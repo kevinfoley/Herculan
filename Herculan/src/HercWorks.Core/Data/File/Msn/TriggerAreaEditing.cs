@@ -19,7 +19,7 @@ namespace HercWorks.Core.Data.File.Msn;
 /// row-9 record with a GUID (<c>MissionGenerator.ReadAreas</c>, <c>WriteBlock</c>), so a new area reaches block 4 before
 /// anything tests it.</para>
 ///
-/// <para>An edit writes the record that supplies the area, its last surviving record (<see cref="MissionDocument.SetArea"/>).
+/// <para>An edit writes the record that supplies the area, its last base record (<see cref="MissionDocument.SetArea"/>).
 /// A shape change, and a delete, can leave a row-6 point the area named that no field names any more
 /// (<see cref="MissionDocument.CountPointRefs"/>, every record whatever its condition); its records are removed in the same
 /// change, as a route edit removes them (<see cref="RouteEditing.RemoveLeftBehind"/>). An area is deleted only while no
@@ -39,7 +39,6 @@ public static class TriggerAreaEditing {
 	/// <summary>What <c>TriggerArea_Resolve</c> (<c>00423358</c>) multiplies a circle's stored radius by.</summary>
 	public const int RadiusScale = 10;
 
-	private const int PointRow = 6;
 	private const int AreaRow = 9;
 	private const int ActionRow = 10;
 
@@ -98,13 +97,13 @@ public static class TriggerAreaEditing {
 
 	/// <summary>
 	/// Makes area GUID <paramref name="area"/> a box (<paramref name="shape"/> <see cref="Box"/>) or a circle, as one
-	/// <see cref="MissionDocument.Change"/>, from where its points stand in the generation. The editor's choice of what the
+	/// <see cref="MissionDocument.Change"/>, from where its points stand. The editor's choice of what the
 	/// other shape is, not a retail rule: a box becomes the circle about its middle whose radius is half its longer side, and
 	/// a circle the square whose corners are its centre less and plus its radius on each axis. The first point is placed as
 	/// <see cref="MissionDocument.PlacePoint"/> places one, rewritten in place when the area is all that names it and
 	/// appended otherwise; a box's second corner is appended. A point the area no longer names that nothing else names is
 	/// removed. Throws <see cref="InvalidOperationException"/> when the area is that shape already, or when a point it names
-	/// is not in the generation.
+	/// is not in the mission.
 	/// </summary>
 	public static MsnEdit SetShape(MissionDocument document, short area, short shape) {
 		var record = document.AreaRecord(area);
@@ -114,7 +113,7 @@ public static class TriggerAreaEditing {
 		}
 
 		short point = record.PointRef;
-		var at = Coordinates(document, point) ?? throw new InvalidOperationException("Its point is not shown in the editor.");
+		var at = RouteEditing.Coordinates(document, point) ?? throw new InvalidOperationException("Its point is not in the mission.");
 		if (toBox) {
 			int radius = Radius(record.SecondPointOrRadius);
 			return document.Change(() => {
@@ -130,7 +129,7 @@ public static class TriggerAreaEditing {
 		}
 
 		short opposite = record.SecondPointOrRadius;
-		var far = Coordinates(document, opposite) ?? throw new InvalidOperationException("Its second corner is not shown in the editor.");
+		var far = RouteEditing.Coordinates(document, opposite) ?? throw new InvalidOperationException("Its second corner is not in the mission.");
 		var middle = ((int)(((long)at.X + far.X) / 2), (int)(((long)at.Y + far.Y) / 2));
 		long longer = Math.Max(Math.Abs((long)far.X - at.X), Math.Abs((long)far.Y - at.Y));
 		short stored = StoredRadius((int)Math.Min(longer / 2, int.MaxValue));
@@ -200,10 +199,4 @@ public static class TriggerAreaEditing {
 		}, out short area);
 		return area;
 	}
-
-	// Where row-6 GUID <point> stands in the generation, or null when no record of it is exported.
-	private static (int X, int Y)? Coordinates(MissionDocument document, short point) =>
-		document.ExportedIndex(PointRow, point) is { } index && index < document.Script.Coordinates.Length
-			? (document.Script.Coordinates[index].X, document.Script.Coordinates[index].Y)
-			: null;
 }

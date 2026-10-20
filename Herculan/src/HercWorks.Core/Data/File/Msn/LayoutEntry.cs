@@ -132,3 +132,54 @@ public sealed record LayoutLine(short Id, IReadOnlyList<int> Records, string Tex
 
 /// <summary>A <c>.ENG</c> record of a line's id under a condition other than its base's, and the text it gives the line then.</summary>
 public sealed record LayoutTextVariation(int Record, short Condition, string Text);
+
+/// <summary>
+/// Row 2's records as the one header they patch (docs/retail/formats/msn-mission-file.md#the-header-patch--row-2). Its
+/// <see cref="Words"/> are its <b>base</b>: the records carrying the same condition as the first, applied in file order over
+/// each word's unset value (<see cref="MissionSettingsPatch.Unset"/>), each record writing every word it does not leave at
+/// that value, as the load does. Every record under any other condition is a <see cref="LayoutHeaderVariation"/>. A launch
+/// that writes over a word (<see cref="MissionGeneration"/>) is not a record and is not shown here.
+/// </summary>
+public sealed class LayoutHeader {
+	private readonly MsnRecordId?[] _setBy;
+
+	internal LayoutHeader(IReadOnlyList<MsnRecordId> records, IReadOnlyList<MsnRecordId> baseRecords, short[] words,
+			MsnRecordId?[] setBy, LayoutPresence presence, IReadOnlyList<LayoutHeaderVariation> variations) {
+		Records = records;
+		Base = baseRecords;
+		Words = words;
+		_setBy = setBy;
+		Presence = presence;
+		Variations = variations;
+	}
+
+	/// <summary>Every row-2 record, in file order.</summary>
+	public IReadOnlyList<MsnRecordId> Records { get; }
+
+	/// <summary>The base's records, in file order: those of <see cref="Records"/> carrying the first one's condition.</summary>
+	public IReadOnlyList<MsnRecordId> Base { get; }
+
+	/// <summary>The ten header words as the base patches them (<c>script.dat</c> offset <c>word * 2</c>).</summary>
+	public IReadOnlyList<short> Words { get; }
+
+	/// <summary>When the base applies: the first record's condition.</summary>
+	public LayoutPresence Presence { get; }
+
+	/// <summary>Each row-2 record under a condition other than the base's, in file order.</summary>
+	public IReadOnlyList<LayoutHeaderVariation> Variations { get; }
+
+	/// <summary>
+	/// The record whose value header word <paramref name="word"/> of <see cref="Words"/> shows: the last base record that sets
+	/// it, else the first record.
+	/// </summary>
+	public MsnRecordId Supplier(int word) {
+		if (word < 0 || word >= _setBy.Length) {
+			throw new ArgumentOutOfRangeException(nameof(word), word, $"The header has {_setBy.Length} words.");
+		}
+
+		return _setBy[word] ?? Records[0];
+	}
+}
+
+/// <summary>A row-2 record under a condition other than the header's base's, and the header words it sets then.</summary>
+public sealed record LayoutHeaderVariation(MsnRecordId Record, short Condition, IReadOnlyList<int> Words);

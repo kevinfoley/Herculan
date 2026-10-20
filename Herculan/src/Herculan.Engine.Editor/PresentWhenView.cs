@@ -122,17 +122,17 @@ internal sealed class PresentWhenView {
 			+ "making a half-filled copy of it where the first is absent.");
 	}
 
-	// One note when a record other than the one that creates it supplies some of its fields under a condition of its own.
+	// One note when a record under another condition sets some of its fields, which an edit here does not change then.
 	private static void DrawSuppliers(MissionDocument source, PresenceTarget target) {
-		var conditions = RecordConditions.ConditionedSuppliers(source, target);
+		var conditions = RecordConditions.VariationConditions(source, target);
 		if (conditions.Count == 0) {
 			return;
 		}
 
-		string named = string.Join(", ", conditions.Select(condition => Name(source, condition, ' ')));
-		EditorText.Note(conditions.Count == 1
-			? $"Some of these fields come from a record present only when {named}: an edit to them holds only then."
-			: $"Some of these fields come from records present only when {named}: an edit to them holds only then.");
+		string named = string.Join(", or ", conditions.Select(condition =>
+			condition == RecordConditions.Always ? "in every state" : $"when {Name(source, condition, ' ')}"));
+		EditorText.Note($"Another record of it sets some of these fields otherwise {named}: an edit here does not change "
+			+ "those fields then.");
 	}
 
 	// What loses its reference to the record where it is absent, one identity link per line.

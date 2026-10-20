@@ -88,7 +88,7 @@ public static class ObjectiveEditing {
 
 	/// <summary>
 	/// Why no objective can be created about <paramref name="kind"/>'s GUID <paramref name="subject"/>, or null when one can: a
-	/// subject the generation does not export, a mission file that ends inside its objectives (<c>DEMO2</c>), and the three
+	/// subject no record carries, a mission file that ends inside its objectives (<c>DEMO2</c>), and the three
 	/// lines of its failure text taking the mission's text past <see cref="MissionTextEditing.LineCap"/>.
 	/// </summary>
 	public static string? WhyNoCreate(MissionDocument document, short kind, short subject) =>
@@ -180,7 +180,7 @@ public static class ObjectiveEditing {
 			return "Only a group, a herc or a structure can be an objective's subject.";
 		}
 
-		return subject == -1 || document.ExportedIndex(row.Value, subject) == null ? "It is not shown in the editor." : null;
+		return document.Layout.Entry(row.Value, subject) == null ? "It is not in the mission." : null;
 	}
 
 	/// <summary>Sets row-17 record <paramref name="record"/>'s subject: a group, herc or structure GUID of <paramref name="kind"/>.</summary>

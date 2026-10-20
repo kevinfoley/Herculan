@@ -4,22 +4,22 @@ using HercWorks.Core.Io.Transform.Common;
 namespace HercWorks.Core.Data.File.Msn;
 
 /// <summary>
-/// A mission held as its <c>.MSN</c> and <c>.ENG</c>, with the <c>script.dat</c> and <c>mission.str</c> generated from
-/// them (<see cref="Regenerate"/>) and the provenance that maps each generated record back to the <c>.MSN</c> records
-/// that supplied it. An edit writes the <c>.MSN</c> record that supplied the value and generates again; the design is
+/// A mission held as its <c>.MSN</c> and <c>.ENG</c>, with its <see cref="Layout"/>, every record present, and the
+/// <c>script.dat</c> and <c>mission.str</c> generated from them (<see cref="Regenerate"/>) with the provenance that maps each
+/// generated record back to the <c>.MSN</c> records that supplied it. An edit writes the <c>.MSN</c> record the layout names
+/// as the field's supplier, builds the layout again and generates again; the design is
 /// docs/herculan/handoff-editor-document.md#holding-the-msn-as-the-document.
 ///
 /// <para>Every edit returns an <see cref="MsnEdit"/> holding the rows it changed, which <see cref="Undo"/> and
 /// <see cref="Redo"/> put back. Several edits made inside one <see cref="Change"/> come back as one, and are all put back
 /// when one of them fails.</para>
 ///
-/// <para>Which record an edit writes, per the handoff's table "An edit writes the record that supplied the value":
-/// a field of a row whose repeated GUID replaces (rows 6 and 8) is written in the last surviving record of the GUID, and
-/// a field of a row whose repeated GUID overlays (rows 12 to 16) in the last surviving record that sets it, else the
-/// first; both are what <see cref="SlotProvenance.Word"/> names. A roster field copied from a variant is written in a
-/// record of the same GUID appended to the row, carrying that field alone, under the condition of the record that drew
-/// the variant, so it overlays whatever is drawn in every state that record survives in. A field set to its unset value
-/// is unset in every record of the GUID, since an overlay cannot carry an unset value.</para>
+/// <para>Which record an edit writes is docs/herculan/handoff-editor-document.md#which-record-an-edit-writes: a field of a
+/// GUID's base is written in its supplier (<see cref="LayoutEntry.Supplier"/>), the last base record that sets it, else the
+/// first record, whether or not the generation keeps it. A roster field the supplier copies from a variant is written in a
+/// record of the same GUID appended to the row, carrying that field alone, under the supplier's condition, so it overlays
+/// whatever is drawn wherever the base is present. A field set to its unset value is unset in every record of the GUID,
+/// since an overlay cannot carry an unset value.</para>
 /// </summary>
 public sealed class MissionDocument {
 	private const int SettingsRow = 2;
@@ -28,9 +28,6 @@ public sealed class MissionDocument {
 	private const int RouteRow = 8;
 	private const int AreaRow = 9;
 	private const int GroupRow = 16;
-
-	/// <summary>Row 8's word 4, its waypoint count and the list after it, as <see cref="SlotProvenance.Word"/> takes it.</summary>
-	private const int RouteListWord = 4;
 
 	/// <summary>The exported slot each GUID of rows 6 to 16 reached in the last generation.</summary>
 	private readonly Dictionary<(int Row, short Guid), SlotProvenance> _slots = new();
@@ -73,14 +70,21 @@ public sealed class MissionDocument {
 	/// <summary>Which records supplied the generated files, from the last generation.</summary>
 	public MissionProvenance Provenance { get; private set; } = new();
 
+	/// <summary>The mission with every record present, built again with each generation; its suppliers are the records edits write.</summary>
+	public MissionLayout Layout { get; private set; } = null!;
+
 	/// <summary>
 	/// The last generation's run, which answers what the shell reads back from a loaded mission besides the files: its
 	/// squad positions and group 0's machines (<see cref="MissionGenerator.SquadPositions"/>, <see cref="MissionGenerator.Herc"/>).
 	/// </summary>
 	public MissionGenerator Generator { get; private set; } = null!;
 
-	/// <summary>Writes the files, generates from them and replaces <see cref="Script"/>'s blocks with what was generated.</summary>
+	/// <summary>
+	/// Builds <see cref="Layout"/> from the records, writes the files, generates from them and replaces <see cref="Script"/>'s
+	/// blocks with what was generated.
+	/// </summary>
 	public void Regenerate() {
+		Layout = MissionLayout.Build(Mission, Text);
 		byte[] msn = new MissionFileTransformer().Write(Mission) ?? throw new InvalidOperationException("The mission file does not write.");
 		byte[]? text = Text == null ? null : new MissionStringFileTransformer().Write(Text);
 		var generator = Generation.Run(msn, text);
@@ -121,9 +125,9 @@ public sealed class MissionDocument {
 	/// <summary>
 	/// Whether a variant supplies <paramref name="field"/> of GUID <paramref name="guid"/>, so that <see cref="SetField"/> writes
 	/// it in an overlay record, which cannot carry the field's unset value. Throws as <see cref="SetField"/> does for a GUID no
-	/// record exports.
+	/// record carries.
 	/// </summary>
-	public bool SuppliedByVariant(MsnField field, short guid) => SlotOf(field.Row, guid).Word(field.Word).CopiedFrom != null;
+	public bool SuppliedByVariant(MsnField field, short guid) => EntryOf(field.Row, guid).Supplier(field.Word).CopiedFrom != null;
 
 	/// <summary>The GUID-keyed record <paramref name="id"/> names, or null for one of rows 4 and 17, which have no GUID.</summary>
 	public MapObject? RecordAt(MsnRecordId id) => MsnRows.Get(Mission, id.Row).GetValue(id.Index) as MapObject;
@@ -231,13 +235,13 @@ public sealed class MissionDocument {
 
 	/// <summary>
 	/// Stands row-6 point <paramref name="point"/> at (<paramref name="x"/>, <paramref name="y"/>, <paramref name="z"/>),
-	/// writing the record that supplies its coordinates, so everything naming the point moves with it. Throws
-	/// <see cref="InvalidOperationException"/> for a point no record exports, or whose coordinates are drawn from a variant
-	/// or summed from two other points, which no retail point is
+	/// writing the record that supplies its coordinates, the GUID's last base record, so everything naming the point moves
+	/// with it. Throws <see cref="InvalidOperationException"/> for a point no record carries, or whose coordinates are drawn
+	/// from a variant or summed from two other points, which no retail point is
 	/// (docs/retail/formats/msn-mission-file.md#row-6-field-decode--the-point-record-dat_0047064e-22-bytesrecord).
 	/// </summary>
 	public MsnEdit SetPoint(short point, int x, int y, int z) {
-		var source = SlotOf(PointRow, point).Word(MapPoint22.XWord);
+		var source = EntryOf(PointRow, point).Supplier(MapPoint22.XWord);
 		var record = (MapPoint22)RecordAt(source.Record)!;
 		if (source.CopiedFrom != null) {
 			throw new InvalidOperationException($"Point {point}'s coordinates are drawn from a variant.");
@@ -278,10 +282,10 @@ public sealed class MissionDocument {
 	/// <summary>
 	/// Sets <paramref name="field"/> of the record of GUID <paramref name="guid"/> that supplies it to
 	/// <paramref name="value"/>, by the rules in the class summary. Throws <see cref="InvalidOperationException"/> for a
-	/// GUID no record exports, and for a field a variant supplies being unset or outside rows 12 to 14.
+	/// GUID no record carries, and for a field a variant supplies being unset or outside rows 12 to 14.
 	/// </summary>
 	public MsnEdit SetField(MsnField field, short guid, short value) {
-		var source = SlotOf(field.Row, guid).Word(field.Word);
+		var source = EntryOf(field.Row, guid).Supplier(field.Word);
 		if (value == field.Unset) {
 			if (source.CopiedFrom != null) {
 				throw new InvalidOperationException($"A variant supplies that field of row {field.Row}'s GUID {guid}, and an overlay cannot unset it.");
@@ -310,9 +314,9 @@ public sealed class MissionDocument {
 
 	/// <summary>
 	/// Sets header word <paramref name="word"/> (<c>script.dat</c> offset <c>word * 2</c>) as row 2 patches it to
-	/// <paramref name="value"/>. Row 2 overlays one header, so the record written is, as for an overlay field, the last
-	/// surviving row-2 record that sets the word (<see cref="MissionProvenance.HeaderWord"/>), else the first surviving
-	/// one, else a record appended unconditioned that sets nothing else. The word's unset value
+	/// <paramref name="value"/>. Row 2 patches one header, so the record written is, as for an overlay field, the header's
+	/// supplier of the word (<see cref="LayoutHeader.Supplier"/>), the last base record that sets it, else the first
+	/// record; with no row-2 record, a record appended unconditioned that sets nothing else. The word's unset value
 	/// (<see cref="MissionSettingsPatch.Unset"/>) is written into every row-2 record that sets the word, whatever its
 	/// condition, since a record cannot carry it over another's. A launch that writes over the word
 	/// (<see cref="MissionGeneration"/>) still does.
@@ -334,9 +338,8 @@ public sealed class MissionDocument {
 			return End(before);
 		}
 
-		var survivors = Provenance.HeaderPatches;
-		if ((Provenance.HeaderWord(word) ?? (survivors.Count > 0 ? survivors[0] : (MsnRecordId?)null)) is { } supplier) {
-			patches[supplier.Index].Data[at] = value;
+		if (Layout.Header is { } patched) {
+			patches[patched.Supplier(word).Index].Data[at] = value;
 			return End(before);
 		}
 
@@ -354,8 +357,8 @@ public sealed class MissionDocument {
 
 	/// <summary>
 	/// Points entry <paramref name="entry"/> of route GUID <paramref name="route"/>'s waypoint list at row-6 GUID
-	/// <paramref name="point"/>, in the record whose list the route holds: its last surviving record, or, for a list a
-	/// variant supplies, that alternative, which every route drawing it shares.
+	/// <paramref name="point"/>, in the record whose list the route shows: its last base record, or, for a list a variant
+	/// supplies, that alternative, which every route drawing it shares.
 	/// </summary>
 	public MsnEdit SetWaypoint(short route, int entry, short point) {
 		var record = ListRecord(route);
@@ -380,8 +383,8 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
-	/// A copy of the waypoint list route GUID <paramref name="route"/> holds in the generation: the row-6 GUIDs of the record
-	/// <see cref="SetWaypoints"/> writes, entry for entry as <c>script.dat</c> block 3 lists them.
+	/// A copy of the waypoint list route GUID <paramref name="route"/> shows: the row-6 GUIDs of the record
+	/// <see cref="SetWaypoints"/> writes, entry for entry.
 	/// </summary>
 	public short[] Waypoints(short route) => (short[])ListRecord(route).Waypoints.Clone();
 
@@ -389,15 +392,15 @@ public sealed class MissionDocument {
 	/// Whether a variant supplies route GUID <paramref name="route"/>'s list, so that the list is a GUID <c>-1</c>
 	/// alternative every route drawing it shares, and an edit of it changes them all.
 	/// </summary>
-	public bool WaypointsShared(short route) => SlotOf(RouteRow, route).Word(RouteListWord).CopiedFrom != null;
+	public bool WaypointsShared(short route) => EntryOf(RouteRow, route).Supplier(MergeRules.RouteListWord).CopiedFrom != null;
 
 	/// <summary>
-	/// The row-9 record that supplies trigger area GUID <paramref name="area"/>: its last surviving record, which row 9's
-	/// replace of a repeated GUID leaves the slot holding whole. Row 9 draws no variant (it has no variant key). Throws
-	/// <see cref="InvalidOperationException"/> for a GUID no record exports.
+	/// The row-9 record that supplies trigger area GUID <paramref name="area"/>: its last base record, which row 9's replace
+	/// of a repeated GUID leaves the area holding whole. Row 9 draws no variant (it has no variant key). Throws
+	/// <see cref="InvalidOperationException"/> for a GUID no record carries.
 	/// </summary>
 	public TriggerArea12 AreaRecord(short area) =>
-		(TriggerArea12)RecordAt(SlotOf(AreaRow, area).Word(TriggerArea12.ShapeWord).Record)!;
+		(TriggerArea12)RecordAt(EntryOf(AreaRow, area).Supplier(TriggerArea12.ShapeWord).Record)!;
 
 	/// <summary>Rewrites, through <paramref name="write"/>, the row-9 record <see cref="AreaRecord"/> answers.</summary>
 	public MsnEdit SetArea(short area, Action<TriggerArea12> write) {
@@ -492,11 +495,11 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
-	/// The variant alternative that supplies <paramref name="field"/> of GUID <paramref name="guid"/>'s generated record: the
-	/// GUID <c>-1</c> record it was copied from (<see cref="WordSource.CopiedFrom"/>), or null when the field is the record's
-	/// own or an overlay's. Throws as <see cref="SetField"/> does for a GUID no record exports.
+	/// The variant alternative that supplies <paramref name="field"/> of GUID <paramref name="guid"/>'s base: the GUID
+	/// <c>-1</c> record the supplier copied it from (<see cref="WordSource.CopiedFrom"/>), or null when the field is the
+	/// record's own or an overlay's. Throws as <see cref="SetField"/> does for a GUID no record carries.
 	/// </summary>
-	public MsnRecordId? AlternativeOf(MsnField field, short guid) => SlotOf(field.Row, guid).Word(field.Word).CopiedFrom;
+	public MsnRecordId? AlternativeOf(MsnField field, short guid) => EntryOf(field.Row, guid).Supplier(field.Word).CopiedFrom;
 
 	/// <summary>
 	/// Sets <paramref name="field"/> to <paramref name="value"/> in the variant alternative <see cref="AlternativeOf"/> answers,
@@ -694,15 +697,13 @@ public sealed class MissionDocument {
 		}
 	}
 
-	private SlotProvenance SlotOf(int row, short guid) =>
-		_slots.TryGetValue((row, guid), out var slot)
-			? slot
-			: throw new InvalidOperationException($"No record of row {row} with GUID {guid} reaches script.dat.");
+	private LayoutEntry EntryOf(int row, short guid) =>
+		Layout.Entry(row, guid) ?? throw new InvalidOperationException($"Row {row} has no record with GUID {guid}.");
 
-	// The row-8 record whose waypoint list route GUID <route> holds: its last surviving record, or the variant alternative
-	// it copies the list from.
+	// The row-8 record whose waypoint list route GUID <route> shows: its last base record, or the variant alternative it
+	// copies the list from.
 	private WaypointGroup ListRecord(short route) {
-		var source = SlotOf(RouteRow, route).Word(RouteListWord);
+		var source = EntryOf(RouteRow, route).Supplier(MergeRules.RouteListWord);
 		return (WaypointGroup)RecordAt(source.CopiedFrom ?? source.Record)!;
 	}
 

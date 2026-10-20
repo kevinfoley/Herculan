@@ -107,9 +107,6 @@ internal sealed class PointMover {
 	private const int AreaBlock = 4;
 	private const int GroupBlock = 11;
 
-	// Row 8's word 4, its waypoint count and the list after it, as SlotProvenance.Word takes it.
-	private const int RouteListWord = 4;
-
 	private readonly ScriptDat _document;
 	private readonly MissionDocument _source;
 	private readonly MissionScene _scene;
@@ -630,7 +627,8 @@ internal sealed class PointMover {
 		}
 	}
 
-	// Whether the field naming the target's point is copied from a variant: an object's roster point, or a route's list.
+	// Whether the field naming the target's point is copied from a variant in the record an edit writes
+	// (MissionDocument.SuppliedByVariant): an object's roster point, or a route's list.
 	private bool FromVariant(MoveTarget target) {
 		var (block, index, word) = target switch {
 			ObjectTarget { Object.Placement: var placement } => (RosterBlock(placement.Kind), placement.SlotIndex,
@@ -639,10 +637,10 @@ internal sealed class PointMover {
 					MissionUnitKind.Flyer => FlyerRosterEntry102.PositionRefWord,
 					_ => BaseRosterEntry62.PositionRefWord
 				}),
-			WaypointTarget waypoint => (RouteBlock, waypoint.Route.Reference, RouteListWord),
+			WaypointTarget waypoint => (RouteBlock, waypoint.Route.Reference, MergeRules.RouteListWord),
 			_ => (0, 0, 0)
 		};
-		return block > 0 && _source.Provenance.Slot(block, index)?.Word(word).CopiedFrom != null;
+		return block > 0 && _source.Layout.Entry(block + 5, _source.GuidOf(block, index))?.Supplier(word).CopiedFrom != null;
 	}
 
 	// How a group moves, as the generated document stands: the point it stands on, its own or its route's first

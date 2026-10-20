@@ -48,7 +48,6 @@ public static class VehicleGroups {
 	private const short PaintsGround = 0;
 
 	private const int BaseRow = 14;
-	private const int GroupRow = 16;
 	private const short BaseRoster = 2;
 
 	/// <summary>Pristine: 108 of the 108 vehicle records.</summary>
@@ -91,19 +90,16 @@ public static class VehicleGroups {
 	}
 
 	/// <summary>
-	/// Whether row-16 group <paramref name="group"/> is a convoy as the editor shows it: a structure group whose first
-	/// member is of a type <paramref name="isGroundVehicle"/> answers true for.
+	/// Whether row-16 group <paramref name="group"/> is a convoy: a structure group whose base's first member a record carries
+	/// is, in its own base, of a type <paramref name="isGroundVehicle"/> answers true for.
 	/// </summary>
 	public static bool IsConvoy(MissionDocument document, short group, Func<int, bool> isGroundVehicle) {
-		if (group == -1 || document.ExportedIndex(GroupRow, group) is not { } index) {
+		if (document.Layout.Entry<MissionGroup164>(group)?.Fields is not { MemberKind: BaseRoster } record) {
 			return false;
 		}
 
-		var record = document.Script.Groups[index];
-		var bases = document.Script.Bases;
-		int slot = Array.FindIndex(record.MemberRefs, member => member >= 0);
-		return record.MemberKind == BaseRoster && slot >= 0 && record.MemberRefs[slot] < bases.Length
-			&& isGroundVehicle(bases[record.MemberRefs[slot]].TypeIndex);
+		var first = record.MemberRefs.Select(member => document.Layout.Entry<BaseRosterEntry62>(member)).FirstOrDefault(entry => entry != null);
+		return first != null && isGroundVehicle(first.Fields.TypeIndex);
 	}
 
 	/// <summary>

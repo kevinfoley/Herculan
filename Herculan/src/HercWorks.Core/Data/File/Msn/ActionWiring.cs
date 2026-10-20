@@ -27,7 +27,7 @@ public static class ActionWiring {
 
 	/// <summary>Why row-16 group <paramref name="group"/>'s deployment action cannot be set, or null when it can.</summary>
 	public static string? WhyNoDeployment(MissionDocument document, short group) =>
-		document.ExportedIndex(GroupRow, group) == null ? "The group is not shown in the editor."
+		document.Layout.Entry(GroupRow, group) == null ? $"The mission has no group {group}."
 			: group == document.GuidOf(SquadBlock, 0) ? "The player's squad is in the mission from the start."
 			: null;
 
@@ -47,8 +47,8 @@ public static class ActionWiring {
 			throw new ArgumentOutOfRangeException(nameof(row), row, "Rows 12 to 14 are the rosters.");
 		}
 
-		if (document.ExportedIndex(row, guid) == null) {
-			return "It is not shown in the editor.";
+		if (document.Layout.Entry(row, guid) == null) {
+			return "It is not in the mission.";
 		}
 
 		short squad = document.GuidOf(SquadBlock, 0);
@@ -62,7 +62,7 @@ public static class ActionWiring {
 	/// and an overlay record cannot carry an unset value.
 	/// </summary>
 	public static string? WhyNoNone(MissionDocument document, MsnField field, short guid) =>
-		document.ExportedIndex(field.Row, guid) != null && document.SuppliedByVariant(field, guid)
+		document.Layout.Entry(field.Row, guid) != null && document.SuppliedByVariant(field, guid)
 			? "A variant supplies it, so it cannot be taken away."
 			: null;
 
@@ -85,8 +85,8 @@ public static class ActionWiring {
 	}
 
 	internal static void CheckAction(MissionDocument document, short action) {
-		if (action != -1 && document.ExportedIndex(ActionRow, action) == null) {
-			throw new InvalidOperationException("That action is not shown in the editor.");
+		if (action != -1 && document.Layout.Entry(ActionRow, action) == null) {
+			throw new InvalidOperationException("That action is not in the mission.");
 		}
 	}
 }

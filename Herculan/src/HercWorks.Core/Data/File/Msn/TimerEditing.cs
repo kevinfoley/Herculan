@@ -1,5 +1,3 @@
-using HercWorks.Core.Data.File.Msn.Script;
-
 namespace HercWorks.Core.Data.File.Msn;
 
 /// <summary>
@@ -10,7 +8,8 @@ namespace HercWorks.Core.Data.File.Msn;
 /// <list type="bullet">
 /// <item>A repeated row-11 GUID overlays field by field (<c>Msn_MergeRow11</c> (<c>00416768</c>)), the delay's unset value
 /// being 0, so a field is written through the record that supplies it (<see cref="MissionDocument.SetField"/>), and an
-/// unset value into every record of the GUID. Row 11 draws no variant.</item>
+/// unset value into every record of the GUID. The fields an edit starts from are the base's
+/// (<see cref="MissionDocument.Layout"/>), whose records it writes. Row 11 draws no variant.</item>
 /// <item>The delay is in seconds, 0 to <see cref="MaxDelay"/>: <c>ActionTimer_SetDelay</c> (<c>004679c0</c>) sign-extends the
 /// stored word and shifts it left 11 into a 32-bit countdown, so a larger stored word reads as negative, and
 /// <c>Timer_CountDown</c> clamps a countdown below 0 to 0, which fires on the first tick it counts. A delay of 0 does that
@@ -25,7 +24,6 @@ namespace HercWorks.Core.Data.File.Msn;
 public static class TimerEditing {
 	private const int TimerRow = 11;
 	private const int ActionRow = 10;
-	private const int ActionBlock = 5;
 
 	/// <summary>The fired slots a record carries.</summary>
 	public const int Slots = 10;
@@ -51,25 +49,27 @@ public static class TimerEditing {
 		return change;
 	}
 
-	/// <summary>Row-11 GUID <paramref name="timer"/> as generated, throwing for one no record exports.</summary>
-	public static ScriptActionTimer Exported(MissionDocument document, short timer) =>
-		timer != -1 && document.ExportedIndex(TimerRow, timer) is { } index
-			? document.Script.ActionTimers[index]
-			: throw new InvalidOperationException($"Timer {timer} is not shown in the editor.");
+	/// <summary>Row-11 GUID <paramref name="timer"/>'s base fields (a copy), throwing for one no record carries.</summary>
+	public static ActionTimer30 Fields(MissionDocument document, short timer) =>
+		document.Layout.Entry<ActionTimer30>(timer)?.Fields
+			?? throw new InvalidOperationException($"The mission has no timer {timer}.");
 
-	/// <summary>The row-10 GUID of the action that starts <paramref name="timer"/> as generated, or <c>-1</c> when it runs from mission start.</summary>
-	public static short Start(MissionDocument document, short timer) => ActionGuid(document, Exported(document, timer).PrimaryActionRef);
+	/// <summary>
+	/// The row-10 GUID of the action that starts <paramref name="timer"/>'s base, or <c>-1</c> when it runs from mission start
+	/// or names no action.
+	/// </summary>
+	public static short Start(MissionDocument document, short timer) => ActionGuid(document, Fields(document, timer).PrimaryActionRef);
 
-	/// <summary>The row-10 GUIDs in <paramref name="timer"/>'s ten fired slots as generated, <c>-1</c> for an empty one.</summary>
+	/// <summary>The row-10 GUIDs in <paramref name="timer"/>'s base's ten fired slots, <c>-1</c> for an empty one or one naming no action.</summary>
 	public static short[] Fired(MissionDocument document, short timer) =>
-		Exported(document, timer).SequenceRefs.Select(action => ActionGuid(document, action)).ToArray();
+		Fields(document, timer).SequenceRefs.Select(action => ActionGuid(document, action)).ToArray();
 
 	/// <summary>How many fired slots are filled, from slot 0 to the last filled one.</summary>
 	public static int Filled(short[] fired) => Array.FindLastIndex(fired, action => action != -1) + 1;
 
 	/// <summary>Sets the action that starts <paramref name="timer"/>, a row-10 GUID, or <c>-1</c> for none: it then runs from mission start.</summary>
 	public static MsnEdit SetStart(MissionDocument document, short timer, short action) {
-		Exported(document, timer);
+		Fields(document, timer);
 		CheckAction(document, action, none: true);
 		return document.Change(() => document.SetField(MsnField.TimerStart, timer, action));
 	}
@@ -80,7 +80,7 @@ public static class TimerEditing {
 			throw new ArgumentOutOfRangeException(nameof(seconds), seconds, $"A delay is 0 to {MaxDelay} seconds.");
 		}
 
-		Exported(document, timer);
+		Fields(document, timer);
 		return document.Change(() => document.SetField(MsnField.TimerDelay, timer, (short)seconds));
 	}
 
@@ -138,13 +138,13 @@ public static class TimerEditing {
 	/// <summary>Deletes row-11 GUID <paramref name="timer"/>: every record of the GUID, whatever its condition.</summary>
 	public static MsnEdit Delete(MissionDocument document, short timer) => document.Change(() => document.Remove(TimerRow, timer));
 
-	// The GUID of the row-10 record that created block-5 action <action>, or -1.
+	// Row-10 GUID <action>, or -1 when no record carries it.
 	private static short ActionGuid(MissionDocument document, short action) =>
-		action >= 0 ? document.GuidOf(ActionBlock, action) : (short)-1;
+		document.Layout.Entry(ActionRow, action) != null ? action : (short)-1;
 
 	private static void CheckAction(MissionDocument document, short action, bool none) {
-		if (action == -1 ? !none : document.ExportedIndex(ActionRow, action) == null) {
-			throw new InvalidOperationException(action == -1 ? "No action was given." : "That action is not shown in the editor.");
+		if (action == -1 ? !none : document.Layout.Entry(ActionRow, action) == null) {
+			throw new InvalidOperationException(action == -1 ? "No action was given." : "That action is not in the mission.");
 		}
 	}
 }

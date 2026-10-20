@@ -165,8 +165,8 @@ public static class VariantEditing {
 
 	/// <summary>
 	/// The record of roster row <paramref name="row"/>'s GUID <paramref name="guid"/> that carries its variant key: the one of
-	/// its records that sets it, or when none does the one that creates its generated record. Null when more than one sets it,
-	/// or no record of the GUID is generated.
+	/// its records that sets it, or when none does its first record, the one that creates it. Null when more than one sets it,
+	/// or no record carries the GUID.
 	/// </summary>
 	public static MsnRecordId? KeyRecord(MissionDocument document, int row, short guid) {
 		var keyed = RecordsOf(document, row, guid).Where(id => KeyOf(document.RecordAt(id)!) != -1).ToList();
@@ -174,7 +174,7 @@ public static class VariantEditing {
 			return keyed.Count == 1 ? keyed[0] : null;
 		}
 
-		return document.ExportedIndex(row, guid) is { } index && document.Provenance.Slot(row - 5, index) is { } slot ? slot.Created : null;
+		return document.Layout.Entry(row, guid)?.Records[0];
 	}
 
 	/// <summary>The table roster row <paramref name="row"/>'s GUID <paramref name="guid"/> draws from: the first of its key's; null for none.</summary>
@@ -448,7 +448,7 @@ public static class VariantEditing {
 	}
 
 	/// <summary>
-	/// Sets <paramref name="field"/> of the alternative GUID <paramref name="guid"/> draws in the editor's state to
+	/// Sets <paramref name="field"/> of the alternative GUID <paramref name="guid"/>'s base copies it from to
 	/// <paramref name="value"/>, as one <see cref="MissionDocument.Change"/>, so every record drawing that alternative changes
 	/// (<see cref="MissionDocument.SetAlternativeField"/>); <see cref="MissionDocument.SetField"/> writes the one GUID's overlay
 	/// instead. Refused for a field no alternative supplies, and an alternative of a table the editor shows only.
@@ -463,8 +463,8 @@ public static class VariantEditing {
 
 	/// <summary>Why <see cref="SetDrawnField"/> refuses <paramref name="field"/> of GUID <paramref name="guid"/>, or null when it writes it.</summary>
 	public static string? WhyNoDrawnField(MissionDocument document, MsnField field, short guid) {
-		if (field.Row is not (>= 12 and <= 14) || document.ExportedIndex(field.Row, guid) == null) {
-			return "It is not a herc, flyer or structure in the mission as shown.";
+		if (field.Row is not (>= 12 and <= 14) || document.Layout.Entry(field.Row, guid) == null) {
+			return "It is not a herc, flyer or structure in the mission.";
 		}
 
 		if (document.AlternativeOf(field, guid) is not { } alternative) {

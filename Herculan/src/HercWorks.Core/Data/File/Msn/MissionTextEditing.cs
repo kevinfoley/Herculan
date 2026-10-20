@@ -25,8 +25,8 @@ public readonly record struct TextOwner(int Row, int Record, MissionTextList? Li
 /// turns it into <c>data\mission.str</c> is docs/retail/formats/msn-mission-file.md#the-eng-string-table.
 ///
 /// <list type="bullet">
-/// <item>An edit of a line writes the <c>.ENG</c> record whose text the generated <c>mission.str</c> line holds
-/// (<see cref="Io.Transform.Common.MissionProvenance.Lines"/>), as every edit writes the record that supplied the value.</item>
+/// <item>An edit of a line writes the <c>.ENG</c> record whose text the line shows (<see cref="LayoutLine.Supplier"/>), the
+/// last record of its id carrying the first one's condition, as every edit writes the record that supplies the value.</item>
 /// <item>Rows 4, 5, 10 and 17 reference text by id, the only rows that do (<c>Msn_ResolveTextRef</c> (<c>00415a7c</c>) is
 /// called for them alone). An objective's failure text is three consecutive <c>mission.str</c> lines from the one it
 /// references (docs/retail/formats/script-dat.md#block-12-in-memory--76-bytes-0x4c), taken here as its id and the next two
@@ -169,23 +169,14 @@ public static class MissionTextEditing {
 	};
 
 	/// <summary>
-	/// The index of the <c>.ENG</c> record whose text the generated <c>mission.str</c> line of <paramref name="id"/> holds,
-	/// or null when no record of the id survives in the generation.
+	/// The index of the <c>.ENG</c> record whose text the line of <paramref name="id"/> shows (<see cref="LayoutLine.Supplier"/>),
+	/// or null when no record carries the id.
 	/// </summary>
-	public static int? SupplierOf(MissionDocument document, short id) {
-		var strings = document.Text?.Strings ?? [];
-		foreach (var line in document.Provenance.Lines) {
-			if (line.Created < strings.Length && strings[line.Created].Guid == id) {
-				return line.Supplier;
-			}
-		}
-
-		return null;
-	}
+	public static int? SupplierOf(MissionDocument document, short id) => document.Layout.Line(id)?.Supplier;
 
 	/// <summary>
-	/// The text <paramref name="id"/>'s line shows in the generation, without its NUL and the one trailing newline
-	/// the simulator's load strips (docs/retail/formats/msn-mission-file.md#the-eng-string-table); null when it has none.
+	/// The text <paramref name="id"/>'s line shows, without its NUL and the one trailing newline the simulator's load strips
+	/// (docs/retail/formats/msn-mission-file.md#the-eng-string-table); null when no record carries the id.
 	/// </summary>
 	public static string? LineText(MissionDocument document, short id) =>
 		SupplierOf(document, id) is { } record ? Shown(document.Text!.Strings![record].Val) : null;
@@ -204,7 +195,7 @@ public static class MissionTextEditing {
 		}
 
 		if (SupplierOf(document, ids[part]) is not { } supplier) {
-			throw new InvalidOperationException("That line is not in the mission's text shown in the editor.");
+			throw new InvalidOperationException("That line is not in the mission's text.");
 		}
 
 		int lines = Lines(document);
@@ -223,10 +214,11 @@ public static class MissionTextEditing {
 	// ---- Row 4's line lists -----------------------------------------------------------------------
 
 	/// <summary>
-	/// The row-4 record block 13 is written from, the first the load read into slot 0, by its index in the row; null for a
-	/// mission with none, as <c>TRAIN1</c> and <c>TRAIN3</c> have none.
+	/// The mission's text package, the row-4 record its line edits write, by its index in the row: the first, which block 13
+	/// is written from whenever its condition holds (every retail one is unconditioned); null for a mission with none, as
+	/// <c>TRAIN1</c> and <c>TRAIN3</c> have none.
 	/// </summary>
-	public static int? PackageRecord(MissionDocument document) => document.Provenance.Slot(13, 0)?.Created.Index;
+	public static int? PackageRecord(MissionDocument document) => document.Mission.Texts is { Length: > 0 } ? 0 : null;
 
 	/// <summary><paramref name="list"/>'s slots in <paramref name="package"/>, its own array.</summary>
 	public static short[] LinesOf(MissionText144 package, MissionTextList list) => list switch {

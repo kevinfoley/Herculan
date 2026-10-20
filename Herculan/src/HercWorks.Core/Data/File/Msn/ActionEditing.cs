@@ -1,4 +1,3 @@
-using HercWorks.Core.Data.File.Msn.Script;
 using HercWorks.Core.Io.Transform.Common;
 
 namespace HercWorks.Core.Data.File.Msn;
@@ -22,7 +21,8 @@ public sealed record ActionNamers(IReadOnlyList<MsnRecordId> Timers, IReadOnlyLi
 /// <list type="bullet">
 /// <item>A repeated row-10 GUID overlays field by field (<c>Msn_MergeRow10</c> (<c>00416521</c>)), so a field is written
 /// through the record that supplies it (<see cref="MissionDocument.SetField"/>), and an unset value into every record of
-/// the GUID. Row 10 draws no variant.</item>
+/// the GUID. The fields an edit starts from are the base's (<see cref="MissionDocument.Layout"/>), whose records it writes.
+/// Row 10 draws no variant.</item>
 /// <item>The area slots are the first four, the only ones retail fills; slots 4 to 7 stay <c>-1</c>. They are kept filled
 /// from slot 0: the load counts an action's areas up to the first <c>-1</c>, so an area after a gap is never tested
 /// (docs/retail/formats/script-dat.md#block-5-in-memory--58-bytes-0x3a). A remove moves every later area up a slot.</item>
@@ -39,12 +39,13 @@ public sealed record ActionNamers(IReadOnlyList<MsnRecordId> Timers, IReadOnlyLi
 /// </list>
 /// </summary>
 public static class ActionEditing {
+	private const int AreaRow = 9;
 	private const int ActionRow = 10;
 	private const int TimerRow = 11;
 	private const int OrderRow = 15;
 	private const int GroupRow = 16;
-	private const int AreaBlock = 4;
-	private const int ActionBlock = 5;
+
+	private const string NoArea = "That trigger area is not in the mission.";
 
 	/// <summary>The area slots offered: the first four, the only ones retail fills.</summary>
 	public const int AreaSlots = 4;
@@ -90,8 +91,8 @@ public static class ActionEditing {
 	/// target (334).
 	/// </summary>
 	public static MsnEdit Create(MissionDocument document, short area, out short guid) {
-		if (area != -1 && document.ExportedIndex(9, area) == null) {
-			throw new InvalidOperationException("That trigger area is not shown in the editor.");
+		if (area != -1 && document.Layout.Entry(AreaRow, area) == null) {
+			throw new InvalidOperationException(NoArea);
 		}
 
 		var areas = Unset(8);
@@ -105,16 +106,18 @@ public static class ActionEditing {
 		return change;
 	}
 
-	/// <summary>Row-10 GUID <paramref name="action"/> as generated, throwing for one no record exports.</summary>
-	public static ScriptAction Exported(MissionDocument document, short action) =>
-		action != -1 && document.ExportedIndex(ActionRow, action) is { } index
-			? document.Script.Actions[index]
-			: throw new InvalidOperationException($"Action {action} is not shown in the editor.");
+	/// <summary>Row-10 GUID <paramref name="action"/>'s base fields (a copy), throwing for one no record carries.</summary>
+	public static MissionAction82 Fields(MissionDocument document, short action) =>
+		document.Layout.Entry<MissionAction82>(action)?.Fields
+			?? throw new InvalidOperationException($"The mission has no action {action}.");
 
-	/// <summary>The row-9 GUIDs in <paramref name="action"/>'s first <see cref="AreaSlots"/> slots as generated, <c>-1</c> for an empty one.</summary>
+	/// <summary>
+	/// The row-9 GUIDs in <paramref name="action"/>'s first <see cref="AreaSlots"/> slots as its base names them, <c>-1</c> for
+	/// an empty one or one naming no area.
+	/// </summary>
 	public static short[] Areas(MissionDocument document, short action) =>
-		Exported(document, action).AreaRefs.Take(AreaSlots)
-			.Select(area => area >= 0 ? document.GuidOf(AreaBlock, area) : (short)-1).ToArray();
+		Fields(document, action).AreaRefs.Take(AreaSlots)
+			.Select(area => document.Layout.Entry(AreaRow, area) != null ? area : (short)-1).ToArray();
 
 	/// <summary>How many area slots are filled before the first empty one, the areas DBSIM tests.</summary>
 	public static int FilledAreas(short[] areas) => Array.IndexOf(areas, (short)-1) is >= 0 and var gap ? gap : areas.Length;
@@ -124,7 +127,7 @@ public static class ActionEditing {
 		var areas = Areas(document, action);
 		return FilledAreas(areas) >= AreaSlots ? $"All {AreaSlots} area slots are filled."
 			: area != -1 && areas.Contains(area) ? "It tests that area already."
-			: area != -1 && document.ExportedIndex(9, area) == null ? "That trigger area is not shown in the editor."
+			: area != -1 && document.Layout.Entry(AreaRow, area) == null ? NoArea
 			: null;
 	}
 
@@ -145,8 +148,8 @@ public static class ActionEditing {
 			throw new InvalidOperationException($"There is no area in slot {slot}.");
 		}
 
-		if (area == -1 || document.ExportedIndex(9, area) == null) {
-			throw new InvalidOperationException("That trigger area is not shown in the editor.");
+		if (document.Layout.Entry(AreaRow, area) == null) {
+			throw new InvalidOperationException(NoArea);
 		}
 
 		if (areas.Where((_, at) => at != slot).Contains(area)) {
@@ -185,7 +188,7 @@ public static class ActionEditing {
 			return $"A type is 0 to {LastType}.";
 		}
 
-		return TargetBlock(type) is { } block && Exported(document, action).Type != type && document.GuidOf(block, 0) == -1
+		return TargetBlock(type) is { } block && Fields(document, action).Type != type && document.GuidOf(block, 0) == -1
 			? $"The mission has no {TargetKind(type)} to be its target."
 			: null;
 	}
@@ -202,7 +205,7 @@ public static class ActionEditing {
 			throw new InvalidOperationException(reason);
 		}
 
-		short current = Exported(document, action).Type;
+		short current = Fields(document, action).Type;
 		if (current == type) {
 			throw new InvalidOperationException("It is that type already.");
 		}
@@ -214,23 +217,28 @@ public static class ActionEditing {
 		});
 	}
 
-	/// <summary>The GUID of <paramref name="action"/>'s target as generated, in the row its type names; <c>-1</c> for none or a type that reads none.</summary>
+	/// <summary>
+	/// The GUID of <paramref name="action"/>'s base's target, in the row its type names; <c>-1</c> for none, one naming no
+	/// record, or a type that reads none.
+	/// </summary>
 	public static short Target(MissionDocument document, short action) {
-		var exported = Exported(document, action);
-		return TargetBlock(exported.Type) is { } block && exported.TargetRef >= 0 ? document.GuidOf(block, exported.TargetRef) : (short)-1;
+		var fields = Fields(document, action);
+		return TargetBlock(fields.Type) is { } block && document.Layout.Entry(block + 5, fields.TargetRef) != null
+			? fields.TargetRef
+			: (short)-1;
 	}
 
 	/// <summary>
 	/// Sets <paramref name="action"/>'s target to <paramref name="target"/>, a GUID of the row its type, 7 to 10, names. Throws for
-	/// any other type, and for a record the generation does not export.
+	/// any other type, and for a GUID no record of that row carries.
 	/// </summary>
 	public static MsnEdit SetTarget(MissionDocument document, short action, short target) {
-		if (TargetBlock(Exported(document, action).Type) is not { } block) {
+		if (TargetBlock(Fields(document, action).Type) is not { } block) {
 			throw new InvalidOperationException("Only types 7 to 10 have a target.");
 		}
 
-		if (target == -1 || document.ExportedIndex(block + 5, target) == null) {
-			throw new InvalidOperationException("That target is not shown in the editor.");
+		if (document.Layout.Entry(block + 5, target) == null) {
+			throw new InvalidOperationException("That target is not in the mission.");
 		}
 
 		return document.Change(() => document.SetField(MsnField.ActionTarget, action, target));
@@ -242,14 +250,14 @@ public static class ActionEditing {
 			throw new ArgumentOutOfRangeException(nameof(verb), verb, $"A verb is 0 to {LastVerb}.");
 		}
 
-		Exported(document, action);
+		Fields(document, action);
 		return document.Change(() => document.SetField(MsnField.ActionVerb, action, verb));
 	}
 
-	/// <summary><paramref name="action"/>'s ten (counter, operation) pairs as generated.</summary>
+	/// <summary><paramref name="action"/>'s ten (counter, operation) pairs as its base sets them.</summary>
 	public static (short Counter, short Op)[] CounterPairs(MissionDocument document, short action) {
-		var exported = Exported(document, action);
-		return Enumerable.Range(0, Pairs).Select(slot => (exported.CounterRefs[slot], exported.CounterOps[slot])).ToArray();
+		var pairs = Fields(document, action).CounterPairs;
+		return Enumerable.Range(0, Pairs).Select(slot => (pairs[slot * 2], pairs[slot * 2 + 1])).ToArray();
 	}
 
 	/// <summary>How many pairs are filled, from the first to the last that sets either word.</summary>
@@ -324,8 +332,8 @@ public static class ActionEditing {
 		});
 	}
 
-	/// <summary>The message <paramref name="action"/> posts as generated, its id, or <c>-1</c> for none: the stored value less one.</summary>
-	public static short Message(MissionDocument document, short action) => (short)(Exported(document, action).MessageId - 1);
+	/// <summary>The message <paramref name="action"/>'s base posts, its id, or <c>-1</c> for none: the stored value less one.</summary>
+	public static short Message(MissionDocument document, short action) => (short)(Fields(document, action).MessageId - 1);
 
 	/// <summary>Sets the message <paramref name="action"/> posts to id <paramref name="id"/>, stored plus one, or none for <c>-1</c>.</summary>
 	public static MsnEdit SetMessage(MissionDocument document, short action, short id) {
@@ -333,7 +341,7 @@ public static class ActionEditing {
 			throw new ArgumentOutOfRangeException(nameof(id), id, "A message id is 0 or more, or -1 for none.");
 		}
 
-		Exported(document, action);
+		Fields(document, action);
 		return document.Change(() => document.SetField(MsnField.ActionMessage, action, (short)(id + 1)));
 	}
 

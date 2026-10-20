@@ -6,7 +6,8 @@ namespace HercWorks.Core.Data.File.Msn;
 /// A read-only view of a <see cref="MissionFile"/> and its <c>.ENG</c> with every record present, conditional ones included:
 /// one entry per thing a designer sees, keyed as the <c>.MSN</c> keys it. Points, headings, routes, trigger areas, actions,
 /// timers, hercs, flyers, structures and ground vehicles, orders and groups are <see cref="LayoutEntry"/>s by row and GUID;
-/// objectives by their index in row 17; conditions by row-1 GUID; text lines by <c>.ENG</c> id. Refs stay GUIDs, for a reader
+/// row 2's header patches are one <see cref="LayoutHeader"/>; objectives are by their index in row 17; conditions by row-1
+/// GUID; text lines by <c>.ENG</c> id. Each field's supplier is the record an edit of it writes. Refs stay GUIDs, for a reader
 /// to resolve through <see cref="Entry(int, short)"/>.
 ///
 /// <para>It is built in one pass and holds copies, never the file's records. Unlike
@@ -24,6 +25,7 @@ public sealed class MissionLayout {
 	private const int GroupRow = 16;
 	private const int ObjectiveRow = 17;
 	private const int ConditionRow = 1;
+	private const int SettingsRow = 2;
 
 	/// <summary>Row 1's types: a range over a draw or a table, and a variant table (docs/retail/formats/msn-mission-file.md#the-conditions--row-1).</summary>
 	private const short RangeType = 2;
@@ -53,6 +55,9 @@ public sealed class MissionLayout {
 
 	private MissionLayout() {
 	}
+
+	/// <summary>Row 2's header patches as one header, or null when the row has no record.</summary>
+	public LayoutHeader? Header { get; private set; }
 
 	/// <summary>Row 17's objectives, by index; an entry the file ends inside of (<see cref="MissionFile.Objectives"/>) is left out.</summary>
 	public IReadOnlyList<LayoutObjective> Objectives => _objectives;
@@ -107,6 +112,7 @@ public sealed class MissionLayout {
 			layout._rows[row] = entries;
 		}
 
+		layout.AddHeader(file);
 		layout.AddObjectives(file);
 		layout.AddConditions(conditions);
 		layout.AddLines(text);
@@ -239,7 +245,44 @@ public sealed class MissionLayout {
 		return claims;
 	}
 
-	// ---- Rows 17 and 1, and the .ENG ------------------------------------------------------------
+	// ---- Rows 2, 17 and 1, and the .ENG ---------------------------------------------------------
+
+	private void AddHeader(MissionFile file) {
+		var patches = file.SettingsPatches ?? [];
+		if (patches.Length == 0) {
+			return;
+		}
+
+		short condition = patches[0].Data[0];
+		var records = new List<MsnRecordId>();
+		var baseRecords = new List<MsnRecordId>();
+		var variations = new List<LayoutHeaderVariation>();
+		var words = new short[MissionGeneration.HeaderWords];
+		var setBy = new MsnRecordId?[MissionGeneration.HeaderWords];
+		for (int word = 0; word < words.Length; word++) {
+			words[word] = MissionSettingsPatch.Unset(word);
+		}
+
+		for (int i = 0; i < patches.Length; i++) {
+			var id = new MsnRecordId(SettingsRow, i);
+			var data = patches[i].Data;
+			var sets = Enumerable.Range(0, words.Length)
+				.Where(word => data[MissionSettingsPatch.HeaderWordsStart + word] != MissionSettingsPatch.Unset(word)).ToList();
+			records.Add(id);
+			if (data[0] != condition) {
+				variations.Add(new LayoutHeaderVariation(id, data[0], sets));
+				continue;
+			}
+
+			baseRecords.Add(id);
+			foreach (int word in sets) {
+				words[word] = data[MissionSettingsPatch.HeaderWordsStart + word];
+				setBy[word] = id;
+			}
+		}
+
+		Header = new LayoutHeader(records, baseRecords, words, setBy, Presence(condition, null, []), variations);
+	}
 
 	private void AddObjectives(MissionFile file) {
 		var objectives = file.Objectives ?? [];

@@ -266,10 +266,68 @@ public class MissionDocumentTests {
 		Assert.Equal(1, document.Script.TheaterVariant);
 	}
 
-	// An unconditioned row-2 record setting the theater alone, clearing no flag.
-	private static short[] Patch(short theater) {
+	/// <summary>
+	/// Catches a field's supplier taken from the generation, or from every record of the GUID whatever its condition: the
+	/// later record holds at the open and sets the side too, so either writes it and leaves the base unchanged.
+	/// </summary>
+	[Fact]
+	public void BaseFieldEditSkipsALaterRecordOfAnotherCondition() {
+		var document = Open(new SyntheticMsn()
+			.Add(1, Condition(guid: DrawGuid, condition: -1, type: 1, lower: 11, upper: 0, operand: 0))
+			.Add(1, Condition(guid: HoldsAtOpen, condition: DrawGuid, type: 2, lower: 0, upper: 9, operand: 0))
+			.Add(16, Group(1, kind: 2))
+			.Add(16, Group(1, kind: 2, condition: HoldsAtOpen)));
+
+		document.SetField(MsnField.GroupSide, 1, Cybrid);
+
+		Assert.Equal(new short[] { Cybrid, 0 }, document.Mission.Groups!.Select(record => record.Side));
+	}
+
+	/// <summary>
+	/// Catches an edit that still needs the generation to keep the record it writes: a group whose only record fails its
+	/// condition at the open takes a deployment action (<see cref="ActionWiring.SetDeployment"/>) instead of being refused.
+	/// </summary>
+	[Fact]
+	public void EditWritesARecordTheGenerationDrops() {
+		const short flagFiveIsSet = 20;
+		var document = Open(new SyntheticMsn()
+			.Add(1, Condition(guid: flagFiveIsSet, condition: -1, type: 0, lower: 5, upper: 0x119, operand: 1))
+			.Add(10, Action(3, type: 1))
+			.Add(16, Group(1, kind: 2))
+			.Add(16, Group(2, kind: 2, condition: flagFiveIsSet)));
+
+		ActionWiring.SetDeployment(document, 2, 3);
+
+		Assert.Null(document.ExportedIndex(16, 2));
+		Assert.Equal(3, document.Mission.Groups![1].DeploymentActionRef);
+	}
+
+	/// <summary>
+	/// Catches row 2's base built from every record whatever its condition, or the header word's supplier taken from the
+	/// generation: the later record holds at the open and sets the theater too, so either writes it there.
+	/// </summary>
+	[Fact]
+	public void HeaderWordSkipsALaterRecordOfAnotherCondition() {
+		var document = Open(new SyntheticMsn()
+			.Add(1, Condition(guid: DrawGuid, condition: -1, type: 1, lower: 11, upper: 0, operand: 0))
+			.Add(1, Condition(guid: HoldsAtOpen, condition: DrawGuid, type: 2, lower: 0, upper: 9, operand: 0))
+			.Add(2, Patch(theater: 2))
+			.Add(2, Patch(theater: 3, condition: HoldsAtOpen)));
+
+		document.SetHeaderWord(0, 4);
+
+		Assert.Equal(new short[] { 4, 3 },
+			document.Mission.SettingsPatches!.Select(patch => patch.Data[MissionSettingsPatch.HeaderWordsStart]));
+	}
+
+	// A draw below 11, and a range over it from 0 to 9, which every open's draw of 0 holds.
+	private const short DrawGuid = 10;
+	private const short HoldsAtOpen = 11;
+
+	// A row-2 record setting the theater alone, clearing no flag.
+	private static short[] Patch(short theater, short condition = -1) {
 		var words = new short[MissionSettingsPatch.Words];
-		words[0] = -1;
+		words[0] = condition;
 		words[MissionSettingsPatch.HeaderWordsStart] = theater;
 		Array.Fill(words, (short)-1, MissionSettingsPatch.ClearListStart, MissionSettingsPatch.Words - MissionSettingsPatch.ClearListStart);
 		return words;

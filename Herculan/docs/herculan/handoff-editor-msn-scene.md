@@ -8,7 +8,7 @@ The document is already the `.MSN` ([`MissionDocument`](handoff-editor-document.
 
 - a conditional record cannot be seen or selected unless the generation happens to keep it, and a refusal says it is "not shown in the editor";
 - an undo step, the index and every view hold `script.dat` block indices, which an add, a delete or a condition change renumbers;
-- a whole layer exists only to map between the two: `MissionRebuild`, `MissionProvenance` lookups per edit, `ExportedIndex`/`ExportedSlot`/`GuidOf`, `PointFollowers`' index bookkeeping.
+- a whole layer exists only to map between the two: `MissionRebuild`, `ExportedIndex`/`ExportedSlot`/`GuidOf`, `PointFollowers`' index bookkeeping.
 
 ## Decided by the user
 
@@ -19,7 +19,7 @@ The document is already the `.MSN` ([`MissionDocument`](handoff-editor-document.
 
 ## Kept
 
-- `MissionDocument` and every record-writing tool in `HercWorks.Core/Data/File/Msn` (the edits, `MsnEdit` undo and redo, `SavedMissions`). What changes is how an edit picks the record it writes ([step 4](#steps)): today that choice reads the generation's provenance (`MissionDocument.SlotOf`), which knows only exported records and throws for one the generation dropped.
+- `MissionDocument` and every record-writing tool in `HercWorks.Core/Data/File/Msn` (the edits, `MsnEdit` undo and redo, `SavedMissions`). An edit picks the record it writes from the layout ([step 4](#steps)), so it works on any record, one the generation drops included.
 - Everything game-facing still goes through `MissionGenerator`: Save's `ScriptDatLint` check, File > Export script.dat and the handoff the game plays. The game's own loads do not change.
 
 ## What reads the generated `script.dat` today
@@ -36,7 +36,7 @@ The document is already the `.MSN` ([`MissionDocument`](handoff-editor-document.
 | `MissionOverlay` (462) | `MissionIndex` routes, areas, pads, `Mission.Coordinates` for the mission box | the new index; the box from the layout's points |
 | `GroupOverlay` (169) | `MissionIndex` setups, orders, members | the new index |
 | `PointFollowers` (291) | the generated `ScriptDat`'s blocks 1, 3, 4, 7 to 9 and 11 | placement recomputed from the layout plus a drag's override, diffed against what stands |
-| `PointMover` (900) | writes a drag's preview into the generated `ScriptDat`; block indices in every target; `Provenance.Slot` for variant points | targets by GUID; preview through an override; `.MSN` written on commit only |
+| `PointMover` (900) | writes a drag's preview into the generated `ScriptDat`; block indices in every target | targets by GUID; preview through an override; `.MSN` written on commit only |
 | `MissionLint` (50) | `ScriptDatLint` over the generation, findings by block index | the same lint over the generation, each finding mapped back to its `.MSN` record through provenance (the one display use left) |
 | `PropertiesPanel` and views | `MissionIndex`, `Mission`, `ScriptDat` record counts, `Placement` fields, `GeneratedRecords` at every link and choice | the layout and the new index ([survey per view](#views)) |
 | Editors and placers | refuse a record the generation has none for (`GeneratedRecords`); `OrderEditor.Slots` and `RouteEditor`'s waypoint entries read the generated blocks; a placer's join, `SideChanger` and `PresenceEditor`'s targets take a group by block index, and a placer selects its object through `ExportedIndex` | edit any record; take GUIDs; select the object for the GUID they wrote |
@@ -125,7 +125,7 @@ Each step builds at 0 warnings, passes `dotnet test`, leaves the editor usable, 
 3a. **Drop the plain `script.dat`** (done), per [question 3](#3-a-plain-scriptdat): `EditorMission.Source` is never null, and the editor has no read-only mode.
 
 3. **Selections and links by GUID** (done). Every selection, link, picker and editor entry point takes GUIDs; the views still read the generated `Mission`, converting at their edge, and say plainly when the generation has no such record. `MissionRebuild`'s reselection goes.
-4. **Edits choose their record from the layout.** `MissionDocument`'s supplier lookups (`SlotOf`, `ListRecord`, `AreaRecord`, `SuppliedByVariant`, `AlternativeOf`, `SetHeaderWord`'s provenance) read the layout, so an edit works on any record; the `.ENG` line supplier likewise. `handoff-editor-document.md`'s [Which record an edit writes](handoff-editor-document.md#which-record-an-edit-writes) is rewritten to match.
+4. **Edits choose their record from the layout** (done). `MissionDocument`'s supplier lookups (`SlotOf`, `ListRecord`, `AreaRecord`, `SuppliedByVariant`, `AlternativeOf`, `SetHeaderWord`'s provenance) read the layout, so an edit works on any record; the `.ENG` line supplier likewise. `handoff-editor-document.md`'s [Which record an edit writes](handoff-editor-document.md#which-record-an-edit-writes) is rewritten to match.
 5. **The scene from the `.MSN`.** World-only load, objects from the layout placed through `MissionPlacementRules` (`LayoutPresence.Group` counts group 0 as a claimant where `ClaimMembers` skips it; the two agree once the squad is placed apart, per question 5), the new `MissionIndex`, `SceneSync` in place of `MissionRebuild`, picker, both overlays, followers, mover and leveller on the new index, the outliner listing every record with conditional rows marked, the Problems list mapped through provenance. The largest step; its brief may split it into objects and groups first, then routes and areas.
 6. **Views on the layout, in their new design.** Each Properties view is rewritten once, reading the layout and the new index and laid out as [handoff-editor-ux-plan.md](handoff-editor-ux-plan.md)'s phases 2 to 6 describe, one view (or one phase's views) per commit, each judged against the [designer tasks](handoff-editor-ux-plan.md#designer-tasks). With the conditional line in every view; `Placement` no longer read for editor data; `ExportedIndex`, `ExportedSlot`, `GuidOf` and `Generator.Conditions`/`VariantPicks` gone from the editor once the last view moves.
 7. **Docs.** Throughout, each step updates the handoffs it changes; this last pass rewrites [handoff-editor-document.md](handoff-editor-document.md)'s provenance, regeneration and rebuild sections, updates [handoff-editor-viewing.md](handoff-editor-viewing.md) and [handoff-editor.md](handoff-editor.md), and drains this handoff into them.

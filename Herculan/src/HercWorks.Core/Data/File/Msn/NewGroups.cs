@@ -72,14 +72,13 @@ internal static class NewGroups {
 
 	/// <summary>
 	/// Why row-16 group <paramref name="group"/> cannot take another member of <paramref name="memberKind"/>, or null when it
-	/// can: it is <paramref name="notKind"/> unless it is a group of that kind shown in the editor, and
+	/// can: it is <paramref name="notKind"/> unless its base is a group of that kind, and
 	/// <paramref name="full"/> when no member slot up to <paramref name="lastSlot"/> is free in every record of it
 	/// (<see cref="MissionDocument.FreeMemberSlot"/>).
 	/// </summary>
 	internal static string? WhyNoJoin(MissionDocument document, short group, short memberKind, int lastSlot, string notKind,
 			string full) {
-		if (group == -1 || document.ExportedIndex(GroupRow, group) is not { } index
-				|| document.Script.Groups[index].MemberKind != memberKind) {
+		if (document.Layout.Entry<MissionGroup164>(group)?.Fields.MemberKind != memberKind) {
 			return notKind;
 		}
 

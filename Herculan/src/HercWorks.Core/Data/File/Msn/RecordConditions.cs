@@ -122,7 +122,7 @@ public static class RecordConditions {
 
 	/// <summary>
 	/// The row-12 to 16 GUID <paramref name="target"/> addresses now: its own, or the order in its slot; <c>-1</c> for an
-	/// objective, an empty slot or a group this state leaves out.
+	/// objective, an empty slot or a group no record carries.
 	/// </summary>
 	public static short GuidOf(MissionDocument document, PresenceTarget target) =>
 		target.Row == OrderRow
@@ -232,25 +232,18 @@ public static class RecordConditions {
 	}
 
 	/// <summary>
-	/// The conditions of the records that supply some field of <paramref name="target"/>'s generated record and carry a
-	/// condition other than the record that created it (<see cref="SlotProvenance.Suppliers"/>): an edit written to such a field
-	/// holds only in the states that record survives in. Distinct, in no particular order; empty for an objective, which no
-	/// other record overlays, and for a target this state leaves out.
+	/// The conditions of <paramref name="target"/>'s variations that set some field (<see cref="LayoutEntry.Variations"/>):
+	/// an edit writes the base, so where such a condition holds, a field the variation sets keeps the variation's value.
+	/// Distinct, in file order, <see cref="Always"/> included; empty for an objective, which no other record overlays, and for
+	/// a target no record carries.
 	/// </summary>
-	public static IReadOnlyList<short> ConditionedSuppliers(MissionDocument document, PresenceTarget target) {
-		if (target.Row == ObjectiveRow) {
+	public static IReadOnlyList<short> VariationConditions(MissionDocument document, PresenceTarget target) {
+		if (target.Row == ObjectiveRow || document.Layout.Entry(target.Row, GuidOf(document, target)) is not { } entry) {
 			return [];
 		}
 
-		short guid = GuidOf(document, target);
-		if (guid == -1 || document.ExportedIndex(target.Row, guid) is not { } index
-				|| document.Provenance.Slot(target.Row - 5, index) is not { } slot) {
-			return [];
-		}
-
-		short created = ConditionAt(document, slot.Created);
-		return slot.Suppliers.Select(supplier => ConditionAt(document, supplier))
-			.Where(condition => condition != Always && condition != created).Distinct().ToList();
+		return entry.Variations.Where(variation => variation.Words.Count > 0).Select(variation => variation.Condition).Distinct()
+			.ToList();
 	}
 
 	/// <summary>Whether a record of <paramref name="target"/> draws a variant: its records' variant keys are set.</summary>
@@ -291,9 +284,6 @@ public static class RecordConditions {
 			_ => false,
 		};
 	}
-
-	private static short ConditionAt(MissionDocument document, MsnRecordId id) =>
-		document.RecordAt(id) is { } record ? ConditionOf(record) : Always;
 
 	private static short ConditionOf(MapObject record) => record switch {
 		MechRosterEntry144 mech => mech.ConditionRef,

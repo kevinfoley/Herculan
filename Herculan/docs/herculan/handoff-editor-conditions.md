@@ -59,7 +59,7 @@ A GUID can have several records, a base and the overlays or replacements that ap
 
 An order another slot runs is first given its own copy. Where an order is absent its slot holds none and later orders do not move up, so a first order is refused where its group cannot be left without one (`GroupOrders.WhyNeedsFirstOrder`, the rule that refuses removing a last order), and a later one notes that the group stops at the order before it.
 
-While a record carries a condition, the view lists what loses its reference to it where it is absent, one identity link per line, from the delete checks' lists: an object's objectives, actions and orders (`RosterDeletion.Check`) and the groups whose member slots reference it; a group's objectives, actions and orders (`RosterDeletion.GroupNamers`); the group slots running an order. When a record of the GUID other than the one that creates the generated record supplies some fields and carries its own condition (`SlotProvenance.Suppliers`), a note says an edit to those fields holds only while that condition does.
+While a record carries a condition, the view lists what loses its reference to it where it is absent, one identity link per line, from the delete checks' lists: an object's objectives, actions and orders (`RosterDeletion.Check`) and the groups whose member slots reference it; a group's objectives, actions and orders (`RosterDeletion.GroupNamers`); the group slots running an order. When a record of the GUID under another condition than its base's sets some fields (`RecordConditions.VariationConditions`), a note says an edit, which writes the base, does not change those fields while that condition holds ([Which record an edit writes](handoff-editor-document.md#which-record-an-edit-writes)).
 
 No Present when:
 

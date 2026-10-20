@@ -162,10 +162,10 @@ public class TriggerAreaEditingTests {
 
 	/// <summary>
 	/// Catches an area edit written into the first record of a repeated GUID, which the generation's replace throws away for
-	/// the last surviving one, so the edit changes nothing generated.
+	/// the last base record, so the edit changes nothing generated.
 	/// </summary>
 	[Fact]
-	public void SetAreaWritesTheLastSurvivingRecordOfTheGuid() {
+	public void SetAreaWritesTheLastBaseRecordOfTheGuid() {
 		var document = Open(new SyntheticMsn()
 			.Add(6, Point(1, 100))
 			.Add(9, Circle(4, 1))

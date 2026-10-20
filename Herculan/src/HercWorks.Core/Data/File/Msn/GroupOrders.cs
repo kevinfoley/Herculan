@@ -14,7 +14,8 @@ namespace HercWorks.Core.Data.File.Msn;
 /// also names first gives the slot its own copy, every record of the GUID copied under a new GUID
 /// (<see cref="MissionDocument.AppendCopy"/>), so the other slots keep the order as it was.</item>
 /// <item>A field is written through the record that supplies it (<see cref="MissionDocument.SetField"/>): 5 of the 637
-/// retail orders carry a condition. A slot is written in the group's record that supplies it the same way.</item>
+/// retail orders carry a condition. A slot is written in the group's record that supplies it the same way. The slots and
+/// fields an edit starts from are the base's (<see cref="MissionDocument.Layout"/>), whose records it writes.</item>
 /// <item>Removing an order removes its row-15 records only when no slot of any record of any group names it any more.</item>
 /// <item>The last order of a group is kept when DBSIM would fault without one (<see cref="WhyNoRemove"/>): a group with no
 /// heading of its own takes its heading from slot 0's route with no test that the slot holds an order, and a herc group's
@@ -39,27 +40,29 @@ public static class GroupOrders {
 	/// <summary>The highest verb, of seven (docs/retail/simulation/ai-goals.md#when-an-order-is-finished--group_isordercomplete-004239fc).</summary>
 	public const short LastVerb = 6;
 
-	private const int OrderBlock = 10;
-	private const int RouteBlock = 3;
 	private const int GroupBlock = 11;
+	private const int PointRow = 6;
+	private const int HeadingRow = 7;
+	private const int RouteRow = 8;
 	private const int OrderRow = 15;
 	private const int GroupRow = 16;
 	private const short MechRoster = 0;
 	private const short FlyerRoster = 1;
+	private const short BaseRoster = 2;
 
 	/// <summary>
-	/// The row-15 GUID in each of row-16 group <paramref name="group"/>'s ten order slots as generated, <c>-1</c> for an
-	/// empty slot; all <c>-1</c> for a group not shown in the editor.
+	/// The row-15 GUID in each of row-16 group <paramref name="group"/>'s ten order slots as its base names them, <c>-1</c> for
+	/// an empty slot or one naming no order; all <c>-1</c> for a GUID no record carries.
 	/// </summary>
 	public static short[] Orders(MissionDocument document, short group) {
 		var orders = Enumerable.Repeat((short)-1, Slots).ToArray();
-		if (document.ExportedIndex(GroupRow, group) is not { } index) {
+		if (document.Layout.Entry<MissionGroup164>(group) is not { } entry) {
 			return orders;
 		}
 
-		var refs = document.Script.Groups[index].OrderRefs;
+		var refs = entry.Fields.OrderRefs;
 		for (int slot = 0; slot < Slots && slot < refs.Length; slot++) {
-			orders[slot] = refs[slot] >= 0 ? document.GuidOf(OrderBlock, refs[slot]) : (short)-1;
+			orders[slot] = document.Layout.Entry(OrderRow, refs[slot]) != null ? refs[slot] : (short)-1;
 		}
 
 		return orders;
@@ -114,14 +117,15 @@ public static class GroupOrders {
 	/// records whose slot-0 order names no route names a point of its own (8 of them no heading).
 	/// </summary>
 	public static string? WhyNoFirstRoute(MissionDocument document, short group, short route) =>
-		route == -1 && document.ExportedIndex(GroupRow, group) is { } index && document.Script.Groups[index].PositionRef < 0
+		route == -1 && document.Layout.Entry<MissionGroup164>(group) is { } entry
+			&& document.Layout.Entry(PointRow, entry.Fields.PositionRef) == null
 			? "With no point of its own, the group stands on its first order's route, so that order needs one."
 			: null;
 
 	/// <summary>Why no order can be added to <paramref name="group"/>, or null when one can.</summary>
 	public static string? WhyNoAdd(MissionDocument document, short group) {
-		if (document.ExportedIndex(GroupRow, group) == null) {
-			return "The group is not shown in the editor.";
+		if (document.Layout.Entry(GroupRow, group) == null) {
+			return $"The mission has no group {group}.";
 		}
 
 		// A first order has no slot-0 route to take (NewOrder), so it runs none.
@@ -178,14 +182,16 @@ public static class GroupOrders {
 	/// findings, and the editor's rule for a flyer group.
 	/// </summary>
 	public static string? WhyNeedsFirstOrder(MissionDocument document, short group) {
-		if (document.ExportedIndex(GroupRow, group) is not { } index) {
+		if (document.Layout.Entry<MissionGroup164>(group) is not { } entry) {
 			return null;
 		}
 
-		var record = document.Script.Groups[index];
-		bool members = record.MemberRefs.Any(member => member >= 0);
+		var record = entry.Fields;
+		int memberRow = record.MemberKind switch { MechRoster => 12, FlyerRoster => 13, BaseRoster => 14, _ => 0 };
+		bool members = memberRow != 0 && record.MemberRefs.Any(member => document.Layout.Entry(memberRow, member) != null);
 		bool squad = group == document.GuidOf(GroupBlock, 0);
-		return record.HeadingRef < 0 ? "With no heading of its own, the group needs a first order: DBSIM faults loading it."
+		return document.Layout.Entry(HeadingRow, record.HeadingRef) == null
+			? "With no heading of its own, the group needs a first order: DBSIM faults loading it."
 			: record.MemberKind == MechRoster && members && !squad ? "A herc group needs a first order: its hercs' AI faults with none."
 			: record.MemberKind == FlyerRoster && members ? "A flyer group keeps its first order: what its AI does with none is not known."
 			: null;
@@ -263,7 +269,7 @@ public static class GroupOrders {
 			throw new ArgumentOutOfRangeException(nameof(verb), verb, $"A verb is 0 to {LastVerb}.");
 		}
 
-		bool noSubject = slot is >= 0 and < Slots && Exported(document, Orders(document, group)[slot]) is { SubjectKind: -1 };
+		bool noSubject = slot is >= 0 and < Slots && Order(document, Orders(document, group)[slot]) is { SubjectKind: -1 };
 		short squad = document.GuidOf(GroupBlock, 0);
 		if (NeedsSubject(verb) && noSubject && squad == -1) {
 			throw new InvalidOperationException("That order needs a subject, and the mission has no group 0 to give it.");
@@ -303,7 +309,7 @@ public static class GroupOrders {
 			throw new ArgumentOutOfRangeException(nameof(kind), kind, "A subject is none (-1), a group (0), a herc (1) or a structure (3).");
 		}
 
-		if (kind == -1 && slot is >= 0 and < Slots && Exported(document, Orders(document, group)[slot]) is { } current
+		if (kind == -1 && slot is >= 0 and < Slots && Order(document, Orders(document, group)[slot]) is { } current
 				&& NeedsSubject(current.Verb)) {
 			throw new InvalidOperationException("That order needs a subject.");
 		}
@@ -325,13 +331,12 @@ public static class GroupOrders {
 		return document.Change(() => document.SetField(MsnField.OrderAction, Own(document, group, slot), action));
 	}
 
-	// Row-15 GUID <order> as generated, or null when it is not exported.
-	private static Script.ScriptOrder? Exported(MissionDocument document, short order) =>
-		order != -1 && document.ExportedIndex(OrderRow, order) is { } index ? document.Script.Orders[index] : null;
+	// Row-15 GUID <order>'s base fields, or null when no record carries it.
+	private static MissionOrder22? Order(MissionDocument document, short order) => document.Layout.Entry<MissionOrder22>(order)?.Fields;
 
-	// The row-8 GUID of the route row-15 GUID <order> runs as generated, or -1.
+	// The row-8 GUID of the route row-15 GUID <order>'s base runs, or -1 when it names none a record carries.
 	private static short RouteOf(MissionDocument document, short order) =>
-		Exported(document, order) is { RouteRef: >= 0 and var route } ? document.GuidOf(RouteBlock, route) : (short)-1;
+		Order(document, order) is { } fields && document.Layout.Entry(RouteRow, fields.RouteRef) != null ? fields.RouteRef : (short)-1;
 
 	// The order in <group>'s slot <slot> for an edit to write: the slot's own, or, when another slot names it too, a copy
 	// named in the slot instead. Made inside the caller's change; RecordConditions writes an order's condition through it too.

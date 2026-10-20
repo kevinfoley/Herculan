@@ -40,37 +40,29 @@ public static class RosterFit {
 	}
 
 	/// <summary>
-	/// The generated value of <paramref name="field"/> (a type, a weapon or an ammunition type) of roster GUID
-	/// <paramref name="guid"/>'s record, as <c>script.dat</c> holds it. Throws <see cref="InvalidOperationException"/> for a
-	/// GUID no record exports.
+	/// The value of <paramref name="field"/> (a type, a weapon or an ammunition type) in roster GUID <paramref name="guid"/>'s
+	/// base (<see cref="MissionDocument.Layout"/>), the option it shows copied in. Throws
+	/// <see cref="InvalidOperationException"/> for a GUID no record carries.
 	/// </summary>
 	public static short Current(MissionDocument document, MsnField field, short guid) {
-		int index = document.ExportedIndex(field.Row, guid)
-			?? throw new InvalidOperationException($"No record of row {field.Row} with GUID {guid} reaches script.dat.");
-		int word = field.Word;
-		switch (field.Row) {
-			case 13 when word == FlyerRosterEntry102.TypeIndexWord:
-				return document.Script.Flyers[index].TypeIndex;
-			case 14 when word == BaseRosterEntry62.TypeIndexWord:
-				return document.Script.Bases[index].TypeIndex;
-			case 12:
-				var record = document.Script.Mechs[index];
-				if (word == MechRosterEntry144.TypeIndexWord) {
-					return record.TypeIndex;
-				}
-
-				if (word >= MechRosterEntry144.WeaponSecondaryWord) {
-					int mount = word - MechRosterEntry144.WeaponSecondaryWord;
-					return mount < record.WeaponSecondary.Length ? record.WeaponSecondary[mount] : field.Unset;
-				}
-
-				return record.WeaponRefs[word - MechRosterEntry144.WeaponRefsWord];
-			default:
-				throw new ArgumentOutOfRangeException(nameof(field), $"Row {field.Row}'s word {word} is not a type or a fit.");
+		bool typeOrFit = field.Row switch {
+			12 => field.Word == MechRosterEntry144.TypeIndexWord
+				|| field.Word >= MechRosterEntry144.WeaponRefsWord && field.Word < MechRosterEntry144.WeaponRefsWord + Slots
+				|| field.Word >= MechRosterEntry144.WeaponSecondaryWord && field.Word < MechRosterEntry144.WeaponSecondaryWord + Slots,
+			13 => field.Word == FlyerRosterEntry102.TypeIndexWord,
+			14 => field.Word == BaseRosterEntry62.TypeIndexWord,
+			_ => false,
+		};
+		if (!typeOrFit) {
+			throw new ArgumentOutOfRangeException(nameof(field), $"Row {field.Row}'s word {field.Word} is not a type or a fit.");
 		}
+
+		var entry = document.Layout.Entry(field.Row, guid)
+			?? throw new InvalidOperationException($"Row {field.Row} has no record with GUID {guid}.");
+		return field.Get(entry.Fields);
 	}
 
-	/// <summary>Whether any of <paramref name="fields"/> of GUID <paramref name="guid"/> is generated as other than its value.</summary>
+	/// <summary>Whether any of <paramref name="fields"/> of GUID <paramref name="guid"/> is other than its value in the base.</summary>
 	public static bool Differs(MissionDocument document, short guid, IReadOnlyList<(MsnField Field, short Value)> fields) =>
 		fields.Any(field => Current(document, field.Field, guid) != field.Value);
 
@@ -84,7 +76,7 @@ public static class RosterFit {
 			.Select(field => document.AlternativeOf(field, guid)).FirstOrDefault();
 
 	/// <summary>
-	/// Writes each of <paramref name="fields"/> of roster GUID <paramref name="guid"/> whose generated value differs, by the
+	/// Writes each of <paramref name="fields"/> of roster GUID <paramref name="guid"/> whose base value differs, by the
 	/// rules in the class summary, as one <see cref="MissionDocument.Change"/>: in the alternative it draws the field from when
 	/// <paramref name="toAlternative"/>, else in the record that supplies it. <paramref name="takesGuidance"/> says whether a
 	/// weapon id takes a guidance kind, which a launcher's ammunition type falls back to SARH for.
@@ -120,8 +112,8 @@ public static class RosterFit {
 			}
 		});
 
-	// Whether the mount whose ammunition type is at row-12 word <ammoWord> holds, as generated now, a weapon that takes a
-	// guidance kind.
+	// Whether the mount whose ammunition type is at row-12 word <ammoWord> holds, in the base as it stands now, a weapon
+	// that takes a guidance kind.
 	private static bool Launcher(MissionDocument document, short guid, int ammoWord, Func<short, bool> takesGuidance) {
 		int mount = ammoWord - MechRosterEntry144.WeaponSecondaryWord;
 		return takesGuidance(Current(document, MsnField.MechWeapon(mount), guid));

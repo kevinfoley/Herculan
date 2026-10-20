@@ -132,8 +132,7 @@ public static class RouteEditing {
 
 	/// <summary>
 	/// Why no waypoint can be inserted after list entry <paramref name="entry"/> of route GUID <paramref name="route"/>, or
-	/// null when one can: the leg from it to the next entry must exist, and both its points must stand somewhere in the
-	/// generation.
+	/// null when one can: the leg from it to the next entry must exist, and a record must carry each of its points.
 	/// </summary>
 	public static string? WhyNoInsert(MissionDocument document, short route, int entry) {
 		var list = document.Waypoints(route);
@@ -142,7 +141,7 @@ public static class RouteEditing {
 		}
 
 		return Coordinates(document, list[entry]) == null || Coordinates(document, list[entry + 1]) == null
-			? "A waypoint of that leg references a point not shown in the editor."
+			? "A waypoint of that leg references a point not in the mission."
 			: null;
 	}
 
@@ -311,9 +310,7 @@ public static class RouteEditing {
 		return point;
 	}
 
-	// Where row-6 GUID <point> stands in the generation, or null when no record of it is exported.
-	private static (int X, int Y)? Coordinates(MissionDocument document, short point) =>
-		document.ExportedIndex(PointRow, point) is { } index && index < document.Script.Coordinates.Length
-			? (document.Script.Coordinates[index].X, document.Script.Coordinates[index].Y)
-			: null;
+	/// <summary>Where row-6 GUID <paramref name="point"/>'s base stands, or null when no record carries it.</summary>
+	internal static (int X, int Y)? Coordinates(MissionDocument document, short point) =>
+		document.Layout.Entry<MapPoint22>(point)?.Fields is { } fields ? (fields.X, fields.Y) : null;
 }
