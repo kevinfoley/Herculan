@@ -170,7 +170,7 @@ public static class MissionTextEditing {
 
 	/// <summary>
 	/// The index of the <c>.ENG</c> record whose text the generated <c>mission.str</c> line of <paramref name="id"/> holds,
-	/// or null when no record of the id survives in this preview.
+	/// or null when no record of the id survives in the generation.
 	/// </summary>
 	public static int? SupplierOf(MissionDocument document, short id) {
 		var strings = document.Text?.Strings ?? [];
@@ -184,7 +184,7 @@ public static class MissionTextEditing {
 	}
 
 	/// <summary>
-	/// The text <paramref name="id"/>'s line shows in this preview, without its NUL and the one trailing newline
+	/// The text <paramref name="id"/>'s line shows in the generation, without its NUL and the one trailing newline
 	/// the simulator's load strips (docs/retail/formats/msn-mission-file.md#the-eng-string-table); null when it has none.
 	/// </summary>
 	public static string? LineText(MissionDocument document, short id) =>
@@ -204,7 +204,7 @@ public static class MissionTextEditing {
 		}
 
 		if (SupplierOf(document, ids[part]) is not { } supplier) {
-			throw new InvalidOperationException("That line is not in the mission's text in this preview.");
+			throw new InvalidOperationException("That line is not in the mission's text shown in the editor.");
 		}
 
 		int lines = Lines(document);

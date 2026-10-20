@@ -11,15 +11,13 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// A variant table's view, in the Properties panel's view of its condition: its key and bound, each alternative with its
-/// chance, a summary and Remove, Add alternative, what is left over, which alternative the editor shows, the records drawing
-/// from it, the other tables of its key, and Delete; and, in the view of a herc, flyer, structure or ground vehicle outside
-/// the squad, which table it is drawn from (docs/herculan/handoff-editor-conditions.md#variants). Each
-/// choice is an edit (<see cref="VariantEditor"/>) or, for the alternative shown, the preview's
-/// (<see cref="MissionPreview.RequestShown"/>). How a record draws is docs/retail/formats/msn-mission-file.md#variants.
+/// chance, a summary and Remove, Add alternative, what is left over, the records drawing from it, the other tables of its
+/// key, and Delete; and, in the view of a herc, flyer, structure or ground vehicle outside the squad, which table it is
+/// drawn from (docs/herculan/handoff-editor-conditions.md#variants). Each choice is an edit (<see cref="VariantEditor"/>).
+/// How a record draws is docs/retail/formats/msn-mission-file.md#variants.
 /// </summary>
 internal sealed class VariantView {
 	private readonly VariantEditor _editor;
-	private readonly MissionPreview _preview;
 	private readonly ConditionEditor _conditions;
 	private readonly PanelLinks _links;
 	private readonly Func<MapObject, string> _summary;
@@ -29,10 +27,8 @@ internal sealed class VariantView {
 	private int _draft;
 
 	/// <param name="summary">What an alternative is, as its kind's view titles it (<see cref="Summaries"/>).</param>
-	public VariantView(VariantEditor editor, MissionPreview preview, ConditionEditor conditions, PanelLinks links,
-			Func<MapObject, string> summary) {
+	public VariantView(VariantEditor editor, ConditionEditor conditions, PanelLinks links, Func<MapObject, string> summary) {
 		_editor = editor;
-		_preview = preview;
 		_conditions = conditions;
 		_links = links;
 		_summary = summary;
@@ -79,14 +75,12 @@ internal sealed class VariantView {
 		}
 
 		if (!ConditionEditing.Outcome(source, guid).Survived) {
-			EditorText.Emphasis("Left out in this preview: nothing draws from it there.");
+			EditorText.Emphasis("Not shown in the editor: nothing draws from it.");
 		}
 
 		EditorText.Reason(why);
 		ImGui.Separator();
 		DrawAlternatives(source, table, why);
-		ImGui.Separator();
-		DrawShown(source, table, why);
 		ImGui.Separator();
 		DrawDrawers(source, table);
 		DrawSameKey(source, table);
@@ -98,8 +92,8 @@ internal sealed class VariantView {
 
 	/// <summary>
 	/// Draws range <paramref name="range"/>'s view, after the condition view's title, as the alternative it chooses: which of
-	/// its table's, with a link to the table, its chance and what it is, then the records that drew it in this
-	/// preview. Its chance, and removing it, are the table's view's. Answers false, drawing nothing, when the range is over no
+	/// its table's, with a link to the table, its chance and what it is, then the records shown in the editor that drew it.
+	/// Its chance, and removing it, are the table's view's. Answers false, drawing nothing, when the range is over no
 	/// table or chooses no alternative its table reads.
 	/// </summary>
 	public bool DrawRange(short range) {
@@ -128,18 +122,18 @@ internal sealed class VariantView {
 		return true;
 	}
 
-	// The records that drew <alternative> in the state shown, one identity link per line.
+	// The records shown in the editor that drew <alternative>, one identity link per line.
 	private void DrawDrawnNow(MissionDocument source, VariantTable table, VariantAlternative alternative) {
 		var drawing = source.Generator.VariantPicks.Where(pick => pick.Value.Source == alternative.Record)
 			.Select(pick => source.Provenance.ExportedSlot(pick.Key) is { } slot ? _conditions.Identity(pick.Key.Row, slot.Index) : null)
 			.OfType<ConditionUse>().DistinctBy(use => use.Label).ToList();
 		if (drawing.Count == 0) {
 			string noun = table.Row switch { 8 => "route", 12 => "herc", 13 => "flyer", 14 => "structure", _ => "record" };
-			EditorText.Note($"No {noun} draws it in this preview.");
+			EditorText.Note($"No {noun} is shown with this alternative.");
 			return;
 		}
 
-		ImGui.Text("Drawn now by:");
+		ImGui.Text("Shown with this alternative:");
 		for (int i = 0; i < drawing.Count; i++) {
 			ImGui.PushID(i);
 			if (drawing[i].Target is { } target) {
@@ -154,7 +148,7 @@ internal sealed class VariantView {
 
 	/// <summary>
 	/// The Drawn from of a herc, flyer, structure or ground vehicle outside the squad: None, a table of its kind's
-	/// alternatives, or New table from it, with a link to the table and what it draws in this preview.
+	/// alternatives, or New table from it, with a link to the table and the alternative the editor shows.
 	/// </summary>
 	public void DrawDrawnFrom(SceneObject placed) {
 		if (_editor.Source is not { } source || _editor.RecordOf(placed) is not var (row, guid)) {
@@ -203,19 +197,19 @@ internal sealed class VariantView {
 		ImGui.PopID();
 	}
 
-	// What record <key> drew from table <table> in the state shown.
+	// What record <key> drew from table <table> in the editor.
 	private void DrawPick(MissionDocument source, MsnRecordId key, short table) {
 		var read = VariantEditing.Table(source, table);
 		short? range = VariantEditing.RangeDrawn(source, key);
 		int at = read?.Alternatives.ToList().FindIndex(alternative => alternative.Range == range) ?? -1;
 		if (read != null && at >= 0) {
-			ImGui.TextWrapped($"In this preview it draws alternative {at + 1}: {_summary(source.RecordAt(read.Alternatives[at].Record)!)}.");
+			ImGui.TextWrapped($"The editor shows alternative {at + 1}: {_summary(source.RecordAt(read.Alternatives[at].Record)!)}.");
 		} else if (!ConditionEditing.Outcome(source, table).Survived) {
-			EditorText.Note("In this preview it draws nothing: the table is left out there, so it keeps its own "
-				+ "fields, and the point, heading and actions those reference are not looked up.");
+			EditorText.Note("The table is not shown in the editor, so it keeps its own fields there, and the point, heading "
+				+ "and actions those reference are not looked up.");
 		} else {
-			EditorText.Note("In this preview its draw takes no alternative, so it keeps its own fields, and the "
-				+ "point, heading and actions those reference are not looked up.");
+			EditorText.Note("Its draw in the editor takes no alternative, so it keeps its own fields, and the point, heading "
+				+ "and actions those reference are not looked up.");
 		}
 	}
 
@@ -277,34 +271,7 @@ internal sealed class VariantView {
 		}
 	}
 
-	// Which alternative the editor shows in place of the table's draw.
-	private void DrawShown(MissionDocument source, VariantTable table, string? why) {
-		short? shown = _preview.ShownAlternative(table.Guid);
-		int at = table.Alternatives.ToList().FindIndex(alternative => alternative.Range == shown);
-		ImGui.Text("Shown in the editor:");
-		ImGui.SetNextItemWidth(-1f);
-		ImGui.BeginDisabled(why != null);
-		if (ImGui.BeginCombo("##shown", at >= 0 ? AlternativeName(source, table, at) : "As drawn")) {
-			if (ImGui.Selectable("As drawn", at < 0) && at >= 0) {
-				_preview.RequestShown(table.Guid, null);
-			}
-
-			for (int i = 0; i < table.Alternatives.Count; i++) {
-				if (ImGui.Selectable(AlternativeName(source, table, i), i == at) && i != at) {
-					_preview.RequestShown(table.Guid, table.Alternatives[i].Range);
-				}
-			}
-
-			ImGui.EndCombo();
-		}
-
-		ImGui.EndDisabled();
-		EditorText.Note("Every record drawing from it shows that alternative, here only: it is not saved, and Simulate a "
-			+ "mission load and Back to first options in the Mission view's Preview let it go.");
-		EditorText.Reason(_preview.Failure);
-	}
-
-	// The records drawing from the table's key, one identity link per line with what each drew in the state shown.
+	// The records drawing from the table's key, one identity link per line with what each drew in the editor.
 	private void DrawDrawers(MissionDocument source, VariantTable table) {
 		ImGui.Text("Drawn by:");
 		var drawers = VariantEditing.Drawers(source, table.Key);
@@ -334,7 +301,7 @@ internal sealed class VariantView {
 		if (drawers.Count == 0) {
 			EditorText.Note("Nothing.");
 		} else if (leftOut > 0) {
-			ImGui.TextWrapped($"{leftOut} more, not in this preview");
+			ImGui.TextWrapped($"{leftOut} more, not shown in the editor");
 		}
 	}
 
@@ -370,18 +337,14 @@ internal sealed class VariantView {
 		}
 	}
 
-	// The range of the alternative the editor shows for <table>: the one chosen to show, else the one the first record drawing
-	// from it drew in the state shown, else the first.
-	private short ShownRange(MissionDocument source, VariantTable table) {
+	// The range of the alternative the editor shows for <table>: the one the first record drawing from it drew in the
+	// editor, else the first.
+	private static short ShownRange(MissionDocument source, VariantTable table) {
 		var ranges = table.Alternatives.Select(alternative => alternative.Range).ToHashSet();
-		return _preview.ShownAlternative(table.Guid)
-			?? VariantEditing.Drawers(source, table.Key).Select(drawer => VariantEditing.RangeDrawn(source, drawer))
-				.FirstOrDefault(range => range is { } drawn && ranges.Contains(drawn))
+		return VariantEditing.Drawers(source, table.Key).Select(drawer => VariantEditing.RangeDrawn(source, drawer))
+			.FirstOrDefault(range => range is { } drawn && ranges.Contains(drawn))
 			?? table.Alternatives[0].Range;
 	}
-
-	private string AlternativeName(MissionDocument source, VariantTable table, int at) =>
-		$"Alternative {at + 1}: {_summary(source.RecordAt(table.Alternatives[at].Record)!)}";
 
 	private static string TableName(MissionDocument source, short table) =>
 		VariantEditing.Table(source, table) is { } read

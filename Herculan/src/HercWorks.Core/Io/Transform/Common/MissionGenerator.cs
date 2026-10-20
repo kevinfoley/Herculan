@@ -83,18 +83,14 @@ public sealed class MissionGenerator {
 	/// <summary>Each surviving row-1 record's index in the file, beside <see cref="_conditions"/>.</summary>
 	private readonly List<int> _conditionIndex = new();
 
-	/// <summary>The alternatives the caller forces, by type-3 GUID: the GUID of the range whose alternative each table picks.</summary>
-	private readonly IReadOnlyDictionary<short, short> _forced;
-
 	/// <summary>The pick of the draw under way, for the record that asked (<see cref="VariantPicks"/>).</summary>
 	private (int? Table, int? Range) _lastPick;
 
 	private readonly Dictionary<MsnRecordId, VariantPick> _picks = new();
 
-	private MissionGenerator(short[] flags, Func<short, int> roll, IReadOnlyDictionary<short, short>? forced = null) {
+	private MissionGenerator(short[] flags, Func<short, int> roll) {
 		_flags = flags;
 		_roll = roll;
-		_forced = forced ?? new Dictionary<short, short>();
 	}
 
 	/// <summary>
@@ -103,12 +99,6 @@ public sealed class MissionGenerator {
 	/// before the write; <see cref="WriteScriptDat"/> puts a literal 1 in place of the third.
 	/// </summary>
 	public short[] Header { get; } = new short[10];
-
-	/// <summary>
-	/// The campaign flag array the load was handed, as the load left it: row 2's clear list zeroed in it. A launch writes
-	/// this into <c>mission.var</c>.
-	/// </summary>
-	public IReadOnlyList<short> Flags => _flags;
 
 	/// <summary>Which <c>.MSN</c> and <c>.ENG</c> records supplied each exported record and <c>mission.str</c> line.</summary>
 	public MissionProvenance Provenance { get; } = new();
@@ -134,13 +124,8 @@ public sealed class MissionGenerator {
 	/// resets it, so what one load leaves there the next load clears again — the caller keeps it.
 	/// <paramref name="roll"/> is VSHELL's <c>ShellRandom_Below</c> (<c>004659ec</c>), a draw in <c>[0, n)</c>.
 	/// <paramref name="text"/> is the <c>.ENG</c> beside the mission, or null for none.
-	///
-	/// <para><paramref name="forced"/> is the editor's preview, nothing the original has: for a type-3 GUID, the GUID of a
-	/// range over it whose alternative the table picks whatever it draws. The table still draws, so every later draw is the
-	/// one it would be (<see cref="PickVariant"/>). The game's own loads pass none.</para>
 	/// </summary>
-	public static MissionGenerator Load(byte[] msn, byte[]? text, short[] flags, short[] clearList, Func<short, int> roll,
-			IReadOnlyDictionary<short, short>? forced = null) {
+	public static MissionGenerator Load(byte[] msn, byte[]? text, short[] flags, short[] clearList, Func<short, int> roll) {
 		if (flags.Length < CampaignFlagCount) {
 			throw new ArgumentException($"The campaign flag array holds {CampaignFlagCount} entries.", nameof(flags));
 		}
@@ -149,7 +134,7 @@ public sealed class MissionGenerator {
 			throw new ArgumentException($"The clear list holds {ClearListLength} entries.", nameof(clearList));
 		}
 
-		var generator = new MissionGenerator(flags, roll, forced);
+		var generator = new MissionGenerator(flags, roll);
 		var reader = new Cursor(msn);
 		if (reader.Short() != Revision) {
 			throw new InvalidDataException("Not a revision 5 mission file.");
@@ -334,8 +319,7 @@ public sealed class MissionGenerator {
 	/// <c>Msn_PickVariant</c> (<c>00415fc3</c>), which a record's variant field (<c>0x04</c>) goes through: the type-3 record
 	/// whose <c>0x06</c> matches is rolled against its <c>0x0a</c>, the roll stored at its <c>0x0c</c>, and
 	/// the type-2 child whose range holds the roll is the answer — its row-1 index. It rolls again on
-	/// every call, and returns <c>-1</c> when no type-3 record's child claims the roll. A table <see cref="_forced"/> names
-	/// takes the forced range once it has drawn, its draw stored as that range's low end.
+	/// every call, and returns <c>-1</c> when no type-3 record's child claims the roll.
 	/// </summary>
 	private int PickVariant(short variant) {
 		const int type = MissionCondition14.TypeWord;
@@ -350,11 +334,7 @@ public sealed class MissionGenerator {
 			}
 
 			record[draw] = (short)_roll(record[MissionCondition14.ComparisonOperandWord]);
-			int picked = _forced.TryGetValue(record[MapObject.GUIDWord], out short forced) ? Child(record, forced) : -1;
-			if (picked >= 0) {
-				record[draw] = _conditions[picked][lower];
-			}
-
+			int picked = -1;
 			for (int child = 0; picked < 0 && child < _conditions.Count; child++) {
 				var candidate = _conditions[child];
 				if (candidate[type] == 2 && candidate[MissionCondition14.ConditionRefWord] == record[MapObject.GUIDWord]
@@ -371,11 +351,6 @@ public sealed class MissionGenerator {
 
 		return -1;
 	}
-
-	/// <summary>The surviving range of GUID <paramref name="range"/> over type-3 record <paramref name="table"/>, or <c>-1</c>.</summary>
-	private int Child(short[] table, short range) =>
-		_conditions.FindIndex(candidate => candidate[MissionCondition14.TypeWord] == 2 && candidate[MapObject.GUIDWord] == range
-			&& candidate[MissionCondition14.ConditionRefWord] == table[MapObject.GUIDWord]);
 
 	/// <summary>
 	/// <c>Msn_VariantSourceRow6</c> (<c>00416120</c>) and its six siblings: the variant picked, then the first of the row's first

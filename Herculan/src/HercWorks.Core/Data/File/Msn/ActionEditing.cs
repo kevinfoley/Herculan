@@ -91,7 +91,7 @@ public static class ActionEditing {
 	/// </summary>
 	public static MsnEdit Create(MissionDocument document, short area, out short guid) {
 		if (area != -1 && document.ExportedIndex(9, area) == null) {
-			throw new InvalidOperationException("That trigger area is not in this preview.");
+			throw new InvalidOperationException("That trigger area is not shown in the editor.");
 		}
 
 		var areas = Unset(8);
@@ -109,7 +109,7 @@ public static class ActionEditing {
 	public static ScriptAction Exported(MissionDocument document, short action) =>
 		action != -1 && document.ExportedIndex(ActionRow, action) is { } index
 			? document.Script.Actions[index]
-			: throw new InvalidOperationException($"Action {action} is not in this preview.");
+			: throw new InvalidOperationException($"Action {action} is not shown in the editor.");
 
 	/// <summary>The row-9 GUIDs in <paramref name="action"/>'s first <see cref="AreaSlots"/> slots as generated, <c>-1</c> for an empty one.</summary>
 	public static short[] Areas(MissionDocument document, short action) =>
@@ -124,7 +124,7 @@ public static class ActionEditing {
 		var areas = Areas(document, action);
 		return FilledAreas(areas) >= AreaSlots ? $"All {AreaSlots} area slots are filled."
 			: area != -1 && areas.Contains(area) ? "It tests that area already."
-			: area != -1 && document.ExportedIndex(9, area) == null ? "That trigger area is not in this preview."
+			: area != -1 && document.ExportedIndex(9, area) == null ? "That trigger area is not shown in the editor."
 			: null;
 	}
 
@@ -146,7 +146,7 @@ public static class ActionEditing {
 		}
 
 		if (area == -1 || document.ExportedIndex(9, area) == null) {
-			throw new InvalidOperationException("That trigger area is not in this preview.");
+			throw new InvalidOperationException("That trigger area is not shown in the editor.");
 		}
 
 		if (areas.Where((_, at) => at != slot).Contains(area)) {
@@ -230,7 +230,7 @@ public static class ActionEditing {
 		}
 
 		if (target == -1 || document.ExportedIndex(block + 5, target) == null) {
-			throw new InvalidOperationException("That target is not in this preview.");
+			throw new InvalidOperationException("That target is not shown in the editor.");
 		}
 
 		return document.Change(() => document.SetField(MsnField.ActionTarget, action, target));

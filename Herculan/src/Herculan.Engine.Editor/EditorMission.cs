@@ -11,15 +11,14 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// One opened mission and everything the editor builds over it on the CPU: the scene, the cross-reference
-/// index, the overlays, the picker, the two side panels and the move, add, delete, fit, type, route, trigger area, action, timer, condition, presence, variant, order, objective, text, theater and preview tools, all sharing one
+/// index, the overlays, the picker, the two side panels and the move, add, delete, fit, type, route, trigger area, action, timer, condition, presence, variant, order, objective, text and theater tools, all sharing one
 /// selection. An edit that adds or removes records builds the CPU state again in place (<see cref="Rebuild"/>), and a
 /// change of theater or time of day dresses the scene in its world again in place (<see cref="Theater"/>). Opening another
 /// mission builds a new one of these rather than resetting this one; <see cref="MissionDrawables"/> is its GPU half.
 /// </summary>
 internal sealed class EditorMission {
 	private EditorMission(GameContent content, string name, ScriptDat document, MissionDocument? source, MissionScene scene,
-			MissionIndex index, TerrainMaterialTable materials, MissionSquad? squad, Func<GameContent>? shellContent,
-			MissionLaunchMode? mode, string handoffDirectory) {
+			MissionIndex index, TerrainMaterialTable materials, MissionSquad? squad, Func<GameContent>? shellContent) {
 		Name = name;
 		Document = document;
 		Source = source;
@@ -34,14 +33,12 @@ internal sealed class EditorMission {
 		Mover = new PointMover(document, source, scene, index, Picker, Overlay, materials);
 		Gizmo = new MoveGizmo(Selection, Mover);
 		Rebuild = new MissionRebuild(content, document, source, scene, index, Overlay, Picker, Mover, Outliner, Selection, squad);
-		Mover.FullRebuild = Rebuild;
 		Placer = new StructurePlacer(document, source, scene, index, Mover, Rebuild, Selection);
 		Sides = new SideChanger(document, source, index, Mover);
 		Deleter = new ObjectDeleter(document, source, index, Mover, Rebuild);
 		Fitter = new MachineFitter(document, source, Mover, Rebuild, shellContent);
 		Squad = new SquadEditor(document, source, index, Mover, Rebuild, Fitter, Deleter);
 		Theater = new TheaterChanger(document, source, scene, index, Mover, Rebuild);
-		Preview = new MissionPreview(source, Rebuild, Mover, Theater, mode, handoffDirectory);
 		Routes = new RouteEditor(source, index, Mover, Rebuild, Selection, Deleter);
 		Placing = new RoutePlacing(Routes, index, drape);
 		Areas = new AreaEditor(source, index, Mover, Rebuild, Selection, Deleter);
@@ -69,8 +66,8 @@ internal sealed class EditorMission {
 		Properties = new PropertiesPanel(index, document, Selection, Mover, Sides, Deleter,
 			new SquadMachinePanel(Fitter, Squad, squad), new RosterFitView(Fitter, Types, Variants, new UnitTypeCatalog(content)),
 			new MissionView(() => Name, () => document.ZoneIndex, Theater, TheaterNames.Labels(content),
-				new MissionPreviewView(Preview, new PanelLinks(index, Selection)), new MissionTextView(Texts)),
-			Routes, Placing, Areas, AreaPlacing, Orders, Objectives, Actions, Timers, Conditions, Presence, Variants, Preview,
+				new MissionTextView(Texts)),
+			Routes, Placing, Areas, AreaPlacing, Orders, Objectives, Actions, Timers, Conditions, Presence, Variants,
 			VariantView.Summaries(content), SimStrings.Load(content));
 	}
 
@@ -177,9 +174,6 @@ internal sealed class EditorMission {
 	/// <summary>Changes the mission's theater and time of day in <see cref="Source"/>, reloading the scene's world, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public TheaterChanger Theater { get; }
 
-	/// <summary>Sets the campaign flags and draws <see cref="Source"/> is previewed with, outside the undo history.</summary>
-	public MissionPreview Preview { get; }
-
 	/// <summary>Creates, edits and deletes routes in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public RouteEditor Routes { get; }
 
@@ -205,12 +199,10 @@ internal sealed class EditorMission {
 	/// the simulator's settings are when they are not beside the script — see <see cref="MissionScene.Load"/>.
 	/// <paramref name="squad"/> is which Hercs the mission's squad pilots, which builds the handoff's <c>player.mec</c> again after
 	/// an edit, and <paramref name="shellContent"/> VSHELL's mount, which holds the shell's chassis and weapon tables. Throws
-	/// <see cref="MissingHandoffFileException"/> as <see cref="MissionLoader.Load"/> does. <paramref name="mode"/> is how the
-	/// mission was opened, which the preview opens it by again (<see cref="MissionPreview"/>).
+	/// <see cref="MissingHandoffFileException"/> as <see cref="MissionLoader.Load"/> does.
 	/// </summary>
 	public static EditorMission Open(GameContent content, string scriptPath, string name, string? dataDirectory = null,
-			MissionDocument? source = null, MissionSquad? squad = null, Func<GameContent>? shellContent = null,
-			MissionLaunchMode? mode = null) {
+			MissionDocument? source = null, MissionSquad? squad = null, Func<GameContent>? shellContent = null) {
 		ScriptDat document;
 		if (source != null) {
 			File.WriteAllBytes(scriptPath, source.ScriptBytes);
@@ -229,6 +221,6 @@ internal sealed class EditorMission {
 		var index = new MissionIndex(scene, document, SquadMessages.LoadCommand(content, scene.Mission.Header.TrainingMissionNumber));
 		// The scene's own copy is not kept; a base pad's tile is sized by its material when the ground is levelled again.
 		return new EditorMission(content, name, document, source, scene, index, TerrainMaterialTable.Load(content), squad,
-			shellContent, mode, Path.GetDirectoryName(Path.GetFullPath(scriptPath)) ?? ".");
+			shellContent);
 	}
 }

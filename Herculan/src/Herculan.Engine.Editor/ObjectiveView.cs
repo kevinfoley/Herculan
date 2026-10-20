@@ -220,7 +220,7 @@ internal sealed class ObjectiveView {
 
 		for (int line = 0; line < lines.Count; line++) {
 			if (lines[line] is not { } text) {
-				EditorText.Note($"Line {line + 1}: no text in this preview.");
+				EditorText.Note($"Line {line + 1}: no text shown in the editor.");
 				continue;
 			}
 

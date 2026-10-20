@@ -180,7 +180,7 @@ public static class ObjectiveEditing {
 			return "Only a group, a herc or a structure can be an objective's subject.";
 		}
 
-		return subject == -1 || document.ExportedIndex(row.Value, subject) == null ? "It is not in this preview." : null;
+		return subject == -1 || document.ExportedIndex(row.Value, subject) == null ? "It is not shown in the editor." : null;
 	}
 
 	/// <summary>Sets row-17 record <paramref name="record"/>'s subject: a group, herc or structure GUID of <paramref name="kind"/>.</summary>

@@ -27,7 +27,7 @@ public static class ActionWiring {
 
 	/// <summary>Why row-16 group <paramref name="group"/>'s deployment action cannot be set, or null when it can.</summary>
 	public static string? WhyNoDeployment(MissionDocument document, short group) =>
-		document.ExportedIndex(GroupRow, group) == null ? "The group is not in this preview."
+		document.ExportedIndex(GroupRow, group) == null ? "The group is not shown in the editor."
 			: group == document.GuidOf(SquadBlock, 0) ? "The player's squad is in the mission from the start."
 			: null;
 
@@ -48,7 +48,7 @@ public static class ActionWiring {
 		}
 
 		if (document.ExportedIndex(row, guid) == null) {
-			return "It is not in this preview.";
+			return "It is not shown in the editor.";
 		}
 
 		short squad = document.GuidOf(SquadBlock, 0);
@@ -86,7 +86,7 @@ public static class ActionWiring {
 
 	internal static void CheckAction(MissionDocument document, short action) {
 		if (action != -1 && document.ExportedIndex(ActionRow, action) == null) {
-			throw new InvalidOperationException("That action is not in this preview.");
+			throw new InvalidOperationException("That action is not shown in the editor.");
 		}
 	}
 }

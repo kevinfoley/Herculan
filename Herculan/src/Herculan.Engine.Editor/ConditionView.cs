@@ -5,9 +5,9 @@ using ImGuiNET;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The Properties panel's view of a condition, a row-1 record: its kind; a flag test's flag, operator and value, a draw's bound
-/// and the number it drew, or a range's draw and ends; what it requires; whether it holds in this preview; what
-/// references it, as links; and Delete, refused while anything does. Each a field or choice that changes it
+/// The Properties panel's view of a condition, a row-1 record: its kind; a flag test's flag, operator and value, a draw's
+/// bound, or a range's draw and ends; what it requires; what references it, as links; and Delete, refused while anything
+/// does. Each a field or choice that changes it
 /// (<see cref="ConditionEditor"/>). A variant table is its table's view (<see cref="VariantView"/>), and a range over one is
 /// shown as the alternative it chooses (<see cref="VariantView.DrawRange"/>), its chance set in the table's view. What each
 /// kind tests is docs/retail/formats/msn-mission-file.md#the-conditions--row-1.
@@ -65,16 +65,13 @@ internal sealed class ConditionView {
 				DrawRequirement(source, guid, record, locked);
 				break;
 			case ConditionEditing.Draw:
-				DrawDraw(source, guid, record, locked);
+				DrawDraw(guid, record, locked);
 				DrawRequirement(source, guid, record, locked);
 				break;
 			case ConditionEditing.Range:
 				DrawRange(source, guid, record, locked);
 				break;
 		}
-
-		ImGui.Spacing();
-		_links.InPreview(_editor.Holds(guid));
 
 		DrawUses(source, guid, record, locked);
 		ImGui.PopID();
@@ -99,7 +96,7 @@ internal sealed class ConditionView {
 			_editor.RequestFlag(guid, (short)typedFlag);
 		}
 
-		if (flag is >= 0 and < ConditionEditing.Flags && MissionPreview.Label(flag) is { } label) {
+		if (flag is >= 0 and < ConditionEditing.Flags && CampaignVariableLabels.Label(flag) is { } label) {
 			EditorText.Note(label);
 		}
 
@@ -125,19 +122,13 @@ internal sealed class ConditionView {
 		EditorText.Note($"Holds while {ConditionEditing.Describe(_editor.Source!.Mission, record)}.");
 	}
 
-	// The bound, the number drawn in the state shown, and New range over this draw.
-	private void DrawDraw(MissionDocument source, short guid, MissionCondition14 record, bool locked) {
+	// The bound and New range over this draw.
+	private void DrawDraw(short guid, MissionCondition14 record, bool locked) {
 		if (IntField("Below", "bound", record.FlagIndexOrRangeLower, 1, ConditionEditing.MaxBound, locked) is { } bound) {
 			_editor.RequestBound(guid, (short)bound);
 		}
 
 		EditorText.Note($"It draws a number from 0 to {record.FlagIndexOrRangeLower - 1}.");
-		if (ConditionEditing.Outcome(source, guid).Draw is { } drawn) {
-			ImGui.Text($"Drawn in this preview: {drawn}");
-		} else {
-			EditorText.Note("Not drawn in this preview: what it requires fails.");
-		}
-
 		EditorText.Note("Adding or deleting a draw, or changing whether it is made, changes what every later draw and "
 			+ "variant pick comes out as.");
 		ImGui.BeginDisabled(locked);
@@ -280,7 +271,7 @@ internal sealed class ConditionView {
 
 		if (uses.LeftOut.Count > 0) {
 			int count = uses.LeftOut.Sum(kind => kind.Count);
-			ImGui.TextWrapped($"{count} more, not in this preview: "
+			ImGui.TextWrapped($"{count} more, not shown in the editor: "
 				+ string.Join(", ", uses.LeftOut.Select(kind => $"{kind.Count} {kind.Kind}")));
 		}
 	}

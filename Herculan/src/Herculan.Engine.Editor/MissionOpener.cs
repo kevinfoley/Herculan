@@ -14,10 +14,9 @@ namespace Herculan.Engine.Editor;
 /// the planned menu for playing user-made missions honours (docs/herculan/handoff-editor-viewing.md#theater-and-time-of-day). A campaign mission is
 /// shown as the launch loads it, on its stage's theater by its own time of day.
 ///
-/// <para>Every draw of an open is its lowest outcome (<see cref="SimRandom.Lowest"/>), so a mission opens as the same
-/// preview every time, each variant table on its first option (docs/herculan/handoff-editor-conditions.md#the-preview): the
-/// editor's choice, where the game's load draws from <see cref="ShellTrainingLaunch.StartupRandom"/>, which
-/// <see cref="OpenAgain"/> does when asked to simulate a load.</para>
+/// <para>Every draw of an open is its lowest outcome (<see cref="SimRandom.Lowest"/>), so a mission opens the same way every
+/// time, each variant table on its first option (docs/herculan/handoff-editor-conditions.md#what-the-editor-shows): the
+/// editor's choice, where the game's load draws from <see cref="ShellTrainingLaunch.StartupRandom"/>.</para>
 ///
 /// <para>The launch is unchanged and its handoff on disk keeps the launch's header until
 /// <see cref="EditorMission.Open"/> writes the document's generation over it.</para>
@@ -57,30 +56,6 @@ internal static class MissionOpener {
 	}
 
 	/// <summary>
-	/// How <see cref="Open"/> opens <paramref name="name"/>, which <see cref="OpenAgain"/> repeats: at its career position,
-	/// or as <c>INSTANT ACTION</c> when <c>gam\career.dat</c> does not list it, or when <paramref name="unlisted"/>, as
-	/// <see cref="OpenNew"/> opens a new mission.
-	/// </summary>
-	public static MissionLaunchMode ModeOf(Func<GameContent> shellContent, string installRoot, string name, bool unlisted) =>
-		new(shellContent, installRoot, Path.GetFileNameWithoutExtension(name),
-			unlisted ? null : MissionFileLaunch.PositionOf(shellContent(), name));
-
-	/// <summary>
-	/// The mission <paramref name="msn"/> and its text <paramref name="text"/> opened again as <paramref name="mode"/> opened
-	/// it, through <see cref="MissionFileLaunch.OpenAt"/>, its handoff written into <paramref name="directory"/>: drawing as
-	/// the game's load does when <paramref name="simulate"/>, else the lowest outcomes, as <see cref="Open"/> does; the
-	/// document then showing the mission's own theater and time of day, as <see cref="Open"/>'s does.
-	/// </summary>
-	public static string? OpenAgain(MissionLaunchMode mode, byte[] msn, byte[]? text, string directory, bool simulate,
-			out MissionDocument? document, out MissionSquad? squad, out string? failure) {
-		string? script = MissionFileLaunch.OpenAt(mode.ShellContent(), mode.InstallRoot, mode.Name, mode.Position, msn, text,
-			directory, simulate ? ShellTrainingLaunch.StartupRandom() : SimRandom.Lowest(), out document, out squad,
-			out failure);
-		document = OwnWorld(document, squad);
-		return script;
-	}
-
-	/// <summary>
 	/// <paramref name="opened"/>, generated again writing nothing over the theater and time of day when it was loaded in
 	/// training mode, which <paramref name="squad"/> says: a squad that is not the career's.
 	/// </summary>
@@ -89,10 +64,3 @@ internal static class MissionOpener {
 			? new MissionDocument(opened.Mission, opened.Text, opened.Generation.WithoutOverwrite(TheaterWord, VariantWord))
 			: opened;
 }
-
-/// <summary>
-/// How the editor opened a mission (<see cref="MissionOpener.ModeOf"/>): VSHELL's mount, the install, the mission's name
-/// without its extension, and the career position it was loaded at, or null for a mission loaded as <c>INSTANT ACTION</c>.
-/// </summary>
-internal sealed record MissionLaunchMode(Func<GameContent> ShellContent, string InstallRoot, string Name,
-	(int Stage, int Mission)? Position);

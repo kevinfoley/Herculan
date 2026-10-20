@@ -54,7 +54,7 @@ internal sealed class SideChanger {
 		}
 
 		Apply(group);
-		_mover.Record(new SideEdit(this, group, change, _source!.Generation));
+		_mover.Record(new SideEdit(this, group, change));
 	}
 
 	// Reads the generated side as the loader does, 1 Cybrid and anything else human, into the index and the members.
@@ -66,8 +66,8 @@ internal sealed class SideChanger {
 		}
 	}
 
-	// The group by its block-11 index, which only the generation the change was made under is sure to give again.
-	private sealed record SideEdit(SideChanger Changer, int Group, MsnEdit Change, MissionGeneration MadeUnder) : IIndexedEdit {
+	// The group by its block-11 index, which the .MSN as the step found or left it generates again (IEditorEdit).
+	private sealed record SideEdit(SideChanger Changer, int Group, MsnEdit Change) : IEditorEdit {
 		public void Undo() {
 			Changer._source!.Undo(Change);
 			Changer.Apply(Group);

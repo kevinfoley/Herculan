@@ -542,7 +542,7 @@ internal sealed class ActionView {
 		}
 
 		if (blockers.Elsewhere > 0) {
-			ImGui.TextWrapped($"{blockers.Elsewhere} more, not in this preview");
+			ImGui.TextWrapped($"{blockers.Elsewhere} more, not shown in the editor");
 		}
 
 		ImGui.PopID();

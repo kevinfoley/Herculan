@@ -6,37 +6,15 @@ using static Herculan.Engine.Tests.SyntheticMsn;
 namespace Herculan.Engine.Tests;
 
 /// <summary>
-/// <see cref="VariantEditing"/> and the generator's forced picks over small synthetic missions: a forced pick still draws, a
-/// new table keeps the record as generated, chances become contiguous ranges, a table is deleted only once nothing draws
-/// from it, and an alternative is read before the records drawing it.
+/// <see cref="VariantEditing"/> over small synthetic missions: a new table keeps the record as generated, chances become
+/// contiguous ranges, a table is deleted only once nothing draws from it, and an alternative is read before the records
+/// drawing it.
 /// </summary>
 public class VariantEditingTests {
 	private const short Hercs = 0;
 	private const short Flyers = 1;
 	private const short Structures = 2;
 	private const short Squad = 9;
-
-	/// <summary>
-	/// Catches a forced pick that skips the table's draw: the second herc's table would then take the draw meant for the
-	/// first, and land on its other alternative.
-	/// </summary>
-	[Fact]
-	public void AForcedPickStillDrawsSoLaterDrawsAreUnchanged() {
-		var document = Open(Mission()
-			.Add(1, Table(0, key: 1, bound: 100)).Add(1, Range(1, 0, 0, 49)).Add(1, Range(2, 0, 50, 99))
-			.Add(1, Table(3, key: 2, bound: 100)).Add(1, Range(4, 3, 0, 49)).Add(1, Range(5, 3, 50, 99))
-			.Add(12, Mech(-1, type: 1, condition: 1)).Add(12, Mech(-1, type: 2, condition: 2))
-			.Add(12, Mech(-1, type: 3, condition: 4)).Add(12, Mech(-1, type: 4, condition: 5))
-			.Add(12, Mech(10, type: -1, variant: 1)).Add(12, Mech(11, type: -1, variant: 2))
-			.Add(16, Group(20, Hercs, position: -1, condition: -1, 10, 11)), Sequence(10, 70));
-		Assert.Equal(1, TypeOf(document, 10));
-		Assert.Equal(4, TypeOf(document, 11));
-
-		document.SetGeneration(document.Generation.WithPick(0, 2));
-
-		Assert.Equal(2, TypeOf(document, 10));
-		Assert.Equal(4, TypeOf(document, 11));
-	}
 
 	/// <summary>
 	/// Catches a new table whose one alternative copies the wrong span, or what the record carries itself where it draws an
@@ -91,8 +69,9 @@ public class VariantEditingTests {
 		Assert.Equal([70, 20, 0], VariantEditing.Percents(table));
 		Assert.Equal(10, table.Leftover);
 		foreach (var (draw, type) in new (short, short)[] { (0, 1), (69, 1), (70, 2), (89, 2), (90, 15), (99, 15) }) {
-			document.SetGeneration(new MissionGeneration(document.Generation.Flags, document.Generation.Header, Sequence(draw)));
-			Assert.Equal(type, TypeOf(document, 10));
+			var drawn = new MissionDocument(document.Mission, document.Text,
+				new MissionGeneration(document.Generation.Flags, document.Generation.Header, Sequence(draw)));
+			Assert.Equal(type, TypeOf(drawn, 10));
 		}
 	}
 

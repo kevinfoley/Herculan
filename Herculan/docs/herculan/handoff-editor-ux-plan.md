@@ -10,7 +10,6 @@ One view per thing a designer authors, the way one friendly dialog in Dynamix's 
 
 | Term | Means | Replaces |
 |---|---|---|
-| **preview** | the one version of the mission the editor shows | "the campaign state shown", "this state of the mission" (R3, R5) |
 | **campaign variable** | one of the 1000 numbers carried from mission to mission; the game writes a few after every mission, missions write the rest | "flag" in conditions and the campaign list, "counter" in counter writes (R1) |
 | **random choice**, **option** | a variant table and its alternatives, and a random roll and its outcome ranges: one roll, several options, each with a chance | "variant table", "alternative", "draw", "range", "draws below" (R19) |
 | **trigger** | an action: who enters which areas, then what happens | "action", "type", "verb" (R6) |
@@ -22,20 +21,18 @@ Numbering a designer sees starts at 1: orders, waypoints, weapon mounts, squadma
 
 Each phase is one commit, tested by the user in the app before it is committed.
 
-### 1. Preview without rolling (done)
+### 1. No rolling (done)
 
-- The editor never rolls on its own. Opening a mission draws every random value at its lowest outcome, so it opens with every random choice on its first option, the same on every open ([The preview](handoff-editor-conditions.md#the-preview)).
-- The Mission view's **Preview** leads with "The editor shows one version of this mission. In play, campaign variables come from earlier missions and random choices are picked at every load.", lists the campaign variables the mission tests, each by its label first ("Last mission's outcome (variable 0)") with "Tested by" links, and offers **Simulate a mission load**, which rolls everything as the game would, and **Back to first options**, with the count of random choices showing an option picked in their own view beside them. Variables 4 to 6, random numbers every load picks, practice and campaign alike, are not listed.
-- A condition and a Present when say "In this preview" or, emphasised, "Not in this preview", with a "Change the preview" link to the Mission view. Every "this state of the mission" and "campaign state shown" string, Core's refusal reasons included, says "this preview".
+- The editor never rolls: an open draws every random value at its lowest, so every random choice shows its first option, the same on every open ([What the editor shows](handoff-editor-conditions.md#what-the-editor-shows)).
+- A record that version leaves out is "not shown in the editor", in views and refusal reasons alike.
 - Covers R3, R5.
 
 ### 2. Random choice view
 
 - One view for a variant table and its alternatives, and for a random roll and the ranges over it (R19), reached from its own outliner list and from any of its conditions, which open it with that option highlighted.
 - Options with their chances as percents, one decimal allowed (12.5%), whatever internal roll size keeps them exact; what each option is, with what tells it apart (a herc option's weapons when the chassis is the same); "Nothing" with what is left over.
-- **Used by**: who picks from it, in game terms (your HERC, the squadmate's HERC, Cybrid hercs (group 5)), and the option each shows in the preview. A record with no object says why (left behind on practice missions).
+- **Used by**: who picks from it, in game terms (your HERC, the squadmate's HERC, Cybrid hercs (group 5)), and the option each shows in the editor. A record with no object says why (left behind on practice missions).
 - A warning when the choice has no effect in play (a squad loadout on a practice mission the practice screen's HERC replaces).
-- **Preview with**: first option, or any option, for the editor only.
 - **Advanced**: key, roll size, condition numbers and ranges.
 - A herc's or route's view that draws from a choice says "One option of <choice>; changes apply to: that option wherever it is picked (N hercs) / only this herc" (R24, R33).
 - The Conditions list moves under Advanced, without its create buttons (R20).

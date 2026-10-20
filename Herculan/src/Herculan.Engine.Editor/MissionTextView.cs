@@ -69,7 +69,7 @@ internal sealed class MissionTextView {
 	private void DrawLine(MissionTextList list, int slot, string? text, int before, int after, bool locked) {
 		ImGui.BeginDisabled(locked);
 		if (text == null) {
-			EditorText.Note("No text in this preview.");
+			EditorText.Note("No text shown in the editor.");
 		} else if (_lines.Draw("##line", $"{list}.{slot}", text) is { } typed) {
 			_editor.RequestText(list, slot, typed);
 		}

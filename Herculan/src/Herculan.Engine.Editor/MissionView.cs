@@ -4,27 +4,24 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// The Properties panel's view of the mission as a whole: its name and zone, then the theater it is played on and the time
-/// of day, changed through <see cref="TheaterChanger"/>, then the preview it is shown in (<see cref="MissionPreviewView"/>),
-/// then its text (<see cref="MissionTextView"/>).
+/// of day, changed through <see cref="TheaterChanger"/>, then its text (<see cref="MissionTextView"/>).
 /// </summary>
 internal sealed class MissionView {
 	private readonly Func<string> _name;
 	private readonly Func<int> _zone;
 	private readonly TheaterChanger _theaters;
 	private readonly IReadOnlyList<string> _labels;
-	private readonly MissionPreviewView _preview;
 	private readonly MissionTextView _text;
 
 	/// <param name="name">What the window title calls the mission, which a Save As changes.</param>
 	/// <param name="zone">The zone the mission is played in, as generated.</param>
 	/// <param name="labels">Each theater's label, in theater order (<see cref="TheaterNames.Labels"/>).</param>
 	public MissionView(Func<string> name, Func<int> zone, TheaterChanger theaters, IReadOnlyList<string> labels,
-			MissionPreviewView preview, MissionTextView text) {
+			MissionTextView text) {
 		_name = name;
 		_zone = zone;
 		_theaters = theaters;
 		_labels = labels;
-		_preview = preview;
 		_text = text;
 	}
 
@@ -74,7 +71,6 @@ internal sealed class MissionView {
 			EditorText.Note(failure);
 		}
 
-		_preview.Draw();
 		_text.Draw();
 	}
 

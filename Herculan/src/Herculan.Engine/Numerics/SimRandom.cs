@@ -78,7 +78,7 @@ public sealed class SimRandom {
 
 	/// <summary>
 	/// <b>Not a ported mechanic.</b> A generator whose table is all zeros, so every step is 0 and every draw its lowest
-	/// outcome: the mission editor opens a mission with it, to preview the same version of the mission on every open.
+	/// outcome: the mission editor opens a mission with it, so it shows the same version of the mission on every open.
 	/// </summary>
 	public static SimRandom Lowest() {
 		var random = new SimRandom();

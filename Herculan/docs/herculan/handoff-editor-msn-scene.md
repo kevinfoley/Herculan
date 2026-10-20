@@ -6,15 +6,15 @@ The plan for making the editor show and select a mission straight from its `.MSN
 
 The document is already the `.MSN` ([`MissionDocument`](handoff-editor-document.md#holding-the-msn-as-the-document)): every tool writes `.MSN` records, and Save, Undo and Redo work on them. What the editor *shows* is not: the scene, the outliner, picking, the overlays, the selection and most Properties views are built from the `script.dat` that `MissionGenerator` writes after each edit. That generator is the game's load. It drops every record whose condition fails, merges a GUID's records into one, applies one random option per variant table and renumbers everything. So:
 
-- a conditional record cannot be seen or selected unless the generation happens to keep it, and a refusal says "not in this preview";
+- a conditional record cannot be seen or selected unless the generation happens to keep it, and a refusal says it is "not shown in the editor";
 - a selection, a link and an undo step hold `script.dat` block indices, which an add, a delete or a condition change renumbers;
-- a whole layer exists only to map between the two: `MissionRebuild`, `MissionProvenance` lookups per edit, `ExportedIndex`/`ExportedSlot`/`GuidOf`, `IIndexedEdit`, the preview, `PointFollowers`' index bookkeeping.
+- a whole layer exists only to map between the two: `MissionRebuild`, `MissionProvenance` lookups per edit, `ExportedIndex`/`ExportedSlot`/`GuidOf`, `PointFollowers`' index bookkeeping.
 
 ## Decided by the user
 
 - The display works on the `.MSN`, not on a generated `script.dat`.
 - Every record is always visible, conditional ones included. A conditional record's view says clearly that it is conditional and when it is present.
-- The preview goes, as part of this rewrite (step 1): `MissionPreview`, `MissionPreviewView`, `PanelLinks.InPreview` and its three lines, every "this preview" string (Core's refusal reasons too), VariantView's "Shown in the editor", `MissionGeneration.WithPick`/`Picks` and `MissionGenerator`'s forced picks, `MissionOpener.OpenAgain`/`ModeOf`/`MissionLaunchMode`, `IIndexedEdit`/`MadeUnder`/`PointMover.FullRebuild`, the outliner's dimming of failing conditions, `MissionPreviewTests`.
+- No preview: the editor shows one version of the mission, the open's, with nothing to change which flags or options it shows ([What the editor shows](handoff-editor-conditions.md#what-the-editor-shows)).
 - UI words: "campaign variable", never "flag"; squad, squadmate; no editor-only names; no cross-mission lookups. Latin-1 only; notes through `EditorText`.
 
 ## Kept
@@ -51,7 +51,7 @@ What each view reads that must change (line counts in parentheses):
 - `PropertiesPanel` (610): `GroupMembers`, `SideOf`, `SetupOf`, `ObjectivesOf*`, `IsWaiting`, `DeploymentActionOf`, `KindOf`, `BasePads`; `Mission.Actions` for the action pickers and arrival text; `Placement` fields including `EngagementActionRef`/`DefeatActionRef` (block-5 indices).
 - `ActionView` (570): `Mission.Actions`/`ActionTimers`, `LinksOf`, `Areas`, `ObjectAt`; `ScriptDat` roster lengths for the target picker and `Actions[].TextRefs`.
 - `TimerView` (162), `TriggerAreaView` (202), `RouteView` (207), `ObjectiveView` (328), `OrderSlotsView` (246): block-index entry points over `Mission`/`MissionIndex`, `ScriptDat` lengths for pickers.
-- `ConditionView` (323), `VariantView` (424), `PresentWhenView` (167): already `.MSN`-based, but read the generation's outcomes and picks, and the preview.
+- `ConditionView` (323), `VariantView` (424), `PresentWhenView` (167): already `.MSN`-based, but read the generation's outcomes and picks.
 - `RosterFitView` (122), `MachineFitView` (130), `SquadMachinePanel` (196): block-7 slots through `MachineFitter`.
 - `PanelLinks` (105), `MissionText` (215), `ActionChoice` (34): build links and labels from block indices.
 - `MissionTextView` (100), `MissionView` (83), `PointFields` (78): `.MSN` already, or nothing index-based.
@@ -96,7 +96,7 @@ One GUID, several records: a base and overlays (rows 12 to 16) or replacements (
 
 A herc, flyer or structure with a variant key takes its type, fit, point and heading from one option of a table, picked at each load (48% of herc, 30% of flyer and 0.4% of structure records).
 
-**Decided:** the scene shows the **first option** in row-1 order, where the record then stands, as a mission opens today, the same every time. The view says it is picked at random from N options and lists them with what tells them apart (UX plan phase 2). No control changes which option the scene shows, since "Shown in the editor" goes with the preview.
+**Decided:** the scene shows the **first option** in row-1 order, where the record then stands, as a mission opens today, the same every time. The view says it is picked at random from N options and lists them with what tells them apart (UX plan phase 2). No control changes which option the scene shows.
 
 ### 3. A plain `script.dat`
 
@@ -120,13 +120,13 @@ Today the squad's objects come from the handoff's `player.mec`: group 0's hercs 
 
 Each step builds at 0 warnings, passes `dotnet test`, leaves the editor usable, and is one commit after the user's in-app check.
 
-1. **Remove the preview.** Everything listed under [Decided by the user](#decided-by-the-user), after checking each for other uses (the survey found `WithPick` in `VariantEditingTests` and 19 "this preview" reasons in Core: `ActionEditing`, `ActionWiring`, `FlyerGroups`, `GroupOrders`, `HercGroups`, `MissionTextEditing`, `NewGroups`, `ObjectiveEditing`, `RouteEditing`, `TimerEditing`, `TriggerAreaEditing`, `VehicleGroups`). Reasons that refuse a record the generation dropped say so without the word, until step 5 makes them unreachable. The editor shows the open's generation, first options, as before; `SideChanger`, `TheaterChanger` and `PointMover` steps lose `IIndexedEdit`.
+1. **Remove the preview** (done). Reasons that refuse a record the generation dropped say it is "not shown in the editor", until step 5 makes them unreachable.
 2. **Core layout and shared rules.** `MissionLayout` with presence and suppliers by the answers to questions 1 and 2; the merge span table shared with `MissionGenerator`; the placement helper out of `MissionLoader`; the world-only scene load; `HercWorks.Query repeats` extended to rows 10 to 16 with conditions. No editor change. Tests only where a named edit would break them (a layout that merges a variation into the base; a keyed herc placed at its own point instead of its option's).
 3. **Selections and links by GUID.** Every selection, link, picker and editor entry point takes GUIDs; the views still read the generated `Mission`, converting at their edge, and say plainly when the generation has no such record. `MissionRebuild`'s reselection goes.
 4. **Edits choose their record from the layout.** `MissionDocument`'s supplier lookups (`SlotOf`, `ListRecord`, `AreaRecord`, `SuppliedByVariant`, `AlternativeOf`, `SetHeaderWord`'s provenance) read the layout, so an edit works on any record; the `.ENG` line supplier likewise. `handoff-editor-document.md`'s [Which record an edit writes](handoff-editor-document.md#which-record-an-edit-writes) is rewritten to match.
 5. **The scene from the `.MSN`.** World-only load, objects from the layout, the new `MissionIndex`, `SceneSync` in place of `MissionRebuild`, picker, both overlays, followers, mover and leveller on the new index, the outliner listing every record with conditional rows marked, the Problems list mapped through provenance. Plain `script.dat` per question 3. The largest step; its brief may split it into objects and groups first, then routes and areas.
 6. **Views on the layout.** Every Properties view reads the layout and the new index; the conditional line in every view; `Placement` no longer read for editor data; `ExportedIndex`, `ExportedSlot`, `GuidOf` and `Generator.Conditions`/`VariantPicks` gone from the editor.
-7. **Docs.** Throughout, each step updates the handoffs it changes; this last pass rewrites [handoff-editor-document.md](handoff-editor-document.md)'s provenance, regeneration and rebuild sections and drops A plain `script.dat`, removes The preview from [handoff-editor-conditions.md](handoff-editor-conditions.md), updates [handoff-editor-viewing.md](handoff-editor-viewing.md) and [handoff-editor.md](handoff-editor.md), rewrites [handoff-editor-ux-plan.md](handoff-editor-ux-plan.md)'s phase 1 (the preview, done, now removed) and phase 2's "Preview with", and drains this handoff into them.
+7. **Docs.** Throughout, each step updates the handoffs it changes; this last pass rewrites [handoff-editor-document.md](handoff-editor-document.md)'s provenance, regeneration and rebuild sections and drops A plain `script.dat`, updates [handoff-editor-viewing.md](handoff-editor-viewing.md) and [handoff-editor.md](handoff-editor.md), and drains this handoff into them.
 
 Class sizes stay under about 1,500 lines; `PointMover` and `EditorHost` shrink (no `script.dat` writes, no read-only path).
 

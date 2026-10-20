@@ -731,7 +731,7 @@ public sealed class EditorHost {
 		_ => mission.Placer.WhyNotJoin(group)
 	};
 
-	// The delete, the machine fit, the squadmate add or remove, the theater or time of day, the preview, the route edit, the trigger-area
+	// The delete, the machine fit, the squadmate add or remove, the theater or time of day, the route edit, the trigger-area
 	// edit, the order edit, the action or timer edit, the objective or text edit, the finished route or area and the Undo or Redo the frame's panels,
 	// menus and keys asked for; none while a drag is under way.
 	private void RunEditRequests(EditorMission mission) {
@@ -750,7 +750,6 @@ public sealed class EditorHost {
 		mission.Types.RunRequest();
 		mission.Squad.RunRequest();
 		mission.Theater.RunRequest();
-		mission.Preview.RunRequest();
 		mission.Routes.RunRequest();
 		mission.Areas.RunRequest();
 		mission.Orders.RunRequest();
@@ -820,8 +819,7 @@ public sealed class EditorHost {
 			}
 
 			opened = EditorMission.Open(_launch.SimulatorContent, generated, Path.GetFileNameWithoutExtension(name), _installData,
-				source, squad, _launch.ShellContent,
-				MissionOpener.ModeOf(_launch.ShellContent, _launch.InstallRoot, name, unlisted: false));
+				source, squad, _launch.ShellContent);
 		} catch (Exception ex) when (ex is MissingHandoffFileException or InvalidDataException or IOException
 				or UnauthorizedAccessException) {
 			_volBrowser.Failure = ex.Message;
@@ -856,7 +854,7 @@ public sealed class EditorHost {
 			}
 
 			opened = EditorMission.Open(_launch.SimulatorContent, generated, request.Name, _installData, source, squad,
-				_launch.ShellContent, MissionOpener.ModeOf(_launch.ShellContent, _launch.InstallRoot, request.Name, unlisted: true));
+				_launch.ShellContent);
 		} catch (Exception ex) when (ex is MissingHandoffFileException or InvalidDataException or IOException
 				or UnauthorizedAccessException) {
 			Fail(ex.Message);

@@ -7,7 +7,7 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// What keeps an action from being deleted (<see cref="ActionEditor.BlockersOf"/>), by block index: the timers that start on
 /// it or fire it, the groups waiting on it, the objects firing it when engaged or defeated, as roster kind and slot, and the
-/// order slots it ends. <see cref="Elsewhere"/> counts the referencing records this preview does not export.
+/// order slots it ends. <see cref="Elsewhere"/> counts the referencing records not shown in the editor.
 /// </summary>
 internal sealed record ActionDeleteBlockers(string? Fixed, IReadOnlyList<int> Timers, IReadOnlyList<int> Groups,
 		IReadOnlyList<(MissionUnitKind Kind, int Slot)> Objects, IReadOnlyList<OrderSlot> Orders, int Elsewhere) {

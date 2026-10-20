@@ -21,7 +21,7 @@ File > New mission (`NewMissionDialog`) asks for:
 
 ## Theater and time of day
 
-The outliner's first entry, Mission, shows `MissionView`: the name and zone, a Theater choice named as the New mission dialog names them, Day or Night, then the preview ([The preview](handoff-editor-conditions.md#the-preview)) and the text ([The mission's text](handoff-editor-mission-logic.md#the-missions-text)).
+The outliner's first entry, Mission, shows `MissionView`: the name and zone, a Theater choice named as the New mission dialog names them, Day or Night, then the text ([The mission's text](handoff-editor-mission-logic.md#the-missions-text)).
 
 What retail plays ([`../retail/formats/script-dat.md`](../retail/formats/script-dat.md#header-format)): the theater (header offset 0) picks `wld\world<theater * 2 + variant>`, the terrain texture bank, palette, sky and fog; the variant (offset 18) is day or night. Every retail load writes over the theater, a campaign's from its stage and a practice or `INSTANT ACTION` one as 1, and a practice or `INSTANT ACTION` load writes the practice screen's time of day over the variant; only a campaign mission plays its `.MSN`'s own day or night.
 

@@ -18,9 +18,8 @@ internal sealed record PresenceLosers(DeleteNamers Names, IReadOnlyList<int> Mem
 /// Sets a record's Present when, which campaign states it is in, each set one step of <see cref="PointMover"/>'s undo
 /// history, through <see cref="RecordConditions"/>'s record edits on the mission's <c>.MSN</c>
 /// (docs/herculan/handoff-editor-conditions.md#present-when). Every set builds the editor's state again
-/// (<see cref="MissionRebuild"/>), as it conditions the record in or out; when the record is absent in this
-/// preview afterwards, the condition it now carries is selected in its place, whose Used by counts it among the records the
-/// state leaves out.
+/// (<see cref="MissionRebuild"/>), as it conditions the record in or out; when the record is not shown in the editor
+/// afterwards, the condition it now carries is selected in its place, whose Used by counts it among the records not shown.
 ///
 /// <para>A herc, flyer, structure or ground vehicle, a group, an order slot and an objective have a target
 /// (<see cref="ObjectTarget"/> and the rest); the player's squad, group 0, its orders and its machines, has none, as the

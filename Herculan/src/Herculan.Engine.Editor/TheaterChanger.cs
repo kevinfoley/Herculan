@@ -105,23 +105,6 @@ internal sealed class TheaterChanger {
 		return null;
 	}
 
-	/// <summary>
-	/// Dresses the scene in the world the generated header picks when it is not <paramref name="theater"/> and
-	/// <paramref name="variant"/>, the world it is dressed in: for a change of the preview, which can condition
-	/// a row-2 record in or out (<see cref="MissionPreview"/>). <see cref="Failure"/> says why it could not.
-	/// </summary>
-	public void Follow(int theater, int variant) {
-		if (_document.TheaterIndex == theater && _document.TheaterVariant == variant) {
-			return;
-		}
-
-		try {
-			Reload();
-		} catch (Exception ex) when (ex is FileNotFoundException or InvalidDataException or ArgumentOutOfRangeException) {
-			Failure = ex.Message;
-		}
-	}
-
 	// Dresses the scene in the world the generated header picks: every object in it, and every object an edit has built
 	// that an undo or redo can put back.
 	private void Reload() {
@@ -130,8 +113,7 @@ internal sealed class TheaterChanger {
 		WorldChanged?.Invoke();
 	}
 
-	// Holds no block index, and a row-2 record conditions nothing else in or out, so it is undone and redone as it is in
-	// any preview (IIndexedEdit).
+	// Puts row 2 back as the step found or left it, and dresses the scene in the world the header then picks.
 	private sealed record WorldEdit(TheaterChanger Changer, MsnEdit Change) : IEditorEdit {
 		public void Undo() {
 			Changer._source!.Undo(Change);

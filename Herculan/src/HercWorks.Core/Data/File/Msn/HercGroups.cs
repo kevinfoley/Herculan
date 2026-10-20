@@ -154,7 +154,7 @@ public static class HercGroups {
 
 	/// <summary>
 	/// Why a herc cannot join row-16 group <paramref name="group"/> of <paramref name="document"/>, or null when it can: a
-	/// herc group in this preview, not the player's squad, with a member slot up to
+	/// herc group shown in the editor, not the player's squad, with a member slot up to
 	/// <see cref="LastJoinSlot"/> that no record of it fills.
 	/// </summary>
 	public static string? WhyNoJoin(MissionDocument document, short group) {

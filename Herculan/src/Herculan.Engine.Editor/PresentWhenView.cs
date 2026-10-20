@@ -5,8 +5,8 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// A record's Present when, drawn by the views of the records retail conditions (an object, a group, an order slot and an
-/// objective): Always or a flag test or range over a draw, with a link to it; New flag test and New draw range; whether
-/// it holds in this preview; each record's condition when the GUID's records differ; and notes on what the
+/// objective): Always or a flag test or range over a draw, with a link to it; New flag test and New draw range; each
+/// record's condition when the GUID's records differ; and notes on what the
 /// condition changes: what loses its reference to the record where it is absent, the variant picks a variant-keyed record
 /// moves, and the fields another record present only under its own condition supplies
 /// (docs/herculan/handoff-editor-conditions.md#present-when). Each choice is a set
@@ -100,7 +100,7 @@ internal sealed class PresentWhenView {
 		ImGui.PopID();
 	}
 
-	// The condition chosen: a link, and whether it holds in this preview.
+	// The condition chosen, as a link.
 	private void DrawChosen(MissionDocument source, short condition) {
 		if (ConditionEditing.IndexOf(source, condition) == null) {
 			EditorText.Note($"Condition {condition} is not in the file, so it is never present.");
@@ -108,7 +108,6 @@ internal sealed class PresentWhenView {
 		}
 
 		_links.Link($"Condition {condition}", new ConditionSelection(condition));
-		_links.InPreview(ConditionEditing.Outcome(source, condition).Survived);
 	}
 
 	// Each record's condition, one short line each, when they differ, and why none is set here.

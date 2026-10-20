@@ -60,9 +60,6 @@ internal sealed class ConditionEditor {
 	/// <summary>Why <paramref name="guid"/> cannot be edited, or null when it can.</summary>
 	public string? WhyFixed(short guid) => WhyReadOnly ?? ConditionEditing.WhyFixed(_source!, guid);
 
-	/// <summary>Whether <paramref name="guid"/> holds in this preview.</summary>
-	public bool Holds(short guid) => _source != null && ConditionEditing.Outcome(_source, guid).Survived;
-
 	/// <summary>Asks for a new flag test, which is then selected.</summary>
 	public void RequestCreateFlagTest() => Create((MissionDocument source, out short guid) => ConditionEditing.CreateFlagTest(source, out guid));
 

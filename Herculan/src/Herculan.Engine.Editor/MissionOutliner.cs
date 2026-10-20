@@ -21,9 +21,6 @@ internal sealed class MissionOutliner {
 	private static readonly Vector4 FindingLinkColor = new(0.55f, 0.78f, 1f, 1f);
 	private static readonly Vector4 SelectedFindingColor = new(1f, 0.85f, 0.1f, 1f);
 
-	// A condition that fails in this preview, dimmed.
-	private static readonly Vector4 FailingConditionColor = new(0.55f, 0.55f, 0.55f, 1f);
-
 	private readonly MissionIndex _index;
 	private MissionLint _lint;
 	private readonly SelectionState _selection;
@@ -174,8 +171,8 @@ internal sealed class MissionOutliner {
 	}
 
 	/// <summary>
-	/// Every row-1 condition, in file order, as the conditions the other records' condition fields reference, dimmed when it
-	/// fails in this preview; none for a plain <c>script.dat</c>, which has no row 1.
+	/// Every row-1 condition, in file order, as the conditions the other records' condition fields reference; none for a
+	/// plain <c>script.dat</c>, which has no row 1.
 	/// </summary>
 	private void DrawConditions() {
 		if (Conditions is not { Listed: { } records, Source: { } source } conditions
@@ -197,16 +194,8 @@ internal sealed class MissionOutliner {
 		for (int i = 0; i < records.Count; i++) {
 			var record = records[i];
 			var selection = new ConditionSelection(record.GUID);
-			bool holds = conditions.Holds(record.GUID);
-			if (!holds) {
-				ImGui.PushStyleColor(ImGuiCol.Text, FailingConditionColor);
-			}
-
 			Choose(selection, WrappedSelectable($"Condition {record.GUID}: {ConditionEditing.Describe(source.Mission, record)}",
 				$"condition{i}", _selection.Is(selection)));
-			if (!holds) {
-				ImGui.PopStyleColor();
-			}
 		}
 	}
 

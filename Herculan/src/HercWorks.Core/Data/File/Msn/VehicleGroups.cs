@@ -91,7 +91,7 @@ public static class VehicleGroups {
 	}
 
 	/// <summary>
-	/// Whether row-16 group <paramref name="group"/> is a convoy in this preview: a structure group whose first
+	/// Whether row-16 group <paramref name="group"/> is a convoy as the editor shows it: a structure group whose first
 	/// member is of a type <paramref name="isGroundVehicle"/> answers true for.
 	/// </summary>
 	public static bool IsConvoy(MissionDocument document, short group, Func<int, bool> isGroundVehicle) {

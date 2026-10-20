@@ -32,21 +32,6 @@ internal sealed class PanelLinks {
 		ImGui.PopStyleColor();
 	}
 
-	/// <summary>
-	/// "In this preview", or "Not in this preview" emphasised, then a link to the Mission view, whose Preview sets which
-	/// version of the mission the editor shows (<see cref="MissionPreviewView"/>).
-	/// </summary>
-	public void InPreview(bool present) {
-		if (present) {
-			ImGui.Text("In this preview.");
-		} else {
-			EditorText.Emphasis("Not in this preview.");
-		}
-
-		ImGui.SameLine();
-		Link("Change the preview", new MissionSelection());
-	}
-
 	public void Object(SceneObject placed) => Link(MissionText.Describe(placed), new ObjectSelection(placed));
 
 	public void Group(int group) => Link(MissionText.DescribeGroup(_index, group), new GroupSelection(group));
