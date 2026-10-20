@@ -1,4 +1,7 @@
+using System.Runtime.CompilerServices;
+using Herculan.Engine.Content;
 using Herculan.Es1.Input;
+using Herculan.Es1.Panels;
 using Herculan.Es1.Sim;
 using Silk.NET.Input;
 
@@ -30,8 +33,11 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 	/// <param name="mouse">The mouse driver, which the host attaches to its mouse; one with no host device when null.</param>
 	/// <param name="port">The game port the joystick devices are built on, and detect their axes on, once.</param>
 	/// <param name="viewChain">The views and cameras the mission start built, which the tick moves between.</param>
+	/// <param name="widgets">What <c>Widget_LoadStylesAndFonts</c> loaded at the mission start, which the panels draw with.</param>
+	/// <param name="content">The volumes the panels' own files are read from.</param>
 	public Es1SimulationRunner(Es1World world, string installRoot, Es1Preferences preferences, IKeyboard? keyboard,
-			Es1HostMouse? mouse, IEs1GamePort port, View.Es1ViewChain? viewChain = null) {
+			Es1HostMouse? mouse, IEs1GamePort port, View.Es1ViewChain? viewChain = null, Es1WidgetResources? widgets = null,
+			GameContent? content = null) {
 		var keyboardInput = new Es1KeyboardInput(Es1HostKeyboard.ReadBiosShiftFlags(keyboard));
 		_hostKeyboard = new Es1HostKeyboard(keyboardInput.Keyboard);
 		if (keyboard != null) {
@@ -44,6 +50,15 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 		};
 		AxisKeys = keyboardInput.AxisKeys;
 		Simulation = new Es1Simulation(world, input, viewChain);
+
+		// Sim_StartMission's step 4 sets the panels' two hooks to SimInput_PushDisable and SimInput_PopEnable.
+		if (viewChain?.Manager is { } manager) {
+			Simulation.Panels = new Es1AlertGlobals(manager.Display, manager.Mouse, input, widgets, content) {
+				EnterHook = AxisKeys.PushDisable,
+				LeaveHook = AxisKeys.PopEnable,
+				InstallRoot = installRoot,
+			};
+		}
 	}
 
 	public Es1Simulation Simulation { get; }
@@ -52,25 +67,42 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 	public Es1AxisKeys AxisKeys { get; }
 
 	/// <summary>
-	/// One host frame of <paramref name="elapsed"/>: the keyboard's typematic, then the frame's steps before the draw, the
-	/// frame's sounds, the clock and, when a tick is due, the tick.
+	/// One host frame of <paramref name="elapsed"/> where nothing shows the monitor, as with no display: the clock and,
+	/// when a tick is due, the whole tick. With no display no panel is raised, so the tick never waits.
 	/// </summary>
+	/// <exception cref="InvalidOperationException">The tick waited, which only a panel's loop does.</exception>
 	public Frame AdvanceHostFrame(TimeSpan elapsed) {
+		if (!AdvanceClock(elapsed)) {
+			return Frame.NoTick;
+		}
+
+		var ended = new StrongBox<bool>();
+		foreach (var _ in Tick(ended)) {
+			throw new InvalidOperationException("The tick waited with nothing to show the monitor.");
+		}
+
+		return ended.Value ? Frame.MissionEnded : Frame.Ticked;
+	}
+
+	/// <summary>
+	/// Host time of <paramref name="elapsed"/> with nothing waiting: the keyboard's typematic, then the frame's steps
+	/// before the draw, the frame's sounds and the clock. Returns whether a tick is due.
+	/// </summary>
+	public bool AdvanceClock(TimeSpan elapsed) {
 		_hostKeyboard.Advance(elapsed.TotalSeconds);
 
 		// Subsystem phase 4 calls no function (docs/es1/simulation/main-loop.md#the-subsystem-phases).
 		// PLACEHOLDER: Sim_FrameSoundTick (00058574), the music, the engine hum and the listener; no plan step ports
 		// ES1's sound yet.
-		if (!Simulation.Globals.Clock.AdvanceHostFrame(elapsed)) {
-			return Frame.NoTick;
-		}
-
-		return Simulation.MainTick() ? Frame.MissionEnded : Frame.Ticked;
+		return Simulation.Globals.Clock.AdvanceHostFrame(elapsed);
 	}
 
+	/// <inheritdoc/>
+	public IEnumerable<Es1Wait> Tick(StrongBox<bool> ended) => Simulation.MainTick(ended);
+
 	/// <summary>
-	/// Host time of <paramref name="elapsed"/> while the frame's end waits for the monitor: the keyboard's typematic and
-	/// the PC timer run on, and no tick runs and no input is taken (<see cref="Es1SimClock.Hold"/>).
+	/// Host time of <paramref name="elapsed"/> while the frame stands waiting, for the monitor or in a panel's loop: the
+	/// keyboard's typematic and the PC timer run on, and no tick runs (<see cref="Es1SimClock.Hold"/>).
 	/// </summary>
 	public void Hold(TimeSpan elapsed) {
 		_hostKeyboard.Advance(elapsed.TotalSeconds);

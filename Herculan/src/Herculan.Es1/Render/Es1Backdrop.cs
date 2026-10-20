@@ -97,16 +97,8 @@ public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 		}
 	}
 
-	/// <summary>
-	/// The preferences' option 5: above 240 the ground is textured (<c>Hzline_FillGround</c>,
-	/// docs/es1/rendering/ground-and-sky.md#the-ground), and otherwise, or without a ground texture, banded; below 240
-	/// count × it / 240 of the scattered points are drawn.
-	/// </summary>
-	public int GroundDetail { get; set; } = 255;
-
-	/// <summary>The preferences byte <c>000bd566</c>: (count · (it + 1)) &gt;&gt; 8 of the clouds are drawn. It is the most,
-	/// 255, the user's choice.</summary>
-	public int CloudDetail { get; set; } = 255;
+	/// <summary>The preferences options 3 to 5, which every <see cref="Draw"/> reads; the viewer's own with no simulation.</summary>
+	public Es1BackdropOptions Options { get; init; } = new(null);
 
 	public void Draw(Camera camera, int viewportX, int viewportY, int viewportWidth, int viewportHeight) {
 		float scale = camera.FocalPixelsFor(viewportHeight) / Es1Horizon.FocalPixels;
@@ -151,7 +143,7 @@ public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 		_shader.SetFloat("uGroundBandHeight", Math.Max(_horizon.GroundBandHeight, 1));
 		_shader.SetFloat("uFirstGroundEdge", _horizon.GroundBandHeight * sinRoll * sinRoll + t * cosRoll);
 
-		bool textured = GroundDetail > Es1GroundSpecks.DetailLimit && _ground != null;
+		bool textured = Options.Textured(_ground != null);
 		_shader.SetInt("uTextured", textured ? 1 : 0);
 		if (textured) {
 			SetTexturedGround(camera, _ground!, pitch, roll, heading, lineRow, scale, centre,
@@ -169,7 +161,7 @@ public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 		_gl.Enable(EnableCap.DepthTest);
 		_gl.ActiveTexture(TextureUnit.Texture0);
 
-		_clouds?.Draw(camera, CloudDetail, _random, centre, camera.FocalPixelsFor(viewportHeight), viewportX, viewportY,
+		_clouds?.Draw(camera, Options.CloudDetail, _random, centre, camera.FocalPixelsFor(viewportHeight), viewportX, viewportY,
 			viewportWidth, viewportHeight);
 		DrawSpecks(camera, scale, centre, viewportX, viewportY, viewportWidth, viewportHeight);
 	}
@@ -185,7 +177,7 @@ public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 			return;
 		}
 
-		var specks = _specks.Update(camera.Position, GroundDetail, _random);
+		var specks = _specks.Update(camera.Position, Options.GroundDetail, _random);
 		if (specks.IsEmpty) {
 			return;
 		}
@@ -263,7 +255,7 @@ public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 	}
 
 	private void SetSkyline(short heading, bool rolled, float lineRow, float lineDown, float cosRoll, float sinRoll) {
-		if (_skyline is not { } skyline) {
+		if (_skyline is not { } skyline || !Options.Skyline) {
 			_shader.SetInt("uSkylineFrames", 0);
 			return;
 		}

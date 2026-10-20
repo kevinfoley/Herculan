@@ -1,4 +1,6 @@
+using System.Runtime.CompilerServices;
 using Herculan.Es1.Input;
+using Herculan.Es1.Panels;
 using Herculan.Es1.View;
 
 namespace Herculan.Es1.Sim;
@@ -28,7 +30,7 @@ public sealed class Es1Simulation {
 	/// <summary>The view commands.</summary>
 	public const ushort V = 0x2f, N = 0x31, Tab = 0x0f, Enter = 0x1c, Esc = 0x01;
 
-	/// <summary>The status-panel and preferences commands, which do nothing until their steps.</summary>
+	/// <summary>The status-panel and preferences commands.</summary>
 	public const ushort Q = 0x10, CtrlEsc = 0x401, CtrlQ = 0x410, P = 0x19, AltP = 0x219, F12 = 0x58;
 
 	/// <summary><c>ViewChain_Viewed</c>'s target class that is a flyer.</summary>
@@ -131,10 +133,28 @@ public sealed class Es1Simulation {
 	public List<IEs1PoolTicked> Projectiles { get; } = new();
 
 	/// <summary>
-	/// <c>Sim_MainTick</c>: one tick, in retail's order. Returns whether it ends the mission, which in the slice it
-	/// never does.
+	/// The in-mission panels' shared state, which <c>Sim_StartMission</c>'s display and mouse give; none raises no panel,
+	/// as with no display, which retail always has, an engine guard.
 	/// </summary>
-	public bool MainTick() {
+	public Es1AlertGlobals? Panels { get; set; }
+
+	/// <summary>
+	/// The frame loop's frame, which <c>PreferencesPanel_Raise</c> draws frames of its own with inside the tick; the loop
+	/// sets it when it is wired to the runner. None raises no preferences panel, as with no display, an engine guard.
+	/// </summary>
+	public IEs1Frame? Frame { get; set; }
+
+	/// <summary><c>Sim_QuitFlag</c> (<c>000b5b9e</c>): set by a non-zero answer of the quit prompt, which ends the mission.</summary>
+	public bool QuitFlag { get; private set; }
+
+	/// <summary>
+	/// <c>Sim_MainTick</c>: one tick, in retail's order, yielding a wait at each pass of a panel's loop the commands
+	/// raise, from which the caller goes on (plan decision 11). <paramref name="ended"/> is set when the tick ends the
+	/// mission, which in the slice only the quit prompt's QUIT does.
+	/// </summary>
+	public IEnumerable<Es1Wait> MainTick(StrongBox<bool> ended) {
+		ended.Value = false;
+
 		// 1. The input block. During playback the block's +0x29 would be the tick's length; tapes are not taken.
 		var block = Input.Build();
 
@@ -168,8 +188,14 @@ public sealed class Es1Simulation {
 		}
 
 		// 4. The player's controls.
-		if (PollPlayerInput(block)) {
-			return true;
+		var polled = new StrongBox<bool>();
+		foreach (var wait in PollPlayerInput(block, polled)) {
+			yield return wait;
+		}
+
+		if (polled.Value) {
+			ended.Value = true;
+			yield break;
 		}
 
 		// 5. PLACEHOLDER: Actions_EvaluateTriggers (0001f87c)(LocalPlayerMech), plan step 8. Then the views.
@@ -181,21 +207,28 @@ public sealed class Es1Simulation {
 
 		// 7. PLACEHOLDER: Mission_PollStatus (0000f454)(LocalPlayerMech) and the status panel 00046efc it puts up, which
 		// end the mission; the mission's end, after plan step 8.
-		return false;
 	}
 
 	/// <summary>
 	/// <c>Sim_DispatchCommand</c>(<paramref name="block"/>): the command word to the cockpit, then the window keys, then
 	/// the fifteen cases at <c>00097180</c>, and any other code to <see cref="Viewed"/>'s <c>Mech_HandleCommand</c>,
-	/// whose answer it returns. A case answers 1 plus its panel's term, so 2 ends the mission.
+	/// whose answer it gives in <paramref name="answer"/>. A case answers 1 plus its panel's term, so 2 ends the mission.
+	/// A panel's case, the cockpit's <c>F11</c> among them, yields a wait at each pass of the panel's loop.
 	/// </summary>
-	internal short DispatchCommand(Es1PlayerInputBlock block) {
+	internal IEnumerable<Es1Wait> DispatchCommand(Es1PlayerInputBlock block, StrongBox<short> answer) {
 		ushort code = block.CommandWord;
 
 		// With no cockpit loaded retail would read through a null CockpitViewInstance; here the cockpit takes nothing.
-		short cockpitTook = Cockpit?.HandleCommand(code) ?? 0;
-		if (cockpitTook != 0) {
-			return cockpitTook;
+		var cockpitTook = new StrongBox<short>();
+		if (Cockpit is { } cockpit) {
+			foreach (var wait in cockpit.HandleCommand(code, Panels, cockpitTook)) {
+				yield return wait;
+			}
+		}
+
+		if (cockpitTook.Value != 0) {
+			answer.Value = cockpitTook.Value;
+			yield break;
 		}
 
 		// Sim_HandleWindowKey (00059dec) answers 0 for every code.
@@ -244,12 +277,38 @@ public sealed class Es1Simulation {
 			case Backspace:
 				CenterTurretMode = true;
 				break;
-			case Q or CtrlEsc or CtrlQ or P:
-				// PLACEHOLDER: the status panel 00046efc, whose answer is the second term (and Ctrl+Esc's and Ctrl+Q's
-				// Sim_QuitFlag), is unread: the mission's end, after plan step 8. Q's MissionAlertArmed is plan step 6's.
+			case Q:
+				// PLACEHOLDER: the status panel with Mission_StatusForAlert(1, LocalPlayerMech)'s status, whose answer is
+				// the second term when it ends the mission, and MissionAlertArmed cleared: Mission_Status needs plan step
+				// 8's sensor model and routes, and the mission's end, after plan step 8, ports it.
 				break;
+			case CtrlEsc or CtrlQ: {
+				var term = new StrongBox<int>();
+				foreach (var wait in RunStatusPanel(Es1StatusAlertPanel.QuitStatus, term)) {
+					yield return wait;
+				}
+
+				second = (short)term.Value;
+				if (term.Value != 0) {
+					QuitFlag = true;
+				}
+
+				break;
+			}
+			case P: {
+				var term = new StrongBox<int>();
+				foreach (var wait in RunStatusPanel(Es1StatusAlertPanel.PauseStatus, term)) {
+					yield return wait;
+				}
+
+				second = (short)term.Value;
+				break;
+			}
 			case AltP or F12:
-				// PLACEHOLDER: 00057820, unread, which ES2's preferences panel stands in; no plan step names it.
+				foreach (var wait in Es1PreferencesRaise.Run(this)) {
+					yield return wait;
+				}
+
 				break;
 			case Ctrl1:
 				Controls.ThrottleLeverMode = (short)(Controls.ThrottleLeverMode > 0 ? -1 : 1);
@@ -258,19 +317,43 @@ public sealed class Es1Simulation {
 				Controls.ToggleStickMode();
 				break;
 			default:
-				return Es1MechCommands.HandleCommand(Viewed, _playerMech, code, DevKeys);
+				answer.Value = Es1MechCommands.HandleCommand(Viewed, _playerMech, code, DevKeys);
+				yield break;
 		}
 
-		return (short)(1 + second);
+		answer.Value = (short)(1 + second);
+	}
+
+	/// <summary>
+	/// A status panel case: <c>StatusAlertPanel_Ctor</c>(0, 0, 1, <paramref name="status"/>), run through its slot
+	/// <c>+0xc</c>, its answer in <paramref name="answer"/>, then destroyed with <c>Alert_Dtor</c>(panel, 3). With no
+	/// <see cref="Panels"/> no panel is raised and the answer is 0.
+	/// </summary>
+	private IEnumerable<Es1Wait> RunStatusPanel(int status, StrongBox<int> answer) {
+		answer.Value = 0;
+		if (Panels == null) {
+			yield break;
+		}
+
+		var panel = new Es1StatusAlertPanel(Panels, status);
+		foreach (var wait in panel.Run(answer)) {
+			yield return wait;
+		}
+
+		panel.Destroy();
 	}
 
 	/// <summary>
 	/// <c>Sim_PollPlayerInput</c>(<paramref name="block"/>): the commands, the axes to the machine or the camera, the
-	/// gunsight drag, the camera's steer, the throttle and the turret, the trigger and buttons 2 and 3. Returns whether
-	/// the dispatch answered 2.
+	/// gunsight drag, the camera's steer, the throttle and the turret, the trigger and buttons 2 and 3.
+	/// <paramref name="ended"/> is set when the dispatch answered 2. The dispatch's panels yield their waits.
 	/// </summary>
-	internal bool PollPlayerInput(Es1PlayerInputBlock block) {
-		short answer = DispatchCommand(block);
+	internal IEnumerable<Es1Wait> PollPlayerInput(Es1PlayerInputBlock block, StrongBox<bool> ended) {
+		var answer = new StrongBox<short>();
+		foreach (var wait in DispatchCommand(block, answer)) {
+			yield return wait;
+		}
+
 		Cockpit?.PollViewDevice(block);
 
 		// The axes: the machine's, or with the camera driven the camera's two and the trigger.
@@ -320,7 +403,7 @@ public sealed class Es1Simulation {
 			}
 		}
 
-		return answer == 2;
+		ended.Value = answer.Value == 2;
 	}
 
 	/// <summary>

@@ -107,10 +107,29 @@ public sealed class Es1ViewManager {
 	public bool BorderPending { get; private set; }
 
 	/// <summary><c>ExternalView_Rect</c> (<c>000afb3c</c>): the external view's rect and projection pair.</summary>
-	public Vue.Entry ExternalViewRect { get; }
+	public Vue.Entry ExternalViewRect { get; private set; }
 
 	/// <summary><c>ExternalView_ClipBlock</c> (<c>000afb94</c>), its one region <c>ExternalView_Rect</c>'s rect.</summary>
-	public Es1ClipBlock ExternalViewClip { get; }
+	public Es1ClipBlock ExternalViewClip { get; private set; }
+
+	/// <summary>
+	/// <c>ExternalView_SetRect</c> (<c>00024a00</c>)(offset, rect), both in <paramref name="rect"/>
+	/// (docs/es1/simulation/cockpit-views.md#the-external-view): the rect and the projection pair stored at
+	/// <c>ExternalView_Rect</c>, the rect at <c>ExternalView_ClipRegion</c>'s; and in view 4 the six installed in the
+	/// render context. A clip block holds its regions by pointer (docs/es1/formats/hd-ed-clip-regions.md), so the clip
+	/// block view 4 installed, which points at <c>ExternalView_ClipRegion</c>, clips to the new rect too.
+	/// </summary>
+	public void SetExternalViewRect(Vue.Entry rect) {
+		ExternalViewRect = rect;
+		ExternalViewClip = Es1ClipBlock.FromRect(rect.ViewportX0, rect.ViewportY0, rect.ViewportX1, rect.ViewportY1);
+		if (CurrentView == Es1CockpitViews.ExternalView) {
+			Window = Es1ViewWindow.Install(rect, 0, 0);
+			Clip = ExternalViewClip;
+		}
+	}
+
+	/// <summary><c>ExternalView_ResetRect</c> (<c>00024a7c</c>): <see cref="SetExternalViewRect"/> with <see cref="ExternalViewDefaultRect"/>.</summary>
+	public void ResetExternalViewRect() => SetExternalViewRect(ExternalViewDefaultRect);
 
 	/// <summary>The render context's six values <c>+0x210</c>–<c>+0x224</c> as the last view state installed them.</summary>
 	public Es1ViewWindow Window { get; private set; }

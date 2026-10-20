@@ -1,4 +1,6 @@
+using System.Runtime.CompilerServices;
 using Herculan.Es1.Input;
+using Herculan.Es1.Panels;
 using Herculan.Es1.Sim;
 
 namespace Herculan.Es1.View;
@@ -106,11 +108,22 @@ public sealed class Es1Cockpit {
 	public void EnableWidgets() => WidgetsOff = false;
 
 	/// <summary>
+	/// <c>Cockpit_SkipFrameDraw</c> (<c>00092d7c</c>), a global: <see cref="DrawFrame"/> does nothing while it is set.
+	/// <c>PreferencesPanel_Raise</c> sets it across one frame of its return to a cockpit view
+	/// (docs/es1/simulation/cockpit-panel.md#drawing-it).
+	/// </summary>
+	public bool SkipFrameDraw { get; set; }
+
+	/// <summary>
 	/// <c>Cockpit_DrawFrame</c> (<c>0002cf28</c>)(cockpit), once a frame from <c>Sim_RenderFrame</c> before the 3D pass:
-	/// the strips built the first time; with the widgets off nothing more this engine draws; otherwise, at step 6, the
-	/// edge cursor. <c>Cockpit_SkipFrameDraw</c>, whose only writer is the unported <c>00057820</c>, is never set.
+	/// nothing while <see cref="SkipFrameDraw"/> is set; the strips built the first time; with the widgets off nothing
+	/// more this engine draws; otherwise, at step 6, the edge cursor.
 	/// </summary>
 	public void DrawFrame() {
+		if (SkipFrameDraw) {
+			return;
+		}
+
 		// 1.
 		if (!StripsBuilt) {
 			BuildScrollTriggers();
@@ -188,63 +201,67 @@ public sealed class Es1Cockpit {
 	/// <summary>
 	/// <c>CockpitWidgets_HandleCommand</c>(cockpit, <paramref name="code"/>): 0 while the widgets are off; otherwise the
 	/// case of the 24 codes at <c>CockpitWidgets_CommandCodes</c> (<c>00092f34</c>) by the manager's current view, and any
-	/// other code to the instruments. Returns 1 for a code a case took or an instrument accepted, else 0.
+	/// other code to the instruments. Answers in <paramref name="answer"/> 1 for a code a case took or an instrument
+	/// accepted, else 0. <c>F11</c>'s case runs the objectives panel's loop inside the tick, yielding a wait at each of its
+	/// passes (plan decision 11), and answers once the panel is down.
 	/// </summary>
-	public short HandleCommand(ushort code) {
+	/// <param name="panels">The in-mission panels' shared state, from which <c>F11</c> builds its panel; with none it builds none and still answers 1, an engine guard as for <see cref="Es1Simulation.Panels"/>.</param>
+	public IEnumerable<Es1Wait> HandleCommand(ushort code, Es1AlertGlobals? panels, StrongBox<short> answer) {
+		answer.Value = 0;
 		if (WidgetsOff) {
-			return 0;
+			yield break;
 		}
 
 		int view = _views.CurrentView;
 		switch (code) {
 			case 0:
-				return 0;
+				break;
 			case >= Key1 and <= Key9:
-				if (view == 1) {
-					return Unlisted(code, view);
-				}
-
-				// PLACEHOLDER: row code - 2: the pod row (+0x23b) flips bit 0 of 00037b50's block and hands it to 00037b14,
-				// another row's gauge (+0x70 + 4 x row), when set, goes to CockpitView_ArmWeaponByGauge (0002d098); the
-				// weapon rows are plan step 6c's, and until then no row has a gauge.
-				return 1;
+				// PLACEHOLDER: outside view 1, row code - 2: the pod row (+0x23b) flips bit 0 of 00037b50's block and hands it
+				// to 00037b14, another row's gauge (+0x70 + 4 x row), when set, goes to CockpitView_ArmWeaponByGauge
+				// (0002d098); the weapon rows are plan step 6c's, and until then no row has a gauge.
+				answer.Value = view == 1 ? Unlisted(code, view) : (short)1;
+				break;
 			case >= F1 and <= F6:
 				// PLACEHOLDER: the press of the MFD's (+0x1e9) button code - F1; the MFD is plan step 6c's.
 				Queue(view switch { 1 => 1, 2 or 3 => 6, _ => -1 });
-				return 1;
+				answer.Value = 1;
+				break;
 			case F7 or F8:
 				// PLACEHOLDER: the press of +0x1f5's button code - F7; the instrument is plan step 6c's.
 				Queue(0);
-				return 1;
+				answer.Value = 1;
+				break;
 			case F9:
 				Queue(view switch { 0 => 5, 2 => 6, _ => -1 });
-				return 1;
+				answer.Value = 1;
+				break;
 			case F10:
 				Queue(view switch { 0 => 4, 3 => 6, _ => -1 });
-				return 1;
+				answer.Value = 1;
+				break;
 			case Esc:
 				Queue(view switch { 0 => 0, 1 => 1, 4 => -1, _ => 6 });
-				return 1;
+				answer.Value = 1;
+				break;
 			case Tab:
-				if (view == 4) {
-					return 0;
-				}
-
-				if (view == 1) {
-					return Unlisted(code, view);
-				}
-
-				// PLACEHOLDER: TargetSelect_Cycle (0002d898)(cockpit), the target selection, plan step 6b.
-				return 1;
+				// PLACEHOLDER: outside views 1 and 4, TargetSelect_Cycle (0002d898)(cockpit), the target selection, plan step 6b.
+				answer.Value = view switch { 4 => 0, 1 => Unlisted(code, view), _ => 1 };
+				break;
 			case F11:
-				// PLACEHOLDER: 0004a1b4(0, 0, 1), the objectives panel, run through slot +0xc of its +0x314 and destroyed by
-				// 00045d0c(panel, 3): the in-mission panels, plan step 6a2.
-				return 1;
+				foreach (var wait in RunObjectivesPanel(panels)) {
+					yield return wait;
+				}
+
+				answer.Value = 1;
+				break;
 			case R:
 				Machine?.ToggleRadarMode();
-				return 1;
+				answer.Value = 1;
+				break;
 			default:
-				return Unlisted(code, view);
+				answer.Value = Unlisted(code, view);
+				break;
 		}
 	}
 
@@ -367,6 +384,24 @@ public sealed class Es1Cockpit {
 				_ => (low, high),
 			};
 		}
+	}
+
+	/// <summary>
+	/// <c>F11</c>'s case: <c>ObjectivesPanel_Ctor</c>(0, 0, 1), run through its slot <c>+0xc</c>, whose answer the case
+	/// does not read, then destroyed with <c>Alert_Dtor</c>(panel, 3)
+	/// (docs/es1/simulation/cockpit-panel.md#keys-and-the-view-device). With no <paramref name="panels"/> nothing is raised.
+	/// </summary>
+	private static IEnumerable<Es1Wait> RunObjectivesPanel(Es1AlertGlobals? panels) {
+		if (panels == null) {
+			yield break;
+		}
+
+		var panel = new Es1ObjectivesPanel(panels);
+		foreach (var wait in panel.Run(new StrongBox<int>())) {
+			yield return wait;
+		}
+
+		panel.Destroy();
 	}
 
 	/// <summary><c>CockpitViewManager_QueueViewCommand</c> with <paramref name="command"/>, or nothing for −1.</summary>

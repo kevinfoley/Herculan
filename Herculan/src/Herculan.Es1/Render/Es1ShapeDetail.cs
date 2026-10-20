@@ -1,5 +1,6 @@
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Render;
+using Herculan.Es1.Input;
 using Herculan.Es1.Sim;
 
 namespace Herculan.Es1.Render;
@@ -30,15 +31,45 @@ public readonly record struct Es1DetailSetting(int SizeScaleQ10, int RootBias, i
 	/// <summary>
 	/// The outputs for option value <paramref name="value"/>: the first key it is at most picks the slot. A byte is never
 	/// above the last key, 300, so every value picks one.
-	///
-	/// <para>With no <c>data\prefs.cfg</c> (<paramref name="value"/> null) the option is 0: <c>Prefs_Load</c>
-	/// (<c>0004a744</c>) zeroes all 17 options when the file does not open
-	/// (docs/es1/simulation/mech-locomotion.md#the-throttle--mech_applythrottleinput-00011afc).</para>
 	/// </summary>
-	public static Es1DetailSetting FromOption(byte? value) {
-		byte option = value ?? 0;
-		int slot = Array.FindIndex(Keys, key => option <= key);
+	public static Es1DetailSetting FromOption(byte value) {
+		int slot = Array.FindIndex(Keys, key => value <= key);
 		return new Es1DetailSetting(ScaleValues[slot], RootBiasValues[slot], MountBiasValues[slot]);
+	}
+}
+
+/// <summary>
+/// The detail setting as the simulator keeps it applied from preferences option 6
+/// (docs/es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08):
+/// <c>Sim_StartMission</c> stores the option in <c>000b5b72</c> and <c>000b5b74</c> and applies it, and
+/// <c>Sim_RenderFrame</c> (<c>ES1DBSIM 00059c08</c>) copies it into <c>000b5b72</c> each frame and, when that differs
+/// from <c>000b5b74</c>, applies it and copies it into <c>000b5b74</c> (<see cref="Refresh"/>). So a change the
+/// preferences panel's SHAPES row makes shows on the next frame drawn.
+/// </summary>
+public sealed class Es1AppliedDetail {
+	private readonly Es1Preferences _options;
+
+	/// <summary><c>000b5b74</c>: the option as last applied.</summary>
+	private byte _applied;
+
+	/// <summary><c>Sim_StartMission</c>'s apply, on the option as <paramref name="options"/> holds it now.</summary>
+	/// <param name="options">The simulator's options, which the preferences panel writes.</param>
+	public Es1AppliedDetail(Es1Preferences options) {
+		_options = options;
+		_applied = options[Es1Preferences.DetailOption];
+		Setting = Es1DetailSetting.FromOption(_applied);
+	}
+
+	/// <summary>What <c>ShapeDetail_ApplyDetailSetting</c> last set.</summary>
+	public Es1DetailSetting Setting { get; private set; }
+
+	/// <summary><c>Sim_RenderFrame</c>'s step: the setting applied again when option 6 differs from its last apply.</summary>
+	public void Refresh() {
+		byte option = _options[Es1Preferences.DetailOption];
+		if (option != _applied) {
+			Setting = Es1DetailSetting.FromOption(option);
+			_applied = option;
+		}
 	}
 }
 

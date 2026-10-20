@@ -8,6 +8,7 @@ using Herculan.Engine.Platform;
 using Herculan.Engine.Render;
 using Herculan.Engine.View;
 using Herculan.Es1.Input;
+using Herculan.Es1.Panels;
 using Herculan.Es1.Render;
 using Herculan.Es1.Scene;
 using Herculan.Es1.Shell;
@@ -27,8 +28,9 @@ public sealed record Es1HeaderOverrides(int? Theater, int? WorldVariant, int? Wo
 /// <summary>
 /// Runs an ES1 mission as far as this engine ports one: the shell's single-mission load when a mission is named, the
 /// simulator's world load from the install's <c>data\</c> files, the tick under the keyboard, the mouse and a controller,
-/// and the cockpit's views of the player's machine on the display's pages, with its screen edges and cursors
-/// (docs/herculan/plan-es1-first-mission.md, steps 4 and 6a). This class
+/// the cockpit's views of the player's machine on the display's pages, with its screen edges and cursors, and the
+/// pause and quit prompts, the objectives and the preferences panel (docs/herculan/plan-es1-first-mission.md, steps 4,
+/// 6a and 6a2). This class
 /// composes: the load and its files are <see cref="Es1SingleMission"/> and <see cref="Es1MissionFiles"/>, the world
 /// <see cref="Es1World"/>, the tick <see cref="Es1SimulationRunner"/>, built by <see cref="Es1SimulationStart"/>, the zone <see cref="Es1ZoneScene"/>, the draw
 /// <see cref="Es1WorldDraw"/>, the display and its views <see cref="Es1VideoMemory"/> and <see cref="Es1ViewManager"/>,
@@ -45,18 +47,14 @@ public sealed record Es1HeaderOverrides(int? Theater, int? WorldVariant, int? Wo
 /// <para>F switches to a free camera, an engine aid with no retail counterpart, which shows the world over the whole
 /// window with the player's machine drawn; the simulator still reads every key, so the keys the free camera moves by
 /// also drive the machine. While the cockpit is shown the host's pointer is hidden over the window, the cockpit's cursor
-/// standing in for it; the free camera shows it, and hides it while the right button looks. G switches the preferences' option 5 between <see cref="TexturedDetail"/>
-/// and <see cref="BandedDetail"/>, the ground between textured and banded. Closing the window quits; so does Esc with no player's machine, since
-/// with one Esc is the simulator's key (docs/es1/simulation/main-loop.md#commands--sim_dispatchcommand-00059df8), and
-/// retail's way out, the <c>Ctrl+Q</c> panel, is plan step 6a2's.</para>
+/// standing in for it; the free camera shows it, and hides it while the right button looks. G, another engine aid,
+/// switches the ground between textured and banded (<see cref="Es1BackdropOptions.ToggleGround"/>): with a simulation
+/// running it overrides preferences option 5's choice until pressed again, without writing the option, and with none it
+/// switches the viewer's own option 5. Closing the window quits; so does Esc with no player's machine, since
+/// with one Esc is the simulator's key (docs/es1/simulation/main-loop.md#commands--sim_dispatchcommand-00059df8); and
+/// so does retail's way out, <c>Ctrl+Q</c>'s or <c>Ctrl+Esc</c>'s QUIT, which ends the mission (plan decision 12).</para>
 /// </summary>
 public static class Es1ZoneViewer {
-	/// <summary>Option 5 while the ground is textured: its largest value, which the viewer starts at, the user's choice.</summary>
-	private const int TexturedDetail = 255;
-
-	/// <summary>Option 5 while the ground is banded: the largest value below 240, which draws 248 of 250 points.</summary>
-	private const int BandedDetail = Es1GroundSpecks.DetailLimit - 1;
-
 	/// <summary>The clear colour when the theater's sky cannot be built: a mid grey, plainly not a retail sky.</summary>
 	private static readonly Vector3 MissingSky = new(0.32f, 0.32f, 0.36f);
 
@@ -65,7 +63,7 @@ public static class Es1ZoneViewer {
 	/// the files that writes, or with no mission named runs it on the files the install's <c>data\</c> holds, as
 	/// <c>DBSIM.EXE</c> does. Returns the process exit code.
 	/// </summary>
-	public static int Run(string installRoot, string? missionName, Es1HeaderOverrides overrides, int? stickModel) {
+	public static int Run(string installRoot, string? missionName, Es1HeaderOverrides overrides) {
 		if (missionName != null) {
 			var random = Es1ShellRandom.AtStartup(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
 			if (Es1SingleMission.Start(installRoot, Es1SingleMission.MountShell(installRoot), missionName, random,
@@ -80,10 +78,6 @@ public static class Es1ZoneViewer {
 		if (Es1MissionFiles.Read(installRoot, out string? error) is not { } files) {
 			Console.Error.WriteLine(error);
 			return 1;
-		}
-
-		if (stickModel is { } model) {
-			files.Preferences.OverrideStickConfiguration((byte)model);
 		}
 
 		var header = files.Script.Header;
@@ -132,11 +126,11 @@ public static class Es1ZoneViewer {
 
 		Console.WriteLine("Keypad drives the HERC; F free camera (RMB + mouse to look, WASD/arrows, Q/E, Shift), " +
 			"G textured/banded ground; close the window to quit" + (player == null ? " (or Esc)." : "."));
-		Show(installRoot, files.Preferences, stickModel != null, content, scene, world, views, $"HERCULAN — Metaltech: Earthsiege — {missionName ?? "data\\script.dat"}, zone {header[1]}");
+		Show(installRoot, files.Preferences, content, scene, world, views, $"HERCULAN — Metaltech: Earthsiege — {missionName ?? "data\\script.dat"}, zone {header[1]}");
 		return 0;
 	}
 
-	private static void Show(string installRoot, Es1Preferences preferences, bool stickModelFromFlag, GameContent content, Es1ZoneScene scene,
+	private static void Show(string installRoot, Es1Preferences preferences, GameContent content, Es1ZoneScene scene,
 			Es1World world, Es1CockpitViews? views, string title) {
 		using var window = new EngineWindow(title);
 
@@ -155,12 +149,19 @@ public static class Es1ZoneViewer {
 		var camera = new Camera();
 		var cockpitCamera = new Camera();
 
+		// With a simulation running the scene reads the simulator's options, which the preferences panel changes, each
+		// frame; with none the viewer's own. Sim_StartMission applies the detail setting before the first frame.
+		var backdropOptions = new Es1BackdropOptions(world.LocalPlayer != null ? preferences : null);
+		var detail = new Es1AppliedDetail(preferences);
+
 		// Sim_StartMission's steps 9 to 13 that build no GL object: the views and their cockpit, and the chain of views
 		// with its cameras, the main one on the player's eye.
 		var player = world.LocalPlayer;
 		// The mouse driver, which the host's mouse is attached to once the window has one; and step 5's
 		// CockpitMouse_Init on it, which runs before the cockpit is built.
 		var hostMouse = new Es1HostMouse();
+		// Step 4's Widget_LoadStylesAndFonts, which the in-mission panels draw with.
+		var widgets = Es1WidgetResources.Load(content);
 		Es1ViewManager? manager = null;
 		if (views != null && player != null) {
 			var display = new Es1VideoMemory();
@@ -188,7 +189,7 @@ public static class Es1ZoneViewer {
 			if (scene.Horizon != null && scene.Palette != null) {
 				backdrop = new Es1Backdrop(gl, scene.Horizon, scene.Ground, scene.Skyline, scene.Clouds, scene.Specks,
 						scene.Palette) {
-					GroundDetail = TexturedDetail,
+					Options = backdropOptions,
 				};
 				disposables.Add(backdrop);
 			}
@@ -208,7 +209,7 @@ public static class Es1ZoneViewer {
 
 			models = Es1MechModels.Upload(gl, content, world.Types.Values.OfType<Es1MechType>(), scene);
 			disposables.Add(models);
-			draw = new Es1WorldDraw(gl, scene, world, models, disposables);
+			draw = new Es1WorldDraw(gl, scene, world, models, detail, disposables);
 			if (manager != null && chain != null) {
 				monitor = new Es1Monitor(gl, manager.Display);
 				disposables.Add(monitor);
@@ -218,14 +219,13 @@ public static class Es1ZoneViewer {
 				var sceneRenderer = renderer;
 				monitor.WorldPass = (x, y, width, height) =>
 					DrawWorld(gl, sceneRenderer, backdrop, worldDraw, cockpitCamera, x, y, width, height);
-				// Cam_Update on ViewObjectPtr, whichever camera the views have made it, drawn with the installed window's
-				// projection; the machine the camera rides in is left out of the draw.
-				frameLoop = new Es1FrameLoop(manager, () => {
+				// Cam_Update on ViewObjectPtr, whichever camera the views have made it; the 3D pass draws from it with the
+				// installed window's projection, the machine the camera rides in left out of the draw.
+				frameLoop = new Es1FrameLoop(manager, () => chain.Camera.Update(), () => {
 					var viewCamera = chain.Camera;
-					viewCamera.Update();
 					viewCamera.ApplyTo(cockpitCamera, manager.Window);
 					worldDraw.Update(cockpitCamera, viewCamera.MountedObject);
-				});
+				}, detail);
 				frameLoop.StartMission(Es1CursorImage.Load(content, "CURSOR"));
 			}
 
@@ -237,8 +237,8 @@ public static class Es1ZoneViewer {
 			}
 
 			if (world.LocalPlayer != null) {
-				simulation = new Es1SimulationStart(world, installRoot, preferences, stickModelFromFlag, input, keyboard, hostMouse,
-					chain);
+				simulation = new Es1SimulationStart(world, installRoot, preferences, input, keyboard, hostMouse,
+					chain, widgets, content);
 				disposables.Add(simulation);
 			}
 
@@ -282,8 +282,8 @@ public static class Es1ZoneViewer {
 			scene.Clouds?.Advance(deltaSeconds);
 
 			bool groundKey = keyboard?.IsKeyPressed(Key.G) == true;
-			if (groundKey && !groundKeyHeld && backdrop != null) {
-				backdrop.GroundDetail = backdrop.GroundDetail == TexturedDetail ? BandedDetail : TexturedDetail;
+			if (groundKey && !groundKeyHeld) {
+				backdropOptions.ToggleGround();
 			}
 
 			groundKeyHeld = groundKey;

@@ -23,12 +23,16 @@ public sealed class Es1WorldDraw {
 	public const int ShadowRange = 30000;
 
 	private readonly Es1ZoneScene _scene;
+	private readonly Es1AppliedDetail _detail;
 	private readonly List<(SceneItem Item, Es1PlacedShape Shape)> _zoneItems = new();
 	private readonly List<MechItems> _mechs = new();
 	private readonly List<(SceneItem Item, Es1Shadow Shadow)> _shadowItems = new();
 
-	public Es1WorldDraw(GL gl, Es1ZoneScene scene, Es1World world, Es1MechModels models, ICollection<IDisposable> owned) {
+	/// <param name="detail">The detail setting the HERCs are drawn at, read on every <see cref="Update"/>.</param>
+	public Es1WorldDraw(GL gl, Es1ZoneScene scene, Es1World world, Es1MechModels models, Es1AppliedDetail detail,
+			ICollection<IDisposable> owned) {
 		_scene = scene;
+		_detail = detail;
 
 		var meshes = new Dictionary<int, GpuMesh>();
 		foreach (var shape in scene.Shapes) {
@@ -45,10 +49,8 @@ public sealed class Es1WorldDraw {
 			_zoneItems.Add((new SceneItem(mesh, WorldScale.ToRenderMatrix(shape.Frame)), shape));
 		}
 
-		// Sim_StartMission applies the detail setting before the first frame.
-		var detail = Es1DetailSetting.FromOption(world.Script.Files.DetailOption);
 		foreach (var mech in world.MechPool) {
-			_mechs.Add(new MechItems(gl, scene, mech, models, detail));
+			_mechs.Add(new MechItems(gl, scene, mech, models));
 			foreach (var shadow in mech.Shadows) {
 				if (shadow.Root >= 0 && shadow.Root < models.ShadowRoots.Count && models.ShadowRoots[shadow.Root] is { } mesh) {
 					_shadowItems.Add((new SceneItem(mesh, Matrix4x4.Identity), shadow));
@@ -74,7 +76,7 @@ public sealed class Es1WorldDraw {
 		}
 
 		foreach (var mech in _mechs) {
-			mech.Update(camera, shading, ridden);
+			mech.Update(camera, shading, ridden, _detail.Setting);
 		}
 
 		foreach (var (item, shadow) in _shadowItems) {
@@ -95,15 +97,13 @@ public sealed class Es1WorldDraw {
 	/// </summary>
 	private sealed class MechItems {
 		private readonly Es1Mech _mech;
-		private readonly Es1DetailSetting _detail;
 		private readonly List<(SceneItem Item, Es1MechPiece Piece, int Root)> _pieces = new();
 		private readonly List<(SceneItem Item, Es1MechPiece Piece, int Hardpoint, int TransformId)> _mountPieces = new();
 		private readonly Dictionary<BspTree, BspDrawGroup> _groups = new();
 		private Transform3 _frame;
 
-		public MechItems(GL gl, Es1ZoneScene scene, Es1Mech mech, Es1MechModels models, Es1DetailSetting detail) {
+		public MechItems(GL gl, Es1ZoneScene scene, Es1Mech mech, Es1MechModels models) {
 			_mech = mech;
-			_detail = detail;
 			uint? texture = models.Textures.TryGetValue(mech.Type.Type, out uint handle) ? handle : null;
 			var roots = models.PiecesOf(mech.Type.Type);
 			for (int root = 0; root < roots.Count; root++) {
@@ -142,7 +142,7 @@ public sealed class Es1WorldDraw {
 			return item;
 		}
 
-		public void Update(Camera camera, Es1Shading shading, Es1Mech? ridden) {
+		public void Update(Camera camera, Es1Shading shading, Es1Mech? ridden, Es1DetailSetting detail) {
 			_frame = _mech.Frame;
 			int distance = camera.Position.ApproxDistanceTo(_mech.Position);
 
@@ -155,7 +155,7 @@ public sealed class Es1WorldDraw {
 
 			var type = _mech.Type;
 			int root = Es1ShapeDetail.SelectRoot(type.Roots.Count, type.ShapeRadius,
-				Es1ShapeDetail.EyeDistance(_frame, camera.Position), _detail, Es1MechType.DetailThresholds);
+				Es1ShapeDetail.EyeDistance(_frame, camera.Position), detail, Es1MechType.DetailThresholds);
 
 			// Every component intact stands each cell-animation part on cell 0; a HERC body's detail parts draw with bias 0.
 			foreach (var (item, piece, pieceRoot) in _pieces) {
@@ -170,7 +170,7 @@ public sealed class Es1WorldDraw {
 				item.Transform = FrameToWorld(transformId);
 				item.RampBlock = block;
 				item.Visible = drawn && hardpoint < slots.Length && slots[hardpoint] != null
-					&& OnScreen(piece.Gate, camera, _detail.MountBias, transformId);
+					&& OnScreen(piece.Gate, camera, detail.MountBias, transformId);
 			}
 		}
 

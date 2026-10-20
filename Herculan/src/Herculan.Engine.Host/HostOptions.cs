@@ -397,14 +397,6 @@ sealed class HostOptions {
 					options.Es1.WorldDetail = detail;
 				}
 				options.Es1.Staged = true;
-			} else if (args[i] == "--stick-model") {
-				// Metaltech: Earthsiege only: preferences option 7, the stick model, over the one data\prefs.cfg holds, for the
-				// run (docs/es1/simulation/joystick.md#building-the-devices). An engine aid with no retail counterpart, in place
-				// until the in-mission preferences panel sets option 7.
-				if (HostArguments.TryReadInt(args, ref i, 0, Es1Preferences.LastStickModel, errors, out int stickModel)) {
-					options.Es1.StickModel = stickModel;
-				}
-				options.Es1.Staged = true;
 			} else if (args[i] == "--install-disc-files") {
 				// Also copy what retail always reads from the disc, as the install window's box does. See RetailInstaller.Plan.
 				options.InstallDiscFiles = true;
@@ -449,14 +441,11 @@ sealed class ShellOptions {
 
 /// <summary>The flags only a Metaltech: Earthsiege install takes. Each sets <see cref="Staged"/>.</summary>
 sealed class Es1Options {
-	/// <summary>Whether <c>--theater</c>, <c>--world</c> or <c>--stick-model</c> was given, which an Earthsiege 2 install refuses.</summary>
+	/// <summary>Whether <c>--theater</c> or <c>--world</c> was given, which an Earthsiege 2 install refuses.</summary>
 	public bool Staged { get; set; }
 	public int? Theater { get; set; }
 	public int? WorldVariant { get; set; }
 	public int? WorldDetail { get; set; }
-
-	/// <summary>Preferences option 7 for the run, an engine aid; null leaves the one <c>data\prefs.cfg</c> holds.</summary>
-	public int? StickModel { get; set; }
 
 	/// <summary>The header words the flags override, null for each one not given.</summary>
 	public Es1HeaderOverrides ToOverrides() => new(Theater, WorldVariant, WorldDetail);

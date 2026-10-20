@@ -62,6 +62,19 @@ public class Es1JoystickDevice {
 	/// <summary><c>InputDevice_Enable</c> (<c>0004b1c0</c>) on <c>+0x78</c>.</summary>
 	public void Enable() => InputEnabled = true;
 
+	/// <summary>
+	/// <c>JoystickDevice_Dtor</c> (<c>0004b7a8</c>)(this, 3) (docs/es1/simulation/joystick.md#the-device-object): the
+	/// device's enabled byte cleared, as is its kind's record; the bits of its axis mask taken out of
+	/// <c>JoystickClaimedAxes</c> and its axis count off <c>JoystickClaimedAxisCount</c>; and the joystick object
+	/// destroyed (<see cref="Es1Joystick.Shutdown"/>). The caller drops the device, which retail frees.
+	/// </summary>
+	public void Destroy() {
+		InputEnabled = false;
+		_globals.ClaimedAxes &= (byte)~Joystick.AxisMask;
+		_globals.ClaimedAxisCount -= (byte)Joystick.AxisCount;
+		Joystick.Shutdown();
+	}
+
 	/// <summary>Slot <c>+4</c> of the device's vtable: the record. This class's is <see cref="ReadWithResponse"/>.</summary>
 	public virtual Es1JoystickRecord ReadState() => ReadWithResponse();
 

@@ -86,6 +86,13 @@ public sealed class Es1Joystick {
 	}
 
 	/// <summary>
+	/// <c>DVJoystick_Dtor</c> (<c>0006b470</c>)(this, 0), as <c>JoystickDevice_Dtor</c> runs it: with the GL slot held,
+	/// <c>DVJoystick_Shutdown</c> (<c>0006b604</c>) clears bit 0 of <c>+0</c>, so the poll and the normalisations do
+	/// nothing (docs/es1/simulation/joystick.md#construction-and-detection).
+	/// </summary>
+	public void Shutdown() => Enabled = false;
+
+	/// <summary>
 	/// <c>DVJoystick_Poll</c> (<c>0006b614</c>): while enabled, <c>DVJoystick_ReadRaw</c> (<c>0006be9f</c>) takes each
 	/// axis in <see cref="AxisMask"/> from the port, and <c>DVJoystick_ReadButtons</c> (<c>0006bf10</c>) the buttons into
 	/// <see cref="Buttons"/> and <see cref="ButtonsCopy"/> (docs/es1/simulation/joystick.md#reading-the-axes,

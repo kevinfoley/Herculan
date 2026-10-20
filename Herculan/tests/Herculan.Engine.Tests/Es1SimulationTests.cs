@@ -23,7 +23,7 @@ public class Es1SimulationTests {
 
 		var steps = new List<short>();
 		for (int i = 0; i < 3; i++) {
-			sim.DispatchCommand(Command(Es1Simulation.Ctrl1));
+			sim.Dispatch(Command(Es1Simulation.Ctrl1));
 			steps.Add(sim.Controls.ThrottleLeverMode);
 		}
 
@@ -40,7 +40,7 @@ public class Es1SimulationTests {
 		var (sim, player) = NewSimulation();
 		player.Throttle = 0x200;
 
-		short answer = sim.DispatchCommand(Command(Es1MechCommands.Keypad5));
+		short answer = sim.Dispatch(Command(Es1MechCommands.Keypad5));
 
 		Assert.Equal(1, answer);
 		Assert.Equal(0, player.Throttle);
@@ -61,15 +61,15 @@ public class Es1SimulationTests {
 		var held = new Es1Simulation(sim.Globals, [group], sim.LocalPlayer, null, sim.Input);
 		int countdown = member.Behaviour.Countdown;
 
-		held.MainTick();
+		held.Tick();
 		Assert.Equal(countdown, member.Behaviour.Countdown);
 
 		action.Activated = true;
-		held.MainTick();
+		held.Tick();
 		Assert.Null(group.Action);
 		Assert.Equal(countdown, member.Behaviour.Countdown);
 
-		held.MainTick();
+		held.Tick();
 		Assert.NotEqual(countdown, member.Behaviour.Countdown);
 	}
 
@@ -87,7 +87,7 @@ public class Es1SimulationTests {
 		var ticking = new Es1Simulation(sim.Globals, [group], player, null, sim.Input);
 
 		Keyboard.Keyboard.Dispatch(Keypad8);
-		ticking.MainTick();
+		ticking.Tick();
 
 		Assert.NotEqual(0, player.PlaybackRate);
 		Assert.Equal(0, player.LocomotionThread!.Rate);
@@ -103,13 +103,13 @@ public class Es1SimulationTests {
 		var (sim, player) = NewSimulation();
 		player.Twist = 0x800;
 
-		sim.PollPlayerInput(Command(Es1Simulation.Backspace));
+		sim.Poll(Command(Es1Simulation.Backspace));
 		Assert.True(sim.CenterTurretMode);
 		Assert.InRange(player.Twist, 0, 0x7ff);
 
 		var twist = Command(0);
 		twist.Axes[Es1PlayerInputBlock.Twist] = 0x100;
-		sim.PollPlayerInput(twist);
+		sim.Poll(twist);
 		Assert.False(sim.CenterTurretMode);
 	}
 

@@ -10,16 +10,29 @@ public sealed class Es1ControlsState {
 	private readonly Es1Preferences _preferences;
 
 	/// <summary>
-	/// The state <c>Prefs_Load</c>'s handlers leave: <c>Input_SetStickMode</c> (<c>0004ad88</c>) copies option 8 into
-	/// <see cref="StickMode"/>, and <c>Input_SetThrottleLeverMode</c> (<c>0004ad94</c>) sets
-	/// <see cref="ThrottleLeverMode"/> to 1 when option 10 is not 0 and to 0 when it is
-	/// (docs/es1/simulation/input.md#the-stick-mode, docs/es1/simulation/mech-locomotion.md#the-throttle--mech_applythrottleinput-00011afc).
+	/// Options 8's and 10's handlers registered with <paramref name="preferences"/>, as <c>Prefs_Init</c> registers them,
+	/// and run with the options as loaded, as <c>Prefs_Load</c> runs them: <see cref="SetStickMode"/> and
+	/// <see cref="SetThrottleLeverMode"/>.
 	/// </summary>
 	public Es1ControlsState(Es1Preferences preferences) {
 		_preferences = preferences;
-		StickMode = preferences.StickMode;
-		ThrottleLeverMode = (short)(preferences.ThrottleKeys ? 1 : 0);
+		preferences.SetHandler(Es1Preferences.StickModeOption, SetStickMode);
+		preferences.SetHandler(Es1Preferences.ThrottleKeysOption, SetThrottleLeverMode);
+		SetStickMode(preferences.StickMode);
+		SetThrottleLeverMode(preferences[Es1Preferences.ThrottleKeysOption]);
 	}
+
+	/// <summary>
+	/// <c>Input_SetStickMode</c> (<c>0004ad88</c>), option 8's handler: the value into <see cref="StickMode"/>
+	/// (docs/es1/simulation/input.md#the-stick-mode).
+	/// </summary>
+	public void SetStickMode(byte value) => StickMode = value;
+
+	/// <summary>
+	/// <c>Input_SetThrottleLeverMode</c> (<c>0004ad94</c>), option 10's handler: <see cref="ThrottleLeverMode"/> 1 for a
+	/// value that is not 0 and 0 for 0 (docs/es1/simulation/mech-locomotion.md#the-throttle--mech_applythrottleinput-00011afc).
+	/// </summary>
+	public void SetThrottleLeverMode(byte value) => ThrottleLeverMode = (short)(value != 0 ? 1 : 0);
 
 	/// <summary><c>Input_StickMode</c> (<c>00095819</c>): 0, 1 (movement) or 2 (turret).</summary>
 	public byte StickMode { get; set; }

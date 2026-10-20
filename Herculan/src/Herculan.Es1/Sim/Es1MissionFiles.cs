@@ -11,7 +11,7 @@ namespace Herculan.Es1.Sim;
 /// The three files the shell hands the simulator in the install's <c>data\</c>, as <c>DBSim_LoadScriptDat</c>
 /// (<c>ES1DBSIM 0001d850</c>) opens them (docs/es1/formats/script-dat.md#reading): <c>data\mission.var</c>,
 /// <c>data\player.mec</c> and <c>data\script.dat</c>, each under a severity-5 assert when it does not open; and the
-/// options of <c>data\prefs.cfg</c> (<see cref="Preferences"/>, and the detail setting, <see cref="DetailOption"/>).
+/// options of <c>data\prefs.cfg</c> (<see cref="Preferences"/>).
 /// </summary>
 /// <param name="Flags">The 100 flags of <c>data\mission.var</c>.</param>
 /// <param name="Player">The squad of <c>data\player.mec</c>.</param>
@@ -34,19 +34,9 @@ public sealed record Es1MissionFiles(short[] Flags, Es1PlayerMec Player, Es1Scri
 	/// <summary>The preferences file <c>Prefs_Load</c> (<c>0004a744</c>) reads.</summary>
 	public const string PrefsName = "prefs.cfg";
 
-	/// <summary>The byte of <c>data\prefs.cfg</c> that holds option 6, the detail setting.</summary>
-	public const int DetailOptionOffset = 6;
-
 	/// <summary>
-	/// Preferences option 6, byte 6 of <c>data\prefs.cfg</c>, which <c>Sim_StartMission</c> applies before the first
-	/// frame (docs/es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08); null when
-	/// the file is missing or shorter.
-	/// </summary>
-	public byte? DetailOption { get; init; }
-
-	/// <summary>
-	/// The 17 option bytes of <c>data\prefs.cfg</c> as <c>Prefs_Load</c> reads them, all 0 when the file is missing,
-	/// from the same read as <see cref="DetailOption"/>, which keeps its own rule for a missing or short file.
+	/// The 17 option bytes of <c>data\prefs.cfg</c> as <c>Prefs_Init</c> loads them, all 0 when the file is missing; the
+	/// simulator's live options, which the preferences panel changes and saves back to the same file.
 	/// </summary>
 	public Es1Preferences Preferences { get; init; } = Es1Preferences.Default;
 
@@ -107,8 +97,7 @@ public sealed record Es1MissionFiles(short[] Flags, Es1PlayerMec Player, Es1Scri
 
 		error = null;
 		return new Es1MissionFiles(flags, player, script) {
-			DetailOption = prefs is { Length: > DetailOptionOffset } ? prefs[DetailOptionOffset] : null,
-			Preferences = Es1Preferences.FromFile(prefs),
+			Preferences = Es1Preferences.Load(prefs, prefsPath, Es1Preferences.VoiceArchiveExists(installRoot)),
 		};
 	}
 }

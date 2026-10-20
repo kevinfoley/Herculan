@@ -52,8 +52,16 @@ public abstract class Es1Widget {
 	public bool HitTest(int x, int y) =>
 		!IsDiamond ? Rect.Contains(x, y) : Math.Abs(x - CenterX) + Math.Abs(y - CenterY) <= Radius;
 
+	/// <summary>Slot <c>+4</c>, the paint; the button base's does nothing.</summary>
+	public virtual void Paint() {
+	}
+
 	/// <summary>Slot <c>+8</c>, invalidate, which <c>Widget_Repaint</c> calls.</summary>
 	public abstract void Invalidate();
+
+	/// <summary>Slot <c>+0x10</c>, the per-frame call a panel's loop makes; the button base's does nothing.</summary>
+	public virtual void Tick() {
+	}
 
 	/// <summary>Slot <c>+0xc</c>, the click, with what <see cref="GetValue"/> answered.</summary>
 	public abstract void OnClick(short value);

@@ -23,22 +23,46 @@ public sealed class Es1InputBuild {
 	private byte _missileArm;
 
 	/// <summary>
-	/// <c>Input_BuildSourceTable</c>'s part from the joystick devices on: the devices built on <paramref name="port"/>
-	/// (<c>Input_CreateJoystickDevices</c>, which <c>Prefs_Init</c> runs last), the live block polled once, the four
-	/// latches cleared, and <paramref name="keyjoy"/>, <c>Keyjoy_LoadConfig</c>'s read. Option 10 goes to the axis
-	/// keys, which read it for <c>Ctrl+I</c> and <c>Ctrl+M</c>.
+	/// <c>Input_BuildSourceTable</c>'s part from the joystick devices on: option 11's handler,
+	/// <see cref="ApplyMouseOption"/>, registered and run with the option as loaded, as <c>Prefs_Init</c> registers it
+	/// and <c>Prefs_Load</c> runs it; the devices built on <paramref name="port"/> (<c>Input_CreateJoystickDevices</c>,
+	/// which <c>Prefs_Init</c> runs last); the live block polled once; the four latches cleared; and
+	/// <paramref name="keyjoy"/>, <c>Keyjoy_LoadConfig</c>'s read. The axis keys read option 10 from
+	/// <paramref name="preferences"/> for <c>Ctrl+I</c> and <c>Ctrl+M</c>.
 	/// </summary>
 	public Es1InputBuild(Es1KeyboardInput keyboard, Es1HostMouse mouse, Es1Preferences preferences,
 		Es1KeyjoyConfig keyjoy, Es1ControlsState controls, IEs1GamePort port) {
 		_keyboard = keyboard;
+		Mouse = mouse;
+		_preferences = preferences;
+		preferences.SetHandler(Es1Preferences.MouseOption, ApplyMouseOption);
+		ApplyMouseOption(preferences[Es1Preferences.MouseOption]);
 		Joysticks = Es1JoystickDevices.Create(preferences, port);
 		_poll = new Es1DevicePoll(keyboard, mouse, Joysticks);
-		_preferences = preferences;
 		_keyjoy = keyjoy;
 		Controls = controls;
-		keyboard.AxisKeys.ThrottleKeysOption = preferences.ThrottleKeys;
+		keyboard.AxisKeys.ThrottleKeysOption = () => preferences.ThrottleKeys;
 		LiveBlock = _poll.Poll();
 		controls.Latches.Clear();
+	}
+
+	/// <summary>The mouse driver, <c>Input_GetMouseDevice</c>'s, which <c>Input_BuildSourceTable</c> always builds.</summary>
+	public Es1HostMouse Mouse { get; }
+
+	/// <summary>
+	/// <c>Prefs_MouseOptionApplied</c> (<c>000956c0</c>): option 11 as <see cref="ApplyMouseOption"/> last applied it,
+	/// <c>0xff</c> in the image, so the first call always applies.
+	/// </summary>
+	public byte MouseOptionApplied { get; private set; } = 0xff;
+
+	/// <summary>
+	/// The mouse input device's enabled byte (<c>+0x3a</c>), which <c>InputDevice_Enable</c> and
+	/// <c>InputDevice_Disable</c> set and clear; while it is clear the live block takes no pointer and no buttons
+	/// (<see cref="Es1DevicePoll.MouseDeviceEnabled"/>).
+	/// </summary>
+	public bool MouseDeviceEnabled {
+		get => _poll.MouseDeviceEnabled;
+		set => _poll.MouseDeviceEnabled = value;
 	}
 
 	/// <summary>The joystick devices option 7 and option 9 name.</summary>
@@ -52,6 +76,15 @@ public sealed class Es1InputBuild {
 
 	/// <summary><c>Input_LiveBlockPtr</c> (<c>000b1840</c>): the last poll, as the build left it.</summary>
 	public Es1LiveBlock LiveBlock { get; private set; }
+
+	/// <summary>
+	/// <c>PlayerInputBlock</c> (<c>000b17ac</c>), the block the last <see cref="Build"/> filled and returned; none before
+	/// the first. Each build fills a new block here, so a block a caller holds is never changed by a later build.
+	/// </summary>
+	public Es1PlayerInputBlock? PlayerInputBlock { get; set; }
+
+	/// <summary>The preferences the build reads, <c>data\prefs.cfg</c>'s options.</summary>
+	public Es1Preferences Preferences => _preferences;
 
 	/// <summary>
 	/// <c>Input_BuildPlayerDevice</c>: one tick's input block, in retail's order. The stick mode read at entry decides
@@ -184,6 +217,26 @@ public sealed class Es1InputBuild {
 			block.Axes[Es1PlayerInputBlock.Steering] = (short)-block.Axes[Es1PlayerInputBlock.Steering];
 		}
 
+		PlayerInputBlock = block;
 		return block;
+	}
+
+	/// <summary>
+	/// <c>Prefs_ApplyMouseOption</c> (<c>0004ad54</c>), option 11's handler (docs/es1/simulation/preferences.md#the-option-array):
+	/// when <paramref name="value"/> differs from <see cref="MouseOptionApplied"/>, it is kept there and, with the mouse
+	/// device <c>Input_BuildSourceTable</c> always builds, the driver turned off for 0 (<c>Mouse_DisableDriver</c>) and
+	/// on otherwise (<c>Mouse_EnableDriver</c>).
+	/// </summary>
+	public void ApplyMouseOption(byte value) {
+		if (value == MouseOptionApplied) {
+			return;
+		}
+
+		MouseOptionApplied = value;
+		if (value == 0) {
+			Mouse.DisableDriver();
+		} else {
+			Mouse.EnableDriver();
+		}
 	}
 }

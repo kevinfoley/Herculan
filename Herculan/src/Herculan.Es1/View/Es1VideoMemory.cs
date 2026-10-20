@@ -188,6 +188,44 @@ public sealed class Es1VideoMemory {
 		}
 	}
 
+	/// <summary>One cell of the draw page at (<paramref name="x"/>, <paramref name="y"/>) set to <paramref name="value"/>, a palette index or <see cref="WorldCell"/>.</summary>
+	public void Plot(int x, int y, ushort value) => Write(Address(DrawPage, x, y), value);
+
+	/// <summary>
+	/// The cells of the source page's inclusive rect {<paramref name="x0"/>, <paramref name="y0"/>, <paramref name="x1"/>,
+	/// <paramref name="y1"/>}, row by row: what <c>Region_SaveRect</c> (<c>00066470</c>) grabs into a region's buffer
+	/// through the driver. A cell the world was drawn into keeps <see cref="WorldCell"/>, whose pixels the world layer
+	/// holds.
+	/// </summary>
+	public ushort[] ReadRect(int x0, int y0, int x1, int y1) {
+		int width = x1 - x0 + 1, rows = y1 - y0 + 1;
+		var cells = new ushort[Math.Max(0, width) * Math.Max(0, rows)];
+		for (int y = 0; y < rows; y++) {
+			for (int x = 0; x < width; x++) {
+				cells[y * width + x] = Cells[Address(SourcePage, x0 + x, y0 + y)];
+			}
+		}
+
+		return cells;
+	}
+
+	/// <summary>
+	/// <paramref name="cells"/>, as <see cref="ReadRect"/> read them, written to the draw page's inclusive rect
+	/// {<paramref name="x0"/>, <paramref name="y0"/>, <paramref name="x1"/>, <paramref name="y1"/>}, every cell, as
+	/// <c>Region_RestoreRect</c> (<c>00066354</c>) blits a region's buffer with the opaque flag <c>0x10</c>.
+	/// </summary>
+	public void WriteRect(int x0, int y0, int x1, int y1, ushort[] cells) {
+		int width = x1 - x0 + 1, rows = y1 - y0 + 1;
+		for (int y = 0; y < rows; y++) {
+			for (int x = 0; x < width; x++) {
+				int source = y * width + x;
+				if (source < cells.Length) {
+					Write(Address(DrawPage, x0 + x, y0 + y), cells[source]);
+				}
+			}
+		}
+	}
+
 	/// <summary>
 	/// <c>Region_CopyBetweenPages</c> (<c>00066914</c>) of the type-0 region {<paramref name="x0"/>, <paramref name="y0"/>,
 	/// <paramref name="x1"/>, <paramref name="y1"/>} at the offset (<paramref name="offsetX"/>, <paramref name="offsetY"/>)

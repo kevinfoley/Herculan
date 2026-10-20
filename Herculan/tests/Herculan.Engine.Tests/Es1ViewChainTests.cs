@@ -35,7 +35,7 @@ public class Es1ViewChainTests {
 	public void TheCockpitsKeysQueueTheirViewCommandsFromTheForwardView(int code, int answer, int pending) {
 		var (views, _) = Views(NewMech(new Es1SimGlobals(), 0));
 
-		Assert.Equal(answer, views.Cockpit.HandleCommand((ushort)code));
+		Assert.Equal(answer, views.Cockpit.Command((ushort)code));
 		Assert.Equal(pending, views.PendingCommand);
 	}
 
@@ -95,7 +95,7 @@ public class Es1ViewChainTests {
 		world.TickUntil(Es1Simulation.V, () => chain.View == Es1ViewChain.OutsideView);
 		var playersCamera = chain.Camera;
 
-		world.Simulation.PollPlayerInput(new Es1PlayerInputBlock { CommandWord = Es1Simulation.N });
+		world.Simulation.Poll(new Es1PlayerInputBlock { CommandWord = Es1Simulation.N });
 
 		Assert.Same(world.Squadmate, chain.Viewed);
 		Assert.Same(world.Squadmate, chain.Chosen);
@@ -205,7 +205,7 @@ public class Es1ViewChainTests {
 		/// </summary>
 		public void TickUntil(ushort code, Func<bool> done) {
 			for (int tick = 0; tick < MaxTicks; tick++) {
-				Simulation.PollPlayerInput(new Es1PlayerInputBlock { CommandWord = tick == 0 ? code : (ushort)0 });
+				Simulation.Poll(new Es1PlayerInputBlock { CommandWord = tick == 0 ? code : (ushort)0 });
 				Simulation.ViewChain.Apply(Simulation.Controls);
 				int retraces = 0;
 				foreach (var _ in Frames.RunFrame(frozen: false)) {

@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using HercWorks.Core.Data.File.Dbsim;
 using Herculan.Es1.Host;
 using Herculan.Es1.Sim;
@@ -147,13 +148,11 @@ public class Es1FramePacingTests {
 
 		public bool Frozen => false;
 
-		public Es1SimulationRunner.Frame AdvanceHostFrame(TimeSpan elapsed) {
-			if (!_clock.AdvanceHostFrame(elapsed)) {
-				return Es1SimulationRunner.Frame.NoTick;
-			}
+		public bool AdvanceClock(TimeSpan elapsed) => _clock.AdvanceHostFrame(elapsed);
 
+		public IEnumerable<Es1Wait> Tick(StrongBox<bool> ended) {
 			Deltas.Add(_clock.TickDelta);
-			return Es1SimulationRunner.Frame.Ticked;
+			return [];
 		}
 
 		public void Hold(TimeSpan elapsed) => _clock.Hold(elapsed);

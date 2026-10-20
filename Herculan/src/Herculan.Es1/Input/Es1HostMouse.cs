@@ -52,6 +52,34 @@ public sealed class Es1HostMouse {
 	public Func<ScreenPointer>? Pointer { get; set; }
 
 	/// <summary>
+	/// Whether the driver reports the mouse, which <see cref="DisableDriver"/> and <see cref="EnableDriver"/> turn off and
+	/// on; on from the start. While it is off the host's moves and button changes are not events: the pointer and the
+	/// word keep their last values and no callback runs.
+	/// </summary>
+	public bool DriverEnabled { get; private set; } = true;
+
+	/// <summary>
+	/// <c>Mouse_DisableDriver</c> (<c>00055a76</c>), <c>INT 33h</c> function <c>0x1f</c>
+	/// (docs/es1/simulation/input.md#the-mouse-driver): the driver stops reporting the mouse, so the cockpit's pointer
+	/// stops where it stands. <see cref="PostEvent"/>, which calls the event handler itself, still runs.
+	/// </summary>
+	public void DisableDriver() => DriverEnabled = false;
+
+	/// <summary>
+	/// <c>Mouse_EnableDriver</c> (<c>00055a90</c>), <c>INT 33h</c> function <c>0x20</c>: the driver reports the mouse
+	/// again. <b>This engine's own:</b> the host's pointer is put on the driver's last position, since the host kept moving
+	/// it while a disabled DOS driver tracked nothing, so the next move goes on from where the pointer stopped.
+	/// </summary>
+	public void EnableDriver() {
+		if (DriverEnabled) {
+			return;
+		}
+
+		DriverEnabled = true;
+		WarpHost();
+	}
+
+	/// <summary>
 	/// Takes the host mouse's events; a second call moves them to the new device. A position <see cref="SetPosition"/>
 	/// gave before there was a device is put on the host's pointer now, as the driver's pointer would already be there.
 	/// </summary>
@@ -119,7 +147,7 @@ public sealed class Es1HostMouse {
 
 	/// <summary>One host move to the client position (<paramref name="clientX"/>, <paramref name="clientY"/>): a move event at the screen pixel under it.</summary>
 	internal void OnMove(float clientX, float clientY) {
-		if (Pointer == null) {
+		if (Pointer == null || !DriverEnabled) {
 			return;
 		}
 
@@ -129,6 +157,10 @@ public sealed class Es1HostMouse {
 
 	/// <summary>One host button event: the button's bit set or cleared, and its press or release event at the pointer. Other buttons are not the driver's three.</summary>
 	internal void OnButton(MouseButton button, bool down) {
+		if (!DriverEnabled) {
+			return;
+		}
+
 		var (bit, pressed, released) = button switch {
 			MouseButton.Left => (LeftBit, LeftPressed, LeftReleased),
 			MouseButton.Right => (RightBit, RightPressed, RightReleased),
@@ -182,7 +214,7 @@ public sealed class Es1HostMouse {
 
 	/// <summary>The pointer read from the host before a button event, which the driver reports with the pointer where it is.</summary>
 	private void SyncFromHost(IMouse mouse) {
-		if (Pointer != null) {
+		if (Pointer != null && DriverEnabled) {
 			(X, Y) = Pointer().ToScreen(mouse.Position.X, mouse.Position.Y);
 		}
 	}

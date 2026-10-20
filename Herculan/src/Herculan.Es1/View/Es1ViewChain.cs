@@ -172,9 +172,10 @@ public sealed class Es1ViewChain {
 
 	/// <summary>
 	/// <c>ViewChain_DrawCaption</c> (<c>00058b68</c>) on the draw page below the external view's rect: the name is
-	/// <see cref="Es1ViewCaption.YouText"/> for the player.
+	/// <see cref="Es1ViewCaption.YouText"/> for the player. <see cref="Apply"/> calls it while the caption's frames count
+	/// down, and <c>PreferencesPanel_Raise</c> on its return to view 4.
 	/// </summary>
-	private void DrawCaption(Es1ControlsState controls) {
+	internal void DrawCaption(Es1ControlsState controls) {
 		if (Manager == null || Caption == null) {
 			return;
 		}

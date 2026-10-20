@@ -1,3 +1,4 @@
+using Herculan.Engine.Content;
 using Herculan.Engine.Input;
 using Herculan.Es1.Input;
 using Herculan.Es1.Sim;
@@ -26,23 +27,26 @@ public sealed class Es1SimulationStart : IDisposable {
 	private readonly Es1World _world;
 	private readonly string _installRoot;
 	private readonly Es1Preferences _preferences;
-	private readonly bool _stickModelFromFlag;
 	private readonly IKeyboard? _keyboard;
 	private readonly Es1HostMouse? _mouse;
 	private readonly MappedController _controller;
 	private readonly View.Es1ViewChain? _viewChain;
+	private readonly Panels.Es1WidgetResources? _widgets;
+	private readonly GameContent? _content;
 	private int _frames;
 
-	/// <param name="preferences">The install's <c>data\prefs.cfg</c>, with <c>--stick-model</c>'s option 7 applied.</param>
-	/// <param name="stickModelFromFlag">Whether option 7 came from <c>--stick-model</c>.</param>
+	/// <param name="preferences">The install's <c>data\prefs.cfg</c>.</param>
 	/// <param name="viewChain">The views and cameras the mission start built, handed to the simulation.</param>
-	public Es1SimulationStart(Es1World world, string installRoot, Es1Preferences preferences, bool stickModelFromFlag,
-			IInputContext input, IKeyboard? keyboard, Es1HostMouse? mouse, View.Es1ViewChain? viewChain = null) {
+	/// <param name="widgets">What <c>Widget_LoadStylesAndFonts</c> loaded at the mission start, handed to the panels.</param>
+	/// <param name="content">The volumes the panels' own files are read from.</param>
+	public Es1SimulationStart(Es1World world, string installRoot, Es1Preferences preferences, IInputContext input, IKeyboard? keyboard, Es1HostMouse? mouse, View.Es1ViewChain? viewChain = null,
+			Panels.Es1WidgetResources? widgets = null, GameContent? content = null) {
 		_viewChain = viewChain;
+		_widgets = widgets;
+		_content = content;
 		_world = world;
 		_installRoot = installRoot;
 		_preferences = preferences;
-		_stickModelFromFlag = stickModelFromFlag;
 		_keyboard = keyboard;
 		_mouse = mouse;
 		// The install's maps, read and never written; with no file the device's defaults apply.
@@ -64,14 +68,15 @@ public sealed class Es1SimulationStart : IDisposable {
 		}
 
 		var port = Es1ControllerPort.Over(_controller);
-		Runner = new Es1SimulationRunner(_world, _installRoot, _preferences, _keyboard, _mouse, port, _viewChain);
+		Runner = new Es1SimulationRunner(_world, _installRoot, _preferences, _keyboard, _mouse, port, _viewChain, _widgets,
+			_content);
 		Console.WriteLine(Describe(port));
 		return Runner;
 	}
 
 	public void Dispose() => Runner?.Dispose();
 
-	/// <summary>The controller found, option 7's model and where it came from, and the port axes that answer.</summary>
+	/// <summary>The controller found, option 7's model at the mission start, and the port axes that answer.</summary>
 	private string Describe(Es1ControllerPort port) {
 		string controller = _controller.Device is { } device
 			? $"{(device.IsGamepad ? "gamepad" : "joystick")} \"{device.Name}\""
@@ -89,7 +94,7 @@ public sealed class Es1SimulationStart : IDisposable {
 		string rudder = Runner?.Simulation.Input.Joysticks.Second is Es1ThrustmasterRcsDevice ? ", option 9 IMThrustmasterRCS" : "";
 		var answering = Enumerable.Range(0, 4).Where(port.AxisAnswers).ToArray();
 		return $"Controller: {controller}; option 7 = {option7}, {model} " +
-			$"(from {(_stickModelFromFlag ? "--stick-model" : "data\\prefs.cfg")}){rudder}; " +
+			$"(from data\\prefs.cfg){rudder}; " +
 			$"port axes answering: {(answering.Length > 0 ? string.Join(", ", answering) : "none")}.";
 	}
 }

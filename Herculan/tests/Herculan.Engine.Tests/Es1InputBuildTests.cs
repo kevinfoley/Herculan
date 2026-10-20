@@ -120,7 +120,8 @@ public class Es1InputBuildTests {
 	public void MouseButtonHoldsFromOneHostEventToTheNext() {
 		var input = new Es1KeyboardInput(0);
 		var mouse = new Es1HostMouse();
-		var prefs = Es1Preferences.FromFile(null);
+		// Option 11 on, or Prefs_ApplyMouseOption turns the driver off at the start.
+		var prefs = Prefs((Es1Preferences.MouseOption, 1));
 		var build = new Es1InputBuild(input, mouse, prefs, Es1KeyjoyConfig.Parse(""), new Es1ControlsState(prefs), Es1NoStickPort.Instance);
 
 		mouse.OnButton(MouseButton.Right, true);

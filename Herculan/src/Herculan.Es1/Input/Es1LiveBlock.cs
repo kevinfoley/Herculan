@@ -81,18 +81,26 @@ public sealed class Es1DevicePoll {
 	public ushort ReadKeyboardCommand() => _keyboard.PopCommand();
 
 	/// <summary>
+	/// The mouse input device's enabled byte, which <c>Input_BuildSourceTable</c> sets; <c>Input_ReadMouseState</c>
+	/// (<c>0004c51c</c>) answers 0 while it is clear.
+	/// </summary>
+	public bool MouseDeviceEnabled { get; set; } = true;
+
+	/// <summary>
 	/// One poll, in retail's order: the keyboard's word with <c>0x1000</c> and <c>0x2000</c> cleared and <c>+0x25</c>;
 	/// the joysticks' poll, then each device's record, kind 3's and then kind 4's, merged when it answers; the mouse's
-	/// pointer and buttons 0, 1 and 2 from the driver's last record (<see cref="Es1HostMouse"/>) and <c>+0x28</c>.
+	/// pointer and buttons 0, 1 and 2 from the driver's last record (<see cref="Es1HostMouse"/>) and <c>+0x28</c>, the
+	/// pointer and buttons left 0 while <see cref="MouseDeviceEnabled"/> is clear.
 	/// </summary>
 	public Es1LiveBlock Poll() {
 		ushort word = (ushort)(ReadKeyboardCommand() & ~LockBits);
+		bool mouse = MouseDeviceEnabled;
 		var block = new Es1LiveBlock {
 			CommandWord = word,
 			KeyboardEnabled = true,
-			PointerX = _mouse.X,
-			PointerY = _mouse.Y,
-			MouseEnabled = true,
+			PointerX = mouse ? _mouse.X : 0,
+			PointerY = mouse ? _mouse.Y : 0,
+			MouseEnabled = mouse,
 		};
 
 		_joysticks.Poll();
@@ -102,7 +110,7 @@ public sealed class Es1DevicePoll {
 			}
 		}
 
-		ushort buttons = _mouse.Buttons;
+		ushort buttons = mouse ? _mouse.Buttons : (ushort)0;
 		block.MouseButtons[0] = (byte)((buttons & Es1HostMouse.LeftBit) != 0 ? 1 : 0);
 		block.MouseButtons[1] = (byte)((buttons & Es1HostMouse.RightBit) != 0 ? 1 : 0);
 		block.MouseButtons[2] = (byte)((buttons & Es1HostMouse.MiddleBit) != 0 ? 1 : 0);

@@ -59,8 +59,11 @@ public sealed class Es1AxisKeys {
 	/// </summary>
 	public short ThrottleStep { get; set; }
 
-	/// <summary>Preferences option 10 (<c>000bd56c</c>), set by the input build's owner.</summary>
-	public bool ThrottleKeysOption { get; set; }
+	/// <summary>
+	/// Where preferences option 10 (<c>000bd56c</c>) is read from at each key, as retail reads the byte, so the controls
+	/// panel's WCS row takes effect at once; the input build points it at its options. None reads the option as off.
+	/// </summary>
+	public Func<bool>? ThrottleKeysOption { get; set; }
 
 	/// <summary><c>DemoMode</c>, set by the owner of a demo's playback: the axis keys claim all 28 codes and raise <see cref="DemoAbort"/>.</summary>
 	public bool DemoMode { get; set; }
@@ -78,7 +81,7 @@ public sealed class Es1AxisKeys {
 			return Es1Keyboard.Claimed;
 		}
 
-		if (ThrottleKeysOption && (code & Es1Keyboard.CtrlBit) != 0 && (code & Es1Keyboard.AltBit) == 0) {
+		if (ThrottleKeysOption?.Invoke() == true && (code & Es1Keyboard.CtrlBit) != 0 && (code & Es1Keyboard.AltBit) == 0) {
 			// The four dwords at 00095898 hold I and M and their key-ups; only the two make codes step.
 			switch (code & 0xff) {
 				case ThrottleUpScancode:

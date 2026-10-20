@@ -82,8 +82,6 @@ static class HostArguments {
 		or runs on the DATA files it holds)
 		  --theater <0-3>             header word 0: desert, temper, ice, urban, over DATA\script.dat's
 		  --world <0-2> <0-1>         header words 9 and 8, the palette and world file, over DATA\script.dat's
-		  --stick-model <0-5>         preferences option 7, the stick model, over DATA\prefs.cfg's; an engine aid,
-		                              no retail counterpart, until the in-mission preferences panel sets it
 
 		Front end (none combines with --mission)
 		  --shell-tab <0-7>  --shell-bay <0-7>  --shell-practice
