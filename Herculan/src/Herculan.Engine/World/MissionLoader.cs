@@ -20,36 +20,8 @@ namespace Herculan.Engine.World;
 /// that builds objects. Anything reading only the first pass will conclude, wrongly, that
 /// <c>script.dat</c> carries no positions.</para>
 ///
-/// <para>The placement rule that pass implements, with the RE for each step:</para>
-/// <list type="number">
-/// <item><b>Which objects exist.</b> Every block-11 record past the first is an activation
-/// directive: a 3-way discriminator naming a roster (mech/flyer/base) and up to 20 refs into it.
-/// Each ref marks that roster slot live. Records that mark nothing spawn nothing, which is why a
-/// mission's roster is routinely larger than its live object count.</item>
-/// <item><b>Where they stand.</b> The same block-11 record carries a position ref, a heading ref and
-/// a route, and <c>DBSim_BuildGroupRecord</c> (<c>00423b34</c>) builds it into a group record holding all three. Each member is
-/// then attached by <c>Mech_AttachToGroup</c> (<c>00417aa8</c>), which fills in the member's position <i>only if the object
-/// does not already have one of its own</i> — so a roster record's own position ref wins where it is
-/// set, and the group's is the fallback. In retail data the roster refs are always unset, so in
-/// practice every object stands at its group's point.</item>
-/// <item><b>Groups with no point of their own</b> fall back to their route: the group's row-15 links
-/// resolve to a waypoint group, and <c>Route_WaypointAt</c> (<c>00423b0c</c>) takes a waypoint from it. Patrol lances are
-/// placed this way — the retail mission's three mech lances all are.</item>
-/// <item><b>The player's lance</b> is not in <c>script.dat</c>'s roster at all. Block 11's
-/// <b>record 0</b> exists only to hold its spawn point: <c>DBSim_LoadScriptDat</c> skips it during
-/// activation, and <c>DBSim_SpawnMissionObjects</c> (<c>004253d8</c>) overwrites its member list with the entries read from
-/// <c>player.mec</c>.</item>
-/// </list>
-///
-/// <para><b>Formation offsets: mechs and bases implemented, flyers still a known gap.</b> Every
-/// member of a group is placed on the group's own point by the rule above; the original then
-/// spreads non-leader members off that point via a per-kind vtable <c>+0x78</c> call
-/// (<c>Mech_ApplyFormationOffset</c> (<c>00417898</c>) for mechs, <c>Base_ApplyFormationOffset</c> (<c>00405c04</c>) for bases —
-/// same slot, same "member index 0 takes no offset" rule). Both tables are implemented:
-/// <see cref="MechFormationTable"/> (<c>dat\MFORMS.DAT</c>) and <see cref="BaseFormationTable"/>
-/// (<c>dat\BFORMS.DAT</c>) — see each class's doc comment for its load-site RE and byte-exact
-/// verification. Flyers remain unfixed; retail missions were not seen putting more than one flyer
-/// in a group.</para>
+/// <para>The placement rule that pass implements is <see cref="MissionPlacementRules"/>, which this loader calls with the
+/// points, headings, routes and member refs it resolves out of the blocks.</para>
 ///
 /// <para><b>Not every group is in the mission when it starts.</b> A block-11 record whose
 /// <c>ActionRef</c> names a block-5 action is <i>waiting on that action</i>, and until it fires the
@@ -117,19 +89,6 @@ public static class MissionLoader {
 		return CaseInsensitivePath.Combine(directory, slot.Length == 0 ? TextFileName : $"missn{slot}.str");
 	}
 
-	/// <summary>
-	/// Degrees-to-binary-angle constant. DBSIM applies this to every block-2 value as it reads them
-	/// (<c>*(short *)local_7c = local_102[0] * 0xb6</c>), which is what identifies that block as
-	/// headings in degrees rather than an opaque discrete field.
-	/// </summary>
-	private const int DegreesToBinaryAngle = 0xb6;
-
-	/// <summary>The block-11 record reserved for the player's lance; it activates nothing.</summary>
-	private const int PlayerGroupIndex = 0;
-
-	/// <summary>Members a block-11 record can name.</summary>
-	private const int GroupMemberSlots = 20;
-
 	/// <summary>Row-15 links a block-11 record can name.</summary>
 	private const int GroupRouteSlots = 10;
 
@@ -165,23 +124,28 @@ public static class MissionLoader {
 		var baseFormations = BaseFormationTable.Load(content);
 
 		var groups = ResolveGroups(script, baseFormations);
-		var claims = ClaimSlots(script, groups);
+		var members = GroupMembers(script, groups);
+		var mechClaims = MissionPlacementRules.ClaimMembers(MissionUnitKind.Mech, members);
+		var flyerClaims = MissionPlacementRules.ClaimMembers(MissionUnitKind.Flyer, members);
+		var baseClaims = MissionPlacementRules.ClaimMembers(MissionUnitKind.Base, members);
 
+		// The three rosters in the order DBSIM's spawn pass walks them, one placement per live slot.
 		var placements = new List<MissionPlacement>();
-		AddRoster(script, claims, mechNames, flyerNames, mechFormations, flyerFormations, baseFormations,
-			placements);
+		AddMechs(script, groups, mechClaims, mechNames, mechFormations, placements);
+		AddFlyers(script, groups, flyerClaims, flyerNames, flyerFormations, placements);
+		AddBases(script, groups, baseClaims, baseFormations, placements);
 
 		var counters = LoadCounters(CaseInsensitivePath.Combine(Path.GetDirectoryName(scriptPath) ?? ".", CountersFileName));
 		var player = LoadPlayerLance(scriptPath, script, groups, mechFormations, mechNames, placements);
-		var basePads = ResolveBasePads(groups, claims[MissionUnitKind.Base], baseFormations, placements);
+		var basePads = ResolveBasePads(groups, baseClaims, baseFormations, placements);
 
 		var coordinates = new List<Vec3i>(script.Coordinates.Length);
 		foreach (var point in script.Coordinates) {
 			coordinates.Add(new Vec3i(point.X, point.Y, point.Z));
 		}
 
-		var playerRoute = groups.Length > PlayerGroupIndex
-			? Route(groups[PlayerGroupIndex].Orders)
+		var playerRoute = groups.Length > MissionPlacementRules.SquadGroupIndex
+			? Route(groups[MissionPlacementRules.SquadGroupIndex].Orders)
 			: Array.Empty<Vec3i>();
 
 		var groupOrders = new IReadOnlyList<MissionOrder?>[groups.Length];
@@ -436,33 +400,19 @@ public static class MissionLoader {
 	private const int TriggerRadiusScale = 10;
 
 	/// <summary>
-	/// The ground each base group repaints. <c>DBSim_SpawnMissionObjects</c> (<c>004253d8</c>) runs
-	/// this for a group whose <c>MemberKind</c> is 2 and whose <c>PaintsGround</c> is set, passing
-	/// <c>Base_ApplyFormationTerrain</c> (<c>00405db0</c>) the group's <i>first-attached</i> member —
-	/// the lowest populated slot of its <c>MemberRefs</c> array, not necessarily slot 0,
-	/// though every retail base group that paints does populate slot 0.
+	/// The ground each base group repaints: one pad per group with a <see cref="MissionPlacementRules.PadLayout"/>, read
+	/// from where its <see cref="MissionPlacementRules.PadLead{TKey}"/> stands.
 	/// </summary>
 	private static List<MissionBasePad> ResolveBasePads(Group[] groups,
-			Dictionary<int, Claim> baseClaims, BaseFormationTable baseFormations,
+			IReadOnlyDictionary<int, MissionMemberClaim> baseClaims, BaseFormationTable baseFormations,
 			List<MissionPlacement> placements) {
 		var pads = new List<MissionBasePad>();
 
 		foreach (var group in groups) {
-			if (group.Kind != MissionUnitKind.Base || !group.PaintsGround) {
+			if (MissionPlacementRules.PadLayout(group.Kind, group.Setup.PaintsGround, group.Setup.FormationId,
+					baseFormations) is not { } layout
+				|| MissionPlacementRules.PadLead(baseClaims, group.Index) is not { } leadSlot) {
 				continue;
-			}
-
-			if (baseFormations.LayoutFor(group.FormationId) is not { } layout) {
-				continue;
-			}
-
-			int leadSlot = -1;
-			int leadMember = int.MaxValue;
-			foreach (var (slot, claim) in baseClaims) {
-				if (claim.Group.Index == group.Index && claim.MemberIndex < leadMember) {
-					leadMember = claim.MemberIndex;
-					leadSlot = slot;
-				}
 			}
 
 			var lead = placements.FirstOrDefault(
@@ -490,38 +440,18 @@ public static class MissionLoader {
 	/// every comparison in the simulation amounts to — the sweep in <c>Detection</c> is the only
 	/// place that tests for a literal value, and it tests for Cybrid.
 	/// </param>
-	/// <param name="PaintsGround">
-	/// The record's <c>PaintsGround</c> (raw msn offset <c>0x06</c>), set on 39 of the 61 retail
-	/// block-11 records. For a base group it gates both halves of the base-formation terrain pass:
-	/// the anchor move applied below, and the repaint of the same tile — see
-	/// <see cref="MissionBasePad"/> and <see cref="BaseFormationLayout"/>.
-	/// </param>
 	/// <param name="Orders">
 	/// The record's ten row-15 links resolved into order records, nulls kept in the slots it left
 	/// unset — <c>DBSim_BuildGroupRecord</c> (<c>00423b34</c>) copies the array position for position
 	/// into <c>group+0x44</c>, and <c>Group_OrderTick</c> reads it by index. See
 	/// docs/retail/simulation/ai-goals.md.
 	/// </param>
-	/// <param name="AuthoredPoint"><inheritdoc cref="MissionGroupSetup.AuthoredPoint"/></param>
-	/// <param name="PointSource"><inheritdoc cref="MissionGroupSetup.PointSource"/></param>
-	/// <param name="HeadingFromRoute"><inheritdoc cref="MissionGroupSetup.HeadingFromRoute"/></param>
-	private readonly record struct Group(int Index, MissionUnitKind Kind, Vec3i Position, int Heading,
-		int FormationId, int DeploymentAction, MissionSide Side, bool PaintsGround,
-		MissionOrder?[] Orders, Vec3i AuthoredPoint, MissionGroupPointSource PointSource,
-		bool HeadingFromRoute) {
-
-		/// <summary>The public view of the record, for <see cref="Mission.GroupSetups"/>.</summary>
-		public MissionGroupSetup Setup => new(Position, AuthoredPoint, PointSource, Heading, HeadingFromRoute,
-			FormationId, PaintsGround);
-	}
-
-	/// <summary>
-	/// A roster slot's claim: which group activated it, and the slot's index within that group's
-	/// <c>MemberRefs</c> array — the "member index" <see cref="BaseFormationTable.OffsetFor"/>
-	/// needs, which is the array position, not a compacted count of live members (see
-	/// <see cref="ClaimSlots"/>).
-	/// </summary>
-	private readonly record struct Claim(Group Group, int MemberIndex);
+	/// <param name="Setup">
+	/// The record's own point, heading and formation, as <see cref="MissionPlacementRules.GroupSetup"/> places it, for
+	/// its members and for <see cref="Mission.GroupSetups"/>.
+	/// </param>
+	private readonly record struct Group(int Index, MissionUnitKind Kind, MissionGroupSetup Setup,
+		int DeploymentAction, MissionSide Side, MissionOrder?[] Orders);
 
 	private static Group[] ResolveGroups(ScriptDat script, BaseFormationTable baseFormations) {
 		var groups = new Group[script.Groups.Length];
@@ -529,136 +459,51 @@ public static class MissionLoader {
 		for (int i = 0; i < groups.Length; i++) {
 			var record = script.Groups[i];
 			var orders = Orders(script, record);
-			var route = Route(orders);
 			var kind = KindOf(record.MemberKind);
-
-			var ownPoint = Coordinate(script, record.PositionRef);
-			var position = ownPoint
-				?? (route.Count > 0 ? route[0] : (Vec3i?)null)
-				?? Vec3i.Zero;
-			var authored = position;
-			var pointSource = ownPoint != null ? MissionGroupPointSource.OwnPoint
-				: route.Count > 0 ? MissionGroupPointSource.RouteStart
-				: MissionGroupPointSource.None;
-			var ownHeading = Heading(script, record.HeadingRef);
-
-			// A structure group that paints its ground also stands at a fixed spot on it. The
-			// mission's own point only picks the tile; the formation supplies the position within
-			// it. Machines never do this -- Mech_AttachToGroup (00417aa8) takes no such flag and
-			// has no equivalent arithmetic.
-			if (kind == MissionUnitKind.Base && record.PaintsGround != 0
-				&& baseFormations.LayoutFor(record.FormationId) is { } layout) {
-				var (snappedX, snappedY) = layout.SnapAnchor(position.X, position.Y);
-				position = new Vec3i(snappedX, snappedY, position.Z);
-			}
 
 			groups[i] = new Group(
 				i,
 				kind,
-				position,
-				ownHeading ?? RouteBearing(route),
-				record.FormationId,
+				MissionPlacementRules.GroupSetup(kind, Coordinate(script, record.PositionRef),
+					Heading(script, record.HeadingRef), Route(orders), record.FormationId, record.PaintsGround != 0,
+					baseFormations),
 				ActionRef(script, record.DeploymentActionRef),
 				record.Side == (short)MissionSide.Cybrid
 					? MissionSide.Cybrid
 					: MissionSide.Human,
-				record.PaintsGround != 0,
-				orders,
-				authored,
-				pointSource,
-				ownHeading == null);
+				orders);
 		}
 
 		return groups;
 	}
 
 	/// <summary>
-	/// Which way a group faces when its own record names no heading: along the first leg of its
-	/// route. <c>DBSim_SpawnMissionObjects</c> (<c>004253d8</c>) takes the route's first two
-	/// waypoints and calls <c>Math_HeadingToward</c> (<c>00492828</c>) with the second one first, which is
-	/// <c>atan2(dy, dx) - 0x4000</c> — the same quarter turn every bearing in the simulation carries,
-	/// since a machine's forward axis is model Y rather than model X.
-	///
-	/// <para>A route with fewer than two waypoints leaves the heading at zero, which is the branch
-	/// the original guards with its <c>1 &lt; waypointCount</c> test. Retail missions reach this for
-	/// every patrolling group <i>and</i> for the player's own squad — none of those records carry a
-	/// heading ref — so without it a whole mission faced due north and every formation spread was
-	/// rotated by the wrong angle.</para>
+	/// Each block-11 record's kind and member refs, a negative ref naming nothing, as
+	/// <see cref="MissionPlacementRules.ClaimMembers{TKey}"/> takes them: the claims are keyed by roster slot.
 	/// </summary>
-	public static int RouteBearing(IReadOnlyList<Vec3i> route) {
-		if (route.Count < 2) {
-			return 0;
+	private static (MissionUnitKind Kind, IReadOnlyList<int?> Members)[] GroupMembers(ScriptDat script, Group[] groups) {
+		var members = new (MissionUnitKind Kind, IReadOnlyList<int?> Members)[groups.Length];
+
+		for (int i = 0; i < groups.Length; i++) {
+			members[i] = (groups[i].Kind,
+				Array.ConvertAll(script.Groups[i].MemberRefs, member => member >= 0 ? (int?)member : null));
 		}
 
-		int dx = route[1].X - route[0].X;
-		int dy = route[1].Y - route[0].Y;
-
-		// Math_Atan2Guarded (00492800)'s degenerate guard, which nudges x — not y — so a zero-length first leg reads
-		// as a bearing of zero rather than a quarter turn off it.
-		if (dx == 0 && dy == 0) {
-			dx = 1;
-		}
-
-		return (SimTrig.Atan2(dy, dx) - BinaryAngle.QuarterTurn) & 0xffff;
+		return members;
 	}
 
-	/// <summary>
-	/// First-claim map, one entry per roster: slot index to the group that places it, and the slot's
-	/// position within that group's member-ref array. Groups are walked in file order and the first
-	/// to name a slot wins, matching <c>Mech_AttachToGroup</c> (<c>00417aa8</c>)'s "only if it has no
-	/// position yet" test. The player's group is skipped, since it activates nothing.
-	///
-	/// <para>The member index recorded here is the raw array position (0-19), <b>not</b> a count of
-	/// live members seen so far — <c>DBSim_BuildGroupRecord</c> (<c>00423b34</c>) passes the loop
-	/// index itself as the attach-time slot, gaps and all, and that is what <c>BaseFormationTable</c>
-	/// indexes by.</para>
-	/// </summary>
-	private static Dictionary<MissionUnitKind, Dictionary<int, Claim>> ClaimSlots(
-			ScriptDat script, Group[] groups) {
-		var claims = new Dictionary<MissionUnitKind, Dictionary<int, Claim>> {
-			[MissionUnitKind.Mech] = new(),
-			[MissionUnitKind.Flyer] = new(),
-			[MissionUnitKind.Base] = new()
-		};
-
-		for (int i = PlayerGroupIndex + 1; i < groups.Length; i++) {
-			var group = groups[i];
-			if (!claims.TryGetValue(group.Kind, out var bySlot)) {
-				continue;
-			}
-
-			var refs = script.Groups[i].MemberRefs;
-			for (int slot = 0; slot < GroupMemberSlots && slot < refs.Length; slot++) {
-				short member = refs[slot];
-				if (member >= 0) {
-					bySlot.TryAdd(member, new Claim(group, slot));
-				}
-			}
-		}
-
-		return claims;
-	}
-
-	/// <summary>
-	/// Walks the three rosters in the order DBSIM's spawn pass does, emitting one placement per live
-	/// slot.
-	/// </summary>
-	private static void AddRoster(ScriptDat script,
-			Dictionary<MissionUnitKind, Dictionary<int, Claim>> claims,
-			UnitTypeNames mechNames, UnitTypeNames flyerNames, MechFormationTable mechFormations,
-			FlyerFormationTable flyerFormations, BaseFormationTable baseFormations,
-			List<MissionPlacement> placements) {
-		var mechClaims = claims[MissionUnitKind.Mech];
+	/// <summary>Block 7's live slots, one placement each, in slot order.</summary>
+	private static void AddMechs(ScriptDat script, Group[] groups, IReadOnlyDictionary<int, MissionMemberClaim> claims,
+			UnitTypeNames mechNames, MechFormationTable mechFormations, List<MissionPlacement> placements) {
 		for (int slot = 0; slot < script.Mechs.Length; slot++) {
-			if (!mechClaims.TryGetValue(slot, out var claim)) {
+			if (!claims.TryGetValue(slot, out var claim)) {
 				continue;
 			}
 
-			var group = claim.Group;
+			var group = groups[claim.Group];
 			var record = script.Mechs[slot];
-			var offset = mechFormations.OffsetFor(group.FormationId, claim.MemberIndex);
-			var ownPoint = Coordinate(script, record.PositionRef);
-			var position = ownPoint ?? OffsetFromGroup(group, mechFormations, claim.MemberIndex);
+			var place = MissionPlacementRules.PlaceHerc(group.Setup, mechFormations, claim.MemberIndex,
+				Coordinate(script, record.PositionRef), Heading(script, record.HeadingRef));
 
 			placements.Add(new MissionPlacement(
 				MissionUnitKind.Mech,
@@ -666,59 +511,65 @@ public static class MissionLoader {
 				mechNames[record.TypeIndex],
 				slot,
 				group.Index,
-				position,
-				Heading(script, record.HeadingRef) ?? group.Heading,
+				place.Position,
+				place.Heading,
 				record.WeaponRefs,
 				record.WeaponSecondary,
 				Side: group.Side,
 				AiCruiseSpeed: record.AiCruiseSpeed,
 				AiRadarActive: record.AiRadarActive != 0,
-				FormationOffset: offset is { } o ? (o.X, o.Y) : null,
+				FormationOffset: place.FormationOffset,
 				EngagementActionRef: ActionRef(script, record.EngagementActionRef),
 				DefeatActionRef: ActionRef(script, record.DefeatActionRef),
 				StartingCondition: record.StartingCondition,
 				OutOfActionReport: new OutOfActionReport(record.CounterRefs, record.CounterOps),
-				GroundPoint: ownPoint == null ? group.Position : null));
+				GroundPoint: place.GroundPoint));
 		}
+	}
 
-		var flyerClaims = claims[MissionUnitKind.Flyer];
+	/// <summary>Block 8's live slots, one placement each, in slot order.</summary>
+	private static void AddFlyers(ScriptDat script, Group[] groups, IReadOnlyDictionary<int, MissionMemberClaim> claims,
+			UnitTypeNames flyerNames, FlyerFormationTable flyerFormations, List<MissionPlacement> placements) {
 		for (int slot = 0; slot < script.Flyers.Length; slot++) {
-			if (!flyerClaims.TryGetValue(slot, out var claim)) {
+			if (!claims.TryGetValue(slot, out var claim)) {
 				continue;
 			}
 
-			var group = claim.Group;
+			var group = groups[claim.Group];
 			var record = script.Flyers[slot];
-			var offset = flyerFormations.OffsetFor(group.FormationId, claim.MemberIndex);
+			var place = MissionPlacementRules.PlaceFlyer(group.Setup, flyerFormations, claim.MemberIndex,
+				Coordinate(script, record.PositionRef), Heading(script, record.HeadingRef));
+
 			placements.Add(new MissionPlacement(
 				MissionUnitKind.Flyer,
 				record.TypeIndex,
 				flyerNames[record.TypeIndex],
 				slot,
 				group.Index,
-				Coordinate(script, record.PositionRef)
-					?? OffsetFromGroup(group, flyerFormations, claim.MemberIndex),
-				Heading(script, record.HeadingRef) ?? group.Heading,
+				place.Position,
+				place.Heading,
 				Array.Empty<short>(),
 				Array.Empty<short>(),
 				Side: group.Side,
-				FlyerFormationOffset: offset,
+				FlyerFormationOffset: place.FlyerFormationOffset,
 				EngagementActionRef: ActionRef(script, record.EngagementActionRef),
 				DefeatActionRef: ActionRef(script, record.DefeatActionRef),
 				OutOfActionReport: new OutOfActionReport(record.CounterRefs, record.CounterOps)));
 		}
+	}
 
-		var baseClaims = claims[MissionUnitKind.Base];
+	/// <summary>Block 9's live slots, one placement each, in slot order.</summary>
+	private static void AddBases(ScriptDat script, Group[] groups, IReadOnlyDictionary<int, MissionMemberClaim> claims,
+			BaseFormationTable baseFormations, List<MissionPlacement> placements) {
 		for (int slot = 0; slot < script.Bases.Length; slot++) {
-			if (!baseClaims.TryGetValue(slot, out var claim)) {
+			if (!claims.TryGetValue(slot, out var claim)) {
 				continue;
 			}
 
-			var group = claim.Group;
+			var group = groups[claim.Group];
 			var record = script.Bases[slot];
-			var offset = baseFormations.OffsetFor(group.FormationId, claim.MemberIndex);
-			var position = Coordinate(script, record.PositionRef)
-				?? OffsetFromGroup(group, baseFormations, claim.MemberIndex);
+			var place = MissionPlacementRules.PlaceStructure(group.Setup, baseFormations, claim.MemberIndex,
+				Coordinate(script, record.PositionRef), Heading(script, record.HeadingRef));
 
 			placements.Add(new MissionPlacement(
 				MissionUnitKind.Base,
@@ -726,13 +577,12 @@ public static class MissionLoader {
 				null,
 				slot,
 				group.Index,
-				position,
-				Heading(script, record.HeadingRef)
-					?? HeadingFromGroup(group, baseFormations, claim.MemberIndex),
+				place.Position,
+				place.Heading,
 				Array.Empty<short>(),
 				Array.Empty<short>(),
 				Side: group.Side,
-				FormationOffset: offset is { } o ? (o.X, o.Y) : null,
+				FormationOffset: place.FormationOffset,
 				EngagementActionRef: ActionRef(script, record.EngagementActionRef),
 				DefeatActionRef: ActionRef(script, record.DefeatActionRef),
 				StartingCondition: record.StartingCondition,
@@ -741,81 +591,9 @@ public static class MissionLoader {
 	}
 
 	/// <summary>
-	/// Which way a structure faces when its own record names no heading: its group's heading plus its
-	/// formation slot's own turn — see <see cref="BaseFormationTable.HeadingNudgeFor"/> for the trace
-	/// and for the evidence that this is a real per-slot field and not a spread artefact.
-	///
-	/// <para>The cast is the original's: <c>Base_AttachToGroup</c> accumulates into a <c>short</c>, so
-	/// the sum wraps rather than running past a full turn.</para>
-	/// </summary>
-	private static int HeadingFromGroup(Group group, BaseFormationTable baseFormations, int memberIndex) =>
-		(short)(group.Heading + baseFormations.HeadingNudgeFor(group.FormationId, memberIndex));
-
-	/// <summary>
-	/// A base's spawn point when it carries no coordinate of its own: the group's point, spread by
-	/// its <see cref="BaseFormationTable"/> entry for this member's slot (member 0, the group's
-	/// first-claimed slot, always takes no offset — see that class's doc comment) and rotated by the
-	/// group's own heading, mirroring <c>Formation_RotateAndAddOffset</c> (<c>00411d64</c>).
-	/// </summary>
-	private static Vec3i OffsetFromGroup(Group group, BaseFormationTable baseFormations, int memberIndex) {
-		var offset = baseFormations.OffsetFor(group.FormationId, memberIndex);
-		return offset is { } o ? FormationSpread(group.Position, group.Heading, o.X, o.Y) : group.Position;
-	}
-
-	/// <summary>
-	/// A mech's spawn point when it carries no coordinate of its own: the group's point, spread by
-	/// its <see cref="MechFormationTable"/> entry for this member's slot and rotated by the group's
-	/// heading — the mech-side twin of the base overload above, both implementing
-	/// <c>Mech_ApplyFormationOffset</c>/<c>Base_ApplyFormationOffset</c>'s shared
-	/// <c>Formation_RotateAndAddOffset</c> (<c>00411d64</c>) rule.
-	/// </summary>
-	private static Vec3i OffsetFromGroup(Group group, MechFormationTable mechFormations, int memberIndex) {
-		var offset = mechFormations.OffsetFor(group.FormationId, memberIndex);
-		return offset is { } o ? FormationSpread(group.Position, group.Heading, o.X, o.Y) : group.Position;
-	}
-
-	/// <summary>
-	/// A flyer's spawn point when its own record names no coordinate — <c>Flyer_AttachToGroup</c> (<c>00421ee8</c>)'s
-	/// unset-position branch, which takes the group's point and runs it through the flyer's own
-	/// <c>+0x78</c> formation slot. The Z rides along, which is what staggers a flight vertically;
-	/// the ground classes' offsets have none.
-	/// </summary>
-	private static Vec3i OffsetFromGroup(Group group, FlyerFormationTable flyerFormations,
-			int memberIndex) {
-		if (flyerFormations.OffsetFor(group.FormationId, memberIndex) is not { } offset) {
-			return group.Position;
-		}
-
-		var spread = FormationSpread(group.Position, group.Heading, offset.X, offset.Y);
-		return new Vec3i(spread.X, spread.Y, spread.Z + offset.Z);
-	}
-
-	/// <summary>
-	/// Rotates a formation offset by the group's heading and adds it to <paramref name="anchor"/> —
-	/// the fixed-point 2D rotation <c>Formation_RotateAndAddOffset</c> (<c>00411d64</c>) reduces to
-	/// for a heading-only object (no pitch/roll), shared by every formation kind.
-	/// </summary>
-	public static Vec3i FormationSpread(Vec3i anchor, int heading, int dx, int dy) {
-		short cos = BinaryAngle.Cos(heading);
-		short sin = BinaryAngle.Sin(heading);
-		int worldDx = (int)(((long)dx * cos - (long)dy * sin + 0x2000) >> 14);
-		int worldDy = (int)(((long)dx * sin + (long)dy * cos + 0x2000) >> 14);
-
-		return new Vec3i(anchor.X + worldDx, anchor.Y + worldDy, anchor.Z);
-	}
-
-	/// <summary>
-	/// Reads the player's squad and places it around block 11's reserved record-0 point. Returns the
-	/// entry the player themself pilots, which is the one worth putting a camera on.
-	///
-	/// <para>The squad spreads exactly as any other group does, because in the original it <i>is</i>
-	/// one: <c>DBSim_SpawnMissionObjects</c> (<c>004253d8</c>) gives every <c>player.mec</c> entry
-	/// the unset-position sentinel and writes the entries into record 0's member array in file
-	/// order, so <c>DBSim_BuildGroupRecord</c> (<c>00423b34</c>) attaches entry <i>i</i> as member
-	/// slot <i>i</i> and <c>Mech_ApplyFormationOffset</c> (<c>00417898</c>) spreads every slot past
-	/// the first. The same offset is the squadmate's post every tick it keeps formation on the
-	/// player (<see cref="Sim.MechObject.FormationOffset"/>); without it the post is the player's own
-	/// position, and <c>Mech_CollisionTest</c> refuses a position that overlaps another machine.</para>
+	/// Reads the player's squad and places it around block 11's reserved record-0 point, each entry as
+	/// <see cref="MissionPlacementRules.PlaceSquadMember"/> spreads it. Returns the entry the player themself pilots,
+	/// which is the one worth putting a camera on.
 	///
 	/// <para>Entry <i>i</i> takes as its <see cref="MissionPlacement.SlotIndex"/> the block-7 slot that
 	/// record 0's member ref <i>i</i> names, or -1 when that ref is unset, so the mission's own mech
@@ -843,33 +621,33 @@ public static class MissionLoader {
 			return null;
 		}
 
-		var spawn = groups[PlayerGroupIndex];
-		var squadRefs = script.Groups[PlayerGroupIndex].MemberRefs;
+		var spawn = groups[MissionPlacementRules.SquadGroupIndex];
+		var squadRefs = script.Groups[MissionPlacementRules.SquadGroupIndex].MemberRefs;
 		MissionPlacement? player = null;
 
 		for (int i = 0; i < lance.Entries.Length; i++) {
 			var entry = lance.Entries[i];
-			int slot = i < GroupMemberSlots && i < squadRefs.Length && squadRefs[i] >= 0
+			int slot = i < MissionPlacementRules.GroupMemberSlots && i < squadRefs.Length && squadRefs[i] >= 0
 				? squadRefs[i]
 				: -1;
-			var offset = mechFormations.OffsetFor(spawn.FormationId, i);
+			var place = MissionPlacementRules.PlaceSquadMember(spawn.Setup, mechFormations, i);
 
 			var placement = new MissionPlacement(
 				MissionUnitKind.Mech,
 				entry.MechType,
 				mechNames[entry.MechType],
 				slot,
-				PlayerGroupIndex,
-				OffsetFromGroup(spawn, mechFormations, i),
-				spawn.Heading,
+				MissionPlacementRules.SquadGroupIndex,
+				place.Position,
+				place.Heading,
 				entry.WeaponRefs,
 				entry.WeaponAmmoTypes,
 				IsPlayerLance: true,
 				PilotIndex: entry.PilotNameIndex,
 				Side: spawn.Side,
-				FormationOffset: offset is { } o ? (o.X, o.Y) : null,
+				FormationOffset: place.FormationOffset,
 				SquadCondition: SquadCondition.Of(entry),
-				GroundPoint: spawn.Position);
+				GroundPoint: place.GroundPoint);
 
 			placements.Add(placement);
 			if (i == lance.PlayerEntryIndex) {
@@ -900,7 +678,7 @@ public static class MissionLoader {
 
 	private static int? Heading(ScriptDat script, short reference) =>
 		reference >= 0 && reference < script.Headings.Length
-			? script.Headings[reference].Degrees * DegreesToBinaryAngle
+			? MissionPlacementRules.HeadingFromDegrees(script.Headings[reference].Degrees)
 			: null;
 
 	/// <summary>
@@ -947,7 +725,7 @@ public static class MissionLoader {
 
 	/// <summary>
 	/// The route a group walks, and the fallback for a group with no point of its own: it stands on
-	/// the route's first waypoint and faces along its first leg (see <see cref="RouteBearing"/>),
+	/// the route's first waypoint and faces along its first leg (see <see cref="MissionPlacementRules.GroupSetup"/>),
 	/// which is how every patrolling group and the player's own squad are placed.
 	///
 	/// <para><b>Slot 0's route, and only slot 0's.</b> <c>DBSim_BuildGroupRecord</c>

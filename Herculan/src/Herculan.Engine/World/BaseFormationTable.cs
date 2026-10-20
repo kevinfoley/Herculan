@@ -172,8 +172,10 @@ public sealed class BaseFormationTable {
 	public BaseFormationLayout? LayoutFor(int formationId) =>
 		formationId >= 0 && formationId < _layouts.Length ? _layouts[formationId] : null;
 
-	public static BaseFormationTable Load(GameContent content) {
-		byte[] bytes = content.ReadRequired(ResourceFolder, ResourceName);
+	public static BaseFormationTable Load(GameContent content) => Parse(content.ReadRequired(ResourceFolder, ResourceName));
+
+	/// <summary>The table out of its bytes.</summary>
+	public static BaseFormationTable Parse(byte[] bytes) {
 		int offset = 0;
 
 		int NextInt32() {

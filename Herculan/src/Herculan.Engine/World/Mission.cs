@@ -195,7 +195,7 @@ public enum MissionGroupPointSource {
 
 	/// <summary>
 	/// The first waypoint of the route its order slot 0 names, which is where a group with no point
-	/// of its own stands — see <see cref="MissionLoader"/>, step 3.
+	/// of its own stands — see <see cref="MissionPlacementRules.GroupSetup"/>.
 	/// </summary>
 	RouteStart,
 
@@ -206,7 +206,7 @@ public enum MissionGroupPointSource {
 /// <summary>
 /// One block-11 record's own placement: the point and heading its members spread from, and how they
 /// spread. A member whose roster record names its own point ignores the first two; see
-/// <see cref="MissionLoader"/>.
+/// <see cref="MissionPlacementRules"/>.
 /// </summary>
 /// <param name="Point">
 /// The point its members spread from, after a paints-ground structure group's snap to a fixed spot in

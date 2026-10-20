@@ -173,7 +173,7 @@ internal sealed class PointFollowers {
 				point = new Vec3i(x, y, authored.Z);
 			}
 
-			int heading = setup.HeadingFromRoute ? MissionLoader.RouteBearing(route) : setup.Heading;
+			int heading = setup.HeadingFromRoute ? MissionPlacementRules.RouteBearing(route) : setup.Heading;
 			if (point == setup.Point && authored == setup.AuthoredPoint && source == setup.PointSource && heading == setup.Heading) {
 				continue;
 			}
@@ -230,11 +230,11 @@ internal sealed class PointFollowers {
 	}
 
 	private static Vec3i GroundSpread(MissionGroupSetup setup, (int X, int Y)? offset) =>
-		offset is { } o ? MissionLoader.FormationSpread(setup.Point, setup.Heading, o.X, o.Y) : setup.Point;
+		offset is { } o ? MissionPlacementRules.FormationSpread(setup.Point, setup.Heading, o.X, o.Y) : setup.Point;
 
 	// A flyer keeps the point's Z, its slot's Z added, and 5000 when that comes out zero.
 	private static Vec3i FlyerSpread(MissionGroupSetup setup, Vec3i? offset) {
-		var spread = offset is { } o ? MissionLoader.FormationSpread(setup.Point, setup.Heading, o.X, o.Y) : setup.Point;
+		var spread = offset is { } o ? MissionPlacementRules.FormationSpread(setup.Point, setup.Heading, o.X, o.Y) : setup.Point;
 		int z = setup.Point.Z + (offset?.Z ?? 0);
 		return new Vec3i(spread.X, spread.Y, z == 0 ? FlyerObject.DefaultHoverHeight : z);
 	}

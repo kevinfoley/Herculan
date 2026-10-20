@@ -55,7 +55,7 @@ public sealed record SceneObject(SimObject Object, SceneModel? Model, MissionPla
 ///
 /// <para>Nothing here is configured by hand. The zone, the theater and its variant come out of
 /// <c>script.dat</c>'s header; the units, their types, positions and headings come out of its
-/// rosters and activation records (see <see cref="MissionLoader"/> for the rule and the RE behind
+/// rosters and activation records (see <see cref="MissionPlacementRules"/> for the rule and the RE behind
 /// it); the player's own lance comes out of <c>player.mec</c>. The previous milestone's single
 /// hardcoded mech at the middle of the zone is gone.</para>
 ///
@@ -637,7 +637,7 @@ public sealed class MissionScene {
 	/// <para>The rotation sign is the simulation's, not the camera's. A HERC's forward vector is
 	/// <c>(-sin h, cos h)</c> in world XY — that falls out of <c>BuildEulerRotationMatrixQ14</c>'s
 	/// Z-only matrix and the row-vector transform, and it is the same sense
-	/// <see cref="MissionLoader"/>'s formation spread rotates in. <see cref="Camera"/>'s yaw runs
+	/// <see cref="MissionPlacementRules.FormationSpread"/> rotates in. <see cref="Camera"/>'s yaw runs
 	/// the other way, so anything attaching a camera to an object's heading negates it; this
 	/// transform must not.</para>
 	///

@@ -377,7 +377,7 @@ public static class Detection {
 	/// The original's argument order is the destination first; this takes them the way round the name
 	/// reads. The degenerate guard is <c>Math_Atan2Guarded</c> (<c>00492800</c>)'s own, which nudges the <b>x</b> delta so a
 	/// pair standing on the same spot reads as a bearing of zero — the same guard
-	/// <see cref="World.MissionLoader"/> applies to a route with no length.
+	/// <see cref="World.MissionPlacementRules.RouteBearing"/> applies to a route with no length.
 	/// </remarks>
 	public static short HeadingToward(Vec3i to, Vec3i from) => (short)(
 		SimTrig.Atan2Guarded(to.Y - from.Y, to.X - from.X) - BinaryAngle.QuarterTurn);

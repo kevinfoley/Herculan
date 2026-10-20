@@ -30,7 +30,7 @@ public readonly record struct MechFormationOffset(int X, int Y);
 /// (<c>00417898</c>, mech vtable <c>+0x78</c>) no-ops for member-index 0 (the leader) and otherwise
 /// looks up <c>Formation_GetSlotOffset(formationId, memberIndex)</c>, rotated into world space by
 /// <c>Formation_RotateAndAddOffset</c> (<c>00411d64</c>) — same plain 2D rotation
-/// <see cref="MissionLoader"/> already implements for bases.</para>
+/// <see cref="MissionPlacementRules.FormationSpread"/> implements for every kind.</para>
 /// </summary>
 public sealed class MechFormationTable {
 	/// <summary>VOL folder and name of the table.</summary>
