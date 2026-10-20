@@ -8,11 +8,12 @@ namespace Herculan.Engine.Editor;
 internal sealed record ConditionUse(string Label, EditorSelection? Target);
 
 /// <summary>
-/// What references a condition (<see cref="ConditionEditor.UsesOf"/>): the records the editor's state holds, one per line, and
-/// how many more the state leaves out, by kind.
+/// What references a condition (<see cref="ConditionEditor.UsesOf"/>): the records the editor's state holds, one per line, how
+/// many more the state leaves out, by kind, and how many variant alternatives, which no state places, records copying from them.
 /// </summary>
-internal sealed record ConditionUses(IReadOnlyList<ConditionUse> Shown, IReadOnlyList<(string Kind, int Count)> LeftOut) {
-	public bool Any => Shown.Count > 0 || LeftOut.Count > 0;
+internal sealed record ConditionUses(IReadOnlyList<ConditionUse> Shown, IReadOnlyList<(string Kind, int Count)> LeftOut,
+		int Alternatives) {
+	public bool Any => Shown.Count > 0 || LeftOut.Count > 0 || Alternatives > 0;
 }
 
 /// <summary>
@@ -109,7 +110,7 @@ internal sealed class ConditionEditor {
 	/// </summary>
 	public ConditionUses UsesOf(short guid) {
 		if (_source is not { } source) {
-			return new ConditionUses([], []);
+			return new ConditionUses([], [], 0);
 		}
 
 		var namers = ConditionEditing.Namers(source, guid);
@@ -118,9 +119,10 @@ internal sealed class ConditionEditor {
 		void Leave(string kind) => leftOut[kind] = leftOut.GetValueOrDefault(kind) + 1;
 
 		var orders = new List<MsnRecordId>();
+		int alternatives = 0;
 		foreach (var record in namers.Records) {
 			if (record.Row is >= 6 and <= 16 && source.RecordAt(record) is { GUID: -1 }) {
-				Leave("variant alternatives");
+				alternatives++;
 				continue;
 			}
 
@@ -169,7 +171,7 @@ internal sealed class ConditionEditor {
 		}
 
 		return new ConditionUses(shown.DistinctBy(use => use.Label).ToList(),
-			leftOut.Select(pair => (pair.Key, pair.Value)).ToList());
+			leftOut.Select(pair => (pair.Key, pair.Value)).ToList(), alternatives);
 	}
 
 	/// <summary>A record the editor's state exports at <paramref name="index"/> of the block row <paramref name="row"/> is written to, by its identity.</summary>

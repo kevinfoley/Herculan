@@ -97,6 +97,62 @@ internal sealed class VariantView {
 	}
 
 	/// <summary>
+	/// Draws range <paramref name="range"/>'s view, after the condition view's title, as the alternative it chooses: which of
+	/// its table's, with a link to the table, its chance and what it is, then the records that drew it in the campaign state
+	/// shown. Its chance, and removing it, are the table's view's. Answers false, drawing nothing, when the range is over no
+	/// table or chooses no alternative its table reads.
+	/// </summary>
+	public bool DrawRange(short range) {
+		if (_editor.Source is not { } source || VariantEditing.TableOfRange(source, range) is not { } guid
+				|| VariantEditing.Table(source, guid) is not { } table) {
+			return false;
+		}
+
+		int at = table.Alternatives.ToList().FindIndex(alternative => alternative.Range == range);
+		if (at < 0) {
+			return false;
+		}
+
+		var alternative = table.Alternatives[at];
+		ImGui.PushID($"range{range}");
+		ImGui.Separator();
+		ImGui.Text($"Alternative {at + 1} of");
+		ImGui.SameLine();
+		_links.Link($"Condition {guid}", new ConditionSelection(guid));
+		ImGui.SameLine(0f, 0f);
+		ImGui.TextWrapped($": {table.Percent(alternative.Draws):0.#}%, {_summary(source.RecordAt(alternative.Record)!)}");
+		EditorText.Note("Its chance is set in its table's view.");
+		ImGui.Spacing();
+		DrawDrawnNow(source, table, alternative);
+		ImGui.PopID();
+		return true;
+	}
+
+	// The records that drew <alternative> in the state shown, one identity link per line.
+	private void DrawDrawnNow(MissionDocument source, VariantTable table, VariantAlternative alternative) {
+		var drawing = source.Generator.VariantPicks.Where(pick => pick.Value.Source == alternative.Record)
+			.Select(pick => source.Provenance.ExportedSlot(pick.Key) is { } slot ? _conditions.Identity(pick.Key.Row, slot.Index) : null)
+			.OfType<ConditionUse>().DistinctBy(use => use.Label).ToList();
+		if (drawing.Count == 0) {
+			string noun = table.Row switch { 8 => "route", 12 => "herc", 13 => "flyer", 14 => "structure", _ => "record" };
+			EditorText.Note($"No {noun} draws it in the campaign state shown.");
+			return;
+		}
+
+		ImGui.Text("Drawn now by:");
+		for (int i = 0; i < drawing.Count; i++) {
+			ImGui.PushID(i);
+			if (drawing[i].Target is { } target) {
+				_links.Link(drawing[i].Label, target);
+			} else {
+				ImGui.Text(drawing[i].Label);
+			}
+
+			ImGui.PopID();
+		}
+	}
+
+	/// <summary>
 	/// The Drawn from of a herc, flyer, structure or ground vehicle outside the squad: None, a table of its kind's
 	/// alternatives, or New table from it, with a link to the table and what it draws in the campaign state shown.
 	/// </summary>

@@ -9,7 +9,8 @@ namespace Herculan.Engine.Editor;
 /// and the number it drew, or a range's draw and ends; what it requires; whether it holds in the campaign state shown; what
 /// references it, as links; and Delete, refused while anything does. Each a field or choice that changes it
 /// (<see cref="ConditionEditor"/>). A variant table is its table's view (<see cref="VariantView"/>), and a range over one is
-/// shown read-only, its chance set there. What each kind tests is docs/retail/formats/msn-mission-file.md#the-conditions--row-1.
+/// shown as the alternative it chooses (<see cref="VariantView.DrawRange"/>), its chance set in the table's view. What each
+/// kind tests is docs/retail/formats/msn-mission-file.md#the-conditions--row-1.
 /// </summary>
 internal sealed class ConditionView {
 	private readonly ConditionEditor _editor;
@@ -39,6 +40,10 @@ internal sealed class ConditionView {
 		string? why = _editor.WhyFixed(guid);
 		bool locked = why != null;
 		ImGui.Text($"Condition {guid}");
+		if (record.Type == ConditionEditing.Range && _variants.DrawRange(guid)) {
+			return;
+		}
+
 		ImGui.Text(KindName(source, record));
 		ImGui.Separator();
 		if (record.Type == ConditionEditing.VariantTable) {
@@ -271,6 +276,10 @@ internal sealed class ConditionView {
 			}
 
 			ImGui.PopID();
+		}
+
+		if (uses.Alternatives > 0) {
+			ImGui.TextWrapped(uses.Alternatives == 1 ? "1 variant alternative" : $"{uses.Alternatives} variant alternatives");
 		}
 
 		if (uses.LeftOut.Count > 0) {

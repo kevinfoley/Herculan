@@ -25,10 +25,10 @@ The view (`ConditionView`, through `ConditionEditor`) opens with "Condition <GUI
 - a range's draw (a choice of the draws before it, with a link) and its two ends, with a note when the ends lie past the draw's bound;
 - Requires: none or any condition before it, with a link (a range's draw is its requirement, and it has no other). Row 1 is read in order, each record against the survivors before it, so a later one is refused with the reason and not offered;
 - whether it holds in the state shown;
-- Used by: every record whose condition references the GUID, in rows 1 to 17 (row 5's 64-byte records by their first word) and the `.ENG`, one short line each, a link where a view exists ("Condition 7", "Group 12", "Herc slot 4", "Group 4, order 1") and plain text otherwise ("Header patch 1", "Debrief 0", "Text line 204"), with the records the state leaves out counted by kind;
+- Used by: every record whose condition references the GUID, in rows 1 to 17 (row 5's 64-byte records by their first word) and the `.ENG`, one short line each, a link where a view exists ("Condition 7", "Group 12", "Herc slot 4", "Group 4, order 1") and plain text otherwise ("Header patch 1", "Debrief 0", "Text line 204"), with the records the state leaves out counted by kind and the variant alternatives it conditions counted apart, since no state places an alternative;
 - Delete, refused while Used by lists anything.
 
-No retail mission carries a row-1 GUID twice, and the view edits no condition whose GUID is. A variant table's view is the table's, and a range over one is shown read-only, with a link to its table and a note that its chance is set there. The campaign state's flag list follows the flag tests.
+No retail mission carries a row-1 GUID twice, and the view edits no condition whose GUID is. A variant table's view is the table's. A range over one is shown as the alternative it chooses (`VariantView.DrawRange`): "Alternative 2 of Condition 0: 50%, <what it is>", with a link to the table, where its chance is set, then the records that drew it in the state shown as links; a range choosing no alternative the table reads is shown as any other range, read-only. The campaign state's flag list follows the flag tests.
 
 ## Variants
 
