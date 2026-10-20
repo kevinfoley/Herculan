@@ -12697,7 +12697,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitWidgets_HandleCommand",
-      "description": "(cockpit, code) in stack order, its arguments removed by this function (RET 8): returns 0 while +0x20b is set. With v the published manager's view +0x10, REPNE SCASD finds the code among the 24 dwords of CockpitWidgets_CommandCodes (00092f34) and jumps through the 24 after them (00092f94). 0 returns 0. 2-10 (keys 1-9): in view 1 as an unlisted code; otherwise row code-2: the pod row (+0x23b) flips bit 0 of the first word of the block 00037b50(the pod gauge +0x1d8) returns and hands the copy to 00037b14(gauge, copy); another row's gauge (+0x70 + 4*row), when set, goes to CockpitView_ArmWeaponByGauge (0002d098). 0x3b-0x40 (F1-F6) and 0x41-0x42 (F7, F8) press button code-0x3b of the MFD +0x1e9 or code-0x41 of +0x1f5 (the button at +0x14 + 4*index), calling the +0xc slot of the button's vtable at +0x1c with (button, 1) unless its int16 +0x17 is 2 or 3; F1-F6 then queue view command 1 from view 1 or 6 from views 2-3 (table 00092ff4, by the view), F7-F8 command 0. 0x43 (F9) queues 5 from view 0 or 6 from view 2; 0x44 (F10) 4 from view 0 or 6 from view 3. 0x01 (Esc) queues 0, 1 or 6 from views 0, 1 and 2-3 (table 00093008, by the view). 0x0f (Tab) returns 0 in view 4, takes the unlisted path in view 1, and otherwise runs TargetSelect_Cycle (0002d898). 0x57 (F11): 0004a1b4(0, 0, 1), the +0xc slot of the vtable at that object's +0x314, then Alert_Dtor (00045d0c)(object, 3). 0x13 (R): Mech_ToggleRadarMode (000157f4)(the machine +0x1ff of CockpitViewInstance (00092d1c)). An unlisted code goes to MfdFlashComm_HandleAltKey (0003a890)(+0x1e9, code), then in view 1 to the +0x10 slot (vtable at +0x76) of +0x1f5 alone, and in any other view to the +0x10 slots of +0x1d4 (when set), +0x1dd, +0x1e1, +0x1e5, +0x1ed, +0x1f1 and +0x1e9, stopping at the first that returns nonzero. Returns 1 for a code a case took or a slot accepted, else 0. es2_xref finds one call, from Sim_DispatchCommand (00059df8). ES2's CockpitWidgets_HandleCommand (DBSIM 00432bc8), which takes 0x02-0x0b and presses the row through Widget_PressChild, answers 0x27, Enter and Alt+D, steps the Targeting Pod on Tab and builds an objectives panel on F11.",
+      "description": "(cockpit, code) in stack order, its arguments removed by this function (RET 8): returns 0 while +0x20b is set. With v the published manager's view +0x10, REPNE SCASD finds the code among the 24 dwords of CockpitWidgets_CommandCodes (00092f34) and jumps through the 24 after them (00092f94). 0 returns 0. 2-10 (keys 1-9): in view 1 as an unlisted code; otherwise row code-2: the pod row (+0x23b) flips bit 0 of the first word of the block 00037b50(the pod gauge +0x1d8) returns and hands the copy to 00037b14(gauge, copy); another row's gauge (+0x70 + 4*row), when set, goes to CockpitView_ArmWeaponByGauge (0002d098). 0x3b-0x40 (F1-F6) and 0x41-0x42 (F7, F8) press button code-0x3b of the MFD +0x1e9 or code-0x41 of +0x1f5 (the button at +0x14 + 4*index), calling the +0xc slot of the button's vtable at +0x1c with (button, 1) unless its int16 +0x17 is 2 or 3; F1-F6 then queue view command 1 from view 1 or 6 from views 2-3 (table 00092ff4, by the view), F7-F8 command 0. 0x43 (F9) queues 5 from view 0 or 6 from view 2; 0x44 (F10) 4 from view 0 or 6 from view 3. 0x01 (Esc) queues 0, 1 or 6 from views 0, 1 and 2-3 (table 00093008, by the view). 0x0f (Tab) returns 0 in view 4, takes the unlisted path in view 1, and otherwise runs TargetSelect_Cycle (0002d898). 0x57 (F11): ObjectivesPanel_Ctor (0004a1b4)(0, 0, 1), the +0xc slot of the vtable at that object's +0x314, then Alert_Dtor (00045d0c)(object, 3). 0x13 (R): Mech_ToggleRadarMode (000157f4)(the machine +0x1ff of CockpitViewInstance (00092d1c)). An unlisted code goes to MfdFlashComm_HandleAltKey (0003a890)(+0x1e9, code), then in view 1 to the +0x10 slot (vtable at +0x76) of +0x1f5 alone, and in any other view to the +0x10 slots of +0x1d4 (when set), +0x1dd, +0x1e1, +0x1e5, +0x1ed, +0x1f1 and +0x1e9, stopping at the first that returns nonzero. Returns 1 for a code a case took or a slot accepted, else 0. es2_xref finds one call, from Sim_DispatchCommand (00059df8). ES2's CockpitWidgets_HandleCommand (DBSIM 00432bc8), which takes 0x02-0x0b and presses the row through Widget_PressChild, answers 0x27, Enter and Alt+D, steps the Targeting Pod on Tab and builds an objectives panel on F11.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#keys-and-the-view-device",
       "verified": {
         "bytes": "0002d24c+910",
@@ -18202,7 +18202,7 @@
       "type": "function",
       "confidence": "high",
       "name": "StringTable_LoadGroup",
-      "description": "(table, attributeDestination, capacity, destination) in stack order, callee-cleaned: reads the int16 group count at the cursor and calls StringTable_ReadNext that many times, filling consecutive destination entries and, when attributeDestination is non-null, consecutive attribute entries; then zeroes the group count +0xc. capacity is not read. ES2's StringTable_LoadGroup (DBSIM 0045395c).",
+      "description": "(table, attributeDestination, capacity, destination) in stack order, callee-cleaned: reads the int16 group count at the cursor and calls StringTable_ReadNext that many times, filling consecutive destination entries and, when attributeDestination is non-null, consecutive attribute entries; then zeroes the group count +0xc and returns the count it read. capacity is not read. ES2's StringTable_LoadGroup (DBSIM 0045395c).",
       "source": "ES1DBSIM disassembly at 000450b0, against ES2's StringTable_LoadGroup",
       "verified": {
         "bytes": "000450b0+97",
@@ -18262,7 +18262,7 @@
       "type": "function",
       "confidence": "high",
       "name": "AlertPanel_CtorBase",
-      "description": "(panel, rect, keepsScreen) in stack order, its arguments removed by this function: the in-mission panels' base constructor. Allocates 0x10 bytes when the panel is null; builds the rect region at +0x10 (vtables 00094d8a to 00094dfe, type 0), StringTable_Ctor (00044f14) at +0x30, GLViewport_Ctor at +0x44, the title bar rect at +0x2ba and GLCursor_Ctor at +0x2ca; stores AlertVtable (00094e26) at +0x314; clears the widget count +0x2b5 and the close byte +0x2b9; copies the rect to +0 and to the render context's rect +0x254, sets its clip mode +0x24c and translation flag +0x250 to 1, +0x264 and +0x268 to 0 and its brush +0x270 to Alert_FillBrush (000b1718); the region's rect is (0, 0, x1 - x0, y1 - y0); with keepsScreen set, a buffer of Rect_PixelCount(region) bytes at +0x28, asserting 'Alert: can't allocate buffer.' (alert.cpp line 0x3b) when operator_new fails, else 0; +0x2c = 0; Widget_ActiveRoot kept at +0x285; CTLWindow_Ctor (00043cac)(0, panel) at +0x281; the display's draw page (+0x3c of 000bdd28) at +0x289; -1 at +0x2e3 (the cancel widget) and 1 at +0x313. ES2's AlertPanel_CtorBase (DBSIM 00454174), whose vptr is at +0 and its rect at +4. es2_xref finds calls from 00046efc, 00047578, 00048408, 00049154 and 0004a1b4.",
+      "description": "(panel, rect, keepsScreen) in stack order, its arguments removed by this function: the in-mission panels' base constructor. Allocates 0x10 bytes when the panel is null; builds the rect region at +0x10 (vtables 00094d8a to 00094dfe, type 0), StringTable_Ctor (00044f14) at +0x30, GLViewport_Ctor at +0x44, the title bar rect at +0x2ba and GLCursor_Ctor at +0x2ca; stores AlertVtable (00094e26) at +0x314; clears the widget count +0x2b5 and the close byte +0x2b9; copies the rect to +0 and to the render context's rect +0x254, sets its clip mode +0x24c and translation flag +0x250 to 1, +0x264 and +0x268 to 0 and its brush +0x270 to Alert_FillBrush (000b1718); the region's rect is (0, 0, x1 - x0, y1 - y0); with keepsScreen set, a buffer of Rect_PixelCount(region) bytes at +0x28, asserting 'Alert: can't allocate buffer.' (alert.cpp line 0x3b) when operator_new fails, else 0; +0x2c = 0; Widget_ActiveRoot kept at +0x285; CTLWindow_Ctor (00043cac)(0, panel) at +0x281; the display's draw page (+0x3c of 000bdd28) at +0x289; -1 at +0x2e3 (the cancel widget) and 1 at +0x313. ES2's AlertPanel_CtorBase (DBSIM 00454174), whose vptr is at +0 and its rect at +4. es2_xref finds calls from StatusAlertPanel_Ctor (00046efc), 00047578, 00048408, 00049154 and ObjectivesPanel_Ctor (0004a1b4).",
       "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panel-object--alertpanel_ctorbase-00045988",
       "verified": {
         "bytes": "00045988+770",
@@ -18337,7 +18337,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Alert_Dtor",
-      "description": "(panel, flags) in stack order, its arguments removed by this function: the in-mission panels' base destructor. Stores AlertVtable (00094e26) at +0x314; frees each of the +0x2b5 widgets at +0x28d and the screen buffer +0x28 when set; destroys +0x2c when set through its slot +0x1c with 3; frees the title label +0x40; clears +0x2ce; GLCursor_Dtor(+0x2ca, 2); stores the vtables 00094e7e and 00094dae at the render context +0x44; OwnedArray_Dtor (00044f48)(+0x30, 2); stores 00094dfe, 00094dd6 and 00094dae at the region +0x10. It tests neither the panel nor the flags and frees nothing of the panel itself. ES2's Alert_Dtor (DBSIM 00454394). es2_xref finds calls from CockpitWidgets_HandleCommand, Sim_DispatchCommand and Sim_MainTick, each with 3 after a panel's run, and from 000472b0, 00047a14, 000487b4, 00049678 and 0004a480 with 0.",
+      "description": "(panel, flags) in stack order, its arguments removed by this function: the in-mission panels' base destructor. Stores AlertVtable (00094e26) at +0x314; frees each of the +0x2b5 widgets at +0x28d and the screen buffer +0x28 when set; destroys +0x2c when set through its slot +0x1c with 3; frees the title label +0x40; clears +0x2ce; GLCursor_Dtor(+0x2ca, 2); stores the vtables 00094e7e and 00094dae at the render context +0x44; OwnedArray_Dtor (00044f48)(+0x30, 2); stores 00094dfe, 00094dd6 and 00094dae at the region +0x10. It tests neither the panel nor the flags and frees nothing of the panel itself. ES2's Alert_Dtor (DBSIM 00454394). es2_xref finds calls from CockpitWidgets_HandleCommand, Sim_DispatchCommand and Sim_MainTick, each with 3 after a panel's run, and from GeneralAlert_Dtor (000472b0), 00047a14, 000487b4, 00049678 and ObjectivesPanel_Dtor (0004a480) with 0.",
       "source": "Herculan/docs/es1/simulation/alert-panels.md#destroying-a-panel--alert_dtor-00045d0c",
       "verified": {
         "bytes": "00045d0c+220",
@@ -18382,7 +18382,7 @@
       "type": "function",
       "confidence": "high",
       "name": "AlertPanel_Enter",
-      "description": "(panel) in stack order, its argument removed by this function: puts a panel up. Copies the 0x2b bytes of PlayerInputBlock to +0x2e8; Input_LatchButton (0004d8c8)(1, 1) to (1, 4); AlertPanel_SetFocus (00046470)(panel, -1); Widget_ClearPressed (00044310)(the panel's root +0x281); keeps the render context 000bdbda at +0x27d and installs the panel's +0x44; sets the display's source and draw pages to its +0x88; keeps Cursor_FollowsMouse at +0x2de and sets it; calls AlertPanel_EnterHook (00094d80) when set; the first time, loads dci\\alert into AlertPanel_CursorImage (00094d7c) with Cursor_LoadWrapper; hides the cursor (slot 31); with a buffer at +0x28, Region_Save of the region +0x14 into it, its rect moved by the panel's origin for the call; the panel's slot +4; AlertPanel_LoadCursor (000463c0)(panel, the alert cursor); shows the cursor (slot 30); adds 1 to AlertPanel_OpenCount (00094d78). ES2's AlertPanel_Enter (DBSIM 00454630) without the message ports and the present timer. es2_xref finds calls from 0004730c, 00047a88, 00048810, 000496f0 and 0004a4ec.",
+      "description": "(panel) in stack order, its argument removed by this function: puts a panel up. Copies the 0x2b bytes of PlayerInputBlock to +0x2e8; Input_LatchButton (0004d8c8)(1, 1) to (1, 4); AlertPanel_SetFocus (00046470)(panel, -1); Widget_ClearPressed (00044310)(the panel's root +0x281); keeps the render context 000bdbda at +0x27d and installs the panel's +0x44; sets the display's source and draw pages to its +0x88; keeps Cursor_FollowsMouse at +0x2de and sets it; calls AlertPanel_EnterHook (00094d80) when set; the first time, loads dci\\alert into AlertPanel_CursorImage (00094d7c) with Cursor_LoadWrapper; hides the cursor (slot 31); with a buffer at +0x28, Region_Save of the region +0x14 into it, its rect moved by the panel's origin for the call; the panel's slot +4; AlertPanel_LoadCursor (000463c0)(panel, the alert cursor); shows the cursor (slot 30); adds 1 to AlertPanel_OpenCount (00094d78). ES2's AlertPanel_Enter (DBSIM 00454630) without the message ports and the present timer. es2_xref finds calls from StatusAlertPanel_RunModal (0004730c), 00047a88, 00048810, 000496f0 and ObjectivesPanel_RunModal (0004a4ec).",
       "source": "Herculan/docs/es1/simulation/alert-panels.md#putting-a-panel-up-and-taking-it-down",
       "verified": {
         "bytes": "00045f00+439",
@@ -18397,7 +18397,7 @@
       "type": "function",
       "confidence": "high",
       "name": "AlertPanel_Leave",
-      "description": "(panel) in stack order, its argument removed by this function: takes a panel down. Clears Cursor_FollowsMouse and hides the cursor; with a buffer at +0x28, Region_Restore of the region +0x14 at +0x18; AlertPanel_RestoreCursorImage (00046428); Cursor_FollowsMouse back from +0x2de, showing the cursor when it is set; calls AlertPanel_LeaveHook (00094d84) when set; installs the render context +0x27d and makes +0x289 the display's draw page; WidgetRoot_Delete (00044350)(+0x281) and, when +0x285 is set, Widget_ClearPressed(+0x285); copies the 0x2b bytes at +0x2e8 back to PlayerInputBlock; with a mouse device, Mouse_SetPosition to the saved pointer +0x2ea, +0x2ee and Cursor_SyncPosition; takes 1 from AlertPanel_OpenCount (00094d78). ES2's AlertPanel_Leave (DBSIM 004548ac) without the present, the two flags and the message ports. es2_xref finds calls from 0004730c, 00047a88, 00048810, 000496f0 and 0004a4ec.",
+      "description": "(panel) in stack order, its argument removed by this function: takes a panel down. Clears Cursor_FollowsMouse and hides the cursor; with a buffer at +0x28, Region_Restore of the region +0x14 at +0x18; AlertPanel_RestoreCursorImage (00046428); Cursor_FollowsMouse back from +0x2de, showing the cursor when it is set; calls AlertPanel_LeaveHook (00094d84) when set; installs the render context +0x27d and makes +0x289 the display's draw page; WidgetRoot_Delete (00044350)(+0x281) and, when +0x285 is set, Widget_ClearPressed(+0x285); copies the 0x2b bytes at +0x2e8 back to PlayerInputBlock; with a mouse device, Mouse_SetPosition to the saved pointer +0x2ea, +0x2ee and Cursor_SyncPosition; takes 1 from AlertPanel_OpenCount (00094d78). ES2's AlertPanel_Leave (DBSIM 004548ac) without the present, the two flags and the message ports. es2_xref finds calls from StatusAlertPanel_RunModal (0004730c), 00047a88, 00048810, 000496f0 and ObjectivesPanel_RunModal (0004a4ec).",
       "source": "Herculan/docs/es1/simulation/alert-panels.md#putting-a-panel-up-and-taking-it-down",
       "verified": {
         "bytes": "000460b8+305",
@@ -18947,6 +18947,111 @@
       }
     },
     {
+      "address": "00046efc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "StatusAlertPanel_Ctor",
+      "description": "(panel, rect, keepsScreen, status) in stack order, its arguments removed by this function: the status panel. Allocates 0x548 bytes with operator_new when panel is null (returning 0 when that fails); a 222 x 109 rect, centred by AlertPanel_CenterRect (0004679c) or placed at the rect's point by AlertPanel_SetRect (0004675c); AlertPanel_CtorBase (00045988)(panel, that rect, keepsScreen); GeneralAlertVtable (0009507e) at +0x314; str\\gnl_alrt into the string table +0x30 with StringTable_LoadFromFile (00044f78), then three groups with StringTable_LoadGroup (000450b0): 19 titles at +0x334, 38 button captions at +0x380 and 76 body lines at +0x418; two button rects through __vec_ctor (000610cb) with GauRect_ElementCtorStatusAlertPanelCopy (0004726c), by its padding 00047269; one button at x 71 for statuses 0, 2, 3, 7, 8, 0x11 and 0x12, two at x 22 and 120 for 1, 4 to 6, 9, 10 and 0xb to 0x10, none for any other (the jump table 000950c0 behind an unsigned bound against 0x12), each (x, 70)-(x + 80, 90); the plate, frame 0 of dba\\gnl2alrt for statuses 0 and 1 and of dba\\gnl_alrt otherwise, loaded with ClassItem_LoadFromFile (0005760c), at +0x2c; per button PanelButton_Ctor (000467c8)(0, index, panel, rect), a caption label in WidgetFont_Cpylw at the button's +0x2c placed by Label_SetRect (00031080) with flags 2 and margin (0, -3), Widget_RegisterClickable (000443d4) with the panel's root +0x281, and the widget list +0x28d; the status's title at +0x318 and pointers to its caption pair at +0x31c and its four body lines at +0x320; the title label at +0x40 in WidgetFont_Title, on the title bar +0x2ba = ((222 - w - 20) >> 1, 4)-(that + w + 20, 21), w the title's width by HudFont_MeasureString (00069d0c), margin (0, -11); four body labels at +0x324 in WidgetFont_Green6x8, centred on (50, 30 + 10i)-(172, 40 + 10i); the cancel widget +0x2e3 = 0, and +0x313 = 0 for status 2. Returns the panel. es2_xref finds six calls, each passing (0, 0, 1, status). ES2's StatusAlertPanel_Ctor (DBSIM 00455934) with ES2's pause panel folded in as statuses 0 and 1, and without its status-5 body.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-status-panel--statusalertpanel_ctor-00046efc",
+      "verified": {
+        "bytes": "00046efc+877",
+        "sha1": "37a8da3dd01f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004726c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GauRect_ElementCtorStatusAlertPanelCopy",
+      "description": "(rect), callee-cleaned: byte for byte the code of GauRect_ElementCtor (0002c994), relocated operands aside: the element constructor StatusAlertPanel_Ctor (00046efc) hands __vec_ctor (000610cb), by its padding entry 00047269, for its two button rects. es2_xref finds the padding address stored once, inside StatusAlertPanel_Ctor.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-status-panel--statusalertpanel_ctor-00046efc; ES1DBSIM disassembly at 0004726c",
+      "verified": {
+        "bytes": "0004726c+66",
+        "sha1": "82d7302b0ac7",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000472b0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GeneralAlert_Dtor",
+      "description": "(panel, flags) in stack order, its arguments removed by this function: the status panel's destructor. Returns at once for a null panel; stores GeneralAlertVtable (0009507e) at +0x314, frees the four body labels at +0x324 with operator_delete (000015f8), runs Alert_Dtor (00045d0c)(panel, 0) and frees the panel when bit 0 of flags is set. GeneralAlertVtable's +0x1c is 0. es2_xref finds two calls, from 00058414 and Prefs_LimitDetailInLowMemory (0004adb0), each passing 3. ES2's GeneralAlert_Dtor (DBSIM 00455f90).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-status-panel--statusalertpanel_ctor-00046efc",
+      "verified": {
+        "bytes": "000472b0+89",
+        "sha1": "57fbd2b3c189",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004730c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "StatusAlertPanel_RunModal",
+      "description": "(panel), its argument removed by this function: the status panel's slot +0xc, entered at its padding 00047309. AlertPanel_Enter (00045f00), AlertPanel_SetFocus (00046470)(panel, 0), then until the close byte +0x2b9 is set: Input_BuildPlayerDevice (0004cb14), its block to the panel's slot +0x14, and slot +0x10 of each widget's +0x1c table; then AlertPanel_Leave (000460b8), and returns bit 0 of the close byte. The same code as ObjectivesPanel_RunModal (0004a4ec). ES2's StatusAlertPanel_RunModal (DBSIM 00455fe4), less its DemoAbort test and its present.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-loop",
+      "verified": {
+        "bytes": "0004730c+184",
+        "sha1": "ee1d16f72de9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000473c4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "StatusAlertPanel_Paint",
+      "description": "(panel), its argument removed by this function: the status panel's slot +4. Bitmap_Blit (00067048) of the plate +0x2c with flags 0 at the region's rect +0x18; the title through the panel's slot +8 with +0x318; counts the body lines +0x320 points at up to the first empty one, at most four, and sets body label i + 1 for a one-line body, i otherwise, to line i with Label_SetText (0003114c); then slot +4 of each widget's +0x1c table. ES2's StatusAlertPanel_Paint (DBSIM 00456068), which also stops at a null line.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-status-panel--statusalertpanel_ctor-00046efc",
+      "verified": {
+        "bytes": "000473c4+286",
+        "sha1": "45b96d7f83a3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000474e4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "StatusAlertPanel_OnChildClick",
+      "description": "(panel, flags, child) in stack order, its arguments removed by this function: the status panel's slot +0x10, entered at its padding 000474e2. Sets the close byte +0x2b9 to 2 when child is widget 0 and to 3 when it is widget 1 of the +0x2b5 widgets at +0x28d, so StatusAlertPanel_RunModal (0004730c) answers 0 for the left button and 1 for the right. ES2's StatusAlertPanel_OnChildClick (DBSIM 00456160) without its AlertPanel_ResetPresentTimer call.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-status-panel--statusalertpanel_ctor-00046efc",
+      "verified": {
+        "bytes": "000474e4+119",
+        "sha1": "229d7edf913a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004755c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "StatusAlertPanel_GetButtonCaption",
+      "description": "(panel, index) in stack order, its arguments removed by this function: the status panel's slot +0x18, entered at its padding 0004755b. Returns entry index of the caption pair +0x31c points at, the status's two strings of GNL_ALRT.STR group 1. ES2's StatusAlertPanel_GetButtonCaption (DBSIM 004561ac).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-status-panel--statusalertpanel_ctor-00046efc",
+      "verified": {
+        "bytes": "0004755c+28",
+        "sha1": "11cab453431b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00048ce4",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -18959,6 +19064,111 @@
         "sha1": "20933309a6e6",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0004a18c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorObjectivesPanelCopy",
+      "description": "(p, flags), callee-cleaned: the code of HeapPtr_DtorPanelCopy (0002acdc): with p non-null deletes the block p points at with operator_delete (000015f8) when that is non-null, then p itself when bit 0 of flags is set. The first function of the objectives panel's object file, a lone copy with no run of ConfigPart's copies after it. es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0004a18c",
+      "verified": {
+        "bytes": "0004a18c+40",
+        "sha1": "d9a963538e21",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0004a1b4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ObjectivesPanel_Ctor",
+      "description": "(panel, rect, keepsScreen) in stack order, its arguments removed by this function: the F11 objectives panel. Allocates 0x39e bytes with operator_new when panel is null (returning 0 when that fails); a 315 x 109 rect, centred by AlertPanel_CenterRect (0004679c) or placed at the rect's point by AlertPanel_SetRect (0004675c); AlertPanel_CtorBase (00045988)(panel, that rect, keepsScreen); StringTable_Ctor (00044f14) on a second string table at +0x318; ObjectiveAlertVtable (000955d6) at +0x314; the plate, frame 0 of dba\\hst_alrt loaded with ClassItem_LoadFromFile (0005760c), at +0x2c; str\\obj_alrt into +0x30 with StringTable_LoadFromFile (00044f78) and its two one-string groups with StringTable_LoadGroup (000450b0), the title at +0x328 and the button caption at +0x32c; data\\object.str, prefixed by Path_ApplyAltDrive (000592a4), into the table +0x318, its group 0 into the pointers from +0x330 and the group's count, StringTable_LoadGroup's answer, as an int16 at +0x380; the title label at +0x40 in WidgetFont_Green6x8 on ((315 - w) >> 1, 3)-(that + w, 13), w the title's width by HudFont_MeasureString (00069d0c), margin (0, -1), with all four words of the title bar +0x2ba set to -20; PanelButton_Ctor (000467c8)(0, 0, panel, (127, 93)-(187, 103)), its caption label in WidgetFont_Cpylw placed by Label_SetRect (00031080) with flags 2 and margin (0, -1), Widget_RegisterClickable (000443d4) with the panel's root +0x281, and widget 0; seven line labels at +0x382 in WidgetFont_Cpylw, placed with flags 1 and margin 0 on (20, 17 + 10i)-(200, 27 + 10i); the cancel widget +0x2e3 = 0. Returns the panel. es2_xref finds one call, from CockpitWidgets_HandleCommand, passing (0, 0, 1). ES2's ObjectivesPanel_Ctor (DBSIM 0045751c), which lists block 13's mission.str lines.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-objectives-panel--objectivespanel_ctor-0004a1b4",
+      "verified": {
+        "bytes": "0004a1b4+715",
+        "sha1": "7f349a96fc3d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004a480",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ObjectivesPanel_Dtor",
+      "description": "(panel, flags) in stack order, its arguments removed by this function: the objectives panel's destructor. Returns at once for a null panel; stores ObjectiveAlertVtable (000955d6) at +0x314, frees the seven line labels at +0x382 with operator_delete (000015f8), runs OwnedArray_Dtor (00044f48)(+0x318, 2) and Alert_Dtor (00045d0c)(panel, 0), and frees the panel when bit 0 of flags is set. ObjectiveAlertVtable's +0x1c is 0, and es2_xref finds no branch, stored pointer or slot holding this function or its padding 0004a47d. ES2's ObjectivesPanel_Dtor (DBSIM 00457a80).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-objectives-panel--objectivespanel_ctor-0004a1b4",
+      "verified": {
+        "bytes": "0004a480+105",
+        "sha1": "a23da6ae289d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004a4ec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ObjectivesPanel_RunModal",
+      "description": "(panel), its argument removed by this function: the objectives panel's slot +0xc, entered at its padding 0004a4e9. The code of StatusAlertPanel_RunModal (0004730c). ES2's ObjectivesPanel_RunModal (DBSIM 00457ae4), less its present.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-loop",
+      "verified": {
+        "bytes": "0004a4ec+184",
+        "sha1": "d3e9cb212cc2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004a5a4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ObjectivesPanel_Paint",
+      "description": "(panel), its argument removed by this function: the objectives panel's slot +4. Bitmap_Blit (00067048) of the plate +0x2c with flags 0 at the region's rect +0x18; the title through the panel's slot +8 with +0x328; then each of the +0x380 (int16) string pointers from +0x330 that is not empty goes to the next of the seven line labels at +0x382 with Label_SetText (0003114c), stopping once seven are set; then slot +4 of each widget's +0x1c table. ES2's ObjectivesPanel_Paint (DBSIM 00457b58).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-objectives-panel--objectivespanel_ctor-0004a1b4",
+      "verified": {
+        "bytes": "0004a5a4+249",
+        "sha1": "4746c8a1a2a8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004a6a0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ObjectivesPanel_OnChildClick",
+      "description": "(panel, flags, child) in stack order, its arguments removed by this function: the objectives panel's slot +0x10, entered at its padding 0004a69d. Sets the close byte +0x2b9 to 1 when child is widget 0 of the +0x2b5 widgets at +0x28d, so ObjectivesPanel_RunModal (0004a4ec) answers 1. ES2's ObjectivesPanel_OnChildClick (DBSIM 00457c30) without its AlertPanel_ResetPresentTimer call.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-objectives-panel--objectivespanel_ctor-0004a1b4",
+      "verified": {
+        "bytes": "0004a6a0+109",
+        "sha1": "349b021108cb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004a710",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ObjectivesPanel_GetButtonCaption",
+      "description": "(panel, index) in stack order, its arguments removed by this function: the objectives panel's slot +0x18, entered at its padding 0004a70d. Returns +0x32c, the RETURN caption, whatever the index. ES2's ObjectivesPanel_GetButtonCaption (DBSIM 00457c6c).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-objectives-panel--objectivespanel_ctor-0004a1b4",
+      "verified": {
+        "bytes": "0004a710+18",
+        "sha1": "c313f9f0c01e",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -19162,7 +19372,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Prefs_LimitDetailInLowMemory",
-      "description": "(value), frameless, its argument removed by this function: the handler of preferences option 6. With g_LowMemory (000bda98) set and the option byte 000bd568 above 160: while the byte PrefsInitInProgress (000b1734) is set, Prefs_SetOption (0004a914)(1, 160, 6); otherwise 0004a900(6), the panel 00046efc(0, 0, 1, 0x11), its +0x314's slot +0xc on it, and 000472b0(panel, 3). It reads the option from 000bd568 and not its argument. Prefs_Init (0004afe8) registers it with Prefs_SetHandler (0004ac4c) for option 6.",
+      "description": "(value), frameless, its argument removed by this function: the handler of preferences option 6. With g_LowMemory (000bda98) set and the option byte 000bd568 above 160: while the byte PrefsInitInProgress (000b1734) is set, Prefs_SetOption (0004a914)(1, 160, 6); otherwise 0004a900(6), the panel StatusAlertPanel_Ctor (00046efc)(0, 0, 1, 0x11), its +0x314's slot +0xc on it, and GeneralAlert_Dtor (000472b0)(panel, 3). It reads the option from 000bd568 and not its argument. Prefs_Init (0004afe8) registers it with Prefs_SetHandler (0004ac4c) for option 6.",
       "source": "Herculan/docs/es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08",
       "verified": {
         "bytes": "0004adb0+91",
@@ -23677,7 +23887,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_MainTick",
-      "description": "No arguments: the simulation tick. The input block from Input_BuildPlayerDevice (0004cb14); during playback SimTickDelta = its int16 +0x29. Unless Sim_Frozen (000b5b92): each g_BasePool element through slot +0x1c; g_ExplosionPool (00005d74), the pools 000aef68 (0000693c), 000aefd4 (00006b28) and 000aeef8 (000064b8), an element whose tick answers non-zero destroyed through slot +0xc with 3; maybe_WeaponChain_EoHold = 0; the pool 000af0b4 through slot +0x18 the same way; then each group of MissionGroups: Group_TickMembers (0001cf60) when its action +0x16 is null, and the action cleared when that action's +0xa is non-zero. Sim_StepOnce (000b5b9c), when set, is cleared and Sim_Frozen set. A non-zero Sim_PollPlayerInput (0005a0c0) returns 1. Then Actions_EvaluateTriggers(LocalPlayerMech) and ViewChain_Apply (0005894c); unless frozen, Sim_DetectionTick and Mech_PerTickSystemsUpdate for each g_MechPool machine whose group +0x3f has no action +0x16 and whose +0x93 is clear. Mission_PollStatus(LocalPlayerMech): status 2 calls 00058414 and returns 1; another status of 0 or more (0x12 in place of 3 when Group_ApplyOutnumberedDamage on the player's group leaves the player destroyed) goes into the panel 00046efc(0, 0, 1, status), run through slot +0xc of its +0x314, and returns 1 when the answer equals the word at 00097158[status], the panel then destroyed by Alert_Dtor (00045d0c)(panel, 3). Returns 0 otherwise. ES2's Sim_MainTick (DBSIM 0045f464).",
+      "description": "No arguments: the simulation tick. The input block from Input_BuildPlayerDevice (0004cb14); during playback SimTickDelta = its int16 +0x29. Unless Sim_Frozen (000b5b92): each g_BasePool element through slot +0x1c; g_ExplosionPool (00005d74), the pools 000aef68 (0000693c), 000aefd4 (00006b28) and 000aeef8 (000064b8), an element whose tick answers non-zero destroyed through slot +0xc with 3; maybe_WeaponChain_EoHold = 0; the pool 000af0b4 through slot +0x18 the same way; then each group of MissionGroups: Group_TickMembers (0001cf60) when its action +0x16 is null, and the action cleared when that action's +0xa is non-zero. Sim_StepOnce (000b5b9c), when set, is cleared and Sim_Frozen set. A non-zero Sim_PollPlayerInput (0005a0c0) returns 1. Then Actions_EvaluateTriggers(LocalPlayerMech) and ViewChain_Apply (0005894c); unless frozen, Sim_DetectionTick and Mech_PerTickSystemsUpdate for each g_MechPool machine whose group +0x3f has no action +0x16 and whose +0x93 is clear. Mission_PollStatus(LocalPlayerMech): status 2 calls 00058414 and returns 1; another status of 0 or more (0x12 in place of 3 when Group_ApplyOutnumberedDamage on the player's group leaves the player destroyed) goes into the panel StatusAlertPanel_Ctor (00046efc)(0, 0, 1, status), run through slot +0xc of its +0x314, and returns 1 when the answer equals the word at 00097158[status], the panel then destroyed by Alert_Dtor (00045d0c)(panel, 3). Returns 0 otherwise. ES2's Sim_MainTick (DBSIM 0045f464).",
       "source": "Herculan/docs/es1/simulation/main-loop.md#the-tick--sim_maintick-00059700; ES1DBSIM decompile and disassembly at 00059700",
       "verified": {
         "bytes": "00059700+931",
@@ -23872,7 +24082,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_DispatchCommand",
-      "description": "(block), callee-cleaned: the block's command word goes to CockpitWidgets_HandleCommand (0002d24c), then to Sim_HandleWindowKey (00059dec), then to the 15 codes at 00097180 (REPNE SCASD, targets 15 dwords after): 0x21f toggles Sim_Frozen while TapePlayback or TapeRecording is set; 0x2f queues view command 3 (ViewChain_PendingView 2) in ViewChain_View 1 or 3 and 2 (pending 3) in view 2; 0x31, in view 3 with the view manager's +0x10 at 4, steps ViewChain_Viewed through LiveObjectList with ObjectList_Next to an object with +0x28 not negative in the player's group and, when it differs, calls ViewChain_ViewObject (00058a44), sets the camera's +0x36 to 1, ViewChain_Chosen and ViewChain_CaptionFrames 2; 0x0f and 0x1c call ViewChain_ToggleCameraControl (00059dbc) with the manager's +0x10 at 4; 0x0e sets g_CenterTurretMode; 0x10 shows Mission_StatusForAlert(1, LocalPlayerMech) in the panel 00046efc and clears MissionAlertArmed; 0x01 queues view command 3, Sound_Play(0x2d) and pending view 2; 0x401 and 0x410 raise the panel with 1 and set Sim_QuitFlag (000b5b9e) on a non-zero answer; 0x19 raises it with 0; 0x219 and 0x58 call 00057820; 0x402 sets ThrottleLeverMode (000919ce) to -1 when it is above 0 and to 1 otherwise; 0x52 calls Input_ToggleStickMode (0004d8e1). Any other code goes to slot +0x30 of ViewChain_Viewed, whose answer is returned. Returns 1 for a handled code plus the panel's answer (Ctrl+Esc, Ctrl+Q, P) or 1 when Q's answer ends the mission. ES2's Sim_DispatchCommand (DBSIM 0045fdac).",
+      "description": "(block), callee-cleaned: the block's command word goes to CockpitWidgets_HandleCommand (0002d24c), then to Sim_HandleWindowKey (00059dec), then to the 15 codes at 00097180 (REPNE SCASD, targets 15 dwords after): 0x21f toggles Sim_Frozen while TapePlayback or TapeRecording is set; 0x2f queues view command 3 (ViewChain_PendingView 2) in ViewChain_View 1 or 3 and 2 (pending 3) in view 2; 0x31, in view 3 with the view manager's +0x10 at 4, steps ViewChain_Viewed through LiveObjectList with ObjectList_Next to an object with +0x28 not negative in the player's group and, when it differs, calls ViewChain_ViewObject (00058a44), sets the camera's +0x36 to 1, ViewChain_Chosen and ViewChain_CaptionFrames 2; 0x0f and 0x1c call ViewChain_ToggleCameraControl (00059dbc) with the manager's +0x10 at 4; 0x0e sets g_CenterTurretMode; 0x10 shows Mission_StatusForAlert(1, LocalPlayerMech) in the panel StatusAlertPanel_Ctor (00046efc) and clears MissionAlertArmed; 0x01 queues view command 3, Sound_Play(0x2d) and pending view 2; 0x401 and 0x410 raise the panel with 1 and set Sim_QuitFlag (000b5b9e) on a non-zero answer; 0x19 raises it with 0; 0x219 and 0x58 call 00057820; 0x402 sets ThrottleLeverMode (000919ce) to -1 when it is above 0 and to 1 otherwise; 0x52 calls Input_ToggleStickMode (0004d8e1). Any other code goes to slot +0x30 of ViewChain_Viewed, whose answer is returned. Returns 1 for a handled code plus the panel's answer (Ctrl+Esc, Ctrl+Q, P) or 1 when Q's answer ends the mission. ES2's Sim_DispatchCommand (DBSIM 0045fdac).",
       "source": "Herculan/docs/es1/simulation/main-loop.md#commands--sim_dispatchcommand-00059df8; ES1DBSIM decompile and disassembly at 00059df8",
       "verified": {
         "bytes": "00059df8+712",
@@ -35559,6 +35769,24 @@
       "name": "AlertSliderGadgetVtable",
       "description": "The panel slider's table, which AlertSliderGadget_Ctor (000469ec) stores at +0x1c: AlertSliderGadget_Paint (00046cc8) at +4, HSliderGadget_InvalidateDeferred (00046c78) at +8, AlertSliderGadget_OnClick (00046ca0) at +0xc, AlertSliderGadget_FlushDeferredPaintNoOp (00046e65) at +0x10, then SliderWidget_GetValueH, SliderWidget_SetValueH, SliderWidget_DragToPointH and SliderWidget_RecomputeScaleH. ES2's AlertSliderGadgetVtable.",
       "source": "Herculan/docs/es1/simulation/alert-panels.md#the-slider"
+    },
+    {
+      "address": "0009507e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "GeneralAlertVtable",
+      "description": "The status panel's table, which StatusAlertPanel_Ctor (00046efc) and GeneralAlert_Dtor (000472b0) store at +0x314: StatusAlertPanel_Paint (000473c4) at +4, AlertPanel_SetTitleText (000461ec) at +8, StatusAlertPanel_RunModal (0004730c) at +0xc, StatusAlertPanel_OnChildClick (000474e4) at +0x10, AlertPanel_HandleEvent (00046670) at +0x14, StatusAlertPanel_GetButtonCaption (0004755c) at +0x18, the three by their padding, and 0 at +0 and +0x1c. ES2's GeneralAlertVtable (DBSIM 0049e148) one slot further on.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-status-panel--statusalertpanel_ctor-00046efc"
+    },
+    {
+      "address": "000955d6",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ObjectiveAlertVtable",
+      "description": "The objectives panel's table, which ObjectivesPanel_Ctor (0004a1b4) and ObjectivesPanel_Dtor (0004a480) store at +0x314: ObjectivesPanel_Paint (0004a5a4) at +4, AlertPanel_SetTitleText (000461ec) at +8, ObjectivesPanel_RunModal (0004a4ec) at +0xc, ObjectivesPanel_OnChildClick (0004a6a0) at +0x10, AlertPanel_HandleEvent (00046670) at +0x14, ObjectivesPanel_GetButtonCaption (0004a710) at +0x18, the three by their padding, and 0 at +0 and +0x1c. ES2's ObjectiveAlertVtable (DBSIM 0049e4f8) one slot further on.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-objectives-panel--objectivespanel_ctor-0004a1b4"
     },
     {
       "address": "000956bf",

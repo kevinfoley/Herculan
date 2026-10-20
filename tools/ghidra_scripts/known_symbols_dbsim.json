@@ -20194,9 +20194,15 @@
       "type": "function",
       "confidence": "high",
       "name": "StatusAlertPanel_OnChildClick",
-      "description": "gnl_alrt's vtable slot +0xc. Writes close flag 2 for child 0 and 3 for child 1; the loop returns that & 1, which is what lets the caller tell the two buttons apart.",
+      "description": "(panel, child): gnl_alrt's vtable slot +0xc. Sets the close flag +0x2d1 to 2 when child is widget 0 and to 3 when it is widget 1 of the +0x2cd widgets at +0x291, then calls AlertPanel_ResetPresentTimer (00454aa4). StatusAlertPanel_RunModal (00455fe4) returns the flag & 1, 0 for the left button and 1 for the right.",
       "source": "docs/retail/simulation/mission-objectives.md",
-      "signature": "void __cdecl StatusAlertPanel_OnChildClick(int panel, int child)"
+      "signature": "void __cdecl StatusAlertPanel_OnChildClick(int panel, int child)",
+      "verified": {
+        "bytes": "00456160+73",
+        "sha1": "324569b2308f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004561ac",
@@ -20409,9 +20415,15 @@
       "type": "function",
       "confidence": "high",
       "name": "ObjectivesPanel_OnChildClick",
-      "description": "obj_alrt's vtable slot +0xc. Sets the close flag when the clicked child is child 0, which is the panel's only widget - the RETURN button.",
+      "description": "(panel, child): obj_alrt's vtable slot +0xc. Sets the close flag +0x2d1 to 1 when child is widget 0 of the +0x2cd widgets at +0x291, the panel's only widget, the RETURN button; then calls AlertPanel_ResetPresentTimer (00454aa4).",
       "source": "docs/retail/simulation/alert-panels.md",
-      "signature": "void __cdecl ObjectivesPanel_OnChildClick(int panel, int child)"
+      "signature": "void __cdecl ObjectivesPanel_OnChildClick(int panel, int child)",
+      "verified": {
+        "bytes": "00457c30+60",
+        "sha1": "db55a9d78fcd",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00457c6c",

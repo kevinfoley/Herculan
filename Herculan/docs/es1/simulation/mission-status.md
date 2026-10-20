@@ -99,9 +99,9 @@ else                                                      clear ? table[selector
 
 A selector outside 0–9 holds nothing and reads its status past the table's ten words.
 
-Where ES2's differs: ES2's evaluates its objective records and ignores the selector it is passed; it has the 500 ms hold and the `SYSTEM.STR` post when not quiet; its box margins are 110000 and 0; and it has no test of the group's `+4`. ES1's gives ES2's numbers 2, 3, 7, 8, 9 and 10 for the same cases and never 5; 4 and 6 it also gives from the `+4` arm, and 11 to 16 are its own ([Open](#open)).
+Where ES2's differs: ES2's evaluates its objective records and ignores the selector it is passed; it has the 500 ms hold and the `SYSTEM.STR` post when not quiet; its box margins are 110000 and 0; and it has no test of the group's `+4`. ES1's gives ES2's numbers 2, 3, 7, 8, 9 and 10 for the same cases and never 5; 4 and 6 it also gives from the `+4` arm, and 11 to 16 are its own, each with a line of its own in the status panel ([what each status shows](alert-panels.md#what-each-status-shows)).
 
-**`Mission_StatusForAlert` (`0000f43c`)**, (quiet, machine): `Mission_Status`(machine, quiet, `ScriptDatHeader` word 3, `000bc4a2`). ES2's (`00413180`) also records the answer as the status already raised when it publishes. `es2_xref.py` finds two calls: `Mission_PollStatus`, quiet 0, and `00059f87`, `Q`'s case in `Sim_DispatchCommand` (`00059df8`), in bytes Ghidra has not disassembled, with quiet 1 and `LocalPlayerMech`, which shows the answer in the status panel `00046efc` and clears `MissionAlertArmed` ([commands](main-loop.md#commands--sim_dispatchcommand-00059df8)).
+**`Mission_StatusForAlert` (`0000f43c`)**, (quiet, machine): `Mission_Status`(machine, quiet, `ScriptDatHeader` word 3, `000bc4a2`). ES2's (`00413180`) also records the answer as the status already raised when it publishes. `es2_xref.py` finds two calls: `Mission_PollStatus`, quiet 0, and `00059f87`, `Q`'s case in `Sim_DispatchCommand` (`00059df8`), in bytes Ghidra has not disassembled, with quiet 1 and `LocalPlayerMech`, which shows the answer in the status panel ([`StatusAlertPanel_Ctor`](alert-panels.md#the-status-panel--statusalertpanel_ctor-00046efc), `00046efc`) and clears `MissionAlertArmed` ([commands](main-loop.md#commands--sim_dispatchcommand-00059df8)).
 
 ## The poll — `Mission_PollStatus` (`0000f454`)
 
@@ -139,7 +139,6 @@ ES2's functions in that stretch with no counterpart in the file: `Group_AllMembe
 
 ## Open
 
-- **Open:** what statuses 11 to 16 put on screen, which turns on the status panel `00046efc`, unread.
 - **Open:** whether anything in ES1 posts `MISSION FAILED`, `MISSION SUCCESSFUL` or the boundary lines; this file posts nothing. A retail check: walk the HERC out past the mission area and note whether a computer line comes up with the boundary panel.
 - **Open:** what clears `MissionAlertArmed` besides `Q`'s case.
 - **Open:** which values header word 3 takes in the retail missions; selectors outside 0–9 read past both tables.

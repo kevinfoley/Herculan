@@ -82,7 +82,7 @@ The pieces of a block are one text: the literal pieces end mid-sentence where th
 | 2 | `int16`, the count of objectives |
 | per objective | `int16` length counting the NUL, the text with its NUL, and a 0 byte |
 
-Each literal piece of an `OBJ:` block is one objective, and the retail blocks hold only literals. `ES1DBSIM`'s reference to `data\object.str` is in `0004a1b4` ([Open](#open)).
+That is a string table of one group ([ES2's `.STR` layout](../../retail/formats/str-strings.md#layout)), the 0 byte each text's count of attributes. Each literal piece of an `OBJ:` block is one objective, and the retail blocks hold only literals. The simulator's objectives panel (`F11`) reads the file as a string table and shows its first seven lines that are not empty ([the objectives panel](../simulation/alert-panels.md#the-objectives-panel--objectivespanel_ctor-0004a1b4)).
 
 ## The dialog box
 
@@ -118,7 +118,6 @@ A `DialogBox` is `0x2d` bytes; its subclasses differ in their constructors and v
 
 - **Open:** what the debriefing ordinal, the first word of `data\results.dat`, counts: which outcome the simulator writes as each value, and why some missions have eight debriefings and some nine.
 - **Open:** whether the simulator rewrites `data\mission.var` before the debriefing reads flags through it, so whether a debriefing's choices see the flags as the mission load seeded them.
-- **Open:** how the simulator reads `data\object.str` (`ES1DBSIM 0004a1b4`) and shows the objectives.
 - **Open:** how the box is drawn and its text broken into lines: `00019a1d`, `00018dcb` and `00018edd`, which the page steps call, `0001907e`, and `00051ff0`'s line height.
 - **Open:** what the byte at a box's `+0` means, what the word `000817c4` that picks the box's position holds, and the boxes at `0009ae64`, `0009ae84` and `0009ae94`.
 - **Open:** when the briefing page `000809b2` carries over from one visit to the war map to the next, since `0002bf15` sets it to 0; the rest of `0002bf15` and the war map's handler `0002c057` are not read.
