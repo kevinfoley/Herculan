@@ -1,0 +1,71 @@
+# Handoff — editor UI redesign plan
+
+The plan for reworking the editor's panels so a mission designer who has never seen the `.MSN` format can use them. The evidence, finding by finding, is [handoff-editor-ux-review.md](handoff-editor-ux-review.md); numbers below (R1 to R42) are its findings. Part of the [editor handoff](handoff-editor.md).
+
+## The rule
+
+One view per thing a designer authors, the way one friendly dialog in Dynamix's own editor would have written several records at once. Storage details (variant keys, roll sizes, GUIDs, condition numbers, field codes, roster slots) are hidden, or kept under a collapsed **Advanced** header for matching against the file. Lists show what tells their entries apart. A note names a control by its label. When something has no effect in play, the view says so.
+
+## Vocabulary
+
+| Term | Means | Replaces |
+|---|---|---|
+| **preview** | the one version of the mission the editor shows | "the campaign state shown", "this state of the mission" (R3, R5) |
+| **campaign variable** | one of the 1000 numbers carried from mission to mission; the game writes a few after every mission, missions write the rest | "flag" in conditions and the campaign list, "counter" in counter writes (R1) |
+| **random choice**, **option** | a variant table and its alternatives, and a random roll and its outcome ranges: one roll, several options, each with a chance | "variant table", "alternative", "draw", "range", "draws below" (R19) |
+| **trigger** | an action: who enters which areas, then what happens | "action", "type", "verb" (R6) |
+| **win condition**, **lose condition** | a mandatory objective, a failure objective | "mandatory", "failure condition" (R12, R14) |
+
+Numbering a designer sees starts at 1: orders, waypoints, weapon mounts, squadmates (R15, R29, R31, R32).
+
+## Phases
+
+Each phase is one commit, tested by the user in the app before it is committed.
+
+### 1. Preview without rolling
+
+- The editor never rolls on its own. Opening a mission previews it with every random choice on its first option and every other random roll at its lowest outcome, the same on every open. Today's open rolls as a game load does (`ShellTrainingLaunch.StartupRandom`, seeded from the tick count).
+- The Mission view's "Campaign state" becomes **Preview**: one lead sentence ("The editor shows one version of this mission. In play, campaign variables come from earlier missions and random choices are picked at every load."), the campaign variables the mission tests, each by its label first, with "Tested by" links, and **Simulate a mission load**, which rolls everything as the game would, with **Back to first options** to undo it. The practice-only variables 4 to 6, which are only the load's own random picks, are not listed.
+- "Holds/Fails in the campaign state shown" becomes "In this preview" / "Not in this preview", with a link to Preview.
+- Covers R3, R5.
+
+### 2. Random choice view
+
+- One view for a variant table and its alternatives, and for a random roll and the ranges over it (R19), reached from its own outliner list and from any of its conditions, which open it with that option highlighted.
+- Options with their chances as percents, one decimal allowed (12.5%), whatever internal roll size keeps them exact; what each option is, with what tells it apart (a herc option's weapons when the chassis is the same); "Nothing" with what is left over.
+- **Used by**: who picks from it, in game terms (your HERC, the squadmate's HERC, Cybrid hercs (group 5)), and the option each shows in the preview. A record with no object says why (left behind on practice missions).
+- A warning when the choice has no effect in play (a squad loadout on a practice mission the practice screen's HERC replaces).
+- **Preview with**: first option, or any option, for the editor only.
+- **Advanced**: key, roll size, condition numbers and ranges.
+- A herc's or route's view that draws from a choice says "One option of <choice>; changes apply to: that option wherever it is picked (N hercs) / only this herc" (R24, R33).
+- The Conditions list moves under Advanced, without its create buttons (R20).
+- Replaces the stopgap range view (`VariantView.DrawRange`, uncommitted).
+
+### 3. Campaign variables and Present when as sentences
+
+- Counter writes everywhere read "Add 1 to campaign variable 30 (label)", headed by what writes them: "Sets campaign variables", "When first achieved, sets campaign variables", "When out of the fight, sets campaign variables" (R1).
+- Present when: "Present: Always / Only when [variable, by label] [is / is not / is at least / is less than] [value] (and also when ...) / In N% of loads (together with ...)". The editor makes and reuses the conditions behind it (R18, R21).
+- A variable the game writes is a sentence: "Only when you lost at least one HERC in the previous mission (written off for damage)". A variable missions write is "Campaign variable 30"; where it comes from is not looked up across missions.
+- Present when on a record whose details change between versions (R22), and Used by entries the editor has no view for (R23), named by effect.
+
+### 4. Triggers and countdowns
+
+- The action view becomes a trigger: **Who** (one picker merging type and target), **Enters** (the areas), **Also fired by**, **Then** (an editable list: bring in a group, with how it arrives; move a group on from its order; start a countdown; add to a campaign variable; send a message) (R6, R8, R16).
+- No code prefixes on choices (R7); messages by their text, the file and line under Advanced, the posting rule in variable terms (R9); the unused text line under Advanced (R10).
+- A timer is a countdown, "Countdown: 30 s after <trigger>", with no empty slots (R11). "Engaged" range in metres (R17).
+
+### 5. Names instead of numbers
+
+- Triggers, routes, groups and objects named by what they are and do, the number dimmed after (R2, R4, R37, R42); delete blockers likewise (R41).
+- Objectives as win and lose conditions, "Must happen: Cybrid hercs (group 4) are written off"; the F11 lines listed apart, with a note that they are only text (R12 to R14); the status-alert text renamed and disabled on a lose condition (R13).
+- Orders as "1st order: Search and destroy, target ...", a later order's route disabled unless an objective reads it (R15).
+
+### 6. Sweep
+
+- Object view's debug data under Advanced (R25); group fields (R26: the formation id under Advanced, since the game names no formation; the paints-ground flag as "Base pad: lays its concrete pad on the ground and snaps to the pad's tile"; R27); shared-point notes as links (R28); the squad without "group 0" (R29), its loadouts collapsed in a campaign (R30); weapon mounts (R31); waypoints from 1, the first being 1, with distances (R32); the play area (R34); the Problems list in the editor's own words, the em dash fixed (R35); notes naming controls by their labels (R36); copy-on-write notes dropped (R38); text-line budget and accents (R39); zones with the missions that use them (R40).
+
+## Decided
+
+- "Campaign variable" names the campaign flag array everywhere in the UI.
+- No editor-only names for triggers, routes, areas and timers (R2).
+- No cross-mission "Set by" lookup for campaign variables.

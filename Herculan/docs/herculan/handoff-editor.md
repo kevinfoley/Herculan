@@ -10,6 +10,7 @@ The editor, `Herculan.Engine.Editor`, run on its own by `Herculan.Engine.Host.Ed
 | [handoff-editor-roster.md](handoff-editor-roster.md) | adding hercs, flyers, ground vehicles and structures; type and fit; sides; deleting; the player's squad |
 | [handoff-editor-mission-logic.md](handoff-editor-mission-logic.md) | orders, wiring, actions, timers, objectives, the mission's text |
 | [handoff-editor-conditions.md](handoff-editor-conditions.md) | the campaign state, conditions, variant tables, Present when |
+| [handoff-editor-ux-plan.md](handoff-editor-ux-plan.md) | the planned UI redesign, by phase; its evidence is [handoff-editor-ux-review.md](handoff-editor-ux-review.md) |
 
 ## What every edit does
 
