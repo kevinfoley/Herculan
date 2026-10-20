@@ -20392,7 +20392,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VGA8_ShowPage",
-      "description": "(page), C convention: the VGA_8 driver's slot 18. ES1GO's VGA8_ShowPage (ES1GO 00070216) with the simulator's globals (the wait mode Display_RetraceWaitMode (00098dba), the pan switch Display_PanEnabled (00098dbe), the page tables VGA8_PageOffsets (0009e5ce) and VGA8_PagePans (0009e5f6), the flag VGA8_ShowPageIdle (00098d96), the routines at 0009df50 and 0009df4c while 00098d6c is set, the 8 bytes 00098d70 and 00098d9a) and two differences: while the word Display_FlipWithoutPan (000bda96) is 1 it skips the wait for the next retrace and the write of the pan to the attribute controller, and it also stores the page at 00098dd2. The offset goes to 0009e608 and the pan >> 1 to 0009e614.",
+      "description": "(page), C convention: the VGA_8 driver's slot 18. ES1GO's VGA8_ShowPage (ES1GO 00070216) with the simulator's globals (the wait mode Display_RetraceWaitMode (00098dba), the pan switch Display_PanEnabled (00098dbe), the page tables VGA8_PageOffsets (0009e5ce) and VGA8_PagePans (0009e5f6), the flag VGA8_ShowPageIdle (00098d96), the routines at 0009df50 and 0009df4c while Cursor_Shown (00098d6c) is set, the 8 bytes Cursor_Position (00098d70) and Cursor_PendingPosition (00098d9a)) and two differences: while the word Display_FlipWithoutPan (000bda96) is 1 it skips the wait for the next retrace and the write of the pan to the attribute controller, and it also stores the page at 00098dd2. The offset goes to 0009e608 and the pan >> 1 to 0009e614.",
       "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulators-own-page-routines; ES1DBSIM disassembly at 00052690; es2_naming.py diff ES1DBSIM ES1GO 00052690:00070216",
       "verified": {
         "bytes": "00052690+269",
@@ -22397,18 +22397,63 @@
       }
     },
     {
+      "address": "00057640",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Cursor_LoadCursorResource",
+      "description": "No arguments: ResourcePath_BuildFolderName (00060698)(the folder 00098100 names, 'dci', and 'cursor' at 00096b3e), VolRStream_CtorFromPath on the path, ClassItem_LoadResource(0, stream), VolRStream_Dtor(stream, 2); returns the loaded item, the mouse pointer's GLCursor. es2_xref finds one call, from Sim_StartMission (0005a9dc). ES2's Cursor_LoadCursorResource (DBSIM 0045ce30).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#the-mission-start--sim_startmission-0005a9dc",
+      "verified": {
+        "bytes": "00057640+64",
+        "sha1": "9958c116fd48",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00057af8",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "TSCamera_CopyFrom",
-      "description": "(camera, from) in stack order, its arguments removed by this function: 00057bb4(camera, from), entered through the padding at 00057bb3, then copies from's fields +0x22 to +0x49 into the camera one by one. ViewChain_ViewObject (00058a44) seeds a free camera from the current one with it, where ES2's ViewChain_ViewObject copies the fields inline.",
+      "description": "(camera, from) in stack order, its arguments removed by this function: TSCamera_CopyBaseFields (00057bb4)(camera, from), entered through the padding at 00057bb3, then copies from's fields +0x22 to +0x49 into the camera one by one. ViewChain_ViewObject (00058a44) seeds a free camera from the current one with it, where ES2's ViewChain_ViewObject copies the fields inline.",
       "source": "Herculan/docs/es1/simulation/main-loop.md#the-views--viewchain_apply-0005894c",
       "verified": {
         "bytes": "00057af8+143",
         "sha1": "d6e6d39c7869",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00057bb4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSCamera_CopyBaseFields",
+      "description": "(camera, from) in stack order, its arguments removed by this function, entered also through its padding 00057bb3: TSCamera_CopyPose (00057be0)(camera, from) by its padding 00057bde, then copies from's dwords +0x16, +0x1a and +0x1e into the camera. es2_xref finds one call, from TSCamera_CopyFrom (00057af8). ES2's ViewChain_ViewObject copies the same fields inline.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#the-views--viewchain_apply-0005894c",
+      "verified": {
+        "bytes": "00057bb4+42",
+        "sha1": "bf8fce6dfb13",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00057be0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSCamera_CopyPose",
+      "description": "(camera, from) in stack order, its arguments removed by this function, entered also through its padding 00057bde: copies from's 18 bytes +0 to +0x11, the position's three dwords and the view's euler triple, into the camera with MOVSD and MOVSB. es2_xref finds one call, from TSCamera_CopyBaseFields (00057bb4).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#the-views--viewchain_apply-0005894c",
+      "verified": {
+        "bytes": "00057be0+39",
+        "sha1": "be2d03d28df9",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -23167,7 +23212,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_StartMission",
-      "description": "No arguments: the mission start. Hands Sim_AssertCleanupHook (0005a7b8) to Assert_AddHook (0005730c); Input_BuildSourceTable (0004c95c); Sim_Timer (000b5baa) = DVTimer_Ctor (0006c6f8)(0, 0x26d3); with the byte 000b5b68 set reads resource.cfg's [SoundFX] Driver#, IRQ, DMA and PortAddress and [Music] Driver# and PortAddress (hex through sscanf (0006c871)) for Sound_Init, else digital device 0; 0004e498; with no sound manager 000959ac, Prefs_SetOption(1, 0, i) for options 0-2; Light_ResetSystem, 00075858, 00066e00, Widget_LoadStylesAndFonts; the hooks 00094d80 and 00094d84 = SimInput_PushDisable (0005a5b4) and SimInput_PopEnable (0005a5d8); Mono_Clear when 000bda94 is set; Subsystem_RunPhase(2); the cursor from 00057640; DBSim_LoadScriptDat; ObjList_Add (00020d5c) of each Zone_ShapeObjects entry up to Zone_ShapeCount or the first null; CockpitMouse_Init (000441cc); CockpitMouseLive (000bd512) = 0; Time_InitSimClock (00063e64); DBSim_SpawnMissionObjects (0001e638) between Prefs_SetOption(1, 0, 1) and Prefs_RevertOption(1, 1); deletes every element of g_ExplosionPool and of 000aeef8; Light_CreateMissionSun (0005a888); ObjList_ZoneShapeCount (000bc596) = ObjList_Count (00092558); LocalPlayerMech (000b5b86) = the last element of g_MechPool (000af68c) with byte +0x9d set, also ViewChain_Viewed (000bda9a) and ViewChain_Chosen (000b5bbc); a 0x4a-byte camera (TSCamera_CtorDefault, vtable 000972de) per member of the player's group (count +0x12 of +0x3f) into ViewChain_SquadCameras (000bda9e); SimDisplay = Sim_CreateDisplay (0005a5f4), GLDisplay_SetAttribute (0006a824)(display, 0x280, 2), page origins 1-3 (0, 200), (320, 0), (320, 200) at +0x50 through the routine 0009df10, +0x88 = 0, +0x8c and +0x3c = 2 (0 with CmdLine_SinglePage (000b5b67) set), +0x34 = +0x88, +0x3c = 3 without CmdLine_SinglePage (000b5b67); ViewObjectPtr (000b5b8a) = TSCamera_Ctor(camera, (0, 0, 0), (0, -6000, 0), 0x100, 8, 000b5b6e), Cam_AttachTo (0005923c)(ViewChain_Viewed), mode +0x36 = 2; 000b5bca = 1; CockpitViewManager_Ctor(0, player), CockpitViewManager_Publish, WeaponMounts_BuildGauges, Cockpit_LoadSquadmatePilots, PaperDoll_BuildWeaponIcons into each machine's +0x194, Cursor_SetImage, Player_PerFrameCockpitUpdate, Cam_Update, CockpitView_SetView 1 then 0; LiftStart_Pending (000b5bb0) = 1 when a g_BasePool element whose group +0x3f has side byte +0x14 0 lies within 40000 of the player, then 00057cf4, otherwise 000928ee = 8, Palette_BlendRangeByPitch, Palette_FlushDirtyRange and Sim_RenderFrame; 000b5bca = 0; Palette_FlushDirtyRange; Widget_DrawToCockpit(0, {0, 0, 320, 400}, 1); the routine 0009df4c; 000b5b72/000b5b74 = option 6 and ShapeDetail_ApplyDetailSetting (00057c08)(option 6); 000b5b96 = option 5 > 240; 0004e294(1); with the lift 00057ffc; unless TapePlayback, CockpitMouseLive = 1; Sound_Play(0x13). ES2's Sim_InitMissionSession (DBSIM 004614fc).",
+      "description": "No arguments: the mission start. Hands Sim_AssertCleanupHook (0005a7b8) to Assert_AddHook (0005730c); Input_BuildSourceTable (0004c95c); Sim_Timer (000b5baa) = DVTimer_Ctor (0006c6f8)(0, 0x26d3); with the byte 000b5b68 set reads resource.cfg's [SoundFX] Driver#, IRQ, DMA and PortAddress and [Music] Driver# and PortAddress (hex through sscanf (0006c871)) for Sound_Init, else digital device 0; 0004e498; with no sound manager 000959ac, Prefs_SetOption(1, 0, i) for options 0-2; Light_ResetSystem, 00075858, 00066e00, Widget_LoadStylesAndFonts; the hooks 00094d80 and 00094d84 = SimInput_PushDisable (0005a5b4) and SimInput_PopEnable (0005a5d8); Mono_Clear when 000bda94 is set; Subsystem_RunPhase(2); the cursor from Cursor_LoadCursorResource (00057640); DBSim_LoadScriptDat; ObjList_Add (00020d5c) of each Zone_ShapeObjects entry up to Zone_ShapeCount or the first null; CockpitMouse_Init (000441cc); CockpitMouseLive (000bd512) = 0; Time_InitSimClock (00063e64); DBSim_SpawnMissionObjects (0001e638) between Prefs_SetOption(1, 0, 1) and Prefs_RevertOption(1, 1); deletes every element of g_ExplosionPool and of 000aeef8; Light_CreateMissionSun (0005a888); ObjList_ZoneShapeCount (000bc596) = ObjList_Count (00092558); LocalPlayerMech (000b5b86) = the last element of g_MechPool (000af68c) with byte +0x9d set, also ViewChain_Viewed (000bda9a) and ViewChain_Chosen (000b5bbc); a 0x4a-byte camera (TSCamera_CtorDefault, vtable 000972de) per member of the player's group (count +0x12 of +0x3f) into ViewChain_SquadCameras (000bda9e); SimDisplay = Sim_CreateDisplay (0005a5f4), GLDisplay_SetAttribute (0006a824)(display, 0x280, 2), page origins 1-3 (0, 200), (320, 0), (320, 200) at +0x50 through the routine 0009df10, +0x88 = 0, +0x8c and +0x3c = 2 (0 with CmdLine_SinglePage (000b5b67) set), +0x34 = +0x88, +0x3c = 3 without CmdLine_SinglePage (000b5b67); ViewObjectPtr (000b5b8a) = TSCamera_Ctor(camera, (0, 0, 0), (0, -6000, 0), 0x100, 8, 000b5b6e), Cam_AttachTo (0005923c)(ViewChain_Viewed), mode +0x36 = 2; 000b5bca = 1; CockpitViewManager_Ctor(0, player), CockpitViewManager_Publish, WeaponMounts_BuildGauges, Cockpit_LoadSquadmatePilots, PaperDoll_BuildWeaponIcons into each machine's +0x194, Cursor_SetImage, Player_PerFrameCockpitUpdate, Cam_Update, CockpitView_SetView 1 then 0; LiftStart_Pending (000b5bb0) = 1 when a g_BasePool element whose group +0x3f has side byte +0x14 0 lies within 40000 of the player, then 00057cf4, otherwise 000928ee = 8, Palette_BlendRangeByPitch, Palette_FlushDirtyRange and Sim_RenderFrame; 000b5bca = 0; Palette_FlushDirtyRange; Widget_DrawToCockpit(0, {0, 0, 320, 400}, 1); the routine 0009df4c; 000b5b72/000b5b74 = option 6 and ShapeDetail_ApplyDetailSetting (00057c08)(option 6); 000b5b96 = option 5 > 240; 0004e294(1); with the lift 00057ffc; unless TapePlayback, CockpitMouseLive = 1; Sound_Play(0x13). ES2's Sim_InitMissionSession (DBSIM 004614fc).",
       "source": "ES1DBSIM decompile at 0005a9dc",
       "verified": {
         "bytes": "0005a9dc+2808",
@@ -28189,7 +28234,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Cursor_SetImage",
-      "description": "(bitmap, hotspot), C convention: hides the cursor (g_RasterRoutines slot 31, 0009df50) while it is shown (00098d6c), stores bitmap at 00098d68 and the hotspot's two dwords at 00098d78, frees the save-under buffer 00098d8a, and for a non-null bitmap stores its int16s +0 and +2 at 00098d80 and 00098d82 and their product at 00098d86, allocates that many bytes as the new save-under, and shows the cursor again (slot 30) when it was shown and the allocation succeeded.",
+      "description": "(bitmap, hotspot), C convention: hides the cursor (g_RasterRoutines slot 31, 0009df50) while it is shown (Cursor_Shown (00098d6c)), stores bitmap at Cursor_Bitmap (00098d68) and the hotspot's two dwords at Cursor_Hotspot (00098d78), frees the save-under buffer 00098d8a, and for a non-null bitmap stores its int16s +0 and +2 at Cursor_SaveUnder (00098d80) and 00098d82 and their product at 00098d86, allocates that many bytes as the new save-under, and shows the cursor again (slot 30) when it was shown and the allocation succeeded.",
       "source": "ES1DBSIM decompile at 00066948",
       "verified": {
         "bytes": "00066948+148",
@@ -28204,7 +28249,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Cursor_SyncPosition",
-      "description": "(point), C convention: when the dword VGA8_ShowPageIdle (00098d96) is set, copies the point to 00098d70/00098d74, between calls through 0009df50 and 0009df4c when the dword 00098d6c is set; otherwise copies it to 00098d9a/00098d9e. ES2's Cursor_SyncPosition (DBSIM 00486d70), statement for statement.",
+      "description": "(point), C convention: when the dword VGA8_ShowPageIdle (00098d96) is set, copies the point to Cursor_Position (00098d70)/00098d74, between calls through 0009df50 and 0009df4c when the dword Cursor_Shown (00098d6c) is set; otherwise copies it to Cursor_PendingPosition (00098d9a)/00098d9e. ES2's Cursor_SyncPosition (DBSIM 00486d70), statement for statement.",
       "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#functions; ES1DBSIM disassembly at 000669dc",
       "verified": {
         "bytes": "000669dc+82",
@@ -28219,7 +28264,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Cursor_GetPosition",
-      "description": "(out), C convention: copies the point at 00098d70/00098d74, which Cursor_SyncPosition (000669dc) writes, to out. ES2's Cursor_GetPosition (DBSIM 00486dc2).",
+      "description": "(out), C convention: copies the point at Cursor_Position (00098d70)/00098d74, which Cursor_SyncPosition (000669dc) writes, to out. ES2's Cursor_GetPosition (DBSIM 00486dc2).",
       "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#functions; ES1DBSIM disassembly at 00066a2e",
       "verified": {
         "bytes": "00066a2e+24",
@@ -32993,6 +33038,36 @@
       }
     },
     {
+      "address": "00088728",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_ShowCursor",
+      "description": "No arguments: slot 30 of the VGA_8 driver's table (000a7b70) and of the VGA_4 driver's table (000a7ae0), the stored pointers es2_xref finds. With a bitmap at Cursor_Bitmap (00098d68) and Cursor_Shown (00098d6c) clear, with interrupts off: sets Cursor_Shown, stores Cursor_Position (00098d70) less Cursor_Hotspot (00098d78) at Cursor_DrawCorner (00098d8e), sets the source and draw pages' offsets 0009e600/0009e604 to the visible page's 0009e608 and their pans 0009e60c/0009e610 to 0009e614, reads the pixels under the corner into Cursor_SaveUnder (00098d80) through g_RasterRoutines slot 27 (0009df40) and draws the bitmap there through slot 26 (0009df3c), each with the clip rect 00098d34 and flags 0, then puts the four back.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-cursor",
+      "verified": {
+        "bytes": "00088728+215",
+        "sha1": "703e2a0955c7",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000887ff",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_HideCursor",
+      "description": "No arguments, frameless, with no Ghidra function: slot 31 of the VGA_8 driver's table (000a7b70) and of the VGA_4 driver's table (000a7ae0), the stored pointers es2_xref finds. With a bitmap at Cursor_Bitmap (00098d68) and Cursor_Shown (00098d6c) set, with interrupts off: clears Cursor_Shown, sets the draw page's offset 0009e604 and pan 0009e610 to the visible page's 0009e608 and 0009e614, and while the dword 00098dc2 is set draws Cursor_SaveUnder (00098d80) back at Cursor_DrawCorner (00098d8e) through g_RasterRoutines slot 26 (0009df3c) with the clip rect 00098d34 and flags 0; then puts the two back.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-cursor",
+      "verified": {
+        "bytes": "000887ff+111",
+        "sha1": "917fd231d7f3",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "0008b39c",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -33050,6 +33125,21 @@
         "sha1": "711e52b0399e",
         "scope": "body",
         "via": "disasm"
+      }
+    },
+    {
+      "address": "0008be88",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_ReadBitmap",
+      "description": "(header, point, clip, flags), C convention: slot 27 of the VGA_8 driver's table (000a7b70), the one stored pointer es2_xref finds. The reverse of VGA8_BlitBitmap (0008b9a8): with a clip rect, returns when the bitmap's rows (+0) and columns (+2) at the point miss it and otherwise cuts them to it; mirrors by the flags 1 and 2; reads the rect of the source page (offset 0009e600, pan 0009e60c, the row table VGA8_RowOffsets) a plane at a time through the graphics controller's read map select (port 3ce index 4, its value put back after) into the pixels the dword +0xa points at.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-cursor",
+      "verified": {
+        "bytes": "0008be88+1010",
+        "sha1": "36bd9b59294a",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -34997,12 +35087,75 @@
       "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-frame-rate-meter"
     },
     {
+      "address": "00098d68",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Cursor_Bitmap",
+      "description": "The mouse pointer's bitmap header, which Cursor_SetImage (00066948) stores; 0 for none, when VGA8_ShowCursor (00088728) and VGA8_HideCursor (000887ff) do nothing.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-cursor"
+    },
+    {
+      "address": "00098d6c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Cursor_Shown",
+      "description": "dword: 1 while the pointer is drawn on the visible page; VGA8_ShowCursor (00088728) sets it and VGA8_HideCursor (000887ff) clears it. 0 in the image.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-cursor"
+    },
+    {
+      "address": "00098d70",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Cursor_Position",
+      "description": "Two int32, the pointer's position, which Cursor_SyncPosition (000669dc) writes and Cursor_GetPosition (00066a2e) reads; VGA8_ShowCursor (00088728) draws the pointer at it less Cursor_Hotspot (00098d78).",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-cursor"
+    },
+    {
+      "address": "00098d78",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Cursor_Hotspot",
+      "description": "Two int32, the pointer's hotspot, which Cursor_SetImage (00066948) stores.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-cursor"
+    },
+    {
+      "address": "00098d80",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Cursor_SaveUnder",
+      "description": "A bitmap header for the pixels under the pointer: int16 rows +0 and columns +2, which Cursor_SetImage (00066948) copies from the pointer's bitmap, the bytes 8 at +4 and 0x10 at +5 (bit 4, every byte written) in the image, the size +6, and the buffer +0xa (00098d8a), which Cursor_SetImage allocates. VGA8_ShowCursor (00088728) fills it and VGA8_HideCursor (000887ff) draws it back.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-cursor"
+    },
+    {
+      "address": "00098d8e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Cursor_DrawCorner",
+      "description": "Two int32, where VGA8_ShowCursor (00088728) last drew the pointer: Cursor_Position (00098d70) less Cursor_Hotspot (00098d78); VGA8_HideCursor (000887ff) puts the save-under back there.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-cursor"
+    },
+    {
       "address": "00098d96",
       "binary": "ES1DBSIM",
       "type": "data",
       "confidence": "high",
       "name": "VGA8_ShowPageIdle",
-      "description": "dword: 0 while VGA8_ShowPage (00052690) runs, which clears it on entry and sets it on return; CockpitView_StepViewTransition (00022904) also clears it before a slide and sets it after. While it is 0, Cursor_SyncPosition (000669dc) leaves the drawn cursor alone and stores the position at 00098d9a.",
+      "description": "dword: 0 while VGA8_ShowPage (00052690) runs, which clears it on entry and sets it on return; CockpitView_StepViewTransition (00022904) also clears it before a slide and sets it after. While it is 0, Cursor_SyncPosition (000669dc) leaves the drawn cursor alone and stores the position at Cursor_PendingPosition (00098d9a).",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulators-own-page-routines"
+    },
+    {
+      "address": "00098d9a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Cursor_PendingPosition",
+      "description": "Two int32: where Cursor_SyncPosition (000669dc) stores the pointer's position while VGA8_ShowPageIdle (00098d96) is 0, and where VGA8_ShowPage (00052690) keeps Cursor_Position (00098d70) while it changes the visible page, copying it back before it shows the pointer again.",
       "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulators-own-page-routines"
     },
     {

@@ -8569,7 +8569,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Cursor_SetImage",
-      "description": "(bitmap, hotspot), C convention: hides the cursor (g_RasterRoutines slot 31, 0008662c) while it is shown (00084424), stores bitmap at 00084420 and the hotspot's two dwords at 00084430, frees the save-under buffer 00084442, and for a non-null bitmap stores its int16s +0 and +2 at 00084438 and 0008443a and their product at 0008443e, allocates that many bytes as the new save-under, and shows the cursor again (slot 30) when it was shown and the allocation succeeded. The code of ES1DBSIM's Cursor_SetImage (00066948), relocated operands aside.",
+      "description": "(bitmap, hotspot), C convention: hides the cursor (g_RasterRoutines slot 31, 0008662c) while it is shown (Cursor_Shown (00084424)), stores bitmap at Cursor_Bitmap (00084420) and the hotspot's two dwords at Cursor_Hotspot (00084430), frees the save-under buffer 00084442, and for a non-null bitmap stores its int16s +0 and +2 at Cursor_SaveUnder (00084438) and 0008443a and their product at 0008443e, allocates that many bytes as the new save-under, and shows the cursor again (slot 30) when it was shown and the allocation succeeded. The code of ES1DBSIM's Cursor_SetImage (00066948), relocated operands aside.",
       "source": "ES1GO decompile at 00050e40",
       "verified": {
         "bytes": "00050e40+148",
@@ -8584,7 +8584,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Cursor_SyncPosition",
-      "description": "(point), C convention: when the dword 0008444e is set, copies the point to 00084428/0008442c, between calls through 0008662c and 00086628 when the dword 00084424 is set; otherwise copies it to 00084452/00084456. The code of ES1DBSIM's Cursor_SyncPosition (ES1DBSIM 000669dc), relocated operands aside. es2_xref finds calls from 0000305b, 00010967, Shell_PresentFrame (00012980) and 00045e98.",
+      "description": "(point), C convention: when the dword 0008444e is set, copies the point to Cursor_Position (00084428)/0008442c, between calls through 0008662c and 00086628 when the dword Cursor_Shown (00084424) is set; otherwise copies it to 00084452/00084456. The code of ES1DBSIM's Cursor_SyncPosition (ES1DBSIM 000669dc), relocated operands aside. es2_xref finds calls from 0000305b, 00010967, Shell_PresentFrame (00012980) and 00045e98.",
       "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#functions; es2_naming.py match ES1DBSIM ES1GO, EXACT; ES1GO disassembly at 00050ed4",
       "verified": {
         "bytes": "00050ed4+82",
@@ -8599,7 +8599,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Cursor_GetPosition",
-      "description": "(out), C convention: copies the point at 00084428/0008442c, which Cursor_SyncPosition (00050ed4) writes, to out. The code of ES1DBSIM's Cursor_GetPosition (ES1DBSIM 00066a2e), relocated operands aside. es2_xref finds no branch or stored pointer to it.",
+      "description": "(out), C convention: copies the point at Cursor_Position (00084428)/0008442c, which Cursor_SyncPosition (00050ed4) writes, to out. The code of ES1DBSIM's Cursor_GetPosition (ES1DBSIM 00066a2e), relocated operands aside. es2_xref finds no branch or stored pointer to it.",
       "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#functions; es2_naming.py match ES1DBSIM ES1GO, EXACT; ES1GO disassembly at 00050f26; es2_xref.py --binary ES1GO 00050f26",
       "verified": {
         "bytes": "00050f26+24",
@@ -16033,7 +16033,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VGA8_ShowPage",
-      "description": "(page), C convention: the VGA_8 driver's slot 18. Clears 0008444e; by 00084472 waits for nothing (0), out of a vertical retrace in progress (1), or for the next retrace to start and end (other), on port 3DA bit 3; writes the page's plane offset (00088e92 + 4*page) to CRTC registers 0xc and 0xd (port 3D4); when 00084472 is non-zero waits for a retrace to start; writes the pan byte (00088eba + page) to attribute register 0x13 (port 3C0, index 0x33). It then stores the offset at 00088ecc and the pan >> 1 at 00088ed8, with 00084424 set first calling the routine 0008662c and copying 8 bytes 00084428 to 00084452, and after copying them back and calling 00086628; then sets 0008444e to 1.",
+      "description": "(page), C convention: the VGA_8 driver's slot 18. Clears 0008444e; by 00084472 waits for nothing (0), out of a vertical retrace in progress (1), or for the next retrace to start and end (other), on port 3DA bit 3; writes the page's plane offset (00088e92 + 4*page) to CRTC registers 0xc and 0xd (port 3D4); when 00084472 is non-zero waits for a retrace to start; writes the pan byte (00088eba + page) to attribute register 0x13 (port 3C0, index 0x33). It then stores the offset at 00088ecc and the pan >> 1 at 00088ed8, with Cursor_Shown (00084424) set first calling the routine 0008662c and copying 8 bytes Cursor_Position (00084428) to 00084452, and after copying them back and calling 00086628; then sets 0008444e to 1.",
       "source": "Herculan/docs/es1/rendering/screen-pages.md#the-pages",
       "verified": {
         "bytes": "00070216+253",
@@ -16053,6 +16053,36 @@
       "verified": {
         "bytes": "00070313+117",
         "sha1": "6ae13d7e0a47",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00070388",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_ShowCursor",
+      "description": "No arguments: slot 30 of the VGA_8 driver's table (0008b2f0) and of the table at 0008b260, the stored pointers es2_xref finds. With a bitmap at Cursor_Bitmap (00084420) and Cursor_Shown (00084424) clear, with interrupts off: sets Cursor_Shown, stores Cursor_Position (00084428) less Cursor_Hotspot (00084430) at Cursor_DrawCorner (00084446), sets the source and draw pages' offsets 00088ec4/00088ec8 to the visible page's 00088ecc and their pans 00088ed0/00088ed4 to 00088ed8, reads the pixels under the corner into Cursor_SaveUnder (00084438) through g_RasterRoutines slot 27 (0008661c) and draws the bitmap there through slot 26 (00086618), each with the clip rect 000843ec and flags 0, then puts the four back. The code of ES1DBSIM's VGA8_ShowCursor (00088728), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-cursor",
+      "verified": {
+        "bytes": "00070388+215",
+        "sha1": "8ca79fca3423",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0007045f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_HideCursor",
+      "description": "No arguments, frameless, with no Ghidra function: slot 31 of the VGA_8 driver's table (0008b2f0) and of the table at 0008b260, the stored pointers es2_xref finds. With a bitmap at Cursor_Bitmap (00084420) and Cursor_Shown (00084424) set, with interrupts off: clears Cursor_Shown, sets the draw page's offset 00088ec8 and pan 00088ed4 to the visible page's 00088ecc and 00088ed8, draws Cursor_SaveUnder (00084438) back at Cursor_DrawCorner (00084446) through g_RasterRoutines slot 26 (00086618) with the clip rect 000843ec and flags 0, and puts the two back. ES1DBSIM's VGA8_HideCursor (000887ff) with its globals relocated, except that ES1DBSIM's draws the save-under back only while the dword 00098dc2 is set, where this one tests nothing.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-cursor",
+      "verified": {
+        "bytes": "0007045f+102",
+        "sha1": "c9edca5c5555",
         "scope": "body",
         "via": "disasm"
       }
@@ -16158,6 +16188,21 @@
       "verified": {
         "bytes": "000739e8+336",
         "sha1": "c91e8d3d37e2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0007425c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_ReadBitmap",
+      "description": "(header, point, clip, flags), C convention: slot 27 of the VGA_8 driver's table (0008b2f0), the one stored pointer es2_xref finds. The reverse of the blit at slot 26 (00073d7c): with a clip rect, returns when the bitmap's rows (+0) and columns (+2) at the point miss it and otherwise cuts them to it; mirrors by the flags 1 and 2; reads the rect of the source page (offset 00088ec4, pan 00088ed0, the row table 00088852) a plane at a time through the graphics controller's read map select (port 3ce index 4, its value put back after) into the pixels the dword +0xa points at. The code of ES1DBSIM's VGA8_ReadBitmap (0008be88), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-cursor",
+      "verified": {
+        "bytes": "0007425c+1010",
+        "sha1": "41c0d3d11226",
         "scope": "body",
         "via": "decompile"
       }
@@ -16941,6 +16986,60 @@
       "name": "_iob",
       "description": "Symantec C++ runtime `_iob`, the stdio FILE array, 0x18 bytes per FILE with the flags at +0xc and the DOS handle at +0x10: stdin (handle 0, flags 0x101) at 00083cd8, stdout (handle 1, 0x102) at 00083cf0, stderr (handle 2, 0x106) at 00083d08 and handle 3 (0x180) at 00083d20. vprintf writes to stdout. ES1DBSIM's _iob is at 0009e84c.",
       "source": "ES1GO image at 00083cd8"
+    },
+    {
+      "address": "00084420",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Cursor_Bitmap",
+      "description": "The mouse pointer's bitmap header, which Cursor_SetImage (00050e40) stores; 0 for none, when VGA8_ShowCursor (00070388) and VGA8_HideCursor (0007045f) do nothing. ES1DBSIM's Cursor_Bitmap is at 00098d68.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-cursor"
+    },
+    {
+      "address": "00084424",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Cursor_Shown",
+      "description": "dword: 1 while the pointer is drawn on the visible page; VGA8_ShowCursor (00070388) sets it and VGA8_HideCursor (0007045f) clears it. 0 in the image. ES1DBSIM's Cursor_Shown is at 00098d6c.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-cursor"
+    },
+    {
+      "address": "00084428",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Cursor_Position",
+      "description": "Two int32, the pointer's position, which Cursor_SyncPosition (00050ed4) writes and Cursor_GetPosition (00050f26) reads; VGA8_ShowCursor (00070388) draws the pointer at it less Cursor_Hotspot (00084430). ES1DBSIM's Cursor_Position is at 00098d70.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-cursor"
+    },
+    {
+      "address": "00084430",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Cursor_Hotspot",
+      "description": "Two int32, the pointer's hotspot, which Cursor_SetImage (00050e40) stores. ES1DBSIM's Cursor_Hotspot is at 00098d78.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-cursor"
+    },
+    {
+      "address": "00084438",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Cursor_SaveUnder",
+      "description": "A bitmap header for the pixels under the pointer: int16 rows +0 and columns +2, which Cursor_SetImage (00050e40) copies from the pointer's bitmap, the bytes 8 at +4 and 0x10 at +5 (bit 4, every byte written) in the image, the size +6, and the buffer +0xa (00084442), which Cursor_SetImage allocates. VGA8_ShowCursor (00070388) fills it and VGA8_HideCursor (0007045f) draws it back. ES1DBSIM's Cursor_SaveUnder is at 00098d80.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-cursor"
+    },
+    {
+      "address": "00084446",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Cursor_DrawCorner",
+      "description": "Two int32, where VGA8_ShowCursor (00070388) last drew the pointer: Cursor_Position (00084428) less Cursor_Hotspot (00084430); VGA8_HideCursor (0007045f) puts the save-under back there. ES1DBSIM's Cursor_DrawCorner is at 00098d8e.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-cursor"
     },
     {
       "address": "000865b0",

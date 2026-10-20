@@ -224,7 +224,7 @@ ES2's ends by flushing the shadows' delete queue.
 
 ES2's ([the developer keys](../../retail/command-line.md#-sprunknown-the-developer-keys)) gates the movement and step codes on the developer keys' switch, presses the shield gauge's child for `0x1a`/`0x1b` ([the shield-balance rocker](../../retail/simulation/cockpit-input.md#8-worked-example-the-shield-balance-rocker)), and has no `0x619`.
 
-**`Mech_ToggleRadarMode` (`000157f4`)**, (machine): flips the radar `+0x90` of the player's machine and plays `0x1b` with it off or `0x1a` with it on. ES2's (`0041b468`) also posts the radar message. `es2_xref.py` finds two calls, `CockpitWidgets_HandleCommand`'s `R` ([the panel's keys](cockpit-panel.md)) and `0003a46c`.
+**`Mech_ToggleRadarMode` (`000157f4`)**, (machine): flips the radar `+0x90` when the machine's `+0x9d` is set, the locally piloted machine, and then, flipped or not, plays `0x1b` with the radar off or `0x1a` with it on. ES2's (`0041b468`) also posts the radar message. `es2_xref.py` finds two calls, `CockpitWidgets_HandleCommand`'s `R` ([the panel's keys](cockpit-panel.md)) and `0003a46c`.
 
 ## Small functions
 

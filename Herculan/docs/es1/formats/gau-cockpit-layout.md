@@ -8,6 +8,8 @@
 
 Nothing shifts the rects into device pixels: ES1's builders pass each block to its constructor as read.
 
+**The eight retail files**, `gau\ROADRUNN` to `gau\COLOSSUS` in `SIMVOL0.VOL` as HercWorks.Core reads them, are 1,700 bytes each with the origin pair (0, 0), so `Gau_Load` moves nothing. The rows in use, the `int32` at 16, are 3, 3, 4, 5, 6, 7, 8 and 9 in chassis order (`ROADRUNN`, `GUNSLING`, `RAPTOR`, `TOMAHAWK`, `PATRIOT`, `PANTHER`, `HERCULES`, `COLOSSUS`). The in-use row rects lie between screen rows 1 and 189, each 7 or 8 rows high, and the parts' rects at 180, 196, 260 and 276 span rows 0 to 7 from a row's top, inside every in-use row. The console block's 16-byte header at 452 is not zero in `PATRIOT`, `HERCULES` and `COLOSSUS`, and in `HERCULES` and `COLOSSUS` the five rects from 468 lie where they would relative to it ([Open](#open)).
+
 ## Differences from ES2
 
 | Offset | ES1 | ES2's offset |
@@ -39,5 +41,5 @@ Nothing shifts the rects into device pixels: ES1's builders pass each block to i
 
 ## Open
 
-- **Open:** a check of the reading against the eight retail files in `SIMVOL0.VOL`, through HercWorks.Core: the `int32` at 16 at most 9 in each, every in-use row rect inside 20–163, the five rects at 468–547 holding the console buttons, and the weapon rows' rects at 180, 196, 260 and 276 inside a row's height.
+- **Open:** what the console block's header at 452 is to its five rects from 468: whether the console's constructors (`00037bd0`, `00037ce4`, unread) add it to them, which `HERCULES`' and `COLOSSUS`' rects suggest, and whether the five are the console buttons.
 - **Open:** what the instrument at 1212 is; its constructor (`0003c258`) is unread, as are those of the other blocks but 1104's. What the gunsight block's `int32` 2 and 3 (1112, 1116) and its bytes from 1180 to 1211 hold: the builder reads neither, and `Gau_Load` adds the origin to `int32` 2 and 3.
