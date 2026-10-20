@@ -13,7 +13,7 @@ namespace Herculan.Engine.Editor;
 /// docs/retail/simulation/mission-objectives.md's.
 /// </summary>
 internal sealed class ObjectiveView {
-	private readonly MissionIndex _index;
+	private readonly GeneratedIndex _index;
 	private readonly ScriptDat _document;
 	private readonly ObjectiveEditor _editor;
 	private readonly Action<int> _groupLink;
@@ -32,7 +32,7 @@ internal sealed class ObjectiveView {
 	/// <param name="slotLink">Draws a link that selects the object in a roster slot.</param>
 	/// <param name="routeLink">Draws a link that selects a route, by block-3 index.</param>
 	/// <param name="presentWhen">Draws the objective's Present when (<paramref name="presence"/>'s target).</param>
-	public ObjectiveView(MissionIndex index, ScriptDat document, ObjectiveEditor editor, Action<int> groupLink,
+	public ObjectiveView(GeneratedIndex index, ScriptDat document, ObjectiveEditor editor, Action<int> groupLink,
 			Action<MissionUnitKind, int> slotLink, Action<int> routeLink, PresentWhenView presentWhen, PresenceEditor presence) {
 		_index = index;
 		_document = document;
@@ -97,7 +97,7 @@ internal sealed class ObjectiveView {
 		}
 
 		ImGui.EndDisabled();
-		if (MissionIndex.UnitKindOf(objective.SubjectKind) is { } unit) {
+		if (GeneratedIndex.UnitKindOf(objective.SubjectKind) is { } unit) {
 			_slotLink(unit, objective.SubjectRef);
 		} else if (objective.SubjectKind == MissionObjectiveSubject.Group) {
 			_groupLink(objective.SubjectRef);

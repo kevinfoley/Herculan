@@ -22,7 +22,7 @@ internal sealed record ActionDeleteBlockers(string? Fixed, IReadOnlyList<int> Ti
 /// Creates, edits and deletes the open mission's actions, and wires them into the groups waiting on them and the objects
 /// firing them, each edit one step of <see cref="PointMover"/>'s undo history, through <see cref="ActionEditing"/>'s and
 /// <see cref="ActionWiring"/>'s record edits on the mission's <c>.MSN</c>. Every edit builds the editor's state again
-/// (<see cref="MissionRebuild"/>): an action's areas decide how the overlay colours each area, its verb how its waiting
+/// (<see cref="SceneSync"/>): an action's areas decide how the overlay colours each area, its verb how its waiting
 /// groups arrive, and a create or a delete adds or removes a block-5 record.
 ///
 /// <para>Actions, areas and groups are taken by their GUIDs, as the selections and the views' choices name them, and an
@@ -33,17 +33,17 @@ internal sealed class ActionEditor {
 	private readonly MissionDocument _source;
 	private readonly GeneratedRecords _records;
 	private readonly PointMover _mover;
-	private readonly MissionRebuild _rebuild;
+	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private readonly ObjectDeleter _deleter;
 	private Func<string?>? _requested;
 
-	public ActionEditor(MissionDocument source, GeneratedRecords records, PointMover mover, MissionRebuild rebuild,
+	public ActionEditor(MissionDocument source, GeneratedRecords records, PointMover mover, SceneSync sync,
 			SelectionState selection, ObjectDeleter deleter) {
 		_source = source;
 		_records = records;
 		_mover = mover;
-		_rebuild = rebuild;
+		_sync = sync;
 		_selection = selection;
 		_deleter = deleter;
 	}
@@ -152,7 +152,7 @@ internal sealed class ActionEditor {
 
 	/// <summary>Why row-16 GUID <paramref name="group"/>'s deployment action cannot be set, or null when it can.</summary>
 	public string? WhyNoDeployment(short group) =>
-		_records.Group(group) == null ? GeneratedRecords.NotShown : ActionWiring.WhyNoDeployment(_source, group);
+		_records.Group(group) == null ? GeneratedRecords.Absent : ActionWiring.WhyNoDeployment(_source, group);
 
 	/// <summary>Asks for <paramref name="group"/> to wait on row-10 GUID <paramref name="action"/>, or on none for <c>-1</c>.</summary>
 	public void RequestDeployment(short group, short action) =>
@@ -216,12 +216,12 @@ internal sealed class ActionEditor {
 	private string? Commit(Func<MsnEdit> edit, Func<short>? selected = null) {
 		MsnEdit change;
 		try {
-			change = _rebuild.Run(edit);
+			change = _sync.Run(edit);
 		} catch (Exception ex) when (ex is InvalidOperationException or ArgumentOutOfRangeException) {
 			return ex.Message;
 		}
 
-		_mover.Record(new RecordsEdit(_rebuild, change));
+		_mover.Record(new RecordsEdit(_sync, change));
 		if (selected?.Invoke() is { } guid && guid != -1) {
 			_selection.Current = new ActionSelection(guid);
 		}

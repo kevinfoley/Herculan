@@ -9,8 +9,8 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// Adds a herc outside the player's squad to the open mission, as one step of <see cref="PointMover"/>'s undo history,
 /// through <see cref="HercGroups"/>'s record edits: in a new group of its own, standing on a route of one waypoint where it
-/// was put and hunting the player's squad, or joining the selected herc group. The editor's state is then built again from
-/// the generated file (<see cref="MissionRebuild"/>), which builds the herc's object for the record, and the herc is
+/// was put and hunting the player's squad, or joining the selected herc group. The scene is then synced with the document
+/// (<see cref="SceneSync"/>), which builds the herc's object for the record, and the herc is
 /// selected (docs/herculan/handoff-editor-roster.md#hercs).
 ///
 /// <para>It comes with the fit a new herc of its type gets (<see cref="MachineFitter.NewHercFit"/>), as a chassis change gives
@@ -23,9 +23,9 @@ internal sealed class HercPlacer {
 	private readonly ScriptDat _document;
 	private readonly MissionDocument _source;
 	private readonly MissionScene _scene;
-	private readonly MissionIndex _index;
+	private readonly GeneratedIndex _index;
 	private readonly PointMover _mover;
-	private readonly MissionRebuild _rebuild;
+	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private readonly MachineFitter _fitter;
 	private readonly UnitTypeNames _names;
@@ -33,14 +33,14 @@ internal sealed class HercPlacer {
 	/// <param name="document">The generated <c>script.dat</c>, <paramref name="source"/>'s, which the scene was loaded from.</param>
 	/// <param name="source">The mission as its <c>.MSN</c>.</param>
 	/// <param name="names">The <c>nam\MECHS.NAM</c> type names, which a ghost's model is found by.</param>
-	public HercPlacer(ScriptDat document, MissionDocument source, MissionScene scene, MissionIndex index, PointMover mover,
-			MissionRebuild rebuild, SelectionState selection, MachineFitter fitter, UnitTypeNames names) {
+	public HercPlacer(ScriptDat document, MissionDocument source, MissionScene scene, GeneratedIndex index, PointMover mover,
+			SceneSync sync, SelectionState selection, MachineFitter fitter, UnitTypeNames names) {
 		_document = document;
 		_source = source;
 		_scene = scene;
 		_index = index;
 		_mover = mover;
-		_rebuild = rebuild;
+		_sync = sync;
 		_selection = selection;
 		_fitter = fitter;
 		_names = names;
@@ -101,27 +101,28 @@ internal sealed class HercPlacer {
 	// The machines player.mec brings, which share block 7's slots, as the mission check counts them.
 	private int SquadSize => _index.Mission.Placements.Count(placement => placement.IsPlayerLance);
 
-	// Makes an add's change and rebuilds from it, then records it as one step and selects the object the rebuild built
-	// for the herc's row-12 GUID; or, when it built none, puts the records back and says why.
+	// Makes an add's change and syncs the scene with it, then records it as one step and selects the object built for
+	// the herc's row-12 GUID; or, when none was built, puts the records back and says why.
 	private string? Commit(int typeIndex, Func<MsnEdit> add, Func<short> mech) {
 		var source = _source;
 		MsnEdit change;
 		try {
-			change = _rebuild.Run(add);
+			change = _sync.Run(add);
 		} catch (InvalidOperationException ex) {
 			return ex.Message;
 		}
 
-		int? slot = source.ExportedIndex(MechRow, mech());
-		if (slot is not { } exported || _index.ObjectAt(MissionUnitKind.Mech, exported) is not { } placed) {
-			_rebuild.Undo(change);
-			return slot == null
+		short added = mech();
+		bool generated = source.ExportedIndex(MechRow, added) != null;
+		if (!generated || _index.Scene.ObjectOf(new ObjectKey(MechRow, added)) == null) {
+			_sync.Undo(change);
+			return !generated
 				? "The added herc was not generated; nothing was added."
 				: $"The install has no herc type {typeIndex}.";
 		}
 
-		_mover.Record(new RecordsEdit(_rebuild, change));
-		_selection.Current = new ObjectSelection(placed);
+		_mover.Record(new RecordsEdit(_sync, change));
+		_selection.Current = new ObjectSelection(MechRow, added);
 		return null;
 	}
 }

@@ -51,8 +51,10 @@ public sealed class FlyerFormationTable {
 		return slotIndex < slots.Length ? slots[slotIndex] : null;
 	}
 
-	public static FlyerFormationTable Load(GameContent content) {
-		byte[] bytes = content.ReadRequired(ResourceFolder, ResourceName);
+	public static FlyerFormationTable Load(GameContent content) => Parse(content.ReadRequired(ResourceFolder, ResourceName));
+
+	/// <summary>The table out of its bytes.</summary>
+	public static FlyerFormationTable Parse(byte[] bytes) {
 		int offset = 0;
 
 		short NextInt16() {

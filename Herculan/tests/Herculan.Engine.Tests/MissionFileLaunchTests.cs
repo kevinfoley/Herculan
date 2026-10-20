@@ -84,6 +84,42 @@ public class MissionFileLaunchTests {
 		}
 	}
 
+	/// <summary>
+	/// The editor's open of a campaign mission and a sync after it (<see cref="SceneSync.Sync"/>). Catches a sync that builds
+	/// every object again instead of standing the one already built for the same record (the open's objects not filed for
+	/// reuse), which leaves the drawing and the undo history holding objects no longer in the scene, and an object standing
+	/// anywhere but where the layout places it. C1_07's hercs 69 to 71 carry variations that hold as it opens.
+	/// </summary>
+	[Fact]
+	public void ASyncKeepsEachObjectWhereTheLayoutPlacesIt() {
+		if (GameInstall.Locate(null) is not { } root) {
+			return;
+		}
+
+		string directory = Path.Combine(Path.GetTempPath(), "herculan-tests", nameof(ASyncKeepsEachObjectWhereTheLayoutPlacesIt));
+		foreach (string file in new[] { "script.dat", "mission.str" }) {
+			if (File.Exists(Path.Combine(directory, file))) {
+				File.Delete(Path.Combine(directory, file));
+			}
+		}
+
+		var shell = GameContent.MountShell(root);
+		string? script = MissionOpener.Open(shell, root, "C1_07.MSN", directory, out var document, out var squad, out string? failure);
+		Assert.True(script != null, failure);
+		var mission = EditorMission.Open(GameContent.MountSimulator(root), script, "C1_07", directory, document!, squad!, () => shell);
+		Assert.All(new short[] { 69, 70, 71 }, guid => Assert.NotNull(mission.Index.ObjectOf(new ObjectKey(12, guid))));
+
+		var opened = mission.Index.Objects.ToList();
+		mission.Sync.Sync();
+		Assert.Equal(opened.Count, mission.Index.Objects.Count);
+		for (int i = 0; i < opened.Count; i++) {
+			var placed = mission.Index.Objects[i];
+			Assert.Same(opened[i], placed);
+			var planned = mission.Index.Planned(placed)!.Place.Position;
+			Assert.Equal((planned.X, planned.Y), (placed.Object.Position.X, placed.Object.Position.Y));
+		}
+	}
+
 	// Header word <word> as the document's row 2 patches it: the supplying record's, else the word's unset value.
 	private static short Patched(MissionDocument document, int word) =>
 		document.Provenance.HeaderWord(word) is { } supplier

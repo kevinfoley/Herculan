@@ -14,10 +14,10 @@ namespace Herculan.Engine.Editor;
 internal sealed class PanelLinks {
 	private static readonly Vector4 LinkColor = new(0.55f, 0.78f, 1f, 1f);
 
-	private readonly MissionIndex _index;
+	private readonly GeneratedIndex _index;
 	private readonly SelectionState _selection;
 
-	public PanelLinks(MissionIndex index, SelectionState selection) {
+	public PanelLinks(GeneratedIndex index, SelectionState selection) {
 		_index = index;
 		_selection = selection;
 	}
@@ -36,7 +36,13 @@ internal sealed class PanelLinks {
 		ImGui.PopStyleColor();
 	}
 
-	public void Object(SceneObject placed) => Link(MissionText.Describe(placed), new ObjectSelection(placed));
+	public void Object(SceneObject placed) {
+		if (_index.Scene.SelectionOf(placed) is { } selection) {
+			Link(MissionText.Describe(placed), selection);
+		} else {
+			ImGui.Text(MissionText.Describe(placed));
+		}
+	}
 
 	/// <summary>Block-11 group <paramref name="group"/>.</summary>
 	public void Group(int group) => Link(MissionText.DescribeGroup(_index, group), Records.GroupAt(group));

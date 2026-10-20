@@ -19,13 +19,14 @@ namespace Herculan.Engine.Editor;
 ///
 /// <para>The views read the generated <c>script.dat</c>, so each is drawn for the generated record the selection's
 /// <c>.MSN</c> record stands for (<see cref="GeneratedRecords"/>); a record the generation has none for shows its kind and
-/// that it is not shown in the editor.</para>
+/// that it is not shown in the editor, or for an object or a group, which the scene shows, that it is absent from the
+/// mission as opened.</para>
 /// </summary>
 internal sealed class PropertiesPanel {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
 	public const float PanelWidth = 340f;
 
-	private readonly MissionIndex _index;
+	private readonly GeneratedIndex _index;
 	private readonly SelectionState _selection;
 	private readonly PointMover _mover;
 	private readonly SideChanger _sides;
@@ -52,7 +53,7 @@ internal sealed class PropertiesPanel {
 	private readonly PointFields _point = new();
 
 	/// <param name="document">The generated <c>script.dat</c>, whose records the order view offers as routes and subjects.</param>
-	public PropertiesPanel(MissionIndex index, ScriptDat document, SelectionState selection, PointMover mover,
+	public PropertiesPanel(GeneratedIndex index, ScriptDat document, SelectionState selection, PointMover mover,
 			SideChanger sides, ObjectDeleter deleter, SquadMachinePanel machine, RosterFitView fit, MissionView mission, RouteEditor routes,
 			RoutePlacing placing, AreaEditor areas, AreaPlacing areaPlacing, OrderEditor orders, ObjectiveEditor objectives,
 			ActionEditor actions, TimerEditor timers, ConditionEditor conditions, PresenceEditor presence, VariantEditor variants,
@@ -99,13 +100,16 @@ internal sealed class PropertiesPanel {
 				_mission.Draw();
 				break;
 			case ObjectSelection selected:
-				DrawObject(selected.Object);
+				if (_index.Scene.ObjectOf(selected) is { } placed) {
+					DrawObject(placed);
+				}
+
 				break;
 			case GroupSelection { Guid: var guid }:
 				if (Records.Group(guid) is { } group) {
 					DrawGroup(guid, group);
 				} else {
-					NotShown("Group");
+					Absent("Group");
 				}
 
 				break;
@@ -167,8 +171,19 @@ internal sealed class PropertiesPanel {
 		EditorText.Note("Not shown in the editor.");
 	}
 
+	// The view of a selected object or group the scene shows and the generation has none for.
+	private static void Absent(string title) {
+		ImGui.TextWrapped(title);
+		EditorText.Note(GeneratedRecords.Absent);
+	}
+
 	private void DrawObject(SceneObject sel) {
 		var placement = sel.Placement;
+		if (placement.SlotIndex < 0 && !placement.IsPlayerLance) {
+			Absent(Title(sel));
+			return;
+		}
+
 		ImGui.TextWrapped(Title(sel));
 		ImGui.AlignTextToFramePadding();
 		ImGui.Text("Group:");
@@ -202,7 +217,7 @@ internal sealed class PropertiesPanel {
 
 		if (!placement.IsPlayerLance) {
 			ImGui.Text($"Starting condition: {placement.StartingCondition}%");
-		} else if (ReferenceEquals(placement, Mission.Player)) {
+		} else if (_index.Scene.Planned(sel) is { Squad: true, MemberIndex: 0 }) {
 			_machine.DrawPlayer();
 		} else {
 			_machine.DrawSquadmateObject(placement.SlotIndex);
@@ -218,7 +233,7 @@ internal sealed class PropertiesPanel {
 			OutOfActionWrites("When out of the fight", report);
 		}
 
-		ObjectiveLinks(_index.ObjectivesOfObject(sel), new ObjectSelection(sel));
+		ObjectiveLinks(_index.ObjectivesOfObject(sel), _index.Scene.SelectionOf(sel)!);
 		DeleteControls(sel);
 	}
 
@@ -259,7 +274,7 @@ internal sealed class PropertiesPanel {
 			if (group >= 0) {
 				ImGui.TextWrapped("It is the last member of its group, which would go with it. These reference the group:");
 			} else {
-				ImGui.TextWrapped("It is the last member of a group not shown in the editor, which would go "
+				ImGui.TextWrapped("It is the last member of a group absent from the mission as opened, which would go "
 					+ "with it. These reference the group:");
 			}
 
@@ -344,8 +359,8 @@ internal sealed class PropertiesPanel {
 		}
 
 		EditorText.Note(Meters(pos));
-		if (typed is { } draft) {
-			_mover.Commit(new ObjectTarget(sel), pos, draft.X, draft.Y, draft.Z);
+		if (typed is { } draft && _index.Scene.KeyOf(sel) is { } key) {
+			_mover.Commit(new ObjectTarget(key), pos, draft.X, draft.Y, draft.Z);
 		}
 
 		PointFields.BoxWarning(_mover.LoadedBox, sel.Object.Position);
@@ -424,7 +439,7 @@ internal sealed class PropertiesPanel {
 
 		if (_index.SetupOf(group) is { } setup) {
 			ImGui.Separator();
-			DrawSetup(group, setup);
+			DrawSetup(guid, group, setup);
 		}
 
 		ImGui.Separator();
@@ -516,8 +531,8 @@ internal sealed class PropertiesPanel {
 		ImGui.PopID();
 	}
 
-	/// <summary>The group's own point, heading and formation.</summary>
-	private void DrawSetup(int group, MissionGroupSetup setup) {
+	/// <summary>The group's own point, heading and formation; its point as the mover moves it, from the layout.</summary>
+	private void DrawSetup(short guid, int group, MissionGroupSetup setup) {
 		string source = setup.PointSource switch {
 			MissionGroupPointSource.OwnPoint => "its own point",
 			MissionGroupPointSource.RouteStart => "its route's first waypoint",
@@ -525,11 +540,12 @@ internal sealed class PropertiesPanel {
 		};
 
 		// The authored point, which a move writes; a flyer group's Z is where its first member flies (PointMover.PositionOf).
-		var target = new GroupTarget(group);
-		var at = _mover.PositionOf(target);
+		var target = new GroupTarget(guid);
+		bool movable = _mover.WhyFixedGroup(guid) == null;
+		var at = movable ? _mover.PositionOf(target) : setup.AuthoredPoint;
 		ImGui.Text("Point, in world units:");
 		ImGui.PushID("point");
-		var typed = _point.Draw(target, at, _mover.HasOwnHeight(target), enabled: _mover.WhyFixed(group) == null);
+		var typed = _point.Draw(target, at, movable && _mover.HasOwnHeight(target), enabled: movable);
 		ImGui.PopID();
 		EditorText.Note($"from {source}");
 		if (setup.AuthoredPoint != setup.Point) {
@@ -541,7 +557,7 @@ internal sealed class PropertiesPanel {
 			_mover.Commit(target, at, draft.X, draft.Y, draft.Z);
 		}
 
-		if (_mover.StandsOnPoint(group)) {
+		if (_mover.StandsOnPoint(guid)) {
 			PointFields.BoxWarning(_mover.LoadedBox, _mover.PositionOf(target));
 		}
 
@@ -567,24 +583,24 @@ internal sealed class PropertiesPanel {
 		}
 
 		ImGui.Separator();
-		DrawGroupMove(group, setup);
+		DrawGroupMove(guid, group, setup);
 	}
 
 	/// <summary>What dragging the group's move handles moves with it (<see cref="PointMover"/>), or why it cannot be moved.</summary>
-	private void DrawGroupMove(int group, MissionGroupSetup setup) {
-		if (_mover.WhyFixed(group) is { } reason) {
+	private void DrawGroupMove(short guid, int group, MissionGroupSetup setup) {
+		if (_mover.WhyFixedGroup(guid) is { } reason) {
 			EditorText.Reason(reason);
 			return;
 		}
 
-		var target = new GroupTarget(group);
+		var target = new GroupTarget(guid);
 		int sharers = _mover.SharersOf(target);
 		string others = $"{sharers} other record(s) (trigger areas, groups, waypoints) referencing its point";
 		if (setup.PointSource == MissionGroupPointSource.OwnPoint) {
 			ImGui.TextWrapped(sharers > 0
 				? $"Its point is referenced by {sharers} other record(s) (trigger areas, groups, waypoints), which move with it. Alt+drag moves the group alone."
 				: "Nothing else references its point.");
-		} else if (_mover.StartOf(group) != null) {
+		} else if (_mover.OnRouteStart(guid)) {
 			ImGui.TextWrapped("Dragging moves its route's first waypoint, the start of the route"
 				+ (sharers > 0 ? $", and the {others} with it" : "")
 				+ ". Alt+drag gives the group a point of its own.");

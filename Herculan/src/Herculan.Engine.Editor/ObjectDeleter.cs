@@ -37,15 +37,13 @@ internal sealed record DeleteBlockers(string? Fixed, DeleteNamers Object, IReadO
 /// <summary>
 /// Deletes a placed structure, mech or flyer from the open mission, whether it was loaded with it or added since, as one
 /// step of <see cref="PointMover"/>'s undo history. The delete is <see cref="RosterDeletion"/>'s record edits on the
-/// mission's <c>.MSN</c>, which remove the object's records and the group it leaves empty and generate
-/// <c>script.dat</c> again; the editor's state is then built again from the generated file (<see cref="MissionRebuild"/>),
-/// since every later record of the object's block, and of block 11 when its group goes, moves down one
+/// mission's <c>.MSN</c>, by the roster record the object stands for, which remove the object's records and the group it
+/// leaves empty and generate <c>script.dat</c> again; the scene is then synced with the document (<see cref="SceneSync"/>)
 /// (docs/herculan/handoff-editor-document.md#the-tools).
 ///
 /// <para>What refuses a delete is <see cref="RosterDeletion"/>'s: an objective, an action or an order naming the object
 /// or the group it would leave empty, an action of its own it fires when engaged or defeated, and the player's squad.
-/// The squad's machines are not roster objects at all in the scene: each <c>player.mec</c> entry is placed from block
-/// 11's record 0 (docs/retail/formats/script-dat.md#placement--the-actual-rule, rule 6).</para>
+/// The squad's machines are group 0's, which its view adds and removes.</para>
 ///
 /// <para>A delete asked for from the Properties panel or the Delete key waits for the frame's ImGui to be rendered
 /// (<see cref="Request"/>, <see cref="TakeRequest"/>), since the rebuild changes what the panels list.</para>
@@ -55,36 +53,33 @@ internal sealed class ObjectDeleter {
 
 	private readonly ScriptDat _document;
 	private readonly MissionDocument _source;
-	private readonly MissionIndex _index;
+	private readonly GeneratedIndex _index;
 	private readonly PointMover _mover;
-	private readonly MissionRebuild _rebuild;
+	private readonly SceneSync _sync;
 	private SceneObject? _requested;
 
-	public ObjectDeleter(ScriptDat document, MissionDocument source, MissionIndex index, PointMover mover,
-			MissionRebuild rebuild) {
+	public ObjectDeleter(ScriptDat document, MissionDocument source, GeneratedIndex index, PointMover mover,
+			SceneSync sync) {
 		_document = document;
 		_source = source;
 		_index = index;
 		_mover = mover;
-		_rebuild = rebuild;
+		_sync = sync;
 	}
 
 	/// <summary>What keeps <paramref name="placed"/> from being deleted; <see cref="DeleteBlockers.None"/> when nothing does.</summary>
 	public DeleteBlockers BlockersOf(SceneObject placed) {
 		var placement = placed.Placement;
 		if (placement.IsPlayerLance) {
-			return DeleteBlockers.Because("the player's squad is placed from group 0 and player.mec, with no roster record; "
-				+ "group 0's view adds and removes squadmates.");
+			return DeleteBlockers.Because("it is in the player's squad; group 0's view adds and removes squadmates.");
 		}
 
 		var source = _source;
-		int block = RosterBlock(placement.Kind);
-		short guid = source.GuidOf(block, placement.SlotIndex);
-		if (guid == -1) {
-			return DeleteBlockers.Because($"its {placement.Kind.ToString().ToLowerInvariant()} roster slot {placement.SlotIndex} is not in the file.");
+		if (_index.Scene.KeyOf(placed) is not { } key) {
+			return DeleteBlockers.Because("its roster record is not in the file.");
 		}
 
-		var check = RosterDeletion.Check(source, block + 5, guid);
+		var check = RosterDeletion.Check(source, key.Row, key.Guid);
 		if (check.InSquad) {
 			return DeleteBlockers.Because("it is in the player's squad, whose machines a practice load builds from its records.");
 		}
@@ -117,16 +112,15 @@ internal sealed class ObjectDeleter {
 		}
 
 		var source = _source;
-		int block = RosterBlock(placed.Placement.Kind);
-		short guid = source.GuidOf(block, placed.Placement.SlotIndex);
+		var (row, guid) = _index.Scene.KeyOf(placed)!.Value;
 		MsnEdit change;
 		try {
-			change = _rebuild.Run(() => RosterDeletion.Delete(source, block + 5, guid));
+			change = _sync.Run(() => RosterDeletion.Delete(source, row, guid));
 		} catch (InvalidOperationException ex) {
 			return ex.Message;
 		}
 
-		_mover.Record(new RecordsEdit(_rebuild, change));
+		_mover.Record(new RecordsEdit(_sync, change));
 		return null;
 	}
 
@@ -170,11 +164,4 @@ internal sealed class ObjectDeleter {
 
 		return new DeleteNamers(objectives, actions, orders, elsewhere);
 	}
-
-	// The script.dat block a roster kind's records are in: 7 mechs, 8 flyers, 9 structures; its .MSN row is 5 more.
-	private static int RosterBlock(MissionUnitKind kind) => kind switch {
-		MissionUnitKind.Mech => 7,
-		MissionUnitKind.Flyer => 8,
-		_ => 9
-	};
 }

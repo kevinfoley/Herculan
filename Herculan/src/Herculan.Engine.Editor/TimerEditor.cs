@@ -5,7 +5,7 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// Creates, edits and deletes the open mission's action timers, each edit one step of <see cref="PointMover"/>'s undo history,
 /// through <see cref="TimerEditing"/>'s record edits on the mission's <c>.MSN</c>. Every edit builds the editor's state again
-/// (<see cref="MissionRebuild"/>): a create or a delete adds or removes a block-6 record, and what a timer starts on and fires
+/// (<see cref="SceneSync"/>): a create or a delete adds or removes a block-6 record, and what a timer starts on and fires
 /// is what the action view lists.
 ///
 /// <para>Timers and actions are taken by their GUIDs, as the selections and the views' choices name them, and a timer not
@@ -15,16 +15,16 @@ internal sealed class TimerEditor {
 	private readonly MissionDocument _source;
 	private readonly GeneratedRecords _records;
 	private readonly PointMover _mover;
-	private readonly MissionRebuild _rebuild;
+	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private Func<string?>? _requested;
 
-	public TimerEditor(MissionDocument source, GeneratedRecords records, PointMover mover, MissionRebuild rebuild,
+	public TimerEditor(MissionDocument source, GeneratedRecords records, PointMover mover, SceneSync sync,
 			SelectionState selection) {
 		_source = source;
 		_records = records;
 		_mover = mover;
-		_rebuild = rebuild;
+		_sync = sync;
 		_selection = selection;
 	}
 
@@ -79,12 +79,12 @@ internal sealed class TimerEditor {
 	private string? Commit(Func<MsnEdit> edit, Func<short>? selected = null) {
 		MsnEdit change;
 		try {
-			change = _rebuild.Run(edit);
+			change = _sync.Run(edit);
 		} catch (Exception ex) when (ex is InvalidOperationException or ArgumentOutOfRangeException) {
 			return ex.Message;
 		}
 
-		_mover.Record(new RecordsEdit(_rebuild, change));
+		_mover.Record(new RecordsEdit(_sync, change));
 		if (selected?.Invoke() is { } guid && guid != -1) {
 			_selection.Current = new TimerSelection(guid);
 		}

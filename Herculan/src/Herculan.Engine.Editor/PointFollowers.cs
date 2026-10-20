@@ -9,32 +9,28 @@ using Herculan.Engine.World;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// Everything in the editor's scene that stands on a <c>script.dat</c> block-1 point, placed again from the document
-/// after its points change (<see cref="Sync"/>), so that whatever shares a moved point moves with it: route waypoints,
-/// trigger areas, each group's point and heading with the members spread from them and a paints-ground group's pad,
-/// and objects whose roster record names a point of its own. Each is placed by the loader's rules
-/// (docs/retail/formats/script-dat.md#placement--the-actual-rule), and only what has changed is touched.
+/// The route and trigger-area lines that stand on a <c>script.dat</c> block-1 point, laid again from the generated document
+/// while a drag previews a move (<see cref="Sync"/>), so that what shares a moved point moves with it: route waypoints and
+/// trigger areas, each resolved as the loader resolves them, and only what has changed touched. The objects and groups
+/// standing on a moved point are placed from the layout with the drag's overrides instead (<see cref="SceneSync.Preview"/>).
 ///
 /// <para>Not placed here: the ground under a moved structure or pad and a pad's paint, which are
 /// <see cref="TerrainLeveller"/>'s; and an order's or an objective's own point, which the editor does not draw.</para>
 /// </summary>
 internal sealed class PointFollowers {
 	private readonly ScriptDat _document;
-	private readonly HeightGrid _terrain;
-	private readonly MissionIndex _index;
+	private readonly MissionDocument _source;
+	private readonly GeneratedIndex _index;
 	private readonly MissionOverlay _overlay;
-	private readonly Action<SceneObject, Vec3i, int> _place;
 	private readonly Dictionary<int, int[]> _waypointEntries = new();
-	private Vec3i[] _synced;
+	private PlacementOverrides _overrides = PlacementOverrides.None;
 
-	/// <param name="place">Stands an object at a position and heading, for whatever draws and picks it.</param>
-	public PointFollowers(ScriptDat document, MissionScene scene, MissionIndex index, MissionOverlay overlay,
-			Action<SceneObject, Vec3i, int> place) {
+	/// <param name="source">The mission as its <c>.MSN</c>, whose GUIDs a drag's overrides name the points by.</param>
+	public PointFollowers(ScriptDat document, MissionDocument source, GeneratedIndex index, MissionOverlay overlay) {
 		_document = document;
-		_terrain = scene.World.Terrain;
+		_source = source;
 		_index = index;
 		_overlay = overlay;
-		_place = place;
 
 		// Which entry of each route's block-3 list each of its resolved waypoints came from: the load drops a ref past
 		// block 1's end, so the two can differ. Taken before an edit appends a point such a ref would then name.
@@ -51,8 +47,6 @@ internal sealed class PointFollowers {
 				_waypointEntries[route.Reference] = entries;
 			}
 		}
-
-		_synced = Points();
 	}
 
 	/// <summary>The block-3 entries <paramref name="route"/>'s waypoints came from, in order, or null when they cannot be told.</summary>
@@ -82,21 +76,14 @@ internal sealed class PointFollowers {
 		? new Vec3i(spawn.X, spawn.Y, terrain.HeightAtWorld(spawn.X, spawn.Y) + mech.Type.RideHeight)
 		: spawn;
 
-	/// <summary>Places again everything the document's points have moved since the last call.</summary>
-	public void Sync() {
-		var points = Points();
-		var changed = new HashSet<int>();
-		for (int i = 0; i < Math.Max(points.Length, _synced.Length); i++) {
-			if (i >= points.Length || i >= _synced.Length || points[i] != _synced[i]) {
-				changed.Add(i);
-			}
-		}
-
-		_synced = points;
+	/// <summary>
+	/// Lays again every route and area line the document's points, or <paramref name="overrides"/>' row-6 GUIDs in their
+	/// place, have moved since the last call.
+	/// </summary>
+	public void Sync(PlacementOverrides? overrides = null) {
+		_overrides = overrides ?? PlacementOverrides.None;
 		SyncRoutes();
 		SyncAreas();
-		SyncGroups();
-		SyncOwnPoints(changed);
 	}
 
 	private void SyncRoutes() {
@@ -140,152 +127,17 @@ internal sealed class PointFollowers {
 		}
 	}
 
-	// A group stands at its own point, else its slot-0 route's first waypoint, and faces along that route's first leg
-	// when it names no heading (rules 3 and 4); a paints-ground group's point snaps into its pad's tile.
-	private void SyncGroups() {
-		for (int group = 0; group < _document.Groups.Length; group++) {
-			if (_index.SetupOf(group) is not { } setup) {
-				continue;
-			}
-
-			var orders = group < _index.Mission.GroupOrders.Count ? _index.Mission.GroupOrders[group] : null;
-			var route = orders is { Count: > 0 } && orders[0] is { RouteRef: var routeRef } && _index.Route(routeRef) is { } walked
-				? walked.Points
-				: Array.Empty<Vec3i>();
-
-			var own = Coordinate(_document.Groups[group].PositionRef);
-			var authored = own ?? (route.Count > 0 ? route[0] : Vec3i.Zero);
-			var source = own != null ? MissionGroupPointSource.OwnPoint
-				: route.Count > 0 ? MissionGroupPointSource.RouteStart
-				: MissionGroupPointSource.None;
-			// Only a structure group snaps. One that paints its ground with no structure placed has no pad, and so no
-			// layout to snap by; it has nothing to move either.
-			bool snaps = setup.PaintsGround && group < _index.Mission.GroupKinds.Count
-				&& _index.Mission.GroupKinds[group] == MissionUnitKind.Base;
-			var pad = _index.BasePads.FirstOrDefault(candidate => candidate.GroupIndex == group);
-			if (snaps && pad == null) {
-				continue;
-			}
-
-			var point = authored;
-			if (snaps && pad != null) {
-				var (x, y) = pad.Layout.SnapAnchor(authored.X, authored.Y);
-				point = new Vec3i(x, y, authored.Z);
-			}
-
-			int heading = setup.HeadingFromRoute ? MissionPlacementRules.RouteBearing(route) : setup.Heading;
-			if (point == setup.Point && authored == setup.AuthoredPoint && source == setup.PointSource && heading == setup.Heading) {
-				continue;
-			}
-
-			var moved = setup with { Point = point, AuthoredPoint = authored, PointSource = source, Heading = heading };
-			_index.SetSetup(group, moved);
-			Vec3i? anchor = PlaceMembers(group, setup, moved, pad?.Anchor);
-			if (pad != null && anchor is { } newAnchor) {
-				var movedPad = pad with { Anchor = newAnchor };
-				_index.SetBasePad(movedPad);
-				_overlay.MovePad(movedPad);
-			}
-		}
-	}
-
-	// Spreads the members with no point of their own from the group's new point and turns those with no heading of
-	// their own by as much as the group turned. Answers where the member that stood on the pad's anchor now stands.
-	private Vec3i? PlaceMembers(int group, MissionGroupSetup before, MissionGroupSetup after, Vec3i? padAnchor) {
-		Vec3i? anchor = null;
-		foreach (var member in _index.GroupMembers[group]) {
-			var placement = member.Placement;
-			if (!placement.IsPlayerLance && OwnPointRef(placement) is not null) {
-				continue;
-			}
-
-			Vec3i position;
-			if (member.Object is FlyerObject) {
-				position = FlyerSpread(after, placement.FlyerFormationOffset);
-			} else {
-				// A mech spawns at the ground's height at the group's point, before the spread, and is drawn where its
-				// first move stands it; a structure takes the height under itself.
-				var spread = GroundSpread(after, placement.FormationOffset);
-				int z = member.Object is MechObject mech
-					? MissionScene.MechSpawnHeight(_terrain, mech, after.Point)
-					: _terrain.HeightAtWorld(spread.X, spread.Y);
-				position = Settled(_terrain, member.Object, new Vec3i(spread.X, spread.Y, z));
-			}
-
-			int heading = member.Object.Heading;
-			if (placement.IsPlayerLance || !HasOwnHeading(placement)) {
-				heading = member.Object is BaseObject
-					? (short)(heading + after.Heading - before.Heading)
-					: after.Heading;
-			}
-
-			if (padAnchor is { } old && member.Object.Position.X == old.X && member.Object.Position.Y == old.Y) {
-				anchor = position;
-			}
-
-			_place(member, position, heading);
+	// Block-1 point <reference>, at an override's coordinates when its GUID has one.
+	private Vec3i? Coordinate(short reference) {
+		if (reference < 0 || reference >= _document.Coordinates.Length) {
+			return null;
 		}
 
-		return anchor;
-	}
-
-	private static Vec3i GroundSpread(MissionGroupSetup setup, (int X, int Y)? offset) =>
-		offset is { } o ? MissionPlacementRules.FormationSpread(setup.Point, setup.Heading, o.X, o.Y) : setup.Point;
-
-	// A flyer keeps the point's Z, its slot's Z added, and 5000 when that comes out zero.
-	private static Vec3i FlyerSpread(MissionGroupSetup setup, Vec3i? offset) {
-		var spread = offset is { } o ? MissionPlacementRules.FormationSpread(setup.Point, setup.Heading, o.X, o.Y) : setup.Point;
-		int z = setup.Point.Z + (offset?.Z ?? 0);
-		return new Vec3i(spread.X, spread.Y, z == 0 ? FlyerObject.DefaultHoverHeight : z);
-	}
-
-	// An object whose roster record names a point that moved stands on it again.
-	private void SyncOwnPoints(HashSet<int> changed) {
-		foreach (var sceneObject in _index.Objects) {
-			if (sceneObject.Placement.IsPlayerLance || OwnPointRef(sceneObject.Placement) is not { } reference
-					|| !changed.Contains(reference) || Coordinate(reference) is not { } point) {
-				continue;
-			}
-
-			var position = Standing(_terrain, sceneObject, point.X, point.Y, point.Z);
-			if (position != sceneObject.Object.Position) {
-				_place(sceneObject, position, sceneObject.Object.Heading);
-			}
+		if (_overrides.Points.Count > 0 && _overrides.Points.TryGetValue(_source.GuidOf(1, reference), out var moved)) {
+			return moved;
 		}
+
+		var point = _document.Coordinates[reference];
+		return new Vec3i(point.X, point.Y, point.Z);
 	}
-
-	// The block-1 ref of a roster record's own point, or null when it names none the file has.
-	private short? OwnPointRef(MissionPlacement placement) {
-		short? reference = placement.Kind switch {
-			MissionUnitKind.Mech when placement.SlotIndex >= 0 && placement.SlotIndex < _document.Mechs.Length =>
-				_document.Mechs[placement.SlotIndex].PositionRef,
-			MissionUnitKind.Flyer when placement.SlotIndex >= 0 && placement.SlotIndex < _document.Flyers.Length =>
-				_document.Flyers[placement.SlotIndex].PositionRef,
-			MissionUnitKind.Base when placement.SlotIndex >= 0 && placement.SlotIndex < _document.Bases.Length =>
-				_document.Bases[placement.SlotIndex].PositionRef,
-			_ => null
-		};
-		return reference is >= 0 && reference < _document.Coordinates.Length ? reference : null;
-	}
-
-	private bool HasOwnHeading(MissionPlacement placement) {
-		short? reference = placement.Kind switch {
-			MissionUnitKind.Mech when placement.SlotIndex >= 0 && placement.SlotIndex < _document.Mechs.Length =>
-				_document.Mechs[placement.SlotIndex].HeadingRef,
-			MissionUnitKind.Flyer when placement.SlotIndex >= 0 && placement.SlotIndex < _document.Flyers.Length =>
-				_document.Flyers[placement.SlotIndex].HeadingRef,
-			MissionUnitKind.Base when placement.SlotIndex >= 0 && placement.SlotIndex < _document.Bases.Length =>
-				_document.Bases[placement.SlotIndex].HeadingRef,
-			_ => null
-		};
-		return reference is >= 0 && reference < _document.Headings.Length;
-	}
-
-	private Vec3i? Coordinate(short reference) =>
-		reference >= 0 && reference < _document.Coordinates.Length
-			? new Vec3i(_document.Coordinates[reference].X, _document.Coordinates[reference].Y, _document.Coordinates[reference].Z)
-			: null;
-
-	private Vec3i[] Points() =>
-		Array.ConvertAll(_document.Coordinates, point => new Vec3i(point.X, point.Y, point.Z));
 }

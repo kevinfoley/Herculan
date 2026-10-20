@@ -12,7 +12,7 @@ namespace Herculan.Engine.Editor;
 /// docs/retail/simulation/mission-deployment.md#action-timers--actiontimer_tick-004230a4.
 /// </summary>
 internal sealed class TimerView {
-	private readonly MissionIndex _index;
+	private readonly GeneratedIndex _index;
 	private readonly ScriptDat _document;
 	private readonly TimerEditor _editor;
 	private readonly PanelLinks _links;
@@ -22,7 +22,7 @@ internal sealed class TimerView {
 	private int _delay;
 
 	/// <param name="document">The generated <c>script.dat</c>, whose block 6 holds each delay in seconds as the file stores it.</param>
-	public TimerView(MissionIndex index, ScriptDat document, TimerEditor editor, PanelLinks links) {
+	public TimerView(GeneratedIndex index, ScriptDat document, TimerEditor editor, PanelLinks links) {
 		_index = index;
 		_document = document;
 		_editor = editor;

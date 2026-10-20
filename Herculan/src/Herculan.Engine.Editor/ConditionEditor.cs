@@ -20,25 +20,25 @@ internal sealed record ConditionUses(IReadOnlyList<ConditionUse> Shown, IReadOnl
 /// <summary>
 /// Creates, edits and deletes the open mission's conditions, row 1, each edit one step of <see cref="PointMover"/>'s undo
 /// history, through <see cref="ConditionEditing"/>'s record edits on the mission's <c>.MSN</c>. Every edit builds the editor's
-/// state again (<see cref="MissionRebuild"/>), as a condition conditions records in and out of the generation.
+/// state again (<see cref="SceneSync"/>), as a condition conditions records in and out of the generation.
 ///
 /// <para>The edits wait for the frame's ImGui to be rendered (<see cref="RunRequest"/>).</para>
 /// </summary>
 internal sealed class ConditionEditor {
 	private readonly MissionDocument _source;
-	private readonly MissionIndex _index;
+	private readonly GeneratedIndex _index;
 	private readonly PointMover _mover;
-	private readonly MissionRebuild _rebuild;
+	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private readonly ObjectDeleter _deleter;
 	private Func<string?>? _requested;
 
-	public ConditionEditor(MissionDocument source, MissionIndex index, PointMover mover, MissionRebuild rebuild,
+	public ConditionEditor(MissionDocument source, GeneratedIndex index, PointMover mover, SceneSync sync,
 			SelectionState selection, ObjectDeleter deleter) {
 		_source = source;
 		_index = index;
 		_mover = mover;
-		_rebuild = rebuild;
+		_sync = sync;
 		_selection = selection;
 		_deleter = deleter;
 	}
@@ -212,7 +212,7 @@ internal sealed class ConditionEditor {
 			_ => new GroupSelection(guid),
 		};
 		string noun = record.Row switch { 8 => "Route", 9 => "Area", 10 => "Action", 11 => "Timer", _ => "Group" };
-		return new ConditionUse($"{noun} (not shown in the editor)", target);
+		return new ConditionUse(record.Row == 16 ? "Group (absent from the mission as opened)" : $"{noun} (not shown in the editor)", target);
 	}
 
 	private ConditionUse Object(int row, int slot) {
@@ -226,7 +226,7 @@ internal sealed class ConditionEditor {
 			noun = "Ground vehicle";
 		}
 
-		return new ConditionUse($"{noun} slot {slot}", new ObjectSelection(placed));
+		return new ConditionUse($"{noun} slot {slot}", _index.Scene.SelectionOf(placed));
 	}
 
 	// What a record of <row> is, in the plural, for the count of those the editor's state leaves out.
@@ -255,12 +255,12 @@ internal sealed class ConditionEditor {
 	private string? Commit(Func<MsnEdit> edit, Func<short> selected) {
 		MsnEdit change;
 		try {
-			change = _rebuild.Run(edit);
+			change = _sync.Run(edit);
 		} catch (Exception ex) when (ex is InvalidOperationException or ArgumentOutOfRangeException) {
 			return ex.Message;
 		}
 
-		_mover.Record(new RecordsEdit(_rebuild, change));
+		_mover.Record(new RecordsEdit(_sync, change));
 		short guid = selected();
 		_selection.Current = guid != -1 && ConditionEditing.IndexOf(_source, guid) != null ? new ConditionSelection(guid) : null;
 		return null;

@@ -14,7 +14,7 @@ internal sealed class RouteView {
 	// (docs/retail/simulation/heads-down-display.md#markers): waypoints past the tenth get no marker.
 	private const int MarkedWaypoints = 10;
 
-	private readonly MissionIndex _index;
+	private readonly GeneratedIndex _index;
 	private readonly SelectionState _selection;
 	private readonly PointMover _mover;
 	private readonly RouteEditor _editor;
@@ -27,7 +27,7 @@ internal sealed class RouteView {
 
 	/// <param name="groupLink">Draws a link that selects a group.</param>
 	/// <param name="references">Draws what references something, one line per record, given the groups whose own route field references it.</param>
-	public RouteView(MissionIndex index, SelectionState selection, PointMover mover, RouteEditor editor, RoutePlacing placing,
+	public RouteView(GeneratedIndex index, SelectionState selection, PointMover mover, RouteEditor editor, RoutePlacing placing,
 			Action<int> groupLink, Action<DeleteNamers, IReadOnlyList<int>> references) {
 		_index = index;
 		_selection = selection;

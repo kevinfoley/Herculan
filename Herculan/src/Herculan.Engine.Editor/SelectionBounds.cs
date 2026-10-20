@@ -18,23 +18,18 @@ internal static class SelectionBounds {
 	/// <summary>The sphere <paramref name="selection"/> fills, or null when it stands nowhere (a timer).</summary>
 	public static (Vector3 Centre, float Radius)? Of(EditorMission mission, EditorSelection selection) {
 		var spheres = new List<(Vector3 Centre, float Radius)>();
-		var index = mission.Index;
+		var index = mission.Generated;
 		var records = index.Records;
 		switch (selection) {
-			case ObjectSelection { Object: var placed }:
+			case ObjectSelection selected when mission.Index.ObjectOf(selected) is { } placed:
 				AddObject(spheres, mission, placed);
 				break;
-			case GroupSelection { Guid: var guid } when records.Group(guid) is { } group:
-				if (group < index.GroupMembers.Count) {
-					foreach (var member in index.GroupMembers[group]) {
-						AddObject(spheres, mission, member);
-					}
+			case GroupSelection { Guid: var guid } when mission.Index.Group(guid) is { } group:
+				foreach (var member in mission.Index.MembersOf(guid)) {
+					AddObject(spheres, mission, member);
 				}
 
-				if (index.SetupOf(group) is { } setup) {
-					spheres.Add((OnGround(mission, setup.Point), PointRadius));
-				}
-
+				spheres.Add((OnGround(mission, group.Setup.Point), PointRadius));
 				break;
 			case AreaSelection { Guid: var guid } when records.Area(guid) is { } area:
 				if (index.Area(area) is { } found) {

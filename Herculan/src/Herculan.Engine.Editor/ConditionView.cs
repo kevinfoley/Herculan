@@ -272,7 +272,7 @@ internal sealed class ConditionView {
 
 		if (uses.LeftOut.Count > 0) {
 			int count = uses.LeftOut.Sum(kind => kind.Count);
-			ImGui.TextWrapped($"{count} more, not shown in the editor: "
+			ImGui.TextWrapped($"{count} more, absent from the mission as opened: "
 				+ string.Join(", ", uses.LeftOut.Select(kind => $"{kind.Count} {kind.Kind}")));
 		}
 	}

@@ -6,7 +6,7 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// Adds and removes the player's squadmates, group 0's members after the player's machine, as one step of
 /// <see cref="PointMover"/>'s undo history each, through <see cref="SquadRoster"/>'s record edits; the editor's state is
-/// then built again (<see cref="MissionRebuild"/>), which builds the handoff's <c>player.mec</c> again first
+/// then built again (<see cref="SceneSync"/>), which builds the handoff's <c>player.mec</c> again first
 /// (docs/herculan/handoff-editor-roster.md#the-players-squad).
 ///
 /// <para>A new squadmate is the player's machine's chassis as the mission holds it now, with that chassis's stock fit
@@ -21,20 +21,20 @@ namespace Herculan.Engine.Editor;
 internal sealed class SquadEditor {
 	private readonly ScriptDat _document;
 	private readonly MissionDocument _source;
-	private readonly MissionIndex _index;
+	private readonly GeneratedIndex _index;
 	private readonly PointMover _mover;
-	private readonly MissionRebuild _rebuild;
+	private readonly SceneSync _sync;
 	private readonly MachineFitter _fitter;
 	private readonly ObjectDeleter _deleter;
 	private Func<string?>? _requested;
 
-	public SquadEditor(ScriptDat document, MissionDocument source, MissionIndex index, PointMover mover,
-			MissionRebuild rebuild, MachineFitter fitter, ObjectDeleter deleter) {
+	public SquadEditor(ScriptDat document, MissionDocument source, GeneratedIndex index, PointMover mover,
+			SceneSync sync, MachineFitter fitter, ObjectDeleter deleter) {
 		_document = document;
 		_source = source;
 		_index = index;
 		_mover = mover;
-		_rebuild = rebuild;
+		_sync = sync;
 		_fitter = fitter;
 		_deleter = deleter;
 	}
@@ -123,12 +123,12 @@ internal sealed class SquadEditor {
 	private string? Commit(Func<MsnEdit> edit) {
 		MsnEdit change;
 		try {
-			change = _rebuild.Run(edit);
+			change = _sync.Run(edit);
 		} catch (InvalidOperationException ex) {
 			return ex.Message;
 		}
 
-		_mover.Record(new RecordsEdit(_rebuild, change));
+		_mover.Record(new RecordsEdit(_sync, change));
 		return null;
 	}
 }

@@ -17,8 +17,8 @@ internal sealed record RouteDeleteBlockers(string? Fixed, DeleteNamers Names, IR
 
 /// <summary>
 /// Creates, edits and deletes the open mission's routes, each edit one step of <see cref="PointMover"/>'s undo history,
-/// through <see cref="RouteEditing"/>'s record edits on the mission's <c>.MSN</c>; the editor's state is then built again
-/// from the generated file (<see cref="MissionRebuild"/>), since a new route's records are exported last and a delete moves
+/// through <see cref="RouteEditing"/>'s record edits on the mission's <c>.MSN</c>; the scene and the indices are then synced
+/// with the document (<see cref="SceneSync"/>), as a new route's records are exported last and a delete moves
 /// every later route, and every later point when a point goes with it, down one
 /// (docs/herculan/handoff-editor-document.md#the-tools).
 ///
@@ -33,19 +33,19 @@ internal sealed record RouteDeleteBlockers(string? Fixed, DeleteNamers Names, IR
 /// </summary>
 internal sealed class RouteEditor {
 	private readonly MissionDocument _source;
-	private readonly MissionIndex _index;
+	private readonly GeneratedIndex _index;
 	private readonly PointMover _mover;
-	private readonly MissionRebuild _rebuild;
+	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private readonly ObjectDeleter _deleter;
 	private Func<string?>? _requested;
 
-	public RouteEditor(MissionDocument source, MissionIndex index, PointMover mover, MissionRebuild rebuild,
+	public RouteEditor(MissionDocument source, GeneratedIndex index, PointMover mover, SceneSync sync,
 			SelectionState selection, ObjectDeleter deleter) {
 		_source = source;
 		_index = index;
 		_mover = mover;
-		_rebuild = rebuild;
+		_sync = sync;
 		_selection = selection;
 		_deleter = deleter;
 	}
@@ -186,12 +186,12 @@ internal sealed class RouteEditor {
 	private string? Commit(Func<MsnEdit> edit, Func<short> route, int waypoint) {
 		MsnEdit change;
 		try {
-			change = _rebuild.Run(edit);
+			change = _sync.Run(edit);
 		} catch (InvalidOperationException ex) {
 			return ex.Message;
 		}
 
-		_mover.Record(new RecordsEdit(_rebuild, change));
+		_mover.Record(new RecordsEdit(_sync, change));
 		if (route() is not -1 and var guid) {
 			bool listed = _index.Records.Route(guid) is { } reference && waypoint < _index.Route(reference)?.Points.Count;
 			_selection.Current = new RouteSelection(guid, listed ? waypoint : -1);

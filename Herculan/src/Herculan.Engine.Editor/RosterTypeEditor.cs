@@ -8,7 +8,7 @@ namespace Herculan.Engine.Editor;
 /// <c>.MSN</c>, as one step of <see cref="PointMover"/>'s undo history each, through <see cref="RosterFit.Write"/>: in the
 /// variant alternative the record draws its type from when asked and the table is one the editor edits, so every record
 /// drawing it changes, else in the record that supplies it (docs/herculan/handoff-editor-roster.md#type-and-fit). A herc's chassis is <see cref="MachineFitter"/>'s. Each edit builds the editor's state again
-/// (<see cref="MissionRebuild"/>), which builds a new object for the record, as its type differs.
+/// (<see cref="SceneSync"/>), which builds a new object for the record, as its type differs.
 ///
 /// <para>The edits run when <see cref="RunRequest"/> is called, once the frame's ImGui is rendered. A plain
 /// <c>script.dat</c> edits nothing.</para>
@@ -16,13 +16,13 @@ namespace Herculan.Engine.Editor;
 internal sealed class RosterTypeEditor {
 	private readonly MissionDocument _source;
 	private readonly PointMover _mover;
-	private readonly MissionRebuild _rebuild;
+	private readonly SceneSync _sync;
 	private Func<string?>? _requested;
 
-	public RosterTypeEditor(MissionDocument source, PointMover mover, MissionRebuild rebuild) {
+	public RosterTypeEditor(MissionDocument source, PointMover mover, SceneSync sync) {
 		_source = source;
 		_mover = mover;
-		_rebuild = rebuild;
+		_sync = sync;
 	}
 
 	/// <summary>Why the last edit run could not be made, or null.</summary>
@@ -56,12 +56,12 @@ internal sealed class RosterTypeEditor {
 
 		MsnEdit change;
 		try {
-			change = _rebuild.Run(() => RosterFit.Write(source, guid, fields, alternative, _ => false));
+			change = _sync.Run(() => RosterFit.Write(source, guid, fields, alternative, _ => false));
 		} catch (InvalidOperationException ex) {
 			return ex.Message;
 		}
 
-		_mover.Record(new RecordsEdit(_rebuild, change));
+		_mover.Record(new RecordsEdit(_sync, change));
 		return null;
 	};
 

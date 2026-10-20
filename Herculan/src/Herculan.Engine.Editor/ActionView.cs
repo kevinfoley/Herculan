@@ -15,7 +15,7 @@ namespace Herculan.Engine.Editor;
 /// docs/retail/simulation/mission-deployment.md#the-four-ways-an-action-activates.
 /// </summary>
 internal sealed class ActionView {
-	private readonly MissionIndex _index;
+	private readonly GeneratedIndex _index;
 	private readonly ScriptDat _document;
 	private readonly ActionEditor _editor;
 	private readonly SelectionState _selection;
@@ -26,7 +26,7 @@ internal sealed class ActionView {
 	private int _counter;
 
 	/// <param name="document">The generated <c>script.dat</c>, whose records the view offers as targets.</param>
-	public ActionView(MissionIndex index, ScriptDat document, ActionEditor editor, SelectionState selection, PanelLinks links) {
+	public ActionView(GeneratedIndex index, ScriptDat document, ActionEditor editor, SelectionState selection, PanelLinks links) {
 		_index = index;
 		_document = document;
 		_editor = editor;
@@ -530,8 +530,8 @@ internal sealed class ActionView {
 
 		foreach (var (kind, slot) in blockers.Objects) {
 			ImGui.PushID($"object{kind}{slot}");
-			if (_index.ObjectAt(kind, slot) is { } placed) {
-				_links.Link(ShortObject(placed), new ObjectSelection(placed));
+			if (_index.ObjectAt(kind, slot) is { } placed && _index.Scene.SelectionOf(placed) is { } chosen) {
+				_links.Link(ShortObject(placed), chosen);
 			} else {
 				EditorText.Note($"{KindName(kind)} slot {slot} (not placed)");
 			}

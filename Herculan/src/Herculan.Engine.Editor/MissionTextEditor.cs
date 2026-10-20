@@ -6,19 +6,19 @@ namespace Herculan.Engine.Editor;
 /// Edits the open mission's objective, briefing and intelligence lines (row 4) and their text, each edit one step of
 /// <see cref="PointMover"/>'s undo history, through <see cref="MissionTextEditing"/>'s record edits on the mission's
 /// <c>.MSN</c> and <c>.ENG</c> (docs/herculan/handoff-editor-mission-logic.md#the-missions-text). Every
-/// edit builds the editor's state again (<see cref="MissionRebuild"/>), which reloads <c>mission.str</c> and block 13.
+/// edit builds the editor's state again (<see cref="SceneSync"/>), which reloads <c>mission.str</c> and block 13.
 /// The edits wait for the frame's ImGui to be rendered (<see cref="RunRequest"/>).
 /// </summary>
 internal sealed class MissionTextEditor {
 	private readonly MissionDocument _source;
 	private readonly PointMover _mover;
-	private readonly MissionRebuild _rebuild;
+	private readonly SceneSync _sync;
 	private Func<string?>? _requested;
 
-	public MissionTextEditor(MissionDocument source, PointMover mover, MissionRebuild rebuild) {
+	public MissionTextEditor(MissionDocument source, PointMover mover, SceneSync sync) {
 		_source = source;
 		_mover = mover;
-		_rebuild = rebuild;
+		_sync = sync;
 	}
 
 	/// <summary>Why the last edit run could not be made, or null.</summary>
@@ -73,12 +73,12 @@ internal sealed class MissionTextEditor {
 	private string? Commit(Func<MsnEdit> edit) {
 		MsnEdit change;
 		try {
-			change = _rebuild.Run(edit);
+			change = _sync.Run(edit);
 		} catch (InvalidOperationException ex) {
 			return ex.Message;
 		}
 
-		_mover.Record(new RecordsEdit(_rebuild, change));
+		_mover.Record(new RecordsEdit(_sync, change));
 		return null;
 	}
 }

@@ -36,8 +36,8 @@ public sealed record ShapeDetailChain(IReadOnlyList<SceneModel> Roots, int Shape
 public sealed record SceneObject(SimObject Object, SceneModel? Model, MissionPlacement Placement,
 	ShapeDetailChain? Detail = null) {
 	/// <summary>
-	/// The mission record it came from. Settable for the mission editor, which points it at the record's new indices
-	/// when an edit renumbers the records, keeping the object.
+	/// The mission record it came from. Settable for the mission editor, which sets it again after each edit, keeping
+	/// the object.
 	/// </summary>
 	public MissionPlacement Placement { get; set; } = Placement;
 
@@ -105,7 +105,7 @@ public sealed class MissionScene {
 	/// <summary>The observer camera, itself a simulation object (see <see cref="FlyCameraObject"/>).</summary>
 	public FlyCameraObject Camera { get; }
 
-	/// <summary>Every placed object, in spawn order.</summary>
+	/// <summary>Every object <see cref="Load"/> placed, in spawn order; none for a world loaded alone (<see cref="LoadWorld"/>).</summary>
 	public IReadOnlyList<SceneObject> Objects { get; }
 
 	/// <summary>
@@ -153,83 +153,9 @@ public sealed class MissionScene {
 	public static MissionScene Load(GameContent content, string scriptPath, string? dataDirectory = null,
 			ScriptDat? script = null) {
 		var mission = MissionLoader.Load(content, script ?? MissionLoader.ReadScript(scriptPath), scriptPath);
-
-		var materials = TerrainMaterialTable.Load(content);
-		var theater = TheaterDescriptor.Load(content, mission.Header.TheaterIndex, mission.Header.TheaterVariant);
-
-		// The one generator the whole session rolls on, at DBSIM's own starting state — the terrain
-		// material pass below is a randomised load-time pass in the original, and it draws from the
-		// same generator every later roll comes out of, so the same instance goes on to the world. The
-		// zone's roll is the first draw on it, as in the original — see
-		// docs/retail/simulation/random-generator.md#the-simulations-draws.
-		var random = new SimRandom();
-
-		// How far this mission draws is a player setting, not a property of the zone — see
-		// TerrainDetail. The simulator keeps it beside the script it was handed, so this looks for it
-		// in the same folder unless told otherwise, and falls back to the highest setting when there is
-		// nothing to read.
-		int detail = TerrainDetail.LevelFrom(dataDirectory ?? Path.GetDirectoryName(scriptPath));
-		var terrain = TerrainZoneLoader.Load(content, mission.Header.ZoneIndex, materials, random,
-			detailLevel: detail);
-
-		// The travelling-projectile table, loaded once at startup as Bullet_LoadResources (0040ade0) loads it, and given
-		// to the world because a shot in flight is simulation state before it is anything visual.
-		var bullets = BulletCatalog.Load(content.Read(BulletCatalog.ResourceFolder, BulletCatalog.TableResource));
-
-		// The impact-effect table, loaded once at startup as Explosion_LoadResources (00407b54) loads it. Its shapes are
-		// built below, and the frame counts they yield go back into the catalog — an effect's life is
-		// one pass of its own flipbook, so the simulation cannot time it without them.
-		var explosions = ExplosionCatalog.Load(
-			content.Read(ExplosionCatalog.ResourceFolder, ExplosionCatalog.TableResource));
-
-		// And the launcher table, loaded once at startup as Rocket_LoadTypeTable_Unguided loads it.
-		var rockets = RocketCatalog.Load(
-			content.Read(RocketCatalog.ResourceFolder, RocketCatalog.TableResource));
-
-		// And the beam table, which Beam_LoadResourceTables (0040b6e0) loads with the same startup
-		// pass. The world gets it because an ELF tracer's geometry is built from it at fire time,
-		// not at draw time.
-		var beams = BeamAppearance.Load(content, theater.PaletteName);
-
-		// The debris tables, headed by DEF_DEB. Debris_LoadResources loads that one at startup and
-		// Base_LoadResources loads BASE_DEB beside it; a chassis' own table is loaded with its type,
-		// which here means as the roster asks for it.
-		var debris = DebrisCatalog.Load(content);
-		debris?.Database(DebrisDatabase.StructureName);
-
-		var world = new SimWorld(terrain, bullets, explosions, rockets, beams, random, debris) {
-			// The shell chose these three before it wrote the script — see SimWorld.Difficulty.
-			Difficulty = mission.Header.Difficulty,
-			UnlimitedAmmunition = mission.Header.UnlimitedAmmunition,
-			PlayerInvulnerable = mission.Header.PlayerInvulnerable,
-			Theater = mission.Header.TheaterIndex,
-			Tweaks = TweakSettings.Current,
-			IsV110 = content.IsV110
-		};
-		world.Mission.LoadCounters(mission.Counters);
-		int cockpitScheme = CockpitPalette.ReadSchemeIndex(content, mission.Player?.TypeName);
-		var models = new SceneModelLibrary(content, theater, cockpitScheme);
-		var baseTypes = BaseTypeTable.Load(content);
-
-		// The theater's ground-shape set, which FlatObj_LoadResources loads at the end of
-		// World_LoadTheater -- before a single object exists, which matters here: a HERC takes its
-		// shadows as it joins the world below, and each is built with its root's radius.
-		var groundShapeModels = BindGroundShapes(models, theater, world);
-
-		// The structure hit-sphere table, read straight after the type table as Base_LoadResources
-		// reads it, and sized by it: BASECOL.DAT carries no count of its own.
-		var baseCollision = BaseCollisionTable.Load(content, baseTypes.Count);
-
-		// The simulator loads both weapon tables once, at startup, not per machine — see WeaponCatalog.
-		var weapons = WeaponCatalog.Load(
-			content.Read(WeaponCatalog.ResourceFolder, WeaponCatalog.TemplateResource),
-			content.Read(WeaponCatalog.ResourceFolder, WeaponCatalog.ProjectileResource));
-
-		// And the transport's weapon slots, which Base_LoadResources reads between BFORMS.DAT and
-		// BASES.DAT. Every transport in the mission shares the one table.
-		var transportArmament = TransportArmament.Load(
-			content.Read(TransportArmament.ResourceFolder, TransportArmament.SlotResource), weapons);
-		var tables = new SpawnTables(baseTypes, baseCollision, weapons, transportArmament);
+		var (materials, theater, world, beams, cockpitScheme, models, groundShapeModels, tables) =
+			LoadWorldParts(content, mission, dataDirectory ?? Path.GetDirectoryName(scriptPath));
+		var terrain = world.Terrain;
 
 		var objects = new List<SceneObject>(mission.Placements.Count);
 		SceneObject? playerObject = null;
@@ -246,18 +172,7 @@ public sealed class MissionScene {
 				}
 			}
 
-			// A structure registers its footprint with the terrain before it is settled onto it, as both
-			// of the original's base-placement paths do. Nothing has moved yet -- the flattening
-			// happens once, below, after every structure has had its say.
-			if (spawned.Object is BaseObject structure) {
-				terrain.MarkStructureFootprint(structure.Position.X, structure.Position.Y,
-					structure.ShapeRadius);
-			}
-
-			// Settling an object onto the terrain before it joins the world is a placement step, not
-			// a simulation step -- a mech's own tick now walks it, which is not what spawning wants.
-			spawned.Object.Position = SpawnPosition(terrain, spawned.Object, placement);
-
+			StandOnTerrain(terrain, spawned);
 			world.Add(spawned.Object);
 			objects.Add(spawned);
 		}
@@ -352,13 +267,165 @@ public sealed class MissionScene {
 		world.PlayerMech?.Weapons.BuildGauges();
 		world.PlayerMech?.Weapons.PushGaugeStates();
 
+		PaintAndFlatten(terrain, materials, mission.BasePads, objects);
+
+		var camera = new FlyCameraObject { Position = CameraStart(mission, terrain) };
+		world.Add(camera);
+
+		var sceneModels = MissionModels.Build(content, theater, materials, models, world, objects, groundShapeModels);
+		return new MissionScene(mission, world, camera, objects, theater, playerObject, beams, sceneModels, content,
+			materials, cockpitScheme, tables, models);
+	}
+
+	/// <summary>
+	/// Loads the world <paramref name="mission"/> plays in and nothing that stands in it: the zone, its terrain and the
+	/// theater's models, the simulation and the camera <see cref="Load"/> builds, with no object placed, no group and no
+	/// action, the terrain neither painted nor levelled and <see cref="Objects"/> empty. The mission editor's, which builds
+	/// its own objects (<see cref="CreateObject"/>) and stands them on the ground as <see cref="Load"/> does
+	/// (<see cref="Settle"/>). It draws from the session's generator what <see cref="Load"/> draws before its first object:
+	/// the zone's roll.
+	/// </summary>
+	/// <param name="dataDirectory">Where the simulator's settings are, when not beside <paramref name="mission"/>'s script.</param>
+	public static MissionScene LoadWorld(GameContent content, Mission mission, string? dataDirectory = null) {
+		var (materials, theater, world, beams, cockpitScheme, models, groundShapeModels, tables) =
+			LoadWorldParts(content, mission, dataDirectory ?? Path.GetDirectoryName(mission.SourcePath));
+		var camera = new FlyCameraObject { Position = CameraStart(mission, world.Terrain) };
+		world.Add(camera);
+
+		var sceneModels = MissionModels.Build(content, theater, materials, models, world, [], groundShapeModels);
+		return new MissionScene(mission, world, camera, [], theater, null, beams, sceneModels, content, materials,
+			cockpitScheme, tables, models);
+	}
+
+	/// <summary>
+	/// Stands <paramref name="objects"/>, built by <see cref="CreateObject"/>, on the ground as <see cref="Load"/> stands
+	/// its own: each structure's footprint marked and each object at its spawn position (<see cref="SpawnPosition"/>), then
+	/// <paramref name="pads"/> painted, the ground levelled once under every footprint, the structures settled on it again,
+	/// and <see cref="Models"/> built again for the objects over the levelled terrain. Once, over a world loaded alone
+	/// (<see cref="LoadWorld"/>): the passes only accumulate. The objects are not added to <see cref="World"/>, listed in
+	/// <see cref="Objects"/> or bound to actions, and nothing is drawn from the generator.
+	/// </summary>
+	public void Settle(IReadOnlyList<SceneObject> objects, IReadOnlyList<MissionBasePad> pads) {
+		foreach (var placed in objects) {
+			StandOnTerrain(World.Terrain, placed);
+		}
+
+		PaintAndFlatten(World.Terrain, _materials, pads, objects);
+		Models = MissionModels.Build(_content, Theater, _materials, _library, World, objects, Models.GroundShapes);
+	}
+
+	/// <summary>
+	/// What <see cref="Load"/> and <see cref="LoadWorld"/> both build before any object exists, in <see cref="Load"/>'s order:
+	/// the zone and its terrain, drawing the zone's roll, the effect tables, the simulation, the theater's models and its
+	/// ground-shape set, and the tables an object is built from.
+	/// </summary>
+	private static (TerrainMaterialTable Materials, TheaterDescriptor Theater, SimWorld World, BeamAppearance? Beams,
+			int CockpitScheme, SceneModelLibrary Models, IReadOnlyList<SceneModel>[] GroundShapeModels, SpawnTables Tables)
+			LoadWorldParts(GameContent content, Mission mission, string? detailDirectory) {
+		var materials = TerrainMaterialTable.Load(content);
+		var theater = TheaterDescriptor.Load(content, mission.Header.TheaterIndex, mission.Header.TheaterVariant);
+
+		// The one generator the whole session rolls on, at DBSIM's own starting state — the terrain
+		// material pass below is a randomised load-time pass in the original, and it draws from the
+		// same generator every later roll comes out of, so the same instance goes on to the world. The
+		// zone's roll is the first draw on it, as in the original — see
+		// docs/retail/simulation/random-generator.md#the-simulations-draws.
+		var random = new SimRandom();
+
+		// How far this mission draws is a player setting, not a property of the zone — see
+		// TerrainDetail. The simulator keeps it beside the script it was handed, so this looks for it
+		// in the same folder unless told otherwise, and falls back to the highest setting when there is
+		// nothing to read.
+		int detail = TerrainDetail.LevelFrom(detailDirectory);
+		var terrain = TerrainZoneLoader.Load(content, mission.Header.ZoneIndex, materials, random,
+			detailLevel: detail);
+
+		// The travelling-projectile table, loaded once at startup as Bullet_LoadResources (0040ade0) loads it, and given
+		// to the world because a shot in flight is simulation state before it is anything visual.
+		var bullets = BulletCatalog.Load(content.Read(BulletCatalog.ResourceFolder, BulletCatalog.TableResource));
+
+		// The impact-effect table, loaded once at startup as Explosion_LoadResources (00407b54) loads it. Its shapes are
+		// built below, and the frame counts they yield go back into the catalog — an effect's life is
+		// one pass of its own flipbook, so the simulation cannot time it without them.
+		var explosions = ExplosionCatalog.Load(
+			content.Read(ExplosionCatalog.ResourceFolder, ExplosionCatalog.TableResource));
+
+		// And the launcher table, loaded once at startup as Rocket_LoadTypeTable_Unguided loads it.
+		var rockets = RocketCatalog.Load(
+			content.Read(RocketCatalog.ResourceFolder, RocketCatalog.TableResource));
+
+		// And the beam table, which Beam_LoadResourceTables (0040b6e0) loads with the same startup
+		// pass. The world gets it because an ELF tracer's geometry is built from it at fire time,
+		// not at draw time.
+		var beams = BeamAppearance.Load(content, theater.PaletteName);
+
+		// The debris tables, headed by DEF_DEB. Debris_LoadResources loads that one at startup and
+		// Base_LoadResources loads BASE_DEB beside it; a chassis' own table is loaded with its type,
+		// which here means as the roster asks for it.
+		var debris = DebrisCatalog.Load(content);
+		debris?.Database(DebrisDatabase.StructureName);
+
+		var world = new SimWorld(terrain, bullets, explosions, rockets, beams, random, debris) {
+			// The shell chose these three before it wrote the script — see SimWorld.Difficulty.
+			Difficulty = mission.Header.Difficulty,
+			UnlimitedAmmunition = mission.Header.UnlimitedAmmunition,
+			PlayerInvulnerable = mission.Header.PlayerInvulnerable,
+			Theater = mission.Header.TheaterIndex,
+			Tweaks = TweakSettings.Current,
+			IsV110 = content.IsV110
+		};
+		world.Mission.LoadCounters(mission.Counters);
+		int cockpitScheme = CockpitPalette.ReadSchemeIndex(content, mission.Player?.TypeName);
+		var models = new SceneModelLibrary(content, theater, cockpitScheme);
+		var baseTypes = BaseTypeTable.Load(content);
+
+		// The theater's ground-shape set, which FlatObj_LoadResources loads at the end of
+		// World_LoadTheater -- before a single object exists, which matters here: a HERC takes its
+		// shadows as it joins the world below, and each is built with its root's radius.
+		var groundShapeModels = BindGroundShapes(models, theater, world);
+
+		// The structure hit-sphere table, read straight after the type table as Base_LoadResources
+		// reads it, and sized by it: BASECOL.DAT carries no count of its own.
+		var baseCollision = BaseCollisionTable.Load(content, baseTypes.Count);
+
+		// The simulator loads both weapon tables once, at startup, not per machine — see WeaponCatalog.
+		var weapons = WeaponCatalog.Load(
+			content.Read(WeaponCatalog.ResourceFolder, WeaponCatalog.TemplateResource),
+			content.Read(WeaponCatalog.ResourceFolder, WeaponCatalog.ProjectileResource));
+
+		// And the transport's weapon slots, which Base_LoadResources reads between BFORMS.DAT and
+		// BASES.DAT. Every transport in the mission shares the one table.
+		var transportArmament = TransportArmament.Load(
+			content.Read(TransportArmament.ResourceFolder, TransportArmament.SlotResource), weapons);
+		var tables = new SpawnTables(baseTypes, baseCollision, weapons, transportArmament);
+		return (materials, theater, world, beams, cockpitScheme, models, groundShapeModels, tables);
+	}
+
+	/// <summary>Stands one object just built on the ground, as the spawn pass does before it joins the world.</summary>
+	private static void StandOnTerrain(HeightGrid terrain, SceneObject spawned) {
+		// A structure registers its footprint with the terrain before it is settled onto it, as both
+		// of the original's base-placement paths do. Nothing has moved yet -- the flattening
+		// happens once, below, after every structure has had its say.
+		if (spawned.Object is BaseObject structure) {
+			terrain.MarkStructureFootprint(structure.Position.X, structure.Position.Y,
+				structure.ShapeRadius);
+		}
+
+		// Settling an object onto the terrain before it joins the world is a placement step, not
+		// a simulation step -- a mech's own tick now walks it, which is not what spawning wants.
+		spawned.Object.Position = SpawnPosition(terrain, spawned.Object, spawned.Placement);
+	}
+
+	/// <summary>The pads painted, the ground levelled once and the structures settled on it again, once every object stands.</summary>
+	private static void PaintAndFlatten(HeightGrid terrain, TerrainMaterialTable materials, IReadOnlyList<MissionBasePad> pads,
+			IReadOnlyList<SceneObject> objects) {
 		// Each base group that carries a formation layout repaints the ground it stands on with that
 		// formation's own material, which is what puts a base on a marked concrete pad instead of on
 		// open terrain, and marks the pad's own cells for the levelling below. The original does
 		// this per group as it builds the group record; both effects only accumulate, so running
 		// them here -- after every structure has marked its own footprint, before the one flattening
 		// pass -- lands in the same place.
-		foreach (var pad in mission.BasePads) {
+		foreach (var pad in pads) {
 			terrain.PaintFormationPad(pad.Anchor.X, pad.Anchor.Y, pad.Layout.MaterialIndex,
 				materials[pad.Layout.MaterialIndex].BlockShift, pad.Layout.Dimension,
 				pad.Layout.Map);
@@ -380,22 +447,16 @@ public sealed class MissionScene {
 					terrain.HeightAtWorld(structure.Position.X, structure.Position.Y));
 			}
 		}
-
-		var camera = new FlyCameraObject { Position = CameraStart(mission, terrain) };
-		world.Add(camera);
-
-		var sceneModels = MissionModels.Build(content, theater, materials, models, world, objects, groundShapeModels);
-		return new MissionScene(mission, world, camera, objects, theater, playerObject, beams, sceneModels, content,
-			materials, cockpitScheme, tables, models);
 	}
 
 	/// <summary>
 	/// Builds the object for a placement the scene was not loaded with, from the same type tables, model library and
-	/// constructors <see cref="Load"/> builds each of its own from — what the mission editor stands a structure it adds
-	/// on. Its model is built if no object the scene loaded with drew one, and is then not in
+	/// constructors <see cref="Load"/> builds each of its own from — what the mission editor builds each of its objects
+	/// with. Its model is built if no object the models were last built for drew one, and is then not in
 	/// <see cref="MissionModels.All"/>. The object stands at the placement's position as given: it is not settled on the
-	/// ground, added to <see cref="World"/> or listed in <see cref="Objects"/>, and its actions are not bound. Null for a
-	/// type the install has nothing for, as in <see cref="Load"/>.
+	/// ground (<see cref="Settle"/>), added to <see cref="World"/> or listed in <see cref="Objects"/>, and its actions are not
+	/// bound. Its component damage draws from the session's generator. Null for a type the install has nothing for, as in
+	/// <see cref="Load"/>.
 	/// </summary>
 	public SceneObject? CreateObject(MissionPlacement placement) => Spawn(placement, _library, _tables, World.Random, World.Tweaks);
 

@@ -18,9 +18,8 @@ internal sealed record PresenceLosers(DeleteNamers Names, IReadOnlyList<int> Mem
 /// Sets a record's Present when, which campaign states it is in, each set one step of <see cref="PointMover"/>'s undo
 /// history, through <see cref="RecordConditions"/>'s record edits on the mission's <c>.MSN</c>
 /// (docs/herculan/handoff-editor-conditions.md#present-when). Every set builds the editor's state again
-/// (<see cref="MissionRebuild"/>), as it conditions the record in or out; when the record is not shown in the editor
-/// afterwards, the condition it now carries is selected in its place, whose Used by lists it (an object among the records
-/// not shown).
+/// (<see cref="SceneSync"/>), as it conditions the record in or out; when the mission as opened leaves the record out
+/// afterwards, the condition it now carries is selected in its place, whose Used by lists it.
 ///
 /// <para>A herc, flyer, structure or ground vehicle, a group, an order slot and an objective have a target
 /// (<see cref="ObjectTarget"/> and the rest); the player's squad, group 0, its orders and its machines, has none, as the
@@ -43,17 +42,17 @@ internal sealed class PresenceEditor {
 
 	private readonly MissionDocument _source;
 	private readonly PointMover _mover;
-	private readonly MissionRebuild _rebuild;
+	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private readonly ObjectDeleter _deleter;
 	private Func<string?>? _requested;
 	private PresenceTarget? _asked;
 
-	public PresenceEditor(MissionDocument source, PointMover mover, MissionRebuild rebuild, SelectionState selection,
+	public PresenceEditor(MissionDocument source, PointMover mover, SceneSync sync, SelectionState selection,
 			ObjectDeleter deleter) {
 		_source = source;
 		_mover = mover;
-		_rebuild = rebuild;
+		_sync = sync;
 		_selection = selection;
 		_deleter = deleter;
 	}
@@ -160,12 +159,12 @@ internal sealed class PresenceEditor {
 			short condition = -1, written = -1;
 			MsnEdit change;
 			try {
-				change = _rebuild.Run(() => set(source, out condition, out written));
+				change = _sync.Run(() => set(source, out condition, out written));
 			} catch (Exception ex) when (ex is InvalidOperationException or ArgumentOutOfRangeException) {
 				return ex.Message;
 			}
 
-			_mover.Record(new RecordsEdit(_rebuild, change));
+			_mover.Record(new RecordsEdit(_sync, change));
 			bool present = target.Row == ObjectiveRow
 				? ObjectiveEditing.ExportedIndex(source, target.Index) != null
 				: written != -1 && source.ExportedIndex(target.Row, written) != null;

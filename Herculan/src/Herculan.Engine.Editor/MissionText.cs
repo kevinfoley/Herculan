@@ -20,7 +20,7 @@ internal static class MissionText {
 	}
 
 	/// <summary>A group: its index, roster and side.</summary>
-	public static string DescribeGroup(MissionIndex index, int group) {
+	public static string DescribeGroup(GeneratedIndex index, int group) {
 		if (group == 0) {
 			return "Group 0 (player squad)";
 		}
@@ -34,7 +34,7 @@ internal static class MissionText {
 	/// An order's or objective's subject as a choice names it: kind -1 none, 0 a group, 1 a herc, 2 a flyer and 3 a
 	/// structure, the numbering both records share, by block index.
 	/// </summary>
-	public static string SubjectName(MissionIndex index, short kind, int subject) {
+	public static string SubjectName(GeneratedIndex index, short kind, int subject) {
 		if (kind == -1 || subject < 0) {
 			return "None";
 		}

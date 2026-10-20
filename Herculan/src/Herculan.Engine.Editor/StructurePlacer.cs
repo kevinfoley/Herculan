@@ -11,8 +11,8 @@ namespace Herculan.Engine.Editor;
 /// Adds a structure to the open mission, as one step of <see cref="PointMover"/>'s undo history: a row-14 roster record,
 /// and a row-16 group of its own that places it, standing on a row-6 point appended for it and facing a row-7 heading of
 /// 0 degrees. Each record is appended to the <c>.MSN</c> unconditioned, with no variant key and a new GUID
-/// (<see cref="MissionDocument.Append"/>), and <c>script.dat</c> is generated again; the editor's state is then built
-/// again from the generated file (<see cref="MissionRebuild"/>), which builds the structure's object for the record
+/// (<see cref="MissionDocument.Append"/>), and <c>script.dat</c> is generated again; the scene is then synced
+/// with the document (<see cref="SceneSync"/>), which builds the structure's object for the record
 /// (docs/herculan/handoff-editor-document.md#the-tools).
 ///
 /// <para>The records take the shape the retail missions give a lone structure most often — 148 of their 537 structure
@@ -48,22 +48,22 @@ internal sealed class StructurePlacer {
 	private readonly MissionDocument _source;
 	private readonly MissionScene _scene;
 	private readonly HeightGrid _terrain;
-	private readonly MissionIndex _index;
+	private readonly GeneratedIndex _index;
 	private readonly PointMover _mover;
-	private readonly MissionRebuild _rebuild;
+	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 
 	/// <param name="document">The generated <c>script.dat</c>, <paramref name="source"/>'s, which the scene was loaded from.</param>
 	/// <param name="source">The mission as its <c>.MSN</c>.</param>
-	public StructurePlacer(ScriptDat document, MissionDocument source, MissionScene scene, MissionIndex index,
-			PointMover mover, MissionRebuild rebuild, SelectionState selection) {
+	public StructurePlacer(ScriptDat document, MissionDocument source, MissionScene scene, GeneratedIndex index,
+			PointMover mover, SceneSync sync, SelectionState selection) {
 		_document = document;
 		_source = source;
 		_scene = scene;
 		_terrain = scene.World.Terrain;
 		_index = index;
 		_mover = mover;
-		_rebuild = rebuild;
+		_sync = sync;
 		_selection = selection;
 	}
 
@@ -139,27 +139,28 @@ internal sealed class StructurePlacer {
 		}), () => structure);
 	}
 
-	// Makes an add's change and rebuilds from it, then records it as one step and selects the object the rebuild built
-	// for the structure's row-14 GUID; or, when it built none, puts the records back and says why.
+	// Makes an add's change and syncs the scene with it, then records it as one step and selects the object built for
+	// the structure's row-14 GUID; or, when none was built, puts the records back and says why.
 	private string? Commit(int typeIndex, Func<MsnEdit> add, Func<short> structure) {
 		var source = _source;
 		MsnEdit change;
 		try {
-			change = _rebuild.Run(add);
+			change = _sync.Run(add);
 		} catch (InvalidOperationException ex) {
 			return ex.Message;
 		}
 
-		int? slot = source.ExportedIndex(BaseRow, structure());
-		if (slot is not { } exported || _index.ObjectAt(MissionUnitKind.Base, exported) is not { } placed) {
-			_rebuild.Undo(change);
-			return slot == null
+		short added = structure();
+		bool generated = source.ExportedIndex(BaseRow, added) != null;
+		if (!generated || _index.Scene.ObjectOf(new ObjectKey(BaseRow, added)) == null) {
+			_sync.Undo(change);
+			return !generated
 				? "The added structure was not generated; nothing was added."
 				: $"The install has no structure type {typeIndex}.";
 		}
 
-		_mover.Record(new RecordsEdit(_rebuild, change));
-		_selection.Current = new ObjectSelection(placed);
+		_mover.Record(new RecordsEdit(_sync, change));
+		_selection.Current = new ObjectSelection(BaseRow, added);
 		return null;
 	}
 

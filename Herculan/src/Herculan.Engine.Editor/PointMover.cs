@@ -14,16 +14,14 @@ namespace Herculan.Engine.Editor;
 internal abstract record MoveTarget;
 
 /// <summary>
-/// One step of <see cref="PointMover"/>'s undo history that is not a move — a side change (<see cref="SideChanger"/>),
-/// or an add or a delete (<see cref="RecordsEdit"/>). Each puts the <c>.MSN</c> back as the step found or left it
-/// (<see cref="MissionDocument.Undo"/>, which generates <c>script.dat</c> again), and the index and the scene with it;
-/// the history then places again what stands on the generated points and levels the ground.
+/// One step of <see cref="PointMover"/>'s undo history: a move, an add, a delete, a side change, any edit
+/// (<see cref="RecordsEdit"/>), or a theater change. Each puts the <c>.MSN</c> back as the step found or left it
+/// (<see cref="MissionDocument.Undo"/>, which generates <c>script.dat</c> again) and syncs the scene with it
+/// (<see cref="SceneSync"/>); the history then levels the ground.
 ///
-/// <para>A step that holds block indices — a move's target, a side change's group — keeps them valid without being
-/// told of later edits: the history is undone last first, so a step is only ever undone or redone with the <c>.MSN</c> as
-/// it stood when the step was made, and the document's one <see cref="MissionGeneration"/> generates the same indices from
-/// the same records. Every step that adds or removes records rebuilds the editor's index from the generated file as it is
-/// undone or redone (<see cref="MissionRebuild"/>), so the index the step reads is that generation's.</para>
+/// <para>A step that holds block indices keeps them valid without being told of later edits: the history is undone last
+/// first, so a step is only ever undone or redone with the <c>.MSN</c> as it stood when the step was made, and the
+/// document's one <see cref="MissionGeneration"/> generates the same indices from the same records.</para>
 /// </summary>
 internal interface IEditorEdit {
 	void Undo();
@@ -31,8 +29,8 @@ internal interface IEditorEdit {
 	void Redo();
 }
 
-/// <summary>A placed object, moved through a point of its roster record's own.</summary>
-internal sealed record ObjectTarget(SceneObject Object) : MoveTarget;
+/// <summary>A placed object, by the roster record it stands for, moved through a point of its record's own.</summary>
+internal sealed record ObjectTarget(ObjectKey Key) : MoveTarget;
 
 /// <summary>
 /// Waypoint <paramref name="Index"/> of <paramref name="Route"/>. <paramref name="WithLast"/> when it is a closed route's
@@ -42,11 +40,11 @@ internal sealed record ObjectTarget(SceneObject Object) : MoveTarget;
 internal sealed record WaypointTarget(EditorRoute Route, int Index, bool WithLast, bool Detach = false) : MoveTarget;
 
 /// <summary>
-/// Group <paramref name="Group"/>, by block-11 record index, moved through the point it stands on: its own, else its
+/// Group <paramref name="Guid"/>, by its row-16 GUID, moved through the point it stands on: its own, else its slot-0
 /// route's first waypoint. <paramref name="Detach"/> when the move gives it a point of its own rather than moving the
 /// point it stands on.
 /// </summary>
-internal sealed record GroupTarget(int Group, bool Detach = false) : MoveTarget;
+internal sealed record GroupTarget(short Guid, bool Detach = false) : MoveTarget;
 
 /// <summary>
 /// Corner <paramref name="Corner"/> of trigger area <paramref name="Area"/>, by block-4 record index: 0 a box's first corner
@@ -62,15 +60,16 @@ internal sealed record AreaCornerTarget(int Area, int Corner, bool Detach = fals
 internal sealed record AreaRadiusTarget(int Area) : MoveTarget;
 
 /// <summary>
-/// Moves what stands on a <c>script.dat</c> block-1 point — a placed object, a route's waypoint or a group — and keeps an
+/// Moves what stands on a point — a placed object, a route's waypoint, a group or a trigger area's corner — and keeps an
 /// undo history. A committed move writes the mission's <c>.MSN</c> (<see cref="MissionDocument"/>), which generates
-/// <c>script.dat</c> again into the document the editor reads; a drag's preview writes that generated document alone,
-/// and the commit's generation replaces what it wrote
-/// (docs/herculan/handoff-editor-document.md#the-tools). After every change to
-/// the document's points, <see cref="PointFollowers"/> places again whatever else stands on them, and after every move,
-/// previews included, <see cref="TerrainLeveller"/> levels the ground under the structures where they now stand. Its
-/// history also holds the edits made elsewhere (<see cref="Record(IEditorEdit)"/>), so that Undo and Redo step through
-/// every edit in the order it was made.
+/// <c>script.dat</c> again, and syncs the scene with it (<see cref="SceneSync"/>), as any edit does
+/// (docs/herculan/handoff-editor-document.md#the-tools). A drag's preview writes no <c>.MSN</c>: the objects and groups
+/// standing on what it moves are placed from the layout with the drag's overrides (<see cref="SceneSync.Preview"/>), and a
+/// waypoint's or an area corner's preview writes the generated document's points, which the route and area lines follow
+/// (<see cref="PointFollowers"/>) and the commit's generation replaces. After every move, previews included,
+/// <see cref="TerrainLeveller"/> levels the ground under the structures where they now stand. Its history also holds the
+/// edits made elsewhere (<see cref="Record(IEditorEdit)"/>), so that Undo and Redo step through every edit in the order it
+/// was made.
 ///
 /// <para>An object is given a point of its own (<see cref="MissionDocument.PlacePoint"/>), which its roster record's ref
 /// then names and which wins over its group's, so the object alone moves
@@ -86,12 +85,12 @@ internal sealed record AreaRadiusTarget(int Area) : MoveTarget;
 /// a waypoint's Z only as the starting altitude of a flight standing on its route's first waypoint and for the
 /// heads-down map's route icons (docs/retail/simulation/ai-goals.md#the-route-cursor-is-loaded-once).</para>
 ///
-/// <para>A group moves as a waypoint does: the point it stands on — its block-11 record's own, else its slot-0 route's
-/// first waypoint (docs/retail/formats/script-dat.md#placement--the-actual-rule, rules 2 and 3) — moves, and whatever
+/// <para>A group moves as a waypoint does: the point it stands on — its own, else its slot-0 route's first waypoint, as the
+/// layout has them (docs/retail/formats/script-dat.md#placement--the-actual-rule, rules 2 and 3) — moves, and whatever
 /// shares it with it; a detached move gives the record a point of its own. Its members with no point of their own, a
-/// paints-ground group's pad and, for group 0, the player's squad follow (<see cref="PointFollowers"/>). The move is of
-/// the authored point, which a paints-ground structure group's snap then puts in its tile. Only a flyer group's height
-/// is read from the point (rule 5), so only a flyer group's is the mission's to set; any other keeps the point's Z.</para>
+/// paints-ground group's pad and, for group 0, the player's squad follow. The move is of the authored point, which a
+/// paints-ground structure group's snap then puts in its tile. Only a flyer group's height is read from the point (rule 5),
+/// so only a flyer group's is the mission's to set; any other keeps the point's Z.</para>
 ///
 /// <para>A trigger area's corner, or a circle's centre, moves as a waypoint does: the point it names moves, and whatever
 /// shares it, or a detached move gives it a point of its own, which its row-9 record then names
@@ -101,48 +100,52 @@ internal sealed record AreaRadiusTarget(int Area) : MoveTarget;
 /// (<see cref="TriggerAreaEditing.SetRadius"/>).</para>
 /// </summary>
 internal sealed class PointMover {
-	// script.dat's blocks 1, 3, 4, 7 to 9 and 11, by number.
+	// script.dat's blocks 1, 3 and 4, by number.
 	private const int PointBlock = 1;
 	private const int RouteBlock = 3;
 	private const int AreaBlock = 4;
-	private const int GroupBlock = 11;
 
 	private readonly ScriptDat _document;
 	private readonly MissionDocument _source;
-	private readonly MissionScene _scene;
 	private readonly HeightGrid _terrain;
 	private readonly MissionIndex _index;
-	private readonly ScenePicker _picker;
+	private readonly GeneratedIndex _generated;
+	private readonly SceneSync _sync;
 	private readonly MissionOverlay _overlay;
 	private PointFollowers _followers;
 	private readonly TerrainLeveller _leveller;
 
-	// Block 1 as it stood before a drag of a shared point or a group began writing into it, and the dragged group's
-	// ref, until the drag commits or is cancelled.
+	// Block 1 as it stood before a drag of a shared waypoint or area corner began writing into it, until the drag commits or
+	// is cancelled.
 	private ScriptCoordinate[]? _beforeDrag;
-	private short[]? _refsBeforeDrag;
 
 	// A dragged circle's stored radius as the drag found it, until the drag commits or is cancelled.
 	private short? _radiusBeforeDrag;
 
-	/// <param name="document">The <c>script.dat</c> the scene was loaded from: <paramref name="source"/>'s generated one.</param>
+	/// <param name="document">The generated <c>script.dat</c>: <paramref name="source"/>'s.</param>
 	/// <param name="source">The mission as its <c>.MSN</c>.</param>
-	public PointMover(ScriptDat document, MissionDocument source, MissionScene scene, MissionIndex index, ScenePicker picker,
-			MissionOverlay overlay, TerrainMaterialTable materials) {
+	public PointMover(ScriptDat document, MissionDocument source, MissionScene scene, MissionIndex index, GeneratedIndex generated,
+			SceneSync sync, MissionOverlay overlay, TerrainMaterialTable materials) {
 		_document = document;
 		_source = source;
-		_scene = scene;
 		_terrain = scene.World.Terrain;
 		_index = index;
-		_picker = picker;
+		_generated = generated;
+		_sync = sync;
 		_overlay = overlay;
-		_followers = new PointFollowers(document, scene, index, overlay, Place);
-		_leveller = new TerrainLeveller(scene, index, materials, overlay, Place);
+		_followers = new PointFollowers(document, source, generated, overlay);
+		_leveller = new TerrainLeveller(scene, index, materials, overlay, sync.Place);
 		LoadedBox = MissionBox.Of(scene.Mission.Coordinates);
+
+		// The routes and areas the followers lay are the generated index's, built again by every sync.
+		sync.Rebuilt += () => _followers = new PointFollowers(_document, _source, _generated, _overlay);
 	}
 
 	/// <summary>Raised with each object whose simulation object has moved, for whatever draws it.</summary>
-	public event Action<SceneObject>? Moved;
+	public event Action<SceneObject>? Moved {
+		add => _sync.Moved += value;
+		remove => _sync.Moved -= value;
+	}
 
 	/// <summary>Raised with the run of terrain mesh vertices a move re-levelled, for whatever uploads it.</summary>
 	public event Action<int, int>? TerrainChanged {
@@ -161,17 +164,18 @@ internal sealed class PointMover {
 	public bool CanRedo => History.CanRedo;
 
 	/// <summary>
-	/// What <paramref name="selection"/> names that can be moved: a movable object, a waypoint or a group, else null; a
-	/// waypoint and a group by their generated index (<see cref="GeneratedRecords"/>), and none for one not shown in the editor.
+	/// What <paramref name="selection"/> names that can be moved: a movable object or group, by the record it stands for,
+	/// or a waypoint, by its generated index (<see cref="GeneratedRecords"/>), none for one the generation has none for;
+	/// else null.
 	/// </summary>
 	public MoveTarget? TargetOf(EditorSelection? selection) => selection switch {
-		ObjectSelection { Object: var selected } when WhyFixed(selected) == null => new ObjectTarget(selected),
-		RouteSelection { Waypoint: >= 0 } waypoint when _index.Records.Route(waypoint.Guid) is { } reference
-				&& _index.Route(reference) is { } route
+		ObjectSelection { Row: var row, Guid: var guid } when WhyFixed(new ObjectKey(row, guid)) == null =>
+			new ObjectTarget(new ObjectKey(row, guid)),
+		RouteSelection { Waypoint: >= 0 } waypoint when _generated.Records.Route(waypoint.Guid) is { } reference
+				&& _generated.Route(reference) is { } route
 				&& waypoint.Waypoint < route.Points.Count && _followers.WaypointEntries(route.Reference) != null =>
 			new WaypointTarget(route, waypoint.Waypoint, waypoint.Waypoint == 0 && route.Closed),
-		GroupSelection { Guid: var guid } when _index.Records.Group(guid) is { } group && WhyFixed(group) == null =>
-			new GroupTarget(group),
+		GroupSelection { Guid: var guid } when WhyFixedGroup(guid) == null => new GroupTarget(guid),
 		_ => null
 	};
 
@@ -182,8 +186,8 @@ internal sealed class PointMover {
 	/// </summary>
 	public IReadOnlyList<MoveTarget> TargetsOf(EditorSelection? selection) {
 		if (selection is AreaSelection { Guid: var guid }) {
-			if (_index.Records.Area(guid) is not { } reference || WhyFixedArea(reference) != null
-					|| _index.Area(reference) is not { } area) {
+			if (_generated.Records.Area(guid) is not { } reference || WhyFixedArea(reference) != null
+					|| _generated.Area(reference) is not { } area) {
 				return [];
 			}
 
@@ -197,7 +201,7 @@ internal sealed class PointMover {
 
 	/// <summary>Why trigger area <paramref name="area"/>, by block-4 index, cannot be moved or edited, or null when it can.</summary>
 	public string? WhyFixedArea(int area) =>
-		_index.Area(area) == null || _source.GuidOf(AreaBlock, area) == -1
+		_generated.Area(area) == null || _source.GuidOf(AreaBlock, area) == -1
 			? $"Trigger area {area}'s record is not in the file."
 			: null;
 
@@ -212,7 +216,7 @@ internal sealed class PointMover {
 	/// undo history, as a drag of its radius handle does.
 	/// </summary>
 	public void CommitRadius(int area, int radius) {
-		if (_index.Area(area) is not { } circle) {
+		if (_generated.Area(area) is not { } circle) {
 			return;
 		}
 
@@ -220,36 +224,35 @@ internal sealed class PointMover {
 		Commit(target, PositionOf(target), circle.A.X + radius, circle.A.Y, 0);
 	}
 
+	/// <summary>Why <paramref name="sceneObject"/> cannot be given a point of its own, or null when it can.</summary>
+	public string? WhyFixed(SceneObject sceneObject) =>
+		_index.KeyOf(sceneObject) is { } key ? WhyFixed(key) : "Its roster record is not in the file.";
+
 	/// <summary>
-	/// Why <paramref name="sceneObject"/> cannot be given a point of its own, or null when it can. The player's squad
-	/// is not in the rosters: each <c>player.mec</c> entry is placed from block 11's record 0
-	/// (docs/retail/formats/script-dat.md#placement--the-actual-rule, rule 6).
+	/// Why the object of <paramref name="key"/> cannot be given a point of its own, or null when it can. The player's squad
+	/// spreads from group 0 whatever point its records name (docs/retail/formats/script-dat.md#placement--the-actual-rule,
+	/// rule 6).
 	/// </summary>
-	public string? WhyFixed(SceneObject sceneObject) {
-		var placement = sceneObject.Placement;
-		if (placement.IsPlayerLance) {
-			return "The player's squad stands at group 0's point; it has no roster record of its own. Move group 0 to move it.";
+	public string? WhyFixed(ObjectKey key) {
+		if (_index.Plan.Object(key) is not { } planned || _index.ObjectOf(key) == null
+				|| _source.Layout.Entry(key.Row, key.Guid) == null) {
+			return "Its roster record is not in the file.";
 		}
 
-		return RecordRef(placement.Kind, placement.SlotIndex) == null
-				|| _source.GuidOf(RosterBlock(placement.Kind), placement.SlotIndex) == -1
-			? $"Its {placement.Kind.ToString().ToLowerInvariant()} roster slot {placement.SlotIndex} is not in the file."
-			: null;
+		return planned.Squad ? "The player's squad spreads from group 0's point: move group 0 to move it." : null;
 	}
 
 	/// <summary>
-	/// Why group <paramref name="group"/> cannot be moved, or null when it can. A structure group that paints its ground
+	/// Why group <paramref name="guid"/> cannot be moved, or null when it can. A structure group that paints its ground
 	/// with no structure placed has no pad to snap by and nothing standing on its point.
 	/// </summary>
-	public string? WhyFixed(int group) {
-		if (group < 0 || group >= _document.Groups.Length || _index.SetupOf(group) is not { } setup
-				|| _source.GuidOf(GroupBlock, group) == -1) {
-			return $"Group {group}'s record is not in the file.";
+	public string? WhyFixedGroup(short guid) {
+		if (_index.Group(guid) is not { } group) {
+			return "Its record is not in the file.";
 		}
 
-		bool snaps = setup.PaintsGround && group < _index.Mission.GroupKinds.Count
-			&& _index.Mission.GroupKinds[group] == MissionUnitKind.Base;
-		return snaps && _index.BasePads.All(pad => pad.GroupIndex != group)
+		bool snaps = group.Setup.PaintsGround && group.Kind == MissionUnitKind.Base;
+		return snaps && group.Pad == null
 			? "It paints its ground but has no structure placed: nothing stands on its point."
 			: null;
 	}
@@ -266,27 +269,28 @@ internal sealed class PointMover {
 	/// <summary>
 	/// How many other fields name the point <paramref name="target"/>'s group stands on — trigger areas, other groups,
 	/// waypoints — which move with it unless it is detached. For a group standing on its route's first waypoint, these
-	/// are besides that waypoint (<see cref="SharersOf(WaypointTarget)"/>).
+	/// are besides that waypoint (and the route's last, when it closes on its first).
 	/// </summary>
 	public int SharersOf(GroupTarget target) {
-		short own = _document.Groups[target.Group].PositionRef;
-		if (Coordinate(own) != null) {
-			return PointNamers(own) - 1;
+		if (_index.Group(target.Guid) is not { } group) {
+			return 0;
 		}
 
-		return StartOf(target.Group) is { } start ? SharersOf(start) : 0;
+		return group.OwnPoint != -1
+			? _source.CountPointRefs(group.OwnPoint) - 1
+			: group.StartPoints.Distinct().Sum(_source.CountPointRefs) - group.StartPoints.Count;
 	}
 
 	// How many fields name block-1 point <reference>: every .MSN record naming its point's GUID, whatever its condition.
-	private int PointNamers(short reference) => _source.CountPointRefs(_source.GuidOf(PointBlock, reference));
+	private int PointNamers(short reference) => _source.CountPointRefs(PointGuid(reference));
 
 	/// <summary>Whether a point's Z is the mission's to set for <paramref name="sceneObject"/>: only a flyer's is.</summary>
 	public static bool HasOwnHeight(SceneObject sceneObject) => sceneObject.Object is FlyerObject;
 
 	/// <summary>Whether <paramref name="target"/> takes a height: a flyer or a flyer group alone.</summary>
 	public bool HasOwnHeight(MoveTarget target) => target switch {
-		ObjectTarget { Object: var sceneObject } => HasOwnHeight(sceneObject),
-		GroupTarget group => IsFlyerGroup(group.Group),
+		ObjectTarget { Key: var key } => _index.ObjectOf(key) is { } placed && HasOwnHeight(placed),
+		GroupTarget group => _index.Group(group.Guid)?.Kind == MissionUnitKind.Flyer,
 		_ => false
 	};
 
@@ -295,13 +299,13 @@ internal sealed class PointMover {
 	/// snap; a flyer group's height is where its first member flies, 5000 for a point at Z 0 (rule 5).
 	/// </summary>
 	public Vec3i PositionOf(MoveTarget target) => target switch {
-		ObjectTarget { Object: var sceneObject } => sceneObject.Object.Position,
+		ObjectTarget { Key: var key } when _index.ObjectOf(key) is { } placed => placed.Object.Position,
 		WaypointTarget waypoint => waypoint.Route.Points[waypoint.Index],
-		GroupTarget { Group: var group } when _index.SetupOf(group) is { AuthoredPoint: var point } =>
-			IsFlyerGroup(group) ? new Vec3i(point.X, point.Y, FlyerHeight(point.Z)) : point,
-		AreaCornerTarget corner when _index.Area(corner.Area) is { } area =>
+		GroupTarget { Guid: var guid } when _index.Group(guid) is { Setup.AuthoredPoint: var point } group =>
+			group.Kind == MissionUnitKind.Flyer ? new Vec3i(point.X, point.Y, FlyerHeight(point.Z)) : point,
+		AreaCornerTarget corner when _generated.Area(corner.Area) is { } area =>
 			corner.Corner == 0 ? new Vec3i(area.A.X, area.A.Y, 0) : new Vec3i(area.B.X, area.B.Y, 0),
-		AreaRadiusTarget radius when _index.Area(radius.Area) is { } area => new Vec3i(area.A.X + area.Radius, area.A.Y, 0),
+		AreaRadiusTarget radius when _generated.Area(radius.Area) is { } area => new Vec3i(area.A.X + area.Radius, area.A.Y, 0),
 		_ => throw new ArgumentOutOfRangeException(nameof(target))
 	};
 
@@ -322,65 +326,56 @@ internal sealed class PointMover {
 	/// waypoint at Z 0; a group at <paramref name="z"/> when it is a flyer group, else at its point's own Z.
 	/// </summary>
 	public Vec3i Standing(MoveTarget target, int x, int y, int z) => target switch {
-		ObjectTarget { Object: var sceneObject } => PointFollowers.Standing(_terrain, sceneObject, x, y, z),
+		ObjectTarget { Key: var key } when _index.ObjectOf(key) is { } placed => PointFollowers.Standing(_terrain, placed, x, y, z),
 		WaypointTarget or AreaCornerTarget or AreaRadiusTarget => new Vec3i(x, y, 0),
 		GroupTarget group => new Vec3i(x, y, HasOwnHeight(group) ? z : PositionOf(group).Z),
 		_ => throw new ArgumentOutOfRangeException(nameof(target))
 	};
 
 	/// <summary>
-	/// The waypoint group <paramref name="group"/> stands on when its record names no point of its own: its slot-0
-	/// order's route's first, with the last when the route is closed. Null when it has a point of its own, or no route
-	/// whose waypoints can be told apart.
+	/// Whether group <paramref name="guid"/> stands on a point the layout has, its own or its route's first waypoint's,
+	/// rather than at the origin.
 	/// </summary>
-	public WaypointTarget? StartOf(int group) {
-		if (Coordinate(_document.Groups[group].PositionRef) != null || group >= _index.Mission.GroupOrders.Count
-				|| _index.Mission.GroupOrders[group] is not { Count: > 0 } orders || orders[0] is not { RouteRef: var routeRef }
-				|| _index.Route(routeRef) is not { Points.Count: > 0 } route || _followers.WaypointEntries(route.Reference) == null) {
-			return null;
-		}
+	public bool StandsOnPoint(short guid) => _index.Group(guid) is { } group && (group.OwnPoint != -1 || group.StartPoints.Count > 0);
 
-		return new WaypointTarget(route, 0, route.Closed);
-	}
+	/// <summary>Whether group <paramref name="guid"/> has no point of its own and stands on its slot-0 route's first waypoint.</summary>
+	public bool OnRouteStart(short guid) => _index.Group(guid) is { OwnPoint: -1, StartPoints.Count: > 0 };
 
 	/// <summary>
-	/// Whether group <paramref name="group"/> stands on a block-1 point, its own or its route's first waypoint's
-	/// (<see cref="StartOf"/>), rather than at the origin.
-	/// </summary>
-	public bool StandsOnPoint(int group) => Coordinate(_document.Groups[group].PositionRef) != null || StartOf(group) != null;
-
-	/// <summary>
-	/// Stands <paramref name="target"/> at <paramref name="position"/> as a drag does before it lets go. An object or a
-	/// detached waypoint moves for the eye alone, the document unchanged until <see cref="Commit"/>; a waypoint moving
-	/// its shared point, or a group, writes into the generated document, so what follows it does, and <see cref="Commit"/>
-	/// or <see cref="Cancel"/> settles it.
+	/// Stands <paramref name="target"/> at <paramref name="position"/> as a drag does before it lets go, writing no
+	/// <c>.MSN</c> until <see cref="Commit"/>: the objects and groups standing on what moves are placed from the layout with
+	/// the drag's overrides; a waypoint or area corner moving its shared point writes the generated document, so the route
+	/// and area lines on it follow, and <see cref="Commit"/> or <see cref="Cancel"/> settles it; a detached one moves for the
+	/// eye alone.
 	/// </summary>
 	public void Preview(MoveTarget target, Vec3i position) {
-		if (target is WaypointTarget { Detach: false } or AreaCornerTarget { Detach: false }) {
-			_beforeDrag ??= Snapshot(_document.Coordinates);
-			WritePoints(target, position);
-			_followers.Sync();
-		} else if (target is AreaRadiusTarget radius) {
-			var record = _document.TriggerAreas[radius.Area];
-			_radiusBeforeDrag ??= record.SecondPointOrRadius;
-			record.SecondPointOrRadius = TriggerAreaEditing.StoredRadius(RadiusAt(radius, position));
-			_followers.Sync();
-		} else if (target is GroupTarget group) {
-			// Each step starts again from the document as the drag found it, so a detached group appends one point at
-			// most, however far it is dragged.
-			_beforeDrag ??= Snapshot(_document.Coordinates);
-			_refsBeforeDrag ??= ReadRefs(group);
-			_document.Coordinates = Snapshot(_beforeDrag);
-			WriteRefs(group, _refsBeforeDrag);
-			try {
-				PreviewGroup(group, position);
-			} catch (InvalidOperationException) {
-				// Commit reports it.
-			}
-
-			_followers.Sync();
-		} else {
-			Stand(target, position);
+		switch (target) {
+			case WaypointTarget { Detach: false } or AreaCornerTarget { Detach: false }:
+				_beforeDrag ??= Snapshot(_document.Coordinates);
+				WritePoints(target, position);
+				_followers.Sync();
+				_sync.Preview(new PlacementOverrides {
+					Points = ReadRefs(target).Select(PointGuid).Where(guid => guid != -1).Distinct()
+						.ToDictionary(guid => guid, _ => position)
+				});
+				break;
+			case AreaRadiusTarget radius:
+				var record = _document.TriggerAreas[radius.Area];
+				_radiusBeforeDrag ??= record.SecondPointOrRadius;
+				record.SecondPointOrRadius = TriggerAreaEditing.StoredRadius(RadiusAt(radius, position));
+				_followers.Sync();
+				break;
+			case GroupTarget group:
+				var overrides = GroupOverrides(group, position);
+				_followers.Sync(overrides);
+				_sync.Preview(overrides);
+				break;
+			case ObjectTarget { Key: var key }:
+				_sync.Preview(new PlacementOverrides { ObjectPoint = (key, position) });
+				break;
+			default:
+				Stand(target, position);
+				break;
 		}
 
 		_leveller.Relevel();
@@ -390,15 +385,14 @@ internal sealed class PointMover {
 	public void Cancel(MoveTarget target, Vec3i before) {
 		if (_beforeDrag is { } points) {
 			_document.Coordinates = points;
-			if (_refsBeforeDrag is { } refs) {
-				WriteRefs(target, refs);
-			}
-
 			_beforeDrag = null;
-			_refsBeforeDrag = null;
 			_followers.Sync();
+			_sync.Preview(null);
 		} else if (TakeRadiusPreview(target)) {
 			_followers.Sync();
+		} else if (target is GroupTarget or ObjectTarget) {
+			_followers.Sync();
+			_sync.Preview(null);
 		} else {
 			Stand(target, before);
 		}
@@ -422,19 +416,19 @@ internal sealed class PointMover {
 
 	// The radius, in world units, a radius handle at <position> gives: its ground-plane distance from the centre.
 	private int RadiusAt(AreaRadiusTarget target, Vec3i position) {
-		var centre = _index.Area(target.Area)?.A ?? position;
+		var centre = _generated.Area(target.Area)?.A ?? position;
 		double dx = (double)position.X - centre.X, dy = (double)position.Y - centre.Y;
 		return (int)Math.Min(Math.Round(Math.Sqrt(dx * dx + dy * dy)), int.MaxValue);
 	}
 
 	/// <summary>
 	/// Moves <paramref name="target"/> to (<paramref name="x"/>, <paramref name="y"/>, <paramref name="z"/>) for good,
-	/// as one step of the undo history: writes the <c>.MSN</c> and generates <c>script.dat</c> again.
-	/// <paramref name="before"/> is where it stood before any <see cref="Preview"/> of this move.
+	/// as one step of the undo history: writes the <c>.MSN</c>, which generates <c>script.dat</c> again, and syncs the
+	/// scene. <paramref name="before"/> is where it stood before any <see cref="Preview"/> of this move.
 	/// </summary>
 	public void Commit(MoveTarget target, Vec3i before, int x, int y, int z) {
-		if (target is ObjectTarget { Object: var sceneObject } && WhyFixed(sceneObject) != null
-				|| target is GroupTarget { Group: var fixedGroup } && WhyFixed(fixedGroup) != null
+		if (target is ObjectTarget { Key: var key } && WhyFixed(key) != null
+				|| target is GroupTarget { Guid: var fixedGroup } && WhyFixedGroup(fixedGroup) != null
 				|| target is AreaCornerTarget { Area: var cornerArea } && WhyFixedArea(cornerArea) != null
 				|| target is AreaRadiusTarget { Area: var radiusArea } && WhyFixedArea(radiusArea) != null) {
 			Cancel(target, before);
@@ -447,13 +441,9 @@ internal sealed class PointMover {
 		// replaces the blocks again.
 		if (_beforeDrag is { } unmoved) {
 			_document.Coordinates = unmoved;
-			if (_refsBeforeDrag is { } refs) {
-				WriteRefs(target, refs);
-			}
 		}
 
 		_beforeDrag = null;
-		_refsBeforeDrag = null;
 		TakeRadiusPreview(target);
 		if (target is AreaRadiusTarget radius
 				&& TriggerAreaEditing.StoredRadius(RadiusAt(radius, position)) == _document.TriggerAreas[radius.Area].SecondPointOrRadius) {
@@ -464,11 +454,12 @@ internal sealed class PointMover {
 
 		MsnEdit change;
 		try {
-			change = _source.Change(() => Write(target, position));
+			change = _sync.Run(() => _source.Change(() => Write(target, position)));
 		} catch (InvalidOperationException ex) {
 			Console.Error.WriteLine($"Cannot move {Describe(target)}: {ex.Message}");
 			_followers.Sync();
-			if (target is ObjectTarget or WaypointTarget { Detach: true } or AreaCornerTarget { Detach: true }) {
+			_sync.Preview(null);
+			if (target is WaypointTarget { Detach: true } or AreaCornerTarget { Detach: true }) {
 				Stand(target, before);
 			}
 
@@ -476,11 +467,7 @@ internal sealed class PointMover {
 			return;
 		}
 
-		if (target is ObjectTarget or WaypointTarget { Detach: true } or AreaCornerTarget { Detach: true }) {
-			Stand(target, position);
-		}
-
-		Record(new Edit(this, target, change, before, position));
+		Record(new RecordsEdit(_sync, change));
 	}
 
 	/// <summary>
@@ -491,25 +478,18 @@ internal sealed class PointMover {
 
 	public void Undo() => Step(History.TakeUndo(), undo: true);
 
-	/// <summary>
-	/// Builds again what places followers from the index (<see cref="PointFollowers"/>), for an index built again
-	/// (<see cref="MissionIndex.Reload"/>).
-	/// </summary>
-	public void Rebuild() => _followers = new PointFollowers(_document, _scene, _index, _overlay, Place);
-
 	public void Redo() => Step(History.TakeRedo(), undo: false);
 
 	/// <summary>
-	/// Adds an edit made elsewhere, already applied, to the history as one step, and places and levels after it as
-	/// after a move.
+	/// Adds an edit made elsewhere, already applied, to the history as one step, and levels after it as after a move.
 	/// </summary>
 	public void Record(IEditorEdit edit) {
 		History.Add(edit);
 		Settle();
 	}
 
-	// Places again what stands on the generated points, rebuilds the mission box overlay and levels the ground, as after
-	// every step.
+	// Lays the route and area lines on the generated points again, rebuilds the mission box overlay and levels the ground,
+	// as after every step.
 	private void Settle() {
 		_followers.Sync();
 		_overlay.SetBox(MissionBox.Of(Points()));
@@ -530,23 +510,6 @@ internal sealed class PointMover {
 		Settle();
 	}
 
-	// Puts the .MSN back as one side of a move left it, which generates the document again.
-	private void Restore(MoveTarget moved, MsnEdit change, bool undo, Vec3i position) {
-		if (undo) {
-			_source.Undo(change);
-		} else {
-			_source.Redo(change);
-		}
-
-		_followers.Sync();
-
-		// An object's own move is the one thing the followers do not place: undone, its record names no point again
-		// and it stands where its group puts it.
-		if (moved is ObjectTarget) {
-			Stand(moved, position);
-		}
-	}
-
 	// Writes a waypoint's or an area corner's new position into each point it names, in the generated document, for a preview.
 	private void WritePoints(MoveTarget target, Vec3i position) {
 		foreach (short reference in ReadRefs(target).Distinct()) {
@@ -558,7 +521,8 @@ internal sealed class PointMover {
 	}
 
 	// Writes a move into the .MSN: a shared waypoint's or area corner's point records; a group's (WriteGroup); a circle's
-	// stored radius; or a point of its own for an object, a detached waypoint or a detached corner (GiveOwnPoint).
+	// stored radius; an object's own point (GiveObjectPoint); or a point of its own for a detached waypoint or a detached
+	// corner (GiveOwnPoint).
 	private void Write(MoveTarget target, Vec3i position) {
 		switch (target) {
 			case WaypointTarget { Detach: false } or AreaCornerTarget { Detach: false }:
@@ -573,16 +537,40 @@ internal sealed class PointMover {
 			case AreaRadiusTarget radius:
 				TriggerAreaEditing.SetRadius(_source, _source.GuidOf(AreaBlock, radius.Area), RadiusAt(radius, position));
 				break;
+			case ObjectTarget placed:
+				GiveObjectPoint(placed, position);
+				break;
 			default:
 				GiveOwnPoint(target, position);
 				break;
 		}
 	}
 
-	// Gives an object, or a detached waypoint, a point of its own at position, and points its field at it: the roster
-	// record's own point, or the route's list entries. A closed route's first and last waypoints name one point between
-	// them more often than not, and move as one. A field a variant supplies names a point every record drawing that
-	// variant shares, so none of its namers counts as moving and a point is appended.
+	// Gives an object a point of its own at position, which its roster record's PositionRef then names: the point it names
+	// rewritten when that field is all that names it, else a point appended. A PositionRef a variant supplies names a point
+	// every record drawing that variant shares, so it does not count as moving and a point is appended.
+	private void GiveObjectPoint(ObjectTarget target, Vec3i position) {
+		var (row, guid) = target.Key;
+		var entry = _source.Layout.Entry(row, guid) ?? throw new InvalidOperationException("Its roster record is not in the file.");
+		var (own, word) = entry.Fields switch {
+			MechRosterEntry144 herc => (herc.PositionRef, MechRosterEntry144.PositionRefWord),
+			FlyerRosterEntry102 flyer => (flyer.PositionRef, FlyerRosterEntry102.PositionRefWord),
+			BaseRosterEntry62 structure => (structure.PositionRef, BaseRosterEntry62.PositionRefWord),
+			_ => throw new InvalidOperationException($"Row {row} is not a roster.")
+		};
+
+		short point = own != -1 && _source.Layout.Entry<MapPoint22>(own) != null ? own : (short)-1;
+		int moving = entry.Supplier(word).CopiedFrom != null ? 0 : 1;
+		_source.PlacePoint(point, moving, position.X, position.Y, position.Z, out short placed);
+		if (placed != point) {
+			_source.SetField(MsnField.RosterPosition(row), guid, placed);
+		}
+	}
+
+	// Gives a detached waypoint or corner a point of its own at position, and points its field at it: the route's list
+	// entries, or the area's corner. A closed route's first and last waypoints name one point between them more often than
+	// not, and move as one. A list a variant supplies names points every route drawing that variant shares, so none of its
+	// namers counts as moving and a point is appended.
 	private void GiveOwnPoint(MoveTarget target, Vec3i position) {
 		var source = _source;
 		short[] refs = ReadRefs(target);
@@ -600,10 +588,6 @@ internal sealed class PointMover {
 		}
 
 		switch (target) {
-			case ObjectTarget { Object.Placement: var placement } when placed[0] != points[0]:
-				source.SetField(MsnField.RosterPosition(RosterBlock(placement.Kind) + 5),
-					source.GuidOf(RosterBlock(placement.Kind), placement.SlotIndex), placed[0]);
-				break;
 			case WaypointTarget waypoint:
 				int[] entries = WaypointEntries(waypoint);
 				short route = source.GuidOf(RouteBlock, waypoint.Route.Reference);
@@ -627,54 +611,38 @@ internal sealed class PointMover {
 		}
 	}
 
-	// Whether the field naming the target's point is copied from a variant in the record an edit writes
-	// (MissionDocument.SuppliedByVariant): an object's roster point, or a route's list.
-	private bool FromVariant(MoveTarget target) {
-		var (block, index, word) = target switch {
-			ObjectTarget { Object.Placement: var placement } => (RosterBlock(placement.Kind), placement.SlotIndex,
-				placement.Kind switch {
-					MissionUnitKind.Mech => MechRosterEntry144.PositionRefWord,
-					MissionUnitKind.Flyer => FlyerRosterEntry102.PositionRefWord,
-					_ => BaseRosterEntry62.PositionRefWord
-				}),
-			WaypointTarget waypoint => (RouteBlock, waypoint.Route.Reference, MergeRules.RouteListWord),
-			_ => (0, 0, 0)
-		};
-		return block > 0 && _source.Layout.Entry(block + 5, _source.GuidOf(block, index))?.Supplier(word).CopiedFrom != null;
-	}
+	// Whether a route's list is copied from a variant in the record an edit writes (MissionDocument.SuppliedByVariant).
+	private bool FromVariant(MoveTarget target) =>
+		target is WaypointTarget waypoint
+		&& _source.Layout.Entry(RouteBlock + 5, _source.GuidOf(RouteBlock, waypoint.Route.Reference))
+			?.Supplier(MergeRules.RouteListWord).CopiedFrom != null;
 
-	// How a group moves, as the generated document stands: the point it stands on, its own or its route's first
-	// waypoint's, unless the move detaches it or it stands on neither; else a point of its own. The Z written is the
-	// point's own unless a flyer group's height moved: a flyer group at the point's Z 0 flies at 5000, and writing 5000
-	// would lift every member whose slot adds a height of its own.
-	private (GroupMove Move, short Own, WaypointTarget? Start, int Z) PlanGroup(GroupTarget target, Vec3i position) {
-		short own = _document.Groups[target.Group].PositionRef;
-		var start = StartOf(target.Group);
-		int pointZ = Coordinate(own)?.Z ?? (start != null ? _document.Coordinates[ReadRefs(start)[0]].Z : 0);
+	// How a group moves, as the layout has it: the point it stands on, its own or its route's first waypoint's, unless the
+	// move detaches it or it stands on neither; else a point of its own. The Z written is the point's own unless a flyer
+	// group's height moved: a flyer group at the point's Z 0 flies at 5000, and writing 5000 would lift every member whose
+	// slot adds a height of its own.
+	private (GroupMove Move, short Own, IReadOnlyList<short> Start, int Z) PlanGroup(GroupTarget target, Vec3i position) {
+		var group = _index.Group(target.Guid) ?? throw new InvalidOperationException("Its record is not in the file.");
+		short own = group.OwnPoint;
+		var start = group.StartPoints;
+		int pointZ = Point(own)?.Z ?? (start.Count > 0 ? Point(start[0])?.Z ?? 0 : 0);
 		int z = HasOwnHeight(target) && position.Z != FlyerHeight(pointZ) ? position.Z : pointZ;
-		var move = !target.Detach && Coordinate(own) != null ? GroupMove.OwnPoint
-			: !target.Detach && start != null ? GroupMove.RouteStart
+		var move = !target.Detach && own != -1 ? GroupMove.OwnPoint
+			: !target.Detach && start.Count > 0 ? GroupMove.RouteStart
 			: GroupMove.NewPoint;
 		return (move, own, start, z);
 	}
 
-	// A group's move written into the generated document, for a preview.
-	private void PreviewGroup(GroupTarget target, Vec3i position) {
+	// Where a group's drag stands it before the commit: the point it stands on at the drag's place, or, for a move that
+	// gives it a point of its own, the group alone there.
+	private PlacementOverrides GroupOverrides(GroupTarget target, Vec3i position) {
 		var (move, own, start, z) = PlanGroup(target, position);
-		switch (move) {
-			case GroupMove.OwnPoint:
-				var point = _document.Coordinates[own];
-				point.X = position.X;
-				point.Y = position.Y;
-				point.Z = z;
-				break;
-			case GroupMove.RouteStart:
-				WritePoints(start!, new Vec3i(position.X, position.Y, z));
-				break;
-			default:
-				_document.Groups[target.Group].PositionRef = ScriptPointRefs.Place(_document, own, position.X, position.Y, z);
-				break;
-		}
+		var at = new Vec3i(position.X, position.Y, z);
+		return move switch {
+			GroupMove.OwnPoint => new PlacementOverrides { Points = new Dictionary<short, Vec3i> { [own] = at } },
+			GroupMove.RouteStart => new PlacementOverrides { Points = start.Distinct().ToDictionary(guid => guid, _ => at) },
+			_ => new PlacementOverrides { GroupPoint = (target.Guid, at) }
+		};
 	}
 
 	// A group's move written into the .MSN.
@@ -683,51 +651,36 @@ internal sealed class PointMover {
 		var (move, own, start, z) = PlanGroup(target, position);
 		switch (move) {
 			case GroupMove.OwnPoint:
-				source.SetPoint(PointGuid(own), position.X, position.Y, z);
+				source.SetPoint(own, position.X, position.Y, z);
 				break;
 			case GroupMove.RouteStart:
-				foreach (short reference in ReadRefs(start!).Distinct()) {
-					source.SetPoint(PointGuid(reference), position.X, position.Y, z);
+				foreach (short point in start.Distinct()) {
+					source.SetPoint(point, position.X, position.Y, z);
 				}
 
 				break;
 			default:
-				short point = PointGuid(own);
-				source.PlacePoint(point, 1, position.X, position.Y, z, out short placed);
-				if (placed != point) {
-					source.SetField(MsnField.GroupPosition, source.GuidOf(GroupBlock, target.Group), placed);
+				source.PlacePoint(own, 1, position.X, position.Y, z, out short placed);
+				if (placed != own) {
+					source.SetField(MsnField.GroupPosition, target.Guid, placed);
 				}
 
 				break;
 		}
 	}
 
+	// Row-6 GUID <guid>'s coordinates as the layout has them, or null.
+	private Vec3i? Point(short guid) =>
+		guid != -1 && _source.Layout.Entry<MapPoint22>(guid)?.Fields is { } point ? new Vec3i(point.X, point.Y, point.Z) : null;
+
 	// The row-6 GUID of block-1 point <reference>, or -1 for none.
 	private short PointGuid(short reference) => _source.GuidOf(PointBlock, reference);
-
-	// The script.dat block a roster kind's records are in: 7 mechs, 8 flyers, 9 structures; its .MSN row is 5 more.
-	private static int RosterBlock(MissionUnitKind kind) => kind switch {
-		MissionUnitKind.Mech => 7,
-		MissionUnitKind.Flyer => 8,
-		_ => 9
-	};
-
-	private bool IsFlyerGroup(int group) =>
-		group < _index.Mission.GroupKinds.Count && _index.Mission.GroupKinds[group] == MissionUnitKind.Flyer;
 
 	// Where a flyer group's first member flies for a point at height z (rule 5).
 	private static int FlyerHeight(int z) => z == 0 ? FlyerObject.DefaultHoverHeight : z;
 
-	private Vec3i? Coordinate(short reference) =>
-		reference >= 0 && reference < _document.Coordinates.Length
-			? new Vec3i(_document.Coordinates[reference].X, _document.Coordinates[reference].Y, _document.Coordinates[reference].Z)
-			: null;
-
 	private void Stand(MoveTarget target, Vec3i position) {
 		switch (target) {
-			case ObjectTarget { Object: var sceneObject }:
-				Place(sceneObject, position, sceneObject.Object.Heading);
-				break;
 			case WaypointTarget waypoint:
 				waypoint.Route.Move(waypoint.Index, position);
 				if (waypoint.WithLast) {
@@ -736,28 +689,20 @@ internal sealed class PointMover {
 
 				_overlay.MoveRoute(waypoint.Route);
 				break;
-			case AreaCornerTarget corner when _index.Area(corner.Area) is { } area:
+			case AreaCornerTarget corner when _generated.Area(corner.Area) is { } area:
 				var moved = corner.Corner == 0
 					? area with { A = position, B = area.Shape == MissionTriggerShape.Circle ? position : area.B }
 					: area with { B = position };
-				_index.SetArea(moved);
+				_generated.SetArea(moved);
 				_overlay.MoveArea(moved);
 				break;
 		}
 	}
 
-	/// <summary>Stands <paramref name="sceneObject"/> at a position and heading, for whatever draws and picks it.</summary>
-	public void Place(SceneObject sceneObject, Vec3i position, int heading) {
-		sceneObject.Object.Position = position;
-		sceneObject.Object.Heading = heading;
-		_picker.Move(sceneObject);
-		Moved?.Invoke(sceneObject);
-	}
-
-	private static string Describe(MoveTarget target) => target switch {
-		ObjectTarget { Object: var sceneObject } => MissionText.Describe(sceneObject),
+	private string Describe(MoveTarget target) => target switch {
+		ObjectTarget { Key: var key } => _index.ObjectOf(key) is { } placed ? MissionText.Describe(placed) : "the object",
 		WaypointTarget waypoint => $"waypoint {waypoint.Index} of route {waypoint.Route.Reference}",
-		GroupTarget group => $"group {group.Group}",
+		GroupTarget group => $"group {_index.Group(group.Guid)?.Number}",
 		AreaCornerTarget corner => $"corner {corner.Corner} of trigger area {corner.Area}",
 		AreaRadiusTarget radius => $"the radius of trigger area {radius.Area}",
 		_ => target.ToString()
@@ -765,67 +710,20 @@ internal sealed class PointMover {
 
 	private List<Vec3i> Points() => _document.Coordinates.Select(point => new Vec3i(point.X, point.Y, point.Z)).ToList();
 
-	// The fields that name the target's point: its roster record's or its group record's PositionRef, or its block-3
-	// entry — two for a closed route's first waypoint, which is also its last.
+	// The block-1 refs naming a waypoint's or corner's point: its block-3 entry, two for a closed route's first waypoint,
+	// which is also its last; or its row-9 field.
 	private short[] ReadRefs(MoveTarget target) => target switch {
-		ObjectTarget { Object.Placement: var placement } => new[] { RecordRef(placement.Kind, placement.SlotIndex)!.Value },
 		WaypointTarget waypoint => Array.ConvertAll(WaypointEntries(waypoint),
 			entry => _document.WaypointGroups[waypoint.Route.Reference].Waypoints[entry]),
-		GroupTarget group => new[] { _document.Groups[group.Group].PositionRef },
 		AreaCornerTarget corner => new[] {
 			corner.Corner == 0 ? _document.TriggerAreas[corner.Area].PointRef : _document.TriggerAreas[corner.Area].SecondPointOrRadius
 		},
 		_ => throw new ArgumentOutOfRangeException(nameof(target))
 	};
 
-	private void WriteRefs(MoveTarget target, short[] refs) {
-		switch (target) {
-			case ObjectTarget { Object.Placement: var placement }:
-				SetRecordRef(placement.Kind, placement.SlotIndex, refs[0]);
-				break;
-			case GroupTarget group:
-				_document.Groups[group.Group].PositionRef = refs[0];
-				break;
-			case AreaCornerTarget { Corner: 0 } corner:
-				_document.TriggerAreas[corner.Area].PointRef = refs[0];
-				break;
-			case AreaCornerTarget corner:
-				_document.TriggerAreas[corner.Area].SecondPointOrRadius = refs[0];
-				break;
-			case WaypointTarget waypoint:
-				int[] entries = WaypointEntries(waypoint);
-				for (int i = 0; i < entries.Length; i++) {
-					_document.WaypointGroups[waypoint.Route.Reference].Waypoints[entries[i]] = refs[i];
-				}
-
-				break;
-		}
-	}
-
 	private int[] WaypointEntries(WaypointTarget waypoint) {
 		int[] entries = _followers.WaypointEntries(waypoint.Route.Reference)!;
 		return waypoint.WithLast ? new[] { entries[0], entries[^1] } : new[] { entries[waypoint.Index] };
-	}
-
-	private short? RecordRef(MissionUnitKind kind, int slot) => kind switch {
-		MissionUnitKind.Mech when slot >= 0 && slot < _document.Mechs.Length => _document.Mechs[slot].PositionRef,
-		MissionUnitKind.Flyer when slot >= 0 && slot < _document.Flyers.Length => _document.Flyers[slot].PositionRef,
-		MissionUnitKind.Base when slot >= 0 && slot < _document.Bases.Length => _document.Bases[slot].PositionRef,
-		_ => null
-	};
-
-	private void SetRecordRef(MissionUnitKind kind, int slot, short reference) {
-		switch (kind) {
-			case MissionUnitKind.Mech:
-				_document.Mechs[slot].PositionRef = reference;
-				break;
-			case MissionUnitKind.Flyer:
-				_document.Flyers[slot].PositionRef = reference;
-				break;
-			case MissionUnitKind.Base:
-				_document.Bases[slot].PositionRef = reference;
-				break;
-		}
 	}
 
 	// Block 1 as a drag found it, copied whole: a few hundred points at most, and a copy cannot be changed by the
@@ -838,12 +736,5 @@ internal sealed class PointMover {
 		OwnPoint,
 		RouteStart,
 		NewPoint,
-	}
-
-	// One move: the .MSN rows it changed, and where the target stood on either side of it.
-	private sealed record Edit(PointMover Mover, MoveTarget Target, MsnEdit Change, Vec3i Before, Vec3i After) : IEditorEdit {
-		public void Undo() => Mover.Restore(Target, Change, undo: true, Before);
-
-		public void Redo() => Mover.Restore(Target, Change, undo: false, After);
 	}
 }

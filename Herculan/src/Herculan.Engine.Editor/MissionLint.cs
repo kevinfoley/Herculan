@@ -12,7 +12,7 @@ internal sealed record EditorFinding(ScriptLintFinding Finding, EditorSelection?
 /// </summary>
 internal sealed class MissionLint {
 	/// <param name="textLines">How many lines the generated <c>mission.str</c> has.</param>
-	public MissionLint(MissionIndex index, ScriptDat script, int textLines) {
+	public MissionLint(GeneratedIndex index, ScriptDat script, int textLines) {
 		int squad = index.Mission.Placements.Count(placement => placement.IsPlayerLance);
 		Findings = ScriptDatLint.Check(script, squad, textLines)
 			.Select(finding => new EditorFinding(finding, TargetOf(finding, index, script)))
@@ -21,14 +21,14 @@ internal sealed class MissionLint {
 
 	public IReadOnlyList<EditorFinding> Findings { get; }
 
-	private static EditorSelection? TargetOf(ScriptLintFinding finding, MissionIndex index, ScriptDat script) {
+	private static EditorSelection? TargetOf(ScriptLintFinding finding, GeneratedIndex index, ScriptDat script) {
 		int i = finding.Index;
 		if (i < 0) {
 			return null;
 		}
 
 		EditorSelection? ObjectOf(MissionUnitKind kind) =>
-			index.ObjectAt(kind, i) is { } placed ? new ObjectSelection(placed) : null;
+			index.ObjectAt(kind, i) is { } placed ? index.Scene.SelectionOf(placed) : null;
 
 		var records = index.Records;
 		return finding.Block switch {

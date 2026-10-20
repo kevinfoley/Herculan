@@ -17,8 +17,9 @@ namespace HercWorks.Core.Data.File.Msn;
 /// <para>Which record an edit writes is docs/herculan/handoff-editor-document.md#which-record-an-edit-writes: a field of a
 /// GUID's base is written in its supplier (<see cref="LayoutEntry.Supplier"/>), the last base record that sets it, else the
 /// first record, whether or not the generation keeps it. A roster field the supplier copies from a variant is written in a
-/// record of the same GUID appended to the row, carrying that field alone, under the supplier's condition, so it overlays
-/// whatever is drawn wherever the base is present. A field set to its unset value is unset in every record of the GUID,
+/// record of the same GUID that overlays it under the supplier's condition, so it overlays whatever is drawn wherever the
+/// base is present: the GUID's last record when that already is one (<see cref="LaterOverlay"/>), else one appended to the
+/// row carrying that field alone. A field set to its unset value is unset in every record of the GUID,
 /// since an overlay cannot carry an unset value.</para>
 /// </summary>
 public sealed class MissionDocument {
@@ -300,10 +301,13 @@ public sealed class MissionDocument {
 		}
 
 		if (source.CopiedFrom != null) {
-			var overlay = OverlayRecord(RecordAt(source.Record)!);
-			field.Set(overlay, value);
 			var overlaying = Begin(field.Row);
-			Add(field.Row, overlay);
+			if (LaterOverlay(field.Row, guid, source.Record) is not { } overlay) {
+				overlay = OverlayRecord(RecordAt(source.Record)!);
+				Add(field.Row, overlay);
+			}
+
+			field.Set(overlay, value);
 			return End(overlaying);
 		}
 
@@ -771,6 +775,21 @@ public sealed class MissionDocument {
 		},
 		_ => throw new InvalidOperationException($"A variant supplies a field of a {asking.GetType().Name}, which only rows 12 to 14 carry in an overlay record."),
 	};
+
+	/// <summary>
+	/// The record of row <paramref name="row"/>'s GUID <paramref name="guid"/> that already overlays what
+	/// <paramref name="supplier"/> copies from a variant, or null: the GUID's last record, when it comes after the supplier,
+	/// carries the base's condition and draws no variant, such as the one an earlier field's edit appended. Writing a field
+	/// there merges as a record appended after it would, so the fields of one edit, a chassis and its mounts, share one record.
+	/// </summary>
+	private MapObject? LaterOverlay(int row, short guid, MsnRecordId supplier) {
+		var entry = EntryOf(row, guid);
+		var last = entry.Records[^1];
+		var record = RecordAt(last);
+		bool unkeyed = record is MechRosterEntry144 { VariantKey: -1 } or FlyerRosterEntry102 { VariantKey: -1 }
+			or BaseRosterEntry62 { VariantKey: -1 };
+		return last.Index > supplier.Index && entry.Base.Contains(last) && unkeyed ? record : null;
+	}
 
 	private static short[] Unset(int count) => Enumerable.Repeat((short)-1, count).ToArray();
 

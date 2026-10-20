@@ -304,7 +304,7 @@ internal sealed class VariantView {
 		if (drawers.Count == 0) {
 			EditorText.Note("Nothing.");
 		} else if (leftOut > 0) {
-			ImGui.TextWrapped($"{leftOut} more, not shown in the editor");
+			ImGui.TextWrapped($"{leftOut} more, absent from the mission as opened");
 		}
 	}
 

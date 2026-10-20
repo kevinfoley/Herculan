@@ -41,17 +41,8 @@ internal sealed class SquadMachinePanel {
 		ImGui.Separator();
 		var squadmates = _editor.Squadmates.ToList();
 		ImGui.Text($"Squadmates: {squadmates.Count}");
-		if (WhereSquadmatesComeFrom() is { } from) {
-			ImGui.TextWrapped(from);
-		}
-
 		if (LeftBehind(squadmates.Count) is { } behind) {
 			ImGui.TextWrapped(behind);
-		}
-
-		if (squadmates.Count > 1) {
-			EditorText.Note("Order matters: each takes the squad position of its place in the list, and removing one moves "
-				+ "those after it up.");
 		}
 
 		foreach (int member in squadmates) {
@@ -87,10 +78,6 @@ internal sealed class SquadMachinePanel {
 		}
 
 		CampaignNote();
-		if (WhereSquadmatesComeFrom() is { } from) {
-			ImGui.TextWrapped(from);
-		}
-
 		DrawSquadmate(squadmate);
 		Failures();
 	}
@@ -126,14 +113,6 @@ internal sealed class SquadMachinePanel {
 		}
 	}
 
-	// Which Hercs the squadmates pilot in a training-mode load, by the launch's own rule (MissionSquad): group 0's. A
-	// campaign mission says so once, through CampaignNote.
-	private string? WhereSquadmatesComeFrom() => _squad.PlayerMachine switch {
-		PlayerMachineSource.Mission or PlayerMachineSource.HercType =>
-			"In this mission the player's squadmates pilot the Hercs below, group 0's members after the player's machine.",
-		_ => null,
-	};
-
 	// The squad build's retail bug, where the squadmates are group 0's: the last squadmate listed never goes on strength
 	// (docs/retail/shell/main-menu.md#starting-a-practice-mission).
 	private string? LeftBehind(int squadmates) {
@@ -141,7 +120,7 @@ internal sealed class SquadMachinePanel {
 			return null;
 		}
 
-		const string bug = "The last squadmate listed stays behind (a retail bug), so ";
+		const string bug = "In training missions, the last squadmate listed stays behind (a retail bug), so ";
 		return squadmates switch {
 			1 => bug + "this squadmate does not appear in the mission and the player goes alone.",
 			2 => bug + "only the first of these appears in the mission.",

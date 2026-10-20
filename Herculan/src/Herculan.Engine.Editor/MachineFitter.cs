@@ -29,7 +29,7 @@ namespace Herculan.Engine.Editor;
 /// <see cref="MissionDocument.Change"/>: asked to write the alternative, a field the herc draws from an edited table's
 /// alternative goes there, and every other field goes in the record that supplies it, a field a variant supplies that the
 /// edit would unset keeping the variant's value, except a launcher's guidance, which is written SARH (0). The squad's edits
-/// never write the alternative. Each builds the editor's state again (<see cref="MissionRebuild"/>), which builds the squad's
+/// never write the alternative. Each builds the editor's state again (<see cref="SceneSync"/>), which builds the squad's
 /// <c>player.mec</c> again first.</para>
 ///
 /// <para>The edits run when <see cref="RunRequest"/> is called, once the frame's ImGui is rendered, since the rebuild
@@ -47,7 +47,7 @@ internal sealed class MachineFitter {
 	private readonly ScriptDat _document;
 	private readonly MissionDocument _source;
 	private readonly PointMover _mover;
-	private readonly MissionRebuild _rebuild;
+	private readonly SceneSync _sync;
 	private readonly Func<GameContent> _shellContent;
 	private ShellArmingLayouts? _layouts;
 	private Func<string?>? _requested;
@@ -55,12 +55,12 @@ internal sealed class MachineFitter {
 	/// <param name="document">The generated <c>script.dat</c>, <paramref name="source"/>'s.</param>
 	/// <param name="source">The mission as its <c>.MSN</c>.</param>
 	/// <param name="shellContent">VSHELL's mount of the install, which holds the stock fits and the arming layouts.</param>
-	public MachineFitter(ScriptDat document, MissionDocument source, PointMover mover, MissionRebuild rebuild,
+	public MachineFitter(ScriptDat document, MissionDocument source, PointMover mover, SceneSync sync,
 			Func<GameContent> shellContent) {
 		_document = document;
 		_source = source;
 		_mover = mover;
-		_rebuild = rebuild;
+		_sync = sync;
 		_shellContent = shellContent;
 	}
 
@@ -204,14 +204,14 @@ internal sealed class MachineFitter {
 
 		MsnEdit change;
 		try {
-			change = _rebuild.Run(() => RosterFit.Write(source, guid, fields, alternative, weapon => ShellWeaponsScreen.TakesGuidance(weapon)));
+			change = _sync.Run(() => RosterFit.Write(source, guid, fields, alternative, weapon => ShellWeaponsScreen.TakesGuidance(weapon)));
 		} catch (InvalidOperationException ex) {
 			return ex.Message;
 		}
 
 		// Nothing written, when every field that differs is one a variant keeps.
 		if (change.Rows.Any()) {
-			_mover.Record(new RecordsEdit(_rebuild, change));
+			_mover.Record(new RecordsEdit(_sync, change));
 		}
 
 		return null;

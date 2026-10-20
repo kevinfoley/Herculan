@@ -10,53 +10,55 @@ using Herculan.Engine.World;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// One opened mission and everything the editor builds over it on the CPU: the scene, the cross-reference
-/// index, the overlays, the picker, the two side panels and the move, add, delete, fit, type, route, trigger area, action, timer, condition, presence, variant, order, objective, text and theater tools, all sharing one
-/// selection. An edit that adds or removes records builds the CPU state again in place (<see cref="Rebuild"/>), and a
+/// One opened mission and everything the editor builds over it on the CPU: the scene, its objects placed from the
+/// <c>.MSN</c>'s layout (<see cref="Index"/>), the generated mission's cross-reference (<see cref="Generated"/>), the overlays, the picker, the two side panels and the move, add, delete, fit, type, route, trigger area, action, timer, condition, presence, variant, order, objective, text and theater tools, all sharing one
+/// selection. Every edit, undo and redo syncs the scene and the indices with the document in place (<see cref="Sync"/>), and a
 /// change of theater or time of day dresses the scene in its world again in place (<see cref="Theater"/>). Opening another
 /// mission builds a new one of these rather than resetting this one; <see cref="MissionDrawables"/> is its GPU half.
 /// </summary>
 internal sealed class EditorMission {
 	private EditorMission(GameContent content, string name, ScriptDat document, MissionDocument source, MissionScene scene,
-			MissionIndex index, TerrainMaterialTable materials, MissionSquad squad, Func<GameContent> shellContent) {
+			PlacementTables tables, MissionIndex sceneIndex, GeneratedIndex index, TerrainMaterialTable materials, MissionSquad squad,
+			Func<GameContent> shellContent) {
 		Name = name;
 		Document = document;
 		Source = source;
 		Scene = scene;
-		Index = index;
+		Index = sceneIndex;
+		Generated = index;
 
 		var drape = new DrapedLines(scene.World.Terrain);
-		Overlay = new MissionOverlay(index, drape);
-		Picker = new ScenePicker(scene, index, Overlay);
-		GroupOverlay = new GroupOverlay(index, drape, Picker);
+		Overlay = new MissionOverlay(index, sceneIndex, drape);
+		Picker = new ScenePicker(scene, sceneIndex, Overlay);
+		GroupOverlay = new GroupOverlay(sceneIndex, index, drape, Picker);
 		Outliner = new MissionOutliner(index, new MissionLint(index, document, source.Provenance.Lines.Count), Selection);
-		Mover = new PointMover(document, source, scene, index, Picker, Overlay, materials);
+		Sync = new SceneSync(content, source, scene, tables, sceneIndex, index, Overlay, Picker, Outliner, Selection, squad);
+		Mover = new PointMover(document, source, scene, sceneIndex, index, Sync, Overlay, materials);
 		Gizmo = new MoveGizmo(Selection, Mover);
-		Rebuild = new MissionRebuild(content, document, source, scene, index, Overlay, Picker, Mover, Outliner, Selection, squad);
-		Placer = new StructurePlacer(document, source, scene, index, Mover, Rebuild, Selection);
-		Sides = new SideChanger(document, source, index, Mover);
-		Deleter = new ObjectDeleter(document, source, index, Mover, Rebuild);
-		Fitter = new MachineFitter(document, source, Mover, Rebuild, shellContent);
-		Squad = new SquadEditor(document, source, index, Mover, Rebuild, Fitter, Deleter);
-		Theater = new TheaterChanger(document, source, scene, index, Mover, Rebuild);
-		Routes = new RouteEditor(source, index, Mover, Rebuild, Selection, Deleter);
+		Placer = new StructurePlacer(document, source, scene, index, Mover, Sync, Selection);
+		Sides = new SideChanger(document, source, index, Mover, Sync);
+		Deleter = new ObjectDeleter(document, source, index, Mover, Sync);
+		Fitter = new MachineFitter(document, source, Mover, Sync, shellContent);
+		Squad = new SquadEditor(document, source, index, Mover, Sync, Fitter, Deleter);
+		Theater = new TheaterChanger(document, source, scene, index, Mover, Sync);
+		Routes = new RouteEditor(source, index, Mover, Sync, Selection, Deleter);
 		Placing = new RoutePlacing(Routes, index, drape);
-		Areas = new AreaEditor(source, index, Mover, Rebuild, Selection, Deleter);
+		Areas = new AreaEditor(source, index, Mover, Sync, Selection, Deleter);
 		AreaPlacing = new AreaPlacing(Areas, drape);
 		Placing.Blocked = () => AreaPlacing.Active;
 		AreaPlacing.Blocked = () => Placing.Active;
-		Hercs = new HercPlacer(document, source, scene, index, Mover, Rebuild, Selection, Fitter, UnitTypeNames.LoadMechs(content));
-		Flyers = new FlyerPlacer(document, source, scene, index, Mover, Rebuild, Selection, UnitTypeNames.LoadFlyers(content));
-		Vehicles = new VehiclePlacer(document, source, index, Mover, Rebuild, Selection, Placer);
-		Orders = new OrderEditor(document, source, index.Records, Mover, Rebuild);
-		Objectives = new ObjectiveEditor(source, index.Records, Mover, Rebuild, Selection);
-		Texts = new MissionTextEditor(source, Mover, Rebuild);
-		Actions = new ActionEditor(source, index.Records, Mover, Rebuild, Selection, Deleter);
-		Timers = new TimerEditor(source, index.Records, Mover, Rebuild, Selection);
-		Conditions = new ConditionEditor(source, index, Mover, Rebuild, Selection, Deleter);
-		Presence = new PresenceEditor(source, Mover, Rebuild, Selection, Deleter);
-		Variants = new VariantEditor(source, Mover, Rebuild, Selection);
-		Types = new RosterTypeEditor(source, Mover, Rebuild);
+		Hercs = new HercPlacer(document, source, scene, index, Mover, Sync, Selection, Fitter, UnitTypeNames.LoadMechs(content));
+		Flyers = new FlyerPlacer(document, source, scene, index, Mover, Sync, Selection, UnitTypeNames.LoadFlyers(content));
+		Vehicles = new VehiclePlacer(document, source, index, Mover, Sync, Selection, Placer);
+		Orders = new OrderEditor(document, source, index.Records, Mover, Sync);
+		Objectives = new ObjectiveEditor(source, index.Records, Mover, Sync, Selection);
+		Texts = new MissionTextEditor(source, Mover, Sync);
+		Actions = new ActionEditor(source, index.Records, Mover, Sync, Selection, Deleter);
+		Timers = new TimerEditor(source, index.Records, Mover, Sync, Selection);
+		Conditions = new ConditionEditor(source, index, Mover, Sync, Selection, Deleter);
+		Presence = new PresenceEditor(source, Mover, Sync, Selection, Deleter);
+		Variants = new VariantEditor(source, Mover, Sync, Selection);
+		Types = new RosterTypeEditor(source, Mover, Sync);
 		Outliner.Placing = Placing;
 		Outliner.AreaPlacing = AreaPlacing;
 		Outliner.Objectives = Objectives;
@@ -91,11 +93,14 @@ internal sealed class EditorMission {
 
 	public MissionScene Scene { get; }
 
-	/// <summary>The mission as the index last built it: as loaded, or as generated after an edit that added or removed records.</summary>
-	public Mission Mission => Index.Mission;
+	/// <summary>The mission as generated after the last edit, which the views read.</summary>
+	public Mission Mission => Generated.Mission;
 
-	/// <summary>The mission's own features, cross-referenced once.</summary>
+	/// <summary>The scene's objects and the mission's groups, as the <c>.MSN</c>'s layout places them, by GUID.</summary>
 	public MissionIndex Index { get; }
+
+	/// <summary>The generated mission's features, cross-referenced by block index, which the views read.</summary>
+	public GeneratedIndex Generated { get; }
 
 	public SelectionState Selection { get; } = new();
 
@@ -114,8 +119,8 @@ internal sealed class EditorMission {
 
 	public MoveGizmo Gizmo { get; }
 
-	/// <summary>Builds the CPU state again after an edit that adds or removes records of <see cref="Source"/>.</summary>
-	public MissionRebuild Rebuild { get; }
+	/// <summary>Syncs the scene and the indices with <see cref="Source"/> after every edit, undo and redo.</summary>
+	public SceneSync Sync { get; }
 
 	/// <summary>Adds structures to <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public StructurePlacer Placer { get; }
@@ -193,9 +198,11 @@ internal sealed class EditorMission {
 
 	/// <summary>
 	/// Opens the handoff at <paramref name="scriptPath"/> as <paramref name="source"/>, the mission it holds as its
-	/// <c>.MSN</c>: the document's generated <c>script.dat</c> and <c>mission.str</c> are written over the handoff's and the
-	/// scene is loaded from them. <paramref name="dataDirectory"/> is where the simulator's settings are when they are not
-	/// beside the script — see <see cref="MissionScene.Load"/>.
+	/// <c>.MSN</c>: the document's generated <c>script.dat</c> and <c>mission.str</c> are written over the handoff's, the
+	/// world is loaded for the mission generated from them (<see cref="MissionScene.LoadWorld"/>), and the objects are built
+	/// for the records the document's layout places (<see cref="LayoutPlacement"/>) and stood on the ground as the game's
+	/// load stands its own (<see cref="MissionScene.Settle"/>). <paramref name="dataDirectory"/> is where the simulator's
+	/// settings are when they are not beside the script — see <see cref="MissionScene.Load"/>.
 	/// <paramref name="squad"/> is which Hercs the mission's squad pilots, which builds the handoff's <c>player.mec</c> again after
 	/// an edit, and <paramref name="shellContent"/> VSHELL's mount, which holds the shell's chassis and weapon tables. Throws
 	/// <see cref="MissingHandoffFileException"/> as <see cref="MissionLoader.Load"/> does.
@@ -206,15 +213,21 @@ internal sealed class EditorMission {
 		File.WriteAllBytes(CaseInsensitivePath.Combine(Path.GetDirectoryName(scriptPath) ?? ".", MissionLoader.TextFileName),
 			source.MissionText);
 		var document = source.Script;
-		var scene = MissionScene.Load(content, scriptPath, dataDirectory, document);
-		foreach (var sceneObject in scene.Objects) {
+		var generated = MissionLoader.Load(content, document, scriptPath);
+		var scene = MissionScene.LoadWorld(content, generated, dataDirectory);
+		var tables = PlacementTables.Load(content);
+		var plan = LayoutPlacement.Place(source.Layout, tables);
+		var objects = SceneSync.Create(scene, source, plan);
+		var sceneIndex = new MissionIndex(plan, objects);
+		scene.Settle(sceneIndex.Objects, sceneIndex.BasePads);
+		foreach (var sceneObject in sceneIndex.Objects) {
 			sceneObject.Object.Position = PointFollowers.Settled(scene.World.Terrain, sceneObject.Object, sceneObject.Object.Position);
 		}
 
-		var index = new MissionIndex(scene, document, new GeneratedRecords(source),
-			SquadMessages.LoadCommand(content, scene.Mission.Header.TrainingMissionNumber));
+		var index = new GeneratedIndex(generated, document, new GeneratedRecords(source),
+			SquadMessages.LoadCommand(content, generated.Header.TrainingMissionNumber), sceneIndex);
 		// The scene's own copy is not kept; a base pad's tile is sized by its material when the ground is levelled again.
-		return new EditorMission(content, name, document, source, scene, index, TerrainMaterialTable.Load(content), squad,
-			shellContent);
+		return new EditorMission(content, name, document, source, scene, tables, sceneIndex, index,
+			TerrainMaterialTable.Load(content), squad, shellContent);
 	}
 }

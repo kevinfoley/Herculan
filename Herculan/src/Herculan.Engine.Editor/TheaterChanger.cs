@@ -12,7 +12,8 @@ namespace Herculan.Engine.Editor;
 /// upload it again.
 ///
 /// <para>Each change writes row 2 through <see cref="MissionDocument.SetHeaderWord"/>, which picks the record that supplies the
-/// word, and generates again. A campaign mission's launch writes its stage's theater over the header, so its theater is
+/// word, and generates again; the scene is dressed in the new world and then synced with the document
+/// (<see cref="SceneSync"/>), as after any edit. A campaign mission's launch writes its stage's theater over the header, so its theater is
 /// shown and not changed; its time of day is its own (<see cref="MissionOpener"/>).</para>
 ///
 /// <para>The edits run when <see cref="RunRequest"/> is called, once the frame's ImGui is rendered, since reloading the world
@@ -22,21 +23,21 @@ internal sealed class TheaterChanger {
 	private readonly ScriptDat _document;
 	private readonly MissionDocument _source;
 	private readonly MissionScene _scene;
-	private readonly MissionIndex _index;
+	private readonly GeneratedIndex _index;
 	private readonly PointMover _mover;
-	private readonly MissionRebuild _rebuild;
+	private readonly SceneSync _sync;
 	private (int Word, short Value)? _requested;
 
 	/// <param name="document">The generated <c>script.dat</c>, <paramref name="source"/>'s, which the scene was loaded from.</param>
 	/// <param name="source">The mission as its <c>.MSN</c>.</param>
-	public TheaterChanger(ScriptDat document, MissionDocument source, MissionScene scene, MissionIndex index, PointMover mover,
-			MissionRebuild rebuild) {
+	public TheaterChanger(ScriptDat document, MissionDocument source, MissionScene scene, GeneratedIndex index, PointMover mover,
+			SceneSync sync) {
 		_document = document;
 		_source = source;
 		_scene = scene;
 		_index = index;
 		_mover = mover;
-		_rebuild = rebuild;
+		_sync = sync;
 	}
 
 	/// <summary>Raised once the scene is dressed in another world, for whatever has it uploaded.</summary>
@@ -98,9 +99,11 @@ internal sealed class TheaterChanger {
 		} catch (Exception ex) when (ex is FileNotFoundException or InvalidDataException or ArgumentOutOfRangeException) {
 			source.Undo(change);
 			Reload();
+			_sync.Sync();
 			return ex.Message;
 		}
 
+		_sync.Sync();
 		_mover.Record(new WorldEdit(this, change));
 		return null;
 	}
@@ -108,21 +111,23 @@ internal sealed class TheaterChanger {
 	// Dresses the scene in the world the generated header picks: every object in it, and every object an edit has built
 	// that an undo or redo can put back.
 	private void Reload() {
-		var objects = _index.Objects.Concat(_rebuild.Built).Distinct(ReferenceEqualityComparer.Instance).Cast<SceneObject>().ToList();
+		var objects = _index.Objects.Concat(_sync.Built).Distinct(ReferenceEqualityComparer.Instance).Cast<SceneObject>().ToList();
 		_scene.ChangeTheater(_document.TheaterIndex, _document.TheaterVariant, objects);
 		WorldChanged?.Invoke();
 	}
 
-	// Puts row 2 back as the step found or left it, and dresses the scene in the world the header then picks.
+	// Puts row 2 back as the step found or left it, dresses the scene in the world the header then picks, and syncs.
 	private sealed record WorldEdit(TheaterChanger Changer, MsnEdit Change) : IEditorEdit {
 		public void Undo() {
 			Changer._source.Undo(Change);
 			Changer.Reload();
+			Changer._sync.Sync();
 		}
 
 		public void Redo() {
 			Changer._source.Redo(Change);
 			Changer.Reload();
+			Changer._sync.Sync();
 		}
 	}
 }

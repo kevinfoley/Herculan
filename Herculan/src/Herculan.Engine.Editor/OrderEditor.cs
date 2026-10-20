@@ -11,7 +11,7 @@ internal sealed record EditableOrder(int Slot, short Guid, ScriptOrder Order, bo
 /// Edits a group's ten order slots, each edit one step of <see cref="PointMover"/>'s undo history, through
 /// <see cref="GroupOrders"/>'s record edits on the mission's <c>.MSN</c>: a slot's verb, route, subject and ending action, and adding,
 /// removing and moving orders (docs/herculan/handoff-editor-mission-logic.md#orders). Every edit builds the
-/// editor's state again (<see cref="MissionRebuild"/>): an order's verb, route and subject decide which routes are walked,
+/// editor's state again (<see cref="SceneSync"/>): an order's verb, route and subject decide which routes are walked,
 /// what the group overlay draws and what the mission check finds, all of which the rebuild builds again, and an add, a
 /// remove or an edit of an order another slot names adds or removes records.
 ///
@@ -26,25 +26,25 @@ internal sealed class OrderEditor {
 	private readonly MissionDocument _source;
 	private readonly GeneratedRecords _records;
 	private readonly PointMover _mover;
-	private readonly MissionRebuild _rebuild;
+	private readonly SceneSync _sync;
 	private Func<string?>? _requested;
 
 	/// <param name="document">The generated <c>script.dat</c>, <paramref name="source"/>'s.</param>
 	/// <param name="source">The mission as its <c>.MSN</c>.</param>
 	public OrderEditor(ScriptDat document, MissionDocument source, GeneratedRecords records, PointMover mover,
-			MissionRebuild rebuild) {
+			SceneSync sync) {
 		_document = document;
 		_source = source;
 		_records = records;
 		_mover = mover;
-		_rebuild = rebuild;
+		_sync = sync;
 	}
 
 	/// <summary>Why the last edit run could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
 	/// <summary>Why row-16 GUID <paramref name="group"/>'s orders cannot be edited, or null when they can.</summary>
-	public string? WhyFixed(short group) => _records.Group(group) == null ? GeneratedRecords.NotShown : null;
+	public string? WhyFixed(short group) => _records.Group(group) == null ? GeneratedRecords.Absent : null;
 
 	/// <summary>The filled order slots of row-16 GUID <paramref name="group"/>, as generated, in slot order.</summary>
 	public IReadOnlyList<EditableOrder> Slots(short group) {
@@ -124,12 +124,12 @@ internal sealed class OrderEditor {
 	private string? Commit(Func<MsnEdit> edit) {
 		MsnEdit change;
 		try {
-			change = _rebuild.Run(edit);
+			change = _sync.Run(edit);
 		} catch (Exception ex) when (ex is InvalidOperationException or ArgumentOutOfRangeException) {
 			return ex.Message;
 		}
 
-		_mover.Record(new RecordsEdit(_rebuild, change));
+		_mover.Record(new RecordsEdit(_sync, change));
 		return null;
 	}
 }

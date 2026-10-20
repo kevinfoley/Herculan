@@ -25,6 +25,12 @@ internal sealed class GeneratedRecords {
 	/// <summary>Why an editor refuses an edit of a record the generation has none for, which no view shows.</summary>
 	public const string NotShown = "It is not shown in the editor.";
 
+	/// <summary>
+	/// What a view says of an object or a group the scene shows and the generation has none for, which the views, reading
+	/// the generated file, cannot show; and why its editors refuse it.
+	/// </summary>
+	public const string Absent = "Absent from the mission as opened, so this view cannot show it yet.";
+
 	private readonly MissionDocument _source;
 
 	public GeneratedRecords(MissionDocument source) => _source = source;

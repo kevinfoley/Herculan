@@ -9,8 +9,8 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// Adds a flyer to the open mission, as one step of <see cref="PointMover"/>'s undo history, through
 /// <see cref="FlyerGroups"/>'s record edits: in a new group of its own, standing on a route of one waypoint where it was put
-/// and hunting the player's squad, or joining the selected flyer group. The editor's state is then built again from the
-/// generated file (<see cref="MissionRebuild"/>), which builds the flyer's object for the record, and the flyer is
+/// and hunting the player's squad, or joining the selected flyer group. The scene is then synced with the document
+/// (<see cref="SceneSync"/>), which builds the flyer's object for the record, and the flyer is
 /// selected (docs/herculan/handoff-editor-roster.md#flyers).
 /// </summary>
 internal sealed class FlyerPlacer {
@@ -20,23 +20,23 @@ internal sealed class FlyerPlacer {
 	private readonly ScriptDat _document;
 	private readonly MissionDocument _source;
 	private readonly MissionScene _scene;
-	private readonly MissionIndex _index;
+	private readonly GeneratedIndex _index;
 	private readonly PointMover _mover;
-	private readonly MissionRebuild _rebuild;
+	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private readonly UnitTypeNames _names;
 
 	/// <param name="document">The generated <c>script.dat</c>, <paramref name="source"/>'s, which the scene was loaded from.</param>
 	/// <param name="source">The mission as its <c>.MSN</c>.</param>
 	/// <param name="names">The <c>nam\FLYERS.NAM</c> type names, which a ghost's model is found by.</param>
-	public FlyerPlacer(ScriptDat document, MissionDocument source, MissionScene scene, MissionIndex index, PointMover mover,
-			MissionRebuild rebuild, SelectionState selection, UnitTypeNames names) {
+	public FlyerPlacer(ScriptDat document, MissionDocument source, MissionScene scene, GeneratedIndex index, PointMover mover,
+			SceneSync sync, SelectionState selection, UnitTypeNames names) {
 		_document = document;
 		_source = source;
 		_scene = scene;
 		_index = index;
 		_mover = mover;
-		_rebuild = rebuild;
+		_sync = sync;
 		_selection = selection;
 		_names = names;
 	}
@@ -92,27 +92,28 @@ internal sealed class FlyerPlacer {
 				Side: side, OutOfActionReport: OutOfActionReport.None))
 			: null;
 
-	// Makes an add's change and rebuilds from it, then records it as one step and selects the object the rebuild built
-	// for the flyer's row-13 GUID; or, when it built none, puts the records back and says why.
+	// Makes an add's change and syncs the scene with it, then records it as one step and selects the object built for
+	// the flyer's row-13 GUID; or, when none was built, puts the records back and says why.
 	private string? Commit(int typeIndex, Func<MsnEdit> add, Func<short> flyer) {
 		var source = _source;
 		MsnEdit change;
 		try {
-			change = _rebuild.Run(add);
+			change = _sync.Run(add);
 		} catch (InvalidOperationException ex) {
 			return ex.Message;
 		}
 
-		int? slot = source.ExportedIndex(FlyerRow, flyer());
-		if (slot is not { } exported || _index.ObjectAt(MissionUnitKind.Flyer, exported) is not { } placed) {
-			_rebuild.Undo(change);
-			return slot == null
+		short added = flyer();
+		bool generated = source.ExportedIndex(FlyerRow, added) != null;
+		if (!generated || _index.Scene.ObjectOf(new ObjectKey(FlyerRow, added)) == null) {
+			_sync.Undo(change);
+			return !generated
 				? "The added flyer was not generated; nothing was added."
 				: $"The install has no flyer type {typeIndex}.";
 		}
 
-		_mover.Record(new RecordsEdit(_rebuild, change));
-		_selection.Current = new ObjectSelection(placed);
+		_mover.Record(new RecordsEdit(_sync, change));
+		_selection.Current = new ObjectSelection(FlyerRow, added);
 		return null;
 	}
 }

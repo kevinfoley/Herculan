@@ -401,9 +401,9 @@ public sealed class EditorHost {
 		var drawables = new MissionDrawables(gl, renderer, mission, _settings);
 		mission.Mover.Moved += drawables.Move;
 		mission.Mover.TerrainChanged += drawables.UploadTerrain;
-		mission.Rebuild.Added += drawables.Add;
-		mission.Rebuild.Removed += drawables.Remove;
-		mission.Rebuild.Rebuilt += drawables.RefreshWaiting;
+		mission.Sync.Added += drawables.Add;
+		mission.Sync.Removed += drawables.Remove;
+		mission.Sync.Rebuilt += drawables.RefreshWaiting;
 		_dropPreview = new DropPreview(mission, drawables);
 		return drawables;
 	}
@@ -412,9 +412,9 @@ public sealed class EditorHost {
 	private static void Unhook(EditorMission mission, MissionDrawables drawables) {
 		mission.Mover.Moved -= drawables.Move;
 		mission.Mover.TerrainChanged -= drawables.UploadTerrain;
-		mission.Rebuild.Added -= drawables.Add;
-		mission.Rebuild.Removed -= drawables.Remove;
-		mission.Rebuild.Rebuilt -= drawables.RefreshWaiting;
+		mission.Sync.Added -= drawables.Add;
+		mission.Sync.Removed -= drawables.Remove;
+		mission.Sync.Rebuilt -= drawables.RefreshWaiting;
 	}
 
 	// Listens to <mission> for what the host does for it: framing a double-clicked selection, and uploading its scene again
@@ -459,8 +459,10 @@ public sealed class EditorHost {
 		}
 
 		if (key == Key.Delete && !control && !placing) {
-			if (_mission?.Selection.Current is ObjectSelection { Object: var selected }) {
-				_mission.Deleter.Request(selected);
+			if (_mission?.Selection.Current is ObjectSelection selected) {
+				if (_mission.Index.ObjectOf(selected) is { } placed) {
+					_mission.Deleter.Request(placed);
+				}
 			} else if (_mission?.Selection.Current is RouteSelection { Guid: var route, Waypoint: var waypoint }) {
 				if (waypoint < 0) {
 					_mission.Routes.RequestDelete(route);
@@ -701,11 +703,11 @@ public sealed class EditorHost {
 	// squad, group 0, is offered so the Toolbox can say why it takes no herc.
 	private static (int? Group, ToolboxKind Kind) JoinableGroup(EditorMission mission) {
 		int group = mission.Selection.Current switch {
-			GroupSelection selected => mission.Index.Records.Group(selected.Guid) ?? -1,
-			ObjectSelection { Object.Placement: var placement } => placement.GroupIndex,
+			GroupSelection selected => mission.Generated.Records.Group(selected.Guid) ?? -1,
+			ObjectSelection selected => mission.Index.ObjectOf(selected)?.Placement.GroupIndex ?? -1,
 			_ => -1
 		};
-		return mission.Index.KindOf(group) switch {
+		return mission.Generated.KindOf(group) switch {
 			MissionUnitKind.Base when group > 0 => (group, ToolboxKind.Structure),
 			MissionUnitKind.Mech => (group, ToolboxKind.Herc),
 			MissionUnitKind.Flyer => (group, ToolboxKind.Flyer),
@@ -889,7 +891,7 @@ public sealed class EditorHost {
 	private static void ReportLoaded(EditorMission opened) {
 		Console.WriteLine(
 			$"Mission {opened.Name}: zone {opened.Mission.Header.ZoneIndex}, theater {opened.Mission.Header.TheaterIndex}. " +
-			$"Placed {opened.Scene.Objects.Count} objects, {opened.Scene.UnmodelledCount} without a model.");
+			$"Placed {opened.Index.Objects.Count} objects, {opened.Index.Objects.Count(placed => placed.Model == null)} without a model.");
 	}
 
 	// Draws the main menu bar and returns its height, which is what the rest of the frame's overlays

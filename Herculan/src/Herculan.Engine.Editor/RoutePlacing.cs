@@ -31,7 +31,7 @@ internal sealed class RoutePlacing {
 	private static readonly Vector3 BandColor = new(1f, 1f, 0.6f);
 
 	private readonly RouteEditor _editor;
-	private readonly MissionIndex _index;
+	private readonly GeneratedIndex _index;
 	private readonly DrapedLines _drape;
 	private readonly List<Vec3i> _placed = new();
 
@@ -40,7 +40,7 @@ internal sealed class RoutePlacing {
 	private bool _finishing;
 	private bool _close;
 
-	public RoutePlacing(RouteEditor editor, MissionIndex index, DrapedLines drape) {
+	public RoutePlacing(RouteEditor editor, GeneratedIndex index, DrapedLines drape) {
 		_editor = editor;
 		_index = index;
 		_drape = drape;

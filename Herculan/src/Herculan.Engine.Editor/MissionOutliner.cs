@@ -21,11 +21,11 @@ internal sealed class MissionOutliner {
 	private static readonly Vector4 FindingLinkColor = new(0.55f, 0.78f, 1f, 1f);
 	private static readonly Vector4 SelectedFindingColor = new(1f, 0.85f, 0.1f, 1f);
 
-	private readonly MissionIndex _index;
+	private readonly GeneratedIndex _index;
 	private MissionLint _lint;
 	private readonly SelectionState _selection;
 
-	public MissionOutliner(MissionIndex index, MissionLint lint, SelectionState selection) {
+	public MissionOutliner(GeneratedIndex index, MissionLint lint, SelectionState selection) {
 		_index = index;
 		_lint = lint;
 		_selection = selection;
@@ -259,7 +259,10 @@ internal sealed class MissionOutliner {
 			}
 
 			foreach (var member in members) {
-				var chosen = new ObjectSelection(member);
+				if (_index.Scene.SelectionOf(member) is not { } chosen) {
+					continue;
+				}
+
 				Choose(chosen, ImGui.Selectable($"{MissionText.Describe(member)}##m{group}.{member.Placement.SlotIndex}",
 					_selection.Is(chosen)));
 			}

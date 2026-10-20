@@ -8,7 +8,7 @@ namespace Herculan.Engine.Editor;
 /// Creates, edits and deletes the open mission's variant tables, and sets which table a herc, flyer, structure or ground
 /// vehicle outside the squad draws from, each edit one step of <see cref="PointMover"/>'s undo history, through
 /// <see cref="VariantEditing"/>'s record edits on the mission's <c>.MSN</c>. Every edit builds the editor's state again
-/// (<see cref="MissionRebuild"/>), as it changes what the records drawing from the table generate; the selection keeps a
+/// (<see cref="SceneSync"/>), as it changes what the records drawing from the table generate; the selection keeps a
 /// table by its row-1 GUID and an object as the rebuild keeps one.
 ///
 /// <para>The edits wait for the frame's ImGui to be rendered (<see cref="RunRequest"/>).</para>
@@ -16,14 +16,14 @@ namespace Herculan.Engine.Editor;
 internal sealed class VariantEditor {
 	private readonly MissionDocument _source;
 	private readonly PointMover _mover;
-	private readonly MissionRebuild _rebuild;
+	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private Func<string?>? _requested;
 
-	public VariantEditor(MissionDocument source, PointMover mover, MissionRebuild rebuild, SelectionState selection) {
+	public VariantEditor(MissionDocument source, PointMover mover, SceneSync sync, SelectionState selection) {
 		_source = source;
 		_mover = mover;
-		_rebuild = rebuild;
+		_sync = sync;
 		_selection = selection;
 	}
 
@@ -98,12 +98,12 @@ internal sealed class VariantEditor {
 
 			MsnEdit change;
 			try {
-				change = _rebuild.Run(() => edit(_source));
+				change = _sync.Run(() => edit(_source));
 			} catch (Exception ex) when (ex is InvalidOperationException or ArgumentOutOfRangeException) {
 				return ex.Message;
 			}
 
-			_mover.Record(new RecordsEdit(_rebuild, change));
+			_mover.Record(new RecordsEdit(_sync, change));
 			if (select is { } table) {
 				_selection.Current = table != -1 && VariantEditing.IsTable(_source, table) ? new ConditionSelection(table) : null;
 			}

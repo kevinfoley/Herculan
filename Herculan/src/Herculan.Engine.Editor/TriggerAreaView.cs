@@ -15,7 +15,7 @@ namespace Herculan.Engine.Editor;
 /// drag of the move handles makes, so a point shared with anything else moves with it.
 /// </summary>
 internal sealed class TriggerAreaView {
-	private readonly MissionIndex _index;
+	private readonly GeneratedIndex _index;
 	private readonly PointMover _mover;
 	private readonly AreaEditor _editor;
 	private readonly AreaPlacing _placing;
@@ -31,7 +31,7 @@ internal sealed class TriggerAreaView {
 	/// <param name="actions">Creates an action testing the area.</param>
 	/// <param name="drawAction">Draws an action's wiring, read-only, as the action view summarises it.</param>
 	/// <param name="references">Draws what references something, one line per record.</param>
-	public TriggerAreaView(MissionIndex index, PointMover mover, AreaEditor editor, AreaPlacing placing, ActionEditor actions,
+	public TriggerAreaView(GeneratedIndex index, PointMover mover, AreaEditor editor, AreaPlacing placing, ActionEditor actions,
 			Action<int> drawAction, Action<DeleteNamers> references) {
 		_index = index;
 		_mover = mover;

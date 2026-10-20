@@ -17,7 +17,7 @@ internal sealed class OrderSlotsView {
 	private const short HercSubject = 1;
 	private const short StructureSubject = 3;
 
-	private readonly MissionIndex _index;
+	private readonly GeneratedIndex _index;
 	private readonly ScriptDat _document;
 	private readonly OrderEditor _editor;
 	private readonly Action<int> _routeLink;
@@ -30,7 +30,7 @@ internal sealed class OrderSlotsView {
 	/// <param name="actionLink">Draws a link that selects an action, by block-5 index.</param>
 	/// <param name="subjectLink">Draws a link that selects an order's subject.</param>
 	/// <param name="presentWhen">Draws each slot's Present when (<paramref name="presence"/>'s target).</param>
-	public OrderSlotsView(MissionIndex index, ScriptDat document, OrderEditor editor, Action<int> routeLink,
+	public OrderSlotsView(GeneratedIndex index, ScriptDat document, OrderEditor editor, Action<int> routeLink,
 			Action<int> actionLink, Action<MissionOrderSubject, int> subjectLink, PresentWhenView presentWhen, PresenceEditor presence) {
 		_index = index;
 		_document = document;

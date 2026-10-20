@@ -7,7 +7,7 @@ namespace Herculan.Engine.Editor;
 /// Creates, edits and deletes the open mission's objectives, each edit one step of <see cref="PointMover"/>'s undo
 /// history, through <see cref="ObjectiveEditing"/>'s and <see cref="MissionTextEditing"/>'s record edits on the mission's
 /// <c>.MSN</c> and <c>.ENG</c> (docs/herculan/handoff-editor-mission-logic.md#objectives). Every edit builds
-/// the editor's state again (<see cref="MissionRebuild"/>): block 12 changes, a create or a delete adds or removes a
+/// the editor's state again (<see cref="SceneSync"/>): block 12 changes, a create or a delete adds or removes a
 /// record, and a text edit changes <c>mission.str</c>.
 ///
 /// <para>Objectives are taken by their index in row 17, as the selections name them, and one not shown in the editor is not
@@ -15,22 +15,22 @@ namespace Herculan.Engine.Editor;
 /// (<see cref="RunRequest"/>), since the rebuild changes what the panels list.</para>
 /// </summary>
 internal sealed class ObjectiveEditor {
-	private const int MechBlock = 7;
-	private const int BaseBlock = 9;
+	private const int MechRow = 12;
+	private const int BaseRow = 14;
 
 	private readonly MissionDocument _source;
 	private readonly GeneratedRecords _records;
 	private readonly PointMover _mover;
-	private readonly MissionRebuild _rebuild;
+	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private Func<string?>? _requested;
 
-	public ObjectiveEditor(MissionDocument source, GeneratedRecords records, PointMover mover, MissionRebuild rebuild,
+	public ObjectiveEditor(MissionDocument source, GeneratedRecords records, PointMover mover, SceneSync sync,
 			SelectionState selection) {
 		_source = source;
 		_records = records;
 		_mover = mover;
-		_rebuild = rebuild;
+		_sync = sync;
 		_selection = selection;
 	}
 
@@ -49,10 +49,10 @@ internal sealed class ObjectiveEditor {
 		switch (selection) {
 			case GroupSelection { Guid: var group }:
 				return (ObjectiveEditing.GroupSubject, group);
-			case ObjectSelection { Object.Placement: { Kind: MissionUnitKind.Mech } placement }:
-				return (ObjectiveEditing.HercSubject, _source.GuidOf(MechBlock, placement.SlotIndex));
-			case ObjectSelection { Object.Placement: { Kind: MissionUnitKind.Base } placement }:
-				return (ObjectiveEditing.StructureSubject, _source.GuidOf(BaseBlock, placement.SlotIndex));
+			case ObjectSelection { Row: MechRow, Guid: var herc }:
+				return (ObjectiveEditing.HercSubject, herc);
+			case ObjectSelection { Row: BaseRow, Guid: var structure }:
+				return (ObjectiveEditing.StructureSubject, structure);
 			case ObjectSelection:
 				whyNot = "A flyer is not offered as a subject: no retail objective asks about one.";
 				return null;
@@ -172,12 +172,12 @@ internal sealed class ObjectiveEditor {
 	private string? Commit(Func<MsnEdit> edit, Func<int>? selected, int? deleted = null) {
 		MsnEdit change;
 		try {
-			change = _rebuild.Run(edit);
+			change = _sync.Run(edit);
 		} catch (Exception ex) when (ex is InvalidOperationException or ArgumentOutOfRangeException) {
 			return ex.Message;
 		}
 
-		_mover.Record(new RecordsEdit(_rebuild, change));
+		_mover.Record(new RecordsEdit(_sync, change));
 		if (selected != null) {
 			_selection.Current = new ObjectiveSelection(selected());
 		} else if (deleted is { } record && _selection.Current is ObjectiveSelection { Record: var current } && current == record) {

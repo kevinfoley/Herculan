@@ -1,6 +1,6 @@
 # Handoff — the HERCULAN mission editor
 
-The editor, `Herculan.Engine.Editor`, run on its own by `Herculan.Engine.Host.Editor` and from the game's Editor menu item, opens a mission as its `.MSN` and `.ENG`, shows it through the `script.dat` generated from them, edits it, and saves it into the install, where the game loads it in place of the archive's.
+The editor, `Herculan.Engine.Editor`, run on its own by `Herculan.Engine.Host.Editor` and from the game's Editor menu item, opens a mission as its `.MSN` and `.ENG`, shows its objects and groups from the `.MSN` and the rest through the `script.dat` generated from them, edits it, and saves it into the install, where the game loads it in place of the archive's.
 
 | Doc | Covers |
 |---|---|
@@ -17,7 +17,7 @@ The editor, `Herculan.Engine.Editor`, run on its own by `Herculan.Engine.Host.Ed
 
 These hold for every edit in the docs above unless the doc says otherwise:
 
-- An edit is one step of the undo history (Edit > Undo and Redo, Ctrl+Z and Ctrl+Y), runs once the frame's panels are drawn, and builds the editor's state again from the generated file ([Rebuilding after an edit](handoff-editor-document.md#rebuilding-after-an-edit)). A move, a side change and a theater or time-of-day change update the scene in place instead.
+- An edit is one step of the undo history (Edit > Undo and Redo, Ctrl+Z and Ctrl+Y), runs once the frame's panels are drawn, and syncs the editor's state with the document, a move and a side change included ([Rebuilding after an edit](handoff-editor-document.md#rebuilding-after-an-edit)). A theater or time-of-day change first dresses the scene in the new world.
 - A typed field applies when it loses the focus.
 - The Delete key deletes the selection, as the view's Delete does, unless a text field has the keyboard or a drag is under way.
 - A delete or removal is refused while another record references what it removes, in any record and whatever its condition; the view lists each referrer as a link, one per line.
@@ -71,7 +71,6 @@ Beyond the gaps each doc lists:
 | A line-length check against the mission screen's wrap, and a line's trailing newline | small |
 | Ordering objectives; deleting a group directly; clearing a reference that refuses a delete | small each |
 | Heading entry and a turn handle | small |
-| Mission check re-run after each move and side change | small |
 | The mission list showing each mission's zone and theater | small |
 | Empty formation slots, briefing-only order point | small each |
 | Tint every area of a selected action; tint ground planes too | small |

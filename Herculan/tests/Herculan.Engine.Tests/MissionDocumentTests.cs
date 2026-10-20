@@ -145,6 +145,30 @@ public class MissionDocumentTests {
 		Assert.Equal(0, document.Mission.Mechs[0].TypeIndex);
 	}
 
+	/// <summary>
+	/// Catches each overlaid field appended as a record of its own, so one chassis change on a variant-keyed herc grows its
+	/// row by a record per mount.
+	/// </summary>
+	[Fact]
+	public void OverlaidFieldsShareOneRecord() {
+		var document = Open(new SyntheticMsn()
+			.Add(1, Condition(guid: 10, condition: -1, type: 3, lower: 7, upper: 0, operand: 1))
+			.Add(1, Condition(guid: 11, condition: 10, type: 2, lower: 0, upper: 5, operand: 0))
+			.Add(12, Mech(-1, type: 0, condition: 11, weapons: [15, 8, 8], ammo: [1]))
+			.Add(12, Mech(2, type: -1, variant: 7)));
+
+		document.Change(() => {
+			document.SetField(MsnField.MechType, 2, 4);
+			document.SetField(MsnField.MechWeapon(0), 2, 9);
+		});
+		document.SetField(MsnField.MechWeapon(1), 2, 9);
+
+		var herc = document.Script.Mechs[0];
+		Assert.Equal(4, herc.TypeIndex);
+		Assert.Equal(new short[] { 9, 9, 8 }, herc.WeaponRefs.Take(3));
+		Assert.Equal(3, document.Mission.Mechs!.Length);
+	}
+
 	/// <summary>Catches a new GUID taken from the row's record count, which can be one already in use, merging the new record into it.</summary>
 	[Fact]
 	public void AppendTakesAFreshGuidAndIsExportedLast() {

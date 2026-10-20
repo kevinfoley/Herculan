@@ -11,8 +11,8 @@ namespace Herculan.Engine.Editor;
 /// <see cref="VehicleGroups"/>'s record edits in a convoy of its own, standing on a route of one waypoint where it was put and
 /// travelling it, or joining the selected convoy; or, given any other structure group, as a structure joins one
 /// (<see cref="StructurePlacer"/>), where it stands as a building unless it is the group's first member
-/// (docs/retail/simulation/ground-vehicles.md#the-ground-vehicle-tick--0046a5d0). The editor's state is then built again
-/// from the generated file (<see cref="MissionRebuild"/>), which builds the vehicle's object for the record, and the vehicle
+/// (docs/retail/simulation/ground-vehicles.md#the-ground-vehicle-tick--0046a5d0). The scene is then synced with the document
+/// (<see cref="SceneSync"/>), which builds the vehicle's object for the record, and the vehicle
 /// is selected (docs/herculan/handoff-editor-roster.md#ground-vehicles). A convoy is a structure
 /// group whose first member is of a type <see cref="BaseObject.IsGroundVehicle"/> answers true for.
 /// </summary>
@@ -22,22 +22,22 @@ internal sealed class VehiclePlacer {
 
 	private readonly ScriptDat _document;
 	private readonly MissionDocument _source;
-	private readonly MissionIndex _index;
+	private readonly GeneratedIndex _index;
 	private readonly PointMover _mover;
-	private readonly MissionRebuild _rebuild;
+	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private readonly StructurePlacer _structures;
 
 	/// <param name="document">The generated <c>script.dat</c>, <paramref name="source"/>'s, which the scene was loaded from.</param>
 	/// <param name="source">The mission as its <c>.MSN</c>.</param>
 	/// <param name="structures">Adds a vehicle to a structure group that is not a convoy, and builds its ghost.</param>
-	public VehiclePlacer(ScriptDat document, MissionDocument source, MissionIndex index, PointMover mover,
-			MissionRebuild rebuild, SelectionState selection, StructurePlacer structures) {
+	public VehiclePlacer(ScriptDat document, MissionDocument source, GeneratedIndex index, PointMover mover,
+			SceneSync sync, SelectionState selection, StructurePlacer structures) {
 		_document = document;
 		_source = source;
 		_index = index;
 		_mover = mover;
-		_rebuild = rebuild;
+		_sync = sync;
 		_selection = selection;
 		_structures = structures;
 	}
@@ -102,27 +102,28 @@ internal sealed class VehiclePlacer {
 		group >= 0 && group < _document.Groups.Length
 		&& VehicleGroups.IsConvoy(_source, _source.GuidOf(GroupBlock, group), BaseObject.IsGroundVehicle);
 
-	// Makes an add's change and rebuilds from it, then records it as one step and selects the object the rebuild built
-	// for the vehicle's row-14 GUID; or, when it built none, puts the records back and says why.
+	// Makes an add's change and syncs the scene with it, then records it as one step and selects the object built for
+	// the vehicle's row-14 GUID; or, when none was built, puts the records back and says why.
 	private string? Commit(int typeIndex, Func<MsnEdit> add, Func<short> vehicle) {
 		var source = _source;
 		MsnEdit change;
 		try {
-			change = _rebuild.Run(add);
+			change = _sync.Run(add);
 		} catch (InvalidOperationException ex) {
 			return ex.Message;
 		}
 
-		int? slot = source.ExportedIndex(BaseRow, vehicle());
-		if (slot is not { } exported || _index.ObjectAt(MissionUnitKind.Base, exported) is not { } placed) {
-			_rebuild.Undo(change);
-			return slot == null
+		short added = vehicle();
+		bool generated = source.ExportedIndex(BaseRow, added) != null;
+		if (!generated || _index.Scene.ObjectOf(new ObjectKey(BaseRow, added)) == null) {
+			_sync.Undo(change);
+			return !generated
 				? "The added ground vehicle was not generated; nothing was added."
 				: $"The install has no structure type {typeIndex}.";
 		}
 
-		_mover.Record(new RecordsEdit(_rebuild, change));
-		_selection.Current = new ObjectSelection(placed);
+		_mover.Record(new RecordsEdit(_sync, change));
+		_selection.Current = new ObjectSelection(BaseRow, added);
 		return null;
 	}
 }

@@ -12,7 +12,8 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// The mission's non-object features drawn over the scene: trigger areas, routes, base pads and the
 /// mission box with its two margins, as lines laid on the terrain, plus their ImGui labels, the waypoint pick and the
-/// tint over a selected area's ground.
+/// tint over a selected area's ground. The areas, routes and mission box are the generated mission's (<see cref="GeneratedIndex"/>);
+/// the pads, and the selected group's snap, the layout's (<see cref="MissionIndex"/>), where the ground is painted.
 ///
 /// <para>Every line is drawn twice: dim with depth testing off, so a feature behind a hill still
 /// shows where it is, then at full colour with depth testing on, so the part in view reads as
@@ -43,7 +44,8 @@ internal sealed class MissionOverlay {
 	/// <summary>How close, in pixels on a 100% display, a click must land to a waypoint to pick it.</summary>
 	private const float WaypointPickRadius = 8f;
 
-	private readonly MissionIndex _index;
+	private readonly GeneratedIndex _index;
+	private readonly MissionIndex _scene;
 	private readonly DrapedLines _drape;
 	private readonly List<(MissionTriggerArea Area, List<Vector3> Lines, Vector3 Color)> _areas = new();
 	private readonly List<(EditorRoute Route, List<Vector3> Lines, Vector3 Color)> _routes = new();
@@ -51,13 +53,14 @@ internal sealed class MissionOverlay {
 	private readonly List<(MissionBasePad Pad, List<Vector3> Lines)> _pads = new();
 	private MissionBox _boxShape;
 
-	public MissionOverlay(MissionIndex index, DrapedLines drape) {
+	public MissionOverlay(GeneratedIndex index, MissionIndex scene, DrapedLines drape) {
 		_index = index;
+		_scene = scene;
 		_drape = drape;
 		Rebuild();
 	}
 
-	/// <summary>Lays every line again from the index, for an index built again (<see cref="MissionIndex.Reload"/>).</summary>
+	/// <summary>Lays every line again from the indices, for indices built again (<see cref="SceneSync"/>).</summary>
 	public void Rebuild() {
 		_areas.Clear();
 		foreach (var area in _index.Areas) {
@@ -73,12 +76,16 @@ internal sealed class MissionOverlay {
 			_routes.Add((route, lines, color));
 		}
 
+		RebuildPads();
+		SetBox(MissionBox.Of(_index.Mission.Coordinates));
+	}
+
+	/// <summary>Lays every pad's outline again where the scene's index now has it, as a drag's preview moves it.</summary>
+	public void RebuildPads() {
 		_pads.Clear();
-		foreach (var pad in _index.BasePads) {
+		foreach (var pad in _scene.BasePads) {
 			_pads.Add((pad, PadLines(pad)));
 		}
-
-		SetBox(MissionBox.Of(_index.Mission.Coordinates));
 	}
 
 	/// <summary>
@@ -116,14 +123,6 @@ internal sealed class MissionOverlay {
 		int at = _areas.FindIndex(entry => entry.Area.Reference == area.Reference);
 		if (at >= 0) {
 			_areas[at] = (area, AreaLines(area), _areas[at].Color);
-		}
-	}
-
-	/// <summary>Lays the outline of <paramref name="pad"/>'s tile again, in place of its group's old one.</summary>
-	public void MovePad(MissionBasePad pad) {
-		int at = _pads.FindIndex(entry => entry.Pad.GroupIndex == pad.GroupIndex);
-		if (at >= 0) {
-			_pads[at] = (pad, PadLines(pad));
 		}
 	}
 
@@ -212,11 +211,11 @@ internal sealed class MissionOverlay {
 		var highlighted = new List<Vector3>();
 
 		if (settings.ShowBasePads) {
-			int selectedGroup = selection.Current is GroupSelection group ? _index.Records.Group(group.Guid) ?? -1 : -1;
+			var selectedGroup = selection.Current is GroupSelection group ? _scene.Group(group.Guid) : null;
 			foreach (var (pad, lines) in _pads) {
-				if (pad.GroupIndex == selectedGroup) {
+				if (selectedGroup != null && pad.GroupIndex == selectedGroup.Number) {
 					highlighted.AddRange(lines);
-					AddSnap(highlighted, pad.GroupIndex);
+					AddSnap(highlighted, selectedGroup.Setup);
 				} else {
 					DrawLines(wireframe, camera, aspect, lines, PadColor);
 				}
@@ -280,11 +279,7 @@ internal sealed class MissionOverlay {
 	/// The paints-ground snap of one group: a post at the point the mission authored and a line from
 	/// it to where the formation's fixed spot in the tile puts the group.
 	/// </summary>
-	private void AddSnap(List<Vector3> into, int group) {
-		if (_index.SetupOf(group) is not { } setup) {
-			return;
-		}
-
+	private void AddSnap(List<Vector3> into, MissionGroupSetup setup) {
 		if (setup.AuthoredPoint == setup.Point) {
 			return;
 		}

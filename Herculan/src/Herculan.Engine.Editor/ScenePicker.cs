@@ -35,7 +35,7 @@ internal sealed class ScenePicker {
 		_index = index;
 		_overlay = overlay;
 		_terrain = scene.World.Terrain;
-		_pickables = scene.Objects.Select(PickableFor).OfType<Pickable>().ToList();
+		_pickables = index.Objects.Select(PickableFor).OfType<Pickable>().ToList();
 	}
 
 	/// <summary>
@@ -90,7 +90,7 @@ internal sealed class ScenePicker {
 		}
 
 		if ((solid ?? plane) is { } best) {
-			return new ObjectSelection(best.SceneObject);
+			return _index.SelectionOf(best.SceneObject);
 		}
 
 		return GroundPick.Cast(origin, direction, _terrain, camera.FarPlane) is { } ground

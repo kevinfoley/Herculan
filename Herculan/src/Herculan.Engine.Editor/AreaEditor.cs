@@ -16,11 +16,11 @@ internal sealed record AreaDeleteBlockers(string? Fixed, DeleteNamers Names) {
 
 /// <summary>
 /// Creates, reshapes and deletes the open mission's trigger areas, each edit one step of <see cref="PointMover"/>'s undo
-/// history, through <see cref="TriggerAreaEditing"/>'s record edits on the mission's <c>.MSN</c>; the editor's state is then
-/// built again from the generated file (<see cref="MissionRebuild"/>), since a new area's records are exported last and a
-/// shape change or a delete adds or removes points, which moves every later point of block 1
+/// history, through <see cref="TriggerAreaEditing"/>'s record edits on the mission's <c>.MSN</c>; the scene and the indices are then
+/// synced with the document (<see cref="SceneSync"/>), as a new area's records are exported last and a shape change or a
+/// delete adds or removes points, which moves every later point of block 1
 /// (docs/herculan/handoff-editor-document.md#the-tools). A corner, centre or radius
-/// move is <see cref="PointMover"/>'s, which rebuilds nothing.
+/// move is <see cref="PointMover"/>'s.
 ///
 /// <para>Areas are taken by their row-9 GUID, as the selections name them, and an area not shown in the editor is not
 /// edited. The edits wait for the frame's ImGui to be rendered (<see cref="RunRequest"/>), since the rebuild
@@ -29,19 +29,19 @@ internal sealed record AreaDeleteBlockers(string? Fixed, DeleteNamers Names) {
 /// </summary>
 internal sealed class AreaEditor {
 	private readonly MissionDocument _source;
-	private readonly MissionIndex _index;
+	private readonly GeneratedIndex _index;
 	private readonly PointMover _mover;
-	private readonly MissionRebuild _rebuild;
+	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private readonly ObjectDeleter _deleter;
 	private Func<string?>? _requested;
 
-	public AreaEditor(MissionDocument source, MissionIndex index, PointMover mover, MissionRebuild rebuild,
+	public AreaEditor(MissionDocument source, GeneratedIndex index, PointMover mover, SceneSync sync,
 			SelectionState selection, ObjectDeleter deleter) {
 		_source = source;
 		_index = index;
 		_mover = mover;
-		_rebuild = rebuild;
+		_sync = sync;
 		_selection = selection;
 		_deleter = deleter;
 	}
@@ -122,12 +122,12 @@ internal sealed class AreaEditor {
 	private string? Commit(Func<MsnEdit> edit, Func<short> area) {
 		MsnEdit change;
 		try {
-			change = _rebuild.Run(edit);
+			change = _sync.Run(edit);
 		} catch (InvalidOperationException ex) {
 			return ex.Message;
 		}
 
-		_mover.Record(new RecordsEdit(_rebuild, change));
+		_mover.Record(new RecordsEdit(_sync, change));
 		if (area() is not -1 and var guid) {
 			_selection.Current = new AreaSelection(guid);
 		}
