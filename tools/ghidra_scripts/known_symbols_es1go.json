@@ -6286,7 +6286,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_CreateDisplay",
-      "description": "(): allocates a 0x8c-byte display and constructs it with 0005a388(display, 0, \"VGA_8\"); builds four points at +0x44 and four at +0x64 with __vec_ctor and ShellDisplay_PagePointCtor (00045d09); calls 0005a5d0(display); sets the page pair +0x84 to 0 and +0x88 to 1, the draw page +0x38 to 1, the source page +0x34 to +0x88 and the visible page +0x30 to +0x84, each through its raster slot while the display is 000ab616; sets the page origins +0x44 to (0, 0), (0, 200), (0, 400), (0, 600) and zeroes the 0x20 bytes at +0x64. It stores the display at 00082750, calls 0005a77c(display, 2, 9), makes the render context 00082754 with 000512a0(0), its +0x208 1 and +0x20c 0, and installs it with Raster_InstallRenderContext.",
+      "description": "(): allocates a 0x8c-byte display and constructs it with 0005a388(display, 0, \"VGA_8\"); builds four points at +0x44 and four at +0x64 with __vec_ctor and ShellDisplay_PagePointCtor (00045d09); calls 0005a5d0(display); sets the page pair +0x84 to 0 and +0x88 to 1, the draw page +0x38 to 1, the source page +0x34 to +0x88 and the visible page +0x30 to +0x84, each through its raster slot while the display is 000ab616; sets the page origins +0x44 to (0, 0), (0, 200), (0, 400), (0, 600) and zeroes the 0x20 bytes at +0x64. It stores the display at 00082750, calls GLDisplay_SetAttribute (0005a77c)(display, 2, 9), makes the render context 00082754 with 000512a0(0), its +0x208 1 and +0x20c 0, and installs it with Raster_InstallRenderContext.",
       "source": "Herculan/docs/es1/rendering/screen-pages.md#the-pages",
       "verified": {
         "bytes": "00045b25+484",
@@ -12062,6 +12062,21 @@
       }
     },
     {
+      "address": "0005a77c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLDisplay_SetAttribute",
+      "description": "(display, value, attribute) in stack order, its arguments removed by this function, entered also at its padding 0005a779: ES1DBSIM's GLDisplay_SetAttribute (ES1DBSIM 0006a824) with the shell's display, whose fields from +0x24 on sit 4 lower, its globals and five attributes, found with REPNE SCASD in the dwords at 00088794. Attribute 2 calls the routine pointer 000865cc with (value, display + 4) and, when display is the current one (000ab616), copies +0x24 and +0x28 to 0008447a and 0008447e; 9 and 10 store value at +0x1c and +0x20 and, for the current display, at 00084472 and 00084476; 15 stores it at 00084492; 16 calls the routine pointer 00086630 with it. Returns 1, or 0 for any other attribute. es2_xref finds calls from Shell_CreateDisplay (00045b25), with (display, 2, 9), and from 0005a2fe.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-pages",
+      "verified": {
+        "bytes": "0005a77c+153",
+        "sha1": "db16ece1e71f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "0005a824",
       "binary": "ES1GO",
       "type": "function",
@@ -15890,6 +15905,51 @@
         "sha1": "6ae13d7e0a47",
         "scope": "body",
         "via": "disasm"
+      }
+    },
+    {
+      "address": "00072ff4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_SetVirtualWidth",
+      "description": "(width, info), C convention, info being a display's +4: the VGA_8 driver's slot 7 (0008b30c). ES1DBSIM's VGA8_SetVirtualWidth (ES1DBSIM 0008b39c) with info+0x20 and +0x24 for its +0x24 and +0x28, the shell's display layout, and the shell's globals: width >> 2 at 0008884a, that less info+4 >> 2 at 0008884e, and the 800 int16 row offsets at 00088852.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-video-memory",
+      "verified": {
+        "bytes": "00072ff4+108",
+        "sha1": "21ee673bdfb3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00073130",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_IsModeUnsupported",
+      "description": "Frameless, (mode), C convention, with no Ghidra function: the VGA_8 driver's slot 8 (0008b310). Returns 0 for modes 0, 1 and 2 and 1 for any other. The same bytes as ES1DBSIM's VGA8_IsModeUnsupported (ES1DBSIM 0008b4d8).",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-video-memory",
+      "verified": {
+        "bytes": "00073130+29",
+        "sha1": "aa01361c5a3a",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00073150",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_OpenMode",
+      "description": "(mode, info), C convention, info being a display's +4: the VGA_8 driver's slot 11 (0008b31c). ES1DBSIM's VGA8_OpenMode (ES1DBSIM 0008b4f8) with the shell's globals, the page size table at 00094788, the ten page offsets at 00088e92, the ten pans at 00088eba and the dwords 00088ec4 to 00088ed8, calling 00073060(mode), and with ten dwords a mode, 0x28 bytes apart at 00094648, where ES1DBSIM's copies eleven.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-video-memory",
+      "verified": {
+        "bytes": "00073150+135",
+        "sha1": "dbb70d1d89cc",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
