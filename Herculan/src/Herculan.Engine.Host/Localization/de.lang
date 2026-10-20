@@ -123,6 +123,9 @@ settings.languages             Sprachen
 settings.game_language         Spielsprache
 settings.interface_language    Sprache der HERCULAN-Oberfläche
 settings.write_failed          {0} konnte nicht geschrieben werden: {1}
+settings.audio                 Audio
+settings.music_volume          Musiklautstärke
+settings.effects_volume        Effektlautstärke
 settings.updates               Updates
 settings.auto_check_updates    Automatisch nach Updates suchen
 settings.check_updates         Nach Updates suchen

@@ -123,6 +123,9 @@ settings.languages             Languages
 settings.game_language         Game language
 settings.interface_language    HERCULAN UI language
 settings.write_failed          Could not write {0}: {1}
+settings.audio                 Audio
+settings.music_volume          Music volume
+settings.effects_volume        Sound effects volume
 settings.updates               Updates
 settings.auto_check_updates    Auto check for updates
 settings.check_updates         Check for Updates

@@ -123,6 +123,9 @@ settings.languages             Langues
 settings.game_language         Langue du jeu
 settings.interface_language    Langue de l'interface HERCULAN
 settings.write_failed          Impossible d'écrire {0} : {1}
+settings.audio                 Audio
+settings.music_volume          Volume de la musique
+settings.effects_volume        Volume des effets sonores
 settings.updates               Mises à jour
 settings.auto_check_updates    Rechercher les mises à jour automatiquement
 settings.check_updates         Rechercher des mises à jour
