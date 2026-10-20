@@ -8774,6 +8774,21 @@
       }
     },
     {
+      "address": "000511c6",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_ResetThunk",
+      "description": "No arguments, frameless, with no Ghidra function: CALL Mouse_Reset (00050fe6), RET. es2_xref finds its address stored at 0005d0db. The code of ES1DBSIM's Mouse_ResetThunk (00055c47), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver",
+      "verified": {
+        "bytes": "000511c6+6",
+        "sha1": "211809a31c50",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "000513fc",
       "binary": "ES1GO",
       "type": "function",
@@ -12758,6 +12773,141 @@
         "sha1": "4a49810edcb4",
         "scope": "body",
         "via": "disasm"
+      }
+    },
+    {
+      "address": "0005cff8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVMouse_Ctor",
+      "description": "(mouse) in stack order, its arguments removed by this function: allocates 0x3a bytes when mouse is null, returning 0 when that fails; GL_ClaimGlobal (00066bf0)(mouse, mouse, 2); the inlined constructors of +4, +0xe and +0x24; when the GL slot 2 (000ab78c) holds the mouse and DVMouse_Init (0005d140) answers non-zero, atexit (0006b620)(Mouse_ResetThunk (000511c6)) and Assert_AddHook (0004f594)(DVMouse_AssertHook (0005d0fc)); returns the mouse. es2_xref finds one call, from 000268b6. The code of ES1DBSIM's DVMouse_Ctor (0006bbc8), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver",
+      "verified": {
+        "bytes": "0005cff8+260",
+        "sha1": "52dfd3ebd047",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005d0fc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVMouse_AssertHook",
+      "description": "Frameless: CALL Mouse_Reset (00050fe6), then RET 4; Ghidra has no function there. es2_xref finds its address stored at 0005d0e8, in DVMouse_Ctor (0005cff8). The code of ES1DBSIM's DVMouse_AssertHook (0006bccc), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver",
+      "verified": {
+        "bytes": "0005d0fc+8",
+        "sha1": "c9e573633dde",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0005d104",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVMouse_Dtor",
+      "description": "(mouse, flags) in stack order, its arguments removed by this function: for a mouse that is set, when the GL slot 2 (000ab78c) is set, runs DVMouse_Shutdown (0005d1b4)(mouse) by its padding 0005d1b1 and clears the slot; frees the mouse with operator_delete (00001a44) when bit 0 of flags is set. es2_xref finds one call, from 000268ff. The code of ES1DBSIM's DVMouse_Dtor (0006bcd4), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver",
+      "verified": {
+        "bytes": "0005d104+58",
+        "sha1": "4d774859df8f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005d140",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVMouse_Init",
+      "description": "(mouse) in stack order, its arguments removed by this function, entered also at its padding 0005d13e: Mouse_Install (00050f8a)(mouse, mouse + 4); when bit 0 of the dword +0 is then set, Mouse_SetDoubleX (00051023)(1), MouseDriver_GetBounds (0005d1ec)(mouse, mouse + 0x24), the dwords +0xe, +0x12, +0x16 and +0x1a set to 0, 0, 320 and 200, MouseDriver_GetBounds (0005d1ec)(mouse, mouse + 0xe) and MouseDriver_SetBounds (0005d220)(mouse, mouse + 0xe). Returns bit 0 of +0. es2_xref finds one call, from DVMouse_Ctor (0005cff8). The code of ES1DBSIM's DVMouse_Init (0006bd10), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver",
+      "verified": {
+        "bytes": "0005d140+113",
+        "sha1": "c83988781726",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005d1b4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVMouse_Shutdown",
+      "description": "(mouse) in stack order, its arguments removed by this function, entered also at its padding 0005d1b1: when bit 0 of the dword +0 is set, zeroes that dword and calls Mouse_Reset (00050fe6); when that answers non-zero, MouseDriver_SetBounds (0005d220)(mouse, mouse + 0x24) and returns 1. Otherwise returns 0. es2_xref finds one call, from DVMouse_Dtor (0005d104). The code of ES1DBSIM's DVMouse_Shutdown (0006bd84), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver",
+      "verified": {
+        "bytes": "0005d1b4+56",
+        "sha1": "ac66d7dd0754",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005d1ec",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MouseDriver_GetBounds",
+      "description": "(mouse, record) in stack order, its arguments removed by this function: copies the four dwords +0xe..+0x1a, the bounds x0, y0, x1, y1, to the record's +0..+0xc and fills its words +0x10..+0x14 with Mouse_GetSensitivity (000510b3)(record). es2_xref finds two calls, from DVMouse_Init (0005d140). The code of ES1DBSIM's MouseDriver_GetBounds (0006bdbc), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver",
+      "verified": {
+        "bytes": "0005d1ec+52",
+        "sha1": "c56147262ea2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005d220",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MouseDriver_SetBounds",
+      "description": "(mouse, record) in stack order, its arguments removed by this function: copies the record's four dwords to +0xe..+0x1a, its dword +0x10 to +0x1e and its bytes +0x14 and +0x15 to +0x22 and +0x23, and calls Mouse_SetLimitsAndSensitivity (0005106d)(record). es2_xref finds two calls, from DVMouse_Init (0005d140) and DVMouse_Shutdown (0005d1b4). The code of ES1DBSIM's MouseDriver_SetBounds (0006bdf0), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver",
+      "verified": {
+        "bytes": "0005d220+40",
+        "sha1": "682de4a23808",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005d248",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MouseDriver_GetBoundsRect",
+      "description": "(mouse, rect) in stack order, its arguments removed by this function: copies the four dwords +0xe..+0x1a to the rect. es2_xref finds no reference to it. The code of ES1DBSIM's MouseDriver_GetBoundsRect (0006be18), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver",
+      "verified": {
+        "bytes": "0005d248+40",
+        "sha1": "461bbb1eb436",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005d270",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MouseDriver_SetBoundsRect",
+      "description": "(mouse, rect) in stack order, its arguments removed by this function: copies the rect's four dwords to +0xe..+0x1a and calls Mouse_SetLimits (000510d2)(rect). es2_xref finds one call, from 00045d24. The code of ES1DBSIM's MouseDriver_SetBoundsRect (0006be40), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver",
+      "verified": {
+        "bytes": "0005d270+52",
+        "sha1": "cbde2e6b0c4c",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {

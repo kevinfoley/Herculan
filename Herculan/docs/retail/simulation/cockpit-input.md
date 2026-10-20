@@ -56,7 +56,7 @@ This `{enabled, eventMask, callback}` triple-array shape is not unique to mouse 
 
 `CockpitMouse_ProcessQueue` (`00452d18`) swaps the queue buffers and, per queued record:
 
-- **Position changed:** hit-tests via `Widget_HitTestChildren`. If a widget is mouse-captured (dragging), forwards the new position straight to its drag-move vtable slot instead of re-hit-testing. Otherwise calls `Widget_TrackPressedWidget`, which keeps the *held* widget's depressed look in sync with the pointer — see §7. It is not a hover mechanism: **DBSIM has no hover state**.
+- **Position changed:** if a widget is mouse-captured (dragging), forwards the new position, less the root's rect origin, straight to its drag-move vtable slot. Otherwise, when `Widget_HitTest` finds the point in the root's own rect, calls `Widget_TrackPressedWidget`, both on the point unrebased (§6), which keeps the *held* widget's depressed look in sync with the pointer — see §7. That is not a hover mechanism: **DBSIM has no hover state**.
 - **Button-down edge** (bit set now, wasn't last record): calls `Widget_OnMouseDown`.
 - **Button-up edge** (bit clear now, was set): sets the double-click flag (below), then calls `Widget_OnMouseUp`, however long the button was held. If a drag was in progress instead, ends the capture and fires the captured widget's `GetValue`/`OnClick` pair directly rather than going through `Widget_OnMouseUp`.
 

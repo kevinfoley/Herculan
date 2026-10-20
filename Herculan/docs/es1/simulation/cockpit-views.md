@@ -139,7 +139,7 @@ With (*dx*, *dy*) the destination record's canvas origin less the current view's
 | 5, glance | none | *x* by record 0's *x* + record 3's, 10 columns a step | the same; current view 3 |
 | 6, back from a glance | none | *x* by −(record 0's *x* + the current view's) | the same; current view 0 |
 
-The byte `00094c5b` lets the pointer move the drawn cursor: the mouse callback at `00044464`, whose address `000441cc` stores, calls `Cursor_SyncPosition` with the pointer's position only while it is set. `es2_xref.py` finds it also read by `000444d0` and `00045f00` and written by `00045f00`, `000460b8` and `00057820` ([Open](#open)).
+The byte `Cursor_FollowsMouse` (`00094c5b`) lets the pointer move the drawn cursor: while it is set, `CockpitMouse_OnEvent` passes `Cursor_SyncPosition` the pointer of each mouse event that leaves the buttons as they were, and `CockpitMouse_ProcessQueue` the point of each recorded move of a replay ([the cockpit's mouse](cockpit-mouse.md#the-callback-and-the-queue)). `es2_xref.py` finds it also read by `00045f00` and written by `00045f00`, `000460b8` and `00057820` ([Open](#open)).
 
 It then sets the command to −1 and the cooldown to 2, calls `CockpitView_SetShakeBand`(10) when `CockpitShakeReseedAfterSlide` is set, and returns the current view.
 
@@ -218,7 +218,7 @@ The next object file's: `CockpitClipRegions_Load` (`00024d44`); `GLBase_DtorClip
 ## Open
 
 - **Open:** the squad message port's slots `+0x14` and `+0x18`, which the view change calls.
-- **Open:** what `000444d0`, `00045f00` and `000460b8` do with the cursor byte `00094c5b`.
+- **Open:** what `00045f00` and `000460b8` do with `Cursor_FollowsMouse`.
 - **Open:** the callers `es2_xref.py` finds and this batch did not read: `00057820` (the rect setters, `CockpitView_SetView`, `View_FillOutside3dRect`, and stores to `000bda96` and `00094c5b`; `F12`'s and `Alt+P`'s case, where ES2's raises the preferences panel: [commands](main-loop.md#commands--sim_dispatchcommand-00059df8)), and `00057ffc` and `00058414` (the shake), with the amplitudes they pass.
 - **Open:** what calls `ClipRegions_AppendRectAboveScreen`, to which `es2_xref.py` finds no reference, and `HeapPtr_DtorMechviewCopy`, likewise.
 - **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: in DOSBox-X's debugger, `BP <CS>:000222c0` set during a mission in the forward view fires when the view changes to the heads-down display, with the dword at `[ESP+8]` 1, and again on the way back, with 0. A check by eye: a glance to the right from the forward view slides the forward view out to the left as the side view comes in from the right, rather than cutting to it, and the return slides the other way.

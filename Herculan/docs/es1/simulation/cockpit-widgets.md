@@ -69,7 +69,7 @@ The display's update stores `Player_DependentCondition`(4) at `+0x68` and runs *
 - **`Widget_ClickSound` (`000314a0`)**, frameless: `Sound_Play`(`0x11`) and `RET 4`. `es1_naming.py vtables` lists it at `+0xc` of nine three-slot mixin tables (`00093ba6`, `00093be6`, …), and `es2_xref.py` finds 16 stored pointers to it.
 - **`Widget_ForwardClickToOwner` (`000314ac`)**, (gadget, flags): with bit 0 of flags set, calls slot `+4` of the owner's `+0x76` table with (owner, flags, gadget), then the gadget's primary `+8` (invalidate) and the mixin's `+0xc` (the sound) on the mixin. ES2's (`00438e3c`). It is the click slot `+0xc` of eight tables, `PanelSelectGadgetVtable` (`000933aa`) and seven in later files.
 - **`PanelStateGadget_OnClick` (`00031550`)**, (gadget, flags): the same, after flipping the lit byte `+0x3c` (ES2's `+0x40`). The click slot of `00093d76` and `00094736`.
-- **`HSliderGadget_OnClick` (`0003166c`)** and **`VSliderGadget_OnClick` (`000316a0`)**, (slider, value): the same three calls with the owner at `+0x3e` and the mixin's vptr at `+0x42`, with no test of the value, as ES2's (`0043901c`, `0043904c`). The first is the click slot of five tables whose value slot reads a horizontal track (`00043ac8`), the second of two whose value slot reads a vertical one (`00043be8`), ES2's `SliderWidget_GetValueV`'s statements.
+- **`HSliderGadget_OnClick` (`0003166c`)** and **`VSliderGadget_OnClick` (`000316a0`)**, (slider, value): the same three calls with the owner at `+0x3e` and the mixin's vptr at `+0x42`, with no test of the value, as ES2's (`0043901c`, `0043904c`). The first is the click slot of five tables whose value slot reads a horizontal track (`SliderWidget_GetValueH`, `00043ac8`), the second of two whose value slot reads a vertical one (`SliderWidget_GetValueV`, `00043be8`) ([the slider base](cockpit-mouse.md#the-slider-base)).
 - **`Widget_NoClickSound` (`00031666`)**, frameless, two `NOP`s and `RET 4`: slot `+0xc` of `PanelSliderGadgetVtable` (`000933d2`), whose `+4` and `+8` hold 0. ES2's (`00439014`).
 
 `PanelSelectGadgetVtable` (`000933aa`) is ES2's `PanelSelectGadget` table (`0049dee4`) one slot further on, its slots this file's copies of the button base's ([`panel.cpp`'s copies](cockpit-panel.md#the-screen-edges-and-the-cursors)):
@@ -80,7 +80,7 @@ The display's update stores `Player_DependentCondition`(4) at `+0x68` and runs *
 | `+8` | `Widget_InvalidateDeferredGadgetsCopy`, (gadget): `+0x1b` = 2, ES2's `+0x1f` ([deferred painting](../../retail/simulation/cockpit-input.md#painting-is-deferred-two-frames)) | `00031528` | `Widget_InvalidateDeferred` (`00455524`) |
 | `+0xc` | `Widget_ForwardClickToOwner` | `000314ac` | `Widget_ForwardClickToOwner` (`00438e3c`) |
 | `+0x10` | `CTLControl_FlushDeferredPaintNoOpGadgetsCopy`, `RET 4` | `00031538` | `CTLControl_FlushDeferredPaintNoOp` (`0045554a`) |
-| `+0x14` | `Widget_GetButtonValueGadgetsCopy`, `NOP`, the `int16` at `00094b84` in `AX`, `RET 4` | `0003153b` | `Widget_GetButtonValue` (`00455530`) |
+| `+0x14` | `Widget_GetButtonValueGadgetsCopy`, `NOP`, `Widget_ClickButtons` (`00094b84`, [the frame's mouse events](cockpit-mouse.md#the-frames-mouse-events--cockpitmouse_processqueue-000444d0)) in `AX`, `RET 4` | `0003153b` | `Widget_GetButtonValue` (`00455530`) |
 | `+0x18` | `CTLControl_SetValueNoOpGadgetsCopy`, three `NOP`s and `RET 8` | `00031545` | `CTLControl_SetValueNoOp` (`0045553b`) |
 | `+0x1c` | `CTLControl_DragMoveNoOpGadgetsCopy`, `NOP` and `RET 8` | `0003154b` | `CTLControl_DragMoveNoOp` (`00455540`) |
 
@@ -191,7 +191,6 @@ They are the same statements laid out differently, the no-ops framed functions, 
 | the bar graph file's region vtable copies, stored in this order | `000934c2`, `000934e6`, `0009350e`, `00093536` |
 | `LEDBMBarGraphHVtable`, `LEDBMBarGraphVVtable` | `0009355e`, `00093576` |
 | the label pen, {x, y} | `000b11bc` |
-| the button value `Widget_GetButtonValueGadgetsCopy` returns, `int16` | `00094b84` |
 
 ## Open
 

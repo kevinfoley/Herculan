@@ -151,7 +151,7 @@ The gadget's other slots are frameless stubs. `CTLButtonControlVtableGunsightCop
 | `+8` | `CTLControl_InvalidateNoOpGunsightCopy` (`0003467b`), `NOP` and `RET 4` | `Gunsight_ClickGadget_InvalidateNoOp` (`0003469f`), `NOP` and `RET 4` | `0043e616` |
 | `+0xc` | `CTLControl_OnClickNoOpGunsightCopy` (`0003467f`), `NOP` and `RET 8` | `Gunsight_ClickGadget_OnClick` | `0043b338` |
 | `+0x10` | `CTLControl_FlushDeferredPaintNoOpGunsightCopy` (`00034683`), `NOP` and `RET 4` | the same | `0045554a` |
-| `+0x14` | `Widget_GetButtonValueGunsightCopy` (`00034687`), `NOP`, the `int16` at `00094b84` in `AX`, `RET 4` | the same | `00455530` |
+| `+0x14` | `Widget_GetButtonValueGunsightCopy` (`00034687`), `NOP`, `Widget_ClickButtons` (`00094b84`) in `AX`, `RET 4` | the same | `00455530` |
 | `+0x18` | `CTLControl_SetValueNoOpGunsightCopy` (`00034691`), three `NOP`s and `RET 8` | the same | `0045553b` |
 | `+0x1c` | `CTLControl_DragMoveNoOpGunsightCopy` (`00034697`), `NOP` and `RET 8` | the same | `00455540` |
 

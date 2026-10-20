@@ -12382,7 +12382,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Cockpit_LoadPanel",
-      "description": "(cockpit, name): keeps Gau_Load (0002b5c4)(ResourcePath_BuildFolderName (00060698)(the folder 00098110 points to, name)) at CockpitGauRecord (00092d3c) and builds the cockpit's objects from it: Cockpit_CreateCanvasContext (0002ad78)'s result at +4, 00043cac(0, it) at +0 (then 00044310 with it), DialogPort_Ctor (0002f3d8)(0, CockpitGauRecord (00092d3c) + 0x684) at +0x203, a 0x469-byte object from MessagePort_CtorBase (0002eb80)(object, CockpitGauRecord (00092d3c) + 0x694) with 00092f0a at its +0x464 and 0 at +0x468 at +0x207, and the results of Gau_WeaponButtonsWidget (0002ccd8), Gau_EnergyMeterWidget (0002cd3c), Gau_ShieldDisplayWidget (0002cd74), Gau_MfdPanelWidget (0002cdac), Gau_ThrottleWidget (0002cdf0), Gau_RovingGunsightWrapper (0002ce28), Gau_PilotRosterWidget (0002ce60) and CockpitClock_Create (0002ce98), each given the cockpit and CockpitGauRecord (00092d3c), at +0x1dd to +0x1f9. Between them makes the .TTM manager with Ttm_ManagerCtor(0, 0, the installed render context 000bdbda, 10) at CockpitTtmManager (00092d70), sets its prefix ttm\\ (00092f2e) with Ttm_SetPathPrefix and calls Ttm_AllocHandles (00069780)(manager, 2); ends with Ttm_RunAll (000695e0)(manager). es2_xref finds one call, from CockpitViewManager_LoadViews.",
+      "description": "(cockpit, name): keeps Gau_Load (0002b5c4)(ResourcePath_BuildFolderName (00060698)(the folder 00098110 points to, name)) at CockpitGauRecord (00092d3c) and builds the cockpit's objects from it: Cockpit_CreateCanvasContext (0002ad78)'s result at +4, CTLWindow_Ctor (00043cac)(0, it) at +0 (then Widget_ClearPressed (00044310) with it), DialogPort_Ctor (0002f3d8)(0, CockpitGauRecord (00092d3c) + 0x684) at +0x203, a 0x469-byte object from MessagePort_CtorBase (0002eb80)(object, CockpitGauRecord (00092d3c) + 0x694) with 00092f0a at its +0x464 and 0 at +0x468 at +0x207, and the results of Gau_WeaponButtonsWidget (0002ccd8), Gau_EnergyMeterWidget (0002cd3c), Gau_ShieldDisplayWidget (0002cd74), Gau_MfdPanelWidget (0002cdac), Gau_ThrottleWidget (0002cdf0), Gau_RovingGunsightWrapper (0002ce28), Gau_PilotRosterWidget (0002ce60) and CockpitClock_Create (0002ce98), each given the cockpit and CockpitGauRecord (00092d3c), at +0x1dd to +0x1f9. Between them makes the .TTM manager with Ttm_ManagerCtor(0, 0, the installed render context 000bdbda, 10) at CockpitTtmManager (00092d70), sets its prefix ttm\\ (00092f2e) with Ttm_SetPathPrefix and calls Ttm_AllocHandles (00069780)(manager, 2); ends with Ttm_RunAll (000695e0)(manager). es2_xref finds one call, from CockpitViewManager_LoadViews.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
       "verified": {
         "bytes": "0002c9d8+361",
@@ -12607,7 +12607,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitWidgets_TranslateForView",
-      "description": "(cockpit, delta) in stack order, callee-cleaned: calls 0004433c with the root widget (the cockpit's +0) and delta's two values pushed by value, subtracts delta from the dwords +0x220 and +0x224 of the cockpit's render context +4, and calls CockpitView_FlipScrollTriggers (0002db1c)(cockpit, delta) by its padding entry 0002db1b when the byte +0x23a is set. ES2's CockpitWidgets_TranslateForView (DBSIM 0043271c), which tests +0x23e and also offsets the widgets of its list at +0x246.",
+      "description": "(cockpit, delta) in stack order, callee-cleaned: calls Widget_TranslateRootForView_Thunk (0004433c) with the root widget (the cockpit's +0) and delta's two values pushed by value, subtracts delta from the dwords +0x220 and +0x224 of the cockpit's render context +4, and calls CockpitView_FlipScrollTriggers (0002db1c)(cockpit, delta) by its padding entry 0002db1b when the byte +0x23a is set. ES2's CockpitWidgets_TranslateForView (DBSIM 0043271c), which tests +0x23e and also offsets the widgets of its list at +0x246.",
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#callees-of-other-modules",
       "verified": {
         "bytes": "0002ced0+88",
@@ -12697,13 +12697,13 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitWidgets_HandleCommand",
-      "description": "(cockpit, code) in stack order, callee-cleaned (RET 8): returns 0 while +0x20b is set. With v the published manager's view +0x10, REPNE SCASD finds the code among the 24 dwords of CockpitWidgets_CommandCodes (00092f34) and jumps through the 24 after them (00092f94); Ghidra's listing leaves the case bodies from 0002d2fa on as undefined bytes. 0 returns 0. 2-10 (keys 1-9): in view 1 as an unlisted code; otherwise row code-2: the pod row (+0x23b) flips bit 0 of the first word of the block 00037b50(the pod gauge +0x1d8) returns and hands the copy to 00037b14(gauge, copy); another row's gauge (+0x70 + 4*row), when set, goes to CockpitView_ArmWeaponByGauge (0002d098). 0x3b-0x40 (F1-F6) and 0x41-0x42 (F7, F8) press button code-0x3b of the MFD +0x1e9 or code-0x41 of +0x1f5 (the button at +0x14 + 4*index), calling the +0xc slot of the button's vtable at +0x1c with (button, 1) unless its int16 +0x17 is 2 or 3; F1-F6 then queue view command 1 from view 1 or 6 from views 2-3 (table 00092ff4), F7-F8 command 0. 0x43 (F9) queues 5 from view 0 or 6 from view 2; 0x44 (F10) 4 from view 0 or 6 from view 3. 0x01 (Esc) queues 0, 1 or 6 from views 0, 1 and 2-3 (table 00093008). 0x0f (Tab) returns 0 in view 4, takes the unlisted path in view 1, and otherwise runs TargetSelect_Cycle (0002d898). 0x57 (F11): 0004a1b4(0, 0, 1), the +0xc slot of the vtable at that object's +0x314, then 00045d0c(object, 3). 0x13 (R): Mech_ToggleRadarMode (000157f4)(the machine +0x1ff of CockpitViewInstance (00092d1c)). An unlisted code goes to MfdFlashComm_HandleAltKey (0003a890)(+0x1e9, code), then in view 1 to the +0x10 slot (vtable at +0x76) of +0x1f5 alone, and in any other view to the +0x10 slots of +0x1d4 (when set), +0x1dd, +0x1e1, +0x1e5, +0x1ed, +0x1f1 and +0x1e9, stopping at the first that returns nonzero. Returns 1 for a code a case took or a slot accepted, else 0. es2_xref finds one call, from Sim_DispatchCommand (00059df8). ES2's CockpitWidgets_HandleCommand (DBSIM 00432bc8), which takes 0x02-0x0b and presses the row through Widget_PressChild, answers 0x27, Enter and Alt+D, steps the Targeting Pod on Tab and builds an objectives panel on F11.",
+      "description": "(cockpit, code) in stack order, its arguments removed by this function (RET 8): returns 0 while +0x20b is set. With v the published manager's view +0x10, REPNE SCASD finds the code among the 24 dwords of CockpitWidgets_CommandCodes (00092f34) and jumps through the 24 after them (00092f94). 0 returns 0. 2-10 (keys 1-9): in view 1 as an unlisted code; otherwise row code-2: the pod row (+0x23b) flips bit 0 of the first word of the block 00037b50(the pod gauge +0x1d8) returns and hands the copy to 00037b14(gauge, copy); another row's gauge (+0x70 + 4*row), when set, goes to CockpitView_ArmWeaponByGauge (0002d098). 0x3b-0x40 (F1-F6) and 0x41-0x42 (F7, F8) press button code-0x3b of the MFD +0x1e9 or code-0x41 of +0x1f5 (the button at +0x14 + 4*index), calling the +0xc slot of the button's vtable at +0x1c with (button, 1) unless its int16 +0x17 is 2 or 3; F1-F6 then queue view command 1 from view 1 or 6 from views 2-3 (table 00092ff4, by the view), F7-F8 command 0. 0x43 (F9) queues 5 from view 0 or 6 from view 2; 0x44 (F10) 4 from view 0 or 6 from view 3. 0x01 (Esc) queues 0, 1 or 6 from views 0, 1 and 2-3 (table 00093008, by the view). 0x0f (Tab) returns 0 in view 4, takes the unlisted path in view 1, and otherwise runs TargetSelect_Cycle (0002d898). 0x57 (F11): 0004a1b4(0, 0, 1), the +0xc slot of the vtable at that object's +0x314, then 00045d0c(object, 3). 0x13 (R): Mech_ToggleRadarMode (000157f4)(the machine +0x1ff of CockpitViewInstance (00092d1c)). An unlisted code goes to MfdFlashComm_HandleAltKey (0003a890)(+0x1e9, code), then in view 1 to the +0x10 slot (vtable at +0x76) of +0x1f5 alone, and in any other view to the +0x10 slots of +0x1d4 (when set), +0x1dd, +0x1e1, +0x1e5, +0x1ed, +0x1f1 and +0x1e9, stopping at the first that returns nonzero. Returns 1 for a code a case took or a slot accepted, else 0. es2_xref finds one call, from Sim_DispatchCommand (00059df8). ES2's CockpitWidgets_HandleCommand (DBSIM 00432bc8), which takes 0x02-0x0b and presses the row through Widget_PressChild, answers 0x27, Enter and Alt+D, steps the Targeting Pod on Tab and builds an objectives panel on F11.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#keys-and-the-view-device",
       "verified": {
         "bytes": "0002d24c+910",
         "sha1": "1a0a716f5b1d",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -12877,7 +12877,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Widget_GetButtonValuePanelCopy",
-      "description": "Frameless: a NOP, then returns the int16 at 00094b84 in AX with RET 4. Slot +0x14 (value) of CTLButtonControlVtablePanelCopy (0009301e) and ScrollTriggerVtable (00093046); the code of slot +0x14 of the library's button base table 00094b8a, 000439bf. ES2's Widget_GetButtonValue (DBSIM 00455530), which returns 0049db6c.",
+      "description": "Frameless: a NOP, then returns the int16 at Widget_ClickButtons (00094b84) in AX with RET 4. Slot +0x14 (value) of CTLButtonControlVtablePanelCopy (0009301e) and ScrollTriggerVtable (00093046); the code of slot +0x14 of the library's button base table 00094b8a, 000439bf. ES2's Widget_GetButtonValue (DBSIM 00455530), which returns 0049db6c.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors",
       "verified": {
         "bytes": "0002daef+10",
@@ -14617,7 +14617,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Widget_GetButtonValueGadgetsCopy",
-      "description": "Frameless: a NOP, then returns the int16 at 00094b84 in AX with RET 4. Slot +0x14 (value) of PanelSelectGadgetVtable (000933aa); the code of Widget_GetButtonValuePanelCopy. ES2's Widget_GetButtonValue (DBSIM 00455530).",
+      "description": "Frameless: a NOP, then returns the int16 at Widget_ClickButtons (00094b84) in AX with RET 4. Slot +0x14 (value) of PanelSelectGadgetVtable (000933aa); the code of Widget_GetButtonValuePanelCopy. ES2's Widget_GetButtonValue (DBSIM 00455530).",
       "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases",
       "verified": {
         "bytes": "0003153b+10",
@@ -14752,7 +14752,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HSliderGadget_OnClick",
-      "description": "(slider, value) in stack order, callee-cleaned: slot +4 of the table at owner+0x76 with (owner, value, slider), the owner being +0x3e; the slider's slot +8 through its vptr +0x1c; slot +0xc of the mixin table at +0x42 on slider+0x3e. The value is not tested. ES2's HSliderGadget_OnClick (DBSIM 0043901c). es2_xref finds it at +0xc of five tables, 00093d06, 00093d4a, 000943b6, 000943fa and 00095006, whose value slot +0x14 is 00043ac8, which reads the knob's +0x2e against the slider's x0.",
+      "description": "(slider, value) in stack order, callee-cleaned: slot +4 of the table at owner+0x76 with (owner, value, slider), the owner being +0x3e; the slider's slot +8 through its vptr +0x1c; slot +0xc of the mixin table at +0x42 on slider+0x3e. The value is not tested. ES2's HSliderGadget_OnClick (DBSIM 0043901c). es2_xref finds it at +0xc of five tables, 00093d06, 00093d4a, 000943b6, 000943fa and 00095006, whose value slot +0x14 is SliderWidget_GetValueH (00043ac8), which reads the knob's +0x2e against the slider's x0.",
       "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases",
       "verified": {
         "bytes": "0003166c+49",
@@ -14767,7 +14767,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VSliderGadget_OnClick",
-      "description": "(slider, value) in stack order, callee-cleaned: the same statements as HSliderGadget_OnClick (0003166c). ES2's VSliderGadget_OnClick (DBSIM 0043904c). es2_xref finds it at +0xc of 0009431a and 0009435e, whose value slot +0x14 is 00043be8, the statements of ES2's SliderWidget_GetValueV. Its RET 8 at 000316ce is followed by three zero bytes and the next object file.",
+      "description": "(slider, value) in stack order, callee-cleaned: the same statements as HSliderGadget_OnClick (0003166c). ES2's VSliderGadget_OnClick (DBSIM 0043904c). es2_xref finds it at +0xc of 0009431a and 0009435e, whose value slot +0x14 is SliderWidget_GetValueV (00043be8), the statements of ES2's SliderWidget_GetValueV. Its RET 8 at 000316ce is followed by three zero bytes and the next object file.",
       "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases",
       "verified": {
         "bytes": "000316a0+49",
@@ -15412,7 +15412,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Gunsight_ClickGadget_OnClick",
-      "description": "(gadget, flags) in stack order, callee-cleaned: slot +0xc of HUDRovingGunsightGadgetVtable (000937da). With bit 0 of flags set, stores 1 in the byte Gunsight_PickArmed (000936d8) and calls ObjPick_Arm (00020d28) with the point at 000b16d4. ES2's Gunsight_ClickGadget_OnClickNoOp (DBSIM 0043b338) tests the same bit and returns.",
+      "description": "(gadget, flags) in stack order, callee-cleaned: slot +0xc of HUDRovingGunsightGadgetVtable (000937da). With bit 0 of flags set, stores 1 in the byte Gunsight_PickArmed (000936d8) and calls ObjPick_Arm (00020d28) with the point at CockpitMouse_CanvasPoint (000b16d4). ES2's Gunsight_ClickGadget_OnClickNoOp (DBSIM 0043b338) tests the same bit and returns.",
       "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-click-surface; ES1DBSIM disassembly at 000337dc",
       "verified": {
         "bytes": "000337dc+30",
@@ -15907,7 +15907,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Widget_GetButtonValueGunsightCopy",
-      "description": "Frameless: a NOP, then returns the int16 at 00094b84 in AX with RET 4. Slot +0x14 (value) of CTLButtonControlVtableGunsightCopy (000937b2) and HUDRovingGunsightGadgetVtable (000937da); the code of Widget_GetButtonValuePanelCopy (0002daef). ES2's Widget_GetButtonValue (DBSIM 00455530).",
+      "description": "Frameless: a NOP, then returns the int16 at Widget_ClickButtons (00094b84) in AX with RET 4. Slot +0x14 (value) of CTLButtonControlVtableGunsightCopy (000937b2) and HUDRovingGunsightGadgetVtable (000937da); the code of Widget_GetButtonValuePanelCopy (0002daef). ES2's Widget_GetButtonValue (DBSIM 00455530).",
       "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-click-surface; capstone at 00034687",
       "verified": {
         "bytes": "00034687+10",
@@ -17252,6 +17252,36 @@
       }
     },
     {
+      "address": "000437d0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_HitTest",
+      "description": "(widget, point) in stack order, its arguments removed by this function: with the byte +0x10 clear, 1 when the point lies in the rect +0..+0xc, edges included; otherwise 1 when |x - the int16 +0x11| + |y - the int16 +0x13| is at most the int16 +0x15; else 0. ES2's Widget_HitTest (DBSIM 00452388). es2_xref finds calls from Widget_HitTestChildren (0004401c) and CockpitMouse_ProcessQueue (000444d0).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#hit-testing",
+      "verified": {
+        "bytes": "000437d0+170",
+        "sha1": "a5eeab5cf842",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004387c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_OffsetRect",
+      "description": "(rect, delta) in stack order, its arguments removed by this function: adds the delta's x to the rect's +0 and +8 and its y to +4 and +0xc. ES2's Widget_OffsetRect (DBSIM 0045240c), identical after normalization. es2_xref finds one call, from Widget_TranslateRootForView (00043d9c).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-root-widget--ctlwindow_ctor-00043cac",
+      "verified": {
+        "bytes": "0004387c+40",
+        "sha1": "9933274b4e0c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000438fc",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -17262,6 +17292,486 @@
       "verified": {
         "bytes": "000438fc+178",
         "sha1": "8bb6ac33ca72",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00043a68",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SliderWidget_DragToPointH",
+      "description": "(slider, point) in stack order, its arguments removed by this function: copies the int16 knob +0x28 to +0x2a and sets the knob to the point's x, or to the rect's x0 when the x is below it, or to x1 less the knob length +0x2c when the x is past that. ES2's SliderWidget_DragToPointH (DBSIM 004524f8).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-slider-base",
+      "verified": {
+        "bytes": "00043a68+96",
+        "sha1": "877dc3309735",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00043ac8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SliderWidget_GetValueH",
+      "description": "(slider) in stack order, its arguments removed by this function: returns ((the dword +0x2e - the rect's x0) << 16) / the scale +0x20, plus the int16 minimum +0x24, in AX. ES2's SliderWidget_GetValueH (DBSIM 00452544).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-slider-base",
+      "verified": {
+        "bytes": "00043ac8+28",
+        "sha1": "7930ed583589",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00043ae4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SliderWidget_SetValueH",
+      "description": "(slider, value) in stack order, its arguments removed by this function: clamps the int16 value to the minimum +0x24 and maximum +0x26, sets the knob +0x28 to the rect's x0 + ((value - minimum) * the scale +0x20 >> 16), and calls slot +0xc of the vtable at +0x1c with (slider, value). ES2's SliderWidget_SetValueH (DBSIM 0045255c).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-slider-base",
+      "verified": {
+        "bytes": "00043ae4+104",
+        "sha1": "44b68c7c1603",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00043b4c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SliderWidget_RecomputeScaleH",
+      "description": "(slider) in stack order, its arguments removed by this function: sets the scale +0x20 to ((x1 - (the dword +0x36 - the dword +0x2e) - x0) << 16) / (the int16 maximum +0x26 - the int16 minimum +0x24). ES2's SliderWidget_RecomputeScaleH (DBSIM 004525a8). es2_xref finds six calls, from 000386a0, 0003ba74 and 000469ec.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-slider-base",
+      "verified": {
+        "bytes": "00043b4c+52",
+        "sha1": "9687ec036a29",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00043b80",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SliderWidget_DragToPointV",
+      "description": "(slider, point) in stack order, its arguments removed by this function: copies the int16 knob +0x28 to +0x2a and sets the knob to the point's y, or to the rect's y0 plus the knob length +0x2c when the y is below that, or to y1 when the y is past it. ES2's SliderWidget_DragToPointV (DBSIM 004525d8).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-slider-base",
+      "verified": {
+        "bytes": "00043b80+101",
+        "sha1": "3a7bfc039ee0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00043be8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SliderWidget_GetValueV",
+      "description": "(slider) in stack order, its arguments removed by this function: returns ((the dword +0x32 - the rect's y0) << 16) / the scale +0x20, plus the int16 minimum +0x24, in AX. ES2's SliderWidget_GetValueV (DBSIM 00452628).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-slider-base",
+      "verified": {
+        "bytes": "00043be8+29",
+        "sha1": "0126e7f80639",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00043c08",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SliderWidget_SetValueV",
+      "description": "(slider, value) in stack order, its arguments removed by this function: clamps the int16 value to the minimum +0x24 and maximum +0x26, sets the knob +0x28 to the rect's y1 - ((value - minimum) * the scale +0x20 >> 16), and calls slot +0xc of the vtable at +0x1c with (slider, value). ES2's SliderWidget_SetValueV (DBSIM 00452644).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-slider-base",
+      "verified": {
+        "bytes": "00043c08+105",
+        "sha1": "528bd13751f1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00043c74",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SliderWidget_RecomputeScaleV",
+      "description": "(slider) in stack order, its arguments removed by this function: sets the scale +0x20 to ((y1 - (the dword +0x3a - the dword +0x32) - y0) << 16) / (the int16 maximum +0x26 - the int16 minimum +0x24). ES2's SliderWidget_RecomputeScaleV (DBSIM 00452694). es2_xref finds two calls, from 0003b2c8.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-slider-base",
+      "verified": {
+        "bytes": "00043c74+53",
+        "sha1": "a70a128f5ac1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00043cac",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLWindow_Ctor",
+      "description": "(window, rect) in stack order, its arguments removed by this function: allocates 0x356 bytes when window is null, returning 0 when that fails; clears the hit-shape byte +0x10 (the inlined base constructors); runs GLViewport_Ctor (00069a84) on +0x17; stores CTLWindowVtable (00094bde) at +0x352; copies the rect's four dwords to +0..+0xc and to the viewport's rect +0x227..+0x233; sets the viewport's clip mode +0x21f to 1 and the int16 list count +0x250 to 0. ES2's CTLWindow_Ctor (DBSIM 004526c4), whose vptr is at +0x17 and viewport at +0x1b. es2_xref finds calls from Cockpit_LoadPanel (0002c9d8) and 00045988.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-root-widget--ctlwindow_ctor-00043cac",
+      "verified": {
+        "bytes": "00043cac+234",
+        "sha1": "d035d662f580",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00043d96",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLWindow_Slot00NoOp",
+      "description": "Frameless, with no Ghidra function: two NOPs and RET 4. Slot +4 of CTLWindowVtable (00094bde), which Widget_NotifySelfAndChildren (000440a0) calls on the root. ES2's CTLWindow_Slot00NoOp (DBSIM 00452aad).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-root-widget--ctlwindow_ctor-00043cac",
+      "verified": {
+        "bytes": "00043d96+5",
+        "sha1": "193b9046c34c",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00043d9c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_TranslateRootForView",
+      "description": "(root, delta) in stack order, its arguments removed by this function: calls GLDisplay_GetAttribute on the display 000bdd28 with 0 and with 1, dropping the answers; adds the delta's x to the dwords +0x22f and +0x227 and its y to +0x233 and +0x22b, the root viewport's rect; and moves the root's rect +0..+0xc by the delta with Widget_OffsetRect (0004387c). ES2's Widget_TranslateRootForView (DBSIM 00452734). es2_xref finds one call, from Widget_TranslateRootForView_Thunk (0004433c).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-root-widget--ctlwindow_ctor-00043cac",
+      "verified": {
+        "bytes": "00043d9c+97",
+        "sha1": "9acc1709f644",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00043e00",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_OnMouseDown",
+      "description": "(root, point) in stack order, its arguments removed by this function: rebases the point by the root's +0 and +4, stores the index Widget_HitTestChildren (0004401c, by its padding 0004401a) answers for it in Widget_PressedIndex (00094c58), and for an index other than -1 sets the int16 state +0x17 of that entry of the list +0x252 to 1; when the entry's int16 +0x19 is 1, calls slot +0x1c of its vtable at +0x1c with the rebased point and sets Widget_DragCapture (00094c5a) to 1; then Widget_Repaint (0004410c, by its padding 00044109). ES2's Widget_OnMouseDown (DBSIM 004527a0), which adds 004d25da/004d25de under a flag. es2_xref finds one call, from CockpitMouse_ProcessQueue (000444d0).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#press-release-and-drag",
+      "verified": {
+        "bytes": "00043e00+170",
+        "sha1": "f2f6de4b2067",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00043eac",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_OnMouseUp",
+      "description": "(root, point) in stack order, its arguments removed by this function: rebases the point by the root's +0 and +4 and stores Widget_HitTestChildren (0004401c)'s index for it in Widget_PressedIndex (00094c58); for an index other than -1, when it is the index held before or bit 1 of Widget_ClickButtons (00094b84) is set, calls slot +0xc of the entry's vtable at +0x1c with what its slot +0x14 returns; then sets the entry's int16 +0x17 to 0, runs Widget_Repaint (0004410c) and sets Widget_PressedIndex to -1. ES2's Widget_OnMouseUp (DBSIM 00452870). es2_xref finds one call, from CockpitMouse_ProcessQueue (000444d0).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#press-release-and-drag",
+      "verified": {
+        "bytes": "00043eac+188",
+        "sha1": "b61e0e6a9c34",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00043f68",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_TrackPressedWidget",
+      "description": "(root, point) in stack order, its arguments removed by this function: while Widget_PressedIndex (00094c58) is not -1, hit-tests the point as given with Widget_HitTestChildren (0004401c); when the answer is that index and the entry's int16 +0x17 is 0, sets it to 1, and otherwise, with the entry's +0x17 at 1, sets it to 0, running Widget_Repaint (0004410c) on each change. ES2's Widget_TrackPressedWidget (DBSIM 00452954). es2_xref finds one call, from CockpitMouse_ProcessQueue (000444d0).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#press-release-and-drag",
+      "verified": {
+        "bytes": "00043f68+178",
+        "sha1": "c4a22d37151d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004401c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_HitTestChildren",
+      "description": "(root, point) in stack order, its arguments removed by this function, entered also at its padding 0004401a: the index of the first entry of the root's list +0x252 (int16 count +0x250) that Widget_HitTest (000437d0) passes and whose int16 +0x17 is not 2, or -1. ES2's Widget_HitTestChildren (DBSIM 00452a00). es2_xref finds calls from Widget_OnMouseDown (00043e00), Widget_OnMouseUp (00043eac) and Widget_TrackPressedWidget (00043f68).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#hit-testing",
+      "verified": {
+        "bytes": "0004401c+131",
+        "sha1": "b731d6bf5ba1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000440a0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_NotifySelfAndChildren",
+      "description": "(root) in stack order, its arguments removed by this function: clears the dword +0x223, calls slot +4 of the root's vtable at +0x352, sets +0x223 to 1, and calls slot +4 of the vtable at +0x1c of each entry of the list +0x252 (int16 count +0x250). ES2's Widget_NotifySelfAndChildren (DBSIM 00452a48). es2_xref finds one call, from Widget_NotifySelfAndChildren_Thunk (00044328).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-root-widget--ctlwindow_ctor-00043cac",
+      "verified": {
+        "bytes": "000440a0+105",
+        "sha1": "dce9bb8d3974",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004410c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_Repaint",
+      "description": "(root, widget) in stack order, its arguments removed by this function, entered also at its padding 00044109: sets the root's dword +0x223 to 1 and calls slot +8 of the widget's vtable at +0x1c. ES2's Widget_Repaint (DBSIM 00452a90), which sets +0x227 and calls slot +4. es2_xref finds eight calls, from Widget_OnMouseDown (00043e00), Widget_OnMouseUp (00043eac), Widget_TrackPressedWidget (00043f68), Widget_Show (00044404), Widget_Hide (00044434) and CockpitMouse_ProcessQueue (000444d0).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-root-widget--ctlwindow_ctor-00043cac",
+      "verified": {
+        "bytes": "0004410c+34",
+        "sha1": "8ba611ea34c5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00044130",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorCockpitMouseCopy",
+      "description": "(p, flags) in stack order, its arguments removed by this function: the code of HeapPtr_DtorAppInputCopy (0004c650), identical after normalization, opening the cockpit mouse file's run of ConfigPart's copies. es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#where-the-object-files-start-and-end",
+      "verified": {
+        "bytes": "00044130+40",
+        "sha1": "06581a4d51d0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00044158",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorCockpitMouseCopy",
+      "description": "(part, flags) in stack order, its arguments removed by this function: slot +0x1c of the vtable 00094bee: the code of ConfigPart_DtorAppInputCopy (0004c678), identical after normalization, storing 00094bee and 00094c22 where that stores 000957a6 and 000957da.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#where-the-object-files-start-and-end",
+      "verified": {
+        "bytes": "00044158+63",
+        "sha1": "cd51cf9736af",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00044197",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagCockpitMouseCopy",
+      "description": "Frameless, with no Ghidra function: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +4 of the vtable 00094bee; the code of ConfigPart_GetClassTagAppInputCopy (0004c6b7).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#where-the-object-files-start-and-end",
+      "verified": {
+        "bytes": "00044197+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "000441a0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorCockpitMouseCopy",
+      "description": "(part, flags) in stack order, its arguments removed by this function: slot +0x1c of the vtable 00094c22 (entered at its padding 0004419d): the code of TSPartBase_DtorAppInputCopy (0004c6c0), identical after normalization, storing 00094c22 where that stores 000957da.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#where-the-object-files-start-and-end",
+      "verified": {
+        "bytes": "000441a0+42",
+        "sha1": "a826e474e068",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000441cc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitMouse_Init",
+      "description": "No arguments: Input_GetMouseDevice_Thunk (0004c634), its answer dropped; Mouse_AddCallback (00055bec)(00044461, the padding before CockpitMouse_OnEvent (00044464), 0x1f), the slot stored in the int16 CockpitMouse_CallbackSlot (00094c52); zeroes CockpitMouse_LastPoint (000b16c0), 000b16c4, the bytes CockpitMouse_RightHeld (000bd510) and CockpitMouse_LeftHeld (000bd50e) and the dword CockpitMouse_LastButtons (000bd538); two __vec_new (00061038)(000442b2, 100, 0xe, 0) buffers at 000bd524 and 000bd52c, their counts CockpitMouseQueueA (000bd520) and CockpitMouseQueueB (000bd528) zeroed, CockpitMouseQueue_Back (000bd530) pointed at CockpitMouseQueueA (000bd520) and CockpitMouseQueue_Front (000bd534) at CockpitMouseQueueB (000bd528); CockpitMouse_DoubleClickTicks (000bd518) = 1000000 / Math_Q14Multiply (0005e838)(the word +4 of the GL slot 0 object 000bdd0c, 0x35a1) / 2; Widget_ActiveRoot (00094c54) = 0 and the int16 Widget_PressedIndex (00094c58) = -1. ES2's CockpitMouse_Init (DBSIM 00452abc), which registers its listener with the mask 0x1e and sets its window to 0x3c / 2. es2_xref finds one call, from Sim_StartMission (0005a9dc).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-callback-and-the-queue",
+      "verified": {
+        "bytes": "000441cc+230",
+        "sha1": "3cef0235f6b7",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000442b4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitMouseEvent_ElementCtor",
+      "description": "(record) in stack order, its arguments removed by this function, entered also at its padding 000442b2: allocates 0xe bytes when record is null, returning 0 when that fails, the inlined constructors of its point testing again at 10 and 8 bytes; returns the record. The element constructor of the two mouse queues CockpitMouse_Init (000441cc) builds. ES2's CockpitMouseEvent_ElementCtor (DBSIM 00453171), which returns its argument.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-callback-and-the-queue",
+      "verified": {
+        "bytes": "000442b4+69",
+        "sha1": "467306027414",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000442fc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitMouse_Shutdown",
+      "description": "Frameless, no arguments, with no Ghidra function: Input_GetMouseDevice_Thunk (0004c634), then Mouse_RemoveCallback (00055c35)(the dword at CockpitMouse_CallbackSlot (00094c52)) and RET. The code at DBSIM 00452b7c, which calls MouseListener_Unregister. es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-callback-and-the-queue",
+      "verified": {
+        "bytes": "000442fc+20",
+        "sha1": "981cf7188bdc",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00044310",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_ClearPressed",
+      "description": "(root) in stack order, its arguments removed by this function: stores the root in Widget_ActiveRoot (00094c54), the root CockpitMouse_ProcessQueue (000444d0) works on, and -1 in the int16 Widget_PressedIndex (00094c58). ES2's Widget_ClearPressed (DBSIM 00452b94). es2_xref finds calls from Cockpit_LoadPanel (0002c9d8), 00045f00 and 000460b8.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-root-widget--ctlwindow_ctor-00043cac",
+      "verified": {
+        "bytes": "00044310+21",
+        "sha1": "2ef574325e7b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00044328",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_NotifySelfAndChildren_Thunk",
+      "description": "(root) in stack order, its arguments removed by this function: calls Widget_NotifySelfAndChildren (000440a0)(root). ES2's Widget_NotifySelfAndChildren_Thunk (DBSIM 00452bac). es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-root-widget--ctlwindow_ctor-00043cac",
+      "verified": {
+        "bytes": "00044328+15",
+        "sha1": "7146c2bd0613",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00044338",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_NoOp",
+      "description": "Frameless, with no Ghidra function: RET 4, between Widget_NotifySelfAndChildren_Thunk (00044328) and Widget_TranslateRootForView_Thunk (0004433c), where ES2's Widget_NoOp (DBSIM 00452bbc) sits. es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-root-widget--ctlwindow_ctor-00043cac",
+      "verified": {
+        "bytes": "00044338+3",
+        "sha1": "6d2a7422bc83",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0004433c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_TranslateRootForView_Thunk",
+      "description": "(dx, dy, root) in stack order, its arguments removed by this function (RET 0xc): calls Widget_TranslateRootForView (00043d9c)(root, the address of dx), the two words making the delta. ES2's Widget_TranslateRootForView_Thunk (DBSIM 00452bc4). es2_xref finds one call, from CockpitWidgets_TranslateForView (0002ced0).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-root-widget--ctlwindow_ctor-00043cac",
+      "verified": {
+        "bytes": "0004433c+19",
+        "sha1": "864bc8a7978d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00044350",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WidgetRoot_Delete",
+      "description": "(root) in stack order, its arguments removed by this function: for a root that is set, stores CTLWindowVtableCockpitMouseCopy (00094c6a) at +0x352 and 00094c7a and then 00094ca2 at +0x17, and frees the root with operator_delete (000015f8). ES2's WidgetRoot_Delete (DBSIM 00452bdc). es2_xref finds one call, from 000460b8.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-root-widget--ctlwindow_ctor-00043cac",
+      "verified": {
+        "bytes": "00044350+51",
+        "sha1": "9bf0a311b27d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00044383",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLWindow_Slot00NoOpCockpitMouseCopy",
+      "description": "Frameless, with no Ghidra function: a NOP and RET 4. Slot +4 of CTLWindowVtableCockpitMouseCopy (00094c6a), which WidgetRoot_Delete (00044350) stores; the cockpit mouse file's copy of CTLWindow_Slot00NoOp (00043d96).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-root-widget--ctlwindow_ctor-00043cac",
+      "verified": {
+        "bytes": "00044383+4",
+        "sha1": "5d5ba9489eeb",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00044388",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLViewport_DtorCockpitMouseCopy",
+      "description": "(object, flags) in stack order, its arguments removed by this function: slot +0x1c of the vtable 00094c7a (entered at its padding 00044387), the cockpit mouse file's copy of GLViewport's table 0009b456: with the object non-null stores 00094c7a and then 00094ca2 at +0 and frees the object with operator_delete (000015f8) when bit 0 of flags is set. The code of 00069bb8, the slot +0x1c of 0009b456, identical after normalization, and byte for byte the code of GLRegion_DtorMechviewCopy (0002433c), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-root-widget--ctlwindow_ctor-00043cac",
+      "verified": {
+        "bytes": "00044388+40",
+        "sha1": "8cdb9de2f937",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000443b0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLBase_DtorCockpitMouseCopy",
+      "description": "(object, flags) in stack order, its arguments removed by this function: slot +0x1c of the vtable 00094ca2, the cockpit mouse file's copy of the library's 0009b42e: with the object non-null stores 00094ca2 at +0 and frees the object with operator_delete (000015f8) when bit 0 of flags is set. The code of 00069b94, the slot +0x1c of 0009b42e, identical after normalization, and byte for byte the code of GLBase_DtorMechviewCopy (00024318), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-root-widget--ctlwindow_ctor-00043cac",
+      "verified": {
+        "bytes": "000443b0+34",
+        "sha1": "1efca2025f11",
         "scope": "body",
         "via": "decompile"
       }
@@ -17279,6 +17789,96 @@
         "sha1": "b65e2213340c",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00044404",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_Show",
+      "description": "(index, root) in stack order, its arguments removed by this function: sets the int16 +0x17 of entry index of the root's list +0x252 to 0 and runs Widget_Repaint (0004410c) on it. ES2's Widget_Show (DBSIM 00452c64). es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-root-widget--ctlwindow_ctor-00043cac",
+      "verified": {
+        "bytes": "00044404+45",
+        "sha1": "b965c7d72036",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00044434",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_Hide",
+      "description": "(index, root) in stack order, its arguments removed by this function: sets the int16 +0x17 of entry index of the root's list +0x252 to 2 and runs Widget_Repaint (0004410c) on it. ES2's Widget_Hide (DBSIM 00452c8c). es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-root-widget--ctlwindow_ctor-00043cac",
+      "verified": {
+        "bytes": "00044434+45",
+        "sha1": "d58d82c76ac5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00044464",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitMouse_OnEvent",
+      "description": "(record) in stack order, its arguments removed by this function, entered also at its padding 00044461, which CockpitMouse_Init (000441cc) registers with Mouse_AddCallback: the record is {x, y, buttons}. While the byte 000bd512 is set, with t the dword 000981c4: when the record's word +8 equals the dword CockpitMouse_LastButtons (000bd538), calls Cursor_SyncPosition (000669dc)(record) while Cursor_FollowsMouse (00094c5b) is set and, when t is above the dword CockpitMouse_LastEventTime (00094cc8), CockpitMouseQueue_Push (00044830)(t, record) by its padding 0004482d; otherwise stores the word in CockpitMouse_LastButtons (000bd538) and calls CockpitMouseQueue_Push (00044830)(the clock 000981c4, record); either way stores t in CockpitMouse_LastEventTime (00094cc8). ES2's CockpitMouse_OnEvent (DBSIM 00452cb4), which reads Time_GetCoarseTicks and stores the time outside the test of its live byte.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-callback-and-the-queue",
+      "verified": {
+        "bytes": "00044464+105",
+        "sha1": "dc169595a4ba",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000444d0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitMouse_ProcessQueue",
+      "description": "No arguments: swaps the queue pointers CockpitMouseQueue_Back (000bd530) and CockpitMouseQueue_Front (000bd534), zeroes the count of the one CockpitMouseQueue_Back (000bd530) now holds and, for each 14-byte record {x, y, buttons, time} of the one CockpitMouseQueue_Front (000bd534) holds, with r the root Widget_ActiveRoot (00094c54): Widget_ClickButtons (00094b84) = the buttons; when the point differs from CockpitMouse_LastPoint (000b16c0)/000b16c4, stores it there, calls Cursor_SyncPosition (000669dc) while TapePlayback (000b5b76) and Cursor_FollowsMouse (00094c5b) are set, stores the point less r's +0x227/+0x22b in CockpitMouse_CanvasPoint (000b16d4)/000b16d8 and, with Widget_DragCapture (00094c5a) clear, calls Widget_TrackPressedWidget (00043f68)(r, point) when Widget_HitTest (000437d0)(r, point) passes, or with it set calls slot +0x1c of the captured entry (index Widget_PressedIndex (00094c58) of r's list +0x252) with the point less r's +0/+4 and Widget_Repaint (0004410c); clears CockpitMouse_DoubleClick (00094c5c); a left press (bit 0 set, the byte CockpitMouse_LeftHeld (000bd50e) clear) sets CockpitMouse_LeftHeld (000bd50e) and calls Widget_OnMouseDown (00043e00)(r, point); a right press sets CockpitMouse_RightHeld (000bd510); a left release clears CockpitMouse_LeftHeld (000bd50e), sets CockpitMouse_DoubleClick (00094c5c) when time - the dword CockpitMouse_LastLeftRelease (00094c60) is below CockpitMouse_DoubleClickTicks (000bd518), stores time in CockpitMouse_LastLeftRelease (00094c60) and the buttons | 1 in Widget_ClickButtons (00094b84); a right release the same with CockpitMouse_RightHeld (000bd510), CockpitMouse_LastRightRelease (00094c64) and | 2; after a release calls Widget_OnMouseUp (00043eac)(r, point) with Widget_DragCapture (00094c5a) clear, or else sets the captured entry's +0x17 to 0, repaints it, clears Widget_DragCapture (00094c5a), calls its slot +0xc with what its slot +0x14 returns and sets Widget_PressedIndex (00094c58) to -1. Returns the queue CockpitMouseQueue_Front (000bd534) holds. ES2's CockpitMouse_ProcessQueue (DBSIM 00452d18), which clears its button word after each record. es2_xref finds one call, from Input_BuildPlayerDevice (0004cb14).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-frames-mouse-events--cockpitmouse_processqueue-000444d0",
+      "verified": {
+        "bytes": "000444d0+861",
+        "sha1": "397af32e5fc8",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00044830",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitMouseQueue_Push",
+      "description": "(time, record) in stack order, its arguments removed by this function, entered also at its padding 0004482d: returns 0 when the count of the queue CockpitMouseQueue_Back (000bd530) points at is 99; otherwise appends a 14-byte entry to its buffer, the record's x and y dwords, its buttons word and the time dword at +0xa, raises the count and returns 1. ES2's CockpitMouseQueue_Push (DBSIM 00453034). es2_xref finds calls from CockpitMouse_OnEvent (00044464) and Input_BuildPlayerDevice (0004cb14), whose playback passes each recorded record with its recorded time.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-callback-and-the-queue",
+      "verified": {
+        "bytes": "00044830+76",
+        "sha1": "4aaeb8b6d3d1",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0004487c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitMouse_StaticInitNoOp",
+      "description": "Frameless, with no Ghidra function: RET. The static constructor table's entry 000adc50, the cockpit mouse file's last code, followed by three zero bytes.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#where-the-object-files-start-and-end",
+      "verified": {
+        "bytes": "0004487c+1",
+        "sha1": "8bf7b464aaa2",
+        "scope": "body",
+        "via": "raw"
       }
     },
     {
@@ -18397,7 +18997,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MouseInputDevice_Ctor",
-      "description": "(this), its argument removed by this function: allocates 0x3f bytes for a null this, returning 0 when that fails; 0006bbc8(this), then InputDevice_Register (0004b0b4)(this+0x3a, this+0x3a, 2); returns this. ES2's MouseInputDevice_Ctor (DBSIM 0045c1b8).",
+      "description": "(this), its argument removed by this function: allocates 0x3f bytes for a null this, returning 0 when that fails; DVMouse_Ctor (0006bbc8)(this), then InputDevice_Register (0004b0b4)(this+0x3a, this+0x3a, 2); returns this. ES2's MouseInputDevice_Ctor (DBSIM 0045c1b8).",
       "source": "Herculan/docs/es1/simulation/input.md#setting-up--input_buildsourcetable-0004c95c",
       "verified": {
         "bytes": "0004c1e0+64",
@@ -18412,7 +19012,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MouseInputDevice_Dtor",
-      "description": "(this, flags) in stack order, its arguments removed by this function: for a non-null this, clears Input_DeviceEnabled (000bd600)[kind at this+0x3b], clears the mouse's recorded kind 000bd612 when it is that kind, runs 0006bcd4(this, 0) and frees this when flags bit 0 is set. ES2's MouseInputDevice_Dtor (DBSIM 0045c1e4).",
+      "description": "(this, flags) in stack order, its arguments removed by this function: for a non-null this, clears Input_DeviceEnabled (000bd600)[kind at this+0x3b], clears the mouse's recorded kind 000bd612 when it is that kind, runs DVMouse_Dtor (0006bcd4)(this, 0) and frees this when flags bit 0 is set. ES2's MouseInputDevice_Dtor (DBSIM 0045c1e4).",
       "source": "Herculan/docs/es1/simulation/input.md#the-input-devices",
       "verified": {
         "bytes": "0004c220+73",
@@ -18637,7 +19237,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Input_BuildSourceTable",
-      "description": "No arguments: InputDevice_Enable (0004b1c0) on KeyboardInputDevice_Ctor (0004b484)(0, 0x10000)+4; Keyboard_AddSubscriberCodes (0006c3b4)(KeyQueue_Subscriber (0006c6e4), KeyQueueWantedCodes (0009581c)); SimInput_SetEnabled(1); InputDevice_Enable (0004b1c0) on MouseInputDevice_Ctor (0004c1e0)(0)+0x3a, and 0006bdbc/0006bdf0 with the bounds 319, 199; Prefs_ClearHandlersAndInit (0004a724); Input_LiveBlockPtr (000b1840) = Input_PollDeviceBlock (0004c2d0)(). Fills the source table: 000b17e0-000b17ec the block's axes 000b17b9-000b17bf, 000b17f0-000b17fc its buttons 000b17c1-000b17c4, 000b1800-000b180c the keyboard pairs 000b188c-000b1898, 000b1810-000b181c the live block's +0xd, +0x11, +0x15, +0x19, 000b1820-000b182c 000b189c-000b189f, 000b1830-000b183c the live block's +0x1d-+0x20. Clears Input_ButtonLatch (000bd634-000bd637) and calls Keyjoy_LoadConfig (0004d918). ES2's Input_BuildSourceTable (DBSIM 0045a5c0).",
+      "description": "No arguments: InputDevice_Enable (0004b1c0) on KeyboardInputDevice_Ctor (0004b484)(0, 0x10000)+4; Keyboard_AddSubscriberCodes (0006c3b4)(KeyQueue_Subscriber (0006c6e4), KeyQueueWantedCodes (0009581c)); SimInput_SetEnabled(1); InputDevice_Enable (0004b1c0) on MouseInputDevice_Ctor (0004c1e0)(0)+0x3a, and MouseDriver_GetBounds (0006bdbc)/MouseDriver_SetBounds (0006bdf0) with the bounds 319, 199; Prefs_ClearHandlersAndInit (0004a724); Input_LiveBlockPtr (000b1840) = Input_PollDeviceBlock (0004c2d0)(). Fills the source table: 000b17e0-000b17ec the block's axes 000b17b9-000b17bf, 000b17f0-000b17fc its buttons 000b17c1-000b17c4, 000b1800-000b180c the keyboard pairs 000b188c-000b1898, 000b1810-000b181c the live block's +0xd, +0x11, +0x15, +0x19, 000b1820-000b182c 000b189c-000b189f, 000b1830-000b183c the live block's +0x1d-+0x20. Clears Input_ButtonLatch (000bd634-000bd637) and calls Keyjoy_LoadConfig (0004d918). ES2's Input_BuildSourceTable (DBSIM 0045a5c0).",
       "source": "Herculan/docs/es1/simulation/input.md#setting-up--input_buildsourcetable-0004c95c; ES1DBSIM decompile at 0004c95c",
       "verified": {
         "bytes": "0004c95c+439",
@@ -18652,7 +19252,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Input_BuildPlayerDevice",
-      "description": "No arguments: the per-tick input build into PlayerInputBlock (000b17ac, 0x2b bytes), which it returns. Reads the live block's command word, skipping zero-scancode words through Input_ReadKeyboardCommand (0004c458)(1, word), masks it with SimCommandMask (000958b8). During playback reads a 14-byte record and an int32 count from TapeFile, sets DemoAbort under DemoMode for a live command, passes the word to Sim_HandleWindowKey, and on a short read or command 0x412 sets DemoAbort, closes the tape, clears TapePlayback and sets maybe_CockpitMouseLive; otherwise feeds each 14-byte mouse event to 00044830 with its point to Input_CursorPos, and fills the command word, axes +0xd-+0x13, buttons +0x15-+0x1c from bit 0-7 and +0x29 (the delta), bits 8-11 being the source buttons. Live: Input_BuildKeyboardAxes (0004c818)(slow, 000b188c), slow in Input_StickMode 1 without InputDrivesCamera or under maybe_WeaponChain_EoHold. 000444d0 gives the mouse events; source button 1 pressed with a mode set calls Input_ToggleStickMode once (latch 000958bc). The missile arm 000958bf, the keyboard pair moves and the Tilt and Missile reversals are ES2's; then, live, preferences option 7 (000bd569) picks each axis's and button's source (options 9 and 10, 000bd56b and 000bd56c, adding the third axis and dropping the stick's Y), the copy, and the latches Input_ButtonLatch/Input_ButtonLatchState (000bd634, Input_ButtonLatchState (000bd638)), and the pointer, mouse bytes, buttons 4-7 and command word from the live block. Recording appends the frame to <TapeStem>.tap (mode ab, assert appinput.cpp 0x2bd). The camera-axis pointers +0x1d/+0x21, the latched-row zeroing, option 10's Input_KeyThrottleStep as the throttle, and Backturn. ES2's Input_BuildPlayerDevice (DBSIM 0045a7f4).",
+      "description": "No arguments: the per-tick input build into PlayerInputBlock (000b17ac, 0x2b bytes), which it returns. Reads the live block's command word, skipping zero-scancode words through Input_ReadKeyboardCommand (0004c458)(1, word), masks it with SimCommandMask (000958b8). During playback reads a 14-byte record and an int32 count from TapeFile, sets DemoAbort under DemoMode for a live command, passes the word to Sim_HandleWindowKey, and on a short read or command 0x412 sets DemoAbort, closes the tape, clears TapePlayback and sets CockpitMouseLive; otherwise feeds each 14-byte mouse event to CockpitMouseQueue_Push (00044830) with its point to Input_CursorPos, and fills the command word, axes +0xd-+0x13, buttons +0x15-+0x1c from bit 0-7 and +0x29 (the delta), bits 8-11 being the source buttons. Live: Input_BuildKeyboardAxes (0004c818)(slow, 000b188c), slow in Input_StickMode 1 without InputDrivesCamera or under maybe_WeaponChain_EoHold. CockpitMouse_ProcessQueue (000444d0) gives the mouse events; source button 1 pressed with a mode set calls Input_ToggleStickMode once (latch 000958bc). The missile arm 000958bf, the keyboard pair moves and the Tilt and Missile reversals are ES2's; then, live, preferences option 7 (000bd569) picks each axis's and button's source (options 9 and 10, 000bd56b and 000bd56c, adding the third axis and dropping the stick's Y), the copy, and the latches Input_ButtonLatch/Input_ButtonLatchState (000bd634, Input_ButtonLatchState (000bd638)), and the pointer, mouse bytes, buttons 4-7 and command word from the live block. Recording appends the frame to <TapeStem>.tap (mode ab, assert appinput.cpp 0x2bd). The camera-axis pointers +0x1d/+0x21, the latched-row zeroing, option 10's Input_KeyThrottleStep as the throttle, and Backturn. ES2's Input_BuildPlayerDevice (DBSIM 0045a7f4).",
       "source": "Herculan/docs/es1/simulation/input.md#the-input-build--input_buildplayerdevice-0004cb14; ES1DBSIM decompile at 0004cb14",
       "verified": {
         "bytes": "0004cb14+3299",
@@ -20977,7 +21577,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mouse_Reset",
-      "description": "No arguments, frameless: while Mouse_StatusPtr (000962e0) is set issues INT 33h function 0 and returns its AX; otherwise returns 0. es2_xref finds calls from Mouse_ResetThunk (00055c47), 0006bbc8 and 0006bd84.",
+      "description": "No arguments, frameless: while Mouse_StatusPtr (000962e0) is set issues INT 33h function 0 and returns its AX; otherwise returns 0. es2_xref finds calls from Mouse_ResetThunk (00055c47), DVMouse_Ctor (0006bbc8) and DVMouse_Shutdown (0006bd84).",
       "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly at 00055a67",
       "verified": {
         "bytes": "00055a67+15",
@@ -21067,7 +21667,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mouse_SetLimitsAndSensitivity",
-      "description": "(record), C convention: INT 33h function 7 with the record's +0 and +8 as the horizontal limits, both doubled while Mouse_DoubleX (000962dc) is set, function 8 with +4 and +0xc as the vertical limits, and function 0x1a with the words +0x10, +0x12 and +0x14 in BX, CX and DX. es2_xref finds one call, from 0006bdf0.",
+      "description": "(record), C convention: INT 33h function 7 with the record's +0 and +8 as the horizontal limits, both doubled while Mouse_DoubleX (000962dc) is set, function 8 with +4 and +0xc as the vertical limits, and function 0x1a with the words +0x10, +0x12 and +0x14 in BX, CX and DX. es2_xref finds one call, from MouseDriver_SetBounds (0006bdf0).",
       "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly at 00055aee",
       "verified": {
         "bytes": "00055aee+70",
@@ -21082,7 +21682,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mouse_GetSensitivity",
-      "description": "(record), C convention: INT 33h function 0x1b, storing BX, CX and DX in the record's words +0x10, +0x12 and +0x14. es2_xref finds one call, from 0006bdbc.",
+      "description": "(record), C convention: INT 33h function 0x1b, storing BX, CX and DX in the record's words +0x10, +0x12 and +0x14. es2_xref finds one call, from MouseDriver_GetBounds (0006bdbc).",
       "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly at 00055b34",
       "verified": {
         "bytes": "00055b34+31",
@@ -21097,7 +21697,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mouse_SetLimits",
-      "description": "(record), C convention: Mouse_SetLimitsAndSensitivity (00055aee) without its function 0x1a: INT 33h function 7 with +0 and +8, doubled while Mouse_DoubleX is set, and function 8 with +4 and +0xc. es2_xref finds one call, from 0006be40.",
+      "description": "(record), C convention: Mouse_SetLimitsAndSensitivity (00055aee) without its function 0x1a: INT 33h function 7 with +0 and +8, doubled while Mouse_DoubleX is set, and function 8 with +4 and +0xc. es2_xref finds one call, from MouseDriver_SetBoundsRect (0006be40).",
       "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly at 00055b53",
       "verified": {
         "bytes": "00055b53+51",
@@ -21142,7 +21742,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mouse_AddCallback",
-      "description": "(callback, mask), C convention: while Mouse_StatusPtr (000962e0) is set takes the lowest clear bit i of Mouse_CallbackMask (000962f4), stores callback at Mouse_Callbacks (000962f8) + 4i and the low byte of mask at Mouse_CallbackEvents (00096378) + i, sets the bit and returns i + 1. With all 32 bits set it stores no callback and still writes the mask byte and sets a bit, at the index left in ECX, whose low word it cleared. es2_xref finds one call, from 000441cc.",
+      "description": "(callback, mask), C convention: while Mouse_StatusPtr (000962e0) is set takes the lowest clear bit i of Mouse_CallbackMask (000962f4), stores callback at Mouse_Callbacks (000962f8) + 4i and the low byte of mask at Mouse_CallbackEvents (00096378) + i, sets the bit and returns i + 1. With all 32 bits set it stores no callback and still writes the mask byte and sets a bit, at the index left in ECX, whose low word it cleared. es2_xref finds one call, from CockpitMouse_Init (000441cc).",
       "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly at 00055bec",
       "verified": {
         "bytes": "00055bec+73",
@@ -21157,7 +21757,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mouse_RemoveCallback",
-      "description": "(slot), C convention: clears bit slot - 1 of Mouse_CallbackMask (000962f4). es2_xref finds one call, from 000442b4.",
+      "description": "(slot), C convention: clears bit slot - 1 of Mouse_CallbackMask (000962f4). es2_xref finds one call, from CockpitMouseEvent_ElementCtor (000442b4).",
       "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly at 00055c35",
       "verified": {
         "bytes": "00055c35+18",
@@ -22567,7 +23167,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_StartMission",
-      "description": "No arguments: the mission start. Hands Sim_AssertCleanupHook (0005a7b8) to Assert_AddHook (0005730c); Input_BuildSourceTable (0004c95c); Sim_Timer (000b5baa) = DVTimer_Ctor (0006c6f8)(0, 0x26d3); with the byte 000b5b68 set reads resource.cfg's [SoundFX] Driver#, IRQ, DMA and PortAddress and [Music] Driver# and PortAddress (hex through sscanf (0006c871)) for Sound_Init, else digital device 0; 0004e498; with no sound manager 000959ac, Prefs_SetOption(1, 0, i) for options 0-2; Light_ResetSystem, 00075858, 00066e00, Widget_LoadStylesAndFonts; the hooks 00094d80 and 00094d84 = SimInput_PushDisable (0005a5b4) and SimInput_PopEnable (0005a5d8); Mono_Clear when 000bda94 is set; Subsystem_RunPhase(2); the cursor from 00057640; DBSim_LoadScriptDat; ObjList_Add (00020d5c) of each Zone_ShapeObjects entry up to Zone_ShapeCount or the first null; 000441cc; maybe_CockpitMouseLive (000bd512) = 0; Time_InitSimClock (00063e64); DBSim_SpawnMissionObjects (0001e638) between Prefs_SetOption(1, 0, 1) and Prefs_RevertOption(1, 1); deletes every element of g_ExplosionPool and of 000aeef8; Light_CreateMissionSun (0005a888); ObjList_ZoneShapeCount (000bc596) = ObjList_Count (00092558); LocalPlayerMech (000b5b86) = the last element of g_MechPool (000af68c) with byte +0x9d set, also ViewChain_Viewed (000bda9a) and ViewChain_Chosen (000b5bbc); a 0x4a-byte camera (TSCamera_CtorDefault, vtable 000972de) per member of the player's group (count +0x12 of +0x3f) into ViewChain_SquadCameras (000bda9e); SimDisplay = Sim_CreateDisplay (0005a5f4), GLDisplay_SetAttribute (0006a824)(display, 0x280, 2), page origins 1-3 (0, 200), (320, 0), (320, 200) at +0x50 through the routine 0009df10, +0x88 = 0, +0x8c and +0x3c = 2 (0 with CmdLine_SinglePage (000b5b67) set), +0x34 = +0x88, +0x3c = 3 without CmdLine_SinglePage (000b5b67); ViewObjectPtr (000b5b8a) = TSCamera_Ctor(camera, (0, 0, 0), (0, -6000, 0), 0x100, 8, 000b5b6e), Cam_AttachTo (0005923c)(ViewChain_Viewed), mode +0x36 = 2; 000b5bca = 1; CockpitViewManager_Ctor(0, player), CockpitViewManager_Publish, WeaponMounts_BuildGauges, Cockpit_LoadSquadmatePilots, PaperDoll_BuildWeaponIcons into each machine's +0x194, Cursor_SetImage, Player_PerFrameCockpitUpdate, Cam_Update, CockpitView_SetView 1 then 0; LiftStart_Pending (000b5bb0) = 1 when a g_BasePool element whose group +0x3f has side byte +0x14 0 lies within 40000 of the player, then 00057cf4, otherwise 000928ee = 8, Palette_BlendRangeByPitch, Palette_FlushDirtyRange and Sim_RenderFrame; 000b5bca = 0; Palette_FlushDirtyRange; Widget_DrawToCockpit(0, {0, 0, 320, 400}, 1); the routine 0009df4c; 000b5b72/000b5b74 = option 6 and ShapeDetail_ApplyDetailSetting (00057c08)(option 6); 000b5b96 = option 5 > 240; 0004e294(1); with the lift 00057ffc; unless TapePlayback, maybe_CockpitMouseLive = 1; Sound_Play(0x13). ES2's Sim_InitMissionSession (DBSIM 004614fc).",
+      "description": "No arguments: the mission start. Hands Sim_AssertCleanupHook (0005a7b8) to Assert_AddHook (0005730c); Input_BuildSourceTable (0004c95c); Sim_Timer (000b5baa) = DVTimer_Ctor (0006c6f8)(0, 0x26d3); with the byte 000b5b68 set reads resource.cfg's [SoundFX] Driver#, IRQ, DMA and PortAddress and [Music] Driver# and PortAddress (hex through sscanf (0006c871)) for Sound_Init, else digital device 0; 0004e498; with no sound manager 000959ac, Prefs_SetOption(1, 0, i) for options 0-2; Light_ResetSystem, 00075858, 00066e00, Widget_LoadStylesAndFonts; the hooks 00094d80 and 00094d84 = SimInput_PushDisable (0005a5b4) and SimInput_PopEnable (0005a5d8); Mono_Clear when 000bda94 is set; Subsystem_RunPhase(2); the cursor from 00057640; DBSim_LoadScriptDat; ObjList_Add (00020d5c) of each Zone_ShapeObjects entry up to Zone_ShapeCount or the first null; CockpitMouse_Init (000441cc); CockpitMouseLive (000bd512) = 0; Time_InitSimClock (00063e64); DBSim_SpawnMissionObjects (0001e638) between Prefs_SetOption(1, 0, 1) and Prefs_RevertOption(1, 1); deletes every element of g_ExplosionPool and of 000aeef8; Light_CreateMissionSun (0005a888); ObjList_ZoneShapeCount (000bc596) = ObjList_Count (00092558); LocalPlayerMech (000b5b86) = the last element of g_MechPool (000af68c) with byte +0x9d set, also ViewChain_Viewed (000bda9a) and ViewChain_Chosen (000b5bbc); a 0x4a-byte camera (TSCamera_CtorDefault, vtable 000972de) per member of the player's group (count +0x12 of +0x3f) into ViewChain_SquadCameras (000bda9e); SimDisplay = Sim_CreateDisplay (0005a5f4), GLDisplay_SetAttribute (0006a824)(display, 0x280, 2), page origins 1-3 (0, 200), (320, 0), (320, 200) at +0x50 through the routine 0009df10, +0x88 = 0, +0x8c and +0x3c = 2 (0 with CmdLine_SinglePage (000b5b67) set), +0x34 = +0x88, +0x3c = 3 without CmdLine_SinglePage (000b5b67); ViewObjectPtr (000b5b8a) = TSCamera_Ctor(camera, (0, 0, 0), (0, -6000, 0), 0x100, 8, 000b5b6e), Cam_AttachTo (0005923c)(ViewChain_Viewed), mode +0x36 = 2; 000b5bca = 1; CockpitViewManager_Ctor(0, player), CockpitViewManager_Publish, WeaponMounts_BuildGauges, Cockpit_LoadSquadmatePilots, PaperDoll_BuildWeaponIcons into each machine's +0x194, Cursor_SetImage, Player_PerFrameCockpitUpdate, Cam_Update, CockpitView_SetView 1 then 0; LiftStart_Pending (000b5bb0) = 1 when a g_BasePool element whose group +0x3f has side byte +0x14 0 lies within 40000 of the player, then 00057cf4, otherwise 000928ee = 8, Palette_BlendRangeByPitch, Palette_FlushDirtyRange and Sim_RenderFrame; 000b5bca = 0; Palette_FlushDirtyRange; Widget_DrawToCockpit(0, {0, 0, 320, 400}, 1); the routine 0009df4c; 000b5b72/000b5b74 = option 6 and ShapeDetail_ApplyDetailSetting (00057c08)(option 6); 000b5b96 = option 5 > 240; 0004e294(1); with the lift 00057ffc; unless TapePlayback, CockpitMouseLive = 1; Sound_Play(0x13). ES2's Sim_InitMissionSession (DBSIM 004614fc).",
       "source": "ES1DBSIM decompile at 0005a9dc",
       "verified": {
         "bytes": "0005a9dc+2808",
@@ -22627,7 +23227,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_Shutdown",
-      "description": "No arguments: maybe_CockpitMouseLive (000bd512) = 0; with TapeFile (000b5b82) open, closes DmpFile (000b5b7e) when open and then the tape, clearing both; GndTex_Free; Mission_WriteResults (0001d698)(LocalPlayerMech); the exit code, 6 under DemoMode (000b5bd0), 0 with Sim_QuitFlag (000b5b9e), else 4 when the player's +0x93 is set and MissionModeFlag (000bc4a0) is not 0, else 3, written as an int16 to data\\exit.cfg (assert init.cpp line 0x1a4, severity 5); Sound_Shutdown; Sim_ShutdownNoOp1 and Sim_ShutdownNoOp2. ES2's Sim_Shutdown (DBSIM 00461eec) keeps the code for WinMain.",
+      "description": "No arguments: CockpitMouseLive (000bd512) = 0; with TapeFile (000b5b82) open, closes DmpFile (000b5b7e) when open and then the tape, clearing both; GndTex_Free; Mission_WriteResults (0001d698)(LocalPlayerMech); the exit code, 6 under DemoMode (000b5bd0), 0 with Sim_QuitFlag (000b5b9e), else 4 when the player's +0x93 is set and MissionModeFlag (000bc4a0) is not 0, else 3, written as an int16 to data\\exit.cfg (assert init.cpp line 0x1a4, severity 5); Sound_Shutdown; Sim_ShutdownNoOp1 and Sim_ShutdownNoOp2. ES2's Sim_Shutdown (DBSIM 00461eec) keeps the code for WinMain.",
       "source": "Herculan/docs/es1/simulation/main-loop.md#the-end--sim_shutdown-0005b568; ES1DBSIM decompile at 0005b568",
       "verified": {
         "bytes": "0005b568+290",
@@ -28892,6 +29492,141 @@
       }
     },
     {
+      "address": "0006bbc8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVMouse_Ctor",
+      "description": "(mouse) in stack order, its arguments removed by this function: allocates 0x3a bytes when mouse is null, returning 0 when that fails; GL_ClaimGlobal (0007d5bc)(mouse, mouse, 2); the inlined constructors of +4, +0xe and +0x24; when the GL slot 2 (000bdd14) holds the mouse and DVMouse_Init (0006bd10) answers non-zero, atexit (0007d628)(Mouse_ResetThunk (00055c47)) and Assert_AddHook (0005730c)(DVMouse_AssertHook (0006bccc)); returns the mouse. VSHELL's DVMouse_Ctor (004052fb), which asserts when the slot is taken and registers no exit routine. es2_xref finds one call, from MouseInputDevice_Ctor (0004c1e0).",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver",
+      "verified": {
+        "bytes": "0006bbc8+260",
+        "sha1": "a37279f68230",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006bccc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVMouse_AssertHook",
+      "description": "Frameless: CALL Mouse_Reset (00055a67), then RET 4; Ghidra has no function there. DVMouse_Ctor (0006bbc8) registers it with Assert_AddHook, where VSHELL's registers the empty DVMouse_AssertHookNoOp (0040550a).",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver",
+      "verified": {
+        "bytes": "0006bccc+8",
+        "sha1": "a9f2adce3fed",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006bcd4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVMouse_Dtor",
+      "description": "(mouse, flags) in stack order, its arguments removed by this function: for a mouse that is set, when the GL slot 2 (000bdd14) is set, runs DVMouse_Shutdown (0006bd84)(mouse) by its padding 0006bd81 and clears the slot; frees the mouse with operator_delete when bit 0 of flags is set. VSHELL's DVMouse_Dtor (0040535f), which asserts when the slot is clear. es2_xref finds one call, from MouseInputDevice_Dtor (0004c220).",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver",
+      "verified": {
+        "bytes": "0006bcd4+58",
+        "sha1": "36ae6d937cbb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006bd10",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVMouse_Init",
+      "description": "(mouse) in stack order, its arguments removed by this function, entered also at its padding 0006bd0e: Mouse_Install (000559c9)(mouse, mouse + 4); when bit 0 of the dword +0 is then set, Mouse_SetDoubleX (00055aa4)(1), MouseDriver_GetBounds (0006bdbc)(mouse, mouse + 0x24), the dwords +0xe, +0x12, +0x16 and +0x1a set to 0, 0, 320 and 200, MouseDriver_GetBounds (0006bdbc)(mouse, mouse + 0xe) and MouseDriver_SetBounds (0006bdf0)(mouse, mouse + 0xe). Returns bit 0 of +0. VSHELL's DVMouse_Init (004053bf), which installs no driver, calls an empty function in place of Mouse_SetDoubleX and sets the bounds to 0, 0, 480 and 640. es2_xref finds one call, from DVMouse_Ctor (0006bbc8).",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver",
+      "verified": {
+        "bytes": "0006bd10+113",
+        "sha1": "8f28b5fcdcc5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006bd84",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVMouse_Shutdown",
+      "description": "(mouse) in stack order, its arguments removed by this function, entered also at its padding 0006bd81: when bit 0 of the dword +0 is set, zeroes that dword and calls Mouse_Reset (00055a67); when that answers non-zero, MouseDriver_SetBounds (0006bdf0)(mouse, mouse + 0x24) and returns 1. Otherwise returns 0. VSHELL's DVMouse_Shutdown (0040541b), which puts the saved settings back without a Mouse_Reset. es2_xref finds one call, from DVMouse_Dtor (0006bcd4).",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver",
+      "verified": {
+        "bytes": "0006bd84+56",
+        "sha1": "ea738d098857",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006bdbc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MouseDriver_GetBounds",
+      "description": "(mouse, record) in stack order, its arguments removed by this function: copies the four dwords +0xe..+0x1a, the bounds x0, y0, x1, y1, to the record's +0..+0xc and fills its words +0x10..+0x14 with Mouse_GetSensitivity (00055b34)(record). VSHELL's MouseDriver_GetBounds (00405446), without the sensitivity. es2_xref finds three calls, from DVMouse_Init (0006bd10) and Input_BuildSourceTable (0004c95c).",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver",
+      "verified": {
+        "bytes": "0006bdbc+52",
+        "sha1": "582def5f2e8a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006bdf0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MouseDriver_SetBounds",
+      "description": "(mouse, record) in stack order, its arguments removed by this function: copies the record's four dwords to +0xe..+0x1a, its dword +0x10 to +0x1e and its bytes +0x14 and +0x15 to +0x22 and +0x23, and calls Mouse_SetLimitsAndSensitivity (00055aee)(record). VSHELL's MouseDriver_SetBounds (00405470), with the sensitivity copied as three words and without the driver call. es2_xref finds three calls, from DVMouse_Init (0006bd10), DVMouse_Shutdown (0006bd84) and Input_BuildSourceTable (0004c95c).",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver",
+      "verified": {
+        "bytes": "0006bdf0+40",
+        "sha1": "1f76b0072d5a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006be18",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MouseDriver_GetBoundsRect",
+      "description": "(mouse, rect) in stack order, its arguments removed by this function: copies the four dwords +0xe..+0x1a to the rect. VSHELL's MouseDriver_GetBoundsRect (004054b2). es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver",
+      "verified": {
+        "bytes": "0006be18+40",
+        "sha1": "461bbb1eb436",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006be40",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MouseDriver_SetBoundsRect",
+      "description": "(mouse, rect) in stack order, its arguments removed by this function: copies the rect's four dwords to +0xe..+0x1a and calls Mouse_SetLimits (00055b53)(rect). VSHELL's MouseDriver_SetBoundsRect (004054dc), without the driver call. es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver",
+      "verified": {
+        "bytes": "0006be40+52",
+        "sha1": "56a676a562c2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0006be74",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -33668,13 +34403,112 @@
       "source": "es1_naming.py vtables ES1DBSIM; the image at 00093aae"
     },
     {
+      "address": "00094b84",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Widget_ClickButtons",
+      "description": "int16: the mouse buttons of the record CockpitMouse_ProcessQueue (000444d0) is on, with bit 0 or 1 added on a left or right release; what the button classes' value slots return, and what Widget_OnMouseUp (00043eac) tests for the right button. ES2's 0049db6c.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-frames-mouse-events--cockpitmouse_processqueue-000444d0"
+    },
+    {
+      "address": "00094bde",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CTLWindowVtable",
+      "description": "The root widget's vtable, which CTLWindow_Ctor (00043cac) stores at +0x352: 0 at +0, CTLWindow_Slot00NoOp (00043d96) at +4, 0 at +8 and +0xc. ES2's CTLWindowVtable (DBSIM 0049db7a).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-root-widget--ctlwindow_ctor-00043cac"
+    },
+    {
+      "address": "00094c52",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouse_CallbackSlot",
+      "description": "int16: the slot Mouse_AddCallback returned to CockpitMouse_Init (000441cc), which CockpitMouse_Shutdown (000442fc) passes to Mouse_RemoveCallback.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-callback-and-the-queue"
+    },
+    {
+      "address": "00094c54",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Widget_ActiveRoot",
+      "description": "The root widget CockpitMouse_ProcessQueue (000444d0) hit-tests against: Widget_ClearPressed (00044310) stores it, CockpitMouse_Init (000441cc) clears it. ES2's 0049dbd8.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-root-widget--ctlwindow_ctor-00043cac"
+    },
+    {
+      "address": "00094c58",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Widget_PressedIndex",
+      "description": "int16: the index in the active root's list of the widget a left press is held on, -1 for none. Widget_OnMouseDown (00043e00) and Widget_OnMouseUp (00043eac) store the hit test's answer in it. ES2's Widget_PressedIndex (DBSIM 0049dbdc).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#press-release-and-drag"
+    },
+    {
+      "address": "00094c5a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Widget_DragCapture",
+      "description": "Byte: set by Widget_OnMouseDown (00043e00) when the pressed widget's int16 +0x19 is 1; while it is set CockpitMouse_ProcessQueue (000444d0) hands each move to the widget's drag slot +0x1c and a release to its value and click slots, and clears it. ES2's Widget_DragCapture (DBSIM 0049dbde).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#press-release-and-drag"
+    },
+    {
       "address": "00094c5b",
       "binary": "ES1DBSIM",
       "type": "data",
       "confidence": "high",
       "name": "Cursor_FollowsMouse",
-      "description": "byte: the mouse callback at 00044464 passes the pointer's position to Cursor_SyncPosition (000669dc) only while it is set. CockpitView_StepViewTransition (00022904) clears it for the external view and sets it on the return. es2_xref finds it also read by 000444d0 and 00045f00 and written by 00045f00, 000460b8 and 00057820.",
+      "description": "byte: the mouse callback at CockpitMouse_OnEvent (00044464) passes the pointer's position to Cursor_SyncPosition (000669dc) only while it is set. CockpitView_StepViewTransition (00022904) clears it for the external view and sets it on the return. es2_xref finds it also read by CockpitMouse_ProcessQueue (000444d0) and 00045f00 and written by 00045f00, 000460b8 and 00057820.",
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#cockpitview_stepviewtransition-00022904"
+    },
+    {
+      "address": "00094c5c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouse_DoubleClick",
+      "description": "Byte: cleared by CockpitMouse_ProcessQueue (000444d0) for each record and set for a release that comes within CockpitMouse_DoubleClickTicks (000bd518) of that button's previous release. es2_xref finds reads in 0003a46c, 0003ac04 and 0003fed8. ES2's CockpitMouse_DoubleClick (DBSIM 0049dbe0).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-frames-mouse-events--cockpitmouse_processqueue-000444d0"
+    },
+    {
+      "address": "00094c60",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouse_LastLeftRelease",
+      "description": "The time, in counts of the clock 000981c4, of the left button's last release, which CockpitMouse_ProcessQueue (000444d0) keeps for the double-click test. ES2's CockpitMouse_LastLeftRelease (DBSIM 0049dbe4).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-frames-mouse-events--cockpitmouse_processqueue-000444d0"
+    },
+    {
+      "address": "00094c64",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouse_LastRightRelease",
+      "description": "The time, in counts of the clock 000981c4, of the right button's last release, which CockpitMouse_ProcessQueue (000444d0) keeps for the double-click test. ES2's CockpitMouse_LastRightRelease (DBSIM 0049dbe8).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-frames-mouse-events--cockpitmouse_processqueue-000444d0"
+    },
+    {
+      "address": "00094c6a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CTLWindowVtableCockpitMouseCopy",
+      "description": "The cockpit mouse file's copy of CTLWindowVtable (00094bde), which WidgetRoot_Delete (00044350) stores: 0 at +0 and CTLWindow_Slot00NoOpCockpitMouseCopy (00044383) at +4.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-root-widget--ctlwindow_ctor-00043cac"
+    },
+    {
+      "address": "00094cc8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouse_LastEventTime",
+      "description": "The clock 000981c4 at the last mouse event CockpitMouse_OnEvent (00044464) took while the queue was live; a move with the buttons unchanged is queued only when the clock has passed it.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-callback-and-the-queue"
     },
     {
       "address": "000956bf",
@@ -35153,6 +35987,24 @@
       "source": "Herculan/docs/es1/simulation/mfd-nav-map.md#where-the-object-file-starts-and-ends; es2_xref finds 00036c05, 00036d38 and 00036e9f"
     },
     {
+      "address": "000b16c0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouse_LastPoint",
+      "description": "Two int32: the pointer of the last record CockpitMouse_ProcessQueue (000444d0) found at a new position. CockpitMouse_Init (000441cc) zeroes them.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-frames-mouse-events--cockpitmouse_processqueue-000444d0"
+    },
+    {
+      "address": "000b16d4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouse_CanvasPoint",
+      "description": "Two int32: the last record's point less the active root's viewport origin (+0x227, +0x22b), which CockpitMouse_ProcessQueue (000444d0) stores on a move, a left press and a release. es2_xref finds its address pushed by Gunsight_ClickGadget_OnClick (000337dc), 0003b088 and 0004208c.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-frames-mouse-events--cockpitmouse_processqueue-000444d0"
+    },
+    {
       "address": "000b1734",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -36449,13 +37301,85 @@
       "source": "ES1DBSIM decompile at 0002b46c"
     },
     {
+      "address": "000bd50e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouse_LeftHeld",
+      "description": "Byte: 1 from a record with the left button down to one with it up, as CockpitMouse_ProcessQueue (000444d0) finds the press and release edges.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-frames-mouse-events--cockpitmouse_processqueue-000444d0"
+    },
+    {
+      "address": "000bd510",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouse_RightHeld",
+      "description": "Byte: 1 from a record with the right button down to one with it up, as CockpitMouse_ProcessQueue (000444d0) finds the press and release edges.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-frames-mouse-events--cockpitmouse_processqueue-000444d0"
+    },
+    {
       "address": "000bd512",
       "binary": "ES1DBSIM",
       "type": "data",
-      "confidence": "medium",
-      "name": "maybe_CockpitMouseLive",
-      "description": "byte: Sim_StartMission clears it and sets it at the end unless a tape plays, the tape's end sets it, and Sim_Shutdown clears it, where ES2's set and clear CockpitMouseLive.",
+      "confidence": "high",
+      "name": "CockpitMouseLive",
+      "description": "byte: CockpitMouse_OnEvent (00044464) queues nothing while it is clear. Sim_StartMission clears it and sets it at the end unless a tape plays, the tape's end sets it, and Sim_Shutdown clears it, as ES2's set and clear CockpitMouseLive.",
       "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000bd518",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouse_DoubleClickTicks",
+      "description": "The double-click window in counts of the clock 000981c4: CockpitMouse_Init (000441cc) sets it to the timer's interrupts a second halved, 60 with the simulator's divisor, so one second. ES2's CockpitMouse_DoubleClickTicks (DBSIM 004d1e70).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-callback-and-the-queue"
+    },
+    {
+      "address": "000bd520",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouseQueueA",
+      "description": "One of the two mouse queues CockpitMouse_Init (000441cc) makes: the int32 count, then at 000bd524 the buffer of 100 records of 14 bytes.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-callback-and-the-queue"
+    },
+    {
+      "address": "000bd528",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouseQueueB",
+      "description": "The other of the two mouse queues CockpitMouse_Init (000441cc) makes: the int32 count, then at 000bd52c the buffer of 100 records of 14 bytes.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-callback-and-the-queue"
+    },
+    {
+      "address": "000bd530",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouseQueue_Back",
+      "description": "The queue CockpitMouseQueue_Push (00044830) appends to; CockpitMouse_ProcessQueue (000444d0) swaps it with CockpitMouseQueue_Front (000bd534) once a tick.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-callback-and-the-queue"
+    },
+    {
+      "address": "000bd534",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouseQueue_Front",
+      "description": "The queue CockpitMouse_ProcessQueue (000444d0) drains after swapping it with CockpitMouseQueue_Back (000bd530), and returns.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-callback-and-the-queue"
+    },
+    {
+      "address": "000bd538",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouse_LastButtons",
+      "description": "The buttons of the last mouse event CockpitMouse_OnEvent (00044464) took; a change of them is always queued.",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-callback-and-the-queue"
     },
     {
       "address": "000bd598",
