@@ -10,8 +10,8 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// Builds again what the editor holds by <c>script.dat</c> block index after an edit that adds or removes <c>.MSN</c>
 /// records: an add, a delete, and the undo and redo of either (<see cref="RecordsEdit"/>). Removing a record moves every
-/// later generated record of its block down one, and an add's records are exported last, so the indices the index, the
-/// scene objects' placements and the selection hold no longer name what they named
+/// later generated record of its block down one, and an add's records are exported last, so the indices the index and the
+/// scene objects' placements hold no longer name what they named
 /// (docs/herculan/handoff-editor-document.md#rebuilding-after-an-edit).
 ///
 /// <para>A rebuild loads a <see cref="Mission"/> from the generated <c>script.dat</c> (<see cref="MissionLoader.Load(GameContent, ScriptDat, string)"/>)
@@ -29,23 +29,12 @@ namespace Herculan.Engine.Editor;
 /// <para>The generated <c>mission.str</c> is written over the handoff's before the load, so the mission's text is the
 /// generation's after a text edit.</para>
 ///
-/// <para>The selection survives when what it names does: an object by identity, or else the object now standing for the
-/// same record; a group by its row-16 GUID, a route by its row-8 GUID, a trigger area by its row-9 GUID, an action by its row-10
-/// GUID, a timer by its row-11 GUID, a condition by its row-1 GUID, and an objective by its row-17 record; anything else is checked against the new index,
-/// and is cleared when it is gone.</para>
+/// <para>A selection names a <c>.MSN</c> record, so it needs no mapping: it is kept while the <c>.MSN</c> has its record
+/// (<see cref="EditorSelection.InFile"/>), a route's waypoint while the route still has one there, and is cleared
+/// otherwise. An object is kept by identity, or else as the object now standing for the same record, and is cleared when
+/// none does.</para>
 /// </summary>
 internal sealed class MissionRebuild {
-	private const int RouteBlock = 3;
-	private const int AreaBlock = 4;
-	private const int ActionBlock = 5;
-	private const int TimerBlock = 6;
-	private const int RouteRow = 8;
-	private const int AreaRow = 9;
-	private const int ActionRow = 10;
-	private const int TimerRow = 11;
-	private const int GroupBlock = 11;
-	private const int GroupRow = 16;
-
 	// The squad's objects are keyed under this row, by their order in player.mec.
 	private const int SquadRow = 0;
 
@@ -104,14 +93,8 @@ internal sealed class MissionRebuild {
 	public T Run<T>(Func<T> edit) {
 		var source = _source;
 		Remember(source);
-		short selectedGroup = _selection.Current is GroupSelection { Group: var group } ? source.GuidOf(GroupBlock, group) : (short)-1;
-		short selectedRoute = _selection.Current is RouteSelection { Route: var route } ? source.GuidOf(RouteBlock, route) : (short)-1;
-		short selectedArea = _selection.Current is AreaSelection { Area: var area } ? source.GuidOf(AreaBlock, area) : (short)-1;
-		short selectedAction = _selection.Current is ActionSelection { Action: var action } ? source.GuidOf(ActionBlock, action) : (short)-1;
-		short selectedTimer = _selection.Current is TimerSelection { Timer: var timer } ? source.GuidOf(TimerBlock, timer) : (short)-1;
-		var selectedObjective = SelectedObjective(source);
 		var result = edit();
-		Rebuild(source, new SelectedKeys(selectedGroup, selectedRoute, selectedArea, selectedAction, selectedTimer), selectedObjective);
+		Rebuild(source);
 		return result;
 	}
 
@@ -146,10 +129,7 @@ internal sealed class MissionRebuild {
 		}
 	}
 
-	// The GUIDs that keep a selected group, route, trigger area, action or timer selected across a rebuild, -1 for none.
-	private readonly record struct SelectedKeys(short Group, short Route, short Area, short Action, short Timer);
-
-	private void Rebuild(MissionDocument source, SelectedKeys selected, SelectedObjectiveRecord? selectedObjective) {
+	private void Rebuild(MissionDocument source) {
 		// The squad the launch would build from this generation, which the load below places, and the text the load reads.
 		if (Squad.PlayerMec(source.Generator) is { } squadFile) {
 			File.WriteAllBytes(MissionLoader.PlayerPathFor(_scene.Mission.SourcePath), squadFile);
@@ -197,33 +177,8 @@ internal sealed class MissionRebuild {
 			Added?.Invoke(joined);
 		}
 
-		Reselect(source, selected, selectedObjective, replacing);
+		Reselect(source, replacing);
 		Rebuilt?.Invoke();
-	}
-
-	// The selected objective's row-17 record, which keeps it selected across the edit: the record itself, which an edit
-	// keeps as it is, its index in the row, and the row's length, which an undo or redo restores copies of.
-	private sealed record SelectedObjectiveRecord(MissionObjective58 Record, int Index, int RowLength);
-
-	private SelectedObjectiveRecord? SelectedObjective(MissionDocument source) =>
-		_selection.Current is ObjectiveSelection { Objective: var objective } && ObjectiveEditing.RecordOf(source, objective) is { } index
-				&& source.Mission.Objectives is { } row && row[index] is { } record
-			? new SelectedObjectiveRecord(record, index, row.Length)
-			: null;
-
-	// The block-12 index the objective <selected> stood for is exported at now: its record's, found by identity, or, when the
-	// row was put back as copies by an undo or redo, by its index while the row keeps its length; null when it is gone.
-	private static int? Objective(MissionDocument source, SelectedObjectiveRecord? selected) {
-		if (selected == null || source.Mission.Objectives is not { } row) {
-			return null;
-		}
-
-		int index = Array.FindIndex(row, record => ReferenceEquals(record, selected.Record));
-		if (index < 0 && row.Length == selected.RowLength) {
-			index = selected.Index;
-		}
-
-		return index >= 0 ? ObjectiveEditing.ExportedIndex(source, index) : null;
 	}
 
 	// The object built for the record a placement stands for, of the placement's type and weapon fit, and not yet placed
@@ -278,32 +233,19 @@ internal sealed class MissionRebuild {
 		return guid != -1 ? (block + 5, guid) : (-block, placement.SlotIndex);
 	}
 
-	// Keeps the selection on what it named, or on <replacing>, the object now standing for the record a selected object
-	// stood for; or clears it. A route is kept by its row-8 GUID, as a route delete moves every later route down one, and
-	// its waypoint while the route still has one there; a trigger area, an action and a timer by their row-9, 10 and 11 GUIDs
-	// likewise.
-	private void Reselect(MissionDocument source, SelectedKeys selected, SelectedObjectiveRecord? selectedObjective,
-			SceneObject? replacing) {
+	// Keeps the selection while the .MSN has the record it names, a route's waypoint while the route still has one there, and
+	// an object as it stands or as <replacing>, the object now standing for the record a selected object stood for; or
+	// clears it.
+	private void Reselect(MissionDocument source, SceneObject? replacing) {
 		_selection.Current = _selection.Current switch {
 			ObjectSelection { Object: var placed } when _index.Objects.Any(kept => ReferenceEquals(kept, placed)) => _selection.Current,
 			ObjectSelection when replacing != null => new ObjectSelection(replacing),
-			GroupSelection when selected.Group != -1 && source.ExportedIndex(GroupRow, selected.Group) is { } group =>
-				new GroupSelection(group),
-			AreaSelection when selected.Area != -1 && source.ExportedIndex(AreaRow, selected.Area) is { } area
-					&& _index.Area(area) != null =>
-				new AreaSelection(area),
-			RouteSelection { Waypoint: var waypoint } when selected.Route != -1
-					&& source.ExportedIndex(RouteRow, selected.Route) is { } route && _index.Route(route) is { } kept =>
-				new RouteSelection(route, waypoint < kept.Points.Count ? waypoint : -1),
-			ActionSelection when selected.Action != -1 && source.ExportedIndex(ActionRow, selected.Action) is { } action
-					&& action < _index.Mission.Actions.Count =>
-				new ActionSelection(action),
-			TimerSelection when selected.Timer != -1 && source.ExportedIndex(TimerRow, selected.Timer) is { } timer
-					&& timer < _index.Mission.ActionTimers.Count =>
-				new TimerSelection(timer),
-			ObjectiveSelection when Objective(source, selectedObjective) is { } objective => new ObjectiveSelection(objective),
-			ConditionSelection { Guid: var condition } when ConditionEditing.IndexOf(source, condition) != null => _selection.Current,
 			MissionSelection => _selection.Current,
+			RouteSelection { Waypoint: >= 0 } route when EditorSelection.InFile(source.Mission, route) =>
+				_index.Records.Route(route.Guid) is { } kept && route.Waypoint < _index.Route(kept)?.Points.Count
+					? route
+					: route with { Waypoint = -1 },
+			{ } selected when EditorSelection.InFile(source.Mission, selected) => selected,
 			_ => null
 		};
 	}

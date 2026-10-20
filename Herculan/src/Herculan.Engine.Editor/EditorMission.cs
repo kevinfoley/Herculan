@@ -48,11 +48,11 @@ internal sealed class EditorMission {
 		Hercs = new HercPlacer(document, source, scene, index, Mover, Rebuild, Selection, Fitter, UnitTypeNames.LoadMechs(content));
 		Flyers = new FlyerPlacer(document, source, scene, index, Mover, Rebuild, Selection, UnitTypeNames.LoadFlyers(content));
 		Vehicles = new VehiclePlacer(document, source, index, Mover, Rebuild, Selection, Placer);
-		Orders = new OrderEditor(document, source, Mover, Rebuild);
-		Objectives = new ObjectiveEditor(source, Mover, Rebuild, Selection);
+		Orders = new OrderEditor(document, source, index.Records, Mover, Rebuild);
+		Objectives = new ObjectiveEditor(source, index.Records, Mover, Rebuild, Selection);
 		Texts = new MissionTextEditor(source, Mover, Rebuild);
-		Actions = new ActionEditor(source, Mover, Rebuild, Selection, Deleter);
-		Timers = new TimerEditor(source, Mover, Rebuild, Selection);
+		Actions = new ActionEditor(source, index.Records, Mover, Rebuild, Selection, Deleter);
+		Timers = new TimerEditor(source, index.Records, Mover, Rebuild, Selection);
 		Conditions = new ConditionEditor(source, index, Mover, Rebuild, Selection, Deleter);
 		Presence = new PresenceEditor(source, Mover, Rebuild, Selection, Deleter);
 		Variants = new VariantEditor(source, Mover, Rebuild, Selection);
@@ -211,7 +211,8 @@ internal sealed class EditorMission {
 			sceneObject.Object.Position = PointFollowers.Settled(scene.World.Terrain, sceneObject.Object, sceneObject.Object.Position);
 		}
 
-		var index = new MissionIndex(scene, document, SquadMessages.LoadCommand(content, scene.Mission.Header.TrainingMissionNumber));
+		var index = new MissionIndex(scene, document, new GeneratedRecords(source),
+			SquadMessages.LoadCommand(content, scene.Mission.Header.TrainingMissionNumber));
 		// The scene's own copy is not kept; a base pad's tile is sized by its material when the ground is levelled again.
 		return new EditorMission(content, name, document, source, scene, index, TerrainMaterialTable.Load(content), squad,
 			shellContent);

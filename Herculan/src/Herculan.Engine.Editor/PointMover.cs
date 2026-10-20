@@ -163,13 +163,18 @@ internal sealed class PointMover {
 
 	public bool CanRedo => History.CanRedo;
 
-	/// <summary>What <paramref name="selection"/> names that can be moved: a movable object, a waypoint or a group, else null.</summary>
+	/// <summary>
+	/// What <paramref name="selection"/> names that can be moved: a movable object, a waypoint or a group, else null; a
+	/// waypoint and a group by their generated index (<see cref="GeneratedRecords"/>), and none for one not shown in the editor.
+	/// </summary>
 	public MoveTarget? TargetOf(EditorSelection? selection) => selection switch {
 		ObjectSelection { Object: var selected } when WhyFixed(selected) == null => new ObjectTarget(selected),
-		RouteSelection { Waypoint: >= 0 } waypoint when _index.Route(waypoint.Route) is { } route
+		RouteSelection { Waypoint: >= 0 } waypoint when _index.Records.Route(waypoint.Guid) is { } reference
+				&& _index.Route(reference) is { } route
 				&& waypoint.Waypoint < route.Points.Count && _followers.WaypointEntries(route.Reference) != null =>
 			new WaypointTarget(route, waypoint.Waypoint, waypoint.Waypoint == 0 && route.Closed),
-		GroupSelection { Group: var group } when WhyFixed(group) == null => new GroupTarget(group),
+		GroupSelection { Guid: var guid } when _index.Records.Group(guid) is { } group && WhyFixed(group) == null =>
+			new GroupTarget(group),
 		_ => null
 	};
 
@@ -179,8 +184,9 @@ internal sealed class PointMover {
 	/// one target, or none.
 	/// </summary>
 	public IReadOnlyList<MoveTarget> TargetsOf(EditorSelection? selection) {
-		if (selection is AreaSelection { Area: var reference }) {
-			if (WhyFixedArea(reference) != null || _index.Area(reference) is not { } area) {
+		if (selection is AreaSelection { Guid: var guid }) {
+			if (_index.Records.Area(guid) is not { } reference || WhyFixedArea(reference) != null
+					|| _index.Area(reference) is not { } area) {
 				return [];
 			}
 

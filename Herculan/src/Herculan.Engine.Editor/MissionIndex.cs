@@ -89,8 +89,10 @@ internal sealed class MissionIndex {
 	private List<MissionSide> _sides = new();
 
 	/// <param name="document">The <c>script.dat</c> the scene was loaded from, whose block 3 lists the routes no order names.</param>
-	public MissionIndex(MissionScene scene, ScriptDat document, SquadMessages? commandMessages) {
+	/// <param name="records">Where each selection's record stands in <paramref name="document"/>.</param>
+	public MissionIndex(MissionScene scene, ScriptDat document, GeneratedRecords records, SquadMessages? commandMessages) {
 		_document = document;
+		Records = records;
 		CommandMessages = commandMessages;
 		Mission = scene.Mission;
 		Reload(scene.Mission, scene.Objects);
@@ -132,6 +134,9 @@ internal sealed class MissionIndex {
 	}
 
 	public Mission Mission { get; private set; }
+
+	/// <summary>Where each selection's record stands in the generated file this index is built over, and back.</summary>
+	public GeneratedRecords Records { get; }
 
 	/// <summary>
 	/// The speakerless message set an action's message is looked up in — <c>COMMAND&lt;n&gt;.STR</c>,

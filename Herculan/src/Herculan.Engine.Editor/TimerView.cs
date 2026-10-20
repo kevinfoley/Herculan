@@ -31,23 +31,24 @@ internal sealed class TimerView {
 
 	private Mission Mission => _index.Mission;
 
-	public void Draw(int timer) {
+	/// <summary>Row-11 GUID <paramref name="guid"/>'s view, the timer generated at block-6 index <paramref name="timer"/>.</summary>
+	public void Draw(short guid, int timer) {
 		if (timer < 0 || timer >= Mission.ActionTimers.Count || timer >= _document.ActionTimers.Length) {
 			return;
 		}
 
 		var record = Mission.ActionTimers[timer];
-		bool locked = _editor.WhyFixed(timer) != null;
+		bool locked = _editor.WhyFixed(guid) != null;
 		ImGui.Text($"Timer {timer}");
 		ImGui.Separator();
-		DrawStart(timer, record, locked);
-		DrawDelay(timer, _document.ActionTimers[timer].Delay, locked);
-		DrawFired(timer, record, locked);
+		DrawStart(guid, record, locked);
+		DrawDelay(guid, timer, _document.ActionTimers[timer].Delay, locked);
+		DrawFired(guid, record, locked);
 
 		ImGui.Separator();
 		ImGui.BeginDisabled(locked);
 		if (ImGui.Button("Delete")) {
-			_editor.RequestDelete(timer);
+			_editor.RequestDelete(guid);
 		}
 
 		ImGui.EndDisabled();
@@ -55,10 +56,10 @@ internal sealed class TimerView {
 	}
 
 	// The action that starts it, or none: then it counts down from mission start.
-	private void DrawStart(int timer, MissionActionTimer record, bool locked) {
+	private void DrawStart(short timer, MissionActionTimer record, bool locked) {
 		Label("Starts when");
 		ImGui.BeginDisabled(locked);
-		if (ActionChoice.Draw("##start", record.PrimaryActionRef, Mission.Actions.Count) is { } chosen) {
+		if (ActionChoice.Draw("##start", record.PrimaryActionRef, Mission.Actions.Count, _index.Records) is { } chosen) {
 			_editor.RequestStart(timer, chosen);
 		}
 
@@ -72,7 +73,8 @@ internal sealed class TimerView {
 	}
 
 	// The delay in seconds, a field applied when it lets go, kept to what the countdown holds.
-	private void DrawDelay(int timer, short seconds, bool locked) {
+	// The delay of the timer of row-11 GUID <guid>, generated at block-6 index <timer>.
+	private void DrawDelay(short guid, int timer, short seconds, bool locked) {
 		if (_delayFor is { } draftFor && draftFor != timer && !ImGui.IsAnyItemActive()) {
 			_delayFor = null;
 		}
@@ -89,7 +91,7 @@ internal sealed class TimerView {
 			_delayFor = null;
 			int draft = Math.Clamp(_delay, 0, TimerEditing.MaxDelay);
 			if (draft != seconds) {
-				_editor.RequestDelay(timer, draft);
+				_editor.RequestDelay(guid, draft);
 			}
 		}
 
@@ -98,7 +100,7 @@ internal sealed class TimerView {
 	}
 
 	// The actions it fires when it runs out, each a choice with Remove and a link, and Add after the last.
-	private void DrawFired(int timer, MissionActionTimer record, bool locked) {
+	private void DrawFired(short timer, MissionActionTimer record, bool locked) {
 		ImGui.Spacing();
 		ImGui.Text("When it runs out, fires:");
 		ImGui.Indent();
@@ -109,7 +111,7 @@ internal sealed class TimerView {
 			ImGui.BeginDisabled(locked);
 			ImGui.SetNextItemWidth(ScaledImGui.Scaled(150f));
 			if (action >= 0) {
-				if (ActionChoice.Draw("##fired", action, Mission.Actions.Count, offerNone: false) is { } chosen) {
+				if (ActionChoice.Draw("##fired", action, Mission.Actions.Count, _index.Records, offerNone: false) is { } chosen) {
 					_editor.RequestFired(timer, slot, chosen);
 				}
 			} else {
@@ -139,7 +141,7 @@ internal sealed class TimerView {
 		if (ImGui.BeginCombo("##addfired", "Add an action")) {
 			for (int action = 0; action < Mission.Actions.Count; action++) {
 				if (ImGui.Selectable($"Action {action}")) {
-					_editor.RequestAddFired(timer, action);
+					_editor.RequestAddFired(timer, _index.Records.ActionGuid(action));
 				}
 			}
 

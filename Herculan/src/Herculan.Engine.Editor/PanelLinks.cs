@@ -7,7 +7,9 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// The Properties panel's links: a clickable label per kind of record that selects it, so a view is also how a mission's
-/// wiring is walked. Each label is its own ImGui ID, unique within a view's ID scope (the views push one per repeated block).
+/// wiring is walked. A view names a record by its index in the generated <c>script.dat</c>, and the link selects the
+/// <c>.MSN</c> record that created it (<see cref="GeneratedRecords"/>). Each label is its own ImGui ID, unique within a
+/// view's ID scope (the views push one per repeated block).
 /// </summary>
 internal sealed class PanelLinks {
 	private static readonly Vector4 LinkColor = new(0.55f, 0.78f, 1f, 1f);
@@ -22,6 +24,8 @@ internal sealed class PanelLinks {
 
 	private Mission Mission => _index.Mission;
 
+	private GeneratedRecords Records => _index.Records;
+
 	/// <summary>A clickable label that selects <paramref name="target"/>.</summary>
 	public void Link(string label, EditorSelection target) {
 		ImGui.PushStyleColor(ImGuiCol.Text, LinkColor);
@@ -34,32 +38,40 @@ internal sealed class PanelLinks {
 
 	public void Object(SceneObject placed) => Link(MissionText.Describe(placed), new ObjectSelection(placed));
 
-	public void Group(int group) => Link(MissionText.DescribeGroup(_index, group), new GroupSelection(group));
+	/// <summary>Block-11 group <paramref name="group"/>.</summary>
+	public void Group(int group) => Link(MissionText.DescribeGroup(_index, group), Records.GroupAt(group));
 
 	/// <summary>A group by its identity alone, as a reference list shows it.</summary>
-	public void ShortGroup(int group) => Link(ShortGroupName(group), new GroupSelection(group));
+	public void ShortGroup(int group) => Link(ShortGroupName(group), Records.GroupAt(group));
 
 	/// <summary>A group's identity alone, as a reference list shows it.</summary>
 	public static string ShortGroupName(int group) => group == 0 ? "Group 0 (player squad)" : $"Group {group}";
 
-	public void Action(int action) => Link($"Action {action}", new ActionSelection(action));
+	/// <summary>Block-5 action <paramref name="action"/>.</summary>
+	public void Action(int action) => Link($"Action {action}", Records.ActionAt(action));
 
+	/// <summary>Block-4 trigger area <paramref name="area"/>.</summary>
 	public void Area(int area) {
 		string shape = _index.Area(area)?.Shape == MissionTriggerShape.Circle ? "circle" : "box";
-		Link($"Area {area} ({shape})", new AreaSelection(area));
+		Link($"Area {area} ({shape})", Records.AreaAt(area));
 	}
 
-	public void Route(int route) => Link($"Route {route}", new RouteSelection(route));
+	/// <summary>Block-3 route <paramref name="route"/>.</summary>
+	public void Route(int route) => Link($"Route {route}", Records.RouteAt(route));
 
-	/// <summary>A timer with its delay and what starts it.</summary>
+	/// <summary>Block-6 timer <paramref name="timer"/>, with its delay and what starts it.</summary>
 	public void Timer(int timer) =>
-		Link($"Timer {timer} ({MissionText.TimerSummary(Mission.ActionTimers[timer])})", new TimerSelection(timer));
+		Link($"Timer {timer} ({MissionText.TimerSummary(Mission.ActionTimers[timer])})", Records.TimerAt(timer));
 
 	/// <summary>A timer by its identity alone, as a reference list shows it.</summary>
-	public void ShortTimer(int timer) => Link($"Timer {timer}", new TimerSelection(timer));
+	public void ShortTimer(int timer) => Link($"Timer {timer}", Records.TimerAt(timer));
 
+	/// <summary>Block-12 objective <paramref name="objective"/>.</summary>
 	public void Objective(int objective) =>
-		Link(MissionText.DescribeObjective(Mission.Objectives[objective], objective), new ObjectiveSelection(objective));
+		Link(MissionText.DescribeObjective(Mission.Objectives[objective], objective), Records.ObjectiveAt(objective));
+
+	/// <summary>An objective by its identity alone, as a reference list shows it.</summary>
+	public void ShortObjective(int objective) => Link($"Objective {objective}", Records.ObjectiveAt(objective));
 
 	/// <summary>The object in roster slot <paramref name="slot"/> of <paramref name="kind"/>, or a note when nothing was placed there.</summary>
 	public void Slot(MissionUnitKind kind, int slot) {

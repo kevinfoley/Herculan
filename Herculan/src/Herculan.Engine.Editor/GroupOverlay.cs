@@ -54,19 +54,24 @@ internal sealed class GroupOverlay {
 	/// <summary>The objects the selection boxes: the selected object, a group's members, or an objective's subject.</summary>
 	private HashSet<Scene.SceneObject> HighlightedObjects(SelectionState selection) => selection.Current switch {
 		ObjectSelection selected => new HashSet<Scene.SceneObject> { selected.Object },
-		GroupSelection group when group.Group >= 0 && group.Group < _index.GroupMembers.Count =>
-			_index.GroupMembers[group.Group].ToHashSet(),
-		ObjectiveSelection objective when objective.Objective < Mission.Objectives.Count =>
-			_index.SubjectObjectsOf(Mission.Objectives[objective.Objective]).ToHashSet(),
+		GroupSelection selected when _index.Records.Group(selected.Guid) is { } group && group < _index.GroupMembers.Count =>
+			_index.GroupMembers[group].ToHashSet(),
+		ObjectiveSelection selected when _index.Records.Objective(selected.Record) is { } objective
+				&& objective < Mission.Objectives.Count =>
+			_index.SubjectObjectsOf(Mission.Objectives[objective]).ToHashSet(),
 		_ => new HashSet<Scene.SceneObject>()
 	};
+
+	// The block-11 index of the selected group, or null when a group is not selected or not shown in the editor.
+	private int? SelectedGroup(SelectionState selection) =>
+		selection.Current is GroupSelection { Guid: var guid } ? _index.Records.Group(guid) : null;
 
 	/// <summary>
 	/// The selected group's point as a post, its heading as an arrow on the ground, and a line from
 	/// the point to each of its orders' subjects.
 	/// </summary>
 	public void DrawSelectedGroup(WireframeRenderer wireframe, Camera camera, float aspect, SelectionState selection) {
-		if (selection.Current is not GroupSelection { Group: var group } || _index.SetupOf(group) is not { } setup) {
+		if (SelectedGroup(selection) is not { } group || _index.SetupOf(group) is not { } setup) {
 			return;
 		}
 
@@ -120,7 +125,7 @@ internal sealed class GroupOverlay {
 			}
 		}
 
-		if (selection.Current is GroupSelection { Group: var selected }) {
+		if (SelectedGroup(selection) is { } selected) {
 			foreach (var (slot, at) in Subjects(selected)) {
 				var order = Mission.GroupOrders[selected][slot]!;
 				StackedLabel(at, $"order {slot}: {MissionText.OrderVerb(order.Verb)}", SubjectColor);

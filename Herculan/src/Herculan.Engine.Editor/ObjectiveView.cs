@@ -23,8 +23,8 @@ internal sealed class ObjectiveView {
 	private readonly PresentWhenView _presentWhen;
 	private readonly PresenceEditor _presence;
 
-	// A counter being typed, and the objective and pair it is for, until its field lets go.
-	private (int Objective, int Slot)? _counterFor;
+	// A counter being typed, and the row-17 record and pair it is for, until its field lets go.
+	private (int Record, int Slot)? _counterFor;
 	private int _counter;
 
 	/// <param name="document">The generated <c>script.dat</c>, whose records the view offers as subjects.</param>
@@ -46,13 +46,14 @@ internal sealed class ObjectiveView {
 
 	private Mission Mission => _index.Mission;
 
-	public void Draw(int index) {
+	/// <summary>Row-17 record <paramref name="record"/>'s view, the objective generated at block-12 index <paramref name="index"/>.</summary>
+	public void Draw(int record, int index) {
 		if (index < 0 || index >= Mission.Objectives.Count) {
 			return;
 		}
 
 		var objective = Mission.Objectives[index];
-		bool locked = _editor.WhyFixed(index) != null;
+		bool locked = _editor.WhyFixed(record) != null;
 
 		ImGui.Text($"Objective {index}");
 		_presentWhen.Draw(_presence.ObjectiveTarget(index));
@@ -60,38 +61,38 @@ internal sealed class ObjectiveView {
 		ImGui.BeginDisabled(locked);
 		bool mandatory = objective.Required == MissionObjective.Mandatory;
 		if (ImGui.RadioButton("Mandatory", mandatory) && !mandatory) {
-			_editor.RequestRequired(index, true);
+			_editor.RequestRequired(record, true);
 		}
 
 		ImGui.SameLine();
 		if (ImGui.RadioButton("Failure condition", !mandatory) && mandatory) {
-			_editor.RequestRequired(index, false);
+			_editor.RequestRequired(record, false);
 		}
 
 		ImGui.EndDisabled();
 		EditorText.Note(mandatory ? "The mission needs this to come true." : "The mission is lost the moment this comes true.");
 
-		DrawSubject(index, objective, locked);
-		DrawCondition(index, objective, locked);
+		DrawSubject(record, objective, locked);
+		DrawCondition(record, objective, locked);
 		if (objective.ConditionCode == MissionObjective.ConditionOrderComplete) {
-			DrawRoute(index, objective, locked);
+			DrawRoute(record, objective, locked);
 		}
 
-		DrawText(index, mandatory, locked);
-		DrawCounters(index, objective, locked);
-		DrawDelete(index);
+		DrawText(record, index, mandatory, locked);
+		DrawCounters(record, objective, locked);
+		DrawDelete(record);
 		EditorText.Reason(_editor.Failure);
 	}
 
-	private void DrawSubject(int index, MissionObjective objective, bool locked) {
+	private void DrawSubject(int record, MissionObjective objective, bool locked) {
 		ImGui.Spacing();
 		short kind = (short)objective.SubjectKind;
 		Label("Subject");
 		ImGui.BeginDisabled(locked);
 		if (ImGui.BeginCombo("##subject", MissionText.SubjectName(_index, kind, objective.SubjectRef))) {
-			Choices(index, kind, objective.SubjectRef, ObjectiveEditing.GroupSubject, _document.Groups.Length);
-			Choices(index, kind, objective.SubjectRef, ObjectiveEditing.HercSubject, _document.Mechs.Length);
-			Choices(index, kind, objective.SubjectRef, ObjectiveEditing.StructureSubject, _document.Bases.Length);
+			Choices(record, kind, objective.SubjectRef, ObjectiveEditing.GroupSubject, _document.Groups.Length);
+			Choices(record, kind, objective.SubjectRef, ObjectiveEditing.HercSubject, _document.Mechs.Length);
+			Choices(record, kind, objective.SubjectRef, ObjectiveEditing.StructureSubject, _document.Bases.Length);
 			ImGui.EndCombo();
 		}
 
@@ -106,7 +107,7 @@ internal sealed class ObjectiveView {
 	}
 
 	// The records of subject kind <choiceKind> the combo offers, under a heading.
-	private void Choices(int index, short kind, int subject, short choiceKind, int count) {
+	private void Choices(int record, short kind, int subject, short choiceKind, int count) {
 		if (count == 0) {
 			return;
 		}
@@ -120,19 +121,19 @@ internal sealed class ObjectiveView {
 		for (int i = 0; i < count; i++) {
 			bool current = kind == choiceKind && subject == i;
 			if (ImGui.Selectable($"{MissionText.SubjectName(_index, choiceKind, i)}##{choiceKind}.{i}", current) && !current) {
-				_editor.RequestSubject(index, choiceKind, i);
+				_editor.RequestSubject(record, choiceKind, _index.Records.SubjectGuid(choiceKind, i));
 			}
 		}
 	}
 
-	private void DrawCondition(int index, MissionObjective objective, bool locked) {
+	private void DrawCondition(int record, MissionObjective objective, bool locked) {
 		bool groupSubject = objective.SubjectKind == MissionObjectiveSubject.Group;
 		Label("Condition");
 		ImGui.BeginDisabled(locked);
 		if (ImGui.BeginCombo("##condition", Condition(objective.ConditionCode, groupSubject))) {
 			foreach (short code in ObjectiveEditing.Conditions) {
 				if (ImGui.Selectable(Condition(code, groupSubject), code == objective.ConditionCode) && code != objective.ConditionCode) {
-					_editor.RequestCondition(index, code);
+					_editor.RequestCondition(record, code);
 				}
 			}
 
@@ -149,14 +150,14 @@ internal sealed class ObjectiveView {
 	private static string Condition(short code, bool groupSubject) => $"{code}: {MissionText.ObjectiveCondition(code, groupSubject)}";
 
 	// Condition 0's route, offered from the routes the subject's group's orders run, and the order slot it reads.
-	private void DrawRoute(int index, MissionObjective objective, bool locked) {
-		var choices = _editor.RouteChoices(index);
+	private void DrawRoute(int record, MissionObjective objective, bool locked) {
+		var choices = _editor.RouteChoices(record);
 		Label("Route");
 		ImGui.BeginDisabled(locked || choices.Count == 0);
 		if (ImGui.BeginCombo("##route", objective.RouteRef >= 0 ? $"Route {objective.RouteRef}" : "None")) {
 			foreach (int route in choices) {
 				if (ImGui.Selectable($"Route {route}", route == objective.RouteRef) && route != objective.RouteRef) {
-					_editor.RequestRoute(index, route);
+					_editor.RequestRoute(record, _index.Records.RouteGuid(route));
 				}
 			}
 
@@ -185,14 +186,14 @@ internal sealed class ObjectiveView {
 	}
 
 	// The three lines of the failure text, each a field that applies when it lets go.
-	private void DrawText(int index, bool mandatory, bool locked) {
+	private void DrawText(int record, int index, bool mandatory, bool locked) {
 		ImGui.Separator();
 		ImGui.Text("Failure text:");
 		EditorText.Note(mandatory
 			? "The status alert shows it while this is the first mandatory objective not yet true, up to its first empty line."
 			: "Never shown: the status alert shows only a mandatory objective's text.");
 
-		var lines = _editor.FailureLines(index);
+		var lines = _editor.FailureLines(record);
 		if (locked) {
 			// An objective no record of the .MSN supplies, as its mission.str has it.
 			foreach (string line in Mission.DescriptionOf(Mission.Objectives[index]).Where(line => line.Length > 0)) {
@@ -203,10 +204,10 @@ internal sealed class ObjectiveView {
 		}
 
 		if (lines.Count == 0) {
-			string? why = _editor.WhyNoGiveText(index);
+			string? why = _editor.WhyNoGiveText(record);
 			ImGui.BeginDisabled(why != null);
 			if (ImGui.Button("Add a failure text")) {
-				_editor.RequestGiveText(index);
+				_editor.RequestGiveText(record);
 			}
 
 			ImGui.EndDisabled();
@@ -214,7 +215,7 @@ internal sealed class ObjectiveView {
 			return;
 		}
 
-		if (_editor.TextShared(index)) {
+		if (_editor.TextShared(record)) {
 			EditorText.Note("Another record uses this text too: a change here gives this objective its own copy.");
 		}
 
@@ -224,14 +225,14 @@ internal sealed class ObjectiveView {
 				continue;
 			}
 
-			if (_lines.Draw($"##failure{line}", $"{index}.{line}", text) is { } typed) {
-				_editor.RequestText(index, line, typed);
+			if (_lines.Draw($"##failure{line}", $"{record}.{line}", text) is { } typed) {
+				_editor.RequestText(record, line, typed);
 			}
 		}
 	}
 
 	// The counter writes, each a counter field and an operation, with Remove, and Add after the last.
-	private void DrawCounters(int index, MissionObjective objective, bool locked) {
+	private void DrawCounters(int record, MissionObjective objective, bool locked) {
 		ImGui.Separator();
 		ImGui.Text("The first time it comes true:");
 		int filled = 0;
@@ -242,7 +243,7 @@ internal sealed class ObjectiveView {
 
 			filled++;
 			ImGui.PushID($"pair{slot}");
-			DrawPair(index, slot, objective.CounterRefs[slot], objective.CounterOps[slot], locked);
+			DrawPair(record, slot, objective.CounterRefs[slot], objective.CounterOps[slot], locked);
 			ImGui.PopID();
 		}
 
@@ -250,32 +251,32 @@ internal sealed class ObjectiveView {
 			EditorText.Note("It writes no counter.");
 		}
 
-		string? why = _editor.WhyNoAddPair(index);
+		string? why = _editor.WhyNoAddPair(record);
 		ImGui.BeginDisabled(why != null);
 		if (ImGui.Button("Add a counter write")) {
-			_editor.RequestAddPair(index);
+			_editor.RequestAddPair(record);
 		}
 
 		ImGui.EndDisabled();
 		EditorText.Reason(why);
 	}
 
-	private void DrawPair(int index, int slot, short counter, short op, bool locked) {
+	private void DrawPair(int record, int slot, short counter, short op, bool locked) {
 		ImGui.BeginDisabled(locked);
 		ImGui.AlignTextToFramePadding();
 		ImGui.Text("Counter");
 		ImGui.SameLine();
-		int shown = _counterFor == (index, slot) ? _counter : counter;
+		int shown = _counterFor == (record, slot) ? _counter : counter;
 		ImGui.SetNextItemWidth(ScaledImGui.Scaled(60f));
 		if (ImGui.InputInt("##counter", ref shown, 0, 0)) {
-			_counterFor = (index, slot);
+			_counterFor = (record, slot);
 			_counter = shown;
 		}
 
-		if (ImGui.IsItemDeactivatedAfterEdit() && _counterFor == (index, slot)) {
+		if (ImGui.IsItemDeactivatedAfterEdit() && _counterFor == (record, slot)) {
 			_counterFor = null;
 			if (_counter != counter) {
-				_editor.RequestPair(index, slot, (short)Math.Clamp(_counter, 0, ObjectiveEditing.Counters - 1), Op(op));
+				_editor.RequestPair(record, slot, (short)Math.Clamp(_counter, 0, ObjectiveEditing.Counters - 1), Op(op));
 			}
 		}
 
@@ -284,7 +285,7 @@ internal sealed class ObjectiveView {
 		if (ImGui.BeginCombo("##op", MissionText.ObjectiveCounterOp(op))) {
 			for (short choice = ObjectiveEditing.CounterSet; choice <= ObjectiveEditing.CounterDecrement; choice++) {
 				if (ImGui.Selectable(MissionText.ObjectiveCounterOp(choice), choice == op) && choice != op) {
-					_editor.RequestPair(index, slot, (short)Math.Clamp((int)counter, 0, ObjectiveEditing.Counters - 1), choice);
+					_editor.RequestPair(record, slot, (short)Math.Clamp((int)counter, 0, ObjectiveEditing.Counters - 1), choice);
 				}
 			}
 
@@ -293,7 +294,7 @@ internal sealed class ObjectiveView {
 
 		ImGui.SameLine();
 		if (ImGui.SmallButton("Remove")) {
-			_editor.RequestRemovePair(index, slot);
+			_editor.RequestRemovePair(record, slot);
 		}
 
 		ImGui.EndDisabled();
@@ -306,12 +307,12 @@ internal sealed class ObjectiveView {
 	private static short Op(short op) =>
 		op is >= ObjectiveEditing.CounterSet and <= ObjectiveEditing.CounterDecrement ? op : ObjectiveEditing.CounterIncrement;
 
-	private void DrawDelete(int index) {
+	private void DrawDelete(int record) {
 		ImGui.Separator();
-		string? why = _editor.WhyNoDelete(index);
+		string? why = _editor.WhyNoDelete(record);
 		ImGui.BeginDisabled(why != null);
 		if (ImGui.Button("Delete")) {
-			_editor.RequestDelete(index);
+			_editor.RequestDelete(record);
 		}
 
 		ImGui.EndDisabled();

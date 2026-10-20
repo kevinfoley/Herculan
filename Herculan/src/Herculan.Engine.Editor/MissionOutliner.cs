@@ -33,6 +33,8 @@ internal sealed class MissionOutliner {
 
 	private Mission Mission => _index.Mission;
 
+	private GeneratedRecords Records => _index.Records;
+
 	/// <summary>Lists <paramref name="lint"/>'s findings in place of the last ones, for a mission built again.</summary>
 	public void Recheck(MissionLint lint) => _lint = lint;
 
@@ -121,7 +123,7 @@ internal sealed class MissionOutliner {
 		for (int i = 0; i < Mission.ActionTimers.Count; i++) {
 			var timer = Mission.ActionTimers[i];
 			var fires = timer.SequenceRefs.Where(reference => reference >= 0 && reference < Mission.Actions.Count);
-			var selection = new TimerSelection(i);
+			var selection = Records.TimerAt(i);
 			Choose(selection, ImGui.Selectable($"Timer {i}: {MissionText.TimerSummary(timer)}, fires {string.Join(", ", fires)}##timer{i}",
 				_selection.Is(selection)));
 		}
@@ -161,7 +163,7 @@ internal sealed class MissionOutliner {
 		}
 
 		for (int i = 0; i < Mission.Objectives.Count; i++) {
-			var selection = new ObjectiveSelection(i);
+			var selection = Records.ObjectiveAt(i);
 			Choose(selection, WrappedSelectable(MissionText.DescribeObjective(Mission.Objectives[i], i), $"objective{i}",
 				_selection.Is(selection)));
 		}
@@ -240,7 +242,8 @@ internal sealed class MissionOutliner {
 				: string.Empty;
 
 			var flags = ImGuiTreeNodeFlags.OpenOnArrow | ImGuiTreeNodeFlags.SpanAvailWidth;
-			if (_selection.Is(new GroupSelection(group))) {
+			var selection = Records.GroupAt(group);
+			if (_selection.Is(selection)) {
 				flags |= ImGuiTreeNodeFlags.Selected;
 			}
 
@@ -249,16 +252,16 @@ internal sealed class MissionOutliner {
 			}
 
 			bool open = ImGui.TreeNodeEx($"{MissionText.DescribeGroup(_index, group)}: {members.Count}{waiting}##group{group}", flags);
-			Choose(new GroupSelection(group), ImGui.IsItemClicked() && !ImGui.IsItemToggledOpen());
+			Choose(selection, ImGui.IsItemClicked() && !ImGui.IsItemToggledOpen());
 
 			if (!open) {
 				continue;
 			}
 
 			foreach (var member in members) {
-				var selection = new ObjectSelection(member);
-				Choose(selection, ImGui.Selectable($"{MissionText.Describe(member)}##m{group}.{member.Placement.SlotIndex}",
-					_selection.Is(selection)));
+				var chosen = new ObjectSelection(member);
+				Choose(chosen, ImGui.Selectable($"{MissionText.Describe(member)}##m{group}.{member.Placement.SlotIndex}",
+					_selection.Is(chosen)));
 			}
 
 			ImGui.TreePop();
@@ -277,7 +280,7 @@ internal sealed class MissionOutliner {
 				: "box";
 			var testing = _index.ActionsTesting(area.Reference).ToList();
 			string actions = testing.Count > 0 ? $"action {string.Join(", ", testing)}" : "no action";
-			var selection = new AreaSelection(area.Reference);
+			var selection = Records.AreaAt(area.Reference);
 			Choose(selection, ImGui.Selectable($"Area {area.Reference}: {shape}, {actions}##area{area.Reference}",
 				_selection.Is(selection)));
 		}
@@ -299,7 +302,7 @@ internal sealed class MissionOutliner {
 			var links = _index.LinksOf(i);
 			string trigger = action.Areas.Count > 0 ? $"{action.Areas.Count} area(s)" : "no area";
 			string effect = links.WaitingGroups.Count > 0 ? $", brings in {links.WaitingGroups.Count} group(s)" : string.Empty;
-			var selection = new ActionSelection(i);
+			var selection = Records.ActionAt(i);
 			Choose(selection, ImGui.Selectable($"Action {i}: {trigger}{effect}##action{i}", _selection.Is(selection)));
 		}
 	}
@@ -321,7 +324,7 @@ internal sealed class MissionOutliner {
 		foreach (var route in _index.Routes) {
 			string walkers = route.Walked ? $"groups {string.Join(", ", route.WalkedBy)}" : "never walked";
 			string shape = route.Closed ? "loop" : "open";
-			var selection = new RouteSelection(route.Reference);
+			var selection = Records.RouteAt(route.Reference);
 			Choose(selection, ImGui.Selectable($"Route {route.Reference}: {shape}, {walkers}##route{route.Reference}",
 				_selection.Is(selection)));
 		}

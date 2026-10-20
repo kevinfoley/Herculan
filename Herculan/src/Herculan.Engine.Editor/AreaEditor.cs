@@ -22,15 +22,12 @@ internal sealed record AreaDeleteBlockers(string? Fixed, DeleteNamers Names) {
 /// (docs/herculan/handoff-editor-document.md#the-tools). A corner, centre or radius
 /// move is <see cref="PointMover"/>'s, which rebuilds nothing.
 ///
-/// <para>Areas are taken by their block-4 index, as the panels list them, and written as the row-9 GUID of the record that
-/// created the slot. The edits wait for the frame's ImGui to be rendered (<see cref="RunRequest"/>), since the rebuild
+/// <para>Areas are taken by their row-9 GUID, as the selections name them, and an area not shown in the editor is not
+/// edited. The edits wait for the frame's ImGui to be rendered (<see cref="RunRequest"/>), since the rebuild
 /// changes what the panels list; <see cref="AreaPlacing"/> calls <see cref="CreateBox"/> and <see cref="CreateCircle"/> at
 /// the same point of the frame.</para>
 /// </summary>
 internal sealed class AreaEditor {
-	private const int AreaBlock = 4;
-	private const int AreaRow = 9;
-
 	private readonly MissionDocument _source;
 	private readonly MissionIndex _index;
 	private readonly PointMover _mover;
@@ -52,37 +49,35 @@ internal sealed class AreaEditor {
 	/// <summary>Why the last edit run could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
-	/// <summary>Why area <paramref name="area"/> cannot be edited, or null when it can.</summary>
-	public string? WhyFixed(int area) => _mover.WhyFixedArea(area);
+	/// <summary>Why row-9 GUID <paramref name="area"/> cannot be edited, or null when it can.</summary>
+	public string? WhyFixed(short area) =>
+		_index.Records.Area(area) is { } reference ? _mover.WhyFixedArea(reference) : GeneratedRecords.NotShown;
 
 	/// <summary>What keeps <paramref name="area"/> from being deleted; <see cref="AreaDeleteBlockers.None"/> when nothing does.</summary>
-	public AreaDeleteBlockers BlockersOf(int area) {
+	public AreaDeleteBlockers BlockersOf(short area) {
 		if (WhyFixed(area) is { } reason) {
 			return AreaDeleteBlockers.Because(reason);
 		}
 
 		var source = _source;
-		var namers = TriggerAreaEditing.Namers(source, GuidOf(area));
+		var namers = TriggerAreaEditing.Namers(source, area);
 		return new AreaDeleteBlockers(null, _deleter.Resolve(source, new MsnNamers([], namers, [])));
 	}
 
 	/// <summary>Asks for <paramref name="area"/> to be a box (<paramref name="circle"/> false) or a circle.</summary>
-	public void RequestShape(int area, bool circle) {
-		short guid = GuidOf(area);
+	public void RequestShape(short area, bool circle) =>
 		_requested = () => WhyFixed(area)
-			?? Commit(() => TriggerAreaEditing.SetShape(_source, guid, circle ? TriggerAreaEditing.Circle : TriggerAreaEditing.Box), guid);
-	}
+			?? Commit(() => TriggerAreaEditing.SetShape(_source, area, circle ? TriggerAreaEditing.Circle : TriggerAreaEditing.Box), area);
 
 	/// <summary>Asks for <paramref name="area"/> to be deleted.</summary>
-	public void RequestDelete(int area) {
-		short guid = GuidOf(area);
+	public void RequestDelete(short area) {
 		_requested = () => {
 			var blockers = BlockersOf(area);
 			if (!blockers.None) {
 				return blockers.Fixed ?? "An action references it; its view says which.";
 			}
 
-			return Commit(() => TriggerAreaEditing.Delete(_source, guid), -1);
+			return Commit(() => TriggerAreaEditing.Delete(_source, area), -1);
 		};
 	}
 
@@ -120,13 +115,10 @@ internal sealed class AreaEditor {
 		return Commit(() => TriggerAreaEditing.CreateCircle(_source, (centre.X, centre.Y), radius, out area), () => area);
 	}
 
-	// The row-9 GUID of block-4 area <area>, or -1.
-	private short GuidOf(int area) => _source.GuidOf(AreaBlock, area);
-
 	private string? Commit(Func<MsnEdit> edit, short area) => Commit(edit, () => area);
 
 	// Makes the change, rebuilding from it, records it as one step of the history and selects the area of row-9 GUID
-	// <area> where it is exported now; an area that is gone leaves the selection to the rebuild.
+	// <area>; an area that is gone (-1) leaves the selection to the rebuild.
 	private string? Commit(Func<MsnEdit> edit, Func<short> area) {
 		MsnEdit change;
 		try {
@@ -136,8 +128,8 @@ internal sealed class AreaEditor {
 		}
 
 		_mover.Record(new RecordsEdit(_rebuild, change));
-		if (area() is not -1 and var guid && _source.ExportedIndex(AreaRow, guid) is { } exported && _index.Area(exported) != null) {
-			_selection.Current = new AreaSelection(exported);
+		if (area() is not -1 and var guid) {
+			_selection.Current = new AreaSelection(guid);
 		}
 
 		return null;

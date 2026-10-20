@@ -461,19 +461,19 @@ public sealed class EditorHost {
 		if (key == Key.Delete && !control && !placing) {
 			if (_mission?.Selection.Current is ObjectSelection { Object: var selected }) {
 				_mission.Deleter.Request(selected);
-			} else if (_mission?.Selection.Current is RouteSelection { Route: var route, Waypoint: var waypoint }) {
+			} else if (_mission?.Selection.Current is RouteSelection { Guid: var route, Waypoint: var waypoint }) {
 				if (waypoint < 0) {
 					_mission.Routes.RequestDelete(route);
 				} else {
 					_mission.Routes.RequestRemove(route, waypoint);
 				}
-			} else if (_mission?.Selection.Current is ObjectiveSelection { Objective: var objective }) {
+			} else if (_mission?.Selection.Current is ObjectiveSelection { Record: var objective }) {
 				_mission.Objectives.RequestDelete(objective);
-			} else if (_mission?.Selection.Current is AreaSelection { Area: var area }) {
+			} else if (_mission?.Selection.Current is AreaSelection { Guid: var area }) {
 				_mission.Areas.RequestDelete(area);
-			} else if (_mission?.Selection.Current is ActionSelection { Action: var action }) {
+			} else if (_mission?.Selection.Current is ActionSelection { Guid: var action }) {
 				_mission.Actions.RequestDelete(action);
-			} else if (_mission?.Selection.Current is TimerSelection { Timer: var timer }) {
+			} else if (_mission?.Selection.Current is TimerSelection { Guid: var timer }) {
 				_mission.Timers.RequestDelete(timer);
 			} else if (_mission?.Selection.Current is ConditionSelection { Guid: var condition }) {
 				if (VariantEditing.IsTable(_mission.Source, condition)) {
@@ -696,12 +696,12 @@ public sealed class EditorHost {
 		_closePending = true;
 	}
 
-	// The herc, flyer or structure group the selection is, or a member of, which a Toolbox add can join, and the Toolbox
-	// entry kind its members are, whose join the Toolbox checks while no entry is chosen. The player's squad, group 0, is
-	// offered so the Toolbox can say why it takes no herc.
+	// The herc, flyer or structure group the selection is, or a member of, which a Toolbox add can join, by its block-11
+	// index, and the Toolbox entry kind its members are, whose join the Toolbox checks while no entry is chosen. The player's
+	// squad, group 0, is offered so the Toolbox can say why it takes no herc.
 	private static (int? Group, ToolboxKind Kind) JoinableGroup(EditorMission mission) {
 		int group = mission.Selection.Current switch {
-			GroupSelection selected => selected.Group,
+			GroupSelection selected => mission.Index.Records.Group(selected.Guid) ?? -1,
 			ObjectSelection { Object.Placement: var placement } => placement.GroupIndex,
 			_ => -1
 		};

@@ -6,11 +6,13 @@ namespace Herculan.Engine.Editor;
 internal static class ActionChoice {
 	/// <summary>
 	/// Draws a combo of None and each of <paramref name="count"/> actions, by block-5 index, showing <paramref name="current"/>
-	/// (<c>-1</c> for none), and answers the one chosen when it differs, or null. Without <paramref name="offerNone"/>, None is
-	/// left out, and <paramref name="whyNoNone"/>, when given, is said under the combo.
+	/// (<c>-1</c> for none), and answers the row-10 GUID of the one chosen when it differs (<c>-1</c> for None), or null.
+	/// Without <paramref name="offerNone"/>, None is left out, and <paramref name="whyNoNone"/>, when given, is said under the
+	/// combo.
 	/// </summary>
-	public static int? Draw(string id, int current, int count, bool offerNone = true, string? whyNoNone = null) {
-		int? chosen = null;
+	public static short? Draw(string id, int current, int count, GeneratedRecords records, bool offerNone = true,
+			string? whyNoNone = null) {
+		short? chosen = null;
 		if (ImGui.BeginCombo(id, current >= 0 ? $"Action {current}" : "None")) {
 			if (offerNone && ImGui.Selectable("None", current < 0) && current >= 0) {
 				chosen = -1;
@@ -18,7 +20,7 @@ internal static class ActionChoice {
 
 			for (int action = 0; action < count; action++) {
 				if (ImGui.Selectable($"Action {action}", action == current) && action != current) {
-					chosen = action;
+					chosen = records.ActionGuid(action);
 				}
 			}
 

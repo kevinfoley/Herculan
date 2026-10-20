@@ -38,8 +38,9 @@ internal sealed class RouteView {
 		_references = references;
 	}
 
-	public void Draw(RouteSelection selected) {
-		if (_index.Route(selected.Route) is not { } route) {
+	/// <summary><paramref name="selected"/>'s view, the route generated at block-3 index <paramref name="reference"/>.</summary>
+	public void Draw(RouteSelection selected, int reference) {
+		if (_index.Route(reference) is not { } route) {
 			return;
 		}
 
@@ -73,7 +74,7 @@ internal sealed class RouteView {
 			var point = route.Points[i];
 			bool isSelected = selected.Waypoint == i;
 			if (ImGui.Selectable($"{i}: {point.X}, {point.Y}##wp{i}", isSelected)) {
-				_selection.Current = new RouteSelection(route.Reference, i);
+				_selection.Current = selected with { Waypoint = i };
 			}
 		}
 
@@ -81,46 +82,46 @@ internal sealed class RouteView {
 			EditorText.Note($"The heads-down map marks waypoints 1 to {MarkedWaypoints - 1} of the player's route, and none after.");
 		}
 
-		DrawEdits(route, selected.Waypoint);
+		DrawEdits(route, selected.Guid, selected.Waypoint);
 		DrawMove(route, selected);
-		DrawDelete(route);
+		DrawDelete(selected.Guid);
 	}
 
-	// Add waypoints, Insert after, Remove, and Close or Open the loop.
-	private void DrawEdits(EditorRoute route, int waypoint) {
+	// Add waypoints, Insert after, Remove, and Close or Open the loop, of <route>, row-8 GUID <guid>.
+	private void DrawEdits(EditorRoute route, short guid, int waypoint) {
 		ImGui.Separator();
-		if (_editor.WhyFixed(route.Reference) is { } reason) {
+		if (_editor.WhyFixed(guid) is { } reason) {
 			EditorText.Reason(reason);
 			return;
 		}
 
-		if (_editor.Shared(route.Reference)) {
+		if (_editor.Shared(guid)) {
 			EditorText.Note("Its waypoint list is a variant's, shared by every route that can draw it: an edit here changes them all.");
 		}
 
-		if (_placing.IsAppendingTo(route.Reference)) {
+		if (_placing.IsAppendingTo(guid)) {
 			EditorText.Note(RoutePlacing.Hint);
 		}
 
 		ImGui.BeginDisabled(_placing.Active);
 		if (Button("Add waypoints", _placing.WhyNoStart)) {
-			_placing.BeginAppend(route.Reference);
+			_placing.BeginAppend(guid);
 		}
 
 		ImGui.SameLine();
 		bool closed = route.Closed;
-		if (Button(closed ? "Open the loop" : "Close the loop", _editor.WhyNoClose(route.Reference, !closed))) {
-			_editor.RequestClosed(route.Reference, !closed);
+		if (Button(closed ? "Open the loop" : "Close the loop", _editor.WhyNoClose(guid, !closed))) {
+			_editor.RequestClosed(guid, !closed);
 		}
 
 		if (waypoint >= 0) {
-			if (Button($"Insert after {waypoint}", _editor.WhyNoInsert(route.Reference, waypoint))) {
-				_editor.RequestInsert(route.Reference, waypoint);
+			if (Button($"Insert after {waypoint}", _editor.WhyNoInsert(guid, waypoint))) {
+				_editor.RequestInsert(guid, waypoint);
 			}
 
 			ImGui.SameLine();
-			if (Button($"Remove {waypoint}", _editor.WhyNoRemove(route.Reference, waypoint))) {
-				_editor.RequestRemove(route.Reference, waypoint);
+			if (Button($"Remove {waypoint}", _editor.WhyNoRemove(guid, waypoint))) {
+				_editor.RequestRemove(guid, waypoint);
 			}
 		} else {
 			EditorText.Note("Select a waypoint to insert one after it or remove it.");
@@ -168,13 +169,13 @@ internal sealed class RouteView {
 
 	// A Delete button, or why the route cannot be deleted, with what names it as links. The delete waits for the frame's
 	// ImGui to be rendered (RouteEditor.RequestDelete).
-	private void DrawDelete(EditorRoute route) {
+	private void DrawDelete(short guid) {
 		ImGui.Separator();
-		var blockers = _editor.BlockersOf(route.Reference);
+		var blockers = _editor.BlockersOf(guid);
 		if (blockers.None) {
 			ImGui.BeginDisabled(_placing.Active);
 			if (ImGui.Button("Delete")) {
-				_editor.RequestDelete(route.Reference);
+				_editor.RequestDelete(guid);
 			}
 
 			ImGui.EndDisabled();

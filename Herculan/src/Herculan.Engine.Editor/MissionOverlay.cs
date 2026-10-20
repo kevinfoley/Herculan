@@ -163,7 +163,8 @@ internal sealed class MissionOverlay {
 	/// other selection.
 	/// </summary>
 	public void Highlight(GroundHighlight highlight, SelectionState selection) {
-		if (selection.Current is not AreaSelection { Area: var reference } || _index.Area(reference) is not { } area) {
+		if (selection.Current is not AreaSelection { Guid: var guid } || _index.Records.Area(guid) is not { } reference
+				|| _index.Area(reference) is not { } area) {
 			highlight.Clear();
 			return;
 		}
@@ -211,7 +212,7 @@ internal sealed class MissionOverlay {
 		var highlighted = new List<Vector3>();
 
 		if (settings.ShowBasePads) {
-			int selectedGroup = selection.Current is GroupSelection group ? group.Group : -1;
+			int selectedGroup = selection.Current is GroupSelection group ? _index.Records.Group(group.Guid) ?? -1 : -1;
 			foreach (var (pad, lines) in _pads) {
 				if (pad.GroupIndex == selectedGroup) {
 					highlighted.AddRange(lines);
@@ -253,9 +254,9 @@ internal sealed class MissionOverlay {
 	/// tests.
 	/// </summary>
 	private HashSet<int> SelectedAreas(SelectionState selection) => selection.Current switch {
-		AreaSelection area => new HashSet<int> { area.Area },
-		ActionSelection action when action.Action < _index.Mission.Actions.Count =>
-			_index.Mission.Actions[action.Action].Areas.Select(area => area.Reference).ToHashSet(),
+		AreaSelection area when _index.Records.Area(area.Guid) is { } reference => new HashSet<int> { reference },
+		ActionSelection selected when _index.Records.Action(selected.Guid) is { } action && action < _index.Mission.Actions.Count =>
+			_index.Mission.Actions[action].Areas.Select(area => area.Reference).ToHashSet(),
 		_ => new HashSet<int>()
 	};
 
@@ -264,11 +265,12 @@ internal sealed class MissionOverlay {
 	/// the route an order-complete objective is about.
 	/// </summary>
 	private HashSet<int> SelectedRoutes(SelectionState selection) => selection.Current switch {
-		RouteSelection route => new HashSet<int> { route.Route },
-		GroupSelection group => _index.Routes.Where(route => route.WalkedBy.Contains(group.Group))
-			.Select(route => route.Reference).ToHashSet(),
-		ObjectiveSelection objective when objective.Objective < _index.Mission.Objectives.Count
-				&& _index.Mission.Objectives[objective.Objective] is
+		RouteSelection route when _index.Records.Route(route.Guid) is { } reference => new HashSet<int> { reference },
+		GroupSelection selected when _index.Records.Group(selected.Guid) is { } group =>
+			_index.Routes.Where(route => route.WalkedBy.Contains(group)).Select(route => route.Reference).ToHashSet(),
+		ObjectiveSelection selected when _index.Records.Objective(selected.Record) is { } objective
+				&& objective < _index.Mission.Objectives.Count
+				&& _index.Mission.Objectives[objective] is
 					{ ConditionCode: MissionObjective.ConditionOrderComplete, RouteRef: >= 0 } record =>
 			new HashSet<int> { record.RouteRef },
 		_ => new HashSet<int>()
@@ -335,7 +337,8 @@ internal sealed class MissionOverlay {
 		}
 
 		foreach (var (route, _, color) in _routes) {
-			bool selected = selection.Is(new RouteSelection(route.Reference));
+			var whole = _index.Records.RouteAt(route.Reference);
+			bool selected = selection.Is(whole);
 			for (int i = 0; i < route.Points.Count; i++) {
 				// A closed route's last waypoint is its first, and is labelled once.
 				if (route.Closed && i == route.Points.Count - 1) {
@@ -346,8 +349,7 @@ internal sealed class MissionOverlay {
 					continue;
 				}
 
-				bool waypointSelected = selection.Current is RouteSelection { Waypoint: var w } current
-					&& current.Route == route.Reference && w == i;
+				bool waypointSelected = Equals(selection.Current, whole with { Waypoint = i });
 				var dotColor = waypointSelected ? SelectedColor : selected ? SelectedColor * 0.8f : color;
 				drawList.AddCircleFilled(at, ScaledImGui.Scaled(waypointSelected ? 5f : 3f), Pack(dotColor));
 
@@ -382,7 +384,7 @@ internal sealed class MissionOverlay {
 				float distance = Vector2.Distance(at, screen);
 				if (distance < best) {
 					best = distance;
-					picked = new RouteSelection(route.Reference, route.Closed && i == route.Points.Count - 1 ? 0 : i);
+					picked = _index.Records.RouteAt(route.Reference, route.Closed && i == route.Points.Count - 1 ? 0 : i);
 				}
 			}
 		}
@@ -416,7 +418,7 @@ internal sealed class MissionOverlay {
 			}
 		}
 
-		return best is { } hit ? new AreaSelection(hit.Reference) : null;
+		return best is { } hit ? _index.Records.AreaAt(hit.Reference) : null;
 	}
 
 	public static void Label(ImDrawListPtr drawList, Vector2 at, string text, Vector3 color) {

@@ -31,7 +31,11 @@ A change goes through `TheaterChanger` ([The tools](handoff-editor-document.md#t
 
 ## Selection and panels
 
-`EditorSelection` is an object, group, trigger area, action, timer, route (with an optional waypoint), objective or condition, held in one `SelectionState` set by the viewport click, the `MissionOutliner` (left: groups with members, areas, actions, timers, routes, objectives under the block-13 objective lines, conditions) and the `PropertiesPanel` (right, one view per kind, every mentioned record a link).
+`EditorSelection` is an object, group, trigger area, action, timer, route (with an optional waypoint), objective or condition, held in one `SelectionState` set by the viewport click, the `MissionOutliner` (left: groups with members, areas, actions, timers, routes, objectives under the block-13 objective lines, conditions, and the Problems list's findings) and the `PropertiesPanel` (right, one view per kind, every mentioned record a link).
+
+Every kind but an object names its `.MSN` record: a group, trigger area, action, timer, route or condition by the GUID of its row (16, 9, 10, 11, 8, 1), an objective by its index in row 17; an object is its `SceneObject`. The editors take the same identities, and each selects the GUID or row-17 index it has just written. A selection is kept across every edit, undo and redo while the `.MSN` has its record ([Rebuilding after an edit](handoff-editor-document.md#rebuilding-after-an-edit)).
+
+The lists, views, overlays and picks still read the generated `script.dat`, so `GeneratedRecords` gives the block index a selection's record was exported at, and the selection a list, link, finding or pick makes from a block index (the GUID of the record that created it). A record the generation has none for, one whose condition fails in the version the editor shows, is selected only through a condition's Used by or by keeping a selection across an edit; its view shows its kind and "Not shown in the editor.", and its editor refuses an edit or a delete ("It is not shown in the editor.").
 
 ## Camera
 

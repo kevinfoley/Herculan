@@ -8,8 +8,9 @@ namespace Herculan.Engine.Editor;
 internal sealed record ConditionUse(string Label, EditorSelection? Target);
 
 /// <summary>
-/// What references a condition (<see cref="ConditionEditor.UsesOf"/>): the records the editor's state holds, one per line, how
-/// many more the state leaves out, by kind, and how many variant alternatives, which no state places, records copying from them.
+/// What references a condition (<see cref="ConditionEditor.UsesOf"/>): the records the editor can select, one per line, how
+/// many more the editor's state leaves out, by kind, and how many variant alternatives, which no state places, records
+/// copying from them.
 /// </summary>
 internal sealed record ConditionUses(IReadOnlyList<ConditionUse> Shown, IReadOnlyList<(string Kind, int Count)> LeftOut,
 		int Alternatives) {
@@ -19,9 +20,7 @@ internal sealed record ConditionUses(IReadOnlyList<ConditionUse> Shown, IReadOnl
 /// <summary>
 /// Creates, edits and deletes the open mission's conditions, row 1, each edit one step of <see cref="PointMover"/>'s undo
 /// history, through <see cref="ConditionEditing"/>'s record edits on the mission's <c>.MSN</c>. Every edit builds the editor's
-/// state again (<see cref="MissionRebuild"/>), as a condition conditions records in and out of the generation, and the
-/// selection keeps a condition by its row-1 GUID, which is its identity in the editor: row 1 reaches no <c>script.dat</c>
-/// block.
+/// state again (<see cref="MissionRebuild"/>), as a condition conditions records in and out of the generation.
 ///
 /// <para>The edits wait for the frame's ImGui to be rendered (<see cref="RunRequest"/>).</para>
 /// </summary>
@@ -98,8 +97,9 @@ internal sealed class ConditionEditor {
 	}
 
 	/// <summary>
-	/// What references <paramref name="guid"/>, whatever its condition (<see cref="ConditionEditing.Namers"/>): each record the
-	/// editor's state holds by its identity, a link where it has a view, and the rest counted by kind.
+	/// What references <paramref name="guid"/>, whatever its condition (<see cref="ConditionEditing.Namers"/>): each record by
+	/// its identity, a link where it has a view, a route, trigger area, action, timer, group or objective whether or not the
+	/// editor's state holds it (<see cref="Selectable"/>), and the rest the state does not hold counted by kind.
 	/// </summary>
 	public ConditionUses UsesOf(short guid) {
 		var source = _source;
@@ -138,6 +138,11 @@ internal sealed class ConditionEditor {
 					continue;
 			}
 
+			if (Selectable(source, record) is { } use) {
+				shown.Add(use);
+				continue;
+			}
+
 			if (source.Provenance.ExportedSlot(record) is not { } slot) {
 				Leave(KindOf(record.Row));
 				continue;
@@ -148,7 +153,7 @@ internal sealed class ConditionEditor {
 
 		var resolved = _deleter.Resolve(source, new MsnNamers([], [], orders));
 		foreach (var order in resolved.Orders) {
-			shown.Add(new ConditionUse($"{PanelLinks.ShortGroupName(order.Group)}, order {order.Slot}", new GroupSelection(order.Group)));
+			shown.Add(new ConditionUse($"{PanelLinks.ShortGroupName(order.Group)}, order {order.Slot}", Records.GroupAt(order.Group)));
 		}
 
 		for (int i = 0; i < resolved.Elsewhere; i++) {
@@ -160,7 +165,7 @@ internal sealed class ConditionEditor {
 			shown.Add(new ConditionUse($"Text line {id}", null));
 		}
 
-		return new ConditionUses(shown.DistinctBy(use => use.Label).ToList(),
+		return new ConditionUses(shown.DistinctBy(use => (use.Label, use.Target)).ToList(),
 			leftOut.Select(pair => (pair.Key, pair.Value)).ToList(), alternatives);
 	}
 
@@ -168,14 +173,47 @@ internal sealed class ConditionEditor {
 	public ConditionUse Identity(int row, int index) => row switch {
 		6 => new ConditionUse($"Point {index}", null),
 		7 => new ConditionUse($"Heading {index}", null),
-		8 => new ConditionUse($"Route {index}", new RouteSelection(index)),
-		9 => new ConditionUse($"Area {index}", new AreaSelection(index)),
-		10 => new ConditionUse($"Action {index}", new ActionSelection(index)),
-		11 => new ConditionUse($"Timer {index}", new TimerSelection(index)),
+		8 => new ConditionUse($"Route {index}", Records.RouteAt(index)),
+		9 => new ConditionUse($"Area {index}", Records.AreaAt(index)),
+		10 => new ConditionUse($"Action {index}", Records.ActionAt(index)),
+		11 => new ConditionUse($"Timer {index}", Records.TimerAt(index)),
 		12 or 13 or 14 => Object(row, index),
-		16 => new ConditionUse(PanelLinks.ShortGroupName(index), new GroupSelection(index)),
-		_ => new ConditionUse($"Objective {index}", index < _index.Mission.Objectives.Count ? new ObjectiveSelection(index) : null),
+		16 => new ConditionUse(PanelLinks.ShortGroupName(index), Records.GroupAt(index)),
+		_ => new ConditionUse($"Objective {index}", index < _index.Mission.Objectives.Count ? Records.ObjectiveAt(index) : null),
 	};
+
+	private GeneratedRecords Records => _index.Records;
+
+	// A route, trigger area, action, timer, group or objective <record> as a link selecting it by its GUID or row-17 index:
+	// by its generated identity where the editor's state holds it, else by its kind, its view then saying it is not shown in
+	// the editor. Null for a record of any other row.
+	private ConditionUse? Selectable(MissionDocument source, MsnRecordId record) {
+		if (record.Row == 17) {
+			var objective = new ObjectiveSelection(record.Index);
+			return Records.Objective(record.Index) is { } shown
+				? new ConditionUse($"Objective {shown}", objective)
+				: new ConditionUse("Objective (not shown in the editor)", objective);
+		}
+
+		if (record.Row is not (8 or 9 or 10 or 11 or 16) || source.RecordAt(record) is not { } found) {
+			return null;
+		}
+
+		short guid = found.GUID;
+		if (source.ExportedIndex(record.Row, guid) is { } index) {
+			return Identity(record.Row, index);
+		}
+
+		EditorSelection target = record.Row switch {
+			8 => new RouteSelection(guid),
+			9 => new AreaSelection(guid),
+			10 => new ActionSelection(guid),
+			11 => new TimerSelection(guid),
+			_ => new GroupSelection(guid),
+		};
+		string noun = record.Row switch { 8 => "Route", 9 => "Area", 10 => "Action", 11 => "Timer", _ => "Group" };
+		return new ConditionUse($"{noun} (not shown in the editor)", target);
+	}
 
 	private ConditionUse Object(int row, int slot) {
 		var kind = row switch { 12 => MissionUnitKind.Mech, 13 => MissionUnitKind.Flyer, _ => MissionUnitKind.Base };
@@ -195,15 +233,9 @@ internal sealed class ConditionEditor {
 	private static string KindOf(int row) => row switch {
 		6 => "points",
 		7 => "headings",
-		8 => "routes",
-		9 => "trigger areas",
-		10 => "actions",
-		11 => "timers",
 		12 => "hercs",
 		13 => "flyers",
-		14 => "structures",
-		16 => "groups",
-		_ => "objectives",
+		_ => "structures",
 	};
 
 	private delegate MsnEdit Creating(MissionDocument source, out short guid);

@@ -19,12 +19,13 @@ internal static class SelectionBounds {
 	public static (Vector3 Centre, float Radius)? Of(EditorMission mission, EditorSelection selection) {
 		var spheres = new List<(Vector3 Centre, float Radius)>();
 		var index = mission.Index;
+		var records = index.Records;
 		switch (selection) {
 			case ObjectSelection { Object: var placed }:
 				AddObject(spheres, mission, placed);
 				break;
-			case GroupSelection { Group: var group }:
-				if (group >= 0 && group < index.GroupMembers.Count) {
+			case GroupSelection { Guid: var guid } when records.Group(guid) is { } group:
+				if (group < index.GroupMembers.Count) {
 					foreach (var member in index.GroupMembers[group]) {
 						AddObject(spheres, mission, member);
 					}
@@ -35,13 +36,13 @@ internal static class SelectionBounds {
 				}
 
 				break;
-			case AreaSelection { Area: var area }:
+			case AreaSelection { Guid: var guid } when records.Area(guid) is { } area:
 				if (index.Area(area) is { } found) {
 					AddArea(spheres, mission, found);
 				}
 
 				break;
-			case ActionSelection { Action: var action } when action >= 0 && action < index.Mission.Actions.Count:
+			case ActionSelection { Guid: var guid } when records.Action(guid) is { } action && action < index.Mission.Actions.Count:
 				foreach (var reference in index.Mission.Actions[action].Areas.Select(area => area.Reference)) {
 					if (index.Area(reference) is { } area) {
 						AddArea(spheres, mission, area);
@@ -49,7 +50,7 @@ internal static class SelectionBounds {
 				}
 
 				break;
-			case RouteSelection { Route: var reference, Waypoint: var waypoint }:
+			case RouteSelection { Guid: var guid, Waypoint: var waypoint } when records.Route(guid) is { } reference:
 				if (index.Route(reference) is { } route) {
 					if (waypoint >= 0 && waypoint < route.Points.Count) {
 						spheres.Add((OnGround(mission, route.Points[waypoint]), PointRadius));
@@ -59,7 +60,8 @@ internal static class SelectionBounds {
 				}
 
 				break;
-			case ObjectiveSelection { Objective: var objective } when objective >= 0 && objective < index.Mission.Objectives.Count:
+			case ObjectiveSelection { Record: var record } when records.Objective(record) is { } objective
+					&& objective < index.Mission.Objectives.Count:
 				foreach (var subject in index.SubjectObjectsOf(index.Mission.Objectives[objective])) {
 					AddObject(spheres, mission, subject);
 				}

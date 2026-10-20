@@ -64,16 +64,16 @@ internal sealed class RoutePlacing {
 	/// <summary>How many waypoints have been placed so far.</summary>
 	public int Placed => _placed.Count;
 
-	/// <summary>Whether waypoints are being added to block-3 route <paramref name="route"/>.</summary>
-	public bool IsAppendingTo(int route) => Active && _route != -1 && _editor.IndexOf(_route) == route;
+	/// <summary>Whether waypoints are being added to row-8 GUID <paramref name="route"/>.</summary>
+	public bool IsAppendingTo(short route) => Active && _route != -1 && _route == route;
 
 	/// <summary>Starts placing a new route's waypoints.</summary>
 	public void BeginNew() => Begin(-1);
 
-	/// <summary>Starts placing waypoints after the last of block-3 route <paramref name="route"/>.</summary>
-	public void BeginAppend(int route) {
+	/// <summary>Starts placing waypoints after the last of row-8 GUID <paramref name="route"/>.</summary>
+	public void BeginAppend(short route) {
 		if (_editor.WhyFixed(route) == null) {
-			Begin(_editor.GuidOf(route));
+			Begin(route);
 		}
 	}
 
@@ -234,7 +234,7 @@ internal sealed class RoutePlacing {
 	}
 
 	// The route the waypoints are added to, as the index has it now, or null for a new route.
-	private EditorRoute? Existing => _route != -1 && _editor.IndexOf(_route) is { } route ? _index.Route(route) : null;
+	private EditorRoute? Existing => _route != -1 && _index.Records.Route(_route) is { } route ? _index.Route(route) : null;
 
 	// The waypoint a click closes the loop on: the route's first, or the first placed.
 	private Vec3i? First(EditorRoute? existing) =>

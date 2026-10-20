@@ -42,16 +42,17 @@ internal sealed class TriggerAreaView {
 		_references = references;
 	}
 
-	public void Draw(int reference) {
+	/// <summary>Row-9 GUID <paramref name="guid"/>'s view, the area generated at block-4 index <paramref name="reference"/>.</summary>
+	public void Draw(short guid, int reference) {
 		if (_index.Area(reference) is not { } area) {
 			return;
 		}
 
 		ImGui.Text($"Trigger area {reference}");
 		ImGui.Separator();
-		string? reason = _editor.WhyFixed(reference);
+		string? reason = _editor.WhyFixed(guid);
 		bool fixedNow = reason != null || _placing.Active;
-		DrawShape(reference, area, fixedNow);
+		DrawShape(guid, area, fixedNow);
 
 		ImGui.BeginDisabled(fixedNow);
 		if (area.Shape == MissionTriggerShape.Circle) {
@@ -85,29 +86,29 @@ internal sealed class TriggerAreaView {
 		ImGui.Spacing();
 		ImGui.BeginDisabled(_placing.Active);
 		if (ImGui.Button("New action testing this area")) {
-			_actions.RequestCreate(reference);
+			_actions.RequestCreate(guid);
 		}
 
 		ImGui.EndDisabled();
 		EditorText.Reason(_actions.Failure);
 
-		DrawDelete(reference);
+		DrawDelete(guid);
 	}
 
 	// Box or Circle, a change switching the area to the other shape.
-	private void DrawShape(int reference, MissionTriggerArea area, bool fixedNow) {
+	private void DrawShape(short guid, MissionTriggerArea area, bool fixedNow) {
 		bool circle = area.Shape == MissionTriggerShape.Circle;
 		ImGui.AlignTextToFramePadding();
 		ImGui.Text("Shape:");
 		ImGui.BeginDisabled(fixedNow);
 		ImGui.SameLine();
 		if (ImGui.RadioButton("Box##shape", !circle) && circle) {
-			_editor.RequestShape(reference, circle: false);
+			_editor.RequestShape(guid, circle: false);
 		}
 
 		ImGui.SameLine();
 		if (ImGui.RadioButton("Circle##shape", circle) && !circle) {
-			_editor.RequestShape(reference, circle: true);
+			_editor.RequestShape(guid, circle: true);
 		}
 
 		ImGui.EndDisabled();
@@ -169,13 +170,13 @@ internal sealed class TriggerAreaView {
 
 	// A Delete button, or why the area cannot be deleted, with the actions referencing it as links. The delete waits for
 	// the frame's ImGui to be rendered (AreaEditor.RequestDelete).
-	private void DrawDelete(int reference) {
+	private void DrawDelete(short guid) {
 		ImGui.Separator();
-		var blockers = _editor.BlockersOf(reference);
+		var blockers = _editor.BlockersOf(guid);
 		if (blockers.None) {
 			ImGui.BeginDisabled(_placing.Active);
 			if (ImGui.Button("Delete")) {
-				_editor.RequestDelete(reference);
+				_editor.RequestDelete(guid);
 			}
 
 			ImGui.EndDisabled();

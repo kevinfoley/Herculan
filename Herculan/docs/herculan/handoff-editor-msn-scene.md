@@ -7,7 +7,7 @@ The plan for making the editor show and select a mission straight from its `.MSN
 The document is already the `.MSN` ([`MissionDocument`](handoff-editor-document.md#holding-the-msn-as-the-document)): every tool writes `.MSN` records, and Save, Undo and Redo work on them. What the editor *shows* is not: the scene, the outliner, picking, the overlays, the selection and most Properties views are built from the `script.dat` that `MissionGenerator` writes after each edit. That generator is the game's load. It drops every record whose condition fails, merges a GUID's records into one, applies one random option per variant table and renumbers everything. So:
 
 - a conditional record cannot be seen or selected unless the generation happens to keep it, and a refusal says it is "not shown in the editor";
-- a selection, a link and an undo step hold `script.dat` block indices, which an add, a delete or a condition change renumbers;
+- an undo step, the index and every view hold `script.dat` block indices, which an add, a delete or a condition change renumbers;
 - a whole layer exists only to map between the two: `MissionRebuild`, `MissionProvenance` lookups per edit, `ExportedIndex`/`ExportedSlot`/`GuidOf`, `PointFollowers`' index bookkeeping.
 
 ## Decided by the user
@@ -29,8 +29,8 @@ The document is already the `.MSN` ([`MissionDocument`](handoff-editor-document.
 | `EditorMission.Open` | writes the generated handoff, `MissionScene.Load` over it, `MissionIndex` over its `Mission` | the world loaded with no objects, objects built from the layout ([The new model](#the-new-model)) |
 | `MissionScene` objects | `Mission.Placements` from `MissionLoader` (block-7/8/9 slots, block-11 groups, `player.mec` for the squad) | one object per layout roster record, placed by the shared placement rules |
 | `MissionIndex` (424) | `Mission` (groups, orders, actions, timers, objectives, setups, pads), block 3 and 4 of the `ScriptDat` | rewritten over the layout, keyed by GUID |
-| `MissionRebuild` (329) | regenerates, reloads `Mission`, matches objects to `.MSN` records through provenance, rewrites `player.mec` and `mission.str`, reselects by GUID ↔ index | `SceneSync`: rebuild the layout, re-place objects by identity, add and remove objects; nothing to reselect |
-| `EditorSelection` | block indices for group (11), area (4), action (5), route (3), timer (6), objective (12); objects through `Placement.SlotIndex` | GUIDs; an objective by its row-17 index; an object by its row and GUID |
+| `MissionRebuild` (329) | regenerates, reloads `Mission`, matches objects to `.MSN` records through provenance, rewrites `player.mec` and `mission.str`, keeps an object selection on the object for the same record | `SceneSync`: rebuild the layout, re-place objects by identity, add and remove objects |
+| `EditorSelection` | an object through `Placement.SlotIndex`; every other kind by GUID or row-17 index, converted to a block index by `GeneratedRecords` | an object by its row and GUID |
 | `MissionOutliner` (344) | `Mission` lists, `MissionIndex`, condition outcomes for dimming | the layout's lists, every record, conditional ones marked |
 | `ScenePicker` (229) | `MissionIndex.IsWaiting`, scene objects | unchanged in shape, over the new index |
 | `MissionOverlay` (462) | `MissionIndex` routes, areas, pads, `Mission.Coordinates` for the mission box | the new index; the box from the layout's points |
@@ -38,8 +38,8 @@ The document is already the `.MSN` ([`MissionDocument`](handoff-editor-document.
 | `PointFollowers` (291) | the generated `ScriptDat`'s blocks 1, 3, 4, 7 to 9 and 11 | placement recomputed from the layout plus a drag's override, diffed against what stands |
 | `PointMover` (900) | writes a drag's preview into the generated `ScriptDat`; block indices in every target; `Provenance.Slot` for variant points | targets by GUID; preview through an override; `.MSN` written on commit only |
 | `MissionLint` (50) | `ScriptDatLint` over the generation, findings by block index | the same lint over the generation, each finding mapped back to its `.MSN` record through provenance (the one display use left) |
-| `PropertiesPanel` and views | `MissionIndex`, `Mission`, `ScriptDat` record counts, `Placement` fields, `GuidOf`/`ExportedIndex` at every link | the layout and the new index, GUID links ([survey per view](#views)) |
-| Editors and placers | take block indices and call `GuidOf`; select results through `ExportedIndex` | take GUIDs; select the GUID they wrote |
+| `PropertiesPanel` and views | `MissionIndex`, `Mission`, `ScriptDat` record counts, `Placement` fields, `GeneratedRecords` at every link and choice | the layout and the new index ([survey per view](#views)) |
+| Editors and placers | refuse a record the generation has none for (`GeneratedRecords`); `OrderEditor.Slots` and `RouteEditor`'s waypoint entries read the generated blocks; a placer's join, `SideChanger` and `PresenceEditor`'s targets take a group by block index, and a placer selects its object through `ExportedIndex` | edit any record; take GUIDs; select the object for the GUID they wrote |
 | `ConditionEditing.Outcome`, `VariantEditing.DrawingNow`, `VariantView` | `Generator.Conditions`, `Generator.VariantPicks`, `Provenance.ExportedSlot` | the layout's presence and the option it shows |
 | `MissionSquad.PlayerMec` in a rebuild | rebuilds `player.mec` per edit | not needed for display; still built for Export and the game's handoff |
 
@@ -74,7 +74,7 @@ A read-only view of a `MissionFile` with every record present, built in one pass
 
 ### Editor
 
-- **Identity.** Each scene object carries the `(row, GUID)` of the roster record it stands for (row 12 for a squad herc too). Selections become `GroupSelection(short Guid)`, `AreaSelection(Guid)`, `ActionSelection(Guid)`, `TimerSelection(Guid)`, `RouteSelection(Guid, Waypoint)`, `ObjectiveSelection(int Record)` (row-17 index, kept as today across an undo while the row keeps its length), `ObjectSelection(SceneObject)` and `ConditionSelection(Guid)`. A selection survives every edit that keeps its GUID, with no mapping.
+- **Identity.** Each scene object carries the `(row, GUID)` of the roster record it stands for (row 12 for a squad herc too). Selections are `GroupSelection(short Guid)`, `AreaSelection(Guid)`, `ActionSelection(Guid)`, `TimerSelection(Guid)`, `RouteSelection(Guid, Waypoint)`, `ObjectiveSelection(int Record)` (row-17 index, kept while row 17 has a record there), `ObjectSelection(SceneObject)` and `ConditionSelection(Guid)`; an object selection takes the object's identity once objects carry it. A selection survives every edit that keeps its GUID, with no mapping.
 - **`MissionIndex`** is rewritten over the layout and the scene objects, keyed by GUID: group members, routes with the groups walking or naming them, areas, each action's firing and fired links, objectives by subject, setups and pads.
 - **`SceneSync`** replaces `MissionRebuild`: after every edit, undo and redo, the layout is rebuilt, every object is placed again by identity, objects for new records are created, objects for removed ones are kept off the scene for an undo, and the overlays and index are refreshed. A move needs no special path: it is an edit like any other.
 - **Drag preview.** A drag places followers from the layout with the dragged point (or group point, or radius) overridden; only the commit writes the `.MSN`.
@@ -124,14 +124,16 @@ Each step builds at 0 warnings, passes `dotnet test`, leaves the editor usable, 
 
 3a. **Drop the plain `script.dat`** (done), per [question 3](#3-a-plain-scriptdat): `EditorMission.Source` is never null, and the editor has no read-only mode.
 
-3. **Selections and links by GUID.** Every selection, link, picker and editor entry point takes GUIDs; the views still read the generated `Mission`, converting at their edge, and say plainly when the generation has no such record. `MissionRebuild`'s reselection goes.
+3. **Selections and links by GUID** (done). Every selection, link, picker and editor entry point takes GUIDs; the views still read the generated `Mission`, converting at their edge, and say plainly when the generation has no such record. `MissionRebuild`'s reselection goes.
 4. **Edits choose their record from the layout.** `MissionDocument`'s supplier lookups (`SlotOf`, `ListRecord`, `AreaRecord`, `SuppliedByVariant`, `AlternativeOf`, `SetHeaderWord`'s provenance) read the layout, so an edit works on any record; the `.ENG` line supplier likewise. `handoff-editor-document.md`'s [Which record an edit writes](handoff-editor-document.md#which-record-an-edit-writes) is rewritten to match.
 5. **The scene from the `.MSN`.** World-only load, objects from the layout placed through `MissionPlacementRules` (`LayoutPresence.Group` counts group 0 as a claimant where `ClaimMembers` skips it; the two agree once the squad is placed apart, per question 5), the new `MissionIndex`, `SceneSync` in place of `MissionRebuild`, picker, both overlays, followers, mover and leveller on the new index, the outliner listing every record with conditional rows marked, the Problems list mapped through provenance. The largest step; its brief may split it into objects and groups first, then routes and areas.
-6. **Views on the layout.** Every Properties view reads the layout and the new index; the conditional line in every view; `Placement` no longer read for editor data; `ExportedIndex`, `ExportedSlot`, `GuidOf` and `Generator.Conditions`/`VariantPicks` gone from the editor.
+6. **Views on the layout, in their new design.** Each Properties view is rewritten once, reading the layout and the new index and laid out as [handoff-editor-ux-plan.md](handoff-editor-ux-plan.md)'s phases 2 to 6 describe, one view (or one phase's views) per commit, each judged against the [designer tasks](handoff-editor-ux-plan.md#designer-tasks). With the conditional line in every view; `Placement` no longer read for editor data; `ExportedIndex`, `ExportedSlot`, `GuidOf` and `Generator.Conditions`/`VariantPicks` gone from the editor once the last view moves.
 7. **Docs.** Throughout, each step updates the handoffs it changes; this last pass rewrites [handoff-editor-document.md](handoff-editor-document.md)'s provenance, regeneration and rebuild sections, updates [handoff-editor-viewing.md](handoff-editor-viewing.md) and [handoff-editor.md](handoff-editor.md), and drains this handoff into them.
 
 Class sizes stay under about 1,500 lines; `PointMover` shrinks (no `script.dat` writes).
 
 ## Open
 
+- **Open:** where the scene shows a waiting group that arrives by drop pod or on foot, whose own point the game never uses (it lands relative to the player when its action fires, [`../retail/simulation/mission-deployment.md`](../retail/simulation/mission-deployment.md#arrival--group_deploymentcheck-004236c4)); today it stands on its point, often the squad's start (`C1_05`'s groups 42 to 44). Proposed for step 5: at the arrival rule's distance and centre bearing from the squad's start and heading, groups sharing that spot spread apart. Decided when the user sees it.
+- **Open:** whether a Cybrid's weapon fit becomes editable, and with what offered per mount (no shell file covers a Cybrid chassis). Until then its view shows the fit twice: `MachineFitView` draws a dropdown row per mount (the weapon dropdowns empty, the guidance ones working) and then the read-only list. One of the two goes once this is decided.
 - **Open:** whether every retail variant table has an option holding a draw of 0 ([Not checked](handoff-editor-document.md#not-checked)); with question 2's first option it no longer matters for display, only for the generation behind Save and Export.

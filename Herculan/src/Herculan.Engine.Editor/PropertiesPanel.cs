@@ -16,6 +16,10 @@ namespace Herculan.Engine.Editor;
 /// <see cref="EditorSelection"/>. Every record a view mentions is a link that selects it, so the
 /// panel is also how a mission's wiring is walked — area to action, action to the groups it brings
 /// in, group to its route.
+///
+/// <para>The views read the generated <c>script.dat</c>, so each is drawn for the generated record the selection's
+/// <c>.MSN</c> record stands for (<see cref="GeneratedRecords"/>); a record the generation has none for shows its kind and
+/// that it is not shown in the editor.</para>
 /// </summary>
 internal sealed class PropertiesPanel {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
@@ -81,6 +85,8 @@ internal sealed class PropertiesPanel {
 
 	private Mission Mission => _index.Mission;
 
+	private GeneratedRecords Records => _index.Records;
+
 	public void Draw(Vector2 display, float menuBarHeight) {
 		float width = ScaledImGui.Scaled(PanelWidth);
 
@@ -95,23 +101,53 @@ internal sealed class PropertiesPanel {
 			case ObjectSelection selected:
 				DrawObject(selected.Object);
 				break;
-			case GroupSelection group:
-				DrawGroup(group.Group);
+			case GroupSelection { Guid: var guid }:
+				if (Records.Group(guid) is { } group) {
+					DrawGroup(guid, group);
+				} else {
+					NotShown("Group");
+				}
+
 				break;
-			case AreaSelection area:
-				_area.Draw(area.Area);
+			case AreaSelection { Guid: var guid }:
+				if (Records.Area(guid) is { } area) {
+					_area.Draw(guid, area);
+				} else {
+					NotShown("Trigger area");
+				}
+
 				break;
-			case ActionSelection action:
-				_action.Draw(action.Action);
+			case ActionSelection { Guid: var guid }:
+				if (Records.Action(guid) is { } action) {
+					_action.Draw(guid, action);
+				} else {
+					NotShown("Action");
+				}
+
 				break;
 			case RouteSelection route:
-				_route.Draw(route);
+				if (Records.Route(route.Guid) is { } reference) {
+					_route.Draw(route, reference);
+				} else {
+					NotShown("Route");
+				}
+
 				break;
-			case ObjectiveSelection objective:
-				_objective.Draw(objective.Objective);
+			case ObjectiveSelection { Record: var record }:
+				if (Records.Objective(record) is { } objective) {
+					_objective.Draw(record, objective);
+				} else {
+					NotShown("Objective");
+				}
+
 				break;
-			case TimerSelection timer:
-				_timer.Draw(timer.Timer);
+			case TimerSelection { Guid: var guid }:
+				if (Records.Timer(guid) is { } timer) {
+					_timer.Draw(guid, timer);
+				} else {
+					NotShown("Timer");
+				}
+
 				break;
 			case ConditionSelection condition:
 				_condition.Draw(condition.Guid);
@@ -123,6 +159,12 @@ internal sealed class PropertiesPanel {
 		}
 
 		ImGui.End();
+	}
+
+	// The view of a selected record the generation has none for, which the views, reading the generated file, cannot show.
+	private static void NotShown(string kind) {
+		ImGui.Text(kind);
+		EditorText.Note("Not shown in the editor.");
 	}
 
 	private void DrawObject(SceneObject sel) {
@@ -237,7 +279,7 @@ internal sealed class PropertiesPanel {
 	private void References(DeleteNamers names, IReadOnlyList<int>? ownRoute = null, IReadOnlyList<int>? fired = null) {
 		foreach (int objective in names.Objectives) {
 			ImGui.PushID($"objective{objective}");
-			_links.Link($"Objective {objective}", new ObjectiveSelection(objective));
+			_links.ShortObjective(objective);
 			ImGui.PopID();
 		}
 
@@ -368,7 +410,8 @@ internal sealed class PropertiesPanel {
 		$"{pos.X / WorldScale.WorldUnitsPerMeter:F1}, {pos.Y / WorldScale.WorldUnitsPerMeter:F1}, "
 			+ $"{pos.Z / WorldScale.WorldUnitsPerMeter:F1} m";
 
-	private void DrawGroup(int group) {
+	// Row-16 GUID <guid>'s view, the group generated at block-11 index <group>.
+	private void DrawGroup(short guid, int group) {
 		ImGui.TextWrapped(MissionText.DescribeGroup(_index, group));
 		_presentWhen.Draw(_presence.GroupTarget(group));
 		TeamField(group, ofMember: false);
@@ -377,7 +420,7 @@ internal sealed class PropertiesPanel {
 		}
 
 		ImGui.Separator();
-		DrawDeployment(group);
+		DrawDeployment(guid, group);
 
 		if (_index.SetupOf(group) is { } setup) {
 			ImGui.Separator();
@@ -395,8 +438,8 @@ internal sealed class PropertiesPanel {
 			OutOfActionWrites("When all of it is out of the fight", Mission.GroupOutOfActionReports[group]);
 		}
 
-		ObjectiveLinks(_index.ObjectivesOfGroup(group), new GroupSelection(group));
-		_orders.Draw(group);
+		ObjectiveLinks(_index.ObjectivesOfGroup(group), new GroupSelection(guid));
+		_orders.Draw(guid, group);
 	}
 
 	/// <summary>
@@ -404,21 +447,21 @@ internal sealed class PropertiesPanel {
 	/// (<see cref="ActionEditor.RequestDeployment"/>), with a link and how the group arrives. The player's squad has none: no
 	/// retail squad record carries one (<see cref="HercWorks.Core.Data.File.Msn.ActionWiring"/>).
 	/// </summary>
-	private void DrawDeployment(int group) {
+	private void DrawDeployment(short guid, int group) {
 		int waitsOn = _index.DeploymentActionOf(group);
 		if (group == 0 && waitsOn < 0) {
 			ImGui.Text("In the mission from the start.");
 			return;
 		}
 
-		string? why = _actions.WhyNoDeployment(group);
+		string? why = _actions.WhyNoDeployment(guid);
 		ImGui.AlignTextToFramePadding();
 		ImGui.Text("Waits on:");
 		ImGui.SameLine();
 		ImGui.SetNextItemWidth(-1f);
 		ImGui.BeginDisabled(why != null);
-		if (ActionChoice.Draw("##deployment", waitsOn, Mission.Actions.Count) is { } chosen) {
-			_actions.RequestDeployment(group, chosen);
+		if (ActionChoice.Draw("##deployment", waitsOn, Mission.Actions.Count, Records) is { } chosen) {
+			_actions.RequestDeployment(guid, chosen);
 		}
 
 		ImGui.EndDisabled();
@@ -461,7 +504,7 @@ internal sealed class PropertiesPanel {
 		ImGui.SameLine();
 		ImGui.SetNextItemWidth(-1f);
 		ImGui.BeginDisabled(why != null);
-		if (ActionChoice.Draw("##own", current, Mission.Actions.Count, offerNone: noNone == null, whyNoNone: noNone) is { } chosen) {
+		if (ActionChoice.Draw("##own", current, Mission.Actions.Count, Records, offerNone: noNone == null, whyNoNone: noNone) is { } chosen) {
 			_actions.RequestObjectAction(placement, defeated, chosen);
 		}
 
@@ -534,10 +577,7 @@ internal sealed class PropertiesPanel {
 			return;
 		}
 
-		if (_mover.TargetOf(new GroupSelection(group)) is not GroupTarget target) {
-			return;
-		}
-
+		var target = new GroupTarget(group);
 		int sharers = _mover.SharersOf(target);
 		string others = $"{sharers} other record(s) (trigger areas, groups, waypoints) referencing its point";
 		if (setup.PointSource == MissionGroupPointSource.OwnPoint) {

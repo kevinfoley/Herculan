@@ -42,24 +42,25 @@ internal sealed class OrderSlotsView {
 		_presence = presence;
 	}
 
-	public void Draw(int group) {
+	/// <summary>The orders of row-16 GUID <paramref name="guid"/>, the group generated at block-11 index <paramref name="group"/>.</summary>
+	public void Draw(short guid, int group) {
 		ImGui.Separator();
 		ImGui.Text("Orders:");
-		string? fixedReason = _editor.WhyFixed(group);
-		var slots = _editor.Slots(group);
+		string? fixedReason = _editor.WhyFixed(guid);
+		var slots = _editor.Slots(guid);
 		if (slots.Count == 0) {
 			EditorText.Note("None.");
 		}
 
 		foreach (var slot in slots) {
 			ImGui.PushID($"order{slot.Slot}");
-			DrawSlot(group, slot, slots[^1].Slot, locked: fixedReason != null);
+			DrawSlot(guid, group, slot, slots[^1].Slot, locked: fixedReason != null);
 			ImGui.PopID();
 		}
 
 		ImGui.Spacing();
-		if (Button("Add an order", _editor.WhyNoAdd(group))) {
-			_editor.RequestAdd(group);
+		if (Button("Add an order", _editor.WhyNoAdd(guid))) {
+			_editor.RequestAdd(guid);
 		}
 
 		if (slots.Count > 1) {
@@ -69,30 +70,31 @@ internal sealed class OrderSlotsView {
 		EditorText.Reason(_editor.Failure);
 	}
 
-	// One slot; <locked> draws its choices disabled, its links still working.
-	private void DrawSlot(int group, EditableOrder slot, int last, bool locked) {
+	// One slot of the group of row-16 GUID <guid>, generated at block-11 index <group>; <locked> draws its choices disabled,
+	// its links still working.
+	private void DrawSlot(short guid, int group, EditableOrder slot, int last, bool locked) {
 		var order = slot.Order;
 		ImGui.Spacing();
 		ImGui.AlignTextToFramePadding();
 		ImGui.Text($"Order {slot.Slot}");
 		ImGui.SameLine();
 		ImGui.BeginDisabled(slot.Slot == 0 || locked);
-		if (SmallButton("Up", slot.Slot == 0 ? null : _editor.WhyNoMove(group, slot.Slot, slot.Slot - 1))) {
-			_editor.RequestMove(group, slot.Slot, slot.Slot - 1);
+		if (SmallButton("Up", slot.Slot == 0 ? null : _editor.WhyNoMove(guid, slot.Slot, slot.Slot - 1))) {
+			_editor.RequestMove(guid, slot.Slot, slot.Slot - 1);
 		}
 
 		ImGui.EndDisabled();
 		ImGui.SameLine();
 		ImGui.BeginDisabled(slot.Slot == last || locked);
-		if (SmallButton("Down", slot.Slot == last ? null : _editor.WhyNoMove(group, slot.Slot, slot.Slot + 1))) {
-			_editor.RequestMove(group, slot.Slot, slot.Slot + 1);
+		if (SmallButton("Down", slot.Slot == last ? null : _editor.WhyNoMove(guid, slot.Slot, slot.Slot + 1))) {
+			_editor.RequestMove(guid, slot.Slot, slot.Slot + 1);
 		}
 
 		ImGui.EndDisabled();
 		ImGui.SameLine();
-		string? whyKept = _editor.WhyNoRemove(group, slot.Slot);
+		string? whyKept = _editor.WhyNoRemove(guid, slot.Slot);
 		if (SmallButton("Remove", whyKept)) {
-			_editor.RequestRemove(group, slot.Slot);
+			_editor.RequestRemove(guid, slot.Slot);
 		}
 
 		ImGui.Indent();
@@ -102,9 +104,9 @@ internal sealed class OrderSlotsView {
 		}
 
 		ImGui.BeginDisabled(locked);
-		DrawVerb(group, slot.Slot, order.Verb, order.SubjectKind == NoSubject);
-		DrawRoute(group, slot.Slot, order.RouteRef);
-		DrawSubject(group, slot.Slot, order.Verb, order.SubjectKind, order.SubjectRef);
+		DrawVerb(guid, slot.Slot, order.Verb, order.SubjectKind == NoSubject);
+		DrawRoute(guid, group, slot.Slot, order.RouteRef);
+		DrawSubject(guid, slot.Slot, order.Verb, order.SubjectKind, order.SubjectRef);
 		ImGui.EndDisabled();
 		if (order.RouteRef >= 0) {
 			_routeLink(order.RouteRef);
@@ -114,16 +116,16 @@ internal sealed class OrderSlotsView {
 			_subjectLink((MissionOrderSubject)order.SubjectKind, order.SubjectRef);
 		}
 
-		DrawEnding(group, slot.Slot, order.ActionRef, locked);
+		DrawEnding(guid, slot.Slot, order.ActionRef, locked);
 		_presentWhen.Draw(_presence.OrderTarget(group, slot.Slot));
 		ImGui.Unindent();
 	}
 
 	// The action that moves the group on from this order when it fires, none or any action, with a link.
-	private void DrawEnding(int group, int slot, short action, bool locked) {
+	private void DrawEnding(short group, int slot, short action, bool locked) {
 		Label("Ends when");
 		ImGui.BeginDisabled(locked);
-		if (ActionChoice.Draw("##ends", action, _index.Mission.Actions.Count) is { } chosen) {
+		if (ActionChoice.Draw("##ends", action, _index.Mission.Actions.Count, _index.Records) is { } chosen) {
 			_editor.RequestAction(group, slot, chosen);
 		}
 
@@ -134,7 +136,7 @@ internal sealed class OrderSlotsView {
 		}
 	}
 
-	private void DrawVerb(int group, int slot, short verb, bool noSubject) {
+	private void DrawVerb(short group, int slot, short verb, bool noSubject) {
 		Label("Verb");
 		if (ImGui.BeginCombo("##verb", MissionText.OrderVerb(verb))) {
 			for (short choice = 0; choice <= GroupOrders.LastVerb; choice++) {
@@ -151,18 +153,19 @@ internal sealed class OrderSlotsView {
 		}
 	}
 
-	private void DrawRoute(int group, int slot, short route) {
+	// The route of the group of row-16 GUID <guid>, generated at block-11 index <group>.
+	private void DrawRoute(short guid, int group, int slot, short route) {
 		Label("Route");
-		string? whyRouteNeeded = _editor.WhyNoRouteNone(group, slot);
+		string? whyRouteNeeded = _editor.WhyNoRouteNone(guid, slot);
 		if (ImGui.BeginCombo("##route", route >= 0 ? $"Route {route}" : "None")) {
 			var flags = whyRouteNeeded != null ? ImGuiSelectableFlags.Disabled : ImGuiSelectableFlags.None;
 			if (ImGui.Selectable("None", route < 0, flags) && route >= 0) {
-				_editor.RequestRoute(group, slot, -1);
+				_editor.RequestRoute(guid, slot, -1);
 			}
 
 			foreach (var choice in _index.Routes) {
 				if (ImGui.Selectable($"Route {choice.Reference}", choice.Reference == route) && choice.Reference != route) {
-					_editor.RequestRoute(group, slot, choice.Reference);
+					_editor.RequestRoute(guid, slot, _index.Records.RouteGuid(choice.Reference));
 				}
 			}
 
@@ -178,7 +181,7 @@ internal sealed class OrderSlotsView {
 		}
 	}
 
-	private void DrawSubject(int group, int slot, short verb, short kind, short subject) {
+	private void DrawSubject(short group, int slot, short verb, short kind, short subject) {
 		Label("Subject");
 		if (!ImGui.BeginCombo("##subject", SubjectName(kind, subject))) {
 			return;
@@ -196,7 +199,7 @@ internal sealed class OrderSlotsView {
 	}
 
 	// The records of subject kind <choiceKind> the combo offers, under a heading.
-	private void Choices(int group, int slot, short kind, short subject, short choiceKind, int count) {
+	private void Choices(short group, int slot, short kind, short subject, short choiceKind, int count) {
 		if (count == 0) {
 			return;
 		}
@@ -206,7 +209,7 @@ internal sealed class OrderSlotsView {
 		for (int i = 0; i < count; i++) {
 			bool current = kind == choiceKind && subject == i;
 			if (ImGui.Selectable($"{SubjectName(choiceKind, (short)i)}##{choiceKind}.{i}", current) && !current) {
-				_editor.RequestSubject(group, slot, choiceKind, i);
+				_editor.RequestSubject(group, slot, choiceKind, _index.Records.SubjectGuid(choiceKind, i));
 			}
 		}
 	}

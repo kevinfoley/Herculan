@@ -36,31 +36,34 @@ internal sealed class ActionView {
 
 	private Mission Mission => _index.Mission;
 
-	public void Draw(int action) {
+	private GeneratedRecords Records => _index.Records;
+
+	/// <summary>Row-10 GUID <paramref name="guid"/>'s view, the action generated at block-5 index <paramref name="action"/>.</summary>
+	public void Draw(short guid, int action) {
 		if (action < 0 || action >= Mission.Actions.Count) {
 			return;
 		}
 
 		var record = Mission.Actions[action];
 		var links = _index.LinksOf(action);
-		bool locked = _editor.WhyFixed(action) != null;
+		bool locked = _editor.WhyFixed(guid) != null;
 
 		ImGui.Text($"Action {action}");
 		ImGui.Separator();
 		ImGui.Text("Fires when:");
-		DrawType(action, record, locked);
-		DrawTarget(action, record, locked);
-		DrawAreas(action, record, locked);
+		DrawType(guid, record, locked);
+		DrawTarget(guid, record, locked);
+		DrawAreas(guid, record, locked);
 		DrawFiredBy(record, links, editing: true);
 
 		ImGui.Separator();
 		ImGui.Text("Then:");
-		DrawVerb(action, record, locked);
+		DrawVerb(guid, record, locked);
 		DrawFollowers(record, links);
-		DrawCounters(action, record, locked);
-		DrawMessage(action, record, locked);
+		DrawCounters(guid, action, record, locked);
+		DrawMessage(guid, record, locked);
 		DrawUnusedText(action);
-		DrawDelete(action);
+		DrawDelete(guid);
 		EditorText.Reason(_editor.Failure);
 	}
 
@@ -73,7 +76,7 @@ internal sealed class ActionView {
 		var record = Mission.Actions[action];
 		var links = _index.LinksOf(action);
 		ImGui.AlignTextToFramePadding();
-		if (_selection.Current is ActionSelection { Action: var current } && current == action) {
+		if (_selection.Is(Records.ActionAt(action))) {
 			ImGui.Text($"Action {action}");
 		} else {
 			_links.Action(action);
@@ -119,7 +122,7 @@ internal sealed class ActionView {
 	}
 
 	// Whose position the areas test, as a choice of every type DBSIM has a case for.
-	private void DrawType(int action, MissionAction record, bool locked) {
+	private void DrawType(short action, MissionAction record, bool locked) {
 		Label("Type");
 		ImGui.BeginDisabled(locked);
 		if (ImGui.BeginCombo("##type", TypeName(record.Type))) {
@@ -148,7 +151,7 @@ internal sealed class ActionView {
 	private static string TypeName(short type) => $"{type}: {MissionText.TriggerSubject(type)}";
 
 	// For types 7 to 10, the herc, flyer, structure or group whose position the areas test; for the others, a note.
-	private void DrawTarget(int action, MissionAction record, bool locked) {
+	private void DrawTarget(short action, MissionAction record, bool locked) {
 		if (ActionEditing.TargetBlock(record.Type) is null) {
 			EditorText.Note("Its target is not used for this type.");
 			return;
@@ -167,7 +170,7 @@ internal sealed class ActionView {
 			for (int i = 0; i < count; i++) {
 				bool current = record.TargetRef == i;
 				if (ImGui.Selectable($"{MissionText.SubjectName(_index, kind, i)}##target{i}", current) && !current) {
-					_editor.RequestTarget(action, record.Type, i);
+					_editor.RequestTarget(action, Records.SubjectGuid(kind, i));
 				}
 			}
 
@@ -196,7 +199,7 @@ internal sealed class ActionView {
 	}
 
 	// The areas it tests, each a choice of any area of the mission with Remove and a link, and Add after the last.
-	private void DrawAreas(int action, MissionAction record, bool locked) {
+	private void DrawAreas(short action, MissionAction record, bool locked) {
 		ImGui.Spacing();
 		ImGui.Text("Trigger areas:");
 		ImGui.Indent();
@@ -206,7 +209,7 @@ internal sealed class ActionView {
 			ImGui.BeginDisabled(locked);
 			ImGui.SetNextItemWidth(ScaledImGui.Scaled(170f));
 			if (AreaCombo("##area", AreaName(area)) is { } chosen && chosen != area) {
-				_editor.RequestArea(action, slot, chosen);
+				_editor.RequestArea(action, slot, Records.AreaGuid(chosen));
 			}
 
 			ImGui.SameLine();
@@ -227,7 +230,7 @@ internal sealed class ActionView {
 		ImGui.BeginDisabled(why != null);
 		ImGui.SetNextItemWidth(ScaledImGui.Scaled(170f));
 		if (AreaCombo("##addarea", "Add an area") is { } added) {
-			_editor.RequestAddArea(action, added);
+			_editor.RequestAddArea(action, Records.AreaGuid(added));
 		}
 
 		ImGui.EndDisabled();
@@ -289,7 +292,7 @@ internal sealed class ActionView {
 	}
 
 	// How the groups waiting on it arrive, as a choice of the six verbs; a value no verb has shows as it is.
-	private void DrawVerb(int action, MissionAction record, bool locked) {
+	private void DrawVerb(short action, MissionAction record, bool locked) {
 		Label("Verb");
 		ImGui.BeginDisabled(locked);
 		if (ImGui.BeginCombo("##verb", VerbName(record.Verb))) {
@@ -356,14 +359,14 @@ internal sealed class ActionView {
 	}
 
 	// The counter writes, each a counter field and an operation, with Remove, and Add after the last.
-	private void DrawCounters(int action, MissionAction record, bool locked) {
+	private void DrawCounters(short guid, int action, MissionAction record, bool locked) {
 		ImGui.Spacing();
 		ImGui.Text("Counter writes:");
 		int filled = ActionEditing.FilledPairs(Enumerable.Range(0, Math.Min(record.CounterRefs.Count, record.CounterOps.Count))
 			.Select(slot => (record.CounterRefs[slot], record.CounterOps[slot])).ToList());
 		for (int slot = 0; slot < filled; slot++) {
 			ImGui.PushID($"pair{slot}");
-			DrawPair(action, slot, record.CounterRefs[slot], record.CounterOps[slot], locked);
+			DrawPair(guid, action, slot, record.CounterRefs[slot], record.CounterOps[slot], locked);
 			ImGui.PopID();
 		}
 
@@ -371,17 +374,18 @@ internal sealed class ActionView {
 			EditorText.Note("It writes no counter.");
 		}
 
-		string? why = _editor.WhyNoAddPair(action);
+		string? why = _editor.WhyNoAddPair(guid);
 		ImGui.BeginDisabled(why != null);
 		if (ImGui.Button("Add a counter write")) {
-			_editor.RequestAddPair(action);
+			_editor.RequestAddPair(guid);
 		}
 
 		ImGui.EndDisabled();
 		EditorText.Reason(why);
 	}
 
-	private void DrawPair(int action, int slot, short counter, short op, bool locked) {
+	// Counter write <slot> of the action of row-10 GUID <guid>, generated at block-5 index <action>.
+	private void DrawPair(short guid, int action, int slot, short counter, short op, bool locked) {
 		ImGui.BeginDisabled(locked);
 		ImGui.AlignTextToFramePadding();
 		ImGui.Text("Counter");
@@ -396,7 +400,7 @@ internal sealed class ActionView {
 		if (ImGui.IsItemDeactivatedAfterEdit() && _counterFor == (action, slot)) {
 			_counterFor = null;
 			if (_counter != counter) {
-				_editor.RequestPair(action, slot, (short)Math.Clamp(_counter, 0, ActionEditing.Counters - 1), Op(op));
+				_editor.RequestPair(guid, slot, (short)Math.Clamp(_counter, 0, ActionEditing.Counters - 1), Op(op));
 			}
 		}
 
@@ -405,7 +409,7 @@ internal sealed class ActionView {
 		if (ImGui.BeginCombo("##op", MissionText.ActionCounterOp(op))) {
 			foreach (short choice in new[] { ActionEditing.CounterClear, ActionEditing.CounterIncrement }) {
 				if (ImGui.Selectable(MissionText.ActionCounterOp(choice), choice == op) && choice != op) {
-					_editor.RequestPair(action, slot, (short)Math.Clamp((int)counter, 0, ActionEditing.Counters - 1), choice);
+					_editor.RequestPair(guid, slot, (short)Math.Clamp((int)counter, 0, ActionEditing.Counters - 1), choice);
 				}
 			}
 
@@ -414,7 +418,7 @@ internal sealed class ActionView {
 
 		ImGui.SameLine();
 		if (ImGui.SmallButton("Remove")) {
-			_editor.RequestRemovePair(action, slot);
+			_editor.RequestRemovePair(guid, slot);
 		}
 
 		ImGui.EndDisabled();
@@ -427,7 +431,7 @@ internal sealed class ActionView {
 	private static short Op(short op) => op is ActionEditing.CounterClear or ActionEditing.CounterIncrement ? op : ActionEditing.CounterIncrement;
 
 	// The message, a choice of none or a line of the COMMAND<n>.STR the mission speaks from, and when it is posted.
-	private void DrawMessage(int action, MissionAction record, bool locked) {
+	private void DrawMessage(short action, MissionAction record, bool locked) {
 		ImGui.Spacing();
 		int training = Mission.Header.TrainingMissionNumber;
 		string file = SquadMessages.CommandResourceName(training);
@@ -494,7 +498,7 @@ internal sealed class ActionView {
 	}
 
 	// A Delete button, or why the action cannot be deleted, with what references it as short links, one per line.
-	private void DrawDelete(int action) {
+	private void DrawDelete(short action) {
 		ImGui.Separator();
 		var blockers = _editor.BlockersOf(action);
 		if (blockers.None) {
@@ -537,7 +541,7 @@ internal sealed class ActionView {
 
 		foreach (var order in blockers.Orders) {
 			ImGui.PushID($"order{order.Group}.{order.Slot}");
-			_links.Link($"{PanelLinks.ShortGroupName(order.Group)}, order {order.Slot}", new GroupSelection(order.Group));
+			_links.Link($"{PanelLinks.ShortGroupName(order.Group)}, order {order.Slot}", Records.GroupAt(order.Group));
 			ImGui.PopID();
 		}
 

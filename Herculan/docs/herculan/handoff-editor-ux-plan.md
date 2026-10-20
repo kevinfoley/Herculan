@@ -17,9 +17,18 @@ One view per thing a designer authors, the way one friendly dialog in Dynamix's 
 
 Numbering a designer sees starts at 1: orders, waypoints, weapon mounts, squadmates (R15, R29, R31, R32).
 
+## Designer tasks
+
+What a designer must be able to do in the editor without reading any doc. Every phase is judged by whether these get easier, and the redesign is done when all four can be done that way:
+
+1. Add two Cybrid hercs that patrol a route.
+2. Make reinforcements drop in when the player reaches an area.
+3. Add a win condition: destroy the base.
+4. Make a herc appear on only some loads of the mission.
+
 ## Phases
 
-Each phase is one commit, tested by the user in the app before it is committed.
+Phases 2 to 6 are carried out by [handoff-editor-msn-scene.md](handoff-editor-msn-scene.md#steps)'s step 6, which rewrites each view once, on the layout and in its new design, one view or one phase's views per commit, each tested by the user in the app before it is committed.
 
 ### 1. No rolling (done)
 
@@ -36,7 +45,7 @@ Each phase is one commit, tested by the user in the app before it is committed.
 - **Advanced**: key, roll size, condition numbers and ranges.
 - A herc's or route's view that draws from a choice says "One option of <choice>; changes apply to: that option wherever it is picked (N hercs) / only this herc" (R24, R33).
 - The Conditions list moves under Advanced, without its create buttons (R20).
-- Replaces the stopgap range view (`VariantView.DrawRange`, uncommitted).
+- Replaces the range view `VariantView.DrawRange` draws.
 
 ### 3. Campaign variables and Present when as sentences
 
