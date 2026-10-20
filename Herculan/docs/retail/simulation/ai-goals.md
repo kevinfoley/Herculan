@@ -110,6 +110,14 @@ Walks every mission group and answers false the moment it finds one that is **on
 
 The comparison is on the subject pointer, not on the guarded position, so two groups only count as rivals when the mission gave them literally the same subject.
 
+### A guard nobody contests — `C5_10`'s ring
+
+A guard order that names a subject no enemy group's order names is complete on its group's first `Group_OrderTick`, before any member has run the `guarding` think. Only the advance makes that visible, and the advance needs a next slot. Across the 62 retail `.MSN` files, a guard order with a subject sits ahead of another order only in `C5_10`, and no objective names a guard order's route, so `C5_10` is the one mission where this rule changes what happens.
+
+There, six single-Cybrid groups (162-167) deploy around the base when the player's squad enters action 72's or action 73's box. Each one's slot 0 is a guard of group 135, the base, and slot 1 is a sleep with no action. The player's squad, the only human group, patrols route 51 and names no subject, so all six move to the sleep on arrival and keep it for the rest of the mission: they stand still and ignore fire ([`ai-combat-states.md`](ai-combat-states.md#sleeping-13--mech_behavioursleepthink-0041c418)). Groups 170 and 171, whose guard orders name no subject, never complete theirs and do fight.
+
+Held, those guards would stand on the base's first member, its `BASE CORE`: `Group_OrderTargetPosition` (`004238d4`) answers the first member's position for a group subject, and group 135 is anchored on point 5, the last waypoint of the player's route.
+
 ## What else reads an order
 
 The loads of an order slot that the searches in [Open](#open) find read five of the record's fields. Four are read through the current index:

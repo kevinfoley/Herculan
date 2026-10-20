@@ -154,6 +154,15 @@ public static class TweakSettingDefinitions {
 	/// until the player finds it and puts it out of the fight. See <see cref="Sim.StrandedStingrayFix"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> StrandedStingrayClosesIn = new("tweak.c2_05_stingray_closes_in", TweakCategory.AI, defaultValue: false, recommendedValue: true);
+
+	/// <summary>
+	/// A guard order that names a subject lasts until the subject is destroyed. Retail also ends it as soon as no
+	/// enemy group's order names the same subject, so in <c>C5_10</c> six Cybrids that guard the base and then sleep
+	/// fall asleep on arrival, standing still and ignoring fire. That mission is the only retail one this changes; a
+	/// mission made in the editor changes wherever a guard order with a subject has a later order. See
+	/// <see cref="Sim.MissionGroup.GuardHeldUntilSubjectDestroyed"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> GuardHoldsUntilDestroyed = new("tweak.c5_10_guards_hold", TweakCategory.AI, defaultValue: false, recommendedValue: true);
 	#endregion
 
 	#region FUNCTIONAL
@@ -248,7 +257,7 @@ public static class TweakSettingDefinitions {
 		PreserveSoundPosition, CriticalDamageMessage, ShowSquadmateNumber, FixComputerMessagePreference,
 		SmootherTurretMovement, MouseExternalView, FixDefendPositionOrder, FixWeaponDamageRecords,
 		ChargeBarPowerLevel, FlashThroughSecondHit, ShowAltitudeTape, DropPodSoundFromPod, FixRepairDiagramSides,
-		FixTerrainHitPoint, FlyerIgnoresPlayerThrottle, StrandedStingrayClosesIn, FasterKeyboardAiming, FixGunsightDrag, FixRaptorIIPerspective, ResetCountersOnReplay,
+		FixTerrainHitPoint, FlyerIgnoresPlayerThrottle, StrandedStingrayClosesIn, GuardHoldsUntilDestroyed, FasterKeyboardAiming, FixGunsightDrag, FixRaptorIIPerspective, ResetCountersOnReplay,
 		PlayLastMusicTrack, ShuffleMissionMusic, ChangePbwBeamHue,
 	};
 }

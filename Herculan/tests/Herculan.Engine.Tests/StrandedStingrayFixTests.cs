@@ -1,10 +1,7 @@
-using HercWorks.Core.Io.Transform.Common;
-using Herculan.Engine.Content;
 using Herculan.Engine.Install;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Scene;
 using Herculan.Engine.Settings;
-using Herculan.Engine.Shell;
 using Herculan.Engine.Sim;
 using Herculan.Engine.World;
 using Xunit;
@@ -88,24 +85,5 @@ public sealed class StrandedStingrayFixTests : IDisposable {
 		Assert.Equal(MissionSide.Human, hunter.OrderTarget!.Side);
 	}
 
-	/// <summary>The mission as a training load of the typed path writes it, flown from the first practice row.</summary>
-	private MissionScene? Load(string? install, string mission) {
-		if (install == null) {
-			return null;
-		}
-
-		var shell = GameContent.MountShell(install);
-		var options = SimulatorPreferences.Defaults();
-		var random = new SimRandom();
-		int Roll(short bound) => random.NextBelow(bound);
-
-		if (ShellTrainingLaunch.NewCareer(shell, options, 0, Roll, null, out _) is not var (game, hangar)) {
-			return null;
-		}
-
-		var handoff = ShellTrainingLaunch.Load(_root, shell, options, 0, $@"MSN\{mission}.MSN", false, Roll,
-			new short[MissionGenerator.ClearListLength], game, hangar, out string? failure);
-		Assert.True(handoff != null, failure);
-		return MissionScene.Load(GameContent.MountSimulator(install), handoff.ScriptPath);
-	}
+	private MissionScene? Load(string? install, string mission) => RetailMissionLoad.Load(_root, install, mission);
 }

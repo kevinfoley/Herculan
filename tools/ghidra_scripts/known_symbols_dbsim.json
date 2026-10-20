@@ -5075,7 +5075,13 @@
       "confidence": "high",
       "name": "Group_NoRivalOrderOnSubject",
       "description": "Whether no other mission group on the opposite side, still holding live members, has a current order naming the same subject pointer as this group's. The second half of order verb 2's (guarding) completion test.",
-      "source": "docs/retail/simulation/ai-goals.md"
+      "source": "docs/retail/simulation/ai-goals.md",
+      "verified": {
+        "bytes": "00412e74+125",
+        "sha1": "a1828f78cb67",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00412ef4",
@@ -6295,8 +6301,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_BehaviourSleepThink",
-      "description": "Behaviour state 13 (sleeping). Releases the target, Mech_LocomotionTick(0,0,0), Ai_UpdateWeaponsFree. Still ticked, detectable and able to answer fire.",
-      "source": "docs/retail/simulation/ai-combat-states.md"
+      "description": "Behaviour state 13 (sleeping). Releases the target (decrementing its +0x1a2 holder count and setting +0x9d) when one is held, then Mech_LocomotionTick(0,0,0) and Ai_UpdateWeaponsFree; returns 0, so the state never ends itself.",
+      "source": "docs/retail/simulation/ai-combat-states.md",
+      "verified": {
+        "bytes": "0041c418+96",
+        "sha1": "a587db4755b2",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0041c478",
@@ -7724,7 +7736,13 @@
       "confidence": "high",
       "name": "Group_OrderTargetPosition",
       "description": "The position the group's current order works to: the order object's +0x26 origin, falling back to the first waypoint of the group's route (**(*(group+6)+2)), read with no null check, when the slot is empty or names no subject.",
-      "source": "docs/retail/simulation/ai-targeting.md"
+      "source": "docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "004238d4+66",
+        "sha1": "dbae35ef38af",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00423918",
@@ -7772,7 +7790,13 @@
       "confidence": "high",
       "name": "Group_IsOrderComplete",
       "description": "Whether a mission group's current order is finished, switched on the order's verb (order+0x00). Verb 0: the order subject's condition tier is 4 (destroyed). Verb 2: the order names a subject and either its tier is 4 or Group_NoRivalOrderOnSubject reports nothing hostile still assigned to it. Verbs 3, 5 and 6: the group's route cursor has no waypoint after the current index. Verbs 1 and 4 never complete and can only be ended by the order's action firing.",
-      "source": "docs/retail/simulation/ai-goals.md"
+      "source": "docs/retail/simulation/ai-goals.md",
+      "verified": {
+        "bytes": "004239fc+119",
+        "sha1": "70b9ea91d62a",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00423a74",
@@ -12013,8 +12037,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdStatusScreen_SetCondition",
-      "description": "Writes the MFD status screen's fourth and fifth labels. Label 4 (screen+0x1c) takes MfdStatusConditionStrings[state] = STRINGS0.STR group 28; state is the caller's, or Damage_ToConditionState(damage) when the caller passes -1. Label 5 (screen+0x20) is composed from literals: \"[ \" (0049be2c), itoa((0x100 - damage) * 100 >> 8), then \"% ]\" (0049be2f) -- undamaged reads \"[ 100% ]\". When the subject is unreadable (screen+0x34 set) it writes \"XXXXXX\" and \"XXX\" instead. NOTE: STRINGS0.STR group 10 holds a near-identical five-string set and is dead data -- SimStrings_LoadAll is the only reference to its array. See docs/retail/simulation/mfd.md.",
-      "source": "docs/retail/simulation/mfd.md"
+      "description": "MfdStatusScreen_SetCondition(screen, damage, friendly, state): writes the MFD status screen's fourth and fifth labels. With the scramble flag screen+0x34 clear, label 4 (screen+0x1c) takes MfdStatusConditionStrings[state] = STRINGS0.STR group 28, the state being Damage_ToConditionState(damage) when state is -1; and when friendly is non-zero, label 5 (screen+0x20) reads \"[ \" (0049be2c), itoa((0x100 - damage) * 100 >> 8) and \"% ]\" (0049be2f), so undamaged reads \"[ 100% ]\". With the flag set it writes \"XXXXXX\" (0049bdba) to label 4 and, when friendly, \"XXX\" (0049bdc1) to label 5. See docs/retail/simulation/mfd.md.",
+      "source": "docs/retail/simulation/mfd.md",
+      "verified": {
+        "bytes": "0043b260+209",
+        "sha1": "1e34e3ac96d6",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043b334",

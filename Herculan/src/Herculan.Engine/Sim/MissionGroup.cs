@@ -386,13 +386,24 @@ public sealed partial class MissionGroup {
 		MissionOrder.VerbSearchDestroy => SubjectCondition() == ConditionDestroyed,
 
 		MissionOrder.VerbGuard => (OrderSubjectGroup != null || OrderSubjectObject != null)
-			&& (SubjectCondition() == ConditionDestroyed || NoRivalOrderOnSubject(world)),
+			&& (SubjectCondition() == ConditionDestroyed
+				|| (!GuardHeldUntilSubjectDestroyed(world) && NoRivalOrderOnSubject(world))),
 
 		MissionOrder.VerbPatrol or MissionOrder.VerbTravel or MissionOrder.VerbFollow =>
 			WaypointAt(RouteCursor + 1) == null,
 
 		_ => false
 	};
+
+	/// <summary>
+	/// Whether <see cref="Settings.TweakSettingDefinitions.GuardHoldsUntilDestroyed"/> drops the no-rival half of the
+	/// guard order's completion test, so the order lasts until its subject is destroyed. <b>This engine's own</b>,
+	/// not the original's: it keeps <c>C5_10</c>'s guards on their post, where retail moves them on to the sleep order
+	/// behind it the moment they arrive (docs/retail/simulation/ai-goals.md#a-guard-nobody-contests--c5_10s-ring).
+	/// Read every tick, so turning it on during a mission holds a guard order still in force.
+	/// </summary>
+	internal static bool GuardHeldUntilSubjectDestroyed(SimWorld world) =>
+		world.Tweaks.GetSettingValue(Settings.TweakSettingDefinitions.GuardHoldsUntilDestroyed);
 
 	/// <summary>
 	/// <c>Group_OrderSubjectCondition</c> (<c>00412dc4</c>) — how far gone the thing the current
