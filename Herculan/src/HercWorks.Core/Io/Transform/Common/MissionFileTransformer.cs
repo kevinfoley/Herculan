@@ -555,4 +555,63 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 	private static void Emit(MemoryStream outArr, byte[] data) {
 		outArr.Write(data, 0, data.Length);
 	}
+
+	// ==========================================================================================
+	// One record as words
+	// ==========================================================================================
+
+	/// <summary>
+	/// A record of rows 6 to 16 as the file holds it, one <c>int16</c> per word, the words the model classes' <c>…Word</c>
+	/// constants number; a row-8 record's waypoint count and list follow its four fixed words.
+	/// </summary>
+	internal short[] Words(MapObject record) {
+		using var o = new MemoryStream();
+		switch (record) {
+			case MapPoint22 r: WriteRow6(o, r); break;
+			case Heading10 r: WriteRow7(o, r); break;
+			case WaypointGroup r: WriteRow8(o, r); break;
+			case TriggerArea12 r: WriteRow9(o, r); break;
+			case MissionAction82 r: WriteRow10(o, r); break;
+			case ActionTimer30 r: WriteRow11(o, r); break;
+			case MechRosterEntry144 r: WriteRow12(o, r); break;
+			case FlyerRosterEntry102 r: WriteRow13(o, r); break;
+			case BaseRosterEntry62 r: WriteRow14(o, r); break;
+			case MissionOrder22 r: WriteRow15(o, r); break;
+			case MissionGroup164 r: WriteRow16(o, r); break;
+			default: throw new ArgumentException($"A {record.GetType().Name} is not a record of rows 6 to 16.", nameof(record));
+		}
+
+		byte[] bytes = o.ToArray();
+		var words = new short[bytes.Length / 2];
+		for (int i = 0; i < words.Length; i++) {
+			words[i] = (short)(bytes[i * 2] | (bytes[i * 2 + 1] << 8));
+		}
+
+		return words;
+	}
+
+	/// <summary>A record of row <paramref name="row"/> (6 to 16) read from <paramref name="words"/>, as <see cref="Words"/> gives them.</summary>
+	internal MapObject Record(int row, short[] words) {
+		var bytes = new byte[words.Length * 2];
+		for (int i = 0; i < words.Length; i++) {
+			bytes[i * 2] = (byte)words[i];
+			bytes[i * 2 + 1] = (byte)(words[i] >> 8);
+		}
+
+		SetBytes(bytes);
+		return row switch {
+			6 => ParseRow6(),
+			7 => ParseRow7(),
+			8 => ParseRow8(),
+			9 => ParseRow9(),
+			10 => ParseRow10(),
+			11 => ParseRow11(),
+			12 => ParseRow12(),
+			13 => ParseRow13(),
+			14 => ParseRow14(),
+			15 => ParseRow15(),
+			16 => ParseRow16(),
+			_ => throw new ArgumentOutOfRangeException(nameof(row), row, "Rows 6 to 16 are the GUID-keyed rows read as words."),
+		};
+	}
 }

@@ -568,40 +568,41 @@ public sealed class MissionGenerator {
 
 	/// <summary>
 	/// Adds record <paramref name="index"/> of <c>.MSN</c> row <paramref name="msnRow"/>, or when an earlier
-	/// record has its GUID hands both to <paramref name="merge"/> — the compaction every GUID-keyed row
-	/// shares. The slot the original read into is reused.
+	/// record has its GUID merges it into that one by the row's <see cref="MergeRules"/> — the compaction every
+	/// GUID-keyed row shares. The slot the original read into is reused.
 	/// </summary>
-	private void AddOrMerge(List<short[]> row, int msnRow, int index, short[] record, Action<short[], short[]> merge) {
+	private void AddOrMerge(List<short[]> row, int msnRow, int index, short[] record) {
 		int existing = Find(row, record[MapObject.GUIDWord], row.Count, exported: false);
 		if (existing == -1) {
 			row.Add(record);
 			Provenance.Added(msnRow, index, record);
-		} else {
-			Provenance.Merging(msnRow, existing, index);
-			merge(record, row[existing]);
+			return;
 		}
-	}
 
-	/// <summary>The whole-record replace rows 3, 6, 7 and 9 use for a repeated GUID.</summary>
-	private void Replace(short[] source, short[] target) {
-		Array.Copy(source, target, target.Length);
-		Provenance.Wrote(0, target.Length);
-	}
+		Provenance.Merging(msnRow, existing, index);
+		var target = row[existing];
+		if (MergeRules.Replaces(msnRow)) {
+			Array.Copy(record, target, target.Length);
+			Provenance.Wrote(0, target.Length);
+			return;
+		}
 
-	/// <summary>Copies each word of <paramref name="source"/> in the range that is not <paramref name="unset"/>.</summary>
-	private void Overlay(short[] source, short[] target, int first, int count, short unset) {
-		for (int i = first; i < first + count; i++) {
-			if (source[i] != unset) {
-				target[i] = source[i];
-				Provenance.Wrote(i, 1);
+		foreach (var span in MergeRules.Overlay(msnRow)) {
+			for (int i = span.First; i < span.First + span.Count; i++) {
+				if (record[i] != span.Unset) {
+					target[i] = record[i];
+					Provenance.Wrote(i, 1);
+				}
 			}
 		}
 	}
 
-	/// <summary>A variant's copy of words from <paramref name="source"/>, a record of <paramref name="row"/>, into <paramref name="target"/>.</summary>
-	private void Copy(IReadOnlyList<short[]> row, int source, short[] target, int first, int count) {
-		Array.Copy(row[source], first, target, first, count);
-		Provenance.CopiedFromVariant(source, first, count);
+	/// <summary>A variant's copy of row <paramref name="msnRow"/>'s <see cref="MergeRules.VariantCopy"/> spans from slot <paramref name="source"/> of <paramref name="row"/> into <paramref name="target"/>.</summary>
+	private void CopyVariant(IReadOnlyList<short[]> row, int source, short[] target, int msnRow) {
+		foreach (var span in MergeRules.VariantCopy(msnRow)) {
+			Array.Copy(row[source], span.First, target, span.First, span.Count);
+			Provenance.CopiedFromVariant(source, span.First, span.Count);
+		}
 	}
 
 	/// <summary>Row 3, 8 bytes: GUID, condition, a word, the value row 4 fetches.</summary>
@@ -610,7 +611,7 @@ public sealed class MissionGenerator {
 		for (int i = 0; i < count; i++) {
 			short[] record = reader.Words(4);
 			if (Gate(record[VariantValue8.ConditionRefWord], _conditions.Count)) {
-				AddOrMerge(_variants, 3, i, record, Replace);
+				AddOrMerge(_variants, 3, i, record);
 			}
 		}
 	}
@@ -666,7 +667,7 @@ public sealed class MissionGenerator {
 
 			short variantKey = record[MapPoint22.VariantKeyWord];
 			if (variantKey != -1 && VariantSource(_points, variantKey, _points.Count, 6, i) is >= 0 and var source) {
-				Copy(_points, source, record, MapPoint22.XWord, 6);
+				CopyVariant(_points, source, record, 6);
 			}
 
 			if (record[MapPoint22.SumFlagWord] != 0) {
@@ -680,7 +681,7 @@ public sealed class MissionGenerator {
 				}
 			}
 
-			AddOrMerge(_points, 6, i, record, Replace);
+			AddOrMerge(_points, 6, i, record);
 		}
 	}
 
@@ -702,10 +703,10 @@ public sealed class MissionGenerator {
 
 			short variantKey = record[Heading10.VariantKeyWord];
 			if (variantKey != -1 && VariantSource(_headings, variantKey, _headings.Count, 7, i) is >= 0 and var source) {
-				Copy(_headings, source, record, Heading10.DegreesWord, 1);
+				CopyVariant(_headings, source, record, 7);
 			}
 
-			AddOrMerge(_headings, 7, i, record, Replace);
+			AddOrMerge(_headings, 7, i, record);
 		}
 	}
 
@@ -738,10 +739,11 @@ public sealed class MissionGenerator {
 
 				Picked(8, i, source);
 				if (source >= 0) {
-					group.Words[4] = _waypointGroups[source].Words[4];
+					const int list = MergeRules.RouteListWord;
+					group.Words[list] = _waypointGroups[source].Words[list];
 					group.Points.Clear();
 					group.Points.AddRange(_waypointGroups[source].Points);
-					Provenance.CopiedFromVariant(source, 4, 1);
+					Provenance.CopiedFromVariant(source, list, 1);
 				}
 			}
 
@@ -771,7 +773,7 @@ public sealed class MissionGenerator {
 				record[TriggerArea12.SecondPointOrRadiusWord] = Ref(_points, record[TriggerArea12.SecondPointOrRadiusWord]);
 			}
 
-			AddOrMerge(_areas, 9, i, record, Replace);
+			AddOrMerge(_areas, 9, i, record);
 		}
 	}
 
@@ -800,13 +802,7 @@ public sealed class MissionGenerator {
 				}
 			}
 
-			AddOrMerge(_actions, 10, i, record, (source, target) => {
-				Overlay(source, target, MissionAction82.TypeWord, 10, -1);
-				Overlay(source, target, MissionAction82.CounterPairsWord, 20, -1);
-				Overlay(source, target, MissionAction82.TextRefsWord, 5, -1);
-				Overlay(source, target, MissionAction82.MessageIdWord, 1, 0);
-				Overlay(source, target, MissionAction82.TargetRefWord, 1, -1);
-			});
+			AddOrMerge(_actions, 10, i, record);
 		}
 	}
 
@@ -825,11 +821,7 @@ public sealed class MissionGenerator {
 				}
 			}
 
-			AddOrMerge(_timers, 11, i, record, (source, target) => {
-				Overlay(source, target, ActionTimer30.PrimaryActionRefWord, 1, -1);
-				Overlay(source, target, ActionTimer30.DelayWord, 1, 0);
-				Overlay(source, target, ActionTimer30.SequenceRefsWord, 10, -1);
-			});
+			AddOrMerge(_timers, 11, i, record);
 		}
 	}
 
@@ -852,31 +844,12 @@ public sealed class MissionGenerator {
 				record[MechRosterEntry144.EngagementActionRefWord] = Ref(_actions, record[MechRosterEntry144.EngagementActionRefWord]);
 				record[MechRosterEntry144.DefeatActionRefWord] = Ref(_actions, record[MechRosterEntry144.DefeatActionRefWord]);
 			} else if (VariantSource(_hercs, record[MechRosterEntry144.VariantKeyWord], _hercs.Count, 12, i) is >= 0 and var source) {
-				Copy(_hercs, source, record, MechRosterEntry144.AiRadarActiveWord, 20);
-				Copy(_hercs, source, record, MechRosterEntry144.WeaponRefsWord, 10);
-				Copy(_hercs, source, record, MechRosterEntry144.PositionRefWord, 2);
-				Copy(_hercs, source, record, MechRosterEntry144.TypeIndexWord, 1);
-				Copy(_hercs, source, record, MechRosterEntry144.OutOfActionReportWord, 20);
-				Copy(_hercs, source, record, MechRosterEntry144.WeaponSecondaryWord, 10);
-				Copy(_hercs, source, record, MechRosterEntry144.Constant2Word, 4);
+				CopyVariant(_hercs, source, record, 12);
 			}
 
-			AddOrMerge(_hercs, 12, i, record, (source, target) => {
-				Overlay(source, target, MechRosterEntry144.AiRadarActiveWord, 20, 0);
-				Overlay(source, target, MechRosterEntry144.WeaponRefsWord, 10, -1);
-				Overlay(source, target, MechRosterEntry144.WeaponSecondaryWord, 10, HercNoGuidance);
-				Overlay(source, target, MechRosterEntry144.TypeIndexWord, 1, -1);
-				Overlay(source, target, MechRosterEntry144.PositionRefWord, 2, -1);
-				Overlay(source, target, MechRosterEntry144.OutOfActionReportWord, 20, -1);
-				Overlay(source, target, MechRosterEntry144.Constant2Word, 1, 2);
-				Overlay(source, target, MechRosterEntry144.EngagementActionRefWord, 2, -1);
-				Overlay(source, target, MechRosterEntry144.StartingConditionWord, 1, 100);
-			});
+			AddOrMerge(_hercs, 12, i, record);
 		}
 	}
-
-	/// <summary>The ammunition word a HERC mount leaves at when it carries nothing guided.</summary>
-	private const short HercNoGuidance = 5;
 
 	/// <summary>Row 13, 102 bytes: the flyer roster, the same arrangement one class down. Merged by <c>Msn_MergeRow13</c> (<c>00416c17</c>).</summary>
 	private void ReadFlyers(Cursor reader) {
@@ -893,16 +866,10 @@ public sealed class MissionGenerator {
 				record[FlyerRosterEntry102.EngagementActionRefWord] = Ref(_actions, record[FlyerRosterEntry102.EngagementActionRefWord]);
 				record[FlyerRosterEntry102.DefeatActionRefWord] = Ref(_actions, record[FlyerRosterEntry102.DefeatActionRefWord]);
 			} else if (VariantSource(_flyers, record[FlyerRosterEntry102.VariantKeyWord], _flyers.Count, 13, i) is >= 0 and var source) {
-				Copy(_flyers, source, record, FlyerRosterEntry102.FlagSpanWord, 23);
-				Copy(_flyers, source, record, FlyerRosterEntry102.OutOfActionReportWord, 23);
+				CopyVariant(_flyers, source, record, 13);
 			}
 
-			AddOrMerge(_flyers, 13, i, record, (source, target) => {
-				Overlay(source, target, FlyerRosterEntry102.FlagSpanWord, 20, 0);
-				Overlay(source, target, FlyerRosterEntry102.PositionRefWord, 3, -1);
-				Overlay(source, target, FlyerRosterEntry102.OutOfActionReportWord, 22, -1);
-				Overlay(source, target, FlyerRosterEntry102.UnkVal_100Word, 1, 100);
-			});
+			AddOrMerge(_flyers, 13, i, record);
 		}
 	}
 
@@ -924,15 +891,10 @@ public sealed class MissionGenerator {
 				record[BaseRosterEntry62.EngagementActionRefWord] = Ref(_actions, record[BaseRosterEntry62.EngagementActionRefWord]);
 				record[BaseRosterEntry62.DefeatActionRefWord] = Ref(_actions, record[BaseRosterEntry62.DefeatActionRefWord]);
 			} else if (VariantSource(_bases, record[BaseRosterEntry62.VariantKeyWord], _bases.Count, 14, i) is >= 0 and var source) {
-				Copy(_bases, source, record, BaseRosterEntry62.TypeIndexWord, 3);
-				Copy(_bases, source, record, BaseRosterEntry62.OutOfActionReportWord, 23);
+				CopyVariant(_bases, source, record, 14);
 			}
 
-			AddOrMerge(_bases, 14, i, record, (source, target) => {
-				Overlay(source, target, BaseRosterEntry62.TypeIndexWord, 3, -1);
-				Overlay(source, target, BaseRosterEntry62.OutOfActionReportWord, 22, -1);
-				Overlay(source, target, BaseRosterEntry62.StartingConditionWord, 1, 100);
-			});
+			AddOrMerge(_bases, 14, i, record);
 		}
 	}
 
@@ -962,10 +924,10 @@ public sealed class MissionGenerator {
 					_ => record[subject],
 				};
 			} else if (VariantSource(_orders, record[MissionOrder22.VariantKeyWord], _orders.Count, 15, i) is >= 0 and var source) {
-				Copy(_orders, source, record, MissionOrder22.VerbWord, 7);
+				CopyVariant(_orders, source, record, 15);
 			}
 
-			AddOrMerge(_orders, 15, i, record, (source, target) => Overlay(source, target, MissionOrder22.VerbWord, 7, -1));
+			AddOrMerge(_orders, 15, i, record);
 		}
 	}
 
@@ -1003,13 +965,7 @@ public sealed class MissionGenerator {
 				record[slot] = Ref(_orders, record[slot]);
 			}
 
-			AddOrMerge(_groups, 16, i, record, (source, target) => {
-				Overlay(source, target, MissionGroup164.PaintsGroundWord, 20, 0);
-				Overlay(source, target, MissionGroup164.MemberRefsWord, 30, -1);
-				Overlay(source, target, MissionGroup164.MemberKindWord, 5, -1);
-				Overlay(source, target, MissionGroup164.SideWord, 2, -1);
-				Overlay(source, target, MissionGroup164.OutOfActionReportWord, 21, -1);
-			});
+			AddOrMerge(_groups, 16, i, record);
 		}
 	}
 

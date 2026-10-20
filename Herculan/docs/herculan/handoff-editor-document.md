@@ -66,7 +66,7 @@ An open's draws, all 0, are moved by no edit, since each is 0 whatever is drawn 
 | The `script.dat` value came from | The edit writes |
 |---|---|
 | a row-3, 6, 7, 8 or 9 GUID carried by more than one surviving record (replace) | the last surviving record of the GUID (`MissionDocument.SetPoint`, `SetArea`). 451 row-6 GUIDs in 24 missions are carried by two or more unconditioned records (`HercWorks.Query repeats`) |
-| a row-10 to 16 GUID carried by more than one surviving record (overlay) | per field, the last surviving record of the GUID that sets it, else the first |
+| a row-10 to 16 GUID carried by more than one surviving record (overlay) | per field, the last surviving record of the GUID that sets it, else the first. Across the retail missions two or more records carry 1 row-11, 93 row-12, 3 row-13, 564 row-14, 4 row-15 and 124 row-16 GUIDs and no row-10 one; the records of 7 herc, 562 structure, 4 order and 11 group GUIDs among them carry different conditions (`HercWorks.Query repeats`) |
 | a field of rows 12 to 15 copied from a variant | a record of the same GUID appended to the row carrying that field alone, under the condition of the record that drew the variant, so it overlays the field whatever is drawn (`MissionDocument.SetField`, rows 12 to 14). Not the GUID `-1` alternative, which every record that can draw it shares; and not unconditioned, which would create the slot alone, every other field unset, in a state where every other record of the GUID fails. `MissionDocument.SetAlternativeField` writes the alternative itself instead (`VariantEditing.SetDrawnField`; `RosterFit.Write` for a type or fit unless the view's "Only this" is ticked), changing every record that draws it, and can write an unset value |
 | a row-8 waypoint list copied from a variant (2% of retail routes) | the alternative, changing every route that draws it (`MissionDocument.SetWaypoint`, `SetWaypoints`). Detaching the route (key `-1`, its own list) would take a draw away and move every later one; row 8 replaces rather than overlays, so an appended record cannot carry one waypoint |
 | a row-15 order another group slot names too (7 of the 609 order GUIDs the retail groups name) | a copy of every record of the GUID under a new GUID, named in the edited slot, and the field in the copy (`GroupOrders`) |
@@ -142,7 +142,6 @@ VSHELL writes `data\script.dat` afresh from the `.MSN` every time it loads a cam
 
 ## Not checked
 
-- No `HercWorks.Query` report counts row-10 to 16 GUIDs carried by more than one record (`repeats` covers rows 3 and 6 to 9), so how often an overlay edit meets a conditioned supplier is not counted.
 - Whether every retail variant table has a child whose range holds a draw of 0. A table with none makes `PickVariant` answer `-1` (`MissionGenerator.cs:306-311`), and a row-12 to 15 record that asked keeps its own refs unresolved (`:805-818`), which matters for a roll of 0.
 - How long one write, generation and parse takes.
 - The slot caps are checked against the file generated in the editor's state; nothing checks the most records any flag state lets survive.

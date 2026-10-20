@@ -33,7 +33,10 @@ internal static class Program {
 		  conditions [<mission>...]        every row #1 condition, of every mission or of those named:
 		                                   the test, draw or variant table, its chain, and what it gates
 		  repeats [<mission>...]           every GUID two or more unconditioned records carry in rows
-		                                   #3, #6, #7, #8 or #9, where the last replaces the rest
+		                                   #3, #6, #7, #8 or #9, where the last replaces the rest; and
+		                                   every GUID two or more records carry in rows #10 to #16,
+		                                   where later ones overlay the fields they set, each with
+		                                   their conditions and whether they differ
 		  lint [<mission>...]              the mission check over the script.dat each mission's load
 		                                   writes, every campaign flag zero and every roll 0
 		  text <mission>... [--ids LO-HI]  the named missions' .ENG text records in file order, each with
