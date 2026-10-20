@@ -74,13 +74,15 @@ public static class MissionFileLaunch {
 	/// mission editor: the <c>.MSN</c> and <c>.ENG</c> the load read, generated with the flags and header words the load
 	/// used and draws from VSHELL's generator as it stood when the load began drawing, so the document's every generation
 	/// draws what this handoff's did (docs/herculan/handoff-editor-document.md#conditions-and-variants).
-	/// <paramref name="squad"/> says which Hercs the squad pilots and builds its <c>player.mec</c> again. Returns the handoff's
-	/// <c>script.dat</c>, or null with the reason.
+	/// <paramref name="random"/> is VSHELL's generator as the load begins, which every draw comes from in the launch's own
+	/// order: a new <see cref="ShellTrainingLaunch.StartupRandom"/> draws as the game's load does, and the editor's preview
+	/// passes <see cref="SimRandom.Lowest"/>. <paramref name="squad"/> says which Hercs the squad pilots and builds its
+	/// <c>player.mec</c> again. Returns the handoff's <c>script.dat</c>, or null with the reason.
 	/// </summary>
-	public static string? Open(GameContent shellContent, string installRoot, string name, string directory,
+	public static string? Open(GameContent shellContent, string installRoot, string name, string directory, SimRandom random,
 			out MissionDocument? document, out MissionSquad? squad, out string? failure) =>
-		Hold(name, (SimRandom random, MissionGenerating generating, out MissionSquad? piloted, out string? why) =>
-			Write(shellContent, installRoot, name, directory, random, generating, out piloted, out why), out document, out squad,
+		Hold(name, random, (SimRandom drawing, MissionGenerating generating, out MissionSquad? piloted, out string? why) =>
+			Write(shellContent, installRoot, name, directory, drawing, generating, out piloted, out why), out document, out squad,
 			out failure);
 
 	/// <summary>
@@ -91,8 +93,9 @@ public static class MissionFileLaunch {
 	/// mission this way until it is saved, after which <see cref="Open"/> reads the saved file.
 	/// </summary>
 	public static string? OpenNew(GameContent shellContent, string installRoot, string name, byte[] msn, byte[]? text,
-			string directory, out MissionDocument? document, out MissionSquad? squad, out string? failure) =>
-		OpenAt(shellContent, installRoot, name, position: null, msn, text, directory, out document, out squad, out failure);
+			string directory, SimRandom random, out MissionDocument? document, out MissionSquad? squad, out string? failure) =>
+		OpenAt(shellContent, installRoot, name, position: null, msn, text, directory, random, out document, out squad,
+			out failure);
 
 	/// <summary>
 	/// The career position <see cref="Open"/> loads <paramref name="name"/> at, or null for a mission
@@ -106,28 +109,27 @@ public static class MissionFileLaunch {
 	/// <paramref name="text"/>, under the name <paramref name="name"/> (no extension), loaded as <see cref="Open"/> loads the
 	/// mission at career position <paramref name="position"/> (<see cref="PositionOf"/>): a stage-0 row in training mode, a
 	/// later stage's mission in campaign mode, or, for none, as <c>INSTANT ACTION</c> loads a mission
-	/// <c>gam\career.dat</c> does not list. Every draw comes from a new <see cref="ShellTrainingLaunch.StartupRandom"/>, in the
-	/// launch's own order. The mission editor's Draw again opens its mission again this way.
+	/// <c>gam\career.dat</c> does not list. Every draw comes from <paramref name="random"/>, as <see cref="Open"/>'s do. The
+	/// mission editor's preview opens its mission again this way.
 	/// </summary>
 	public static string? OpenAt(GameContent shellContent, string installRoot, string name, (int Stage, int Mission)? position,
-			byte[] msn, byte[]? text, string directory, out MissionDocument? document, out MissionSquad? squad,
+			byte[] msn, byte[]? text, string directory, SimRandom random, out MissionDocument? document, out MissionSquad? squad,
 			out string? failure) =>
-		Hold(name, (SimRandom random, MissionGenerating generating, out MissionSquad? piloted, out string? why) =>
+		Hold(name, random, (SimRandom drawing, MissionGenerating generating, out MissionSquad? piloted, out string? why) =>
 			position is var (stage, mission)
-				? WriteAt(shellContent, installRoot, name, stage, mission, (msn, text), directory, random, generating, out piloted,
+				? WriteAt(shellContent, installRoot, name, stage, mission, (msn, text), directory, drawing, generating, out piloted,
 					out why)
 				: LoadUnlisted(shellContent, ShellWorkingFiles.DataDirectory(installRoot), $"{MissionFolder}\\{name}{MissionExtension}",
-					msn, text, directory, random, new short[MissionGenerator.ClearListLength], generating, out piloted, out why),
+					msn, text, directory, drawing, new short[MissionGenerator.ClearListLength], generating, out piloted, out why),
 			out document, out squad, out failure);
 
 	private delegate string? HandoffWriter(SimRandom random, MissionGenerating generating, out MissionSquad? squad,
 		out string? failure);
 
-	// Writes a handoff through <write> and holds the mission its load generated as a MissionDocument, which draws what
-	// the handoff's load drew.
-	private static string? Hold(string name, HandoffWriter write, out MissionDocument? document, out MissionSquad? squad,
-			out string? failure) {
-		var random = ShellTrainingLaunch.StartupRandom();
+	// Writes a handoff through <write>, drawing from <random>, and holds the mission its load generated as a MissionDocument,
+	// which draws what the handoff's load drew.
+	private static string? Hold(string name, SimRandom random, HandoffWriter write, out MissionDocument? document,
+			out MissionSquad? squad, out string? failure) {
 		MissionDocument? opened = null;
 		string? script = write(random, (msn, text, flags, header) => {
 			var drawn = random.Copy();

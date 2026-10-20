@@ -20,11 +20,11 @@ internal abstract record MoveTarget;
 /// the history then places again what stands on the generated points and levels the ground.
 ///
 /// <para>A step that holds block indices — a move's target, a side change's group — keeps them valid without being
-/// told of later edits as long as the campaign state stands: the history is undone last first, so a step is only ever
+/// told of later edits as long as the preview stands: the history is undone last first, so a step is only ever
 /// undone or redone with the <c>.MSN</c> as it stood when the step was made, and generating from the same records with the
 /// same <see cref="MissionGeneration"/> gives the same indices. Every step that adds or removes records rebuilds the
 /// editor's index from the generated file as it is undone or redone (<see cref="MissionRebuild"/>), so the index the step
-/// reads is that generation's. A change of the campaign state (<see cref="CampaignState"/>) is no step and changes which
+/// reads is that generation's. A change of the preview (<see cref="MissionPreview"/>) is no step and changes which
 /// records are generated, so a step holding indices remembers the generation it was made under
 /// (<see cref="IIndexedEdit"/>); undone or redone under another, it puts its <c>.MSN</c> rows back and the editor's state is
 /// built again in full through <see cref="MissionRebuild"/> in place of its own scene update.</para>
@@ -552,7 +552,7 @@ internal sealed class PointMover {
 
 	/// <summary>
 	/// Places again what stands on the generated points, rebuilds the mission box overlay and levels the ground, as after
-	/// every step: for a change made outside the history (<see cref="CampaignState"/>).
+	/// every step: for a change made outside the history (<see cref="MissionPreview"/>).
 	/// </summary>
 	public void Settle() {
 		_followers.Sync();
@@ -566,7 +566,7 @@ internal sealed class PointMover {
 		}
 
 		if (edit is IIndexedEdit indexed && !ReferenceEquals(indexed.MadeUnder, _source!.Generation)) {
-			var rebuild = FullRebuild ?? throw new InvalidOperationException("No rebuild is set for a step made in another campaign state.");
+			var rebuild = FullRebuild ?? throw new InvalidOperationException("No rebuild is set for a step made under another preview.");
 			if (undo) {
 				rebuild.Undo(indexed.Change);
 			} else {

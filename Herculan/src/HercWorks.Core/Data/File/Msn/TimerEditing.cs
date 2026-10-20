@@ -55,7 +55,7 @@ public static class TimerEditing {
 	public static ScriptActionTimer Exported(MissionDocument document, short timer) =>
 		timer != -1 && document.ExportedIndex(TimerRow, timer) is { } index
 			? document.Script.ActionTimers[index]
-			: throw new InvalidOperationException($"Timer {timer} is not in this state of the mission.");
+			: throw new InvalidOperationException($"Timer {timer} is not in this preview.");
 
 	/// <summary>The row-10 GUID of the action that starts <paramref name="timer"/> as generated, or <c>-1</c> when it runs from mission start.</summary>
 	public static short Start(MissionDocument document, short timer) => ActionGuid(document, Exported(document, timer).PrimaryActionRef);
@@ -144,7 +144,7 @@ public static class TimerEditing {
 
 	private static void CheckAction(MissionDocument document, short action, bool none) {
 		if (action == -1 ? !none : document.ExportedIndex(ActionRow, action) == null) {
-			throw new InvalidOperationException(action == -1 ? "No action was given." : "That action is not in this state of the mission.");
+			throw new InvalidOperationException(action == -1 ? "No action was given." : "That action is not in this preview.");
 		}
 	}
 }

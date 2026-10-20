@@ -8,10 +8,10 @@ using Xunit;
 namespace Herculan.Engine.Tests;
 
 /// <summary>
-/// The editor's campaign state (<see cref="CampaignState"/>) over a mission opened as the editor opens one, against a real
+/// The editor's preview (<see cref="MissionPreview"/>) over a mission opened as the editor opens one, against a real
 /// install. Skips silently without one, as the rest of the suite does.
 /// </summary>
-public class CampaignStateTests {
+public class MissionPreviewTests {
 	private const int GroupRow = 16;
 
 	/// <summary>
@@ -20,9 +20,9 @@ public class CampaignStateTests {
 	/// <c>C2_07</c>, flag 402 above 0 brings in group 123, which comes before Cybrid group 128 in the file.
 	/// </summary>
 	[Fact]
-	public void SideChangeUndoneInAnotherCampaignStateRestoresItsOwnGroup() {
+	public void SideChangeUndoneUnderAnotherPreviewRestoresItsOwnGroup() {
 		const short Gated = 123, Changed = 128;
-		if (Open("C2_07", nameof(SideChangeUndoneInAnotherCampaignStateRestoresItsOwnGroup), campaign: true) is not { } mission) {
+		if (Open("C2_07", nameof(SideChangeUndoneUnderAnotherPreviewRestoresItsOwnGroup), campaign: true) is not { } mission) {
 			return;
 		}
 
@@ -33,9 +33,9 @@ public class CampaignStateTests {
 		Assert.Equal(MissionSide.Cybrid, mission.Index.SideOf(group));
 		mission.Sides.Set(group, MissionSide.Human);
 
-		mission.Campaign.RequestFlag(402, 1);
-		mission.Campaign.RunRequest();
-		Assert.Null(mission.Campaign.Failure);
+		mission.Preview.RequestFlag(402, 1);
+		mission.Preview.RunRequest();
+		Assert.Null(mission.Preview.Failure);
 		int moved = source.ExportedIndex(GroupRow, Changed)!.Value;
 		Assert.NotEqual(group, moved);
 
@@ -47,26 +47,26 @@ public class CampaignStateTests {
 
 	/// <summary>
 	/// Catches a flag edit that writes <c>mission.var</c> from the flags typed rather than as the load leaves them (every
-	/// load clears flag 0), a Draw again that drops the flags typed, and either one added to the undo history.
+	/// load clears flag 0), a simulated load that drops the flags typed, and either one added to the undo history.
 	/// </summary>
 	[Fact]
-	public void TypedFlagsSurviveDrawAgainOutsideTheHistory() {
-		if (Open("TRAIN5", nameof(TypedFlagsSurviveDrawAgainOutsideTheHistory), campaign: false) is not { } mission) {
+	public void TypedFlagsSurviveASimulatedLoadOutsideTheHistory() {
+		if (Open("TRAIN5", nameof(TypedFlagsSurviveASimulatedLoadOutsideTheHistory), campaign: false) is not { } mission) {
 			return;
 		}
 
-		mission.Campaign.RequestFlag(0, 5);
-		mission.Campaign.RunRequest();
-		Assert.Null(mission.Campaign.Failure);
-		Assert.Equal(5, mission.Campaign.Flag(0));
+		mission.Preview.RequestFlag(0, 5);
+		mission.Preview.RunRequest();
+		Assert.Null(mission.Preview.Failure);
+		Assert.Equal(5, mission.Preview.Flag(0));
 		byte[] counters = File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(mission.Mission.SourcePath)!, MissionLoader.CountersFileName));
 		Assert.Equal(0, BitConverter.ToInt16(counters, 0));
 
-		mission.Campaign.RequestDrawAgain();
-		mission.Campaign.RunRequest();
+		mission.Preview.RequestSimulate();
+		mission.Preview.RunRequest();
 
-		Assert.Null(mission.Campaign.Failure);
-		Assert.Equal(5, mission.Campaign.Flag(0));
+		Assert.Null(mission.Preview.Failure);
+		Assert.Equal(5, mission.Preview.Flag(0));
 		Assert.False(mission.Mover.CanUndo);
 	}
 

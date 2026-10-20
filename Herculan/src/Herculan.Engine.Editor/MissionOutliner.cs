@@ -21,7 +21,7 @@ internal sealed class MissionOutliner {
 	private static readonly Vector4 FindingLinkColor = new(0.55f, 0.78f, 1f, 1f);
 	private static readonly Vector4 SelectedFindingColor = new(1f, 0.85f, 0.1f, 1f);
 
-	// A condition that fails in the campaign state shown, dimmed.
+	// A condition that fails in this preview, dimmed.
 	private static readonly Vector4 FailingConditionColor = new(0.55f, 0.55f, 0.55f, 1f);
 
 	private readonly MissionIndex _index;
@@ -175,7 +175,7 @@ internal sealed class MissionOutliner {
 
 	/// <summary>
 	/// Every row-1 condition, in file order, as the conditions the other records' condition fields reference, dimmed when it
-	/// fails in the campaign state shown; none for a plain <c>script.dat</c>, which has no row 1.
+	/// fails in this preview; none for a plain <c>script.dat</c>, which has no row 1.
 	/// </summary>
 	private void DrawConditions() {
 		if (Conditions is not { Listed: { } records, Source: { } source } conditions

@@ -81,7 +81,7 @@ public static class FlyerGroups {
 
 	/// <summary>
 	/// Why a flyer cannot join row-16 group <paramref name="group"/> of <paramref name="document"/>, or null when it can: a
-	/// flyer group in this state of the mission with a member slot up to <see cref="LastJoinSlot"/> that no record of it
+	/// flyer group in this preview with a member slot up to <see cref="LastJoinSlot"/> that no record of it
 	/// fills.
 	/// </summary>
 	public static string? WhyNoJoin(MissionDocument document, short group) =>

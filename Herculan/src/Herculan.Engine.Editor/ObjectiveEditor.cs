@@ -135,7 +135,7 @@ internal sealed class ObjectiveEditor {
 
 	/// <summary>
 	/// The text of each line of <paramref name="objective"/>'s failure text as it is shown, or null for a line it has no text
-	/// for in this state of the mission; empty when it has no failure text.
+	/// for in this preview; empty when it has no failure text.
 	/// </summary>
 	public IReadOnlyList<string?> FailureLines(int objective) {
 		if (_source == null || Record(objective) is not { } record) {

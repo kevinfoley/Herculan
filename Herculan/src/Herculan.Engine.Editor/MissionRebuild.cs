@@ -9,9 +9,9 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// Builds again what the editor holds by <c>script.dat</c> block index after an edit that adds or removes <c>.MSN</c>
-/// records: an add, a delete, and the undo and redo of either (<see cref="RecordsEdit"/>); a change of the campaign state
-/// the mission is shown in (<see cref="CampaignState"/>), which conditions records in and out; and the undo or redo of a
-/// step made in another campaign state (<see cref="IIndexedEdit"/>). Removing a record moves every
+/// records: an add, a delete, and the undo and redo of either (<see cref="RecordsEdit"/>); a change of the preview
+/// the mission is shown in (<see cref="MissionPreview"/>), which conditions records in and out; and the undo or redo of a
+/// step made under another preview (<see cref="IIndexedEdit"/>). Removing a record moves every
 /// later generated record of its block down one, and an add's records are exported last, so the indices the index, the
 /// scene objects' placements and the selection hold no longer name what they named
 /// (docs/herculan/handoff-editor-document.md#rebuilding-after-an-edit).
@@ -85,8 +85,8 @@ internal sealed class MissionRebuild {
 	}
 
 	/// <summary>
-	/// Which Hercs the squad pilots and how its <c>player.mec</c> is built again, which Draw again replaces
-	/// (<see cref="CampaignState"/>); null for a plain <c>script.dat</c>.
+	/// Which Hercs the squad pilots and how its <c>player.mec</c> is built again, which a reopen of the preview replaces
+	/// (<see cref="MissionPreview"/>); null for a plain <c>script.dat</c>.
 	/// </summary>
 	public MissionSquad? Squad { get; set; }
 

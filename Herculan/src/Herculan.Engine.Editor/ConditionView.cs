@@ -6,7 +6,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// The Properties panel's view of a condition, a row-1 record: its kind; a flag test's flag, operator and value, a draw's bound
-/// and the number it drew, or a range's draw and ends; what it requires; whether it holds in the campaign state shown; what
+/// and the number it drew, or a range's draw and ends; what it requires; whether it holds in this preview; what
 /// references it, as links; and Delete, refused while anything does. Each a field or choice that changes it
 /// (<see cref="ConditionEditor"/>). A variant table is its table's view (<see cref="VariantView"/>), and a range over one is
 /// shown as the alternative it chooses (<see cref="VariantView.DrawRange"/>), its chance set in the table's view. What each
@@ -74,11 +74,7 @@ internal sealed class ConditionView {
 		}
 
 		ImGui.Spacing();
-		if (_editor.Holds(guid)) {
-			ImGui.Text("Holds in the campaign state shown.");
-		} else {
-			EditorText.Emphasis("Fails in the campaign state shown.");
-		}
+		_links.InPreview(_editor.Holds(guid));
 
 		DrawUses(source, guid, record, locked);
 		ImGui.PopID();
@@ -103,7 +99,7 @@ internal sealed class ConditionView {
 			_editor.RequestFlag(guid, (short)typedFlag);
 		}
 
-		if (flag is >= 0 and < ConditionEditing.Flags && CampaignState.Label(flag) is { } label) {
+		if (flag is >= 0 and < ConditionEditing.Flags && MissionPreview.Label(flag) is { } label) {
 			EditorText.Note(label);
 		}
 
@@ -137,9 +133,9 @@ internal sealed class ConditionView {
 
 		EditorText.Note($"It draws a number from 0 to {record.FlagIndexOrRangeLower - 1}.");
 		if (ConditionEditing.Outcome(source, guid).Draw is { } drawn) {
-			ImGui.Text($"Drawn in the campaign state shown: {drawn}");
+			ImGui.Text($"Drawn in this preview: {drawn}");
 		} else {
-			EditorText.Note("Not drawn in the campaign state shown: what it requires fails.");
+			EditorText.Note("Not drawn in this preview: what it requires fails.");
 		}
 
 		EditorText.Note("Adding or deleting a draw, or changing whether it is made, changes what every later draw and "
@@ -284,7 +280,7 @@ internal sealed class ConditionView {
 
 		if (uses.LeftOut.Count > 0) {
 			int count = uses.LeftOut.Sum(kind => kind.Count);
-			ImGui.TextWrapped($"{count} more, which this state of the mission leaves out: "
+			ImGui.TextWrapped($"{count} more, not in this preview: "
 				+ string.Join(", ", uses.LeftOut.Select(kind => $"{kind.Count} {kind.Kind}")));
 		}
 	}

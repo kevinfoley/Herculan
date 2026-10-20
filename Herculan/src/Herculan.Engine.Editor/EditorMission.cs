@@ -11,7 +11,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// One opened mission and everything the editor builds over it on the CPU: the scene, the cross-reference
-/// index, the overlays, the picker, the two side panels and the move, add, delete, fit, type, route, trigger area, action, timer, condition, presence, variant, order, objective, text, theater and campaign state tools, all sharing one
+/// index, the overlays, the picker, the two side panels and the move, add, delete, fit, type, route, trigger area, action, timer, condition, presence, variant, order, objective, text, theater and preview tools, all sharing one
 /// selection. An edit that adds or removes records builds the CPU state again in place (<see cref="Rebuild"/>), and a
 /// change of theater or time of day dresses the scene in its world again in place (<see cref="Theater"/>). Opening another
 /// mission builds a new one of these rather than resetting this one; <see cref="MissionDrawables"/> is its GPU half.
@@ -41,7 +41,7 @@ internal sealed class EditorMission {
 		Fitter = new MachineFitter(document, source, Mover, Rebuild, shellContent);
 		Squad = new SquadEditor(document, source, index, Mover, Rebuild, Fitter, Deleter);
 		Theater = new TheaterChanger(document, source, scene, index, Mover, Rebuild);
-		Campaign = new CampaignState(source, Rebuild, Mover, Theater, mode, handoffDirectory);
+		Preview = new MissionPreview(source, Rebuild, Mover, Theater, mode, handoffDirectory);
 		Routes = new RouteEditor(source, index, Mover, Rebuild, Selection, Deleter);
 		Placing = new RoutePlacing(Routes, index, drape);
 		Areas = new AreaEditor(source, index, Mover, Rebuild, Selection, Deleter);
@@ -69,8 +69,8 @@ internal sealed class EditorMission {
 		Properties = new PropertiesPanel(index, document, Selection, Mover, Sides, Deleter,
 			new SquadMachinePanel(Fitter, Squad, squad), new RosterFitView(Fitter, Types, Variants, new UnitTypeCatalog(content)),
 			new MissionView(() => Name, () => document.ZoneIndex, Theater, TheaterNames.Labels(content),
-				new CampaignStateView(Campaign), new MissionTextView(Texts)),
-			Routes, Placing, Areas, AreaPlacing, Orders, Objectives, Actions, Timers, Conditions, Presence, Variants, Campaign,
+				new MissionPreviewView(Preview, new PanelLinks(index, Selection)), new MissionTextView(Texts)),
+			Routes, Placing, Areas, AreaPlacing, Orders, Objectives, Actions, Timers, Conditions, Presence, Variants, Preview,
 			VariantView.Summaries(content), SimStrings.Load(content));
 	}
 
@@ -177,8 +177,8 @@ internal sealed class EditorMission {
 	/// <summary>Changes the mission's theater and time of day in <see cref="Source"/>, reloading the scene's world, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public TheaterChanger Theater { get; }
 
-	/// <summary>Sets the campaign flags and draws <see cref="Source"/> is shown with, outside the undo history.</summary>
-	public CampaignState Campaign { get; }
+	/// <summary>Sets the campaign flags and draws <see cref="Source"/> is previewed with, outside the undo history.</summary>
+	public MissionPreview Preview { get; }
 
 	/// <summary>Creates, edits and deletes routes in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public RouteEditor Routes { get; }
@@ -206,7 +206,7 @@ internal sealed class EditorMission {
 	/// <paramref name="squad"/> is which Hercs the mission's squad pilots, which builds the handoff's <c>player.mec</c> again after
 	/// an edit, and <paramref name="shellContent"/> VSHELL's mount, which holds the shell's chassis and weapon tables. Throws
 	/// <see cref="MissingHandoffFileException"/> as <see cref="MissionLoader.Load"/> does. <paramref name="mode"/> is how the
-	/// mission was opened, which Draw again opens it by again (<see cref="CampaignState"/>).
+	/// mission was opened, which the preview opens it by again (<see cref="MissionPreview"/>).
 	/// </summary>
 	public static EditorMission Open(GameContent content, string scriptPath, string name, string? dataDirectory = null,
 			MissionDocument? source = null, MissionSquad? squad = null, Func<GameContent>? shellContent = null,

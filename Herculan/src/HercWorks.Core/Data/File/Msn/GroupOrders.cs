@@ -49,7 +49,7 @@ public static class GroupOrders {
 
 	/// <summary>
 	/// The row-15 GUID in each of row-16 group <paramref name="group"/>'s ten order slots as generated, <c>-1</c> for an
-	/// empty slot; all <c>-1</c> for a group this state of the mission leaves out.
+	/// empty slot; all <c>-1</c> for a group this preview leaves out.
 	/// </summary>
 	public static short[] Orders(MissionDocument document, short group) {
 		var orders = Enumerable.Repeat((short)-1, Slots).ToArray();
@@ -121,7 +121,7 @@ public static class GroupOrders {
 	/// <summary>Why no order can be added to <paramref name="group"/>, or null when one can.</summary>
 	public static string? WhyNoAdd(MissionDocument document, short group) {
 		if (document.ExportedIndex(GroupRow, group) == null) {
-			return "The group is not in this state of the mission.";
+			return "The group is not in this preview.";
 		}
 
 		// A first order has no slot-0 route to take (NewOrder), so it runs none.

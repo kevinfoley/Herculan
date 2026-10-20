@@ -1,5 +1,6 @@
 using HercWorks.Core.Data.File.Msn;
 using Herculan.Engine.Content;
+using Herculan.Engine.Numerics;
 using Herculan.Engine.Shell;
 
 namespace Herculan.Engine.Editor;
@@ -12,6 +13,11 @@ namespace Herculan.Engine.Editor;
 /// day over them (docs/retail/formats/script-dat.md#the-training-fields): a departure from <c>INSTANT ACTION</c> the user chose, which
 /// the planned menu for playing user-made missions honours (docs/herculan/handoff-editor-viewing.md#theater-and-time-of-day). A campaign mission is
 /// shown as the launch loads it, on its stage's theater by its own time of day.
+///
+/// <para>Every draw of an open is its lowest outcome (<see cref="SimRandom.Lowest"/>), so a mission opens as the same
+/// preview every time, each variant table on its first option (docs/herculan/handoff-editor-conditions.md#the-preview): the
+/// editor's choice, where the game's load draws from <see cref="ShellTrainingLaunch.StartupRandom"/>, which
+/// <see cref="OpenAgain"/> does when asked to simulate a load.</para>
 ///
 /// <para>The launch is unchanged and its handoff on disk keeps the launch's header until
 /// <see cref="EditorMission.Open"/> writes the document's generation over it.</para>
@@ -26,19 +32,26 @@ internal static class MissionOpener {
 
 	public const int VariantWord = 18 / 2;
 
-	/// <summary><see cref="MissionFileLaunch.Open"/>, the document then showing the mission's own theater and time of day.</summary>
+	/// <summary>
+	/// <see cref="MissionFileLaunch.Open"/> drawing the lowest outcomes, the document then showing the mission's own theater
+	/// and time of day.
+	/// </summary>
 	public static string? Open(GameContent shellContent, string installRoot, string name, string directory,
 			out MissionDocument? document, out MissionSquad? squad, out string? failure) {
-		string? script = MissionFileLaunch.Open(shellContent, installRoot, name, directory, out document, out squad, out failure);
+		string? script = MissionFileLaunch.Open(shellContent, installRoot, name, directory, SimRandom.Lowest(), out document,
+			out squad, out failure);
 		document = OwnWorld(document, squad);
 		return script;
 	}
 
-	/// <summary><see cref="MissionFileLaunch.OpenNew"/>, the document then showing the mission's own theater and time of day.</summary>
+	/// <summary>
+	/// <see cref="MissionFileLaunch.OpenNew"/> drawing the lowest outcomes, the document then showing the mission's own theater
+	/// and time of day.
+	/// </summary>
 	public static string? OpenNew(GameContent shellContent, string installRoot, string name, byte[] msn, byte[]? text,
 			string directory, out MissionDocument? document, out MissionSquad? squad, out string? failure) {
-		string? script = MissionFileLaunch.OpenNew(shellContent, installRoot, name, msn, text, directory, out document,
-			out squad, out failure);
+		string? script = MissionFileLaunch.OpenNew(shellContent, installRoot, name, msn, text, directory, SimRandom.Lowest(),
+			out document, out squad, out failure);
 		document = OwnWorld(document, squad);
 		return script;
 	}
@@ -54,14 +67,15 @@ internal static class MissionOpener {
 
 	/// <summary>
 	/// The mission <paramref name="msn"/> and its text <paramref name="text"/> opened again as <paramref name="mode"/> opened
-	/// it, through <see cref="MissionFileLaunch.OpenAt"/>, with new draws, its handoff written into
-	/// <paramref name="directory"/>; the document then showing the mission's own theater and time of day, as
-	/// <see cref="Open"/>'s does.
+	/// it, through <see cref="MissionFileLaunch.OpenAt"/>, its handoff written into <paramref name="directory"/>: drawing as
+	/// the game's load does when <paramref name="simulate"/>, else the lowest outcomes, as <see cref="Open"/> does; the
+	/// document then showing the mission's own theater and time of day, as <see cref="Open"/>'s does.
 	/// </summary>
-	public static string? OpenAgain(MissionLaunchMode mode, byte[] msn, byte[]? text, string directory,
+	public static string? OpenAgain(MissionLaunchMode mode, byte[] msn, byte[]? text, string directory, bool simulate,
 			out MissionDocument? document, out MissionSquad? squad, out string? failure) {
 		string? script = MissionFileLaunch.OpenAt(mode.ShellContent(), mode.InstallRoot, mode.Name, mode.Position, msn, text,
-			directory, out document, out squad, out failure);
+			directory, simulate ? ShellTrainingLaunch.StartupRandom() : SimRandom.Lowest(), out document, out squad,
+			out failure);
 		document = OwnWorld(document, squad);
 		return script;
 	}

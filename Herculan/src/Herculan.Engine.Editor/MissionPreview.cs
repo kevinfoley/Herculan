@@ -7,29 +7,32 @@ using Herculan.Engine.World;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The campaign state the editor shows a mission in: the campaign flags its row-1 conditions test, as the load hands them
-/// in, and the load's random draws (docs/herculan/handoff-editor-conditions.md#the-campaign-state). A flag
-/// typed in, or Draw again, which opens the mission again as its open loaded it with new draws
-/// (<see cref="MissionOpener.OpenAgain"/>), replaces the document's generation (<see cref="MissionDocument.SetGeneration"/>),
-/// writes the handoff's <c>mission.var</c> as the launch writes it for that generation, and builds the editor's state again
-/// (<see cref="MissionRebuild"/>), the squad's <c>player.mec</c> and the generated <c>mission.str</c> with it. Neither
-/// changes the document: neither is a step of the undo history, marks it unsaved or changes what Save writes.
+/// The preview: the one version of a mission the editor shows, made by the campaign flags its row-1 conditions test, as the
+/// load hands them in, and the load's random draws (docs/herculan/handoff-editor-conditions.md#the-preview). A mission opens
+/// with every draw its lowest outcome (<see cref="MissionOpener"/>). A flag typed in, Simulate a mission load, which opens
+/// the mission again as its open loaded it drawing as the game does, and Back to first options, which opens it again with
+/// the lowest draws (<see cref="MissionOpener.OpenAgain"/>), each replace the document's generation
+/// (<see cref="MissionDocument.SetGeneration"/>), write the handoff's <c>mission.var</c> as the launch writes it for that
+/// generation, and build the editor's state again (<see cref="MissionRebuild"/>), the squad's <c>player.mec</c> and the
+/// generated <c>mission.str</c> with it. None changes the document: none is a step of the undo history, marks it unsaved or
+/// changes what Save writes.
 ///
-/// <para>Draw again keeps every flag as it stands but those the launch draws, 4 to 6, which take the new load's draws. The requests run when <see cref="RunRequest"/> is called, once the
-/// frame's panels are drawn, as the other edits do.</para>
+/// <para>Both reopens keep every flag as it stands but those the launch draws, 4 to 6, which take the new load's draws. The
+/// requests run when <see cref="RunRequest"/> is called, once the frame's panels are drawn, as the other edits do.</para>
 ///
-/// <para>The alternative a variant table's view shows in place of its draw (<see cref="RequestShown"/>) is part of the state
-/// too: the generation's forced picks (<see cref="MissionGeneration.WithPick"/>), which still draw, so nothing else the
-/// generation draws changes. It is kept through a flag change and an edit, ignored once its table or range is gone, and
-/// cleared by Draw again, whose generation forces nothing.</para>
+/// <para>The alternative a variant table's view shows in place of its draw (<see cref="RequestShown"/>) is part of the
+/// preview too: the generation's forced picks (<see cref="MissionGeneration.WithPick"/>), which still draw, so nothing else
+/// the generation draws changes. It is kept through a flag change and an edit, ignored once its table or range is gone, and
+/// cleared by both reopens, whose generation forces nothing.</para>
 /// </summary>
-internal sealed class CampaignState {
-	// The flags every load draws (ShellTrainingLaunch's SeedDrawnFlags).
+internal sealed class MissionPreview {
+	// The flags every load draws (ShellTrainingLaunch's SeedDrawnFlags), below this bound.
 	private const int FirstDrawnFlag = 4;
 	private const int LastDrawnFlag = 6;
+	private const int DrawnFlagBound = 12;
 
-	// The folder inside the handoff's that Draw again opens the mission into, so a failed draw leaves the handoff as it was.
-	private const string DrawFolder = "draw";
+	// The folder inside the handoff's that a reopen opens the mission into, so a failed one leaves the handoff as it was.
+	private const string ReopenFolder = "draw";
 
 	private readonly MissionDocument? _source;
 	private readonly MissionRebuild _rebuild;
@@ -39,13 +42,15 @@ internal sealed class CampaignState {
 	private readonly string _handoff;
 
 	private (int Flag, short Value)? _flagRequested;
-	private bool _drawRequested;
+
+	// A reopen asked for: true to simulate a load, false for the first options.
+	private bool? _reopenRequested;
 	private (short Table, short? Range)? _shownRequested;
 
-	/// <param name="source">The mission as its <c>.MSN</c>, or null for a plain <c>script.dat</c>, which has no state to set.</param>
-	/// <param name="mode">How the mission was opened, which Draw again opens it by again; null when it cannot be.</param>
+	/// <param name="source">The mission as its <c>.MSN</c>, or null for a plain <c>script.dat</c>, which has no preview to set.</param>
+	/// <param name="mode">How the mission was opened, which a reopen opens it by again; null when it cannot be.</param>
 	/// <param name="handoffDirectory">Where the open wrote the handoff.</param>
-	public CampaignState(MissionDocument? source, MissionRebuild rebuild, PointMover mover, TheaterChanger theater,
+	public MissionPreview(MissionDocument? source, MissionRebuild rebuild, PointMover mover, TheaterChanger theater,
 			MissionLaunchMode? mode, string handoffDirectory) {
 		_source = source;
 		_rebuild = rebuild;
@@ -55,23 +60,37 @@ internal sealed class CampaignState {
 		_handoff = handoffDirectory;
 	}
 
-	/// <summary>Whether the mission is held as its <c>.MSN</c>, which has a state to show.</summary>
+	/// <summary>Whether the mission is held as its <c>.MSN</c>, which has a preview to set.</summary>
 	public bool Shown => _source != null;
 
 	/// <summary>Whether the mission was loaded in training mode, a practice mission or <c>INSTANT ACTION</c>, rather than at a campaign position.</summary>
 	public bool Training => _rebuild.Squad?.PlayerMachine is not PlayerMachineSource.CareerSquad;
 
+	/// <summary>Whether the draws are a simulated load's, rather than the lowest outcomes an open draws.</summary>
+	public bool Simulated { get; private set; }
+
 	/// <summary>
-	/// Every campaign flag a type-0 row-1 record of the mission tests, whatever the record's own condition, in index
-	/// order; an index past the flag array, which reads 0 whatever is set, left out.
+	/// Every campaign flag a type-0 row-1 record of the mission tests, whatever the record's own condition, in index order;
+	/// an index past the flag array, which reads 0 whatever is set, and the flags every load draws (<see cref="TestsDrawnFlag"/>)
+	/// left out.
 	/// </summary>
 	public IReadOnlyList<int> TestedFlags =>
-		(_source?.Mission.Conditions ?? [])
-			.Where(condition => condition.Type == 0 && condition.FlagIndexOrRangeLower is >= 0 and < MissionGenerator.CampaignFlagCount)
-			.Select(condition => (int)condition.FlagIndexOrRangeLower)
+		FlagTests.Select(condition => (int)condition.FlagIndexOrRangeLower)
+			.Where(flag => flag is < FirstDrawnFlag or > LastDrawnFlag)
 			.Distinct()
 			.Order()
 			.ToList();
+
+	/// <summary>Whether the mission tests a flag every load draws, 4 to 6, which only a reopen sets.</summary>
+	public bool TestsDrawnFlag => FlagTests.Any(condition => condition.FlagIndexOrRangeLower is >= FirstDrawnFlag and <= LastDrawnFlag);
+
+	/// <summary>The type-0 row-1 records testing flag <paramref name="flag"/>, in file order.</summary>
+	public IReadOnlyList<MissionCondition14> TestsOf(int flag) =>
+		FlagTests.Where(condition => condition.FlagIndexOrRangeLower == flag).ToList();
+
+	private IEnumerable<MissionCondition14> FlagTests =>
+		(_source?.Mission.Conditions ?? [])
+			.Where(condition => condition.Type == 0 && condition.FlagIndexOrRangeLower is >= 0 and < MissionGenerator.CampaignFlagCount);
 
 	/// <summary>The value flag <paramref name="flag"/> has as the generation hands the load the flags.</summary>
 	public short Flag(int flag) => _source!.Generation.Flags[flag];
@@ -82,7 +101,7 @@ internal sealed class CampaignState {
 		0 => "Last mission's outcome",
 		1 => "Campaign stage",
 		2 => "Mission in the stage",
-		>= FirstDrawnFlag and <= LastDrawnFlag => "Drawn at each load (0 to 11)",
+		>= FirstDrawnFlag and <= LastDrawnFlag => $"Random number picked at each load (0 to {DrawnFlagBound - 1})",
 		8 => "Hercs scrapped",
 		9 => "Pilots lost",
 		// docs/retail/formats/msn-mission-file.md#the-debriefs-loss-line
@@ -90,8 +109,8 @@ internal sealed class CampaignState {
 		_ => null,
 	};
 
-	/// <summary>Why the draws cannot be made again, or null when they can.</summary>
-	public string? WhyNoDraw => _mover.WhyReadOnly ?? (_mode == null ? "This mission's open cannot be made again." : null);
+	/// <summary>Why the mission cannot be opened again, or null when it can.</summary>
+	public string? WhyNoReopen => _mover.WhyReadOnly ?? (_mode == null ? "This mission's open cannot be made again." : null);
 
 	/// <summary>Why the last change asked for could not be made, or null.</summary>
 	public string? Failure { get; private set; }
@@ -99,8 +118,11 @@ internal sealed class CampaignState {
 	/// <summary>Asks for flag <paramref name="flag"/> to be handed the load as <paramref name="value"/>.</summary>
 	public void RequestFlag(int flag, short value) => _flagRequested = (flag, value);
 
-	/// <summary>Asks for the mission to be opened again with new draws.</summary>
-	public void RequestDrawAgain() => _drawRequested = true;
+	/// <summary>Asks for the mission to be opened again drawing as the game's load does.</summary>
+	public void RequestSimulate() => _reopenRequested = true;
+
+	/// <summary>Asks for the mission to be opened again with the lowest draws, as it opened.</summary>
+	public void RequestFirstOptions() => _reopenRequested = false;
 
 	/// <summary>The range GUID whose alternative variant table <paramref name="table"/> shows in place of its draw, or null when it shows what it draws.</summary>
 	public short? ShownAlternative(short table) => _source?.Generation.Picks.TryGetValue(table, out short range) == true ? range : null;
@@ -114,10 +136,10 @@ internal sealed class CampaignState {
 	/// <summary>Makes the change asked for since the last call, if any; <see cref="Failure"/> says why one could not be made.</summary>
 	public void RunRequest() {
 		var flag = _flagRequested;
-		bool draw = _drawRequested;
+		bool? reopen = _reopenRequested;
 		var shown = _shownRequested;
 		_flagRequested = null;
-		_drawRequested = false;
+		_reopenRequested = null;
 		_shownRequested = null;
 		if (_source == null || _mover.WhyReadOnly != null) {
 			return;
@@ -133,15 +155,18 @@ internal sealed class CampaignState {
 			Failure = Apply(_source.Generation.WithFlags(flags), squad: null);
 		}
 
-		if (draw) {
-			Failure = DrawAgain(_source);
+		if (reopen is { } simulate) {
+			Failure = Reopen(_source, simulate);
+			if (Failure == null) {
+				Simulated = simulate;
+			}
 		}
 	}
 
-	// Opens the mission again from its .MSN and .ENG as they stand, with new draws, and takes that open's generation with
-	// the flags as they stand but 4 to 6, and its squad.
-	private string? DrawAgain(MissionDocument source) {
-		if (WhyNoDraw is { } reason) {
+	// Opens the mission again from its .MSN and .ENG as they stand, drawing as the game's load does when <simulate> and the
+	// lowest outcomes otherwise, and takes that open's generation with the flags as they stand but 4 to 6, and its squad.
+	private string? Reopen(MissionDocument source, bool simulate) {
+		if (WhyNoReopen is { } reason) {
 			return reason;
 		}
 
@@ -150,12 +175,12 @@ internal sealed class CampaignState {
 		}
 
 		byte[]? text = source.Text == null ? null : new MissionStringFileTransformer().Write(source.Text);
-		string directory = Path.Combine(_handoff, DrawFolder);
-		MissionDocument? drawn;
+		string directory = Path.Combine(_handoff, ReopenFolder);
+		MissionDocument? opened;
 		MissionSquad? squad;
 		try {
 			Clear(directory);
-			if (MissionOpener.OpenAgain(_mode!, msn, text, directory, out drawn, out squad, out string? failure) == null) {
+			if (MissionOpener.OpenAgain(_mode!, msn, text, directory, simulate, out opened, out squad, out string? failure) == null) {
 				return failure;
 			}
 		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException) {
@@ -170,10 +195,10 @@ internal sealed class CampaignState {
 
 		var flags = source.Generation.Flags.ToArray();
 		for (int index = FirstDrawnFlag; index <= LastDrawnFlag; index++) {
-			flags[index] = drawn!.Generation.Flags[index];
+			flags[index] = opened!.Generation.Flags[index];
 		}
 
-		return Apply(drawn!.Generation.WithFlags(flags), squad);
+		return Apply(opened!.Generation.WithFlags(flags), squad);
 	}
 
 	// Generates the document with <generation>, writes mission.var as the launch writes it, takes <squad> when given and
@@ -190,7 +215,7 @@ internal sealed class CampaignState {
 				try {
 					WriteMissionVar(source.Generator.Flags);
 				} catch {
-					// Nothing is rebuilt after a throw, so the state the editor shows goes back to the one it was built from.
+					// Nothing is rebuilt after a throw, so the preview goes back to the one it was built from.
 					source.SetGeneration(generationBefore);
 					_rebuild.Squad = squadBefore;
 					throw;

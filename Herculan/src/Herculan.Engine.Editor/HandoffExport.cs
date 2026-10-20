@@ -9,7 +9,7 @@ namespace Herculan.Engine.Editor;
 /// Herculan.Engine.Host or DBSIM to run directly. It writes the document's generated <c>script.dat</c> and
 /// <c>mission.str</c>, and copies the rest of the handoff from the editor's scratch folder as it is: <c>player.mec</c>, as
 /// the open wrote it or an edit built it again (<see cref="MissionRebuild"/>), and <c>mission.var</c>, as the open or the last
-/// change of the campaign state (<see cref="CampaignState"/>) wrote it. It never writes the install's own <c>DATA\</c>,
+/// change of the preview (<see cref="MissionPreview"/>) wrote it. It never writes the install's own <c>DATA\</c>,
 /// which holds the game's own handoff (docs/herculan/handoff-editor-document.md#what-a-saved-scriptdat-reaches).
 /// </summary>
 internal static class HandoffExport {

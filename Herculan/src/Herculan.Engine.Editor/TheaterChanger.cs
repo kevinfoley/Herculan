@@ -107,8 +107,8 @@ internal sealed class TheaterChanger {
 
 	/// <summary>
 	/// Dresses the scene in the world the generated header picks when it is not <paramref name="theater"/> and
-	/// <paramref name="variant"/>, the world it is dressed in: for a change of the campaign state, which can condition
-	/// a row-2 record in or out (<see cref="CampaignState"/>). <see cref="Failure"/> says why it could not.
+	/// <paramref name="variant"/>, the world it is dressed in: for a change of the preview, which can condition
+	/// a row-2 record in or out (<see cref="MissionPreview"/>). <see cref="Failure"/> says why it could not.
 	/// </summary>
 	public void Follow(int theater, int variant) {
 		if (_document.TheaterIndex == theater && _document.TheaterVariant == variant) {
@@ -131,7 +131,7 @@ internal sealed class TheaterChanger {
 	}
 
 	// Holds no block index, and a row-2 record conditions nothing else in or out, so it is undone and redone as it is in
-	// any campaign state (IIndexedEdit).
+	// any preview (IIndexedEdit).
 	private sealed record WorldEdit(TheaterChanger Changer, MsnEdit Change) : IEditorEdit {
 		public void Undo() {
 			Changer._source!.Undo(Change);

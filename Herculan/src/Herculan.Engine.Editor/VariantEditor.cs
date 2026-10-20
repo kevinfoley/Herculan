@@ -11,7 +11,7 @@ namespace Herculan.Engine.Editor;
 /// (<see cref="MissionRebuild"/>), as it changes what the records drawing from the table generate; the selection keeps a
 /// table by its row-1 GUID and an object as the rebuild keeps one.
 ///
-/// <para>Which alternative a table shows in place of its draw is the campaign state's (<see cref="CampaignState.RequestShown"/>),
+/// <para>Which alternative a table shows in place of its draw is the preview's (<see cref="MissionPreview.RequestShown"/>),
 /// outside the undo history. A delete forgets the table's, so a new table taking its GUID does not inherit it.</para>
 ///
 /// <para>The edits wait for the frame's ImGui to be rendered (<see cref="RunRequest"/>). A plain <c>script.dat</c> edits

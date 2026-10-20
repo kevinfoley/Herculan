@@ -37,8 +37,9 @@ public class MissionFileLaunchTests {
 			}
 		}
 
-		string? script = MissionFileLaunch.Open(GameContent.MountShell(root), root, "TRAIN5.MSN", directory, out var document,
-			out var squad, out string? failure);
+		// The game's draws, not the editor's lowest ones, under which a generator copied at the wrong moment draws the same.
+		string? script = MissionFileLaunch.Open(GameContent.MountShell(root), root, "TRAIN5.MSN", directory,
+			ShellTrainingLaunch.StartupRandom(), out var document, out var squad, out string? failure);
 
 		Assert.True(script != null, failure);
 		Assert.Equal(File.ReadAllBytes(script), document!.ScriptBytes);

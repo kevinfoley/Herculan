@@ -52,7 +52,7 @@ internal sealed class PropertiesPanel {
 			SideChanger sides, ObjectDeleter deleter, SquadMachinePanel machine, RosterFitView fit, MissionView mission, RouteEditor routes,
 			RoutePlacing placing, AreaEditor areas, AreaPlacing areaPlacing, OrderEditor orders, ObjectiveEditor objectives,
 			ActionEditor actions, TimerEditor timers, ConditionEditor conditions, PresenceEditor presence, VariantEditor variants,
-			CampaignState campaign, Func<HercWorks.Core.Data.File.Msn.MapObject, string> alternatives, StringFile? strings) {
+			MissionPreview preview, Func<HercWorks.Core.Data.File.Msn.MapObject, string> alternatives, StringFile? strings) {
 		_index = index;
 		_selection = selection;
 		_mover = mover;
@@ -65,7 +65,7 @@ internal sealed class PropertiesPanel {
 		_actions = actions;
 		_action = new ActionView(index, document, actions, selection, _links);
 		_timer = new TimerView(index, document, timers, _links);
-		_variants = new VariantView(variants, campaign, conditions, _links, alternatives);
+		_variants = new VariantView(variants, preview, conditions, _links, alternatives);
 		_condition = new ConditionView(conditions, _links, _variants);
 		_presence = presence;
 		_presentWhen = new PresentWhenView(presence, _links, (names, ownRoute) => References(names, ownRoute));
@@ -217,7 +217,7 @@ internal sealed class PropertiesPanel {
 			if (group >= 0) {
 				ImGui.TextWrapped("It is the last member of its group, which would go with it. These reference the group:");
 			} else {
-				ImGui.TextWrapped("It is the last member of a group this state of the mission leaves out, which would go "
+				ImGui.TextWrapped("It is the last member of a group this preview leaves out, which would go "
 					+ "with it. These reference the group:");
 			}
 
@@ -232,7 +232,7 @@ internal sealed class PropertiesPanel {
 	/// What references something, one short line per record: an objective or an action by its link alone, and a group by
 	/// its link and what of it references, its orders (<paramref name="names"/>) and its own route field
 	/// (<paramref name="ownRoute"/>, block-11 indices) on its one line. <paramref name="fired"/> are the actions it fires
-	/// when engaged or defeated, by block-5 index, -1 for one this state of the mission leaves out.
+	/// when engaged or defeated, by block-5 index, -1 for one this preview leaves out.
 	/// </summary>
 	private void References(DeleteNamers names, IReadOnlyList<int>? ownRoute = null, IReadOnlyList<int>? fired = null) {
 		foreach (int objective in names.Objectives) {
@@ -254,7 +254,7 @@ internal sealed class PropertiesPanel {
 				ImGui.SameLine(0f, 0f);
 				ImGui.Text(": fired by it");
 			} else {
-				ImGui.TextWrapped("An action it fires, which this state of the mission leaves out");
+				ImGui.TextWrapped("An action it fires, not in this preview");
 			}
 
 			ImGui.PopID();
@@ -275,7 +275,7 @@ internal sealed class PropertiesPanel {
 		}
 
 		if (names.Elsewhere > 0) {
-			ImGui.TextWrapped($"{names.Elsewhere} more, which this state of the mission leaves out");
+			ImGui.TextWrapped($"{names.Elsewhere} more, not in this preview");
 		}
 	}
 

@@ -22,11 +22,11 @@ Numbering a designer sees starts at 1: orders, waypoints, weapon mounts, squadma
 
 Each phase is one commit, tested by the user in the app before it is committed.
 
-### 1. Preview without rolling
+### 1. Preview without rolling (done)
 
-- The editor never rolls on its own. Opening a mission previews it with every random choice on its first option and every other random roll at its lowest outcome, the same on every open. Today's open rolls as a game load does (`ShellTrainingLaunch.StartupRandom`, seeded from the tick count).
-- The Mission view's "Campaign state" becomes **Preview**: one lead sentence ("The editor shows one version of this mission. In play, campaign variables come from earlier missions and random choices are picked at every load."), the campaign variables the mission tests, each by its label first, with "Tested by" links, and **Simulate a mission load**, which rolls everything as the game would, with **Back to first options** to undo it. The practice-only variables 4 to 6, which are only the load's own random picks, are not listed.
-- "Holds/Fails in the campaign state shown" becomes "In this preview" / "Not in this preview", with a link to Preview.
+- The editor never rolls on its own. Opening a mission draws every random value at its lowest outcome, so it opens with every random choice on its first option, the same on every open ([The preview](handoff-editor-conditions.md#the-preview)).
+- The Mission view's **Preview** leads with "The editor shows one version of this mission. In play, campaign variables come from earlier missions and random choices are picked at every load.", lists the campaign variables the mission tests, each by its label first ("Last mission's outcome (variable 0)") with "Tested by" links, and offers **Simulate a mission load**, which rolls everything as the game would, and **Back to first options**, with the count of random choices showing an option picked in their own view beside them. Variables 4 to 6, random numbers every load picks, practice and campaign alike, are not listed.
+- A condition and a Present when say "In this preview" or, emphasised, "Not in this preview", with a "Change the preview" link to the Mission view. Every "this state of the mission" and "campaign state shown" string, Core's refusal reasons included, says "this preview".
 - Covers R3, R5.
 
 ### 2. Random choice view

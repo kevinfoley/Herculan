@@ -114,7 +114,7 @@ public static class TriggerAreaEditing {
 		}
 
 		short point = record.PointRef;
-		var at = Coordinates(document, point) ?? throw new InvalidOperationException("Its point is not in this state of the mission.");
+		var at = Coordinates(document, point) ?? throw new InvalidOperationException("Its point is not in this preview.");
 		if (toBox) {
 			int radius = Radius(record.SecondPointOrRadius);
 			return document.Change(() => {
@@ -130,7 +130,7 @@ public static class TriggerAreaEditing {
 		}
 
 		short opposite = record.SecondPointOrRadius;
-		var far = Coordinates(document, opposite) ?? throw new InvalidOperationException("Its second corner is not in this state of the mission.");
+		var far = Coordinates(document, opposite) ?? throw new InvalidOperationException("Its second corner is not in this preview.");
 		var middle = ((int)(((long)at.X + far.X) / 2), (int)(((long)at.Y + far.Y) / 2));
 		long longer = Math.Max(Math.Abs((long)far.X - at.X), Math.Abs((long)far.Y - at.Y));
 		short stored = StoredRadius((int)Math.Min(longer / 2, int.MaxValue));

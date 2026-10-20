@@ -542,7 +542,7 @@ internal sealed class ActionView {
 		}
 
 		if (blockers.Elsewhere > 0) {
-			ImGui.TextWrapped($"{blockers.Elsewhere} more, which this state of the mission leaves out");
+			ImGui.TextWrapped($"{blockers.Elsewhere} more, not in this preview");
 		}
 
 		ImGui.PopID();

@@ -142,7 +142,7 @@ public static class RouteEditing {
 		}
 
 		return Coordinates(document, list[entry]) == null || Coordinates(document, list[entry + 1]) == null
-			? "A waypoint of that leg references a point this state of the mission leaves out."
+			? "A waypoint of that leg references a point this preview leaves out."
 			: null;
 	}
 
