@@ -36,6 +36,10 @@ A type-0 fill is one colour, which DBSIM's `Raster_DrawPolygonDispatch` resolves
 
 A crossing is always computed from the outside endpoint `a` toward the other endpoint `b`, as `y = a.y + (bound − a.x) · (b.y − a.y) / (b.x − a.x)` for the `x` pass (and the transpose for `y`), in 64 bits, the division truncating toward zero. So an edge clips to the same point whichever way it is walked. When the `x` pass leaves a single point, the `y` pass keeps it only if its `y` is inside; when it leaves none, the result is empty and nothing is drawn.
 
+### Clipping a line
+
+`Line_ClipToRect(a, b, rect)` (`0045554c`; DBSIM `00483b60`) cuts the segment between the points `a` and `b`, in place, to `rect = {x0, y0, x1, y1}`, inclusive, and returns 1, or 0 when nothing of it is left. It takes the bounds once each, in the order `y0`, `x0`, `y1`, `x1`. When both endpoints lie beyond a bound it returns 0, leaving both points as they were; when one does, that endpoint moves onto the bound, at the crossing computed from it toward the other as [the rectangle clipper's](#clipping-to-a-rectangle) is, in 64 bits with the division truncating toward zero; when neither does, nothing changes. A point on a bound is inside. To move `b` it first swaps the two points and leaves them swapped, so each bound that moves `b` reverses their order: the result can hold the endpoints the other way round. `Raster_DrawLine` (DBSIM `004838f8`) cuts a line through it in clip mode 1 and for each rect region of a clip list.
+
 ### Scan conversion
 
 `Poly_ScanConvertToSpanRegion(count, points, out)` writes the span region for a convex, clockwise outline.
@@ -65,7 +69,7 @@ A shallow edge's value is the outermost pixel its Bresenham line puts on that ro
 `Raster_FillRect` (DBSIM `004865f8`), given an inclusive rect {*x0*, *y0*, *x1*, *y1*}, by the brush's mode:
 
 - **0** fills it with the colour through `g_RasterRoutines` slot 2; **6** remaps it through slot 3 with the brush's second field. The rect first moves by the block's translation, (`+0x20c` − `+0x21c`, `+0x210` − `+0x220`), when `+0x208` is set, and is clipped by the clip mode `+0x204`: 0 not at all, 1 to the block's rect at `+0x20c`, otherwise to each region of the block's list, from its last entry to its first: a rect region's intersection goes to the mode's routine, and a span region's intersection with the rect, as a span list, to slot 0 whatever the mode.
-- **4** draws four lines, the rect's edges, both ends included: (*x1*, *y0*) to (*x0*, *y0*), (*x0*, *y1*) to (*x0*, *y0*), (*x0*, *y1*) to (*x1*, *y1*) and (*x1*, *y0*) to (*x1*, *y1*). The lines move and clip as lines do.
+- **4** draws four lines, the rect's edges, both ends included: (*x1*, *y0*) to (*x0*, *y0*), (*x0*, *y1*) to (*x0*, *y0*), (*x0*, *y1*) to (*x1*, *y1*) and (*x1*, *y0*) to (*x1*, *y1*). The lines move and clip as lines do ([clipping a line](#clipping-a-line)).
 - Any other mode draws nothing.
 
 ### Ellipses

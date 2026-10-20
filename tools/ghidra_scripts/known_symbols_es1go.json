@@ -562,7 +562,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Raster_DrawLine",
-      "description": "(from, to), C convention: draws a line between two {x, y} points with the pen at the installed clip block's +0x224 (the block 0008441c points at): mode 0 a flat colour, mode 2 a span remap through g_RasterRoutines slot 1 (000865b4), a colour whose top byte is 4 read from the colour ramps at 00085da9. The points move by the block's translation when +0x208 is set. Clip mode 0 draws the whole line and mode 1 the line clipped to the rect at +0x20c (0004ffac): a flat colour through slot 34 (00086638), a remap as the spans 0004fe60 scan-converts it to. Other modes take each region of the list at +0: a rect region clips the line with 0004ffac, a span region intersects the line's spans with it through 0004fc50, and each piece goes to the pen's span routine. The code of ES1DBSIM's Raster_DrawLine (0006a064), relocated operands aside.",
+      "description": "(from, to), C convention: draws a line between two {x, y} points with the pen at the installed clip block's +0x224 (the block 0008441c points at): mode 0 a flat colour, mode 2 a span remap through g_RasterRoutines slot 1 (000865b4), a colour whose top byte is 4 read from the colour ramps at 00085da9. The points move by the block's translation when +0x208 is set. Clip mode 0 draws the whole line and mode 1 the line clipped to the rect at +0x20c (Line_ClipToRect (0004ffac)): a flat colour through slot 34 (00086638), a remap as the spans 0004fe60 scan-converts it to. Other modes take each region of the list at +0: a rect region clips the line with Line_ClipToRect (0004ffac), a span region intersects the line's spans with it through 0004fc50, and each piece goes to the pen's span routine. The code of ES1DBSIM's Raster_DrawLine (0006a064), relocated operands aside.",
       "source": "ES1GO decompile at 00001b6c",
       "verified": {
         "bytes": "00001b6c+614",
@@ -1897,7 +1897,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Anm_Play",
-      "description": "(mode, sound, path) in stack order, callee-cleaned: plays a .ANM. Saves +0x34 and +0x38 of the display object the dword 000ab616 points to and stores +0x38 at +0x34 and +0x30 at +0x38, each through 000865f0 or 000865f4 while the object is still 000ab616's; in a mode other than 0 makes a 320 x 200 bitmap over a new 64,000-byte buffer and calls 0005afa8(the bitmap + 4, a zeroed 8-byte object, 0); sets up a player with Anm_Ctor (00013a3c); when sound is not -1 and the manager 00082768 exists, destroys the sound 0007e9a4 (slot +8 with 3), makes SoundManager_CreateObject(manager, 2, 0, sound) into it and, when the byte 0007fcb9 is set and it was made, calls 000209e0(0007fcfc) when that is not 0 and plays it (slot +0x10); calls NoOp_Void (00012bde); loads path with Anm_Load (00013aa8) and, for a good file, sets the buffer as the background (Anm_SetBackground (00013c30)) in a mode other than 0, then repeats: in mode 0 a deadline 60 / the header's word +0x44 ticks past the clock 0007e6fc; Anm_DrawFrame (00013c46); Anm_SetFrame (00013bf7) with Anm_GetFrame (00013be6) + 1, stopping when it returns 0; in mode 0 a wait for the deadline; NoOp_Void. Then deletes the buffer, calls NoOp_Void, builds the rectangle (0, 0)-(319, 199), stores +0x30 at +0x34 and the saved +0x38 back, calls Region_CopyBetweenPages (00051c40) with an object holding the rectangle, stores the saved +0x34 back, and destroys the player (Anm_Dtor (00013a7a) with 2) and the bitmap (00050198). es2_xref finds two calls, both in 0003c1b7, passing mode 1 with sound 10 and with sound 11.",
+      "description": "(mode, sound, path) in stack order, callee-cleaned: plays a .ANM. Saves +0x34 and +0x38 of the display object the dword 000ab616 points to and stores +0x38 at +0x34 and +0x30 at +0x38, each through 000865f0 or 000865f4 while the object is still 000ab616's; in a mode other than 0 makes a 320 x 200 bitmap over a new 64,000-byte buffer and calls Bitmap_GrabClipDispatch (0005afa8)(the bitmap + 4, a zeroed 8-byte object, 0); sets up a player with Anm_Ctor (00013a3c); when sound is not -1 and the manager 00082768 exists, destroys the sound 0007e9a4 (slot +8 with 3), makes SoundManager_CreateObject(manager, 2, 0, sound) into it and, when the byte 0007fcb9 is set and it was made, calls 000209e0(0007fcfc) when that is not 0 and plays it (slot +0x10); calls NoOp_Void (00012bde); loads path with Anm_Load (00013aa8) and, for a good file, sets the buffer as the background (Anm_SetBackground (00013c30)) in a mode other than 0, then repeats: in mode 0 a deadline 60 / the header's word +0x44 ticks past the clock 0007e6fc; Anm_DrawFrame (00013c46); Anm_SetFrame (00013bf7) with Anm_GetFrame (00013be6) + 1, stopping when it returns 0; in mode 0 a wait for the deadline; NoOp_Void. Then deletes the buffer, calls NoOp_Void, builds the rectangle (0, 0)-(319, 199), stores +0x30 at +0x34 and the saved +0x38 back, calls Region_CopyBetweenPages (00051c40) with an object holding the rectangle, stores the saved +0x34 back, and destroys the player (Anm_Dtor (00013a7a) with 2) and the bitmap (00050198). es2_xref finds two calls, both in 0003c1b7, passing mode 1 with sound 10 and with sound 11.",
       "source": "Herculan/docs/es1/formats/anm-animation.md#playing",
       "verified": {
         "bytes": "000132d8+1667",
@@ -8399,6 +8399,21 @@
       }
     },
     {
+      "address": "0004ffac",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Line_ClipToRect",
+      "description": "(a, b, rect{x0, y0, x1, y1}), C convention: cuts the segment between the int32 points a and b, in place, to the inclusive rect, taking y0, x0, y1 and x1 in that order. When both endpoints lie beyond a bound it returns 0, leaving both points as they were; when one does, that endpoint moves onto the bound at the crossing computed from it toward the other (IMUL, then IDIV of the 64-bit product, the quotient truncated toward zero). To move b it first exchanges the two points (XCHG) and leaves them exchanged, so the result can hold the endpoints in the other order. Stores both points and returns 1. A point on a bound is inside. ES2's Line_ClipToRect (DBSIM 00483b60), identical after normalisation. An object file of its own, between the zero fills after the RETs at 0004ffaa and 000500a9. es2_xref finds three calls, from Raster_DrawLine (00001b6c). The code of ES1DBSIM's Line_ClipToRect (0007d4a4), relocated operands aside.",
+      "source": "ES1GO decompile at 0004ffac",
+      "verified": {
+        "bytes": "0004ffac+254",
+        "sha1": "6a64776caa1b",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "000502c0",
       "binary": "ES1GO",
       "type": "function",
@@ -8464,7 +8479,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Region_SaveRect",
-      "description": "(region, buffer), C convention: wraps buffer in a stack bitmap header the size of the region's rect (translated by the drawing context's offset when 0008441c's +0x208 is set) and grabs the screen into it with 0005afa8(header, rect, 0). The code of ES1DBSIM's Region_SaveRect (00066470), relocated operands aside.",
+      "description": "(region, buffer), C convention: wraps buffer in a stack bitmap header the size of the region's rect (translated by the drawing context's offset when 0008441c's +0x208 is set) and grabs the screen into it with Bitmap_GrabClipDispatch (0005afa8)(header, rect, 0). The code of ES1DBSIM's Region_SaveRect (00066470), relocated operands aside.",
       "source": "ES1GO decompile at 00050658",
       "verified": {
         "bytes": "00050658+156",
@@ -12485,6 +12500,21 @@
       }
     },
     {
+      "address": "0005afa8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Bitmap_GrabClipDispatch",
+      "description": "(header, point, flags), C convention: reads the screen into a bitmap. Clears the low four bits of the header's flags byte +5; sets its format byte +4 to 8 when the display depth 0008446a is 8 or 4 and the byte differs from it; zeroes its pixels (+0xa, size +6) with memset; moves the point by the clip block's (the one 0008441c points at) +0x20c/+0x210 less +0x21c/+0x220 when its +0x208 is 1; and by its clip mode +0x204 calls g_RasterRoutines slot 27 (0008661c, VGA8_ReadBitmap (0007425c)) with (header, point, clip, flags): clip 0 for mode 0, the block's rect +0x20c for mode 1, and for mode 2 once for each entry of the block's list (count +0) whose region type is 0, with that region's rect. ES2's Bitmap_GrabClipDispatch (DBSIM 00488868), the same statements. es2_xref finds three calls, from Region_SaveRect (00050658), Anm_Play (000132d8) and 00014ac7. The code of ES1DBSIM's Bitmap_GrabClipDispatch (0006aa70), relocated operands aside.",
+      "source": "ES1GO decompile at 0005afa8",
+      "verified": {
+        "bytes": "0005afa8+315",
+        "sha1": "ade9f74a3ad8",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "0005b0e4",
       "binary": "ES1GO",
       "type": "function",
@@ -16490,6 +16520,21 @@
         "sha1": "2ffcf3d52329",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00075950",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_DrawLine",
+      "description": "(colour, a, b), C convention: the VGA_8 driver's line, slot 34 of its table 0008b2f0 (+0x88), which Raster_DrawLine (00001b6c) calls through 00086638 for a flat colour. Draws on the draw page (offset 00088ec8, pan 00088ed4 added to each x, row table 00088852, row bytes 0008884a, selector 00088848 in FS) through the sequencer's map mask (port 3C4 index 2). It starts from the point with the smaller x, a when the two are equal; dx is the x distance and dy the absolute y distance, the row step negated when the line rises. dy 0: the dx + 1 pixels of the row, in one write with the mask 00088ee0[4 * (x & 3) + ((dx + 1) & 3)] when they stay in one group of four columns, else the first group's mask 00088ef0[x & 3], the whole groups with mask 0xf (REP STOSW), and the last group's 00088ef4[the remaining count & 3]. dx 0: dy + 1 pixels of the column. dx <= dy: on row i from 0 to dy the pixel at column x + floor(i * (dx + 1) / (dy + 1)). dx > dy: on column j from 0 to dx the pixel floor(j * (dy + 1) / (dx + 1)) rows on, the pixels of one group of four on one row written together. So both end points are drawn, and the pixels do not depend on the order of a and b. es2_xref finds one reference, the table's slot. The code of ES1DBSIM's VGA8_DrawLine (0008cb90), relocated operands aside.",
+      "source": "ES1GO decompile at 00075950",
+      "verified": {
+        "bytes": "00075950+426",
+        "sha1": "eff5c721039d",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {

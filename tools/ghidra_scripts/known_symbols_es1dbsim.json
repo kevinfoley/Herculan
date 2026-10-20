@@ -18007,7 +18007,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CornerFrame_DrawEdgeRing",
-      "description": "(style, first, grow, inset, rect by value) in stack order, its arguments removed by this function, also entered at its padding 00044ada: one ring of four one-pixel edges with Raster_DrawLine, each under the pen {0, colour} at the render context's +0x228 (restored after) and skipped when that colour dword is 0. With left = x0 + inset, top = y0 + inset, w = x1 - x0 + grow and h = y1 - y0 + grow: dword style[first] the left edge (left, top+1)-(left, top+h-1), style[first+1] the top edge (left+1, top)-(left+w-1, top), style[first+2] the right edge at x = left+w, style[first+3] the bottom edge at y = top+h. ES2's CornerFrame_DrawEdgeRing (DBSIM 004533a4). es2_xref finds three calls, from CornerFrame_Draw (00044954).",
+      "description": "(style, first, grow, inset, rect by value) in stack order, its arguments removed by this function, also entered at its padding 00044ada: one ring of four one-pixel edges with Raster_DrawLine, each under the pen {0, colour} at the render context's +0x228 (restored after) and skipped when that colour dword is 0. With left = x0 + inset, top = y0 + inset, w = x1 - x0 + grow and h = y1 - y0 + grow: dword style[first] the left edge (left, top+1)-(left, top+h-1), style[first+1] the top edge (left+1, top)-(left+w-1, top), style[first+2] the right edge (left+w, top+1)-(left+w, top+h-1), style[first+3] the bottom edge (left+1, top+h)-(left+w-1, top+h). ES2's CornerFrame_DrawEdgeRing (DBSIM 004533a4). es2_xref finds three calls, from CornerFrame_Draw (00044954).",
       "source": "Herculan/docs/es1/simulation/alert-panels.md#drawing-a-frame-from-a-style",
       "verified": {
         "bytes": "00044adc+392",
@@ -18382,7 +18382,7 @@
       "type": "function",
       "confidence": "high",
       "name": "AlertPanel_Enter",
-      "description": "(panel) in stack order, its argument removed by this function: puts a panel up. Copies the 0x2b bytes of PlayerInputBlock to +0x2e8; Input_LatchButton (0004d8c8)(1, 1) to (1, 4); AlertPanel_SetFocus (00046470)(panel, -1); Widget_ClearPressed (00044310)(the panel's root +0x281); keeps the render context 000bdbda at +0x27d and installs the panel's +0x44; sets the display's source and draw pages to its +0x88; keeps Cursor_FollowsMouse at +0x2de and sets it; calls AlertPanel_EnterHook (00094d80) when set; the first time, loads dci\\alert into AlertPanel_CursorImage (00094d7c) with Cursor_LoadWrapper; hides the cursor (slot 31); with a buffer at +0x28, Region_Save of the region +0x14 into it, its rect moved by the panel's origin for the call; the panel's slot +4; AlertPanel_LoadCursor (000463c0)(panel, the alert cursor); shows the cursor (slot 30); adds 1 to AlertPanel_OpenCount (00094d78). ES2's AlertPanel_Enter (DBSIM 00454630) without the message ports and the present timer. es2_xref finds calls from StatusAlertPanel_RunModal (0004730c), PreferencesPanel_Run (00047a88), ControlsPanel_Run (00048810), 000496f0 and ObjectivesPanel_RunModal (0004a4ec).",
+      "description": "(panel) in stack order, its argument removed by this function: puts a panel up. Copies the 0x2b bytes of PlayerInputBlock to +0x2e8; Input_LatchButton (0004d8c8)(1, 1) to (1, 4); AlertPanel_SetFocus (00046470)(panel, -1); Widget_ClearPressed (00044310)(the panel's root +0x281); keeps the render context 000bdbda at +0x27d and installs the panel's +0x44; sets the display's source and draw pages to its +0x88; keeps Cursor_FollowsMouse at +0x2de and sets it; calls AlertPanel_EnterHook (00094d80) when set; the first time, loads dci\\alert into AlertPanel_CursorImage (00094d7c) with Cursor_LoadWrapper; hides the cursor (slot 31); with a buffer at +0x28, Region_Save of the region +0x14 into it, its rect moved by minus the panel's corner for the call, since Region_SaveRect (00066470) and Bitmap_GrabClipDispatch (0006aa70) each add the panel's render context's translation, the corner; the panel's slot +4; AlertPanel_LoadCursor (000463c0)(panel, the alert cursor); shows the cursor (slot 30); adds 1 to AlertPanel_OpenCount (00094d78). ES2's AlertPanel_Enter (DBSIM 00454630) without the message ports and the present timer. es2_xref finds calls from StatusAlertPanel_RunModal (0004730c), PreferencesPanel_Run (00047a88), ControlsPanel_Run (00048810), 000496f0 and ObjectivesPanel_RunModal (0004a4ec).",
       "source": "Herculan/docs/es1/simulation/alert-panels.md#putting-a-panel-up-and-taking-it-down",
       "verified": {
         "bytes": "00045f00+439",
@@ -18457,7 +18457,7 @@
       "type": "function",
       "confidence": "high",
       "name": "AlertPanel_SetFocus",
-      "description": "(panel, index) in stack order, its arguments removed by this function, also entered at its padding 0004646e: for index -1, with a mouse device (Input_GetMouseDevice_Thunk), runs Input_BuildPlayerDevice (0004cb14) and takes the first of the +0x2b5 widgets at +0x28d whose rect holds the block's pointer (+2, +6), edges included, else -1; for another index, puts the pointer on the widget's centre plus the panel's origin (x0 + ((x1 - x0) >> 1) + panel x0, likewise y) with Mouse_SetPosition when there is a mouse device and Cursor_SyncPosition either way. Stores the index at +0x2df. ES2's AlertPanel_SetFocus (DBSIM 00454c7c).",
+      "description": "(panel, index) in stack order, its arguments removed by this function, also entered at its padding 0004646e: for index -1, with a mouse device (Input_GetMouseDevice_Thunk), runs Input_BuildPlayerDevice (0004cb14) and takes the first of the +0x2b5 widgets at +0x28d whose rect holds the block's pointer (+2, +6), edges included, else -1: the pointer in screen pixels against the widgets' panel-local rects, without the panel's corner; for another index, puts the pointer on the widget's centre plus the panel's origin (x0 + ((x1 - x0) >> 1) + panel x0, likewise y) with Mouse_SetPosition when there is a mouse device and Cursor_SyncPosition either way. Stores the index at +0x2df. ES2's AlertPanel_SetFocus (DBSIM 00454c7c).",
       "source": "Herculan/docs/es1/simulation/alert-panels.md#focus",
       "verified": {
         "bytes": "00046470+275",
@@ -18532,7 +18532,7 @@
       "type": "function",
       "confidence": "high",
       "name": "AlertPanel_HandleEvent",
-      "description": "(panel, block) in stack order, its arguments removed by this function, slot +0x14 of AlertVtable (00094e26), also entered at its padding 0004666e: button 0 (+0x15) presses the focused widget +0x2df with AlertPanel_PressWidget (0004662c)(flags 1), or focuses widget 0 with AlertPanel_SetFocus (00046470) when the focus is -1, then Input_LatchButton (0004d8c8)(1, 1); else button 1 (+0x16) runs AlertPanel_FocusNext (000465d8) and Input_LatchButton(1, 2); else the command word, by REPNE SCASD in the 5 dwords at 00094eec: 0x01 presses the cancel widget +0x2e3 unless it is -1, 0x0f focuses the next, 0x20f the previous AlertPanel_FocusPrevious (00046600), 0x1c does what button 0 does without the latch, and 0x52 focuses the next while the preferences byte 000bd56c is set. Returns 1 when a case acts and 0 for any other code. ES2's AlertPanel_HandleEvent (DBSIM 00454e10), whose previous-widget code is 0x80f.",
+      "description": "(panel, block) in stack order, its arguments removed by this function, slot +0x14 of AlertVtable (00094e26), also entered at its padding 0004666e: button 0 (+0x15) presses the focused widget +0x2df with AlertPanel_PressWidget (0004662c)(flags 1), or focuses widget 0 with AlertPanel_SetFocus (00046470) when the focus is -1, then Input_LatchButton (0004d8c8)(1, 1); else button 1 (+0x16) runs AlertPanel_FocusNext (000465d8) and Input_LatchButton(1, 2); else the command word, by REPNE SCASD in the 5 dwords at 00094eec: 0x01 presses the cancel widget +0x2e3 unless it is -1, 0x0f focuses the next, 0x20f the previous AlertPanel_FocusPrevious (00046600), 0x1c does what button 0 does without the latch, and 0x52 focuses the next while the preferences byte 000bd56c is set. Returns 1 for either button and for each of the five codes, also when the case acts on nothing (0x01 with the cancel widget -1, 0x52 with the byte clear), and 0 for any other code. ES2's AlertPanel_HandleEvent (DBSIM 00454e10), whose previous-widget code is 0x80f.",
       "source": "Herculan/docs/es1/simulation/alert-panels.md#keys--alertpanel_handleevent-00046670",
       "verified": {
         "bytes": "00046670+224",
@@ -18772,7 +18772,7 @@
       "type": "function",
       "confidence": "high",
       "name": "PanelButton_Tick",
-      "description": "(button) in stack order, its argument removed by this function, slot +0x10 of AlertSelectGadgetVtable (00094f96), also entered at its padding 0004698a: while the paint counter byte +0x1b is above 0, calls the paint slot +4 and takes 1 from it. ES2's PanelButton_Tick (DBSIM 00455064).",
+      "description": "(button) in stack order, its argument removed by this function, slot +0x10 of AlertSelectGadgetVtable (00094f96), also entered at its padding 0004698a: when the paint counter byte +0x1b is set, calls the paint slot +4 once and takes 1 from it. ES2's PanelButton_Tick (DBSIM 00455064).",
       "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons",
       "verified": {
         "bytes": "0004698c+30",
@@ -18952,7 +18952,7 @@
       "type": "function",
       "confidence": "high",
       "name": "StatusAlertPanel_Ctor",
-      "description": "(panel, rect, keepsScreen, status) in stack order, its arguments removed by this function: the status panel. Allocates 0x548 bytes with operator_new when panel is null (returning 0 when that fails); a 222 x 109 rect, centred by AlertPanel_CenterRect (0004679c) or placed at the rect's point by AlertPanel_SetRect (0004675c); AlertPanel_CtorBase (00045988)(panel, that rect, keepsScreen); GeneralAlertVtable (0009507e) at +0x314; str\\gnl_alrt into the string table +0x30 with StringTable_LoadFromFile (00044f78), then three groups with StringTable_LoadGroup (000450b0): 19 titles at +0x334, 38 button captions at +0x380 and 76 body lines at +0x418; two button rects through __vec_ctor (000610cb) with GauRect_ElementCtorStatusAlertPanelCopy (0004726c), by its padding 00047269; one button at x 71 for statuses 0, 2, 3, 7, 8, 0x11 and 0x12, two at x 22 and 120 for 1, 4 to 6, 9, 10 and 0xb to 0x10, none for any other (the jump table 000950c0 behind an unsigned bound against 0x12), each (x, 70)-(x + 80, 90); the plate, frame 0 of dba\\gnl2alrt for statuses 0 and 1 and of dba\\gnl_alrt otherwise, loaded with ClassItem_LoadFromFile (0005760c), at +0x2c; per button PanelButton_Ctor (000467c8)(0, index, panel, rect), a caption label in WidgetFont_Cpylw at the button's +0x2c placed by Label_SetRect (00031080) with flags 2 and margin (0, -3), Widget_RegisterClickable (000443d4) with the panel's root +0x281, and the widget list +0x28d; the status's title at +0x318 and pointers to its caption pair at +0x31c and its four body lines at +0x320; the title label at +0x40 in WidgetFont_Title, on the title bar +0x2ba = ((222 - w - 20) >> 1, 4)-(that + w + 20, 21), w the title's width by HudFont_MeasureString (00069d0c), margin (0, -11); four body labels at +0x324 in WidgetFont_Green6x8, centred on (50, 30 + 10i)-(172, 40 + 10i); the cancel widget +0x2e3 = 0, and +0x313 = 0 for status 2. Returns the panel. es2_xref finds six calls, each passing (0, 0, 1, status). ES2's StatusAlertPanel_Ctor (DBSIM 00455934) with ES2's pause panel folded in as statuses 0 and 1, and without its status-5 body.",
+      "description": "(panel, rect, keepsScreen, status) in stack order, its arguments removed by this function: the status panel. Allocates 0x548 bytes with operator_new when panel is null (returning 0 when that fails); a 222 x 109 rect, centred by AlertPanel_CenterRect (0004679c) or placed at the rect's point by AlertPanel_SetRect (0004675c); AlertPanel_CtorBase (00045988)(panel, that rect, keepsScreen); GeneralAlertVtable (0009507e) at +0x314; str\\gnl_alrt into the string table +0x30 with StringTable_LoadFromFile (00044f78), then three groups with StringTable_LoadGroup (000450b0), each passing 0 as the attribute destination and the capacities 19, 38 and 76, which that function leaves unread: 19 titles at +0x334, 38 button captions at +0x380 and 76 body lines at +0x418, the counts str\\GNL_ALRT.STR's groups hold; two button rects through __vec_ctor (000610cb) with GauRect_ElementCtorStatusAlertPanelCopy (0004726c), by its padding 00047269; one button at x 71 for statuses 0, 2, 3, 7, 8, 0x11 and 0x12, two at x 22 and 120 for 1, 4 to 6, 9, 10 and 0xb to 0x10, none for any other (the jump table 000950c0 behind an unsigned bound against 0x12), each (x, 70)-(x + 80, 90); the plate, frame 0 of dba\\gnl2alrt for statuses 0 and 1 and of dba\\gnl_alrt otherwise, loaded with ClassItem_LoadFromFile (0005760c), at +0x2c; per button PanelButton_Ctor (000467c8)(0, index, panel, rect), a caption label in WidgetFont_Cpylw at the button's +0x2c placed by Label_SetRect (00031080) with flags 2 and margin (0, -3), Widget_RegisterClickable (000443d4) with the panel's root +0x281, and the widget list +0x28d; the status's title at +0x318 and pointers to its caption pair at +0x31c and its four body lines at +0x320; the title label at +0x40 in WidgetFont_Title, on the title bar +0x2ba = ((222 - w - 20) >> 1, 4)-(that + w + 20, 21), w the title's width by HudFont_MeasureString (00069d0c), margin (0, -11); four body labels at +0x324 in WidgetFont_Green6x8, centred on (50, 30 + 10i)-(172, 40 + 10i); the cancel widget +0x2e3 = 0, and +0x313 = 0 for status 2. Returns the panel. es2_xref finds six calls, each passing (0, 0, 1, status). ES2's StatusAlertPanel_Ctor (DBSIM 00455934) with ES2's pause panel folded in as statuses 0 and 1, and without its status-5 body.",
       "source": "Herculan/docs/es1/simulation/alert-panels.md#the-status-panel--statusalertpanel_ctor-00046efc",
       "verified": {
         "bytes": "00046efc+877",
@@ -19087,7 +19087,7 @@
       "type": "function",
       "confidence": "high",
       "name": "PreferencesPanel_Run",
-      "description": "(panel), slot +0xc of PrefsAlertVtable (000951ae): the preferences panel's loop. With no sound manager (000959ac 0) puts widgets 0, 1 and 2 in state 2; clears the action +0x340; AlertPanel_Enter (00045f00); AlertPanel_SetFocus (00046470)(panel, 0); copies the panel from the page on the screen to the display's +0x8c (Region_CopyBetweenPages (00066914), the cursor hidden around it) and makes +0x88 the draw page again. Until the close byte +0x2b9 is set: Input_BuildPlayerDevice (0004cb14), the block to slot +0x14; then for an action: 0 Prefs_ToggleOption (0004a94c)(1, 0), 1 the same on option 1, 2 Prefs_StepOption (0004a988)(1, 3, 2) while VoiceArchivePresent (000956bf) is set, 3 Prefs_ToggleOption(1, 3), 4 to 6 Prefs_IncreaseOption (0004aa18)(1, 0x20, option 4 to 6), or Prefs_DecreaseOption (0004aa78) with the right-button byte +0x2e7 set, each of those setting its row's repaint counter +0x388 + row to 2; 7, CONTROLS, repaints widget 7, builds the controls panel on the stack (ControlsPanel_Ctor (00048408)(that, 0, 1)), runs it (ControlsPanel_Run (00048810)), repaints this panel through slot +4, focuses the cancel widget and destroys the controls panel (ControlsPanel_Dtor (000487b4), 2); 8, DONE, PreferencesPanel_Save (000483a0, by its padding 0004839d) and the close byte 3; the action back to -1; then PreferencesPanel_CallDrawHook (00048198, by its padding 00048195). AlertPanel_Leave (000460b8); with a draw hook and a screen buffer +0x28, copies the panel's region onto +0x8c under its own render context and sets the draw page back. Returns bit 0 of the close byte. ES2's PreferencesPanel_Run (DBSIM 00456d4c) with ES1's nine buttons.",
+      "description": "(panel), slot +0xc of PrefsAlertVtable (000951ae): the preferences panel's loop. With no sound manager (000959ac 0) puts widgets 0, 1 and 2 in state 2; clears the action +0x340; AlertPanel_Enter (00045f00); AlertPanel_SetFocus (00046470)(panel, 0); copies the panel from the page on the screen to the display's +0x8c (Region_CopyBetweenPages (00066914), the cursor hidden around it) and makes +0x88 the draw page again. Until the close byte +0x2b9 is set: Input_BuildPlayerDevice (0004cb14), the block to slot +0x14; then for an action: 0 Prefs_ToggleOption (0004a94c)(1, 0), 1 the same on option 1, 2 Prefs_StepOption (0004a988)(1, 3, 2) while VoiceArchivePresent (000956bf) is set, 3 Prefs_ToggleOption(1, 3), 4 to 6 Prefs_IncreaseOption (0004aa18)(1, 0x20, option 4 to 6), or Prefs_DecreaseOption (0004aa78) with the right-button byte +0x2e7 set, each of those setting its row's repaint counter +0x388 + row to 2, case 2 only when it steps; 7, CONTROLS, paints widget 7 at once through slot +4 of its +0x1c table, builds the controls panel on the stack (ControlsPanel_Ctor (00048408)(that, 0, 1)), runs it (ControlsPanel_Run (00048810)), repaints this panel through slot +4, focuses the cancel widget and destroys the controls panel (ControlsPanel_Dtor (000487b4), 2); 8, DONE, PreferencesPanel_Save (000483a0, by its padding 0004839d) and the close byte 3; the action back to -1; then PreferencesPanel_CallDrawHook (00048198, by its padding 00048195). AlertPanel_Leave (000460b8); with a draw hook and a screen buffer +0x28, copies the panel's region onto +0x8c under its own render context and sets the draw page back. Returns bit 0 of the close byte. ES2's PreferencesPanel_Run (DBSIM 00456d4c) with ES1's nine buttons.",
       "source": "Herculan/docs/es1/simulation/preferences.md#the-loop--preferencespanel_run-00047a88",
       "verified": {
         "bytes": "00047a88+1029",
@@ -19282,7 +19282,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ControlsPanel_Run",
-      "description": "(panel), slot +0xc of ControlsAlertVtable (000952c6): the controls panel's loop. Copies options 7, 8, 10, 9 and 11 to +0x39c to +0x3a0; +0x3a1 = 2 when option 7 is 2, else 0; +0x3a2 = option 8, or 1 for 0; +0x3a3 = option 9; +0x3a4 and +0x3a5 = options 7 and 9 as applied. AlertPanel_Enter (00045f00), AlertPanel_SetFocus (00046470)(panel, 0); until the close byte +0x2b9 is set: Input_BuildPlayerDevice (0004cb14), the block to slot +0x14; for the action +0x398 (the button index plus 1): 1 steps option 7 modulo 6, Prefs_StepOption (0004a988) or with the right-button byte +0x2e7 Prefs_StepOptionBack (0004a9d0), once more forward when that gives 0 with the block's button 0 (+0x15) held; for 0 it keeps option 8 at +0x3a2 and sets it to 0 (Prefs_SetOption (0004a914)), for any other puts it back when it is 0; at 2 it keeps the panel's option 9 at +0x3a3 and clears it, otherwise puts it back from +0x3a3 when that is set; 2, with option 7 not 0, steps option 8 modulo 3 forward or back until it is not 0; 3 toggles option 10 (Prefs_ToggleOption (0004a94c)); 4 toggles option 9 and, turned on with option 7 at 2, sets option 7 to 1 with +0x3a1 = 2, or turned off with +0x3a1 at 2, sets option 7 back to 2 and +0x3a1 = 0; 5 toggles option 11; 6, CALIBRATE, with option 9 set or option 7 not 0, ControlsPanel_ApplyDevices (00048e98), the calibration panel on the stack (00049154(that, panel, 1)), its loop 000496f0, the focus to the cancel widget, and its destructor 00049678(that, 2); 7, DONE, ControlsPanel_ApplyDevices and Prefs_CommitOptions (0004a83c)(1). Each changed row is redrawn with ControlsPanel_RefreshRow (00048ce4). Then each widget's per-frame slot +0x10. AlertPanel_Leave (000460b8); returns bit 0 of the close byte. ES2's ControlsPanel_Run (DBSIM 00458650) binds stick buttons.",
+      "description": "(panel), slot +0xc of ControlsAlertVtable (000952c6): the controls panel's loop. Copies options 7, 8, 10, 9 and 11 to +0x39c to +0x3a0; +0x3a1 = 2 when option 7 is 2, else 0; +0x3a2 = option 8, or 1 for 0; +0x3a3 = option 9; +0x3a4 and +0x3a5 = options 7 and 9 as applied. AlertPanel_Enter (00045f00), AlertPanel_SetFocus (00046470)(panel, 0); until the close byte +0x2b9 is set: Input_BuildPlayerDevice (0004cb14), the block to slot +0x14; for the action +0x398 (the button index plus 1): 1 steps option 7 modulo 6, Prefs_StepOption (0004a988) or with the right-button byte +0x2e7 Prefs_StepOptionBack (0004a9d0), once more forward when that gives 0 with the block's button 0 (+0x15) held; for 0, with the panel's option 8 +0x39d not 0, it keeps that at +0x3a2 and sets option 8 to 0 (Prefs_SetOption (0004a914)), leaving the RCS byte +0x39f alone; for any other model it puts option 8 back from +0x3a2 when it is 0, and then at 2 keeps the RCS byte +0x39f, when set, at +0x3a3 and XORs it with 1, and at any other model sets it from +0x3a3 when that is set; 2, with option 7 not 0, steps option 8 modulo 3 forward or back until it is not 0; 3 toggles option 10 (Prefs_ToggleOption (0004a94c)); 4 toggles option 9 and, turned on with option 7 at 2, sets option 7 to 1 with +0x3a1 = 2, or turned off with +0x3a1 at 2, sets option 7 back to 2 and +0x3a1 = 0; 5 toggles option 11; 6, CALIBRATE, with option 9 set or option 7 not 0, ControlsPanel_ApplyDevices (00048e98), the calibration panel on the stack (00049154(that, panel, 1)), its loop 000496f0, the focus to the cancel widget, and its destructor 00049678(that, 2); 7, DONE, ControlsPanel_ApplyDevices and Prefs_CommitOptions (0004a83c)(1). Each changed row is redrawn with ControlsPanel_RefreshRow (00048ce4). Then each widget's per-frame slot +0x10. AlertPanel_Leave (000460b8); returns bit 0 of the close byte. ES2's ControlsPanel_Run (DBSIM 00458650) binds stick buttons.",
       "source": "Herculan/docs/es1/simulation/preferences.md#its-loop--controlspanel_run-00048810",
       "verified": {
         "bytes": "00048810+1094",
@@ -19529,6 +19529,21 @@
         "sha1": "3b453fdb528f",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0004a900",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Prefs_UndoSetOption",
+      "description": "(index), frameless, its argument removed by this function (RET 4): Prefs_Options (000bd562)[index] = Prefs_PreviousOptions (000bd586)[index], the value before the option's last write; the body is a MOVSX, two byte moves and the RET, with no call, so the option's handler stays unrun. It starts after three 0x90 bytes that follow the RET 4 of 0004a8a8. ES2's Prefs_UndoSetOption (DBSIM 00459924). es2_xref finds one call, from Prefs_LimitDetailInLowMemory (0004adb0).",
+      "source": "ES1DBSIM capstone disassembly at 0004a900, against ES2's Prefs_UndoSetOption",
+      "verified": {
+        "bytes": "0004a900+20",
+        "sha1": "dc3cd6a52b1b",
+        "scope": "body",
+        "via": "raw"
       }
     },
     {
@@ -19852,7 +19867,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Prefs_LimitDetailInLowMemory",
-      "description": "(value), frameless, its argument removed by this function: the handler of preferences option 6. With g_LowMemory (000bda98) set and the option byte 000bd568 above 160: while the byte PrefsInitInProgress (000b1734) is set, Prefs_SetOption (0004a914)(1, 160, 6); otherwise 0004a900(6), the panel StatusAlertPanel_Ctor (00046efc)(0, 0, 1, 0x11), its +0x314's slot +0xc on it, and GeneralAlert_Dtor (000472b0)(panel, 3). It reads the option from 000bd568 and not its argument. Prefs_Init (0004afe8) registers it with Prefs_SetHandler (0004ac4c) for option 6.",
+      "description": "(value), frameless, its argument removed by this function: the handler of preferences option 6. With g_LowMemory (000bda98) set and the option byte 000bd568 above 160: while the byte PrefsInitInProgress (000b1734) is set, Prefs_SetOption (0004a914)(1, 160, 6); otherwise Prefs_UndoSetOption (0004a900)(6), the panel StatusAlertPanel_Ctor (00046efc)(0, 0, 1, 0x11), its +0x314's slot +0xc on it, and GeneralAlert_Dtor (000472b0)(panel, 3). It reads the option from 000bd568 and not its argument. Prefs_Init (0004afe8) registers it with Prefs_SetHandler (0004ac4c) for option 6.",
       "source": "Herculan/docs/es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08",
       "verified": {
         "bytes": "0004adb0+91",
@@ -29725,7 +29740,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Region_SaveRect",
-      "description": "(region, buffer), C convention: wraps buffer in a stack bitmap header the size of the region's rect (translated by the drawing context's offset when 00098d64's +0x208 is set) and grabs the screen into it with 0006aa70(header, rect, 0). ES2's Region_SaveRect (DBSIM 00487da0).",
+      "description": "(region, buffer), C convention: wraps buffer in a stack bitmap header the size of the region's rect (translated by the drawing context's offset when 00098d64's +0x208 is set) and grabs the screen into it with Bitmap_GrabClipDispatch (0006aa70)(header, rect, 0). ES2's Region_SaveRect (DBSIM 00487da0).",
       "source": "ES1DBSIM decompile at 00066470, against ES2's Region_SaveRect",
       "verified": {
         "bytes": "00066470+156",
@@ -30487,7 +30502,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Raster_DrawLine",
-      "description": "(from, to), C convention: draws a line between two {x, y} points with the pen at the installed clip block's +0x224 (the block 00098d64 points at): mode 0 a flat colour, mode 2 a span remap through g_RasterRoutines slot 1 (0009ded8), a colour whose top byte is 4 read from the colour ramps at 0009a6f5. The points move by the block's translation when +0x208 is set. Clip mode 0 draws the whole line and mode 1 the line clipped to the rect at +0x20c (0007d4a4): a flat colour through slot 34 (0009df5c), a remap as the spans 0007d358 scan-converts it to. Other modes take each region of the list at +0: a rect region clips the line with 0007d4a4, a span region intersects the line's spans with it through 00073b7c, and each piece goes to the pen's span routine. ES2's Raster_DrawLine (DBSIM 004838f8), statement for statement.",
+      "description": "(from, to), C convention: draws a line between two {x, y} points with the pen at the installed clip block's +0x224 (the block 00098d64 points at): mode 0 a flat colour, mode 2 a span remap through g_RasterRoutines slot 1 (0009ded8), a colour whose top byte is 4 read from the colour ramps at 0009a6f5. The points move by the block's translation when +0x208 is set. Clip mode 0 draws the whole line and mode 1 the line clipped to the rect at +0x20c (Line_ClipToRect (0007d4a4)): a flat colour through slot 34 (0009df5c), a remap as the spans 0007d358 scan-converts it to. Other modes take each region of the list at +0: a rect region clips the line with Line_ClipToRect (0007d4a4), a span region intersects the line's spans with it through 00073b7c, and each piece goes to the pen's span routine. ES2's Raster_DrawLine (DBSIM 004838f8), statement for statement.",
       "source": "ES1DBSIM decompile at 0006a064, against ES2's Raster_DrawLine",
       "verified": {
         "bytes": "0006a064+614",
@@ -30627,6 +30642,21 @@
       "verified": {
         "bytes": "0006a8e0+246",
         "sha1": "3547737f935c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006aa70",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Bitmap_GrabClipDispatch",
+      "description": "(header, point, flags), C convention: reads the screen into a bitmap. Clears the low four bits of the header's flags byte +5; sets its format byte +4 to 8 when the display depth 00098db2 is 8 or 4 and the byte differs from it; zeroes its pixels (+0xa, size +6) with memset; moves the point by the clip block's (the one 00098d64 points at) +0x20c/+0x210 less +0x21c/+0x220 when its +0x208 is 1; and by its clip mode +0x204 calls g_RasterRoutines slot 27 (0009df40, VGA8_ReadBitmap (0008be88)) with (header, point, clip, flags): clip 0 for mode 0, the block's rect +0x20c for mode 1, and for mode 2 once for each entry of the block's list (count +0) whose region type is 0, with that region's rect. ES2's Bitmap_GrabClipDispatch (DBSIM 00488868), the same statements. es2_xref finds two calls, from Region_SaveRect (00066470) and 0004571c.",
+      "source": "ES1DBSIM decompile at 0006aa70, diffed against ES2's Bitmap_GrabClipDispatch",
+      "verified": {
+        "bytes": "0006aa70+315",
+        "sha1": "8a93c9fc2cf2",
         "scope": "body",
         "via": "decompile"
       }
@@ -33749,6 +33779,21 @@
       }
     },
     {
+      "address": "0007d4a4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Line_ClipToRect",
+      "description": "(a, b, rect{x0, y0, x1, y1}), C convention: cuts the segment between the int32 points a and b, in place, to the inclusive rect, taking y0, x0, y1 and x1 in that order. When both endpoints lie beyond a bound it returns 0, leaving both points as they were; when one does, that endpoint moves onto the bound at the crossing computed from it toward the other (IMUL, then IDIV of the 64-bit product, the quotient truncated toward zero). To move b it first exchanges the two points (XCHG) and leaves them exchanged, so the result can hold the endpoints in the other order. Stores both points and returns 1. A point on a bound is inside. ES2's Line_ClipToRect (DBSIM 00483b60), identical after normalisation. An object file of its own, between the zero fills after the RETs at 0007d4a2 and 0007d5a1. es2_xref finds three calls, from Raster_DrawLine (0006a064).",
+      "source": "ES1DBSIM disassembly at 0007d4a4, against ES2's Line_ClipToRect",
+      "verified": {
+        "bytes": "0007d4a4+254",
+        "sha1": "6a64776caa1b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0007d5a4",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -34790,6 +34835,21 @@
         "sha1": "95cfd34e5b9f",
         "scope": "body",
         "via": "disasm"
+      }
+    },
+    {
+      "address": "0008cb90",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_DrawLine",
+      "description": "(colour, a, b), C convention: the VGA_8 driver's line, slot 34 of its table 000a7b70 (+0x88), which Raster_DrawLine (0006a064) calls through 0009df5c for a flat colour. Draws on the draw page (offset 0009e604, pan 0009e610 added to each x, row table 0009df8e, row bytes 0009df86, selector 0009df84 in FS) through the sequencer's map mask (port 3C4 index 2). It starts from the point with the smaller x, a when the two are equal; dx is the x distance and dy the absolute y distance, the row step negated when the line rises. dy 0: the dx + 1 pixels of the row, in one write with the mask 0009e61c[4 * (x & 3) + ((dx + 1) & 3)] when they stay in one group of four columns, else the first group's mask 0009e62c[x & 3], the whole groups with mask 0xf (REP STOSW), and the last group's 0009e630[the remaining count & 3]. dx 0: dy + 1 pixels of the column. dx <= dy: on row i from 0 to dy the pixel at column x + floor(i * (dx + 1) / (dy + 1)). dx > dy: on column j from 0 to dx the pixel floor(j * (dy + 1) / (dx + 1)) rows on, the pixels of one group of four on one row written together. So both end points are drawn, and the pixels do not depend on the order of a and b. es2_xref finds one reference, the table's slot.",
+      "source": "ES1DBSIM disassembly at 0008cb90",
+      "verified": {
+        "bytes": "0008cb90+426",
+        "sha1": "b835cec77943",
+        "scope": "body",
+        "via": "both"
       }
     },
     {

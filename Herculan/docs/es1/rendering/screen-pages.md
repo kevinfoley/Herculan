@@ -178,6 +178,25 @@ Where the shell's routines take a row's offset from the row table, which the dri
 
 The code runs from `00051c3c` to `00052813` in two pieces. `VGA8_CopyRectBetweenPages` closes the code from `00050e20` ([profile files](../formats/profile-files.md#where-the-object-file-starts-and-ends)); the other three row routines, `00051f1c`–`000523a3`, stand between two zero fills. From `000523a4` to `00052813`, between zero fills at `000523a1` and `00052811`, is ES2's `DBSIM 0045c61c`–`0045c860` in order: `Vga_WaitVerticalRetrace` (`000523a4`), `Vga_WaitRetraceEnd` (`000523ae`), the monochrome component panel (`000523b8`–`00052643`, [the component panel](../simulation/debug-monitor.md#the-component-panel)), and then the four page routines.
 
+### Lines and clipped bitmaps
+
+**In clip mode 1 a line is cut to the clip block's rect and drawn with both its end pixels, and a bitmap loses the columns and rows outside the rect; the rect's edges are inside.** `Raster_DrawLine` (`ES1DBSIM 0006a064`), ES2's, moves its two points by the block's translation when `+0x208` is set and, in clip mode 1, cuts them to the rect `+0x20c` with `Line_ClipToRect` (`0007d4a4`), ES2's ([clipping a line](../../retail/rendering/polygon-fill.md#clipping-a-line)), drawing nothing when that answers 0. A flat color then goes to `VGA_8`'s slot 34 (`0009df5c`).
+
+**`VGA8_DrawLine` (`0008cb90`)**, slot 34, (color, *a*, *b*), C convention, writes the color on the draw page (the offset `0009e604`, the pan `0009e610` added to each *x*) through the sequencer's map mask (port `3C4` index 2). It starts from the point with the smaller *x*, *a* when the two are equal; *dx* is the distance across and *dy* the distance down or up:
+
+- *dy* = 0: the run of *dx* + 1 pixels, in one write with the mask `0009e61c`[4 · (*x* & 3) + ((*dx* + 1) & 3)] when it stays in one group of four columns, and otherwise the first group's partial mask `0009e62c`[*x* & 3], the whole groups with all four planes, and the last group's `0009e630`[the remaining count & 3];
+- *dx* = 0: the *dy* + 1 pixels of the column;
+- *dx* ≤ *dy*: on each row *i* from 0 to *dy*, the pixel at column *x* + ⌊*i* · (*dx* + 1) / (*dy* + 1)⌋;
+- *dx* > *dy*: on each column *j* from 0 to *dx*, the pixel *y* ± ⌊*j* · (*dy* + 1) / (*dx* + 1)⌋ rows away, a row's pixels in one group of four written together.
+
+Both end points are drawn, and which point comes first does not change the pixels, so the order `Line_ClipToRect` leaves them in does not show.
+
+**`VGA8_BlitBitmapClipped` (`0008c27c`)**, slot 28, given a clip rect, trims the bitmap at the point: *L* is how far the rect's *x0* lies right of the point's *x*, *R* how far the bitmap's last column, *x* + columns − 1, lies right of *x1*, each 0 when it does not, and *T* and *B* the same in rows. It draws nothing when the rect's *x0* is right of the last column or the point's *x* right of *x1*, the same in *y*, or when columns − *L* − *R* or rows − *T* − *B* is 0, and otherwise the rest. `Raster_BlitDispatch` (`0006a8e0`) passes it the block's rect `+0x20c` in clip mode 1 ([the display drivers](polygon-shading.md#the-display-drivers)).
+
+**`Bitmap_GrabClipDispatch` (`0006aa70`)**, (header, point, flags), C convention, is ES2's (DBSIM `00488868`), the blit's dispatch the other way round: it zeroes the bitmap's pixels, clears the low four bits of its flags byte `+5`, sets its format byte `+4` to 8 when the display's depth (`00098db2`) is 8 or 4 and the byte differs from it, moves the point by the block's translation when `+0x208` is 1, and reads the screen into the bitmap through slot 27 (`0009df40`, `VGA8_ReadBitmap`): with no clip rect in clip mode 0, with the rect `+0x20c` in mode 1, and once for each rect region of the list in mode 2. `Region_SaveRect` (`00066470`) moves the region's rect by the same translation before it calls it, so a saved rect is moved twice ([putting a panel up](../simulation/alert-panels.md#putting-a-panel-up-and-taking-it-down)).
+
+`Line_ClipToRect` is an object file of its own, `0007d4a4`–`0007d5a3`, between the zero fills after the `RET`s at `0007d4a2` and `0007d5a1`; `toupper` (`0007d5a4`) follows it.
+
 ### The cursor
 
 **The simulator draws the mouse pointer itself on the page on the screen, saving the pixels under it first and putting them back to hide it; the shown page's change, a view's slide and a new image each hide it and show it again.** `VGA_8`'s slots 30 and 31 (`0009df4c`, `0009df50`), which `VGA_4`'s table (`000a7ae0`) also holds, are its show and hide, no arguments, each with interrupts off (`CLI` to `STI`) and doing nothing without a bitmap. They draw on the visible page: for the call each sets the draw page's offset `0009e604` and pan `0009e610` to the visible page's, `0009e608` and `0009e614`, and the show sets the source page's, `0009e600` and `0009e60c`, the same, and puts all of them back after. The state:

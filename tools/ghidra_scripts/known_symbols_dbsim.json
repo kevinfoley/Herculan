@@ -34065,8 +34065,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Line_ClipToRect",
-      "description": "(a, b, rect{x0, y0, x1, y1}): clips the segment a-b in place against the inclusive rect, against y0, x0, y1 and x1 in that order, each time moving the outside endpoint to the crossing computed from it in 64 bits (truncating). Returns 0, leaving the points as they were, when both endpoints lie beyond the same bound; otherwise 1. Raster_DrawLine clips through it for clip mode 1 and for each rect of a clip list.",
-      "source": "DBSIM decompile at 00483b60"
+      "description": "(a, b, rect{x0, y0, x1, y1}): clips the segment a-b in place against the inclusive rect, against y0, x0, y1 and x1 in that order, each time moving the outside endpoint to the crossing computed from it in 64 bits (truncating). To move b it first exchanges the two points (XCHG) and leaves them exchanged, so the result can hold the endpoints in the other order. Returns 0, leaving the points as they were, when both endpoints lie beyond the same bound; otherwise 1. Raster_DrawLine clips through it for clip mode 1 and for each rect of a clip list.",
+      "source": "DBSIM decompile at 00483b60",
+      "verified": {
+        "bytes": "00483b60+254",
+        "sha1": "6a64776caa1b",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00483c60",

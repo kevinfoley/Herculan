@@ -16989,8 +16989,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Line_ClipToRect",
-      "description": "The VSHELL copy of DBSIM's Line_ClipToRect, line for line: clips a-b in place against the inclusive rect {x0, y0, x1, y1}, returning 0 when the segment is wholly beyond one bound. Gfx_DrawLine clips through it.",
-      "source": "VSHELL decompile at 0045554c, diffed against DBSIM 00483b60"
+      "description": "The VSHELL copy of DBSIM's Line_ClipToRect, line for line: clips a-b in place against the inclusive rect {x0, y0, x1, y1}, returning 0 when the segment is wholly beyond one bound. To move b it first exchanges the two points and leaves them exchanged, so the result can hold the endpoints in the other order.",
+      "source": "VSHELL decompile at 0045554c, diffed against DBSIM 00483b60",
+      "verified": {
+        "bytes": "0045554c+254",
+        "sha1": "6a64776caa1b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0045564c",
