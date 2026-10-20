@@ -11,6 +11,7 @@ The editor, `Herculan.Engine.Editor`, run on its own by `Herculan.Engine.Host.Ed
 | [handoff-editor-mission-logic.md](handoff-editor-mission-logic.md) | orders, wiring, actions, timers, objectives, the mission's text |
 | [handoff-editor-conditions.md](handoff-editor-conditions.md) | the preview, conditions, variant tables, Present when |
 | [handoff-editor-ux-plan.md](handoff-editor-ux-plan.md) | the planned UI redesign, by phase; its evidence is [handoff-editor-ux-review.md](handoff-editor-ux-review.md) |
+| [handoff-editor-msn-scene.md](handoff-editor-msn-scene.md) | the planned rewrite that shows and selects the `.MSN` directly, every record included, in place of the generated `script.dat` |
 
 ## What every edit does
 
