@@ -47,6 +47,8 @@ public sealed class PilotControls {
 	private bool _fireRowLatched;
 	private int _missileKeyboardHold;
 
+	private readonly GunsightDrag _gunsightDrag = new();
+
 	public PilotControls(SimulatorStart start, CockpitView view, CockpitDisplays displays, CockpitCommands commands,
 			TapePlayback tape, TapeRecording recording, DeveloperKeys developerKeys, StagedStart staging) {
 		_view = view;
@@ -94,7 +96,9 @@ public sealed class PilotControls {
 	/// The frame's pilot input: the machine's controls, the camera's axes, the round's steering, and the observer
 	/// camera's keys — from the player, the tape, or nobody while a modal is up.
 	/// </summary>
-	public void Update(IKeyState? controls, bool modalPanelOpen, IKeyState? freeCameraKeys) {
+	/// <param name="gunsightPointer">The pointer the gunsight drag reads, in the forward view's art pixels.</param>
+	public void Update(IKeyState? controls, bool modalPanelOpen, IKeyState? freeCameraKeys,
+			GunsightPointer gunsightPointer) {
 		var pilotMech = _view.PilotMech;
 
 		// The flight model's lever test is a pair of globals in the original, read for every aircraft it
@@ -220,6 +224,18 @@ public sealed class PilotControls {
 				CenterBody = pilotMech.Controls.CenterBody,
 				FlightThrottleLever = pilotMech.Controls.FlightThrottleLever,
 			};
+		}
+
+		// The gunsight drag, added after either branch to what the machine is handed, and not to the input block the
+		// round and the tape read. A replay's block has no pointer or buttons, so it never arms there.
+		if (pilotInput && pilotMech != null && controls != null && !modalPanelOpen
+				&& _displays.Art?.Gau.GunsightComplex is { } complex) {
+			const float shift = CockpitArt.GauToPixelScale;
+			_gunsightDrag.Update(_tape.Playing ? GunsightPointer.Released : gunsightPointer,
+				(int)(complex.Origin.X * shift), (int)(complex.Origin.Y * shift),
+				(int)((complex.Origin.X + complex.Size.Width) * shift),
+				(int)((complex.Origin.Y + complex.Size.Height) * shift));
+			pilotMech.Controls = _gunsightDrag.AddTo(pilotMech.Controls);
 		}
 
 		// The free camera during a replay, which the live keyboard flies while the tape pilots.

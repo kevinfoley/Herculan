@@ -55,6 +55,8 @@ tweak.c2_05_stingray_closes_in.display_name  Corriger la mission Delta 5
 tweak.c2_05_stingray_closes_in.description   Dans la mission d'escorte du prototype de Raptor II, une fois le prototype ramené à la base, le Stingray Cybrid qui le traque quitte son coin de la carte et marche droit sur le prototype. Dans le jeu original, il ne quitte jamais l'extrême nord-est de la carte.
 tweak.faster_keyboard_aiming.display_name  Visée au clavier plus rapide
 tweak.faster_keyboard_aiming.description   Maintenir une touche enfoncée fait pivoter et incliner la tourelle de votre HERC aussi vite qu'un joystick poussé à fond. Dans le jeu original, une touche vise à la moitié de cette vitesse, et le chapeau chinois du joystick aux trois quarts.
+tweak.fix_gunsight_drag.display_name  Corriger la visée souris
+tweak.fix_gunsight_drag.description   Maintenez le bouton droit de la souris n'importe où dans la vitre avant et déplacez la souris pour orienter la tourelle de votre HERC : plus le pointeur est loin de l'endroit où vous avez appuyé, plus la tourelle tourne vite, jusqu'à la vitesse d'un joystick poussé à fond. Le jeu original possède cette commande, mais oublie le bouton droit dès que la souris bouge, si bien qu'elle ne fonctionne jamais.
 tweak.fix_raptor2_perspective.display_name  Corriger la perspective du Raptor II
 tweak.fix_raptor2_perspective.description   Place la vue cockpit du Raptor II dans son cockpit. Dans le jeu original, la vue se trouve au-dessus du sommet du HERC. Le suivi de la tourelle et la convergence des armes suivent ce changement.
 tweak.reset_counters_on_replay.display_name  Corriger les indicateurs de « Rejouer la mission »

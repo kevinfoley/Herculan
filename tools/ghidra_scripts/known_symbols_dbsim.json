@@ -11526,8 +11526,14 @@
       "type": "function",
       "confidence": "high",
       "name": "PanelGauge_Ctor",
-      "description": "PanelGauge base constructor (vtable 0049bc6c). Clears the sensor-dropout state (+0x74 condition, +0x76/+0x77 dark flag, +0x78 deadline, +0x6c sequencer) and defaults both spell ranges to 180-360 coarse ticks, sequences +0x70 = 0 and +0x72 = 1.",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md"
+      "description": "(this, rect, arg): PanelGauge base constructor. Installs PanelGaugeVtable (0049bc6c), copies rect's four ints to +4..+0x10 and arg to +0x14, clears the sensor-dropout state (+0x74 condition, +0x76/+0x77 dark flag, +0x78 deadline, +0x6c sequencer, +0x8c/+0x8d, +0x90, +0xb0) and defaults both spell ranges to 180-360 coarse ticks (+0x7c..+0x88), sequences +0x70 = 0 and +0x72 = 1.",
+      "source": "DBSIM decompile at 00438b20",
+      "verified": {
+        "bytes": "00438b20+158",
+        "sha1": "a1adca4044ba",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00438bc0",
@@ -12392,7 +12398,13 @@
       "confidence": "high",
       "name": "GauRovingGunsight_ApplyCoordShift",
       "description": "(block): VideoMode_ShiftRect on the first rect, then shifts the twelve x/y pairs at +0x10..+0x34 and +0x3c..+0x70 by VideoMode_XCoordShift / VideoMode_YCoordShift; the int at +0x38 is left alone. Gau_RovingGunsightWrapper runs it on the .GAU block at +1088 (0x440), as Gau_ThrottleWidget does GauThrottle_ApplyCoordShift.",
-      "source": "DBSIM decompile at 0043e118"
+      "source": "DBSIM decompile at 0043e118",
+      "verified": {
+        "bytes": "0043e118+252",
+        "sha1": "fe90b5e2a0f1",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043e214",
@@ -18854,7 +18866,13 @@
       "confidence": "high",
       "name": "Input_ReadMouseState",
       "description": "(out, kind): for kind 2 with the mouse device enabled, copies the {int, int, int16 buttons} record 0045c22c returns into out and caches it at 004d24a3; when 0045c22c returns null it copies the cached record instead. Returns 0 only when the device is disabled; for any other kind it writes nothing and returns 1.",
-      "source": "DBSIM decompile at 0045bc58"
+      "source": "DBSIM decompile at 0045bc58",
+      "verified": {
+        "bytes": "0045bc58+174",
+        "sha1": "e955e0ebd6bb",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0045bd08",
@@ -19124,7 +19142,13 @@
       "confidence": "high",
       "name": "MouseInputDevice_GetState",
       "description": "(device): MouseDriver_GetState(); device is passed on and not read. Input_ReadMouseState copies the record it returns.",
-      "source": "DBSIM disassembly at 0045c22c"
+      "source": "DBSIM disassembly at 0045c22c",
+      "verified": {
+        "bytes": "0045c22c+15",
+        "sha1": "560b823cb572",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0045c23c",
@@ -29000,7 +29024,13 @@
       "confidence": "high",
       "name": "MouseDriver_GetState",
       "description": "Returns 006c5fd4, the mouse driver's {int x, int y, int16 buttons} record.",
-      "source": "DBSIM disassembly at 00480728"
+      "source": "DBSIM disassembly at 00480728",
+      "verified": {
+        "bytes": "00480728+10",
+        "sha1": "d04e5a1e29cf",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00480734",
@@ -29053,8 +29083,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mouse_DispatchEvent",
-      "description": "Rescales a raw window-client-space (x,y) from Mouse_WndProcHook into the game's internal coordinate space via a fixed-point factor (Mouse_RecomputeScale), packs the current L/R button-held bitmask into DAT_006c5fdc, and calls every enabled entry of the 10-slot mouse-listener table (DAT_006c5f5c, registered via MouseListener_Register) whose event mask has the event kind's bit set.",
-      "source": "docs/retail/simulation/cockpit-input.md"
+      "description": "(kind, lParam, buttons): calls Mouse_RecomputeScale while the factor at 004a2de4 is 0, scales lParam's client x and y by the Q16 factors 004a2de4/004a2de8 into Mouse_State (006c5fd4/006c5fd8), rebuilds the button word 006c5fdc from bits 0 and 1 of buttons alone, and calls every enabled entry of the ten-slot listener table 006c5f5c whose mask has bit kind set, with &Mouse_State.",
+      "source": "DBSIM decompile at 0048083c",
+      "verified": {
+        "bytes": "0048083c+176",
+        "sha1": "a95bf0235aa4",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004808ec",
@@ -29062,8 +29098,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mouse_WndProcHook",
-      "description": "Registered into the MainWndProc filter chain (see WndProcHook_Register). Catches WM_MOUSEMOVE(0x200)/WM_LBUTTONDOWN(0x201)/WM_LBUTTONUP(0x202)/WM_RBUTTONDOWN(0x204)/WM_RBUTTONUP(0x205) -- none of which MainWndProc's own switch handles -- and forwards each to Mouse_DispatchEvent with a kind id (0=move,1=ldown,2=lup,3=rdown,4=rup) and a button-held bitmask built from wParam.",
-      "source": "docs/retail/simulation/cockpit-input.md"
+      "description": "(hwnd, msg, wParam, lParam): a MainWndProc filter. WM_SIZE (5) calls Mouse_RecomputeScale. The five mouse messages go to Mouse_DispatchEvent(kind, lParam, buttons), kind 0 move, 1 left down, 2 left up, 3 right down, 4 right up. buttons carries wParam's MK_LBUTTON as 1 and its MK_RBUTTON doubled, as 4 -- except WM_RBUTTONDOWN, which passes 2 for the right button, and the two left messages, which set or leave bit 0 by the message itself. Returns 1 for move and the left pair, 0 for the right pair and anything else.",
+      "source": "DBSIM decompile at 004808ec",
+      "verified": {
+        "bytes": "004808ec+221",
+        "sha1": "20c957dec4fb",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004809cc",

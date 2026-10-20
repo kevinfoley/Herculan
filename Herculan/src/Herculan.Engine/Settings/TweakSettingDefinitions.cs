@@ -216,6 +216,14 @@ public static class TweakSettingDefinitions {
 	public static readonly TweakSettingDefinition<bool> FasterKeyboardAiming = new("tweak.faster_keyboard_aiming", TweakCategory.Functional, defaultValue: false, recommendedValue: false);
 
 	/// <summary>
+	/// Hold the right mouse button on the front window and move the mouse to aim the turret. Retail has the control,
+	/// but its mouse record drops the held right button at the first move, so the drag never acts; this feeds it the
+	/// button itself, and turns the turret no faster than a stick pushed all the way, where retail's term grows without
+	/// limit. Off, it reads the record's bit as retail does. See <see cref="Input.GunsightDrag"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> FixGunsightDrag = new("tweak.fix_gunsight_drag", TweakCategory.Functional, defaultValue: false, recommendedValue: true);
+
+	/// <summary>
 	/// Put the Raptor II pilot's eye in its cockpit. Retail's <c>RAPTOR2.DAT</c> lifts it above the top of the
 	/// model; this keeps the file's fore/aft offset and drops the lift. Turret tracking and gun convergence
 	/// measure from the same lift, so they move with the view, for every Raptor II in the mission. See
@@ -240,7 +248,7 @@ public static class TweakSettingDefinitions {
 		PreserveSoundPosition, CriticalDamageMessage, ShowSquadmateNumber, FixComputerMessagePreference,
 		SmootherTurretMovement, MouseExternalView, FixDefendPositionOrder, FixWeaponDamageRecords,
 		ChargeBarPowerLevel, FlashThroughSecondHit, ShowAltitudeTape, DropPodSoundFromPod, FixRepairDiagramSides,
-		FixTerrainHitPoint, FlyerIgnoresPlayerThrottle, StrandedStingrayClosesIn, FasterKeyboardAiming, FixRaptorIIPerspective, ResetCountersOnReplay,
+		FixTerrainHitPoint, FlyerIgnoresPlayerThrottle, StrandedStingrayClosesIn, FasterKeyboardAiming, FixGunsightDrag, FixRaptorIIPerspective, ResetCountersOnReplay,
 		PlayLastMusicTrack, ShuffleMissionMusic, ChangePbwBeamHue,
 	};
 }

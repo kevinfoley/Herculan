@@ -55,6 +55,8 @@ tweak.c2_05_stingray_closes_in.display_name  Fix Delta Sector Mission 5
 tweak.c2_05_stingray_closes_in.description   In the mission to escort the Raptor II prototype, once you bring the prototype home, the Cybrid Stingray hunting it leaves its corner of the map and heads straight for the prototype. In retail it never leaves the far north-east corner.
 tweak.faster_keyboard_aiming.display_name  Faster Keyboard Aiming
 tweak.faster_keyboard_aiming.description   Holding a key turns and tilts your HERC's turret as fast as pushing the joystick all the way does. In retail a key aims at half that speed, and the joystick's hat at three quarters of it.
+tweak.fix_gunsight_drag.display_name  Fix Mouse Turret Aiming
+tweak.fix_gunsight_drag.description   Hold the right mouse button anywhere in the front window and move the mouse to aim your HERC's turret: the further the pointer is from where you pressed, the faster the turret turns, up to the speed of a joystick pushed all the way. Retail has this control, but forgets the right button as soon as the mouse moves, so it never works.
 tweak.fix_raptor2_perspective.display_name  Fix Raptor II Perspective
 tweak.fix_raptor2_perspective.description   Puts the Raptor II's cockpit view in its cockpit. In retail the view sits above the top of the HERC. Turret tracking and gun convergence move with it.
 tweak.reset_counters_on_replay.display_name  Fix "Replay Mission" flags
