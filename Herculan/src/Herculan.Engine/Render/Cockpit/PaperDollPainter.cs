@@ -123,7 +123,8 @@ internal static class PaperDollPainter {
 	///
 	/// <para>The rect is the file's inclusive corner pair, doubled and its far corner nudged one
 	/// further, because the loader shifts every <c>.PDG</c> coordinate by the video mode's
-	/// <c>X/YCoordShift</c> and adds that <c>+1</c> in the 640-wide mode — so the region covers the
+	/// <c>X/YCoordShift</c> and adds that <c>+1</c> with the hi-res banks (<c>VideoMode_UseHiResBanks</c>),
+	/// whose <c>.HBA</c> art this draws — so the region covers the
 	/// full 2x2 device footprint of each source pixel. Matching pixels go out as merged horizontal
 	/// runs rather than one quad each.</para>
 	/// </summary>

@@ -599,11 +599,11 @@ public sealed partial class MechObject {
 	/// that step covered, ramped within the current frame and committed whole at each frame
 	/// boundary. Rotate it into world space, add it on, and reset.</para>
 	///
-	/// <para>This seeds and reads the locomotion thread throughout. The original seeds the shape's
+	/// <para>This seeds and reads the locomotion thread directly. The original seeds the shape's
 	/// first thread (<c>ShapeInst_SeedRootTransform</c>, <c>00478a70</c>) and reads the first one
-	/// after <c>AnimThread_StepAll</c>'s priority re-sort, which is the twist thread while
-	/// locomotion plays a stop/step-off sequence — see docs/retail/rendering/dts-node-posing.md, "Several
-	/// threads on one shape".</para>
+	/// after <c>AnimThread_StepAll</c>'s priority re-sort, and the locomotion thread holds that slot
+	/// throughout — see docs/retail/rendering/dts-node-posing.md, "Several threads on one
+	/// shape".</para>
 	/// </summary>
 	private void IntegrateMotion() {
 		if (Thread == null) {

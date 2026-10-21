@@ -68,7 +68,7 @@ The names of the slots are [the file's](../formats/dmg-damage-file.md#the-two-in
 | `0x2e` | `ENEMY TARGET DESTROYED` | the death gate, on the shared predicate below |
 | `0x2f` | `ENEMY TARGET DISABLED` | the leg branch's immobilise, on that same predicate |
 
-`0x15` `SHIELDS CRITICAL` belongs to the same family from one function further out: `Mech_DirectFireHitTest` posts it where it sets `mech+0xb0` (`00418dc7`), on the first shot to land on the player's own machine with under 500 points of charge left across both facings.
+`0x15` `SHIELDS CRITICAL` belongs to the same family from one function further out: `Mech_DirectFireHitTest` posts it where it sets `mech+0xb0` (`00418dc7`), on the first shot to get through the player's own machine's shields with under 500 points of charge left across both facings; a shot the struck facing absorbs whole skips the test.
 
 **Four of the five latch bytes are one-shots that are never cleared** — `+0xa8`/`+0xa9`/`+0xaa`/`+0xab`, each written `1` exactly once, in `Mech_ComponentDamageWrite`. They are why a machine that keeps taking hits in the same band does not repeat itself, and they are separate from `MessagePort_Show`'s own 4.8 s swallow of a repeated id ([`cockpit-messages.md`](cockpit-messages.md)), which would not be enough on its own. All four are load-bearing elsewhere as well: `+0xa8`/`+0xa9` are the two speed penalties ([`mech-locomotion.md`](mech-locomotion.md)) and `+0xaa`/`+0xab` the reactor's grades, which cut speed too; the reactor output they also grade is fixed before either can be set ([`reactor-energy-pool.md`](reactor-energy-pool.md#reactor-output-rate--mech_computereactorrate-00417d08)).
 

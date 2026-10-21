@@ -220,7 +220,7 @@ return steep ? 1 : 2
 
 ## `sleeping` (13) — `Mech_BehaviourSleepThink` (`0041c418`)
 
-Release the target, `Mech_LocomotionTick(mech, 0, 0, 0)`, `Ai_UpdateWeaponsFree`. A sleeping machine stands with its throttle at zero and its radar on whatever the mission file set, and holds no target — but it is still ticked, still detectable, and still answers fire through its vtable `+0x50` like any other.
+Release the target, `Mech_LocomotionTick(mech, 0, 0, 0)`, `Ai_UpdateWeaponsFree`. A sleeping machine stands with its throttle at zero and its radar on whatever the mission file set, and holds no target. It is still ticked and still detectable, but it does not fight back: `sleeping`'s descriptor carries flag bit 3, so `Mech_AiOnTakingFire` shares the shooter as a contact and returns before choosing a response ([`ai-targeting.md`](ai-targeting.md#taking-fire--mech_aiontakingfire-0041f7b8-mech-vtable-0x50)). Verb 4 never completes, so only the order's action moves a sleeping group on. With no action, the machine stays asleep for the rest of the mission.
 
 ## `dead` (20), `disabled` (21) and `in limbo` (19) — `Mech_BehaviourInertThink` (`0041e554`)
 

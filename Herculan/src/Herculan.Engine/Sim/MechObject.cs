@@ -95,6 +95,15 @@ public sealed partial class MechObject : SimObject {
 			Shape = new ShapeInstance(animation);
 			Thread = Shape.AddThread(Type.StopForwardSequence);
 
+			// Mech_Constructor (00415bb0) zeroes both stop sequences' priority in the shape's own
+			// sequence table, so for every machine of the type, and the locomotion thread ranks first
+			// whatever it plays. See docs/retail/rendering/dts-node-posing.md, "Several threads on one
+			// shape".
+			animation.Sequences[Type.StopForwardSequence].ClearPriority();
+			if (animation.HasSequence(Type.StopReverseSequence)) {
+				animation.Sequences[Type.StopReverseSequence].ClearPriority();
+			}
+
 			// The torso's two threads, in the constructor's own order, which breaks priority ties
 			// between threads (ShapeInstance.LocalOf). Neither ever plays:
 			// their rate stays zero and the torso tick seeks them by angle instead. A type record

@@ -118,6 +118,7 @@ sealed class FrontEndWindow : IDisposable {
 	public void Attach(GL gl, IInputContext input) {
 		_imgui = new ScaledImGui(gl, _window, input, _imguiFontPath, _imguiItalicFontPath) {
 			HeldAsMouseButtons = () => (_padPointer.ClickHeld, _padPointer.RightClickHeld),
+			PointerOverride = () => _padPointer.Override,
 		};
 		_menuBar.Tweaks.Fonts = _imgui;
 		_padNav = new ImGuiGamepad(input);
@@ -130,12 +131,13 @@ sealed class FrontEndWindow : IDisposable {
 
 	/// <summary>
 	/// The pointer in framebuffer pixels. The pointer reports window-client pixels while a canvas is placed in
-	/// framebuffer pixels, which differ on a scaled display — the same correction the mission host makes.
+	/// framebuffer pixels, which differ on a scaled display — the same correction the mission host makes. It is the
+	/// gamepad's own pointer where the window's cursor could not follow the pad (<see cref="GamepadPointer.Override"/>).
 	/// </summary>
 	public (float X, float Y) PointerIn(IMouse mouse, Vector2D<int> framebuffer) {
 		var client = _window.ClientSize;
-		return (mouse.Position.X * framebuffer.X / Math.Max(client.X, 1),
-			mouse.Position.Y * framebuffer.Y / Math.Max(client.Y, 1));
+		var position = _padPointer.PositionOf(mouse);
+		return (position.X * framebuffer.X / Math.Max(client.X, 1), position.Y * framebuffer.Y / Math.Max(client.Y, 1));
 	}
 
 	/// <summary>Whether a gamepad's trigger is pulled as the left button (<see cref="GamepadPointer"/>).</summary>

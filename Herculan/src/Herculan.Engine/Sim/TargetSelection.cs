@@ -25,9 +25,10 @@ namespace Herculan.Engine.Sim;
 /// <c>TargetSelect_SetObject(view, 0)</c>.</item>
 /// </list>
 ///
-/// <para>A click on the gunsight reaches <see cref="Select"/>, the same entry point
-/// <see cref="Clear"/> uses. The MFD scanner's TARGET button does not: it runs <see cref="Cycle"/>,
-/// as [Enter] does.</para>
+/// <para>A click on the gunsight selects nothing: the gunsight's click slot,
+/// <c>Gunsight_ClickGadget_OnClickNoOp</c> (<c>0043b338</c>), returns without acting. See
+/// docs/retail/simulation/cockpit-gunsight-hud.md. The MFD scanner's TARGET button runs
+/// <see cref="Cycle"/>, as [Enter] does.</para>
 ///
 /// <para>Each of the three ends by pushing the new target into the gunsight widget
 /// (<c>Gunsight_SetValues</c>), which draws the HUD target box —
@@ -252,9 +253,8 @@ public sealed class TargetSelection {
 	}
 
 	/// <summary>
-	/// <c>TargetSelect_SetObject</c> (<c>004332dc</c>) — select one named object, the entry point a
-	/// click on the gunsight uses. Passing null clears the selection, which is what the
-	/// <c>;</c> key does.
+	/// <c>TargetSelect_SetObject</c> (<c>004332dc</c>) — select one named object. Passing null clears
+	/// the selection, which is what the <c>;</c> key does.
 	///
 	/// <para><b>It walks rather than assigns</b>, and the walk is visible in the result: the selection
 	/// is stepped through the world's object list from a cursor this class keeps, one object per

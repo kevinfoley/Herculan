@@ -52,6 +52,16 @@ Weapon names above are the simulator's own. Subtype 9 is reached by two weapon i
 5. Build a shot record (same layout as a beam's, see [`weapon-firing.md`](weapon-firing.md#the-shot-record)) with **the frame as the ray and the step as its length**, and run `Sim_RaycastObjectList`. A bullet therefore sweeps the segment it is about to cross rather than testing a point, which is what stops a fast round tunnelling through a machine between ticks.
 6. Struck anything and the shot ends; struck nothing and it moves.
 
+**A round's reach is its lifetime times its speed, and the weapon's range plays no part in it.** The age gains `0x200` per 125 ms and the round expires once it passes `lifetime * 0x200`, so it moves `lifetime` steps of `Speed` units at a steady 125 ms tick. The mount template's range (`+0x30`, [`../formats/weapons-dat-sim.md`](../formats/weapons-dat-sim.md#decoded-tail-fields)), which the shell's weapon text prints rounded, only marks a target in or out of range ([`weapon-mounts.md`](weapon-mounts.md)) and guides the AI's weapon choice; nothing passes it to `Bullet_Fire`. So every autocannon flies past its printed range. Fired from a standing machine (1 m = 166.667 units, [`dbsim-physics-notes.md`](dbsim-physics-notes.md#world-units)):
+
+| Weapon | Lifetime x speed | Reach | Printed range |
+|---|---|---|---|
+| ATC20 | 20 x 5000 | 600 m | 450 m |
+| ATC35, ATC75 | 18 x 5000 | 540 m | 420 m (ATC35) |
+| ATC50, ATC100 | 16 x 5000 | 480 m | 380 m (ATC50) |
+
+A walker adds `Q10(2000, speed scalar)` to every step, so an OUTLAW at its top speed scalar of 276 adds 539 a step, and its ATC35 rounds reach about 600 m.
+
 **Both damage figures are scaled Q10 by `+0x56` only when that is nonzero** — an autocannon round, spent out of a magazine rather than a charge, does the record's face value. The beam dispatch spells the same line unconditionally but can never pass zero.
 
 ### The plasma branch

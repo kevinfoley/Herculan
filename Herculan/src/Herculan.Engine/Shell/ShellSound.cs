@@ -12,6 +12,11 @@ namespace Herculan.Engine.Shell;
 /// <para>The original's fades are loops that hold the shell until they finish. This one steps once per
 /// <see cref="Update"/> under the same rule, so the window keeps drawing, and <see cref="Fading"/> is
 /// what the host holds the widgets on meanwhile.</para>
+///
+/// <para>The player's <see cref="AudioVolumes"/> are laid over the SOS volume here rather than by a
+/// <see cref="VolumeBackend"/>, since the music is a sample like the clicks: the music's gain is scaled by
+/// <see cref="AudioVolumes.Music"/> and the clicks' by <see cref="AudioVolumes.Effects"/>, and a change to the music
+/// volume reaches the playing track at the next <see cref="Update"/>.</para>
 /// </summary>
 public sealed class ShellSound {
 	/// <summary>The archive the shell's sounds are in.</summary>
@@ -36,6 +41,8 @@ public sealed class ShellSound {
 
 	private readonly IAudioBackend _backend;
 	private readonly SimulatorPreferences _options;
+	private readonly AudioVolumes _volumes;
+	private float _musicGainVolume;
 	private readonly int _press;
 	private readonly int _tabClick;
 	private readonly int _switch;
@@ -51,10 +58,12 @@ public sealed class ShellSound {
 	private bool _fadingOut;
 	private long _lastFadeStep;
 
-	private ShellSound(IAudioBackend backend, SimulatorPreferences options, int press, int tabClick, int @switch,
-			int music) {
+	private ShellSound(IAudioBackend backend, SimulatorPreferences options, AudioVolumes volumes, int press, int tabClick,
+			int @switch, int music) {
 		_backend = backend;
 		_options = options;
+		_volumes = volumes;
+		_musicGainVolume = volumes.Music;
 		_press = press;
 		_tabClick = tabClick;
 		_switch = @switch;
@@ -89,13 +98,15 @@ public sealed class ShellSound {
 	/// <c>hmi\shell2.wav</c> while it is 0 for the music, looping forever at volume 0. A missing sample
 	/// plays nothing. Flipping option 5 afterwards is the caller's, as it is the setup's in the original.
 	/// </summary>
-	public static ShellSound Load(GameContent content, IAudioBackend backend, SimulatorPreferences options) {
+	public static ShellSound Load(GameContent content, IAudioBackend backend, SimulatorPreferences options,
+			AudioVolumes volumes) {
 		ArgumentNullException.ThrowIfNull(content);
 		ArgumentNullException.ThrowIfNull(backend);
 		ArgumentNullException.ThrowIfNull(options);
+		ArgumentNullException.ThrowIfNull(volumes);
 
 		string musicName = options[MusicTrackOption] != 0 ? "shell1.wav" : "shell2.wav";
-		return new ShellSound(backend, options, Sample("gm_69.wav"), Sample("bptlt2.wav"),
+		return new ShellSound(backend, options, volumes, Sample("gm_69.wav"), Sample("bptlt2.wav"),
 			Sample("lswitch2.wav"), Sample(musicName)) {
 			MusicName = musicName,
 		};
@@ -121,7 +132,8 @@ public sealed class ShellSound {
 		}
 
 		Active = true;
-		_musicPlay = _backend.Start(_music, Gain(_musicVolume), 0f, 1f, looping: true);
+		_musicGainVolume = _volumes.Music;
+		_musicPlay = _backend.Start(_music, MusicGain(), 0f, 1f, looping: true);
 	}
 
 	/// <summary>
@@ -182,11 +194,18 @@ public sealed class ShellSound {
 	/// since the last — up until the volume is past 99, or down until it is below 2.
 	/// <see cref="Environment.TickCount64"/> is that same clock, at its same granularity.
 	///
-	/// <para>It services the backend's device first (<see cref="IAudioBackend.Update"/>), which is this
-	/// engine's and has no counterpart in the original's loop.</para>
+	/// <para>It services the backend's device first (<see cref="IAudioBackend.Update"/>), and pushes a changed music
+	/// volume to the playing track, which are this engine's and have no counterpart in the original's loop.</para>
 	/// </summary>
 	public void Update() {
 		_backend.Update();
+
+		if (_volumes.Music != _musicGainVolume) {
+			_musicGainVolume = _volumes.Music;
+			if (_musicPlay >= 0) {
+				_backend.SetGain(_musicPlay, MusicGain());
+			}
+		}
 
 		if (!Fading) {
 			return;
@@ -206,7 +225,7 @@ public sealed class ShellSound {
 		_lastFadeStep = now;
 		_musicVolume += _fadingIn ? 1 : -1;
 		if (_musicPlay >= 0) {
-			_backend.SetGain(_musicPlay, Gain(_musicVolume));
+			_backend.SetGain(_musicPlay, MusicGain());
 		}
 	}
 
@@ -231,7 +250,7 @@ public sealed class ShellSound {
 	private void Play(int sample) {
 		if (Active && _options[Prefs.SoundsOption] != 0) {
 			_clickPlays.RemoveAll(click => !_backend.IsPlaying(click));
-			int play = _backend.Start(sample, Gain(FullVolume), 0f, 1f, looping: false);
+			int play = _backend.Start(sample, Gain(FullVolume) * _volumes.Effects, 0f, 1f, looping: false);
 			if (play >= 0) {
 				_clickPlays.Add(play);
 			}
@@ -243,4 +262,6 @@ public sealed class ShellSound {
 	/// with the master <c>Sos_MasterVolume</c> (<c>00473160</c>) on the 100 it holds in the image, which is linear in the volume.
 	/// </summary>
 	private static float Gain(int volume) => Math.Clamp(volume / (float)FullVolume, 0f, 1f);
+
+	private float MusicGain() => Gain(_musicVolume) * _musicGainVolume;
 }

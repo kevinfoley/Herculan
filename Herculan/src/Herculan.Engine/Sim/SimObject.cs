@@ -507,10 +507,11 @@ public abstract class SimObject {
 	public virtual int CollisionRadius => 0;
 
 	/// <summary>
-	/// The drawn model's own radius, in world units - the original's vtable slot <c>+0x10</c>,
-	/// <c>SimObject_GetShapeRadius</c> (<c>0046b80c</c>), which reads it straight off the shape the
-	/// object instances rather than out of any type record. The HUD target box sizes itself from it
-	/// (see <c>Herculan.Engine.Cockpit.TargetBox</c>).
+	/// The drawn model's own radius, in world units - the <c>int16</c> <c>+8</c> of the shape the object
+	/// instances rather than any type record's figure, which the original's vtable slot <c>+0x10</c>,
+	/// <c>SimObject_GetShapeRadius</c> (<c>0046b80c</c>), returns. The HUD target box sizes itself from
+	/// it, reading the shape's field in place (see <c>Herculan.Engine.Cockpit.TargetBox</c> and
+	/// docs/retail/simulation/hud-target-indicator.md).
 	///
 	/// <para>All three shootable classes keep it apart from <see cref="HitRadius"/>: a structure's
 	/// body radius is its own <c>BASES.DAT</c> figure, a machine's is the flat 750 of

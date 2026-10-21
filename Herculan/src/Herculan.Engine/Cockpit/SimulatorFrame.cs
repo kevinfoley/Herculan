@@ -2,7 +2,9 @@ using HercWorks.Core.Data.File.Cfg;
 using Herculan.Engine.Audio;
 using Herculan.Engine.Content;
 using Herculan.Engine.Input;
+using Herculan.Engine.Render;
 using Herculan.Engine.Scene;
+using Herculan.Engine.Settings;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using static Herculan.Engine.Input.KeyChords;
@@ -194,7 +196,7 @@ public sealed class SimulatorFrame {
 		}
 
 		_view.ReadOrbitDrag(_input.Mouse, _input.ImGuiWantsMouse);
-		Pilot.Update(controls, _panels.AnyOpen, liveFreeKeys);
+		Pilot.Update(controls, _panels.AnyOpen, liveFreeKeys, SampleGunsightPointer());
 		var keyPointer = _input.Pointer();
 		var keyFramebuffer = _framebufferSize();
 		Keyboard.Read(controls, _panels.AnyOpen, pilotInput: _view.Piloting || _tape.Playing,
@@ -391,6 +393,29 @@ public sealed class SimulatorFrame {
 					&& SystemButtons.Showing((SystemButton)i, framebuffer.X, framebuffer.Y, pointerRow);
 			}
 		}
+	}
+
+	// The pointer as the gunsight drag reads it. The original compares the screen position with a rect that no view
+	// change moves, so the position is taken through the forward view placed at rest, whatever the pan, the glance or
+	// the external view are doing. Its right-button bit is the mouse record's unless the tweak hands it the button
+	// itself. Nothing reaches the drag over the debug panel, as nothing clicks the cockpit there.
+	private GunsightPointer SampleGunsightPointer() {
+		if (_art == null || _input.ImGuiWantsMouse) {
+			return GunsightPointer.Released;
+		}
+
+		var (x, y, buttons) = _input.Pointer();
+		if (float.IsNaN(x) || float.IsNaN(y)) {
+			return GunsightPointer.Released;
+		}
+
+		var framebuffer = _framebufferSize();
+		var (artX, artY) = CockpitScreenLayout.Create(framebuffer.X, framebuffer.Y, _art, 0f, _view.Pan.TravelRows)
+			.Center.WindowToArt(x, y);
+		bool right = TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.FixGunsightDrag)
+			? buttons.HasFlag(CockpitMouseButtons.Right)
+			: _input.Cockpit.RightPressedLast;
+		return new GunsightPointer(right, (int)MathF.Floor(artX), (int)MathF.Floor(artY));
 	}
 
 	// The preferences read where they are used, every frame rather than watched for changes: the preferences

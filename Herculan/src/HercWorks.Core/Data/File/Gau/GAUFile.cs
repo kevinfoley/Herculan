@@ -39,8 +39,7 @@ namespace HercWorks.Core.Data.File.Gau;
 ///     - 1068: not read by the throttle's constructor.
 ///     - 1072: <see cref="HThrottle.TickOffsetX"/>.
 ///     - 1076-1087: zero in every retail file.
-///     - 1088-1103: the head of the gunsight complex's record — an origin offset, then the complex's
-///       own bottom-right (320, 117 or 157). See docs/retail/simulation/cockpit-gunsight-hud.md.
+///     - 1088-1103: <see cref="GunsightComplex"/>, the head of the gunsight complex's record.
 ///   1104 - <see cref="HeadingTape"/>.
 ///   1120 - <see cref="RemainderBeforeReticle"/>, 16 bytes: the time readout's anchor at 1120 and the
 ///     speed caption's at 1128 (docs/retail/simulation/cockpit-gunsight-hud.md, "Speed and time readouts").
@@ -88,6 +87,12 @@ public class GAUFile {
 
 	/// <summary>Content offsets 1064-1103, kept raw — see the class doc comment.</summary>
 	public byte[]? RemainderBeforeHeadingTape { get; set; }
+
+	/// <summary>
+	/// The gunsight complex's own rect at content offset 1088 - see <see cref="HGunsightComplex"/>. Surfaced from
+	/// <see cref="RemainderBeforeHeadingTape"/>, which still carries the same bytes and is what the write path emits.
+	/// </summary>
+	public HGunsightComplex? GunsightComplex { get; set; }
 
 	public HHeadingTape? HeadingTape { get; set; }
 

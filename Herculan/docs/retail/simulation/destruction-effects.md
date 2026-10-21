@@ -103,7 +103,7 @@ Gravity is `-0x20` everywhere but theater 4, the Moon — the test is `CMP word 
 
 1. **Fire**, picked by the record's flags — [Who catches fire](#who-catches-fire).
 2. **The shape**: a `+0x03` that is not `-1` steps that sequence of the machine's shape to cell 2, its blank cell ([`../rendering/mech-shape-drawing.md`](../rendering/mech-shape-drawing.md#a-destroyed-component-hides-its-own-geometry)).
-3. **An explosion** of `EXPLOS.DAT` type 10, or `0x11` when the flags' bit 2 is set, at the component's anchor: its cluster's bounding-sphere centre, through that cluster's node frame composed with the machine's, or the machine's own frame when no cluster names the component.
+3. **An explosion** of `EXPLOS.DAT` type 10, or `0x11` when the flags' bit 2 is set, at the component's anchor: its cluster's bounding-sphere centre, through that cluster's node frame composed with the machine's, or through the machine's own frame when the cluster's node is `-1`. The cluster comes from `Collision_FindClusterForComponent` (`0040ca8c`), whose null result for a component no cluster names is used unchecked; every live body component on retail data has one ([Open](#open)).
 4. **Debris**, the `+0x02` group or 2, thrown from that same frame ([Spawn sites](#spawn-sites)).
 
 The fire and the explosion share a one-per-cascade latch, `DAT_004a98b0`, cleared at the start of each cascade. Choosing type `0x11` sets it, and while it is set the rest of that cascade lights neither a fire nor an explosion. The shape step and the debris are not gated by it.
@@ -201,3 +201,7 @@ A theater-4 test sits beside these in both debris and fire and is a different th
 | `WeaponMount_Destroy`'s third argument selects a debris *lifetime*, shorter for the local player | It selects a `(childGroup, deathEffect)` pair, and the path that loses the mount picks it ([`weapon-mounts.md`](weapon-mounts.md#losing-a-mount)). Neither call site tests who is flying |
 | `Sound_DetailSetting` is an audio setting | The name comes from the sound throttle's read. The byte is the EFFECTS DETAIL row, and it also decides a collapsing structure's smoke and pace and a debris piece's burst ([EFFECTS DETAIL](#effects-detail)) |
 | A debris piece's `+0x59` is a lifetime or an eviction priority, as it is on a fire | Different classes at the same offset. On a piece it is the `EXPLOS.DAT` type that goes off where the piece ends |
+
+## Open
+
+- **Open:** whether every hardpoint a loadout can fit has a mount cluster in its chassis' `.COL`. `Component_DestroyAndCascade` reads the anchor through `Collision_FindClusterForComponent`'s result without a null test, so a live component with no cluster would read through a null pointer. Every component 0–18 a retail `.DMG` gives internals has a cluster; the mount components 19–28 were not checked against the hardpoints each chassis offers.

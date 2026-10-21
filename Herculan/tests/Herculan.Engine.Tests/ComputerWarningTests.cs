@@ -158,6 +158,48 @@ public class ComputerWarningTests {
 	}
 
 	/// <summary>
+	/// <c>SHIELDS CRITICAL</c> is set on the shots that get through the shields, not on every shot
+	/// that lands: <c>Mech_DirectFireHitTest</c> tests the charge only on the branch where shield
+	/// damage is left over. Both facings hold one shot's worth, so the first shot is absorbed whole
+	/// with the array already under the threshold and says nothing; the second finds its facing
+	/// empty, gets through, and is the positive control.
+	/// </summary>
+	[Fact]
+	public void ShieldsCriticalWaitsForAShotThatGetsThrough() {
+		if (Content() is not { } content
+				|| Spawn(content, "OUTLAW") is not { } shooter
+				|| Spawn(content, "OUTLAW") is not { } victim) {
+			return;
+		}
+
+		victim.IsPlayer = true;
+		var log = new MessageLog();
+		var world = FlatWorld(log, shooter, victim);
+		victim.Position = shooter.Position + new Vec3i(0, 6000, 0);
+
+		// The raycast scales a shot's damage by the difficulty before any hit test, so one shot against
+		// the full array measures what a shot takes off a facing.
+		var probe = Shot(shooter, LightShotDamage);
+		Assert.NotEqual(0, HitTests.Raycast(world, probe));
+		short perShot = probe.DamageShield;
+
+		short drainFront = (short)(victim.Shields.Front - perShot);
+		short drainRear = (short)(victim.Shields.Rear - perShot);
+		victim.Shields.AbsorbDirectFire(front: true, ref drainFront);
+		victim.Shields.AbsorbDirectFire(front: false, ref drainRear);
+		Assert.True(victim.Shields.Total < MechObject.ShieldsDownAlertCharge, "the array should start under the threshold");
+
+		HitTests.Raycast(world, Shot(shooter, LightShotDamage));
+		Assert.True(victim.Shields.Total == perShot, "the first shot should have been absorbed whole by one facing");
+		Assert.False(victim.ShieldsDownAlert, "a shot the shields absorb whole does not test the charge");
+		Assert.DoesNotContain(SystemMessages.ShieldsCritical, log.Said);
+
+		HitTests.Raycast(world, Shot(shooter, LightShotDamage));
+		Assert.True(victim.ShieldsDownAlert, "a shot that gets through with the array under the threshold sets the latch");
+		Assert.Equal(1, log.Said.Count(said => said == SystemMessages.ShieldsCritical));
+	}
+
+	/// <summary>
 	/// A ray that reaches the shooter's own selected target marks the <i>shooter</i> engaged —
 	/// <c>Sim_RaycastObjectList</c>'s half of <c>obj+0x9e</c>, which is reached with nothing in
 	/// detection range of either machine. A ray that reaches something else does not.
@@ -203,10 +245,10 @@ public class ComputerWarningTests {
 	/// torso height: fired from the machine's own origin it starts at ground level, and the terrain
 	/// query clips the ray to nothing before an object is ever tested.
 	/// </summary>
-	internal static WeaponShot Shot(MechObject shooter) {
+	internal static WeaponShot Shot(MechObject shooter, short damage = ShotDamage) {
 		var muzzle = shooter.WorldTransform;
 		muzzle.Z += MuzzleHeight;
-		return new WeaponShot(muzzle, ShotRange, ShotDamage, ShotDamage, TestRound, shooter, excluded: null);
+		return new WeaponShot(muzzle, ShotRange, damage, damage, TestRound, shooter, excluded: null);
 	}
 
 	/// <summary>Roughly the hit cylinder's own centre height, <c>typeRecord+0x18</c>.</summary>
@@ -214,6 +256,9 @@ public class ComputerWarningTests {
 
 	private const int ShotRange = 30000;
 	private const short ShotDamage = 100;
+
+	/// <summary>Light enough that two facings holding one shot each sit under the 500 threshold at any difficulty.</summary>
+	private const short LightShotDamage = 20;
 
 	/// <summary>A bare <c>PROJ.DAT</c> row — only the impact-effect arrays are read off it.</summary>
 	private static readonly ProjectileData.Projectile TestRound = new() {

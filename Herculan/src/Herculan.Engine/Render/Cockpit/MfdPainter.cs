@@ -322,7 +322,8 @@ internal sealed class MfdPainter {
 
 	/// <summary>
 	/// <c>HddMap_DrawTerrain</c> as the NAV MAP calls it: the raster's four corners projected about the
-	/// machine at <see cref="MfdNavMap.Scale"/>, turned about the map centre by the heading with
+	/// machine at <see cref="MfdNavMap.Scale"/>, turned by the heading about the viewed machine's screen
+	/// point, which that projection puts at the map centre, with
 	/// <c>Math_Rotate2DPoint</c>'s matrix, and clipped to the inset by a GL scissor — the analogue of
 	/// the screen's own offscreen render target, as <see cref="HddMapPainter.DrawHddMap"/> uses it.
 	/// </summary>

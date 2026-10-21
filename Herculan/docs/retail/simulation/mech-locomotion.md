@@ -293,17 +293,17 @@ Because `G` varies frame to frame (OUTLAW walk: 150, 240, 170, 240, 80, 380 …)
 
 Predicted run-gait top speed vs. the HUD reading, all Hercs, no fitted parameters:
 
-| Herc | rawMax | scale | simMax | walk u/tick | run u/tick | pred km/h | HUD km/h | pred/HUD |
-|---|---|---|---|---|---|---|---|---|
-| OUTLAW | 325 | 0.851 | 276 | 2.092 | 5.080 | 94.6 | 100.0 | 0.947 |
-| RAPTOR2 | 215 | 0.976 | 209 | 2.862 | 5.025 | 70.9 | 66.1 | 1.072 |
-| TOMAHAWK | 240 | 1.180 | 283 | 2.025 | 4.140 | 79.1 | 73.8 | 1.071 |
-| SAMSON | 190 | 1.078 | 204 | 2.200 | 4.460 | 61.4 | 58.4 | 1.051 |
-| COLOSSUS | 180 | 0.911 | 164 | 2.325 | 5.140 | 56.9 | 55.4 | 1.028 |
-| APOCA | 200 | 0.497 | 99 | 3.800 | 8.472 | 56.6 | 61.5 | 0.920 |
-| OGRE | 190 | 0.874 | 166 | 2.775 | 5.375 | 60.2 | 58.4 | 1.030 |
-| MAVERICK | 285 | 0.976 | 278 | 2.862 | 5.025 | 94.3 | 87.7 | 1.076 |
-| SCARAB | 180 | 1.070 | 192 | 1.833 | 3.840 | 49.8 | 55.4 | 0.899 |
+| Herc     | rawMax | scale | simMax | walk u/tick | run u/tick | pred km/h | HUD km/h | pred/HUD |
+| -------- | ------ | ----- | ------ | ----------- | ---------- | --------- | -------- | -------- |
+| OUTLAW   | 325    | 0.851 | 276    | 2.092       | 5.080      | 94.6      | 100.0    | 0.947    |
+| RAPTOR2  | 215    | 0.976 | 209    | 2.862       | 5.025      | 70.9      | 66.1     | 1.072    |
+| TOMAHAWK | 240    | 1.180 | 283    | 2.025       | 4.140      | 79.1      | 73.8     | 1.071    |
+| SAMSON   | 190    | 1.078 | 204    | 2.200       | 4.460      | 61.4      | 58.4     | 1.051    |
+| COLOSSUS | 180    | 0.911 | 164    | 2.325       | 5.140      | 56.9      | 55.4     | 1.028    |
+| APOCA    | 200    | 0.497 | 99     | 3.800       | 8.472      | 56.6      | 61.5     | 0.920    |
+| OGRE     | 190    | 0.874 | 166    | 2.775       | 5.375      | 60.2      | 58.4     | 1.030    |
+| MAVERICK | 285    | 0.976 | 278    | 2.862       | 5.025      | 94.3      | 87.7     | 1.076    |
+| SCARAB   | 180    | 1.070 | 192    | 1.833       | 3.840      | 49.8      | 55.4     | 0.899    |
 
 Full 18-Herc run: all within 0.899–1.076, mean ≈ 1.00. Four independent quantities must be correct for this to hold — root-motion model, the 3.125 tick constant, the load-time rescale, and the 166.667 units/m world scale. APOCA is the tightest constraint: stride 8.472 u/tick (largest) against scale 0.497 (smallest); without the rescale it is 2× wrong.
 

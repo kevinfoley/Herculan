@@ -23,7 +23,7 @@ public sealed class CockpitCommands(CockpitDisplays displays, CockpitView view, 
 	public void DrainClicks(CockpitInput queue, double deltaSeconds, int framebufferWidth, int framebufferHeight) {
 		var cockpitArt = displays.Art!;
 		var inputLayout = CockpitScreenLayout.Create(framebufferWidth, framebufferHeight, cockpitArt,
-			view.Pan.OffsetRows, view.Pan.TravelRows, view.Glance.OffsetPanels);
+			view.WindowOffsetRows, view.Pan.TravelRows, view.Glance.OffsetPanels);
 
 		foreach (var click in queue.Drain(deltaSeconds, inputLayout, cockpitArt, displays.Hud)) {
 			ApplyCockpitClick(click);
@@ -250,7 +250,7 @@ public sealed class CockpitCommands(CockpitDisplays displays, CockpitView view, 
 		}
 
 		var layout = CockpitScreenLayout.Create(framebufferWidth, framebufferHeight, cockpitArt,
-			view.Pan.OffsetRows, view.Pan.TravelRows, view.Glance.OffsetPanels);
+			view.WindowOffsetRows, view.Pan.TravelRows, view.Glance.OffsetPanels);
 		var (artX, artY) = layout.Surface(CockpitSurface.HeadsDown) is { } placed && !float.IsNaN(pointerX)
 			? placed.WindowToArt(pointerX, pointerY)
 			: (float.NaN, float.NaN);

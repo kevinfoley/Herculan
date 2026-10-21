@@ -104,7 +104,7 @@ The gunsight complex's block, read by `Gau_RovingGunsightWidget` (`0043c7d8`) �
 | int | content offset | Role |
 |---|---|---|
 | `[0]`,`[1]` | 1088, 1092 | Origin added to every child rect. Zero in all 9 retail files |
-| `[2]`,`[3]` | 1096, 1100 | The complex's own bottom-right — `320, 117` or `320, 157` |
+| `[2]`,`[3]` | 1096, 1100 | The complex's own bottom-right — `320, 117` on APOCA, RAPTOR2 and RAZOR, `320, 157` on the other six. With `[0]`,`[1]` it is the rect the [gunsight drag](../simulation/gunsight-drag.md#the-rect) arms in |
 | `[4..7]` | 1104-1116 | **Heading tape** rect. `100,y - 220,y+17` in every file, so 120x17 centred on the 320-wide HUD. The [rotation indicator](../simulation/cockpit-gunsight-hud.md#rotation-indicator) is derived from it |
 | `[8..0xb]` | 1120-1132 | Speed and time readout anchors: 1120/1124 the *right* edge of the time field, 1128/1132 the *left* edge of the `SPEED:` caption — [Speed and time readouts](../simulation/cockpit-gunsight-hud.md#speed-and-time-readouts) |
 | `[0xc]`,`[0xd]` | 1136, 1140 | Reticle point — [Child 4](../simulation/hud-target-indicator.md#child-4--the-reticle) |

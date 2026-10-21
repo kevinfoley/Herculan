@@ -4,6 +4,7 @@ using Herculan.Engine.Content;
 using Herculan.Engine.Gl;
 using Herculan.Engine.Render;
 using Herculan.Engine.Render.Cockpit;
+using Herculan.Engine.Settings;
 using Herculan.Engine.View;
 using Silk.NET.OpenGL;
 
@@ -72,7 +73,7 @@ sealed class CockpitRenderer : IDisposable {
 		// One placement for the whole frame, shared with the input path so a widget's click region cannot
 		// drift from the art it was drawn over — see CockpitScreenLayout.
 		var layout = CockpitScreenLayout.Create(totalWidth, totalHeight, _art!,
-			_view.Pan.OffsetRows, _view.Pan.TravelRows, _view.Glance.OffsetPanels);
+			_view.WindowOffsetRows, _view.Pan.TravelRows, _view.Glance.OffsetPanels);
 
 		var world = layout.World;
 		var cockpitCamera = CloneCamera(_view.Camera);
@@ -94,15 +95,27 @@ sealed class CockpitRenderer : IDisposable {
 		// Each panel is one of DBSIM's views and carries that view's own .VUE 3D rect. The two glances
 		// share a canopy bitmap but not a rect — view 3's runs the full width of the view where view 2's
 		// stops short of it — so the mirrored panel takes view 3 rather than a mirrored copy of view 2.
-		DrawPanel(layout.Left, _textures.Side!, mirrorHorizontally: true, hud: null,
-			CockpitViewGeometry.MirroredGlanceViewIndex);
-		DrawPanel(layout.Center, _textures.Front!, mirrorHorizontally: false, hud: _art,
-			CockpitViewGeometry.ForwardViewIndex);
-		DrawPanel(layout.Right, _textures.Side!, mirrorHorizontally: false, hud: null,
-			CockpitViewGeometry.GlanceViewIndex);
+		//
+		// Every panel's world goes down before any panel's art, so the target box can go between them: under the
+		// widescreen tweak it is drawn across the window's width rather than cut at the center panel's edges, and the
+		// side panels' art then covers it as the center panel's does. Each pass is scissored to its own panel and
+		// the art writes no depth, so the order changes nothing else.
+		DrawWorld(layout.Left, CockpitViewGeometry.MirroredGlanceViewIndex, mirrorHorizontally: true);
+		DrawWorld(layout.Center, CockpitViewGeometry.ForwardViewIndex, mirrorHorizontally: false);
+		DrawWorld(layout.Right, CockpitViewGeometry.GlanceViewIndex, mirrorHorizontally: false);
 
-		void DrawPanel(CockpitScreenLayout.PlacedSurface surface, GpuTexture texture,
-				bool mirrorHorizontally, CockpitArt? hud, int viewIndex) {
+		bool boxToWindowEdges = TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.HighResolutionWidescreen);
+		if (boxToWindowEdges && _textures.HudSprites != null) {
+			var center = layout.Center.Viewport;
+			_canopy.DrawTargetBox(0, center.Y, totalWidth, center.Height, center.X, center.Width,
+				layout.Center.ArtWidth, layout.Center.ArtHeight, _art!, _textures.HudSprites, _displays.Hud);
+		}
+
+		DrawArt(layout.Left, _textures.Side!, mirrorHorizontally: true, hud: null);
+		DrawArt(layout.Center, _textures.Front!, mirrorHorizontally: false, hud: _art);
+		DrawArt(layout.Right, _textures.Side!, mirrorHorizontally: false, hud: null);
+
+		void DrawWorld(CockpitScreenLayout.PlacedSurface surface, int viewIndex, bool mirrorHorizontally) {
 			// The view's .VUE 3D rect, as a scissor around the whole 3D pass — the outer bound DBSIM's
 			// rasterizer clips to, which the canopy's alpha cutout does not express on its own. See
 			// CockpitViewGeometry.WorldViewport. The sky is inside the scissor because it is part of the
@@ -116,12 +129,16 @@ sealed class CockpitRenderer : IDisposable {
 			_passes.Draw(cockpitCamera, world.X, world.Y, world.Width, world.Height);
 
 			gl.Disable(EnableCap.ScissorTest);
+		}
 
+		void DrawArt(CockpitScreenLayout.PlacedSurface surface, GpuTexture texture, bool mirrorHorizontally,
+				CockpitArt? hud) {
 			var viewport = surface.Viewport;
 			_canopy.Draw(viewport.X, viewport.Y, viewport.Width, viewport.Height, texture,
 				surface.ArtWidth, surface.ArtHeight, mirrorHorizontally, hud,
 				spriteTexture: _textures.HudSprites, hudState: _displays.Hud, mapTexture: _textures.HddMap,
-				missileView: hud == null ? null : (x, y, width, height, view) => _passes.DrawMissileView(gl, x, y, width, height, view, _view.Camera));
+				missileView: hud == null ? null : (x, y, width, height, view) => _passes.DrawMissileView(gl, x, y, width, height, view, _view.Camera),
+				drawTargetBox: !boxToWindowEdges);
 		}
 	}
 
@@ -293,13 +310,11 @@ sealed class CockpitRenderer : IDisposable {
 		var (centerX, centerY) = _view.ViewGeometry?.ProjectionCenter(viewIndex)
 			?? (CockpitViewGeometry.DefaultProjectionCenterX, CockpitViewGeometry.DefaultProjectionCenterY);
 
-		// The step kick and the damage shake both move the centre itself, in the art's own pixels, so
-		// they go through the same art-to-window transform as everything else on the panel — which is how
-		// the original applies them: straight onto the projection centre, before the view is installed.
-		// Art y runs downward, and the two carry the original's opposite sign conventions — see
-		// CockpitHitShake.OffsetPixels.
-		var (windowX, windowY) = surface.ArtToWindow(centerX,
-			centerY - _view.Kick.OffsetPixels + _view.Shake.OffsetPixels);
+		// The step kick moves the centre itself, in the art's own pixels, so it goes through the same
+		// art-to-window transform as everything else on the panel — which is how the original applies it:
+		// straight onto the projection centre, before the view is installed. Art y runs downward. The damage
+		// shake is not here: it moves the whole layout, world included (CockpitView.WindowOffsetRows).
+		var (windowX, windowY) = surface.ArtToWindow(centerX, centerY - _view.Kick.OffsetPixels);
 
 		// The world viewport shares the panels' top edge and height, so only x changes frame.
 		return new Vector2(

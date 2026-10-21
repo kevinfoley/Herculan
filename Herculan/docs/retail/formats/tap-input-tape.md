@@ -71,7 +71,7 @@ Then one 24-byte header per frame, plus its variable tail:
 
 **Buttons 5-8 are not recorded.** Only `004d2360`-`004d2363` reach the header, and playback's `memset` of the input block leaves the other four zero. The four bits are written after the press-once latch has masked the build ([`../simulation/joystick-input.md`](../simulation/joystick-input.md#the-buttons)), so each is set on the one frame its action fires, and the trigger's own button is zero because the trigger is extracted from it. The hat bytes are zero under HAT = 2, which writes the hat onto the turret axes and clears them before they are recorded.
 
-**Nor is the block's pointer.** Its `+0x02`..`+0x0c` — the pointer position and the mouse buttons the live build copies in — are on no record, and playback leaves them zero. The [gunsight drag](../simulation/joystick-input.md#the-gunsight-drag) reads them, so a replay never arms it.
+**Nor is the block's pointer.** Its `+0x02`..`+0x0c` — the pointer position and the mouse buttons the live build copies in — are on no record, and playback leaves them zero. The [gunsight drag](../simulation/gunsight-drag.md) reads them, so a replay never arms it.
 
 The raw bank at `+0x0d` is read back into locals that only the recording branch reads. In the retail tapes its bit 0, the stick's trigger button, is set on 180, 116 and 185 frames, every one of them a frame whose trigger bit is set; the trigger bit is set on 180, 200 and 204.
 
