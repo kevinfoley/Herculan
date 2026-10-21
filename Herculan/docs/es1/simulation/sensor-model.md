@@ -30,7 +30,7 @@ The code is `0000e218`–`0000eb67`. It opens with `HeapPtr_DtorDetectionCopy` (
 No arguments; ES2's (`004123ac`, [passes](../../retail/simulation/target-selection.md#passes)) in its three passes over `LiveObjectList`:
 
 1. For each object whose group's action `+0x16` is clear, it ticks the countdowns `+0x178` and `+0x17b` with `Math_CountdownTimerTick`; when the second expires, it reloads its counter `+0x17c` with 10000 + `Math_RandomBelow`(`000b5bd4`, 1000) and runs `Detection_DecayContacts` on the object.
-2. For each object whose group's action is clear, neither immobilised nor destroyed, on side 0, it runs `Detection_Sweep`, holding back the player's machine (`+0x9d`) to sweep it last.
+2. For each object whose group's action is clear, neither immobilised nor destroyed, on side 0, it runs `Detection_Sweep`, except an object with `+0x9d` set, the player's machine, which it holds back; after the walk it sweeps the last object it held back, so with more than one such object only the last that passed the tests is swept.
 3. It clears every object's `+0x9c`.
 
 `es2_xref.py` finds one call, from `Sim_MainTick` (`00059700`, [the tick](main-loop.md#the-tick--sim_maintick-00059700)), unless the simulation is frozen.
@@ -61,11 +61,11 @@ if d < Detection_ContactScanRange():               // 30000 or 60000
         machine+0x98 = 1; Action_Activate(other+0x16c) unless it is null or other+0x9c
 ```
 
-Slot `+0x40` is the turret twist and `+0x48` [the sensor arc](sim-object-base.md#the-sensor-arc), ES2's `+0x3c` and `+0x44`. ES2's (`004128f8`, [ranges](../../retail/simulation/target-selection.md#detection_sweep-004128f8-ranges)) paints within 200000 and lights each object on its own terms: the other when it emits or lies within 140000, after the callout, and the machine when it emits or the other lies within 140000. It looks within 80000, a fixed range, where ES1's looks within `Detection_ContactScanRange` (`0001f814`), the range the player's own target selection allows a contact ([`Detection_ContactScanRange`](world.md#small-functions)).
+Slot `+0x40` is the turret twist and `+0x48` [the sensor arc](sim-object-base.md#the-sensor-arc), ES2's `+0x3c` and `+0x44`. The arc's argument is added in 16 bits, so twist + *h* and twist + *h* − `0x8000` wrap as angles do. ES2's (`004128f8`, [ranges](../../retail/simulation/target-selection.md#detection_sweep-004128f8-ranges)) paints within 200000 and lights each object on its own terms: the other when it emits or lies within 140000, after the callout, and the machine when it emits or the other lies within 140000. It looks within 80000, a fixed range, where ES1's looks within `Detection_ContactScanRange` (`0001f814`), the range the player's own target selection allows a contact ([`Detection_ContactScanRange`](world.md#small-functions)).
 
 ## Line of sight — `Detection_LineOfSight` (`0000e55c`)
 
-(machine, other): when the counter of the *other's* countdown, `+0x179`, is 0, it reloads the *machine's* counter `+0x179` with 5000 + `Math_RandomBelow`(`000b5bd4`, 1000) and stores in the machine's cache byte `+0x10c` + the other's slot whether `Sim_RaycastShapes`(0, other `+0x20`, machine `+0x20`, result) answers 0, a line from the machine's position to the other's that strikes no zone shape. It returns the cached byte. ES2's ([line of sight](../../retail/simulation/target-selection.md#line-of-sight--detection_lineofsight-00412608)) has the same asymmetric gate but walks the terrain between the two aim nodes, each raised by its aim node's height or 500; ES1's runs between the two objects' positions with no height added.
+(machine, other): when the counter of the *other's* countdown, `+0x179`, is 0, it reloads the *machine's* counter `+0x179` with 5000 + `Math_RandomBelow`(`000b5bd4`, 1000) and stores in the machine's cache byte `+0x10c` + the other's slot whether `Sim_RaycastShapes`(0, other `+0x20`, machine `+0x20`, result) answers 0, a line from the machine's position to the other's that strikes no zone shape. It returns the cached byte, sign-extended. While the other's counter is not 0 it returns the machine's byte as it stands, so a test is answered by whatever the last test with the same machine and slot stored, or, before any, by what the byte held from the machine's construction ([Open](#open)). `Detection_Sweep`'s three tests pass the sweeping machine, a human-side object, as the machine, and `Detection_DecayContacts` passes the decaying object, so a Cybrid's decay reads its own row of the cache, which no sweep's test writes, behind the gate of the human's counter, which the sweeps' tests reload. ES2's ([line of sight](../../retail/simulation/target-selection.md#line-of-sight--detection_lineofsight-00412608)) has the same asymmetric gate but walks the terrain between the two aim nodes, each raised by its aim node's height or 500; ES1's runs between the two objects' positions with no height added.
 
 ## Passing a contact on — `Detection_ShareContact` (`0000e618`)
 
@@ -99,5 +99,5 @@ Slot `+0x40` is the turret twist and `+0x48` [the sensor arc](sim-object-base.md
 
 - **Open:** what calls `HeapPtr_DtorDetectionCopy`, to which `es2_xref.py` finds no branch or stored pointer.
 - **Open:** what reads `000af264`, which `Mech_AiEnemySighted` sets as ES2's sets `00499358`.
-- **Open:** what else ticks or reloads the two countdowns `+0x178` and `+0x17b`, and what sets them at a machine's construction.
+- **Open:** what else ticks or reloads the two countdowns `+0x178` and `+0x17b`, and what sets them and the line-of-sight cache `+0x10c` at a machine's construction.
 - **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: in a mission, `BP <CS>:0000e240` fires once per simulation tick, and `BP <CS>:0000e760` fires as a squadmate first sees an enemy, just before its enemy-sighted message comes up.

@@ -10633,7 +10633,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Raster_DrawPolygonDispatch",
-      "description": "(count, points), C convention: draws a polygon with the brush {mode, colour} at the installed clip block's (0008441c) +0x228, translating the points by (+0x20c - +0x21c, +0x210 - +0x220) first when +0x208 is set. Fewer than three points, or brush mode 4, draw in the brush colour through a temporary brush at +0x224: one point through Gfx_PlotPixel (000559fc), two through Raster_DrawLine, more as a line loop. For three or more: mode 0 fills through g_RasterRoutines slot 0 with the colour (a palette index for top byte 0, the ramp entry from 00085da9 for top byte 4, nothing otherwise), mode 1 goes to 0006a05c, modes 5 and 7 to the routine at 00086634, mode 6 fills through slot 1 (000865b4) with the brush's second field. The fills scan-convert with 00067954 and clip per the clip mode +0x204: 0 none, 1 through 000692e4 against the rect at +0x20c, otherwise against each region of the block's list (rects through 000692e4, span regions through 0004fc50). The code of ES1DBSIM's Raster_DrawPolygonDispatch (00068be0), relocated operands aside.",
+      "description": "(count, points), C convention: draws a polygon with the brush {mode, colour} at the installed clip block's (0008441c) +0x228, translating the points by (+0x20c - +0x21c, +0x210 - +0x220) first when +0x208 is set. Fewer than three points, or brush mode 4, draw in the brush colour through a temporary brush at +0x224: one point through Gfx_PlotPixel (000559fc), two through Raster_DrawLine, more as a line loop. For three or more: mode 0 fills through g_RasterRoutines slot 0 with the colour (a palette index for top byte 0, the ramp entry from 00085da9 for top byte 4, nothing otherwise), mode 1 goes to 0006a05c, modes 5 and 7 to the routine at 00086634, mode 6 fills through slot 1 (000865b4) with the brush's second field. The fills scan-convert with Poly_ScanConvertToSpanRegion (00067954) and clip per the clip mode +0x204: 0 none, 1 through Poly_ClipToRect (000692e4) against the rect at +0x20c, otherwise against each region of the block's list (rects through Poly_ClipToRect (000692e4), span regions through 0004fc50). The code of ES1DBSIM's Raster_DrawPolygonDispatch (00068be0), relocated operands aside.",
       "source": "ES1GO decompile at 00055584",
       "verified": {
         "bytes": "00055584+867",
@@ -15066,6 +15066,36 @@
       "verified": {
         "bytes": "0006780c+276",
         "sha1": "b946f4cabc21",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00067954",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Poly_ScanConvertToSpanRegion",
+      "description": "ES2's Poly_ScanConvertToSpanRegion (DBSIM 00484614), the scan conversion of a polygon into the span region the span routine fills, but for the computed jump into the unrolled stores: its JMP EDX at 0006801a enters the run of stores before 000692dc at 12 bytes a store (EDX = 000692dc - 12 x (n + 1)), each store STOSW, ADD EDI,ECX, ADD [EBP - 0x1b8],EBX and ADC EAX,ESI; after the run the JMP at 000692dc goes back into the function, and three zero bytes follow it before Poly_ClipToRect (000692e4). es2_xref finds four calls, from Raster_DrawPolygonDispatch (00055584). es2_naming.py diff finds it the same as ES1DBSIM's Poly_ScanConvertToSpanRegion (00076f54) but for the jump's base address.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#clipped-polygons; es2_naming.py diff ES1DBSIM 00076f54 ES1GO 00067954; ES1GO disassembly at 00068011-0006801a and bytes at 0006801c and 000692d8",
+      "verified": {
+        "bytes": "00067954+1736",
+        "sha1": "b3a8a3216445",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000692e4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Poly_ClipToRect",
+      "description": "ES2's Poly_ClipToRect (DBSIM 0048422c), the clip of a polygon to a rect. es2_xref finds three calls, from Raster_DrawPolygonDispatch (00055584), which clips a span fill with it against the clip block's rect in clip mode 1 and against each rect region in clip mode 2. It opens an object file: the unrolled stores of Poly_ScanConvertToSpanRegion (00067954) before it end with a JMP at 000692dc and three zero bytes. The code of ES1DBSIM's Poly_ClipToRect (000788e4), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#clipped-polygons; es2_naming.py match ES1DBSIM ES1GO (exact)",
+      "verified": {
+        "bytes": "000692e4+1000",
+        "sha1": "5839c68c1c3f",
         "scope": "body",
         "via": "decompile"
       }

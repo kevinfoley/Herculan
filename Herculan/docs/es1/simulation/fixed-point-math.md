@@ -56,10 +56,23 @@ The rate-over-tick helpers differ as well. ES1's `Math_IntegrateRateOverTick` (`
 These C helpers do the same as ES2's of the same name, read side by side:
 
 - `Math_Atan2Guarded` (`00063ca0`) and `Math_HeadingToward` (`00063cc8`), which take their arguments in ES2's order;
+- `Math_EulerToward` (`00063d2c`), (from, to, out) in stack order, the reverse of ES2's (out, to, from): with *d* = *to* − *from*, out[2] = `Math_Atan2Guarded`(*d*.x, *d*.y) − `0x4000`, out[1] = 0 and out[0] = `Math_Atan2Guarded`(`Math_FastMagnitude2D`(*d*.x, *d*.y), *d*.z), the angles that turn model Y toward *to*; ES2's reaches the magnitude through a thunk;
 - `Math_CountdownTimerTick` (`0006410c`), whose tick delta is `SimTickDelta`;
 - `Math_DistanceBetweenPoints` (`00063c20`), which subtracts in line where ES2's calls `Vec3_Subtract`;
+- `Transform_ApplyToPoint` (`0005f58c`) and `Transform_RotatePoint` (`0005ef74`), the `int32` point through a 32-byte transform with and without its translation, identical to ES2's after normalisation;
 - `Math_RateLimitedMoveToward` (`0005e598`) and its `int32` form `Math_RateLimitedMoveTowardInt` (`0005e608`), which take their arguments in the reverse of ES2's order ([calling conventions](../formats/compiler.md#calling-conventions));
 - the generator ([ES2's](../../retail/simulation/random-generator.md)): `Math_RandomNext` (`00063af4`) and `Math_RandomBelow` (`00063b3c`) over the same 56-short state with its cursors at `+0x70` and `+0x71`, and `Math_RandomSeed` (`00063aa4`), whose 112-byte seed table (`00098150`) is ES2's at `004a6958`. ES1's seeding calls nothing after the copy, where ES2's calls an empty function.
+
+## Rescaling a vector
+
+**`Math_NormalizeVec3ToLength` (`00063b5c`)**, (length, vector) in stack order, is ES2's (DBSIM `004926e4`, (vector, length)) on ES1's primitives: it rescales an `int32` vector in place to the `int16` length and returns the vector. With *m* = `Math_FastMagnitude3D` of the vector, a vector of magnitude 0 is zeroed (`memset` of 12 bytes); otherwise:
+
+```
+s = (int16)((length << 16) / m)          // IDIV, truncated toward zero
+v[i] = (int16)Math_Q16Multiply2(s, v[i]) // i = 0, 1, 2
+```
+
+The scale wraps once *m* is no more than twice the length, as ES2's does. Each product goes through the rounding `Math_Q16Multiply2` ([the primitives](#the-primitives)) and is truncated to 16 bits and sign-extended, where ES2's divides through `Math_DivInt` and keeps each product of the truncating `Math_Q16Multiply` whole. `es2_xref.py` finds two calls, from `GridShape_Raycast` ([the collision volume](world.md#the-collision-volume--gridshape)) and from `00008268` ([Open](#open)). The function opens an object file: `Math_RandomBelow`'s `RET 8` at `00063b57` is followed by two zero bytes ([where object files meet](../formats/compiler.md#where-object-files-meet-in-the-code)).
 
 ## The slew
 
@@ -87,6 +100,7 @@ then adds the velocity to the position and returns it. An error and a velocity t
 
 ## Open
 
+- **Open:** what `00008268`, the other caller of `Math_NormalizeVec3ToLength`, rescales, and where the object file `Math_NormalizeVec3ToLength` opens ends: `es1_boilerplate.py bounds` finds no zero fill or module copy from it to `00063cf7`.
 - **Open:** no caller of `Slew_Ctor`, `Slew_Step` or `Math_RateLimitedMoveTowardInt` found by `es2_xref.py`.
 
 - **Open:** a retail check of the two-interrupt frame: under DOSBox-X with enough cycles for 60 frames a second, a 10000-count countdown (the mission status poll, [`mission-status.md`](mission-status.md#open)) runs out in 2.6 seconds of wall time rather than 3.9, and a HERC covers a measured distance in two thirds of the time it takes at 40 frames a second or fewer.

@@ -109,7 +109,14 @@ The three queries are ES2's, the arguments after the shape in reverse order:
 
 - `GridShape_HeightAround` (`0001fa9c`), (shape, radius, point) in stack order: ES2's. `es2_xref.py` finds calls from the other two.
 - `GridShape_HeightAt` (`0001fc5c`), (shape, radius, point): ES2's. `es2_xref.py` finds one call, from `Structure_WalkCollisionTest` (`0002075c`, [a point against the shapes](terrain.md#a-point--zone_walkcollisiontest-00020860)).
-- `GridShape_Raycast` (`0001fccc`), (shape, clearance, segment, out), the segment two `int32` triples: ES2's march but for three things. It also rejects a segment whose two ends both have a negative Z; the step count is the length divided by the step, without ES2's 1 added; and a step hits when the sampled height is greater than its Z, where ES2's also wants the height non-zero. The direction is rescaled to the step by `00063b5c`. `es2_xref.py` finds one call, from `Sim_RaycastShapeVolume` (`00020894`, [a ray against the shapes](terrain.md#a-ray--zone_raycastshapeobjects-00020b50)).
+- `GridShape_Raycast` (`0001fccc`), (shape, clearance, segment, out), the segment two `int32` triples: ES2's march but for three things. It also rejects a segment whose two ends both have a negative Z; the step count is the length divided by the step, without ES2's 1 added; and a step hits when the sampled height is greater than its Z, where ES2's also wants the height non-zero. With *s* the cell shift `+0x32`:
+
+  1. It returns 0 for a shape with no columns (`+0x2a`), when both ends' Z are at or above the ceiling `+0x430`, or when both are negative.
+  2. The origin shift (*ox*, *oy*) = (`int16`)(`+0x2e` << *s*), (`int16`)(`+0x30` << *s*) is added to both ends' X and Y. The step is the `int16` (1 << *s*) + the clearance, the clearance read as a word, as `GridShape_HeightAround` reads its radius (`0001faba`).
+  3. The direction, end − start, is rescaled to the step with `Math_NormalizeVec3ToLength` (`00063b5c`, [rescaling a vector](fixed-point-math.md#rescaling-a-vector)), and the step count is `Math_FastMagnitude3D`(start − end) / step, truncated to 16 bits; with a count of 0 or less it returns 0.
+  4. From the start, before each advance by the direction, while the `int16` step index is below the count: when `GridShape_HeightAround`(shape, clearance, point) is greater than the point's Z, it writes the point to out `+4`, `+8` and `+0xc`, less *ox* and *oy* in X and Y, and returns 1 in `AX`. After the last step it returns 0.
+
+  `es2_xref.py` finds one call, from `Sim_RaycastShapeVolume` (`00020894`, [a ray against the shapes](terrain.md#a-ray--zone_raycastshapeobjects-00020b50)).
 
 ## Functions
 
@@ -147,7 +154,7 @@ Callees of other modules read for them: `RaycastShapeMinDistance_Clear` (`000208
 
 ## Open
 
-- **Open:** the callees read for none of this module's functions: `0001ac58` and `00003cbc` from the second pass ([its Open](../formats/script-dat.md#open)); `00063b5c`, which rescales the march's direction, where ES2's calls `Math_NormalizeVec3ToLength`; and the five readers of the header mode at offset 4 besides `Damage_ScaleByDifficulty`.
+- **Open:** the callees read for none of this module's functions: `0001ac58` and `00003cbc` from the second pass ([its Open](../formats/script-dat.md#open)); and the five readers of the header mode at offset 4 besides `Damage_ScaleByDifficulty`.
 - **Open:** the callers `es2_xref.py` finds and this batch did not read: `00007198`, `00007f84` and `000088cc` (the shot sweep); `0002d624` (the scan range).
 - **Open:** whether `GO.EXE`'s `0000f39c`, `0000f515` and `0000f5c4` are its copies of the three queries: they stand before its `GridShape` functions in the queries' order, but compile differently and `0000f5c4` is 851 bytes to `GridShape_Raycast`'s 413. `es2_xref.py --binary ES1GO` finds two calls to `0000f39c` and none to the other two.
 - **Open:** the module's two static constructors, the dwords at `000adc10` and `000adc14`, have no Ghidra function and no entry: `0001fa98`, a lone `RET`, and `0002018c`, which passes 1 and `00092414`, the entry beside `GridShape`'s name and load function, to `ClassItem_RegisterBucket` in stack order.

@@ -197,6 +197,15 @@ Both end points are drawn, and which point comes first does not change the pixel
 
 `Line_ClipToRect` is an object file of its own, `0007d4a4`–`0007d5a3`, between the zero fills after the `RET`s at `0007d4a2` and `0007d5a1`; `toupper` (`0007d5a4`) follows it.
 
+### Clipped polygons
+
+**A filled polygon is clipped and scan-converted by ES2's two routines ([filling a polygon](../../retail/rendering/polygon-fill.md#filling-a-polygon)).** `Raster_DrawPolygonDispatch` (`ES1DBSIM 00068be0`) clips a span fill to the rect `+0x20c` in clip mode 1, and in clip mode 2 to each region of the block's list, a rect region through the same clip and a span region through `00073b7c`; it scan-converts each result into the span region the span routine fills.
+
+- **`Poly_ClipToRect` (`000788e4`)** is ES2's (DBSIM `0048422c`, [clipping to a rectangle](../../retail/rendering/polygon-fill.md#clipping-to-a-rectangle)), identical after normalisation.
+- **`Poly_ScanConvertToSpanRegion` (`00076f54`)** is ES2's (DBSIM `00484614`, [scan conversion](../../retail/rendering/polygon-fill.md#scan-conversion)) but for the unrolled stores its computed jump enters: ES1's jumps back from `000788dc` by 12 bytes a store, each store (`STOSW`, `ADD EDI,ECX`, `ADD [EBP−0x1b8],EBX`, `ADC EAX,ESI`) stepping its accumulator in the frame, where ES2's saves `EBP` at `004a33ec`, holds the accumulator in `EBP` and jumps back from `004865e4` by 8 bytes a store. After the run a `JMP` at `000788dc` goes back into the function, and three zero bytes follow it, so `Poly_ClipToRect` opens an object file of its own ([where object files meet](../formats/compiler.md#where-object-files-meet-in-the-code)).
+
+`es2_xref.py` finds three calls of `Poly_ClipToRect` and four of `Poly_ScanConvertToSpanRegion`, all from `Raster_DrawPolygonDispatch`.
+
 ### The cursor
 
 **The simulator draws the mouse pointer itself on the page on the screen, saving the pixels under it first and putting them back to hide it; the shown page's change, a view's slide and a new image each hide it and show it again.** `VGA_8`'s slots 30 and 31 (`0009df4c`, `0009df50`), which `VGA_4`'s table (`000a7ae0`) also holds, are its show and hide, no arguments, each with interrupts off (`CLI` to `STI`) and doing nothing without a bitmap. They draw on the visible page: for the call each sets the draw page's offset `0009e604` and pan `0009e610` to the visible page's, `0009e608` and `0009e614`, and the show sets the source page's, `0009e600` and `0009e60c`, the same, and puts all of them back after. The state:

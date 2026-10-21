@@ -6892,7 +6892,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Player_PerFrameCockpitUpdate",
-      "description": "(machine), callee-cleaned: EnergyMeter_Value (000af6fc) = (pool +0x228 << 10) / 10000 to 00039b78(CockpitViewInstance +0x1e1, &value); Shield_BalanceInputRead (0000fbb4)(+0x1b8); WeaponMounts_PerFrameUpdate (0000cf78)(manager +0x198, the distance to the target +0x15e or 0); the throttle exchange through 0003b250 and 0003b200 on +0x1ed (with +0x8d clear the gauge's value to +0x226, otherwise +0x226 to the gauge and +0x8d cleared) and the speed fraction (speed << 10) / top; then a copy of Gunsight_GetStateBlock (00035180)(+0x1f1): the pitch +0x230 at offset 4, the heading +0xa and twist +0x22e at 0 and 2 unless +0x9e is set; when its target at offset 6 differs from +0x15e, +0x95 cleared, the holders' counts +0x15c moved, the target taken and +0x97 set, and with no target and the manager's +0x14 set, g_CenterTurretMode (000b5ba4) = 1; +0x95 at 0x25; Gunsight_SetValues (00035090). es2_xref finds two calls, from Sim_RenderFrame (00059c08) and Sim_StartMission (0005a9dc). ES2's Player_PerFrameCockpitUpdate (DBSIM 0041b130), which takes the target from the cockpit and resolves its aim point.",
+      "description": "(machine), callee-cleaned: EnergyMeter_Value (000af6fc) = (pool +0x228 << 10) / 10000 to 00039b78(CockpitViewInstance +0x1e1, &value); Shield_BalanceInputRead (0000fbb4)(+0x1b8); WeaponMounts_PerFrameUpdate (0000cf78)(manager +0x198, the distance to the target +0x15e or 0); the throttle exchange through 0003b250 and 0003b200 on +0x1ed (with +0x8d clear the gauge's value to +0x226, otherwise +0x226 to the gauge and +0x8d cleared) and the speed fraction (speed << 10) / top; then a copy of Gunsight_GetStateBlock (00035180)(+0x1f1): the pitch +0x230 at offset 4, the heading +0xa and twist +0x22e at 0 and 2 unless +0x9e is set; when its target at offset 6 differs from +0x15e: +0x95 cleared, 1 taken from the old target's holders' count +0x15c when there is an old target, the block's target stored at +0x15e and 1 added to its count when it is not null, +0x97 set, and with no new target and the manager's +0x14 set, g_CenterTurretMode (000b5ba4) = 1; +0x95 at 0x25; Gunsight_SetValues (00035090). es2_xref finds two calls, from Sim_RenderFrame (00059c08) and Sim_StartMission (0005a9dc). ES2's Player_PerFrameCockpitUpdate (DBSIM 0041b130), which takes the target from the cockpit and resolves its aim point.",
       "source": "Herculan/docs/es1/simulation/mech.md#the-cockpit; ES1DBSIM decompile at 000155a8",
       "verified": {
         "bytes": "000155a8+561",
@@ -7717,13 +7717,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_AiSelectBehaviour",
-      "description": "(machine), callee-cleaned: installs player for the player's machine (+0x9d); otherwise the state its group's word +4 names through Mech_AiSelectBehaviourVerbTable (00091d14): 1 search destroy, 3 ramming, 6 guarding, 7 and 8 patrolling, 10 sleeping, 11 travelling, or bulldog travel when the type record's +0x22 is over 0x7d00; any other word installs the descriptor in EDI at entry. Then it releases the target +0x15e (the holders' count +0x15c, +0x97 set) and returns 1. ES2's Mech_AiSelectBehaviour (DBSIM 0041eb34), which also reads the standing squad order.",
+      "description": "(machine), callee-cleaned: installs player for the player's machine (+0x9d); otherwise the state its group's word +4 names through Mech_AiSelectBehaviourVerbTable (00091d14): 1 search destroy, 3 ramming, 6 guarding, 7 and 8 patrolling, 10 sleeping, 11 travelling, or bulldog travel when the type record's +0x22 is over 0x7d00; any other word installs the descriptor in EDI at entry. Then, when the target +0x15e is set, it takes 1 from that target's holders' count +0x15c, clears +0x15e and sets +0x97. It returns 1. ES2's Mech_AiSelectBehaviour (DBSIM 0041eb34), which also reads the standing squad order.",
       "source": "Herculan/docs/es1/simulation/mech-ai.md#choosing-a-state--mech_aiselectbehaviour-0001892c; ES1DBSIM disassembly at 0001892c",
       "verified": {
         "bytes": "0001892c+195",
         "sha1": "02a90e6cb31b",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -7747,13 +7747,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Cockpit_TargetAnglesFromCameraBone",
-      "description": "(machine, point), callee-cleaned: sets TargetAngles_CalledOnce (000af710) on the first call; takes the point into the frame of the eye node the type record's +0xc names (the machine's transform and the node's, each transposed), less the record's +0x66 in Z, Math_EulerToward into TargetAngles_Residual (000af714); the twist axis -Q8(c, |c|) with c = clamp(Q10(250, yaw +4), +/-0x100) and the pitch axis Q8(c, |c|) from the pitch +0; Mech_TorsoTwistTick (000149ac)(machine, twist axis) and Mech_TorsoPitchTick (00014ba0)(machine, Math_FastMagnitude3D of the point, pitch axis); returns TargetAngles_Residual (000af714). ES2's Cockpit_TargetAnglesFromCameraBone (DBSIM 0041ef14), which damps small errors beyond 50000 and passes snap targets.",
+      "description": "(machine, point), callee-cleaned: sets TargetAngles_CalledOnce (000af710) on the first call. Slot +0x24 of the shape (the shape instance +0x2e's +4) with the type record's int16 +0xc gives the eye part, and the node's transform is the 32-byte entry at the instance's +0x16 + 0x20 x the part's int16 +4, copied from address 0 when the slot answers 0. The point goes through the machine's transform (Context_GetTransform (000016e8) of +6) and then the node's, each inverted with Transform_TransposeRotation (00063e05) and the negated translation through Transform_RotatePoint (0005ef74) and applied with Transform_ApplyToPoint (0005f58c); the record's +0x66 is subtracted from its Z, and Math_EulerToward (00063d2c)((0, 0, 0), point) goes into TargetAngles_Residual (000af714). The twist axis is Q8(-c, |-c|) with c = clamp(Q10(250, the yaw at +4), +/-0x100): the value is negated before the Math_Q8Multiply (0005e7f8), |-0x8000| taken as 0x7fff; the pitch axis is Q8(c, |c|) from the pitch at +0 the same way, unnegated, the Q10 through Math_Q10Multiply (0005e818). Then Mech_TorsoTwistTick (000149ac)(machine, twist axis) and Mech_TorsoPitchTick (00014ba0)(machine, Math_FastMagnitude3D (0006325a) of the point after the Z subtraction, pitch axis); returns the residual's address. ES2's Cockpit_TargetAnglesFromCameraBone (DBSIM 0041ef14), which damps small errors beyond 50000 and passes snap targets.",
       "source": "Herculan/docs/es1/simulation/mech-ai.md#weapons; ES1DBSIM decompile at 00018b78",
       "verified": {
         "bytes": "00018b78+725",
         "sha1": "03d42858d3cd",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -9067,7 +9067,7 @@
       "type": "function",
       "confidence": "high",
       "name": "GridShape_Raycast",
-      "description": "(shape, clearance, segment, out) in stack order, callee-cleaned, the segment two int32 triples: 0 for a shape with no columns (+0x2a), when both ends' Z are at or above the ceiling +0x430, or when both are negative. Otherwise it shifts both ends by the origin (+0x2e, +0x30) << shift (+0x32), rescales the direction to a step of (1 << shift) + clearance as an int16 with FUN_00063b5c, and for Math_FastMagnitude3D(start - end) / step steps from the start tests GridShape_HeightAround (0001fa9c)(shape, clearance, point): at the first step where it is greater than the point's Z it writes the point less the origin shift to out +4, +8 and +0xc and returns 1. ES2's GridShape_Raycast (DBSIM 004273c8), which adds 1 to the step count, also wants the height non-zero, and has no negative-Z reject. es2_xref finds one call, from Sim_RaycastShapeVolume (00020894).",
+      "description": "(shape, clearance, segment, out) in stack order, callee-cleaned, the segment two int32 triples: 0 for a shape with no columns (+0x2a), when both ends' Z are at or above the ceiling +0x430, or when both are negative. Otherwise it shifts both ends by the origin (+0x2e, +0x30) << shift (+0x32), rescales the direction to a step of (1 << shift) + clearance as an int16 with Math_NormalizeVec3ToLength, and for Math_FastMagnitude3D(start - end) / step steps from the start tests GridShape_HeightAround (0001fa9c)(shape, clearance, point): at the first step where it is greater than the point's Z it writes the point less the origin shift to out +4, +8 and +0xc and returns 1. ES2's GridShape_Raycast (DBSIM 004273c8), which adds 1 to the step count, also wants the height non-zero, and has no negative-Z reject. es2_xref finds one call, from Sim_RaycastShapeVolume (00020894).",
       "source": "Herculan/docs/es1/simulation/world.md#the-collision-volume--gridshape",
       "verified": {
         "bytes": "0001fccc+413",
@@ -16102,7 +16102,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Gau_RovingGunsightWidget",
-      "description": "(gunsight, cockpit, block) in stack order, callee-cleaned: the gunsight's constructor, run on the .GAU block at 1104. Allocates 0xd0 bytes with operator_new when gunsight is null (returning null when that fails), runs PanelGauge_Ctor (00031318)(gunsight, cockpit, block), the inlined constructors of the 0x26-byte state block at +0x7a, and stores HUDVtable (00093842) at +0x76. With o the block's int32 0-1 and p its int32 12-13 it appends with Gunsight_AddChild (00034e94), by its padding entry 00034e91: Gunsight_ClickSurface_Ctor (000345bc) over int32 15-18 + o; then, after Cursor_SyncPosition (000669dc)(p), Mouse_SetPosition (00055ab8)(p.x, p.y) when Input_GetMouseDevice_Thunk (0004c634) returns non-zero and Mouse_PostEvent (00055bc2)({2 p.x, p.y, int16 0}, 1), HudHeadingTape_Ctor (00033c20) over int32 4-7 + o, limits 0xe38 and 0xf1c8 through its slot +0x14; HudRotationIndicator_Ctor (00033968) over that rect with x0 + 15, y0 + 10, x1 - 15, y1 + 10, limits 0x38e3 and 0xc71d; HudSlideBarV_Ctor (00033ac4) over int32 8-11 + o, limits 8000 and 0xe0c0; Gunsight_Reticle_Ctor (00033f1c) over p - int32 14 to p + int32 14, + o, its +0x1c/+0x20 set to p; Gunsight_TargetIndicator_Ctor (0003403c) and Gunsight_UnusedChild_Ctor (00034710) over the same rect, each with +0x24 = gunsight + 0x7a; HudWaypointIndicator_Ctor (0003475c) over the tape's rect, limits 0xe38 and 0xf1c8. Then +0xcc = Label_Ctor (00030f44)(0, the font at 00092d60), Label_SetRect (00031080)(label, 2, {x0 - 3, y0 + 10, x0 + 12, y0 + 15} of child 1's top-left, {0, 0}) and the label's +0x1c = 0x38; zeroes +0x64, the state block (memset (00060b40)) and the int16 +0x68; returns gunsight. ES2's Gau_RovingGunsightWidget (DBSIM 0043c7d8). es2_xref finds one call, from Gau_RovingGunsightWrapper (0002ce28).",
+      "description": "(gunsight, cockpit, block) in stack order, callee-cleaned: the gunsight's constructor, run on the .GAU block at 1104. Allocates 0xd0 bytes with operator_new when gunsight is null (returning null when that fails), runs PanelGauge_Ctor (00031318)(gunsight, cockpit, block), the inlined constructors of the 0x26-byte state block at +0x7a, and stores HUDVtable (00093842) at +0x76. With o the block's int32 0-1 and p its int32 12-13 it appends with Gunsight_AddChild (00034e94), by its padding entry 00034e91: Gunsight_ClickSurface_Ctor (000345bc) over int32 15-18 + o; then, after Cursor_SyncPosition (000669dc)(p) and Mouse_SetPosition (00055ab8)(p.x, p.y) when Input_GetMouseDevice_Thunk (0004c634) returns non-zero, Mouse_PostEvent (00055bc2)({2 p.x, p.y, int16 0}, 1) with or without a mouse device, HudHeadingTape_Ctor (00033c20) over int32 4-7 + o, limits 0xe38 and 0xf1c8 through its slot +0x14; HudRotationIndicator_Ctor (00033968) over that rect with x0 + 15, y0 + 10, x1 - 15, y1 + 10, limits 0x38e3 and 0xc71d; HudSlideBarV_Ctor (00033ac4) over int32 8-11 + o, limits 8000 and 0xe0c0; Gunsight_Reticle_Ctor (00033f1c) over p - int32 14 to p + int32 14, + o, its +0x1c/+0x20 set to p; Gunsight_TargetIndicator_Ctor (0003403c) and Gunsight_UnusedChild_Ctor (00034710) over the same rect, each with +0x24 = gunsight + 0x7a; HudWaypointIndicator_Ctor (0003475c) over the tape's rect, limits 0xe38 and 0xf1c8. Then +0xcc = Label_Ctor (00030f44)(0, the font at 00092d60), Label_SetRect (00031080)(label, 2, {x0 - 3, y0 + 10, x0 + 12, y0 + 15} of child 1's top-left, {0, 0}) and the label's +0x1c = 0x38; zeroes +0x64, the state block (memset (00060b40)) and the int16 +0x68; returns gunsight. ES2's Gau_RovingGunsightWidget (DBSIM 0043c7d8). es2_xref finds one call, from Gau_RovingGunsightWrapper (0002ce28).",
       "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#building-the-gunsight; ES1DBSIM disassembly at 00034aec",
       "verified": {
         "bytes": "00034aec+924",
@@ -28538,6 +28538,21 @@
       }
     },
     {
+      "address": "00063b5c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_NormalizeVec3ToLength",
+      "description": "(length, vector) in stack order, its arguments removed by this function (RET 8): rescales the int32 vector in place to the int16 length and returns it. With m = Math_FastMagnitude3D (0006325a) of the vector, an m of 0 zeroes its 12 bytes with memset (00060b40); otherwise s = (length << 16) / m by IDIV, narrowed to int16, and each component becomes Math_Q16Multiply2 (0007358c)(s, component), the rounding multiply, truncated to 16 bits and sign-extended (CWDE). ES2's Math_NormalizeVec3ToLength (DBSIM 004926e4), (vector, length), which divides through Math_DivInt and keeps each product of the truncating Math_Q16Multiply whole. es2_xref finds two calls, from GridShape_Raycast (0001fccc) and from 00008268. It opens an object file: the RET 8 at 00063b57 before it is followed by two zero bytes.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#rescaling-a-vector; ES1DBSIM disassembly at 00063b5c; es2_naming.py diff against DBSIM 004926e4",
+      "verified": {
+        "bytes": "00063b5c+156",
+        "sha1": "1d75aa53a7ca",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00063c20",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -28618,13 +28633,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Math_EulerToward",
-      "description": "(to, from, out) in stack order, callee-cleaned, d = from - to: out[2] = Math_Atan2Guarded(x = d.x, y = d.y) - 0x4000, out[1] = 0, out[0] = Math_Atan2Guarded(x = Math_FastMagnitude2D(d.x, d.y), y = d.z). ES2's Math_EulerToward (DBSIM 00492884), which reaches the magnitude through a thunk.",
+      "description": "(from, to, out) in stack order, callee-cleaned, d = to - from: out[2] = Math_Atan2Guarded (00063ca0)(x = d.x, y = d.y) - 0x4000, out[1] = 0, out[0] = Math_Atan2Guarded(x = Math_FastMagnitude2D (00063234)(d.x, d.y), y = d.z), the Euler angles that turn model Y toward to; returns out. ES2's Math_EulerToward (DBSIM 00492884), (out, to, from), which reaches the magnitude through a thunk.",
       "source": "ES1DBSIM decompile at 00063d2c, against ES2's Math_EulerToward",
       "verified": {
         "bytes": "00063d2c+96",
         "sha1": "c4f34fba52d5",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -30043,7 +30058,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Raster_DrawPolygonDispatch",
-      "description": "(count, points), C convention: draws a polygon with the brush {mode, colour} at the installed clip block's (00098d64) +0x228, translating the points by (+0x20c - +0x21c, +0x210 - +0x220) first when +0x208 is set. Fewer than three points, or brush mode 4, draw in the brush colour through a temporary brush at +0x224: one point through Gfx_PlotPixel (00069058), two through Raster_DrawLine, more as a line loop. For three or more: mode 0 fills through g_RasterRoutines slot 0 with the colour (a palette index for top byte 0, the ramp entry from 0009a6f5 for top byte 4, nothing otherwise), mode 1 goes to 0007965c, modes 5 and 7 to the routine at 0009df58, mode 6 fills through slot 1 (0009ded8) with the brush's second field. The fills scan-convert with 00076f54 and clip per the clip mode +0x204: 0 none, 1 through 000788e4 against the rect at +0x20c, otherwise against each region of the block's list (rects through 000788e4, span regions through 00073b7c). es2_naming.py diff finds it identical to ES2's Raster_DrawPolygonDispatch (DBSIM 00483dac) but for labels.",
+      "description": "(count, points), C convention: draws a polygon with the brush {mode, colour} at the installed clip block's (00098d64) +0x228, translating the points by (+0x20c - +0x21c, +0x210 - +0x220) first when +0x208 is set. Fewer than three points, or brush mode 4, draw in the brush colour through a temporary brush at +0x224: one point through Gfx_PlotPixel (00069058), two through Raster_DrawLine, more as a line loop. For three or more: mode 0 fills through g_RasterRoutines slot 0 with the colour (a palette index for top byte 0, the ramp entry from 0009a6f5 for top byte 4, nothing otherwise), mode 1 goes to 0007965c, modes 5 and 7 to the routine at 0009df58, mode 6 fills through slot 1 (0009ded8) with the brush's second field. The fills scan-convert with Poly_ScanConvertToSpanRegion (00076f54) and clip per the clip mode +0x204: 0 none, 1 through Poly_ClipToRect (000788e4) against the rect at +0x20c, otherwise against each region of the block's list (rects through Poly_ClipToRect (000788e4), span regions through 00073b7c). es2_naming.py diff finds it identical to ES2's Raster_DrawPolygonDispatch (DBSIM 00483dac) but for labels.",
       "source": "ES1DBSIM decompile at 00068be0, against ES2's Raster_DrawPolygonDispatch",
       "verified": {
         "bytes": "00068be0+867",
@@ -32434,7 +32449,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Math_Q16Multiply2",
-      "description": "(a, b), C convention: Math_Q16Multiply's body. es2_xref finds three calls, all from 00063b5c. ES2's Math_Q16Multiply2 (DBSIM 0047df71) truncates.",
+      "description": "(a, b), C convention: Math_Q16Multiply's body. es2_xref finds three calls, all from Math_NormalizeVec3ToLength (00063b5c). ES2's Math_Q16Multiply2 (DBSIM 0047df71) truncates.",
       "source": "ES1DBSIM disassembly at 0007358c; Herculan/docs/es1/simulation/fixed-point-math.md#the-primitives",
       "verified": {
         "bytes": "0007358c+24",
@@ -33377,6 +33392,36 @@
         "sha1": "74c0ade21c13",
         "scope": "body",
         "via": "disasm"
+      }
+    },
+    {
+      "address": "00076f54",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Poly_ScanConvertToSpanRegion",
+      "description": "ES2's Poly_ScanConvertToSpanRegion (DBSIM 00484614), the scan conversion of a polygon into the span region the span routine fills: es2_naming.py diff finds the two the same after normalisation but for the computed jump into the unrolled stores. ES1's JMP EDX at 0007761a enters the run of stores before 000788dc at 12 bytes a store (EDX = 000788dc - 12 x (n + 1)), each store STOSW, ADD EDI,ECX, ADD [EBP - 0x1b8],EBX and ADC EAX,ESI, so the accumulator steps in the frame; after the run the JMP at 000788dc goes back to 0007709f, and three zero bytes follow it before Poly_ClipToRect (000788e4). ES2's saves EBP at 004a33ec, takes its accumulator into EBP and enters its run before 004865e4 at 8 bytes a store, ADD EBP,EBX in place of the frame add. es2_xref finds four calls, from Raster_DrawPolygonDispatch (00068be0).",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#clipped-polygons; es2_naming.py diff ES1DBSIM 00076f54 DBSIM 00484614; ES1DBSIM disassembly at 00077605-0007761a and bytes at 0007761c and 000788c4",
+      "verified": {
+        "bytes": "00076f54+1736",
+        "sha1": "ba1ceacdd83c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000788e4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Poly_ClipToRect",
+      "description": "ES2's Poly_ClipToRect (DBSIM 0048422c), the clip of a polygon to a rect: es2_naming.py diff finds the two identical after normalisation (260 lines). es2_xref finds three calls, from Raster_DrawPolygonDispatch (00068be0), which clips a span fill with it against the clip block's rect in clip mode 1 and against each rect region in clip mode 2. It opens an object file: the unrolled stores of Poly_ScanConvertToSpanRegion (00076f54) before it end with a JMP at 000788dc and three zero bytes.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#clipped-polygons; es2_naming.py diff ES1DBSIM 000788e4 DBSIM 0048422c",
+      "verified": {
+        "bytes": "000788e4+1000",
+        "sha1": "5839c68c1c3f",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {

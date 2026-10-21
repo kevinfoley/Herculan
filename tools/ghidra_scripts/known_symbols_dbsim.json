@@ -38362,9 +38362,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Math_NormalizeVec3ToLength",
-      "description": "Rescales an int Vec3 in place to the requested length and returns it. Zeroes all three when the magnitude is zero; otherwise scales each by Math_Q16Divide(length << 16, magnitude) NARROWED TO A SIGNED 16-BIT VALUE before the multiply, so a step over a short delta comes out shorter than asked for. Distinct from Math_NormalizeVec3ShortToLength (0046c138), which is the three-short form and halves until the magnitude fits first.",
+      "description": "(vector, length): rescales the int Vec3 in place to the int16 length and returns it. With the magnitude from Point3I_Magnitude (00492971), a magnitude of 0 zeroes its 12 bytes with _memset; otherwise each component becomes Math_Q16Multiply (0047df81)(component, b), b = Math_DivInt (004929f8)(length << 16, magnitude) narrowed to a signed 16-bit value, so a step over a short delta does not come out at the length asked for. Distinct from Math_NormalizeVec3ShortToLength (0046c138).",
       "source": "docs/retail/simulation/beam-visuals.md, docs/retail/simulation/hit-detection.md",
-      "signature": "int * __cdecl Math_NormalizeVec3ToLength(int *vector, short length)"
+      "signature": "int * __cdecl Math_NormalizeVec3ToLength(int *vector, short length)",
+      "verified": {
+        "bytes": "004926e4+112",
+        "sha1": "75b447693833",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00492754",
@@ -38457,8 +38463,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Math_EulerToward",
-      "description": "Math_EulerToward(out, from, to), d = from - to: euler[2] = Math_Atan2Guarded(dx, dy) - 0x4000, euler[1] = 0, euler[0] = Math_Atan2Guarded(Math_FastMagnitude2D(dx, dy), dz). Math_Atan2Guarded takes (x, y), so euler[2] is the ground bearing and euler[0] is an ELEVATION above the horizon, not a polar angle from +Z. The quarter-turn subtraction is because the simulation's forward axis is model Y. Same helper and same argument order as Math_HeadingToward.",
-      "source": "docs/retail/simulation/projectiles.md"
+      "description": "Math_EulerToward(out, to, from), d = to - from: euler[2] = Math_Atan2Guarded (00492800)(dx, dy) - 0x4000, euler[1] = 0, euler[0] = Math_Atan2Guarded(Math_FastMagnitude2D_Thunk (0049298e)(dx, dy), dz), the call to the thunk leaving dz pushed as the second call's second argument; returns out. Math_Atan2Guarded takes (x, y), so euler[2] is the ground bearing of to seen from from and euler[0] is an ELEVATION above the horizon, not a polar angle from +Z. The quarter-turn subtraction is because the simulation's forward axis is model Y.",
+      "source": "docs/retail/simulation/projectiles.md",
+      "verified": {
+        "bytes": "00492884+108",
+        "sha1": "f4ddb4d3fe8d",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "004928f0",
