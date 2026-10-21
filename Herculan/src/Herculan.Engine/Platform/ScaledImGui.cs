@@ -21,7 +21,7 @@ namespace Herculan.Engine.Platform;
 /// </summary>
 public sealed class ScaledImGui : IDisposable {
 	/// <summary>The font's size in pixels on a 100% display.</summary>
-	public const float FontSize = 16f;
+	public const float FontSize = 20f;
 
 	/// <summary>How many times <see cref="FontSize"/> <see cref="LargeFont"/> is.</summary>
 	public const float LargeFontScale = 2f;
