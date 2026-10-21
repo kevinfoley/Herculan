@@ -73,7 +73,7 @@ sealed class CockpitRenderer : IDisposable {
 		// One placement for the whole frame, shared with the input path so a widget's click region cannot
 		// drift from the art it was drawn over — see CockpitScreenLayout.
 		var layout = CockpitScreenLayout.Create(totalWidth, totalHeight, _art!,
-			_view.Pan.OffsetRows, _view.Pan.TravelRows, _view.Glance.OffsetPanels);
+			_view.WindowOffsetRows, _view.Pan.TravelRows, _view.Glance.OffsetPanels);
 
 		var world = layout.World;
 		var cockpitCamera = CloneCamera(_view.Camera);
@@ -310,13 +310,11 @@ sealed class CockpitRenderer : IDisposable {
 		var (centerX, centerY) = _view.ViewGeometry?.ProjectionCenter(viewIndex)
 			?? (CockpitViewGeometry.DefaultProjectionCenterX, CockpitViewGeometry.DefaultProjectionCenterY);
 
-		// The step kick and the damage shake both move the centre itself, in the art's own pixels, so
-		// they go through the same art-to-window transform as everything else on the panel — which is how
-		// the original applies them: straight onto the projection centre, before the view is installed.
-		// Art y runs downward, and the two carry the original's opposite sign conventions — see
-		// CockpitHitShake.OffsetPixels.
-		var (windowX, windowY) = surface.ArtToWindow(centerX,
-			centerY - _view.Kick.OffsetPixels + _view.Shake.OffsetPixels);
+		// The step kick moves the centre itself, in the art's own pixels, so it goes through the same
+		// art-to-window transform as everything else on the panel — which is how the original applies it:
+		// straight onto the projection centre, before the view is installed. Art y runs downward. The damage
+		// shake is not here: it moves the whole layout, world included (CockpitView.WindowOffsetRows).
+		var (windowX, windowY) = surface.ArtToWindow(centerX, centerY - _view.Kick.OffsetPixels);
 
 		// The world viewport shares the panels' top edge and height, so only x changes frame.
 		return new Vector2(

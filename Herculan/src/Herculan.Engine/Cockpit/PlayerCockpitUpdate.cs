@@ -277,7 +277,7 @@ public sealed class PlayerCockpitUpdate(CockpitDisplays displays, CockpitView vi
 
 		return new TargetIndicator(
 			ScreenX: centerX + across * Camera.FocalLengthPixels / MathF.Max(depth, camera.NearPlane),
-			ScreenY: centerY - view.Kick.OffsetPixels + view.Shake.OffsetPixels
+			ScreenY: centerY - view.Kick.OffsetPixels
 				- Vector3.Dot(offset, up) * Camera.FocalLengthPixels / MathF.Max(depth, camera.NearPlane),
 			InFront: inFront,
 			BehindToLeft: across < 0f,

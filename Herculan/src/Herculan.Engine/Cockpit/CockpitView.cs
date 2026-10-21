@@ -51,8 +51,8 @@ public sealed class CockpitView {
 		// (474 device), but reading it is what makes the pan the file's statement instead of this host's.
 		Pan = new CockpitPan(ViewGeometry?.HeadsDownTravelY ?? CockpitViewGeometry.DefaultHeadsDownOriginY);
 
-		// And the damage shake, which rides the same centre as the step kick and is ticked beside it in the
-		// original's own cockpit pass — see CockpitHitShake.
+		// And the damage shake, which moves the same display window as the pan and is ticked beside the step
+		// kick in the original's own cockpit pass — see CockpitHitShake.
 		Shake = new CockpitHitShake(scene.World.PresentationRandom);
 
 		// Straight to the pan rather than through RequestHeadsDown, whose external-view gate reads state not
@@ -87,6 +87,14 @@ public sealed class CockpitView {
 	public CockpitViewKick Kick { get; } = new();
 
 	public CockpitHitShake Shake { get; }
+
+	/// <summary>
+	/// How far down the cockpit canvas the display window sits this frame, in device rows: the pan's
+	/// <see cref="CockpitPan.OffsetRows"/> plus the damage shake's <see cref="CockpitHitShake.OffsetPixels"/>,
+	/// which moves the same window. Everything placed by <see cref="Render.CockpitScreenLayout"/> moves with
+	/// it — the art, the instruments, their click areas and the world behind the canopy.
+	/// </summary>
+	public float WindowOffsetRows => Pan.OffsetRows + Shake.OffsetPixels;
 
 	/// <summary>
 	/// The chain of views [V] and the joystick's OUTSIDE VIEW and CHASE VIEW step through, and the camera behind
@@ -333,6 +341,7 @@ public sealed class CockpitView {
 		var pilotMech = PilotMech!;
 		Shake.FlashSurvivesRestart =
 			TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.FlashThroughSecondHit);
+		Shake.HeadsDownView = Pan.HeadsDownViewIndex;
 		if (ExternalViewActive) {
 			Kick.Reset();
 			Shake.Reset(pilotMech.CockpitHits);
