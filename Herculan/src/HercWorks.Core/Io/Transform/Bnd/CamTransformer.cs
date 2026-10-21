@@ -22,26 +22,17 @@ public class CamTransformer : ByteTransformer<Cam> {
 		SetBytes(inputArray);
 
 		var cam = new Cam {
-			Unknown0 = IndexByte(),
-			Unknown1 = IndexByte(),
-			Unknown2 = IndexByte(),
-			Unknown3 = IndexByte(),
-			Distance1 = IndexShortLE(),
-			Distance2 = IndexShortLE(),
-			Blank1 = IndexByte(),
-			Unknown4 = IndexByte(),
-			Unknown5 = IndexByte(),
-			Blank2 = IndexByte(),
-			Blank3 = IndexByte(),
-			Unknown6 = IndexByte(),
-			Unknown7 = IndexByte(),
-			Blank4 = IndexByte(),
-			Blank5 = IndexByte(),
-			Unknown8 = IndexByte(),
-			Unknown9 = IndexByte(),
-			Unknown10 = IndexByte(),
-			Value3 = IndexShortLE(),
-			Value4 = IndexShortLE(),
+			Stamp = (uint)IndexIntLE(),
+			MinOrbitDistance = IndexShortLE(),
+			MaxOrbitDistance = IndexShortLE(),
+			AngleRateScale = IndexShortLE(),
+			AngleRateStep = IndexShortLE(),
+			ZoomRateScale = IndexShortLE(),
+			ZoomRateStep = IndexShortLE(),
+			PitchLimit = IndexShortLE(),
+			MinEyeHeight = IndexShortLE(),
+			SlopeAllowance = IndexShortLE(),
+			ChaseDelay = IndexShortLE(),
 		};
 
 		return cam;
@@ -51,28 +42,14 @@ public class CamTransformer : ByteTransformer<Cam> {
 		using var outStream = new MemoryStream();
 
 		void Emit(byte[] bytes) => outStream.Write(bytes, 0, bytes.Length);
-		void WriteByte(byte b) => outStream.WriteByte(b);
 
-		WriteByte(cam.Unknown0);
-		WriteByte(cam.Unknown1);
-		WriteByte(cam.Unknown2);
-		WriteByte(cam.Unknown3);
-		Emit(WriteShortLE(cam.Distance1));
-		Emit(WriteShortLE(cam.Distance2));
-		WriteByte(cam.Blank1);
-		WriteByte(cam.Unknown4);
-		WriteByte(cam.Unknown5);
-		WriteByte(cam.Blank2);
-		WriteByte(cam.Blank3);
-		WriteByte(cam.Unknown6);
-		WriteByte(cam.Unknown7);
-		WriteByte(cam.Blank4);
-		WriteByte(cam.Blank5);
-		WriteByte(cam.Unknown8);
-		WriteByte(cam.Unknown9);
-		WriteByte(cam.Unknown10);
-		Emit(WriteShortLE(cam.Value3));
-		Emit(WriteShortLE(cam.Value4));
+		Emit(WriteIntLE((int)cam.Stamp));
+		foreach (short value in new[] {
+			cam.MinOrbitDistance, cam.MaxOrbitDistance, cam.AngleRateScale, cam.AngleRateStep, cam.ZoomRateScale,
+			cam.ZoomRateStep, cam.PitchLimit, cam.MinEyeHeight, cam.SlopeAllowance, cam.ChaseDelay,
+		}) {
+			Emit(WriteShortLE(value));
+		}
 
 		return outStream.ToArray();
 	}

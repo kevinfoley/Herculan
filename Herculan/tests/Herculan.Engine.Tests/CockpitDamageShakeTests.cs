@@ -78,6 +78,29 @@ public class CockpitDamageShakeTests {
 	}
 
 	/// <summary>
+	/// In the Heads-Down Display the band lies on the other side of the window's rest, so the window
+	/// walks up the canvas. It is not the forward walk mirrored: at the band's middle both limits are
+	/// equally far and the step goes toward the lower one either way, which here is outward, so this
+	/// walk reaches 9 rows from the rest where the forward one stops at 8.
+	/// </summary>
+	[Fact]
+	public void InTheHeadsDownDisplayTheWalkGoesUpTheCanvasAndReachesNine() {
+		var shake = new CockpitHitShake { HeadsDownView = true };
+		var reached = new HashSet<int>();
+
+		for (int hit = 1; hit <= 40; hit++) {
+			shake.Update(Frame, hit);
+			foreach (int offset in OffsetsOver(shake, frames: 55, hits: hit)) {
+				reached.Add(offset);
+			}
+
+			Advance(shake, CockpitHitShake.DurationSeconds, hits: hit);
+		}
+
+		Assert.Equal(Enumerable.Range(-9, 10), reached.OrderBy(o => o));
+	}
+
+	/// <summary>
 	/// The window is <c>0x3c</c> coarse ticks and then both halves go back — the view to rest and the
 	/// palette to the theater's.
 	/// </summary>

@@ -1,6 +1,6 @@
 # Cockpit messages
 
-DBSIM's **cockpit message port** is two instances of two classes on one base, `MsgPort`: the computer's own ticker at `view+0x20b` (`EventPort`) and the pilot-and-squad channel at `view+0x207` (`DialogPort`, or in a training mission its subclass `CommandPort`). Both are ten-slot queues sharing one lifecycle (`MessagePort_Tick`); what differs is where each posts from, what it draws, and whether it speaks through the [computer's voice or a squadmate's](audio.md#speech-and-the-comm-portraits).
+DBSIM's **cockpit message port** is two instances of two classes on one base, `MsgPort`: the computer's own ticker at `view+0x20b` (`EventPort`) and the pilot-and-squad channel at `view+0x207` (`DialogPort`, or in a training mission its subclass `CommandPort`). Both are ten-slot queues sharing one lifecycle (`MessagePort_Tick`); what differs is where each posts from, what it draws, and whether it speaks through the [computer's voice or a squadmate's](audio.md#speech-and-the-comm-portraits). The object itself — its fields, the queue, the constructors and each class's slots — is [`cockpit-message-port.md`](cockpit-message-port.md).
 
 ## The computer's messages
 

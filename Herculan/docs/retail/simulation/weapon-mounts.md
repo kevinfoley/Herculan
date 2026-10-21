@@ -63,6 +63,16 @@ Shared mount fields mean different things per class:
 | `+0x49` | destroyed | destroyed |
 | `+0x4b` | LINK engaged | LINK engaged |
 
+### The base constructor — `WeaponMount_CtorBase` (`0040df30`)
+
+Every class's constructor runs it first, as (mount, shape instance, hardpoint record, template, projectile record); `Pod_CtorBase` (`0040e234`) passes 0 for the projectile record. In order:
+
+1. With the hardpoint's mounting code (`.GL +6`) below 4, it opens the weapon model and gives it its private cell frames at `+0x10`/`+0x14` ([the muzzle flash](#the-muzzle-flash), steps 1 and 2); otherwise the model is 0.
+2. It stores its bases' tables and then `WeaponMountBaseVtable`, and keeps the hardpoint record at `+0x18`, the template at `+0x1c` and the projectile record at `+0x20`.
+3. `+0x5b` and `+0x5f` get `ShapeInst_AddThread`(shape instance, `.GL +2` or `+4`), or 0 when that value is negative ([gun convergence](weapon-firing.md#gun-convergence--mech_convergegunsonrange-0041a74c)).
+4. With a model, it moves the model's points to the mount point ([the muzzle flash](#the-muzzle-flash), step 3).
+5. It zeroes the two `int16` triples at `+0x24` (the convergence angles) and `+0x2a`, the refire countdown `+0x31`, the flag blocks `+0x33` and `+0x3b`, and the 24 bytes from `+0x43`, then sets the selectable byte `+0x4c` to 1 and the refire scale `+0x63` to `0x400`.
+
 ### Ammunition
 
 `WeaponMount_CtorAmmunition` (`0040e140`) reads the magazine size from the template's field at `+0x3a` and powers the mount up holding a full one: `+0x7b = size`, `+0x7d = size << 8`. The gauge prints `+0x7d >> 8`, and `+0x7d` lags the real count: `WeaponMount_PushAmmoGaugeState` (`0040f330`) decays it toward `+0x7b * 256` at 250 per 125 ms, which is what makes the cockpit counter roll rather than jump. The fire dispatch spends `+0x7b` — see [`weapon-firing.md`](weapon-firing.md#the-ammunition-dispatch).
@@ -111,11 +121,11 @@ The spin-up only runs while the mount is **ready**: `WeaponMounts_FireTrigger` t
 
 **It is the weapon's own model playing its cell animation.** Nothing spawns an effect for it, and there is no muzzle-flash resource of any kind — `dts\FIRE.DTS` is the burning-object effect, not this (see [`destruction-effects.md`](destruction-effects.md#fire)).
 
-Every hardpoint whose mounting code is visible (`.GL +6 < 4`) gets its own copy of the weapon model when the mount is built:
+Every hardpoint whose mounting code is visible (`.GL +6 < 4`) gets its own copy of the weapon model when the mount is built, from a table of raw chunks that exists only while the HERCs are built. `WeaponModels_LoadShapeChunks` (`0040f998`) reads every top-level chunk of `dts\mechwpns` whole: it asserts that the chunk's tag is `0x140008` (`GUNLIST.CPP` line `0x90`, severity 5), sizes it with `ClassItem_TagTotalSize` (`0047a434`), and reads it into a `Mem_NewArray` buffer, the pointers at `004a9988`, the lengths at `004a9a78` and the count at `004a9b68`. Its loop has no bound, and the length array starts `0xf0` bytes after the pointer array. `DBSim_SpawnMissionObjects` (`004253d8`) builds the HERC records and the `player.mec` entries between that call and `WeaponModels_FreeShapeChunks` (`0040fa88`), which frees each buffer and nulls its pointer.
 
-1. `WeaponMount_CtorBase` (`0040df30`) calls `WeaponMount_ShapeForMountingCode` (`0040fab0`), which instantiates `MECHWPNS.DTS`'s shape `template[0x22 + code * 2]` from the raw chunk `WeaponModels_LoadShapeChunks` (`0040f998`) cached, and binds it the `wpntex` atlas at `shape+0x26`.
+1. [`WeaponMount_CtorBase`](#the-base-constructor--weaponmount_ctorbase-0040df30) (`0040df30`) calls `WeaponMount_ShapeForMountingCode` (`0040fab0`), which opens chunk `template[0x22 + code * 2]` of that table as a memory stream, loads the shape from it, and binds it the `wpntex` atlas at `shape+0x26`.
 2. `ShapeInstance_CtorCellFrames` (`00402fc0`) stores the shape at `mount+0x10` and allocates `mount+0x14` as a **private copy** of its per-sequence frame array, `shape+0x24` entries long.
-3. `Shape_TranslatePointLists` (`0040dd4c`) translates the shape's own point lists by `WeaponMount_MuzzleOffset` — the mount point, not the muzzle. That private copy is why every mount can carry the same weapon and still sit and flash independently.
+3. `Shape_TranslatePointLists` (`0040dd4c`), (shape, offset), adds the `int16` triple `WeaponMount_MuzzleOffset` returns — the mount point, not the muzzle — to the model's points, once, so the mount's copy is stored moved and every draw reads the moved points. It walks the part tree by class tag ([chunk tags](../formats/dts-shape.md#chunk-tags)): a `TSPartList`, `TSShape`, `TSCellAnimPart`, `TSDetailPart` or `TSBSPPart` (`0x140007`, `0x140008`, `0x14000b`, `0x14000c`, `0x140015`) calls it again for each child (count `+0x10`, pointer array `+0x12`); a `TSGroup` or `TSBSPGroup` (`0x140014`, `0x14000a`) moves its own points; any other tag returns, and `0x140006`, a tag no class in the registry carries, calls it again with the same arguments. A group clears one byte per point (count `+0x22`) in `004a98f0`, marks, for each poly (count `+0x26`, pointer array `+0x1c`) whose tag is `TSPoly`, `TSSolidPoly`, `TSShadePoly`, `TSGouraudPoly` or `TSTexture4Poly`, the poly's point `+6` and the `+8` entries of the group's index list (`+0x10`, `int16`) from the poly's `+0xa` on, and then adds (x, y, z) to each marked point of its point list (`+0x14`, three `int16` each). A point that only an alias poly uses is not moved. That private copy is why every mount can carry the same weapon and still sit and flash independently.
 4. `Mech_ConfigureLoadout` reads the hardpoint's bone from `WeaponMount_HardpointBoneId` (`0040e61c`, the `.GL` record's `+0`, the same bone the shot leaves from) and `Shape_StampTransformId` (`00417530`) stamps that transform id onto every part of the shape, so it rides the machine's own skeleton.
 
 The animation is `WeaponMount_RefireTick`'s tail, and it is the whole of it:
@@ -258,9 +268,11 @@ The command codes are [scancodes](cockpit-input.md#keyboard-commands-are-scancod
 
 `WeaponMounts_SelectByGauge` finds the mount whose own gauge pointer (`+0x77`) matches, requires `+0x4c`, calls `WeaponMounts_SetSelection` and sets the single-fire flag. **A pod fails this twice over**: its `+0x4c` is cleared by `Pod_CtorBase` (`0040e234`), and its gauge-match slot (`WeaponMount_MatchGaugeNever`, `0040df00`) returns 0 unconditionally.
 
-`WeaponMounts_SetSelection` is the only writer of `+0x1d`, and it normalises a linked pair onto its first half — arming the right-hand weapon of a linked pair arms the left-hand one instead, since the second half's partner offset is negative. That is what keeps a pair's two rows agreeing.
+`WeaponMounts_SetSelection` is how every arming path writes `+0x1d` (besides it, the constructor stores the initial selection and `WeaponMounts_AdvanceToReady` puts the original back before its last `SetSelection`), and it normalises a linked pair onto its first half — arming the right-hand weapon of a linked pair arms the left-hand one instead, since the second half's partner offset is negative. That is what keeps a pair's two rows agreeing.
 
 **Single fire (`+0x18`).** Set by arming a weapon by hand, cleared by `[W]`/`[Alt]`+`[W]` and by firing. While it is set, the per-frame pass leaves the selection alone however unready the weapon is; while it is clear, `WeaponMounts_AdvanceToReady` (`00410a3c`) hands the selection to the next mount in the chain that is [ready](#readiness--weaponmounts_mountisready-00410970). That is the whole of the manual's "select a weapon to single-fire … once you fire, the current firing chain will resume". The gate is not in the advance itself but in `WeaponMounts_ChainReady` (`00410a04`), the wrapper it asks: with `+0x18` set that returns ready without testing anything, so the chain cannot step. The flag is cleared at the key handler, not inside `WeaponMounts_StepSelection` (`0041074c`), so the chain switch and the per-frame advance both step the selection without clearing it.
+
+**An electro-optical launch holds the chain.** When `WeaponMounts_FireTrigger` fires a mount whose ammunition subtype (slot `+0x60`) is 3, it sets two words, `004d25aa` and `004d25ac`. While `004d25aa` is set, `WeaponMounts_ChainReady` returns ready without testing, as it does for single fire, so the armed launcher stays armed. Once `004d25aa` is clear with `004d25ac` still set, `WeaponMounts_PerFrameUpdate` steps the selection once and clears single fire; `WeaponMounts_SetSelection` clears `004d25ac` whenever the selection changes. The hold lasts while the round is flown ([the missile camera](rockets.md#the-missile-camera)).
 
 `WeaponMounts_StepSelection` steps to the next mount that is selectable, in the current chain, and either unlinked or the *first* half of a linked pair.
 

@@ -225,7 +225,7 @@ Four flags, each set by its key in [`data\keyjoy.cfg`](../formats/keyjoy-cfg.md)
 | Key | Inverts |
 |---|---|
 | `Tilt` | the **keyboard's** turret-pitch axis, unconditionally |
-| `Backturn` | the steering axis while the throttle axis is positive — while backing up. Applied last, to the combined axes |
+| `Backturn` | the steering axis while the throttle axis is positive — while backing up. Applied last, to the combined axes, whatever is being piloted: in a RAZOR those axes are the aileron and the elevator ([`razor-flight.md`](razor-flight.md#axis-remapping)), so it reverses the roll while the stick or keyboard pitches the nose up |
 | `Missile` | the keyboard's pitch while a round is flown (`DAT_004d25aa`), which the input build otherwise negates; the stick's is untouched |
 | `Rudder` | the joystick's rudder axis, and only when the device reports one |
 

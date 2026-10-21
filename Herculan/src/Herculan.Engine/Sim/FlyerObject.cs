@@ -32,7 +32,7 @@ public sealed partial class FlyerObject : SimObject {
 	public const int DefaultHoverHeight = 5000;
 
 	/// <summary>
-	/// The effect id a hit on an already-wrecked flyer spawns instead of the shot's own — the
+	/// The effect id the hit that brings a flyer down spawns instead of the shot's own — the
 	/// original's literal 10 in <c>Flyer_DirectFireHitTest</c>, the same id the component-destruction
 	/// path uses for its ordinary blast.
 	/// </summary>
@@ -178,9 +178,15 @@ public sealed partial class FlyerObject : SimObject {
 	/// </list>
 	///
 	/// <para>The effect a hit spawns is the shot's <see cref="WeaponShot.ImpactFxGroup.Armor"/> array
-	/// — the same array a structure hit uses — <b>unless the flyer is already a wreck</b>, in which
+	/// — the same array a structure hit uses — <b>unless this hit brought the flyer down</b>, in which
 	/// case the original substitutes a fixed effect id of its own instead of anything the shot
-	/// carries.</para>
+	/// carries. The test reads <see cref="Destroyed"/> after the write; a flyer destroyed earlier
+	/// cannot be struck, its one component's alive flag being clear.</para>
+	///
+	/// <para>The original also opens with the spectator flag (<c>DAT_0049ef5c</c>): set, the watched
+	/// flyer cannot be struck at all. Nothing in retail sets the flag, and this engine has no
+	/// spectator mode, so the gate is not carried — docs/retail/simulation/external-views.md, "The
+	/// spectator flag".</para>
 	///
 	/// <para>Wreckage follows every hit, and the hit that brings the aircraft down throws a different
 	/// group — see docs/retail/simulation/hit-detection.md, "<c>Flyer_DirectFireHitTest</c>".</para>
@@ -299,7 +305,9 @@ public sealed partial class FlyerObject : SimObject {
 
 		// Flyer_ComponentDamageWrite's own order: the announcement and the shooter's kill credit go
 		// out before the destroyed flag is set, the mission action after the drop, and the dead state
-		// and the flyby stop last.
+		// and the flyby stop last. The wasDestroyed guards are this engine's: the original runs the
+		// whole branch on every cascading write to component 0, and a second one would need a hit on
+		// a flyer it has sunk 100000 under the map with its component's alive flag clear.
 		if (!wasDestroyed && world != null) {
 			AnnounceNeutralised(world, attacker, this, SystemMessages.EnemyTargetDestroyed);
 			(attacker as MechObject)?.CreditNeutralised(world, this, wasImmobilised: false);

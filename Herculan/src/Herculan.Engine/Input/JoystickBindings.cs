@@ -349,12 +349,16 @@ public sealed class JoystickBindings {
 
 	/// <summary>
 	/// The last of <c>data\keyjoy.cfg</c>, applied dead last to the combined axes.
+	///
+	/// <para><b>Not in a RAZOR.</b> Retail applies it whatever is being piloted, and a RAZOR's throttle and steering axes
+	/// are its elevator and aileron, so there it reverses the roll whenever the nose is pulled up
+	/// (docs/retail/simulation/joystick-input.md#the-keyjoy-switches). This engine applies it to a walker only.</para>
 	/// </summary>
 	public PilotAxes ApplyBackturn(PilotAxes axes) {
 		// Backturn, applied dead last to the combined result: while the throttle axis is positive —
 		// backing up — the steering axis is inverted, so the machine turns the way reversing a vehicle
 		// turns.
-		if (Keyjoy.ReverseBackturn && axes.Throttle > 0) {
+		if (Keyjoy.ReverseBackturn && !PilotingRazor && axes.Throttle > 0) {
 			axes = axes with { Steer = (short)-axes.Steer };
 		}
 

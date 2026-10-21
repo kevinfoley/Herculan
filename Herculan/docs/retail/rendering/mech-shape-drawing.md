@@ -60,8 +60,8 @@ Across the 21 machine shapes, the leading four to six roots keep root 0's number
 One per-node world transform array exists per object, and **every root is drawn through it**:
 
 - `ShapeInst_Construct` (`0047872c`), the shape-instance constructor, sizes the dirty-flag, local and world arrays from `shape->animList->nodeCount` at `shapeInst+0xc` and allocates them once. The shape it reads is the one the instance is built with, root 0. Nothing reallocates them.
-- `ShapeInst_BuildWorldTransforms` (`00478b58`) has exactly two callers — that constructor, and `ShapeInstance_StepAnimation` (`00478c2c`), which `SimObject_ApplyRootMotion` runs once per sim tick. `Shape_DrawAtDetailLevel` restores root 0 into the instance at the end of every draw, so **both callers run with root 0 installed** and the relation list walked is always root 0's.
-- `ShapeInst_BindNodeTransformArray` (`00475fd8`) binds that one array to the render global; its two callers are the generic shape-render entry and exit. Nothing rebinds per root.
+- `ShapeInst_BuildWorldTransforms` (`00478b58`) is called from that constructor and from `ShapeInstance_StepAnimation` (`00478c2c`), which `SimObject_ApplyRootMotion` runs once per sim tick; those are the two calls `es2_xref.py` finds ([Open](#open)). `Shape_DrawAtDetailLevel` restores root 0 into the instance at the end of every draw, so **both run with root 0 installed** and the relation list walked is always root 0's.
+- `ANShapeInstance_Render` points the drawn root's `+0x18` at the instance's world array before drawing, and `ShapeInst_BindNodeTransformArray` (`00475fd8`) binds what `+0x18` holds, so whichever root is drawn, it is drawn through that one array ([Drawing a shape](dts-node-posing.md#drawing-a-shape)). `es2_xref.py` finds two calls of the bind, from `TSShape_Render` and `TSShapeInstance_Render` ([Open](#open)).
 - `AnimThread_EvalNodeLocals` (`004799a4`) indexes the locals by the part ids of the sequence the **thread's own** anim list names — `thread+0` — not the drawn root's.
 
 `Shape_LoadAllRoots` (`00474bcc`) loads every root, into a 100-slot buffer.
@@ -107,14 +107,20 @@ Built once, per LOD root, by `MechType_InitOne`:
 - `GunLayout_CollectHardpointBones` (`0040fc50`) walks the `.GL` and emits each record's bone id (`+0x00`), or `-1` when its mounting code (`.GL +6`) is 4, the invisible mounting.
 - `MechType_BindHardpointSlots` (`0040304c`) resolves each id through the shape's vtable `+0x24` to the **address of the part slot** holding the part whose id (`part+6`) is that id, and stores null for `-1`. The result is a `{void **slots; short count}` pair per root, at `typeRec+0xe6`.
 
-Applied every frame by `Mech_SpliceHardpointShapes` (`004030d0`), for each root:
+Applied every frame by `Mech_SpliceHardpointShapes` (`004030d0`), which `Mech_Draw` calls for each root with the root's slot list, the machine's mount array (the manager's `+4`, holes kept) and the blank records. It walks the slots and the mount array together, stops at the end of the slots, and takes nothing from the mounts past the array's count:
 
 ```c
-replacement = mount->shape ? mount->shape : blankRecord;   // blanks from typeRec+0xec, 0x18 apart
-replacement[+4] = (*slot)[+4];                             // inherit TSBasePart.Transform
-replacement[+6] = (*slot)[+6];                             // inherit the part id
-*slot = replacement;
+for each slot, with the mount entry at the same index while the array lasts:
+    if (*slot) {                                           // the slot holds a part
+        replacement = mount ? mount : blankRecord;         // blanks from typeRec+0xec, 0x18 apart
+        replacement[+4] = (*slot)[+4];                     // inherit TSBasePart.Transform
+        replacement[+6] = (*slot)[+6];                     // inherit the part id
+        *slot = replacement;
+    }
+    blankRecord += 0x18;                                   // for every slot a mount entry was taken for
 ```
+
+The replacement is the mount object itself, the array's entry, not a shape the mount holds: a mount is a `CONFIG_PART` with its weapon model at `+0x10`, so the part list draws the gun in the slot's turn ([how the gun is lit](effect-lights.md#a-part-drawn-through-a-saved-state-shades-the-effect-lights-in-another-nodes-frame)).
 
 **The match is on the part id, not on the transform node.** Verified against every retail chassis, where the ids are exactly the visible hardpoints' bones:
 
@@ -160,3 +166,8 @@ The same reasoning covers 14 plain `TSPoly`s reachable at cell 0 across every dr
 | A mech `.DTS` carries one `ANAnimList`, on its root shape | One **per root**, and they differ in every dimension — APOCA's root 0 declares 8 sequences over 372 keyframes and 12 nodes, its root 4 declares 1 over 17 and 9 |
 | The `.DMG` record's `+0x03` byte is a HUD slot | It is the index of the `TSCellAnimPart` sequence the component drives, which the destruction path steps to its blank cell. The `= 2` write is a cell frame, not a damage state ([A destroyed component hides its own geometry](#a-destroyed-component-hides-its-own-geometry)) |
 | A nonzero detail bias is harmless because the walk can still reach root 0 | The walk only ever advances, and it starts at the bias. `g_ShapeDetailBias` is the floor on how fine a machine is ever drawn, which is what makes the lowest HERC DETAIL setting a visible change at point-blank range and not only at distance |
+
+## Open
+
+- **Open:** no caller of `ShapeInst_BuildWorldTransforms` other than `ShapeInst_Construct` and `ShapeInstance_StepAnimation` found by `es2_xref.py`.
+- **Open:** no caller of `ShapeInst_BindNodeTransformArray` other than `TSShape_Render` and `TSShapeInstance_Render` found by `es2_xref.py`.

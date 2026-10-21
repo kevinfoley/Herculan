@@ -1,5 +1,6 @@
 using System.Numerics;
 using HercWorks.Core.Data.File.Cfg;
+using Herculan.Engine.Audio;
 using Herculan.Engine.Content;
 using Herculan.Engine.Host.Install;
 using Herculan.Engine.Host.Localization;
@@ -31,6 +32,9 @@ namespace Herculan.Engine.Host.Settings;
 /// it also switches the interface to the matching <c>.lang</c> file, when there is one. The interface language is
 /// any <c>.lang</c> file, by the name it gives itself (<see cref="LocalizationTable.GetLanguages"/>), and changes at
 /// once, in a mission too.</para>
+///
+/// <para>Audio holds the music and sound-effects volumes (<see cref="AudioVolumes"/>), which retail has no control for.
+/// They change what is sounding at once, in a mission too, and are saved as a slider is let go.</para>
 ///
 /// <para>Updates holds the "Auto check for updates" setting and a Check for Updates button (<see cref="UpdateChecks"/>),
 /// which work in a mission too.</para>
@@ -146,6 +150,9 @@ sealed class SettingsWindow : IDisposable {
 			ImGui.SeparatorText(_session.Localization.GetStringOrKey("settings.languages"));
 			GameLanguageRow(installRoot);
 			_interfaceLanguage.Draw();
+
+			ImGui.SeparatorText(_session.Localization.GetStringOrKey("settings.audio"));
+			AudioRows();
 
 			ImGui.SeparatorText(_session.Localization.GetStringOrKey("settings.updates"));
 			UpdatesRows();
@@ -283,6 +290,24 @@ sealed class SettingsWindow : IDisposable {
 	private void ForgetLanguages() {
 		_gameLanguages = null;
 		_interfaceLanguage.Forget();
+	}
+
+	// The two volumes as percentage sliders. Dragging sets the volume at once; letting go saves it.
+	private void AudioRows() {
+		var volumes = AudioVolumes.Current;
+		volumes.Music = VolumeSlider("settings.music_volume", volumes.Music, out bool musicDone);
+		volumes.Effects = VolumeSlider("settings.effects_volume", volumes.Effects, out bool effectsDone);
+		if (musicDone || effectsDone) {
+			volumes.Save();
+		}
+	}
+
+	private float VolumeSlider(string key, float volume, out bool done) {
+		int percent = (int)MathF.Round(volume * 100f);
+		ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X * 0.5f);
+		ImGui.SliderInt(_session.Localization.GetStringOrKey(key) + "###" + key, ref percent, 0, 100, "%d%%", ImGuiSliderFlags.AlwaysClamp);
+		done = ImGui.IsItemDeactivatedAfterEdit();
+		return percent / 100f;
 	}
 
 	// The automatic check's setting, which takes effect from the next start, and Check for Updates with what the last

@@ -68,11 +68,15 @@ public sealed class CanopyPanelPainter {
 	/// pixels (x, y from the bottom left, width, height) and the camera to draw it from, and expected
 	/// to leave the scissor off. Null leaves the screen on its flood under the cross.
 	/// </param>
+	/// <param name="drawTargetBox">
+	/// False when the caller has already drawn the target box through <see cref="DrawTargetBox"/>, over a wider
+	/// viewport than this panel's.
+	/// </param>
 	public void Draw(int viewportX, int viewportY, int viewportWidth, int viewportHeight,
 			GpuTexture cockpitTexture, int cockpitTextureWidth, int cockpitTextureHeight,
 			bool mirrorHorizontally, CockpitArt? hud, GpuTexture? spriteTexture = null,
 			CockpitHudState? hudState = null, GpuTexture? mapTexture = null,
-			Action<int, int, int, int, Camera>? missileView = null) {
+			Action<int, int, int, int, Camera>? missileView = null, bool drawTargetBox = true) {
 		_overlay.Begin(viewportX, viewportY, viewportWidth, viewportHeight);
 
 		// Fit by height, preserving the art's native aspect ratio — never stretched. When the panel is
@@ -89,13 +93,8 @@ public sealed class CanopyPanelPainter {
 		// front window that goes *behind* the cockpit frame. See GunsightPainter.AddTargetBoxLayer for why — it is the only
 		// gunsight child that drops back into the view's own render context, whose clip block is the
 		// herc's canopy cutout, while every other widget draws through the full-canvas context.
-		if (hud?.Sprites is { } boxSprites && spriteTexture != null
-			&& !(hudState ?? CockpitHudState.Default).Dropout.GunsightDark) {
-			_overlay.Clear();
-			_gunsight.AddTargetBoxLayer(hud.Gau, boxSprites, hudState ?? CockpitHudState.Default, scale, quadX0);
-			if (_overlay.VertexCount > 0) {
-				_overlay.Submit(spriteTexture);
-			}
+		if (drawTargetBox) {
+			SubmitTargetBox(hud, spriteTexture, hudState, scale, quadX0);
 		}
 
 		_overlay.Clear();
@@ -161,6 +160,41 @@ public sealed class CanopyPanelPainter {
 		}
 
 		_overlay.End();
+	}
+
+	/// <summary>
+	/// The center panel's target box alone, drawn into a viewport wider than the panel so it is not cut at the
+	/// panel's edges — for the side panels' art to cover instead, the caller drawing them after it. The box keeps the
+	/// panel's own placement: <paramref name="panelX"/> and <paramref name="panelWidth"/> are the panel's viewport
+	/// columns in the same framebuffer, and the viewport shares its rows.
+	///
+	/// <para>This engine's: the original clips the box to the forward view's canopy cutout
+	/// (<see cref="GunsightPainter.AddTargetBoxLayer"/>), and never shows the glances' windows beside it at rest.</para>
+	/// </summary>
+	public void DrawTargetBox(int viewportX, int viewportY, int viewportWidth, int viewportHeight,
+			int panelX, int panelWidth, int cockpitTextureWidth, int cockpitTextureHeight,
+			CockpitArt hud, GpuTexture spriteTexture, CockpitHudState? hudState) {
+		_overlay.Begin(viewportX, viewportY, viewportWidth, viewportHeight);
+
+		float scale = viewportHeight / (float)cockpitTextureHeight;
+		float quadX0 = panelX - viewportX + (panelWidth - cockpitTextureWidth * scale) / 2f;
+		SubmitTargetBox(hud, spriteTexture, hudState, scale, quadX0);
+
+		_overlay.End();
+	}
+
+	private void SubmitTargetBox(CockpitArt? hud, GpuTexture? spriteTexture, CockpitHudState? hudState,
+			float scale, float quadX0) {
+		if (hud?.Sprites is not { } boxSprites || spriteTexture == null
+			|| (hudState ?? CockpitHudState.Default).Dropout.GunsightDark) {
+			return;
+		}
+
+		_overlay.Clear();
+		_gunsight.AddTargetBoxLayer(hud.Gau, boxSprites, hudState ?? CockpitHudState.Default, scale, quadX0);
+		if (_overlay.VertexCount > 0) {
+			_overlay.Submit(spriteTexture);
+		}
 	}
 
 	/// <summary>The cockpit-art quad at its native aspect ratio, positioned by <see cref="Draw"/>'s fit-by-height math.</summary>

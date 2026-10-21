@@ -15,8 +15,8 @@ One file per theater variant. `World_LoadTheater` (`0042e010`) reads the one the
 | `int32` count + count x `int32` | `WorldShades_BandsTagged` (`004cfd84`), the distance thresholds of the [colour bands](../rendering/distance-fog-and-sky.md#distance-colour-bands--worldshades_applyforobject-0042e8e8) for an object with a type tag: 16 entries, 4400 apart from 60000 — from 30000 in `WORLD4` |
 | `int32` count + count x `int32` | `WorldShades_BandsTag0` (`004cfd88`), the same for tag 0: 16 entries, 4400 apart from 60000, in every retail file |
 | `int16` rows, `int16` cols | sizes the pair of ramp tables that follow; 16 and 11 in every retail file |
-| cols x `int32`, `int16`, cols x `int32` | expanded by `Palette_InterpolateIndexRanges` (`00430d08`) into `WorldShades_LevelRanges` (`004cfd7c`), one index range per column and band |
-| 4 bytes, 4 bytes | a second, 1-wide ramp through the same expander, into `WorldShades_BlendRanges` (`004cfd80`) |
+| cols x 4 bytes, `int16`, cols x 4 bytes | two tables of palette index ranges, each entry an `int16` first index and an `int16` count, with an unused `int16` between them. `Palette_InterpolateIndexRanges` (`00430d08`) expands them into `WorldShades_LevelRanges` (`004cfd7c`): for each column, *rows* ranges stepping in 8.8 fixed point from the first table's range to the second's, the last exactly the second's |
+| 4 bytes, 4 bytes | two more ranges, a 1-wide ramp through the same expander, into `WorldShades_BlendRanges` (`004cfd80`) |
 | `int16`, `int16`, `int32`, `int32` | the two `int32`s are `WorldShades_DistanceOffsets` (`004cfd6c`), the offsets a tag-5 object's distance takes |
 | 5 NUL-terminated strings | `world24`, `clouds2`, `impact<N>`, **terrain bank**, `tex` |
 
@@ -42,3 +42,14 @@ The first eight `int16`s, which `World_LoadTheater` hands to the theater's `hzli
 | 5 | 10 | ground band height | 1 |
 | 6 | 12 | ground band count | 1 |
 | 7 | 14 | line offset | 0 |
+
+## The load
+
+`World_LoadTheater` (`0042e010`) takes the `script.dat` header, copies its 20 bytes to `004cfd48` and names the theater's files `world<N>`, N being twice header word 0 plus header word 9. In order, it:
+
+1. loads `dpl\world<N>` with `Palette_LoadAndActivate` (`00430394`), the live palette ([`../rendering/cockpit-canopy-palette.md`](../rendering/cockpit-canopy-palette.md#palette));
+2. opens `wld\world<N>` and builds the theater's `hzline` with `Hzline_Ctor` (`0042eb5c`) into `g_TheaterHzline` (`0049aee0`) before it reads the first field, then reads the file [as laid out above](#the-worldn-descriptor--layout), storing short 4 + short 6 − 1 at `0049aee8`, `0x40` at `004cfd74` and `0x62` at `004cfd7a`. Shorts 8, 12 and 13, the two `int16` before the distance offsets, and the first, second and fifth strings are read and not used;
+3. opens `cyc\world<N>` with `VolRStream_Open`, which may fail. When it opens and its first `int16`, a count, is not 0, it allocates 6 × count bytes at `0049aeec`, the count at `0049aef0`, and reads count records of three `int16`, registering each with `PaletteCycle_Register` (`00430638`). It steps 12 bytes a record, so the records past the first half of the count land beyond the allocation. `SIMVOL0`, `SIMPATCH` and `ZONES` hold no `cyc\` entry;
+4. loads `dat\shades` with `World_LoadShades` (`0042e760`) ([distance colour bands](../rendering/distance-fog-and-sky.md#distance-colour-bands--worldshades_applyforobject-0042e8e8));
+5. reads `rmp\world<N>`, an `int32` width, an `int32` height and width × height × 256 bytes, into `ShadeRampTable`, sized by `ShadeRamp_Allocate` ([`../rendering/terrain-lighting.md`](../rendering/terrain-lighting.md));
+6. passes the fourth string to `Terrain_BindTextureBank`, the ramp's dimensions to `Raster_SetShadeRampDimensions`, and short 9 to `FlatObj_LoadResources` (`004097a8`).

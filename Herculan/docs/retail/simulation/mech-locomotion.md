@@ -20,7 +20,7 @@ Reverse-engineered from `DBSIM.EXE` (`mechsys.cpp`) in the `ES2Recon` Ghidra pro
 | `0040250c` | `SimObject_ApplyRootMotion` | Root-motion → world position/heading |
 | `00402628` / `004027fc` | `SimObject_PushTransform` / `PopTransform` | Save/restore full transform incl. node hierarchy |
 | `00418f74` | `Mech_CollisionTest` | Returns nonzero on blocked move |
-| `004195c8` | `Mech_PlaceLegsOnGround` | Moves each of the machine's shadows under its part ([`ground-shapes.md`](ground-shapes.md#a-hercs-shadows)); footfall detection |
+| `004195c8` | `Mech_PlaceLegsOnGround` | Moves each of the machine's shadows under its part ([`ground-shapes.md`](ground-shapes.md#a-hercs-shadows)); [footfalls](#footfalls) |
 | `0041a550` / `0041a808` | `Mech_TorsoTwistTick` / `Mech_TorsoPitchTick` | Turret aim, not locomotion — [`torso-aim.md`](torso-aim.md) |
 
 `Mech_MovementTick` is the **move** slot of the AI behaviour state a machine currently holds, shared by 18 of the 22 states; it decides nothing, the think function calls `Mech_LocomotionTick` with the steering. How the slot is reached, and which states differ, is in [`ai-dispatch.md`](ai-dispatch.md).
@@ -153,7 +153,7 @@ Between the speed step and the turn rate sits [the gait state machine](#the-gait
 
 ### The gait state machine
 
-It drives the locomotion thread (`mech+0x22c`) through two calls. `AnimThread_SetSequence` (`004791a0`) cuts to a sequence at a given frame. `AnimThread_SetTarget` (`00479570`) only asks for one: `AnimThread_FindTransition` (`004792c8`) walks the playing sequence's frames from the next one on, in the direction of play, to the first frame whose transition list names the requested sequence, and arms it. When `AnimThread_Advance` (`00479614`) next crosses into that frame, the thread's next sequence (`thread+8`) becomes the requested one, the frame lasts the transition's own duration while the pose blends across, and at its end the requested sequence is the one playing (`thread+4`). A playing sequence with no frame listing a transition to the requested one arms nothing and keeps playing. **Dropping a request** is done inline: the tick writes what `AnimThread_SetSequence`'s tail writes (`+0x0c`, `+0x16`, `+0x18` to -1, `+0x1a` to 0, `+0x50` to 1), which forgets the request and keeps the playing sequence.
+It drives the locomotion thread (`mech+0x22c`) through two calls ([Animation threads](../rendering/dts-node-posing.md#animation-threads)). `AnimThread_SetSequence` (`004791a0`) cuts to a sequence at a given frame. `AnimThread_SetTarget` (`00479570`) only asks for one, which the thread reaches at the next frame of the playing sequence that has a transition to it: that frame lasts the transition's own duration while the pose blends across, and at its end the requested sequence is the one playing (`thread+4`). A playing sequence with no frame listing a transition to the requested one arms nothing and keeps playing. **Dropping a request** is done inline: the tick writes what `AnimThread_SetSequence`'s tail writes (`+0x0c`, `+0x16`, `+0x18` to -1, `+0x1a` to 0, `+0x50` to 1), which forgets the request and keeps the playing sequence.
 
 The sequences come from the type record: walk `W` (`+0x0e`), run `R` (`+0x10`), the forward and reverse stop/step-off sequences `SF` and `SR` (`+0x12`, `+0x14`), turn-in-place `T` (`+0x7c`) and the death sequence (`+0x46`). `thr` is the walk↔run threshold `+0x2e` and `thrRev` its reverse-side twin `+0x6e`. `S` is the speed scalar after this tick's step and `P` the speed before it; *stopping* means the thread is playing `SF` or `SR`, *turning* that it is playing `T`.
 
@@ -357,7 +357,7 @@ The landing calls `Mech_SpreadImpactDamage` (`00417a04`) with `(150, 120)` — s
 
 **A HERC disabled while standing too close to another HERC, or to a HERC's wreck, never falls.** The fall advances only when the machine's move does: `disabled` and `dead` keep the ordinary walk move ([`ai-dispatch.md`](ai-dispatch.md)), so every frame of the fall is a step through `Mech_MovementTick` and [`Mech_CollisionTest`](#collision). With its centre within 1,500 units of another machine's (both HERCs' 750 body radius, which a wreck keeps) every step is refused, and [the refusal](#what-a-refused-move-does)'s `SimObject_PopTransform` puts back each animation thread's whole record along with the position — sequence, frame and target included — so playback never reaches the death sequence. The machine stays standing in the pose it was disabled in, its lost leg no longer planted, `mech+0xb4` is never latched, and it remains a target for the AI as a machine still falling does. Walking cannot close that gap, since the same test refuses the step; [the ram charge](ai-combat-states.md#the-charge--mech_behaviourramtick-0041e488), which has no undo, is one move that can.
 
-`Mech_PlaceLegsOnGround` has a death-sequence arm of its own, but it leaves the sound id unset and so can never reach the footfall it guards.
+The fall plays no footfall of its own: `Mech_PlaceLegsOnGround`'s arm for the death sequence leaves its sound unset ([footfalls](#footfalls)).
 
 ## Cockpit eye and bob
 
@@ -380,6 +380,26 @@ On flat ground, standing eye height 3.2 m (STINGRAY) to 11.2 m (SAMSON), running
 
 **RAPTOR2's eye is above its own model.** At rest its camera node sits 1740 units up, level with the cockpit at the front of the upper body, and the record's lift of 460 puts the eye at 2200 — over the highest polygon of the shape (2090, the top of the upper fins) and 220 over the torso's top. The fore/aft 300 puts it over the cockpit, so the view looks out from the right place along the machine but from above it.
 
+## Footfalls
+
+**The player hears the steps of any HERC within 15000 units of the camera, and each step of the player's own HERC bobs the view.** A step is a foot passing a point fore and aft in the machine's frame, latched so that it sounds once per stride. The tests are the second half of each entry's pass in `Mech_PlaceLegsOnGround` (`004195c8`), after the entry's shadow is placed ([a HERC's shadows](ground-shapes.md#a-hercs-shadows)), so an entry whose shadow is gone tests nothing. The function does nothing for a machine with no locomotion thread, and the tests run only for the locally piloted machine (`+0xa3`) or one whose position is within 15000 of the view object's (`Math_FastMagnitude3D`).
+
+The gait is the locomotion thread's requested sequence (`+0x16`), or the playing one (`+4`) when none is requested, read once per call. Entry *i*'s kind is `typeRec+0x72`[*i*], its point the translation of the node of part `typeRec+0x77`[*i*] in the shape instance's world array (a missing part, or one with a negative node, takes the static transform at `006c572c` instead), and its latch the byte `mech+0x2b4` + *i*:
+
+| Kind | Gait | Index | Measured | Direction |
+|---|---|---|---|---|
+| 0, a foot | walk, turn in place or either stop sequence | 0, or 1 when the playback rate `+0x2a0` is 0 or less | the point's Y, fore and aft in the machine's frame | forward at index 0, backward at 1 |
+| 0 | run | 2 | the same | forward |
+| 2, the body | the death sequence (`typeRec+0x46`) | 3, with the latch `+0x2b8` | the point's world Z | forward |
+| any other | | none: nothing is tested | | |
+
+With an index, a foot first arms its latch, then plants:
+
+- **Arming**: going forward, a value past `typeRec+0xac` + 2 × index (record offsets 170, 172 and 174) sets the latch; going backward, a value below it.
+- **Planting**: with the latch set, going forward, a value below `typeRec+0x98` + 2 × index (record offsets 150, 152, 154 and 156); going backward, a value past it. It plays sound `0x1d` at the machine's position when that is within 15000 of the view, starts [the step kick](../rendering/cockpit-canopy-palette.md#the-step-kick) for the locally piloted machine, and clears the latch.
+
+The death arm sets no sound and no arming test, so it never plants: a falling HERC makes no footfall. It also moves the latch cursor to `+0x2b8`, so entries after the body's would take their latches from `+0x2b9`; every retail biped's body is the last of its three entries ([a HERC's shadows](ground-shapes.md#a-hercs-shadows)).
+
 ## Collision
 
 `Mech_CollisionTest` (`00418f74`) answers "is the position I just integrated into refused", and is run after every move. Three things refuse it, in order:
@@ -398,6 +418,8 @@ A block against another **machine** also hurts both of them, through the explosi
 - **Inside one**: the thread is cut to frame 0 of the forward stop sequence (`typeRec+0x12`), and the machine stays where it was.
 
 Either way `Mech_PlaceLegsOnGround` runs after.
+
+**What the save holds.** `SimObject_PushTransform` (`00402628`) copies the frame's rotation and position, each of the shape instance's ten thread slots' records (`0x52` bytes each, a slot holding no thread skipped) and, for the instance's node count, its node dirty flags, 12-byte local poses and 32-byte world transforms, into static buffers with room for ten threads and 30 nodes; `SimObject_PopTransform` (`004027fc`) copies them back. The Euler angles (`+0x0c`–`+0x11`) are not in the save: after a pop the frame holds the saved rotation while the angles keep the refused step's, and the frame takes the step's turn the next time it is rebuilt from the angles, which `Mech_LocomotionTick`'s clearing of `+0x32` asks for every tick.
 
 ### The structure a machine stands in
 

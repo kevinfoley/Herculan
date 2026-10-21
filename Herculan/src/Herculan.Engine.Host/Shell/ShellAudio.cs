@@ -53,7 +53,7 @@ sealed class ShellAudio : IDisposable {
 		}
 
 		// The wrapper is not disposed: it owns Backend, which Dispose disposes directly.
-		Sound = ShellSound.Load(_content, new SoundCfgBackend(Backend, _soundCfg), _options);
+		Sound = ShellSound.Load(_content, new SoundCfgBackend(Backend, _soundCfg), _options, AudioVolumes.Current);
 		if (!Sound.HasMusic) {
 			Console.Error.WriteLine($"No hmi\\{Sound.MusicName} in {ShellSound.ArchiveName} — the shell has no music.");
 		}

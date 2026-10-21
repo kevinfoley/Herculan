@@ -198,9 +198,12 @@ public sealed class GameAudio : ISoundSink, IDisposable {
 	/// The install's <c>data\sound.cfg</c>, applied through <see cref="SoundCfgBackend"/>; null takes the shipped
 	/// settings.
 	/// </param>
+	/// <param name="volumes">
+	/// The player's volumes, laid over everything through <see cref="VolumeBackend"/>; null plays at full volume.
+	/// </param>
 	public static GameAudio Create(GameContent content, MessagePorts ports, SimRandom? random = null, bool lowMemory = false,
 			bool silent = false, string? cdDrive = null, string? musicDirectory = null,
-			HercWorks.Disc.DiscImage? discImage = null, SoundCfg? soundCfg = null) {
+			HercWorks.Disc.DiscImage? discImage = null, SoundCfg? soundCfg = null, AudioVolumes? volumes = null) {
 		// The message port's display half needs nothing but the text, so the ticker still runs on a
 		// machine with no sound device and in an install with no SIMSOUND.VOL.
 		var messages = ports.Computer.Messages;
@@ -218,9 +221,8 @@ public sealed class GameAudio : ISoundSink, IDisposable {
 		}
 
 		string? deviceFailure = null;
-		var backend = new SoundCfgBackend(
-			(silent ? null : (IAudioBackend?)OpenAlBackend.TryCreate(out deviceFailure)) ?? new NullAudioBackend(),
-			soundCfg ?? new SoundCfg());
+		IAudioBackend device = (silent ? null : (IAudioBackend?)OpenAlBackend.TryCreate(out deviceFailure)) ?? new NullAudioBackend();
+		var backend = new SoundCfgBackend(volumes != null ? new VolumeBackend(device, volumes) : device, soundCfg ?? new SoundCfg());
 		// Music is Red Book CD audio and never went through SOS, so it gets a stream of its own on the
 		// device rather than a pool channel: failing to find a disc leaves the effects half exactly as
 		// it was.

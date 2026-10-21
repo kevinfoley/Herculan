@@ -216,20 +216,10 @@ public class DTSModelTransformer : ByteTransformer<DynamixThreeSpaceModel> {
 
 		link = (TSDetailPart)ReadTSPartList(link, parent);
 
-		// FIXME (carried over from Java): so far these just seem to trail at the end for any
-		// remaining bytes of the TSObject's byte-len. Pretty weird.
-		int detailCount = (link.GetDataIndex() + link.ByteLen) - Index;
-
-		// Derived by subtraction rather than read from a count field, so it goes negative if the part
-		// list above overran the chunk. Caught here because a negative length would otherwise blow up
-		// as an unrelated-looking OverflowException from the array allocation on the next line.
-		if (detailCount < 0) {
-			throw new InvalidDataException(
-				$"TSDetailPart at offset {link.Index} overran its own {link.ByteLen}-byte payload by " +
-				$"{-detailCount} bytes while reading its part list.");
-		}
-
-		var details = new short[detailCount / 2];
+		// One threshold per part, as TSDetailPart_ReadFromStream (0049017c) reads them. Retail skips
+		// any bytes left before the chunk's end; LoadChunkByType rejects them instead, and no retail
+		// shape has any.
+		var details = new short[link.Parts!.Length];
 		for (int d = 0; d < details.Length; d++) {
 			details[d] = IndexShortLE();
 		}
@@ -723,7 +713,14 @@ public class DTSModelTransformer : ByteTransformer<DynamixThreeSpaceModel> {
 	private void WriteTSDetailPart(TSDetailPart detailPart, MemoryStream bos) {
 		WriteTSPartList(detailPart, bos);
 
-		foreach (var d in detailPart.Details!) {
+		// The reader takes one threshold per part, so any other count would write a chunk it rejects.
+		if (detailPart.Details!.Length != detailPart.Parts!.Length) {
+			throw new InvalidOperationException(
+				$"TSDetailPart has {detailPart.Details.Length} thresholds for {detailPart.Parts.Length} parts; " +
+				"it needs one per part.");
+		}
+
+		foreach (var d in detailPart.Details) {
 			Emit(bos, WriteShortLE(d));
 		}
 	}

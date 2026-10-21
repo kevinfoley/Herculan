@@ -34,7 +34,7 @@ tweak.play_last_music_track.description   Missions also play the last of the dis
 tweak.shuffle_mission_music.display_name  Shuffle mission music
 tweak.shuffle_mission_music.description   Each mission plays a music track chosen at random, never the same one twice in a row. Retail plays the tracks in a fixed order, one per mission.
 tweak.change_pbw_beam_hue.display_name  Change PBW beam hue
-tweak.change_pbw_beam_hue.description   In retail, the PBW and PBW2 beams use the same texture as the Lasers, making them indistinguishable. This tweak adjusts the PBW hue for visual clarity.
+tweak.change_pbw_beam_hue.description   In retail, the PBW and PBW2 beams use the same texture as the Lasers, making them indistinguishable. This tweak adjusts the PBW/PBW2 hue for visual clarity, based on the colors used in Metaltech: Earthsiege.
 tweak.high_resolution_widescreen.display_name  Enable high-resolution, widescreen rendering
 tweak.high_resolution_widescreen.description   When enabled, gameplay is rendered at the window resolution and aspect ratio. When disabled, gameplay is rendered at 640x480. The shell is always 640x480.
 tweak.smoother_turret_movement.display_name   Smoother turret movement
@@ -123,6 +123,9 @@ settings.languages             Languages
 settings.game_language         Game language
 settings.interface_language    HERCULAN UI language
 settings.write_failed          Could not write {0}: {1}
+settings.audio                 Audio
+settings.music_volume          Music volume
+settings.effects_volume        Sound effects volume
 settings.updates               Updates
 settings.auto_check_updates    Auto check for updates
 settings.check_updates         Check for Updates

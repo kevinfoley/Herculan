@@ -18,7 +18,7 @@ All nine children derive from `GunsightChild_CtorBase` (`0043b344`), a bare rect
 
 | # | Ctor | What it is |
 |---|---|---|
-| 0 | `Gunsight_ClickSurface_Ctor` (`0043c120`) | The clickable gunsight surface. Registers a child gadget with the cockpit's click list — the "gunsight click" entry into `TargetSelect_SetObject`. Its paint (`Gunsight_ClickSurface_Paint`, `0043c1dc`) only tracks the cursor against its rect |
+| 0 | `Gunsight_ClickSurface_Ctor` (`0043c120`) | The clickable gunsight surface. Registers a `0x20`-byte gadget over its rect with the cockpit's click list; the gadget's click slot, `Gunsight_ClickGadget_OnClickNoOp` (`0043b338`), tests bit 0 of its flags and returns, where ES1's arms [the pixel pick](../rendering/terrain-drawing.md#the-pixel-pick-and-the-occlusion-probe). Its paint (`Gunsight_ClickSurface_Paint`, `0043c1dc`) reads the cursor and calls `Cockpit_SetForwardCursor` with 1 while it lies in the rect, bounds inclusive, and 0 otherwise |
 | 1 | `HudHeadingTape_Ctor` (`0043b57c`) | Heading tick tape, bank `hudhtick`, limits ±`0xe38` |
 | 2 | `HudRotationIndicator_Ctor` (`0043b438`) | The rotation indicator, limits ±`0x38e3` |
 | 3 | `HudSlideBar_CtorHidden` (`0043b54c`) | The pitch axis's slide bar — **paint slot is a no-op** (`HudSlideBarHidden_PaintNoOp`, `0043b574`), so it is never drawn |
@@ -28,6 +28,13 @@ All nine children derive from `GunsightChild_CtorBase` (`0043b344`), a bare rect
 | 7, 8 | `HudWaypointIndicator_Ctor` (`0043c268`) | The two waypoint indicators, below. 7 takes the `+0x45` flag that makes it the nav marker's |
 
 Children 4 and 5: [`hud-target-indicator.md`](hud-target-indicator.md).
+
+### Painting
+
+The gunsight has two paint slots. Both skip everything while the display is dark (`+0x76`, [sensor dropout](cockpit-hud-widgets.md#sensor-dropout)) or while neither corner of child 0's rect is on screen (`CockpitView_RectCornerVisible`), and both draw inside a `Cockpit_PushCanvasContext`/`Cockpit_PopRenderContext` pair.
+
+- `Gunsight_Paint` (`0043d5c8`) calls each child's slot 0, its paint, then draws the [`ATT` legend](#the-att-legend), calls `HudClock_Tick` and `Hud_UpdateSpeedReadout`, sets the text of the four labels at `004d1850`–`004d185c` ([the readouts](#speed-and-time-readouts)), and calls `Gunsight_PaintHudScanner` and `Gunsight_PaintAltitudeScale`.
+- `Gunsight_UpdateAndPaint` (`0043d6dc`), the slot `+8` that runs once a frame, returns at once in view 4 unless the view manager's byte `+0x1c` is set. It stores `Player_DependentCondition(2)` at `+0x74` and, when that is non-zero, the gunsight's dropout ranges for it from the tables at `0049be48`–`0049be66` at `+0x7c`–`+0x88`, and runs `PanelGauge_TickDropout`. Past the two tests above, it hands the [pixel pick's](../rendering/terrain-drawing.md#the-pixel-pick-and-the-occlusion-probe) object, when there is one, to `TargetSelect_SetObject` with the cockpit (`+0x14`) while the byte `Gunsight_PickArmed` (`0049be74`) is set and the pick is idle, clearing the byte; fills the state block's target fields ([live values](#live-values)); drives the [heading tape](#heading-tape); calls each child's slot `+4`, its repaint; and draws the rest as `Gunsight_Paint` does.
 
 ### Live values
 
@@ -62,10 +69,10 @@ Frame 13 is green and 12 yellow; the 299 threshold is about 1.6°, so any delibe
 
 ### Heading tape
 
-Child 1, the manual's Heading Indicator. `HudHeadingTape_Recompute` (`0043b5dc`) caches the rect's width at `+0x28` and the `hudhtick` bank's last and first frames at `+0x48`/`+0x4c`; `HudHeadingTape_SetHeading` (`0043b654`) converts the angle it is given into a frame pair and a sub-frame offset:
+Child 1, the manual's Heading Indicator. `HudHeadingTape_Ctor` (`0043b57c`) builds it on `HudRotationIndicator_Ctor`, stores `HRevRotationGaugeVtable`, loads the `hudhtick` bank once into `HudHTickBank` (`0049be70`) (from `hba` while `VideoMode_UseHiResBanks` is set, else `dba`) and runs its recompute, slot `+8`. `HudHeadingTape_Recompute` (`0043b5dc`) caches the rect's width at `+0x28`, `bankFrames * rectWidth` at `+0x40`, `rect.x0` at `+0x44` and the bank's last and first frames at `+0x48`/`+0x4c`, and zeroes `+0x3c`; it also sets the `int16` `+0x50` to 1 and `+0x52` to `bankFrames - 2` (`bankFrames - 1` when that is negative), which none of the tape's five slots reads. The tape's set-limits slot, `HudHeadingTape_SetLimits` (`0043b7b4`), stores `(hi - lo) / rectWidth` at `+0x40` and then runs `HudSlideBar_SetLimits`, whose closing recompute writes `bankFrames * rectWidth` back. `HudHeadingTape_SetHeading` (`0043b654`) converts the angle it is given into a frame pair and a sub-frame offset:
 
 ```
-total   = Math_Q16Multiply(heading, framePixels)     // +0x40, bankFrames * rectWidth in Q16
+total   = Math_Q16Multiply(heading, framePixels)     // +0x40, bankFrames * rectWidth
 frame   = total / rectWidth,  offset = total % rectWidth   // both wrapped at bankFrames
 +0x44   = rect.x0 - offset
 +0x48   = bank[frame],  +0x4c = bank[frame + 1]

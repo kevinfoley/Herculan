@@ -73,8 +73,9 @@ public static class Detection {
 	private const int ContactShareRange = 100000;
 
 	/// <summary>
-	/// How far a contact stays a contact. <see cref="DecayContacts"/> drops anything past it —
-	/// measured on the ground plane alone, unlike every other range here.
+	/// One past how far a contact stays a contact. <see cref="DecayContacts"/> drops a contact at this
+	/// distance or more, so one farther than 100000 — measured on the ground plane alone, unlike every
+	/// other range here.
 	/// </summary>
 	private const int ContactHoldRange = 100001;
 

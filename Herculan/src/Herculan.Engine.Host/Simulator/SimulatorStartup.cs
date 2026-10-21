@@ -115,7 +115,7 @@ static class SimulatorStartup {
 		var ports = new MessagePorts(SystemMessages.Load(content));
 		var audio = GameAudio.Create(content, ports, scene.World.PresentationRandom, silent: options.SilentAudio, cdDrive: options.CdDrive,
 			musicDirectory: options.MusicDirectory, discImage: disc?.Image,
-			soundCfg: SoundCfg.Load(GameInstall.SoundCfgPath(installRoot)));
+			soundCfg: SoundCfg.Load(GameInstall.SoundCfgPath(installRoot)), volumes: AudioVolumes.Current);
 		audio.Attach(scene.World);
 		Console.WriteLine($"Audio: {audio.Status}");
 

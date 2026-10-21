@@ -170,6 +170,27 @@ There is no vertical alignment flag: every label is vertically centred in its re
 
 `inkHeight` is the font's own `0x1a` header field (11 for `.HFN`), **not** its cell height (13) — see [`../formats/dfn-hfn-dci.md`](../formats/dfn-hfn-dci.md), "`inkHeight` and label placement". All the arithmetic is integer, both shifts included; doing it in floating point shifts a label up to a pixel on either axis.
 
+**The label object** is every HUD caption in the simulator, the MFD's and the other displays' alike. `Label_Ctor` (`004387ac`), (label, font, panelRelative), zeroes `0x21` bytes and stores:
+
+| Offset | Holds |
+|---|---|
+| `+0x00` | the font, which is the text's color ([HUD fonts](cockpit-hud-widgets.md#hud-fonts)) |
+| `+0x04`–`+0x13` | the rect `{x0, y0, x1, y1}` |
+| `+0x14`, `+0x16` | the anchor's x and y, `int16` |
+| `+0x18` | panel-relative: `Label_SetText` subtracts the global blit offset (`004d25da`, `004d25de`) from the fill rect and the pen |
+| `+0x19` | the alignment flags, 2 center and 4 right |
+| `+0x1d` | the fill color; 0 draws no background |
+| `+0x21` | the hotkey font, on a label built by `Label_CtorWithAltFont` |
+
+`Label_SetText` fills the rect in the fill color, with the brush `{0, color}` installed at the current render context's `+0x22c` for the fill, before it draws the text. The other entry points:
+
+- `Label_CtorWithAltFont` (`00438a70`), (label, font, panelRelative): `Label_Ctor`, then the same font again at `+0x21`, a `0x25`-byte label. `es2_xref.py` finds its calls in `MfdFlashCommScreen_Ctor` and `HddCommandScreen_Ctor`, and those of `Label_SetTextWithHotkey` in the two screens' paints and updates; the hotkey font the rows draw in is [below](#mfdflashcomm--mode-1).
+- `Label_SetTextWithHotkey` (`00438aac`), (label, text, index): `Label_SetText` through `Label_SetText_Thunk` (`00438a94`), then, when index is at most the text's length, moves the pen x (`004d1838`) right by `HudFont_MeasureString` of the text's first index characters and draws `text[index]` again with `HudFont_DrawGlyph` in the font at `+0x21`. That is the order list's red hotkey letter ([the order rows](#mfdflashcomm--mode-1)).
+- `Label_SetRectAroundPoint` (`004387d0`), (label, point, text, flags): sizes the rect to the text around a point instead of taking one. With the text's width w, flags 2 makes `x0 = x − w/2`, `x1 = x0 + w` and the anchor x their midpoint; 4 makes `x1 = x`, `x0 = x − w + 1` and the anchor x x; otherwise `x0 = x`, `x1 = x + w` and the anchor x x. `y0 = y − cellHeight/2` and `y1 = y`, and the anchor y is `inkHeight + y1 + y`, which counts y twice ([Open](#open)).
+- `Label_SetNumber` (`00438a40`), (label, n): the decimal text of n through `_itoa`, then `Label_SetText` ([Open](#open)).
+
+`Label_StaticInitNoOp` (`00438b1c`), a lone `RET`, is the label file's static initializer.
+
 ## Screens
 
 ### `MFDStatus` — modes 0 and 4
@@ -199,7 +220,7 @@ The roster is filled once, at mission start: `Cockpit_LoadSquadmatePilots` (`004
 
 **A SELECT press scrambles the status screen for one refresh.** Besides its action, the shared case sets the current mode's dirty flag and writes 100 to the current screen's `+0xc` — the only store of 100 to that field in the image. `MfdStatusScreen_Update` (`0043b210`) turns it into the flag `+0x34` with a deadline 30 coarse ticks ahead at `+0x35`, and clears the flag at its first run past the deadline. While the flag is set the paint skips a HERC's paper-doll blit and the pod highlight, label 1 reads `XXXXXXXXX`, label 3 `XXXXXX`, and label 4 `XXX` for a friendly or `DIST:  XXXXX` for a hostile. The update runs only on the 30-tick refresh, so the scramble goes up at the first refresh after the press — the same one that parks a stepped roster entry — and comes down at the first refresh past its deadline.
 
-Everything the paint (`MfdStatusScreen_Paint`, `0043a5a0`) chooses is a property of that subject, not of the mode:
+Each paint (`MfdStatusScreen_Paint`, `0043a5a0`) starts by flooding the viewport in palette index `0x11`, an immediate ([ids and immediates](../formats/colors-dat.md#ids-and-immediates)) installed as the brush {0, `0x11`} at the render context's `+0x22c`, over the viewport's rect with its top edge moved down and its right and bottom edges moved in by `1 << XCoordShift`. Everything it then chooses is a property of the subject, not of the mode:
 
 | Test | Effect |
 |---|---|
@@ -261,7 +282,7 @@ Text margin `2 << XCoordShift` = 4 device — the only nonzero label margin on t
 |---|---|
 | `ColorSchemePanels[1]` `CPGREEN` | an ordinary row |
 | `[3]` `CPYLW` | the selected row, which the paint re-fonts as it fills it |
-| `[6]` `CPOFF` | an unavailable row, one whose state byte has bit 0 set. `FUN_0043fa14` sets that bit and turns the row's hotkey font `+0x21` to `CPOFF` as well; `FUN_0043f9f4` puts the hotkey font back to `CPRED` and clears bit 1, keeping bit 0. Neither has a caller found ([Open](#open)) |
+| `[6]` `CPOFF` | an unavailable row, one whose state byte has bit 0 set. `MfdFlashComm_DisableRow` (`0043fa14`) sets that bit and turns the row's hotkey font `+0x21` to `CPOFF` as well; `MfdFlashComm_ResetRow` (`0043f9f4`) puts the hotkey font back to `CPRED` and clears bit 1, keeping bit 0. Neither has a caller found ([Open](#open)) |
 | `[2]` `CPRED` | the row's alternate at `+0x21`, which is **not** an unavailable state — `Label_SetTextWithHotkey` (`00438aac`) redraws exactly one character of the row in it, at the index the order's own attribute byte names, which is how the hotkey letter is picked out. The [F7] order list uses the same mechanism |
 
 The selected row also carries a plate: `MFD` frames 11-13, 91x8 GAU, blitted by `MfdFlashCommScreen_DrawRowPlate` (`0043fa34`) **after** the text so the hollow rounded rect frames it rather than covering it. Frame 11 unpressed, 12 while XMIT is held — the index is `0xb +` that button's own press byte — and 13 the plain plate that erases a row which has just stopped being selected. `MfdFlashCommScreen_Update` (`0043f878`) repaints exactly those two rows when the cursor moves, rather than the whole block.
@@ -275,6 +296,7 @@ Screen fields, based at `MfdDisplay+0xd1`:
 | Offset | Contents |
 |---|---|
 | `+0x08` | Pointer to the display's shared state block (`display+0xb1`), whose first int is the selected row |
+| `+0x10` | The display |
 | `+0x14` | Six row label pointers |
 | `+0x2c` | Six row state bytes — bit 0 unavailable, bit 1 showing the second verb |
 | `+0x32` | The screen's own row, which is what XMIT resolves |
@@ -289,7 +311,7 @@ Two dispatches, not one. `CockpitWidgets_HandleCommand` (`00432bc8`) offers ever
 | Code | Handler | Effect |
 |---|---|---|
 | `0x1e` `0x22` `0x23` `0x18` `0x2e` `0x12` `0x21` (A G H O C E F) | `MfdDisplay_KeyDispatch` (`004469c0`) | Select rows 0, 1, 2, 3, 4, 4, 5. Gated on the display being on mode 1 |
-| the same seven `+0x200` | `MfdFlashComm_HandleAltKey` (`00446c10`) | Select **and transmit**, from any screen. `0x22e` only transmits when the resolved verb is 4 and `0x212` only when it is 7 |
+| the same seven `+0x200` | `MfdFlashComm_HandleAltKey` (`00446c10`) | Select **and transmit**, from any screen: `MfdFlashComm_SetScreenRow` (`0043f9b8`) makes the row the screen's own (`+0x32`), keeping the old one at `+0x37` for the update to repaint, `MfdFlashComm_Transmit` sends its verb, and `MfdFlashComm_SelectRow` selects it. `0x22e` only transmits when the resolved verb is 4 and `0x212` only when it is 7 |
 | `0x2d` (X) | `MfdDisplay_KeyDispatch` (`004469c0`) | Press button 10 if the current mode shows it |
 | `0x33` `0x34` (`,` `.`) | `MfdDisplay_KeyDispatch` (`004469c0`) | Previous / next available row, wrapping |
 | `0x20` (D) | `MfdDisplay_KeyDispatch` (`004469c0`) | Press button 7 SELECT if visible |
@@ -322,16 +344,19 @@ The update floods the inset with palette index `0x11` and blits at `inset + (0x1
 
 ### `MFDMap` — mode 2
 
-`MfdMapScreen_Ctor` (`00440494`) takes the whole inset rect, allocates a 0x239-byte offscreen render target centred at `-((x1 - x0) >> 1)`, `-((y1 - y0) >> 1)` — so the map's centre is 97, 60 device pixels into the inset on every retail herc — and a `View_Ctor` view with perspective shift 8 and zero angles. No labels, no aux buttons.
+**The NAV MAP is the command display's terrain map at a fixed scale, centered on the player's machine and turned so that its heading points up, with a small cross at the center.** It has no labels, grid, border, markers or aux buttons, and no clamp, zoom or pan.
 
-`MfdMapScreen_Paint` (`004405e4`), every frame the screen is up:
+`MfdMapScreen_Ctor` (`00440494`), (screen, inset rect), allocates nothing itself: it runs `MFDisplay_Ctor`, stores `MFDNavMapVtable` (`0049c4be`) and copies the rect to `+0x18`–`+0x24`. It builds at `+0x10` a `0x239`-byte `GLViewport`, its origin `+0x220`/`+0x224` at −((*x1* − *x0*) >> 1), −((*y1* − *y0*) >> 1), so the map's center is 97, 60 device pixels into the inset on every retail herc, and its clip mode `+0x208` 1; and at `+0x14` a `0x22`-byte view, `View_Ctor`(view, the viewport, perspective shift 8, near plane `0x100`, position (0, 0, 0), angles `MfdMapScreen_ViewAngles` (`0049c454`)), which stores the viewport at `+0x16`, the shift at `+0x1a` and the near plane at `+0x1e`. `MfdMapScreen_StaticInit` (`004407f0`) sets those angles to {`0xc000`, 0, 0}, a pitch straight down. The constructor puts back the render context it found. The object is `0x28` bytes.
 
-1. Floods the rect with `COLORS.DAT` id 19, which is why no screen chrome is blitted for this mode.
-2. Centres the projection on the viewing machine (`obj+0x26`, `+0x2a`) at a fixed scale of `200000` — 8.8 fixed, about 781 world units or 4.7 m per device pixel. Projection is the command display's, [`heads-down-display.md`](heads-down-display.md#the-maps-frame-of-reference); there is no clamp, zoom or pan.
-3. `HddMap_DrawTerrain(obj+0x10)` — the command display's raster, [`heads-down-display.md`](heads-down-display.md#terrain-raster), turned by the machine's heading where the command display passes 0.
-4. A cross in `COLORS.DAT` id 16: two `Raster_DrawLine` (`004838f8`) calls, `(-1, 0)-(1, 0)` and `(0, -1)-(0, 1)` shifted by `VideoMode_X/YCoordShift`, through the target's origin.
+The table's paint slot `+0` is `MfdMapScreen_PaintNoOp` (`004405dc`), an empty body; the map is drawn by its update slot `+4`, `MfdMapScreen_Paint` (`004405e4`), (screen), every frame the screen is up ([paint order](#paint-order)):
 
-No grid, border or markers.
+1. While the view manager's view-change flag is set (`CockpitViewManagerPublished` `+0x1c`, [the view manager](cockpit-views.md#object-model)), it returns at once.
+2. It floods the screen's rect (`+4`) with `COLORS.DAT` id 19, the brush {0, color} at the installed render context's `+0x22c`, which is why no screen chrome is blitted for this mode.
+3. It sets the viewport's rect `+0x210`–`+0x21c` to the screen's rect less that context's origin `+0x220`/`+0x224`, copies the context's clip block (`0x81` dwords from `+4`) and its clip mode `+0x208` over the viewport's, and installs the viewport with `Raster_InstallRenderContext`.
+4. It puts the view over the cockpit's machine (`CockpitViewInstance` `+0x203`): position `+4`–`+0xc` = the machine's `+0x26`, `+0x2a` and 200000; angles `+0x10`–`+0x14` = the first `int16` of `MfdMapScreen_ViewAngles`, 0 and 0. It clears the viewport's translation flag `+0x20c` and installs the view's projection with `Raster_InstallViewProjection`. A camera straight overhead at a height of 200000 with a focal length of 2⁸ = 256 maps about 781 world units, 4.7 m, to a device pixel, which is the command display's projection ([the map's frame of reference](heads-down-display.md#the-maps-frame-of-reference)). It also calls `View_GetActiveObject` and does not use the result.
+5. `HddMap_DrawTerrain`(the machine's `int16` heading `+0x10`) blits the command display's terrain raster turned by that angle ([terrain raster](heads-down-display.md#terrain-raster)); the command display passes 0.
+6. It sets the viewport's translation flag `+0x20c`, installs the pen {0, `COLORS.DAT` id 16} at its `+0x228`, and draws two lines with `Raster_DrawLine` (`004838f8`), (−(1 ≪ `VideoMode_XCoordShift`), 0)–(1 ≪ `VideoMode_XCoordShift`, 0) and (0, −(1 ≪ `VideoMode_YCoordShift`))–(0, 1 ≪ `VideoMode_YCoordShift`): a cross through the viewport's origin, each line five device pixels long in the 640-wide modes.
+7. It reinstalls the render context it found and copies the screen's rect to the display with `Widget_DrawToCockpit`(1, rect, 0).
 
 **Heading up.** The turn is a positive binary angle in screen space, clockwise on a screen whose y runs down. A heading counts the other way — a machine moves along `(-sin h, cos h)` — so turning the picture by the heading puts the nose at the top.
 
@@ -376,7 +401,8 @@ The `mfd_dmg` bank is the screen's sensor-dropout wipe, played over the inset at
 - **Deferred:** `MfdMissileViewScreen_BlinkLockLabel` (`004403bc`), which toggles the MISSILE CAM screen's `+0x44` with coarse-tick bit `0x20` and repaints label 3 in `CPYLW` on id 9 or id 19 to match — the paint's lock blink, latched in a byte. `es2_xref.py` finds no branch to it and no stored pointer.
 - **Deferred:** what the label `MfdDisplay_Ctor` builds once per process into `0049cbd0` is for — centred over the inset rect, zero margins, plate `COLORS.DAT` id 19 (`004d3c26`). `es2_xref.py 0049cbd0` finds four references, all in the constructor.
 - **Deferred:** a reader of `STRINGS0.STR` group 10's array (`004d1440`). `es2_xref.py 004d1440` finds only `SimStrings_LoadAll` (`0043766a`), and the disassembly holds no operand in `004d1440`-`004d1453`; an access through a neighbouring group's base would show in neither.
-- **Deferred:** a caller of `FUN_0043fa14` or `FUN_0043f9f4`, the FLASH COMM row-state helpers. `es2_xref.py` reports both UNREFERENCED with no late function start nearby, and the only writes to the row state bytes found over `0043f000`-`00447fff` (`es2_fieldscan.py 2c` plus a disassembly grep for indexed byte writes) are the constructor's clear, `MfdFlashComm_ToggleRowVariant`'s `XOR` and these two. Without a caller no row draws in `CPOFF`.
+- **Deferred:** a caller of `MfdFlashComm_DisableRow` (`0043fa14`) or `MfdFlashComm_ResetRow` (`0043f9f4`), the FLASH COMM row-state helpers. `es2_xref.py` reports both UNREFERENCED with no late function start nearby, and the only writes to the row state bytes found over `0043f000`-`00447fff` (`es2_fieldscan.py 2c` plus a disassembly grep for indexed byte writes) are the constructor's clear, `MfdFlashComm_ToggleRowVariant`'s `XOR` and these two. Without a caller no row draws in `CPOFF`.
 - **Deferred:** what label 2 of the MISSILE CAM screen (`+0x3b`) shows. `es2_fieldscan.py 3b` over `0043facc`-`00440500` finds only the constructor's re-font, against two paint reads of label 1 (`+0x37`) as control.
 - **Deferred:** a writer of `mech+0xb0` other than `Mech_DirectFireHitTest` (`00418dc7`, set) and `Mech_PerTickSystemsUpdate` (`0041ab25`, clear). `es2_fieldscan.py b0 --writes-only` over `00400000`-`004a0000` finds no other on a mech (the rest are widget dirty flags and the `004d2540` video block), and no `memset`, `memcpy` or `REP MOVS` onto a mech was found. A writer that reaches a machine the player is not piloting would let a HERC on F5 read `SHIELDS DN`.
 - **Deferred:** what the 100 a TARGET press writes to the SCANNER screen's `+0xc` does. `es2_fieldscan.py c` over `0043a2e0`-`00440a00` finds the status screen's read of its own `+0xc` in `MfdStatusScreen_Update` and no read of the SCANNER screen's: both `+0xc` reads in its update and paint are of the shared state block, through `+0x8`.
+- **Open:** a caller of `Label_SetRectAroundPoint` (`004387d0`) or `Label_SetNumber` (`00438a40`): `es2_xref.py` finds no branch to either and no stored pointer.

@@ -7,18 +7,22 @@ namespace Herculan.Engine.View;
 /// The cockpit's damage shake — what a hit on the player's own cockpit, or the landing at the bottom
 /// of a long slide, does to the view for <c>0x3c</c> coarse ticks (0.96 s).
 ///
-/// <para><b>It is the projection centre again</b>, the same mechanism as
-/// <see cref="CockpitViewKick"/> and not a camera move: <c>CockpitView_SetShakeBand</c>
-/// (<c>0042d2f8</c>) seeds a vertical band at the resting view offset and
-/// <c>CockpitView_StepShake</c> (<c>0042d4a8</c>) walks the offset inside it once a frame. The
-/// derivation is in docs/retail/rendering/cockpit-canopy-palette.md, "The damage shake".</para>
+/// <para><b>It moves the display window over the cockpit canvas</b>, as the heads-down pan does, not
+/// the camera: <c>CockpitView_SetShakeBand</c> (<c>0042d2f8</c>) seeds a vertical band at the window's
+/// resting origin and <c>CockpitView_StepShake</c> (<c>0042d4a8</c>) walks the origin inside it once a
+/// frame, carrying the canopy, the instruments and the world's projection with it, so the whole picture
+/// jitters as one. <see cref="Cockpit.CockpitView.WindowOffsetRows"/> is where this offset meets the
+/// pan's. The step kick (<see cref="CockpitViewKick"/>) is the other mechanism: it moves only the
+/// projection centre, behind a cockpit that holds still. The derivation is in
+/// docs/retail/rendering/cockpit-canopy-palette.md, "The damage shake".</para>
 ///
 /// <para><b>The walk never settles, and it never reaches the band's limits.</b> Each step moves
 /// toward whichever of the two limits is <i>farther</i> away, and which one that is flips at the
 /// middle — so the walk reverses on every crossing, and moving outward requires already being on the
-/// near side. With <see cref="BandPixels"/> and steps of 0-4 the offset starts at the low limit and
-/// thereafter ranges over 1 to 8: the band is wider than the excursion it produces, which is why
-/// reading the amplitude as the travel overstates the effect.</para>
+/// near side. With <see cref="BandPixels"/> and steps of 0-4 the offset starts at the limit at the
+/// window's rest and thereafter ranges over 1 to 8 rows from it (1 to 9 in the Heads-Down Display, see
+/// <see cref="StepBand"/>): the band is wider than the excursion it produces, which is why reading the
+/// amplitude as the travel overstates the effect.</para>
 ///
 /// <para><b>The palette flash runs beside it.</b> The original swaps the whole live palette to the
 /// theater's <c>IMPACT&lt;n&gt;.DPL</c> — a heavy red shift of the theater's own — and alternates the
@@ -38,8 +42,11 @@ namespace Herculan.Engine.View;
 /// <see cref="Settings.TweakSettingDefinitions.FlashThroughSecondHit"/> tweak, under which the flash
 /// carries on from either phase.</para>
 ///
-/// <para>The original's view slides can also re-seed a disarmed band, which this class has no
-/// counterpart for. See docs/retail/rendering/cockpit-canopy-palette.md, "The damage shake".</para>
+/// <para>Three parts of the original have no counterpart here. A view change clears a running band
+/// (<c>CockpitView_ApplyViewState</c>), where this one carries on through a heads-down pan; a finished
+/// view slide can re-seed a disarmed band; and each step also pulls the 3D rect's right edge in by the
+/// step, besides its bottom, which the cockpit's layout does not follow. See
+/// docs/retail/rendering/cockpit-canopy-palette.md, "The damage shake".</para>
 /// </summary>
 public sealed class CockpitHitShake {
 	/// <summary>
@@ -88,18 +95,25 @@ public sealed class CockpitHitShake {
 	private bool _swapPartnerIsImpact;
 
 	private bool _banded;
+	private bool _bandAboveRest;
 	private int _offset;
 
 	private int _lastHits;
 
 	/// <summary>
-	/// This shake's current offset, in the art's device pixels. <b>It is added to the projection
-	/// centre</b>, where <see cref="CockpitViewKick.OffsetPixels"/> is subtracted from it: the shake
-	/// drives the view offset the original installs directly, and the kick drives the render target's
-	/// own centre offset, which the projection install subtracts. Both sign conventions are the
-	/// original's, and the two effects are live at the same time.
+	/// How far this shake has walked the display window from its rest, in the canvas's device rows,
+	/// positive down the canvas (the picture moves up), 0 when no band is armed. It is positive in the
+	/// forward view and the glances and negative in the Heads-Down Display, where the band lies on the
+	/// other side of the rest. <see cref="Cockpit.CockpitView.WindowOffsetRows"/> adds it to the pan's.
+	/// The step kick is live at the same time, on the projection centre alone.
 	/// </summary>
 	public int OffsetPixels => _banded ? _offset : 0;
+
+	/// <summary>
+	/// Whether the cockpit is showing the Heads-Down Display, the original's view 1, which the host sets
+	/// each frame; a band seeded while it is set lies above the window's rest rather than below.
+	/// </summary>
+	public bool HeadsDownView { get; set; }
 
 	/// <summary>
 	/// Whether the scene and the canopy draw through the theater's impact palette this frame. It
@@ -212,11 +226,14 @@ public sealed class CockpitHitShake {
 	}
 
 	/// <summary>
-	/// <c>CockpitView_SetShakeBand</c>'s tail, for the forward cockpit view: the band runs from the
-	/// resting offset to <see cref="BandPixels"/> past it, and the walk starts at the resting end.
+	/// <c>CockpitView_SetShakeBand</c>'s tail: the band runs <see cref="BandPixels"/> from the window's
+	/// rest, down the canvas in the forward view and the glances and up it in the Heads-Down Display
+	/// (<see cref="HeadsDownView"/>), and the walk starts at the rest. Which side it lies on is fixed
+	/// here, as the original stores the two limits.
 	/// </summary>
 	private void SetBand() {
 		_banded = true;
+		_bandAboveRest = HeadsDownView;
 		_offset = 0;
 	}
 
@@ -232,21 +249,24 @@ public sealed class CockpitHitShake {
 	/// <summary>
 	/// <c>CockpitView_StepShake</c>'s arithmetic: move toward the farther limit by up to
 	/// <paramref name="step"/>, and no farther than that limit. Landing exactly on a limit is what
-	/// turns the walk round, since the other one is then the farther of the two.
+	/// turns the walk round, since the other one is then the farther of the two. At the middle the two
+	/// are equally far and the step goes toward the lower limit, whichever side of the rest the band
+	/// lies on, so the two walks are not mirror images: one reaches 8 rows down the canvas from the rest,
+	/// the other 9 rows up it.
 	/// </summary>
 	private void StepBand(int step) {
 		if (!_banded) {
 			return;
 		}
 
-		int belowTop = BandPixels - _offset;
-		int aboveBottom = _offset;
+		int lower = _bandAboveRest ? -BandPixels : 0;
+		int upper = lower + BandPixels;
+		int fromLower = _offset - lower;
+		int toUpper = upper - _offset;
 
-		int delta = aboveBottom < belowTop
-			? Math.Min(step, belowTop)
-			: -Math.Min(step, aboveBottom);
-
-		_offset += delta;
+		_offset += fromLower < toUpper
+			? Math.Min(step, toUpper)
+			: -Math.Min(step, fromLower);
 	}
 
 	/// <summary>The next flash interval — <c>rand() % 10</c> coarse ticks, so 0 to 144 ms.</summary>

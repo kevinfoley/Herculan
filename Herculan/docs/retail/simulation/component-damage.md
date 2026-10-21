@@ -68,7 +68,7 @@ The names of the slots are [the file's](../formats/dmg-damage-file.md#the-two-in
 | `0x2e` | `ENEMY TARGET DESTROYED` | the death gate, on the shared predicate below |
 | `0x2f` | `ENEMY TARGET DISABLED` | the leg branch's immobilise, on that same predicate |
 
-`0x15` `SHIELDS CRITICAL` belongs to the same family from one function further out: `Mech_DirectFireHitTest` posts it where it sets `mech+0xb0` (`00418dc7`), on the first shot to land on the player's own machine with under 500 points of charge left across both facings.
+`0x15` `SHIELDS CRITICAL` belongs to the same family from one function further out: `Mech_DirectFireHitTest` posts it where it sets `mech+0xb0` (`00418dc7`), on the first shot to get through the player's own machine's shields with under 500 points of charge left across both facings; a shot the struck facing absorbs whole skips the test.
 
 **Four of the five latch bytes are one-shots that are never cleared** — `+0xa8`/`+0xa9`/`+0xaa`/`+0xab`, each written `1` exactly once, in `Mech_ComponentDamageWrite`. They are why a machine that keeps taking hits in the same band does not repeat itself, and they are separate from `MessagePort_Show`'s own 4.8 s swallow of a repeated id ([`cockpit-messages.md`](cockpit-messages.md)), which would not be enough on its own. All four are load-bearing elsewhere as well: `+0xa8`/`+0xa9` are the two speed penalties ([`mech-locomotion.md`](mech-locomotion.md)) and `+0xaa`/`+0xab` the reactor's grades, which cut speed too; the reactor output they also grade is fixed before either can be set ([`reactor-energy-pool.md`](reactor-energy-pool.md#reactor-output-rate--mech_computereactorrate-00417d08)).
 
@@ -163,6 +163,21 @@ A mount's share is taken against its armour plus the maximum of internal 12 + *n
 
 The arrays are written directly, not through `Mech_ComponentDamageWrite`, so nothing reacts to the condition at spawn. The shield array `Mech_ConfigureLoadout` has just sized for a pristine machine stands until the first write recomputes it ([`damage-system.md`](damage-system.md#the-shield-system)), the reactor keeps its pristine rate for the mission ([`reactor-energy-pool.md`](reactor-energy-pool.md#reactor-output-rate--mech_computereactorrate-00417d08)), and the speed latches stay clear until a write grades the legs and the reactor, so a squad machine with worn servos walks at full speed until it is next hit.
 
+### The damage readouts — `Component_FillDamageReadouts` (`004151a4`)
+
+The buffer the damage screens ([`mfd.md`](mfd.md)) and the results file ([the status blocks](mission-objectives.md#what-the-mission-leaves-the-shell--mission_writeresults-0042412c)) read: one `int16` reading per entry, each a Q8 damage fraction where 0 is pristine and `0x100` gone, read off the two damage arrays entry by entry. `(header, buffer)`, the header the machine's `+0x206`:
+
+| Entries | Reading |
+|---|---|
+| 0 | not written |
+| 1–19 | components 0–18: `(damage << 8) / armour`, `0x100` for an entry holding `-1` |
+| 20–31 | the twelve internals 0–11 on their own: 0 for an internal whose maximum is 0, `0x100` for `-1`, otherwise `(damage << 8) / maximum` |
+| 32–41 | the ten mounts, component 19 + *n* together with internal 12 + *n*: `((damage + internal damage) << 8) / (armour + internal maximum)`, each `-1` entry counted at its maximum |
+
+Each division is signed.
+
+**One entry — `Component_ReadEntryDamage` (`004152ec`)**, `(header, kind, index)`: kind 0 internal *index* against its maximum, kind 1 component *index* against its armour, kind 2 component *index* + 19 against component *index*'s armour; `(damage << 8) / maximum`, or `0x100` for a `-1` entry or a zero maximum.
+
 ### What a wreck is worth — `Mech_SalvageValue` (`00418e60`)
 
 What the player's side takes home. `Mission_TotalSalvage` (`00423e88`) sums this function at the end of the run over every machine that is on the other side from the player's and is destroyed (`+0x99`) or immobilised (`+0xa4`); what the total becomes is [`mission-objectives.md`](mission-objectives.md#what-the-mission-leaves-the-shell--mission_writeresults-0042412c)'s.
@@ -171,7 +186,7 @@ Per machine, in order:
 
 1. **`mech+0xb3` short-circuits it to zero.** A machine the mission placed already broken — the two worst starting-condition grades above — is worth nothing, so a mission cannot be farmed by authoring derelicts into it.
 2. **Each surviving hardpoint is queued.** For every mount whose component is under `0x80` damage, `Salvage_QueueWeapon` (`00426ac8`) takes `{template+0x56, (0x100 - damage) * 100 >> 8}` — the weapon's catalog id and its condition as a percentage. This is the same list the mount-destruction path appends to ([the destruction roll](weapon-mounts.md#the-chance-path--the-destruction-roll)), and the results carry it to the shell as salvage pairs. The list is `Mem_NewArray(200)` (`004773e4`, at `0042530d`), room for 50 four-byte pairs, and the append checks nothing. `Mem_NewArray` allocates 8 bytes more than it is asked for, so pairs 51 and 52 land in that slack; pair 53 is the first that can write past the block ([Open](#open)). Campaign missions field far more mounts than that on the side opposite the player's: 18 of the 50 can load with more than 52, and `C4_07.MSN` with up to 99, so a player who puts most of such a mission's opposition out of the fight without stripping its guns runs the list past its end.
-3. **The chassis itself** is `Q10(Mech_WeightedArmorRemaining(mech), typeRec+0x54)`, and `typeRec+0x54` is **halved when component 0 is at full damage** — a chassis blown apart is worth half one merely stopped. `Mech_WeightedArmorRemaining` (`0041537c`) sums `(maxArmor - damage) * weight / maxArmor` over the live components, against the weight table at `00499fe0`; `maxArmor` is the component's own `.DMG` record and a component at or past 150 damage contributes nothing.
+3. **The chassis itself** is `Q10(Mech_WeightedArmorRemaining(mech), typeRec+0x54)`, and `typeRec+0x54` is **halved when component 0 is at full damage** — a chassis blown apart is worth half one merely stopped. `Mech_WeightedArmorRemaining` (`0041537c`) sums `(maximum - damage) * weight / maximum` over components 0–18 whose occupancy flag is set, against their armour and the weights at `00499fe0` (3000, 3000, 1000, 1000, 2000, 2000, 1000, 2000, 2000, 1000, 1000, 500, 500, 2000, 2000, 1000, 1000, 500, 500), and over internals 0–11 whose maximum is not 0, against that maximum and the weights at `0049a006` (1500, 1500, 0, 0, 1000, 3000, 1000, 1000, 1000, 0, 1500, 1500). An entry holding `-1`, or 150 damage or more, contributes nothing.
 
 So a machine pays for what survived, not for what was wrecked, and its guns pay separately by how intact each one is.
 

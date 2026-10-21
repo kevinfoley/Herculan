@@ -180,6 +180,20 @@ public sealed class AnimSequence {
 	/// </summary>
 	public int PreviousFrame(int frame) =>
 		frame != 0 ? frame - 1 : Cyclic ? FrameCount - 1 : 0;
+
+	/// <summary>
+	/// Whether playback landing on <paramref name="frame"/> at <paramref name="offset"/> still runs
+	/// into <paramref name="target"/> rather than past it — vtable <c>+0x28</c> forward and
+	/// <c>+0x2c</c> backward: <c>ANSequence_FrameShortOfTarget</c> (<c>00478680</c>) and
+	/// <c>ANSequence_FrameShortOfTargetBackward</c> (<c>004786ac</c>) for a plain sequence, and for a
+	/// cyclic one <c>ANCyclicSequence_FrameShortOfTarget_Always</c> (<c>00478714</c>) and its
+	/// backward twin (<c>00478720</c>), which answer yes, since a loop reaches every frame. See
+	/// docs/retail/rendering/dts-node-posing.md, "Cyclic and one-shot sequences".
+	/// </summary>
+	public bool FrameShortOfTarget(int frame, int target, int offset, bool backward) =>
+		Cyclic
+		|| (backward ? frame > target : frame < target)
+		|| (frame == target && offset == 0);
 }
 
 /// <summary>

@@ -519,7 +519,7 @@ public static partial class DtsMeshBuilder {
 	/// <c>MechType_BindHardpointSlots</c> (<c>0040304c</c>), which resolves each id to the address of the shape's part slot holding
 	/// the part with that id. The mech's own draw (<c>Mech_Draw</c> (<c>004174c8</c>), mech vtable <c>+0</c>) then
 	/// runs <c>Mech_SpliceHardpointShapes</c> (<c>004030d0</c>) before rendering anything, replacing each slot's contents with either
-	/// the fitted mount's weapon shape or a blank record from <c>typeRec+0xec</c>, inheriting the
+	/// the fitted mount itself, drawn through its own render, or a blank record from <c>typeRec+0xec</c>, inheriting the
 	/// placeholder's node transform and id. Empty or fitted, the shipped geometry is always
 	/// overwritten.</para>
 	///

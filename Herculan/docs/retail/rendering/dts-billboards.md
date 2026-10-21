@@ -8,7 +8,7 @@ Which `.DBA` a sprite resolves against is the shape instance's own bound bank, t
 
 ## Class identification
 
-Via DBSIM's `g_TSObjectTypeRegistry` (`004a63c8`), not resemblance:
+Via DBSIM's [type registry](../formats/dts-shape.md#chunk-tags), not resemblance:
 
 | Tag | Type | Constructor | Vtable | Render (`+0x1c`) |
 |---|---|---|---|---|
@@ -22,13 +22,13 @@ child = children[ cellFrames[animSequence] % childCount ];
 child->vtable[+0x1c]();
 ```
 
-**One child per frame, not a container.** `cellFrames` is the drawing shape instance's own per-sequence `ushort` array, published to the global `DAT_006b7bf0` by whatever installs the instance for drawing. Walking every child the way a `TSPartList` is walked stacks the whole animation on top of itself.
+**One child per frame, not a container.** `cellFrames` is the drawing shape instance's own per-sequence `ushort` array, published to the global `DAT_006b7bf0` by the shape render that draws it ([Drawing a shape](dts-node-posing.md#drawing-a-shape)). Walking every child the way a `TSPartList` is walked stacks the whole animation on top of itself.
 
 **Children need not be bitmaps.** `BULLETS.DTS` root 8 (plasma) is a two-cell animation over real `TSGroup` geometry, and both `ROCKETS.DTS` roots animate their exhaust flame the same way — that file holds no `TSBitmapPart` at all (see [`../formats/rockets-dat.md`](../formats/rockets-dat.md#dtsrocketsdts)). `animSequence` (`part+0x16`, the label `TSCellAnimPart_DebugPrint` prints it under) picks which entry of `cellFrames` the part reads; a projectile's own tick names the same sequence in its type record and mods the counter by `TSShape.SequenceList[seq]`, the shape's per-sequence frame count at `shape+0x20`.
 
 ## `TSBitmapPart_Render` (`004762e8`)
 
-The bitmap tag (`part+0x10`) indexes the bound bank directly. The rest is a screen-space blit of a rotated, scaled quad, built from four things:
+The bitmap tag (`part+0x10`) indexes the bound bank directly. Nothing is drawn when the bank's entry is null, when the part's centre in view space is not beyond the near plane, or when the centre after the perspective divide has an x or a y outside −1000 to 1000. The rest is a screen-space blit of a rotated, scaled quad, built from four things:
 
 **Scale.** `scale = (radius * 4 << focalShift) / depth`, where `radius` is `TSBasePart.Radius` and `depth` is the part's centre in view space. Every dimension below is `Math_Q8Multiply`'d by it. Since the projection maps a view-plane length `L` at depth `D` to `(L << focalShift) / D` pixels, the projection constant cancels: **one bitmap pixel spans `radius / 64` world units**, whatever the field of view is.
 

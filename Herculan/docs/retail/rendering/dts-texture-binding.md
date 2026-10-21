@@ -105,7 +105,7 @@ Every `dts\*.DTS` with a matching `dat\*.DAT`, 22 mechs:
 
 ## Poly types and their colour mechanisms (DBSIM.EXE)
 
-DBSIM's DTS type registry (`g_TSObjectTypeRegistry`, `004a63c8` — 12-byte `{tag, ctor, name}` entries keyed by the on-disk chunk marker) identifies a shape object's class by construction. Use it, not structural resemblance to VSHELL's renderers.
+DBSIM's [DTS type registry](../formats/dts-shape.md#chunk-tags) identifies a shape object's class by construction. Use it, not structural resemblance to VSHELL's renderers.
 
 | Tag | Type | Vtable | Render (`+0x1c`) | Surface value means |
 |---|---|---|---|---|
@@ -247,18 +247,9 @@ When `maybe_g_DepthBufferEnabled` (`0049f270`) is non-zero, `Raster_SetupTexture
 
 `DepthBuffer_Alloc` (`0048b960`) allocates the buffer as width × height zeroed dwords and records the two sizes. `DepthBuffer_ClearWrappedRows` (`0048b7f0`) sets to `0xffffffff` every row whose `(row + g_DepthBufferFrameTag) & 0xff` is 0 and then decrements the tag, so with one clear per frame each row's tag byte falls by one a frame and a row is reset once every 256 frames rather than every frame. Whether anything calls them is [Open](#open).
 
-### The projection, clip and fill chain (DBSIM)
+### The projection, clip and fill chain
 
-A flat poly is drawn in three steps: project the face's vertices to screen points, clip the ring against the near plane if a vertex fell behind it, and fill the result. The face arrives in globals: `DAT_006c6968` the vertex count, `DAT_006c696a` the offset into the vertex-index list `DAT_006c6976`, and the per-point state byte `DAT_006c697e` (0 untouched, 1 behind the near plane, 2 projected) that memoises a vertex shared between faces. The screen points come out in `Poly_ScreenPoints` (`006cbb86`), count `DAT_006cbc86`.
-
-| Function | Does |
-|---|---|
-| `Poly_ProjectShapeVertices` (`0048c848`) | Projects over the group's 6-byte `int16` point triples at `DAT_006c696c`. Called by `TSSolidPoly_Render`, `TSShadedPoly_Render` and `TSTexture4Poly_Render` |
-| `Poly_ProjectIndexedVertices` (`0048c964`) | The same over 12-byte `int32` points at `DAT_006c6970`; returns non-zero when any vertex fell behind the near plane. Called by `BeamTracer_Draw` and by `TexPoly_Render` (`0042ff2d`) |
-| `Poly_ClipRingToNearPlane` (`0048ce14`) | Run only when a vertex fell behind the plane: clips the ring and rebuilds the screen-point list. Called by `TSSolidPoly_Render`, `TSShadedPoly_Render` and `BeamTracer_Draw`, among others |
-| `PolyFill_Fill` (`0048d4b4`) | Fills the screen polygon through `Raster_DrawPolygonEitherWinding`, then runs `PolyFill_FillThenOutline`'s outline pass without its mode-5 guard |
-
-Both fills' outline pass is gated on the default brush (`DAT_006c60d4 != DAT_006c60dc`) and writes that brush, so a caller that installed its own brush on the context, as the beam draw does, gets an identical flat redraw instead of an outline.
+`TSSolidPoly_Render`, `TSShadedPoly_Render` and `TSTexture4Poly_Render` project a poly's corners with `Poly_ProjectShapeVertices` (`0048c848`), and `BeamTracer_Draw` and `TexPoly_Render` (`0042ff2d`) theirs with `Poly_ProjectIndexedVertices` (`0048c964`). The ring is clipped with `Poly_ClipRingToNearPlane` (`0048ce14`) when one fell behind the near plane, and filled with `PolyFill_FillThenOutline` (`0048d518`); [`view-transform-and-projection.md`](view-transform-and-projection.md#projecting-and-clipping-a-polygon) has the chain and the globals it runs on.
 
 ### Shaded-poly surface values are ramp numbers
 
@@ -305,7 +296,7 @@ so a normal derived from the corner order is the negation of the one the file ca
 
 ### `TSPoly_FrontBackVisibilityTest`
 
-Per **poly**, not per pixel. Takes the poly's own stored normal and centre points and answers "front" for a positive result: with a perspective focal shift it returns `dot(normal, eyeInModelSpace − centre)`, and with a shift of 0 it returns 1 when the normal, rotated into view space, has negative depth. DBSIM's copy is `0048c620`, VSHELL's `0045e480`. When it answers "back", the renderer negates *all* of that poly's normals before lighting them and takes the back surface pair instead of the front ([above](#poly-types-and-their-colour-mechanisms-dbsimexe)).
+Per **poly**, not per pixel. Takes the poly's own stored normal and centre points and answers "front" for a positive result: with a perspective focal shift it returns `dot(normal, eyeInModelSpace − centre)`, and with a shift of 0 it returns 1 when the normal, rotated into view space, has negative depth. DBSIM's copy is `0048c620`, VSHELL's `0045e480`; `Raster_FrontFacing` (`0048c738`) is the same test with the centre an `int32` point. When it answers "back", the renderer negates *all* of that poly's normals before lighting them and takes the back surface pair instead of the front ([above](#poly-types-and-their-colour-mechanisms-dbsimexe)).
 
 A result of zero is "back", which is every answer a poly with a zero stored normal gets: 175 of the 261 retail line polys and 9 of the 80 point polys carry `(0, 0, 0)`, all of them drawing alike from both sides.
 

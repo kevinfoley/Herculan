@@ -58,20 +58,44 @@ The window reaches the 3D world too, because the world draws through the same li
 
 ### Palette module
 
+**One palette is live at a time; the module records which of its entries have changed since the screen last took them, and on top of that runs per-range color cycling and timed fades between two palettes.**
+
 | Symbol | Address | Role |
 |---|---|---|
-| `ActivePaletteObject` | `0049b020` | Live palette; `+8` = entry array. `0049b024` last uploaded, `0049b028`/`0x2c`/`0x30` dirty min/max/valid. |
+| `ActivePaletteObject` | `0049b020` | Live palette: `+4` its entry count (`int16`), `+8` its entries, a dword each, bytes 0–2 red, green and blue in 6 bits. `0049b024` is the palette last uploaded, `0049b028`/`0x2c`/`0x30` the dirty range's first and last entry and its valid flag. |
+| `Palette_LoadResources`, `Palette_RegisterSubsystem` | `0043034c`, `00430e90` | Allocate `g_ShadeRamps` at subsystem phase 2 and clear the five cycle slots. |
 | `Palette_LoadAndActivate` | `00430394` | Load a `.DPL` and make it active. |
-| `Palette_SetActive` | `004303b0` | Swap active object, return previous. |
-| `Palette_InstallRange` | `004303c4` | Copy `count` entries to `baseIndex`, extend dirty range. |
-| `Palette_ReadRange` | `00430440` | Inverse of the above. |
-| `Palette_GetEntry` | `00430474` | Single entry. |
-| `Palette_FlushDirtyRange` | `0043048c` | Upload dirty range; whole palette if the active object changed. |
-| `Palette_CycleAnimatedRanges` | `004306ac` | 5 slots of per-frame sub-range rotation, keyed off `Time_GetCoarseTicks`. |
-| `Palette_InterpolateColours` | `004307b0` | Interpolate colour pairs across N steps. |
+| `Palette_SetActive` | `004303b0` | Make a palette the active one and return the previous one. |
+| `Palette_InstallRange` | `004303c4` | `(base, count, source)`: copy `count` entries into the active palette from `base` and widen the dirty range over them, starting it afresh when its flag is clear. |
+| `Palette_ReadRange`, `Palette_GetEntry` | `00430440`, `00430474` | Copy `count` entries of the active palette out from an index; return one entry. `es2_xref.py` finds no caller of either ([Open](#open)). |
+| `Palette_FlushDirtyRange` | `0043048c` | [The upload](#the-upload). |
+| `PaletteCycle_Register`, `PaletteCycle_Unregister`, `Palette_CycleAnimatedRanges` | `00430638`, `00430688`, `004306ac` | [Color cycling](#color-cycling). |
+| `Palette_SetRampsToRange`, `Palette_SetRampsToRangeList`, `Palette_ReadShadeRampRanges` | `00430518`, `00430590`, `004304dc` | Re-point records of `g_ShadeRamps` (`0049b034`) at palette index ranges, the mechanism of the [distance color bands](distance-fog-and-sky.md#distance-colour-bands--worldshades_applyforobject-0042e8e8), and read them back. |
+| `Palette_InterpolateColours` | `004307b0` | [Interpolating colors](#interpolating-colors). |
 | `Palette_BeginCrossFade` | `004308fc` | Precompute 8.8 per-channel deltas between two palette objects over a duration in coarse ticks; either may be null (fade to/from black). |
 | `Palette_StepCrossFade` | `00430b34` | Write the fade's colours for the time elapsed since its first call; returns the coarse ticks remaining. |
 | `Palette_InterpolateIndexRanges` | `00430d08` | Interpolates index *ranges*, not colours — terrain shading only, driven from `WORLD<n>.WLD`. |
+
+#### The upload
+
+`Palette_FlushDirtyRange`, which `es2_xref.py` finds called twice from `Sim_EndFrame`, from `CockpitViewManager_LoadViews` and twice from `Sim_InitMissionSession`, hands the screen the active palette. When the active palette is not the one last uploaded (`0049b024`) it uploads it whole, ramps included, and records it as the last uploaded; otherwise, when the dirty flag is set, it hands all 256 of its entries to the screen palette, the dirty range itself unread. It then clears the dirty range and its flag.
+
+#### Color cycling
+
+`PaletteCycle_Register` puts a record `{int16 first, int16 count, int16 delay}` in the first empty slot of five (`004cfde8`), its due time at now + delay coarse ticks (`004cfdfc`) and its offset at 0 (`004cfe10`), and returns 1, or 0 when all five are full; `PaletteCycle_Unregister` empties the first slot holding the record, and `es2_xref.py` finds no caller of it. `Palette_CycleAnimatedRanges`, which `Sim_EndFrame` calls, takes `Time_GetCoarseTicks` as now, and for each filled slot whose due time is before now:
+
+```
+for i in 0 .. count-1:  buffer[i] = palette[first + (offset + i) mod count]     the live palette
+Palette_InstallRange(first, count, buffer)
+offset = offset + 1;  if offset == count: offset = 0
+due    = now + delay
+```
+
+Each step reads the entries the step before rewrote, so successive steps turn the range by 0, 1, 2, … entries, the turn wrapping at the range's length, rather than by one entry each.
+
+#### Interpolating colors
+
+`Palette_InterpolateColours`, given `(from, to, count, levels, out)`, writes `levels` colors to `out` for each of `count` pairs of colors: *levels* − 1 colors from *from*'s, each channel stepping by ((*to* − *from*) · 256) / (*levels* − 1) in 8.8 fixed point, the step truncated to an `int16` and the channels read as signed bytes, each color written with `0x01` in its top byte; then *to*'s dword unchanged. `es2_xref.py` finds no caller of ES2's ([Open](#open)).
 
 `Palette_BeginCrossFade` has three call sites in two functions, neither part of steady-state cockpit rendering and neither touching the secondary palette:
 
@@ -82,7 +106,7 @@ The window reaches the 3D world too, because the world draws through the same li
 
 ### The damage shake
 
-Taking a hit shakes the view and flashes the palette, for `0x3c` coarse ticks — 0.96 s. Two functions in `MECHVIEW.CPP` own it, and it is the sibling of the footfall kick below: the cockpit's per-frame pass (`CockpitView_PerFrameUpdate`) ticks the two one after the other.
+Taking a hit shakes the view and flashes the palette, for `0x3c` coarse ticks — 0.96 s. Two functions in `PANEL.CPP` ([translation units](../simulation/cockpit-views.md)) own it, and it is the sibling of the footfall kick below: the cockpit's per-frame pass (`CockpitView_PerFrameUpdate`) ticks the two one after the other.
 
 `Cockpit_StartHitShake` (`00434010`) arms it, and returns at once in view mode 4:
 
@@ -105,9 +129,9 @@ if (nextToggleTick == 0) {
 
 `Cockpit_HitShakeTick` (`0043408c`) runs it: while `endTick` is in the future it calls `CockpitView_StepShake(rand() % 5)` every frame and flips the palette each time `nextToggleTick` expires, rearming that at `now + rand() % 10`. On expiry it restores both. Mode 4 clears `endTick` outright, so leaving the cockpit ends a shake in progress.
 
-**The shake is the projection centre again, not a camera move** — the same mechanism as the step kick. `CockpitView_SetShakeBand` (`0042d2f8`) copies the resting view offset to `004cfae4`/`004cfae8` and sets two limits either side of it, `+amplitude` or `-amplitude` depending on the view mode; `CockpitView_StepShake` (`0042d4a8`) then moves the y offset toward **whichever limit is farther** by up to its step argument.
+**The shake moves the screen's window over the back buffer, not the camera, and so carries the canopy with it.** `CockpitView_SetShakeBand` (`0042d2f8`) takes the offset `004cfae4`/`004cfae8` from the window's origin (`Display_OriginX`/`Y`; the view's canvas origin on the `-b` paged path), keeps a resting copy at `004cfadc`/`004cfae0`, and sets two limits on *y*, `−amplitude` below it in view 1 and `+amplitude` above it in views 0, 2 and 3. `CockpitView_StepShake` (`0042d4a8`) then moves the *y* offset toward **whichever limit is farther** by up to its step argument and moves the window there through `g_RasterRoutines` slot 15, driver 3's `Display_SetOrigin` (`004648d4`), which ignores the page it is given, rebases the render target's pixel pointer on the point and stores it in `Display_OriginX`/`Y`. The canopy sits in the back buffer, so on screen it moves by the step. To keep the 3D cutout on it, `CockpitView_StepShake` moves the view's clip regions (a rect region's last row, a span region's first row), `ActiveScanlineClipSpans` and the render context's `+0x218`/`+0x21c`, the right and bottom of its 3D rect, by the step, and the widgets with `CockpitWidgets_TranslateForView`. It adds each step to `004cfaf4`, which `CockpitView_GetShakeOffset` (`0042d870`) returns as {0, total}; `Sim_RenderFrame` adds that pair to `Sim_RenderContext`'s `+0x220`/`+0x224`, the projection pair `Raster_InstallViewProjection` subtracts from the rect's corner, for the frame's draw and takes it out after. That is the context the world is drawn through: `Sim_InitMissionSession` (`004614fc`) builds the cockpit's view object with `View_Ctor` (`0048bc98`) and `Sim_RenderContext`, which `View_Ctor` stores at the view's `+0x16`; the view chain's camera swaps copy `+0x16` with the rest of the view; and `Raster_InstallViewProjection` reads the context there through `View_GetRenderContext` (`00495061`). So the projection centre moves with the canopy, and the canopy, the widgets and the world move on screen together, one picture shaken. `CockpitView_ClearShake` (`0042d624`) moves the window back to the resting copy and takes the total back out of the regions, the spans and the rect.
 
-**Which limit that is flips at the band's middle**, so the walk reverses every time it crosses the centre and can never settle — and, after the first step off the limit it starts on, **it never reaches either limit again**. Moving outward requires being on the near side of the middle, so the furthest reachable offset is the largest sub-middle offset plus the largest step. With the band of `5 << VideoMode_YCoordShift` the arm passes — ten device pixels in the 640-wide modes — and steps of 0-4, the offset starts at the limit and thereafter ranges over 1 to 8. **The band is wider than the excursion it produces**, which is the trap in reading the amplitude as the travel.
+**Which limit that is flips at the band's middle**, so the walk reverses every time it crosses the centre and can never settle — and, after the first step off the limit it starts on, **it never reaches either limit again**. Moving outward requires being on the near side of the middle, so the furthest reachable offset is the largest sub-middle offset plus the largest step. With the band of `5 << VideoMode_YCoordShift` the arm passes — ten device pixels in the 640-wide modes — and steps of 0-4, the offset starts at the limit and thereafter ranges over 1 to 8 from the rest. **The band is wider than the excursion it produces**, which is the trap in reading the amplitude as the travel. At the middle the two limits are equally far and the step goes toward the lower one in every view, so view 1's band, which lies below the rest, is walked outward from there, and its offset ranges over 1 to 9 below the rest.
 
 The flash is a whole-palette swap rather than a fade: `Palette_ActivateImpact` (`0042ea44`) makes the secondary palette `ImpactPaletteObject` (`0049aef8`) active and saves the previous one, `Palette_ToggleImpact` (`0042ea70`) alternates the two, and `Palette_RestoreFromImpact` (`0042ea94`) puts the original back. That object is loaded twice over: `World_LoadTheater` (`0042e010`) builds it from the theater's own `IMPACT<n>.DPL`, named in `wld\WORLD<n>.WLD` ([`../formats/wld-world.md`](../formats/wld-world.md#the-worldn-descriptor--layout)), and step 6 of the cockpit load sequence ([`../simulation/cockpit-views.md`](../simulation/cockpit-views.md#cockpitviewmanager_loadviews-sequence)) then overwrites its 24 cockpit indices from `IMPACTCP.DPL`. So a flash recolours the world and the cockpit together, each from its own source.
 
@@ -119,7 +143,7 @@ The shield meter's rings are computed rather than taken from either file. `Shiel
 
 ### The step kick
 
-Each footfall of the player's own machine bobs the view through the projection centre, as the shake does. `Mech_PlaceLegsOnGround` calls `Cockpit_StartStepKick` (`00434144`) for a locally piloted machine; outside view mode 4 it takes out any offset in progress (`CockpitView_ClearKickOffset`, `0042d854`) and restarts the curve, `StepKickStartTick` (`0049b634`) at now and `StepKickEndTick` (`0049b638`) at now + `0x3c` coarse ticks, 0.96 s. A machine stepping faster than that re-triggers it.
+Each footfall of the player's own machine bobs the view through the projection centre, where the [damage shake](#the-damage-shake) moves the screen's window. `Mech_PlaceLegsOnGround` calls `Cockpit_StartStepKick` (`00434144`) for a locally piloted machine; outside view mode 4 it takes out any offset in progress (`CockpitView_ClearKickOffset`, `0042d854`) and restarts the curve, `StepKickStartTick` (`0049b634`) at now and `StepKickEndTick` (`0049b638`) at now + `0x3c` coarse ticks, 0.96 s. A machine stepping faster than that re-triggers it.
 
 `Cockpit_StepKickTick` (`00434194`), which `CockpitView_PerFrameUpdate` runs straight after `Cockpit_HitShakeTick`, plays `StepKickCurve` (`0049b046`), ten `int16`s `1 2 3 4 5 5 4 3 2 1`, indexed `(now - start) * 10 / 0x3c`. It halves the value when `VideoMode_YCoordShift` is 0 and shifts it left by `YCoordShift - 1` otherwise, so the peak is five device pixels in the 640-wide modes. `CockpitView_SetKickOffset` (`0042d82c`) adds the value to the render context's `+0x224` after taking out the one it added last (`CockpitView_KickOffset`, `004cfd3c`), and `Raster_InstallViewProjection` subtracts that field, so the whole image slides behind a cockpit that stays put. View mode 4 or the end tick passing ends it, through `CockpitView_ClearKickOffset`. The camera node's world orientation does not move over a stride.
 
@@ -129,10 +153,12 @@ Each footfall of the player's own machine bobs the view through the projection c
 |---|---|
 | `Palette_BeginCrossFade` is the damage flash | Its call sites are the death flash and the lift start. The damage flash is a hard alternation between two whole palettes — `Palette_ActivateImpact`/`Palette_ToggleImpact` — with no fade of any kind between them |
 | `Palette_StepCrossFade` advances the fade one step per call | It interpolates by coarse ticks elapsed since its first call, so a slow frame rate jumps further per frame rather than stretching the fade — see "Palette module" |
-| The shake's amplitude is how far the view travels | The band is the limit pair the walk is bounded by, not its excursion. A step is only ever taken toward the farther limit, which reverses at the middle, so a ten-pixel band produces a one-to-eight-pixel wander — see "The damage shake" |
+| The damage shake moves the projection centre, as the step kick does | The step kick changes only the render context's `+0x224`. `CockpitView_StepShake` moves the window over the back buffer through `Display_SetOrigin`, which carries the canopy, and moves the clip regions and the 3D rect with it — see "The damage shake" |
+| The shake's amplitude is how far the view travels | The band is the limit pair the walk is bounded by, not its excursion. A step is only ever taken toward the farther limit, which reverses at the middle, so a ten-pixel band produces a one-to-eight-pixel wander, one to nine in view 1 — see "The damage shake" |
 
 ## Open
 
 - **Deferred:** what reaches the death flash, `Sim_DeathFlash`. `es2_xref.py` finds no branch, stored pointer or vtable slot holding it, and the `death1` and `death2` palettes it loads are not in the shipped data.
 - **Deferred:** no writer of `HitShakeEndTick` (`0049b0fc`) or `HitShakeNextToggleTick` (`0049b100`) found outside `Cockpit_StartHitShake` and `Cockpit_HitShakeTick`. `es2_xref.py` finds 7 and 6 absolute references, all in those two functions, and none of the `0049b0xx`-`0049b12x` addresses the image loads as a base reaches either.
 - **Open:** what the shield meter's rings show through a retail flash — whether a reading change lands while the impact palette is active often enough to keep them steady, or they drop to the impact palette's slots 66-71.
+- **Open:** what calls `Palette_ReadRange`, `Palette_GetEntry`, `PaletteCycle_Unregister` and `Palette_InterpolateColours`: `es2_xref.py` finds no branch, stored pointer or vtable slot holding any of them. ES1's simulator calls its `Palette_InterpolateColours` for the pitch gradient.

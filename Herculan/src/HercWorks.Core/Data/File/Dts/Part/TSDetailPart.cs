@@ -9,7 +9,8 @@ namespace HercWorks.Core.Data.File.Dts.Part;
 public class TSDetailPart : TSPartList {
 	/// <summary>
 	/// Projected-size thresholds, ascending and index-aligned with <see cref="TSPartList.Parts"/>:
-	/// part 0 is the coarsest. On disk they fill whatever of the chunk follows the part list.
+	/// part 0 is the coarsest. One per part, after the part list; see
+	/// docs/retail/formats/dts-shape.md, "Part chunks".
 	/// </summary>
 	public short[]? Details { get; set; }
 

@@ -155,7 +155,7 @@ A dword whose image value is 0. `es2_xref.py` finds seven accesses to it over th
 | `TargetSelect_InForwardCone` (`00433250`) | The bearing is taken from the watched object, less its heading, with no turret twist added |
 | `Player_PerFrameCockpitUpdate` (`0041b130`) | The range to the selected target, which the weapon manager's readiness gate reads ([`weapon-mounts.md`](weapon-mounts.md)), is measured from the watched object |
 | `WeaponMount_PrepareShot` (`0040e788`), two compares | For the local player, the hardpoint's bone record is copied with its last translation component lowered by 1500 (`0x5dc`) and composed with the watched object in place of the machine ([`weapon-firing.md`](weapon-firing.md)) |
-| `Flyer_DirectFireHitTest` (`00421c8c`) | The watched flyer skips the distance-against-radius prefilter that otherwise ends the test early |
+| `Flyer_DirectFireHitTest` (`00421c8c`) | The watched flyer cannot be struck: the test returns 0 before its distance-against-radius prefilter |
 | `Sim_DispatchCommand` (`0045fdac`), the default case | The command goes to `LocalPlayerMech` through vtable `+0x2c`; with the flag clear it goes to `ViewChain_Viewed`, which is the player's machine until the camera moves |
 
 ## What the external view shows

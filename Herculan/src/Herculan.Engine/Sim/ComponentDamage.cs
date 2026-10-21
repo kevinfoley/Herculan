@@ -24,7 +24,7 @@ namespace Herculan.Engine.Sim;
 /// </list>
 ///
 /// <para>The maxima are not here: they are the <c>dmg\&lt;NAME&gt;.DMG</c> file, which supplies both
-/// an 18-byte record per main component (its armour, its bone group, its destruction flags, and its
+/// an 18-byte record per main component (its armour, its parent component, its destruction flags, and its
 /// weighted list of dependents) and a flat maximum per dependent. That file is
 /// <see cref="HercSimDamage"/>, already parsed by HercWorks.Core. A weapon mount is the exception:
 /// its fitted weapon brings its own record and maximum (<see cref="FitWeapon"/>).</para>
@@ -58,7 +58,10 @@ public sealed class ComponentDamage {
 	/// <inheritdoc cref="FlyerComponentCount"/>
 	public const int FlyerDependentCount = 1;
 
-	/// <summary>The damage-finished-it flag <c>Component_SpillIntoDependents</c> (<c>0040cf44</c>) pours in on destruction — its own literal.</summary>
+	/// <summary>
+	/// What <c>Component_DestroyAndCascade</c> (<c>0040d434</c>) pours into a destroyed component's
+	/// dependents through <c>Component_SpillIntoDependents</c> to finish them off — its own literal.
+	/// </summary>
 	private const short FinishOffDependents = 32000;
 
 	private readonly HercSimDamage.HercPiece[] _pieces;
@@ -438,7 +441,7 @@ public sealed class ComponentDamage {
 	/// (<c>Mech_ComponentDamageWrite</c> tests it and returns before reaching here); the write itself
 	/// runs on an inactive slot. That distinction is what lets the weapon-mount destruction roll
 	/// clear the slot's flag and <i>then</i> finish the component off with a flat 10000 without the
-	/// bone group coming apart with it — see <see cref="Deactivate"/>.</para>
+	/// components that hang off it coming apart with it — see <see cref="Deactivate"/>.</para>
 	/// </summary>
 	/// <param name="index">Which component.</param>
 	/// <param name="damage">How much.</param>
@@ -474,8 +477,9 @@ public sealed class ComponentDamage {
 
 		DestroyAndCascade(index, world, owner, debris);
 
-		// The original queues the bone-group siblings on a shared list and drains it here rather
-		// than recursing, so a cycle in the data cannot blow the stack. Same shape, own list.
+		// The original queues the components whose parent index names the destroyed one on a shared
+		// list and drains it here rather than recursing, so a cycle in the data cannot blow the
+		// stack. Same shape, own list.
 		while (_pendingCascade.Count > 0) {
 			int next = _pendingCascade[^1];
 			_pendingCascade.RemoveAt(_pendingCascade.Count - 1);
@@ -561,8 +565,10 @@ public sealed class ComponentDamage {
 	///
 	/// <para>The explosion and the debris are thrown from where the component <i>is</i> — its
 	/// collision cluster resolved through the machine's posed node, the same point a blast measures
-	/// its falloff from. A component the <c>.COL</c> never names has no such point and falls back to
-	/// the machine's own origin, which is at its feet.</para>
+	/// its falloff from. The original looks the cluster up and reads the point through the result
+	/// unchecked; every live component on retail data has one. A component the <c>.COL</c> never
+	/// names falls back to the machine's own origin here, where the original would read the point
+	/// through a null cluster. Retail data never reaches it, and the user accepted the fallback.</para>
 	/// </summary>
 	private void DestructionEffects(int index, HercSimDamage.HercPiece piece, SimWorld? world,
 			SimObject? owner, DebrisDatabase? debris) {
