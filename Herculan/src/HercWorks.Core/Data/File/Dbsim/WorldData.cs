@@ -12,10 +12,10 @@ namespace HercWorks.Core.Data.File.Dbsim;
 /// int32 count, count x int32       -- distance bands A
 /// int32 count, count x int32       -- distance bands B
 /// int16 rampRows, int16 rampColumns
-/// rampColumns x int32              -- ramp table A
+/// rampColumns x {int16, int16}     -- ramp table A: palette index ranges, first index and count
 /// int16                            -- loose field between the tables
-/// rampColumns x int32              -- ramp table B
-/// 4 bytes, 4 bytes                 -- two more entries expanded the same way (Palette_InterpolateIndexRanges, 00430d08)
+/// rampColumns x {int16, int16}     -- ramp table B
+/// 4 bytes, 4 bytes                 -- two more ranges expanded the same way (Palette_InterpolateIndexRanges, 00430d08)
 /// int16, int16, int32, int32
 /// 5 x null-terminated string
 /// </code>
@@ -118,7 +118,11 @@ public class WorldData {
 	/// <inheritdoc cref="RampRows"/>
 	public short RampColumns { get; set; }
 
-	/// <summary>First colour-ramp table, <see cref="RampColumns"/> entries.</summary>
+	/// <summary>
+	/// First colour-ramp table, <see cref="RampColumns"/> palette index ranges, each kept as one
+	/// <c>int</c> holding the range's <c>int16</c> first index (low half) and count (high half). See
+	/// docs/retail/formats/wld-world.md.
+	/// </summary>
 	public int[] RampTableA { get; set; } = Array.Empty<int>();
 
 	/// <summary>The loose short the original reads between the two ramp tables.</summary>

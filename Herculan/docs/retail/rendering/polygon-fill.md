@@ -1,6 +1,6 @@
 # Polygon fill and scan conversion
 
-VSHELL and DBSIM link the same 2D graphics code for filling a convex polygon: a winding check, a rectangle clipper, and a Bresenham scan converter that turns the outline into one span per row. VSHELL also carries an `int32` copy of the scan converter, which `hgrid.cpp` uses to walk the grid cells inside a polygon in a fixed order around a centre cell. Addresses are VSHELL's, with DBSIM's copy in parentheses where it has been identified.
+VSHELL and DBSIM link the same 2D graphics code for filling a convex polygon: a winding check, a rectangle clipper, and a Bresenham scan converter that turns the outline into one span per row. The same code fills [rectangles and ellipses](#rectangles-and-ellipses), and with brush mode 4 outlines them instead. VSHELL also carries an `int32` copy of the scan converter, which `hgrid.cpp` uses to walk the grid cells inside a polygon in a fixed order around a centre cell. Addresses are VSHELL's, with DBSIM's copy in parentheses where it has been identified.
 
 Points are `int32` `{x, y}` pairs, `y` growing downward. A span region is `int16`: the top row, the row count, then an `{x0, x1}` pair per row, `x0` the left end.
 
@@ -18,6 +18,10 @@ A positive sum is clockwise as drawn on screen, which is the winding step 5 need
 
 The step-2 copies, `Gfx_FillPolygon`'s translated copy and its clip output each hold 20 points, and the clipper's and scan converter's working buffers 50. None is bounds-checked.
 
+### The brush colour
+
+A type-0 fill is one colour, which DBSIM's `Raster_DrawPolygonDispatch` resolves by the colour's top byte before it scan-converts. A top byte of 0 hands the colour to the span routine as it is, a palette index. A top byte of 4 names a ramp entry: with *r* the colour's low 16 bits, sign-extended, and *s* its bits 16–23, it is the `int16` at entry (*s* · length) >> 8 of record *r* of the raster's ramp table `g_RasterColourRamps` (`004a4fbd`), each record `{int16 *entries, int16 length}`. Any other top byte draws nothing.
+
 ### Clipping to a rectangle
 
 `Poly_ClipToRect(count, points, out, rect)` clips against `rect = {x0, y0, x1, y1}`, inclusive, and returns the new count. It is Sutherland–Hodgman in two passes, all of `x` first and then all of `y`. A point is outside when `x < x0` or `x > x1` (then `y < y0` or `y > y1`). For each edge from the previous point to the current one:
@@ -31,6 +35,10 @@ The step-2 copies, `Gfx_FillPolygon`'s translated copy and its clip output each 
 | outside | outside, same side | nothing |
 
 A crossing is always computed from the outside endpoint `a` toward the other endpoint `b`, as `y = a.y + (bound − a.x) · (b.y − a.y) / (b.x − a.x)` for the `x` pass (and the transpose for `y`), in 64 bits, the division truncating toward zero. So an edge clips to the same point whichever way it is walked. When the `x` pass leaves a single point, the `y` pass keeps it only if its `y` is inside; when it leaves none, the result is empty and nothing is drawn.
+
+### Clipping a line
+
+`Line_ClipToRect(a, b, rect)` (`0045554c`; DBSIM `00483b60`) cuts the segment between the points `a` and `b`, in place, to `rect = {x0, y0, x1, y1}`, inclusive, and returns 1, or 0 when nothing of it is left. It takes the bounds once each, in the order `y0`, `x0`, `y1`, `x1`. When both endpoints lie beyond a bound it returns 0, leaving both points as they were; when one does, that endpoint moves onto the bound, at the crossing computed from it toward the other as [the rectangle clipper's](#clipping-to-a-rectangle) is, in 64 bits with the division truncating toward zero; when neither does, nothing changes. A point on a bound is inside. To move `b` it first swaps the two points and leaves them swapped, so each bound that moves `b` reverses their order: the result can hold the endpoints the other way round. `Raster_DrawLine` (DBSIM `004838f8`) cuts a line through it in clip mode 1 and for each rect region of a clip list.
 
 ### Scan conversion
 
@@ -54,14 +62,14 @@ A shallow edge's value is the outermost pixel its Bresenham line puts on that ro
 
 ## Rectangles and ellipses
 
-**A rectangle or an ellipse is filled with the brush's colour, or, with brush mode 4, only its outline is drawn.** Both read the fill brush `{mode, colour}` at the clip block's `+0x228` and resolve its colour by the brush colour's top-byte rule. An outline is drawn with lines (`Raster_DrawLine`, `004838f8`) under a temporary pen `{0, colour}` at `+0x224`, the pen at `+0x224` being put back after. With mode 4, a polygon is drawn as a line loop in the same way (`Raster_DrawPolygonDispatch`, [the outline pass](dts-texture-binding.md#tssolidpoly--palette-index-unlit-fill-plus-outline)).
+**A rectangle or an ellipse is filled with the brush's colour, or, with brush mode 4, only its outline is drawn.** Both read the fill brush `{mode, colour}` at the clip block's `+0x228` and resolve its colour by [the brush colour](#the-brush-colour)'s top-byte rule. An outline is drawn with lines (`Raster_DrawLine`, `004838f8`) under a temporary pen `{0, colour}` at `+0x224`, the pen at `+0x224` being put back after. With mode 4, a polygon is drawn as a line loop in the same way (`Raster_DrawPolygonDispatch`, [the outline pass](dts-texture-binding.md#tssolidpoly--palette-index-unlit-fill-plus-outline)).
 
 ### Rectangles
 
 `Raster_FillRect` (DBSIM `004865f8`), given an inclusive rect {*x0*, *y0*, *x1*, *y1*}, by the brush's mode:
 
 - **0** fills it with the colour through `g_RasterRoutines` slot 2; **6** remaps it through slot 3 with the brush's second field. The rect first moves by the block's translation, (`+0x20c` − `+0x21c`, `+0x210` − `+0x220`), when `+0x208` is set, and is clipped by the clip mode `+0x204`: 0 not at all, 1 to the block's rect at `+0x20c`, otherwise to each region of the block's list, from its last entry to its first: a rect region's intersection goes to the mode's routine, and a span region's intersection with the rect, as a span list, to slot 0 whatever the mode.
-- **4** draws four lines, the rect's edges, both ends included: (*x1*, *y0*) to (*x0*, *y0*), (*x0*, *y1*) to (*x0*, *y0*), (*x0*, *y1*) to (*x1*, *y1*) and (*x1*, *y0*) to (*x1*, *y1*). The lines move and clip as lines do.
+- **4** draws four lines, the rect's edges, both ends included: (*x1*, *y0*) to (*x0*, *y0*), (*x0*, *y1*) to (*x0*, *y0*), (*x0*, *y1*) to (*x1*, *y1*) and (*x1*, *y0*) to (*x1*, *y1*). The lines move and clip as lines do ([clipping a line](#clipping-a-line)).
 - Any other mode draws nothing.
 
 ### Ellipses

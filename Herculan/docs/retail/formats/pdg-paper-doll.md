@@ -6,9 +6,9 @@ One file per chassis, 21 in retail, plus `pdg\WEAPONS.PDG`: a chassis' damage di
 
 ## Views
 
-`PaperDoll_Load` reads 3 views, each an origin/size pair plus a vector of `0x1c`-byte regions (`{int index; int left, top; int right, bottom; int colorId; int recolorMode}`).
+`PaperDoll_Load` reads an `int32` view count and that many views into the record's three, each an origin/size pair plus an `int32` count and a vector of `0x1c`-byte regions (`{int index; int left, top; int right, bottom; int colorId; int recolorMode}`).
 
-Coordinates are authored in the 320-wide space and shifted by `VideoMode_X/YCoordShift`, with the bottom-right corner additionally `+1` in the 640-wide mode, so a region covers the full 2x2 device footprint of each source pixel. Region art comes from `{herc}.HBA`/`.DBA`, frame `n` for view `n`.
+Coordinates are authored in the 320-wide space and shifted by `VideoMode_X/YCoordShift`, with the bottom-right corner additionally `+1` when `VideoMode_UseHiResBanks` is set, so a region covers the full 2x2 device footprint of each source pixel. Region art comes from `{herc}.HBA` with the hi-res banks and `.DBA` without, frame `n` for view `n`. When `pdg\<name>` does not open, the load asserts at severity 5 (`pdamage.cpp`, line `0x48`).
 
 The two nameless fields are what makes a region a damage region:
 

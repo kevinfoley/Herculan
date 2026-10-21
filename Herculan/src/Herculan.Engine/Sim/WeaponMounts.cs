@@ -340,7 +340,9 @@ public sealed class WeaponMounts {
 	}
 
 	/// <summary>
-	/// <c>WeaponMounts_SetSelection</c> (<c>00410708</c>): the one place <see cref="Selected"/> is written.
+	/// <c>WeaponMounts_SetSelection</c> (<c>00410708</c>): how every arming path writes <see cref="Selected"/>.
+	/// The constructor's initial selection and <c>WeaponMounts_AdvanceToReady</c>'s restore of the original
+	/// before its last call write it directly; see docs/retail/simulation/weapon-mounts.md.
 	///
 	/// <para>It normalises a linked pair to its first half — arming the right-hand weapon of a linked
 	/// pair arms the left-hand one instead (the partner offset is negative on the second half). That

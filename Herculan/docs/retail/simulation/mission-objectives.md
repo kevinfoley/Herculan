@@ -178,7 +178,7 @@ Group_StatusLineIndex(group, verb):
     return result - 1
 ```
 
-`routeExhausted` is the **group's own** route cursor at `+0x04`, not the subject's. So each verb answers in one of three bands — 0 for done cleanly, `tier+1`/`tier+2` for done, `tier+5`/`tier+6` for still running — with the group's damage tier sliding the answer inside its band. It is a per-group "how is this squad doing" line, one the mission never asks for.
+`routeExhausted` is the **group's own** route cursor at `+0x04`, not the subject's. So each verb answers in one of three bands — 0 for done cleanly, `tier+1`/`tier+2` for done, `tier+5`/`tier+6` for still running — with the group's damage tier sliding the answer inside its band. It is a per-group "how is this squad doing" line, one the mission never asks for. ES1's simulator has the same function with three more verbs and writes its answer for the player's squad into `data\results.dat` as the mission's outcome.
 
 The six helpers:
 

@@ -12,36 +12,29 @@ There is no envelope, no format marker and no record tag: the first byte of a `.
 
 ## CAM.BND's full 24-byte record
 
-The Java source (`herc-works-mdk-main/ES2Core/.../data/file/bnd/{Cam,Mech,MechSys,AppInput,MechView}.java`) has **sample-value-annotated byte layouts** for 5 of the 83 files; for `CAM.BND` specifically it accounts for **every byte of the record**:
+**A dword, then the ten constants of the camera's placement and steering, in the order the camera code uses them.** Each value after the dword is an immediate in `Cam_Update` (`004011a0`), `Cam_ApproachRate` (`00401c20`) or `Cam_ApproachZoom` (`00401c4c`); what each does is in [`external-views.md`](../simulation/external-views.md#the-camera-object--cam).
 
-| Content offset | Type | Retail value |
-|---|---|---|
-| 0 | UINT8 | 54 |
-| 1 | UINT8 | 208 |
-| 2 | UINT8 | 52 |
-| 3 | UINT8 | 49 |
-| 4-5 | UINT16 LE | 2500 |
-| 6-7 | UINT16 LE | 30000 |
-| 8 | UINT8 | 0 |
-| 9 | UINT8 | 8 |
-| 10 | UINT8 | 192 |
-| 11 | UINT8 | 0 |
-| 12 | UINT8 | 0 |
-| 13 | UINT8 | 4 |
-| 14 | UINT8 | 80 |
-| 15 | UINT8 | 0 |
-| 16 | UINT8 | 0 |
-| 17 | UINT8 | 48 |
-| 18 | UINT8 | 38 |
-| 19 | UINT8 | 2 |
-| 20-21 | UINT16 LE | 500 |
-| 22-23 | UINT16 LE | 8000 |
+| Content offset | Type | Retail value | In `DBSIM.EXE` |
+|---|---|---|---|
+| 0 | `uint32` | `0x3134D036` | the [first dword](#the-first-dword) |
+| 4 | `int16` | 2500 | the orbit's least distance, `0x9c4` in `Cam_Update` |
+| 6 | `int16` | 30000 | the orbit's greatest distance, `0x7530` in `Cam_Update` |
+| 8 | `int16` | `0x800` | the angle rates' Q8 scale, `Cam_ApproachRate` |
+| 10 | `int16` | `0xc0` | the angle rates' step, `Cam_ApproachRate` |
+| 12 | `int16` | `0x400` | the zoom rate's and free camera's speed's Q8 scale, `Cam_ApproachZoom` |
+| 14 | `int16` | `0x50` | the zoom rate's and speed's step, `Cam_ApproachZoom` |
+| 16 | `int16` | `0x3000` | the pitch limit, either way, `Cam_Update` modes 0 and 1 |
+| 18 | `int16` | 550 | the eye's height over the ground, `0x226` in `Cam_Update` modes 0 and 1 |
+| 20 | `int16` | 500 | the free camera's slope allowance, `Q10(500, …)` in `Cam_Update` mode 0 |
+| 22 | `int16` | 8000 | the chase camera's delay, `0x1f40` in `Cam_Update` mode 3 |
 
-All 22 numeric fields but one match the Java author's sample values exactly. Offset 14: author's notes say "50" but retail is `0x50` = 80 (likely hex transcription).
+The Java source (`herc-works-mdk-main/ES2Core/.../data/file/bnd/{Cam,Mech,MechSys,AppInput,MechView}.java`) carries sample values for 5 of the 83 files, and for `CAM.BND` for every byte; they match the retail bytes except at offset 14, where the notes say "50" for `0x50`.
 
-Every other `.BND` file has an unrelated record shape.
+Every other `.BND` file has an unrelated record shape. ES1's `CAM.BND` is this record without offsets 20–23, its eye height 100.
 
-Offset 3 (49 = ASCII `'1'`) appears at the same offset in `CAM`, `MECH` and `MECHSYS`. What the fields mean is [Open](#open).
+## The first dword
+
+`CAM.BND`, `MECH.BND` and `MECHSYS.BND` open with a dword that, read as seconds since 1970, falls in February 1996: `0x3134D036`, `0x3133A4F2` and `0x3123B8F1`. Their shared byte 49 (`'1'`) at offset 3 is that dword's high byte.
 
 **Other Java-annotated files** (`MECH.BND`, `MECHSYS.BND`, `AppInput.BND`, `MechView.BND`):
 - `MECH.BND`: first 8 bytes match Java notes exactly (242, 164, 51, 49, 12, 0, 42, 0); bytes 8+ diverge. Record 394 bytes total; the Java notes document the first 16.
@@ -54,6 +47,7 @@ Offset 3 (49 = ASCII `'1'`) appears at the same offset in `CAM`, `MECH` and `MEC
 Hardcoded instruction immediates in `dbsim-physics-notes.md` (rocket steering) and the weapon rows' sensor-dropout ranges ([`../simulation/cockpit-hud-widgets.md`](../simulation/cockpit-hud-widgets.md#sensor-dropout)) found in the disassembly match byte-exact values in their corresponding `.BND` files:
 - `ROCKET.BND` at content offsets 6-7, 8-9, 14-15: `1280`, `3072`, `40000`
 - `PWEAPONS.BND` at content offsets 58-65: `120, 360, 180, 1800` (contiguous), `WeaponGauge_Ctor`'s dark and shown ranges
+- `CAM.BND` at every offset after the first dword: the camera's ten constants ([above](#cambnds-full-24-byte-record))
 
 **Conclusion:** `.BND` files are human/build-tool source format whose values are baked directly into `DBSIM.EXE`'s code at build time. The retail game never opens `.bnd` files; there is no runtime loader.
 
@@ -70,7 +64,6 @@ Hardcoded instruction immediates in `dbsim-physics-notes.md` (rocket steering) a
 
 ## Open
 
-- **Deferred:** what `CAM.BND`'s fields mean. the four 16-bit fields at offsets 4, 6, 20 and 22 (2500, 30000, 500, 8000) may be camera near/far or zoom-range values; offset 3, shared with `MECH` and `MECHSYS`, may be a format sub-version byte. Matching them to immediates in DBSIM's camera code would settle both.
 - **Deferred:** the layouts of the other 82 files, shelved because the game never reads them. `MECH.BND` looks like a per-mech-type array from about offset 8; `MECHSYS.BND`'s decreasing 75…6 run looks like distance or LOD tiers. If resumed:
   - `CAM.BND`'s layout above is the template.
   - Group the rest by payload length and diff within a family (`P*.BND` cockpit panels, `*_ALRT.BND` alert configs) — the approach that decoded `.DCI`.

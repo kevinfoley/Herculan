@@ -15,14 +15,15 @@ Confirmed `typeId` values, each written as the envelope's 4 bytes read **big-end
 
 | typeId (BE dword) | Kind |
 |---|---|
+| `0x00002800` | An old-format bitmap, "Old GLBitmap" in the class table: `OldGLBitmap_Construct` (`00481c3c`) returns 0, so it loads as no object |
 | `0x01002800` | `.DBA`/`.HBA`/`.HB0-2`/`.DB0-2` — bitmap array |
 | `0x0E002800` | Embedded single-image sub-header inside the above |
 | `0x0B002800` | `.DCI` — cursor image, below |
 | `0x05002800` | `.DFN`/`.HFN` — bitmap font, below |
 
-Each resource is one record: the envelope, a `uint32` size of what follows, and that many bytes, rounded up to an even length with one zero byte. A bitmap array's body is an `int16` frame count, an `int16` ([Open](#open)), then that many [bitmap records](#the-bitmap-record), each rounded up the same way; a `.DBM` is one bitmap record. All 358 bitmap arrays and 10 `.DBM` in v1.0's archives end there except `dba\CORNERS.DBA`, which carries 606 bytes past its 24 frames: a bitmap body without its record header, then three whole bitmap records ([Open](#open)).
+Each resource is one record: the envelope, a `uint32` size of what follows, and that many bytes, rounded up to an even length with one zero byte. A bitmap array's body is an `int32` frame count, then that many [bitmap records](#the-bitmap-record), each rounded up the same way: `GLBitmapArray_ReadFromStream` (`00482d70`) reads the count as one dword and loads each element with `ClassItem_LoadResource`; a `.DBM` is one bitmap record. All 358 bitmap arrays and 10 `.DBM` in v1.0's archives end there except `dba\CORNERS.DBA`, which carries 606 bytes past its 24 frames: a bitmap body without its record header, then three whole bitmap records ([Open](#open)).
 
-`.DFN`/`.HFN`/`.DCI` are dispatched by a generic class-registry loader in `DBSIM.EXE` (`ClassItem_ReadTypeTag` (`0047a5a8`) → `ClassItem_FindHandler` (`0047a394`)). Specific loaders: `Panel_LoadWrapper` (`00430f58`, fonts), `Cursor_LoadWrapper` (`00430fb0`, cursors).
+`.DFN`/`.HFN`/`.DCI` load through the class-item reader, which picks the class from the record's tag ([chunk headers](dts-shape.md#chunk-headers)). Specific loaders: `Panel_LoadWrapper` (`00430f58`, fonts), `Cursor_LoadWrapper` (`00430fb0`, cursors).
 
 ### The bitmap record
 
@@ -82,7 +83,7 @@ Confirmed layout (offsets relative to the start of file content, i.e. after the 
 | SCURSOR.DCI | 8×8 | (3,7) | edge-strip arrow, south |
 | PCURSOR.DCI | 16×9 | (4,4) | over the gunsight's click surface |
 
-The bitmap header from `0x18` is the ordinary one ([The bitmap record](#the-bitmap-record)), read by the same code as any other bitmap item. In all 7 files the pixels end exactly at `0x18 + subSize`, the envelope rounds its own length up to even with one zero byte, and one more zero byte follows it. `PCURSOR.DCI` carries 96 further bytes past its envelope, zero but for pairs of `0x3C` ([Open](#open)). Preserve them as raw when parsing.
+The bitmap header from `0x18` is the ordinary one ([The bitmap record](#the-bitmap-record)), read by the same code as any other bitmap item. In all 7 files the pixels end exactly at `0x18 + subSize`, the bitmap record is rounded up to even with one zero byte inside the envelope's size, and the file ends where the envelope does. `PCURSOR.DCI` alone carries 96 further bytes past its envelope, zero but for pairs of `0x3C` ([Open](#open)). Preserve them as raw when parsing.
 
 ## `.DFN` / `.HFN` — bitmap font
 
@@ -101,10 +102,10 @@ Offsets relative to content start, i.e. after the 9-byte VOL prefix.
 0x02  uint16            = 0x0028
 0x04  uint32 totalSize  -- content size below this field
 0x08  int16  glyphCount
-0x0a  int16             -- 0 in every retail file
-0x0c  int16  firstCharCode           -- 32 in every retail file
+0x0a  int16  mapCount                -- 0 in every retail file
+0x0c  int16  firstCharCode           -- 32 in every retail file; -1 adds the map below
 0x0e  int16  cellHeight
-0x10  int16             -- -1 in every retail file
+0x10  int16  widthsFlag              -- -1 in every retail file, which adds the widths below
 0x12  int16  cellHeight              -- repeated
 0x14  int16  baseline                -- 8 (.DFN) / 9 (.HFN)
 0x16  int16  bitsPerPixel            -- 8 in every retail file
@@ -117,8 +118,11 @@ Offsets relative to content start, i.e. after the 9-byte VOL prefix.
 0x1e  uint32 poolLength
 0x22  [poolLength bytes]              glyph pool
       [glyphCount x uint32]           each glyph's start offset into the pool
-      [glyphCount x uint8]            each glyph's width
+      [glyphCount x uint8]            each glyph's width, when widthsFlag is -1
+      [mapCount x int16]              when firstCharCode is -1
 ```
+
+`GLFont_ReadFromStream` (`00482908`) reads the eleven shorts and the pool length, then each array in this order, the two last only under their conditions. `GLFont_GetStreamSize` (`00482770`) and `GLFont_GetMemorySize` (`004827ac`) count the widths and the map at 4 bytes an entry, where the read moves 1 and 2.
 
 A glyph is `width * cellHeight` bytes, row-major, one palette index per pixel. **Verified across all 54 retail font files: every glyph's pool slice is exactly `width * cellHeight` bytes, no exceptions** — so the width byte and the gap between consecutive offsets state the same fact twice.
 
@@ -160,9 +164,8 @@ Real files checked (`ACTOR.BND`, `MECH.BND`, `CAM.BND`, `PA_01000.SNC`, `PA_0200
 
 ## Open
 
-- **Open:** the `.DFN`/`.HFN` header shorts at `0x0a` and `0x18`. They are 0 in every retail file and have no consumer found.
+- **Open:** the `.DFN`/`.HFN` header short at `0x18`, 0 in every retail file, with no consumer found; and what the map holds and reads it, and what gives a glyph's width when `widthsFlag` is not -1. No retail font has either case.
 - **Open:** `PCURSOR.DCI`'s 96 bytes past its envelope. The cursor's load reads one class item, which ends at the envelope; what reads these bytes is the open question. They may be a second image layer (an AND-mask or outline) specific to this cursor.
 - **Open:** whether DBSIM.EXE (not VSHELL) loads the SHELL0 fonts (`FONT.DFN`, `FONT2.DFN`, `BLACK.DFN`).
-- **Open:** the bitmap array's second `int16`, after the frame count.
 - **Open:** what a bitmap record's extra dwords hold, and what reads them from the bitmap object's `+0x16`.
 - **Open:** `dba\CORNERS.DBA`'s 606 bytes past its declared frames — whether anything reads them, or they are left over from an earlier, longer version of the file.

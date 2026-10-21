@@ -208,6 +208,8 @@ A mission start left over from Metaltech: Earthsiege, in some of whose missions 
 - **`00461cc6`** — nonzero calls `LiftStart_DarkenPalette` (`0045d52c`). Zero instead sets `0049aef6` to 8, calls the empty `Palette_NoOp` (`0042eb40`), flushes the palette and renders one frame; the lift branch makes the first two of those itself and skips the others.
 - **`00461e20`**, near the end of bring-up — nonzero calls `LiftStart_Rise` (`0045d840`).
 
+Just before the first test it walks `g_StructurePool` for a structure whose group's side byte `+0x12` is 0 within 40000 of the player, and discards the answer. ES1's simulator starts its lift on that search.
+
 ### The darkening — `LiftStart_DarkenPalette` (`0045d52c`)
 
 Copies the live palette into two new palette objects, rewrites entries 32-47 and 64-79 of the first as (G/2, R/2, B/2) — **red and green swapped as well as halved** — and installs those two spans live. It then starts a `0x78`-coarse-tick (1.92 s) cross-fade from the darkened object to the untouched copy ([`../rendering/cockpit-canopy-palette.md`](../rendering/cockpit-canopy-palette.md#palette-module)), and clears `0049aef4` ([Open](#open)). In ES2's palette the two spans overlap both ends of the cockpit scheme's window, slots 42-65 ([`../rendering/cockpit-canopy-palette.md`](../rendering/cockpit-canopy-palette.md#palette)).

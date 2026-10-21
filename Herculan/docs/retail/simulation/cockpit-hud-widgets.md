@@ -8,6 +8,62 @@ The view manager and canvas these widgets are drawn onto: [`cockpit-views.md`](c
 
 The files behind them: the per-herc widget geometry is [`gau\<HERC>.GAU`](../formats/gau-cockpit-layout.md), the colour ids the gauges carry resolve through [`dat\COLORS.DAT`](../formats/colors-dat.md), and the damage diagram is [`.PDG`](../formats/pdg-paper-doll.md).
 
+## The cockpit object
+
+**One object holds the whole cockpit: every console instrument, the two message boxes, the cursors and the canvas they are drawn on. It is built once a mission, as the cockpit's views are loaded, and repaints its instruments every frame.** `PANEL.CPP` owns it; the view manager builds it in step 4 of its [bring-up](cockpit-views.md#cockpitviewmanager_loadviews-sequence), and the first one built is `CockpitViewInstance` (`0049b088`).
+
+### Building it
+
+1. `CockpitView_Ctor` (`00431008`), (cockpit, machine): stores the machine at `+0x203` and the `int16` `+0x6c` of its type record (`+0x1f2`) at `+0x201`, sets `+0x214` to `maybe_GlobalLiveObjectList` and the `int16` `+0x218` to 0, and runs `ColorSchemePanels_LoadAll`. It then allocates a 16-byte array at `004d0490` and four 12-byte records at `004d0494`, each {0, a 16-byte array, a 16-byte array}, and returns the cockpit.
+2. `ColorSchemePanels_LoadAll` (`00431098`), (cockpit): hands `SimStrings_LoadAll` the path `Language_StringFilePath` makes of `strings0` and `str`; the first time it runs, it loads the [fonts](#hud-fonts) and the seven cursors from `dci\` into `Cockpit_CursorImages` through `Cursor_LoadWrapper` (`00430fb0`), putting `PCURSOR` in the forward view's slot `+0x236` and `CURSOR` in the other views' slot `+0x23a` ([cursor rendering](cockpit-input.md#9-cursor-rendering)). It zeroes the three `g_SquadmateMachines`, calls `_memset`(cockpit + `0xa20`, `0x284`, 0), stores the cockpit in `CockpitViewInstance` when that is 0, clears the widgets-off byte `+0x20f`, the active cursor slot `+0x226`, `+0x241`, `+0x245` and `+0x26a`, and sets the `int16` `+0x23f` to −1.
+3. `Gau_BuildCockpitWidgets` (`00431bf8`), (cockpit, herc name): loads `gau\<herc>` into `CockpitGauRecord` with `Gau_Load` ([the layout](../formats/gau-cockpit-layout.md)); makes the canvas context over {0, 0, `CockpitCanvasWidth` − 1, `004d25d6` − 1} at `+4`; builds the root widget, a `0x398`-byte `CTLWindow` over the record, at `+0`; then `SystemButtons_Ctor`, the pilot channel at `+0x207` and the ticker at `+0x20b` ([the message boxes](cockpit-messages.md)), the seven instruments below, the coordinate shifts of the record's remaining rects, the weapon rows (`WeaponMounts_BuildGauges`) and the [flyer branch](#power-up-sequence). The order is the cockpit's [click precedence](cockpit-input.md#registration-order-is-precedence).
+
+`Cockpit_CreateCanvasContext` (`00430ea0`), (rect), makes the canvas context: a `0x239`-byte `GLViewport` with clip mode `+0x208` = 1, translation `+0x20c` = 1, the rect at `+0x210`–`+0x21c`, the byte `+0x230` and the dword `+0x231` cleared and `+0x235` = 200. It stores the context at `004d042c` and returns it.
+
+Each instrument's wrapper, (cockpit, `.GAU` record), shifts its block into device pixels, allocates and constructs the instrument with (block, cockpit), appends it to the cockpit's widget list (`+8`, its count at `+0x6c`) and returns it:
+
+| Field | Wrapper | Block | Size | Constructor |
+|---|---|---|---|---|
+| `+0x1e1` | `Gau_WeaponButtonsWidget` (`00432340`) | 468 | `0xb5` | `ConsoleButtons_Ctor`, then `ConsoleButtons_SetChainNumber`(2); the wrapper also sets the byte `+0x1e0` to 1, `+0x1d4` to 0 and `+0x1d8` to the dword at `+0x16c` |
+| `+0x1e5` | `Gau_EnergyMeterWidget` (`004323e0`) | 548 | `0xc3` | `EnergyPoolGauge_Ctor` |
+| `+0x1e9` | `Gau_ShieldDisplayWidget` (`00432454`) | 616 | `0xd4` | `ShieldsGauge_Ctor` |
+| `+0x1ed` | `Gau_MfdPanelWidget` (`004324c8`) | 728 | `0x349` | `MfdDisplay_Ctor`, then `MfdDisplay_SetMode`(3) |
+| `+0x1f1` | `Gau_ThrottleWidget` (`0043254c`) | 1000 | `0xca` | `ThrottleGauge_Ctor` |
+| `+0x1f5` | `Gau_RovingGunsightWrapper` (`004325c0`) | 1088 | `0x11b` | `Gau_RovingGunsightWidget` |
+| `+0x1f9` | `Gau_PilotRosterWidget` (`00432634`) | 1212 | `0x78a` | `HddDisplay_Ctor` |
+
+**The weapon rows.** Every row's factory ([weapon-row rects](../formats/gau-cockpit-layout.md#weapon-row-rects)) ends in `CockpitView_RegisterWeaponGauge` (`00432018`), (cockpit, gauge, row): a row of −1 takes the first empty one of the ten slots at `+0x70`; the gauge goes to `+0x1d8` when that is 0, onto the widget list and into its row's slot, and the list count and the row count `+0x98` each go up by 1.
+
+**The squadmates.** `Cockpit_LoadSquadmatePilots` (`00431530`), (cockpit), finds the player's machine (byte `+0xa3` set) in `GlobalMechList` with `Pool_Prev`, keeps its group (`+0x45`) at `0049b0f8`, and takes up to three of the group's members (the array `+0xc`, `int16` count `+0x10`, stopping at a null) other than the cockpit's own machine into `g_SquadmateMachines`. For each it calls `HddGauge_LoadPilotFrames`(`+0x1f9`, slot, the member's `int16` `+0x29c`), then `MfdDisplay_SetStatusRoster`(`+0x1ed`, count). `Squad_SendOrderToSlot` (`00431610`), `Squad_BroadcastOrderFromCockpit` (`0043166c`) and `Squad_CallsignOf` (`00431690`) read that list.
+
+| Offset | Holds |
+|---|---|
+| `+0x00`, `+0x04` | the root widget, the canvas context |
+| `+0x08` | the widget list, its count at `+0x6c` |
+| `+0x70` | the ten weapon-row gauges, their count at `+0x98` |
+| `+0x1e1`–`+0x1f9` | the seven instruments above |
+| `+0x201`, `+0x203` | the chassis' `int16` `+0x6c`, the machine |
+| `+0x207`, `+0x20b` | the pilot channel and the ticker |
+| `+0x20f` | 1 while the widgets are off (the external view) |
+| `+0x210` | the target selection |
+| `+0x21a`, `+0x21e`, `+0x222` | the [screen-edge strips](cockpit-input.md#10-the-screen-edges-are-three-widgets) |
+| `+0x226`, `+0x232`–`+0x23a` | the active cursor slot and the three slots |
+| `+0x23e` | set once the screen-edge strips are built |
+| `+0x241`, `+0x245` | the [power-up](#power-up-sequence)'s |
+
+### Drawing it
+
+`Cockpit_PushCanvasContext` (`004311e0`) adds 1 to the index byte `0049b106`, saves the installed render context (`006c5ff4`) at that index of the stack `004d0470`, installs the cockpit's canvas context `+4` with `Raster_InstallRenderContext` and returns it; `Cockpit_PopRenderContext` (`00431210`) reinstalls the saved one and takes 1 from the index.
+
+`CockpitView_PerFrameUpdate` (`004327ac`), (cockpit), from `Sim_RenderFrame` ([per-frame ordering](#per-frame-ordering)), does nothing while the byte `0049b104` is set. Otherwise:
+
+1. the first time, it calls `CockpitView_BuildScrollTriggers` ([the screen-edge strips](cockpit-input.md#10-the-screen-edges-are-three-widgets)) and sets `+0x23e`;
+2. until `+0x245` is set, `Cockpit_PowerUpTick`; then `Cockpit_HitShakeTick` and `Cockpit_StepKickTick` ([the damage shake](../rendering/cockpit-canopy-palette.md#the-damage-shake));
+3. with the widgets on: slot `+0x14` of the pilot channel `+0x207`; between `Cockpit_PushCanvasContext` and `Cockpit_PopRenderContext`, slot `+8` of each of the ten weapon rows that is set and of `+0x1e1`, `+0x1e5`, `+0x1e9`, `+0x1f1`, `+0x1ed` and `+0x1f9`; `Cockpit_UpdateEdgeCursor`; with the target selection `+0x210` set, clears it when `TargetSelect_CanTarget`(cockpit, selection) returns 0 ([losing the selection](target-selection.md#losing-the-selection--cockpitview_perframeupdate)); `WidgetRoot_ServicePressFlashes` on the root; `NavMarker_Tick`;
+4. with the widgets off, slot `+8` of `+0x1f9` alone.
+
+The gunsight complex `+0x1f5` is not among them; it is one of the dispatches `Sim_RenderFrame` makes after `Player_PerFrameCockpitUpdate` ([per-frame ordering](#per-frame-ordering)).
+
 ## HUD sprite art — `.HBA`/`.DBA`
 
 A bank ships twice under the same name: `dba\NAME.DBA` for the 320-wide mode and `hba\NAME.HBA` for the 640-wide one, exactly 2x on both axes, frame for frame, with identical frame counts. The two folder-name literals sit adjacent to each bank name in `.rdata` (`"NAME\0hba\0dba\0"`). The exceptions: `corners` is hardcoded to `dba` and `hba\CORNERS.HBA` does not exist; `static` and `pilot<n>` have no `hba\` copy, below; and `hdd`'s two copies hold the same frames at sizes that are not 2x ([`heads-down-display.md`](heads-down-display.md#frame-to-widget-confirmation)).
@@ -32,22 +88,68 @@ Frame-to-state mapping: `PWEAPONS` 0/1 are the selected/unselected row plate, 2/
 
 ## LED gauges
 
-`LEDBarGraphH`/`LEDBarGraphV`. `LedBarGraph_Ctor` (`004395c4`) installs vtable `PTR_FUN_0049bd30` over `LedBarGraph_CtorBase` (`004390c4`), which precomputes:
+**A bar graph is a meter that fills a rect from one edge in proportion to a value, lit up to the value and unlit beyond it.** `LEDBarGraphH`/`LEDBarGraphV` are the two the cockpit draws, built on a plain bar graph base.
 
-```
-span    = (end - start) * 0x10000 / range     // range is the caller's value scale
-current = span < 1 ? end : start              // sign of span selects fill direction
-```
+### The bar graph base
 
-`LedBarGraph_PaintToValue` (`004395e8`) fills from `start` to `start + (value * span >> 16)` (16.16 fixed point), both included, then installs field `0x24` as the draw colour and covers the remainder, from the next column to `end`, with `Raster_FillRect`.
+`BarGraph_Ctor` (`0043907c`) copies the rect `{x0, y0, x1, y1}` to `+4`, and `BarGraph_GetRect` (`004390b8`) returns its address. `LedBarGraph_CtorBase` (`004390c4`), (bar, rect, range), makes the bar a `BarGraphH` (vtable `0049bd60`), and `LedBarGraph_CtorV` (`00439344`) a `BarGraphV` (`0049bd48`), `0x2c` bytes each:
 
-The filled span is not solid. `LedBarGraph_FillPinstripe` (`00439758`) walks the x range twice — once over even columns, once over odd — drawing a full-height line each step, both ends of the range included: field `0x2c` paints even columns, `0x30` odd. The columns are device pixels, since the energy meter's rect is shifted before its bar is built (below), so each stripe is one device pixel wide in every video mode. Two near-identical shades interleaved at one pixel read as a single shaded fill.
+| Offset | Holds |
+|---|---|
+| `+0x14` | the span, `(end − start) × 0x10000 / range`: 16.16 pixels per unit of value, *range* the constructor's `int16` |
+| `+0x18`, `+0x1c` | start and end: the rect's `x0` and `x1` (`BarGraphH`) or `y0` and `y1` (`BarGraphV`) |
+| `+0x20` | the fill position |
+| `+0x24`, `+0x28` | the unlit and lit colors |
 
-`LEDBarGraphH` fills along **x**: `LedBarGraph_CtorBase` takes start/end from the rect's `x0`/`x1` (`param_2[0]`/`param_2[2]`), and the pinstripe walk strides columns. `LEDBarGraphV`'s constructor (`00439834`) goes through `LedBarGraph_CtorV` instead, and its fill, `LedBarGraphV_FillPinstripe` (`00439a0c`), draws full-width lines on alternate rows, `0x2c` on even rows and `0x30` on odd.
+The span's sign picks the edge the bar fills from. A `BarGraphH` fills from start when the span is 1 or more and from end otherwise; a `BarGraphV` fills from end, its bottom, when the span is 0 or more and from start otherwise (its repaint and reset test 1 or more, as `BarGraphH`'s do). Each class has three slots:
+
+- **`+0`, paint to value v** (`BarGraphH_PaintToValue`, `00439118`; `BarGraphV_PaintToValue`, `00439398`): the position p is `start + (v × span >> 16)` filling from start, `end − (v × span >> 16)` filling from end. It fills start to p in the lit color and p + 1 to end in the unlit, or p to end lit and start to p − 1 unlit, with `Raster_FillRect` on the rect at `+4`, and stores p at `+0x20`. `BarGraphV_PaintToValue` writes those positions into the rect's `x0` and `x1` rather than `y0` and `y1`, so it would fill a band across x over the rect's whole height; the throttle's two `BarGraphV`s are the ones built, and they are never drawn ([below](#throttle-gauge)).
+- **`+4`, repaint the run from a to b** (`BarGraphH_RepaintSpan`, `004391e0`; `BarGraphV_RepaintSpan`, `00439460`): orders a and b and clamps them to start..end as lo..hi, then fills lo..hi against the stored position p, the lit part with the brush the render context already holds (the display's `+0x44`, its `+0x228`) and the unlit part in `+0x24`. Wholly on the unlit side of p, the run is unlit; wholly on the lit side, lit. A run that p splits is filled lo..p and p..hi: `BarGraphV`'s lights the side its paint lights, and `BarGraphH`'s the other side, in both directions.
+- **`+8`, reset** (`BarGraphH_ResetToEmpty`, `0043a211`; `BarGraphV_ResetToEmpty`, `0043a190`): the position becomes the edge the bar fills from, as each constructor also sets it.
+
+### LED bar graphs
+
+**An LED bar graph lights its filled part in two shades interleaved a pixel apart, which read as one shaded fill.** `LEDBarGraphH` (`0x34` bytes by its class record) and `LEDBarGraphV` (`0x3c`) are a `BarGraphH` and a `BarGraphV` with the two shades at `+0x2c` and `+0x30`. `LedBarGraph_Ctor` (`004395c4`), (bar, rect, range), runs `LedBarGraph_CtorBase` and installs `LEDBarGraphH`'s vtable (`0049bd30`); `LEDBarGraphV_Ctor` (`00439834`) runs `LedBarGraph_CtorV` and installs `0049bd18`. Neither sets a color: the builder writes `+0x24`, `+0x2c` and `+0x30` afterwards.
+
+The lit run is the pinstripe. `LedBarGraph_FillPinstripe` (`00439758`), (bar, rect), walks the rect's x range twice, once over even columns and once over odd, drawing a full-height line (`Raster_DrawLine` from *y0* to *y1*) at each, both ends of the range included: `+0x2c` paints even columns, `+0x30` odd, each through a temporary pen {0, shade} in the current render context, the old pen put back after. `LedBarGraphV_FillPinstripe` (`00439a0c`) draws full-width lines on alternate rows instead, `+0x2c` on even rows and `+0x30` on odd. The columns are device pixels, since the energy meter's rect is shifted before its bar is built (below), so each stripe is one device pixel wide in every video mode.
+
+The slots replace the base's paint and repaint; the reset is the base's:
+
+- **Paint to value** (`LedBarGraph_PaintToValue`, `004395e8`): `BarGraphH_PaintToValue`'s runs, the lit one through the pinstripe and the remainder with `Raster_FillRect` after the installed brush's color is swapped for `+0x24` (put back after). With the span at 1 or more that is start to `start + (value * span >> 16)` (16.16 fixed point) lit and the next column to end unlit. `LedBarGraphV_PaintToValue` (`00439858`) is `BarGraphV_PaintToValue`'s, the lit run through `LedBarGraphV_FillPinstripe`, and like it writes the positions into the rect's *x0* and *x1* (`+4`, `+0xc`).
+- **Repaint** (`LedBarGraph_RepaintToValue`, `004396a8`), (bar, value): draws the whole bar for the value without storing it: the position p by the span's sign as the paint does, then start to p through the pinstripe and p + 1 to end through a temporary brush {0, `+0x24`} at the render context's `+0x22c`, the old brush put back. For a bar filling from end that lights the side the paint leaves unlit. `LedBarGraphV_Repaint` (`00439918`) redraws at the stored position `+0x20` on the rect's *y0* and *y1* (`+8`, `+0x10`): with the span below 1, start to the position lit and the rest unlit; otherwise start to the position unlit and the rest lit. Its argument is loaded and not used.
+
+`es2_xref.py` finds `LedBarGraph_Ctor` called from `TurboPodGauge_Ctor`, `WeaponSliderGadget_Ctor`, `EnergyPoolGauge_Ctor` and `AlertSliderGadget_Ctor`, and `LEDBarGraphV_Ctor` from `EnergyPoolGauge_Ctor` alone, in an arm it never takes (below).
 
 `EnergyPoolGauge_Ctor` (`00444d5c`) constructs an `LEDBarGraphH` over the `.GAU` widget rect at 564 with range `0x400`. The rect is its two corners, offset by the panel rect at 548 (zero in every retail `.GAU`), and `Gau_EnergyMeterWidget` (`004323e0`) has shifted both into device pixels first (`GauEnergyMeter_ApplyCoordShift`, `00445110`), so the bar spans `x0 << XCoordShift` to `x1 << XCoordShift` inclusive. It builds the bar in a switch on its own `+0x20`, which it sets to 0 just before (`00444e41`-`00444e49`), so it always takes the `LedBarGraph_Ctor` case and skips the `LEDBarGraphV` one (`00444edc`). It writes colour ids 6 and 5 into `0x2c`/`0x30` and id 19 into `0x24`. Those resolve to palette indices 98/97/16 = `(0,116,204)`, `(0,40,160)`, `(0,0,0)` — the blue pinstripe bar retail draws directly under the TRACK button, i.e. the **Master Energy Pool meter**. `Player_PerFrameCockpitUpdate` feeds it the pool scaled to that range — see [../simulation/reactor-energy-pool.md](reactor-energy-pool.md#cockpit-readouts). Its only caller is `Gau_EnergyMeterWidget`, and the binary's own class-name table pairs `EnergyPoolGauge` with `LEDBarGraphV` (file offset 280429) and `ShieldsGauge` with `ShieldsSelectGadget` (279148) — the LED bar is the energy meter, and `ShieldsGauge` is a different class entirely.
 
 A second `LEDBarGraph` per weapon row carries the energy-weapon charge field (`WeaponSliderGadget_Ctor` (`00442950`), range `0x400`) — but with raw palette indices `0x20`/`0x22` and remainder `0x2e`, not `COLORS.DAT` ids. See [Weapon hardpoint rows](#weapon-hardpoint-rows).
+
+### Bitmap bar graphs
+
+**A bitmap bar graph draws its lit and unlit parts as slices of two pictures of the whole bar, one full and one empty, rather than in flat colors.** `LEDBMBarGraphH` and `LEDBMBarGraphV`, `0x68` bytes each by their class records, are a `BarGraphH` and a `BarGraphV` with:
+
+| Offset | Holds |
+|---|---|
+| `+0x2c`, `+0x44` | two `0x18`-byte `GLRectangleRegion`s, each its vtable at `+0`, a dword at `+4` set to 0 and a rect at `+8`: the drawn bitmap's rect and the run's rect moved onto it |
+| `+0x5c` | a 5000-byte buffer (`Mem_NewArray`) for the screen under the bitmap |
+| `+0x60`, `+0x64` | the unlit and the lit bitmap |
+
+`LedBmBarGraphH_Ctor` (`00439ae8`) and `LedBmBarGraphV_Ctor` (`00439e10`), (bar, rect, range, unlit, lit), run `LedBarGraph_CtorBase` or `LedBarGraph_CtorV`, install `0049bd00` or `0049bce8`, build the two regions in place, store the bitmaps and allocate the buffer. `es2_xref.py` finds no reference to either constructor ([Open](#open)).
+
+- **Paint to value** (`LedBmBarGraphH_PaintToValue`, `00439b8c`): with the span at 1 or more, start to p from the lit bitmap and p + 1 to end from the unlit one, through `LedBmBarGraphH_DrawBitmapSpan`; with the span below 1, p to end and start to p − 1 with `Raster_FillRect` in the brush as installed. It stores p at `+0x20`. `LedBmBarGraphV_PaintToValue` (`00439eb4`) is `LedBarGraphV_PaintToValue`'s runs, both from the bitmaps (lit `+0x64`, unlit `+0x60`) through `LedBmBarGraphV_DrawBitmapSpan`, the positions written into the rect's *x0* and *x1* as there.
+- **Repaint**: `LedBmBarGraphH_RepaintNoOp` (`00439c40`) and `LedBmBarGraphV_RepaintNoOp` (`00439f68`) return at once.
+- **Reset**: the base's.
+
+**A run shows the same columns of the picture as it covers of the bar.** `LedBmBarGraphH_DrawBitmapSpan` (`00439c48`), (bar, bitmap), with the run in the bar's rect:
+
+1. Region `+0x2c`'s rect becomes the lit bitmap's size, its `int16` `+6` columns and `+4` rows shifted by `VideoMode_XCoordShift` and `VideoMode_YCoordShift`, placed at twice the translation of the installed render context (`006c5ff4`), its `+0x220` and `+0x224`.
+2. Region `+0x44`'s rect becomes the run's rect moved left by start and up to row 0, then by the translation; the copy's offset is (start − the translation's *x*, the run's *y0* − its *y*).
+3. The display's draw page (`+0x3c`) becomes its source page (`+0x38`), through the raster routines' source-page slot when that display is current.
+4. `Region_Save` keeps the screen under region `+0x2c` in the buffer; `Bitmap_Blit`(bitmap, the translation) draws the bitmap, and `VideoMode_BlitBitmap`(`004d2540`, bitmap, the translation) follows ([Open](#open)); `Region_CopyBetweenPages` copies region `+0x44` by the offset, which puts the bitmap's columns *x0* − start to *x1* − start onto the run; `Region_Restore` puts the saved screen back.
+
+`LedBmBarGraphV_DrawBitmapSpan` (`00439f70`) does the same on the y axis, the run's rect moved up by start onto the bitmap, calling `VideoMode_BlitBitmap` alone of the two blits.
+
+`LedBmBarGraphH_Dtor` (`0043a22a`), (bar, flags), takes seven from the runtime's destructor count and frees the bar with `Mem_Delete` when bit 0 of flags is set; it frees neither the buffer nor the regions. `es2_xref.py` finds its address as a dword at `0043a1d1`, in the class record at `0043a1a9`.
 
 ## Throttle gauge
 
@@ -148,6 +250,20 @@ Three gauge classes, one per mount class, all built on `WeaponGauge_Ctor` (`0044
 | ammunition | `CockpitView_CreateAmmoWeaponGauge` (`00432124`) → `AmmoWeaponGauge_Ctor` (`00440f78`) | round count, `itoa` (`AmmoWeaponGauge_Paint`, `004411b4`) of the mount's `+0x7d >> 8` |
 | pod | `CockpitView_CreatePodGauge` → one of three `PodGauge` classes | none — the name label widens over both fields — except the Turbo Pod's |
 
+**The energy and ammunition rows.** `WeaponGauge_Ctor`, (gauge, block, cockpit, mount), runs `PanelGauge_Ctor` and stores the mount at `+0xbd` and 0 in the bytes `+0xb1` and `+0xc1`; [the wipes](#the-wipes) give its banks and sequencer. `WeaponGauge_MountProjectileType` (`00440a14`) and `WeaponGauge_MountProjectileSubtype` (`00440a3c`), (gauge), return the `int16` `+0` or `+2` of the `PROJ.DAT` record at the mount's `+0x20`, or −1 with no mount or no record ([the missile cam switch](mfd.md#modes)). `EnergyWeaponGauge_Ctor` and `AmmoWeaponGauge_Ctor`, (gauge, block, cockpit, row, mount), each store `ChainedWeaponGaugeVtable` (`0049c93c`), the `int16` row at `+0xd9` and then their own table; build child 0, the `ChainedWeaponSelectGadget` at `+0x18`, handing it bit *row* of the block's byte `+0x40` (energy) or `+0x30` (ammunition) as the mirror flag; register it in the root widget's list with `Widget_RegisterClickable`; and copy the mount's name (below). The energy row then builds child 1, the charge bar (`WeaponSliderGadget_Ctor` with the block's dword `+0x3c`), at `+0x1c` and registers it, and stores 2 in the child count `+0x68` and `0x400` at `+0xc6`; the ammunition row builds its round-count label at `+0xdb` (`Label_Ctor` in `ColorSchemePanels[11]` `gray`, panel-relative, left-aligned or right-aligned when mirrored, fill `0x2e`) and stores 1 in the count. Both end by clearing the 0x17-byte state block at `+0xc2`, which also clears the energy row's `0x400`. The objects are `0xdf` and `0xef` bytes.
+
+| Slot | Energy (`EnergyWeaponGaugeVtable`, `0049c91c`) | Ammunition (`ProjectileWeaponGaugeVtable`, `0049c8fc`) |
+|---|---|---|
+| `+0` | `EnergyWeaponGauge_OnChildClick` (`00440ef0`), (gauge, child, value): child 0 chains the row (`WeaponMounts_ToggleChainMember`, the cockpit machine's manager `+0x202` and the row) when bit 1 of the value is set and arms it (`CockpitView_ArmWeaponByGauge`) otherwise; child 1 stores the value, clamped to 0..`0x400`, at `+0xc6` | `AmmoWeaponGauge_OnChildClick` (`004414b4`): child 0 as the energy row's, then 2 in the repaint counter `+0xb0` |
+| `+4` | `EnergyWeaponGauge_Paint` (`00440c68`): while armed (`+0x8c`), each child's slot `+0` | `AmmoWeaponGauge_Paint` (`004411b4`): while armed, child 0's slot `+0`, then the round count unless the row is dark or mid-wipe, the label off screen, child 0's state `+0x1b` 2 or the destroyed byte `+0xd3` set: `itoa` of `+0xc2` into the label in `ColorSchemePanels[10]` `white` when `+0xd6` is set and `[11]` `gray` otherwise |
+| `+8` | `EnergyWeaponGauge_Update` (`00440c90`), below | `AmmoWeaponGauge_Update` (`00441268`), below |
+| `+0xc` | `PanelGauge_KeyDispatchNone` | the same |
+| `+0x10` | `EnergyWeaponGauge_SetState` (`00440d4c`), below | `AmmoWeaponGauge_SetState` (`004413f4`), below |
+
+`EnergyWeaponGauge_GetState` (`00440e74`) and `AmmoWeaponGauge_GetState` (`004414a4`) return the gauge plus `0xc2`. Each update returns at once unless the row's rect has a corner on screen (`CockpitView_RectCornerVisible`) or the view manager's view-change flag `+0x1c` is set, and the row is armed. The energy row then runs `EnergyWeaponGauge_PowerUpFill` until the power-up is done; the ammunition row marks it done (`+0x8d`) and sets `+0xb0` to 2. With the power-up done, the first update that finds the rect on screen runs the row's paint, sets `+0x8e` and returns. Otherwise the update runs the [sensor dropout](#sensor-dropout) on condition 2, repaints the children (slot `+4`; the ammunition row also sets `+0xb0` to 2) on the frame the row comes back from dark, and calls each child's slot `+0xc`. The ammunition row's then, unless the row is dark or mid-wipe, sets `+0xb0` to 2 when child 0's byte `+0x1f` is set, and steps `+0xb0` down: at 2, once the label has a corner on screen, the paint's round count, unless destroyed; at 1, `Widget_DrawToCockpit`(0, the label's rect, 0) unless destroyed.
+
+`EnergyWeaponGauge_SetState`, (gauge, block): a new block `+4` goes to `+0xc6` and to the charge bar's slot `+0x14`; a new block `+0` to `+0xc2` and the bar's fill `+0x7a`, and while the power-up is not done to `+0xdb`, the value the fill ramps toward; a new destroyed byte `+0x11` goes to `+0xd3` and puts both children's state `+0x1b` to 2 or 0, held back through `+0xc1` while the shake offset's `+4` is nonzero; the bytes `+0x14`–`+0x16` go to `+0xd6`–`+0xd8`. It repaints (slot `+4`) child 0 when a byte changed and the bar when a value did. `AmmoWeaponGauge_SetState` is the same over one child, with no shake test: a new round count goes to `+0xc2` and sets `+0xb0` to 2, and a byte change repaints child 0 and sets `+0xb0` to 2.
+
 **The mount pushes its row's values.** Its vtable `+0x50` — `WeaponMount_PushEnergyGaugeState` (`0040f288`) on the energy and ELF classes, `WeaponMount_PushAmmoGaugeState` (`0040f330`) on the ammunition class — copies the gauge's state block, fills it and hands it back through the gauge's vtable `+0x10`:
 
 | Block | Energy | Ammunition |
@@ -158,7 +274,7 @@ Three gauge classes, one per mount class, all built on `WeaponGauge_Ctor` (`0044
 | `+0x12` | mid-charge, `+0x43` | — |
 | `+0x14`-`+0x16` | the three state flags its caller passes | as energy |
 
-`EnergyWeaponGauge_SetState` (`00440d4c`) stores block `+0x00` at the bar's `+0x7a`, and `WeaponSliderGadget_Paint` (`00442b38`) fills the `LEDBarGraph` to that, so the bar shows the capacitor rather than the power level, against the fixed 1200: a capacitor at its spawn 960 fills four fifths of it. The ammunition row's `+0x7d` lags the magazine on purpose, which is what rolls the counter ([`weapon-mounts.md`](weapon-mounts.md#ammunition)).
+`WeaponSliderGadget_Paint` (`00442b38`) fills the `LEDBarGraph` to the bar's `+0x7a`, which `EnergyWeaponGauge_SetState` sets from block `+0x00` (above), so the bar shows the capacitor rather than the power level, against the fixed 1200: a capacitor at its spawn 960 fills four fifths of it. The ammunition row's `+0x7d` lags the magazine on purpose, which is what rolls the counter ([`weapon-mounts.md`](weapon-mounts.md#ammunition)).
 
 All three `strncpy` 12 bytes of the mount's name (`WeaponMount_GetDisplayName`, `0040e18c`) into the gauge at `+0xb1`. The pod class instead seeds an 11-char buffer with a space, appends the name, then appends `STRINGS0.STR` group 3 (`" POD"`) into the room left — `" SHIELD POD"`. A destroyed mount's row prints group 2 (`"OFFLINE"`) in place of the name.
 
@@ -200,9 +316,18 @@ The damage diagram drawn from a chassis' [`.PDG`](../formats/pdg-paper-doll.md):
 
 ### Tinting
 
-A region is not filled. `PaperDoll_RecolorRect` (`00437e94`) walks the region's rect a pixel at a time and, in mode 0 (the region's [`recolorMode`](../formats/pdg-paper-doll.md#views)), rewrites only the pixels still holding `colorId`, which is why the outlines and detail drawn over a limb survive its recolour. Modes 1 and 3 do the same without the doubled pixel step; mode 2 adds the tint to every pixel that is not the id-19 background. Modes 0 and 1 skip the walk when the two colours are equal, so an undamaged region costs nothing.
+A region is not filled. `PaperDoll_RecolorRect` (`00437e94`), (rect, keyIndex, tintIndex, mode), rewrites only the pixels of the region's rect that still hold `colorId` (the key), which is why the outlines and detail drawn over a limb survive its recolor. It makes the display's draw page (`+0x3c`) its source page (`+0x38`, through `g_RasterRoutines` slot 16 when that display is current), offsets the rect by the canvas context's `+0x210`, `+0x214` less its `+0x220`, `+0x224`, does nothing when the top row is then above row 0, and walks the rect a row at a time, left to right, reading each pixel back through `g_RasterRoutines_GetPixel` and writing through `g_RasterRoutines_PutPixel`. The mode is the region's [`recolorMode`](../formats/pdg-paper-doll.md#views):
 
-`PaperDoll_RecolorRectFromArt` (`00438230`) is the same four modes reading the source bitmap instead of the raster, for a screen that repaints a region without having repainted what is under it first — the Heads-Down Display's route, where the MFD takes the first.
+| Mode | A pixel is rewritten when it is | It becomes | The walk is skipped when tint = key |
+|---|---|---|---|
+| 0 | the key | the tint | yes |
+| 1 | the key | the tint | yes |
+| 2 | anything but `COLORS.DAT` id 19's index, the background | itself + the tint | no |
+| 3 | the key | the tint | no |
+
+Mode 0 is written as a range test from the key to the key and a shift of the pixel by tint − key, which comes to the same. When a 320-wide bank is drawn doubled (`VideoMode_PanelMode` 3 without `VideoMode_UseHiResBanks`), every mode tests one pixel per block of 2^`VideoMode_XCoordShift` × 2^`VideoMode_YCoordShift` and writes the whole block, stepping a block at a time; otherwise a block is one pixel.
+
+`PaperDoll_RecolorRectFromArt` (`00438230`), (rect, art, artOrigin, keyIndex, tintIndex, mode), is the same walk with mode 0 testing the source bitmap instead of the screen, for a screen that repaints a region without having repainted what is under it first: the pixel at the rect's offset from `artOrigin` (offset the same way) in `art`'s rows, its width the `int16` `+6` and its pixels from `+0xe`, the offset divided by the block size. Its mode 0 does not skip when tint = key, and its modes 1 to 3 step one pixel, doubled bank or not. `es2_xref.py` finds `PaperDoll_RecolorRect` called once from `MfdStatusScreen_Paint` and five times from `HddDamageScreen_Update`, and `PaperDoll_RecolorRectFromArt` once from `HddDamageScreen_Update`.
 
 `Damage_PickRegionTint` (`00438624`) chooses the colour from one Q8 damage reading, on `Damage_ToConditionState`'s own bands:
 
@@ -226,7 +351,7 @@ The frame is template `+0x50` ([`../formats/weapons-dat-sim.md`](../formats/weap
 
 ## HUD fonts
 
-`ColorSchemePanels_LoadAll` (`00431098`) lazily loads 18 `.DFN`/`.HFN` fonts into `ColorSchemePanels` (`0049b0ac`), then 7 `.DCI` cursors. Load order is the array index:
+`ColorSchemePanels_LoadAll` (`00431098`) loads 18 fonts into `ColorSchemePanels` (`0049b0ac`) the first time it runs ([building the cockpit](#building-it)), each through `Panel_LoadWrapper` (`00430f58`), which opens a `VolRStream` on the path and returns `ClassItem_LoadResource`'s item, from `hfn\` in panel mode 3 and `dfn\` otherwise. Load order is the array index:
 
 | 0-5 | 6-11 | 12-17 |
 |---|---|---|
@@ -382,5 +507,7 @@ Each display runs the toggle from its own update, so a display whose update does
 
 ## Open
 
+- **Open:** a builder of a [bitmap bar graph](#bitmap-bar-graphs): `es2_xref.py` finds no reference to `LedBmBarGraphH_Ctor` or `LedBmBarGraphV_Ctor`, nor to `LedBmBarGraphH_Dtor` beyond its class record. ES1's throttle builds its two bars as bitmap bar graphs.
+- **Open:** what `VideoMode_BlitBitmap` does with the block at `004d2540`, which the [bitmap bar graphs'](#bitmap-bar-graphs) run calls after `Bitmap_Blit`, unread.
 - **Deferred:** what consumes `PWEAPONS` frame 7, a 640x80 strip.
 - **Deferred:** whether any cockpit shows the `PanelAmbience` clock: two two-digit labels and a colon label that `PanelAmbience_TickClock` (`00452144`) blinks, advancing the clock on every second call, the second field wrapping at 59 and the whole at 99:59. Its one construction is in `Gau_PanelAmbienceWidget` (`004326a8`), from the `.GAU` block at 1604, for which `es2_xref.py` finds no caller; that block is zero in all nine retail `.GAU` files.

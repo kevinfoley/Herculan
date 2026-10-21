@@ -23,7 +23,8 @@ public class DynamixBitmapArrayTransformer : ByteTransformer<DynamixBitmapArray>
 		var dba = new DynamixBitmapArray {
 			FileSize = IndexSegmentLE(4),
 			FrameCount = IndexShortLE(),
-			ArrayCols = IndexShortLE() // TODO (carried over from Java): could this actually be an INT32 for total images?
+			// The high half of the original's int32 frame count (docs/retail/formats/dfn-hfn-dci.md#the-shared-dynamix-resource-envelope).
+			ArrayCols = IndexShortLE()
 		};
 
 		var images = new DynamixBitmap[dba.FrameCount];
