@@ -24,8 +24,8 @@ internal sealed record PlacementTables(MechFormationTable Mechs, FlyerFormationT
 
 /// <summary>
 /// Where a drag stands what it moves before it lets go, which <see cref="LayoutPlacement.Place"/> reads in place of the
-/// layout's: a point's coordinates, a group standing on a point of its own, or an object standing alone. Only the commit
-/// writes the <c>.MSN</c>.
+/// layout's: a point's coordinates, a group standing on a point of its own, an object standing alone, a waypoint or an area
+/// corner on a point of its own, or a circle's radius. Only the commit writes the <c>.MSN</c>.
 /// </summary>
 internal sealed record PlacementOverrides {
 	/// <summary>None: everything where the layout puts it.</summary>
@@ -39,6 +39,21 @@ internal sealed record PlacementOverrides {
 
 	/// <summary>An object standing on a point of its own at these coordinates.</summary>
 	public (ObjectKey Object, Vec3i Point)? ObjectPoint { get; init; }
+
+	/// <summary>
+	/// Entries of a route's list, by its row-8 GUID, standing on a point of their own at these coordinates: a waypoint dragged
+	/// alone, which moves its route's line and nothing else until the commit.
+	/// </summary>
+	public (short Route, IReadOnlyList<int> Entries, Vec3i Point)? DetachedWaypoint { get; init; }
+
+	/// <summary>
+	/// A trigger area's corner (0 a box's first corner or a circle's centre, 1 a box's second), by its row-9 GUID, standing on
+	/// a point of its own at these coordinates: a corner dragged alone.
+	/// </summary>
+	public (short Area, int Corner, Vec3i Point)? DetachedCorner { get; init; }
+
+	/// <summary>A circle trigger area, by its row-9 GUID, of this radius in world units.</summary>
+	public (short Area, int Radius)? Radius { get; init; }
 }
 
 /// <summary>
@@ -69,17 +84,30 @@ internal sealed record PlannedGroup(short Guid, int Number, MissionUnitKind Kind
 	bool Waiting, MissionGroupSetup Setup, short OwnPoint, IReadOnlyList<short> StartPoints, IReadOnlyList<short> Orders,
 	IReadOnlyList<ObjectKey> Members, MissionBasePad? Pad);
 
-/// <summary>Every group and every placed roster record of a layout, as <see cref="LayoutPlacement.Place"/> places them.</summary>
+/// <summary>
+/// Every group, every placed roster record, and every route, trigger area and action of a layout, as
+/// <see cref="LayoutPlacement.Place"/> places them.
+/// </summary>
 internal sealed class LayoutPlan {
 	private readonly Dictionary<short, PlannedGroup> _groups;
 	private readonly Dictionary<ObjectKey, PlannedObject> _objects;
+	private readonly Dictionary<short, PlannedRoute> _routes;
+	private readonly Dictionary<short, PlannedArea> _areas;
+	private readonly Dictionary<short, PlannedAction> _actions;
 
-	public LayoutPlan(MissionLayout layout, IReadOnlyList<PlannedGroup> groups, IReadOnlyList<PlannedObject> objects) {
+	public LayoutPlan(MissionLayout layout, IReadOnlyList<PlannedGroup> groups, IReadOnlyList<PlannedObject> objects,
+			IReadOnlyList<PlannedRoute> routes, IReadOnlyList<PlannedArea> areas, IReadOnlyList<PlannedAction> actions) {
 		Layout = layout;
 		Groups = groups;
 		Objects = objects;
+		Routes = routes;
+		Areas = areas;
+		Actions = actions;
 		_groups = groups.GroupBy(group => group.Guid).ToDictionary(same => same.Key, same => same.First());
 		_objects = objects.ToDictionary(placed => placed.Key);
+		_routes = routes.ToDictionary(route => route.Guid);
+		_areas = areas.ToDictionary(area => area.Guid);
+		_actions = actions.ToDictionary(action => action.Guid);
 	}
 
 	/// <summary>The layout placed.</summary>
@@ -94,9 +122,24 @@ internal sealed class LayoutPlan {
 	/// </summary>
 	public IReadOnlyList<PlannedObject> Objects { get; }
 
+	/// <summary>Every row-8 route with a waypoint that stands somewhere, in layout order.</summary>
+	public IReadOnlyList<PlannedRoute> Routes { get; }
+
+	/// <summary>Every row-9 trigger area that stands somewhere, in layout order.</summary>
+	public IReadOnlyList<PlannedArea> Areas { get; }
+
+	/// <summary>Every row-10 action, in layout order.</summary>
+	public IReadOnlyList<PlannedAction> Actions { get; }
+
 	public PlannedGroup? Group(short guid) => _groups.GetValueOrDefault(guid);
 
 	public PlannedObject? Object(ObjectKey key) => _objects.GetValueOrDefault(key);
+
+	public PlannedRoute? Route(short guid) => _routes.GetValueOrDefault(guid);
+
+	public PlannedArea? Area(short guid) => _areas.GetValueOrDefault(guid);
+
+	public PlannedAction? Action(short guid) => _actions.GetValueOrDefault(guid);
 }
 
 /// <summary>
@@ -120,6 +163,7 @@ internal sealed class LayoutPlan {
 /// slot 0 the player, slot <i>i</i> squadmate <i>i</i>). A slot past a gap, which no build reads, spreads by its position
 /// too, and so does the squadmate the practice load leaves behind. A record group 0 and a later group both reference is
 /// the squad's alone.</item>
+/// <item>The routes, trigger areas and actions are <see cref="LayoutFeatures"/>'.</item>
 /// </list>
 /// </summary>
 internal static class LayoutPlacement {
@@ -128,7 +172,10 @@ internal static class LayoutPlacement {
 	private const int FlyerRow = 13;
 	private const int BaseRow = 14;
 
-	/// <summary>The layout's groups and placed records, with <paramref name="overrides"/> read in place of the layout's.</summary>
+	/// <summary>
+	/// The layout's groups, placed records, routes, areas and actions, with <paramref name="overrides"/> read in place of the
+	/// layout's.
+	/// </summary>
 	public static LayoutPlan Place(MissionLayout layout, PlacementTables tables, PlacementOverrides? overrides = null) {
 		overrides ??= PlacementOverrides.None;
 		var groupEntries = layout.Entries<MissionGroup164>();
@@ -246,7 +293,8 @@ internal static class LayoutPlacement {
 			groups[number] = group with { Members = claimed[number], Pad = pad };
 		}
 
-		return new LayoutPlan(layout, groups, objects);
+		var (routes, areas, actions) = LayoutFeatures.Place(layout, groups, overrides);
+		return new LayoutPlan(layout, groups, objects, routes, areas, actions);
 	}
 
 	private static PlannedObject Herc(ObjectKey key, MechRosterEntry144 herc, PlacementTables tables, PlannedGroup group,
@@ -259,8 +307,8 @@ internal static class LayoutPlacement {
 	private static Vec3i? OwnPoint(MissionLayout layout, ObjectKey key, short point, PlacementOverrides overrides) =>
 		overrides.ObjectPoint is { } alone && alone.Object == key ? alone.Point : Point(layout, point, overrides);
 
-	// The coordinates of row-6 GUID <guid>, a drag's in place of its record's, or null when the layout has no such point.
-	private static Vec3i? Point(MissionLayout layout, short guid, PlacementOverrides overrides) {
+	/// <summary>The coordinates of row-6 GUID <paramref name="guid"/>, a drag's in place of its record's, or null when the layout has no such point.</summary>
+	internal static Vec3i? Point(MissionLayout layout, short guid, PlacementOverrides overrides) {
 		if (guid == -1) {
 			return null;
 		}

@@ -38,15 +38,18 @@ internal sealed class RouteView {
 		_references = references;
 	}
 
-	/// <summary><paramref name="selected"/>'s view, the route generated at block-3 index <paramref name="reference"/>.</summary>
+	/// <summary>
+	/// <paramref name="selected"/>'s view, the route generated at block-3 index <paramref name="reference"/>; its waypoints are
+	/// the layout's (<see cref="MissionIndex"/>), which a drag's preview moves.
+	/// </summary>
 	public void Draw(RouteSelection selected, int reference) {
-		if (_index.Route(reference) is not { } route) {
+		if (_index.Route(reference) is not { } route || _index.Scene.Route(selected.Guid) is not { } placed) {
 			return;
 		}
 
 		ImGui.Text($"Route {route.Reference}");
 		ImGui.Separator();
-		ImGui.Text(route.Closed ? "Closed: a loop walked for ever" : "Open: walking it to the end completes the order");
+		ImGui.Text(placed.Closed ? "Closed: a loop walked for ever" : "Open: walking it to the end completes the order");
 
 		if (route.WalkedBy.Count > 0) {
 			ImGui.Text("Walked by:");
@@ -68,27 +71,27 @@ internal sealed class RouteView {
 		}
 
 		ImGui.Separator();
-		int count = route.Closed ? route.Points.Count - 1 : route.Points.Count;
+		int count = placed.Closed ? placed.Points.Count - 1 : placed.Points.Count;
 		ImGui.Text($"Waypoints: {count}");
 		for (int i = 0; i < count; i++) {
-			var point = route.Points[i];
+			var point = placed.Points[i];
 			bool isSelected = selected.Waypoint == i;
 			if (ImGui.Selectable($"{i}: {point.X}, {point.Y}##wp{i}", isSelected)) {
 				_selection.Current = selected with { Waypoint = i };
 			}
 		}
 
-		if (route.WalkedBy.Contains(0) && route.Points.Count > MarkedWaypoints) {
+		if (route.WalkedBy.Contains(0) && placed.Points.Count > MarkedWaypoints) {
 			EditorText.Note($"The heads-down map marks waypoints 1 to {MarkedWaypoints - 1} of the player's route, and none after.");
 		}
 
-		DrawEdits(route, selected.Guid, selected.Waypoint);
-		DrawMove(route, selected);
+		DrawEdits(placed, selected.Guid, selected.Waypoint);
+		DrawMove(route, placed, selected);
 		DrawDelete(selected.Guid);
 	}
 
 	// Add waypoints, Insert after, Remove, and Close or Open the loop, of <route>, row-8 GUID <guid>.
-	private void DrawEdits(EditorRoute route, short guid, int waypoint) {
+	private void DrawEdits(PlannedRoute route, short guid, int waypoint) {
 		ImGui.Separator();
 		if (_editor.WhyFixed(guid) is { } reason) {
 			EditorText.Reason(reason);
@@ -133,14 +136,14 @@ internal sealed class RouteView {
 
 	// The selected waypoint's X and Y as fields, which move it when one lets go as a plain drag of its move handles does,
 	// its point with whatever else references it (PointMover); and what that moves with it.
-	private void DrawMove(EditorRoute route, RouteSelection selected) {
-		int count = route.Closed ? route.Points.Count - 1 : route.Points.Count;
+	private void DrawMove(EditorRoute route, PlannedRoute placed, RouteSelection selected) {
+		int count = placed.Closed ? placed.Points.Count - 1 : placed.Points.Count;
 		if (selected.Waypoint < 0 || selected.Waypoint >= count) {
 			return;
 		}
 
 		var target = _mover.TargetOf(selected) as WaypointTarget;
-		var at = route.Points[selected.Waypoint];
+		var at = placed.Points[selected.Waypoint];
 		ImGui.Separator();
 		ImGui.Text($"Waypoint {selected.Waypoint}, in world units:");
 		ImGui.PushID("waypoint");
@@ -150,7 +153,7 @@ internal sealed class RouteView {
 			_mover.Commit(target, at, draft.X, draft.Y, 0);
 		}
 
-		PointFields.BoxWarning(_mover.LoadedBox, route.Points[selected.Waypoint]);
+		PointFields.BoxWarning(_mover.LoadedBox, at);
 		if (target is not { } waypoint) {
 			return;
 		}

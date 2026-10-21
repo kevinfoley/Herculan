@@ -55,7 +55,7 @@ internal sealed record ActionSelection(short Guid) : EditorSelection;
 
 /// <summary>
 /// One route, by its row-8 GUID, and optionally one of its waypoints, by its index in the route's
-/// <see cref="EditorRoute.Points"/> (-1 for the route as a whole).
+/// <see cref="PlannedRoute.Points"/> (-1 for the route as a whole).
 /// </summary>
 internal sealed record RouteSelection(short Guid, int Waypoint = -1) : EditorSelection;
 

@@ -28,12 +28,12 @@ internal sealed class EditorMission {
 		Generated = index;
 
 		var drape = new DrapedLines(scene.World.Terrain);
-		Overlay = new MissionOverlay(index, sceneIndex, drape);
+		Overlay = new MissionOverlay(sceneIndex, drape);
 		Picker = new ScenePicker(scene, sceneIndex, Overlay);
 		GroupOverlay = new GroupOverlay(sceneIndex, index, drape, Picker);
 		Outliner = new MissionOutliner(index, new MissionLint(index, document, source.Provenance.Lines.Count), Selection);
 		Sync = new SceneSync(content, source, scene, tables, sceneIndex, index, Overlay, Picker, Outliner, Selection, squad);
-		Mover = new PointMover(document, source, scene, sceneIndex, index, Sync, Overlay, materials);
+		Mover = new PointMover(source, scene, sceneIndex, Sync, Overlay, materials);
 		Gizmo = new MoveGizmo(Selection, Mover);
 		Placer = new StructurePlacer(document, source, scene, index, Mover, Sync, Selection);
 		Sides = new SideChanger(document, source, index, Mover, Sync);
@@ -96,7 +96,7 @@ internal sealed class EditorMission {
 	/// <summary>The mission as generated after the last edit, which the views read.</summary>
 	public Mission Mission => Generated.Mission;
 
-	/// <summary>The scene's objects and the mission's groups, as the <c>.MSN</c>'s layout places them, by GUID.</summary>
+	/// <summary>The scene's objects and the mission's groups, routes and trigger areas, as the <c>.MSN</c>'s layout places them, by GUID.</summary>
 	public MissionIndex Index { get; }
 
 	/// <summary>The generated mission's features, cross-referenced by block index, which the views read.</summary>
@@ -221,7 +221,7 @@ internal sealed class EditorMission {
 		var sceneIndex = new MissionIndex(plan, objects);
 		scene.Settle(sceneIndex.Objects, sceneIndex.BasePads);
 		foreach (var sceneObject in sceneIndex.Objects) {
-			sceneObject.Object.Position = PointFollowers.Settled(scene.World.Terrain, sceneObject.Object, sceneObject.Object.Position);
+			sceneObject.Object.Position = GroundStanding.Settled(scene.World.Terrain, sceneObject.Object, sceneObject.Object.Position);
 		}
 
 		var index = new GeneratedIndex(generated, document, new GeneratedRecords(source),

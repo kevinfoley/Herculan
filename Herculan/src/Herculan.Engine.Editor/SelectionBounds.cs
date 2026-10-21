@@ -9,7 +9,8 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// The sphere a selection fills, in world units, for the camera to frame (<see cref="EditorCamera.Frame"/>): an object's
 /// pick sphere, a group's members and point, an area's footprint, a route's waypoints, an objective's subject or an
-/// action's areas. Ground features sit on the terrain, where they are drawn.
+/// action's areas. Ground features sit on the terrain, where they are drawn. All but an objective's subject are the
+/// layout's (<see cref="MissionIndex"/>).
 /// </summary>
 internal static class SelectionBounds {
 	/// <summary>How large a sphere a single point is framed as, in world units (about 20 m).</summary>
@@ -31,27 +32,22 @@ internal static class SelectionBounds {
 
 				spheres.Add((OnGround(mission, group.Setup.Point), PointRadius));
 				break;
-			case AreaSelection { Guid: var guid } when records.Area(guid) is { } area:
-				if (index.Area(area) is { } found) {
-					AddArea(spheres, mission, found);
-				}
-
+			case AreaSelection { Guid: var guid } when mission.Index.Area(guid) is { } area:
+				AddArea(spheres, mission, area.Area);
 				break;
-			case ActionSelection { Guid: var guid } when records.Action(guid) is { } action && action < index.Mission.Actions.Count:
-				foreach (var reference in index.Mission.Actions[action].Areas.Select(area => area.Reference)) {
-					if (index.Area(reference) is { } area) {
-						AddArea(spheres, mission, area);
+			case ActionSelection { Guid: var guid } when mission.Index.Action(guid) is { } action:
+				foreach (short reference in action.Areas) {
+					if (mission.Index.Area(reference) is { } area) {
+						AddArea(spheres, mission, area.Area);
 					}
 				}
 
 				break;
-			case RouteSelection { Guid: var guid, Waypoint: var waypoint } when records.Route(guid) is { } reference:
-				if (index.Route(reference) is { } route) {
-					if (waypoint >= 0 && waypoint < route.Points.Count) {
-						spheres.Add((OnGround(mission, route.Points[waypoint]), PointRadius));
-					} else {
-						spheres.AddRange(route.Points.Select(point => (OnGround(mission, point), PointRadius)));
-					}
+			case RouteSelection { Guid: var guid, Waypoint: var waypoint } when mission.Index.Route(guid) is { } route:
+				if (waypoint >= 0 && waypoint < route.Points.Count) {
+					spheres.Add((OnGround(mission, route.Points[waypoint]), PointRadius));
+				} else {
+					spheres.AddRange(route.Points.Select(point => (OnGround(mission, point), PointRadius)));
 				}
 
 				break;

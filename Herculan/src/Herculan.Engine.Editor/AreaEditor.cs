@@ -51,7 +51,7 @@ internal sealed class AreaEditor {
 
 	/// <summary>Why row-9 GUID <paramref name="area"/> cannot be edited, or null when it can.</summary>
 	public string? WhyFixed(short area) =>
-		_index.Records.Area(area) is { } reference ? _mover.WhyFixedArea(reference) : GeneratedRecords.NotShown;
+		_index.Records.Area(area) != null ? _mover.WhyFixedArea(area) : GeneratedRecords.NotShown;
 
 	/// <summary>What keeps <paramref name="area"/> from being deleted; <see cref="AreaDeleteBlockers.None"/> when nothing does.</summary>
 	public AreaDeleteBlockers BlockersOf(short area) {

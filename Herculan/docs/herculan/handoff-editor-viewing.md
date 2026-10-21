@@ -35,7 +35,7 @@ A change goes through `TheaterChanger` ([The tools](handoff-editor-document.md#t
 
 Every kind names its `.MSN` record: a group, trigger area, action, timer, route or condition by the GUID of its row (16, 9, 10, 11, 8, 1), an objective by its index in row 17, and an object by the row (12, 13 or 14, a squad herc's 12) and GUID of the roster record it stands for (`ObjectSelection`), which `MissionIndex` resolves to the scene's object. The editors take the same identities, and each selects the GUID or row-17 index it has just written. A selection is kept across every edit, undo and redo while the `.MSN` has its record ([Rebuilding after an edit](handoff-editor-document.md#rebuilding-after-an-edit)).
 
-The scene's objects and groups are the layout's (`MissionIndex`), and the picker, the selection boxes, the group overlay, the base pads, the leveller and the move handles of objects and groups read them by GUID. The outliner, the Properties views, the route and area overlay and the mission check still read the generated `script.dat` (`GeneratedIndex`), so `GeneratedRecords` gives the block index a selection's record was exported at, and the selection a list, link or finding makes from a block index (the GUID of the record that created it). A record the generation has none for, one whose condition fails in the version the editor shows, is selected through a condition's Used by, by keeping a selection across an edit, or, for an object, by picking it in the scene; its view shows its kind and "Not shown in the editor.", or for an object, a group or an objective its title and Present when, then "Absent from the mission as opened, so this view cannot show it yet.", and its editor refuses any other edit or a delete with the same words.
+The scene's objects, groups, routes and trigger areas are the layout's (`MissionIndex`), every record included, and the picker, the selection boxes, the group overlay, the route and area overlay, the base pads, the mission box, the framing, the leveller and the move handles read them by GUID. The outliner, the Properties views and the mission check still read the generated `script.dat` (`GeneratedIndex`), so `GeneratedRecords` gives the block index a selection's record was exported at, and the selection a list, link or finding makes from a block index (the GUID of the record that created it); the route and area views take their waypoints and corners from `MissionIndex`, which follows a drag's preview. A record the generation has none for, one whose condition fails in the version the editor shows, is selected through a condition's Used by, by keeping a selection across an edit, or, for an object, a waypoint or an area, by picking it in the scene; its view shows its kind and "Not shown in the editor.", or for an object, a group or an objective its title and Present when, then "Absent from the mission as opened, so this view cannot show it yet.", and its editor refuses any other edit or a delete with the same words.
 
 ## Camera
 
@@ -51,18 +51,20 @@ A press on a move handle of the selection, a selected trigger area's corners and
 
 ## Overlays
 
-`MissionOverlay` draws through `DrapedLines`, each toggled from the View menu, a line behind terrain dimmed:
+`MissionOverlay` draws the layout's features (`MissionIndex`) through `DrapedLines`, each toggled from the View menu, a line behind terrain dimmed:
 
-- every trigger area of block 4, coloured by who trips it, grey when no action tests it;
-- every route of block 3 in three colours (the player's, walked, never walked), loops closed, waypoints numbered when selected;
-- every base pad's painted tile (`MissionBasePad.TileOrigin`), as the layout places it, with the selected group's authored point and its snap;
-- the mission box with its HDD-map and abort margins.
+- every trigger area of row 9 whose points the layout has, coloured by who trips it (the first action testing it), grey when no action tests it, labelled by its place in row 9;
+- every route of row 8 with a waypoint the layout has, in three colours (the player's, walked, never walked), loops closed, labelled by its place in row 8, waypoints numbered when selected;
+- every base pad's painted tile (`MissionBasePad.TileOrigin`), with the selected group's authored point and its snap;
+- the mission box, the extent of every row-6 point, with its HDD-map and abort margins.
+
+An area or route is numbered as the outliner numbers it while the generation drops none before it.
 
 A selected area's ground is tinted yellow over exactly what its test catches, a circle's octagon included, through `SceneRenderer.Highlight`, which only the editor's program compiles. Only a selected area is tinted; a selected action's areas are outlined, since `Highlight` holds one region. The tint covers the terrain, not a structure's ground plane inside the area.
 
 ## Cross-references
 
-`GeneratedIndex` works out once which actions test each area, which groups walk or merely name each route, and for each action the timers, engaged and defeated objects that fire it and the waiting groups, ended orders, started timers, counters and message (from `COMMAND<n>.STR`) that follow. The action view shows all of it, and an area's view shows it read-only for every action testing the area (`ActionView.DrawSummary`).
+For the scene, `MissionIndex` works out from the layout which actions test each area (an action's slots up to the first unset one) and which groups walk or merely name each route. For the views, `GeneratedIndex` works out the same over the generated mission, and for each action the timers, engaged and defeated objects that fire it and the waiting groups, ended orders, started timers, counters and message (from `COMMAND<n>.STR`) that follow. The action view shows all of it, and an area's view shows it read-only for every action testing the area (`ActionView.DrawSummary`).
 
 ## Groups
 

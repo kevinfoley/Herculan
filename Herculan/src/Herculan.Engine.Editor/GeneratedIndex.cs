@@ -7,16 +7,14 @@ using Herculan.Engine.World;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// One route the mission's orders name — a <c>script.dat</c> block-3 waypoint group, resolved to
+/// One route of the generated mission — a <c>script.dat</c> block-3 waypoint group, resolved to
 /// points.
 /// </summary>
 internal sealed class EditorRoute {
-	private readonly Vec3i[] _points;
-
-	/// <param name="points">Its waypoints, in order; copied, so a move here leaves the loaded orders alone.</param>
+	/// <param name="points">Its waypoints, in order.</param>
 	public EditorRoute(int reference, IReadOnlyList<Vec3i> points, IReadOnlyList<int> walkedBy, IReadOnlyList<int> namedBy) {
 		Reference = reference;
-		_points = points.ToArray();
+		Points = points;
 		WalkedBy = walkedBy;
 		NamedBy = namedBy;
 	}
@@ -24,8 +22,8 @@ internal sealed class EditorRoute {
 	/// <summary>The block-3 record index.</summary>
 	public int Reference { get; }
 
-	/// <summary>Its waypoints, in order, as the editor's moves have left them.</summary>
-	public IReadOnlyList<Vec3i> Points => _points;
+	/// <summary>Its waypoints, in order.</summary>
+	public IReadOnlyList<Vec3i> Points { get; }
 
 	/// <summary>
 	/// The groups whose order slot 0 names it — the only route a group ever walks, see
@@ -38,9 +36,6 @@ internal sealed class EditorRoute {
 
 	/// <summary>Whether any group's order names it, in any slot.</summary>
 	public bool InAnOrder => WalkedBy.Count > 0 || NamedBy.Count > 0;
-
-	/// <summary>Stands waypoint <paramref name="index"/> at <paramref name="point"/>.</summary>
-	public void Move(int index, Vec3i point) => _points[index] = point;
 
 	/// <summary>
 	/// Whether the route closes on itself — its last waypoint is its first — and so is walked as a loop
@@ -70,13 +65,12 @@ internal sealed record ActionLinks(
 
 /// <summary>
 /// The editor's cross-reference over the generated mission, by <c>script.dat</c> block index, which the Properties views,
-/// the outliner, the route and area overlay and the mission check read until they move to the layout
-/// (docs/herculan/handoff-editor-msn-scene.md#steps): which actions name which trigger area, which groups walk which
-/// route, what fires each action and what each one sets off. Built from the <see cref="World.Mission"/> generated after
-/// each edit and the scene's objects (<see cref="MissionIndex"/>), each <see cref="SceneObject.Placement"/> carrying the
-/// generation's indices for its record's GUID (<see cref="SceneSync"/>), so an object the generation has none for is in no
-/// group or roster slot here. Between rebuilds, which record names which is never recomputed; the routes' points and the
-/// trigger areas are copies, which <see cref="PointFollowers"/> keeps in step with a drag's preview.
+/// the outliner and the mission check read until they move to the layout (docs/herculan/handoff-editor-msn-scene.md#steps):
+/// which actions name which trigger area, which groups walk which route, what fires each action and what each one sets off.
+/// Built from the <see cref="World.Mission"/> generated after each edit and the scene's objects (<see cref="MissionIndex"/>),
+/// each <see cref="SceneObject.Placement"/> carrying the generation's indices for its record's GUID (<see cref="SceneSync"/>),
+/// so an object the generation has none for is in no group or roster slot here. Nothing here follows a drag's preview:
+/// what the scene draws is <see cref="MissionIndex"/>'s.
 /// </summary>
 internal sealed class GeneratedIndex {
 	private readonly ScriptDat _document;
@@ -181,9 +175,6 @@ internal sealed class GeneratedIndex {
 	/// </summary>
 	public IReadOnlyList<EditorRoute> Routes { get; private set; } = [];
 
-	/// <summary>The route the player's squad walks, or null.</summary>
-	public EditorRoute? PlayerRoute => Routes.FirstOrDefault(route => route.WalkedBy.Contains(0));
-
 	public MissionTriggerArea? Area(int reference) {
 		foreach (var area in Areas) {
 			if (area.Reference == reference) {
@@ -223,14 +214,6 @@ internal sealed class GeneratedIndex {
 	/// <summary>A group's point, heading and formation, or null for an index the mission does not have.</summary>
 	public MissionGroupSetup? SetupOf(int group) =>
 		group >= 0 && group < _setups.Count ? _setups[group] : null;
-
-	/// <summary>Replaces the area with <paramref name="area"/>'s reference by <paramref name="area"/>.</summary>
-	public void SetArea(MissionTriggerArea area) {
-		int at = _areas.FindIndex(existing => existing.Reference == area.Reference);
-		if (at >= 0) {
-			_areas[at] = area;
-		}
-	}
 
 	/// <summary>
 	/// Where a record a mission ref names stands: an object's position, or a group's point. Null when
@@ -331,9 +314,6 @@ internal sealed class GeneratedIndex {
 
 		return areas;
 	}
-
-	/// <summary>Whether an action tests <paramref name="areaReference"/>.</summary>
-	public bool Tested(int areaReference) => ActionsTesting(areaReference).Any();
 
 	private static List<EditorRoute> BuildRoutes(Mission mission, ScriptDat document) {
 		var points = new SortedDictionary<int, IReadOnlyList<Vec3i>>();

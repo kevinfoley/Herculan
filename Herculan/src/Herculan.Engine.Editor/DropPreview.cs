@@ -8,7 +8,7 @@ namespace Herculan.Engine.Editor;
 /// the drag is over the view: built as the add builds it (<see cref="HercPlacer.Ghost"/>, <see cref="FlyerPlacer.Ghost"/>,
 /// <see cref="VehiclePlacer.Ghost"/>, <see cref="StructurePlacer.Ghost"/>) and drawn through <see cref="MissionDrawables"/>,
 /// but not listed in the index or the picker, so nothing selects or levels it. It stands where the add's object will stand
-/// on a point at Z 0 (<see cref="PointFollowers.Standing"/>, <see cref="PointFollowers.Settled"/>): a herc at its ride
+/// on a point at Z 0 (<see cref="GroundStanding.Standing"/>, <see cref="GroundStanding.Settled"/>): a herc at its ride
 /// height above the ground as it is, a flyer at 5,000 units, a ground vehicle or a structure on the ground before the add
 /// levels it.
 /// </summary>
@@ -52,7 +52,7 @@ internal sealed class DropPreview {
 		}
 
 		var terrain = _mission.Scene.World.Terrain;
-		_ghost.Object.Position = PointFollowers.Settled(terrain, _ghost.Object, PointFollowers.Standing(terrain, _ghost, at.X, at.Y, 0));
+		_ghost.Object.Position = GroundStanding.Settled(terrain, _ghost.Object, GroundStanding.Standing(terrain, _ghost, at.X, at.Y, 0));
 		if (_shown) {
 			_drawables.Move(_ghost);
 		} else {

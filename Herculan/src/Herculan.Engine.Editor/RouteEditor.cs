@@ -23,9 +23,9 @@ internal sealed record RouteDeleteBlockers(string? Fixed, DeleteNamers Names, IR
 /// (docs/herculan/handoff-editor-document.md#the-tools).
 ///
 /// <para>Routes are taken by their row-8 GUID, as the selections name them, and a route not shown in the editor is not
-/// edited. A waypoint here is one the route view lists, by its index in <see cref="EditorRoute.Points"/>; it is mapped to its
-/// block-3 list entry (<see cref="PointMover.WaypointEntries"/>), which is the <c>.MSN</c> list's entry, as the generation
-/// writes one for one. A route whose waypoints cannot be told apart from its entries is not edited.</para>
+/// edited. A waypoint here is one the route view lists, by its index in <see cref="PlannedRoute.Points"/>; it is mapped to
+/// the entry of the <c>.MSN</c> list it comes from (<see cref="PlannedRoute.Entries"/>). A route none of whose waypoints
+/// names a point the layout has is not edited.</para>
 ///
 /// <para>The view's edits wait for the frame's ImGui to be rendered (<see cref="RunRequest"/>), since the rebuild changes
 /// what the panels list; <see cref="RoutePlacing"/> calls <see cref="Create"/> and <see cref="Extend"/> at the same
@@ -55,11 +55,11 @@ internal sealed class RouteEditor {
 
 	/// <summary>Why row-8 GUID <paramref name="route"/>'s waypoints cannot be edited, or null when they can.</summary>
 	public string? WhyFixed(short route) {
-		if (_index.Records.Route(route) is not { } reference) {
+		if (_index.Records.Route(route) == null) {
 			return GeneratedRecords.NotShown;
 		}
 
-		return _mover.WaypointEntries(reference) == null
+		return _index.Scene.Route(route) == null
 			? "Some of its waypoints reference points the mission does not have, so they cannot be edited one by one."
 			: null;
 	}
@@ -172,12 +172,9 @@ internal sealed class RouteEditor {
 		return Commit(() => RouteEditing.Extend(source, route, at, close), route, -1);
 	}
 
-	// The block-3 list entry of waypoint <waypoint> of <route>, or -1 when it has none.
+	// The entry of <route>'s list waypoint <waypoint> comes from, or -1 when it has none.
 	private int Entry(short route, int waypoint) =>
-		_index.Records.Route(route) is { } reference && _mover.WaypointEntries(reference) is { } entries
-			&& waypoint >= 0 && waypoint < entries.Length
-				? entries[waypoint]
-				: -1;
+		_index.Scene.Route(route)?.Entries is { } entries && waypoint >= 0 && waypoint < entries.Count ? entries[waypoint] : -1;
 
 	private string? Commit(Func<MsnEdit> edit, short route, int waypoint) => Commit(edit, () => route, waypoint);
 
@@ -193,7 +190,7 @@ internal sealed class RouteEditor {
 
 		_mover.Record(new RecordsEdit(_sync, change));
 		if (route() is not -1 and var guid) {
-			bool listed = _index.Records.Route(guid) is { } reference && waypoint < _index.Route(reference)?.Points.Count;
+			bool listed = waypoint < _index.Scene.Route(guid)?.Points.Count;
 			_selection.Current = new RouteSelection(guid, listed ? waypoint : -1);
 		}
 

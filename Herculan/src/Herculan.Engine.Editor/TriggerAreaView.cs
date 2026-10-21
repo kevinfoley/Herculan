@@ -42,9 +42,12 @@ internal sealed class TriggerAreaView {
 		_references = references;
 	}
 
-	/// <summary>Row-9 GUID <paramref name="guid"/>'s view, the area generated at block-4 index <paramref name="reference"/>.</summary>
+	/// <summary>
+	/// Row-9 GUID <paramref name="guid"/>'s view, the area generated at block-4 index <paramref name="reference"/>; its shape
+	/// and corners are the layout's (<see cref="MissionIndex"/>), which a drag's preview moves.
+	/// </summary>
 	public void Draw(short guid, int reference) {
-		if (_index.Area(reference) is not { } area) {
+		if (_index.Scene.Area(guid)?.Area is not { } area) {
 			return;
 		}
 
@@ -56,11 +59,11 @@ internal sealed class TriggerAreaView {
 
 		ImGui.BeginDisabled(fixedNow);
 		if (area.Shape == MissionTriggerShape.Circle) {
-			DrawCorner(reference, 0, "Centre", area.A, reason != null);
-			DrawRadius(reference, area.Radius, reason != null);
+			DrawCorner(guid, reference, 0, "Centre", area.A, reason != null);
+			DrawRadius(guid, reference, area.Radius, reason != null);
 		} else {
-			DrawCorner(reference, 0, "Corner 1", area.A, reason != null);
-			DrawCorner(reference, 1, "Corner 2", area.B, reason != null);
+			DrawCorner(guid, reference, 0, "Corner 1", area.A, reason != null);
+			DrawCorner(guid, reference, 1, "Corner 2", area.B, reason != null);
 			ImGui.Text($"Size: {MissionText.Distance(Math.Abs(area.B.X - area.A.X))} by {MissionText.Distance(Math.Abs(area.B.Y - area.A.Y))}");
 			EditorText.Note("Height is ignored: the box catches anything over its ground.");
 		}
@@ -120,16 +123,16 @@ internal sealed class TriggerAreaView {
 	// A corner's or the centre's X and Y as fields, which move its point when one lets go, what shares the point, and
 	// whether it stands outside the mission box as opened. The box is of block 1's points alone, so a circle's edge past
 	// it grows nothing and only the centre is tested.
-	private void DrawCorner(int reference, int corner, string label, Vec3i at, bool fixedNow) {
+	private void DrawCorner(short guid, int reference, int corner, string label, Vec3i at, bool fixedNow) {
 		var point = new Vec3i(at.X, at.Y, 0);
 		ImGui.PushID($"corner{corner}");
 		ImGui.Text($"{label}, in world units:");
 		if (_corners.Draw((reference, corner), point, withZ: false) is { } draft) {
-			_mover.Commit(new AreaCornerTarget(reference, corner), point, draft.X, draft.Y, 0);
+			_mover.Commit(new AreaCornerTarget(guid, corner), point, draft.X, draft.Y, 0);
 		}
 
 		PointFields.BoxWarning(_mover.LoadedBox, point);
-		if (!fixedNow && _mover.SharersOf(new AreaCornerTarget(reference, corner)) is > 0 and var sharers) {
+		if (!fixedNow && _mover.SharersOf(new AreaCornerTarget(guid, corner)) is > 0 and var sharers) {
 			string what = label == "Centre" ? "the centre" : "the corner";
 			EditorText.Note($"Its point is referenced by {sharers} other record(s) (waypoints, other areas, groups), which move "
 				+ $"with it. Alt+drag moves {what} alone.");
@@ -139,7 +142,7 @@ internal sealed class TriggerAreaView {
 	}
 
 	// The radius as a field, in world units, stored in tens when it lets go.
-	private void DrawRadius(int reference, int radius, bool fixedNow) {
+	private void DrawRadius(short guid, int reference, int radius, bool fixedNow) {
 		if (_radiusDraftFor is { } draftFor && draftFor != reference && !ImGui.IsAnyItemActive()) {
 			_radiusDraftFor = null;
 		}
@@ -157,7 +160,7 @@ internal sealed class TriggerAreaView {
 			int draft = _radiusDraft;
 			_radiusDraftFor = null;
 			if (TriggerAreaEditing.Radius(TriggerAreaEditing.StoredRadius(draft)) != radius) {
-				_mover.CommitRadius(reference, draft);
+				_mover.CommitRadius(guid, draft);
 			}
 		}
 

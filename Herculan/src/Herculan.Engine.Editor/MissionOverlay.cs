@@ -1,4 +1,5 @@
 using System.Numerics;
+using HercWorks.Core.Data.File.Msn;
 using Herculan.Engine.Cockpit;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Platform;
@@ -12,8 +13,8 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// The mission's non-object features drawn over the scene: trigger areas, routes, base pads and the
 /// mission box with its two margins, as lines laid on the terrain, plus their ImGui labels, the waypoint pick and the
-/// tint over a selected area's ground. The areas, routes and mission box are the generated mission's (<see cref="GeneratedIndex"/>);
-/// the pads, and the selected group's snap, the layout's (<see cref="MissionIndex"/>), where the ground is painted.
+/// tint over a selected area's ground. Every feature is the layout's (<see cref="MissionIndex"/>), by GUID, a conditional
+/// one included, so a route or area the mission as opened leaves out is drawn and picked like any other.
 ///
 /// <para>Every line is drawn twice: dim with depth testing off, so a feature behind a hill still
 /// shows where it is, then at full colour with depth testing on, so the part in view reads as
@@ -44,54 +45,62 @@ internal sealed class MissionOverlay {
 	/// <summary>How close, in pixels on a 100% display, a click must land to a waypoint to pick it.</summary>
 	private const float WaypointPickRadius = 8f;
 
-	private readonly GeneratedIndex _index;
-	private readonly MissionIndex _scene;
+	private readonly MissionIndex _index;
 	private readonly DrapedLines _drape;
-	private readonly List<(MissionTriggerArea Area, List<Vector3> Lines, Vector3 Color)> _areas = new();
-	private readonly List<(EditorRoute Route, List<Vector3> Lines, Vector3 Color)> _routes = new();
+	private List<(PlannedArea Area, List<Vector3> Lines, Vector3 Color)> _areas = new();
+	private List<(PlannedRoute Route, List<Vector3> Lines, Vector3 Color)> _routes = new();
 	private readonly List<(List<Vector3> Lines, Vector3 Color)> _box = new();
 	private readonly List<(MissionBasePad Pad, List<Vector3> Lines)> _pads = new();
 	private MissionBox _boxShape;
 
-	public MissionOverlay(GeneratedIndex index, MissionIndex scene, DrapedLines drape) {
+	public MissionOverlay(MissionIndex index, DrapedLines drape) {
 		_index = index;
-		_scene = scene;
 		_drape = drape;
 		Rebuild();
 	}
 
-	/// <summary>Lays every line again from the indices, for indices built again (<see cref="SceneSync"/>).</summary>
+	/// <summary>Lays every line again from the index, for an index built again (<see cref="SceneSync"/>).</summary>
 	public void Rebuild() {
-		_areas.Clear();
+		Lay(keep: false);
+		SetBox(_index.Box);
+	}
+
+	/// <summary>
+	/// Lays again the route, area and pad lines the index now places elsewhere, as a drag's preview moves them; a route or
+	/// area that stands where it stood keeps its lines.
+	/// </summary>
+	public void Replan() => Lay(keep: true);
+
+	// Lays the route, area and pad lines from the index, keeping a feature's old lines when <keep> and it has not moved.
+	private void Lay(bool keep) {
+		var oldAreas = keep ? _areas.ToDictionary(entry => entry.Area.Guid) : null;
+		_areas = new List<(PlannedArea, List<Vector3>, Vector3)>(_index.Areas.Count);
 		foreach (var area in _index.Areas) {
-			_areas.Add((area, AreaLines(area), AreaColor(area)));
+			var lines = oldAreas?.GetValueOrDefault(area.Guid) is { Area.Area: var was } old && was == area.Area
+				? old.Lines
+				: AreaLines(area.Area);
+			_areas.Add((area, lines, AreaColor(area)));
 		}
 
-		_routes.Clear();
+		var oldRoutes = keep ? _routes.ToDictionary(entry => entry.Route.Guid) : null;
+		_routes = new List<(PlannedRoute, List<Vector3>, Vector3)>(_index.Routes.Count);
 		var playerRoute = _index.PlayerRoute;
 		foreach (var route in _index.Routes) {
-			var lines = new List<Vector3>();
-			_drape.AddPolyline(lines, route.Points);
-			var color = !route.Walked ? UnwalkedRouteColor : route == playerRoute ? PlayerRouteColor : RouteColor;
+			var lines = oldRoutes?.GetValueOrDefault(route.Guid) is { Route.Points: var was } old && was.SequenceEqual(route.Points)
+				? old.Lines
+				: RouteLines(route);
+			var color = !route.Walked ? UnwalkedRouteColor : route.Guid == playerRoute?.Guid ? PlayerRouteColor : RouteColor;
 			_routes.Add((route, lines, color));
 		}
 
-		RebuildPads();
-		SetBox(MissionBox.Of(_index.Mission.Coordinates));
-	}
-
-	/// <summary>Lays every pad's outline again where the scene's index now has it, as a drag's preview moves it.</summary>
-	public void RebuildPads() {
 		_pads.Clear();
-		foreach (var pad in _scene.BasePads) {
+		foreach (var pad in _index.BasePads) {
 			_pads.Add((pad, PadLines(pad)));
 		}
 	}
 
-	/// <summary>
-	/// The mission box drawn, with its two margins: block 1's extent, which an edit to a point can grow or shrink.
-	/// </summary>
-	public void SetBox(MissionBox box) {
+	// The mission box drawn, with its two margins: block 1's extent, which an edit to a point can grow or shrink.
+	private void SetBox(MissionBox box) {
 		_boxShape = box;
 		_box.Clear();
 		if (!box.IsEmpty) {
@@ -103,27 +112,8 @@ internal sealed class MissionOverlay {
 
 	/// <summary>Lays every line on the ground again, for terrain whose heights have changed under them.</summary>
 	public void Redrape() {
-		for (int i = 0; i < _areas.Count; i++) {
-			_areas[i] = (_areas[i].Area, AreaLines(_areas[i].Area), _areas[i].Color);
-		}
-
-		foreach (var (route, _, _) in _routes.ToList()) {
-			MoveRoute(route);
-		}
-
-		for (int i = 0; i < _pads.Count; i++) {
-			_pads[i] = (_pads[i].Pad, PadLines(_pads[i].Pad));
-		}
-
+		Lay(keep: false);
 		SetBox(_boxShape);
-	}
-
-	/// <summary>Lays <paramref name="area"/>'s outline again where it now stands.</summary>
-	public void MoveArea(MissionTriggerArea area) {
-		int at = _areas.FindIndex(entry => entry.Area.Reference == area.Reference);
-		if (at >= 0) {
-			_areas[at] = (area, AreaLines(area), _areas[at].Color);
-		}
 	}
 
 	private List<Vector3> AreaLines(MissionTriggerArea area) {
@@ -137,6 +127,12 @@ internal sealed class MissionOverlay {
 		return lines;
 	}
 
+	private List<Vector3> RouteLines(PlannedRoute route) {
+		var lines = new List<Vector3>();
+		_drape.AddPolyline(lines, route.Points);
+		return lines;
+	}
+
 	private List<Vector3> PadLines(MissionBasePad pad) {
 		var (x, y) = pad.TileOrigin;
 		int size = pad.Layout.TileSize;
@@ -145,25 +141,12 @@ internal sealed class MissionOverlay {
 		return lines;
 	}
 
-	/// <summary>Lays <paramref name="route"/>'s line again over its waypoints as they now stand.</summary>
-	public void MoveRoute(EditorRoute route) {
-		int at = _routes.FindIndex(entry => ReferenceEquals(entry.Route, route));
-		if (at < 0) {
-			return;
-		}
-
-		var lines = new List<Vector3>();
-		_drape.AddPolyline(lines, route.Points);
-		_routes[at] = (route, lines, _routes[at].Color);
-	}
-
 	/// <summary>
 	/// Tints the ground a selected trigger area catches, through <paramref name="highlight"/>, and clears it for any
 	/// other selection.
 	/// </summary>
 	public void Highlight(GroundHighlight highlight, SelectionState selection) {
-		if (selection.Current is not AreaSelection { Guid: var guid } || _index.Records.Area(guid) is not { } reference
-				|| _index.Area(reference) is not { } area) {
+		if (selection.Current is not AreaSelection { Guid: var guid } || _index.Area(guid)?.Area is not { } area) {
 			highlight.Clear();
 			return;
 		}
@@ -181,9 +164,9 @@ internal sealed class MissionOverlay {
 	/// What colour an area draws in: by who trips it, read off the first action that tests it — the
 	/// player's side of the fight, everyone else's groups, or one named target — or grey when no action tests it.
 	/// </summary>
-	private Vector3 AreaColor(MissionTriggerArea area) {
-		foreach (int action in _index.ActionsTesting(area.Reference)) {
-			return _index.Mission.Actions[action].Type switch {
+	private Vector3 AreaColor(PlannedArea area) {
+		foreach (short guid in area.TestedBy) {
+			return _index.Action(guid)?.Type switch {
 				MissionAction.SubjectPlayer or MissionAction.SubjectPlayerGroup => PlayerTriggerColor,
 				>= MissionAction.SubjectTargetMech => TargetTriggerColor,
 				_ => GroupTriggerColor
@@ -211,7 +194,7 @@ internal sealed class MissionOverlay {
 		var highlighted = new List<Vector3>();
 
 		if (settings.ShowBasePads) {
-			var selectedGroup = selection.Current is GroupSelection group ? _scene.Group(group.Guid) : null;
+			var selectedGroup = selection.Current is GroupSelection group ? _index.Group(group.Guid) : null;
 			foreach (var (pad, lines) in _pads) {
 				if (selectedGroup != null && pad.GroupIndex == selectedGroup.Number) {
 					highlighted.AddRange(lines);
@@ -225,7 +208,7 @@ internal sealed class MissionOverlay {
 		if (settings.ShowRoutes) {
 			var selectedRoutes = SelectedRoutes(selection);
 			foreach (var (route, lines, color) in _routes) {
-				if (selectedRoutes.Contains(route.Reference)) {
+				if (selectedRoutes.Contains(route.Guid)) {
 					highlighted.AddRange(lines);
 				} else {
 					DrawLines(wireframe, camera, aspect, lines, color);
@@ -236,9 +219,9 @@ internal sealed class MissionOverlay {
 		if (settings.ShowTriggerAreas) {
 			var selectedAreas = SelectedAreas(selection);
 			foreach (var (area, lines, color) in _areas) {
-				if (selectedAreas.Contains(area.Reference)) {
+				if (selectedAreas.Contains(area.Guid)) {
 					highlighted.AddRange(lines);
-					AddPosts(highlighted, area);
+					AddPosts(highlighted, area.Area);
 				} else {
 					DrawLines(wireframe, camera, aspect, lines, color);
 				}
@@ -249,30 +232,27 @@ internal sealed class MissionOverlay {
 	}
 
 	/// <summary>
-	/// The areas the selection lights up: the selected area, or every area the selected action
+	/// The areas the selection lights up, by GUID: the selected area, or every area the selected action
 	/// tests.
 	/// </summary>
-	private HashSet<int> SelectedAreas(SelectionState selection) => selection.Current switch {
-		AreaSelection area when _index.Records.Area(area.Guid) is { } reference => new HashSet<int> { reference },
-		ActionSelection selected when _index.Records.Action(selected.Guid) is { } action && action < _index.Mission.Actions.Count =>
-			_index.Mission.Actions[action].Areas.Select(area => area.Reference).ToHashSet(),
-		_ => new HashSet<int>()
+	private HashSet<short> SelectedAreas(SelectionState selection) => selection.Current switch {
+		AreaSelection area => [area.Guid],
+		ActionSelection selected when _index.Action(selected.Guid) is { } action => action.Areas.ToHashSet(),
+		_ => []
 	};
 
 	/// <summary>
-	/// The routes the selection lights up: the selected route, the route a selected group walks, or
+	/// The routes the selection lights up, by GUID: the selected route, the route a selected group walks, or
 	/// the route an order-complete objective is about.
 	/// </summary>
-	private HashSet<int> SelectedRoutes(SelectionState selection) => selection.Current switch {
-		RouteSelection route when _index.Records.Route(route.Guid) is { } reference => new HashSet<int> { reference },
-		GroupSelection selected when _index.Records.Group(selected.Guid) is { } group =>
-			_index.Routes.Where(route => route.WalkedBy.Contains(group)).Select(route => route.Reference).ToHashSet(),
-		ObjectiveSelection selected when _index.Records.Objective(selected.Record) is { } objective
-				&& objective < _index.Mission.Objectives.Count
-				&& _index.Mission.Objectives[objective] is
-					{ ConditionCode: MissionObjective.ConditionOrderComplete, RouteRef: >= 0 } record =>
-			new HashSet<int> { record.RouteRef },
-		_ => new HashSet<int>()
+	private HashSet<short> SelectedRoutes(SelectionState selection) => selection.Current switch {
+		RouteSelection route => [route.Guid],
+		GroupSelection selected =>
+			_index.Routes.Where(route => route.WalkedBy.Contains(selected.Guid)).Select(route => route.Guid).ToHashSet(),
+		ObjectiveSelection selected when _index.Layout.Objectives.FirstOrDefault(objective => objective.Index == selected.Record)
+				is { Fields: { ConditionCode: MissionObjective.ConditionOrderComplete, RouteRef: not -1 } record } =>
+			[record.RouteRef],
+		_ => []
 	};
 
 	/// <summary>
@@ -309,8 +289,8 @@ internal sealed class MissionOverlay {
 
 	/// <summary>
 	/// The labels: each area's number at its centre, each walked route's number at its first
-	/// waypoint, and the selected route's waypoint numbers. Drawn into ImGui's background list, so
-	/// they sit under every panel.
+	/// waypoint, and the selected route's waypoint numbers. An area and a route are numbered by their place in the layout's
+	/// row 9 and row 8. Drawn into ImGui's background list, so they sit under every panel.
 	/// </summary>
 	public void DrawLabels(Camera camera, EditorSettings settings, SelectionState selection) {
 		var drawList = ImGui.GetBackgroundDrawList();
@@ -318,11 +298,12 @@ internal sealed class MissionOverlay {
 
 		if (settings.ShowTriggerAreas) {
 			foreach (var (area, _, color) in _areas) {
-				var centre = area.Shape == MissionTriggerShape.Circle
-					? area.A
-					: new Vec3i((area.A.X + area.B.X) / 2, (area.A.Y + area.B.Y) / 2, 0);
+				var shape = area.Area;
+				var centre = shape.Shape == MissionTriggerShape.Circle
+					? shape.A
+					: new Vec3i((shape.A.X + shape.B.X) / 2, (shape.A.Y + shape.B.Y) / 2, 0);
 				if (project.ToScreen(_drape.OnGround(centre.X, centre.Y)) is { } at) {
-					Label(drawList, at, $"Area {area.Reference}", color);
+					Label(drawList, at, $"Area {area.Number}", color);
 				}
 			}
 		}
@@ -332,8 +313,7 @@ internal sealed class MissionOverlay {
 		}
 
 		foreach (var (route, _, color) in _routes) {
-			var whole = _index.Records.RouteAt(route.Reference);
-			bool selected = selection.Is(whole);
+			bool selected = selection.Is(new RouteSelection(route.Guid));
 			for (int i = 0; i < route.Points.Count; i++) {
 				// A closed route's last waypoint is its first, and is labelled once.
 				if (route.Closed && i == route.Points.Count - 1) {
@@ -344,14 +324,14 @@ internal sealed class MissionOverlay {
 					continue;
 				}
 
-				bool waypointSelected = Equals(selection.Current, whole with { Waypoint = i });
+				bool waypointSelected = Equals(selection.Current, new RouteSelection(route.Guid, i));
 				var dotColor = waypointSelected ? SelectedColor : selected ? SelectedColor * 0.8f : color;
 				drawList.AddCircleFilled(at, ScaledImGui.Scaled(waypointSelected ? 5f : 3f), Pack(dotColor));
 
 				if (selected) {
 					Label(drawList, at + new Vector2(ScaledImGui.Scaled(6f), 0f), i.ToString(), SelectedColor);
 				} else if (i == 0 && route.Walked) {
-					Label(drawList, at + new Vector2(ScaledImGui.Scaled(6f), 0f), $"Route {route.Reference}", color);
+					Label(drawList, at + new Vector2(ScaledImGui.Scaled(6f), 0f), $"Route {route.Number}", color);
 				}
 			}
 		}
@@ -379,7 +359,7 @@ internal sealed class MissionOverlay {
 				float distance = Vector2.Distance(at, screen);
 				if (distance < best) {
 					best = distance;
-					picked = _index.Records.RouteAt(route.Reference, route.Closed && i == route.Points.Count - 1 ? 0 : i);
+					picked = new RouteSelection(route.Guid, route.Closed && i == route.Points.Count - 1 ? 0 : i);
 				}
 			}
 		}
@@ -397,23 +377,24 @@ internal sealed class MissionOverlay {
 			return null;
 		}
 
-		MissionTriggerArea? best = null;
+		PlannedArea? best = null;
 		double bestSize = double.MaxValue;
 		foreach (var (area, _, _) in _areas) {
-			if (!area.Contains(ground)) {
+			var shape = area.Area;
+			if (!shape.Contains(ground)) {
 				continue;
 			}
 
-			double size = area.Shape == MissionTriggerShape.Circle
-				? Math.PI * area.Radius * (double)area.Radius
-				: Math.Abs((double)(area.B.X - area.A.X) * (area.B.Y - area.A.Y));
+			double size = shape.Shape == MissionTriggerShape.Circle
+				? Math.PI * shape.Radius * (double)shape.Radius
+				: Math.Abs((double)(shape.B.X - shape.A.X) * (shape.B.Y - shape.A.Y));
 			if (size < bestSize) {
 				bestSize = size;
 				best = area;
 			}
 		}
 
-		return best is { } hit ? _index.Records.AreaAt(hit.Reference) : null;
+		return best is { } hit ? new AreaSelection(hit.Guid) : null;
 	}
 
 	public static void Label(ImDrawListPtr drawList, Vector2 at, string text, Vector3 color) {

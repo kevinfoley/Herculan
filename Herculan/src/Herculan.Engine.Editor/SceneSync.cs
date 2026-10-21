@@ -213,8 +213,8 @@ internal sealed class SceneSync {
 
 	/// <summary>
 	/// Places every record again with <paramref name="overrides"/>, a drag's, read in place of the layout's, or as the layout
-	/// stands for null, standing each object where it then stands and taking the groups' setups and pads into the index and
-	/// the pads' outlines: a drag's preview, which writes nothing.
+	/// stands for null, standing each object where it then stands and taking the groups' setups and pads and the routes and
+	/// areas into the index and the overlay's lines: a drag's preview, which writes nothing.
 	/// </summary>
 	public void Preview(PlacementOverrides? overrides) {
 		var plan = LayoutPlacement.Place(_source.Layout, _tables, overrides);
@@ -232,7 +232,7 @@ internal sealed class SceneSync {
 		}
 
 		_index.Replan(plan);
-		_overlay.RebuildPads();
+		_overlay.Replan();
 	}
 
 	/// <summary>Stands <paramref name="sceneObject"/> at a position and heading, for whatever draws and picks it.</summary>
@@ -243,11 +243,11 @@ internal sealed class SceneSync {
 		Moved?.Invoke(sceneObject);
 	}
 
-	// Stands an object where its placement puts it, as the spawn pass does and the editor draws it (PointFollowers.Settled);
+	// Stands an object where its placement puts it, as the spawn pass does and the editor draws it (GroundStanding.Settled);
 	// touched only when that moved it.
 	private void Stand(SceneObject placed) {
 		var placement = placed.Placement;
-		var position = PointFollowers.Settled(_terrain, placed.Object, MissionScene.SpawnPosition(_terrain, placed.Object, placement));
+		var position = GroundStanding.Settled(_terrain, placed.Object, MissionScene.SpawnPosition(_terrain, placed.Object, placement));
 		if (position != placed.Object.Position || placement.Heading != placed.Object.Heading) {
 			Place(placed, position, placement.Heading);
 		}
@@ -295,9 +295,7 @@ internal sealed class SceneSync {
 			ObjectSelection selected => _index.ObjectOf(selected) != null ? selected : null,
 			MissionSelection => _selection.Current,
 			RouteSelection { Waypoint: >= 0 } route when EditorSelection.InFile(_source.Mission, route) =>
-				_generated.Records.Route(route.Guid) is { } kept && route.Waypoint < _generated.Route(kept)?.Points.Count
-					? route
-					: route with { Waypoint = -1 },
+				route.Waypoint < _index.Route(route.Guid)?.Points.Count ? route : route with { Waypoint = -1 },
 			{ } selected when EditorSelection.InFile(_source.Mission, selected) => selected,
 			_ => null
 		};

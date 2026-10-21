@@ -16,7 +16,7 @@ namespace Herculan.Engine.Editor;
 /// reaches is what mission start would make of it. Running the passes again is the editor's own; retail never does.
 ///
 /// <para>What stands on the ground is settled again where it changed: a structure on the ground under it, as the
-/// spawn pass re-settles them, and a walking mech where the editor draws it (<see cref="PointFollowers.Settled"/>).
+/// spawn pass re-settles them, and a walking mech where the editor draws it (<see cref="GroundStanding.Settled"/>).
 /// The terrain mesh is rebuilt over the cells that changed (<see cref="Changed"/>) and the overlays laid on it again.</para>
 /// </summary>
 internal sealed class TerrainLeveller {
@@ -132,7 +132,7 @@ internal sealed class TerrainLeveller {
 			var position = sceneObject.Object.Position;
 			var settled = sceneObject.Object switch {
 				BaseObject => new Vec3i(position.X, position.Y, _terrain.HeightAtWorld(position.X, position.Y)),
-				MechObject mech => PointFollowers.Settled(_terrain, mech, position),
+				MechObject mech => GroundStanding.Settled(_terrain, mech, position),
 				_ => position
 			};
 
