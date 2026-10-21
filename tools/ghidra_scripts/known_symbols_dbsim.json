@@ -16339,7 +16339,13 @@
       "confidence": "high",
       "name": "Cockpit_CycleTarget",
       "description": "TargetSelect_Cycle(CockpitViewInstance). MfdButton_OnClick's SELECT/TARGET case calls it in every mode but 0.",
-      "source": "DBSIM decompile at 00446f88"
+      "source": "DBSIM decompile at 00446f88",
+      "verified": {
+        "bytes": "00446f88+17",
+        "sha1": "4ad0eb7c1331",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00446f9c",

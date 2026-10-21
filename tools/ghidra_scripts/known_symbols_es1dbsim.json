@@ -6922,7 +6922,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_ToggleRadarMode",
-      "description": "(machine), callee-cleaned: flips the radar byte +0x90 when the machine's +0x9d is set, then Sound_Play (0004de84)(0x1b) with it clear or (0x1a) with it set. es2_xref finds two calls, from CockpitWidgets_HandleCommand (0002d24c) and 0003a46c. ES2's Mech_ToggleRadarMode (DBSIM 0041b468), which also posts the radar message.",
+      "description": "(machine), callee-cleaned: flips the radar byte +0x90 when the machine's +0x9d is set, then Sound_Play (0004de84)(0x1b) with it clear or (0x1a) with it set. es2_xref finds two calls, from CockpitWidgets_HandleCommand (0002d24c) and MfdButton_OnClick (0003a46c). ES2's Mech_ToggleRadarMode (DBSIM 0041b468), which also posts the radar message.",
       "source": "Herculan/docs/es1/simulation/mech.md#the-cockpit; ES1DBSIM decompile at 000157f4",
       "verified": {
         "bytes": "000157f4+71",
@@ -12787,7 +12787,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TargetSelect_Cycle",
-      "description": "(cockpit), callee-cleaned: with the selection +0x20c 0, takes the first object of LiveObjectList (000bc416) when it passes TargetSelect_CanTarget (0002d624) and TargetSelect_InForwardCone (0002d71c); otherwise walks on with ObjectList_Next (0000dba4) from the selection, or from that first object, until an object passes both or the walk is back at its start. A different object becomes +0x20c and goes to the roving gunsight +0x1f1 as in TargetSelect_SetObject (0002d78c): the block's dword +6 and byte +0x24 = 1 through Gunsight_GetStateBlock (00035180) and Gunsight_SetValues (00035090). Returns +0x20c. es2_xref finds calls from CockpitWidgets_HandleCommand (0002d24c) and TargetSelect_SetObject through the padding entry 0002d896, and from 0003ab08 and Sim_PollPlayerInput (0005a0c0). ES2's TargetSelect_Cycle (DBSIM 0043349c), which TargetSelect_SetObject runs in the same place and which builds a shortlist by bearing and range instead.",
+      "description": "(cockpit), callee-cleaned: with the selection +0x20c 0, takes the first object of LiveObjectList (000bc416) when it passes TargetSelect_CanTarget (0002d624) and TargetSelect_InForwardCone (0002d71c); otherwise walks on with ObjectList_Next (0000dba4) from the selection, or from that first object, until an object passes both or the walk is back at its start. A different object becomes +0x20c and goes to the roving gunsight +0x1f1 as in TargetSelect_SetObject (0002d78c): the block's dword +6 and byte +0x24 = 1 through Gunsight_GetStateBlock (00035180) and Gunsight_SetValues (00035090). Returns +0x20c. es2_xref finds calls from CockpitWidgets_HandleCommand (0002d24c) and TargetSelect_SetObject through the padding entry 0002d896, and from Cockpit_CycleTarget (0003ab08) and Sim_PollPlayerInput (0005a0c0). ES2's TargetSelect_Cycle (DBSIM 0043349c), which TargetSelect_SetObject runs in the same place and which builds a shortlist by bearing and range instead.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-target-selection",
       "verified": {
         "bytes": "0002d898+214",
@@ -17117,18 +17117,78 @@
       }
     },
     {
+      "address": "0003a46c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdButton_OnClick",
+      "description": "(display, flags, child) in stack order, its arguments removed by this function (RET 0xc): slot +4 of the display's table 00093fb6, entered at its padding 0003a469. Finds child among the buttons at +0x14 (count +0x64), returning when it is not there, and jumps through the table 00094020 by its index: 0 to 5 call 0003a9ec(display, index) by its padding entry 0003a9eb; 6 calls 0003a9c4(display) by its padding entry 0003a9c1; 7, while the mode +0x8a is 3, Mech_ToggleRadarMode (000157f4)(the machine +0x1ff of CockpitViewInstance (00092d1c)); 8 calls 0003ab1c(display) by its padding entry 0003ab1b and 9 Cockpit_CycleTarget (0003ab08)(display), in any mode; 10, in mode 1 and while CockpitMouse_DoubleClick (00094c5c) is clear, MfdFlashComm_Transmit (0003adc8)(display); 11 and 12, in mode 1, 0003abac (by its padding entry 0003abaa) and 0003ab70, each (display). Cases 8 to 12 then set the byte +0xae + mode. ES2's MfdButton_OnClick (DBSIM 0044681c), (display, button), whose 7 and 9 share a case that tests the mode, and whose 11 and 12 store 0 or 1 in the machine's +0x96.",
+      "source": "Herculan/docs/es1/simulation/mfd-flash-comm.md#the-displays-buttons-and-keys; ES1DBSIM disassembly at 0003a46c",
+      "verified": {
+        "bytes": "0003a46c+379",
+        "sha1": "5d877a7c1349",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003a5e8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdDisplay_KeyDispatch",
+      "description": "(display, code) in stack order, its arguments removed by this function (RET 8): slot +0x10 of the display's table 00093fb6, entered at its padding 0003a5e7. Returns 0 when CockpitView_RectCornerVisible (0002b214) answers 0 for the rect +0xb4. REPNE SCASD over the six codes at 00094054, 0x20, 0x213, 0x14, 0x2d, 0x33 and 0x34 (D, Alt+R, T, X, comma, period), jumping through the six dwords after them: each presses button 7, 8, 9, 10, 11 or 12 (the dwords +0x30 to +0x44) when the byte 00093f64 + 13 * mode (+0x8a) + button is set, calling slot +0xc of the button's table at +0x1c with (button, 1) unless its int16 +0x17 is 2 or 3; 0x213 calls 0003ab1c(display) by its padding entry 0003ab1b when that byte is 0; each returns 1. Otherwise, in mode 1, REPNE SCASD over the seven codes at 00094084, 0x1e, 0x22, 0x23, 0x18, 0x2e, 0x12 and 0x21 (A, G, H, O, C, E, F), each calling 0003acd4(display, row, +0xc4) for rows 0, 1, 2, 3, 4, 4 and 5 and returning 1. Any other code returns 0. The cases at 0003a6c5, 0003a712, 0003a75f, 0003a7ac, 0003a839, 0003a849, 0003a859 and 0003a869 are undefined bytes in ES1Recon, read with capstone. ES2's MfdDisplay_KeyDispatch (DBSIM 004469c0), which presses button 9 on 0x214 (Alt+T) and steps the FLASH COMM row on 0x33 and 0x34.",
+      "source": "Herculan/docs/es1/simulation/mfd-flash-comm.md#the-displays-buttons-and-keys; ES1DBSIM image at 0003a5e8-0003a88e, capstone",
+      "verified": {
+        "bytes": "0003a5e8+668",
+        "sha1": "1c9ed5c0c03f",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0003a890",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "MfdFlashComm_HandleAltKey",
-      "description": "(mfd, code) in stack order, callee-cleaned (RET 8): with the FLASH COMM screen at the mfd's +0x9a, REPNE SCASD over the seven codes at 000940bc, 0x21e, 0x222, 0x223, 0x218, 0x22e, 0x212 and 0x221 (Alt with A, G, H, O, C, E, F), jumping through the seven dwords after them (000940d8) to 0003a8ba, 0003a8db, 0003a8fc, 0003a91d, 0003a93b, 0003a968 and 0003a991, a case returning 1 in AL; returns 0 for any other code. The cases at 0003a8ba and 0003a8db each call MfdFlashComm_SetScreenRow (00035f80)(screen, 0 or 1), MfdFlashComm_Transmit (0003adc8)(mfd) and 0003acd4(mfd, the same row, the mfd's +0xc4); the other five are undefined bytes in ES1Recon. ES2's MfdFlashComm_HandleAltKey (DBSIM 00446c10), which takes the same seven codes.",
+      "description": "(mfd, code) in stack order, callee-cleaned (RET 8): with the FLASH COMM screen at the mfd's +0x9a, REPNE SCASD over the seven codes at 000940bc, 0x21e, 0x222, 0x223, 0x218, 0x22e, 0x212 and 0x221 (Alt with A, G, H, O, C, E, F), jumping through the seven dwords after them (000940d8) to 0003a8ba, 0003a8db, 0003a8fc, 0003a91d, 0003a93b, 0003a968 and 0003a991, a case returning 1 in AL; returns 0 for any other code. Each case calls MfdFlashComm_SetScreenRow (00035f80)(screen, row), MfdFlashComm_Transmit (0003adc8)(mfd) and 0003acd4(mfd, row, the mfd's +0xc4), the rows being 0, 1, 2, 3, 4, 4 and 5; the cases of 0x22e and 0x212 transmit and call 0003acd4 only when MfdFlashComm_SelectedVerb (00035f4c)(screen) then answers 4 and 7. The five cases from 0003a8fc are undefined bytes in ES1Recon, read with capstone. ES2's MfdFlashComm_HandleAltKey (DBSIM 00446c10), which takes the same seven codes.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#callees-of-other-modules",
       "verified": {
         "bytes": "0003a890+296",
         "sha1": "a50d1e96f496",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "0003ab08",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Cockpit_CycleTarget",
+      "description": "(display) in stack order, frameless: pushes CockpitViewInstance (00092d1c), calls TargetSelect_Cycle (0002d898) and returns with RET 4, removing the display it was given. ES2's Cockpit_CycleTarget (DBSIM 00446f88), which takes no argument. es2_xref finds one call, from MfdButton_OnClick (0003a46c), its case for button 9.",
+      "source": "Herculan/docs/es1/simulation/mfd-flash-comm.md#the-displays-buttons-and-keys; ES1DBSIM disassembly at 0003ab08",
+      "verified": {
+        "bytes": "0003ab08+14",
+        "sha1": "e0f7968cc2f2",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003ab18",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdDisplay_StubNoOp",
+      "description": "Frameless: a RET 8 alone, after the two 0x90 bytes at 0003ab16 that fall through to it. es2_xref finds no branch or stored pointer to 0003ab16, 0003ab17 or 0003ab18.",
+      "source": "Herculan/docs/es1/simulation/mfd-flash-comm.md#the-displays-buttons-and-keys; the image at 0003ab16",
+      "verified": {
+        "bytes": "0003ab18+3",
+        "sha1": "a4f5248d9b7d",
+        "scope": "body",
+        "via": "raw"
       }
     },
     {
@@ -36241,7 +36301,7 @@
       "type": "data",
       "confidence": "high",
       "name": "CockpitMouse_DoubleClick",
-      "description": "Byte: cleared by CockpitMouse_ProcessQueue (000444d0) for each record and set for a release that comes within CockpitMouse_DoubleClickTicks (000bd518) of that button's previous release. es2_xref finds reads in 0003a46c, 0003ac04 and 0003fed8. ES2's CockpitMouse_DoubleClick (DBSIM 0049dbe0).",
+      "description": "Byte: cleared by CockpitMouse_ProcessQueue (000444d0) for each record and set for a release that comes within CockpitMouse_DoubleClickTicks (000bd518) of that button's previous release. es2_xref finds reads in MfdButton_OnClick (0003a46c), 0003ac04 and 0003fed8. ES2's CockpitMouse_DoubleClick (DBSIM 0049dbe0).",
       "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-frames-mouse-events--cockpitmouse_processqueue-000444d0"
     },
     {
