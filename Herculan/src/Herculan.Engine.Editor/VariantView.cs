@@ -116,7 +116,7 @@ internal sealed class VariantView {
 		ImGui.SameLine();
 		_links.Link($"Condition {guid}", new ConditionSelection(guid));
 		ImGui.SameLine(0f, 0f);
-		ImGui.TextWrapped($": {table.Percent(alternative.Draws):0.#}%, {_summary(source.RecordAt(alternative.Record)!)}");
+		EditorText.Wrapped($": {table.Percent(alternative.Draws):0.#}%, {_summary(source.RecordAt(alternative.Record)!)}");
 		EditorText.Note("Its chance is set in its table's view.");
 		ImGui.Spacing();
 		DrawDrawnNow(source, table, alternative);
@@ -236,7 +236,7 @@ internal sealed class VariantView {
 			}
 
 			ImGui.SameLine();
-			ImGui.Text("%");
+			ImGui.TextUnformatted("%");
 			ImGui.SameLine();
 			ImGui.TextWrapped(_summary(source.RecordAt(alternative.Record)!));
 			if (why == null && table.Alternatives.Count > 1) {
@@ -257,7 +257,7 @@ internal sealed class VariantView {
 
 		if (table.Leftover > 0) {
 			string noun = table.Row switch { 12 => "herc", 13 => "flyer", 14 => "structure", _ => "record" };
-			ImGui.TextWrapped($"Left over: {table.Percent(table.Leftover):0.#}%");
+			EditorText.Wrapped($"Left over: {table.Percent(table.Leftover):0.#}%");
 			EditorText.Note($"A draw there takes no alternative: a {noun} drawing it keeps its own fields, and the point, "
 				+ "heading and actions those reference are not looked up.");
 		}

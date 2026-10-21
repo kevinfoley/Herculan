@@ -48,6 +48,12 @@ internal sealed class GeneratedRecords {
 	/// <summary>The block-12 index row-17 record <paramref name="record"/> is exported at, or null.</summary>
 	public int? Objective(int record) => ObjectiveEditing.ExportedIndex(_source, record);
 
+	/// <summary>The row-17 records the generation exports no objective for, in file order.</summary>
+	public IReadOnlyList<int> AbsentObjectives() {
+		var objectives = _source.Mission.Objectives ?? [];
+		return Enumerable.Range(0, objectives.Length).Where(record => objectives[record] != null && Objective(record) == null).ToList();
+	}
+
 	/// <summary>The GUID of the record that created block-11 group <paramref name="group"/>, or <c>-1</c>.</summary>
 	public short GroupGuid(int group) => _source.GuidOf(GroupBlock, group);
 

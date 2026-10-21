@@ -134,7 +134,8 @@ internal sealed class MissionOutliner {
 	/// Nothing reconciles the two, so they are listed apart.
 	/// </summary>
 	private void DrawObjectives() {
-		if (!ImGui.CollapsingHeader($"Objectives ({Mission.Objectives.Count})###objectives")) {
+		var absent = Records.AbsentObjectives();
+		if (!ImGui.CollapsingHeader($"Objectives ({Mission.Objectives.Count + absent.Count})###objectives")) {
 			return;
 		}
 
@@ -166,6 +167,14 @@ internal sealed class MissionOutliner {
 			var selection = Records.ObjectiveAt(i);
 			Choose(selection, WrappedSelectable(MissionText.DescribeObjective(Mission.Objectives[i], i), $"objective{i}",
 				_selection.Is(selection)));
+		}
+
+		// The objectives the mission as opened leaves out, last, numbered among themselves, so one a Present when took out can
+		// be selected and brought back.
+		for (int i = 0; i < absent.Count; i++) {
+			var selection = new ObjectiveSelection(absent[i]);
+			string label = absent.Count == 1 ? "Objective not in the mission as opened" : $"Objective not in the mission as opened ({i + 1})";
+			Choose(selection, ImGui.Selectable($"{label}##absent{absent[i]}", _selection.Is(selection)));
 		}
 	}
 
@@ -231,7 +240,8 @@ internal sealed class MissionOutliner {
 	}
 
 	private void DrawGroups() {
-		if (!ImGui.CollapsingHeader($"Groups ({_index.GroupMembers.Count})###groups")) {
+		var absent = _index.Scene.Groups.Where(group => Records.Group(group.Guid) == null).ToList();
+		if (!ImGui.CollapsingHeader($"Groups ({_index.GroupMembers.Count + absent.Count})###groups")) {
 			return;
 		}
 
@@ -268,6 +278,13 @@ internal sealed class MissionOutliner {
 			}
 
 			ImGui.TreePop();
+		}
+
+		// The groups the mission as opened leaves out, last, so one a Present when took out can be selected and brought back.
+		foreach (var group in absent) {
+			var selection = new GroupSelection(group.Guid);
+			Choose(selection, ImGui.Selectable($"Group {group.Number} ({group.Kind}, {group.Side}): not in the mission as opened"
+				+ $"##absent{group.Guid}", _selection.Is(selection)));
 		}
 	}
 

@@ -5,7 +5,8 @@ using ImGuiNET;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The Properties panel's view of a condition, a row-1 record: its kind; a flag test's flag, operator and value, a draw's
+/// The Properties panel's view of a condition, a row-1 record: its kind; a flag test's flag (a campaign variable, picked by
+/// what it holds, <see cref="CampaignVariablePicker"/>), operator and value, a draw's
 /// bound, or a range's draw and ends; what it requires; what references it, as links; and Delete, refused while anything
 /// does. Each a field or choice that changes it
 /// (<see cref="ConditionEditor"/>). A variant table is its table's view (<see cref="VariantView"/>), and a range over one is
@@ -16,6 +17,7 @@ internal sealed class ConditionView {
 	private readonly ConditionEditor _editor;
 	private readonly PanelLinks _links;
 	private readonly VariantView _variants;
+	private readonly CampaignVariablePicker _picker = new();
 
 	// A number being typed, and the field it is for, until the field lets go.
 	private string? _draftFor;
@@ -90,16 +92,16 @@ internal sealed class ConditionView {
 		_ => $"Type {record.Type}",
 	};
 
-	// The flag (with what it holds where that is known), the operator and the value.
+	// The flag, picked from the campaign variables by what they hold, the operator and the value.
 	private void DrawFlagTest(short guid, MissionCondition14 record, bool locked) {
-		int flag = record.FlagIndexOrRangeLower;
-		if (IntField("Flag", "flag", flag, 0, ConditionEditing.Flags - 1, locked) is { } typedFlag) {
-			_editor.RequestFlag(guid, (short)typedFlag);
+		short flag = record.FlagIndexOrRangeLower;
+		Label("Flag");
+		ImGui.BeginDisabled(locked);
+		if (_picker.Draw("##flag", flag is >= 0 and < ConditionEditing.Flags ? flag : null, _editor.Source) is { } picked && picked != flag) {
+			_editor.RequestFlag(guid, picked);
 		}
 
-		if (flag is >= 0 and < ConditionEditing.Flags && CampaignVariableLabels.Label(flag) is { } label) {
-			EditorText.Note(label);
-		}
+		ImGui.EndDisabled();
 
 		Label("Test");
 		ImGui.BeginDisabled(locked);

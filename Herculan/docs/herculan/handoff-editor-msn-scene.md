@@ -33,7 +33,7 @@ The document is already the `.MSN` ([`MissionDocument`](handoff-editor-document.
 | `PointMover` (740) | writes a waypoint's or area corner's drag preview into the generated `ScriptDat`; block indices in the waypoint and area targets | targets by GUID; no `script.dat` writes |
 | `MissionLint` (50) | `ScriptDatLint` over the generation, findings by block index | the same lint over the generation, each finding mapped back to its `.MSN` record through provenance (the one display use left) |
 | `PropertiesPanel` and views | `MissionIndex`, `Mission`, `ScriptDat` record counts, `Placement` fields, `GeneratedRecords` at every link and choice | the layout and the new index ([survey per view](#views)) |
-| Editors and placers | refuse a record the generation has none for (`GeneratedRecords`); `OrderEditor.Slots` and `RouteEditor`'s waypoint entries read the generated blocks; a placer's join, `SideChanger` and `PresenceEditor`'s targets take a group by block index | edit any record; take GUIDs |
+| Editors and placers | refuse a record the generation has none for (`GeneratedRecords`); `OrderEditor.Slots` and `RouteEditor`'s waypoint entries read the generated blocks; a placer's join and `SideChanger` take a group by block index | edit any record; take GUIDs |
 | `ConditionEditing.Outcome`, `VariantEditing.DrawingNow`, `VariantView` | `Generator.Conditions`, `Generator.VariantPicks`, `Provenance.ExportedSlot` | the layout's presence and the option it shows |
 
 ### Views
@@ -43,7 +43,7 @@ What each view reads that must change (line counts in parentheses):
 - `PropertiesPanel` (610): `GroupMembers`, `SideOf`, `SetupOf`, `ObjectivesOf*`, `IsWaiting`, `DeploymentActionOf`, `KindOf`, `BasePads`; `Mission.Actions` for the action pickers and arrival text; `Placement` fields including `EngagementActionRef`/`DefeatActionRef` (block-5 indices).
 - `ActionView` (570): `Mission.Actions`/`ActionTimers`, `LinksOf`, `Areas`, `ObjectAt`; `ScriptDat` roster lengths for the target picker and `Actions[].TextRefs`.
 - `TimerView` (162), `TriggerAreaView` (202), `RouteView` (207), `ObjectiveView` (328), `OrderSlotsView` (246): block-index entry points over `Mission`/`GeneratedIndex`, `ScriptDat` lengths for pickers.
-- `ConditionView` (323), `VariantView` (424), `PresentWhenView` (167): already `.MSN`-based, but read the generation's outcomes and picks.
+- `ConditionView` (323), `VariantView` (424): already `.MSN`-based, but read the generation's outcomes and picks. `PresentWhenView` reads the `.MSN` and the layout, but resolves what loses its reference to an absent record to block indices.
 - `RosterFitView` (122), `MachineFitView` (130), `SquadMachinePanel` (196): block-7 slots through `MachineFitter`.
 - `PanelLinks` (105), `MissionText` (215), `ActionChoice` (34): build links and labels from block indices.
 - `MissionTextView` (100), `MissionView` (83), `PointFields` (78): `.MSN` already, or nothing index-based.
@@ -72,7 +72,7 @@ A read-only view of a `MissionFile` with every record present, built in one pass
 - **`SceneSync`**: after every edit, undo and redo, every record is placed again from the layout, each object stands for its record by identity, objects for new records (or a changed type or fit) are created, objects for removed ones are kept off the scene for an undo, and the overlays and indices are refreshed. A move and a side change need no special path: each is an edit like any other.
 - **Drag preview.** A drag places followers from the layout with the dragged point (or group point, or radius) overridden; only the commit writes the `.MSN`.
 - **The generation** stays inside `MissionDocument`, generated with the open's inputs (the launch's flags, every draw at its lowest), for the Problems list, Save's check and Export only. Nothing displayed reads it.
-- **Conditional records.** Every view opens, after the name, with one emphasized line when the record is conditional ("Present only when campaign variable 30 is more than 0", "Present in about half of all loads", "Its type is picked at random each load"), then the Present when control as today. The outliner marks a conditional row "(conditional)"; the scene draws it as any other (the editor's choice, offered for the user's call).
+- **Conditional records.** Every view opens, after the name, with its Present when, an emphasized sentence and its controls ([Present when](handoff-editor-conditions.md#present-when)), and a record drawn at random with a line saying so ("Its type is picked at random each load"). The outliner marks a conditional row "(conditional)"; the scene draws it as any other (the editor's choice, offered for the user's call).
 
 ## Decisions on the rewrite's questions
 

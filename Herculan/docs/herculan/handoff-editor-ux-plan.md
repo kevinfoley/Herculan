@@ -50,9 +50,9 @@ Phases 2 to 6 are carried out by [handoff-editor-msn-scene.md](handoff-editor-ms
 ### 3. Campaign variables and Present when as sentences
 
 - Counter writes everywhere read "Add 1 to campaign variable 30 (label)", headed by what writes them: "Sets campaign variables", "When first achieved, sets campaign variables", "When out of the fight, sets campaign variables" (R1).
-- Present when: "Present: Always / Only when [variable, by label] [is / is not / is at least / is less than] [value] (and also when ...) / In N% of loads (together with ...)". The editor makes and reuses the conditions behind it (R18, R21).
-- A variable the game writes is a sentence: "Only when you lost at least one HERC in the previous mission (written off for damage)". A variable missions write is "Campaign variable 30"; where it comes from is not looked up across missions.
-- Present when on a record whose details change between versions (R22), and Used by entries the editor has no view for (R23), named by effect.
+- Present when (done): "Always / Only when a campaign variable... / In some loads...", each clause a row, each variable picked from a list by what it holds or by its uses in the mission; the editor makes, reuses and cleans up the conditions behind it (R18, R21), and a record whose details change between versions names what changes (R22) ([Present when](handoff-editor-conditions.md#present-when)).
+- A variable the game writes reads by what it holds ("the number of Hercs scrapped in the previous mission"); one missions write is "campaign variable 30"; where it comes from is not looked up across missions (done in Present when).
+- Used by entries the editor has no view for (R23), named by effect.
 
 ### 4. Triggers and countdowns
 

@@ -286,18 +286,18 @@ public static class ConditionEditing {
 	}
 
 	/// <summary>The record edit of <see cref="CreateFlagTest"/>, made inside the caller's <see cref="MissionDocument.Change"/>.</summary>
-	internal static void AppendFlagTest(MissionDocument document, out short guid) =>
+	private static void AppendFlagTest(MissionDocument document, out short guid) =>
 		Append(document, new MissionCondition14 {
 			ConditionRef = -1, Type = FlagTest, FlagIndexOrRangeLower = NewFlag, OperatorOrRangeUpperOrResult = NewOperator,
 			ComparisonOperand = NewValue,
 		}, out guid);
 
 	/// <summary>The record edit of <see cref="CreateDraw"/>, made inside the caller's <see cref="MissionDocument.Change"/>.</summary>
-	internal static void AppendDraw(MissionDocument document, out short guid) =>
+	private static void AppendDraw(MissionDocument document, out short guid) =>
 		Append(document, new MissionCondition14 { ConditionRef = -1, Type = Draw, FlagIndexOrRangeLower = NewBound }, out guid);
 
 	/// <summary>The record edit of <see cref="CreateRange"/>, made inside the caller's <see cref="MissionDocument.Change"/>.</summary>
-	internal static void AppendRange(MissionDocument document, short draw, out short guid) =>
+	private static void AppendRange(MissionDocument document, short draw, out short guid) =>
 		Append(document, new MissionCondition14 {
 			ConditionRef = draw, Type = Range, FlagIndexOrRangeLower = NewLow, OperatorOrRangeUpperOrResult = NewHigh,
 		}, out guid);

@@ -1,5 +1,6 @@
 using System.Numerics;
 using HercWorks.Core.Data.File;
+using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Data.File.Msn.Script;
 using Herculan.Engine.Cockpit;
 using Herculan.Engine.Numerics;
@@ -19,8 +20,8 @@ namespace Herculan.Engine.Editor;
 ///
 /// <para>The views read the generated <c>script.dat</c>, so each is drawn for the generated record the selection's
 /// <c>.MSN</c> record stands for (<see cref="GeneratedRecords"/>); a record the generation has none for shows its kind and
-/// that it is not shown in the editor, or for an object or a group, which the scene shows, that it is absent from the
-/// mission as opened.</para>
+/// that it is not shown in the editor, or for an object, a group or an objective its title, its Present when, which can
+/// bring it back, and that it is absent from the mission as opened.</para>
 /// </summary>
 internal sealed class PropertiesPanel {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
@@ -109,7 +110,9 @@ internal sealed class PropertiesPanel {
 				if (Records.Group(guid) is { } group) {
 					DrawGroup(guid, group);
 				} else {
-					Absent("Group");
+					var planned = _index.Scene.Group(guid);
+					Absent(planned == null ? "Group" : $"Group {planned.Number} ({planned.Kind}, {planned.Side})",
+						_presence.GroupTarget(guid));
 				}
 
 				break;
@@ -141,7 +144,7 @@ internal sealed class PropertiesPanel {
 				if (Records.Objective(record) is { } objective) {
 					_objective.Draw(record, objective);
 				} else {
-					NotShown("Objective");
+					Absent("Objective", _presence.ObjectiveTarget(record));
 				}
 
 				break;
@@ -171,16 +174,19 @@ internal sealed class PropertiesPanel {
 		EditorText.Note("Not shown in the editor.");
 	}
 
-	// The view of a selected object or group the scene shows and the generation has none for.
-	private static void Absent(string title) {
+	// The view of a selected object, group or objective the generation has none for: its title, its Present when, which can
+	// bring it back, and that the rest cannot be shown.
+	private void Absent(string title, PresenceTarget? target) {
 		ImGui.TextWrapped(title);
+		_presentWhen.Draw(target);
+		ImGui.Separator();
 		EditorText.Note(GeneratedRecords.Absent);
 	}
 
 	private void DrawObject(SceneObject sel) {
 		var placement = sel.Placement;
 		if (placement.SlotIndex < 0 && !placement.IsPlayerLance) {
-			Absent(Title(sel));
+			Absent(Title(sel), _presence.ObjectTarget(sel));
 			return;
 		}
 
@@ -216,7 +222,7 @@ internal sealed class PropertiesPanel {
 		ImGui.Text($"Hit radius: {sel.Object.HitRadius} units");
 
 		if (!placement.IsPlayerLance) {
-			ImGui.Text($"Starting condition: {placement.StartingCondition}%");
+			ImGui.TextUnformatted($"Starting condition: {placement.StartingCondition}%");
 		} else if (_index.Scene.Planned(sel) is { Squad: true, MemberIndex: 0 }) {
 			_machine.DrawPlayer();
 		} else {
@@ -428,7 +434,7 @@ internal sealed class PropertiesPanel {
 	// Row-16 GUID <guid>'s view, the group generated at block-11 index <group>.
 	private void DrawGroup(short guid, int group) {
 		ImGui.TextWrapped(MissionText.DescribeGroup(_index, group));
-		_presentWhen.Draw(_presence.GroupTarget(group));
+		_presentWhen.Draw(_presence.GroupTarget(guid));
 		TeamField(group, ofMember: false);
 		if (group == 0) {
 			_machine.DrawSquad();

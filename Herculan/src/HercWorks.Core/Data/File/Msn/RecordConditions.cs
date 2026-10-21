@@ -75,6 +75,7 @@ public readonly record struct PresenceRecord(MsnRecordId Record, short Condition
 /// <item>The conditions offered are flag tests and ranges over a draw (<see cref="Offered"/>). A draw holds whenever it is
 /// made, and a variant table and the ranges over it are what variant keys draw by, which the editor does not author
 /// (<see cref="ConditionEditing.InVariantTable"/>).</item>
+/// <item>A Present when stated as clauses, which builds and cleans up the conditions behind it, is <see cref="PresenceRules"/>.</item>
 /// </list>
 /// </summary>
 public static class RecordConditions {
@@ -188,50 +189,6 @@ public static class RecordConditions {
 	}
 
 	/// <summary>
-	/// Appends a new flag test (<see cref="ConditionEditing.CreateFlagTest"/>) and makes <paramref name="target"/> present only
-	/// while it holds, as one <see cref="MissionDocument.Change"/>; <paramref name="condition"/> is its GUID, and
-	/// <paramref name="written"/> as <see cref="SetPresence"/> answers it.
-	/// </summary>
-	public static MsnEdit SetPresenceToNewFlagTest(MissionDocument document, PresenceTarget target, out short condition,
-			out short written) {
-		if (WhyFixed(document, target) is { } reason) {
-			throw new InvalidOperationException(reason);
-		}
-
-		short created = -1, guid = -1;
-		var change = document.Change(() => {
-			ConditionEditing.AppendFlagTest(document, out created);
-			guid = Write(document, target, created);
-		});
-		condition = created;
-		written = guid;
-		return change;
-	}
-
-	/// <summary>
-	/// Appends a new draw and a range over it (<see cref="ConditionEditing.CreateDraw"/>, <see cref="ConditionEditing.CreateRange"/>)
-	/// and makes <paramref name="target"/> present only while the range holds, as one <see cref="MissionDocument.Change"/>;
-	/// <paramref name="condition"/> is the range's GUID, and <paramref name="written"/> as <see cref="SetPresence"/> answers it.
-	/// The draw is made ahead of every variant pick, so every pick changes.
-	/// </summary>
-	public static MsnEdit SetPresenceToNewDrawRange(MissionDocument document, PresenceTarget target, out short condition,
-			out short written) {
-		if (WhyFixed(document, target) is { } reason) {
-			throw new InvalidOperationException(reason);
-		}
-
-		short created = -1, guid = -1;
-		var change = document.Change(() => {
-			ConditionEditing.AppendDraw(document, out short draw);
-			ConditionEditing.AppendRange(document, draw, out created);
-			guid = Write(document, target, created);
-		});
-		condition = created;
-		written = guid;
-		return change;
-	}
-
-	/// <summary>
 	/// The conditions of <paramref name="target"/>'s variations that set some field (<see cref="LayoutEntry.Variations"/>):
 	/// an edit writes the base, so where such a condition holds, a field the variation sets keeps the variation's value.
 	/// Distinct, in file order, <see cref="Always"/> included; empty for an objective, which no other record overlays, and for
@@ -256,9 +213,12 @@ public static class RecordConditions {
 			_ => false,
 		});
 
-	// Writes <condition> into every record of <target>, inside the caller's change, an order slot's order given to the slot
-	// first; answers the GUID written, -1 for an objective.
-	private static short Write(MissionDocument document, PresenceTarget target, short condition) {
+	/// <summary>
+	/// Writes <paramref name="condition"/> into every record of <paramref name="target"/>, inside the caller's
+	/// <see cref="MissionDocument.Change"/>, an order slot's order given to the slot first; answers the GUID written, <c>-1</c>
+	/// for an objective.
+	/// </summary>
+	internal static short Write(MissionDocument document, PresenceTarget target, short condition) {
 		switch (target.Row) {
 			case ObjectiveRow:
 				document.Rewrite<MissionObjective58>(ObjectiveRow, target.Index, record => record.ConditionRef = condition);

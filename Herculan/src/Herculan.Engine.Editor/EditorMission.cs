@@ -56,7 +56,7 @@ internal sealed class EditorMission {
 		Actions = new ActionEditor(source, index.Records, Mover, Sync, Selection, Deleter);
 		Timers = new TimerEditor(source, index.Records, Mover, Sync, Selection);
 		Conditions = new ConditionEditor(source, index, Mover, Sync, Selection, Deleter);
-		Presence = new PresenceEditor(source, Mover, Sync, Selection, Deleter);
+		Presence = new PresenceEditor(source, sceneIndex, Mover, Sync, Deleter);
 		Variants = new VariantEditor(source, Mover, Sync, Selection);
 		Types = new RosterTypeEditor(source, Mover, Sync);
 		Outliner.Placing = Placing;

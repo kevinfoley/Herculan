@@ -7,8 +7,7 @@ namespace Herculan.Engine.Tests;
 
 /// <summary>
 /// <see cref="RecordConditions"/> over small synthetic missions: a record's Present when is written into every record of its
-/// GUID or refused, an order another slot runs is copied first, a variant-keyed record's own condition is the one written,
-/// and a new condition and the set are one step.
+/// GUID or refused, an order another slot runs is copied first, and a variant-keyed record's own condition is the one written.
 /// </summary>
 public class RecordConditionsTests {
 	private const short Hercs = 0;
@@ -102,27 +101,6 @@ public class RecordConditionsTests {
 		Assert.Equal(Fails, Assert.Single(document.Mission.Mechs!, record => record.GUID == 5).ConditionRef);
 		Assert.Equal(2, Assert.Single(document.Mission.Mechs!, record => record.GUID == -1).ConditionRef);
 		Assert.Null(document.ExportedIndex(12, 5));
-	}
-
-	/// <summary>
-	/// Catches New flag test made as a step of its own beside the set: the one edit answered undoes both, the flag test
-	/// and the structure's condition, so the structure is back.
-	/// </summary>
-	[Fact]
-	public void ANewFlagTestAndTheSetAreOneStep() {
-		var document = Open(Mission()
-			.Add(14, Base(1))
-			.Add(16, Group(10, Structures, position: -1, condition: -1, 1)));
-		int conditions = ConditionEditing.Records(document).Length;
-
-		var change = RecordConditions.SetPresenceToNewFlagTest(document, PresenceTarget.Of(14, 1), out short condition, out _);
-
-		Assert.Equal(condition, Assert.Single(document.Mission.Bases!).ConditionRef);
-		Assert.Null(document.ExportedIndex(14, 1));
-		document.Undo(change);
-		Assert.Equal(conditions, ConditionEditing.Records(document).Length);
-		Assert.Equal(-1, Assert.Single(document.Mission.Bases!).ConditionRef);
-		Assert.NotNull(document.ExportedIndex(14, 1));
 	}
 
 	// Condition 0, which fails, and group 0, the squad: the player's machine, facing a heading of its own.

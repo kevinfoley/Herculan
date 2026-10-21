@@ -522,8 +522,9 @@ public sealed class MissionDocument {
 	/// <summary>
 	/// Puts <paramref name="record"/> at <paramref name="index"/> of row <paramref name="row"/>, the records from there on
 	/// moving up one: for a variant alternative, a GUID <c>-1</c> record, which a record draws only when it is read before it
-	/// (docs/retail/formats/msn-mission-file.md#variants). A GUID <c>-1</c> record is never exported or merged, so no
-	/// <c>script.dat</c> index moves.
+	/// (docs/retail/formats/msn-mission-file.md#variants), or a row-1 condition that a later one must be able to require
+	/// (<see cref="PresenceRules"/>). A GUID <c>-1</c> record is never exported or merged, so no <c>script.dat</c> index
+	/// moves; a condition's GUID is the caller's.
 	/// </summary>
 	public MsnEdit Insert(int row, int index, MapObject record) {
 		var records = MsnRows.Get(Mission, row);

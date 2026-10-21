@@ -56,7 +56,7 @@ internal sealed class ObjectiveView {
 		bool locked = _editor.WhyFixed(record) != null;
 
 		ImGui.Text($"Objective {index}");
-		_presentWhen.Draw(_presence.ObjectiveTarget(index));
+		_presentWhen.Draw(_presence.ObjectiveTarget(record));
 		ImGui.Separator();
 		ImGui.BeginDisabled(locked);
 		bool mandatory = objective.Required == MissionObjective.Mandatory;

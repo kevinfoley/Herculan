@@ -18,11 +18,17 @@ internal static class EditorText {
 			ImGui.PushFont(font);
 		}
 
-		ImGui.TextWrapped(text);
+		Wrapped(text);
 		if (bold != null) {
 			ImGui.PopFont();
 		}
 	}
+
+	/// <summary>
+	/// Plain text, wrapped at the window's edge. ImGui reads <c>TextWrapped</c>'s text as a printf format, where "50% of"
+	/// is a conversion, so every <c>%</c> is doubled; a line that holds one goes through here or <c>TextUnformatted</c>.
+	/// </summary>
+	public static void Wrapped(string text) => ImGui.TextWrapped(text.Replace("%", "%%"));
 
 	/// <summary>Why a control is disabled, as a note led by <paramref name="lead"/>; nothing for null.</summary>
 	public static void Reason(string? reason, string lead = "") {
@@ -34,14 +40,14 @@ internal static class EditorText {
 	/// <summary>A note, wrapped at the window's edge.</summary>
 	public static void Note(string text) {
 		ImGui.PushStyleColor(ImGuiCol.Text, NoteColor);
-		ImGui.TextWrapped(text);
+		Wrapped(text);
 		ImGui.PopStyleColor();
 	}
 
 	/// <summary>Why an input is refused, wrapped, in a strong red, under the field <see cref="PushProblemField"/> tinted.</summary>
 	public static void Problem(string text) {
 		ImGui.PushStyleColor(ImGuiCol.Text, ProblemColor);
-		ImGui.TextWrapped(text);
+		Wrapped(text);
 		ImGui.PopStyleColor();
 	}
 

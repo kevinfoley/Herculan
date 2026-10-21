@@ -9,7 +9,8 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// The group view's orders: each filled slot of the ten with its verb, route, subject and the action that ends it as choices
 /// that change them (<see cref="OrderEditor"/>), each with a link, and buttons that add an order after the last, remove
-/// one or move one up or down. What each field does is docs/retail/simulation/ai-goals.md's.
+/// one or move one up or down. A slot whose order the mission as opened leaves out shows only its Present when. What each
+/// field does is docs/retail/simulation/ai-goals.md's.
 /// </summary>
 internal sealed class OrderSlotsView {
 	private const short NoSubject = -1;
@@ -48,13 +49,19 @@ internal sealed class OrderSlotsView {
 		ImGui.Text("Orders:");
 		string? fixedReason = _editor.WhyFixed(guid);
 		var slots = _editor.Slots(guid);
-		if (slots.Count == 0) {
+		var orders = GroupOrders.Orders(_presence.Source, guid);
+		if (slots.Count == 0 && orders.All(order => order == -1)) {
 			EditorText.Note("None.");
 		}
 
-		foreach (var slot in slots) {
-			ImGui.PushID($"order{slot.Slot}");
-			DrawSlot(guid, group, slot, slots[^1].Slot, locked: fixedReason != null);
+		for (int i = 0; i < orders.Length; i++) {
+			ImGui.PushID($"order{i}");
+			if (slots.FirstOrDefault(slot => slot.Slot == i) is { } slot) {
+				DrawSlot(guid, group, slot, slots[^1].Slot, locked: fixedReason != null);
+			} else if (orders[i] != -1) {
+				DrawAbsent(guid, i);
+			}
+
 			ImGui.PopID();
 		}
 
@@ -117,7 +124,18 @@ internal sealed class OrderSlotsView {
 		}
 
 		DrawEnding(guid, slot.Slot, order.ActionRef, locked);
-		_presentWhen.Draw(_presence.OrderTarget(group, slot.Slot));
+		_presentWhen.Draw(_presence.OrderTarget(guid, slot.Slot));
+		ImGui.Unindent();
+	}
+
+	// A slot of the group of row-16 GUID <guid> whose order the mission as opened leaves out: its Present when, which can
+	// bring it back, and that the rest cannot be shown.
+	private void DrawAbsent(short guid, int slot) {
+		ImGui.Spacing();
+		ImGui.Text($"Order {slot}");
+		ImGui.Indent();
+		_presentWhen.Draw(_presence.OrderTarget(guid, slot));
+		EditorText.Note(GeneratedRecords.Absent);
 		ImGui.Unindent();
 	}
 
