@@ -36,10 +36,10 @@ Vtable `+0x20` for every structure class: all five type-switched vtables `Base_C
 
 ```
 wreck = typeRec[+4] != -1 && componentState[0][+5] <= 1 && obj[+0x99] != 0
-if (wreck || typeRec[+0x38] == 0)  -> collision-volume path, component 0
+if (wreck || typeRec[+0x38] == 0)  -> collision-volume path, component -1
 else                               -> sphere-model path, names the component
 if (hit) {
-    if (!destroyed) vtable+0x74(componentIndex, shot.DamageArmor, shot.owner)
+    if (!destroyed) vtable+0x74(componentIndex, shot.DamageArmor, shot.owner)   // -1 is taken as 0 there
     spawn ImpactFXArmor effect at rayTransform.TransformPoint(0, hitDistance, 0)
     if ((rand & 0xfff) < 0x401) throw debris group 1 from the same point     // 25%
 }
@@ -117,16 +117,19 @@ A mech's `+0x5c` is a third of the `+0x1a` shot radius, and its model bound is l
 The shortest of the three, and the only one with no second piece of geometry behind it: the coarse reject on `SimObject_GetShapeRadius` (`shape+8`), then straight to the sphere test against `flyerTypeRec+0x32` with the alive flags at `flyer+0x208`. No shields, no collision volume.
 
 ```
+if (spectatorFlag && obj == ViewChain_Viewed) -> miss   // the watched flyer; the flag is 0 in retail
 if (shapeRadius + shot.clearance + rayLength < |muzzle - obj|) -> miss
 hit = Mech_SelectStruckComponent(typeRec[+0x32], obj, ray, objToMuzzle, obj[+0x208])
 if (hit) {
     fx = shot.ImpactFXArmor[rand & 3]
     vtable+0x74(hit.component, shot.DamageArmor, shot.owner)
-    if (obj[+0x99]) fx = 10                       // already a wreck: a fixed effect id, not the shot's
-    spawn fx at rayTransform.TransformPoint(0, hit.distance + 1, 0)
+    if (obj[+0x99]) fx = 10                       // this hit brought it down: a fixed effect id, not the shot's
+    spawn fx at rayTransform.TransformPoint(0, hit.distance + 1, 0), with no owner
     throw debris at the same point: group 1, or 3 if obj[+0x99] is now set   // every hit, where a structure rolls 25%
 }
 ```
+
+The wreck test reads `+0x99` after the write, so it picks out the hit that destroys the aircraft: a destroyed flyer's one component has its alive flag cleared, so the sphere test passes over it from then on. The spectator flag is [`external-views.md`](external-views.md#the-spectator-flag--dat_0049ef5c)'s.
 
 A flyer's health record is one component with one dependent ([`component-damage.md`](component-damage.md#the-component-damage-system)); what its vtable `+0x74` (`Flyer_ComponentDamageWrite`, `00421bb4`) does on losing it is [`ai-flyers.md`](ai-flyers.md#death). The debris groups are in [`destruction-effects.md`](destruction-effects.md#spawn-sites).
 

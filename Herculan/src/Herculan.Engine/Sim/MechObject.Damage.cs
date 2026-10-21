@@ -309,20 +309,21 @@ public sealed partial class MechObject {
 
 		DamageTaken += shot.DamageShield - shieldDamage;
 
-		// The shields-down latch, set exactly where the original sets it: on the locally piloted
-		// machine, when a shot lands with less than 500 points of charge left across both facings.
-		// It plays alert 0x15 here and is released again in PowerTick once the array rebuilds past
-		// 1500 - and it is what the MFD status screen reads for its SHIELDS DN condition, which is
-		// why a HERC target never shows that state.
-		if (LocallyPiloted && !ShieldsDownAlert && Shields.Total < ShieldsDownAlertCharge) {
-			ShieldsDownAlert = true;
-			world.Sounds?.Say(SystemMessages.ShieldsCritical);
-		}
-
 		if (shieldDamage == 0) {
 			world.Effects.SpawnPickedImpactEffect(
 				shot.ImpactFx(WeaponShot.ImpactFxGroup.Shield), shot.Muzzle.TransformPoint(0, struckAt, 0), this);
 			return struckAt;
+		}
+
+		// The shields-down latch, set exactly where the original sets it: on the locally piloted
+		// machine, when a shot gets through the shields with less than 500 points of charge left
+		// across both facings. A shot the facing absorbs whole never reaches it. It plays alert 0x15
+		// here and is released again in PowerTick once the array rebuilds past 1500 - and it is what
+		// the MFD status screen reads for its SHIELDS DN condition, which is why a HERC target never
+		// shows that state.
+		if (LocallyPiloted && !ShieldsDownAlert && Shields.Total < ShieldsDownAlertCharge) {
+			ShieldsDownAlert = true;
+			world.Sounds?.Say(SystemMessages.ShieldsCritical);
 		}
 
 		var hit = CollisionModel.Test(
@@ -582,8 +583,7 @@ public sealed partial class MechObject {
 
 	/// <summary>
 	/// One component's blast anchor: the shape node it rides and the point it sits at on that node.
-	/// Null for a component the <c>.COL</c> never names, which is most of the internals — see
-	/// <see cref="ComponentPosition"/>.
+	/// Null for a component the <c>.COL</c> never names — see <see cref="ComponentPosition"/>.
 	/// </summary>
 	private readonly record struct ComponentAnchor(short NodeIndex, short X, short Y, short Z);
 
@@ -634,11 +634,10 @@ public sealed partial class MechObject {
 	/// node 0 would be left in the object frame; no retail <c>.COL</c> uses node 0.</para>
 	///
 	/// <para><b>A component with no anchor answers the machine's own origin</b>, which is at its
-	/// feet. That is the original's first branch, not a fallback invented here, and it is what most
-	/// of a HERC gets: a mech <c>.COL</c> names between six and sixteen of the 29 slots, so every
-	/// internal and — on most chassis — the weapon brackets are measured from the ground under the machine
-	/// rather than from anywhere near where they are. A blast at head height reaches those parts less
-	/// readily than the geometry would suggest.</para>
+	/// feet. That is the original's first branch, not a fallback invented here. On retail data it
+	/// answers only for slots that are never live: every body component a retail <c>.DMG</c> gives
+	/// internals has a cluster, and the ones a <c>.COL</c> leaves out lose their active flag at
+	/// loadout (docs/retail/simulation/damage-system.md, "Where a component stands").</para>
 	/// </summary>
 	public override Vec3i ComponentWorldPosition(short componentIndex) => ComponentPosition(componentIndex);
 

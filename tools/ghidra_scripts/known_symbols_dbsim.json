@@ -789,8 +789,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Base_ApplyDamage",
-      "description": "Structure vtable +0x74. Writes one component's damage against its BASES.DAT template max. Past half the maximum it rolls once per tenth of health the shot moved through, each a ~10% chance (rand & 0xfff <= 0x199) of destroying the component outright. On a kill it clears the alive flag, records the attacker at state+7, and if Base_DamageFraction reads 0x100 marks the structure destroyed (obj+0x99), activates its mission action (obj+0x1b6) and credits the kill through attacker vtable +0x60. Returns early when typeRec+0x1e (invulnerable) is set.",
-      "source": "docs/retail/simulation/hit-detection.md"
+      "description": "Structure vtable +0x74, (structure, component, damage, attacker). Returns at once when typeRec+0x1e (invulnerable) is set. Component -1 is taken as 0. A component whose alive flag is clear takes nothing. New damage at or past the BASES.DAT component maximum (record +0) destroys it; short of that but past half the maximum it draws once per tenth of the maximum between the old and new damage (damage*10/max, Q16), each draw (rand & 0xfff) <= 0x199 destroying it outright. Short of destruction the damage is added. On destruction: the attacker is stored on the component state, damage set to the maximum, the alive flag cleared; when vtable +0x40 (Base_DamageFraction) then reads 0x100, posts 0x2e if the attacker is LocalPlayerMech and the structure is its +0x1a4 target, credits the attacker through its +0x60, sets +0x99, clears the scanner, runs Mech_ReportOutOfAction and activates the defeat action (+0x1b6). Then, when the component record's +4 is not -1, loads its stages left from g_BaseDeathStageCount[+4] and its stage timer with 300.",
+      "source": "docs/retail/simulation/hit-detection.md",
+      "verified": {
+        "bytes": "00404d70+432",
+        "sha1": "1e0abe645764",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00404f20",
@@ -798,9 +804,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Base_ApplyExplosiveDamage",
-      "description": "Structure vtable +0x70, the blast counterpart of Base_ApplyDamage. Returns early for an invulnerable type, for a wreck that leaves a hulk, and -- the gate that matters -- for a type with no BASECOL.DAT model installed at typeRec+0x38, which makes 40 of the 65 retail types immune to explosions while still vulnerable to direct fire. For every live component it draws and compares (rand & 0xfff) < 0x1004, a ceiling one above the largest value that mask can produce, so THE ROLL NEVER FAILS and every component is measured; the draw only advances the generator. Measures the blast point against the component's own position via vtable +0x58 and applies (blastRadius - distance) * damage / blastRadius through vtable +0x74. No shields, no facing.",
+      "description": "Structure vtable +0x70, the blast counterpart of Base_ApplyDamage. Returns at once for an invulnerable type (typeRec+0x1e), for a wreck (typeRec+4 != -1, component 0's stages left <= 1 and +0x99 set), and for a type with no BASECOL.DAT model at typeRec+0x38 -- 40 of the 65 retail types, which stand in a blast untouched while still vulnerable to direct fire. For every component whose alive flag is set it draws and compares (rand & 0xfff) < 0x1004, a ceiling one above the largest value that mask can produce, so THE ROLL NEVER FAILS and every live component is measured; the draw only advances the generator. Measures the blast point against vtable +0x58's component position and, inside blastRadius, applies (blastRadius - distance) * damage / blastRadius through vtable +0x74. No shields, no facing.",
       "source": "docs/retail/simulation/damage-system.md",
-      "signature": "void __cdecl Base_ApplyExplosiveDamage(StructureObject *this, short damage, int *hitPoint, short blastRadius, int *attacker)"
+      "signature": "void __cdecl Base_ApplyExplosiveDamage(StructureObject *this, short damage, int *hitPoint, short blastRadius, int *attacker)",
+      "verified": {
+        "bytes": "00404f20+249",
+        "sha1": "e111401a4551",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040501c",
@@ -808,8 +820,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Bullet_StashDirectFireDamage",
-      "description": "Writes the two globals (DAT_004a9676 armour, DAT_004a9678 shield) that Base_DirectFireHitTest reads back when a shot arrives with zero on both counts. Called only from Bullet_TickUpdate's subtype-9 (plasma) branch, which stashes the round's damage here and then zeroes it in the shot record before the raycast.",
-      "source": "docs/retail/simulation/hit-detection.md"
+      "description": "(armour, shield): stores the two figures in DAT_004a9676 (armour) and DAT_004a9678 (shield), which Base_DirectFireHitTest's volume path reads back. es2_xref finds one call, from Bullet_TickUpdate's subtype-9 (plasma) branch.",
+      "source": "docs/retail/simulation/hit-detection.md",
+      "verified": {
+        "bytes": "0040501c+26",
+        "sha1": "b44e227a55f7",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00405038",
@@ -817,8 +835,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Base_DirectFireHitTest",
-      "description": "Structure vtable +0x20 -- all five type-switched vtables Base_Construct installs (00497784/97818/978ac/97940/979d4) point this slot here. Hit test and damage in one call. Branches on typeRec+0x38 (installed when BASES.DAT +0x30 is nonzero): non-null runs Mech_SelectStruckComponent against the type's BASECOL.DAT sphere model and names the struck component, null runs Sim_RaycastShapeVolume against the shape's collision height field and always reports component 0. A destroyed type with a hulk (typeRec+4 != -1) is forced to the volume path. Spawns the shot's armour impact effect (shot effects base +0x10). See docs/retail/simulation/hit-detection.md.",
-      "source": "docs/retail/simulation/hit-detection.md"
+      "description": "Structure vtable +0x20 -- all five type-switched vtables Base_Construct installs (00497784/97818/978ac/97940/979d4) point this slot here. Hit test and damage in one call. A wreck (typeRec+4 != -1, component 0's stages left <= 1 and +0x99 set) or a type with a null BASECOL.DAT model (typeRec+0x38) runs Sim_RaycastShapeVolume on a one-structure list and leaves the component at -1; a hit there with zero armour and shield damage on the shot takes its armour figure from DAT_004a9676 (Bullet_StashDirectFireDamage). Otherwise the coarse reject on vtable +0x10 shape radius + ray[+8] + ray length, then Mech_SelectStruckComponent against the typeRec+0x38 model with the alive flags, naming the component. Either path adds 1 to the hit distance. On a hit: while +0x99 is clear, vtable +0x74(component, armour damage, shot owner +0xe), the armour figure alone being passed; an effect from the shot's third impact array (shot+0xa entries 8-11, rand & 3) at the distance down the ray; and on (rand & 0xfff) < 0x401 debris group 1 thrown from that point. Returns the distance, or 0.",
+      "source": "docs/retail/simulation/hit-detection.md",
+      "verified": {
+        "bytes": "00405038+635",
+        "sha1": "19b6a91b531b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004052b4",
@@ -826,8 +850,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Base_DamageFraction",
-      "description": "Structure vtable +0x40. (sum of component damage << 8) / (sum of component max) -- a ratio of sums, not a count of destroyed components, so a type with one large core component is effectively destroyed by killing the core alone. 0x100 means the structure has fallen.",
-      "source": "docs/retail/simulation/hit-detection.md"
+      "description": "Structure vtable +0x40. (sum of every component's damage << 8) / (sum of every component's BASES.DAT maximum), over typeRec+0x12 components, divided unguarded -- a ratio of sums, not a count of destroyed components, so a type with one large core component is effectively destroyed by killing the core alone. 0x100 means the structure has fallen.",
+      "source": "docs/retail/simulation/hit-detection.md",
+      "verified": {
+        "bytes": "004052b4+83",
+        "sha1": "e8ed6b7395ab",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00405308",
@@ -951,9 +981,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Base_ComponentPosition",
-      "description": "Structure vtable +0x58: the world position of one destructible part, which is what the blast falloff measures from. Builds the object's rotation from its euler triple while the frame-valid word at obj+0x32 is 0 (setting it to 1), then puts the component's own point at BASES.DAT component record +0x10 through the object transform at obj+0x12. No node resolution -- a structure's parts do not move -- and NOT the BASECOL.DAT sphere geometry a shot is tested against.",
+      "description": "Structure vtable +0x58: the world position of one destructible part, which is what the blast falloff measures from. Builds the object's rotation from its euler triple while the frame-valid word at obj+0x32 is 0 (setting it to 1), then puts the component's own point at BASES.DAT component record +0x10 through the object transform at obj+0x12. No node resolution and no index check, and NOT the BASECOL.DAT sphere geometry a shot is tested against.",
       "source": "docs/retail/simulation/hit-detection.md",
-      "signature": "void __cdecl Base_ComponentPosition(StructureObject *this, short componentIndex, int *out)"
+      "signature": "void __cdecl Base_ComponentPosition(StructureObject *this, short componentIndex, int *out)",
+      "verified": {
+        "bytes": "00406808+94",
+        "sha1": "41f3aa977c9b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00406868",
@@ -2822,8 +2858,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_ComponentGeometryTest_Candidate",
-      "description": "Per-candidate coarse geometry test, called by Mech_SelectStruckComponent.",
-      "source": "docs/retail/simulation/hit-detection.md"
+      "description": "(node, object, objectToMuzzle, activeFlags): one collision-model node of Mech_SelectStruckComponent's walk, not a coarse test. Builds the node-to-muzzle transform -- a copy of objectToMuzzle for node id < 0, otherwise the node's posed transform (shape vtable +0x20 part lookup through obj+0x34, identity at 006c572c for a missing part) concatenated with it -- and points Collision_NodeToMuzzleTransform at it. Then for each of the node's 16-byte clusters (count at +4, array at +6) whose component's active flag is set, runs Collision_ClusterTest, and on a non-zero result stores it in DAT_004a989c and the cluster's component (+6) in DAT_004a98a0. Returns 0.",
+      "source": "docs/retail/simulation/hit-detection.md",
+      "verified": {
+        "bytes": "0040c8fc+213",
+        "sha1": "bff128ec5942",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040c9d4",
@@ -2831,8 +2873,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_SelectStruckComponent",
-      "description": "Deterministic single-component selection via real hit geometry -- iterates up to 29 component slots, tracks best match, returns exactly the one struck (no randomness, unlike the explosive path).",
-      "source": "docs/retail/simulation/hit-detection.md"
+      "description": "(model, object, rayRecord, objectToMuzzle, activeFlags): the shared sphere-model hit test, used by all three classes' direct-fire hit tests. Sets the result globals -- component DAT_004a98a0 = -1, hit DAT_004a989c = 0, working distance DAT_004a9894 = the ray length (ray+4), clearance DAT_004a9898 = ray+8 -- and runs Mech_ComponentGeometryTest_Candidate on each of the model's nodes (count at +0, 10-byte nodes at +2). Copies the hit and component to the 6-byte result at DAT_004a98a2 and returns a pointer to it, or null when nothing was hit. No randomness: the last cluster that hit is the one returned.",
+      "source": "docs/retail/simulation/hit-detection.md",
+      "verified": {
+        "bytes": "0040c9d4+129",
+        "sha1": "7518d36836c2",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040ca58",
@@ -2840,8 +2888,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Collision_FindClusterInNode",
-      "description": "Linear search over one node's 16-byte clusters for a matching component index (cluster+6). Helper for Collision_FindClusterForComponent.",
-      "source": "docs/retail/simulation/hit-detection.md"
+      "description": "(node, componentIndex, nodeIndexOut): linear search over one node's 16-byte clusters (count at node+4, array at node+6) for the first whose component index (+6) matches; on a match writes the node's id (+0) out and returns the cluster, otherwise returns null.",
+      "source": "docs/retail/simulation/hit-detection.md",
+      "verified": {
+        "bytes": "0040ca58+51",
+        "sha1": "280ea98590bb",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0040ca8c",
@@ -2849,8 +2903,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Collision_FindClusterForComponent",
-      "description": "Walks a collision model's nodes looking for the cluster that owns a given component index, via Collision_FindClusterInNode; returns the cluster and writes the owning node index out. Used by Component_DestroyAndCascade to place a destroyed component's debris, not by the hit test.",
-      "source": "docs/retail/simulation/hit-detection.md"
+      "description": "(collisionRecord, componentIndex, nodeIndexOut): walks the record's nodes (count at +0, 10-byte nodes at +2) through Collision_FindClusterInNode and returns the first cluster naming componentIndex, its node index written out, or null when no node has one.",
+      "source": "docs/retail/simulation/hit-detection.md",
+      "verified": {
+        "bytes": "0040ca8c+63",
+        "sha1": "8e7df8c6fda0",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040cacc",
@@ -3036,8 +3096,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Component_AllDependentsDestroyed",
-      "description": "Whether every dependent sub-piece a component's .DMG record lists is destroyed (-1). Used only by Component_IsFullyDestroyed.",
-      "source": "docs/retail/simulation/component-damage.md"
+      "description": "(piece, dependentDamage): true when every entry of the piece's dependent list (count at piece+6, 4-byte entries at piece+8, internal index at entry+2) holds a negative damage value, i.e. is destroyed; true for an empty list. es2_xref finds one call, from Component_IsFullyDestroyed.",
+      "source": "docs/retail/simulation/component-damage.md",
+      "verified": {
+        "bytes": "0040cf10+51",
+        "sha1": "b632d47098ae",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040cf44",
@@ -3045,8 +3111,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Component_SpillIntoDependents",
-      "description": "Pours a destroyed component's overflow damage into its dependent sub-pieces, one at a time. The pick is weighted and random: each live dependent contributes its .DMG CritChance to a total, a draw under that total selects one, and if the spill destroys it the remainder goes round again. Returns true only when no live dependents remain -- which is the condition Component_ApplyDamageAndCascade requires before it will cascade.",
-      "source": "docs/retail/simulation/component-damage.md"
+      "description": "(piece, dependentDamage, damage, dependentMaxima): pours damage into the piece's dependents one at a time. Each round sums the spill weight (entry+0) of every live dependent (damage >= 0); a zero total returns true at once. Otherwise it draws Math_RandomBelow(total) on the shared generator, walks the list subtracting each live entry's weight, and hands the first one that takes the draw below zero to Component_AddDamage against that internal's maximum, the excess coming back through the damage argument. A spill that destroys the dependent goes round again with the excess; a spill that leaves it standing returns false. So it returns true only once every dependent is destroyed -- which is what Component_ApplyDamageAndCascade requires before it will cascade. An internal with a maximum of 0 is destroyed by any spill, a spill of 0 included.",
+      "source": "docs/retail/simulation/component-damage.md",
+      "verified": {
+        "bytes": "0040cf44+177",
+        "sha1": "bb917b1cdca0",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040cff8",
@@ -3160,8 +3232,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Component_AddDamage",
-      "description": "Adds damage to one component/dependent damage entry. An entry already holding -1 (destroyed) absorbs nothing. An entry the damage finishes stores -1 rather than the max and writes the EXCESS back through the damage pointer, which is what Component_SpillIntoDependents runs on. Returns whether the entry is now destroyed.",
-      "source": "docs/retail/simulation/component-damage.md"
+      "description": "(entry, maximum, damage*): adds damage to one damage entry. An entry already negative (-1, destroyed) is left alone, the damage left as it was, and the call answers destroyed. Otherwise entry + damage under the maximum is stored; at or past it the excess (entry + damage - maximum) is written back through the damage pointer and the entry becomes -1 rather than the maximum. Returns whether the entry is now negative.",
+      "source": "docs/retail/simulation/component-damage.md",
+      "verified": {
+        "bytes": "0040d3ec+70",
+        "sha1": "05ad500c03c7",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040d434",
@@ -3169,8 +3247,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Component_DestroyAndCascade",
-      "description": "Destroys a component and walks the destruction-dependency group named by its .DMG bone id, destroying every sibling that shares it. Also the whole of what a lost part puts on screen: the .DMG record's +0x03 (the TSCellAnimPart sequence this component drives) gates a fire and is stepped to its blank cell, an explosion goes off at the component's own composed frame -- type 0x11 and a one-per-cascade-group latch at DAT_004a98b0 when the .DMG destruction flags' bit 2 is set, type 10 otherwise -- and the +0x02 debris group is thrown, falling back to group 2 when it states -1.",
-      "source": "docs/retail/simulation/component-damage.md"
+      "description": "(damageHeader, i): takes main component i out. First looks up the component's cluster with Collision_FindClusterForComponent on the header's collision record (+0x10), keeping the node index it writes and the cluster's bound centre at cluster+8; the result is used without a null test. Returns 0 at once when the component's active flag (+8 array) is clear. Otherwise: damage entry -1, active flag 0, Component_SpillIntoDependents with a flat 32000 to finish the dependents. When the piece's +3 byte (the TSCellAnimPart sequence it drives) is not negative: while the cascade latch DAT_004a98b0 is clear, flags bit 1 releases the owner's fires (FireEffect_ReleaseForOwner) and lights FireEffect shape 0, else bit 3 lights shape 2, each on the node index and the bound centre; then that sequence's cell in the owner's shape instance is set to 2. Builds the component's frame -- the owner's world transform for node -1, otherwise the node's posed transform (shape vtable +0x20 part lookup, identity at 006c572c for a missing part) concatenated with it -- and puts the bound centre through it. While the latch is clear, explodes there: EXPLOS.DAT type 10, or 0x11 with flags bit 2, which also sets the latch. Throws the piece's +2 debris group, or group 2 when it is -1, from that frame. Then queues every component whose active flag is set and whose piece +4 parent index is i on the list at maybe_ComponentDependencyList (count byte at +5), and returns 1.",
+      "source": "docs/retail/simulation/component-damage.md",
+      "verified": {
+        "bytes": "0040d434+1476",
+        "sha1": "43f7bb5f74f8",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0040d9f8",
@@ -3178,8 +3262,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Component_IsFullyDestroyed",
-      "description": "Component destroyed AND all of its dependents destroyed. The stricter of the two 'is this gone' tests; Mech_ComponentDamageWrite asks it of the two cockpit slots (0 and 1) as the mech's death gate.",
-      "source": "docs/retail/simulation/component-damage.md"
+      "description": "(damageHeader, i): main component i's damage entry is negative (destroyed) AND Component_AllDependentsDestroyed answers for its piece. The stricter of the two 'is this gone' tests; Mech_ComponentDamageWrite asks it of the two cockpit slots (0 and 1) as the mech's death gate.",
+      "source": "docs/retail/simulation/component-damage.md",
+      "verified": {
+        "bytes": "0040d9f8+62",
+        "sha1": "8828a327532c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040da38",
@@ -3211,8 +3301,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Component_ReadDamagePercent",
-      "description": "Reads a component's ACCUMULATED DAMAGE as Q8 (0-256), 0 = pristine and 256 = destroyed -- not health. Component_AllocDamageArrays zeroes the arrays at init and the write path (Component_AddDamage) ADDS damage to the entry, capping it at the record's max and storing -1 once destroyed; this read substitutes the max for a -1 entry, so a destroyed component reads as fully damaged. Aggregates the component's own value with all its dependent sub-components before computing (totalDamage<<8)/totalMax. Callers read it as damage, not health, including the pod-bonus curves in Mech_ComputeReactorRate/Mech_ComputeShieldCapacity and the mech+0x317 locomotion term.",
-      "source": "docs/retail/simulation/component-damage.md"
+      "description": "(damageHeader, i): main component i's ACCUMULATED DAMAGE as Q8, 0 = pristine and 0x100 = destroyed -- not health. Starts from the piece's armour (+0) as the maximum and its damage entry, a negative entry counting as the armour, then adds every dependent the piece lists: its damage (a negative entry counting as its maximum) and its maximum from the .DMG maxima array (dmg table +4). Returns (totalDamage << 8) / totalMaximum, divided unguarded.",
+      "source": "docs/retail/simulation/component-damage.md",
+      "verified": {
+        "bytes": "0040dbc0+152",
+        "sha1": "181fdb980769",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040dc58",
@@ -5008,8 +5104,14 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObject_CreditNeutralisedTargetNoOp",
-      "description": "Vtable +0x60 of the ACTOR base, the flyer and all five structure tables: an empty body. Only the mech (Mech_CreditNeutralisedTarget) credits a kill.",
-      "source": "docs/retail/simulation/component-damage.md"
+      "description": "An empty body (push ebp; mov ebp,esp; pop ebp; ret). es2_xref finds it in the +0x60 kill-credit slot of SimObjectBaseVtable, FlyerVtable and the five structure vtables; the mech's override is Mech_CreditNeutralisedTarget.",
+      "source": "docs/retail/simulation/component-damage.md",
+      "verified": {
+        "bytes": "00411b2c+5",
+        "sha1": "74c0a4a36986",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00411b34",
@@ -5026,9 +5128,15 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObject_ApplyExplosiveDamage",
-      "description": "The SimObject base class's vtable +0x70, and the implementation a FLYER uses -- the flyer class does not override the slot. No roll, no component selection, no shields and no range test (the sweep has already made it): applies (blastRadius - (distance - obj[+0x5c])) * damage / blastRadius to component 0 through vtable +0x74. Because the object's own +0x5c is subtracted, a blast inside the body radius scales by more than one -- though a flyer's +0x5c is 0.",
+      "description": "The SimObject base class's vtable +0x70, which a FLYER inherits. No roll, no component selection, no shields and no range test: applies (blastRadius - (distance - vtable +0x5c body radius)) * damage / blastRadius to component 0 through vtable +0x74, the distance taken from the hit point to the object's position. A blast inside the body radius scales by more than one, though a flyer's +0x5c is 0.",
       "source": "docs/retail/simulation/damage-system.md",
-      "signature": "void __cdecl SimObject_ApplyExplosiveDamage(SimObject *this, short damage, int *hitPoint, short blastRadius, SimObject *attacker)"
+      "signature": "void __cdecl SimObject_ApplyExplosiveDamage(SimObject *this, short damage, int *hitPoint, short blastRadius, SimObject *attacker)",
+      "verified": {
+        "bytes": "00411b3c+81",
+        "sha1": "6a018d78c10b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00411b90",
@@ -5647,8 +5755,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Shield_SetMax",
-      "description": "Trivial setter: writes the shield array's total capacity at shieldStruct+6 (mech+0x228). Only caller is Mech_ComputeShieldCapacity. The base capacity at shieldStruct+8 is left alone, which is why the cockpit rings measure against the pre-pod figure.",
-      "source": "docs/retail/simulation/damage-system.md"
+      "description": "Trivial setter: writes the shield array's total capacity at shieldStruct+6 (mech+0x228). The base capacity at shieldStruct+8 is left alone. es2_xref finds one call, from Mech_ComputeShieldCapacity.",
+      "source": "docs/retail/simulation/damage-system.md",
+      "verified": {
+        "bytes": "00413ab8+16",
+        "sha1": "2359d36aef73",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00413ac8",
@@ -5995,9 +6109,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_CreditNeutralisedTarget",
-      "description": "Mech vtable +0x60, told to the machine that just put victim out of the fight. Plain __cdecl on three stack arguments -- every call site pushes three and cleans 12 bytes, so the decompiler's __thiscall rendering with a leading parameter is wrong. victimAlreadyImmobilised suppresses the kill half only: the kill tally at mech+0x2a4, one short per victim target class (+0x1a8), the +0xa6 latch and the scorer's 0x02 callout. The victim's own 0x25/0x04 cry goes out either way, and is the image's only Ai_PostSquadMessage call that forces a post past a destroyed machine.",
+      "description": "Mech vtable +0x60, told to the machine that just put victim out of the fight. Plain __cdecl on three stack arguments -- every call site pushes three and cleans 12 bytes, so the decompiler's __thiscall rendering with a leading parameter is wrong. Unless victimAlreadyImmobilised is set: when the attacker is in PlayerMech's group, is not PlayerMech and the victim's team byte (group+0x12) differs from its own, Ai_PostSquadMessage(attacker, 0x02, 0); and whenever the team bytes differ, the attacker's kill tally at mech+0x2a4 for the victim's target class (+0x1a8) goes up one and +0xa6 is set. Either way, when the victim is in PlayerMech's group and is not PlayerMech, Ai_PostSquadMessage(victim, 0x25 if +0x99 is set else 0x04, forced), and when the attacker is PlayerMech mission counter DAT_004a9f08 goes up one.",
       "source": "docs/retail/simulation/component-damage.md",
-      "signature": "void __cdecl Mech_CreditNeutralisedTarget(SimObject *attacker, SimObject *victim, short victimAlreadyImmobilised)"
+      "signature": "void __cdecl Mech_CreditNeutralisedTarget(SimObject *attacker, SimObject *victim, short victimAlreadyImmobilised)",
+      "verified": {
+        "bytes": "00415710+182",
+        "sha1": "8540400a52f4",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004157c8",
@@ -6211,8 +6331,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_ComputeShieldCapacity",
-      "description": "Sibling of Mech_ComputeReactorRate for shield capacity; writes mech+0x228 via Shield_SetMax. Base is typeRecord+0xc0 = record offset 190, the maximum total shield, a fleet-wide 3500. Chassis damage above 0x80 on dependent-subpiece 4 scales it down in five steps to 50%; a Shield Pod in slot mech+0x30f adds up to a second full base (doubling it) on the same five-step pod-damage curve the Energy Pod uses. Called from Mech_ConfigureLoadout (followed by Shield_RefillToBalance) and again from Mech_ComponentDamageWrite, so capacity shrinks as the generator is damaged.",
-      "source": "docs/retail/simulation/reactor-energy-pool.md"
+      "description": "Writes mech+0x228 via Shield_SetMax. Base is typeRecord+0xc0 = record offset 190, a fleet-wide 3500. The shield generator's own reading -- internal 4's damage against its maximum, 0x100 when destroyed -- scales the base by ((reading - 0x80) / 0x19) * -0x66 + 0x400 in Q10 once it is 0x80 or more, down to about half. A Shield Pod at mech+0x30f adds Q10(((podDamage / 0x33) * -0xcc + 0x400), base), the base undamaged, while podDamage -- Component_ReadDamagePercent of the pod hardpoint's component, .GL+0x17 + 19 -- is under 0xe1.",
+      "source": "docs/retail/simulation/reactor-energy-pool.md",
+      "verified": {
+        "bytes": "00417bec+281",
+        "sha1": "c6ba9c96a203",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00417d08",
@@ -6275,8 +6401,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_DirectFireHitTest",
-      "description": "Mech vtable +0x20. Range check -> Mech_ShieldAbsorb_DirectFire -> Mech_SelectStruckComponent -> Mech_ApplyDirectFireDamage. The hit-test and damage application are the same call, one level deeper than Sim_RaycastObjectList's caller.",
-      "source": "docs/retail/simulation/hit-detection.md"
+      "description": "Mech vtable +0x20, (mech, shot): the direct-fire hit test and damage application in one call. Rejects when ray[+8] (200) + ray length + typeRec+0x1a is under the muzzle-to-machine distance. For a machine not locally piloted, the shot's rocket subtype (shot+0x12) 0 or 1 turns the scanner (+0x96) on while the radar-silence timer is 0, and 2 turns it off and loads the timer with 6000. Concatenates the machine's world transform with the ray's cached world-to-muzzle transform and calls Mech_ShieldAbsorb_DirectFire with the shot's shield damage (shot+6); a zero return is a miss. On a hit it clears +0x94 and adds what the shields took to mech+0x288. Shield damage left at 0 ends there: an effect from the shot's first impact array (shot+0xa, rand & 3) at the shield's hit distance down the ray, and that distance returned. Otherwise, for the locally piloted machine with +0xb0 clear and front + rear under 500, posts 0x15 and sets +0xb0; then Mech_SelectStruckComponent on the machine's .COL model (+0x1f6) with its active flags; a miss returns 0, a hit adds the armour damage (shot+4) to +0x288 and calls Mech_ApplyDirectFireDamage(component, shot, point at that distance down the ray), returning the distance.",
+      "source": "docs/retail/simulation/hit-detection.md",
+      "verified": {
+        "bytes": "00418ba8+693",
+        "sha1": "97321e218756",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00418e60",
@@ -6567,9 +6699,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_ComponentPosition",
-      "description": "Mech vtable +0x58: the world position of one of the 29 .DMG components. Indexes the piece table at *(mech+0x1fa) by componentIndex * 0x12 and reads the two RUNTIME-ONLY HercPiece fields +0x0c (shape part id) and +0x0e (pointer to a short[3] point), which the .DMG loader leaves as -1/null and Mech_ConfigureLoadout fills in from the .COL. A null point returns the MACHINE'S OWN POSITION -- which is most of a HERC, since a mech .COL names only 6-16 of the 29 slots. Otherwise the point goes through the object transform, composing the part's posed node transform first when the part id is > 0 (strictly greater, so part 0 stays in the object frame). A part the shape lacks falls back to the identity transform at 006c572c. Also the accessor a missile takes its lock node's position from.",
+      "description": "Mech vtable +0x58: the world position of one of the 29 .DMG components. Indexes the piece table at *(mech+0x1fa) by componentIndex * 0x12 and reads the two RUNTIME-ONLY HercPiece fields +0x0c (shape part id) and +0x0e (pointer to a short[3] point), which the .DMG loader leaves as -1/null and Mech_ConfigureLoadout fills in from the .COL. A null point returns the MACHINE'S OWN POSITION. Otherwise the point goes through the object transform, composing the part's posed node transform first when the part id is > 0 (strictly greater, so part 0 stays in the object frame). A part the shape lacks falls back to the identity transform at 006c572c.",
       "source": "docs/retail/simulation/damage-system.md",
-      "signature": "void __cdecl Mech_ComponentPosition(MechObject *this, short componentIndex, int *out)"
+      "signature": "void __cdecl Mech_ComponentPosition(MechObject *this, short componentIndex, int *out)",
+      "verified": {
+        "bytes": "0041b60c+283",
+        "sha1": "f03ce2148021",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0041b728",
@@ -7680,8 +7818,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Flyer_ComponentDamageWrite",
-      "description": "Flyer vtable +0x74. Thin wrapper over Component_ApplyDamageAndCascade on the header at flyer+0x200: destroying component 0 loses the aircraft -- sets flyer+0x99, credits the kill through the attacker's +0x60, fires the mission action at flyer+0x1b6, and writes -100000 to flyer+0x2e so it falls.",
-      "source": "docs/retail/simulation/hit-detection.md"
+      "description": "Flyer vtable +0x74, (flyer, component, damage, attacker). Points DAT_004a96e4 at the flight block's world velocity for the length of the call, so debris the cascade throws inherits it, then Component_ApplyDamageAndCascade on the header at flyer+0x200. When that cascaded and the component is 0: with an attacker, posts 0x2e if the attacker is LocalPlayerMech and the flyer its +0x1a4 target, and credits the attacker through its +0x60; then sets +0x99, clears the scanner, sets +0x38, writes -100000 to the world Z (+0x2e), runs Mech_ReportOutOfAction, activates the defeat action, installs behaviour state 00499e60, and stops sound 0x31 when +6 says it is playing, clearing +6. Nothing in it tests +0x99 first.",
+      "source": "docs/retail/simulation/hit-detection.md",
+      "verified": {
+        "bytes": "00421bb4+215",
+        "sha1": "4cf5350cd3fc",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00421c8c",
@@ -7689,8 +7833,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Flyer_DirectFireHitTest",
-      "description": "Flyer vtable +0x20. Coarse reject on SimObject_GetShapeRadius (shape+8), then Mech_SelectStruckComponent against the type's col/<NAME>.COL model (flyerTypeRec+0x32) with the per-component alive flags at obj+0x208. Damage through vtable +0x74; spawns the shot's armour impact effect, or a fixed effect id 10 once the flyer is destroyed. No shields and no collision volume -- the simplest of the three hit tests.",
-      "source": "docs/retail/simulation/hit-detection.md"
+      "description": "Flyer vtable +0x20. Returns 0 at once while the spectator flag DAT_0049ef5c is set and this flyer is ViewChain_Viewed. Coarse reject on vtable +0x10 shape radius + ray[+8] + ray length, then Mech_SelectStruckComponent against the type's .COL model (flyerTypeRec+0x32) with the active flags at +0x208. On a hit: draws an effect from the shot's third impact array (shot+0xa entries 8-11, rand & 3) before anything else, calls vtable +0x74(component, armour damage, shot owner), then if +0x99 is now set swaps in effect 10 and debris group 3 for the ordinary group 1. Spawns the effect with no owner and throws the debris group from the point at distance + 1 down the ray, and returns that distance. No shields and no collision volume.",
+      "source": "docs/retail/simulation/hit-detection.md",
+      "verified": {
+        "bytes": "00421c8c+504",
+        "sha1": "2b0d3a8c6065",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00421e84",
@@ -8489,8 +8639,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_DamageToPlayerDisabled",
-      "description": "Two-global predicate gating the very first line of Mech_ComponentDamageWrite for the locally piloted machine: if MissionModeFlag is zero the answer is PlayerInvulnerableFlag == 1, otherwise MissionDifficulty == 0. Reads as an invulnerability or practice setting; neither global's writer was traced.",
-      "source": "docs/retail/simulation/component-damage.md"
+      "description": "Two-global predicate gating the very first line of Mech_ComponentDamageWrite for the locally piloted machine: when MissionModeFlag is 0 the answer is PlayerInvulnerableFlag == 1, otherwise MissionDifficulty == 0. Which arm is live is docs/retail/simulation/difficulty.md's.",
+      "source": "docs/retail/simulation/component-damage.md",
+      "verified": {
+        "bytes": "004240f4+53",
+        "sha1": "96673e48adda",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042412c",
