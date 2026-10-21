@@ -58,6 +58,7 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	private readonly Action _camUpdate;
 	private readonly Action? _beginWorldPass;
 	private readonly Es1AppliedDetail? _detail;
+	private readonly Func<Es1Camera>? _viewCamera;
 
 	// The frame's work from the tick on, standing at its current wait; null once it has run.
 	private IEnumerator<Es1Wait>? _work;
@@ -76,11 +77,17 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	/// camera and the render context as they stand when it draws.
 	/// </param>
 	/// <param name="detail">The detail setting the 3D pass draws the HERCs at, which each frame applies again when option 6 has changed.</param>
-	public Es1FrameLoop(Es1ViewManager views, Action camUpdate, Action? beginWorldPass = null, Es1AppliedDetail? detail = null) {
+	/// <param name="viewCamera">
+	/// <c>ViewObjectPtr</c>, the current camera, whose view the 3D pass installs (<see cref="Es1ViewManager.InstallViewProjection"/>)
+	/// for what draws over the scene; with none, none is installed.
+	/// </param>
+	public Es1FrameLoop(Es1ViewManager views, Action camUpdate, Action? beginWorldPass = null, Es1AppliedDetail? detail = null,
+			Func<Es1Camera>? viewCamera = null) {
 		Views = views;
 		_camUpdate = camUpdate;
 		_beginWorldPass = beginWorldPass;
 		_detail = detail;
+		_viewCamera = viewCamera;
 	}
 
 	public Es1ViewManager Views { get; }
@@ -104,7 +111,8 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	/// <summary>
 	/// The display's part of <c>Sim_StartMission</c>: step 11, the pages at (0, 0), (0, 200), (320, 0) and (320, 200),
 	/// the pair {0, 2}, page 0 shown and page 3 drawn on; step 13, <paramref name="cursor"/> installed on the display's
-	/// cursor, the draw page 2 again and views 1 and 0 set, so both canopies lie in page 2's half; step 14 without the
+	/// cursor, <c>Player_PerFrameCockpitUpdate</c>, <c>Cam_Update</c>, the draw page 2 again and views 1 and 0 set, so both
+	/// canopies lie in page 2's half; step 14 without the
 	/// lift, the first frame's 3D pass; and step 15, the whole of page 2 copied onto page 0, the cursor shown and the
 	/// cockpit's mouse made live.
 	/// </summary>
@@ -123,6 +131,8 @@ public sealed class Es1FrameLoop : IEs1Frame {
 		display.DrawPage = 3;
 
 		display.Cursor.SetImage(cursor);
+		PlayerCockpitUpdate();
+		_camUpdate();
 		display.DrawPage = display.PairDrawn;
 		Views.SetView(1);
 		Views.SetView(0);
@@ -130,7 +140,6 @@ public sealed class Es1FrameLoop : IEs1Frame {
 		// Step 14 without the lift, which needs a friendly structure within 40000 and no structure is spawned: the
 		// pitch gradient (Palette_BlendRangeByPitch) is not run (Es1Backdrop), and Palette_FlushDirtyRange has nothing
 		// to send; then Sim_RenderFrame.
-		_camUpdate();
 		RenderFrame();
 
 		// Step 15: Widget_DrawToCockpit(0, {0, 0, 320, 400}, 1), page +0x8c copied onto +0x88 and the draw page put back.
@@ -327,19 +336,39 @@ public sealed class Es1FrameLoop : IEs1Frame {
 
 	/// <summary>
 	/// <c>Sim_RenderFrame</c> (<c>00059c08</c>): the detail setting applied again when option 6 has changed, the cockpit's
-	/// frame (<c>Cockpit_DrawFrame</c>), then the 3D pass, which draws the world into the draw page in the installed
-	/// window and clip block when the current view is not 1 or a view change is staged.
+	/// frame (<c>Cockpit_DrawFrame</c>), then the 3D pass, which installs the current camera's view and draws the world
+	/// into the draw page in the installed window and clip block when the current view is not 1 or a view change is
+	/// staged, answering a pending pixel pick from what it drew (<see cref="Es1ObjectPick.Resolve"/>),
+	/// <c>Player_PerFrameCockpitUpdate</c>, and the gunsight's per-frame update over it
+	/// (<see cref="Gunsight.Es1Gunsight.UpdateAndPaint"/>), which reads the pick's answer in the same frame, as retail's does.
 	/// </summary>
 	private void RenderFrame() {
 		_detail?.Refresh();
 		// The shake offset Sim_RenderFrame adds to the projection pair is (0, 0) while no shake is armed (plan step 7).
 		Views.Cockpit.DrawFrame();
 		if (Views.CurrentView != 1 || Views.Staged) {
+			if (_viewCamera?.Invoke() is { } camera) {
+				Views.InstallViewProjection(camera);
+			}
+
 			_beginWorldPass?.Invoke();
 			Views.Display.DrawWorld(Views.Window, Views.Clip);
+			// ObjList_DrawFrameObjects' end, with the pick pending: the object the pass has just drawn at its point.
+			Views.Cockpit.Globals.ObjectPick.Resolve(Views.Display.WorldObjectAt);
 		}
 
-		// PLACEHOLDER: Player_PerFrameCockpitUpdate (000155a8), the gunsight's slot +0xc and the squad message port's slot
-		// +0x10 after the 3D pass: the cockpit, plan steps 6b and 6c.
+		PlayerCockpitUpdate();
+		Views.Cockpit.Gunsight.UpdateAndPaint();
+		// PLACEHOLDER: the squad message port's slot +0x10, plan step 6c.
+	}
+
+	/// <summary>
+	/// <c>Player_PerFrameCockpitUpdate</c>(<c>LocalPlayerMech</c>), the view manager's machine; with none, which retail
+	/// always has, nothing.
+	/// </summary>
+	private void PlayerCockpitUpdate() {
+		if (Views.Cockpit.Machine is { } machine) {
+			Es1PlayerCockpitUpdate.Run(machine, Views.Cockpit);
+		}
 	}
 }

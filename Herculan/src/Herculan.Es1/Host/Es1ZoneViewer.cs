@@ -167,7 +167,7 @@ public static class Es1ZoneViewer {
 			var display = new Es1VideoMemory();
 			var cockpitMouse = new Es1CockpitMouse(display.Cursor);
 			cockpitMouse.Init(hostMouse);
-			manager = new Es1ViewManager(views, display, player, cockpitMouse);
+			manager = new Es1ViewManager(views, display, player, cockpitMouse, world.Globals);
 		}
 
 		var chain = player != null ? new Es1ViewChain(player, manager, Es1ViewCaption.Load(content)) : null;
@@ -219,13 +219,17 @@ public static class Es1ZoneViewer {
 				var sceneRenderer = renderer;
 				monitor.WorldPass = (x, y, width, height) =>
 					DrawWorld(gl, sceneRenderer, backdrop, worldDraw, cockpitCamera, x, y, width, height);
+				// The gunsight's pick, answered from what that pass drew (plan decision 16).
+				var pick = new Es1WorldPick(gl, sceneRenderer, worldDraw);
+				disposables.Add(pick);
+				monitor.WorldPick = viewport => pick.ObjectAt(cockpitCamera, viewport);
 				// Cam_Update on ViewObjectPtr, whichever camera the views have made it; the 3D pass draws from it with the
 				// installed window's projection, the machine the camera rides in left out of the draw.
 				frameLoop = new Es1FrameLoop(manager, () => chain.Camera.Update(), () => {
 					var viewCamera = chain.Camera;
 					viewCamera.ApplyTo(cockpitCamera, manager.Window);
 					worldDraw.Update(cockpitCamera, viewCamera.MountedObject);
-				}, detail);
+				}, detail, () => chain.Camera);
 				frameLoop.StartMission(Es1CursorImage.Load(content, "CURSOR"));
 			}
 

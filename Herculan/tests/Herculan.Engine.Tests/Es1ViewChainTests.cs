@@ -194,7 +194,7 @@ public class Es1ViewChainTests {
 		})!;
 
 		var mech = new Es1Mech(new Es1MechType(chassis, animation), globals.DwellJitter) { Position = new Vec3i(0, 0, z) };
-		globals.LiveObjects.Add(mech);
+		globals.AddLiveObject(mech);
 		return mech;
 	}
 

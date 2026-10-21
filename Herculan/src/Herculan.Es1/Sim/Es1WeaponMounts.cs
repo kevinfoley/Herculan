@@ -265,6 +265,13 @@ public sealed class Es1WeaponMounts {
 	public bool ChainChanged { get; private set; }
 
 	/// <summary>
+	/// <c>+0x14</c>, TRACK's latch, which the turret's tracking and <c>Player_PerFrameCockpitUpdate</c> read
+	/// (docs/es1/simulation/weapon-mounts.md#the-manager). PLACEHOLDER: never set until plan step 6c's console panel, whose
+	/// TRACK <c>WeaponMounts_PerFrameUpdate</c> copies here each frame.
+	/// </summary>
+	public bool TrackLatch { get; set; }
+
+	/// <summary>
 	/// The factory and, when <paramref name="local"/>, <c>WeaponMounts_CtorLocal</c>'s chains: for each hardpoint record in
 	/// file order the weapon and ammunition type its <c>+0x17</c> slot indexes in <paramref name="fit"/> and
 	/// <paramref name="ammunition"/>, and the class the weapon id picks

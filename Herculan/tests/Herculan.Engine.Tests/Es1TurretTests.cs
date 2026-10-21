@@ -2,6 +2,7 @@ using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Data.File.Dbsim;
 using HercWorks.Core.Data.File.Dts.Anim;
 using Herculan.Engine.Anim;
+using Herculan.Engine.Numerics;
 using Herculan.Es1.Sim;
 using Xunit;
 
@@ -76,6 +77,27 @@ public class Es1TurretTests {
 
 		Es1Turret.ConvergeGuns(mounts, 0, eyeLift);
 		Assert.Equal(((short)0, (short)0, (short)0), beside.Convergence);
+	}
+
+	/// <summary>
+	/// Tracking a point ahead and to either side turns the turret toward it as the target selection's forward cone counts
+	/// the twist, the twist added to the bearing: the twist rate's sign is the bearing's opposite, at the full deflection a
+	/// 45° error asks for. Catches the yaw axis' negation dropped (the turret turning away), the point left in world space
+	/// rather than the machine's frame (the heading of a turned machine ignored), or the clamp dropped.
+	/// </summary>
+	[Theory]
+	[InlineData(10000, 0)]
+	[InlineData(-10000, 0)]
+	[InlineData(10000, 0x4000)]
+	public void TrackingTurnsTheTurretTowardThePoint(int x, short heading) {
+		var mech = NewMech(maxRate: 0x100, accel: 0x7fff);
+		mech.Rotation = (0, 0, heading);
+		var point = Transform3.FromEuler(0, 0, heading).RotateVector(x, 10000, 0);
+		short bearing = (short)(Es1MissionGroup.HeadingToward(mech.Position, point) - heading);
+
+		mech.Turret.TrackPoint(new Es1SimClock(), new Es1TurretServos(), point);
+
+		Assert.Equal(-Math.Sign(bearing) * Es1Turret.AxisFull, mech.TwistRate);
 	}
 
 	/// <summary>

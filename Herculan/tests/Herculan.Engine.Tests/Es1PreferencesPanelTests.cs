@@ -264,7 +264,7 @@ public class Es1PreferencesPanelTests {
 		})!;
 
 		var mech = new Es1Mech(new Es1MechType(chassis, animation), globals.DwellJitter);
-		globals.LiveObjects.Add(mech);
+		globals.AddLiveObject(mech);
 		return mech;
 	}
 }

@@ -61,7 +61,9 @@ public sealed class Es1ViewManager {
 	/// The cockpit's mouse, <c>CockpitMouse_Init</c> run on it, as <c>Sim_StartMission</c> runs it before the cockpit is
 	/// built; with none, one on <paramref name="display"/>'s cursor with no driver.
 	/// </param>
-	public Es1ViewManager(Es1CockpitViews files, Es1VideoMemory display, Es1Mech? machine = null, Es1CockpitMouse? mouse = null) {
+	/// <param name="globals">The simulation's globals, whose live object list the cockpit's target selection walks; with none, an empty world's.</param>
+	public Es1ViewManager(Es1CockpitViews files, Es1VideoMemory display, Es1Mech? machine = null, Es1CockpitMouse? mouse = null,
+			Es1SimGlobals? globals = null) {
 		Files = files;
 		Display = display;
 		if (mouse == null) {
@@ -70,7 +72,7 @@ public sealed class Es1ViewManager {
 		}
 
 		Mouse = mouse;
-		Cockpit = new Es1Cockpit(this, machine, mouse);
+		Cockpit = new Es1Cockpit(this, machine, mouse, globals ?? new Es1SimGlobals());
 		ExternalViewRect = ExternalViewDefaultRect;
 		ExternalViewClip = Es1ClipBlock.FromRect(ExternalViewRect.ViewportX0, ExternalViewRect.ViewportY0,
 			ExternalViewRect.ViewportX1, ExternalViewRect.ViewportY1);
@@ -136,6 +138,18 @@ public sealed class Es1ViewManager {
 
 	/// <summary>The render context's clip block as the last view state copied it in, clip mode 2.</summary>
 	public Es1ClipBlock Clip { get; private set; } = Es1ClipBlock.Empty;
+
+	/// <summary>
+	/// The installed view, <c>Raster_InstallViewProjection</c>'s, which the 3D pass installs for <c>ViewObjectPtr</c> through
+	/// <see cref="Window"/> and which stands until the next pass installs it again; null before the first pass.
+	/// </summary>
+	public Es1ViewProjection? Projection { get; private set; }
+
+	/// <summary><c>Raster_InstallViewProjection</c>(<paramref name="camera"/>) through the render context's <see cref="Window"/>.</summary>
+	public void InstallViewProjection(Es1Camera camera) => Projection = Es1ViewProjection.Install(camera, Window);
+
+	/// <summary>The render context <c>000b5b6e</c> as the 2D draws over the scene find it: <see cref="Clip"/> on the display's draw page.</summary>
+	public Es1SceneCanvas SceneCanvas() => new(Display, Clip);
 
 	/// <summary><c>CockpitViewCanvasOrigin</c> (<c>000afa9c</c>), the current view's canvas origin.</summary>
 	public (int X, int Y) CanvasOrigin { get; private set; }
@@ -229,8 +243,7 @@ public sealed class Es1ViewManager {
 				Display.Blit(art, mirrored: view == 3);
 			}
 
-			// PLACEHOLDER: CockpitView_InvalidateWidgets (0002b4a0)(+0x1b) for views 0 to 3, the cockpit's repaint, plan
-			// step 6c.
+			Cockpit.InvalidateWidgets();
 		}
 
 		CurrentView = view;

@@ -72,7 +72,7 @@ public readonly record struct CellGate(short Sequence, short Frame, PartDetail? 
 /// <param name="WalkFaces">
 /// Per triangle, in <paramref name="Vertices"/>' order, the textured face it was fanned out of, in the node's own space,
 /// or null for a triangle that is no such face's; null when no triangle is. The table a renderer that fills textured
-/// faces by the original's column walk reads — see <see cref="TextureWalkFace"/>.
+/// faces by the original's row walk reads — see <see cref="TextureWalkFace"/>.
 /// </param>
 public readonly record struct MeshSegment(int TransformId, CellGate Gate, MeshVertex[] Vertices,
 	int TriangleVertexCount, int PointVertexCount = 0, BspLeaf? Leaf = null, bool Ground = false, int Layer = 0,

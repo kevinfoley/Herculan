@@ -83,6 +83,35 @@ public sealed class Es1Turret {
 	}
 
 	/// <summary>
+	/// <c>Cockpit_TargetAnglesFromCameraBone</c> (<c>00018b78</c>), (machine, <paramref name="point"/>)
+	/// (docs/es1/simulation/mech-ai.md#weapons): the point taken into the machine's frame and then into the frame of the
+	/// eye node the record's <c>+0xc</c> names, each inverted inline, its Z less the record's <c>+0x66</c>;
+	/// <c>Math_EulerToward</c> from the node's origin to it, the residual; the twist axis Q8(<i>a</i>, |<i>a</i>|) with
+	/// <i>a</i> = −clamp(Q10(<see cref="CentringGain"/>, yaw), ±<see cref="AxisFull"/>), the pitch axis likewise from the
+	/// pitch without the negation; then the twist tick, and the pitch tick at the range
+	/// <c>Math_FastMagnitude3D</c> of the point in the node's frame. Returns the residual, <c>TargetAngles_Residual</c>
+	/// (<c>000af714</c>). The once flag <c>TargetAngles_CalledOnce</c> (<c>000af710</c>) it sets is not kept: no reader of it
+	/// is known.
+	/// </summary>
+	public (short Pitch, short Roll, short Yaw) TrackPoint(Es1SimClock clock, Es1TurretServos servos, Vec3i point) {
+		var mech = _mech;
+		var chassis = mech.Type.Chassis;
+		var inMachine = mech.Frame.Inverted().TransformPoint(point.X, point.Y, point.Z);
+		var local = mech.PartTransform(chassis.CameraPartId).Inverted().TransformPoint(inMachine.X, inMachine.Y, inMachine.Z);
+		local = new Vec3i(local.X, local.Y, local.Z - chassis.EyeOffsetZ);
+		var residual = SimTrig.EulerToward(local, Vec3i.Zero);
+
+		short twistAxis = Squared((short)-CentringDemand(residual.Z));
+		short pitchAxis = Squared((short)CentringDemand(residual.X));
+		TwistTick(clock, servos, twistAxis);
+		PitchTick(clock, servos, SimMath.FastMagnitude3D(local.X, local.Y, local.Z), pitchAxis);
+		return residual;
+
+		// Q8(axis, |axis|), the magnitude as retail takes it.
+		static short Squared(short axis) => (short)SimMath.Q8MultiplyRounded(axis, (short)Magnitude(axis));
+	}
+
+	/// <summary>
 	/// The gun convergence of <c>Mech_TorsoPitchTick</c> (docs/es1/simulation/mech.md#the-turret), ES2's
 	/// <c>Mech_ConvergeGunsOnRange</c> (docs/retail/simulation/weapon-firing.md#gun-convergence--mech_convergegunsonrange-0041a74c)
 	/// with no gates: for each mount, <paramref name="range"/> 0 clears <see cref="Es1WeaponMount.Convergence"/>;

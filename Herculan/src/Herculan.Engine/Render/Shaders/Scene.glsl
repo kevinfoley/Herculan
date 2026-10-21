@@ -39,7 +39,8 @@ flat VARYING float vShadeRamp;
 flat VARYING float vSolidPaletteIndex;
 // The fill ramp a shaded poly's outline is tested against, or -1. See MeshVertex.OutlineFillRamp.
 flat VARYING float vOutlineFillRamp;
-// The face's facing, the vertex stage's front/back decision below: 1 front, -1 back. Read by the column walk.
+// The face's facing, the vertex stage's front/back decision below: 1 front, -1 back. Read by the textured faces' row
+// walk.
 flat VARYING float vFacing;
 VARYING float vLightShade;
 VARYING float vViewDistance;
@@ -344,27 +345,33 @@ float gridCoverage() {
 
 #endif
 
-// The textured faces' column walk, for an item with a SceneItem.TextureWalk: VGA8_FillBitmapPolygon (ES1DBSIM 000534ac)
-// in clip mode 1 (docs/es1/rendering/polygon-shading.md#bitmap-fills-brush-modes-5-and-7), evaluated for this one
-// fragment over the whole face its triangle was fanned out of, gl_PrimitiveID naming the triangle's record in
-// TextureWalkTable. The face's ring is cut at the near plane as Poly_ClipRingToNearPlaneWithUV cuts it
+// The textured faces' row walk, for an item with a SceneItem.TextureWalk: VGA8_FillBitmapPolygon (ES1DBSIM 000534ac)
+// in clip mode 2, the mode the scene is drawn in (docs/es1/rendering/polygon-shading.md#the-display-drivers and
+// #bitmap-fills-brush-modes-5-and-7), evaluated for this one fragment over the whole face its triangle was fanned out
+// of, gl_PrimitiveID naming the triangle's record in TextureWalkTable. The face's ring is cut at the near plane as
+// Poly_ClipRingToNearPlaneWithUV cuts it
 // (docs/retail/rendering/view-transform-and-projection.md#clipping-at-the-near-plane) and projected with the vertex
-// stage's matrices; then the column's two edges, the span between them and the span's nearest texel are found by the
-// doc's steps. Retail steps integers from integer screen points; this evaluates the same lines in float at the
-// fragment's column and row, and departs from it in these places:
+// stage's matrices; then the row's two edges, the span between them along the row
+// (VGA8_SpanBitmapRow, 000735a4) and the span's nearest texel are found by the doc's steps. Edge A runs backward round
+// the ring and edge B forward, from the first corner with the smallest row toward the first with the largest, whose row
+// is never drawn; an edge whose next corner is in its own row is passed over, the next edge starting from that corner's
+// own column and texture point. The span's cut to each of the clip block's regions is not made here: the world layer's
+// cells take the scene's pixels inside the current view's regions alone (Es1VideoMemory.DrawWorld), which keeps the
+// pixels the span's cut keeps. Retail steps integers from integer screen points; this evaluates the same lines in float
+// at the fragment's row and column, and departs from it in these places:
 //   - the projected points keep their fractions, where retail's are whole pixels;
-//   - an edge's row is the ceiling of its line at the column, less WALK_EPSILON so that a row the line meets exactly is
-//     not pushed one down by rounding, where retail keeps the ceiling exact with a remainder;
-//   - u and v are interpolated in float, where retail steps 16.16 values whose step Math_Q16Divide truncates;
+//   - an edge's column is the ceiling of its line at the row, less WALK_EPSILON so that a column the line meets exactly
+//     is not pushed one right by rounding, where retail keeps the ceiling exact with a remainder;
+//   - u and v are interpolated in float, along the edges and along the span, where retail steps 16.16 values whose
+//     steps Math_Q16Divide truncates;
 //   - the cut at the clip rect's top (VGA8_BitmapPolyClipTop) is not made: the edges are evaluated where the cut leaves
 //     them, without its truncating division;
-//   - "the walk ends when A's row exceeds B's" is tested at this column alone, which for a convex ring happens only at
+//   - "the walk ends when A's column exceeds B's" is tested at this row alone, which for a convex ring happens only at
 //     its far end;
 //   - only fragments the triangles rasterize are evaluated, so a pixel the walk would fill past their edges stays as
 //     it was.
-// An edge whose next vertex is in its own column is passed over, the next edge starting from that vertex's own row and
-// texture point. No winding test is made (docs/es1/rendering/polygon-shading.md#the-four-poly-types): a copy drawing the
-// front value walks its ring as projected, and one drawing the back value walks the screen ring reversed, as
+// No winding test is made (docs/es1/rendering/polygon-shading.md#the-four-poly-types): a copy drawing the front value
+// walks its ring as projected, and one drawing the back value walks the screen ring reversed, as
 // Raster_DrawPolygonReversed reverses it, its texture points left in slot order; a ring the walk cannot fill draws
 // nothing.
 uniform bool uTextureWalk;
@@ -396,9 +403,9 @@ void walkPut(vec3 view, vec2 texturePoint) {
 	walkCount++;
 }
 
-// The row and texture point of the edge chain running from `from` by `step` toward `far`, at column x. False past the
+// The column and texture point of the edge chain running from `from` by `step` toward `far`, at row y. False past the
 // chain's end.
-bool walkEdge(int from, int step, int far, float x, out float s, out vec2 texturePoint) {
+bool walkEdge(int from, int step, int far, float y, out float s, out vec2 texturePoint) {
 	s = 0.0;
 	texturePoint = vec2(0.0);
 	int i = from;
@@ -411,10 +418,10 @@ bool walkEdge(int from, int step, int far, float x, out float s, out vec2 textur
 		j = j < 0 ? j + walkCount : (j >= walkCount ? j - walkCount : j);
 		vec2 a = walkScreen[i];
 		vec2 b = walkScreen[j];
-		if (x >= a.x && x < b.x) {
-			float k = x - a.x;
-			float span = b.x - a.x;
-			s = ceil(a.y + k * (b.y - a.y) / span - WALK_EPSILON);
+		if (y >= a.y && y < b.y) {
+			float k = y - a.y;
+			float span = b.y - a.y;
+			s = ceil(a.x + k * (b.x - a.x) / span - WALK_EPSILON);
 			texturePoint = walkTexture[i] + k * (walkTexture[j] - walkTexture[i]) / span;
 			return true;
 		}
@@ -480,41 +487,42 @@ int walkTexel(out ivec2 at) {
 		}
 	}
 
-	// Step 1, and the first corners with the smallest and the largest column.
+	// Step 1, and the first corners with the smallest and the largest row.
 	int near = 0;
 	int far = 0;
-	float lowY = walkScreen[0].y;
-	float highY = lowY;
+	float lowX = walkScreen[0].x;
+	float highX = lowX;
 	for (int i = 1; i < walkCount; i++) {
 		vec2 point = walkScreen[i];
-		near = point.x < walkScreen[near].x ? i : near;
-		far = point.x > walkScreen[far].x ? i : far;
-		lowY = min(lowY, point.y);
-		highY = max(highY, point.y);
+		near = point.y < walkScreen[near].y ? i : near;
+		far = point.y > walkScreen[far].y ? i : far;
+		lowX = min(lowX, point.x);
+		highX = max(highX, point.x);
 	}
 
 	float x = gl_FragCoord.x - uViewportOrigin.x - 0.5;
 	float y = uViewportSize.y - (gl_FragCoord.y - uViewportOrigin.y) - 0.5;
-	if (walkScreen[near].x >= walkScreen[far].x || lowY >= highY || x < walkScreen[near].x
-			|| x >= walkScreen[far].x) {
+	if (walkScreen[near].y >= walkScreen[far].y || lowX >= highX || y < walkScreen[near].y
+			|| y >= walkScreen[far].y) {
 		return 0;
 	}
 
-	// Steps 3 and 4: edge A forward, edge B backward; the far corner's column is never reached.
+	// Steps 3 and 4: edge A backward, edge B forward; the far corner's row is never reached.
 	float a;
 	float b;
 	vec2 pointA;
 	vec2 pointB;
-	if (!walkEdge(near, 1, far, x, a, pointA) || !walkEdge(near, -1, far, x, b, pointB) || a > b
-			|| y < a || y > b) {
+	if (!walkEdge(near, -1, far, y, a, pointA) || !walkEdge(near, 1, far, y, b, pointB) || a > b
+			|| x < a || x > b) {
 		return 0;
 	}
 
-	// Step 5: the middles of n equal steps from A to B, and the nearest texel. Nothing in retail bounds the address;
-	// the middles stay inside the frame, and the clamp keeps a rounding slip out of the atlas's next frame.
+	// Step 5, VGA8_SpanBitmapRow: the middles of n equal steps from A to B along the row, and the nearest texel.
+	// Nothing in retail bounds the address; the middles stay inside the frame, and the clamp keeps a rounding slip out
+	// of the atlas's next frame.
 	float n = b - a + 1.0;
 	vec2 stepPoint = (pointB - pointA) / n;
-	vec2 texturePoint = pointA + stepPoint * 0.5 + (y - a) * stepPoint;
+	vec2 texturePoint = pointA + stepPoint * 0.5 + (x - a) * stepPoint;
 	ivec2 texel = clamp(ivec2(floor(texturePoint + 0.5)), ivec2(0), ivec2(frameSize) - 1);
 	at = ivec2(header.yz) + texel;
 	return 1;

@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Herculan.Es1.Gunsight;
 using Herculan.Es1.Input;
 using Herculan.Es1.Panels;
 using Herculan.Es1.Sim;
@@ -12,8 +13,10 @@ namespace Herculan.Es1.View;
 /// widgets-off byte and the view device's button latch, with <c>CockpitWidgets_HandleCommand</c> (<c>0002d24c</c>) and
 /// <c>CockpitView_PollViewDevice</c> (<c>0002d1a0</c>) (docs/es1/simulation/cockpit-panel.md#keys-and-the-view-device);
 /// and the screen-edge strips and the cursor slots (docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors),
-/// with <c>Cockpit_DrawFrame</c>'s steps that reach them. The instruments, the target selection and the message boxes
-/// join it with the plan steps that port them (docs/herculan/plan-es1-first-mission.md, step 6).
+/// with <c>Cockpit_DrawFrame</c>'s steps that reach them; the roving gunsight <c>+0x1f1</c> with the canvas context it
+/// draws through (docs/es1/simulation/cockpit-panel.md#drawing-it); and the target selection <c>+0x20c</c>
+/// (<see cref="Es1TargetSelection"/>). The other instruments and the message boxes join it with the plan steps that port
+/// them (docs/herculan/plan-es1-first-mission.md, step 6).
 ///
 /// <para><see cref="Es1ViewManager"/> builds it, as <c>CockpitViewManager_LoadViews</c> does, and it is
 /// <c>CockpitViewInstance</c> (<c>00092d1c</c>), the first cockpit built.</para>
@@ -40,17 +43,18 @@ public sealed class Es1Cockpit {
 	/// <param name="views">The manager whose current view the keys read and whose commands they queue, <c>CockpitViewManager_Published</c>.</param>
 	/// <param name="machine"><c>+0x1ff</c>, the manager's machine.</param>
 	/// <param name="mouse">The cockpit's mouse, whose root the panel's root becomes.</param>
-	internal Es1Cockpit(Es1ViewManager views, Es1Mech? machine, Es1CockpitMouse mouse) {
+	/// <param name="globals">The simulation's globals, whose live object list the target selection walks.</param>
+	internal Es1Cockpit(Es1ViewManager views, Es1Mech? machine, Es1CockpitMouse mouse, Es1SimGlobals globals) {
 		_views = views;
 		_mouse = mouse;
 		Machine = machine;
+		Globals = globals;
+		Targets = new Es1TargetSelection(this);
 		Cursors = new Es1CockpitCursors(views.Files.Cursors, mouse.Cursor);
 		var layout = views.Files.Layout;
 		var head = new Es1Rect(layout.Origin.X, layout.Origin.Y, BitConverter.ToInt32(layout.Bytes8, 0), BitConverter.ToInt32(layout.Bytes8, 4));
 		Root = LoadPanel(head);
-		var gunsight = layout.Gunsight;
-		GunsightRect = new Es1Rect(gunsight.Origin.X, gunsight.Origin.Y, gunsight.Int2, gunsight.Int3);
-		BuildGunsight(gunsight.ReticleCentre.X, gunsight.ReticleCentre.Y);
+		Gunsight = new Es1Gunsight(this, layout.Gunsight, views.Files.GunsightBanks, views.Files.Fonts, mouse);
 	}
 
 	/// <summary><c>+0x1ff</c>, the machine.</summary>
@@ -73,12 +77,39 @@ public sealed class Es1Cockpit {
 	/// </summary>
 	public (int X, int Y) CanvasOrigin { get; private set; }
 
+	/// <summary><c>+0x1f1</c>, the roving gunsight, which <c>Gau_RovingGunsightWrapper</c> (<c>0002ce28</c>) builds on the <c>.GAU</c> block at 1104.</summary>
+	public Es1Gunsight Gunsight { get; }
+
 	/// <summary>
 	/// The rect <c>+0</c>–<c>+0xc</c> of the roving gunsight <c>+0x1f1</c>, the <c>.GAU</c> block at 1104's first 16
 	/// bytes as <c>PanelGauge_Ctor</c> copies them (docs/es1/simulation/cockpit-gunsight-hud.md#building-the-gunsight),
 	/// which the gunsight drag tests the pointer against.
 	/// </summary>
-	public Es1Rect GunsightRect { get; }
+	public Es1Rect GunsightRect => Gunsight.Rect;
+
+	/// <summary>The simulation's globals: the live object list the target selection walks, and the scan range's header word.</summary>
+	public Es1SimGlobals Globals { get; }
+
+	/// <summary>The target selection, <c>+0x20c</c>–<c>+0x214</c>, and the functions that walk it.</summary>
+	public Es1TargetSelection Targets { get; }
+
+	/// <inheritdoc cref="Es1TargetSelection.Selection"/>
+	public IEs1SimObject? Selection => Targets.Selection;
+
+	/// <summary>The view manager's current view <c>+0x10</c>, which the gunsight's update reads through <c>CockpitViewManager_Published</c>.</summary>
+	internal int CurrentView => _views.CurrentView;
+
+	/// <inheritdoc cref="Es1ViewManager.Projection"/>
+	internal Es1ViewProjection? Projection => _views.Projection;
+
+	/// <inheritdoc cref="Es1ViewManager.SceneCanvas"/>
+	internal Es1SceneCanvas SceneCanvas() => _views.SceneCanvas();
+
+	/// <summary>The display library's cursor, which <c>Cursor_GetPosition</c> reads.</summary>
+	internal Es1Cursor Cursor => _mouse.Cursor;
+
+	/// <inheritdoc cref="Es1CockpitMouse.CanvasPoint"/>
+	internal (int X, int Y) MouseCanvasPoint => _mouse.CanvasPoint;
 
 	/// <summary><c>+0x216</c>, <c>+0x21a</c>, <c>+0x21e</c>, the bottom, left and right screen-edge strips, once built.</summary>
 	public Es1ScrollTrigger? BottomStrip { get; private set; }
@@ -117,7 +148,8 @@ public sealed class Es1Cockpit {
 	/// <summary>
 	/// <c>Cockpit_DrawFrame</c> (<c>0002cf28</c>)(cockpit), once a frame from <c>Sim_RenderFrame</c> before the 3D pass:
 	/// nothing while <see cref="SkipFrameDraw"/> is set; the strips built the first time; with the widgets off nothing
-	/// more this engine draws; otherwise, at step 6, the edge cursor.
+	/// more this engine draws; otherwise, at step 6, the edge cursor, and at step 7 the selection dropped when
+	/// <see cref="Es1TargetSelection.CanTarget"/> refuses it.
 	/// </summary>
 	public void DrawFrame() {
 		if (SkipFrameDraw) {
@@ -141,7 +173,49 @@ public sealed class Es1Cockpit {
 		// 6. PLACEHOLDER: Cockpit_RunTtmScripts and the ticker's MessageTicker_Update, plan step 6c; then the edge cursor.
 		Cursors.UpdateEdgeCursor();
 
-		// 7. PLACEHOLDER: TargetSelect_CanTarget on the selection +0x20c, plan step 6b.
+		// 7.
+		if (Targets.Selection is { } selection && !Targets.CanTarget(selection)) {
+			Targets.Selection = null;
+		}
+	}
+
+	/// <summary>
+	/// <c>Cockpit_PushCanvasContext</c> (<c>0002b00c</c>): the canvas context, its rect and origin as they stand, over the
+	/// display's draw page. The pop, <c>Cockpit_PopRenderContext</c>, has nothing to put back: the context is handed to
+	/// what draws rather than installed.
+	/// </summary>
+	internal Es1PanelCanvas PushCanvasContext() => new(_views.Display, CanvasRect, CanvasOrigin);
+
+	/// <summary>
+	/// <c>CockpitView_RectCornerVisible</c> (<c>0002b214</c>)(<paramref name="rect"/>): false while the widgets are off;
+	/// otherwise whether the corner (<i>x0</i>, <i>y0</i>) or (<i>x1</i>, <i>y1</i>) lies in the box whose corner is the
+	/// canvas context's rect corner plus its origin, columns 0 to 319 and rows 0 to 200 from it, both bounds included.
+	/// </summary>
+	public bool RectCornerVisible(Es1Rect rect) {
+		if (WidgetsOff) {
+			return false;
+		}
+
+		int left = CanvasRect.X0 + CanvasOrigin.X, top = CanvasRect.Y0 + CanvasOrigin.Y;
+		return Inside(rect.X0, rect.Y0) || Inside(rect.X1, rect.Y1);
+
+		bool Inside(int x, int y) => left <= x && x <= left + ScreenWidth - 1 && top <= y && y <= top + ScreenHeight;
+	}
+
+	/// <summary>
+	/// <c>CockpitView_InvalidateWidgets</c> (<c>0002b4a0</c>)(cockpit), which <c>CockpitView_SetView</c> runs for views 0
+	/// to 3: unless the widgets are off, the instruments' slot <c>+8</c>, of which the gunsight's,
+	/// <see cref="Es1Gunsight.Paint"/>, is ported.
+	/// </summary>
+	public void InvalidateWidgets() {
+		if (WidgetsOff) {
+			return;
+		}
+
+		// PLACEHOLDER: between the canvas push and pop, slot +8 of the nine weapon rows, the pod row +0x1d8, +0x1dd,
+		// +0x1e1, +0x1e5, +0x1ed, +0x1e9 and +0x1f5: plan step 6c's instruments.
+		Gunsight.Paint();
+		// PLACEHOLDER: slot +8 of the clock +0x1f9, and Cockpit_RunTtmScripts: plan step 6c.
 	}
 
 	/// <summary>
@@ -245,7 +319,10 @@ public sealed class Es1Cockpit {
 				answer.Value = 1;
 				break;
 			case Tab:
-				// PLACEHOLDER: outside views 1 and 4, TargetSelect_Cycle (0002d898)(cockpit), the target selection, plan step 6b.
+				if (view is not (1 or 4)) {
+					Targets.Cycle();
+				}
+
 				answer.Value = view switch { 4 => 0, 1 => Unlisted(code, view), _ => 1 };
 				break;
 			case F11:
@@ -319,24 +396,10 @@ public sealed class Es1Cockpit {
 		var root = new Es1WidgetRoot(head);
 		_mouse.Widgets.ClearPressed(root);
 
-		// PLACEHOLDER: the .TTM manager, the pilot channel (record + 1668) and the ticker (record + 1684), plan step 6c;
-		// and the instruments, the gunsight's but for what BuildGunsight builds, plan steps 6b and 6c. The gunsight's
-		// click surface registers its gadget on the root before the strips, so it wins where they overlap.
+		// PLACEHOLDER: the .TTM manager, the pilot channel (record + 1668) and the ticker (record + 1684), and the
+		// instruments but the gunsight, which the constructor builds next: plan step 6c. The gunsight's click surface
+		// registers its gadget on the root before the strips, so it wins where they overlap.
 		return root;
-	}
-
-	/// <summary>
-	/// What <c>Gau_RovingGunsightWidget</c> (<c>00034aec</c>) does with the pointer between its children 0 and 1, the rest
-	/// of the gunsight being plan steps 6b and 6c's: the drawn cursor and the driver's pointer put on the reticle's centre
-	/// (<paramref name="x"/>, <paramref name="y"/>), and a move with no button down posted as the driver would send it
-	/// (docs/es1/simulation/cockpit-gunsight-hud.md#building-the-gunsight).
-	/// </summary>
-	private void BuildGunsight(int x, int y) {
-		_mouse.Cursor.SyncPosition(x, y);
-		if (_mouse.Driver is { } driver) {
-			driver.SetPosition(x, y);
-			driver.PostEvent(new Es1MouseRecord(x, y, 0), Es1HostMouse.Moved);
-		}
 	}
 
 	/// <summary>

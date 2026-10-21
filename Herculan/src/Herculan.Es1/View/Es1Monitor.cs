@@ -34,6 +34,16 @@ public sealed class Es1Monitor : IEs1WorldLayer, IDisposable {
 	/// <summary>The 3D pass, given the GL viewport (x, y, width, height, from the bottom-left) in the world layer it draws into.</summary>
 	public Action<int, int, int, int>? WorldPass { get; set; }
 
+	/// <summary>
+	/// The readback of the object <see cref="WorldPass"/> last drew at one pixel, given that pass's GL viewport, run with
+	/// the world layer bound as the pass left it and the scissor on the pixel (<see cref="IndexedWorldSurface.BeginWorldPixel"/>).
+	/// Null answers no object.
+	/// </summary>
+	public Func<(int X, int Y, int Width, int Height), object?>? WorldPick { get; set; }
+
+	// The GL viewport of the last world pass.
+	private (int X, int Y, int Width, int Height)? _worldViewport;
+
 	/// <summary>The live palette the cells' indices show through; a palette other than the last is sent again.</summary>
 	public void SetPalette(DynamixPalette? palette) {
 		if (_paletteSet && ReferenceEquals(palette, _palette)) {
@@ -92,8 +102,26 @@ public sealed class Es1Monitor : IEs1WorldLayer, IDisposable {
 
 	void IEs1WorldLayer.DrawWorld(int x, int y, int width, int height) {
 		var (glX, glY, glWidth, glHeight) = _surface.BeginWorld(x, y, width, height);
+		_worldViewport = (glX, glY, glWidth, glHeight);
 		WorldPass?.Invoke(glX, glY, glWidth, glHeight);
 		_surface.EndWorld();
+	}
+
+	/// <summary>
+	/// The pixel at the middle of the cell's <i>k</i> × <i>k</i> block of the world layer, the one the pick reads, put to
+	/// <see cref="WorldPick"/>.
+	/// </summary>
+	object? IEs1WorldLayer.ObjectAt(int x, int y) {
+		if (WorldPick == null || _worldViewport is not { } viewport) {
+			return null;
+		}
+
+		_surface.BeginWorldPixel(x, y);
+		try {
+			return WorldPick(viewport);
+		} finally {
+			_surface.EndWorld();
+		}
 	}
 
 	void IEs1WorldLayer.Copy(int sourceX, int sourceY, int targetX, int targetY, int width, int height) =>

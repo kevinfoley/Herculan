@@ -14,6 +14,12 @@ public interface IEs1WorldLayer {
 
 	/// <summary>Copies the world pixels of one rect of cells onto another; the two never overlap.</summary>
 	void Copy(int sourceX, int sourceY, int targetX, int targetY, int width, int height);
+
+	/// <summary>
+	/// The object the last <see cref="DrawWorld"/> drew at the cell (<paramref name="x"/>, <paramref name="y"/>), read
+	/// back before anything else draws into the layer, or null for none. Asked only of a cell inside that pass's rect.
+	/// </summary>
+	object? ObjectAt(int x, int y);
 }
 
 /// <summary>
@@ -66,6 +72,9 @@ public sealed class Es1VideoMemory {
 	private int _pan;
 
 	private int _dirtyFirst = 0, _dirtyLast = StoreRows - 1;
+
+	// The last DrawWorld whose world layer was drawn: its page, its rect held to the page, and its clip block.
+	private (int Page, int X0, int Y0, int X1, int Y1, Es1ClipBlock Clip)? _worldPass;
 
 	/// <summary>The store, <see cref="StoreRows"/> rows of <see cref="Width"/> cells, a palette index or <see cref="WorldCell"/> each, from index 0.</summary>
 	public ushort[] Cells { get; } = new ushort[Width * StoreRows];
@@ -275,6 +284,7 @@ public sealed class Es1VideoMemory {
 	/// to the page, of which the pixels inside <paramref name="clip"/>'s regions take it, clip mode 2.
 	/// </summary>
 	public void DrawWorld(Es1ViewWindow window, Es1ClipBlock clip) {
+		_worldPass = null;
 		int x1 = Math.Min(window.X1, PageWidth - 1), y1 = Math.Min(window.Y1, PageHeight - 1);
 		if (x1 < window.X0 || y1 < window.Y0) {
 			return;
@@ -293,7 +303,25 @@ public sealed class Es1VideoMemory {
 		int left = corner % Width, top = corner / Width;
 		if (Layer != null && left + width <= Width && top + rows <= StoreRows) {
 			Layer.DrawWorld(left, top, width, rows);
+			_worldPass = (DrawPage, window.X0, window.Y0, x1, y1, clip);
 		}
+	}
+
+	/// <summary>
+	/// The object the last <see cref="DrawWorld"/> drew at the point (<paramref name="x"/>, <paramref name="y"/>) of the
+	/// page it drew on, read from the world layer under that point's cell (<see cref="IEs1WorldLayer.ObjectAt"/>); null
+	/// where it drew no world pixel, outside its window or where its clip regions leave the cockpit's own pixels, and with
+	/// no layer drawn. Retail's pick reads the point on the display's <c>+0x8c</c>, during a frame the page the 3D pass
+	/// draws on (docs/es1/simulation/terrain.md#the-pixel-pick-and-the-occlusion-probe).
+	/// </summary>
+	public object? WorldObjectAt(int x, int y) {
+		if (Layer == null || _worldPass is not { } pass || x < pass.X0 || x > pass.X1 || y < pass.Y0 || y > pass.Y1
+				|| !pass.Clip.Contains(x, y)) {
+			return null;
+		}
+
+		int address = Address(pass.Page, x, y);
+		return Layer.ObjectAt(address % Width, address / Width);
 	}
 
 	/// <summary>The store's rows written since the last call, for the GPU's copy of the cells; (0, 0) for none.</summary>

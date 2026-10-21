@@ -24,7 +24,7 @@ public sealed class Es1WorldDraw {
 
 	private readonly Es1ZoneScene _scene;
 	private readonly Es1AppliedDetail _detail;
-	private readonly List<(SceneItem Item, Es1PlacedShape Shape)> _zoneItems = new();
+	private readonly List<(SceneItem Item, Es1PlacedShape Shape, object Object)> _zoneItems = new();
 	private readonly List<MechItems> _mechs = new();
 	private readonly List<(SceneItem Item, Es1Shadow Shadow)> _shadowItems = new();
 
@@ -35,7 +35,8 @@ public sealed class Es1WorldDraw {
 		_detail = detail;
 
 		var meshes = new Dictionary<int, GpuMesh>();
-		foreach (var shape in scene.Shapes) {
+		for (int index = 0; index < scene.Shapes.Count; index++) {
+			var shape = scene.Shapes[index];
 			if (ModelOf(scene, shape) is not { Vertices.Length: > 0 } model) {
 				continue;
 			}
@@ -46,7 +47,9 @@ public sealed class Es1WorldDraw {
 				owned.Add(mesh);
 			}
 
-			_zoneItems.Add((new SceneItem(mesh, WorldScale.ToRenderMatrix(shape.Frame)), shape));
+			// The zone's shape object, Zone_ShapeObjects' entry for the record, boxed once so the pick answers one object for it.
+			object zoneObject = index < scene.ZoneShapes.Objects.Count ? scene.ZoneShapes.Objects[index] : shape;
+			_zoneItems.Add((new SceneItem(mesh, WorldScale.ToRenderMatrix(shape.Frame)), shape, zoneObject));
 		}
 
 		foreach (var mech in world.MechPool) {
@@ -65,10 +68,18 @@ public sealed class Es1WorldDraw {
 	/// <summary>The zone shapes' and the HERCs' items.</summary>
 	public IEnumerable<SceneItem> Objects => _zoneItems.Select(entry => entry.Item).Concat(_mechs.SelectMany(m => m.Items));
 
+	/// <summary>
+	/// The objects <c>ObjList_DrawFrameObjects</c> draws, each with its items, in the order <see cref="Objects"/> lists
+	/// their items: each zone shape, as its <see cref="Es1ShapeObject"/>, then each HERC.
+	/// </summary>
+	public IEnumerable<(object Object, IEnumerable<SceneItem> Items)> FrameObjects =>
+		_zoneItems.Select(entry => (entry.Object, (IEnumerable<SceneItem>)[entry.Item]))
+			.Concat(_mechs.Select(mech => ((object)mech.Mech, mech.Items)));
+
 	/// <summary>Places and culls every item for <paramref name="camera"/>; <paramref name="ridden"/> is the machine the camera rides in, or null.</summary>
 	public void Update(Camera camera, Es1Mech? ridden) {
 		var shading = _scene.Shading;
-		foreach (var (item, shape) in _zoneItems) {
+		foreach (var (item, shape, _) in _zoneItems) {
 			var frame = shape.Frame;
 			int distance = camera.Position.ApproxDistanceTo(new Vec3i(frame.X, frame.Y, frame.Z));
 			item.Visible = frame.Z >= 0 && !shading.IsBeyondLastBand(Es1Shading.ZoneShapeTag, distance);
@@ -123,6 +134,8 @@ public sealed class Es1WorldDraw {
 				}
 			}
 		}
+
+		public Es1Mech Mech => _mech;
 
 		public IEnumerable<SceneItem> Items => _pieces.Select(entry => entry.Item).Concat(_mountPieces.Select(entry => entry.Item));
 

@@ -190,5 +190,7 @@ public class Es1ViewChangeTests {
 
 		public void Copy(int sourceX, int sourceY, int targetX, int targetY, int width, int height) =>
 			Copied.Add((sourceX, sourceY, targetX, targetY, width, height));
+
+		public object? ObjectAt(int x, int y) => null;
 	}
 }

@@ -4,7 +4,7 @@ namespace Herculan.Engine.Render;
 
 /// <summary>
 /// A textured face's whole ring as the original hands its bitmap fill: the corners in the mesh's own space and the
-/// texture point each carries, in texels of its frame, for Scene.glsl to fill the face column by column in screen space
+/// texture point each carries, in texels of its frame, for Scene.glsl to fill the face row by row in screen space
 /// (docs/es1/rendering/polygon-shading.md#bitmap-fills-brush-modes-5-and-7) rather than through the triangles' own
 /// mapping. Every triangle fanned out of the face carries the same ring, so all of them fill from the one walk.
 /// </summary>

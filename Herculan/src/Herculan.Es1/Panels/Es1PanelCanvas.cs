@@ -1,5 +1,6 @@
 using HercWorks.Core.Data.File.Dyn;
 using Herculan.Engine.Content;
+using Herculan.Engine.Render;
 using Herculan.Es1.View;
 
 namespace Herculan.Es1.Panels;
@@ -18,28 +19,122 @@ namespace Herculan.Es1.Panels;
 /// underline <c>+0x230</c> and field justification <c>+0x231</c>, so a string is drawn neither underlined nor moved.
 /// Everything is drawn on the display's draw page, which <c>AlertPanel_Enter</c> makes the page on the screen.
 ///
+/// <para>The cockpit's canvas context, which <c>Cockpit_CreateCanvasContext</c> (<c>0002ad78</c>) makes the same way
+/// over the <c>.GAU</c> record's first 16 bytes and <c>Cockpit_PushCanvasContext</c> installs
+/// (docs/es1/simulation/cockpit-panel.md#drawing-it), is one too, with the origin <c>+0x220</c>/<c>+0x224</c> the view
+/// changes move: the translation is the rect's corner less the origin, as <c>Raster_DrawLine</c> and
+/// <c>Raster_DrawPolygonDispatch</c> (<c>00068be0</c>) move a point by <c>+0x210</c> − <c>+0x220</c> and
+/// <c>+0x214</c> − <c>+0x224</c> of the context. A panel's origin is (0, 0).</para>
+///
 /// <para>In this engine the context is passed to what draws rather than installed in <c>000bdbda</c>: no other
-/// drawing runs while a panel is up.</para>
+/// drawing runs while a panel is up, and the cockpit's is made afresh at each push from the cockpit's rect and origin.</para>
 /// </summary>
 public sealed class Es1PanelCanvas {
 	/// <summary>The bitmap flag that has every byte written; without it a 0 byte leaves the pixel.</summary>
 	private const byte OpaqueFlag = 0x10;
 
-	public Es1PanelCanvas(Es1VideoMemory display, Es1Rect rect) {
+	/// <param name="origin">The context's origin, <c>+0x220</c>/<c>+0x224</c>; (0, 0) for a panel's.</param>
+	public Es1PanelCanvas(Es1VideoMemory display, Es1Rect rect, (int X, int Y) origin = default) {
 		Display = display;
 		Rect = rect;
+		Origin = origin;
 	}
 
 	public Es1VideoMemory Display { get; }
 
-	/// <summary><c>+0x254</c>–<c>+0x260</c> of the panel, the context's rect: the panel's on the screen, both its translation and its clip.</summary>
+	/// <summary><c>+0x210</c>–<c>+0x21c</c>, the context's rect: a panel's on the screen, both its translation and its clip.</summary>
 	public Es1Rect Rect { get; }
 
-	/// <summary>One pixel at the panel's (<paramref name="x"/>, <paramref name="y"/>), unless it lies outside <see cref="Rect"/>.</summary>
+	/// <summary><c>+0x220</c>/<c>+0x224</c>, the origin, taken off the translation.</summary>
+	public (int X, int Y) Origin { get; }
+
+	/// <summary>The translation a point is moved by: the rect's corner less the origin.</summary>
+	public (int X, int Y) Translation => (Rect.X0 - Origin.X, Rect.Y0 - Origin.Y);
+
+	/// <summary>One pixel at the context's (<paramref name="x"/>, <paramref name="y"/>), unless it lies outside <see cref="Rect"/> once translated.</summary>
 	public void Plot(int x, int y, byte color) {
-		int screenX = x + Rect.X0, screenY = y + Rect.Y0;
+		int screenX = x + Translation.X, screenY = y + Translation.Y;
 		if (Rect.Contains(screenX, screenY)) {
 			Display.Plot(screenX, screenY, color);
+		}
+	}
+
+	/// <summary>
+	/// <c>Raster_DrawPolygonDispatch</c> (<c>00068be0</c>) of three points or more under the brush {0,
+	/// <paramref name="color"/>} in clip mode 1, the points wound clockwise on screen as its callers list them: the
+	/// points translated, cut to <see cref="Rect"/> by <c>Poly_ClipToRect</c> (<c>000788e4</c>), scan-converted by
+	/// <c>00076f54</c> and each span filled, both ends included, a span whose ends come out reversed skipped. Both
+	/// routines are ES2's (docs/retail/rendering/polygon-fill.md#clipping-to-a-rectangle,
+	/// docs/retail/rendering/polygon-fill.md#scan-conversion): <c>es2_naming.py diff</c> finds the clipper identical
+	/// to DBSIM's <c>0048422c</c> and the scan converter DBSIM's <c>00484614</c> but for its table of unrolled stores.
+	/// </summary>
+	public void FillPolygon(IReadOnlyList<(int X, int Y)> points, byte color) {
+		if (points.Count < 3) {
+			throw new ArgumentException("A filled polygon has three points or more.", nameof(points));
+		}
+
+		var (dx, dy) = Translation;
+		var clipped = ClipToRect(points.Select(p => (p.X + dx, p.Y + dy)).ToList(), Rect);
+		if (clipped.Count == 0) {
+			return;
+		}
+
+		var region = SpanRegion.ScanConvert(clipped);
+		for (int row = 0; row < region.Spans.Length; row++) {
+			var (x0, x1) = region.Spans[row];
+			for (int x = x0; x <= x1; x++) {
+				Display.Plot(x, region.Top + row, color);
+			}
+		}
+	}
+
+	/// <summary>
+	/// <c>Poly_ClipToRect</c>: Sutherland–Hodgman against the inclusive <paramref name="rect"/>, every <i>x</i> bound first
+	/// and then every <i>y</i> bound, each crossing computed from the outside end toward the other in 64 bits, the
+	/// division truncating; a single point the <i>x</i> pass leaves is kept only when its <i>y</i> is inside.
+	/// </summary>
+	internal static List<(int X, int Y)> ClipToRect(List<(int X, int Y)> points, Es1Rect rect) {
+		var xs = ClipAxis(points, rect.X0, rect.X1, vertical: true);
+		if (xs.Count == 1) {
+			return xs[0].Y >= rect.Y0 && xs[0].Y <= rect.Y1 ? xs : [];
+		}
+
+		return xs.Count == 0 ? xs : ClipAxis(xs, rect.Y0, rect.Y1, vertical: false);
+
+		// One pass against the bounds lo and hi, of x when vertical, else of y.
+		static List<(int X, int Y)> ClipAxis(List<(int X, int Y)> points, int lo, int hi, bool vertical) {
+			var result = new List<(int X, int Y)>();
+			for (int i = 0; i < points.Count; i++) {
+				var previous = points[(i + points.Count - 1) % points.Count];
+				var current = points[i];
+				int previousSide = Side(previous), currentSide = Side(current);
+				if (previousSide == 0) {
+					result.Add(currentSide == 0 ? current : Crossing(current, previous, currentSide));
+				} else if (currentSide == 0) {
+					result.Add(Crossing(previous, current, previousSide));
+					result.Add(current);
+				} else if (currentSide != previousSide) {
+					result.Add(Crossing(previous, current, previousSide));
+					result.Add(Crossing(current, previous, currentSide));
+				}
+			}
+
+			return result;
+
+			int Side((int X, int Y) p) {
+				int along = vertical ? p.X : p.Y;
+				return along < lo ? -1 : along > hi ? 1 : 0;
+			}
+
+			// The point where the edge from the outside end a toward b meets the bound on a's side.
+			(int X, int Y) Crossing((int X, int Y) a, (int X, int Y) b, int side) {
+				int bound = side < 0 ? lo : hi;
+				if (vertical) {
+					return (bound, (int)(a.Y + (long)(bound - a.X) * (b.Y - a.Y) / (b.X - a.X)));
+				}
+
+				return ((int)(a.X + (long)(bound - a.Y) * (b.X - a.X) / (b.Y - a.Y)), bound);
+			}
 		}
 	}
 

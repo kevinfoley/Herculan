@@ -130,9 +130,9 @@ public sealed class SceneItem {
 	/// <summary>
 	/// The faces <see cref="Mesh"/>'s textured triangles were fanned out of (<see cref="TextureWalkTable"/>), or null.
 	/// With a table, a textured triangle whose face it holds is filled the way Earthsiege's <c>VGA8_FillBitmapPolygon</c>
-	/// (<c>ES1DBSIM 000534ac</c>) fills brush mode 7, column by column in screen space with no perspective
-	/// (docs/es1/rendering/polygon-shading.md#bitmap-fills-brush-modes-5-and-7); without one, through the mesh's own
-	/// mapping (<see cref="MeshVertex.UvWeight"/>). Only Earthsiege's HERCs set it; Earthsiege 2's items never do.
+	/// (<c>ES1DBSIM 000534ac</c>) fills brush mode 7 in the scene's clip mode 2, row by row in screen space with no
+	/// perspective (docs/es1/rendering/polygon-shading.md#bitmap-fills-brush-modes-5-and-7); without one, through the
+	/// mesh's own mapping (<see cref="MeshVertex.UvWeight"/>). Only Earthsiege's HERCs set it; Earthsiege 2's items never do.
 	/// </summary>
 	public GpuTextureWalkTable? TextureWalk { get; set; }
 }

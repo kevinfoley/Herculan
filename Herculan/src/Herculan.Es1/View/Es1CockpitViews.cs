@@ -4,6 +4,7 @@ using HercWorks.Core.Data.File.Gau;
 using HercWorks.Core.Io.Transform.Common;
 using HercWorks.Core.Io.Transform.Dbsim;
 using Herculan.Engine.Content;
+using Herculan.Es1.Gunsight;
 
 namespace Herculan.Es1.View;
 
@@ -29,11 +30,12 @@ public readonly record struct Es1ViewWindow(int X0, int Y0, int X1, int Y1, int 
 /// <summary>
 /// The files <c>CockpitViewManager_LoadViews</c> (<c>ES1DBSIM 00021fb0</c>) loads for the player chassis' cockpit
 /// (docs/es1/simulation/cockpit-views.md#the-view-manager): the <c>.VUE</c> records, each view's clip regions and canopy
-/// art, and <c>dpl\cockpit</c>; and the two the cockpit object it builds loads, the seven cursors
-/// <c>ColorSchemePanels_LoadAll</c> loads and the <c>.GAU</c> layout <c>Cockpit_LoadPanel</c> reads
-/// (docs/es1/simulation/cockpit-panel.md#building-it). <see cref="Es1ViewManager"/> switches between the views.
+/// art, and <c>dpl\cockpit</c>; and what the cockpit object it builds loads: the ten fonts and seven cursors
+/// <c>ColorSchemePanels_LoadAll</c> loads, the <c>.GAU</c> layout <c>Cockpit_LoadPanel</c> reads
+/// (docs/es1/simulation/cockpit-panel.md#building-it), and the gunsight's banks. <see cref="Es1ViewManager"/> switches
+/// between the views.
 ///
-/// <para>Not loaded: the cockpit's fonts, <c>dba\pbuttons</c> and the instruments' files, which plan step 6c ports.</para>
+/// <para>Not loaded: <c>dba\pbuttons</c> and the other instruments' files, which plan step 6c ports.</para>
 /// </summary>
 public sealed class Es1CockpitViews {
 	/// <summary>The screen the simulator draws on, 320 by 200 (docs/es1/rendering/polygon-shading.md#the-display-drivers).</summary>
@@ -51,8 +53,11 @@ public sealed class Es1CockpitViews {
 
 	/// <param name="layout">The <c>.GAU</c> as <c>Gau_Load</c> returns it; an all-zero layout when null.</param>
 	/// <param name="cursors">The seven cursors in <see cref="CursorNames"/>' order; none when null.</param>
+	/// <param name="fonts">The ten fonts in <see cref="FontNames"/>' order; none when null.</param>
+	/// <param name="gunsightBanks">The gunsight's banks; none when null.</param>
 	internal Es1CockpitViews(string name, Vue.Entry[] records, Es1ClipBlock[] clips, DynamixBitmap?[] canopies,
-			DynamixPalette? palette, Es1GauFile? layout = null, Es1CursorImage?[]? cursors = null) {
+			DynamixPalette? palette, Es1GauFile? layout = null, Es1CursorImage?[]? cursors = null, HudFont?[]? fonts = null,
+			Es1GunsightBanks? gunsightBanks = null) {
 		Name = name;
 		_records = records;
 		_clips = clips;
@@ -60,6 +65,8 @@ public sealed class Es1CockpitViews {
 		CockpitPalette = palette;
 		Layout = layout ?? new Es1GauFile();
 		Cursors = cursors ?? new Es1CursorImage?[CursorNames.Length];
+		Fonts = fonts ?? new HudFont?[FontNames.Length];
+		GunsightBanks = gunsightBanks ?? new Es1GunsightBanks();
 	}
 
 	/// <summary>
@@ -68,6 +75,22 @@ public sealed class Es1CockpitViews {
 	/// the arrow, the gunsight's, the map pick's, and the four edges' arrows north, south, east and west.
 	/// </summary>
 	public static readonly string[] CursorNames = ["CURSOR", "PCURSOR", "MCURSOR", "NCURSOR", "SCURSOR", "ECURSOR", "WCURSOR"];
+
+	/// <summary>
+	/// The ten <c>dfn\</c> fonts in the order <c>ColorSchemePanels_LoadAll</c> loads them into <c>ColorSchemePanels</c>
+	/// (<c>00092d40</c>) (docs/es1/simulation/cockpit-panel.md#building-it).
+	/// </summary>
+	public static readonly string[] FontNames =
+		["CPBLUE", "CPGREEN", "CPRED", "CPYLW", "CPON", "CPPRESS", "CPOFF", "CPGREY", "CPBLACK", "CPORANGE"];
+
+	/// <summary>The indices of <c>cpgreen</c> (<c>00092d44</c>) and <c>cpblack</c> (<c>00092d60</c>) in <see cref="Fonts"/>.</summary>
+	public const int CpGreen = 1, CpBlack = 8;
+
+	/// <summary><c>ColorSchemePanels</c>, in <see cref="FontNames"/>' order; null for a font whose file is missing.</summary>
+	public IReadOnlyList<HudFont?> Fonts { get; }
+
+	/// <summary>The banks the gunsight's slide bars and heading tape draw from.</summary>
+	public Es1GunsightBanks GunsightBanks { get; }
 
 	/// <summary><c>CockpitGauRecord</c> (<c>00092d3c</c>): <c>gau\&lt;name&gt;</c> after <c>Gau_Load</c>'s origin add.</summary>
 	public Es1GauFile Layout { get; }
@@ -97,7 +120,8 @@ public sealed class Es1CockpitViews {
 	/// <c>CockpitViewManager_LoadViews</c> for <paramref name="name"/>: <c>vue\&lt;name&gt;</c>, <c>ed&lt;i&gt;\&lt;name&gt;</c>
 	/// for each view and <c>db&lt;n&gt;\&lt;name&gt;</c> for each canopy, view 3 sharing view 2's
 	/// (<c>CockpitCanopy_LoadViewBitmap</c>, <c>00022184</c>); <c>dpl\cockpit</c>; the seven cursors; and
-	/// <c>gau\&lt;name&gt;</c> (<c>Gau_Load</c>, <c>0002b5c4</c>). Null when the <c>.VUE</c> is missing, or the <c>.GAU</c>,
+	/// <c>gau\&lt;name&gt;</c> (<c>Gau_Load</c>, <c>0002b5c4</c>); the ten fonts; and the gunsight's banks. Null when the
+	/// <c>.VUE</c> is missing, or the <c>.GAU</c>,
 	/// whose absence <c>Gau_Load</c> asserts on.
 	/// </summary>
 	public static Es1CockpitViews? Load(GameContent content, string name) {
@@ -127,6 +151,8 @@ public sealed class Es1CockpitViews {
 		}
 
 		var cursors = CursorNames.Select(cursor => Es1CursorImage.Load(content, cursor)).ToArray();
-		return new Es1CockpitViews(name, records, clips, canopies, palette, layout.Loaded(), cursors);
+		var fonts = FontNames.Select(font => HudFont.Load(content, font, "dfn")).ToArray();
+		return new Es1CockpitViews(name, records, clips, canopies, palette, layout.Loaded(), cursors, fonts,
+			Es1GunsightBanks.Load(content));
 	}
 }

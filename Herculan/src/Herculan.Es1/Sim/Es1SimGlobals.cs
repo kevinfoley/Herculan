@@ -4,7 +4,7 @@ namespace Herculan.Es1.Sim;
 
 /// <summary>
 /// The simulator's globals a machine's tick reads and writes: the clock, the generator, the dwell jitter, the turret's
-/// servo latches, the live object list, the structures and the zone's shapes. Retail keeps each at a fixed address; the world owns one of these.
+/// servo latches, the live object list, the structures, the zone's shapes and the pixel pick. Retail keeps each at a fixed address; the world owns one of these.
 /// </summary>
 public sealed class Es1SimGlobals {
 	/// <summary>The tick length and the helpers that scale by it (<see cref="Es1SimClock"/>).</summary>
@@ -23,8 +23,38 @@ public sealed class Es1SimGlobals {
 	/// <summary>The servo-sound helpers' latches and last angles (<see cref="Es1TurretServos"/>).</summary>
 	public Es1TurretServos TurretServos { get; } = new();
 
-	/// <summary><c>LiveObjectList</c>, the objects <c>ObjectList_Add</c> has added, in the order added.</summary>
+	/// <summary><c>LiveObjectList</c>, the objects <see cref="AddLiveObject"/> has added, in the order added.</summary>
 	public List<IEs1SimObject> LiveObjects { get; } = new();
+
+	/// <summary>
+	/// Script.dat header word 8 (<c>000bc4ac</c>), which picks the world file (docs/es1/formats/wld-world.md#which-file) and
+	/// <c>Detection_ContactScanRange</c>'s range (docs/es1/simulation/world.md#small-functions).
+	/// </summary>
+	public short HeaderWord8 { get; set; }
+
+	/// <summary>The enemy-sighted callout's globals (<see cref="Es1SensorGlobals"/>).</summary>
+	public Es1SensorGlobals Sensors { get; } = new();
+
+	/// <summary>
+	/// <c>g_CenterTurretMode</c> (<c>000b5ba4</c>): the turret centres instead of following the twist and pitch. The tick's
+	/// controls and <c>Player_PerFrameCockpitUpdate</c> both set it, so it lives with the globals both reach.
+	/// </summary>
+	public bool CenterTurretMode { get; set; }
+
+	/// <summary>
+	/// <c>EnergyMeter_Value</c> (<c>000af6fc</c>), the energy pool as <c>Player_PerFrameCockpitUpdate</c> hands it to the
+	/// energy meter: (pool &lt;&lt; 10) / 10000.
+	/// </summary>
+	public int EnergyMeterValue { get; set; }
+
+	/// <summary>
+	/// <c>ObjectList_Add</c> (<c>0000db10</c>) on <c>LiveObjectList</c>: the object stored at the count's place and given
+	/// that slot at <c>+0x45</c> (docs/es1/simulation/sim-object-base.md#the-live-object-list).
+	/// </summary>
+	public void AddLiveObject(IEs1SimObject simObject) {
+		simObject.ListSlot = (short)LiveObjects.Count;
+		LiveObjects.Add(simObject);
+	}
 
 	/// <summary>
 	/// <c>g_BasePool</c> (<c>000aed70</c>)'s structures in build order. PLACEHOLDER: empty: blocks 7 and 8 are not spawned
@@ -35,6 +65,9 @@ public sealed class Es1SimGlobals {
 
 	/// <summary><c>Zone_ShapeCount</c> and <c>Zone_ShapeObjects</c>, the zone's placed shapes; empty until the zone is loaded.</summary>
 	public Es1ZoneShapes ZoneShapes { get; set; } = Es1ZoneShapes.Empty;
+
+	/// <summary>The pixel pick, which the gunsight's click arms and the 3D pass answers (<see cref="Es1ObjectPick"/>).</summary>
+	public Es1ObjectPick ObjectPick { get; } = new();
 }
 
 /// <summary>
@@ -53,12 +86,73 @@ public sealed class Es1DwellJitter {
 }
 
 /// <summary>
-/// What <c>Mech_CollisionTest</c> (<c>00014174</c>) reads of another live object: its position, its group, its target
-/// class and the two vtable slots it calls (docs/es1/simulation/mech-locomotion.md#collision--mech_collisiontest-00014174).
+/// An object of <c>LiveObjectList</c>, as far as <c>Mech_CollisionTest</c> (<c>00014174</c>,
+/// docs/es1/simulation/mech-locomotion.md#collision--mech_collisiontest-00014174) and the sensor model
+/// (docs/es1/simulation/sensor-model.md#the-fields) read and write it: the fields every simulated object shares and the
+/// vtable slots they call, with the object base's answer (docs/es1/simulation/sim-object-base.md#the-base-classs-own-functions)
+/// for a slot a class leaves to it.
 /// </summary>
 public interface IEs1SimObject {
 	/// <summary><c>+0x20</c>, the position.</summary>
 	Vec3i Position { get; }
+
+	/// <summary><c>+0xa</c>, the heading.</summary>
+	short Heading { get; }
+
+	/// <summary><c>+0x45</c>, the slot <c>ObjectList_Add</c> gave it, which indexes the per-object byte tables.</summary>
+	short ListSlot { get; set; }
+
+	/// <summary><c>+0x8f</c>, radar-visible: an active radar has shown it up.</summary>
+	bool RadarVisible { get; set; }
+
+	/// <summary><c>+0x90</c>, the radar: the object emits while it is set.</summary>
+	bool RadarOn { get; }
+
+	/// <summary><c>+0x93</c>, destroyed.</summary>
+	bool Destroyed { get; }
+
+	/// <summary><c>+0x98</c>, engaged, which the sensor model sets for an enemy known within 50000.</summary>
+	bool Engaged { get; set; }
+
+	/// <summary><c>+0x9c</c>, the per-tick gate: while set, the sensor model runs none of the object's engagement action; its tick clears it last.</summary>
+	bool EngagementGate { get; set; }
+
+	/// <summary><c>+0x9d</c>, the player's machine.</summary>
+	bool IsPlayer { get; }
+
+	/// <summary><c>+0x9e</c>, immobilized.</summary>
+	bool Immobilized { get; }
+
+	/// <summary><c>+0x15c</c>, how many objects hold it as their target.</summary>
+	short TargetHolders { get; set; }
+
+	/// <summary>
+	/// Its shape's radius, the <c>int16</c> <c>+8</c> of the dword <c>+4</c> of its instance <c>+0x2e</c>, which the gunsight's
+	/// update reads for the target box (docs/es1/simulation/cockpit-gunsight-hud.md#the-state-block).
+	/// </summary>
+	short ShapeRadius { get; }
+
+	/// <summary>Slot <c>+0x34</c>'s first triple, the point an aim at the object is taken to, from its position.</summary>
+	Vec3i AimOffset { get; }
+
+	/// <summary><c>+0x16c</c>, the engagement action, or null.</summary>
+	Es1Action? EngagementAction { get; }
+
+	/// <summary>The contacts <c>+0xbc</c>, the line-of-sight cache <c>+0x10c</c> and the two countdowns <c>+0x178</c> and <c>+0x17b</c>.</summary>
+	Es1SensorTables Sensors { get; }
+
+	/// <summary>Slot <c>+0x40</c>, the turret twist: the base's <c>SimObject_GetTorsoTwistAngleZero</c> (<c>0000d6d0</c>) answers 0.</summary>
+	short TorsoTwistAngle => 0;
+
+	/// <summary>Slot <c>+0x48</c>, the sensor arc: the base's <see cref="Es1SensorModel.BearingInSensorArc"/>.</summary>
+	bool BearingInSensorArc(short bearing) => Es1SensorModel.BearingInSensorArc(Heading, bearing);
+
+	/// <summary>
+	/// Slot <c>+0x4c</c>, the enemy-sighted callout, with the globals it reads and <c>PlayerMech</c>
+	/// (<paramref name="playerMech"/>): the base's <c>SimObject_AiEnemySightedNoOp</c> (<c>0000e75c</c>) does nothing.
+	/// </summary>
+	void AiEnemySighted(IEs1SimObject sighted, Es1SimGlobals globals, Es1Mech playerMech) {
+	}
 
 	/// <summary><c>+0x3f</c>, the group.</summary>
 	Es1MissionGroup? Group { get; }

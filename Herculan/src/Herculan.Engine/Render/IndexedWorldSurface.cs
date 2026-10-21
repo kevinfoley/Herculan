@@ -191,7 +191,21 @@ public sealed class IndexedWorldSurface : IDisposable {
 		return rect;
 	}
 
-	/// <summary>Ends <see cref="BeginWorld"/>'s pass: the scissor off and the window's framebuffer bound.</summary>
+	/// <summary>
+	/// Binds the world layer, its depth and stencil as the last pass left them, with the scissor on the one pixel at the
+	/// middle of the cell (<paramref name="x"/>, <paramref name="y"/>)'s <see cref="Scale"/> × <see cref="Scale"/> block,
+	/// so the pass's geometry drawn again reaches that pixel alone. Returns the pixel, from the layer's bottom-left.
+	/// <see cref="EndWorld"/> puts the window back.
+	/// </summary>
+	public (int X, int Y) BeginWorldPixel(int x, int y) {
+		var pixel = (X: x * Scale + Scale / 2, Y: (Rows - 1 - y) * Scale + Scale / 2);
+		_gl.BindFramebuffer(FramebufferTarget.Framebuffer, _framebuffer);
+		_gl.Enable(EnableCap.ScissorTest);
+		_gl.Scissor(pixel.X, pixel.Y, 1, 1);
+		return pixel;
+	}
+
+	/// <summary>Ends <see cref="BeginWorld"/>'s pass or <see cref="BeginWorldPixel"/>'s binding: the scissor off and the window's framebuffer bound.</summary>
 	public void EndWorld() {
 		_gl.Disable(EnableCap.ScissorTest);
 		_gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);

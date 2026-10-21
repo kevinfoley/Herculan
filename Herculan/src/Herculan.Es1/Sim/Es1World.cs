@@ -87,6 +87,7 @@ public sealed class Es1World {
 			: new WeaponModelChunks([]);
 
 		var world = new Es1World(script, types);
+		world.Globals.HeaderWord8 = script.Header[8];
 		world.SpawnObjects(content, weapons, weaponModels, formations);
 		return world;
 	}
@@ -140,7 +141,7 @@ public sealed class Es1World {
 
 			var mech = new Es1Mech(type, Globals.DwellJitter);
 			MechPool.Add(mech);
-			LiveObjects.Add(mech);
+			Globals.AddLiveObject(mech);
 
 			if (slot < dat.Mechs.Length) {
 				SpawnRecordMech(mech, dat.Mechs[slot], weapons, ModelFor);

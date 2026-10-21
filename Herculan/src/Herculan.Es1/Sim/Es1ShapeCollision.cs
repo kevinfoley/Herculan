@@ -25,7 +25,61 @@ public sealed class Es1ZoneShapes(IReadOnlyList<Es1ShapeObject> objects) {
 	/// (docs/es1/simulation/terrain.md#a-point--zone_walkcollisiontest-00020860). Retail passes the radius on unread.
 	/// </summary>
 	public int WalkCollisionTest(Vec3i point) => Es1ShapeTests.WalkCollisionTest(Objects, point);
+
+	/// <summary>
+	/// <c>Zone_RaycastShapeObjects</c> (<c>00020b50</c>): <see cref="Es1ShapeTests.RaycastShapeVolume"/> over the zone's
+	/// shapes (docs/es1/simulation/terrain.md#a-ray--zone_raycastshapeobjects-00020b50).
+	/// </summary>
+	public bool RaycastShapeObjects(Es1Ray ray, out Es1RayHit hit) => Es1ShapeTests.RaycastShapeVolume(Objects, ray, out hit);
+
+	/// <summary>
+	/// <c>Sim_RaycastShapes</c> (<c>00020b70</c>)(<paramref name="clearance"/>, <paramref name="to"/>,
+	/// <paramref name="from"/>, result): the ray from <paramref name="from"/> to <paramref name="to"/>
+	/// (<see cref="Es1Ray.Between"/>) against every zone shape, and whether it struck one
+	/// (docs/es1/simulation/terrain.md#a-line-between-two-points--sim_raycastshapes-00020b70).
+	/// </summary>
+	public bool RaycastShapes(short clearance, Vec3i to, Vec3i from, out Es1RayHit hit) =>
+		RaycastShapeObjects(Es1Ray.Between(clearance, to, from), out hit);
 }
+
+/// <summary>
+/// ES2's ray record, which <c>Sim_RaycastShapes</c> builds on its stack (docs/es1/simulation/terrain.md#a-ray--zone_raycastshapeobjects-00020b50):
+/// the frame at <c>+0</c>, the length at <c>+4</c>, which each hit shortens, the clearance at <c>+8</c> and the
+/// world-to-ray transform at <c>+0xa</c>, the frame's rotation transposed with the negated translation rotated by it.
+/// </summary>
+public sealed class Es1Ray(Transform3 frame, int length, short clearance) {
+	/// <summary>The frame, its translation the ray's start, its Y axis along the ray.</summary>
+	public Transform3 Frame { get; } = frame;
+
+	/// <summary><c>+4</c>, the length.</summary>
+	public int Length { get; set; } = length;
+
+	/// <summary><c>+8</c>, the clearance, which widens the shapes' reach and the march's step and samples.</summary>
+	public short Clearance { get; } = clearance;
+
+	/// <summary><c>+0xa</c>, the world-to-ray transform.</summary>
+	public Transform3 WorldToRay { get; } = frame.Inverted();
+
+	/// <summary>The start, the frame's translation (<c>+0x14</c> of the frame).</summary>
+	public Vec3i Start => new(Frame.X, Frame.Y, Frame.Z);
+
+	/// <summary>
+	/// <c>Sim_RaycastShapes</c>' record: the rotation <c>BuildEulerRotationMatrixQ14</c> builds from
+	/// <c>Math_EulerToward</c> (<c>00063d2c</c>) of <paramref name="to"/> less <paramref name="from"/>, at
+	/// <paramref name="from"/>, the length <c>Math_DistanceBetweenPoints</c>(<paramref name="from"/>, <paramref name="to"/>).
+	/// </summary>
+	public static Es1Ray Between(short clearance, Vec3i to, Vec3i from) {
+		var (x, y, z) = SimTrig.EulerToward(to, from);
+		var frame = Transform3.FromEuler(x, y, z);
+		frame.X = from.X;
+		frame.Y = from.Y;
+		frame.Z = from.Z;
+		return new Es1Ray(frame, from.ApproxDistanceTo(to), clearance);
+	}
+}
+
+/// <summary>A ray's result: <c>+0</c>, the distance to the hit, and <c>+4</c>, the shape struck.</summary>
+public readonly record struct Es1RayHit(int Distance, Es1ShapeObject Shape);
 
 /// <summary>
 /// A structure of <c>g_BasePool</c>, as far as the walk test reads it: whether its type (<c>+0x188</c>) has a collision
@@ -83,5 +137,56 @@ public static class Es1ShapeTests {
 		}
 
 		return WalkCollisionTest(candidates, point);
+	}
+
+	/// <summary>A hit nearer the ray's start than this ends <see cref="RaycastShapeVolume"/>'s walk.</summary>
+	public const int NearHit = 500;
+
+	/// <summary>
+	/// <c>Sim_RaycastShapeVolume</c> (<c>00020894</c>), ES2's march over a list of objects
+	/// (docs/es1/simulation/terrain.md#a-ray--zone_raycastshapeobjects-00020b50). For each, with <i>r</i> its shape's
+	/// radius plus the clearance: when its distance from the ray's start is no more than <i>r</i> plus the length and its
+	/// position through the world-to-ray transform has |<i>x</i>| &lt; <i>r</i> and −<i>r</i> &lt; <i>y</i> &lt;
+	/// <i>r</i> + the length, the ray's start and end are taken into the shape's frame and marched
+	/// (<see cref="Es1GridShape.Raycast"/>). A hit shortens the ray to the distance from the start to the hit point, which
+	/// <paramref name="hit"/> takes with the shape, and one nearer than <see cref="NearHit"/> ends the walk. Answers whether
+	/// anything was struck. An object with no volume, whose grid is empty, is not marched, as the march answers 0 for it.
+	/// </summary>
+	/// <remarks>
+	/// PLACEHOLDER: <c>RaycastShapeMinDistance</c> (<c>000afa40</c>), which the walk lowers to each distance and zeroes at
+	/// each object within reach, is not kept: its only reader is the shot sweep <c>Sim_RaycastObjectList</c>, plan step 7.
+	/// </remarks>
+	public static bool RaycastShapeVolume(IReadOnlyList<Es1ShapeObject> objects, Es1Ray ray, out Es1RayHit hit) {
+		hit = default;
+		bool struck = false;
+		var start = ray.Start;
+		foreach (var shape in objects) {
+			var frame = shape.Frame;
+			int reach = shape.Radius + ray.Clearance;
+			int length = ray.Length;
+			if (SimMath.FastMagnitude3D(start.X - frame.X, start.Y - frame.Y, start.Z - frame.Z) > reach + length) {
+				continue;
+			}
+
+			var along = ray.WorldToRay.TransformPoint(frame.X, frame.Y, frame.Z);
+			if (along.X >= reach || along.X <= -reach || along.Y <= -reach || along.Y >= reach + length) {
+				continue;
+			}
+
+			var toShape = frame.Inverted();
+			var from = toShape.TransformPoint(start.X, start.Y, start.Z);
+			var endInWorld = ray.Frame.TransformPoint(0, length, 0);
+			var to = toShape.TransformPoint(endInWorld.X, endInWorld.Y, endInWorld.Z);
+			if (shape.Volume is { } volume && volume.Raycast(ray.Clearance, from, to, out var at)) {
+				ray.Length = at.ApproxDistanceTo(from);
+				hit = new Es1RayHit(ray.Length, shape);
+				struck = true;
+				if (ray.Length < NearHit) {
+					break;
+				}
+			}
+		}
+
+		return struck;
 	}
 }

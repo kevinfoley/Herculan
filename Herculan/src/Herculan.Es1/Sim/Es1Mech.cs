@@ -230,6 +230,73 @@ public sealed class Es1Mech : IEs1SimObject {
 	/// <summary><c>+0x90</c>, the radar, on or off; no constructor step writes it (docs/es1/simulation/mech.md#construction).</summary>
 	public bool RadarOn { get; set; }
 
+	/// <summary><c>+0xa</c>, the heading, the last of <see cref="Rotation"/>.</summary>
+	public short Heading => Rotation.Z;
+
+	/// <inheritdoc/>
+	public short ListSlot { get; set; }
+
+	/// <inheritdoc/>
+	public bool RadarVisible { get; set; }
+
+	/// <summary><c>+0x93</c>, destroyed. PLACEHOLDER: nothing sets it until plan step 7's damage write.</summary>
+	public bool Destroyed { get; set; }
+
+	/// <summary><c>+0x15e</c>, its own target, or null.</summary>
+	public IEs1SimObject? Target { get; set; }
+
+	/// <inheritdoc/>
+	public short TargetHolders { get; set; }
+
+	/// <summary><c>+0x95</c>, the lock lamp.</summary>
+	public bool LockLamp { get; set; }
+
+	/// <summary><c>+0x97</c>, the target just changed.</summary>
+	public bool TargetChanged { get; set; }
+
+	/// <summary>
+	/// <see cref="Target"/> released, as <c>Mech_AiSelectBehaviour</c> (<c>0001892c</c>) does: with a target, its holders'
+	/// count down by 1, the target null and <see cref="TargetChanged"/> set; with none, nothing.
+	/// </summary>
+	public void ReleaseTarget() {
+		if (Target == null) {
+			return;
+		}
+
+		Target.TargetHolders--;
+		Target = null;
+		TargetChanged = true;
+	}
+
+	/// <inheritdoc/>
+	/// <remarks>Root 0's, <see cref="Es1MechType.ShapeRadius"/>, the radius the LOD choice reads.</remarks>
+	public short ShapeRadius => (short)Type.ShapeRadius;
+
+	/// <summary>
+	/// Slot <c>+0x34</c>, <c>Mech_GetAimPoint</c> (<c>00010ee0</c>)(machine, orbit, eye): its first triple, the orbit's
+	/// centre (0, the record's <c>+0x68</c>, <c>+0x6a</c>) (docs/es1/simulation/mech.md#small-functions).
+	/// </summary>
+	public Vec3i AimOffset => new(0, Type.Chassis.OrbitCentreY, Type.Chassis.OrbitCentreZ);
+
+	/// <inheritdoc/>
+	public bool Engaged { get; set; }
+
+	/// <inheritdoc/>
+	public bool EngagementGate { get; set; }
+
+	/// <summary><c>+0x16c</c>, the engagement action, the first of <see cref="Actions"/>.</summary>
+	public Es1Action? EngagementAction => Actions.First;
+
+	/// <inheritdoc/>
+	public Es1SensorTables Sensors { get; } = new();
+
+	/// <summary>Slot <c>+0x40</c>, <c>Mech_GetTorsoTwistAngle</c> (<c>00010e34</c>): <see cref="Twist"/> (docs/es1/simulation/mech.md#small-functions).</summary>
+	public short TorsoTwistAngle => Twist;
+
+	/// <summary>Slot <c>+0x4c</c>, <see cref="Es1SensorModel.MechAiEnemySighted"/>.</summary>
+	public void AiEnemySighted(IEs1SimObject sighted, Es1SimGlobals globals, Es1Mech playerMech) =>
+		Es1SensorModel.MechAiEnemySighted(this, sighted, globals, playerMech);
+
 	/// <summary>
 	/// <c>Mech_ToggleRadarMode</c> (<c>000157f4</c>): for the player's machine (<c>+0x9d</c>) the radar flipped
 	/// (docs/es1/simulation/mech.md#the-cockpit). PLACEHOLDER: the sound it then plays, <c>0x1b</c> with the radar off and

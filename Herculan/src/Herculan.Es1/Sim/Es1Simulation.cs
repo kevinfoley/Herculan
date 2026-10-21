@@ -91,14 +91,17 @@ public sealed class Es1Simulation {
 		set => ViewChain.Viewed = value;
 	}
 
-	/// <summary><c>Sim_Frozen</c> (<c>000b5b92</c>): the pools, the groups, the detection and the systems tick do not run.</summary>
+	/// <summary><c>Sim_Frozen</c> (<c>000b5b92</c>): the pools, the groups, the sensor model and the systems tick do not run.</summary>
 	public bool Frozen { get; set; }
 
 	/// <summary><c>Sim_StepOnce</c> (<c>000b5b9c</c>): the tick that finds it set clears it and sets the freeze. No key sets it.</summary>
 	public bool StepOnce { get; set; }
 
-	/// <summary><c>g_CenterTurretMode</c> (<c>000b5ba4</c>): the turret centres instead of following the twist and pitch.</summary>
-	public bool CenterTurretMode { get; set; }
+	/// <inheritdoc cref="Es1SimGlobals.CenterTurretMode"/>
+	public bool CenterTurretMode {
+		get => Globals.CenterTurretMode;
+		set => Globals.CenterTurretMode = value;
+	}
 
 	/// <summary>
 	/// <c>TapePlayback</c> and <c>TapeRecording</c> (<c>000b5b76</c>, <c>000b5b78</c>), which <c>Alt+S</c>'s freeze
@@ -201,9 +204,13 @@ public sealed class Es1Simulation {
 		// 5. PLACEHOLDER: Actions_EvaluateTriggers (0001f87c)(LocalPlayerMech), plan step 8. Then the views.
 		ViewChain.Apply(Controls);
 
-		// 6. PLACEHOLDER: unless frozen, Sim_DetectionTick (the sensor model), plan step 8, and Mech_PerTickSystemsUpdate
-		// (00014ee0) for each machine of g_MechPool, last to first, whose group holds no action and that is not
-		// destroyed, plan step 7.
+		// 6. Unless frozen, the sensor model, then the systems tick.
+		if (!Frozen) {
+			Es1SensorModel.Tick(Globals, _playerMech);
+
+			// PLACEHOLDER: Mech_PerTickSystemsUpdate (00014ee0) for each machine of g_MechPool, last to first, whose group
+			// holds no action and that is not destroyed, plan step 7.
+		}
 
 		// 7. PLACEHOLDER: Mission_PollStatus (0000f454)(LocalPlayerMech) and the status panel 00046efc it puts up, which
 		// end the mission; the mission's end, after plan step 8.
@@ -389,7 +396,8 @@ public sealed class Es1Simulation {
 		if (block.Buttons[2] == 0) {
 			_cycleHeld = false;
 		} else if (!_cycleHeld) {
-			// PLACEHOLDER: TargetSelect_Cycle (CockpitViewInstance), plan step 6b.
+			// With no cockpit loaded retail would cycle through a null CockpitViewInstance; here nothing is cycled.
+			Cockpit?.Targets.Cycle();
 			_cycleHeld = true;
 		}
 
@@ -407,23 +415,32 @@ public sealed class Es1Simulation {
 	}
 
 	/// <summary>
-	/// The player's machine: <c>Mech_ApplyThrottleInput</c> with <c>ThrottleLeverMode</c>, then the turret: disabled it
-	/// centres; with twist or pitch input the centring stops; then the centring tick or the two axis ticks.
+	/// The player's machine: <c>Mech_ApplyThrottleInput</c> with <c>ThrottleLeverMode</c>, then the turret, with the range
+	/// to the target <c>+0x15e</c> by <c>Math_DistanceBetweenPoints</c>, 0 with none: disabled it centres; with no twist or
+	/// pitch input, TRACK's latch and a target not destroyed, it tracks the target's position plus its slot <c>+0x34</c>
+	/// offset (<see cref="Es1Turret.TrackPoint"/>) and the centring stops; with input the centring stops; then the centring
+	/// tick, or unless tracking the two axis ticks.
+	///
+	/// <para>TRACK's latch stays clear until plan step 6c's console panel sets it (<see cref="Es1WeaponMounts.TrackLatch"/>),
+	/// so until then the turret never tracks.</para>
 	/// </summary>
 	private void TickPlayersMachine(short steer, short throttle, short twist, short pitch) {
 		var player = LocalPlayer;
 		var clock = Globals.Clock;
 		player.Locomotion.ApplyThrottleInput(clock, throttle, steer, Controls.ThrottleLeverMode);
 
-		// PLACEHOLDER: the target +0x15e, which plan step 6b's target selection selects; with none its range is 0.
-		const int range = 0;
-		const bool tracking = false;
+		var target = player.Target;
+		int range = target?.Position.ApproxDistanceTo(player.Position) ?? 0;
+		bool tracking = false;
 		if (player.Immobilized) {
 			CenterTurretMode = true;
 		} else if (twist == 0 && pitch == 0) {
-			// PLACEHOLDER: with the mounts' auto-track latch +0x14 and a live target, the target's +0x20 plus its slot
-			// +0x34 offset to Cockpit_TargetAnglesFromCameraBone, the centring cleared and the axis ticks skipped; with no
-			// target until plan step 6b, it never tracks.
+			// Retail's machine always holds a manager; this one has none until Mech_ConfigureLoadout has run.
+			if (player.Mounts?.TrackLatch == true && target is { Destroyed: false }) {
+				player.Turret.TrackPoint(clock, Globals.TurretServos, target.Position + target.AimOffset);
+				CenterTurretMode = false;
+				tracking = true;
+			}
 		} else {
 			CenterTurretMode = false;
 		}

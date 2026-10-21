@@ -205,7 +205,7 @@ public class Es1MovementTests {
 
 		var mech = new Es1Mech(new Es1MechType(chassis, animation), globals.DwellJitter) { Position = position };
 		mech.LocomotionThread!.SetSequence(Walk, 0, 0);
-		globals.LiveObjects.Add(mech);
+		globals.AddLiveObject(mech);
 		return mech;
 	}
 }

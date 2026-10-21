@@ -18,7 +18,7 @@ namespace Herculan.Es1.Render;
 /// <param name="Gate">The cell it stands on.</param>
 /// <param name="Leaf">The <c>TSBSPPart</c> child it is, or null.</param>
 /// <param name="Layer">Its paint layer in that child.</param>
-/// <param name="TextureWalk">Its textured faces' table for the column walk, or null — see <see cref="SceneItem.TextureWalk"/>.</param>
+/// <param name="TextureWalk">Its textured faces' table for the row walk, or null — see <see cref="SceneItem.TextureWalk"/>.</param>
 public sealed record Es1MechPiece(GpuMesh Mesh, int TransformId, CellGate Gate, BspLeaf? Leaf, int Layer,
 	GpuTextureWalkTable? TextureWalk = null);
 
@@ -41,7 +41,7 @@ public sealed class Es1MechModels : IDisposable {
 
 	/// <summary>
 	/// Whether the HERCs' textured faces are mapped with perspective, through the mesh's own homogeneous mapping
-	/// (<see cref="MeshVertex.UvWeight"/>), in place of retail's column walk in screen space
+	/// (<see cref="MeshVertex.UvWeight"/>), in place of retail's row walk in screen space
 	/// (docs/es1/rendering/polygon-shading.md#bitmap-fills-brush-modes-5-and-7). Off: the pieces carry the walk's face
 	/// tables. Read when the pieces are uploaded. The code path of a tweak that is not built
 	/// (docs/herculan/plan-es1-first-mission.md#open).

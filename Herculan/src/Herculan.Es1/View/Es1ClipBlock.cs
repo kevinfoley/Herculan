@@ -18,6 +18,12 @@ public sealed class Es1ClipBlock {
 		_spans = spans;
 	}
 
+	/// <summary>The rect regions, their bounds included.</summary>
+	public IReadOnlyList<(int X0, int Y0, int X1, int Y1)> Rects => _rects;
+
+	/// <summary>The span regions, one span a row each.</summary>
+	public IReadOnlyList<Es1ClipSpanBlock> Spans => _spans;
+
 	/// <summary>A block of no region, in which nothing is drawn.</summary>
 	public static Es1ClipBlock Empty { get; } = new([], []);
 

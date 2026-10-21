@@ -60,7 +60,8 @@ public static class Es1MechBehaviour {
 
 	/// <summary>
 	/// <c>Mech_AiSelectBehaviour</c> (<c>0001892c</c>), the reassess of <c>deciding</c> and of the states that reassess by
-	/// it: <c>player</c> for the player's machine (<c>+0x9d</c>), installed through <c>Behaviour_SetState</c>; it returns 1.
+	/// it: <c>player</c> for the player's machine (<c>+0x9d</c>), installed through <c>Behaviour_SetState</c>; then the
+	/// target released (<see cref="Es1Mech.ReleaseTarget"/>); it returns 1.
 	/// The second pass sets <c>+0x9d</c> after the constructor has installed <c>deciding</c>
 	/// (docs/es1/formats/script-dat.md#the-second-pass), so this is how the player's machine reaches <c>player</c>.
 	/// </summary>
@@ -76,8 +77,7 @@ public static class Es1MechBehaviour {
 			Es1Footfalls.PlaceLegsOnGround(mech);
 		}
 
-		// PLACEHOLDER: the target +0x15e released (its holders' count +0x15c down by 1, +0x97 set); no machine holds a
-		// target until plan steps 6 and 8.
+		mech.ReleaseTarget();
 		return 1;
 	}
 
