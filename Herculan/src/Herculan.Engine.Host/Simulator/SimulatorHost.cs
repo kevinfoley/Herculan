@@ -372,7 +372,7 @@ sealed class SimulatorHost : IDisposable {
 
 		// The damage flash is the cockpit's own, so dropping out of the cockpit for the fly camera puts the
 		// palette back rather than leaving a flash up with nothing ticking it.
-		_flash?.Apply(_view.InMachine && _view.Shake.FlashActive);
+		_flash?.Apply(_view.InMachine && _view.Shake.FlashShown);
 
 		// What the debug panel reports about the walk — see DebugProbes.Sample for why it is measured
 		// every frame rather than only while the panel is up.

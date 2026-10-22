@@ -74,6 +74,17 @@ tweaks.none                    Aucun
 tweaks.defaults                Par défaut
 tweaks.recommended             Recommandés
 tweaks.all                     Tous
+a11y.title                     Accessibilité
+a11y.category.motor            Motricité
+a11y.category.cognitive        Cognition
+a11y.category.vision           Vision
+a11y.category.hearing          Audition
+a11y.larger_font.display_name  Police plus grande
+a11y.larger_font.description   Affiche le texte des menus et fenêtres propres à HERCULAN en plus grand. Les écrans du jeu lui-même ne changent pas.
+a11y.disable_damage_flash.display_name Désactiver le flash rouge
+a11y.disable_damage_flash.description Quand votre cockpit est touché, l'écran ne clignote plus en rouge. L'écran tremble toujours.
+a11y.disable_damage_shake.display_name Désactiver le tremblement
+a11y.disable_damage_shake.description Quand votre cockpit est touché, l'écran ne tremble plus. Le flash rouge de dégâts apparaît toujours.
 install_prompt.window_title    HERCULAN Engine — Trouver Earthsiege 2
 install_prompt.message         HERCULAN n'a pas trouvé Earthsiege 2. Choisissez le dossier d'Earthsiege 2 : celui qui contient le dossier {0}.
 install_prompt.path_hint       Dossier d'Earthsiege 2
@@ -92,6 +103,7 @@ crash.window_title            HERCULAN Engine — Erreur
 crash.message                 HERCULAN s'est arrêté à cause d'une erreur : {0} Les détails se trouvent dans {1}.
 menu.debug                     Débogage
 menu.tweaks                    Ajustements
+menu.accessibility             Accessibilité
 menu.settings                  Paramètres
 menu.controller                Manette
 menu.editor                    Éditeur

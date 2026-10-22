@@ -40,6 +40,7 @@ if (options.InstallSource != null && options.InstallDestination != null) {
 var localization = new LocalizationTable();
 HostLog.Localization = localization;
 TweakSettings.Current.LoadFromDisk();
+A11ySettings.Current.LoadFromDisk();
 HostWindow.Icons = WindowIcon.Load();
 
 // The one font every ImGui window the host opens is drawn in.

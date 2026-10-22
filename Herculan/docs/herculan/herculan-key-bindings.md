@@ -4,14 +4,14 @@ The keys the engine adds to retail's. Every retail key works as [`../retail/key-
 
 | Key | What it does |
 |---|---|
-| `Shift+Esc` | Raise the menu bar: in a mission with the Debug, Settings, Controller, Tweaks and About panels, in the front end with Settings, Controller, Tweaks and About. Press again to back out. It works the same over a mission's pause, objectives and other panels, a movie and the briefing map's opening, and nothing of retail's sees the press: it closes no panel and skips nothing. Retail takes `Shift+Esc` as `Esc`.
+| `Shift+Esc` | Raise the menu bar: in a mission with the Debug, Settings, Controller, Tweaks, Accessibility and About panels, in the front end with Settings, Controller, Tweaks, Accessibility and About. Press again to back out. It works the same over a mission's pause, objectives and other panels, a movie and the briefing map's opening, and nothing of retail's sees the press: it closes no panel and skips nothing. Retail takes `Shift+Esc` as `Esc`.
 | `Esc` | While the menu bar or one of its panels is up, or the welcome the front end shows on its first start, or its notice of a newer release, back out of it, unless a mission's pause, objectives or other panel is up, which takes it as retail's does. Otherwise `Esc` is retail's everywhere.
 | Gamepad Back | Raise the menu bar or back out of it, as `Shift+Esc` does, in a mission and in the front end. While the bar stays up, the highlight goes on its first item ([Gamepad in the menus](#gamepad-in-the-menus)). |
 | Gamepad Start | In a mission, pause and raise the pause menu, or resume from it ([The pause menu](#the-pause-menu)). Retail's own pause panel stays on `P`. |
 | Gamepad left stick click | In a mission, hold for the squad orders ([Squad orders on a gamepad](#squad-orders-on-a-gamepad)). |
 | Gamepad right stick click | In a mission, hold for the cockpit's screens ([Screens on a gamepad](#screens-on-a-gamepad)). |
 | Gamepad right stick, right trigger | In the front end, move the pointer and click, unless the Controller window's Mouse emulation chooses the left ones; any button but Back skips a movie ([Gamepad in the front end](#gamepad-in-the-front-end)). |
-| Pointer at the top left | In the front end, raise the menu bar by moving the pointer to the window's top edge, within 300 pixels of its left edge (both scaled with the display, as the bar is). A click outside the bar hides it again. Not while a movie plays, nor while the window is out of focus. |
+| Pointer at the top left | In the front end, raise the menu bar by moving the pointer to the left end of the window's top edge. A click outside the bar hides it again. Not while a movie plays, nor while the window is out of focus. |
 | Left mouse drag | With the Mouse-controlled outside view tweak, swing the outside view round the HERC. |
 | `PrtScn` | While full screen, copy the frame to the clipboard in place of Windows' own capture, which can show a stale frame of a full-screen game; with `Alt`, `Ctrl`, `Shift` or `Win` held the key is Windows'. `--save-prtscn` also saves it ([`herculan-command-line.md`](herculan-command-line.md#screenshots-and-staged-state)). |
 

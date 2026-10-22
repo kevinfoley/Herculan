@@ -2,6 +2,7 @@ using Herculan.Engine.Cockpit;
 using Herculan.Engine.Host.Debugging;
 using Herculan.Engine.Host.Localization;
 using Herculan.Engine.Platform;
+using Herculan.Engine.Settings;
 using ImGuiNET;
 
 namespace Herculan.Engine.Host.Settings;
@@ -9,7 +10,7 @@ namespace Herculan.Engine.Host.Settings;
 /// <summary>
 /// The menu bar [Shift+Esc] raises over the shell and over a mission, and the pointer at the window's top left over the
 /// shell (<see cref="ShowOnHover"/>), HERCULAN's own and not retail's, and the
-/// panels it opens: Debug (a mission's only, and only under <c>--developer</c>), Settings, Controller, Tweaks and About; the
+/// panels it opens: Debug (a mission's only, and only under <c>--developer</c>), Settings, Controller, Tweaks, Accessibility and About; the
 /// Editor item, which leaves the shell for the mission editor and is greyed over a mission; and the
 /// first start's <see cref="WelcomeDialog"/> and the <see cref="UpdateDialog"/>, which the shell raises without the bar. Hidden until <see cref="Show"/>, and never
 /// drawn into a <c>--screenshot</c> capture. Plain [Esc] is retail's in a mission, where it pans to and from the
@@ -19,7 +20,7 @@ namespace Herculan.Engine.Host.Settings;
 sealed class HostMenuBar : IEscapeMenu {
 	// The zone ShowOnHover watches, in pixels on a 100% display (ScaledImGui.Scaled), so that on a scaled display it
 	// grows with the bar's own items rather than shrinking under them.
-	private const float HoverWidth = 300f;
+	private const float HoverWidth = 500f;
 	private const float HoverHeight = 4f;
 
 	private readonly LocalizationTable _localization;
@@ -41,6 +42,7 @@ sealed class HostMenuBar : IEscapeMenu {
 		Tweaks = tweaks;
 		Settings = settings;
 		Controller = controller;
+		Accessibility = new AccessibilityMenu(A11ySettings.Current, localization);
 		_debug = debug;
 		About = new AboutWindow(localization);
 		Welcome = new WelcomeDialog(localization, () => Tweaks.IsOpen = true);
@@ -53,6 +55,8 @@ sealed class HostMenuBar : IEscapeMenu {
 
 	public ControllerWindow Controller { get; }
 
+	public AccessibilityMenu Accessibility { get; }
+
 	public AboutWindow About { get; }
 
 	public WelcomeDialog Welcome { get; }
@@ -63,8 +67,8 @@ sealed class HostMenuBar : IEscapeMenu {
 	public bool Visible { get; private set; }
 
 	/// <summary>Whether one of the bar's panels, or the welcome or the update notice, is up.</summary>
-	public bool PanelOpen => Tweaks.IsOpen || Settings.IsOpen || Controller.IsOpen || About.IsOpen || Welcome.IsOpen || Update.IsOpen
-		|| _debug?.IsOpen == true;
+	public bool PanelOpen => Tweaks.IsOpen || Settings.IsOpen || Controller.IsOpen || Accessibility.IsOpen || About.IsOpen
+		|| Welcome.IsOpen || Update.IsOpen || _debug?.IsOpen == true;
 
 	/// <summary>Whether the bar or one of its panels is up.</summary>
 	public bool Up => Visible || PanelOpen;
@@ -102,7 +106,7 @@ sealed class HostMenuBar : IEscapeMenu {
 
 	/// <summary>
 	/// [Esc]'s step back: takes down whichever panel is up, else hides the bar. Returns false when neither
-	/// was up, leaving the key to the host. Tweaks goes through its Cancel, so an edit made but not saved is
+	/// was up, leaving the key to the host. Tweaks and Accessibility go through their Cancel, so an edit made but not saved is
 	/// discarded rather than left applied but unpersisted. The welcome goes as its OK does, the update notice as its Close does.
 	/// </summary>
 	public bool BackOut() {
@@ -115,6 +119,9 @@ sealed class HostMenuBar : IEscapeMenu {
 			}
 			if (Controller.IsOpen) {
 				Controller.Cancel();
+			}
+			if (Accessibility.IsOpen) {
+				Accessibility.Cancel();
 			}
 			if (Welcome.IsOpen) {
 				Welcome.Dismiss();
@@ -174,6 +181,10 @@ sealed class HostMenuBar : IEscapeMenu {
 				Tweaks.IsOpen = true;
 			}
 
+			if (ImGui.MenuItem(_localization.GetStringOrKey("menu.accessibility"))) {
+				Accessibility.IsOpen = true;
+			}
+
 			if (ImGui.MenuItem(_localization.GetStringOrKey("menu.editor"), null, false, _openEditor != null)) {
 				_openEditor!();
 			}
@@ -195,6 +206,7 @@ sealed class HostMenuBar : IEscapeMenu {
 		Tweaks.Draw(_centring.Condition);
 		Settings.Draw(owner, _centring.Condition);
 		Controller.Draw(_centring.Condition);
+		Accessibility.Draw(_centring.Condition);
 		About.Draw(_centring.Condition);
 		Welcome.Draw(_centring.Condition);
 		Update.Draw(_centring.Condition);

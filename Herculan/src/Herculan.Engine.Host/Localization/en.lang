@@ -74,6 +74,17 @@ tweaks.none                    None
 tweaks.defaults                Defaults
 tweaks.recommended             Recommended
 tweaks.all                     All
+a11y.title                     Accessibility
+a11y.category.motor            Motor
+a11y.category.cognitive        Cognitive
+a11y.category.vision           Vision
+a11y.category.hearing          Hearing
+a11y.larger_font.display_name           Larger font size
+a11y.larger_font.description            Draw the text of HERCULAN's own menus and windows at a larger size. The game's original screens are unchanged.
+a11y.disable_damage_flash.display_name  Disable fullscreen flash
+a11y.disable_damage_flash.description   When your cockpit takes a hit, the screen no longer flashes red.
+a11y.disable_damage_shake.display_name  Disable camera shake
+a11y.disable_damage_shake.description   When your cockpit takes a hit, the screen no longer shakes.
 install_prompt.window_title    HERCULAN Engine — Find Earthsiege 2
 install_prompt.message         HERCULAN could not find Earthsiege 2. Choose the Earthsiege 2 folder: the one that holds the {0} folder.
 install_prompt.path_hint       Earthsiege 2 folder
@@ -92,6 +103,7 @@ crash.window_title            HERCULAN Engine — Error
 crash.message                 HERCULAN stopped because of an error: {0} The details are in {1}.
 menu.debug                     Debug
 menu.tweaks                    Tweaks
+menu.accessibility             Accessibility
 menu.settings                  Settings
 menu.controller                Controller
 menu.editor                    Editor

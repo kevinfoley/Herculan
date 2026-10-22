@@ -74,6 +74,17 @@ tweaks.none                    Keine
 tweaks.defaults                Standard
 tweaks.recommended             Empfohlen
 tweaks.all                     Alle
+a11y.title                     Barrierefreiheit
+a11y.category.motor            Motorik
+a11y.category.cognitive        Kognition
+a11y.category.vision           Sehen
+a11y.category.hearing          Hören
+a11y.larger_font.display_name  Größere Schrift
+a11y.larger_font.description   Zeigt den Text der HERCULAN-eigenen Menüs und Fenster größer an. Die Bildschirme des Spiels selbst bleiben unverändert.
+a11y.disable_damage_flash.display_name Vollbild-Blitz deaktivieren
+a11y.disable_damage_flash.description Wenn Ihr Cockpit getroffen wird, blinkt der Bildschirm nicht mehr rot. Der Bildschirm wackelt weiterhin.
+a11y.disable_damage_shake.display_name Kamerawackeln deaktivieren
+a11y.disable_damage_shake.description Wenn Ihr Cockpit getroffen wird, wackelt der Bildschirm nicht mehr. Das rote Schadensaufblitzen erscheint weiterhin.
 install_prompt.window_title    HERCULAN Engine — Earthsiege 2 suchen
 install_prompt.message         HERCULAN konnte Earthsiege 2 nicht finden. Wählen Sie den Earthsiege-2-Ordner: den Ordner, der den Ordner {0} enthält.
 install_prompt.path_hint       Earthsiege-2-Ordner
@@ -92,6 +103,7 @@ crash.window_title            HERCULAN Engine — Fehler
 crash.message                 HERCULAN wurde wegen eines Fehlers beendet: {0} Die Details stehen in {1}.
 menu.debug                     Debug
 menu.tweaks                    Optimierungen
+menu.accessibility             Barrierefreiheit
 menu.settings                  Einstellungen
 menu.controller                Controller
 menu.editor                    Editor
