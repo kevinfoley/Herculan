@@ -126,7 +126,7 @@ The same segment and the same walk, with a different question at each step: is t
 
 **The direction.** Setup packs the halved delta into three shorts and normalises it to length `0x800` with `Math_NormalizeVec3ShortToLength` (`0046c138`), the normaliser the face normals go through, so the two are in the same units.
 
-**The face test** is `Terrain_FaceBlocksMovement` (`0046fe40`), on the steepness of the face's normal alone; its threshold, and how it sits against the move's own slope refusal, are in [`ai-navigation.md`](ai-navigation.md#the-two-probes). On the threshold value exactly it falls through to the dot product of the normal and the direction, blocking under `-8000000`.
+**The face test** is `Terrain_FaceBlocksMovement` (`0046fe40`), on the steepness of the face's normal alone; its threshold, and how it sits against the move's own slope refusal, are in [`ai-navigation.md`](ai-navigation.md#the-two-probes). On the threshold value exactly it falls through to the dot product of the normal and the direction, blocking under `-8000000`. That arm never blocks: both vectors are at length `0x800` by `Math_FastMagnitude3D`, which reads at most about 8% low, so each is at most about `0x8b4` long and the product is never below about `-4950000`. `Deployment_PickPointNearPlayer`'s zero direction gives 0. So a face exactly on the threshold does not block.
 
 **Each step**, in order:
 

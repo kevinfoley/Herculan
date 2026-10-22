@@ -55,14 +55,8 @@ public sealed class EditorSettings {
 	/// </summary>
 	public SavedWindow? Window { get; set; }
 
-	/// <summary>
-	/// Where the settings live: <c>%APPDATA%\Herculan\editor-settings.json</c> on Windows, and the
-	/// platform's equivalent user-config directory elsewhere.
-	/// </summary>
-	public static string FilePath => Path.Combine(
-		Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData,
-			Environment.SpecialFolderOption.DoNotVerify),
-		"Herculan", "editor-settings.json");
+	/// <summary>Where the settings live: <c>editor-settings.json</c> in <see cref="UserConfig.Folder"/>.</summary>
+	public static string FilePath => UserConfig.PathOf("editor-settings.json");
 
 	/// <summary>
 	/// Reads the settings file, falling back to the defaults when it is absent or unreadable. A
@@ -84,16 +78,8 @@ public sealed class EditorSettings {
 		}
 	}
 
-	/// <summary>Writes the settings, creating the directory if this is the first save.</summary>
-	public void Save() {
-		string path = FilePath;
-		try {
-			Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-			File.WriteAllText(path, JsonSerializer.Serialize(this, SerializerOptions));
-		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
-			Console.Error.WriteLine($"Could not write {path}: {ex.Message}");
-		}
-	}
+	/// <summary>Writes the settings (<see cref="UserConfig.Write"/>).</summary>
+	public void Save() => UserConfig.Write(FilePath, JsonSerializer.Serialize(this, SerializerOptions));
 
 	/// <summary>A detached copy, for holding the pre-edit values behind a Cancel button.</summary>
 	public EditorSettings Clone() {

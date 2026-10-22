@@ -11,7 +11,8 @@ namespace Herculan.Engine.Sim;
 /// (<c>TargetSelect_SetObject</c> (<c>004332dc</c>)/<c>TargetSelect_Nearest</c> (<c>004333c8</c>)/<c>TargetSelect_Cycle</c> (<c>0043349c</c>), all taking that widget tree as
 /// their subject), and the machine is told afterwards. That is why this class is a peer of
 /// <see cref="MechObject"/> rather than a property of it, and it is also why an AI machine's target
-/// gets there by a different route entirely (<c>Mech_AiEngageOrderedTarget</c> (<c>0041c0f4</c>), which is not ported).</para>
+/// gets there by a different route entirely — the AI's own writers, docs/retail/simulation/ai-targeting.md
+/// ("The AI writers of +0x1a4").</para>
 ///
 /// <para><b>The three commands</b> are the manual's, confirmed against
 /// <c>CockpitWidgets_HandleCommand</c> and <c>Sim_DispatchCommand</c> by scancode:</para>

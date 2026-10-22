@@ -685,9 +685,10 @@ public sealed class SimWorld {
 
 	/// <summary>
 	/// One tick under the <c>Alt+S</c> freeze: what <c>Sim_MainTick</c> still runs with
-	/// <c>DAT_004d2576</c> up. That is the player's input poll (<see cref="MechObject.FrozenTick"/>)
-	/// and the mission's verdict; every pool, object, group, timer and the sensor sweep wait. The
-	/// modal panels are not this: they stop the tick outright.
+	/// <c>DAT_004d2576</c> up. That is the player's input poll
+	/// (<see cref="MechObject.PlayerInputTick"/>, frozen) and the mission's verdict; every pool, object,
+	/// group, timer, the sensor sweep and the systems pass wait. The modal panels are not this: they stop
+	/// the tick outright.
 	/// </summary>
 	public void TickFrozen(short tickDelta) {
 		SimMath.TickDelta = tickDelta;
@@ -696,7 +697,7 @@ public sealed class SimWorld {
 		PlayerMissile.TriggerCleared = false;
 
 		if (PlayerMech is { Removed: false, AwaitingDeployment: false } player) {
-			player.FrozenTick(this);
+			player.PlayerInputTick(this, frozen: true);
 		}
 
 		if (PlayerMech is { Removed: false, Destroyed: false } pilot) {
@@ -769,6 +770,8 @@ public sealed class SimWorld {
 		Effects.TickDebris();
 		Effects.TickFires();
 
+		// The structures' pool, which Sim_MainTick walks after the projectiles. A machine or an aircraft
+		// is in no pool it walks and does nothing here: it moves from its AI tick in the group pass below.
 		// A group still waiting on its arrival action is not in the mission yet, so it does not tick:
 		// Sim_MainTick sends such a group to Group_DeploymentCheck instead of its order tick, and
 		// skips a base's own update outright. See SimObject.AwaitingDeployment.
@@ -780,9 +783,9 @@ public sealed class SimWorld {
 		}
 
 		// The AI, which is driven from the mission-group layer and not from the object list: a machine
-		// that is not a live group member never thinks. It runs here, alongside the object updates and
-		// ahead of the sensor sweep, so a machine reassesses on the contacts it had at the top of the
-		// tick rather than on ones made during it.
+		// that is not a live group member never thinks and never moves, the player's own machine
+		// included. It runs ahead of the sensor sweep, so a machine reassesses on the contacts it had at
+		// the top of the tick rather than on ones made during it.
 		//
 		// A group that has not entered the mission takes the other branch instead: Sim_MainTick sends
 		// it to Group_DeploymentCheck and not to its order tick, and it is one or the other, never
@@ -795,6 +798,12 @@ public sealed class SimWorld {
 			} else {
 				group.AiTick(this);
 			}
+		}
+
+		// Sim_PollPlayerInput, straight after the group pass: the player's control law and trigger act
+		// on a machine that has already moved this tick.
+		if (PlayerMech is { Removed: false, AwaitingDeployment: false } player) {
+			player.PlayerInputTick(this, frozen: false);
 		}
 
 		// The mission's timers, then its triggers. Sim_MainTick runs ActionTimers_Tick (00426b48) and
@@ -814,13 +823,17 @@ public sealed class SimWorld {
 		Detection.Tick(this);
 
 		// And then the per-mech systems pass, which is where Sim_MainTick puts it — immediately after
-		// the sensor sweep, because the lock gate reads the line-of-sight cache that sweep maintains.
-		// Only the missile-lock half and the ECM's engagement gate run from here; the reactor and shield
-		// half is inside MechObject.Tick, where its inputs are last tick's and its position is free.
+		// the sensor sweep, because the lock gate reads the line-of-sight cache that sweep maintains — for
+		// every deployed machine still standing. The locks take a second pass, so each one reads every
+		// machine's jammer as this tick left it (see MechObject.JammerTick).
 		for (int i = 0; i < _objects.Count; i++) {
 			if (_objects[i] is MechObject { Removed: false, AwaitingDeployment: false, Destroyed: false } mech) {
-				mech.RaiseTargetEngagementGate();
-				mech.AiTimersTick();
+				mech.SystemsTick(this);
+			}
+		}
+
+		for (int i = 0; i < _objects.Count; i++) {
+			if (_objects[i] is MechObject { Removed: false, AwaitingDeployment: false, Destroyed: false } mech) {
 				mech.MissileLockTick(this);
 			}
 		}

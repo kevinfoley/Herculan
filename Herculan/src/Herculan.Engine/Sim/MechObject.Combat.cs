@@ -17,10 +17,9 @@ public sealed partial class MechObject {
 	/// fire button — so holding it fires again the moment the refire timer runs out and the capacitor
 	/// is back over the threshold. Nothing edge-detects it anywhere along the path.</para>
 	///
-	/// <para>Only a machine with a pilot ever reaches this: the original calls it from the input poll
-	/// for <c>LocalPlayerMech</c> alone, and AI machines fire through their own think function, which
-	/// is unported. Here that falls out of <see cref="Controls"/>, which is
-	/// <see cref="MechControls.Neutral"/> for everything the player is not flying.</para>
+	/// <para>Only the player's machine reaches this: the original calls it from the input poll for
+	/// <c>LocalPlayerMech</c> alone, as <see cref="PlayerInputTick"/> does, and AI machines fire from
+	/// their thinks (<see cref="AimAndFireAtMech"/>).</para>
 	///
 	/// <para>The rest of <c>Mech_PlayerFireTick</c> is the player's <b>line of fire</b>: on a shot it stamps
 	/// up to 40 points along the turret bearing at <see cref="FiringLineSpacing"/> spacing, cut to the

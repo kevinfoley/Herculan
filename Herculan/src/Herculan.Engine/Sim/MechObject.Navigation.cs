@@ -16,17 +16,16 @@ namespace Herculan.Engine.Sim;
 /// </summary>
 public partial class MechObject {
 	/// <summary>
-	/// Whether this machine is driven by its behaviour state rather than by <see cref="Controls"/>, in
-	/// which case <see cref="Tick"/> runs the state's move slot and leaves the pilot path alone. The
-	/// original's split is the same, by machine: <c>Sim_PollPlayerInput</c> runs the throttle path for
-	/// <c>LocalPlayerMech</c> and nothing else. A state with no think (<c>deciding</c>,
-	/// <c>in limbo</c>) is still the AI's, and drives nothing.
+	/// Whether this machine is steered by its thinks rather than by <see cref="Controls"/>: every machine
+	/// but the player's, the original's own test (<c>mech != PlayerMech</c>), since
+	/// <c>Sim_PollPlayerInput</c> runs the throttle path for <c>LocalPlayerMech</c> and nothing else. A
+	/// state with no think (<c>deciding</c>, <c>in limbo</c>) is still the AI's, and drives nothing.
 	/// </summary>
-	private bool UnderAiControl => !IsPlayer && Behaviour.State != null;
+	private bool UnderAiControl => !IsPlayer;
 
 	/// <summary>
-	/// <c>Ai_NavigationStep</c> (<c>0041d598</c>) — the movement half that <c>patrolling</c>,
-	/// <c>search/destroy</c> and <c>guarding</c> share.
+	/// <c>Ai_NavigationStep</c> (<c>0041d598</c>) — the movement half that <c>patrolling</c> and
+	/// <c>search/destroy</c> share. <see cref="GuardThink"/> calls the same primitives itself.
 	///
 	/// <para><b>Only the group leader reads the route.</b> Everyone else steers off the leader, which
 	/// is what keeps a group together over a route one machine is following, and what stops a group
@@ -419,7 +418,7 @@ public partial class MechObject {
 	/// exactly what that order buys.</para>
 	/// </summary>
 	private bool PatrolThink(SimWorld world) {
-		// Sampled before the movement, because the movement can clear it.
+		// The original reads the verb before the movement runs, and its gate and acquisition test use that copy.
 		short standing = SquadOrderVerb;
 		NavigationStep(world);
 		Target = null;
@@ -567,7 +566,8 @@ public partial class MechObject {
 
 	/// <summary>
 	/// <c>Mech_BehaviourGuardThink</c> (<c>0041e224</c>) — behaviour state 15. A player squadmate with
-	/// no standing order skips the state entirely and holds formation; everything else works a
+	/// no standing order holds formation instead, and acquires only when told to
+	/// <see cref="FireAtWill"/>; everything else works a
 	/// standoff ring around <see cref="GoalPosition"/>, approaching past 30000, holding still between
 	/// 10000 and 30000, and walking outward below 10000.
 	///
@@ -583,10 +583,14 @@ public partial class MechObject {
 		SimObject? defence = null;
 
 		if ((holdsPost || FireAtWill) && SimMath.TimerCountDown(ref _navDecisionTimer) == 0) {
-			defence = SquadOrderVerb == SquadOrderEngage && SquadOrderTarget != null
-				? SquadOrderTarget
-				: AiTargeting.SelectDefenceTarget(world, this, post,
-					Group?.OrderTarget != null ? AiTargeting.DefenceRange : AiTargeting.OpenDefenceRange);
+			if (SquadOrderVerb == SquadOrderEngage && SquadOrderTarget != null) {
+				defence = SquadOrderTarget;
+			} else {
+				// The think never reloads its own clock: Ai_SelectDefenceTarget writes the 10000 into
+				// mech+0x5b, so a guard with nothing in reach looks again every 10000 counts.
+				_navDecisionTimer = NavDecisionInterval;
+				defence = AiTargeting.SelectDefenceTarget(world, this, post);
+			}
 		}
 
 		if (defence == null) {

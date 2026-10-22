@@ -1,13 +1,15 @@
 using Herculan.Engine.Audio;
 using Herculan.Engine.Content;
 using Herculan.Engine.Host.Localization;
+using Herculan.Engine.Input;
 using Herculan.Engine.Install;
 
 namespace Herculan.Engine.Host;
 
 /// <summary>
 /// What outlives one turn of the shell or one mission: the install, which the Settings menu can change for
-/// the next turn, the install's disc, the player's interface strings and the font every ImGui window is drawn in.
+/// the next turn, the install's disc, the player's interface strings, the keys and the font every ImGui window is
+/// drawn in.
 /// </summary>
 sealed class HostSession(string installRoot, LocalizationTable localization, string imguiFontPath,
 		string imguiItalicFontPath) : IDisposable {
@@ -55,6 +57,9 @@ sealed class HostSession(string installRoot, LocalizationTable localization, str
 	public bool SavePrintScreens { get; init; }
 
 	public LocalizationTable Localization { get; } = localization;
+
+	/// <summary>The one key map every key handler reads, a mission's and the front end's (<see cref="KeyMap.Retail"/>).</summary>
+	public KeyMap Keys { get; } = KeyMap.Retail;
 
 	public string ImGuiFontPath { get; } = imguiFontPath;
 

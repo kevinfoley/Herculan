@@ -25,7 +25,7 @@ Every countdown in this doc is in the simulation's timer unit, which is not a mi
 | Transport | `00497784` | `004045c8` | `0x22` |
 | GroundVehicle | `00497818` | `0046a5d0`, [`ground-vehicles.md`](ground-vehicles.md) | `0x2d`-`0x34`, `0x37`-`0x3d` |
 
-Six indices — `0x0a`, `0x35`, `0x36`, `0x3e`-`0x40` — match no case, so nothing is constructed. Only three slots differ across the five tables: the destructor, this one, and `GetTorsoTwistAngle` (`+0x3c`).
+Six indices — `0x0a`, `0x35`, `0x36`, `0x3e`-`0x40` — match no case, and nor does an index above `0x3d`. The switch's default allocates nothing and jumps straight to the shared tail below with its object register never set, so the tail's stores land wherever `EDI` points on entry — at the one call site, in `DBSim_SpawnMissionObjects` (`00425c90`), the per-record byte array at `004aa93e` — and that address is returned as the structure. No retail mission places any of the six. Every arm, too, carries on through the tail when `Pool_Alloc` returns null, and the Plain and Radar arms write their spawn bytes through the pointer before the tail does. Only three slots differ across the five tables: the destructor, this one, and `GetTorsoTwistAngle` (`+0x3c`).
 
 **That last one is the armed/unarmed line.** The Armed and GroundVehicle tables install `Base_GetTurretAngle` (`00403594`), which returns a real aim angle from `structure+0x20f`; Plain and Radar mast keep the shared zero stub `SimObject_GetTorsoTwistAngleZero` (`00411a5c`).
 
@@ -135,7 +135,7 @@ At a run both shortfalls are large — a HERC at 90 km/h covers about 120 m in 4
 `BASES.DAT +0x2c` is how far up the structure anything aiming at it aims. **All 65 retail types state one**, 1000 to 2000 world units, so a building is never shot at the ground point its model origin sits on. Two vtable slots carry it, read by different callers:
 
 - **`+0x24`, `Base_GetAimNodeTransform` (`00403548`)** returns a node transform whose translation is `(0, 0, +0x2c)`. Homing rockets and bullets, the HUD target indicator and the line-of-sight ray read this slot — [`target-selection.md`](target-selection.md#aim-point--vtable-0x24).
-- **`+0x30`, `Base_GetAimPoint` (`0040351c`)** fills two out triples. The shared base form (`SimObject_GetAimPointZero`, `00411a74`) zeroes both and the structure's writes `+0x2c` into the Z of the second. Its callers are the two tower ticks, which add the second triple to the target's position unrotated for their lead point; the camera attach, where the first triple is the eye and the second the orbit centre ([`external-views.md`](external-views.md#the-camera-object--cam)); and `Ai_AimAndFire`'s fallback for a target that is neither a machine nor a structure.
+- **`+0x30`, `Base_GetAimPoint` (`0040351c`)** fills two out triples. The shared base form (`SimObject_GetAimPointZero`, `00411a74`) zeroes both and the structure's writes `+0x2c` into the Z of the second. Its callers are the armed and transport ticks, which add the second triple to the target's position unrotated for their aim point — for a HERC target that is `Mech_GetAimPoint`'s (`004155c4`) orbit centre `(0, type+0x68, type+0x6a)`, not the cockpit node `+0x24` names; the camera attach, where the first triple is the eye and the second the orbit centre ([`external-views.md`](external-views.md#the-camera-object--cam)); and `Ai_AimAndFire`'s fallback for a target that is neither a machine nor a structure.
 
 ### What the turret's AI is, and is not
 

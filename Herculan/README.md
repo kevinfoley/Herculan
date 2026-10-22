@@ -118,10 +118,11 @@ src/
   HercWorks.UI/           WinForms shell (net8.0-windows)
     Program.cs
     MainForm.cs
-  HercWorks.Query/        console tool — searches the retail .MSN missions through HercWorks.Core:
-                          which missions place a structure, mech or flyer type, what tests or
-                          writes a campaign flag, and what orders each group carries; `records` and
-                          `header` dump one mission's raw .MSN rows (`--help` lists the commands)
+  HercWorks.Query/        console tool — searches the retail .MSN missions and chassis records through
+                          HercWorks.Core: which missions place a structure, mech or flyer type, what
+                          tests or writes a campaign flag, what orders each group carries, and each
+                          chassis' value of a dat\<name>.DAT field; `records` and `header` dump one
+                          mission's raw .MSN rows (`--help` lists the commands)
 tests/
   HercWorks.Vol.Tests/    xUnit round-trip test against a hand-built synthetic .vol
   HercWorks.Query.Tests/  the queries against the retail missions, when ES2/ is present

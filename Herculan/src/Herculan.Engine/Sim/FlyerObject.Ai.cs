@@ -152,7 +152,9 @@ public sealed partial class FlyerObject {
 	/// <c>Mech_AiTick</c> (<c>00411cec</c>) as an aircraft runs it. Identical in shape to
 	/// <see cref="MechObject.AiTick"/> — the dispatchers are the flyer's own vtable slots but the
 	/// tick that drives them is the same function — so the order is reassess, dwell countdown, move,
-	/// think, and the move is <see cref="Tick"/>'s, run from the object pass that precedes this one.
+	/// think. The move is <c>Flyer_DispatchMove</c> (<c>004217fc</c>): <see cref="MovementTick"/> for
+	/// the four states that carry one, and nothing at all for <c>deciding</c>, <c>sleeping</c> and
+	/// <c>dead</c>, whose triples are null.
 	///
 	/// <para>The reassess is <c>Flyer_AiSelectBehaviour</c> (<c>00422d00</c>); there is no combat form.
 	/// An aircraft picks its target inside its think and never changes state to do it. <c>sleeping</c>
@@ -170,6 +172,10 @@ public sealed partial class FlyerObject {
 
 		if (Behaviour.State is { SuppressesDwell: false }) {
 			SimMath.TimerCountDown(ref Behaviour.DwellCountdown);
+		}
+
+		if (Behaviour.State is { Moves: true } && Flight != null) {
+			MovementTick(world);
 		}
 
 		bool finished = Behaviour.State?.Think switch {
@@ -443,20 +449,31 @@ public sealed partial class FlyerObject {
 	/// leader up out of the group rather than using the object it was handed — and the offset's Z
 	/// goes on unrotated, which is what stacks a flight vertically.
 	/// </summary>
-	private Vec3i FormationStation(SimObject leader) {
-		var station = SimTrig.OffsetPointByBearing(leader.Position, (short)leader.Heading, StationLead);
+	private Vec3i FormationStation(SimObject leader) =>
+		FormationPostAround(
+			SimTrig.OffsetPointByBearing(leader.Position, (short)leader.Heading, StationLead),
+			leader.Heading);
 
+	/// <summary>
+	/// <c>Flyer_ApplyFormationOffset</c> (<c>00421e98</c>) applied to an anchor and a leader heading:
+	/// the anchor itself for the flight leader or a formation with no slot for this aircraft,
+	/// otherwise the <c>FFORMS.DAT</c> offset's X and Y rotated by that heading and its Z added
+	/// unrotated. Station keeping anchors it ahead of the leader (<see cref="FormationStation"/>);
+	/// a group arriving on foot anchors it on the arrival point (<see cref="MissionGroup.PlaceOnFoot"/>,
+	/// docs/retail/simulation/mission-deployment.md, "Arrival").
+	/// </summary>
+	internal Vec3i FormationPostAround(Vec3i anchor, int heading) {
 		if (FormationOffset is not { } offset) {
-			return station;
+			return anchor;
 		}
 
-		short cos = BinaryAngle.Cos(leader.Heading);
-		short sin = BinaryAngle.Sin(leader.Heading);
+		short cos = BinaryAngle.Cos(heading);
+		short sin = BinaryAngle.Sin(heading);
 
 		return new Vec3i(
-			station.X + (int)(((long)offset.X * cos - (long)offset.Y * sin + 0x2000) >> 14),
-			station.Y + (int)(((long)offset.X * sin + (long)offset.Y * cos + 0x2000) >> 14),
-			station.Z + offset.Z);
+			anchor.X + (int)(((long)offset.X * cos - (long)offset.Y * sin + 0x2000) >> 14),
+			anchor.Y + (int)(((long)offset.X * sin + (long)offset.Y * cos + 0x2000) >> 14),
+			anchor.Z + offset.Z);
 	}
 
 	/// <summary>

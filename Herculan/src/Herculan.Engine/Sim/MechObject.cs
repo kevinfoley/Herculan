@@ -78,6 +78,11 @@ public sealed partial class MechObject : SimObject {
 		_damage = damage;
 		_weaponModelCellCount = weaponModelCellCount;
 
+		// Mech_Constructor (00415bb0) marks a chassis with no salvage scale worth no salvage, guns
+		// included: the SPIDER, in retail. See docs/retail/simulation/component-damage.md, "What a
+		// wreck is worth".
+		WorthNoSalvage = Type.SalvageScale == 0;
+
 		if (Type.IsFlyer && flightModel != null) {
 			// Mech_Constructor's own flyer seed: airborne at 1000, with the throttle field the
 			// flight model owns starting where the machine's own throttle is.
@@ -111,6 +116,12 @@ public sealed partial class MechObject : SimObject {
 			TorsoTwistThread = AddTorsoThread(animation, Type.TorsoTwistSequence);
 			TorsoPitchThread = AddTorsoThread(animation, Type.TorsoPitchSequence);
 		}
+
+		// Mech_Constructor's install (00415f33): deciding, for the player's machine too, because the spawn
+		// marks it as the player only after the constructor returns (004256e7). Its first reassess installs
+		// player or player fly (SelectBehaviour). In constructor order, so the dwell jitter steps in spawn
+		// order. See docs/retail/simulation/ai-dispatch.md#choosing-a-state--mech_aiselectbehaviour-0041eb34.
+		SetBehaviourState(BehaviourState.Deciding);
 
 		// The original splits this in two: the constructor sizes the shield array and fills the pool,
 		// and the spawn path calls Mech_ConfigureLoadout straight afterwards to fit the pods and
@@ -423,81 +434,98 @@ public sealed partial class MechObject : SimObject {
 	private bool _rotationValid;
 
 	/// <summary>
-	/// One simulation step: the control law, then the move it implies.
-	///
-	/// <para>The original reaches these through two different paths — the input poll calls the
-	/// control law for the player and the AI think function calls it for everyone else, while the
-	/// move runs from the object list's own per-tick dispatch. Their order within a frame is the
-	/// same either way, and running them back to back here is what makes a headless tick
-	/// reproducible.</para>
+	/// Nothing: <c>Sim_MainTick</c> (<c>0045f464</c>) walks no pool a HERC is in. A machine's move runs
+	/// from its AI tick (<see cref="MoveTick"/>), the player's controls from the input poll
+	/// (<see cref="PlayerInputTick"/>), and the reactor, AI countdowns and jammer from the systems pass
+	/// (<see cref="SystemsTick"/>), each where <see cref="SimWorld.Tick(short, double)"/> runs the
+	/// original's pass. See docs/retail/simulation/main-loop.md#the-tick.
 	/// </summary>
 	public override void Tick(SimWorld world) {
-		// Firing comes before the power tick, which is the original's order within a frame and not an
-		// arbitrary choice: Sim_PollPlayerInput runs the trigger path, and the mech list's own
-		// Mech_PerTickSystemsUpdate pass follows it. That pass is what counts the refire timer down,
-		// so a shot fired this tick has already lost a tick's worth of its delay by the end of it.
-		FireTick(world);
+	}
 
-		// Reactor and pool first. In the original this is a separate dispatch entirely —
-		// Sim_MainTick walks the global mech list calling Mech_PerTickSystemsUpdate, while the
-		// control law comes in from the input poll or the AI think — but it runs once per mech per
-		// tick either way, and its inputs are last tick's, so its position within the tick is free.
-		PowerTick(world);
-
-		// The jammer, from the same original function. Before the flight branch because a turretless
-		// chassis carries hardpoints and can fit the pod like anything else.
-		JammerTick();
-
-		if (Flight is { } flight) {
-			// A flyer takes a different behaviour class entirely: no throttle law, no turret, and a
-			// move of its own. See MechObject.Flight.cs.
+	/// <summary>
+	/// <c>Behaviour_DispatchMove</c> (<c>00415afc</c>), the mech vtable <c>+0x14</c>: the installed
+	/// state's move slot, which <see cref="AiTick"/> runs between the dwell countdown and the think. So
+	/// only a live member of a group that has entered the mission moves, and a state this tick's
+	/// reassess installs moves under its own slot on the same tick. See
+	/// docs/retail/simulation/ai-dispatch.md#the-ai-tick--mech_aitick-00411cec.
+	/// </summary>
+	private void MoveTick(SimWorld world) {
+		if (Flight is { } flight && !IsPlayer) {
+			// Retail never reaches an AI-controlled RAZOR, whose walker move would fault
+			// (docs/retail/simulation/razor-flight.md#how-the-flyer-paths-are-reached). This engine flies one on
+			// its neutral controls rather than modelling the fault; see FlightTick.
 			FlightTick(world, flight);
 			return;
 		}
 
-		if (UnderAiControl) {
-			// Mech_ApplyThrottleInput and the turret block are Sim_PollPlayerInput's, and it runs for
-			// LocalPlayerMech alone. An AI machine reaches the control law from its think instead —
-			// see MechObject.Navigation.cs — so running the input path for it here would bleed the
-			// throttle back to zero underneath every decision the think just made. What it gets is
-			// its state's move slot, Behaviour_DispatchMove (00415afc).
-			switch (Behaviour.State!.Move) {
-				case MoveSlot.Ram:
-					// See MechObject.Ramming.cs.
-					RamTick(world);
-					break;
-				case MoveSlot.None:
-					// deciding and in limbo. No move at all, which is what keeps a SPIDER that has
-					// vanished sunk under the map: the walk would put it back on the ground.
-					break;
-				default:
+		switch (Behaviour.State?.Move) {
+			case MoveSlot.Walk:
+				MovementTick(world);
+				break;
+			case MoveSlot.Fly:
+				// Razor_MovementTick. A flyer type built without its .FM has no flight model and is left on
+				// the walker's move, which is wrong but is at least not a crash.
+				if (Flight is { } fly) {
+					FlyerMovementTick(world, fly);
+				} else {
 					MovementTick(world);
-					break;
-			}
+				}
 
-			return;
+				break;
+			case MoveSlot.Ram:
+				// See MechObject.Ramming.cs.
+				RamTick(world);
+				break;
+			default:
+				// deciding and in limbo. No move at all, which is what keeps a SPIDER that has vanished
+				// sunk under the map: the walk would put it back on the ground.
+				break;
 		}
-
-		PilotInputTick(world);
-		MovementTick(world);
 	}
 
 	/// <summary>
-	/// What a tick frozen by the developer keys' <c>Alt+S</c> does to the player's machine:
-	/// <c>Sim_MainTick</c> (<c>0045f464</c>) still runs <c>Sim_PollPlayerInput</c> under the freeze, so
-	/// the trigger, the throttle law and the turret go on, while the move, the power tick and a flyer's
-	/// flight input sit behind it. So a frozen machine turns if it has speed, slews its turret and fires,
-	/// and walks nowhere. See docs/retail/command-line.md's developer keys.
+	/// <c>Sim_PollPlayerInput</c> (<c>00460764</c>)'s part on the machine, which
+	/// <see cref="SimWorld"/> runs for <see cref="SimWorld.PlayerMech"/> straight after the group pass:
+	/// the control law — the throttle and turret (<see cref="PilotInputTick"/>), or a flyer's
+	/// <c>Razor_ApplyFlightInput</c> (<see cref="FlightControlTick"/>) — and then the trigger
+	/// (<see cref="FireTick"/>), in the original's order. The move the AI tick has already run this tick
+	/// integrated last tick's settings, so the controls reach the machine's next move. See
+	/// docs/retail/simulation/main-loop.md#the-tick.
 	/// </summary>
-	internal void FrozenTick(SimWorld world) {
-		FireTick(world);
-
-		if (Flight == null && !UnderAiControl) {
+	/// <param name="frozen">
+	/// The developer keys' <c>Alt+S</c> freeze, under which <c>Sim_MainTick</c> still runs the poll but the
+	/// poll skips a flyer's flight input. With the move and the systems pass stopped as well, a frozen
+	/// machine turns if it has speed, slews its turret and fires, and walks nowhere. See
+	/// docs/retail/command-line.md's developer keys.
+	/// </param>
+	internal void PlayerInputTick(SimWorld world, bool frozen) {
+		if (Flight is { } flight) {
+			if (!frozen) {
+				FlightControlTick(world, flight);
+			}
+		} else {
 			PilotInputTick(world);
 		}
+
+		FireTick(world);
 	}
 
-	/// <summary><c>Sim_PollPlayerInput</c>'s throttle and turret branch, ahead of the move.</summary>
+	/// <summary>
+	/// <c>Mech_PerTickSystemsUpdate</c> (<c>0041aa5c</c>) up to its lock steps, in its order: the reactor
+	/// and pool, the AI countdowns, the ECM's engagement gate and the jammer. <see cref="SimWorld"/> runs
+	/// it after the sensor sweep for every deployed machine still standing, and
+	/// <see cref="MissileLockTick"/> in a pass after it (see <see cref="JammerTick"/>). The pass follows the
+	/// input poll, so it counts down the refire delay of a shot fired this tick, the player's or a think's.
+	/// </summary>
+	internal void SystemsTick(SimWorld world) {
+		PowerTick(world);
+		AiTimersTick();
+		RaiseTargetEngagementGate();
+		JammerTick();
+	}
+
+	/// <summary><c>Sim_PollPlayerInput</c>'s throttle and turret branch, ahead of the trigger.</summary>
 	private void PilotInputTick(SimWorld world) {
 		LatchCenterBody();
 

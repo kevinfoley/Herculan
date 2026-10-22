@@ -18,11 +18,31 @@ public interface IKeyState {
 	bool IsKeyRepeated(Key key) => false;
 }
 
-/// <summary>The window's own keyboard, and the auto-repeat Windows would give it.</summary>
-public sealed class LiveKeys(IKeyboard device) : IKeyState {
+/// <summary>
+/// The window's own keyboard as DBSIM reads it, and the auto-repeat Windows would give it. Retail takes a key by its
+/// virtual-key code through <see cref="VkToScancode"/>, so on a layout other than US every key here is the one the
+/// layout makes of the physical key (<see cref="Layout"/>), and the handlers, a recording and the auto-repeat all see
+/// retail's keys: on a French AZERTY keyboard the key printed A is [A].
+/// </summary>
+public sealed class LiveKeys : IKeyState {
 	private readonly KeyRepeat _repeat = new(KeyRepeat.SystemTypematic());
 
-	public IKeyboard Device { get; } = device;
+	public LiveKeys(IKeyboard device) {
+		Device = device;
+		Positional = new PositionalKeys(this);
+		Layout.Refresh();
+	}
+
+	public IKeyboard Device { get; }
+
+	/// <summary>The layout's translation of a physical key into retail's, taken up again every frame by <see cref="AdvanceRepeat"/>.</summary>
+	public KeyboardLayout Layout { get; } = new(VkToScancode.KeyOf);
+
+	/// <summary>
+	/// The same keyboard with every key in its US place, for this engine's own keys that are placed rather than
+	/// named, such as the fly camera's [W] [A] [S] [D].
+	/// </summary>
+	public IKeyState Positional { get; }
 
 	/// <summary>
 	/// Keys the host holds down on another device's behalf, such as the [Alt] order key a gamepad's squad-order radial
@@ -31,12 +51,22 @@ public sealed class LiveKeys(IKeyboard device) : IKeyState {
 	/// </summary>
 	public HashSet<Key> HeldByHost { get; } = [];
 
-	public bool IsKeyPressed(Key key) => Device.IsKeyPressed(key) || HeldByHost.Contains(key);
+	public bool IsKeyPressed(Key key) => Layout.IsDown(Device, key) || HeldByHost.Contains(key);
 
-	public bool IsKeyRepeated(Key key) => _repeat.Repeated == key;
+	/// <summary>Windows repeats the physical key pressed last, so the repeat is kept by physical key and read as the key it makes.</summary>
+	public bool IsKeyRepeated(Key key) => _repeat.Repeated is { } physical && Layout.Translate(physical) == key;
 
-	/// <summary>Moves the auto-repeat on by one host frame, before anything reads the keys.</summary>
-	public void AdvanceRepeat(double deltaSeconds) => _repeat.Advance(Device.IsKeyPressed, deltaSeconds);
+	/// <summary>Moves the keyboard on by one host frame, before anything reads the keys: a layout switched since the last, then the auto-repeat.</summary>
+	public void AdvanceRepeat(double deltaSeconds) {
+		Layout.Refresh();
+		_repeat.Advance(Device.IsKeyPressed, deltaSeconds);
+	}
+
+	private sealed class PositionalKeys(LiveKeys keys) : IKeyState {
+		public bool IsKeyPressed(Key key) => keys.Device.IsKeyPressed(key) || keys.HeldByHost.Contains(key);
+
+		public bool IsKeyRepeated(Key key) => keys._repeat.Repeated == key;
+	}
 }
 
 /// <summary>

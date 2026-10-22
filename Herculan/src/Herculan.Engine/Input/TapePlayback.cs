@@ -17,6 +17,7 @@ public sealed class TapePlayback {
 	private readonly SimulatorPreferences _preferences;
 	private readonly Func<Vector2D<int>> _framebufferSize;
 	private readonly CockpitInput _cockpitInput;
+	private readonly KeyMap _keyMap;
 
 	// The replay's own state. Frame is the frame taken this host frame, if one was due; the keys it
 	// pressed are down for this frame only, and the next frame leaves them up before another press can
@@ -29,13 +30,15 @@ public sealed class TapePlayback {
 	/// <param name="preferences">The install's simulator preferences, whose video mode scales the tape's mouse.</param>
 	/// <param name="framebufferSize">The window's framebuffer size, which the tape's mouse is placed on.</param>
 	/// <param name="cockpitInput">The cockpit's click queue, which the tape's clicks go into.</param>
+	/// <param name="keyMap">The key map, whose <see cref="KeyAction.StopTape"/> stops the playback.</param>
 	public TapePlayback(InputTapePlayer? player, SimulatorPreferences preferences, Func<Vector2D<int>> framebufferSize,
-			CockpitInput cockpitInput) {
+			CockpitInput cockpitInput, KeyMap keyMap) {
 		Player = player;
 		Keys = player != null ? new TapeKeys() : null;
 		_preferences = preferences;
 		_framebufferSize = framebufferSize;
 		_cockpitInput = cockpitInput;
+		_keyMap = keyMap;
 	}
 
 	public InputTapePlayer? Player { get; }
@@ -75,20 +78,20 @@ public sealed class TapePlayback {
 	/// <summary>
 	/// The two things the live keyboard still does while a tape plays, both of which retail tests on the live
 	/// command word rather than the tape's: [Ctrl+E] stops the playback, and under -D any key that makes a
-	/// command code raises the abort.
+	/// command code raises the abort. Each key is the one the layout makes of it (<see cref="LiveKeys.Layout"/>).
 	/// </summary>
 	public void ListenTo(LiveKeys liveKeys) {
 		if (Player == null) {
 			return;
 		}
 
-		liveKeys.Device.KeyDown += (device, key, _) => {
-			if (Player.Finished) {
+		liveKeys.Device.KeyDown += (device, physical, _) => {
+			if (Player.Finished || liveKeys.Layout.Translate(physical) is not { } key) {
 				return;
 			}
 
 			bool ctrl = device.IsKeyPressed(Key.ControlLeft) || device.IsKeyPressed(Key.ControlRight);
-			if (Player.DemoMode || (ctrl && key == Key.E)) {
+			if (Player.DemoMode || (ctrl && key == _keyMap.KeyOf(KeyAction.StopTape))) {
 				_liveStopRequested = true;
 			}
 		};

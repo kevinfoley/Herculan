@@ -2,7 +2,9 @@
 
 The simulator's keyboard, by what each key does. Keys the manual does not list are marked **(not in the manual)**. The technical side — how a keystroke becomes a command code, and which handler answers it — is [`simulation/cockpit-input.md`](simulation/cockpit-input.md#keyboard-commands-are-scancodes); the joystick's bindings are [`simulation/joystick-input.md`](simulation/joystick-input.md).
 
-"Keypad" means the numeric keypad with Num Lock off. The arrow keys and the keypad's arrows are the same keys to the game.
+"Keypad" means the numeric keypad with Num Lock off. The arrow keys and the keypad's arrows are the same keys to the game, as are the keypad's `Enter` and `Enter`, and keypad `0` and `Insert`.
+
+On a keyboard other than the US layout, a key is the one that sends the key's Windows virtual-key code. DBSIM turns that code into a US scancode through a fixed table ([`simulation/cockpit-input.md`](simulation/cockpit-input.md#how-a-keystroke-becomes-one-of-those-codes)), so a letter is the key printed with that letter on any layout: on a French AZERTY keyboard `A` is the key marked A. A symbol key is whichever key the layout gives the US symbol's virtual-key code (`VK_OEM_7` for `'`), whatever is printed on it. The French and German on-line manuals' quick-reference page lists keys by their place on a US keyboard instead, so its AZERTY letters are wrong: it gives `Q` for the command display's ATTACK ENEMY, `Z` for the next weapon and `A` for the mission-status panel.
 
 A key held down acts again at the keyboard's repeat rate, as if pressed over and over: a held `[` keeps moving the shield balance, a held `W` keeps stepping through the weapons, and a held `V` goes in and out of the outside view. Only the key pressed last repeats. The driving and turret keys and `Space` are the exception: they are read as held for as long as they are down.
 
@@ -113,8 +115,11 @@ A joystick does the same with its stick and trigger, and its CHASE VIEW button f
 | `F11` | Mission objectives. |
 | `F12`, `Alt+P` | Preferences. |
 | `/` (the manual's `[?]`) | The on-line manual. |
-| `Enter`, `Esc` | Close a panel with its first button. |
+| `Enter` | On a panel, press the selected button, which is the first until `Tab` moves on. |
+| `Esc` | On a panel, press its cancel button. |
+| `Tab`, `Insert` | On a panel, select the next button, back to the first after the last. `Shift+Tab` does the same ([`simulation/alert-panels.md`](simulation/alert-panels.md#keys-and-the-press-flash)). |
 | `Alt+Enter` | Switch between full screen and a window. |
+| `Alt+Esc`, `Ctrl+Esc`, `Alt+Tab` | Leave full screen for a window. Nothing else in the game sees these keys. |
 
 While an input tape plays back, `Ctrl+E` stops it; see [`formats/tap-input-tape.md`](formats/tap-input-tape.md).
 

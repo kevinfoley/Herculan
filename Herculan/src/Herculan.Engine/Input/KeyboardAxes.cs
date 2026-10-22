@@ -1,37 +1,36 @@
 using Herculan.Engine.Sim;
-using Silk.NET.Input;
 
 namespace Herculan.Engine.Input;
 
 /// <summary>
 /// The keyboard's two axis pairs — <c>Input_BuildKeyboardAxes</c> (<c>0045a4b0</c>) over the fourteen keys
-/// <c>Input_KeyjoyAxisKey</c> (<c>0045a308</c>) holds. The first pair is steering and throttle, the second twist
-/// and pitch, and a binding decides which game axes each reaches (<see cref="JoystickBindings"/>). Each key is
-/// worth <see cref="MechControls.KeyboardAxis"/> on the axes its entry names. See
-/// docs/retail/simulation/joystick-input.md#the-keyboard.
+/// <c>Input_KeyjoyAxisKey</c> (<c>0045a308</c>) holds, each taken from the <see cref="KeyMap"/>. The first pair is
+/// steering and throttle, the second twist and pitch, and a binding decides which game axes each reaches
+/// (<see cref="JoystickBindings"/>). Each key is worth <see cref="MechControls.KeyboardAxis"/> on the axes its entry
+/// names. See docs/retail/simulation/joystick-input.md#the-keyboard.
 /// </summary>
 public static class KeyboardAxes {
-	// Keys 0-7, in the order of the original's wanted-codes list. Each scancode is two keys here: VkToScancode
-	// (004a1104) gives the arrow and editing cluster the keypad's own codes (TapeKeys.KeysOf).
-	private static readonly (Key Pad, Key Cluster, sbyte Dx, sbyte Dy, bool Diagonal)[] FirstPairKeys = {
-		(Key.Keypad7, Key.Home, -1, -1, true),
-		(Key.Keypad8, Key.Up, 0, -1, false),
-		(Key.Keypad9, Key.PageUp, 1, -1, true),
-		(Key.Keypad4, Key.Left, -1, 0, false),
-		(Key.Keypad6, Key.Right, 1, 0, false),
-		(Key.Keypad1, Key.End, -1, 1, true),
-		(Key.Keypad2, Key.Down, 0, 1, false),
-		(Key.Keypad3, Key.PageDown, 1, 1, true),
+	// Keys 0-7, in the order of the original's wanted-codes list. Each scancode is two keys here, the action's two
+	// chords: VkToScancode (004a1104) gives the arrow and editing cluster the keypad's own codes (TapeKeys.KeysOf).
+	private static readonly (KeyAction Action, sbyte Dx, sbyte Dy, bool Diagonal)[] FirstPairKeys = {
+		(KeyAction.DiagonalForwardLeft, -1, -1, true),
+		(KeyAction.ThrottleForward, 0, -1, false),
+		(KeyAction.DiagonalForwardRight, 1, -1, true),
+		(KeyAction.SteerLeft, -1, 0, false),
+		(KeyAction.SteerRight, 1, 0, false),
+		(KeyAction.DiagonalBackLeft, -1, 1, true),
+		(KeyAction.ThrottleBack, 0, 1, false),
+		(KeyAction.DiagonalBackRight, 1, 1, true),
 	};
 
-	// Keys 8-13.
-	private static readonly (Key Key, sbyte Dx, sbyte Dy)[] SecondPairKeys = {
-		(Key.M, 0, -1),
-		(Key.J, -1, 0),
-		(Key.K, 1, 0),
-		(Key.I, 0, 1),
-		(Key.KeypadSubtract, 0, -1),
-		(Key.KeypadAdd, 0, 1),
+	// Keys 8-13. The last two are the RAZOR's throttle keys.
+	private static readonly (KeyAction Action, sbyte Dx, sbyte Dy, bool Razor)[] SecondPairKeys = {
+		(KeyAction.TurretDown, 0, -1, false),
+		(KeyAction.TurretLeft, -1, 0, false),
+		(KeyAction.TurretRight, 1, 0, false),
+		(KeyAction.TurretUp, 0, 1, false),
+		(KeyAction.RazorThrottleDown, 0, -1, true),
+		(KeyAction.RazorThrottleUp, 0, 1, true),
 	};
 
 	/// <summary>
@@ -42,10 +41,10 @@ public static class KeyboardAxes {
 	/// Keypad <c>-</c> and <c>+</c> are axis keys: a RAZOR's, whose second pair's pitch is its throttle.
 	/// <c>Input_KeyjoyAxisKey</c> passes them on otherwise.
 	/// </param>
-	public static PilotAxes Build(IKeyState keys, bool throttleKeys) {
+	public static PilotAxes Build(IKeyState keys, KeyMap keyMap, bool throttleKeys) {
 		int steer = 0, throttle = 0;
-		foreach (var (pad, cluster, dx, dy, diagonal) in FirstPairKeys) {
-			if (!keys.IsKeyPressed(pad) && !keys.IsKeyPressed(cluster)) {
+		foreach (var (action, dx, dy, diagonal) in FirstPairKeys) {
+			if (!keyMap.IsDown(keys, action)) {
 				continue;
 			}
 
@@ -59,12 +58,12 @@ public static class KeyboardAxes {
 		}
 
 		int twist = 0, pitch = 0;
-		foreach (var (key, dx, dy) in SecondPairKeys) {
-			if (key is Key.KeypadSubtract or Key.KeypadAdd && !throttleKeys) {
+		foreach (var (action, dx, dy, razor) in SecondPairKeys) {
+			if (razor && !throttleKeys) {
 				continue;
 			}
 
-			if (keys.IsKeyPressed(key)) {
+			if (keys.IsKeyPressed(keyMap.KeyOf(action))) {
 				(twist, pitch) = (dx, dy);
 				break;
 			}

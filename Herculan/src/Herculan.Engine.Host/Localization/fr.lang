@@ -74,6 +74,17 @@ tweaks.none                    Aucun
 tweaks.defaults                Par défaut
 tweaks.recommended             Recommandés
 tweaks.all                     Tous
+a11y.title                     Accessibilité
+a11y.category.motor            Motricité
+a11y.category.cognitive        Cognition
+a11y.category.vision           Vision
+a11y.category.hearing          Audition
+a11y.larger_font.display_name  Police plus grande
+a11y.larger_font.description   Affiche le texte des menus et fenêtres propres à HERCULAN en plus grand. Les écrans du jeu lui-même ne changent pas.
+a11y.disable_damage_flash.display_name Désactiver le flash rouge
+a11y.disable_damage_flash.description Quand votre cockpit est touché, l'écran ne clignote plus en rouge. L'écran tremble toujours.
+a11y.disable_damage_shake.display_name Désactiver le tremblement
+a11y.disable_damage_shake.description Quand votre cockpit est touché, l'écran ne tremble plus. Le flash rouge de dégâts apparaît toujours.
 install_prompt.window_title    HERCULAN Engine — Trouver Earthsiege 2
 install_prompt.message         HERCULAN n'a pas trouvé Earthsiege 2. Choisissez le dossier d'Earthsiege 2 : celui qui contient le dossier {0}.
 install_prompt.path_hint       Dossier d'Earthsiege 2
@@ -92,8 +103,10 @@ crash.window_title            HERCULAN Engine — Erreur
 crash.message                 HERCULAN s'est arrêté à cause d'une erreur : {0} Les détails se trouvent dans {1}.
 menu.debug                     Débogage
 menu.tweaks                    Ajustements
+menu.accessibility             Accessibilité
 menu.settings                  Paramètres
 menu.controller                Manette
+menu.keys                      Touches
 menu.editor                    Éditeur
 menu.about                     À propos
 pause.title                    Pause
@@ -207,6 +220,110 @@ controller.invert_razor_pitch_tip   Inverse le sens dans lequel les commandes l�
 controller.actions_note        Cette fenêtre choisit les parties de votre périphérique que le jeu utilise. Ce que fait chacune (diriger ou viser, FIRE, TARGET, etc.) se règle en mission : appuyez sur F12 pour les préférences, puis CONTROLS. Avec une manette de jeu, les lignes JOYSTICK, THROTTLE, RUDDER et HAT y sont réglées pour elle, et ses choix de boutons sont gardés à part de ceux d'un joystick. Les réglages sont enregistrés dans data\herculan-joystick.cfg, que le jeu original ne lit pas.
 controller.defaults            Par défaut
 controller.no_data_folder      Il n'y a pas de dossier data où enregistrer les réglages.
+keys.title                     Touches
+keys.filter_hint               Chercher une touche ou action
+keys.column_key                Touche
+keys.column_action             Effet
+keys.no_match                  Aucune touche ne correspond.
+keys.section.driving           Pilotage
+keys.section.weapons           Armes
+keys.section.targeting         Ciblage et boucliers
+keys.section.displays          Écrans et vues
+keys.section.flash_comm        Sur FLASH COMM
+keys.section.command_display   Sur l'affichage des commandes
+keys.section.damage_detail     Sur le détail des dégâts
+keys.section.outside_view      En vue externe
+keys.section.panels            Panneaux et partie
+keys.section.herculan          Touches propres à HERCULAN
+keys.row.throttle              Régime moteur en avant et en arrière. La touche arrière maintenue fait passer le régime par zéro jusqu'en marche arrière.
+keys.row.steer                 Tourner à gauche et à droite.
+keys.row.all_stop              Arrêt complet.
+keys.row.turret_twist          Faire pivoter la tourelle à gauche et à droite.
+keys.row.turret_pitch          Incliner la tourelle vers le haut et vers le bas.
+keys.row.center_turret         Centrer la tourelle sur le corps et couper le suivi automatique de la tourelle.
+keys.row.center_legs           Centrer les jambes sous la tourelle.
+keys.row.razor_throttle        Régime moteur vers le haut et vers le bas, dans le RAZOR.
+keys.row.diagonals             Tourner et régler le régime en même temps, en diagonale ; prime sur les flèches et le reste du pavé numérique.
+keys.row.fire                  Tirer, tant que la touche est maintenue.
+keys.row.select_row            Sélectionner la rangée d'armes 1 à 10.
+keys.row.chain_row             Ajouter cette rangée d'armes à la chaîne de tir en cours, ou l'en retirer.
+keys.row.next_weapon           Arme suivante et précédente.
+keys.row.link_weapon           Relier l'arme sélectionnée à l'arme identique sur le point d'emport opposé.
+keys.row.next_chain            Chaîne de tir suivante.
+keys.row.power_level           Augmenter ou baisser le niveau de puissance de l'arme à énergie sélectionnée, d'un cran par pression. Dans le RAZOR, la paire du pavé numérique règle plutôt le régime moteur.
+keys.row.next_target           Sélectionner la cible suivante.
+keys.row.nearest_target        Sélectionner la cible la plus proche.
+keys.row.clear_target          Annuler la cible.
+keys.row.target_component      Parcourir les composants de la cible, avec un dispositif de visée (Targeting Pod).
+keys.row.radar_mode            Faire passer le radar d'actif à passif et inversement.
+keys.row.radar_range           Changer la portée du radar, en mode actif.
+keys.row.scanner_next_target   Sur l'écran SCANNER, sélectionner la cible suivante.
+keys.row.turret_tracking       Suivi automatique de la tourelle activé ou désactivé. Le désactiver centre aussi la tourelle.
+keys.row.shields               Déplacer la puissance des boucliers vers l'arrière ou vers l'avant.
+keys.row.mfd_status            Afficher STATUS sur le MFD, aussi depuis l'affichage tête basse.
+keys.row.mfd_flash_comm        Afficher FLASH COMM sur le MFD, aussi depuis l'affichage tête basse.
+keys.row.mfd_nav_map           Afficher NAV MAP sur le MFD, aussi depuis l'affichage tête basse.
+keys.row.mfd_scanner           Afficher SCANNER sur le MFD, aussi depuis l'affichage tête basse.
+keys.row.mfd_target            Afficher TARGET sur le MFD, aussi depuis l'affichage tête basse.
+keys.row.mfd_missile_cam       Afficher MISSILE CAM sur le MFD, aussi depuis l'affichage tête basse.
+keys.row.command_display       Afficher l'affichage des commandes sur l'affichage tête basse.
+keys.row.damage_detail         Afficher le détail des dégâts sur l'affichage tête basse.
+keys.row.look_sideways         Regarder par les fenêtres de gauche et de droite.
+keys.row.view_back             Depuis la vue avant, descendre à l'affichage tête basse. Revenir à la vue avant depuis une fenêtre latérale ou l'affichage tête basse, et au cockpit depuis la vue externe.
+keys.row.outside_view          Passer à la vue externe, et revenir au cockpit.
+keys.row.other_hercs           Sur l'écran STATUS, alterner entre votre HERC et ceux de vos coéquipiers. Sur l'écran TARGET, sélectionner la cible suivante.
+keys.row.nav_marker            Poser une balise de navigation là où vous êtes.
+keys.row.flash_comm_pick       Choisir un ordre : ATTACK MY TARGET, IGNORE MY TARGET, HELP ME OUT!, JOIN ON ME, SCAN FOR HOSTILES, EMCON, FIRE AT WILL / HOLD YOUR FIRE.
+keys.row.step_orders           Parcourir les ordres.
+keys.row.flash_comm_transmit   Transmettre l'ordre.
+keys.row.flash_comm_send       Choisir et transmettre les mêmes ordres depuis n'importe quel écran.
+keys.row.command_squadmate     Choisir un coéquipier, de gauche à droite.
+keys.row.command_order         Choisir un ordre : DISENGAGE, ATTACK ENEMY, DEFEND POSITION, PATROL GRIDPOINT, GOTO GRIDPOINT, JOIN ON ME, SCAN FOR HOSTILES, EMCON.
+keys.row.command_next_unit     Pour ATTACK ENEMY ou DEFEND POSITION, choisir l'unité suivante sur la carte que l'ordre peut viser : un ennemi connu, ou une unité alliée.
+keys.row.command_pick          Faire le choix de l'ordre comme le ferait un clic : l'unité choisie en dernier pour ATTACK ENEMY ou DEFEND POSITION, sinon ce qui est sous le pointeur.
+keys.row.command_zoom          Zoomer la carte en avant et en arrière.
+keys.row.command_scroll        Faire défiler la carte.
+keys.row.command_recenter      Recentrer la carte sur votre HERC.
+keys.row.command_transmit      Transmettre l'ordre, ou l'annuler.
+keys.row.damage_show           Afficher les systèmes structurels, internes et d'armes.
+keys.row.damage_step           Parcourir les systèmes structurels, internes et d'armes.
+keys.row.damage_herc           Parcourir les HERC : le vôtre, celui de chaque coéquipier, puis celui de votre cible.
+keys.row.camera_swing          Faire pivoter la caméra autour du HERC et au-dessus.
+keys.row.camera_zoom           Zoomer en avant et en arrière.
+keys.row.camera_swap           Passer les commandes au HERC, que vous pilotez et faites tirer depuis l'extérieur, puis les rendre à la caméra.
+keys.row.camera_next           Regarder le HERC suivant de votre escouade. Les commandes restent à la caméra tant que ce n'est pas le vôtre.
+keys.row.camera_back           Revenir au cockpit.
+keys.row.mission_status        Afficher l'état de la mission, avec un moyen d'en sortir.
+keys.row.pause                 Pause.
+keys.row.quit_game             Quitter le jeu.
+keys.row.objectives            Afficher les objectifs de la mission.
+keys.row.preferences           Ouvrir les préférences.
+keys.row.online_manual         Ouvrir le manuel en ligne.
+keys.row.panel_accept          Sur un panneau, appuyer sur le bouton sélectionné, le premier tant qu'aucun autre n'est sélectionné.
+keys.row.panel_cancel          Sur un panneau, appuyer sur son bouton d'annulation.
+keys.row.panel_next            Sur un panneau, sélectionner le bouton suivant, puis le premier après le dernier.
+keys.row.full_screen           Basculer entre plein écran et fenêtre.
+keys.row.leave_full_screen     Quitter le plein écran pour une fenêtre.
+keys.row.stop_tape             Arrêter la lecture d'un enregistrement des commandes.
+keys.row.menu_bar              Ouvrir la barre de menus d'HERCULAN ; appuyer de nouveau pour en sortir.
+keys.row.menu_back             Quitter la barre de menus ou l'une de ses fenêtres, quand elle est ouverte.
+keys.row.copy_frame            En plein écran, copier l'image dans le presse-papiers.
+keycap.ctrl                    Ctrl
+keycap.alt                     Alt
+keycap.shift                   Maj
+keycap.escape                  Échap
+keycap.enter                   Entrée
+keycap.tab                     Tab
+keycap.space                   Espace
+keycap.backspace               Retour arrière
+keycap.insert                  Inser
+keycap.up                      Flèche haut
+keycap.down                    Flèche bas
+keycap.left                    Flèche gauche
+keycap.right                   Flèche droite
+keycap.print_screen            Impr. écran
+keycap.function                F{0}
+keycap.keypad                  Pavé num. {0}
 disc_prompt.message            Choisissez le dossier du disque d'Earthsiege 2, comme le lecteur de CD ou une copie du disque. Il est enregistré dans le fichier data\{0} de l'installation, que le jeu original lit aussi, et l'interface de jeu redémarre.
 disc_prompt.path_hint          Dossier du disque
 disc_prompt.picker_title       Choisissez le dossier du disque d'Earthsiege 2

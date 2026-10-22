@@ -10,7 +10,7 @@ namespace HercWorks.Query;
 /// </summary>
 internal static class Program {
 	private const string Usage = """
-		HercWorks.Query — search the retail .MSN missions.
+		HercWorks.Query — search the retail .MSN missions and chassis records.
 
 		  structures --type <index|name>   row #14 records of a BASES.DAT type
 		  mechs      --type <index|name>   row #12 records of a MECHS.NAM type
@@ -53,6 +53,11 @@ internal static class Program {
 		                                   or of those named, carry each value of field X, most first; raw, as
 		                                   records reads them
 
+		  chassis [--field <name|offset>]  every chassis' dat\<name>.DAT type record, in MECHS.NAM order:
+		                                   with --field, each chassis' value of that field in decimal
+		                                   and hex; without, the record's fields with their offsets and
+		                                   types. --type picks the chassis (default all)
+
 		  census                           every entry of every archive in the install's VOL folder
 		                                   through the HercWorks reader bound to it, written back and
 		                                   compared: per archive and type, how many round-trip, parse,
@@ -73,7 +78,11 @@ internal static class Program {
 		  --row N           records: list only row #N, 1-17; values: the row to count
 		  --field X         values: a property of the row's record type, any case (--field TypeIndex); an
 		                    array takes an element index (--field OrderRefs[0]), and without one each
-		                    whole array is a value. An unknown field lists the row's fields
+		                    whole array is a value. An unknown field lists the row's fields.
+		                    chassis: a record field, by name (whole, then prefix) or by record offset
+		                    (0x52, 82). An offset that starts no field prints the word stored there
+		                    and names the field it falls in. Record offset N is the exe's type-record
+		                    offset N+2.
 		  --non-squad       values: leave out the player's squad: row #16's group 0 and every later
 		                    record with its GUID, the row #12 records those name and the alternatives
 		                    their variant keys draw; row #15 keeps the orders a group outside it names
@@ -112,14 +121,14 @@ internal static class Program {
 				case "--against" when i + 1 < args.Length:
 					against = args[++i];
 					break;
+				case "--field" when i + 1 < args.Length:
+					field = args[++i];
+					break;
 				case "--ids" when i + 1 < args.Length:
 					ids = args[++i];
 					break;
 				case "--row" when i + 1 < args.Length:
 					rowOption = args[++i];
-					break;
-				case "--field" when i + 1 < args.Length:
-					field = args[++i];
 					break;
 				case "--kind" when i + 1 < args.Length:
 					kindOption = args[++i];
@@ -190,6 +199,10 @@ internal static class Program {
 			}
 
 			return 0;
+		}
+
+		if (command == "chassis") {
+			return Chassis(output, data, type, field, json);
 		}
 
 		if (command == "missions") {
@@ -400,6 +413,46 @@ internal static class Program {
 			WriteJson(output, query);
 		} else {
 			TextReport.Types(output, data, query, variants);
+		}
+
+		return 0;
+	}
+
+	private static int Chassis(TextWriter output, RetailData data, string? type, string? spec, bool json) {
+		if (data.Chassis.FirstOrDefault(c => c.Bytes != null)?.Bytes is not { } sample) {
+			return Fail($"No chassis record in {RetailData.SimulatorArchive}.");
+		}
+
+		var fields = ChassisQuery.Fields(sample.Length);
+		var chassis = data.Chassis;
+		if (type != null) {
+			if (TypeQuery.ResolveTypes(data, RosterKind.Mech, type) is not { } types
+					|| chassis.Where(c => types.Contains(c.Index)).ToList() is not { Count: > 0 } picked) {
+				return Fail($"No chassis is named {type}; `types mechs` lists them.");
+			}
+
+			chassis = picked;
+		}
+
+		if (spec == null) {
+			if (json) {
+				WriteJson(output, fields);
+			} else {
+				ChassisQuery.WriteFields(output, fields, sample.Length);
+			}
+
+			return 0;
+		}
+
+		if (ChassisQuery.ResolveOffset(fields, spec, sample.Length, out var named, out string? error) is not { } offset) {
+			return Fail(error!);
+		}
+
+		var result = ChassisQuery.Run(chassis, fields, offset, named);
+		if (json) {
+			WriteJson(output, result);
+		} else {
+			ChassisQuery.Write(output, result);
 		}
 
 		return 0;

@@ -106,10 +106,6 @@ public enum MoveSlot {
 /// (<c>00413ed4</c>) fills at startup. Field meanings, the flag-bit consumers and the whole
 /// dispatch model are in docs/retail/simulation/ai-dispatch.md; this is a transcription of the table the
 /// initialiser writes, read out of the disassembly rather than out of any data file.
-///
-/// <para><b>The move slot is dispatched from the object pass, not the AI tick.</b>
-/// <see cref="MechObject.Tick"/> runs <see cref="Move"/> for every machine ahead of the group pass that
-/// runs the think, so the original's "integrate on the last think's decisions" ordering falls out.</para>
 /// </summary>
 public sealed class BehaviourState {
 	private BehaviourState(int index, string name, int dwell, int flags, ReassessSlot reassess,

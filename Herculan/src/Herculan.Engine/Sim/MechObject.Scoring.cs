@@ -79,9 +79,10 @@ public sealed partial class MechObject {
 	private readonly short[] _killsByClass = new short[(int)TargetClass.GroundVehicle + 1];
 
 	/// <summary>
-	/// <c>mech+0xb3</c> — the mission placed this machine already broken, so its wreck is worth nothing.
-	/// <see cref="ApplyStartingCondition"/> raises it on its two worst grades, so a mission cannot be farmed
-	/// by authoring derelicts into it.
+	/// <c>mech+0xb3</c> — this machine's wreck is worth nothing. The constructor raises it for a chassis
+	/// with no salvage scale, and <see cref="ApplyStartingCondition"/> on its two worst grades, so a
+	/// mission cannot be farmed by authoring derelicts into it. See
+	/// docs/retail/simulation/component-damage.md#what-a-wreck-is-worth--mech_salvagevalue-00418e60.
 	/// </summary>
 	public bool WorthNoSalvage { get; private set; }
 

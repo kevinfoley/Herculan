@@ -24,6 +24,7 @@ public sealed class ModalPanels {
 	private readonly SimWorld _world;
 	private readonly SimulatorPreferences _preferences;
 	private readonly bool _hasCockpit;
+	private readonly KeyMap _keyMap;
 
 	private int _objectivesKeysDown;
 	private int _preferencesKeysDown;
@@ -50,9 +51,11 @@ public sealed class ModalPanels {
 	private double _panelTicks;
 	private long PanelTicks => (long)_panelTicks;
 
+	/// <param name="keyMap">Where the panels' keys are read from.</param>
 	public ModalPanels(SimulatorStart start, IPointerDevice pointer, CockpitView view, bool hasCockpit,
-			JoystickCapabilities stagedJoystick) {
+			JoystickCapabilities stagedJoystick, KeyMap keyMap) {
 		_pointer = pointer;
+		_keyMap = keyMap;
 		_view = view;
 		_mission = start.Mission;
 		_world = start.World;
@@ -154,13 +157,16 @@ public sealed class ModalPanels {
 		}
 
 		if (StatusAlert == null) {
-			Console.Error.WriteLine("[Q] mission-status alert: GNL_ALRT.STR is missing; the panel will not open.");
+			Console.Error.WriteLine($"[{_keyMap.Chord(KeyAction.MissionStatus)}] mission-status alert: GNL_ALRT.STR is "
+				+ "missing; the panel will not open.");
 		}
 		if (Objectives == null) {
-			Console.Error.WriteLine("[F11] objectives panel: OBJ_ALRT.STR is missing; the panel will not open.");
+			Console.Error.WriteLine($"[{_keyMap.Chord(KeyAction.Objectives)}] objectives panel: OBJ_ALRT.STR is missing; "
+				+ "the panel will not open.");
 		}
 		if (Preferences == null) {
-			Console.Error.WriteLine("[F12] preferences panel: PRF_ALRT.STR is missing; the panel will not open.");
+			Console.Error.WriteLine($"[{_keyMap.Chord(KeyAction.Preferences)}] preferences panel: PRF_ALRT.STR is missing; "
+				+ "the panel will not open.");
 		}
 		if (Controls == null) {
 			Console.Error.WriteLine("CONTROLS panel: CTL_ALRT.STR is missing; the panel will not open.");
@@ -415,12 +421,17 @@ public sealed class ModalPanels {
 		}
 
 		bool ctrl = keyboard.IsKeyPressed(Key.ControlLeft) || keyboard.IsKeyPressed(Key.ControlRight);
-		bool q = Edge(Key.Q, 0);
+		bool q = Edge(_keyMap.KeyOf(KeyAction.MissionStatus), 0);
 		var key = PanelKey(keyboard, ref _statusAlertKeysDown);
-		bool pause = Edge(Key.P, 4);
+		bool pause = Edge(_keyMap.KeyOf(KeyAction.Pause), 4);
+
+		// [Ctrl+Q]'s key keeps a bit of its own beside [Q]'s, as two bindings sharing a key do; [Ctrl] decides which
+		// of the two acts.
+		bool quit = Edge(_keyMap.KeyOf(KeyAction.QuitGame), 5);
+		bool statusKey = ctrl ? quit : q;
 
 		if (StatusAlert.IsOpen) {
-			return StatusAlert.HandleKey(key, PanelTicks) || q || pause;
+			return StatusAlert.HandleKey(key, PanelTicks) || statusKey || pause;
 		}
 
 		if (!CanRaiseStatusAlert(missionOver)) {
@@ -429,14 +440,14 @@ public sealed class ModalPanels {
 
 		// [Ctrl+Q] is command 0x410 — the Ctrl bit over Q's own scancode — and asks to leave the game
 		// rather than the mission. [Q] alone asks how the mission stands, and [P] pauses.
-		if (q) {
+		if (statusKey) {
 			return ctrl
 				? OpenStatusAlert((MissionStatus)StatusAlertPanel.ExitGameStatus, _world.Mission.Objectives)
 				: RaiseStatusAlertForQuit();
 		}
 
-		// [Ctrl+P] is 0x419, a developer key, and never reaches the pause.
-		if (pause && !ctrl) {
+		// [Ctrl+P] is 0x419, a developer key, and [Alt+P] is 0x219, the preferences panel's: neither reaches the pause.
+		if (pause && !ctrl && !AltHeld(keyboard)) {
 			return OpenStatusAlert((MissionStatus)StatusAlertPanel.PauseStatus, _world.Mission.Objectives);
 		}
 
@@ -457,7 +468,7 @@ public sealed class ModalPanels {
 			return false;
 		}
 
-		bool open = Edge(Key.F11, 0);
+		bool open = Edge(_keyMap.KeyOf(KeyAction.Objectives), 0);
 		var key = PanelKey(keyboard, ref _objectivesKeysDown);
 
 		if (Objectives.IsOpen) {
@@ -474,13 +485,10 @@ public sealed class ModalPanels {
 		bool Edge(Key key, int bit) => KeyBit(keyboard, key, bit, ref _objectivesKeysDown);
 	}
 
-	// [F12] puts the preferences panel up — scancode 0x58 through CockpitWidgets_HandleCommand
-	// (PreferencesPanel_Raise, 0045cfd4) — and [Esc] takes it down: the panel's own handler presses the cancel
-	// widget the constructor set to DONE. [Return] presses the focused widget (PreferencesPanel.Focus). As with [F11], nothing in the panel's loop answers 0x58, so a second
-	// press does not close it.
-	//
-	// The original also reaches this panel on [Alt+P], command 0x219. Not bound here: [P] alone is the
-	// pause panel, and this host has no Alt-modified command bank yet.
+	// [F12] and [Alt+P] put the preferences panel up — commands 0x58 and 0x219, both PreferencesPanel_Raise
+	// (0045cfd4) — and [Esc] takes it down: the panel's own handler presses the cancel widget the constructor set to
+	// DONE. [Return] presses the focused widget (PreferencesPanel.Focus). As with [F11], nothing in the panel's loop
+	// answers either code, so a second press does not close it.
 	//
 	// Returns whether the panel claimed the keystroke, so [Esc] does not also reach the debug panel.
 	private bool ReadPreferencesKeys(IKeyState? keyboard) {
@@ -489,7 +497,11 @@ public sealed class ModalPanels {
 			return false;
 		}
 
-		bool open = Edge(Key.F12, 0);
+		// [Alt+P]'s key keeps a bit of its own beside [P]'s pause, as two bindings sharing a key do. `|`, not `||`, so
+		// both bits are refreshed every frame.
+		var openKeys = _keyMap.Chords(KeyAction.Preferences);
+		bool open = Edge(openKeys[0].Key, 0)
+			| (Edge(openKeys[1].Key, 4) && AltHeld(keyboard) && !CtrlHeld(keyboard));
 		var key = PanelKey(keyboard, ref _preferencesKeysDown);
 
 		// The controls panel is modal over this one: while it is up it answers the keys, and this panel
@@ -516,14 +528,17 @@ public sealed class ModalPanels {
 	// The one code the panel's handler matches this frame, off bits 1-3 and 8-10 of the panel's held-key mask.
 	// [Shift] is not tested: SimCommandMask strips it from the input block's command word the handler reads,
 	// so [Shift+Return] is [Return] and [Shift+Tab] is [Tab]. With [Alt] or [Ctrl] down these are other codes,
-	// which the handler does not answer.
-	private static AlertPanelKey PanelKey(IKeyState keyboard, ref int keysDown) {
+	// which the handler does not answer. Each chord of an action has its own bit.
+	private AlertPanelKey PanelKey(IKeyState keyboard, ref int keysDown) {
+		var accept = _keyMap.Chords(KeyAction.PanelAccept);
+		var nextButton = _keyMap.Chords(KeyAction.PanelNextButton);
+
 		// `|`, not `||`: every edge must be read every frame or the one that is skipped never updates its held
 		// state, and the next press of it is swallowed.
-		bool enter = KeyBit(keyboard, Key.Enter, 1, ref keysDown) | KeyBit(keyboard, Key.KeypadEnter, 2, ref keysDown);
-		bool escape = KeyBit(keyboard, Key.Escape, 3, ref keysDown);
-		bool next = KeyBit(keyboard, Key.Tab, 8, ref keysDown)
-			| KeyBit(keyboard, Key.Keypad0, 9, ref keysDown) | KeyBit(keyboard, Key.Insert, 10, ref keysDown);
+		bool enter = KeyBit(keyboard, accept[0].Key, 1, ref keysDown) | KeyBit(keyboard, accept[1].Key, 2, ref keysDown);
+		bool escape = KeyBit(keyboard, _keyMap.KeyOf(KeyAction.PanelCancel), 3, ref keysDown);
+		bool next = KeyBit(keyboard, nextButton[0].Key, 8, ref keysDown)
+			| KeyBit(keyboard, nextButton[1].Key, 9, ref keysDown) | KeyBit(keyboard, nextButton[2].Key, 10, ref keysDown);
 
 		if (!Unmodified(keyboard)) {
 			return AlertPanelKey.None;

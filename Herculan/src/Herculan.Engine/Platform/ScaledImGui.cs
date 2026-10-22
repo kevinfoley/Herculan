@@ -1,4 +1,6 @@
 using System.Numerics;
+using System.Runtime.InteropServices;
+using Herculan.Engine.Settings;
 using ImGuiNET;
 using Silk.NET.Input;
 using Silk.NET.OpenGL;
@@ -17,14 +19,25 @@ namespace Herculan.Engine.Platform;
 ///
 /// <para>When the window moves to a display of another scale, or the scale setting changes, the controller is built
 /// again: Silk bakes the font atlas once, in the constructor, and keeps rebuilding its texture private. Building
-/// again forgets ImGui's own state with the old context, such as where a panel was dragged to.</para>
+/// again forgets ImGui's own state with the old context, such as where a panel was dragged to. So does turning the
+/// <see cref="A11ySettingDefinitions.LargerFont"/> setting on or off, which bakes the font at
+/// <see cref="LargerFontSize"/>; every size given through <see cref="Scaled(float)"/> grows with it.</para>
 /// </summary>
 public sealed class ScaledImGui : IDisposable {
-	/// <summary>The font's size in pixels on a 100% display.</summary>
-	public const float FontSize = 16f;
+	/// <summary>The font's size in pixels on a 100% display, and the size every other size in pixels is given against.</summary>
+	public const float FontSize = 20f;
+
+	/// <summary>The font's size in pixels on a 100% display under <see cref="A11ySettingDefinitions.LargerFont"/>.</summary>
+	public const float LargerFontSize = 40f;
 
 	/// <summary>How many times <see cref="FontSize"/> <see cref="LargeFont"/> is.</summary>
 	public const float LargeFontScale = 2f;
+
+	// The characters every font is baked with: ImGui's default Basic Latin and Latin-1 Supplement, and General
+	// Punctuation for the .lang files' dashes, ellipsis and German quotes, which would otherwise draw as '?'. Pinned for
+	// the life of the process, since ImGui keeps the pointer for every rebuild of the atlas.
+	private static readonly ushort[] GlyphRanges = [0x0020, 0x00ff, 0x2000, 0x206f, 0];
+	private static readonly nint GlyphRangesPointer = GCHandle.Alloc(GlyphRanges, GCHandleType.Pinned).AddrOfPinnedObject();
 
 	private readonly GL _gl;
 	private readonly EngineWindow _window;
@@ -35,6 +48,7 @@ public sealed class ScaledImGui : IDisposable {
 	private ImGuiController _controller;
 	private float _builtContentScale;
 	private float _builtClientScale;
+	private float _builtFontSize;
 
 	/// <param name="fontPath">The TrueType font every ImGui window draws in.</param>
 	/// <param name="italicFontPath">Its italic face, for <see cref="ItalicFont"/>; null for none.</param>
@@ -116,12 +130,16 @@ public sealed class ScaledImGui : IDisposable {
 	/// </summary>
 	public Func<Vector2?>? PointerOverride { get; set; }
 
-	/// <summary>Starts the next ImGui frame, first building the controller again if the display's scale changed.</summary>
+	/// <summary>
+	/// Starts the next ImGui frame, first building the controller again if the display's scale or the font's size
+	/// changed.
+	/// </summary>
 	public void Update(float deltaSeconds) {
 		// Compared loosely: the client scale is a ratio of two sizes, which a resize need not update together.
-		if (_window.ClientScale is { } clientScale
+		if ((_window.ClientScale is { } clientScale
 				&& (MathF.Abs(_window.ContentScale - _builtContentScale) > 0.01f
-					|| MathF.Abs(clientScale - _builtClientScale) > 0.01f)) {
+					|| MathF.Abs(clientScale - _builtClientScale) > 0.01f))
+				|| ChosenFontSize != _builtFontSize) {
 			_controller.Dispose();
 			_controller = Build();
 		}
@@ -158,6 +176,9 @@ public sealed class ScaledImGui : IDisposable {
 
 	public void Dispose() => _controller.Dispose();
 
+	private static float ChosenFontSize =>
+		A11ySettings.Current.GetSettingValue(A11ySettingDefinitions.LargerFont) ? LargerFontSize : FontSize;
+
 	// Silk's controller writes io.MouseDown from the mouse alone just before NewFrame, and NewFrame then applies the queued
 	// events over it, so the button's state with the other control's goes in as an event. ImGui drops an event that
 	// repeats the button's last state, which it reads from io.MouseDown, so that is set to the opposite first; the
@@ -193,12 +214,18 @@ public sealed class ScaledImGui : IDisposable {
 	private ImGuiController Build() {
 		_builtContentScale = _window.ContentScale;
 		_builtClientScale = _window.ClientScale ?? _builtContentScale;
-		float pixels = MathF.Round(FontSize * _builtContentScale);
-		var controller = new ImGuiController(_gl, _window.View, _input, new ImGuiFontConfig(_fontPath, (int)pixels), () => {
+		_builtFontSize = ChosenFontSize;
+		float pixels = MathF.Round(_builtFontSize * _builtContentScale);
+		var fontConfig = new ImGuiFontConfig(_fontPath, (int)pixels, _ => GlyphRangesPointer);
+		var controller = new ImGuiController(_gl, _window.View, _input, fontConfig, () => {
 			var fonts = ImGui.GetIO().Fonts;
-			LargeFont = fonts.AddFontFromFileTTF(_fontPath, pixels * LargeFontScale);
-			ItalicFont = _italicFontPath != null ? fonts.AddFontFromFileTTF(_italicFontPath, pixels) : null;
-			BoldFont = _boldFontPath != null ? fonts.AddFontFromFileTTF(_boldFontPath, pixels) : null;
+			LargeFont = fonts.AddFontFromFileTTF(_fontPath, pixels * LargeFontScale, default, GlyphRangesPointer);
+			ItalicFont = _italicFontPath != null
+				? fonts.AddFontFromFileTTF(_italicFontPath, pixels, default, GlyphRangesPointer)
+				: null;
+			BoldFont = _boldFontPath != null
+				? fonts.AddFontFromFileTTF(_boldFontPath, pixels, default, GlyphRangesPointer)
+				: null;
 		});
 		ImGui.GetIO().FontGlobalScale = _builtClientScale / _builtContentScale;
 		ImGui.GetStyle().ScaleAllSizes(_builtClientScale);
