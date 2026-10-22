@@ -34,9 +34,10 @@ public sealed record VariantTable(short Guid, short Key, short Bound, short Requ
 /// itself, all of one row, no other table carries its key, and the player's squad draws nothing from it
 /// (<see cref="Table"/>'s <see cref="VariantTable.WhyFixed"/>). The rest, row 8's waypoint lists among them, are shown
 /// only.</item>
-/// <item>The chances are whole percents: each edit of them writes the ranges over the table, contiguous from 0 in the ranges'
-/// row-1 order, and the bound 100 (<see cref="SetChances"/>). A draw below any bound of 1 or more takes one step of VSHELL's
-/// generator, <c>ShellRandom_Below</c> (<c>004659ec</c>) being <c>(ShellRandom_Next() &amp; 0x7fff) % n</c>
+/// <item>The chances are percents to one decimal: each edit of them writes the ranges over the table, contiguous from 0 in the
+/// ranges' row-1 order, and the bound <see cref="ChanceBound"/> gives them, 100 when every chance is a whole percent, else
+/// 1000 (<see cref="SetChances"/>). A draw below any bound of 1 or more takes one step of VSHELL's generator,
+/// <c>ShellRandom_Below</c> (<c>004659ec</c>) being <c>(ShellRandom_Next() &amp; 0x7fff) % n</c>
 /// (docs/retail/shell/campaign-loop.md#the-shells-generator), so writing the bound moves no later draw; no retail table's
 /// bound is below 1. A draw no range holds takes no alternative from this table (the editor's chances leave that as the
 /// leftover).</item>
@@ -51,8 +52,15 @@ public static class VariantEditing {
 	private const int ConditionRow = 1;
 	private const int GroupBlock = 11;
 
-	/// <summary>The bound every chance edit writes: the chances are percents.</summary>
+	/// <summary>The bound a chance edit writes when every chance is a whole percent, and a new table's.</summary>
 	public const short PercentBound = 100;
+
+	/// <summary>The bound a chance edit writes when a chance has a tenth of a percent.</summary>
+	public const short TenthBound = 1000;
+
+	/// <summary>The bound <paramref name="percents"/> are written over: <see cref="PercentBound"/> when each is a whole percent, else <see cref="TenthBound"/>.</summary>
+	public static short ChanceBound(IReadOnlyList<decimal> percents) =>
+		percents.All(percent => percent % 1 == 0) ? PercentBound : TenthBound;
 
 	// ---- Reading -----------------------------------------------------------------------------------
 
@@ -84,10 +92,13 @@ public static class VariantEditing {
 			&& other.FlagIndexOrRangeLower == table.FlagIndexOrRangeLower).Select(other => other.GUID).ToList();
 		var ranges = records.Where(record => record.Type == ConditionEditing.Range && TableOfRange(document, record.GUID) == guid).ToList();
 
-		string? why = records.Count(other => other.GUID == guid) > 1 ? $"More than one record carries condition {guid}."
-			: table.ComparisonOperand < 1 ? "It draws below a bound under 1."
-			: sameKey.Count > 0 ? $"Condition {sameKey[0]} is a table under the same key: a draw the first leaves uncovered goes on to the next."
-			: ranges.Count == 0 ? "It has no alternatives."
+		bool first = records.First(other => other.Type == ConditionEditing.VariantTable
+			&& other.FlagIndexOrRangeLower == table.FlagIndexOrRangeLower).GUID == guid;
+		string? why = records.Count(other => other.GUID == guid) > 1 ? "Its condition number is repeated in the file."
+			: table.ComparisonOperand < 1 ? "Its roll is below 1, so no load picks an option."
+			: sameKey.Count > 0 && first ? "A load that picks Nothing here picks from a second random choice, so the pair is shown only."
+			: sameKey.Count > 0 ? "A load picks from it only when the first random choice of its pair picks Nothing, so the pair is shown only."
+			: ranges.Count == 0 ? "It has no options."
 			: null;
 
 		var alternatives = new List<VariantAlternative>();
@@ -96,9 +107,9 @@ public static class VariantEditing {
 		foreach (var range in ranges) {
 			var gated = ConditionEditing.Namers(document, range.GUID);
 			var alternative = gated.Records.Count == 1 ? gated.Records[0] : (MsnRecordId?)null;
-			why ??= records.Count(other => other.GUID == range.GUID) > 1 ? $"More than one record carries condition {range.GUID}."
-				: gated.Records.Count == 0 && gated.Text.Count == 0 ? $"Range {range.GUID} chooses no alternative."
-				: gated.Records.Count != 1 || gated.Text.Count > 0 ? $"Range {range.GUID} chooses more than one record."
+			why ??= records.Count(other => other.GUID == range.GUID) > 1 ? "An option's condition number is repeated in the file."
+				: gated.Records.Count == 0 && gated.Text.Count == 0 ? "An option of it is empty."
+				: gated.Records.Count != 1 || gated.Text.Count > 0 ? "An option of it is more than one thing."
 				: WhyNoAlternative(document, alternative!.Value, row);
 			if (alternative is { } found) {
 				row = row == 0 ? found.Row : row;
@@ -114,36 +125,41 @@ public static class VariantEditing {
 			}
 		}
 
-		why ??= DrawnBySquad(document, table.FlagIndexOrRangeLower) ? "The player's squad draws from it." : null;
+		why ??= DrawnBySquad(document, table.FlagIndexOrRangeLower) ? "The player's squad picks from it, so it is shown only." : null;
 		return new VariantTable(guid, table.FlagIndexOrRangeLower, table.ComparisonOperand, table.ConditionRef, row,
 			alternatives, sameKey, why);
 	}
 
 	// Why the record a range conditions is not an alternative the editor edits, given the row of those before it (0 for none).
 	private static string? WhyNoAlternative(MissionDocument document, MsnRecordId record, int row) =>
-		record.Row == 8 ? "Its alternatives are route waypoint lists, which are shown only."
+		record.Row == 8 ? "Its options are routes, so it is shown only; a route's view edits the waypoints of the option it shows."
 		: record.Row is not (>= 12 and <= 14) || document.RecordAt(record) is not { GUID: -1 } alternative
-			? $"A range of it conditions a record that is not an alternative herc, flyer or structure."
-		: KeyOf(alternative) != -1 ? "An alternative of it draws from a table of its own."
-		: row != 0 && row != record.Row ? "Its alternatives are of more than one kind."
+			? "An option of it is not a herc, flyer, structure or ground vehicle."
+		: KeyOf(alternative) != -1 ? "An option of it picks from a random choice of its own."
+		: row != 0 && row != record.Row ? "Its options are of more than one kind."
 		: null;
 
 	/// <summary>
-	/// The whole percents <paramref name="table"/>'s alternatives show: each one's share of the draws, rounded so that they add
-	/// up to the rounded share of every alternative together, the largest fractions rounded up first (the editor's choice).
+	/// The percents <paramref name="table"/>'s alternatives show, to one decimal: each one's share of the draws, rounded so that
+	/// they add up to the rounded share of every alternative together, the largest fractions rounded up first (the editor's
+	/// choice).
 	/// </summary>
-	public static IReadOnlyList<int> Percents(VariantTable table) {
+	public static IReadOnlyList<decimal> Percents(VariantTable table) {
 		int bound = Math.Max((int)table.Bound, 1);
 		var counts = table.Alternatives.Select(alternative => alternative.Draws).ToList();
-		var percents = counts.Select(count => count * 100 / bound).ToList();
-		int target = (counts.Sum() * 200 + bound) / (2 * bound);
-		foreach (int at in Enumerable.Range(0, counts.Count).OrderByDescending(at => counts[at] * 100 % bound).ThenBy(at => at)
-				.Take(Math.Max(target - percents.Sum(), 0))) {
-			percents[at]++;
+		var tenths = counts.Select(count => count * 1000 / bound).ToList();
+		int target = (counts.Sum() * 2000 + bound) / (2 * bound);
+		foreach (int at in Enumerable.Range(0, counts.Count).OrderByDescending(at => counts[at] * 1000 % bound).ThenBy(at => at)
+				.Take(Math.Max(target - tenths.Sum(), 0))) {
+			tenths[at]++;
 		}
 
-		return percents;
+		return tenths.Select(tenth => tenth / 10m).ToList();
 	}
+
+	/// <summary>Whether <see cref="Percents"/> shows each of <paramref name="table"/>'s chances exactly.</summary>
+	public static bool Exact(VariantTable table) =>
+		table.Bound > 0 && table.Alternatives.All(alternative => alternative.Draws * 1000 % table.Bound == 0);
 
 	/// <summary>
 	/// Every record that draws from <paramref name="table"/>'s key, in any state: those of rows 6 to 8 and 12 to 15 whose
@@ -192,36 +208,41 @@ public static class VariantEditing {
 			&& record.FlagIndexOrRangeLower == key)?.GUID;
 	}
 
-	/// <summary>What record <paramref name="record"/> drew in the editor's state, or null when it drew nothing (<see cref="MissionGenerator.VariantPicks"/>).</summary>
+	/// <summary>What record <paramref name="record"/> drew in the generation, or null when it drew nothing (<see cref="MissionGenerator.VariantPicks"/>).</summary>
 	public static VariantPick? PickOf(MissionDocument document, MsnRecordId record) =>
 		document.Generator.VariantPicks.TryGetValue(record, out var pick) ? pick : null;
 
-	/// <summary>The range GUID of what <paramref name="record"/> drew in the editor's state, or null when no range held its draw.</summary>
-	public static short? RangeDrawn(MissionDocument document, MsnRecordId record) =>
-		PickOf(document, record)?.Range is { } index ? ConditionEditing.Records(document)[index].GUID : null;
+	/// <summary>
+	/// The draw record <paramref name="record"/> makes in the layout, its table and the options it sees, the first of them the one
+	/// shown (<see cref="LayoutDraw.Shown"/>); null when it draws nothing or is a variant alternative, which no entry holds.
+	/// </summary>
+	public static LayoutDraw? DrawOf(MissionDocument document, MsnRecordId record) {
+		if (record.Row is < 6 or > 16 || document.RecordAt(record) is not { GUID: not -1 } found
+				|| document.Layout.Entry(record.Row, found.GUID) is not { } entry) {
+			return null;
+		}
 
-	/// <summary>The records of rows 12 to 14 that drew variant alternative <paramref name="alternative"/> in the editor's state.</summary>
-	public static IReadOnlyList<MsnRecordId> DrawingNow(MissionDocument document, MsnRecordId alternative) =>
-		document.Generator.VariantPicks.Where(pick => pick.Key.Row is >= 12 and <= 14 && pick.Value.Source == alternative)
-			.Select(pick => pick.Key).OrderBy(id => id.Row).ThenBy(id => id.Index).ToList();
+		return entry.Presence.Draws.Concat(entry.Variations.Select(variation => variation.Draw).OfType<LayoutDraw>())
+			.FirstOrDefault(draw => draw.Drawer == record);
+	}
 
 	// ---- Why not -----------------------------------------------------------------------------------
 
 	/// <summary>Why roster row <paramref name="row"/>'s GUID <paramref name="guid"/> cannot be given a table or have it taken away, or null when it can.</summary>
 	public static string? WhyNoTables(MissionDocument document, int row, short guid) {
 		if (row is not (>= 12 and <= 14)) {
-			return "Only hercs, flyers, structures and ground vehicles draw from a table here.";
+			return "Only hercs, flyers, structures and ground vehicles pick from a random choice here.";
 		}
 
-		if (document.ExportedIndex(row, guid) == null) {
-			return "It is not in the mission as shown.";
+		if (document.Layout.Entry(row, guid) == null) {
+			return "It is not in the mission.";
 		}
 
 		if (RosterDeletion.Check(document, row, guid).InSquad) {
-			return "The squad is built from group 0's members, so it draws from no table here.";
+			return "A squad HERC's random choice is not set here.";
 		}
 
-		return KeyRecord(document, row, guid) == null ? "More than one of its records draws from a table." : null;
+		return KeyRecord(document, row, guid) == null ? "More than one of its records picks at random." : null;
 	}
 
 	/// <summary>Why roster row <paramref name="row"/>'s GUID <paramref name="guid"/> cannot draw from <paramref name="table"/>, or none for <c>-1</c>; null when it can.</summary>
@@ -232,38 +253,42 @@ public static class VariantEditing {
 		}
 
 		if (Table(document, table) is not { } read) {
-			return $"Condition {table} is not a table.";
+			return $"Condition {table} is not a random choice.";
 		}
 
-		return read.WhyFixed ?? (read.Row != row ? $"Its alternatives are {KindOf(read.Row)}s." : null);
+		return read.WhyFixed ?? (read.Row != row ? $"Its options are {KindOf(read.Row)}s." : null);
 	}
 
-	/// <summary>Why <paramref name="table"/>'s chances cannot be set to <paramref name="percents"/>, one per alternative; null when they can.</summary>
-	public static string? WhyNoChances(MissionDocument document, short table, IReadOnlyList<int> percents) =>
-		Table(document, table) is not { } read ? $"Condition {table} is not a table."
+	/// <summary>
+	/// Why <paramref name="table"/>'s chances cannot be set to <paramref name="percents"/>, one per alternative, each a percent
+	/// to one decimal; null when they can.
+	/// </summary>
+	public static string? WhyNoChances(MissionDocument document, short table, IReadOnlyList<decimal> percents) =>
+		Table(document, table) is not { } read ? $"Condition {table} is not a random choice."
 		: read.WhyFixed is { } reason ? reason
-		: percents.Count != read.Alternatives.Count ? $"It has {read.Alternatives.Count} alternatives."
+		: percents.Count != read.Alternatives.Count ? $"It has {read.Alternatives.Count} options."
 		: percents.Any(percent => percent is < 0 or > 100) ? "A chance is 0% to 100%."
+		: percents.Any(percent => decimal.Round(percent, 1) != percent) ? "A chance takes one decimal at most."
 		: percents.Sum() > 100 ? "The chances add up to more than 100%."
 		: null;
 
 	/// <summary>Why an alternative cannot be added to <paramref name="table"/>, or null when it can.</summary>
 	public static string? WhyNoAdd(MissionDocument document, short table) =>
-		Table(document, table) is not { } read ? $"Condition {table} is not a table."
-		: read.WhyFixed ?? (Percents(read).Max() < 2 ? "No alternative has a chance of 2% or more to share." : null);
+		Table(document, table) is not { } read ? $"Condition {table} is not a random choice."
+		: read.WhyFixed ?? (Percents(read).Max() < 0.2m ? "No option has a chance of 0.2% or more to share." : null);
 
 	/// <summary>Why <paramref name="range"/>'s alternative cannot be removed from <paramref name="table"/>, or null when it can.</summary>
 	public static string? WhyNoRemove(MissionDocument document, short table, short range) =>
-		Table(document, table) is not { } read ? $"Condition {table} is not a table."
+		Table(document, table) is not { } read ? $"Condition {table} is not a random choice."
 		: read.WhyFixed is { } reason ? reason
-		: read.Alternatives.All(alternative => alternative.Range != range) ? $"Range {range} is not one of its alternatives."
-		: read.Alternatives.Count == 1 ? "A table keeps at least one alternative."
+		: read.Alternatives.All(alternative => alternative.Range != range) ? $"Condition {range} is not one of its options."
+		: read.Alternatives.Count == 1 ? "A random choice keeps at least one option."
 		: null;
 
-	/// <summary>Why <paramref name="table"/> cannot be deleted, or null when it can.</summary>
+	/// <summary>Why <paramref name="table"/> cannot be deleted, or null when it can (<see cref="PickedFrom"/>, <see cref="Referenced"/>).</summary>
 	public static string? WhyNoDelete(MissionDocument document, short table) {
 		if (Table(document, table) is not { } read) {
-			return $"Condition {table} is not a table.";
+			return $"Condition {table} is not a random choice.";
 		}
 
 		if (read.WhyFixed is { } reason) {
@@ -271,14 +296,27 @@ public static class VariantEditing {
 		}
 
 		if (Drawers(document, read.Key).Count > 0) {
-			return "Records draw from it.";
+			return PickedFrom;
 		}
 
-		var ranges = read.Alternatives.Select(alternative => alternative.Range).ToHashSet();
-		var namers = ConditionEditing.Namers(document, table);
-		bool referenced = namers.Text.Count > 0
-			|| namers.Records.Any(id => id.Row != ConditionRow || !ranges.Contains(ConditionEditing.Records(document)[id.Index].GUID));
-		return referenced ? "Records other than its alternatives reference it." : null;
+		return Referencers(document, read).Any ? Referenced : null;
+	}
+
+	/// <summary><see cref="WhyNoDelete"/>'s reason while a record draws by the table's key.</summary>
+	public const string PickedFrom = "Records pick from it.";
+
+	/// <summary><see cref="WhyNoDelete"/>'s reason while a record other than its ranges, or a text line, references the table.</summary>
+	public const string Referenced = "Records other than its options reference it.";
+
+	/// <summary>
+	/// What references <paramref name="table"/> other than its own ranges: the records whose condition is its GUID, and the
+	/// <c>.ENG</c> records by index (<see cref="ConditionEditing.Namers"/>).
+	/// </summary>
+	public static ConditionNamers Referencers(MissionDocument document, VariantTable table) {
+		var ranges = table.Alternatives.Select(alternative => alternative.Range).ToHashSet();
+		var namers = ConditionEditing.Namers(document, table.Guid);
+		return new ConditionNamers(namers.Records.Where(id => id.Row != ConditionRow
+			|| !ranges.Contains(ConditionEditing.Records(document)[id.Index].GUID)).ToList(), namers.Text);
 	}
 
 	// ---- Editing -----------------------------------------------------------------------------------
@@ -287,8 +325,8 @@ public static class VariantEditing {
 	/// Gives roster row <paramref name="row"/>'s GUID <paramref name="guid"/> a table of its own, as one
 	/// <see cref="MissionDocument.Change"/>: a table appended last in row 1 under a key no table and no record carries
 	/// (<see cref="NewKey"/>), bound 100 and requiring nothing; one range over it, 0 to 99; and one alternative, a copy of what
-	/// the record now generates from (the alternative it draws, or else its key record), inserted just before its key record,
-	/// which then carries the key. Its generated record is the one it was; every later draw changes, as it now draws.
+	/// the layout shows the record as (the option its draw shows, <see cref="DrawOf"/>, or else its key record), inserted just
+	/// before its key record, which then carries the key. It looks as it did; every later draw changes, as it now draws.
 	/// <paramref name="table"/> is the new table's GUID.
 	/// </summary>
 	public static MsnEdit CreateTable(MissionDocument document, int row, short guid, out short table) {
@@ -297,7 +335,7 @@ public static class VariantEditing {
 		}
 
 		var keyRecord = KeyRecord(document, row, guid)!.Value;
-		var source = PickOf(document, keyRecord)?.Source ?? keyRecord;
+		var source = DrawOf(document, keyRecord)?.Shown?.Record ?? keyRecord;
 		var alternative = (MapObject)MsnRows.CopyRecord(document.RecordAt(source)!);
 		short key = NewKey(document);
 		short created = -1;
@@ -320,8 +358,8 @@ public static class VariantEditing {
 	/// <summary>
 	/// Sets the table roster row <paramref name="row"/>'s GUID <paramref name="guid"/> draws from, its key record's variant
 	/// key, as one <see cref="MissionDocument.Change"/>: <paramref name="table"/>'s key, the table's alternatives read after
-	/// the key record moved to just before it; or, for <c>-1</c>, none, the record then carrying as its own what it now draws
-	/// (the editor's choice, so it stays as shown).
+	/// the key record moved to just before it; or, for <c>-1</c>, none, the record then carrying as its own the option the
+	/// layout shows it with (<see cref="DrawOf"/>; the editor's choice, so it stays as shown).
 	/// </summary>
 	public static MsnEdit SetTable(MissionDocument document, int row, short guid, short table) {
 		if (WhyNoTable(document, row, guid, table) is { } reason) {
@@ -330,7 +368,7 @@ public static class VariantEditing {
 
 		var keyRecord = KeyRecord(document, row, guid)!.Value;
 		if (table == -1) {
-			var drawn = PickOf(document, keyRecord)?.Source is { } source ? document.RecordAt(source) : null;
+			var drawn = DrawOf(document, keyRecord)?.Shown?.Record is { } source ? document.RecordAt(source) : null;
 			return document.Change(() => document.RewriteAt<MapObject>(row, keyRecord.Index, record => {
 				if (drawn != null) {
 					CopyPayload(drawn, record);
@@ -359,8 +397,9 @@ public static class VariantEditing {
 	/// <summary>
 	/// Adds an alternative to <paramref name="table"/>, a copy of the one range <paramref name="copyOf"/> chooses, inserted just
 	/// after it, under a new range appended last in row 1, as one <see cref="MissionDocument.Change"/>. The new one takes half
-	/// the chance of the alternative with the largest, the first of those that tie, rounded down (the editor's choice), and
-	/// the ranges are written as <see cref="SetChances"/> writes them. <paramref name="range"/> is the new range's GUID.
+	/// the chance of the alternative with the largest, the first of those that tie, rounded down to one decimal (the editor's
+	/// choice), and the ranges are written as <see cref="SetChances"/> writes them. <paramref name="range"/> is the new range's
+	/// GUID.
 	/// </summary>
 	public static MsnEdit AddAlternative(MissionDocument document, short table, short copyOf, out short range) {
 		if (WhyNoAdd(document, table) is { } reason) {
@@ -369,10 +408,10 @@ public static class VariantEditing {
 
 		var read = Table(document, table)!;
 		var copied = read.Alternatives.FirstOrDefault(alternative => alternative.Range == copyOf)
-			?? throw new InvalidOperationException($"Range {copyOf} is not one of its alternatives.");
+			?? throw new InvalidOperationException($"Condition {copyOf} is not one of its options.");
 		var percents = Percents(read).ToList();
 		int largest = percents.IndexOf(percents.Max());
-		int share = percents[largest] / 2;
+		decimal share = Math.Floor(percents[largest] * 5) / 10;
 		percents[largest] -= share;
 		percents.Add(share);
 		var alternative = (MapObject)MsnRows.CopyRecord(document.RecordAt(copied.Record)!);
@@ -411,11 +450,12 @@ public static class VariantEditing {
 	}
 
 	/// <summary>
-	/// Sets <paramref name="table"/>'s chances, one whole percent per alternative in its ranges' row-1 order, adding up to 100
-	/// at most, as one <see cref="MissionDocument.Change"/>: the bound 100, and each range the next run of draws from 0 for its
-	/// percent, a 0% range 100 to 100, which no draw below 100 reaches. A draw past the last run takes no alternative here.
+	/// Sets <paramref name="table"/>'s chances, one percent to one decimal per alternative in its ranges' row-1 order, adding up
+	/// to 100 at most, as one <see cref="MissionDocument.Change"/>: the bound <see cref="ChanceBound"/> gives them, and each range
+	/// the next run of draws from 0 for its percent, a 0% range the bound to the bound, which no draw below it reaches. A draw
+	/// past the last run takes no alternative here.
 	/// </summary>
-	public static MsnEdit SetChances(MissionDocument document, short table, IReadOnlyList<int> percents) {
+	public static MsnEdit SetChances(MissionDocument document, short table, IReadOnlyList<decimal> percents) {
 		if (WhyNoChances(document, table, percents) is { } reason) {
 			throw new InvalidOperationException(reason);
 		}
@@ -497,18 +537,19 @@ public static class VariantEditing {
 
 	// ---- Internals ---------------------------------------------------------------------------------
 
-	// Writes <table>'s bound 100 and <ranges>' ends from <percents>, inside the caller's change.
-	private static void WriteChances(MissionDocument document, short table, IReadOnlyList<short> ranges, IReadOnlyList<int> percents) {
-		if (ConditionEditing.Record(document, table).ComparisonOperand != PercentBound) {
+	// Writes <table>'s bound for <percents> (ChanceBound) and <ranges>' ends from them, inside the caller's change.
+	private static void WriteChances(MissionDocument document, short table, IReadOnlyList<short> ranges, IReadOnlyList<decimal> percents) {
+		short bound = ChanceBound(percents);
+		if (ConditionEditing.Record(document, table).ComparisonOperand != bound) {
 			document.Rewrite<MissionCondition14>(ConditionRow, ConditionEditing.IndexOf(document, table)!.Value,
-				record => record.ComparisonOperand = PercentBound);
+				record => record.ComparisonOperand = bound);
 		}
 
 		int start = 0;
 		for (int i = 0; i < ranges.Count; i++) {
-			int percent = percents[i];
-			short low = (short)(percent > 0 ? start : PercentBound), high = (short)(percent > 0 ? start + percent - 1 : PercentBound);
-			start += percent;
+			int draws = (int)(percents[i] * bound / 100);
+			short low = (short)(draws > 0 ? start : bound), high = (short)(draws > 0 ? start + draws - 1 : bound);
+			start += draws;
 			var record = ConditionEditing.Record(document, ranges[i]);
 			if (record.FlagIndexOrRangeLower != low || record.OperatorOrRangeUpperOrResult != high) {
 				document.Rewrite<MissionCondition14>(ConditionRow, ConditionEditing.IndexOf(document, ranges[i])!.Value, range => {

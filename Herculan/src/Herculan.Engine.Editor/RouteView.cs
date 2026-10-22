@@ -6,8 +6,9 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// The Properties panel's view of a route: whether it is a loop, which groups walk it, its waypoints, and the edits that
 /// make a route (<see cref="RouteEditor"/>, <see cref="RoutePlacing"/>): add waypoints after the last, insert one after the
-/// selected one, remove the selected one, close or open the loop, delete the route; and the selected waypoint's X and Y as
-/// typed fields (<see cref="PointFields"/>).
+/// selected one, remove the selected one, close or open the loop, delete the route; the selected waypoint's X and Y as
+/// typed fields (<see cref="PointFields"/>); and, when its waypoints are an option of a random choice, which one, since an
+/// edit changes that option (docs/herculan/handoff-editor-conditions.md#variants).
 /// </summary>
 internal sealed class RouteView {
 	// The heads-down map marks the player's route from its second waypoint and at most nine of them
@@ -21,14 +22,16 @@ internal sealed class RouteView {
 	private readonly RoutePlacing _placing;
 	private readonly Action<int> _groupLink;
 	private readonly Action<DeleteNamers, IReadOnlyList<int>> _references;
+	private readonly Action<short> _choice;
 
 	// The selected waypoint's point being typed.
 	private readonly PointFields _point = new();
 
 	/// <param name="groupLink">Draws a link that selects a group.</param>
 	/// <param name="references">Draws what references something, one line per record, given the groups whose own route field references it.</param>
+	/// <param name="choice">Draws, for a route GUID whose waypoints are an option of a random choice, which one (<see cref="VariantView.DrawRouteChoice"/>).</param>
 	public RouteView(GeneratedIndex index, SelectionState selection, PointMover mover, RouteEditor editor, RoutePlacing placing,
-			Action<int> groupLink, Action<DeleteNamers, IReadOnlyList<int>> references) {
+			Action<int> groupLink, Action<DeleteNamers, IReadOnlyList<int>> references, Action<short> choice) {
 		_index = index;
 		_selection = selection;
 		_mover = mover;
@@ -36,6 +39,7 @@ internal sealed class RouteView {
 		_placing = placing;
 		_groupLink = groupLink;
 		_references = references;
+		_choice = choice;
 	}
 
 	/// <summary>
@@ -99,7 +103,7 @@ internal sealed class RouteView {
 		}
 
 		if (_editor.Shared(guid)) {
-			EditorText.Note("Its waypoint list is a variant's, shared by every route that can draw it: an edit here changes them all.");
+			_choice(guid);
 		}
 
 		if (_placing.IsAppendingTo(guid)) {

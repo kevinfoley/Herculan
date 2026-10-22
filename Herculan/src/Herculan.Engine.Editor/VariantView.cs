@@ -1,7 +1,5 @@
+using System.Numerics;
 using HercWorks.Core.Data.File.Msn;
-using HercWorks.Core.Io.Transform.Common;
-using Herculan.Engine.Cockpit;
-using Herculan.Engine.Content;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Scene;
 using Herculan.Engine.World;
@@ -10,235 +8,109 @@ using ImGuiNET;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// A variant table's view, in the Properties panel's view of its condition: its key and bound, each alternative with its
-/// chance, a summary and Remove, Add alternative, what is left over, the records drawing from it, the other tables of its
-/// key, and Delete; and, in the view of a herc, flyer, structure or ground vehicle outside the squad, which table it is
-/// drawn from (docs/herculan/handoff-editor-conditions.md#variants). Each choice is an edit (<see cref="VariantEditor"/>).
-/// How a record draws is docs/retail/formats/msn-mission-file.md#variants.
+/// The Random choice view, in the Properties panel's view of a variant table's condition and of a range over one, that option
+/// then highlighted (docs/herculan/handoff-editor-conditions.md#variants): its title, each option with its chance, what it is
+/// and Remove, Nothing with what is left over, Add option, Used by, a warning when it has no effect in play, Delete random
+/// choice, and the records' numbers under Advanced; and the Random choice line of the view of a herc, flyer, structure or
+/// ground vehicle and of a route. Each choice is an edit (<see cref="VariantEditor"/>). Everything it shows is the
+/// <c>.MSN</c>'s and its layout's (<see cref="RandomChoices"/>), so the scene's option is each record's first
+/// (<see cref="LayoutDraw.Shown"/>). How a record picks is docs/retail/formats/msn-mission-file.md#variants.
 /// </summary>
 internal sealed class VariantView {
+	private static readonly Vector4 HighlightColor = new(1f, 0.85f, 0.1f, 1f);
+
 	private readonly VariantEditor _editor;
-	private readonly ConditionEditor _conditions;
+	private readonly RandomChoices _choices;
 	private readonly PanelLinks _links;
-	private readonly Func<MapObject, string> _summary;
 
 	// A chance being typed, and the field it is for, until the field lets go.
 	private string? _draftFor;
-	private int _draft;
+	private float _draft;
 
-	/// <param name="summary">What an alternative is, as its kind's view titles it (<see cref="Summaries"/>).</param>
-	public VariantView(VariantEditor editor, ConditionEditor conditions, PanelLinks links, Func<MapObject, string> summary) {
+	public VariantView(VariantEditor editor, RandomChoices choices, PanelLinks links) {
 		_editor = editor;
-		_conditions = conditions;
+		_choices = choices;
 		_links = links;
-		_summary = summary;
 	}
 
 	/// <summary>
-	/// What an alternative is: a herc's chassis name and a flyer's type name as <c>nam\MECHS.NAM</c> and <c>nam\FLYERS.NAM</c>
-	/// list them, a structure's or ground vehicle's type and the name the MFD prints, as the object view titles each, and a
-	/// route's waypoint count.
+	/// Draws the Random choice view of row-1 GUID <paramref name="guid"/> when it is a variant table, or a range over one choosing
+	/// an option the table reads, that option highlighted; answers false, drawing nothing, for any other condition.
 	/// </summary>
-	public static Func<MapObject, string> Summaries(GameContent content) {
-		var mechs = UnitTypeNames.LoadMechs(content);
-		var flyers = UnitTypeNames.LoadFlyers(content);
-		var bases = BaseTypeTable.Load(content);
-		var strings = SimStrings.Load(content);
-		return record => record switch {
-			MechRosterEntry144 mech => mechs[mech.TypeIndex] ?? $"Herc type {mech.TypeIndex}",
-			FlyerRosterEntry102 flyer => flyers[flyer.TypeIndex] ?? $"Flyer type {flyer.TypeIndex}",
-			BaseRosterEntry62 structure when bases[structure.TypeIndex] is { } type =>
-				$"{(type.IsVehicle ? "Ground vehicle" : "Base")} type {structure.TypeIndex}: "
-					+ (MfdStatusSubject.BaseName(type, strings) is { Length: > 0 } name && !string.IsNullOrWhiteSpace(name) ? name : "(no name)"),
-			BaseRosterEntry62 structure => $"Base type {structure.TypeIndex}",
-			WaypointGroup route => $"A route of {route.Waypoints.Length} waypoint(s)",
-			_ => record.GetType().Name,
-		};
-	}
-
-	/// <summary>Draws table <paramref name="guid"/>'s view, after the condition view's title.</summary>
-	public void DrawTable(short guid) {
+	public bool DrawChoice(short guid) {
 		var source = _editor.Source;
-		if (VariantEditing.Table(source, guid) is not { } table) {
-			return;
-		}
-
-		string? why = _editor.WhyFixed(table);
-		ImGui.PushID($"table{guid}");
-		ImGui.Text($"Key: {table.Key}");
-		ImGui.Text($"Draws below: {table.Bound}");
-		if (table.Requires != -1) {
-			ImGui.AlignTextToFramePadding();
-			ImGui.Text("Requires:");
-			ImGui.SameLine();
-			_links.Link($"Condition {table.Requires}", new ConditionSelection(table.Requires));
-			EditorText.Note("Where that condition fails, nothing draws from this table.");
-		}
-
-		if (!ConditionEditing.Outcome(source, guid).Survived) {
-			EditorText.Emphasis("Not shown in the editor: nothing draws from it.");
-		}
-
-		EditorText.Reason(why);
-		ImGui.Separator();
-		DrawAlternatives(source, table, why);
-		ImGui.Separator();
-		DrawDrawers(source, table);
-		DrawSameKey(source, table);
-		ImGui.Separator();
-		DrawDelete(source, table, why);
-		EditorText.Reason(_editor.Failure);
-		ImGui.PopID();
-	}
-
-	/// <summary>
-	/// Draws range <paramref name="range"/>'s view, after the condition view's title, as the alternative it chooses: which of
-	/// its table's, with a link to the table, its chance and what it is, then the records shown in the editor that drew it.
-	/// Its chance, and removing it, are the table's view's. Answers false, drawing nothing, when the range is over no
-	/// table or chooses no alternative its table reads.
-	/// </summary>
-	public bool DrawRange(short range) {
-		var source = _editor.Source;
-		if (VariantEditing.TableOfRange(source, range) is not { } guid
-				|| VariantEditing.Table(source, guid) is not { } table) {
+		short? table = VariantEditing.IsTable(source, guid) ? guid : VariantEditing.TableOfRange(source, guid);
+		if (table is not { } shown || _choices.Read(shown) is not { } read) {
 			return false;
 		}
 
-		int at = table.Alternatives.ToList().FindIndex(alternative => alternative.Range == range);
-		if (at < 0) {
+		short? highlight = shown == guid ? null : guid;
+		if (highlight != null && read.Alternatives.All(alternative => alternative.Range != highlight)) {
 			return false;
 		}
 
-		var alternative = table.Alternatives[at];
-		ImGui.PushID($"range{range}");
-		ImGui.Separator();
-		ImGui.Text($"Alternative {at + 1} of");
-		ImGui.SameLine();
-		_links.Link($"Condition {guid}", new ConditionSelection(guid));
-		ImGui.SameLine(0f, 0f);
-		EditorText.Wrapped($": {table.Percent(alternative.Draws):0.#}%, {_summary(source.RecordAt(alternative.Record)!)}");
-		EditorText.Note("Its chance is set in its table's view.");
-		ImGui.Spacing();
-		DrawDrawnNow(source, table, alternative);
-		ImGui.PopID();
+		DrawTable(read, highlight);
 		return true;
 	}
 
-	// The records shown in the editor that drew <alternative>, one identity link per line.
-	private void DrawDrawnNow(MissionDocument source, VariantTable table, VariantAlternative alternative) {
-		var drawing = source.Generator.VariantPicks.Where(pick => pick.Value.Source == alternative.Record)
-			.Select(pick => source.Provenance.ExportedSlot(pick.Key) is { } slot ? _conditions.Identity(pick.Key.Row, slot.Index) : null)
-			.OfType<ConditionUse>().DistinctBy(use => use.Label).ToList();
-		if (drawing.Count == 0) {
-			string noun = table.Row switch { 8 => "route", 12 => "herc", 13 => "flyer", 14 => "structure", _ => "record" };
-			EditorText.Note($"No {noun} is shown with this alternative.");
-			return;
+	private void DrawTable(VariantTable table, short? highlight) {
+		var users = _choices.Users(table);
+		string? why = table.WhyFixed;
+		ImGui.PushID($"table{table.Guid}");
+		EditorText.Wrapped(_choices.Title(table));
+		if (_choices.NoEffect(table) is { } warning) {
+			EditorText.Emphasis(warning);
 		}
 
-		ImGui.Text("Shown with this alternative:");
-		for (int i = 0; i < drawing.Count; i++) {
-			ImGui.PushID(i);
-			if (drawing[i].Target is { } target) {
-				_links.Link(drawing[i].Label, target);
-			} else {
-				ImGui.Text(drawing[i].Label);
-			}
-
-			ImGui.PopID();
-		}
-	}
-
-	/// <summary>
-	/// The Drawn from of a herc, flyer, structure or ground vehicle outside the squad: None, a table of its kind's
-	/// alternatives, or New table from it, with a link to the table and the alternative the editor shows.
-	/// </summary>
-	public void DrawDrawnFrom(SceneObject placed) {
-		var source = _editor.Source;
-		if (_editor.RecordOf(placed) is not var (row, guid)) {
-			return;
-		}
-
-		string kind = Noun(placed);
-		string? why = _editor.WhyNoTables(row, guid);
-		short? current = VariantEditing.TableOf(source, row, guid);
-		ImGui.PushID("drawnFrom");
-		ImGui.Text("Drawn from:");
-		ImGui.SetNextItemWidth(-1f);
-		ImGui.BeginDisabled(why != null);
-		if (ImGui.BeginCombo("##table", current is { } shown ? TableName(source, shown) : "None")) {
-			if (ImGui.Selectable("None", current == null) && current != null) {
-				_editor.RequestTable(row, guid, -1);
-			}
-
-			foreach (short table in VariantEditing.Tables(source)) {
-				if (VariantEditing.WhyNoTable(source, row, guid, table) == null
-						&& ImGui.Selectable(TableName(source, table), table == current) && table != current) {
-					_editor.RequestTable(row, guid, table);
-				}
-			}
-
-			if (ImGui.Selectable($"New table from this {kind}")) {
-				_editor.RequestCreate(row, guid);
-			}
-
-			ImGui.EndCombo();
-		}
-
-		ImGui.EndDisabled();
 		EditorText.Reason(why);
-		if (current is { } drawn) {
-			_links.Link($"Condition {drawn}", new ConditionSelection(drawn));
-			if (VariantEditing.KeyRecord(source, row, guid) is { } key) {
-				DrawPick(source, key, drawn);
-			}
-		}
-
-		if (why == null) {
-			EditorText.Note("Choosing a table, or None, changes what every later random pick comes out as.");
-		}
-
+		ImGui.Separator();
+		DrawOptions(table, users, why, highlight);
+		ImGui.Separator();
+		DrawUsers(table, users);
+		ImGui.Separator();
+		DrawDelete(table, why);
+		EditorText.Reason(_editor.Failure);
+		DrawAdvanced(table);
 		ImGui.PopID();
 	}
 
-	// What record <key> drew from table <table> in the editor.
-	private void DrawPick(MissionDocument source, MsnRecordId key, short table) {
-		var read = VariantEditing.Table(source, table);
-		short? range = VariantEditing.RangeDrawn(source, key);
-		int at = read?.Alternatives.ToList().FindIndex(alternative => alternative.Range == range) ?? -1;
-		if (read != null && at >= 0) {
-			ImGui.TextWrapped($"The editor shows alternative {at + 1}: {_summary(source.RecordAt(read.Alternatives[at].Record)!)}.");
-		} else if (!ConditionEditing.Outcome(source, table).Survived) {
-			EditorText.Note("The table is not shown in the editor, so it keeps its own fields there, and the point, heading "
-				+ "and actions those reference are not looked up.");
-		} else {
-			EditorText.Note("Its draw in the editor takes no alternative, so it keeps its own fields, and the point, heading "
-				+ "and actions those reference are not looked up.");
-		}
-	}
-
-	// Each alternative with its chance, its summary and Remove; what is left over; Add alternative.
-	private void DrawAlternatives(MissionDocument source, VariantTable table, string? why) {
+	// Each option with its chance, what it is and Remove; Nothing; Add option.
+	private void DrawOptions(VariantTable table, IReadOnlyList<ChoiceUser> users, string? why, short? highlight) {
+		var source = _editor.Source;
 		var percents = VariantEditing.Percents(table);
-		bool whole = table.Bound == VariantEditing.PercentBound
-			&& table.Alternatives.All(alternative => table.Percent(alternative.Draws) % 1 == 0);
-		ImGui.Text("Alternatives:");
+		var inScene = users.Select(user => user.Shown).OfType<int>().ToHashSet();
+		ImGui.Text("Options:");
 		for (int i = 0; i < table.Alternatives.Count; i++) {
 			var alternative = table.Alternatives[i];
 			ImGui.PushID(i);
 			ImGui.AlignTextToFramePadding();
 			ImGui.Text($"{i + 1}.");
 			ImGui.SameLine();
-			ImGui.SetNextItemWidth(ScaledImGui.Scaled(48f));
-			if (PercentField($"chance{table.Guid}.{i}", percents[i], why != null) is { } typed) {
-				var asked = percents.ToArray();
-				asked[i] = typed;
-				_editor.RequestChances(table.Guid, asked);
+			if (why != null) {
+				ImGui.TextUnformatted($"{percents[i]:0.#}%");
+			} else {
+				ImGui.SetNextItemWidth(ScaledImGui.Scaled(56f));
+				if (ChanceField($"chance{table.Guid}.{i}", percents[i]) is { } typed) {
+					var asked = percents.ToArray();
+					asked[i] = typed;
+					_editor.RequestChances(table.Guid, asked);
+				}
+
+				ImGui.SameLine();
+				ImGui.TextUnformatted("%");
 			}
 
 			ImGui.SameLine();
-			ImGui.TextUnformatted("%");
-			ImGui.SameLine();
-			ImGui.TextWrapped(_summary(source.RecordAt(alternative.Record)!));
+			bool lit = alternative.Range == highlight;
+			if (lit) {
+				ImGui.PushStyleColor(ImGuiCol.Text, HighlightColor);
+			}
+
+			EditorText.Wrapped(_choices.Option(table, i) + (inScene.Contains(i) ? " (in the scene)" : ""));
+			if (lit) {
+				ImGui.PopStyleColor();
+			}
+
 			if (why == null && table.Alternatives.Count > 1) {
 				ImGui.SameLine();
 				if (ImGui.SmallButton("Remove")) {
@@ -249,67 +121,141 @@ internal sealed class VariantView {
 			ImGui.PopID();
 		}
 
-		if (!whole) {
-			string exact = string.Join(", ", table.Alternatives.Select(alternative => $"{table.Percent(alternative.Draws):0.#}%"));
-			EditorText.Note($"Its chances now: {exact}, of draws below {table.Bound}. A change writes every chance as the "
-				+ "whole percent shown, of draws below 100, which changes no other draw.");
+		if (!VariantEditing.Exact(table)) {
+			string exact = string.Join(", ", table.Alternatives.Select(alternative => $"{table.Percent(alternative.Draws):0.###}%"));
+			EditorText.Note(why == null ? $"Rounded from {exact}: a change writes every chance as shown." : $"Rounded from {exact}.");
 		}
 
 		if (table.Leftover > 0) {
-			string noun = table.Row switch { 12 => "herc", 13 => "flyer", 14 => "structure", _ => "record" };
-			EditorText.Wrapped($"Left over: {table.Percent(table.Leftover):0.#}%");
-			EditorText.Note($"A draw there takes no alternative: a {noun} drawing it keeps its own fields, and the point, "
-				+ "heading and actions those reference are not looked up.");
+			EditorText.Wrapped($"Nothing: {Math.Max(100m - percents.Sum(), 0m):0.#}%");
+			if (table.Row is >= 12 and <= 14) {
+				// Its references stay the .MSN's own numbers, which the load reads as list positions (MissionGenerator.ReadHercs and
+				// its siblings, docs/herculan/handoff-editor-conditions.md#variants).
+				EditorText.Note($"A load that lands here picks no option: the {_choices.Noun(table)} keeps its own details, but its "
+					+ "position, heading and triggers can come out wrong in play.");
+			}
+		}
+
+		if (inScene.Count > 0) {
+			EditorText.Note("Each load picks one option at random; the scene shows the first.");
 		}
 
 		if (why == null) {
 			string? noAdd = VariantEditing.WhyNoAdd(source, table.Guid);
 			ImGui.BeginDisabled(noAdd != null);
-			if (ImGui.Button("Add alternative")) {
-				_editor.RequestAdd(table.Guid, ShownRange(source, table));
+			if (ImGui.Button("Add option")) {
+				_editor.RequestAdd(table.Guid, table.Alternatives[inScene.Count > 0 ? inScene.Min() : 0].Range);
 			}
 
 			ImGui.EndDisabled();
-			EditorText.Note(noAdd ?? "A copy of the alternative the editor shows, taking half the largest chance.");
+			EditorText.Note(noAdd ?? "Adds a copy of the option the scene shows, with half the largest chance.");
 		}
 	}
 
-	// The records drawing from the table's key, one identity link per line with what each drew in the editor.
-	private void DrawDrawers(MissionDocument source, VariantTable table) {
-		ImGui.Text("Drawn by:");
-		var drawers = VariantEditing.Drawers(source, table.Key);
-		int leftOut = 0;
-		ImGui.PushID("drawers");
-		foreach (var drawer in drawers) {
-			if (source.Provenance.ExportedSlot(drawer) is not { } slot) {
-				leftOut++;
-				continue;
-			}
-
-			var use = _conditions.Identity(drawer.Row, slot.Index);
-			ImGui.PushID($"{drawer.Row}.{drawer.Index}");
-			if (use.Target is { } target) {
-				_links.Link(use.Label, target);
+	// Every record that picks from it, one identity link per line with the option the scene shows it with, and why it has no
+	// effect in play when it has none.
+	private void DrawUsers(VariantTable table, IReadOnlyList<ChoiceUser> users) {
+		ImGui.Text("Used by:");
+		ImGui.PushID("users");
+		for (int i = 0; i < users.Count; i++) {
+			var user = users[i];
+			ImGui.PushID(i);
+			if (user.Target is { } target) {
+				_links.Link(user.Label, target);
 			} else {
-				ImGui.Text(use.Label);
+				ImGui.TextUnformatted(user.Label);
 			}
 
-			int at = table.Alternatives.ToList().FindIndex(alternative => alternative.Range == VariantEditing.RangeDrawn(source, drawer));
 			ImGui.SameLine(0f, 0f);
-			ImGui.Text(at >= 0 ? $": alternative {at + 1}" : ": none");
+			ImGui.TextUnformatted(user.Shown is { } shown ? $": shows option {shown + 1}"
+				: user.OtherChoice ? ": shows another random choice's option"
+				: ": keeps its own details");
+			if (user.Unused is { } unused) {
+				EditorText.Note(RandomChoices.UnusedNote(unused));
+			}
+
 			ImGui.PopID();
 		}
 
 		ImGui.PopID();
-		if (drawers.Count == 0) {
-			EditorText.Note("Nothing.");
-		} else if (leftOut > 0) {
-			ImGui.TextWrapped($"{leftOut} more, absent from the mission as opened");
+		int others = _choices.Others(table);
+		if (others > 0) {
+			ImGui.TextWrapped(others == 1 ? "1 option of another random choice" : $"{others} options of other random choices");
+		}
+
+		if (users.Count == 0 && others == 0) {
+			EditorText.Note("Nothing picks from it.");
 		}
 	}
 
-	// The other tables under its key, as links.
-	private void DrawSameKey(MissionDocument source, VariantTable table) {
+	// Delete random choice, or why it cannot be deleted, with what references it as links.
+	private void DrawDelete(VariantTable table, string? why) {
+		if (why != null) {
+			return;
+		}
+
+		switch (VariantEditing.WhyNoDelete(_editor.Source, table.Guid)) {
+			case VariantEditing.PickedFrom:
+				ImGui.TextWrapped("Cannot be deleted while those under Used by pick from it.");
+				return;
+			case VariantEditing.Referenced:
+				ImGui.TextWrapped("Cannot be deleted while these reference it:");
+				ImGui.PushID("referencing");
+				foreach (var (label, target) in _choices.Referencing(table)) {
+					ImGui.PushID(label);
+					if (target != null) {
+						_links.Link(label, target);
+					} else {
+						ImGui.TextUnformatted(label);
+					}
+
+					ImGui.PopID();
+				}
+
+				ImGui.PopID();
+				return;
+			case { } reason:
+				EditorText.Reason(reason, "Cannot be deleted: ");
+				return;
+		}
+
+		if (ImGui.Button("Delete random choice")) {
+			_editor.RequestDelete(table.Guid);
+		}
+	}
+
+	// The records behind it, for matching against the file: its condition number and key, its requirement, its roll, each
+	// option's condition number and range, and the other tables under its key.
+	private void DrawAdvanced(VariantTable table) {
+		if (!ImGui.CollapsingHeader("Advanced")) {
+			return;
+		}
+
+		var source = _editor.Source;
+		ImGui.TextUnformatted($"Condition {table.Guid}, key {table.Key}");
+		ImGui.TextUnformatted(table.Bound > 0 ? $"Roll: a number from 0 to {table.Bound - 1}" : $"Roll: below {table.Bound}");
+		if (table.Requires != -1) {
+			ImGui.AlignTextToFramePadding();
+			ImGui.Text("Requires:");
+			ImGui.SameLine();
+			_links.Link($"Condition {table.Requires}", new ConditionSelection(table.Requires));
+			EditorText.Note("Where that condition fails, nothing picks from this random choice.");
+		}
+
+		ImGui.PushID("ranges");
+		for (int i = 0; i < table.Alternatives.Count; i++) {
+			var alternative = table.Alternatives[i];
+			var range = ConditionEditing.Record(source, alternative.Range);
+			ImGui.PushID(i);
+			ImGui.Text($"Option {i + 1}:");
+			ImGui.SameLine();
+			_links.Link($"Condition {alternative.Range}", new ConditionSelection(alternative.Range));
+			ImGui.SameLine(0f, 0f);
+			ImGui.TextUnformatted($", {(ushort)range.FlagIndexOrRangeLower} to {(ushort)range.OperatorOrRangeUpperOrResult}");
+			ImGui.PopID();
+		}
+
+		ImGui.PopID();
 		if (table.SameKey.Count == 0) {
 			return;
 		}
@@ -322,37 +268,106 @@ internal sealed class VariantView {
 		}
 	}
 
-	// Delete, or why it cannot be deleted.
-	private void DrawDelete(MissionDocument source, VariantTable table, string? why) {
-		if (why != null) {
+	/// <summary>
+	/// The Random choice line of a herc's, flyer's, structure's or ground vehicle's view: outside the squad a choice of None,
+	/// each random choice of its kind by its title, or New random choice from this herc (flyer, structure, ground vehicle); for
+	/// a squad herc the choice it picks from, shown only. Then a link to the choice and which option the scene shows.
+	/// </summary>
+	public void DrawObjectChoice(SceneObject placed) {
+		var source = _editor.Source;
+		var index = _choices.Index;
+		if (index.KeyOf(placed) is not { } key || index.Plan.Object(key) is not { } planned) {
 			return;
 		}
 
-		if (VariantEditing.WhyNoDelete(source, table.Guid) is { } reason) {
-			ImGui.TextWrapped(reason == "Records draw from it."
-				? "Cannot be deleted while the records under Drawn by draw from it."
-				: $"Cannot be deleted: {reason}");
+		int row = key.Row;
+		short guid = key.Guid;
+		short? current = VariantEditing.TableOf(source, row, guid);
+		if (planned.Squad && current == null) {
 			return;
 		}
 
-		if (ImGui.Button("Delete")) {
-			_editor.RequestDelete(table.Guid);
+		ImGui.PushID("choice");
+		ImGui.AlignTextToFramePadding();
+		ImGui.Text("Random choice:");
+		if (!planned.Squad) {
+			string? why = VariantEditing.WhyNoTables(source, row, guid);
+			ImGui.SameLine();
+			ImGui.SetNextItemWidth(-1f);
+			ImGui.BeginDisabled(why != null);
+			if (ImGui.BeginCombo("##choice", current is { } named ? TitleOf(named) : "None")) {
+				if (ImGui.Selectable("None", current == null) && current != null) {
+					_editor.RequestTable(row, guid, -1);
+				}
+
+				foreach (short table in _choices.All) {
+					if (VariantEditing.WhyNoTable(source, row, guid, table) == null
+							&& ImGui.Selectable($"{TitleOf(table)}##{table}", table == current) && table != current) {
+						_editor.RequestTable(row, guid, table);
+					}
+				}
+
+				if (ImGui.Selectable($"New random choice from this {Noun(placed)}")) {
+					_editor.RequestCreate(row, guid);
+				}
+
+				ImGui.EndCombo();
+			}
+
+			ImGui.EndDisabled();
+			EditorText.Reason(why);
+		}
+
+		if (current is { } chosen) {
+			_links.Link(TitleOf(chosen), new ConditionSelection(chosen));
+			DrawShown(row, guid, chosen);
+		}
+
+		EditorText.Reason(_editor.Failure);
+		ImGui.PopID();
+	}
+
+	/// <summary>
+	/// The Random choice line of route <paramref name="guid"/>'s view when its waypoints are an option of a random choice: which
+	/// option, with a link to the choice, and that an edit changes that option wherever it is picked.
+	/// </summary>
+	public void DrawRouteChoice(short guid) {
+		const int routeRow = 8;
+		if (VariantEditing.TableOf(_editor.Source, routeRow, guid) is not { } table || _choices.Read(table) is not { } read) {
+			return;
+		}
+
+		ImGui.PushID("routeChoice");
+		ImGui.AlignTextToFramePadding();
+		ImGui.Text(ShownAt(routeRow, guid, read) is { } at ? $"Its waypoints are option {at + 1} of" : "It picks its waypoints from");
+		ImGui.SameLine();
+		_links.Link(_choices.Title(read), new ConditionSelection(table));
+		EditorText.Note("Editing them changes that option wherever it is picked.");
+		ImGui.PopID();
+	}
+
+	// Which option of <table> the scene shows record <row>, <guid> with.
+	private void DrawShown(int row, short guid, short table) {
+		if (_choices.Read(table) is { } read && ShownAt(row, guid, read) is { } at) {
+			EditorText.Wrapped($"The scene shows option {at + 1}: {_choices.Option(read, at)}.");
+		} else {
+			EditorText.Note("The scene shows none of its options, so it keeps its own details.");
 		}
 	}
 
-	// The range of the alternative the editor shows for <table>: the one the first record drawing from it drew in the
-	// editor, else the first.
-	private static short ShownRange(MissionDocument source, VariantTable table) {
-		var ranges = table.Alternatives.Select(alternative => alternative.Range).ToHashSet();
-		return VariantEditing.Drawers(source, table.Key).Select(drawer => VariantEditing.RangeDrawn(source, drawer))
-			.FirstOrDefault(range => range is { } drawn && ranges.Contains(drawn))
-			?? table.Alternatives[0].Range;
+	// The option of <table> the layout shows the key record of <row>, <guid> with, or null for none of its options.
+	private int? ShownAt(int row, short guid, VariantTable table) {
+		var source = _editor.Source;
+		if (VariantEditing.KeyRecord(source, row, guid) is not { } key
+				|| VariantEditing.DrawOf(source, key) is not { Table: var drawn, Shown: { Record: not null } option } || drawn != table.Guid) {
+			return null;
+		}
+
+		int at = table.Alternatives.ToList().FindIndex(alternative => alternative.Range == option.Range);
+		return at >= 0 ? at : null;
 	}
 
-	private static string TableName(MissionDocument source, short table) =>
-		VariantEditing.Table(source, table) is { } read
-			? $"Condition {table}: table of {read.Alternatives.Count} alternative(s)"
-			: $"Condition {table}";
+	private string TitleOf(short table) => _choices.Read(table) is { } read ? _choices.Title(read) : $"Condition {table}";
 
 	/// <summary>What the view of <paramref name="placed"/> calls it: herc, flyer, ground vehicle or structure.</summary>
 	internal static string Noun(SceneObject placed) => placed.Placement.Kind switch {
@@ -362,29 +377,27 @@ internal sealed class VariantView {
 		_ => "structure",
 	};
 
-	// A typed whole percent, 0 to 100; answers the value when the field lets go after a change.
-	private int? PercentField(string id, int current, bool locked) {
+	// A typed percent to one decimal, 0 to 100; answers the value when the field lets go after a change.
+	private decimal? ChanceField(string id, decimal current) {
 		if (_draftFor != null && _draftFor != id && !ImGui.IsAnyItemActive()) {
 			_draftFor = null;
 		}
 
-		int shown = _draftFor == id ? _draft : current;
-		ImGui.BeginDisabled(locked);
-		if (ImGui.InputInt($"##{id}", ref shown, 0, 0)) {
+		float shown = _draftFor == id ? _draft : (float)current;
+		if (ImGui.InputFloat($"##{id}", ref shown, 0f, 0f, "%.1f")) {
 			_draftFor = id;
 			_draft = shown;
 		}
 
-		int? typed = null;
+		decimal? typed = null;
 		if (ImGui.IsItemDeactivatedAfterEdit() && _draftFor == id) {
 			_draftFor = null;
-			int value = Math.Clamp(_draft, 0, 100);
+			decimal value = float.IsFinite(_draft) ? decimal.Round((decimal)Math.Clamp(_draft, 0f, 100f), 1) : current;
 			if (value != current) {
 				typed = value;
 			}
 		}
 
-		ImGui.EndDisabled();
 		return typed;
 	}
 }

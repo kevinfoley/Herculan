@@ -9,9 +9,9 @@ namespace Herculan.Engine.Editor;
 /// what it holds, <see cref="CampaignVariablePicker"/>), operator and value, a draw's
 /// bound, or a range's draw and ends; what it requires; what references it, as links; and Delete, refused while anything
 /// does. Each a field or choice that changes it
-/// (<see cref="ConditionEditor"/>). A variant table is its table's view (<see cref="VariantView"/>), and a range over one is
-/// shown as the alternative it chooses (<see cref="VariantView.DrawRange"/>), its chance set in the table's view. What each
-/// kind tests is docs/retail/formats/msn-mission-file.md#the-conditions--row-1.
+/// (<see cref="ConditionEditor"/>). A variant table, and a range over one choosing an option, are its Random choice view
+/// (<see cref="VariantView.DrawChoice"/>), the range's option highlighted. What each kind tests is
+/// docs/retail/formats/msn-mission-file.md#the-conditions--row-1.
 /// </summary>
 internal sealed class ConditionView {
 	private readonly ConditionEditor _editor;
@@ -34,7 +34,7 @@ internal sealed class ConditionView {
 
 	public void Draw(short guid) {
 		var source = _editor.Source;
-		if (ConditionEditing.IndexOf(source, guid) == null) {
+		if (ConditionEditing.IndexOf(source, guid) == null || _variants.DrawChoice(guid)) {
 			return;
 		}
 
@@ -43,20 +43,11 @@ internal sealed class ConditionView {
 		string? why = _editor.WhyFixed(guid);
 		bool locked = why != null;
 		ImGui.Text($"Condition {guid}");
-		if (record.Type == ConditionEditing.Range && _variants.DrawRange(guid)) {
-			return;
-		}
-
 		ImGui.Text(KindName(source, record));
 		ImGui.Separator();
-		if (record.Type == ConditionEditing.VariantTable) {
-			_variants.DrawTable(guid);
-			return;
-		}
-
 		if (ConditionEditing.InVariantTable(source, guid)) {
 			ImGui.TextWrapped(ConditionEditing.Describe(source.Mission, record));
-			EditorText.Note("Its chance is set in its table's view.");
+			EditorText.Note("Its chance is set in its random choice's view.");
 		} else {
 			EditorText.Reason(why);
 		}
@@ -86,9 +77,9 @@ internal sealed class ConditionView {
 		ConditionEditing.FlagTest => "Flag test",
 		ConditionEditing.Draw => "Draw",
 		ConditionEditing.Range when ConditionEditing.ParentOf(source, record.GUID)?.Type == ConditionEditing.VariantTable =>
-			"Range over a variant table",
+			"Option of a random choice",
 		ConditionEditing.Range => "Range over a draw",
-		ConditionEditing.VariantTable => "Variant table",
+		ConditionEditing.VariantTable => "Random choice",
 		_ => $"Type {record.Type}",
 	};
 
@@ -146,7 +137,7 @@ internal sealed class ConditionView {
 	private void DrawRange(MissionDocument source, short guid, MissionCondition14 record, bool locked) {
 		var parent = ConditionEditing.ParentOf(source, guid);
 		if (parent?.Type == ConditionEditing.VariantTable) {
-			ImGui.Text("Variant table:");
+			ImGui.Text("Random choice:");
 			ImGui.SameLine();
 			_links.Link($"Condition {parent.GUID}", new ConditionSelection(parent.GUID));
 			ImGui.Text($"From {(ushort)record.FlagIndexOrRangeLower} to {(ushort)record.OperatorOrRangeUpperOrResult}");

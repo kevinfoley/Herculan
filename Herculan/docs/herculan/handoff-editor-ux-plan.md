@@ -38,14 +38,14 @@ Phases 2 to 6 are carried out by [handoff-editor-msn-scene.md](handoff-editor-ms
 
 ### 2. Random choice view
 
-- One view for a variant table and its alternatives, and for a random roll and the ranges over it (R19), reached from its own outliner list and from any of its conditions, which open it with that option highlighted.
-- Options with their chances as percents, one decimal allowed (12.5%), whatever internal roll size keeps them exact; what each option is, with what tells it apart (a herc option's weapons when the chassis is the same); "Nothing" with what is left over.
-- **Used by**: who picks from it, in game terms (your HERC, the squadmate's HERC, Cybrid hercs (group 5)), and the option each shows in the editor. A record with no object says why (left behind on practice missions).
-- A warning when the choice has no effect in play (a squad loadout on a practice mission the practice screen's HERC replaces).
-- **Advanced**: key, roll size, condition numbers and ranges.
-- A herc's or route's view that draws from a choice says "One option of <choice>; changes apply to: that option wherever it is picked (N hercs) / only this herc" (R24, R33).
-- The Conditions list moves under Advanced, without its create buttons (R20).
-- Replaces the range view `VariantView.DrawRange` draws.
+- Variant tables (done, [Variants](handoff-editor-conditions.md#variants)): one view for a table and its options (R19), reached from the Mission panel's Random choices list and from any of its conditions, which open it with that option highlighted.
+- Options with their chances as percents, one decimal allowed (12.5%), over whichever roll size keeps them exact; what each option is, with what tells it apart (a herc option's weapons when the chassis is the same); "Nothing" with what is left over (done).
+- **Used by**: who picks from it, in game terms (the player's HERC, Squadmate 2's HERC, SCARAB (group 5)), and the option each shows in the editor; a record with no object says why (done).
+- A warning when the choice has no effect in play, such as a squad loadout on a practice mission the practice screen's HERC replaces (done).
+- **Advanced**: key, roll size, condition numbers and ranges (done).
+- A herc's view that picks from a choice offers "Random choice:" and "Changes apply to: that option, wherever it is picked (N hercs) / only this herc"; a route's says its waypoints are an option of the choice (R24, R33, done).
+- The Conditions list is under Advanced, without its create buttons (R20, done).
+- A random roll (a draw) and its ranges keep their own views: every retail roll picks only a debrief loss line, which the editor does not show yet, and they join the Random choice view when the debrief text gets a view.
 
 ### 3. Campaign variables and Present when as sentences
 

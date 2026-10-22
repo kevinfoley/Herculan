@@ -9,8 +9,8 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// The Mission panel down the left of the window: the mission itself (its theater and time of day,
 /// <see cref="MissionView"/>), then the mission check's findings, then every group (with its members), trigger area,
-/// action, timer, route, objective and condition as a list, the trigger areas and routes with the buttons that start placing a new
-/// one, and the actions, timers, objectives and conditions with the buttons that create one. It is the only way to reach the parts of a mission that are not
+/// action, timer, route, objective and random choice as a list, the trigger areas and routes with the buttons that start placing a new
+/// one, and the actions, timers and objectives with the buttons that create one; last, under Advanced, every condition. It is the only way to reach the parts of a mission that are not
 /// standing somewhere — an action with no area, a route with no waypoints — and the other way
 /// to make a selection. A double-click also frames the record in the view (<see cref="SelectionState.Focus"/>).
 ///
@@ -69,8 +69,11 @@ internal sealed class MissionOutliner {
 	/// <summary>What the Timers list's New timer asks to create a timer; set once the mission's tools are built.</summary>
 	public TimerEditor? Timers { get; set; }
 
-	/// <summary>What the Conditions list reads and its New flag test and New draw ask; set once the mission's tools are built.</summary>
+	/// <summary>What the Conditions list under Advanced reads; set once the mission's tools are built.</summary>
 	public ConditionEditor? Conditions { get; set; }
+
+	/// <summary>What the Random choices list reads; set once the mission's tools are built.</summary>
+	public RandomChoices? Choices { get; set; }
 
 	public void Draw(Vector2 display, float menuBarHeight) {
 		ImGui.SetNextWindowPos(new Vector2(0f, menuBarHeight));
@@ -86,7 +89,8 @@ internal sealed class MissionOutliner {
 		DrawTimers();
 		DrawRoutes();
 		DrawObjectives();
-		DrawConditions();
+		DrawChoices();
+		DrawAdvanced();
 
 		ImGui.End();
 	}
@@ -191,34 +195,56 @@ internal sealed class MissionOutliner {
 	}
 
 	/// <summary>
-	/// Every row-1 condition, in file order, as the conditions the other records' condition fields reference.
+	/// Every variant table, in row-1 order, as its Random choice view titles it, with how many records pick from it; selected
+	/// while it or a range over it is (docs/herculan/handoff-editor-conditions.md#variants).
 	/// </summary>
-	private void DrawConditions() {
-		if (Conditions is not { } conditions) {
+	private void DrawChoices() {
+		if (Choices is not { } choices) {
+			return;
+		}
+
+		var tables = choices.All;
+		if (!ImGui.CollapsingHeader($"Random choices ({tables.Count})###choices")) {
+			return;
+		}
+
+		short? current = _selection.Current is ConditionSelection { Guid: var guid }
+			? VariantEditing.IsTable(_source, guid) ? guid : VariantEditing.TableOfRange(_source, guid)
+			: null;
+		foreach (short table in tables) {
+			if (choices.Read(table) is not { } read) {
+				continue;
+			}
+
+			int users = choices.Users(read).Count + choices.Others(read);
+			Choose(new ConditionSelection(table), WrappedSelectable($"{choices.Title(read)} (used by {users})", $"choice{table}",
+				current == table));
+		}
+	}
+
+	/// <summary>
+	/// Advanced, collapsed: every row-1 condition, in file order, as the conditions the other records' condition fields
+	/// reference.
+	/// </summary>
+	private void DrawAdvanced() {
+		if (Conditions is not { } conditions || !ImGui.CollapsingHeader("Advanced###advanced")) {
 			return;
 		}
 
 		var records = conditions.Listed;
-		if (!ImGui.CollapsingHeader($"Conditions ({records.Count})###conditions")) {
+		if (!ImGui.TreeNode($"Conditions ({records.Count})###conditions")) {
 			return;
 		}
 
 		var source = conditions.Source;
-		if (ImGui.SmallButton("New flag test")) {
-			conditions.RequestCreateFlagTest();
-		}
-
-		ImGui.SameLine();
-		if (ImGui.SmallButton("New draw")) {
-			conditions.RequestCreateDraw();
-		}
-
 		for (int i = 0; i < records.Count; i++) {
 			var record = records[i];
 			var selection = new ConditionSelection(record.GUID);
 			Choose(selection, WrappedSelectable($"Condition {record.GUID}: {ConditionEditing.Describe(source.Mission, record)}",
 				$"condition{i}", _selection.Is(selection)));
 		}
+
+		ImGui.TreePop();
 	}
 
 	/// <summary>

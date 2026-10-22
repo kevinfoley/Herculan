@@ -33,9 +33,6 @@ internal sealed class VariantEditor {
 	/// <summary>Why the last edit run could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
-	/// <summary>Why <paramref name="table"/> is shown without being edited, or null when it is edited.</summary>
-	public string? WhyFixed(VariantTable table) => table.WhyFixed;
-
 	/// <summary>The roster row and GUID of a placed object outside the squad, or null for one of the squad.</summary>
 	public (int Row, short Guid)? RecordOf(SceneObject placed) {
 		var placement = placed.Placement;
@@ -70,8 +67,8 @@ internal sealed class VariantEditor {
 		Ask(() => VariantEditing.WhyNoRemove(_source, table, range),
 			source => VariantEditing.RemoveAlternative(source, table, range), table);
 
-	/// <summary>Asks for <paramref name="table"/>'s chances to be <paramref name="percents"/>, one per alternative.</summary>
-	public void RequestChances(short table, IReadOnlyList<int> percents) =>
+	/// <summary>Asks for <paramref name="table"/>'s chances to be <paramref name="percents"/>, one percent to one decimal per alternative.</summary>
+	public void RequestChances(short table, IReadOnlyList<decimal> percents) =>
 		Ask(() => VariantEditing.WhyNoChances(_source, table, percents),
 			source => VariantEditing.SetChances(source, table, percents), table);
 

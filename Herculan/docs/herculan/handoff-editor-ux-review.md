@@ -26,9 +26,9 @@ Paths are under `Herculan/src/Herculan.Engine.Editor/` unless they say otherwise
 
 ### 4. Identity strings built from roster slots and enum names
 
-- **Where:** `MissionText.cs:25,30` give "Group 0 (player squad)" and "Group 5 (Mech, Cybrid)". `MissionText.cs:18` gives "Seeker (mech slot 3)". `MissionText.cs:44-46` gives "Herc slot 4 (not placed)". `ActionView.cs:554-555` and `PanelLinks.cs:69` give "Herc slot 3" and "flyer slot 2 (not placed)". The same strings appear in the outliner (`MissionOutliner.cs:263,272`) and in every link.
+- **Where:** `MissionText.cs:25,30` give "Group 0 (player squad)" and "Group 5 (Mech, Cybrid)". `MissionText.cs:18` gives "SCARAB (mech slot 3)". `MissionText.cs:44-46` gives "Herc slot 4 (not placed)". `ActionView.cs:554-555` and `PanelLinks.cs:69` give "Herc slot 3" and "flyer slot 2 (not placed)". The same strings appear in the outliner (`MissionOutliner.cs:263,272`) and in every link.
 - **Why:** "Mech" and "Base" are enum names: the UI says Herc and Structure everywhere else. A roster slot is a storage index. "(not placed)" links to something with no object in the scene and does not say why it has none.
-- **Proposal:** Name a group by its team and members: "Cybrid hercs: Seeker x2, Talon (group 5)", "Player's squad". Name an object by its type and group: "Seeker in Cybrid hercs (group 5)", or "Seeker 2 of 3" when the group has several of one type. In place of "slot N (not placed)", say what is missing: "a herc that only appears in other versions of this mission" (see finding 3), as plain text rather than a link.
+- **Proposal:** Name a group by its team and members: "Cybrid hercs: SCARAB x2, DIABLO (group 5)", "Player's squad". Name an object by its type and group: "SCARAB in Cybrid hercs (group 5)", or "SCARAB 2 of 3" when the group has several of one type. In place of "slot N (not placed)", say what is missing: "a herc that only appears in other versions of this mission" (see finding 3), as plain text rather than a link.
 
 ## Mission logic: actions, timers, objectives, orders
 

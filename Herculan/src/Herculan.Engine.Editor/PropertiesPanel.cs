@@ -58,7 +58,7 @@ internal sealed class PropertiesPanel {
 			SideChanger sides, ObjectDeleter deleter, SquadMachinePanel machine, RosterFitView fit, MissionView mission, RouteEditor routes,
 			RoutePlacing placing, AreaEditor areas, AreaPlacing areaPlacing, OrderEditor orders, ObjectiveEditor objectives,
 			ActionEditor actions, TimerEditor timers, ConditionEditor conditions, PresenceEditor presence, VariantEditor variants,
-			Func<HercWorks.Core.Data.File.Msn.MapObject, string> alternatives, StringFile? strings) {
+			RandomChoices choices, StringFile? strings) {
 		_index = index;
 		_selection = selection;
 		_mover = mover;
@@ -71,12 +71,12 @@ internal sealed class PropertiesPanel {
 		_actions = actions;
 		_action = new ActionView(index, document, actions, selection, _links);
 		_timer = new TimerView(index, document, timers, _links);
-		_variants = new VariantView(variants, conditions, _links, alternatives);
+		_variants = new VariantView(variants, choices, _links);
 		_condition = new ConditionView(conditions, _links, _variants);
 		_presence = presence;
 		_presentWhen = new PresentWhenView(presence, _links, (names, ownRoute) => References(names, ownRoute));
 		_route = new RouteView(index, selection, mover, routes, placing, _links.Group,
-			(names, ownRoute) => References(names, ownRoute));
+			(names, ownRoute) => References(names, ownRoute), _variants.DrawRouteChoice);
 		_area = new TriggerAreaView(index, mover, areas, areaPlacing, actions, _action.DrawSummary, names => References(names));
 		_orders = new OrderSlotsView(index, document, orders, _links.Route, _links.Action, _links.Subject, _presentWhen, presence);
 		_objectives = objectives;
@@ -196,7 +196,7 @@ internal sealed class PropertiesPanel {
 		ImGui.SameLine();
 		_links.Group(placement.GroupIndex);
 		_presentWhen.Draw(_presence.ObjectTarget(sel));
-		_variants.DrawDrawnFrom(sel);
+		_variants.DrawObjectChoice(sel);
 		ImGui.Separator();
 		ImGui.Text($"Kind: {placement.Kind}");
 		if (!_fit.Covers(sel)) {

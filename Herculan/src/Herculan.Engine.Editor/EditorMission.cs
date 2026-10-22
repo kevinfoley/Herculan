@@ -65,12 +65,14 @@ internal sealed class EditorMission {
 		Outliner.Actions = Actions;
 		Outliner.Timers = Timers;
 		Outliner.Conditions = Conditions;
+		var choices = new RandomChoices(source, sceneIndex, content, squad);
+		Outliner.Choices = choices;
 		Properties = new PropertiesPanel(index, document, Selection, Mover, Sides, Deleter,
-			new SquadMachinePanel(Fitter, Squad, squad), new RosterFitView(Fitter, Types, Variants, new UnitTypeCatalog(content)),
+			new SquadMachinePanel(Fitter, Squad, squad), new RosterFitView(Fitter, Types, Variants, choices, new UnitTypeCatalog(content)),
 			new MissionView(() => Name, () => document.ZoneIndex, Theater, TheaterNames.Labels(content),
 				new MissionTextView(Texts)),
 			Routes, Placing, Areas, AreaPlacing, Orders, Objectives, Actions, Timers, Conditions, Presence, Variants,
-			VariantView.Summaries(content), SimStrings.Load(content));
+			choices, SimStrings.Load(content));
 	}
 
 	/// <summary>

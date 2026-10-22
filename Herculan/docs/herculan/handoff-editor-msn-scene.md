@@ -31,7 +31,6 @@ The document is already the `.MSN` ([`MissionDocument`](handoff-editor-document.
 | `MissionLint` (71) | `ScriptDatLint` over the generation, each finding mapped back to the `.MSN` record that created its record through provenance (`MissionDocument.GuidOf`, `ObjectiveEditing.RecordOf`); the squad count from the generated `Mission`'s placements | stays: the one display use of the generation |
 | `PropertiesPanel` and views | `MissionIndex`, `Mission`, `ScriptDat` record counts, `Placement` fields, `GeneratedRecords` at every link and choice | the layout and the new index ([survey per view](#views)) |
 | Editors and placers | refuse a record the generation has none for (`GeneratedRecords`); `OrderEditor.Slots` reads the generated blocks; a placer's join and `SideChanger` take a group by block index | edit any record; take GUIDs |
-| `ConditionEditing.Outcome`, `VariantEditing.DrawingNow`, `VariantView` | `Generator.Conditions`, `Generator.VariantPicks`, `Provenance.ExportedSlot` | the layout's presence and the option it shows |
 
 ### Views
 
@@ -40,7 +39,7 @@ What each view reads that must change (line counts in parentheses):
 - `PropertiesPanel` (610): `GroupMembers`, `SideOf`, `SetupOf`, `ObjectivesOf*`, `IsWaiting`, `DeploymentActionOf`, `KindOf`, `BasePads`; `Mission.Actions` for the action pickers and arrival text; `Placement` fields including `EngagementActionRef`/`DefeatActionRef` (block-5 indices).
 - `ActionView` (570): `Mission.Actions`/`ActionTimers`, `LinksOf`, `Areas`, `ObjectAt`; `ScriptDat` roster lengths for the target picker and `Actions[].TextRefs`.
 - `TimerView` (162), `TriggerAreaView` (206), `RouteView` (211), `ObjectiveView` (328), `OrderSlotsView` (246): block-index entry points over `Mission`/`GeneratedIndex`, `ScriptDat` lengths for pickers; the area's corners and the route's waypoints are already the new index's.
-- `ConditionView` (323), `VariantView` (424): already `.MSN`-based, but read the generation's outcomes and picks. `PresentWhenView` reads the `.MSN` and the layout, but resolves what loses its reference to an absent record to block indices.
+- `ConditionView` (310): `.MSN`-based, but its Used by finds objects and groups through `Provenance.ExportedSlot` and the generated index. `PresentWhenView` reads the `.MSN` and the layout, but resolves what loses its reference to an absent record to block indices.
 - `RosterFitView` (122), `MachineFitView` (130), `SquadMachinePanel` (196): block-7 slots through `MachineFitter`.
 - `PanelLinks` (105), `MissionText` (215), `ActionChoice` (34): build links and labels from block indices.
 - `MissionTextView` (100), `MissionView` (83), `PointFields` (78): `.MSN` already, or nothing index-based.

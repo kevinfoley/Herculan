@@ -55,12 +55,6 @@ internal sealed class ConditionEditor {
 	/// <summary>Why <paramref name="guid"/> cannot be edited, or null when it can.</summary>
 	public string? WhyFixed(short guid) => ConditionEditing.WhyFixed(_source, guid);
 
-	/// <summary>Asks for a new flag test, which is then selected.</summary>
-	public void RequestCreateFlagTest() => Create((MissionDocument source, out short guid) => ConditionEditing.CreateFlagTest(source, out guid));
-
-	/// <summary>Asks for a new draw, which is then selected.</summary>
-	public void RequestCreateDraw() => Create((MissionDocument source, out short guid) => ConditionEditing.CreateDraw(source, out guid));
-
 	/// <summary>Asks for a new range over draw <paramref name="draw"/>, which is then selected.</summary>
 	public void RequestCreateRange(short draw) =>
 		Create((MissionDocument source, out short guid) => ConditionEditing.CreateRange(source, draw, out guid));
