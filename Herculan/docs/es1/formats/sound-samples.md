@@ -154,7 +154,7 @@ Each voice-line slot then gets `SoundManager_CreateObject`(manager, 0, 0, index)
 
 ### Voice lines
 
-`SpeechLine_Load` (`0004e0f0`) takes a script name and a voice name in stack order. It finds the voice-line slot (`000bd734`, `0x3a` bytes each) whose `+0x2b` holds `0004e208`'s key for the voice name, or takes one from `0004e08c` and stores the key. On a new slot, when the manager exists and the byte `000959e4` is set, it builds `simvoice\<voice name>.sfx` in the slot's `+0x0e`, names it as the slot's index with `SoundManager_SetSampleName`, and loads the slot's sound with `SoundObject_LoadSample`, returning 0 when that fails; then it loads the script with `Snc_Load` ([`snc-lip-sync.md`](snc-lip-sync.md#the-simulators-scripts)). It stores `000981c4` at `+0x2f` and returns the slot.
+`SpeechLine_Load` (`0004e0f0`) takes a script name and a voice name in stack order. It finds the voice-line slot (`000bd734`, `0x3a` bytes each) whose `+0x2b` holds `0004e208`'s key for the voice name, or takes one from `0004e08c` and stores the key. On a new slot, when the manager exists and the byte `Sound_SpeechEnabled` (`000959e4`), which preferences option 2 sets ([the option array](../simulation/preferences.md#the-option-array)), is set, it builds `simvoice\<voice name>.sfx` in the slot's `+0x0e`, names it as the slot's index with `SoundManager_SetSampleName`, and loads the slot's sound with `SoundObject_LoadSample`, returning 0 when that fails; then it loads the script with `Snc_Load` ([`snc-lip-sync.md`](snc-lip-sync.md#the-simulators-scripts)). It stores `000981c4` at `+0x2f` and returns the slot.
 
 ## The shell's names
 

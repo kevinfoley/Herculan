@@ -75,7 +75,7 @@ In panel coordinates, which the screen has 111 rows lower:
 |---|---|---|---|
 | 0 | `MUSIC` | 0 off, 1 on | its handler, `Prefs_ApplyMusicOption` ([below](#the-option-array)), and `Music_Tick` ([the music](main-loop.md#the-music--music_tick-000585dc)) |
 | 1 | `SOUNDS` | 0 off, 1 on | its handler, `Prefs_ApplySoundsOption` |
-| 2 | `RADIO` | 0 `TEXT ONLY`, 1 `VOICE ONLY`, 2 `TEXT / VOICE` | its handler, `Prefs_ApplyRadioOption`: the voice lines' load gate (`000959e4`, [speech lines](../formats/sound-samples.md)) is on for 1 and 2, and the message boxes' show (`MessagePort_ShowEnabled`, [the lifecycle](cockpit-messages.md#the-lifecycle)) for 0 and 2 |
+| 2 | `RADIO` | 0 `TEXT ONLY`, 1 `VOICE ONLY`, 2 `TEXT / VOICE` | its handler, `Prefs_ApplyRadioOption`: the voice lines' load gate (`Sound_SpeechEnabled`, `000959e4`, [speech lines](../formats/sound-samples.md)) is on for 1 and 2, and the message boxes' show (`MessagePort_ShowEnabled`, [the lifecycle](cockpit-messages.md#the-lifecycle)) for 0 and 2 |
 | 3 | `HORIZON` | 0 off, 1 on | `Hzline_DrawWithOffset`, which draws the horizon's skyline only while it is on ([the horizon skyline](../rendering/ground-and-sky.md#the-horizon-skyline)) |
 | 4 | `SKY` | 0 to 255 | `Clouds_DriftAndDraw`, which draws (count · (value + 1)) >> 8 of the clouds ([each frame](../rendering/ground-and-sky.md#each-frame)) |
 | 5 | `GROUND` | 0 to 255 | the ground, textured only above 240 ([the ground](../rendering/ground-and-sky.md#the-ground)), and the scattered points below it ([the scattered points](../rendering/ground-and-sky.md#the-scattered-points)) |
@@ -198,7 +198,7 @@ ES1's simulator keeps 17 options, `Prefs_Options` (`000bd562`), byte *n* option 
 |---|---|---|---|
 | 0 | `000bd562` | `MUSIC` | `Prefs_ApplyMusicOption` (`0004ad0c`): `0004e294`(value), then `Music_Tick` when the value is not 0 and `PrefsInitInProgress` (`000b1734`) is clear |
 | 1 | `000bd563` | `SOUNDS` | `Prefs_ApplySoundsOption` (`0004acfc`): `0004e2c8`(value) |
-| 2 | `000bd564` | `RADIO` | `Prefs_ApplyRadioOption` (`0004ad30`), frameless, with no Ghidra function: `000959e4` = (value ≠ 0), `MessagePort_ShowEnabled` (`000930d2`) = (value ≠ 1) |
+| 2 | `000bd564` | `RADIO` | `Prefs_ApplyRadioOption` (`0004ad30`), frameless, with no Ghidra function: `Sound_SpeechEnabled` (`000959e4`) = (value ≠ 0), `MessagePort_ShowEnabled` (`000930d2`) = (value ≠ 1) |
 | 3 to 5 | `000bd565` to `000bd567` | `HORIZON`, `SKY`, `GROUND` | none |
 | 6 | `000bd568` | `SHAPES` | `Prefs_LimitDetailInLowMemory` ([the detail setting](object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08)) |
 | 7 | `000bd569` | `JOYSTICK` | none |
@@ -260,5 +260,5 @@ Each first copies the option to `Prefs_PreviousOptions` and writes through `Pref
 - **Open:** which instrument copies its rect to the screen first after `PreferencesPanel_Raise` returns to a cockpit view, and so how soon the pointer is drawn again: the slot `+8` that `CockpitView_SetView`'s `CockpitView_InvalidateWidgets` (`0002b4a0`) calls on each instrument, unread here, may make one copy on the next frame, before the clock's next advance.
 - **Open:** whether a change made on the preferences panel before CONTROLS is opened and closed reaches `data\prefs.cfg`. A retail check: set SKY to its lowest, open CONTROLS, press DONE, press DONE on the preferences panel, and see whether the next mission's sky has its clouds back.
 - **Open:** what the freed stick device reads after `NONE` is chosen with a stick fitted. A retail check under DOSBox-X with a stick: choose `NONE` on the controls panel, press DONE twice, and see whether the stick still steers the HERC.
-- **Open:** what `0004e294` and `0004e2c8`, which the MUSIC and SOUNDS handlers call, do to the sound, and what reads `000959e4`, the voice lines' gate ([sound samples](../formats/sound-samples.md#open)).
+- **Open:** what `0004e294` and `0004e2c8`, which the MUSIC and SOUNDS handlers call, do to the sound. `es2_xref.py --decode` finds `Sound_SpeechEnabled` (`000959e4`) read in `SpeechLine_Load` and in `0004e518`, unread ([the message boxes](cockpit-messages.md#open)).
 - **Open:** a positive control in the running game ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: `F12` in the forward view shows the outside view turning round the HERC above a strip of MUSIC, SOUNDS, RADIO and HORIZON beside SKY, GROUND and SHAPES; [=] on SKY adds clouds behind the panel at once; and `GROUND` at its highest textures the ground.

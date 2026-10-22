@@ -7132,13 +7132,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_BehaviourPlayerThink",
-      "description": "(machine), callee-cleaned, the think of the player state: for the group's first member, the waypoint arm (Route_WaypointAt (0001cfb8) after the cursor at group+6, within 10000 by Math_DistanceBetweenPoints2D and not closing the route: Computer_PostMessage (0001a154)(0) and Route_AdvanceCursor (0001c8c0)), then by script.dat header word 3 (000bc4a2): 0 posts 5 once, latched by MissionTarget_Announced (000af70c), and sets +0x99 when the target is the group's order target; 5 sets +0x99 within 40000 of Mech_AiGoalPosition (000179a0); 3 runs the data link on DataLink_Step (000af700), DataLink_Timer (000af704) and DataLink_StepDelays (00091ce8), the subject alive with its group's action +0x16 clear, within 10000 and within 0x2000 of the turret-adjusted heading, posting 0x1d + the step, setting +0x9a at step 4, and posting 0x21 and resetting the step on breaking off. Returns 0. ES2's Mech_BehaviourPlayerThink (DBSIM 0041c194), whose messages are 0x1d, 0x19, 0x34 and 0x38 and which gives selector 7 the data link too.",
+      "description": "(machine), callee-cleaned, the think of the player state; returns 0, doing nothing for a machine that is not entry 0 of its group's (+0x3f) member array +0xe. The waypoint arm: Route_WaypointAt (0001cfb8)(group + 6, the cursor + 1) within 10000 by Math_DistanceBetweenPoints2D (00063c64) with Route_NextWaypointClosesRoute (0001c908) answering 0: Computer_PostMessage (0001a154)(0) and Route_AdvanceCursor (0001c8c0). Then by script.dat header word 3 (000bc4a2): 0, with MissionTarget_Announced (000af70c) 0, the target +0x15e set and Group_IsOrderTarget (0001ce3c)(group, target) non-zero, sets the latch to 1, posts 5 and sets +0x99; 5 sets +0x99 within 40000 of Mech_AiGoalPosition (000179a0); 3, while DataLink_Step (000af700) is not 4, runs the data link on s = Group_OrderTargetObject (0001cda0)(group), used without a test for 0. While s's byte +0x93 is clear, its group's action +0x16 is 0, s is within 10000 by Math_DistanceBetweenPoints (00063c20), and the int16 Math_HeadingToward (00063cc8) from the machine's +0x20 to s's less the heading +0xa, sign-extended, plus the twist +0x22e and 0x2000, unwrapped and compared unsigned, is below 0x4000: it returns while Timer_CountDown (00064178)(DataLink_Timer (000af704)) answers non-zero, and otherwise reloads the counter 000af705 from DataLink_StepDelays (00091ce8)[step], posts 0x1d + the step, adds 1 to the step and at 4 sets +0x9a. Otherwise it posts 0x21 and zeroes the step when the step is not 0, and zeroes the counter 000af705 whatever the step. ES2's Mech_BehaviourPlayerThink (DBSIM 0041c194), whose messages are 0x1d, 0x19, 0x34 and 0x38 and which gives selector 7 the data link too.",
       "source": "Herculan/docs/es1/simulation/mech-ai.md#the-players-think--mech_behaviourplayerthink-00015f80; ES1DBSIM decompile at 00015f80",
       "verified": {
         "bytes": "00015f80+602",
         "sha1": "b6048bf7299c",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -12157,13 +12157,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Widget_DrawToCockpit",
-      "description": "(offset, rect, which) in stack order, callee-cleaned: copies a widget's rect between the display's two pages. Returns 0 unless CockpitView_RectCornerVisible(rect) is 1 and the byte +0x18 of the view manager at CockpitViewManagerPublished (000bc5a0) is 0. The GL display at 000bdd28 holds the pages at +0x88 and +0x8c: which = 1 copies from +0x8c to +0x88, and returns 0 while 000b5bca is set; any other value copies from +0x88 to +0x8c. Under Cockpit_PushCanvasContext it stores the source page at the display's +0x38 and the draw page at +0x3c, each also to 00098dd6 / 00098dda and through g_RasterRoutines slots 16 and 17 (0009df14, 0009df18); copies the type-0 region {rect} with Region_CopyBetweenPages (00066914) at the offset, Cockpit_ZeroOffset (000b0dd4) when offset is null, between slot 31 (0009df50) and slot 30 (0009df4c); puts back the draw page it found, pops the context and returns 1. ES2's Widget_DrawToCockpit (DBSIM 0043122c) has these steps, tests the view manager's +0x1c, and adds a gate on Display_UseScrollWindow, the video-mode offsets 004d25da/004d25de and a one-pixel widening of the rect for scaled modes.",
+      "description": "(offset, rect, which) in stack order, callee-cleaned: copies a widget's rect between the display's two pages. Returns 0 unless CockpitView_RectCornerVisible(rect) is 1 and the byte +0x18 of the view manager at CockpitViewManagerPublished (000bc5a0) is 0. The GL display at 000bdd28 holds the pages at +0x88 and +0x8c: which = 1 copies from +0x8c to +0x88, and returns 0 while 000b5bca is set; any other value copies from +0x88 to +0x8c. Under Cockpit_PushCanvasContext it stores the source page at the display's +0x38 and the draw page at +0x3c, each also to 00098dd6 / 00098dda and through g_RasterRoutines slots 16 and 17 (0009df14, 0009df18); copies the type-0 region {rect} with Region_CopyBetweenPages (00066914) at the offset, Cockpit_ZeroOffset (000b0dd4) when offset is null, between slot 31 (0009df50) and slot 30 (0009df4c); puts back the draw page it found, leaving the source page as it set it, pops the context and returns 1. ES2's Widget_DrawToCockpit (DBSIM 0043122c) has these steps, tests the view manager's +0x1c, and adds a gate on Display_UseScrollWindow, the video-mode offsets 004d25da/004d25de and a one-pixel widening of the rect for scaled modes.",
       "source": "ES1DBSIM decompile at 0002b058, against ES2's Widget_DrawToCockpit",
       "verified": {
         "bytes": "0002b058+318",
         "sha1": "9da00b096203",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -13327,13 +13327,13 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_Enqueue",
-      "description": "(queue, entry, record) in stack order, callee-cleaned: with the count +0x1ea at 10 first MessagePort_QueueDropLast (0002e85c). Takes the first record whose in-use byte (+0x1e0 + i) is clear, sets it, and fills the 0x2c-byte record queue + i * 0x2c: the record's five dwords +2..+0x15 at +2, the entry's text pointer (entry +0) at +0x17, and from the attribute bytes at entry +5: byte 0 as the int16 id +0, byte 1 at +0x16, byte 2 (the priority) at +0x1b, bytes 3 and 4 times 0x3c at +0x1c and +0x20, and bytes 5 and 6 times 0x3c plus the dword 000981c4 at +0x24 and +0x28. Inserts i in the order list +0x1b8 before the first queued record whose priority is strictly greater, or at the end, and adds 1 to the count. ES2's MessagePort_Enqueue (DBSIM 00434e8c), which also stores bytes 7 to 11 and reads now from Time_GetCoarseTicks.",
+      "description": "(queue, entry, record) in stack order, callee-cleaned: with the count +0x1ea at 10 first MessagePort_QueueDropLast (0002e85c). Takes the first record whose in-use byte (+0x1e0 + i) is clear, sets it, and fills the 0x2c-byte record queue + i * 0x2c: the record's five dwords +2..+0x15 at +2, the entry's text pointer (entry +0) at +0x17, and from the attribute bytes at entry +5: byte 0 as the int16 id +0, byte 1 at +0x16, byte 2 (the priority) at +0x1b, bytes 3 and 4 times 0x3c at +0x1c and +0x20, and bytes 5 and 6 times 0x3c plus the dword 000981c4 at +0x24 and +0x28. With every record in use it queues nothing. Puts i in the order list +0x1b8 at k, the first queued record whose priority is strictly greater, or at the end, moving entries down one from position count - 2 to k (0002e6e3-0002e726), so the last queued entry is overwritten and the entry at the new count - 1 keeps the index it held; then adds 1 to the count. ES2's MessagePort_Enqueue (DBSIM 00434e8c), which also stores bytes 7 to 11 and reads now from Time_GetCoarseTicks.",
       "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-queue",
       "verified": {
         "bytes": "0002e59c+457",
         "sha1": "6f1f72267448",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -13387,13 +13387,13 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_QueueDropLast",
-      "description": "(queue), callee-cleaned: clears the in-use byte of the record the tenth order entry (+0x1dc) names and takes 1 from the count +0x1ea. ES2's MessagePort_QueueDropLast (DBSIM 004351c0).",
+      "description": "(queue), callee-cleaned: clears the in-use byte (+0x1e0) of order[order[9]], the record named by the order entry (+0x1b8) whose position is the tenth entry's (+0x1dc) value, not of the tenth entry's own record (0002e865-0002e880), and takes 1 from the count +0x1ea. ES2's MessagePort_QueueDropLast (DBSIM 004351c0), which does the same.",
       "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-queue",
       "verified": {
         "bytes": "0002e85c+53",
         "sha1": "4c2199a9752d",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -13702,7 +13702,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SystemMessages_Index",
-      "description": "(port, digit, which) in stack order, callee-cleaned: loads str\\<name>.str (ResourcePath_BuildFolderName (00060698)(str, name), StringTable_LoadFromFile (00044f78)) and indexes it. which -1: system into SystemStringTable (000b0e54), index SystemMessageIndex (000bd0ec); -2: commandr into CommandStringTable (000b0e44), index CommandMessageIndex (000bd0ac); a slot 0-2: first, when g_SquadmateMachines[slot] is entry 0 of its group's (+0x3f) member array +0xe, itself with which -2; then pilot<digit> into PilotStringTables (000b0e14) + slot * 0x10, index PilotMessageIndex (000bcc22) + slot * 0x183. For each StringTable_ReadNext (00045004) entry, the 9-byte slot index + attribute byte 0 * 9 takes {text, attributes at +5} while its count byte +4 is 0, and the count goes up by 1. ES2's SystemMessages_Index (DBSIM 00435970), (port, mode, n, bank), with the command file commandX and paths by language.",
+      "description": "(port, digit, which) in stack order, callee-cleaned: loads str\\<name>.str (ResourcePath_BuildFolderName (00060698)(str, name), StringTable_LoadFromFile (00044f78)) and indexes it. which -1: system into SystemStringTable (000b0e54), index SystemMessageIndex (000bd0ec); -2: commandr into CommandStringTable (000b0e44), index CommandMessageIndex (000bd0ac); a slot 0-2: first, when g_SquadmateMachines[slot] is entry 0 of its group's (+0x3f) member array +0xe, itself with which -2; then pilot<digit> into PilotStringTables (000b0e14) + slot * 0x10, index PilotMessageIndex (000bcc22) + slot * 0x183. For each entry StringTable_ReadNext (00045004) returns, the 9-byte slot index + attribute byte 0 * 9 takes {text, attributes at +5} while its count byte +4 is 0, and the count goes up by 1; the loop ends at the first 0 that function answers, which comes at the end of the file's first group, so that group alone is indexed. ES2's SystemMessages_Index (DBSIM 00435970), (port, mode, n, bank), with the command file commandX and paths by language, whose loop ends on two 0 answers in a row and so indexes every group.",
       "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-string-files",
       "verified": {
         "bytes": "0002f1ec+303",
@@ -13717,13 +13717,13 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_StepToVariant",
-      "description": "(port, n, slot, table) in stack order, callee-cleaned (entered also at its padding 0002f31b): for n 0 returns slot; otherwise steps n times with StrTable_NextString (0004513c)(table, the slot's text) and returns the slot it builds at 000bd21e: that string, a count byte 0 at 000bd222, and StrTable_GetAttributes (00045194)(table, string) at 000bd223. ES2's MessagePort_StepToVariant (DBSIM 00435a74).",
+      "description": "(port, n, slot, table) in stack order, callee-cleaned (entered also at its padding 0002f31b): for n 0 returns slot; otherwise calls StrTable_NextString (0004513c)(table, the slot's text) n times, each with the slot's own text (0002f335), so any n gives the string after it, and returns the slot it builds at MessagePort_VariantSlot (000bd21e): that string, a count byte 0 at 000bd222, and StrTable_GetAttributes (00045194)(table, string) at 000bd223. ES2's MessagePort_StepToVariant (DBSIM 00435a74).",
       "source": "Herculan/docs/es1/simulation/cockpit-messages.md#posting",
       "verified": {
         "bytes": "0002f31c+82",
         "sha1": "d1d196f3f787",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -13927,13 +13927,13 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_CopyBoxBetweenPages",
-      "description": "(port, direction) in stack order, callee-cleaned: while a line is up (+0x436) copies the port's box between the display's pages: Cockpit_PushCanvasContext, then the display (000bdd28) gets +0x88 as its source page (+0x38) and +0x8c as its draw page (+0x3c) for direction 0, the other way for 1, each mirrored to 00098dd6/00098dda and the routines 0009df14/0009df18 when that display is current. With the cursor hidden (g_RasterRoutines slot 31, 0009df50) it copies the region at +0x43b with Region_CopyBetweenPages (00066914)(region, {0, 0}), shows the cursor (slot 30) unless the view manager's +0x10 is 4 and AlertPanel_OpenCount (00094d78) is 0, restores the draw page and Cockpit_PopRenderContext. ES2's MessagePort_CopyBoxBetweenPages (DBSIM 00437164).",
+      "description": "(port, direction) in stack order, callee-cleaned: while a line is up (+0x436) copies the port's box between the display's pages: Cockpit_PushCanvasContext, then the display (000bdd28) gets +0x88 as its source page (+0x38) and +0x8c as its draw page (+0x3c) for direction 0, the other way for 1, each mirrored to 00098dd6/00098dda and the routines 0009df14/0009df18 when that display is current. With the cursor hidden (g_RasterRoutines slot 31, 0009df50) it copies the region at +0x43b with Region_CopyBetweenPages (00066914)(region, {0, 0}), shows the cursor (slot 30) unless the view manager's +0x10 is 4 and AlertPanel_OpenCount (00094d78) is 0, restores the draw page, leaving the source page as it set it, and Cockpit_PopRenderContext. ES2's MessagePort_CopyBoxBetweenPages (DBSIM 00437164).",
       "source": "ES1DBSIM decompile at 0002fcd4, against ES2's MessagePort_CopyBoxBetweenPages",
       "verified": {
         "bytes": "0002fcd4+298",
         "sha1": "fca7ddbf36fe",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -15127,13 +15127,13 @@
       "type": "function",
       "confidence": "high",
       "name": "LedBmBarGraphH_PaintToValue",
-      "description": "(bar, value) in stack order, callee-cleaned: slot +4 of LEDBMBarGraphHVtable (0009355e). Computes p as BarGraphH_PaintToValue (000317c4) does and clamps it to at most end (+0x18), then to at least start (+0x14); when it differs from the stored q (+0x1c) draws the strip between them, both ends included, through LedBmBarGraphH_DrawBitmapSpan (00032838) by its padding, and stores p. Span +0x10 of 1 or more: growing (p above q), q..p from the bitmap at +0x60; shrinking, p..q from +0x64. Otherwise: growing (p below q), p..q from +0x60; shrinking, q..p from +0x64. ES2's LedBmBarGraphH_PaintToValue (DBSIM 00439b8c) redraws the whole bar, lights it from +0x64, and fills with Raster_FillRect for a span below 1.",
+      "description": "(bar, value) in stack order, callee-cleaned: slot +4 of LEDBMBarGraphHVtable (0009355e). Computes p as BarGraphH_PaintToValue (000317c4) does and clamps it to at most end (+0x18), then to at least start (+0x14); when it differs from the stored q (+0x1c) writes the strip's ends, the lesser first, into the rect's x0 (+0) and x1 (+8), where they stay, draws the strip between them, both ends included, through LedBmBarGraphH_DrawBitmapSpan (00032838) by its padding, and stores p. Span +0x10 of 1 or more: growing (p above q), q..p from the bitmap at +0x60; shrinking, p..q from +0x64. Otherwise: growing (p below q), p..q from +0x60; shrinking, q..p from +0x64. ES2's LedBmBarGraphH_PaintToValue (DBSIM 00439b8c) redraws the whole bar, lights it from +0x64, and fills with Raster_FillRect for a span below 1.",
       "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bitmap-bar-graphs; ES1DBSIM disassembly at 00032764",
       "verified": {
         "bytes": "00032764+207",
         "sha1": "058ecbbc40cd",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -17842,7 +17842,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SliderWidget_SetValueH",
-      "description": "(slider, value) in stack order, its arguments removed by this function: clamps the int16 value to the minimum +0x24 and maximum +0x26, sets the knob +0x28 to the rect's x0 + ((value - minimum) * the scale +0x20 >> 16), and calls slot +0xc of the vtable at +0x1c with (slider, value). ES2's SliderWidget_SetValueH (DBSIM 0045255c).",
+      "description": "(slider, value) in stack order, its arguments removed by this function: clamps the int16 value to the minimum +0x24 and maximum +0x26, sets the int16 knob +0x28 to the low 16 bits of the rect's x0 + ((value - minimum) * the scale +0x20 >> 16), an arithmetic shift, and calls slot +0xc of the vtable at +0x1c with (slider, the clamped value). ES2's SliderWidget_SetValueH (DBSIM 0045255c).",
       "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-slider-base",
       "verified": {
         "bytes": "00043ae4+104",
@@ -17902,13 +17902,13 @@
       "type": "function",
       "confidence": "high",
       "name": "SliderWidget_SetValueV",
-      "description": "(slider, value) in stack order, its arguments removed by this function: clamps the int16 value to the minimum +0x24 and maximum +0x26, sets the knob +0x28 to the rect's y1 - ((value - minimum) * the scale +0x20 >> 16), and calls slot +0xc of the vtable at +0x1c with (slider, value). ES2's SliderWidget_SetValueV (DBSIM 00452644).",
+      "description": "(slider, value) in stack order, its arguments removed by this function: clamps the int16 value to the minimum +0x24 and maximum +0x26, sets the int16 knob +0x28 to the low 16 bits of the rect's y1 - ((value - minimum) * the scale +0x20 >> 16), an arithmetic shift, and calls slot +0xc of the vtable at +0x1c with (slider, the clamped value). ES2's SliderWidget_SetValueV (DBSIM 00452644).",
       "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-slider-base",
       "verified": {
         "bytes": "00043c08+105",
         "sha1": "528bd13751f1",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -17992,13 +17992,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Widget_OnMouseUp",
-      "description": "(root, point) in stack order, its arguments removed by this function: rebases the point by the root's +0 and +4 and stores Widget_HitTestChildren (0004401c)'s index for it in Widget_PressedIndex (00094c58); for an index other than -1, when it is the index held before or bit 1 of Widget_ClickButtons (00094b84) is set, calls slot +0xc of the entry's vtable at +0x1c with what its slot +0x14 returns; then sets the entry's int16 +0x17 to 0, runs Widget_Repaint (0004410c) and sets Widget_PressedIndex to -1. ES2's Widget_OnMouseUp (DBSIM 00452870). es2_xref finds one call, from CockpitMouse_ProcessQueue (000444d0).",
+      "description": "(root, point) in stack order, its arguments removed by this function: rebases the point by the root's +0 and +4 and stores Widget_HitTestChildren (0004401c)'s index for it in Widget_PressedIndex (00094c58); for an index other than -1, when it is the index held before or bit 1 of Widget_ClickButtons (00094b84) is set, calls slot +0xc of the entry's vtable at +0x1c with what its slot +0x14 returns in AX, sign-extended (CWDE at 00043f19); then sets the entry's int16 +0x17 to 0, runs Widget_Repaint (0004410c) and sets Widget_PressedIndex to -1. ES2's Widget_OnMouseUp (DBSIM 00452870). es2_xref finds one call, from CockpitMouse_ProcessQueue (000444d0).",
       "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#press-release-and-drag",
       "verified": {
         "bytes": "00043eac+188",
         "sha1": "b61e0e6a9c34",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -20272,7 +20272,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Prefs_ApplyRadioOption",
-      "description": "(value), frameless, its argument removed by this function: the handler Prefs_Init (0004afe8) registers for option 2: stores (value != 0) in the byte 000959e4 and (value != 1) in MessagePort_ShowEnabled (000930d2). The role of ES2's Prefs_ApplyPilotMessageOption (DBSIM 00459cc4).",
+      "description": "(value), frameless, its argument removed by this function: the handler Prefs_Init (0004afe8) registers for option 2: stores (value != 0) in the byte Sound_SpeechEnabled (000959e4) and (value != 1) in MessagePort_ShowEnabled (000930d2). The role of ES2's Prefs_ApplyPilotMessageOption (DBSIM 00459cc4).",
       "source": "Herculan/docs/es1/simulation/preferences.md#the-option-array",
       "verified": {
         "bytes": "0004ad30+36",
@@ -21607,7 +21607,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SpeechLine_Load",
-      "description": "(sncName, voiceName) in stack order: finds the voice-line slot (000bd734, stride 0x3a, count 000bd73c) whose +0x2b holds 0004e208's key for voiceName; with none, takes a slot from 0004e08c (returning 0 when it gives none), stores the key at +0x2b and 1 at +0x33, and, when the sound manager 000959ac exists and the byte 000959e4 is set, builds simvoice\\<voiceName>.sfx in the slot's +0xe, names it as the slot's index +0x34 with SoundManager_SetSampleName (0004f99c) and loads the slot's sound +0x36 with SoundObject_LoadSample, returning 0 when that fails; then Snc_Load(slot, sound, sncName). Stores 000981c4 at +0x2f and returns the slot. es2_xref finds one call, from 0003e1a8 in 0003e060.",
+      "description": "(sncName, voiceName) in stack order: finds the voice-line slot (000bd734, stride 0x3a, count 000bd73c) whose +0x2b holds 0004e208's key for voiceName; with none, takes a slot from 0004e08c (returning 0 when it gives none), stores the key at +0x2b and 1 at +0x33, and, when the sound manager 000959ac exists and the byte Sound_SpeechEnabled (000959e4) is set, builds simvoice\\<voiceName>.sfx in the slot's +0xe, names it as the slot's index +0x34 with SoundManager_SetSampleName (0004f99c) and loads the slot's sound +0x36 with SoundObject_LoadSample, returning 0 when that fails; then Snc_Load(slot, sound, sncName). Stores 000981c4 at +0x2f and returns the slot. es2_xref finds one call, from 0003e1a8 in 0003e060.",
       "source": "Herculan/docs/es1/formats/sound-samples.md#voice-lines",
       "verified": {
         "bytes": "0004e0f0+278",
@@ -35308,7 +35308,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VGA8_ReadBitmap",
-      "description": "(header, point, clip, flags), C convention: slot 27 of the VGA_8 driver's table (000a7b70), the one stored pointer es2_xref finds. The reverse of VGA8_BlitBitmap (0008b9a8): with a clip rect, returns when the bitmap's rows (+0) and columns (+2) at the point miss it and otherwise cuts them to it; mirrors by the flags 1 and 2; reads the rect of the source page (offset 0009e600, pan 0009e60c, the row table VGA8_RowOffsets) a plane at a time through the graphics controller's read map select (port 3ce index 4, its value put back after) into the pixels the dword +0xa points at.",
+      "description": "(header, point, clip, flags), C convention: slot 27 of the VGA_8 driver's table (000a7b70), the one stored pointer es2_xref finds. The reverse of VGA8_BlitBitmap (0008b9a8): with a clip rect, returns when the bitmap's rows (+0) and columns (+2) at the point miss it and otherwise cuts them to it; mirrors by the flags 1 and 2; reads the rect of the source page (offset 0009e600, pan 0009e60c, the row table VGA8_RowOffsets) a plane at a time through the graphics controller's read map select (port 3ce index 4, its value put back after) into the pixels the dword +0xa points at. With flags 0 the first pixel read goes to byte T * columns + L, T and L the rows and columns cut at the top and the left, and each row steps a whole row of the bitmap, so every pixel lands at its own row and column and the bytes the clip cuts off are not written.",
       "source": "Herculan/docs/es1/rendering/screen-pages.md#the-cursor",
       "verified": {
         "bytes": "0008be88+1010",
@@ -35869,7 +35869,7 @@
       "type": "data",
       "confidence": "high",
       "name": "DataLink_StepDelays",
-      "description": "int32[4] {5000, 5000, -25536, 0}: the delay Mech_BehaviourPlayerThink (00015f80) loads into DataLink_Timer (000af704) before each data link line, ES2's values.",
+      "description": "int32[4] {5000, 5000, 0xffff9c40 (-25536), 0}: the delay Mech_BehaviourPlayerThink (00015f80) loads into DataLink_Timer (000af704) before each data link line, ES2's values. Timer_CountDown (00064178) clamps the negative third to 0 on its next tick.",
       "source": "Herculan/docs/es1/simulation/mech-ai.md#globals; ES1DBSIM image at 00091ce8"
     },
     {
@@ -37151,6 +37151,15 @@
       "source": "Herculan/docs/es1/simulation/input.md#globals; ES1DBSIM disassembly"
     },
     {
+      "address": "000959e4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Sound_SpeechEnabled",
+      "description": "Byte, 0 in the image: Prefs_ApplyRadioOption (0004ad30), preferences option 2's handler, stores (value != 0) here, and SpeechLine_Load (0004e0f0) builds and loads a voice line's sample only while it is set. es2_xref --decode finds one more read, in 0004e518. ES2's Sound_SpeechEnabled (DBSIM 0049f97e) has the role.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#open; ES1DBSIM image at 000959e4"
+    },
+    {
       "address": "00095d10",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -38065,7 +38074,7 @@
       "type": "data",
       "confidence": "high",
       "name": "DataLink_Step",
-      "description": "int16: the data link's line count, 0 to 4, stepped and reset by Mech_BehaviourPlayerThink (00015f80).",
+      "description": "dword: the data link's line count, 0 to 4, stepped and reset by Mech_BehaviourPlayerThink (00015f80), whose arm does nothing once it is 4. It lies past the image's file bytes, so the startup's zero fill makes it 0.",
       "source": "Herculan/docs/es1/simulation/mech-ai.md#globals; ES1DBSIM decompile at 00015f80"
     },
     {
@@ -38074,7 +38083,7 @@
       "type": "data",
       "confidence": "high",
       "name": "DataLink_Timer",
-      "description": "A countdown record, its int32 counter at 000af705: Mech_BehaviourPlayerThink (00015f80) steps it with Timer_CountDown (00064178) and loads it from DataLink_StepDelays (00091ce8).",
+      "description": "A countdown record, its int32 counter at 000af705: Mech_BehaviourPlayerThink (00015f80) steps it with Timer_CountDown (00064178), reloads it from DataLink_StepDelays (00091ce8) and zeroes the counter when the link breaks off. It lies past the image's file bytes, so the startup's zero fill makes it 0.",
       "source": "Herculan/docs/es1/simulation/mech-ai.md#globals; ES1DBSIM decompile at 00015f80"
     },
     {
@@ -38083,7 +38092,7 @@
       "type": "data",
       "confidence": "high",
       "name": "MissionTarget_Announced",
-      "description": "Mech_BehaviourPlayerThink (00015f80)'s latch on computer message 5: tested for 0 and set to 1.",
+      "description": "dword: Mech_BehaviourPlayerThink (00015f80)'s latch on computer message 5, tested for 0 and set to 1. It lies past the image's file bytes, so the startup's zero fill makes it 0.",
       "source": "Herculan/docs/es1/simulation/mech-ai.md#globals; ES1DBSIM decompile at 00015f80"
     },
     {
@@ -39840,6 +39849,15 @@
       "name": "SystemMessageIndex",
       "description": "The index of str\\system.str, 9-byte slots at id * 9, which MessagePort_Post (0002ed94) reads for a record with no subject. ES2's at DBSIM 004d0b33.",
       "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-string-files"
+    },
+    {
+      "address": "000bd21e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "MessagePort_VariantSlot",
+      "description": "The 9-byte index slot MessagePort_StepToVariant (0002f31c) builds and returns: the string at +0, a count byte 0 at 000bd222 and the string's attributes at 000bd223. It follows the 34 slots of SystemMessageIndex (000bd0ec). ES2's at DBSIM 004d0d6a.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#posting; ES1DBSIM decompile at 0002f31c"
     },
     {
       "address": "000bd228",
