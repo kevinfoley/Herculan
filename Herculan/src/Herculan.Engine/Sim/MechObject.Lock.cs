@@ -307,11 +307,12 @@ public sealed partial class MechObject {
 	/// jammer.</item>
 	/// </list>
 	///
-	/// <para>Called from <see cref="Tick"/> rather than from <see cref="MissileLockTick"/>, so every
-	/// machine's jammer is current before any lock is stepped against it. The original derives and
-	/// steps within one per-mech pass, so a lock there reads a jammer that is one tick stale for the
-	/// machines later in the list; at a roll that re-rolls every few seconds the difference cannot be
-	/// observed, and running it as two passes is what keeps a headless tick order-independent.</para>
+	/// <para>Called from <see cref="SystemsTick"/>, in a pass ahead of the one that runs
+	/// <see cref="MissileLockTick"/>, so every machine's jammer is current before any lock is stepped
+	/// against it. The original derives and steps within one per-mech pass, so a lock there reads a
+	/// jammer that is one tick stale for the machines later in the list; at a roll that re-rolls every
+	/// few seconds the difference cannot be observed, and running it as two passes is what keeps a
+	/// headless tick order-independent.</para>
 	/// </summary>
 	internal void JammerTick() {
 		Jammer = Pods.Ecm && (LocallyPiloted ? EcmEnabled : ScannerActive);

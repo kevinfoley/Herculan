@@ -117,6 +117,7 @@ public class SkeletonPoseTests {
 		int middle = (1 << (widthShift + cellShift)) / 2;
 		mech.Position = new Vec3i(middle, middle, terrain.HeightAtWorld(middle, middle));
 		world.Add(mech);
+		MechLocomotionTests.BecomePlayer(world, mech);
 		return world;
 	}
 

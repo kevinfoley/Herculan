@@ -17,8 +17,9 @@ public sealed partial class MechObject : IFlightBody {
 
 	/// <summary>
 	/// This chassis' flight parameters, or null when it does not fly. Non-null is what puts the
-	/// machine on the flight path in <see cref="Tick"/>. A RAZOR built without its <c>.FM</c> is left
-	/// on the walker paths, which is wrong but is at least not a crash.
+	/// machine on the flight paths in <see cref="MoveTick"/> and <see cref="PlayerInputTick"/>. A RAZOR
+	/// built without its <c>.FM</c> is left on the walker paths, which is wrong but is at least not a
+	/// crash.
 	/// </summary>
 	public FlightModelRecord? Flight { get; }
 
@@ -99,18 +100,17 @@ public sealed partial class MechObject : IFlightBody {
 	bool IFlightBody.AirframeIntact(int component) => AirframeIntact(component);
 
 	/// <summary>
-	/// One tick of the flight path, replacing the walker's throttle law, turret tick and move
-	/// together. <c>Sim_PollPlayerInput</c> (<c>00460764</c>) branches on the type record's flyer
-	/// flag and calls <c>Razor_ApplyFlightInput</c> (<c>0041bb9c</c>) in place of
-	/// <c>Mech_ApplyThrottleInput</c> and the two turret ticks, while the object list dispatches
-	/// <c>Razor_MovementTick</c> (<c>004198f4</c>) in place of
-	/// <c>Mech_MovementTick</c> — the move of the <c>player fly</c> behaviour state, which
-	/// <c>Mech_AiSelectBehaviour</c> (<c>0041eb34</c>) installs for the player's machine when its type is
-	/// a flyer. This engine runs the flight path for any machine whose type is a flyer, where retail
-	/// gives an AI-controlled RAZOR its order's state and the walker's move; see
+	/// Both halves of the flight path back to back, the flight input on <see cref="Controls"/> and then
+	/// the move, which <see cref="MoveTick"/> runs for an AI-controlled RAZOR. <b>This is the engine's
+	/// own.</b> The player's RAZOR takes the halves where retail runs them: <c>Sim_PollPlayerInput</c>
+	/// (<c>00460764</c>) branches on the type record's flyer flag and calls <c>Razor_ApplyFlightInput</c>
+	/// (<c>0041bb9c</c>, <see cref="FlightControlTick"/>) in place of <c>Mech_ApplyThrottleInput</c> and
+	/// the two turret ticks (<see cref="PlayerInputTick"/>), and <c>Razor_MovementTick</c>
+	/// (<c>004198f4</c>, <see cref="FlyerMovementTick"/>) is the move of the <c>player fly</c> state.
+	/// Retail never puts a RAZOR under AI control, and its walker move would fault if it did; see
 	/// docs/retail/simulation/razor-flight.md#how-the-flyer-paths-are-reached.
 	///
-	/// <para><b>The turret does not move.</b> Neither turret tick is on this path at all, so a
+	/// <para><b>The turret does not move.</b> Neither turret tick is on the flight path at all, so a
 	/// RAZOR's guns point where its nose points and aiming means flying.</para>
 	///
 	/// <para><b>Nor is there any of the walker's collision handling.</b> No swept body test, no

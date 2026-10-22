@@ -119,7 +119,7 @@ public sealed partial class MechObject {
 
 	/// <summary>
 	/// <c>Mech_BehaviourRamTick</c> (<c>0041e488</c>) — the <c>ramming</c> state's move slot, run once
-	/// a tick from <see cref="Tick"/> like any other move and twice more from
+	/// a tick from <see cref="MoveTick"/> like any other move and twice more from
 	/// <see cref="RamThink"/> while the machine is charging.
 	///
 	/// <para>It is <see cref="MovementTick"/> with the undo taken out. Integrate, drop onto the

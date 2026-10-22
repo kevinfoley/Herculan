@@ -295,10 +295,6 @@ public sealed class MissionScene {
 			}
 
 			group.Add(placed.Object);
-
-			if (placed.Object is MechObject machine) {
-				machine.InstallInitialBehaviour();
-			}
 		}
 
 		BindOrderSubjects(groups, objects);

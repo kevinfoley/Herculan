@@ -16,13 +16,12 @@ namespace Herculan.Engine.Sim;
 /// </summary>
 public partial class MechObject {
 	/// <summary>
-	/// Whether this machine is driven by its behaviour state rather than by <see cref="Controls"/>, in
-	/// which case <see cref="Tick"/> runs the state's move slot and leaves the pilot path alone. The
-	/// original's split is the same, by machine: <c>Sim_PollPlayerInput</c> runs the throttle path for
-	/// <c>LocalPlayerMech</c> and nothing else. A state with no think (<c>deciding</c>,
-	/// <c>in limbo</c>) is still the AI's, and drives nothing.
+	/// Whether this machine is steered by its thinks rather than by <see cref="Controls"/>: every machine
+	/// but the player's, the original's own test (<c>mech != PlayerMech</c>), since
+	/// <c>Sim_PollPlayerInput</c> runs the throttle path for <c>LocalPlayerMech</c> and nothing else. A
+	/// state with no think (<c>deciding</c>, <c>in limbo</c>) is still the AI's, and drives nothing.
 	/// </summary>
-	private bool UnderAiControl => !IsPlayer && Behaviour.State != null;
+	private bool UnderAiControl => !IsPlayer;
 
 	/// <summary>
 	/// <c>Ai_NavigationStep</c> (<c>0041d598</c>) — the movement half that <c>patrolling</c> and

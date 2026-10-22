@@ -15,32 +15,14 @@ public partial class MechObject {
 	public BehaviourBlock Behaviour;
 
 	/// <summary>
-	/// <c>Mech_Constructor</c>'s initial install (<c>00415f33</c>/<c>f46</c>/<c>f59</c>): everything but
-	/// the player starts in <c>deciding</c> and waits for its group's order.
-	///
-	/// <para>The player's machine goes straight to <c>player</c> or <c>player fly</c> here, which is
-	/// this engine's shortcut. Retail constructs it in <c>deciding</c> too, because the spawn marks it
-	/// as the player only after the constructor returns, and its first AI tick's reassess installs the
-	/// player state — one <c>Behaviour_SetState</c> more, which steps the dwell jitter by 13 more. See
-	/// docs/retail/simulation/ai-dispatch.md#choosing-a-state--mech_aiselectbehaviour-0041eb34.</para>
-	/// </summary>
-	internal void InstallInitialBehaviour() =>
-		SetBehaviourState(IsPlayer
-			? Type.IsFlyer ? BehaviourState.PlayerFly : BehaviourState.Player
-			: BehaviourState.Deciding);
-
-	/// <summary>
 	/// <c>Mech_AiTick</c> (<c>00411cec</c>) — one machine's AI frame. Its only caller is
 	/// <c>Group_OrderTick</c>, so this runs from <see cref="MissionGroup.AiTick"/> and a machine that
 	/// is not a live group member never thinks.
 	///
-	/// <para>The original's order is reassess, then the dwell countdown, then move, then think.
-	/// <see cref="Tick"/> runs the move slot for every machine, and it runs from the object pass that
-	/// precedes this one, so the machine is still integrated on the <i>previous</i> think's decisions
-	/// — the original's ordering, arrived at from the other side, except that a state this tick's
-	/// reassess installs first moves under its own move slot on the next tick (see
-	/// <see cref="BehaviourState"/>). Only the states whose think is ported dispatch one; see
-	/// <see cref="ThinkSlot"/>.</para>
+	/// <para>The original's order is reassess, then the dwell countdown, then the move
+	/// (<see cref="MoveTick"/>), then the think, so the machine is integrated on the previous think's
+	/// decisions under the state this tick's reassess left it in. Only the states whose think is ported
+	/// dispatch one; see <see cref="ThinkSlot"/>.</para>
 	///
 	/// <para>A think returning nonzero zeroes its own dwell countdown, which is a state saying it has
 	/// finished. None of the navigation thinks ever does — a movement order ends through
@@ -68,6 +50,8 @@ public partial class MechObject {
 		if (Behaviour.State is { SuppressesDwell: false }) {
 			SimMath.TimerCountDown(ref Behaviour.DwellCountdown);
 		}
+
+		MoveTick(world);
 
 		bool finished = Behaviour.State?.Think switch {
 			ThinkSlot.Player => PlayerThink(world),

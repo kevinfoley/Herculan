@@ -152,7 +152,9 @@ public sealed partial class FlyerObject {
 	/// <c>Mech_AiTick</c> (<c>00411cec</c>) as an aircraft runs it. Identical in shape to
 	/// <see cref="MechObject.AiTick"/> — the dispatchers are the flyer's own vtable slots but the
 	/// tick that drives them is the same function — so the order is reassess, dwell countdown, move,
-	/// think, and the move is <see cref="Tick"/>'s, run from the object pass that precedes this one.
+	/// think. The move is <c>Flyer_DispatchMove</c> (<c>004217fc</c>): <see cref="MovementTick"/> for
+	/// the four states that carry one, and nothing at all for <c>deciding</c>, <c>sleeping</c> and
+	/// <c>dead</c>, whose triples are null.
 	///
 	/// <para>The reassess is <c>Flyer_AiSelectBehaviour</c> (<c>00422d00</c>); there is no combat form.
 	/// An aircraft picks its target inside its think and never changes state to do it. <c>sleeping</c>
@@ -170,6 +172,10 @@ public sealed partial class FlyerObject {
 
 		if (Behaviour.State is { SuppressesDwell: false }) {
 			SimMath.TimerCountDown(ref Behaviour.DwellCountdown);
+		}
+
+		if (Behaviour.State is { Moves: true } && Flight != null) {
+			MovementTick(world);
 		}
 
 		bool finished = Behaviour.State?.Think switch {
