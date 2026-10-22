@@ -153,9 +153,10 @@ internal static class Es1PreferencesRaise {
 		}
 
 		// 10. The kept camera is destroyed in place (TSContext_Dtor); nothing here keeps it.
-		// PLACEHOLDER: the cursor, hidden since the external view's command, stays hidden: retail's next instrument redraw
-		// shows it again through Widget_DrawToCockpit (docs/es1/simulation/preferences.md#raising-the-panel--preferencespanel_raise-00057820),
-		// and the instruments are plan step 6c's.
+		// PLACEHOLDER: the cursor, hidden since the external view's command, stays hidden until an instrument's next redraw
+		// shows it again through Widget_DrawToCockpit (docs/es1/simulation/preferences.md#raising-the-panel--preferencespanel_raise-00057820);
+		// of the instruments only the throttle gauge is built, which redraws when the throttle or the speed changes, and the
+		// rest are plan step 6c's.
 		views.Mouse.FollowsMouse = true;
 		simulation.Frozen = frozen;
 	}

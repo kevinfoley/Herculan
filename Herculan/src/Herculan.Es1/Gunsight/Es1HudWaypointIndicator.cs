@@ -82,18 +82,15 @@ public sealed class Es1HudWaypointIndicator : Es1HudRotationIndicator {
 	/// set with <c>Label_SetText</c>.
 	/// </summary>
 	public override void Paint() {
-		if (Cockpit.Machine is not { Group: { Route: { } route } group } machine) {
+		if (Cockpit.Machine is not { Group: { } group } machine) {
 			return;
 		}
 
-		// Route_WaypointAt (0001cfb8)(the cursor, n) answers null past the route's end; the cursor below the route's count
-		// follows. A negative n, which no cursor reaches, draws nothing: an engine guard.
 		int n = group.RouteCursor + 1;
-		if (n < 0 || n >= route.Length) {
+		if (group.WaypointAt(n) is not { } waypoint) {
 			return;
 		}
 
-		var waypoint = route[n];
 		Point = (waypoint.X, waypoint.Y);
 		Distance = SimMath.FastMagnitude2D(Point.X - machine.Position.X, Point.Y - machine.Position.Y);
 		Value = Es1MissionGroup.HeadingToward(machine.Position, new Vec3i(Point.X, Point.Y, 0));

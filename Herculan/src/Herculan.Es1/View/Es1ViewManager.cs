@@ -62,8 +62,9 @@ public sealed class Es1ViewManager {
 	/// built; with none, one on <paramref name="display"/>'s cursor with no driver.
 	/// </param>
 	/// <param name="globals">The simulation's globals, whose live object list the cockpit's target selection walks; with none, an empty world's.</param>
+	/// <param name="preferences">The simulator's options, which the cockpit's message boxes read; with none, those of a <c>data\prefs.cfg</c> that does not open.</param>
 	public Es1ViewManager(Es1CockpitViews files, Es1VideoMemory display, Es1Mech? machine = null, Es1CockpitMouse? mouse = null,
-			Es1SimGlobals? globals = null) {
+			Es1SimGlobals? globals = null, Es1Preferences? preferences = null) {
 		Files = files;
 		Display = display;
 		if (mouse == null) {
@@ -72,7 +73,7 @@ public sealed class Es1ViewManager {
 		}
 
 		Mouse = mouse;
-		Cockpit = new Es1Cockpit(this, machine, mouse, globals ?? new Es1SimGlobals());
+		Cockpit = new Es1Cockpit(this, machine, mouse, globals ?? new Es1SimGlobals(), preferences ?? Es1Preferences.Default);
 		ExternalViewRect = ExternalViewDefaultRect;
 		ExternalViewClip = Es1ClipBlock.FromRect(ExternalViewRect.ViewportX0, ExternalViewRect.ViewportY0,
 			ExternalViewRect.ViewportX1, ExternalViewRect.ViewportY1);

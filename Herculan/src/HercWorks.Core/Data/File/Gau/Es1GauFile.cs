@@ -78,7 +78,7 @@ public class Es1GauFile {
 	/// Offset 1000, 104 bytes: the block <c>Gau_ThrottleWidget</c> (<c>0002cdf0</c>) hands the instrument at the cockpit's
 	/// <c>+0x1ed</c>.
 	/// </summary>
-	public Es1GauInstrumentBlock ThrottleBlock { get; set; } = new() { Rest = new byte[88] };
+	public Es1GauThrottleBlock ThrottleBlock { get; set; } = new();
 
 	/// <summary>Offset 1104, 108 bytes.</summary>
 	public Es1GauGunsightBlock Gunsight { get; set; } = new();

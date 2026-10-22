@@ -17,6 +17,21 @@ public sealed class Es1SimGlobals {
 	/// </summary>
 	public SimRandom Random { get; } = new();
 
+	/// <summary>
+	/// The simulator's second generator at <c>000b5c48</c>, which <c>Main_StaticInit</c> seeds as it seeds
+	/// <see cref="Random"/>, so it starts in the same state (docs/es1/simulation/main-loop.md#functions); a message post
+	/// rolls its variant on it (docs/es1/simulation/cockpit-messages.md#posting). The clouds and the ground's specks,
+	/// which retail also draws on it (docs/es1/formats/wld-world.md), draw on their own in this engine
+	/// (<see cref="Scene.Es1Clouds"/>), so its state at a post is not retail's.
+	/// </summary>
+	public SimRandom PresentationRandom { get; } = new();
+
+	/// <summary>
+	/// <c>CockpitViewInstance</c> (<c>00092d1c</c>), the first cockpit built, which <c>ColorSchemePanels_LoadAll</c>
+	/// stores when it is none (docs/es1/simulation/cockpit-panel.md#building-it); none before one is built.
+	/// </summary>
+	public View.Es1Cockpit? CockpitViewInstance { get; set; }
+
 	/// <summary><c>Behaviour_DwellJitter</c> (<c>000bc426</c>).</summary>
 	public Es1DwellJitter DwellJitter { get; } = new();
 
@@ -31,6 +46,16 @@ public sealed class Es1SimGlobals {
 	/// <c>Detection_ContactScanRange</c>'s range (docs/es1/simulation/world.md#small-functions).
 	/// </summary>
 	public short HeaderWord8 { get; set; }
+
+	/// <summary>
+	/// Script.dat header word 3 (<c>000bc4a2</c>), the mission's selector: the arm the player's think runs
+	/// (docs/es1/simulation/mech-ai.md#the-players-think--mech_behaviourplayerthink-00015f80) and the question the status
+	/// asks (docs/es1/simulation/mission-status.md#the-status--mission_status-0000f4e8).
+	/// </summary>
+	public short HeaderWord3 { get; set; }
+
+	/// <summary>The player's think's latch and data link (<see cref="Es1PlayerThinkGlobals"/>).</summary>
+	public Es1PlayerThinkGlobals PlayerThink { get; } = new();
 
 	/// <summary>The enemy-sighted callout's globals (<see cref="Es1SensorGlobals"/>).</summary>
 	public Es1SensorGlobals Sensors { get; } = new();

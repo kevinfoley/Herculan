@@ -30,6 +30,13 @@ public sealed class Es1MissionGroup {
 	/// <summary><c>+0x08</c>, the route: its waypoints' points, or null.</summary>
 	public Vec3i[]? Route { get; init; }
 
+	/// <summary>
+	/// The block-1 point each waypoint of <see cref="Route"/> names. A waypoint group holds a pointer to each of its points
+	/// (docs/es1/formats/script-dat.md), so two waypoints hold the same pointer exactly when they name the same point,
+	/// which is what <see cref="AdvanceCursor"/> and <see cref="NextWaypointClosesRoute"/> compare.
+	/// </summary>
+	public int[]? RoutePointRefs { get; init; }
+
 	/// <summary><c>+0x0c</c>, the heading.</summary>
 	public short Heading { get; init; }
 
@@ -54,8 +61,68 @@ public sealed class Es1MissionGroup {
 	/// <summary><c>+0x24</c> and <c>+0x26</c>, the out-of-action (flag, operation) pair.</summary>
 	public (short Flag, short Operation) OutOfAction { get; init; }
 
-	/// <summary><c>Route_WaypointAt</c> (<c>0001cfb8</c>): the route's waypoint at the cursor, or null without one.</summary>
-	public Vec3i? WaypointAtCursor => Route is { } route && RouteCursor >= 0 && RouteCursor < route.Length ? route[RouteCursor] : null;
+	/// <summary><see cref="WaypointAt"/> the cursor.</summary>
+	public Vec3i? WaypointAtCursor => WaypointAt(RouteCursor);
+
+	/// <summary>
+	/// <c>Route_WaypointAt</c> (<c>0001cfb8</c>)(the cursor at <c>+6</c>, <paramref name="index"/>): null without a route or
+	/// with the index not below its count, otherwise the waypoint's point
+	/// (docs/es1/simulation/mission-groups.md#the-groups-target). A negative index, which no cursor reaches, answers null
+	/// here: an engine guard.
+	/// </summary>
+	public Vec3i? WaypointAt(int index) => Route is { } route && index >= 0 && index < route.Length ? route[index] : null;
+
+	/// <summary>
+	/// <c>Route_AdvanceCursor</c> (<c>0001c8c0</c>): the cursor's index up by 1, and back to 0 when the route has more than
+	/// one waypoint, the new index is its last, and that waypoint names the first's point
+	/// (docs/es1/simulation/mission-groups.md#the-groups-target).
+	/// </summary>
+	public void AdvanceCursor() {
+		RouteCursor++;
+		if (RoutePointRefs is { Length: > 1 } refs && RouteCursor == refs.Length - 1 && refs[^1] == refs[0]) {
+			RouteCursor = 0;
+		}
+	}
+
+	/// <summary>
+	/// <c>Route_NextWaypointClosesRoute</c> (<c>0001c908</c>): whether the waypoint after the cursor is the route's last and
+	/// names the first's point (docs/es1/simulation/mission-groups.md#the-groups-target).
+	/// </summary>
+	public bool NextWaypointClosesRoute =>
+		RoutePointRefs is { Length: > 0 } refs && RouteCursor + 1 == refs.Length - 1 && refs[^1] == refs[0];
+
+	/// <summary>
+	/// <c>Group_OrderTargetObject</c> (<c>0001cda0</c>), by <see cref="TargetKind"/>: 0, the target group's first member;
+	/// 1 to 3, the target; otherwise null (docs/es1/simulation/mission-groups.md#the-groups-target). Retail tests no
+	/// pointer; a target group with no first member, or none, answers null here: an engine guard.
+	/// </summary>
+	public IEs1SimObject? OrderTargetObject() => TargetKind switch {
+		0 => Target is Es1MissionGroup { Members: [IEs1SimObject first, ..] } ? first : null,
+		>= 1 and <= 3 => Target as IEs1SimObject,
+		_ => null,
+	};
+
+	/// <summary>
+	/// <c>Group_OrderTargetPosition</c> (<c>0001cde0</c>), by <see cref="TargetKind"/>: 0, the position of the target group's
+	/// first member; 1 to 3, the target's position; otherwise the point of the route's first waypoint
+	/// (docs/es1/simulation/mission-groups.md#the-groups-target). Retail tests no pointer; where it would read through a
+	/// null one (no target object, no route), null here: an engine guard.
+	/// </summary>
+	public Vec3i? OrderTargetPosition() => TargetKind switch {
+		>= 0 and <= 3 => OrderTargetObject()?.Position,
+		_ => WaypointAt(0),
+	};
+
+	/// <summary>
+	/// <c>Group_IsOrderTarget</c> (<c>0001ce3c</c>)(group, <paramref name="candidate"/>), by <see cref="TargetKind"/>: 0,
+	/// whether the candidate's group is the target; 1 to 3, whether the candidate is the target; otherwise false
+	/// (docs/es1/simulation/mission-groups.md#the-groups-target).
+	/// </summary>
+	public bool IsOrderTarget(IEs1SimObject candidate) => TargetKind switch {
+		0 => ReferenceEquals(candidate.Group, Target),
+		>= 1 and <= 3 => ReferenceEquals(candidate, Target),
+		_ => false,
+	};
 
 	/// <summary>
 	/// <c>Math_HeadingToward</c> (<c>ES1DBSIM 00063cc8</c>), ES2's: the ground bearing from <paramref name="from"/> to

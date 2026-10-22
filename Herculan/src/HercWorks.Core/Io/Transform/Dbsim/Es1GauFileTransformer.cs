@@ -48,7 +48,17 @@ public class Es1GauFileTransformer : ByteTransformer<Es1GauFile> {
 			EnergyMeterBlock = ReadInstrumentBlock(68),
 			ShieldDisplayBlock = ReadInstrumentBlock(112),
 			MfdPanelBlock = new Es1GauMfdPanelBlock { Header = ReadRect(), Rects744 = ReadRects(13), Bytes952 = IndexSegment(48) },
-			ThrottleBlock = ReadInstrumentBlock(104),
+			ThrottleBlock = new Es1GauThrottleBlock {
+				Origin = ReadPoint(),
+				Int2 = IndexIntLE(),
+				Int3 = IndexIntLE(),
+				Track = ReadRect(),
+				ForwardBar = ReadRect(),
+				ReverseBar = ReadRect(),
+				Lights = IndexIntLE(),
+				KnobFrame = IndexIntLE(),
+				Bytes1072 = IndexSegment(32),
+			},
 			Gunsight = new Es1GauGunsightBlock {
 				Origin = ReadPoint(),
 				Int2 = IndexIntLE(),
@@ -137,8 +147,16 @@ public class Es1GauFileTransformer : ByteTransformer<Es1GauFile> {
 		Rects(source.MfdPanelBlock.Rects744);
 		w.Write(source.MfdPanelBlock.Bytes952);
 
-		Rect(source.ThrottleBlock.Header);
-		w.Write(source.ThrottleBlock.Rest);
+		var throttle = source.ThrottleBlock;
+		Point(throttle.Origin);
+		w.Write(throttle.Int2);
+		w.Write(throttle.Int3);
+		Rect(throttle.Track);
+		Rect(throttle.ForwardBar);
+		Rect(throttle.ReverseBar);
+		w.Write(throttle.Lights);
+		w.Write(throttle.KnobFrame);
+		w.Write(throttle.Bytes1072);
 
 		var gunsight = source.Gunsight;
 		Point(gunsight.Origin);

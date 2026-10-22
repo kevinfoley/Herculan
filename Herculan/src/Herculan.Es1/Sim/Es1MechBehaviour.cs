@@ -93,8 +93,7 @@ public static class Es1MechBehaviour {
 		var inert = Unported("Mech_BehaviourInertThink", 0x00018308, 8);
 		return [
 			new("deciding", 0, 0, null, null, select, 3),
-			// The player's think posts the cockpit's messages (plan step 6) and raises the mission's end flags.
-			new("player", 10, 1, Unported("Mech_BehaviourPlayerThink", 0x00015f80, 6), walk, null, 3),
+			new("player", 10, 1, Es1PlayerThink.Think, walk, null, 3),
 			new("attacking", 50000, 2, Unported("Mech_BehaviourAttackThink", 0x000163a0, 8), walk, combat, 0),
 			new("flanking", 50000, 2, Unported("Mech_BehaviourFlankThink", 0x000173c8, 8), walk, combat, 0),
 			new("facing off", 50000, 2, Unported("Mech_BehaviourFaceOffThink", 0x000172f0, 8), walk, combat, 0),

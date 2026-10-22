@@ -87,6 +87,7 @@ public sealed class Es1World {
 			: new WeaponModelChunks([]);
 
 		var world = new Es1World(script, types);
+		world.Globals.HeaderWord3 = script.Header[3];
 		world.Globals.HeaderWord8 = script.Header[8];
 		world.SpawnObjects(content, weapons, weaponModels, formations);
 		return world;
@@ -256,15 +257,17 @@ public sealed class Es1World {
 	/// (docs/es1/simulation/mission-groups.md#the-group-record).
 	/// </summary>
 	private Es1MissionGroup BuildGroupRecord(int index, Es1ScriptGroup record, Es1MechFormations formations) {
-		var route = record.WaypointGroupRef >= 0 && record.WaypointGroupRef < Script.Routes.Length
-			? Script.Routes[record.WaypointGroupRef].Select(PointAt).ToArray()
+		var routeRefs = record.WaypointGroupRef >= 0 && record.WaypointGroupRef < Script.Routes.Length
+			? Script.Routes[record.WaypointGroupRef]
 			: null;
+		var route = routeRefs?.Select(PointAt).ToArray();
 		short order = index == 0 && record.Word32 == Es1MissionGroup.TravellingOrder ? Es1MissionGroup.SquadPatrolOrder : record.Word32;
 		var group = new Es1MissionGroup {
 			MemberKind = record.MemberKind,
 			Formation = record.Word30,
 			Order = order,
 			Route = route,
+			RoutePointRefs = routeRefs,
 			Heading = Es1MissionGroup.HeadingFor(record, Script, route),
 			Side = unchecked((byte)record.Word4A),
 			Action = ActionAt(record.ActionRef),

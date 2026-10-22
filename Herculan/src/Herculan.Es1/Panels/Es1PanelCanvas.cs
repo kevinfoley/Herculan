@@ -188,6 +188,69 @@ public sealed class Es1PanelCanvas {
 	}
 
 	/// <summary>
+	/// <c>Region_Save</c> of a type-0 region whose rect is <paramref name="region"/>, in clip mode 1 with the translation
+	/// flag set: <c>Region_SaveRect</c> (<c>00066470</c>) moves the rect by the translation and
+	/// <c>Bitmap_GrabClipDispatch</c> (<c>0006aa70</c>) moves it again (docs/es1/rendering/screen-pages.md#lines-and-clipped-bitmaps),
+	/// so the grab reads the display's source page under the rect moved twice, cut to <see cref="Rect"/>. The cells come
+	/// back row by row over the rect's size. A cell cut off is 0 in its place in the buffer: the dispatch zeroes the
+	/// buffer first, and <c>VGA8_ReadBitmap</c> (<c>0008be88</c>) reads the cut rect into the buffer at the cut's row and
+	/// column.
+	/// </summary>
+	public ushort[] SaveRegion(Es1Rect region) {
+		var (dx, dy) = Translation;
+		int width = region.X1 - region.X0 + 1, rows = region.Y1 - region.Y0 + 1;
+		var cells = new ushort[Math.Max(0, width) * Math.Max(0, rows)];
+		int left = region.X0 + 2 * dx, top = region.Y0 + 2 * dy;
+		for (int row = 0; row < rows; row++) {
+			for (int column = 0; column < width; column++) {
+				int x = left + column, y = top + row;
+				if (Rect.Contains(x, y)) {
+					cells[row * width + column] = Display.Cell(Display.SourcePage, x, y);
+				}
+			}
+		}
+
+		return cells;
+	}
+
+	/// <summary>
+	/// <c>Region_Restore</c> of a type-0 region whose rect is <paramref name="region"/> at the point (<paramref name="x"/>,
+	/// <paramref name="y"/>): <c>Region_RestoreRect</c> (<c>00066354</c>) blits <paramref name="cells"/> as a bitmap of
+	/// the rect's size with the opaque flag <c>0x10</c> through <c>Raster_BlitDispatch</c>, which moves the point by the
+	/// translation once and cuts the blit to <see cref="Rect"/>; every cell is written, on the draw page.
+	/// </summary>
+	public void RestoreRegion(Es1Rect region, int x, int y, ushort[] cells) {
+		var (dx, dy) = Translation;
+		int width = region.X1 - region.X0 + 1, rows = region.Y1 - region.Y0 + 1;
+		for (int row = 0; row < rows; row++) {
+			for (int column = 0; column < width; column++) {
+				int screenX = x + dx + column, screenY = y + dy + row, source = row * width + column;
+				if (source < cells.Length && Rect.Contains(screenX, screenY)) {
+					Display.Plot(screenX, screenY, cells[source]);
+				}
+			}
+		}
+	}
+
+	/// <summary>
+	/// <c>Region_CopyBetweenPages</c> (<c>00066914</c>) of a type-0 region whose rect is <paramref name="region"/> at the
+	/// offset (<paramref name="offsetX"/>, <paramref name="offsetY"/>), in clip mode 1 with the translation flag set:
+	/// <c>Region_CopyRectBetweenPages</c> (<c>00066690</c>) moves the rect by the offset and the translation, cuts it to <see cref="Rect"/>,
+	/// copying nothing when they do not meet, and hands it and the offset to the driver's slot 20, which copies the source
+	/// page's rect moved back by the offset onto the draw page's rect (docs/es1/rendering/screen-pages.md#copying-between-pages).
+	/// </summary>
+	public void CopyRegion(Es1Rect region, int offsetX, int offsetY) {
+		var (dx, dy) = Translation;
+		int x0 = Math.Max(region.X0 + offsetX + dx, Rect.X0), y0 = Math.Max(region.Y0 + offsetY + dy, Rect.Y0);
+		int x1 = Math.Min(region.X1 + offsetX + dx, Rect.X1), y1 = Math.Min(region.Y1 + offsetY + dy, Rect.Y1);
+		if (x1 < x0 || y1 < y0) {
+			return;
+		}
+
+		Display.CopyRect(x0 - offsetX, y0 - offsetY, x1 - offsetX, y1 - offsetY, offsetX, offsetY);
+	}
+
+	/// <summary>
 	/// <c>HudFont_DrawString</c> (<c>00069e38</c>) from the pen (<paramref name="x"/>, <paramref name="y"/>): each glyph
 	/// with its top row at <paramref name="y"/> less the font's ink height, its 0 bytes left, the pen moving right by its
 	/// width (docs/es1/simulation/cockpit-widgets.md#labels).

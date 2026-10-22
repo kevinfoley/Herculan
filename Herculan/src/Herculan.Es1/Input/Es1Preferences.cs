@@ -325,12 +325,27 @@ public sealed class Es1Preferences {
 	}
 
 	/// <summary>
-	/// <c>Prefs_ApplyRadioOption</c> (<c>0004ad30</c>), option 2's handler. PLACEHOLDER: the voice lines' load gate
-	/// <c>000959e4</c> = (value ≠ 0), ES1's sound, which no plan step ports yet; and <c>MessagePort_ShowEnabled</c>
-	/// (<c>000930d2</c>) = (value ≠ 1), the message boxes, plan step 6c.
+	/// <c>MessagePort_ShowEnabled</c> (<c>000930d2</c>), the message boxes' file's byte, 1 in the image: while it is
+	/// clear a port's tick counts a due and ready message as shown without showing it
+	/// (docs/es1/simulation/cockpit-messages.md#the-lifecycle). Kept with the options because option 2's handler writes it
+	/// from the options' load on, before any port is built.
+	/// </summary>
+	public bool MessagePortShowEnabled { get; set; } = true;
+
+	/// <summary>
+	/// The byte <c>000959e4</c>, 0 in the image, which option 2's handler sets beside
+	/// <see cref="MessagePortShowEnabled"/>. PLACEHOLDER: its readers are ES1's sound, which no plan step ports yet
+	/// (docs/es1/simulation/preferences.md#open).
+	/// </summary>
+	public bool VoiceLinesGate { get; private set; }
+
+	/// <summary>
+	/// <c>Prefs_ApplyRadioOption</c> (<c>0004ad30</c>), option 2's handler: <see cref="VoiceLinesGate"/> = (value ≠ 0)
+	/// and <see cref="MessagePortShowEnabled"/> = (value ≠ 1) (docs/es1/simulation/preferences.md#the-option-array).
 	/// </summary>
 	private void ApplyRadioOption(byte value) {
-		_ = value;
+		VoiceLinesGate = value != 0;
+		MessagePortShowEnabled = value != 1;
 	}
 
 	/// <summary>

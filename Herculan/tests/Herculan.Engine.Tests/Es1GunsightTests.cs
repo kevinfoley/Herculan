@@ -124,18 +124,19 @@ public class Es1GunsightTests {
 	}
 
 	/// <summary>
-	/// The click surface's gadget is the root's first widget, ahead of the strips the first frame builds, and a click arms
-	/// the pick only with the left button. Catches the gadget registered after the strips (which take an overlapping click
-	/// first) or the button's bit misread.
+	/// The click surface's gadget is the root's second widget, after the throttle's slider, which <c>Cockpit_LoadPanel</c>
+	/// builds first, and ahead of the strips the first frame builds; and a click arms the pick only with the left button.
+	/// Catches the gadget registered after the strips (which take an overlapping click first) or the button's bit misread.
 	/// </summary>
 	[Fact]
-	public void ClickGadgetComesFirstAndArmsOnTheLeftButton() {
+	public void ClickGadgetComesBeforeTheStripsAndArmsOnTheLeftButton() {
 		var rig = Rig();
 		new Es1FrameLoop(rig.Views, () => { }).StartMission();
 		var root = rig.Views.Cockpit.Root;
 
-		Assert.Same(rig.Gunsight.ClickSurface.Gadget, root.Clickables[0]);
-		Assert.Same(rig.Views.Cockpit.BottomStrip, root.Clickables[1]);
+		Assert.Same(rig.Views.Cockpit.Throttle.Slider, root.Clickables[0]);
+		Assert.Same(rig.Gunsight.ClickSurface.Gadget, root.Clickables[1]);
+		Assert.Same(rig.Views.Cockpit.BottomStrip, root.Clickables[2]);
 		rig.Gunsight.ClickSurface.Gadget.OnClick(2);
 		Assert.False(rig.Gunsight.PickArmed);
 		rig.Gunsight.ClickSurface.Gadget.OnClick(1);

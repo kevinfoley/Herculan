@@ -1,8 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Herculan.Es1.Gunsight;
 using Herculan.Es1.Input;
+using Herculan.Es1.Messages;
 using Herculan.Es1.Panels;
 using Herculan.Es1.Sim;
+using Herculan.Es1.Throttle;
 
 namespace Herculan.Es1.View;
 
@@ -13,10 +16,11 @@ namespace Herculan.Es1.View;
 /// widgets-off byte and the view device's button latch, with <c>CockpitWidgets_HandleCommand</c> (<c>0002d24c</c>) and
 /// <c>CockpitView_PollViewDevice</c> (<c>0002d1a0</c>) (docs/es1/simulation/cockpit-panel.md#keys-and-the-view-device);
 /// and the screen-edge strips and the cursor slots (docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors),
-/// with <c>Cockpit_DrawFrame</c>'s steps that reach them; the roving gunsight <c>+0x1f1</c> with the canvas context it
-/// draws through (docs/es1/simulation/cockpit-panel.md#drawing-it); and the target selection <c>+0x20c</c>
-/// (<see cref="Es1TargetSelection"/>). The other instruments and the message boxes join it with the plan steps that port
-/// them (docs/herculan/plan-es1-first-mission.md, step 6).
+/// with <c>Cockpit_DrawFrame</c>'s steps that reach them; the throttle gauge <c>+0x1ed</c> and the roving gunsight
+/// <c>+0x1f1</c> with the canvas context they draw through and <c>Widget_DrawToCockpit</c>
+/// (docs/es1/simulation/cockpit-panel.md#drawing-it); the computer's ticker <c>+0x207</c>
+/// (<see cref="Es1MessageTicker"/>); and the target selection <c>+0x20c</c> (<see cref="Es1TargetSelection"/>). The
+/// other instruments and the pilot channel join it with plan step 6c (docs/herculan/plan-es1-first-mission.md).
 ///
 /// <para><see cref="Es1ViewManager"/> builds it, as <c>CockpitViewManager_LoadViews</c> does, and it is
 /// <c>CockpitViewInstance</c> (<c>00092d1c</c>), the first cockpit built.</para>
@@ -44,24 +48,46 @@ public sealed class Es1Cockpit {
 	/// <param name="machine"><c>+0x1ff</c>, the manager's machine.</param>
 	/// <param name="mouse">The cockpit's mouse, whose root the panel's root becomes.</param>
 	/// <param name="globals">The simulation's globals, whose live object list the target selection walks.</param>
-	internal Es1Cockpit(Es1ViewManager views, Es1Mech? machine, Es1CockpitMouse mouse, Es1SimGlobals globals) {
+	/// <param name="preferences">The simulator's options, whose <see cref="Es1Preferences.MessagePortShowEnabled"/> the message boxes read.</param>
+	internal Es1Cockpit(Es1ViewManager views, Es1Mech? machine, Es1CockpitMouse mouse, Es1SimGlobals globals,
+			Es1Preferences preferences) {
 		_views = views;
 		_mouse = mouse;
 		Machine = machine;
 		Globals = globals;
+		Preferences = preferences;
 		Targets = new Es1TargetSelection(this);
 		Cursors = new Es1CockpitCursors(views.Files.Cursors, mouse.Cursor);
-		var layout = views.Files.Layout;
-		var head = new Es1Rect(layout.Origin.X, layout.Origin.Y, BitConverter.ToInt32(layout.Bytes8, 0), BitConverter.ToInt32(layout.Bytes8, 4));
-		Root = LoadPanel(head);
-		Gunsight = new Es1Gunsight(this, layout.Gunsight, views.Files.GunsightBanks, views.Files.Fonts, mouse);
+		globals.CockpitViewInstance ??= this;
+		LoadPanel(views.Files);
 	}
+
+	/// <summary>The simulator's options, of which the message boxes read <see cref="Es1Preferences.MessagePortShowEnabled"/>.</summary>
+	public Es1Preferences Preferences { get; }
+
+	/// <summary><c>+0x207</c>, the computer's ticker, which <c>Cockpit_LoadPanel</c> builds on the <c>.GAU</c> record + 1684.</summary>
+	public Es1MessageTicker Ticker { get; private set; }
+
+	/// <summary>The message boxes' string tables, globals in retail, which the first port built fills.</summary>
+	public Es1MessageTables MessageTables { get; } = new();
+
+	/// <summary>
+	/// The in-mission panels' shared state, whose <c>AlertPanel_OpenCount</c> the message boxes' page copy reads; none,
+	/// as before the host wires it, reads as no panel up.
+	/// </summary>
+	internal Es1AlertGlobals? Panels { get; set; }
+
+	/// <summary><c>SimDisplay</c>, the display the cockpit draws on.</summary>
+	internal Es1VideoMemory Display => _views.Display;
+
+	/// <summary>The view manager's <c>+0x18</c>, set while a view change is staged.</summary>
+	internal bool ViewChangeStaged => _views.Staged;
 
 	/// <summary><c>+0x1ff</c>, the machine.</summary>
 	public Es1Mech? Machine { get; }
 
 	/// <summary><c>+0</c>, the root widget, built over the <c>.GAU</c> record's first 16 bytes.</summary>
-	public Es1WidgetRoot Root { get; }
+	public Es1WidgetRoot Root { get; private set; }
 
 	/// <summary>
 	/// The canvas context's rect, <c>+0x210</c>–<c>+0x21c</c> of <c>+4</c>: the <c>.GAU</c> record's first 16 bytes, as
@@ -77,8 +103,18 @@ public sealed class Es1Cockpit {
 	/// </summary>
 	public (int X, int Y) CanvasOrigin { get; private set; }
 
+	/// <summary><c>+0x1ed</c>, the throttle gauge, which <c>Gau_ThrottleWidget</c> (<c>0002cdf0</c>) builds on the <c>.GAU</c> block at 1000.</summary>
+	public Es1ThrottleGauge Throttle { get; private set; }
+
 	/// <summary><c>+0x1f1</c>, the roving gunsight, which <c>Gau_RovingGunsightWrapper</c> (<c>0002ce28</c>) builds on the <c>.GAU</c> block at 1104.</summary>
-	public Es1Gunsight Gunsight { get; }
+	public Es1Gunsight Gunsight { get; private set; }
+
+	/// <summary>
+	/// <c>000b5bca</c>, a global: set while <c>Sim_StartMission</c> brings the cockpit up, from its step 13 to its step 15
+	/// (docs/es1/simulation/main-loop.md#the-mission-start--sim_startmission-0005a9dc), when <see cref="DrawToCockpit"/>
+	/// copies nothing.
+	/// </summary>
+	public bool BringUp { get; set; }
 
 	/// <summary>
 	/// The rect <c>+0</c>–<c>+0xc</c> of the roving gunsight <c>+0x1f1</c>, the <c>.GAU</c> block at 1104's first 16
@@ -148,7 +184,8 @@ public sealed class Es1Cockpit {
 	/// <summary>
 	/// <c>Cockpit_DrawFrame</c> (<c>0002cf28</c>)(cockpit), once a frame from <c>Sim_RenderFrame</c> before the 3D pass:
 	/// nothing while <see cref="SkipFrameDraw"/> is set; the strips built the first time; with the widgets off nothing
-	/// more this engine draws; otherwise, at step 6, the edge cursor, and at step 7 the selection dropped when
+	/// more this engine draws; otherwise, at step 5, the throttle gauge's per-frame slot inside the canvas push, at step 6
+	/// the ticker's (<see cref="Es1MessageTicker.Update"/>) and the edge cursor, and at step 7 the selection dropped when
 	/// <see cref="Es1TargetSelection.CanTarget"/> refuses it.
 	/// </summary>
 	public void DrawFrame() {
@@ -168,9 +205,13 @@ public sealed class Es1Cockpit {
 			return;
 		}
 
-		// 4. and 5. PLACEHOLDER: PilotMessagePort_RestoreBackground while no view change is staged, and between the canvas
-		// push and pop the weapon rows', the pod row's and six instruments' slot +0xc: plan step 6c.
-		// 6. PLACEHOLDER: Cockpit_RunTtmScripts and the ticker's MessageTicker_Update, plan step 6c; then the edge cursor.
+		// 4. PLACEHOLDER: PilotMessagePort_RestoreBackground while no view change is staged, plan step 6c.
+		// 5. Between the canvas push and pop, slot +0xc of each set weapon row, the pod row, +0x1dd, +0x1e1, +0x1e5,
+		// +0x1ed, +0x1e9 and +0x1f5. PLACEHOLDER: all but the throttle gauge +0x1ed, plan step 6c's instruments.
+		Throttle.Update();
+		// 6. PLACEHOLDER: Cockpit_RunTtmScripts, plan step 6c's .TTM scripts. Then the ticker's slot +0x10 and the edge
+		// cursor.
+		Ticker.Update();
 		Cursors.UpdateEdgeCursor();
 
 		// 7.
@@ -203,17 +244,44 @@ public sealed class Es1Cockpit {
 	}
 
 	/// <summary>
+	/// <c>Widget_DrawToCockpit</c> (<c>0002b058</c>)(0, <paramref name="rect"/>, 1), a widget's rect copied from the page
+	/// drawn on to the page on the screen (docs/es1/simulation/cockpit-panel.md#drawing-it): nothing, answering false,
+	/// unless <see cref="RectCornerVisible"/> passes the rect, no view change is staged and the cockpit is not being
+	/// brought up (<see cref="BringUp"/>); otherwise, inside the canvas push, the display's <c>+0x8c</c> made its source
+	/// page and <c>+0x88</c> its draw page, the rect copied between them as a type-0 region at the offset (0, 0),
+	/// <c>Cockpit_ZeroOffset</c>, with the cursor taken off and drawn again around the copy (the driver's slots 31 and 30),
+	/// and the draw page put back; the source page stays the one it set.
+	/// </summary>
+	internal bool DrawToCockpit(Es1Rect rect) {
+		if (!RectCornerVisible(rect) || _views.Staged || BringUp) {
+			return false;
+		}
+
+		var display = _views.Display;
+		var canvas = PushCanvasContext();
+		int draw = display.DrawPage;
+		display.SourcePage = display.PairDrawn;
+		display.DrawPage = display.PairVisible;
+		display.Cursor.Hide();
+		canvas.CopyRegion(rect, 0, 0);
+		display.Cursor.Show();
+		display.DrawPage = draw;
+		return true;
+	}
+
+	/// <summary>
 	/// <c>CockpitView_InvalidateWidgets</c> (<c>0002b4a0</c>)(cockpit), which <c>CockpitView_SetView</c> runs for views 0
-	/// to 3: unless the widgets are off, the instruments' slot <c>+8</c>, of which the gunsight's,
-	/// <see cref="Es1Gunsight.Paint"/>, is ported.
+	/// to 3: unless the widgets are off, the instruments' slot <c>+8</c>, of which the throttle gauge's,
+	/// <see cref="Es1ThrottleGauge.Paint"/>, and the gunsight's, <see cref="Es1Gunsight.Paint"/>, are ported.
 	/// </summary>
 	public void InvalidateWidgets() {
 		if (WidgetsOff) {
 			return;
 		}
 
-		// PLACEHOLDER: between the canvas push and pop, slot +8 of the nine weapon rows, the pod row +0x1d8, +0x1dd,
-		// +0x1e1, +0x1e5, +0x1ed, +0x1e9 and +0x1f5: plan step 6c's instruments.
+		// Between the canvas push and pop, slot +8 of the nine weapon rows, the pod row +0x1d8, +0x1dd, +0x1e1, +0x1e5,
+		// +0x1ed, +0x1e9 and +0x1f5. PLACEHOLDER: all but the throttle gauge +0x1ed, plan step 6c's instruments.
+		Throttle.Paint();
 		Gunsight.Paint();
 		// PLACEHOLDER: slot +8 of the clock +0x1f9, and Cockpit_RunTtmScripts: plan step 6c.
 	}
@@ -387,19 +455,31 @@ public sealed class Es1Cockpit {
 	}
 
 	/// <summary>
-	/// <c>Cockpit_LoadPanel</c> (<c>0002c9d8</c>)'s first steps on the <c>.GAU</c> record's first 16 bytes,
-	/// <paramref name="head"/>: the canvas context's rect (<c>Cockpit_CreateCanvasContext</c>), the root widget
-	/// (<c>CTLWindow_Ctor</c>) made the root the mouse's events go to (<c>Widget_ClearPressed</c>).
+	/// <c>Cockpit_LoadPanel</c> (<c>0002c9d8</c>) on <paramref name="files"/>' <c>.GAU</c> layout, as far as this engine
+	/// builds it: over the record's first 16 bytes the canvas context's rect (<c>Cockpit_CreateCanvasContext</c>) and the
+	/// root widget (<c>CTLWindow_Ctor</c>), made the root the mouse's events go to (<c>Widget_ClearPressed</c>); the
+	/// ticker <c>+0x207</c> on the record + 1684; then, of
+	/// the instruments in retail's order, the throttle gauge <c>+0x1ed</c> on the block at 1000 and the gunsight
+	/// <c>+0x1f1</c> on the block at 1104. Each registers its gadget on the root in that order, the throttle's slider
+	/// first, and both before the strips the first frame builds, so each wins where a later one overlaps it.
 	/// </summary>
-	private Es1WidgetRoot LoadPanel(Es1Rect head) {
+	[MemberNotNull(nameof(Root), nameof(Ticker), nameof(Throttle), nameof(Gunsight))]
+	private void LoadPanel(Es1CockpitViews files) {
+		var layout = files.Layout;
+		var head = new Es1Rect(layout.Origin.X, layout.Origin.Y, BitConverter.ToInt32(layout.Bytes8, 0), BitConverter.ToInt32(layout.Bytes8, 4));
 		CanvasRect = head;
-		var root = new Es1WidgetRoot(head);
-		_mouse.Widgets.ClearPressed(root);
+		Root = new Es1WidgetRoot(head);
+		_mouse.Widgets.ClearPressed(Root);
 
-		// PLACEHOLDER: the .TTM manager, the pilot channel (record + 1668) and the ticker (record + 1684), and the
-		// instruments but the gunsight, which the constructor builds next: plan step 6c. The gunsight's click surface
-		// registers its gadget on the root before the strips, so it wins where they overlap.
-		return root;
+		// PLACEHOLDER: the .TTM manager, and the pilot channel, DialogPort_Ctor(0, record + 1668) at +0x203: plan step 6c.
+		// Retail builds the pilot channel first, and its MessagePort_CtorBase loads str\system.str; with no pilot channel,
+		// the ticker's loads it.
+		Ticker = new Es1MessageTicker(this, Es1Rect.From(layout.TickerBox), MessageTables, files.SystemStrings,
+			files.Fonts[Es1CockpitViews.CpRed]);
+		// PLACEHOLDER: the instruments +0x1dd, +0x1e1, +0x1e5 and +0x1e9 before the throttle gauge: plan step 6c.
+		Throttle = new Es1ThrottleGauge(this, layout.ThrottleBlock, files.ThrottleLights, files.PushButtons);
+		Gunsight = new Es1Gunsight(this, layout.Gunsight, files.GunsightBanks, files.Fonts, _mouse);
+		// PLACEHOLDER: the instrument +0x1f5, the clock +0x1f9 and Ttm_RunAll: plan step 6c.
 	}
 
 	/// <summary>
@@ -478,11 +558,17 @@ public sealed class Es1Cockpit {
 	/// An unlisted code: <c>MfdFlashComm_HandleAltKey</c> (<c>0003a890</c>)(the MFD <c>+0x1e9</c>, code); when that answers
 	/// 0, in view 1 the key slot of <c>+0x1f5</c> alone, and in any other view the key slots of <c>+0x1d4</c> when set,
 	/// <c>+0x1dd</c>, <c>+0x1e1</c>, <c>+0x1e5</c>, <c>+0x1ed</c>, <c>+0x1f1</c> and <c>+0x1e9</c>, to the first that
-	/// accepts. PLACEHOLDER: the instruments are plan step 6c's; with none built, none accepts and the code answers 0.
+	/// accepts; 1 when one does, else 0. The throttle gauge's and the gunsight's slots take no key.
 	/// </summary>
 	private static short Unlisted(ushort code, int view) {
-		_ = code;
-		_ = view;
-		return 0;
+		// PLACEHOLDER: MfdFlashComm_HandleAltKey on the MFD +0x1e9, and in view 1 the key slot of +0x1f5, plan step 6c's
+		// instruments; until then neither accepts.
+		if (view == 1) {
+			return 0;
+		}
+
+		// PLACEHOLDER: the key slots of +0x1d4, +0x1dd, +0x1e1 and +0x1e5 before the throttle gauge's, and of +0x1e9 after
+		// the gunsight's, plan step 6c's instruments; until then none accepts.
+		return Es1ThrottleGauge.KeyDispatch(code) != 0 || Es1Gunsight.KeyDispatch(code) != 0 ? (short)1 : (short)0;
 	}
 }

@@ -1,3 +1,4 @@
+using HercWorks.Core.Data.File;
 using HercWorks.Core.Data.File.Dbsim;
 using HercWorks.Core.Data.File.Dyn;
 using HercWorks.Core.Data.File.Gau;
@@ -5,6 +6,7 @@ using HercWorks.Core.Io.Transform.Common;
 using HercWorks.Core.Io.Transform.Dbsim;
 using Herculan.Engine.Content;
 using Herculan.Es1.Gunsight;
+using Herculan.Es1.Panels;
 
 namespace Herculan.Es1.View;
 
@@ -30,12 +32,13 @@ public readonly record struct Es1ViewWindow(int X0, int Y0, int X1, int Y1, int 
 /// <summary>
 /// The files <c>CockpitViewManager_LoadViews</c> (<c>ES1DBSIM 00021fb0</c>) loads for the player chassis' cockpit
 /// (docs/es1/simulation/cockpit-views.md#the-view-manager): the <c>.VUE</c> records, each view's clip regions and canopy
-/// art, and <c>dpl\cockpit</c>; and what the cockpit object it builds loads: the ten fonts and seven cursors
-/// <c>ColorSchemePanels_LoadAll</c> loads, the <c>.GAU</c> layout <c>Cockpit_LoadPanel</c> reads
-/// (docs/es1/simulation/cockpit-panel.md#building-it), and the gunsight's banks. <see cref="Es1ViewManager"/> switches
-/// between the views.
+/// art, and <c>dpl\cockpit</c>; and what the cockpit object it builds loads: the ten fonts, seven cursors and
+/// <c>dba\pbuttons</c> <c>ColorSchemePanels_LoadAll</c> loads, the <c>.GAU</c> layout <c>Cockpit_LoadPanel</c> reads
+/// (docs/es1/simulation/cockpit-panel.md#building-it), the gunsight's banks, and the throttle's bar pictures, which
+/// its slider's constructor loads (docs/es1/simulation/cockpit-throttle-gauge.md#building-it).
+/// <see cref="Es1ViewManager"/> switches between the views.
 ///
-/// <para>Not loaded: <c>dba\pbuttons</c> and the other instruments' files, which plan step 6c ports.</para>
+/// <para>Not loaded: the other instruments' files, which plan step 6c ports.</para>
 /// </summary>
 public sealed class Es1CockpitViews {
 	/// <summary>The screen the simulator draws on, 320 by 200 (docs/es1/rendering/polygon-shading.md#the-display-drivers).</summary>
@@ -55,9 +58,13 @@ public sealed class Es1CockpitViews {
 	/// <param name="cursors">The seven cursors in <see cref="CursorNames"/>' order; none when null.</param>
 	/// <param name="fonts">The ten fonts in <see cref="FontNames"/>' order; none when null.</param>
 	/// <param name="gunsightBanks">The gunsight's banks; none when null.</param>
+	/// <param name="pushButtons">The frames of <c>dba\pbuttons</c>; none when null.</param>
+	/// <param name="throttleLights">The frames of the throttle's light file; none when null.</param>
+	/// <param name="systemStrings"><c>str\system.str</c>; none when null.</param>
 	internal Es1CockpitViews(string name, Vue.Entry[] records, Es1ClipBlock[] clips, DynamixBitmap?[] canopies,
 			DynamixPalette? palette, Es1GauFile? layout = null, Es1CursorImage?[]? cursors = null, HudFont?[]? fonts = null,
-			Es1GunsightBanks? gunsightBanks = null) {
+			Es1GunsightBanks? gunsightBanks = null, IReadOnlyList<DynamixBitmap>? pushButtons = null,
+			IReadOnlyList<DynamixBitmap>? throttleLights = null, StringFile? systemStrings = null) {
 		Name = name;
 		_records = records;
 		_clips = clips;
@@ -67,6 +74,9 @@ public sealed class Es1CockpitViews {
 		Cursors = cursors ?? new Es1CursorImage?[CursorNames.Length];
 		Fonts = fonts ?? new HudFont?[FontNames.Length];
 		GunsightBanks = gunsightBanks ?? new Es1GunsightBanks();
+		PushButtons = pushButtons;
+		ThrottleLights = throttleLights;
+		SystemStrings = systemStrings;
 	}
 
 	/// <summary>
@@ -83,14 +93,31 @@ public sealed class Es1CockpitViews {
 	public static readonly string[] FontNames =
 		["CPBLUE", "CPGREEN", "CPRED", "CPYLW", "CPON", "CPPRESS", "CPOFF", "CPGREY", "CPBLACK", "CPORANGE"];
 
-	/// <summary>The indices of <c>cpgreen</c> (<c>00092d44</c>) and <c>cpblack</c> (<c>00092d60</c>) in <see cref="Fonts"/>.</summary>
-	public const int CpGreen = 1, CpBlack = 8;
+	/// <summary>The indices of <c>cpgreen</c> (<c>00092d44</c>), <c>cpred</c> (<c>00092d48</c>) and <c>cpblack</c> (<c>00092d60</c>) in <see cref="Fonts"/>.</summary>
+	public const int CpGreen = 1, CpRed = 2, CpBlack = 8;
+
+	/// <summary>
+	/// <c>str\system.str</c>, the computer's lines, which the first message port built loads into
+	/// <c>SystemStringTable</c> (docs/es1/simulation/cockpit-messages.md#the-string-files); null when it is missing or
+	/// does not parse.
+	/// </summary>
+	public StringFile? SystemStrings { get; }
 
 	/// <summary><c>ColorSchemePanels</c>, in <see cref="FontNames"/>' order; null for a font whose file is missing.</summary>
 	public IReadOnlyList<HudFont?> Fonts { get; }
 
 	/// <summary>The banks the gunsight's slide bars and heading tape draw from.</summary>
 	public Es1GunsightBanks GunsightBanks { get; }
+
+	/// <summary><c>CockpitPButtonsBank</c> (<c>00092d68</c>), the frames of <c>dba\pbuttons</c>; null when the file is missing.</summary>
+	public IReadOnlyList<DynamixBitmap>? PushButtons { get; }
+
+	/// <summary>
+	/// The frames of <c>dba\&lt;light&gt;</c>, the light name the <c>.GAU</c> throttle block's <c>int32</c> <c>0x10</c>
+	/// indexes (<see cref="Throttle.Es1ThrottleSlider.LightName"/>), the throttle's bar pictures; null when the file is
+	/// missing.
+	/// </summary>
+	public IReadOnlyList<DynamixBitmap>? ThrottleLights { get; }
 
 	/// <summary><c>CockpitGauRecord</c> (<c>00092d3c</c>): <c>gau\&lt;name&gt;</c> after <c>Gau_Load</c>'s origin add.</summary>
 	public Es1GauFile Layout { get; }
@@ -120,7 +147,9 @@ public sealed class Es1CockpitViews {
 	/// <c>CockpitViewManager_LoadViews</c> for <paramref name="name"/>: <c>vue\&lt;name&gt;</c>, <c>ed&lt;i&gt;\&lt;name&gt;</c>
 	/// for each view and <c>db&lt;n&gt;\&lt;name&gt;</c> for each canopy, view 3 sharing view 2's
 	/// (<c>CockpitCanopy_LoadViewBitmap</c>, <c>00022184</c>); <c>dpl\cockpit</c>; the seven cursors; and
-	/// <c>gau\&lt;name&gt;</c> (<c>Gau_Load</c>, <c>0002b5c4</c>); the ten fonts; and the gunsight's banks. Null when the
+	/// <c>gau\&lt;name&gt;</c> (<c>Gau_Load</c>, <c>0002b5c4</c>); the ten fonts; <c>dba\pbuttons</c>; the gunsight's banks;
+	/// the throttle's light file; and <c>str\system.str</c> from the untranslated folder, as
+	/// <c>ResourcePath_BuildFolderName</c> names it. Null when the
 	/// <c>.VUE</c> is missing, or the <c>.GAU</c>,
 	/// whose absence <c>Gau_Load</c> asserts on.
 	/// </summary>
@@ -152,7 +181,12 @@ public sealed class Es1CockpitViews {
 
 		var cursors = CursorNames.Select(cursor => Es1CursorImage.Load(content, cursor)).ToArray();
 		var fonts = FontNames.Select(font => HudFont.Load(content, font, "dfn")).ToArray();
-		return new Es1CockpitViews(name, records, clips, canopies, palette, layout.Loaded(), cursors, fonts,
-			Es1GunsightBanks.Load(content));
+		var loaded = layout.Loaded();
+		var lights = Throttle.Es1ThrottleSlider.LightName(loaded.ThrottleBlock.Lights) is { Length: > 0 } light
+			? Es1WidgetResources.LoadFrames(content, light)
+			: null;
+		return new Es1CockpitViews(name, records, clips, canopies, palette, loaded, cursors, fonts,
+			Es1GunsightBanks.Load(content), Es1WidgetResources.LoadFrames(content, "PBUTTONS"), lights,
+			SimStrings.LoadUntranslated(content, "SYSTEM.STR"));
 	}
 }

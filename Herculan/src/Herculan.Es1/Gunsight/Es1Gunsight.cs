@@ -229,6 +229,15 @@ public sealed class Es1Gunsight {
 		PaintAttLegend();
 	}
 
+	/// <summary>
+	/// Slot <c>+0x10</c> of <c>HUDVtable</c>, <c>PanelGauge_KeyDispatchNoneGunsightCopy</c> (<c>00034e8b</c>)(gunsight,
+	/// code): 0, taking no key.
+	/// </summary>
+	public static short KeyDispatch(ushort code) {
+		_ = code;
+		return 0;
+	}
+
 	/// <summary><c>Gunsight_AddChild</c> (<c>00034e94</c>): a child appended.</summary>
 	private void AddChild(Es1GunsightChild child) => _children.Add(child);
 

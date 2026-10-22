@@ -110,11 +110,11 @@ public sealed class Es1FrameLoop : IEs1Frame {
 
 	/// <summary>
 	/// The display's part of <c>Sim_StartMission</c>: step 11, the pages at (0, 0), (0, 200), (320, 0) and (320, 200),
-	/// the pair {0, 2}, page 0 shown and page 3 drawn on; step 13, <paramref name="cursor"/> installed on the display's
-	/// cursor, <c>Player_PerFrameCockpitUpdate</c>, <c>Cam_Update</c>, the draw page 2 again and views 1 and 0 set, so both
-	/// canopies lie in page 2's half; step 14 without the
-	/// lift, the first frame's 3D pass; and step 15, the whole of page 2 copied onto page 0, the cursor shown and the
-	/// cockpit's mouse made live.
+	/// the pair {0, 2}, page 0 shown and page 3 drawn on; step 13, the bring-up flag set (<see cref="Es1Cockpit.BringUp"/>),
+	/// <paramref name="cursor"/> installed on the display's cursor, <c>Player_PerFrameCockpitUpdate</c>, <c>Cam_Update</c>,
+	/// the draw page 2 again and views 1 and 0 set, so both canopies lie in page 2's half; step 14 without the lift, the
+	/// first frame's 3D pass; and step 15, the flag cleared, the whole of page 2 copied onto page 0, the cursor shown and
+	/// the cockpit's mouse made live.
 	/// </summary>
 	/// <param name="cursor">Step 5's cursor, <c>dci\cursor</c>, which <c>00057640</c> loads.</param>
 	public void StartMission(Es1CursorImage? cursor = null) {
@@ -130,6 +130,8 @@ public sealed class Es1FrameLoop : IEs1Frame {
 		display.ShowPage(display.PairVisible);
 		display.DrawPage = 3;
 
+		// Step 13 opens with 000b5bca set, under which Widget_DrawToCockpit copies nothing.
+		Views.Cockpit.BringUp = true;
 		display.Cursor.SetImage(cursor);
 		PlayerCockpitUpdate();
 		_camUpdate();
@@ -142,7 +144,9 @@ public sealed class Es1FrameLoop : IEs1Frame {
 		// to send; then Sim_RenderFrame.
 		RenderFrame();
 
-		// Step 15: Widget_DrawToCockpit(0, {0, 0, 320, 400}, 1), page +0x8c copied onto +0x88 and the draw page put back.
+		// Step 15: 000b5bca cleared; Widget_DrawToCockpit(0, {0, 0, 320, 400}, 1), page +0x8c copied onto +0x88 and the
+		// draw page put back.
+		Views.Cockpit.BringUp = false;
 		// PLACEHOLDER: retail tests CockpitView_RectCornerVisible against the cockpit's canvas context and copies under
 		// that context's clip block, both the cockpit object's (plan step 6); the copy here is unclipped.
 		int draw = display.DrawPage;

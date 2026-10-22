@@ -248,6 +248,46 @@ public sealed class Es1Mech : IEs1SimObject {
 	/// <inheritdoc/>
 	public short TargetHolders { get; set; }
 
+	/// <summary>
+	/// <c>+0x99</c>, the player's objective latch, which the player's think sets under selectors 0 and 5 and the selector-0
+	/// status tests (docs/es1/simulation/mission-status.md#the-fields).
+	/// </summary>
+	public bool ObjectiveReached { get; set; }
+
+	/// <summary>
+	/// <c>+0x9a</c>, the data link's latch, which the player's think sets at the link's fourth step and the selector-3
+	/// status tests (docs/es1/simulation/mission-status.md#the-fields).
+	/// </summary>
+	public bool DataLinkComplete { get; set; }
+
+	/// <summary>
+	/// <c>+0x1d2</c>, the standing squad order's verb (docs/es1/simulation/mech-ai.md#the-fields). PLACEHOLDER: its writer,
+	/// the squad order <c>0001a1cc</c>, is plan step 8's, so it holds 0 in the slice.
+	/// </summary>
+	public short SquadVerb { get; set; }
+
+	/// <summary><c>+0x1d4</c>, the squad order's point. PLACEHOLDER: written with <see cref="SquadVerb"/>, plan step 8.</summary>
+	public Vec3i SquadPoint { get; set; }
+
+	/// <summary><c>+0x1dc</c>, the squad order's target, or null. PLACEHOLDER: written with <see cref="SquadVerb"/>, plan step 8.</summary>
+	public IEs1SimObject? SquadTarget { get; set; }
+
+	/// <summary><c>+0x1e0</c>, the squad order's second object, or null. PLACEHOLDER: written with <see cref="SquadVerb"/>, plan step 8.</summary>
+	public IEs1SimObject? SquadSecondObject { get; set; }
+
+	/// <summary>
+	/// <c>Mech_AiGoalPosition</c> (<c>000179a0</c>): the position the machine holds, by <see cref="SquadVerb"/>: 6, the
+	/// order's point; 3, the second object's position; 5, the target's; otherwise its group's
+	/// <see cref="Es1MissionGroup.OrderTargetPosition"/> (docs/es1/simulation/mech-ai.md#navigation). Retail tests no
+	/// pointer; where it would read through a null one, null here: an engine guard.
+	/// </summary>
+	public Vec3i? AiGoalPosition() => SquadVerb switch {
+		6 => SquadPoint,
+		3 => SquadSecondObject?.Position,
+		5 => SquadTarget?.Position,
+		_ => Group?.OrderTargetPosition(),
+	};
+
 	/// <summary><c>+0x95</c>, the lock lamp.</summary>
 	public bool LockLamp { get; set; }
 

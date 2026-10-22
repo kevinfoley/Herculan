@@ -167,7 +167,7 @@ public static class Es1ZoneViewer {
 			var display = new Es1VideoMemory();
 			var cockpitMouse = new Es1CockpitMouse(display.Cursor);
 			cockpitMouse.Init(hostMouse);
-			manager = new Es1ViewManager(views, display, player, cockpitMouse, world.Globals);
+			manager = new Es1ViewManager(views, display, player, cockpitMouse, world.Globals, preferences);
 		}
 
 		var chain = player != null ? new Es1ViewChain(player, manager, Es1ViewCaption.Load(content)) : null;

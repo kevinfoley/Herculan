@@ -115,6 +115,43 @@ public class Es1GauPilotRosterBlock {
 }
 
 /// <summary>
+/// The throttle's block at 1000 of <see cref="Es1GauFile"/>, the <c>int32</c> from 1000 to 1071 that
+/// <c>ThrottleGauge_Ctor</c> (<c>0003b0d4</c>) and the two slider constructors read
+/// (docs/es1/formats/gau-cockpit-layout.md#the-throttle-block-at-1000), then 32 bytes they do not.
+/// </summary>
+public class Es1GauThrottleBlock {
+	/// <summary><c>int32</c> 0 and 1, offset 1000: the origin, added to every rect below.</summary>
+	public PixelPoint Origin { get; set; }
+
+	/// <summary><c>int32</c> 2, offset 1008: unread by the constructors.</summary>
+	public int Int2 { get; set; }
+
+	/// <summary><c>int32</c> 3, offset 1012: unread by the constructors.</summary>
+	public int Int3 { get; set; }
+
+	/// <summary><c>int32</c> 4 to 7, offset 1016: the track's rect, which is the slider's own.</summary>
+	public Es1GauRect Track { get; set; }
+
+	/// <summary><c>int32</c> 8 to 0xb, offset 1032: the forward bar's rect.</summary>
+	public Es1GauRect ForwardBar { get; set; }
+
+	/// <summary><c>int32</c> 0xc to 0xf, offset 1048: the reverse bar's rect.</summary>
+	public Es1GauRect ReverseBar { get; set; }
+
+	/// <summary>
+	/// <c>int32</c> 0x10, offset 1064: 1 builds the vertical slider and any other value the horizontal one; also the index of
+	/// the bars' picture among the light names at <c>0009328c</c>.
+	/// </summary>
+	public int Lights { get; set; }
+
+	/// <summary><c>int32</c> 0x11, offset 1068: the knob's frame in <c>dba\pbuttons</c>.</summary>
+	public int KnobFrame { get; set; }
+
+	/// <summary>Offsets 1072-1103, which the constructors do not read.</summary>
+	public byte[] Bytes1072 { get; set; } = new byte[32];
+}
+
+/// <summary>
 /// The gunsight's block at 1104 of <see cref="Es1GauFile"/>, the <c>int32</c> from 1104 to 1179 that
 /// <c>Gau_RovingGunsightWidget</c> (<c>00034aec</c>) reads (docs/es1/formats/gau-cockpit-layout.md#the-gunsight-block-at-1104),
 /// then 32 bytes it does not.
