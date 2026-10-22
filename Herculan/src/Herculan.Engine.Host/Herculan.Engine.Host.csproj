@@ -20,6 +20,10 @@
     <ProjectReference Include="..\Herculan.Engine.Editor\Herculan.Engine.Editor.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Herculan.Engine.Tests" />
+  </ItemGroup>
+
   <!-- Linked from the editor host rather than copied: one font file, two hosts. -->
   <ItemGroup>
     <None Include="..\Herculan.Engine.Host.Editor\Assets\Fonts\Open_Sans\static\OpenSans-Regular.ttf" Link="Assets\Fonts\Open_Sans\static\OpenSans-Regular.ttf" CopyToOutputDirectory="PreserveNewest" />

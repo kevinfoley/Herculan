@@ -153,7 +153,7 @@ sealed class SimulatorHost : IDisposable {
 		// Hidden until [Shift+Esc] first raises it — see SimulatorFrame's [Esc] — since it is the only way
 		// to reach its panels and every key from F1 to F12, [Esc] and [Tab] among the rest, is already retail's. A
 		// mission has no shell turn to restart, so Settings shows the folders greyed.
-		_menuBar = new HostMenuBar(session.Localization, new TweaksMenu(TweakSettings.Current, session.Localization),
+		_menuBar = new HostMenuBar(session.Localization, session.Keys, new TweaksMenu(TweakSettings.Current, session.Localization),
 			new SettingsWindow(session, restartShell: null), new ControllerWindow(session.Localization, () => _start.DataDirectory),
 			options.DeveloperMode ? _debugPanel : null);
 

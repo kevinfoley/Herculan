@@ -18,6 +18,12 @@ namespace Herculan.Engine.Input;
 /// <para>Elsewhere there is no virtual-key code, and the translation is HERCULAN's own approximation, not read from
 /// any retail binary: a key whose GLFW name is a letter is that letter, a key in a letter's US place whose name is
 /// no letter is no key (its letter is elsewhere on the layout), and the digits and symbols stay where they are.</para>
+///
+/// <para><see cref="Printed"/> names a game key for a key list by what is printed on the key that makes it, refreshed
+/// with the translation. A letter or a digit is itself on any layout, since the key that sends its virtual-key code is
+/// the one printed with it. On Windows a symbol is the character the layout gives the US symbol's virtual-key code,
+/// from <c>MapVirtualKeyExW</c>'s <c>MAPVK_VK_TO_CHAR</c>; elsewhere it is GLFW's name for the key in the symbol's US
+/// place, where the translation leaves it. When neither gives a character, it is the US symbol.</para>
 /// </summary>
 public sealed class KeyboardLayout {
 	/// <summary>
@@ -35,12 +41,42 @@ public sealed class KeyboardLayout {
 	// The GLFW the window and input already run on; GetApi loads the same native library.
 	private static readonly Lazy<Glfw> GlfwApi = new(Glfw.GetApi);
 
+	// What a US keyboard prints on each Movable key, by index; null for the ISO key, which it lacks.
+	private static readonly string?[] UsPrinted = Movable.Select(key => key switch {
+		>= Key.A and <= Key.Z => ((char)('A' + (key - Key.A))).ToString(),
+		>= Key.Number0 and <= Key.Number9 => ((char)('0' + (key - Key.Number0))).ToString(),
+		Key.Minus => "-",
+		Key.Equal => "=",
+		Key.LeftBracket => "[",
+		Key.RightBracket => "]",
+		Key.BackSlash => "\\",
+		Key.Semicolon => ";",
+		Key.Apostrophe => "'",
+		Key.GraveAccent => "`",
+		Key.Comma => ",",
+		Key.Period => ".",
+		Key.Slash => "/",
+		_ => null,
+	}).ToArray();
+
+	// The US virtual-key code of each Movable key the game reads, the inverse of VkToScancode over them.
+	private static readonly Dictionary<Key, int> UsVirtualKeys = Enumerable.Range(0, 0x100)
+		.Select(code => (Code: code, Key: VkToScancode.KeyOf(code)))
+		.Where(pair => pair.Key is { } key && Array.IndexOf(Movable, key) >= 0)
+		.GroupBy(pair => pair.Key!.Value)
+		.ToDictionary(group => group.Key, group => group.First().Code);
+
 	private readonly Func<int, Key?> _keyOfVirtualKey;
 
 	// What each Movable key reads as, by index, and for each key that some Movable key reads as, every physical key
 	// that does. A key not in _sources is read off its own place alone.
 	private readonly Key?[] _keys = Movable.Select(key => (Key?)key).ToArray();
 	private readonly Dictionary<Key, Key[]> _sources = new();
+
+	// What is printed on the key that makes each Movable key, by index (Printed), and elsewhere than Windows the GLFW
+	// name it was made from, so an unchanged name is not upper-cased again every frame.
+	private readonly string?[] _printed = UsPrinted.ToArray();
+	private readonly string?[] _names = new string?[Movable.Length];
 	private nint _windowsLayout;
 	private bool _built;
 
@@ -54,6 +90,15 @@ public sealed class KeyboardLayout {
 	public Key? Translate(Key physical) {
 		int index = Array.IndexOf(Movable, physical);
 		return index >= 0 ? _keys[index] : physical;
+	}
+
+	/// <summary>
+	/// What is printed on the key that makes the game's <paramref name="key"/>, upper-cased, for a key a layout can move;
+	/// null for every other key, which a key list names rather than reads off the keyboard.
+	/// </summary>
+	public string? Printed(Key key) {
+		int index = Array.IndexOf(Movable, key);
+		return index >= 0 ? _printed[index] : null;
 	}
 
 	/// <summary>Whether any physical key the game reads as <paramref name="key"/> is down.</summary>
@@ -90,8 +135,14 @@ public sealed class KeyboardLayout {
 			Key? key;
 			if (OperatingSystem.IsWindows()) {
 				key = WindowsKeyOf(Movable[i], _windowsLayout);
+				_printed[i] = IsLetterOrDigit(Movable[i]) ? UsPrinted[i] : WindowsCharacterOf(Movable[i], _windowsLayout) ?? UsPrinted[i];
 			} else {
-				key = PrintedKeyOf(Movable[i]);
+				string? name = KeyName(Movable[i]);
+				key = PrintedKeyOf(Movable[i], name);
+				if (name != _names[i] || !_built) {
+					_names[i] = name;
+					_printed[i] = IsLetterOrDigit(Movable[i]) || string.IsNullOrEmpty(name) ? UsPrinted[i] : name.ToUpperInvariant();
+				}
 			}
 
 			changed |= key != _keys[i];
@@ -129,20 +180,41 @@ public sealed class KeyboardLayout {
 		return _keyOfVirtualKey((int)MapVirtualKeyExW((uint)scancode, MapVkVscToVkEx, layout));
 	}
 
-	// The non-Windows approximation: the letter GLFW names the key by, if it names one.
-	private static Key? PrintedKeyOf(Key physical) {
+	// The character a Windows layout gives the US virtual-key code of a game key, less the dead-key bit, upper-cased;
+	// null for none.
+	[System.Runtime.Versioning.SupportedOSPlatform("windows")]
+	private static string? WindowsCharacterOf(Key key, nint layout) {
+		if (!UsVirtualKeys.TryGetValue(key, out int virtualKey)) {
+			return null;
+		}
+
+		char c = (char)(MapVirtualKeyExW((uint)virtualKey, MapVkVkToChar, layout) & 0x7fffffff);
+		return c == 0 || char.IsControl(c) ? null : char.ToUpperInvariant(c).ToString();
+	}
+
+	private static bool IsLetterOrDigit(Key key) => key is >= Key.A and <= Key.Z or >= Key.Number0 and <= Key.Number9;
+
+	// GLFW's name for a physical key, the character it types on the current layout; null for a key GLFW has no
+	// scancode for on this platform.
+	private static string? KeyName(Key physical) {
 		int scancode = GlfwApi.Value.GetKeyScancode((int)physical);
-		if (scancode < 0) {
+		return scancode < 0 ? null : GlfwApi.Value.GetKeyName((int)physical, scancode);
+	}
+
+	// The non-Windows approximation: the letter GLFW names the key by, if it names one.
+	private static Key? PrintedKeyOf(Key physical, string? name) {
+		if (GlfwApi.Value.GetKeyScancode((int)physical) < 0) {
 			return physical;
 		}
 
-		if (GlfwApi.Value.GetKeyName((int)physical, scancode) is [var c] && char.ToUpperInvariant(c) is >= 'A' and <= 'Z' and var letter) {
+		if (name is [var c] && char.ToUpperInvariant(c) is >= 'A' and <= 'Z' and var letter) {
 			return Key.A + (letter - 'A');
 		}
 
 		return physical is >= Key.A and <= Key.Z ? null : physical;
 	}
 
+	private const uint MapVkVkToChar = 2;
 	private const uint MapVkVscToVkEx = 3;
 
 	[DllImport("user32.dll")]

@@ -1,6 +1,7 @@
 using Herculan.Engine.Cockpit;
 using Herculan.Engine.Host.Debugging;
 using Herculan.Engine.Host.Localization;
+using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Settings;
 using ImGuiNET;
@@ -10,7 +11,7 @@ namespace Herculan.Engine.Host.Settings;
 /// <summary>
 /// The menu bar [Shift+Esc] raises over the shell and over a mission, and the pointer at the window's top left over the
 /// shell (<see cref="ShowOnHover"/>), HERCULAN's own and not retail's, and the
-/// panels it opens: Debug (a mission's only, and only under <c>--developer</c>), Settings, Controller, Tweaks, Accessibility and About; the
+/// panels it opens: Debug (a mission's only, and only under <c>--developer</c>), Settings, Controller, Keys, Tweaks, Accessibility and About; the
 /// Editor item, which leaves the shell for the mission editor and is greyed over a mission; and the
 /// first start's <see cref="WelcomeDialog"/> and the <see cref="UpdateDialog"/>, which the shell raises without the bar. Hidden until <see cref="Show"/>, and never
 /// drawn into a <c>--screenshot</c> capture. Plain [Esc] is retail's in a mission, where it pans to and from the
@@ -34,14 +35,16 @@ sealed class HostMenuBar : IEscapeMenu {
 	private bool _panelWasOpen;
 	private bool _highlightWasShowing;
 
+	/// <param name="keys">The key map the Keys window lists.</param>
 	/// <param name="openEditor">The Editor item's switch to the mission editor, or null to grey the item.</param>
-	public HostMenuBar(LocalizationTable localization, TweaksMenu tweaks, SettingsWindow settings, ControllerWindow controller,
-			DebugPanel? debug = null, Action? openEditor = null) {
+	public HostMenuBar(LocalizationTable localization, KeyMap keys, TweaksMenu tweaks, SettingsWindow settings,
+			ControllerWindow controller, DebugPanel? debug = null, Action? openEditor = null) {
 		_localization = localization;
 		_openEditor = openEditor;
 		Tweaks = tweaks;
 		Settings = settings;
 		Controller = controller;
+		Keys = new KeysWindow(localization, keys);
 		Accessibility = new AccessibilityMenu(A11ySettings.Current, localization);
 		_debug = debug;
 		About = new AboutWindow(localization);
@@ -55,6 +58,8 @@ sealed class HostMenuBar : IEscapeMenu {
 
 	public ControllerWindow Controller { get; }
 
+	public KeysWindow Keys { get; }
+
 	public AccessibilityMenu Accessibility { get; }
 
 	public AboutWindow About { get; }
@@ -67,7 +72,7 @@ sealed class HostMenuBar : IEscapeMenu {
 	public bool Visible { get; private set; }
 
 	/// <summary>Whether one of the bar's panels, or the welcome or the update notice, is up.</summary>
-	public bool PanelOpen => Tweaks.IsOpen || Settings.IsOpen || Controller.IsOpen || Accessibility.IsOpen || About.IsOpen
+	public bool PanelOpen => Tweaks.IsOpen || Settings.IsOpen || Controller.IsOpen || Keys.IsOpen || Accessibility.IsOpen || About.IsOpen
 		|| Welcome.IsOpen || Update.IsOpen || _debug?.IsOpen == true;
 
 	/// <summary>Whether the bar or one of its panels is up.</summary>
@@ -128,6 +133,7 @@ sealed class HostMenuBar : IEscapeMenu {
 			}
 			Update.Dismiss();
 			Settings.Close();
+			Keys.IsOpen = false;
 			About.IsOpen = false;
 			return true;
 		}
@@ -177,6 +183,10 @@ sealed class HostMenuBar : IEscapeMenu {
 				Controller.Open();
 			}
 
+			if (ImGui.MenuItem(_localization.GetStringOrKey("menu.keys"))) {
+				Keys.IsOpen = true;
+			}
+
 			if (ImGui.MenuItem(_localization.GetStringOrKey("menu.tweaks"))) {
 				Tweaks.IsOpen = true;
 			}
@@ -206,6 +216,7 @@ sealed class HostMenuBar : IEscapeMenu {
 		Tweaks.Draw(_centring.Condition);
 		Settings.Draw(owner, _centring.Condition);
 		Controller.Draw(_centring.Condition);
+		Keys.Draw(_centring.Condition);
 		Accessibility.Draw(_centring.Condition);
 		About.Draw(_centring.Condition);
 		Welcome.Draw(_centring.Condition);

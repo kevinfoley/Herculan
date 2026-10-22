@@ -106,6 +106,7 @@ menu.tweaks                    Tweaks
 menu.accessibility             Accessibility
 menu.settings                  Settings
 menu.controller                Controller
+menu.keys                      Keys
 menu.editor                    Editor
 menu.about                     About
 pause.title                    Paused
@@ -219,6 +220,110 @@ controller.invert_razor_pitch_tip   Reverses which way the controls pitch the RA
 controller.actions_note        This window sets which parts of your device the game uses. What each one does (steering or aiming, FIRE, TARGET and so on) is set in a mission: press F12 for Preferences, then CONTROLS. With a gamepad, the JOYSTICK, THROTTLE, RUDDER and HAT rows there are set to suit it, and its button choices are kept apart from a joystick's. The settings are saved to data\herculan-joystick.cfg, which the original game does not read.
 controller.defaults            Defaults
 controller.no_data_folder      There is no data folder to save the settings in.
+keys.title                     Keys
+keys.filter_hint               Find a key or action
+keys.column_key                Key
+keys.column_action             What it does
+keys.no_match                  No key matches.
+keys.section.driving           Driving
+keys.section.weapons           Weapons
+keys.section.targeting         Targeting and shields
+keys.section.displays          Displays and views
+keys.section.flash_comm        On FLASH COMM
+keys.section.command_display   On the command display
+keys.section.damage_detail     On the damage detail
+keys.section.outside_view      In the outside view
+keys.section.panels            Panels and the game
+keys.section.herculan          HERCULAN's own keys
+keys.row.throttle              Throttle forward and back. Holding the back key takes the throttle through zero into reverse.
+keys.row.steer                 Steer left and right.
+keys.row.all_stop              All stop.
+keys.row.turret_twist          Twist the turret left and right.
+keys.row.turret_pitch          Pitch the turret up and down.
+keys.row.center_turret         Center the turret on the body and turn Automatic Turret Tracking off.
+keys.row.center_legs           Center the legs under the turret.
+keys.row.razor_throttle        Throttle up and down, in the RAZOR.
+keys.row.diagonals             Steer and work the throttle together, diagonally, overriding the arrows and the rest of the keypad.
+keys.row.fire                  Fire, for as long as it is held.
+keys.row.select_row            Select weapon row 1 to 10.
+keys.row.chain_row             Add that weapon row to the current firing chain, or take it out.
+keys.row.next_weapon           Next and previous weapon.
+keys.row.link_weapon           Link the selected weapon to the identical one on the opposite hardpoint.
+keys.row.next_chain            Next firing chain.
+keys.row.power_level           Raise or lower the selected energy weapon's power level, one step a press. In the RAZOR the keypad pair is the throttle instead.
+keys.row.next_target           Select the next target.
+keys.row.nearest_target        Select the nearest target.
+keys.row.clear_target          Clear the target.
+keys.row.target_component      Step through the target's components, with a Targeting Pod.
+keys.row.radar_mode            Switch the radar between active and passive.
+keys.row.radar_range           Change the radar range, in active mode.
+keys.row.scanner_next_target   On the SCANNER screen, select the next target.
+keys.row.turret_tracking       Automatic Turret Tracking on or off. Turning it off also centers the turret.
+keys.row.shields               Move shield power toward the rear or the front.
+keys.row.mfd_status            Show STATUS on the MFD, also from the Heads-Down Display.
+keys.row.mfd_flash_comm        Show FLASH COMM on the MFD, also from the Heads-Down Display.
+keys.row.mfd_nav_map           Show NAV MAP on the MFD, also from the Heads-Down Display.
+keys.row.mfd_scanner           Show SCANNER on the MFD, also from the Heads-Down Display.
+keys.row.mfd_target            Show TARGET on the MFD, also from the Heads-Down Display.
+keys.row.mfd_missile_cam       Show MISSILE CAM on the MFD, also from the Heads-Down Display.
+keys.row.command_display       Show the command display on the Heads-Down Display.
+keys.row.damage_detail         Show the damage detail on the Heads-Down Display.
+keys.row.look_sideways         Look out of the left and right windows.
+keys.row.view_back             From the forward view, down to the Heads-Down Display. Back to the forward view from a side window or the Heads-Down Display, and to the cockpit from the outside view.
+keys.row.outside_view          Switch to the outside view, and back to the cockpit.
+keys.row.other_hercs           On the STATUS screen, cycle between your HERC and your squadmates' HERCs. On the TARGET screen, select the next target.
+keys.row.nav_marker            Drop a nav marker where you stand.
+keys.row.flash_comm_pick       Pick an order: ATTACK MY TARGET, IGNORE MY TARGET, HELP ME OUT!, JOIN ON ME, SCAN FOR HOSTILES, EMCON, FIRE AT WILL / HOLD YOUR FIRE.
+keys.row.step_orders           Step through the orders.
+keys.row.flash_comm_transmit   Transmit the order.
+keys.row.flash_comm_send       Pick and transmit the same orders from any screen.
+keys.row.command_squadmate     Pick a squadmate, left to right.
+keys.row.command_order         Pick an order: DISENGAGE, ATTACK ENEMY, DEFEND POSITION, PATROL GRIDPOINT, GOTO GRIDPOINT, JOIN ON ME, SCAN FOR HOSTILES, EMCON.
+keys.row.command_next_unit     For ATTACK ENEMY or DEFEND POSITION, pick the next unit on the map it can take: a hostile you know of, or a friendly.
+keys.row.command_pick          Make the order's pick as a click would: the unit last picked for ATTACK ENEMY or DEFEND POSITION, otherwise whatever is under the pointer.
+keys.row.command_zoom          Zoom the map in and out.
+keys.row.command_scroll        Scroll the map.
+keys.row.command_recenter      Put the map back on your HERC.
+keys.row.command_transmit      Transmit the order, or cancel it.
+keys.row.damage_show           Show structural, internal and weapon systems.
+keys.row.damage_step           Step through structural, internal and weapon systems.
+keys.row.damage_herc           Step through the HERCs: yours, each squadmate's, then your target's.
+keys.row.camera_swing          Swing the camera around the HERC and over it.
+keys.row.camera_zoom           Zoom in and out.
+keys.row.camera_swap           Hand the controls to the HERC, which you then drive and fire from outside, and back to the camera.
+keys.row.camera_next           Look at the next HERC in your squad. The controls stay on the camera while it is not your own.
+keys.row.camera_back           Back to the cockpit.
+keys.row.mission_status        Show how the mission stands, with a way out of it.
+keys.row.pause                 Pause.
+keys.row.quit_game             Leave the game.
+keys.row.objectives            Show the mission objectives.
+keys.row.preferences           Open the preferences.
+keys.row.online_manual         Open the on-line manual.
+keys.row.panel_accept          On a panel, press the selected button, which is the first until another is selected.
+keys.row.panel_cancel          On a panel, press its cancel button.
+keys.row.panel_next            On a panel, select the next button, back to the first after the last.
+keys.row.full_screen           Switch between full screen and a window.
+keys.row.leave_full_screen     Leave full screen for a window.
+keys.row.stop_tape             Stop an input tape that is playing back.
+keys.row.menu_bar              Raise HERCULAN's menu bar; press again to back out of it.
+keys.row.menu_back             While the menu bar or one of its windows is up, back out of it.
+keys.row.copy_frame            While full screen, copy the frame to the clipboard.
+keycap.ctrl                    Ctrl
+keycap.alt                     Alt
+keycap.shift                   Shift
+keycap.escape                  Esc
+keycap.enter                   Enter
+keycap.tab                     Tab
+keycap.space                   Space
+keycap.backspace               Backspace
+keycap.insert                  Insert
+keycap.up                      Up
+keycap.down                    Down
+keycap.left                    Left
+keycap.right                   Right
+keycap.print_screen            PrtScn
+keycap.function                F{0}
+keycap.keypad                  Keypad {0}
 disc_prompt.message            Choose the Earthsiege 2 disc folder, such as the CD drive or a copy of the disc. It is written to the install's data\{0}, which the original game reads too, and the front end restarts.
 disc_prompt.path_hint          Disc folder
 disc_prompt.picker_title       Choose the Earthsiege 2 disc folder
