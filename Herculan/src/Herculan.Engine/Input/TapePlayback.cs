@@ -75,15 +75,15 @@ public sealed class TapePlayback {
 	/// <summary>
 	/// The two things the live keyboard still does while a tape plays, both of which retail tests on the live
 	/// command word rather than the tape's: [Ctrl+E] stops the playback, and under -D any key that makes a
-	/// command code raises the abort.
+	/// command code raises the abort. Each key is the one the layout makes of it (<see cref="LiveKeys.Layout"/>).
 	/// </summary>
 	public void ListenTo(LiveKeys liveKeys) {
 		if (Player == null) {
 			return;
 		}
 
-		liveKeys.Device.KeyDown += (device, key, _) => {
-			if (Player.Finished) {
+		liveKeys.Device.KeyDown += (device, physical, _) => {
+			if (Player.Finished || liveKeys.Layout.Translate(physical) is not { } key) {
 				return;
 			}
 

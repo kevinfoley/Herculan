@@ -83,6 +83,15 @@ public static class ShellKeyboard {
 	};
 
 	/// <summary>
+	/// The key <see cref="Index"/> takes for the virtual-key code a layout gives a letter, digit or symbol key, or null
+	/// for a code VSHELL drops (<see cref="Input.KeyboardLayout"/>). <c>MainWndProc</c> matches the message's wParam
+	/// against <c>0046d384</c>'s 0x54 entries, which hold every digit's and letter's code and no <c>VK_OEM_</c> code.
+	/// A digit's or letter's code is its own character, as is Silk's <see cref="Key"/> for it.
+	/// </summary>
+	public static Key? KeyOfVirtualKey(int virtualKey) =>
+		virtualKey is >= (int)Key.Number0 and <= (int)Key.Number9 or >= (int)Key.A and <= (int)Key.Z ? (Key)virtualKey : null;
+
+	/// <summary>
 	/// The event a key sends, or null for none. A press sends a command or a character; a release sends
 	/// a command, and only for a command key, whose release has its own entry at <c>index | 0x80</c>.
 	///
