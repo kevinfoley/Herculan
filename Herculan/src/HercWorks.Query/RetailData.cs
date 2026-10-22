@@ -20,11 +20,17 @@ internal sealed record Mission(string Name, MissionFile File, MissionStringFile?
 /// <param name="TextRecords">The <c>.ENG</c>'s record count, null when the mission has none.</param>
 internal sealed record MissionSummary(string Mission, int Conditions, int Mechs, int Flyers, int Bases, int Groups, int? TextRecords);
 
+/// <summary>One chassis: a <c>MECHS.NAM</c> entry and the <c>dat\&lt;name&gt;.DAT</c> type record it names.</summary>
+/// <param name="Index">Its position in <c>MECHS.NAM</c>, which is its mech type index.</param>
+/// <param name="Record">The parsed record, null when the archive has no such file.</param>
+/// <param name="Bytes">The record as stored, null when the archive has no such file.</param>
+internal sealed record Chassis(int Index, string Name, HercSimDat? Record, byte[]? Bytes);
+
 /// <summary>
 /// Everything a query reads out of an install, parsed by HercWorks.Core: every <c>MSN\*.MSN</c> and its
 /// <c>.ENG</c> out of <c>ZONES.VOL</c>, and the type tables that name what the rosters place —
-/// <c>dat\BASES.DAT</c>, <c>nam\MECHS.NAM</c>, <c>nam\FLYERS.NAM</c> and <c>str\STRINGS0.STR</c> — out
-/// of <c>SIMVOL0.VOL</c>.
+/// <c>dat\BASES.DAT</c>, <c>nam\MECHS.NAM</c>, <c>nam\FLYERS.NAM</c> and <c>str\STRINGS0.STR</c> — and
+/// the <c>dat\&lt;name&gt;.DAT</c> chassis record of every <c>MECHS.NAM</c> name, out of <c>SIMVOL0.VOL</c>.
 ///
 /// <para>Each archive is opened by name, from the install's <c>VOL</c> folder and then from the
 /// <c>VOL</c> folder of the directory its <c>DATA\drive.cfg</c> names, which is where a v1.10 Minimum
@@ -42,7 +48,7 @@ internal sealed class RetailData {
 	public const int VehicleNameGroup = 24;
 
 	private RetailData(string installRoot, string missionArchive, IReadOnlyList<Mission> missions,
-			BasesDat? bases, NameList? mechs, NameList? flyers, StringFile? strings) {
+			BasesDat? bases, NameList? mechs, NameList? flyers, StringFile? strings, IReadOnlyList<Chassis> chassis) {
 		InstallRoot = installRoot;
 		MissionArchivePath = missionArchive;
 		Missions = missions;
@@ -50,6 +56,7 @@ internal sealed class RetailData {
 		MechNames = mechs;
 		FlyerNames = flyers;
 		SimStrings = strings;
+		Chassis = chassis;
 	}
 
 	public string InstallRoot { get; }
@@ -62,6 +69,9 @@ internal sealed class RetailData {
 	public NameList? MechNames { get; }
 	public NameList? FlyerNames { get; }
 	public StringFile? SimStrings { get; }
+
+	/// <summary>One per <c>MECHS.NAM</c> entry, in its order; empty when <c>SIMVOL0.VOL</c> or <c>MECHS.NAM</c> is missing.</summary>
+	public IReadOnlyList<Chassis> Chassis { get; }
 
 	/// <summary>
 	/// The install to read when none is given: the nearest <c>ES2</c> folder holding
@@ -109,15 +119,21 @@ internal sealed class RetailData {
 		BasesDat? bases = null;
 		NameList? mechs = null, flyers = null;
 		StringFile? strings = null;
+		var chassis = new List<Chassis>();
 		if (FindArchive(installRoot, SimulatorArchive) is { } sim) {
 			var simVol = VolFileReader.ParseVolFile(sim);
 			bases = Find(simVol, "DAT", "BASES.DAT") is { RawBytes: { } b } ? new BasesDatTransformer().Parse(b) : null;
 			mechs = Find(simVol, "NAM", "MECHS.NAM") is { RawBytes: { } m } ? new NameListTransformer().Parse(m) : null;
 			flyers = Find(simVol, "NAM", "FLYERS.NAM") is { RawBytes: { } f } ? new NameListTransformer().Parse(f) : null;
 			strings = Find(simVol, "STR", "STRINGS0.STR") is { RawBytes: { } s } ? new StringFileTransformer().Parse(s) : null;
+			var names = mechs?.Names ?? [];
+			for (int i = 0; i < names.Length; i++) {
+				byte[]? record = Find(simVol, "DAT", names[i] + ".DAT")?.RawBytes;
+				chassis.Add(new Chassis(i, names[i], record != null ? new HercSimDataTransformer().Parse(record) : null, record));
+			}
 		}
 
-		return new RetailData(Path.GetFullPath(installRoot), Path.GetFullPath(zones), missions, bases, mechs, flyers, strings);
+		return new RetailData(Path.GetFullPath(installRoot), Path.GetFullPath(zones), missions, bases, mechs, flyers, strings, chassis);
 	}
 
 	/// <summary>
