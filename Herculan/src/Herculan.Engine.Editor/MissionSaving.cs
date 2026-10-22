@@ -378,8 +378,7 @@ internal sealed class MissionSaving {
 
 	private List<ScriptLintFinding> Check() {
 		var mission = _mission!;
-		int squad = mission.Mission.Placements.Count(placement => placement.IsPlayerLance);
-		return ScriptDatLint.Check(mission.Source.Script, squad, mission.Source.Provenance.Lines.Count);
+		return ScriptDatLint.Check(mission.Source.Script, MissionLint.SquadOf(mission.Mission), mission.Source.Provenance.Lines.Count);
 	}
 
 	private bool InArchive(string name) =>

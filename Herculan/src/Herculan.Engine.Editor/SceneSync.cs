@@ -202,7 +202,7 @@ internal sealed class SceneSync {
 		_generated.Reload(mission);
 		_picker.Rebuild(_index.Objects);
 		_overlay.Rebuild();
-		_outliner.Recheck(new MissionLint(_generated, _source.Script, _source.Provenance.Lines.Count));
+		_outliner.Recheck(new MissionLint(_source, _index, MissionLint.SquadOf(mission)));
 		foreach (var joined in _index.Objects.Where(placed => !before.Contains(placed))) {
 			Added?.Invoke(joined);
 		}

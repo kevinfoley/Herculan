@@ -1,3 +1,4 @@
+using HercWorks.Core.Data.File.Msn;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Scene;
 using Herculan.Engine.World;
@@ -9,6 +10,11 @@ namespace Herculan.Engine.Editor;
 /// table cites where its codes are documented — and only the wording is the editor's.
 /// </summary>
 internal static class MissionText {
+	private const int RouteRow = 8;
+	private const int MechRow = 12;
+	private const int FlyerRow = 13;
+	private const int BaseRow = 14;
+
 	/// <summary>An object, by type and the roster slot the mission's refs name it by.</summary>
 	public static string Describe(SceneObject placed) {
 		var placement = placed.Placement;
@@ -151,18 +157,7 @@ internal static class MissionText {
 
 	/// <summary>An objective in one line: its index, whether it is mandatory or a failure condition, and its question.</summary>
 	public static string DescribeObjective(MissionObjective objective, int index) {
-		string question = objective.ConditionCode switch {
-			MissionObjective.ConditionOrderComplete => $"order on route {objective.RouteRef} done",
-			MissionObjective.ConditionLost => "lost",
-			MissionObjective.ConditionClear => "clear of threats",
-			MissionObjective.ConditionDataLink or MissionObjective.ConditionDataLinkAlso => "data link",
-			MissionObjective.ConditionEngaged => "engaged",
-			MissionObjective.ConditionDisarmed => "disarmed",
-			MissionObjective.ConditionUnengaged => "not engaged",
-			MissionObjective.ConditionNoDataLink or MissionObjective.ConditionNoDataLinkAlso => "no data link",
-			_ => $"code {objective.ConditionCode}"
-		};
-
+		string question = ObjectiveQuestion(objective.ConditionCode, $"order on route {objective.RouteRef} done");
 		string subject = objective.SubjectKind switch {
 			MissionObjectiveSubject.Group => $"group {objective.SubjectRef}",
 			MissionObjectiveSubject.Mech => $"mech slot {objective.SubjectRef}",
@@ -173,6 +168,123 @@ internal static class MissionText {
 
 		string role = objective.Required == MissionObjective.Mandatory ? "mandatory" : "failure";
 		return $"Objective {index}, {role}: {subject} {question}";
+	}
+
+	/// <summary>
+	/// A row-17 objective in one line, as <see cref="DescribeObjective(MissionObjective, int)"/> describes a generated one, from
+	/// the layout (docs/herculan/handoff-editor-viewing.md#selection-and-panels): its subject a group by its display number, an
+	/// object by <see cref="SubjectName"/>, and its route by its place in row 8.
+	/// </summary>
+	/// <param name="number">Its place in <see cref="MissionLayout.Objectives"/>.</param>
+	public static string DescribeObjective(MissionIndex index, LayoutObjective objective, int number) {
+		var fields = objective.Fields;
+		string done = NumberIn(index.Layout, RouteRow, fields.RouteRef) is { } route
+			? $"order on route {route} done"
+			: "order done, no route";
+		string question = ObjectiveQuestion(fields.ConditionCode, done);
+		string role = fields.Required == MissionObjective.Mandatory ? "mandatory" : "failure";
+		return $"Objective {number}, {role}: {SubjectName(index, fields.SubjectKind, fields.SubjectRef)} {question}";
+	}
+
+	/// <summary>
+	/// An objective's subject from the layout: kind 0 a group by its display number, 1 a herc, 2 a flyer and 3 a structure or
+	/// ground vehicle by its <see cref="MemberName"/> and its group's number, or by its type when no group places it.
+	/// </summary>
+	private static string SubjectName(MissionIndex index, short kind, short subject) {
+		if (kind == 0) {
+			return index.Group(subject) is { } group ? $"group {group.Number}" : "no group";
+		}
+
+		int? row = kind switch { 1 => MechRow, 2 => FlyerRow, 3 => BaseRow, _ => null };
+		if (row is not { } roster) {
+			return $"subject kind {kind}";
+		}
+
+		var key = new ObjectKey(roster, subject);
+		if (index.Plan.Object(key) is { } planned) {
+			return planned.Squad || index.Group(planned.Group) is not { } group
+				? MemberName(index, planned)
+				: $"{MemberName(index, planned)} (group {group.Number})";
+		}
+
+		short? type = index.Layout.Entry(roster, subject)?.Fields switch {
+			MechRosterEntry144 herc => herc.TypeIndex,
+			FlyerRosterEntry102 flyer => flyer.TypeIndex,
+			BaseRosterEntry62 structure => structure.TypeIndex,
+			_ => null
+		};
+
+		string what = roster switch { MechRow => "Herc", FlyerRow => "Flyer", _ => "Structure" };
+		return type is { } typeIndex ? $"{what} type {typeIndex} (in no group)" : $"no {what.ToLowerInvariant()}";
+	}
+
+	// The question an objective asks, in a word or two; <orderDone> for an order-complete one.
+	private static string ObjectiveQuestion(short code, string orderDone) => code switch {
+		MissionObjective.ConditionOrderComplete => orderDone,
+		MissionObjective.ConditionLost => "lost",
+		MissionObjective.ConditionClear => "clear of threats",
+		MissionObjective.ConditionDataLink or MissionObjective.ConditionDataLinkAlso => "data link",
+		MissionObjective.ConditionEngaged => "engaged",
+		MissionObjective.ConditionDisarmed => "disarmed",
+		MissionObjective.ConditionUnengaged => "not engaged",
+		MissionObjective.ConditionNoDataLink or MissionObjective.ConditionNoDataLinkAlso => "no data link",
+		_ => $"code {code}"
+	};
+
+	/// <summary>
+	/// A placed roster record as the outliner names it (docs/herculan/handoff-editor-ux-review.md#4-identity-strings-built-from-roster-slots-and-enum-names):
+	/// its type name, else its kind and type number; numbered "2 of 3" in member order when its group has more than one of
+	/// its type; and "(player squad)" for a squad herc.
+	/// </summary>
+	public static string MemberName(MissionIndex index, PlannedObject planned) {
+		string type = TypeName(index, planned);
+		string name = type;
+		if (index.Group(planned.Group) is { } group) {
+			var same = group.Members
+				.Where(key => key.Row == planned.Key.Row && index.Plan.Object(key)?.TypeIndex == planned.TypeIndex)
+				.ToList();
+			if (same.Count > 1) {
+				// A comma keeps "Structure type 40, 2 of 3" from reading as one number.
+				string count = $"{same.IndexOf(planned.Key) + 1} of {same.Count}";
+				name = char.IsDigit(type[^1]) ? $"{type}, {count}" : $"{type} {count}";
+			}
+		}
+
+		return planned.Squad ? $"{name} (player squad)" : name;
+	}
+
+	// A placed record's type name, else its kind and type number: a ground vehicle told from a structure by its object's type.
+	private static string TypeName(MissionIndex index, PlannedObject planned) {
+		if (planned.TypeName is { } name) {
+			return name;
+		}
+
+		string kind = planned.Kind switch {
+			MissionUnitKind.Mech => "Herc",
+			MissionUnitKind.Flyer => "Flyer",
+			_ => index.ObjectOf(planned.Key)?.Object is Sim.BaseObject { Type.IsVehicle: true } ? "Ground vehicle" : "Structure"
+		};
+
+		return $"{kind} type {planned.TypeIndex}";
+	}
+
+	/// <summary>
+	/// Where row-<paramref name="row"/> GUID <paramref name="guid"/> stands in its row of <paramref name="layout"/>, its display
+	/// number; null for <c>-1</c> or a GUID the row has no entry for.
+	/// </summary>
+	public static int? NumberIn(MissionLayout layout, int row, short guid) {
+		if (guid == -1) {
+			return null;
+		}
+
+		var entries = layout.Entries(row);
+		for (int i = 0; i < entries.Count; i++) {
+			if (entries[i].Guid == guid) {
+				return i;
+			}
+		}
+
+		return null;
 	}
 
 	/// <summary>A binary angle as compass degrees.</summary>
@@ -186,6 +298,16 @@ internal static class MissionText {
 			? $"{seconds} s after action {timer.PrimaryActionRef} fires"
 			: $"{seconds} s into the mission";
 	}
+
+	/// <summary>
+	/// A row-11 timer's delay and what starts it, as <see cref="TimerSummary(MissionActionTimer)"/> says it of a generated one,
+	/// the starting action by its display number; a start the layout has no action for is the mission's start, as the
+	/// generation resolves it to none.
+	/// </summary>
+	public static string TimerSummary(MissionIndex index, ActionTimer30 timer) =>
+		index.Action(timer.PrimaryActionRef) is { } start
+			? $"{timer.Delay} s after action {start.Number} fires"
+			: $"{timer.Delay} s into the mission";
 
 	/// <summary>A duration of <paramref name="seconds"/> in hours, minutes and seconds, leaving out the parts that are 0.</summary>
 	public static string Duration(int seconds) {

@@ -64,8 +64,8 @@ internal sealed record ActionLinks(
 	IReadOnlyList<OrderSlot> OrdersItEnds);
 
 /// <summary>
-/// The editor's cross-reference over the generated mission, by <c>script.dat</c> block index, which the Properties views,
-/// the outliner and the mission check read until they move to the layout (docs/herculan/handoff-editor-msn-scene.md#steps):
+/// The editor's cross-reference over the generated mission, by <c>script.dat</c> block index, which the Properties views
+/// read until they move to the layout (docs/herculan/handoff-editor-msn-scene.md#steps):
 /// which actions name which trigger area, which groups walk which route, what fires each action and what each one sets off.
 /// Built from the <see cref="World.Mission"/> generated after each edit and the scene's objects (<see cref="MissionIndex"/>),
 /// each <see cref="SceneObject.Placement"/> carrying the generation's indices for its record's GUID (<see cref="SceneSync"/>),

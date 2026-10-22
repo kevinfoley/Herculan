@@ -1,6 +1,6 @@
 # Handoff — the HERCULAN mission editor
 
-The editor, `Herculan.Engine.Editor`, run on its own by `Herculan.Engine.Host.Editor` and from the game's Editor menu item, opens a mission as its `.MSN` and `.ENG`, shows its objects and groups from the `.MSN` and the rest through the `script.dat` generated from them, edits it, and saves it into the install, where the game loads it in place of the archive's.
+The editor, `Herculan.Engine.Editor`, run on its own by `Herculan.Engine.Host.Editor` and from the game's Editor menu item, opens a mission as its `.MSN` and `.ENG`, shows its scene and the Mission panel's lists from the `.MSN` and its Properties views through the `script.dat` generated from it, edits it, and saves it into the install, where the game loads it in place of the archive's.
 
 | Doc | Covers |
 |---|---|

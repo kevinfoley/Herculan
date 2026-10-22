@@ -48,7 +48,7 @@ The route view (`RouteView`, through `RouteEditor`):
 - **Delete** (or the Delete key on the route) is refused while an order, an objective or a group's own route field names it, one line per record, a group's orders and own route on one line.
 - A list a variant supplies is the alternative's, as for a waypoint move, and the view says so.
 
-The outliner lists every route of block 3 with a waypoint, those no order names included. No waypoint count is capped (no doc records a fixed-size waypoint array in DBSIM); the heads-down map marks at most waypoints 1 to 9 of the player's route ([`../retail/simulation/heads-down-display.md`](../retail/simulation/heads-down-display.md#markers)), and the route view says so for a longer one.
+The outliner lists every route of row 8, those no order names included, and one with no waypoint standing anywhere as "no waypoints". No waypoint count is capped (no doc records a fixed-size waypoint array in DBSIM); the heads-down map marks at most waypoints 1 to 9 of the player's route ([`../retail/simulation/heads-down-display.md`](../retail/simulation/heads-down-display.md#markers)), and the route view says so for a longer one.
 
 Gaps:
 

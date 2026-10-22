@@ -11,29 +11,45 @@ namespace Herculan.Engine.Editor;
 /// <see cref="MissionView"/>), then the mission check's findings, then every group (with its members), trigger area,
 /// action, timer, route, objective and condition as a list, the trigger areas and routes with the buttons that start placing a new
 /// one, and the actions, timers, objectives and conditions with the buttons that create one. It is the only way to reach the parts of a mission that are not
-/// standing somewhere — an action with no area, a group not yet in the mission — and the other way
+/// standing somewhere — an action with no area, a route with no waypoints — and the other way
 /// to make a selection. A double-click also frames the record in the view (<see cref="SelectionState.Focus"/>).
+///
+/// <para>Every list is the <c>.MSN</c>'s layout (docs/herculan/handoff-editor-viewing.md#selection-and-panels): every record
+/// of its row, a conditional one included, in layout order, numbered by its place in its row, each selecting its record by
+/// GUID or row-17 index. A row whose record is not in every version of the mission is marked <see cref="NotAlways"/>.</para>
 /// </summary>
 internal sealed class MissionOutliner {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
 	public const float PanelWidth = 300f;
 
+	private const int RouteRow = 8;
+	private const int AreaRow = 9;
+	private const int ActionRow = 10;
+	private const int TimerRow = 11;
+	private const int GroupRow = 16;
+
+	/// <summary>
+	/// What a row whose record is present only under a condition carries after its text, the words the "Present when" field
+	/// every view opens with uses for the other case.
+	/// </summary>
+	private const string NotAlways = " (not always present)";
+
 	private static readonly Vector4 FindingLinkColor = new(0.55f, 0.78f, 1f, 1f);
 	private static readonly Vector4 SelectedFindingColor = new(1f, 0.85f, 0.1f, 1f);
 
-	private readonly GeneratedIndex _index;
+	private readonly MissionDocument _source;
+	private readonly MissionIndex _index;
 	private MissionLint _lint;
 	private readonly SelectionState _selection;
 
-	public MissionOutliner(GeneratedIndex index, MissionLint lint, SelectionState selection) {
+	public MissionOutliner(MissionDocument source, MissionIndex index, MissionLint lint, SelectionState selection) {
+		_source = source;
 		_index = index;
 		_lint = lint;
 		_selection = selection;
 	}
 
-	private Mission Mission => _index.Mission;
-
-	private GeneratedRecords Records => _index.Records;
+	private MissionLayout Layout => _index.Layout;
 
 	/// <summary>Lists <paramref name="lint"/>'s findings in place of the last ones, for a mission built again.</summary>
 	public void Recheck(MissionLint lint) => _lint = lint;
@@ -93,49 +109,50 @@ internal sealed class MissionOutliner {
 		// Wrapped text rather than a Selectable, whose label does not wrap and most messages are
 		// wider than the panel.
 		foreach (var (finding, target) in _lint.Findings) {
+			ImGui.BulletText(string.Empty);
+			ImGui.SameLine();
 			if (target == null) {
-				ImGui.BulletText(string.Empty);
-				ImGui.SameLine();
-				ImGui.TextWrapped(finding.Message);
+				EditorText.Wrapped(finding.Message);
 				continue;
 			}
 
-			ImGui.BulletText(string.Empty);
-			ImGui.SameLine();
 			ImGui.PushStyleColor(ImGuiCol.Text, _selection.Is(target) ? SelectedFindingColor : FindingLinkColor);
-			ImGui.TextWrapped(finding.Message);
+			EditorText.Wrapped(finding.Message);
 			ImGui.PopStyleColor();
 			Choose(target, ImGui.IsItemClicked());
 		}
 	}
 
 	private void DrawTimers() {
-		if (!ImGui.CollapsingHeader($"Timers ({Mission.ActionTimers.Count})###timers")) {
+		var timers = Layout.Entries<ActionTimer30>();
+		if (!ImGui.CollapsingHeader($"Timers ({timers.Count})###timers")) {
 			return;
 		}
 
-		if (Timers is { } timers) {
+		if (Timers is { } editor) {
 			if (ImGui.SmallButton("New timer")) {
-				timers.RequestCreate();
+				editor.RequestCreate();
 			}
 		}
 
-		for (int i = 0; i < Mission.ActionTimers.Count; i++) {
-			var timer = Mission.ActionTimers[i];
-			var fires = timer.SequenceRefs.Where(reference => reference >= 0 && reference < Mission.Actions.Count);
-			var selection = Records.TimerAt(i);
-			Choose(selection, ImGui.Selectable($"Timer {i}: {MissionText.TimerSummary(timer)}, fires {string.Join(", ", fires)}##timer{i}",
+		for (int number = 0; number < timers.Count; number++) {
+			var timer = timers[number];
+			var fires = timer.Fields.SequenceRefs.Select(reference => _index.Action(reference)?.Number).OfType<int>().ToList();
+			string fired = fires.Count > 0 ? $"fires {string.Join(", ", fires)}" : "fires nothing";
+			var selection = new TimerSelection(timer.Guid);
+			Choose(selection, ImGui.Selectable(
+				$"Timer {number}: {MissionText.TimerSummary(_index, timer.Fields)}, {fired}{Marker(TimerRow, timer.Guid)}##timer{timer.Guid}",
 				_selection.Is(selection)));
 		}
 	}
 
 	/// <summary>
-	/// The objectives the simulation tests (block 12), under the list the player is shown (block 13).
+	/// The objectives the simulation tests (row 17), under the list the player is shown (the text package's objective lines).
 	/// Nothing reconciles the two, so they are listed apart.
 	/// </summary>
 	private void DrawObjectives() {
-		var absent = Records.AbsentObjectives();
-		if (!ImGui.CollapsingHeader($"Objectives ({Mission.Objectives.Count + absent.Count})###objectives")) {
+		var records = Layout.Objectives;
+		if (!ImGui.CollapsingHeader($"Objectives ({records.Count})###objectives")) {
 			return;
 		}
 
@@ -152,29 +169,24 @@ internal sealed class MissionOutliner {
 		}
 
 		// Both wrapped, as their lines run well past the panel's width.
-		if (Mission.ObjectiveTextRefs.Count > 0) {
+		var lines = MissionTextEditing.Filled(_source, MissionTextList.Objectives);
+		if (lines.Count > 0) {
 			EditorText.Note("Objective lines (F11), edited in the Mission view:");
-			foreach (int line in Mission.ObjectiveTextRefs) {
+			foreach (var (_, id) in lines) {
 				ImGui.BulletText(string.Empty);
 				ImGui.SameLine();
-				ImGui.TextWrapped(Mission.TextAt(line));
+				EditorText.Wrapped(MissionTextEditing.LineText(_source, id) ?? string.Empty);
 			}
 
 			ImGui.Spacing();
 		}
 
-		for (int i = 0; i < Mission.Objectives.Count; i++) {
-			var selection = Records.ObjectiveAt(i);
-			Choose(selection, WrappedSelectable(MissionText.DescribeObjective(Mission.Objectives[i], i), $"objective{i}",
-				_selection.Is(selection)));
-		}
-
-		// The objectives the mission as opened leaves out, last, numbered among themselves, so one a Present when took out can
-		// be selected and brought back.
-		for (int i = 0; i < absent.Count; i++) {
-			var selection = new ObjectiveSelection(absent[i]);
-			string label = absent.Count == 1 ? "Objective not in the mission as opened" : $"Objective not in the mission as opened ({i + 1})";
-			Choose(selection, ImGui.Selectable($"{label}##absent{absent[i]}", _selection.Is(selection)));
+		for (int number = 0; number < records.Count; number++) {
+			var objective = records[number];
+			var selection = new ObjectiveSelection(objective.Index);
+			string marker = objective.Presence.Always ? string.Empty : NotAlways;
+			Choose(selection, WrappedSelectable(MissionText.DescribeObjective(_index, objective, number) + marker,
+				$"objective{objective.Index}", _selection.Is(selection)));
 		}
 	}
 
@@ -239,20 +251,23 @@ internal sealed class MissionOutliner {
 		return clicked;
 	}
 
+	/// <summary><see cref="NotAlways"/> when row <paramref name="row"/>'s entry for <paramref name="guid"/> is present only under a condition, else nothing.</summary>
+	private string Marker(int row, short guid) => Layout.Entry(row, guid)?.Presence.Always == false ? NotAlways : string.Empty;
+
 	private void DrawGroups() {
-		var absent = _index.Scene.Groups.Where(group => Records.Group(group.Guid) == null).ToList();
-		if (!ImGui.CollapsingHeader($"Groups ({_index.GroupMembers.Count + absent.Count})###groups")) {
+		var groups = _index.Groups;
+		if (!ImGui.CollapsingHeader($"Groups ({groups.Count})###groups")) {
 			return;
 		}
 
-		for (int group = 0; group < _index.GroupMembers.Count; group++) {
-			var members = _index.GroupMembers[group];
-			string waiting = group < Mission.GroupDeploymentActions.Count && Mission.GroupDeploymentActions[group] >= 0
-				? $", waits on action {Mission.GroupDeploymentActions[group]}"
+		foreach (var group in groups) {
+			var members = _index.MembersOf(group.Guid);
+			string waiting = group.Waiting && _index.Action(group.DeploymentAction) is { } action
+				? $", waits on action {action.Number}"
 				: string.Empty;
 
 			var flags = ImGuiTreeNodeFlags.OpenOnArrow | ImGuiTreeNodeFlags.SpanAvailWidth;
-			var selection = Records.GroupAt(group);
+			var selection = new GroupSelection(group.Guid);
 			if (_selection.Is(selection)) {
 				flags |= ImGuiTreeNodeFlags.Selected;
 			}
@@ -261,7 +276,8 @@ internal sealed class MissionOutliner {
 				flags |= ImGuiTreeNodeFlags.Leaf;
 			}
 
-			bool open = ImGui.TreeNodeEx($"{MissionText.DescribeGroup(_index, group)}: {members.Count}{waiting}##group{group}", flags);
+			bool open = ImGui.TreeNodeEx(
+				$"{GroupName(group)}: {members.Count}{waiting}{Marker(GroupRow, group.Guid)}##group{group.Guid}", flags);
 			Choose(selection, ImGui.IsItemClicked() && !ImGui.IsItemToggledOpen());
 
 			if (!open) {
@@ -269,66 +285,87 @@ internal sealed class MissionOutliner {
 			}
 
 			foreach (var member in members) {
-				if (_index.Scene.SelectionOf(member) is not { } chosen) {
+				if (_index.Planned(member) is not { } planned) {
 					continue;
 				}
 
-				Choose(chosen, ImGui.Selectable($"{MissionText.Describe(member)}##m{group}.{member.Placement.SlotIndex}",
+				var chosen = new ObjectSelection(planned.Key.Row, planned.Key.Guid);
+				Choose(chosen, ImGui.Selectable(
+					$"{MissionText.MemberName(_index, planned)}{Marker(planned.Key.Row, planned.Key.Guid)}##m{planned.Key.Row}.{planned.Key.Guid}",
 					_selection.Is(chosen)));
 			}
 
 			ImGui.TreePop();
 		}
-
-		// The groups the mission as opened leaves out, last, so one a Present when took out can be selected and brought back.
-		foreach (var group in absent) {
-			var selection = new GroupSelection(group.Guid);
-			Choose(selection, ImGui.Selectable($"Group {group.Number} ({group.Kind}, {group.Side}): not in the mission as opened"
-				+ $"##absent{group.Guid}", _selection.Is(selection)));
-		}
 	}
 
+	// A group: its display number, roster and side, as the outliner has always named it.
+	private static string GroupName(PlannedGroup group) {
+		if (group.Number == 0) {
+			return "Group 0 (player squad)";
+		}
+
+		string kind = Enum.IsDefined(group.Kind) ? group.Kind.ToString() : "?";
+		return $"Group {group.Number} ({kind}, {group.Side})";
+	}
+
+	/// <summary>
+	/// Every row-9 trigger area. One whose corner or centre references a point the layout has none for stands nowhere: it is
+	/// listed with what is missing, and no action tests it.
+	/// </summary>
 	private void DrawAreas() {
-		if (!ImGui.CollapsingHeader($"Trigger areas ({_index.Areas.Count})###areas")) {
+		var entries = Layout.Entries<TriggerArea12>();
+		if (!ImGui.CollapsingHeader($"Trigger areas ({entries.Count})###areas")) {
 			return;
 		}
 
 		AreaPlacing?.DrawStartButtons(small: true);
-		foreach (var area in _index.Areas) {
-			string shape = area.Shape == MissionTriggerShape.Circle
-				? $"circle, {MissionText.Distance(area.Radius)}"
-				: "box";
-			var testing = _index.ActionsTesting(area.Reference).ToList();
-			string actions = testing.Count > 0 ? $"action {string.Join(", ", testing)}" : "no action";
-			var selection = Records.AreaAt(area.Reference);
-			Choose(selection, ImGui.Selectable($"Area {area.Reference}: {shape}, {actions}##area{area.Reference}",
+		for (int number = 0; number < entries.Count; number++) {
+			var entry = entries[number];
+			string text;
+			if (_index.Area(entry.Guid) is { } area) {
+				string shape = area.Area.Shape == MissionTriggerShape.Circle
+					? $"circle, {MissionText.Distance(area.Area.Radius)}"
+					: "box";
+				var testing = area.TestedBy.Select(guid => _index.Action(guid)?.Number).OfType<int>().ToList();
+				string actions = testing.Count > 0 ? $"action {string.Join(", ", testing)}" : "no action";
+				text = $"{shape}, {actions}";
+			} else {
+				text = entry.Fields.Shape != 0 ? "circle, its center is missing" : "box, a corner is missing";
+			}
+
+			var selection = new AreaSelection(entry.Guid);
+			Choose(selection, ImGui.Selectable($"Area {number}: {text}{Marker(AreaRow, entry.Guid)}##area{entry.Guid}",
 				_selection.Is(selection)));
 		}
 	}
 
 	private void DrawActions() {
-		if (!ImGui.CollapsingHeader($"Actions ({Mission.Actions.Count})###actions")) {
+		var actions = _index.Actions;
+		if (!ImGui.CollapsingHeader($"Actions ({actions.Count})###actions")) {
 			return;
 		}
 
-		if (Actions is { } actions) {
+		if (Actions is { } editor) {
 			if (ImGui.SmallButton("New action")) {
-				actions.RequestCreate();
+				editor.RequestCreate();
 			}
 		}
 
-		for (int i = 0; i < Mission.Actions.Count; i++) {
-			var action = Mission.Actions[i];
-			var links = _index.LinksOf(i);
+		foreach (var action in actions) {
+			int waiting = _index.Groups.Count(group => group.Waiting && group.DeploymentAction == action.Guid);
 			string trigger = action.Areas.Count > 0 ? $"{action.Areas.Count} area(s)" : "no area";
-			string effect = links.WaitingGroups.Count > 0 ? $", brings in {links.WaitingGroups.Count} group(s)" : string.Empty;
-			var selection = Records.ActionAt(i);
-			Choose(selection, ImGui.Selectable($"Action {i}: {trigger}{effect}##action{i}", _selection.Is(selection)));
+			string effect = waiting > 0 ? $", brings in {waiting} group(s)" : string.Empty;
+			var selection = new ActionSelection(action.Guid);
+			Choose(selection, ImGui.Selectable($"Action {action.Number}: {trigger}{effect}{Marker(ActionRow, action.Guid)}##action{action.Guid}",
+				_selection.Is(selection)));
 		}
 	}
 
+	/// <summary>Every row-8 route. One none of whose waypoints references a point the layout has stands nowhere, and says so.</summary>
 	private void DrawRoutes() {
-		if (!ImGui.CollapsingHeader($"Routes ({_index.Routes.Count})###routes")) {
+		var entries = Layout.Entries<WaypointGroup>();
+		if (!ImGui.CollapsingHeader($"Routes ({entries.Count})###routes")) {
 			return;
 		}
 
@@ -341,11 +378,19 @@ internal sealed class MissionOutliner {
 			ImGui.EndDisabled();
 		}
 
-		foreach (var route in _index.Routes) {
-			string walkers = route.Walked ? $"groups {string.Join(", ", route.WalkedBy)}" : "never walked";
-			string shape = route.Closed ? "loop" : "open";
-			var selection = Records.RouteAt(route.Reference);
-			Choose(selection, ImGui.Selectable($"Route {route.Reference}: {shape}, {walkers}##route{route.Reference}",
+		for (int number = 0; number < entries.Count; number++) {
+			var entry = entries[number];
+			string text;
+			if (_index.Route(entry.Guid) is { } route) {
+				var walkers = route.WalkedBy.Select(guid => _index.Group(guid)?.Number).OfType<int>().ToList();
+				string walked = walkers.Count > 0 ? $"groups {string.Join(", ", walkers)}" : "never walked";
+				text = $"{(route.Closed ? "loop" : "open")}, {walked}";
+			} else {
+				text = "no waypoints";
+			}
+
+			var selection = new RouteSelection(entry.Guid);
+			Choose(selection, ImGui.Selectable($"Route {number}: {text}{Marker(RouteRow, entry.Guid)}##route{entry.Guid}",
 				_selection.Is(selection)));
 		}
 	}

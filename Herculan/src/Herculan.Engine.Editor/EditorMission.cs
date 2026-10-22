@@ -18,8 +18,8 @@ namespace Herculan.Engine.Editor;
 /// </summary>
 internal sealed class EditorMission {
 	private EditorMission(GameContent content, string name, ScriptDat document, MissionDocument source, MissionScene scene,
-			PlacementTables tables, MissionIndex sceneIndex, GeneratedIndex index, TerrainMaterialTable materials, MissionSquad squad,
-			Func<GameContent> shellContent) {
+			PlacementTables tables, MissionIndex sceneIndex, GeneratedIndex index, MissionLint lint, TerrainMaterialTable materials,
+			MissionSquad squad, Func<GameContent> shellContent) {
 		Name = name;
 		Document = document;
 		Source = source;
@@ -31,7 +31,7 @@ internal sealed class EditorMission {
 		Overlay = new MissionOverlay(sceneIndex, drape);
 		Picker = new ScenePicker(scene, sceneIndex, Overlay);
 		GroupOverlay = new GroupOverlay(sceneIndex, index, drape, Picker);
-		Outliner = new MissionOutliner(index, new MissionLint(index, document, source.Provenance.Lines.Count), Selection);
+		Outliner = new MissionOutliner(source, sceneIndex, lint, Selection);
 		Sync = new SceneSync(content, source, scene, tables, sceneIndex, index, Overlay, Picker, Outliner, Selection, squad);
 		Mover = new PointMover(source, scene, sceneIndex, Sync, Overlay, materials);
 		Gizmo = new MoveGizmo(Selection, Mover);
@@ -228,6 +228,6 @@ internal sealed class EditorMission {
 			SquadMessages.LoadCommand(content, generated.Header.TrainingMissionNumber), sceneIndex);
 		// The scene's own copy is not kept; a base pad's tile is sized by its material when the ground is levelled again.
 		return new EditorMission(content, name, document, source, scene, tables, sceneIndex, index,
-			TerrainMaterialTable.Load(content), squad, shellContent);
+			new MissionLint(source, sceneIndex, MissionLint.SquadOf(generated)), TerrainMaterialTable.Load(content), squad, shellContent);
 	}
 }

@@ -3,13 +3,13 @@ using HercWorks.Core.Data.File.Msn;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// Where the record a selection names stands in the generated <c>script.dat</c> the views and overlays still read, and
+/// Where the record a selection names stands in the generated <c>script.dat</c> the Properties views still read, and
 /// back: a group, trigger area, action, timer or route by its GUID of row 16, 9, 10, 11 or 8, at its block-11, 4, 5, 6
 /// or 3 index, and an objective by its row-17 index, at its block-12 index through provenance. Null where the generation
 /// has no such record, one whose condition fails as the editor opened the mission, whose view then says it is not shown
 /// in the editor (docs/herculan/handoff-editor-viewing.md#selection-and-panels).
 ///
-/// <para>The selections a view, list or link makes from a block index are built here too (<see cref="GroupAt"/> and the
+/// <para>The selections a view or link makes from a block index are built here too (<see cref="GroupAt"/> and the
 /// rest), from the GUID of the record that created the generated record (<see cref="MissionDocument.GuidOf"/>).</para>
 /// </summary>
 internal sealed class GeneratedRecords {
@@ -47,12 +47,6 @@ internal sealed class GeneratedRecords {
 
 	/// <summary>The block-12 index row-17 record <paramref name="record"/> is exported at, or null.</summary>
 	public int? Objective(int record) => ObjectiveEditing.ExportedIndex(_source, record);
-
-	/// <summary>The row-17 records the generation exports no objective for, in file order.</summary>
-	public IReadOnlyList<int> AbsentObjectives() {
-		var objectives = _source.Mission.Objectives ?? [];
-		return Enumerable.Range(0, objectives.Length).Where(record => objectives[record] != null && Objective(record) == null).ToList();
-	}
 
 	/// <summary>The GUID of the record that created block-11 group <paramref name="group"/>, or <c>-1</c>.</summary>
 	public short GroupGuid(int group) => _source.GuidOf(GroupBlock, group);
