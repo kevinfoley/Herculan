@@ -88,8 +88,11 @@ public static class SoundId {
 	/// <summary><c>podland.wav</c> — a drop pod striking the ground.</summary>
 	public const int PodLanded = 0x30;
 
-	/// <summary><c>flyby1.wav</c> — a flyer passing, looped while it is alive.</summary>
-	public const int FlyerLoop = 0x31;
+	/// <summary>
+	/// <c>flyby1.wav</c> — a flyer passing, played once each time one comes within range
+	/// (docs/retail/simulation/ai-flyers.md, "The move").
+	/// </summary>
+	public const int FlyerFlyby = 0x31;
 
 	/// <summary><c>missin.wav</c> — missile inbound, from <c>Rocket_TickUpdate</c>.</summary>
 	public const int MissileInbound = 0x32;

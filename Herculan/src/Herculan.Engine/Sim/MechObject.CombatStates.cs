@@ -159,10 +159,10 @@ public sealed partial class MechObject {
 	/// <c>Mech_BehaviourFlankThink</c> (<c>0041d4e4</c>) — behaviour state 4. The shared shape with
 	/// <see cref="CircleStep"/> between the geometry and the move step, and nothing else.
 	///
-	/// <para><b>No retail chassis can reach it</b>: the combat reassess gates <c>flanking</c> on a
-	/// type field that reads zero on all 21 of them, so a machine that is outgunned takes
-	/// <c>facing off</c> instead. It is ported because <c>attacking base</c> shares the circling step,
-	/// and because a modded chassis could open the gate.</para>
+	/// <para>It is what a fast machine does when outgunned: the combat reassess gates it on
+	/// <see cref="MechTypeRecord.FlankingGate"/>, the chassis' forward speed, which 13 of the 21
+	/// retail chassis clear; the other eight take <c>facing off</c>. See
+	/// docs/retail/simulation/ai-combat-states.md, "`flanking` (4)".</para>
 	/// </summary>
 	private bool FlankThink(SimWorld world) {
 		if (BeginSkirtIfBlocked() || Target is not { } target) {
@@ -249,7 +249,8 @@ public sealed partial class MechObject {
 	///
 	/// <para>A machine only advances on a flyer it is pointed within 11° of <i>and</i> that is both
 	/// far off and not pointed back at it, so turning under one is mostly what it does. It gives up
-	/// on range before it looks at whether the flyer is even alive.</para>
+	/// on range before it looks at whether the flyer is even alive, and its completion test is the
+	/// flyer being destroyed rather than <see cref="AiTargeting.ShouldAbandonTarget"/>.</para>
 	/// </summary>
 	private bool AttackFlyerThink(SimWorld world) {
 		if (Target is not { } target) {
@@ -288,8 +289,8 @@ public sealed partial class MechObject {
 	///
 	/// <para>Two legs. While the threat is still within 67.5° of the nose the machine reverses with
 	/// its steering pointed a half turn away, which turns it; once turned, the other leg runs it off
-	/// at 135° to the threat, flipping sides every four seconds so it does not run in a straight
-	/// line.</para>
+	/// at 135° to the threat, flipping sides every <see cref="FleeSideInterval"/> counts (about two
+	/// seconds) so it does not run in a straight line.</para>
 	///
 	/// <para><b>It still shoots at what it is running from</b>, and <see cref="FleeCheck"/> has
 	/// already put <see cref="Fear"/> high enough to drop <see cref="ChooseWeapon"/>'s score floor to
@@ -332,8 +333,8 @@ public sealed partial class MechObject {
 		CombatMoveStep(world, ref geometry);
 
 		// The approach flag lands on the low byte of the countdown above, which is why the reload is
-		// rounded rather than exact. It is the original's own scratch aliasing, and it moves a 4000 ms
-		// clock between 3840 and 4095.
+		// rounded rather than exact. It is the original's own scratch aliasing, and it moves a
+		// 4000-count clock between 3840 and 4095.
 		_fleeSideTimer = (_fleeSideTimer & ~0xff) | (geometry.Approach > 0 ? 0x00 : 0xff);
 
 		AimAndFire(world, threat, geometry.Aspect);
@@ -346,9 +347,11 @@ public sealed partial class MechObject {
 	///
 	/// <para>It walks an arc around the obstruction: a point 90° off its own line to the stashed
 	/// position, at the range it currently stands at, always to the side chosen on the first tick.
-	/// The line of sight is re-tested every five seconds and only a <i>clear</i> reading ends the
-	/// state — and <b>only a shape block gets the arc</b>. Blocked by ground, the machine walks
-	/// straight at the stash, which is it driving up the hill that is in the way.</para>
+	/// The line of sight is re-tested every <see cref="SkirtRecheckInterval"/> counts (about 2.4
+	/// seconds) and only a <i>clear</i> reading ends the state — and <b>only an impassable block
+	/// gets the arc</b>: a shape, or ground too steep to climb. Blocked by ground it could walk, the
+	/// machine walks straight at the stash, which is it driving up the rise that is in the
+	/// way.</para>
 	///
 	/// <para>It does not shoot, and the stash is a position taken once — so a machine skirting after
 	/// a moving target walks to where that target was.</para>
@@ -553,10 +556,16 @@ public sealed partial class MechObject {
 		/// <summary>Nothing in the way.</summary>
 		Clear,
 
-		/// <summary>A shape is in the way — the reading that makes <c>skirting</c> walk an arc.</summary>
+		/// <summary>
+		/// Reading 1: something the machine cannot get past — a shape, or ground too steep to climb.
+		/// The reading that makes <c>skirting</c> walk an arc.
+		/// </summary>
 		BlockedByShape,
 
-		/// <summary>Terrain as well, which <c>skirting</c> walks straight at.</summary>
+		/// <summary>
+		/// Reading 2: ground the machine could walk over, which the thin ray grazes. <c>skirting</c>
+		/// walks straight at the stash.
+		/// </summary>
 		BlockedByTerrain
 	}
 

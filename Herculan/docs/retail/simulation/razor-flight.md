@@ -20,17 +20,17 @@ The RAZOR is a **HERC-class object with a flyer flag**, not an instance of the `
 
 ### How the flyer paths are reached
 
-`Mech_Constructor` (`00415bb0`) picks one of three **behaviour class** instances by (is this the local player `mech+0xa3`, does the type record set the flyer flag):
+The move a machine runs is its behaviour state's, and which of three states it holds turns on (is this the local player `mech+0xa3`, does the type record set the flyer flag):
 
 | Condition | Behaviour state |
 | --- | --- |
-| Not the player | `004993a4` — `deciding` |
+| Not the player | `004993a4` — `deciding`, then whatever its orders resolve to |
 | Player, walker | `004993e2` — `player` |
 | Player, flyer | `00499420` — `player fly` |
 
-These are states 0, 1 and 2 of the 22-entry AI behaviour table, and the names are the game's own; the full roster and the dispatch mechanism are in [`ai-dispatch.md`](ai-dispatch.md). Each descriptor holds three pointer-to-member-function triples `{func, thisDelta, vtableIndex}` filled in at startup from a 0x24-stride source block. Block 1 (`0049991c`) is the walker set and its `+0x0c` slot is `Mech_MovementTick`; `FlyerBehaviourSlots` (`00499940`) is block 2 and its `+0x0c` slot is `Razor_MovementTick`. Because these are member pointers reached through the vtable dispatchers rather than vtable entries directly, Ghidra reports no xrefs on either move function.
+`Mech_Constructor` (`00415bb0`) and `Mech_AiSelectBehaviour` (`0041eb34`) both make this test. The spawn raises `+0xa3` only after the constructor returns, so every machine is constructed in `deciding`, and the player's gets `player` or `player fly` from `Mech_AiSelectBehaviour` on its first AI tick ([`ai-dispatch.md`](ai-dispatch.md#choosing-a-state--mech_aiselectbehaviour-0041eb34)). These are states 0, 1 and 2 of the 22-entry AI behaviour table, and the names are the game's own; the full roster and the dispatch mechanism are in [`ai-dispatch.md`](ai-dispatch.md). Each descriptor holds three pointer-to-member-function triples `{func, thisDelta, vtableIndex}` filled in at startup from a 0x24-stride source block. Block 1 (`0049991c`) is the walker set and its `+0x0c` slot is `Mech_MovementTick`; `FlyerBehaviourSlots` (`00499940`) is block 2 and its `+0x0c` slot is `Razor_MovementTick`. Because these are member pointers reached through the vtable dispatchers rather than vtable entries directly, Ghidra reports no xrefs on either move function.
 
-**Only the player's RAZOR flies.** An AI-controlled one takes the not-the-player branch and the walker move, which would walk it ([Open](#open)). The Cybrid aircraft are a different class entirely and fly under their own AI — see [`ai-flyers.md`](ai-flyers.md).
+**Only the player's RAZOR flies.** An AI-controlled one takes its order's state, whose move is the walker's, which would walk it ([Open](#open)). The Cybrid aircraft are a different class entirely and fly under their own AI — see [`ai-flyers.md`](ai-flyers.md).
 
 The input side is gated separately, in `Sim_PollPlayerInput` (`00460764`), on the flyer flag alone.
 
@@ -225,4 +225,4 @@ A fatal contact sheds wreckage — group 3 at the contact point, and only from t
 
 ## Open
 
-- **Open:** whether any retail mission places an AI-controlled RAZOR, which the constructor would give the walker move. None has been found.
+- **Open:** whether any retail mission places an AI-controlled RAZOR, which its behaviour state would give the walker move. None has been found.

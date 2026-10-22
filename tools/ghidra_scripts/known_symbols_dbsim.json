@@ -216,8 +216,14 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObjectBase_Constructor",
-      "description": "Constructor of TS_OBJ (TSObjVtable, 004a0b98, RTTI 'TS_OBJ', 0x41 bytes), (this, shape). Installs DRAWABLE (004a14bc), then MAT_OBJ (00497289) with +0xc, the short at +0x10, +0x26..+0x31 and the short at +0x32 zeroed, then TSObjVtable; stores a new 0xc-byte TSShapeInstance (TSShapeInstance_Ctor) for a non-null shape at +0x34, and zeroes +0x38..+0x3f. A derived class's constructor runs it first and installs its own table after. SimObjectBase_ConstructShaped is the variant that allocates a 0x42-byte animated shape instance instead.",
-      "source": "DBSIM decompile at 00402188; RTTI at 004a0b98"
+      "description": "Constructor of TS_OBJ (TSObjVtable, 004a0b98, RTTI 'TS_OBJ', 0x41 bytes), (this, shape) -> this. Installs DRAWABLE (004a14bc), then MAT_OBJ (00497289) with the euler triple at +0xc..+0x11, the position triple at +0x26..+0x31 and the frame-valid short at +0x32 zeroed, then TSObjVtable; stores at +0x34 a new 0xc-byte TSShapeInstance (Mem_New, TSShapeInstance_Ctor) for a non-null shape, 0 when the shape is null or the allocation fails, and zeroes +0x38..+0x3f. A derived class's constructor runs it first and installs its own table after. SimObjectBase_ConstructShaped is the variant that allocates a 0x42-byte animated shape instance instead.",
+      "source": "DBSIM decompile at 00402188; RTTI at 004a0b98",
+      "verified": {
+        "bytes": "00402188+240",
+        "sha1": "b2de1c7a60ef",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00402278",
@@ -581,8 +587,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Base_GetAimPoint",
-      "description": "The structure class's vtable +0x30 -- where on a structure anything aiming at it should aim. Calls SimObject_GetAimPointZero (00411a74) to clear both out triples, then writes BASES.DAT +0x2c into the offset triple's Z. Every caller adds the offset to the object's position unrotated, so this is a height up the structure's side. All 65 retail types state one, 1000 to 2000 world units. This settles BASES.DAT +0x2c, the last unread field of the record besides +0x00 and the six bytes at +0x18.",
-      "source": "docs/retail/simulation/structure-behaviour.md"
+      "description": "The structure classes' vtable +0x30 (all five structure tables), (this, outEye, outOffset): SimObject_GetAimPointZero (00411a74) zeroes both 6-byte out triples, then BASES.DAT +0x2c (the type record at +0x1f2) goes into the second triple's Z (word +4). All 65 retail types state 1000 to 2000 world units. Base_TransportThinkTick (read) adds the second triple to its target's position unrotated as its aim point, so for a structure target it is a height up the structure's side; the other vtable +0x30 dispatch sites a grep of the disassembly for CALL [reg+0x30] finds in simulation code (Base_ArmedThinkTick, Ai_AimAndFire, Cam_AttachTo) are in structure-behaviour.md, 'What a structure is aimed at'.",
+      "source": "docs/retail/simulation/structure-behaviour.md",
+      "verified": {
+        "bytes": "0040351c+43",
+        "sha1": "b8567b411600",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00403548",
@@ -746,8 +758,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Base_TransportThinkTick",
-      "description": "StructureTransportVtable's +0x18 tick slot (class LC_BASE), BASES.DAT type 0x22 alone -- the TRANSPORT (its MFD name, STRINGS0.STR group 23 entry 24 via BASES.DAT +0x28), a landed drop pod with three fixed weapon stations; nothing on the model moves. A fallen one hands the tick to Base_ThinkTick. Otherwise runs Base_DeathSequenceTick, then fires THREE weapon stations from one object by rewriting its own heading field: heading += 0x1555, three passes 0x5554 (120 degrees) apart, original heading restored at the end. Unless +0xa5 is set it first sets +0xa5 when every component after the first is at full damage. Each station's 0x1f-byte record at +0x209+s*0x1f holds three 8-byte slots, a retarget countdown at +0x18 (Ai_SelectTarget(this, 0x10, 0x3000) on a 10000 reload) and a target at +0x1b. Slots read g_LcWeaponSlots (dat\\LC_WPNS.DAT); slot k is live while component 2s+(k!=0)+1 is short of full damage, steps a firing window (reload 004973f4[open] + Math_RandomBelow(004973f8[open]), both pairs 5000) and fires when its refire countdown is out, the window open, the aim error (from the origin, against this station's heading) inside the slot's arcs and the range under the slot's. Slot 0 fires Rocket_Fire(3, muzzle, own euler, this, 0) with the target installed on +0x1a4 across the call and cleared after, purely to give the round a lock; slots 1-2 fire Bullet_FireBurst(3, frame aimed at the target, template+0x30, this, template+0x38) with WeaponMountTemplate_GetByWeaponId(8). Muzzle = position + Rotate2D(heading, offset.xy) + offset.z. Refire reloads from the slot's +0x14.",
-      "source": "docs/retail/simulation/structure-behaviour.md"
+      "description": "StructureTransportVtable's +0x18 tick slot (class LC_BASE), installed for BASES.DAT type 0x22 -- the TRANSPORT (its MFD name, STRINGS0.STR group 23 entry 24 via BASES.DAT +0x28), a landed drop pod with three fixed weapon stations; nothing on the model moves. A fallen one (+0x99) hands the tick to Base_ThinkTick and returns its result. Otherwise runs Base_DeathSequenceTick, then fires THREE weapon stations from one object by rewriting its own heading field (+0x10), clearing the frame-valid short +0x32 at each write: heading += 0x1555, three passes 0x5554 (120 degrees) apart, original heading restored at the end; returns 0. The stations run when +0xa5 is clear at entry; on that path it first sets +0xa5 when every component after the first is at full damage, and the stations still run on that tick. Each station's 0x1f-byte record at +0x209+s*0x1f holds three 8-byte slots, a retarget countdown at +0x18 (Ai_SelectTarget(this, 0x10, 0x3000) on a 10000 reload) and a target at +0x1b. With a target: range = Math_DistanceBetweenPoints to the target's position; aim point = the target's position plus the second triple of its vtable +0x30, unrotated; aim error = Math_EulerToward(aim point, origin) less the object's (pitch, roll, heading). Slots read g_LcWeaponSlots (dat\\LC_WPNS.DAT); slot k is live while component 2s+(k!=0)+1 is not at full damage, steps a firing window (reload 004973f4[open] + Math_RandomBelow(004973f8[open]), both pairs 5000) and fires when its refire countdown is out, the window open, the heading and pitch errors inside the slot's arcs ((ushort)(error + arc) < 2 * arc) and the range under the slot's. Slot 0 fires Rocket_Fire(3, muzzle, own euler, this, 0) with the target installed on +0x1a4 across the call and cleared after, each write keeping the target's +0x1a2 holder count and raising +0x9d, to give the round a lock; slots 1-2 fire Bullet_FireBurst(3, frame aimed from the muzzle at the aim point, template+0x30, this, template+0x38) with WeaponMountTemplate_GetByWeaponId(8). Muzzle = position + Rotate2D(heading, offset.xy) + offset.z. Refire reloads from the slot's +0x14.",
+      "source": "docs/retail/simulation/structure-behaviour.md",
+      "verified": {
+        "bytes": "004045c8+1306",
+        "sha1": "b169db490073",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00404ae4",
@@ -765,8 +783,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_RaycastShapeList",
-      "description": "(out, ray, side): gathers Sim_RaycastShapes' candidates from the structure pool (g_StructurePool), oldest first through Pool_Prev, into a stack array, then calls Sim_RaycastShapeVolume over them and returns its hit flag. Machines are not in the pool. A non-negative side skips a structure whose group team byte differs. The filter is Base_GetCollisionRadius's test read the other way round: typeRec+0x06 zero -- a STATIC structure -- always counts, and an animated structure counts ONLY once it passes the wreck test (typeRec+4 != -1, component 0 stages left <= 1, obj+0x99). No group-action test. So among structures this probe sees exactly the set whose collision radius is zero, and the machine sweep sees the rest.",
-      "source": "docs/retail/simulation/hit-detection.md"
+      "description": "(out, ray, side) -> hit flag in AX: gathers Sim_RaycastShapes' candidates from the structure pool (g_StructurePool), oldest first through Pool_Prev, into a 0x240-byte stack array of 144 pointers whose count the walk does not bound (retail missions place at most 89 row #14 records, by HercWorks.Query missions), then, with at least one candidate, calls Sim_RaycastShapeVolume over them and returns 1 when it hit, else 0. Machines are not in the pool. A non-negative side skips a structure whose group (+0x45) side byte +0x12 differs. The filter is Base_GetCollisionRadius's test read the other way round: typeRec+0x06 zero -- a STATIC structure -- always counts, and an animated structure counts once it passes the wreck test (typeRec+4 != -1, component 0's stages left (state +5) <= 1, obj+0x99), and not before. It makes no group-action test. So among structures this probe sees exactly the set whose collision radius is zero, and the machine sweep sees the rest.",
+      "source": "docs/retail/simulation/hit-detection.md",
+      "verified": {
+        "bytes": "00404bc0+223",
+        "sha1": "697b1d279ee4",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00404ca0",
@@ -874,8 +898,21 @@
       "type": "function",
       "confidence": "high",
       "name": "Base_Construct",
-      "description": "Builds a structure from a script.dat block-9 record: switches on the type index to pick one of five vtables, allocates the per-component alive-flag array (obj+0x201) and state array (obj+0x205, 11 bytes/entry), seeds each component's damage from the mission record's health percentage (param_1[0x19]: <0 or 100 = intact, 0 = spawned destroyed), and stores the BASES.DAT type record at obj+0x1f2. Its tail then builds one animation thread per sequence from 0 up, for as many as BASES.DAT +0x06 states (0-2): each is registered on the shape instance by ShapeInst_AddThread (00402374), started at the rate in the +0x20 short pair, and thread 1 is additionally seeded with AnimThread_SeekToPosition(thread, 1, 6000). So +0x06 is a THREAD COUNT, not merely a library selector -- the library is picked per case in the switch (the four Radar and four Armed cases take dts\\BASES_AN.DTS, every other case dgs\\BASES.DGS) and the two agree on all retail data. +0x20 is the per-thread playback rate pair.",
-      "source": "docs/retail/simulation/hit-detection.md; docs/retail/simulation/structure-behaviour.md"
+      "description": "Builds a structure from a script.dat block-9 record and returns it; DBSim_SpawnMissionObjects passes the record and a byte, and the byte is not read. Switches on the record's BASES.DAT type index (+0x00, type record = DAT_004a9620 + index * 0x3c). Each of five arms takes a g_StructurePool slot and, when Pool_Alloc succeeds, runs SimObjectBase_ConstructStatic (shape DAT_004a9600[typeRec+2], dgs\\BASES.DGS) or SimObjectBase_ConstructAnimated (shape DAT_004a95f8[typeRec+2], dts\\BASES_AN.DTS; the Radar and Armed arms), inlines the ACTOR and BASE prologues (+0x1a8 = -1 then 1, +0x98 and +0xa7 = 1, ObjectList_Add to the live-object list, +0x1b2 and +0x1b6 = 0, +0x1ba/+0x1bc/+0x1be = -1, tag +0x04 = 5) and installs its vtable: Plain (StructureVtable) also sets +0xa5; Radar (StructureRadarVtable) sets +0x96 and +0xa5; Armed (StructureArmedVtable); Transport (StructureTransportVtable) builds the three 0x1f-byte station records at +0x209 (Rtl_VectorNew, TransportStation_ElementCtor); GroundVehicle (StructureArmedVtable, then StructureGroundVehicleVtable) tag 10 and +0x1a8 = 3. The Plain and Radar arms write their +0xa5/+0x96 bytes outside the Pool_Alloc null check. An index above 0x3d or one of the six that match no case (0x0a, 0x35, 0x36, 0x3e-0x40) jumps to the shared tail with EDI unset, so the tail writes through and returns whatever EDI holds; no retail mission places those six (HercWorks.Query structures). The tail: for i < min(2, typeRec+0x06) an animation thread ShapeInst_AddThread(this, i) at +0x1f9[i], AnimThread_SetPlaybackRate(thread, typeRec+0x20[i]), and for i = 1 AnimThread_SeekToPosition(thread, 1, 6000); +0xb7 = 1 when typeRec+0x1e (invulnerable) is non-zero; a Mem_NewArray of typeRec+0x12 shorts at +0x201, every one set to 1 (alive); a Rtl_VectorNew of typeRec+0x12 11-byte component states at +0x205 (StructureComponentState_ElementCtor); then per component (30-byte records at typeRec+0x14) state+5 = 0 and damage from the record's starting condition (+0x32): negative 0; 0 the component's maximum (+0), with its collapsed cell (+2, when non-negative) set to 1 in the shape instance's cell array (+0x34 -> +8); otherwise (100 - pct) * maximum / 100. Starting condition 0 also sets +0x99, clears +0x96 and, when typeRec+0x04 >= 0, swaps the shape instance's shape (+0x34 -> +4) for g_HulkShapes[typeRec+0x04]. Last it stores typeRec+0x26 at +0x1f7 and the type record at +0x1f2. So +0x06 is a thread count; the library is picked per arm, and the two agree on all retail data. +0x20 is the per-thread playback rate pair.",
+      "source": "docs/retail/simulation/hit-detection.md; docs/retail/simulation/structure-behaviour.md",
+      "verified": {
+        "bytes": "00405314+2183",
+        "sha1": "2ca963a04b20",
+        "scope": "body",
+        "via": "both",
+        "negatives": [
+          {
+            "claim": "No retail mission places a structure of type 0x0a, 0x35, 0x36, 0x3e, 0x3f or 0x40",
+            "evidence": "data",
+            "how": "HercWorks.Query structures --type for each, over all 62 retail .MSN files: 0 records"
+          }
+        ]
+      }
     },
     {
       "address": "00405b9c",
@@ -997,8 +1034,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Base_FirstLiveComponent",
-      "description": "Base vtable +0x54. With a null second argument returns the first component index whose alive flag (+0x201 array) is non-zero, which is what Ai_AimAndFire asks for. With a pose (Rocket_Fire passes the round's +0xc block: euler triple, position at +0x1a) it walks the same live components and returns the one whose bearing from that position is nearest the pose's pitch and heading in |dpitch| + |dheading|, as Mech_ComponentNearestAim does; -1 when none is live.",
-      "source": "docs/retail/simulation/ai-weapons.md"
+      "description": "Structure vtable +0x54 (all five structure tables), (this, pose) -> component index in AX. Walks the type's components (typeRec+0x12) over the alive-flag shorts at +0x201. With a null pose it returns the first index whose flag is non-zero, which is what Ai_AimAndFire asks for. With a pose (Rocket_Fire passes the round's +0xc block: euler triple, position at +0x1a) it places each live component through vtable +0x58, takes Math_EulerToward(component, pose position) less the pose's euler, and keeps the one with the least |dpitch| + |dheading| (a difference of -0x8000 counts as 0x7fff; the best starts at 0x1000000 and the first of equals wins), as Mech_ComponentNearestAim does. Either form returns -1 when no component is live.",
+      "source": "docs/retail/simulation/ai-weapons.md",
+      "verified": {
+        "bytes": "00406868+243",
+        "sha1": "5ec00d90aae3",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0040695c",
@@ -2350,7 +2393,13 @@
       "confidence": "high",
       "name": "Rocket_HomingSteer",
       "description": "Missile seeker. Steers only with a target (+0x56) and, when the owner is locally piloted (owner+0xa3), only while that target is still the owner's selected target (owner+0x1a4). Subtype 2 (ARM) steers only while the target emits (target +0x96 scanner or +0xa1 jammer). The lead is the target's component +0x5a through target vtable +0x58 when non-negative, else the aim point (vtable +0x24) or the origin; Math_EulerToward(lead, self) less the round's euler gives the pitch and heading errors. Subtype 3 sets owner+0xb5 to suppress AI weapon selection for a tick; subtypes 0, 1 and 4, while the FIRING owner's +0x9c spoof flag is set (ECM), move each error in [-0xc00, 0xbff] by 0xc00 toward the opposite sign. Each error then goes through Math_RateLimitedMoveToward at 0x500 and Math_IntegrateRateOverTick onto pitch (+0xc) and heading (+0x10).",
-      "source": "docs/retail/simulation/rockets.md"
+      "source": "docs/retail/simulation/rockets.md",
+      "verified": {
+        "bytes": "0040a254+561",
+        "sha1": "b9a2daa5dd27",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0040a488",
@@ -2394,8 +2443,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Rocket_Fire",
-      "description": "Rocket_Fire(subtypeId, muzzleWorldPoint, aimEulerTriple, launcher, ownerTravelSpeed) -- spawns one PROJ.DAT Type-0 rocket from the effect pool g_ProjectilePool. Always builds via Rocket_Construct; it never calls Grenade_Construct. Speed = ownerTravelSpeed + literal 500. Attaches the launcher's +0x1a4 (selected target) when the launcher is not locally simulated (+0xa3 clear) and the subtype is 3, or else when the launcher's vtable +0x6c returns nonzero -- Mech_MissileLockState for a machine, SimObject_MissileLockState_Always (1) for a flyer or a structure. Plays ROCKETS.DAT +0x0c + 10.",
-      "source": "docs/retail/simulation/rockets.md"
+      "description": "Rocket_Fire(subtypeId, muzzleWorldPoint, aimEulerTriple, launcher, ownerTravelSpeed) -- spawns one PROJ.DAT Type-0 rocket from the effect pool g_ProjectilePool through Rocket_Construct(round, subtypeId); it makes no call to Grenade_Construct. A failed Pool_Alloc skips the construction and the stores below go through the null pointer. Position +0x26 = the muzzle point, euler +0xc = the aim triple, +0x32 = 0, launcher at +0x4a, speed +0x52 = ownerTravelSpeed + literal 500, +0x42..+0x49 and the age +0x54 zeroed. Lock gate: 1 when the launcher is not locally piloted (+0xa3 clear) and the subtype is 3, else the launcher's vtable +0x6c(launcher, subtype) -- Mech_MissileLockState for a machine, SimObject_MissileLockState_Always (1) for a flyer or a structure. With the gate, +0x56 = the launcher's +0x1a4 (selected target) and, when that is non-null, +0x5a = the target's vtable +0x54(target, &round+0xc), the component the round steers at; without it +0x56 = 0. A locally piloted launcher's round is stored in DAT_0049c394, the round the missile camera rides. Plays ROCKETS.DAT +0x0c + 10 at the muzzle (Sound_PlayAt).",
+      "source": "docs/retail/simulation/rockets.md",
+      "verified": {
+        "bytes": "0040a9c4+339",
+        "sha1": "d876ed49773c",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0040ab18",
@@ -3622,8 +3677,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMount_GetAmmoType",
-      "description": "Ammunition mount vtable+0x60: returns the resolved PROJ.DAT record's subtype id when that record is a Missile (category 0), otherwise 5. Callers treat 5 and 3 as always-available and gate the other values on the manager's per-ammunition-type counters at manager+0x0a. The energy class returns a constant 5 from this slot (WeaponMount_GetEnergyAmmoType).",
-      "source": "docs/retail/simulation/weapon-mounts.md"
+      "description": "Ammunition mount vtable +0x60 (AmmoMountVtable, GrenadeMountVtable), (mount, short *outRounds) -> subtype in AX. When the mount's projectile record (+0x20) is PROJ.DAT Type 0, a Missile, it writes the rounds remaining (+0x7b) through the optional out pointer and returns the record's subtype id (word +2); otherwise it tail-calls WeaponMount_GetEnergyAmmoType, which writes 0 through the out pointer and returns 5. WeaponMounts_RoundsByMissileType sums the out value per subtype; the readiness and fire gates exempt 5 and 3 from the per-subtype missile-lock flags at manager+0x0a (weapon-mounts.md, 'Readiness').",
+      "source": "docs/retail/simulation/weapon-mounts.md",
+      "verified": {
+        "bytes": "0040e644+50",
+        "sha1": "9263083b6ee1",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0040e678",
@@ -3746,7 +3807,13 @@
       "confidence": "high",
       "name": "WeaponMount_EnergyIsSpent",
       "description": "ENERGY_WPN and ELF_WPN vtable +0x5c: returns the destroyed byte +0x49, sign-extended. Ai_ChooseWeapon passes over a mount whose +0x5c answers non-zero, and latches 'no weapons left' when every mount does.",
-      "source": "DBSIM decompile at 0040ed34"
+      "source": "DBSIM decompile at 0040ed34",
+      "verified": {
+        "bytes": "0040ed34+19",
+        "sha1": "3d2c880032aa",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0040ed48",
@@ -3755,7 +3822,13 @@
       "confidence": "high",
       "name": "WeaponMount_AmmoIsSpent",
       "description": "PROJECTILE_WPN and GRENADE_WPN vtable +0x5c: returns 1 when the rounds remaining (+0x7b) are zero or the mount is destroyed (+0x49), otherwise 0. Ai_ChooseWeapon passes over a spent mount.",
-      "source": "DBSIM decompile at 0040ed48"
+      "source": "DBSIM decompile at 0040ed48",
+      "verified": {
+        "bytes": "0040ed48+33",
+        "sha1": "39488c851407",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0040ed6c",
@@ -3774,7 +3847,13 @@
       "name": "ElfMount_CanFire",
       "description": "ElfMountVtable +0x2c, AND THE REASON AN ELF CANNOT BE RE-TRIGGERED UNTIL ITS CAPACITOR IS FULL. Same two template fields as WeaponMount_EnergyCanFire with the branch between them dropped, so the threshold is ALWAYS max(template+0x36, mount+0x7b): !destroyed && (charge >= max(+0x36, chargeTarget) || (mount+0x33 && charge >= template+0x38)). Both ELFs read +0x36 = 400 against a 960 charge target, so a fresh trigger pull needs the full capacitor; the +0x33 clause is the sustain, dropping the bar to one shot's 70 while the mount is firing every tick. No refire-timer term, consistent with both ELF templates carrying a +0x4c of zero.",
       "source": "docs/retail/simulation/weapon-mounts.md",
-      "signature": "int __cdecl ElfMount_CanFire(void *mount)"
+      "signature": "int __cdecl ElfMount_CanFire(void *mount)",
+      "verified": {
+        "bytes": "0040eda0+70",
+        "sha1": "2373f1ee1857",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0040ede8",
@@ -4005,7 +4084,13 @@
       "confidence": "high",
       "name": "WeaponMount_AmmoCountsInCombatRating",
       "description": "PROJECTILE_WPN and GRENADE_WPN vtable +0x54: rounds remaining (+0x7b) >= the magazine size (template+0x3a) >> 3. Mech_ComputeCombatRating adds a mount's value (template+0x4e, scaled by its condition) only when this slot answers non-zero, so a launcher or gun below an eighth of a magazine stops counting.",
-      "source": "DBSIM decompile at 0040f520"
+      "source": "DBSIM decompile at 0040f520",
+      "verified": {
+        "bytes": "0040f520+30",
+        "sha1": "9250b826d2b8",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0040f540",
@@ -4087,8 +4172,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMount_IsSpent_Always",
-      "description": "GUN_STATE vtable +0x5c (00498e44), kept by POD_WPN and the five pods: returns 1, so Ai_ChooseWeapon never considers a pod and a pod never keeps the 'no weapons left' latch off.",
-      "source": "DBSIM decompile at 0040f8a4"
+      "description": "GUN_STATE vtable +0x5c (00498e44), kept by POD_WPN and the five pods: returns 1 in AX. Ai_ChooseWeapon passes over a mount whose +0x5c answers non-zero, so it passes over every pod, and a pod does not keep its 'no weapons left' latch off.",
+      "source": "DBSIM decompile at 0040f8a4",
+      "verified": {
+        "bytes": "0040f8a4+9",
+        "sha1": "4486105d0aab",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0040f8ad",
@@ -4693,8 +4784,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMount_CountsInCombatRating_Always",
-      "description": "GUN_STATE vtable +0x54 (00498e44), kept by POD_WPN, the five pods, ENERGY_WPN and ELF_WPN: returns 1, so every such mount's value counts in Mech_ComputeCombatRating. The ammunition classes install WeaponMount_AmmoCountsInCombatRating.",
-      "source": "DBSIM decompile at 004111e9"
+      "description": "GUN_STATE vtable +0x54 (00498e44), kept by POD_WPN, the five pods, ENERGY_WPN and ELF_WPN: returns 1 in AX, so every such mount's value counts in Mech_ComputeCombatRating. The ammunition classes install WeaponMount_AmmoCountsInCombatRating.",
+      "source": "DBSIM decompile at 004111e9",
+      "verified": {
+        "bytes": "004111e9+9",
+        "sha1": "4486105d0aab",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00411246",
@@ -4999,8 +5096,14 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObject_GetAimPointZero",
-      "description": "The shared base's vtable +0x30: memsets both 6-byte out triples to zero, i.e. aim at the object's own origin with no offset. The FlyerVtable installs it unchanged; the structure tables wrap it in Base_GetAimPoint (0040351c) and the mech table replaces it with 004155c4.",
-      "source": "docs/retail/simulation/structure-behaviour.md"
+      "description": "The shared base's vtable +0x30 (ACTOR's SimObjectBaseVtable and FlyerVtable), (this, outEye, outOffset): memsets both 6-byte out triples to zero, i.e. aim at the object's own origin with no offset. The structure tables wrap it in Base_GetAimPoint (0040351c) and the mech table installs Mech_GetAimPoint (004155c4).",
+      "source": "docs/retail/simulation/structure-behaviour.md",
+      "verified": {
+        "bytes": "00411a74+37",
+        "sha1": "25d22296d036",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00411a9c",
@@ -5050,8 +5153,14 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObject_CompareCombatRatingStub",
-      "description": "The shared base's vtable +0x4c: `return 1`. Ai_SelectTarget (00411fa0) dispatches this slot on the ASKING object, so a structure or a flyer -- both of whose tables install this stub -- scores every candidate against column 1 of the four Q10 weight tables at 0049933c/42/48, whatever the ratings actually are. Only the mech table replaces it, with Mech_CompareCombatRating (0041cabc).",
-      "source": "docs/retail/simulation/structure-behaviour.md"
+      "description": "The shared base's vtable +0x4c: returns 1 in AX. es2_xref finds it in seven tables: ACTOR's, the flyer's and the five structure tables. Ai_SelectTarget (00411fa0) dispatches this slot on the ASKING object, so a structure or a flyer scores every candidate against column 1 of the four Q10 weight tables at 0049933c/42/48, whatever the ratings actually are. The mech table installs Mech_CompareCombatRating (0041cabc) in the slot.",
+      "source": "docs/retail/simulation/structure-behaviour.md",
+      "verified": {
+        "bytes": "00411ac0+9",
+        "sha1": "4486105d0aab",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00411acc",
@@ -5067,9 +5176,15 @@
       "binary": "DBSIM",
       "type": "function",
       "confidence": "high",
-      "name": "Mech_ShareContact",
-      "description": "Thin wrapper over Detection_ShareContact, used by Mech_AiOnTakingFire so that being shot spreads the attacker's position to the whole side.",
-      "source": "docs/retail/simulation/ai-targeting.md"
+      "name": "SimObject_AiOnTakingFire",
+      "description": "The shared base's vtable +0x50 (AiOnTakingFire), which es2_xref finds in ACTOR's SimObjectBaseVtable, the FlyerVtable and all five structure tables, (this, attacker, damage): calls Detection_ShareContact(this, attacker) and does nothing else, so a structure or aircraft that is shot passes its attacker on to its own side and has no other reaction. Mech_AiOnTakingFire, the mech's override, calls it directly with (this, attacker, 0) when the attacker's side byte differs from its own.",
+      "source": "docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "00411aec+21",
+        "sha1": "2966b6ac2f0f",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00411b04",
@@ -5119,8 +5234,14 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObject_AiOnLineOfFireBlockedNoOp",
-      "description": "Vtable +0x64 of the ACTOR base, the flyer and all five structure tables: an empty body. Only the mech (Mech_AiOnLineOfFireBlocked) reacts.",
-      "source": "docs/retail/simulation/ai-combat-states.md"
+      "description": "Vtable +0x64 (AiOnLineOfFireBlocked) of the ACTOR base, the flyer and all five structure tables, by es2_xref: an empty body. The mech table installs Mech_AiOnLineOfFireBlocked.",
+      "source": "docs/retail/simulation/ai-combat-states.md",
+      "verified": {
+        "bytes": "00411b34+5",
+        "sha1": "74c0a4a36986",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00411b3c",
@@ -5381,7 +5502,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Detection_ShareContact",
-      "description": "(spotter, contact): when their groups' (+0x45) side bytes +0x12 differ, for each object whose group's dword +0x14 is 0 and whose side is the spotter's, the spotter included: within 100000 of the contact (Math_DistanceBetweenPoints) it sets the object's contact byte (+0xc2 + the contact's +0x4b); within 50000 it also sets the contact's +0x9e and runs Action_Activate on the object's own +0x1b2 unless that is null or the object's +0xa2 is set. Detection_Sweep (004128f8) and Mech_ShareContact (00411aec) call it.",
+      "description": "(spotter, contact): when their groups' (+0x45) side bytes +0x12 differ, for each object whose group's dword +0x14 is 0 and whose side is the spotter's, the spotter included: within 100000 of the contact (Math_DistanceBetweenPoints) it sets the object's contact byte (+0xc2 + the contact's +0x4b); within 50000 it also sets the contact's +0x9e and runs Action_Activate on the object's own +0x1b2 unless that is null or the object's +0xa2 is set. Detection_Sweep (004128f8) and SimObject_AiOnTakingFire (00411aec) call it.",
       "source": "docs/retail/simulation/mission-deployment.md",
       "verified": {
         "bytes": "00412704+241",
@@ -5396,8 +5517,14 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObject_AiEnemySightedNoOp",
-      "description": "Vtable +0x48 of the ACTOR base, the flyer and all five structure tables: an empty body. Only the mech (Mech_AiEnemySighted) calls out a contact.",
-      "source": "DBSIM decompile and disassembly at 004127f8"
+      "description": "Vtable +0x48 (AiEnemySighted) of the ACTOR base, the flyer and all five structure tables, by es2_xref: an empty body. The mech table installs Mech_AiEnemySighted, which calls out a contact.",
+      "source": "DBSIM decompile and disassembly at 004127f8",
+      "verified": {
+        "bytes": "004127f8+5",
+        "sha1": "74c0a4a36986",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00412800",
@@ -5465,8 +5592,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Group_IsWipedOut",
-      "description": "Whether every member of a mission group is out of the fight -- destroyed (+0x99), immobilised (+0xa4) or disarmed (+0xa5). Returns 0 as soon as one member is still in it. Its ONLY caller is Group_NoRivalOrderOnSubject (00412e74), the guarding-order completion test, so the +0xa5 term means a group of ordinary structures -- which Base_Construct spawns already disarmed -- reads as wiped out from the moment it is built.",
-      "source": "docs/retail/simulation/ai-goals.md"
+      "description": "(group) -> AX: 1 when every member in the group's member array (+0xc, count +0x10) is out of the fight -- destroyed (+0x99), immobilised (+0xa4) or disarmed (+0xa5); 0 as soon as one member is still in it. A group with no members answers 1. es2_xref finds one caller, Group_NoRivalOrderOnSubject (00412e74), the guarding-order completion test. With the +0xa5 term a group of ordinary structures -- which Base_Construct's Plain and Radar arms spawn already disarmed -- reads as wiped out from the moment it is built.",
+      "source": "docs/retail/simulation/ai-goals.md",
+      "verified": {
+        "bytes": "00412be4+113",
+        "sha1": "ec6dd22497cf",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00412c58",
@@ -5498,9 +5631,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Group_OrderSubjectEngaged",
-      "description": "Whether the group's current order's subject has been engaged: Group_AnyMemberEngaged of the subject group for order kind 0, the subject object's own +0x9e otherwise. No caller.",
+      "description": "Whether the group's current order (group+0x44[group+0x6c]) has had its subject engaged: for an order whose kind (+0x0c) is 0, Group_AnyMemberEngaged of the subject group; otherwise the subject object's own +0x9e byte, sign-extended. es2_xref finds no caller.",
       "source": "docs/retail/simulation/mission-objectives.md",
-      "signature": "short __cdecl Group_OrderSubjectEngaged(void *group)"
+      "signature": "short __cdecl Group_OrderSubjectEngaged(void *group)",
+      "verified": {
+        "bytes": "00412d4c+65",
+        "sha1": "13a504ce6507",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00412d90",
@@ -5606,8 +5745,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mission_PollStatus",
-      "description": "Sim_MainTick's last act. Steps the 10 s poll interval and the 10 s alert delay, and hands up a status worth raising.",
-      "source": "docs/retail/simulation/mission-objectives.md"
+      "description": "The objective poll, called with the player's machine from Sim_MainTick (the one call es2_xref finds), which makes the call only while that machine's +0x99 is clear. Steps MissionAlertTimer (004a9ee9) and then MissionPollTimer (004a9ee6) through Math_CountdownTimerTick, and returns -1 without evaluating while the poll counter is above 0 and SimObject_IsOutsideMissionBox is false. Otherwise it takes Mission_StatusForAlert(machine, 0). A status whose DAT_0049935c entry is set and which differs from the last raised status (DAT_004a9ed0) arms the alert delay the first time (MissionAlertArmed 004a9eec := 1, counter 004a9eea := 10000), and is stored in DAT_004a9ed0 and returned in AX once that counter is 0 or the status is 2. Every other path re-arms the poll counter (004a9ee7) to 10000 and returns -1. 10000 counts is about 4.9 s. This function never clears MissionAlertArmed.",
+      "source": "docs/retail/simulation/mission-objectives.md",
+      "verified": {
+        "bytes": "004131ac+157",
+        "sha1": "a0c7ad733030",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041324c",
@@ -5726,9 +5871,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Group_OrderSubjectRouteExhausted",
-      "description": "Whether the current order's subject has no waypoint left after its route cursor. No caller -- not even Group_StatusLineIndex.",
+      "description": "Whether the current order's subject has no waypoint after its route cursor: returns Route_WaypointAt(route, cursor + 1) == 0, where the route is the subject group's own (+0x04) for an order of kind 0 and the subject object's group's (object+0x45, then +0x04) otherwise. es2_xref finds no reference to it, Group_StatusLineIndex included.",
       "source": "docs/retail/simulation/mission-objectives.md",
-      "signature": "short __cdecl Group_OrderSubjectRouteExhausted(void *group)"
+      "signature": "short __cdecl Group_OrderSubjectRouteExhausted(void *group)",
+      "verified": {
+        "bytes": "004139a0+101",
+        "sha1": "5e27cbb30e60",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00413a08",
@@ -5736,9 +5887,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Group_OrderSubjectArrivedAndClear",
-      "description": "Whether the current order's subject is deployed (its group has no pending deployment action) and clear of threats. Called only from Group_StatusLineIndex, which is unreachable.",
+      "description": "Whether the current order's subject is deployed and clear of threats, 1 or 0: for an order of kind 0, the subject group's deployment action (+0x14) is null and Group_AllMembersClearOfThreats holds; otherwise the subject object's group (+0x45) has a null +0x14 and Mission_IsClearOfThreats holds for the object. Callers found by es2_xref: two calls in Group_StatusLineIndex, for which es2_xref finds no caller.",
       "source": "docs/retail/simulation/mission-objectives.md",
-      "signature": "short __cdecl Group_OrderSubjectArrivedAndClear(void *group)"
+      "signature": "short __cdecl Group_OrderSubjectArrivedAndClear(void *group)",
+      "verified": {
+        "bytes": "00413a08+135",
+        "sha1": "d8eea636cbab",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00413a90",
@@ -5872,8 +6029,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Behaviour_CountTick",
-      "description": "(block): the end of every Mech_AiTick. When block+0x36 (set to 1 by Behaviour_SetState) is set it clears it and counts nothing; otherwise it sets block+0x35 to 1 and increments the int block+0x09. So +0x09 counts the AI ticks a state has run, less the one it was installed in.",
-      "source": "DBSIM decompile at 00413eb0 and 00411cec"
+      "description": "(block): called from Mech_AiTick at 00411d58, the one call es2_xref finds. When block+0x36 (set to 1 by Behaviour_SetState) is set it clears it and counts nothing; otherwise it sets block+0x35 to 1 and increments the int block+0x09. So +0x09 counts the AI ticks a state has run, less the one it was installed in.",
+      "source": "DBSIM decompile at 00413eb0 and 00411cec",
+      "verified": {
+        "bytes": "00413eb0+33",
+        "sha1": "9c28dfe78639",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00413ed4",
@@ -5881,8 +6044,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Behaviour_BuildStateTable",
-      "description": "The unmarked static initialiser that builds all 22 behaviour state descriptors at 004993a4 from the slot blocks at 004998f8: name, dwell time, the 16-bit flag mask expanded through Behaviour_ExpandFlagBits, the three member-function triples and the +0x3c short. Ghidra's analysis does not recognise it as a function; create one at this address to read it.",
-      "source": "docs/retail/simulation/ai-dispatch.md"
+      "description": "The C++ static initialiser that builds the 22 Mech behaviour state descriptors, 0x3e bytes each, at BehaviourStateTable (004993a4); es2_xref finds its address once, in the priority-0x20 Borland _INIT_ entry at 004a7ac2. For state N it writes +0x00 the name (BehaviourStateNames 00499c10 + offset), +0x04 a dwell immediate, +0x08 a 16-bit mask immediate expanded through Behaviour_ExpandFlagBits, +0x18/+0x24/+0x30 the think, move and reassess triples copied in that order from the 0x24-byte block at BehaviourSlotBlocks (004998f8 + 0x24*N), and +0x3c an immediate short. The per-state values are ai-dispatch.md's state table.",
+      "source": "docs/retail/simulation/ai-dispatch.md",
+      "verified": {
+        "bytes": "00413ed4+3473",
+        "sha1": "c7db5838d06e",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00414c68",
@@ -5891,7 +6060,13 @@
       "confidence": "high",
       "name": "Flyer_BuildStateTable",
       "description": "Static initialiser for the Flyer class' own behaviour state table: seven 0x3c-byte descriptors at FlyerBehaviourStateTable (00499cf8), each taking its name from FlyerBehaviourStateNames (00499f98), a dwell immediate, a 16-bit flag mask through Behaviour_ExpandFlagBits, and its three {func,thisDelta,vtableIndex} triples copied from FlyerBehaviourSlotBlocks (00499e9c). Sits immediately after Behaviour_BuildStateTable's RET; its address is the priority-0x20 entry at 004a7ac8 in Borland's _INIT_ table, and es2_xref finds no call to it.",
-      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice"
+      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice",
+      "verified": {
+        "bytes": "00414c68+960",
+        "sha1": "58d837b3fac0",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00415028",
@@ -5899,9 +6074,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Behaviour_ExpandFlagBits",
-      "description": "Unpacks a 16-bit mask into 16 one-byte booleans (bit & 1 each), used on behaviour state descriptor +0x08 by Behaviour_BuildStateTable. Bits 0-5 are the only ones any state sets: 0 stops Mech_AiTick running the dwell countdown (true of every state bar deciding, the five combat states, driving off en and fleeing), 1 marks a state as committed to a fight, 2 as holding a place, 3 as ignoring incoming fire, and 4/5 carry the target state tier Ai_TargetStateTier reads.",
+      "description": "(out16, mask2): unpacks two mask bytes into 16 one-byte booleans, low bit first ((byte >> k) & 1). Callers found by es2_xref: 22 calls in Behaviour_BuildStateTable and 7 in Flyer_BuildStateTable, each on a descriptor's +0x08. The masks the mech builder passes are 0x00, 0x01, 0x02, 0x03, 0x05, 0x06, 0x09, 0x12 and 0x21, and the flyer builder's 0x00 and 0x01; what each bit means to its readers is ai-dispatch.md's 'The flag bits'.",
       "source": "docs/retail/simulation/ai-dispatch.md",
-      "signature": "void __cdecl Behaviour_ExpandFlagBits(byte *out16, byte *mask2)"
+      "signature": "void __cdecl Behaviour_ExpandFlagBits(byte *out16, byte *mask2)",
+      "verified": {
+        "bytes": "00415028+64",
+        "sha1": "94409163124d",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00415068",
@@ -6027,8 +6208,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_GetOverallDamage",
-      "description": "Mech vtable +0x40. The machine's overall damage figure; Mech_AiFleeCheck uses it as the base of its fear value.",
-      "source": "docs/retail/simulation/ai-targeting.md"
+      "description": "Mech vtable +0x40. Returns Component_ReadOverallDamage over the machine's damage block at +0x206: its whole damage as a Q8 fraction, 0 pristine and 256 destroyed. Mech_AiFleeCheck uses it as the base of its fear value.",
+      "source": "docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "00415504+20",
+        "sha1": "83cccab7f194",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00415518",
@@ -6100,8 +6287,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_PlayerFireTick",
-      "description": "The player's fire path, called once a frame from Sim_PollPlayerInput with the input device struct. Calls WeaponMounts_FireTrigger(mech+0x202, inputDevice, mech); on a shot it also stamps the player's LINE OF FIRE into DAT_004a9c0c -- up to 40 points at 0x1000 spacing along the turret bearing, cut to the selected target's range, count in DAT_004a9d4c, zeroed when the trigger produces nothing. Nothing draws it: its only reader is Mech_AiObstacleAvoidance, which steers the player's own squadmates out of it. The only caller of the trigger path -- AI machines fire from their own think function.",
-      "source": "docs/retail/simulation/weapon-firing.md"
+      "description": "(mech, inputDevice): the player's fire path, called from Sim_PollPlayerInput (the one call es2_xref finds) with the input device struct. Calls WeaponMounts_FireTrigger(mech+0x202, inputDevice, mech). When that returns 0 it zeroes the line-of-fire count DAT_004a9d4c; otherwise it stamps the player's LINE OF FIRE into DAT_004a9c0c: (x, y) points every 0x1000 units from the machine's position along heading (+0x10) less the torso twist (vtable +0x3c), the first one step out, numbering Math_DistanceBetweenPoints to the selected target (+0x1a4) >> 12 clamped to 1..40, or 20 with no target. The other references es2_xref finds to the two globals are reads in Mech_AiObstacleAvoidance (00416709, 004167ec), which steers the player's own squadmates out of the line, and the array's construction in Mech_RegisterSubsystem.",
+      "source": "docs/retail/simulation/weapon-firing.md",
+      "verified": {
+        "bytes": "00415608+264",
+        "sha1": "99e77a9c78a9",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00415710",
@@ -6134,9 +6327,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Behaviour_DispatchMove",
-      "description": "Mech vtable +0x14. Reads the behaviour descriptor at *(mech+0x4d) and calls its +0x24 move triple as (*func)(mech + thisDelta), returning 0 without calling when the triple is entirely zero. This -- not vtable +0x18 -- is how Mech_MovementTick and Razor_MovementTick are reached, which is why neither has an xref.",
+      "description": "Mech vtable +0x14. Reads the behaviour descriptor at *(mech+0x4d); when its +0x24 move triple {func, thisDelta, vtableIndex} is all zero it returns 0 without calling, otherwise it returns (*func)(mech + thisDelta). The third dword enters only the zero test. Mech_MovementTick, Razor_MovementTick and Mech_BehaviourRamTick are reached this way, as the move triples in BehaviourSlotBlocks, which is where es2_xref finds their addresses.",
       "source": "docs/retail/simulation/ai-dispatch.md",
-      "signature": "undefined4 __cdecl Behaviour_DispatchMove(MechObject *mech)"
+      "signature": "undefined4 __cdecl Behaviour_DispatchMove(MechObject *mech)",
+      "verified": {
+        "bytes": "00415afc+59",
+        "sha1": "492731366538",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00415b38",
@@ -6144,9 +6343,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Behaviour_DispatchThink",
-      "description": "Mech vtable +0x18. Same shape as Behaviour_DispatchMove but reads the descriptor's +0x18 think triple. Every per-state think function in BehaviourStateTable is reached only through here.",
+      "description": "Mech vtable +0x18. Behaviour_DispatchMove's shape over the descriptor's +0x18 think triple: 0 when the triple is all zero, otherwise (*func)(mech + thisDelta), whose value it returns.",
       "source": "docs/retail/simulation/ai-dispatch.md",
-      "signature": "undefined4 __cdecl Behaviour_DispatchThink(MechObject *mech)"
+      "signature": "undefined4 __cdecl Behaviour_DispatchThink(MechObject *mech)",
+      "verified": {
+        "bytes": "00415b38+59",
+        "sha1": "28a7a3cac9e9",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00415b74",
@@ -6154,9 +6359,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Behaviour_DispatchReassess",
-      "description": "Mech vtable +0x1c, reading the descriptor's +0x30 triple. 'Reassess' is a coined name for the slot, from what its two implementations do; the binary carries none. Combat states (attacking, flanking, facing off, attacking base, attacking flyer, fleeing) point it at 0041cf18; every other live state points it straight at Mech_AiSelectBehaviour, and 0041cf18 itself calls that twice.",
+      "description": "Mech vtable +0x1c. Behaviour_DispatchMove's shape over the descriptor's +0x30 triple. 'Reassess' is a coined name for the slot, from what its two implementations do; the binary carries none. Behaviour_BuildStateTable points it at Mech_AiCombatReassess in attacking, flanking, facing off, attacking base, attacking flyer and fleeing, at Mech_AiSelectBehaviour in deciding and states 8-17, and leaves it zero in player, player fly, in limbo, dead and disabled, for which this returns 0.",
       "source": "docs/retail/simulation/ai-dispatch.md",
-      "signature": "undefined4 __cdecl Behaviour_DispatchReassess(MechObject *mech)"
+      "signature": "undefined4 __cdecl Behaviour_DispatchReassess(MechObject *mech)",
+      "verified": {
+        "bytes": "00415b74+59",
+        "sha1": "22ba6e1347bd",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00415bb0",
@@ -6164,8 +6375,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_Constructor",
-      "description": "The Mech class constructor -- assigns a fully-populated 34-slot vtable at 0x0049a282 (by far the largest of the base-constructor-helper's 13 callers). Calls Damage_LoadMechDmgFile, Shield_Init, Component_AllocHealthArrays, Component_LinkMaxRefData. Registers the locomotion thread on typeRec+0x12, then zeroes the priority (+6) of the shape's own sequences typeRec+0x12 and +0x14 (00415dbc, 00415dd5) before registering the twist (+0x1c) and pitch (+0x24) threads.",
-      "source": "memory project_es2_exe_recon"
+      "description": "(mech, typeId): the Mech class constructor; es2_xref finds its one call, in DBSim_SpawnMissionObjects. Builds the base through SimObjectBase_ConstructWithDetailTable with the type's detail table (typeRec+0xde), sets target class +0x1a8 to -1, +0x98 and +0xa7 to 1, joins the live-object list (004a9b7c), clears both mission actions (+0x1b2, +0x1b6), writes -1 to +0x1ba/+0x1bc/+0x1be and installs MechVtable (0049a282, 34 slots). Then Component_AllocDamageArrays(+0x206, 29 components, 22 dependents), five 3-byte countdown timers at +0x258, +0x29c 0, typeTag (+0x04) 7, the type record at +0x1f2 (MECH_TYPE_DATA + index*0x21e), turret angles and rates (+0x294..+0x29a), throttle +0x290, speed +0x28e and turn rate +0x28c zeroed, the energy pool +0x292 at 10000, +0x1a8 0, Shield_Init(+0x222, typeRec+0xc0), fear +0x2aa and cruise speed +0x252 zeroed, and +0xb3 (worth no salvage) set when the salvage scale typeRec+0x54 is 0. Registers the locomotion thread on typeRec+0x12 at +0x22c, zeroing the priority (+6) of the shape's own sequences typeRec+0x12 and +0x14 (00415dbc, 00415dd5), then the twist (+0x1c) and pitch (+0x24) threads at +0x230/+0x234; a negative sequence id leaves its pointer 0. Counts typeRec+0x72's bytes up to the first negative into +0x23c and builds one flat ground shape per entry into the array at +0x238 (typeTag 9, z -100000). Installs a behaviour state on +0x4d: deciding (004993a4) when +0xa3 is clear, otherwise player fly (00499420) when typeRec+0x50 is set and player (004993e2) when not. Zeroes +0x29e and the squad order verb +0x23e; loads the .DMG (Damage_LoadMechDmgFile, +0x1fa) and the collision model (Collision_RegisterObject, +0x1f6) from the type's folder name (004a9de4[typeRec+0x6c]) and joins them with Component_LinkMaxRefData; zeroes +0x2b4..+0x2b7 and sets +0x2b8 to 1; zeroes the 0x4e-byte flight block at +0x2b9, points +0x2d9 at +0x0c, seeds +0x2dd with the inverse of the current transform, the airspeed +0x2bd with 1000 and +0x2d7 from +0x290, and zeroes +0x31c. Returns mech. DBSim_SpawnMissionObjects sets +0xa3 only after this returns, so the player's own machine is constructed in deciding (ai-dispatch.md).",
+      "source": "memory project_es2_exe_recon",
+      "verified": {
+        "bytes": "00415bb0+1323",
+        "sha1": "ba7e69418266",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "004160dc",
@@ -6281,9 +6498,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_ApplyStartingCondition",
-      "description": "Applies a mission record's starting condition, as a percentage, once from DBSim_SpawnMissionObjects right after the machine's engagement/defeat actions are resolved. 100 is pristine; bands are >=0x50 untouched, >=0x3c 50 damage, >=0x28 80, >=0x14 120 plus the reactor dependent written off outright, and below 0x14 a WRECK: one of components 7/8 destroyed with 32000 (plus one of 13/14 when typeRec+0x4a>2), mech+0xa4 immobilised and mech+0xb4 collapsed. Each band ends in Mech_SpreadImpactDamage(mech, n, n+0x19). The condition comes from script.dat block 7 +0x84. Args derived from disassembly: two pushes with ADD ESP,0x8 at 004259b0; [EBP+8] mech, [EBP+0xc] word.",
+      "description": "(mech, percent): applies a mission record's starting condition (script.dat block 7 +0x84); es2_xref finds its one call, in DBSim_SpawnMissionObjects at 004259b0. Negative or 0x50 and up: Mech_SpreadImpactDamage(mech, 0, 25), which returns at once. 0x3c-0x4f: 50. 0x28-0x3b: 80. 0x14-0x27: 120, with dependent 5 (the reactor) set to Q8(0x100, its maximum) and +0xb3 (worth no salvage) set. Below 0x14, a wreck: component 7 on an odd Math_RandomNext roll, 8 on an even one, written off with 32000 through vtable +0x74 with no attacker, and when typeRec+0x4a exceeds 2 likewise 13 on an odd roll, 14 on an even one; then +0xa4 (immobilised), +0xb3 and +0xb4 (collapsed) set; 150. Each band ends in Mech_SpreadImpactDamage(mech, n, n+0x19). Args derived from disassembly: two pushes with ADD ESP,0x8 at 004259b0; [EBP+8] mech, [EBP+0xc] word.",
       "source": "docs/retail/simulation/component-damage.md",
-      "signature": "void __cdecl Mech_ApplyStartingCondition(MechObject *mech, short conditionPercent)"
+      "signature": "void __cdecl Mech_ApplyStartingCondition(MechObject *mech, short conditionPercent)",
+      "verified": {
+        "bytes": "004178e8+281",
+        "sha1": "275aebb3bb34",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00417a04",
@@ -6478,9 +6701,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Razor_MovementTick",
-      "description": "The flyer chassis' per-tick move, the counterpart of Mech_MovementTick and NOT an autopilot. Integrates the world velocity at mech+0x2c5 into the position (skipped once mech+0xa4 is set), then runs six airframe contact probes -- the two wings, the two nacelles, the cockpit and the fuselage, the game's own names for them from STRINGS0 group 14 -- each against the terrain under it and, bar the fuselage, against a ray one tick's travel long. A contact damages that component through Mech_ApplyDirectFireDamage with the hand-built shot record at 0049a170, kicks the airframe away from what it touched, and scales the damage by airspeed. Destroying the cockpit or the fuselage latches mech+0xa4 and the aircraft stops moving. Ends with the engine-note pitch and maybe_Mech_ConvergeGunsOnRange. Reached as slot +0x0c of the flyer behaviour class at FlyerBehaviourSlots, not through the mech vtable.",
+      "description": "The RAZOR's per-tick move, the counterpart of Mech_MovementTick and not an autopilot: the move triple of behaviour state 2 (player fly; slot block 2 at 00499940, +0x0c at 0049994c, the one reference es2_xref finds), reached through Behaviour_DispatchMove. Copies the airframe transform before moving and computes five probe points through the copy; unless +0xa4 is set, adds the world velocity at +0x2c5, each component through Math_IntegrateRateOverTick, to the position. Then, each probe only while its component is intact: right wing (8) and left wing (7), a ground test and a Sim_RaycastObjectList sweep the airspeed (+0x2bd) long at clearance 300, rolling the airframe away by Q10(4000, depth) or a flat 4000; left and right nacelles (4, 5), the sweep alone at clearance 150, a flat 8000 roll, both reporting at the left nacelle's point; the cockpit (0), ground test and sweep at clearance 200, a negative pitch rate zeroed and then pitched up by Q10(2000, depth) or 2000; a look-ahead ground test at (0, 15000, -1500) while 4, 5 and 0 are all intact, pitching up by Q10(20, depth); and the fuselage (6), a ground test at the moved position that puts the airframe back on the ground. Each ray probe writes its point into the copy's translation and leaves it there. A contact applies its kick to the attitude at once and damages its component through Mech_ApplyDirectFireDamage with AirframeContactShot (0049a170): Q10(airspeed, 500/1000/5000) for a wing/cockpit/fuselage ground contact, 1000 (wing) or 5000 for an object contact, shield figure 8000. Destroying the cockpit or the fuselage throws debris group 3 and latches +0xa4. For the locally piloted machine it then sets the engine hum (sound 0x2d) to Math_FastMagnitude3D(body velocity)*16+28000 clamped to 16 bits, or stops it once +0x99 is set; last, unconditionally, Mech_ConvergeGunsOnRange with the range to +0x1a4, 0 with none. Returns 1.",
       "source": "docs/retail/simulation/razor-flight.md",
-      "signature": "short __cdecl Razor_MovementTick(MechObject *mech)"
+      "signature": "short __cdecl Razor_MovementTick(MechObject *mech)",
+      "verified": {
+        "bytes": "004198f4+2668",
+        "sha1": "0a53769eb85a",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0041a360",
@@ -6629,8 +6858,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Player_PerFrameCockpitUpdate",
-      "description": "The player's once-a-frame cockpit refresh. Its throttle exchange is the two-way binding between the machine and the cockpit slider: with mech+0x93 clear the gauge's value is written to mech+0x290, and ALSO to mech+0x2d7 when the type record's flyer flag is set, which is the only path by which the slider reaches a RAZOR's flight model. With the flag set the machine's own throttle is handed back to the gauge instead. The speed half it feeds the gauge is mech+0x28e, the walker speed scalar -- see KNOWN_ISSUES.md.",
-      "source": "docs/retail/simulation/razor-flight.md"
+      "description": "The player's once-a-frame cockpit exchange; es2_xref finds calls from Sim_RenderFrame and Sim_InitMissionSession. Pushes (pool << 10) / 10000 to the energy meter (cockpit +0x1e5) and runs Shield_BalanceInputRead. Calls WeaponMounts_PerFrameUpdate with the range to the selected target (+0x1a4), measured from ViewChain_Viewed when DAT_0049ef5c is set and this is LocalPlayerMech, otherwise from the machine, 0 with none. The throttle exchange with the gauge (cockpit +0x1f1): with +0x93 clear the gauge's throttle is written to +0x290 and, when the type record's flyer flag (+0x50) is set, to +0x2d7 as well; with +0x93 set the machine's +0x290 goes to the gauge and +0x93 is cleared. The speed half it feeds the gauge is (+0x28e << 10) / top speed (typeRec+6 forward, -typeRec+4 in reverse), the walker speed scalar -- see KNOWN_ISSUES.md. Fills the gunsight (cockpit +0x1f5) with the heading and twist (left as they were while +0xa4 is set), the pitch, the cockpit's selection and +0x9b. When the cockpit's selection (cockpit +0x210) differs from +0x1a4 it clears +0x9b, moves +0x1a4 over with the +0x1a2 reference counts and sets +0x9d, resets the Targeting Pod's component lock (pod slot 1) for a non-null selection, and arms the ATT wait timer (+0x31c) at 0x1194 when nothing is selected and weaponMounts+0x14 is set. While nothing is selected and that byte is set it counts the timer (record +0x31b) down and sets g_CenterTurretMode at 0. Ends with Player_ResolveTargetAimPoint for a selected target and CockpitView_SetTargetBlock.",
+      "source": "docs/retail/simulation/razor-flight.md",
+      "verified": {
+        "bytes": "0041b130+822",
+        "sha1": "5365c9ddd0d7",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0041b468",
@@ -6739,9 +6974,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_SquadOrderLineIndex",
-      "description": "The string index the F7 heads-down comm box prints on a squadmate's OBJECTIVE: line, into STRINGS0 group 40 (ATTACK/TRAVEL/PATROL/FORM UP/GUARD/FLEE/DEAD/IMMOBILE). Starts from the machine's behaviour descriptor +0x3c, then overrides with the standing squad order at mech+0x23e (1->1, 2->2, 3 or 6->4), but only when the machine is neither immobilised (+0xa4) nor destroyed (+0x99), its +0x3c is not 5, and the behaviour block's +0x09 is zero. Sole caller HddGauge_PaintIdle; this settles descriptor +0x3c's role. Args derived from disassembly: [EBP+8] only.",
+      "description": "The string index the F7 heads-down comm box prints on a squadmate's OBJECTIVE: line, into STRINGS0 group 40 (ATTACK/TRAVEL/PATROL/FORM UP/GUARD/FLEE/DEAD/IMMOBILE), returned in AX. Starts from the machine's behaviour descriptor +0x3c, then overrides it with the standing squad order at mech+0x23e (1->1, 2->2, 3 or 6->4), but only when the machine is neither immobilised (+0xa4) nor destroyed (+0x99), the descriptor's +0x3c is not 5, and the descriptor's +0x09 (flag bit 1, committed to a fight) is zero. es2_xref finds its one call, in HddGauge_PaintIdle. Args derived from disassembly: [EBP+8] only.",
       "source": "docs/retail/simulation/heads-down-display.md",
-      "signature": "short __cdecl Mech_SquadOrderLineIndex(MechObject *mech)"
+      "signature": "short __cdecl Mech_SquadOrderLineIndex(MechObject *mech)",
+      "verified": {
+        "bytes": "0041bac8+114",
+        "sha1": "cb8029e509a4",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041bb3c",
@@ -6780,8 +7021,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_RegisterSubsystem",
-      "description": "The mech module's C++ static initialiser (Borland _INIT_ entry 004a7ace): registers Mech_ResetMissionGlobals (00415464) as subsystem phase 2, run once per mission from Sim_InitMissionSession, and Mech_FlushDeletes (0041544c) as phase 5, run once a frame; zeroes GlobalMechList (004a9bfe, which is the mech pool object itself) and vector-news DAT_004a9c0c. Both registered functions are reached through Subsystem_RunPhase.",
-      "source": "docs/retail/simulation/ai-combat-states.md"
+      "description": "The mech module's C++ static initialiser (Borland _INIT_ entry 004a7ace): inside an Eh_InitExceptBlock frame, registers Mech_ResetMissionGlobals (00415464) through RegisterSubsystemLoader as subsystem phase 2, the once-per-mission phase, and Mech_FlushDeletes (0041544c) as phase 5, the once-a-frame phase; zeroes GlobalMechList (004a9bfe, which is the mech pool object itself) and vector-news DAT_004a9c0c as 40 elements of 8 bytes, the player's line-of-fire points. Subsystem_RunPhase is what dispatches a registered phase.",
+      "source": "docs/retail/simulation/ai-combat-states.md",
+      "verified": {
+        "bytes": "0041bc5c+105",
+        "sha1": "37556dec0cd3",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041bcc8",
@@ -6982,8 +7229,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_BehaviourAttackThink",
-      "description": "Behaviour state 3 (attacking). Skirt gate, combat geometry, then a standoff point 18000 units off the target's beam when the target is facing this machine (|aspect| < 8000) -- reflected through this machine's own position on the reverse arm -- or a plain square-up when it is not. Leaves the built-in 15000/30000 standoff ring.",
-      "source": "docs/retail/simulation/ai-combat-states.md"
+      "description": "Behaviour state 3 (attacking). Returns 0 when Ai_BeginSkirtIfBlocked starts a skirt. Builds the combat geometry. With |aspect| < 8000 it sets approach = (0x8000 - |bearing error|) >= 4000 ? 1 : -1, takes the point 18000 units from the target along its heading +-0x4000 (+0x4000 when (bearing error < 0) equals (|bearing error| > 0x4000)), reflects that point through this machine's position when approach is -1, and steers at it (bearing error = Math_HeadingToward(point, position) - heading); otherwise approach is 0, or -1 past 0x1fff of bearing error, and the steer stays on the target. Leaves the built-in 15000/30000 standoff ring. Ai_CombatMoveStep, then Ai_AimAndFire with the aspect. Returns Ai_ClearSquadEngageOrder's 1 when Ai_ShouldAbandonTarget answers nonzero or this machine is out of action (+0xa5, +0xa4 or +0x99), else 0.",
+      "source": "docs/retail/simulation/ai-combat-states.md",
+      "verified": {
+        "bytes": "0041c594+407",
+        "sha1": "8978b33adf78",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041c72c",
@@ -7006,8 +7259,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_BehaviourAttackBaseThink",
-      "description": "Behaviour state 6 (attacking base). Forces the aspect to 32000 when the target's BASES.DAT +0x2e is zero, so Ai_CircleStep stands off instead of circling; standoffs 25000 / -20536, which makes the ring mandatory. Its completion test demands destruction, not merely being out of action, for a structure the mission order names.",
-      "source": "docs/retail/simulation/ai-combat-states.md"
+      "description": "Behaviour state 6 (attacking base). Returns 0 when Ai_BeginSkirtIfBlocked starts a skirt. Builds the combat geometry and, when the target's type record +0x2e (BASES.DAT armament class) is zero, forces the aspect and its magnitude to 32000, so Ai_CircleStep stands off instead of circling. Ai_CircleStep, then standoffs 25000 / -20536, which makes the ring mandatory; Ai_CombatMoveStep and Ai_AimAndFire with the aspect. Its completion test replaces Ai_ShouldAbandonTarget: when a squad engage order stands (+0x23e == 4 with +0x248 non-null) or Group_IsOrderTarget(group, target) holds, the target is finished only when destroyed (+0x99); otherwise when out of action (+0xa5, +0xa4 or +0x99). Returns Ai_ClearSquadEngageOrder's 1 when the target is finished or this machine is out of action, else 0.",
+      "source": "docs/retail/simulation/ai-combat-states.md",
+      "verified": {
+        "bytes": "0041c86c+352",
+        "sha1": "d198a08b7700",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041c9cc",
@@ -7015,8 +7274,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_BehaviourAttackFlyerThink",
-      "description": "Behaviour state 7 (attacking flyer). No skirt gate; standoffs 0/1000000 put both move-step arms out of reach so the state owns the approach flag outright. Advances only inside 2000 BAM of bearing error with the flyer past 35000 and not facing back. Returns finished past 150000 range.",
-      "source": "docs/retail/simulation/ai-combat-states.md"
+      "description": "Behaviour state 7 (attacking flyer). No skirt gate. Builds the combat geometry, then approach = -1 at 2000 BAM or more of bearing error; inside that, 1 when |aspect| > 2000 and the 3D range > 35000, 0 when only one of the two holds, -1 when neither. Standoffs 0/1000000, which leave the approach to the state at any range the think keeps. Ai_CombatMoveStep, then Ai_AimAndFire with the aspect. Returns 1 past 150000 range, before any other test; otherwise returns Ai_ClearSquadEngageOrder's 1 when the flyer's +0x99 (destroyed) is set or this machine is out of action (+0xa5, +0xa4 or +0x99), else 0. That completion test reads the flyer's +0x99 directly in place of Ai_ShouldAbandonTarget.",
+      "source": "docs/retail/simulation/ai-combat-states.md",
+      "verified": {
+        "bytes": "0041c9cc+240",
+        "sha1": "b798ebc70dc9",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041cabc",
@@ -7025,7 +7290,13 @@
       "confidence": "high",
       "name": "Mech_CompareCombatRating",
       "description": "Mech vtable +0x4c. Compares this machine's combat rating (+0x29e) with a candidate's and returns the index the AI's three target-weight tables share: 0 this machine's is higher, 1 within 400, 2 the candidate's is higher. Returns 0 for every non-HERC candidate. Both ratings are jittered by rand & 1000 (AND AX,0x3e8) where rand % 1000 was meant.",
-      "source": "docs/retail/simulation/ai-targeting.md"
+      "source": "docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "0041cabc+133",
+        "sha1": "b98126ef441d",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0041cb44",
@@ -7093,8 +7364,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_BehaviourFleeThink",
-      "description": "Behaviour state 18 (fleeing). Moves the selected target into the block scratch at mech+0x61 and releases the selection, then reverses with the steer a half turn away while the threat is within 0x3000 of the nose and runs off at +/-0x6000 once turned, flipping side every 4000 ms. Engages the Turbo Pod every tick and still fires at the stash.",
-      "source": "docs/retail/simulation/ai-combat-states.md"
+      "description": "Behaviour state 18 (fleeing). When mech+0x1a4 is set it stores it at mech+0x61 in the block scratch and releases it (target+0x1a2 decremented, mech+0x9d set); the geometry, the aim and the completion test then run against mech+0x61. Under 0x3000 of bearing error: approach -1 and the steer turned a half turn (+0x8000). Otherwise: when the countdown stepped by Timer_CountDown through handle mech+0x5a (the int at +0x5b) has run out, it reloads 4000 counts (about 2 s) and writes rand & 1 as a word at +0x5f; then approach 1 and the steer offset by -0x6000 when +0x5f is set, +0x6000 when clear. Standoffs 0/10000000. TurboPod_Engage on the pod at mech+0x317 when there is one, every tick. Ai_CombatMoveStep, then Ai_AimAndFire(mech, aspect, stash). Returns 1 when the stashed object is out of action (+0xa5, +0xa4 or +0x99), else 0.",
+      "source": "docs/retail/simulation/ai-combat-states.md",
+      "verified": {
+        "bytes": "0041d2c4+343",
+        "sha1": "16889606495c",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041d41c",
@@ -7102,8 +7379,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_BehaviourFaceOffThink",
-      "description": "Behaviour state 5 (facing off), and the whole of state 16 (driving off en). Approach = -1 past 0x1fff of bearing error, else 1; standoffs 16000/35000. Never steers anywhere but at the target.",
-      "source": "docs/retail/simulation/ai-combat-states.md"
+      "description": "Behaviour state 5 (facing off). Ai_BeginSkirtIfBlocked gate (returns 0 when it fires), the combat geometry, then approach 1 under 0x2000 of bearing error and -1 at 0x2000 or more, standoffs 16000/35000, and the bearing error left pointing at the target. Ai_CombatMoveStep, Ai_AimAndFire, then returns Ai_ClearSquadEngageOrder's 1 when Ai_ShouldAbandonTarget answers nonzero or this machine is out of action (+0xa5, +0xa4 or +0x99), else 0.",
+      "source": "docs/retail/simulation/ai-combat-states.md",
+      "verified": {
+        "bytes": "0041d41c+199",
+        "sha1": "61392b3a89e7",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041d4e4",
@@ -7111,8 +7394,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_BehaviourFlankThink",
-      "description": "Behaviour state 4 (flanking). The shared combat shape with Ai_CircleStep between the geometry and the move step. Unreachable in retail: the combat reassess gates it on typeRec+0xc8, zero on all 21 chassis.",
-      "source": "docs/retail/simulation/ai-combat-states.md"
+      "description": "Behaviour state 4 (flanking). Ai_BeginSkirtIfBlocked gate (returns 0 when it fires), the combat geometry, Ai_CircleStep, Ai_CombatMoveStep, Ai_AimAndFire, then facing off's completion test: Ai_ClearSquadEngageOrder's 1 when Ai_ShouldAbandonTarget answers nonzero or this machine is out of action (+0xa5, +0xa4 or +0x99), else 0. The combat reassess installs it for an outgunned machine whose typeRec+0xc8 is over 0xb9; MechType_InitOne copies the forward speed typeRec+0x06 there, and 13 of the 21 retail chassis clear the bar.",
+      "source": "docs/retail/simulation/ai-combat-states.md",
+      "verified": {
+        "bytes": "0041d4e4+179",
+        "sha1": "3ee7caed86e3",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041d598",
@@ -7120,8 +7409,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_NavigationStep",
-      "description": "The movement half the patrol, search-and-destroy and guard thinks share: Ai_DriveToPoint at mech+0x240 under a standing squad order, Ai_FollowRoute for the group leader, Ai_KeepFormation for everyone else -- so ONLY THE LEADER READS THE ROUTE. Then Ai_UpdateWeaponsFree and Mech_CenterTorsoTick.",
-      "source": "docs/retail/simulation/ai-navigation.md"
+      "description": "The movement half of the patrol and search-and-destroy thinks; callers found by es2_xref: Mech_BehaviourSearchDestroyThink, Mech_BehaviourPatrolThink and Ai_NavigationStepThunk. Under a standing squad order (mech+0x23e nonzero) Ai_DriveToPoint at mech+0x240; otherwise Ai_FollowRoute when this machine is its group's slot 0 (**(group+0x0c)) and Ai_KeepFormation when it is not, so on this path the group leader is the one machine that reads the route. Then Ai_UpdateWeaponsFree and Mech_CenterTorsoTick(mech, 0).",
+      "source": "docs/retail/simulation/ai-navigation.md",
+      "verified": {
+        "bytes": "0041d598+84",
+        "sha1": "d98e83662ef7",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041d5ec",
@@ -7144,8 +7439,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_NavigationStepThunk",
-      "description": "A bare tail call to Ai_NavigationStep. Named by no behaviour descriptor.",
-      "source": "docs/retail/simulation/ai-navigation.md"
+      "description": "Calls Ai_NavigationStep(mech) and returns. No caller, stored pointer or vtable slot found by es2_xref.",
+      "source": "docs/retail/simulation/ai-navigation.md",
+      "verified": {
+        "bytes": "0041d5fc+15",
+        "sha1": "721529deddd8",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041d60c",
@@ -7153,8 +7454,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_BehaviourSearchDestroyThink",
-      "description": "Behaviour state 12, search/destroy. Mech_BehaviourPatrolThink's shape and the same leader gate, differing in that what it acquires must pass Group_IsOrderTarget -- the group fights only what its order names.",
-      "source": "docs/retail/simulation/ai-navigation.md"
+      "description": "Behaviour state 12, search/destroy. Ai_NavigationStep, then releases mech+0x1a4, then returns 0 unless this machine is its group's slot 0 or mech+0xb6 (FIRE AT WILL) is set. Past that gate, when the countdown stepped by Math_CountdownTimerTick through handle mech+0x5a (the word at +0x5b) has run out, it reloads 10000 counts (about 4.9 s) and, for a machine out of action (+0xa5, +0xa4 or +0x99), installs Ai_SelectTarget(this, 0, 0) and, when that is non-null, writes -1 to mech+0x2a2 and installs fleeing (descriptor 00499800). Otherwise it takes Ai_SelectTarget(this, 1, 0) and, when that passes Group_IsOrderTarget, installs it, sets mech+0xac and runs Mech_AiEnterCombat. Always returns 0. Mech_BehaviourPatrolThink's shape, with no squad-verb term in the gate and no verb test on the acquisition.",
+      "source": "docs/retail/simulation/ai-navigation.md",
+      "verified": {
+        "bytes": "0041d60c+451",
+        "sha1": "d43fe0ee6804",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041d7d0",
@@ -7162,8 +7469,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_BehaviourPatrolThink",
-      "description": "Behaviour state 8, patrolling. Ai_NavigationStep, drop the target, then a gate that returns for any machine that is neither the group leader nor under a standing squad order -- so only the leader ever acquires. Past it, on the 10000-count (about 4.9 s) block-scratch timer at mech+0x5a: a machine out of action takes fleeing, otherwise it acquires (mask 1) only when the group order verb is 3 or the squad verb is 2, and hands the result to Mech_AiEnterCombat.",
-      "source": "docs/retail/simulation/ai-navigation.md"
+      "description": "Behaviour state 8, patrolling. Reads the squad verb mech+0x23e, runs Ai_NavigationStep, releases mech+0x1a4, then returns 0 unless this machine is its group's slot 0, the squad verb is nonzero or mech+0xb6 (FIRE AT WILL) is set. Past that gate, when the countdown stepped by Math_CountdownTimerTick through handle mech+0x5a (the word at +0x5b) has run out, it reloads 10000 counts (about 4.9 s) and, for a machine out of action (+0xa5, +0xa4 or +0x99), installs Ai_SelectTarget(this, 0, 0) and, when that is non-null, writes -1 to mech+0x2a2 and installs fleeing (00499800). Otherwise it acquires with Ai_SelectTarget(this, 1, 0) when the squad verb is 2, or is 0 with the group's current order verb 3 (a null order entry reads as 0x0b); it installs the pick, null included, and on a non-null pick sets mech+0xac and runs Mech_AiEnterCombat. Always returns 0.",
+      "source": "docs/retail/simulation/ai-navigation.md",
+      "verified": {
+        "bytes": "0041d7d0+506",
+        "sha1": "e0b488bae0d7",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041d9cc",
@@ -7171,8 +7484,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_BehaviourTravelThink",
-      "description": "Behaviour states 9 and 11, travelling and bulldog travel. Calls Ai_FollowRoute DIRECTLY rather than through Ai_NavigationStep, so every member reads the route and every member can advance the shared cursor. Then drops the target and, on the mech+0x5a timer, acquires into mech+0x5f -- a turret look-at, never written to mech+0x1a4.",
-      "source": "docs/retail/simulation/ai-navigation.md"
+      "description": "Behaviour states 9 and 11, travelling and bulldog travel. Calls Ai_FollowRoute directly rather than through Ai_NavigationStep, so every member reads the route and every member can advance the shared cursor. Releases mech+0x1a4. When the countdown stepped by Timer_CountDown through handle mech+0x5a (the int at +0x5b) has run out: Ai_SelectTarget(this, 0, 0) into mech+0x5f, a turret look-at this function keeps out of mech+0x1a4; reload 10000; radar mech+0x96 = 1 when the pick is non-null or mech+0x97 is set, else 0. While mech+0x5f is non-null, Ai_AimAndFire(this, aspect, it), the aspect built by hand: Math_HeadingToward from it to this machine, less its heading, plus its vtable +0x3c twist. Always returns 0.",
+      "source": "docs/retail/simulation/ai-navigation.md",
+      "verified": {
+        "bytes": "0041d9cc+221",
+        "sha1": "b56d7ba2963d",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041daac",
@@ -7180,8 +7499,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_BehaviourFollowThink",
-      "description": "Behaviour state 10, following. Mech_BehaviourTravelThink with the route replaced by Group_OrderTargetObject's position and a 25000-unit stop, that stop being a 3D Math_DistanceBetweenPoints range rather than the ground one every steer uses. Touches no route cursor, while verb 6's completion test is a route test -- so a following order can only complete on a group whose route was empty to begin with.",
-      "source": "docs/retail/simulation/ai-navigation.md"
+      "description": "Behaviour state 10, following. Mech_BehaviourTravelThink with the route replaced: the object Group_OrderTargetObject returns (read without a null test) is stood off with Mech_LocomotionTick(this, 0, 0, 0) inside a 3D Math_DistanceBetweenPoints range of 25000, and driven at with Ai_DriveToPoint beyond it. Then the travel think's release, look-at acquisition, radar write and Ai_AimAndFire. It advances no route cursor, while verb 6's completion test is a route test -- so a following order can only complete on a group whose route was empty to begin with. Always returns 0.",
+      "source": "docs/retail/simulation/ai-navigation.md",
+      "verified": {
+        "bytes": "0041daac+287",
+        "sha1": "eb49f00c0d4a",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041dbcc",
@@ -7234,8 +7559,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_BehaviourSkirtThink",
-      "description": "Behaviour state 14 (skirting). Walks an arc around whatever blocked the line of fire, at a point 90 degrees off the line to the position stashed at mech+0x31e, re-testing Ai_LineOfSightBlocked every 5000 ms and restoring the stashed descriptor from mech+0x5a when it comes back clear. A terrain block (reading 2) gets no arc.",
-      "source": "docs/retail/simulation/ai-combat-states.md"
+      "description": "Behaviour state 14 (skirting). Walks at the position stashed at mech+0x31e or, while the last line-of-sight reading (mech+0x61) is 1, at a point offset from it by the stored range mech+0x67 along the bearing from it to this machine plus or minus 0x4000 (side mech+0x60, chosen on the first tick from the sign of the bearing error to the stash). The first tick (word mech+0x5e zero) sets +0x5e, arms the re-test countdown (the int at mech+0x63, handle +0x62) with 5000 counts (about 2.4 s) and sets +0x61 = 1. On each expiry it reloads 5000 and stores Ai_LineOfSightBlocked's answer at +0x61: 0 reinstalls the descriptor stashed at mech+0x5a and clears mech+0xad, nonzero writes the ground range to the stash to +0x67. A reading of 2 (ground the machine could walk) gets no offset. Steers with Mech_LocomotionTick(this, error >> 6, 0x100, 0), then Mech_CenterTorsoTick(this, 0). Always returns 0.",
+      "source": "docs/retail/simulation/ai-combat-states.md",
+      "verified": {
+        "bytes": "0041dd64+311",
+        "sha1": "7402bb8b1bda",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041de9c",
@@ -7288,8 +7619,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_BehaviourGuardThink",
-      "description": "Behaviour state 15, guarding. A player squadmate with no standing order holds formation instead; everything else works a standoff ring on Mech_AiGoalPosition -- approach past 30000, hold facing OUTWARD (the -0x8000 in the steering term) between 10000 and 30000, walk away below 10000. Targets through Ai_SelectDefenceTarget, installing driving off en (16) or fleeing (18).",
-      "source": "docs/retail/simulation/ai-navigation.md"
+      "description": "Behaviour state 15, guarding. Post = Mech_AiGoalPosition. Releases mech+0x1a4. A machine in a group whose slot 0 is PlayerMech with no standing squad order (mech+0x23e zero) does not hold the post; any other does. When it holds the post or mech+0xb6 is set, and the countdown at mech+0x5b (Math_CountdownTimerTick through handle +0x5a) has run out, it picks mech+0x248 under squad verb 4 when that is non-null, Ai_SelectDefenceTarget(this, post) otherwise; the think does not reload the countdown itself. With no pick, a machine not holding the post runs Ai_KeepFormation, Ai_UpdateWeaponsFree and Mech_CenterTorsoTick; one holding it runs Mech_CenterTorsoTick and Ai_UpdateWeaponsFree, then Ai_DriveToPoint at the post past 30000 ground range, else Mech_LocomotionTick(this, (bearing to post - heading + 0x8000) >> 6, range under 10000 ? 0x100 : 0, 0) -- facing away from the post, walking away inside 10000 and standing between. A pick is installed at mech+0x1a4; out of action (+0xa5, +0xa4 or +0x99) installs fleeing (00499800) and writes -1 to mech+0x2a2, otherwise driving off en (00499784), Mech_AiSelectAimComponent, and radar mech+0x96 = 1 unless the group's slot 0 has +0xa3 set and mech+0xb2 is clear. Always returns 0. It calls Ai_KeepFormation and Ai_DriveToPoint itself rather than through Ai_NavigationStep.",
+      "source": "docs/retail/simulation/ai-navigation.md",
+      "verified": {
+        "bytes": "0041e224+612",
+        "sha1": "7b933c682aac",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041e488",
@@ -7313,8 +7650,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_BehaviourInertThink",
-      "description": "Behaviour states 20 (dead) and 21 (disabled). Mech_LocomotionTick(mech, 0, 0, 0) and nothing else.",
-      "source": "docs/retail/simulation/ai-combat-states.md"
+      "description": "Behaviour states 20 (dead) and 21 (disabled). Mech_LocomotionTick(mech, 0, 0, 0), then returns 0.",
+      "source": "docs/retail/simulation/ai-combat-states.md",
+      "verified": {
+        "bytes": "0041e554+25",
+        "sha1": "a9fdfa8dd933",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041e570",
@@ -7322,9 +7665,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_BehaviourRamThink",
-      "description": "The think slot (+0x00) of AI behaviour state block 00499b5c, the ramming attack. Acquires a target through Ai_SelectTarget(this, 6, 0) into mech+0x1a4 every 10000 ms (timer at mech+0x5a), maintaining its +0x1a2 refcount, then steers with Mech_LocomotionTick(turn = (bearing - heading) >> 8, throttle 0x100) -- a QUARTER the steer gain every other state uses. A two-phase flag at mech+0x5f over a countdown at mech+0x62, each phase arming the timer it ENTERS: approaching (0) lasts 8000 + rand(4000), charging (1) lasts 3000 + rand(1500). Charging, it calls Mech_BehaviourRamTick TWICE, interleaved with two more steers -- three RamTicks a tick counting the move slot's own. Both fields start zeroed by Behaviour_SetState, so entering the state charges immediately. Always returns 0.",
+      "description": "The think slot (+0x00) of AI behaviour state block 00499b5c, the ramming attack. When the countdown stepped by Timer_CountDown through handle mech+0x5a (the int at +0x5b) has run out it installs Ai_SelectTarget(this, 6, 0) at mech+0x1a4, maintaining the +0x1a2 holder counts and +0x9d, and reloads 10000 counts (about 4.9 s). With no target, Mech_LocomotionTick(this, 0, 0, 1) and return. Otherwise it steers with Mech_LocomotionTick(turn = (bearing - heading) >> 8, throttle 0x100, avoidance flag 1) -- a quarter the >> 6 steer gain of the other states. A two-phase word flag at mech+0x5f over a countdown at mech+0x62 (Math_CountdownTimerTick through handle +0x61), each phase arming the countdown of the phase it enters: approaching (0) lasts 8000 + Math_RandomBelow(4000) counts, charging (1) 3000 + Math_RandomBelow(1500). Charging, after the first steer come Mech_BehaviourRamTick, a steer, Mech_BehaviourRamTick again and a third steer, returning early whenever the target has gone after a RamTick -- three RamTicks a tick counting the move slot's own. Both fields start zeroed by Behaviour_SetState, so the first think flips to charging and the extra RamTicks start on the next. Always returns 0.",
       "source": "docs/retail/simulation/damage-system.md",
-      "signature": "int __cdecl Mech_BehaviourRamThink(int *this)"
+      "signature": "int __cdecl Mech_BehaviourRamThink(int *this)",
+      "verified": {
+        "bytes": "0041e570+487",
+        "sha1": "fea28acbc877",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041e758",
@@ -7401,8 +7750,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_AiSelectBehaviour",
-      "description": "Picks and installs the next AI behaviour state. Three mutually exclusive paths: the local player (mech+0xa3) takes 'player fly' or 'player' on the type record's flyer flag typeRec+0x50; a machine in the player's own group with a standing squad order (mech+0x23e) maps verbs 1/2 to 'patrolling', 4 to Mech_AiEngageOrderedTarget against the order target at mech+0x248, and 6 to 'guarding'; anything else reads its mission group's current order (mech+0x45, array at group+0x44 indexed by group+0x6c, verb = the entry's first short) and maps 0-6 to search/destroy, ramming, guarding, patrolling, sleeping, travelling-or-bulldog-travel (split on typeRec+0x22 vs 0x7d01) and following. A null order entry substitutes verb 0x0b, which matches no case. Every path releases mech+0x1a4, decrements the target's +0x1a2 refcount and sets mech+0x9d, so a state change always drops the target.",
-      "source": "docs/retail/simulation/ai-dispatch.md"
+      "description": "__cdecl(mech): picks and installs the next AI behaviour state. Three mutually exclusive paths: the local player (mech+0xa3) takes 'player fly' (00499420) or 'player' (004993e2) on the type record's flyer flag typeRec+0x50; a machine in a group whose slot 0 is PlayerMech with a standing squad order (mech+0x23e) maps verbs 1/2 to 'patrolling', 4 to Mech_AiEngageOrderedTarget against the order target at mech+0x248 -- or, when that target's +0x99 is set, clears mech+0x23e and re-enters -- and 6 to 'guarding'; anything else reads its mission group's current order (mech+0x45, array at group+0x44 indexed by group+0x6c, verb = the entry's first short) and maps 0-6 to search/destroy, ramming, guarding, patrolling, sleeping, travelling-or-bulldog-travel (bulldog when typeRec+0x22 is over 0x7d00) and following. A null order entry substitutes verb 0x0b, which matches no case and installs whatever descriptor EDX held on entry. The player branch, squad verbs 1/2 and 6 and the order-verb path each release a non-null mech+0x1a4 after installing (target+0x1a2 decremented, mech+0x9d set); squad verb 4 does not, and squad verbs 3, 5 and above 6 install nothing and leave the target. Returns 1 on every path.",
+      "source": "docs/retail/simulation/ai-dispatch.md",
+      "verified": {
+        "bytes": "0041eb34+674",
+        "sha1": "4c05131a17fc",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0041edd8",
@@ -7479,8 +7834,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_AiOnTakingFire",
-      "description": "Mech vtable +0x50, called with (attacker, damage) when something hits this machine. Applies no damage. Shares the attacker as a contact through Detection_ShareContact, opens the 30000-count (about 14.6 s) under-fire window at +0x27d, and for a machine in the player's group accumulates the damage at +0x281 and ignores it until the total passes 8000. Otherwise, on a 10000-count (about 4.9 s) retarget cooldown at +0x273, it reacts by the current state's descriptor flag bits: bit 2 (guarding, driving off en) defends the post via Ai_SelectDefenceTarget around Mech_AiGoalPosition (a verb-4 squad order replaces the pick unless the pick is shooting at it; failing both, the attacker), bit 3 (sleeping, ramming, bulldog travel) ignores fire entirely, and anything else re-acquires with Ai_SelectTarget(this, 0x24, 0). Also posts squad message 3, and Mech_AiFriendlyFireComplaint when the player is the shooter.",
-      "source": "docs/retail/simulation/ai-targeting.md"
+      "description": "Mech vtable +0x50, called with (attacker, damage) when something hits this machine; it applies no damage itself. In order: when the attacker is PlayerMech and this machine's group (+0x45) is PlayerMech's, Mech_AiFriendlyFireComplaint. Returns when the attacker is out of action (+0xa5, +0xa4 or +0x99) or its group's side byte (+0x12) equals this machine's. SimObject_AiOnTakingFire(this, attacker, 0), which runs Detection_ShareContact, and the under-fire countdown at +0x27d set to 30000 (about 14.6 s). In PlayerMech's group it adds the damage to +0x281 and returns while the total is under 8000. Returns for the local player (+0xa3), while the retarget cooldown at +0x273 runs, or when the attacker is mech+0x1a4 and the state's flag bit 1 (descriptor+0x09) is set. Sets +0x273 to 10000 (about 4.9 s). With flag bit 1 clear in a group whose slot 0 has +0xa3 set: squad message 3 through Ai_PostSquadMessage when the attacker is a HERC (+0x1a8 zero), and +0x9a cleared when the attacker is that slot-0 machine's target. Flag bit 2 (descriptor+0x0a; guarding, driving off en): pick = Ai_SelectDefenceTarget(this, Mech_AiGoalPosition(this)), replaced by mech+0x248 under squad verb 4 unless the pick's +0x1a4 is this machine; a non-null pick replaces the attacker, which is installed at +0x1a4; a HERC gets driving off en (00499784) and Mech_AiSelectAimComponent, anything else Mech_AiEngageOrderedTarget. Flag bit 3 (descriptor+0x0b; sleeping, ramming, bulldog travel): returns. Otherwise pick = Ai_SelectTarget(this, 0x24, 0); under squad verb 4, unless the pick's +0x1a4 is this machine, mech+0x248 replaces it when non-null with +0xa4 and +0x99 clear, and the verb is cleared to 0 when not. The pick is installed; non-null sets +0xac and runs Mech_AiEnterCombat, null with a target held on entry runs Mech_AiSelectBehaviour.",
+      "source": "docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "0041f7b8+778",
+        "sha1": "eb74d29af64c",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041fac4",
@@ -7503,8 +7864,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_FollowRoute",
-      "description": "Drives at the waypoint AFTER the group's route cursor, advancing the cursor through Route_AdvanceCursor when Ai_DriveToPoint reports arrival, and standing still with the throttle at zero when the route has run out. One of four callers of Route_AdvanceCursor, with Mech_BehaviourPlayerThink, Flyer_LeadRouteStep and GroundVehicle_LeaderSteer; all four step the group+0x04 of the group they belong to.",
-      "source": "docs/retail/simulation/ai-navigation.md"
+      "description": "Drives at the waypoint after the group's route cursor (Route_WaypointAt(group+0x04, index + 1)), stepping the cursor with Route_AdvanceCursor(group+0x04) when Ai_DriveToPoint reports arrival, and calling Mech_LocomotionTick(mech, 0, 0, 0) -- standing with the throttle at zero -- when there is no such waypoint. Callers of Route_AdvanceCursor found by es2_xref: this, Mech_BehaviourPlayerThink, Flyer_LeadRouteStep and GroundVehicle_LeaderSteer.",
+      "source": "docs/retail/simulation/ai-navigation.md",
+      "verified": {
+        "bytes": "0041fb60+85",
+        "sha1": "38d26d3464bb",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041fbb8",
@@ -7836,7 +8203,13 @@
       "name": "Mech_ReceiveSquadOrder",
       "description": "Mech vtable +0x28. One machine receiving one transmitted squad order: switches on the record's verb (STRINGS0 group 0, 0-0x11) over twelve jump-table arms covering sixteen verbs (6, 9 and anything above 0x11 take the default) and installs the standing order at mech+0x23e, its destination at +0x240, its target at +0x248, its guard subject at +0x24c and its abandon tier at +0x250. Verbs 0xd/0xe write patrol and move, 0/2/0xb write engage, 0xc writes guard; 3/0xa/0xf clear the order and reinstall patrolling; 4/0x10 and 7/0x11 are the radar pair, writing mech+0xb2 and mech+0x96; 5 and 8 are the FIRE AT WILL / HOLD YOUR FIRE pair, writing mech+0xb6; 1 sets the ignore-the-player's-selection latch at mech+0x9a, which 0, 5 and 0xb clear. Returns 1 when the order was taken. Each case picks a reply id for Ai_PostSquadMessage, posted only when priorReply is 0, or 1 with an accepted order. Args derived from disassembly: [EBP+8], [EBP+0xc], [EBP+0x10]; the vtable call site at 0043164d pushes three and does ADD ESP,0xc.",
       "source": "docs/retail/simulation/ai-squadmates.md",
-      "signature": "short __cdecl Mech_ReceiveSquadOrder(MechObject *mech, SquadOrderRecord *order, short priorReply)"
+      "signature": "short __cdecl Mech_ReceiveSquadOrder(MechObject *mech, SquadOrderRecord *order, short priorReply)",
+      "verified": {
+        "bytes": "00420ad4+2733",
+        "sha1": "ced3ae4c0747",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00421584",
@@ -7908,8 +8281,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Flyer_DispatchMove",
-      "description": "Flyer vtable +0x14. Calls the installed behaviour descriptor's +0x24 move triple (the descriptor pointer is at flyer+0x4d). The flyer twin of the mech dispatchers; Mech_AiTick (00411cec) is what reaches it.",
-      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice"
+      "description": "Flyer vtable +0x14, the one reference es2_xref finds (FlyerVtable). Reads the behaviour descriptor at flyer+0x4d and calls its +0x24 move triple as (*func)(flyer + thisDelta), returning that call's EAX; when all three dwords of the triple are zero it returns 0 without calling. It also copies the flyer's position (+0x26, 12 bytes) to the stack first, a leftover the dispatch ignores. The flyer twin of Behaviour_DispatchMove.",
+      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice",
+      "verified": {
+        "bytes": "004217fc+79",
+        "sha1": "280b13941142",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0042184c",
@@ -7917,8 +8296,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Flyer_DispatchThink",
-      "description": "Flyer vtable +0x18. Calls the installed behaviour descriptor's +0x18 think triple.",
-      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice"
+      "description": "Flyer vtable +0x18; es2_xref finds that slot as its one reference. Reads the behaviour descriptor pointer at flyer+0x4d and its think triple at descriptor+0x18/+0x1c/+0x20. When all three dwords are zero it returns 0; otherwise it calls the +0x18 function with flyer plus the +0x1c this-adjustment and returns the callee's EAX, with the OR of the three dwords still in ECX.",
+      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice",
+      "verified": {
+        "bytes": "0042184c+59",
+        "sha1": "28a7a3cac9e9",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00421888",
@@ -7926,8 +8311,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Flyer_DispatchReassess",
-      "description": "Flyer vtable +0x1c. Calls the installed behaviour descriptor's +0x30 reassess triple, which for every flyer state is Flyer_AiSelectBehaviour (00422d00).",
-      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice"
+      "description": "Flyer vtable +0x1c; es2_xref finds that slot as its one reference. Reads the behaviour descriptor pointer at flyer+0x4d and its reassess triple at descriptor+0x30/+0x34/+0x38. When all three dwords are zero it returns 0; otherwise it calls the +0x30 function with flyer plus the +0x34 this-adjustment and returns the callee's EAX. The OR of the three dwords is left in ECX across the call; every flyer state that has a reassess carries {Flyer_AiSelectBehaviour (00422d00), 0, 0}, so ECX holds 00422d00, which Flyer_AiSelectBehaviour's no-case path hands Behaviour_SetState as its descriptor.",
+      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice",
+      "verified": {
+        "bytes": "00421888+59",
+        "sha1": "22ba6e1347bd",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "004218c4",
@@ -7935,8 +8326,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Flyer_MovementTick",
-      "description": "The flyer's per-tick move, the +0x24 slot of the four behaviour states that have one. Adds the world velocity at flyer+0x24f to the position RAW -- three plain ADDs at 0042190a, with no Math_IntegrateRateOverTick, so a flyer's world velocity is a per-tick step where Razor_MovementTick's is a rate. Then four terrain probes (two wingtips at (+/-1000,-420,-300) that roll the airframe away, a nose point at (0,1000,0) and a look-ahead at (0,15000,-1500) that pitch it up), a clamp of the origin to terrain+500, and the flyby loop (sound 0x31) started or released at 30000 units from the view object. No damage, no object sweep, and no gate on being wrecked.",
-      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice"
+      "description": "The flyer's per-tick move, the +0x24 slot of the four behaviour states that have one. Rebuilds the rotation matrix at +0x12 from the euler triple at +0x0c (BuildEulerRotationMatrixQ14) when the flag at +0x32 is clear, and sets the flag. Adds the world velocity at flyer+0x24f to the position at +0x26 RAW -- three plain ADDs at 0042190a, with no Math_IntegrateRateOverTick, so a flyer's world velocity is a per-tick step where Razor_MovementTick's is a rate. Then four probes, each a body-frame point placed by Transform_ApplyToPoint through the transform at +0x12, which is not rebuilt between them, and compared with Terrain_HeightQuery; where the ground is above the point by d: the wingtip (1000,-420,-300) subtracts Q10(4000,d) from the roll rate +0x25d and the wingtip (-1000,-420,-300) adds it, then roll +0x0e += roll rate; the nose (0,1000,0) and the look-ahead (0,15000,-1500) first zero a negative pitch rate +0x25b, add Q10(2000,d) and Q10(20,d) to it respectively, then pitch +0x0c += pitch rate; each contact clears +0x32. Then sets the origin's Z to terrain + 500 when it is lower. While the airspeed +0x247 is positive it measures Math_FastMagnitude3D to ViewObjectPtr's position: under 30000 with the latch +0x06 clear it calls Sound_Play(0x31), flyby1.wav, whose loop count is 1, and sets the latch; at 30000 or more it clears the latch. Returns 1 in AX. It reads +0x1fa into a local it never uses, does no damage, sweeps no objects and tests no wrecked flag.",
+      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice",
+      "verified": {
+        "bytes": "004218c4+749",
+        "sha1": "0c9c46c1a39e",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00421bb4",
@@ -7983,8 +8380,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Flyer_ApplyFormationOffset",
-      "description": "Flyer vtable +0x78. No-ops for member index 0 (the flight leader); otherwise reads the three-int16 station offset FlyerFormation_GetSlotOffset (00423044) resolves out of dat/FFORMS.DAT and hands it to Formation_RotateAndAddOffset (00411d64), which rotates it by the GROUP LEADER's heading and adds it to the caller's point. Unlike a mech's or a base's, the offset carries a Z, which is what stacks a flight vertically.",
-      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice"
+      "description": "Flyer vtable +0x78; es2_xref finds that slot as its one reference. (flyer, point): no-ops when the word at flyer+0x49, the member's formation slot, is 0 (the flight leader); otherwise takes the three int16 FlyerFormation_GetSlotOffset (00423044) resolves out of dat/FFORMS.DAT for (group+0x02 formation id, that slot), sign-extends them to ints and hands them to Formation_RotateAndAddOffset (00411d64), which rotates them by the GROUP LEADER's rotation and adds them to the point. Unlike a mech's or a base's, the offset carries a Z, which is what stacks a flight vertically.",
+      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice",
+      "verified": {
+        "bytes": "00421e98+78",
+        "sha1": "7f6d41143145",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00421ee8",
@@ -8037,8 +8440,14 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObject_SetRunInto",
-      "description": "Vtable +0x68 in ALL EIGHT SimObject-shaped tables -- base, mech, flyer and the five structure classes -- with no override anywhere. Two instructions: obj+0xb1 = 1, \"something ran into me\". TWO call sites through the slot, both collision sweeps calling it on whatever object blocked the move, whatever class that object is: Mech_CollisionTest (0041903a) and GroundVehicle_CollisionTest (0046a581), the sweep inside StructureGroundVehicleVtable's +0x18 tick slot GroundVehicle_ThinkTick. Mech_BehaviourRamTick is the byte's only reader, and NOTHING clears it. Both the write and the read rebase (ADD reg, 0x92) and use displacement 0x1f, so a scalar search for 0xb1 finds neither -- search byte ptr [reg + 0x1f] instead.",
-      "source": "docs/retail/simulation/ai-combat-states.md"
+      "description": "Vtable +0x68 in eight SimObject-shaped tables -- base, mech, flyer and the five structure classes; es2_xref finds those eight slots and no branch to it. Two instructions: obj+0xb1 = 1, \"something ran into me\", written as ADD EAX,0x92 then byte [EAX+0x1f], so a scalar search for 0xb1 misses it. A grep of the disassembly for indirect CALL [reg+0x68] finds two calls on sim objects, both collision sweeps calling it on whatever object blocked the move, whatever its class: Mech_CollisionTest (0041903a) and GroundVehicle_CollisionTest (0046a581), the sweep inside the ground vehicle tick; the grep's third hit (00417fdf) is Mech_ComponentDamageWrite calling a component's vtable. es2_fieldscan b1 finds one reader on a sim object, Mech_BehaviourRamTick (0041e500, rebased the same way), and no write besides this one (ai-combat-states.md, The charge).",
+      "source": "docs/retail/simulation/ai-combat-states.md",
+      "verified": {
+        "bytes": "0042200c+17",
+        "sha1": "2287570183bc",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00422069",
@@ -8061,8 +8470,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Flyer_PitchCommand",
-      "description": "Elevator command that holds a pitch attitude: Q16(desiredPitch - flyer.pitch, 1500), resolved through cos(roll) at Q14, less Q16(pitchRate, 8000).",
-      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice"
+      "description": "(flyer, desiredPitch): the elevator command that holds a pitch attitude. Q16(desiredPitch - pitch +0x0c, 1500), put through Math_Q14Multiply with Math_CosBam(roll +0x0e) and sign-extended from 16 bits, less Q16(pitch rate +0x25b, 8000); returns the 32-bit difference in EAX. es2_xref finds two callers, Flyer_PitchToAltitude and Flyer_AttackRun.",
+      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice",
+      "verified": {
+        "bytes": "00422098+111",
+        "sha1": "0ea473959937",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00422108",
@@ -8124,8 +8539,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Flyer_SteerAndFly",
-      "description": "The flyer's steering channel and the function every movement step (route step, station keeping, attack run) ends in. Builds a 16-bit bank command from Q16(-turn,2500) + Q16(bankTurnRate at flyer+0x287, 32000) + Q16(rollRate,-5000); holds the aircraft at +/-(typeRecord+0x0e, the maximum bank angle) with a 1500 hysteresis band when the bank would take it further over; answers a steering command under 2000 with rudder (Q16(-turn,4000)) and level wings instead of a bank, and only if the roll is already under 800. Fills the command array's fifth element with the terrain height under the aircraft, which is FlightModel_Step's ceiling reference. When it is handed a leader it adds a term of Math_Q14Multiply(leader+0x1f8, cos(own heading - leader heading)); no writer of +0x1f8 was found by es2_fieldscan, a decompile grep or a raw disp32 sweep of the code section, and the flyer pool is zero-filled.",
-      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice"
+      "description": "(flyer, turn, elevator, leader): the flyer's steering channel, and the function es2_xref finds called by every movement step (Flyer_LeadRouteStep, Flyer_FormationStep, Flyer_AttackRun). The bank command is a 16-bit sum Q16(-turn, 2500) + Q16(r, 32000) + Q16(roll rate +0x25d, -5000), where r is the bank heading rate at flyer+0x287, less Q16(Math_Q14Multiply(leader+0x1f8, Math_CosBam(own heading +0x10 - leader heading +0x10)), 200) when a leader is passed. It fills a five-int command array: [1] the elevator argument, [2] rudder 0, [3] throttle 0, [4] Terrain_HeightQuery under the aircraft, FlightModel_Step's ceiling reference. With maxBank the type record's +0x0e (record pointer at +0x1fa): roll +0x0e at or above maxBank - 1500 with a positive bank command calls Flyer_CommandRoll(maxBank); at or below -(maxBank - 1500) with a negative one, Flyer_CommandRoll(-maxBank). Otherwise a turn whose magnitude (0x7fff for -0x8000) is under 2000 sets the rudder to Q16(-turn, 4000) when the roll is under 800, signed, and calls Flyer_CommandRoll(0) either way; anything larger puts the bank command in [0], zeroes the rudder and calls Flyer_ApplyFlightCommand. es2_fieldscan, a decompile grep and a raw disp32 sweep of the code section find no writer of +0x1f8, and the flyer pool is zero-filled (ai-flyers.md, Open).",
+      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice",
+      "verified": {
+        "bytes": "004222fc+453",
+        "sha1": "8ffd13bb42b0",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "004224c4",
@@ -8133,8 +8554,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Flyer_LeadRouteStep",
-      "description": "The flight leader's route step. Takes the waypoint one past the group's cursor, advances the cursor when it is within 15000 ground units, else falls back to the cursor's own waypoint; holds altitude 30000 through Flyer_PitchToAltitude and steers with Q16(bearingError, 28000) through Flyer_SteerAndFly.",
-      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice"
+      "description": "The flight leader's route step. Takes Route_WaypointAt(group+0x04 cursor, index + 1); when there is one it steers at it and calls Route_AdvanceCursor when Math_GroundDistanceBetweenPoints puts it within 15000; when there is none it steers at Route_WaypointAt(cursor, index) without advancing, and when that is null too the null point goes to Math_HeadingToward. Elevator Flyer_PitchToAltitude(30000); steering Q16(Math_HeadingToward(waypoint, position) - heading +0x10, 28000), through Flyer_SteerAndFly with no leader; then writes 0xb4 to the formation throttle word flyer+0x21c.",
+      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice",
+      "verified": {
+        "bytes": "004224c4+210",
+        "sha1": "cae3a40db4af",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00422598",
@@ -8187,8 +8614,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Flyer_FollowStep",
-      "description": "The movement step the three non-combat flyer thinks all open with: Flyer_LeadRouteStep for the group's first member, Flyer_FormationStep for everybody else, then flyer+0x96 (the radar mode) zeroed.",
-      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice"
+      "description": "The movement step the three non-combat flyer thinks (search and destroy, patrolling, scouting) open with: Flyer_LeadRouteStep when the flyer is the group's first member (group+0x0c [0]), Flyer_FormationStep otherwise, then flyer+0x96 (the radar mode) = 0.",
+      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice",
+      "verified": {
+        "bytes": "00422a50+48",
+        "sha1": "d221054372d8",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00422a80",
@@ -8196,8 +8629,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Flyer_BehaviourSearchDestroyThink",
-      "description": "search and destroy's think. Flyer_FollowStep, then for the flight leader only and when the flyer+0x5b countdown reads 0. The sweep reloads it with 10000, but Behaviour_SetState zeroes +0x5a..+0x81 at every reassess, so in practice the sweep runs on the state's first tick and after each 5000-count dwell: Ai_SelectTarget with mask 0x11 (mission target only, reject own class), checked against Group_IsOrderTarget before it is taken, then Flyer_EngageWithFlight.",
-      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice"
+      "description": "search and destroy's think. Flyer_FollowStep; then, for the group's first member only, Math_CountdownTimerTick on the record at flyer+0x5a (the 16-bit count at +0x5b). When that reads 0 it stores 10000 there and sweeps: Ai_SelectTarget mask 0x11 (restrict the designated bonus, reject own class), cone 0. A non-null result that Group_IsOrderTarget accepts becomes the target -- obj+0x1a4, decrementing the old target's +0x1a2 holder count and incrementing the new one's, and setting +0x9d, when it differs -- and Flyer_EngageWithFlight runs. Returns 0. Behaviour_SetState zeroes +0x5a..+0x81 at every state change, so the count is 0 on the state's first tick (ai-flyers.md, The thinks).",
+      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice",
+      "verified": {
+        "bytes": "00422a80+180",
+        "sha1": "68a4898b3de5",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00422b34",
@@ -8205,8 +8644,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Flyer_BehaviourPatrolThink",
-      "description": "patrolling's think. The same shape as Flyer_BehaviourSearchDestroyThink with mask 0x10 and no order-target check, so a flight on patrol takes anything it can see that is not another aircraft.",
-      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice"
+      "description": "patrolling's think. The same shape as Flyer_BehaviourSearchDestroyThink with mask 0x10 (reject own class) and no Group_IsOrderTarget test: the sweep's result, null included, becomes the target with the same holder-count and +0x9d bookkeeping, and Flyer_EngageWithFlight runs when the target is non-null afterwards. Returns 0.",
+      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice",
+      "verified": {
+        "bytes": "00422b34+166",
+        "sha1": "bc5aec4a47de",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00422bdc",
@@ -8214,8 +8659,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Flyer_BehaviourScoutThink",
-      "description": "scouting's think: Flyer_FollowStep and nothing else.",
-      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice"
+      "description": "scouting's think: Flyer_FollowStep, then returns 0.",
+      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice",
+      "verified": {
+        "bytes": "00422bdc+17",
+        "sha1": "0f1c410d9a42",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00422bf0",
@@ -8223,8 +8674,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Flyer_EngageWithFlight",
-      "description": "Puts the whole flight onto the leader's target: installs the attacking descriptor (00499d34) on itself, then for the group's first member only hands every surviving member the same target (obj+0x1a4, with the +0x1a2 counters and the +0x9d changed flag) and recurses into it. The recursion terminates because only the leader takes the loop.",
-      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice"
+      "description": "Puts the whole flight onto the leader's target. Installs the attacking descriptor (00499d34) on itself with Behaviour_SetState; then, when it is the group's first member, walks the member array group+0x0c up to the count at group+0x10, stopping at the first null entry, and for every other member whose +0x99 is clear copies its own target into the member's +0x1a4 when they differ (decrementing the old target's +0x1a2 holder count, incrementing the new one's, setting the member's +0x9d) and recurses into the member. The recursion ends there because a member that is not the first does not take the loop.",
+      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice",
+      "verified": {
+        "bytes": "00422bf0+183",
+        "sha1": "97529acdb2e4",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00422ca8",
@@ -8247,9 +8704,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Flyer_AiSelectBehaviour",
-      "description": "The reassess slot of the five flyer states that have one (sleeping and dead carry a null triple): maps the group's current order verb onto a descriptor. 0 -> search and destroy (00499dac), 3 -> patrolling (00499d70), 4 -> sleeping (00499de8), 5 -> scouting (00499e24); 4 and 5 also latch flyer+0xa5, the out-of-the-fight byte. Verbs 1, 2 and 6 and an empty order slot match no case and leave ECX unwritten, so Behaviour_SetState is handed ECX as Flyer_DispatchReassess left it: the OR of the reassess triple, which is 00422d00, this function's own address.",
+      "description": "The reassess slot of the five flyer states that have one (sleeping and dead carry a null triple): maps the group's current order verb onto a descriptor. The order is group+0x44 + 4 * group+0x6c; a null slot reads as verb 0xb. 0 -> search and destroy (00499dac), 3 -> patrolling (00499d70), 4 -> sleeping (00499de8), 5 -> scouting (00499e24); 4 and 5 also latch flyer+0xa5, the out-of-the-fight byte. Any other verb -- 1, 2, 6, or the 0xb of an empty slot -- matches no case and leaves ECX unwritten, so Behaviour_SetState is handed ECX as Flyer_DispatchReassess left it: the OR of the reassess triple, which is 00422d00, this function's own address. Returns 1 in AX.",
       "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice",
-      "signature": "short __cdecl Flyer_AiSelectBehaviour(void *flyer)"
+      "signature": "short __cdecl Flyer_AiSelectBehaviour(void *flyer)",
+      "verified": {
+        "bytes": "00422d00+143",
+        "sha1": "7c749d0a8859",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00422d90",
@@ -8520,9 +8983,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Group_DeploymentCheck",
-      "description": "Per-frame arrival check for a mission group that has not entered the world yet, run by Sim_MainTick for exactly the groups whose record +0x14 action pointer is non-null. No-ops until that action runtime activation flag (action+0x0a) is set. Then the action verb (action+0x02) picks the arrival: 2 or 3 spawn a METEOR drop pod 150000 units from the player (bearing +-90 deg for 2, +-22.5 deg for 3) carrying the group, leaving +0x14 set for the pod to clear on landing and latching group+0x13 so only one pod is ever launched; 4 or 5 place the group leader at 90000 units behind (4) or 150000 ahead (5) facing bearing-0x8000, run every other member through vtable +0x78 for its formation offset, and clear +0x14; any other verb just clears +0x14 so the group goes live where it stands. All arrival points come from Deployment_PickPointNearPlayer.",
+      "description": "Per-frame arrival check for a mission group that has not entered the world yet; Sim_MainTick (0045f6d0) calls it instead of Group_OrderTick for a group whose +0x14 action pointer is non-null. No-ops until that action's runtime activation flag (action+0x0a) is set. Then the action verb (action+0x02) picks the arrival. 2 or 3: once only, latched by group+0x13 whether or not the pod is built, a METEOR drop pod (Pool_Alloc from g_MeteorPool, Meteor_Construct with the group) aimed 150000 units from the player at bearing 0x4000 - (rand & 0x7fff) for 2 (+-90 deg) or 0x1000 - (rand & 0x1fff) for 3 (+-22.5 deg), leaving +0x14 set for the pod to clear on landing. 4 or 5: the group leader goes to a point 90000 units away at bearing 0x9000 - (rand & 0x1fff) (behind, +-22.5 deg) for 4, or 150000 at 0x2000 - (rand & 0x3fff) (ahead, +-45 deg) for 5, with heading bearing - 0x8000 and its matrix flag +0x32 cleared; every other member gets a copy of the point through its own vtable +0x78 formation offset as its position, its heading untouched; +0x14 is cleared. Any other verb just clears +0x14, so the group goes live where it stands. The bearings are relative to the player's heading in Deployment_PickPointNearPlayer, which the pod passes 0 and the walk-on verbs 1 as its avoid-deployed-objects flag; draws use Math_RandomNext(0x4d261d).",
       "source": "docs/retail/simulation/mission-deployment.md",
-      "signature": "void __cdecl Group_DeploymentCheck(int *group)"
+      "signature": "void __cdecl Group_DeploymentCheck(int *group)",
+      "verified": {
+        "bytes": "004236c4+476",
+        "sha1": "7f40686e9dad",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "004238a0",
@@ -22019,8 +22488,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Main_StaticInit",
-      "description": "MAIN.CPP's C++ static initialiser: the priority-0x20 entry at 004a7b70 in Borland's _INIT_ table (00 20 d8 ca 45 00), with no direct caller. Loads the video-mode/sim-globals block base 004d2540 into EBX, constructs the member object at 004d2603 (GLBitmap_Ctor), memsets the 0xc3-byte block to zero and fills its defaults through EBX: among them VideoMode_PanelMode (+0x7b) and maybe_CockpitLayoutMode (+0x7c) = 0, the 320-wide mode-0 geometry, Display_UseScrollWindow (+0xaa, 004d25ea) = 1, PilotingRazor = 0 and ControlsOptionBase = 0xd. Ends by seeding the two Math_RandomNext state blocks at 004d261d and 004d268f. The only write of +0x7c anywhere, and the only writer of +0x7b besides VideoMode_Configure.",
-      "source": "docs/retail/simulation/cockpit-views.md"
+      "description": "MAIN.CPP's C++ static initialiser: the priority-0x20 entry at 004a7b70 in Borland's _INIT_ table (00 20 d8 ca 45 00); es2_xref finds that pointer and no branch to it. Loads the video-mode/sim-globals block base 004d2540 into EBX, constructs the member object at 004d2603 (+0xc3, GLBitmap_Ctor), then memsets the 0xc3-byte block to zero and fills its defaults through EBX: +0x4a = 1, +0x0c = 1, the dword +0x0e = 0, +0x56/+0x58/+0x5a = -1, ViewChain_CameraControlPreferred (+0x5c) = 1, ViewChain_View (+0x32) and ViewChain_PendingView (+0x5e) = 2, +0x7a = 0x72, maybe_CockpitLayoutMode (+0x7c) and VideoMode_PanelMode (+0x7b) = 0, Display_UseScrollWindow (+0xaa, 004d25ea) = 1, the dwords +0x82..+0x96 = 320, 200, 640 (back buffer width), 400 (height), 320 (cockpit canvas width), 400, VideoMode_UseHiResBanks (+0xb0) = 0, +0x7d = 1, +0xa2 = 1, PilotingRazor (+0xb5) and +0xb6 = 0, ControlsOptionBase (+0xbb) = 0xd. Ends by seeding the two Math_RandomNext state blocks at 004d261d and 004d268f with Math_RandomSeed.",
+      "source": "docs/retail/simulation/cockpit-views.md",
+      "verified": {
+        "bytes": "0045cad8+277",
+        "sha1": "2e8dd7d87eb5",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0045cbf0",
@@ -22815,8 +23290,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Sound_Play",
-      "description": "(catalogId). Non-positional. Rolls the variation count (attribute byte 6) to displace the id, sets volume to Math_Q16Multiply(byte 1, 65000) * byte 8 / 100 -- or 0 when the category is muted -- and plays.",
-      "source": "docs/retail/simulation/audio.md"
+      "description": "(catalogId). Non-positional: no position is taken or set. Does nothing while SfxManager is null. When the id's variation count (attribute byte 6) is above 1 it adds Math_RandomBelow(presentation block 0x4d268f, count) to the id; then sets the voice's volume to Math_Q16Multiply(byte 1, 65000) * byte 8 / 100 -- or 0 when Sound_IsCategoryEnabled says the category is muted -- and calls Sfx_Play on the catalog voice for that id.",
+      "source": "docs/retail/simulation/audio.md",
+      "verified": {
+        "bytes": "0046272c+174",
+        "sha1": "f10ad542aebe",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004627dc",
@@ -24206,9 +24687,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Timer_CountDown",
-      "description": "Generic countdown step in the simulation's timer unit (about 0.49 ms per count, not a millisecond): subtracts SimTickDelta from the int at p+1, clamps at 0, returns it. Taking p+1 rather than p is why the AI behaviour block's dwell countdown sits at an unaligned +0x05 with a spare byte at +0x04. Mech_AiTick passes &block+0x04, so descriptor+0x04 is a dwell time in timer units.",
+      "description": "(p): generic 32-bit countdown step in the simulation's timer unit (about 0.49 ms per count, not a millisecond): subtracts SimTickDelta (sign-extended word at 004d3be8) from the int at p+1, stores 0 when the result is negative, and returns the int in EAX. The byte at p is neither read nor written here, so p names the byte below the counter: Mech_AiTick, read at 00411d1c, passes the behaviour block (obj+0x4d) + 0x04, which makes the dwell countdown the int at obj+0x52. Math_CountdownTimerTick (00467944) is the 16-bit sibling.",
       "source": "docs/retail/simulation/ai-dispatch.md",
-      "signature": "undefined4 __cdecl Timer_CountDown(int p)"
+      "signature": "undefined4 __cdecl Timer_CountDown(int p)",
+      "verified": {
+        "bytes": "004679a4+28",
+        "sha1": "015749fcec66",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "004679c0",
@@ -25327,8 +25814,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Terrain_RayWalk",
-      "description": "Ray-versus-terrain traversal, the largest function in the terrain module (5129 bytes). Halves the segment delta until every component fits +/-32000, derives four Q16 slopes via Math_Q16Divide, classifies the ground-plane delta into an octant 0-7, then walks the height grid cell by cell with a two-phase step (a minor-axis crossing stashes the major-axis exit and replays it next iteration). param_6 selects the per-step surface test, and the two ask different questions. Mode 0, the thin ray (Sim_RaycastTerrain for weapon fire, Terrain_RayHitDistance), reports the ground wherever the segment is at or below it: each step yields an exit point and an edge code 0=W/1=E/2=N/3=S, tested by Terrain_EdgeCrossingTest and refined by Terrain_CellSurfaceIntersect. Mode 1, the slope walk (Mech_AiObstacleAvoidance's two probes, Ai_LineOfSightBlocked), packs the delta into three shorts normalised to 0x800 by Math_NormalizeVec3ShortToLength and asks Terrain_FaceBlocksAt (start on the first step, endpoint on the last) / Terrain_EdgeFaceBlocks (every other step) whether the face being crossed is too steep to walk; a hit on this cell's face or the endpoint's reports Terrain_FindDiagonalCrossing, one on the neighbour's reports the exit point. The segment has no width in either mode. Six multiplies in the octant-2/3 arms are 32-bit truncating imul/sar rather than Math_Q16Multiply.",
-      "source": "docs/retail/simulation/terrain-heightmap.md (terrain clipping RE session)"
+      "description": "Ray-versus-terrain traversal, 5129 bytes. (grid, start, end, radius, out, mode). Halves the segment delta until every component fits +/-32000, derives four Q16 slopes via Math_Q16Divide (dy/dx, dz/dx, dx/dy, dz/dy, each 0x10000 on a zero divisor), classifies the ground-plane delta into an octant 0-7, then walks the height grid cell by cell with a two-phase step (a minor-axis crossing stashes the major-axis exit and replays it next iteration). A start cell, or any later cell, outside the grid returns 0. param_6 selects the per-step surface test, and the two ask different questions. Mode 0, the thin ray (es2_xref finds Sim_RaycastTerrain and Terrain_RayHitDistance), reports the ground wherever the segment is at or below it: each non-final step yields an exit point and an edge code 0=W/1=E/2=N/3=S tested by Terrain_EdgeCrossingTest; the final step height-queries its endpoint and, when it is also the first, the start; a crossing calls Terrain_CellSurfaceIntersect when out is non-null, copies its point only when it finds one, and returns 1 either way. Mode 1, the slope walk (es2_xref finds Mech_AiObstacleAvoidance's two probes and Ai_LineOfSightBlocked), packs the delta into three shorts normalised to 0x800 by Math_NormalizeVec3ShortToLength and asks whether the face being crossed is too steep: Terrain_FaceBlocksAt at the start on the first step (a hit reports the start), Terrain_FaceBlocksAt at the endpoint on the last (clear returns 0, a hit reports Terrain_FindDiagonalCrossing), Terrain_EdgeFaceBlocks on every other step (2 reports Terrain_FindDiagonalCrossing, any other nonzero the exit point). A hit returns 1 in AL. The segment has no width in either mode, and the radius argument is only forwarded to Terrain_CellSurfaceIntersect. Six multiplies in the octant-2/3 arms are 32-bit truncating imul/sar rather than Math_Q16Multiply.",
+      "source": "docs/retail/simulation/terrain-heightmap.md (terrain clipping RE session)",
+      "verified": {
+        "bytes": "0046e87c+5166",
+        "sha1": "48222fe74da8",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0046fcac",
@@ -25345,8 +25838,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Terrain_FaceBlocksMovement",
-      "description": "Whether one terrain triangle stops a moving body, from the UPWARD COMPONENT OF ITS NORMAL ALONE: under 0x60e at the 0x800 normal scale -- about 41 degrees of slope -- is a wall and blocks, anything shallower does not. On the boundary value exactly it falls through to a dot product of the face normal against the segment direction, blocking under -8000000; that arm needs the normal to land on 0x60e to the unit and decides almost nothing. This is the whole of Terrain_RayWalk's mode 1, and the reason mode 1 exists: the AI's obstacle probes lie flat on the ground, and mode 0 would report a graze on every one of them.",
-      "source": "docs/retail/simulation/ai-navigation.md"
+      "description": "(unused, direction, normal): whether one terrain triangle stops a moving body, from the UPWARD COMPONENT OF ITS NORMAL: normal.z under 0x60e at the 0x800 normal scale -- about 41 degrees of slope -- is a wall and returns 1 in AL; above 0x60e it returns 0. On 0x60e exactly it returns DotProductVec3Short(normal, direction) < -8000000. es2_xref finds two callers, Terrain_FaceBlocksAt and Terrain_EdgeFaceBlocks, which hand on the direction they are given and a face normal from the cell record, built at length 0x800; Terrain_RayWalk gives them its direction normalised to 0x800 by the same Math_NormalizeVec3ShortToLength. Math_FastMagnitude3D reads at most ~8% low, so each vector is at most ~0x8b4 long, the dot product is never below about -4950000, and the boundary arm returns 0; Deployment_PickPointNearPlayer's zero direction gives 0 too. This is the face test under Terrain_RayWalk's mode 1.",
+      "source": "docs/retail/simulation/ai-navigation.md",
+      "verified": {
+        "bytes": "0046fe40+66",
+        "sha1": "57deb24ba0ac",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0046fe84",
@@ -25897,7 +26396,13 @@
       "confidence": "high",
       "name": "Pool_Prev",
       "description": "(pool, node): the in-use node before node (link at node-4), returned as node + 8 or 0; with a null node, walks Pool_Next to the last in-use node.",
-      "source": "DBSIM decompile and disassembly at 00471b64"
+      "source": "DBSIM decompile and disassembly at 00471b64",
+      "verified": {
+        "bytes": "00471b64+64",
+        "sha1": "83ee47c2b4f3",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00471ba4",
@@ -39087,8 +39592,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Math_RandomNext",
-      "description": "The game's pseudo-random generator: an additive lagged Fibonacci generator over a 56-entry (0x38) table of shorts with two rotating byte cursors at state+0x70 and state+0x71. Each call does table[i] += table[j]; returns the new table[i] in the low 16 bits; then advances both cursors modulo 56. Callers pass the state block address (0x4d261d) and mask the result -- & 0xfff for the terrain material roll in TerrainZone_PopulateFromBitmap and for the explosion's ~51% per-component roll in Mech_ApplyExplosiveDamage. Seeded only by Math_RandomSeed (00492d7c), from a static table; there is no entropy input anywhere, so DBSIM's simulation replays identically on every run.",
-      "source": "docs/retail/simulation/random-generator.md"
+      "description": "The game's pseudo-random generator: an additive lagged Fibonacci generator over a 56-entry (0x38) table of shorts with two rotating byte cursors, j at state+0x70 and i at state+0x71. Each call does table[i] += table[j], returns the new table[i] zero-extended in EAX (the high word is the sign extension of the cursor, so 0), then advances i and j, each wrapping to 0 at 0x38. The argument is a state block: the simulation's is 0x4d261d and the presentation generator's 0x4d268f, and random-generator.md tables the draw sites es2_xref finds and the masks they apply (& 0xfff for the terrain material roll and the explosion's per-component roll). Seeding is Math_RandomSeed (00492d7c), which copies the static table at 004a6958 and sets the cursors to 0x18 and 0x37, taking no clock or other input.",
+      "source": "docs/retail/simulation/random-generator.md",
+      "verified": {
+        "bytes": "00492dd4+66",
+        "sha1": "351f6d0f6906",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00492e18",

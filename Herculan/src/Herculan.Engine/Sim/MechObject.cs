@@ -78,6 +78,11 @@ public sealed partial class MechObject : SimObject {
 		_damage = damage;
 		_weaponModelCellCount = weaponModelCellCount;
 
+		// Mech_Constructor (00415bb0) marks a chassis with no salvage scale worth no salvage, guns
+		// included: the SPIDER, in retail. See docs/retail/simulation/component-damage.md, "What a
+		// wreck is worth".
+		WorthNoSalvage = Type.SalvageScale == 0;
+
 		if (Type.IsFlyer && flightModel != null) {
 			// Mech_Constructor's own flyer seed: airborne at 1000, with the throttle field the
 			// flight model owns starting where the machine's own throttle is.

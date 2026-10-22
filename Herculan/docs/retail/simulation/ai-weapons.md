@@ -13,7 +13,7 @@ Its whole body is a switch on the target's target class (`obj+0x1a8`, [`target-s
 | Class | Aim point |
 |---|---|
 | 0, a machine | `Ai_AimAndFireAtMech`, below — the only branch that uses the shooter's aim component |
-| 1, a structure | The base's **first surviving component**: vtable `+0x54` (`Base_FirstLiveComponent`, `00406868`) with a null second argument returns the first index whose damage word is non-zero, and vtable `+0x58` places it |
+| 1, a structure | The base's **first surviving component**: vtable `+0x54` (`Base_FirstLiveComponent`, `00406868`) with a null second argument returns the first index whose alive flag (`+0x201`) is set, and vtable `+0x58` places it |
 | anything else | The object's own aim offset, vtable `+0x30`'s second triple, added to its position. A GroundVehicle (class 3) is built as a structure and answers with its `BASES.DAT +0x2c` height (`Base_GetAimPoint`, [`structure-behaviour.md`](structure-behaviour.md#what-a-structure-is-aimed-at)); a flyer (class 2) answers zero (`SimObject_GetAimPointZero`), so it is shot at its origin |
 
 The last two go straight to `Ai_FireAtPoint`. Only the first has a turret gate.

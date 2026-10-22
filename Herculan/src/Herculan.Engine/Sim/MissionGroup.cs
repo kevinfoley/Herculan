@@ -503,8 +503,9 @@ public sealed partial class MissionGroup {
 	/// <para><b>It reads <see cref="SimObject.OutOfAction"/>, not <see cref="SimObject.Neutralised"/></b>
 	/// — the original's test is all three of <c>+0x99</c>, <c>+0xa4</c> and <c>+0xa5</c>, so a
 	/// machine that is alive and mobile but has lost every weapon counts as gone. That is the point
-	/// of the question rather than an oversight: the only caller asks whether an enemy group can
-	/// still contest a guard post, and a disarmed machine cannot. Despite the name this is not a
+	/// of the question rather than an oversight: its one caller found by <c>es2_xref</c> asks whether
+	/// an enemy group can still contest a guard post, and a disarmed machine cannot. A group with no
+	/// members answers yes. Despite the name this is not a
 	/// "has this group been destroyed" test and must not be reused as one — see
 	/// docs/retail/simulation/ai-goals.md.</para>
 	/// </summary>

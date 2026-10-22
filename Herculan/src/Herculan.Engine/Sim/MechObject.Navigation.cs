@@ -25,8 +25,8 @@ public partial class MechObject {
 	private bool UnderAiControl => !IsPlayer && Behaviour.State != null;
 
 	/// <summary>
-	/// <c>Ai_NavigationStep</c> (<c>0041d598</c>) — the movement half that <c>patrolling</c>,
-	/// <c>search/destroy</c> and <c>guarding</c> share.
+	/// <c>Ai_NavigationStep</c> (<c>0041d598</c>) — the movement half that <c>patrolling</c> and
+	/// <c>search/destroy</c> share. <see cref="GuardThink"/> calls the same primitives itself.
 	///
 	/// <para><b>Only the group leader reads the route.</b> Everyone else steers off the leader, which
 	/// is what keeps a group together over a route one machine is following, and what stops a group
@@ -419,7 +419,7 @@ public partial class MechObject {
 	/// exactly what that order buys.</para>
 	/// </summary>
 	private bool PatrolThink(SimWorld world) {
-		// Sampled before the movement, because the movement can clear it.
+		// The original reads the verb before the movement runs, and its gate and acquisition test use that copy.
 		short standing = SquadOrderVerb;
 		NavigationStep(world);
 		Target = null;
@@ -567,7 +567,8 @@ public partial class MechObject {
 
 	/// <summary>
 	/// <c>Mech_BehaviourGuardThink</c> (<c>0041e224</c>) — behaviour state 15. A player squadmate with
-	/// no standing order skips the state entirely and holds formation; everything else works a
+	/// no standing order holds formation instead, and acquires only when told to
+	/// <see cref="FireAtWill"/>; everything else works a
 	/// standoff ring around <see cref="GoalPosition"/>, approaching past 30000, holding still between
 	/// 10000 and 30000, and walking outward below 10000.
 	///

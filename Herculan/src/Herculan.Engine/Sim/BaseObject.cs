@@ -320,12 +320,10 @@ public sealed partial class BaseObject : SimObject {
 
 	/// <inheritdoc />
 	/// <remarks>
-	/// The structure's vtable <c>+0x30</c> (<c>0040351c</c>): the base accessor zeroes the offset
-	/// triple and this one writes <see cref="BaseType.AimPointHeight"/> into its Z, which the tower
-	/// ticks add to the position unrotated. So a building is aimed at a stated height up its side
-	/// rather than at the ground point its model origin sits on. Homing, the HUD indicator and line
-	/// of sight read the <c>+0x24</c> slot instead; this one is read by the tower ticks, the camera
-	/// attach and <c>Ai_AimAndFire</c>'s fallback
+	/// The structure's vtable <c>+0x24</c> (<c>Base_GetAimNodeTransform</c>, <c>00403548</c>), a node
+	/// whose translation is <c>(0, 0, </c><see cref="BaseType.AimPointHeight"/><c>)</c>. So a building
+	/// is aimed at a stated height up its side rather than at the ground point its model origin sits
+	/// on. The <c>+0x30</c> slot carries the same height (<see cref="ViewMounts"/>)
 	/// (docs/retail/simulation/structure-behaviour.md, "What a structure is aimed at").
 	/// </remarks>
 	public override Vec3i AimPoint =>
@@ -341,7 +339,10 @@ public sealed partial class BaseObject : SimObject {
 	public override int SightHeight => Type.AimPointHeight;
 
 	/// <inheritdoc />
-	/// <remarks>The same <c>+0x30</c> accessor: its height goes into the second triple's Z.</remarks>
+	/// <remarks>
+	/// The structure's vtable <c>+0x30</c> (<c>Base_GetAimPoint</c>, <c>0040351c</c>): the base accessor
+	/// zeroes both triples and this one writes <see cref="BaseType.AimPointHeight"/> into the second's Z.
+	/// </remarks>
 	public override (Vec3i Eye, Vec3i OrbitCentre) ViewMounts =>
 		(Vec3i.Zero, new Vec3i(0, 0, Type.AimPointHeight));
 

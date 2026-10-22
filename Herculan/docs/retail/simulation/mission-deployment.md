@@ -93,7 +93,7 @@ The raycast's route is the tail of the sweep in [`hit-detection.md`](hit-detecti
 `Detection_ShareContact` takes a spotter and a contact and does nothing if they are on the same side (`group+0x12`). Otherwise it walks the live-object list. Each object on the spotter's side whose group has arrived (`group+0x14` clear), the spotter included, is measured to the contact with `Math_DistanceBetweenPoints`. Within 100000 it gets the contact ([`target-selection.md`](target-selection.md#the-sensor-model--sim_detectiontick-004123ac)). Within 50000 the function also raises the **contact's** `+0x9e` (`004127a7`, through `EDI`, the second argument) and activates the **list object's own** `+0x1b2` (`004127ab`-`004127c2`, through `EBX`). The `+0x9e` write does not depend on the list object having an action. Two things call it:
 
 - **A new contact in the sweep.** One that a human-side object other than the player's machine makes, and the reciprocal one that a Cybrid object makes. A contact the player's own machine makes is not shared ([`target-selection.md`](target-selection.md#passes)).
-- **A shot striking an object**, with the struck object as spotter and the shooter as contact. The struck object's vtable `+0x50` makes the call: `Mech_ShareContact` (`00411aec`) for a structure, flyer or base object, `Mech_AiOnTakingFire` for a HERC past its own gates ([`ai-targeting.md`](ai-targeting.md#passing-a-contact-on)).
+- **A shot striking an object**, with the struck object as spotter and the shooter as contact. The struck object's vtable `+0x50` makes the call: `SimObject_AiOnTakingFire` (`00411aec`) for a structure, flyer or base object, `Mech_AiOnTakingFire` for a HERC past its own gates ([`ai-targeting.md`](ai-targeting.md#passing-a-contact-on)).
 
 So an engagement action does not wait for a mutual contact. It activates as soon as an object within 50000 of a hostile first spots it, or is shot by it from within 50000.
 
@@ -152,11 +152,11 @@ Runs every frame for every waiting group; does nothing until that group's action
 
 No retail `.MSN` authors verb 4 or 5: the verb runs 0-3 across the corpus ([`msn-mission-file.md`](../formats/msn-mission-file.md#row-10-field-decode--the-action-record-dat_00470660-82-bytesrecord)). The two on-foot arrivals are read from the code alone.
 
-**On foot** places the group's leader at that point facing `bearing - 0x8000` (the bearing itself, not the player's heading plus it), runs each other member through its own vtable `+0x78` formation offset, and clears `group+0x14` immediately. Only the leader is turned.
+**On foot** places the group's leader at that point facing `bearing - 0x8000` (the bearing itself, not the player's heading plus it) and clears its rotation-valid flag `+0x32`. Each other member gets a copy of the point passed through its own vtable `+0x78` formation offset as its position — a flyer's offset carries a Z ([`ai-flyers.md`](ai-flyers.md#station-keeping)) — and `group+0x14` is cleared immediately. Only the leader is turned.
 
 **In place** (any other verb, e.g. verb 1) just clears `group+0x14`, so the group goes live where it already stands — the one arrival for which the placed position is not a placeholder.
 
-**Drop pod** spawns a `METEOR` and leaves `group+0x14` set; the pod clears it on landing. A byte at `group+0x13` latches the launch, so a group only ever gets one pod.
+**Drop pod** spawns a `METEOR` and leaves `group+0x14` set; the pod clears it on landing. A byte at `group+0x13` latches the launch, so a group only ever gets one pod. The latch is set before the pod is taken from `g_MeteorPool`, so when `Pool_Alloc` returns null the group is left waiting for good.
 
 ### Picking the point — `Deployment_PickPointNearPlayer` (`0042354c`)
 

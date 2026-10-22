@@ -33,8 +33,8 @@ public sealed partial class FlyerObject : IFlightBody {
 	private const int GroundClearance = 500;
 
 	/// <summary>
-	/// Range at which the flyby loop starts, and beyond which the latch is released so the next pass
-	/// plays it again.
+	/// Range inside which the flyby sound plays, and at or beyond which the latch is released so the
+	/// next pass plays it again.
 	/// </summary>
 	private const int FlybySoundRange = 30000;
 
@@ -174,7 +174,7 @@ public sealed partial class FlyerObject : IFlightBody {
 	/// <c>Flyer_MovementTick</c> (<c>004218c4</c>) — the flyer's per-tick move, the function its behaviour descriptors carry
 	/// in the <c>+0x24</c> slot where a walking machine carries <c>Mech_MovementTick</c>. It
 	/// adds the velocity the control law settled on, runs four terrain probes over the
-	/// airframe, refuses to let the aircraft sink into the ground, and pitches the flyby loop.
+	/// airframe, refuses to let the aircraft sink into the ground, and plays the flyby sound.
 	///
 	/// <para><b>The probes are lighter than a RAZOR's.</b> There are four rather than seven, none of
 	/// them sweeps forward against objects, and <b>none of them does any damage</b>: a Cybrid flyer
@@ -267,10 +267,11 @@ public sealed partial class FlyerObject : IFlightBody {
 	}
 
 	/// <summary>
-	/// The flyby loop — catalog id <c>0x31</c>, <c>flyby1.wav</c>. Started once when an aircraft with
-	/// any airspeed comes within <see cref="FlybySoundRange"/> of the listener and released again
-	/// when it leaves, through a latch on the object itself (<c>flyer+0x06</c>), so a pass sounds
-	/// once per pass. <c>Sound_Play</c> is not positional: every flyer in range shares the one row.
+	/// The flyby sound — catalog id <c>0x31</c>, <c>flyby1.wav</c>, whose loop count is 1. Played
+	/// once when an aircraft with any airspeed comes within <see cref="FlybySoundRange"/> of the
+	/// listener, through a latch on the object itself (<c>flyer+0x06</c>) that is released when it
+	/// leaves, so it sounds once per pass. <c>Sound_Play</c> is not positional: every flyer in range
+	/// shares the one row (docs/retail/simulation/ai-flyers.md, "The move").
 	/// </summary>
 	private void UpdateFlybySound(SimWorld world) {
 		if (AirSpeed <= 0) {
@@ -287,7 +288,7 @@ public sealed partial class FlyerObject : IFlightBody {
 		}
 
 		if (!_flybySounding) {
-			world.Sounds?.Play(SoundId.FlyerLoop);
+			world.Sounds?.Play(SoundId.FlyerFlyby);
 			_flybySounding = true;
 		}
 	}
@@ -295,15 +296,16 @@ public sealed partial class FlyerObject : IFlightBody {
 	private bool _flybySounding;
 
 	/// <summary>
-	/// Silences the loop when the aircraft goes down — the original's <c>Sound_Stop(0x31)</c>,
-	/// gated on the same latch so a flyer that was never in earshot does not stop somebody else's.
+	/// Cuts a flyby sound still playing when the aircraft goes down — the original's
+	/// <c>Sound_Stop(0x31)</c>, which it runs only while the latch at <c>flyer+0x06</c> is set and
+	/// follows by clearing it, so a flyer that was never in earshot does not stop somebody else's.
 	/// </summary>
 	private void StopFlybySound(SimWorld? world) {
 		if (!_flybySounding) {
 			return;
 		}
 
-		world?.Sounds?.Stop(SoundId.FlyerLoop);
+		world?.Sounds?.Stop(SoundId.FlyerFlyby);
 		_flybySounding = false;
 	}
 
@@ -411,8 +413,9 @@ public sealed partial class FlyerObject : IFlightBody {
 	/// <item>Anything larger is flown as a bank.</item>
 	/// </list>
 	///
-	/// <para>The original also has a leader term in the bank command, scaled by the leader's
-	/// <c>+0x1f8</c>. The flyer pool is zero-filled and no writer of that field is known
+	/// <para>The original also takes a leader term off the bank heading rate when station keeping
+	/// hands it the leader, scaled by the leader's <c>+0x1f8</c>. The flyer pool is zero-filled and no
+	/// writer of that field is known
 	/// (docs/retail/simulation/ai-flyers.md, Open), so the term contributes nothing and the branch is not
 	/// reproduced.</para>
 	/// </summary>

@@ -119,7 +119,7 @@ A linear sweep of the live-object list. A candidate is weighed when it is not th
 
 ### The player's line of fire
 
-The third source runs only for a machine whose group is **led by the player**, and what it reads is `DAT_004a9c0c`: a trail of up to 40 points that `Mech_PlayerFireTick` (`00415608`) stamps along the player's turret bearing every time the trigger produces a shot, spaced `0x1000` apart and cut to the range of the player's selected target. The array has exactly three references in the image: `Mech_RegisterSubsystem` (`0041bcac`) builds it — 40 elements of 8 bytes, which is where the cap comes from — `Mech_PlayerFireTick` writes it, and this function reads it. Nothing draws it.
+The third source runs only for a machine whose group is **led by the player**, and what it reads is `DAT_004a9c0c`: a trail of up to 40 points that `Mech_PlayerFireTick` (`00415608`) stamps along the player's turret bearing every time the trigger produces a shot, spaced `0x1000` apart from one step out and cut to the range of the player's selected target (range `>> 12`, at least 1) — 20 points when nothing is selected. `es2_xref.py` finds three references to the array in the image: `Mech_RegisterSubsystem` (`0041bcac`) builds it — 40 elements of 8 bytes, which is where the cap comes from — `Mech_PlayerFireTick` writes it, and this function reads it. None is a draw path.
 
 **So the squad gets out of the player's line of fire.** These points are scaled by `Q10(1000, d)` — near enough the true range — and claim a side inside a wider 67.5° arc than a machine does. Not firing zeroes the count, so the line exists only while the player is actually shooting.
 
@@ -156,18 +156,18 @@ Six of the 22 states are navigation rather than combat — 8, 9, 10, 11, 12 and 
 
 ### `patrolling` (8) — `Mech_BehaviourPatrolThink` (`0041d7d0`)
 
-`Ai_NavigationStep`, then the target drops, and then a gate: **a machine that is not the group leader, has no standing squad order and has not been told to fire at will returns here and does nothing else.** It does not even hold a target — the drop is above the gate — so by default the leader is the group's only scout. The squad verb is sampled *before* the movement, which can clear it. `mech+0xb6` is `FIRE AT WILL` and is what buys a follower the right to scout; see [`ai-squadmates.md`](ai-squadmates.md).
+`Ai_NavigationStep`, then the target drops, and then a gate: **a machine that is not the group leader, has no standing squad order and has not been told to fire at will returns here and does nothing else.** It does not even hold a target — the drop is above the gate — so by default the leader is the group's only scout. The squad verb is read *before* the movement runs, and that copy is what the gate and the acquisition test below use. `mech+0xb6` is `FIRE AT WILL` and is what buys a follower the right to scout; see [`ai-squadmates.md`](ai-squadmates.md).
 
 That is not the same as a follower never fighting. Two things reach one: `Mech_AiOnTakingFire`, and the combat reassess's leader sweep, which the leader's own think triggers the moment it finds something. So a follower cannot *notice* a fight, only join one, and it joins by acquiring its own target rather than taking the leader's. See [`ai-targeting.md`](ai-targeting.md#the-combat-reassess--mech_aicombatreassess-0041cf18).
 
 Past the gate, on a 10000-count timer — about 4.9 seconds, see [`dbsim-physics-notes.md`](dbsim-physics-notes.md#timer-units) — in the behaviour block's scratch (`mech+0x5a`):
 
-- A machine that is out of action (`+0xa5`, `+0xa4` or `+0x99`) acquires a target and takes `fleeing`.
-- Otherwise it acquires only when the group order verb is 3 or the squad order verb is 2 — the two that actually mean patrol — with the mission-target-only filter, and hands what it finds to `Mech_AiEnterCombat`.
+- A machine that is out of action (`+0xa5`, `+0xa4` or `+0x99`) acquires with `Ai_SelectTarget(this, 0, 0)` and, when that finds something, sets `mech+0x2a2` to −1 and takes `fleeing`, running from what it found. Finding nothing, it stays in the state.
+- Otherwise it acquires only when the squad order verb is 2, or is 0 with a group order verb of 3 — the two that actually mean patrol — through `Ai_SelectTarget(this, 1, 0)`, mask 1 being the designated-target tier ([`ai-targeting.md`](ai-targeting.md#acquisition--ai_selecttarget-00411fa0)). It installs the pick, null included, and hands a non-null one to `Mech_AiEnterCombat` with `+0xac` set.
 
 ### `search/destroy` (12) — `Mech_BehaviourSearchDestroyThink` (`0041d60c`)
 
-The same shape and the same gate less its squad-verb term — only leadership and `mech+0xb6` open this one — with one difference that is the whole state: what it acquires must pass `Group_IsOrderTarget`. **A search-and-destroy group fights only what its order names** and walks past everything else. The flee arm is as in `patrolling`.
+The same shape and the same gate less its squad-verb term — only leadership and `mech+0xb6` open this one. It acquires with the same `Ai_SelectTarget(this, 1, 0)` on every expiry of the clock, with no verb test, and the difference that is the whole state: the pick is installed only when it passes `Group_IsOrderTarget`. **A search-and-destroy group fights only what its order names** and walks past everything else. The flee arm is as in `patrolling`.
 
 ### `travelling` (9) and `bulldog travel` (11) — `Mech_BehaviourTravelThink` (`0041d9cc`)
 
@@ -216,7 +216,7 @@ Its target handling is the exception among the five: it runs `Ai_SelectDefenceTa
 | Reading | Why it is wrong |
 |---|---|
 | `Mech_MovementTick`, the move slot 18 states share, is where AI movement happens | It integrates and collides; it steers nothing. Every AI steering decision is a think function calling `Mech_LocomotionTick` |
-| `DAT_004a9c0c` is the HUD's lead-indicator trail | Nothing draws it. Its three references are the static initialiser that builds it, `Mech_PlayerFireTick`'s write and `Mech_AiObstacleAvoidance`'s read — it is a friendly-fire keep-out line, not a display |
+| `DAT_004a9c0c` is the HUD's lead-indicator trail | The three references `es2_xref.py` finds are the static initialiser that builds it, `Mech_PlayerFireTick`'s write and `Mech_AiObstacleAvoidance`'s read — it is a friendly-fire keep-out line, not a display |
 | Obstacle avoidance has a mirrored mode for a machine walking backwards | It has the code for one — a flag that flips the probe length negative and rotates every bearing test by a half turn — and the flag is written zero at the top of the function and never anywhere else. The half-speed arm of the speed override is unreachable for the same reason |
 | The whole group follows the route | Only the group leader does, through `Ai_NavigationStep`. The exception is `travelling`, which bypasses that chooser entirely and has every member reading the route at once |
 | A `following` order ends when the group reaches what it is following | Its completion test is the route test the other two movement verbs use, and nothing in `following` advances the route cursor |
@@ -226,4 +226,5 @@ Its target handling is the exception among the five: it runs `Ai_SelectDefenceTa
 ## Open
 
 - **Deferred:** descriptor `+0x3c` groups `skirting` and `ramming` with the combat states against the rest of the navigation roster, a stronger distinction than its one reader needs — see [`ai-dispatch.md`](ai-dispatch.md).
+- **Open:** what reaches `Ai_NavigationStepThunk` (`0041d5fc`), which calls `Ai_NavigationStep` and returns. `es2_xref.py` finds no rel32 branch, stored pointer or vtable slot holding its address; the same sweep does find each behaviour think as a stored pointer in `BehaviourSlotBlocks`, and the function before it, `Mech_AiEnterCombat`, ends at `0041d5fb`.
 - **Deferred:** why the firing line is the only source that cuts speed — the distance thresholds for the other two are zero, which reads more like an unfinished tuning pass than a decision.

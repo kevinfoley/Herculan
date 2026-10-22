@@ -78,7 +78,8 @@ public sealed partial class BaseObject {
 
 	/// <summary>
 	/// One weapon station: acquire on its own <see cref="StationRetargetInterval"/> countdown, take the
-	/// aim error from the structure's origin to the target's aim point against this station's heading,
+	/// aim error from the structure's origin to the target's position plus its
+	/// <see cref="SimObject.ViewMounts"/> orbit centre against this station's heading,
 	/// and run the three <see cref="TransportArmament.Slots"/>.
 	///
 	/// <para>A slot is live only while its component stands short of full damage: the launcher slot
@@ -97,8 +98,11 @@ public sealed partial class BaseObject {
 			return;
 		}
 
+		// The aim point is the target's vtable +0x30 second triple added to its position unrotated, not
+		// the +0x24 node AimPoint models: for a HERC the orbit centre rather than the cockpit node
+		// (docs/retail/simulation/structure-behaviour.md, "What a structure is aimed at").
 		int range = Position.ApproxDistanceTo(target.Position);
-		var aim = target.AimPoint;
+		var aim = target.Position + target.ViewMounts.OrbitCentre;
 		var (pitch, _, yaw) = SimTrig.EulerToward(aim, Position);
 		short pitchError = (short)(pitch - Pitch);
 		short yawError = (short)(yaw - Heading);

@@ -104,8 +104,11 @@ public sealed partial class MechObject : IFlightBody {
 	/// flag and calls <c>Razor_ApplyFlightInput</c> (<c>0041bb9c</c>) in place of
 	/// <c>Mech_ApplyThrottleInput</c> and the two turret ticks, while the object list dispatches
 	/// <c>Razor_MovementTick</c> (<c>004198f4</c>) in place of
-	/// <c>Mech_MovementTick</c> — a whole distinct behaviour class, picked in
-	/// <c>Mech_Constructor</c> (<c>00415bb0</c>) by (is this the player, is this a flyer).
+	/// <c>Mech_MovementTick</c> — the move of the <c>player fly</c> behaviour state, which
+	/// <c>Mech_AiSelectBehaviour</c> (<c>0041eb34</c>) installs for the player's machine when its type is
+	/// a flyer. This engine runs the flight path for any machine whose type is a flyer, where retail
+	/// gives an AI-controlled RAZOR its order's state and the walker's move; see
+	/// docs/retail/simulation/razor-flight.md#how-the-flyer-paths-are-reached.
 	///
 	/// <para><b>The turret does not move.</b> Neither turret tick is on this path at all, so a
 	/// RAZOR's guns point where its nose points and aiming means flying.</para>

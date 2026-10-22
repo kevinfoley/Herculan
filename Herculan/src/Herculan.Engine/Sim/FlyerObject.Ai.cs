@@ -443,20 +443,31 @@ public sealed partial class FlyerObject {
 	/// leader up out of the group rather than using the object it was handed — and the offset's Z
 	/// goes on unrotated, which is what stacks a flight vertically.
 	/// </summary>
-	private Vec3i FormationStation(SimObject leader) {
-		var station = SimTrig.OffsetPointByBearing(leader.Position, (short)leader.Heading, StationLead);
+	private Vec3i FormationStation(SimObject leader) =>
+		FormationPostAround(
+			SimTrig.OffsetPointByBearing(leader.Position, (short)leader.Heading, StationLead),
+			leader.Heading);
 
+	/// <summary>
+	/// <c>Flyer_ApplyFormationOffset</c> (<c>00421e98</c>) applied to an anchor and a leader heading:
+	/// the anchor itself for the flight leader or a formation with no slot for this aircraft,
+	/// otherwise the <c>FFORMS.DAT</c> offset's X and Y rotated by that heading and its Z added
+	/// unrotated. Station keeping anchors it ahead of the leader (<see cref="FormationStation"/>);
+	/// a group arriving on foot anchors it on the arrival point (<see cref="MissionGroup.PlaceOnFoot"/>,
+	/// docs/retail/simulation/mission-deployment.md, "Arrival").
+	/// </summary>
+	internal Vec3i FormationPostAround(Vec3i anchor, int heading) {
 		if (FormationOffset is not { } offset) {
-			return station;
+			return anchor;
 		}
 
-		short cos = BinaryAngle.Cos(leader.Heading);
-		short sin = BinaryAngle.Sin(leader.Heading);
+		short cos = BinaryAngle.Cos(heading);
+		short sin = BinaryAngle.Sin(heading);
 
 		return new Vec3i(
-			station.X + (int)(((long)offset.X * cos - (long)offset.Y * sin + 0x2000) >> 14),
-			station.Y + (int)(((long)offset.X * sin + (long)offset.Y * cos + 0x2000) >> 14),
-			station.Z + offset.Z);
+			anchor.X + (int)(((long)offset.X * cos - (long)offset.Y * sin + 0x2000) >> 14),
+			anchor.Y + (int)(((long)offset.X * sin + (long)offset.Y * cos + 0x2000) >> 14),
+			anchor.Z + offset.Z);
 	}
 
 	/// <summary>

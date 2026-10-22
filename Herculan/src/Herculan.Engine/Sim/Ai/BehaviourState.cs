@@ -107,9 +107,11 @@ public enum MoveSlot {
 /// dispatch model are in docs/retail/simulation/ai-dispatch.md; this is a transcription of the table the
 /// initialiser writes, read out of the disassembly rather than out of any data file.
 ///
-/// <para><b>The move slot is dispatched from the object pass, not the AI tick.</b>
-/// <see cref="MechObject.Tick"/> runs <see cref="Move"/> for every machine ahead of the group pass that
-/// runs the think, so the original's "integrate on the last think's decisions" ordering falls out.</para>
+/// <para><b>The move slot is dispatched from the object pass, not the AI tick</b>, which is this
+/// engine's arrangement. <see cref="MechObject.Tick"/> runs <see cref="Move"/> for every machine ahead
+/// of the group pass that runs the think, so the original's "integrate on the last think's decisions"
+/// ordering falls out. Retail's <c>Mech_AiTick</c> runs the move after the reassess, so a state the
+/// reassess installs moves under its own slot that same tick; here it does so a tick later.</para>
 /// </summary>
 public sealed class BehaviourState {
 	private BehaviourState(int index, string name, int dwell, int flags, ReassessSlot reassess,

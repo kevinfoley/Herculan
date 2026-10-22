@@ -16,7 +16,7 @@ if (Ai_ShouldAbandonTarget(mech) || mech is out of action) return Ai_ClearSquadE
 return 0
 ```
 
-`attacking flyer` omits the skirt gate and `fleeing` omits it and the abandonment test; everything else is verbatim. A nonzero return zeroes the state's own dwell countdown, which is a state saying it is finished — see [`ai-dispatch.md`](ai-dispatch.md#what-the-dwell-time-buys).
+`flanking` and `facing off` are this verbatim. `attacking flyer` omits the skirt gate and tests the flyer's `+0x99` in place of `Ai_ShouldAbandonTarget`; `attacking base` has its own completion test; `fleeing` omits the gate and the tail and returns 1 when what it runs from is out of action — each below. A nonzero return zeroes the state's own dwell countdown, which is a state saying it is finished — see [`ai-dispatch.md`](ai-dispatch.md#what-the-dwell-time-buys).
 
 **"Out of action" is the same three bytes throughout the AI**: `mech+0xa5` no weapons left, `mech+0xa4`, `mech+0x99` destroyed. `Ai_ClearSquadEngageOrder` (`0041c478`) is the tail: it returns 1, and on the way clears a standing squad engage order (`mech+0x23e` 4 to 0) whose target (`mech+0x248`) is the machine's current target (`mech+0x1a4`). It reads and writes nothing else.
 
@@ -137,7 +137,7 @@ approach = |bearingError| >= 2000            ? -1
 
 A machine only advances on a flyer it is pointed within 11° of *and* that is both far off and not pointed back at it; anything else is a stand or a retreat. Turning under a flyer is what the machine mostly does, since the bearing gate is tight enough that it is rarely satisfied while the flyer is manoeuvring.
 
-It gives up on range: past 150000 units the think returns finished, before it even looks at whether the flyer is alive.
+It gives up on range: past 150000 units the think returns finished, before it even looks at whether the flyer is alive. Inside that range the completion test is the flyer's own `+0x99` (destroyed) or this machine being out of action, ending through `Ai_ClearSquadEngageOrder` as the others do; `Ai_ShouldAbandonTarget` is not called, so a crippled flyer (`+0xa4`) does not end the state, and a verb-4 squad order's tier plays no part.
 
 ## `fleeing` (18) — `Mech_BehaviourFleeThink` (`0041d2c4`)
 
@@ -280,7 +280,7 @@ return 1
 
 It is `Mech_MovementTick` with the undo removed. The walking move restores the step and backs away from a block ([`mech-locomotion.md`](mech-locomotion.md)); this detonates instead — a blast the machine excludes *itself* from, and then a flat 32000 on every component it still has, through the same endpoint a shot reaches. There is no roll, no falloff and no survival; the blast is only what it does to everyone else on the way out. Damage and radius are [`damage-system.md`](damage-system.md#the-sweep--damage_explosiveblastsweep-00426a20)'s third call site.
 
-**What sets it off is any block at all** — a rock, a building, a wingman — not contact with the target, and not this tick's contact either. `mech+0xb1` is the "something ran into me" latch, and this is its one reader in the image. It is written by `SimObject_SetRunInto` (`0042200c`), vtable `+0x68` in all eight `SimObject`-shaped tables with no class overriding it, on whatever object blocked a move and whatever class that object is. Two sweeps call it: `Mech_CollisionTest`, and `GroundVehicle_CollisionTest` inside the ground vehicle tick ([`ground-vehicles.md`](ground-vehicles.md#the-ground-vehicle-tick--0046a5d0)). **Nothing ever lowers the byte.** A machine bumped once at any earlier point in the mission blows up on its first tick in the state, before it has gone anywhere.
+**What sets it off is any block at all** — a rock, a building, a wingman — not contact with the target, and not this tick's contact either. `mech+0xb1` is the "something ran into me" latch, and this is its one reader in the image. It is written by `SimObject_SetRunInto` (`0042200c`), vtable `+0x68` in all eight `SimObject`-shaped tables with no class overriding it, on whatever object blocked a move and whatever class that object is. A grep of the disassembly for indirect calls through `+0x68` finds two sweeps calling it, `Mech_CollisionTest` and `GroundVehicle_CollisionTest` inside the ground vehicle tick ([`ground-vehicles.md`](ground-vehicles.md#the-ground-vehicle-tick--0046a5d0)); its third hit is a call through a component's vtable. **Nothing ever lowers the byte.** A machine bumped once at any earlier point in the mission blows up on its first tick in the state, before it has gone anywhere.
 
 That "nothing lowers it" is a negative claim, so here is what it rests on, by three methods that fail differently:
 
