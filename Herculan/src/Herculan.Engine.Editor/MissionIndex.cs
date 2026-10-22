@@ -124,6 +124,12 @@ internal sealed class MissionIndex {
 	/// <summary>Whether <paramref name="placed"/>'s group waits on an action before it is in the mission.</summary>
 	public bool IsWaiting(SceneObject placed) => GroupOf(placed)?.Waiting == true;
 
+	/// <summary>
+	/// Whether <paramref name="placed"/> is in the scene, drawn and picked: false for a member of a group kept out of it
+	/// (<see cref="PlannedGroup.OffScene"/>), which is still indexed and selected from the outliner.
+	/// </summary>
+	public bool InScene(SceneObject placed) => GroupOf(placed)?.OffScene != true;
+
 	/// <summary>The pad group <paramref name="guid"/> paints, or null.</summary>
 	public MissionBasePad? PadOf(short guid) => Group(guid)?.Pad;
 

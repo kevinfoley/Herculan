@@ -92,6 +92,24 @@ internal static class MissionText {
 		_ => "in place"
 	};
 
+	/// <summary>
+	/// Why a group kept out of the scene (<see cref="PlannedGroup.OffScene"/>) is not shown in it, in one sentence with how
+	/// far from the player it arrives (<see cref="Sim.MissionGroup.PodDistance"/> and the two walk-on distances) and how
+	/// (<see cref="Arrival"/>): for the group's own view, or for a member's (<paramref name="member"/>).
+	/// </summary>
+	public static string OffScene(short verb, bool member) {
+		int distance = verb switch {
+			MissionAction.VerbWalkBehind => Sim.MissionGroup.WalkOnDistanceBehind,
+			MissionAction.VerbWalkAhead => Sim.MissionGroup.WalkOnDistanceAhead,
+			_ => Sim.MissionGroup.PodDistance,
+		};
+
+		string away = $"{distance / Render.WorldScale.WorldUnitsPerMeter:F0} m from the player, wherever they are";
+		return member
+			? $"Not shown in the scene: its group arrives {away}, when the action it waits on fires ({Arrival(verb)})."
+			: $"Not shown in the scene: it arrives {away}, when that action fires ({Arrival(verb)}).";
+	}
+
 	/// <summary>The state an order verb installs — docs/retail/simulation/ai-goals.md#when-an-order-is-finished--group_isordercomplete-004239fc.</summary>
 	public static string OrderVerb(short verb) => verb switch {
 		MissionOrder.VerbSearchDestroy => "search/destroy",

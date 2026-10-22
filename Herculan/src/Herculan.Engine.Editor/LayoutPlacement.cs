@@ -73,6 +73,10 @@ internal sealed record PlannedObject(ObjectKey Key, MissionUnitKind Kind, int Ty
 /// </summary>
 /// <param name="DeploymentAction">The row-10 GUID it waits on, or <c>-1</c>.</param>
 /// <param name="Waiting">Whether that action is in the layout, so the group is not in the mission until it fires.</param>
+/// <param name="ArrivalVerb">
+/// That action's verb (<see cref="MissionAction82.Verb"/>), which says how the group arrives when it fires; <c>-1</c> when
+/// it is not <paramref name="Waiting"/>.
+/// </param>
 /// <param name="OwnPoint">The row-6 GUID of its own point when the layout has it, else <c>-1</c>.</param>
 /// <param name="StartPoints">
 /// The row-6 GUIDs its slot-0 route's first waypoint names, and the last's too when the route closes on its start, the
@@ -81,8 +85,20 @@ internal sealed record PlannedObject(ObjectKey Key, MissionUnitKind Kind, int Ty
 /// <param name="Orders">Its ten order slots' row-15 GUIDs, <c>-1</c> where unset.</param>
 /// <param name="Pad">The ground it paints, read from its first member, or null.</param>
 internal sealed record PlannedGroup(short Guid, int Number, MissionUnitKind Kind, MissionSide Side, short DeploymentAction,
-	bool Waiting, MissionGroupSetup Setup, short OwnPoint, IReadOnlyList<short> StartPoints, IReadOnlyList<short> Orders,
-	IReadOnlyList<ObjectKey> Members, MissionBasePad? Pad);
+		bool Waiting, short ArrivalVerb, MissionGroupSetup Setup, short OwnPoint, IReadOnlyList<short> StartPoints,
+		IReadOnlyList<short> Orders, IReadOnlyList<ObjectKey> Members, MissionBasePad? Pad) {
+	/// <summary>
+	/// Whether the group is kept out of the scene, by the user's choice (docs/herculan/handoff-editor-msn-scene.md#decided-by-the-user):
+	/// it waits on an action whose verb brings it in by drop pod or on foot, at a point picked about the player when the
+	/// action fires (docs/retail/simulation/mission-deployment.md#arrival--group_deploymentcheck-004236c4), so retail neither
+	/// draws nor touches it before then and never uses its own point. Its members are still built and indexed, and selected
+	/// from the outliner; only the scene leaves them out: not drawn, picked, boxed, labelled, framed or given move handles.
+	/// A structure group stays in the scene whatever its action's verb: DBSIM builds a held-back structure at load where it
+	/// is placed, footprint and pad included (docs/retail/simulation/mission-deployment.md#held-back-structures-stand-from-the-start).
+	/// </summary>
+	public bool OffScene => Waiting && Kind != MissionUnitKind.Base && ArrivalVerb is MissionAction.VerbPodWide
+		or MissionAction.VerbPodNarrow or MissionAction.VerbWalkBehind or MissionAction.VerbWalkAhead;
+}
 
 /// <summary>
 /// Every group, every placed roster record, and every route, trigger area and action of a layout, as
@@ -167,7 +183,6 @@ internal sealed class LayoutPlan {
 /// </list>
 /// </summary>
 internal static class LayoutPlacement {
-	private const int ActionRow = 10;
 	private const int MechRow = 12;
 	private const int FlyerRow = 13;
 	private const int BaseRow = 14;
@@ -201,10 +216,10 @@ internal static class LayoutPlacement {
 			members.Add((kind, slots));
 
 			short action = fields.DeploymentActionRef;
+			short? verb = action != -1 ? layout.Entry<MissionAction82>(action)?.Fields.Verb : null;
 			groups.Add(new PlannedGroup(entry.Guid, number, kind,
-				fields.Side == (short)MissionSide.Cybrid ? MissionSide.Cybrid : MissionSide.Human, action,
-				action != -1 && layout.Entry(ActionRow, action) != null, setup, ownPoint, starts, fields.OrderRefs.ToArray(),
-				[], null));
+				fields.Side == (short)MissionSide.Cybrid ? MissionSide.Cybrid : MissionSide.Human, action, verb != null,
+				verb ?? -1, setup, ownPoint, starts, fields.OrderRefs.ToArray(), [], null));
 		}
 
 		// Group 0's hercs, the squad, each by the first slot that references it.

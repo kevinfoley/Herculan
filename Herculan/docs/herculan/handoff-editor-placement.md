@@ -33,7 +33,7 @@ After every move, a drag's preview included, `TerrainLeveller` puts the heightma
 
 - A non-leader group member keeps its `FormationOffset`, and AI followers hold formation on their leader every tick, so the move sets a spawn position the AI may walk out of.
 - A paints-ground base group snaps to a fixed spot in its tile, so a small move does nothing and a larger one jumps a whole tile ([`../retail/formats/script-dat.md`](../retail/formats/script-dat.md#the-anchor)).
-- A group waiting to arrive by drop pod or on foot is placed at a placeholder, so its position changes nothing once the mission runs ([`../retail/simulation/mission-deployment.md`](../retail/simulation/mission-deployment.md#arrival--group_deploymentcheck-004236c4)); its view says so. One arriving in place, and a held-back structure, stand where placed, the structure solid and undrawn from the first frame ([`../retail/simulation/mission-deployment.md`](../retail/simulation/mission-deployment.md#held-back-structures-stand-from-the-start)).
+- A group waiting to arrive by drop pod or on foot is placed at a placeholder, so its position changes nothing once the mission runs ([`../retail/simulation/mission-deployment.md`](../retail/simulation/mission-deployment.md#arrival--group_deploymentcheck-004236c4)); it is not in the scene, so it has no move handles, and its view says how it arrives ([Waiting groups](handoff-editor-viewing.md#waiting-groups)). One arriving in place, and a held-back structure, stand where placed, the structure solid and undrawn from the first frame ([`../retail/simulation/mission-deployment.md`](../retail/simulation/mission-deployment.md#held-back-structures-stand-from-the-start)).
 
 ## Routes
 

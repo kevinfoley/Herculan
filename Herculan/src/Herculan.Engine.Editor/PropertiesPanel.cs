@@ -229,7 +229,9 @@ internal sealed class PropertiesPanel {
 			_machine.DrawSquadmateObject(placement.SlotIndex);
 		}
 
-		if (_index.IsWaiting(sel)) {
+		if (_index.Scene.GroupOf(sel) is { OffScene: true } landing) {
+			EditorText.Note(MissionText.OffScene(landing.ArrivalVerb, member: true));
+		} else if (_index.IsWaiting(sel)) {
 			ImGui.TextWrapped("Its group is waiting on an action: nothing of it is drawn or ticked until "
 				+ "that fires, and this position is a placeholder unless the group arrives in place.");
 		}
@@ -488,6 +490,11 @@ internal sealed class PropertiesPanel {
 		ImGui.EndDisabled();
 		if (waitsOn >= 0) {
 			_links.Action(waitsOn);
+		}
+
+		if (_index.Scene.Group(guid) is { OffScene: true } landing) {
+			EditorText.Note(MissionText.OffScene(landing.ArrivalVerb, member: false));
+		} else if (waitsOn >= 0) {
 			ImGui.TextWrapped($"Not in the mission until that action fires; then it arrives {MissionText.Arrival(Mission.Actions[waitsOn].Verb)}.");
 		} else {
 			ImGui.Text("In the mission from the start.");

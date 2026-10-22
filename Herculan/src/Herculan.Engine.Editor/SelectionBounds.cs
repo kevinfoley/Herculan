@@ -10,13 +10,16 @@ namespace Herculan.Engine.Editor;
 /// The sphere a selection fills, in world units, for the camera to frame (<see cref="EditorCamera.Frame"/>): an object's
 /// pick sphere, a group's members and point, an area's footprint, a route's waypoints, an objective's subject or an
 /// action's areas. Ground features sit on the terrain, where they are drawn. All but an objective's subject are the
-/// layout's (<see cref="MissionIndex"/>).
+/// layout's (<see cref="MissionIndex"/>). An object out of the scene, and a group kept out of it
+/// (<see cref="PlannedGroup.OffScene"/>), fill nothing.
 /// </summary>
 internal static class SelectionBounds {
 	/// <summary>How large a sphere a single point is framed as, in world units (about 20 m).</summary>
 	private const float PointRadius = 3000f;
 
-	/// <summary>The sphere <paramref name="selection"/> fills, or null when it stands nowhere (a timer).</summary>
+	/// <summary>
+	/// The sphere <paramref name="selection"/> fills, or null when it stands nowhere (a timer, or a group out of the scene).
+	/// </summary>
 	public static (Vector3 Centre, float Radius)? Of(EditorMission mission, EditorSelection selection) {
 		var spheres = new List<(Vector3 Centre, float Radius)>();
 		var index = mission.Generated;
@@ -25,7 +28,7 @@ internal static class SelectionBounds {
 			case ObjectSelection selected when mission.Index.ObjectOf(selected) is { } placed:
 				AddObject(spheres, mission, placed);
 				break;
-			case GroupSelection { Guid: var guid } when mission.Index.Group(guid) is { } group:
+			case GroupSelection { Guid: var guid } when mission.Index.Group(guid) is { OffScene: false } group:
 				foreach (var member in mission.Index.MembersOf(guid)) {
 					AddObject(spheres, mission, member);
 				}
@@ -63,8 +66,13 @@ internal static class SelectionBounds {
 		return Enclosing(spheres);
 	}
 
-	// An object's pick sphere, which covers its whole model, or its hit radius about its position when it has none.
+	// An object's pick sphere, which covers its whole model, or its hit radius about its position when it has none; nothing
+	// for an object out of the scene.
 	private static void AddObject(List<(Vector3, float)> into, EditorMission mission, SceneObject placed) {
+		if (!mission.Index.InScene(placed)) {
+			return;
+		}
+
 		if (mission.Picker.PickableOf(placed) is { } pickable) {
 			var render = pickable.CenterRender;
 			into.Add((new Vector3(render.X, -render.Z, render.Y) * WorldScale.WorldUnitsPerMeter,

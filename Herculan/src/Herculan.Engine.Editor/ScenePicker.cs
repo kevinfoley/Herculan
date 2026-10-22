@@ -35,12 +35,13 @@ internal sealed class ScenePicker {
 		_index = index;
 		_overlay = overlay;
 		_terrain = scene.World.Terrain;
-		_pickables = index.Objects.Select(PickableFor).OfType<Pickable>().ToList();
+		_pickables = PickablesOf(index.Objects);
 	}
 
 	/// <summary>
-	/// Everything with a model, which is everything that can be drawn — a waiting group's members
-	/// included, whether or not the settings draw them.
+	/// Everything in the scene with a model, which is everything that can be drawn — a waiting group's members
+	/// included, whether or not the settings draw them, but not those of a group kept out of the scene
+	/// (<see cref="MissionIndex.InScene"/>).
 	/// </summary>
 	public IReadOnlyList<Pickable> Pickables => _pickables;
 
@@ -122,9 +123,14 @@ internal sealed class ScenePicker {
 		return new Pickable(sceneObject, bounds.LocalCenter, MathF.Max(bounds.Radius, 1f));
 	}
 
-	/// <summary>Makes <paramref name="objects"/> what is picked, each where its simulation object now stands.</summary>
-	public void Rebuild(IEnumerable<SceneObject> objects) =>
-		_pickables = objects.Select(PickableFor).OfType<Pickable>().ToList();
+	/// <summary>
+	/// Makes <paramref name="objects"/> what is picked, each where its simulation object now stands, but those out of the
+	/// scene.
+	/// </summary>
+	public void Rebuild(IEnumerable<SceneObject> objects) => _pickables = PickablesOf(objects);
+
+	private List<Pickable> PickablesOf(IEnumerable<SceneObject> objects) =>
+		objects.Where(_index.InScene).Select(PickableFor).OfType<Pickable>().ToList();
 
 	/// <summary>
 	/// The ground under window pixel <paramref name="screen"/> (+Y down), in world units, or null when the view ray
@@ -151,7 +157,7 @@ internal sealed class ScenePicker {
 		}
 	}
 
-	/// <summary>The pick sphere of <paramref name="sceneObject"/>, or null when it has no model.</summary>
+	/// <summary>The pick sphere of <paramref name="sceneObject"/>, or null when it has no model or is out of the scene.</summary>
 	public Pickable? PickableOf(SceneObject sceneObject) =>
 		_pickables.Find(pickable => ReferenceEquals(pickable.SceneObject, sceneObject));
 

@@ -12,7 +12,8 @@ namespace Herculan.Engine.Editor;
 /// What the editor draws over the placed objects and the groups they belong to: the selection boxes,
 /// the outlines that stand in for a waiting group's members, the selected group's own point and
 /// heading, and a line from it to whatever each of its orders names. Groups, their members and their orders' subjects are
-/// the layout's (<see cref="MissionIndex"/>), by GUID.
+/// the layout's (<see cref="MissionIndex"/>), by GUID. A group kept out of the scene (<see cref="PlannedGroup.OffScene"/>)
+/// has none of it, nor is it a line's subject.
 /// </summary>
 internal sealed class GroupOverlay {
 	private static readonly Vector3 WaitingColor = new(0.55f, 0.6f, 0.72f);
@@ -64,9 +65,9 @@ internal sealed class GroupOverlay {
 		_ => new HashSet<Scene.SceneObject>()
 	};
 
-	// The selected group, or null when a group is not selected.
+	// The selected group, or null when a group is not selected or it is out of the scene.
 	private PlannedGroup? SelectedGroup(SelectionState selection) =>
-		selection.Current is GroupSelection { Guid: var guid } ? _index.Group(guid) : null;
+		selection.Current is GroupSelection { Guid: var guid } && _index.Group(guid) is { OffScene: false } group ? group : null;
 
 	/// <summary>
 	/// The selected group's point as a post, its heading as an arrow on the ground, and a line from
@@ -120,13 +121,12 @@ internal sealed class GroupOverlay {
 			var actions = _index.Layout.Entries<MissionAction82>();
 			var numbers = Enumerable.Range(0, actions.Count).ToDictionary(i => actions[i].Guid);
 			foreach (var group in _index.Groups) {
-				if (!group.Waiting || _index.MembersOf(group.Guid).Count == 0) {
+				if (!group.Waiting || group.OffScene || _index.MembersOf(group.Guid).Count == 0) {
 					continue;
 				}
 
-				int action = numbers[group.DeploymentAction];
 				StackedLabel(group.Setup.Point,
-					$"Group {group.Number}: waits on action {action}, {MissionText.ArrivalKind(actions[action].Fields.Verb)}",
+					$"Group {group.Number}: waits on action {numbers[group.DeploymentAction]}, {MissionText.ArrivalKind(group.ArrivalVerb)}",
 					WaitingColor);
 			}
 		}
@@ -139,8 +139,9 @@ internal sealed class GroupOverlay {
 	}
 
 	/// <summary>
-	/// Each order slot of <paramref name="group"/> whose order the layout has and names a subject the layout places, with
-	/// the order's verb and where that subject stands: a group's point, or the object of a herc, flyer or structure.
+	/// Each order slot of <paramref name="group"/> whose order the layout has and names a subject the layout places in the
+	/// scene, with the order's verb and where that subject stands: a group's point, or the object of a herc, flyer or
+	/// structure.
 	/// </summary>
 	private IEnumerable<(int Slot, short Verb, Vec3i At)> Subjects(PlannedGroup group) {
 		for (int slot = 0; slot < group.Orders.Count; slot++) {
@@ -150,10 +151,10 @@ internal sealed class GroupOverlay {
 			}
 
 			Vec3i? at = (MissionOrderSubject)order.SubjectKind switch {
-				MissionOrderSubject.Group => _index.Group(order.SubjectRef)?.Setup.Point,
-				MissionOrderSubject.Mech => _index.ObjectOf(new ObjectKey(12, order.SubjectRef))?.Object.Position,
-				MissionOrderSubject.Flyer => _index.ObjectOf(new ObjectKey(13, order.SubjectRef))?.Object.Position,
-				MissionOrderSubject.Base => _index.ObjectOf(new ObjectKey(14, order.SubjectRef))?.Object.Position,
+				MissionOrderSubject.Group => _index.Group(order.SubjectRef) is { OffScene: false } subject ? subject.Setup.Point : null,
+				MissionOrderSubject.Mech => ObjectAt(new ObjectKey(12, order.SubjectRef)),
+				MissionOrderSubject.Flyer => ObjectAt(new ObjectKey(13, order.SubjectRef)),
+				MissionOrderSubject.Base => ObjectAt(new ObjectKey(14, order.SubjectRef)),
 				_ => null
 			};
 
@@ -162,6 +163,10 @@ internal sealed class GroupOverlay {
 			}
 		}
 	}
+
+	// Where the object of <key> stands, or null when the scene has none for it or it is out of the scene.
+	private Vec3i? ObjectAt(ObjectKey key) =>
+		_index.ObjectOf(key) is { } placed && _index.InScene(placed) ? placed.Object.Position : null;
 
 	/// <summary>
 	/// An arrow on the ground from <paramref name="from"/> along <paramref name="heading"/>. A machine

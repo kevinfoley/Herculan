@@ -102,14 +102,17 @@ internal sealed class PointMover {
 	public bool CanRedo => History.CanRedo;
 
 	/// <summary>
-	/// What <paramref name="selection"/> names that can be moved: a movable object or group, by the record it stands for,
-	/// or a waypoint, by its route's GUID; else null.
+	/// What <paramref name="selection"/> names that the move handles can drag: a movable object or group in the scene, by
+	/// the record it stands for, or a waypoint, by its route's GUID; else null. An object or group out of the scene
+	/// (<see cref="PlannedGroup.OffScene"/>) has no handles.
 	/// </summary>
 	public MoveTarget? TargetOf(EditorSelection? selection) => selection switch {
-		ObjectSelection { Row: var row, Guid: var guid } when WhyFixed(new ObjectKey(row, guid)) == null =>
+		ObjectSelection { Row: var row, Guid: var guid } when WhyFixed(new ObjectKey(row, guid)) == null
+				&& _index.ObjectOf(new ObjectKey(row, guid)) is { } placed && _index.InScene(placed) =>
 			new ObjectTarget(new ObjectKey(row, guid)),
 		RouteSelection waypoint => _features.TargetOf(waypoint),
-		GroupSelection { Guid: var guid } when WhyFixedGroup(guid) == null => new GroupTarget(guid),
+		GroupSelection { Guid: var guid } when WhyFixedGroup(guid) == null && _index.Group(guid) is { OffScene: false } =>
+			new GroupTarget(guid),
 		_ => null
 	};
 

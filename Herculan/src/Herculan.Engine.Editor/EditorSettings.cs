@@ -42,9 +42,9 @@ public sealed class EditorSettings {
 	public bool ShowBasePads { get; set; } = true;
 
 	/// <summary>
-	/// How the members of a group waiting on an action are shown. The simulation draws none of them
-	/// until the action fires, and most stand at a placeholder point, so by default they are outlined
-	/// rather than drawn.
+	/// How the members of a group waiting on an action are shown, one that arrives in place or a structure group: a group
+	/// arriving by drop pod or on foot is never in the scene (<see cref="PlannedGroup.OffScene"/>). The simulation draws
+	/// none of them until the action fires, so by default they are outlined rather than drawn.
 	/// </summary>
 	[JsonConverter(typeof(JsonStringEnumConverter<WaitingGroupDisplay>))]
 	public WaitingGroupDisplay WaitingGroups { get; set; } = WaitingGroupDisplay.Outlined;

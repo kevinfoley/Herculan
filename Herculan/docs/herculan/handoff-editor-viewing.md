@@ -35,7 +35,7 @@ A change goes through `TheaterChanger` ([The tools](handoff-editor-document.md#t
 
 Every kind names its `.MSN` record: a group, trigger area, action, timer, route or condition by the GUID of its row (16, 9, 10, 11, 8, 1), an objective by its index in row 17, and an object by the row (12, 13 or 14, a squad herc's 12) and GUID of the roster record it stands for (`ObjectSelection`), which `MissionIndex` resolves to the scene's object. The editors take the same identities, and each selects the GUID or row-17 index it has just written. A selection is kept across every edit, undo and redo while the `.MSN` has its record ([Rebuilding after an edit](handoff-editor-document.md#rebuilding-after-an-edit)).
 
-The scene's objects, groups, routes and trigger areas are the layout's (`MissionIndex`), every record included, and the picker, the selection boxes, the group overlay, the route and area overlay, the base pads, the mission box, the framing, the leveller and the move handles read them by GUID.
+The scene's objects, groups, routes and trigger areas are the layout's (`MissionIndex`), every record included but a group arriving by drop pod or on foot ([Waiting groups](#waiting-groups)), and the picker, the selection boxes, the group overlay, the route and area overlay, the base pads, the mission box, the framing, the leveller and the move handles read them by GUID.
 
 The outliner lists the layout too (`MissionLayout`, `MissionIndex`): every group with its members, and every trigger area, action, timer, route and objective, a conditional one included, in layout order, each numbered by its place in its row (row 17's list for an objective) and selecting its record by GUID or row-17 index. A reference inside a row, an area's testing actions, a route's walking groups, a group's waiting action, a timer's starting and fired actions, an objective's subject and route, is that record's number. A member is named by its type, numbered "Seeker 2 of 3" in member order when its group has more than one of that type, a squad herc "(player squad)"; an objective's subject object by its type and its group's number. An area whose corner or centre references a point the layout has none for, and a route none of whose waypoints does, stand nowhere and are listed with what is missing ("a corner is missing", "no waypoints"). A row whose record is not in every version of the mission, an object's by its group's condition too, ends "(not always present)", the words of the "Present when" field its view opens with.
 
@@ -43,7 +43,7 @@ The Properties views still read the generated `script.dat` (`GeneratedIndex`), s
 
 ## Camera
 
-`EditorCamera` flies free (right mouse to look, WASD/arrows, Q/E, Shift). A double-click in the viewport or the outliner selects and frames the selection (`SelectionBounds`, `EditorCamera.Frame`), keeping the yaw and looking down on it. A double-click on a link in the Properties panel selects without framing, and a timer is never framed.
+`EditorCamera` flies free (right mouse to look, WASD/arrows, Q/E, Shift). A double-click in the viewport or the outliner selects and frames the selection (`SelectionBounds`, `EditorCamera.Frame`), keeping the yaw and looking down on it. A double-click on a link in the Properties panel selects without framing, and a timer, a group out of the scene and its members are never framed.
 
 V, or View > Top-down, looks down from above, north up, high enough over the middle of the zone that its whole grid fits the window; looking turns about the vertical alone, W is up the screen, fog is off and the clip planes are pushed out with the height. V again returns to the pose it left; opening another mission leaves it. It is the perspective camera at its pitch limit, 88 degrees down, not an orthographic map: things stand up toward the edges and a point's place on screen shifts with its height. It frames the grid as it opens, not after a resize.
 
@@ -51,7 +51,7 @@ How a structure's ground plane (shadow, floor plates) draws from that height is 
 
 ## Picking
 
-A press on a move handle of the selection, a selected trigger area's corners and radius included, is taken in screen space first (`MoveGizmo`). Otherwise `ScenePicker` tries a waypoint in screen space, then an object (skipping waiting groups when hidden): the bounding spheres the ray meets give the candidates, and the nearest triangle wins, a structure's ground plane counting only when the ray meets nothing solid, so a Herc on a base's pad is picked rather than the base; then `GroundPick` (a ray march against `HeightAtWorld`) and the smallest trigger area containing that point.
+A press on a move handle of the selection, a selected trigger area's corners and radius included, is taken in screen space first (`MoveGizmo`). Otherwise `ScenePicker` tries a waypoint in screen space, then an object (skipping a group out of the scene, and a waiting group when View > Waiting Groups hides it): the bounding spheres the ray meets give the candidates, and the nearest triangle wins, a structure's ground plane counting only when the ray meets nothing solid, so a Herc on a base's pad is picked rather than the base; then `GroundPick` (a ray march against `HeightAtWorld`) and the smallest trigger area containing that point.
 
 ## Overlays
 
@@ -72,7 +72,7 @@ For the scene, `MissionIndex` works out from the layout which actions test each 
 
 ## Groups
 
-A group's setup is its point (with its pre-snap authored point and where it came from), heading (and whether it is the route bearing), formation id and paints-ground flag (`MissionGroupSetup`): the layout's for the scene (`MissionIndex`), the generated block-11 record's for the group view (`Mission.GroupSetups`). Selecting a group boxes its members and highlights the route it walks; `GroupOverlay` draws, from the layout, a post at its point, a heading arrow, and a line to each order's subject labelled with slot and verb. Its view shows its members, Present when, deployment action, orders, setup, out-of-action counter writes and related objectives; an object's view its Present when, counter writes and objectives.
+A group's setup is its point (with its pre-snap authored point and where it came from), heading (and whether it is the route bearing), formation id and paints-ground flag (`MissionGroupSetup`): the layout's for the scene (`MissionIndex`), the generated block-11 record's for the group view (`Mission.GroupSetups`). Selecting a group boxes its members and highlights the route it walks; `GroupOverlay` draws, from the layout, a post at its point, a heading arrow, and a line to each order's subject in the scene labelled with slot and verb. A group out of the scene gets only its route's highlight. Its view shows its members, Present when, deployment action, orders, setup, out-of-action counter writes and related objectives; an object's view its Present when, counter writes and objectives.
 
 Not drawn:
 
@@ -81,7 +81,9 @@ Not drawn:
 
 ## Waiting groups
 
-View > Waiting Groups draws, outlines (meshes hidden, members boxed, still selectable) or hides the members of a group gated on an action. Unless hidden, each is labelled at its point with the action and the arrival (drop pod, on foot, in place), labels sharing a point stacked; the label numbers the group and the action by their place in the layout's rows 16 and 10, as the outliner numbers them. Translucent ghosts in place of outlines need a tint or alpha path in `SceneRenderer`.
+A group waiting on an action whose verb brings it in by drop pod or on foot (2 to 5) is not in the scene (`PlannedGroup.OffScene`), by the user's choice ([`handoff-editor-msn-scene.md`](handoff-editor-msn-scene.md#decided-by-the-user)): its members are neither drawn nor picked and get no box, label, order line, framing or move handle, as retail neither draws nor touches such a group before it arrives and never uses its point, bringing it in about the player when the action fires ([`../retail/simulation/mission-deployment.md`](../retail/simulation/mission-deployment.md#arrival--group_deploymentcheck-004236c4)). Its route is still drawn. Its members are still built and indexed and are selected from the outliner, and the group's view and each member's say it is not in the scene and how it arrives. A structure group stays in the scene whatever its action's verb, as DBSIM builds a held-back structure where it is placed, footprint and pad included ([`../retail/simulation/mission-deployment.md`](../retail/simulation/mission-deployment.md#held-back-structures-stand-from-the-start)).
+
+View > Waiting Groups draws, outlines (meshes hidden, members boxed, still selectable) or hides the members of every other group gated on an action: one arriving in place, or a structure group. Unless hidden, each is labelled at its point with the action and the arrival (drop pod, on foot, in place), labels sharing a point stacked; the label numbers the group and the action by their place in the layout's rows 16 and 10, as the outliner numbers them. Translucent ghosts in place of outlines need a tint or alpha path in `SceneRenderer`.
 
 ## Mission check
 
@@ -89,6 +91,6 @@ View > Waiting Groups draws, outlines (meshes hidden, members boxed, still selec
 
 ## Not shown
 
-- **Drop-pod and on-foot arrival points**, picked at run time from the player's position and heading when the action fires.
+- **Drop-pod and on-foot arrivals**: such a group is not in the scene, since it arrives at a point picked from the player's position and heading when the action fires ([Waiting groups](#waiting-groups)).
 - **Detection and engagement ranges** (50,000 and 100,000 units), simulation constants rather than mission data.
 - An **action graph**: the action view walks the wiring one link at a time, where a node graph of actions, timers and the objects and groups between them would show it at once.

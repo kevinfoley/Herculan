@@ -20,6 +20,10 @@ internal sealed class MissionDrawables : IDisposable {
 	private readonly MeshVertex[] _terrainVertices;
 	private readonly List<SceneItem> _items;
 	private readonly Func<SceneObject, bool> _isWaiting;
+	private readonly Func<SceneObject, bool> _inScene;
+
+	// The items of the objects out of the scene (MissionIndex.InScene), never drawn.
+	private readonly List<SceneItem> _offScene = new();
 
 	// Each model's uploads, by model key: a celled shape's cells or else its flat mesh, its ground plane and its texture.
 	private readonly Dictionary<string, GpuMesh> _modelMeshes = new();
@@ -34,6 +38,7 @@ internal sealed class MissionDrawables : IDisposable {
 	public MissionDrawables(GL gl, SceneRenderer renderer, EditorMission mission, EditorSettings settings) {
 		_gl = gl;
 		_isWaiting = mission.Index.IsWaiting;
+		_inScene = mission.Index.InScene;
 		var scene = mission.Scene;
 
 		// See Scene.Atmosphere. Without it the renderer has no sky gradient, so DrawSky paints nothing and the
@@ -79,7 +84,10 @@ internal sealed class MissionDrawables : IDisposable {
 	/// <summary>The terrain item and the structures' ground planes painted onto it.</summary>
 	public GroundShapeLayer GroundLayer { get; }
 
-	/// <summary>The items of the objects whose group waits on an action, which the settings may stop drawing.</summary>
+	/// <summary>
+	/// The items of the objects in the scene whose group waits on an action, which the settings may stop drawing. Those of
+	/// an object out of the scene (<see cref="MissionIndex.InScene"/>) are not among them: they are never drawn.
+	/// </summary>
 	public List<SceneItem> WaitingItems { get; } = new();
 
 	/// <summary>
@@ -95,7 +103,6 @@ internal sealed class MissionDrawables : IDisposable {
 		uint? textureHandle = _modelTextures.TryGetValue(model.Key, out var texture) ? texture.Handle : null;
 		var draw = new ObjectDraw { Transform = MissionScene.TransformOf(sceneObject) };
 		var transform = draw.Transform;
-		bool waiting = _isWaiting(sceneObject);
 		if (_modelCells.TryGetValue(model.Key, out var cellMeshes)) {
 			// What the flat mesh is: every sequence on its first cell and every detail part at its finest
 			// level. The ground plane stays with _groundMeshes below.
@@ -136,9 +143,7 @@ internal sealed class MissionDrawables : IDisposable {
 
 		_objects[sceneObject] = draw;
 		_items.AddRange(draw.Items);
-		if (waiting) {
-			WaitingItems.AddRange(draw.Items);
-		}
+		FileItems(sceneObject, draw);
 	}
 
 	/// <summary>Stops drawing <paramref name="sceneObject"/>. Its model's uploads stay, for a redo to draw it again.</summary>
@@ -150,6 +155,7 @@ internal sealed class MissionDrawables : IDisposable {
 		foreach (var item in draw.Items) {
 			_items.Remove(item);
 			WaitingItems.Remove(item);
+			_offScene.Remove(item);
 		}
 
 		if (draw.GroundShape >= 0) {
@@ -162,17 +168,31 @@ internal sealed class MissionDrawables : IDisposable {
 		}
 	}
 
-	/// <summary>Lists again which drawn objects' groups wait on an action, for an index built again.</summary>
+	/// <summary>
+	/// Lists again which drawn objects are out of the scene and which in it wait on an action, for an index built again.
+	/// </summary>
 	public void RefreshWaiting() {
-		foreach (var item in WaitingItems) {
+		foreach (var item in WaitingItems.Concat(_offScene)) {
 			item.Visible = true;
 		}
 
 		WaitingItems.Clear();
+		_offScene.Clear();
 		foreach (var (sceneObject, draw) in _objects) {
-			if (_isWaiting(sceneObject)) {
-				WaitingItems.AddRange(draw.Items);
+			FileItems(sceneObject, draw);
+		}
+	}
+
+	// Files an object's items as out of the scene, hidden for good, or as waiting, for the settings to show or hide.
+	private void FileItems(SceneObject sceneObject, ObjectDraw draw) {
+		if (!_inScene(sceneObject)) {
+			foreach (var item in draw.Items) {
+				item.Visible = false;
 			}
+
+			_offScene.AddRange(draw.Items);
+		} else if (_isWaiting(sceneObject)) {
+			WaitingItems.AddRange(draw.Items);
 		}
 	}
 
