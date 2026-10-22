@@ -2,7 +2,6 @@ using Herculan.Engine.Audio;
 using Herculan.Engine.Input;
 using Herculan.Engine.Scene;
 using Herculan.Engine.Sim;
-using Silk.NET.Input;
 using static Herculan.Engine.Input.KeyChords;
 
 namespace Herculan.Engine.Cockpit;
@@ -16,8 +15,9 @@ namespace Herculan.Engine.Cockpit;
 /// </summary>
 /// <param name="razorThrottleKeys">Whether keypad <c>-</c> and <c>+</c> are the RAZOR's throttle keys this frame —
 /// <see cref="PilotControls.RazorThrottleKeys"/>.</param>
+/// <param name="keyMap">Where each key is read from.</param>
 public sealed class PilotKeys(CockpitView view, CockpitDisplays displays, CockpitCommands commands, MissionScene scene,
-		GameAudio audio, Func<bool> razorThrottleKeys) {
+		GameAudio audio, Func<bool> razorThrottleKeys, KeyMap keyMap) {
 	private readonly KeyLatch _allStop = new();
 	private readonly KeyLatch _shieldRear = new();
 	private readonly KeyLatch _shieldFront = new();
@@ -42,14 +42,14 @@ public sealed class PilotKeys(CockpitView view, CockpitDisplays displays, Cockpi
 	private readonly KeyLatch _autoTrack = new();
 
 	// The weapon panel's row keys, in row order: [1] is row 1 and [0] is row 10, which is the same
-	// wrap-around the row's own printed digit uses ((slot + 1) % 10).
-	private static readonly Key[] WeaponRowKeys = {
-		Key.Number1, Key.Number2, Key.Number3, Key.Number4, Key.Number5,
-		Key.Number6, Key.Number7, Key.Number8, Key.Number9, Key.Number0,
-	};
+	// wrap-around the row's own printed digit uses ((slot + 1) % 10). Each row's [Alt] chain toggle keeps a
+	// latch of its own on the same key, as [Alt+W] does beside [W].
+	private const int WeaponRowCount = 10;
 
-	private readonly KeyLatch[] _weaponRow = WeaponRowKeys.Select(_ => new KeyLatch()).ToArray();
-	private readonly KeyLatch _cycleWeapon = new();
+	private readonly KeyLatch[] _weaponRow = Enumerable.Range(0, WeaponRowCount).Select(_ => new KeyLatch()).ToArray();
+	private readonly KeyLatch[] _chainRow = Enumerable.Range(0, WeaponRowCount).Select(_ => new KeyLatch()).ToArray();
+	private readonly KeyLatch _nextWeapon = new();
+	private readonly KeyLatch _previousWeapon = new();
 	private readonly KeyLatch _link = new();
 	private readonly KeyLatch _chain = new();
 	private readonly KeyLatch _powerUp = new();
@@ -63,15 +63,16 @@ public sealed class PilotKeys(CockpitView view, CockpitDisplays displays, Cockpi
 	/// does, as each repeat reaches the original's dispatcher once the panel is down.
 	/// </summary>
 	public void Swallow(IKeyState controls) {
-		_allStop.Press(controls.IsKeyPressed(Key.Keypad5));
-		_shieldRear.Press(controls.IsKeyPressed(Key.LeftBracket));
-		_shieldFront.Press(controls.IsKeyPressed(Key.RightBracket));
-		_radar.Press(controls.IsKeyPressed(Key.R));
-		_autoTrack.Press(!displays.HddCommandHasKeyboard && controls.IsKeyPressed(Key.T));
-		_cycleTarget.Press(Unmodified(controls) && controls.IsKeyPressed(Key.Enter));
-		_nearestTarget.Press(controls.IsKeyPressed(Key.Apostrophe));
-		_clearTarget.Press(controls.IsKeyPressed(Key.Semicolon));
-		_cycleComponent.Press(Unmodified(controls) && controls.IsKeyPressed(Key.Tab));
+		_allStop.Press(controls.IsKeyPressed(keyMap.KeyOf(KeyAction.AllStop)));
+		_shieldRear.Press(controls.IsKeyPressed(keyMap.KeyOf(KeyAction.ShieldsRear)));
+		_shieldFront.Press(controls.IsKeyPressed(keyMap.KeyOf(KeyAction.ShieldsFront)));
+		_radar.Press(controls.IsKeyPressed(keyMap.KeyOf(KeyAction.RadarMode)));
+		_autoTrack.Press(!displays.HddCommandHasKeyboard
+			&& controls.IsKeyPressed(keyMap.KeyOf(KeyAction.AutoTurretTracking)));
+		_cycleTarget.Press(Unmodified(controls) && controls.IsKeyPressed(keyMap.KeyOf(KeyAction.NextTarget)));
+		_nearestTarget.Press(controls.IsKeyPressed(keyMap.KeyOf(KeyAction.NearestTarget)));
+		_clearTarget.Press(controls.IsKeyPressed(keyMap.KeyOf(KeyAction.ClearTarget)));
+		_cycleComponent.Press(Unmodified(controls) && controls.IsKeyPressed(keyMap.KeyOf(KeyAction.NextTargetComponent)));
 		ApplyWeaponKeys(controls, null);
 	}
 
@@ -80,7 +81,7 @@ public sealed class PilotKeys(CockpitView view, CockpitDisplays displays, Cockpi
 		// Keypad [5], all stop: zero the throttle and let the gauge follow the machine this frame
 		// rather than putting the old setting straight back. Held, it stops again on each repeat until
 		// another key is pressed, since only the key pressed last repeats.
-		if (_allStop.PressOrRepeat(controls, Key.Keypad5)) {
+		if (_allStop.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.AllStop))) {
 			pilotMech.AllStop();
 		}
 
@@ -94,11 +95,11 @@ public sealed class PilotKeys(CockpitView view, CockpitDisplays displays, Cockpi
 		// facing's own press slot — Widget_ForwardClickToOwner, which calls slot +8 of its second vtable
 		// (0049ca01), and that slot is Widget_ClickSound: catalog id 0x11. Pressing the widget is also
 		// what makes the two input routes agree by construction.
-		if (_shieldRear.PressOrRepeat(controls, Key.LeftBracket)) {
+		if (_shieldRear.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.ShieldsRear))) {
 			pilotMech.Shields.AdjustBalance(towardFront: false);
 			audio.Director?.Play(SoundId.ButtonClick);
 		}
-		if (_shieldFront.PressOrRepeat(controls, Key.RightBracket)) {
+		if (_shieldFront.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.ShieldsFront))) {
 			pilotMech.Shields.AdjustBalance(towardFront: true);
 			audio.Director?.Play(SoundId.ButtonClick);
 		}
@@ -110,14 +111,16 @@ public sealed class PilotKeys(CockpitView view, CockpitDisplays displays, Cockpi
 		// visual range, and in the original what makes a distant enemy targetable is usually that
 		// *enemy's* radar being on — which is AI behaviour the engine does not have yet. [Alt+R] is
 		// another code, 0x213, the MFD's range key, and no handler gives it the radar.
-		if (_radar.PressOrRepeat(controls, Key.R) && !view.CockpitWidgetsOff && !AltHeld(controls)) {
+		if (_radar.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.RadarMode)) && !view.CockpitWidgetsOff
+				&& !AltHeld(controls)) {
 			pilotMech.ToggleScanner(scene.World);
 		}
 
 		// [T] toggles ATT. The command display owns [T] as an order hotkey while it is down, so the
 		// two are split the same way the arrows and [Backspace] are, and for the same reason. [Alt+T]
 		// is 0x214, the MFD's TARGET key.
-		if (_autoTrack.PressOrRepeat(controls, Key.T, !displays.HddCommandHasKeyboard) && Unmodified(controls)) {
+		if (_autoTrack.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.AutoTurretTracking), !displays.HddCommandHasKeyboard)
+				&& Unmodified(controls)) {
 			// Sim_DispatchCommand's 0x14 case toggles the TRACK widget and, if that turned it off,
 			// latches the centring mode — so [T] off brings the turret home rather than leaving it
 			// wherever the tracker had it. Backspace's own case is the mirror image. A refused toggle
@@ -133,9 +136,10 @@ public sealed class PilotKeys(CockpitView view, CockpitDisplays displays, Cockpi
 		// dispatcher's and keeps working.
 		if (scene.Targeting is { } targeting) {
 			bool widgetsOff = view.CockpitWidgetsOff;
-			bool cycleTarget = _cycleTarget.PressOrRepeat(controls, Key.Enter, Unmodified(controls));
-			bool nearestTarget = _nearestTarget.PressOrRepeat(controls, Key.Apostrophe);
-			bool clearTarget = _clearTarget.PressOrRepeat(controls, Key.Semicolon);
+			bool cycleTarget = _cycleTarget.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.NextTarget),
+				Unmodified(controls));
+			bool nearestTarget = _nearestTarget.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.NearestTarget));
+			bool clearTarget = _clearTarget.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.ClearTarget));
 
 			// On the scanner and TARGET STATUS, [Enter] presses the MFD's own TARGET or SELECT button, which
 			// steps the selection. In the heads-down view it is the display's key instead — see
@@ -155,7 +159,7 @@ public sealed class PilotKeys(CockpitView view, CockpitDisplays displays, Cockpi
 		// 0x0f to the pod only when the view is not the heads-down one; while the display is down the
 		// same case goes to its own key dispatch, where the command display's [Tab] steps its unit pick —
 		// see CockpitKeyboard.
-		bool cycleComponentKey = _cycleComponent.PressOrRepeat(controls, Key.Tab,
+		bool cycleComponentKey = _cycleComponent.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.NextTargetComponent),
 			!view.Pan.AtHeadsDown && Unmodified(controls));
 		if (cycleComponentKey && !view.CockpitWidgetsOff) {
 			pilotMech.CycleTargetComponent();
@@ -190,8 +194,11 @@ public sealed class PilotKeys(CockpitView view, CockpitDisplays displays, Cockpi
 		// code, which the display does not take. See CockpitKeyboard.ReadHddDisplayKeys.
 		bool headsDown = view.Pan.AtHeadsDown;
 
-		for (int slot = 0; slot < WeaponRowKeys.Length; slot++) {
-			if (_weaponRow[slot].PressOrRepeat(keyboard, WeaponRowKeys[slot]) && !ctrl) {
+		for (int slot = 0; slot < WeaponRowCount; slot++) {
+			// Both latches are read every frame, and [Alt] decides which of the two keys acts.
+			bool rowKey = _weaponRow[slot].PressOrRepeat(keyboard, keyMap.KeyOf(KeyAction.WeaponRow1 + slot));
+			bool chainKey = _chainRow[slot].PressOrRepeat(keyboard, keyMap.KeyOf(KeyAction.ToggleChainRow1 + slot));
+			if ((alt ? chainKey : rowKey) && !ctrl) {
 				// [Alt] and a number is command 0x202-0x20b, which the weapon manager answers itself; the
 				// bare number is 0x02-0x0b, which CockpitWidgets_HandleCommand answers by pressing the
 				// row's own select gadget. That is why only the bare key can toggle a pod.
@@ -209,7 +216,9 @@ public sealed class PilotKeys(CockpitView view, CockpitDisplays displays, Cockpi
 			}
 		}
 
-		if (_cycleWeapon.PressOrRepeat(keyboard, Key.W) && (alt || !headsDown)) {
+		bool nextWeapon = _nextWeapon.PressOrRepeat(keyboard, keyMap.KeyOf(KeyAction.NextWeapon));
+		bool previousWeapon = _previousWeapon.PressOrRepeat(keyboard, keyMap.KeyOf(KeyAction.PreviousWeapon));
+		if ((alt ? previousWeapon : nextWeapon) && (alt || !headsDown)) {
 			mounts?.CycleSelection(alt ? -1 : 1);
 		}
 
@@ -217,22 +226,25 @@ public sealed class PilotKeys(CockpitView view, CockpitDisplays displays, Cockpi
 		// forward panels outside the heads-down view and to nothing with the widgets off; the weapon
 		// manager answers neither code.
 		bool consoleKeys = mounts != null && !view.CockpitWidgetsOff && !view.Pan.AtHeadsDown;
-		if (_link.PressOrRepeat(keyboard, Key.L) && consoleKeys) {
+		if (_link.PressOrRepeat(keyboard, keyMap.KeyOf(KeyAction.LinkWeapon)) && consoleKeys) {
 			commands.PressConsoleButtonByKey(ConsoleButton.Link);
 		}
-		if (_chain.PressOrRepeat(keyboard, Key.GraveAccent) && consoleKeys) {
+		if (_chain.PressOrRepeat(keyboard, keyMap.KeyOf(KeyAction.NextChain)) && consoleKeys) {
 			commands.PressConsoleButtonByKey(ConsoleButton.Chain);
 		}
 
 		// [-] and [=], with the keypad's own pair alongside them, move the armed energy weapon's power
 		// level, one step of 0x50 out of 1200 per key-down event. The keypad's pair is the RAZOR's
 		// throttle instead, which Input_KeyjoyAxisKey (0045a308) takes before the command queue sees it.
-		// `|`, not `||`, so both of a pair's latches are refreshed every frame.
+		// `|`, not `||`, so both of a pair's latches are refreshed every frame. The keypad's key is each action's
+		// second chord.
 		bool padPower = !razorThrottleKeys();
-		bool powerUp = _powerUp.PressOrRepeat(keyboard, Key.Equal)
-			| (_powerUpPad.PressOrRepeat(keyboard, Key.KeypadAdd) && !alt && padPower);
-		bool powerDown = _powerDown.PressOrRepeat(keyboard, Key.Minus)
-			| (_powerDownPad.PressOrRepeat(keyboard, Key.KeypadSubtract) && padPower);
+		var powerUpKeys = keyMap.Chords(KeyAction.PowerUp);
+		var powerDownKeys = keyMap.Chords(KeyAction.PowerDown);
+		bool powerUp = _powerUp.PressOrRepeat(keyboard, powerUpKeys[0].Key)
+			| (_powerUpPad.PressOrRepeat(keyboard, powerUpKeys[1].Key) && !alt && padPower);
+		bool powerDown = _powerDown.PressOrRepeat(keyboard, powerDownKeys[0].Key)
+			| (_powerDownPad.PressOrRepeat(keyboard, powerDownKeys[1].Key) && padPower);
 		if (powerUp && !headsDown) {
 			mounts?.AdjustPower(raise: true);
 		}

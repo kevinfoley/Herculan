@@ -15,25 +15,14 @@ public partial class MechObject {
 	public BehaviourBlock Behaviour;
 
 	/// <summary>
-	/// <c>Mech_Constructor</c>'s initial install (<c>00415f33</c>/<c>f46</c>/<c>f59</c>): the player's
-	/// machine is settled at construction, everything else starts in <c>deciding</c> and waits for
-	/// its group's order — or, with the order layer unported, for something to shoot it.
-	/// </summary>
-	internal void InstallInitialBehaviour() =>
-		SetBehaviourState(IsPlayer
-			? Type.IsFlyer ? BehaviourState.PlayerFly : BehaviourState.Player
-			: BehaviourState.Deciding);
-
-	/// <summary>
 	/// <c>Mech_AiTick</c> (<c>00411cec</c>) — one machine's AI frame. Its only caller is
 	/// <c>Group_OrderTick</c>, so this runs from <see cref="MissionGroup.AiTick"/> and a machine that
 	/// is not a live group member never thinks.
 	///
-	/// <para>The original's order is reassess, then the dwell countdown, then move, then think.
-	/// <see cref="Tick"/> runs the move slot for every machine, and it runs from the object pass that
-	/// precedes this one, so the machine is still integrated on the <i>previous</i> think's decisions
-	/// — the original's ordering, arrived at from the other side. Only the states whose think is
-	/// ported dispatch one; see <see cref="ThinkSlot"/>.</para>
+	/// <para>The original's order is reassess, then the dwell countdown, then the move
+	/// (<see cref="MoveTick"/>), then the think, so the machine is integrated on the previous think's
+	/// decisions under the state this tick's reassess left it in. Only the states whose think is ported
+	/// dispatch one; see <see cref="ThinkSlot"/>.</para>
 	///
 	/// <para>A think returning nonzero zeroes its own dwell countdown, which is a state saying it has
 	/// finished. None of the navigation thinks ever does — a movement order ends through
@@ -61,6 +50,8 @@ public partial class MechObject {
 		if (Behaviour.State is { SuppressesDwell: false }) {
 			SimMath.TimerCountDown(ref Behaviour.DwellCountdown);
 		}
+
+		MoveTick(world);
 
 		bool finished = Behaviour.State?.Think switch {
 			ThinkSlot.Player => PlayerThink(world),
@@ -92,7 +83,7 @@ public partial class MechObject {
 
 	/// <summary>
 	/// <c>Mech_AiSelectBehaviour</c> (<c>0041eb34</c>) — picks and installs the next state. Three
-	/// mutually exclusive paths, of which only the first can be taken here.
+	/// mutually exclusive paths, tested in this order.
 	///
 	/// <list type="number">
 	/// <item><b>The local player</b> takes <c>player fly</c> or <c>player</c> on the type record's
@@ -108,8 +99,11 @@ public partial class MechObject {
 	/// docs/retail/simulation/ai-goals.md, "A group with no order at all". No retail mission reaches it.</item>
 	/// </list>
 	///
-	/// <para><b>Every path ends by dropping the target</b>, which is the original's own behaviour and
-	/// the reason a machine that finds nothing to fight also lets go of what it was holding.</para>
+	/// <para><b>Every path that installs a state here drops the target</b> — the player branch, squad
+	/// verbs 1, 2 and 6, and the group order — which is why a machine that finds nothing to fight
+	/// also lets go of what it was holding. The engage hands off to <see cref="EngageOrderedTarget"/>,
+	/// which acquires instead, and squad verbs 3 and 5 install nothing and leave the target. See
+	/// docs/retail/simulation/ai-dispatch.md, "Choosing a state".</para>
 	/// </summary>
 	private void SelectBehaviour(SimWorld world) {
 		if (IsPlayer) {
@@ -264,10 +258,14 @@ public partial class MechObject {
 	/// </summary>
 	private bool FleeCheck(SimWorld world) {
 		if (OutOfAction) {
-			// A machine that is out of the fight and still reassessing. The structure exception keys
-			// on BASES.DAT +0x2e, a field the format reads past without using, so the branch that
-			// would send it back to Mech_AiSelectBehaviour cannot be evaluated and it always flees.
-			SetBehaviourState(BehaviourState.Fleeing);
+			// A machine that is out of the fight and still reassessing flees, unless what it holds is
+			// a structure that cannot hurt it: then it goes back to its order instead.
+			if (Target is BaseObject { Type.ThreatensAttackers: false }) {
+				SelectBehaviour(world);
+			} else {
+				SetBehaviourState(BehaviourState.Fleeing);
+			}
+
 			return true;
 		}
 
@@ -435,11 +433,12 @@ public partial class MechObject {
 
 		if (state.HoldsPlace) {
 			// Defend the post rather than chase the shooter.
+			// The original's pick also reloads mech+0x5b, the guard's sweep clock; the state installed
+			// below zeroes it again, so the reload is not reproduced here.
 			var post = GoalPosition();
-			var defence = AiTargeting.SelectDefenceTarget(world, this, post,
-				Group?.OrderTarget != null ? AiTargeting.DefenceRange : AiTargeting.OpenDefenceRange);
+			var defence = AiTargeting.SelectDefenceTarget(world, this, post);
 
-			if (defence is not MechObject { Target: { } held } || !ReferenceEquals(held, this)) {
+			if (!ReferenceEquals(defence?.Target, this)) {
 				if (SquadOrderVerb == SquadOrderEngage) {
 					defence = SquadOrderTarget;
 				}
@@ -467,7 +466,10 @@ public partial class MechObject {
 		var picked = AiTargeting.SelectTarget(world, this,
 			TargetFilter.IgnoreCrowding | TargetFilter.IgnoreBearing);
 
-		if (picked is not MechObject { Target: { } aimed } || !ReferenceEquals(aimed, this)) {
+		// "Is the pick shooting at me" reads the pick's shared target field whatever its class, so an
+		// armed structure or an aircraft holding this machine keeps its place against a verb-4 order —
+		// docs/retail/simulation/ai-targeting.md, "Taking fire".
+		if (!ReferenceEquals(picked?.Target, this)) {
 			if (SquadOrderVerb == SquadOrderEngage) {
 				if (SquadOrderTarget is { Neutralised: false } ordered) {
 					picked = ordered;

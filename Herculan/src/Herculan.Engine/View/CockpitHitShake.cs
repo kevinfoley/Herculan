@@ -26,8 +26,8 @@ namespace Herculan.Engine.View;
 ///
 /// <para><b>The palette flash runs beside it.</b> The original swaps the whole live palette to the
 /// theater's <c>IMPACT&lt;n&gt;.DPL</c> — a heavy red shift of the theater's own — and alternates the
-/// two every 0-9 coarse ticks. <see cref="FlashActive"/> is that switch; the host follows it into
-/// <see cref="SceneRenderer.ImpactPaletteActive"/> and the canopy's own flash buffer. See
+/// two every 0-9 coarse ticks. <see cref="FlashActive"/> is that switch; the host follows
+/// <see cref="FlashShown"/> into <see cref="SceneRenderer.ImpactPaletteActive"/> and the canopy's own flash buffer. See
 /// <see cref="Scene.ImpactFlash"/> for what does and does not follow a swap in this renderer.</para>
 ///
 /// <para><b>Retriggering does not compound — it stops the shake.</b> A second trigger inside the
@@ -102,12 +102,12 @@ public sealed class CockpitHitShake {
 
 	/// <summary>
 	/// How far this shake has walked the display window from its rest, in the canvas's device rows,
-	/// positive down the canvas (the picture moves up), 0 when no band is armed. It is positive in the
+	/// positive down the canvas (the picture moves up), 0 when no band is armed or <see cref="ShakeHidden"/>. It is positive in the
 	/// forward view and the glances and negative in the Heads-Down Display, where the band lies on the
 	/// other side of the rest. <see cref="Cockpit.CockpitView.WindowOffsetRows"/> adds it to the pan's.
 	/// The step kick is live at the same time, on the projection centre alone.
 	/// </summary>
-	public int OffsetPixels => _banded ? _offset : 0;
+	public int OffsetPixels => _banded && !ShakeHidden ? _offset : 0;
 
 	/// <summary>
 	/// Whether the cockpit is showing the Heads-Down Display, the original's view 1, which the host sets
@@ -122,6 +122,24 @@ public sealed class CockpitHitShake {
 	/// timer and not the shake's.
 	/// </summary>
 	public bool FlashActive { get; private set; }
+
+	/// <summary>
+	/// Whether the impact palette is on screen this frame: <see cref="FlashActive"/>, unless <see cref="FlashHidden"/>.
+	/// This is what the host follows into <see cref="SceneRenderer.ImpactPaletteActive"/> and the canopy.
+	/// </summary>
+	public bool FlashShown => FlashActive && !FlashHidden;
+
+	/// <summary>
+	/// The <see cref="Settings.A11ySettingDefinitions.DisableDamageFlash"/> setting, which the host sets: the flash
+	/// still runs, and draws on the generator as before, but <see cref="FlashShown"/> stays false.
+	/// </summary>
+	public bool FlashHidden { get; set; }
+
+	/// <summary>
+	/// The <see cref="Settings.A11ySettingDefinitions.DisableDamageShake"/> setting, which the host sets: the walk
+	/// still runs, and draws on the generator as before, but <see cref="OffsetPixels"/> stays 0.
+	/// </summary>
+	public bool ShakeHidden { get; set; }
 
 	/// <summary>
 	/// The <see cref="Settings.TweakSettingDefinitions.FlashThroughSecondHit"/> tweak, which the host

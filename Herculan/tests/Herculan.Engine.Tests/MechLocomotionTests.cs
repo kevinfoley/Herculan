@@ -410,7 +410,21 @@ public class MechLocomotionTests {
 		int middle = (1 << (widthShift + cellShift)) / 2;
 		mech.Position = new Vec3i(middle, middle, terrain.HeightAtWorld(middle, middle));
 		world.Add(mech);
+		BecomePlayer(world, mech);
 		return world;
+	}
+
+	/// <summary>
+	/// Makes <paramref name="mech"/> the player's machine, in a group of its own: a machine moves only
+	/// from its group's AI tick, and only the player's takes <see cref="MechObject.Controls"/>.
+	/// </summary>
+	internal static void BecomePlayer(SimWorld world, MechObject mech) {
+		mech.IsPlayer = true;
+		var group = new MissionGroup(0, World.MissionUnitKind.Mech, World.MissionSide.Human,
+			System.Array.Empty<World.MissionOrder?>());
+		group.Add(mech);
+		world.AddGroup(group);
+		world.PlayerMech = mech;
 	}
 
 	private static MechObject? Spawn(GameContent content, string herc) {

@@ -34,6 +34,7 @@ public sealed class SimulatorFrame {
 	private readonly ISimulatorInput _input;
 	private readonly IEscapeMenu? _escapeMenu;
 	private readonly Func<Vector2D<int>> _framebufferSize;
+	private readonly KeyMap _keyMap;
 	private readonly bool[] _systemButtonsShowing = new bool[SystemButtons.Count];
 
 	private readonly KeyLatch _escape = new();
@@ -46,10 +47,11 @@ public sealed class SimulatorFrame {
 	/// <param name="systemButtons">What the two system buttons reach on the window.</param>
 	/// <param name="escapeMenu">The host's own menu, which [Shift+Esc] raises, if it has one.</param>
 	/// <param name="framebufferSize">The window's framebuffer size, read where each step places something on it.</param>
+	/// <param name="keyMap">Where every key handler of the frame reads its keys.</param>
 	public SimulatorFrame(SimulatorStart start, CockpitArt? art, CockpitView view, CockpitDisplays displays,
 			ModalPanels panels, TapePlayback tape, TapeRecording recording, DeveloperKeys developerKeys,
 			SimulatorStaging staging, MissionOutcome outcome, ISimulatorInput input, ISystemButtonActions systemButtons,
-			IEscapeMenu? escapeMenu, Func<Vector2D<int>> framebufferSize) {
+			IEscapeMenu? escapeMenu, Func<Vector2D<int>> framebufferSize, KeyMap keyMap) {
 		_start = start;
 		_scene = start.Scene;
 		_audio = start.Audio;
@@ -65,10 +67,11 @@ public sealed class SimulatorFrame {
 		_input = input;
 		_escapeMenu = escapeMenu;
 		_framebufferSize = framebufferSize;
+		_keyMap = keyMap;
 
 		Commands = new CockpitCommands(displays, view, _scene, _audio, systemButtons, tape);
-		Pilot = new PilotControls(start, view, displays, Commands, tape, recording, developerKeys, staging.Start);
-		Keyboard = new CockpitKeyboard(displays, view, Commands, _scene, _audio);
+		Pilot = new PilotControls(start, view, displays, Commands, tape, recording, developerKeys, staging.Start, keyMap);
+		Keyboard = new CockpitKeyboard(displays, view, Commands, _scene, _audio, keyMap);
 		CockpitUpdate = new PlayerCockpitUpdate(displays, view, Commands, _scene, _ports);
 		Stepper = new SimulationStepper(_scene.World, tape, recording, panels, outcome, developerKeys, view, Pilot, input);
 	}
@@ -163,6 +166,7 @@ public sealed class SimulatorFrame {
 		_panels.AdvanceClock(deltaSeconds);
 
 		// A press the menu bar holds is hidden from the panels, so [Shift+Esc] never dismisses one as it raises the bar.
+		// The key is ClaimEscape's.
 		var panelKeys = _input.KeyboardCapturedByImGui ? null : _input.Keyboard;
 		if (panelKeys != null && _escapeHeldByMenu && !_tape.Playing) {
 			panelKeys = new KeysWithout(panelKeys, Key.Escape);
@@ -285,6 +289,10 @@ public sealed class SimulatorFrame {
 	// [Shift+Esc], which the menu takes for the whole of its hold, over a modal panel too. Tracked every frame, as
 	// the modal panels track their own [Esc] edge regardless of who else claims it — otherwise a press still held on
 	// the frame a retail panel lets go of [Esc] reads as a second, fresh press here.
+	//
+	// KEPT LITERAL: this one read of [Esc] is three actions at once, the menu bar's [Shift+Esc] (KeyAction.MenuBar), its
+	// back-out (MenuBack) and the game's own (ViewBack), whose gates hang together through _escapeHeldByMenu: a press
+	// the menu takes keeps its repeats from the game. Splitting it by action would change that.
 	private bool ClaimEscape() {
 		_escapePressed = false;
 		_escapeRepeated = false;
@@ -322,7 +330,8 @@ public sealed class SimulatorFrame {
 		bool tapePlaying = _tape.Playing;
 		var keyboard = _input.Keyboard;
 		if (tapePlaying && keyboard != null) {
-			if (_tapeEscape.PressOrRepeat(keyboard, Key.Escape) && !consumedByPanel && Unmodified(keyboard)) {
+			if (_tapeEscape.PressOrRepeat(keyboard, _keyMap.KeyOf(KeyAction.ViewBack)) && !consumedByPanel
+					&& Unmodified(keyboard)) {
 				_view.Escape(hasCockpit);
 			}
 

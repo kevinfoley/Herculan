@@ -111,9 +111,11 @@ public sealed partial class MissionGroup {
 		leader.Heading = leaderHeading & 0xffff;
 
 		for (int i = 1; i < _members.Count; i++) {
-			_members[i].Position = _members[i] is MechObject member
-				? member.FormationPostAround(point, leader.Heading)
-				: point;
+			_members[i].Position = _members[i] switch {
+				MechObject member => member.FormationPostAround(point, leader.Heading),
+				FlyerObject aircraft => aircraft.FormationPostAround(point, leader.Heading),
+				_ => point
+			};
 		}
 	}
 

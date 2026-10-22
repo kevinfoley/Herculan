@@ -37,13 +37,10 @@ sealed class WelcomeDialog {
 	}
 
 	/// <summary>
-	/// Where the dismissal is remembered: <c>%APPDATA%\Herculan\welcome-shown.txt</c> on Windows, and the platform's
-	/// equivalent user-config directory elsewhere. Its presence is the record; it holds nothing.
+	/// Where the dismissal is remembered: <c>welcome-shown.txt</c> in <see cref="UserConfig.Folder"/>. Its presence is the
+	/// record; it holds nothing.
 	/// </summary>
-	public static string ShownFile => Path.Combine(
-		Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData,
-			Environment.SpecialFolderOption.DoNotVerify),
-		"Herculan", "welcome-shown.txt");
+	public static string ShownFile => UserConfig.PathOf("welcome-shown.txt");
 
 	/// <summary>Whether the dialog is up.</summary>
 	public bool IsOpen => _open;
@@ -106,13 +103,5 @@ sealed class WelcomeDialog {
 		_viewTweaks();
 	}
 
-	private static void RememberShown() {
-		string path = ShownFile;
-		try {
-			Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-			File.WriteAllText(path, "");
-		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
-			Console.Error.WriteLine($"Could not write {path}: {ex.Message}");
-		}
-	}
+	private static void RememberShown() => UserConfig.Write(ShownFile, "");
 }

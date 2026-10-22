@@ -2,6 +2,7 @@ using HercWorks.Core.Data.File.Cfg;
 using HercWorks.Core.Io;
 using Herculan.Engine.Content;
 using Herculan.Engine.Host.Shell.Tabs;
+using Herculan.Engine.Input;
 using Herculan.Engine.Install;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Shell;
@@ -85,6 +86,7 @@ sealed class ShellHost : IDisposable {
 	private readonly MainMenuPanels _menu;
 	private readonly EditFields _fields;
 	private readonly KeyboardRouting _keys;
+	private readonly KeyboardLayout _layout = new(ShellKeyboard.KeyOfVirtualKey);
 	private readonly CanvasContent _content;
 
 	/// <summary>Whether a simulator exit code brings the shell back up rather than ending the run: 3, 4 and 6.</summary>
@@ -223,7 +225,7 @@ sealed class ShellHost : IDisposable {
 			_movies, _audio, _outcome, _loop, _navigation, repaint);
 		_fields = new EditFields(_window, _audio, _movies, _pointer, _screen, saveScreen, _menu, dialogs.MissionName, _canvas,
 			_widgets, repaint);
-		_keys = new KeyboardRouting(_window, _movies, _startup, _game, _menu, _fields, repaint);
+		_keys = new KeyboardRouting(_window, _movies, _startup, _game, _menu, _fields, repaint, session.Keys);
 		_buttons.Taken = key => key == Key.Escape && _keys.EscapeIsMenuBars;
 		_buttons.AlsoLeft = () => _window.PadClickHeld;
 		_buttons.AlsoSkip = () => _window.PadSkipHeld;
@@ -269,9 +271,19 @@ sealed class ShellHost : IDisposable {
 		// taken to whichever the option asks. --shell-windowed keeps the window, which retail's -d does not.
 		_window.StartFullScreen(_game.Options[Prefs.DisplayModeOption] != 0 && !_startWindowed);
 
+		// Each key is the one the layout makes of it, by VSHELL's virtual-key reading (ShellKeyboard.KeyOfVirtualKey); a
+		// key VSHELL drops on this layout goes nowhere.
 		if (_window.Keyboard is { } keyboard) {
-			keyboard.KeyDown += (_, key, _) => _keys.KeyDown(key);
-			keyboard.KeyUp += (_, key, _) => _keys.KeyUp(key);
+			keyboard.KeyDown += (_, physical, _) => {
+				if (ShellKey(physical) is { } key) {
+					_keys.KeyDown(key);
+				}
+			};
+			keyboard.KeyUp += (_, physical, _) => {
+				if (ShellKey(physical) is { } key) {
+					_keys.KeyUp(key);
+				}
+			};
 		}
 
 		if (_startPractice) {
@@ -297,6 +309,12 @@ sealed class ShellHost : IDisposable {
 	// main loop and the movie queue (docs/retail/shell/startup.md#the-main-loop), and starts set, as the image's 1 does,
 	// until the first WM_KILLFOCUS.
 	private void OnFocusChanged(bool focused) => _audio.FocusChanged(focused, _movies.Playing);
+
+	// The key VSHELL reads for a physical one, under the layout current as the key goes down or up.
+	private Key? ShellKey(Key physical) {
+		_layout.Refresh();
+		return _layout.Translate(physical);
+	}
 
 	private void OnUpdate(double delta) {
 		_audio.Update();

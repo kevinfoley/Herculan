@@ -11,10 +11,10 @@ namespace Herculan.Engine.Input;
 /// is the key pressed last too, which takes the repeat off whatever had it.
 /// </summary>
 public sealed class KeyRepeat((double Delay, double Interval) typematic) {
-	// Every key a set-1 scancode stands for, modifiers included, and the right-hand modifiers, which share
-	// their left-hand twins' scancodes.
+	// Every key a set-1 scancode stands for, modifiers included, the right-hand modifiers, which share their
+	// left-hand twins' scancodes, and every key a layout can make one of those (KeyboardLayout.Movable).
 	private static readonly Key[] Watched = Enumerable.Range(1, 0x58).SelectMany(TapeKeys.KeysOf)
-		.Append(Key.ControlRight).Append(Key.AltRight).Distinct().ToArray();
+		.Append(Key.ControlRight).Append(Key.AltRight).Concat(KeyboardLayout.Movable).Distinct().ToArray();
 
 	private readonly HashSet<Key> _down = new();
 	private Key? _repeating;

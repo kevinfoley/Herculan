@@ -64,7 +64,7 @@ tweak.fix_raptor2_perspective.description   Setzt die Cockpitansicht des Raptor 
 tweak.reset_counters_on_replay.display_name  Flags bei „Einsatz noch mal?“ korrigieren
 tweak.reset_counters_on_replay.description   Behebt, dass Einsatz-Flags nicht zurückgesetzt werden, wenn Sie einen Einsatz wiederholen (nachdem Sie im Einsatz getötet wurden). Das konnte Freischaltungen verhindern oder anderes unerwartetes Verhalten auslösen.
 tweaks.title                   Optimierungen
-tweaks.description             Optimierungen verändern das Spielverhalten, meist um Fehler zu beheben oder den Komfort zu verbessern. Für ein möglichst originalgetreues Spielerlebnis (Fehler inklusive) klicken Sie auf „Keine", um alle Optimierungen abzuschalten.
+tweaks.description             Optimierungen verändern das Spielverhalten, meist um Fehler zu beheben oder den Komfort zu verbessern. Für ein möglichst originalgetreues Spielerlebnis (Fehler inklusive) klicken Sie auf „Keine“, um alle Optimierungen abzuschalten.
 tweaks.note                    Einige kleinere optische Fehler und mögliche Abstürze werden in HERCULAN nicht nachgebildet. Moderne Eingabegeräte und alternative Steuerungsschemata werden über das Menü Controller immer unterstützt.
 tweaks.category.cosmetic       Kosmetisch
 tweaks.category.ai             KI
@@ -74,6 +74,17 @@ tweaks.none                    Keine
 tweaks.defaults                Standard
 tweaks.recommended             Empfohlen
 tweaks.all                     Alle
+a11y.title                     Barrierefreiheit
+a11y.category.motor            Motorik
+a11y.category.cognitive        Kognition
+a11y.category.vision           Sehen
+a11y.category.hearing          Hören
+a11y.larger_font.display_name  Größere Schrift
+a11y.larger_font.description   Zeigt den Text der HERCULAN-eigenen Menüs und Fenster größer an. Die Bildschirme des Spiels selbst bleiben unverändert.
+a11y.disable_damage_flash.display_name Vollbild-Blitz deaktivieren
+a11y.disable_damage_flash.description Wenn Ihr Cockpit getroffen wird, blinkt der Bildschirm nicht mehr rot. Der Bildschirm wackelt weiterhin.
+a11y.disable_damage_shake.display_name Kamerawackeln deaktivieren
+a11y.disable_damage_shake.description Wenn Ihr Cockpit getroffen wird, wackelt der Bildschirm nicht mehr. Das rote Schadensaufblitzen erscheint weiterhin.
 install_prompt.window_title    HERCULAN Engine — Earthsiege 2 suchen
 install_prompt.message         HERCULAN konnte Earthsiege 2 nicht finden. Wählen Sie den Earthsiege-2-Ordner: den Ordner, der den Ordner {0} enthält.
 install_prompt.path_hint       Earthsiege-2-Ordner
@@ -92,8 +103,10 @@ crash.window_title            HERCULAN Engine — Fehler
 crash.message                 HERCULAN wurde wegen eines Fehlers beendet: {0} Die Details stehen in {1}.
 menu.debug                     Debug
 menu.tweaks                    Optimierungen
+menu.accessibility             Barrierefreiheit
 menu.settings                  Einstellungen
 menu.controller                Controller
+menu.keys                      Tasten
 menu.editor                    Editor
 menu.about                     Über
 pause.title                    Pause
@@ -207,6 +220,110 @@ controller.invert_razor_pitch_tip   Kehrt um, in welche Richtung die Steuerung d
 controller.actions_note        Dieses Fenster legt fest, welche Teile Ihres Geräts das Spiel verwendet. Was jedes davon tut (Lenken oder Zielen, FIRE, TARGET usw.), wird in einer Mission eingestellt: Drücken Sie F12 für die Einstellungen, dann CONTROLS. Mit einem Gamepad sind die Zeilen JOYSTICK, THROTTLE, RUDDER und HAT dort passend festgelegt, und seine Tastenbelegung wird getrennt von der eines Joysticks gespeichert. Die Einstellungen werden in data\herculan-joystick.cfg gespeichert, die das Originalspiel nicht liest.
 controller.defaults            Standard
 controller.no_data_folder      Es gibt keinen data-Ordner, in dem die Einstellungen gespeichert werden können.
+keys.title                     Tasten
+keys.filter_hint               Taste oder Aktion suchen
+keys.column_key                Taste
+keys.column_action             Wirkung
+keys.no_match                  Keine Taste passt.
+keys.section.driving           Fahren
+keys.section.weapons           Waffen
+keys.section.targeting         Zielerfassung und Schilde
+keys.section.displays          Anzeigen und Ansichten
+keys.section.flash_comm        Auf FLASH COMM
+keys.section.command_display   Auf der Befehlsanzeige
+keys.section.damage_detail     Auf der Schadensanzeige
+keys.section.outside_view      In der Außenansicht
+keys.section.panels            Felder und Spiel
+keys.section.herculan          Eigene Tasten von HERCULAN
+keys.row.throttle              Schub vor und zurück. Die Zurück-Taste gehalten führt den Schub über null hinaus in den Rückwärtsgang.
+keys.row.steer                 Nach links und rechts lenken.
+keys.row.all_stop              Anhalten.
+keys.row.turret_twist          Den Turm nach links und rechts drehen.
+keys.row.turret_pitch          Den Turm nach oben und unten neigen.
+keys.row.center_turret         Den Turm auf den Rumpf ausrichten und die automatische Zielverfolgung ausschalten.
+keys.row.center_legs           Die Beine unter dem Turm ausrichten.
+keys.row.razor_throttle        Schub hoch und runter, im RAZOR.
+keys.row.diagonals             Lenken und Schub zugleich, diagonal; hat Vorrang vor den Pfeiltasten und dem übrigen Ziffernblock.
+keys.row.fire                  Feuern, solange die Taste gedrückt ist.
+keys.row.select_row            Waffenreihe 1 bis 10 wählen.
+keys.row.chain_row             Diese Waffenreihe in die aktuelle Feuerkette aufnehmen oder aus ihr entfernen.
+keys.row.next_weapon           Nächste und vorherige Waffe.
+keys.row.link_weapon           Die gewählte Waffe mit der gleichen am gegenüberliegenden Aufhängepunkt verbinden.
+keys.row.next_chain            Nächste Feuerkette.
+keys.row.power_level           Die Energiestufe der gewählten Energiewaffe um eine Stufe pro Druck erhöhen oder senken. Im RAZOR ist das Paar auf dem Ziffernblock stattdessen der Schub.
+keys.row.next_target           Das folgende Ziel wählen.
+keys.row.nearest_target        Das nächstgelegene Ziel wählen.
+keys.row.clear_target          Das Ziel aufheben.
+keys.row.target_component      Mit einer Zielkapsel durch die Bauteile des Ziels schalten.
+keys.row.radar_mode            Das Radar zwischen aktiv und passiv umschalten.
+keys.row.radar_range           Die Radarreichweite ändern, im aktiven Modus.
+keys.row.scanner_next_target   Auf dem SCANNER-Bildschirm das folgende Ziel wählen.
+keys.row.turret_tracking       Automatische Zielverfolgung ein oder aus. Beim Ausschalten wird auch der Turm ausgerichtet.
+keys.row.shields               Schildenergie nach hinten oder nach vorn verlagern.
+keys.row.mfd_status            STATUS auf dem MFD zeigen, auch vom Heads-Down-Display aus.
+keys.row.mfd_flash_comm        FLASH COMM auf dem MFD zeigen, auch vom Heads-Down-Display aus.
+keys.row.mfd_nav_map           NAV MAP auf dem MFD zeigen, auch vom Heads-Down-Display aus.
+keys.row.mfd_scanner           SCANNER auf dem MFD zeigen, auch vom Heads-Down-Display aus.
+keys.row.mfd_target            TARGET auf dem MFD zeigen, auch vom Heads-Down-Display aus.
+keys.row.mfd_missile_cam       MISSILE CAM auf dem MFD zeigen, auch vom Heads-Down-Display aus.
+keys.row.command_display       Die Befehlsanzeige auf dem Heads-Down-Display zeigen.
+keys.row.damage_detail         Die Schadensanzeige auf dem Heads-Down-Display zeigen.
+keys.row.look_sideways         Aus dem linken und rechten Fenster schauen.
+keys.row.view_back             Von der Vorwärtssicht hinunter zum Heads-Down-Display. Zurück zur Vorwärtssicht von einem Seitenfenster oder dem Heads-Down-Display, und von der Außenansicht ins Cockpit.
+keys.row.outside_view          Zur Außenansicht und zurück ins Cockpit.
+keys.row.other_hercs           Auf dem STATUS-Bildschirm zwischen Ihrem HERC und denen Ihrer Truppmitglieder wechseln. Auf dem TARGET-Bildschirm das folgende Ziel wählen.
+keys.row.nav_marker            Eine Navigationsmarke dort setzen, wo Sie stehen.
+keys.row.flash_comm_pick       Einen Befehl wählen: ATTACK MY TARGET, IGNORE MY TARGET, HELP ME OUT!, JOIN ON ME, SCAN FOR HOSTILES, EMCON, FIRE AT WILL / HOLD YOUR FIRE.
+keys.row.step_orders           Durch die Befehle schalten.
+keys.row.flash_comm_transmit   Den Befehl senden.
+keys.row.flash_comm_send       Dieselben Befehle von jedem Bildschirm aus wählen und senden.
+keys.row.command_squadmate     Ein Truppmitglied wählen, von links nach rechts.
+keys.row.command_order         Einen Befehl wählen: DISENGAGE, ATTACK ENEMY, DEFEND POSITION, PATROL GRIDPOINT, GOTO GRIDPOINT, JOIN ON ME, SCAN FOR HOSTILES, EMCON.
+keys.row.command_next_unit     Für ATTACK ENEMY oder DEFEND POSITION die folgende Einheit auf der Karte wählen, die infrage kommt: einen bekannten Feind oder eine eigene Einheit.
+keys.row.command_pick          Die Auswahl für den Befehl wie mit einem Klick treffen: die zuletzt für ATTACK ENEMY oder DEFEND POSITION gewählte Einheit, sonst was unter dem Mauszeiger liegt.
+keys.row.command_zoom          Die Karte vergrößern und verkleinern.
+keys.row.command_scroll        Die Karte verschieben.
+keys.row.command_recenter      Die Karte wieder auf Ihren HERC zentrieren.
+keys.row.command_transmit      Den Befehl senden oder abbrechen.
+keys.row.damage_show           Struktur, innere Systeme und Waffensysteme zeigen.
+keys.row.damage_step           Durch Struktur, innere Systeme und Waffensysteme schalten.
+keys.row.damage_herc           Durch die HERCs schalten: Ihren, den jedes Truppmitglieds, dann den Ihres Ziels.
+keys.row.camera_swing          Die Kamera um den HERC herum und über ihn schwenken.
+keys.row.camera_zoom           Hinein- und herauszoomen.
+keys.row.camera_swap           Die Steuerung an den HERC übergeben, den Sie dann von außen fahren und feuern lassen, und zurück an die Kamera.
+keys.row.camera_next           Den nächsten HERC Ihres Trupps ansehen. Die Steuerung bleibt bei der Kamera, solange es nicht Ihr eigener ist.
+keys.row.camera_back           Zurück ins Cockpit.
+keys.row.mission_status        Den Stand der Mission zeigen, mit der Möglichkeit, sie zu verlassen.
+keys.row.pause                 Pause.
+keys.row.quit_game             Das Spiel verlassen.
+keys.row.objectives            Die Missionsziele zeigen.
+keys.row.preferences           Die Einstellungen öffnen.
+keys.row.online_manual         Das Online-Handbuch öffnen.
+keys.row.panel_accept          In einem Feld die gewählte Schaltfläche drücken; das ist die erste, bis eine andere gewählt wird.
+keys.row.panel_cancel          In einem Feld seine Abbrechen-Schaltfläche drücken.
+keys.row.panel_next            In einem Feld die nächste Schaltfläche wählen, nach der letzten wieder die erste.
+keys.row.full_screen           Zwischen Vollbild und Fenster wechseln.
+keys.row.leave_full_screen     Das Vollbild für ein Fenster verlassen.
+keys.row.stop_tape             Die Wiedergabe einer Eingabeaufzeichnung beenden.
+keys.row.menu_bar              Die Menüleiste von HERCULAN öffnen; erneut drücken, um sie zu verlassen.
+keys.row.menu_back             Die Menüleiste oder eines ihrer Fenster verlassen, solange es offen ist.
+keys.row.copy_frame            Im Vollbild das Bild in die Zwischenablage kopieren.
+keycap.ctrl                    Strg
+keycap.alt                     Alt
+keycap.shift                   Umschalt
+keycap.escape                  Esc
+keycap.enter                   Eingabe
+keycap.tab                     Tab
+keycap.space                   Leertaste
+keycap.backspace               Rücktaste
+keycap.insert                  Einfg
+keycap.up                      Pfeil hoch
+keycap.down                    Pfeil runter
+keycap.left                    Pfeil links
+keycap.right                   Pfeil rechts
+keycap.print_screen            Druck
+keycap.function                F{0}
+keycap.keypad                  Ziffernblock {0}
 disc_prompt.message            Wählen Sie den Ordner des Earthsiege-2-Datenträgers, etwa das CD-Laufwerk oder eine Kopie der CD. Er wird in data\{0} der Installation gespeichert, die auch das Originalspiel liest, und das Spielmenü startet neu.
 disc_prompt.path_hint          Datenträgerordner
 disc_prompt.picker_title       Ordner des Earthsiege-2-Datenträgers auswählen

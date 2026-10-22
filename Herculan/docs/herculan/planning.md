@@ -36,7 +36,7 @@ All behavior matches the original game exactly by default. The only exceptions a
 
 ### Simulation object architecture
 
-**Traditional OOP / virtual dispatch, matching the original — not ECS.** DBSIM.EXE's simulation objects are built on a shared base-object constructor helper (`SimObjectBase_Constructor`, `00402188`) called by every `SimObject`-derived class right after its vtable pointer is set. See [`sim-object-layout.md`](../retail/simulation/sim-object-layout.md).
+**Traditional OOP / virtual dispatch, matching the original — not ECS.** DBSIM.EXE's simulation objects are built on shared base-object constructors (`SimObjectBase_Constructor`, `00402188`, and its shaped, animated and static variants), which a derived class's constructor runs first, installing its own vtable after. See [`sim-object-layout.md`](../retail/simulation/sim-object-layout.md).
 
 Plan: a `SimObject` abstract base class in the engine with virtual overrides mirroring the discovered vtable shape (Mech, Rocket, Bullet, Flyer, ...), rather than a component/system model.
 

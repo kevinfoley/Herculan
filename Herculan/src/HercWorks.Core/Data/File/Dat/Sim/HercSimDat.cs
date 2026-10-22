@@ -145,7 +145,9 @@ public class HercSimDat {
 
 	/// <summary>
 	/// Offset 82 — what the chassis' wreck is worth, a Q10 scale on its weighted remaining armour:
-	/// 1024, 1500 or 800 across retail. <c>Mech_SalvageValue</c> (<c>00418e60</c>) reads it.
+	/// 500 to 2000 across retail, and 0 on the SPIDER, which makes <c>Mech_Constructor</c> mark the
+	/// machine worth no salvage at all. <c>Mech_SalvageValue</c> (<c>00418e60</c>) reads it. See
+	/// docs/retail/simulation/component-damage.md#what-a-wreck-is-worth--mech_salvagevalue-00418e60.
 	/// </summary>
 	public short SalvageScale { get; set; }
 

@@ -172,7 +172,10 @@ public abstract class SimObject {
 	/// <c>Eye</c>, where a camera attached to it sits, and <c>OrbitCentre</c>, the point the outside
 	/// view circles. The shared base (<c>SimObject_GetAimPointZero</c>, <c>00411a74</c>) zeroes both,
 	/// which is what a flyer keeps; <see cref="MechObject"/> and <see cref="BaseObject"/> override it.
-	/// See docs/retail/simulation/external-views.md.
+	/// See docs/retail/simulation/external-views.md. The original's armed and transport structure
+	/// ticks also shoot at <c>OrbitCentre</c> added to the position unrotated, rather than at
+	/// <see cref="AimPoint"/>
+	/// (docs/retail/simulation/structure-behaviour.md, "What a structure is aimed at").
 	/// </summary>
 	public virtual (Vec3i Eye, Vec3i OrbitCentre) ViewMounts => (Vec3i.Zero, Vec3i.Zero);
 
@@ -224,7 +227,7 @@ public abstract class SimObject {
 
 	/// <summary>
 	/// Vtable <c>+0x50</c> — a shot from <paramref name="attacker"/> just struck this object, made by
-	/// <see cref="HitTests.Raycast"/>. Every class but the HERC installs <c>Mech_ShareContact</c>
+	/// <see cref="HitTests.Raycast"/>. Every class but the HERC installs <c>SimObject_AiOnTakingFire</c>
 	/// (<c>00411aec</c>), which does nothing but share the attacker with this object's side
 	/// (<see cref="Detection.ShareContact"/>); the HERC overrides it with its reaction
 	/// (docs/retail/simulation/ai-targeting.md, "Passing a contact on").

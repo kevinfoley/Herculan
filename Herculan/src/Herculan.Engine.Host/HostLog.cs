@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
 using Herculan.Engine.Host.Localization;
+using Herculan.Engine.Platform;
 
 namespace Herculan.Engine.Host;
 
@@ -25,9 +26,7 @@ static class HostLog {
 		"Herculan");
 
 	// Where older builds wrote the logs, with the settings. Whatever is left there is moved into LogFolder.
-	private static readonly string LegacyLogFolder = Path.Combine(
-		Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData, Environment.SpecialFolderOption.DoNotVerify),
-		"Herculan");
+	private static readonly string LegacyLogFolder = UserConfig.Folder;
 
 	/// <summary>This run's log.</summary>
 	public static readonly string LogPath = Path.Combine(LogFolder, "herculan.log");

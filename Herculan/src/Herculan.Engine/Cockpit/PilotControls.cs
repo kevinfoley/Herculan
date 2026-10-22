@@ -7,7 +7,6 @@ using Herculan.Engine.Scene;
 using Herculan.Engine.Settings;
 using Herculan.Engine.Sim;
 using Herculan.Engine.View;
-using Silk.NET.Input;
 using static Herculan.Engine.Input.KeyChords;
 using InputTape = HercWorks.Core.Data.File.Dbsim.InputTape;
 
@@ -30,6 +29,7 @@ public sealed class PilotControls {
 	private readonly DeveloperKeys _developerKeys;
 	private readonly StagedStart _staging;
 	private readonly PilotKeys _keys;
+	private readonly KeyMap _keyMap;
 
 	private JoystickPilotInput _joystickInput = JoystickPilotInput.None;
 
@@ -50,7 +50,7 @@ public sealed class PilotControls {
 	private readonly GunsightDrag _gunsightDrag = new();
 
 	public PilotControls(SimulatorStart start, CockpitView view, CockpitDisplays displays, CockpitCommands commands,
-			TapePlayback tape, TapeRecording recording, DeveloperKeys developerKeys, StagedStart staging) {
+			TapePlayback tape, TapeRecording recording, DeveloperKeys developerKeys, StagedStart staging, KeyMap keyMap) {
 		_view = view;
 		_displays = displays;
 		_scene = start.Scene;
@@ -61,7 +61,8 @@ public sealed class PilotControls {
 		_developerKeys = developerKeys;
 		_staging = staging;
 		_commands = commands;
-		_keys = new PilotKeys(view, displays, commands, start.Scene, start.Audio, () => RazorThrottleKeys);
+		_keyMap = keyMap;
+		_keys = new PilotKeys(view, displays, commands, start.Scene, start.Audio, () => RazorThrottleKeys, keyMap);
 
 		// The bindings themselves are the twelve bytes of prefs.cfg — nothing about them changes when the
 		// hardware does, which is the whole point of the split; JoystickDeviceMap is what absorbs a modern
@@ -166,8 +167,8 @@ public sealed class PilotControls {
 			if (_tape.Playing) {
 				if (_tape.Frame is { } tapeFrame && !_tape.FrameUnderPanel) {
 					pilotMech.Controls = TapeControls(tapeFrame,
-						centerTorso: !commandHasKeys && controls.IsKeyPressed(Key.Backspace),
-						centerBody: _joystickCenterBody || controls.IsKeyPressed(Key.BackSlash));
+						centerTorso: !commandHasKeys && controls.IsKeyPressed(_keyMap.KeyOf(KeyAction.CenterTurret)),
+						centerBody: _joystickCenterBody || controls.IsKeyPressed(_keyMap.KeyOf(KeyAction.CenterLegs)));
 					_view.TakeCameraAxes(pilotMech.Controls);
 				}
 			} else {
@@ -318,7 +319,7 @@ public sealed class PilotControls {
 			_fireRowLatched = true;
 		}
 
-		if (_fireRowLatched && !keys.IsKeyPressed(Key.Space) && !stickReading.Button(0)) {
+		if (_fireRowLatched && !keys.IsKeyPressed(_keyMap.KeyOf(KeyAction.Fire)) && !stickReading.Button(0)) {
 			_fireRowLatched = false;
 		}
 
@@ -329,7 +330,9 @@ public sealed class PilotControls {
 		// Under the developer flag an arrow held with Ctrl or Alt is a move or turn key, and this engine
 		// takes it off the steering and throttle axes. Retail keeps it on them — see KNOWN_ISSUES.md.
 		bool arrowsAreCommands = _developerKeys.Enabled && (CtrlHeld(keys) || AltHeld(keys));
-		var keyboardAxes = _view.Pan.HeadsDownViewIndex ? PilotAxes.Centred : KeyboardAxes.Build(keys, RazorThrottleKeys);
+		var keyboardAxes = _view.Pan.HeadsDownViewIndex
+			? PilotAxes.Centred
+			: KeyboardAxes.Build(keys, _keyMap, RazorThrottleKeys);
 		if (FasterKeyboardAiming) {
 			keyboardAxes = KeyboardAxes.AtStickRate(keyboardAxes, _joystickInput.KeyboardAimsTurret);
 		}
@@ -391,13 +394,13 @@ public sealed class PilotControls {
 			ThrottleLever: Bindings.ThrottleLeverMode(StickCapabilities, _preferences),
 			TorsoTwist: axes.TorsoTwist,
 			TorsoPitch: axes.TorsoPitch,
-			CenterTorso: !commandHasKeys && keys.IsKeyPressed(Key.Backspace),
-			CenterBody: _joystickCenterBody || keys.IsKeyPressed(Key.BackSlash),
+			CenterTorso: !commandHasKeys && keys.IsKeyPressed(_keyMap.KeyOf(KeyAction.CenterTurret)),
+			CenterBody: _joystickCenterBody || keys.IsKeyPressed(_keyMap.KeyOf(KeyAction.CenterLegs)),
 			// [Space] is held, not pressed — see MechControls.Fire. Holding it keeps the armed weapon
 			// firing as fast as its refire delay and its capacitor allow. So is the joystick trigger,
 			// for the same reason and through the same byte.
 			Fire: _staging.HeldFire || (_joystickInput.Fire && !(_fireRowLatched && fireRowIsTrigger))
-				|| (keys.IsKeyPressed(Key.Space) && !_fireRowLatched),
+				|| (keys.IsKeyPressed(_keyMap.KeyOf(KeyAction.Fire)) && !_fireRowLatched),
 			// The flight model's own pair of conditions, which differ from the walker's above.
 			FlightThrottleLever: JoystickBindings.FlightThrottleIsLever(StickCapabilities, _preferences));
 		_view.TakeCameraAxes(mech.Controls);

@@ -14,9 +14,9 @@ public static class KeyChords {
 	public static bool ShiftHeld(IKeyState keyboard) =>
 		keyboard.IsKeyPressed(Key.ShiftLeft) || keyboard.IsKeyPressed(Key.ShiftRight);
 
-	// [Shift+Esc] alone, with neither [Alt] nor [Ctrl]: HERCULAN's own menu-bar key. Retail takes it as [Esc], since
-	// SimCommandMask strips [Shift]; the menu bar takes that alias for itself everywhere, modal panels included, and
-	// nothing of the game's sees the press.
+	// The modifiers of [Shift+Esc], HERCULAN's own menu-bar key (KeyAction.MenuBar): [Shift] with neither [Alt] nor
+	// [Ctrl]. Retail takes it as [Esc], since SimCommandMask strips [Shift]; the menu bar takes that alias for itself
+	// everywhere, modal panels included, and nothing of the game's sees the press. The key is the caller's.
 	public static bool MenuBarChord(IKeyState keyboard) => ShiftHeld(keyboard) && Unmodified(keyboard);
 
 	// Neither [Alt] nor [Ctrl] held: the key arrives as its bare scancode, the code the cockpit's [Enter] and
@@ -29,10 +29,17 @@ public static class KeyChords {
 	public static int Axis(IKeyState keyboard, Key positive, Key negative) =>
 		(keyboard.IsKeyPressed(positive) ? 1 : 0) - (keyboard.IsKeyPressed(negative) ? 1 : 0);
 
-	/// <summary>The observer camera's keys: this engine's own fly camera, not anything of the original's.</summary>
+	/// <summary>
+	/// The observer camera's keys: this engine's own fly camera, not anything of the original's. The live keyboard's
+	/// are read by place (<see cref="LiveKeys.Positional"/>), so [W] [A] [S] [D] sit together on any layout.
+	/// </summary>
 	public static CameraInput FlyCameraInput(IKeyState? keyboard) {
 		if (keyboard == null) {
 			return default;
+		}
+
+		if (keyboard is LiveKeys liveKeys) {
+			keyboard = liveKeys.Positional;
 		}
 
 		return new CameraInput {

@@ -57,7 +57,9 @@ static class SimulatorStartup {
 			var frames = tapePlayer.Tape.Frames;
 			Console.WriteLine($"Tape {tapePlayer.Name}: {frames.Count} frames, {tapePlayer.RecordedSeconds:0.0} s as recorded, "
 				+ $"unpacked to {Path.GetDirectoryName(tapeScriptPath)}. "
-				+ (demoTape ? "Any key ends the demo." : "Ctrl+E stops it and hands the controls over."));
+				+ (demoTape
+					? "Any key ends the demo."
+					: $"{session.Keys.Chord(KeyAction.StopTape)} stops it and hands the controls over."));
 			foreach (var (first, last) in tapePlayer.InferredPanelSpans) {
 				Console.WriteLine($"  Frames {first}-{last} hold one SimTickDelta ({frames[first].TickDelta}): the "
 					+ "recording probably had a modal panel up across them.");

@@ -250,18 +250,20 @@ public static class AiTargeting {
 
 	/// <summary>
 	/// <c>Ai_SelectDefenceTarget</c> (<c>0041e0e0</c>) — the machine threatening a defended point.
-	/// Scored on distance to the post rather than to the defender, so a guard picks off whatever has
-	/// come closest to what it is guarding.
+	/// Scored on ground distance to the post rather than to the defender, so a guard picks off
+	/// whatever has come closest to what it is guarding. The range is <see cref="DefenceRange"/>, or
+	/// <see cref="OpenDefenceRange"/> when the group's current order has no subject, which is what
+	/// makes a guard with nothing specific to protect look much further afield.
+	///
+	/// <para>The original also reloads the guard think's sweep clock here; the engine's guard does
+	/// that itself, at the call — see <c>MechObject.GuardThink</c>.</para>
 	/// </summary>
 	/// <param name="self">The defender.</param>
 	/// <param name="post">The place being held — see <c>Mech_AiGoalPosition</c>.</param>
-	/// <param name="limit">
-	/// <see cref="DefenceRange"/> normally; <see cref="OpenDefenceRange"/> when the group's current
-	/// order names no object, which is what makes a guard with nothing specific to protect look much
-	/// further afield for whatever is coming.
-	/// </param>
-	public static SimObject? SelectDefenceTarget(SimWorld world, SimObject self, Vec3i post,
-			int limit = OpenDefenceRange) {
+	public static SimObject? SelectDefenceTarget(SimWorld world, SimObject self, Vec3i post) {
+		int limit = self.Group is { } group && (group.OrderSubjectGroup != null || group.OrderSubjectObject != null)
+			? DefenceRange
+			: OpenDefenceRange;
 		SimObject? best = null;
 		int bestScore = 0;
 		bool bestAlive = false;
@@ -279,7 +281,8 @@ public static class AiTargeting {
 				continue;
 			}
 
-			int score = limit - candidate.Position.ApproxDistanceTo(post);
+			// Math_GroundDistanceBetweenPoints: the post's height does not count.
+			int score = limit - SimMath.FastMagnitude2D(candidate.Position.X - post.X, candidate.Position.Y - post.Y);
 			if (score <= 0) {
 				continue;
 			}
@@ -386,7 +389,7 @@ public static class AiTargeting {
 	/// <summary>Ordinary defence range; <see cref="SelectDefenceTarget"/>'s narrow form.</summary>
 	public const int DefenceRange = 90000;
 
-	/// <summary>The wider defence range for a group whose current order names no object.</summary>
+	/// <summary>The wider defence range for a group whose current order has no subject.</summary>
 	public const int OpenDefenceRange = 980000;
 
 	/// <summary><c>0049933c</c> — the candidate is shooting at me.</summary>

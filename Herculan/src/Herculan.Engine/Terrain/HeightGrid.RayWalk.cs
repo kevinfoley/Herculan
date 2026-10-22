@@ -603,10 +603,10 @@ public sealed partial class HeightGrid {
 	///
 	/// <para>The equality case is transcribed rather than tidied. The original compares twice against
 	/// the same immediate — below it blocks, above it does not, and on it exactly it falls through to
-	/// a dot product of the face normal against the segment's direction, blocking only when the
-	/// segment is running into the face hard enough. That third arm can only be reached by a normal
-	/// landing on the boundary value to the unit, so it decides almost nothing, but it is what the
-	/// binary does.</para>
+	/// a dot product of the face normal against the segment's direction, blocking under
+	/// <see cref="FaceHeadOnDot"/>. With both vectors at <see cref="HeightGrid.NormalOne"/> length that
+	/// product cannot get that low, so the arm never blocks
+	/// (docs/retail/simulation/terrain-heightmap.md, "Mode 1 — the slope walk").</para>
 	/// </summary>
 	private bool FaceBlocks(int normalAt, int dirX, int dirY, int dirZ) {
 		int normalZ = _normals[normalAt + 2];

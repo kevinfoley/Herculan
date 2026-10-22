@@ -333,15 +333,9 @@ public sealed partial class FlyerObject : SimObject {
 	private const int WreckDropHeight = -100000;
 
 	/// <summary>
-	/// The object pass' tick, which for an aircraft is its behaviour descriptor's <c>+0x24</c> move
-	/// slot — <see cref="MovementTick"/> for the four states that carry one, and nothing at all for
-	/// <c>deciding</c>, <c>sleeping</c> and <c>dead</c>, whose triples are null. The think runs from
-	/// the group pass that follows, in <see cref="AiTick"/>, so the aircraft is integrated on the
-	/// previous think's decisions — the original's own ordering.
+	/// Nothing: <c>Sim_MainTick</c> (<c>0045f464</c>) walks no pool an aircraft is in. It moves from its
+	/// AI tick, <see cref="AiTick"/>. See docs/retail/simulation/main-loop.md#the-tick.
 	/// </summary>
 	public override void Tick(SimWorld world) {
-		if (Behaviour.State is { Moves: true } && Flight != null) {
-			MovementTick(world);
-		}
 	}
 }

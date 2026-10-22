@@ -9416,7 +9416,7 @@
       "parameter": 0,
       "struct": "SimObject",
       "binary": "DBSIM",
-      "description": "Mech_ShareContact's this: held by the vtables or destructor fields of 7 classes (ACTOR, BASE, FLYER, GUN_BASE, ...), whose common base is ACTOR."
+      "description": "SimObject_AiOnTakingFire's this: held by the vtables or destructor fields of 7 classes (ACTOR, BASE, FLYER, GUN_BASE, ...), whose common base is ACTOR."
     },
     {
       "function": "00411b1c",

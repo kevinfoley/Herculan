@@ -44,13 +44,14 @@ sealed class SimulatorRig {
 		Staging = new SimulatorStaging(staged, new StagedScreenshot(), screenshotRun: false);
 
 		Art = LoadCockpitArt(start);
-		View = new CockpitView(Scene, Art, Staging.Start);
+		View = new CockpitView(Scene, Art, Staging.Start, KeyMap.Retail);
 
-		Tape = new TapePlayback(null, start.Preferences, () => new Vector2D<int>(Width, Height), _cockpitInput);
+		Tape = new TapePlayback(null, start.Preferences, () => new Vector2D<int>(Width, Height), _cockpitInput,
+			KeyMap.Retail);
 		Recording = new TapeRecording(null, start.Preferences, Ports);
 		Input = new ScriptedInput(Keys, Pointer, _cockpitInput);
 
-		Panels = new ModalPanels(start, Pointer, View, hasCockpit: Art != null, Staging.Start.Joystick);
+		Panels = new ModalPanels(start, Pointer, View, hasCockpit: Art != null, Staging.Start.Joystick, KeyMap.Retail);
 		Panels.OpenStaged(Staging.Start);
 
 		Displays = new CockpitDisplays(start, Art, View, Staging);
@@ -60,7 +61,7 @@ sealed class SimulatorRig {
 		Staging.StageMachine(View.PilotMech, Scene.World);
 
 		Simulator = new SimulatorFrame(start, Art, View, Displays, Panels, Tape, Recording, DeveloperKeys, Staging,
-			Outcome, Input, SystemButtonPresses, escapeMenu: null, () => new Vector2D<int>(Width, Height));
+			Outcome, Input, SystemButtonPresses, escapeMenu: null, () => new Vector2D<int>(Width, Height), KeyMap.Retail);
 
 		Audio.StartMissionMusic(Scene.Mission.Header, 0);
 		Displays.PowerUpCockpit(Audio, screenshotRun: false);

@@ -76,8 +76,10 @@ public sealed partial class BaseObject {
 			return;
 		}
 
+		// The target's vtable +0x30 second triple added to its position unrotated, as the transport tick
+		// aims (docs/retail/simulation/structure-behaviour.md, "What a structure is aimed at").
 		bool gun = Type.Armament != BaseArmament.Launcher;
-		var aim = target.AimPoint;
+		var aim = target.Position + target.ViewMounts.OrbitCentre;
 
 		if (range < LeadRange) {
 			int projectileSpeed = gun ? GunProjectile?.Speed ?? 0 : 0;

@@ -18,18 +18,21 @@ sealed class WindowKeys : ISystemButtonActions {
 	private readonly TapePlayback _tape;
 	private readonly string _manualRoot;
 	private readonly GameDisc? _disc;
+	private readonly KeyMap _keyMap;
 
 	private bool _manualKeyDown;
 	private bool _fullScreenKeyDown;
 	private bool _fullScreenLiveKeyDown;
 	private bool _leaveFullScreenKeyDown;
 
-	public WindowKeys(EngineWindow window, SimulatorInput input, TapePlayback tape, string manualRoot, GameDisc? disc) {
+	public WindowKeys(EngineWindow window, SimulatorInput input, TapePlayback tape, string manualRoot, GameDisc? disc,
+			KeyMap keyMap) {
 		_window = window;
 		_input = input;
 		_tape = tape;
 		_manualRoot = manualRoot;
 		_disc = disc;
+		_keyMap = keyMap;
 	}
 
 	/// <summary>
@@ -71,7 +74,7 @@ sealed class WindowKeys : ISystemButtonActions {
 			return;
 		}
 
-		bool down = keyboard.IsKeyPressed(Key.Slash);
+		bool down = keyboard.IsKeyPressed(_keyMap.KeyOf(KeyAction.OnlineManual));
 		bool edge = down && !_manualKeyDown;
 		_manualKeyDown = down;
 		if (edge && !modalPanelOpen) {
@@ -107,8 +110,9 @@ sealed class WindowKeys : ISystemButtonActions {
 			bool shift = liveKeys.IsKeyPressed(Key.ShiftLeft) || liveKeys.IsKeyPressed(Key.ShiftRight);
 			bool alt = AltHeld(liveKeys);
 			bool ctrl = CtrlHeld(liveKeys);
-			bool down = !shift && ((alt && !ctrl && liveKeys.IsKeyPressed(Key.Escape))
-				|| (ctrl && !alt && liveKeys.IsKeyPressed(Key.Escape)));
+			var leaveKeys = _keyMap.Chords(KeyAction.LeaveFullScreen);
+			bool down = !shift && ((alt && !ctrl && liveKeys.IsKeyPressed(leaveKeys[0].Key))
+				|| (ctrl && !alt && liveKeys.IsKeyPressed(leaveKeys[1].Key)));
 			leave = down && !_leaveFullScreenKeyDown;
 			_leaveFullScreenKeyDown = down;
 		} else {
@@ -128,8 +132,7 @@ sealed class WindowKeys : ISystemButtonActions {
 				return false;
 			}
 
-			bool down = AltHeld(keys) && !CtrlHeld(keys)
-				&& (keys.IsKeyPressed(Key.Enter) || keys.IsKeyPressed(Key.KeypadEnter));
+			bool down = AltHeld(keys) && !CtrlHeld(keys) && _keyMap.IsDown(keys, KeyAction.FullScreen);
 			bool pressed = down && !wasDown;
 			wasDown = down;
 			return pressed;

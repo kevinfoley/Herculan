@@ -60,8 +60,11 @@ public sealed partial class MechObject {
 	/// </summary>
 	private void AimAndFireAtMech(SimWorld world, MechObject target, short aspect) {
 		short bearingError = (short)(Detection.HeadingToward(target.Position, Position) - (short)Heading);
+		short limit = Type.TorsoTwistLimit;
 
-		if (Abs(bearingError) >= Type.TorsoTwistLimit) {
+		// The original's unsigned window test: inside is [-limit, limit), so PITBULL's 32767 refuses
+		// only 0x7fff and -0x8000.
+		if ((ushort)(bearingError + limit) >= (ushort)(2 * limit)) {
 			CenterTorsoTick(world);
 			return;
 		}
@@ -126,8 +129,10 @@ public sealed partial class MechObject {
 
 		// A launcher fires the moment it is chosen — the round steers itself. Only a gun waits for the
 		// turret to arrive.
+		// The original's unsigned windows: a gun fires with both residuals in [-1000, 1000).
 		if (weapon.AmmoType != WeaponMount.NotAMissile
-				|| (Abs(yaw) < AimedFireTolerance && Abs(pitch) < AimedFireTolerance)) {
+				|| ((ushort)(yaw + AimedFireTolerance) < (ushort)(2 * AimedFireTolerance)
+					&& (ushort)(pitch + AimedFireTolerance) < (ushort)(2 * AimedFireTolerance))) {
 			weapon.Fire(this, world);
 
 			if (weapon.WeaponId is WeaponMount.ElfWeaponId or WeaponMount.Elf2WeaponId) {
@@ -162,7 +167,7 @@ public sealed partial class MechObject {
 		// heading — both 0 and 1 land in its front quadrant, so the front shield is what comes back
 		// whichever way the target is facing. Reproduced; see KNOWN_ISSUES.md.
 		short shield = target.ShieldByHeading(
-			(short)(Abs(aspect) <= BinaryAngle.QuarterTurn - 1 ? 1 : 0));
+			(short)((ushort)(aspect + BinaryAngle.QuarterTurn) < (ushort)BinaryAngle.HalfTurn ? 1 : 0));
 
 		short jitter = target.TargetClass == TargetClass.Herc ? MechJitterBound : OtherJitterBound;
 		WeaponMount? chosen = null;
@@ -185,13 +190,14 @@ public sealed partial class MechObject {
 				Scanner = true;
 			}
 
-			if (!inRange || mount.Projectile is not { } projectile || !mount.CanFire) {
+			// Subtypes 5 (not a launcher) and 3 (the pilot-flown EO round) bypass the lock; every other
+			// launcher needs its own subtype locked before it can be scored at all.
+			if (!inRange
+					|| (kind != WeaponMount.NotAMissile && kind != PilotFlownHomingType && !Weapons.Locked(kind))) {
 				continue;
 			}
 
-			// Subtypes 5 (not a launcher) and 3 (the pilot-flown EO round) bypass the lock; every other
-			// launcher needs its own subtype locked before it can be scored at all.
-			if (kind != WeaponMount.NotAMissile && kind != PilotFlownHomingType && !Weapons.Locked(kind)) {
+			if (!mount.CanFire || mount.Projectile is not { } projectile) {
 				continue;
 			}
 

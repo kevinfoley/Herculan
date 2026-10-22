@@ -13,7 +13,7 @@ Reimplementation of Earthsiege 2 (1996) in C#, reverse-engineered from the retai
 Build: `dotnet build Herculan/HerculanEngine.sln` (engine) and `Herculan/HercWorksMDK.sln` (toolkit).
 Tests: `dotnet test Herculan/HerculanEngine.sln`. Keep both at 0 warnings.
 
-Questions about the retail missions — which place a structure, mech or flyer type, what tests or writes a campaign flag, what orders a group carries, per-row record counts — go to `Herculan/src/HercWorks.Query` (`--help`), not a throwaway scanner. It reads through HercWorks.Core, so a wrong answer is a Core bug to fix there.
+Questions about the retail missions and chassis — which place a structure, mech or flyer type, what tests or writes a campaign flag, what orders a group carries, per-row record counts, a chassis record field's value per chassis — go to `Herculan/src/HercWorks.Query` (`--help`), not a throwaway scanner. It reads through HercWorks.Core, so a wrong answer is a Core bug to fix there.
 
 ## Reading files
 

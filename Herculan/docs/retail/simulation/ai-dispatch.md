@@ -18,7 +18,7 @@ DBSIM holds a machine's 22 behaviour states as three static arrays that share on
 
 `004993a4 + 22 * 0x3e = 004998f8`.
 
-Ghidra reports no xrefs on any of the three: the descriptors are reached by immediate address, the blocks are read by an unmarked static initialiser at `00413ed4`, and the names are reached as `base + offset`.
+Ghidra reports no xrefs on any of the three: the descriptors are reached by immediate address, the blocks are read by the C++ static initialiser `Behaviour_BuildStateTable` (`00413ed4`), whose address sits in Borland's `_INIT_` table at `004a7ac2` (priority `0x20`) rather than behind a call, and the names are reached as `base + offset`.
 
 ## The 22 states
 
@@ -95,7 +95,7 @@ Notes the table makes visible:
 | 3 | **Ignore fire entirely** |
 | 4, 5 | The target's *state tier*, read off the target's descriptor by `Ai_TargetStateTier`: fleeing versus finished. See [`ai-targeting.md`](ai-targeting.md#abandoning-a-target--ai_shouldabandontarget-0041c4a8) |
 
-The initialiser copies block `+0x00 → +0x18`, `+0x0c → +0x24`, `+0x18 → +0x30`, so the block and descriptor slot orders differ and only the descriptor order is the one the dispatchers use.
+The initialiser copies block `+0x00 → +0x18`, `+0x0c → +0x24`, `+0x18 → +0x30`: a block holds the descriptor's three triples in the same order, think, move, reassess, `0x18` lower.
 
 ## The mech's behaviour block — `mech+0x4d`
 
@@ -176,9 +176,9 @@ Each calls `(*slot.func)(mech + slot.thisDelta)`. Because these are pointer-to-m
 
 ## Choosing a state — `Mech_AiSelectBehaviour` (`0041eb34`)
 
-Three mutually exclusive paths, tested in this order.
+Three mutually exclusive paths, tested in this order. Every path returns 1.
 
-**1. The local player** (`mech+0xa3` set). Installs `player fly` if the type record's flyer flag (`typeRec+0x50`) is set, else `player`. `Mech_Constructor` (`00415bb0`) makes the same test, so the player's state is settled at construction and re-affirmed here.
+**1. The local player** (`mech+0xa3` set). Installs `player fly` if the type record's flyer flag (`typeRec+0x50`) is set, else `player`. **This is where the player's machine gets its state.** `Mech_Constructor` (`00415bb0`) makes the same test, but `DBSim_SpawnMissionObjects` raises `+0xa3` only after the constructor has returned (`004256e7`), on a pool node `Pool_Init` zeroed, so the player's machine is constructed in `deciding` like every other ([Open](#open)). `deciding` holds for 0 counts, so the machine's first AI tick runs this function and installs the player state, two `Behaviour_SetState` calls where the constructor alone would have made one.
 
 **2. A machine in the player's own group** carrying a standing squad order (`mech+0x23e` nonzero). The order verb selects:
 
@@ -214,7 +214,7 @@ The paths that install no state — squad verbs 3 and 5, and any verb above 6 �
 
 | Installed by | States |
 |---|---|
-| `Mech_Constructor` (`00415bb0`) | `deciding`, `player`, `player fly` |
+| `Mech_Constructor` (`00415bb0`) | `deciding`; `player` and `player fly` behind a `+0xa3` test the spawn has not yet made true ([Choosing a state](#choosing-a-state--mech_aiselectbehaviour-0041eb34)) |
 | `Mech_ComponentDamageWrite` (`00417de4`) | `disabled`, `dead`, `in limbo` |
 | `Mech_AiEngageOrderedTarget` (`0041c0f4`) | `attacking flyer`, `attacking base` |
 | `Mech_AiFleeCheck` (`0041cb94`) | `fleeing` ×2 |
@@ -273,4 +273,5 @@ The AI-relevant mech vtable slots, as entry points for the topic docs. Slots who
 ## Open
 
 - **Deferred:** bits 6–15 of descriptor `+0x08` — no state sets one, so nothing can read one.
+- **Open:** whether `Mech_Constructor`'s two player branches are ever taken. `es2_fieldscan.py a3 --writes-only` finds one write of `+0xa3`, `DBSim_SpawnMissionObjects`'s store after the constructor returns, and `es2_xref.py` finds that function's one call to the constructor; a mech pool node reused within the mission, still holding a player's `+0xa3`, is the one way found that the test could read 1.
 - **Open:** what raises `mech+0xaf`. The field scan finds no writer but `Mech_AiTick`'s own clear, and a null result is not proof; a write through a base register neither alias pass follows would go unseen.

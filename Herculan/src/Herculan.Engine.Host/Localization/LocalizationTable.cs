@@ -1,4 +1,5 @@
 using System.Globalization;
+using Herculan.Engine.Platform;
 
 namespace Herculan.Engine.Host.Localization;
 
@@ -26,10 +27,7 @@ public class LocalizationTable {
 	/// Where the player's chosen locale is remembered: one line for it, and a second for the locale in use before
 	/// it, which startup falls back to when the chosen one no longer loads.
 	/// </summary>
-	private static readonly string SelectedLocaleFile = Path.Combine(
-		Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData,
-			Environment.SpecialFolderOption.DoNotVerify),
-		"Herculan", "selected-locale.txt");
+	private static readonly string SelectedLocaleFile = UserConfig.PathOf("selected-locale.txt");
 
 	private Dictionary<string, string> _keyValuePairs = new();
 	private Dictionary<string, string>? _fallback;
@@ -177,12 +175,7 @@ public class LocalizationTable {
 	// Remembers locale as chosen and previous, the locale it replaces, as the one to fall back to; a choice of the
 	// locale already in use keeps the fallback already remembered.
 	private static void SaveSelectedLocales(string locale, string previous) {
-		try {
-			string[] lines = previous != locale ? [locale, previous] : [locale, .. LoadSelectedLocales().Skip(1).Take(1)];
-			Directory.CreateDirectory(Path.GetDirectoryName(SelectedLocaleFile)!);
-			File.WriteAllLines(SelectedLocaleFile, lines);
-		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
-			Console.Error.WriteLine($"Could not write {SelectedLocaleFile}: {ex.Message}");
-		}
+		string[] lines = previous != locale ? [locale, previous] : [locale, .. LoadSelectedLocales().Skip(1).Take(1)];
+		UserConfig.WriteLines(SelectedLocaleFile, lines);
 	}
 }

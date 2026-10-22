@@ -246,9 +246,7 @@ public sealed partial class MechObject {
 			}
 
 			// Mech_AiObstacleAvoidance amends the steer and the speed the caller settled on, in place.
-			// The original's own gate is "not the player's machine", which there is the same set as
-			// "driven by a think function" because only the player has a pilot. Here Controls can fly
-			// any machine, and a machine somebody is flying should not have its stick taken off it.
+			// The original's own gate is "not the player's machine", which UnderAiControl tests.
 			if (UnderAiControl) {
 				ObstacleAvoidance(world, ref turn, ref desired, ignoreObstacles);
 			}
@@ -773,10 +771,15 @@ public sealed partial class MechObject {
 	/// <summary>Below this a machine is placed as a wreck rather than merely pre-damaged.</summary>
 	private const short WreckedCondition = 0x14;
 
-	/// <summary>The two leg components a wreck loses one of, and the rear pair on a four-legged chassis.</summary>
-	private static readonly short[] FrontLegComponents = { 7, 8 };
+	/// <summary>
+	/// The two leg components a wreck loses one of, and the rear pair on a four-legged chassis, indexed
+	/// by the roll's low bit: an even roll takes 8 (14), an odd one 7 (13), as
+	/// <c>Mech_ApplyStartingCondition</c> tests it.
+	/// </summary>
+	private static readonly short[] FrontLegComponents = { 8, 7 };
 
-	private static readonly short[] RearLegComponents = { 13, 14 };
+	/// <inheritdoc cref="FrontLegComponents"/>
+	private static readonly short[] RearLegComponents = { 14, 13 };
 
 	/// <summary>What a leg is written off with — past any leg component's armour.</summary>
 	private const short LegWriteOff = 32000;
@@ -800,11 +803,8 @@ public sealed partial class MechObject {
 	/// <para>The odds are always the damage figure plus 25, which is the original's own arithmetic
 	/// rather than four separate constants.</para>
 	///
-	/// <para><b>How much the campaign uses it is unmeasured.</b> The ten available
-	/// <c>script.dat</c> files are saves taken from a few of the 50-odd <c>.MSN</c> missions, and in
-	/// those, 138 of 139 mech records read 100 and one reads 50 — enough to confirm the field is a
-	/// percentage, not enough to say which bands the campaign exercises. See
-	/// <c>ScriptMechRecord.StartingCondition</c>.</para>
+	/// <para>The retail <c>.MSN</c> mech rows state 100 or 50, so the campaign exercises the 40-59
+	/// band alone — see docs/retail/formats/msn-mission-file.md.</para>
 	///
 	/// <para>The two worst grades also raise <see cref="WorthNoSalvage"/>.</para>
 	/// </summary>
@@ -828,14 +828,15 @@ public sealed partial class MechObject {
 				WorthNoSalvage = true;
 			} else {
 				spread = 150;
-				WorthNoSalvage = true;
 
 				ComponentDamageWrite(world, FrontLegComponents[world.Random.Next() & 1], LegWriteOff, null);
 				if (Type.LegCount > 2) {
 					ComponentDamageWrite(world, RearLegComponents[world.Random.Next() & 1], LegWriteOff, null);
 				}
 
+				// After the leg writes, in the original's order.
 				Immobilised = true;
+				WorthNoSalvage = true;
 				Collapsed = true;
 			}
 		}

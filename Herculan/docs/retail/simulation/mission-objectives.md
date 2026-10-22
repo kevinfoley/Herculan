@@ -159,7 +159,7 @@ That is not what the player sees. The two are queued a tick apart but shown ten 
 
 ## The group report, and why nothing shows it
 
-Eight functions sit among the ones above, read the same order records and the same per-machine flags, and produce a small integer that is plainly a line index. `Group_StatusLineIndex` (`00412f90`) is the head of the set. `es2_xref.py` finds no relative branch, stored pointer or vtable slot holding it, so nothing reaches it ([Open](#open) covers what that sweep cannot see). Only one of the other seven is called from outside the set.
+Eight functions sit among the ones above, read the same order records and the same per-machine flags, and produce a small integer that is plainly a line index. `Group_StatusLineIndex` (`00412f90`) is the head of the set. `es2_xref.py` finds no relative branch, stored pointer or vtable slot holding it ([Open](#open) covers what that sweep cannot see). Only one of the other seven is called from outside the set.
 
 ```
 Group_StatusLineIndex(group, verb):
@@ -191,9 +191,9 @@ The six helpers:
 | `Group_OrderSubjectEngaged` (`00412d4c`) | the current order's subject — the group form for kind 0, the object's own `+0x9e` otherwise |
 | `Group_OrderSubjectArrivedAndClear` (`00413a08`) | the current order's subject is deployed and clear of threats |
 
-`Group_AnyMemberEngaged` is the one called from outside: `Mission_EvaluateObjectives` calls it too, which is what makes condition 6 work. `Group_OrderSubjectEngaged` is the set's second head — it calls `Group_AnyMemberEngaged`, and nothing calls it. The other four helpers are called only by `Group_StatusLineIndex`.
+`Group_AnyMemberEngaged` is the one called from outside: `Mission_EvaluateObjectives` calls it too, which is what makes condition 6 work. `Group_OrderSubjectEngaged` is the set's second head — it calls `Group_AnyMemberEngaged`, and `es2_xref.py` finds no caller of it. The callers `es2_xref.py` finds for the other four helpers are all in `Group_StatusLineIndex`.
 
-`Group_OrderSubjectRouteExhausted` (`004139a0`) sits in the middle of the set and is a further head: `es2_xref.py` finds no reference to it of any kind, `Group_StatusLineIndex` included.
+`Group_OrderSubjectRouteExhausted` (`004139a0`) sits in the middle of the set and is a further head: `es2_xref.py` finds no reference to it of any kind, `Group_StatusLineIndex` included. It asks whether the current order's subject has run out of route — `Route_WaypointAt(route, cursor + 1)` is null — where the route is the subject group's own for a kind-0 order and the subject object's group's otherwise.
 
 **`mech+0xa6` therefore has no live reader.** `Mech_CreditNeutralisedTarget` latches it on a machine's first cross-side kill ([`component-damage.md`](component-damage.md#what-the-attacker-is-told--mech_creditneutralisedtarget-00415710)) and the only reader `es2_fieldscan.py` finds in the simulator's objects is `Group_AnyMemberScoredAKill`. The same goes for `+0x9f` (`Group_AnyMemberObjectiveSighted`) and for `+0xa0` *in its group form* — the objective conditions read the player's own `+0xa0` directly rather than through `Group_AnyMemberDataLinked`.
 

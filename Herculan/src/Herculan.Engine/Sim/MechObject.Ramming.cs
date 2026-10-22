@@ -51,7 +51,8 @@ public sealed partial class MechObject {
 	/// contact has just killed this machine and killing it drops what it was holding.</para>
 	///
 	/// <para>Both timers start at zero out of <see cref="SetBehaviourState"/>, so entering the state
-	/// acquires a target on the first think and starts charging on the same one.</para>
+	/// acquires a target on the first think and flips to charging on the same one; the extra
+	/// <see cref="RamTick"/>s start on the second.</para>
 	/// </summary>
 	private bool RamThink(SimWorld world) {
 		if (SimMath.TimerCountDown(ref _ramRetargetTimer) == 0) {
@@ -118,7 +119,7 @@ public sealed partial class MechObject {
 
 	/// <summary>
 	/// <c>Mech_BehaviourRamTick</c> (<c>0041e488</c>) — the <c>ramming</c> state's move slot, run once
-	/// a tick from <see cref="Tick"/> like any other move and twice more from
+	/// a tick from <see cref="MoveTick"/> like any other move and twice more from
 	/// <see cref="RamThink"/> while the machine is charging.
 	///
 	/// <para>It is <see cref="MovementTick"/> with the undo taken out. Integrate, drop onto the

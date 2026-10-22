@@ -62,7 +62,7 @@ sealed class FrontEndWindow : IDisposable {
 		_padPointer.Settings = JoystickMapFile.LoadIn(dataDirectory).Mouse;
 		var controller = new ControllerWindow(session.Localization, () => dataDirectory);
 		controller.Saved += file => _padPointer.Settings = file.Mouse;
-		_menuBar = new HostMenuBar(session.Localization, new TweaksMenu(TweakSettings.Current, session.Localization),
+		_menuBar = new HostMenuBar(session.Localization, session.Keys, new TweaksMenu(TweakSettings.Current, session.Localization),
 			new SettingsWindow(session, () => RequestClose(restartRequested)), controller,
 			openEditor: () => RequestClose(editorRequested));
 		_window.FocusChanged += focused => {
