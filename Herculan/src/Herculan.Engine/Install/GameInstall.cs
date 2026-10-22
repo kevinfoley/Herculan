@@ -3,6 +3,7 @@ using HercWorks.Core.Io;
 using HercWorks.Core.Io.Transform.Common;
 using HercWorks.Disc;
 using Herculan.Engine.Content;
+using Herculan.Engine.Platform;
 using Herculan.Engine.World;
 
 namespace Herculan.Engine.Install;
@@ -20,13 +21,10 @@ public static class GameInstall {
 	public const string ArchiveFolderName = "VOL";
 
 	/// <summary>
-	/// Where the last install used is remembered: <c>%APPDATA%\Herculan\install-path.txt</c> on Windows,
-	/// and the platform's equivalent user-config directory elsewhere. One line, the path.
+	/// Where the last install used is remembered: <c>install-path.txt</c> in <see cref="UserConfig.Folder"/>. One line,
+	/// the path.
 	/// </summary>
-	public static string RememberedPathFile => Path.Combine(
-		Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData,
-			Environment.SpecialFolderOption.DoNotVerify),
-		"Herculan", "install-path.txt");
+	public static string RememberedPathFile => UserConfig.PathOf("install-path.txt");
 
 	/// <summary>
 	/// Resolves an install root, in order: an explicit <paramref name="explicitPath"/> (a command
@@ -71,15 +69,7 @@ public static class GameInstall {
 	/// Records <paramref name="installRoot"/> as the install last used, which <see cref="Locate"/> tries
 	/// before searching. A failed write is logged and otherwise ignored: the next launch searches again.
 	/// </summary>
-	public static void Remember(string installRoot) {
-		string path = RememberedPathFile;
-		try {
-			Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-			File.WriteAllText(path, Path.GetFullPath(installRoot));
-		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
-			Console.Error.WriteLine($"Could not write {path}: {ex.Message}");
-		}
-	}
+	public static void Remember(string installRoot) => UserConfig.Write(RememberedPathFile, Path.GetFullPath(installRoot));
 
 	/// <summary>The <c>VOL</c> archive directory inside an install root.</summary>
 	public static string ArchiveDirectory(string installRoot) =>

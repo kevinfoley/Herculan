@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Herculan.Engine.Platform;
 using Herculan.Engine.Updates;
 
 namespace Herculan.Engine.Host.Settings;
@@ -16,14 +17,11 @@ static class UpdateChecks {
 	private static bool? _automaticSetting;
 
 	/// <summary>
-	/// Where the setting is kept: <c>%APPDATA%\Herculan\check-for-updates.txt</c> on Windows, and the platform's
-	/// equivalent user-config directory elsewhere. Its presence turns the setting on; it holds nothing. Absent, as on a
-	/// first start, the setting is off, so no check is made until the player asks for one.
+	/// Where the setting is kept: <c>check-for-updates.txt</c> in <see cref="UserConfig.Folder"/>. Its presence turns the
+	/// setting on; it holds nothing. Absent, as on a first start, the setting is off, so no check is made until the player
+	/// asks for one.
 	/// </summary>
-	public static string SettingFile => Path.Combine(
-		Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData,
-			Environment.SpecialFolderOption.DoNotVerify),
-		"Herculan", "check-for-updates.txt");
+	public static string SettingFile => UserConfig.PathOf("check-for-updates.txt");
 
 	/// <summary>
 	/// Whether the check is made automatically, read from <see cref="SettingFile"/> once a run. A failed write is logged
@@ -32,18 +30,19 @@ static class UpdateChecks {
 	public static bool Automatic {
 		get => _automaticSetting ??= File.Exists(SettingFile);
 		set {
-			string path = SettingFile;
-			try {
-				if (value) {
-					Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-					File.WriteAllText(path, "");
-				} else {
-					File.Delete(path);
-				}
+			if (value ? UserConfig.Write(SettingFile, "") : DeleteSettingFile()) {
 				_automaticSetting = value;
-			} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
-				Console.Error.WriteLine($"Could not write {path}: {ex.Message}");
 			}
+		}
+	}
+
+	private static bool DeleteSettingFile() {
+		try {
+			File.Delete(SettingFile);
+			return true;
+		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+			Console.Error.WriteLine($"Could not delete {SettingFile}: {ex.Message}");
+			return false;
 		}
 	}
 

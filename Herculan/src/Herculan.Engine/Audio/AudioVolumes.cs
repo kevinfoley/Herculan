@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Herculan.Engine.Platform;
 
 namespace Herculan.Engine.Audio;
 
@@ -21,14 +22,8 @@ public sealed class AudioVolumes {
 	/// <summary>The player's volumes, read from <see cref="FilePath"/> on first use and edited by the Settings window.</summary>
 	public static AudioVolumes Current => current ??= Load();
 
-	/// <summary>
-	/// Where the volumes live: <c>%APPDATA%\Herculan\volume.json</c> on Windows, and the platform's equivalent
-	/// user-config directory elsewhere.
-	/// </summary>
-	public static string FilePath => Path.Combine(
-		Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData,
-			Environment.SpecialFolderOption.DoNotVerify),
-		"Herculan", "volume.json");
+	/// <summary>Where the volumes live: <c>volume.json</c> in <see cref="UserConfig.Folder"/>.</summary>
+	public static string FilePath => UserConfig.PathOf("volume.json");
 
 	/// <summary>The music's gain, 0 to 1.</summary>
 	public float Music {
@@ -42,16 +37,8 @@ public sealed class AudioVolumes {
 		set => _effects = Clamp(value);
 	}
 
-	/// <summary>Writes both volumes, creating the directory if this is the first save. A failed write is logged.</summary>
-	public void Save() {
-		string path = FilePath;
-		try {
-			Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-			File.WriteAllText(path, JsonSerializer.Serialize(new Saved(Music, Effects)));
-		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
-			Console.Error.WriteLine($"Could not write {path}: {ex.Message}");
-		}
-	}
+	/// <summary>Writes both volumes (<see cref="UserConfig.Write"/>).</summary>
+	public void Save() => UserConfig.Write(FilePath, JsonSerializer.Serialize(new Saved(Music, Effects)));
 
 	// Both at full when the file is absent or unreadable: a corrupt or hand-edited file is not worth failing a launch over.
 	private static AudioVolumes Load() {

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Herculan.Engine.Platform;
 
 namespace Herculan.Engine.Settings;
 
@@ -33,14 +34,8 @@ public sealed class TweakSettings {
 	public void SetSettingValue(TweakSettingDefinition<bool> setting, bool value)
 		=> _bools[setting] = value;
 
-	/// <summary>
-	/// Where the settings live: <c>%APPDATA%\Herculan\tweak-settings.json</c> on Windows, and the
-	/// platform's equivalent user-config directory elsewhere.
-	/// </summary>
-	public static string FilePath => Path.Combine(
-		Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData,
-			Environment.SpecialFolderOption.DoNotVerify),
-		"Herculan", "tweak-settings.json");
+	/// <summary>Where the settings live: <c>tweak-settings.json</c> in <see cref="UserConfig.Folder"/>.</summary>
+	public static string FilePath => UserConfig.PathOf("tweak-settings.json");
 
 	/// <summary>
 	/// Reads the settings file into this instance, replacing whatever values it already held. Used
@@ -76,21 +71,13 @@ public sealed class TweakSettings {
 		}
 	}
 
-	/// <summary>Writes every setting's current value, creating the directory if this is the first save.</summary>
+	/// <summary>Writes every setting's current value (<see cref="UserConfig.Write"/>).</summary>
 	public bool SaveToDisk() {
-		string path = FilePath;
-		try {
-			var toSave = new Dictionary<string, bool>();
-			foreach (TweakSettingDefinition<bool> setting in TweakSettingDefinitions.All) {
-				toSave[setting.ID] = GetSettingValue(setting);
-			}
-
-			Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-			File.WriteAllText(path, JsonSerializer.Serialize(toSave, SerializerOptions));
-			return true;
-		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
-			Console.Error.WriteLine($"Could not write {path}: {ex.Message}");
-			return false;
+		var toSave = new Dictionary<string, bool>();
+		foreach (TweakSettingDefinition<bool> setting in TweakSettingDefinitions.All) {
+			toSave[setting.ID] = GetSettingValue(setting);
 		}
+
+		return UserConfig.Write(FilePath, JsonSerializer.Serialize(toSave, SerializerOptions));
 	}
 }
