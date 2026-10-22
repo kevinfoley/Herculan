@@ -25740,7 +25740,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Avi_CloseDevice",
-      "description": "Frameless, in bytes Ghidra left undefined (es2_xref reports the address as Vfw_ICSetStatusProc+0x84). mciSendCommandA(mciGetDeviceIDA('avivideo' at 004a0ce5), 0x804 MCI_CLOSE, 0, &parms), mciGetDeviceIDA through the undefined import thunk at 0049699c. No caller found by es2_xref.",
+      "description": "Frameless. mciSendCommandA(mciGetDeviceIDA('avivideo' at 004a0ce5), 0x804 MCI_CLOSE, 0, &parms), mciGetDeviceIDA through its import thunk (0049699c). No caller found by es2_xref.",
       "source": "DBSIM capstone disassembly at 0047173c",
       "verified": {
         "bytes": "0047173c+29",
