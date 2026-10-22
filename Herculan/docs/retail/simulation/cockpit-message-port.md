@@ -25,7 +25,7 @@
 
 ## The queue
 
-**A port keeps up to ten messages in priority order; posting into a full queue first drops the one at the end.** The queue is `0x21e` bytes:
+**A port keeps up to ten messages in priority order, but a post that has to go ahead of a queued message loses the one at the end, and a post into a full queue frees the wrong record.** The queue is `0x21e` bytes:
 
 | Offset | Holds |
 |---|---|
@@ -37,7 +37,11 @@
 A record holds the message id (`int16` `+0`), the twenty bytes at `+2`–`+0x15` of the record the poster passed, whose dword `+2` is the subject, the text pointer at `+0x18`, and the attribute bytes and the four timings ([the record](cockpit-messages.md#the-computers-messages)).
 
 - **`MessagePort_QueueInit` (`00434e50`)**, (queue): builds the ten records with `QueuedMessage_ElementCtor` (`00437558`) and sets the count and the ten in-use bytes to 0.
-- **`MessagePort_Enqueue` (`00434e8c`)**, (queue, record, entry), *entry* being an index slot {text, count, attributes} ([posting](#posting)): with ten queued it first runs `MessagePort_QueueDropLast` (`004351c0`), which frees the record the tenth order entry names and takes 1 from the count. It takes the first record not in use, marks it, fills it, and inserts its index in the order before the first queued message whose priority (`+0x17`) is strictly greater, or at the end, adding 1 to the count.
+- **`MessagePort_Enqueue` (`00434e8c`)**, (queue, record, entry), *entry* being an index slot {text, count, attributes} ([posting](#posting)): with ten queued it first runs `MessagePort_QueueDropLast` (`004351c0`), which clears the in-use byte of `order[order[9]]`, the record named by the order entry whose position is the tenth entry's value, not of the tenth entry's own record (`MOV EDX,[EAX+0x20e]`; `MOV ECX,[EAX+EDX*4+0x1ea]`; `MOV byte [EAX+ECX+0x212],0`), and takes 1 from the count. It takes the first record not in use, queuing nothing when every one is, marks it and fills it. Its index goes into the order at *k*, the first queued message whose priority (`+0x17`) is strictly greater, or at the end, and the count goes up by 1. To make room it moves entries down one from position count − 2 to *k*, so the entry at count − 1, the last queued, is overwritten, and the entry at the new count − 1 keeps the index it held before.
+
+  So a post that goes ahead of a queued message drops the last queued one from the order, its record left in use, and leaves a stale index at the end. In a full queue the record `QueueDropLast` frees is still in the order unless `order[9]` is 9, so the post overwrites a queued message's record and the order names that record twice, while the tenth entry's record stays in use with no entry within the count naming it.
+
+  The retail files never reach the first: attribute byte 2 is 0 on every entry of `SYSTEM.STR`, `PILOT1.STR`, `PILOT2.STR`, `PILOT4.STR` and `COMMAND0.STR`–`COMMAND4.STR`, in v1.0 and in v1.10's English, French and German, so *k* is always the count and nothing moves. The second needs only ten messages queued on one port.
 - **`MessagePort_QueueFront` (`00435074`)** and **`MessagePort_QueueAt` (`004350d4`)**, (queue[, index]): the record at the order's index, or 0 past the count.
 - **`MessagePort_RemoveAt` (`00435140`)**, (queue, index): with the queue not empty, frees the record and moves the later order entries down one.
 - **`MessagePort_QueueExpire` (`004351ec`)**, (queue): from the last order entry down to entry 1, removes each message whose `maxWait` deadline (`+0x28`) is earlier than now; the front is never dropped here.
@@ -73,7 +77,7 @@ The two no-ops are empty bodies. `MessagePort_Tick` reaches the show through `+0
 - **`MessagePort_PickVariant` (`00436a3c`)**, (port, record), the ticker's post: the id's slot in the system index (`004d0b33` + id × 9), against `SystemStringTable` (`004d04d8`).
 - **`PilotMessagePort_Post` (`00435c48`)**, (port, record), the channel's: with no subject, the slot in the command index `004d0971`, against `CommandStringTable` (`004d04c8`); otherwise `Squad_IndexOf` of the subject picks the squadmate's slot, and its index `004d04e8` + slot × `0x183` against `PilotStringTables` (`004d0498`) + slot × `0x10`. A subject in no slot is not caught: the post compares the low byte of `Squad_IndexOf`'s −1, zero-extended to 255, with −1, so it goes on with slot 255 and reads its slot from `004d04e8` + 255 × `0x183` + id × 9, past the three slots' index.
 
-Both then roll: a slot is {dword text, byte count at `+4`, dword attributes at `+5`}; with a count of 2 or more the variant is the random generator `0x4d268f`'s next low word modulo the count, else 0. A nonzero variant goes through **`MessagePort_StepToVariant` (`00435a74`)**, (port, table, slot, *n*): from the slot's text it steps *n* times with `StrTable_NextString` (`004539cc`), which returns the string after the one given in the loaded file, and returns a slot it builds at `004d0d6a`: that string, a count of 0, and `StrTable_GetAttributes` (`00453a08`) of it. The post queues the slot with `MessagePort_Enqueue` on the port's `+4` when its text and attributes are both set.
+Both then roll: a slot is {dword text, byte count at `+4`, dword attributes at `+5`}; with a count of 2 or more the variant is the random generator `0x4d268f`'s next low word modulo the count, else 0. A nonzero variant goes through **`MessagePort_StepToVariant` (`00435a74`)**, (port, table, slot, *n*): it calls `StrTable_NextString` (`004539cc`), which returns the string after the one given in the loaded file, *n* times, each time with the slot's own text, so every variant from 1 on gives the string right after the slot's; and returns a slot it builds at `004d0d6a`: that string, a count of 0, and `StrTable_GetAttributes` (`00453a08`) of it. The post queues the slot with `MessagePort_Enqueue` on the port's `+4` when its text and attributes are both set.
 
 **`SystemMessages_Index` (`00435970`)**, (port, mode, *n*, bank), loads a string file into its table and fills an index from it: mode 0 `system` into `SystemStringTable` and `004d0b33`; mode 1 `commandX`, the digit *n*, into `CommandStringTable` and `004d0971`; mode 2 the pilot file of *bank* into `PilotStringTables` + *n* × `0x10` and `004d04e8` + *n* × `0x183`. For each string it reads, the slot at the index + attribute byte 0 × 9 takes the text and attributes when its count is 0, and its count goes up by 1 ([variants](cockpit-messages.md#the-computers-messages)). `MessagePort_StaticInit` (`00437270`) builds the five tables empty.
 
@@ -110,6 +114,8 @@ The second queue is a five-message log: `MessagePort_StampedQueueAppend` (`00435
 | Reading | Why it is wrong |
 |---|---|
 | `PilotMessagePort_Post` drops a post whose subject is in no squadmate slot | The decompile shows a return on −1, but the code compares `EDX`, holding the zero-extended low byte of `Squad_IndexOf`'s result (255 for −1), with −1, which never holds ([posting](#posting)). |
+| `MessagePort_QueueDropLast` frees the last queued message's record | It reads the tenth order entry and then the order entry at that position, freeing `order[order[9]]` ([the queue](#the-queue)). |
+| `MessagePort_StepToVariant` walks *n* strings on from the slot | Each of its calls passes the slot's own text, not the string the last call returned ([posting](#posting)). |
 
 ## Open
 

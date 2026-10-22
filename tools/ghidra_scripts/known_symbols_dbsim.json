@@ -12746,13 +12746,13 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_Enqueue",
-      "description": "(queue, record, entry): with the count +0x21c at 10 first MessagePort_QueueDropLast (004351c0). Takes the first record whose in-use byte (+0x212 + i) is clear, sets it, and fills the 0x31-byte record queue + i * 0x31: record's five dwords +2..+0x15 at +2, entry's text pointer (entry +0) at +0x18, and from the attribute bytes at entry +5: byte 0 as the int16 id +0x00, byte 1 (filename digit) at +0x16, byte 2 (priority) at +0x17, bytes 3 and 4 (minTime, maxTime) times 0x3c coarse ticks at +0x1c and +0x20, bytes 5 and 6 (minWait, maxWait) times 0x3c plus Time_GetCoarseTicks at +0x24 and +0x28, and bytes 7-11 at +0x2c..+0x30: byte 7 is the clip number, and bytes 8-11 lie past the eight a SYSTEM.STR entry supplies. Inserts i in the order list +0x1ea before the first queued record whose priority is strictly greater, or at the end, so low sorts first, and adds 1 to the count.",
+      "description": "(queue, record, entry): with the count +0x21c at 10 first MessagePort_QueueDropLast (004351c0). Takes the first record whose in-use byte (+0x212 + i) is clear, sets it, and fills the 0x31-byte record queue + i * 0x31: record's five dwords +2..+0x15 at +2, entry's text pointer (entry +0) at +0x18, and from the attribute bytes at entry +5: byte 0 as the int16 id +0x00, byte 1 (filename digit) at +0x16, byte 2 (priority) at +0x17, bytes 3 and 4 (minTime, maxTime) times 0x3c coarse ticks at +0x1c and +0x20, bytes 5 and 6 (minWait, maxWait) times 0x3c plus Time_GetCoarseTicks at +0x24 and +0x28, and bytes 7-11 at +0x2c..+0x30: byte 7 is the clip number, and bytes 8-11 lie past the eight a SYSTEM.STR entry supplies. With every record in use it queues nothing. Puts i in the order list +0x1ea at k, the first queued record whose priority is strictly greater, or at the end, so low sorts first, moving entries down one from position count - 2 to k, so the last queued entry is overwritten and the entry at the new count - 1 keeps the index it held; then adds 1 to the count.",
       "source": "docs/retail/simulation/audio.md",
       "verified": {
         "bytes": "00434e8c+487",
         "sha1": "2e7608c61f4f",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -12806,13 +12806,13 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_QueueDropLast",
-      "description": "(queue): clears the in-use byte at +0x212 + the record index held in the tenth order slot (+0x20e) and takes 1 from the count +0x21c: drops the last, lowest-priority message. MessagePort_Enqueue (00434e8c) runs it on a full queue (count 10).",
+      "description": "(queue): clears the in-use byte at +0x212 + order[order[9]], the record named by the order entry (+0x1ea) whose position is the tenth order entry's (+0x20e) value, not of the tenth entry's own record, and takes 1 from the count +0x21c. MessagePort_Enqueue (00434e8c) runs it on a full queue (count 10).",
       "source": "DBSIM decompile at 004351c0",
       "verified": {
         "bytes": "004351c0+36",
         "sha1": "f64337720341",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -13040,13 +13040,13 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_StepToVariant",
-      "description": "(port, table, record, n): for n > 0, steps StrTable_NextString (004539cc) n times from the record's string and returns a record built in the static at 004d0d6a -- the string at +0, 0 at +4, StrTable_GetAttributes (00453a08)(table, string) at +5; for n = 0 returns record unchanged. MessagePort_PickVariant and PilotMessagePort_Post pass it the rolled variant.",
+      "description": "(port, table, record, n): for n > 0, calls StrTable_NextString (004539cc)(table, the record's string) n times, each with the record's own string, so any n gives the string after it, and returns a record built in the static at 004d0d6a -- the string at +0, 0 at +4, StrTable_GetAttributes (00453a08)(table, string) at +5; for n = 0 returns record unchanged. MessagePort_PickVariant and PilotMessagePort_Post pass it the rolled variant.",
       "source": "DBSIM decompile at 00435a74",
       "verified": {
         "bytes": "00435a74+81",
         "sha1": "bf69e06b9e46",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {

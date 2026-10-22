@@ -19,6 +19,8 @@ tweak.critical_damage_message.display_name     Meldung „Damage Level Critical�
 tweak.critical_damage_message.description      Spielt „Damage Level Critical“ ab, wenn der Spieler kritischen Schaden erleidet. Funktioniert im Originalspiel wegen eines Tippfehlers im Code nicht.
 tweak.show_squadmate_number.display_name       Nummer der Staffelkameraden anzeigen
 tweak.show_squadmate_number.description        Zeigt im Heads Down Display die Nummer jedes Staffelkameraden an (entsprechend der Zifferntaste, mit der er ausgewählt wird), mithilfe einer Beschriftung, die im Originalspiel ungenutzt und ausgeblendet ist
+tweak.every_squadmate_reply.display_name       Abwechslungsreiche Antworten der Staffelkameraden
+tweak.every_squadmate_reply.description        Staffelkameraden wählen gleichmäßig unter allen aufgenommenen Antworten, sodass ein zustimmender Staffelkamerad auch „Verstanden“ sagen kann. Im Originalspiel sagt er zwei von drei Malen „Jawohl, Sir“ und sonst „Bestätigt!“, aber nie „Verstanden“.
 tweak.fix_computer_message_pref.display_name   Einstellung COMPUTER MESSAGE korrigieren
 tweak.fix_computer_message_pref.description    Die Sprachausgabe des Cockpitcomputers wird über die Einstellung COMPUTER MESSAGE statt über die Einstellung PILOT MESSAGE gesteuert.
 tweak.flash_through_second_hit.display_name    Schadensblitz bei zweitem Treffer beibehalten

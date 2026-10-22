@@ -77,6 +77,13 @@ public static class TweakSettingDefinitions {
 	public static readonly TweakSettingDefinition<bool> ShowSquadmateNumber = new("tweak.show_squadmate_number", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: false);
 
 	/// <summary>
+	/// A squadmate picks evenly among every recording of a reply, so a yes can be <c>ROGER.</c> Retail picks the
+	/// first recording or the one after it, never a third, so a yes is <c>YES SIR.</c> two times in three and
+	/// <c>AFFIRMATIVE!</c> otherwise. See <see cref="Content.SquadMessages.Pick"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> EverySquadmateReply = new("tweak.every_squadmate_reply", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
+
+	/// <summary>
 	/// Cockpit computer voiceover is controlled by the COMPUTER MESSAGE preference
 	/// instead of the PILOT MESSAGE preference.
 	/// </summary>
@@ -255,7 +262,7 @@ public static class TweakSettingDefinitions {
 	/// <summary>Every defined <c>bool</c> tweak setting, keyed by ID for <see cref="TweakSettings"/> save/load.</summary>
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> All = new[] {
 		HighResolutionWidescreen, ShowCorrectStats, ShowAccurateSpeed, RoundShieldBalance, ShowTargetDistanceInMeters, FixNacelleImpactEffectPosition,
-		PreserveSoundPosition, CriticalDamageMessage, ShowSquadmateNumber, FixComputerMessagePreference,
+		PreserveSoundPosition, CriticalDamageMessage, ShowSquadmateNumber, EverySquadmateReply, FixComputerMessagePreference,
 		SmootherTurretMovement, MouseExternalView, FixDefendPositionOrder, FixWeaponDamageRecords,
 		ChargeBarPowerLevel, FlashThroughSecondHit, ShowAltitudeTape, DropPodSoundFromPod, FixRepairDiagramSides,
 		FixTerrainHitPoint, FlyerIgnoresPlayerThrottle, StrandedStingrayClosesIn, GuardHoldsUntilDestroyed, FasterKeyboardAiming, FixGunsightDrag, FixRaptorIIPerspective, ResetCountersOnReplay,
