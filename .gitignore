@@ -30,6 +30,8 @@ dxwnd/
 Reference/
 Herculan/tests/Herculan.Engine.Tests/bin/
 Herculan/tests/Herculan.Engine.Tests/obj/
+Herculan/tests/Herculan.Engine.Host.Tests/bin/
+Herculan/tests/Herculan.Engine.Host.Tests/obj/
 Design/
 
 # ImGui writes this beside the working directory when the debug panel is used.

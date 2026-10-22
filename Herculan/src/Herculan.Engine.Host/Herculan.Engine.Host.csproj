@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="Herculan.Engine.Tests" />
+    <InternalsVisibleTo Include="Herculan.Engine.Host.Tests" />
   </ItemGroup>
 
   <!-- Linked from the editor host rather than copied: one font file, two hosts. -->

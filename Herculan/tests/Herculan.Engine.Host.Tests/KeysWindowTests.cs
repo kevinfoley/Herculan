@@ -2,7 +2,7 @@ using Herculan.Engine.Host.Settings;
 using Herculan.Engine.Input;
 using Xunit;
 
-namespace Herculan.Engine.Tests;
+namespace Herculan.Engine.Host.Tests;
 
 // The Keys window lists the map through a table of its own, and names everything through .lang entries, so an action
 // added to the map without a row would be missing from the window, and an entry missing from en.lang would show as its

@@ -20,10 +20,8 @@ sealed class KeysWindow {
 	private const float PanelHeight = 560f;
 	private const int FilterLength = 64;
 
-	// A run's join; U+2026 is outside the glyphs the hosts' font is built with, which ImGui would draw as '?', so it
-	// falls back to three dots until the font has it.
+	// A run's join.
 	private const string Ellipsis = " … ";
-	private const string Dots = " ... ";
 
 	private static readonly string[] WindowEntries = [
 		"keys.title", "keys.filter_hint", "keys.column_key", "keys.column_action", "keys.no_match", "general.close",
@@ -83,7 +81,7 @@ sealed class KeysWindow {
 			var style = ImGui.GetStyle();
 			float footer = ImGui.GetFrameHeight() + style.ItemSpacing.Y * 2f + 1f;
 			if (ImGui.BeginChild("##rows", new Vector2(0f, -footer))) {
-				Sections(_filter.Trim(), FontHas('…') ? Ellipsis : Dots);
+				Sections(_filter.Trim());
 			}
 			ImGui.EndChild();
 
@@ -101,7 +99,7 @@ sealed class KeysWindow {
 	}
 
 	// Each section with a row that passes the filter, open while there is a filter so its matches show.
-	private void Sections(string filter, string runJoin) {
+	private void Sections(string filter) {
 		bool any = false;
 		foreach (var section in _sections) {
 			_matches.Clear();
@@ -110,7 +108,7 @@ sealed class KeysWindow {
 					continue;
 				}
 
-				string keys = _labels.Of(_map, row, runJoin);
+				string keys = _labels.Of(_map, row, Ellipsis);
 				string description = Text(row.Description);
 				if (filter.Length == 0 || keys.Contains(filter, StringComparison.OrdinalIgnoreCase)
 						|| description.Contains(filter, StringComparison.OrdinalIgnoreCase)) {
@@ -170,12 +168,6 @@ sealed class KeysWindow {
 		KeySection.Herculan => "keys.section.herculan",
 		_ => throw new ArgumentOutOfRangeException(nameof(section), section, null),
 	};
-
-	// Whether the current font has a glyph for c.
-	private static bool FontHas(char c) {
-		var lookup = ImGui.GetFont().IndexLookup;
-		return c < lookup.Size && lookup[c] != ushort.MaxValue;
-	}
 
 	private string Text(string key) => _localization.GetStringOrKey(key);
 }

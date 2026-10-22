@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Runtime.InteropServices;
 using Herculan.Engine.Settings;
 using ImGuiNET;
 using Silk.NET.Input;
@@ -31,6 +32,12 @@ public sealed class ScaledImGui : IDisposable {
 
 	/// <summary>How many times <see cref="FontSize"/> <see cref="LargeFont"/> is.</summary>
 	public const float LargeFontScale = 2f;
+
+	// The characters every font is baked with: ImGui's default Basic Latin and Latin-1 Supplement, and General
+	// Punctuation for the .lang files' dashes, ellipsis and German quotes, which would otherwise draw as '?'. Pinned for
+	// the life of the process, since ImGui keeps the pointer for every rebuild of the atlas.
+	private static readonly ushort[] GlyphRanges = [0x0020, 0x00ff, 0x2000, 0x206f, 0];
+	private static readonly nint GlyphRangesPointer = GCHandle.Alloc(GlyphRanges, GCHandleType.Pinned).AddrOfPinnedObject();
 
 	private readonly GL _gl;
 	private readonly EngineWindow _window;
@@ -202,10 +209,13 @@ public sealed class ScaledImGui : IDisposable {
 		_builtClientScale = _window.ClientScale ?? _builtContentScale;
 		_builtFontSize = ChosenFontSize;
 		float pixels = MathF.Round(_builtFontSize * _builtContentScale);
-		var controller = new ImGuiController(_gl, _window.View, _input, new ImGuiFontConfig(_fontPath, (int)pixels), () => {
+		var fontConfig = new ImGuiFontConfig(_fontPath, (int)pixels, _ => GlyphRangesPointer);
+		var controller = new ImGuiController(_gl, _window.View, _input, fontConfig, () => {
 			var fonts = ImGui.GetIO().Fonts;
-			LargeFont = fonts.AddFontFromFileTTF(_fontPath, pixels * LargeFontScale);
-			ItalicFont = _italicFontPath != null ? fonts.AddFontFromFileTTF(_italicFontPath, pixels) : null;
+			LargeFont = fonts.AddFontFromFileTTF(_fontPath, pixels * LargeFontScale, default, GlyphRangesPointer);
+			ItalicFont = _italicFontPath != null
+				? fonts.AddFontFromFileTTF(_italicFontPath, pixels, default, GlyphRangesPointer)
+				: null;
 		});
 		ImGui.GetIO().FontGlobalScale = _builtClientScale / _builtContentScale;
 		ImGui.GetStyle().ScaleAllSizes(_builtClientScale);

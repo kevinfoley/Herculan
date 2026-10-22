@@ -64,7 +64,7 @@ tweak.fix_raptor2_perspective.description   Setzt die Cockpitansicht des Raptor 
 tweak.reset_counters_on_replay.display_name  Flags bei „Einsatz noch mal?“ korrigieren
 tweak.reset_counters_on_replay.description   Behebt, dass Einsatz-Flags nicht zurückgesetzt werden, wenn Sie einen Einsatz wiederholen (nachdem Sie im Einsatz getötet wurden). Das konnte Freischaltungen verhindern oder anderes unerwartetes Verhalten auslösen.
 tweaks.title                   Optimierungen
-tweaks.description             Optimierungen verändern das Spielverhalten, meist um Fehler zu beheben oder den Komfort zu verbessern. Für ein möglichst originalgetreues Spielerlebnis (Fehler inklusive) klicken Sie auf „Keine", um alle Optimierungen abzuschalten.
+tweaks.description             Optimierungen verändern das Spielverhalten, meist um Fehler zu beheben oder den Komfort zu verbessern. Für ein möglichst originalgetreues Spielerlebnis (Fehler inklusive) klicken Sie auf „Keine“, um alle Optimierungen abzuschalten.
 tweaks.note                    Einige kleinere optische Fehler und mögliche Abstürze werden in HERCULAN nicht nachgebildet. Moderne Eingabegeräte und alternative Steuerungsschemata werden über das Menü Controller immer unterstützt.
 tweaks.category.cosmetic       Kosmetisch
 tweaks.category.ai             KI
