@@ -50,6 +50,7 @@ sealed class SimulatorHost : IDisposable {
 	private readonly DebugPanel _debugPanel;
 	private readonly HostMenuBar _menuBar;
 	private readonly DeveloperKeys _developerKeys;
+	private readonly KeyMap _keyMap;
 
 	private readonly TapePlayback _tape;
 	private readonly PauseMenu _pauseMenu;
@@ -61,6 +62,12 @@ sealed class SimulatorHost : IDisposable {
 	private readonly PadRadial _screenRadial = new(ControllerDevice.GamepadRightStick, 2, ScreenCount, 260f);
 	private const int ScreenCount = 8;
 	private const int MfdScreenCount = 6;
+
+	// The screen radial's eight, in its order: each screen's key, which a choice holds and its label names.
+	private static readonly KeyAction[] ScreenKeys = {
+		KeyAction.MfdStatus, KeyAction.MfdFlashComm, KeyAction.MfdNavMap, KeyAction.MfdScanner, KeyAction.MfdTarget,
+		KeyAction.MfdMissileCam, KeyAction.CommandDisplay, KeyAction.DamageDetail,
+	};
 
 	// The mission's frame with the high-resolution tweak off: retail's resolution (docs/retail/launch-options.md,
 	// "Display").
@@ -107,20 +114,21 @@ sealed class SimulatorHost : IDisposable {
 		_audio = start.Audio;
 		_ports = start.Ports;
 		_preferences = start.Preferences;
+		_keyMap = session.Keys;
 		var mission = start.Mission;
 
 		_art = LoadCockpitArt(start);
-		_view = new CockpitView(_scene, _art, staging.Start);
+		_view = new CockpitView(_scene, _art, staging.Start, _keyMap);
 
 		_window = new EngineWindow(window, $"HERCULAN Engine — zone {mission.Header.ZoneIndex}");
 
 		var cockpitInput = new CockpitInput();
-		var tape = new TapePlayback(start.TapePlayer, _preferences, () => Fit().Frame, cockpitInput);
+		var tape = new TapePlayback(start.TapePlayer, _preferences, () => Fit().Frame, cockpitInput, _keyMap);
 		_tape = tape;
 		_recording = new TapeRecording(start.TapeRecorder, _preferences, _ports);
 		_input = new SimulatorInput(_window, tape, cockpitInput, Fit);
 
-		_panels = new ModalPanels(start, _input, _view, hasCockpit: _art != null, staging.Start.Joystick);
+		_panels = new ModalPanels(start, _input, _view, hasCockpit: _art != null, staging.Start.Joystick, _keyMap);
 		_panels.OpenStaged(staging.Start);
 
 		if (_art?.HeadsDown != null) {
@@ -157,9 +165,9 @@ sealed class SimulatorHost : IDisposable {
 
 		staging.StageMachine(_view.PilotMech, _scene.World);
 
-		_windowKeys = new WindowKeys(_window, _input, tape, start.InstallRoot, start.Disc);
+		_windowKeys = new WindowKeys(_window, _input, tape, start.InstallRoot, start.Disc, _keyMap);
 		_frame = new SimulatorFrame(start, _art, _view, _displays, _panels, tape, _recording, _developerKeys, staging,
-			_outcome, _input, _windowKeys, _menuBar, () => Fit().Frame);
+			_outcome, _input, _windowKeys, _menuBar, () => Fit().Frame, _keyMap);
 		_frame.Stepper.Ticked += () => _debugProbes.SampleBeams(_scene.World);
 		_pauseMenu = new PauseMenu(session.Localization, _frame, _panels, _outcome, cockpitInput);
 		_input.MouseQueued += (x, y, buttons, width, height) =>
@@ -404,13 +412,16 @@ sealed class SimulatorHost : IDisposable {
 
 		var liveKeys = _input.LiveKeys;
 		if (_orderRadial.Update(_inputContext, RadialAllowed() && !_screenRadial.IsOpen) is { } row && liveKeys != null
-				&& CockpitKeyboard.FlashCommKey(row, _displays.FlashComm.VerbOf(row)) is { } orderKey) {
-			liveKeys.HeldByHost.Add(Key.AltLeft);
-			liveKeys.HeldByHost.Add(orderKey);
+				&& _frame.Keyboard.FlashCommKey(row, _displays.FlashComm.VerbOf(row)) is { } orderKey) {
+			if (orderKey.Modifiers.HasFlag(KeyModifiers.Alt)) {
+				liveKeys.HeldByHost.Add(Key.AltLeft);
+			}
+
+			liveKeys.HeldByHost.Add(orderKey.Key);
 		}
 
 		if (_screenRadial.Update(_inputContext, RadialAllowed() && !_orderRadial.IsOpen) is { } screen && liveKeys != null) {
-			liveKeys.HeldByHost.Add(Key.F1 + screen);
+			liveKeys.HeldByHost.Add(_keyMap.KeyOf(ScreenKeys[screen]));
 		}
 	}
 
@@ -420,7 +431,7 @@ sealed class SimulatorHost : IDisposable {
 	private void ReadRadarToggle() {
 		if (_inputContext != null && _options.ScreenshotPath == null && !_frame.Suspended && !_tape.Playing
 				&& _joystick?.RadarToggleHeld() == true) {
-			_input.LiveKeys?.HeldByHost.Add(Key.R);
+			_input.LiveKeys?.HeldByHost.Add(_keyMap.KeyOf(KeyAction.RadarMode));
 		}
 	}
 
@@ -444,7 +455,7 @@ sealed class SimulatorHost : IDisposable {
 		string? title = screen < MfdScreenCount
 			? MfdLayout.Title(strings, (MfdMode)screen)
 			: strings?.Text(HddLayout.PageTitleGroup, screen - MfdScreenCount);
-		return $"{(screen < MfdScreenCount ? "MFD" : "HDD")} F{screen + 1} {title}".TrimEnd();
+		return $"{(screen < MfdScreenCount ? "MFD" : "HDD")} {_keyMap.Chord(ScreenKeys[screen])} {title}".TrimEnd();
 	}
 
 	// TERRAIN TEXTURE, the one live preference the draw reads rather than the simulation (see

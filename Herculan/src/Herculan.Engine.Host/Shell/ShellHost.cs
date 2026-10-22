@@ -225,7 +225,7 @@ sealed class ShellHost : IDisposable {
 			_movies, _audio, _outcome, _loop, _navigation, repaint);
 		_fields = new EditFields(_window, _audio, _movies, _pointer, _screen, saveScreen, _menu, dialogs.MissionName, _canvas,
 			_widgets, repaint);
-		_keys = new KeyboardRouting(_window, _movies, _startup, _game, _menu, _fields, repaint);
+		_keys = new KeyboardRouting(_window, _movies, _startup, _game, _menu, _fields, repaint, session.Keys);
 		_buttons.Taken = key => key == Key.Escape && _keys.EscapeIsMenuBars;
 		_buttons.AlsoLeft = () => _window.PadClickHeld;
 		_buttons.AlsoSkip = () => _window.PadSkipHeld;

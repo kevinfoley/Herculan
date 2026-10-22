@@ -4,7 +4,6 @@ using Herculan.Engine.Input;
 using Herculan.Engine.Scene;
 using Herculan.Engine.Sim;
 using Herculan.Engine.View;
-using Silk.NET.Input;
 using static Herculan.Engine.Input.KeyChords;
 
 namespace Herculan.Engine.Cockpit;
@@ -22,36 +21,40 @@ namespace Herculan.Engine.Cockpit;
 /// read as held state instead — [F1]-[F8], and [S]/[I]/[W] in the heads-down view — are the ones whose command,
 /// repeated, changes nothing.</para>
 /// </summary>
+/// <param name="keyMap">Where each key is read from.</param>
 public sealed class CockpitKeyboard(CockpitDisplays displays, CockpitView view, CockpitCommands commands,
-		MissionScene scene, GameAudio audio) {
+		MissionScene scene, GameAudio audio, KeyMap keyMap) {
 	// FLASH COMM's seven order keys, in the order MfdFlashComm_HandleAltKey (00446c10) and MfdDisplay_KeyDispatch (004469c0) both switch on their
-	// scancodes: which row each selects, and — for the two rows that carry two orders — which verb has to
-	// be showing before [Alt] will transmit it. -1 means transmit whatever the row reads.
-	private static readonly (Key Key, int Row, int Verb)[] FlashCommKeys = {
-		(Key.A, 0, -1),   // ATTACK MY TARGET
-		(Key.G, 1, -1),   // IGNORE MY TARGET
-		(Key.H, 2, -1),   // HELP ME OUT!
-		(Key.O, 3, -1),   // JOIN ON ME
-		(Key.C, 4, (int)SquadCommand.ScanForHostiles),
-		(Key.E, 4, (int)SquadCommand.Emcon),
-		(Key.F, 5, -1),   // FIRE AT WILL / HOLD YOUR FIRE
+	// scancodes: the bare letter's action and the [Alt] one's, which row each selects, and — for the two rows that
+	// carry two orders — which verb has to be showing before [Alt] will transmit it. -1 means transmit whatever the
+	// row reads.
+	private static readonly (KeyAction Pick, KeyAction Send, int Row, int Verb)[] FlashCommKeys = {
+		(KeyAction.FlashCommAttackMyTarget, KeyAction.SendAttackMyTarget, 0, -1),
+		(KeyAction.FlashCommIgnoreMyTarget, KeyAction.SendIgnoreMyTarget, 1, -1),
+		(KeyAction.FlashCommHelpMeOut, KeyAction.SendHelpMeOut, 2, -1),
+		(KeyAction.FlashCommJoinOnMe, KeyAction.SendJoinOnMe, 3, -1),
+		(KeyAction.FlashCommScanForHostiles, KeyAction.SendScanForHostiles, 4, (int)SquadCommand.ScanForHostiles),
+		(KeyAction.FlashCommEmcon, KeyAction.SendEmcon, 4, (int)SquadCommand.Emcon),
+		(KeyAction.FlashCommFireAtWill, KeyAction.SendFireAtWill, 5, -1),   // FIRE AT WILL / HOLD YOUR FIRE
 	};
 
 	/// <summary>
-	/// The letter that, under [Alt], transmits FLASH COMM's row <paramref name="row"/> while the row names
+	/// The chord that transmits FLASH COMM's row <paramref name="row"/> from any screen while the row names
 	/// <paramref name="verb"/>; null when none does.
 	/// </summary>
-	public static Key? FlashCommKey(int row, int verb) {
-		foreach (var (key, keyRow, requiredVerb) in FlashCommKeys) {
+	public KeyChord? FlashCommKey(int row, int verb) {
+		foreach (var (_, send, keyRow, requiredVerb) in FlashCommKeys) {
 			if (keyRow == row && (requiredVerb < 0 || requiredVerb == verb)) {
-				return key;
+				return keyMap.Chord(send);
 			}
 		}
 
 		return null;
 	}
 
-	private readonly KeyLatch[] _flashCommKeys = FlashCommKeys.Select(_ => new KeyLatch()).ToArray();
+	// A letter's bare press and its [Alt] one keep a latch each, as two bindings sharing a key do.
+	private readonly KeyLatch[] _flashCommPickKeys = FlashCommKeys.Select(_ => new KeyLatch()).ToArray();
+	private readonly KeyLatch[] _flashCommSendKeys = FlashCommKeys.Select(_ => new KeyLatch()).ToArray();
 	private readonly KeyLatch _flashCommTransmit = new();
 	private readonly KeyLatch _flashCommNextRow = new();
 	private readonly KeyLatch _flashCommPreviousRow = new();
@@ -68,24 +71,29 @@ public sealed class CockpitKeyboard(CockpitDisplays displays, CockpitView view, 
 	// The command display's order hotkeys are the manual's own, and they are not a table in the code: each
 	// STRINGS0 group 0 entry carries the index of its hotkey character within its own text, and the screen's
 	// scancode dispatch maps that character to the order. Listed here in order-list order.
-	private static readonly Key[] HddCommandKeys = { Key.D, Key.A, Key.F, Key.T, Key.G, Key.O, Key.C, Key.E };
-	private static readonly Key[] HddPilotKeys = { Key.Number1, Key.Number2, Key.Number3 };
-	private static readonly Key[] HddArrowKeys = { Key.Up, Key.Down, Key.Left, Key.Right };
+	private static readonly KeyAction[] HddCommandKeys = {
+		KeyAction.CommandDisengage, KeyAction.CommandAttackEnemy, KeyAction.CommandDefendPosition,
+		KeyAction.CommandPatrolGridpoint, KeyAction.CommandGotoGridpoint, KeyAction.CommandJoinOnMe,
+		KeyAction.CommandScanForHostiles, KeyAction.CommandEmcon,
+	};
+	private static readonly KeyAction[] HddPilotKeys = {
+		KeyAction.CommandSquadmate1, KeyAction.CommandSquadmate2, KeyAction.CommandSquadmate3,
+	};
 
-	// The keypad's arrows, which are the same scancodes to the original (TapeKeys.KeysOf). With the axis keys
-	// off on the display, they reach its key dispatch as the arrows do.
-	private static readonly Key[] HddPadArrowKeys = { Key.Keypad8, Key.Keypad2, Key.Keypad4, Key.Keypad6 };
-
-	private static bool HddArrowHeld(IKeyState controls, int arrow) =>
-		controls.IsKeyPressed(HddArrowKeys[arrow]) || controls.IsKeyPressed(HddPadArrowKeys[arrow]);
-
-	private static bool HddArrowRepeated(IKeyState controls, int arrow) =>
-		controls.IsKeyRepeated(HddArrowKeys[arrow]) || controls.IsKeyRepeated(HddPadArrowKeys[arrow]);
+	// The four arrows on each page, in the order of the display's arrow buttons. Each action's second chord is the
+	// keypad's arrow, the same scancode to the original (TapeKeys.KeysOf): with the axis keys off on the display, it
+	// reaches its key dispatch as the arrow does.
+	private static readonly KeyAction[] HddArrowKeys = {
+		KeyAction.CommandScrollUp, KeyAction.CommandScrollDown, KeyAction.CommandScrollLeft, KeyAction.CommandScrollRight,
+	};
+	private static readonly KeyAction[] HddDamageArrowKeys = {
+		KeyAction.DamageSystemsUp, KeyAction.DamageSystemsDown, KeyAction.DamageHercLeft, KeyAction.DamageHercRight,
+	};
 
 	private readonly KeyLatch[] _hddOrderKeys = HddCommandKeys.Select(_ => new KeyLatch()).ToArray();
 	private readonly KeyLatch[] _hddPilotKeys = HddPilotKeys.Select(_ => new KeyLatch()).ToArray();
 	private readonly KeyLatch[] _hddArrowKeys = HddArrowKeys.Select(_ => new KeyLatch()).ToArray();
-	private readonly KeyLatch[] _hddDamageArrowKeys = HddArrowKeys.Select(_ => new KeyLatch()).ToArray();
+	private readonly KeyLatch[] _hddDamageArrowKeys = HddDamageArrowKeys.Select(_ => new KeyLatch()).ToArray();
 	private readonly KeyLatch _hddPreviousOrder = new();
 	private readonly KeyLatch _hddNextOrder = new();
 	private readonly KeyLatch _hddZoomIn = new();
@@ -129,10 +137,10 @@ public sealed class CockpitKeyboard(CockpitDisplays displays, CockpitView view, 
 		// either one opens the display — so each both pans down and selects its own screen, which is
 		// what the display's own two page buttons dispatch (HddDisplay_SetPage (0044a5e4) with the button's index).
 		if (displays.Art?.HeadsDown != null && controls != null && !modalPanelUp && !view.CockpitWidgetsOff) {
-			if (controls.IsKeyPressed(Key.F7)) {
+			if (controls.IsKeyPressed(keyMap.KeyOf(KeyAction.CommandDisplay))) {
 				displays.Hud = displays.Hud with { Hdd = HddPage.CommandDisplay };
 				view.RequestHeadsDown(headsDown: true);
-			} else if (controls.IsKeyPressed(Key.F8)) {
+			} else if (controls.IsKeyPressed(keyMap.KeyOf(KeyAction.DamageDetail))) {
 				displays.Hud = displays.Hud with { Hdd = HddPage.DamageDetail };
 				view.RequestHeadsDown(headsDown: true);
 			}
@@ -143,8 +151,8 @@ public sealed class CockpitKeyboard(CockpitDisplays displays, CockpitView view, 
 		// would go on to start the other glance the moment the strip got back. A repeat toward the glance
 		// already out is refused by the glance's own gate.
 		if (displays.Art != null && controls != null) {
-			bool glanceLeft = _glanceLeft.PressOrRepeat(controls, Key.F9);
-			bool glanceRight = _glanceRight.PressOrRepeat(controls, Key.F10);
+			bool glanceLeft = _glanceLeft.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.LookLeft));
+			bool glanceRight = _glanceRight.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.LookRight));
 			if (glanceLeft && !modalPanelUp) {
 				view.CommandGlance(GlanceSide.Left);
 			} else if (glanceRight && !modalPanelUp) {
@@ -160,8 +168,10 @@ public sealed class CockpitKeyboard(CockpitDisplays displays, CockpitView view, 
 		// key-down event.
 		if (controls != null && displays.HddHasArrows && displays.Hud.Hdd == HddPage.DamageDetail) {
 			bool modified = CtrlHeld(controls) || AltHeld(controls) || modalPanelUp;
-			for (int i = 0; i < HddArrowKeys.Length; i++) {
-				if ((_hddDamageArrowKeys[i].Press(HddArrowHeld(controls, i)) | HddArrowRepeated(controls, i)) && !modified) {
+			for (int i = 0; i < HddDamageArrowKeys.Length; i++) {
+				var arrow = HddDamageArrowKeys[i];
+				if ((_hddDamageArrowKeys[i].Press(keyMap.IsDown(controls, arrow)) | keyMap.IsRepeated(controls, arrow))
+						&& !modified) {
 					commands.PressHddButtonByKey(HddLayout.Widget.ArrowUp + i);
 				}
 			}
@@ -201,8 +211,10 @@ public sealed class CockpitKeyboard(CockpitDisplays displays, CockpitView view, 
 		}
 
 		for (int i = 0; i < FlashCommKeys.Length; i++) {
-			var (key, row, requiredVerb) = FlashCommKeys[i];
-			if (!_flashCommKeys[i].PressOrRepeat(controls, key) || ctrl || modalPanelUp) {
+			var (pick, send, row, requiredVerb) = FlashCommKeys[i];
+			bool picked = _flashCommPickKeys[i].PressOrRepeat(controls, keyMap.KeyOf(pick));
+			bool sent = _flashCommSendKeys[i].PressOrRepeat(controls, keyMap.KeyOf(send));
+			if (!(alt ? sent : picked) || ctrl || modalPanelUp) {
 				continue;
 			}
 
@@ -225,22 +237,24 @@ public sealed class CockpitKeyboard(CockpitDisplays displays, CockpitView view, 
 
 		if (flashCommUp) {
 			// [X] presses XMIT, which is aux button 10 — the same press a click on the button makes.
-			if (_flashCommTransmit.PressOrRepeat(controls, Key.X) && !modalPanelUp) {
+			if (_flashCommTransmit.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.FlashCommTransmit)) && !modalPanelUp) {
 				commands.PressMfdButtonByKey(MfdLayout.TransmitButton);
 			}
 
 			// [.] and [,] walk the list past any row the squad cannot take.
-			if (_flashCommNextRow.PressOrRepeat(controls, Key.Period) && !ctrl && !modalPanelUp) {
+			if (_flashCommNextRow.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.FlashCommNextOrder)) && !ctrl
+					&& !modalPanelUp) {
 				flashComm.StepRow(1);
 			}
-			if (_flashCommPreviousRow.PressOrRepeat(controls, Key.Comma) && !ctrl && !modalPanelUp) {
+			if (_flashCommPreviousRow.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.FlashCommPreviousOrder)) && !ctrl
+					&& !modalPanelUp) {
 				flashComm.StepRow(-1);
 			}
 		}
 
 		// [Alt+D] is command 0x220, which the cockpit view claims in its own handler before the panel
 		// below it ever sees it: it drops a nav marker rather than transmitting DISENGAGE.
-		if (alt && _navMarker.PressOrRepeat(controls, Key.D) && !ctrl && !modalPanelUp
+		if (alt && _navMarker.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.DropNavMarker)) && !ctrl && !modalPanelUp
 				&& flashCommWorld.PlayerMech is { } marking) {
 			displays.NavMarker.Drop(marking.Position);
 		}
@@ -252,9 +266,9 @@ public sealed class CockpitKeyboard(CockpitDisplays displays, CockpitView view, 
 	// instead, and neither the external view nor this engine's free camera, where [D] strafes, shows
 	// the cockpit.
 	private void ReadMfdButtonKeys(IKeyState controls, bool modalPanelUp) {
-		bool selectKey = _mfdSelect.PressOrRepeat(controls, Key.D);
-		bool rangeKey = _mfdRange.PressOrRepeat(controls, Key.R);
-		bool targetKey = _mfdTarget.PressOrRepeat(controls, Key.T);
+		bool selectKey = _mfdSelect.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.OtherHercsStatus));
+		bool rangeKey = _mfdRange.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.RadarRange));
+		bool targetKey = _mfdTarget.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.ScannerNextTarget));
 		bool mfdKeys = !modalPanelUp && !view.Pan.AtHeadsDown && !view.ExternalViewActive
 			&& !CtrlHeld(controls);
 		bool alt = AltHeld(controls);
@@ -298,7 +312,7 @@ public sealed class CockpitKeyboard(CockpitDisplays displays, CockpitView view, 
 
 		bool modified = CtrlHeld(controls) || AltHeld(controls) || modalPanelUp;
 		for (int slot = 0; slot < HddPilotKeys.Length; slot++) {
-			if (_hddPilotKeys[slot].PressOrRepeat(controls, HddPilotKeys[slot]) && !modified) {
+			if (_hddPilotKeys[slot].PressOrRepeat(controls, keyMap.KeyOf(HddPilotKeys[slot])) && !modified) {
 				commands.PressHddButtonByKey(HddLayout.Widget.PilotBox0 + slot);
 			}
 		}
@@ -344,29 +358,33 @@ public sealed class CockpitKeyboard(CockpitDisplays displays, CockpitView view, 
 		// row's corner, so the key for the order already armed leaves it armed, pick and all, as the click does.
 		bool modified = CtrlHeld(controls) || AltHeld(controls) || modalPanelUp;
 		for (int i = 0; i < HddCommandKeys.Length; i++) {
-			if (_hddOrderKeys[i].PressOrRepeat(controls, HddCommandKeys[i]) && !modified && command.SelectedOrder != (HddOrder)i) {
+			if (_hddOrderKeys[i].PressOrRepeat(controls, keyMap.KeyOf(HddCommandKeys[i])) && !modified
+					&& command.SelectedOrder != (HddOrder)i) {
 				command.SelectOrder((HddOrder)i);
 			}
 		}
 
 		// [,] and [.] walk the list without the pointer, and only once an order is already armed —
 		// both functions return immediately otherwise.
-		if (_hddPreviousOrder.PressOrRepeat(controls, Key.Comma) && !modified) {
+		if (_hddPreviousOrder.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.CommandPreviousOrder)) && !modified) {
 			command.StepOrder(-1);
 		}
-		if (_hddNextOrder.PressOrRepeat(controls, Key.Period) && !modified) {
+		if (_hddNextOrder.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.CommandNextOrder)) && !modified) {
 			command.StepOrder(1);
 		}
 
 		// [+] and [-], the two magnifiers, on every key-down event, auto-repeats included: HddButton_OnClick
 		// (0044be50) latches only the page buttons, so each repeat is another zoom step.
-		// `|`, not `||`, so both of a pair's latches are refreshed every frame.
-		if ((_hddZoomIn.PressOrRepeat(controls, Key.Equal) | _hddZoomInPad.PressOrRepeat(controls, Key.KeypadAdd))
-				&& !modalPanelUp) {
+		// `|`, not `||`, so both of a pair's latches are refreshed every frame. The keypad's key is each action's
+		// second chord.
+		var zoomInKeys = keyMap.Chords(KeyAction.CommandZoomIn);
+		var zoomOutKeys = keyMap.Chords(KeyAction.CommandZoomOut);
+		if ((_hddZoomIn.PressOrRepeat(controls, zoomInKeys[0].Key)
+				| _hddZoomInPad.PressOrRepeat(controls, zoomInKeys[1].Key)) && !modalPanelUp) {
 			commands.PressHddButtonByKey(HddLayout.Widget.ZoomIn);
 		}
-		if ((_hddZoomOut.PressOrRepeat(controls, Key.Minus) | _hddZoomOutPad.PressOrRepeat(controls, Key.KeypadSubtract))
-				&& !modalPanelUp) {
+		if ((_hddZoomOut.PressOrRepeat(controls, zoomOutKeys[0].Key)
+				| _hddZoomOutPad.PressOrRepeat(controls, zoomOutKeys[1].Key)) && !modalPanelUp) {
 			commands.PressHddButtonByKey(HddLayout.Widget.ZoomOut);
 		}
 
@@ -374,40 +392,41 @@ public sealed class CockpitKeyboard(CockpitDisplays displays, CockpitView view, 
 		// HddDisplay_KeyDispatch's scancodes 0x48, 0x50, 0x4b and 0x4d, each a single Widget_PressChild. Keypad [5]
 		// drops the scroll and puts the map back on the machine.
 		for (int i = 0; i < HddArrowKeys.Length; i++) {
-			if ((_hddArrowKeys[i].Press(HddArrowHeld(controls, i)) | HddArrowRepeated(controls, i)) && !modified) {
+			var arrow = HddArrowKeys[i];
+			if ((_hddArrowKeys[i].Press(keyMap.IsDown(controls, arrow)) | keyMap.IsRepeated(controls, arrow))
+					&& !modified) {
 				commands.PressHddButtonByKey(HddLayout.Widget.ArrowUp + i);
 			}
 		}
 
-		if (_hddRecentre.PressOrRepeat(controls, Key.Keypad5) && !modalPanelUp) {
+		if (_hddRecentre.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.CommandRecenter)) && !modalPanelUp) {
 			command.View.Recentre();
 		}
 
 		// [X] and [Backspace] press XMIT and CANCEL — HddCommandScreen_KeyDispatch (0044cc40)'s 0x2d and 0x0e.
-		if (_hddTransmit.PressOrRepeat(controls, Key.X) && !modalPanelUp) {
+		if (_hddTransmit.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.CommandTransmit)) && !modalPanelUp) {
 			commands.PressHddButtonByKey(HddLayout.Widget.Transmit);
 		}
-		if (_hddCancel.PressOrRepeat(controls, Key.Backspace) && !modalPanelUp) {
+		if (_hddCancel.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.CommandCancel)) && !modalPanelUp) {
 			commands.PressHddButtonByKey(HddLayout.Widget.Cancel);
 		}
 
 		// [Enter] clicks the map for the armed order — on the unit last picked, or under the pointer.
-		if (_hddPick.PressOrRepeat(controls, Key.Enter) && !modified) {
+		if (_hddPick.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.CommandPick)) && !modified) {
 			commands.PickOnHddMapByEnter(pointer.X, pointer.Y, framebufferWidth, framebufferHeight);
 		}
 
 		// [Tab] steps the pick through the units the armed order can take.
-		if (_hddCycleUnit.PressOrRepeat(controls, Key.Tab) && !modified) {
+		if (_hddCycleUnit.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.CommandNextUnit)) && !modified) {
 			commands.CycleHddUnitByTab();
 		}
 	}
 
 	// The MFD screen the function keys are asking for, or null when none of them is down — returning null
 	// rather than a default keeps the display on whatever screen it was already showing.
-	private static MfdMode? ReadMfdMode(IKeyState keyboard) {
-		Key[] keys = { Key.F1, Key.F2, Key.F3, Key.F4, Key.F5, Key.F6 };
-		for (int i = 0; i < keys.Length; i++) {
-			if (keyboard.IsKeyPressed(keys[i])) {
+	private MfdMode? ReadMfdMode(IKeyState keyboard) {
+		for (int i = 0; i < MfdModeKeys.Length; i++) {
+			if (keyboard.IsKeyPressed(keyMap.KeyOf(MfdModeKeys[i]))) {
 				return (MfdMode)i;
 			}
 		}
@@ -415,17 +434,23 @@ public sealed class CockpitKeyboard(CockpitDisplays displays, CockpitView view, 
 		return null;
 	}
 
+	// In MfdMode order.
+	private static readonly KeyAction[] MfdModeKeys = {
+		KeyAction.MfdStatus, KeyAction.MfdFlashComm, KeyAction.MfdNavMap,
+		KeyAction.MfdScanner, KeyAction.MfdTarget, KeyAction.MfdMissileCam,
+	};
+
 	// The Heads-Down damage screen's component category, or null when none of its three keys is down —
 	// same rule as ReadMfdMode: returning null leaves the screen on whatever it was already showing.
-	private static HddDamageView? ReadHddDamageView(IKeyState keyboard) {
-		if (keyboard.IsKeyPressed(Key.S)) {
+	private HddDamageView? ReadHddDamageView(IKeyState keyboard) {
+		if (keyboard.IsKeyPressed(keyMap.KeyOf(KeyAction.DamageStructural))) {
 			return HddDamageView.Structural;
 		}
 
-		if (keyboard.IsKeyPressed(Key.I)) {
+		if (keyboard.IsKeyPressed(keyMap.KeyOf(KeyAction.DamageInternal))) {
 			return HddDamageView.Internal;
 		}
 
-		return keyboard.IsKeyPressed(Key.W) ? HddDamageView.Weapons : null;
+		return keyboard.IsKeyPressed(keyMap.KeyOf(KeyAction.DamageWeapons)) ? HddDamageView.Weapons : null;
 	}
 }

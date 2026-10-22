@@ -19,6 +19,7 @@ namespace Herculan.Engine.Cockpit;
 /// </summary>
 public sealed class CockpitView {
 	private readonly MissionScene _scene;
+	private readonly KeyMap _keyMap;
 
 	// The mouse outside view's orbit, for the tweak that swaps retail's for it (see ExternalCamera). Held
 	// here because it is state the host owns across frames, as the view kick is. Yaw starts directly behind the machine and pitch level with
@@ -40,8 +41,10 @@ public sealed class CockpitView {
 	private readonly KeyLatch _viewControlKey = new();
 	private readonly KeyLatch _viewNextKey = new();
 
-	public CockpitView(MissionScene scene, CockpitArt? art, StagedStart staging) {
+	/// <param name="keyMap">Where the view chain's keys are read from.</param>
+	public CockpitView(MissionScene scene, CockpitArt? art, StagedStart staging, KeyMap keyMap) {
 		_scene = scene;
+		_keyMap = keyMap;
 		PilotMech = scene.PlayerMech;
 		Piloting = PilotMech != null;
 		ViewGeometry = art?.ViewGeometry;
@@ -216,7 +219,7 @@ public sealed class CockpitView {
 		// [V], scancode 0x2f: out to the outside view and back. The cockpit is not drawn in the
 		// external view, and the machine — left out of the cockpit view because its geometry wraps the
 		// eye — is.
-		if (_externalViewKey.PressOrRepeat(controls, Key.V, !CtrlHeld(controls))) {
+		if (_externalViewKey.PressOrRepeat(controls, _keyMap.KeyOf(KeyAction.OutsideView), !CtrlHeld(controls))) {
 			Chain.ToggleOutside(fromKeyboard: true);
 		}
 
@@ -224,14 +227,14 @@ public sealed class CockpitView {
 		// outside view on to the next squadmate. All three are cockpit keys the widgets claim first,
 		// so they reach these cases only while the widgets are off.
 		bool unmodified = Unmodified(controls);
-		bool viewControlKey = _viewControlKey.Press(unmodified
-				&& (controls.IsKeyPressed(Key.Enter) || controls.IsKeyPressed(Key.Tab)))
-			| (unmodified && (controls.IsKeyRepeated(Key.Enter) || controls.IsKeyRepeated(Key.Tab)));
+		bool viewControlKey = _viewControlKey.Press(unmodified && _keyMap.IsDown(controls, KeyAction.SwapCameraControls))
+			| (unmodified && _keyMap.IsRepeated(controls, KeyAction.SwapCameraControls));
 		if (viewControlKey && CockpitWidgetsOff) {
 			Chain.ToggleCameraControl();
 		}
 
-		if (_viewNextKey.PressOrRepeat(controls, Key.N, !CtrlHeld(controls) && !AltHeld(controls))) {
+		if (_viewNextKey.PressOrRepeat(controls, _keyMap.KeyOf(KeyAction.ViewNextSquadmate),
+				!CtrlHeld(controls) && !AltHeld(controls))) {
 			Chain.NextSquadmate(_scene.World.Objects);
 		}
 	}

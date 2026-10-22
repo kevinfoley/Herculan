@@ -1,5 +1,6 @@
 using HercWorks.Core.Data.File.Cfg;
 using Herculan.Engine.Host.Shell.Tabs;
+using Herculan.Engine.Input;
 using Herculan.Engine.Shell;
 using Silk.NET.Input;
 
@@ -17,12 +18,14 @@ sealed class KeyboardRouting {
 	private readonly MainMenuPanels _menu;
 	private readonly EditFields _fields;
 	private readonly Action _repaint;
+	private readonly KeyMap _keyMap;
 
-	// Whether the [Esc] held now went to the menu bar, which its release follows.
+	// Whether the [Esc] held now went to the menu bar, which its release follows, and which key that was.
 	private bool _escapeIsMenuBars;
+	private Key _menuBarKey;
 
 	public KeyboardRouting(FrontEndWindow window, ShellMovies movies, StartupScreen startup, GameInProgress game,
-			MainMenuPanels menu, EditFields fields, Action repaint) {
+			MainMenuPanels menu, EditFields fields, Action repaint, KeyMap keyMap) {
 		_window = window;
 		_movies = movies;
 		_startup = startup;
@@ -30,11 +33,15 @@ sealed class KeyboardRouting {
 		_menu = menu;
 		_fields = fields;
 		_repaint = repaint;
+		_keyMap = keyMap;
 	}
 
 	public void KeyDown(Key key) {
-		if (key == Key.Escape) {
-			_escapeIsMenuBars = MenuBarTakesEscape();
+		bool menuBarKey = key == _keyMap.KeyOf(KeyAction.MenuBar);
+		bool menuBackKey = key == _keyMap.KeyOf(KeyAction.MenuBack);
+		if (menuBarKey || menuBackKey) {
+			_escapeIsMenuBars = MenuBarTakesEscape(menuBarKey, menuBackKey);
+			_menuBarKey = key;
 			if (_escapeIsMenuBars) {
 				_window.MenuBarEscape();
 				return;
@@ -47,7 +54,7 @@ sealed class KeyboardRouting {
 
 	public void KeyUp(Key key) {
 		DisplayHotkey(key, released: true);
-		if (key != Key.Escape || !_escapeIsMenuBars) {
+		if (key != _menuBarKey || !_escapeIsMenuBars) {
 			_fields.DeliverKey(key, released: true);
 		}
 	}
@@ -56,18 +63,18 @@ sealed class KeyboardRouting {
 	/// Whether the [Esc] held now is the menu bar's, so that nothing of retail's sees it — read by the movie and
 	/// briefing-intro skip, which poll the key rather than taking its events (<see cref="PolledButtons"/>).
 	/// </summary>
-	public bool EscapeIsMenuBars => _escapeIsMenuBars && _window.Keyboard?.IsKeyPressed(Key.Escape) == true;
+	public bool EscapeIsMenuBars => _escapeIsMenuBars && _window.Keyboard?.IsKeyPressed(_menuBarKey) == true;
 
 	// [Shift+Esc] alone, or any unmodified [Esc] while the bar is up, is the menu bar's, wherever the shell is; every
 	// other [Esc] is retail's (docs/retail/shell/main-menu.md#typing-into-a-row): a movie and the briefing map's intro
 	// skip on it, an edit field under the pointer takes it, and with Alt or Ctrl it leaves full screen. A press the
 	// bar takes is the bar's for as long as it is held, its release included, so it never does both.
-	private bool MenuBarTakesEscape() {
+	private bool MenuBarTakesEscape(bool menuBarKey, bool menuBackKey) {
 		var keyboard = _window.Keyboard;
 		bool shift = keyboard != null && (keyboard.IsKeyPressed(Key.ShiftLeft) || keyboard.IsKeyPressed(Key.ShiftRight));
 		bool alt = keyboard != null && (keyboard.IsKeyPressed(Key.AltLeft) || keyboard.IsKeyPressed(Key.AltRight));
 		bool ctrl = keyboard != null && (keyboard.IsKeyPressed(Key.ControlLeft) || keyboard.IsKeyPressed(Key.ControlRight));
-		return !alt && !ctrl && (shift || _window.MenuBarUp);
+		return !alt && !ctrl && ((menuBarKey && shift) || (menuBackKey && _window.MenuBarUp));
 	}
 
 	// MainWndProc (00404a2c)'s display keys (docs/retail/shell/main-menu.md#full-screen-asks-first), each gated
@@ -87,7 +94,8 @@ sealed class KeyboardRouting {
 		bool alt = keyboard.IsKeyPressed(Key.AltLeft) || keyboard.IsKeyPressed(Key.AltRight);
 		bool ctrl = keyboard.IsKeyPressed(Key.ControlLeft) || keyboard.IsKeyPressed(Key.ControlRight);
 		bool altOnly = alt && !shift && !ctrl;
-		bool altEnter = altOnly && key is Key.Enter or Key.KeypadEnter;
+		var leaveKeys = _keyMap.Chords(KeyAction.LeaveFullScreen);
+		bool altEnter = altOnly && _keyMap.Chords(KeyAction.FullScreen).Any(chord => chord.Key == key);
 		if (!altEnter && (_startup.Running || _movies.Playing)) {
 			return;
 		}
@@ -98,7 +106,7 @@ sealed class KeyboardRouting {
 			}
 
 			_window.ToggleFullScreen();
-		} else if ((altOnly && key == Key.Escape) || (ctrl && !alt && !shift && key == Key.Escape)) {
+		} else if ((altOnly && key == leaveKeys[0].Key) || (ctrl && !alt && !shift && key == leaveKeys[1].Key)) {
 			if (_window.FullScreen) {
 				_window.ToggleFullScreen();
 			}
