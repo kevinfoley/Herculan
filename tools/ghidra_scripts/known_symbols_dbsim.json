@@ -16962,8 +16962,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ThrottleGauge_Ctor",
-      "description": "Constructor for the throttle slider gauge. Lazily loads the `throttle` sprite bank into DAT_0049cfc4, folder selected by VideoMode_PanelMode == 3 choosing \"hba\" over \"dba\". Reads CockpitViewInstance and its own .GAU track rect. Bank frame 0 is a 2px tick, frame 1 the knob.",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md (HUD sprite art)"
+      "description": "(gauge, block, cockpit): the throttle gauge's constructor, run on the .GAU block at 1000. PanelGauge_Ctor, ThrottleGaugeVtable at +0; the first time (DAT_0049cfc4 null) loads the bank throttle with Resource_Load from the folder ResourcePath_BuildFolderName picks, the one at 004a0a40 in VideoMode_PanelMode 3 and 004a0a28 otherwise. The track is the block's int32 4-7 plus int32 0-1; with int32 0x10 equal to 1 it builds ThrottleSlider_CtorV in 0x86 bytes from Mem_New at +0x18 and sets +0xc1 to 0, otherwise ThrottleSlider_CtorFixed and +0xc1 = 1, each under an exception frame. Widget_RegisterClickable(the root widget of CockpitViewInstance, the slider); the child count +0x68 = 1; clears the 8 bytes from +0xb1 and +0xb5 again; the centre tick's position +0xc2/+0xc6 = the slider's knob top-left +0x2e/+0x32, its x plus the block's int32 0x12 << VideoMode_XCoordShift.",
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md (HUD sprite art)",
+      "verified": {
+        "bytes": "00447b84+435",
+        "sha1": "6a5443e61d58",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00447d38",
@@ -16971,8 +16977,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ThrottleGauge_Paint",
-      "description": "ThrottleGauge vtable +0x04 (0049d1e0): paints its child (+0x18, the slider) through slot +0x00 of its table at +0x17, then Bitmap_Blit(**(DAT_0049cfc4+8), gauge+0xc2, 0).",
-      "source": "DBSIM decompile at 00447d38"
+      "description": "(gauge): ThrottleGaugeVtable slot +0x04: the slider's (+0x18) paint, slot +0 of its table at +0x17, then Bitmap_Blit(frame 0 of the bank throttle, the centre tick's position +0xc2, 0).",
+      "source": "DBSIM decompile at 00447d38",
+      "verified": {
+        "bytes": "00447d38+49",
+        "sha1": "01e345406e27",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00447d6c",
@@ -16980,8 +16992,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ThrottleGauge_Update",
-      "description": "ThrottleGauge vtable +0x08 (0049d1e0): runs its child's slot +0x0c (FlushDeferredPaint).",
-      "source": "DBSIM decompile at 00447d6c"
+      "description": "(gauge): ThrottleGaugeVtable slot +0x08: the slider's (+0x18) per-frame slot +0xc, its table at +0x17.",
+      "source": "DBSIM decompile at 00447d6c",
+      "verified": {
+        "bytes": "00447d6c+19",
+        "sha1": "fc0b828f9859",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00447d80",
@@ -16989,8 +17007,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ThrottleGauge_SetValues",
-      "description": "Writes the gauge's live value pair at +0xb1 from a caller struct of two ints: [0] speed as a Q10 fraction of max, [1] throttle Q10 +/-0x400. Pushes the throttle down to the slider child's set-value slot (+0x14) when it changed, and marks the child dirty (+0x1f = 2) when the speed fraction changed. Called once a frame by Player_PerFrameCockpitUpdate.",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md"
+      "description": "(gauge, pair): pair is {speed fraction, throttle}, two int32. When the throttle differs from +0xb5, calls the slider's (+0x18) set-value slot +0x14 with it as an int16; when the speed fraction differs from +0xb1, sets the slider's paint counter +0x1f to 2; then stores the pair at +0xb1 and +0xb5.",
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md",
+      "verified": {
+        "bytes": "00447d80+78",
+        "sha1": "f51907183100",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00447dd0",
@@ -16998,8 +17022,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ThrottleGauge_GetValues",
-      "description": "Returns gauge + 0xb1, the speedFraction/throttle int pair. Player_PerFrameCockpitUpdate reads [1] (gauge+0xb5) into mech+0x290 unless the mech+0x93 dirty flag says input moved the throttle this frame, in which case it pushes the other way. That arbitration is the whole of the two-way binding between the slider and the keyboard.",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md"
+      "description": "(gauge): returns gauge + 0xb1, the pair {speed fraction, throttle}.",
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md",
+      "verified": {
+        "bytes": "00447dd0+13",
+        "sha1": "b1db8a56e34f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00447de0",
@@ -17007,8 +17037,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ThrottleGauge_OnChildValue",
-      "description": "Gauge slot 0: a child reporting a value. Finds the child in the gauge's array (+0x18, count +0x68); index 0 is the slider, and its value is negated when the gauge's +0xc1 is 0 (the vertical variant) before being stored to +0xb5. That negation cancels SliderWidget_GetValueV's own inversion, leaving positive = forward = knob up.",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md"
+      "description": "(gauge, child, value): ThrottleGaugeVtable slot +0, the value a child reports. Finds the child among the +0x68 at +0x18; for the first, stores the value at +0xb5, negated when the byte +0xc1 is 0 (the vertical slider), which with SliderWidget_GetValueV's inversion leaves positive forward with the knob up; for a later child it returns its index less 1, and the count when the child is not found.",
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md",
+      "verified": {
+        "bytes": "00447de0+68",
+        "sha1": "179549679d37",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00447e24",
@@ -17016,8 +17052,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ThrottleSlider_CtorV",
-      "description": "The throttle's vertical slider child, built when .GAU offset 1064 (SLIDE_DIR) == 1 -- the case all 9 retail .GAU files use. Knob spans the track's full width with its height from throttle bank frame 1 (28x12), limits +/-0x400 at +0x24/+0x26, and an initial position centred on the track (knobBottom = trackBottom - (trackHeight - knobHeight)/2), which is the manual's centred-is-stopped detent. Also constructs the two LED fill bars from .GAU ints [8..11] and [12..15] into private fields +0x7e and +0x82 -- it never registers them as children, and nothing ever paints them (see LedBarGraph_CtorV).",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md"
+      "description": "(slider, track, gauge, block): the throttle's vertical slider. SliderWidget_CtorBase over the track, CTLVSliderVtable and its recompute-scale slot; the owner at +0x42 and the mixin tables at +0x3e; the GLRectangleRegion at +0x56 (0 at +0x5a); PanelVSliderGadget's tables, the int16 +0x1b = 0, then ThrottleVSliderGadgetVtable and its mixin table. The knob bitmap +0x4e is frame 1 of the bank throttle, the length +0x2c its int16 +4; the knob spans the track's x0..x1 with its bottom (y1 - ((y1 - y0) >> 1)) + (length >> 1) and its top that less the length; the region's rect and +0x6e/+0x72 take it, and +0x52 = Mem_NewArray(Region_PixelCount(+0x5a)). The bars: 0x2c bytes each from Mem_New, LedBarGraph_CtorV over block int32 8-11 plus int32 0-1 with range 0x400 at +0x7e and over int32 12-15 with -0x400 at +0x82. +0x4a = +0x7a = 0; position +0x28 and +0x2a = the knob's bottom; minimum -0x400, maximum 0x400; the recompute-scale slot again.",
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md",
+      "verified": {
+        "bytes": "00447e24+634",
+        "sha1": "22e722300580",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004480a0",
@@ -17025,8 +17067,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ThrottleSlider_DrawKnobV",
-      "description": "ThrottleVSliderGadget vtable +0x00 (0049d12c): when the slider is on screen, places the knob rect from the knob position (+0x28/+0x2c), points the raster source page at the draw page, saves the screen under the knob (offset by the canvas origin) into +0x52 with Region_Save, blits the knob bitmap (+0x4e) mirrored (flag 2) when the knob sits right of 160 << XCoordShift, and records the knob rect at +0x6e/+0x72. ThrottleSlider_PaintV is the table's +0x0c.",
-      "source": "DBSIM decompile at 004480a0"
+      "description": "(slider): ThrottleVSliderGadgetVtable slot +0, the paint. When CockpitView_RectCornerVisible passes: the knob rect's +0x3a = the int16 position +0x28 and +0x32 = that less the length +0x2c; the display's +0x38 = its +0x3c (and the raster source page when it is the current display); the region rect +0x5e-+0x6d = the knob rect plus the render context's +0x220/+0x224; Region_Save into +0x52; Bitmap_Blit(the knob +0x4e, +0x2e, flags), the flags 2 when the knob's x0 is past 0xa0 << VideoMode_XCoordShift and 0 otherwise; +0x6e/+0x72 = +0x2e/+0x32.",
+      "source": "DBSIM decompile at 004480a0",
+      "verified": {
+        "bytes": "004480a0+250",
+        "sha1": "4ec7be323420",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044819c",
@@ -17034,8 +17082,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ThrottleSlider_PaintV",
-      "description": "Vertical throttle slider paint. Copies the gauge's +0xb1 speed fraction into +0x7a/+0x4a and does nothing further with it, reads the two LED fill bars' rects only to widen the invalidated region handed to Widget_DrawToCockpit, then blits the knob at its current height. It never draws either bar -- see LedBarGraph_CtorV.",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md"
+      "description": "(slider): ThrottleVSliderGadgetVtable slot +0xc, the per-frame paint. With the paint counter +0x1f at 2 and CockpitView_RectCornerVisible passing: Region_Restore of the screen saved under the knob at +0x6e; +0x7a = the gauge's (+0x42) +0xb1, and +0x4a = it when it differs; a rect from min(forward bar x0, knob x0) to max(knob x1, forward bar x1) by BarGraph_GetRect, and from min(old knob y0, forward bar start +0x18) to max(old knob y1, reverse bar end +0x1c), widened to the new knob rect; then the knob drawn as ThrottleSlider_DrawKnobV draws it; Widget_DrawToCockpit(1, rect, 0); +0x1f = 0.",
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md",
+      "verified": {
+        "bytes": "0044819c+475",
+        "sha1": "669fb42a3bb6",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00448378",
@@ -17043,8 +17097,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ThrottleSlider_OnValue",
-      "description": "Throttle slider commit slot (vtable +8). Notifies the parent gauge via VSliderGadget_OnClick (which dispatches the owner's slot 0 = ThrottleGauge_OnChildValue, then repaints), then sets ThrottleLeverMode (0049a06e) from the sign of the committed value -- but gated on a joystick throttle control being configured AND assigned to THROTTLE in preferences, so it is inert on a keyboard/mouse setup.",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md"
+      "description": "(slider, value): the vertical throttle slider's click slot: VSliderGadget_OnClick(slider, value); then, when bit 0 of DAT_0049db6c is set, the byte +8 of Input_QueryCapabilities' block is non-zero and DAT_004d1fca is 1, ThrottleLeverMode (0049a06e) = 1, or 0xffff when the value is above 0.",
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md",
+      "verified": {
+        "bytes": "00448378+69",
+        "sha1": "5316f7696f8d",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004483c0",
@@ -17133,8 +17193,14 @@
       "type": "function",
       "confidence": "high",
       "name": "VSliderGadget_InvalidateDeferred",
-      "description": "PanelVSliderGadget vtable +0x04 (0049d19c), kept by ThrottleVSliderGadget: this->[0x1f] = 2, the vertical slider's copy of Widget_InvalidateDeferred. HSliderGadget_InvalidateDeferred is the horizontal one.",
-      "source": "DBSIM decompile at 00448b30"
+      "description": "(slider): sets the paint counter +0x1f to 2, the vertical slider's invalidate. HSliderGadget_InvalidateDeferred is the horizontal one.",
+      "source": "DBSIM decompile at 00448b30",
+      "verified": {
+        "bytes": "00448b30+12",
+        "sha1": "4be0f3faf56f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00448b3c",

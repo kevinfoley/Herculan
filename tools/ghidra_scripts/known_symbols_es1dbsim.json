@@ -6892,7 +6892,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Player_PerFrameCockpitUpdate",
-      "description": "(machine), callee-cleaned: EnergyMeter_Value (000af6fc) = (pool +0x228 << 10) / 10000 to 00039b78(CockpitViewInstance +0x1e1, &value); Shield_BalanceInputRead (0000fbb4)(+0x1b8); WeaponMounts_PerFrameUpdate (0000cf78)(manager +0x198, the distance to the target +0x15e or 0); the throttle exchange through 0003b250 and 0003b200 on +0x1ed (with +0x8d clear the gauge's value to +0x226, otherwise +0x226 to the gauge and +0x8d cleared) and the speed fraction (speed << 10) / top; then a copy of Gunsight_GetStateBlock (00035180)(+0x1f1): the pitch +0x230 at offset 4, the heading +0xa and twist +0x22e at 0 and 2 unless +0x9e is set; when its target at offset 6 differs from +0x15e: +0x95 cleared, 1 taken from the old target's holders' count +0x15c when there is an old target, the block's target stored at +0x15e and 1 added to its count when it is not null, +0x97 set, and with no new target and the manager's +0x14 set, g_CenterTurretMode (000b5ba4) = 1; +0x95 at 0x25; Gunsight_SetValues (00035090). es2_xref finds two calls, from Sim_RenderFrame (00059c08) and Sim_StartMission (0005a9dc). ES2's Player_PerFrameCockpitUpdate (DBSIM 0041b130), which takes the target from the cockpit and resolves its aim point.",
+      "description": "(machine), callee-cleaned: EnergyMeter_Value (000af6fc) = (pool +0x228 << 10) / 10000 to 00039b78(CockpitViewInstance +0x1e1, &value); Shield_BalanceInputRead (0000fbb4)(+0x1b8); WeaponMounts_PerFrameUpdate (0000cf78)(manager +0x198, the distance to the target +0x15e or 0); the throttle exchange through ThrottleGauge_GetValues (0003b250) and ThrottleGauge_SetValues (0003b200) on +0x1ed (with +0x8d clear the gauge's value to +0x226, otherwise +0x226 to the gauge and +0x8d cleared) and the speed fraction (speed << 10) / top; then a copy of Gunsight_GetStateBlock (00035180)(+0x1f1): the pitch +0x230 at offset 4, the heading +0xa and twist +0x22e at 0 and 2 unless +0x9e is set; when its target at offset 6 differs from +0x15e: +0x95 cleared, 1 taken from the old target's holders' count +0x15c when there is an old target, the block's target stored at +0x15e and 1 added to its count when it is not null, +0x97 set, and with no new target and the manager's +0x14 set, g_CenterTurretMode (000b5ba4) = 1; +0x95 at 0x25; Gunsight_SetValues (00035090). es2_xref finds two calls, from Sim_RenderFrame (00059c08) and Sim_StartMission (0005a9dc). ES2's Player_PerFrameCockpitUpdate (DBSIM 0041b130), which takes the target from the cockpit and resolves its aim point.",
       "source": "Herculan/docs/es1/simulation/mech.md#the-cockpit; ES1DBSIM decompile at 000155a8",
       "verified": {
         "bytes": "000155a8+561",
@@ -12547,7 +12547,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Gau_ThrottleWidget",
-      "description": "(cockpit, record) in stack order, callee-cleaned: builds the instrument with 0003b0d4(0, cockpit, record + 0x3e8), appends it to the widget list +8 (count +0x6c) and returns it. es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8), which stores the result at +0x1ed. ES2's Gau_ThrottleWidget (DBSIM 0043254c), which shifts the block first.",
+      "description": "(cockpit, record) in stack order, callee-cleaned: builds the instrument with ThrottleGauge_Ctor (0003b0d4)(0, cockpit, record + 0x3e8), appends it to the widget list +8 (count +0x6c) and returns it. es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8), which stores the result at +0x1ed. ES2's Gau_ThrottleWidget (DBSIM 0043254c), which shifts the block first.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#building-it",
       "verified": {
         "bytes": "0002cdf0+56",
@@ -14752,7 +14752,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HSliderGadget_OnClick",
-      "description": "(slider, value) in stack order, callee-cleaned: slot +4 of the table at owner+0x76 with (owner, value, slider), the owner being +0x3e; the slider's slot +8 through its vptr +0x1c; slot +0xc of the mixin table at +0x42 on slider+0x3e. The value is not tested. ES2's HSliderGadget_OnClick (DBSIM 0043901c). es2_xref finds it at +0xc of five tables, 00093d06, 00093d4a, 000943b6, 000943fa and 00095006, whose value slot +0x14 is SliderWidget_GetValueH (00043ac8), which reads the knob's +0x2e against the slider's x0.",
+      "description": "(slider, value) in stack order, callee-cleaned: slot +4 of the table at owner+0x76 with (owner, value, slider), the owner being +0x3e; the slider's slot +8 through its vptr +0x1c; slot +0xc of the mixin table at +0x42 on slider+0x3e. The value is not tested. ES2's HSliderGadget_OnClick (DBSIM 0043901c). es2_xref finds it at +0xc of five tables, 00093d06, 00093d4a, 000943b6, ThrottleHSliderGadgetVtable (000943fa) and 00095006, whose value slot +0x14 is SliderWidget_GetValueH (00043ac8), which reads the knob's +0x2e against the slider's x0.",
       "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases",
       "verified": {
         "bytes": "0003166c+49",
@@ -14767,7 +14767,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VSliderGadget_OnClick",
-      "description": "(slider, value) in stack order, callee-cleaned: the same statements as HSliderGadget_OnClick (0003166c). ES2's VSliderGadget_OnClick (DBSIM 0043904c). es2_xref finds it at +0xc of 0009431a and 0009435e, whose value slot +0x14 is SliderWidget_GetValueV (00043be8), the statements of ES2's SliderWidget_GetValueV. Its RET 8 at 000316ce is followed by three zero bytes and the next object file.",
+      "description": "(slider, value) in stack order, callee-cleaned: the same statements as HSliderGadget_OnClick (0003166c). ES2's VSliderGadget_OnClick (DBSIM 0043904c). es2_xref finds it at +0xc of 0009431a and ThrottleVSliderGadgetVtable (0009435e), whose value slot +0x14 is SliderWidget_GetValueV (00043be8), the statements of ES2's SliderWidget_GetValueV. Its RET 8 at 000316ce is followed by three zero bytes and the next object file.",
       "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases",
       "verified": {
         "bytes": "000316a0+49",
@@ -14812,7 +14812,7 @@
       "type": "function",
       "confidence": "high",
       "name": "BarGraph_GetRect",
-      "description": "(bar), callee-cleaned, frameless: MOV EAX,[ESP+4] and RET 4, returning the bar, whose rect is at +0. ES2's BarGraph_GetRect (DBSIM 004390b8) returns bar + 4. es2_xref finds ten calls, one each from 00039a28 and 00039abc and four each from 0003b804 and 0003bf18, the counts of ES2's calls from EnergyPoolGauge_Paint, EnergyPoolGauge_Update, ThrottleSlider_PaintV and ThrottleSlider_FlushPaintH; 00039a28 passes the object at its +0x7e and calls that object's slot +8 through its +0x28, where a bar graph keeps its vtable.",
+      "description": "(bar), callee-cleaned, frameless: MOV EAX,[ESP+4] and RET 4, returning the bar, whose rect is at +0. ES2's BarGraph_GetRect (DBSIM 004390b8) returns bar + 4. es2_xref finds ten calls, one each from 00039a28 and 00039abc and four each from ThrottleSlider_PaintV (0003b804) and ThrottleSlider_FlushPaintH (0003bf18), the counts of ES2's calls from EnergyPoolGauge_Paint, EnergyPoolGauge_Update, ThrottleSlider_PaintV and ThrottleSlider_FlushPaintH; 00039a28 passes the object at its +0x7e and calls that object's slot +8 through its +0x28, where a bar graph keeps its vtable.",
       "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bar-graphs",
       "verified": {
         "bytes": "00031738+7",
@@ -15067,7 +15067,7 @@
       "type": "function",
       "confidence": "high",
       "name": "LedBmBarGraphH_Ctor",
-      "description": "(bar, unlit, lit, range, rect) in stack order, callee-cleaned: allocates 0x68 bytes with operator_new when bar is null (returning null when that fails), runs BarGraphH_Ctor (00031740)(bar, range, rect), and builds two 0x18-byte GLRectangleRegions in place at +0x2c and +0x44: the file's vtable copies 000934c2, 000934e6, 0009350e and 00093536 stored in turn at +0, the dword +4 zeroed, the rect's constructor inlined at +8. Stores LEDBMBarGraphHVtable (0009355e) at +0x28, lit at +0x60 and unlit at +0x64, and allocates the save buffer at +0x5c with operator_new: unlit's width (int16 +6) times its height (int16 +4) plus 0x20 bytes. ES2's LedBmBarGraphH_Ctor (DBSIM 00439ae8), whose buffer is a fixed 5000 bytes and whose +0x64 is the lit bitmap. es2_xref finds two calls, both from 0003ba74.",
+      "description": "(bar, unlit, lit, range, rect) in stack order, callee-cleaned: allocates 0x68 bytes with operator_new when bar is null (returning null when that fails), runs BarGraphH_Ctor (00031740)(bar, range, rect), and builds two 0x18-byte GLRectangleRegions in place at +0x2c and +0x44: the file's vtable copies 000934c2, 000934e6, 0009350e and 00093536 stored in turn at +0, the dword +4 zeroed, the rect's constructor inlined at +8. Stores LEDBMBarGraphHVtable (0009355e) at +0x28, lit at +0x60 and unlit at +0x64, and allocates the save buffer at +0x5c with operator_new: unlit's width (int16 +6) times its height (int16 +4) plus 0x20 bytes. ES2's LedBmBarGraphH_Ctor (DBSIM 00439ae8), whose buffer is a fixed 5000 bytes and whose +0x64 is the lit bitmap. es2_xref finds two calls, both from ThrottleSlider_CtorFixed (0003ba74).",
       "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bitmap-bar-graphs; ES1DBSIM decompile at 000324e4",
       "verified": {
         "bytes": "000324e4+515",
@@ -15172,7 +15172,7 @@
       "type": "function",
       "confidence": "high",
       "name": "LedBmBarGraphV_Ctor",
-      "description": "(bar, lit, unlit, range, rect) in stack order, callee-cleaned: LedBmBarGraphH_Ctor (000324e4) over BarGraphV_Ctor (00031aac), storing LEDBMBarGraphVVtable (00093576) at +0x28; the second argument goes to +0x64 and sizes the buffer at +0x5c, the third to +0x60, and here +0x64 is the lit bitmap. ES2's LedBmBarGraphV_Ctor (DBSIM 00439e10), whose buffer is a fixed 5000 bytes. es2_xref finds two calls, both from 0003b2c8.",
+      "description": "(bar, lit, unlit, range, rect) in stack order, callee-cleaned: LedBmBarGraphH_Ctor (000324e4) over BarGraphV_Ctor (00031aac), storing LEDBMBarGraphVVtable (00093576) at +0x28; the second argument goes to +0x64 and sizes the buffer at +0x5c, the third to +0x60, and here +0x64 is the lit bitmap. ES2's LedBmBarGraphV_Ctor (DBSIM 00439e10), whose buffer is a fixed 5000 bytes. es2_xref finds two calls, both from ThrottleSlider_CtorV (0003b2c8).",
       "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bitmap-bar-graphs; es2_naming.py diff ES1DBSIM 000324e4 ES1DBSIM 00032a18",
       "verified": {
         "bytes": "00032a18+515",
@@ -17207,6 +17207,411 @@
       }
     },
     {
+      "address": "0003b0ac",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorThrottleGaugeCopy",
+      "description": "(p, flags) in stack order, its arguments removed by this function: the throttle gauge file's lone copy of the 40-byte destructor, which opens the file: with p set, frees the block p points at with operator_delete (000015f8) when it is set, then p when bit 0 of flags is set. Identical after normalisation to HeapPtr_DtorGunlistCopy (0000baf0). es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0003b0ac",
+      "verified": {
+        "bytes": "0003b0ac+40",
+        "sha1": "c8f36424d16c",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003b0d4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ThrottleGauge_Ctor",
+      "description": "(gauge, cockpit, block) in stack order, its arguments removed by this function: the throttle gauge's constructor, run on the .GAU block at 1000. Allocates 0x8b bytes with operator_new when gauge is null (returning 0 when that fails), runs PanelGauge_Ctor (00031318)(gauge, cockpit, block) and stores ThrottleGaugeVtable (00094206) at +0x76. The track is the block's int32 4-7 plus its int32 0-1; with int32 0x10 equal to 1 it stores ThrottleSlider_CtorV (0003b2c8)(0, block, gauge, track), by its padding 0003b2c7, at +0x14 and 0 at the byte +0x8a, otherwise ThrottleSlider_CtorFixed (0003ba74), by its padding 0003ba73, with the same arguments and 1 at +0x8a. Widget_RegisterClickable (000443d4)(the slider, the root widget at +0 of CockpitViewInstance (00092d1c)); the child count +0x64 = 1; memset (00060b40) clears the 8 bytes from +0x7a and +0x7e is set to 0 again. ES2's ThrottleGauge_Ctor (DBSIM 00447b84), which also loads the bank throttle and places the centre tick. es2_xref finds one call, from Gau_ThrottleWidget (0002cdf0).",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#the-gauge--throttlegauge_ctor-0003b0d4; ES1DBSIM disassembly at 0003b0d4",
+      "verified": {
+        "bytes": "0003b0d4+241",
+        "sha1": "907be8142b87",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003b1c5",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PanelGauge_KeyDispatchNoneThrottleGaugeCopy",
+      "description": "Frameless: three NOPs, then XOR EAX,EAX and RET 8: returns 0, taking no key. Slot +0x10, the key slot, of ThrottleGaugeVtable (00094206); the code of PanelGauge_KeyDispatchNone (0003139b) with two more NOPs before it. ES2's PanelGauge_KeyDispatchNone (DBSIM 00452344).",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#the-gauge--throttlegauge_ctor-0003b0d4; ES1DBSIM disassembly at 0003b1c5",
+      "verified": {
+        "bytes": "0003b1c5+8",
+        "sha1": "14fac6e555be",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0003b1d0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ThrottleGauge_Paint",
+      "description": "(gauge) in stack order, its arguments removed by this function: slot +8 of ThrottleGaugeVtable (00094206), by its padding 0003b1cd: calls the paint slot +4 of the slider at +0x14, its table at the slider's +0x1c. ES2's ThrottleGauge_Paint (DBSIM 00447d38), which also blits the centre tick.",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#the-gauge--throttlegauge_ctor-0003b0d4; ES1DBSIM disassembly at 0003b1d0",
+      "verified": {
+        "bytes": "0003b1d0+24",
+        "sha1": "eca0f70c5c46",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003b1e8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ThrottleGauge_Update",
+      "description": "(gauge) in stack order, its arguments removed by this function: slot +0xc of ThrottleGaugeVtable (00094206): calls the per-frame slot +0x10 of the slider at +0x14, its table at the slider's +0x1c. ES2's ThrottleGauge_Update (DBSIM 00447d6c).",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#the-gauge--throttlegauge_ctor-0003b0d4; ES1DBSIM disassembly at 0003b1e8",
+      "verified": {
+        "bytes": "0003b1e8+24",
+        "sha1": "fed95d6f3061",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003b200",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ThrottleGauge_SetValues",
+      "description": "(gauge, pair) in stack order, its arguments removed by this function: pair is {speed fraction, throttle}, two int32. When the throttle differs from +0x7e, calls the set-value slot +0x18 of the slider at +0x14 with it; when the speed fraction differs from +0x7a, sets the slider's paint counter +0x1b to 2; then stores the pair at +0x7a and +0x7e. ES2's ThrottleGauge_SetValues (DBSIM 00447d80), on +0xb1, +0xb5 and the slider's +0x1f. es2_xref finds one call, from Player_PerFrameCockpitUpdate (000155a8).",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#the-exchange-with-the-throttle; ES1DBSIM disassembly at 0003b200",
+      "verified": {
+        "bytes": "0003b200+79",
+        "sha1": "3fdc96c3d692",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003b250",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ThrottleGauge_GetValues",
+      "description": "Frameless: MOV EAX,[ESP+4], ADD EAX,0x7a and RET 4: returns the gauge plus 0x7a, the pair {speed fraction, throttle}. The same bytes as Gunsight_GetStateBlock (00035180). ES2's ThrottleGauge_GetValues (DBSIM 00447dd0), which returns +0xb1. es2_xref finds one call, from Player_PerFrameCockpitUpdate (000155a8).",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#the-exchange-with-the-throttle; ES1DBSIM disassembly at 0003b250",
+      "verified": {
+        "bytes": "0003b250+10",
+        "sha1": "df0dc4c07cf6",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003b25c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ThrottleGauge_OnChildValue",
+      "description": "(gauge, value, child) in stack order, its arguments removed by this function: slot +4 of ThrottleGaugeVtable (00094206), by its padding 0003b25a, which the slider's click slot calls. Walks the +0x64 children from +0x14; when the child is the first, stores the value at +0x7e, negated when the byte +0x8a is 0 (the vertical slider); for a later child or none it stores nothing. It sets no return value. ES2's ThrottleGauge_OnChildValue (DBSIM 00447de0), (gauge, child, value), which returns the child's index.",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#the-gauge--throttlegauge_ctor-0003b0d4; ES1DBSIM disassembly at 0003b25c",
+      "verified": {
+        "bytes": "0003b25c+107",
+        "sha1": "62de988b374f",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003b2c8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ThrottleSlider_CtorV",
+      "description": "(slider, block, gauge, track) in stack order, its arguments removed by this function: the vertical throttle slider, 0x86 bytes from operator_new when slider is null (0 when that fails). SliderWidget_CtorBase (000439d4)(slider, 1, 0, 0x100, 0, track), the table 00094222, SliderWidget_RecomputeScaleV (00043c74); the gauge at +0x3e; the GLRectangleRegion at +0x56 (tables 00094266, 0009428a, 000942b2, 000942da in turn, 0 at +0x5a); mixin tables 0009424e and 00094302 at +0x42, 0009431a at +0x1c, the int16 state +0x17 = 0, then ThrottleVSliderGadget_PanelSliderGadgetVtable (00094346) at +0x42 and ThrottleVSliderGadgetVtable (0009435e) at +0x1c. +0x76 = ClassItem_LoadFromFile (0005760c)(ResourcePath_BuildFolderName (00060698)(dba, the light name 0009328c[block int32 0x10])). The knob bitmap +0x4e is frame block int32 0x11 of CockpitPButtonsBank (00092d68); the knob length +0x2c its int16 +4; the knob rect +0x2e spans the track's x0..x1 with its bottom (y1 - ((y1 - y0) >> 1)) + (length >> 1) and its top that less the length; the region's rect and +0x6e/+0x72 take it; +0x52 = operator_new of Region_PixelCount (00066609)(+0x5a). The forward bar +0x7e = LedBmBarGraphV_Ctor (00032a18)(0, frame 1, frame 0, 0x400, block int32 8-11 + origin) and the reverse bar +0x82 the same with frame 2 as unlit, -0x400 and int32 12-15, the frames from +0x76's +8. +0x4a = +0x7a = 0; position +0x28 and +0x2a = the knob's bottom; minimum -0x400, maximum 0x400; SliderWidget_RecomputeScaleV again. ES2's ThrottleSlider_CtorV (DBSIM 00447e24), whose knob is frame 1 of the bank throttle and whose bars are plain BarGraphVs. es2_xref finds one call, from ThrottleGauge_Ctor (0003b0d4).",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#building-it; ES1DBSIM disassembly at 0003b2c8",
+      "verified": {
+        "bytes": "0003b2c8+785",
+        "sha1": "1a9abc0fa30f",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003b5d9",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLSliderControl_PaintNoOpThrottleGaugeCopy",
+      "description": "Frameless: three NOPs and RET 4. Slot +4 of the vtable 00094222, and slot +4 of the vtable 0009431a, and slot +4 of the vtable 0009438a (entered at 0003b5dc), and slot +4 of the vtable 000943b6 (entered at 0003b5dc); the code of CTLSliderControl_PaintNoOp (00043a5e). ES2's CTLSliderControl_PaintNoOp (DBSIM 0045571c).",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0003b5d9",
+      "verified": {
+        "bytes": "0003b5d9+6",
+        "sha1": "0011b5e9ac52",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0003b5df",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLSliderControl_InvalidateNoOpThrottleGaugeCopy",
+      "description": "Frameless: a NOP and RET 4. Slot +8 of the vtable 00094222, and slot +8 of the vtable 0009438a (entered at 0003b5e0); the code of CTLSliderControl_InvalidateNoOp (00043a63). ES2's CTLSliderControl_InvalidateNoOp (DBSIM 00455721).",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0003b5df",
+      "verified": {
+        "bytes": "0003b5df+4",
+        "sha1": "5d5ba9489eeb",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0003b5e3",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_OnClickNoOpThrottleGaugeCopy",
+      "description": "Frameless: a NOP and RET 8. Slot +0xc of the vtable 00094222, and slot +0xc of the vtable 0009438a (entered at 0003b5e4); the code of CTLControl_OnClickNoOpPanelCopy (0002dae7). ES2's CTLControl_OnClickNoOp (DBSIM 0045555e).",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0003b5e3",
+      "verified": {
+        "bytes": "0003b5e3+4",
+        "sha1": "da32ac57381a",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0003b5e7",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_FlushDeferredPaintNoOpThrottleGaugeCopy",
+      "description": "Frameless: a NOP and RET 4. Slot +0x10 of the vtable 00094222, and slot +0x10 of the vtable 0009431a, and slot +0x10 of the vtable 0009438a (entered at 0003b5e8), and slot +0x10 of the vtable 000943b6 (entered at 0003b5e8); the code of CTLControl_FlushDeferredPaintNoOpPanelCopy (0002daeb). ES2's CTLControl_FlushDeferredPaintNoOp (DBSIM 0045554a).",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0003b5e7",
+      "verified": {
+        "bytes": "0003b5e7+4",
+        "sha1": "5d5ba9489eeb",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0003b5ec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLBase_DtorThrottleGaugeCopy",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of the vtable 0009428a (entered at its padding 0003b5eb): byte for byte the code of GLBase_DtorMechviewCopy (00024318), relocated operands aside, storing 0009428a where that stores 00092712.",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0003b5ec",
+      "verified": {
+        "bytes": "0003b5ec+34",
+        "sha1": "e73db4831bb0",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003b610",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRegion_DtorThrottleGaugeCopy",
+      "description": "(object, flags) in stack order, its arguments removed by this function: slot +0x1c of the vtable 000942b2, by its padding 0003b60e: identical after normalisation to GLRegion_DtorBarGraphsCopy (0003270c), storing this file's region tables.",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#functions; ES1DBSIM disassembly at 0003b610",
+      "verified": {
+        "bytes": "0003b610+40",
+        "sha1": "e18e3a651537",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003b638",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRectangleRegion_DtorThrottleGaugeCopy",
+      "description": "(region, flags): slot +0x1c of the vtable 000942da: byte for byte the code of GLRectangleRegion_Dtor (0007999c), relocated operands aside, storing 000942da and 000942b2 and 0009428a where that stores 0009f2ce and 0009f2a6 and 0009f27e.",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0003b638",
+      "verified": {
+        "bytes": "0003b638+46",
+        "sha1": "fc94e223604e",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003b668",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VSliderGadget_InvalidateDeferred",
+      "description": "(slider) in stack order, its arguments removed by this function: sets the paint counter +0x1b to 2. Slot +8 of 0009431a and of ThrottleVSliderGadgetVtable (0009435e), by its padding 0003b666. The same code as HSliderGadget_InvalidateDeferred (00046c78). ES2's VSliderGadget_InvalidateDeferred (DBSIM 00448b30), on +0x1f.",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#drawing-it; ES1DBSIM disassembly at 0003b668",
+      "verified": {
+        "bytes": "0003b668+16",
+        "sha1": "9e51e63401e5",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003b678",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ThrottleVSliderGadget_DrawKnobVThunk",
+      "description": "Frameless this-adjusting thunk: ADD [ESP+4],-0x3e and JMP to ThrottleSlider_DrawKnobV (0003b690) by its padding 0003b68e. Slot +4 of ThrottleVSliderGadget_PanelSliderGadgetVtable (00094346). ES2's ThrottleVSliderGadget_DrawKnobVThunk (DBSIM 00448b50).",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#building-it; ES1DBSIM disassembly at 0003b678",
+      "verified": {
+        "bytes": "0003b678+24",
+        "sha1": "24ca35f6f639",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003b684",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ThrottleVSliderGadget_PaintVThunk",
+      "description": "Frameless this-adjusting thunk: ADD [ESP+4],-0x3e and JMP to ThrottleSlider_PaintV (0003b804) by its padding 0003b803. Slot +8 of ThrottleVSliderGadget_PanelSliderGadgetVtable (00094346). ES2's ThrottleVSliderGadget_PaintVThunk (DBSIM 00448b46).",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#building-it; ES1DBSIM disassembly at 0003b684",
+      "verified": {
+        "bytes": "0003b684+384",
+        "sha1": "2ffe5f3dbb8d",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003b690",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ThrottleSlider_DrawKnobV",
+      "description": "(slider) in stack order, its arguments removed by this function: the paint slot +4 of ThrottleVSliderGadgetVtable (0009435e), by its padding 0003b68e. When CockpitView_RectCornerVisible (0002b214) passes the slider: for the forward bar +0x7e its reset (slot +0xc of its table at +0x28), its paint (slot +4) to 0x400 and its paint to +0x7a; the same for the reverse bar +0x82 with -0x400; the knob rect +0x3a = the int16 position +0x28 and +0x32 = that less the length +0x2c; the display 000bdd28's +0x38 = its +0x3c, also to 00098dd6 and through the raster slot 0009df14 when it is the current display; the region rect +0x5e-+0x6d = the knob rect plus the render context 000bdbda's +0x220/+0x224; Region_Save (000665d6)(+0x5a, buffer +0x52); Bitmap_Blit (00067048)(the knob +0x4e, 0, +0x2e); +0x6e/+0x72 = +0x2e/+0x32. ES2's ThrottleSlider_DrawKnobV (DBSIM 004480a0), which paints no bar and blits with flags 2 for a knob past column 160 << VideoMode_XCoordShift.",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#drawing-it; ES1DBSIM disassembly at 0003b690",
+      "verified": {
+        "bytes": "0003b690+371",
+        "sha1": "d5e7f30fb64a",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003b804",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ThrottleSlider_PaintV",
+      "description": "(slider) in stack order, its arguments removed by this function: the per-frame slot +0x10 of ThrottleVSliderGadgetVtable (0009435e), by its padding 0003b803. With the paint counter +0x1b at 2 and CockpitView_RectCornerVisible (0002b214) passing the slider: Region_Restore (0006641f)(+0x5a, +0x6e, buffer +0x52); +0x7a = the gauge's (+0x3e) +0x7a and, when that differs from +0x4a, the paint slot +4 of the forward bar +0x7e and of the reverse bar +0x82 with it, and +0x4a = it; a rect from min(forward bar x0, knob x0) to max(knob x1, forward bar x1) by BarGraph_GetRect (00031738), and from min(old knob y0, forward bar start +0x14) to max(old knob y1, reverse bar end +0x18), widened to the new knob rect, +0x32 = position +0x28 less the length +0x2c and +0x3a = the position; then the source page, region, Region_Save, Bitmap_Blit of the knob and +0x6e/+0x72 as ThrottleSlider_DrawKnobV (0003b690) does; Widget_DrawToCockpit (0002b058)(0, rect, 1); +0x1b = 0. ES2's ThrottleSlider_PaintV (DBSIM 0044819c), which paints no bar.",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#drawing-it; ES1DBSIM disassembly at 0003b804",
+      "verified": {
+        "bytes": "0003b804+623",
+        "sha1": "5e39766cb9b2",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003ba74",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ThrottleSlider_CtorFixed",
+      "description": "(slider, block, gauge, track) in stack order, its arguments removed by this function: the horizontal throttle slider, ThrottleSlider_CtorV (0003b2c8) on the x axis: SliderWidget_RecomputeScaleH (00043b4c) and the base table 0009438a, the gadget tables 000943b6, ThrottleHSliderGadget_PanelSliderGadgetVtable (000943e2) and ThrottleHSliderGadgetVtable (000943fa); the knob bitmap +0x4e from CockpitPButtonsBank (00092d68) as there, but the length +0x2c is 12 and the knob rect spans the track's y0..y1 from x0 + ((x1 - x0) >> 1) - 6 to that plus 12; the bars LedBmBarGraphH_Ctor (000324e4)(0, frame 0, frame 1, 0x400, block int32 8-11 + origin) at +0x7e and (0, frame 2, frame 1, -0x400, int32 12-15) at +0x82; position +0x28 and +0x2a = the knob's x0. ES2's ThrottleSlider_CtorFixed (DBSIM 004483c0), whose knob is frame 1 of the bank throttle and whose bars are plain BarGraphHs. es2_xref finds one call, from ThrottleGauge_Ctor (0003b0d4).",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#building-it; ES1DBSIM disassembly at 0003ba74",
+      "verified": {
+        "bytes": "0003ba74+777",
+        "sha1": "cebccc5a0542",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003bd80",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HSliderGadget_InvalidateDeferredThrottleGaugeCopy",
+      "description": "(slider) in stack order: slot +8 of the vtable 000943b6 (entered at its padding 0003bd7d), and slot +8 of the vtable ThrottleHSliderGadgetVtable (000943fa) (entered at its padding 0003bd7d): byte for byte the code of HSliderGadget_InvalidateDeferred (00046c78), relocated operands aside. ES2's HSliderGadget_InvalidateDeferred (DBSIM 004556d0).",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0003bd80",
+      "verified": {
+        "bytes": "0003bd80+16",
+        "sha1": "9e51e63401e5",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003bd90",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ThrottleHSliderGadget_PaintHThunk",
+      "description": "Frameless this-adjusting thunk: ADD [ESP+4],-0x3e and JMP to ThrottleSlider_PaintH (0003bda8) by its padding 0003bda6. Slot +4 of ThrottleHSliderGadget_PanelSliderGadgetVtable (000943e2). ES2's ThrottleHSliderGadget_PaintHThunk (DBSIM 00448b26).",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#building-it; ES1DBSIM disassembly at 0003bd90",
+      "verified": {
+        "bytes": "0003bd90+24",
+        "sha1": "768b041e6093",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003bd9c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ThrottleHSliderGadget_FlushPaintHThunk",
+      "description": "Frameless this-adjusting thunk: ADD [ESP+4],-0x3e and JMP to ThrottleSlider_FlushPaintH (0003bf18). Slot +8 of ThrottleHSliderGadget_PanelSliderGadgetVtable (000943e2). ES2's ThrottleHSliderGadget_FlushPaintHThunk (DBSIM 00448b1c).",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#building-it; ES1DBSIM disassembly at 0003bd9c",
+      "verified": {
+        "bytes": "0003bd9c+10",
+        "sha1": "8da523228edb",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003bda8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ThrottleSlider_PaintH",
+      "description": "(slider) in stack order, its arguments removed by this function: the paint slot +4 of ThrottleHSliderGadgetVtable (000943fa), by its padding 0003bda6: ThrottleSlider_DrawKnobV (0003b690) on the x axis, the knob rect +0x2e = the position +0x28 and +0x36 = that plus the length +0x2c; its first call is the reset of the forward bar +0x7e, and so is its fourth, where the vertical paint resets the reverse bar +0x82, so the reverse bar is painted to -0x400 and back from its stored position. ES2's ThrottleSlider_PaintH (DBSIM 00448638), which paints no bar.",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#drawing-it; ES1DBSIM disassembly at 0003bda8",
+      "verified": {
+        "bytes": "0003bda8+368",
+        "sha1": "7fb78375694c",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003bf18",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ThrottleSlider_FlushPaintH",
+      "description": "(slider) in stack order, its arguments removed by this function: the per-frame slot +0x10 of ThrottleHSliderGadgetVtable (000943fa): ThrottleSlider_PaintV (0003b804) on the x axis, the rect's columns from min(reverse bar start +0x14, old knob x0) to max(old knob x1, forward bar end +0x18) widened to the new knob's, its rows from min(forward bar y0, knob y0) to max(knob y1, forward bar y1) by BarGraph_GetRect (00031738). Its RET 4 at 0003c186, followed by three zero bytes, ends the file. ES2's ThrottleSlider_FlushPaintH (DBSIM 00448710), which paints no bar.",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#drawing-it; ES1DBSIM disassembly at 0003bf18",
+      "verified": {
+        "bytes": "0003bf18+625",
+        "sha1": "a136506a16c7",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0003e830",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -17362,7 +17767,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SliderWidget_CtorBase",
-      "description": "(slider, knob length, position, maximum, minimum, rect) in stack order, its arguments removed by this function: Widget_CtorRect (000438fc) on the rect, the knob's 16-byte rect at +0x2e constructed in place, CTLSliderControlVtable 00094bb2 at +0x1c, the scale +0x20 = 0, the int16 minimum +0x24, maximum +0x26, position +0x28 and +0x2a, knob length +0x2c, and the drag flag +0x19 = 1. ES2's SliderWidget_CtorBase (DBSIM 004524a8), arguments in reverse. es2_xref finds calls from 000386a0, 0003b2c8, 0003ba74 and AlertSliderGadget_Ctor (000469ec).",
+      "description": "(slider, knob length, position, maximum, minimum, rect) in stack order, its arguments removed by this function: Widget_CtorRect (000438fc) on the rect, the knob's 16-byte rect at +0x2e constructed in place, CTLSliderControlVtable 00094bb2 at +0x1c, the scale +0x20 = 0, the int16 minimum +0x24, maximum +0x26, position +0x28 and +0x2a, knob length +0x2c, and the drag flag +0x19 = 1. ES2's SliderWidget_CtorBase (DBSIM 004524a8), arguments in reverse. es2_xref finds calls from 000386a0, ThrottleSlider_CtorV (0003b2c8), ThrottleSlider_CtorFixed (0003ba74) and AlertSliderGadget_Ctor (000469ec).",
       "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-slider-base",
       "verified": {
         "bytes": "000439d4+138",
@@ -17452,7 +17857,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SliderWidget_RecomputeScaleH",
-      "description": "(slider) in stack order, its arguments removed by this function: sets the scale +0x20 to ((x1 - (the dword +0x36 - the dword +0x2e) - x0) << 16) / (the int16 maximum +0x26 - the int16 minimum +0x24). ES2's SliderWidget_RecomputeScaleH (DBSIM 004525a8). es2_xref finds six calls, from 000386a0, 0003ba74 and AlertSliderGadget_Ctor (000469ec).",
+      "description": "(slider) in stack order, its arguments removed by this function: sets the scale +0x20 to ((x1 - (the dword +0x36 - the dword +0x2e) - x0) << 16) / (the int16 maximum +0x26 - the int16 minimum +0x24). ES2's SliderWidget_RecomputeScaleH (DBSIM 004525a8). es2_xref finds six calls, from 000386a0, ThrottleSlider_CtorFixed (0003ba74) and AlertSliderGadget_Ctor (000469ec).",
       "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-slider-base",
       "verified": {
         "bytes": "00043b4c+52",
@@ -17512,7 +17917,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SliderWidget_RecomputeScaleV",
-      "description": "(slider) in stack order, its arguments removed by this function: sets the scale +0x20 to ((y1 - (the dword +0x3a - the dword +0x32) - y0) << 16) / (the int16 maximum +0x26 - the int16 minimum +0x24). ES2's SliderWidget_RecomputeScaleV (DBSIM 00452694). es2_xref finds two calls, from 0003b2c8.",
+      "description": "(slider) in stack order, its arguments removed by this function: sets the scale +0x20 to ((y1 - (the dword +0x3a - the dword +0x32) - y0) << 16) / (the int16 maximum +0x26 - the int16 minimum +0x24). ES2's SliderWidget_RecomputeScaleV (DBSIM 00452694). es2_xref finds two calls, from ThrottleSlider_CtorV (0003b2c8).",
       "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-slider-base",
       "verified": {
         "bytes": "00043c74+53",
@@ -36276,6 +36681,51 @@
       "name": "ProjectileWeaponGaugeVtable",
       "description": "The ammunition row's vtable: a zero dword, then AmmoWeaponGauge_OnChildClick (00037784), AmmoWeaponGauge_Paint (00037544), AmmoWeaponGauge_Update (000375e4), the key slot at 00036f8c and AmmoWeaponGauge_SetState (000376b4), the paint, update and set-state by their padding. ES2's ProjectileWeaponGaugeVtable.",
       "source": "es1_naming.py vtables ES1DBSIM; the image at 00093aae"
+    },
+    {
+      "address": "00094206",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ThrottleGaugeVtable",
+      "description": "The throttle gauge's vtable, which ThrottleGauge_Ctor (0003b0d4) stores at +0x76: a zero dword, then ThrottleGauge_OnChildValue (0003b25c) by its padding, ThrottleGauge_Paint (0003b1d0) by its padding, ThrottleGauge_Update (0003b1e8) and PanelGauge_KeyDispatchNoneThrottleGaugeCopy (0003b1c5). ES2's ThrottleGaugeVtable (DBSIM 0049d1e0) one slot further on.",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#the-gauge--throttlegauge_ctor-0003b0d4"
+    },
+    {
+      "address": "00094346",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ThrottleVSliderGadget_PanelSliderGadgetVtable",
+      "description": "The vertical throttle slider's mixin table, which ThrottleSlider_CtorV (0003b2c8) stores at +0x42: a zero dword, ThrottleVSliderGadget_DrawKnobVThunk (0003b678), ThrottleVSliderGadget_PaintVThunk (0003b684) and 00031668, the RET 4 of Widget_NoClickSound (00031666).",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#building-it"
+    },
+    {
+      "address": "0009435e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ThrottleVSliderGadgetVtable",
+      "description": "The vertical throttle slider's primary vtable, which ThrottleSlider_CtorV (0003b2c8) stores at +0x1c last: a zero dword, then ThrottleSlider_DrawKnobV (0003b690), VSliderGadget_InvalidateDeferred (0003b668), VSliderGadget_OnClick (000316a0), ThrottleSlider_PaintV (0003b804), the first, second and fourth by their padding, then SliderWidget_GetValueV (00043be8), SliderWidget_SetValueV (00043c08), SliderWidget_DragToPointV (00043b80) and SliderWidget_RecomputeScaleV (00043c74).",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#building-it"
+    },
+    {
+      "address": "000943e2",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ThrottleHSliderGadget_PanelSliderGadgetVtable",
+      "description": "The horizontal throttle slider's mixin table, which ThrottleSlider_CtorFixed (0003ba74) stores at +0x42: a zero dword, ThrottleHSliderGadget_PaintHThunk (0003bd90), ThrottleHSliderGadget_FlushPaintHThunk (0003bd9c) and 00031668, the RET 4 of Widget_NoClickSound (00031666).",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#building-it"
+    },
+    {
+      "address": "000943fa",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ThrottleHSliderGadgetVtable",
+      "description": "The horizontal throttle slider's primary vtable, which ThrottleSlider_CtorFixed (0003ba74) stores at +0x1c last: a zero dword, then ThrottleSlider_PaintH (0003bda8) by its padding, HSliderGadget_InvalidateDeferredThrottleGaugeCopy (0003bd80) by its padding, HSliderGadget_OnClick (0003166c), ThrottleSlider_FlushPaintH (0003bf18), then SliderWidget_GetValueH (00043ac8), SliderWidget_SetValueH (00043ae4), SliderWidget_DragToPointH (00043a68) and SliderWidget_RecomputeScaleH (00043b4c).",
+      "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#building-it"
     },
     {
       "address": "00094b84",

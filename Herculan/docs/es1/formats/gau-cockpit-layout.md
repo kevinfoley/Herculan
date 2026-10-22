@@ -19,11 +19,42 @@ Nothing shifts the rects into device pixels: ES1's builders pass each block to i
 | 164, 244, 340 | the blocks of the ammunition, energy and pod rows, each opening with the scratch rect its factory copies a row's rect to before building the row's gauge ([the weapon rows](../simulation/cockpit-panel.md#the-weapon-rows)). The ammunition and energy blocks hold at 180 and 260 the select button's rect and at 196 and 276 the round count's or charge bar's, each relative to the row's top-left, and the energy block at 304 an `int32` its gauge hands the charge bar's constructor ([the weapon rows' gauges](../simulation/cockpit-weapon-gauges.md#the-energy-row)) | 180, 260, 356; ES2's gauges place their parts at fixed offsets from the row's rect, and read a mirror flag from a byte of the block |
 | 372 | three rects | 388 |
 | 452 | the console buttons' block: a 16-byte header, then five rects from 468 | 468, four rects from 484 |
-| 548, 616, 728, 1000 | the blocks of the instruments at the cockpit's `+0x1e1` to `+0x1ed` | the same |
+| 548, 616, 728 | the blocks of the instruments at the cockpit's `+0x1e1` to `+0x1e9` | the same |
+| 1000 | the throttle's block, [below](#the-throttle-block-at-1000) | the same, with the centre tick's nudge |
 | 1104 | the gunsight's block, [below](#the-gunsight-block-at-1104) | 1088 |
 | 1212 | the block of the instrument at `+0x1f5`, with 15 rects at 1292 and 3 at 1532 | the same, the Heads-Down Display |
 | 1604 | the cockpit clock's block ([the cockpit clock](ttm-scripts.md#the-cockpit-clock)) | the same, `PanelAmbience`'s |
 | 1668, 1684 | the pilot channel's box and the ticker's | the same |
+
+## The throttle block at 1000
+
+`ThrottleGauge_Ctor` (`0003b0d4`) and the two slider constructors read the block's `int32` from 1000 to 1071 ([the throttle gauge](../simulation/cockpit-throttle-gauge.md#the-gauge--throttlegauge_ctor-0003b0d4)), on the plan of ES2's block at 1000 ([ES2's](../../retail/formats/gau-cockpit-layout.md#gau-block-at-1000)), unshifted:
+
+| int | Offset | ES1 | ES2's |
+|---|---|---|---|
+| `[0]`, `[1]` | 1000, 1004 | the origin, added to every rect below | the same |
+| `[2]`, `[3]` | 1008, 1012 | unread by the constructors; where the origin is set, the bottom-right corner of the rects' area | not read by the gauge's or the vertical slider's constructor |
+| `[4..7]` | 1016–1028 | the track's rect, which is the slider's own | the same |
+| `[8..0xb]` | 1032–1044 | the forward bar's rect | the same |
+| `[0xc..0xf]` | 1048–1060 | the reverse bar's rect | the same |
+| `[0x10]` | 1064 | 1 builds the vertical slider and any other value the horizontal one; also the index of the bars' picture among the light names at `0009328c` ([the light names](str-strings.md#where-the-object-file-starts-and-ends)) | 1 builds the vertical slider |
+| `[0x11]` | 1068 | the knob's frame in `dba\pbuttons` | none; ES2's knob is frame 1 of the bank `throttle` |
+| `[0x12]` | 1072 | unread | the centre tick's x nudge |
+
+The eight retail files hold, with bytes 1072–1103 zero in all of them:
+
+| File | Origin | `[2]`, `[3]` | Track | Forward bar | Reverse bar | `[0x10]` | `[0x11]` |
+|---|---|---|---|---|---|---|---|
+| `ROADRUNN` | 0, 0 | 0, 0 | 43, 133, 55, 168 | 57, 134, 58, 149 | 57, 150, 58, 166 | 1 | 27 |
+| `GUNSLING` | 0, 0 | 0, 0 | 109, 134, 121, 172 | 122, 137, 123, 153 | 122, 154, 123, 169 | 1 | 27 |
+| `RAPTOR` | 0, 0 | 0, 0 | 30, 183, 86, 191 | 59, 190, 83, 191 | 35, 190, 58, 191 | 2 | 27 |
+| `TOMAHAWK` | 0, 0 | 0, 0 | 19, 155, 34, 191 | 18, 156, 19, 171 | 18, 173, 19, 188 | 1 | 27 |
+| `PATRIOT` | 37, 162 | 62, 188 | 12, 0, 24, 26 | 0, 0, 1, 14 | 0, 16, 1, 26 | 1 | 27 |
+| `PANTHER` | 0, 0 | 0, 0 | 62, 159, 78, 190 | 79, 159, 80, 175 | 79, 177, 80, 190 | 1 | 27 |
+| `HERCULES` | 75, 136 | 103, 174 | 4, 0, 19, 39 | 0, 5, 1, 21 | 0, 23, 1, 36 | 1 | 27 |
+| `COLOSSUS` | 82, 139 | 103, 173 | 3, 0, 16, 34 | 0, 2, 1, 18 | 0, 20, 1, 31 | 1 | 27 |
+
+So the `RAPTOR`'s throttle runs across, its forward bar right of the track's middle and its reverse bar left of it, both along the track's bottom two rows, and the other seven run up, each with its bars in a two-column strip left or right of the track (in `TOMAHAWK` sharing the track's first column), the forward bar the strip's upper half and the reverse bar its lower.
 
 ## The gunsight block at 1104
 
@@ -42,4 +73,4 @@ Nothing shifts the rects into device pixels: ES1's builders pass each block to i
 ## Open
 
 - **Open:** what the console block's header at 452 is to its five rects from 468: whether the console's constructors (`00037bd0`, `00037ce4`, unread) add it to them, which `HERCULES`' and `COLOSSUS`' rects suggest, and whether the five are the console buttons.
-- **Open:** what the instrument at 1212 is; its constructor (`0003c258`) is unread, as are those of the other blocks but 1104's. What the gunsight block's `int32` 2 and 3 (1112, 1116) and its bytes from 1180 to 1211 hold: the builder reads neither, and `Gau_Load` adds the origin to `int32` 2 and 3.
+- **Open:** what the instrument at 1212 is; its constructor (`0003c258`) is unread, as are those of the other blocks but 1000's and 1104's. What the gunsight block's `int32` 2 and 3 (1112, 1116) and its bytes from 1180 to 1211 hold: the builder reads neither, and `Gau_Load` adds the origin to `int32` 2 and 3.

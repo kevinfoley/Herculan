@@ -58,12 +58,12 @@ Each instrument's wrapper, (cockpit, record), constructs the instrument with (0,
 | `+0x1e1` | `Gau_EnergyMeterWidget` (`0002cd3c`) | 548 | `00039818` ([its clip file](../formats/hd-ed-clip-regions.md#which-files)) | `004323e0`, `+0x1e5` |
 | `+0x1e5` | `Gau_ShieldDisplayWidget` (`0002cd74`) | 616 | `00038f34` | `00432454`, `+0x1e9` |
 | `+0x1e9` | `Gau_MfdPanelWidget` (`0002cdac`) | 728 | `00039c64`, then `0003a9ec`(it, 0) | `004324c8`, `+0x1ed`, mode 3 |
-| `+0x1ed` | `Gau_ThrottleWidget` (`0002cdf0`) | 1000 | `0003b0d4` | `0043254c`, `+0x1f1` |
+| `+0x1ed` | `Gau_ThrottleWidget` (`0002cdf0`) | 1000 | `ThrottleGauge_Ctor` (`0003b0d4`, [the throttle gauge](cockpit-throttle-gauge.md)) | `0043254c`, `+0x1f1` |
 | `+0x1f1` | `Gau_RovingGunsightWrapper` (`0002ce28`) | 1104 | `Gau_RovingGunsightWidget` (`00034aec`, [the gunsight HUD](cockpit-gunsight-hud.md#building-the-gunsight)) | `004325c0`, block 1088, `+0x1f5` |
 | `+0x1f5` | `Gau_PilotRosterWidget` (`0002ce60`) | 1212 | `0003c258` | `00432634`, `+0x1f9` |
 | `+0x1f9` | `CockpitClock_Create` (`0002ce98`) | 1604 | [the cockpit clock](../formats/ttm-scripts.md#the-cockpit-clock) | `Gau_PanelAmbienceWidget` (`004326a8`), to which `es2_xref.py` finds no call |
 
-The names are ES2's, by the block, the order of the calls and the field; the constructors other than the gunsight's are unread ([Open](#open)). The instrument at `+0x1f1` is drawn outside the canvas context as ES2's gunsight complex is ([drawing it](#drawing-it)), and `Cockpit_LoadSquadmatePilots` hands the squadmates' pilots to the one at `+0x1f5` as ES2's does to its Heads-Down Display.
+The names are ES2's, by the block, the order of the calls and the field; the constructors other than the gunsight's and the throttle's are unread ([Open](#open)). The instrument at `+0x1f1` is drawn outside the canvas context as ES2's gunsight complex is ([drawing it](#drawing-it)), and `Cockpit_LoadSquadmatePilots` hands the squadmates' pilots to the one at `+0x1f5` as ES2's does to its Heads-Down Display.
 
 ### The weapon rows
 
@@ -266,7 +266,7 @@ Read for this module and named with it, each ES2's counterpart:
 - **Open:** a write to the scanner ranges `000bd4f4`–`000bd4ff` through a pointer: `es2_xref.py --decode` finds no instruction that takes their address, and a store through a base computed another way would not show in it.
 - **Open:** whether ES1 has a nearest-target command outside `panel.cpp`, where ES2's `004333c8` sits beside the selection.
 - **Open:** the library's button base table `00094b8a` and its seven slot functions `000439ae`–`000439cf`, of which `panel.cpp`'s are copies, for the library sweep; and the ES1GO counterparts of the module's copies.
-- **Open:** the instruments' constructors: `00037bd0` and `00037ce4`, `00039818`, `00038f34`, `00039c64` and `0003a9ec`, `0003b0d4`, `0003c258` and `0003dab4`, and the pod gauge's `00037810` ([the weapon rows' gauges](cockpit-weapon-gauges.md#open)).
+- **Open:** the instruments' constructors: `00037bd0` and `00037ce4`, `00039818`, `00038f34`, `00039c64` and `0003a9ec`, `0003c258` and `0003dab4`, and the pod gauge's `00037810` ([the weapon rows' gauges](cockpit-weapon-gauges.md#open)).
 - **Open:** a write to the display's first clip block (`+0x40`) between `GLDisplay_Open` and the cockpit's build, which would give the canvas context another starting origin: the functions `Sim_StartMission` runs in between were not searched for one, and a store through the block's base is not found by an address search.
 - **Open:** what reads `CockpitPButtonsBank` (`00092d68`), and the dwords `+0x1d0` and `+0x168` and the byte `+0x1dc` that `Gau_WeaponButtonsWidget`, `CockpitView_SetConsoleButtonsLatch` and `CockpitView_UnlightConsoleButtons` write and read.
 - **Open:** what calls `Squad_CallsignOf`, `HeapPtr_DtorPanelCopy`, `CockpitView_SetConsoleButtonsLatch`, `CockpitView_UnlightConsoleButtons` and `Squad_SlotOfPilotName`, to none of which `es2_xref.py` finds a reference.
