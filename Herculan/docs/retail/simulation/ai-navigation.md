@@ -195,7 +195,7 @@ The post is `Mech_AiGoalPosition` (`0041dbcc`). A player squadmate with no stand
 
 The half-turn in the steering term (`bearing - heading - 0x8000`) is what makes a guard face outward. The ring is the state's entire movement; there is no patrol of the perimeter.
 
-Its target handling is the exception among the five: it runs `Ai_SelectDefenceTarget` (`0041e0e0`, scored in [`ai-targeting.md`](ai-targeting.md#taking-fire--mech_aiontakingfire-0041f7b8-mech-vtable-0x50)) against the post rather than a plain acquisition, and installs `driving off en` (16) on what it finds, or `fleeing` (18) if it is itself out of action.
+Its target handling is the exception among the five: it runs `Ai_SelectDefenceTarget` (`0041e0e0`, scored in [`ai-targeting.md`](ai-targeting.md#taking-fire--mech_aiontakingfire-0041f7b8-mech-vtable-0x50)) against the post rather than a plain acquisition, and installs `driving off en` (16) on what it finds, or `fleeing` (18) if it is itself out of action. The acquisition runs when the decision clock at `mech+0x5b` has run down, and the think never reloads that clock itself: `Ai_SelectDefenceTarget` writes the 10000 into it. So a guard with nothing in reach looks again every 10000 counts, and its first tick in the state looks at once, `Behaviour_SetState` having zeroed the clock.
 
 ## Mech and mission fields this layer owns
 

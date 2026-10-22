@@ -18,7 +18,7 @@ return 0
 
 `attacking flyer` omits the skirt gate and `fleeing` omits it and the abandonment test; everything else is verbatim. A nonzero return zeroes the state's own dwell countdown, which is a state saying it is finished — see [`ai-dispatch.md`](ai-dispatch.md#what-the-dwell-time-buys).
 
-**"Out of action" is the same three bytes throughout the AI**: `mech+0xa5` no weapons left, `mech+0xa4`, `mech+0x99` destroyed. `Ai_ClearSquadEngageOrder` (`0041c478`) is the tail: it returns 1, and on the way clears a standing squad engage order (`mech+0x23e == 4`) whose target is the one being let go.
+**"Out of action" is the same three bytes throughout the AI**: `mech+0xa5` no weapons left, `mech+0xa4`, `mech+0x99` destroyed. `Ai_ClearSquadEngageOrder` (`0041c478`) is the tail: it returns 1, and on the way clears a standing squad engage order (`mech+0x23e` 4 to 0) whose target (`mech+0x248`) is the machine's current target (`mech+0x1a4`). It reads and writes nothing else.
 
 ## The geometry block — `Ai_BuildCombatGeometry` (`0041e758`)
 
@@ -97,7 +97,7 @@ Walk in when pointed at the target, back off when more than 45° off it, and hol
 
 ## `driving off en` (16) — `Mech_BehaviourDriveOffThink` (`0041def0`)
 
-The skirt gate, then `facing off`'s think verbatim. What separates the two states is entirely in their descriptors: `driving off en` carries the "holding a place" flag bit and reassesses through `Mech_AiSelectBehaviour` rather than the combat reassess, so after its 50000-count dwell (about 24 s) it goes back to its order instead of looking for another fight. It is what a guard and a machine taking fire at its post are put into — see [`ai-navigation.md`](ai-navigation.md) and [`ai-targeting.md`](ai-targeting.md#taking-fire--mech_aiontakingfire-0041f7b8-mech-vtable-0x50).
+The skirt gate, then a call to `facing off`'s think, whose answer it returns. What follows that call in the function (`0041df1b`–`0041e0d6`, raw bytes in the Ghidra listing) sits after an unconditional jump to the epilogue: a second body that steers relative to `Mech_AiGoalPosition`, stores 750 to `mech+0x2aa`, calls `Ai_AimAndFire` and `Ai_ShouldAbandonTarget`, and on completion zeroes `mech+0x248` instead of calling `Ai_ClearSquadEngageOrder`. `es2_xref.py` lists those two calls under this function; whether anything reaches them is [Open](#open). What separates the two states is entirely in their descriptors: `driving off en` carries the "holding a place" flag bit and reassesses through `Mech_AiSelectBehaviour` rather than the combat reassess, so after its 50000-count dwell (about 24 s) it goes back to its order instead of looking for another fight. It is what a guard and a machine taking fire at its post are put into — see [`ai-navigation.md`](ai-navigation.md) and [`ai-targeting.md`](ai-targeting.md#taking-fire--mech_aiontakingfire-0041f7b8-mech-vtable-0x50).
 
 ## `attacking base` (6) — `Mech_BehaviourAttackBaseThink` (`0041c86c`)
 
@@ -165,7 +165,7 @@ The state a machine enters when its own shots are hitting something that is not 
 
 ### How it is reached
 
-`Mech_AiOnLineOfFireBlocked` (`0041dd2c`, mech vtable `+0x64`) copies the machine's current target position to `mech+0x31e` and sets `mech+0xad`. Its one caller is the tail of `Sim_RaycastObjectList` (`00426528`), which makes the call when a shot stops on terrain or on a third object nearer than the intended target, by the bearing test in [`hit-detection.md`](hit-detection.md#the-sweep--sim_raycastobjectlist-00426528). The call is unconditional, so no vtable can leave the slot empty: every `SimObject`-shaped table but `MechVtable` fills it with `SimObject_AiOnLineOfFireBlockedNoOp` (`00411b34`), a shared stub that is a frame set-up and a `RET`. Only a machine reacts.
+`Mech_AiOnLineOfFireBlocked` (`0041dd2c`, mech vtable `+0x64`) copies the machine's current target position to `mech+0x31e` and sets `mech+0xad`, and does nothing when the machine holds no target. Its one caller is the tail of `Sim_RaycastObjectList` (`00426528`), which makes the call when a shot stops on terrain or on a third object nearer than the intended target, by the bearing test in [`hit-detection.md`](hit-detection.md#the-sweep--sim_raycastobjectlist-00426528). The call is unconditional, so no vtable can leave the slot empty: every `SimObject`-shaped table but `MechVtable` fills it with `SimObject_AiOnLineOfFireBlockedNoOp` (`00411b34`), a shared stub that is a frame set-up and a `RET`. Only a machine reacts.
 
 `Ai_BeginSkirtIfBlocked` (`0041de9c`) is the gate at the top of every combat think and turns that flag into the state:
 
@@ -220,7 +220,7 @@ return steep ? 1 : 2
 
 ## `sleeping` (13) — `Mech_BehaviourSleepThink` (`0041c418`)
 
-Release the target, `Mech_LocomotionTick(mech, 0, 0, 0)`, `Ai_UpdateWeaponsFree`. A sleeping machine stands with its throttle at zero and its radar on whatever the mission file set, and holds no target. It is still ticked and still detectable, but it does not fight back: `sleeping`'s descriptor carries flag bit 3, so `Mech_AiOnTakingFire` shares the shooter as a contact and returns before choosing a response ([`ai-targeting.md`](ai-targeting.md#taking-fire--mech_aiontakingfire-0041f7b8-mech-vtable-0x50)). Verb 4 never completes, so only the order's action moves a sleeping group on. With no action, the machine stays asleep for the rest of the mission.
+Release the target, `Mech_LocomotionTick(mech, 0, 0, 0)`, `Ai_UpdateWeaponsFree`. A sleeping machine stands with its throttle at zero and its radar on its standing setting ([`target-selection.md`](target-selection.md#how-an-ai-machines-radar-is-set)), and holds no target. It is still ticked and still detectable, but it does not fight back: `sleeping`'s descriptor carries flag bit 3, so `Mech_AiOnTakingFire` shares the shooter as a contact and returns before choosing a response ([`ai-targeting.md`](ai-targeting.md#taking-fire--mech_aiontakingfire-0041f7b8-mech-vtable-0x50)). Verb 4 never completes, so only the order's action moves a sleeping group on. With no action, the machine stays asleep for the rest of the mission.
 
 ## `dead` (20), `disabled` (21) and `in limbo` (19) — `Mech_BehaviourInertThink` (`0041e554`)
 
@@ -317,15 +317,15 @@ if (|aspect| < threshold) {                         // the target is facing me: 
     mech+0x66 = 0
 } else {                                            // it is not: square up
     mech+0x66 = 1
-    approach = |mech.turretTwist| < 2000 ? 0 : -1
+    approach = (uint16)(mech.turretTwist + 2000) < 4000 ? 0 : -1      // twist in [-2000, 2000)
 }
 ```
 
 - **The circle is a point 15000 units out from the target on the machine's own approach line, rotated 33° to one side** — near enough a tangent, so the machine walks a wide arc around a target that is pointing at it and closes on one that is not.
 - **Which side it circles to is the side it is already turning toward**, re-chosen every tick, so a machine that overshoots reverses its arc rather than committing.
-- **The break-off costs half a second and is bought with damage.** `mech+0x288` is the damage taken within the current ~4000-count window (about two seconds), zeroed at each window's expiry ([`sim-object-layout.md`](sim-object-layout.md#countdowns-keep-their-counter-one-byte-past-the-record)); once it passes 100 the machine spends 1000 counts in every 4000 — about half a second in every two — reversing in a straight line with no steering at all. An undamaged machine never breaks off, and one that has stopped taking fire stops breaking off within about two seconds.
+- **The break-off costs half a second and is bought with damage.** `mech+0x288` is the damage taken within the current ~4000-count window (about two seconds), zeroed at each window's expiry ([`sim-object-layout.md`](sim-object-layout.md#countdowns-keep-their-counter-one-byte-past-the-record)); once it passes 100 the machine spends 1000 counts in every 5000 — about half a second in every two and a half — reversing in a straight line with no steering at all. The cycle is 5000 because the break-off arm reloads the 4000-count interval on every tick it runs, so the interval only starts counting once the break-off has ended. An undamaged machine never breaks off, and one that has stopped taking fire stops breaking off within about two seconds.
 - **The hysteresis is one-sided.** The threshold is 0x6000 (135°) while the machine is circling and 0x4000 (90°) once it has squared up, so a target has to turn further to start the circle than to stop it.
-- The square-up arm gates on the machine's *own* turret twist rather than on any range: it stands still while the turret is within 2000 BAM of centre and reverses while it is not, so the machine walks backwards until its hull has caught up with where its guns are already pointing.
+- The square-up arm gates on the machine's *own* turret twist rather than on any range: it stands still while the turret twist is in `[-2000, 2000)` BAM and reverses while it is not, so the machine walks backwards until its hull has caught up with where its guns are already pointing.
 
 ## Fields this layer owns
 
@@ -371,3 +371,7 @@ Fields outside the block:
 | `Ai_CombatMoveStep`'s range tests read the bearing the state just steered to | The magnitude at `geom+0x04` is recomputed *after* both tests, so they see the bearing to the target and the steer sees the state's own point |
 | `fleeing` keeps the machine it is running from as its target | It moves the pointer into the block scratch and releases the selection on its first tick. Nothing holds a target while it flees, which is why the machine is not counted among that target's holders |
 | `attacking` walks a circle like `flanking` does | It builds one aim point per tick off the target's beam and steers at it; there is no timer and no alternation. The circling step is `flanking`'s and `attacking base`'s alone |
+
+## Open
+
+- **Open:** whether anything reaches the second body in `Mech_BehaviourDriveOffThink` (`0041df1b`–`0041e0d6`). The function's own code before it branches only to `0041df0f` and the epilogue, and `es2_xref.py` run on every instruction start in the range finds no rel32 branch into it and one stored-pointer hit, at `00492064`, which is the operand bytes of a `CALL` inside another function.

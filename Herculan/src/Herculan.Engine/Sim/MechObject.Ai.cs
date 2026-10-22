@@ -264,10 +264,14 @@ public partial class MechObject {
 	/// </summary>
 	private bool FleeCheck(SimWorld world) {
 		if (OutOfAction) {
-			// A machine that is out of the fight and still reassessing. The structure exception keys
-			// on BASES.DAT +0x2e, a field the format reads past without using, so the branch that
-			// would send it back to Mech_AiSelectBehaviour cannot be evaluated and it always flees.
-			SetBehaviourState(BehaviourState.Fleeing);
+			// A machine that is out of the fight and still reassessing flees, unless what it holds is
+			// a structure that cannot hurt it: then it goes back to its order instead.
+			if (Target is BaseObject { Type.ThreatensAttackers: false }) {
+				SelectBehaviour(world);
+			} else {
+				SetBehaviourState(BehaviourState.Fleeing);
+			}
+
 			return true;
 		}
 
@@ -435,9 +439,10 @@ public partial class MechObject {
 
 		if (state.HoldsPlace) {
 			// Defend the post rather than chase the shooter.
+			// The original's pick also reloads mech+0x5b, the guard's sweep clock; the state installed
+			// below zeroes it again, so the reload is not reproduced here.
 			var post = GoalPosition();
-			var defence = AiTargeting.SelectDefenceTarget(world, this, post,
-				Group?.OrderTarget != null ? AiTargeting.DefenceRange : AiTargeting.OpenDefenceRange);
+			var defence = AiTargeting.SelectDefenceTarget(world, this, post);
 
 			if (defence is not MechObject { Target: { } held } || !ReferenceEquals(held, this)) {
 				if (SquadOrderVerb == SquadOrderEngage) {

@@ -583,10 +583,14 @@ public partial class MechObject {
 		SimObject? defence = null;
 
 		if ((holdsPost || FireAtWill) && SimMath.TimerCountDown(ref _navDecisionTimer) == 0) {
-			defence = SquadOrderVerb == SquadOrderEngage && SquadOrderTarget != null
-				? SquadOrderTarget
-				: AiTargeting.SelectDefenceTarget(world, this, post,
-					Group?.OrderTarget != null ? AiTargeting.DefenceRange : AiTargeting.OpenDefenceRange);
+			if (SquadOrderVerb == SquadOrderEngage && SquadOrderTarget != null) {
+				defence = SquadOrderTarget;
+			} else {
+				// The think never reloads its own clock: Ai_SelectDefenceTarget writes the 10000 into
+				// mech+0x5b, so a guard with nothing in reach looks again every 10000 counts.
+				_navDecisionTimer = NavDecisionInterval;
+				defence = AiTargeting.SelectDefenceTarget(world, this, post);
+			}
 		}
 
 		if (defence == null) {

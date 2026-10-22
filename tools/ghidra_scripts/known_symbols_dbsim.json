@@ -6891,8 +6891,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_AiEngageOrderedTarget",
-      "description": "Installs a squad order's target on the machine (maintaining +0x1a2 and +0x9d) and picks the state for it: a HERC sets mech+0xac and enters Mech_AiCombatReassess, a flyer takes attacking flyer, a structure attacking base.",
-      "source": "docs/retail/simulation/ai-targeting.md"
+      "description": "(mech, target). When target differs from mech+0x1a4 it installs it, maintaining the +0x1a2 holder counts and raising +0x9d. Then it switches on the target's class (target+0x1a8, read without a null test): 0, a HERC, sets mech+0xac and runs Mech_AiEnterCombat; 1 or 3, a structure or ground vehicle, installs attacking base (descriptor 00499518); 2, a flyer, installs attacking flyer (00499556); any other class installs nothing. Callers found by es2_xref: Mech_AiSelectBehaviour, Mech_AiOnTakingFire and five sites in Mech_ReceiveSquadOrder.",
+      "source": "docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "0041c0f4+157",
+        "sha1": "773bb2ad8c8d",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041c194",
@@ -6916,8 +6922,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_UpdateWeaponsFree",
-      "description": "The AI's radar switch, not a weapons gate: mech+0x96 is the PASSIVE/ACTIVE scanner mode. Copies mech+0xb2 (the squad's radar order) for a machine whose group is led by the player and mech+0x97 -- the mission file's own standing setting -- for everyone else. Every navigation state calls it; the detection sweep and the anti-radiation seeker are what read the result.",
-      "source": "docs/retail/simulation/target-selection.md"
+      "description": "The AI's radar switch, whatever the name says: writes mech+0x96, the PASSIVE/ACTIVE scanner mode, from mech+0xb2 (the squad's radar order) when the first member of the machine's group (**(group+0xc)) has +0xa3 set, the player's group, and from mech+0x97 (the mission file's standing setting) otherwise. It does not test the radar-silence timer. Callers found by es2_xref: Ai_NavigationStep, Mech_BehaviourSleepThink and two sites in Mech_BehaviourGuardThink.",
+      "source": "docs/retail/simulation/target-selection.md",
+      "verified": {
+        "bytes": "0041c3c8+78",
+        "sha1": "1d56da8b7dc8",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041c418",
@@ -6940,8 +6952,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_ClearSquadEngageOrder",
-      "description": "The tail of every combat think's completion test. Returns 1, and clears a standing squad engage order (mech+0x23e == 4) whose target at mech+0x248 is the one being let go.",
-      "source": "docs/retail/simulation/ai-combat-states.md"
+      "description": "Returns 1, and clears a standing squad engage order (mech+0x23e 4 to 0) when its target mech+0x248 is the machine's current target mech+0x1a4. Callers found by es2_xref: the attacking, flanking, facing off, attacking base and attacking flyer thinks, each as the tail of its completion test.",
+      "source": "docs/retail/simulation/ai-combat-states.md",
+      "verified": {
+        "bytes": "0041c478+46",
+        "sha1": "79fbde20ba16",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041c4a8",
@@ -6949,8 +6967,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_ShouldAbandonTarget",
-      "description": "Whether a combat state should drop its target. Under squad order verb 4, when Ai_TargetStateTier exceeds the order's threshold at mech+0x250. For the group order's designated target, dead or crippled on the human side but only +0x99 destroyed on the Cybrid side. Otherwise out of action (+0xa5, +0xa4 or +0x99). Called from the think functions of attacking, flanking, facing off and driving off en.",
-      "source": "docs/retail/simulation/ai-targeting.md"
+      "description": "Whether a combat state should drop its target, mech+0x1a4. Under squad order verb 4 (mech+0x23e) with an order target at +0x248: when Ai_TargetStateTier of the current target exceeds mech+0x250, compared signed, and nothing else is tested. For the group order's designated target (Group_IsOrderTarget): on the human side (group+0x12 zero) when the target's +0xa4 or +0x99 is set, on the Cybrid side when +0x99 is. Otherwise when it is out of action (+0xa5, +0xa4 or +0x99). Callers found by es2_xref: the attacking, flanking and facing off thinks, and a call in the bytes of Mech_BehaviourDriveOffThink that follow its unconditional jump to the epilogue.",
+      "source": "docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "0041c4a8+233",
+        "sha1": "40f4d8af80fa",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041c594",
@@ -6967,8 +6991,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_CircleStep",
-      "description": "The circling step flanking and attacking base share. On mech+0x60 (a 1000-count break-off, about half a second) it reverses in a straight line; otherwise it circles a target whose |aspect| is under the mech+0x66 hysteresis threshold (0x6000 circling, 0x4000 squared up) by steering at a point 15000 units out from the target on this machine's approach line rotated +/-6000, and squares up on one that is not, standing still while its own turret twist is inside 2000. The break-off is armed only while mech+0x288 (damage taken in the current ~2 s window, which Mech_PerTickSystemsUpdate zeroes at each expiry of the +0x285 countdown) is past 100.",
-      "source": "docs/retail/simulation/ai-combat-states.md"
+      "description": "(mech, geom): the circling step. While the break-off countdown at mech+0x60 (stepped through the handle +0x5f) is running it writes near standoff 0, approach -1 and bearing error 0 into the block, clears the hysteresis byte mech+0x66 and reloads the interval countdown mech+0x63 with 4000, so one break-off and its interval take 5000 counts. Otherwise it steps the interval (handle +0x62) and, when that has run out and mech+0x288 (damage in the current window) exceeds 100, sets the break-off to 1000. Threshold = 0x4000 when +0x66 is set, else 0x6000. With |aspect| (geom+0x08) under it, it circles: near standoff 0, approach 1, and the bearing error points at Math_OffsetPointByBearing(target position, bearing + 0x8000 + (bearing error >= 0 ? 6000 : -6000), 15000), clearing +0x66. Otherwise it squares up: sets +0x66, and with its own twist (vtable +0x3c) in [-2000, 2000) writes approach 0 and the word at mech+0x5d to 0, else approach -1. The squaring-up arm writes no standoff. Callers found by es2_xref: the flanking and attacking base thinks.",
+      "source": "docs/retail/simulation/ai-combat-states.md",
+      "verified": {
+        "bytes": "0041c72c+319",
+        "sha1": "828800634d3a",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041c86c",
@@ -7003,8 +7033,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_SumAttackerRatings",
-      "description": "Sums mech+0x29e over every machine in GlobalMechList whose target is the object passed in -- the combined combat rating of everything shooting at it, for Mech_AiFleeCheck.",
-      "source": "docs/retail/simulation/ai-targeting.md"
+      "description": "(object). Sums the signed short +0x29e (combat rating) over every machine in GlobalMechList, walked with Pool_Prev, whose +0x1a4 is the object: the combined rating of the HERCs targeting it. Callers found by es2_xref: Mech_AiFleeCheck, at two sites.",
+      "source": "docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "0041cb44+79",
+        "sha1": "fc7418e4b171",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041cb94",
@@ -7012,8 +7048,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_AiFleeCheck",
-      "description": "Installs the fleeing state (descriptor 00499800) and returns nonzero when it has taken the decision. A machine already out of action flees unless its target is a structure whose BASES.DAT +0x2e is zero. Otherwise fear = Mech_GetOverallDamage plus 5/25/50 per component (0049a328 lists six) past 60/120/180 Q8 damage, and it flees on how many machines hold it as their target: any at fear >= 71, three or a stronger pair at 51-70, three whose average rating beats its own at 31-50, never at 30 or under. Writes 300/600/1000 to mech+0x2aa.",
-      "source": "docs/retail/simulation/ai-targeting.md"
+      "description": "Decides whether a machine breaks off; returns 1 when it has installed a state itself. Out of action (+0xa5, +0xa4 or +0x99): when its target (+0x1a4, read without a null test) is class 1 or 3 and that type's BASES.DAT +0x2e is zero it runs Mech_AiSelectBehaviour, otherwise it installs fleeing (descriptor 00499800); either way it returns 1 and leaves +0x2aa alone. Otherwise fear = Mech_GetOverallDamage (vtable +0x40) plus, band by band, the band's penalty (0049a334: 5/25/50) once for each of the six components 0049a328 lists (0, 1, 4, 5, 6, 7) whose Q8 damage ratio (damage*256/max, 256 for a negative damage word) exceeds the band's threshold (0049a33a: 60/120/180), stopping at the first band no component passes. Then against +0x1a2 holders: fear over 70 writes +0x2aa = 1000 and flees on any holder; 51-70 writes 600 and flees on three or more, or on one or two whose Ai_SumAttackerRatings beats its own +0x29e; 31-50 writes 300 and flees on three or more whose average rating beats its own; 30 or under writes nothing and returns 0.",
+      "source": "docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "0041cb94+628",
+        "sha1": "32e9cc40f20b",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041ce08",
@@ -7021,8 +7063,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_AiSelectAimComponent",
-      "description": "Chooses the component slot the AI aims at and writes it to mech+0x2a2, or -1. One rand & 0x7f picks a band: slots 7-18 under 0x28 or whenever a targeting computer at mech+0x30b reads under 0xaa at its +0x7f, the weapon-mount slots 19..18+mountCount, mountCount read from the shooter's own manager (this+0x202) under 0x50, else the chassis slots 0-6; a collapsed target (+0xb4) narrows it to slot 0. Within the band it skips slots the target no longer has (target+0x20e) and takes the highest Component_ReadDamagePercent + (rand & 0x3f). RETAIL BUG: the damage is read from this+0x206, the shooter's own components, while the occupancy array walked is the target's.",
-      "source": "docs/retail/simulation/ai-targeting.md"
+      "description": "Chooses the component slot the AI aims at and writes it to mech+0x2a2, or -1. One rand & 0x7f, always drawn, picks a band: a collapsed target (target+0xb4) gives slot 0 alone; under 0x28, or whenever the targeting pod at mech+0x30b exists and its +0x7f is under 0xaa, slots 7-18; under 0x50 the weapon-mount slots 19..18+count, the count read from the shooter's own manager (mech+0x202 +0x08); otherwise slots 0-6. Within the band it skips slots whose word in the target's occupancy array (the pointer at target+0x20e) is zero, and for the rest takes the highest Component_ReadDamagePercent(mech+0x206, slot) + (rand & 0x3f) above 0, drawing one jitter per slot it reads. The damage read is the shooter's own components, mech+0x206, while the occupancy walked is the target's. Callers found by es2_xref: Mech_AiCombatReassess, Mech_BehaviourGuardThink and Mech_AiOnTakingFire.",
+      "source": "docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "0041ce08+270",
+        "sha1": "81fbb8818a11",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041cf18",
@@ -7081,8 +7129,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_AiEnterCombat",
-      "description": "Thin wrapper that calls Mech_AiCombatReassess; the entry point other AI paths use to force a machine into the combat decision.",
-      "source": "docs/retail/simulation/ai-targeting.md"
+      "description": "Calls Mech_AiCombatReassess(mech) and returns. Callers found by es2_xref: Mech_AiEngageOrderedTarget, Mech_AiCombatReassess (the leader sweep), Mech_BehaviourSearchDestroyThink, Mech_BehaviourPatrolThink and Mech_AiOnTakingFire.",
+      "source": "docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "0041d5ec+15",
+        "sha1": "73ed7d9ef8ea",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041d5fc",
@@ -7135,8 +7189,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_AiGoalPosition",
-      "description": "Resolves the point a machine is working to: a squad order's target object or its stored point for verbs 3, 5 and 6, otherwise the mission group's current order target via Group_OrderTargetPosition.",
-      "source": "docs/retail/simulation/ai-targeting.md"
+      "description": "Returns a pointer to the point a machine is working to, by squad order verb (mech+0x23e): 3, the position of the object at +0x24c; 5, the position of the object at +0x248; 6, the position of the object at +0x24c, or the stored point at +0x240 when that is null; any other verb, Group_OrderTargetPosition of the machine's group. Verbs 3 and 5 read the pointer without a null test. Callers found by es2_xref: Mech_BehaviourPlayerThink, Mech_BehaviourGuardThink, Mech_AiOnTakingFire and the second body of Mech_BehaviourDriveOffThink.",
+      "source": "docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "0041dbcc+86",
+        "sha1": "a41f85cc7d68",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041dc24",
@@ -7159,8 +7219,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_AiOnLineOfFireBlocked",
-      "description": "Mech vtable +0x64. Copies the selected target's position to mech+0x31e and sets mech+0xad, which makes the next combat think enter skirting. Its one caller is the tail of Sim_RaycastObjectList: a shot that stopped nearer than the shooter's target and within 0x2000 of the same bearing. The base and flyer classes leave the slot empty.",
-      "source": "docs/retail/simulation/ai-combat-states.md"
+      "description": "Mech vtable +0x64. With a target at mech+0x1a4 it copies the target's position (+0x26) to mech+0x31e and sets mech+0xad, which makes the next combat think enter skirting; with none it does nothing. Found by es2_xref only as the MechVtable slot; the call through the slot is Sim_RaycastObjectList's (hit-detection.md). The other SimObject-shaped tables fill the slot with SimObject_AiOnLineOfFireBlockedNoOp.",
+      "source": "docs/retail/simulation/ai-combat-states.md",
+      "verified": {
+        "bytes": "0041dd2c+56",
+        "sha1": "aba880c34655",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041dd64",
@@ -7177,8 +7243,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_BeginSkirtIfBlocked",
-      "description": "The gate at the top of every combat think. When mech+0xad is set it stashes the current descriptor at mech+0x5a, installs skirting (descriptor 0x499708), records the 3D range to mech+0x31e at mech+0x67, and returns true so the think does nothing else.",
-      "source": "docs/retail/simulation/ai-combat-states.md"
+      "description": "The skirt gate. When mech+0xad is set it keeps the current descriptor pointer (mech+0x4d), installs skirting (descriptor 0x499708, state 14), stores the kept pointer at mech+0x5a in the scratch that install just zeroed, writes the 3D range from the machine to mech+0x31e at mech+0x67, and returns 1; otherwise returns 0. It leaves +0xad set. Callers found by es2_xref: the attacking, attacking base, facing off, flanking and driving off en thinks.",
+      "source": "docs/retail/simulation/ai-combat-states.md",
+      "verified": {
+        "bytes": "0041de9c+81",
+        "sha1": "051fdc1bd159",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041def0",
@@ -7186,8 +7258,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_BehaviourDriveOffThink",
-      "description": "Behaviour state 16 (driving off en). Ai_BeginSkirtIfBlocked, then Mech_BehaviourFaceOffThink verbatim. The states differ only in their descriptors: this one holds a place and reassesses through Mech_AiSelectBehaviour.",
-      "source": "docs/retail/simulation/ai-combat-states.md"
+      "description": "Behaviour state 16 (driving off en). Returns 0 when Ai_BeginSkirtIfBlocked takes over; otherwise calls Mech_BehaviourFaceOffThink and returns its answer. The states differ only in their descriptors: this one holds a place and reassesses through Mech_AiSelectBehaviour. The bytes after that call's jump to the epilogue (0041df1b-0041e0d6, raw in the Ghidra listing) hold a second body: it steers relative to Mech_AiGoalPosition, stores 750 to mech+0x2aa, calls Ai_AimAndFire and Ai_ShouldAbandonTarget, and on completion zeroes mech+0x248. Searched for an entry into them with es2_xref on every instruction start: no rel32 branch found, and one stored-pointer hit that is CALL operand bytes at 00492064.",
+      "source": "docs/retail/simulation/ai-combat-states.md",
+      "verified": {
+        "bytes": "0041def0+494",
+        "sha1": "a9b496f57cbc",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0041e0e0",
@@ -7195,8 +7273,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_SelectDefenceTarget",
-      "description": "Picks the HERC threatening a defended point: over GlobalMechList, candidates passing Ai_IsTargetable and not crippled, scored (limit - distance to the point) / (holders + 1), where limit is 90000, or 980000 when the group's current order names no object. Preferring live candidates, it returns the best. Used by Mech_AiOnTakingFire for the guarding and driving-off states.",
-      "source": "docs/retail/simulation/ai-targeting.md"
+      "description": "(mech, point). Reloads mech+0x5b, the guard think's sweep countdown, with 10000. Limit is 90000, or 980000 when the group's current order record (group+0x44 indexed by group+0x6c) has a null subject at +0x0e. Walks GlobalMechList with Pool_Prev over the HERCs that Ai_IsTargetable(mech, candidate, 0) passes and whose +0xa4 is clear; score = limit - Math_GroundDistanceBetweenPoints(candidate, point), divided by holders + 1 when +0x1a2 is nonzero (this machine included when it holds the candidate), and a score that is not positive is dropped. A live candidate (+0xa5 and +0x99 clear) displaces one that is not whatever the score, and one that is not live is skipped once a live one is held; otherwise the higher score wins. Returns the best, or 0. Callers found by es2_xref: Mech_BehaviourGuardThink and Mech_AiOnTakingFire.",
+      "source": "docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "0041e0e0+321",
+        "sha1": "6d9c2cbf67e7",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041e224",
@@ -7248,8 +7332,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_BuildCombatGeometry",
-      "description": "Fills the 0x18-byte block every combat think passes down: +0x00 bearing to target, +0x02 bearing error, +0x04 its magnitude, +0x06 the target's aspect (bearing back to me in its turret frame), +0x08 its magnitude, +0x0a 3D range, +0x0e approach flag, +0x10/+0x14 the 15000/30000 standoff pair. The states steer on the aspect, and the copy Ai_AimAndFire is handed has one reader, Ai_ChooseWeapon's shield-facing test.",
-      "source": "docs/retail/simulation/ai-combat-states.md"
+      "description": "(mech, geom, target): fills the 0x18-byte block a combat think passes down. A null target means mech+0x1a4. +0x00 bearing to the target (Math_HeadingToward); +0x02 that less the machine's heading (+0x10); +0x06 the aspect, target vtable +0x3c (turret twist) + bearing + 0x8000 - target heading; +0x0a the 3D range (Math_DistanceBetweenPoints); +0x04 and +0x08 the magnitudes of +0x02 and +0x06, -0x8000 saturating to 0x7fff; +0x0e approach 0; +0x10 15000 and +0x14 30000, the standoff pair. Callers found by es2_xref: the attacking, attacking base, attacking flyer, fleeing, facing off and flanking thinks.",
+      "source": "docs/retail/simulation/ai-combat-states.md",
+      "verified": {
+        "bytes": "0041e758+205",
+        "sha1": "576e2252089f",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041e828",
@@ -7257,8 +7347,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_CombatMoveStep",
-      "description": "The combat states' movement: sets the block's approach flag from the range against the standoff pair -- choosing the sign so the machine opens or closes the range whichever way it is facing -- stashes it at mech+0x5a, and drives Mech_LocomotionTick with the bearing error >> 6 and +/-0x100. The range arms read the magnitude Ai_BuildCombatGeometry left, before the caller's own steering override is folded in.",
-      "source": "docs/retail/simulation/ai-combat-states.md"
+      "description": "(mech, geom): the combat states' walk. Range (geom+0x0a) under the near standoff sets approach to 1 when |bearing error| (geom+0x04) is 0x4000 or more, else -1; range over the far standoff sets it to 1 when the magnitude is 0x4000 or less, else -1; between them the approach already in the block stands. Then it recomputes geom+0x04 from geom+0x02, and with approach nonzero stores it as a short at mech+0x5a and takes speed +0x100 or -0x100 by its sign, speed 0 otherwise. Ends in Mech_LocomotionTick(mech, bearing error >> 6, speed, 0). Callers found by es2_xref: the attacking, attacking base, attacking flyer, fleeing, facing off and flanking thinks.",
+      "source": "docs/retail/simulation/ai-combat-states.md",
+      "verified": {
+        "bytes": "0041e828+171",
+        "sha1": "89950160093d",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041e8d4",
@@ -7275,8 +7371,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_AimAndFireAtMech",
-      "description": "Ai_AimAndFire's machine branch. Refuses the shot and centres the turret when the bearing error exceeds the chassis' torso-twist limit (typeRec+0x22: 14000 on 20 of the 21 chassis; PITBULL's 32767 passes every error but 0x7fff and -0x8000). Aims at the chosen component (mech+0x2a2) only when the 3D range is in [5000, 20000); otherwise at the target's aim node origin. Ends in Ai_FireAtPoint.",
-      "source": "docs/retail/simulation/ai-weapons.md"
+      "description": "(mech, aspect, target): Ai_AimAndFire's machine branch. Bearing error = Math_HeadingToward(target, mech) - mech heading (+0x10); unless (u16)(error + lim) < (u16)(2 * lim), lim being the shooter's typeRec+0x22 torso-twist limit, so the error lies in [-lim, lim), it runs Mech_CenterTorsoTick(mech, 0) and returns. With mech+0x2a2 at 0 or above and the 3D range (Math_DistanceBetweenPoints) in [5000, 20000) the point is the target's vtable +0x58 (Mech_ComponentPosition) for that slot; otherwise it is the target's aim node, Mech_GetAimNodeTransform (vtable +0x24) +0x14 put through Transform_ApplyToPoint with the target's world frame at +0x12, which it first rebuilds from the euler triple at +0x0c when the valid flag +0x32 is clear and then sets. Ends in Ai_FireAtPoint(mech, point, aspect, target). typeRec+0x22 is 14000 on 20 of the 21 chassis; PITBULL's 32767 refuses only 0x7fff and -0x8000.",
+      "source": "docs/retail/simulation/ai-weapons.md",
+      "verified": {
+        "bytes": "0041e984+247",
+        "sha1": "2d1c5ae76792",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041ea7c",
@@ -7284,8 +7386,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_AimAndFire",
-      "description": "The aim-and-fire tail every combat think ends on, and which travelling/following call against their look-at object -- so a walking machine shoots at what it watches without selecting it. Switches on the target's class (obj+0x1a8) to pick the aim point: class 0 goes to Ai_AimAndFireAtMech, class 1 to the structure's first live component (vtable +0x54 with a null second argument, then +0x58), anything else to the object's position plus its own aim offset (vtable +0x30). A null third argument means mech+0x1a4.",
-      "source": "docs/retail/simulation/ai-weapons.md"
+      "description": "(mech, aspect, target): the aim-and-fire tail. A null target means mech+0x1a4, read without a further null test. Switches on the target's class (obj+0x1a8): 0 goes to Ai_AimAndFireAtMech; 1 aims at the structure's component that vtable +0x54 returns with a null second argument, placed by vtable +0x58; anything else aims at the object's position plus the second triple vtable +0x30 fills. The last two end in Ai_FireAtPoint(mech, point, aspect, target). Callers found by es2_xref: the attacking, flanking, facing off, attacking base, attacking flyer, fleeing, travelling and following thinks, and a call in the bytes of Mech_BehaviourDriveOffThink that follow its unconditional jump to the epilogue.",
+      "source": "docs/retail/simulation/ai-weapons.md",
+      "verified": {
+        "bytes": "0041ea7c+182",
+        "sha1": "c6fa6e24333d",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041eb34",
@@ -7326,8 +7434,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_ChooseWeapon",
-      "description": "Scores every mount and returns the best above a floor mapped from mech+0x2aa (fear) through [0,0x400] -> [150,-100]; nothing above the floor means the machine aims and does not shoot. A mount whose vtable +0x5c answers non-zero (destroyed; an ammunition mount also when empty; a pod always) is passed over first. Score is Q10(100, damage credit) - Q10(1000, template+0x34) plus rand(35)*rand(35), where the credit is the armor damage with no shield, the shield damage when the shield holds, and the armor damage + 10000 on the shot that breaks it. Gates launchers on manager+0x0a lock, turns the radar on for an in-range SARH launcher, and latches mech+0xa5 -- no weapons left -- when every mount is absent or spent.",
-      "source": "docs/retail/simulation/ai-weapons.md"
+      "description": "(mech, aspect, range, target). Scores every mount and returns the best above a floor of Math_MapRange(mech+0x2aa, 0, 0x400, 150, -100), or 0, in which case the machine aims and does not shoot. It asks the target's vtable +0x34 for the shield with the boolean (u16)(aspect + 0x4000) < 0x8000 in place of a heading, and sets the jitter bound to 35 for a class-0 target and 30 otherwise. It also compares the machine's group with PlayerMech's and discards the result. Per mount: a null slot or one whose vtable +0x5c answers nonzero (spent) is passed over; any other clears the all-spent flag. kind = vtable +0x60; a kind-0 (SARH) mount that WeaponMount_RangeAllows passes turns mech+0x96 on when it is off and the radar-silence counter +0x26b is zero. It is scored only when in range and either kind 5 or 3 or the manager's lock word at +0x0a + 2*kind is set, and then only when vtable +0x2c (can fire) answers nonzero. Credit from the mount's PROJ.DAT record at mount+0x20: its armor damage (+6) with no shield, its shield damage (+4) when that does not exceed the shield, and armor damage + 10000 when it does. Score = Q10(100, credit) - Q10(1000, template+0x34) + rand(bound) * rand(bound), the best held as a short. When every mount was absent or spent and mech+0xa5 is clear it sets +0xa5, activates the object's +0x1b6 action, and raises MissionPollTimer_Count (004a9ee7) to at least 1000.",
+      "source": "docs/retail/simulation/ai-weapons.md",
+      "verified": {
+        "bytes": "0041f358+584",
+        "sha1": "c2664013e33a",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041f5a0",
@@ -7335,8 +7449,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_FireAtPoint",
-      "description": "The AI's fire decision. Reuses the latched mount at mech+0x2ac while it is ready and in range, else spends mech+0xb5 or runs Ai_ChooseWeapon. Aims the turret through Cockpit_TargetAnglesFromCameraBone whether or not anything fires. Leads the point by range*targetSpeed/projectileSpeed along the target's heading, adds the difficulty aim scatter for a Cybrid group only, and fires -- a launcher immediately, a gun only inside 1000 BAM in both axes. Latches ELF and ELF2 back into mech+0x2ac.",
-      "source": "docs/retail/simulation/ai-weapons.md"
+      "description": "(mech, point, aspect, target): the AI's fire decision. Range is the ground distance to the point. It keeps the latched mount at mech+0x2ac when one is latched, its vtable +0x2c answers nonzero and WeaponMount_RangeAllows passes. Failing that: with mech+0xb5 set it clears it and the weapon is 0 for this call; without, it runs Ai_ChooseWeapon and zeroes +0x2ac. Weapon 0: Cockpit_TargetAnglesFromCameraBone(mech, point) and return. With one: when the PROJ.DAT speed (mount+0x20 +0x0a) is positive and the target's vtable +0x38 speed is nonzero, the point is moved along the target's heading by (short)((short)(range >> 2) * speed * 4 / projectile speed); for a group whose side byte (group+0x12) is nonzero, a nonzero scatter from 0049a30c indexed by the difficulty at 004a9ee0 adds Math_RandomBelow(scatter) to x, y and z. Then it aims through Cockpit_TargetAnglesFromCameraBone, and fires (vtable +0x28) when the mount's vtable +0x60 kind is not 5, or when both residual angles are in [-1000, 1000). After a shot it latches the mount into +0x2ac when its template's +0x56 is 6 or 0x16, ELF or ELF2. Callers found by es2_xref: Ai_AimAndFireAtMech and Ai_AimAndFire.",
+      "source": "docs/retail/simulation/ai-weapons.md",
+      "verified": {
+        "bytes": "0041f5a0+495",
+        "sha1": "7be79923dd07",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041f790",
@@ -7344,8 +7464,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_AiFriendlyFireComplaint",
-      "description": "Posts squad message 8 when the player shoots a machine in the player's own group, on a 40000-count (about 19.5 s) cooldown at mech+0x278.",
-      "source": "docs/retail/simulation/ai-targeting.md"
+      "description": "When the countdown at mech+0x278 is zero, reloads it with 40000 (about 19.5 s) and posts squad message 8 through Ai_PostSquadMessage(mech, 8, 0); otherwise does nothing. It tests nothing about the shooter: callers found by es2_xref, Mech_AiOnTakingFire (the player hitting a member of its own group) and Sim_RaycastObjectList (the player's shot hitting its own side outside its group), make that decision.",
+      "source": "docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "0041f790+40",
+        "sha1": "995ca9a3554c",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041f7b8",

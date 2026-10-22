@@ -421,9 +421,10 @@ public sealed partial class MechObject {
 	/// its arc rather than committing.</para>
 	///
 	/// <para><b>The break-off is bought with damage.</b> While <see cref="DamageTaken"/> — the damage
-	/// taken in the last two seconds or so — is past 100, the machine spends about half a second in
-	/// every two reversing in a straight line with no steering at all; one that stops taking fire stops
-	/// breaking off when that window next expires.</para>
+	/// taken in the last two seconds or so — is past 100, the machine spends 1000 counts in every 5000,
+	/// about half a second in every two and a half, reversing in a straight line with no steering at
+	/// all: the 4000-count interval is held full through each break-off and runs only after it. One
+	/// that stops taking fire stops breaking off when that window next expires.</para>
 	///
 	/// <para>The square-up arm gates on this machine's <i>own</i> turret twist rather than on any
 	/// range, so it walks backwards until its hull has caught up with where its guns already
@@ -459,7 +460,10 @@ public sealed partial class MechObject {
 			_circleSquaredUp = false;
 		} else {
 			_circleSquaredUp = true;
-			geometry.Approach = (short)(Abs(TorsoTwistAngle) < CircleSquareUpTwist ? 0 : -1);
+			// The original's unsigned window: standing still needs the twist in [-2000, 2000).
+			geometry.Approach = (short)((ushort)(TorsoTwistAngle + CircleSquareUpTwist) < (ushort)(2 * CircleSquareUpTwist)
+				? 0
+				: -1);
 		}
 	}
 
@@ -528,8 +532,9 @@ public sealed partial class MechObject {
 	/// <summary>
 	/// <c>Mech_AiOnLineOfFireBlocked</c> (<c>0041dd2c</c>, mech vtable <c>+0x64</c>) — one of this
 	/// machine's own shots stopped on something that is not what it aimed at.
-	/// <see cref="HitTests.Raycast"/> is the only caller; the base and flyer classes leave the slot
-	/// empty, so only a machine reacts.
+	/// <see cref="HitTests.Raycast"/> is the only caller. The other classes' tables fill the slot with
+	/// a stub that returns at once (<c>SimObject_AiOnLineOfFireBlockedNoOp</c>, <c>00411b34</c>), so
+	/// only a machine reacts.
 	/// </summary>
 	public void OnLineOfFireBlocked() {
 		if (Target is not { } target) {
