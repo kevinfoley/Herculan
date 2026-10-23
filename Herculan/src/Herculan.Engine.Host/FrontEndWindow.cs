@@ -149,6 +149,9 @@ sealed class FrontEndWindow : IDisposable {
 	/// </summary>
 	public bool PadSkipHeld => _padPointer.SkipHeld && !_menuBar.Visible;
 
+	/// <summary>Whether a gamepad's A is held (<see cref="GamepadPointer.AHeld"/>); never while the bar is up, as <see cref="PadSkipHeld"/>.</summary>
+	public bool PadAHeld => _padPointer.AHeld && !_menuBar.Visible;
+
 	/// <summary>
 	/// Moves the pointer by a gamepad's stick and reads its triggers and its buttons, once an update before the
 	/// buttons are polled (<see cref="GamepadPointer"/>). The pad stands down without the focus, in a <c>--screenshot</c>

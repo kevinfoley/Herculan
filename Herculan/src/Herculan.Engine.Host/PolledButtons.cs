@@ -53,9 +53,20 @@ sealed class PolledButtons {
 		return pressed;
 	}
 
+	/// <summary>
+	/// Whether the left button's last press <see cref="Deliver"/> delivered came from <see cref="AlsoLeft"/> alone, the
+	/// mouse's own button being up: a click made with a gamepad.
+	/// </summary>
+	public bool LeftPressedByAlso { get; private set; }
+
 	/// <summary>Each button that has changed state since the last update, left first, handed to <paramref name="changed"/> as the press or release it is.</summary>
 	public void Deliver(IMouse mouse, Action<MouseButton, bool> changed) {
-		Edge(LeftHeld(mouse), ref _leftHeld, MouseButton.Left, changed);
+		bool left = LeftHeld(mouse);
+		if (left && !_leftHeld) {
+			LeftPressedByAlso = !mouse.IsButtonPressed(MouseButton.Left);
+		}
+
+		Edge(left, ref _leftHeld, MouseButton.Left, changed);
 		Edge(mouse.IsButtonPressed(MouseButton.Right), ref _rightHeld, MouseButton.Right, changed);
 
 		// Not a button the widgets take, but tracked, so one held down before a movie starts does not skip it.

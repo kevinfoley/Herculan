@@ -65,6 +65,10 @@ tweak.fix_raptor2_perspective.display_name  Corriger la perspective du Raptor II
 tweak.fix_raptor2_perspective.description   Place la vue cockpit du Raptor II dans son cockpit. Dans le jeu original, la vue se trouve au-dessus du sommet du HERC. Le suivi de la tourelle et la convergence des armes suivent ce changement.
 tweak.reset_counters_on_replay.display_name  Corriger les indicateurs de « Rejouer la mission »
 tweak.reset_counters_on_replay.description   Corrige les indicateurs de mission qui ne sont pas réinitialisés quand vous choisissez de rejouer une mission (après avoir été tué pendant la mission), ce qui pouvait faire échouer des déblocages ou causer d'autres comportements inattendus.
+tweak.auto_fill_save_name.display_name  Nommer les sauvegardes automatiquement
+tweak.auto_fill_save_name.description   Quand vous cliquez sur SAUVEGARDER, un nom est rempli automatiquement. Vous devez quand même cliquer sur ACCEPTER. Avec une manette, le nom est toujours rempli automatiquement.
+tweak.auto_save_slot_10.display_name  Sauvegarde automatique emplacement 10
+tweak.auto_save_slot_10.description   Après le compte rendu de chaque mission, votre partie est sauvegardée dans l'emplacement 10 de l'écran PARTIES SAUVEG. Elle remplace ce que contenait l'emplacement 10.
 tweaks.title                   Ajustements
 tweaks.description             Les ajustements modifient le comportement du jeu, en général pour corriger des bugs ou apporter des améliorations de confort. Pour l'expérience la plus proche de l'original (bugs compris), cliquez sur « Aucun » pour désactiver tous les ajustements.
 tweaks.note                    Certains bugs graphiques mineurs et plantages potentiels ne sont pas reproduits dans HERCULAN. La prise en charge des périphériques d'entrée modernes et des autres schémas de commande reste toujours disponible dans le menu Manette.
@@ -101,6 +105,8 @@ install_prompt.no_path         Tapez ou collez le chemin du dossier d'Earthsiege
 install_prompt.not_an_install  {0} n'est pas un dossier d'Earthsiege 2 : il ne contient aucun dossier {1}.
 mission_load.window_title      HERCULAN Engine — Erreur
 mission_load.missing_file      La mission ne peut pas démarrer : {0} est manquant. Lancez la mission depuis les menus, qui écrivent ce fichier.
+save.auto_name                 {0} {1} Mission {2}
+save.auto_save_name            SAUVEGARDE AUTO {0}
 crash.window_title            HERCULAN Engine — Erreur
 crash.message                 HERCULAN s'est arrêté à cause d'une erreur : {0} Les détails se trouvent dans {1}.
 menu.debug                     Débogage

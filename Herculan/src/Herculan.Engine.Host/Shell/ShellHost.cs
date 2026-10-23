@@ -89,6 +89,10 @@ sealed class ShellHost : IDisposable {
 	private readonly KeyboardLayout _layout = new(ShellKeyboard.KeyOfVirtualKey);
 	private readonly KeyRepeat _keyRepeat = new(KeyRepeat.SystemTypematic());
 	private readonly CanvasContent _content;
+	private readonly SaveRestoreTab _save;
+
+	// Whether a gamepad's A was held at the last update, to see it go down.
+	private bool _padAHeld;
 
 	/// <summary>Whether a simulator exit code brings the shell back up rather than ending the run: 3, 4 and 6.</summary>
 	public static bool ReturnsToShell(int code) =>
@@ -219,9 +223,10 @@ sealed class ShellHost : IDisposable {
 			_window, _widgets, repaint);
 		var hangar = new HangarTabs(content, _game, dialogs, _screen, _widgets, startBay, repaint);
 		_navigation = new TabNavigation(_screen, _canvas, _game, saveScreen, hangar, _mission, _audio, _widgets, repaint);
+		var names = new SaveNames(_game, saveScreen, _canvas, session.Localization, () => _buttons.LeftPressedByAlso);
 		_loop = new CampaignScreens(installRoot, content, _game, saveScreen, hangar, _mission, _navigation, _startup, _movies, _canvas,
-			dialogs, _screen, _outcome, _window, _widgets, missionPicker, repaint);
-		var save = new SaveRestoreTab(saveScreen, _game, _loop, _mission, _navigation, _screen, _widgets, repaint);
+			dialogs, _screen, _outcome, _window, _widgets, names, missionPicker, repaint);
+		_save = new SaveRestoreTab(saveScreen, _game, _loop, _mission, _navigation, _screen, _widgets, names, repaint);
 		_menu = new MainMenuPanels(installRoot, disc, content, _window, _screen, _widgets, _game, saveScreen, mainMenu, dialogs,
 			_movies, _audio, _outcome, _loop, _navigation, repaint);
 		_fields = new EditFields(_window, _audio, _movies, _pointer, _screen, saveScreen, _menu, dialogs.MissionName, _canvas,
@@ -230,7 +235,7 @@ sealed class ShellHost : IDisposable {
 		_buttons.Taken = key => key == Key.Escape && _keys.EscapeIsMenuBars;
 		_buttons.AlsoLeft = () => _window.PadClickHeld;
 		_buttons.AlsoSkip = () => _window.PadSkipHeld;
-		_content = new CanvasContent(_canvas, _screen, _pointer, _startup, dialogs, _movies, _menu, save, hangar, _mission);
+		_content = new CanvasContent(_canvas, _screen, _pointer, _startup, dialogs, _movies, _menu, _save, hangar, _mission);
 
 		_navigation.EnterTab(_screen.SelectedTab);
 
@@ -320,6 +325,9 @@ sealed class ShellHost : IDisposable {
 	private void OnUpdate(double delta) {
 		_audio.Update();
 		_window.UpdatePadPointer(delta);
+		bool padA = _window.PadAHeld;
+		bool padAPressed = padA && !_padAHeld;
+		_padAHeld = padA;
 
 		// Windows' auto-repeat, which retail takes as fresh key-downs (docs/retail/shell/main-menu.md#typing-into-a-row),
 		// rebuilt from the held keys because the window's own key events carry no repeats.
@@ -410,6 +418,10 @@ sealed class ShellHost : IDisposable {
 		} else {
 			_pointer.Move(_content.HitAt(canvasX, canvasY));
 			_buttons.Deliver(mouse, _widgets.Deliver);
+			if (padAPressed) {
+				_save.PadAccept();
+			}
+
 			if (arrowsTick) {
 				_mission.RepeatArrows();
 			}
