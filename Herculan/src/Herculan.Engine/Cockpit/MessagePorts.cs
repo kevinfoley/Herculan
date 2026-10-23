@@ -29,6 +29,7 @@ public sealed class MessagePorts {
 	private MechObject? _pilot;
 	private TimeSpan _powerUpAnnounceIn = TimeSpan.MinValue;
 	private double _messageTicks;
+	private int _retailFrames;
 
 	/// <param name="messages">The computer's messages, or null when <c>SYSTEM.STR</c> would not load.</param>
 	public MessagePorts(SystemMessages? messages) {
@@ -123,12 +124,27 @@ public sealed class MessagePorts {
 		Computer.Update((long)_messageTicks);
 
 		// The squad channel runs on the same clock: it is the second instance of the same port, and
-		// its comm boxes count their static in the same coarse ticks.
+		// its comm boxes count their deadlines in the same coarse ticks. It runs once per retail frame
+		// rather than once per call, because its paints step the static and draw on the presentation
+		// generator once each time they run.
 		if (Squad is { } squad) {
 			squad.Port.PilotDisabled = Computer.PilotDisabled;
-			squad.Update((long)_messageTicks);
+			for (; _retailFrames > 0; _retailFrames--) {
+				squad.Update((long)_messageTicks);
+			}
 		}
+
+		_retailFrames = 0;
 	}
+
+	/// <summary>
+	/// Counts one of the original's frames for the squad channel's next <see cref="Update"/>. DBSIM runs one
+	/// simulation tick per frame, its loop capped at 25 a second (<see cref="SimWorld.TicksPerSecond"/>), and
+	/// <c>HddDisplay_Update</c> services the comm boxes once a frame, so the caller raises this once per
+	/// simulation tick. No tick runs while a modal panel or the mission's end freezes the simulation, and the
+	/// boxes hold still then too, as they do behind retail's panels.
+	/// </summary>
+	public void NoteRetailFrame() => _retailFrames++;
 
 	/// <summary>
 	/// <c>Cockpit_PowerUpTick</c> (<c>00432924</c>)'s tail — the cockpit's power-up sequence announcing itself once

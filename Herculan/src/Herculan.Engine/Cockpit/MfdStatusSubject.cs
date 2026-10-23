@@ -34,7 +34,7 @@ public enum MfdSilhouetteKind {
 /// is "is this one of ours", both decided from the subject alone.</para>
 ///
 /// <para>A flyer's name comes from <c>FLYERS.DAT</c> <c>NameBytes</c>, the same <c>+0x12</c> the paint
-/// reads, and a HERC's from its type name.</para>
+/// reads, and a HERC's from its type record's (<see cref="Sim.MechObject.TypeName"/>).</para>
 /// </summary>
 /// <param name="Present">Whether there is a subject at all. False draws the no-target screen.</param>
 /// <param name="Identified">
@@ -170,15 +170,16 @@ public readonly record struct MfdStatusSubject(
 					condition = 1;
 				}
 
-				// The name is the type record's own, which for every retail machine is the herc name -
-				// the same name its .HBA paper-doll bank and .PDG diagram are filed under. Only this
-				// branch asks whether the subject is one of ours: the machine being flown prints YOU, a
+				// The printed name is the type record's own (typeRec+0x58), while the paper doll is filed
+				// under the data files' name — the two differ on SPIDER (Arachnitron). Only this branch
+				// asks whether the subject is one of ours: the machine being flown prints YOU, a
 				// squadmate its pilot's name, and both head the screen ID:.
 				string name = mech.Name.ToUpperInvariant();
+				string typeName = mech.TypeName.ToUpperInvariant();
 				int squadSlot = squad?.SlotOf(mech) ?? -1;
-				string printed = own ? strings?.Text(MfdLayout.SelfNameGroup, 0) ?? name
+				string printed = own ? strings?.Text(MfdLayout.SelfNameGroup, 0) ?? typeName
 					: squadSlot >= 0 ? squad!.Name(squadSlot)
-					: name;
+					: typeName;
 				return new MfdStatusSubject(
 					Present: true, Identified: true, Own: own || squadSlot >= 0, Hostile: hostile,
 					Name: printed,

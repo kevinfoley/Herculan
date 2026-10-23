@@ -203,7 +203,7 @@ There is no vertical alignment flag: every label is vertically centred in its re
 | Label | Text | Source |
 |---|---|---|
 | 0 | `ID:` / `TARGET:` / `DIST:  ` | `DAT_004d1570`-`78` = group 20 |
-| 1 | Subject name | group 17 `YOU`; a squadmate's pilot name (`HddGauge_Name`); a HERC's or flyer's own type-record name (`typeRec+0x58`, flyer `typeRec+0x12`); a structure's or vehicle's name from group 23 or 24; group 26 `NONE`, group 27 `UNKNOWN` |
+| 1 | Subject name | group 17 `YOU`; a squadmate's pilot name (`HddGauge_Name`); a HERC's or flyer's own type-record name (`typeRec+0x58`, flyer `typeRec+0x12`), which is not always the chassis' file name — `SPIDER.DAT`'s is `Arachnitron`, `HEADHUNT.DAT`'s `Headhunter`; a structure's or vehicle's name from group 23 or 24; group 26 `NONE`, group 27 `UNKNOWN` |
 | 2 | `STATUS:` | `DAT_004d157c` = group 21 |
 | 3 | Condition | `DAT_004d1698[state]` = group 28 |
 | 4 | Integrity or range | composed, below |

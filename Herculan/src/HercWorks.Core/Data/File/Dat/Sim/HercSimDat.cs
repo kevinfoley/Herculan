@@ -157,7 +157,11 @@ public class HercSimDat {
 	/// </summary>
 	public short WeaponMountsDestructible { get; set; }
 
-	/// <summary>Offsets 86-97 — the chassis name, NUL-padded ASCII.</summary>
+	/// <summary>
+	/// Offsets 86-97 — the chassis name, NUL-padded ASCII: the one the simulator prints for the type, which is
+	/// not always the data files' name. SPIDER's is <c>Arachnitron</c>, HEADHUNT's <c>Headhunter</c>. See
+	/// docs/retail/simulation/mfd.md#mfdstatus--modes-0-and-4.
+	/// </summary>
 	public byte[]? NameBytes { get; set; }
 
 	/// <summary>

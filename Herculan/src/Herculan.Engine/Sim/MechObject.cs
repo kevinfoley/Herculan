@@ -69,6 +69,10 @@ public sealed partial class MechObject : SimObject {
 			FlightModel? flightModel = null) {
 		Name = name;
 		SimData = simData;
+		TypeName = simData.NameBytes is { } nameBytes
+			&& System.Text.Encoding.ASCII.GetString(nameBytes).Split('\0')[0].Trim() is { Length: > 0 } typeName
+				? typeName
+				: name;
 		Type = new MechTypeRecord(simData);
 		_shapeRadius = shapeRadius;
 		Loadout = loadout;
@@ -132,6 +136,12 @@ public sealed partial class MechObject : SimObject {
 
 	/// <summary>Base name of the mech's data files, e.g. <c>SAMSON</c> for <c>dat\SAMSON.DAT</c>.</summary>
 	public string Name { get; }
+
+	/// <summary>
+	/// The chassis' own name, <see cref="HercSimDat.NameBytes"/> (the original's <c>typeRec+0x58</c>), as text.
+	/// Falls back to <see cref="Name"/> when the field is empty.
+	/// </summary>
+	public string TypeName { get; }
 
 	/// <summary>The mech type's stats, straight out of the game's own per-mech <c>.DAT</c>.</summary>
 	public HercSimDat SimData { get; }

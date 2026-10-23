@@ -362,7 +362,7 @@ public sealed class SquadCommChannel {
 
 	/// <summary>
 	/// Runs every box for one frame at <paramref name="coarseTicks"/> — the service loop's own state
-	/// machine, minus the painting. Call once a frame, after <see cref="SquadMessagePort.Update"/>.
+	/// machine, minus the painting. Call once per retail frame — see <see cref="MessagePorts.NoteRetailFrame"/>.
 	/// </summary>
 	public void Update(long coarseTicks) {
 		_now = coarseTicks;
