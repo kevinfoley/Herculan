@@ -26,12 +26,13 @@ internal sealed class EditorMission {
 		Scene = scene;
 		Index = sceneIndex;
 		Generated = index;
+		Names = new MissionNames(sceneIndex, RosterTypeNames.Load(content));
 
 		var drape = new DrapedLines(scene.World.Terrain);
 		Overlay = new MissionOverlay(sceneIndex, drape);
 		Picker = new ScenePicker(scene, sceneIndex, Overlay);
-		GroupOverlay = new GroupOverlay(sceneIndex, index, drape, Picker);
-		Outliner = new MissionOutliner(source, sceneIndex, lint, Selection);
+		GroupOverlay = new GroupOverlay(sceneIndex, drape, Picker);
+		Outliner = new MissionOutliner(source, sceneIndex, Names, lint, Selection);
 		Sync = new SceneSync(content, source, scene, tables, sceneIndex, index, Overlay, Picker, Outliner, Selection, squad);
 		Mover = new PointMover(source, scene, sceneIndex, Sync, Overlay, materials);
 		Gizmo = new MoveGizmo(Selection, Mover);
@@ -50,12 +51,12 @@ internal sealed class EditorMission {
 		Hercs = new HercPlacer(document, source, scene, index, Mover, Sync, Selection, Fitter, UnitTypeNames.LoadMechs(content));
 		Flyers = new FlyerPlacer(document, source, scene, index, Mover, Sync, Selection, UnitTypeNames.LoadFlyers(content));
 		Vehicles = new VehiclePlacer(document, source, index, Mover, Sync, Selection, Placer);
-		Orders = new OrderEditor(document, source, index.Records, Mover, Sync);
-		Objectives = new ObjectiveEditor(source, index.Records, Mover, Sync, Selection);
+		Orders = new OrderEditor(source, Mover, Sync);
+		Objectives = new ObjectiveEditor(source, Mover, Sync, Selection);
 		Texts = new MissionTextEditor(source, Mover, Sync);
 		Actions = new ActionEditor(source, Mover, Sync, Selection);
 		Timers = new TimerEditor(source, Mover, Sync, Selection);
-		Conditions = new ConditionEditor(source, index, Mover, Sync, Selection, Deleter);
+		Conditions = new ConditionEditor(source, index, Names, Mover, Sync, Selection, Deleter);
 		Presence = new PresenceEditor(source, sceneIndex, Mover, Sync, Deleter);
 		Variants = new VariantEditor(source, Mover, Sync, Selection);
 		Types = new RosterTypeEditor(source, Mover, Sync);
@@ -65,14 +66,14 @@ internal sealed class EditorMission {
 		Outliner.Actions = Actions;
 		Outliner.Timers = Timers;
 		Outliner.Conditions = Conditions;
-		var choices = new RandomChoices(source, sceneIndex, content, squad);
+		var choices = new RandomChoices(source, sceneIndex, Names, squad);
 		Outliner.Choices = choices;
-		Properties = new PropertiesPanel(index, document, Selection, Mover, Sides, Deleter,
+		Properties = new PropertiesPanel(index, Selection, Mover, Sides, Deleter,
 			new SquadMachinePanel(Fitter, Squad, squad), new RosterFitView(Fitter, Types, Variants, choices, new UnitTypeCatalog(content)),
 			new MissionView(() => Name, () => document.ZoneIndex, Theater, TheaterNames.Labels(content),
 				new MissionTextView(Texts)),
 			Routes, Placing, Areas, AreaPlacing, Orders, Objectives, Actions, Timers, Conditions, Presence, Variants,
-			choices, new TriggerMessages(content), SimStrings.Load(content));
+			choices, new TriggerMessages(content), Names, SimStrings.Load(content));
 	}
 
 	/// <summary>
@@ -103,6 +104,9 @@ internal sealed class EditorMission {
 
 	/// <summary>The generated mission's features, cross-referenced by block index, which the views read.</summary>
 	public GeneratedIndex Generated { get; }
+
+	/// <summary>What the panels, the outliner and the Toolbox name the mission's records by.</summary>
+	public MissionNames Names { get; }
 
 	public SelectionState Selection { get; } = new();
 

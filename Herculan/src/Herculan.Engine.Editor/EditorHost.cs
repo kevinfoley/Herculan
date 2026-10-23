@@ -599,8 +599,9 @@ public sealed class EditorHost {
 			_mission.Properties.Draw(display, menuBarHeight);
 			var (joinable, joinKind) = JoinableGroup(_mission);
 			var mission = _mission;
+			string? joinName = joinable is { } joining ? mission.Names.GroupBrief(mission.Generated.Records.GroupGuid(joining)).Full : null;
 			_toolbox.Draw(display,
-				enabled: !mission.Gizmo.Dragging && !mission.PlacingAny, joinable, joinKind,
+				enabled: !mission.Gizmo.Dragging && !mission.PlacingAny, joinable, joinName, joinKind,
 				joinable is { } group ? kind => WhyNotJoin(mission, group, kind) : null,
 				mission.Hercs.WhyNoAdd, mission.Flyers.WhyNoAdd, mission.Vehicles.WhyNoAdd, mission.Placer.WhyNoAdd,
 				() => {
@@ -736,7 +737,7 @@ public sealed class EditorHost {
 		}
 
 		if (deleting != null && mission.Deleter.Delete(deleting) is { } reason) {
-			Console.Error.WriteLine($"Cannot delete {MissionText.Describe(deleting)}: {reason}");
+			Console.Error.WriteLine($"Cannot delete {(mission.Index.KeyOf(deleting) is { } key ? mission.Names.Object(key).Full : "the object")}: {reason}");
 		}
 
 		mission.Fitter.RunRequest();

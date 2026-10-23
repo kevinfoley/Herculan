@@ -23,7 +23,8 @@ namespace HercWorks.Core.Data.File.Msn;
 /// </summary>
 public static class ObjectiveEditing {
 	private const int Row = 17;
-	private const int RouteBlock = 3;
+	private const int RouteRow = 8;
+	private const int GroupRow = 16;
 	private const int ObjectiveBlock = 12;
 
 	/// <summary><see cref="MissionObjective58.Required"/> for a mandatory objective, 91 of the 127 retail records.</summary>
@@ -47,6 +48,7 @@ public static class ObjectiveEditing {
 	/// <summary>Subject kinds: a group (row 16), a herc (row 12), a structure or ground vehicle (row 14).</summary>
 	public const short GroupSubject = 0;
 	public const short HercSubject = 1;
+	public const short FlyerSubject = 2;
 	public const short StructureSubject = 3;
 
 	/// <summary>The counter pairs a record carries.</summary>
@@ -159,10 +161,11 @@ public static class ObjectiveEditing {
 		}
 
 		short route = -1;
-		if (code == OrderComplete && Record(document, record).RouteRef == -1 && ExportedIndex(document, record) is { } objective
-				&& SubjectGroup(document, objective) is >= 0 and var group && document.Script.Groups[group].OrderRefs[0] is >= 0 and var order
-				&& order < document.Script.Orders.Length && document.Script.Orders[order].RouteRef is >= 0 and var slot0Route) {
-			route = document.GuidOf(RouteBlock, slot0Route);
+		var current = Record(document, record);
+		if (code == OrderComplete && current.RouteRef == -1 && SubjectGroup(document, current) is not -1 and var group
+				&& document.Layout.Entry<MissionOrder22>(GroupOrders.Orders(document, group)[0])?.Fields.RouteRef is { } slot0Route
+				&& document.Layout.Entry(RouteRow, slot0Route) != null) {
+			route = slot0Route;
 		}
 
 		return Write(document, record, objective => {
@@ -200,40 +203,33 @@ public static class ObjectiveEditing {
 		Write(document, record, objective => objective.RouteRef = route);
 
 	/// <summary>
-	/// The block-11 group whose orders block-12 objective <paramref name="objective"/>'s condition 0 reads: its subject group,
-	/// or the group its subject herc or structure is a member of; <c>-1</c> for none.
+	/// The row-16 GUID of the group whose orders <paramref name="objective"/>'s condition 0 reads, from the layout: its subject
+	/// group, or the first group whose base names its subject herc, flyer or structure as a member
+	/// (<see cref="LayoutPresence.Group"/>); <c>-1</c> for none.
 	/// </summary>
-	public static int SubjectGroup(MissionDocument document, int objective) {
-		var script = document.Script;
-		if (objective < 0 || objective >= script.Objectives.Length) {
-			return -1;
+	public static short SubjectGroup(MissionDocument document, MissionObjective58 objective) {
+		var layout = document.Layout;
+		if (objective.SubjectKind == GroupSubject) {
+			return layout.Entry(GroupRow, objective.SubjectRef) != null ? objective.SubjectRef : (short)-1;
 		}
 
-		var record = script.Objectives[objective];
-		short members = record.SubjectKind switch { HercSubject => 0, StructureSubject => 2, _ => -1 };
-		if (record.SubjectKind == GroupSubject) {
-			return record.SubjectRef >= 0 && record.SubjectRef < script.Groups.Length ? record.SubjectRef : -1;
-		}
-
-		return members == -1 || record.SubjectRef < 0 ? -1
-			: Array.FindIndex(script.Groups, group => group.MemberKind == members && group.MemberRefs.Contains(record.SubjectRef));
+		int? row = objective.SubjectKind switch { HercSubject => 12, FlyerSubject => 13, StructureSubject => 14, _ => null };
+		return row is { } roster && layout.Entry(roster, objective.SubjectRef) is { } entry ? entry.Presence.Group : (short)-1;
 	}
 
 	/// <summary>
-	/// The routes, by block-3 index, that block-12 objective <paramref name="objective"/>'s condition 0 can be about: those
-	/// its subject's group's order slots run, in slot order, once each.
+	/// The routes, by row-8 GUID, that row-17 record <paramref name="record"/>'s condition 0 can be about: those its subject's
+	/// group's order slots run (<see cref="SubjectGroup"/>), in slot order, once each, from the layout.
 	/// </summary>
-	public static IReadOnlyList<int> RouteChoices(MissionDocument document, int objective) {
-		var script = document.Script;
-		int group = SubjectGroup(document, objective);
-		if (group < 0) {
+	public static IReadOnlyList<short> RouteChoices(MissionDocument document, int record) {
+		short group = SubjectGroup(document, Record(document, record));
+		if (group == -1) {
 			return [];
 		}
 
-		return script.Groups[group].OrderRefs
-			.Where(order => order >= 0 && order < script.Orders.Length)
-			.Select(order => (int)script.Orders[order].RouteRef)
-			.Where(route => route >= 0)
+		return GroupOrders.Orders(document, group)
+			.Select(order => document.Layout.Entry<MissionOrder22>(order)?.Fields.RouteRef ?? -1)
+			.Where(route => route != -1 && document.Layout.Entry(RouteRow, route) != null)
 			.Distinct()
 			.ToList();
 	}

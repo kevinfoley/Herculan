@@ -34,6 +34,11 @@ internal sealed class TriggerThenList {
 
 	private MissionLayout Layout => _index.Layout;
 
+	private MissionNames Names => _links.Names;
+
+	// The widest a menu entry is drawn, in pixels: the Properties panel's width.
+	private static float MenuWidth => ScaledImGui.Scaled(PropertiesPanel.PanelWidth);
+
 	/// <summary>Row-10 GUID <paramref name="guid"/>'s Then list, of base <paramref name="fields"/>; every control disabled when <paramref name="locked"/>.</summary>
 	public void Draw(short guid, MissionAction82 fields, bool locked) {
 		var follows = _index.Links(guid).Follows;
@@ -185,7 +190,7 @@ internal sealed class TriggerThenList {
 			}
 
 			ImGui.PushID($"starts{starts.Countdown}");
-			_links.ShortCountdown(starts.Countdown);
+			_links.Countdown(starts.Countdown);
 			ImGui.SameLine();
 			RemoveButton(guid, starts, locked, "Removing it makes the countdown start with the mission.");
 			ImGui.AlignTextToFramePadding();
@@ -320,8 +325,8 @@ internal sealed class TriggerThenList {
 				}
 
 				string? why = _editor.WhyNoFollow(follower);
-				string now = group.Waiting ? $" (now waits on {MissionText.TriggerName(Layout, group.DeploymentAction)})" : "";
-				if (ImGui.MenuItem($"{MissionText.GroupName(group)}{now}##{group.Guid}", string.Empty, false, why == null)) {
+				string now = group.Waiting ? $" (now waits on {TriggerNumber(group.DeploymentAction)})" : "";
+				if (ImGui.MenuItem($"{NameText.Fit(Names.Group(group.Guid).Full + now, MenuWidth)}##{group.Guid}", string.Empty, false, why == null)) {
 					_editor.RequestFollow(guid, follower);
 				}
 
@@ -334,7 +339,7 @@ internal sealed class TriggerThenList {
 		if (ImGui.BeginMenu("Move a group on from its order")) {
 			foreach (var group in _index.Groups) {
 				var slots = GroupOrders.Orders(Source, group.Guid);
-				if (GroupOrders.Filled(slots) == 0 || !ImGui.BeginMenu($"{MissionText.GroupName(group)}##{group.Guid}")) {
+				if (GroupOrders.Filled(slots) == 0 || !ImGui.BeginMenu($"{NameText.Fit(Names.Group(group.Guid).Full, MenuWidth)}##{group.Guid}")) {
 					continue;
 				}
 
@@ -345,7 +350,7 @@ internal sealed class TriggerThenList {
 					}
 
 					short ending = Layout.Entry<MissionOrder22>(slots[slot])?.Fields.ActionRef ?? -1;
-					string now = _index.Action(ending) != null ? $" (now ends on {MissionText.TriggerName(Layout, ending)})" : "";
+					string now = _index.Action(ending) != null ? $" (now ends on {TriggerNumber(ending)})" : "";
 					if (ImGui.MenuItem($"{OrderName(group.Guid, slot)}{now}##{slot}")) {
 						_editor.RequestFollow(guid, follower);
 					}
@@ -365,7 +370,7 @@ internal sealed class TriggerThenList {
 			foreach (var countdown in Layout.Entries<ActionTimer30>()) {
 				var follower = new StartsCountdown(countdown.Guid);
 				if (!follows.Contains(follower)
-						&& ImGui.MenuItem($"{MissionText.CountdownName(Layout, countdown.Guid)} ({MissionText.CountdownSummary(_index, countdown.Fields)})##{countdown.Guid}")) {
+						&& ImGui.MenuItem($"{NameText.Fit(Names.Countdown(countdown.Guid).Full, MenuWidth)}##{countdown.Guid}")) {
 					_editor.RequestFollow(guid, follower);
 				}
 			}
@@ -383,7 +388,7 @@ internal sealed class TriggerThenList {
 		var messages = _messages.For(training);
 		bool sends = ActionEditing.Message(Source, guid) >= 0;
 		if (ImGui.BeginMenu("Send a message", messages != null && !sends)) {
-			float width = ScaledImGui.Scaled(PropertiesPanel.PanelWidth);
+			float width = MenuWidth;
 			foreach (int line in messages?.Ids ?? []) {
 				if (ImGui.MenuItem($"{Fit(_messages.Text(training, line) ?? "", width)}##{line}")) {
 					_editor.RequestMessage(guid, (short)line);
@@ -408,7 +413,7 @@ internal sealed class TriggerThenList {
 		Tooltip(consequence);
 	}
 
-	// A group's order slot as the Then list names it: "1st order (search/destroy)".
+	// A group's order slot as the Then list names it: "1st order (Search and destroy)".
 	private string OrderName(short group, int slot) {
 		short order = GroupOrders.Orders(Source, group)[slot];
 		string verb = Layout.Entry<MissionOrder22>(order)?.Fields is { } fields ? MissionText.OrderVerb(fields.Verb) : "missing";
@@ -434,18 +439,8 @@ internal sealed class TriggerThenList {
 		}
 	}
 
-	/// <summary><paramref name="text"/> cut, with "...", to fit <paramref name="width"/> pixels in the current font.</summary>
-	internal static string Fit(string text, float width) {
-		const string more = "...";
-		if (ImGui.CalcTextSize(text).X <= width) {
-			return text;
-		}
+	// Row-10 GUID <guid> by its number alone, for a note that a link already names in full: "trigger 2".
+	private string TriggerNumber(short guid) => MissionText.NumberIn(Layout, 10, guid) is { } number ? $"trigger {number}" : "a trigger";
 
-		int length = text.Length;
-		while (length > 0 && ImGui.CalcTextSize(text[..length] + more).X > width) {
-			length--;
-		}
-
-		return text[..length].TrimEnd() + more;
-	}
+	private static string Fit(string text, float width) => NameText.Fit(text, width);
 }

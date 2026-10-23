@@ -27,16 +27,19 @@ internal sealed record ConditionUses(IReadOnlyList<ConditionUse> Shown, IReadOnl
 internal sealed class ConditionEditor {
 	private readonly MissionDocument _source;
 	private readonly GeneratedIndex _index;
+	private readonly MissionNames _names;
 	private readonly PointMover _mover;
 	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private readonly ObjectDeleter _deleter;
 	private Func<string?>? _requested;
 
-	public ConditionEditor(MissionDocument source, GeneratedIndex index, PointMover mover, SceneSync sync,
+	/// <param name="names">What the Used by list names the records it lists by.</param>
+	public ConditionEditor(MissionDocument source, GeneratedIndex index, MissionNames names, PointMover mover, SceneSync sync,
 			SelectionState selection, ObjectDeleter deleter) {
 		_source = source;
 		_index = index;
+		_names = names;
 		_mover = mover;
 		_sync = sync;
 		_selection = selection;
@@ -156,7 +159,8 @@ internal sealed class ConditionEditor {
 
 		var resolved = _deleter.Resolve(source, new MsnNamers([], [], orders));
 		foreach (var order in resolved.Orders) {
-			shown.Add(new ConditionUse($"{PanelLinks.ShortGroupName(order.Group)}, order {order.Slot}", Records.GroupAt(order.Group)));
+			var group = _names.GroupBrief(Records.GroupGuid(order.Group));
+			shown.Add(new ConditionUse($"{MissionText.Ordinal(order.Slot + 1)} order of {group.Full}", Records.GroupAt(order.Group)));
 		}
 
 		for (int i = 0; i < resolved.Elsewhere; i++) {
@@ -175,13 +179,15 @@ internal sealed class ConditionEditor {
 	/// <summary>A record the editor's state exports at <paramref name="index"/> of the block row <paramref name="row"/> is written to, by its identity.</summary>
 	public ConditionUse Identity(int row, int index) => row switch {
 		6 or 7 => NoView(row, 1),
-		8 => new ConditionUse($"Route {index}", Records.RouteAt(index)),
-		9 => new ConditionUse($"Area {index}", Records.AreaAt(index)),
-		10 => new ConditionUse($"Trigger {index}", Records.ActionAt(index)),
-		11 => new ConditionUse($"Countdown {index}", Records.TimerAt(index)),
+		8 => new ConditionUse(_names.Route(Records.RouteGuid(index)).Full, Records.RouteAt(index)),
+		9 => new ConditionUse(_names.Area(Records.AreaGuid(index)).Full, Records.AreaAt(index)),
+		10 => new ConditionUse(_names.Trigger(Records.ActionGuid(index)).Full, Records.ActionAt(index)),
+		11 => new ConditionUse(_names.Countdown(Records.TimerGuid(index)).Full, Records.TimerAt(index)),
 		12 or 13 or 14 => Object(row, index),
-		16 => new ConditionUse(PanelLinks.ShortGroupName(index), Records.GroupAt(index)),
-		_ => new ConditionUse($"Objective {index}", index < _index.Mission.Objectives.Count ? Records.ObjectiveAt(index) : null),
+		16 => new ConditionUse(_names.GroupBrief(Records.GroupGuid(index)).Full, Records.GroupAt(index)),
+		_ when index < _index.Mission.Objectives.Count && Records.ObjectiveAt(index) is { Record: >= 0 } objective =>
+			new ConditionUse(_names.Objective(objective.Record).Full, objective),
+		_ => new ConditionUse("A win or lose condition", null),
 	};
 
 	private GeneratedRecords Records => _index.Records;
@@ -212,15 +218,11 @@ internal sealed class ConditionEditor {
 		return new ConditionUse($"{what} (not shown in the editor)", null);
 	}
 
-	// A route, trigger area, action, timer, group or objective <record> as a link selecting it by its GUID or row-17 index:
-	// by its generated identity where the editor's state holds it, else by its kind, its view then saying it is not shown in
-	// the editor. Null for a record of any other row.
+	// A route, trigger area, action, timer, group or objective <record> as a link selecting it by its GUID or row-17 index,
+	// named from the layout (MissionNames). Null for a record of any other row.
 	private ConditionUse? Selectable(MissionDocument source, MsnRecordId record) {
 		if (record.Row == 17) {
-			var objective = new ObjectiveSelection(record.Index);
-			return Records.Objective(record.Index) is { } shown
-				? new ConditionUse($"Objective {shown}", objective)
-				: new ConditionUse("Objective (not shown in the editor)", objective);
+			return new ConditionUse(_names.Objective(record.Index).Full, new ObjectiveSelection(record.Index));
 		}
 
 		if (record.Row is not (8 or 9 or 10 or 11 or 16) || source.RecordAt(record) is not { } found) {
@@ -228,33 +230,21 @@ internal sealed class ConditionEditor {
 		}
 
 		short guid = found.GUID;
-		if (source.ExportedIndex(record.Row, guid) is { } index) {
-			return Identity(record.Row, index);
-		}
-
-		EditorSelection target = record.Row switch {
-			8 => new RouteSelection(guid),
-			9 => new AreaSelection(guid),
-			10 => new ActionSelection(guid),
-			11 => new TimerSelection(guid),
-			_ => new GroupSelection(guid),
+		return record.Row switch {
+			8 => new ConditionUse(_names.Route(guid).Full, new RouteSelection(guid)),
+			9 => new ConditionUse(_names.Area(guid).Full, new AreaSelection(guid)),
+			10 => new ConditionUse(_names.Trigger(guid).Full, new ActionSelection(guid)),
+			11 => new ConditionUse(_names.Countdown(guid).Full, new TimerSelection(guid)),
+			_ => new ConditionUse(_names.GroupBrief(guid).Full, new GroupSelection(guid)),
 		};
-		string noun = record.Row switch { 8 => "Route", 9 => "Area", 10 => "Trigger", 11 => "Countdown", _ => "Group" };
-		return new ConditionUse(record.Row == 16 ? "Group (absent from the mission as opened)" : $"{noun} (not shown in the editor)", target);
 	}
 
+	// The roster record generated at <slot> of the block row <row> is written to, by its name (MissionNames.Object), a link when
+	// the scene has its object.
 	private ConditionUse Object(int row, int slot) {
-		var kind = row switch { 12 => MissionUnitKind.Mech, 13 => MissionUnitKind.Flyer, _ => MissionUnitKind.Base };
-		string noun = row switch { 12 => "Herc", 13 => "Flyer", _ => "Structure" };
-		if (_index.ObjectAt(kind, slot) is not { } placed) {
-			return new ConditionUse($"{noun} slot {slot} (not placed)", null);
-		}
-
-		if (placed.Object is Sim.BaseObject { Type.IsVehicle: true }) {
-			noun = "Ground vehicle";
-		}
-
-		return new ConditionUse($"{noun} slot {slot}", _index.Scene.SelectionOf(placed));
+		var key = new ObjectKey(row, _source.GuidOf(row - 5, slot));
+		var target = _index.Scene.ObjectOf(key) != null ? new ObjectSelection(row, key.Guid) : null;
+		return new ConditionUse(_names.Object(key).Full, target);
 	}
 
 	// What a record of <row> is, in the plural, for the count of those the editor's state leaves out.

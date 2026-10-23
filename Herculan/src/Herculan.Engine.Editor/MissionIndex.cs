@@ -10,7 +10,8 @@ namespace Herculan.Engine.Editor;
 /// keyed by GUID, every record included, a conditional one too: each object and the roster record it stands for
 /// (<see cref="ObjectKey"/>); each group's members, setup, pad, roster, side, the action it waits on and its display number;
 /// each route's waypoints and the groups walking or naming it; each area's shape and the actions testing it; each action's
-/// areas, what else fires it and what follows it (<see cref="TriggerWiring"/>); and the mission box. Built again by
+/// areas, what else fires it and what follows it (<see cref="TriggerWiring"/>); each objective's subject, its group and the
+/// order it reads; and the mission box. Built again by
 /// <see cref="SceneSync"/> after every edit, undo and redo, and placed again, keeping its objects, for a drag's preview
 /// (<see cref="Replan"/>), which moves nothing the wiring reads.
 /// </summary>
@@ -146,6 +147,67 @@ internal sealed class MissionIndex {
 
 	/// <summary>What fires row-10 GUID <paramref name="guid"/> besides its areas, and what follows it; <see cref="TriggerLinks.None"/> for none.</summary>
 	public TriggerLinks Links(short guid) => _links.GetValueOrDefault(guid) ?? TriggerLinks.None;
+
+	/// <summary>
+	/// The roster record an objective's or order's subject of <paramref name="kind"/> (1 a herc, 2 a flyer, 3 a structure or
+	/// ground vehicle) and GUID <paramref name="guid"/> names; null for a group (kind 0), none or an unknown kind.
+	/// </summary>
+	public static ObjectKey? SubjectKey(short kind, short guid) => kind switch {
+		1 => new ObjectKey(12, guid),
+		2 => new ObjectKey(13, guid),
+		3 => new ObjectKey(14, guid),
+		_ => null,
+	};
+
+	/// <summary>
+	/// The row-16 GUID of the group whose orders objective <paramref name="fields"/>'s condition 0 reads: its subject group, or
+	/// the group that places its subject; <c>-1</c> when there is none.
+	/// </summary>
+	public short SubjectGroup(MissionObjective58 fields) => fields.SubjectKind == 0
+		? Group(fields.SubjectRef) != null ? fields.SubjectRef : (short)-1
+		: SubjectKey(fields.SubjectKind, fields.SubjectRef) is { } key && Plan.Object(key) is { } planned ? planned.Group : (short)-1;
+
+	/// <summary>The objects objective <paramref name="fields"/> is asked of: its subject's object, or every member of its subject group.</summary>
+	public IReadOnlyList<SceneObject> SubjectObjects(MissionObjective58 fields) => fields.SubjectKind == 0
+		? MembersOf(fields.SubjectRef)
+		: SubjectKey(fields.SubjectKind, fields.SubjectRef) is { } key && ObjectOf(key) is { } placed ? [placed] : [];
+
+	/// <summary>
+	/// The order slot of group <paramref name="group"/> whose completion a condition-0 objective on row-8 GUID
+	/// <paramref name="route"/> reads: the first slot whose order names that route, as <c>Mission_GroupOrderCompleteOnRoute</c>
+	/// (<c>0041324c</c>) scans them (docs/retail/simulation/ai-goals.md#what-else-reads-an-order); <c>-1</c> for none.
+	/// </summary>
+	public int SlotOnRoute(short group, short route) {
+		if (route == -1 || Group(group) is not { } planned) {
+			return -1;
+		}
+
+		for (int slot = 0; slot < planned.Orders.Count; slot++) {
+			if (planned.Orders[slot] != -1 && Layout.Entry<MissionOrder22>(planned.Orders[slot])?.Fields.RouteRef == route) {
+				return slot;
+			}
+		}
+
+		return -1;
+	}
+
+	/// <summary>The objectives whose subject is group <paramref name="group"/>, in row-17 order.</summary>
+	public IEnumerable<LayoutObjective> ObjectivesAbout(short group) =>
+		Layout.Objectives.Where(objective => objective.Fields.SubjectKind == 0 && objective.Fields.SubjectRef == group);
+
+	/// <summary>The objectives whose subject is the roster record <paramref name="key"/> itself, in row-17 order.</summary>
+	public IEnumerable<LayoutObjective> ObjectivesAbout(ObjectKey key) =>
+		Layout.Objectives.Where(objective => SubjectKey(objective.Fields.SubjectKind, objective.Fields.SubjectRef) == key);
+
+	/// <summary>
+	/// The objectives that read the order in group <paramref name="group"/>'s slot <paramref name="slot"/>: those asking
+	/// whether the subject's group has finished its order on a route (condition 0) whose group is this one and whose route is
+	/// the first this group's orders name in that slot (<see cref="SlotOnRoute"/>), in row-17 order.
+	/// </summary>
+	public IReadOnlyList<LayoutObjective> ObjectivesReadingOrder(short group, int slot) => Layout.Objectives
+		.Where(objective => objective.Fields.ConditionCode == MissionObjective.ConditionOrderComplete
+			&& SubjectGroup(objective.Fields) == group && SlotOnRoute(group, objective.Fields.RouteRef) == slot)
+		.ToList();
 
 	private static List<MissionBasePad> PadsOf(LayoutPlan plan) =>
 		plan.Groups.Select(group => group.Pad).OfType<MissionBasePad>().ToList();

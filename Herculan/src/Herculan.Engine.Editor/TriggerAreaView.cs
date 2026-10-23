@@ -16,6 +16,7 @@ namespace Herculan.Engine.Editor;
 /// </summary>
 internal sealed class TriggerAreaView {
 	private readonly GeneratedIndex _index;
+	private readonly MissionNames _names;
 	private readonly PointMover _mover;
 	private readonly AreaEditor _editor;
 	private readonly AreaPlacing _placing;
@@ -31,9 +32,11 @@ internal sealed class TriggerAreaView {
 	/// <param name="actions">Creates a trigger testing the area.</param>
 	/// <param name="drawTrigger">Draws a trigger's wiring by its row-10 GUID, read-only, as the trigger view summarizes it.</param>
 	/// <param name="references">Draws what references something, one line per record.</param>
-	public TriggerAreaView(GeneratedIndex index, PointMover mover, AreaEditor editor, AreaPlacing placing, ActionEditor actions,
-			Action<short> drawTrigger, Action<DeleteNamers> references) {
+	/// <param name="names">What the title names the area by.</param>
+	public TriggerAreaView(GeneratedIndex index, MissionNames names, PointMover mover, AreaEditor editor, AreaPlacing placing,
+			ActionEditor actions, Action<short> drawTrigger, Action<DeleteNamers> references) {
 		_index = index;
+		_names = names;
 		_mover = mover;
 		_editor = editor;
 		_placing = placing;
@@ -51,7 +54,12 @@ internal sealed class TriggerAreaView {
 			return;
 		}
 
-		ImGui.Text($"Trigger area {reference}");
+		var name = _names.Area(guid);
+		EditorText.Wrapped(name.Text);
+		if (name.Number is { } number) {
+			ImGui.TextDisabled(number);
+		}
+
 		ImGui.Separator();
 		string? reason = _editor.WhyFixed(guid);
 		bool fixedNow = reason != null || _placing.Active;

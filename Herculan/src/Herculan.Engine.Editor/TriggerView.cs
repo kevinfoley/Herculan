@@ -15,9 +15,6 @@ namespace Herculan.Engine.Editor;
 /// each trigger testing it. What each part does in play is docs/retail/simulation/mission-deployment.md#the-four-ways-an-action-activates.
 /// </summary>
 internal sealed class TriggerView {
-	private const int MechRow = 12;
-	private const int FlyerRow = 13;
-	private const int BaseRow = 14;
 	private const int MissionGroupRow = 16;
 
 	private readonly MissionIndex _index;
@@ -38,6 +35,8 @@ internal sealed class TriggerView {
 
 	private MissionLayout Layout => _index.Layout;
 
+	private MissionNames Names => _links.Names;
+
 	/// <summary>Row-10 GUID <paramref name="guid"/>'s view; nothing for a GUID the layout has no trigger for.</summary>
 	public void Draw(short guid) {
 		if (Layout.Entry<MissionAction82>(guid)?.Fields is not { } fields) {
@@ -45,7 +44,12 @@ internal sealed class TriggerView {
 		}
 
 		bool locked = _editor.WhyFixed(guid) != null;
-		ImGui.Text(MissionText.TriggerName(Layout, guid));
+		var name = Names.Trigger(guid);
+		EditorText.Wrapped(name.Text);
+		if (name.Number is { } number) {
+			ImGui.TextDisabled(number);
+		}
+
 		ImGui.Separator();
 		DrawWho(guid, fields, locked);
 		DrawAreas(guid, locked);
@@ -65,7 +69,7 @@ internal sealed class TriggerView {
 
 		ImGui.AlignTextToFramePadding();
 		if (_selection.Is(new ActionSelection(guid))) {
-			ImGui.Text(MissionText.TriggerName(Layout, guid));
+			NameText.Draw(Names.Trigger(guid));
 		} else {
 			_links.Trigger(guid);
 		}
@@ -124,12 +128,12 @@ internal sealed class TriggerView {
 
 		short target = ActionEditing.Target(Source, guid);
 		var choices = Targets(row);
-		string preview = target == -1 ? "No target chosen" : choices.FirstOrDefault(choice => choice.Guid == target).Label ?? "";
+		var preview = target == -1 ? new RecordName("No target chosen") : choices.FirstOrDefault(choice => choice.Guid == target).Name;
 		ImGui.SetNextItemWidth(-1f);
 		ImGui.BeginDisabled(locked);
-		if (ImGui.BeginCombo("##target", preview)) {
-			foreach (var (choice, label) in choices) {
-				if (ImGui.Selectable($"{label}##{choice}", choice == target) && choice != target) {
+		if (NameText.BeginCombo("##target", preview)) {
+			foreach (var (choice, name) in choices) {
+				if (NameText.Selectable(name, $"target{choice}", choice == target) && choice != target) {
 					_editor.RequestTarget(guid, choice);
 				}
 			}
@@ -161,25 +165,14 @@ internal sealed class TriggerView {
 	// The row a target of <type> is a record of: 12 to 14 for types 7 to 9, 16 for type 10; null for the others.
 	private static int? TargetRow(short type) => ActionEditing.TargetBlock(type) is { } block ? block + 5 : null;
 
-	// Every record of <row> a target can be, by GUID in layout order, named as the outliner names it.
-	private IReadOnlyList<(short Guid, string Label)> Targets(int row) {
+	// Every record of <row> a target can be, by GUID in layout order, by its name.
+	private IReadOnlyList<(short Guid, RecordName Name)> Targets(int row) {
 		if (row == MissionGroupRow) {
-			return _index.Groups.Select(group => (group.Guid, MissionText.GroupName(group))).ToList();
+			return _index.Groups.Select(group => (group.Guid, Names.Group(group.Guid))).ToList();
 		}
 
-		return Layout.Entries(row).Select(entry => (entry.Guid, _index.Plan.Object(new ObjectKey(row, entry.Guid)) is { } planned
-			? MissionText.ObjectName(_index, planned)
-			: $"{RosterNoun(row)} type {TypeOf(entry.Fields)} (in no group)")).ToList();
+		return Layout.Entries(row).Select(entry => (entry.Guid, Names.Object(new ObjectKey(row, entry.Guid)))).ToList();
 	}
-
-	private static string RosterNoun(int row) => row switch { MechRow => "Herc", FlyerRow => "Flyer", _ => "Structure" };
-
-	private static short TypeOf(MapObject fields) => fields switch {
-		MechRosterEntry144 herc => herc.TypeIndex,
-		FlyerRosterEntry102 flyer => flyer.TypeIndex,
-		BaseRosterEntry62 structure => structure.TypeIndex,
-		_ => -1,
-	};
 
 	// "enters one of these areas:", each a choice of any area of the mission with Remove and a link, and Add after the last.
 	private void DrawAreas(short guid, bool locked) {
@@ -191,7 +184,7 @@ internal sealed class TriggerView {
 			ImGui.PushID($"area{slot}");
 			ImGui.BeginDisabled(locked);
 			ImGui.SetNextItemWidth(ScaledImGui.Scaled(170f));
-			if (AreaCombo("##area", PanelLinks.AreaName(_index, area)) is { } chosen && chosen != area) {
+			if (AreaCombo("##area", Names.Area(area)) is { } chosen && chosen != area) {
 				_editor.RequestArea(guid, slot, chosen);
 			}
 
@@ -212,7 +205,7 @@ internal sealed class TriggerView {
 		string? why = _editor.WhyNoAddArea(guid);
 		ImGui.BeginDisabled(locked || why != null);
 		ImGui.SetNextItemWidth(ScaledImGui.Scaled(170f));
-		if (AreaCombo("##addarea", "Add an area") is { } added) {
+		if (AreaCombo("##addarea", new RecordName("Add an area")) is { } added) {
 			_editor.RequestAddArea(guid, added);
 		}
 
@@ -228,11 +221,11 @@ internal sealed class TriggerView {
 	}
 
 	// A combo of every area of the mission, in layout order; answers the row-9 GUID of the one chosen, or null.
-	private short? AreaCombo(string id, string preview) {
+	private short? AreaCombo(string id, RecordName preview) {
 		short? chosen = null;
-		if (ImGui.BeginCombo(id, preview)) {
+		if (NameText.BeginCombo(id, preview)) {
 			foreach (var area in Layout.Entries<TriggerArea12>()) {
-				if (ImGui.Selectable($"{PanelLinks.AreaName(_index, area.Guid)}##{area.Guid}")) {
+				if (NameText.Selectable(Names.Area(area.Guid), $"area{area.Guid}", false)) {
 					chosen = area.Guid;
 				}
 			}
@@ -299,7 +292,7 @@ internal sealed class TriggerView {
 		ImGui.TextWrapped("Cannot be deleted while these reference it:");
 		foreach (short countdown in blockers.Countdowns) {
 			ImGui.PushID($"countdown{countdown}");
-			_links.ShortCountdown(countdown);
+			_links.Countdown(countdown);
 			ImGui.PopID();
 		}
 
@@ -317,8 +310,8 @@ internal sealed class TriggerView {
 
 		foreach (var order in blockers.Orders) {
 			ImGui.PushID($"order{order.Group}.{order.Slot}");
-			string group = _index.Group(order.Group) is { } planned ? $"Group {planned.Number}" : "A group";
-			_links.Link($"{group}, {MissionText.Ordinal(order.Slot + 1)} order", new GroupSelection(order.Group));
+			var group = Names.GroupBrief(order.Group);
+			_links.Link(group with { Text = $"{MissionText.Ordinal(order.Slot + 1)} order of {group.Text}" }, new GroupSelection(order.Group));
 			ImGui.PopID();
 		}
 

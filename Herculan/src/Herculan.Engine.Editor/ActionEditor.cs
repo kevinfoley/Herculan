@@ -1,6 +1,5 @@
 using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Io.Transform.Common;
-using Herculan.Engine.World;
 
 namespace Herculan.Engine.Editor;
 
@@ -27,9 +26,9 @@ internal sealed record TriggerDeleteBlockers(string? Fixed, IReadOnlyList<short>
 /// its arrival how its waiting groups arrive.
 ///
 /// <para>Triggers, areas, groups and countdowns are taken by their GUIDs, as the selections and the views' choices name them,
-/// and any trigger the layout has is edited, a conditional one included. An object's own two triggers are still set from its
-/// generated placement (<see cref="RequestObjectAction"/>), as the object view reads the generation. The edits wait for the
-/// frame's ImGui to be rendered (<see cref="RunRequest"/>), since the rebuild changes what the panels list.</para>
+/// and any trigger the layout has is edited, a conditional one included; an object's own two triggers by the roster record it
+/// stands for (<see cref="RequestObjectAction"/>). The edits wait for the frame's ImGui to be rendered
+/// (<see cref="RunRequest"/>), since the rebuild changes what the panels list.</para>
 /// </summary>
 internal sealed class ActionEditor {
 	private const int ActionRow = 10;
@@ -194,35 +193,20 @@ internal sealed class ActionEditor {
 	public void RequestDeployment(short group, short action) =>
 		_requested = () => WhyNoDeployment(group) ?? Commit(() => ActionWiring.SetDeployment(_source, group, action));
 
-	/// <summary>Why <paramref name="placement"/>'s own triggers cannot be set, or null when they can.</summary>
-	public string? WhyNoObjectAction(MissionPlacement placement) {
-		if (placement.IsPlayerLance) {
-			return "A machine of the player's squad is built from player.mec, not its record.";
-		}
+	/// <summary>Why the roster record <paramref name="key"/>'s own triggers cannot be set, or null when they can.</summary>
+	public string? WhyNoObjectAction(ObjectKey key) =>
+		_source.Layout.Entry(key.Row, key.Guid) == null ? "Its record is not in the file." : ActionWiring.WhyNoObjectAction(_source, key.Row, key.Guid);
 
-		var (row, guid) = Roster(placement);
-		return guid == -1 ? "Its record is not in the file." : ActionWiring.WhyNoObjectAction(_source, row, guid);
-	}
-
-	/// <summary>Why <paramref name="placement"/>'s engaged trigger, or with <paramref name="defeated"/> its defeated one, cannot be none, or null.</summary>
-	public string? WhyNoNone(MissionPlacement placement, bool defeated) {
-		if (WhyNoObjectAction(placement) != null) {
-			return null;
-		}
-
-		var (row, guid) = Roster(placement);
-		return ActionWiring.WhyNoNone(_source, MsnField.RosterAction(row, defeated), guid);
-	}
+	/// <summary>Why <paramref name="key"/>'s engaged trigger, or with <paramref name="defeated"/> its defeated one, cannot be none, or null.</summary>
+	public string? WhyNoNone(ObjectKey key, bool defeated) =>
+		WhyNoObjectAction(key) != null ? null : ActionWiring.WhyNoNone(_source, MsnField.RosterAction(key.Row, defeated), key.Guid);
 
 	/// <summary>
-	/// Asks for <paramref name="placement"/> to fire row-10 GUID <paramref name="action"/>, or none for <c>-1</c>, when engaged,
-	/// or with <paramref name="defeated"/> when defeated.
+	/// Asks for the roster record <paramref name="key"/> to fire row-10 GUID <paramref name="action"/>, or none for <c>-1</c>,
+	/// when engaged, or with <paramref name="defeated"/> when defeated.
 	/// </summary>
-	public void RequestObjectAction(MissionPlacement placement, bool defeated, short action) {
-		var (row, guid) = Roster(placement);
-		_requested = () => WhyNoObjectAction(placement)
-			?? Commit(() => ActionWiring.SetObjectAction(_source, row, guid, defeated, action));
-	}
+	public void RequestObjectAction(ObjectKey key, bool defeated, short action) =>
+		_requested = () => WhyNoObjectAction(key) ?? Commit(() => ActionWiring.SetObjectAction(_source, key.Row, key.Guid, defeated, action));
 
 	/// <summary>Makes the edit asked for since the last call, if any; <see cref="Failure"/> says why one could not be made.</summary>
 	public void RunRequest() {
@@ -234,18 +218,6 @@ internal sealed class ActionEditor {
 
 	// Asks for <edit> of <action>'s records, or of the records wired to it, once the frame is drawn; refused while it is fixed.
 	private void Ask(short action, Func<MsnEdit> edit) => _requested = () => WhyFixed(action) ?? Commit(edit);
-
-	// The roster row and the GUID of the record that created a placement's slot.
-	private (int Row, short Guid) Roster(MissionPlacement placement) {
-		int block = RosterBlock(placement.Kind);
-		return (block + 5, _source.GuidOf(block, placement.SlotIndex));
-	}
-
-	private static int RosterBlock(MissionUnitKind kind) => kind switch {
-		MissionUnitKind.Mech => 7,
-		MissionUnitKind.Flyer => 8,
-		_ => 9
-	};
 
 	// Makes the change, rebuilding from it, records it as one step of the history, and selects the trigger of row-10 GUID
 	// <selected>, when one is given.

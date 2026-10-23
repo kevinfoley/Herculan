@@ -428,7 +428,7 @@ internal sealed class PointMover {
 	private static int FlyerHeight(int z) => z == 0 ? FlyerObject.DefaultHoverHeight : z;
 
 	private string Describe(MoveTarget target) => target switch {
-		ObjectTarget { Key: var key } => _index.ObjectOf(key) is { } placed ? MissionText.Describe(placed) : "the object",
+		ObjectTarget { Key: var key } => _index.Plan.Object(key)?.TypeName ?? "the object",
 		GroupTarget group => $"group {_index.Group(group.Guid)?.Number}",
 		_ => _features.Describe(target)
 	};

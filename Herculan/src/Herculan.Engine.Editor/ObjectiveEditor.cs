@@ -10,8 +10,8 @@ namespace Herculan.Engine.Editor;
 /// the editor's state again (<see cref="SceneSync"/>): block 12 changes, a create or a delete adds or removes a
 /// record, and a text edit changes <c>mission.str</c>.
 ///
-/// <para>Objectives are taken by their index in row 17, as the selections name them, and one not shown in the editor is not
-/// edited; subjects and routes by their GUIDs. The edits wait for the frame's ImGui to be rendered
+/// <para>Objectives are taken by their index in row 17, as the selections name them, any record of the row, a conditional
+/// one included; subjects and routes by their GUIDs. The edits wait for the frame's ImGui to be rendered
 /// (<see cref="RunRequest"/>), since the rebuild changes what the panels list.</para>
 /// </summary>
 internal sealed class ObjectiveEditor {
@@ -19,16 +19,13 @@ internal sealed class ObjectiveEditor {
 	private const int BaseRow = 14;
 
 	private readonly MissionDocument _source;
-	private readonly GeneratedRecords _records;
 	private readonly PointMover _mover;
 	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private Func<string?>? _requested;
 
-	public ObjectiveEditor(MissionDocument source, GeneratedRecords records, PointMover mover, SceneSync sync,
-			SelectionState selection) {
+	public ObjectiveEditor(MissionDocument source, PointMover mover, SceneSync sync, SelectionState selection) {
 		_source = source;
-		_records = records;
 		_mover = mover;
 		_sync = sync;
 		_selection = selection;
@@ -41,7 +38,8 @@ internal sealed class ObjectiveEditor {
 	public string? Failure { get; private set; }
 
 	/// <summary>Why row-17 record <paramref name="record"/> cannot be edited, or null when it can.</summary>
-	public string? WhyFixed(int record) => _records.Objective(record) == null ? GeneratedRecords.NotShown : null;
+	public string? WhyFixed(int record) =>
+		_source.Layout.Objectives.Any(objective => objective.Index == record) ? null : "That objective is not in the mission.";
 
 	/// <summary>
 	/// The subject an objective about <paramref name="selection"/> would have, as its kind (0 a group, 1 a herc, 3 a
@@ -110,11 +108,10 @@ internal sealed class ObjectiveEditor {
 	public void RequestRoute(int record, short route) => Ask(record, () => ObjectiveEditing.SetRoute(_source, record, route));
 
 	/// <summary>
-	/// The routes, by block-3 index, condition 0 of row-17 record <paramref name="record"/> can be about
-	/// (<see cref="ObjectiveEditing.RouteChoices"/>); none when it is not shown in the editor.
+	/// The routes, by row-8 GUID, condition 0 of row-17 record <paramref name="record"/> can be about
+	/// (<see cref="ObjectiveEditing.RouteChoices"/>); none when the row has no such record.
 	/// </summary>
-	public IReadOnlyList<int> RouteChoices(int record) =>
-		_records.Objective(record) is { } objective ? ObjectiveEditing.RouteChoices(_source, objective) : [];
+	public IReadOnlyList<short> RouteChoices(int record) => WhyFixed(record) == null ? ObjectiveEditing.RouteChoices(_source, record) : [];
 
 	/// <summary>Why no counter write can be added to <paramref name="record"/>, or null when one can.</summary>
 	public string? WhyNoAddPair(int record) => WhyFixed(record) ?? ObjectiveEditing.WhyNoAddPair(_source, record);
@@ -131,7 +128,7 @@ internal sealed class ObjectiveEditor {
 
 	/// <summary>
 	/// The text of each line of <paramref name="record"/>'s failure text as it is shown, or null for a line it has no text
-	/// for in the editor; empty when it has no failure text or is not shown in the editor.
+	/// for in the editor; empty when it has no failure text or the row has no such record.
 	/// </summary>
 	public IReadOnlyList<string?> FailureLines(int record) {
 		if (WhyFixed(record) != null) {

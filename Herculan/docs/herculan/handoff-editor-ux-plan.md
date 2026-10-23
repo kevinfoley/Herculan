@@ -62,11 +62,11 @@ Phases 2 to 6 are carried out by [handoff-editor-msn-scene.md](handoff-editor-ms
 - A timer is a countdown, "Countdown 2: 30 s after trigger 4", its fired list with no empty slots (R11). The "Engaged" distance in metres (R17).
 - Every label, link and refusal reason says trigger and countdown.
 
-### 5. Names instead of numbers
+### 5. Names instead of numbers (done)
 
-- Triggers, routes, groups and objects named by what they are and do, the number dimmed after (R2, R4, R37, R42); delete blockers likewise (R41).
-- Objectives as win and lose conditions, "Must happen: Cybrid hercs (group 4) are written off"; the F11 lines listed apart, with a note that they are only text (R12 to R14); the status-alert text renamed and disabled on a lose condition (R13).
-- Orders as "1st order: Search and destroy, target ...", a later order's route disabled unless an objective reads it (R15).
+- Triggers, routes, areas, countdowns, groups and objects named by what they are and do, the number dimmed after, in titles, links, pickers, outliner rows, delete blockers and the Toolbox's Join (R2, R4, R37, R41's order numbering, R42); a long name cut to fit, whole on hover ([Names](handoff-editor-mission-logic.md#names), done).
+- Objectives as win and lose conditions, "Must happen: Cybrid hercs (group 4) are written off", with Role, Who and What happens; the F11 lines listed apart, with a note that they are only text (R12 to R14); the status alert text renamed and disabled on a lose condition (R13) ([Objectives](handoff-editor-mission-logic.md#objectives), done).
+- Orders as "1st order" with Does, Route, Target and Ends when, each verb with what it does; a later order's route disabled unless an objective reads it, which is listed as a link (R15); the shared-order note dropped (R38's order note) ([Orders](handoff-editor-mission-logic.md#orders), done).
 
 ### 6. Sweep
 

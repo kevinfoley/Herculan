@@ -1,12 +1,8 @@
-using HercWorks.Core.Data.File;
 using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Data.Struct;
 using HercWorks.Core.Io.Transform.Common;
-using Herculan.Engine.Cockpit;
-using Herculan.Engine.Content;
 using Herculan.Engine.Render;
 using Herculan.Engine.Shell;
-using Herculan.Engine.World;
 
 namespace Herculan.Engine.Editor;
 
@@ -50,11 +46,8 @@ internal sealed class RandomChoices {
 
 	private readonly MissionDocument _source;
 	private readonly MissionIndex _index;
+	private readonly MissionNames _names;
 	private readonly MissionSquad _squad;
-	private readonly UnitTypeNames _mechs;
-	private readonly UnitTypeNames _flyers;
-	private readonly BaseTypeTable _bases;
-	private readonly StringFile? _strings;
 
 	// What has been read of the layout _readFor, cleared once an edit builds another.
 	private MissionLayout? _readFor;
@@ -62,15 +55,13 @@ internal sealed class RandomChoices {
 	private readonly Dictionary<short, VariantTable?> _tables = new();
 	private readonly Dictionary<short, (IReadOnlyList<ChoiceUser> Users, int Others)> _users = new();
 
+	/// <param name="names">What the records picking from a choice are named by.</param>
 	/// <param name="squad">Which Hercs the mission's squad pilots, which says when a squad HERC's pick has no effect.</param>
-	public RandomChoices(MissionDocument source, MissionIndex index, GameContent content, MissionSquad squad) {
+	public RandomChoices(MissionDocument source, MissionIndex index, MissionNames names, MissionSquad squad) {
 		_source = source;
 		_index = index;
+		_names = names;
 		_squad = squad;
-		_mechs = UnitTypeNames.LoadMechs(content);
-		_flyers = UnitTypeNames.LoadFlyers(content);
-		_bases = BaseTypeTable.Load(content);
-		_strings = SimStrings.Load(content);
 	}
 
 	/// <summary>The mission as its <c>.MSN</c>.</summary>
@@ -275,8 +266,8 @@ internal sealed class RandomChoices {
 		return new ChoiceUser(label, target, shown, other, unused);
 	}
 
-	// A record that picks, by what the designer sees: an object by its name and its group's number, a squad herc as the player's
-	// or a squadmate's HERC, a route by its number in the Routes list.
+	// A record that picks, by what the designer sees (MissionNames): an object by its name and its group, a squad herc as the
+	// player's or a squadmate's HERC, a route by its shape and who walks it.
 	private (string Label, EditorSelection? Target, ChoiceUnused? Unused) Identity(LayoutEntry entry) {
 		var (label, target) = Named(entry.Row, entry.Guid);
 		var key = new ObjectKey(entry.Row, entry.Guid);
@@ -293,23 +284,22 @@ internal sealed class RandomChoices {
 			case 7:
 				return ("A heading", null);
 			case RouteRow:
-				return ($"Route {MissionText.NumberIn(layout, row, guid)}", new RouteSelection(guid));
+				return (_names.Route(guid).Full, new RouteSelection(guid));
 			case 9:
-				return ($"Area {MissionText.NumberIn(layout, row, guid)}", new AreaSelection(guid));
+				return (_names.Area(guid).Full, new AreaSelection(guid));
 			case 10:
-				return (MissionText.TriggerName(layout, guid), new ActionSelection(guid));
+				return (_names.Trigger(guid).Full, new ActionSelection(guid));
 			case 11:
-				return (MissionText.CountdownName(layout, guid), new TimerSelection(guid));
+				return (_names.Countdown(guid).Full, new TimerSelection(guid));
 			case 15:
 				return ("An order", null);
 			case 16:
-				return (_index.Group(guid) is { } placed ? $"Group {placed.Number}" : "A group", new GroupSelection(guid));
+				return (_names.GroupBrief(guid).Full, new GroupSelection(guid));
 		}
 
 		var key = new ObjectKey(row, guid);
 		if (_index.Plan.Object(key) is not { } planned) {
-			string type = layout.Entry(row, guid)?.Fields is { } fields ? ShortName(fields) : "A record";
-			return ($"{type} (no group places it)", null);
+			return (layout.Entry(row, guid) != null ? _names.Object(key).Full : "A record", null);
 		}
 
 		EditorSelection? target = _index.ObjectOf(key) != null ? new ObjectSelection(row, guid) : null;
@@ -317,9 +307,7 @@ internal sealed class RandomChoices {
 			return (planned.MemberIndex == 0 ? "The player's HERC" : $"Squadmate {planned.MemberIndex}'s HERC", target);
 		}
 
-		return (_index.Group(planned.Group) is { } group
-			? $"{MissionText.MemberName(_index, planned)} (group {group.Number})"
-			: MissionText.MemberName(_index, planned), target);
+		return (_names.Object(key).Full, target);
 	}
 
 	// Why a squad herc's pick has no effect, by the launch's rule (MissionSquad) and the squad build's list: group 0's members
@@ -342,32 +330,15 @@ internal sealed class RandomChoices {
 		return planned.MemberIndex > run ? ChoiceUnused.AfterGap : planned.MemberIndex == run ? ChoiceUnused.LeftBehind : null;
 	}
 
-	private (string Label, EditorSelection? Target) ObjectiveName(int record) {
-		var objectives = _source.Layout.Objectives;
-		for (int number = 0; number < objectives.Count; number++) {
-			if (objectives[number].Index == record) {
-				return ($"Objective {number}", new ObjectiveSelection(record));
-			}
-		}
-
-		return ("An objective", new ObjectiveSelection(record));
-	}
+	private (string Label, EditorSelection? Target) ObjectiveName(int record) =>
+		(_names.Objective(record).Full, new ObjectiveSelection(record));
 
 	private MapObject? Record(VariantAlternative alternative) => _source.RecordAt(alternative.Record);
 
-	// A record's type by name: a herc's chassis and a flyer's type as nam\MECHS.NAM and nam\FLYERS.NAM list them, a
-	// structure's or ground vehicle's the name the MFD prints.
-	private string ShortName(MapObject? record) => record switch {
-		MechRosterEntry144 herc => _mechs[herc.TypeIndex] ?? $"Herc type {herc.TypeIndex}",
-		FlyerRosterEntry102 flyer => _flyers[flyer.TypeIndex] ?? $"Flyer type {flyer.TypeIndex}",
-		BaseRosterEntry62 structure when _bases[structure.TypeIndex] is { } type
-				&& MfdStatusSubject.BaseName(type, _strings) is { } name && !string.IsNullOrWhiteSpace(name) => name,
-		BaseRosterEntry62 structure => $"{(IsVehicle(structure) ? "Ground vehicle" : "Structure")} type {structure.TypeIndex}",
-		WaypointGroup => "Route",
-		_ => "Record",
-	};
+	// A record's type by name (RosterTypeNames); a route option is a route.
+	private string ShortName(MapObject? record) => record is WaypointGroup ? "Route" : _names.Types.Name(record);
 
-	private bool IsVehicle(BaseRosterEntry62 structure) => _bases[structure.TypeIndex]?.IsVehicle == true;
+	private bool IsVehicle(BaseRosterEntry62 structure) => _names.Types.IsVehicle(structure);
 
 	// A herc's weapons by name, its empty mounts and the slots past its capacity left out.
 	private static string Weapons(MechRosterEntry144 herc) {

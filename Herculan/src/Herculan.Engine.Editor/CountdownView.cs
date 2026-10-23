@@ -5,8 +5,8 @@ using ImGuiNET;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The Properties panel's view of a countdown (a row-11 action timer), from the <c>.MSN</c>'s layout by GUID: its title with its
-/// delay and what starts it, the trigger that starts it (none: the mission's start), its delay in seconds, the triggers it
+/// The Properties panel's view of a countdown (a row-11 action timer), from the <c>.MSN</c>'s layout by GUID: its name, its
+/// delay and what starts it (<see cref="MissionNames.Countdown"/>), the trigger that starts it (none: the mission's start), its delay in seconds, the triggers it
 /// fires when it runs out, each a choice that changes it (<see cref="TimerEditor"/>), with links, and a Delete button. What a
 /// countdown does is docs/retail/simulation/mission-deployment.md#action-timers--actiontimer_tick-004230a4.
 /// </summary>
@@ -29,7 +29,12 @@ internal sealed class CountdownView {
 		}
 
 		bool locked = _editor.WhyFixed(guid) != null;
-		EditorText.Wrapped($"{MissionText.CountdownName(_index.Layout, guid)}: {MissionText.CountdownSummary(_index, countdown)}");
+		var name = _links.Names.Countdown(guid);
+		EditorText.Wrapped(name.Text);
+		if (name.Number is { } number) {
+			ImGui.TextDisabled(number);
+		}
+
 		ImGui.Separator();
 		DrawStart(guid, countdown, locked);
 		DrawDelay(guid, countdown.Delay, locked);
@@ -50,7 +55,7 @@ internal sealed class CountdownView {
 		short start = TimerEditing.Start(_editor.Source, guid);
 		Label("Starts when");
 		ImGui.BeginDisabled(locked);
-		if (ActionChoice.Draw("##start", start, _index, none: "The mission starts") is { } chosen) {
+		if (ActionChoice.Draw("##start", start, _index, _links.Names, none: "The mission starts") is { } chosen) {
 			_editor.RequestStart(guid, chosen);
 		}
 
@@ -93,7 +98,7 @@ internal sealed class CountdownView {
 			ImGui.PushID($"fired{slot}");
 			ImGui.BeginDisabled(locked);
 			ImGui.SetNextItemWidth(ScaledImGui.Scaled(150f));
-			if (ActionChoice.Draw("##fired", trigger, _index, offerNone: false) is { } chosen) {
+			if (ActionChoice.Draw("##fired", trigger, _index, _links.Names, offerNone: false) is { } chosen) {
 				_editor.RequestFired(guid, slot, chosen);
 			}
 
@@ -114,9 +119,9 @@ internal sealed class CountdownView {
 		string? why = _editor.WhyNoAddFired(guid);
 		ImGui.BeginDisabled(locked || why != null);
 		ImGui.SetNextItemWidth(ScaledImGui.Scaled(150f));
-		if (ImGui.BeginCombo("##addfired", "Add a trigger")) {
+		if (NameText.BeginCombo("##addfired", new RecordName("Add a trigger"))) {
 			foreach (var trigger in _index.Actions) {
-				if (ImGui.Selectable($"Trigger {trigger.Number}##{trigger.Guid}")) {
+				if (NameText.Selectable(_links.Names.Trigger(trigger.Guid), $"add{trigger.Guid}", false)) {
 					_editor.RequestAddFired(guid, trigger.Guid);
 				}
 			}

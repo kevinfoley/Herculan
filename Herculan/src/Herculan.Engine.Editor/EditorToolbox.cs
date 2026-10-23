@@ -52,7 +52,7 @@ internal sealed class EditorToolbox {
 	private bool _join;
 
 	// The group the selection is or belongs to, as the last frame drawn was told, and why an entry of each kind cannot
-	// join it; and the group an add joins when "Join the selected group" is ticked, null while the entry chosen cannot.
+	// join it; and the group an add joins when "Join" is ticked, null while the entry chosen cannot.
 	private int? _selectedGroup;
 	private Func<ToolboxKind, string?>? _whyNotJoin;
 	private int? _joinGroup;
@@ -103,6 +103,7 @@ internal sealed class EditorToolbox {
 
 	/// <param name="enabled">False while nothing can be added, such as during a move.</param>
 	/// <param name="selectedGroup">The herc, flyer or structure group the selection is or belongs to, which an add can join; or null.</param>
+	/// <param name="selectedGroupName">What <paramref name="selectedGroup"/> is called (<see cref="MissionNames.GroupBrief"/>), or null.</param>
 	/// <param name="groupKind">The entry kind <paramref name="selectedGroup"/>'s members are, whose join is checked while no entry is chosen.</param>
 	/// <param name="whyNotJoin">
 	/// Why <paramref name="selectedGroup"/> cannot take an entry of a kind, or null when it can: the check that kind's add
@@ -116,7 +117,7 @@ internal sealed class EditorToolbox {
 	/// Draws the placing tools' entries (<see cref="RoutePlacing.DrawToolboxEntry"/>, <see cref="AreaPlacing.DrawToolboxEntry"/>)
 	/// above the lists, or null.
 	/// </param>
-	public void Draw(Vector2 display, bool enabled, int? selectedGroup, ToolboxKind groupKind,
+	public void Draw(Vector2 display, bool enabled, int? selectedGroup, string? selectedGroupName, ToolboxKind groupKind,
 			Func<ToolboxKind, string?>? whyNotJoin, string? whyNoHerc, string? whyNoFlyer, string? whyNoVehicle,
 			string? whyNoStructure, Action? routeEntry = null) {
 		_whyNoHerc = whyNoHerc;
@@ -137,7 +138,7 @@ internal sealed class EditorToolbox {
 				ImGui.Separator();
 			}
 
-			DrawContents(enabled, selectedGroup, whyNot);
+			DrawContents(enabled, selectedGroupName, whyNot);
 		}
 
 		ImGui.End();
@@ -157,13 +158,13 @@ internal sealed class EditorToolbox {
 		}
 	}
 
-	private void DrawContents(bool enabled, int? selectedGroup, string? whyNotJoin) {
+	private void DrawContents(bool enabled, string? selectedGroup, string? whyNotJoin) {
 		ImGui.TextWrapped("Drag an entry onto the ground, or double-click it to add it in the middle of the view.");
 		// Unticked while it cannot join, since an add then gets a group of its own; ticked again once it can.
 		bool canJoin = _joinGroup != null;
 		bool join = _join && canJoin;
 		ImGui.BeginDisabled(!canJoin);
-		if (ImGui.Checkbox(selectedGroup is { } group ? $"Join the selected group {group}" : "Join the selected group", ref join)) {
+		if (ImGui.Checkbox(selectedGroup is { } group ? $"Join {group}###join" : "Join the selected group###join", ref join)) {
 			_join = join;
 		}
 

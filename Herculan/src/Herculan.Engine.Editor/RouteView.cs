@@ -16,6 +16,7 @@ internal sealed class RouteView {
 	private const int MarkedWaypoints = 10;
 
 	private readonly GeneratedIndex _index;
+	private readonly MissionNames _names;
 	private readonly SelectionState _selection;
 	private readonly PointMover _mover;
 	private readonly RouteEditor _editor;
@@ -30,9 +31,11 @@ internal sealed class RouteView {
 	/// <param name="groupLink">Draws a link that selects a group.</param>
 	/// <param name="references">Draws what references something, one line per record, given the groups whose own route field references it.</param>
 	/// <param name="choice">Draws, for a route GUID whose waypoints are an option of a random choice, which one (<see cref="VariantView.DrawRouteChoice"/>).</param>
-	public RouteView(GeneratedIndex index, SelectionState selection, PointMover mover, RouteEditor editor, RoutePlacing placing,
-			Action<int> groupLink, Action<DeleteNamers, IReadOnlyList<int>> references, Action<short> choice) {
+	/// <param name="names">What the title names the route by.</param>
+	public RouteView(GeneratedIndex index, MissionNames names, SelectionState selection, PointMover mover, RouteEditor editor,
+			RoutePlacing placing, Action<int> groupLink, Action<DeleteNamers, IReadOnlyList<int>> references, Action<short> choice) {
 		_index = index;
+		_names = names;
 		_selection = selection;
 		_mover = mover;
 		_editor = editor;
@@ -51,7 +54,12 @@ internal sealed class RouteView {
 			return;
 		}
 
-		ImGui.Text($"Route {route.Reference}");
+		var name = _names.Route(selected.Guid);
+		EditorText.Wrapped(name.Text);
+		if (name.Number is { } number) {
+			ImGui.TextDisabled(number);
+		}
+
 		ImGui.Separator();
 		ImGui.Text(placed.Closed ? "Closed: a loop walked for ever" : "Open: walking it to the end completes the order");
 

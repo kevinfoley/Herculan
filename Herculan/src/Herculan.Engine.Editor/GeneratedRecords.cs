@@ -5,7 +5,7 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// Where the record a selection names stands in the generated <c>script.dat</c> the Properties views still read, and
 /// back: a group, trigger area, action, timer or route by its GUID of row 16, 9, 10, 11 or 8, at its block-11, 4, 5, 6
-/// or 3 index, and an objective by its row-17 index, at its block-12 index through provenance. Null where the generation
+/// or 3 index, and an objective's row-17 index from its block-12 index through provenance. Null where the generation
 /// has no such record, one whose condition fails as the editor opened the mission, whose view then says it is not shown
 /// in the editor (docs/herculan/handoff-editor-viewing.md#selection-and-panels).
 ///
@@ -17,9 +17,6 @@ internal sealed class GeneratedRecords {
 	private const int AreaBlock = 4;
 	private const int ActionBlock = 5;
 	private const int TimerBlock = 6;
-	private const int MechBlock = 7;
-	private const int FlyerBlock = 8;
-	private const int BaseBlock = 9;
 	private const int GroupBlock = 11;
 
 	/// <summary>Why an editor refuses an edit of a record the generation has none for, which no view shows.</summary>
@@ -45,9 +42,6 @@ internal sealed class GeneratedRecords {
 
 	public int? Route(short guid) => _source.ExportedIndex(RouteBlock + 5, guid);
 
-	/// <summary>The block-12 index row-17 record <paramref name="record"/> is exported at, or null.</summary>
-	public int? Objective(int record) => ObjectiveEditing.ExportedIndex(_source, record);
-
 	/// <summary>The GUID of the record that created block-11 group <paramref name="group"/>, or <c>-1</c>.</summary>
 	public short GroupGuid(int group) => _source.GuidOf(GroupBlock, group);
 
@@ -58,18 +52,6 @@ internal sealed class GeneratedRecords {
 	public short TimerGuid(int timer) => _source.GuidOf(TimerBlock, timer);
 
 	public short RouteGuid(int route) => _source.GuidOf(RouteBlock, route);
-
-	/// <summary>
-	/// The GUID of an order's, objective's or action target's subject: kind 0 a group, 1 a herc, 2 a flyer and 3 a structure,
-	/// the numbering those records share, at block index <paramref name="index"/>; <c>-1</c> for none.
-	/// </summary>
-	public short SubjectGuid(short kind, int index) => kind switch {
-		0 => _source.GuidOf(GroupBlock, index),
-		1 => _source.GuidOf(MechBlock, index),
-		2 => _source.GuidOf(FlyerBlock, index),
-		3 => _source.GuidOf(BaseBlock, index),
-		_ => -1,
-	};
 
 	public GroupSelection GroupAt(int group) => new(GroupGuid(group));
 

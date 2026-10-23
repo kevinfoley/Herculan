@@ -9,8 +9,8 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// The sphere a selection fills, in world units, for the camera to frame (<see cref="EditorCamera.Frame"/>): an object's
 /// pick sphere, a group's members and point, an area's footprint, a route's waypoints, an objective's subject or an
-/// action's areas. Ground features sit on the terrain, where they are drawn. All but an objective's subject are the
-/// layout's (<see cref="MissionIndex"/>). An object out of the scene, and a group kept out of it
+/// action's areas. Ground features sit on the terrain, where they are drawn. All are the layout's
+/// (<see cref="MissionIndex"/>). An object out of the scene, and a group kept out of it
 /// (<see cref="PlannedGroup.OffScene"/>), fill nothing.
 /// </summary>
 internal static class SelectionBounds {
@@ -22,8 +22,6 @@ internal static class SelectionBounds {
 	/// </summary>
 	public static (Vector3 Centre, float Radius)? Of(EditorMission mission, EditorSelection selection) {
 		var spheres = new List<(Vector3 Centre, float Radius)>();
-		var index = mission.Generated;
-		var records = index.Records;
 		switch (selection) {
 			case ObjectSelection selected when mission.Index.ObjectOf(selected) is { } placed:
 				AddObject(spheres, mission, placed);
@@ -54,9 +52,9 @@ internal static class SelectionBounds {
 				}
 
 				break;
-			case ObjectiveSelection { Record: var record } when records.Objective(record) is { } objective
-					&& objective < index.Mission.Objectives.Count:
-				foreach (var subject in index.SubjectObjectsOf(index.Mission.Objectives[objective])) {
+			case ObjectiveSelection { Record: var record }
+					when mission.Index.Layout.Objectives.FirstOrDefault(objective => objective.Index == record) is { } objective:
+				foreach (var subject in mission.Index.SubjectObjects(objective.Fields)) {
 					AddObject(spheres, mission, subject);
 				}
 

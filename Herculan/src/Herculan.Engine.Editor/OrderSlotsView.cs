@@ -1,5 +1,4 @@
 using HercWorks.Core.Data.File.Msn;
-using HercWorks.Core.Data.File.Msn.Script;
 using Herculan.Engine.Platform;
 using Herculan.Engine.World;
 using ImGuiNET;
@@ -7,61 +6,51 @@ using ImGuiNET;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The group view's orders: each filled slot of the ten with its verb, route, subject and the trigger that ends it as choices
-/// that change them (<see cref="OrderEditor"/>), each with a link, and buttons that add an order after the last, remove
-/// one or move one up or down. A slot whose order the mission as opened leaves out shows only its Present when. What each
-/// field does is docs/retail/simulation/ai-goals.md's.
+/// The group view's orders, from the <c>.MSN</c>'s layout by the group's GUID: each filled slot of the ten, numbered from 1st,
+/// with what it does, its route, its target and the trigger that ends it as choices that change them
+/// (<see cref="OrderEditor"/>), each with a link, its Present when, and buttons that add an order after the last, remove one
+/// or move one up or down. A later order's route moves nothing (a group walks only its first order's route), so it is offered
+/// only when an objective reads it. What each field does is docs/retail/simulation/ai-goals.md's.
 /// </summary>
 internal sealed class OrderSlotsView {
 	private const short NoSubject = -1;
 	private const short GroupSubject = 0;
 	private const short HercSubject = 1;
 	private const short StructureSubject = 3;
+	private const int MechRow = 12;
+	private const int BaseRow = 14;
 
-	private readonly GeneratedIndex _index;
-	private readonly ScriptDat _document;
+	private readonly MissionIndex _index;
 	private readonly OrderEditor _editor;
-	private readonly Action<int> _routeLink;
-	private readonly Action<int> _actionLink;
-	private readonly Action<MissionOrderSubject, int> _subjectLink;
+	private readonly PanelLinks _links;
 	private readonly PresentWhenView _presentWhen;
 	private readonly PresenceEditor _presence;
 
-	/// <param name="routeLink">Draws a link that selects a route, by block-3 index.</param>
-	/// <param name="actionLink">Draws a link that selects a trigger, by block-5 index.</param>
-	/// <param name="subjectLink">Draws a link that selects an order's subject.</param>
 	/// <param name="presentWhen">Draws each slot's Present when (<paramref name="presence"/>'s target).</param>
-	public OrderSlotsView(GeneratedIndex index, ScriptDat document, OrderEditor editor, Action<int> routeLink,
-			Action<int> actionLink, Action<MissionOrderSubject, int> subjectLink, PresentWhenView presentWhen, PresenceEditor presence) {
+	public OrderSlotsView(MissionIndex index, OrderEditor editor, PanelLinks links, PresentWhenView presentWhen,
+			PresenceEditor presence) {
 		_index = index;
-		_document = document;
 		_editor = editor;
-		_routeLink = routeLink;
-		_actionLink = actionLink;
-		_subjectLink = subjectLink;
+		_links = links;
 		_presentWhen = presentWhen;
 		_presence = presence;
 	}
 
-	/// <summary>The orders of row-16 GUID <paramref name="guid"/>, the group generated at block-11 index <paramref name="group"/>.</summary>
-	public void Draw(short guid, int group) {
+	private MissionNames Names => _links.Names;
+
+	/// <summary>The orders of row-16 GUID <paramref name="guid"/>.</summary>
+	public void Draw(short guid) {
 		ImGui.Separator();
-		ImGui.Text("Orders:");
-		string? fixedReason = _editor.WhyFixed(guid);
+		ImGui.TextUnformatted("Orders:");
+		bool locked = _editor.WhyFixed(guid) != null;
 		var slots = _editor.Slots(guid);
-		var orders = GroupOrders.Orders(_presence.Source, guid);
-		if (slots.Count == 0 && orders.All(order => order == -1)) {
+		if (slots.Count == 0) {
 			EditorText.Note("None.");
 		}
 
-		for (int i = 0; i < orders.Length; i++) {
-			ImGui.PushID($"order{i}");
-			if (slots.FirstOrDefault(slot => slot.Slot == i) is { } slot) {
-				DrawSlot(guid, group, slot, slots[^1].Slot, locked: fixedReason != null);
-			} else if (orders[i] != -1) {
-				DrawAbsent(guid, i);
-			}
-
+		foreach (var slot in slots) {
+			ImGui.PushID($"order{slot.Slot}");
+			DrawSlot(guid, slot, slots[^1].Slot, locked);
 			ImGui.PopID();
 		}
 
@@ -77,13 +66,12 @@ internal sealed class OrderSlotsView {
 		EditorText.Reason(_editor.Failure);
 	}
 
-	// One slot of the group of row-16 GUID <guid>, generated at block-11 index <group>; <locked> draws its choices disabled,
-	// its links still working.
-	private void DrawSlot(short guid, int group, EditableOrder slot, int last, bool locked) {
+	// One slot of the group of row-16 GUID <guid>; <locked> draws its choices disabled, its links still working.
+	private void DrawSlot(short guid, EditableOrder slot, int last, bool locked) {
 		var order = slot.Order;
 		ImGui.Spacing();
 		ImGui.AlignTextToFramePadding();
-		ImGui.Text($"Order {slot.Slot}");
+		ImGui.TextUnformatted($"{MissionText.Ordinal(slot.Slot + 1)} order");
 		ImGui.SameLine();
 		ImGui.BeginDisabled(slot.Slot == 0 || locked);
 		if (SmallButton("Up", slot.Slot == 0 ? null : _editor.WhyNoMove(guid, slot.Slot, slot.Slot - 1))) {
@@ -99,148 +87,165 @@ internal sealed class OrderSlotsView {
 
 		ImGui.EndDisabled();
 		ImGui.SameLine();
-		string? whyKept = _editor.WhyNoRemove(guid, slot.Slot);
+		string? whyKept = locked ? null : _editor.WhyNoRemove(guid, slot.Slot);
+		ImGui.BeginDisabled(locked);
 		if (SmallButton("Remove", whyKept)) {
 			_editor.RequestRemove(guid, slot.Slot);
 		}
 
+		ImGui.EndDisabled();
 		ImGui.Indent();
 		EditorText.Reason(whyKept);
-		if (slot.Shared) {
-			EditorText.Note("Another group has this order too: a change here gives this group its own copy.");
-		}
-
-		ImGui.BeginDisabled(locked);
-		DrawVerb(guid, slot.Slot, order.Verb, order.SubjectKind == NoSubject);
-		DrawRoute(guid, group, slot.Slot, order.RouteRef);
-		DrawSubject(guid, slot.Slot, order.Verb, order.SubjectKind, order.SubjectRef);
-		ImGui.EndDisabled();
-		if (order.RouteRef >= 0) {
-			_routeLink(order.RouteRef);
-		}
-
-		if (order.SubjectKind != NoSubject && order.SubjectRef >= 0) {
-			_subjectLink((MissionOrderSubject)order.SubjectKind, order.SubjectRef);
-		}
-
-		DrawEnding(guid, slot.Slot, order.ActionRef, locked);
+		DrawVerb(guid, slot.Slot, order.Verb, order.SubjectKind == NoSubject, locked);
+		DrawRoute(guid, slot.Slot, order.RouteRef, locked);
+		DrawTarget(guid, slot.Slot, order.Verb, order.SubjectKind, order.SubjectRef, locked);
+		DrawEnding(guid, slot.Slot, order.Verb, order.ActionRef, slot.Slot != last, locked);
 		_presentWhen.Draw(_presence.OrderTarget(guid, slot.Slot));
 		ImGui.Unindent();
 	}
 
-	// A slot of the group of row-16 GUID <guid> whose order the mission as opened leaves out: its Present when, which can
-	// bring it back, and that the rest cannot be shown.
-	private void DrawAbsent(short guid, int slot) {
-		ImGui.Spacing();
-		ImGui.Text($"Order {slot}");
-		ImGui.Indent();
-		_presentWhen.Draw(_presence.OrderTarget(guid, slot));
-		EditorText.Note(GeneratedRecords.Absent);
-		ImGui.Unindent();
-	}
-
-	// The trigger that moves the group on from this order when it fires, none or any trigger, with a link; <action> is its
-	// block-5 index.
-	private void DrawEnding(short group, int slot, short action, bool locked) {
-		Label("Ends when");
+	// What the order does, a choice of the seven verbs, each with what it does and when it is done.
+	private void DrawVerb(short group, int slot, short verb, bool noSubject, bool locked) {
+		Label("Does");
 		ImGui.BeginDisabled(locked);
-		short current = action >= 0 ? _index.Records.ActionGuid(action) : (short)-1;
-		if (ActionChoice.Draw("##ends", current, _index.Scene) is { } chosen) {
-			_editor.RequestAction(group, slot, chosen);
-		}
-
-		ImGui.EndDisabled();
-		if (action >= 0) {
-			_actionLink(action);
-			EditorText.Note("When that trigger fires, the group moves on to its next order.");
-		}
-	}
-
-	private void DrawVerb(short group, int slot, short verb, bool noSubject) {
-		Label("Verb");
 		if (ImGui.BeginCombo("##verb", MissionText.OrderVerb(verb))) {
 			for (short choice = 0; choice <= GroupOrders.LastVerb; choice++) {
 				if (ImGui.Selectable(MissionText.OrderVerb(choice), choice == verb) && choice != verb) {
 					_editor.RequestVerb(group, slot, choice);
 				}
-			}
 
-			ImGui.EndCombo();
-		}
-
-		if (noSubject) {
-			EditorText.Note("Search/destroy, ramming and following need a subject: choosing one gives the order the player's squad.");
-		}
-	}
-
-	// The route of the group of row-16 GUID <guid>, generated at block-11 index <group>.
-	private void DrawRoute(short guid, int group, int slot, short route) {
-		Label("Route");
-		string? whyRouteNeeded = _editor.WhyNoRouteNone(guid, slot);
-		if (ImGui.BeginCombo("##route", route >= 0 ? $"Route {route}" : "None")) {
-			var flags = whyRouteNeeded != null ? ImGuiSelectableFlags.Disabled : ImGuiSelectableFlags.None;
-			if (ImGui.Selectable("None", route < 0, flags) && route >= 0) {
-				_editor.RequestRoute(guid, slot, -1);
-			}
-
-			foreach (var choice in _index.Routes) {
-				if (ImGui.Selectable($"Route {choice.Reference}", choice.Reference == route) && choice.Reference != route) {
-					_editor.RequestRoute(guid, slot, _index.Records.RouteGuid(choice.Reference));
+				if (ImGui.IsItemHovered()) {
+					ImGui.SetTooltip(MissionText.OrderVerbNote(choice));
 				}
 			}
 
 			ImGui.EndCombo();
 		}
 
+		ImGui.EndDisabled();
+		EditorText.Note(MissionText.OrderVerbNote(verb));
+		if (noSubject) {
+			EditorText.Note("Search and destroy, Ram and Follow need a target: choosing one gives the order the player's squad.");
+		}
+	}
+
+	// The order's route: the group's own on its first order; on a later one only a key an objective can read, so offered only
+	// when one reads it (the editor's choice), with those objectives as links.
+	private void DrawRoute(short group, int slot, short route, bool locked) {
+		IReadOnlyList<LayoutObjective> readers = slot > 0 ? _index.ObjectivesReadingOrder(group, slot) : [];
+		bool moot = slot > 0 && readers.Count == 0;
+		Label("Route");
+		string? whyRouteNeeded = locked ? null : _editor.WhyNoRouteNone(group, slot);
+		ImGui.BeginDisabled(locked || moot);
+		var current = route != -1 ? Names.Route(route) : new RecordName("None");
+		if (NameText.BeginCombo("##route", current)) {
+			var flags = whyRouteNeeded != null ? ImGuiSelectableFlags.Disabled : ImGuiSelectableFlags.None;
+			if (ImGui.Selectable("None", route == -1, flags) && route != -1) {
+				_editor.RequestRoute(group, slot, -1);
+			}
+
+			foreach (var entry in _index.Layout.Entries<WaypointGroup>()) {
+				if (NameText.Selectable(Names.Route(entry.Guid), $"route{entry.Guid}", entry.Guid == route) && entry.Guid != route) {
+					_editor.RequestRoute(group, slot, entry.Guid);
+				}
+			}
+
+			ImGui.EndCombo();
+		}
+
+		ImGui.EndDisabled();
+		if (route != -1 && _index.Route(route) != null) {
+			_links.LayoutRoute(route);
+		}
+
 		if (slot > 0) {
-			EditorText.Note("Never walked: a group walks only its first order's route.");
-		} else if (group == 0) {
+			EditorText.Note("No effect on movement: a group only walks its first order's route.");
+			foreach (var objective in readers) {
+				ImGui.PushID($"reader{objective.Index}");
+				ImGui.TextUnformatted("Read by");
+				ImGui.SameLine();
+				_links.Objective(objective.Index);
+				ImGui.PopID();
+			}
+		} else if (_index.Group(group) is { Number: 0 }) {
 			EditorText.Note("The player's route.");
 		} else if (whyRouteNeeded != null) {
 			EditorText.Reason(whyRouteNeeded);
 		}
 	}
 
-	private void DrawSubject(short group, int slot, short verb, short kind, short subject) {
-		Label("Subject");
-		if (!ImGui.BeginCombo("##subject", SubjectName(kind, subject))) {
-			return;
-		}
-
-		// No None for a verb that needs a subject (GroupOrders.NeedsSubject).
-		if (!GroupOrders.NeedsSubject(verb) && ImGui.Selectable("None", kind == NoSubject) && kind != NoSubject) {
-			_editor.RequestSubject(group, slot, NoSubject, -1);
-		}
-
-		Choices(group, slot, kind, subject, GroupSubject, _document.Groups.Length);
-		Choices(group, slot, kind, subject, HercSubject, _document.Mechs.Length);
-		Choices(group, slot, kind, subject, StructureSubject, _document.Bases.Length);
-		ImGui.EndCombo();
-	}
-
-	// The records of subject kind <choiceKind> the combo offers, under a heading.
-	private void Choices(short group, int slot, short kind, short subject, short choiceKind, int count) {
-		if (count == 0) {
-			return;
-		}
-
-		ImGui.Separator();
-		ImGui.TextDisabled(choiceKind switch { GroupSubject => "Groups", HercSubject => "Hercs", _ => "Structures" });
-		for (int i = 0; i < count; i++) {
-			bool current = kind == choiceKind && subject == i;
-			if (ImGui.Selectable($"{SubjectName(choiceKind, (short)i)}##{choiceKind}.{i}", current) && !current) {
-				_editor.RequestSubject(group, slot, choiceKind, _index.Records.SubjectGuid(choiceKind, i));
+	// The order's target, none for a verb that does not need one, else a group, a herc or a structure, picked by name.
+	private void DrawTarget(short group, int slot, short verb, short kind, short subject, bool locked) {
+		Label("Target");
+		ImGui.BeginDisabled(locked);
+		if (NameText.BeginCombo("##target", Names.Subject(kind, subject))) {
+			// No None for a verb that needs a subject (GroupOrders.NeedsSubject).
+			if (!GroupOrders.NeedsSubject(verb) && ImGui.Selectable("None", kind == NoSubject) && kind != NoSubject) {
+				_editor.RequestSubject(group, slot, NoSubject, -1);
 			}
+
+			Heading("Groups");
+			foreach (var choice in _index.Groups) {
+				Choice(group, slot, kind, subject, GroupSubject, choice.Guid, Names.Group(choice.Guid));
+			}
+
+			Heading("Hercs");
+			foreach (var herc in _index.Layout.Entries(MechRow)) {
+				Choice(group, slot, kind, subject, HercSubject, herc.Guid, Names.Object(new ObjectKey(MechRow, herc.Guid)));
+			}
+
+			Heading("Structures and ground vehicles");
+			foreach (var structure in _index.Layout.Entries(BaseRow)) {
+				Choice(group, slot, kind, subject, StructureSubject, structure.Guid, Names.Object(new ObjectKey(BaseRow, structure.Guid)));
+			}
+
+			ImGui.EndCombo();
+		}
+
+		ImGui.EndDisabled();
+		if (kind == GroupSubject) {
+			_links.LayoutGroup(subject);
+		} else if (MissionIndex.SubjectKey(kind, subject) is { } key) {
+			_links.Object(key);
 		}
 	}
 
-	private string SubjectName(short kind, short subject) => MissionText.SubjectName(_index, kind, subject);
+	private static void Heading(string text) {
+		ImGui.Separator();
+		ImGui.TextDisabled(text);
+	}
 
-	// A field's label, with the choice after it filling the rest of the line.
+	private void Choice(short group, int slot, short kind, short subject, short choiceKind, short guid, RecordName name) {
+		bool current = kind == choiceKind && subject == guid;
+		if (NameText.Selectable(name, $"{choiceKind}.{guid}", current) && !current) {
+			_editor.RequestSubject(group, slot, choiceKind, guid);
+		}
+	}
+
+	// The trigger that moves the group on from this order when it fires, none or any trigger, with a link; <hasNext> says a
+	// later order waits on it.
+	private void DrawEnding(short group, int slot, short verb, short action, bool hasNext, bool locked) {
+		Label("Ends when");
+		ImGui.BeginDisabled(locked);
+		if (ActionChoice.Draw("##ends", action, _index, Names) is { } chosen) {
+			_editor.RequestAction(group, slot, chosen);
+		}
+
+		ImGui.EndDisabled();
+		bool set = action != -1 && _index.Action(action) != null;
+		if (set) {
+			_links.Trigger(action);
+			EditorText.Note("When that trigger fires, the group moves on to its next order.");
+		} else if (hasNext && verb is MissionOrder.VerbRam or MissionOrder.VerbSleep) {
+			EditorText.Note("Ram and Sleep never end by themselves: with no trigger here, the group never reaches its next order.");
+		}
+	}
+
+	// A field's label, with the choice after it filling the rest of the line, the choices lined up past the widest label.
 	private static void Label(string text) {
 		ImGui.AlignTextToFramePadding();
-		ImGui.Text(text);
-		ImGui.SameLine(ScaledImGui.Scaled(90f));
+		ImGui.TextUnformatted(text);
+		ImGui.SameLine(MathF.Max(ScaledImGui.Scaled(80f), ImGui.CalcTextSize("Ends when").X + ImGui.GetStyle().ItemSpacing.X));
 		ImGui.SetNextItemWidth(-1f);
 	}
 

@@ -26,14 +26,11 @@ internal sealed class GroupOverlay {
 	private const int ArrowHeadLength = 2500;
 
 	private readonly MissionIndex _index;
-	private readonly GeneratedIndex _generated;
 	private readonly DrapedLines _drape;
 	private readonly ScenePicker _picker;
 
-	/// <param name="generated">The generated mission's index, which an objective's subject is still found through.</param>
-	public GroupOverlay(MissionIndex index, GeneratedIndex generated, DrapedLines drape, ScenePicker picker) {
+	public GroupOverlay(MissionIndex index, DrapedLines drape, ScenePicker picker) {
 		_index = index;
-		_generated = generated;
 		_drape = drape;
 		_picker = picker;
 	}
@@ -59,9 +56,8 @@ internal sealed class GroupOverlay {
 	private HashSet<Scene.SceneObject> HighlightedObjects(SelectionState selection) => selection.Current switch {
 		ObjectSelection selected when _index.ObjectOf(selected) is { } placed => new HashSet<Scene.SceneObject> { placed },
 		GroupSelection { Guid: var guid } => _index.MembersOf(guid).ToHashSet(),
-		ObjectiveSelection selected when _generated.Records.Objective(selected.Record) is { } objective
-				&& objective < _generated.Mission.Objectives.Count =>
-			_generated.SubjectObjectsOf(_generated.Mission.Objectives[objective]).ToHashSet(),
+		ObjectiveSelection selected when _index.Layout.Objectives.FirstOrDefault(objective => objective.Index == selected.Record)
+				is { } objective => _index.SubjectObjects(objective.Fields).ToHashSet(),
 		_ => new HashSet<Scene.SceneObject>()
 	};
 
@@ -133,7 +129,7 @@ internal sealed class GroupOverlay {
 
 		if (SelectedGroup(selection) is { } selected) {
 			foreach (var (slot, verb, at) in Subjects(selected)) {
-				StackedLabel(at, $"order {slot}: {MissionText.OrderVerb(verb)}", SubjectColor);
+				StackedLabel(at, $"{MissionText.Ordinal(slot + 1)} order: {MissionText.OrderVerb(verb)}", SubjectColor);
 			}
 		}
 	}

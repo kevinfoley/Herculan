@@ -1,7 +1,6 @@
 using System.Numerics;
 using HercWorks.Core.Data.File;
 using HercWorks.Core.Data.File.Msn;
-using HercWorks.Core.Data.File.Msn.Script;
 using Herculan.Engine.Cockpit;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Platform;
@@ -18,11 +17,13 @@ namespace Herculan.Engine.Editor;
 /// panel is also how a mission's wiring is walked — area to action, action to the groups it brings
 /// in, group to its route.
 ///
-/// <para>The trigger and countdown views (<see cref="TriggerView"/>, <see cref="CountdownView"/>) read the <c>.MSN</c>'s
-/// layout by GUID, every record included. The others read the generated <c>script.dat</c>, so each is drawn for the generated record the selection's
-/// <c>.MSN</c> record stands for (<see cref="GeneratedRecords"/>); a record the generation has none for shows its kind and
-/// that it is not shown in the editor, or for an object, a group or an objective its title, its Present when, which can
-/// bring it back, and that it is absent from the mission as opened.</para>
+/// <para>The trigger, countdown and objective views and a group's orders (<see cref="TriggerView"/>,
+/// <see cref="CountdownView"/>, <see cref="ObjectiveView"/>, <see cref="OrderSlotsView"/>) read the <c>.MSN</c>'s layout by
+/// GUID or row-17 index, every record included, and so do a group's Waits on and an object's own two triggers. The others
+/// read the generated <c>script.dat</c>, so each is drawn for the generated record the selection's <c>.MSN</c> record stands
+/// for (<see cref="GeneratedRecords"/>); a record the generation has none for shows its kind and that it is not shown in the
+/// editor, or for an object or a group its title, its Present when, which can bring it back, and that it is absent from the
+/// mission as opened, a group's orders after it. Every record is named by <see cref="MissionNames"/>.</para>
 /// </summary>
 internal sealed class PropertiesPanel {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
@@ -54,12 +55,11 @@ internal sealed class PropertiesPanel {
 	// An object's or a group's point being typed.
 	private readonly PointFields _point = new();
 
-	/// <param name="document">The generated <c>script.dat</c>, whose records the order view offers as routes and subjects.</param>
-	public PropertiesPanel(GeneratedIndex index, ScriptDat document, SelectionState selection, PointMover mover,
+	public PropertiesPanel(GeneratedIndex index, SelectionState selection, PointMover mover,
 			SideChanger sides, ObjectDeleter deleter, SquadMachinePanel machine, RosterFitView fit, MissionView mission, RouteEditor routes,
 			RoutePlacing placing, AreaEditor areas, AreaPlacing areaPlacing, OrderEditor orders, ObjectiveEditor objectives,
 			ActionEditor actions, TimerEditor timers, ConditionEditor conditions, PresenceEditor presence, VariantEditor variants,
-			RandomChoices choices, TriggerMessages messages, StringFile? strings) {
+			RandomChoices choices, TriggerMessages messages, MissionNames names, StringFile? strings) {
 		_index = index;
 		_selection = selection;
 		_mover = mover;
@@ -68,28 +68,25 @@ internal sealed class PropertiesPanel {
 		_machine = machine;
 		_fit = fit;
 		_mission = mission;
-		_links = new PanelLinks(index, selection);
+		_links = new PanelLinks(index.Records, index.Scene, names, selection);
 		_actions = actions;
 		_trigger = new TriggerView(index.Scene, actions, selection, _links, messages);
 		_countdown = new CountdownView(index.Scene, timers, _links);
 		_variants = new VariantView(variants, choices, _links);
 		_condition = new ConditionView(conditions, _links, _variants);
 		_presence = presence;
-		_presentWhen = new PresentWhenView(presence, _links, (names, ownRoute) => References(names, ownRoute));
-		_route = new RouteView(index, selection, mover, routes, placing, _links.Group,
-			(names, ownRoute) => References(names, ownRoute), _variants.DrawRouteChoice);
-		_area = new TriggerAreaView(index, mover, areas, areaPlacing, actions, _trigger.DrawSummary, names => References(names));
-		_orders = new OrderSlotsView(index, document, orders, _links.Route, _links.Action, _links.Subject, _presentWhen, presence);
+		_presentWhen = new PresentWhenView(presence, _links, (namers, ownRoute) => References(namers, ownRoute));
+		_route = new RouteView(index, names, selection, mover, routes, placing, _links.Group,
+			(namers, ownRoute) => References(namers, ownRoute), _variants.DrawRouteChoice);
+		_area = new TriggerAreaView(index, names, mover, areas, areaPlacing, actions, _trigger.DrawSummary, namers => References(namers));
+		_orders = new OrderSlotsView(index.Scene, orders, _links, _presentWhen, presence);
 		_objectives = objectives;
-		_objective = new ObjectiveView(index, document, objectives, _links.Group, _links.Slot, _links.Route, _presentWhen, presence);
-		machine.References = names => References(names);
+		_objective = new ObjectiveView(index.Scene, objectives, _links, _presentWhen, presence);
+		machine.References = namers => References(namers);
 		_strings = strings;
 	}
 
 	private Mission Mission => _index.Mission;
-
-	// The row-10 GUID of the trigger generated at block-5 index <action>, or -1 for none.
-	private short ActionGuid(int action) => action >= 0 ? Records.ActionGuid(action) : (short)-1;
 
 	private GeneratedRecords Records => _index.Records;
 
@@ -113,10 +110,11 @@ internal sealed class PropertiesPanel {
 			case GroupSelection { Guid: var guid }:
 				if (Records.Group(guid) is { } group) {
 					DrawGroup(guid, group);
+				} else if (_index.Scene.Group(guid) != null) {
+					Absent(_links.Names.Group(guid).Full, _presence.GroupTarget(guid));
+					_orders.Draw(guid);
 				} else {
-					var planned = _index.Scene.Group(guid);
-					Absent(planned == null ? "Group" : $"Group {planned.Number} ({planned.Kind}, {planned.Side})",
-						_presence.GroupTarget(guid));
+					NotShown("Group");
 				}
 
 				break;
@@ -145,10 +143,10 @@ internal sealed class PropertiesPanel {
 
 				break;
 			case ObjectiveSelection { Record: var record }:
-				if (Records.Objective(record) is { } objective) {
-					_objective.Draw(record, objective);
+				if (_objectives.WhyFixed(record) == null) {
+					_objective.Draw(record);
 				} else {
-					Absent("Objective", _presence.ObjectiveTarget(record));
+					NotShown("Win or lose condition");
 				}
 
 				break;
@@ -198,7 +196,9 @@ internal sealed class PropertiesPanel {
 		ImGui.AlignTextToFramePadding();
 		ImGui.Text("Group:");
 		ImGui.SameLine();
-		_links.Group(placement.GroupIndex);
+		if (_index.Scene.GroupOf(sel) is { } ownGroup) {
+			_links.ShortLayoutGroup(ownGroup.Guid);
+		}
 		_presentWhen.Draw(_presence.ObjectTarget(sel));
 		_variants.DrawObjectChoice(sel);
 		ImGui.Separator();
@@ -235,15 +235,20 @@ internal sealed class PropertiesPanel {
 
 		if (_index.Scene.GroupOf(sel) is { OffScene: true } landing) {
 			EditorText.Note(MissionText.OffScene(landing.ArrivalVerb, member: true));
-		} else if (_index.IsWaiting(sel)) {
+		} else if (_index.Scene.IsWaiting(sel)) {
 			ImGui.TextWrapped("Its group is waiting on a trigger: nothing of it is drawn or ticked until "
 				+ "that fires, and this position is a placeholder unless the group arrives in place.");
 		}
 
-		DrawOwnActions(placement);
+		var key = _index.Scene.KeyOf(sel);
+		if (key is { } own && !placement.IsPlayerLance) {
+			DrawOwnActions(own);
+		}
+
 		OutOfActionWrites(sel);
 
-		ObjectiveLinks(_index.ObjectivesOfObject(sel), _index.Scene.SelectionOf(sel)!);
+		ObjectiveLinks(key is { } subject ? _index.Scene.ObjectivesAbout(subject) : Enumerable.Empty<LayoutObjective>(),
+			_index.Scene.SelectionOf(sel)!);
 		DeleteControls(sel);
 	}
 
@@ -304,7 +309,7 @@ internal sealed class PropertiesPanel {
 	private void References(DeleteNamers names, IReadOnlyList<int>? ownRoute = null, IReadOnlyList<int>? fired = null) {
 		foreach (int objective in names.Objectives) {
 			ImGui.PushID($"objective{objective}");
-			_links.ShortObjective(objective);
+			_links.GeneratedObjective(objective);
 			ImGui.PopID();
 		}
 
@@ -329,7 +334,7 @@ internal sealed class PropertiesPanel {
 
 		var groups = names.Orders.Select(order => order.Group).Concat(ownRoute ?? []).Distinct().ToList();
 		foreach (int group in groups) {
-			var parts = names.Orders.Where(order => order.Group == group).Select(order => $"order {order.Slot}").ToList();
+			var parts = names.Orders.Where(order => order.Group == group).Select(order => $"{MissionText.Ordinal(order.Slot + 1)} order").ToList();
 			if (ownRoute?.Contains(group) == true) {
 				parts.Add("own route");
 			}
@@ -337,7 +342,7 @@ internal sealed class PropertiesPanel {
 			ImGui.PushID($"group{group}");
 			_links.ShortGroup(group);
 			ImGui.SameLine(0f, 0f);
-			ImGui.Text($": {string.Join(", ", parts)}");
+			ImGui.TextUnformatted($": {string.Join(", ", parts)}");
 			ImGui.PopID();
 		}
 
@@ -437,7 +442,12 @@ internal sealed class PropertiesPanel {
 
 	// Row-16 GUID <guid>'s view, the group generated at block-11 index <group>.
 	private void DrawGroup(short guid, int group) {
-		ImGui.TextWrapped(MissionText.DescribeGroup(_index, group));
+		var name = _links.Names.Group(guid);
+		EditorText.Wrapped(name.Text);
+		if (name.Number is { } number) {
+			ImGui.TextDisabled(number);
+		}
+
 		_presentWhen.Draw(_presence.GroupTarget(guid));
 		TeamField(group, ofMember: false);
 		if (group == 0) {
@@ -445,7 +455,7 @@ internal sealed class PropertiesPanel {
 		}
 
 		ImGui.Separator();
-		DrawDeployment(guid, group);
+		DrawDeployment(guid);
 
 		if (_index.SetupOf(group) is { } setup) {
 			ImGui.Separator();
@@ -465,43 +475,47 @@ internal sealed class PropertiesPanel {
 			OutOfActionWrites("When every member is destroyed or immobilized, sets campaign variables", Mission.GroupOutOfActionReports[group]);
 		}
 
-		ObjectiveLinks(_index.ObjectivesOfGroup(group), new GroupSelection(guid));
-		_orders.Draw(guid, group);
+		ObjectiveLinks(_index.Scene.ObjectivesAbout(guid), new GroupSelection(guid));
+		_orders.Draw(guid);
 	}
 
 	/// <summary>
-	/// The trigger the group waits on before it is in the mission, a choice of none or any trigger
+	/// The trigger the group waits on before it is in the mission, from the layout, a choice of none or any trigger
 	/// (<see cref="ActionEditor.RequestDeployment"/>), with a link and how the group arrives. The player's squad has none: no
 	/// retail squad record carries one (<see cref="HercWorks.Core.Data.File.Msn.ActionWiring"/>).
 	/// </summary>
-	private void DrawDeployment(short guid, int group) {
-		int waitsOn = _index.DeploymentActionOf(group);
-		if (group == 0 && waitsOn < 0) {
-			ImGui.Text("In the mission from the start.");
+	private void DrawDeployment(short guid) {
+		if (_index.Scene.Group(guid) is not { } planned) {
+			return;
+		}
+
+		short waitsOn = planned.Waiting ? planned.DeploymentAction : (short)-1;
+		if (planned.Number == 0 && waitsOn == -1) {
+			ImGui.TextUnformatted("In the mission from the start.");
 			return;
 		}
 
 		string? why = _actions.WhyNoDeployment(guid);
 		ImGui.AlignTextToFramePadding();
-		ImGui.Text("Waits on:");
+		ImGui.TextUnformatted("Waits on:");
 		ImGui.SameLine();
 		ImGui.SetNextItemWidth(-1f);
 		ImGui.BeginDisabled(why != null);
-		if (ActionChoice.Draw("##deployment", ActionGuid(waitsOn), _index.Scene) is { } chosen) {
+		if (ActionChoice.Draw("##deployment", waitsOn, _index.Scene, _links.Names) is { } chosen) {
 			_actions.RequestDeployment(guid, chosen);
 		}
 
 		ImGui.EndDisabled();
-		if (waitsOn >= 0) {
-			_links.Action(waitsOn);
+		if (waitsOn != -1) {
+			_links.Trigger(waitsOn);
 		}
 
-		if (_index.Scene.Group(guid) is { OffScene: true } landing) {
-			EditorText.Note(MissionText.OffScene(landing.ArrivalVerb, member: false));
-		} else if (waitsOn >= 0) {
-			ImGui.TextWrapped($"Not in the mission until that trigger fires; then it arrives {MissionText.Arrival(Mission.Actions[waitsOn].Verb)}.");
+		if (planned.OffScene) {
+			EditorText.Note(MissionText.OffScene(planned.ArrivalVerb, member: false));
+		} else if (waitsOn != -1) {
+			EditorText.Wrapped($"Not in the mission until that trigger fires; then it arrives {MissionText.Arrival(planned.ArrivalVerb)}.");
 		} else {
-			ImGui.Text("In the mission from the start.");
+			ImGui.TextUnformatted("In the mission from the start.");
 		}
 
 		EditorText.Reason(why);
@@ -509,21 +523,24 @@ internal sealed class PropertiesPanel {
 	}
 
 	/// <summary>
-	/// The triggers a roster object fires when engaged and when defeated, each a choice of none or any trigger
-	/// (<see cref="ActionEditor.RequestObjectAction"/>), with a link, and what engaged and defeated mean
+	/// The triggers the roster record <paramref name="key"/> fires when engaged and when defeated, from the layout, each a choice
+	/// of none or any trigger (<see cref="ActionEditor.RequestObjectAction"/>), with a link, and what engaged and defeated mean
 	/// (docs/retail/simulation/mission-deployment.md#an-objects-own-two-actions--0x1b2-and-0x1b6), the engagement distance in
 	/// metres. Not for a machine of the player's squad, which is built from <c>player.mec</c>: no retail squad record carries
 	/// either.
 	/// </summary>
-	private void DrawOwnActions(MissionPlacement placement) {
-		if (placement.IsPlayerLance) {
-			return;
-		}
+	private void DrawOwnActions(ObjectKey key) {
+		(short engaged, short defeated) = _index.Scene.Layout.Entry(key.Row, key.Guid)?.Fields switch {
+			MechRosterEntry144 herc => (herc.EngagementActionRef, herc.DefeatActionRef),
+			FlyerRosterEntry102 flyer => (flyer.EngagementActionRef, flyer.DefeatActionRef),
+			BaseRosterEntry62 structure => (structure.EngagementActionRef, structure.DefeatActionRef),
+			_ => ((short)-1, (short)-1),
+		};
 
 		ImGui.Separator();
-		string? why = _actions.WhyNoObjectAction(placement);
-		OwnAction("When engaged, fires", placement, defeated: false, placement.EngagementActionRef, why);
-		OwnAction("When defeated, fires", placement, defeated: true, placement.DefeatActionRef, why);
+		string? why = _actions.WhyNoObjectAction(key);
+		OwnAction("When engaged, fires", key, defeated: false, engaged, why);
+		OwnAction("When defeated, fires", key, defeated: true, defeated, why);
 		EditorText.Note($"A trigger set here fires when it is engaged: an enemy within {MissionText.Metres(Sim.Detection.EngagementRange)} "
 			+ "spots it, or an enemy shoots it. Or when it is defeated: destroyed; a herc also when immobilized or left with no "
 			+ "working weapon.");
@@ -531,21 +548,27 @@ internal sealed class PropertiesPanel {
 		EditorText.Reason(_actions.Failure);
 	}
 
-	private void OwnAction(string label, MissionPlacement placement, bool defeated, int current, string? why) {
+	// One of the two, row-10 GUID <current> or -1: a choice of the triggers, with a link. A ref the layout has no trigger for
+	// fires nothing, as the generation resolves it to none.
+	private void OwnAction(string label, ObjectKey key, bool defeated, short current, string? why) {
+		if (_index.Scene.Action(current) == null) {
+			current = -1;
+		}
+
 		ImGui.PushID(label);
 		ImGui.AlignTextToFramePadding();
-		ImGui.Text($"{label}:");
-		string? noNone = _actions.WhyNoNone(placement, defeated);
+		ImGui.TextUnformatted($"{label}:");
+		string? noNone = _actions.WhyNoNone(key, defeated);
 		ImGui.SameLine();
 		ImGui.SetNextItemWidth(-1f);
 		ImGui.BeginDisabled(why != null);
-		if (ActionChoice.Draw("##own", ActionGuid(current), _index.Scene, offerNone: noNone == null, whyNoNone: noNone) is { } chosen) {
-			_actions.RequestObjectAction(placement, defeated, chosen);
+		if (ActionChoice.Draw("##own", current, _index.Scene, _links.Names, offerNone: noNone == null, whyNoNone: noNone) is { } chosen) {
+			_actions.RequestObjectAction(key, defeated, chosen);
 		}
 
 		ImGui.EndDisabled();
-		if (current >= 0) {
-			_links.Action(current);
+		if (current != -1) {
+			_links.Trigger(current);
 		}
 
 		ImGui.PopID();
@@ -628,10 +651,9 @@ internal sealed class PropertiesPanel {
 			ImGui.TextWrapped("Dragging gives it a point of its own.");
 		}
 
-		int waitsOn = _index.DeploymentActionOf(group);
-		if (waitsOn >= 0 && Mission.Actions[waitsOn].Verb is MissionAction.VerbPodWide or MissionAction.VerbPodNarrow
-				or MissionAction.VerbWalkBehind or MissionAction.VerbWalkAhead) {
-			ImGui.TextWrapped($"It arrives {MissionText.ArrivalKind(Mission.Actions[waitsOn].Verb)}, placed about the "
+		if (_index.Scene.Group(guid) is { Waiting: true } planned && planned.ArrivalVerb is MissionAction.VerbPodWide
+				or MissionAction.VerbPodNarrow or MissionAction.VerbWalkBehind or MissionAction.VerbWalkAhead) {
+			ImGui.TextWrapped($"It arrives {MissionText.ArrivalKind(planned.ArrivalVerb)}, placed about the "
 				+ "player when the trigger fires: its point is a placeholder, and moving it does not move where it arrives.");
 		}
 	}
@@ -675,16 +697,18 @@ internal sealed class PropertiesPanel {
 		Enumerable.Range(0, words.Length / 2).Select(pair => (words[pair * 2], words[pair * 2 + 1])).ToList();
 
 	/// <summary>
-	/// Links to the objectives asked of the selection, and a button that adds one about <paramref name="subject"/>, the
-	/// selection itself (<see cref="ObjectiveEditor"/>).
+	/// Links to the win and lose conditions asked of the selection, each its sentence, and a button that adds a win condition
+	/// about <paramref name="subject"/>, the selection itself (<see cref="ObjectiveEditor"/>).
 	/// </summary>
-	private void ObjectiveLinks(IEnumerable<int> objectives, EditorSelection subject) {
+	private void ObjectiveLinks(IEnumerable<LayoutObjective> objectives, EditorSelection subject) {
 		ImGui.Separator();
-		ImGui.Text("Related objectives:");
+		ImGui.TextUnformatted("Win and lose conditions about it:");
 		ImGui.PushID("objectives");
 		bool any = false;
-		foreach (int objective in objectives) {
-			_links.Objective(objective);
+		foreach (var objective in objectives) {
+			ImGui.PushID(objective.Index);
+			_links.Objective(objective.Index);
+			ImGui.PopID();
 			any = true;
 		}
 
@@ -694,7 +718,7 @@ internal sealed class PropertiesPanel {
 
 		string? why = _objectives.WhyNoCreate(subject);
 		ImGui.BeginDisabled(why != null);
-		if (ImGui.Button("Add objective")) {
+		if (ImGui.Button("Add a win condition")) {
 			_objectives.RequestCreate(subject);
 		}
 

@@ -53,8 +53,8 @@ internal readonly record struct OrderSlot(int Group, int Slot, MissionOrder Orde
 
 /// <summary>
 /// The editor's cross-reference over the generated mission, by <c>script.dat</c> block index, which the Properties views
-/// read until they move to the layout (docs/herculan/handoff-editor-msn-scene.md#steps):
-/// which groups walk which route, each group's members, setup, side and waiting action, and each objective's subject.
+/// still on the generation read until they move to the layout (docs/herculan/handoff-editor-msn-scene.md#steps):
+/// which groups walk which route, and each group's members, setup and side.
 /// Built from the <see cref="World.Mission"/> generated after each edit and the scene's objects (<see cref="MissionIndex"/>),
 /// each <see cref="SceneObject.Placement"/> carrying the generation's indices for its record's GUID (<see cref="SceneSync"/>),
 /// so an object the generation has none for is in no group or roster slot here. Nothing here follows a drag's preview:
@@ -167,13 +167,6 @@ internal sealed class GeneratedIndex {
 	/// </summary>
 	public SceneObject? ObjectAt(MissionUnitKind kind, int slot) => _bySlot.GetValueOrDefault((kind, slot));
 
-	/// <summary>The action <paramref name="group"/> waits on before it is in the mission, or -1.</summary>
-	public int DeploymentActionOf(int group) =>
-		group >= 0 && group < Mission.GroupDeploymentActions.Count ? Mission.GroupDeploymentActions[group] : -1;
-
-	/// <summary>Whether <paramref name="placed"/> belongs to a group waiting on an action.</summary>
-	public bool IsWaiting(SceneObject placed) => DeploymentActionOf(placed.Placement.GroupIndex) >= 0;
-
 	/// <summary>A group's point, heading and formation, or null for an index the mission does not have.</summary>
 	public MissionGroupSetup? SetupOf(int group) =>
 		group >= 0 && group < _setups.Count ? _setups[group] : null;
@@ -185,86 +178,6 @@ internal sealed class GeneratedIndex {
 	public Vec3i? PointOf(MissionUnitKind? kind, int reference) => kind is { } objectKind
 		? ObjectAt(objectKind, reference)?.Object.Position
 		: SetupOf(reference)?.Point;
-
-	/// <summary>
-	/// The objects an objective is asked of: its subject object, or every placed member of its
-	/// subject group.
-	/// </summary>
-	public IReadOnlyList<SceneObject> SubjectObjectsOf(MissionObjective objective) {
-		if (UnitKindOf(objective.SubjectKind) is { } kind) {
-			return ObjectAt(kind, objective.SubjectRef) is { } placed ? new[] { placed } : Array.Empty<SceneObject>();
-		}
-
-		return objective.SubjectKind == MissionObjectiveSubject.Group
-				&& objective.SubjectRef >= 0 && objective.SubjectRef < GroupMembers.Count
-			? GroupMembers[objective.SubjectRef]
-			: Array.Empty<SceneObject>();
-	}
-
-	/// <summary>
-	/// The group whose orders condition 0 reads: the subject group, or the group the subject object
-	/// belongs to. -1 when the subject is an object nothing placed.
-	/// </summary>
-	public int OrderGroupOf(MissionObjective objective) => UnitKindOf(objective.SubjectKind) is { } kind
-		? ObjectAt(kind, objective.SubjectRef)?.Placement.GroupIndex ?? -1
-		: objective.SubjectKind == MissionObjectiveSubject.Group ? objective.SubjectRef : -1;
-
-	/// <summary>
-	/// The order slot of <paramref name="group"/> whose completion an order-complete objective on
-	/// <paramref name="routeRef"/> reads, or -1 when none runs that route — the first slot to run it,
-	/// as <see cref="Sim.MissionGroup.OrderCompletedForRoute"/> picks it.
-	/// </summary>
-	public int SlotOnRoute(int group, int routeRef) {
-		if (group < 0 || group >= Mission.GroupOrders.Count || routeRef < 0) {
-			return -1;
-		}
-
-		var orders = Mission.GroupOrders[group];
-		for (int slot = 0; slot < orders.Count; slot++) {
-			if (orders[slot]?.RouteRef == routeRef) {
-				return slot;
-			}
-		}
-
-		return -1;
-	}
-
-	/// <summary>The objectives whose subject is <paramref name="group"/>.</summary>
-	public IEnumerable<int> ObjectivesOfGroup(int group) {
-		for (int i = 0; i < Mission.Objectives.Count; i++) {
-			if (Mission.Objectives[i] is { SubjectKind: MissionObjectiveSubject.Group } objective
-					&& objective.SubjectRef == group) {
-				yield return i;
-			}
-		}
-	}
-
-	/// <summary>The objectives whose subject is <paramref name="placed"/> itself.</summary>
-	public IEnumerable<int> ObjectivesOfObject(SceneObject placed) {
-		for (int i = 0; i < Mission.Objectives.Count; i++) {
-			var objective = Mission.Objectives[i];
-			if (UnitKindOf(objective.SubjectKind) == placed.Placement.Kind
-					&& objective.SubjectRef == placed.Placement.SlotIndex && placed.Placement.SlotIndex >= 0) {
-				yield return i;
-			}
-		}
-	}
-
-	/// <summary>The roster an objective subject indexes, or null for a group subject.</summary>
-	public static MissionUnitKind? UnitKindOf(MissionObjectiveSubject kind) => kind switch {
-		MissionObjectiveSubject.Mech => MissionUnitKind.Mech,
-		MissionObjectiveSubject.Flyer => MissionUnitKind.Flyer,
-		MissionObjectiveSubject.Base => MissionUnitKind.Base,
-		_ => null
-	};
-
-	/// <summary>The roster an order subject indexes, or null for a group subject (or none).</summary>
-	public static MissionUnitKind? UnitKindOf(MissionOrderSubject kind) => kind switch {
-		MissionOrderSubject.Mech => MissionUnitKind.Mech,
-		MissionOrderSubject.Flyer => MissionUnitKind.Flyer,
-		MissionOrderSubject.Base => MissionUnitKind.Base,
-		_ => null
-	};
 
 	// Every block-4 record resolved as the loader resolves an action's (MissionLoader.TriggerArea).
 	private static List<MissionTriggerArea> BuildAreas(ScriptDat document) {

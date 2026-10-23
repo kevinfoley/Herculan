@@ -1,11 +1,10 @@
 using HercWorks.Core.Data.File.Msn;
-using HercWorks.Core.Data.File.Msn.Script;
 using Herculan.Engine.Sim;
 
 namespace Herculan.Engine.Editor;
 
-/// <summary>One filled order slot of a group, as generated: its row-15 GUID, its record, and whether another slot names it too.</summary>
-internal sealed record EditableOrder(int Slot, short Guid, ScriptOrder Order, bool Shared);
+/// <summary>One filled order slot of a group, from the layout: its row-15 GUID and the order's base fields.</summary>
+internal sealed record EditableOrder(int Slot, short Guid, MissionOrder22 Order);
 
 /// <summary>
 /// Edits a group's ten order slots, each edit one step of <see cref="PointMover"/>'s undo history, through
@@ -16,51 +15,44 @@ internal sealed record EditableOrder(int Slot, short Guid, ScriptOrder Order, bo
 /// remove or an edit of an order another slot names adds or removes records.
 ///
 /// <para>Groups, routes, subjects and actions are taken by their GUIDs, as the selections and the views' choices name them,
-/// and a group not shown in the editor is not edited. The edits wait for the frame's ImGui to be rendered
+/// and any group the layout has is edited, a conditional one included. The edits wait for the frame's ImGui to be rendered
 /// (<see cref="RunRequest"/>), since the rebuild changes what the panels list.</para>
 /// </summary>
 internal sealed class OrderEditor {
-	private const int OrderBlock = 10;
+	private const int GroupRow = 16;
 
-	private readonly ScriptDat _document;
 	private readonly MissionDocument _source;
-	private readonly GeneratedRecords _records;
 	private readonly PointMover _mover;
 	private readonly SceneSync _sync;
 	private Func<string?>? _requested;
 
-	/// <param name="document">The generated <c>script.dat</c>, <paramref name="source"/>'s.</param>
 	/// <param name="source">The mission as its <c>.MSN</c>.</param>
-	public OrderEditor(ScriptDat document, MissionDocument source, GeneratedRecords records, PointMover mover,
-			SceneSync sync) {
-		_document = document;
+	public OrderEditor(MissionDocument source, PointMover mover, SceneSync sync) {
 		_source = source;
-		_records = records;
 		_mover = mover;
 		_sync = sync;
 	}
+
+	/// <summary>The mission as its <c>.MSN</c>.</summary>
+	public MissionDocument Source => _source;
 
 	/// <summary>Why the last edit run could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
 	/// <summary>Why row-16 GUID <paramref name="group"/>'s orders cannot be edited, or null when they can.</summary>
-	public string? WhyFixed(short group) => _records.Group(group) == null ? GeneratedRecords.Absent : null;
+	public string? WhyFixed(short group) => _source.Layout.Entry(GroupRow, group) == null ? "That group is not in the mission." : null;
 
-	/// <summary>The filled order slots of row-16 GUID <paramref name="group"/>, as generated, in slot order.</summary>
+	/// <summary>
+	/// The filled order slots of row-16 GUID <paramref name="group"/>, from the layout, in slot order: each slot whose order the
+	/// layout has (<see cref="GroupOrders.Orders"/>), with that order's base fields.
+	/// </summary>
 	public IReadOnlyList<EditableOrder> Slots(short group) {
-		if (_records.Group(group) is not { } index || index >= _document.Groups.Length) {
-			return [];
-		}
-
-		var refs = _document.Groups[index].OrderRefs;
+		var orders = GroupOrders.Orders(_source, group);
 		var slots = new List<EditableOrder>();
-		for (int slot = 0; slot < refs.Length; slot++) {
-			if (refs[slot] < 0 || refs[slot] >= _document.Orders.Length) {
-				continue;
+		for (int slot = 0; slot < orders.Length; slot++) {
+			if (orders[slot] != -1 && _source.Layout.Entry<MissionOrder22>(orders[slot])?.Fields is { } fields) {
+				slots.Add(new EditableOrder(slot, orders[slot], fields));
 			}
-
-			short guid = _source.GuidOf(OrderBlock, refs[slot]);
-			slots.Add(new EditableOrder(slot, guid, _document.Orders[refs[slot]], GroupOrders.Shared(_source, guid)));
 		}
 
 		return slots;
