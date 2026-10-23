@@ -23,7 +23,7 @@ namespace Herculan.Engine.Editor;
 /// </summary>
 internal sealed class RoutePlacing {
 	/// <summary>What the mode asks of the user, in the Toolbox, the route view and over the view.</summary>
-	public const string Hint = "Click the ground to place each waypoint, or the first waypoint to close the loop. Enter finishes; Esc cancels.";
+	public const string Hint = "Click the ground to place each waypoint, or the route's start to close the loop. Enter finishes; Esc cancels.";
 
 	// How close, in pixels on a 100% display, a click must land to the first waypoint to close the loop on it.
 	private const float CloseRadius = 8f;
@@ -31,7 +31,7 @@ internal sealed class RoutePlacing {
 	private static readonly Vector3 BandColor = new(1f, 1f, 0.6f);
 
 	private readonly RouteEditor _editor;
-	private readonly GeneratedIndex _index;
+	private readonly MissionIndex _index;
 	private readonly DrapedLines _drape;
 	private readonly List<Vec3i> _placed = new();
 
@@ -40,7 +40,7 @@ internal sealed class RoutePlacing {
 	private bool _finishing;
 	private bool _close;
 
-	public RoutePlacing(RouteEditor editor, GeneratedIndex index, DrapedLines drape) {
+	public RoutePlacing(RouteEditor editor, MissionIndex index, DrapedLines drape) {
 		_editor = editor;
 		_index = index;
 		_drape = drape;
@@ -174,7 +174,7 @@ internal sealed class RoutePlacing {
 		for (int i = 0; i < _placed.Count; i++) {
 			if (OnScreen(camera, _placed[i]) is { } at) {
 				drawList.AddCircleFilled(at, ScaledImGui.Scaled(4f), MissionOverlay.Pack(MissionOverlay.SelectedColor));
-				MissionOverlay.Label(drawList, at + new Vector2(ScaledImGui.Scaled(6f), 0f), (from + i).ToString(),
+				MissionOverlay.Label(drawList, at + new Vector2(ScaledImGui.Scaled(6f), 0f), MissionText.WaypointMark(from + i),
 					MissionOverlay.SelectedColor);
 			}
 		}
@@ -233,15 +233,15 @@ internal sealed class RoutePlacing {
 		Active = false;
 	}
 
-	// The route the waypoints are added to, as the index has it now, or null for a new route.
-	private EditorRoute? Existing => _route != -1 && _index.Records.Route(_route) is { } route ? _index.Route(route) : null;
+	// The route the waypoints are added to, as the layout places it now, or null for a new route.
+	private PlannedRoute? Existing => _route != -1 ? _index.Route(_route) : null;
 
 	// The waypoint a click closes the loop on: the route's first, or the first placed.
-	private Vec3i? First(EditorRoute? existing) =>
+	private Vec3i? First(PlannedRoute? existing) =>
 		existing != null ? existing.Points[0] : _placed.Count > 0 ? _placed[0] : null;
 
 	// How many waypoints a route has: a closed route's last is its first again.
-	private static int Count(EditorRoute route) => route.Closed ? route.Points.Count - 1 : route.Points.Count;
+	private static int Count(PlannedRoute route) => route.Closed ? route.Points.Count - 1 : route.Points.Count;
 
 	private Vector2? OnScreen(Camera camera, Vec3i point) => new ScreenProjection(camera).ToScreen(_drape.OnGround(point.X, point.Y));
 }

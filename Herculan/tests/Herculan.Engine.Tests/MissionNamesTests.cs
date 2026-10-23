@@ -1,6 +1,7 @@
 using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Editor;
+using Herculan.Engine.Numerics;
 using Herculan.Engine.Scene;
 using Xunit;
 using static Herculan.Engine.Tests.SyntheticMsn;
@@ -22,8 +23,9 @@ public class MissionNamesTests {
 
 	/// <summary>
 	/// Catches a group named from another group's members (or from every roster record), a member type counted once per
-	/// group rather than per member, and an object numbered "2 of 3" among every herc of the mission rather than among those
-	/// of its own type in its own group.
+	/// group rather than per member, an object numbered "2 of 3" among every herc of the mission rather than among those
+	/// of its own type in its own group, and a group numbered from 0 again: the squad is first in row 16, so the first group
+	/// after it is group 2.
 	/// </summary>
 	[Fact]
 	public void AGroupIsNamedByItsOwnMembersAndAnObjectByItsPlaceAmongThem() {
@@ -33,10 +35,25 @@ public class MissionNamesTests {
 			.Add(16, Group(Other, Hercs, position: -1, condition: -1, 8));
 		var names = Names(msn);
 
-		Assert.Equal(new RecordName("Human hercs: Herc type 19 x2, Herc type 17", "(group 1)"), names.Group(Wing));
-		Assert.Equal(new RecordName("Human hercs: Herc type 19", "(group 2)"), names.Group(Other));
-		Assert.Equal(new RecordName("Herc type 19 2 of 2 in Human hercs", "(group 1)"), names.Object(new ObjectKey(12, 7)));
-		Assert.Equal(new RecordName("Herc type 19 in Human hercs", "(group 2)"), names.Object(new ObjectKey(12, 8)));
+		Assert.Equal(new RecordName("Human hercs: Herc type 19 x2, Herc type 17", "(group 2)"), names.Group(Wing));
+		Assert.Equal(new RecordName("Human hercs: Herc type 19", "(group 3)"), names.Group(Other));
+		Assert.Equal(new RecordName("Herc type 19 2 of 2 in Human hercs", "(group 2)"), names.Object(new ObjectKey(12, 7)));
+		Assert.Equal(new RecordName("Herc type 19 in Human hercs", "(group 3)"), names.Object(new ObjectKey(12, 8)));
+	}
+
+	/// <summary>
+	/// Catches a waypoint row measuring its leg to the waypoint after it, or from the start, rather than from the one before
+	/// it, and a waypoint numbered other than the cockpit numbers it: the start, then waypoint 1
+	/// (docs/retail/simulation/cockpit-gunsight-hud.md#waypoint-indicators). 50,000 world units are 300 m.
+	/// </summary>
+	[Fact]
+	public void AWaypointIsNumberedAsTheCockpitNumbersItAndMeasuredFromTheOneBefore() {
+		var points = new[] { new Vec3i(0, 0, 0), new Vec3i(50000, 0, 0), new Vec3i(50000, 100000, 0) };
+
+		Assert.Equal(["Start", "Waypoint 1", "Waypoint 2"], Enumerable.Range(0, 3).Select(MissionText.Waypoint));
+		Assert.Null(MissionText.LegFromPrevious(points, 0));
+		Assert.Equal("300 m from the start", MissionText.LegFromPrevious(points, 1));
+		Assert.Equal("600 m from waypoint 1", MissionText.LegFromPrevious(points, 2));
 	}
 
 	/// <summary>

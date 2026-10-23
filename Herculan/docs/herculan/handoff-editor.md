@@ -1,6 +1,6 @@
 # Handoff — the HERCULAN mission editor
 
-The editor, `Herculan.Engine.Editor`, run on its own by `Herculan.Engine.Host.Editor` and from the game's Editor menu item, opens a mission as its `.MSN` and `.ENG`, shows its scene, the Mission panel's lists, the trigger, countdown, objective, object and group views and a group's orders from the `.MSN` and its route and trigger area views through the `script.dat` generated from it, edits it, and saves it into the install, where the game loads it in place of the archive's.
+The editor, `Herculan.Engine.Editor`, run on its own by `Herculan.Engine.Host.Editor` and from the game's Editor menu item, opens a mission as its `.MSN` and `.ENG`, shows its scene, the Mission panel's lists and every Properties view from the `.MSN`, checks the `script.dat` generated from it for the Problems list, edits it, and saves it into the install, where the game loads it in place of the archive's.
 
 | Doc | Covers |
 |---|---|
@@ -29,12 +29,12 @@ These hold for every edit in the docs above unless the doc says otherwise:
 
 What the user has corrected in the editor's panels, which every new view follows:
 
-- **Vocabulary.** A row-10 action is a **trigger**, a row-11 timer a **countdown** and a row-17 objective a **win condition** or a **lose condition**, in every label, link and refusal reason the editor shows; the code keeps the retail names. The player's group is the squad, never a "lance"; its other members are squadmates, never "wingmen". The player *pilots* a HERC; "fly" is for flyers. The subject of a sentence is the player, the mission or the HERC, never "the game". A group's side is its **Team**. A structure or ground vehicle is titled by its type and the name the MFD's F5 screen prints (`Base type 40: <name>`). The editor says "references", never "names it".
+- **Vocabulary.** A row-10 action is a **trigger**, a row-11 timer a **countdown** and a row-17 objective a **win condition** or a **lose condition**, in every label, link and refusal reason the editor shows; the code keeps the retail names. The player's group is the squad, never a "lance"; its other members are squadmates, never "wingmen". The player *pilots* a HERC; "fly" is for flyers. The subject of a sentence is the player, the mission or the HERC, never "the game". A group's side is its **Team**. A structure or ground vehicle is titled by its kind and the name the MFD's F5 screen prints ("Structure: SUPPLY DEPOT"), its type number under Advanced. The mission box is the **play area**. The editor says "references", never "names it".
 - **Plain words, short.** A note says what the user sees or can do, in one short sentence, not how the records produce it: "No heading of its own: it faces along its route's first leg", not "names none: the bearing of its route's first leg". Labels are the user's words ("Related objectives", not "Objectives asked of it").
 - **No note for what a disabled control already shows.** A field the user cannot change is drawn disabled; a note is added only when the reason is not obvious.
 - **Notes go through `EditorText`.** `EditorText.Note` draws every aside wrapped, in a grey lighter than ImGui's disabled text (unwrapped, the 340-pixel Properties panel cuts it off). `EditorText.Emphasis` draws, in bold, the one note per view the user must not miss.
 - **Latin-1 only in UI strings.** The ImGui font atlas holds Basic Latin and Latin-1, so an em dash or a curly quote draws as `?`. Use parentheses, colons and straight quotes; `°` is in range.
-- **Names, not numbers.** A record is named by what it is and does, with its number in its row dimmed after it so a link still reads, cut to fit on one line and whole on hover; one source names it everywhere ([Names](handoff-editor-mission-logic.md#names)). A list position a designer sees counts from 1 ("1st order").
+- **Names, not numbers.** A record is named by what it is and does, with its number in its row dimmed after it so a link still reads, cut to fit on one line and whole on hover; one source names it everywhere ([Names](handoff-editor-mission-logic.md#names)). Every number a designer sees counts from 1, a record's (`MissionText.Number`) and a list position's ("1st order") alike; a route's waypoints follow the cockpit, "Start" then "Waypoint 1" ([Routes](handoff-editor-placement.md#routes)).
 - **Identity first.** An object's view opens with its name and then its group.
 - **Errors point at the fix.** A refused input shows its reason in a strong red and tints the field to change.
 

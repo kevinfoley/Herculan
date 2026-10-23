@@ -7,15 +7,17 @@ using ImGuiNET;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The Properties panel's view of a trigger area: its shape, a box's corners or a circle's centre and radius as typed
-/// fields (<see cref="PointFields"/>), what shares their points, whether one stands outside the mission box as opened, the triggers testing it, and the edits that make one (<see cref="AreaEditor"/>,
+/// The Properties panel's view of a trigger area, read from the layout and <see cref="MissionIndex"/> by its row-9 GUID, every
+/// area of the <c>.MSN</c> included: its shape, a box's corners or a circle's centre and radius as typed fields
+/// (<see cref="PointFields"/>), what shares their points, whether one stands outside the mission's play area as opened, the
+/// triggers testing it, and the edits that make one (<see cref="AreaEditor"/>,
 /// <see cref="PointMover"/>): switch box and circle, move a corner, the centre or the radius, delete the area; and a new trigger
 /// testing it (<see cref="ActionEditor"/>). A field
 /// applies when it loses the focus, as one step of the undo history, through the same <see cref="PointMover.Commit"/> a
 /// drag of the move handles makes, so a point shared with anything else moves with it.
 /// </summary>
 internal sealed class TriggerAreaView {
-	private readonly GeneratedIndex _index;
+	private readonly MissionIndex _index;
 	private readonly MissionNames _names;
 	private readonly PointMover _mover;
 	private readonly AreaEditor _editor;
@@ -25,9 +27,9 @@ internal sealed class TriggerAreaView {
 	private readonly Action<DeleteNamers> _references;
 	private readonly PointSharers _sharers;
 
-	// A corner or centre being typed; and a radius being typed, and for which area, until its field lets go.
+	// A corner or centre being typed; and a radius being typed, and for which area's row-9 GUID, until its field lets go.
 	private readonly PointFields _corners = new();
-	private int? _radiusDraftFor;
+	private short? _radiusDraftFor;
 	private int _radiusDraft;
 
 	/// <param name="actions">Creates a trigger testing the area.</param>
@@ -35,7 +37,7 @@ internal sealed class TriggerAreaView {
 	/// <param name="references">Draws what references something, one line per record.</param>
 	/// <param name="names">What the title names the area by.</param>
 	/// <param name="sharers">Lists what else stands on a corner's or the center's point.</param>
-	public TriggerAreaView(GeneratedIndex index, MissionNames names, PointMover mover, AreaEditor editor, AreaPlacing placing,
+	public TriggerAreaView(MissionIndex index, MissionNames names, PointMover mover, AreaEditor editor, AreaPlacing placing,
 			ActionEditor actions, Action<short> drawTrigger, Action<DeleteNamers> references, PointSharers sharers) {
 		_index = index;
 		_names = names;
@@ -49,14 +51,11 @@ internal sealed class TriggerAreaView {
 	}
 
 	/// <summary>
-	/// Row-9 GUID <paramref name="guid"/>'s view, the area generated at block-4 index <paramref name="reference"/>; its shape
-	/// and corners are the layout's (<see cref="MissionIndex"/>), which a drag's preview moves.
+	/// Row-9 GUID <paramref name="guid"/>'s view; its shape and corners are the layout's (<see cref="MissionIndex"/>), which a
+	/// drag's preview moves. An area whose corner or center references a position the layout has none for shows its name, why,
+	/// and Delete.
 	/// </summary>
-	public void Draw(short guid, int reference) {
-		if (_index.Scene.Area(guid)?.Area is not { } area) {
-			return;
-		}
-
+	public void Draw(short guid) {
 		var name = _names.Area(guid);
 		EditorText.Wrapped(name.Text);
 		if (name.Number is { } number) {
@@ -64,17 +63,23 @@ internal sealed class TriggerAreaView {
 		}
 
 		ImGui.Separator();
+		if (_index.Area(guid)?.Area is not { } area) {
+			EditorText.Reason(_editor.WhyFixed(guid));
+			DrawDelete(guid);
+			return;
+		}
+
 		string? reason = _editor.WhyFixed(guid);
 		bool fixedNow = reason != null || _placing.Active;
 		DrawShape(guid, area, fixedNow);
 
 		ImGui.BeginDisabled(fixedNow);
 		if (area.Shape == MissionTriggerShape.Circle) {
-			DrawCorner(guid, reference, 0, "Centre", area.A, reason != null);
-			DrawRadius(guid, reference, area.Radius, reason != null);
+			DrawCorner(guid, 0, "Center", area.A, reason != null);
+			DrawRadius(guid, area.Radius, reason != null);
 		} else {
-			DrawCorner(guid, reference, 0, "Corner 1", area.A, reason != null);
-			DrawCorner(guid, reference, 1, "Corner 2", area.B, reason != null);
+			DrawCorner(guid, 0, "Corner 1", area.A, reason != null);
+			DrawCorner(guid, 1, "Corner 2", area.B, reason != null);
 			ImGui.Text($"Size: {MissionText.Distance(Math.Abs(area.B.X - area.A.X))} by {MissionText.Distance(Math.Abs(area.B.Y - area.A.Y))}");
 			EditorText.Note("Height is ignored: the box catches anything over its ground.");
 		}
@@ -84,7 +89,7 @@ internal sealed class TriggerAreaView {
 		EditorText.Reason(_editor.Failure);
 
 		bool tested = false;
-		foreach (short trigger in _index.Scene.Area(guid)?.TestedBy ?? []) {
+		foreach (short trigger in _index.Area(guid)?.TestedBy ?? []) {
 			ImGui.Separator();
 			ImGui.PushID(trigger);
 			_drawTrigger(trigger);
@@ -132,13 +137,13 @@ internal sealed class TriggerAreaView {
 	}
 
 	// A corner's or the centre's X and Y as fields, which move its point when one lets go, what shares the point, and
-	// whether it stands outside the mission box as opened. The box is of block 1's points alone, so a circle's edge past
+	// whether it stands outside the play area as opened. The play area is of block 1's points alone, so a circle's edge past
 	// it grows nothing and only the centre is tested.
-	private void DrawCorner(short guid, int reference, int corner, string label, Vec3i at, bool fixedNow) {
+	private void DrawCorner(short guid, int corner, string label, Vec3i at, bool fixedNow) {
 		var point = new Vec3i(at.X, at.Y, 0);
 		ImGui.PushID($"corner{corner}");
 		ImGui.Text($"{label}, in world units:");
-		if (_corners.Draw((reference, corner), point, withZ: false) is { } draft) {
+		if (_corners.Draw((guid, corner), point, withZ: false) is { } draft) {
 			_mover.Commit(new AreaCornerTarget(guid, corner), point, draft.X, draft.Y, 0);
 		}
 
@@ -151,21 +156,21 @@ internal sealed class TriggerAreaView {
 	}
 
 	// The radius as a field, in world units, stored in tens when it lets go.
-	private void DrawRadius(short guid, int reference, int radius, bool fixedNow) {
-		if (_radiusDraftFor is { } draftFor && draftFor != reference && !ImGui.IsAnyItemActive()) {
+	private void DrawRadius(short guid, int radius, bool fixedNow) {
+		if (_radiusDraftFor is { } draftFor && draftFor != guid && !ImGui.IsAnyItemActive()) {
 			_radiusDraftFor = null;
 		}
 
-		int shown = _radiusDraftFor == reference ? _radiusDraft : radius;
+		int shown = _radiusDraftFor == guid ? _radiusDraft : radius;
 		bool done = false;
 		ImGui.PushID("radius");
 		ImGui.Text("Radius, in world units:");
 		if (Field("##radius", ref shown, ref done)) {
-			_radiusDraftFor = reference;
+			_radiusDraftFor = guid;
 			_radiusDraft = shown;
 		}
 
-		if (done && _radiusDraftFor == reference) {
+		if (done && _radiusDraftFor == guid) {
 			int draft = _radiusDraft;
 			_radiusDraftFor = null;
 			if (TriggerAreaEditing.Radius(TriggerAreaEditing.StoredRadius(draft)) != radius) {

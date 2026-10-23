@@ -23,14 +23,19 @@ internal sealed class TheaterChanger {
 	private readonly ScriptDat _document;
 	private readonly MissionDocument _source;
 	private readonly MissionScene _scene;
-	private readonly GeneratedIndex _index;
+	private readonly MissionIndex _index;
 	private readonly PointMover _mover;
 	private readonly SceneSync _sync;
 	private (int Word, short Value)? _requested;
 
-	/// <param name="document">The generated <c>script.dat</c>, <paramref name="source"/>'s, which the scene was loaded from.</param>
+	/// <param name="document">
+	/// The generated <c>script.dat</c>, <paramref name="source"/>'s, which the scene's world was loaded from: its header is the
+	/// theater and time of day the launch plays, a campaign stage's theater written over the mission's own
+	/// (<see cref="MissionOpener"/>), which the world is dressed in.
+	/// </param>
 	/// <param name="source">The mission as its <c>.MSN</c>.</param>
-	public TheaterChanger(ScriptDat document, MissionDocument source, MissionScene scene, GeneratedIndex index, PointMover mover,
+	/// <param name="index">The scene's objects, every one of which is dressed in the new world.</param>
+	public TheaterChanger(ScriptDat document, MissionDocument source, MissionScene scene, MissionIndex index, PointMover mover,
 			SceneSync sync) {
 		_document = document;
 		_source = source;

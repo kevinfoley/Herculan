@@ -22,8 +22,8 @@ internal enum ToolboxKind {
 /// Whether it goes on the ground under the pointer, where an entry was dragged and let go over the view; otherwise on
 /// the ground at the middle of the view.
 /// </param>
-/// <param name="Group">The group it joins, whose side it takes; null for a group of its own.</param>
-internal sealed record ToolboxRequest(ToolboxKind Kind, int TypeIndex, MissionSide Side, bool AtPointer, int? Group);
+/// <param name="Group">The row-16 GUID of the group it joins, whose side it takes; null for a group of its own.</param>
+internal sealed record ToolboxRequest(ToolboxKind Kind, int TypeIndex, MissionSide Side, bool AtPointer, short? Group);
 
 /// <summary>A Toolbox entry being dragged toward the view: what it would add, and on which side.</summary>
 internal readonly record struct ToolboxDrag(ToolboxKind Kind, int TypeIndex, MissionSide Side);
@@ -41,6 +41,9 @@ internal readonly record struct ToolboxDrag(ToolboxKind Kind, int TypeIndex, Mis
 /// New route (<see cref="RoutePlacing"/>) and the trigger-area tool's New box and New circle (<see cref="AreaPlacing"/>).
 /// </summary>
 internal sealed class EditorToolbox {
+	/// <summary>Why the selected group cannot be joined once the <c>.MSN</c> has no such group.</summary>
+	public const string GroupGone = "The group is no longer in the mission.";
+
 	// Where it first opens and how big, in pixels on a 100% display (ScaledImGui.Scaled): beside the Mission panel,
 	// at the bottom of the window.
 	private const float Width = 260f;
@@ -53,9 +56,9 @@ internal sealed class EditorToolbox {
 
 	// The group the selection is or belongs to, as the last frame drawn was told, and why an entry of each kind cannot
 	// join it; and the group an add joins when "Join" is ticked, null while the entry chosen cannot.
-	private int? _selectedGroup;
+	private short? _selectedGroup;
 	private Func<ToolboxKind, string?>? _whyNotJoin;
-	private int? _joinGroup;
+	private short? _joinGroup;
 	private (ToolboxKind Kind, int TypeIndex)? _chosen;
 	private (ToolboxKind Kind, int TypeIndex)? _dragging;
 	private ToolboxRequest? _request;
@@ -102,7 +105,7 @@ internal sealed class EditorToolbox {
 	}
 
 	/// <param name="enabled">False while nothing can be added, such as during a move.</param>
-	/// <param name="selectedGroup">The herc, flyer or structure group the selection is or belongs to, which an add can join; or null.</param>
+	/// <param name="selectedGroup">The row-16 GUID of the herc, flyer or structure group the selection is or belongs to, which an add can join; or null.</param>
 	/// <param name="selectedGroupName">What <paramref name="selectedGroup"/> is called (<see cref="MissionNames.GroupBrief"/>), or null.</param>
 	/// <param name="groupKind">The entry kind <paramref name="selectedGroup"/>'s members are, whose join is checked while no entry is chosen.</param>
 	/// <param name="whyNotJoin">
@@ -117,7 +120,7 @@ internal sealed class EditorToolbox {
 	/// Draws the placing tools' entries (<see cref="RoutePlacing.DrawToolboxEntry"/>, <see cref="AreaPlacing.DrawToolboxEntry"/>)
 	/// above the lists, or null.
 	/// </param>
-	public void Draw(Vector2 display, bool enabled, int? selectedGroup, string? selectedGroupName, ToolboxKind groupKind,
+	public void Draw(Vector2 display, bool enabled, short? selectedGroup, string? selectedGroupName, ToolboxKind groupKind,
 			Func<ToolboxKind, string?>? whyNotJoin, string? whyNoHerc, string? whyNoFlyer, string? whyNoVehicle,
 			string? whyNoStructure, Action? routeEntry = null) {
 		_whyNoHerc = whyNoHerc;
@@ -270,7 +273,7 @@ internal sealed class EditorToolbox {
 	// A double-click can choose an entry of another kind in the frame it asks for it, so the join is checked again for
 	// <kind>, and a refusal is shown rather than adding it in a group of its own.
 	private void Request(ToolboxKind kind, int typeIndex, bool atPointer) {
-		int? group = null;
+		short? group = null;
 		if (_join && _joinGroup is { } joining) {
 			if (_selectedGroup != null && _whyNotJoin?.Invoke(kind) is { } refused) {
 				Status = refused;

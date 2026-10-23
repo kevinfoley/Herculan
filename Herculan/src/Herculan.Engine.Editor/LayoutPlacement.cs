@@ -66,8 +66,8 @@ internal sealed record PlannedObject(ObjectKey Key, MissionUnitKind Kind, int Ty
 	bool AiRadarActive, short Group, int MemberIndex, bool Squad, MissionSide Side, MissionMemberPlace Place);
 
 /// <summary>
-/// One row-16 group as placed: its position in the layout's row 16 (<paramref name="Number"/>, its display number, which is
-/// its generated block-11 index when the generation drops no group before it), roster, side, the action it waits on
+/// One row-16 group as placed: its place in the layout's row 16 (<paramref name="Position"/>, from 0, the squad's 0;
+/// <see cref="Number"/> is what the editor shows), roster, side, the action it waits on
 /// (<c>-1</c> for none), its setup (<see cref="MissionPlacementRules.GroupSetup"/>) and the records it places, in roster
 /// order, the squad's in slot order.
 /// </summary>
@@ -84,9 +84,15 @@ internal sealed record PlannedObject(ObjectKey Key, MissionUnitKind Kind, int Ty
 /// </param>
 /// <param name="Orders">Its ten order slots' row-15 GUIDs, <c>-1</c> where unset.</param>
 /// <param name="Pad">The ground it paints, read from its first member, or null.</param>
-internal sealed record PlannedGroup(short Guid, int Number, MissionUnitKind Kind, MissionSide Side, short DeploymentAction,
+internal sealed record PlannedGroup(short Guid, int Position, MissionUnitKind Kind, MissionSide Side, short DeploymentAction,
 		bool Waiting, short ArrivalVerb, MissionGroupSetup Setup, short OwnPoint, IReadOnlyList<short> StartPoints,
 		IReadOnlyList<short> Orders, IReadOnlyList<ObjectKey> Members, MissionBasePad? Pad) {
+	/// <summary>Its number as the editor shows it (<see cref="MissionText.Number"/>).</summary>
+	public int Number => MissionText.Number(Position);
+
+	/// <summary>Whether it is the player's squad: the layout's first group.</summary>
+	public bool IsSquad => Position == MissionPlacementRules.SquadGroupIndex;
+
 	/// <summary>
 	/// Whether the group is kept out of the scene, by the user's choice (docs/herculan/handoff-editor-msn-scene.md#decided-by-the-user):
 	/// it waits on an action whose verb brings it in by drop pod or on foot, at a point picked about the player when the

@@ -5,8 +5,8 @@ using Herculan.Engine.World;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// One row-8 route as placed: its position in the layout's row 8 (<paramref name="Number"/>, its display number, which is its
-/// generated block-3 index when the generation drops no route before it), its waypoints, and the groups whose orders name it.
+/// One row-8 route as placed: its place in the layout's row 8 (<paramref name="Position"/>, from 0; <see cref="Number"/> is
+/// what the editor shows), its waypoints, and the groups whose orders name it.
 /// </summary>
 /// <param name="Points">
 /// Its waypoints, in order: each entry of its list naming a point the layout has, as the load drops a waypoint naming none.
@@ -18,8 +18,11 @@ namespace Herculan.Engine.Editor;
 /// (docs/retail/simulation/ai-goals.md#the-route-cursor-is-loaded-once).
 /// </param>
 /// <param name="NamedBy">The row-16 GUIDs of the groups that name it only in a later order slot, which no group walks.</param>
-internal sealed record PlannedRoute(short Guid, int Number, IReadOnlyList<Vec3i> Points, IReadOnlyList<int> Entries,
+internal sealed record PlannedRoute(short Guid, int Position, IReadOnlyList<Vec3i> Points, IReadOnlyList<int> Entries,
 		IReadOnlyList<short> PointGuids, IReadOnlyList<short> WalkedBy, IReadOnlyList<short> NamedBy) {
+	/// <summary>Its number as the editor shows it (<see cref="MissionText.Number"/>).</summary>
+	public int Number => MissionText.Number(Position);
+
 	/// <summary>
 	/// Whether the route closes on itself, its last waypoint its first, and so is walked as a loop that never ends. Compared
 	/// by position, as the simulation's route cursor compares it (<see cref="Sim.MissionGroup.RouteCursor"/>).
@@ -31,8 +34,8 @@ internal sealed record PlannedRoute(short Guid, int Number, IReadOnlyList<Vec3i>
 }
 
 /// <summary>
-/// One row-9 trigger area as placed: its position in the layout's row 9 (<paramref name="Number"/>, its display number, which
-/// is its generated block-4 index when the generation drops no area before it), where it stands and the actions testing it.
+/// One row-9 trigger area as placed: its place in the layout's row 9 (<paramref name="Position"/>, from 0;
+/// <see cref="Number"/> is what the editor shows), where it stands and the actions testing it.
 /// </summary>
 /// <param name="Area">
 /// Its shape and where it stands, resolved as the load resolves a block-4 record (<see cref="MissionLoader.TriggerArea"/>): a
@@ -41,17 +44,23 @@ internal sealed record PlannedRoute(short Guid, int Number, IReadOnlyList<Vec3i>
 /// </param>
 /// <param name="PointGuids">The row-6 GUIDs of its first corner or centre and, for a box, its second corner.</param>
 /// <param name="TestedBy">The row-10 GUIDs of the actions that test it (<see cref="PlannedAction.Areas"/>), in layout order.</param>
-internal sealed record PlannedArea(short Guid, int Number, MissionTriggerArea Area, IReadOnlyList<short> PointGuids,
-	IReadOnlyList<short> TestedBy);
+internal sealed record PlannedArea(short Guid, int Position, MissionTriggerArea Area, IReadOnlyList<short> PointGuids,
+		IReadOnlyList<short> TestedBy) {
+	/// <summary>Its number as the editor shows it (<see cref="MissionText.Number"/>).</summary>
+	public int Number => MissionText.Number(Position);
+}
 
 /// <summary>
-/// One row-10 action as placed: its position in the layout's row 10 (its display number), its type, which says whose position
-/// its areas test, and the areas it tests: its area slots up to the first unset one or the first naming an area the layout
-/// has not, which the generation resolves to unset and the load stops at (<see cref="MissionLoader"/>'s action pass), each
-/// area that stands somewhere (<see cref="LayoutPlan.Area"/>).
+/// One row-10 action as placed: its place in the layout's row 10 (<paramref name="Position"/>, from 0; <see cref="Number"/> is
+/// what the editor shows), its type, which says whose position its areas test, and the areas it tests: its area slots up to
+/// the first unset one or the first naming an area the layout has not, which the generation resolves to unset and the load
+/// stops at (<see cref="MissionLoader"/>'s action pass), each area that stands somewhere (<see cref="LayoutPlan.Area"/>).
 /// </summary>
 /// <param name="Areas">The row-9 GUIDs of the areas it tests, in slot order.</param>
-internal sealed record PlannedAction(short Guid, int Number, short Type, IReadOnlyList<short> Areas);
+internal sealed record PlannedAction(short Guid, int Position, short Type, IReadOnlyList<short> Areas) {
+	/// <summary>Its number as the editor shows it (<see cref="MissionText.Number"/>).</summary>
+	public int Number => MissionText.Number(Position);
+}
 
 /// <summary>
 /// The routes, trigger areas and actions of a layout, as <see cref="LayoutPlacement.Place"/> places them beside its groups
@@ -95,9 +104,9 @@ internal static class LayoutFeatures {
 		}
 
 		var placedAreas = shapes.Values
-			.Select(shape => new PlannedArea(shape.Guid, shape.Number, shape.Area, shape.Points,
+			.Select(shape => new PlannedArea(shape.Guid, shape.Position, shape.Area, shape.Points,
 				tested.GetValueOrDefault(shape.Guid) ?? (IReadOnlyList<short>)[]))
-			.OrderBy(area => area.Number)
+			.OrderBy(area => area.Position)
 			.ToList();
 		return (routes, placedAreas, actions);
 	}
@@ -154,7 +163,7 @@ internal static class LayoutFeatures {
 	}
 
 	// Every area that stands somewhere, by its GUID: a circle about its first point, a box between its two.
-	private static Dictionary<short, (short Guid, int Number, MissionTriggerArea Area, IReadOnlyList<short> Points)> Shapes(
+	private static Dictionary<short, (short Guid, int Position, MissionTriggerArea Area, IReadOnlyList<short> Points)> Shapes(
 			MissionLayout layout, PlacementOverrides overrides) {
 		var shapes = new Dictionary<short, (short, int, MissionTriggerArea, IReadOnlyList<short>)>();
 		var entries = layout.Entries<TriggerArea12>();

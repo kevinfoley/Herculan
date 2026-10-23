@@ -22,21 +22,24 @@ internal sealed record AreaDeleteBlockers(string? Fixed, DeleteNamers Names) {
 /// (docs/herculan/handoff-editor-document.md#the-tools). A corner, centre or radius
 /// move is <see cref="PointMover"/>'s.
 ///
-/// <para>Areas are taken by their row-9 GUID, as the selections name them, and an area not shown in the editor is not
-/// edited. The edits wait for the frame's ImGui to be rendered (<see cref="RunRequest"/>), since the rebuild
+/// <para>Areas are taken by their row-9 GUID, as the selections name them, from the layout, every area of the <c>.MSN</c>
+/// included, whatever its condition; one whose corner or center references a position the layout has none for can be deleted,
+/// and nothing else. The edits wait for the frame's ImGui to be rendered (<see cref="RunRequest"/>), since the rebuild
 /// changes what the panels list; <see cref="AreaPlacing"/> calls <see cref="CreateBox"/> and <see cref="CreateCircle"/> at
 /// the same point of the frame.</para>
 /// </summary>
 internal sealed class AreaEditor {
+	private const int AreaRow = 9;
+
 	private readonly MissionDocument _source;
-	private readonly GeneratedIndex _index;
+	private readonly MissionIndex _index;
 	private readonly PointMover _mover;
 	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private readonly ObjectDeleter _deleter;
 	private Func<string?>? _requested;
 
-	public AreaEditor(MissionDocument source, GeneratedIndex index, PointMover mover, SceneSync sync,
+	public AreaEditor(MissionDocument source, MissionIndex index, PointMover mover, SceneSync sync,
 			SelectionState selection, ObjectDeleter deleter) {
 		_source = source;
 		_index = index;
@@ -50,13 +53,12 @@ internal sealed class AreaEditor {
 	public string? Failure { get; private set; }
 
 	/// <summary>Why row-9 GUID <paramref name="area"/> cannot be edited, or null when it can.</summary>
-	public string? WhyFixed(short area) =>
-		_index.Records.Area(area) != null ? _mover.WhyFixedArea(area) : GeneratedRecords.NotShown;
+	public string? WhyFixed(short area) => _mover.WhyFixedArea(area);
 
 	/// <summary>What keeps <paramref name="area"/> from being deleted; <see cref="AreaDeleteBlockers.None"/> when nothing does.</summary>
 	public AreaDeleteBlockers BlockersOf(short area) {
-		if (WhyFixed(area) is { } reason) {
-			return AreaDeleteBlockers.Because(reason);
+		if (_index.Layout.Entry(AreaRow, area) == null) {
+			return AreaDeleteBlockers.Because(FeatureMoves.AreaGone);
 		}
 
 		var source = _source;

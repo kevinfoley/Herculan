@@ -158,7 +158,7 @@ public static class HercGroups {
 	/// </summary>
 	public static string? WhyNoJoin(MissionDocument document, short group) {
 		if (group != -1 && group == SquadRoster.Squad(document)) {
-			return "The player's squad takes squadmates in its own view.";
+			return "Squadmates are added with Add a squadmate in the Player's squad view: click Player's squad under Groups in the Mission panel.";
 		}
 
 		return NewGroups.WhyNoJoin(document, group, MechRoster, LastJoinSlot, "It is not a herc group.",

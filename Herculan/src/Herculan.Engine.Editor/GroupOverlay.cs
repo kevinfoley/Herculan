@@ -114,15 +114,14 @@ internal sealed class GroupOverlay {
 		}
 
 		if (settings.WaitingGroups != WaitingGroupDisplay.Hidden) {
-			var actions = _index.Layout.Entries<MissionAction82>();
-			var numbers = Enumerable.Range(0, actions.Count).ToDictionary(i => actions[i].Guid);
 			foreach (var group in _index.Groups) {
-				if (!group.Waiting || group.OffScene || _index.MembersOf(group.Guid).Count == 0) {
+				if (!group.Waiting || group.OffScene || _index.MembersOf(group.Guid).Count == 0
+						|| _index.Action(group.DeploymentAction) is not { } trigger) {
 					continue;
 				}
 
 				StackedLabel(group.Setup.Point,
-					$"Group {group.Number}: waits on trigger {numbers[group.DeploymentAction]}, {MissionText.ArrivalKind(group.ArrivalVerb)}",
+					$"Group {group.Number}: waits on trigger {trigger.Number}, {MissionText.ArrivalKind(group.ArrivalVerb)}",
 					WaitingColor);
 			}
 		}

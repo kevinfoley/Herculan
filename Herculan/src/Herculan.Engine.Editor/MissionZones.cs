@@ -9,8 +9,16 @@ namespace Herculan.Engine.Editor;
 /// <c>script.dat</c> header names it, and its size in world units.
 /// </summary>
 internal sealed record ZoneChoice(short Zone, int Width, int Height) {
-	/// <summary>The list's line.</summary>
-	public string Label => $"ZONE{Zone}";
+	/// <summary>The retail missions played in it, by name (<see cref="ZoneCatalog"/>); empty for none.</summary>
+	public IReadOnlyList<string> UsedBy { get; init; } = [];
+
+	/// <summary>The zone, its size and the retail missions played in it: "Zone 502 (12.6 by 12.6 km): used by C5_02, C5_04".</summary>
+	public string Label =>
+		$"Zone {Zone} ({Kilometres(Width)} by {Kilometres(Height)} km): "
+		+ (UsedBy.Count > 0 ? $"used by {string.Join(", ", UsedBy)}" : "used by no retail mission");
+
+	private static string Kilometres(int worldUnits) =>
+		(worldUnits / Render.WorldScale.WorldUnitsPerMeter / 1000f).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
 }
 
 /// <summary>

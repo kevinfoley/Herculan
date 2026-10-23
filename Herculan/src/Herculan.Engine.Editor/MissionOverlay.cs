@@ -196,7 +196,7 @@ internal sealed class MissionOverlay {
 		if (settings.ShowBasePads) {
 			var selectedGroup = selection.Current is GroupSelection group ? _index.Group(group.Guid) : null;
 			foreach (var (pad, lines) in _pads) {
-				if (selectedGroup != null && pad.GroupIndex == selectedGroup.Number) {
+				if (selectedGroup != null && pad.GroupIndex == selectedGroup.Position) {
 					highlighted.AddRange(lines);
 					AddSnap(highlighted, selectedGroup.Setup);
 				} else {
@@ -289,8 +289,9 @@ internal sealed class MissionOverlay {
 
 	/// <summary>
 	/// The labels: each area's number at its centre, each walked route's number at its first
-	/// waypoint, and the selected route's waypoint numbers. An area and a route are numbered by their place in the layout's
-	/// row 9 and row 8. Drawn into ImGui's background list, so they sit under every panel.
+	/// waypoint, and the selected route's waypoints, "Start" and then their numbers (<see cref="MissionText.WaypointMark"/>). An
+	/// area and a route are numbered as the editor numbers them everywhere (<see cref="MissionText.Number"/>). Drawn into ImGui's
+	/// background list, so they sit under every panel.
 	/// </summary>
 	public void DrawLabels(Camera camera, EditorSettings settings, SelectionState selection) {
 		var drawList = ImGui.GetBackgroundDrawList();
@@ -329,7 +330,7 @@ internal sealed class MissionOverlay {
 				drawList.AddCircleFilled(at, ScaledImGui.Scaled(waypointSelected ? 5f : 3f), Pack(dotColor));
 
 				if (selected) {
-					Label(drawList, at + new Vector2(ScaledImGui.Scaled(6f), 0f), i.ToString(), SelectedColor);
+					Label(drawList, at + new Vector2(ScaledImGui.Scaled(6f), 0f), MissionText.WaypointMark(i), SelectedColor);
 				} else if (i == 0 && route.Walked) {
 					Label(drawList, at + new Vector2(ScaledImGui.Scaled(6f), 0f), $"Route {route.Number}", color);
 				}

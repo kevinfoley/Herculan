@@ -58,7 +58,7 @@ internal sealed class GroupView {
 
 		_presentWhen.Draw(_presence.GroupTarget(guid));
 		_team.Draw(guid, ofMember: false);
-		if (group.Number == 0) {
+		if (group.IsSquad) {
 			_machine.DrawSquad();
 		}
 
@@ -95,7 +95,7 @@ internal sealed class GroupView {
 	/// </summary>
 	private void DrawDeployment(PlannedGroup group) {
 		short waitsOn = group.Waiting ? group.DeploymentAction : (short)-1;
-		if (group.Number == 0 && waitsOn == -1) {
+		if (group.IsSquad && waitsOn == -1) {
 			ImGui.TextUnformatted("In the mission from the start.");
 			return;
 		}
@@ -139,7 +139,7 @@ internal sealed class GroupView {
 				ImGui.TextUnformatted("Starts at: its own position");
 				break;
 			case MissionGroupPointSource.RouteStart:
-				ImGui.TextUnformatted("Starts at: the first waypoint of its route");
+				ImGui.TextUnformatted("Starts at: the start of its route");
 				if (FirstRoute(group) is { } route && _index.Route(route) != null) {
 					_links.LayoutRoute(route);
 				}

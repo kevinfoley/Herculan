@@ -195,8 +195,15 @@ internal static class MissionText {
 	};
 
 	/// <summary>
-	/// Where row-<paramref name="row"/> GUID <paramref name="guid"/> stands in its row of <paramref name="layout"/>, its display
-	/// number; null for <c>-1</c> or a GUID the row has no entry for.
+	/// The number the editor shows for a record at <paramref name="position"/> in its row, from 0: every record number a
+	/// designer sees counts from 1 (docs/herculan/handoff-editor-ux-plan.md#decided). It is the record's place among its row's
+	/// identities, not its index in a file, so nothing is matched against a file through it.
+	/// </summary>
+	public static int Number(int position) => position + 1;
+
+	/// <summary>
+	/// The number the editor shows for row-<paramref name="row"/> GUID <paramref name="guid"/> in <paramref name="layout"/>
+	/// (<see cref="Number"/>); null for <c>-1</c> or a GUID the row has no entry for.
 	/// </summary>
 	public static int? NumberIn(MissionLayout layout, int row, short guid) {
 		if (guid == -1) {
@@ -206,11 +213,39 @@ internal static class MissionText {
 		var entries = layout.Entries(row);
 		for (int i = 0; i < entries.Count; i++) {
 			if (entries[i].Guid == guid) {
-				return i;
+				return Number(i);
 			}
 		}
 
 		return null;
+	}
+
+	/// <summary>
+	/// Waypoint <paramref name="index"/> of a route, from 0, as the route view names it: "Start" for the first, where a group
+	/// stands, then "Waypoint 1" on. That is the cockpit's numbering: the waypoint indicator reads "WAYPOINT n" for the route's
+	/// waypoint <i>n</i> counted from its start, and the heads-down map's first route marker is on waypoint 1
+	/// (docs/retail/simulation/cockpit-gunsight-hud.md#waypoint-indicators, docs/retail/simulation/heads-down-display.md#markers).
+	/// </summary>
+	public static string Waypoint(int index) => index == 0 ? "Start" : $"Waypoint {index}";
+
+	/// <summary><see cref="Waypoint"/> inside a sentence: "the start", "waypoint 2".</summary>
+	public static string WaypointInSentence(int index) => index == 0 ? "the start" : $"waypoint {index}";
+
+	/// <summary><see cref="Waypoint"/> as a label in the scene: "Start", "2".</summary>
+	public static string WaypointMark(int index) => index == 0 ? "Start" : index.ToString();
+
+	/// <summary>
+	/// How far waypoint <paramref name="index"/> of <paramref name="points"/> lies from the one before it, along the ground:
+	/// "420 m from waypoint 2"; null for the start, which has none before it.
+	/// </summary>
+	public static string? LegFromPrevious(IReadOnlyList<Vec3i> points, int index) {
+		if (index <= 0 || index >= points.Count) {
+			return null;
+		}
+
+		var (from, to) = (points[index - 1], points[index]);
+		double dx = to.X - from.X, dy = to.Y - from.Y;
+		return $"{Metres((int)Math.Round(Math.Sqrt(dx * dx + dy * dy)))} from {WaypointInSentence(index - 1)}";
 	}
 
 	/// <summary>A list position from 1 as an ordinal: "1st", "2nd", "3rd", "4th", "11th".</summary>

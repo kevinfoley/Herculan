@@ -20,10 +20,8 @@ namespace Herculan.Engine.Editor;
 /// <para>It then builds again what still reads the generation: the generated <see cref="World.Mission"/>
 /// (<see cref="MissionLoader.Load(GameContent, ScriptDat, string)"/>, after writing the generated <c>mission.str</c> and, for a
 /// mission loaded in training mode, the squad's <c>player.mec</c> beside the handoff, as the launch would for the
-/// generation, <see cref="MissionSquad"/>) and <see cref="GeneratedIndex"/>, each object's <see cref="SceneObject.Placement"/>
-/// carrying the generation's block-11 group for its record's GUID (<see cref="PlacementOf"/>); then
-/// the new <see cref="MissionIndex"/>, the pick spheres, the overlays' lines and the mission check, and tells the drawing what
-/// left and what joined the scene.</para>
+/// generation, <see cref="MissionSquad"/>) and <see cref="GeneratedIndex"/>; then the new <see cref="MissionIndex"/>, the pick
+/// spheres, the overlays' lines and the mission check, and tells the drawing what left and what joined the scene.</para>
 ///
 /// <para>A selection names a <c>.MSN</c> record, so it needs no mapping: it is kept while the <c>.MSN</c> has its record
 /// (<see cref="EditorSelection.InFile"/>), an object while the scene has an object for its record, a route's waypoint while
@@ -94,7 +92,7 @@ internal sealed class SceneSync {
 	public static Dictionary<ObjectKey, SceneObject> Create(MissionScene scene, MissionDocument source, LayoutPlan plan) {
 		var objects = new Dictionary<ObjectKey, SceneObject>();
 		foreach (var planned in plan.Objects) {
-			if (scene.CreateObject(PlacementOf(planned, source)) is { } placed) {
+			if (scene.CreateObject(PlacementOf(planned)) is { } placed) {
 				objects[planned.Key] = placed;
 			}
 		}
@@ -104,15 +102,13 @@ internal sealed class SceneSync {
 
 	/// <summary>
 	/// What a planned record's object is built and placed from: its type, fit, condition, place, side and formation slot,
-	/// from the layout; and from the generation, for what still reads it, the block-11 index of its group's (the Toolbox's
-	/// join, <c>EditorHost.JoinableGroup</c>), -1 where the generation has no record of the GUID. The editor binds no action
-	/// and ticks nothing, so its roster slot, which only the game's load binds by, is -1, and the actions and writes that load
-	/// binds are left unset.
+	/// from the layout. The editor binds no action and ticks nothing, so its roster slot and group index, which only the
+	/// game's load binds by, are -1, and the actions and writes that load binds are left unset.
 	/// </summary>
-	public static MissionPlacement PlacementOf(PlannedObject planned, MissionDocument source) {
+	public static MissionPlacement PlacementOf(PlannedObject planned) {
 		var place = planned.Place;
 		return new MissionPlacement(planned.Kind, planned.TypeIndex, planned.TypeName,
-			SlotIndex: -1, source.ExportedIndex(16, planned.Group) ?? -1,
+			SlotIndex: -1, GroupIndex: -1,
 			place.Position, place.Heading, planned.WeaponRefs, planned.WeaponSecondary,
 			IsPlayerLance: planned.Squad,
 			Side: planned.Side,
@@ -159,7 +155,7 @@ internal sealed class SceneSync {
 		var objects = new Dictionary<ObjectKey, SceneObject>();
 		var placedNow = new HashSet<object>(ReferenceEqualityComparer.Instance);
 		foreach (var planned in plan.Objects) {
-			var placement = PlacementOf(planned, _source);
+			var placement = PlacementOf(planned);
 			var placed = Reuse(planned.Key, placement, placedNow) ?? Build(planned.Key, placement);
 			if (placed == null) {
 				continue;

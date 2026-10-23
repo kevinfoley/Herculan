@@ -21,7 +21,8 @@ internal sealed class MissionTextView {
 	public void Draw() {
 		ImGui.Separator();
 		ImGui.Text("Text");
-		EditorText.Note($"{_editor.LineCount} of the {MissionTextEditing.LineCap} lines the simulator reads.");
+		EditorText.Note($"Text used: {_editor.LineCount} of {MissionTextEditing.LineCap} lines (briefing, objective lines, "
+			+ "intelligence report, status alerts and debrief together).");
 		DrawList(MissionTextList.Objectives, "Objective lines");
 		DrawList(MissionTextList.Briefing, "Briefing");
 		DrawList(MissionTextList.Intelligence, "Intelligence report");
@@ -38,7 +39,7 @@ internal sealed class MissionTextView {
 			? lines.Count > PanelLines ? $"The F11 panel lists the first {PanelLines}." : "The F11 panel lists them."
 			: "The mission screen shows them in a campaign, joined into one text.");
 		if (lines.Any(line => line.Text?.Any(c => c > 127) == true)) {
-			EditorText.Note("Letters past code 127 show as spaces on version 1.0's mission screen.");
+			EditorText.Note("Accented letters show as spaces on the mission screen in the original 1.0 release.");
 		}
 
 		ImGui.PushID(list.ToString());
@@ -84,10 +85,6 @@ internal sealed class MissionTextView {
 		ImGui.SameLine();
 		if (ImGui.SmallButton("Remove")) {
 			_editor.RequestRemove(list, slot);
-		}
-
-		if (_editor.Shared(list, slot)) {
-			EditorText.Note("Another record uses this line too: a change here gives this slot its own copy.");
 		}
 	}
 }

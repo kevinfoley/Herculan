@@ -262,12 +262,6 @@ internal sealed class ConditionView {
 		if (uses.Alternatives > 0) {
 			ImGui.TextWrapped(uses.Alternatives == 1 ? "1 variant alternative" : $"{uses.Alternatives} variant alternatives");
 		}
-
-		if (uses.LeftOut.Count > 0) {
-			int count = uses.LeftOut.Sum(kind => kind.Count);
-			ImGui.TextWrapped($"{count} more, absent from the mission as opened: "
-				+ string.Join(", ", uses.LeftOut.Select(kind => $"{kind.Count} {kind.Kind}")));
-		}
 	}
 
 	// A typed number labelled <label>, kept to <min>..<max>; answers the value when the field lets go after a change.

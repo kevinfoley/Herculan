@@ -33,11 +33,6 @@ internal sealed class MissionTextEditor {
 			.Select(entry => (entry.Slot, entry.Id, MissionTextEditing.LineText(_source, entry.Id)))
 			.ToList();
 
-	/// <summary>Whether another record references the line in <paramref name="list"/>'s slot <paramref name="slot"/> too, so an edit copies it first.</summary>
-	public bool Shared(MissionTextList list, int slot) =>
-		MissionTextEditing.PackageRecord(_source) is { } record
-			&& MissionTextEditing.Shared(_source, TextOwner.Package(record, list, slot));
-
 	/// <summary>Why no line can be added to <paramref name="list"/>, or null when one can.</summary>
 	public string? WhyNoAdd(MissionTextList list) => MissionTextEditing.WhyNoAdd(_source, list);
 

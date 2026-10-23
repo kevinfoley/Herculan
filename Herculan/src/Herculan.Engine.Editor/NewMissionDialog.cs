@@ -174,7 +174,7 @@ internal sealed class NewMissionDialog {
 		}
 
 		Spacer();
-		ImGui.TextWrapped("The mission is the player's machine alone, with one nav point to reach.");
+		ImGui.TextWrapped("The mission is the player's HERC alone, with one waypoint to reach.");
 		Problem(_problem);
 		Problem(Failure);
 		Spacer();

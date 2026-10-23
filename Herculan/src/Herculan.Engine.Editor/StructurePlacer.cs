@@ -42,20 +42,19 @@ internal sealed class StructurePlacer {
 	private const int HeadingRow = 7;
 	private const int BaseRow = 14;
 	private const int GroupRow = 16;
-	private const int GroupBlock = 11;
 
 	private readonly ScriptDat _document;
 	private readonly MissionDocument _source;
 	private readonly MissionScene _scene;
 	private readonly HeightGrid _terrain;
-	private readonly GeneratedIndex _index;
+	private readonly MissionIndex _index;
 	private readonly PointMover _mover;
 	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 
 	/// <param name="document">The generated <c>script.dat</c>, <paramref name="source"/>'s, which the scene was loaded from.</param>
 	/// <param name="source">The mission as its <c>.MSN</c>.</param>
-	public StructurePlacer(ScriptDat document, MissionDocument source, MissionScene scene, GeneratedIndex index,
+	public StructurePlacer(ScriptDat document, MissionDocument source, MissionScene scene, MissionIndex index,
 			PointMover mover, SceneSync sync, SelectionState selection) {
 		_document = document;
 		_source = source;
@@ -78,7 +77,7 @@ internal sealed class StructurePlacer {
 	/// <paramref name="joinGroup"/>, as a member of that structure group; and selects it. Answers why it could not, or
 	/// null when it did.
 	/// </summary>
-	public string? Add(int typeIndex, MissionSide side, int x, int y, int? joinGroup = null) {
+	public string? Add(int typeIndex, MissionSide side, int x, int y, short? joinGroup = null) {
 		if (WhyNoAdd is { } refused) {
 			return refused;
 		}
@@ -103,30 +102,27 @@ internal sealed class StructurePlacer {
 	}
 
 	/// <summary>
-	/// Why a structure cannot be added to <paramref name="group"/>, or null when it can: the group must be a structure
-	/// group in the file, other than the player's squad, with a member slot no record of it fills in any state.
+	/// Why a structure cannot be added to <paramref name="group"/>, by its row-16 GUID, or null when it can: the group must be
+	/// a structure group of the mission, other than the player's squad, with a member slot no record of it fills in any state.
 	/// </summary>
-	public string? WhyNotJoin(int group) =>
-		WhyNoAdd is { } readOnly ? readOnly
-			: group <= 0 || group >= _document.Groups.Length || _index.KindOf(group) != MissionUnitKind.Base
-				|| _source.GuidOf(GroupBlock, group) == -1
-				? $"Group {group} is not a structure group."
-				: _source.FreeMemberSlot(_source.GuidOf(GroupBlock, group)) < 0
-					? $"Group {group} has each of its 20 member slots filled by one of its records."
-					: null;
+	public string? WhyNotJoin(short group) =>
+		WhyNoAdd is { } full ? full
+			: _index.Group(group) is not { } planned ? EditorToolbox.GroupGone
+			: planned.IsSquad || planned.Kind != MissionUnitKind.Base ? "It is not a group of structures."
+			: _source.FreeMemberSlot(group) < 0 ? "It already has 20 members, as many as a group holds."
+			: null;
 
 	// Adds a structure to an existing structure group, in the first member slot no record of the group fills. DBSIM walks
 	// all 20 member refs by their raw index (docs/retail/formats/script-dat.md#placement--the-actual-rule, rule 7), so a
 	// slot free earlier in the list serves as well as one at its end. The record names a point of its own at (x, y), which
 	// wins over the slot's formation offset from the group's point (rule 2), and no heading, so it faces the group's way;
 	// its side is the group's.
-	private string? Join(int typeIndex, int group, int x, int y) {
-		if (WhyNotJoin(group) is { } reason) {
+	private string? Join(int typeIndex, short groupGuid, int x, int y) {
+		if (WhyNotJoin(groupGuid) is { } reason) {
 			return reason;
 		}
 
 		var source = _source;
-		short groupGuid = source.GuidOf(GroupBlock, group);
 		int memberSlot = source.FreeMemberSlot(groupGuid);
 		var position = new Vec3i(x, y, _terrain.HeightAtWorld(x, y));
 		short structure = -1;
@@ -152,7 +148,7 @@ internal sealed class StructurePlacer {
 
 		short added = structure();
 		bool generated = source.ExportedIndex(BaseRow, added) != null;
-		if (!generated || _index.Scene.ObjectOf(new ObjectKey(BaseRow, added)) == null) {
+		if (!generated || _index.ObjectOf(new ObjectKey(BaseRow, added)) == null) {
 			_sync.Undo(change);
 			return !generated
 				? "The added structure was not generated; nothing was added."

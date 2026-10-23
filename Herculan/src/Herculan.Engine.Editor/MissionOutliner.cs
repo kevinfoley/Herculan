@@ -102,8 +102,8 @@ internal sealed class MissionOutliner {
 	}
 
 	/// <summary>
-	/// The mission check's findings, open by default when there are any. A finding whose record the
-	/// editor can show selects it.
+	/// The mission check's findings, open by default when there are any, each in the editor's words (<see cref="ProblemText"/>).
+	/// A finding whose record the editor can show selects it.
 	/// </summary>
 	private void DrawProblems() {
 		var flags = _lint.Findings.Count > 0 ? ImGuiTreeNodeFlags.DefaultOpen : ImGuiTreeNodeFlags.None;
@@ -121,13 +121,14 @@ internal sealed class MissionOutliner {
 		foreach (var (finding, target) in _lint.Findings) {
 			ImGui.BulletText(string.Empty);
 			ImGui.SameLine();
+			string text = ProblemText.Of(finding, target, _names, Layout);
 			if (target == null) {
-				EditorText.Wrapped(finding.Message);
+				EditorText.Wrapped(text);
 				continue;
 			}
 
 			ImGui.PushStyleColor(ImGuiCol.Text, _selection.Is(target) ? SelectedFindingColor : FindingLinkColor);
-			EditorText.Wrapped(finding.Message);
+			EditorText.Wrapped(text);
 			ImGui.PopStyleColor();
 			Choose(target, ImGui.IsItemClicked());
 		}

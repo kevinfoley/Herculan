@@ -134,10 +134,10 @@ internal sealed class PointSharers {
 		return placed.Closed && at == placed.Points.Count - 1 ? 0 : at;
 	}
 
-	// A route's waypoint, by the route's name and the waypoint's number as the route view lists it.
+	// A route's waypoint, by the route's name and the waypoint as the route view lists it.
 	private void WaypointLink(short route, int waypoint) {
 		var name = Names.Route(route);
-		string part = waypoint >= 0 ? $"waypoint {waypoint}" : "a waypoint";
+		string part = waypoint >= 0 ? MissionText.WaypointInSentence(waypoint) : "a waypoint";
 		_links.Link(name with { Text = $"{name.Text}: {part}" }, new RouteSelection(route, waypoint));
 	}
 

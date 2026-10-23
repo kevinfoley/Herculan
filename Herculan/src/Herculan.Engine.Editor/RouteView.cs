@@ -4,18 +4,20 @@ using ImGuiNET;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The Properties panel's view of a route: whether it is a loop, which groups walk it, its waypoints, and the edits that
-/// make a route (<see cref="RouteEditor"/>, <see cref="RoutePlacing"/>): add waypoints after the last, insert one after the
-/// selected one, remove the selected one, close or open the loop, delete the route; the selected waypoint's X and Y as
-/// typed fields (<see cref="PointFields"/>); and, when its waypoints are an option of a random choice, which one, since an
-/// edit changes that option (docs/herculan/handoff-editor-conditions.md#variants).
+/// The Properties panel's view of a route, read from the layout and <see cref="MissionIndex"/> by its row-8 GUID, every route
+/// of the <c>.MSN</c> included (docs/herculan/handoff-editor-placement.md#routes): whether it is a loop, which groups walk it,
+/// its waypoints, "Start" and then "Waypoint 1" on, each with its distance from the one before (<see cref="MissionText.Waypoint"/>),
+/// and the edits that make a route (<see cref="RouteEditor"/>, <see cref="RoutePlacing"/>): add waypoints after the last,
+/// insert one after the selected one, remove the selected one, close or open the loop, delete the route; the selected
+/// waypoint's X and Y as typed fields (<see cref="PointFields"/>); and, when its waypoints are an option of a random choice,
+/// which one, since an edit changes that option (docs/herculan/handoff-editor-conditions.md#variants).
 /// </summary>
 internal sealed class RouteView {
 	// The heads-down map marks the player's route from its second waypoint and at most nine of them
 	// (docs/retail/simulation/heads-down-display.md#markers): waypoints past the tenth get no marker.
 	private const int MarkedWaypoints = 10;
 
-	private readonly GeneratedIndex _index;
+	private readonly MissionIndex _index;
 	private readonly MissionNames _names;
 	private readonly SelectionState _selection;
 	private readonly PointMover _mover;
@@ -32,7 +34,7 @@ internal sealed class RouteView {
 	/// <param name="sharers">Lists what else stands on the selected waypoint's point.</param>
 	/// <param name="choice">Draws, for a route GUID whose waypoints are an option of a random choice, which one (<see cref="VariantView.DrawRouteChoice"/>).</param>
 	/// <param name="names">What the title names the route by.</param>
-	public RouteView(GeneratedIndex index, MissionNames names, SelectionState selection, PointMover mover, RouteEditor editor,
+	public RouteView(MissionIndex index, MissionNames names, SelectionState selection, PointMover mover, RouteEditor editor,
 			RoutePlacing placing, PanelLinks links, PointSharers sharers, Action<short> choice) {
 		_index = index;
 		_names = names;
@@ -46,18 +48,22 @@ internal sealed class RouteView {
 	}
 
 	/// <summary>
-	/// <paramref name="selected"/>'s view, the route generated at block-3 index <paramref name="reference"/>; its waypoints are
-	/// the layout's (<see cref="MissionIndex"/>), which a drag's preview moves.
+	/// <paramref name="selected"/>'s view; its waypoints are the layout's (<see cref="MissionIndex"/>), which a drag's preview
+	/// moves. A route none of whose waypoints stands anywhere shows its name, why, and Delete.
 	/// </summary>
-	public void Draw(RouteSelection selected, int reference) {
-		if (_index.Route(reference) is not { } route || _index.Scene.Route(selected.Guid) is not { } placed) {
-			return;
-		}
-
+	public void Draw(RouteSelection selected) {
 		var name = _names.Route(selected.Guid);
 		EditorText.Wrapped(name.Text);
 		if (name.Number is { } number) {
 			ImGui.TextDisabled(number);
+		}
+
+		if (_index.Route(selected.Guid) is not { } placed) {
+			ImGui.Separator();
+			EditorText.Note("None of its waypoints references a position the mission has, so it stands nowhere and no group "
+				+ "can walk it.");
+			DrawDelete(selected.Guid);
+			return;
 		}
 
 		ImGui.Separator();
@@ -87,23 +93,35 @@ internal sealed class RouteView {
 		}
 
 		ImGui.Separator();
-		int count = placed.Closed ? placed.Points.Count - 1 : placed.Points.Count;
+		DrawWaypoints(placed, selected);
+		DrawEdits(placed, selected.Guid, selected.Waypoint);
+		DrawMove(placed, selected);
+		DrawDelete(selected.Guid);
+	}
+
+	// The waypoints, one selectable row each: "Start", then "Waypoint 2: 420 m from waypoint 1"; and, on the player's route,
+	// that the cockpit numbers them the same way and how many the heads-down map marks.
+	private void DrawWaypoints(PlannedRoute placed, RouteSelection selected) {
+		int count = Count(placed);
 		ImGui.Text($"Waypoints: {count}");
 		for (int i = 0; i < count; i++) {
-			var point = placed.Points[i];
-			bool isSelected = selected.Waypoint == i;
-			if (ImGui.Selectable($"{i}: {point.X}, {point.Y}##wp{i}", isSelected)) {
+			string row = MissionText.LegFromPrevious(placed.Points, i) is { } leg
+				? $"{MissionText.Waypoint(i)}: {leg}"
+				: MissionText.Waypoint(i);
+			if (ImGui.Selectable($"{row}##wp{i}", selected.Waypoint == i)) {
 				_selection.Current = selected with { Waypoint = i };
 			}
 		}
 
-		if (_index.Scene.PlayerRoute?.Guid == selected.Guid && placed.Points.Count > MarkedWaypoints) {
-			EditorText.Note($"The heads-down map marks waypoints 1 to {MarkedWaypoints - 1} of the player's route, and none after.");
+		if (_index.PlayerRoute?.Guid != selected.Guid) {
+			return;
 		}
 
-		DrawEdits(placed, selected.Guid, selected.Waypoint);
-		DrawMove(route, placed, selected);
-		DrawDelete(selected.Guid);
+		EditorText.Note("The cockpit numbers these waypoints the same way: heading for Waypoint 2, the waypoint indicator "
+			+ "reads WAYPOINT 2.");
+		if (placed.Points.Count > MarkedWaypoints) {
+			EditorText.Note($"The heads-down map marks waypoints 1 to {MarkedWaypoints - 1} of the player's route, and none after.");
+		}
 	}
 
 	// Add waypoints, Insert after, Remove, and Close or Open the loop, of <route>, row-8 GUID <guid>.
@@ -134,12 +152,13 @@ internal sealed class RouteView {
 		}
 
 		if (waypoint >= 0) {
-			if (Button($"Insert after {waypoint}", _editor.WhyNoInsert(guid, waypoint))) {
+			string which = MissionText.WaypointInSentence(waypoint);
+			if (Button($"Insert after {which}", _editor.WhyNoInsert(guid, waypoint))) {
 				_editor.RequestInsert(guid, waypoint);
 			}
 
 			ImGui.SameLine();
-			if (Button($"Remove {waypoint}", _editor.WhyNoRemove(guid, waypoint))) {
+			if (Button($"Remove {which}", _editor.WhyNoRemove(guid, waypoint))) {
 				_editor.RequestRemove(guid, waypoint);
 			}
 		} else {
@@ -152,18 +171,17 @@ internal sealed class RouteView {
 
 	// The selected waypoint's X and Y as fields, which move it when one lets go as a plain drag of its move handles does,
 	// its point with whatever else references it (PointMover); and what that moves with it.
-	private void DrawMove(EditorRoute route, PlannedRoute placed, RouteSelection selected) {
-		int count = placed.Closed ? placed.Points.Count - 1 : placed.Points.Count;
-		if (selected.Waypoint < 0 || selected.Waypoint >= count) {
+	private void DrawMove(PlannedRoute placed, RouteSelection selected) {
+		if (selected.Waypoint < 0 || selected.Waypoint >= Count(placed)) {
 			return;
 		}
 
 		var target = _mover.TargetOf(selected) as WaypointTarget;
 		var at = placed.Points[selected.Waypoint];
 		ImGui.Separator();
-		ImGui.Text($"Waypoint {selected.Waypoint}, in world units:");
+		ImGui.Text($"{MissionText.Waypoint(selected.Waypoint)}, in world units:");
 		ImGui.PushID("waypoint");
-		var typed = _point.Draw((route.Reference, selected.Waypoint), at, withZ: false, enabled: target != null && !_placing.Active);
+		var typed = _point.Draw((selected.Guid, selected.Waypoint), at, withZ: false, enabled: target != null && !_placing.Active);
 		ImGui.PopID();
 		if (typed is { } draft && target != null) {
 			_mover.Commit(target, at, draft.X, draft.Y, 0);
@@ -176,13 +194,13 @@ internal sealed class RouteView {
 
 		_sharers.Draw(_mover.SharersOf(waypoint));
 
-		if (selected.Waypoint <= 1 && placed.WalkedBy.Any(group => _index.Scene.Group(group)?.Setup.PointSource == MissionGroupPointSource.RouteStart)) {
-			ImGui.TextWrapped("A group with no point of its own starts on the first waypoint, facing along the first "
-				+ "leg, and moves and turns with them.");
+		if (selected.Waypoint <= 1 && placed.WalkedBy.Any(group => _index.Group(group)?.Setup.PointSource == MissionGroupPointSource.RouteStart)) {
+			EditorText.Note("A group with no position of its own stands on the start, facing Waypoint 1, so it moves and turns "
+				+ "with these two.");
 		}
 	}
 
-	// A Delete button, or why the route cannot be deleted, with what names it as links. The delete waits for the frame's
+	// A Delete button, or why the route cannot be deleted, with what references it as links. The delete waits for the frame's
 	// ImGui to be rendered (RouteEditor.RequestDelete).
 	private void DrawDelete(short guid) {
 		ImGui.Separator();
@@ -208,6 +226,9 @@ internal sealed class RouteView {
 
 		ImGui.PopID();
 	}
+
+	// How many waypoints the view lists: a closed route's last entry is its first again, and is listed once.
+	private static int Count(PlannedRoute route) => route.Closed ? route.Points.Count - 1 : route.Points.Count;
 
 	// A button, disabled with <reason> on hover when there is one.
 	private static bool Button(string label, string? reason) {

@@ -122,7 +122,7 @@ internal sealed class MissionNames {
 	/// <summary>Whether a sentence about group <paramref name="guid"/> takes a plural verb: every group but the player's squad.</summary>
 	public bool GroupPlural(short guid) => _index.Group(guid) is not { } group || !IsSquad(group);
 
-	private static bool IsSquad(PlannedGroup group) => group.Number == 0;
+	private static bool IsSquad(PlannedGroup group) => group.IsSquad;
 
 	private static string GroupNumber(PlannedGroup group) => $"(group {group.Number})";
 
@@ -409,12 +409,12 @@ internal sealed class MissionNames {
 	/// in row 17.
 	/// </summary>
 	public RecordName Objective(LayoutObjective objective) {
-		int number = 0;
-		while (number < Layout.Objectives.Count && Layout.Objectives[number].Index != objective.Index) {
-			number++;
+		int position = 0;
+		while (position < Layout.Objectives.Count && Layout.Objectives[position].Index != objective.Index) {
+			position++;
 		}
 
-		return new RecordName(ObjectiveSentence(objective.Fields), $"(objective {number})");
+		return new RecordName(ObjectiveSentence(objective.Fields), $"(objective {MissionText.Number(position)})");
 	}
 
 	/// <summary>Row-17 record <paramref name="record"/> by <see cref="Objective(LayoutObjective)"/>, or a note when the row has none there.</summary>

@@ -15,8 +15,9 @@ One view per thing a designer authors, the way one friendly dialog in Dynamix's 
 | **trigger** | an action: who enters which areas, then what happens | "action", "type", "verb" (R6) |
 | **countdown** | an action timer: a delay, from the mission's start or a trigger, after which it fires triggers | "timer" (R11) |
 | **win condition**, **lose condition** | a mandatory objective, a failure objective | "mandatory", "failure condition" (R12, R14) |
+| **play area** | the mission box: the extent of the mission's positions, which the heads-down map frames, past which the player is warned and then the mission aborted | "mission box", "abort line" (R34) |
 
-Numbering a designer sees starts at 1: orders, waypoints, weapon mounts, squadmates (R15, R29, R31, R32).
+Numbering a designer sees starts at 1: records, orders, waypoints after the start, hardpoints, squadmates (R15, R29, R31, R32).
 
 ## Designer tasks
 
@@ -34,7 +35,7 @@ Phases 2 to 6 are carried out by [handoff-editor-msn-scene.md](handoff-editor-ms
 ### 1. No rolling (done)
 
 - The editor never rolls: an open draws every random value at its lowest, so every random choice shows its first option, the same on every open ([What the editor shows](handoff-editor-conditions.md#what-the-editor-shows)).
-- A record that version leaves out is "not shown in the editor", in views and refusal reasons alike.
+- A record that version leaves out is shown in full from the layout, in its view as in the scene ([Selection and panels](handoff-editor-viewing.md#selection-and-panels)).
 - Covers R3, R5.
 
 ### 2. Random choice view
@@ -68,9 +69,9 @@ Phases 2 to 6 are carried out by [handoff-editor-msn-scene.md](handoff-editor-ms
 - Objectives as win and lose conditions, "Must happen: Cybrid hercs (group 4) are written off", with Role, Who and What happens; the F11 lines listed apart, with a note that they are only text (R12 to R14); the status alert text renamed and disabled on a lose condition (R13) ([Objectives](handoff-editor-mission-logic.md#objectives), done).
 - Orders as "1st order" with Does, Route, Target and Ends when, each verb with what it does; a later order's route disabled unless an objective reads it, which is listed as a link (R15); the shared-order note dropped (R38's order note) ([Orders](handoff-editor-mission-logic.md#orders), done).
 
-### 6. Sweep
+### 6. Sweep (done)
 
-- Waypoints from 1, the first being 1, with distances (R32); the play area (R34); the Problems list in the editor's own words, the em dash fixed (R35); notes naming controls by their labels (R36); copy-on-write notes dropped (R38); text-line budget and accents (R39); zones with the missions that use them (R40).
+- Every record number a designer sees from 1 ([Decided](#decided)); waypoints as the cockpit numbers them, "Start" and then "Waypoint 1" on, each row with its leg from the one before ("Waypoint 2: 420 m from waypoint 1"), in the route view, the scene and Insert after and Remove (R32, [Routes](handoff-editor-placement.md#routes)); the mission box as the play area, with what grows with it in play (R34, [Moving](handoff-editor-placement.md#moving)); the Problems list in the editor's own words by finding kind, the lint's em dash fixed (R35, [Mission check](handoff-editor-viewing.md#mission-check)); notes naming controls by their labels (R36); copy-on-write notes dropped (R38); the text-line budget, with what shares it, and accents (R39, [The mission's text](handoff-editor-mission-logic.md#the-missions-text)); zones with their size and the retail missions that use them (R40, [New mission](handoff-editor-viewing.md#new-mission)); a structure titled by its kind and MFD name, its type number under Advanced (R4).
 - Done, with the object and group views on the layout: the object view's type number, model, triangles, texture and hit radius under Advanced, "Kind" and "Roster slot" gone (R25); the group's formation under Advanced, since no retail file names a formation, and its paints-ground flag as "Base pad: lays its concrete pad on the ground tile under it, N square" (R26); "Starts at:" (R27); "Also on this spot, moving with it:" with a link per sharer, in the group, route and trigger area views (R28); a group's own route field as "its own route (not editable yet)" in a route's delete blockers (R41's own route) ([Groups](handoff-editor-viewing.md#groups), [Moving](handoff-editor-placement.md#moving)).
 - Done, with the squad and the hardpoints on the layout: the squad's views without "group 0" or "member slot", "Player's HERC" and "Squadmate 1" to "Squadmate 3" by place in the list (R29); in a campaign mission each HERC's chassis and weapons under a collapsed "HERC and weapons (not used in the campaign)" header, with what the squad's list still sets (R30) ([The player's squad](handoff-editor-roster.md#the-players-squad)); mounts as "Hardpoint 1" up, an empty one "(empty)" (R31); a Cybrid's weapons as dropdowns of what retail missions fit ([A Cybrid's weapons](handoff-editor-roster.md#a-cybrids-weapons)). R24's "Changes apply to:" wording was already phase 2's.
 

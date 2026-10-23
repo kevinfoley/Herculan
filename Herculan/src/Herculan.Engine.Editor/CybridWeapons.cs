@@ -14,26 +14,26 @@ namespace Herculan.Engine.Editor;
 /// missions fit there on that chassis (<see cref="RetailMountFits"/>), read from the archives as they shipped, not from a
 /// mission saved over one. A weapon chosen takes the ammunition type those records carry with it there most often.
 ///
-/// <para>Built once per editor run, the first time a Cybrid's hardpoints are drawn: every <c>MSN\*.MSN</c> the shell's
-/// archives hold (<see cref="MissionFileLaunch.List"/>), and each chassis's hardpoint list from the simulator's. With no
-/// mission there, nothing is offered and the hardpoints are read-only.</para>
+/// <para>Built once per editor run, the first time a Cybrid's hardpoints are drawn: every mission the shell's archives hold
+/// (<see cref="ArchivedMissions"/>), and each chassis's hardpoint list from the simulator's. With no mission there, nothing is
+/// offered and the hardpoints are read-only.</para>
 /// </summary>
 internal sealed class CybridWeapons {
 	private const string HardpointFolder = "gl";
 	private const string HardpointExtension = ".GL";
 
 	private readonly GameContent _simulator;
-	private readonly Func<GameContent> _shell;
+	private readonly ArchivedMissions _missions;
 	private readonly Dictionary<int, IReadOnlyList<int>> _hardPoints = new();
 	private UnitTypeNames? _names;
 	private RetailMountFits? _fits;
 	private bool _scanned;
 
 	/// <param name="simulator">DBSIM's mount of the install, which holds the chassis names and hardpoint lists.</param>
-	/// <param name="shell">VSHELL's mount of the install, which holds the missions.</param>
-	public CybridWeapons(GameContent simulator, Func<GameContent> shell) {
+	/// <param name="missions">The missions the install's archives hold.</param>
+	public CybridWeapons(GameContent simulator, ArchivedMissions missions) {
 		_simulator = simulator;
-		_shell = shell;
+		_missions = missions;
 	}
 
 	/// <summary>Whether the install's archives hold any mission to read the fits from.</summary>
@@ -79,12 +79,7 @@ internal sealed class CybridWeapons {
 		}
 
 		_scanned = true;
-		var shell = _shell();
-		var transformer = new MissionFileTransformer();
-		var missions = MissionFileLaunch.List(shell)
-			.Select(name => shell.ReadArchived(MissionFileLaunch.MissionFolder, name) is { } bytes ? transformer.Parse(bytes) : null)
-			.OfType<MissionFile>()
-			.ToList();
+		var missions = _missions.All.Select(mission => mission.Mission).ToList();
 		_fits = missions.Count > 0 ? RetailMountFits.Scan(missions) : null;
 		return _fits;
 	}

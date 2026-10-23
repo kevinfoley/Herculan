@@ -80,17 +80,20 @@ internal sealed class FeatureMoves {
 			: [new AreaCornerTarget(area, 0), new AreaCornerTarget(area, 1)];
 	}
 
+	/// <summary>Why a trigger area the selection names is not edited once the <c>.MSN</c> has no such area.</summary>
+	public const string AreaGone = "The trigger area is no longer in the mission.";
+
 	/// <summary>Why trigger area <paramref name="area"/>, by its row-9 GUID, cannot be moved or edited, or null when it can.</summary>
 	public string? WhyFixedArea(short area) =>
 		_index.Area(area) != null ? null
-		: _source.Layout.Entry(AreaRow, area) == null ? "Its record is not in the file."
-		: "A point it references is not in the file.";
+		: _source.Layout.Entry(AreaRow, area) == null ? AreaGone
+		: "A corner or its center references a position the mission does not have, so it cannot be moved or reshaped.";
 
 	/// <summary>Why <paramref name="target"/> cannot be moved, or null when it can.</summary>
 	public string? WhyFixed(MoveTarget target) => target switch {
 		WaypointTarget waypoint => _index.Route(waypoint.Route) is { } route && waypoint.Index < route.Points.Count
 			? null
-			: "Its route is not in the file.",
+			: RouteEditor.Gone,
 		AreaCornerTarget corner => WhyFixedArea(corner.Area),
 		AreaRadiusTarget radius => WhyFixedArea(radius.Area),
 		_ => throw new ArgumentOutOfRangeException(nameof(target))
@@ -191,8 +194,8 @@ internal sealed class FeatureMoves {
 
 	/// <summary>What a failed move of <paramref name="target"/> is called on the console.</summary>
 	public string Describe(MoveTarget target) => target switch {
-		WaypointTarget waypoint => $"waypoint {waypoint.Index} of route {_index.Route(waypoint.Route)?.Number}",
-		AreaCornerTarget corner => $"corner {corner.Corner} of trigger area {_index.Area(corner.Area)?.Number}",
+		WaypointTarget waypoint => $"{MissionText.WaypointInSentence(waypoint.Index)} of route {_index.Route(waypoint.Route)?.Number}",
+		AreaCornerTarget corner => $"corner {corner.Corner + 1} of trigger area {_index.Area(corner.Area)?.Number}",
 		AreaRadiusTarget radius => $"the radius of trigger area {_index.Area(radius.Area)?.Number}",
 		_ => target.ToString()
 	};

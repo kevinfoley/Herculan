@@ -3,11 +3,10 @@ using HercWorks.Core.Data.File.Msn;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// Where the record a selection names stands in the generated <c>script.dat</c> that the route and trigger area views, the
-/// condition view's Used by, route placing and the Toolbox's join still read, and back: a group, trigger area, action, timer or route by its GUID of row 16, 9, 10, 11 or 8, at its block-11, 4, 5, 6
-/// or 3 index, and an objective's row-17 index from its block-12 index through provenance. Null where the generation
-/// has no such record, one whose condition fails as the editor opened the mission, whose view then says it is not shown
-/// in the editor (docs/herculan/handoff-editor-viewing.md#selection-and-panels).
+/// Where the record a selection names stands in the generated <c>script.dat</c>, and back: a group, trigger area, action,
+/// timer or route by its GUID of row 16, 9, 10, 11 or 8, at its block-11, 4, 5, 6 or 3 index, and an objective's row-17
+/// index from its block-12 index through provenance; null where the generation has no such record. No view reads it: every
+/// one reads the layout (docs/herculan/handoff-editor-msn-scene.md#what-reads-the-generated-scriptdat-today).
 ///
 /// <para>The selections a view or link makes from a block index are built here too (<see cref="GroupAt"/> and the
 /// rest), from the GUID of the record that created the generated record (<see cref="MissionDocument.GuidOf"/>).</para>
@@ -18,9 +17,6 @@ internal sealed class GeneratedRecords {
 	private const int ActionBlock = 5;
 	private const int TimerBlock = 6;
 	private const int GroupBlock = 11;
-
-	/// <summary>Why an editor refuses an edit of a record the generation has none for, which no view shows.</summary>
-	public const string NotShown = "It is not shown in the editor.";
 
 	private readonly MissionDocument _source;
 

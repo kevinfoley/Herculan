@@ -255,7 +255,8 @@ public class ActionEditingTests {
 
 	/// <summary>
 	/// Catches the two action checks this editor's edits can trip dropped from the mission check: a type 7 to 10 action with no
-	/// target, and a message on an action that writes no counter, which DBSIM never posts.
+	/// target, and a message on an action that writes no counter, which DBSIM never posts; and either filed under the other's
+	/// kind, which the Problems list phrases each finding by.
 	/// </summary>
 	[Fact]
 	public void MissionCheckFindsATargetlessTypeAndAnUnpostedMessage() {
@@ -265,8 +266,8 @@ public class ActionEditingTests {
 
 		var findings = ScriptDatLint.Check(document.Script).Where(finding => finding.Block == ScriptBlock.Actions).ToList();
 
-		Assert.Contains(findings, finding => finding.Index == 0 && finding.Message.Contains("no target"));
-		Assert.Contains(findings, finding => finding.Index == 1 && finding.Message.Contains("never posts"));
+		Assert.Equal([(0, ScriptLintKind.NoTarget), (1, ScriptLintKind.MessageNeverPosted)],
+			findings.Select(finding => (finding.Index, finding.Kind)));
 	}
 
 	// Group 0, the squad: the player's machine, facing a heading of its own; and the two row-1 conditions a type-7 variant key

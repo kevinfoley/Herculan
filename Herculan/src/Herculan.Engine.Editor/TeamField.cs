@@ -38,7 +38,7 @@ internal sealed class TeamField {
 		ImGui.EndDisabled();
 		if (ofMember) {
 			EditorText.Note("Team controlled by group");
-		} else if (reason != null && group.Number != 0) {
+		} else if (reason != null && !group.IsSquad) {
 			EditorText.Reason(reason);
 		} else if (reason == null && group.Members.Count > 1) {
 			EditorText.Note($"All {group.Members.Count} members change with it.");

@@ -100,16 +100,16 @@ internal sealed class ObjectView {
 		DrawAdvanced(sel, planned);
 	}
 
-	// The object's name: a herc's or flyer's type name, or for a structure or ground vehicle its type and the name the MFD's
-	// status screen prints for it (MfdStatusSubject.BaseName).
+	// The object's name: a herc's or flyer's type name, or for a structure or ground vehicle its kind and the name the MFD's
+	// status screen prints for it (MfdStatusSubject.BaseName), "Structure: SUPPLY DEPOT"; its type number is under Advanced.
 	private string Title(SceneObject sel, PlannedObject planned) {
 		if (sel.Object is Sim.BaseObject structure) {
-			string kind = structure.Type.IsVehicle ? "Ground vehicle" : "Base";
+			string kind = structure.Type.IsVehicle ? "Ground vehicle" : "Structure";
 			string? name = MfdStatusSubject.BaseName(structure.Type, _strings);
-			return $"{kind} type {planned.TypeIndex}: {(string.IsNullOrWhiteSpace(name) ? "(no name)" : name)}";
+			return string.IsNullOrWhiteSpace(name) ? $"{kind} with no name on the MFD" : $"{kind}: {name}";
 		}
 
-		return planned.TypeName ?? $"{planned.Kind} type {planned.TypeIndex}";
+		return _links.Names.TypeName(planned.Key);
 	}
 
 	/// <summary>
@@ -284,7 +284,7 @@ internal sealed class ObjectView {
 			return;
 		}
 
-		ImGui.Text($"Type index: {planned.TypeIndex}");
+		ImGui.Text($"Type number: {planned.TypeIndex}");
 		if (sel.Model is { } model) {
 			ImGui.Text($"Model: {model.Key}");
 			ImGui.Text($"Triangles: {model.TriangleVertexCount / 3}");

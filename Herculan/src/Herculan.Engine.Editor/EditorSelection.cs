@@ -7,8 +7,7 @@ namespace Herculan.Engine.Editor;
 /// an action, a route — so the selection is one of several kinds, each addressed the way the
 /// mission file addresses it: a GUID of its row, or an objective by its index in row 17; an object by the roster record it
 /// stands for. A selection so names a <c>.MSN</c> record, and survives every edit that keeps that record
-/// (<see cref="InFile"/>); the route and trigger area views find the generated record it stands for through
-/// <see cref="GeneratedRecords"/>.
+/// (<see cref="InFile"/>); every view reads that record from the layout.
 /// </summary>
 internal abstract record EditorSelection {
 	/// <summary>

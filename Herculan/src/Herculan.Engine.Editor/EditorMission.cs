@@ -19,7 +19,7 @@ namespace Herculan.Engine.Editor;
 internal sealed class EditorMission {
 	private EditorMission(GameContent content, string name, ScriptDat document, MissionDocument source, MissionScene scene,
 			PlacementTables tables, MissionIndex sceneIndex, GeneratedIndex index, MissionLint lint, TerrainMaterialTable materials,
-			MissionSquad squad, Func<GameContent> shellContent, CybridWeapons cybrid) {
+			MissionSquad squad, Func<GameContent> shellContent, CybridWeapons cybrid, ZoneCatalog zones) {
 		Name = name;
 		Document = document;
 		Source = source;
@@ -36,27 +36,27 @@ internal sealed class EditorMission {
 		Sync = new SceneSync(content, source, scene, tables, sceneIndex, index, Overlay, Picker, Outliner, Selection, squad);
 		Mover = new PointMover(source, scene, sceneIndex, Sync, Overlay, materials);
 		Gizmo = new MoveGizmo(Selection, Mover);
-		Placer = new StructurePlacer(document, source, scene, index, Mover, Sync, Selection);
+		Placer = new StructurePlacer(document, source, scene, sceneIndex, Mover, Sync, Selection);
 		Sides = new SideChanger(source, sceneIndex, Mover, Sync);
 		Deleter = new ObjectDeleter(source, sceneIndex, Mover, Sync);
 		Fitter = new MachineFitter(source, Mover, Sync, shellContent, cybrid);
 		Squad = new SquadEditor(source, index, Mover, Sync, Fitter, Deleter);
-		Theater = new TheaterChanger(document, source, scene, index, Mover, Sync);
-		Routes = new RouteEditor(source, index, Mover, Sync, Selection, Deleter);
-		Placing = new RoutePlacing(Routes, index, drape);
-		Areas = new AreaEditor(source, index, Mover, Sync, Selection, Deleter);
+		Theater = new TheaterChanger(document, source, scene, sceneIndex, Mover, Sync);
+		Routes = new RouteEditor(source, sceneIndex, Mover, Sync, Selection, Deleter);
+		Placing = new RoutePlacing(Routes, sceneIndex, drape);
+		Areas = new AreaEditor(source, sceneIndex, Mover, Sync, Selection, Deleter);
 		AreaPlacing = new AreaPlacing(Areas, drape);
 		Placing.Blocked = () => AreaPlacing.Active;
 		AreaPlacing.Blocked = () => Placing.Active;
-		Hercs = new HercPlacer(document, source, scene, index, Mover, Sync, Selection, Fitter, UnitTypeNames.LoadMechs(content));
-		Flyers = new FlyerPlacer(document, source, scene, index, Mover, Sync, Selection, UnitTypeNames.LoadFlyers(content));
-		Vehicles = new VehiclePlacer(document, source, index, Mover, Sync, Selection, Placer);
+		Hercs = new HercPlacer(source, scene, index, Mover, Sync, Selection, Fitter, UnitTypeNames.LoadMechs(content));
+		Flyers = new FlyerPlacer(source, scene, sceneIndex, Mover, Sync, Selection, UnitTypeNames.LoadFlyers(content));
+		Vehicles = new VehiclePlacer(source, sceneIndex, Mover, Sync, Selection, Placer);
 		Orders = new OrderEditor(source, Mover, Sync);
 		Objectives = new ObjectiveEditor(source, Mover, Sync, Selection);
 		Texts = new MissionTextEditor(source, Mover, Sync);
 		Actions = new ActionEditor(source, Mover, Sync, Selection);
 		Timers = new TimerEditor(source, Mover, Sync, Selection);
-		Conditions = new ConditionEditor(source, index, Names, Mover, Sync, Selection, Deleter);
+		Conditions = new ConditionEditor(source, sceneIndex, Names, Mover, Sync, Selection, Deleter);
 		Presence = new PresenceEditor(source, sceneIndex, Mover, Sync, Deleter);
 		Variants = new VariantEditor(source, sceneIndex, Mover, Sync, Selection);
 		Types = new RosterTypeEditor(source, Mover, Sync);
@@ -68,9 +68,9 @@ internal sealed class EditorMission {
 		Outliner.Conditions = Conditions;
 		var choices = new RandomChoices(source, sceneIndex, Names, squad);
 		Outliner.Choices = choices;
-		Properties = new PropertiesPanel(index, Selection, source, Mover, Sides, Deleter,
+		Properties = new PropertiesPanel(sceneIndex, Selection, source, Mover, Sides, Deleter,
 			new SquadMachinePanel(Fitter, Squad, squad), new RosterFitView(Fitter, Types, Variants, choices, new UnitTypeCatalog(content)),
-			new MissionView(() => Name, () => document.ZoneIndex, Theater, TheaterNames.Labels(content),
+			new MissionView(() => Name, () => zones.Describe(document.ZoneIndex), Theater, TheaterNames.Labels(content),
 				new MissionTextView(Texts)),
 			Routes, Placing, Areas, AreaPlacing, Orders, Objectives, Actions, Timers, Conditions, Presence, Variants,
 			choices, new TriggerMessages(content), Names, SimStrings.Load(content));
@@ -210,12 +210,13 @@ internal sealed class EditorMission {
 	/// load stands its own (<see cref="MissionScene.Settle"/>). <paramref name="dataDirectory"/> is where the simulator's
 	/// settings are when they are not beside the script — see <see cref="MissionScene.Load"/>.
 	/// <paramref name="squad"/> is which Hercs the mission's squad pilots, which builds the handoff's <c>player.mec</c> again after
-	/// an edit, <paramref name="shellContent"/> VSHELL's mount, which holds the shell's chassis and weapon tables, and
-	/// <paramref name="cybrid"/> what a Cybrid's hardpoints offer, built once per editor run. Throws
+	/// an edit, <paramref name="shellContent"/> VSHELL's mount, which holds the shell's chassis and weapon tables,
+	/// <paramref name="cybrid"/> what a Cybrid's hardpoints offer and <paramref name="zones"/> the install's zones with the
+	/// retail missions that use each, both built once per editor run. Throws
 	/// <see cref="MissingHandoffFileException"/> as <see cref="MissionLoader.Load"/> does.
 	/// </summary>
 	public static EditorMission Open(GameContent content, string scriptPath, string name, string dataDirectory,
-			MissionDocument source, MissionSquad squad, Func<GameContent> shellContent, CybridWeapons cybrid) {
+			MissionDocument source, MissionSquad squad, Func<GameContent> shellContent, CybridWeapons cybrid, ZoneCatalog zones) {
 		File.WriteAllBytes(scriptPath, source.ScriptBytes);
 		File.WriteAllBytes(CaseInsensitivePath.Combine(Path.GetDirectoryName(scriptPath) ?? ".", MissionLoader.TextFileName),
 			source.MissionText);
@@ -234,6 +235,7 @@ internal sealed class EditorMission {
 		var index = new GeneratedIndex(generated, document, new GeneratedRecords(source), sceneIndex);
 		// The scene's own copy is not kept; a base pad's tile is sized by its material when the ground is levelled again.
 		return new EditorMission(content, name, document, source, scene, tables, sceneIndex, index,
-			new MissionLint(source, sceneIndex, MissionLint.SquadOf(generated)), TerrainMaterialTable.Load(content), squad, shellContent, cybrid);
+			new MissionLint(source, sceneIndex, MissionLint.SquadOf(generated)), TerrainMaterialTable.Load(content), squad, shellContent, cybrid,
+			zones);
 	}
 }

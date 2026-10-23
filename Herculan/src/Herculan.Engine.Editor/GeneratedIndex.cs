@@ -52,12 +52,11 @@ internal sealed class EditorRoute {
 internal readonly record struct OrderSlot(int Group, int Slot, MissionOrder Order);
 
 /// <summary>
-/// The editor's cross-reference over the generated mission, by <c>script.dat</c> block index, which what is still on the
-/// generation reads until it moves to the layout (docs/herculan/handoff-editor-msn-scene.md#steps): the routes and which
-/// groups walk them, for the route view and route placing; each group's roster, for the Toolbox's join; and the generated
-/// <see cref="World.Mission"/> itself. Built from the <see cref="World.Mission"/> generated after each edit and the scene's
-/// objects (<see cref="MissionIndex"/>). Nothing here follows a drag's preview: what the scene draws is
-/// <see cref="MissionIndex"/>'s.
+/// The editor's cross-reference over the generated mission, by <c>script.dat</c> block index, built from the
+/// <see cref="World.Mission"/> generated after each edit and the scene's objects (<see cref="MissionIndex"/>). Only the generated
+/// <see cref="World.Mission"/> itself is read, for the squad the block-7 cap counts and the window title's zone; the routes,
+/// rosters and records here have no reader left (docs/herculan/handoff-editor-msn-scene.md#what-reads-the-generated-scriptdat-today).
+/// Nothing here follows a drag's preview: what the scene draws is <see cref="MissionIndex"/>'s.
 /// </summary>
 internal sealed class GeneratedIndex {
 	private readonly ScriptDat _document;

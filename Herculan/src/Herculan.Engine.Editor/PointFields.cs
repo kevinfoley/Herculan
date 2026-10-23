@@ -8,7 +8,7 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// A point's X and Y, and optionally Z, as typed fields in world units, which a view applies when one lets go, through
 /// <see cref="PointMover.Commit"/> as a drag of the move handles does, as one step of the undo history; and the warning
-/// that a point stands outside the mission box as opened. The object, group, route and trigger-area views share it.
+/// that a point stands outside the mission's play area as opened. The object, group, route and trigger-area views share it.
 /// </summary>
 internal sealed class PointFields {
 	// A point being typed, and what it is for, until its field lets go.
@@ -60,14 +60,21 @@ internal sealed class PointFields {
 	/// <summary>
 	/// Says when <paramref name="at"/> is outside <paramref name="box"/>, the mission box as opened
 	/// (<see cref="PointMover.LoadedBox"/>), which a block-1 point outside it grows: a test of the point's X and Y alone, as
-	/// the box is of the points alone (<see cref="MissionBox.Of"/>).
+	/// the box is of the points alone (<see cref="MissionBox.Of"/>). The UI calls the box the play area: the heads-down map
+	/// frames it in red, the player is warned "APPROACHING MISSION ZONE BOUNDARY" once outside it, and the mission is aborted
+	/// <see cref="Sim.MissionObjectives.RulesOfEngagementMargin"/> past it (docs/retail/simulation/mission-objectives.md#the-status--mission_status-004135e8).
 	/// </summary>
 	public static void BoxWarning(MissionBox box, Vec3i at) {
 		if (!box.IsEmpty && (at.X < box.MinX || at.X > box.MaxX || at.Y < box.MinY || at.Y > box.MaxY)) {
-			ImGui.TextWrapped("Outside the mission box as opened: the box, the heads-down map's frame and the abort "
-				+ "line grow to take it in.");
+			EditorText.Note(PlayAreaWarning);
 		}
 	}
+
+	/// <summary>What <see cref="BoxWarning"/> says.</summary>
+	public static string PlayAreaWarning =>
+		"Outside the mission's play area: the play area grows to include it, and with it the heads-down map's red border, the "
+		+ "edge where the player is warned APPROACHING MISSION ZONE BOUNDARY, and the line "
+		+ $"{MissionText.Metres(Sim.MissionObjectives.RulesOfEngagementMargin)} beyond, where the mission is aborted.";
 
 	private static bool Field(string label, ref int value, ref bool done) {
 		ImGui.SetNextItemWidth(ScaledImGui.Scaled(140f));

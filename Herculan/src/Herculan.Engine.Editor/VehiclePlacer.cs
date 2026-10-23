@@ -18,22 +18,18 @@ namespace Herculan.Engine.Editor;
 /// </summary>
 internal sealed class VehiclePlacer {
 	private const int BaseRow = 14;
-	private const int GroupBlock = 11;
 
-	private readonly ScriptDat _document;
 	private readonly MissionDocument _source;
-	private readonly GeneratedIndex _index;
+	private readonly MissionIndex _index;
 	private readonly PointMover _mover;
 	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private readonly StructurePlacer _structures;
 
-	/// <param name="document">The generated <c>script.dat</c>, <paramref name="source"/>'s, which the scene was loaded from.</param>
 	/// <param name="source">The mission as its <c>.MSN</c>.</param>
 	/// <param name="structures">Adds a vehicle to a structure group that is not a convoy, and builds its ghost.</param>
-	public VehiclePlacer(ScriptDat document, MissionDocument source, GeneratedIndex index, PointMover mover,
+	public VehiclePlacer(MissionDocument source, MissionIndex index, PointMover mover,
 			SceneSync sync, SelectionState selection, StructurePlacer structures) {
-		_document = document;
 		_source = source;
 		_index = index;
 		_mover = mover;
@@ -53,7 +49,7 @@ internal sealed class VehiclePlacer {
 	/// (<paramref name="x"/>, <paramref name="y"/>), in a convoy of its own or, given <paramref name="joinGroup"/>, as a
 	/// member of that structure group; and selects it. Answers why it could not, or null when it did.
 	/// </summary>
-	public string? Add(int typeIndex, MissionSide side, int x, int y, int? joinGroup = null) {
+	public string? Add(int typeIndex, MissionSide side, int x, int y, short? joinGroup = null) {
 		if (WhyNoAdd is { } refused) {
 			return refused;
 		}
@@ -74,8 +70,7 @@ internal sealed class VehiclePlacer {
 				return reason;
 			}
 
-			short group = source.GuidOf(GroupBlock, joined);
-			return Commit(typeIndex, () => VehicleGroups.Join(source, group, vehicle, BaseObject.IsGroundVehicle, out added),
+			return Commit(typeIndex, () => VehicleGroups.Join(source, joined, vehicle, BaseObject.IsGroundVehicle, out added),
 				() => added);
 		}
 
@@ -83,13 +78,12 @@ internal sealed class VehiclePlacer {
 	}
 
 	/// <summary>
-	/// Why a ground vehicle cannot be added to group <paramref name="group"/>, by block-11 index, or null when it can: a
+	/// Why a ground vehicle cannot be added to group <paramref name="group"/>, by its row-16 GUID, or null when it can: a
 	/// convoy's limit (<see cref="VehicleGroups.WhyNoJoin"/>), or for any other group a structure's
 	/// (<see cref="StructurePlacer.WhyNotJoin"/>).
 	/// </summary>
-	public string? WhyNotJoin(int group) =>
-		IsConvoy(group) ? VehicleGroups.WhyNoJoin(_source, _source.GuidOf(GroupBlock, group), BaseObject.IsGroundVehicle)
-			: _structures.WhyNotJoin(group);
+	public string? WhyNotJoin(short group) =>
+		IsConvoy(group) ? VehicleGroups.WhyNoJoin(_source, group, BaseObject.IsGroundVehicle) : _structures.WhyNotJoin(group);
 
 	/// <summary>
 	/// The vehicle <see cref="Add"/> would add of <paramref name="typeIndex"/> on <paramref name="side"/>, built as a
@@ -97,10 +91,9 @@ internal sealed class VehiclePlacer {
 	/// </summary>
 	public SceneObject? Ghost(int typeIndex, MissionSide side) => _structures.Ghost(typeIndex, side);
 
-	// Whether block-11 group <group> is a convoy in the generated file.
-	private bool IsConvoy(int group) =>
-		group >= 0 && group < _document.Groups.Length
-		&& VehicleGroups.IsConvoy(_source, _source.GuidOf(GroupBlock, group), BaseObject.IsGroundVehicle);
+	// Whether row-16 group <group> is a convoy.
+	private bool IsConvoy(short group) =>
+		_index.Group(group) != null && VehicleGroups.IsConvoy(_source, group, BaseObject.IsGroundVehicle);
 
 	// Makes an add's change and syncs the scene with it, then records it as one step and selects the object built for
 	// the vehicle's row-14 GUID; or, when none was built, puts the records back and says why.
@@ -115,7 +108,7 @@ internal sealed class VehiclePlacer {
 
 		short added = vehicle();
 		bool generated = source.ExportedIndex(BaseRow, added) != null;
-		if (!generated || _index.Scene.ObjectOf(new ObjectKey(BaseRow, added)) == null) {
+		if (!generated || _index.ObjectOf(new ObjectKey(BaseRow, added)) == null) {
 			_sync.Undo(change);
 			return !generated
 				? "The added ground vehicle was not generated; nothing was added."

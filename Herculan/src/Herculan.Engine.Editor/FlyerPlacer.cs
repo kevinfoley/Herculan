@@ -15,23 +15,19 @@ namespace Herculan.Engine.Editor;
 /// </summary>
 internal sealed class FlyerPlacer {
 	private const int FlyerRow = 13;
-	private const int GroupBlock = 11;
 
-	private readonly ScriptDat _document;
 	private readonly MissionDocument _source;
 	private readonly MissionScene _scene;
-	private readonly GeneratedIndex _index;
+	private readonly MissionIndex _index;
 	private readonly PointMover _mover;
 	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private readonly UnitTypeNames _names;
 
-	/// <param name="document">The generated <c>script.dat</c>, <paramref name="source"/>'s, which the scene was loaded from.</param>
 	/// <param name="source">The mission as its <c>.MSN</c>.</param>
 	/// <param name="names">The <c>nam\FLYERS.NAM</c> type names, which a ghost's model is found by.</param>
-	public FlyerPlacer(ScriptDat document, MissionDocument source, MissionScene scene, GeneratedIndex index, PointMover mover,
+	public FlyerPlacer(MissionDocument source, MissionScene scene, MissionIndex index, PointMover mover,
 			SceneSync sync, SelectionState selection, UnitTypeNames names) {
-		_document = document;
 		_source = source;
 		_scene = scene;
 		_index = index;
@@ -52,7 +48,7 @@ internal sealed class FlyerPlacer {
 	/// (<paramref name="x"/>, <paramref name="y"/>), in a group of its own or, given <paramref name="joinGroup"/>, as a
 	/// member of that flyer group; and selects it. Answers why it could not, or null when it did.
 	/// </summary>
-	public string? Add(int typeIndex, MissionSide side, int x, int y, int? joinGroup = null) {
+	public string? Add(int typeIndex, MissionSide side, int x, int y, short? joinGroup = null) {
 		if (WhyNoAdd is { } refused) {
 			return refused;
 		}
@@ -69,17 +65,15 @@ internal sealed class FlyerPlacer {
 				return reason;
 			}
 
-			short group = source.GuidOf(GroupBlock, joined);
-			return Commit(typeIndex, () => FlyerGroups.Join(source, group, flyer, out added), () => added);
+			return Commit(typeIndex, () => FlyerGroups.Join(source, joined, flyer, out added), () => added);
 		}
 
 		return Commit(typeIndex, () => FlyerGroups.Create(source, flyer, (short)side, x, y, out added, out _), () => added);
 	}
 
-	/// <summary>Why a flyer cannot be added to group <paramref name="group"/>, by block-11 index, or null when it can.</summary>
-	public string? WhyNotJoin(int group) =>
-		group < 0 || group >= _document.Groups.Length || _source.GuidOf(GroupBlock, group) == -1 ? $"Group {group} is not in the file."
-			: FlyerGroups.WhyNoJoin(_source, _source.GuidOf(GroupBlock, group));
+	/// <summary>Why a flyer cannot be added to group <paramref name="group"/>, by its row-16 GUID, or null when it can.</summary>
+	public string? WhyNotJoin(short group) =>
+		_index.Group(group) == null ? EditorToolbox.GroupGone : FlyerGroups.WhyNoJoin(_source, group);
 
 	/// <summary>
 	/// The flyer <see cref="Add"/> would add of <paramref name="typeIndex"/> on <paramref name="side"/>, built the same way
@@ -105,7 +99,7 @@ internal sealed class FlyerPlacer {
 
 		short added = flyer();
 		bool generated = source.ExportedIndex(FlyerRow, added) != null;
-		if (!generated || _index.Scene.ObjectOf(new ObjectKey(FlyerRow, added)) == null) {
+		if (!generated || _index.ObjectOf(new ObjectKey(FlyerRow, added)) == null) {
 			_sync.Undo(change);
 			return !generated
 				? "The added flyer was not generated; nothing was added."

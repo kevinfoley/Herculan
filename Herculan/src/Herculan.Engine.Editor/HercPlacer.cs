@@ -18,9 +18,7 @@ namespace Herculan.Engine.Editor;
 /// </summary>
 internal sealed class HercPlacer {
 	private const int MechRow = 12;
-	private const int GroupBlock = 11;
 
-	private readonly ScriptDat _document;
 	private readonly MissionDocument _source;
 	private readonly MissionScene _scene;
 	private readonly GeneratedIndex _index;
@@ -30,12 +28,11 @@ internal sealed class HercPlacer {
 	private readonly MachineFitter _fitter;
 	private readonly UnitTypeNames _names;
 
-	/// <param name="document">The generated <c>script.dat</c>, <paramref name="source"/>'s, which the scene was loaded from.</param>
 	/// <param name="source">The mission as its <c>.MSN</c>.</param>
+	/// <param name="index">The generated mission, whose squad shares the herc roster's slot cap, and the layout's groups and objects.</param>
 	/// <param name="names">The <c>nam\MECHS.NAM</c> type names, which a ghost's model is found by.</param>
-	public HercPlacer(ScriptDat document, MissionDocument source, MissionScene scene, GeneratedIndex index, PointMover mover,
+	public HercPlacer(MissionDocument source, MissionScene scene, GeneratedIndex index, PointMover mover,
 			SceneSync sync, SelectionState selection, MachineFitter fitter, UnitTypeNames names) {
-		_document = document;
 		_source = source;
 		_scene = scene;
 		_index = index;
@@ -57,7 +54,7 @@ internal sealed class HercPlacer {
 	/// (<paramref name="x"/>, <paramref name="y"/>), in a group of its own or, given <paramref name="joinGroup"/>, as a
 	/// member of that herc group; and selects it. Answers why it could not, or null when it did.
 	/// </summary>
-	public string? Add(int typeIndex, MissionSide side, int x, int y, int? joinGroup = null) {
+	public string? Add(int typeIndex, MissionSide side, int x, int y, short? joinGroup = null) {
 		if (WhyNoAdd is { } refused) {
 			return refused;
 		}
@@ -75,17 +72,15 @@ internal sealed class HercPlacer {
 				return reason;
 			}
 
-			short group = source.GuidOf(GroupBlock, joined);
-			return Commit(typeIndex, () => HercGroups.Join(source, group, herc, squad, out mech), () => mech);
+			return Commit(typeIndex, () => HercGroups.Join(source, joined, herc, squad, out mech), () => mech);
 		}
 
 		return Commit(typeIndex, () => HercGroups.Create(source, herc, (short)side, x, y, squad, out mech, out _), () => mech);
 	}
 
-	/// <summary>Why a herc cannot be added to group <paramref name="group"/>, by block-11 index, or null when it can.</summary>
-	public string? WhyNotJoin(int group) =>
-		group < 0 || group >= _document.Groups.Length || _source.GuidOf(GroupBlock, group) == -1 ? $"Group {group} is not in the file."
-			: HercGroups.WhyNoJoin(_source, _source.GuidOf(GroupBlock, group));
+	/// <summary>Why a herc cannot be added to group <paramref name="group"/>, by its row-16 GUID, or null when it can.</summary>
+	public string? WhyNotJoin(short group) =>
+		_index.Scene.Group(group) == null ? EditorToolbox.GroupGone : HercGroups.WhyNoJoin(_source, group);
 
 	/// <summary>
 	/// The herc <see cref="Add"/> would add of <paramref name="typeIndex"/> on <paramref name="side"/>, built the same way

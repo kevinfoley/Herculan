@@ -22,25 +22,31 @@ internal sealed record RouteDeleteBlockers(string? Fixed, DeleteNamers Names, IR
 /// every later route, and every later point when a point goes with it, down one
 /// (docs/herculan/handoff-editor-document.md#the-tools).
 ///
-/// <para>Routes are taken by their row-8 GUID, as the selections name them, and a route not shown in the editor is not
-/// edited. A waypoint here is one the route view lists, by its index in <see cref="PlannedRoute.Points"/>; it is mapped to
-/// the entry of the <c>.MSN</c> list it comes from (<see cref="PlannedRoute.Entries"/>). A route none of whose waypoints
-/// names a point the layout has is not edited.</para>
+/// <para>Routes are taken by their row-8 GUID, as the selections name them, from the layout (<see cref="MissionIndex"/>),
+/// every route of the <c>.MSN</c> included, whatever its condition. A waypoint here is one the route view lists, by its index
+/// in <see cref="PlannedRoute.Points"/>; it is mapped to the entry of the <c>.MSN</c> list it comes from
+/// (<see cref="PlannedRoute.Entries"/>). A route none of whose waypoints names a point the layout has can be deleted, and
+/// nothing else.</para>
 ///
 /// <para>The view's edits wait for the frame's ImGui to be rendered (<see cref="RunRequest"/>), since the rebuild changes
 /// what the panels list; <see cref="RoutePlacing"/> calls <see cref="Create"/> and <see cref="Extend"/> at the same
 /// point of the frame.</para>
 /// </summary>
 internal sealed class RouteEditor {
+	private const int RouteRow = 8;
+
+	/// <summary>Why a route the selection names is not edited once the <c>.MSN</c> has no such route.</summary>
+	public const string Gone = "The route is no longer in the mission.";
+
 	private readonly MissionDocument _source;
-	private readonly GeneratedIndex _index;
+	private readonly MissionIndex _index;
 	private readonly PointMover _mover;
 	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private readonly ObjectDeleter _deleter;
 	private Func<string?>? _requested;
 
-	public RouteEditor(MissionDocument source, GeneratedIndex index, PointMover mover, SceneSync sync,
+	public RouteEditor(MissionDocument source, MissionIndex index, PointMover mover, SceneSync sync,
 			SelectionState selection, ObjectDeleter deleter) {
 		_source = source;
 		_index = index;
@@ -55,12 +61,12 @@ internal sealed class RouteEditor {
 
 	/// <summary>Why row-8 GUID <paramref name="route"/>'s waypoints cannot be edited, or null when they can.</summary>
 	public string? WhyFixed(short route) {
-		if (_index.Records.Route(route) == null) {
-			return GeneratedRecords.NotShown;
+		if (!InMission(route)) {
+			return Gone;
 		}
 
-		return _index.Scene.Route(route) == null
-			? "Some of its waypoints reference points the mission does not have, so they cannot be edited one by one."
+		return _index.Route(route) == null
+			? "None of its waypoints references a position the mission has, so they cannot be edited one by one."
 			: null;
 	}
 
@@ -81,8 +87,8 @@ internal sealed class RouteEditor {
 	/// <summary>What keeps <paramref name="route"/> from being deleted; <see cref="RouteDeleteBlockers.None"/> when nothing does.</summary>
 	public RouteDeleteBlockers BlockersOf(short route) {
 		var source = _source;
-		if (_index.Records.Route(route) == null) {
-			return RouteDeleteBlockers.Because(GeneratedRecords.NotShown);
+		if (!InMission(route)) {
+			return RouteDeleteBlockers.Because(Gone);
 		}
 
 		var namers = RouteEditing.Namers(source, route);
@@ -151,8 +157,8 @@ internal sealed class RouteEditor {
 	/// </summary>
 	public string? Extend(short route, IReadOnlyList<Vec3i> waypoints, bool close) {
 		var source = _source;
-		if (_index.Records.Route(route) == null) {
-			return "The route is no longer in the mission.";
+		if (!InMission(route)) {
+			return Gone;
 		}
 
 		if (waypoints.Count == 0 && (!close || RouteEditing.IsClosed(source.Waypoints(route)))) {
@@ -163,9 +169,12 @@ internal sealed class RouteEditor {
 		return Commit(() => RouteEditing.Extend(source, route, at, close), route, -1);
 	}
 
+	// Whether the layout has row-8 GUID <route>.
+	private bool InMission(short route) => _index.Layout.Entry(RouteRow, route) != null;
+
 	// The entry of <route>'s list waypoint <waypoint> comes from, or -1 when it has none.
 	private int Entry(short route, int waypoint) =>
-		_index.Scene.Route(route)?.Entries is { } entries && waypoint >= 0 && waypoint < entries.Count ? entries[waypoint] : -1;
+		_index.Route(route)?.Entries is { } entries && waypoint >= 0 && waypoint < entries.Count ? entries[waypoint] : -1;
 
 	private string? Commit(Func<MsnEdit> edit, short route, int waypoint) => Commit(edit, () => route, waypoint);
 
@@ -181,7 +190,7 @@ internal sealed class RouteEditor {
 
 		_mover.Record(new RecordsEdit(_sync, change));
 		if (route() is not -1 and var guid) {
-			bool listed = waypoint < _index.Scene.Route(guid)?.Points.Count;
+			bool listed = waypoint < _index.Route(guid)?.Points.Count;
 			_selection.Current = new RouteSelection(guid, listed ? waypoint : -1);
 		}
 

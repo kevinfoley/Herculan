@@ -8,13 +8,11 @@ namespace Herculan.Engine.Editor;
 internal sealed record ConditionUse(string Label, EditorSelection? Target);
 
 /// <summary>
-/// What references a condition (<see cref="ConditionEditor.UsesOf"/>): the records the editor can select, one per line, how
-/// many more the editor's state leaves out, by kind, and how many variant alternatives, which no state places, records
-/// copying from them.
+/// What references a condition (<see cref="ConditionEditor.UsesOf"/>): each record by its identity, one per line, and how many
+/// variant alternatives, which no state places, records copying from them.
 /// </summary>
-internal sealed record ConditionUses(IReadOnlyList<ConditionUse> Shown, IReadOnlyList<(string Kind, int Count)> LeftOut,
-		int Alternatives) {
-	public bool Any => Shown.Count > 0 || LeftOut.Count > 0 || Alternatives > 0;
+internal sealed record ConditionUses(IReadOnlyList<ConditionUse> Shown, int Alternatives) {
+	public bool Any => Shown.Count > 0 || Alternatives > 0;
 }
 
 /// <summary>
@@ -26,7 +24,7 @@ internal sealed record ConditionUses(IReadOnlyList<ConditionUse> Shown, IReadOnl
 /// </summary>
 internal sealed class ConditionEditor {
 	private readonly MissionDocument _source;
-	private readonly GeneratedIndex _index;
+	private readonly MissionIndex _index;
 	private readonly MissionNames _names;
 	private readonly PointMover _mover;
 	private readonly SceneSync _sync;
@@ -35,7 +33,7 @@ internal sealed class ConditionEditor {
 	private Func<string?>? _requested;
 
 	/// <param name="names">What the Used by list names the records it lists by.</param>
-	public ConditionEditor(MissionDocument source, GeneratedIndex index, MissionNames names, PointMover mover, SceneSync sync,
+	public ConditionEditor(MissionDocument source, MissionIndex index, MissionNames names, PointMover mover, SceneSync sync,
 			SelectionState selection, ObjectDeleter deleter) {
 		_source = source;
 		_index = index;
@@ -95,16 +93,14 @@ internal sealed class ConditionEditor {
 
 	/// <summary>
 	/// What references <paramref name="guid"/>, whatever its condition (<see cref="ConditionEditing.Namers"/>): each record by
-	/// its identity, a link where it has a view, a route, trigger area, action, timer, group or objective whether or not the
-	/// editor's state holds it (<see cref="Selectable"/>), and the rest the state does not hold counted by kind.
+	/// its identity from the layout, a link where it has a view: a route, trigger area, action, timer, group or objective
+	/// (<see cref="Selectable"/>), a herc, flyer, structure or ground vehicle when the scene has its object
+	/// (<see cref="Object"/>); a point, a heading and the rows the editor has no view for named by what they do.
 	/// </summary>
 	public ConditionUses UsesOf(short guid) {
 		var source = _source;
 		var namers = ConditionEditing.Namers(source, guid);
 		var shown = new List<ConditionUse>();
-		var leftOut = new Dictionary<string, int>();
-		void Leave(string kind) => leftOut[kind] = leftOut.GetValueOrDefault(kind) + 1;
-
 		var orders = new List<MsnRecordId>();
 		int alternatives = 0;
 
@@ -127,30 +123,20 @@ internal sealed class ConditionEditor {
 					// The text package the Mission view's lines edit.
 					shown.Add(new ConditionUse("The mission's objective, briefing and intelligence lines", new MissionSelection()));
 					continue;
-				case 2 or 3 or 4 or 5:
+				case 2 or 3 or 4 or 5 or 6 or 7:
 					Unseen(record.Row);
 					continue;
 				case 15:
 					orders.Add(record);
 					continue;
+				case 12 or 13 or 14 when source.RecordAt(record) is { } roster:
+					shown.Add(Object(record.Row, roster.GUID));
+					continue;
 			}
 
 			if (Selectable(source, record) is { } use) {
 				shown.Add(use);
-				continue;
 			}
-
-			if (source.Provenance.ExportedSlot(record) is not { } slot) {
-				Leave(KindOf(record.Row));
-				continue;
-			}
-
-			if (record.Row is 6 or 7) {
-				Unseen(record.Row);
-				continue;
-			}
-
-			shown.Add(Identity(record.Row, slot.Index));
 		}
 
 		foreach (int row in unseen.Keys.Order()) {
@@ -163,8 +149,14 @@ internal sealed class ConditionEditor {
 			shown.Add(new ConditionUse($"{MissionText.Ordinal(order.Slot + 1)} order of {group.Full}", new GroupSelection(order.Group)));
 		}
 
-		for (int i = 0; i < resolved.Options + resolved.UnrunOrders; i++) {
-			Leave("orders");
+		if (resolved.Options > 0) {
+			shown.Add(new ConditionUse(resolved.Options == 1 ? "1 option of a random choice"
+				: $"{resolved.Options} options of random choices", null));
+		}
+
+		if (resolved.UnrunOrders > 0) {
+			shown.Add(new ConditionUse(resolved.UnrunOrders == 1 ? "1 order no group runs"
+				: $"{resolved.UnrunOrders} orders no group runs", null));
 		}
 
 		var strings = source.Text?.Strings ?? [];
@@ -172,25 +164,8 @@ internal sealed class ConditionEditor {
 			shown.Add(new ConditionUse($"Text line {id}", null));
 		}
 
-		return new ConditionUses(shown.DistinctBy(use => (use.Label, use.Target)).ToList(),
-			leftOut.Select(pair => (pair.Key, pair.Value)).ToList(), alternatives);
+		return new ConditionUses(shown.DistinctBy(use => (use.Label, use.Target)).ToList(), alternatives);
 	}
-
-	/// <summary>A record the editor's state exports at <paramref name="index"/> of the block row <paramref name="row"/> is written to, by its identity.</summary>
-	public ConditionUse Identity(int row, int index) => row switch {
-		6 or 7 => NoView(row, 1),
-		8 => new ConditionUse(_names.Route(Records.RouteGuid(index)).Full, Records.RouteAt(index)),
-		9 => new ConditionUse(_names.Area(Records.AreaGuid(index)).Full, Records.AreaAt(index)),
-		10 => new ConditionUse(_names.Trigger(Records.ActionGuid(index)).Full, Records.ActionAt(index)),
-		11 => new ConditionUse(_names.Countdown(Records.TimerGuid(index)).Full, Records.TimerAt(index)),
-		12 or 13 or 14 => Object(row, index),
-		16 => new ConditionUse(_names.GroupBrief(Records.GroupGuid(index)).Full, Records.GroupAt(index)),
-		_ when index < _index.Mission.Objectives.Count && Records.ObjectiveAt(index) is { Record: >= 0 } objective =>
-			new ConditionUse(_names.Objective(objective.Record).Full, objective),
-		_ => new ConditionUse("A win or lose condition", null),
-	};
-
-	private GeneratedRecords Records => _index.Records;
 
 	/// <summary>
 	/// <paramref name="count"/> records of row <paramref name="row"/>, one the editor has no view for, by what they do in the
@@ -239,22 +214,12 @@ internal sealed class ConditionEditor {
 		};
 	}
 
-	// The roster record generated at <slot> of the block row <row> is written to, by its name (MissionNames.Object), a link when
-	// the scene has its object.
-	private ConditionUse Object(int row, int slot) {
-		var key = new ObjectKey(row, _source.GuidOf(row - 5, slot));
-		var target = _index.Scene.ObjectOf(key) != null ? new ObjectSelection(row, key.Guid) : null;
+	// The row-<row> roster record of GUID <guid> by its name (MissionNames.Object), a link when the scene has its object.
+	private ConditionUse Object(int row, short guid) {
+		var key = new ObjectKey(row, guid);
+		var target = _index.ObjectOf(key) != null ? new ObjectSelection(row, guid) : null;
 		return new ConditionUse(_names.Object(key).Full, target);
 	}
-
-	// What a record of <row> is, in the plural, for the count of those the editor's state leaves out.
-	private static string KindOf(int row) => row switch {
-		6 => "points",
-		7 => "headings",
-		12 => "hercs",
-		13 => "flyers",
-		_ => "structures",
-	};
 
 	private delegate MsnEdit Creating(MissionDocument source, out short guid);
 

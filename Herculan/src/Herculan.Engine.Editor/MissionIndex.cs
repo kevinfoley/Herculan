@@ -8,7 +8,7 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// The scene's objects, groups, routes and trigger areas as the <c>.MSN</c>'s layout places them (<see cref="LayoutPlacement"/>),
 /// keyed by GUID, every record included, a conditional one too: each object and the roster record it stands for
-/// (<see cref="ObjectKey"/>); each group's members, setup, pad, roster, side, the action it waits on and its display number;
+/// (<see cref="ObjectKey"/>); each group's members, setup, pad, roster, side, the action it waits on and its place in row 16;
 /// each route's waypoints and the groups walking or naming it; each area's shape and the actions testing it; each action's
 /// areas, what else fires it and what follows it (<see cref="TriggerWiring"/>); each objective's subject, its group and the
 /// order it reads; and the mission box. Built again by
@@ -38,7 +38,7 @@ internal sealed class MissionIndex {
 	/// <summary>Every object in the scene, in <see cref="LayoutPlan.Objects"/>' order.</summary>
 	public IReadOnlyList<SceneObject> Objects => _objects;
 
-	/// <summary>Every pad a group paints, in group order, each by its group's display number.</summary>
+	/// <summary>Every pad a group paints, in group order, each by its group's place in row 16 (<see cref="PlannedGroup.Position"/>).</summary>
 	public IReadOnlyList<MissionBasePad> BasePads => _pads;
 
 	/// <summary>Every row-16 group, in layout order.</summary>

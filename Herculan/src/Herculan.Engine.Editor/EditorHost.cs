@@ -88,8 +88,10 @@ public sealed class EditorHost {
 	private readonly string _installData;
 	private readonly string _missionCache = Path.Combine(Path.GetTempPath(), "herculan-editor");
 
-	// What a Cybrid's hardpoints offer, read from the install's missions the first time one is drawn, once per run.
+	// What a Cybrid's hardpoints offer, and the zones with the retail missions that use each, read from the install's archived
+	// missions the first time either is asked for, once per run.
 	private readonly CybridWeapons _cybridWeapons;
+	private readonly ZoneCatalog _zones;
 
 	private EditorMission? _mission;
 	private EditorExit _exit = EditorExit.Closed;
@@ -162,7 +164,9 @@ public sealed class EditorHost {
 	private EditorHost(EditorLaunch launch) {
 		_launch = launch;
 		_installData = ShellWorkingFiles.DataDirectory(launch.InstallRoot);
-		_cybridWeapons = new CybridWeapons(launch.SimulatorContent, launch.ShellContent);
+		var archived = new ArchivedMissions(launch.ShellContent);
+		_cybridWeapons = new CybridWeapons(launch.SimulatorContent, archived);
+		_zones = new ZoneCatalog(launch.SimulatorContent, archived);
 		_flyNearPlane = _camera.NearPlane;
 		_flyFarPlane = _camera.FarPlane;
 		_padPointer = new GamepadPointer { Settings = JoystickMapFile.LoadIn(_installData).Mouse };
@@ -171,8 +175,7 @@ public sealed class EditorHost {
 			VolMissionBrowser.Merge(MissionFileLaunch.List(launch.ShellContent()), SavedMissions.List(launch.InstallRoot)));
 		_saving = new MissionSaving(launch.InstallRoot, launch.ShellContent, _missionCache);
 		_saving.Saved += _volBrowser.Refresh;
-		_newMission = new NewMissionDialog(_saving, () => MissionZones.List(launch.SimulatorContent),
-			() => TheaterNames.Labels(launch.SimulatorContent));
+		_newMission = new NewMissionDialog(_saving, () => _zones.Zones, () => TheaterNames.Labels(launch.SimulatorContent));
 		_toolbox = new EditorToolbox(launch.SimulatorContent);
 
 		Console.WriteLine($"HERCULAN Mission Editor on {launch.InstallRoot}");
@@ -603,7 +606,7 @@ public sealed class EditorHost {
 			_mission.Properties.Draw(display, menuBarHeight);
 			var (joinable, joinKind) = JoinableGroup(_mission);
 			var mission = _mission;
-			string? joinName = joinable is { } joining ? mission.Names.GroupBrief(mission.Generated.Records.GroupGuid(joining)).Full : null;
+			string? joinName = joinable is { } joining ? mission.Names.GroupBrief(joining).Full : null;
 			_toolbox.Draw(display,
 				enabled: !mission.Gizmo.Dragging && !mission.PlacingAny, joinable, joinName, joinKind,
 				joinable is { } group ? kind => WhyNotJoin(mission, group, kind) : null,
@@ -703,26 +706,29 @@ public sealed class EditorHost {
 		_closePending = true;
 	}
 
-	// The herc, flyer or structure group the selection is, or a member of, which a Toolbox add can join, by its block-11
-	// index, and the Toolbox entry kind its members are, whose join the Toolbox checks while no entry is chosen. The player's
-	// squad, group 0, is offered so the Toolbox can say why it takes no herc.
-	private static (int? Group, ToolboxKind Kind) JoinableGroup(EditorMission mission) {
-		int group = mission.Selection.Current switch {
-			GroupSelection selected => mission.Generated.Records.Group(selected.Guid) ?? -1,
-			ObjectSelection selected => mission.Index.ObjectOf(selected)?.Placement.GroupIndex ?? -1,
-			_ => -1
+	// The herc, flyer or structure group the selection is, or a member of, which a Toolbox add can join, by its row-16 GUID
+	// in the layout, and the Toolbox entry kind its members are, whose join the Toolbox checks while no entry is chosen. The
+	// player's squad is offered so the Toolbox can say why it takes no herc.
+	private static (short? Group, ToolboxKind Kind) JoinableGroup(EditorMission mission) {
+		var index = mission.Index;
+		var group = mission.Selection.Current switch {
+			GroupSelection selected => index.Group(selected.Guid),
+			ObjectSelection selected => index.Plan.Object(new ObjectKey(selected.Row, selected.Guid)) is { } planned
+				? index.Group(planned.Group)
+				: null,
+			_ => null
 		};
-		return mission.Generated.KindOf(group) switch {
-			MissionUnitKind.Base when group > 0 => (group, ToolboxKind.Structure),
-			MissionUnitKind.Mech => (group, ToolboxKind.Herc),
-			MissionUnitKind.Flyer => (group, ToolboxKind.Flyer),
+		return group switch {
+			{ Kind: MissionUnitKind.Base, IsSquad: false } => (group.Guid, ToolboxKind.Structure),
+			{ Kind: MissionUnitKind.Mech } => (group.Guid, ToolboxKind.Herc),
+			{ Kind: MissionUnitKind.Flyer } => (group.Guid, ToolboxKind.Flyer),
 			_ => (null, ToolboxKind.Structure)
 		};
 	}
 
-	// Why an entry of <kind> cannot join <group>: the WhyNotJoin of the placer that kind's add goes through, which its Add
-	// refuses by, so the Toolbox's checkbox and the add agree.
-	private static string? WhyNotJoin(EditorMission mission, int group, ToolboxKind kind) => kind switch {
+	// Why an entry of <kind> cannot join <group>, by its row-16 GUID: the WhyNotJoin of the placer that kind's add goes
+	// through, which its Add refuses by, so the Toolbox's checkbox and the add agree.
+	private static string? WhyNotJoin(EditorMission mission, short group, ToolboxKind kind) => kind switch {
 		ToolboxKind.Herc => mission.Hercs.WhyNotJoin(group),
 		ToolboxKind.Flyer => mission.Flyers.WhyNotJoin(group),
 		ToolboxKind.Vehicle => mission.Vehicles.WhyNotJoin(group),
@@ -817,7 +823,7 @@ public sealed class EditorHost {
 			}
 
 			opened = EditorMission.Open(_launch.SimulatorContent, generated, Path.GetFileNameWithoutExtension(name), _installData,
-				source!, squad!, _launch.ShellContent, _cybridWeapons);
+				source!, squad!, _launch.ShellContent, _cybridWeapons, _zones);
 		} catch (Exception ex) when (ex is MissingHandoffFileException or InvalidDataException or IOException
 				or UnauthorizedAccessException) {
 			_volBrowser.Failure = ex.Message;
@@ -852,7 +858,7 @@ public sealed class EditorHost {
 			}
 
 			opened = EditorMission.Open(_launch.SimulatorContent, generated, request.Name, _installData, source!, squad!,
-				_launch.ShellContent, _cybridWeapons);
+				_launch.ShellContent, _cybridWeapons, _zones);
 		} catch (Exception ex) when (ex is MissingHandoffFileException or InvalidDataException or IOException
 				or UnauthorizedAccessException) {
 			Fail(ex.Message);
@@ -980,7 +986,7 @@ public sealed class EditorHost {
 			}
 
 			bool box = _settings.ShowMissionBox;
-			if (ImGui.MenuItem("Mission Box", null, ref box)) {
+			if (ImGui.MenuItem("Play Area", null, ref box)) {
 				_settings.ShowMissionBox = box;
 				changed = true;
 			}

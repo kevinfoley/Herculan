@@ -205,6 +205,7 @@ Paths are under `Herculan/src/Herculan.Engine.Editor/` unless they say otherwise
 - **Where:** `RouteView.cs:75` "0: 12345, 67890"; `:117,122` "Insert after 0", "Remove 0"; `:144` "Waypoint 0, in world units:"; `:81` "The heads-down map marks waypoints 1 to 9 of the player's route...".
 - **Why:** The rows give no sense of place. On the player's route, the waypoint marked on the heads-down map does not carry the number the editor shows.
 - **Proposal:** Number from 1, and call waypoint 1 "Start" on any route. On the player's route, label the later waypoints as the nav points the map marks, after checking against `docs/retail/simulation/heads-down-display.md#markers`. Show the distance from the previous waypoint ("Nav 2: 420 m from Nav 1") in place of raw X and Y.
+- **Retail:** the cockpit numbers a route's waypoints from its start: the HUD's waypoint indicator reads `WAYPOINT n` while the player heads for waypoint *n*, the start being waypoint 0, and the heads-down map's first route marker is on waypoint 1 ([`../retail/simulation/cockpit-gunsight-hud.md`](../retail/simulation/cockpit-gunsight-hud.md#waypoint-indicators), [`../retail/simulation/heads-down-display.md`](../retail/simulation/heads-down-display.md#markers)). So "Start", then "Waypoint 1", matches play.
 
 ### 33. A route's waypoint list shared with a random choice
 
@@ -271,5 +272,4 @@ Paths are under `Herculan/src/Herculan.Engine.Editor/` unless they say otherwise
 ## Open
 
 - **Open:** findings 6, 18 and 19 regroup records into one view and should be designed alongside the Random choice view, so that the three share a vocabulary ("option", "random choice", "version of the mission").
-- **Open:** finding 32 needs a retail fact before its wording is final: which waypoint the heads-down map numbers 1.
 - **Open:** finding 2's editor-only names would be this engine's invention. Whether to add them, and where to store them, is the user's call.

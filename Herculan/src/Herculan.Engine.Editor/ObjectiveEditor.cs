@@ -140,10 +140,6 @@ internal sealed class ObjectiveEditor {
 			.ToList();
 	}
 
-	/// <summary>Whether another record references <paramref name="record"/>'s failure text too, so an edit copies it first.</summary>
-	public bool TextShared(int record) =>
-		WhyFixed(record) == null && MissionTextEditing.Shared(_source, TextOwner.Objective(record));
-
 	/// <summary>Asks for line <paramref name="line"/> of <paramref name="record"/>'s failure text to read <paramref name="text"/>.</summary>
 	public void RequestText(int record, int line, string text) =>
 		Ask(record, () => MissionTextEditing.SetLine(_source, TextOwner.Objective(record), line, text));

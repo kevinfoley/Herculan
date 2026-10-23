@@ -219,7 +219,7 @@ public static class ConditionEditing {
 
 		var record = Record(document, guid);
 		return Records(document).Count(other => other.GUID == guid) > 1 ? $"More than one record carries condition {guid}."
-			: InVariantTable(document, guid) ? "A variant table and its ranges are edited in the table's view."
+			: InVariantTable(document, guid) ? "A random choice is edited in its own view: click it under Random choices in the Mission panel."
 			: record.Type is < FlagTest or > VariantTable ? $"Its type, {record.Type}, is none the load reads."
 			: null;
 	}
