@@ -271,5 +271,5 @@ Paths are under `Herculan/src/Herculan.Engine.Editor/` unless they say otherwise
 ## Open
 
 - **Open:** findings 6, 18 and 19 regroup records into one view and should be designed alongside the Random choice view, so that the three share a vocabulary ("option", "random choice", "version of the mission").
-- **Open:** findings 26 and 32 need retail facts before their wording is final: formation names, what "paints ground" does in play, and which waypoint the heads-down map numbers 1.
+- **Open:** finding 32 needs a retail fact before its wording is final: which waypoint the heads-down map numbers 1.
 - **Open:** finding 2's editor-only names would be this engine's invention. Whether to add them, and where to store them, is the user's call.

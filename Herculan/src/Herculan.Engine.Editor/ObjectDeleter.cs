@@ -1,35 +1,33 @@
 using HercWorks.Core.Data.File.Msn;
-using HercWorks.Core.Data.File.Msn.Script;
 using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Scene;
-using Herculan.Engine.World;
 
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// What names a roster object or a group, by block index in the generated <c>script.dat</c>: the objectives whose
-/// subject it is, the actions whose target it is, and the order slots naming it as their subject.
-/// <paramref name="Elsewhere"/> counts the naming records the editor's state does not export (a record that fails its
-/// condition here, or an order no group runs), which name it in another state.
+/// What references a roster object, a group, a route or a trigger area, by identity in the <c>.MSN</c>'s layout, every record
+/// whatever its condition: the objectives (row-17 indices), the triggers (row-10 GUIDs) and the group order slots whose order
+/// references it. <see cref="Options"/> counts the options of random choices (variant alternatives, GUID <c>-1</c>) that
+/// reference it, and <see cref="UnrunOrders"/> the orders referencing it that no group's slot runs.
 /// </summary>
-internal sealed record DeleteNamers(IReadOnlyList<int> Objectives, IReadOnlyList<int> Actions,
-		IReadOnlyList<OrderSlot> Orders, int Elsewhere) {
-	public static DeleteNamers None { get; } = new([], [], [], 0);
+internal sealed record DeleteNamers(IReadOnlyList<int> Objectives, IReadOnlyList<short> Triggers,
+		IReadOnlyList<EndsOrder> Orders, int Options, int UnrunOrders) {
+	public static DeleteNamers None { get; } = new([], [], [], 0, 0);
 
-	public bool Any => Objectives.Count > 0 || Actions.Count > 0 || Orders.Count > 0 || Elsewhere > 0;
+	public bool Any => Objectives.Count > 0 || Triggers.Count > 0 || Orders.Count > 0 || Options > 0 || UnrunOrders > 0;
 }
 
 /// <summary>
 /// What keeps a placed object from being deleted (<see cref="ObjectDeleter.BlockersOf"/>). <see cref="Fixed"/> is why it
-/// cannot be deleted at all; the rest is what names it or needs it, by block index.
+/// cannot be deleted at all; the rest is what references or needs it, by identity.
 /// </summary>
-/// <param name="Object">What names the object.</param>
-/// <param name="OwnActions">The actions it fires when engaged or defeated, by block-5 index; -1 for one this state does not export.</param>
-/// <param name="RemovedGroups">The groups it is the last member of, by block-11 index, which go with it, and what names each.</param>
-internal sealed record DeleteBlockers(string? Fixed, DeleteNamers Object, IReadOnlyList<int> OwnActions,
-		IReadOnlyList<(int Group, DeleteNamers Names)> RemovedGroups) {
+/// <param name="Object">What references the object.</param>
+/// <param name="OwnTriggers">The row-10 GUIDs of the triggers it fires when engaged or defeated.</param>
+/// <param name="RemovedGroups">The row-16 GUIDs of the groups it is the last member of, which go with it, and what references each.</param>
+internal sealed record DeleteBlockers(string? Fixed, DeleteNamers Object, IReadOnlyList<short> OwnTriggers,
+		IReadOnlyList<(short Group, DeleteNamers Names)> RemovedGroups) {
 	/// <summary>Whether nothing does, and the object can be deleted.</summary>
-	public bool None => Fixed == null && !Object.Any && OwnActions.Count == 0 && RemovedGroups.All(group => !group.Names.Any);
+	public bool None => Fixed == null && !Object.Any && OwnTriggers.Count == 0 && RemovedGroups.All(group => !group.Names.Any);
 
 	public static DeleteBlockers Because(string reason) => new(reason, DeleteNamers.None, [], []);
 }
@@ -41,26 +39,24 @@ internal sealed record DeleteBlockers(string? Fixed, DeleteNamers Object, IReadO
 /// leaves empty and generate <c>script.dat</c> again; the scene is then synced with the document (<see cref="SceneSync"/>)
 /// (docs/herculan/handoff-editor-document.md#the-tools).
 ///
-/// <para>What refuses a delete is <see cref="RosterDeletion"/>'s: an objective, an action or an order naming the object
+/// <para>What refuses a delete is <see cref="RosterDeletion"/>'s: an objective, an action or an order referencing the object
 /// or the group it would leave empty, an action of its own it fires when engaged or defeated, and the player's squad.
-/// The squad's machines are group 0's, which its view adds and removes.</para>
+/// The squad's machines are group 0's, which its view adds and removes. Each is named by its identity in the layout
+/// (<see cref="Resolve"/>), so any record shows, one the mission as opened leaves out included.</para>
 ///
 /// <para>A delete asked for from the Properties panel or the Delete key waits for the frame's ImGui to be rendered
 /// (<see cref="Request"/>, <see cref="TakeRequest"/>), since the rebuild changes what the panels list.</para>
 /// </summary>
 internal sealed class ObjectDeleter {
-	private const int GroupRow = 16;
+	private const int ObjectiveRow = 17;
 
-	private readonly ScriptDat _document;
 	private readonly MissionDocument _source;
-	private readonly GeneratedIndex _index;
+	private readonly MissionIndex _index;
 	private readonly PointMover _mover;
 	private readonly SceneSync _sync;
 	private SceneObject? _requested;
 
-	public ObjectDeleter(ScriptDat document, MissionDocument source, GeneratedIndex index, PointMover mover,
-			SceneSync sync) {
-		_document = document;
+	public ObjectDeleter(MissionDocument source, MissionIndex index, PointMover mover, SceneSync sync) {
 		_source = source;
 		_index = index;
 		_mover = mover;
@@ -69,25 +65,22 @@ internal sealed class ObjectDeleter {
 
 	/// <summary>What keeps <paramref name="placed"/> from being deleted; <see cref="DeleteBlockers.None"/> when nothing does.</summary>
 	public DeleteBlockers BlockersOf(SceneObject placed) {
-		var placement = placed.Placement;
-		if (placement.IsPlayerLance) {
+		if (_index.Planned(placed) is not { } planned) {
+			return DeleteBlockers.Because("its roster record is not in the file.");
+		}
+
+		if (planned.Squad) {
 			return DeleteBlockers.Because("it is in the player's squad; group 0's view adds and removes squadmates.");
 		}
 
 		var source = _source;
-		if (_index.Scene.KeyOf(placed) is not { } key) {
-			return DeleteBlockers.Because("its roster record is not in the file.");
-		}
-
-		var check = RosterDeletion.Check(source, key.Row, key.Guid);
+		var check = RosterDeletion.Check(source, planned.Key.Row, planned.Key.Guid);
 		if (check.InSquad) {
 			return DeleteBlockers.Because("it is in the player's squad, whose machines a practice load builds from its records.");
 		}
 
-		var own = check.FiredActions.Select(action => source.Provenance.ExportedSlot(action)?.Index ?? -1).ToList();
-		var groups = check.EmptiedGroups
-			.Select(group => (source.ExportedIndex(GroupRow, group.Group) ?? -1, Resolve(source, group.Namers)))
-			.ToList();
+		var own = check.FiredActions.Select(action => source.RecordAt(action)?.GUID ?? -1).Where(guid => guid != -1).Distinct().ToList();
+		var groups = check.EmptiedGroups.Select(group => (group.Group, Resolve(source, group.Namers))).ToList();
 		return new DeleteBlockers(null, Resolve(source, check.Namers), own, groups);
 	}
 
@@ -112,7 +105,7 @@ internal sealed class ObjectDeleter {
 		}
 
 		var source = _source;
-		var (row, guid) = _index.Scene.KeyOf(placed)!.Value;
+		var (row, guid) = _index.KeyOf(placed)!.Value;
 		MsnEdit change;
 		try {
 			change = _sync.Run(() => RosterDeletion.Delete(source, row, guid));
@@ -125,43 +118,42 @@ internal sealed class ObjectDeleter {
 	}
 
 	/// <summary>
-	/// The records naming something, as the block indices this state exports them at: an order through each group slot
-	/// running it.
+	/// The records <paramref name="namers"/> lists, by identity in the layout: an objective by its row-17 index, a trigger by
+	/// its GUID, and an order through each group slot running it, as the group's base names it. A record of GUID <c>-1</c> is
+	/// an option of a random choice, and an order no slot runs is counted apart.
 	/// </summary>
 	public DeleteNamers Resolve(MissionDocument source, MsnNamers namers) {
-		int elsewhere = 0;
-		List<int> Exported(IReadOnlyList<MsnRecordId> records) {
-			var indices = new List<int>();
+		int options = 0;
+		List<short> Guids(IEnumerable<MsnRecordId> records) {
+			var guids = new List<short>();
 			foreach (var record in records) {
-				if (source.Provenance.ExportedSlot(record) is { } slot) {
-					indices.Add(slot.Index);
-				} else {
-					elsewhere++;
+				if (source.RecordAt(record) is not { } found) {
+					continue;
+				}
+
+				if (found.GUID == -1) {
+					options++;
+				} else if (!guids.Contains(found.GUID)) {
+					guids.Add(found.GUID);
 				}
 			}
 
-			return indices;
+			return guids;
 		}
 
-		var objectives = Exported(namers.Objectives);
-		var actions = Exported(namers.Actions);
-		var orders = new List<OrderSlot>();
-		foreach (int order in Exported(namers.Orders).Distinct()) {
-			int before = orders.Count;
-			for (int group = 0; group < _document.Groups.Length && group < _index.Mission.GroupOrders.Count; group++) {
-				var refs = _document.Groups[group].OrderRefs;
-				for (int slot = 0; slot < refs.Length; slot++) {
-					if (refs[slot] == order && _index.Mission.GroupOrders[group][slot] is { } run) {
-						orders.Add(new OrderSlot(group, slot, run));
-					}
-				}
+		var objectives = namers.Objectives.Where(record => record.Row == ObjectiveRow).Select(record => record.Index).Distinct().ToList();
+		var triggers = Guids(namers.Actions);
+		var orders = new List<EndsOrder>();
+		int unrun = 0;
+		foreach (short order in Guids(namers.Orders)) {
+			var running = _index.OrderSlots(order);
+			if (running.Count == 0) {
+				unrun++;
 			}
 
-			if (orders.Count == before) {
-				elsewhere++;
-			}
+			orders.AddRange(running.Where(slot => !orders.Contains(slot)).ToList());
 		}
 
-		return new DeleteNamers(objectives, actions, orders, elsewhere);
+		return new DeleteNamers(objectives, triggers, orders, options, unrun);
 	}
 }

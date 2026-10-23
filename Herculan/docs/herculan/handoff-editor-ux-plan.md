@@ -70,10 +70,13 @@ Phases 2 to 6 are carried out by [handoff-editor-msn-scene.md](handoff-editor-ms
 
 ### 6. Sweep
 
-- Object view's debug data under Advanced (R25); group fields (R26: the formation id under Advanced, since the game names no formation; the paints-ground flag as "Base pad: lays its concrete pad on the ground and snaps to the pad's tile"; R27); shared-point notes as links (R28); the squad without "group 0" (R29), its loadouts collapsed in a campaign (R30); weapon mounts (R31); waypoints from 1, the first being 1, with distances (R32); the play area (R34); the Problems list in the editor's own words, the em dash fixed (R35); notes naming controls by their labels (R36); copy-on-write notes dropped (R38); text-line budget and accents (R39); zones with the missions that use them (R40).
+- The squad without "group 0" (R29), its loadouts collapsed in a campaign (R30); weapon mounts (R31); waypoints from 1, the first being 1, with distances (R32); the play area (R34); the Problems list in the editor's own words, the em dash fixed (R35); notes naming controls by their labels (R36); copy-on-write notes dropped (R38); text-line budget and accents (R39); zones with the missions that use them (R40).
+- Done, with the object and group views on the layout: the object view's type number, model, triangles, texture and hit radius under Advanced, "Kind" and "Roster slot" gone (R25); the group's formation under Advanced, since no retail file names a formation, and its paints-ground flag as "Base pad: lays its concrete pad on the ground tile under it, N square" (R26); "Starts at:" (R27); "Also on this spot, moving with it:" with a link per sharer, in the group, route and trigger area views (R28); a group's own route field as "its own route (not editable yet)" in a route's delete blockers (R41's own route) ([Groups](handoff-editor-viewing.md#groups), [Moving](handoff-editor-placement.md#moving)).
 
 ## Decided
 
 - "Campaign variable" names the campaign flag array everywhere in the UI.
 - No editor-only names for triggers, routes, areas and timers (R2).
 - No cross-mission "Set by" lookup for campaign variables.
+- Every record number a designer sees counts from 1: groups, triggers, countdowns, routes, areas, objectives and the rest, as orders and waypoints do (phase 6). The number is the record's place among its row's identities, not its index in the file, so nothing matches against the file through it.
+- A Cybrid herc's weapons are editable, each mount offering the weapons retail missions fit on that mount of that chassis, read from the install's missions; a mount no retail mission fits stays read-only (phase 6).

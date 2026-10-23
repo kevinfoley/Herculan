@@ -17,12 +17,12 @@ namespace Herculan.Engine.Editor;
 /// the object of a record no group places off the scene, keeping it, so an undone delete stands the same object, model and
 /// all, where it stood. Terrain and models are not loaded again.
 ///
-/// <para>It then builds again what the views still read from the generation: the generated <see cref="World.Mission"/>
+/// <para>It then builds again what still reads the generation: the generated <see cref="World.Mission"/>
 /// (<see cref="MissionLoader.Load(GameContent, ScriptDat, string)"/>, after writing the generated <c>mission.str</c> and, for a
 /// mission loaded in training mode, the squad's <c>player.mec</c> beside the handoff, as the launch would for the
 /// generation, <see cref="MissionSquad"/>) and <see cref="GeneratedIndex"/>, each object's <see cref="SceneObject.Placement"/>
-/// carrying the generation's indices for its record's GUID (<see cref="PlacementOf"/>); then the new
-/// <see cref="MissionIndex"/>, the pick spheres, the overlays' lines and the mission check, and tells the drawing what
+/// carrying the generation's block-7, 8 or 9 slot and block-11 group for its record's GUID (<see cref="PlacementOf"/>); then
+/// the new <see cref="MissionIndex"/>, the pick spheres, the overlays' lines and the mission check, and tells the drawing what
 /// left and what joined the scene.</para>
 ///
 /// <para>A selection names a <c>.MSN</c> record, so it needs no mapping: it is kept while the <c>.MSN</c> has its record
@@ -104,46 +104,24 @@ internal sealed class SceneSync {
 
 	/// <summary>
 	/// What a planned record's object is built and placed from: its type, fit, condition, place, side and formation slot,
-	/// from the layout; and from the generation, for the views that still read it, the block-7, 8 or 9 slot its GUID was
-	/// exported to, the block-11 index of its group's, its two actions' block-5 indices and its out-of-action writes, as the
-	/// generated record holds them (-1 and none where the generation has no record of the GUID).
+	/// from the layout; and from the generation, for what still reads it, the block-7, 8 or 9 slot its GUID was exported to
+	/// (a herc's fit, <see cref="MachineFitter"/>, and a squadmate's machine, <see cref="SquadMachinePanel"/>) and the block-11
+	/// index of its group's (the Toolbox's join, <c>EditorHost.JoinableGroup</c>), -1 where the generation has no record of the
+	/// GUID. The editor binds no action and ticks nothing, so the actions and writes the game's load binds are left unset.
 	/// </summary>
 	public static MissionPlacement PlacementOf(PlannedObject planned, MissionDocument source) {
-		var script = source.Script;
-		int slot = source.ExportedIndex(planned.Key.Row, planned.Key.Guid) ?? -1;
-		(short Engaged, short Defeated, OutOfActionReport Report)? generated = planned.Kind switch {
-			MissionUnitKind.Mech when slot >= 0 && slot < script.Mechs.Length => Generated(script, script.Mechs[slot].EngagementActionRef,
-				script.Mechs[slot].DefeatActionRef, script.Mechs[slot].CounterRefs, script.Mechs[slot].CounterOps),
-			MissionUnitKind.Flyer when slot >= 0 && slot < script.Flyers.Length => Generated(script,
-				script.Flyers[slot].EngagementActionRef, script.Flyers[slot].DefeatActionRef, script.Flyers[slot].CounterRefs,
-				script.Flyers[slot].CounterOps),
-			MissionUnitKind.Base when slot >= 0 && slot < script.Bases.Length => Generated(script, script.Bases[slot].EngagementActionRef,
-				script.Bases[slot].DefeatActionRef, script.Bases[slot].CounterRefs, script.Bases[slot].CounterOps),
-			_ => null
-		};
-
 		var place = planned.Place;
-		return new MissionPlacement(planned.Kind, planned.TypeIndex, planned.TypeName, slot,
-			source.ExportedIndex(16, planned.Group) ?? -1, place.Position, place.Heading, planned.WeaponRefs,
-			planned.WeaponSecondary,
+		return new MissionPlacement(planned.Kind, planned.TypeIndex, planned.TypeName,
+			source.ExportedIndex(planned.Key.Row, planned.Key.Guid) ?? -1, source.ExportedIndex(16, planned.Group) ?? -1,
+			place.Position, place.Heading, planned.WeaponRefs, planned.WeaponSecondary,
 			IsPlayerLance: planned.Squad,
 			Side: planned.Side,
 			AiCruiseSpeed: planned.AiCruiseSpeed,
 			AiRadarActive: planned.AiRadarActive,
 			FormationOffset: place.FormationOffset,
 			FlyerFormationOffset: place.FlyerFormationOffset,
-			EngagementActionRef: planned.Squad ? -1 : generated?.Engaged ?? -1,
-			DefeatActionRef: planned.Squad ? -1 : generated?.Defeated ?? -1,
 			StartingCondition: planned.StartingCondition,
-			OutOfActionReport: planned.Squad ? null : generated?.Report,
 			GroundPoint: place.GroundPoint);
-	}
-
-	// A generated roster record's two actions, a ref outside block 5 read as -1 as the loader reads it, and its writes.
-	private static (short, short, OutOfActionReport) Generated(ScriptDat script, short engaged, short defeated,
-			IReadOnlyList<short> counterRefs, IReadOnlyList<short> counterOps) {
-		short Action(short reference) => reference >= 0 && reference < script.Actions.Length ? reference : (short)-1;
-		return (Action(engaged), Action(defeated), new OutOfActionReport(counterRefs, counterOps));
 	}
 
 	/// <summary>

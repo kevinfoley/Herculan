@@ -97,24 +97,34 @@ internal sealed class FeatureMoves {
 	};
 
 	/// <summary>
-	/// How many other fields name the points <paramref name="target"/>'s waypoint names — trigger areas, groups, other
-	/// waypoints — which move with it unless it is detached.
+	/// The other fields naming the points <paramref name="target"/>'s waypoint names (trigger areas, groups, other waypoints),
+	/// which move with it unless it is detached: every field naming them but the waypoint's own entries, in the route's
+	/// record or in the option of a random choice that supplies its list.
 	/// </summary>
-	public int SharersOf(WaypointTarget target) {
+	public IReadOnlyList<PointRef> SharersOf(WaypointTarget target) {
 		if (WhyFixed(target) != null) {
-			return 0;
+			return [];
 		}
 
-		var points = PointsOf(target);
-		return points.Distinct().Sum(_source.CountPointRefs) - points.Length;
+		var entries = EntriesOf(target);
+		var list = _source.Layout.Entry(RouteRow, target.Route)?.Supplier(MergeRules.RouteListWord);
+		bool Own(PointRef reference) => reference.Record.Row == RouteRow && entries.Contains(reference.Field)
+			&& (reference.Record == list?.CopiedFrom || _source.RecordAt(reference.Record)?.GUID == target.Route);
+		return PointsOf(target).Distinct().SelectMany(_source.PointRefs).Where(reference => !Own(reference)).ToList();
 	}
 
 	/// <summary>
-	/// How many other fields name the point <paramref name="target"/>'s corner names — waypoints, other areas, groups — which
-	/// move with it unless it is detached.
+	/// The other fields naming the point <paramref name="target"/>'s corner names (waypoints, other areas, groups), which move
+	/// with it unless it is detached: every field naming it but that corner of the area's own records.
 	/// </summary>
-	public int SharersOf(AreaCornerTarget target) =>
-		WhyFixed(target) == null && PointsOf(target) is [var point] ? _source.CountPointRefs(point) - 1 : 0;
+	public IReadOnlyList<PointRef> SharersOf(AreaCornerTarget target) {
+		if (WhyFixed(target) != null || PointsOf(target) is not [var point]) {
+			return [];
+		}
+
+		return _source.PointRefs(point).Where(reference => reference.Record.Row != AreaRow || reference.Field != target.Corner
+			|| _source.RecordAt(reference.Record)?.GUID != target.Area).ToList();
+	}
 
 	/// <summary>Where <paramref name="target"/> stands now, in world units, a drag's preview included.</summary>
 	public Vec3i PositionOf(MoveTarget target) => target switch {

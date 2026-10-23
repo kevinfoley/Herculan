@@ -21,7 +21,6 @@ internal sealed class PresentWhenView {
 
 	private readonly PresenceEditor _editor;
 	private readonly PanelLinks _links;
-	private readonly Action<DeleteNamers, IReadOnlyList<int>> _references;
 	private readonly CampaignVariablePicker _picker = new();
 
 	// The target given a variable row not yet filled, by Only when a campaign variable... or And also when....
@@ -31,11 +30,9 @@ internal sealed class PresentWhenView {
 	private uint? _draftFor;
 	private int _draft;
 
-	/// <param name="references">Draws what references something, one line per record, given the groups whose own route field references it.</param>
-	public PresentWhenView(PresenceEditor editor, PanelLinks links, Action<DeleteNamers, IReadOnlyList<int>> references) {
+	public PresentWhenView(PresenceEditor editor, PanelLinks links) {
 		_editor = editor;
 		_links = links;
-		_references = references;
 	}
 
 	/// <summary>Draws <paramref name="target"/>'s Present when; nothing for null, which the squad has.</summary>
@@ -336,10 +333,10 @@ internal sealed class PresentWhenView {
 
 		ImGui.PushID("losers");
 		EditorText.Note("Where it is absent, these lose their reference to it:");
-		_references(losers.Names, []);
-		foreach (int group in losers.MemberOf) {
+		_links.References(losers.Names);
+		foreach (short group in losers.MemberOf) {
 			ImGui.PushID($"member{group}");
-			_links.ShortGroup(group);
+			_links.ShortLayoutGroup(group);
 			ImGui.SameLine(0f, 0f);
 			ImGui.Text(": member");
 			ImGui.PopID();

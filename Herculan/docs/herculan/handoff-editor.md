@@ -1,6 +1,6 @@
 # Handoff — the HERCULAN mission editor
 
-The editor, `Herculan.Engine.Editor`, run on its own by `Herculan.Engine.Host.Editor` and from the game's Editor menu item, opens a mission as its `.MSN` and `.ENG`, shows its scene, the Mission panel's lists, the trigger, countdown and objective views and a group's orders from the `.MSN` and its other Properties views through the `script.dat` generated from it, edits it, and saves it into the install, where the game loads it in place of the archive's.
+The editor, `Herculan.Engine.Editor`, run on its own by `Herculan.Engine.Host.Editor` and from the game's Editor menu item, opens a mission as its `.MSN` and `.ENG`, shows its scene, the Mission panel's lists, the trigger, countdown, objective, object and group views and a group's orders from the `.MSN` and its route and trigger area views through the `script.dat` generated from it, edits it, and saves it into the install, where the game loads it in place of the archive's.
 
 | Doc | Covers |
 |---|---|
@@ -55,7 +55,7 @@ Beyond the gaps each doc lists:
 | 13 (8), flyers | the campaign variables it sets when destroyed (shown) |
 | 14 (9), structures and ground vehicles | the starting condition (0 in 29% of retail records), the campaign variables it sets when destroyed (shown; 698 retail records set one) |
 | 15 (10), orders | the formation and the point |
-| 16 (11), groups | the formation id, paints-ground flag, heading, own route, the campaign variables it sets when every member is down (shown) and map-shown flag; deleting one other than with its last member |
+| 16 (11), groups | the formation id (shown under Advanced), paints-ground flag (shown as its base pad), heading, own route (shown under Advanced), the campaign variables it sets when every member is down (shown) and map-shown flag; deleting one other than with its last member |
 | 17 (12), objectives | the condition ref, which the campaign layer authors; their order |
 
 **Campaign variables.** Triggers, objectives and out-of-action reports set campaign variables, which persist into the campaign flags a later mission's row 1 tests ([`../retail/shell/campaign-loop.md`](../retail/shell/campaign-loop.md#the-campaign-flag-array-is-the-msn-condition-store)); each view lists its writes as sentences ([Campaign variable writes](handoff-editor-mission-logic.md#campaign-variable-writes)). The campaign variable picker lists every variable the mission touches, with what touches it, and those the debrief reads, by what it does with them ([The campaign variable picker](handoff-editor-conditions.md#the-campaign-variable-picker)); what other missions set or test is not looked up.

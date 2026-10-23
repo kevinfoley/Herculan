@@ -28,7 +28,12 @@ public sealed class MissionDocument {
 	private const int HeadingRow = 7;
 	private const int RouteRow = 8;
 	private const int AreaRow = 9;
+	private const int MechRow = 12;
+	private const int FlyerRow = 13;
+	private const int StructureRow = 14;
+	private const int OrderRow = 15;
 	private const int GroupRow = 16;
+	private const int ObjectiveRow = 17;
 
 	/// <summary>The exported slot each GUID of rows 6 to 16 reached in the last generation.</summary>
 	private readonly Dictionary<(int Row, short Guid), SlotProvenance> _slots = new();
@@ -139,28 +144,54 @@ public sealed class MissionDocument {
 	/// Every record counts whatever its condition, since one that fails in the generation's state names the point in
 	/// another.
 	/// </summary>
-	public int CountPointRefs(short point) {
+	public int CountPointRefs(short point) => PointRefs(point).Count;
+
+	/// <summary>
+	/// Every field naming row-6 GUID <paramref name="point"/>, in row and file order, the fields <see cref="CountPointRefs"/>
+	/// counts: each by its record and, for a route, the entry of its list, for a trigger area 0 its first corner or center and
+	/// 1 a box's second corner.
+	/// </summary>
+	public IReadOnlyList<PointRef> PointRefs(short point) {
+		var refs = new List<PointRef>();
 		if (point == -1) {
-			return 0;
+			return refs;
 		}
 
-		int Is(short reference) => reference == point ? 1 : 0;
-		int count = 0;
-		foreach (var route in Mission.WaypointGroups ?? []) {
-			count += route.Waypoints.Count(reference => reference == point);
+		void Each<T>(int row, T?[]? records, Func<T, short> reference) where T : class {
+			for (int i = 0; i < (records?.Length ?? 0); i++) {
+				if (records![i] is { } record && reference(record) == point) {
+					refs.Add(new PointRef(new MsnRecordId(row, i), 0));
+				}
+			}
 		}
 
-		foreach (var area in Mission.TriggerAreas ?? []) {
-			count += Is(area.PointRef) + (area.Shape == 0 ? Is(area.SecondPointOrRadius) : 0);
+		var routes = Mission.WaypointGroups ?? [];
+		for (int i = 0; i < routes.Length; i++) {
+			for (int entry = 0; entry < routes[i].Waypoints.Length; entry++) {
+				if (routes[i].Waypoints[entry] == point) {
+					refs.Add(new PointRef(new MsnRecordId(RouteRow, i), entry));
+				}
+			}
 		}
 
-		count += (Mission.Mechs ?? []).Sum(record => Is(record.PositionRef));
-		count += (Mission.Flyers ?? []).Sum(record => Is(record.PositionRef));
-		count += (Mission.Bases ?? []).Sum(record => Is(record.PositionRef));
-		count += (Mission.Orders ?? []).Sum(record => Is(record.PointRef));
-		count += (Mission.Groups ?? []).Sum(record => Is(record.PositionRef));
-		count += (Mission.Objectives ?? []).Sum(record => record == null ? 0 : Is(record.PointRef));
-		return count;
+		var areas = Mission.TriggerAreas ?? [];
+		for (int i = 0; i < areas.Length; i++) {
+			if (areas[i].PointRef == point) {
+				refs.Add(new PointRef(new MsnRecordId(AreaRow, i), 0));
+			}
+
+			if (areas[i].Shape == 0 && areas[i].SecondPointOrRadius == point) {
+				refs.Add(new PointRef(new MsnRecordId(AreaRow, i), 1));
+			}
+		}
+
+		Each(MechRow, Mission.Mechs, record => record.PositionRef);
+		Each(FlyerRow, Mission.Flyers, record => record.PositionRef);
+		Each(StructureRow, Mission.Bases, record => record.PositionRef);
+		Each(OrderRow, Mission.Orders, record => record.PointRef);
+		Each(GroupRow, Mission.Groups, record => record.PositionRef);
+		Each(ObjectiveRow, Mission.Objectives, record => record.PointRef);
+		return refs;
 	}
 
 	/// <summary>
@@ -811,3 +842,10 @@ public sealed class MissionDocument {
 		to.ObjectiveTextRefs = from.ObjectiveTextRefs;
 	}
 }
+
+/// <summary>
+/// A field naming a row-6 point (<see cref="MissionDocument.PointRefs"/>): its <paramref name="Record"/>, and
+/// <paramref name="Field"/>, for a route the entry of its list, for a trigger area 0 its first corner or center and 1 a box's
+/// second corner, and 0 for any other record.
+/// </summary>
+public readonly record struct PointRef(MsnRecordId Record, int Field);

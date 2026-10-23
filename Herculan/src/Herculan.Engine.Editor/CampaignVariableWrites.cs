@@ -207,6 +207,10 @@ internal sealed class CampaignVariableWrites {
 	public static IReadOnlyList<(short Variable, short Op)> Pairs(IReadOnlyList<short> variables, IReadOnlyList<short> codes) =>
 		Enumerable.Range(0, Math.Min(variables.Count, codes.Count)).Select(slot => (variables[slot], codes[slot])).ToList();
 
+	/// <summary>The (variable, code) pairs of a record's interleaved out-of-action <paramref name="words"/>, as the <c>.MSN</c> holds them.</summary>
+	public static IReadOnlyList<(short Variable, short Op)> Interleaved(IReadOnlyList<short> words) =>
+		Enumerable.Range(0, words.Count / 2).Select(pair => (words[pair * 2], words[pair * 2 + 1])).ToList();
+
 	// The code a variable change keeps: the write's own, or Add 1 for one the layer has no case for.
 	private static short Kept(WriteLayer layer, short code) =>
 		Operation(layer, code).Kind != WriteKind.Unknown

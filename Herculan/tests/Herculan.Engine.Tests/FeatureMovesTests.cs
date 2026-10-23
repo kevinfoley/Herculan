@@ -30,7 +30,7 @@ public class FeatureMovesTests {
 		Assert.Equal(opened, Write(document));
 		Assert.Equal(at, preview.Route(10)!.Points[0]);
 		Assert.Equal(at, preview.Area(4)!.Area.A);
-		Assert.Equal(1, moves.SharersOf(target));
+		Assert.Equal(new MsnRecordId(9, 0), Assert.Single(moves.SharersOf(target)).Record);
 
 		document.Change(() => moves.Write(target, at));
 		var point = document.Layout.Entry<MapPoint22>(1)!.Fields;

@@ -60,6 +60,8 @@ internal sealed record GroupTarget(short Guid, bool Detach = false) : MoveTarget
 /// so only a flyer group's is the mission's to set; any other keeps the point's Z.</para>
 /// </summary>
 internal sealed class PointMover {
+	private const int GroupRow = 16;
+
 	private readonly MissionDocument _source;
 	private readonly HeightGrid _terrain;
 	private readonly MissionIndex _index;
@@ -128,10 +130,10 @@ internal sealed class PointMover {
 	public string? WhyFixedArea(short area) => _features.WhyFixedArea(area);
 
 	/// <inheritdoc cref="FeatureMoves.SharersOf(AreaCornerTarget)"/>
-	public int SharersOf(AreaCornerTarget target) => _features.SharersOf(target);
+	public IReadOnlyList<PointRef> SharersOf(AreaCornerTarget target) => _features.SharersOf(target);
 
 	/// <inheritdoc cref="FeatureMoves.SharersOf(WaypointTarget)"/>
-	public int SharersOf(WaypointTarget target) => _features.SharersOf(target);
+	public IReadOnlyList<PointRef> SharersOf(WaypointTarget target) => _features.SharersOf(target);
 
 	/// <summary>
 	/// Sets the radius of circle trigger area <paramref name="area"/>, by its row-9 GUID, to <paramref name="radius"/> world
@@ -175,23 +177,24 @@ internal sealed class PointMover {
 
 		bool snaps = group.Setup.PaintsGround && group.Kind == MissionUnitKind.Base;
 		return snaps && group.Pad == null
-			? "It paints its ground but has no structure placed: nothing stands on its point."
+			? "It lays a base pad but has no structure placed, so nothing stands on its position."
 			: null;
 	}
 
 	/// <summary>
-	/// How many other fields name the point <paramref name="target"/>'s group stands on — trigger areas, other groups,
-	/// waypoints — which move with it unless it is detached. For a group standing on its route's first waypoint, these
-	/// are besides that waypoint (and the route's last, when it closes on its first).
+	/// The fields naming the point <paramref name="target"/>'s group stands on (trigger areas, other groups, waypoints), which
+	/// move with it unless it is detached: every field naming it but the group's own records'. For a group standing on its
+	/// route's first waypoint, that waypoint is one of them.
 	/// </summary>
-	public int SharersOf(GroupTarget target) {
+	public IReadOnlyList<PointRef> SharersOf(GroupTarget target) {
 		if (_index.Group(target.Guid) is not { } group) {
-			return 0;
+			return [];
 		}
 
-		return group.OwnPoint != -1
-			? _source.CountPointRefs(group.OwnPoint) - 1
-			: group.StartPoints.Distinct().Sum(_source.CountPointRefs) - group.StartPoints.Count;
+		IEnumerable<short> points = group.OwnPoint != -1 ? [group.OwnPoint] : group.StartPoints.Distinct();
+		return points.SelectMany(_source.PointRefs)
+			.Where(reference => reference.Record.Row != GroupRow || _source.RecordAt(reference.Record)?.GUID != target.Guid)
+			.ToList();
 	}
 
 	/// <summary>Whether a point's Z is the mission's to set for <paramref name="sceneObject"/>: only a flyer's is.</summary>

@@ -3,8 +3,8 @@ using HercWorks.Core.Data.File.Msn;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// Where the record a selection names stands in the generated <c>script.dat</c> the Properties views still read, and
-/// back: a group, trigger area, action, timer or route by its GUID of row 16, 9, 10, 11 or 8, at its block-11, 4, 5, 6
+/// Where the record a selection names stands in the generated <c>script.dat</c> that the route and trigger area views, the
+/// condition view's Used by, route placing and the Toolbox's join still read, and back: a group, trigger area, action, timer or route by its GUID of row 16, 9, 10, 11 or 8, at its block-11, 4, 5, 6
 /// or 3 index, and an objective's row-17 index from its block-12 index through provenance. Null where the generation
 /// has no such record, one whose condition fails as the editor opened the mission, whose view then says it is not shown
 /// in the editor (docs/herculan/handoff-editor-viewing.md#selection-and-panels).
@@ -21,12 +21,6 @@ internal sealed class GeneratedRecords {
 
 	/// <summary>Why an editor refuses an edit of a record the generation has none for, which no view shows.</summary>
 	public const string NotShown = "It is not shown in the editor.";
-
-	/// <summary>
-	/// What a view says of an object or a group the scene shows and the generation has none for, which the views, reading
-	/// the generated file, cannot show; and why its editors refuse it.
-	/// </summary>
-	public const string Absent = "Absent from the mission as opened, so this view cannot show it yet.";
 
 	private readonly MissionDocument _source;
 

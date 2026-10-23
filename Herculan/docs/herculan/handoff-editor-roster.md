@@ -38,17 +38,17 @@ Outside the squad:
 - **A flyer's Type** offers the Toolbox's flyers.
 - **A herc's Chassis** offers the 21 types; the new type takes the fit an add gives it, all ten slots written. A Human chassis then shows one row per mount, a weapon and for a launcher a guidance, offered and written as the squad's ([The player's squad](#the-players-squad), `MachineFitter`, drawn by `MachineFitView`); a Cybrid's fit is listed read-only, with a note, since nothing establishes which weapons its mounts take.
 
-A field a variant table supplies is the alternative's to edit ([Variants](handoff-editor-conditions.md#variants)). Each change builds a new object and keeps it selected; the mission check tests no roster record's type, so it finds nothing new.
+A field a variant table supplies is the alternative's to edit ([Variants](handoff-editor-conditions.md#variants)). Each change builds a new object and keeps it selected; the mission check tests no roster record's type, so it finds nothing new. A flyer's, structure's or ground vehicle's Type is changed for any record the layout has (`RosterTypeEditor`); a herc's Chassis and mounts are found by the block-7 slot the generation exported it at (`MachineFitter`), so a herc the mission as opened leaves out shows neither.
 
 ## Sides
 
-A group's view offers its Team, the group's side (block 11 `0x6e`), for every group but the squad; all its members change, and the view says how many when there are others. An object's view shows its group's team fixed. `SideChanger` writes it and generates again, then sets the index's copy and each member's simulation object from the generated field, without a rebuild.
+A group's view offers its Team, the group's side (block 11 `0x6e`), for every group but the squad; all its members change, and the view says how many when there are others. An object's view shows its group's team fixed. `SideChanger` takes the group by its row-16 GUID, any group the layout has, and writes it; the sync then sets each member's simulation object from the layout.
 
 ## Deleting
 
 An object's view has Delete, and the Delete key deletes the selected object. `ObjectDeleter` removes every record of the object's GUID and its group's member slots naming it; a group left with no member goes too, with its orders that no other group runs, and the view names the group that goes with the object. The roster shrinks, so the slot caps count only what can spawn. The variant alternatives a deleted record drew from stay, and deleting a variant-keyed record moves every later draw ([Conditions and variants](handoff-editor-document.md#conditions-and-variants)).
 
-A GUID with no record resolves to `-1` (`MissionGenerator.cs:473-496`), so the delete is refused while an objective, an action or an order names the object, or the group the delete would remove, and while the object fires an action of its own when engaged or defeated, a variant alternative it can draw included. The player's squad is refused (group 0's view removes squadmates). The ground is levelled again as after a move.
+A GUID with no record resolves to `-1` (`MissionGenerator.cs:473-496`), so the delete is refused while an objective, an action or an order names the object, or the group the delete would remove, and while the object fires an action of its own when engaged or defeated, a variant alternative it can draw included. The view lists each by its identity in the layout, one the mission as opened leaves out included (`ObjectDeleter.Resolve`): an objective or trigger by its link, a trigger it fires with ": fired by it", an order as its group and slot ("Cybrid hercs (group 4): 1st order"), and the options of random choices and the orders no group runs as counts. The player's squad is refused (group 0's view removes squadmates); Core's own refusal finds the squad as group 0 of the generation (`RosterDeletion.Check`). The ground is levelled again as after a move.
 
 ## The player's squad
 

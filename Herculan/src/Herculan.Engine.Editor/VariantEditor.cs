@@ -15,13 +15,15 @@ namespace Herculan.Engine.Editor;
 /// </summary>
 internal sealed class VariantEditor {
 	private readonly MissionDocument _source;
+	private readonly MissionIndex _index;
 	private readonly PointMover _mover;
 	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private Func<string?>? _requested;
 
-	public VariantEditor(MissionDocument source, PointMover mover, SceneSync sync, SelectionState selection) {
+	public VariantEditor(MissionDocument source, MissionIndex index, PointMover mover, SceneSync sync, SelectionState selection) {
 		_source = source;
+		_index = index;
 		_mover = mover;
 		_sync = sync;
 		_selection = selection;
@@ -33,17 +35,12 @@ internal sealed class VariantEditor {
 	/// <summary>Why the last edit run could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
-	/// <summary>The roster row and GUID of a placed object outside the squad, or null for one of the squad.</summary>
-	public (int Row, short Guid)? RecordOf(SceneObject placed) {
-		var placement = placed.Placement;
-		if (placement.IsPlayerLance) {
-			return null;
-		}
-
-		int block = placement.Kind switch { MissionUnitKind.Mech => 7, MissionUnitKind.Flyer => 8, _ => 9 };
-		short guid = _source.GuidOf(block, placement.SlotIndex);
-		return guid == -1 ? null : (block + 5, guid);
-	}
+	/// <summary>
+	/// The roster row and GUID of the record a placed object outside the squad stands for, from the layout; null for one of the
+	/// squad.
+	/// </summary>
+	public (int Row, short Guid)? RecordOf(SceneObject placed) =>
+		_index.Planned(placed) is { Squad: false } planned ? (planned.Key.Row, planned.Key.Guid) : null;
 
 	/// <summary>Why the object of roster row <paramref name="row"/>'s GUID <paramref name="guid"/> cannot change table at all, or null when it can.</summary>
 	public string? WhyNoTables(int row, short guid) => VariantEditing.WhyNoTables(_source, row, guid);

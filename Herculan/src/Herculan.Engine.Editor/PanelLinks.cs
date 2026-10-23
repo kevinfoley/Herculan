@@ -1,7 +1,6 @@
 using System.Numerics;
 using HercWorks.Core.Data.File.Msn;
 using Herculan.Engine.Scene;
-using Herculan.Engine.World;
 using ImGuiNET;
 
 namespace Herculan.Engine.Editor;
@@ -9,20 +8,16 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// The Properties panel's links: a clickable label per kind of record that selects it, so a view is also how a mission's
 /// wiring is walked. Each record is named by <see cref="MissionNames"/>, from the layout by its GUID, its text cut to fit the
-/// line and its number dimmed after it (<see cref="NameText"/>). A view still reading the generation names a record by its
-/// index in the generated <c>script.dat</c>, which the link turns into the GUID of the <c>.MSN</c> record that created it
-/// (<see cref="GeneratedRecords"/>). Each label is its own ImGui ID, unique within a view's ID scope (the views push one per
-/// repeated block).
+/// line and its number dimmed after it (<see cref="NameText"/>). Each label is its own ImGui ID, unique within a view's ID
+/// scope (the views push one per repeated block).
 /// </summary>
 internal sealed class PanelLinks {
 	private static readonly Vector4 LinkColor = new(0.55f, 0.78f, 1f, 1f);
 
-	private readonly GeneratedRecords _records;
 	private readonly MissionIndex _scene;
 	private readonly SelectionState _selection;
 
-	public PanelLinks(GeneratedRecords records, MissionIndex scene, MissionNames names, SelectionState selection) {
-		_records = records;
+	public PanelLinks(MissionIndex scene, MissionNames names, SelectionState selection) {
 		_scene = scene;
 		Names = names;
 		_selection = selection;
@@ -69,9 +64,6 @@ internal sealed class PanelLinks {
 		}
 	}
 
-	/// <summary>Block-5 action <paramref name="action"/>, as the trigger its record is (<see cref="Trigger"/>).</summary>
-	public void Action(int action) => Trigger(_records.ActionGuid(action));
-
 	/// <summary>Row-11 GUID <paramref name="guid"/>, a countdown, by its delay and what starts it.</summary>
 	public void Countdown(short guid) {
 		if (_scene.Layout.Entry<ActionTimer30>(guid) != null) {
@@ -92,12 +84,6 @@ internal sealed class PanelLinks {
 			Link(Names.GroupBrief(guid), new GroupSelection(guid));
 		}
 	}
-
-	/// <summary>Block-11 group <paramref name="group"/>, by <see cref="LayoutGroup"/>.</summary>
-	public void Group(int group) => LayoutGroup(_records.GroupGuid(group));
-
-	/// <summary>Block-11 group <paramref name="group"/>, by <see cref="ShortLayoutGroup"/>.</summary>
-	public void ShortGroup(int group) => ShortLayoutGroup(_records.GroupGuid(group));
 
 	/// <summary>
 	/// The roster record <paramref name="key"/> by <see cref="MissionNames.Object"/>, a link when the scene has its object;
@@ -128,6 +114,56 @@ internal sealed class PanelLinks {
 	/// <summary>Row-17 record <paramref name="record"/>, an objective, as its sentence.</summary>
 	public void Objective(int record) => Link(Names.Objective(record), new ObjectiveSelection(record));
 
-	/// <summary>Block-12 objective <paramref name="objective"/>, as the row-17 record it was exported from (<see cref="Objective"/>).</summary>
-	public void GeneratedObjective(int objective) => Objective(_records.ObjectiveAt(objective).Record);
+	/// <summary>
+	/// What references something, one short identity line per record (docs/herculan/handoff-editor.md#what-every-edit-does):
+	/// each objective and trigger by its link; each trigger of <paramref name="fired"/>, those an object fires when engaged or
+	/// defeated, by its link and ": fired by it"; and each group by its link and what of it references, its orders and, for a
+	/// group of <paramref name="ownRoute"/>, its own route field, which no view edits, on its one line. Then the options of
+	/// random choices and the orders no group runs, counted.
+	/// </summary>
+	public void References(DeleteNamers names, IReadOnlyList<short>? ownRoute = null, IReadOnlyList<short>? fired = null) {
+		foreach (int objective in names.Objectives) {
+			ImGui.PushID($"objective{objective}");
+			Objective(objective);
+			ImGui.PopID();
+		}
+
+		foreach (short trigger in names.Triggers) {
+			ImGui.PushID($"target{trigger}");
+			Trigger(trigger);
+			ImGui.PopID();
+		}
+
+		foreach (short trigger in fired ?? []) {
+			ImGui.PushID($"fired{trigger}");
+			Trigger(trigger);
+			ImGui.SameLine(0f, 0f);
+			ImGui.TextUnformatted(": fired by it");
+			ImGui.PopID();
+		}
+
+		var groups = names.Orders.Select(order => order.Group).Concat(ownRoute ?? []).Distinct().ToList();
+		foreach (short group in groups) {
+			var parts = names.Orders.Where(order => order.Group == group).Select(order => $"{MissionText.Ordinal(order.Slot + 1)} order").ToList();
+			if (ownRoute?.Contains(group) == true) {
+				parts.Add("its own route (not editable yet)");
+			}
+
+			ImGui.PushID($"group{group}");
+			ShortLayoutGroup(group);
+			ImGui.SameLine(0f, 0f);
+			ImGui.TextUnformatted($": {string.Join(", ", parts)}");
+			ImGui.PopID();
+		}
+
+		Counted(names.Options, "option of a random choice", "options of random choices");
+		Counted(names.UnrunOrders, "order no group runs", "orders no group runs");
+	}
+
+	// "1 option of a random choice", "3 options of random choices"; nothing for none.
+	private static void Counted(int count, string one, string several) {
+		if (count > 0) {
+			ImGui.TextWrapped(count == 1 ? $"1 {one}" : $"{count} {several}");
+		}
+	}
 }

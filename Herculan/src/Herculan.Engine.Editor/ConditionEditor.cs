@@ -159,11 +159,11 @@ internal sealed class ConditionEditor {
 
 		var resolved = _deleter.Resolve(source, new MsnNamers([], [], orders));
 		foreach (var order in resolved.Orders) {
-			var group = _names.GroupBrief(Records.GroupGuid(order.Group));
-			shown.Add(new ConditionUse($"{MissionText.Ordinal(order.Slot + 1)} order of {group.Full}", Records.GroupAt(order.Group)));
+			var group = _names.GroupBrief(order.Group);
+			shown.Add(new ConditionUse($"{MissionText.Ordinal(order.Slot + 1)} order of {group.Full}", new GroupSelection(order.Group)));
 		}
 
-		for (int i = 0; i < resolved.Elsewhere; i++) {
+		for (int i = 0; i < resolved.Options + resolved.UnrunOrders; i++) {
 			Leave("orders");
 		}
 

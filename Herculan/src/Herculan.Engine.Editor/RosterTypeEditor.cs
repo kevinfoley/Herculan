@@ -10,8 +10,7 @@ namespace Herculan.Engine.Editor;
 /// drawing it changes, else in the record that supplies it (docs/herculan/handoff-editor-roster.md#type-and-fit). A herc's chassis is <see cref="MachineFitter"/>'s. Each edit builds the editor's state again
 /// (<see cref="SceneSync"/>), which builds a new object for the record, as its type differs.
 ///
-/// <para>The edits run when <see cref="RunRequest"/> is called, once the frame's ImGui is rendered. A plain
-/// <c>script.dat</c> edits nothing.</para>
+/// <para>The edits run when <see cref="RunRequest"/> is called, once the frame's ImGui is rendered.</para>
 /// </summary>
 internal sealed class RosterTypeEditor {
 	private readonly MissionDocument _source;
@@ -28,9 +27,12 @@ internal sealed class RosterTypeEditor {
 	/// <summary>Why the last edit run could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
-	/// <summary>Why roster row <paramref name="row"/>'s GUID <paramref name="guid"/>'s type cannot be changed, or null when it can.</summary>
+	/// <summary>
+	/// Why roster row <paramref name="row"/>'s GUID <paramref name="guid"/>'s type cannot be changed, or null when it can: any
+	/// record the layout has, one the mission as opened leaves out included.
+	/// </summary>
 	public string? WhyFixed(int row, short guid) =>
-		_source.ExportedIndex(row, guid) == null ? "It is not in the mission as shown." : null;
+		_source.Layout.Entry(row, guid) == null ? "Its record is not in the file." : null;
 
 	/// <summary>
 	/// The variant alternative a type change of roster row <paramref name="row"/>'s GUID <paramref name="guid"/> asked to write

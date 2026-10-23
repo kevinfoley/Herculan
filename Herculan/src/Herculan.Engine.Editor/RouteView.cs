@@ -21,27 +21,27 @@ internal sealed class RouteView {
 	private readonly PointMover _mover;
 	private readonly RouteEditor _editor;
 	private readonly RoutePlacing _placing;
-	private readonly Action<int> _groupLink;
-	private readonly Action<DeleteNamers, IReadOnlyList<int>> _references;
+	private readonly PanelLinks _links;
+	private readonly PointSharers _sharers;
 	private readonly Action<short> _choice;
 
 	// The selected waypoint's point being typed.
 	private readonly PointFields _point = new();
 
-	/// <param name="groupLink">Draws a link that selects a group.</param>
-	/// <param name="references">Draws what references something, one line per record, given the groups whose own route field references it.</param>
+	/// <param name="links">Draws the links to the groups walking it and to what references it.</param>
+	/// <param name="sharers">Lists what else stands on the selected waypoint's point.</param>
 	/// <param name="choice">Draws, for a route GUID whose waypoints are an option of a random choice, which one (<see cref="VariantView.DrawRouteChoice"/>).</param>
 	/// <param name="names">What the title names the route by.</param>
 	public RouteView(GeneratedIndex index, MissionNames names, SelectionState selection, PointMover mover, RouteEditor editor,
-			RoutePlacing placing, Action<int> groupLink, Action<DeleteNamers, IReadOnlyList<int>> references, Action<short> choice) {
+			RoutePlacing placing, PanelLinks links, PointSharers sharers, Action<short> choice) {
 		_index = index;
 		_names = names;
 		_selection = selection;
 		_mover = mover;
 		_editor = editor;
 		_placing = placing;
-		_groupLink = groupLink;
-		_references = references;
+		_links = links;
+		_sharers = sharers;
 		_choice = choice;
 	}
 
@@ -63,22 +63,26 @@ internal sealed class RouteView {
 		ImGui.Separator();
 		ImGui.Text(placed.Closed ? "Closed: a loop walked for ever" : "Open: walking it to the end completes the order");
 
-		if (route.WalkedBy.Count > 0) {
+		if (placed.WalkedBy.Count > 0) {
 			ImGui.Text("Walked by:");
-			foreach (int group in route.WalkedBy) {
-				_groupLink(group);
+			foreach (short group in placed.WalkedBy) {
+				ImGui.PushID($"walked{group}");
+				_links.LayoutGroup(group);
+				ImGui.PopID();
 			}
-		} else if (route.InAnOrder) {
+		} else if (placed.NamedBy.Count > 0) {
 			ImGui.TextWrapped("Walked by no group: only later order slots reference it, and a group only ever "
 				+ "walks its first order's route.");
 		} else {
 			ImGui.TextWrapped("No order references it, so no group walks it.");
 		}
 
-		if (route.NamedBy.Count > 0) {
+		if (placed.NamedBy.Count > 0) {
 			ImGui.Text("Referenced in a later order by:");
-			foreach (int group in route.NamedBy) {
-				_groupLink(group);
+			foreach (short group in placed.NamedBy) {
+				ImGui.PushID($"named{group}");
+				_links.LayoutGroup(group);
+				ImGui.PopID();
 			}
 		}
 
@@ -93,7 +97,7 @@ internal sealed class RouteView {
 			}
 		}
 
-		if (route.WalkedBy.Contains(0) && placed.Points.Count > MarkedWaypoints) {
+		if (_index.Scene.PlayerRoute?.Guid == selected.Guid && placed.Points.Count > MarkedWaypoints) {
 			EditorText.Note($"The heads-down map marks waypoints 1 to {MarkedWaypoints - 1} of the player's route, and none after.");
 		}
 
@@ -170,13 +174,9 @@ internal sealed class RouteView {
 			return;
 		}
 
-		int sharers = _mover.SharersOf(waypoint);
-		ImGui.TextWrapped(sharers > 0
-			? $"Its point is referenced by {sharers} other record(s) (trigger areas, groups, other waypoints), which move "
-				+ "with it. Alt+drag moves the waypoint alone."
-			: "Nothing else references its point.");
+		_sharers.Draw(_mover.SharersOf(waypoint));
 
-		if (selected.Waypoint <= 1 && route.WalkedBy.Any(group => _index.SetupOf(group)?.PointSource == MissionGroupPointSource.RouteStart)) {
+		if (selected.Waypoint <= 1 && placed.WalkedBy.Any(group => _index.Scene.Group(group)?.Setup.PointSource == MissionGroupPointSource.RouteStart)) {
 			ImGui.TextWrapped("A group with no point of its own starts on the first waypoint, facing along the first "
 				+ "leg, and moves and turns with them.");
 		}
@@ -204,7 +204,7 @@ internal sealed class RouteView {
 
 		ImGui.PushID("delete");
 		ImGui.TextWrapped("Cannot be deleted while these reference it:");
-		_references(blockers.Names, blockers.Groups);
+		_links.References(blockers.Names, blockers.Groups);
 
 		ImGui.PopID();
 	}

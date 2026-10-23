@@ -23,6 +23,7 @@ internal sealed class TriggerAreaView {
 	private readonly ActionEditor _actions;
 	private readonly Action<short> _drawTrigger;
 	private readonly Action<DeleteNamers> _references;
+	private readonly PointSharers _sharers;
 
 	// A corner or centre being typed; and a radius being typed, and for which area, until its field lets go.
 	private readonly PointFields _corners = new();
@@ -33,8 +34,9 @@ internal sealed class TriggerAreaView {
 	/// <param name="drawTrigger">Draws a trigger's wiring by its row-10 GUID, read-only, as the trigger view summarizes it.</param>
 	/// <param name="references">Draws what references something, one line per record.</param>
 	/// <param name="names">What the title names the area by.</param>
+	/// <param name="sharers">Lists what else stands on a corner's or the center's point.</param>
 	public TriggerAreaView(GeneratedIndex index, MissionNames names, PointMover mover, AreaEditor editor, AreaPlacing placing,
-			ActionEditor actions, Action<short> drawTrigger, Action<DeleteNamers> references) {
+			ActionEditor actions, Action<short> drawTrigger, Action<DeleteNamers> references, PointSharers sharers) {
 		_index = index;
 		_names = names;
 		_mover = mover;
@@ -43,6 +45,7 @@ internal sealed class TriggerAreaView {
 		_actions = actions;
 		_drawTrigger = drawTrigger;
 		_references = references;
+		_sharers = sharers;
 	}
 
 	/// <summary>
@@ -140,10 +143,8 @@ internal sealed class TriggerAreaView {
 		}
 
 		PointFields.BoxWarning(_mover.LoadedBox, point);
-		if (!fixedNow && _mover.SharersOf(new AreaCornerTarget(guid, corner)) is > 0 and var sharers) {
-			string what = label == "Centre" ? "the centre" : "the corner";
-			EditorText.Note($"Its point is referenced by {sharers} other record(s) (waypoints, other areas, groups), which move "
-				+ $"with it. Alt+drag moves {what} alone.");
+		if (!fixedNow) {
+			_sharers.Draw(_mover.SharersOf(new AreaCornerTarget(guid, corner)));
 		}
 
 		ImGui.PopID();

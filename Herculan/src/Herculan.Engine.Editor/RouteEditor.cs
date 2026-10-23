@@ -5,10 +5,10 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// What keeps a route from being deleted (<see cref="RouteEditor.BlockersOf"/>). <see cref="Fixed"/> is why it cannot be
-/// deleted at all; <see cref="Names"/> the orders and objectives naming it, and <see cref="Groups"/> the groups whose own
-/// route field names it, by block-11 index.
+/// deleted at all; <see cref="Names"/> the orders and objectives referencing it, and <see cref="Groups"/> the row-16 GUIDs of
+/// the groups whose own route field references it.
 /// </summary>
-internal sealed record RouteDeleteBlockers(string? Fixed, DeleteNamers Names, IReadOnlyList<int> Groups) {
+internal sealed record RouteDeleteBlockers(string? Fixed, DeleteNamers Names, IReadOnlyList<short> Groups) {
 	/// <summary>Whether nothing does, and the route can be deleted.</summary>
 	public bool None => Fixed == null && !Names.Any && Groups.Count == 0;
 
@@ -87,17 +87,8 @@ internal sealed class RouteEditor {
 
 		var namers = RouteEditing.Namers(source, route);
 		var names = _deleter.Resolve(source, new MsnNamers(namers.Objectives, [], namers.Orders));
-		var groups = new List<int>();
-		int elsewhere = 0;
-		foreach (var record in namers.Groups) {
-			if (source.Provenance.ExportedSlot(record) is { } slot) {
-				groups.Add(slot.Index);
-			} else {
-				elsewhere++;
-			}
-		}
-
-		return new RouteDeleteBlockers(null, names with { Elsewhere = names.Elsewhere + elsewhere }, groups.Distinct().ToList());
+		var groups = namers.Groups.Select(record => source.RecordAt(record)?.GUID ?? -1).Where(group => group != -1).Distinct().ToList();
+		return new RouteDeleteBlockers(null, names, groups);
 	}
 
 	/// <summary>Asks for a waypoint halfway along the leg after waypoint <paramref name="waypoint"/> of <paramref name="route"/>.</summary>

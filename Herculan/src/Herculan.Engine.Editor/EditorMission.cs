@@ -37,8 +37,8 @@ internal sealed class EditorMission {
 		Mover = new PointMover(source, scene, sceneIndex, Sync, Overlay, materials);
 		Gizmo = new MoveGizmo(Selection, Mover);
 		Placer = new StructurePlacer(document, source, scene, index, Mover, Sync, Selection);
-		Sides = new SideChanger(document, source, index, Mover, Sync);
-		Deleter = new ObjectDeleter(document, source, index, Mover, Sync);
+		Sides = new SideChanger(source, sceneIndex, Mover, Sync);
+		Deleter = new ObjectDeleter(source, sceneIndex, Mover, Sync);
 		Fitter = new MachineFitter(document, source, Mover, Sync, shellContent);
 		Squad = new SquadEditor(document, source, index, Mover, Sync, Fitter, Deleter);
 		Theater = new TheaterChanger(document, source, scene, index, Mover, Sync);
@@ -58,7 +58,7 @@ internal sealed class EditorMission {
 		Timers = new TimerEditor(source, Mover, Sync, Selection);
 		Conditions = new ConditionEditor(source, index, Names, Mover, Sync, Selection, Deleter);
 		Presence = new PresenceEditor(source, sceneIndex, Mover, Sync, Deleter);
-		Variants = new VariantEditor(source, Mover, Sync, Selection);
+		Variants = new VariantEditor(source, sceneIndex, Mover, Sync, Selection);
 		Types = new RosterTypeEditor(source, Mover, Sync);
 		Outliner.Placing = Placing;
 		Outliner.AreaPlacing = AreaPlacing;
@@ -68,7 +68,7 @@ internal sealed class EditorMission {
 		Outliner.Conditions = Conditions;
 		var choices = new RandomChoices(source, sceneIndex, Names, squad);
 		Outliner.Choices = choices;
-		Properties = new PropertiesPanel(index, Selection, Mover, Sides, Deleter,
+		Properties = new PropertiesPanel(index, Selection, source, Mover, Sides, Deleter,
 			new SquadMachinePanel(Fitter, Squad, squad), new RosterFitView(Fitter, Types, Variants, choices, new UnitTypeCatalog(content)),
 			new MissionView(() => Name, () => document.ZoneIndex, Theater, TheaterNames.Labels(content),
 				new MissionTextView(Texts)),

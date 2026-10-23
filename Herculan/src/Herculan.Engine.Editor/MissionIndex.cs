@@ -191,6 +191,24 @@ internal sealed class MissionIndex {
 		return -1;
 	}
 
+	/// <summary>The group slots whose base names row-15 GUID <paramref name="order"/>, in layout order.</summary>
+	public IReadOnlyList<EndsOrder> OrderSlots(short order) {
+		var slots = new List<EndsOrder>();
+		if (order == -1) {
+			return slots;
+		}
+
+		foreach (var group in Groups) {
+			for (int slot = 0; slot < group.Orders.Count; slot++) {
+				if (group.Orders[slot] == order) {
+					slots.Add(new EndsOrder(group.Guid, slot));
+				}
+			}
+		}
+
+		return slots;
+	}
+
 	/// <summary>The objectives whose subject is group <paramref name="group"/>, in row-17 order.</summary>
 	public IEnumerable<LayoutObjective> ObjectivesAbout(short group) =>
 		Layout.Objectives.Where(objective => objective.Fields.SubjectKind == 0 && objective.Fields.SubjectRef == group);

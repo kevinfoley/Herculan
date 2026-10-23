@@ -5,11 +5,11 @@ using Herculan.Engine.Scene;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// What loses its reference to a record in the states it is absent from (<see cref="PresenceEditor.LosersOf"/>), by block
-/// index: what the delete checks list for its kind (<see cref="Names"/>), and the groups whose member slots reference a
-/// roster object (<see cref="MemberOf"/>).
+/// What loses its reference to a record in the states it is absent from (<see cref="PresenceEditor.LosersOf"/>), by identity
+/// in the layout: what the delete checks list for its kind (<see cref="Names"/>), and the row-16 GUIDs of the groups whose
+/// member slots reference a roster object (<see cref="MemberOf"/>).
 /// </summary>
-internal sealed record PresenceLosers(DeleteNamers Names, IReadOnlyList<int> MemberOf) {
+internal sealed record PresenceLosers(DeleteNamers Names, IReadOnlyList<short> MemberOf) {
 	public bool Any => Names.Any || MemberOf.Count > 0;
 }
 
@@ -114,8 +114,7 @@ internal sealed class PresenceEditor {
 				return new PresenceLosers(_deleter.Resolve(source, RosterDeletion.GroupNamers(source, guid)), []);
 			case >= 12 and <= 14:
 				var check = RosterDeletion.Check(source, target.Row, guid);
-				var groups = check.MemberOf.Select(group => source.ExportedIndex(GroupRow, group)).OfType<int>().ToList();
-				return new PresenceLosers(_deleter.Resolve(source, check.Namers), groups);
+				return new PresenceLosers(_deleter.Resolve(source, check.Namers), check.MemberOf);
 			default:
 				return null;
 		}
