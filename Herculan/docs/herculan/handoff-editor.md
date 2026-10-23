@@ -1,6 +1,6 @@
 # Handoff — the HERCULAN mission editor
 
-The editor, `Herculan.Engine.Editor`, run on its own by `Herculan.Engine.Host.Editor` and from the game's Editor menu item, opens a mission as its `.MSN` and `.ENG`, shows its scene and the Mission panel's lists from the `.MSN` and its Properties views through the `script.dat` generated from it, edits it, and saves it into the install, where the game loads it in place of the archive's.
+The editor, `Herculan.Engine.Editor`, run on its own by `Herculan.Engine.Host.Editor` and from the game's Editor menu item, opens a mission as its `.MSN` and `.ENG`, shows its scene, the Mission panel's lists and the trigger and countdown views from the `.MSN` and its other Properties views through the `script.dat` generated from it, edits it, and saves it into the install, where the game loads it in place of the archive's.
 
 | Doc | Covers |
 |---|---|
@@ -8,7 +8,7 @@ The editor, `Herculan.Engine.Editor`, run on its own by `Herculan.Engine.Host.Ed
 | [handoff-editor-viewing.md](handoff-editor-viewing.md) | opening, New mission, theater and time of day, selection, camera, picking, overlays, groups, waiting groups, the mission check |
 | [handoff-editor-placement.md](handoff-editor-placement.md) | moving objects, waypoints, groups and area corners; routes; trigger areas |
 | [handoff-editor-roster.md](handoff-editor-roster.md) | adding hercs, flyers, ground vehicles and structures; type and fit; sides; deleting; the player's squad |
-| [handoff-editor-mission-logic.md](handoff-editor-mission-logic.md) | orders, wiring, campaign variable writes, actions, timers, objectives, the mission's text |
+| [handoff-editor-mission-logic.md](handoff-editor-mission-logic.md) | orders, wiring, campaign variable writes, triggers, countdowns, objectives, the mission's text |
 | [handoff-editor-conditions.md](handoff-editor-conditions.md) | what the editor shows, conditions, variant tables, Present when |
 | [handoff-editor-ux-plan.md](handoff-editor-ux-plan.md) | the planned UI redesign, by phase; its evidence is [handoff-editor-ux-review.md](handoff-editor-ux-review.md) |
 | [handoff-editor-msn-scene.md](handoff-editor-msn-scene.md) | the planned rewrite that shows and selects the `.MSN` directly, every record included, in place of the generated `script.dat` |
@@ -29,7 +29,7 @@ These hold for every edit in the docs above unless the doc says otherwise:
 
 What the user has corrected in the editor's panels, which every new view follows:
 
-- **Vocabulary.** The player's group is the squad, never a "lance"; its other members are squadmates, never "wingmen". The player *pilots* a HERC; "fly" is for flyers. The subject of a sentence is the player, the mission or the HERC, never "the game". A group's side is its **Team**. A structure or ground vehicle is titled by its type and the name the MFD's F5 screen prints (`Base type 40: <name>`). The editor says "references", never "names it".
+- **Vocabulary.** A row-10 action is a **trigger** and a row-11 timer a **countdown**, in every label, link and refusal reason the editor shows; the code keeps the retail names. The player's group is the squad, never a "lance"; its other members are squadmates, never "wingmen". The player *pilots* a HERC; "fly" is for flyers. The subject of a sentence is the player, the mission or the HERC, never "the game". A group's side is its **Team**. A structure or ground vehicle is titled by its type and the name the MFD's F5 screen prints (`Base type 40: <name>`). The editor says "references", never "names it".
 - **Plain words, short.** A note says what the user sees or can do, in one short sentence, not how the records produce it: "No heading of its own: it faces along its route's first leg", not "names none: the bearing of its route's first leg". Labels are the user's words ("Related objectives", not "Objectives asked of it").
 - **No note for what a disabled control already shows.** A field the user cannot change is drawn disabled; a note is added only when the reason is not obvious.
 - **Notes go through `EditorText`.** `EditorText.Note` draws every aside wrapped, in a grey lighter than ImGui's disabled text (unwrapped, the 340-pixel Properties panel cuts it off). `EditorText.Emphasis` draws, in bold, the one note per view the user must not miss.
@@ -49,7 +49,7 @@ Beyond the gaps each doc lists:
 | 4 (13), text package | the briefing movie (`0x8E`); the records after the first; a line's trailing newline |
 | 7 (2), headings | a heading for an object or a group |
 | 8 (3), routes | naming one from a group's own route field (row 16) |
-| 10 (5), actions | the text line (`0x44`) |
+| 10 (5), triggers | the leftover text line (`0x44`) |
 | 12 (7), mechs | a Cybrid's weapon fit and ammunition types; AI radar and cruise speed, starting condition, the campaign variables it sets when put out of action (shown) |
 | 13 (8), flyers | the campaign variables it sets when destroyed (shown) |
 | 14 (9), structures and ground vehicles | the starting condition (0 in 29% of retail records), the campaign variables it sets when destroyed (shown; 698 retail records set one) |
@@ -57,7 +57,7 @@ Beyond the gaps each doc lists:
 | 16 (11), groups | the formation id, paints-ground flag, heading, own route, the campaign variables it sets when every member is down (shown) and map-shown flag; deleting one other than with its last member |
 | 17 (12), objectives | the condition ref, which the campaign layer authors; their order |
 
-**Campaign variables.** Actions, objectives and out-of-action reports set campaign variables, which persist into the campaign flags a later mission's row 1 tests ([`../retail/shell/campaign-loop.md`](../retail/shell/campaign-loop.md#the-campaign-flag-array-is-the-msn-condition-store)); each view lists its writes as sentences ([Campaign variable writes](handoff-editor-mission-logic.md#campaign-variable-writes)). The campaign variable picker lists every variable the mission touches, with what touches it, and those the debrief reads, by what it does with them ([The campaign variable picker](handoff-editor-conditions.md#the-campaign-variable-picker)); what other missions set or test is not looked up.
+**Campaign variables.** Triggers, objectives and out-of-action reports set campaign variables, which persist into the campaign flags a later mission's row 1 tests ([`../retail/shell/campaign-loop.md`](../retail/shell/campaign-loop.md#the-campaign-flag-array-is-the-msn-condition-store)); each view lists its writes as sentences ([Campaign variable writes](handoff-editor-mission-logic.md#campaign-variable-writes)). The campaign variable picker lists every variable the mission touches, with what touches it, and those the debrief reads, by what it does with them ([The campaign variable picker](handoff-editor-conditions.md#the-campaign-variable-picker)); what other missions set or test is not looked up.
 
 ## Scope
 
@@ -72,7 +72,7 @@ Beyond the gaps each doc lists:
 | Heading entry and a turn handle | small |
 | The mission list showing each mission's zone and theater | small |
 | Empty formation slots, briefing-only order point | small each |
-| Tint every area of a selected action; tint ground planes too | small |
+| Tint every area of a selected trigger; tint ground planes too | small |
 | Waiting groups as translucent ghosts | small–medium |
 | Orthographic top-down view | small–medium |
-| Action graph | medium–large |
+| Trigger graph | medium–large |

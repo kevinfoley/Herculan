@@ -18,7 +18,8 @@ namespace Herculan.Engine.Editor;
 /// panel is also how a mission's wiring is walked — area to action, action to the groups it brings
 /// in, group to its route.
 ///
-/// <para>The views read the generated <c>script.dat</c>, so each is drawn for the generated record the selection's
+/// <para>The trigger and countdown views (<see cref="TriggerView"/>, <see cref="CountdownView"/>) read the <c>.MSN</c>'s
+/// layout by GUID, every record included. The others read the generated <c>script.dat</c>, so each is drawn for the generated record the selection's
 /// <c>.MSN</c> record stands for (<see cref="GeneratedRecords"/>); a record the generation has none for shows its kind and
 /// that it is not shown in the editor, or for an object, a group or an objective its title, its Present when, which can
 /// bring it back, and that it is absent from the mission as opened.</para>
@@ -40,9 +41,9 @@ internal sealed class PropertiesPanel {
 	private readonly OrderSlotsView _orders;
 	private readonly ObjectiveView _objective;
 	private readonly ObjectiveEditor _objectives;
-	private readonly ActionView _action;
+	private readonly TriggerView _trigger;
 	private readonly ActionEditor _actions;
-	private readonly TimerView _timer;
+	private readonly CountdownView _countdown;
 	private readonly ConditionView _condition;
 	private readonly PresenceEditor _presence;
 	private readonly PresentWhenView _presentWhen;
@@ -58,7 +59,7 @@ internal sealed class PropertiesPanel {
 			SideChanger sides, ObjectDeleter deleter, SquadMachinePanel machine, RosterFitView fit, MissionView mission, RouteEditor routes,
 			RoutePlacing placing, AreaEditor areas, AreaPlacing areaPlacing, OrderEditor orders, ObjectiveEditor objectives,
 			ActionEditor actions, TimerEditor timers, ConditionEditor conditions, PresenceEditor presence, VariantEditor variants,
-			RandomChoices choices, StringFile? strings) {
+			RandomChoices choices, TriggerMessages messages, StringFile? strings) {
 		_index = index;
 		_selection = selection;
 		_mover = mover;
@@ -69,15 +70,15 @@ internal sealed class PropertiesPanel {
 		_mission = mission;
 		_links = new PanelLinks(index, selection);
 		_actions = actions;
-		_action = new ActionView(index, document, actions, selection, _links);
-		_timer = new TimerView(index, document, timers, _links);
+		_trigger = new TriggerView(index.Scene, actions, selection, _links, messages);
+		_countdown = new CountdownView(index.Scene, timers, _links);
 		_variants = new VariantView(variants, choices, _links);
 		_condition = new ConditionView(conditions, _links, _variants);
 		_presence = presence;
 		_presentWhen = new PresentWhenView(presence, _links, (names, ownRoute) => References(names, ownRoute));
 		_route = new RouteView(index, selection, mover, routes, placing, _links.Group,
 			(names, ownRoute) => References(names, ownRoute), _variants.DrawRouteChoice);
-		_area = new TriggerAreaView(index, mover, areas, areaPlacing, actions, _action.DrawSummary, names => References(names));
+		_area = new TriggerAreaView(index, mover, areas, areaPlacing, actions, _trigger.DrawSummary, names => References(names));
 		_orders = new OrderSlotsView(index, document, orders, _links.Route, _links.Action, _links.Subject, _presentWhen, presence);
 		_objectives = objectives;
 		_objective = new ObjectiveView(index, document, objectives, _links.Group, _links.Slot, _links.Route, _presentWhen, presence);
@@ -86,6 +87,9 @@ internal sealed class PropertiesPanel {
 	}
 
 	private Mission Mission => _index.Mission;
+
+	// The row-10 GUID of the trigger generated at block-5 index <action>, or -1 for none.
+	private short ActionGuid(int action) => action >= 0 ? Records.ActionGuid(action) : (short)-1;
 
 	private GeneratedRecords Records => _index.Records;
 
@@ -125,10 +129,10 @@ internal sealed class PropertiesPanel {
 
 				break;
 			case ActionSelection { Guid: var guid }:
-				if (Records.Action(guid) is { } action) {
-					_action.Draw(guid, action);
+				if (_index.Scene.Action(guid) != null) {
+					_trigger.Draw(guid);
 				} else {
-					NotShown("Action");
+					NotShown("Trigger");
 				}
 
 				break;
@@ -149,10 +153,10 @@ internal sealed class PropertiesPanel {
 
 				break;
 			case TimerSelection { Guid: var guid }:
-				if (Records.Timer(guid) is { } timer) {
-					_timer.Draw(guid, timer);
+				if (_index.Scene.Layout.Entry<ActionTimer30>(guid) != null) {
+					_countdown.Draw(guid);
 				} else {
-					NotShown("Timer");
+					NotShown("Countdown");
 				}
 
 				break;
@@ -232,7 +236,7 @@ internal sealed class PropertiesPanel {
 		if (_index.Scene.GroupOf(sel) is { OffScene: true } landing) {
 			EditorText.Note(MissionText.OffScene(landing.ArrivalVerb, member: true));
 		} else if (_index.IsWaiting(sel)) {
-			ImGui.TextWrapped("Its group is waiting on an action: nothing of it is drawn or ticked until "
+			ImGui.TextWrapped("Its group is waiting on a trigger: nothing of it is drawn or ticked until "
 				+ "that fires, and this position is a placeholder unless the group arrives in place.");
 		}
 
@@ -294,7 +298,7 @@ internal sealed class PropertiesPanel {
 	/// <summary>
 	/// What references something, one short line per record: an objective or an action by its link alone, and a group by
 	/// its link and what of it references, its orders (<paramref name="names"/>) and its own route field
-	/// (<paramref name="ownRoute"/>, block-11 indices) on its one line. <paramref name="fired"/> are the actions it fires
+	/// (<paramref name="ownRoute"/>, block-11 indices) on its one line. <paramref name="fired"/> are the triggers it fires
 	/// when engaged or defeated, by block-5 index, -1 for one not shown in the editor.
 	/// </summary>
 	private void References(DeleteNamers names, IReadOnlyList<int>? ownRoute = null, IReadOnlyList<int>? fired = null) {
@@ -317,7 +321,7 @@ internal sealed class PropertiesPanel {
 				ImGui.SameLine(0f, 0f);
 				ImGui.Text(": fired by it");
 			} else {
-				ImGui.TextWrapped("An action it fires, not shown in the editor");
+				ImGui.TextWrapped("A trigger it fires, not shown in the editor");
 			}
 
 			ImGui.PopID();
@@ -466,7 +470,7 @@ internal sealed class PropertiesPanel {
 	}
 
 	/// <summary>
-	/// The action the group waits on before it is in the mission, a choice of none or any action
+	/// The trigger the group waits on before it is in the mission, a choice of none or any trigger
 	/// (<see cref="ActionEditor.RequestDeployment"/>), with a link and how the group arrives. The player's squad has none: no
 	/// retail squad record carries one (<see cref="HercWorks.Core.Data.File.Msn.ActionWiring"/>).
 	/// </summary>
@@ -483,7 +487,7 @@ internal sealed class PropertiesPanel {
 		ImGui.SameLine();
 		ImGui.SetNextItemWidth(-1f);
 		ImGui.BeginDisabled(why != null);
-		if (ActionChoice.Draw("##deployment", waitsOn, Mission.Actions.Count, Records) is { } chosen) {
+		if (ActionChoice.Draw("##deployment", ActionGuid(waitsOn), _index.Scene) is { } chosen) {
 			_actions.RequestDeployment(guid, chosen);
 		}
 
@@ -495,7 +499,7 @@ internal sealed class PropertiesPanel {
 		if (_index.Scene.Group(guid) is { OffScene: true } landing) {
 			EditorText.Note(MissionText.OffScene(landing.ArrivalVerb, member: false));
 		} else if (waitsOn >= 0) {
-			ImGui.TextWrapped($"Not in the mission until that action fires; then it arrives {MissionText.Arrival(Mission.Actions[waitsOn].Verb)}.");
+			ImGui.TextWrapped($"Not in the mission until that trigger fires; then it arrives {MissionText.Arrival(Mission.Actions[waitsOn].Verb)}.");
 		} else {
 			ImGui.Text("In the mission from the start.");
 		}
@@ -505,9 +509,11 @@ internal sealed class PropertiesPanel {
 	}
 
 	/// <summary>
-	/// The actions a roster object fires when engaged and when defeated, each a choice of none or any action
-	/// (<see cref="ActionEditor.RequestObjectAction"/>), with a link. Not for a machine of the player's squad, which is built
-	/// from <c>player.mec</c>: no retail squad record carries either.
+	/// The triggers a roster object fires when engaged and when defeated, each a choice of none or any trigger
+	/// (<see cref="ActionEditor.RequestObjectAction"/>), with a link, and what engaged and defeated mean
+	/// (docs/retail/simulation/mission-deployment.md#an-objects-own-two-actions--0x1b2-and-0x1b6), the engagement distance in
+	/// metres. Not for a machine of the player's squad, which is built from <c>player.mec</c>: no retail squad record carries
+	/// either.
 	/// </summary>
 	private void DrawOwnActions(MissionPlacement placement) {
 		if (placement.IsPlayerLance) {
@@ -518,8 +524,9 @@ internal sealed class PropertiesPanel {
 		string? why = _actions.WhyNoObjectAction(placement);
 		OwnAction("When engaged, fires", placement, defeated: false, placement.EngagementActionRef, why);
 		OwnAction("When defeated, fires", placement, defeated: true, placement.DefeatActionRef, why);
-		EditorText.Note("Engaged: an enemy within 50,000 units spots it, or shoots it. Defeated: destroyed; a herc also "
-			+ "when immobilized or left with no working weapon.");
+		EditorText.Note($"A trigger set here fires when it is engaged: an enemy within {MissionText.Metres(Sim.Detection.EngagementRange)} "
+			+ "spots it, or an enemy shoots it. Or when it is defeated: destroyed; a herc also when immobilized or left with no "
+			+ "working weapon.");
 		EditorText.Reason(why);
 		EditorText.Reason(_actions.Failure);
 	}
@@ -532,7 +539,7 @@ internal sealed class PropertiesPanel {
 		ImGui.SameLine();
 		ImGui.SetNextItemWidth(-1f);
 		ImGui.BeginDisabled(why != null);
-		if (ActionChoice.Draw("##own", current, Mission.Actions.Count, Records, offerNone: noNone == null, whyNoNone: noNone) is { } chosen) {
+		if (ActionChoice.Draw("##own", ActionGuid(current), _index.Scene, offerNone: noNone == null, whyNoNone: noNone) is { } chosen) {
 			_actions.RequestObjectAction(placement, defeated, chosen);
 		}
 
@@ -625,7 +632,7 @@ internal sealed class PropertiesPanel {
 		if (waitsOn >= 0 && Mission.Actions[waitsOn].Verb is MissionAction.VerbPodWide or MissionAction.VerbPodNarrow
 				or MissionAction.VerbWalkBehind or MissionAction.VerbWalkAhead) {
 			ImGui.TextWrapped($"It arrives {MissionText.ArrivalKind(Mission.Actions[waitsOn].Verb)}, placed about the "
-				+ "player when the action fires: its point is a placeholder, and moving it does not move where it arrives.");
+				+ "player when the trigger fires: its point is a placeholder, and moving it does not move where it arrives.");
 		}
 	}
 

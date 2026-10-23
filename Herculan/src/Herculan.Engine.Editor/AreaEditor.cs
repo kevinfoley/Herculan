@@ -74,7 +74,7 @@ internal sealed class AreaEditor {
 		_requested = () => {
 			var blockers = BlockersOf(area);
 			if (!blockers.None) {
-				return blockers.Fixed ?? "An action references it; its view says which.";
+				return blockers.Fixed ?? "A trigger references it; its view says which.";
 			}
 
 			return Commit(() => TriggerAreaEditing.Delete(_source, area), -1);

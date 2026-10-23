@@ -181,7 +181,7 @@ public static class TriggerAreaEditing {
 	/// </summary>
 	public static MsnEdit Delete(MissionDocument document, short area) {
 		if (Namers(document, area).Count > 0) {
-			throw new InvalidOperationException($"Trigger area {area} is referenced by an action.");
+			throw new InvalidOperationException($"Trigger area {area} is referenced by a trigger.");
 		}
 
 		var named = (document.Mission.TriggerAreas ?? []).Where(record => record.GUID == area)

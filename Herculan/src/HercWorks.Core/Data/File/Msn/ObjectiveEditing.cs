@@ -262,11 +262,11 @@ public static class ObjectiveEditing {
 	/// </summary>
 	public static MsnEdit SetPair(MissionDocument document, int record, int slot, short counter, short op) {
 		if (slot < 0 || slot >= FilledPairs(Record(document, record))) {
-			throw new InvalidOperationException($"There is no counter write {slot}.");
+			throw new InvalidOperationException($"There is no campaign variable write {slot + 1}.");
 		}
 
 		if (counter is < 0 or >= Counters) {
-			throw new ArgumentOutOfRangeException(nameof(counter), counter, $"A counter is 0 to {Counters - 1}.");
+			throw new ArgumentOutOfRangeException(nameof(counter), counter, $"A campaign variable is 0 to {Counters - 1}.");
 		}
 
 		if (op is < CounterSet or > CounterDecrement) {
@@ -283,7 +283,7 @@ public static class ObjectiveEditing {
 	public static MsnEdit RemovePair(MissionDocument document, int record, int slot) {
 		int filled = FilledPairs(Record(document, record));
 		if (slot < 0 || slot >= filled) {
-			throw new InvalidOperationException($"There is no counter write {slot}.");
+			throw new InvalidOperationException($"There is no campaign variable write {slot + 1}.");
 		}
 
 		return Write(document, record, objective => {

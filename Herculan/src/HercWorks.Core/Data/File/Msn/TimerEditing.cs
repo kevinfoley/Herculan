@@ -36,13 +36,14 @@ public static class TimerEditing {
 
 	/// <summary>
 	/// Appends a new timer, answering its GUID in <paramref name="guid"/>: unconditioned and its dead word <c>0x04</c>
-	/// <c>-1</c>, as all 72 retail records; <see cref="NewDelay"/>; started by no action, so it runs from mission start, and
-	/// firing nothing until an action is added, the editor's choice.
+	/// <c>-1</c>, as all 72 retail records; <see cref="NewDelay"/>; started by row-10 action <paramref name="start"/>, or by
+	/// none for <c>-1</c>, so it runs from mission start; and firing nothing until an action is added, the editor's choice.
 	/// </summary>
-	public static MsnEdit Create(MissionDocument document, out short guid) {
+	public static MsnEdit Create(MissionDocument document, out short guid, short start = -1) {
+		CheckAction(document, start, none: true);
 		short created = -1;
 		var change = document.Change(() => document.Append(TimerRow, new ActionTimer30 {
-			ConditionRef = -1, Unk04 = -1, PrimaryActionRef = -1, Delay = NewDelay,
+			ConditionRef = -1, Unk04 = -1, PrimaryActionRef = start, Delay = NewDelay,
 			SequenceRefs = Enumerable.Repeat((short)-1, Slots).ToArray(),
 		}, out created));
 		guid = created;
@@ -52,7 +53,7 @@ public static class TimerEditing {
 	/// <summary>Row-11 GUID <paramref name="timer"/>'s base fields (a copy), throwing for one no record carries.</summary>
 	public static ActionTimer30 Fields(MissionDocument document, short timer) =>
 		document.Layout.Entry<ActionTimer30>(timer)?.Fields
-			?? throw new InvalidOperationException($"The mission has no timer {timer}.");
+			?? throw new InvalidOperationException("That countdown is not in the mission.");
 
 	/// <summary>
 	/// The row-10 GUID of the action that starts <paramref name="timer"/>'s base, or <c>-1</c> when it runs from mission start
@@ -87,8 +88,8 @@ public static class TimerEditing {
 	/// <summary>Why <paramref name="action"/> cannot be added to <paramref name="timer"/>'s fired actions, or null when it can.</summary>
 	public static string? WhyNoAddFired(MissionDocument document, short timer, short action = -1) {
 		var fired = Fired(document, timer);
-		return Filled(fired) >= Slots ? $"All {Slots} slots are filled."
-			: action != -1 && fired.Contains(action) ? "It fires that action already."
+		return Filled(fired) >= Slots ? $"It already fires {Slots} triggers, the most it can hold."
+			: action != -1 && fired.Contains(action) ? "It fires that trigger already."
 			: null;
 	}
 
@@ -107,12 +108,12 @@ public static class TimerEditing {
 	public static MsnEdit SetFired(MissionDocument document, short timer, int slot, short action) {
 		var fired = Fired(document, timer);
 		if (slot < 0 || slot >= Filled(fired)) {
-			throw new InvalidOperationException($"There is no action in slot {slot}.");
+			throw new InvalidOperationException($"There is no trigger in place {slot + 1}.");
 		}
 
 		CheckAction(document, action, none: false);
 		if (fired.Where((_, at) => at != slot).Contains(action)) {
-			throw new InvalidOperationException("It fires that action already.");
+			throw new InvalidOperationException("It fires that trigger already.");
 		}
 
 		return document.Change(() => document.SetField(MsnField.TimerFired(slot), timer, action));
@@ -123,7 +124,7 @@ public static class TimerEditing {
 		var fired = Fired(document, timer);
 		int last = Filled(fired) - 1;
 		if (slot < 0 || slot > last || fired[slot] == -1) {
-			throw new InvalidOperationException($"There is no action in slot {slot}.");
+			throw new InvalidOperationException($"There is no trigger in place {slot + 1}.");
 		}
 
 		return document.Change(() => {
@@ -144,7 +145,7 @@ public static class TimerEditing {
 
 	private static void CheckAction(MissionDocument document, short action, bool none) {
 		if (action == -1 ? !none : document.Layout.Entry(ActionRow, action) == null) {
-			throw new InvalidOperationException(action == -1 ? "No action was given." : "That action is not in the mission.");
+			throw new InvalidOperationException(action == -1 ? "No trigger was given." : "That trigger is not in the mission.");
 		}
 	}
 }

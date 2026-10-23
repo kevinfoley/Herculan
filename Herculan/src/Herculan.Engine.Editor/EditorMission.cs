@@ -11,7 +11,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// One opened mission and everything the editor builds over it on the CPU: the scene, its objects placed from the
-/// <c>.MSN</c>'s layout (<see cref="Index"/>), the generated mission's cross-reference (<see cref="Generated"/>), the overlays, the picker, the two side panels and the move, add, delete, fit, type, route, trigger area, action, timer, condition, presence, variant, order, objective, text and theater tools, all sharing one
+/// <c>.MSN</c>'s layout (<see cref="Index"/>), the generated mission's cross-reference (<see cref="Generated"/>), the overlays, the picker, the two side panels and the move, add, delete, fit, type, route, trigger area, trigger, countdown, condition, presence, variant, order, objective, text and theater tools, all sharing one
 /// selection. Every edit, undo and redo syncs the scene and the indices with the document in place (<see cref="Sync"/>), and a
 /// change of theater or time of day dresses the scene in its world again in place (<see cref="Theater"/>). Opening another
 /// mission builds a new one of these rather than resetting this one; <see cref="MissionDrawables"/> is its GPU half.
@@ -53,8 +53,8 @@ internal sealed class EditorMission {
 		Orders = new OrderEditor(document, source, index.Records, Mover, Sync);
 		Objectives = new ObjectiveEditor(source, index.Records, Mover, Sync, Selection);
 		Texts = new MissionTextEditor(source, Mover, Sync);
-		Actions = new ActionEditor(source, index.Records, Mover, Sync, Selection, Deleter);
-		Timers = new TimerEditor(source, index.Records, Mover, Sync, Selection);
+		Actions = new ActionEditor(source, Mover, Sync, Selection);
+		Timers = new TimerEditor(source, Mover, Sync, Selection);
 		Conditions = new ConditionEditor(source, index, Mover, Sync, Selection, Deleter);
 		Presence = new PresenceEditor(source, sceneIndex, Mover, Sync, Deleter);
 		Variants = new VariantEditor(source, Mover, Sync, Selection);
@@ -72,7 +72,7 @@ internal sealed class EditorMission {
 			new MissionView(() => Name, () => document.ZoneIndex, Theater, TheaterNames.Labels(content),
 				new MissionTextView(Texts)),
 			Routes, Placing, Areas, AreaPlacing, Orders, Objectives, Actions, Timers, Conditions, Presence, Variants,
-			choices, SimStrings.Load(content));
+			choices, new TriggerMessages(content), SimStrings.Load(content));
 	}
 
 	/// <summary>
@@ -226,8 +226,7 @@ internal sealed class EditorMission {
 			sceneObject.Object.Position = GroundStanding.Settled(scene.World.Terrain, sceneObject.Object, sceneObject.Object.Position);
 		}
 
-		var index = new GeneratedIndex(generated, document, new GeneratedRecords(source),
-			SquadMessages.LoadCommand(content, generated.Header.TrainingMissionNumber), sceneIndex);
+		var index = new GeneratedIndex(generated, document, new GeneratedRecords(source), sceneIndex);
 		// The scene's own copy is not kept; a base pad's tile is sized by its material when the ground is levelled again.
 		return new EditorMission(content, name, document, source, scene, tables, sceneIndex, index,
 			new MissionLint(source, sceneIndex, MissionLint.SquadOf(generated)), TerrainMaterialTable.Load(content), squad, shellContent);

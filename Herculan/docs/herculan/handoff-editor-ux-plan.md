@@ -13,6 +13,7 @@ One view per thing a designer authors, the way one friendly dialog in Dynamix's 
 | **campaign variable** | one of the 1000 numbers carried from mission to mission; the game writes a few after every mission, missions write the rest | "flag" in conditions and the campaign list, "counter" in the writes (R1) |
 | **random choice**, **option** | a variant table and its alternatives, and a random roll and its outcome ranges: one roll, several options, each with a chance | "variant table", "alternative", "draw", "range", "draws below" (R19) |
 | **trigger** | an action: who enters which areas, then what happens | "action", "type", "verb" (R6) |
+| **countdown** | an action timer: a delay, from the mission's start or a trigger, after which it fires triggers | "timer" (R11) |
 | **win condition**, **lose condition** | a mandatory objective, a failure objective | "mandatory", "failure condition" (R12, R14) |
 
 Numbering a designer sees starts at 1: orders, waypoints, weapon mounts, squadmates (R15, R29, R31, R32).
@@ -54,11 +55,12 @@ Phases 2 to 6 are carried out by [handoff-editor-msn-scene.md](handoff-editor-ms
 - A variable the game writes reads by what it holds ("the number of Hercs scrapped in the previous mission"); one missions write is "campaign variable 30"; where it comes from is not looked up across missions (done in Present when).
 - Used by entries the editor has no view for (R23), named by effect, "(not shown in the editor)" after each (done, [Conditions](handoff-editor-conditions.md#conditions)).
 
-### 4. Triggers and countdowns
+### 4. Triggers and countdowns (done)
 
-- The action view becomes a trigger: **Who** (one picker merging type and target), **Enters** (the areas), **Also fired by**, **Then** (an editable list: bring in a group, with how it arrives; move a group on from its order; start a countdown; add to a campaign variable; send a message) (R6, R8, R16).
-- No code prefixes on choices (R7); messages by their text, the file and line under Advanced, the posting rule in variable terms (R9); the unused text line under Advanced (R10).
-- A timer is a countdown, "Countdown: 30 s after <trigger>", with no empty slots (R11). "Engaged" range in metres (R17).
+- The action view is the trigger view, on the layout ([Triggers](handoff-editor-mission-logic.md#triggers)): **Fires when** (one choice of whose position its areas test, the herc, flyer, structure or group of the four particular kinds in a second choice under it), the areas it **enters**, **Also fired by**, and **Then**, an editable list with an Add... menu: bring in a group, with how every group it brings in arrives, shown only when one does; move a group on from its order; start a countdown, a new one included; set a campaign variable; send a message. Each entry writes the record that holds the link (R6, R8, R16).
+- No code prefixes on choices (R7); messages by their text, the file and id under Advanced, the sending rule in campaign variable terms (R9); the unused text line under Advanced as leftover text (R10).
+- A timer is a countdown, "Countdown 2: 30 s after trigger 4", its fired list with no empty slots (R11). The "Engaged" distance in metres (R17).
+- Every label, link and refusal reason says trigger and countdown.
 
 ### 5. Names instead of numbers
 

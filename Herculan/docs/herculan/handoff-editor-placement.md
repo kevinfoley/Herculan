@@ -6,7 +6,7 @@ Moving objects, waypoints, groups and area corners; creating and editing routes 
 
 An object holds no position; it holds a `PositionRef` index into block 1. Most retail roster records carry `-1`, so the object takes its group's point plus a formation offset ([`../retail/formats/script-dat.md`](../retail/formats/script-dat.md#placement--the-actual-rule), rule 2, gives the ones that name their own). A group with no point of its own stands on its route's first waypoint (rules 2 and 3).
 
-Points are shared on purpose. In 45 of the 62 retail missions a route waypoint is the same block-1 point as a trigger area's centre or corner (94 of the 886 distinct waypoint points, `HercWorks.Query routes` and `actions`): that is how a mission fires an action when a waypoint is reached. `C1_01`'s player route runs through points 119, 121, 122, 123 and 124, its drop-pod triggers are circles about 121 to 124, and the groups those triggers bring in deploy on 119.
+Points are shared on purpose. In 45 of the 62 retail missions a route waypoint is the same block-1 point as a trigger area's centre or corner (94 of the 886 distinct waypoint points, `HercWorks.Query routes` and `actions`): that is how a mission fires a trigger when a waypoint is reached. `C1_01`'s player route runs through points 119, 121, 122, 123 and 124, its drop-pod triggers are circles about 121 to 124, and the groups those triggers bring in deploy on 119.
 
 So every drag offers two choices: a plain drag moves the point, and whatever shares it moves too; Alt+drag gives the dragged thing a point of its own (`MissionDocument.PlacePoint`), leaving the rest where it was.
 
@@ -59,15 +59,15 @@ Gaps:
 
 ## Trigger areas
 
-**New box** and **New circle**, in the Toolbox and at the top of the outliner's Trigger areas list, start placing (`AreaPlacing`): a box is a press at one corner and a drag to the opposite one, a circle a press at its centre and a drag to its radius, drawn as it grows with its size by the pointer, and added on release. Esc or Cancel adds nothing (and reaches neither Back to game nor the prompt); a box with no width or depth, or a circle with no radius, adds nothing; a press over a panel starts none. While placing, handles and picking are off, and the Delete key, Undo, Redo, the Toolbox entries and New route do nothing. A box's corners need no order ([`../retail/simulation/mission-deployment.md`](../retail/simulation/mission-deployment.md#the-areas--block-4-resolved-by-triggerarea_resolve-00423358)). The generation exports every row-9 record whether or not an action references it, so a new area reaches block 4; the view of one no action tests says it fires nothing. The area is selected.
+**New box** and **New circle**, in the Toolbox and at the top of the outliner's Trigger areas list, start placing (`AreaPlacing`): a box is a press at one corner and a drag to the opposite one, a circle a press at its centre and a drag to its radius, drawn as it grows with its size by the pointer, and added on release. Esc or Cancel adds nothing (and reaches neither Back to game nor the prompt); a box with no width or depth, or a circle with no radius, adds nothing; a press over a panel starts none. While placing, handles and picking are off, and the Delete key, Undo, Redo, the Toolbox entries and New route do nothing. A box's corners need no order ([`../retail/simulation/mission-deployment.md`](../retail/simulation/mission-deployment.md#the-areas--block-4-resolved-by-triggerarea_resolve-00423358)). The generation exports every row-9 record whether or not a trigger references it, so a new area reaches block 4; the view of one no trigger tests says it does nothing. The area is selected.
 
 The area view (`TriggerAreaView`, through `AreaEditor`):
 
 - **Box or Circle.** A box becomes the circle about its middle with a radius of half its longer side; a circle the square of its centre plus and minus its radius (the editor's choice).
 - **Corner or centre fields** and a circle's **radius** in world units, stored in tens, rounded; with how many other records reference each point.
 - **Handles** on each box corner, or on a circle's centre with a diamond on its edge for the radius. A corner moves as a waypoint does, Z 0 always (the area test ignores Z). A corner or radius move goes through `PointMover`'s preview and commit; the outline, the tint, whatever shares the point and the mission box follow.
-- **The actions testing it**, and **New action testing this area** ([Actions](handoff-editor-mission-logic.md#actions)).
-- **Delete** (or the Delete key) is refused while an action references the area in any of its eight slots, since the load stops reading an action's areas at its first `-1`.
+- **The triggers testing it**, each read-only as the trigger view summarizes it, and **New trigger testing this area** ([Triggers](handoff-editor-mission-logic.md#triggers)).
+- **Delete** (or the Delete key) is refused while a trigger references the area in any of its eight slots, since the load stops reading a trigger's areas at its first `-1`.
 
 Retail: 58 of 62 missions use trigger areas, 257 distinct areas named 143 times as boxes and 132 as circles, 16 shared by more than one action; actions test the player in 142 of 338 and the player's group in 170. `C2_01`'s boundary strips and `TRAIN8.MSN`'s three defeat-chained reinforcement waves ([`../retail/simulation/mission-deployment.md`](../retail/simulation/mission-deployment.md#train8msn-end-to-end)) are good test cases.
 

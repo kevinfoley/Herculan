@@ -52,21 +52,9 @@ internal sealed class EditorRoute {
 internal readonly record struct OrderSlot(int Group, int Slot, MissionOrder Order);
 
 /// <summary>
-/// Everything that activates one mission action, and everything that waits on it — the four
-/// activation routes and the three consumers in docs/retail/simulation/mission-deployment.md.
-/// </summary>
-internal sealed record ActionLinks(
-	IReadOnlyList<int> TimersFiringIt,
-	IReadOnlyList<int> TimersItStarts,
-	IReadOnlyList<SceneObject> EngagedObjects,
-	IReadOnlyList<SceneObject> DefeatedObjects,
-	IReadOnlyList<int> WaitingGroups,
-	IReadOnlyList<OrderSlot> OrdersItEnds);
-
-/// <summary>
 /// The editor's cross-reference over the generated mission, by <c>script.dat</c> block index, which the Properties views
 /// read until they move to the layout (docs/herculan/handoff-editor-msn-scene.md#steps):
-/// which actions name which trigger area, which groups walk which route, what fires each action and what each one sets off.
+/// which groups walk which route, each group's members, setup, side and waiting action, and each objective's subject.
 /// Built from the <see cref="World.Mission"/> generated after each edit and the scene's objects (<see cref="MissionIndex"/>),
 /// each <see cref="SceneObject.Placement"/> carrying the generation's indices for its record's GUID (<see cref="SceneSync"/>),
 /// so an object the generation has none for is in no group or roster slot here. Nothing here follows a drag's preview:
@@ -75,7 +63,6 @@ internal sealed record ActionLinks(
 internal sealed class GeneratedIndex {
 	private readonly ScriptDat _document;
 	private readonly Dictionary<(MissionUnitKind, int), SceneObject> _bySlot = new();
-	private ActionLinks[] _actionLinks = [];
 	private List<MissionTriggerArea> _areas = new();
 	private List<MissionGroupSetup> _setups = new();
 	private List<MissionBasePad> _basePads = new();
@@ -87,11 +74,9 @@ internal sealed class GeneratedIndex {
 	/// <param name="document">The generated <c>script.dat</c>, whose block 3 lists the routes no order names.</param>
 	/// <param name="records">Where each selection's record stands in <paramref name="document"/>.</param>
 	/// <param name="scene">The scene's objects by identity, whose objects this index lists.</param>
-	public GeneratedIndex(Mission mission, ScriptDat document, GeneratedRecords records, SquadMessages? commandMessages,
-			MissionIndex scene) {
+	public GeneratedIndex(Mission mission, ScriptDat document, GeneratedRecords records, MissionIndex scene) {
 		_document = document;
 		Records = records;
-		CommandMessages = commandMessages;
 		Scene = scene;
 		Mission = mission;
 		Reload(mission);
@@ -129,23 +114,12 @@ internal sealed class GeneratedIndex {
 		_sides = mission.GroupSides.ToList();
 		_basePads = mission.BasePads.ToList();
 		Routes = BuildRoutes(mission, _document);
-
-		_actionLinks = new ActionLinks[mission.Actions.Count];
-		for (int i = 0; i < _actionLinks.Length; i++) {
-			_actionLinks[i] = BuildLinks(i, objects);
-		}
 	}
 
 	public Mission Mission { get; private set; }
 
 	/// <summary>Where each selection's record stands in the generated file this index is built over, and back.</summary>
 	public GeneratedRecords Records { get; }
-
-	/// <summary>
-	/// The speakerless message set an action's message is looked up in — <c>COMMAND&lt;n&gt;.STR</c>,
-	/// see <see cref="MissionAction.MessageId"/> — or null when the install has none.
-	/// </summary>
-	public SquadMessages? CommandMessages { get; }
 
 	/// <summary>Every placed object, in spawn order.</summary>
 	public IReadOnlyList<SceneObject> Objects => _objects;
@@ -186,17 +160,6 @@ internal sealed class GeneratedIndex {
 	}
 
 	public EditorRoute? Route(int reference) => Routes.FirstOrDefault(route => route.Reference == reference);
-
-	/// <summary>The actions that test <paramref name="areaReference"/>, in block-5 order.</summary>
-	public IEnumerable<int> ActionsTesting(int areaReference) {
-		for (int i = 0; i < Mission.Actions.Count; i++) {
-			if (Mission.Actions[i].Areas.Any(area => area.Reference == areaReference)) {
-				yield return i;
-			}
-		}
-	}
-
-	public ActionLinks LinksOf(int action) => _actionLinks[action];
 
 	/// <summary>
 	/// The placed object a mission ref names — an order, objective or action subject — or null when
@@ -361,45 +324,5 @@ internal sealed class GeneratedIndex {
 				return new EditorRoute(entry.Key, entry.Value, walked, named);
 			})
 			.ToList();
-	}
-
-	private ActionLinks BuildLinks(int action, IReadOnlyList<SceneObject> objects) {
-		var firing = new List<int>();
-		var starts = new List<int>();
-		for (int i = 0; i < Mission.ActionTimers.Count; i++) {
-			var timer = Mission.ActionTimers[i];
-			if (timer.SequenceRefs.Any(reference => reference == action)) {
-				firing.Add(i);
-			}
-
-			if (timer.PrimaryActionRef == action) {
-				starts.Add(i);
-			}
-		}
-
-		var waiting = new List<int>();
-		for (int group = 0; group < Mission.GroupDeploymentActions.Count; group++) {
-			if (Mission.GroupDeploymentActions[group] == action) {
-				waiting.Add(group);
-			}
-		}
-
-		var ends = new List<OrderSlot>();
-		for (int group = 0; group < Mission.GroupOrders.Count; group++) {
-			var orders = Mission.GroupOrders[group];
-			for (int slot = 0; slot < orders.Count; slot++) {
-				if (orders[slot] is { } order && order.ActionRef == action) {
-					ends.Add(new OrderSlot(group, slot, order));
-				}
-			}
-		}
-
-		return new ActionLinks(
-			firing,
-			starts,
-			objects.Where(o => o.Placement.EngagementActionRef == action).ToList(),
-			objects.Where(o => o.Placement.DefeatActionRef == action).ToList(),
-			waiting,
-			ends);
 	}
 }

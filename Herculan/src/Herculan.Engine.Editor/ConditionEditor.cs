@@ -177,8 +177,8 @@ internal sealed class ConditionEditor {
 		6 or 7 => NoView(row, 1),
 		8 => new ConditionUse($"Route {index}", Records.RouteAt(index)),
 		9 => new ConditionUse($"Area {index}", Records.AreaAt(index)),
-		10 => new ConditionUse($"Action {index}", Records.ActionAt(index)),
-		11 => new ConditionUse($"Timer {index}", Records.TimerAt(index)),
+		10 => new ConditionUse($"Trigger {index}", Records.ActionAt(index)),
+		11 => new ConditionUse($"Countdown {index}", Records.TimerAt(index)),
 		12 or 13 or 14 => Object(row, index),
 		16 => new ConditionUse(PanelLinks.ShortGroupName(index), Records.GroupAt(index)),
 		_ => new ConditionUse($"Objective {index}", index < _index.Mission.Objectives.Count ? Records.ObjectiveAt(index) : null),
@@ -239,7 +239,7 @@ internal sealed class ConditionEditor {
 			11 => new TimerSelection(guid),
 			_ => new GroupSelection(guid),
 		};
-		string noun = record.Row switch { 8 => "Route", 9 => "Area", 10 => "Action", 11 => "Timer", _ => "Group" };
+		string noun = record.Row switch { 8 => "Route", 9 => "Area", 10 => "Trigger", 11 => "Countdown", _ => "Group" };
 		return new ConditionUse(record.Row == 16 ? "Group (absent from the mission as opened)" : $"{noun} (not shown in the editor)", target);
 	}
 

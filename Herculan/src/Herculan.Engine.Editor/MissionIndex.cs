@@ -10,9 +10,9 @@ namespace Herculan.Engine.Editor;
 /// keyed by GUID, every record included, a conditional one too: each object and the roster record it stands for
 /// (<see cref="ObjectKey"/>); each group's members, setup, pad, roster, side, the action it waits on and its display number;
 /// each route's waypoints and the groups walking or naming it; each area's shape and the actions testing it; each action's
-/// areas; and the mission box. Built again by <see cref="SceneSync"/> after every edit, undo and redo, and placed again,
-/// keeping its objects, for a drag's preview (<see cref="Replan"/>). What else fires an action and what it fires are still
-/// <see cref="GeneratedIndex"/>'s.
+/// areas, what else fires it and what follows it (<see cref="TriggerWiring"/>); and the mission box. Built again by
+/// <see cref="SceneSync"/> after every edit, undo and redo, and placed again, keeping its objects, for a drag's preview
+/// (<see cref="Replan"/>), which moves nothing the wiring reads.
 /// </summary>
 internal sealed class MissionIndex {
 	private readonly Dictionary<ObjectKey, SceneObject> _byKey = new();
@@ -20,6 +20,7 @@ internal sealed class MissionIndex {
 	private readonly Dictionary<short, IReadOnlyList<SceneObject>> _members = new();
 	private List<SceneObject> _objects = new();
 	private List<MissionBasePad> _pads = new();
+	private IReadOnlyDictionary<short, TriggerLinks> _links = new Dictionary<short, TriggerLinks>();
 
 	/// <param name="objects">The object built for each placed record that has one.</param>
 	public MissionIndex(LayoutPlan plan, IReadOnlyDictionary<ObjectKey, SceneObject> objects) {
@@ -83,6 +84,7 @@ internal sealed class MissionIndex {
 		}
 
 		_pads = PadsOf(plan);
+		_links = TriggerWiring.Build(plan);
 		Box = MissionBox.Of(plan.Layout.Entries<MapPoint22>()
 			.Select(point => new Vec3i(point.Fields.X, point.Fields.Y, point.Fields.Z)).ToList());
 	}
@@ -141,6 +143,9 @@ internal sealed class MissionIndex {
 
 	/// <summary>Row-10 GUID <paramref name="guid"/>'s action, or null when the layout has none.</summary>
 	public PlannedAction? Action(short guid) => Plan.Action(guid);
+
+	/// <summary>What fires row-10 GUID <paramref name="guid"/> besides its areas, and what follows it; <see cref="TriggerLinks.None"/> for none.</summary>
+	public TriggerLinks Links(short guid) => _links.GetValueOrDefault(guid) ?? TriggerLinks.None;
 
 	private static List<MissionBasePad> PadsOf(LayoutPlan plan) =>
 		plan.Groups.Select(group => group.Pad).OfType<MissionBasePad>().ToList();

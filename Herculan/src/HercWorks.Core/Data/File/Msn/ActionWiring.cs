@@ -86,7 +86,7 @@ public static class ActionWiring {
 
 	internal static void CheckAction(MissionDocument document, short action) {
 		if (action != -1 && document.Layout.Entry(ActionRow, action) == null) {
-			throw new InvalidOperationException("That action is not in the mission.");
+			throw new InvalidOperationException("That trigger is not in the mission.");
 		}
 	}
 }

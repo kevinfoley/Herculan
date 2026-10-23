@@ -9,9 +9,9 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// The Mission panel down the left of the window: the mission itself (its theater and time of day,
 /// <see cref="MissionView"/>), then the mission check's findings, then every group (with its members), trigger area,
-/// action, timer, route, objective and random choice as a list, the trigger areas and routes with the buttons that start placing a new
-/// one, and the actions, timers and objectives with the buttons that create one; last, under Advanced, every condition. It is the only way to reach the parts of a mission that are not
-/// standing somewhere — an action with no area, a route with no waypoints — and the other way
+/// trigger (row-10 action), countdown (row-11 timer), route, objective and random choice as a list, the trigger areas and routes with the buttons that start placing a new
+/// one, and the triggers, countdowns and objectives with the buttons that create one; last, under Advanced, every condition. It is the only way to reach the parts of a mission that are not
+/// standing somewhere (a trigger with no area, a route with no waypoints) and the other way
 /// to make a selection. A double-click also frames the record in the view (<see cref="SelectionState.Focus"/>).
 ///
 /// <para>Every list is the <c>.MSN</c>'s layout (docs/herculan/handoff-editor-viewing.md#selection-and-panels): every record
@@ -63,10 +63,10 @@ internal sealed class MissionOutliner {
 	/// <summary>What the Objectives list's New objective asks to create an objective; set once the mission's tools are built.</summary>
 	public ObjectiveEditor? Objectives { get; set; }
 
-	/// <summary>What the Actions list's New action asks to create an action; set once the mission's tools are built.</summary>
+	/// <summary>What the Triggers list's New trigger asks to create a trigger; set once the mission's tools are built.</summary>
 	public ActionEditor? Actions { get; set; }
 
-	/// <summary>What the Timers list's New timer asks to create a timer; set once the mission's tools are built.</summary>
+	/// <summary>What the Countdowns list's New countdown asks to create a countdown; set once the mission's tools are built.</summary>
 	public TimerEditor? Timers { get; set; }
 
 	/// <summary>What the Conditions list under Advanced reads; set once the mission's tools are built.</summary>
@@ -85,8 +85,8 @@ internal sealed class MissionOutliner {
 		DrawProblems();
 		DrawGroups();
 		DrawAreas();
-		DrawActions();
-		DrawTimers();
+		DrawTriggers();
+		DrawCountdowns();
 		DrawRoutes();
 		DrawObjectives();
 		DrawChoices();
@@ -127,25 +127,30 @@ internal sealed class MissionOutliner {
 		}
 	}
 
-	private void DrawTimers() {
-		var timers = Layout.Entries<ActionTimer30>();
-		if (!ImGui.CollapsingHeader($"Timers ({timers.Count})###timers")) {
+	/// <summary>Every row-11 countdown: its delay, what starts it and the triggers it fires, by their numbers.</summary>
+	private void DrawCountdowns() {
+		var countdowns = Layout.Entries<ActionTimer30>();
+		if (!ImGui.CollapsingHeader($"Countdowns ({countdowns.Count})###timers")) {
 			return;
 		}
 
 		if (Timers is { } editor) {
-			if (ImGui.SmallButton("New timer")) {
+			if (ImGui.SmallButton("New countdown")) {
 				editor.RequestCreate();
 			}
 		}
 
-		for (int number = 0; number < timers.Count; number++) {
-			var timer = timers[number];
-			var fires = timer.Fields.SequenceRefs.Select(reference => _index.Action(reference)?.Number).OfType<int>().ToList();
-			string fired = fires.Count > 0 ? $"fires {string.Join(", ", fires)}" : "fires nothing";
-			var selection = new TimerSelection(timer.Guid);
+		for (int number = 0; number < countdowns.Count; number++) {
+			var countdown = countdowns[number];
+			var fires = countdown.Fields.SequenceRefs.Select(reference => _index.Action(reference)?.Number).OfType<int>().Distinct().ToList();
+			string fired = fires.Count switch {
+				0 => "fires nothing",
+				1 => $"fires trigger {fires[0]}",
+				_ => $"fires triggers {string.Join(", ", fires)}",
+			};
+			var selection = new TimerSelection(countdown.Guid);
 			Choose(selection, ImGui.Selectable(
-				$"Timer {number}: {MissionText.TimerSummary(_index, timer.Fields)}, {fired}{Marker(TimerRow, timer.Guid)}##timer{timer.Guid}",
+				$"Countdown {number}: {MissionText.CountdownSummary(_index, countdown.Fields)}, {fired}{Marker(TimerRow, countdown.Guid)}##timer{countdown.Guid}",
 				_selection.Is(selection)));
 		}
 	}
@@ -289,7 +294,7 @@ internal sealed class MissionOutliner {
 		foreach (var group in groups) {
 			var members = _index.MembersOf(group.Guid);
 			string waiting = group.Waiting && _index.Action(group.DeploymentAction) is { } action
-				? $", waits on action {action.Number}"
+				? $", waits on trigger {action.Number}"
 				: string.Empty;
 
 			var flags = ImGuiTreeNodeFlags.OpenOnArrow | ImGuiTreeNodeFlags.SpanAvailWidth;
@@ -303,7 +308,7 @@ internal sealed class MissionOutliner {
 			}
 
 			bool open = ImGui.TreeNodeEx(
-				$"{GroupName(group)}: {members.Count}{waiting}{Marker(GroupRow, group.Guid)}##group{group.Guid}", flags);
+				$"{MissionText.GroupName(group)}: {members.Count}{waiting}{Marker(GroupRow, group.Guid)}##group{group.Guid}", flags);
 			Choose(selection, ImGui.IsItemClicked() && !ImGui.IsItemToggledOpen());
 
 			if (!open) {
@@ -325,16 +330,6 @@ internal sealed class MissionOutliner {
 		}
 	}
 
-	// A group: its display number, roster and side, as the outliner has always named it.
-	private static string GroupName(PlannedGroup group) {
-		if (group.Number == 0) {
-			return "Group 0 (player squad)";
-		}
-
-		string kind = Enum.IsDefined(group.Kind) ? group.Kind.ToString() : "?";
-		return $"Group {group.Number} ({kind}, {group.Side})";
-	}
-
 	/// <summary>
 	/// Every row-9 trigger area. One whose corner or centre references a point the layout has none for stands nowhere: it is
 	/// listed with what is missing, and no action tests it.
@@ -354,7 +349,11 @@ internal sealed class MissionOutliner {
 					? $"circle, {MissionText.Distance(area.Area.Radius)}"
 					: "box";
 				var testing = area.TestedBy.Select(guid => _index.Action(guid)?.Number).OfType<int>().ToList();
-				string actions = testing.Count > 0 ? $"action {string.Join(", ", testing)}" : "no action";
+				string actions = testing.Count switch {
+					0 => "no trigger",
+					1 => $"trigger {testing[0]}",
+					_ => $"triggers {string.Join(", ", testing)}",
+				};
 				text = $"{shape}, {actions}";
 			} else {
 				text = entry.Fields.Shape != 0 ? "circle, its center is missing" : "box, a corner is missing";
@@ -366,24 +365,39 @@ internal sealed class MissionOutliner {
 		}
 	}
 
-	private void DrawActions() {
-		var actions = _index.Actions;
-		if (!ImGui.CollapsingHeader($"Actions ({actions.Count})###actions")) {
+	/// <summary>
+	/// Every row-10 trigger: what fires it (its areas, else the countdowns or objects that do, else that nothing does) and how
+	/// many groups it brings in.
+	/// </summary>
+	private void DrawTriggers() {
+		var triggers = _index.Actions;
+		if (!ImGui.CollapsingHeader($"Triggers ({triggers.Count})###actions")) {
 			return;
 		}
 
 		if (Actions is { } editor) {
-			if (ImGui.SmallButton("New action")) {
+			if (ImGui.SmallButton("New trigger")) {
 				editor.RequestCreate();
 			}
 		}
 
-		foreach (var action in actions) {
-			int waiting = _index.Groups.Count(group => group.Waiting && group.DeploymentAction == action.Guid);
-			string trigger = action.Areas.Count > 0 ? $"{action.Areas.Count} area(s)" : "no area";
-			string effect = waiting > 0 ? $", brings in {waiting} group(s)" : string.Empty;
-			var selection = new ActionSelection(action.Guid);
-			Choose(selection, ImGui.Selectable($"Action {action.Number}: {trigger}{effect}{Marker(ActionRow, action.Guid)}##action{action.Guid}",
+		foreach (var trigger in triggers) {
+			var links = _index.Links(trigger.Guid);
+			int waiting = links.Follows.OfType<BringsInGroup>().Count();
+			string fired = trigger.Areas.Count switch {
+				1 => "1 area",
+				> 1 => $"{trigger.Areas.Count} areas",
+				_ when links.FiringCountdowns.Count > 0 => "fired by a countdown",
+				_ when links.FiredOtherwise => "fired by an object",
+				_ => "nothing fires it",
+			};
+			string effect = waiting switch {
+				0 => string.Empty,
+				1 => ", brings in 1 group",
+				_ => $", brings in {waiting} groups",
+			};
+			var selection = new ActionSelection(trigger.Guid);
+			Choose(selection, ImGui.Selectable($"Trigger {trigger.Number}: {fired}{effect}{Marker(ActionRow, trigger.Guid)}##action{trigger.Guid}",
 				_selection.Is(selection)));
 		}
 	}

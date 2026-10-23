@@ -8,8 +8,8 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// The Properties panel's view of a trigger area: its shape, a box's corners or a circle's centre and radius as typed
-/// fields (<see cref="PointFields"/>), what shares their points, whether one stands outside the mission box as opened, the actions testing it, and the edits that make one (<see cref="AreaEditor"/>,
-/// <see cref="PointMover"/>): switch box and circle, move a corner, the centre or the radius, delete the area; and a new action
+/// fields (<see cref="PointFields"/>), what shares their points, whether one stands outside the mission box as opened, the triggers testing it, and the edits that make one (<see cref="AreaEditor"/>,
+/// <see cref="PointMover"/>): switch box and circle, move a corner, the centre or the radius, delete the area; and a new trigger
 /// testing it (<see cref="ActionEditor"/>). A field
 /// applies when it loses the focus, as one step of the undo history, through the same <see cref="PointMover.Commit"/> a
 /// drag of the move handles makes, so a point shared with anything else moves with it.
@@ -20,7 +20,7 @@ internal sealed class TriggerAreaView {
 	private readonly AreaEditor _editor;
 	private readonly AreaPlacing _placing;
 	private readonly ActionEditor _actions;
-	private readonly Action<int> _drawAction;
+	private readonly Action<short> _drawTrigger;
 	private readonly Action<DeleteNamers> _references;
 
 	// A corner or centre being typed; and a radius being typed, and for which area, until its field lets go.
@@ -28,17 +28,17 @@ internal sealed class TriggerAreaView {
 	private int? _radiusDraftFor;
 	private int _radiusDraft;
 
-	/// <param name="actions">Creates an action testing the area.</param>
-	/// <param name="drawAction">Draws an action's wiring, read-only, as the action view summarises it.</param>
+	/// <param name="actions">Creates a trigger testing the area.</param>
+	/// <param name="drawTrigger">Draws a trigger's wiring by its row-10 GUID, read-only, as the trigger view summarizes it.</param>
 	/// <param name="references">Draws what references something, one line per record.</param>
 	public TriggerAreaView(GeneratedIndex index, PointMover mover, AreaEditor editor, AreaPlacing placing, ActionEditor actions,
-			Action<int> drawAction, Action<DeleteNamers> references) {
+			Action<short> drawTrigger, Action<DeleteNamers> references) {
 		_index = index;
 		_mover = mover;
 		_editor = editor;
 		_placing = placing;
 		_actions = actions;
-		_drawAction = drawAction;
+		_drawTrigger = drawTrigger;
 		_references = references;
 	}
 
@@ -73,22 +73,22 @@ internal sealed class TriggerAreaView {
 		EditorText.Reason(_editor.Failure);
 
 		bool tested = false;
-		foreach (int action in _index.ActionsTesting(reference)) {
+		foreach (short trigger in _index.Scene.Area(guid)?.TestedBy ?? []) {
 			ImGui.Separator();
-			ImGui.PushID(action);
-			_drawAction(action);
+			ImGui.PushID(trigger);
+			_drawTrigger(trigger);
 			ImGui.PopID();
 			tested = true;
 		}
 
 		if (!tested) {
 			ImGui.Separator();
-			EditorText.Note("No action tests it, so it fires nothing.");
+			EditorText.Note("No trigger tests it, so it does nothing.");
 		}
 
 		ImGui.Spacing();
 		ImGui.BeginDisabled(_placing.Active);
-		if (ImGui.Button("New action testing this area")) {
+		if (ImGui.Button("New trigger testing this area")) {
 			_actions.RequestCreate(guid);
 		}
 

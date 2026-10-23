@@ -55,59 +55,101 @@ internal static class MissionText {
 	}
 
 	/// <summary>
-	/// Whose position an action's trigger areas are offered — the type table in
-	/// docs/retail/simulation/mission-deployment.md#trigger-areas--actions_evaluatetriggers-00426b70.
+	/// Whose position a trigger's areas are offered, in a phrase that follows "fires when" — the type table in
+	/// docs/retail/simulation/mission-deployment.md#trigger-areas--actions_evaluatetriggers-00426b70. A group still waiting to
+	/// arrive is never tested.
 	/// </summary>
 	public static string TriggerSubject(short type) => type switch {
-		MissionAction.SubjectPlayer => "the player's Herc",
-		MissionAction.SubjectPlayerGroup => "any machine of the player's squad",
-		MissionAction.SubjectHumanGroups => "any member of a deployed human group",
-		MissionAction.SubjectCybridGroups => "any member of a deployed Cybrid group",
-		MissionAction.SubjectMechGroups => "any member of a deployed herc group",
-		MissionAction.SubjectFlyerGroups => "any member of a deployed flyer group",
-		MissionAction.SubjectBaseGroups => "any member of a deployed structure group",
-		MissionAction.SubjectTargetMech => "its target herc",
-		MissionAction.SubjectTargetFlyer => "its target flyer",
-		MissionAction.SubjectTargetBase => "its target structure",
-		MissionAction.SubjectTargetGroup => "any member of its target group",
-		_ => $"nothing (type {type})"
+		MissionAction.SubjectPlayer => "the player's HERC",
+		MissionAction.SubjectPlayerGroup => "any HERC of the player's squad",
+		MissionAction.SubjectHumanGroups => "any member of a human group that has arrived",
+		MissionAction.SubjectCybridGroups => "any member of a Cybrid group that has arrived",
+		MissionAction.SubjectMechGroups => "any member of a herc group that has arrived",
+		MissionAction.SubjectFlyerGroups => "any member of a flyer group that has arrived",
+		MissionAction.SubjectBaseGroups => "any member of a structure group that has arrived",
+		MissionAction.SubjectTargetMech => "a particular herc",
+		MissionAction.SubjectTargetFlyer => "a particular flyer",
+		MissionAction.SubjectTargetBase => "a particular structure or ground vehicle",
+		MissionAction.SubjectTargetGroup => "any member of a particular group",
+		_ => $"an unknown kind ({type})"
 	};
 
+	/// <summary><see cref="TriggerSubject"/> as a choice in a trigger's Who picker names it, capitalized.</summary>
+	public static string TriggerWho(short type) {
+		string subject = TriggerSubject(type);
+		return char.ToUpperInvariant(subject[0]) + subject[1..];
+	}
+
 	/// <summary>
-	/// How a group waiting on an action arrives — the verb table in
-	/// docs/retail/simulation/mission-deployment.md#arrival--group_deploymentcheck-004236c4.
+	/// How a group waiting on a trigger arrives, in a phrase that follows "it arrives" — the verb table in
+	/// docs/retail/simulation/mission-deployment.md#arrival--group_deploymentcheck-004236c4, where every value but 2 to 5 is
+	/// in place.
 	/// </summary>
 	public static string Arrival(short verb) => verb switch {
-		MissionAction.VerbPodWide => "drop pod, within 90° of the player's heading",
-		MissionAction.VerbPodNarrow => "drop pod, within 22.5° of the player's heading",
+		MissionAction.VerbPodWide => "by drop pod, within 90° of the player's heading",
+		MissionAction.VerbPodNarrow => "by drop pod, within 22.5° of the player's heading",
 		MissionAction.VerbWalkBehind => "on foot, from behind the player",
 		MissionAction.VerbWalkAhead => "on foot, ahead of the player",
 		_ => "in place"
 	};
 
-	/// <summary><see cref="Arrival"/> in a word or two, for a label.</summary>
+	/// <summary><see cref="Arrival"/> in a word or two, for a label: "by drop pod", "on foot" or "in place".</summary>
 	public static string ArrivalKind(short verb) => verb switch {
-		MissionAction.VerbPodWide or MissionAction.VerbPodNarrow => "drop pod",
+		MissionAction.VerbPodWide or MissionAction.VerbPodNarrow => "by drop pod",
 		MissionAction.VerbWalkBehind or MissionAction.VerbWalkAhead => "on foot",
 		_ => "in place"
 	};
 
+	/// <summary>The arrivals a trigger's Arrives choice offers, in its order: the four landings about the player, then in place (1).</summary>
+	public static IReadOnlyList<short> Arrivals { get; } = [
+		MissionAction.VerbPodWide, MissionAction.VerbPodNarrow, MissionAction.VerbWalkBehind, MissionAction.VerbWalkAhead, 1,
+	];
+
+	/// <summary>An arrival as the Arrives choice names it; every value but 2 to 5 is in place.</summary>
+	public static string ArrivalChoice(short verb) => verb switch {
+		MissionAction.VerbPodWide => "By drop pod, in front of the player",
+		MissionAction.VerbPodNarrow => "By drop pod, straight ahead of the player",
+		MissionAction.VerbWalkBehind => "On foot, from behind the player",
+		MissionAction.VerbWalkAhead => "On foot, from ahead of the player",
+		_ => "In place"
+	};
+
 	/// <summary>
-	/// Why a group kept out of the scene (<see cref="PlannedGroup.OffScene"/>) is not shown in it, in one sentence with how
-	/// far from the player it arrives (<see cref="Sim.MissionGroup.PodDistance"/> and the two walk-on distances) and how
-	/// (<see cref="Arrival"/>): for the group's own view, or for a member's (<paramref name="member"/>).
+	/// What an arrival does, in one sentence for the note under the Arrives choice: how far from the player a group lands or
+	/// walks in (<see cref="ArrivalDistance"/>) and on what bearing, or that it goes live where it stands.
 	/// </summary>
-	public static string OffScene(short verb, bool member) {
+	public static string ArrivalNote(short verb) => verb is MissionAction.VerbPodWide or MissionAction.VerbPodNarrow
+			or MissionAction.VerbWalkBehind or MissionAction.VerbWalkAhead
+		? $"It arrives {Arrival(verb)}, {ArrivalDistance(verb)} from the player, wherever they are when the trigger fires."
+		: "It goes live where it stands when the trigger fires.";
+
+	/// <summary>
+	/// How far from the player a group arrives (<see cref="Sim.MissionGroup.PodDistance"/> and the two walk-on distances), in
+	/// metres.
+	/// </summary>
+	public static string ArrivalDistance(short verb) {
 		int distance = verb switch {
 			MissionAction.VerbWalkBehind => Sim.MissionGroup.WalkOnDistanceBehind,
 			MissionAction.VerbWalkAhead => Sim.MissionGroup.WalkOnDistanceAhead,
 			_ => Sim.MissionGroup.PodDistance,
 		};
 
-		string away = $"{distance / Render.WorldScale.WorldUnitsPerMeter:F0} m from the player, wherever they are";
+		return Metres(distance);
+	}
+
+	/// <summary>A distance in world units, in whole metres alone: "300 m".</summary>
+	public static string Metres(int worldUnits) => $"{worldUnits / Render.WorldScale.WorldUnitsPerMeter:F0} m";
+
+	/// <summary>
+	/// Why a group kept out of the scene (<see cref="PlannedGroup.OffScene"/>) is not shown in it, in one sentence with how
+	/// far from the player it arrives and how (<see cref="Arrival"/>): for the group's own view, or for a member's
+	/// (<paramref name="member"/>).
+	/// </summary>
+	public static string OffScene(short verb, bool member) {
+		string away = $"{ArrivalDistance(verb)} from the player, wherever they are";
 		return member
-			? $"Not shown in the scene: its group arrives {away}, when the action it waits on fires ({Arrival(verb)})."
-			: $"Not shown in the scene: it arrives {away}, when that action fires ({Arrival(verb)}).";
+			? $"Not shown in the scene: its group arrives {away}, when the trigger it waits on fires ({Arrival(verb)})."
+			: $"Not shown in the scene: it arrives {away}, when that trigger fires ({Arrival(verb)}).";
 	}
 
 	/// <summary>The state an order verb installs — docs/retail/simulation/ai-goals.md#when-an-order-is-finished--group_isordercomplete-004239fc.</summary>
@@ -191,9 +233,7 @@ internal static class MissionText {
 
 		var key = new ObjectKey(roster, subject);
 		if (index.Plan.Object(key) is { } planned) {
-			return planned.Squad || index.Group(planned.Group) is not { } group
-				? MemberName(index, planned)
-				: $"{MemberName(index, planned)} (group {group.Number})";
+			return ObjectName(index, planned);
 		}
 
 		short? type = index.Layout.Entry(roster, subject)?.Fields switch {
@@ -242,6 +282,30 @@ internal static class MissionText {
 		return planned.Squad ? $"{name} (player squad)" : name;
 	}
 
+	/// <summary>A placed roster record by its <see cref="MemberName"/> and its group's number: "SCARAB (group 5)"; a squad herc as "(player squad)".</summary>
+	public static string ObjectName(MissionIndex index, PlannedObject planned) =>
+		planned.Squad || index.Group(planned.Group) is not { } group
+			? MemberName(index, planned)
+			: $"{MemberName(index, planned)} (group {group.Number})";
+
+	/// <summary>A group: its display number, roster and side, as the outliner names it; group 0 the player's squad.</summary>
+	public static string GroupName(PlannedGroup group) {
+		if (group.Number == 0) {
+			return "Group 0 (player squad)";
+		}
+
+		string kind = Enum.IsDefined(group.Kind) ? group.Kind.ToString() : "?";
+		return $"Group {group.Number} ({kind}, {group.Side})";
+	}
+
+	/// <summary>Row-10 GUID <paramref name="guid"/> as the editor names a trigger until triggers get names: "Trigger 4", by its place in row 10.</summary>
+	public static string TriggerName(MissionLayout layout, short guid) =>
+		NumberIn(layout, 10, guid) is { } number ? $"Trigger {number}" : "A trigger not in the mission";
+
+	/// <summary>Row-11 GUID <paramref name="guid"/> as the editor names a countdown: "Countdown 2", by its place in row 11.</summary>
+	public static string CountdownName(MissionLayout layout, short guid) =>
+		NumberIn(layout, 11, guid) is { } number ? $"Countdown {number}" : "A countdown not in the mission";
+
 	// A placed record's type name, else its kind and type number: a ground vehicle told from a structure by its object's type.
 	private static string TypeName(MissionIndex index, PlannedObject planned) {
 		if (planned.TypeName is { } name) {
@@ -276,27 +340,27 @@ internal static class MissionText {
 		return null;
 	}
 
+	/// <summary>A list position from 1 as an ordinal: "1st", "2nd", "3rd", "4th", "11th".</summary>
+	public static string Ordinal(int position) => (position % 100, position % 10) switch {
+		(11 or 12 or 13, _) => $"{position}th",
+		(_, 1) => $"{position}st",
+		(_, 2) => $"{position}nd",
+		(_, 3) => $"{position}rd",
+		_ => $"{position}th",
+	};
+
 	/// <summary>A binary angle as compass degrees.</summary>
 	public static string Heading(int binaryAngle) =>
 		$"{BinaryAngle.ToRadians(binaryAngle) * (180f / MathF.PI):F1} deg";
 
-	/// <summary>A timer's delay and what starts it.</summary>
-	public static string TimerSummary(MissionActionTimer timer) {
-		int seconds = timer.Delay >> MissionActionTimer.DelayShift;
-		return timer.PrimaryActionRef >= 0
-			? $"{seconds} s after action {timer.PrimaryActionRef} fires"
-			: $"{seconds} s into the mission";
-	}
-
 	/// <summary>
-	/// A row-11 timer's delay and what starts it, as <see cref="TimerSummary(MissionActionTimer)"/> says it of a generated one,
-	/// the starting action by its display number; a start the layout has no action for is the mission's start, as the
-	/// generation resolves it to none.
+	/// A row-11 countdown's delay and what starts it: "30 s after trigger 4" or "30 s from mission start", the starting trigger by
+	/// its display number; a start the layout has no trigger for is the mission's start, as the generation resolves it to none.
 	/// </summary>
-	public static string TimerSummary(MissionIndex index, ActionTimer30 timer) =>
-		index.Action(timer.PrimaryActionRef) is { } start
-			? $"{timer.Delay} s after action {start.Number} fires"
-			: $"{timer.Delay} s into the mission";
+	public static string CountdownSummary(MissionIndex index, ActionTimer30 countdown) =>
+		index.Action(countdown.PrimaryActionRef) is { } start
+			? $"{countdown.Delay} s after trigger {start.Number}"
+			: $"{countdown.Delay} s from mission start";
 
 	/// <summary>A duration of <paramref name="seconds"/> in hours, minutes and seconds, leaving out the parts that are 0.</summary>
 	public static string Duration(int seconds) {

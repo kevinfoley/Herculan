@@ -126,7 +126,7 @@ internal sealed class GroupOverlay {
 				}
 
 				StackedLabel(group.Setup.Point,
-					$"Group {group.Number}: waits on action {numbers[group.DeploymentAction]}, {MissionText.ArrivalKind(group.ArrivalVerb)}",
+					$"Group {group.Number}: waits on trigger {numbers[group.DeploymentAction]}, {MissionText.ArrivalKind(group.ArrivalVerb)}",
 					WaitingColor);
 			}
 		}

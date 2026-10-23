@@ -7,7 +7,7 @@ using ImGuiNET;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The group view's orders: each filled slot of the ten with its verb, route, subject and the action that ends it as choices
+/// The group view's orders: each filled slot of the ten with its verb, route, subject and the trigger that ends it as choices
 /// that change them (<see cref="OrderEditor"/>), each with a link, and buttons that add an order after the last, remove
 /// one or move one up or down. A slot whose order the mission as opened leaves out shows only its Present when. What each
 /// field does is docs/retail/simulation/ai-goals.md's.
@@ -28,7 +28,7 @@ internal sealed class OrderSlotsView {
 	private readonly PresenceEditor _presence;
 
 	/// <param name="routeLink">Draws a link that selects a route, by block-3 index.</param>
-	/// <param name="actionLink">Draws a link that selects an action, by block-5 index.</param>
+	/// <param name="actionLink">Draws a link that selects a trigger, by block-5 index.</param>
 	/// <param name="subjectLink">Draws a link that selects an order's subject.</param>
 	/// <param name="presentWhen">Draws each slot's Present when (<paramref name="presence"/>'s target).</param>
 	public OrderSlotsView(GeneratedIndex index, ScriptDat document, OrderEditor editor, Action<int> routeLink,
@@ -139,18 +139,20 @@ internal sealed class OrderSlotsView {
 		ImGui.Unindent();
 	}
 
-	// The action that moves the group on from this order when it fires, none or any action, with a link.
+	// The trigger that moves the group on from this order when it fires, none or any trigger, with a link; <action> is its
+	// block-5 index.
 	private void DrawEnding(short group, int slot, short action, bool locked) {
 		Label("Ends when");
 		ImGui.BeginDisabled(locked);
-		if (ActionChoice.Draw("##ends", action, _index.Mission.Actions.Count, _index.Records) is { } chosen) {
+		short current = action >= 0 ? _index.Records.ActionGuid(action) : (short)-1;
+		if (ActionChoice.Draw("##ends", current, _index.Scene) is { } chosen) {
 			_editor.RequestAction(group, slot, chosen);
 		}
 
 		ImGui.EndDisabled();
 		if (action >= 0) {
 			_actionLink(action);
-			EditorText.Note("When it fires, the group moves on to its next order.");
+			EditorText.Note("When that trigger fires, the group moves on to its next order.");
 		}
 	}
 

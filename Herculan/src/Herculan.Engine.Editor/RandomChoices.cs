@@ -297,9 +297,9 @@ internal sealed class RandomChoices {
 			case 9:
 				return ($"Area {MissionText.NumberIn(layout, row, guid)}", new AreaSelection(guid));
 			case 10:
-				return ($"Action {MissionText.NumberIn(layout, row, guid)}", new ActionSelection(guid));
+				return (MissionText.TriggerName(layout, guid), new ActionSelection(guid));
 			case 11:
-				return ($"Timer {MissionText.NumberIn(layout, row, guid)}", new TimerSelection(guid));
+				return (MissionText.CountdownName(layout, guid), new TimerSelection(guid));
 			case 15:
 				return ("An order", null);
 			case 16:

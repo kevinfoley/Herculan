@@ -109,7 +109,7 @@ public static class ActionEditing {
 	/// <summary>Row-10 GUID <paramref name="action"/>'s base fields (a copy), throwing for one no record carries.</summary>
 	public static MissionAction82 Fields(MissionDocument document, short action) =>
 		document.Layout.Entry<MissionAction82>(action)?.Fields
-			?? throw new InvalidOperationException($"The mission has no action {action}.");
+			?? throw new InvalidOperationException("That trigger is not in the mission.");
 
 	/// <summary>
 	/// The row-9 GUIDs in <paramref name="action"/>'s first <see cref="AreaSlots"/> slots as its base names them, <c>-1</c> for
@@ -125,7 +125,7 @@ public static class ActionEditing {
 	/// <summary>Why row-9 area <paramref name="area"/> cannot be added to <paramref name="action"/>, or null when it can.</summary>
 	public static string? WhyNoAddArea(MissionDocument document, short action, short area) {
 		var areas = Areas(document, action);
-		return FilledAreas(areas) >= AreaSlots ? $"All {AreaSlots} area slots are filled."
+		return FilledAreas(areas) >= AreaSlots ? $"It already tests {AreaSlots} areas, the most it can hold."
 			: area != -1 && areas.Contains(area) ? "It tests that area already."
 			: area != -1 && document.Layout.Entry(AreaRow, area) == null ? NoArea
 			: null;
@@ -145,7 +145,7 @@ public static class ActionEditing {
 	public static MsnEdit SetArea(MissionDocument document, short action, int slot, short area) {
 		var areas = Areas(document, action);
 		if (slot < 0 || slot >= FilledAreas(areas)) {
-			throw new InvalidOperationException($"There is no area in slot {slot}.");
+			throw new InvalidOperationException($"There is no area in place {slot + 1}.");
 		}
 
 		if (document.Layout.Entry(AreaRow, area) == null) {
@@ -164,7 +164,7 @@ public static class ActionEditing {
 		var areas = Areas(document, action);
 		int last = FilledAreas(areas) - 1;
 		if (slot < 0 || slot > last) {
-			throw new InvalidOperationException($"There is no area in slot {slot}.");
+			throw new InvalidOperationException($"There is no area in place {slot + 1}.");
 		}
 
 		return document.Change(() => {
@@ -234,7 +234,7 @@ public static class ActionEditing {
 	/// </summary>
 	public static MsnEdit SetTarget(MissionDocument document, short action, short target) {
 		if (TargetBlock(Fields(document, action).Type) is not { } block) {
-			throw new InvalidOperationException("Only types 7 to 10 have a target.");
+			throw new InvalidOperationException("Only a trigger tested on a particular herc, flyer, structure or group has a target.");
 		}
 
 		if (document.Layout.Entry(block + 5, target) == null) {
@@ -247,7 +247,7 @@ public static class ActionEditing {
 	/// <summary>Sets <paramref name="action"/>'s verb, 0 to <see cref="LastVerb"/>.</summary>
 	public static MsnEdit SetVerb(MissionDocument document, short action, short verb) {
 		if (verb is < 0 or > LastVerb) {
-			throw new ArgumentOutOfRangeException(nameof(verb), verb, $"A verb is 0 to {LastVerb}.");
+			throw new ArgumentOutOfRangeException(nameof(verb), verb, $"An arrival is 0 to {LastVerb}.");
 		}
 
 		Fields(document, action);
@@ -295,11 +295,11 @@ public static class ActionEditing {
 	/// </summary>
 	public static MsnEdit SetPair(MissionDocument document, short action, int slot, short counter, short op) {
 		if (slot < 0 || slot >= FilledPairs(CounterPairs(document, action))) {
-			throw new InvalidOperationException($"There is no counter write {slot}.");
+			throw new InvalidOperationException($"There is no campaign variable write {slot + 1}.");
 		}
 
 		if (counter is < 0 or >= Counters) {
-			throw new ArgumentOutOfRangeException(nameof(counter), counter, $"A counter is 0 to {Counters - 1}.");
+			throw new ArgumentOutOfRangeException(nameof(counter), counter, $"A campaign variable is 0 to {Counters - 1}.");
 		}
 
 		if (op is not (CounterClear or CounterIncrement)) {
@@ -317,7 +317,7 @@ public static class ActionEditing {
 		var pairs = CounterPairs(document, action);
 		int last = FilledPairs(pairs) - 1;
 		if (slot < 0 || slot > last) {
-			throw new InvalidOperationException($"There is no counter write {slot}.");
+			throw new InvalidOperationException($"There is no campaign variable write {slot + 1}.");
 		}
 
 		return document.Change(() => {
@@ -382,7 +382,7 @@ public static class ActionEditing {
 	/// </summary>
 	public static MsnEdit Delete(MissionDocument document, short action) {
 		if (Namers(document, action).Any) {
-			throw new InvalidOperationException($"Action {action} is referenced by a timer, a group, an object or an order.");
+			throw new InvalidOperationException("That trigger is referenced by a countdown, a group, an object or an order.");
 		}
 
 		var texts = (document.Mission.Actions ?? []).Where(record => record.GUID == action)

@@ -147,7 +147,7 @@ internal sealed class SquadMachinePanel {
 			ImGui.TextWrapped("Cannot be removed while these reference or need it:");
 			References?.Invoke(names);
 			if (ownActions) {
-				ImGui.TextWrapped("An action it fires when engaged or defeated");
+				ImGui.TextWrapped("A trigger it fires when engaged or defeated");
 			}
 		} else if (_fitter.SquadSlot(member) is not { } fixedSlot || reason != _fitter.WhyFixed(fixedSlot)) {
 			EditorText.Reason(reason, "Cannot be removed: ");

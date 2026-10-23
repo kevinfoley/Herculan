@@ -3,38 +3,40 @@ using HercWorks.Core.Data.File.Msn;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// Creates, edits and deletes the open mission's action timers, each edit one step of <see cref="PointMover"/>'s undo history,
-/// through <see cref="TimerEditing"/>'s record edits on the mission's <c>.MSN</c>. Every edit builds the editor's state again
-/// (<see cref="SceneSync"/>): a create or a delete adds or removes a block-6 record, and what a timer starts on and fires
-/// is what the action view lists.
+/// Creates, edits and deletes the open mission's countdowns (row-11 action timers), each edit one step of
+/// <see cref="PointMover"/>'s undo history, through <see cref="TimerEditing"/>'s record edits on the mission's <c>.MSN</c>.
+/// Every edit builds the editor's state again (<see cref="SceneSync"/>), so the trigger view lists what a countdown starts on
+/// and fires as it now stands.
 ///
-/// <para>Timers and actions are taken by their GUIDs, as the selections and the views' choices name them, and a timer not
-/// shown in the editor is not edited. The edits wait for the frame's ImGui to be rendered (<see cref="RunRequest"/>).</para>
+/// <para>Countdowns and triggers are taken by their GUIDs, as the selections and the views' choices name them, and any
+/// countdown the layout has is edited. The edits wait for the frame's ImGui to be rendered (<see cref="RunRequest"/>).</para>
 /// </summary>
 internal sealed class TimerEditor {
+	private const int TimerRow = 11;
+
 	private readonly MissionDocument _source;
-	private readonly GeneratedRecords _records;
 	private readonly PointMover _mover;
 	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private Func<string?>? _requested;
 
-	public TimerEditor(MissionDocument source, GeneratedRecords records, PointMover mover, SceneSync sync,
-			SelectionState selection) {
+	public TimerEditor(MissionDocument source, PointMover mover, SceneSync sync, SelectionState selection) {
 		_source = source;
-		_records = records;
 		_mover = mover;
 		_sync = sync;
 		_selection = selection;
 	}
 
+	/// <summary>The mission as its <c>.MSN</c>, whose countdowns the countdown view reads.</summary>
+	public MissionDocument Source => _source;
+
 	/// <summary>Why the last edit run could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
 	/// <summary>Why row-11 GUID <paramref name="timer"/> cannot be edited, or null when it can.</summary>
-	public string? WhyFixed(short timer) => _records.Timer(timer) == null ? GeneratedRecords.NotShown : null;
+	public string? WhyFixed(short timer) => _source.Layout.Entry(TimerRow, timer) == null ? "That countdown is not in the mission." : null;
 
-	/// <summary>Why no action can be added to <paramref name="timer"/>'s fired ones, or null when one can.</summary>
+	/// <summary>Why no trigger can be added to <paramref name="timer"/>'s fired ones, or null when one can.</summary>
 	public string? WhyNoAddFired(short timer) => WhyFixed(timer) ?? TimerEditing.WhyNoAddFired(_source, timer);
 
 	/// <summary>Asks for a new timer, which is then selected.</summary>
