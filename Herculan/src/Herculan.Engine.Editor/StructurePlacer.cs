@@ -11,7 +11,7 @@ namespace Herculan.Engine.Editor;
 /// Adds a structure to the open mission, as one step of <see cref="PointMover"/>'s undo history: a row-14 roster record,
 /// and a row-16 group of its own that places it, standing on a row-6 point appended for it and facing a row-7 heading of
 /// 0 degrees. Each record is appended to the <c>.MSN</c> unconditioned, with no variant key and a new GUID
-/// (<see cref="MissionDocument.Append"/>), and <c>script.dat</c> is generated again; the scene is then synced
+/// (<see cref="MissionDocument.Append"/>), so every version of the mission has it; the scene is then synced
 /// with the document (<see cref="SceneSync"/>), which builds the structure's object for the record
 /// (docs/herculan/handoff-editor-document.md#the-tools).
 ///
@@ -31,7 +31,8 @@ namespace Herculan.Engine.Editor;
 ///
 /// <para>Block 9 is capped at DBSIM's structure slots (<see cref="ScriptDatLint.BaseSlotCap"/>), past which its load
 /// writes over the globals that follow (docs/retail/formats/script-dat.md#the-two-pass-read--and-what-it-means-for-dbsim-keeps):
-/// an add that would pass it in the generated file is refused.</para>
+/// an add that would pass it in any version of the mission is refused, counting every row-14 GUID of the layout whatever its
+/// condition.</para>
 /// </summary>
 internal sealed class StructurePlacer {
 	// A structure group's roster and formation, as row 16 numbers them.
@@ -43,7 +44,6 @@ internal sealed class StructurePlacer {
 	private const int BaseRow = 14;
 	private const int GroupRow = 16;
 
-	private readonly ScriptDat _document;
 	private readonly MissionDocument _source;
 	private readonly MissionScene _scene;
 	private readonly HeightGrid _terrain;
@@ -52,11 +52,9 @@ internal sealed class StructurePlacer {
 	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 
-	/// <param name="document">The generated <c>script.dat</c>, <paramref name="source"/>'s, which the scene was loaded from.</param>
 	/// <param name="source">The mission as its <c>.MSN</c>.</param>
-	public StructurePlacer(ScriptDat document, MissionDocument source, MissionScene scene, MissionIndex index,
+	public StructurePlacer(MissionDocument source, MissionScene scene, MissionIndex index,
 			PointMover mover, SceneSync sync, SelectionState selection) {
-		_document = document;
 		_source = source;
 		_scene = scene;
 		_terrain = scene.World.Terrain;
@@ -66,10 +64,15 @@ internal sealed class StructurePlacer {
 		_selection = selection;
 	}
 
-	/// <summary>Why no structure can be added, or null when one can: block 9 is full.</summary>
-	public string? WhyNoAdd => _document.Bases.Length >= ScriptDatLint.BaseSlotCap
-		? $"The mission already has {_document.Bases.Length} structures, as many as DBSIM holds."
-		: null;
+	/// <summary>Why no structure can be added, or null when one can: block 9 is full in some version of the mission.</summary>
+	public string? WhyNoAdd {
+		get {
+			int structures = _source.Layout.Entries(BaseRow).Count;
+			return structures >= ScriptDatLint.BaseSlotCap
+				? $"At maximum structure limit ({ScriptDatLint.BaseSlotCap})."
+				: null;
+		}
+	}
 
 	/// <summary>
 	/// Adds a structure of <c>BASES.DAT</c> type <paramref name="typeIndex"/> on <paramref name="side"/>, standing on
@@ -138,7 +141,6 @@ internal sealed class StructurePlacer {
 	// Makes an add's change and syncs the scene with it, then records it as one step and selects the object built for
 	// the structure's row-14 GUID; or, when none was built, puts the records back and says why.
 	private string? Commit(int typeIndex, Func<MsnEdit> add, Func<short> structure) {
-		var source = _source;
 		MsnEdit change;
 		try {
 			change = _sync.Run(add);
@@ -147,12 +149,9 @@ internal sealed class StructurePlacer {
 		}
 
 		short added = structure();
-		bool generated = source.ExportedIndex(BaseRow, added) != null;
-		if (!generated || _index.ObjectOf(new ObjectKey(BaseRow, added)) == null) {
+		if (_index.ObjectOf(new ObjectKey(BaseRow, added)) == null) {
 			_sync.Undo(change);
-			return !generated
-				? "The added structure was not generated; nothing was added."
-				: $"The install has no structure type {typeIndex}.";
+			return $"The install has no structure type {typeIndex}.";
 		}
 
 		_mover.Record(new RecordsEdit(_sync, change));

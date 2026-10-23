@@ -8,8 +8,7 @@ namespace Herculan.Engine.Tests;
 
 /// <summary>
 /// The editor's selections over a small synthetic mission: a selection names a <c>.MSN</c> record and is kept while the file
-/// has it (<see cref="EditorSelection.InFile"/>), and <see cref="GeneratedRecords"/> finds the generated record it stands for,
-/// or none for a record the generation drops.
+/// has it (<see cref="EditorSelection.InFile"/>).
 /// </summary>
 public class EditorSelectionTests {
 	private const short Structures = 2;
@@ -43,25 +42,6 @@ public class EditorSelectionTests {
 		document.Remove(16, 10);
 		Assert.False(EditorSelection.InFile(document.Mission, group));
 		Assert.True(EditorSelection.InFile(document.Mission, new AreaSelection(10)));
-	}
-
-	/// <summary>
-	/// Catches a view given a generated index for a record the generation dropped, and a link selecting a GUID read from the
-	/// wrong block: a group whose condition fails has no generated index though the file keeps it, and a surviving group's
-	/// generated index selects its own GUID again.
-	/// </summary>
-	[Fact]
-	public void ARecordTheGenerationDropsHasNoGeneratedIndex() {
-		var document = Open(Mission()
-			.Add(14, Base(1))
-			.Add(14, Base(2))
-			.Add(16, Group(10, Structures, position: -1, condition: Fails, 1))
-			.Add(16, Group(11, Structures, position: -1, condition: -1, 2)));
-		var records = new GeneratedRecords(document);
-
-		Assert.Null(records.Group(10));
-		Assert.True(EditorSelection.InFile(document.Mission, new GroupSelection(10)));
-		Assert.Equal(new GroupSelection(11), records.GroupAt(Assert.NotNull(records.Group(11))));
 	}
 
 	// Condition 0, which fails, and group 0, the squad: the player's machine, facing a heading of its own.

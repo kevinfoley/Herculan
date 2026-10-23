@@ -117,8 +117,7 @@ public class VariantEditingTests {
 		VariantEditing.AddAlternative(document, 0, 1, out short added);
 		var table = VariantEditing.Table(document, 0)!;
 		Assert.Equal([50, 50], VariantEditing.Percents(table));
-		var alternative = Assert.Single(table.Alternatives, other => other.Range == added).Record;
-		Assert.Equal(alternative, VariantEditing.PickOf(document, VariantEditing.KeyRecord(document, 12, 10)!.Value)!.Value.Source);
+		Assert.Single(table.Alternatives, other => other.Range == added);
 		Assert.Equal(3, TypeOf(document, 10));
 
 		VariantEditing.SetTable(document, 12, 11, 0);
@@ -149,7 +148,7 @@ public class VariantEditingTests {
 	};
 
 	private static short TypeOf(MissionDocument document, short guid) =>
-		document.Script.Mechs[document.ExportedIndex(12, guid)!.Value].TypeIndex;
+		document.Script.Mechs[Exported(document, 12, guid)!.Value].TypeIndex;
 
 	private static MissionDocument Open(SyntheticMsn msn, Func<Func<short, int>> roll) =>
 		MissionDocument.Read(msn.Bytes(), null, new MissionGeneration(new short[MissionGenerator.CampaignFlagCount],

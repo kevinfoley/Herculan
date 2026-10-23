@@ -1,5 +1,4 @@
 using HercWorks.Core.Data.File.Msn;
-using HercWorks.Core.Data.File.Msn.Script;
 using Herculan.Engine.Scene;
 
 namespace Herculan.Engine.Editor;
@@ -11,16 +10,17 @@ namespace Herculan.Engine.Editor;
 /// model is drawn through, the sky and the fog. <see cref="WorldChanged"/> then tells whatever has the scene uploaded to
 /// upload it again.
 ///
-/// <para>Each change writes row 2 through <see cref="MissionDocument.SetHeaderWord"/>, which picks the record that supplies the
-/// word, and generates again; the scene is dressed in the new world and then synced with the document
-/// (<see cref="SceneSync"/>), as after any edit. A campaign mission's launch writes its stage's theater over the header, so its theater is
-/// shown and not changed; its time of day is its own (<see cref="MissionOpener"/>).</para>
+/// <para>The theater and time of day shown, and dressed, are the launch's header words (<see cref="MissionDocument.LaunchHeader"/>):
+/// row 2's base, with what the launch writes over it. Each change writes row 2 through
+/// <see cref="MissionDocument.SetHeaderWord"/>, which picks the record that supplies the word; the scene is dressed in the new
+/// world and then synced with the document (<see cref="SceneSync"/>), as after any edit. A campaign mission's launch writes its
+/// stage's theater over the header, so its theater is shown and not changed; its time of day is its own
+/// (<see cref="MissionOpener"/>).</para>
 ///
 /// <para>The edits run when <see cref="RunRequest"/> is called, once the frame's ImGui is rendered, since reloading the world
 /// replaces what the frame draws with.</para>
 /// </summary>
 internal sealed class TheaterChanger {
-	private readonly ScriptDat _document;
 	private readonly MissionDocument _source;
 	private readonly MissionScene _scene;
 	private readonly MissionIndex _index;
@@ -28,16 +28,9 @@ internal sealed class TheaterChanger {
 	private readonly SceneSync _sync;
 	private (int Word, short Value)? _requested;
 
-	/// <param name="document">
-	/// The generated <c>script.dat</c>, <paramref name="source"/>'s, which the scene's world was loaded from: its header is the
-	/// theater and time of day the launch plays, a campaign stage's theater written over the mission's own
-	/// (<see cref="MissionOpener"/>), which the world is dressed in.
-	/// </param>
 	/// <param name="source">The mission as its <c>.MSN</c>.</param>
 	/// <param name="index">The scene's objects, every one of which is dressed in the new world.</param>
-	public TheaterChanger(ScriptDat document, MissionDocument source, MissionScene scene, MissionIndex index, PointMover mover,
-			SceneSync sync) {
-		_document = document;
+	public TheaterChanger(MissionDocument source, MissionScene scene, MissionIndex index, PointMover mover, SceneSync sync) {
 		_source = source;
 		_scene = scene;
 		_index = index;
@@ -48,14 +41,14 @@ internal sealed class TheaterChanger {
 	/// <summary>Raised once the scene is dressed in another world, for whatever has it uploaded.</summary>
 	public event Action? WorldChanged;
 
-	/// <summary>The theater the mission is shown on, as generated.</summary>
-	public int Theater => _document.TheaterIndex;
+	/// <summary>The theater the mission is shown on, as the launch plays it.</summary>
+	public int Theater => _source.LaunchHeader[MissionOpener.TheaterWord];
 
-	/// <summary>Whether the mission is played by night: the generated header's variant 1.</summary>
-	public bool Night => _document.TheaterVariant != 0;
+	/// <summary>Whether the mission is played by night: the launch's theater variant 1.</summary>
+	public bool Night => Variant != 0;
 
-	/// <summary>The generated header's theater variant, which <see cref="Night"/> reads.</summary>
-	public int Variant => _document.TheaterVariant;
+	/// <summary>The launch's theater variant, which <see cref="Night"/> reads.</summary>
+	public int Variant => _source.LaunchHeader[MissionOpener.VariantWord];
 
 	/// <summary>Why the theater cannot be changed, or null when it can.</summary>
 	public string? WhyTheaterFixed =>
@@ -87,7 +80,7 @@ internal sealed class TheaterChanger {
 			return reason;
 		}
 
-		if ((word == MissionOpener.TheaterWord ? Theater : _document.TheaterVariant) == value) {
+		if ((word == MissionOpener.TheaterWord ? Theater : Variant) == value) {
 			return null;
 		}
 
@@ -113,11 +106,11 @@ internal sealed class TheaterChanger {
 		return null;
 	}
 
-	// Dresses the scene in the world the generated header picks: every object in it, and every object an edit has built
+	// Dresses the scene in the world the launch's header picks: every object in it, and every object an edit has built
 	// that an undo or redo can put back.
 	private void Reload() {
 		var objects = _index.Objects.Concat(_sync.Built).Distinct(ReferenceEqualityComparer.Instance).Cast<SceneObject>().ToList();
-		_scene.ChangeTheater(_document.TheaterIndex, _document.TheaterVariant, objects);
+		_scene.ChangeTheater(Theater, Variant, objects);
 		WorldChanged?.Invoke();
 	}
 

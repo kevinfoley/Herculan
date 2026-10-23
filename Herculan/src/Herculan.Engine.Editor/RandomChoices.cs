@@ -113,8 +113,8 @@ internal sealed class RandomChoices {
 
 	/// <summary>
 	/// What option <paramref name="at"/> of <paramref name="table"/> is, with what tells it from the others: a herc's chassis,
-	/// and its weapons when another option has that chassis; a flyer's type; a structure's or ground vehicle's type and the
-	/// name the MFD prints; a route's waypoint count and length, and its start when another option matches both.
+	/// and its weapons when another option has that chassis; a flyer's type; a structure's or ground vehicle's kind and the
+	/// name the MFD prints, as its view titles it (<see cref="RosterTypeNames.StructureTitle"/>); a route's waypoint count and length, and its start when another option matches both.
 	/// </summary>
 	public string Option(VariantTable table, int at) {
 		var record = Record(table.Alternatives[at]);
@@ -125,7 +125,7 @@ internal sealed class RandomChoices {
 					? $"{ShortName(herc)}: {Weapons(herc)}"
 					: ShortName(herc);
 			case BaseRosterEntry62 structure:
-				return $"{(IsVehicle(structure) ? "Ground vehicle" : "Structure")} type {structure.TypeIndex}: {ShortName(structure)}";
+				return _names.Types.StructureTitle(structure);
 			case WaypointGroup route:
 				var (count, meters, start) = Shape(route);
 				string text = $"{count} waypoint{(count == 1 ? "" : "s")}, {meters:F0} m";

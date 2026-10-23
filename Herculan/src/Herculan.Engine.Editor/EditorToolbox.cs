@@ -42,7 +42,14 @@ internal readonly record struct ToolboxDrag(ToolboxKind Kind, int TypeIndex, Mis
 /// </summary>
 internal sealed class EditorToolbox {
 	/// <summary>Why the selected group cannot be joined once the <c>.MSN</c> has no such group.</summary>
-	public const string GroupGone = "The group is no longer in the mission.";
+	public const string GroupGone = "Not found.";
+
+	/// <summary>Why an object of roster row <paramref name="row"/> (12 to 14) cannot be changed once the <c>.MSN</c> has no record for it.</summary>
+	public static string ObjectGone(int row) => row switch {
+		12 => "Not found.",
+		13 => "Not found.",
+		_ => "Not found.",
+	};
 
 	// Where it first opens and how big, in pixels on a 100% display (ScaledImGui.Scaled): beside the Mission panel,
 	// at the bottom of the window.

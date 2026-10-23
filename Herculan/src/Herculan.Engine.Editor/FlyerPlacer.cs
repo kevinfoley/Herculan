@@ -89,7 +89,6 @@ internal sealed class FlyerPlacer {
 	// Makes an add's change and syncs the scene with it, then records it as one step and selects the object built for
 	// the flyer's row-13 GUID; or, when none was built, puts the records back and says why.
 	private string? Commit(int typeIndex, Func<MsnEdit> add, Func<short> flyer) {
-		var source = _source;
 		MsnEdit change;
 		try {
 			change = _sync.Run(add);
@@ -98,12 +97,9 @@ internal sealed class FlyerPlacer {
 		}
 
 		short added = flyer();
-		bool generated = source.ExportedIndex(FlyerRow, added) != null;
-		if (!generated || _index.ObjectOf(new ObjectKey(FlyerRow, added)) == null) {
+		if (_index.ObjectOf(new ObjectKey(FlyerRow, added)) == null) {
 			_sync.Undo(change);
-			return !generated
-				? "The added flyer was not generated; nothing was added."
-				: $"The install has no flyer type {typeIndex}.";
+			return $"The install has no flyer type {typeIndex}.";
 		}
 
 		_mover.Record(new RecordsEdit(_sync, change));

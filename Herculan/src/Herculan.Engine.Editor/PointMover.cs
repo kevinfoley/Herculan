@@ -150,7 +150,7 @@ internal sealed class PointMover {
 
 	/// <summary>Why <paramref name="sceneObject"/> cannot be given a point of its own, or null when it can.</summary>
 	public string? WhyFixed(SceneObject sceneObject) =>
-		_index.KeyOf(sceneObject) is { } key ? WhyFixed(key) : "Its roster record is not in the file.";
+		_index.KeyOf(sceneObject) is { } key ? WhyFixed(key) : "Not found.";
 
 	/// <summary>
 	/// Why the object of <paramref name="key"/> cannot be given a point of its own, or null when it can. The player's squad
@@ -160,7 +160,7 @@ internal sealed class PointMover {
 	public string? WhyFixed(ObjectKey key) {
 		if (_index.Plan.Object(key) is not { } planned || _index.ObjectOf(key) == null
 				|| _source.Layout.Entry(key.Row, key.Guid) == null) {
-			return "Its roster record is not in the file.";
+			return EditorToolbox.ObjectGone(key.Row);
 		}
 
 		return planned.Squad ? "The player's squad spreads from group 0's point: move group 0 to move it." : null;
@@ -172,7 +172,7 @@ internal sealed class PointMover {
 	/// </summary>
 	public string? WhyFixedGroup(short guid) {
 		if (_index.Group(guid) is not { } group) {
-			return "Its record is not in the file.";
+			return EditorToolbox.GroupGone;
 		}
 
 		bool snaps = group.Setup.PaintsGround && group.Kind == MissionUnitKind.Base;
@@ -355,7 +355,7 @@ internal sealed class PointMover {
 	// every record drawing that variant shares, so it does not count as moving and a point is appended.
 	private void GiveObjectPoint(ObjectTarget target, Vec3i position) {
 		var (row, guid) = target.Key;
-		var entry = _source.Layout.Entry(row, guid) ?? throw new InvalidOperationException("Its roster record is not in the file.");
+		var entry = _source.Layout.Entry(row, guid) ?? throw new InvalidOperationException(EditorToolbox.ObjectGone(row));
 		var (own, word) = entry.Fields switch {
 			MechRosterEntry144 herc => (herc.PositionRef, MechRosterEntry144.PositionRefWord),
 			FlyerRosterEntry102 flyer => (flyer.PositionRef, FlyerRosterEntry102.PositionRefWord),
@@ -376,7 +376,7 @@ internal sealed class PointMover {
 	// group's height moved: a flyer group at the point's Z 0 flies at 5000, and writing 5000 would lift every member whose
 	// slot adds a height of its own.
 	private (GroupMove Move, short Own, IReadOnlyList<short> Start, int Z) PlanGroup(GroupTarget target, Vec3i position) {
-		var group = _index.Group(target.Guid) ?? throw new InvalidOperationException("Its record is not in the file.");
+		var group = _index.Group(target.Guid) ?? throw new InvalidOperationException(EditorToolbox.GroupGone);
 		short own = group.OwnPoint;
 		var start = group.StartPoints;
 		int pointZ = Point(own)?.Z ?? (start.Count > 0 ? Point(start[0])?.Z ?? 0 : 0);

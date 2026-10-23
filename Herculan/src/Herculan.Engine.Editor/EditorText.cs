@@ -60,6 +60,24 @@ internal static class EditorText {
 
 	public static void PopProblemField() => ImGui.PopStyleColor(3);
 
+	/// <summary>
+	/// A <see cref="ImGui.Selectable(string, bool)"/> whose label wraps at the edge of the window or list it is in: a
+	/// label-less selectable as tall as the wrapped text, with the text drawn over it.
+	/// </summary>
+	public static bool WrappedSelectable(string text, string id, bool selected) {
+		float width = ImGui.GetContentRegionAvail().X;
+		var start = ImGui.GetCursorScreenPos();
+		float height = ImGui.CalcTextSize(text, false, width).Y;
+		bool clicked = ImGui.Selectable($"##{id}", selected, ImGuiSelectableFlags.None, new Vector2(0f, height));
+		var next = ImGui.GetCursorScreenPos();
+		ImGui.SetCursorScreenPos(start);
+		ImGui.PushTextWrapPos(ImGui.GetCursorPosX() + width);
+		ImGui.TextUnformatted(text);
+		ImGui.PopTextWrapPos();
+		ImGui.SetCursorScreenPos(next);
+		return clicked;
+	}
+
 	private static readonly Vector4 ProblemColor = new(1f, 0.27f, 0.2f, 1f);
 	private static readonly Vector4 ProblemFieldColor = new(0.36f, 0.2f, 0.2f, 1f);
 	private static readonly Vector4 ProblemFieldHoveredColor = new(0.44f, 0.25f, 0.25f, 1f);

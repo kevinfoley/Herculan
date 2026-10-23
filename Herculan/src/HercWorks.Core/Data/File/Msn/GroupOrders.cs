@@ -166,7 +166,7 @@ public static class GroupOrders {
 	public static string? WhyNoRemove(MissionDocument document, short group, int slot) {
 		var orders = Orders(document, group);
 		if (slot < 0 || slot >= Slots || orders[slot] == -1) {
-			return $"There is no order in slot {slot}.";
+			return $"The group has no order {slot + 1}.";
 		}
 
 		if (Filled(orders) > 1) {
@@ -342,7 +342,7 @@ public static class GroupOrders {
 	internal static short Own(MissionDocument document, short group, int slot) {
 		short order = slot is >= 0 and < Slots ? Orders(document, group)[slot] : (short)-1;
 		if (order == -1) {
-			throw new InvalidOperationException($"There is no order in slot {slot}.");
+			throw new InvalidOperationException($"The group has no order {slot + 1}.");
 		}
 
 		if (!Shared(document, order)) {

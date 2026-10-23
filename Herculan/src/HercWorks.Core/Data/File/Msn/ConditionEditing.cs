@@ -96,38 +96,10 @@ public static class ConditionEditing {
 	public static MissionCondition14 Record(MissionDocument document, short guid) =>
 		IndexOf(document, guid) is { } index
 			? Records(document)[index]
-			: throw new InvalidOperationException($"Condition {guid} is not in the file.");
+			: throw new InvalidOperationException(Gone);
 
-	/// <summary>
-	/// Row 1 as the editor's state loaded it: record <paramref name="guid"/>'s outcome, whether it holds and the draw it made
-	/// (<see cref="MissionGenerator.Conditions"/>).
-	/// </summary>
-	public static ConditionOutcome Outcome(MissionDocument document, short guid) =>
-		IndexOf(document, guid) is { } index && index < document.Generator.Conditions.Count
-			? document.Generator.Conditions[index]
-			: new ConditionOutcome(false, null);
-
-	/// <summary>
-	/// Whether what <paramref name="guid"/> requires holds in the editor's state: it requires nothing, or a record before it
-	/// carrying the GUID it requires survived. For a range, whether its draw was made.
-	/// </summary>
-	public static bool RequirementHolds(MissionDocument document, short guid) {
-		var record = Record(document, guid);
-		if (record.ConditionRef == -1) {
-			return true;
-		}
-
-		int index = IndexOf(document, guid)!.Value;
-		var records = Records(document);
-		var outcomes = document.Generator.Conditions;
-		for (int i = 0; i < index && i < outcomes.Count; i++) {
-			if (records[i].GUID == record.ConditionRef && outcomes[i].Survived) {
-				return true;
-			}
-		}
-
-		return false;
-	}
+	/// <summary>Why a condition that has been deleted from the mission cannot be read or edited.</summary>
+	private const string Gone = "Not found.";
 
 	/// <summary>
 	/// The record a range is over: the first record before it carrying its <c>0x02</c> GUID, whose draw the load's range test
@@ -214,7 +186,7 @@ public static class ConditionEditing {
 	/// <summary>Why condition <paramref name="guid"/> cannot be edited or deleted, or null when it can.</summary>
 	public static string? WhyFixed(MissionDocument document, short guid) {
 		if (IndexOf(document, guid) == null) {
-			return $"Condition {guid} is not in the file.";
+			return Gone;
 		}
 
 		var record = Record(document, guid);
@@ -248,7 +220,7 @@ public static class ConditionEditing {
 		}
 
 		if (IndexOf(document, required) is not { } at) {
-			return $"Condition {required} is not in the file.";
+			return $"The mission has no condition {required}.";
 		}
 
 		if (at > IndexOf(document, guid)!.Value) {

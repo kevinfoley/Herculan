@@ -35,6 +35,14 @@ internal sealed class SyntheticMsn {
 		return stream.ToArray();
 	}
 
+	/// <summary>
+	/// The <c>script.dat</c> index that row <paramref name="row"/>'s GUID <paramref name="guid"/> reached in
+	/// <paramref name="document"/>'s last generation, read from its provenance, or null when the generation dropped it: what a
+	/// test of an edit finds the generated record by.
+	/// </summary>
+	public static int? Exported(MissionDocument document, int row, short guid) =>
+		document.Provenance.Slots(row - 5).FirstOrDefault(slot => document.RecordAt(slot.Created)?.GUID == guid)?.Index;
+
 	/// <summary>A row-1 condition.</summary>
 	public static short[] Condition(short guid, short condition, short type, short lower, short upper, short operand) {
 		var words = new short[7];

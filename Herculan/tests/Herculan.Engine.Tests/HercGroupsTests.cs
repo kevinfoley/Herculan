@@ -24,10 +24,10 @@ public class HercGroupsTests {
 		var document = Open(Mission());
 		byte[] opened = Write(document);
 
-		var change = HercGroups.Create(document, Machine(), side: 1, x: 5000, y: 7000, squadSize: 1, out short mech, out short group);
+		var change = HercGroups.Create(document, Machine(), side: 1, x: 5000, y: 7000, out short mech, out short group);
 
 		var script = document.Script;
-		var made = script.Groups[document.ExportedIndex(16, group)!.Value];
+		var made = script.Groups[Exported(document, 16, group)!.Value];
 		Assert.Equal(mech, document.GuidOf(7, made.MemberRefs[0]));
 		Assert.Equal(1, made.Side);
 		Assert.Equal(-1, made.PositionRef);
@@ -54,25 +54,35 @@ public class HercGroupsTests {
 			.Add(16, Group(10, Hercs, position: -1, condition: -1, 1, -1, 1))
 			.Add(16, Group(11, Hercs, position: -1, condition: -1, 1, 1, 1, 1, 1, 1, 1, 1)));
 
-		HercGroups.Join(document, 10, Machine(), squadSize: 1, out short mech);
+		HercGroups.Join(document, 10, Machine(), out short mech);
 
-		var joined = document.Script.Groups[document.ExportedIndex(16, 10)!.Value];
+		var joined = document.Script.Groups[Exported(document, 16, 10)!.Value];
 		Assert.Equal(mech, document.GuidOf(7, joined.MemberRefs[1]));
 		Assert.NotNull(HercGroups.WhyNoJoin(document, Squad));
 		Assert.NotNull(HercGroups.WhyNoJoin(document, 11));
 		byte[] before = Write(document);
-		Assert.Throws<InvalidOperationException>(() => HercGroups.Join(document, Squad, Machine(), squadSize: 1, out _));
+		Assert.Throws<InvalidOperationException>(() => HercGroups.Join(document, Squad, Machine(), out _));
 		Assert.Equal(before, Write(document));
 	}
 
-	/// <summary>Catches the mech slot cap checked without the squad's machines, which share it, or off by one.</summary>
+	/// <summary>
+	/// Catches the mech slot cap checked without the squad's machines, which share it, without a herc the generation drops,
+	/// which another version of the mission has, or off by one: the player's herc and a squad of one leave room for one more
+	/// herc while the mission has two fewer than the cap, a herc whose condition fails among them, and none with one more.
+	/// </summary>
 	[Fact]
 	public void AddPastTheMechSlotsIsRefused() {
-		var document = Open(Mission());
-		int hercs = document.Script.Mechs.Length;
+		SyntheticMsn Hercs(int count) {
+			var msn = Mission().Add(1, Condition(guid: 0, condition: -1, type: 0, lower: 5, upper: MissionGenerator.OpEqual, operand: 1));
+			for (short guid = 1; guid < count; guid++) {
+				msn.Add(12, Mech(guid, type: 9, condition: guid == 1 ? (short)0 : (short)-1));
+			}
 
-		Assert.Null(HercGroups.WhyNoAdd(document, ScriptDatLint.MechSlotCap - hercs - 1));
-		Assert.NotNull(HercGroups.WhyNoAdd(document, ScriptDatLint.MechSlotCap - hercs));
+			return msn;
+		}
+
+		Assert.Null(HercGroups.WhyNoAdd(Open(Hercs(ScriptDatLint.MechSlotCap - 2))));
+		Assert.NotNull(HercGroups.WhyNoAdd(Open(Hercs(ScriptDatLint.MechSlotCap - 1))));
 	}
 
 	// Group 0, the squad: the player's machine, facing a heading of its own.

@@ -210,8 +210,8 @@ public class ActionEditingTests {
 		Assert.Equal(3, document.Mission.Mechs![1].DefeatActionRef);
 		Assert.Equal(4, document.Mission.Mechs!.Last().DefeatActionRef);
 		Assert.Equal(2, document.Mission.Mechs!.Last().GUID);
-		var herc = document.Script.Mechs[document.ExportedIndex(12, 2)!.Value];
-		Assert.Equal(document.ExportedIndex(10, 4), herc.DefeatActionRef);
+		var herc = document.Script.Mechs[Exported(document, 12, 2)!.Value];
+		Assert.Equal(Exported(document, 10, 4), herc.DefeatActionRef);
 	}
 
 	/// <summary>

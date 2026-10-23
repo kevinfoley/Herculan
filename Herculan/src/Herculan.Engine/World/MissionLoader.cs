@@ -44,7 +44,7 @@ public static class MissionLoader {
 	/// <summary>The mission handoff itself.</summary>
 	public const string ScriptFileName = "script.dat";
 
-	/// <summary>The player's lance, written beside it.</summary>
+	/// <summary>The player's squad, written beside it.</summary>
 	public const string PlayerFileName = "player.mec";
 
 	/// <summary>The mission's own text, written beside it as well.</summary>
@@ -54,7 +54,7 @@ public static class MissionLoader {
 	public const string CountersFileName = "mission.var";
 
 	/// <summary>
-	/// The lance file that goes with a mission file. The live pair in <c>DATA\</c> is
+	/// The squad file that goes with a mission file. The live pair in <c>DATA\</c> is
 	/// <c>script.dat</c>/<c>player.mec</c>; the save-slot snapshots in <c>SAV\</c> keep the same
 	/// pairing with a slot number on both halves (<c>script3.dat</c>/<c>player3.mec</c>).
 	/// </summary>
@@ -136,7 +136,7 @@ public static class MissionLoader {
 		AddBases(script, groups, baseClaims, baseFormations, placements);
 
 		var counters = LoadCounters(CaseInsensitivePath.Combine(Path.GetDirectoryName(scriptPath) ?? ".", CountersFileName));
-		var player = LoadPlayerLance(scriptPath, script, groups, mechFormations, mechNames, placements);
+		var player = LoadPlayerSquad(scriptPath, script, groups, mechFormations, mechNames, placements);
 		var basePads = ResolveBasePads(groups, baseClaims, baseFormations, placements);
 
 		var coordinates = new List<Vec3i>(script.Coordinates.Length);
@@ -604,7 +604,7 @@ public static class MissionLoader {
 	/// <para>A missing <c>player.mec</c> throws <see cref="MissingHandoffFileException"/>, as the
 	/// original asserts on it — see docs/retail/formats/script-dat.md#call-chain--confirmed.</para>
 	/// </summary>
-	private static MissionPlacement? LoadPlayerLance(string scriptPath, ScriptDat script, Group[] groups,
+	private static MissionPlacement? LoadPlayerSquad(string scriptPath, ScriptDat script, Group[] groups,
 			MechFormationTable mechFormations, UnitTypeNames mechNames,
 			List<MissionPlacement> placements) {
 		string playerPath = PlayerPathFor(scriptPath);
@@ -617,7 +617,7 @@ public static class MissionLoader {
 			return null;
 		}
 
-		if (new MecFileTransformer().Parse(File.ReadAllBytes(playerPath)) is not MecFile lance) {
+		if (new MecFileTransformer().Parse(File.ReadAllBytes(playerPath)) is not MecFile squad) {
 			return null;
 		}
 
@@ -625,8 +625,8 @@ public static class MissionLoader {
 		var squadRefs = script.Groups[MissionPlacementRules.SquadGroupIndex].MemberRefs;
 		MissionPlacement? player = null;
 
-		for (int i = 0; i < lance.Entries.Length; i++) {
-			var entry = lance.Entries[i];
+		for (int i = 0; i < squad.Entries.Length; i++) {
+			var entry = squad.Entries[i];
 			int slot = i < MissionPlacementRules.GroupMemberSlots && i < squadRefs.Length && squadRefs[i] >= 0
 				? squadRefs[i]
 				: -1;
@@ -642,7 +642,7 @@ public static class MissionLoader {
 				place.Heading,
 				entry.WeaponRefs,
 				entry.WeaponAmmoTypes,
-				IsPlayerLance: true,
+				IsPlayerSquad: true,
 				PilotIndex: entry.PilotNameIndex,
 				Side: spawn.Side,
 				FormationOffset: place.FormationOffset,
@@ -650,7 +650,7 @@ public static class MissionLoader {
 				GroundPoint: place.GroundPoint);
 
 			placements.Add(placement);
-			if (i == lance.PlayerEntryIndex) {
+			if (i == squad.PlayerEntryIndex) {
 				player = placement;
 			}
 		}

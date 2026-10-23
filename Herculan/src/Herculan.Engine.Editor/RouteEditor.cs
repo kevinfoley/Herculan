@@ -36,7 +36,7 @@ internal sealed class RouteEditor {
 	private const int RouteRow = 8;
 
 	/// <summary>Why a route the selection names is not edited once the <c>.MSN</c> has no such route.</summary>
-	public const string Gone = "The route is no longer in the mission.";
+	public const string Gone = "Not found.";
 
 	private readonly MissionDocument _source;
 	private readonly MissionIndex _index;

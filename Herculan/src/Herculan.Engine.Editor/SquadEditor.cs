@@ -6,31 +6,27 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// The player's squad as the layout holds it, by GUID (<see cref="SquadRoster"/>), and its squadmates added and removed, as
 /// one step of <see cref="PointMover"/>'s undo history each, through <see cref="SquadRoster"/>'s record edits; the editor's
-/// state is then built again (<see cref="SceneSync"/>), which builds the handoff's <c>player.mec</c> again first
-/// (docs/herculan/handoff-editor-roster.md#the-players-squad).
+/// state is then built again (<see cref="SceneSync"/>) (docs/herculan/handoff-editor-roster.md#the-players-squad).
 ///
 /// <para>A new squadmate is the player's HERC's chassis as the mission holds it now, with that chassis's stock fit
 /// (<see cref="MachineFitter.StockFit"/>), as a Herc Type choice gives it. An add is refused past
 /// <see cref="SquadRoster.MaxSquadmates"/> and past DBSIM's block-7 slots (<see cref="ScriptDatLint.MechSlotCap"/>),
-/// which the squad's machines share with the roster, counted as the mission check counts them, over the generation the game's
-/// load makes, the add taking one more of each.</para>
+/// which the squad's machines share with the roster, counted over every version of the mission
+/// (<see cref="HercGroups.WhyNoRoom"/>), the add taking one more of each: a row-12 GUID and a squad position.</para>
 ///
 /// <para>The edits run when <see cref="RunRequest"/> is called, once the frame's ImGui is rendered, since the rebuild
 /// changes what the panels list.</para>
 /// </summary>
 internal sealed class SquadEditor {
 	private readonly MissionDocument _source;
-	private readonly GeneratedIndex _index;
 	private readonly PointMover _mover;
 	private readonly SceneSync _sync;
 	private readonly MachineFitter _fitter;
 	private readonly ObjectDeleter _deleter;
 	private Func<string?>? _requested;
 
-	public SquadEditor(MissionDocument source, GeneratedIndex index, PointMover mover, SceneSync sync, MachineFitter fitter,
-			ObjectDeleter deleter) {
+	public SquadEditor(MissionDocument source, PointMover mover, SceneSync sync, MachineFitter fitter, ObjectDeleter deleter) {
 		_source = source;
-		_index = index;
 		_mover = mover;
 		_sync = sync;
 		_fitter = fitter;
@@ -61,11 +57,8 @@ internal sealed class SquadEditor {
 				return reason;
 			}
 
-			int hercs = _source.Script.Mechs.Length;
-			int squad = _index.Mission.Placements.Count(placement => placement.IsPlayerLance);
-			if (hercs + squad + 2 > ScriptDatLint.MechSlotCap) {
-				return $"The mission already has {hercs} hercs plus a squad of {squad}, and DBSIM holds "
-					+ $"{ScriptDatLint.MechSlotCap} in all.";
+			if (HercGroups.WhyNoRoom(_source.Layout, 2) is { } full) {
+				return full;
 			}
 
 			return Player is { } player && _fitter.Record(player) is { } record && _fitter.StockFit(record.TypeIndex) == null

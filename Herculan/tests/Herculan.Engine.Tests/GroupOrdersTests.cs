@@ -58,9 +58,9 @@ public class GroupOrdersTests {
 
 		short own = GroupOrders.Orders(document, 10)[0];
 		Assert.NotEqual(20, own);
-		Assert.Equal(5, document.Script.Orders[document.ExportedIndex(15, own)!.Value].Verb);
+		Assert.Equal(5, document.Script.Orders[Exported(document, 15, own)!.Value].Verb);
 		Assert.Equal(20, GroupOrders.Orders(document, 11)[0]);
-		Assert.Equal(0, document.Script.Orders[document.ExportedIndex(15, 20)!.Value].Verb);
+		Assert.Equal(0, document.Script.Orders[Exported(document, 15, 20)!.Value].Verb);
 		Assert.False(GroupOrders.Shared(document, own));
 	}
 
@@ -111,7 +111,7 @@ public class GroupOrdersTests {
 
 		GroupOrders.SetVerb(document, 10, 0, HercGroups.SearchDestroy);
 
-		var order = document.Script.Orders[document.ExportedIndex(15, 20)!.Value];
+		var order = document.Script.Orders[Exported(document, 15, 20)!.Value];
 		Assert.Equal(HercGroups.GroupSubject, order.SubjectKind);
 		Assert.Equal(0, order.SubjectRef);
 		Assert.Throws<InvalidOperationException>(() => GroupOrders.SetSubject(document, 10, 0, -1, -1));

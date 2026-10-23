@@ -32,7 +32,7 @@ internal sealed class RosterTypeEditor {
 	/// record the layout has, one the mission as opened leaves out included.
 	/// </summary>
 	public string? WhyFixed(int row, short guid) =>
-		_source.Layout.Entry(row, guid) == null ? "Its record is not in the file." : null;
+		_source.Layout.Entry(row, guid) == null ? EditorToolbox.ObjectGone(row) : null;
 
 	/// <summary>
 	/// The variant alternative a type change of roster row <paramref name="row"/>'s GUID <paramref name="guid"/> asked to write

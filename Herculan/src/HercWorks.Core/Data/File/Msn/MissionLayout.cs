@@ -59,6 +59,14 @@ public sealed class MissionLayout {
 	/// <summary>Row 2's header patches as one header, or null when the row has no record.</summary>
 	public LayoutHeader? Header { get; private set; }
 
+	/// <summary>
+	/// The ten header words (<c>script.dat</c> offset <c>word * 2</c>) as row 2's base patches them, <see cref="Header"/>'s
+	/// <see cref="LayoutHeader.Words"/>; with no row-2 record, each word's unset value (<see cref="MissionSettingsPatch.Unset"/>),
+	/// what the load's header holds before row 2 patches it.
+	/// </summary>
+	public IReadOnlyList<short> HeaderWords =>
+		Header?.Words ?? Enumerable.Range(0, MissionGeneration.HeaderWords).Select(MissionSettingsPatch.Unset).ToArray();
+
 	/// <summary>Row 17's objectives, by index; an entry the file ends inside of (<see cref="MissionFile.Objectives"/>) is left out.</summary>
 	public IReadOnlyList<LayoutObjective> Objectives => _objectives;
 

@@ -56,7 +56,7 @@ public class RosterFitTests {
 		RosterFit.Write(document, First, RosterFit.Chassis(15, weapons, ammo), toAlternative: true, _ => false);
 
 		foreach (short herc in new[] { First, Second }) {
-			Assert.Equal(15, document.Script.Mechs[document.ExportedIndex(12, herc)!.Value].TypeIndex);
+			Assert.Equal(15, document.Script.Mechs[Exported(document, 12, herc)!.Value].TypeIndex);
 			Assert.Equal(weapons, Weapons(document, herc));
 		}
 	}
@@ -91,5 +91,5 @@ public class RosterFitTests {
 	}
 
 	private static short[] Weapons(MissionDocument document, short guid) =>
-		document.Script.Mechs[document.ExportedIndex(12, guid)!.Value].WeaponRefs;
+		document.Script.Mechs[Exported(document, 12, guid)!.Value].WeaponRefs;
 }

@@ -98,7 +98,6 @@ internal sealed class VehiclePlacer {
 	// Makes an add's change and syncs the scene with it, then records it as one step and selects the object built for
 	// the vehicle's row-14 GUID; or, when none was built, puts the records back and says why.
 	private string? Commit(int typeIndex, Func<MsnEdit> add, Func<short> vehicle) {
-		var source = _source;
 		MsnEdit change;
 		try {
 			change = _sync.Run(add);
@@ -107,12 +106,9 @@ internal sealed class VehiclePlacer {
 		}
 
 		short added = vehicle();
-		bool generated = source.ExportedIndex(BaseRow, added) != null;
-		if (!generated || _index.ObjectOf(new ObjectKey(BaseRow, added)) == null) {
+		if (_index.ObjectOf(new ObjectKey(BaseRow, added)) == null) {
 			_sync.Undo(change);
-			return !generated
-				? "The added ground vehicle was not generated; nothing was added."
-				: $"The install has no structure type {typeIndex}.";
+			return $"The install has no structure type {typeIndex}.";
 		}
 
 		_mover.Record(new RecordsEdit(_sync, change));

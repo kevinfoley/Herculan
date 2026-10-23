@@ -80,14 +80,6 @@ public sealed class MissionGenerator {
 	private readonly short[] _flags;
 	private readonly Func<short, int> _roll;
 
-	/// <summary>Each surviving row-1 record's index in the file, beside <see cref="_conditions"/>.</summary>
-	private readonly List<int> _conditionIndex = new();
-
-	/// <summary>The pick of the draw under way, for the record that asked (<see cref="VariantPicks"/>).</summary>
-	private (int? Table, int? Range) _lastPick;
-
-	private readonly Dictionary<MsnRecordId, VariantPick> _picks = new();
-
 	private MissionGenerator(short[] flags, Func<short, int> roll) {
 		_flags = flags;
 		_roll = roll;
@@ -102,20 +94,6 @@ public sealed class MissionGenerator {
 
 	/// <summary>Which <c>.MSN</c> and <c>.ENG</c> records supplied each exported record and <c>mission.str</c> line.</summary>
 	public MissionProvenance Provenance { get; } = new();
-
-	/// <summary>
-	/// Row 1 as the load read it, one entry per record in file order (its index in <see cref="MissionFile.Conditions"/>):
-	/// whether it survived, and for a type-1 survivor the draw it made. Reading it changes nothing the load writes.
-	/// </summary>
-	public IReadOnlyList<ConditionOutcome> Conditions => _outcomes;
-
-	private readonly List<ConditionOutcome> _outcomes = new();
-
-	/// <summary>
-	/// What each record of rows 6 to 8 and 12 to 15 that draws by a variant key drew, by its row and index in the file: the
-	/// table whose range held the draw, that range, and the record copied from. Reading it changes nothing the load writes.
-	/// </summary>
-	public IReadOnlyDictionary<MsnRecordId, VariantPick> VariantPicks => _picks;
 
 	/// <summary>
 	/// Loads a mission. <paramref name="flags"/> is the campaign flag array the row-1 comparisons read,
@@ -221,7 +199,6 @@ public sealed class MissionGenerator {
 		int count = reader.Short();
 		for (int i = 0; i < count; i++) {
 			short[] record = reader.Words(7);
-			int survivors = _conditions.Count;
 			switch (record[MissionCondition14.TypeWord]) {
 				case 0:
 					if (Gate(record[condition], _conditions.Count)) {
@@ -254,14 +231,6 @@ public sealed class MissionGenerator {
 
 					break;
 			}
-
-			bool survived = _conditions.Count > survivors;
-			if (survived) {
-				_conditionIndex.Add(i);
-			}
-
-			_outcomes.Add(new ConditionOutcome(survived,
-				survived && record[MissionCondition14.TypeWord] == 1 ? record[upper] : (short?)null));
 		}
 	}
 
@@ -326,7 +295,6 @@ public sealed class MissionGenerator {
 		const int lower = MissionCondition14.FlagIndexOrRangeLowerWord;
 		const int upper = MissionCondition14.OperatorOrRangeUpperOrResultWord;
 		const int draw = MissionCondition14.LatestDrawWord;
-		_lastPick = (null, null);
 		for (int parent = 0; parent < _conditions.Count; parent++) {
 			var record = _conditions[parent];
 			if (record[type] != 3 || record[lower] != variant) {
@@ -344,7 +312,6 @@ public sealed class MissionGenerator {
 			}
 
 			if (picked >= 0) {
-				_lastPick = (_conditionIndex[parent], _conditionIndex[picked]);
 				return picked;
 			}
 		}
@@ -355,10 +322,9 @@ public sealed class MissionGenerator {
 	/// <summary>
 	/// <c>Msn_VariantSourceRow6</c> (<c>00416120</c>) and its six siblings: the variant picked, then the first of the row's first
 	/// <paramref name="count"/> records whose condition is that variant's GUID. That record is what a
-	/// record with a variant field copies its fields from. What record <paramref name="index"/> of <c>.MSN</c> row
-	/// <paramref name="msnRow"/>, the record asking, drew goes to <see cref="VariantPicks"/>.
+	/// record with a variant field copies its fields from.
 	/// </summary>
-	private int VariantSource(IReadOnlyList<short[]> row, short variant, int count, int msnRow, int index) {
+	private int VariantSource(IReadOnlyList<short[]> row, short variant, int count) {
 		int picked = PickVariant(variant);
 		int source = -1;
 		for (int i = 0; picked >= 0 && i < count; i++) {
@@ -369,14 +335,8 @@ public sealed class MissionGenerator {
 			}
 		}
 
-		Picked(msnRow, index, source);
 		return source;
 	}
-
-	/// <summary>Files what record <paramref name="index"/> of <paramref name="msnRow"/> drew: <see cref="_lastPick"/>, and slot <paramref name="source"/> of its row or none.</summary>
-	private void Picked(int msnRow, int index, int source) =>
-		_picks[new MsnRecordId(msnRow, index)] = new VariantPick(_lastPick.Table, _lastPick.Range,
-			source >= 0 ? Provenance.CreatedAt(msnRow, source) : null);
 
 	// ---- Row 2: the header patches --------------------------------------------------------------
 
@@ -666,7 +626,7 @@ public sealed class MissionGenerator {
 			}
 
 			short variantKey = record[MapPoint22.VariantKeyWord];
-			if (variantKey != -1 && VariantSource(_points, variantKey, _points.Count, 6, i) is >= 0 and var source) {
+			if (variantKey != -1 && VariantSource(_points, variantKey, _points.Count) is >= 0 and var source) {
 				CopyVariant(_points, source, record, 6);
 			}
 
@@ -702,7 +662,7 @@ public sealed class MissionGenerator {
 			}
 
 			short variantKey = record[Heading10.VariantKeyWord];
-			if (variantKey != -1 && VariantSource(_headings, variantKey, _headings.Count, 7, i) is >= 0 and var source) {
+			if (variantKey != -1 && VariantSource(_headings, variantKey, _headings.Count) is >= 0 and var source) {
 				CopyVariant(_headings, source, record, 7);
 			}
 
@@ -737,7 +697,6 @@ public sealed class MissionGenerator {
 					}
 				}
 
-				Picked(8, i, source);
 				if (source >= 0) {
 					const int list = MergeRules.RouteListWord;
 					group.Words[list] = _waypointGroups[source].Words[list];
@@ -843,7 +802,7 @@ public sealed class MissionGenerator {
 				record[MechRosterEntry144.HeadingRefWord] = Ref(_headings, record[MechRosterEntry144.HeadingRefWord]);
 				record[MechRosterEntry144.EngagementActionRefWord] = Ref(_actions, record[MechRosterEntry144.EngagementActionRefWord]);
 				record[MechRosterEntry144.DefeatActionRefWord] = Ref(_actions, record[MechRosterEntry144.DefeatActionRefWord]);
-			} else if (VariantSource(_hercs, record[MechRosterEntry144.VariantKeyWord], _hercs.Count, 12, i) is >= 0 and var source) {
+			} else if (VariantSource(_hercs, record[MechRosterEntry144.VariantKeyWord], _hercs.Count) is >= 0 and var source) {
 				CopyVariant(_hercs, source, record, 12);
 			}
 
@@ -865,7 +824,7 @@ public sealed class MissionGenerator {
 				record[FlyerRosterEntry102.HeadingRefWord] = Ref(_headings, record[FlyerRosterEntry102.HeadingRefWord]);
 				record[FlyerRosterEntry102.EngagementActionRefWord] = Ref(_actions, record[FlyerRosterEntry102.EngagementActionRefWord]);
 				record[FlyerRosterEntry102.DefeatActionRefWord] = Ref(_actions, record[FlyerRosterEntry102.DefeatActionRefWord]);
-			} else if (VariantSource(_flyers, record[FlyerRosterEntry102.VariantKeyWord], _flyers.Count, 13, i) is >= 0 and var source) {
+			} else if (VariantSource(_flyers, record[FlyerRosterEntry102.VariantKeyWord], _flyers.Count) is >= 0 and var source) {
 				CopyVariant(_flyers, source, record, 13);
 			}
 
@@ -890,7 +849,7 @@ public sealed class MissionGenerator {
 				record[BaseRosterEntry62.HeadingRefWord] = Ref(_headings, record[BaseRosterEntry62.HeadingRefWord]);
 				record[BaseRosterEntry62.EngagementActionRefWord] = Ref(_actions, record[BaseRosterEntry62.EngagementActionRefWord]);
 				record[BaseRosterEntry62.DefeatActionRefWord] = Ref(_actions, record[BaseRosterEntry62.DefeatActionRefWord]);
-			} else if (VariantSource(_bases, record[BaseRosterEntry62.VariantKeyWord], _bases.Count, 14, i) is >= 0 and var source) {
+			} else if (VariantSource(_bases, record[BaseRosterEntry62.VariantKeyWord], _bases.Count) is >= 0 and var source) {
 				CopyVariant(_bases, source, record, 14);
 			}
 
@@ -923,7 +882,7 @@ public sealed class MissionGenerator {
 					3 => Ref(_bases, record[subject]),
 					_ => record[subject],
 				};
-			} else if (VariantSource(_orders, record[MissionOrder22.VariantKeyWord], _orders.Count, 15, i) is >= 0 and var source) {
+			} else if (VariantSource(_orders, record[MissionOrder22.VariantKeyWord], _orders.Count) is >= 0 and var source) {
 				CopyVariant(_orders, source, record, 15);
 			}
 
@@ -1305,17 +1264,6 @@ public sealed class MissionGenerator {
 		public void Skip(int count) => _at += Math.Max(count, 0);
 	}
 }
-
-/// <summary>One row-1 record as the load read it (<see cref="MissionGenerator.Conditions"/>).</summary>
-/// <param name="Survived">Whether it survived, so that a condition ref naming its GUID passes.</param>
-/// <param name="Draw">For a type-1 survivor, the draw it made, below its bound; null otherwise.</param>
-public readonly record struct ConditionOutcome(bool Survived, short? Draw);
-
-/// <summary>What one variant-keyed record drew (<see cref="MissionGenerator.VariantPicks"/>).</summary>
-/// <param name="Table">The row-1 index of the type-3 record whose range held the draw; null when no table's did.</param>
-/// <param name="Range">The row-1 index of that range; null with <paramref name="Table"/>.</param>
-/// <param name="Source">The record of its own row it copied from, the first conditioned on the range read before it; null when none was.</param>
-public readonly record struct VariantPick(int? Table, int? Range, MsnRecordId? Source);
 
 /// <summary>
 /// One row-12 record as <c>MsnGen_LoadMission</c> builds a squad machine from it: its chassis, ten

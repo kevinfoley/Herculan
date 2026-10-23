@@ -74,10 +74,6 @@ public static class ObjectiveEditing {
 	public static int? RecordOf(MissionDocument document, int objective) =>
 		document.Provenance.Slot(ObjectiveBlock, objective)?.Created.Index;
 
-	/// <summary>The block-12 index row-17 record <paramref name="record"/> is exported at, or null when it fails its condition.</summary>
-	public static int? ExportedIndex(MissionDocument document, int record) =>
-		document.Provenance.ExportedSlot(new MsnRecordId(Row, record))?.Index;
-
 	/// <summary>Row-17 record <paramref name="record"/>, throwing for one the row does not have.</summary>
 	public static MissionObjective58 Record(MissionDocument document, int record) =>
 		document.Mission.Objectives is { } row && record >= 0 && record < row.Length && row[record] is { } found

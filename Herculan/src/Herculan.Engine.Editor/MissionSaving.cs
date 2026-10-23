@@ -376,10 +376,7 @@ internal sealed class MissionSaving {
 		Write(request);
 	}
 
-	private List<ScriptLintFinding> Check() {
-		var mission = _mission!;
-		return ScriptDatLint.Check(mission.Source.Script, MissionLint.SquadOf(mission.Mission), mission.Source.Provenance.Lines.Count);
-	}
+	private List<ScriptLintFinding> Check() => MissionLint.Check(_mission!.Source);
 
 	private bool InArchive(string name) =>
 		MissionFileLaunch.List(_shellContent())
@@ -411,7 +408,8 @@ internal sealed class MissionSaving {
 	private void RunExport(string folder) {
 		var document = _mission!.Source;
 		try {
-			var written = HandoffExport.Write(folder, _installRoot, _handoffDirectory, document.ScriptBytes, document.MissionText);
+			var written = HandoffExport.Write(folder, _installRoot, _handoffDirectory, document.ScriptBytes, document.MissionText,
+				_mission.PlayerSquad.PlayerMec(document.Generator));
 			Console.WriteLine($"Exported {_mission.Name} as {string.Join(", ", written)}.");
 			ShowMessage($"Exported {_mission.Name} into {folder}: {string.Join(", ", written.Select(Path.GetFileName))}.");
 		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException) {

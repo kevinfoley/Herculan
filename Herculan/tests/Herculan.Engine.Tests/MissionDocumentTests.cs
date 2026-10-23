@@ -180,9 +180,9 @@ public class MissionDocumentTests {
 			out short guid);
 
 		Assert.DoesNotContain(document.Mission.Bases!.SkipLast(1), record => record.GUID == guid);
-		Assert.Equal(document.Script.Bases.Length - 1, document.ExportedIndex(14, guid));
-		Assert.Equal(0, document.ExportedIndex(14, 2));
-		Assert.Equal(1, document.ExportedIndex(14, 0));
+		Assert.Equal(document.Script.Bases.Length - 1, Exported(document, 14, guid));
+		Assert.Equal(0, Exported(document, 14, 2));
+		Assert.Equal(1, Exported(document, 14, 0));
 	}
 
 	/// <summary>
@@ -204,7 +204,7 @@ public class MissionDocumentTests {
 		var script = document.Script;
 		Assert.Equal(2, script.Groups.Length);
 		Assert.Equal(-1, script.Orders[0].SubjectRef);
-		Assert.Equal(document.ExportedIndex(16, 3), script.Objectives[0].SubjectRef);
+		Assert.Equal(Exported(document, 16, 3), script.Objectives[0].SubjectRef);
 		Assert.Equal(3, document.Mission.Objectives![0]!.SubjectRef);
 	}
 
@@ -322,7 +322,7 @@ public class MissionDocumentTests {
 
 		ActionWiring.SetDeployment(document, 2, 3);
 
-		Assert.Null(document.ExportedIndex(16, 2));
+		Assert.Null(Exported(document, 16, 2));
 		Assert.Equal(3, document.Mission.Groups![1].DeploymentActionRef);
 	}
 

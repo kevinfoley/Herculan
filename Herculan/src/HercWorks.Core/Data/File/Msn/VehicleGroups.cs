@@ -27,8 +27,9 @@ namespace HercWorks.Core.Data.File.Msn;
 /// so it takes its formation post, as 29 of the 30 retail convoy members past slot 0 do.</para>
 ///
 /// <para>Block 9 holds DBSIM's <see cref="ScriptDatLint.BaseSlotCap"/> structure slots, which ground vehicles share
-/// (docs/retail/formats/script-dat.md#the-two-pass-read--and-what-it-means-for-dbsim-keeps): an add that would pass it is
-/// refused, counted as the mission check counts it.</para>
+/// (docs/retail/formats/script-dat.md#the-two-pass-read--and-what-it-means-for-dbsim-keeps): an add that would pass it in
+/// any version of the mission is refused, counting every row-14 GUID of the layout whatever its condition, as a structure's
+/// add counts them.</para>
 /// </summary>
 public static class VehicleGroups {
 	/// <summary>
@@ -67,9 +68,9 @@ public static class VehicleGroups {
 
 	/// <summary>Why no ground vehicle can be added to <paramref name="document"/>, or null when one can.</summary>
 	public static string? WhyNoAdd(MissionDocument document) {
-		int bases = document.Script.Bases.Length;
+		int bases = document.Layout.Entries(BaseRow).Count;
 		return bases + 1 > ScriptDatLint.BaseSlotCap
-			? $"The mission already has {bases} structures and ground vehicles, as many as DBSIM holds."
+			? $"At maximum structure limit ({ScriptDatLint.BaseSlotCap})."
 			: null;
 	}
 

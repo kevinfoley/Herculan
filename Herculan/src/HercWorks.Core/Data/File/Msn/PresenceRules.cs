@@ -114,7 +114,7 @@ public static class PresenceRules {
 	private const int Row = 1;
 
 	/// <summary>Why a reading is not clauses, in the editor's words.</summary>
-	private const string Missing = "The rule it names is not in the file, so it is never present.";
+	private const string Missing = "It depends on a condition the mission does not have, so it is never present.";
 	private const string Twice = "A rule it depends on is carried twice in the file, so it is set under Advanced.";
 	private const string Option = "It is one option of a random choice, so it is set under Advanced.";
 	private const string Shared = "It shares its roll with other records, so its chance is set under Advanced.";
@@ -187,7 +187,7 @@ public static class PresenceRules {
 	public static PresenceReading Read(MissionDocument document, PresenceTarget target) {
 		var records = RecordConditions.Records(document, target);
 		if (records.Count == 0) {
-			return new PresenceReading(null, "It is not in the file.", []);
+			return new PresenceReading(null, RecordConditions.Gone(target), []);
 		}
 
 		if (RecordConditions.Shared(document, target) is not { } condition) {
@@ -263,7 +263,7 @@ public static class PresenceRules {
 		return change;
 	}
 
-	// Why <guid> cannot be a link of a chain: not in the file, carried twice, a random choice's, or of no type the load reads.
+	// Why <guid> cannot be a link of a chain: deleted, carried twice, a random choice's, or of no type the load reads.
 	private static string? Why(MissionDocument document, short guid) {
 		if (ConditionEditing.IndexOf(document, guid) == null) {
 			return Missing;

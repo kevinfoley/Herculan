@@ -901,7 +901,7 @@ public sealed class EditorHost {
 
 	private static void ReportLoaded(EditorMission opened) {
 		Console.WriteLine(
-			$"Mission {opened.Name}: zone {opened.Mission.Header.ZoneIndex}, theater {opened.Mission.Header.TheaterIndex}. " +
+			$"Mission {opened.Name}: zone {opened.Zone}, theater {opened.Theater.Theater}. " +
 			$"Placed {opened.Index.Objects.Count} objects, {opened.Index.Objects.Count(placed => placed.Model == null)} without a model.");
 	}
 

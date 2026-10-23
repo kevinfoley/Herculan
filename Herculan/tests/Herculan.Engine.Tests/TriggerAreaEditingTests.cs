@@ -28,7 +28,7 @@ public class TriggerAreaEditingTests {
 		var record = Array.Find(document.Mission.TriggerAreas!, candidate => candidate.GUID == area)!;
 		Assert.Equal((-1, -1, TriggerAreaEditing.Box), (record.ConditionRef, record.Unk04, record.Shape));
 		var script = document.Script;
-		var exported = script.TriggerAreas[document.ExportedIndex(9, area)!.Value];
+		var exported = script.TriggerAreas[Exported(document, 9, area)!.Value];
 		Assert.Equal((100, 200, 0), (script.Coordinates[exported.PointRef].X, script.Coordinates[exported.PointRef].Y, script.Coordinates[exported.PointRef].Z));
 		Assert.Equal((300, 400), (script.Coordinates[exported.SecondPointOrRadius].X, script.Coordinates[exported.SecondPointOrRadius].Y));
 		document.Undo(change);
@@ -49,7 +49,7 @@ public class TriggerAreaEditingTests {
 
 		var document = Open(new SyntheticMsn());
 		TriggerAreaEditing.CreateCircle(document, (0, 0), 5000, out short area);
-		Assert.Equal(500, document.Script.TriggerAreas[document.ExportedIndex(9, area)!.Value].SecondPointOrRadius);
+		Assert.Equal(500, document.Script.TriggerAreas[Exported(document, 9, area)!.Value].SecondPointOrRadius);
 	}
 
 	/// <summary>Catches a box of no width or no depth being added, which DBSIM's strict box test can never catch anything in.</summary>
@@ -83,7 +83,7 @@ public class TriggerAreaEditingTests {
 		var record = document.AreaRecord(4);
 		Assert.Equal(TriggerAreaEditing.Circle, record.Shape);
 		Assert.Equal(50, record.SecondPointOrRadius);
-		var centre = document.Script.Coordinates[document.ExportedIndex(6, record.PointRef)!.Value];
+		var centre = document.Script.Coordinates[Exported(document, 6, record.PointRef)!.Value];
 		Assert.Equal((500, 200), (centre.X, centre.Y));
 		Assert.Contains(document.Mission.Points!, point => point.GUID == 2);
 
@@ -174,7 +174,7 @@ public class TriggerAreaEditingTests {
 		TriggerAreaEditing.SetRadius(document, 4, 7000);
 
 		Assert.Equal(new short[] { 100, 700 }, document.Mission.TriggerAreas!.Select(record => record.SecondPointOrRadius));
-		Assert.Equal(700, document.Script.TriggerAreas[document.ExportedIndex(9, 4)!.Value].SecondPointOrRadius);
+		Assert.Equal(700, document.Script.TriggerAreas[Exported(document, 9, 4)!.Value].SecondPointOrRadius);
 	}
 
 	// A row-9 box trigger area between row-6 GUIDs <first> and <second>.

@@ -8,10 +8,11 @@ namespace Herculan.Engine.Editor;
 /// mission's zone choice and the Mission view (docs/herculan/handoff-editor-viewing.md#new-mission): built once per editor
 /// run, the first time either asks, from the missions the archives hold (<see cref="ArchivedMissions"/>). A mission's zone is
 /// header word 1 (<c>script.dat</c> offset 2, docs/retail/formats/script-dat.md#header-format) as its row-2 base patches it
-/// (<see cref="LayoutHeader.Words"/>); no launch writes over it.
+/// (<see cref="MissionLayout.HeaderWords"/>); no launch writes over it.
 /// </summary>
 internal sealed class ZoneCatalog {
-	private const int ZoneWord = 2 / 2;
+	/// <summary>The header word that holds the zone, <c>script.dat</c> offset 2.</summary>
+	public const int ZoneWord = 2 / 2;
 
 	private readonly GameContent _simulator;
 	private readonly ArchivedMissions _missions;
@@ -33,7 +34,8 @@ internal sealed class ZoneCatalog {
 	private List<ZoneChoice> Build() {
 		var usedBy = new Dictionary<short, List<string>>();
 		foreach (var mission in _missions.All) {
-			if (MissionLayout.Build(mission.Mission).Header?.Words is not { } words || words[ZoneWord] == MissionSettingsPatch.Unset(ZoneWord)) {
+			var words = MissionLayout.Build(mission.Mission).HeaderWords;
+			if (words[ZoneWord] == MissionSettingsPatch.Unset(ZoneWord)) {
 				continue;
 			}
 

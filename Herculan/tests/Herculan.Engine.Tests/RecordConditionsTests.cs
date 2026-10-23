@@ -47,13 +47,13 @@ public class RecordConditionsTests {
 			.Add(14, Base(1))
 			.Add(14, Base(1))
 			.Add(16, Group(10, Structures, position: -1, condition: -1, 1)));
-		Assert.NotNull(document.ExportedIndex(14, 1));
+		Assert.NotNull(Exported(document, 14, 1));
 
 		RecordConditions.SetPresence(document, PresenceTarget.Of(14, 1), Fails, out short written);
 
 		Assert.Equal(1, written);
 		Assert.All(document.Mission.Bases!.Where(record => record.GUID == 1), record => Assert.Equal(Fails, record.ConditionRef));
-		Assert.Null(document.ExportedIndex(14, 1));
+		Assert.Null(Exported(document, 14, 1));
 	}
 
 	/// <summary>
@@ -94,13 +94,13 @@ public class RecordConditionsTests {
 			.Add(12, Mech(-1, type: 3, condition: 2))
 			.Add(12, Mech(5, type: -1, variant: key))
 			.Add(16, Group(10, Hercs, position: -1, condition: -1, 5)));
-		Assert.Equal(3, document.Script.Mechs[document.ExportedIndex(12, 5)!.Value].TypeIndex);
+		Assert.Equal(3, document.Script.Mechs[Exported(document, 12, 5)!.Value].TypeIndex);
 
 		RecordConditions.SetPresence(document, PresenceTarget.Of(12, 5), Fails, out _);
 
 		Assert.Equal(Fails, Assert.Single(document.Mission.Mechs!, record => record.GUID == 5).ConditionRef);
 		Assert.Equal(2, Assert.Single(document.Mission.Mechs!, record => record.GUID == -1).ConditionRef);
-		Assert.Null(document.ExportedIndex(12, 5));
+		Assert.Null(Exported(document, 12, 5));
 	}
 
 	// Condition 0, which fails, and group 0, the squad: the player's machine, facing a heading of its own.

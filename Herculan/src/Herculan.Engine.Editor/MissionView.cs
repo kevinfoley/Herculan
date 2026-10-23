@@ -15,7 +15,7 @@ internal sealed class MissionView {
 	private readonly MissionTextView _text;
 
 	/// <param name="name">What the window title calls the mission, which a Save As changes.</param>
-	/// <param name="zone">The zone the mission is played in, as generated, described by <see cref="ZoneCatalog.Describe"/>.</param>
+	/// <param name="zone">The zone the mission is played in, as the launch plays it (<see cref="EditorMission.Zone"/>), described by <see cref="ZoneCatalog.Describe"/>.</param>
 	/// <param name="labels">Each theater's label, in theater order (<see cref="TheaterNames.Labels"/>).</param>
 	public MissionView(Func<string> name, Func<string> zone, TheaterChanger theaters, IReadOnlyList<string> labels,
 			MissionTextView text) {

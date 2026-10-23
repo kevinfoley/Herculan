@@ -139,7 +139,7 @@ internal sealed class NewMissionDialog {
 			ImGui.TextWrapped("The install has no terrain zones.");
 		} else if (ImGui.BeginListBox("##zones", new Vector2(-1f, ScaledImGui.Scaled(ListHeight)))) {
 			for (int i = 0; i < zones.Count; i++) {
-				if (ImGui.Selectable(zones[i].Label, i == _zone)) {
+				if (EditorText.WrappedSelectable(zones[i].Label, $"zone{i}", i == _zone)) {
 					_zone = i;
 				}
 			}

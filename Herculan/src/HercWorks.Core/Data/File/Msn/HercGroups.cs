@@ -26,7 +26,8 @@ namespace HercWorks.Core.Data.File.Msn;
 ///
 /// <para>Block 7 holds DBSIM's <see cref="ScriptDatLint.MechSlotCap"/> mech slots, shared with the squad's
 /// <c>player.mec</c> machines (docs/retail/formats/script-dat.md#the-two-pass-read--and-what-it-means-for-dbsim-keeps):
-/// an add that would pass it is refused, counted as the mission check counts it.</para>
+/// an add that would pass it in any version of the mission is refused (<see cref="WhyNoRoom"/>), counting every row-12 GUID of
+/// the layout whatever its condition, plus one machine per squad position group 0 gives (<see cref="SquadRoster.Positions"/>).</para>
 /// </summary>
 public static class HercGroups {
 	/// <summary>
@@ -125,14 +126,19 @@ public static class HercGroups {
 		EngagementActionRef = -1, DefeatActionRef = -1, StartingCondition = StartingCondition,
 	};
 
+	/// <summary>Why no herc can be added to <paramref name="document"/>, or null when one can (<see cref="WhyNoRoom"/>).</summary>
+	public static string? WhyNoAdd(MissionDocument document) => WhyNoRoom(document.Layout, 1);
+
 	/// <summary>
-	/// Why no herc can be added to <paramref name="document"/>, whose squad brings <paramref name="squadSize"/> machines
-	/// from <c>player.mec</c>, or null when one can.
+	/// Why <paramref name="taking"/> more of block 7's slots cannot be taken in <paramref name="layout"/>, or null when they can:
+	/// its row-12 GUIDs, every one whatever its condition, and the squad's machines, one per squad position
+	/// (<see cref="SquadRoster.Positions"/>), with them, must stay within <see cref="ScriptDatLint.MechSlotCap"/>.
 	/// </summary>
-	public static string? WhyNoAdd(MissionDocument document, int squadSize) {
-		int hercs = document.Script.Mechs.Length;
-		return hercs + squadSize + 1 > ScriptDatLint.MechSlotCap
-			? $"The mission already has {hercs} hercs plus a squad of {squadSize}, and DBSIM holds {ScriptDatLint.MechSlotCap} in all."
+	public static string? WhyNoRoom(MissionLayout layout, int taking) {
+		int hercs = layout.Entries(MechRow).Count;
+		int squad = SquadRoster.Positions(layout);
+		return hercs + squad + taking > ScriptDatLint.MechSlotCap
+			? $"At maximum HERC limit ({ScriptDatLint.MechSlotCap})."
 			: null;
 	}
 
@@ -142,9 +148,9 @@ public static class HercGroups {
 	/// <see cref="MissionDocument.Change"/>; answers the herc's row-12 GUID and the group's row-16 GUID. Throws
 	/// <see cref="InvalidOperationException"/> when <see cref="WhyNoAdd"/> refuses it, or the mission has no group 0.
 	/// </summary>
-	public static MsnEdit Create(MissionDocument document, MechRosterEntry144 herc, short side, int x, int y, int squadSize,
+	public static MsnEdit Create(MissionDocument document, MechRosterEntry144 herc, short side, int x, int y,
 			out short mech, out short group) {
-		if (WhyNoAdd(document, squadSize) is { } reason) {
+		if (WhyNoAdd(document) is { } reason) {
 			throw new InvalidOperationException(reason);
 		}
 
@@ -170,8 +176,8 @@ public static class HercGroups {
 	/// <see cref="MissionDocument.Change"/>; answers the herc's row-12 GUID. Throws <see cref="InvalidOperationException"/>
 	/// when <see cref="WhyNoAdd"/> or <see cref="WhyNoJoin"/> refuses it.
 	/// </summary>
-	public static MsnEdit Join(MissionDocument document, short group, MechRosterEntry144 herc, int squadSize, out short mech) {
-		if ((WhyNoAdd(document, squadSize) ?? WhyNoJoin(document, group)) is { } reason) {
+	public static MsnEdit Join(MissionDocument document, short group, MechRosterEntry144 herc, out short mech) {
+		if ((WhyNoAdd(document) ?? WhyNoJoin(document, group)) is { } reason) {
 			throw new InvalidOperationException(reason);
 		}
 

@@ -35,7 +35,7 @@ public class ObjectDeleterTests {
 
 		var names = deleter.Resolve(document, RosterDeletion.GroupNamers(document, 1));
 
-		Assert.Null(document.ExportedIndex(16, 2));
+		Assert.Null(Exported(document, 16, 2));
 		Assert.Equal([new EndsOrder(2, 0)], names.Orders);
 		Assert.Equal(0, names.UnrunOrders);
 	}

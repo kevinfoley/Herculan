@@ -21,7 +21,7 @@ internal sealed class HercPlacer {
 
 	private readonly MissionDocument _source;
 	private readonly MissionScene _scene;
-	private readonly GeneratedIndex _index;
+	private readonly MissionIndex _index;
 	private readonly PointMover _mover;
 	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
@@ -29,9 +29,9 @@ internal sealed class HercPlacer {
 	private readonly UnitTypeNames _names;
 
 	/// <param name="source">The mission as its <c>.MSN</c>.</param>
-	/// <param name="index">The generated mission, whose squad shares the herc roster's slot cap, and the layout's groups and objects.</param>
+	/// <param name="index">The layout's groups and objects.</param>
 	/// <param name="names">The <c>nam\MECHS.NAM</c> type names, which a ghost's model is found by.</param>
-	public HercPlacer(MissionDocument source, MissionScene scene, GeneratedIndex index, PointMover mover,
+	public HercPlacer(MissionDocument source, MissionScene scene, MissionIndex index, PointMover mover,
 			SceneSync sync, SelectionState selection, MachineFitter fitter, UnitTypeNames names) {
 		_source = source;
 		_scene = scene;
@@ -44,10 +44,10 @@ internal sealed class HercPlacer {
 	}
 
 	/// <summary>
-	/// Why no herc can be added, or null when one can: block 7 is full with the squad's
+	/// Why no herc can be added, or null when one can: block 7 is full in some version of the mission with the squad's
 	/// machines counted (<see cref="HercGroups.WhyNoAdd"/>).
 	/// </summary>
-	public string? WhyNoAdd => HercGroups.WhyNoAdd(_source, SquadSize);
+	public string? WhyNoAdd => HercGroups.WhyNoAdd(_source);
 
 	/// <summary>
 	/// Adds a herc of <c>MECHS.NAM</c> type <paramref name="typeIndex"/> on <paramref name="side"/> at
@@ -65,22 +65,21 @@ internal sealed class HercPlacer {
 
 		var source = _source;
 		var herc = HercGroups.Machine((short)typeIndex, weapons, ammo);
-		int squad = SquadSize;
 		short mech = -1;
 		if (joinGroup is { } joined) {
 			if (WhyNotJoin(joined) is { } reason) {
 				return reason;
 			}
 
-			return Commit(typeIndex, () => HercGroups.Join(source, joined, herc, squad, out mech), () => mech);
+			return Commit(typeIndex, () => HercGroups.Join(source, joined, herc, out mech), () => mech);
 		}
 
-		return Commit(typeIndex, () => HercGroups.Create(source, herc, (short)side, x, y, squad, out mech, out _), () => mech);
+		return Commit(typeIndex, () => HercGroups.Create(source, herc, (short)side, x, y, out mech, out _), () => mech);
 	}
 
 	/// <summary>Why a herc cannot be added to group <paramref name="group"/>, by its row-16 GUID, or null when it can.</summary>
 	public string? WhyNotJoin(short group) =>
-		_index.Scene.Group(group) == null ? EditorToolbox.GroupGone : HercGroups.WhyNoJoin(_source, group);
+		_index.Group(group) == null ? EditorToolbox.GroupGone : HercGroups.WhyNoJoin(_source, group);
 
 	/// <summary>
 	/// The herc <see cref="Add"/> would add of <paramref name="typeIndex"/> on <paramref name="side"/>, built the same way
@@ -93,13 +92,9 @@ internal sealed class HercPlacer {
 				weapons, ammo, Side: side, OutOfActionReport: OutOfActionReport.None))
 			: null;
 
-	// The machines player.mec brings, which share block 7's slots, as the mission check counts them.
-	private int SquadSize => _index.Mission.Placements.Count(placement => placement.IsPlayerLance);
-
 	// Makes an add's change and syncs the scene with it, then records it as one step and selects the object built for
 	// the herc's row-12 GUID; or, when none was built, puts the records back and says why.
 	private string? Commit(int typeIndex, Func<MsnEdit> add, Func<short> mech) {
-		var source = _source;
 		MsnEdit change;
 		try {
 			change = _sync.Run(add);
@@ -108,12 +103,9 @@ internal sealed class HercPlacer {
 		}
 
 		short added = mech();
-		bool generated = source.ExportedIndex(MechRow, added) != null;
-		if (!generated || _index.Scene.ObjectOf(new ObjectKey(MechRow, added)) == null) {
+		if (_index.ObjectOf(new ObjectKey(MechRow, added)) == null) {
 			_sync.Undo(change);
-			return !generated
-				? "The added herc was not generated; nothing was added."
-				: $"The install has no herc type {typeIndex}.";
+			return $"The install has no herc type {typeIndex}.";
 		}
 
 		_mover.Record(new RecordsEdit(_sync, change));

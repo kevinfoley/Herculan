@@ -30,7 +30,7 @@ public class ObjectiveEditingTests {
 		var created = document.Mission.Objectives![record]!;
 		Assert.Equal(5, created.TextRef);
 		Assert.Equal([5, 6, 7], document.Text!.Strings![^3..].Select(entry => entry.Guid).ToArray());
-		int line = document.Script.Objectives[ObjectiveEditing.ExportedIndex(document, record)!.Value].TextRef;
+		int line = document.Script.Objectives[document.Provenance.ExportedSlot(new MsnRecordId(17, record))!.Value.Index].TextRef;
 		for (int part = 0; part < MissionTextEditing.FailureLines; part++) {
 			var supplier = document.Text.Strings[document.Provenance.Lines[line + part].Supplier];
 			Assert.Equal(5 + part, supplier.Guid);

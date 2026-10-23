@@ -31,7 +31,7 @@ internal sealed class SideChanger {
 
 	/// <summary>Why row-16 GUID <paramref name="group"/>'s side cannot be changed, or null when it can.</summary>
 	public string? WhyFixed(short group) =>
-		_index.Group(group) is not { } planned ? "Its record is not in the file."
+		_index.Group(group) is not { } planned ? EditorToolbox.GroupGone
 			: planned.IsSquad ? "The editor leaves the player's squad's team alone."
 			: null;
 

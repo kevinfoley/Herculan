@@ -1,9 +1,6 @@
 using HercWorks.Core.Data.File.Msn;
-using HercWorks.Core.Data.File.Msn.Script;
-using Herculan.Engine.Content;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Scene;
-using Herculan.Engine.Shell;
 using Herculan.Engine.Terrain;
 using Herculan.Engine.World;
 
@@ -15,13 +12,10 @@ namespace Herculan.Engine.Editor;
 /// the document's layout (<see cref="LayoutPlacement"/>), stands each object already built for a record where it now
 /// stands, builds one for a record that has none of its type and fit (<see cref="MissionScene.CreateObject"/>), and takes
 /// the object of a record no group places off the scene, keeping it, so an undone delete stands the same object, model and
-/// all, where it stood. Terrain and models are not loaded again.
+/// all, where it stood. Terrain and models are not loaded again, nothing is written to disk and no mission is loaded.
 ///
-/// <para>It then builds again what still reads the generation: the generated <see cref="World.Mission"/>
-/// (<see cref="MissionLoader.Load(GameContent, ScriptDat, string)"/>, after writing the generated <c>mission.str</c> and, for a
-/// mission loaded in training mode, the squad's <c>player.mec</c> beside the handoff, as the launch would for the
-/// generation, <see cref="MissionSquad"/>) and <see cref="GeneratedIndex"/>; then the new <see cref="MissionIndex"/>, the pick
-/// spheres, the overlays' lines and the mission check, and tells the drawing what left and what joined the scene.</para>
+/// <para>It then builds again the <see cref="MissionIndex"/>, the pick spheres, the overlays' lines and the mission check
+/// (<see cref="MissionLint"/>), and tells the drawing what left and what joined the scene.</para>
 ///
 /// <para>A selection names a <c>.MSN</c> record, so it needs no mapping: it is kept while the <c>.MSN</c> has its record
 /// (<see cref="EditorSelection.InFile"/>), an object while the scene has an object for its record, a route's waypoint while
@@ -31,13 +25,11 @@ namespace Herculan.Engine.Editor;
 /// object where they put it, and builds nothing: only the commit writes the <c>.MSN</c>.</para>
 /// </summary>
 internal sealed class SceneSync {
-	private readonly GameContent _content;
 	private readonly MissionDocument _source;
 	private readonly MissionScene _scene;
 	private readonly HeightGrid _terrain;
 	private readonly PlacementTables _tables;
 	private readonly MissionIndex _index;
-	private readonly GeneratedIndex _generated;
 	private readonly MissionOverlay _overlay;
 	private readonly ScenePicker _picker;
 	private readonly MissionOutliner _outliner;
@@ -46,29 +38,21 @@ internal sealed class SceneSync {
 	// Every object built for the mission, by the record it stands for, the latest first.
 	private readonly Dictionary<ObjectKey, List<SceneObject>> _built = new();
 
-	/// <param name="squad">Which Hercs the squad pilots and how its <c>player.mec</c> is built again.</param>
-	public SceneSync(GameContent content, MissionDocument source, MissionScene scene, PlacementTables tables, MissionIndex index,
-			GeneratedIndex generated, MissionOverlay overlay, ScenePicker picker, MissionOutliner outliner,
-			SelectionState selection, MissionSquad squad) {
-		_content = content;
+	public SceneSync(MissionDocument source, MissionScene scene, PlacementTables tables, MissionIndex index,
+			MissionOverlay overlay, ScenePicker picker, MissionOutliner outliner, SelectionState selection) {
 		_source = source;
 		_scene = scene;
 		_terrain = scene.World.Terrain;
 		_tables = tables;
 		_index = index;
-		_generated = generated;
 		_overlay = overlay;
 		_picker = picker;
 		_outliner = outliner;
 		_selection = selection;
-		Squad = squad;
 		foreach (var placed in index.Objects) {
 			_built[index.KeyOf(placed)!.Value] = [placed];
 		}
 	}
-
-	/// <summary>Which Hercs the squad pilots and how its <c>player.mec</c> is built again.</summary>
-	public MissionSquad Squad { get; }
 
 	/// <summary>Raised with each object a sync puts in the scene, for whatever draws it.</summary>
 	public event Action<SceneObject>? Added;
@@ -110,7 +94,7 @@ internal sealed class SceneSync {
 		return new MissionPlacement(planned.Kind, planned.TypeIndex, planned.TypeName,
 			SlotIndex: -1, GroupIndex: -1,
 			place.Position, place.Heading, planned.WeaponRefs, planned.WeaponSecondary,
-			IsPlayerLance: planned.Squad,
+			IsPlayerSquad: planned.Squad,
 			Side: planned.Side,
 			AiCruiseSpeed: planned.AiCruiseSpeed,
 			AiRadarActive: planned.AiRadarActive,
@@ -144,12 +128,6 @@ internal sealed class SceneSync {
 
 	/// <summary>Builds the scene's objects and the indices again from the document as it now stands.</summary>
 	public void Sync() {
-		if (Squad.PlayerMec(_source.Generator) is { } squadFile) {
-			File.WriteAllBytes(MissionLoader.PlayerPathFor(_scene.Mission.SourcePath), squadFile);
-		}
-
-		File.WriteAllBytes(MissionLoader.TextPathFor(_scene.Mission.SourcePath), _source.MissionText);
-		var mission = MissionLoader.Load(_content, _source.Script, _scene.Mission.SourcePath);
 		var plan = LayoutPlacement.Place(_source.Layout, _tables);
 		var before = _index.Objects.ToHashSet(ReferenceEqualityComparer.Instance);
 		var objects = new Dictionary<ObjectKey, SceneObject>();
@@ -173,10 +151,9 @@ internal sealed class SceneSync {
 		}
 
 		_index.Reload(plan, objects);
-		_generated.Reload(mission);
 		_picker.Rebuild(_index.Objects);
 		_overlay.Rebuild();
-		_outliner.Recheck(new MissionLint(_source, _index, MissionLint.SquadOf(mission)));
+		_outliner.Recheck(new MissionLint(_source, _index));
 		foreach (var joined in _index.Objects.Where(placed => !before.Contains(placed))) {
 			Added?.Invoke(joined);
 		}

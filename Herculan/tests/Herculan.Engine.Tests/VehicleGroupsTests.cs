@@ -36,7 +36,7 @@ public class VehicleGroupsTests {
 			out short group);
 
 		var script = document.Script;
-		var made = script.Groups[document.ExportedIndex(16, group)!.Value];
+		var made = script.Groups[Exported(document, 16, group)!.Value];
 		Assert.Equal(Structures, made.MemberKind);
 		Assert.Equal(vehicle, document.GuidOf(9, made.MemberRefs[0]));
 		Assert.Equal(Transport, script.Bases[made.MemberRefs[0]].TypeIndex);
@@ -57,10 +57,10 @@ public class VehicleGroupsTests {
 		Assert.Equal(opened, Write(document));
 
 		var hercDocument = Open(Mission());
-		HercGroups.Create(hercDocument, HercGroups.Machine(9, Unset(10), Unset(10)), side: 1, x: 0, y: 0, squadSize: 1,
+		HercGroups.Create(hercDocument, HercGroups.Machine(9, Unset(10), Unset(10)), side: 1, x: 0, y: 0,
 			out _, out short hercs);
 		Assert.Equal(0, made.PaintsGround);
-		Assert.Equal(1, hercDocument.Script.Groups[hercDocument.ExportedIndex(16, hercs)!.Value].PaintsGround);
+		Assert.Equal(1, hercDocument.Script.Groups[Exported(hercDocument, 16, hercs)!.Value].PaintsGround);
 	}
 
 	/// <summary>
@@ -82,7 +82,7 @@ public class VehicleGroupsTests {
 		// The leader pick's four members, slots 1 to 3 after the vehicle in slot 0.
 		for (int slot = 1; slot <= 3; slot++) {
 			VehicleGroups.Join(document, convoy, VehicleGroups.Machine(Transport), BaseObject.IsGroundVehicle, out short joined);
-			var record = document.Script.Groups[document.ExportedIndex(16, convoy)!.Value];
+			var record = document.Script.Groups[Exported(document, 16, convoy)!.Value];
 			Assert.Equal(joined, document.GuidOf(9, record.MemberRefs[slot]));
 			Assert.Equal(-1, document.Script.Bases[record.MemberRefs[slot]].PositionRef);
 		}

@@ -29,7 +29,7 @@ public class FlyerGroupsTests {
 
 		var script = document.Script;
 		Assert.Equal(hercs, script.Mechs.Length);
-		var made = script.Groups[document.ExportedIndex(16, group)!.Value];
+		var made = script.Groups[Exported(document, 16, group)!.Value];
 		Assert.Equal(1, made.MemberKind);
 		Assert.Equal(flyer, document.GuidOf(8, made.MemberRefs[0]));
 		Assert.Equal(-1, made.PositionRef);
@@ -57,7 +57,7 @@ public class FlyerGroupsTests {
 		// FFORMS.DAT's three places beside the leader, member slots 1 to 3.
 		for (int slot = 1; slot <= 3; slot++) {
 			FlyerGroups.Join(document, group, FlyerGroups.Machine(0), out short joined);
-			var record = document.Script.Groups[document.ExportedIndex(16, group)!.Value];
+			var record = document.Script.Groups[Exported(document, 16, group)!.Value];
 			Assert.Equal(joined, document.GuidOf(8, record.MemberRefs[slot]));
 		}
 

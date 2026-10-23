@@ -56,7 +56,7 @@ public sealed record SceneObject(SimObject Object, SceneModel? Model, MissionPla
 /// <para>Nothing here is configured by hand. The zone, the theater and its variant come out of
 /// <c>script.dat</c>'s header; the units, their types, positions and headings come out of its
 /// rosters and activation records (see <see cref="MissionPlacementRules"/> for the rule and the RE behind
-/// it); the player's own lance comes out of <c>player.mec</c>. The previous milestone's single
+/// it); the player's own squad comes out of <c>player.mec</c>. The previous milestone's single
 /// hardcoded mech at the middle of the zone is gone.</para>
 ///
 /// <para>Everything is CPU-side on purpose. It loads files, builds a <see cref="SimWorld"/> and

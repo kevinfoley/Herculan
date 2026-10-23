@@ -31,8 +31,9 @@ public sealed record ActionNamers(IReadOnlyList<MsnRecordId> Timers, IReadOnlyLi
 /// <c>Action_Activate</c> (<c>00423430</c>) has a case for, 5 (clear) and 6 (+1).</item>
 /// <item>The message is stored plus one, 0 for none; DBSIM subtracts the one at load.</item>
 /// <item>Types 7 to 10 read the target <c>0x50</c> as a herc, a flyer, a structure or a group; any other type keeps it as
-/// authored, and DBSIM zeroes it. A type change to 7 to 10 gives the action the first record of that kind the generation
-/// exports as its target, and one to 0 to 6 unsets it, as 334 of the 338 retail records leave it (<c>HercWorks.Query values
+/// authored, and DBSIM zeroes it. A type change to 7 to 10 gives the action as its target the first entry of that kind's
+/// row in the layout (12 hercs, 13 flyers, 14 structures, 16 groups), in the order of each GUID's first record, whatever its
+/// condition, and one to 0 to 6 unsets it, as 334 of the 338 retail records leave it (<c>HercWorks.Query values
 /// --row 10 --field TargetRef</c>); both the editor's choice.</item>
 /// <item>An action is deleted only while nothing references it (<see cref="Namers"/>): a ref to a GUID with no record
 /// resolves to <c>-1</c>, so a timer, a waiting group, an object or an order would lose it.</item>
@@ -188,17 +189,21 @@ public static class ActionEditing {
 			return $"A type is 0 to {LastType}.";
 		}
 
-		return TargetBlock(type) is { } block && Fields(document, action).Type != type && document.GuidOf(block, 0) == -1
+		return TargetBlock(type) is { } block && Fields(document, action).Type != type && FirstTarget(document, block) == -1
 			? $"The mission has no {TargetKind(type)} to be its target."
 			: null;
 	}
+
+	// The GUID of the first layout entry of the row script.dat block <block> is exported from, or -1 when the row has none.
+	private static short FirstTarget(MissionDocument document, int block) =>
+		document.Layout.Entries(block + 5) is { Count: > 0 } entries ? entries[0].Guid : (short)-1;
 
 	/// <summary>What a target of type <paramref name="type"/> is, in a word.</summary>
 	public static string TargetKind(short type) => type switch { 7 => "herc", 8 => "flyer", 9 => "structure", _ => "group" };
 
 	/// <summary>
-	/// Sets <paramref name="action"/>'s type, 0 to <see cref="LastType"/>. A change to 7 to 10 gives it the first record of that
-	/// kind the generation exports as its target, and a change to 0 to 6 unsets the target (the class summary).
+	/// Sets <paramref name="action"/>'s type, 0 to <see cref="LastType"/>. A change to 7 to 10 gives it the first layout entry of
+	/// that kind as its target, and a change to 0 to 6 unsets the target (the class summary).
 	/// </summary>
 	public static MsnEdit SetType(MissionDocument document, short action, short type) {
 		if (WhyNoType(document, action, type) is { } reason) {
@@ -210,7 +215,7 @@ public static class ActionEditing {
 			throw new InvalidOperationException("It is that type already.");
 		}
 
-		short target = TargetBlock(type) is { } block ? document.GuidOf(block, 0) : (short)-1;
+		short target = TargetBlock(type) is { } block ? FirstTarget(document, block) : (short)-1;
 		return document.Change(() => {
 			document.SetField(MsnField.ActionType, action, type);
 			document.SetField(MsnField.ActionTarget, action, target);

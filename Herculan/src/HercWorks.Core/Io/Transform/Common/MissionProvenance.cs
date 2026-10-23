@@ -98,9 +98,6 @@ public sealed class MissionProvenance {
 	/// </summary>
 	internal void CopiedFromVariant(int source, int first, int count) => _pendingCopies.Add((source, first, count));
 
-	/// <summary>The record that created slot <paramref name="slot"/> of <paramref name="row"/>, exported or not.</summary>
-	internal MsnRecordId CreatedAt(int row, int slot) => SlotsOfRow(row)[slot].Created;
-
 	/// <summary>Record <paramref name="index"/> of <paramref name="row"/> added as a new slot.</summary>
 	internal void Added(int row, int index, short[] words) {
 		var record = new MsnRecordId(row, index);

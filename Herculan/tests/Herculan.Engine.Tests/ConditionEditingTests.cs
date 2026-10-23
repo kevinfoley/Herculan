@@ -6,9 +6,8 @@ using static Herculan.Engine.Tests.SyntheticMsn;
 namespace Herculan.Engine.Tests;
 
 /// <summary>
-/// <see cref="ConditionEditing"/> and <see cref="MissionGenerator.Conditions"/> over small synthetic missions: a condition
-/// can require only an earlier one, a delete is refused while any row or the text references it, the operator's wording
-/// reads as the load tests, and the generation's view of row 1 lines up with row 1's records.
+/// <see cref="ConditionEditing"/> over small synthetic missions: a condition can require only an earlier one, a delete is
+/// refused while any row or the text references it, and the operator's wording reads as the load tests.
 /// </summary>
 public class ConditionEditingTests {
 	private const short Flag = 5;
@@ -34,7 +33,6 @@ public class ConditionEditingTests {
 
 		ConditionEditing.SetRequirement(document, 1, 0);
 		Assert.Equal(0, ConditionEditing.Record(document, 1).ConditionRef);
-		Assert.True(ConditionEditing.Outcome(document, 1).Survived);
 	}
 
 	/// <summary>
@@ -62,7 +60,7 @@ public class ConditionEditingTests {
 
 	/// <summary>
 	/// Catches a description that puts an operator on the wrong side (the load's <c>&gt;</c> and <c>&gt;=</c> take the value on
-	/// the left): for every operator and a flag below, at and above the value, the flag test holds in the generation exactly
+	/// the left): for every operator and a flag below, at and above the value, a point under the flag test is generated exactly
 	/// when its description, read as written, is true.
 	/// </summary>
 	[Fact]
@@ -73,7 +71,8 @@ public class ConditionEditingTests {
 				var flags = new short[MissionGenerator.CampaignFlagCount];
 				flags[Flag] = flag;
 				var document = Open(new SyntheticMsn()
-					.Add(1, Condition(guid: 0, condition: -1, type: 0, lower: Flag, upper: op, operand: value)), flags);
+					.Add(1, Condition(guid: 0, condition: -1, type: 0, lower: Flag, upper: op, operand: value))
+					.Add(6, Point(0, 1000, condition: 0)), flags);
 
 				string[] words = ConditionEditing.Describe(document.Mission, 0)!.Split(' ');
 				Assert.Equal(["flag", Flag.ToString(), value.ToString()], new[] { words[0], words[1], words[3] });
@@ -87,35 +86,8 @@ public class ConditionEditingTests {
 					_ => throw new InvalidOperationException(words[2]),
 				};
 
-				Assert.Equal(described, ConditionEditing.Outcome(document, 0).Survived);
+				Assert.Equal(described ? 1 : 0, document.Script.Coordinates.Length);
 			}
-		}
-	}
-
-	/// <summary>
-	/// Catches the generation's view of row 1 drifting from row 1's indices (an outcome kept only for survivors, or a draw
-	/// reported for a record that made none): a draw whose requirement fails makes no draw, the next draw takes the first
-	/// roll, and each range over it holds exactly when that draw is in its ends.
-	/// </summary>
-	[Fact]
-	public void OutcomesLineUpWithRowOne() {
-		var document = Open(new SyntheticMsn()
-			.Add(1, Condition(guid: 0, condition: -1, type: 0, lower: Flag, upper: MissionGenerator.OpEqual, operand: 1))
-			.Add(1, Condition(guid: 1, condition: 0, type: 1, lower: 11, upper: 0, operand: 0))
-			.Add(1, Condition(guid: 2, condition: -1, type: 1, lower: 11, upper: 0, operand: 0))
-			.Add(1, Condition(guid: 3, condition: 2, type: 2, lower: 0, upper: 6, operand: 0))
-			.Add(1, Condition(guid: 4, condition: 2, type: 2, lower: 8, upper: 9, operand: 0)),
-			new short[MissionGenerator.CampaignFlagCount], rolls: [7, 1]);
-
-		Assert.False(ConditionEditing.Outcome(document, 0).Survived);
-		Assert.Equal(new ConditionOutcome(false, null), ConditionEditing.Outcome(document, 1));
-		Assert.False(ConditionEditing.RequirementHolds(document, 1));
-		short drawn = Assert.IsType<short>(ConditionEditing.Outcome(document, 2).Draw);
-		Assert.Equal((short)7, drawn);
-		foreach (short range in new short[] { 3, 4 }) {
-			var record = ConditionEditing.Record(document, range);
-			Assert.Equal(record.FlagIndexOrRangeLower <= drawn && drawn <= record.OperatorOrRangeUpperOrResult,
-				ConditionEditing.Outcome(document, range).Survived);
 		}
 	}
 

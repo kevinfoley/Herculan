@@ -140,11 +140,17 @@ public static class RecordConditions {
 		ConditionEditing.Records(document).Select(record => record.GUID).Where(guid => guid != -1).Distinct()
 			.Where(guid => Offered(document, guid)).ToList();
 
+	/// <summary>
+	/// The reason given for <paramref name="target"/> when the mission has no record of it: a guard only, since the editor
+	/// clears a selection whose record an edit removes.
+	/// </summary>
+	public static string Gone(PresenceTarget target) => "Not found.";
+
 	/// <summary>Why <paramref name="target"/>'s presence cannot be set at all, or null when it can.</summary>
 	public static string? WhyFixed(MissionDocument document, PresenceTarget target) {
 		var records = Records(document, target);
 		if (records.Count == 0) {
-			return target.Row == OrderRow ? $"There is no order in slot {target.Slot}." : "It is not in the file.";
+			return Gone(target);
 		}
 
 		if (InSquad(document, target)) {
@@ -166,7 +172,7 @@ public static class RecordConditions {
 	public static string? WhyNoPresence(MissionDocument document, PresenceTarget target, short condition) =>
 		WhyFixed(document, target)
 			?? (condition == Always ? null
-				: ConditionEditing.IndexOf(document, condition) == null ? $"Condition {condition} is not in the file."
+				: ConditionEditing.IndexOf(document, condition) == null ? "Not found."
 				: !Offered(document, condition) ? $"Condition {condition} is not a flag test or a range over a draw."
 				: null);
 

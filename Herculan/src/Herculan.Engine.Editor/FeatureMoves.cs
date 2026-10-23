@@ -81,7 +81,7 @@ internal sealed class FeatureMoves {
 	}
 
 	/// <summary>Why a trigger area the selection names is not edited once the <c>.MSN</c> has no such area.</summary>
-	public const string AreaGone = "The trigger area is no longer in the mission.";
+	public const string AreaGone = "Not found.";
 
 	/// <summary>Why trigger area <paramref name="area"/>, by its row-9 GUID, cannot be moved or edited, or null when it can.</summary>
 	public string? WhyFixedArea(short area) =>
@@ -245,7 +245,7 @@ internal sealed class FeatureMoves {
 	// The entries of the route's list a waypoint stands for: its own, and for a closed route's first waypoint, which is also
 	// its last, the last's too.
 	private IReadOnlyList<int> EntriesOf(WaypointTarget waypoint) {
-		var entries = _index.Route(waypoint.Route)?.Entries ?? throw new InvalidOperationException("Its route is not in the file.");
+		var entries = _index.Route(waypoint.Route)?.Entries ?? throw new InvalidOperationException(RouteEditor.Gone);
 		return waypoint.WithLast ? [entries[0], entries[^1]] : [entries[waypoint.Index]];
 	}
 
@@ -253,10 +253,10 @@ internal sealed class FeatureMoves {
 	private short[] PointsOf(MoveTarget target) {
 		switch (target) {
 			case WaypointTarget waypoint:
-				var guids = _index.Route(waypoint.Route)?.PointGuids ?? throw new InvalidOperationException("Its route is not in the file.");
+				var guids = _index.Route(waypoint.Route)?.PointGuids ?? throw new InvalidOperationException(RouteEditor.Gone);
 				return waypoint.WithLast ? [guids[0], guids[^1]] : [guids[waypoint.Index]];
 			case AreaCornerTarget corner:
-				var area = _index.Area(corner.Area) ?? throw new InvalidOperationException("Its record is not in the file.");
+				var area = _index.Area(corner.Area) ?? throw new InvalidOperationException(AreaGone);
 				return corner.Corner < area.PointGuids.Count ? [area.PointGuids[corner.Corner]] : [];
 			default:
 				throw new ArgumentOutOfRangeException(nameof(target));

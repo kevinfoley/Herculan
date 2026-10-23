@@ -35,9 +35,6 @@ public sealed class MissionDocument {
 	private const int GroupRow = 16;
 	private const int ObjectiveRow = 17;
 
-	/// <summary>The exported slot each GUID of rows 6 to 16 reached in the last generation.</summary>
-	private readonly Dictionary<(int Row, short Guid), SlotProvenance> _slots = new();
-
 	/// <summary>The edits made so far inside <see cref="Change"/>, or null outside one.</summary>
 	private List<MsnEdit>? _change;
 
@@ -80,6 +77,14 @@ public sealed class MissionDocument {
 	public MissionLayout Layout { get; private set; } = null!;
 
 	/// <summary>
+	/// The ten header words the launch plays (<c>script.dat</c> offset <c>word * 2</c>), built again with each generation: the
+	/// layout's (<see cref="MissionLayout.HeaderWords"/>), with every word <see cref="Generation"/> writes over the loaded header
+	/// written over them, as the launch writes them (<see cref="MissionGeneration.WriteHeader"/>). No condition is tested, so a
+	/// row-2 variation is not applied.
+	/// </summary>
+	public IReadOnlyList<short> LaunchHeader { get; private set; } = [];
+
+	/// <summary>
 	/// The last generation's run, which answers what the shell reads back from a loaded mission besides the files: its
 	/// squad positions and group 0's machines (<see cref="MissionGenerator.SquadPositions"/>, <see cref="MissionGenerator.Herc"/>).
 	/// </summary>
@@ -91,6 +96,9 @@ public sealed class MissionDocument {
 	/// </summary>
 	public void Regenerate() {
 		Layout = MissionLayout.Build(Mission, Text);
+		var header = Layout.HeaderWords.ToArray();
+		MissionGeneration.WriteHeader(header, Generation.Header);
+		LaunchHeader = header;
 		byte[] msn = new MissionFileTransformer().Write(Mission) ?? throw new InvalidOperationException("The mission file does not write.");
 		byte[]? text = Text == null ? null : new MissionStringFileTransformer().Write(Text);
 		var generator = Generation.Run(msn, text);
@@ -103,15 +111,6 @@ public sealed class MissionDocument {
 		Provenance = generator.Provenance;
 		Generator = generator;
 		CopyBlocks(parsed, Script);
-
-		_slots.Clear();
-		for (int row = PointRow; row <= GroupRow; row++) {
-			foreach (var slot in Provenance.Slots(row - 5)) {
-				if (RecordAt(slot.Created) is { } record) {
-					_slots[(row, record.GUID)] = slot;
-				}
-			}
-		}
 	}
 
 	// ---- Lookups ----------------------------------------------------------------------------------
@@ -124,9 +123,6 @@ public sealed class MissionDocument {
 		block is >= 1 and <= 11 && Provenance.Slot(block, index) is { } slot && RecordAt(slot.Created) is { } record
 			? record.GUID
 			: (short)-1;
-
-	/// <summary>The <c>script.dat</c> index row <paramref name="row"/>'s GUID <paramref name="guid"/> was exported at, or null when it was not.</summary>
-	public int? ExportedIndex(int row, short guid) => _slots.TryGetValue((row, guid), out var slot) ? slot.Index : null;
 
 	/// <summary>
 	/// Whether a variant supplies <paramref name="field"/> of GUID <paramref name="guid"/>, so that <see cref="SetField"/> writes

@@ -207,10 +207,6 @@ public static class VariantEditing {
 			&& record.FlagIndexOrRangeLower == key)?.GUID;
 	}
 
-	/// <summary>What record <paramref name="record"/> drew in the generation, or null when it drew nothing (<see cref="MissionGenerator.VariantPicks"/>).</summary>
-	public static VariantPick? PickOf(MissionDocument document, MsnRecordId record) =>
-		document.Generator.VariantPicks.TryGetValue(record, out var pick) ? pick : null;
-
 	/// <summary>
 	/// The draw record <paramref name="record"/> makes in the layout, its table and the options it sees, the first of them the one
 	/// shown (<see cref="LayoutDraw.Shown"/>); null when it draws nothing or is a variant alternative, which no entry holds.

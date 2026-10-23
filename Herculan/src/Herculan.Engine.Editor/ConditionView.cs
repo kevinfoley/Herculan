@@ -260,7 +260,7 @@ internal sealed class ConditionView {
 		}
 
 		if (uses.Alternatives > 0) {
-			ImGui.TextWrapped(uses.Alternatives == 1 ? "1 variant alternative" : $"{uses.Alternatives} variant alternatives");
+			ImGui.TextWrapped(uses.Alternatives == 1 ? "1 option of a random choice" : $"{uses.Alternatives} options of a random choice");
 		}
 	}
 

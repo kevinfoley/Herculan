@@ -53,6 +53,17 @@ internal sealed class RosterTypeNames {
 		_ => "A record",
 	};
 
+	/// <summary>
+	/// What a structure or ground vehicle is titled by: its kind and the name the MFD's status screen prints for it
+	/// (<see cref="MfdStatusSubject.BaseName"/>), "Structure: SUPPLY DEPOT", or its kind "with no name on the MFD"; its type
+	/// number is under Advanced.
+	/// </summary>
+	public string StructureTitle(BaseRosterEntry62 structure) {
+		string kind = IsVehicle(structure) ? "Ground vehicle" : "Structure";
+		string? name = _bases?[structure.TypeIndex] is { } type ? MfdStatusSubject.BaseName(type, _strings) : null;
+		return string.IsNullOrWhiteSpace(name) ? $"{kind} with no name on the MFD" : $"{kind}: {name}";
+	}
+
 	/// <summary>Whether <paramref name="structure"/>'s type is a ground vehicle, which drives.</summary>
 	public bool IsVehicle(BaseRosterEntry62 structure) => _bases?[structure.TypeIndex]?.IsVehicle == true;
 }

@@ -35,7 +35,7 @@ public class RosterDeletionTests {
 		Assert.DoesNotContain(document.Mission.Bases!, record => record.GUID == 7);
 		Assert.All(document.Mission.Groups!, group => Assert.DoesNotContain((short)7, group.MemberRefs));
 		Assert.Equal(2, document.Mission.Groups!.Length);
-		Assert.Equal<int?>(document.ExportedIndex(14, 8), document.Script.Groups[0].MemberRefs[1]);
+		Assert.Equal<int?>(Exported(document, 14, 8), document.Script.Groups[0].MemberRefs[1]);
 	}
 
 	/// <summary>
@@ -58,9 +58,9 @@ public class RosterDeletionTests {
 		var script = document.Script;
 		Assert.Single(script.Groups);
 		Assert.DoesNotContain(document.Mission.Groups!, group => group.GUID == 1);
-		Assert.Equal<int?>(document.ExportedIndex(16, 2), script.Objectives[0].SubjectRef);
-		Assert.Equal<int?>(document.ExportedIndex(16, 2), script.Orders[0].SubjectRef);
-		Assert.Equal<int?>(document.ExportedIndex(14, 8), script.Groups[0].MemberRefs[0]);
+		Assert.Equal<int?>(Exported(document, 16, 2), script.Objectives[0].SubjectRef);
+		Assert.Equal<int?>(Exported(document, 16, 2), script.Orders[0].SubjectRef);
+		Assert.Equal<int?>(Exported(document, 14, 8), script.Groups[0].MemberRefs[0]);
 	}
 
 	/// <summary>Catches a check that misses the objectives naming the object, or a delete made without the check.</summary>
@@ -153,7 +153,7 @@ public class RosterDeletionTests {
 		Assert.Equal((short)8, first);
 		Assert.Equal(opened, undone);
 		Assert.Equal(generated, regenerated);
-		Assert.Equal(900, script.Coordinates[script.Bases[document.ExportedIndex(14, 8)!.Value].PositionRef].X);
+		Assert.Equal(900, script.Coordinates[script.Bases[Exported(document, 14, 8)!.Value].PositionRef].X);
 	}
 
 	/// <summary>
@@ -175,7 +175,7 @@ public class RosterDeletionTests {
 
 		var script = document.Script;
 		Assert.Contains(document.Mission.Bases!, record => record.GUID == -1);
-		Assert.Equal(100, script.Coordinates[script.Bases[document.ExportedIndex(14, 3)!.Value].PositionRef].X);
+		Assert.Equal(100, script.Coordinates[script.Bases[Exported(document, 14, 3)!.Value].PositionRef].X);
 	}
 
 	/// <summary>

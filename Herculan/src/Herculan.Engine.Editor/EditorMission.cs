@@ -1,5 +1,4 @@
 using HercWorks.Core.Data.File.Msn;
-using HercWorks.Core.Data.File.Msn.Script;
 using HercWorks.Core.Io;
 using Herculan.Engine.Content;
 using Herculan.Engine.Scene;
@@ -11,21 +10,20 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// One opened mission and everything the editor builds over it on the CPU: the scene, its objects placed from the
-/// <c>.MSN</c>'s layout (<see cref="Index"/>), the generated mission's cross-reference (<see cref="Generated"/>), the overlays, the picker, the two side panels and the move, add, delete, fit, type, route, trigger area, trigger, countdown, condition, presence, variant, order, objective, text and theater tools, all sharing one
+/// <c>.MSN</c>'s layout (<see cref="Index"/>), the overlays, the picker, the two side panels and the move, add, delete, fit, type, route, trigger area, trigger, countdown, condition, presence, variant, order, objective, text and theater tools, all sharing one
 /// selection. Every edit, undo and redo syncs the scene and the indices with the document in place (<see cref="Sync"/>), and a
 /// change of theater or time of day dresses the scene in its world again in place (<see cref="Theater"/>). Opening another
 /// mission builds a new one of these rather than resetting this one; <see cref="MissionDrawables"/> is its GPU half.
 /// </summary>
 internal sealed class EditorMission {
-	private EditorMission(GameContent content, string name, ScriptDat document, MissionDocument source, MissionScene scene,
-			PlacementTables tables, MissionIndex sceneIndex, GeneratedIndex index, MissionLint lint, TerrainMaterialTable materials,
+	private EditorMission(GameContent content, string name, MissionDocument source, MissionScene scene,
+			PlacementTables tables, MissionIndex sceneIndex, MissionLint lint, TerrainMaterialTable materials,
 			MissionSquad squad, Func<GameContent> shellContent, CybridWeapons cybrid, ZoneCatalog zones) {
 		Name = name;
-		Document = document;
 		Source = source;
 		Scene = scene;
 		Index = sceneIndex;
-		Generated = index;
+		PlayerSquad = squad;
 		Names = new MissionNames(sceneIndex, RosterTypeNames.Load(content));
 
 		var drape = new DrapedLines(scene.World.Terrain);
@@ -33,22 +31,22 @@ internal sealed class EditorMission {
 		Picker = new ScenePicker(scene, sceneIndex, Overlay);
 		GroupOverlay = new GroupOverlay(sceneIndex, drape, Picker);
 		Outliner = new MissionOutliner(source, sceneIndex, Names, lint, Selection);
-		Sync = new SceneSync(content, source, scene, tables, sceneIndex, index, Overlay, Picker, Outliner, Selection, squad);
+		Sync = new SceneSync(source, scene, tables, sceneIndex, Overlay, Picker, Outliner, Selection);
 		Mover = new PointMover(source, scene, sceneIndex, Sync, Overlay, materials);
 		Gizmo = new MoveGizmo(Selection, Mover);
-		Placer = new StructurePlacer(document, source, scene, sceneIndex, Mover, Sync, Selection);
+		Placer = new StructurePlacer(source, scene, sceneIndex, Mover, Sync, Selection);
 		Sides = new SideChanger(source, sceneIndex, Mover, Sync);
 		Deleter = new ObjectDeleter(source, sceneIndex, Mover, Sync);
 		Fitter = new MachineFitter(source, Mover, Sync, shellContent, cybrid);
-		Squad = new SquadEditor(source, index, Mover, Sync, Fitter, Deleter);
-		Theater = new TheaterChanger(document, source, scene, sceneIndex, Mover, Sync);
+		Squad = new SquadEditor(source, Mover, Sync, Fitter, Deleter);
+		Theater = new TheaterChanger(source, scene, sceneIndex, Mover, Sync);
 		Routes = new RouteEditor(source, sceneIndex, Mover, Sync, Selection, Deleter);
 		Placing = new RoutePlacing(Routes, sceneIndex, drape);
 		Areas = new AreaEditor(source, sceneIndex, Mover, Sync, Selection, Deleter);
 		AreaPlacing = new AreaPlacing(Areas, drape);
 		Placing.Blocked = () => AreaPlacing.Active;
 		AreaPlacing.Blocked = () => Placing.Active;
-		Hercs = new HercPlacer(source, scene, index, Mover, Sync, Selection, Fitter, UnitTypeNames.LoadMechs(content));
+		Hercs = new HercPlacer(source, scene, sceneIndex, Mover, Sync, Selection, Fitter, UnitTypeNames.LoadMechs(content));
 		Flyers = new FlyerPlacer(source, scene, sceneIndex, Mover, Sync, Selection, UnitTypeNames.LoadFlyers(content));
 		Vehicles = new VehiclePlacer(source, sceneIndex, Mover, Sync, Selection, Placer);
 		Orders = new OrderEditor(source, Mover, Sync);
@@ -70,10 +68,10 @@ internal sealed class EditorMission {
 		Outliner.Choices = choices;
 		Properties = new PropertiesPanel(sceneIndex, Selection, source, Mover, Sides, Deleter,
 			new SquadMachinePanel(Fitter, Squad, squad), new RosterFitView(Fitter, Types, Variants, choices, new UnitTypeCatalog(content)),
-			new MissionView(() => Name, () => zones.Describe(document.ZoneIndex), Theater, TheaterNames.Labels(content),
+			new MissionView(() => Name, () => zones.Describe(Zone), Theater, TheaterNames.Labels(content),
 				new MissionTextView(Texts)),
 			Routes, Placing, Areas, AreaPlacing, Orders, Objectives, Actions, Timers, Conditions, Presence, Variants,
-			choices, new TriggerMessages(content), Names, SimStrings.Load(content));
+			choices, new TriggerMessages(content), Names);
 	}
 
 	/// <summary>
@@ -83,27 +81,20 @@ internal sealed class EditorMission {
 	public string Name { get; set; }
 
 	/// <summary>
-	/// The <c>script.dat</c> <see cref="Scene"/> was loaded from: <see cref="Source"/>'s generated file, whose blocks each
-	/// edit's generation replaces. It keeps every record as written, including what
-	/// loading resolves away — a ref past the end of its block, a slot DBSIM never reads.
-	/// </summary>
-	public ScriptDat Document { get; }
-
-	/// <summary>
 	/// The mission as its <c>.MSN</c> and <c>.ENG</c>, which every edit writes.
 	/// </summary>
 	public MissionDocument Source { get; }
 
 	public MissionScene Scene { get; }
 
-	/// <summary>The mission as generated after the last edit, which the views read.</summary>
-	public Mission Mission => Generated.Mission;
+	/// <summary>Which Hercs the mission's squad pilots, which builds the handoff's <c>player.mec</c> for File &gt; Export.</summary>
+	public MissionSquad PlayerSquad { get; }
+
+	/// <summary>The zone the mission is played in: the launch's header word (<see cref="MissionDocument.LaunchHeader"/>).</summary>
+	public short Zone => Source.LaunchHeader[ZoneCatalog.ZoneWord];
 
 	/// <summary>The scene's objects and the mission's groups, routes and trigger areas, as the <c>.MSN</c>'s layout places them, by GUID.</summary>
 	public MissionIndex Index { get; }
-
-	/// <summary>The generated mission's features, cross-referenced by block index, which the views read.</summary>
-	public GeneratedIndex Generated { get; }
 
 	/// <summary>What the panels, the outliner and the Toolbox name the mission's records by.</summary>
 	public MissionNames Names { get; }
@@ -200,17 +191,18 @@ internal sealed class EditorMission {
 	public bool PlacingAny => Placing.Active || AreaPlacing.Active;
 
 	/// <summary>The window title, the name marked <c>*</c> when <paramref name="unsaved"/> changes are held.</summary>
-	public string Title(bool unsaved) => $"HERCULAN Mission Editor — {Name}{(unsaved ? "*" : "")}, zone {Mission.Header.ZoneIndex}";
+	public string Title(bool unsaved) => $"HERCULAN Mission Editor — {Name}{(unsaved ? "*" : "")}, zone {Zone}";
 
 	/// <summary>
 	/// Opens the handoff at <paramref name="scriptPath"/> as <paramref name="source"/>, the mission it holds as its
 	/// <c>.MSN</c>: the document's generated <c>script.dat</c> and <c>mission.str</c> are written over the handoff's, the
 	/// world is loaded for the mission generated from them (<see cref="MissionScene.LoadWorld"/>), and the objects are built
 	/// for the records the document's layout places (<see cref="LayoutPlacement"/>) and stood on the ground as the game's
-	/// load stands its own (<see cref="MissionScene.Settle"/>). <paramref name="dataDirectory"/> is where the simulator's
+	/// load stands its own (<see cref="MissionScene.Settle"/>). That write and load happen once, here; an edit writes nothing
+	/// and loads nothing. <paramref name="dataDirectory"/> is where the simulator's
 	/// settings are when they are not beside the script — see <see cref="MissionScene.Load"/>.
-	/// <paramref name="squad"/> is which Hercs the mission's squad pilots, which builds the handoff's <c>player.mec</c> again after
-	/// an edit, <paramref name="shellContent"/> VSHELL's mount, which holds the shell's chassis and weapon tables,
+	/// <paramref name="squad"/> is which Hercs the mission's squad pilots, which builds the <c>player.mec</c> File &gt; Export
+	/// writes, <paramref name="shellContent"/> VSHELL's mount, which holds the shell's chassis and weapon tables,
 	/// <paramref name="cybrid"/> what a Cybrid's hardpoints offer and <paramref name="zones"/> the install's zones with the
 	/// retail missions that use each, both built once per editor run. Throws
 	/// <see cref="MissingHandoffFileException"/> as <see cref="MissionLoader.Load"/> does.
@@ -220,8 +212,7 @@ internal sealed class EditorMission {
 		File.WriteAllBytes(scriptPath, source.ScriptBytes);
 		File.WriteAllBytes(CaseInsensitivePath.Combine(Path.GetDirectoryName(scriptPath) ?? ".", MissionLoader.TextFileName),
 			source.MissionText);
-		var document = source.Script;
-		var generated = MissionLoader.Load(content, document, scriptPath);
+		var generated = MissionLoader.Load(content, source.Script, scriptPath);
 		var scene = MissionScene.LoadWorld(content, generated, dataDirectory);
 		var tables = PlacementTables.Load(content);
 		var plan = LayoutPlacement.Place(source.Layout, tables);
@@ -232,10 +223,8 @@ internal sealed class EditorMission {
 			sceneObject.Object.Position = GroundStanding.Settled(scene.World.Terrain, sceneObject.Object, sceneObject.Object.Position);
 		}
 
-		var index = new GeneratedIndex(generated, document, new GeneratedRecords(source), sceneIndex);
 		// The scene's own copy is not kept; a base pad's tile is sized by its material when the ground is levelled again.
-		return new EditorMission(content, name, document, source, scene, tables, sceneIndex, index,
-			new MissionLint(source, sceneIndex, MissionLint.SquadOf(generated)), TerrainMaterialTable.Load(content), squad, shellContent, cybrid,
-			zones);
+		return new EditorMission(content, name, source, scene, tables, sceneIndex, new MissionLint(source, sceneIndex),
+			TerrainMaterialTable.Load(content), squad, shellContent, cybrid, zones);
 	}
 }

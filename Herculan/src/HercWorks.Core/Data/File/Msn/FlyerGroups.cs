@@ -21,8 +21,8 @@ namespace HercWorks.Core.Data.File.Msn;
 /// point, so it flies in its formation place.</para>
 ///
 /// <para>Block 8 holds DBSIM's <see cref="ScriptDatLint.FlyerSlotCap"/> flyer slots
-/// (docs/retail/formats/script-dat.md#the-two-pass-read--and-what-it-means-for-dbsim-keeps): an add that would pass it is
-/// refused, counted as the mission check counts it.</para>
+/// (docs/retail/formats/script-dat.md#the-two-pass-read--and-what-it-means-for-dbsim-keeps): an add that would pass it in
+/// any version of the mission is refused, counting every row-13 GUID of the layout whatever its condition.</para>
 /// </summary>
 public static class FlyerGroups {
 	/// <summary>
@@ -58,9 +58,9 @@ public static class FlyerGroups {
 
 	/// <summary>Why no flyer can be added to <paramref name="document"/>, or null when one can.</summary>
 	public static string? WhyNoAdd(MissionDocument document) {
-		int flyers = document.Script.Flyers.Length;
+		int flyers = document.Layout.Entries(FlyerRow).Count;
 		return flyers + 1 > ScriptDatLint.FlyerSlotCap
-			? $"The mission already has {flyers} flyers, and DBSIM holds {ScriptDatLint.FlyerSlotCap}."
+			? $"At maximum flyer limit ({ScriptDatLint.FlyerSlotCap})."
 			: null;
 	}
 

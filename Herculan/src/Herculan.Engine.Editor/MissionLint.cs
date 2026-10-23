@@ -1,6 +1,5 @@
 using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Data.File.Msn.Script;
-using Herculan.Engine.World;
 
 namespace Herculan.Engine.Editor;
 
@@ -19,9 +18,8 @@ internal sealed class MissionLint {
 	private const int BaseRow = 14;
 
 	/// <param name="index">The layout's groups and objects, which an order's and an object's finding is shown through.</param>
-	/// <param name="squad">How many machines the squad brings into the generated mission (<see cref="SquadOf"/>).</param>
-	public MissionLint(MissionDocument source, MissionIndex index, int squad) {
-		Findings = ScriptDatLint.Check(source.Script, squad, source.Provenance.Lines.Count)
+	public MissionLint(MissionDocument source, MissionIndex index) {
+		Findings = Check(source)
 			.Select(finding => new EditorFinding(finding, TargetOf(finding, source, index)))
 			.ToList();
 	}
@@ -29,10 +27,12 @@ internal sealed class MissionLint {
 	public IReadOnlyList<EditorFinding> Findings { get; }
 
 	/// <summary>
-	/// How many machines the squad brings into <paramref name="generated"/>, the mission loaded from the generation, which
-	/// share the herc roster's slot cap: those its <c>player.mec</c> places.
+	/// <see cref="ScriptDatLint"/> over <paramref name="source"/>'s generated <c>script.dat</c>, the squad's machines, which
+	/// share the herc roster's slot cap, counted one per squad position its layout's group 0 gives
+	/// (<see cref="SquadRoster.Positions"/>), as an add counts them (<see cref="HercGroups.WhyNoRoom"/>).
 	/// </summary>
-	public static int SquadOf(Mission generated) => generated.Placements.Count(placement => placement.IsPlayerLance);
+	public static List<ScriptLintFinding> Check(MissionDocument source) =>
+		ScriptDatLint.Check(source.Script, SquadRoster.Positions(source.Layout), source.Provenance.Lines.Count);
 
 	private static EditorSelection? TargetOf(ScriptLintFinding finding, MissionDocument source, MissionIndex index) {
 		int i = finding.Index;

@@ -42,7 +42,7 @@ internal sealed class PropertiesPanel {
 			SideChanger sides, ObjectDeleter deleter, SquadMachinePanel machine, RosterFitView fit, MissionView mission, RouteEditor routes,
 			RoutePlacing placing, AreaEditor areas, AreaPlacing areaPlacing, OrderEditor orders, ObjectiveEditor objectives,
 			ActionEditor actions, TimerEditor timers, ConditionEditor conditions, PresenceEditor presence, VariantEditor variants,
-			RandomChoices choices, TriggerMessages messages, MissionNames names, StringFile? strings) {
+			RandomChoices choices, TriggerMessages messages, MissionNames names) {
 		_index = index;
 		_selection = selection;
 		_mission = mission;
@@ -62,7 +62,7 @@ internal sealed class PropertiesPanel {
 		var team = new TeamField(index, sides);
 		var related = new RelatedObjectives(objectives, links);
 		_object = new ObjectView(index, links, mover, team, deleter, machine, fit, presentWhen, presence, variantView, actions,
-			related, strings);
+			related);
 		_group = new GroupView(index, links, mover, team, machine, presentWhen, presence, actions, related, orderSlots, sharers);
 		machine.References = namers => links.References(namers);
 	}
@@ -147,6 +147,6 @@ internal sealed class PropertiesPanel {
 	// The view of a selection whose record the .MSN no longer has, until the next sync clears it.
 	private static void Gone(string kind) {
 		ImGui.Text(kind);
-		EditorText.Note("It is no longer in the mission.");
+		EditorText.Note("Not found.");
 	}
 }

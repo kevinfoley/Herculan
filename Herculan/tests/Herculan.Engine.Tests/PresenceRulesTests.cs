@@ -136,11 +136,11 @@ public class PresenceRulesTests {
 
 		var change = PresenceRules.SetRule(document, First, Rule(null, (30, Greater, 0)), out _);
 
-		Assert.Null(document.ExportedIndex(14, 1));
+		Assert.Null(Exported(document, 14, 1));
 		document.Undo(change);
 		Assert.Equal(conditions, ConditionEditing.Records(document).Length);
 		Assert.Equal(-1, BaseCondition(document, 1));
-		Assert.NotNull(document.ExportedIndex(14, 1));
+		Assert.NotNull(Exported(document, 14, 1));
 	}
 
 	/// <summary>

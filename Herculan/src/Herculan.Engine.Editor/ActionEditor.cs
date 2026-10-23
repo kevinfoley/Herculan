@@ -195,7 +195,7 @@ internal sealed class ActionEditor {
 
 	/// <summary>Why the roster record <paramref name="key"/>'s own triggers cannot be set, or null when they can.</summary>
 	public string? WhyNoObjectAction(ObjectKey key) =>
-		_source.Layout.Entry(key.Row, key.Guid) == null ? "Its record is not in the file." : ActionWiring.WhyNoObjectAction(_source, key.Row, key.Guid);
+		_source.Layout.Entry(key.Row, key.Guid) == null ? EditorToolbox.ObjectGone(key.Row) : ActionWiring.WhyNoObjectAction(_source, key.Row, key.Guid);
 
 	/// <summary>Why <paramref name="key"/>'s engaged trigger, or with <paramref name="defeated"/> its defeated one, cannot be none, or null.</summary>
 	public string? WhyNoNone(ObjectKey key, bool defeated) =>

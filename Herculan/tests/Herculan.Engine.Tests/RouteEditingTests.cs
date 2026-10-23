@@ -25,7 +25,7 @@ public class RouteEditingTests {
 		var change = RouteEditing.Create(document, [(100, 10), (200, 20), (300, 30)], closed: true, out short route);
 
 		var script = document.Script;
-		var refs = script.WaypointGroups[document.ExportedIndex(8, route)!.Value].Waypoints;
+		var refs = script.WaypointGroups[Exported(document, 8, route)!.Value].Waypoints;
 		Assert.Equal(4, refs.Length);
 		Assert.Equal(refs[0], refs[^1]);
 		Assert.Equal(new[] { 100, 200, 300 }, refs.Take(3).Select(reference => script.Coordinates[reference].X));
@@ -51,7 +51,7 @@ public class RouteEditingTests {
 		Assert.Equal(4, list.Length);
 		Assert.True(RouteEditing.IsClosed(list));
 		Assert.Equal(3, RouteEditing.WaypointCount(list));
-		Assert.Equal(300, document.Script.Coordinates[document.ExportedIndex(6, list[2])!.Value].X);
+		Assert.Equal(300, document.Script.Coordinates[Exported(document, 6, list[2])!.Value].X);
 	}
 
 	/// <summary>
@@ -73,7 +73,7 @@ public class RouteEditingTests {
 		RouteEditing.InsertAfter(document, 5, 0);
 
 		var script = document.Script;
-		var other = script.WaypointGroups[document.ExportedIndex(8, 6)!.Value].Waypoints;
+		var other = script.WaypointGroups[Exported(document, 8, 6)!.Value].Waypoints;
 		Assert.Equal(3, other.Length);
 		Assert.Equal(200, script.Coordinates[other[1]].X);
 		Assert.Empty(Array.Find(document.Mission.WaypointGroups!, record => record.GUID == 5)!.Waypoints);

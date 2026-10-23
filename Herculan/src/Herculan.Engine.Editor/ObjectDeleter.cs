@@ -66,7 +66,7 @@ internal sealed class ObjectDeleter {
 	/// <summary>What keeps <paramref name="placed"/> from being deleted; <see cref="DeleteBlockers.None"/> when nothing does.</summary>
 	public DeleteBlockers BlockersOf(SceneObject placed) {
 		if (_index.Planned(placed) is not { } planned) {
-			return DeleteBlockers.Because("its roster record is not in the file.");
+			return DeleteBlockers.Because("not found.");
 		}
 
 		if (planned.Squad) {

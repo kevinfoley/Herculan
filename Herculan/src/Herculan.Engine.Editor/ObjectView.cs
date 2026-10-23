@@ -31,14 +31,13 @@ internal sealed class ObjectView {
 	private readonly VariantView _variants;
 	private readonly ActionEditor _actions;
 	private readonly RelatedObjectives _objectives;
-	private readonly StringFile? _strings;
 
 	// The object's point being typed.
 	private readonly PointFields _point = new();
 
 	public ObjectView(MissionIndex index, PanelLinks links, PointMover mover, TeamField team, ObjectDeleter deleter,
 			SquadMachinePanel machine, RosterFitView fit, PresentWhenView presentWhen, PresenceEditor presence, VariantView variants,
-			ActionEditor actions, RelatedObjectives objectives, StringFile? strings) {
+			ActionEditor actions, RelatedObjectives objectives) {
 		_index = index;
 		_links = links;
 		_mover = mover;
@@ -51,7 +50,6 @@ internal sealed class ObjectView {
 		_variants = variants;
 		_actions = actions;
 		_objectives = objectives;
-		_strings = strings;
 	}
 
 	/// <summary>Draws <paramref name="sel"/>'s view; nothing for an object the layout does not place.</summary>
@@ -60,7 +58,7 @@ internal sealed class ObjectView {
 			return;
 		}
 
-		ImGui.TextWrapped(Title(sel, planned));
+		ImGui.TextWrapped(Title(planned));
 		ImGui.AlignTextToFramePadding();
 		ImGui.Text("Group:");
 		ImGui.SameLine();
@@ -100,17 +98,11 @@ internal sealed class ObjectView {
 		DrawAdvanced(sel, planned);
 	}
 
-	// The object's name: a herc's or flyer's type name, or for a structure or ground vehicle its kind and the name the MFD's
-	// status screen prints for it (MfdStatusSubject.BaseName), "Structure: SUPPLY DEPOT"; its type number is under Advanced.
-	private string Title(SceneObject sel, PlannedObject planned) {
-		if (sel.Object is Sim.BaseObject structure) {
-			string kind = structure.Type.IsVehicle ? "Ground vehicle" : "Structure";
-			string? name = MfdStatusSubject.BaseName(structure.Type, _strings);
-			return string.IsNullOrWhiteSpace(name) ? $"{kind} with no name on the MFD" : $"{kind}: {name}";
-		}
-
-		return _links.Names.TypeName(planned.Key);
-	}
+	// The object's name: a herc's or flyer's type name, or a structure's or ground vehicle's title (RosterTypeNames.StructureTitle).
+	private string Title(PlannedObject planned) =>
+		_index.Layout.Entry(planned.Key.Row, planned.Key.Guid)?.Fields is BaseRosterEntry62 structure
+			? _links.Names.Types.StructureTitle(structure)
+			: _links.Names.TypeName(planned.Key);
 
 	/// <summary>
 	/// The object's position, as fields that move it when it can be moved (<see cref="PointMover"/>). A field's edit

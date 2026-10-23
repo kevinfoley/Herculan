@@ -228,7 +228,7 @@ internal sealed class MissionOutliner {
 			}
 
 			int users = choices.Users(read).Count + choices.Others(read);
-			Choose(new ConditionSelection(table), WrappedSelectable($"{choices.Title(read)} (used by {users})", $"choice{table}",
+			Choose(new ConditionSelection(table), EditorText.WrappedSelectable($"{choices.Title(read)} (used by {users})", $"choice{table}",
 				current == table));
 		}
 	}
@@ -251,7 +251,7 @@ internal sealed class MissionOutliner {
 		for (int i = 0; i < records.Count; i++) {
 			var record = records[i];
 			var selection = new ConditionSelection(record.GUID);
-			Choose(selection, WrappedSelectable($"Condition {record.GUID}: {ConditionEditing.Describe(source.Mission, record)}",
+			Choose(selection, EditorText.WrappedSelectable($"Condition {record.GUID}: {ConditionEditing.Describe(source.Mission, record)}",
 				$"condition{i}", _selection.Is(selection)));
 		}
 
@@ -276,24 +276,6 @@ internal sealed class MissionOutliner {
 	/// </summary>
 	private bool Row(RecordName name, int row, short guid, string id, EditorSelection selection) =>
 		NameText.Selectable(name with { Text = name.Text + Marker(row, guid) }, id, _selection.Is(selection));
-
-	/// <summary>
-	/// A <see cref="ImGui.Selectable(string, bool)"/> whose label wraps at the panel's edge: a label-less selectable
-	/// as tall as the wrapped text, with the text drawn over it.
-	/// </summary>
-	private static bool WrappedSelectable(string text, string id, bool selected) {
-		float width = ImGui.GetContentRegionAvail().X;
-		var start = ImGui.GetCursorScreenPos();
-		float height = ImGui.CalcTextSize(text, false, width).Y;
-		bool clicked = ImGui.Selectable($"##{id}", selected, ImGuiSelectableFlags.None, new Vector2(0f, height));
-		var next = ImGui.GetCursorScreenPos();
-		ImGui.SetCursorScreenPos(start);
-		ImGui.PushTextWrapPos(ImGui.GetCursorPosX() + width);
-		ImGui.TextUnformatted(text);
-		ImGui.PopTextWrapPos();
-		ImGui.SetCursorScreenPos(next);
-		return clicked;
-	}
 
 	/// <summary><see cref="NotAlways"/> when row <paramref name="row"/>'s entry for <paramref name="guid"/> is present only under a condition, else nothing.</summary>
 	private string Marker(int row, short guid) => Layout.Entry(row, guid)?.Presence.Always == false ? NotAlways : string.Empty;

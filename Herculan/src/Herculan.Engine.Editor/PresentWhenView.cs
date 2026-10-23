@@ -307,7 +307,7 @@ internal sealed class PresentWhenView {
 	// The condition chosen, as a link.
 	private void DrawChosen(MissionDocument source, short condition) {
 		if (ConditionEditing.IndexOf(source, condition) == null) {
-			EditorText.Note($"Condition {condition} is not in the file, so it is never present.");
+			EditorText.Note("It references a condition the mission does not have, so it is never present.");
 			return;
 		}
 
@@ -382,7 +382,7 @@ internal sealed class PresentWhenView {
 			return "Always";
 		}
 
-		string described = ConditionEditing.Describe(source.Mission, condition) ?? "not in the file";
+		string described = ConditionEditing.Describe(source.Mission, condition) ?? "missing";
 		return separator == ':' ? $"Condition {condition}: {described}" : $"condition {condition} ({described})";
 	}
 }
