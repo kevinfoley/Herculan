@@ -237,9 +237,7 @@ internal sealed class PropertiesPanel {
 		}
 
 		DrawOwnActions(placement);
-		if (placement.OutOfActionReport is { } report) {
-			OutOfActionWrites("When out of the fight", report);
-		}
+		OutOfActionWrites(sel);
 
 		ObjectiveLinks(_index.ObjectivesOfObject(sel), _index.Scene.SelectionOf(sel)!);
 		DeleteControls(sel);
@@ -457,8 +455,10 @@ internal sealed class PropertiesPanel {
 			_links.Object(member);
 		}
 
+		// Group_ReportIfAllOutOfAction: the last member to go finds every other destroyed or immobilized; a disarmed one
+		// counts as standing (docs/retail/simulation/mission-deployment.md#the-out-of-action-report).
 		if (group < Mission.GroupOutOfActionReports.Count) {
-			OutOfActionWrites("When all of it is out of the fight", Mission.GroupOutOfActionReports[group]);
+			OutOfActionWrites("When every member is destroyed or immobilized, sets campaign variables", Mission.GroupOutOfActionReports[group]);
 		}
 
 		ObjectiveLinks(_index.ObjectivesOfGroup(group), new GroupSelection(guid));
@@ -518,8 +518,8 @@ internal sealed class PropertiesPanel {
 		string? why = _actions.WhyNoObjectAction(placement);
 		OwnAction("When engaged, fires", placement, defeated: false, placement.EngagementActionRef, why);
 		OwnAction("When defeated, fires", placement, defeated: true, placement.DefeatActionRef, why);
-		EditorText.Note("Engaged: an enemy within 50,000 units spots it, or shoots it. Defeated: put out of the fight, "
-			+ "or for a herc, left with no working weapon.");
+		EditorText.Note("Engaged: an enemy within 50,000 units spots it, or shoots it. Defeated: destroyed; a herc also "
+			+ "when immobilized or left with no working weapon.");
 		EditorText.Reason(why);
 		EditorText.Reason(_actions.Failure);
 	}
@@ -629,23 +629,43 @@ internal sealed class PropertiesPanel {
 		}
 	}
 
-	/// <summary>An out-of-action report's counter writes, or nothing when it makes none.</summary>
-	private static void OutOfActionWrites(string heading, OutOfActionReport report) {
-		bool any = false;
-		for (int i = 0; i < report.CounterRefs.Count && i < report.CounterOps.Count; i++) {
-			if (report.CounterRefs[i] < 0) {
-				continue;
-			}
-
-			if (!any) {
+	/// <summary>
+	/// The campaign variables an object sets when it goes out of the fight, read-only, headed by what sends it out
+	/// (docs/retail/simulation/mission-deployment.md#the-out-of-action-report): a herc's report runs the first time it is
+	/// destroyed or immobilized, a flyer's, a structure's and a ground vehicle's when it is destroyed. Nothing when it sets
+	/// none. A squad herc's record sets none in play, since the squad's machines start with empty slots, so its view says so
+	/// where its record lists any.
+	/// </summary>
+	private void OutOfActionWrites(SceneObject sel) {
+		var placement = sel.Placement;
+		string heading = placement.Kind == MissionUnitKind.Mech
+			? "When destroyed or immobilized, sets campaign variables"
+			: "When destroyed, sets campaign variables";
+		if (placement.IsPlayerLance) {
+			if (_index.Scene.KeyOf(sel) is { } key && _index.Scene.Layout.Entry(key.Row, key.Guid)?.Fields is MechRosterEntry144 herc
+					&& WritesOf(herc.OutOfActionReport).Any(write => write.Variable >= 0)) {
 				ImGui.Separator();
-				ImGui.Text($"{heading}:");
-				any = true;
+				ImGui.TextWrapped($"{heading}:");
+				EditorText.Note("None in play: a HERC of the player's squad sets none of its own, whatever its record lists.");
 			}
 
-			ImGui.BulletText($"counter {report.CounterRefs[i]}: {MissionText.OutOfActionOp(report.CounterOps[i])}");
+			return;
+		}
+
+		OutOfActionWrites(heading, placement.OutOfActionReport ?? OutOfActionReport.None);
+	}
+
+	// <report>'s writes under <heading>, or nothing when it makes none.
+	private static void OutOfActionWrites(string heading, OutOfActionReport report) {
+		var writes = CampaignVariableWrites.Pairs(report.CounterRefs, report.CounterOps);
+		if (writes.Any(write => write.Variable >= 0)) {
+			CampaignVariableWrites.DrawReadOnly(heading, WriteLayer.OutOfAction, writes);
 		}
 	}
+
+	// The (variable, code) pairs of a record's interleaved out-of-action words.
+	private static IReadOnlyList<(short Variable, short Op)> WritesOf(short[] words) =>
+		Enumerable.Range(0, words.Length / 2).Select(pair => (words[pair * 2], words[pair * 2 + 1])).ToList();
 
 	/// <summary>
 	/// Links to the objectives asked of the selection, and a button that adds one about <paramref name="subject"/>, the

@@ -77,7 +77,11 @@ internal static class PresenceSentences {
 		RecordAspect.Position => ("position", false),
 		RecordAspect.Heading => ("heading", false),
 		RecordAspect.StartingCondition => ("starting condition", false),
-		RecordAspect.OutOfFightWrites => ("campaign variable writes when out of the fight", true),
+		RecordAspect.OutOfFightWrites => (row switch {
+			12 => "campaign variables set when destroyed or immobilized",
+			16 => "campaign variables set when every member is destroyed or immobilized",
+			_ => "campaign variables set when destroyed",
+		}, true),
 		RecordAspect.FiredTriggers => ("triggers fired when engaged or defeated", true),
 		RecordAspect.Members => ("members", true),
 		RecordAspect.Orders => ("orders", true),

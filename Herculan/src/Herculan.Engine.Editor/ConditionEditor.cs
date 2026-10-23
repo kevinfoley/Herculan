@@ -104,6 +104,11 @@ internal sealed class ConditionEditor {
 
 		var orders = new List<MsnRecordId>();
 		int alternatives = 0;
+
+		// The records with no view, counted by row.
+		var unseen = new Dictionary<int, int>();
+		void Unseen(int row) => unseen[row] = unseen.GetValueOrDefault(row) + 1;
+
 		foreach (var record in namers.Records) {
 			if (record.Row is >= 6 and <= 16 && source.RecordAt(record) is { GUID: -1 }) {
 				alternatives++;
@@ -115,17 +120,12 @@ internal sealed class ConditionEditor {
 					short condition = ConditionEditing.Records(source)[record.Index].GUID;
 					shown.Add(new ConditionUse($"Condition {condition}", new ConditionSelection(condition)));
 					continue;
-				case 2:
-					shown.Add(new ConditionUse($"Header patch {record.Index}", null));
+				case 4 when record.Index == MissionTextEditing.PackageRecord(source):
+					// The text package the Mission view's lines edit.
+					shown.Add(new ConditionUse("The mission's objective, briefing and intelligence lines", new MissionSelection()));
 					continue;
-				case 3:
-					shown.Add(new ConditionUse($"Movie value {source.RecordAt(record)?.GUID}", null));
-					continue;
-				case 4:
-					shown.Add(new ConditionUse($"Text package {record.Index}", null));
-					continue;
-				case 5:
-					shown.Add(new ConditionUse($"Debrief {record.Index}", null));
+				case 2 or 3 or 4 or 5:
+					Unseen(record.Row);
 					continue;
 				case 15:
 					orders.Add(record);
@@ -142,7 +142,16 @@ internal sealed class ConditionEditor {
 				continue;
 			}
 
+			if (record.Row is 6 or 7) {
+				Unseen(record.Row);
+				continue;
+			}
+
 			shown.Add(Identity(record.Row, slot.Index));
+		}
+
+		foreach (int row in unseen.Keys.Order()) {
+			shown.Add(NoView(row, unseen[row]));
 		}
 
 		var resolved = _deleter.Resolve(source, new MsnNamers([], [], orders));
@@ -165,8 +174,7 @@ internal sealed class ConditionEditor {
 
 	/// <summary>A record the editor's state exports at <paramref name="index"/> of the block row <paramref name="row"/> is written to, by its identity.</summary>
 	public ConditionUse Identity(int row, int index) => row switch {
-		6 => new ConditionUse($"Point {index}", null),
-		7 => new ConditionUse($"Heading {index}", null),
+		6 or 7 => NoView(row, 1),
 		8 => new ConditionUse($"Route {index}", Records.RouteAt(index)),
 		9 => new ConditionUse($"Area {index}", Records.AreaAt(index)),
 		10 => new ConditionUse($"Action {index}", Records.ActionAt(index)),
@@ -177,6 +185,32 @@ internal sealed class ConditionEditor {
 	};
 
 	private GeneratedRecords Records => _index.Records;
+
+	/// <summary>
+	/// <paramref name="count"/> records of row <paramref name="row"/>, one the editor has no view for, by what they do in the
+	/// mission (docs/retail/formats/msn-mission-file.md): a header patch sets the mission's settings, its zone among them, and
+	/// clears the campaign variables it lists as the mission loads; a row-3 value is a briefing's or a debrief's movie; a text
+	/// package other than the one the Mission view edits is another version of the mission's lines and briefing movie; a
+	/// row-5 record a version of the debrief; then a point and a heading.
+	/// </summary>
+	private static ConditionUse NoView(int row, int count) {
+		string what = (row, count) switch {
+			(2, 1) => "Mission settings, such as the zone",
+			(2, _) => $"{count} sets of mission settings, such as the zone",
+			(3, 1) => "A briefing or debrief movie",
+			(3, _) => $"{count} briefing or debrief movies",
+			(4, 1) => "Another version of the mission's lines and briefing movie",
+			(4, _) => $"{count} other versions of the mission's lines and briefing movie",
+			(5, 1) => "The debrief: its lines and movie",
+			(5, _) => $"{count} versions of the debrief: lines and movie",
+			(6, 1) => "A position",
+			(6, _) => $"{count} positions",
+			(7, 1) => "A heading",
+			_ => $"{count} headings",
+		};
+
+		return new ConditionUse($"{what} (not shown in the editor)", null);
+	}
 
 	// A route, trigger area, action, timer, group or objective <record> as a link selecting it by its GUID or row-17 index:
 	// by its generated identity where the editor's state holds it, else by its kind, its view then saying it is not shown in

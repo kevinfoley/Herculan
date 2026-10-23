@@ -273,7 +273,7 @@ public static class ActionEditing {
 
 	/// <summary>Why no counter write can be added to <paramref name="action"/>, or null when one can.</summary>
 	public static string? WhyNoAddPair(MissionDocument document, short action) =>
-		FilledPairs(CounterPairs(document, action)) >= Pairs ? $"All {Pairs} counter writes are filled." : null;
+		FilledPairs(CounterPairs(document, action)) >= Pairs ? $"It already lists {Pairs} campaign variable changes, the most it can hold." : null;
 
 	/// <summary>Adds a counter write after <paramref name="action"/>'s last (<see cref="NewPairCounter"/>, <see cref="NewPairOp"/>).</summary>
 	public static MsnEdit AddPair(MissionDocument document, short action) {

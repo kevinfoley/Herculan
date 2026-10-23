@@ -10,7 +10,7 @@ One view per thing a designer authors, the way one friendly dialog in Dynamix's 
 
 | Term | Means | Replaces |
 |---|---|---|
-| **campaign variable** | one of the 1000 numbers carried from mission to mission; the game writes a few after every mission, missions write the rest | "flag" in conditions and the campaign list, "counter" in counter writes (R1) |
+| **campaign variable** | one of the 1000 numbers carried from mission to mission; the game writes a few after every mission, missions write the rest | "flag" in conditions and the campaign list, "counter" in the writes (R1) |
 | **random choice**, **option** | a variant table and its alternatives, and a random roll and its outcome ranges: one roll, several options, each with a chance | "variant table", "alternative", "draw", "range", "draws below" (R19) |
 | **trigger** | an action: who enters which areas, then what happens | "action", "type", "verb" (R6) |
 | **win condition**, **lose condition** | a mandatory objective, a failure objective | "mandatory", "failure condition" (R12, R14) |
@@ -47,12 +47,12 @@ Phases 2 to 6 are carried out by [handoff-editor-msn-scene.md](handoff-editor-ms
 - The Conditions list is under Advanced, without its create buttons (R20, done).
 - A random roll (a draw) and its ranges keep their own views: every retail roll picks only a debrief loss line, which the editor does not show yet, and they join the Random choice view when the debrief text gets a view.
 
-### 3. Campaign variables and Present when as sentences
+### 3. Campaign variables and Present when as sentences (done)
 
-- Counter writes everywhere read "Add 1 to campaign variable 30 (label)", headed by what writes them: "Sets campaign variables", "When first achieved, sets campaign variables", "When out of the fight, sets campaign variables" (R1).
+- Writes everywhere read "Add 1 to campaign variable 22 (ATC50 units the debrief adds to the armory)", in one shared list, headed by what writes them: "Sets campaign variables", "The first time it comes true, sets campaign variables", "When destroyed or immobilized, sets campaign variables" and its flyer, structure and group forms; each variable picked from the picker's list for a write, which names those the debrief reads by what it does with them (R1, [Campaign variable writes](handoff-editor-mission-logic.md#campaign-variable-writes)).
 - Present when (done): "Always / Only when a campaign variable... / In some loads...", each clause a row, each variable picked from a list by what it holds or by its uses in the mission; the editor makes, reuses and cleans up the conditions behind it (R18, R21), and a record whose details change between versions names what changes (R22) ([Present when](handoff-editor-conditions.md#present-when)).
 - A variable the game writes reads by what it holds ("the number of Hercs scrapped in the previous mission"); one missions write is "campaign variable 30"; where it comes from is not looked up across missions (done in Present when).
-- Used by entries the editor has no view for (R23), named by effect.
+- Used by entries the editor has no view for (R23), named by effect, "(not shown in the editor)" after each (done, [Conditions](handoff-editor-conditions.md#conditions)).
 
 ### 4. Triggers and countdowns
 

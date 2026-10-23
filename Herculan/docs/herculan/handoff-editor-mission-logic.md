@@ -1,6 +1,6 @@
 # Handoff — orders, actions, timers, objectives and text in the editor
 
-A group's orders, the actions and timers that drive a mission, the wiring between them, objectives and the mission's text. Part of the [editor handoff](handoff-editor.md). Which records each tool writes is in [The tools](handoff-editor-document.md#the-tools).
+A group's orders, the actions and timers that drive a mission, the wiring between them, the campaign variables a mission sets, objectives and the mission's text. Part of the [editor handoff](handoff-editor.md). Which records each tool writes is in [The tools](handoff-editor-document.md#the-tools).
 
 ## Orders
 
@@ -37,6 +37,22 @@ Not edited: an order's formation and point.
 
 Each is none or any action, with a link. A field a variant supplies offers no None, since an overlay cannot carry the unset value, so a variant-supplied engaged or defeated action cannot be taken away.
 
+## Campaign variable writes
+
+An action, an objective, and a herc, flyer, structure, ground vehicle or group put out of action each set up to ten campaign variables, the array a later mission's [Present when](handoff-editor-conditions.md#present-when) tests ([`../retail/simulation/mission-deployment.md`](../retail/simulation/mission-deployment.md#the-mission-counters--dat_004a9ef4)). Every view lists them the same way (`CampaignVariableWrites`), one sentence per write: "Add 1 to campaign variable 100", "Set campaign variable 100 to 0", "Subtract 1 from campaign variable 100", with the variable's meaning after its number where the game sets or reads it ([the picker](handoff-editor-conditions.md#the-campaign-variable-picker)): "Add 1 to campaign variable 22 (ATC50 units the debrief adds to the armory)". A code the record's layer has no case for reads "Unknown operation on campaign variable N (no effect in play)". The three layers number their operations differently, and a list offers only its own:
+
+| Writes | Heading | Operations, by code |
+|---|---|---|
+| an action ([`../retail/simulation/mission-deployment.md`](../retail/simulation/mission-deployment.md#the-four-ways-an-action-activates)) | Sets campaign variables | Add 1 (6), Set to 0 (5) |
+| an objective, win or lose condition alike, the first time its condition holds ([`../retail/simulation/mission-objectives.md`](../retail/simulation/mission-objectives.md#the-record)) | The first time it comes true, sets campaign variables | Set to 1 (4), Set to 0 (5), Add 1 (6), Subtract 1 (7) |
+| a herc, the first time it is destroyed or immobilized ([`../retail/simulation/component-damage.md`](../retail/simulation/component-damage.md#going-out-of-the-fight)) | When destroyed or immobilized, sets campaign variables | Set to 0 (1), Add 1 (2), Set to 1 to 4 (`0x0d` to `0x10`) ([`../retail/simulation/mission-deployment.md`](../retail/simulation/mission-deployment.md#the-out-of-action-report)) |
+| a flyer, when its component 0 goes; a structure or a ground vehicle, when it is destroyed, a ground vehicle sharing the structure's damage path ([`../retail/simulation/structure-behaviour.md`](../retail/simulation/structure-behaviour.md#taking-damage--base_applydamage-00404d70)) | When destroyed, sets campaign variables | as a herc's |
+| a group, when its last member to go finds every other destroyed or immobilized, a disarmed one counting as standing | When every member is destroyed or immobilized, sets campaign variables | as a herc's |
+
+In the action and objective views a write is a sentence, then a choice of the layer's operations and a variable from the picker's list for a write, with Remove; Add follows the last, up to ten, and the list stays filled from the first. Choosing a variable keeps the operation, or makes it Add 1 when the layer has no case for it. A new action write is campaign variable 0, Add 1, as all 66 retail action writes are, each posting the action's message ([Actions](#actions)); a new objective write is campaign variable 52, Add 1, the first write of 4 of the 31 retail objectives that write one. A list with no write says "It sets no campaign variable."
+
+The other three are read-only and shown only when they list a write. A HERC of the player's squad sets none of its own in play, since its slots start empty ([`../retail/simulation/mission-deployment.md`](../retail/simulation/mission-deployment.md#the-out-of-action-report)): where its record lists writes, its view says "None in play" under the heading instead.
+
 ## Actions
 
 **New action**, at the top of the outliner's Actions list, and **New action testing this area**, in a trigger area's view, add one and select it. The action view (`ActionView`, through `ActionEditor`) offers:
@@ -45,8 +61,8 @@ Each is none or any action, with a link. A field a variant supplies offers no No
 - **Trigger areas**, up to four, each a choice with Remove and a link, and Add after the last; a remove moves later areas up, since the load stops at the first `-1`, and an area already tested is refused. Slots 4 to 7, which no retail record fills, stay `-1`.
 - The timers and objects that fire it, as links.
 - **Verb**, 0 to 5, worded from the arrival table ([`../retail/simulation/mission-deployment.md`](../retail/simulation/mission-deployment.md#arrival--group_deploymentcheck-004236c4)), any other value shown as it is; then the groups waiting on it, the orders it ends and the timers it starts, as links.
-- **Counter writes**, up to ten, each a counter (0 to 999) and one of the two operations `Action_Activate` knows, clear (5) and +1 (6), with Add after the last (counter 0, +1, as all 66 retail records that write one have it) and Remove, kept filled from the first.
-- **Message**, none or a line of the `COMMAND<n>.STR` the mission speaks from, `n` its header's training mission number, which row 2 patches and no launch writes over ([`../retail/formats/script-dat.md`](../retail/formats/script-dat.md#the-training-mission-number)), each line offered with its text and written as its id plus one in `0x4E`. A training mission's lines are its instructor's sentences, offered by id, each with the sentences after it joined as the training port shows them ([`../retail/simulation/cockpit-messages.md`](../retail/simulation/cockpit-messages.md#the-training-port)). The view says the message is posted once per counter write and not at all when the action writes none, in bold when that leaves it never posted.
+- **Sets campaign variables**, up to ten ([Campaign variable writes](#campaign-variable-writes)).
+- **Message**, none or a line of the `COMMAND<n>.STR` the mission speaks from, `n` its header's training mission number, which row 2 patches and no launch writes over ([`../retail/formats/script-dat.md`](../retail/formats/script-dat.md#the-training-mission-number)), each line offered with its text and written as its id plus one in `0x4E`. A training mission's lines are its instructor's sentences, offered by id, each with the sentences after it joined as the training port shows them ([`../retail/simulation/cockpit-messages.md`](../retail/simulation/cockpit-messages.md#the-training-port)). The view says the message is posted once for each campaign variable the action sets and not at all when it sets none, in bold when that leaves it never posted.
 - The text ref at `0x44`, which one retail record sets and DBSIM drops, read-only.
 - **Delete**, refused while a timer starts on or fires it, a group waits on it, an object fires it (variant alternatives included) or an order ends on it ("Timer 3", "Group 12", "Herc slot 4", "Group 4, order 1").
 
@@ -74,7 +90,7 @@ The objective view (`ObjectiveView`, through `ObjectiveEditor`) offers:
 - the subject, a group, a herc or a structure (boxed in the scene), with a link; a record holding a flyer or a kind no case reads shows it as it is;
 - the condition, every code `Mission_EvaluateObjectives` has a case for (0 to 4 and 6 to 10), with a note for 3, 4, 9 and 10, which test the player's data link and not the subject. For condition 0 the route (highlighted), from the routes the subject's group's orders run (the object's own group for an object), and the order slot it reads; a change to condition 0 with no route takes the group's slot-0 route;
 - the failure text's three lines, applied when a field lets go, with a note on when the status alert shows them, or Add a failure text when there is none ([The mission's text](#the-missions-text));
-- the counter writes, up to ten, each a counter (0 to 999) and one of the objective layer's four operations (set, clear, +1, -1), with Add and Remove, kept filled from the first;
+- the campaign variables it sets the first time it comes true, up to ten ([Campaign variable writes](#campaign-variable-writes));
 - Delete.
 
 Row 17 has no GUID and nothing references an objective: the load renumbers no ref to one, and DBSIM's objective array (`004a9ec4`, its count `004a9ec0`) is referenced, by `es2_xref.py`, only in `DBSim_SpawnMissionObjects`, which fills it, and `Mission_EvaluateObjectives`, which walks it. An edit writes the record itself, a conditioned one included (retail's carry conditions 79 and 80). A mission file that ends inside its objectives (`DEMO2`) adds and deletes none.

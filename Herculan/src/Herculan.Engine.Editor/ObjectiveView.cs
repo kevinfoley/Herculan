@@ -8,7 +8,8 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// The Properties panel's view of an objective: mandatory or a failure condition, its subject, its condition and, for
-/// condition 0, its route, its failure text and its counter writes, each a field that changes it
+/// condition 0, its route, its failure text and the campaign variables it sets (<see cref="CampaignVariableWrites"/>), each
+/// a field that changes it
 /// (<see cref="ObjectiveEditor"/>), and a Delete button. What each field does is
 /// docs/retail/simulation/mission-objectives.md's.
 /// </summary>
@@ -22,10 +23,7 @@ internal sealed class ObjectiveView {
 	private readonly LineField _lines = new();
 	private readonly PresentWhenView _presentWhen;
 	private readonly PresenceEditor _presence;
-
-	// A counter being typed, and the row-17 record and pair it is for, until its field lets go.
-	private (int Record, int Slot)? _counterFor;
-	private int _counter;
+	private readonly CampaignVariableWrites _writes = new();
 
 	/// <param name="document">The generated <c>script.dat</c>, whose records the view offers as subjects.</param>
 	/// <param name="groupLink">Draws a link that selects a group, by block-11 index.</param>
@@ -79,7 +77,7 @@ internal sealed class ObjectiveView {
 		}
 
 		DrawText(record, index, mandatory, locked);
-		DrawCounters(record, objective, locked);
+		DrawWrites(record, objective, locked);
 		DrawDelete(record);
 		EditorText.Reason(_editor.Failure);
 	}
@@ -231,81 +229,26 @@ internal sealed class ObjectiveView {
 		}
 	}
 
-	// The counter writes, each a counter field and an operation, with Remove, and Add after the last.
-	private void DrawCounters(int record, MissionObjective objective, bool locked) {
+	// The campaign variables it sets the first time its condition holds, a win or a lose condition alike
+	// (docs/retail/simulation/mission-objectives.md#the-record), each a sentence with its operation and variable to change it,
+	// Remove, and Add after the last.
+	private void DrawWrites(int record, MissionObjective objective, bool locked) {
 		ImGui.Separator();
-		ImGui.Text("The first time it comes true:");
-		int filled = 0;
-		for (int slot = 0; slot < objective.CounterRefs.Count && slot < objective.CounterOps.Count; slot++) {
-			if (objective.CounterRefs[slot] == -1 && objective.CounterOps[slot] == -1) {
+		var pairs = CampaignVariableWrites.Pairs(objective.CounterRefs, objective.CounterOps);
+		var filled = pairs.TakeWhile(pair => pair.Variable != -1 || pair.Op != -1).ToList();
+		switch (_writes.Draw("The first time it comes true, sets campaign variables", WriteLayer.Objective, filled, _editor.Source,
+				locked, _editor.WhyNoAddPair(record))) {
+			case SetWriteRequest set:
+				_editor.RequestPair(record, set.Slot, set.Variable, set.Op);
 				break;
-			}
-
-			filled++;
-			ImGui.PushID($"pair{slot}");
-			DrawPair(record, slot, objective.CounterRefs[slot], objective.CounterOps[slot], locked);
-			ImGui.PopID();
-		}
-
-		if (filled == 0) {
-			EditorText.Note("It writes no counter.");
-		}
-
-		string? why = _editor.WhyNoAddPair(record);
-		ImGui.BeginDisabled(why != null);
-		if (ImGui.Button("Add a counter write")) {
-			_editor.RequestAddPair(record);
-		}
-
-		ImGui.EndDisabled();
-		EditorText.Reason(why);
-	}
-
-	private void DrawPair(int record, int slot, short counter, short op, bool locked) {
-		ImGui.BeginDisabled(locked);
-		ImGui.AlignTextToFramePadding();
-		ImGui.Text("Counter");
-		ImGui.SameLine();
-		int shown = _counterFor == (record, slot) ? _counter : counter;
-		ImGui.SetNextItemWidth(ScaledImGui.Scaled(60f));
-		if (ImGui.InputInt("##counter", ref shown, 0, 0)) {
-			_counterFor = (record, slot);
-			_counter = shown;
-		}
-
-		if (ImGui.IsItemDeactivatedAfterEdit() && _counterFor == (record, slot)) {
-			_counterFor = null;
-			if (_counter != counter) {
-				_editor.RequestPair(record, slot, (short)Math.Clamp(_counter, 0, ObjectiveEditing.Counters - 1), Op(op));
-			}
-		}
-
-		ImGui.SameLine();
-		ImGui.SetNextItemWidth(ScaledImGui.Scaled(110f));
-		if (ImGui.BeginCombo("##op", MissionText.ObjectiveCounterOp(op))) {
-			for (short choice = ObjectiveEditing.CounterSet; choice <= ObjectiveEditing.CounterDecrement; choice++) {
-				if (ImGui.Selectable(MissionText.ObjectiveCounterOp(choice), choice == op) && choice != op) {
-					_editor.RequestPair(record, slot, (short)Math.Clamp((int)counter, 0, ObjectiveEditing.Counters - 1), choice);
-				}
-			}
-
-			ImGui.EndCombo();
-		}
-
-		ImGui.SameLine();
-		if (ImGui.SmallButton("Remove")) {
-			_editor.RequestRemovePair(record, slot);
-		}
-
-		ImGui.EndDisabled();
-		if (counter < 0 || op < 0) {
-			EditorText.Note("Skipped: a write needs both a counter and an operation.");
+			case AddWriteRequest:
+				_editor.RequestAddPair(record);
+				break;
+			case RemoveWriteRequest remove:
+				_editor.RequestRemovePair(record, remove.Slot);
+				break;
 		}
 	}
-
-	// An operation an edit keeps: the record's, or increment for one outside the four.
-	private static short Op(short op) =>
-		op is >= ObjectiveEditing.CounterSet and <= ObjectiveEditing.CounterDecrement ? op : ObjectiveEditing.CounterIncrement;
 
 	private void DrawDelete(int record) {
 		ImGui.Separator();

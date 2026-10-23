@@ -253,7 +253,7 @@ internal sealed class ConditionView {
 			if (use.Target is { } target) {
 				_links.Link(use.Label, target);
 			} else {
-				ImGui.Text(use.Label);
+				ImGui.TextWrapped(use.Label);
 			}
 
 			ImGui.PopID();

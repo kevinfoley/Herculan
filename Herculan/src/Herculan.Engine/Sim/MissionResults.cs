@@ -112,5 +112,5 @@ public static class MissionResults {
 	private const int SalvageScale = 0x9c4;
 
 	/// <summary>What one unit of mission counter 20 adds to the award, in kilograms.</summary>
-	private const int SalvageBonusKilograms = 25000;
+	public const int SalvageBonusKilograms = 25000;
 }

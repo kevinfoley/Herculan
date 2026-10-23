@@ -9,7 +9,8 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// The Properties panel's view of a mission action: whose position its trigger areas test, its target, its areas, its
-/// verb, its counter writes and its message, each a choice or field that changes it (<see cref="ActionEditor"/>), what fires
+/// verb, the campaign variables it sets (<see cref="CampaignVariableWrites"/>) and its message, each a choice or field that
+/// changes it (<see cref="ActionEditor"/>), what fires
 /// it and what follows as links, and a Delete button. <see cref="DrawSummary"/> is the same wiring read-only, as a trigger
 /// area's view lists each action testing it. What each field does is
 /// docs/retail/simulation/mission-deployment.md#the-four-ways-an-action-activates.
@@ -20,10 +21,7 @@ internal sealed class ActionView {
 	private readonly ActionEditor _editor;
 	private readonly SelectionState _selection;
 	private readonly PanelLinks _links;
-
-	// A counter being typed, and the action and pair it is for, until its field lets go.
-	private (int Action, int Slot)? _counterFor;
-	private int _counter;
+	private readonly CampaignVariableWrites _writes = new();
 
 	/// <param name="document">The generated <c>script.dat</c>, whose records the view offers as targets.</param>
 	public ActionView(GeneratedIndex index, ScriptDat document, ActionEditor editor, SelectionState selection, PanelLinks links) {
@@ -60,7 +58,7 @@ internal sealed class ActionView {
 		ImGui.Text("Then:");
 		DrawVerb(guid, record, locked);
 		DrawFollowers(record, links);
-		DrawCounters(guid, action, record, locked);
+		DrawWrites(guid, record, locked);
 		DrawMessage(guid, record, locked);
 		DrawUnusedText(action);
 		DrawDelete(guid);
@@ -100,17 +98,11 @@ internal sealed class ActionView {
 		ImGui.Text("Then:");
 		ImGui.Indent();
 		bool any = DrawFollowers(record, links);
-		for (int i = 0; i < record.CounterRefs.Count && i < record.CounterOps.Count; i++) {
-			if (record.CounterRefs[i] >= 0) {
-				ImGui.Text($"counter {record.CounterRefs[i]}: {MissionText.ActionCounterOp(record.CounterOps[i])}");
-				any = true;
-			}
-		}
-
+		any |= CampaignVariableWrites.DrawLines(WriteLayer.Action, CampaignVariableWrites.Pairs(record.CounterRefs, record.CounterOps));
 		if (record.MessageId >= 0) {
 			ImGui.TextWrapped($"message {record.MessageId}: {MessageText(record.MessageId) ?? "(no text)"}");
 			int posts = Posts(record);
-			EditorText.Note(posts == 0 ? "never posted: the action writes no counter" : $"posted {posts}x");
+			EditorText.Note(posts == 0 ? "never posted: it sets no campaign variable" : $"posted {posts}x");
 			any = true;
 		}
 
@@ -358,77 +350,22 @@ internal sealed class ActionView {
 		return any;
 	}
 
-	// The counter writes, each a counter field and an operation, with Remove, and Add after the last.
-	private void DrawCounters(short guid, int action, MissionAction record, bool locked) {
-		ImGui.Spacing();
-		ImGui.Text("Counter writes:");
-		int filled = ActionEditing.FilledPairs(Enumerable.Range(0, Math.Min(record.CounterRefs.Count, record.CounterOps.Count))
-			.Select(slot => (record.CounterRefs[slot], record.CounterOps[slot])).ToList());
-		for (int slot = 0; slot < filled; slot++) {
-			ImGui.PushID($"pair{slot}");
-			DrawPair(guid, action, slot, record.CounterRefs[slot], record.CounterOps[slot], locked);
-			ImGui.PopID();
-		}
-
-		if (filled == 0) {
-			EditorText.Note("It writes no counter.");
-		}
-
-		string? why = _editor.WhyNoAddPair(guid);
-		ImGui.BeginDisabled(why != null);
-		if (ImGui.Button("Add a counter write")) {
-			_editor.RequestAddPair(guid);
-		}
-
-		ImGui.EndDisabled();
-		EditorText.Reason(why);
-	}
-
-	// Counter write <slot> of the action of row-10 GUID <guid>, generated at block-5 index <action>.
-	private void DrawPair(short guid, int action, int slot, short counter, short op, bool locked) {
-		ImGui.BeginDisabled(locked);
-		ImGui.AlignTextToFramePadding();
-		ImGui.Text("Counter");
-		ImGui.SameLine();
-		int shown = _counterFor == (action, slot) ? _counter : counter;
-		ImGui.SetNextItemWidth(ScaledImGui.Scaled(60f));
-		if (ImGui.InputInt("##counter", ref shown, 0, 0)) {
-			_counterFor = (action, slot);
-			_counter = shown;
-		}
-
-		if (ImGui.IsItemDeactivatedAfterEdit() && _counterFor == (action, slot)) {
-			_counterFor = null;
-			if (_counter != counter) {
-				_editor.RequestPair(guid, slot, (short)Math.Clamp(_counter, 0, ActionEditing.Counters - 1), Op(op));
-			}
-		}
-
-		ImGui.SameLine();
-		ImGui.SetNextItemWidth(ScaledImGui.Scaled(90f));
-		if (ImGui.BeginCombo("##op", MissionText.ActionCounterOp(op))) {
-			foreach (short choice in new[] { ActionEditing.CounterClear, ActionEditing.CounterIncrement }) {
-				if (ImGui.Selectable(MissionText.ActionCounterOp(choice), choice == op) && choice != op) {
-					_editor.RequestPair(guid, slot, (short)Math.Clamp((int)counter, 0, ActionEditing.Counters - 1), choice);
-				}
-			}
-
-			ImGui.EndCombo();
-		}
-
-		ImGui.SameLine();
-		if (ImGui.SmallButton("Remove")) {
-			_editor.RequestRemovePair(guid, slot);
-		}
-
-		ImGui.EndDisabled();
-		if (counter < 0) {
-			EditorText.Note("Skipped: a write needs a counter.");
+	// The campaign variables it sets, each a sentence with its operation and variable to change it, Remove, and Add after the last.
+	private void DrawWrites(short guid, MissionAction record, bool locked) {
+		var pairs = CampaignVariableWrites.Pairs(record.CounterRefs, record.CounterOps);
+		var filled = pairs.Take(ActionEditing.FilledPairs(pairs)).ToList();
+		switch (_writes.Draw("Sets campaign variables", WriteLayer.Action, filled, _editor.Source, locked, _editor.WhyNoAddPair(guid))) {
+			case SetWriteRequest set:
+				_editor.RequestPair(guid, set.Slot, set.Variable, set.Op);
+				break;
+			case AddWriteRequest:
+				_editor.RequestAddPair(guid);
+				break;
+			case RemoveWriteRequest remove:
+				_editor.RequestRemovePair(guid, remove.Slot);
+				break;
 		}
 	}
-
-	// An operation an edit keeps: the record's, or +1 for one Action_Activate has no case for.
-	private static short Op(short op) => op is ActionEditing.CounterClear or ActionEditing.CounterIncrement ? op : ActionEditing.CounterIncrement;
 
 	// The message, a choice of none or a line of the COMMAND<n>.STR the mission speaks from, and when it is posted.
 	private void DrawMessage(short action, MissionAction record, bool locked) {
@@ -466,9 +403,9 @@ internal sealed class ActionView {
 				: $"From str\\{file}, training mission {training}'s instructor script.");
 
 		int posts = Posts(record);
-		const string rule = "It is posted once for each counter write, and not at all when the action writes none.";
+		const string rule = "It is posted once for each campaign variable it sets, and not at all when it sets none.";
 		if (record.MessageId >= 0 && posts == 0) {
-			EditorText.Emphasis($"Never posted: it writes no counter. {rule}");
+			EditorText.Emphasis($"Never posted: it sets no campaign variable. {rule}");
 		} else if (record.MessageId >= 0) {
 			EditorText.Note($"Posted {posts} time(s). {rule}");
 		} else {

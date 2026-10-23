@@ -122,35 +122,6 @@ internal static class MissionText {
 		_ => $"verb {verb}"
 	};
 
-	/// <summary>What one of an action's counter operations does to its counter.</summary>
-	public static string ActionCounterOp(short op) => op switch {
-		MissionAction.CounterIncrement => "+1",
-		MissionAction.CounterClear => "cleared",
-		_ => $"op {op}, no effect"
-	};
-
-	/// <summary>
-	/// What one of an objective's counter operations does — a different code set from the action's,
-	/// see docs/retail/simulation/mission-objectives.md#the-record.
-	/// </summary>
-	public static string ObjectiveCounterOp(short op) => op switch {
-		MissionObjective.CounterSet => "set to 1",
-		MissionObjective.CounterClear => "cleared",
-		MissionObjective.CounterIncrement => "+1",
-		MissionObjective.CounterDecrement => "-1",
-		_ => $"op {op}, no effect"
-	};
-
-	/// <summary>
-	/// What one of an out-of-action report's operations does — docs/retail/simulation/mission-deployment.md#the-out-of-action-report.
-	/// </summary>
-	public static string OutOfActionOp(short op) => op switch {
-		OutOfActionReport.OpClear => "cleared",
-		OutOfActionReport.OpIncrement => "+1",
-		>= OutOfActionReport.OpSetFirst and <= OutOfActionReport.OpSetLast => $"set to {op - OutOfActionReport.SetBias}",
-		_ => $"op {op}, no effect"
-	};
-
 	/// <summary>
 	/// The question an objective asks of its subject — the condition table in
 	/// docs/retail/simulation/mission-objectives.md#what-each-condition-asks.
@@ -159,7 +130,7 @@ internal static class MissionText {
 		MissionObjective.ConditionOrderComplete => groupSubject
 			? "has finished its order on the route below"
 			: "its group has finished its order on the route below",
-		MissionObjective.ConditionLost => groupSubject ? "is written off" : "is destroyed or immobilised",
+		MissionObjective.ConditionLost => groupSubject ? "is written off" : "is destroyed or immobilized",
 		MissionObjective.ConditionClear => groupSubject
 			? "is not written off, and every living member is clear of threats"
 			: "is clear of threats",

@@ -8,7 +8,7 @@ The editor, `Herculan.Engine.Editor`, run on its own by `Herculan.Engine.Host.Ed
 | [handoff-editor-viewing.md](handoff-editor-viewing.md) | opening, New mission, theater and time of day, selection, camera, picking, overlays, groups, waiting groups, the mission check |
 | [handoff-editor-placement.md](handoff-editor-placement.md) | moving objects, waypoints, groups and area corners; routes; trigger areas |
 | [handoff-editor-roster.md](handoff-editor-roster.md) | adding hercs, flyers, ground vehicles and structures; type and fit; sides; deleting; the player's squad |
-| [handoff-editor-mission-logic.md](handoff-editor-mission-logic.md) | orders, wiring, actions, timers, objectives, the mission's text |
+| [handoff-editor-mission-logic.md](handoff-editor-mission-logic.md) | orders, wiring, campaign variable writes, actions, timers, objectives, the mission's text |
 | [handoff-editor-conditions.md](handoff-editor-conditions.md) | what the editor shows, conditions, variant tables, Present when |
 | [handoff-editor-ux-plan.md](handoff-editor-ux-plan.md) | the planned UI redesign, by phase; its evidence is [handoff-editor-ux-review.md](handoff-editor-ux-review.md) |
 | [handoff-editor-msn-scene.md](handoff-editor-msn-scene.md) | the planned rewrite that shows and selects the `.MSN` directly, every record included, in place of the generated `script.dat` |
@@ -50,14 +50,14 @@ Beyond the gaps each doc lists:
 | 7 (2), headings | a heading for an object or a group |
 | 8 (3), routes | naming one from a group's own route field (row 16) |
 | 10 (5), actions | the text line (`0x44`) |
-| 12 (7), mechs | a Cybrid's weapon fit and ammunition types; AI radar and cruise speed, starting condition, out-of-action counter writes |
-| 13 (8), flyers | the out-of-action counter writes |
-| 14 (9), structures and ground vehicles | the starting condition (0 in 29% of retail records), out-of-action counter writes (698 retail records write one) |
+| 12 (7), mechs | a Cybrid's weapon fit and ammunition types; AI radar and cruise speed, starting condition, the campaign variables it sets when put out of action (shown) |
+| 13 (8), flyers | the campaign variables it sets when destroyed (shown) |
+| 14 (9), structures and ground vehicles | the starting condition (0 in 29% of retail records), the campaign variables it sets when destroyed (shown; 698 retail records set one) |
 | 15 (10), orders | the formation and the point |
-| 16 (11), groups | the formation id, paints-ground flag, heading, own route, out-of-action counter writes and map-shown flag; deleting one other than with its last member |
+| 16 (11), groups | the formation id, paints-ground flag, heading, own route, the campaign variables it sets when every member is down (shown) and map-shown flag; deleting one other than with its last member |
 | 17 (12), objectives | the condition ref, which the campaign layer authors; their order |
 
-**Counters.** Actions, objectives and out-of-action reports write counters, which persist into the campaign flags the next mission's row 1 tests ([`../retail/shell/campaign-loop.md`](../retail/shell/campaign-loop.md#the-campaign-flag-array-is-the-msn-condition-store)). Nothing lists which counters a mission writes, so nothing helps choose a free one or wire it to a condition.
+**Campaign variables.** Actions, objectives and out-of-action reports set campaign variables, which persist into the campaign flags a later mission's row 1 tests ([`../retail/shell/campaign-loop.md`](../retail/shell/campaign-loop.md#the-campaign-flag-array-is-the-msn-condition-store)); each view lists its writes as sentences ([Campaign variable writes](handoff-editor-mission-logic.md#campaign-variable-writes)). The campaign variable picker lists every variable the mission touches, with what touches it, and those the debrief reads, by what it does with them ([The campaign variable picker](handoff-editor-conditions.md#the-campaign-variable-picker)); what other missions set or test is not looked up.
 
 ## Scope
 
@@ -67,7 +67,6 @@ Beyond the gaps each doc lists:
 | Mission text: debrief lines, action lines, the briefing and debrief movies | small–medium |
 | Edit roster and group fields | medium |
 | The objective type and the training mission number | small |
-| Counter overview | small |
 | A line-length check against the mission screen's wrap, and a line's trailing newline | small |
 | Ordering objectives; deleting a group directly; clearing a reference that refuses a delete | small each |
 | Heading entry and a turn handle | small |

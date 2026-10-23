@@ -240,7 +240,7 @@ public static class ObjectiveEditing {
 
 	/// <summary>Why no counter write can be added to row-17 record <paramref name="record"/>, or null when one can.</summary>
 	public static string? WhyNoAddPair(MissionDocument document, int record) =>
-		FilledPairs(Record(document, record)) >= Pairs ? $"All {Pairs} counter writes are filled." : null;
+		FilledPairs(Record(document, record)) >= Pairs ? $"It already lists {Pairs} campaign variable changes, the most it can hold." : null;
 
 	/// <summary>Adds a counter write after row-17 record <paramref name="record"/>'s last (<see cref="NewPairCounter"/>, <see cref="NewPairOp"/>).</summary>
 	public static MsnEdit AddPair(MissionDocument document, int record) {

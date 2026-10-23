@@ -34,6 +34,9 @@ internal sealed class ObjectiveEditor {
 		_selection = selection;
 	}
 
+	/// <summary>The mission as its <c>.MSN</c>, whose campaign variable uses the views' variable choices list.</summary>
+	public MissionDocument Source => _source;
+
 	/// <summary>Why the last edit run could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
