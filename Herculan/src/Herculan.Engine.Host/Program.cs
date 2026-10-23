@@ -75,6 +75,16 @@ using var session = new HostSession(installRoot, localization, imguiFontPath, im
 	SavePrintScreens = options.SavePrintScreens,
 };
 
+// A drive.cfg that opens no disc is given an image found the way the install was, written in as if chosen in Settings.
+if (session.Disc == null && GameInstall.FindDiscImage(installRoot, ShellHost.DiscCheckMovie) is { } foundImage) {
+	try {
+		GameInstall.WriteDiscImage(installRoot, foundImage);
+		session.ReopenDisc();
+	} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+		Console.Error.WriteLine($"Found the disc image {foundImage}, but could not write it into data\\drive.cfg ({ex.Message}).");
+	}
+}
+
 // The disc GameInstall.OpenDiscFile falls back from, said once: a disc without the movie the shell's startup
 // probes for (ShellHost.DiscCheckMovie) is not the CD.
 if (session.Disc is { } startupDisc) {

@@ -194,6 +194,43 @@ public static class GameInstall {
 	}
 
 	/// <summary>
+	/// A disc image for an install whose <c>drive.cfg</c> opens no disc, looked for as <see cref="Locate"/> looks for an
+	/// install: the first image beside the running binary, then in each folder above it, that
+	/// <see cref="CheckDiscImage"/> passes and that is the install's release; null when none is. A folder's images are
+	/// tried in <see cref="ImageSearchExtensions"/>' order, then by name, so a cue sheet is taken over the <c>.bin</c>
+	/// files it names, which open without its audio tracks. The release is told
+	/// apart as <see cref="LauncherLanguage.IsV110"/> tells installs apart, by <see cref="LauncherLanguage.V110ArchiveName"/>
+	/// in the disc's <c>VOL</c> folder: the disc's archives fill in those the install did not copy, so a disc of the
+	/// other release would mix the two. Searching for an image is this engine's own.
+	/// </summary>
+	public static string? FindDiscImage(string installRoot, string discCheckFile) {
+		bool v110 = LauncherLanguage.IsV110(installRoot);
+		for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory != null; directory = directory.Parent) {
+			string[] files;
+			try {
+				files = Directory.GetFiles(directory.FullName);
+			} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+				continue;
+			}
+
+			var images = files
+				.Select(file => (File: file, Rank: Array.FindIndex(ImageSearchExtensions,
+					extension => string.Equals(Path.GetExtension(file), extension, StringComparison.OrdinalIgnoreCase))))
+				.Where(candidate => candidate.Rank >= 0)
+				.OrderBy(candidate => candidate.Rank)
+				.ThenBy(candidate => candidate.File, StringComparer.OrdinalIgnoreCase)
+				.Select(candidate => candidate.File);
+			foreach (string image in images) {
+				if (CheckDiscImage(image, discCheckFile, out _) == null && IsV110Image(image) == v110) {
+					return image;
+				}
+			}
+		}
+
+		return null;
+	}
+
+	/// <summary>
 	/// Writes <paramref name="imagePath"/> into the install's <c>data\drive.cfg</c> as its disc image, or takes the
 	/// image out with null, keeping the file's two retail lines. A file without them gets <c>.</c>, the install
 	/// itself, as its disc, and <paramref name="installRoot"/> as its install, so that retail's two reads find two
@@ -306,6 +343,18 @@ public static class GameInstall {
 		Missing,
 		Whitespace,
 		NotLatin1,
+	}
+
+	/// <summary>The image files <see cref="FindDiscImage"/> tries, in the order it tries them within a folder.</summary>
+	private static readonly string[] ImageSearchExtensions = [".cue", ".iso", ".bin"];
+
+	private static bool IsV110Image(string path) {
+		try {
+			using var disc = GameDisc.OpenImage(path);
+			return disc.ArchiveNames().Contains(LauncherLanguage.V110ArchiveName, StringComparer.OrdinalIgnoreCase);
+		} catch (Exception ex) when (ex is DiscFormatException or IOException or UnauthorizedAccessException) {
+			return false;
+		}
 	}
 
 	private static string? LoadRemembered() {
