@@ -234,6 +234,7 @@ sealed class ShellHost : IDisposable {
 		_keys = new KeyboardRouting(_window, _movies, _startup, _game, _menu, _fields, repaint, session.Keys);
 		_buttons.Taken = key => key == Key.Escape && _keys.EscapeIsMenuBars;
 		_buttons.AlsoLeft = () => _window.PadClickHeld;
+		_buttons.AlsoRight = () => _window.PadRightClickHeld;
 		_buttons.AlsoSkip = () => _window.PadSkipHeld;
 		_content = new CanvasContent(_canvas, _screen, _pointer, _startup, dialogs, _movies, _menu, _save, hangar, _mission);
 
