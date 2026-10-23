@@ -2271,8 +2271,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Keyboard_PostEvents",
-      "description": "Drains the keyboard object's command buffer into command events (0x100, code from 0046e471 at the key code) and its key ring into character events (0x40, from 0046e571 or with Shift 0046e5c5, upper-cased; Ctrl+Q posts its own event). Every event goes out with no target.",
-      "source": "docs/retail/shell/main-menu.md#typing-into-a-row"
+      "description": "Drains the keyboard object's command buffer into command events (0x100, code from 0046e471 at the key code; a code whose table byte is 0xff posts nothing) and its key ring (Keyboard_PopKey) into character events (0x40, from 0046e571 or with Shift 0046e5c5, upper-cased). A ring entry with the release bit 0x80 is skipped, a table byte of 0 posts nothing, and Ctrl+Q posts a command event of code 0x11 and ends the pass, leaving the rest of the ring for the next. It keeps no state of its own about which keys are down, so every key-down the window posted, auto-repeats included, becomes an event. Every event goes out with no target.",
+      "source": "VSHELL decompile at 00408f95; docs/retail/shell/main-menu.md#typing-into-a-row",
+      "verified": {
+        "bytes": "00408f95+654",
+        "sha1": "044eaea15db4",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004092dc",

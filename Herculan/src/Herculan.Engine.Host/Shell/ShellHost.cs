@@ -87,6 +87,7 @@ sealed class ShellHost : IDisposable {
 	private readonly EditFields _fields;
 	private readonly KeyboardRouting _keys;
 	private readonly KeyboardLayout _layout = new(ShellKeyboard.KeyOfVirtualKey);
+	private readonly KeyRepeat _keyRepeat = new(KeyRepeat.SystemTypematic());
 	private readonly CanvasContent _content;
 
 	/// <summary>Whether a simulator exit code brings the shell back up rather than ending the run: 3, 4 and 6.</summary>
@@ -319,6 +320,15 @@ sealed class ShellHost : IDisposable {
 	private void OnUpdate(double delta) {
 		_audio.Update();
 		_window.UpdatePadPointer(delta);
+
+		// Windows' auto-repeat, which retail takes as fresh key-downs (docs/retail/shell/main-menu.md#typing-into-a-row),
+		// rebuilt from the held keys because the window's own key events carry no repeats.
+		if (_window.Keyboard is { } heldKeys) {
+			_keyRepeat.Advance(heldKeys.IsKeyPressed, delta);
+			if (_keyRepeat.Repeated is { } physical && ShellKey(physical) is { } repeated) {
+				_keys.KeyRepeat(repeated);
+			}
+		}
 
 		// The movie queue holds the shell while it plays out, as Movie_PlayQueue's loop does.
 		if (_movies.Active) {
