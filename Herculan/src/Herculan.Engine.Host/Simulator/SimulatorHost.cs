@@ -305,6 +305,10 @@ sealed class SimulatorHost : IDisposable {
 		_menuBar.Tweaks.Fonts = _imgui;
 		_padNav = new ImGuiGamepad(input);
 		_imgui.GamepadFeed = _padNav.Feed;
+
+		// A modal panel's focus puts the pointer on its button (ModalPanels.SyncPointer), which ImGui draws where the
+		// system will not show it (SimulatorInput.WarpedPointer); never in a --screenshot capture.
+		_imgui.PointerOverride = () => _panels.AnyOpen && _options.ScreenshotPath == null ? _input.WarpedPointer : null;
 		_input.ImGui = _imgui;
 		_textures = new CockpitTextures(gl, _art, _displays.HddCommand, _displays.HddMapFlashRaster);
 		_flash = new DamageFlash(_scene, _art, _passes.Scene, _textures);
