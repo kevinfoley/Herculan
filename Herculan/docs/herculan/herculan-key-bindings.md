@@ -29,7 +29,7 @@ The menu bar and its windows work with a gamepad alone, in a mission and in the 
 |---|---|
 | D-pad | Move between items. Left and right also step a slider. |
 | A | Press the item, open a list, tick a box. |
-| B | Close a list, leave the menu bar for the window under it, or step out of a scrolling area. |
+| B | Close a list, leave the menu bar for the window under it, or step out of a scrolling area. With no window open, hide the menu bar. |
 | X, held | With the bumpers, bring another window to the front; with the left stick, move the window. |
 | Bumpers | Held while stepping a slider: slower (left) or faster (right). |
 | Left stick | Scroll the window. |

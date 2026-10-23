@@ -210,6 +210,12 @@ sealed class HostMenuBar : IEscapeMenu {
 				Visible = false;
 			}
 
+			// So does a gamepad's B while no panel is up. ImGui's own B leaves the bar for the window under it, which is
+			// none then, so it would only take the highlight off a bar still standing over the game.
+			if (!PanelOpen && ImGui.IsKeyPressed(ImGuiKey.GamepadFaceRight, false)) {
+				Visible = false;
+			}
+
 			ImGui.EndMainMenuBar();
 		}
 
