@@ -547,8 +547,8 @@ sealed class SimulatorHost : IDisposable {
 		if (_options.ScreenshotPath == null) {
 			_menuBar.Draw(_window.View.Native?.Win32?.Hwnd ?? 0, _window.FullScreen);
 			_pauseMenu.Draw();
-			_orderRadial.Draw(OrderLabel, _imgui!.LargeFont);
-			_screenRadial.Draw(ScreenLabel, _imgui.LargeFont);
+			_orderRadial.Draw(OrderLabel, _imgui!.RadialFont);
+			_screenRadial.Draw(ScreenLabel, _imgui.RadialFont);
 		}
 
 		_debugPanel.Draw(

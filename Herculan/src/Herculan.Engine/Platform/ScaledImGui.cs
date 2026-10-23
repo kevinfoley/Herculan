@@ -30,8 +30,8 @@ public sealed class ScaledImGui : IDisposable {
 	/// <summary>The font's size in pixels on a 100% display under <see cref="A11ySettingDefinitions.LargerFont"/>.</summary>
 	public const float LargerFontSize = 40f;
 
-	/// <summary>How many times <see cref="FontSize"/> <see cref="LargeFont"/> is.</summary>
-	public const float LargeFontScale = 2f;
+	/// <summary>Font size multiplier for large font.</summary>
+	public const float RadialFontScale = 1.5f;
 
 	// The characters every font is baked with: ImGui's default Basic Latin and Latin-1 Supplement, and General
 	// Punctuation for the .lang files' dashes, ellipsis and German quotes, which would otherwise draw as '?'. Pinned for
@@ -67,10 +67,10 @@ public sealed class ScaledImGui : IDisposable {
 	public static float Scaled(float size) => size * ImGui.GetFontSize() / FontSize;
 
 	/// <summary>
-	/// The same font rasterised at <see cref="LargeFontScale"/> times the size, for text drawn that large, which the
-	/// ordinary font would draw blurred. Drawn at <see cref="LargeFontSize"/>.
+	/// The same font rasterised at <see cref="RadialFontScale"/> times the size, for text drawn that large, which the
+	/// ordinary font would draw blurred. Drawn at <see cref="RadialFontSize"/>.
 	/// </summary>
-	public ImFontPtr LargeFont { get; private set; }
+	public ImFontPtr RadialFont { get; private set; }
 
 	/// <summary>
 	/// The font's italic face at the ordinary size, or null when the constructor was given none. Rebuilt with the
@@ -78,8 +78,8 @@ public sealed class ScaledImGui : IDisposable {
 	/// </summary>
 	public ImFontPtr? ItalicFont { get; private set; }
 
-	/// <summary>The size <see cref="LargeFont"/> is drawn at in the current ImGui frame, as <see cref="Scaled(float)"/>.</summary>
-	public static float LargeFontSize => ImGui.GetFontSize() * LargeFontScale;
+	/// <summary>The size <see cref="RadialFont"/> is drawn at in the current ImGui frame, as <see cref="Scaled(float)"/>.</summary>
+	public static float RadialFontSize => ImGui.GetFontSize() * RadialFontScale;
 
 	/// <inheritdoc cref="Scaled(float)"/>
 	public static Vector2 Scaled(Vector2 size) => size * (ImGui.GetFontSize() / FontSize);
@@ -212,7 +212,7 @@ public sealed class ScaledImGui : IDisposable {
 		var fontConfig = new ImGuiFontConfig(_fontPath, (int)pixels, _ => GlyphRangesPointer);
 		var controller = new ImGuiController(_gl, _window.View, _input, fontConfig, () => {
 			var fonts = ImGui.GetIO().Fonts;
-			LargeFont = fonts.AddFontFromFileTTF(_fontPath, pixels * LargeFontScale, default, GlyphRangesPointer);
+			RadialFont = fonts.AddFontFromFileTTF(_fontPath, pixels * RadialFontScale, default, GlyphRangesPointer);
 			ItalicFont = _italicFontPath != null
 				? fonts.AddFontFromFileTTF(_italicFontPath, pixels, default, GlyphRangesPointer)
 				: null;
