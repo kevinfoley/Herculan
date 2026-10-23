@@ -12,12 +12,14 @@ namespace Herculan.Engine.Editor;
 /// (<see cref="MachineFitter.StockFit"/>), as a Herc Type choice gives it. An add is refused past
 /// <see cref="SquadRoster.MaxSquadmates"/> and past DBSIM's block-7 slots (<see cref="ScriptDatLint.MechSlotCap"/>),
 /// which the squad's machines share with the roster, counted over every version of the mission
-/// (<see cref="HercGroups.WhyNoRoom"/>), the add taking one more of each: a row-12 GUID and a squad position.</para>
+/// (<see cref="RosterLimits.WhyNoRoom"/>), the add taking one more of each: a row-12 GUID and a squad position.</para>
 ///
 /// <para>The edits run when <see cref="RunRequest"/> is called, once the frame's ImGui is rendered, since the rebuild
 /// changes what the panels list.</para>
 /// </summary>
 internal sealed class SquadEditor {
+	private const int MechRow = 12;
+
 	private readonly MissionDocument _source;
 	private readonly PointMover _mover;
 	private readonly SceneSync _sync;
@@ -57,7 +59,7 @@ internal sealed class SquadEditor {
 				return reason;
 			}
 
-			if (HercGroups.WhyNoRoom(_source.Layout, 2) is { } full) {
+			if (RosterLimits.WhyNoRoom(_source.Layout, MechRow, 2) is { } full) {
 				return full;
 			}
 

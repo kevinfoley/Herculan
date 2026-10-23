@@ -28,8 +28,7 @@ namespace HercWorks.Core.Data.File.Msn;
 ///
 /// <para>Block 9 holds DBSIM's <see cref="ScriptDatLint.BaseSlotCap"/> structure slots, which ground vehicles share
 /// (docs/retail/formats/script-dat.md#the-two-pass-read--and-what-it-means-for-dbsim-keeps): an add that would pass it in
-/// any version of the mission is refused, counting every row-14 GUID of the layout whatever its condition, as a structure's
-/// add counts them.</para>
+/// any version of the mission is refused, counted as <see cref="RosterLimits"/> counts it, as a structure's add is.</para>
 /// </summary>
 public static class VehicleGroups {
 	/// <summary>
@@ -67,12 +66,7 @@ public static class VehicleGroups {
 	};
 
 	/// <summary>Why no ground vehicle can be added to <paramref name="document"/>, or null when one can.</summary>
-	public static string? WhyNoAdd(MissionDocument document) {
-		int bases = document.Layout.Entries(BaseRow).Count;
-		return bases + 1 > ScriptDatLint.BaseSlotCap
-			? $"At maximum structure limit ({ScriptDatLint.BaseSlotCap})."
-			: null;
-	}
+	public static string? WhyNoAdd(MissionDocument document) => RosterLimits.WhyNoRoom(document.Layout, BaseRow, 1);
 
 	/// <summary>
 	/// Adds <paramref name="vehicle"/> in a new convoy on <paramref name="side"/> (0 human, 1 Cybrid), standing on a route of

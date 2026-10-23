@@ -31,7 +31,7 @@ public class FlyerGroupsTests {
 		Assert.Equal(hercs, script.Mechs.Length);
 		var made = script.Groups[Exported(document, 16, group)!.Value];
 		Assert.Equal(1, made.MemberKind);
-		Assert.Equal(flyer, document.GuidOf(8, made.MemberRefs[0]));
+		Assert.Equal(flyer, GuidAt(document, 8, made.MemberRefs[0]));
 		Assert.Equal(-1, made.PositionRef);
 		var order = script.Orders[made.OrderRefs[0]];
 		Assert.Equal(HercGroups.SearchDestroy, order.Verb);
@@ -58,7 +58,7 @@ public class FlyerGroupsTests {
 		for (int slot = 1; slot <= 3; slot++) {
 			FlyerGroups.Join(document, group, FlyerGroups.Machine(0), out short joined);
 			var record = document.Script.Groups[Exported(document, 16, group)!.Value];
-			Assert.Equal(joined, document.GuidOf(8, record.MemberRefs[slot]));
+			Assert.Equal(joined, GuidAt(document, 8, record.MemberRefs[slot]));
 		}
 
 		Assert.NotNull(FlyerGroups.WhyNoJoin(document, group));

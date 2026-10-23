@@ -26,8 +26,7 @@ namespace HercWorks.Core.Data.File.Msn;
 ///
 /// <para>Block 7 holds DBSIM's <see cref="ScriptDatLint.MechSlotCap"/> mech slots, shared with the squad's
 /// <c>player.mec</c> machines (docs/retail/formats/script-dat.md#the-two-pass-read--and-what-it-means-for-dbsim-keeps):
-/// an add that would pass it in any version of the mission is refused (<see cref="WhyNoRoom"/>), counting every row-12 GUID of
-/// the layout whatever its condition, plus one machine per squad position group 0 gives (<see cref="SquadRoster.Positions"/>).</para>
+/// an add that would pass it in any version of the mission is refused, counted as <see cref="RosterLimits"/> counts it.</para>
 /// </summary>
 public static class HercGroups {
 	/// <summary>
@@ -126,21 +125,8 @@ public static class HercGroups {
 		EngagementActionRef = -1, DefeatActionRef = -1, StartingCondition = StartingCondition,
 	};
 
-	/// <summary>Why no herc can be added to <paramref name="document"/>, or null when one can (<see cref="WhyNoRoom"/>).</summary>
-	public static string? WhyNoAdd(MissionDocument document) => WhyNoRoom(document.Layout, 1);
-
-	/// <summary>
-	/// Why <paramref name="taking"/> more of block 7's slots cannot be taken in <paramref name="layout"/>, or null when they can:
-	/// its row-12 GUIDs, every one whatever its condition, and the squad's machines, one per squad position
-	/// (<see cref="SquadRoster.Positions"/>), with them, must stay within <see cref="ScriptDatLint.MechSlotCap"/>.
-	/// </summary>
-	public static string? WhyNoRoom(MissionLayout layout, int taking) {
-		int hercs = layout.Entries(MechRow).Count;
-		int squad = SquadRoster.Positions(layout);
-		return hercs + squad + taking > ScriptDatLint.MechSlotCap
-			? $"At maximum HERC limit ({ScriptDatLint.MechSlotCap})."
-			: null;
-	}
+	/// <summary>Why no herc can be added to <paramref name="document"/>, or null when one can (<see cref="RosterLimits.WhyNoRoom"/>).</summary>
+	public static string? WhyNoAdd(MissionDocument document) => RosterLimits.WhyNoRoom(document.Layout, MechRow, 1);
 
 	/// <summary>
 	/// Adds <paramref name="herc"/> in a new group on <paramref name="side"/> (0 human, 1 Cybrid), standing on a route of

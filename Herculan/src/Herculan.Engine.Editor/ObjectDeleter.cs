@@ -36,7 +36,7 @@ internal sealed record DeleteBlockers(string? Fixed, DeleteNamers Object, IReadO
 /// Deletes a placed structure, mech or flyer from the open mission, whether it was loaded with it or added since, as one
 /// step of <see cref="PointMover"/>'s undo history. The delete is <see cref="RosterDeletion"/>'s record edits on the
 /// mission's <c>.MSN</c>, by the roster record the object stands for, which remove the object's records and the group it
-/// leaves empty and generate <c>script.dat</c> again; the scene is then synced with the document (<see cref="SceneSync"/>)
+/// leaves empty; the scene is then synced with the document (<see cref="SceneSync"/>)
 /// (docs/herculan/handoff-editor-document.md#the-tools).
 ///
 /// <para>What refuses a delete is <see cref="RosterDeletion"/>'s: an objective, an action or an order referencing the object

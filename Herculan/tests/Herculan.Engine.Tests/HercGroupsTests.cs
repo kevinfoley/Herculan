@@ -28,7 +28,7 @@ public class HercGroupsTests {
 
 		var script = document.Script;
 		var made = script.Groups[Exported(document, 16, group)!.Value];
-		Assert.Equal(mech, document.GuidOf(7, made.MemberRefs[0]));
+		Assert.Equal(mech, GuidAt(document, 7, made.MemberRefs[0]));
 		Assert.Equal(1, made.Side);
 		Assert.Equal(-1, made.PositionRef);
 		var order = script.Orders[made.OrderRefs[0]];
@@ -57,7 +57,7 @@ public class HercGroupsTests {
 		HercGroups.Join(document, 10, Machine(), out short mech);
 
 		var joined = document.Script.Groups[Exported(document, 16, 10)!.Value];
-		Assert.Equal(mech, document.GuidOf(7, joined.MemberRefs[1]));
+		Assert.Equal(mech, GuidAt(document, 7, joined.MemberRefs[1]));
 		Assert.NotNull(HercGroups.WhyNoJoin(document, Squad));
 		Assert.NotNull(HercGroups.WhyNoJoin(document, 11));
 		byte[] before = Write(document);

@@ -1,5 +1,4 @@
 using System.Numerics;
-using HercWorks.Core.Data.File.Msn.Script;
 using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Content;
 using Herculan.Engine.Platform;
@@ -12,8 +11,9 @@ namespace Herculan.Engine.Editor;
 /// File &gt; Save, Save As and Export script.dat, and the prompt that asks to save unsaved changes before the mission is
 /// left, each an ImGui modal. A Save writes the open mission's <c>.MSN</c> and text as loose files in the install
 /// (<see cref="SavedMissions"/>) under its own name, which the game then loads in place of an archive's copy; a Save As
-/// writes them under a name typed in, which the mission then has. Either runs the mission check over the generated
-/// <c>script.dat</c> first and, when it finds anything, asks before writing; and asks before a save that would first
+/// writes them under a name typed in, which the mission then has. Either runs the mission check over the <c>.MSN</c> first
+/// (<see cref="MissionLint"/>) and, when it finds anything, lists it as the Problems list words it (<see cref="ProblemText"/>)
+/// and asks before writing; and asks before a save that would first
 /// put a loose file over an archive mission, or replace a loose file under another mission's name. Whether the mission
 /// has changed since it was last saved or opened is its undo history's (<see cref="EditHistory.Dirty"/>).
 ///
@@ -57,7 +57,7 @@ internal sealed class MissionSaving {
 	private SaveRequest? _request;
 	private Action? _leaving;
 	private string _leavingWhat = "";
-	private IReadOnlyList<ScriptLintFinding> _findings = [];
+	private IReadOnlyList<string> _findings = [];
 	private string _message = "";
 	private string _typedName = "";
 	private string _typedFolder = "";
@@ -257,12 +257,12 @@ internal sealed class MissionSaving {
 	}
 
 	private void DrawFindings() {
-		ImGui.TextWrapped($"The mission check found {Count(_findings.Count, "problem")} in the script.dat this mission generates:");
+		ImGui.TextWrapped($"The mission check found {Count(_findings.Count, "problem")} in this mission:");
 		Spacer();
-		foreach (var finding in _findings.Take(ListedFindings)) {
+		foreach (string finding in _findings.Take(ListedFindings)) {
 			ImGui.Bullet();
 			ImGui.SameLine();
-			ImGui.TextWrapped(finding.Message);
+			ImGui.TextWrapped(finding);
 		}
 
 		if (_findings.Count > ListedFindings) {
@@ -376,7 +376,13 @@ internal sealed class MissionSaving {
 		Write(request);
 	}
 
-	private List<ScriptLintFinding> Check() => MissionLint.Check(_mission!.Source);
+	// The mission check's findings as the Problems list words them.
+	private List<string> Check() {
+		var mission = _mission!;
+		return new MissionLint(mission.Source, mission.Index).Findings
+			.Select(finding => ProblemText.Of(finding, mission.Names, mission.Index.Layout))
+			.ToList();
+	}
 
 	private bool InArchive(string name) =>
 		MissionFileLaunch.List(_shellContent())
@@ -412,7 +418,10 @@ internal sealed class MissionSaving {
 				_mission.PlayerSquad.PlayerMec(document.Generator));
 			Console.WriteLine($"Exported {_mission.Name} as {string.Join(", ", written)}.");
 			ShowMessage($"Exported {_mission.Name} into {folder}: {string.Join(", ", written.Select(Path.GetFileName))}.");
-		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException) {
+		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException
+				or InvalidOperationException) {
+			// The generation runs here, at the first read since the last edit, and fails as an InvalidDataException, an
+			// ArgumentException or an InvalidOperationException (MissionDocument.Script).
 			_typedProblem = ex.Message;
 		}
 	}

@@ -24,7 +24,7 @@ internal sealed class MissionTextEditor {
 	/// <summary>Why the last edit run could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
-	/// <summary>How many lines the generated <c>mission.str</c> has.</summary>
+	/// <inheritdoc cref="MissionTextEditing.Lines"/>
 	public int LineCount => MissionTextEditing.Lines(_source);
 
 	/// <summary><paramref name="list"/>'s filled slots, with the id each references and its text, null for an id with no text in this state.</summary>

@@ -118,10 +118,11 @@ internal sealed class MissionOutliner {
 
 		// Wrapped text rather than a Selectable, whose label does not wrap and most messages are
 		// wider than the panel.
-		foreach (var (finding, target) in _lint.Findings) {
+		foreach (var finding in _lint.Findings) {
 			ImGui.BulletText(string.Empty);
 			ImGui.SameLine();
-			string text = ProblemText.Of(finding, target, _names, Layout);
+			string text = ProblemText.Of(finding, _names, Layout);
+			var target = finding.Target;
 			if (target == null) {
 				EditorText.Wrapped(text);
 				continue;
@@ -195,7 +196,7 @@ internal sealed class MissionOutliner {
 		}
 
 		EditorText.Note("These lines are only text: the mission never ticks them off. Win and lose conditions decide it. Edit "
-			+ "them under Text when you click Mission at the top of this panel.");
+			+ "them under \"Text\" when you click \"Mission\" at the top of this panel.");
 
 		// Wrapped, as the lines run well past the panel's width.
 		foreach (var (_, id) in lines) {

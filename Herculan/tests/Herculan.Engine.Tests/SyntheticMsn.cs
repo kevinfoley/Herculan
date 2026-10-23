@@ -43,6 +43,14 @@ internal sealed class SyntheticMsn {
 	public static int? Exported(MissionDocument document, int row, short guid) =>
 		document.Provenance.Slots(row - 5).FirstOrDefault(slot => document.RecordAt(slot.Created)?.GUID == guid)?.Index;
 
+	/// <summary>
+	/// The GUID of the <c>.MSN</c> record that created record <paramref name="index"/> of <c>script.dat</c> block
+	/// <paramref name="block"/> (1 to 11) in <paramref name="document"/>'s generation, read from its provenance, or <c>-1</c>:
+	/// what a test finds the record a generated ref names by.
+	/// </summary>
+	public static short GuidAt(MissionDocument document, int block, int index) =>
+		document.Provenance.Slot(block, index) is { } slot && document.RecordAt(slot.Created) is { } record ? record.GUID : (short)-1;
+
 	/// <summary>A row-1 condition.</summary>
 	public static short[] Condition(short guid, short condition, short type, short lower, short upper, short operand) {
 		var words = new short[7];

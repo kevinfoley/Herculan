@@ -38,7 +38,7 @@ public class VehicleGroupsTests {
 		var script = document.Script;
 		var made = script.Groups[Exported(document, 16, group)!.Value];
 		Assert.Equal(Structures, made.MemberKind);
-		Assert.Equal(vehicle, document.GuidOf(9, made.MemberRefs[0]));
+		Assert.Equal(vehicle, GuidAt(document, 9, made.MemberRefs[0]));
 		Assert.Equal(Transport, script.Bases[made.MemberRefs[0]].TypeIndex);
 		Assert.Equal((-1, -1), (made.PositionRef, made.HeadingRef));
 		var order = script.Orders[made.OrderRefs[0]];
@@ -83,7 +83,7 @@ public class VehicleGroupsTests {
 		for (int slot = 1; slot <= 3; slot++) {
 			VehicleGroups.Join(document, convoy, VehicleGroups.Machine(Transport), BaseObject.IsGroundVehicle, out short joined);
 			var record = document.Script.Groups[Exported(document, 16, convoy)!.Value];
-			Assert.Equal(joined, document.GuidOf(9, record.MemberRefs[slot]));
+			Assert.Equal(joined, GuidAt(document, 9, record.MemberRefs[slot]));
 			Assert.Equal(-1, document.Script.Bases[record.MemberRefs[slot]].PositionRef);
 		}
 

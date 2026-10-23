@@ -21,7 +21,7 @@ namespace Herculan.Engine.Editor;
 /// point nor a heading of its own, so the structure stands on the group's point as the group's slot 0, with the group's
 /// heading (docs/retail/formats/script-dat.md#placement--the-actual-rule, rules 2 and 7); it starts pristine, fires no
 /// action and writes no counter, every unused pair <c>-1</c> as in the retail files. A group naming a heading needs no
-/// slot-0 order (<see cref="ScriptDatLint"/>). The group does not paint its ground. Which side it is on is the
+/// first order (<see cref="MissionCheckKind.NoHeadingNoOrder"/>). The group does not paint its ground. Which side it is on is the
 /// caller's. A row-7 heading of 0 degrees that is its GUID's one record, unconditioned and drawing no variant, is shared
 /// rather than appended (<see cref="MissionDocument.ShareableHeading"/>).</para>
 ///
@@ -31,8 +31,7 @@ namespace Herculan.Engine.Editor;
 ///
 /// <para>Block 9 is capped at DBSIM's structure slots (<see cref="ScriptDatLint.BaseSlotCap"/>), past which its load
 /// writes over the globals that follow (docs/retail/formats/script-dat.md#the-two-pass-read--and-what-it-means-for-dbsim-keeps):
-/// an add that would pass it in any version of the mission is refused, counting every row-14 GUID of the layout whatever its
-/// condition.</para>
+/// an add that would pass it in any version of the mission is refused, counted as <see cref="RosterLimits"/> counts it.</para>
 /// </summary>
 internal sealed class StructurePlacer {
 	// A structure group's roster and formation, as row 16 numbers them.
@@ -65,14 +64,7 @@ internal sealed class StructurePlacer {
 	}
 
 	/// <summary>Why no structure can be added, or null when one can: block 9 is full in some version of the mission.</summary>
-	public string? WhyNoAdd {
-		get {
-			int structures = _source.Layout.Entries(BaseRow).Count;
-			return structures >= ScriptDatLint.BaseSlotCap
-				? $"At maximum structure limit ({ScriptDatLint.BaseSlotCap})."
-				: null;
-		}
-	}
+	public string? WhyNoAdd => RosterLimits.WhyNoRoom(_source.Layout, BaseRow, 1);
 
 	/// <summary>
 	/// Adds a structure of <c>BASES.DAT</c> type <paramref name="typeIndex"/> on <paramref name="side"/>, standing on

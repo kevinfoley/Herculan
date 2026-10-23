@@ -196,7 +196,7 @@ internal sealed class VariantView {
 
 		switch (VariantEditing.WhyNoDelete(_editor.Source, table.Guid)) {
 			case VariantEditing.PickedFrom:
-				ImGui.TextWrapped("Cannot be deleted while those under Used by pick from it.");
+				ImGui.TextWrapped("Cannot be deleted while those under \"Used by\" pick from it.");
 				return;
 			case VariantEditing.Referenced:
 				ImGui.TextWrapped("Cannot be deleted while these reference it:");

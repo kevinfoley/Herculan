@@ -13,7 +13,7 @@ namespace HercWorks.Core.Data.File.Msn;
 /// (<c>004a9ec4</c>, its count <c>004a9ec0</c>) is referenced only by <c>DBSim_SpawnMissionObjects</c> (<c>004253d8</c>),
 /// which fills it, and <c>Mission_EvaluateObjectives</c> (<c>00413280</c>), which walks it (<c>es2_xref.py</c>). So an edit
 /// writes the record itself, a conditioned one included, and a delete removes it with nothing to renumber.</item>
-/// <item>A record is named here by its index in row 17 (<see cref="RecordOf"/> maps a block-12 index to it).</item>
+/// <item>A record is named here by its index in row 17.</item>
 /// <item>The conditions offered are those <c>Mission_EvaluateObjectives</c> has a case for, 0 to 4 and 6 to 10
 /// (<see cref="Conditions"/>); 5 has none. The subjects offered are a group, a herc and a structure: no retail objective
 /// asks about a flyer (the user's choice). A record already holding either keeps it until it is changed.</item>
@@ -25,7 +25,6 @@ public static class ObjectiveEditing {
 	private const int Row = 17;
 	private const int RouteRow = 8;
 	private const int GroupRow = 16;
-	private const int ObjectiveBlock = 12;
 
 	/// <summary><see cref="MissionObjective58.Required"/> for a mandatory objective, 91 of the 127 retail records.</summary>
 	public const short Mandatory = 1;
@@ -69,10 +68,6 @@ public static class ObjectiveEditing {
 	/// </summary>
 	public const short NewPairCounter = 52;
 	public const short NewPairOp = CounterIncrement;
-
-	/// <summary>The row-17 index of the record block-12 objective <paramref name="objective"/> was exported from, or null.</summary>
-	public static int? RecordOf(MissionDocument document, int objective) =>
-		document.Provenance.Slot(ObjectiveBlock, objective)?.Created.Index;
 
 	/// <summary>Row-17 record <paramref name="record"/>, throwing for one the row does not have.</summary>
 	public static MissionObjective58 Record(MissionDocument document, int record) =>

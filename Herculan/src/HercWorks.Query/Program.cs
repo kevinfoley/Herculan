@@ -37,8 +37,12 @@ internal static class Program {
 		                                   every GUID two or more records carry in rows #10 to #16,
 		                                   where later ones overlay the fields they set, each with
 		                                   their conditions and whether they differ
-		  lint [<mission>...]              the mission check over the script.dat each mission's load
-		                                   writes, every campaign flag zero and every roll 0
+		  lint [<mission>...]              the mission check over every mission's .MSN and .ENG, or those
+		                                   named, every version at once: refs to records the mission does
+		                                   not have, records DBSIM never reads, shapes it faults on,
+		                                   rosters and text past what it holds; with --generated, over the
+		                                   script.dat each mission's load writes instead, every campaign
+		                                   flag zero and every roll 0
 		  text <mission>... [--ids LO-HI]  the named missions' .ENG text records in file order, each with
 		                                   its decoded condition; a later record of an id replaces the
 		                                   line when its condition holds
@@ -73,6 +77,7 @@ internal static class Program {
 		  --route-switch    orders: list only groups with a later order naming a route other than
 		                    slot 0's
 		  --with-point      orders: list only groups with an order that names a row #6 point
+		  --generated       lint: check the script.dat each load writes, not the .MSN
 		  --ids LO-HI       text: list only the records whose id is in this range (--ids 200-204);
 		                    routes: only the routes whose GUID is in it
 		  --row N           records: list only row #N, 1-17; values: the row to count
@@ -107,7 +112,7 @@ internal static class Program {
 
 	internal static int Run(string[] args, TextWriter output) {
 		string? install = null, type = null, against = null, ids = null, rowOption = null, field = null, kindOption = null;
-		bool json = false, variants = false, routeSwitch = false, withPoint = false, nonSquad = false;
+		bool json = false, variants = false, routeSwitch = false, withPoint = false, nonSquad = false, generated = false;
 		var positional = new List<string>();
 		var where = new List<string>();
 		for (int i = 0; i < args.Length; i++) {
@@ -150,6 +155,9 @@ internal static class Program {
 					break;
 				case "--with-point":
 					withPoint = true;
+					break;
+				case "--generated":
+					generated = true;
 					break;
 				case "-h" or "--help" or "/?":
 					output.WriteLine(Usage);
@@ -312,7 +320,7 @@ internal static class Program {
 		}
 
 		if (command == "lint") {
-			var lint = LintQuery.Run(data, positional.Skip(1).ToList());
+			var lint = LintQuery.Run(data, positional.Skip(1).ToList(), generated);
 			if (json) {
 				WriteJson(output, lint);
 			} else {

@@ -10,7 +10,7 @@ namespace Herculan.Engine.Editor;
 ///
 /// <para>Groups are taken by their row-16 GUID, any group the layout has, a conditional one included. The change writes row
 /// 16's <see cref="MissionGroup164.Side"/> in the record of the group's GUID that supplies it
-/// (<see cref="MissionDocument.SetField"/>, docs/herculan/handoff-editor-document.md#the-tools), which generates <c>script.dat</c> again,
+/// (<see cref="MissionDocument.SetField"/>, docs/herculan/handoff-editor-document.md#the-tools),
 /// and syncs the scene (<see cref="SceneSync"/>), which sets each member's simulation object and placement from the layout.
 /// The player's squad, the layout's first group, is left alone: the editor's choice, as a squad that changed sides
 /// would leave the player fighting their own.</para>

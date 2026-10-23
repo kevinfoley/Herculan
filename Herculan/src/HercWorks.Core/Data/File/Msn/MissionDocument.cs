@@ -5,14 +5,18 @@ namespace HercWorks.Core.Data.File.Msn;
 
 /// <summary>
 /// A mission held as its <c>.MSN</c> and <c>.ENG</c>, with its <see cref="Layout"/>, every record present, and the
-/// <c>script.dat</c> and <c>mission.str</c> generated from them (<see cref="Regenerate"/>) with the provenance that maps each
-/// generated record back to the <c>.MSN</c> records that supplied it. An edit writes the <c>.MSN</c> record the layout names
-/// as the field's supplier, builds the layout again and generates again; the design is
-/// docs/herculan/handoff-editor-document.md#holding-the-msn-as-the-document.
+/// <c>script.dat</c> and <c>mission.str</c> generated from them with the provenance that maps each generated record back to
+/// the <c>.MSN</c> records that supplied it. An edit writes the <c>.MSN</c> record the layout names as the field's supplier
+/// and builds the layout again; the design is docs/herculan/handoff-editor-document.md#holding-the-msn-as-the-document.
+///
+/// <para>The generation is not run by an edit: an edit, undo or redo leaves it stale, and <see cref="Script"/>,
+/// <see cref="ScriptBytes"/>, <see cref="MissionText"/>, <see cref="Provenance"/> and <see cref="Generator"/> generate again
+/// when one of them is next read, so a reader of the layout alone never pays for it.</para>
 ///
 /// <para>Every edit returns an <see cref="MsnEdit"/> holding the rows it changed, which <see cref="Undo"/> and
 /// <see cref="Redo"/> put back. Several edits made inside one <see cref="Change"/> come back as one, and are all put back
-/// when one of them fails.</para>
+/// when one of them fails; what can fail inside an edit is the edit itself, the layout's build and the <c>.MSN</c>'s write,
+/// not the generation, which fails when it is next read.</para>
 ///
 /// <para>Which record an edit writes is docs/herculan/handoff-editor-document.md#which-record-an-edit-writes: a field of a
 /// GUID's base is written in its supplier (<see cref="LayoutEntry.Supplier"/>), the last base record that sets it, else the
@@ -38,11 +42,24 @@ public sealed class MissionDocument {
 	/// <summary>The edits made so far inside <see cref="Change"/>, or null outside one.</summary>
 	private List<MsnEdit>? _change;
 
+	private readonly ScriptDat _script = new();
+	private byte[] _scriptBytes = [];
+	private byte[] _missionText = [];
+	private MissionProvenance _provenance = new();
+	private MissionGenerator _generator = null!;
+
+	/// <summary>The files the generation runs over, as the last <see cref="Rebuild"/> wrote them.</summary>
+	private byte[] _msn = [];
+	private byte[]? _eng;
+
+	/// <summary>Whether the records have changed since the last generation.</summary>
+	private bool _stale = true;
+
 	public MissionDocument(MissionFile mission, MissionStringFile? text, MissionGeneration generation) {
 		Mission = mission;
 		Text = text;
 		Generation = generation;
-		Regenerate();
+		Rebuild();
 	}
 
 	/// <summary>A document over the <c>.MSN</c> <paramref name="msn"/> and the <c>.ENG</c> <paramref name="text"/>, or none.</summary>
@@ -60,24 +77,45 @@ public sealed class MissionDocument {
 
 	/// <summary>
 	/// The generated <c>script.dat</c>: one object for the document's life, whose header and blocks each generation
-	/// replaces, so whatever holds it reads the latest.
+	/// replaces. Generates first when the records have changed since the last, so whatever holds the object reads the
+	/// latest once this or another of the generation's members has been read after the edit.
 	/// </summary>
-	public ScriptDat Script { get; } = new();
+	public ScriptDat Script {
+		get {
+			Generate();
+			return _script;
+		}
+	}
 
-	/// <summary>The generated <c>script.dat</c>'s bytes.</summary>
-	public byte[] ScriptBytes { get; private set; } = [];
+	/// <summary>The generated <c>script.dat</c>'s bytes, generated first as <see cref="Script"/> is.</summary>
+	public byte[] ScriptBytes {
+		get {
+			Generate();
+			return _scriptBytes;
+		}
+	}
 
-	/// <summary>The generated <c>mission.str</c>'s bytes.</summary>
-	public byte[] MissionText { get; private set; } = [];
+	/// <summary>The generated <c>mission.str</c>'s bytes, generated first as <see cref="Script"/> is.</summary>
+	public byte[] MissionText {
+		get {
+			Generate();
+			return _missionText;
+		}
+	}
 
-	/// <summary>Which records supplied the generated files, from the last generation.</summary>
-	public MissionProvenance Provenance { get; private set; } = new();
+	/// <summary>Which records supplied the generated files, generated first as <see cref="Script"/> is.</summary>
+	public MissionProvenance Provenance {
+		get {
+			Generate();
+			return _provenance;
+		}
+	}
 
-	/// <summary>The mission with every record present, built again with each generation; its suppliers are the records edits write.</summary>
+	/// <summary>The mission with every record present, built again with each edit; its suppliers are the records edits write.</summary>
 	public MissionLayout Layout { get; private set; } = null!;
 
 	/// <summary>
-	/// The ten header words the launch plays (<c>script.dat</c> offset <c>word * 2</c>), built again with each generation: the
+	/// The ten header words the launch plays (<c>script.dat</c> offset <c>word * 2</c>), built again with each edit: the
 	/// layout's (<see cref="MissionLayout.HeaderWords"/>), with every word <see cref="Generation"/> writes over the loaded header
 	/// written over them, as the launch writes them (<see cref="MissionGeneration.WriteHeader"/>). No condition is tested, so a
 	/// row-2 variation is not applied.
@@ -85,44 +123,54 @@ public sealed class MissionDocument {
 	public IReadOnlyList<short> LaunchHeader { get; private set; } = [];
 
 	/// <summary>
-	/// The last generation's run, which answers what the shell reads back from a loaded mission besides the files: its
-	/// squad positions and group 0's machines (<see cref="MissionGenerator.SquadPositions"/>, <see cref="MissionGenerator.Herc"/>).
+	/// The generation's run, which answers what the shell reads back from a loaded mission besides the files: its squad
+	/// positions and group 0's machines (<see cref="MissionGenerator.SquadPositions"/>, <see cref="MissionGenerator.Herc"/>).
+	/// Generated first as <see cref="Script"/> is.
 	/// </summary>
-	public MissionGenerator Generator { get; private set; } = null!;
+	public MissionGenerator Generator {
+		get {
+			Generate();
+			return _generator;
+		}
+	}
 
 	/// <summary>
-	/// Builds <see cref="Layout"/> from the records, writes the files, generates from them and replaces <see cref="Script"/>'s
-	/// blocks with what was generated.
+	/// Builds <see cref="Layout"/> and <see cref="LaunchHeader"/> from the records, writes the files the generation runs over,
+	/// and leaves the generation stale.
 	/// </summary>
-	public void Regenerate() {
+	private void Rebuild() {
 		Layout = MissionLayout.Build(Mission, Text);
 		var header = Layout.HeaderWords.ToArray();
 		MissionGeneration.WriteHeader(header, Generation.Header);
 		LaunchHeader = header;
-		byte[] msn = new MissionFileTransformer().Write(Mission) ?? throw new InvalidOperationException("The mission file does not write.");
-		byte[]? text = Text == null ? null : new MissionStringFileTransformer().Write(Text);
-		var generator = Generation.Run(msn, text);
+		_msn = new MissionFileTransformer().Write(Mission) ?? throw new InvalidOperationException("The mission file does not write.");
+		_eng = Text == null ? null : new MissionStringFileTransformer().Write(Text);
+		_stale = true;
+	}
+
+	/// <summary>
+	/// When the records have changed since the last generation, generates from the files <see cref="Rebuild"/> wrote and
+	/// replaces <see cref="Script"/>'s blocks with what was generated; a generation that throws leaves it stale.
+	/// </summary>
+	private void Generate() {
+		if (!_stale) {
+			return;
+		}
+
+		var generator = Generation.Run(_msn, _eng);
 		var script = generator.WriteScriptDat();
 		var parsed = new ScriptDatTransformer().Parse(script)
 			?? throw new InvalidOperationException("The generated script.dat does not parse.");
 
-		ScriptBytes = script;
-		MissionText = generator.WriteMissionText();
-		Provenance = generator.Provenance;
-		Generator = generator;
-		CopyBlocks(parsed, Script);
+		_scriptBytes = script;
+		_missionText = generator.WriteMissionText();
+		_provenance = generator.Provenance;
+		_generator = generator;
+		CopyBlocks(parsed, _script);
+		_stale = false;
 	}
 
 	// ---- Lookups ----------------------------------------------------------------------------------
-
-	/// <summary>
-	/// The GUID of the <c>.MSN</c> record that created record <paramref name="index"/> of <c>script.dat</c> block
-	/// <paramref name="block"/> (1 to 11), or <c>-1</c> when there is none.
-	/// </summary>
-	public short GuidOf(int block, int index) =>
-		block is >= 1 and <= 11 && Provenance.Slot(block, index) is { } slot && RecordAt(slot.Created) is { } record
-			? record.GUID
-			: (short)-1;
 
 	/// <summary>
 	/// Whether a variant supplies <paramref name="field"/> of GUID <paramref name="guid"/>, so that <see cref="SetField"/> writes
@@ -225,7 +273,7 @@ public sealed class MissionDocument {
 
 	/// <summary>
 	/// Makes the edits <paramref name="edits"/> calls for as one: answers them combined, or, when one throws, puts back
-	/// every row they changed, generates again and rethrows.
+	/// every row they changed, builds the layout again and rethrows.
 	/// </summary>
 	public MsnEdit Change(Action edits) {
 		if (_change != null) {
@@ -241,7 +289,7 @@ public sealed class MissionDocument {
 				WriteBack(made[i], after: false);
 			}
 
-			Regenerate();
+			Rebuild();
 			throw;
 		}
 
@@ -249,16 +297,16 @@ public sealed class MissionDocument {
 		return MsnEdit.Combine(made);
 	}
 
-	/// <summary>Puts back the rows and text <paramref name="edit"/> changed as it found them, and generates again.</summary>
+	/// <summary>Puts back the rows and text <paramref name="edit"/> changed as it found them, and builds the layout again.</summary>
 	public void Undo(MsnEdit edit) {
 		WriteBack(edit, after: false);
-		Regenerate();
+		Rebuild();
 	}
 
-	/// <summary>Puts back the rows and text <paramref name="edit"/> changed as it left them, and generates again.</summary>
+	/// <summary>Puts back the rows and text <paramref name="edit"/> changed as it left them, and builds the layout again.</summary>
 	public void Redo(MsnEdit edit) {
 		WriteBack(edit, after: true);
-		Regenerate();
+		Rebuild();
 	}
 
 	/// <summary>
@@ -757,7 +805,8 @@ public sealed class MissionDocument {
 
 	private Snapshot BeginText() => new([], true, MsnRows.CopyText(Text?.Strings));
 
-	// The edit that changed what Begin copied, once it has; generates again, and puts it back if that fails.
+	// The edit that changed what Begin copied, once it has; builds the layout again and writes the .MSN, and puts the edit
+	// back if that fails.
 	private MsnEdit End(Snapshot before) {
 		var rows = new SortedDictionary<int, (Array Before, Array After)>();
 		foreach (var (row, records) in before.Rows) {
@@ -766,10 +815,10 @@ public sealed class MissionDocument {
 
 		var edit = new MsnEdit(rows, before.Text ? new TextSides(before.TextBefore, MsnRows.CopyText(Text?.Strings)) : null);
 		try {
-			Regenerate();
+			Rebuild();
 		} catch {
 			WriteBack(edit, after: false);
-			Regenerate();
+			Rebuild();
 			throw;
 		}
 

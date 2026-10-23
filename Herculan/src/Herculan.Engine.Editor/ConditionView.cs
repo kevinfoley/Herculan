@@ -233,7 +233,7 @@ internal sealed class ConditionView {
 		}
 
 		if (uses.Any) {
-			ImGui.TextWrapped("Cannot be deleted while the records under Used by reference it.");
+			ImGui.TextWrapped("Cannot be deleted while the records under \"Used by\" reference it.");
 			return;
 		}
 

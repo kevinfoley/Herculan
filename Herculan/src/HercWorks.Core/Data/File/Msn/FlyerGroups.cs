@@ -22,7 +22,7 @@ namespace HercWorks.Core.Data.File.Msn;
 ///
 /// <para>Block 8 holds DBSIM's <see cref="ScriptDatLint.FlyerSlotCap"/> flyer slots
 /// (docs/retail/formats/script-dat.md#the-two-pass-read--and-what-it-means-for-dbsim-keeps): an add that would pass it in
-/// any version of the mission is refused, counting every row-13 GUID of the layout whatever its condition.</para>
+/// any version of the mission is refused, counted as <see cref="RosterLimits"/> counts it.</para>
 /// </summary>
 public static class FlyerGroups {
 	/// <summary>
@@ -57,12 +57,7 @@ public static class FlyerGroups {
 	}
 
 	/// <summary>Why no flyer can be added to <paramref name="document"/>, or null when one can.</summary>
-	public static string? WhyNoAdd(MissionDocument document) {
-		int flyers = document.Layout.Entries(FlyerRow).Count;
-		return flyers + 1 > ScriptDatLint.FlyerSlotCap
-			? $"At maximum flyer limit ({ScriptDatLint.FlyerSlotCap})."
-			: null;
-	}
+	public static string? WhyNoAdd(MissionDocument document) => RosterLimits.WhyNoRoom(document.Layout, FlyerRow, 1);
 
 	/// <summary>
 	/// Adds <paramref name="flyer"/> in a new group on <paramref name="side"/> (0 human, 1 Cybrid), standing on a route of

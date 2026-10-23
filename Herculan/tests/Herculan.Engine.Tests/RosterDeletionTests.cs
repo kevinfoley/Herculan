@@ -143,17 +143,18 @@ public class RosterDeletionTests {
 		byte[] generated = document.ScriptBytes;
 
 		var delete = RosterDeletion.Delete(document, 14, 7);
-		short first = document.GuidOf(9, 0);
+		short first = GuidAt(document, 9, 0);
 		document.Undo(delete);
 		byte[] undone = Write(document);
 		byte[] regenerated = document.ScriptBytes;
+		document.SetPoint(GuidAt(document, 1, document.Script.Bases[1].PositionRef), 900, 0, 0);
+		int moved = Exported(document, 14, 8)!.Value;
 		var script = document.Script;
-		document.SetPoint(document.GuidOf(1, script.Bases[1].PositionRef), 900, 0, 0);
 
 		Assert.Equal((short)8, first);
 		Assert.Equal(opened, undone);
 		Assert.Equal(generated, regenerated);
-		Assert.Equal(900, script.Coordinates[script.Bases[Exported(document, 14, 8)!.Value].PositionRef].X);
+		Assert.Equal(900, script.Coordinates[script.Bases[moved].PositionRef].X);
 	}
 
 	/// <summary>

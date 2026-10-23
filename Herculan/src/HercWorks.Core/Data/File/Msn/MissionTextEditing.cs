@@ -38,7 +38,8 @@ public readonly record struct TextOwner(int Row, int Record, MissionTextList? Li
 /// count and searches it, <c>MissionStr_Write</c> (<c>004179f0</c>) writes it in order, and every field is renumbered to a
 /// line index; no table is indexed by id, and <c>-1</c> is the one id with a meaning (no text).</item>
 /// <item>DBSIM reads at most <see cref="LineCap"/> lines of <c>mission.str</c> (<c>DBSim_LoadScriptDat</c>
-/// (<c>00424308</c>)), so an edit that would take the generated file past that is refused.</item>
+/// (<c>00424308</c>)), so an edit that would take the text past that in any version of the mission is refused, every
+/// <c>.ENG</c> id counted (<see cref="Lines"/>).</item>
 /// <item>A row-4 list stays filled from its first slot, as block 13's count assumes
 /// (docs/retail/formats/script-dat.md#the-13-block-structure): an add fills the slot after the last filled one, and a
 /// remove moves every later line up a slot.</item>
@@ -54,8 +55,11 @@ public static class MissionTextEditing {
 	/// <summary>How many slots each row-4 list has.</summary>
 	public static int Capacity(MissionTextList list) => list == MissionTextList.Objectives ? 10 : 30;
 
-	/// <summary>How many lines the generated <c>mission.str</c> has.</summary>
-	public static int Lines(MissionDocument document) => document.Provenance.Lines.Count;
+	/// <summary>
+	/// How many lines the mission's text takes in every version of the mission at once: one per <c>.ENG</c> id
+	/// (<see cref="MissionLayout.Lines"/>), each of which places a <c>mission.str</c> line in a version whose records of it survive.
+	/// </summary>
+	public static int Lines(MissionDocument document) => document.Layout.Lines.Count;
 
 	/// <summary>Why <paramref name="adding"/> more lines cannot be added to the mission's text, or null when they can.</summary>
 	public static string? WhyNoLines(MissionDocument document, int adding) {
@@ -324,7 +328,7 @@ public static class MissionTextEditing {
 		}
 	}
 
-	/// <summary>Throws when the generated text has grown past <see cref="LineCap"/> lines from <paramref name="before"/>.</summary>
+	/// <summary>Throws when the text has grown past <see cref="LineCap"/> lines (<see cref="Lines"/>) from <paramref name="before"/>.</summary>
 	internal static void CheckLines(MissionDocument document, int before) {
 		int lines = Lines(document);
 		if (lines > before && lines > LineCap) {

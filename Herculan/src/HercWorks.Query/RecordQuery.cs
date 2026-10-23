@@ -81,7 +81,7 @@ internal static class RecordQuery {
 		return new RecordQueryMission(mission.Name, rows);
 	}
 
-	/// <summary>Row 2, and the header <see cref="MissionGenerator"/> writes with every campaign flag zero and every roll 0, as <c>lint</c> generates it.</summary>
+	/// <summary>Row 2, and the header <see cref="MissionGenerator"/> writes with every campaign flag zero and every roll 0, as <c>lint --generated</c> generates it.</summary>
 	public static HeaderQueryMission Header(Mission mission) {
 		var generator = MissionGenerator.Load(mission.MsnBytes, mission.EngBytes,
 			new short[MissionGenerator.CampaignFlagCount], new short[MissionGenerator.ClearListLength], _ => 0);

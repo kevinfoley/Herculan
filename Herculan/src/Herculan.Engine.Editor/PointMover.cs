@@ -15,7 +15,7 @@ internal abstract record MoveTarget;
 /// <summary>
 /// One step of <see cref="PointMover"/>'s undo history: a move, an add, a delete, a side change, any edit
 /// (<see cref="RecordsEdit"/>), or a theater change. Each puts the <c>.MSN</c> back as the step found or left it
-/// (<see cref="MissionDocument.Undo"/>, which generates <c>script.dat</c> again) and syncs the scene with it
+/// (<see cref="MissionDocument.Undo"/>) and syncs the scene with it
 /// (<see cref="SceneSync"/>); the history then levels the ground.
 /// </summary>
 internal interface IEditorEdit {
@@ -36,8 +36,7 @@ internal sealed record GroupTarget(short Guid, bool Detach = false) : MoveTarget
 
 /// <summary>
 /// Moves what stands on a point — a placed object, a route's waypoint, a group or a trigger area's corner — and keeps an
-/// undo history. A committed move writes the mission's <c>.MSN</c> (<see cref="MissionDocument"/>), which generates
-/// <c>script.dat</c> again, and syncs the scene with it (<see cref="SceneSync"/>), as any edit does
+/// undo history. A committed move writes the mission's <c>.MSN</c> (<see cref="MissionDocument"/>) and syncs the scene with it (<see cref="SceneSync"/>), as any edit does
 /// (docs/herculan/handoff-editor-document.md#the-tools). A drag's preview writes nothing: everything standing on what it
 /// moves, the route and area lines included, is placed from the layout with the drag's overrides
 /// (<see cref="PlacementOverrides"/>, <see cref="SceneSync.Preview"/>). After every move, previews included,
@@ -274,8 +273,7 @@ internal sealed class PointMover {
 
 	/// <summary>
 	/// Moves <paramref name="target"/> to (<paramref name="x"/>, <paramref name="y"/>, <paramref name="z"/>) for good,
-	/// as one step of the undo history: writes the <c>.MSN</c>, which generates <c>script.dat</c> again, and syncs the
-	/// scene. <paramref name="before"/> is where it stood before any <see cref="Preview"/> of this move.
+	/// as one step of the undo history: writes the <c>.MSN</c> and syncs the scene. <paramref name="before"/> is where it stood before any <see cref="Preview"/> of this move.
 	/// </summary>
 	public void Commit(MoveTarget target, Vec3i before, int x, int y, int z) {
 		string? fixedNow = target switch {

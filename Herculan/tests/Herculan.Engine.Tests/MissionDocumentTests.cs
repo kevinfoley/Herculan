@@ -25,7 +25,6 @@ public class MissionDocumentTests {
 			document.SetField(MsnField.BasePosition, 1, point);
 		});
 		document.SetField(MsnField.GroupSide, 1, Cybrid);
-		document.Regenerate();
 
 		var script = document.Script;
 		Assert.Equal((500, 600), (script.Coordinates[script.Bases[0].PositionRef].X, script.Coordinates[script.Bases[0].PositionRef].Y));
@@ -112,7 +111,6 @@ public class MissionDocumentTests {
 			document.PlacePoint(-1, 1, 900, 0, 0, out short point);
 			document.SetField(MsnField.BasePosition, 2, point);
 		});
-		document.Regenerate();
 
 		var script = document.Script;
 		var bases = document.Mission.Bases!;

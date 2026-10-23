@@ -398,7 +398,7 @@ internal sealed class TriggerThenList {
 			ImGui.EndMenu();
 		}
 
-		Tooltip(sends ? "It sends one already: change it under Sends a message." : null);
+		Tooltip(sends ? "It sends one already: change it under \"Sends a message\"." : null);
 		ImGui.EndPopup();
 	}
 

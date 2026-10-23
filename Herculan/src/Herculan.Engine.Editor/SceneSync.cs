@@ -12,7 +12,8 @@ namespace Herculan.Engine.Editor;
 /// the document's layout (<see cref="LayoutPlacement"/>), stands each object already built for a record where it now
 /// stands, builds one for a record that has none of its type and fit (<see cref="MissionScene.CreateObject"/>), and takes
 /// the object of a record no group places off the scene, keeping it, so an undone delete stands the same object, model and
-/// all, where it stood. Terrain and models are not loaded again, nothing is written to disk and no mission is loaded.
+/// all, where it stood. Terrain and models are not loaded again, nothing is written to disk, no mission is loaded and no
+/// <c>script.dat</c> is generated.
 ///
 /// <para>It then builds again the <see cref="MissionIndex"/>, the pick spheres, the overlays' lines and the mission check
 /// (<see cref="MissionLint"/>), and tells the drawing what left and what joined the scene.</para>
@@ -105,8 +106,8 @@ internal sealed class SceneSync {
 	}
 
 	/// <summary>
-	/// Makes <paramref name="edit"/>, which writes the <c>.MSN</c> and generates again, then syncs the scene with it. An edit
-	/// that throws has put the records back, and nothing is synced.
+	/// Makes <paramref name="edit"/>, which writes the <c>.MSN</c> and builds its layout again, then syncs the scene with it. An
+	/// edit that throws has put the records back, and nothing is synced.
 	/// </summary>
 	public T Run<T>(Func<T> edit) {
 		var result = edit();
