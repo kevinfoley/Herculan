@@ -62,6 +62,10 @@ namespace Herculan.Engine.Cockpit;
 /// <param name="DropoutFrame">
 /// The <see cref="SensorDropout.RowBank"/> frame standing in the plate's hole meanwhile.
 /// </param>
+/// <param name="MountIndex">
+/// The mount's position in the fit, which is the order the gauges were built and repaint in — see
+/// <see cref="WeaponRowRepaintOrder"/>. -1 on a slot no mount claims.
+/// </param>
 public readonly record struct WeaponRowState(
 	string Name,
 	WeaponMountKind Kind,
@@ -74,7 +78,8 @@ public readonly record struct WeaponRowState(
 	bool PodButton = false,
 	bool Powered = true,
 	bool DropoutHidden = false,
-	int? DropoutFrame = null) {
+	int? DropoutFrame = null,
+	int MountIndex = -1) {
 
 	/// <summary>A <c>.GAU</c> slot with no mount on it.</summary>
 	public static WeaponRowState Empty { get; } =
@@ -178,7 +183,8 @@ public readonly record struct WeaponRowState(
 				PodButton: mount.PodButton && !mount.Disabled,
 				Powered: powered,
 				DropoutHidden: dropouts?.Row(slot)?.Hidden ?? false,
-				DropoutFrame: dropouts?.Row(slot)?.Frame);
+				DropoutFrame: dropouts?.Row(slot)?.Frame,
+				MountIndex: mount.MountIndex);
 		}
 
 		return rows;

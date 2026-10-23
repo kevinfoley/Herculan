@@ -24,9 +24,10 @@ internal static class ConsoleGaugePainter {
 	/// <c>+12</c> device offset — the constructor's own <c>+6</c> GAU literal. It is drawn only for a
 	/// mount that is armed or in the current fire group, lit (frame 4) when the mount could fire and
 	/// dark (frame 5) when it could not, which is why a pod's row never has one;</item>
-	/// <item>the slot number at <c>+6</c> device, then the weapon's name in the label rect the
-	/// constructor puts at <c>+11..+35</c> GAU. Colour is the font: <c>WHITE</c> for the selected
-	/// row, <c>GRAY</c> for the rest.</item>
+	/// <item>the slot number, centred in the label <c>WeaponSelectGadget_Ctor</c> (<c>004421dc</c>) builds at
+	/// <c>+2..+5</c> GAU, then the weapon's name in the label rect the constructor puts at <c>+11..+35</c> GAU.
+	/// Colour is the font: the name <c>WHITE</c> for the selected row and the number <c>GREEN</c>, both
+	/// <c>GRAY</c> on the rest.</item>
 	/// <item>and, on a pod row whose button is on, that label rect flooded green first — see
 	/// <see cref="PodPlateColorId"/>.</item>
 	/// <item>the value field past the name, at <c>+0x24..+0x35</c> GAU — a round count for an
@@ -39,10 +40,17 @@ internal static class ConsoleGaugePainter {
 	/// underlay, a flat plate in the row's own background colour. The bank's other nine frames are the
 	/// row's sensor-dropout wipe: while <see cref="WeaponRowState.DropoutHidden"/> every paint but the
 	/// plate's bezel holds back, and the wipe's frame stands in the hole instead.</para>
+	///
+	/// <para>A pod row has no plate: its select gadget is the plain class, whose paint is the underlay and the
+	/// number alone (<c>WeaponSelectGadget_PaintUnderlay</c>).</para>
+	///
+	/// <para>The rows are drawn in <see cref="CockpitHudState.WeaponPaintOrder"/>, the most recently repainted
+	/// last, because a plate's bezel overhangs its rect and the RAZOR's rows 3 and 6 share two columns.</para>
 	/// </summary>
 	internal static void AddWeaponRows(GAUFile gau, CockpitHudState state,
 			(Vector3 FillEven, Vector3 FillOdd)? barColors, Vector3? podPlate,
 			Action<string, int, float, float> blit, Func<string, string, float, float, float> drawText,
+			Action<string, string, int, int, int, int, Vector3?> drawCentered,
 			Action<float, float, float, float, Vector3> fillRect) {
 		if (gau.Weapons is not { } weapons) {
 			return;
@@ -50,7 +58,13 @@ internal static class ConsoleGaugePainter {
 
 		const float S = CockpitArt.GauToPixelScale;
 		int slots = Math.Min(gau.WeaponListTotal, weapons.Length);
-		for (int i = 0; i < slots; i++) {
+		var order = state.WeaponPaintOrder;
+		for (int n = 0; n < (order?.Count ?? slots); n++) {
+			int i = order?[n] ?? n;
+			if (i >= slots) {
+				continue;
+			}
+
 			var rect = weapons[i];
 			var row = i < state.Weapons.Count ? state.Weapons[i] : WeaponRowState.Empty;
 
@@ -59,15 +73,17 @@ internal static class ConsoleGaugePainter {
 				continue;
 			}
 
-			// The row's own font, which the slot number always wears: WHITE for the selected row and
-			// GRAY for the rest. A pod row's name is the exception — see nameFont.
+			// The row's own font for its name and round count: WHITE for the selected row and GRAY for
+			// the rest. WeaponSelectGadget_Paint redraws the number in GREEN on the selected row. A pod
+			// row is never selected, and its name is the exception — see nameFont.
 			string font = row.Selected ? "WHITE" : "GRAY";
+			string numberFont = row.Selected ? "GREEN" : "GRAY";
+			bool pod = row.Kind == WeaponMountKind.Pod;
 
 			// A pod row's own paint (PodGauge_Paint, 0044171c) re-dresses the name label, and only the name label:
-			// it reaches the widget at gauge+0xca and never touches the slot number, which
-			// WeaponSelectGadget_Paint draws in the row font above. The label's font comes from the
-			// button rather than from the selection, which a pod never has — gray while the button is
-			// off, dark while it is on, over the green plate below.
+			// it reaches the widget at gauge+0xca and never touches the slot number. The label's font
+			// comes from the button rather than from the selection — gray while the button is off, dark
+			// while it is on, over the green plate below.
 			string nameFont = row.PodButton ? "DARK" : font;
 			float left = rect.Origin.X * S;
 			float top = rect.Origin.Y * S;
@@ -79,12 +95,18 @@ internal static class ConsoleGaugePainter {
 					blit(SensorDropout.RowBank, wipe, left, top);
 				}
 
-				blit("PWEAPONS", row.Selected ? 0 : 1, left - RowPlateBezel, top - RowPlateBezel);
+				if (!pod) {
+					blit("PWEAPONS", row.Selected ? 0 : 1, left - RowPlateBezel, top - RowPlateBezel);
+				}
+
 				continue;
 			}
 
 			blit(SensorDropout.RowBank, RowUnderlayFrame, left, top);
-			blit("PWEAPONS", row.Selected ? 0 : 1, left - RowPlateBezel, top - RowPlateBezel);
+			if (!pod) {
+				blit("PWEAPONS", row.Selected ? 0 : 1, left - RowPlateBezel, top - RowPlateBezel);
+			}
+
 			if (row.Selected || row.InGroup) {
 				blit("PWEAPONS", row.Ready ? ReadyStateFrame : UnreadyStateFrame, left + 12, top);
 			}
@@ -102,7 +124,9 @@ internal static class ConsoleGaugePainter {
 			}
 
 			// One digit, as WeaponSelectGadget_Ctor (004421dc) writes it: row 10 is the [0] key's and prints 0.
-			drawText(font, ((i + 1) % 10).ToString(), left + 6, top);
+			// Its label is centred (Label_SetRect flag 2), so the digit's own width places it.
+			drawCentered(numberFont, ((i + 1) % 10).ToString(), rect.Origin.X + SlotNumberLeft, rect.Origin.Y,
+				rect.Origin.X + SlotNumberRight, rect.Origin.Y + SlotNumberBottom, null);
 			if (row.Name is { Length: > 0 } name) {
 				drawText(nameFont, name, left + 22, top);
 			}
@@ -133,10 +157,20 @@ internal static class ConsoleGaugePainter {
 	/// hole of palette index 0 punched out of the middle, so all the art carries is a two-pixel bezel
 	/// and the row's interior is the console bitmap showing through. Offsetting by the bezel width
 	/// lands that hole with its top-left corner exactly on the rect, which is where the hardpoint
-	/// state box (14 device pixels tall, drawn at the rect's own <c>y</c>) and an engaged pod's green
-	/// plate both have to sit for the row to close around them.</para>
+	/// state box (14 device pixels tall, drawn at the rect's own <c>y</c>) has to sit for the row to
+	/// close around it.</para>
 	/// </summary>
 	private const int RowPlateBezel = 2;
+
+	/// <summary>
+	/// The slot number's label, in <c>.GAU</c> units from the row's own left edge and top —
+	/// <c>WeaponSelectGadget_Ctor</c> (<c>004421dc</c>) builds it at <c>x0+2 .. x0+5</c>, <c>y0 .. y0+5</c>.
+	/// </summary>
+	private const int SlotNumberLeft = 2;
+
+	private const int SlotNumberRight = 5;
+
+	private const int SlotNumberBottom = 5;
 
 	/// <summary>The <see cref="SensorDropout.RowBank"/> frame every row is underlaid with — 112x14, the plate's hole exactly.</summary>
 	private const int RowUnderlayFrame = 0;
