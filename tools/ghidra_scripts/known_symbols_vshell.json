@@ -1755,7 +1755,13 @@
       "confidence": "high",
       "name": "Shell_OpenHelp",
       "description": "WinHelpA(main window, path, HELP_CONTENTS, 0).",
-      "source": "docs/retail/shell/main-menu.md#the-main-menu"
+      "source": "docs/retail/shell/main-menu.md#the-main-menu",
+      "verified": {
+        "bytes": "004073a2+23",
+        "sha1": "d521b1370818",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004073bc",
@@ -9588,7 +9594,13 @@
       "confidence": "high",
       "name": "OnlineManual_Open",
       "description": "Leaves full screen, option 6 = 0, commit, save all, ShellSound_Stop, then Shell_OpenHelp on Path_UnderDriveCfg(<language>\\es2guide.hlp), the folder chosen by Shell_ReadLanguageCfg's letter E/F/G; any other letter fails a severity-4 assert, 'online help not found', and Assert_Report exits the shell.",
-      "source": "docs/retail/shell/main-menu.md#the-main-menu"
+      "source": "docs/retail/shell/main-menu.md#the-main-menu",
+      "verified": {
+        "bytes": "004317ea+193",
+        "sha1": "f11bf9ea31dc",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004318ab",
@@ -10788,8 +10800,14 @@
       "type": "function",
       "confidence": "high",
       "name": "TabHandler_MenuButton",
-      "description": "The square button's click handler; calls into wmain.cpp at 004317ea.",
-      "source": "docs/retail/shell/screen-layout.md#what-a-tab-click-does"
+      "description": "The square button's click handler: once Shell_MainLoopStarted is set, OnlineManual_Open, the main menu's ONLINE MANUAL action, and nothing else; no tab teardown, lit-flag write or tab click sound.",
+      "source": "docs/retail/shell/screen-layout.md#what-a-tab-click-does",
+      "verified": {
+        "bytes": "00439f2d+175",
+        "sha1": "b3c8b93ad7e4",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00439fdc",

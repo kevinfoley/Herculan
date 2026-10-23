@@ -12,10 +12,11 @@ sealed class TabNavigation {
 	private readonly HangarTabs _hangar;
 	private readonly MissionTabScreens _mission;
 	private readonly ShellAudio _audio;
+	private readonly ShellManual _manual;
 	private readonly Action _repaint;
 
 	public TabNavigation(ShellScreen screen, ShellCanvas canvas, GameInProgress game, ShellSaveScreen saveScreen, HangarTabs hangar,
-			MissionTabScreens mission, ShellAudio audio, WidgetEvents widgets, Action repaint) {
+			MissionTabScreens mission, ShellAudio audio, ShellManual manual, WidgetEvents widgets, Action repaint) {
 		_screen = screen;
 		_canvas = canvas;
 		_game = game;
@@ -23,6 +24,7 @@ sealed class TabNavigation {
 		_hangar = hangar;
 		_mission = mission;
 		_audio = audio;
+		_manual = manual;
 		_repaint = repaint;
 
 		widgets.Handle(ShellWidgetKind.StripButton, widget => Activate(widget.Index));
@@ -68,7 +70,10 @@ sealed class TabNavigation {
 
 	// A strip button's handler.
 	private void Activate(int id) {
+		// The square button's handler (TabHandler_MenuButton, 00439f2d) opens the manual and does none of a tab's
+		// steps: no lit tab, no teardown, no tab click.
 		if (id == ShellScreen.MenuButtonId) {
+			_manual.Open();
 			return;
 		}
 

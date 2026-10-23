@@ -223,12 +223,13 @@ sealed class ShellHost : IDisposable {
 		_mission = new MissionTabScreens(installRoot, content, _canvas, missionScreen, _movies, _game, _screen, dialogs, _outcome,
 			_window, _widgets, repaint);
 		var hangar = new HangarTabs(content, _game, dialogs, _screen, _widgets, startBay, repaint);
-		_navigation = new TabNavigation(_screen, _canvas, _game, saveScreen, hangar, _mission, _audio, _widgets, repaint);
+		var manual = new ShellManual(installRoot, disc, _window, _game, _audio);
+		_navigation = new TabNavigation(_screen, _canvas, _game, saveScreen, hangar, _mission, _audio, manual, _widgets, repaint);
 		var names = new SaveNames(_game, saveScreen, _canvas, session.Localization, () => _buttons.LeftPressedByAlso);
 		_loop = new CampaignScreens(installRoot, content, _game, saveScreen, hangar, _mission, _navigation, _startup, _movies, _canvas,
 			dialogs, _screen, _outcome, _window, _widgets, names, missionPicker, repaint);
 		_save = new SaveRestoreTab(saveScreen, _game, _loop, _mission, _navigation, _screen, _widgets, names, repaint);
-		_menu = new MainMenuPanels(installRoot, disc, content, _window, _screen, _widgets, _game, saveScreen, mainMenu, dialogs,
+		_menu = new MainMenuPanels(manual, content, _window, _screen, _widgets, _game, saveScreen, mainMenu, dialogs,
 			_movies, _audio, _outcome, _loop, _navigation, repaint);
 		_fields = new EditFields(_window, _audio, _movies, _pointer, _screen, saveScreen, _menu, dialogs.MissionName, _canvas,
 			_widgets, repaint);

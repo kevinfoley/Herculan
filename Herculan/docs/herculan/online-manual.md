@@ -4,7 +4,7 @@ How HERCULAN shows the game's on-line manual. The help file itself is [`../retai
 
 ## What opens it
 
-- The main menu's `ONLINE MANUAL` (`MainMenuPanels.OpenOnlineManual`) does what retail's `004317ea` does before its `WinHelpA` call — leaves full screen, writes option 6 to match, commits and saves the options, stops the shell's sound — and then opens the manual.
+- The main menu's `ONLINE MANUAL` and the "?" button at the left of the shell's tab strip (`ShellManual.Open`) do what retail's `004317ea` does before its `WinHelpA` call — leave full screen, write option 6 to match, commit and save the options, stop the shell's sound — and then open the manual. Retail opens it at its contents page from both, whichever screen is up ([`../retail/shell/screen-layout.md`](../retail/shell/screen-layout.md#what-a-tab-click-does)).
 - `/` in a mission (`ReadManualKey` in the simulator host), which is `?` without Shift, as the dispatcher sees it. Not while a modal panel holds the input.
 - The right-hand of the cockpit's two system buttons, the question mark at the screen's top-right corner ([`../retail/simulation/cockpit-input.md`](../retail/simulation/cockpit-input.md#the-two-system-buttons)), except while a tape plays back.
 
