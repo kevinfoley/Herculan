@@ -29,14 +29,14 @@ public class SquadRosterTests {
 
 		SquadRoster.Remove(document, 1);
 
-		Assert.Equal(3, SquadRoster.Positions(document.Script));
-		Assert.Equal([0, 2, 3], Enumerable.Range(0, 3).Select(slot => document.GuidOf(7, document.Script.Groups[0].MemberRefs[slot])));
+		Assert.Equal(3, SquadRoster.Positions(document.Layout));
+		Assert.Equal([0, 2, 3], Enumerable.Range(0, 3).Select(slot => SquadRoster.Member(document.Layout, slot)));
 		Assert.DoesNotContain(document.Mission.Mechs!, record => record.GUID == 1);
 
 		SquadRoster.Add(document, SquadRoster.Machine(4, Unset(), Filler()), out short added);
 
-		Assert.Equal(4, SquadRoster.Positions(document.Script));
-		Assert.Equal(added, document.GuidOf(7, document.Script.Groups[0].MemberRefs[3]));
+		Assert.Equal(4, SquadRoster.Positions(document.Layout));
+		Assert.Equal(added, SquadRoster.Member(document.Layout, 3));
 		Assert.NotNull(SquadRoster.WhyNoAdd(document));
 	}
 

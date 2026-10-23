@@ -46,7 +46,6 @@ public static class HercGroups {
 	public const int LastJoinSlot = 7;
 
 	private const int MechRow = 12;
-	private const int GroupBlock = 11;
 	private const short MechRoster = 0;
 
 	/// <summary>
@@ -158,7 +157,7 @@ public static class HercGroups {
 	/// <see cref="LastJoinSlot"/> that no record of it fills.
 	/// </summary>
 	public static string? WhyNoJoin(MissionDocument document, short group) {
-		if (group != -1 && group == document.GuidOf(GroupBlock, 0)) {
+		if (group != -1 && group == SquadRoster.Squad(document)) {
 			return "The player's squad takes squadmates in its own view.";
 		}
 

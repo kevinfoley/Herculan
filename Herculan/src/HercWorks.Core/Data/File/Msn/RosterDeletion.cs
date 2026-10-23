@@ -14,7 +14,7 @@ public sealed record MsnNamers(IReadOnlyList<MsnRecordId> Objectives, IReadOnlyL
 
 /// <summary>What deleting a roster object would take with it, and what refuses it (<see cref="RosterDeletion.Check"/>).</summary>
 /// <param name="InSquad">
-/// It is a member of the player's squad: a row-12 GUID that a record of the group exported as block 11's record 0 names.
+/// It is a member of the player's squad: a row-12 GUID that a record of group 0, the layout's first group (<see cref="SquadRoster.Squad(MissionLayout)"/>), names.
 /// </param>
 /// <param name="Namers">The objectives, actions and orders naming it.</param>
 /// <param name="FiredActions">
@@ -63,7 +63,6 @@ public static class RosterDeletion {
 	private const int OrderRow = 15;
 	private const int GroupRow = 16;
 	private const int ObjectiveRow = 17;
-	private const int SquadBlock = 11;
 
 	/// <summary>What deleting row <paramref name="row"/>'s GUID <paramref name="guid"/> would take with it, and what refuses it.</summary>
 	public static RosterDeleteCheck Check(MissionDocument document, int row, short guid) {
@@ -93,7 +92,7 @@ public static class RosterDeletion {
 			}
 		}
 
-		short squad = document.GuidOf(SquadBlock, 0);
+		short squad = SquadRoster.Squad(document);
 		bool inSquad = row == MechRow && squad != -1 && memberOf.Contains(squad);
 		return new RosterDeleteCheck(inSquad, namers, FiredActions(mission, row, records), memberOf, emptied);
 	}

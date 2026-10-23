@@ -187,6 +187,13 @@ public sealed class GameContent {
 		: _entries.TryGetValue(Key(folder, name), out var entry) ? entry.RawBytes : null;
 
 	/// <summary>
+	/// Reads one resource's bytes from the first mounted archive that holds it, passing over a loose file in the install,
+	/// or null: the file as it shipped, for a reader that must not see what has been saved over it.
+	/// </summary>
+	public byte[]? ReadArchived(string folder, string name) =>
+		_entries.TryGetValue(Key(folder, name), out var entry) ? entry.RawBytes : null;
+
+	/// <summary>
 	/// Same as <see cref="Read"/> but throws with the resolved resource path when the entry is
 	/// missing — for callers where a missing file means the install is wrong, not a condition to
 	/// handle.

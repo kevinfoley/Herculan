@@ -80,7 +80,7 @@ internal sealed class ObjectView {
 		} else if (planned.MemberIndex == 0) {
 			_machine.DrawPlayer();
 		} else {
-			_machine.DrawSquadmateObject(sel.Placement.SlotIndex);
+			_machine.DrawSquadmateObject(planned.Key.Guid);
 		}
 
 		if (group.OffScene) {

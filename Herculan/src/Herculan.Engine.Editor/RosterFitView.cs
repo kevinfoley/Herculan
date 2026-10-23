@@ -64,15 +64,15 @@ internal sealed class RosterFitView {
 		string noun = VariantView.Noun(placed);
 		ImGui.Separator();
 		ImGui.PushID("fit");
-		var drawn = row == 12 ? _fitter.DrawnAlternative(placement.SlotIndex) : _types.DrawnAlternative(row, guid);
+		var drawn = row == 12 ? _fitter.DrawnAlternative(guid) : _types.DrawnAlternative(row, guid);
 		bool toAlternative = drawn != null && !OnlyThis(row, guid, noun, drawn.Value);
 		if (row == 12) {
-			if (_fitter.PartlyDrawn(placement.SlotIndex) && toAlternative) {
+			if (_fitter.PartlyDrawn(guid) && toAlternative) {
 				EditorText.Note($"What was set for this {noun} alone stays as set.");
 			}
 
-			_fit.Draw(placement.SlotIndex, choices, type => _catalog.NameOf(kind, type),
-				"A new chassis comes with the fit a new herc of it gets.", toAlternative, showFixed: true);
+			_fit.Draw(guid, choices, type => _catalog.NameOf(kind, type),
+				"A new chassis comes with the fit a new herc of it gets.", toAlternative);
 			Failure(_fitter.Failure);
 		} else {
 			DrawType(row, guid, kind, choices, placement.TypeIndex, toAlternative);

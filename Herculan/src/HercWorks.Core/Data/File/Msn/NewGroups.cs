@@ -12,7 +12,6 @@ namespace HercWorks.Core.Data.File.Msn;
 internal static class NewGroups {
 	private const int OrderRow = 15;
 	private const int GroupRow = 16;
-	private const int GroupBlock = 11;
 
 	/// <summary>
 	/// Formation 0: 283 of the 433 herc group records (3 in 146), 61 of the 76 flyer group records (3 in 13) and 12 of the
@@ -39,7 +38,7 @@ internal static class NewGroups {
 	/// </summary>
 	internal static MsnEdit Create(MissionDocument document, int row, MapObject member, short memberKind, short side, int x,
 			int y, out short memberGuid, out short groupGuid) {
-		short squad = document.GuidOf(GroupBlock, 0);
+		short squad = SquadRoster.Squad(document);
 		if (squad == -1) {
 			throw new InvalidOperationException("The mission has no group 0, the player's squad, for the new group to hunt.");
 		}

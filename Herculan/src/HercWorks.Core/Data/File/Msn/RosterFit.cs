@@ -24,6 +24,9 @@ public static class RosterFit {
 	/// <summary>The guidance kind DBSIM reads the filler 5 as on a launcher.</summary>
 	public const short Sarh = 0;
 
+	/// <summary>The ammunition type retail records carry in a slot that holds no launcher (docs/retail/simulation/weapon-mounts.md#the-second-loadout-array-is-the-ammunition-type).</summary>
+	public const short Filler = 5;
+
 	/// <summary>
 	/// The fields a herc's chassis change writes: its type <paramref name="type"/>, and in each of the ten slots
 	/// <paramref name="weapons"/>' weapon and <paramref name="ammo"/>'s ammunition type, the whole fit a new herc of the type

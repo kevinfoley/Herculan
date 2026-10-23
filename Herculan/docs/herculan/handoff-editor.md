@@ -51,7 +51,7 @@ Beyond the gaps each doc lists:
 | 7 (2), headings | a heading for an object or a group |
 | 8 (3), routes | naming one from a group's own route field (row 16) |
 | 10 (5), triggers | the leftover text line (`0x44`) |
-| 12 (7), mechs | a Cybrid's weapon fit and ammunition types; AI radar and cruise speed, starting condition, the campaign variables it sets when put out of action (shown) |
+| 12 (7), mechs | AI radar and cruise speed, starting condition, the campaign variables it sets when put out of action (shown) |
 | 13 (8), flyers | the campaign variables it sets when destroyed (shown) |
 | 14 (9), structures and ground vehicles | the starting condition (0 in 29% of retail records), the campaign variables it sets when destroyed (shown; 698 retail records set one) |
 | 15 (10), orders | the formation and the point |

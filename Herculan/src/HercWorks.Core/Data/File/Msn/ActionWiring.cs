@@ -23,12 +23,11 @@ public static class ActionWiring {
 	private const int ActionRow = 10;
 	private const int MechRow = 12;
 	private const int GroupRow = 16;
-	private const int SquadBlock = 11;
 
 	/// <summary>Why row-16 group <paramref name="group"/>'s deployment action cannot be set, or null when it can.</summary>
 	public static string? WhyNoDeployment(MissionDocument document, short group) =>
 		document.Layout.Entry(GroupRow, group) == null ? $"The mission has no group {group}."
-			: group == document.GuidOf(SquadBlock, 0) ? "The player's squad is in the mission from the start."
+			: group == SquadRoster.Squad(document) ? "The player's squad is in the mission from the start."
 			: null;
 
 	/// <summary>Sets row-16 group <paramref name="group"/>'s deployment action, a row-10 GUID, or <c>-1</c> for none.</summary>
@@ -51,7 +50,7 @@ public static class ActionWiring {
 			return "It is not in the mission.";
 		}
 
-		short squad = document.GuidOf(SquadBlock, 0);
+		short squad = SquadRoster.Squad(document);
 		return row == MechRow && squad != -1 && (document.Mission.Groups ?? []).Any(record => record.GUID == squad && record.MemberRefs.Contains(guid))
 			? "A machine of the player's squad is built from player.mec, not its record."
 			: null;

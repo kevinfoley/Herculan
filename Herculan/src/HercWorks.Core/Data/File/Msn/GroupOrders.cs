@@ -40,7 +40,6 @@ public static class GroupOrders {
 	/// <summary>The highest verb, of seven (docs/retail/simulation/ai-goals.md#when-an-order-is-finished--group_isordercomplete-004239fc).</summary>
 	public const short LastVerb = 6;
 
-	private const int GroupBlock = 11;
 	private const int PointRow = 6;
 	private const int HeadingRow = 7;
 	private const int RouteRow = 8;
@@ -95,7 +94,7 @@ public static class GroupOrders {
 	/// route, or none when the group has no order yet.
 	/// </summary>
 	public static MissionOrder22 NewOrder(MissionDocument document, short group, Func<int, bool> isGroundVehicle) {
-		short squad = document.GuidOf(GroupBlock, 0);
+		short squad = SquadRoster.Squad(document);
 		short route = RouteOf(document, Orders(document, group)[0]);
 		return group == squad || squad == -1 ? HercGroups.Order(Patrol, route, -1, -1)
 			: VehicleGroups.IsConvoy(document, group, isGroundVehicle) ? HercGroups.Order(VehicleGroups.Travel, route, -1, -1)
@@ -189,7 +188,7 @@ public static class GroupOrders {
 		var record = entry.Fields;
 		int memberRow = record.MemberKind switch { MechRoster => 12, FlyerRoster => 13, BaseRoster => 14, _ => 0 };
 		bool members = memberRow != 0 && record.MemberRefs.Any(member => document.Layout.Entry(memberRow, member) != null);
-		bool squad = group == document.GuidOf(GroupBlock, 0);
+		bool squad = group == SquadRoster.Squad(document);
 		return document.Layout.Entry(HeadingRow, record.HeadingRef) == null
 			? "With no heading of its own, the group needs a first order: DBSIM faults loading it."
 			: record.MemberKind == MechRoster && members && !squad ? "A herc group needs a first order: its hercs' AI faults with none."
@@ -270,7 +269,7 @@ public static class GroupOrders {
 		}
 
 		bool noSubject = slot is >= 0 and < Slots && Order(document, Orders(document, group)[slot]) is { SubjectKind: -1 };
-		short squad = document.GuidOf(GroupBlock, 0);
+		short squad = SquadRoster.Squad(document);
 		if (NeedsSubject(verb) && noSubject && squad == -1) {
 			throw new InvalidOperationException("That order needs a subject, and the mission has no group 0 to give it.");
 		}

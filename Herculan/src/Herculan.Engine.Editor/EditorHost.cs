@@ -88,6 +88,9 @@ public sealed class EditorHost {
 	private readonly string _installData;
 	private readonly string _missionCache = Path.Combine(Path.GetTempPath(), "herculan-editor");
 
+	// What a Cybrid's hardpoints offer, read from the install's missions the first time one is drawn, once per run.
+	private readonly CybridWeapons _cybridWeapons;
+
 	private EditorMission? _mission;
 	private EditorExit _exit = EditorExit.Closed;
 
@@ -159,6 +162,7 @@ public sealed class EditorHost {
 	private EditorHost(EditorLaunch launch) {
 		_launch = launch;
 		_installData = ShellWorkingFiles.DataDirectory(launch.InstallRoot);
+		_cybridWeapons = new CybridWeapons(launch.SimulatorContent, launch.ShellContent);
 		_flyNearPlane = _camera.NearPlane;
 		_flyFarPlane = _camera.FarPlane;
 		_padPointer = new GamepadPointer { Settings = JoystickMapFile.LoadIn(_installData).Mouse };
@@ -813,7 +817,7 @@ public sealed class EditorHost {
 			}
 
 			opened = EditorMission.Open(_launch.SimulatorContent, generated, Path.GetFileNameWithoutExtension(name), _installData,
-				source!, squad!, _launch.ShellContent);
+				source!, squad!, _launch.ShellContent, _cybridWeapons);
 		} catch (Exception ex) when (ex is MissingHandoffFileException or InvalidDataException or IOException
 				or UnauthorizedAccessException) {
 			_volBrowser.Failure = ex.Message;
@@ -848,7 +852,7 @@ public sealed class EditorHost {
 			}
 
 			opened = EditorMission.Open(_launch.SimulatorContent, generated, request.Name, _installData, source!, squad!,
-				_launch.ShellContent);
+				_launch.ShellContent, _cybridWeapons);
 		} catch (Exception ex) when (ex is MissingHandoffFileException or InvalidDataException or IOException
 				or UnauthorizedAccessException) {
 			Fail(ex.Message);

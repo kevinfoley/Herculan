@@ -4,10 +4,13 @@ using ImGuiNET;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The Properties panel's view of the player's squad, under the squad's objects and group 0: which Hercs the player and
-/// the squadmates pilot in this mission, and the mission's group-0 machines, each as a chassis choice and one row per
-/// mount the chassis has, edited through <see cref="MachineFitter"/> (drawn by <see cref="MachineFitView"/>); and the squadmates added and removed through
-/// <see cref="SquadEditor"/>.
+/// The Properties panel's view of the player's squad, under the squad's objects and group 0, read from the layout by GUID
+/// (docs/herculan/handoff-editor-roster.md#the-players-squad): which HERCs the player and the squadmates pilot in this
+/// mission, and the mission's own HERCs of the squad, each as a chassis choice and one row per hardpoint, edited through
+/// <see cref="MachineFitter"/> (drawn by <see cref="MachineFitView"/>); and the squadmates added and removed through
+/// <see cref="SquadEditor"/>. Squadmates are numbered from 1 by their place in the squad's list. In a mission that loads with
+/// the career's squad (<see cref="PlayerMachineSource.CareerSquad"/>), each HERC's chassis and weapons are under a collapsed
+/// header, since they are not used there.
 /// </summary>
 internal sealed class SquadMachinePanel {
 	private readonly MachineFitter _fitter;
@@ -15,7 +18,7 @@ internal sealed class SquadMachinePanel {
 	private readonly SquadEditor _editor;
 	private readonly MissionSquad _squad;
 
-	/// <param name="squad">Which Hercs the mission's squad pilots.</param>
+	/// <param name="squad">Which HERCs the mission's squad pilots.</param>
 	public SquadMachinePanel(MachineFitter fitter, SquadEditor editor, MissionSquad squad) {
 		_fitter = fitter;
 		_fit = new MachineFitView(fitter);
@@ -29,25 +32,34 @@ internal sealed class SquadMachinePanel {
 	/// </summary>
 	public Action<DeleteNamers>? References { get; set; }
 
-	/// <summary>The player's machine: which Herc the player pilots, then group 0's first member's record.</summary>
+	// A campaign mission's squad is the career's (MissionSquad), whatever the mission's own HERCs are.
+	private bool Campaign => _squad.PlayerMachine == PlayerMachineSource.CareerSquad;
+
+	/// <summary>The view of the player's own HERC: which HERC the player pilots, then the mission's own.</summary>
 	public void DrawPlayer() {
-		DrawPlayerMachine();
+		CampaignNote();
+		DrawPlayerHerc();
 		Failures();
 	}
 
-	/// <summary>Group 0's view: the player's machine, then each squadmate, with Add and Remove.</summary>
+	/// <summary>The squad's group view: the player's HERC, then each squadmate, with Add and Remove.</summary>
 	public void DrawSquad() {
-		DrawPlayerMachine();
+		CampaignNote();
+		DrawPlayerHerc();
 		ImGui.Separator();
-		var squadmates = _editor.Squadmates.ToList();
+		var squadmates = _editor.Squadmates;
 		ImGui.Text($"Squadmates: {squadmates.Count}");
+		if (squadmates.Count > 0 && !Campaign) {
+			EditorText.Note("Squadmates pilot the HERCs listed below.");
+		}
+
 		if (LeftBehind(squadmates.Count) is { } behind) {
 			ImGui.TextWrapped(behind);
 		}
 
-		foreach (int member in squadmates) {
+		for (int number = 1; number <= squadmates.Count; number++) {
 			ImGui.Separator();
-			DrawSquadmate(member);
+			DrawSquadmate(number, squadmates[number - 1]);
 		}
 
 		ImGui.Separator();
@@ -59,64 +71,64 @@ internal sealed class SquadMachinePanel {
 
 		ImGui.EndDisabled();
 		if (noAdd == null) {
-			EditorText.Note("A new squadmate is the player's machine's chassis, with its stock fit.");
+			EditorText.Note("A new squadmate takes the player's HERC's chassis, with its stock fit, after the last.");
 		} else {
 			EditorText.Reason(noAdd);
 		}
+
 		Failures();
 	}
 
-	/// <summary>
-	/// The view of a squadmate's own object: the squadmate group 0's member slots give block-7 slot <paramref name="slot"/>.
-	/// </summary>
-	public void DrawSquadmateObject(int slot) {
+	/// <summary>The view of a squadmate's own object, the herc of row-12 GUID <paramref name="guid"/>.</summary>
+	public void DrawSquadmateObject(short guid) {
 		ImGui.Separator();
-		int? member = _editor.Squadmates.Cast<int?>().FirstOrDefault(member => _fitter.SquadSlot(member!.Value) == slot);
-		if (member is not { } squadmate) {
-			EditorText.Note("Group 0 lists no squadmate for this Herc.");
+		var squadmates = _editor.Squadmates;
+		int number = squadmates.ToList().IndexOf(guid) + 1;
+		if (number == 0) {
+			EditorText.Note("Not in the squad in play: it comes after a gap in the squad's list, and the HERCs after a gap are not used.");
 			return;
 		}
 
 		CampaignNote();
-		DrawSquadmate(squadmate);
+		DrawSquadmate(number, guid);
 		Failures();
 	}
 
-	// The player's machine: which Herc the player pilots, then group 0's first member's record.
-	private void DrawPlayerMachine() {
-		ImGui.Separator();
-		ImGui.Text("Player's machine");
-		CampaignNote();
+	// The player's HERC: which HERC the player pilots, then the mission's own.
+	private void DrawPlayerHerc() {
+		ImGui.Text("Player's HERC");
 		if (WhichHerc() is { } piloted) {
 			ImGui.TextWrapped(piloted);
 		}
 
-		if (_fitter.SquadSlot(0) is { } slot) {
-			DrawMachine(slot);
+		if (_editor.Player is { } player) {
+			Pickers("player", () => DrawHerc(player));
 		} else {
-			EditorText.Note("Group 0 references no herc record.");
+			EditorText.Note("The player's squad has no HERC for the player.");
 		}
 	}
 
-	// Which Herc the player pilots in this mission, by the launch's own rule (MissionSquad).
+	// Which HERC the player pilots in this mission, by the launch's own rule (MissionSquad).
 	private string? WhichHerc() => _squad.PlayerMachine switch {
-		PlayerMachineSource.Mission => "In this mission the player pilots the Herc below.",
+		PlayerMachineSource.Mission => "In this mission the player pilots the HERC below.",
 		PlayerMachineSource.HercType => $"In this mission the player pilots a stock {ChassisName(_squad.HercTypeChassis)}, "
-			+ "the Herc Type chosen on the practice screen, not the Herc below.",
+			+ "the Herc Type chosen on the practice screen, not the HERC below.",
 		_ => null,
 	};
 
-	// A campaign mission's squad is the career's (MissionSquad), whatever group 0 holds.
+	// In a campaign mission the squad pilots the career's HERCs, and the squad's list sets only how many squad positions
+	// are in play (docs/retail/shell/campaign-loop.md#loading-the-careers-mission).
 	private void CampaignNote() {
-		if (_squad.PlayerMachine == PlayerMachineSource.CareerSquad) {
-			EditorText.Emphasis("In campaign missions, the default HERCs and loadouts selected here are not used.");
+		if (Campaign) {
+			EditorText.Emphasis("In this campaign mission the squad pilots the career's HERCs, so the HERCs and weapons set "
+				+ "here are not used. The number of squadmates listed sets how many of the career's squadmates can go.");
 		}
 	}
 
-	// The squad build's retail bug, where the squadmates are group 0's: the last squadmate listed never goes on strength
+	// The squad build's retail bug, where the squadmates are the mission's: the last squadmate listed never goes on strength
 	// (docs/retail/shell/main-menu.md#starting-a-practice-mission).
 	private string? LeftBehind(int squadmates) {
-		if (squadmates == 0 || _squad.PlayerMachine is not (PlayerMachineSource.Mission or PlayerMachineSource.HercType)) {
+		if (squadmates == 0 || Campaign) {
 			return null;
 		}
 
@@ -128,20 +140,19 @@ internal sealed class SquadMachinePanel {
 		};
 	}
 
-	// A squadmate: its machine, and Remove or why it cannot be removed.
-	private void DrawSquadmate(int member) {
-		ImGui.PushID($"squadmate{member}");
-		ImGui.Text($"Squadmate {member}");
-		if (_fitter.SquadSlot(member) is { } slot) {
-			DrawMachine(slot);
-		} else {
-			EditorText.Note($"Group 0's member slot {member} references no herc record.");
-		}
-
-		var (reason, names, ownActions) = _editor.WhyNoRemove(member);
+	// Squadmate <number>, from 1, the herc of row-12 GUID <guid>: its HERC, and Remove or why it cannot be removed.
+	private void DrawSquadmate(int number, short guid) {
+		ImGui.PushID($"squadmate{number}");
+		ImGui.Text($"Squadmate {number}");
+		Pickers("herc", () => DrawHerc(guid));
+		var (reason, names, ownActions) = _editor.WhyNoRemove(number);
 		if (reason == null && !names.Any && !ownActions) {
 			if (ImGui.Button("Remove")) {
-				_editor.RequestRemove(member);
+				_editor.RequestRemove(number);
+			}
+
+			if (number < _editor.Squadmates.Count) {
+				EditorText.Note("Each squadmate after it moves up one place.");
 			}
 		} else if (reason == null) {
 			ImGui.TextWrapped("Cannot be removed while these reference or need it:");
@@ -149,16 +160,31 @@ internal sealed class SquadMachinePanel {
 			if (ownActions) {
 				ImGui.TextWrapped("A trigger it fires when engaged or defeated");
 			}
-		} else if (_fitter.SquadSlot(member) is not { } fixedSlot || reason != _fitter.WhyFixed(fixedSlot)) {
+		} else {
 			EditorText.Reason(reason, "Cannot be removed: ");
 		}
 
 		ImGui.PopID();
 	}
 
-	// The chassis choice and the fit of the record at block-7 slot <slot>.
-	private void DrawMachine(int slot) =>
-		_fit.Draw(slot, MachineFitter.Chassis, ChassisName, "A new chassis comes with its stock fit.");
+	// A HERC's chassis and weapons: in a campaign mission, which does not use them, under a collapsed header.
+	private void Pickers(string id, Action draw) {
+		if (!Campaign) {
+			draw();
+			return;
+		}
+
+		ImGui.PushID(id);
+		if (ImGui.CollapsingHeader("HERC and weapons (not used in the campaign)")) {
+			draw();
+		}
+
+		ImGui.PopID();
+	}
+
+	// The chassis choice and the hardpoints of the herc of row-12 GUID <guid>.
+	private void DrawHerc(short guid) =>
+		_fit.Draw(guid, MachineFitter.Chassis, ChassisName, "A new chassis comes with its stock fit.");
 
 	// Why the last fit, add or remove could not be made.
 	private void Failures() {

@@ -4,22 +4,21 @@ using HercWorks.Core.Data.File.Msn.Script;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// Adds and removes the player's squadmates, group 0's members after the player's machine, as one step of
-/// <see cref="PointMover"/>'s undo history each, through <see cref="SquadRoster"/>'s record edits; the editor's state is
-/// then built again (<see cref="SceneSync"/>), which builds the handoff's <c>player.mec</c> again first
+/// The player's squad as the layout holds it, by GUID (<see cref="SquadRoster"/>), and its squadmates added and removed, as
+/// one step of <see cref="PointMover"/>'s undo history each, through <see cref="SquadRoster"/>'s record edits; the editor's
+/// state is then built again (<see cref="SceneSync"/>), which builds the handoff's <c>player.mec</c> again first
 /// (docs/herculan/handoff-editor-roster.md#the-players-squad).
 ///
-/// <para>A new squadmate is the player's machine's chassis as the mission holds it now, with that chassis's stock fit
+/// <para>A new squadmate is the player's HERC's chassis as the mission holds it now, with that chassis's stock fit
 /// (<see cref="MachineFitter.StockFit"/>), as a Herc Type choice gives it. An add is refused past
 /// <see cref="SquadRoster.MaxSquadmates"/> and past DBSIM's block-7 slots (<see cref="ScriptDatLint.MechSlotCap"/>),
-/// which the squad's machines share with the roster, counted as the mission check counts them, the add taking one more of
-/// each.</para>
+/// which the squad's machines share with the roster, counted as the mission check counts them, over the generation the game's
+/// load makes, the add taking one more of each.</para>
 ///
 /// <para>The edits run when <see cref="RunRequest"/> is called, once the frame's ImGui is rendered, since the rebuild
 /// changes what the panels list.</para>
 /// </summary>
 internal sealed class SquadEditor {
-	private readonly ScriptDat _document;
 	private readonly MissionDocument _source;
 	private readonly GeneratedIndex _index;
 	private readonly PointMover _mover;
@@ -28,9 +27,8 @@ internal sealed class SquadEditor {
 	private readonly ObjectDeleter _deleter;
 	private Func<string?>? _requested;
 
-	public SquadEditor(ScriptDat document, MissionDocument source, GeneratedIndex index, PointMover mover,
-			SceneSync sync, MachineFitter fitter, ObjectDeleter deleter) {
-		_document = document;
+	public SquadEditor(MissionDocument source, GeneratedIndex index, PointMover mover, SceneSync sync, MachineFitter fitter,
+			ObjectDeleter deleter) {
 		_source = source;
 		_index = index;
 		_mover = mover;
@@ -42,8 +40,19 @@ internal sealed class SquadEditor {
 	/// <summary>Why the last edit run could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
-	/// <summary>Group 0's member slots holding the squadmates, in squad order: slot 1 up to the first unset one.</summary>
-	public IEnumerable<int> Squadmates => Enumerable.Range(1, SquadRoster.Positions(_document) - 1);
+	/// <summary>The row-12 GUID of the player's HERC, group 0's first member, or null when it names none.</summary>
+	public short? Player => SquadRoster.Member(_source.Layout, 0) is var guid and not -1 ? guid : null;
+
+	/// <summary>
+	/// The squadmates' row-12 GUIDs, in squad order: group 0's member slots from 1 up to the first unset one. Squadmate
+	/// <c>k</c>, from 1, is the <c>k</c>th.
+	/// </summary>
+	public IReadOnlyList<short> Squadmates {
+		get {
+			var layout = _source.Layout;
+			return Enumerable.Range(1, SquadRoster.Positions(layout) - 1).Select(slot => SquadRoster.Member(layout, slot)).ToList();
+		}
+	}
 
 	/// <summary>Why a squadmate cannot be added, or null when one can.</summary>
 	public string? WhyNoAdd {
@@ -52,25 +61,26 @@ internal sealed class SquadEditor {
 				return reason;
 			}
 
+			int hercs = _source.Script.Mechs.Length;
 			int squad = _index.Mission.Placements.Count(placement => placement.IsPlayerLance);
-			if (_document.Mechs.Length + squad + 2 > ScriptDatLint.MechSlotCap) {
-				return $"The mission already has {_document.Mechs.Length} hercs plus a squad of {squad}, and DBSIM holds "
+			if (hercs + squad + 2 > ScriptDatLint.MechSlotCap) {
+				return $"The mission already has {hercs} hercs plus a squad of {squad}, and DBSIM holds "
 					+ $"{ScriptDatLint.MechSlotCap} in all.";
 			}
 
-			return _fitter.SquadSlot(0) is { } player && _fitter.Record(player) is { } record && _fitter.StockFit(record.TypeIndex) == null
+			return Player is { } player && _fitter.Record(player) is { } record && _fitter.StockFit(record.TypeIndex) == null
 				? $"The install has no stock fit for chassis {record.TypeIndex}."
 				: null;
 		}
 	}
 
 	/// <summary>
-	/// Why the squadmate in group 0's member slot <paramref name="member"/> cannot be removed, or null when it can, with
-	/// what names or needs it.
+	/// Why squadmate <paramref name="number"/>, from 1, cannot be removed, or null when it can, with what references or
+	/// needs it.
 	/// </summary>
-	public (string? Fixed, DeleteNamers Names, bool OwnActions) WhyNoRemove(int member) {
-		if (SquadRoster.Check(_source, member) is not var (_, check)) {
-			return ("Its record is not one of its own: group 0 references it more than once, or it is all the group holds.", DeleteNamers.None, false);
+	public (string? Fixed, DeleteNamers Names, bool OwnActions) WhyNoRemove(int number) {
+		if (SquadRoster.Check(_source, number) is not var (_, check)) {
+			return ("Its record is also another squad member's, or it is the only HERC the squad has.", DeleteNamers.None, false);
 		}
 
 		var names = _deleter.Resolve(_source, check.Namers);
@@ -80,8 +90,8 @@ internal sealed class SquadEditor {
 	/// <summary>Asks for a squadmate to be added after the last.</summary>
 	public void RequestAdd() => _requested = Add;
 
-	/// <summary>Asks for the squadmate in group 0's member slot <paramref name="member"/> to be removed.</summary>
-	public void RequestRemove(int member) => _requested = () => Remove(member);
+	/// <summary>Asks for squadmate <paramref name="number"/>, from 1, to be removed.</summary>
+	public void RequestRemove(int number) => _requested = () => Remove(number);
 
 	/// <summary>Makes the edit asked for since the last call, if any; <see cref="Failure"/> says why one could not be made.</summary>
 	public void RunRequest() {
@@ -96,17 +106,16 @@ internal sealed class SquadEditor {
 			return reason;
 		}
 
-		var player = _fitter.Record(_fitter.SquadSlot(0) ?? -1);
-		if (player == null || _fitter.StockFit(player.TypeIndex) is not var (weapons, guidance)) {
-			return "Group 0 references no player's machine to take the chassis of.";
+		if (Player is not { } player || _fitter.Record(player) is not { } herc || _fitter.StockFit(herc.TypeIndex) is not var (weapons, guidance)) {
+			return "The player's squad has no HERC for the player, whose chassis a new squadmate takes.";
 		}
 
 		var source = _source;
-		return Commit(() => SquadRoster.Add(source, SquadRoster.Machine(player.TypeIndex, weapons, guidance), out _));
+		return Commit(() => SquadRoster.Add(source, SquadRoster.Machine(herc.TypeIndex, weapons, guidance), out _));
 	}
 
-	private string? Remove(int member) {
-		var (reason, names, ownActions) = WhyNoRemove(member);
+	private string? Remove(int number) {
+		var (reason, names, ownActions) = WhyNoRemove(number);
 		if (reason != null) {
 			return reason;
 		}
@@ -116,7 +125,7 @@ internal sealed class SquadEditor {
 		}
 
 		var source = _source;
-		return Commit(() => SquadRoster.Remove(source, member));
+		return Commit(() => SquadRoster.Remove(source, number));
 	}
 
 	// Makes the change, rebuilding from it, and records it as one step of the history.

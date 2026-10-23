@@ -82,7 +82,6 @@ public static class RecordConditions {
 	private const int OrderRow = 15;
 	private const int GroupRow = 16;
 	private const int ObjectiveRow = 17;
-	private const int SquadBlock = 11;
 
 	/// <summary>The condition field's value for a record present in every state.</summary>
 	public const short Always = -1;
@@ -233,10 +232,10 @@ public static class RecordConditions {
 		}
 	}
 
-	// Group 0, as the generation exports it, an order in one of its slots, or a herc its member slots reference in any of its
+	// Group 0, the layout's first group (SquadRoster.Squad), an order in one of its slots, or a herc its member slots reference in any of its
 	// records.
 	private static bool InSquad(MissionDocument document, PresenceTarget target) {
-		short squad = document.GuidOf(SquadBlock, 0);
+		short squad = SquadRoster.Squad(document);
 		return squad != -1 && target.Row switch {
 			GroupRow => target.Guid == squad,
 			OrderRow => target.Group == squad,

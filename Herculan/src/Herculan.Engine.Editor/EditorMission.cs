@@ -19,7 +19,7 @@ namespace Herculan.Engine.Editor;
 internal sealed class EditorMission {
 	private EditorMission(GameContent content, string name, ScriptDat document, MissionDocument source, MissionScene scene,
 			PlacementTables tables, MissionIndex sceneIndex, GeneratedIndex index, MissionLint lint, TerrainMaterialTable materials,
-			MissionSquad squad, Func<GameContent> shellContent) {
+			MissionSquad squad, Func<GameContent> shellContent, CybridWeapons cybrid) {
 		Name = name;
 		Document = document;
 		Source = source;
@@ -39,8 +39,8 @@ internal sealed class EditorMission {
 		Placer = new StructurePlacer(document, source, scene, index, Mover, Sync, Selection);
 		Sides = new SideChanger(source, sceneIndex, Mover, Sync);
 		Deleter = new ObjectDeleter(source, sceneIndex, Mover, Sync);
-		Fitter = new MachineFitter(document, source, Mover, Sync, shellContent);
-		Squad = new SquadEditor(document, source, index, Mover, Sync, Fitter, Deleter);
+		Fitter = new MachineFitter(source, Mover, Sync, shellContent, cybrid);
+		Squad = new SquadEditor(source, index, Mover, Sync, Fitter, Deleter);
 		Theater = new TheaterChanger(document, source, scene, index, Mover, Sync);
 		Routes = new RouteEditor(source, index, Mover, Sync, Selection, Deleter);
 		Placing = new RoutePlacing(Routes, index, drape);
@@ -210,11 +210,12 @@ internal sealed class EditorMission {
 	/// load stands its own (<see cref="MissionScene.Settle"/>). <paramref name="dataDirectory"/> is where the simulator's
 	/// settings are when they are not beside the script — see <see cref="MissionScene.Load"/>.
 	/// <paramref name="squad"/> is which Hercs the mission's squad pilots, which builds the handoff's <c>player.mec</c> again after
-	/// an edit, and <paramref name="shellContent"/> VSHELL's mount, which holds the shell's chassis and weapon tables. Throws
+	/// an edit, <paramref name="shellContent"/> VSHELL's mount, which holds the shell's chassis and weapon tables, and
+	/// <paramref name="cybrid"/> what a Cybrid's hardpoints offer, built once per editor run. Throws
 	/// <see cref="MissingHandoffFileException"/> as <see cref="MissionLoader.Load"/> does.
 	/// </summary>
 	public static EditorMission Open(GameContent content, string scriptPath, string name, string dataDirectory,
-			MissionDocument source, MissionSquad squad, Func<GameContent> shellContent) {
+			MissionDocument source, MissionSquad squad, Func<GameContent> shellContent, CybridWeapons cybrid) {
 		File.WriteAllBytes(scriptPath, source.ScriptBytes);
 		File.WriteAllBytes(CaseInsensitivePath.Combine(Path.GetDirectoryName(scriptPath) ?? ".", MissionLoader.TextFileName),
 			source.MissionText);
@@ -233,6 +234,6 @@ internal sealed class EditorMission {
 		var index = new GeneratedIndex(generated, document, new GeneratedRecords(source), sceneIndex);
 		// The scene's own copy is not kept; a base pad's tile is sized by its material when the ground is levelled again.
 		return new EditorMission(content, name, document, source, scene, tables, sceneIndex, index,
-			new MissionLint(source, sceneIndex, MissionLint.SquadOf(generated)), TerrainMaterialTable.Load(content), squad, shellContent);
+			new MissionLint(source, sceneIndex, MissionLint.SquadOf(generated)), TerrainMaterialTable.Load(content), squad, shellContent, cybrid);
 	}
 }

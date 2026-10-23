@@ -21,7 +21,7 @@ namespace Herculan.Engine.Editor;
 /// (<see cref="MissionLoader.Load(GameContent, ScriptDat, string)"/>, after writing the generated <c>mission.str</c> and, for a
 /// mission loaded in training mode, the squad's <c>player.mec</c> beside the handoff, as the launch would for the
 /// generation, <see cref="MissionSquad"/>) and <see cref="GeneratedIndex"/>, each object's <see cref="SceneObject.Placement"/>
-/// carrying the generation's block-7, 8 or 9 slot and block-11 group for its record's GUID (<see cref="PlacementOf"/>); then
+/// carrying the generation's block-11 group for its record's GUID (<see cref="PlacementOf"/>); then
 /// the new <see cref="MissionIndex"/>, the pick spheres, the overlays' lines and the mission check, and tells the drawing what
 /// left and what joined the scene.</para>
 ///
@@ -104,15 +104,15 @@ internal sealed class SceneSync {
 
 	/// <summary>
 	/// What a planned record's object is built and placed from: its type, fit, condition, place, side and formation slot,
-	/// from the layout; and from the generation, for what still reads it, the block-7, 8 or 9 slot its GUID was exported to
-	/// (a herc's fit, <see cref="MachineFitter"/>, and a squadmate's machine, <see cref="SquadMachinePanel"/>) and the block-11
-	/// index of its group's (the Toolbox's join, <c>EditorHost.JoinableGroup</c>), -1 where the generation has no record of the
-	/// GUID. The editor binds no action and ticks nothing, so the actions and writes the game's load binds are left unset.
+	/// from the layout; and from the generation, for what still reads it, the block-11 index of its group's (the Toolbox's
+	/// join, <c>EditorHost.JoinableGroup</c>), -1 where the generation has no record of the GUID. The editor binds no action
+	/// and ticks nothing, so its roster slot, which only the game's load binds by, is -1, and the actions and writes that load
+	/// binds are left unset.
 	/// </summary>
 	public static MissionPlacement PlacementOf(PlannedObject planned, MissionDocument source) {
 		var place = planned.Place;
 		return new MissionPlacement(planned.Kind, planned.TypeIndex, planned.TypeName,
-			source.ExportedIndex(planned.Key.Row, planned.Key.Guid) ?? -1, source.ExportedIndex(16, planned.Group) ?? -1,
+			SlotIndex: -1, source.ExportedIndex(16, planned.Group) ?? -1,
 			place.Position, place.Heading, planned.WeaponRefs, planned.WeaponSecondary,
 			IsPlayerLance: planned.Squad,
 			Side: planned.Side,

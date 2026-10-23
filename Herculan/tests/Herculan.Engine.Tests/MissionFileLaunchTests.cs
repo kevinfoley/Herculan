@@ -106,7 +106,9 @@ public class MissionFileLaunchTests {
 		var shell = GameContent.MountShell(root);
 		string? script = MissionOpener.Open(shell, root, "C1_07.MSN", directory, out var document, out var squad, out string? failure);
 		Assert.True(script != null, failure);
-		var mission = EditorMission.Open(GameContent.MountSimulator(root), script, "C1_07", directory, document!, squad!, () => shell);
+		var simulator = GameContent.MountSimulator(root);
+		var mission = EditorMission.Open(simulator, script, "C1_07", directory, document!, squad!, () => shell,
+			new CybridWeapons(simulator, () => shell));
 		Assert.All(new short[] { 69, 70, 71 }, guid => Assert.NotNull(mission.Index.ObjectOf(new ObjectKey(12, guid))));
 
 		var opened = mission.Index.Objects.ToList();

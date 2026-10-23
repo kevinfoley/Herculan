@@ -50,7 +50,6 @@ public sealed record VariantTable(short Guid, short Key, short Bound, short Requ
 /// </summary>
 public static class VariantEditing {
 	private const int ConditionRow = 1;
-	private const int GroupBlock = 11;
 
 	/// <summary>The bound a chance edit writes when every chance is a whole percent, and a new table's.</summary>
 	public const short PercentBound = 100;
@@ -614,7 +613,7 @@ public static class VariantEditing {
 
 	// Whether a herc group 0 references draws by <key>: a squad record a table drives, which the editor leaves alone.
 	private static bool DrawnBySquad(MissionDocument document, short key) =>
-		document.GuidOf(GroupBlock, 0) != -1
+		SquadRoster.Squad(document) != -1
 		&& Drawers(document, key).Any(id => id.Row == 12 && document.RecordAt(id) is { GUID: not -1 } herc
 			&& RosterDeletion.Check(document, 12, herc.GUID).InSquad);
 
