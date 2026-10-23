@@ -24462,7 +24462,13 @@
       "confidence": "high",
       "name": "Help_Show",
       "description": "WinHelpA(mainWindow, path, HELP_CONTENTS, 0), after Video_ToggleFullscreen drops the game back to a window when 004d25e2 says it is fullscreen.",
-      "source": "docs/retail/simulation/cockpit-input.md"
+      "source": "docs/retail/simulation/cockpit-input.md",
+      "verified": {
+        "bytes": "004668c0+39",
+        "sha1": "810223186a6c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00466955",

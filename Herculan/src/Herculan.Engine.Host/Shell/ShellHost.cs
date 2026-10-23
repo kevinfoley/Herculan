@@ -223,7 +223,7 @@ sealed class ShellHost : IDisposable {
 		_mission = new MissionTabScreens(installRoot, content, _canvas, missionScreen, _movies, _game, _screen, dialogs, _outcome,
 			_window, _widgets, repaint);
 		var hangar = new HangarTabs(content, _game, dialogs, _screen, _widgets, startBay, repaint);
-		var manual = new ShellManual(installRoot, disc, _window, _game, _audio);
+		var manual = new ShellManual(installRoot, disc, _game, _audio);
 		_navigation = new TabNavigation(_screen, _canvas, _game, saveScreen, hangar, _mission, _audio, manual, _widgets, repaint);
 		var names = new SaveNames(_game, saveScreen, _canvas, session.Localization, () => _buttons.LeftPressedByAlso);
 		_loop = new CampaignScreens(installRoot, content, _game, saveScreen, hangar, _mission, _navigation, _startup, _movies, _canvas,

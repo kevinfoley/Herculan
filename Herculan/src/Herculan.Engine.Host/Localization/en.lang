@@ -124,6 +124,7 @@ pause.preferences              Preferences
 pause.quit                     Quit
 about.title                    About
 about.license                  License
+manual.loading                 Opening the on-line manual…
 welcome.title                  Welcome
 welcome.message                Welcome to the HERCULAN Engine! HERCULAN includes a variety of optional tweaks to customize your play experience. To access HERCULAN's menu bar, press Shift-Esc at any time.
 welcome.view_tweaks            View Tweaks

@@ -1,3 +1,4 @@
+using System.Numerics;
 using Herculan.Engine.Cockpit;
 using Herculan.Engine.Host.Debugging;
 using Herculan.Engine.Host.Localization;
@@ -13,7 +14,8 @@ namespace Herculan.Engine.Host.Settings;
 /// shell (<see cref="ShowOnHover"/>), HERCULAN's own and not retail's, and the
 /// panels it opens: Debug (a mission's only, and only under <c>--developer</c>), Settings, Controller, Keys, Tweaks, Accessibility and About; the
 /// Editor item, which leaves the shell for the mission editor and is greyed over a mission; and the
-/// first start's <see cref="WelcomeDialog"/> and the <see cref="UpdateDialog"/>, which the shell raises without the bar. Hidden until <see cref="Show"/>, and never
+/// first start's <see cref="WelcomeDialog"/> and the <see cref="UpdateDialog"/>, which the shell raises without the bar; and a
+/// notice while the on-line manual opens (<see cref="OnlineManual.Opening"/>). Hidden until <see cref="Show"/>, and never
 /// drawn into a <c>--screenshot</c> capture. Plain [Esc] is retail's in a mission, where it pans to and from the
 /// Heads-Down Display, so which key reaches the bar is each host's to decide: over a mission
 /// <see cref="SimulatorFrame"/>, over the shell <c>KeyboardRouting</c>.
@@ -227,6 +229,23 @@ sealed class HostMenuBar : IEscapeMenu {
 		About.Draw(_centring.Condition);
 		Welcome.Draw(_centring.Condition);
 		Update.Draw(_centring.Condition);
+		DrawManualNotice();
 		_highlightWasShowing = ImGui.GetIO().NavVisible;
+	}
+
+	// While the on-line manual is being opened (OnlineManual.Opening), a notice at the window's centre with no buttons, which
+	// takes no input and goes by itself.
+	private void DrawManualNotice() {
+		if (!OnlineManual.Opening) {
+			return;
+		}
+
+		ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), ImGuiCond.Always, new Vector2(0.5f, 0.5f));
+		if (ImGui.Begin("###manual_loading", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoInputs
+				| ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoNav)) {
+			ImGui.TextUnformatted(_localization.GetStringOrKey("manual.loading"));
+		}
+
+		ImGui.End();
 	}
 }

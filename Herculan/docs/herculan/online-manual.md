@@ -4,15 +4,15 @@ How HERCULAN shows the game's on-line manual. The help file itself is [`../retai
 
 ## What opens it
 
-- The main menu's `ONLINE MANUAL` and the "?" button at the left of the shell's tab strip (`ShellManual.Open`) do what retail's `004317ea` does before its `WinHelpA` call — leave full screen, write option 6 to match, commit and save the options, stop the shell's sound — and then open the manual. Retail opens it at its contents page from both, whichever screen is up ([`../retail/shell/screen-layout.md`](../retail/shell/screen-layout.md#what-a-tab-click-does)).
+- The main menu's `ONLINE MANUAL` and the "?" button at the left of the shell's tab strip (`ShellManual.Open`) do what retail's `004317ea` does before its `WinHelpA` call — commit and save the options, stop the shell's sound — and then open the manual. Retail opens it at its contents page from both, whichever screen is up ([`../retail/shell/screen-layout.md`](../retail/shell/screen-layout.md#what-a-tab-click-does)).
 - `/` in a mission (`ReadManualKey` in the simulator host), which is `?` without Shift, as the dispatcher sees it. Not while a modal panel holds the input.
 - The right-hand of the cockpit's two system buttons, the question mark at the screen's top-right corner ([`../retail/simulation/cockpit-input.md`](../retail/simulation/cockpit-input.md#the-two-system-buttons)), except while a tape plays back.
 
-Both mission paths leave full screen first, as retail's `Help_Show` does before its `WinHelpA` call (`OpenManual` in the simulator host).
+None of them leaves full screen. Retail's `004317ea` and `Help_Show` both do before calling `WinHelpA`, and the shell's also writes option 6 to match; here the game stays full screen behind the browser, which is let take the foreground as it is launched (`AllowSetForegroundWindow`), so one already running comes forward rather than flashing in the taskbar.
 
 ## Conversion
 
-`OnlineManual` picks the language folder from the first byte of `DATA\LANGUAGE.CFG` as `Language_GetFolderName` does, reads `<folder>\ES2GUIDE.HLP` and `<folder>\README.WRI`, and has `HercWorks.Help` parse them (`HelpFile`, `WriteDocument`) and write them out as one HTML page (`HelpHtmlWriter`). The page goes to `%LOCALAPPDATA%\HERCULAN\manual\<folder>.html` and is handed to the default browser. The first open in a run rewrites the page, so nothing left in that folder by anything else is what opens; later opens reuse it. Conversion takes about a fifth of a second and runs off the frame loop.
+`OnlineManual` picks the language folder from the first byte of `DATA\LANGUAGE.CFG` as `Language_GetFolderName` does, reads `<folder>\ES2GUIDE.HLP` and `<folder>\README.WRI`, and has `HercWorks.Help` parse them (`HelpFile`, `WriteDocument`) and write them out as one HTML page (`HelpHtmlWriter`). The page goes to `%LOCALAPPDATA%\HERCULAN\manual\<folder>.html` and is handed to the default browser. The first open in a run rewrites the page, so nothing left in that folder by anything else is what opens; later opens reuse it. Conversion takes about a fifth of a second and runs off the frame loop. Reading the help file off a CD can take seconds, so from the request until the page has been handed to the browser a notice without buttons stays at the centre of the window.
 
 `HercWorks.Help` reads only the WinHelp features the three retail files use, and rejects a file that uses anything else with the reason. It is not a general WinHelp viewer.
 
