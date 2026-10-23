@@ -72,13 +72,18 @@ sealed class SaveRestoreTab {
 	/// A gamepad's A: a click on ACCEPT while a rename is live on this tab, wherever the pointer is. This engine's own, so a
 	/// name SAVE filled in for a gamepad click is accepted without steering to the button.
 	/// </summary>
-	public void PadAccept() {
-		if (_screen.SelectedTab != ShellScreen.SaveTab || !_saveScreen.IsEnabled(ShellSaveButton.Accept)) {
+	public void PadAccept() => PadClick(ShellSaveButton.Accept);
+
+	/// <summary>A gamepad's B: a click on CANCEL while a rename is live on this tab, wherever the pointer is, as <see cref="PadAccept"/>.</summary>
+	public void PadCancel() => PadClick(ShellSaveButton.Cancel);
+
+	private void PadClick(ShellSaveButton button) {
+		if (_screen.SelectedTab != ShellScreen.SaveTab || !_saveScreen.IsEnabled(button)) {
 			return;
 		}
 
-		var rect = _saveScreen.ButtonRect(ShellSaveButton.Accept);
-		_widgets.Click(ShellHit.Button(new ShellWidget(ShellWidgetKind.SaveButton, (int)ShellSaveButton.Accept), rect,
+		var rect = _saveScreen.ButtonRect(button);
+		_widgets.Click(ShellHit.Button(new ShellWidget(ShellWidgetKind.SaveButton, (int)button), rect,
 			(rect.X0 + rect.X1) / 2f, (rect.Y0 + rect.Y1) / 2f));
 	}
 

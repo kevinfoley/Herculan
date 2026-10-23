@@ -91,8 +91,9 @@ sealed class ShellHost : IDisposable {
 	private readonly CanvasContent _content;
 	private readonly SaveRestoreTab _save;
 
-	// Whether a gamepad's A was held at the last update, to see it go down.
+	// Whether a gamepad's A and B were held at the last update, to see each go down.
 	private bool _padAHeld;
+	private bool _padBHeld;
 
 	/// <summary>Whether a simulator exit code brings the shell back up rather than ending the run: 3, 4 and 6.</summary>
 	public static bool ReturnsToShell(int code) =>
@@ -329,6 +330,9 @@ sealed class ShellHost : IDisposable {
 		bool padA = _window.PadAHeld;
 		bool padAPressed = padA && !_padAHeld;
 		_padAHeld = padA;
+		bool padB = _window.PadBHeld;
+		bool padBPressed = padB && !_padBHeld;
+		_padBHeld = padB;
 
 		// Windows' auto-repeat, which retail takes as fresh key-downs (docs/retail/shell/main-menu.md#typing-into-a-row),
 		// rebuilt from the held keys because the window's own key events carry no repeats.
@@ -421,6 +425,10 @@ sealed class ShellHost : IDisposable {
 			_buttons.Deliver(mouse, _widgets.Deliver);
 			if (padAPressed) {
 				_save.PadAccept();
+			}
+
+			if (padBPressed) {
+				_save.PadCancel();
 			}
 
 			if (arrowsTick) {
