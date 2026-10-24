@@ -94,7 +94,7 @@ internal sealed record PlannedGroup(short Guid, int Position, MissionUnitKind Ki
 	public bool IsSquad => Position == MissionPlacementRules.SquadGroupIndex;
 
 	/// <summary>
-	/// Whether the group is kept out of the scene, by the user's choice (docs/herculan/handoff-editor-msn-scene.md#decided-by-the-user):
+	/// Whether the group is kept out of the scene, by the user's choice (docs/herculan/handoff-editor-viewing.md#waiting-groups):
 	/// it waits on an action whose verb brings it in by drop pod or on foot, at a point picked about the player when the
 	/// action fires (docs/retail/simulation/mission-deployment.md#arrival--group_deploymentcheck-004236c4), so retail neither
 	/// draws nor touches it before then and never uses its own point. Its members are still built and indexed, and selected
@@ -167,7 +167,7 @@ internal sealed class LayoutPlan {
 /// <summary>
 /// Where the mission's groups and the roster records they place stand, from the <c>.MSN</c>'s <see cref="MissionLayout"/>
 /// alone, through the game's own placement rules (<see cref="MissionPlacementRules"/>) over the values the layout resolves,
-/// keyed by GUID (docs/herculan/handoff-editor-msn-scene.md#4-positions). Each entry's base fields are placed, never a
+/// keyed by GUID (docs/herculan/handoff-editor-document.md#rebuilding-after-an-edit). Each entry's base fields are placed, never a
 /// variation: a keyed entry's fields already carry its shown option's point, heading, type and fit.
 ///
 /// <list type="bullet">
@@ -179,7 +179,7 @@ internal sealed class LayoutPlan {
 /// <item>Each claimed record stands by <see cref="MissionPlacementRules.PlaceHerc"/>, <see cref="MissionPlacementRules.PlaceFlyer"/>
 /// or <see cref="MissionPlacementRules.PlaceStructure"/> with its own point and heading, and each pad is read from its
 /// group's <see cref="MissionPlacementRules.PadLead{TKey}"/>.</item>
-/// <item>The squad, by the user's choice (docs/herculan/handoff-editor-msn-scene.md#5-the-squad-in-the-scene): one object
+/// <item>The squad, by the user's choice (docs/herculan/handoff-editor-roster.md#the-players-squad): one object
 /// per herc group 0's member slots reference, each spread from group 0 by <see cref="MissionPlacementRules.PlaceSquadMember"/>
 /// at its slot's position, which is the entry the training squad build gives it (<c>ShellTrainingLaunch.BuildSquad</c>:
 /// slot 0 the player, slot <i>i</i> squadmate <i>i</i>). A slot past a gap, which no build reads, spreads by its position

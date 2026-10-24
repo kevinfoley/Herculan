@@ -1,23 +1,22 @@
 # Handoff — the HERCULAN mission editor
 
-The editor, `Herculan.Engine.Editor`, run on its own by `Herculan.Engine.Host.Editor` and from the game's Editor menu item, opens a mission as its `.MSN` and `.ENG`, shows its scene, the Mission panel's lists and every Properties view from the `.MSN`, checks the `script.dat` generated from it for the Problems list, edits it, and saves it into the install, where the game loads it in place of the archive's.
+The editor, `Herculan.Engine.Editor`, run on its own by `Herculan.Engine.Host.Editor` and from the game's Editor menu item, opens a mission as its `.MSN` and `.ENG`, shows its scene, the Mission panel's lists and every Properties view from the `.MSN`, every record included, checks the `.MSN` for the Problems list, edits it, and saves it into the install, where the game loads it in place of the archive's. It generates a `script.dat` only to open the mission's world and for File > Export.
 
 | Doc | Covers |
 |---|---|
-| [handoff-editor-document.md](handoff-editor-document.md) | how the `.MSN` is held, which record each edit writes, the edit tools, regeneration and rebuild, saving and export |
+| [handoff-editor-document.md](handoff-editor-document.md) | how the `.MSN` is held, its layout, which record each edit writes, the edit tools, the generation and the rebuild after an edit, saving and export |
 | [handoff-editor-viewing.md](handoff-editor-viewing.md) | opening, New mission, theater and time of day, selection, camera, picking, overlays, groups, waiting groups, the mission check |
 | [handoff-editor-placement.md](handoff-editor-placement.md) | moving objects, waypoints, groups and area corners; routes; trigger areas |
 | [handoff-editor-roster.md](handoff-editor-roster.md) | adding hercs, flyers, ground vehicles and structures; type and fit; sides; deleting; the player's squad |
 | [handoff-editor-mission-logic.md](handoff-editor-mission-logic.md) | orders, wiring, campaign variable writes, triggers, countdowns, objectives, the mission's text |
 | [handoff-editor-conditions.md](handoff-editor-conditions.md) | what the editor shows, conditions, variant tables, Present when |
 | [handoff-editor-ux-plan.md](handoff-editor-ux-plan.md) | the planned UI redesign, by phase; its evidence is [handoff-editor-ux-review.md](handoff-editor-ux-review.md) |
-| [handoff-editor-msn-scene.md](handoff-editor-msn-scene.md) | the planned rewrite that shows and selects the `.MSN` directly, every record included, in place of the generated `script.dat` |
 
 ## What every edit does
 
 These hold for every edit in the docs above unless the doc says otherwise:
 
-- An edit is one step of the undo history (Edit > Undo and Redo, Ctrl+Z and Ctrl+Y), runs once the frame's panels are drawn, and syncs the editor's state with the document, a move and a side change included ([Rebuilding after an edit](handoff-editor-document.md#rebuilding-after-an-edit)). A theater or time-of-day change first dresses the scene in the new world.
+- An edit is one step of the undo history (Edit > Undo and Redo, Ctrl+Z and Ctrl+Y), runs once the frame's panels are drawn, and syncs the editor's state with the document, a move and a side change included ([Rebuilding after an edit](handoff-editor-document.md#rebuilding-after-an-edit)). It writes nothing to disk and generates no `script.dat` ([The generation](handoff-editor-document.md#the-generation)). A theater or time-of-day change first dresses the scene in the new world.
 - A typed field applies when it loses the focus.
 - The Delete key deletes the selection, as the view's Delete does, unless a text field has the keyboard or a drag is under way.
 - A delete or removal is refused while another record references what it removes, in any record and whatever its condition; the view lists each referrer as a link, one per line.

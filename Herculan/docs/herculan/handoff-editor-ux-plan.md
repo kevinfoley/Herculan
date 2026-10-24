@@ -30,7 +30,7 @@ What a designer must be able to do in the editor without reading any doc. Every 
 
 ## Phases
 
-Phases 2 to 6 are carried out by [handoff-editor-msn-scene.md](handoff-editor-msn-scene.md#steps)'s step 6, which rewrites each view once, on the layout and in its new design, one view or one phase's views per commit, each tested by the user in the app before it is committed.
+Each view of phases 2 to 6 reads the `.MSN`'s layout ([Selection and panels](handoff-editor-viewing.md#selection-and-panels)) and is laid out as its phase describes; one view or one phase's views go in per commit, each tested by the user in the app before it is committed.
 
 ### 1. No rolling (done)
 
