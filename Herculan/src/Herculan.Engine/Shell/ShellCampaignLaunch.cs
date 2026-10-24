@@ -73,10 +73,14 @@ public static class ShellCampaignLaunch {
 		header[7] = skill;
 		header[0] = stages[stage].CampaignIndex;
 
-		Directory.CreateDirectory(directory);
 		string scriptPath = CaseInsensitivePath.Combine(directory, MissionLoader.ScriptFileName);
-		ShellWorkingFiles.WriteMissionFile(scriptPath, loaded.WriteScriptDat());
-		ShellWorkingFiles.WriteMissionFile(CaseInsensitivePath.Combine(directory, MissionLoader.TextFileName), loaded.WriteMissionText());
+		if (!ShellWorkingFiles.TryWrite(() => {
+				Directory.CreateDirectory(directory);
+				ShellWorkingFiles.WriteMissionFile(scriptPath, loaded.WriteScriptDat());
+				ShellWorkingFiles.WriteMissionFile(CaseInsensitivePath.Combine(directory, MissionLoader.TextFileName), loaded.WriteMissionText());
+			}, out failure)) {
+			return null;
+		}
 
 		// The original asserts row 4 is there before it copies slot 0 into the career block.
 		var briefing = loaded.TextPackage is { } package ? ShellCareerBriefing.From(package) : null;
@@ -251,9 +255,10 @@ public static class ShellCampaignLaunch {
 
 		var flagBytes = new byte[flags.Length * 2];
 		Buffer.BlockCopy(flags, 0, flagBytes, 0, flagBytes.Length);
-		File.WriteAllBytes(CaseInsensitivePath.Combine(directory, ShellMissionLaunch.MissionVarFileName), flagBytes);
-		File.WriteAllBytes(CaseInsensitivePath.Combine(directory, MissionLoader.PlayerFileName), ShellMissionLaunch.ExportPlayerMec(hangar));
-		return loaded;
+		return ShellWorkingFiles.TryWrite(() => {
+			File.WriteAllBytes(CaseInsensitivePath.Combine(directory, ShellMissionLaunch.MissionVarFileName), flagBytes);
+			File.WriteAllBytes(CaseInsensitivePath.Combine(directory, MissionLoader.PlayerFileName), ShellMissionLaunch.ExportPlayerMec(hangar));
+		}, out failure) ? loaded : null;
 	}
 
 	/// <summary>Where the career block keeps each text array's count, the array following it (docs/retail/formats/save-games.md#career-block--152-bytes).</summary>

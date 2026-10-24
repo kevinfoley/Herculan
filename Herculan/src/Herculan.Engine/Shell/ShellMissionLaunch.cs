@@ -156,29 +156,32 @@ public static class ShellMissionLaunch {
 	/// <c>script.dat</c> and <c>mission.str</c> (<see cref="ShellWorkingFiles"/>), which a slot's load or the
 	/// career's mission load put in <c>data\</c>; <c>mission.var</c>, the 2000-byte campaign flag array
 	/// <c>MissionVar_Write</c> (<c>0040e9cb</c>) writes; and <c>player.mec</c> from the hangar as the
-	/// screens have left it. Returns the path of the <c>script.dat</c> written, or null when there is no
-	/// mission file to copy.
+	/// screens have left it. Returns the path of the <c>script.dat</c> written, or null with the reason when
+	/// there is no mission file to copy or the handoff cannot be written.
 	/// </summary>
-	public static string? WriteHandoff(string directory, ShellWorkingFiles working, PlayerSave save, ShellHangar hangar) {
+	public static string? WriteHandoff(string directory, ShellWorkingFiles working, PlayerSave save, ShellHangar hangar,
+			out string? failure) {
 		if (working.Script is not { } script || !File.Exists(script)) {
+			failure = working.Script is { } missing ? $"{missing} is missing." : "There is no mission to launch.";
 			return null;
 		}
 
-		Directory.CreateDirectory(directory);
 		string scriptPath = CaseInsensitivePath.Combine(directory, MissionLoader.ScriptFileName);
-		CopyUnlessSame(script, scriptPath);
+		return ShellWorkingFiles.TryWrite(() => {
+			Directory.CreateDirectory(directory);
+			CopyUnlessSame(script, scriptPath);
 
-		string? text = working.Text;
-		string textPath = CaseInsensitivePath.Combine(directory, MissionLoader.TextFileName);
-		if (File.Exists(text)) {
-			CopyUnlessSame(text, textPath);
-		} else if (File.Exists(textPath)) {
-			File.Delete(textPath);
-		}
+			string? text = working.Text;
+			string textPath = CaseInsensitivePath.Combine(directory, MissionLoader.TextFileName);
+			if (File.Exists(text)) {
+				CopyUnlessSame(text, textPath);
+			} else if (File.Exists(textPath)) {
+				File.Delete(textPath);
+			}
 
-		WriteCampaignFlags(directory, save);
-		File.WriteAllBytes(CaseInsensitivePath.Combine(directory, MissionLoader.PlayerFileName), ExportPlayerMec(hangar));
-		return scriptPath;
+			WriteCampaignFlags(directory, save);
+			File.WriteAllBytes(CaseInsensitivePath.Combine(directory, MissionLoader.PlayerFileName), ExportPlayerMec(hangar));
+		}, out failure) ? scriptPath : null;
 	}
 
 	/// <summary>
@@ -200,7 +203,7 @@ public static class ShellMissionLaunch {
 
 	private static void CopyUnlessSame(string from, string to) {
 		if (!string.Equals(Path.GetFullPath(from), Path.GetFullPath(to), StringComparison.OrdinalIgnoreCase)) {
-			File.Copy(from, to, overwrite: true);
+			ShellSaveSlots.CopyFile(from, to);
 		}
 	}
 

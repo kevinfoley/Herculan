@@ -113,6 +113,13 @@ save.auto_name                 {0} {1} Mission {2}
 save.auto_save_name            AUTOSPEICHERUNG {0}
 crash.window_title            HERCULAN Engine — Fehler
 crash.message                 HERCULAN wurde wegen eines Fehlers beendet: {0} Die Details stehen in {1}.
+error.title                    Fehler
+error.window_title             HERCULAN Engine — Fehler
+error.new_career               Das neue Spiel konnte nicht gestartet werden.
+error.mission_load             Die Mission konnte nicht geladen werden.
+error.slot_load                Der Spielstand konnte nicht geladen werden.
+error.save                     Das Spiel konnte nicht gespeichert werden.
+error.debrief                  Die Ergebnisse der Mission konnten nicht gelesen werden.
 menu.debug                     Debug
 menu.tweaks                    Optimierungen
 menu.accessibility             Barrierefreiheit

@@ -113,6 +113,13 @@ save.auto_name                 {0} {1} Mission {2}
 save.auto_save_name            SAUVEGARDE AUTO {0}
 crash.window_title            HERCULAN Engine — Erreur
 crash.message                 HERCULAN s'est arrêté à cause d'une erreur : {0} Les détails se trouvent dans {1}.
+error.title                    Erreur
+error.window_title             HERCULAN Engine — Erreur
+error.new_career               La nouvelle partie n'a pas pu démarrer.
+error.mission_load             La mission n'a pas pu être chargée.
+error.slot_load                La partie sauvegardée n'a pas pu être chargée.
+error.save                     La partie n'a pas pu être sauvegardée.
+error.debrief                  Les résultats de la mission n'ont pas pu être lus.
 menu.debug                     Débogage
 menu.tweaks                    Ajustements
 menu.accessibility             Accessibilité

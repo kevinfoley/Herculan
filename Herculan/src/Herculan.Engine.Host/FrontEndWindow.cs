@@ -1,3 +1,4 @@
+using Herculan.Engine.Host.Localization;
 using Herculan.Engine.Host.Settings;
 using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
@@ -30,6 +31,7 @@ sealed class FrontEndWindow : IDisposable {
 	private readonly string _imguiFontPath;
 	private readonly string _imguiItalicFontPath;
 	private readonly string? _screenshotPath;
+	private readonly LocalizationTable _localization;
 	private readonly GamepadHostButtons _padButtons = new();
 	private readonly GamepadPointer _padPointer = new();
 	private IInputContext? _input;
@@ -57,6 +59,7 @@ sealed class FrontEndWindow : IDisposable {
 		_imguiFontPath = session.ImGuiFontPath;
 		_imguiItalicFontPath = session.ImGuiItalicFontPath;
 		_screenshotPath = screenshotPath;
+		_localization = session.Localization;
 		_window = new EngineWindow(window, title);
 		string dataDirectory = ShellWorkingFiles.DataDirectory(session.InstallRoot);
 		_padPointer.Settings = JoystickMapFile.LoadIn(dataDirectory).Mouse;
@@ -216,6 +219,22 @@ sealed class FrontEndWindow : IDisposable {
 	}
 
 	/// <summary>
+	/// Tells the player that <paramref name="message"/>, with <paramref name="detail"/> saying why: in the
+	/// <see cref="ErrorDialog"/> over the window while it is up, or in the operating system's own box
+	/// (<see cref="NativeAlert"/>) once the window has closed, as it has for the autosave at the loop's end. A
+	/// <c>--screenshot</c> capture, which has nobody to close either, only writes it to standard error.
+	/// </summary>
+	public void ShowError(string message, string detail) {
+		if (_screenshotPath != null) {
+			Console.Error.WriteLine($"{message} {detail}");
+		} else if (_imgui != null) {
+			_menuBar.Error.Show(message, detail);
+		} else {
+			NativeAlert.ShowError(_localization.GetStringOrKey("error.window_title"), $"{message}\n\n{detail}");
+		}
+	}
+
+	/// <summary>
 	/// The top of a frame: ImGui's, and a gamepad's Back, which raises the menu bar or backs out of it as [Shift+Esc]
 	/// does (<see cref="GamepadHostButtons"/>), and puts ImGui's navigation on the bar it leaves up. The front end has no
 	/// pause, so Start does nothing here.
@@ -236,7 +255,7 @@ sealed class FrontEndWindow : IDisposable {
 
 	/// <summary>
 	/// The menu bar and its windows over whatever the frame drew, never in a <c>--screenshot</c> capture; and the update
-	/// notice, once the automatic check has found a newer release and the welcome is down.
+	/// notice, once the automatic check has found a newer release and the welcome and any error notice are down.
 	/// </summary>
 	/// <param name="revealOnHover">
 	/// Whether the pointer at the window's top left raises the bar (<see cref="HostMenuBar.ShowOnHover"/>): the caller's
@@ -248,7 +267,7 @@ sealed class FrontEndWindow : IDisposable {
 		}
 
 		if (_screenshotPath == null) {
-			if (!_menuBar.Welcome.IsOpen && UpdateChecks.TakeNews() is { } news) {
+			if (!_menuBar.Welcome.IsOpen && !_menuBar.Error.IsOpen && UpdateChecks.TakeNews() is { } news) {
 				_menuBar.Update.Offer(news);
 			}
 

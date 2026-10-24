@@ -113,6 +113,13 @@ save.auto_name                 {0} {1} Mission {2}
 save.auto_save_name            AUTO SAVE {0}
 crash.window_title            HERCULAN Engine — Error
 crash.message                 HERCULAN stopped because of an error: {0} The details are in {1}.
+error.title                    Error
+error.window_title             HERCULAN Engine — Error
+error.new_career               The new game could not be started.
+error.mission_load             The mission could not be loaded.
+error.slot_load                The saved game could not be loaded.
+error.save                     The game could not be saved.
+error.debrief                  The mission's results could not be read.
 menu.debug                     Debug
 menu.tweaks                    Tweaks
 menu.accessibility             Accessibility

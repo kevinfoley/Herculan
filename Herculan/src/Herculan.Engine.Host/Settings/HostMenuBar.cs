@@ -14,7 +14,7 @@ namespace Herculan.Engine.Host.Settings;
 /// shell (<see cref="ShowOnHover"/>), HERCULAN's own and not retail's, and the
 /// panels it opens: Debug (a mission's only, and only under <c>--developer</c>), Settings, Controller, Keys, Tweaks, Accessibility and About; the
 /// Editor item, which leaves the shell for the mission editor and is greyed over a mission; and the
-/// first start's <see cref="WelcomeDialog"/> and the <see cref="UpdateDialog"/>, which the shell raises without the bar; and a
+/// first start's <see cref="WelcomeDialog"/>, the <see cref="UpdateDialog"/> and the <see cref="ErrorDialog"/>, which the shell raises without the bar; and a
 /// notice while the on-line manual opens (<see cref="OnlineManual.Opening"/>). Hidden until <see cref="Show"/>, and never
 /// drawn into a <c>--screenshot</c> capture. Plain [Esc] is retail's in a mission, where it pans to and from the
 /// Heads-Down Display, so which key reaches the bar is each host's to decide: over a mission
@@ -52,6 +52,7 @@ sealed class HostMenuBar : IEscapeMenu {
 		About = new AboutWindow(localization);
 		Welcome = new WelcomeDialog(localization, () => Tweaks.IsOpen = true);
 		Update = new UpdateDialog(localization);
+		Error = new ErrorDialog(localization);
 	}
 
 	public TweaksMenu Tweaks { get; }
@@ -70,12 +71,14 @@ sealed class HostMenuBar : IEscapeMenu {
 
 	public UpdateDialog Update { get; }
 
+	public ErrorDialog Error { get; }
+
 	/// <summary>Whether the bar is up.</summary>
 	public bool Visible { get; private set; }
 
-	/// <summary>Whether one of the bar's panels, or the welcome or the update notice, is up.</summary>
+	/// <summary>Whether one of the bar's panels, or the welcome, the update notice or the error notice, is up.</summary>
 	public bool PanelOpen => Tweaks.IsOpen || Settings.IsOpen || Controller.IsOpen || Keys.IsOpen || Accessibility.IsOpen || About.IsOpen
-		|| Welcome.IsOpen || Update.IsOpen || _debug?.IsOpen == true;
+		|| Welcome.IsOpen || Update.IsOpen || Error.IsOpen || _debug?.IsOpen == true;
 
 	/// <summary>Whether the bar or one of its panels is up.</summary>
 	public bool Up => Visible || PanelOpen;
@@ -114,7 +117,8 @@ sealed class HostMenuBar : IEscapeMenu {
 	/// <summary>
 	/// [Esc]'s step back: takes down whichever panel is up, else hides the bar. Returns false when neither
 	/// was up, leaving the key to the host. Tweaks and Accessibility go through their Cancel, so an edit made but not saved is
-	/// discarded rather than left applied but unpersisted. The welcome goes as its OK does, the update notice as its Close does.
+	/// discarded rather than left applied but unpersisted. The welcome and the error notice go as their OK does, the update notice
+	/// as its Close does.
 	/// </summary>
 	public bool BackOut() {
 		if (PanelOpen) {
@@ -134,6 +138,7 @@ sealed class HostMenuBar : IEscapeMenu {
 				Welcome.Dismiss();
 			}
 			Update.Dismiss();
+			Error.Dismiss();
 			Settings.Close();
 			Keys.IsOpen = false;
 			About.IsOpen = false;
@@ -229,6 +234,11 @@ sealed class HostMenuBar : IEscapeMenu {
 		About.Draw(_centring.Condition);
 		Welcome.Draw(_centring.Condition);
 		Update.Draw(_centring.Condition);
+		// One modal at a time: an error raised under the welcome or the update notice waits for it to go.
+		if (!Welcome.IsOpen && !Update.IsOpen) {
+			Error.Draw(_centring.Condition);
+		}
+
 		DrawManualNotice();
 		_highlightWasShowing = ImGui.GetIO().NavVisible;
 	}

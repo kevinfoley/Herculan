@@ -101,11 +101,14 @@ public static class MissionFileLaunch {
 
 		var flagBytes = new byte[flags.Length * 2];
 		Buffer.BlockCopy(flags, 0, flagBytes, 0, flagBytes.Length);
-		File.WriteAllBytes(CaseInsensitivePath.Combine(directory, ShellMissionLaunch.MissionVarFileName), flagBytes);
-
 		string handoffPlayer = CaseInsensitivePath.Combine(directory, MissionLoader.PlayerFileName);
-		if (!string.Equals(Path.GetFullPath(handoffPlayer), Path.GetFullPath(playerPath), StringComparison.OrdinalIgnoreCase)) {
-			File.WriteAllBytes(handoffPlayer, playerBytes);
+		if (!ShellWorkingFiles.TryWrite(() => {
+				File.WriteAllBytes(CaseInsensitivePath.Combine(directory, ShellMissionLaunch.MissionVarFileName), flagBytes);
+				if (!string.Equals(Path.GetFullPath(handoffPlayer), Path.GetFullPath(playerPath), StringComparison.OrdinalIgnoreCase)) {
+					File.WriteAllBytes(handoffPlayer, playerBytes);
+				}
+			}, out failure)) {
+			return null;
 		}
 
 		Console.WriteLine($"{campaign.MissionPath}: stage {stage} mission {mission}, loaded as a campaign mission at "

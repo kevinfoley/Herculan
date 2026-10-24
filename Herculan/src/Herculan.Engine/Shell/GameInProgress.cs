@@ -3,6 +3,24 @@ using Herculan.Engine.Content;
 
 namespace Herculan.Engine.Shell;
 
+/// <summary>The shell's step that failed, which the host names to the player above the reason (<see cref="GameInProgress.Failed"/>).</summary>
+public enum ShellFailure {
+	/// <summary>A new career, from <c>ACCEPT</c> on the registration screen or a training launch.</summary>
+	NewCareer,
+
+	/// <summary>A mission's load and handoff, for the campaign, training, <c>Rock &amp; Roll</c> or a replay.</summary>
+	MissionLoad,
+
+	/// <summary>A save slot's load, for <c>RESTORE</c> or <c>CONTINUE GAME</c>.</summary>
+	SlotLoad,
+
+	/// <summary>A save, named or the autosave.</summary>
+	Save,
+
+	/// <summary>The debrief of the mission the simulator came back from.</summary>
+	Debrief,
+}
+
 /// <summary>
 /// The game the shell's memory holds — the career, its hangar and its working files — with the campaign mode and
 /// the preferences array, and the saves that write the game out.
@@ -68,6 +86,16 @@ public sealed class GameInProgress {
 	/// <summary>The game's script.dat, mission.str and player.mec, which a save copies out beside it.</summary>
 	public ShellWorkingFiles WorkingFiles { get; set; }
 
+	/// <summary>
+	/// Raised with the step and the reason when a step of the shell's fails and leaves the player where they were or
+	/// on the main menu, for the host to tell them; the step has written the reason to the log already. The report is
+	/// this engine's own.
+	/// </summary>
+	public event Action<ShellFailure, string>? Failed;
+
+	/// <summary>Raises <see cref="Failed"/>.</summary>
+	public void ReportFailure(ShellFailure step, string reason) => Failed?.Invoke(step, reason);
+
 	/// <summary>The campaign stage, the career's own 1-5, which picks the mission tab's palettes and movies.</summary>
 	public int CampaignStage { get; private set; } = 1;
 
@@ -123,6 +151,7 @@ public sealed class GameInProgress {
 		int written = slot == CurrentGameSlot && training ? CurrentGameSlot + 1 : slot;
 		if (entry == null) {
 			Console.WriteLine($"Could not save slot {written}: {failure}");
+			ReportFailure(ShellFailure.Save, failure ?? string.Empty);
 			return null;
 		}
 
