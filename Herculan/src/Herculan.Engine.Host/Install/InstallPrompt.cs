@@ -16,8 +16,8 @@ namespace Herculan.Engine.Host.Install;
 /// combo, since a first start has no Settings menu to reach it from.
 /// </summary>
 static class InstallPrompt {
-	private const int WindowWidth = 640;
-	private const int WindowHeight = 260;
+	internal const int WindowWidth = 640;
+	internal const int WindowHeight = 260;
 
 	/// <summary>
 	/// The prompt's body: <c>install_prompt</c>'s strings, refusing any folder that is not an install.
@@ -71,17 +71,10 @@ static class InstallPrompt {
 			gl.ClearColor(0.1f, 0.1f, 0.1f, 1f);
 			gl.Clear(ClearBufferMask.ColorBufferBit);
 
-			var viewport = ImGui.GetMainViewport();
-			ImGui.SetNextWindowPos(viewport.WorkPos);
-			ImGui.SetNextWindowSize(viewport.WorkSize);
-			ImGui.Begin("##install", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoMove
-				| ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoBringToFrontOnFocus);
-			if (language.Draw()) {
+			var outcome = Draw(prompt, language, window.View.Native?.Win32?.Hwnd ?? 0, out bool languageChanged);
+			if (languageChanged) {
 				window.Title = Title();
 			}
-			ImGui.Separator();
-			var outcome = prompt.Draw(window.View.Native?.Win32?.Hwnd ?? 0, GameInstall.ArchiveFolderName);
-			ImGui.End();
 			install = outcome == PathPrompt.Outcome.Alternative;
 			imgui.Render();
 
@@ -98,5 +91,22 @@ static class InstallPrompt {
 
 		window.Run();
 		return (prompt.Chosen, install);
+	}
+
+	/// <summary>
+	/// The window's one frame of content, filling the viewport: the language combo over the prompt.
+	/// <paramref name="languageChanged"/> is whether the combo changed the locale this frame.
+	/// </summary>
+	internal static PathPrompt.Outcome Draw(PathPrompt prompt, InterfaceLanguageCombo language, nint owner, out bool languageChanged) {
+		var viewport = ImGui.GetMainViewport();
+		ImGui.SetNextWindowPos(viewport.WorkPos);
+		ImGui.SetNextWindowSize(viewport.WorkSize);
+		ImGui.Begin("##install", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoMove
+			| ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoBringToFrontOnFocus);
+		languageChanged = language.Draw();
+		ImGui.Separator();
+		var outcome = prompt.Draw(owner, GameInstall.ArchiveFolderName);
+		ImGui.End();
+		return outcome;
 	}
 }

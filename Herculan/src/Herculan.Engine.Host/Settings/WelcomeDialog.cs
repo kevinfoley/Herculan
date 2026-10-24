@@ -48,10 +48,15 @@ sealed class WelcomeDialog {
 	/// <summary>Raises the dialog, unless it has been dismissed before, on this run or an earlier one.</summary>
 	public void Offer() {
 		if (!_open && !File.Exists(ShownFile)) {
-			_open = true;
-			_popupRaised = false;
-			_checkForUpdates = UpdateChecks.Automatic;
+			Raise();
 		}
+	}
+
+	/// <summary>Raises the dialog whether or not it has been dismissed before.</summary>
+	internal void Raise() {
+		_open = true;
+		_popupRaised = false;
+		_checkForUpdates = UpdateChecks.Automatic;
 	}
 
 	/// <summary>Takes the dialog down as OK does.</summary>
