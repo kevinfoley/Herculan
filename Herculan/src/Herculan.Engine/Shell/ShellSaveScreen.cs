@@ -152,12 +152,52 @@ public sealed class ShellSaveScreen {
 	/// (<c>SaveScreen_BeginRename</c>, <c>004377d2</c>): the selected row's caret flags set and its string
 	/// rewritten as <c>"%2d. "</c>, the slot number with the name gone. Taking the pointer onto the row is
 	/// the host's, through <see cref="ShellPointer.Grab"/>.
+	///
+	/// <para>A <paramref name="name"/> is this engine's own: the row starts with it after the prefix
+	/// (<see cref="RowLabel"/>) rather than empty, for the player to accept or edit.</para>
 	/// </summary>
-	public void BeginRename() {
+	public void BeginRename(string? name = null, HudFont? font = null) {
 		_caretEnabled[_selected] = true;
 		_caretOn[_selected] = true;
-		_rowText[_selected] = $"{_selected + 1,2}. ";
+		_rowText[_selected] = RowLabel(_selected, name ?? string.Empty, font);
 		Renaming = true;
+	}
+
+	/// <summary>
+	/// A row's string for <paramref name="name"/>, as typing it into the row after a rename's <c>"%2d. "</c>
+	/// prefix leaves it: a character the row's set refuses is dropped, and the name stops at the first one
+	/// that would break the length or fit test, so the row shows all of what it keeps. This engine's own, for
+	/// names the player did not type.
+	/// </summary>
+	public string RowLabel(int row, string name, HudFont? font) {
+		string prefix = $"{row + 1,2}. ";
+		string text = prefix;
+		foreach (char c in name) {
+			if (!PermittedCharacters.Contains(c)) {
+				continue;
+			}
+
+			if (!Fits(row, text, c, font)) {
+				break;
+			}
+
+			text += c;
+		}
+
+		return prefix + text[prefix.Length..].TrimEnd();
+	}
+
+	/// <summary>
+	/// The name this engine gives a save of <paramref name="summary"/>'s game: <paramref name="format"/> of the
+	/// pilot's name, the sector and the mission number as the detail panel prints them (<c>{0}</c>, <c>{1}</c>,
+	/// <c>{2}</c>), with the gap an empty part leaves closed up. A stage outside the campaign's 1-5, such as a
+	/// training career's 0, has no sector word.
+	/// </summary>
+	public static string AutoName(ShellSaveSummary summary, ShellText? text, string format) {
+		string sector = summary.Sector is >= 1 and <= SectorCount ? text?.Text(FirstSectorWord + summary.Sector) ?? string.Empty
+			: string.Empty;
+		string name = string.Format(format, summary.PilotName.Trim(), sector.Trim(), summary.Mission + 1);
+		return string.Join(' ', name.Split(' ', StringSplitOptions.RemoveEmptyEntries));
 	}
 
 	/// <summary>
@@ -205,17 +245,19 @@ public sealed class ShellSaveScreen {
 	/// </summary>
 	private bool Type(int row, char c, HudFont? font) {
 		string text = _rowText[row];
-		if (!PermittedCharacters.Contains(c) || text.Length + 1 >= MaxLength) {
-			return false;
-		}
-
-		var rect = RowRect(row);
-		if ((font?.Width(c) ?? 0) + (font?.Measure(text) ?? 0) + CaretWidth >= rect.X1 - rect.X0) {
+		if (!PermittedCharacters.Contains(c) || !Fits(row, text, c, font)) {
 			return false;
 		}
 
 		_rowText[row] = text + c;
 		return true;
+	}
+
+	/// <summary><c>ESDialog_TypeChar</c>'s length and fit tests for <paramref name="c"/> going on the end of <paramref name="text"/>.</summary>
+	private bool Fits(int row, string text, char c, HudFont? font) {
+		var rect = RowRect(row);
+		return text.Length + 1 < MaxLength
+			&& (font?.Width(c) ?? 0) + (font?.Measure(text) ?? 0) + CaretWidth < rect.X1 - rect.X0;
 	}
 
 	/// <summary><c>ESDialog_Erase</c> (<c>0040be56</c>): the last character off, never into the first <see cref="KeptPrefix"/>.</summary>
@@ -566,6 +608,9 @@ public sealed class ShellSaveScreen {
 	private const int FirstSkillWord = 0x35;
 	private const int FirstRankWord = 0x39;
 	private const int FirstSectorWord = 0x76;
+
+	/// <summary>The campaign's five sectors, stages 1-5.</summary>
+	private const int SectorCount = 5;
 
 	/// <summary>The shell's kilograms-to-tons divisor, in the salvage figure's own <c>sprintf</c>.</summary>
 	private const int KilogramsPerTon = 1000;

@@ -664,7 +664,7 @@ public sealed class HddCommandScreen {
 	/// </summary>
 	private string PilotName(int slot, SimObject mate) =>
 		PilotNameOf?.Invoke(slot) is { Length: > 0 } pilot ? pilot
-			: mate is MechObject mech ? mech.Name.ToUpperInvariant() : $"WING {slot + 1}";
+			: mate is MechObject mech ? mech.TypeName.ToUpperInvariant() : $"WING {slot + 1}";
 
 	/// <summary>
 	/// <c>HddGauge_ConditionIndex</c>: the mean of the machine's structural readings, bucketed into

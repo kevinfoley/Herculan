@@ -84,6 +84,9 @@ public sealed class PlayerCockpitUpdate(CockpitDisplays displays, CockpitView vi
 
 		var squadComm = displays.SquadComm;
 		var hddCommand = displays.HddCommand;
+		var weaponRowStates = WeaponRowState.Build(pilotMech.Weapons,
+			cockpitArt.Gau.WeaponListTotal, cockpitArt.Strings, cockpitPowerUp, ports.CoarseTicks,
+			cockpitDropouts);
 		hudState = displays.Hud;
 		hudState = hudState with {
 			MissionTime = displays.Clock.Text,
@@ -101,9 +104,8 @@ public sealed class PlayerCockpitUpdate(CockpitDisplays displays, CockpitView vi
 			ShieldFront = shieldFront,
 			ShieldRear = shieldRear,
 			EnergyFraction = pilotMech.EnergyPoolFraction,
-			Weapons = WeaponRowState.Build(pilotMech.Weapons,
-				cockpitArt.Gau.WeaponListTotal, cockpitArt.Strings, cockpitPowerUp, ports.CoarseTicks,
-				cockpitDropouts),
+			Weapons = weaponRowStates,
+			WeaponPaintOrder = displays.WeaponRepaints.Update(weaponRowStates),
 			Dropout = cockpitDropouts.Snapshot,
 			ChargeBarsDraggable = TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.ChargeBarPowerLevel),
 			ChainGroup = pilotMech.Weapons.Group,

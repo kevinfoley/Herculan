@@ -488,7 +488,7 @@ public sealed class CanopyPanelPainter {
 		}
 
 		ConsoleGaugePainter.AddWeaponRows(gau, state, hud.WeaponBarColors, hud.LogicalColor(ConsoleGaugePainter.PodPlateColorId),
-			BlitDevice, DrawText,
+			BlitDevice, DrawText, DrawTextCentered,
 			(x0, y0, x1, y1, color) => _overlay.AddFilledRect(Dx(x0), Dy(y0), Dx(x1), Dy(y1), color));
 		ConsoleGaugePainter.AddShieldReadouts(gau, state, hud.GaugeColors?.Remainder, DrawTextCentered);
 		ConsoleGaugePainter.AddConsoleButtons(gau, hud.Strings, state, BlitDevice, DrawTextCentered);

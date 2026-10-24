@@ -22,7 +22,11 @@ sealed class CampaignScreens {
 	private readonly ShellScreen _screen;
 	private readonly ShellOutcome _outcome;
 	private readonly FrontEndWindow _window;
+	private readonly SaveNames _names;
 	private readonly Action _repaint;
+
+	// Set by a debrief that goes on to the next mission, so that mission's load writes the auto-save once it has loaded.
+	private bool _debriefLoad;
 
 	// Shell_MissionPickerEnabled (00482284), -@: whether the mission-name dialog is left up for a click rather than
 	// clicked at once.
@@ -36,7 +40,7 @@ sealed class CampaignScreens {
 	public CampaignScreens(string installRoot, GameContent content, GameInProgress game, ShellSaveScreen saveScreen, HangarTabs hangar,
 			MissionTabScreens mission, TabNavigation navigation, StartupScreen startup, ShellMovies movies, ShellCanvas canvas,
 			ShellDialogs dialogs, ShellScreen screen, ShellOutcome outcome, FrontEndWindow window, WidgetEvents widgets,
-			bool missionPicker, Action repaint) {
+			SaveNames names, bool missionPicker, Action repaint) {
 		_game = game;
 		_campaign = new ShellCampaignLoop(installRoot, content, game, saveScreen);
 		_hangar = hangar;
@@ -49,6 +53,7 @@ sealed class CampaignScreens {
 		_screen = screen;
 		_outcome = outcome;
 		_window = window;
+		_names = names;
 		_missionPicker = missionPicker;
 		_repaint = repaint;
 
@@ -111,6 +116,7 @@ sealed class CampaignScreens {
 				_mission.ShowDebrief(result.Debrief is { } text ? ShellMissionTexts.AssembleDebrief(text) : null,
 					result.Debrief?.Movie);
 				if (_game.LoadedGame != null) {
+					_debriefLoad = true;
 					StartMissionLoad(_startup.Begin);
 				}
 
@@ -169,13 +175,22 @@ sealed class CampaignScreens {
 	/// Career_LoadCurrentMission (0044d4cc) for a null <paramref name="missionPath"/>, MissionNameDialog_OnLoad (0044d5bd)
 	/// for a typed one. A campaign's puts the frame up on the mission tab in the view MissionScreenView holds; a training
 	/// one's launches, closing the shell on exit code 2. Returns whether it loaded.
+	///
+	/// <para>The load that follows a debrief writes the auto-save once the mission is in (<see cref="SaveNames.AutoSaveAfterDebrief"/>),
+	/// so the save holds what SAVE would write with the debrief up.</para>
 	/// </summary>
 	private bool LoadCurrentMission(string? missionPath) {
+		bool debriefLoad = _debriefLoad;
+		_debriefLoad = false;
 		if (_game.Mode == ShellCampaignMode.Campaign) {
 			if (!_campaign.LoadCareerMission(missionPath)) {
 				_mission.DropDebrief();
 				_loadFailed();
 				return false;
+			}
+
+			if (debriefLoad) {
+				_names.AutoSaveAfterDebrief();
 			}
 
 			_screen.ReturnToFrame(_game.Mode);

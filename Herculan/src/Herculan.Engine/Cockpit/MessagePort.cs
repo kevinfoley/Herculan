@@ -69,7 +69,8 @@ public readonly record struct MessageTicker(string? Text, long ScrollTicks, bool
 public sealed class MessagePort {
 	/// <summary>
 	/// Messages the queue holds — the vector <c>MessagePort_QueueInit</c> (<c>00434e50</c>) builds, ten records of <c>0x31</c>
-	/// bytes. Posting into a full queue drops the last, which is the lowest-priority one.
+	/// bytes. Posting into a full queue drops the last, which is the lowest-priority one (see
+	/// <see cref="Post"/> for how that differs from retail).
 	/// </summary>
 	public const int Capacity = 10;
 
@@ -172,6 +173,12 @@ public sealed class MessagePort {
 	/// <see cref="ISoundSink.Say"/>'s destination. Queued by priority (attribute byte 2, zero
 	/// throughout the retail file), and a post into a full queue drops the lowest-priority entry to
 	/// make room.
+	///
+	/// <para>This queue departs from <c>MessagePort_Enqueue</c> (<c>00434e8c</c>) on purpose: retail's
+	/// post into a full queue frees the wrong record, and a post that goes ahead of a queued message
+	/// loses the last one. This one keeps every message it should. See
+	/// docs/retail/simulation/cockpit-message-port.md, "The queue", and KNOWN_ISSUES.md.
+	/// <see cref="SquadMessagePort.Post"/> queues the same way.</para>
 	/// </summary>
 	/// <param name="messageId">The flat <c>SYSTEM.STR</c> id — see <see cref="SystemMessages"/>.</param>
 	/// <param name="subject">

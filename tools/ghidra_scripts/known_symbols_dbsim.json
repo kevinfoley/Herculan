@@ -12764,13 +12764,13 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_Enqueue",
-      "description": "(queue, record, entry): with the count +0x21c at 10 first MessagePort_QueueDropLast (004351c0). Takes the first record whose in-use byte (+0x212 + i) is clear, sets it, and fills the 0x31-byte record queue + i * 0x31: record's five dwords +2..+0x15 at +2, entry's text pointer (entry +0) at +0x18, and from the attribute bytes at entry +5: byte 0 as the int16 id +0x00, byte 1 (filename digit) at +0x16, byte 2 (priority) at +0x17, bytes 3 and 4 (minTime, maxTime) times 0x3c coarse ticks at +0x1c and +0x20, bytes 5 and 6 (minWait, maxWait) times 0x3c plus Time_GetCoarseTicks at +0x24 and +0x28, and bytes 7-11 at +0x2c..+0x30: byte 7 is the clip number, and bytes 8-11 lie past the eight a SYSTEM.STR entry supplies. Inserts i in the order list +0x1ea before the first queued record whose priority is strictly greater, or at the end, so low sorts first, and adds 1 to the count.",
+      "description": "(queue, record, entry): with the count +0x21c at 10 first MessagePort_QueueDropLast (004351c0). Takes the first record whose in-use byte (+0x212 + i) is clear, sets it, and fills the 0x31-byte record queue + i * 0x31: record's five dwords +2..+0x15 at +2, entry's text pointer (entry +0) at +0x18, and from the attribute bytes at entry +5: byte 0 as the int16 id +0x00, byte 1 (filename digit) at +0x16, byte 2 (priority) at +0x17, bytes 3 and 4 (minTime, maxTime) times 0x3c coarse ticks at +0x1c and +0x20, bytes 5 and 6 (minWait, maxWait) times 0x3c plus Time_GetCoarseTicks at +0x24 and +0x28, and bytes 7-11 at +0x2c..+0x30: byte 7 is the clip number, and bytes 8-11 lie past the eight a SYSTEM.STR entry supplies. With every record in use it queues nothing. Puts i in the order list +0x1ea at k, the first queued record whose priority is strictly greater, or at the end, so low sorts first, moving entries down one from position count - 2 to k, so the last queued entry is overwritten and the entry at the new count - 1 keeps the index it held; then adds 1 to the count.",
       "source": "docs/retail/simulation/audio.md",
       "verified": {
         "bytes": "00434e8c+487",
         "sha1": "2e7608c61f4f",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -12824,13 +12824,13 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_QueueDropLast",
-      "description": "(queue): clears the in-use byte at +0x212 + the record index held in the tenth order slot (+0x20e) and takes 1 from the count +0x21c: drops the last, lowest-priority message. MessagePort_Enqueue (00434e8c) runs it on a full queue (count 10).",
+      "description": "(queue): clears the in-use byte at +0x212 + order[order[9]], the record named by the order entry (+0x1ea) whose position is the tenth order entry's (+0x20e) value, not of the tenth entry's own record, and takes 1 from the count +0x21c. MessagePort_Enqueue (00434e8c) runs it on a full queue (count 10).",
       "source": "DBSIM decompile at 004351c0",
       "verified": {
         "bytes": "004351c0+36",
         "sha1": "f64337720341",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -13058,13 +13058,13 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_StepToVariant",
-      "description": "(port, table, record, n): for n > 0, steps StrTable_NextString (004539cc) n times from the record's string and returns a record built in the static at 004d0d6a -- the string at +0, 0 at +4, StrTable_GetAttributes (00453a08)(table, string) at +5; for n = 0 returns record unchanged. MessagePort_PickVariant and PilotMessagePort_Post pass it the rolled variant.",
+      "description": "(port, table, record, n): for n > 0, calls StrTable_NextString (004539cc)(table, the record's string) n times, each with the record's own string, so any n gives the string after it, and returns a record built in the static at 004d0d6a -- the string at +0, 0 at +4, StrTable_GetAttributes (00453a08)(table, string) at +5; for n = 0 returns record unchanged. MessagePort_PickVariant and PilotMessagePort_Post pass it the rolled variant.",
       "source": "DBSIM decompile at 00435a74",
       "verified": {
         "bytes": "00435a74+81",
         "sha1": "bf69e06b9e46",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -15964,8 +15964,14 @@
       "type": "function",
       "confidence": "high",
       "name": "PodGauge_Ctor",
-      "description": "The weapon-row gauge class for equipment pods (vtable 0049c8d0), built via CockpitView_CreatePodGauge. Has no state box and no value field: its name label spans x0+11..x0+53 of the .GAU hardpoint rect, and its 11-char name buffer is seeded with a literal space, then the mount name, then STRINGS0.STR group 3 (' POD') appended into whatever room is left -- 'SHIELD' becomes ' SHIELD POD'.",
-      "source": "docs/retail/simulation/weapon-mounts.md"
+      "description": "The weapon-row gauge class for equipment pods (vtable 0049c8d0), built via CockpitView_CreatePodGauge. Builds its click target as the plain WeaponSelectGadget (WeaponSelectGadget_Ctor), not the chained class, so it has no plate, no state box and no value field: its name label spans x0+11..x0+53 of the .GAU hardpoint rect, left-aligned (right-aligned when the slot-mask bit mirrors it), and its 11-char name buffer is seeded with a literal space, then the mount name, then STRINGS0.STR group 3 (' POD') appended into whatever room is left -- 'SHIELD' becomes ' SHIELD POD'.",
+      "source": "docs/retail/simulation/weapon-mounts.md",
+      "verified": {
+        "bytes": "00441524+501",
+        "sha1": "867c72ab06e6",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044171c",
@@ -15973,9 +15979,15 @@
       "type": "function",
       "confidence": "high",
       "name": "PodGauge_Paint",
-      "description": "PodGauge vtable +4, shared by all three pod gauge classes. Picks the name label's font and ink from the two state bytes: the destroyed byte at +0xc3 wins and prints the offline text across the widened label while hiding the row's select gadget (state 2), and failing that the button byte at +0xc2 selects the gray font 0049b0d8 with ink 0x2e when off and the dark font 0049b0dc with HudColorTable id 12 when on. That re-fonting is the only feedback a pod row gives, since it has no state box.",
+      "description": "PodGauge vtable +4, shared by all three pod gauge classes. While armed (+0x8c) it first runs the select gadget's (+0x18) paint slot, which for this plain class is WeaponSelectGadget_PaintUnderlay -- so a pod row has no PWEAPONS plate. Then, unless dark or mid-wipe and when the name label (+0xca) is on screen, picks the label's font and ink from the two state bytes: the destroyed byte at +0xc3 wins and prints the offline text centred across the label from x0+11 to the gauge's edge, and sets the select gadget's state +0x1b to 2 (after that gadget has painted), and failing that the button byte at +0xc2 selects the gray font 0049b0d8 with ink 0x2e when off and the dark font 0049b0dc with HudColorTable id 12 when on. That re-fonting is the only feedback a pod row gives, since it has no state box.",
       "source": "docs/retail/simulation/cockpit-hud-widgets.md",
-      "signature": "void __cdecl PodGauge_Paint(int gauge)"
+      "signature": "void __cdecl PodGauge_Paint(int gauge)",
+      "verified": {
+        "bytes": "0044171c+308",
+        "sha1": "0114390ceb1b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00441850",
@@ -16216,13 +16228,13 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponSelectGadget_Ctor",
-      "description": "Constructor for WeaponSelectGadget, the weapon-row leaf without chain membership: Widget_CtorRect on the .GAU rect, the PanelSelectGadget then WeaponSelectGadget vtables at +0x17 with their PanelGadget mixins at +0x20, param_3 at +0x24, the slot at +0x28, and +0x1b and +0x1d zeroed. Builds the slot-number Label at +0x40 in font DAT_0049b0d4, its rect 2 to 5 device pixels in from the gadget's left edge, or from its right edge when param_5 is set, and 0 to 5 down. Writes the slot's digit, (slot + 1) % 10 + '0', to +0x44 and 0 to +0x46, so row 10 prints 0. Callers found by es2_xref: PodGauge_Ctor, and ChainedWeaponSelectGadget_Ctor as its base constructor. Class name from the descriptor record at 00443283.",
+      "description": "Constructor for WeaponSelectGadget, the weapon-row leaf without chain membership: Widget_CtorRect on the .GAU rect, the PanelSelectGadget then WeaponSelectGadget vtables at +0x17 with their PanelGadget mixins at +0x20, param_3 at +0x24, the slot at +0x28, and +0x1b and +0x1d zeroed. Builds the slot-number Label at +0x40 in font DAT_0049b0d4, its rect 2 to 5 GAU units (each shifted by VideoMode_XCoordShift) in from the gadget's left edge, or from its right edge when param_5 is set, and 0 to 5 down, centred (Label_SetRect flag 2). Writes the slot's digit, (slot + 1) % 10 + '0', to +0x44 and 0 to +0x46, so row 10 prints 0. Callers found by es2_xref: PodGauge_Ctor, and ChainedWeaponSelectGadget_Ctor as its base constructor. Class name from the descriptor record at 00443283.",
       "source": "docs/retail/simulation/cockpit-input.md",
       "verified": {
         "bytes": "004421dc+438",
         "sha1": "22b4d7086814",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -16279,8 +16291,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponSelectGadget_Paint",
-      "description": "Paints one weapon row: the row plate from PWEAPONS frame 0 (selected) or 1 (not) at the .GAU rect minus one device pixel on both axes, the hardpoint state box from PWEAPONS frames 4/5/6 by state, the weapon name from the gauge's own 12-char buffer (+0xb1), and the round count. Text colour is the font: ColorSchemePanels[10] WHITE / [11] GRAY for the name, [13] GREEN / [11] GRAY for the count; the label's field 0x1d is the background colour it paints first (0x2e here).",
-      "source": "cockpit rendering RE session"
+      "description": "ChainedWeaponSelectGadgetVtable +0x00: paints one energy or ammunition row, when CockpitView_RectCornerVisible passes the gadget and the owning gauge (+0x4) is armed (+0x8c). Unless the gauge is dark (+0x76) or its wipe sequence (+0x6c) runs: WeaponSelectGadget_PaintUnderlay; the name label (+0x2c) from the gauge's 12-char buffer (+0xb1) in ColorSchemePanels[10] when the selected byte +0xd6 is set and [11] otherwise, or, with the destroyed byte +0xd3 set, the OFFLINE text (DAT_004d13c8) in [11], centred in the label widened to the gauge's own edge; the slot number (+0x40) again in [13] when selected and [11] otherwise; then the state box at +0x46 -- PWEAPONS frame 6 destroyed, frame 4 ready (+0xd8) or 5 not when selected or in the group (+0xd7), else a fill of palette 0x2e. Always, last: PWEAPONS frame 0 selected / 1 not at the gadget's rect less 1 << VideoMode_XCoordShift on both axes, the row plate's bezel.",
+      "source": "DBSIM decompile at 004426c0; docs/retail/simulation/cockpit-hud-widgets.md",
+      "verified": {
+        "bytes": "004426c0+529",
+        "sha1": "0b3971944827",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004428d4",
@@ -16289,7 +16307,13 @@
       "confidence": "high",
       "name": "ChainedWeaponSelectGadget_FlushDeferredPaint",
       "description": "ChainedWeaponSelectGadget's FlushDeferredPaint slot +0xc (vtable 0049c7dc), also reached by the jump at 004433ea. Counter +0x1f at 1: Widget_DrawToCockpit(0) on the gadget and on its second rect at +0x56; at 2: WeaponSelectGadget_PaintUnderlay and the Paint slot. Either way it decrements the counter.",
-      "source": "DBSIM decompile at 004428d4; es2_xref.py"
+      "source": "DBSIM decompile at 004428d4; es2_xref.py",
+      "verified": {
+        "bytes": "004428d4+73",
+        "sha1": "9e73c94a7388",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00442920",
@@ -20669,7 +20693,13 @@
       "confidence": "high",
       "name": "Widget_InvalidateDeferred",
       "description": "The base Invalidate at leaf-widget vtable slot +4, which Widget_Repaint calls. Its whole body is this->[0x1f] = 2: it schedules a repaint rather than performing one. Slot +0xc, walked once per frame, is what acts on the counter.",
-      "source": "docs/retail/simulation/cockpit-input.md"
+      "source": "docs/retail/simulation/cockpit-input.md",
+      "verified": {
+        "bytes": "00455524+12",
+        "sha1": "4be0f3faf56f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00455530",
@@ -24450,7 +24480,13 @@
       "confidence": "high",
       "name": "Help_Show",
       "description": "WinHelpA(mainWindow, path, HELP_CONTENTS, 0), after Video_ToggleFullscreen drops the game back to a window when 004d25e2 says it is fullscreen.",
-      "source": "docs/retail/simulation/cockpit-input.md"
+      "source": "docs/retail/simulation/cockpit-input.md",
+      "verified": {
+        "bytes": "004668c0+39",
+        "sha1": "810223186a6c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00466955",

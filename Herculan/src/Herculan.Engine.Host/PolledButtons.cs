@@ -23,13 +23,16 @@ sealed class PolledButtons {
 	/// <summary>Another control held as the left button, such as a gamepad's trigger (<see cref="Platform.GamepadPointer"/>).</summary>
 	public Func<bool>? AlsoLeft { get; set; }
 
+	/// <summary>Another control held as the right button, such as a gamepad's other trigger (<see cref="Platform.GamepadPointer"/>).</summary>
+	public Func<bool>? AlsoRight { get; set; }
+
 	/// <summary>Another control held as a skip key, such as a gamepad's buttons (<see cref="Platform.GamepadPointer"/>).</summary>
 	public Func<bool>? AlsoSkip { get; set; }
 
 	/// <summary>Takes the buttons' state without delivering it, so an edge made meanwhile is spent.</summary>
 	public void SpendButtons(IMouse mouse) {
 		_leftHeld = LeftHeld(mouse);
-		_rightHeld = mouse.IsButtonPressed(MouseButton.Right);
+		_rightHeld = RightHeld(mouse);
 		_alsoSkipHeld = AlsoSkipDown();
 	}
 
@@ -42,7 +45,7 @@ sealed class PolledButtons {
 	/// <summary>Whether a button or a skip key has gone down since the last update. Every state is taken either way.</summary>
 	public bool SkipPressed(IMouse? mouse, IKeyboard? keyboard) {
 		bool left = LeftHeld(mouse);
-		bool right = mouse?.IsButtonPressed(MouseButton.Right) == true;
+		bool right = RightHeld(mouse);
 		bool key = SkipKeyDown(keyboard);
 		bool also = AlsoSkipDown();
 		bool pressed = (left && !_leftHeld) || (right && !_rightHeld) || (key && !_skipKeyHeld) || (also && !_alsoSkipHeld);
@@ -53,10 +56,21 @@ sealed class PolledButtons {
 		return pressed;
 	}
 
+	/// <summary>
+	/// Whether the left button's last press <see cref="Deliver"/> delivered came from <see cref="AlsoLeft"/> alone, the
+	/// mouse's own button being up: a click made with a gamepad.
+	/// </summary>
+	public bool LeftPressedByAlso { get; private set; }
+
 	/// <summary>Each button that has changed state since the last update, left first, handed to <paramref name="changed"/> as the press or release it is.</summary>
 	public void Deliver(IMouse mouse, Action<MouseButton, bool> changed) {
-		Edge(LeftHeld(mouse), ref _leftHeld, MouseButton.Left, changed);
-		Edge(mouse.IsButtonPressed(MouseButton.Right), ref _rightHeld, MouseButton.Right, changed);
+		bool left = LeftHeld(mouse);
+		if (left && !_leftHeld) {
+			LeftPressedByAlso = !mouse.IsButtonPressed(MouseButton.Left);
+		}
+
+		Edge(left, ref _leftHeld, MouseButton.Left, changed);
+		Edge(RightHeld(mouse), ref _rightHeld, MouseButton.Right, changed);
 
 		// Not a button the widgets take, but tracked, so one held down before a movie starts does not skip it.
 		_alsoSkipHeld = AlsoSkipDown();
@@ -72,6 +86,8 @@ sealed class PolledButtons {
 	}
 
 	private bool LeftHeld(IMouse? mouse) => mouse?.IsButtonPressed(MouseButton.Left) == true || AlsoLeft?.Invoke() == true;
+
+	private bool RightHeld(IMouse? mouse) => mouse?.IsButtonPressed(MouseButton.Right) == true || AlsoRight?.Invoke() == true;
 
 	private bool AlsoSkipDown() => AlsoSkip?.Invoke() == true;
 

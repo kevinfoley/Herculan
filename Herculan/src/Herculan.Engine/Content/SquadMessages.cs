@@ -15,9 +15,9 @@ namespace Herculan.Engine.Content;
 /// <para><b>The id is the key, not the position.</b> <c>SystemMessages_Index</c> (<c>00435970</c>)
 /// scatters the strings into a table at <c>base + attr[0] * 9</c> and counts how many land in each
 /// slot, so entries sharing an id become variants of one message and the post rolls between them.
-/// Unlike <c>SYSTEM.STR</c>, the pilot files really do use this: ids 2, 3, 21, 30 and 31 have two to
-/// four recordings each, which is why the same squadmate does not answer a repeated order in the same
-/// words.</para>
+/// Unlike <c>SYSTEM.STR</c>, the pilot files really do use this, for ids 2, 30 and 31
+/// (docs/retail/simulation/cockpit-messages.md, "Its message sets"); <see cref="Pick"/> says which of
+/// their recordings retail reaches.</para>
 /// </summary>
 public sealed class SquadMessages {
 	/// <summary>Highest message id the files use, and the largest the portrait scripts are numbered to.</summary>
@@ -56,16 +56,28 @@ public sealed class SquadMessages {
 	/// (<c>00436a3c</c>) do, or null when the file has no such id. Both take the full sixteen bits
 	/// unsigned, <c>(next &amp; 0xffff) % count</c>, rather than <see cref="Numerics.SimRandom.NextBelow"/>'s
 	/// fifteen, and draw only when there is more than one variant.
+	///
+	/// <para>A roll of 0 is the id's first entry and any other roll the entry after it in file order,
+	/// whatever its id, because <c>MessagePort_StepToVariant</c> (<c>00435a74</c>) steps from the first
+	/// entry on every pass (docs/retail/simulation/cockpit-message-port.md, "Posting"). So an id's
+	/// third recording is never picked. <paramref name="everyVariant"/> is this engine's alternative,
+	/// the <see cref="Settings.TweakSettingDefinitions.EverySquadmateReply"/> tweak: the roll picks
+	/// that variant, so each is equally likely. The draw is the same either way.</para>
 	/// </summary>
-	public Entry? Pick(int id, Numerics.SimRandom? random) {
+	public Entry? Pick(int id, Numerics.SimRandom? random, bool everyVariant = false) {
 		var entries = Variants(id);
 		if (entries.Count == 0) {
 			return null;
 		}
 
-		return entries.Count == 1 || random == null
-			? entries[0]
-			: entries[random.NextMasked(0xffff) % entries.Count];
+		if (entries.Count == 1 || random == null) {
+			return entries[0];
+		}
+
+		int roll = random.NextMasked(0xffff) % entries.Count;
+		return roll == 0 ? entries[0]
+			: everyVariant ? entries[roll]
+			: _ordered[_firstIndex[id] + 1];
 	}
 
 	/// <summary>

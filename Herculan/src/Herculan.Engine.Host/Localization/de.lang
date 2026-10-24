@@ -19,6 +19,8 @@ tweak.critical_damage_message.display_name     Meldung „Damage Level Critical�
 tweak.critical_damage_message.description      Spielt „Damage Level Critical“ ab, wenn der Spieler kritischen Schaden erleidet. Funktioniert im Originalspiel wegen eines Tippfehlers im Code nicht.
 tweak.show_squadmate_number.display_name       Nummer der Staffelkameraden anzeigen
 tweak.show_squadmate_number.description        Zeigt im Heads Down Display die Nummer jedes Staffelkameraden an (entsprechend der Zifferntaste, mit der er ausgewählt wird), mithilfe einer Beschriftung, die im Originalspiel ungenutzt und ausgeblendet ist
+tweak.every_squadmate_reply.display_name       Abwechslungsreiche Antworten der Staffelkameraden
+tweak.every_squadmate_reply.description        Staffelkameraden wählen gleichmäßig unter allen aufgenommenen Antworten, sodass ein zustimmender Staffelkamerad auch „Verstanden“ sagen kann. Im Originalspiel sagt er zwei von drei Malen „Jawohl, Sir“ und sonst „Bestätigt!“, aber nie „Verstanden“.
 tweak.fix_computer_message_pref.display_name   Einstellung COMPUTER MESSAGE korrigieren
 tweak.fix_computer_message_pref.description    Die Sprachausgabe des Cockpitcomputers wird über die Einstellung COMPUTER MESSAGE statt über die Einstellung PILOT MESSAGE gesteuert.
 tweak.flash_through_second_hit.display_name    Schadensblitz bei zweitem Treffer beibehalten
@@ -63,6 +65,10 @@ tweak.fix_raptor2_perspective.display_name  Raptor-II-Perspektive korrigieren
 tweak.fix_raptor2_perspective.description   Setzt die Cockpitansicht des Raptor II in sein Cockpit. Im Originalspiel liegt die Ansicht über der Oberkante des HERC. Turmnachführung und Waffenkonvergenz wandern mit.
 tweak.reset_counters_on_replay.display_name  Flags bei „Einsatz noch mal?“ korrigieren
 tweak.reset_counters_on_replay.description   Behebt, dass Einsatz-Flags nicht zurückgesetzt werden, wenn Sie einen Einsatz wiederholen (nachdem Sie im Einsatz getötet wurden). Das konnte Freischaltungen verhindern oder anderes unerwartetes Verhalten auslösen.
+tweak.auto_fill_save_name.display_name  Spielstandnamen immer vorschlagen
+tweak.auto_fill_save_name.description   Wenn Sie auf SPEICHERN klicken, wird ein Name automatisch ausgefüllt. Sie müssen trotzdem noch auf ANNEHMEN klicken. Mit einem Controller wird der Name immer automatisch ausgefüllt.
+tweak.auto_save_slot_10.display_name  Autospeichern in Platz 10
+tweak.auto_save_slot_10.description   Nach der Nachbesprechung jedes Einsatzes wird Ihr Spiel in Platz 10 des Bildschirms GESPEICHERTE SPIELE gesichert. Was Platz 10 enthielt, wird ersetzt.
 tweaks.title                   Optimierungen
 tweaks.description             Optimierungen verändern das Spielverhalten, meist um Fehler zu beheben oder den Komfort zu verbessern. Für ein möglichst originalgetreues Spielerlebnis (Fehler inklusive) klicken Sie auf „Keine“, um alle Optimierungen abzuschalten.
 tweaks.note                    Einige kleinere optische Fehler und mögliche Abstürze werden in HERCULAN nicht nachgebildet. Moderne Eingabegeräte und alternative Steuerungsschemata werden über das Menü Controller immer unterstützt.
@@ -99,6 +105,8 @@ install_prompt.no_path         Geben Sie den Pfad zum Earthsiege-2-Ordner ein od
 install_prompt.not_an_install  {0} ist kein Earthsiege-2-Ordner: Er enthält keinen Ordner {1}.
 mission_load.window_title      HERCULAN Engine — Fehler
 mission_load.missing_file      Die Mission kann nicht starten: {0} fehlt. Starten Sie die Mission über die Menüs, die diese Datei schreiben.
+save.auto_name                 {0} {1} Mission {2}
+save.auto_save_name            AUTOSPEICHERUNG {0}
 crash.window_title            HERCULAN Engine — Fehler
 crash.message                 HERCULAN wurde wegen eines Fehlers beendet: {0} Die Details stehen in {1}.
 menu.debug                     Debug
@@ -116,6 +124,7 @@ pause.preferences              Einstellungen
 pause.quit                     Beenden
 about.title                    Über
 about.license                  Lizenz
+manual.loading                 Das Online-Handbuch wird geöffnet…
 welcome.title                  Willkommen
 welcome.message                Willkommen bei der HERCULAN Engine! HERCULAN bietet eine Reihe optionaler Optimierungen, mit denen Sie Ihr Spielerlebnis anpassen können. Drücken Sie jederzeit Umschalt+Esc, um die Menüleiste von HERCULAN zu öffnen.
 welcome.view_tweaks            Optimierungen anzeigen

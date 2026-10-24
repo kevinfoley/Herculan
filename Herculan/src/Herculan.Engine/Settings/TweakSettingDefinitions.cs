@@ -77,6 +77,13 @@ public static class TweakSettingDefinitions {
 	public static readonly TweakSettingDefinition<bool> ShowSquadmateNumber = new("tweak.show_squadmate_number", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: false);
 
 	/// <summary>
+	/// A squadmate picks evenly among every recording of a reply, so a yes can be <c>ROGER.</c> Retail picks the
+	/// first recording or the one after it, never a third, so a yes is <c>YES SIR.</c> two times in three and
+	/// <c>AFFIRMATIVE!</c> otherwise. See <see cref="Content.SquadMessages.Pick"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> EverySquadmateReply = new("tweak.every_squadmate_reply", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
+
+	/// <summary>
 	/// Cockpit computer voiceover is controlled by the COMPUTER MESSAGE preference
 	/// instead of the PILOT MESSAGE preference.
 	/// </summary>
@@ -250,15 +257,29 @@ public static class TweakSettingDefinitions {
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> ResetCountersOnReplay = new("tweak.reset_counters_on_replay", TweakCategory.Functional, defaultValue: true, recommendedValue: true);
 
+	/// <summary>
+	/// SAVE starts the slot's new name filled in as the pilot's name, the sector and the mission number, for the player to
+	/// edit or ACCEPT, as it always does when clicked with a gamepad. Retail empties the name. See
+	/// <see cref="Shell.ShellSaveScreen.AutoName"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> AutoFillSaveName = new("tweak.auto_fill_save_name", TweakCategory.Functional, defaultValue: false, recommendedValue: false);
+
+	/// <summary>
+	/// After a debrief that goes on to the next mission, the game is saved to the save screen's tenth row, named
+	/// <c>AUTO SAVE</c> and the pilot's name, the sector and the mission number, over whatever the row held. Retail saves
+	/// only to its hidden current-game slot then. See <see cref="Shell.ShellSaveScreen.AutoName"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> AutoSaveSlot10 = new("tweak.auto_save_slot_10", TweakCategory.Functional, defaultValue: false, recommendedValue: false);
+
 	#endregion
 
 	/// <summary>Every defined <c>bool</c> tweak setting, keyed by ID for <see cref="TweakSettings"/> save/load.</summary>
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> All = new[] {
 		HighResolutionWidescreen, ShowCorrectStats, ShowAccurateSpeed, RoundShieldBalance, ShowTargetDistanceInMeters, FixNacelleImpactEffectPosition,
-		PreserveSoundPosition, CriticalDamageMessage, ShowSquadmateNumber, FixComputerMessagePreference,
+		PreserveSoundPosition, CriticalDamageMessage, ShowSquadmateNumber, EverySquadmateReply, FixComputerMessagePreference,
 		SmootherTurretMovement, MouseExternalView, FixDefendPositionOrder, FixWeaponDamageRecords,
 		ChargeBarPowerLevel, FlashThroughSecondHit, ShowAltitudeTape, DropPodSoundFromPod, FixRepairDiagramSides,
 		FixTerrainHitPoint, FlyerIgnoresPlayerThrottle, StrandedStingrayClosesIn, GuardHoldsUntilDestroyed, FasterKeyboardAiming, FixGunsightDrag, FixRaptorIIPerspective, ResetCountersOnReplay,
-		PlayLastMusicTrack, ShuffleMissionMusic, ChangePbwBeamHue,
+		AutoFillSaveName, AutoSaveSlot10, PlayLastMusicTrack, ShuffleMissionMusic, ChangePbwBeamHue,
 	};
 }

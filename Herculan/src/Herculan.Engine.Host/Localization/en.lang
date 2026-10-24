@@ -19,6 +19,8 @@ tweak.critical_damage_message.display_name     "Damage Level Critical" message
 tweak.critical_damage_message.description      Play "Damage Level Critical" when the player takes critical damage. Does not work in retail due to a typo in the code.
 tweak.show_squadmate_number.display_name       Show squadmate number
 tweak.show_squadmate_number.description        On the Heads Down Display, shows each squadmate's number (corresponding to the number key used to select them) using a label that is unused and hidden in retail
+tweak.every_squadmate_reply.display_name       Varied squadmate replies
+tweak.every_squadmate_reply.description        Squadmates choose evenly among all their recorded replies, so a squadmate who agrees can also say "Roger." In retail they say "Yes sir" two times in three and "Affirmative!" otherwise, and never "Roger."
 tweak.fix_computer_message_pref.display_name   Fix COMPUTER MESSAGE Preference
 tweak.fix_computer_message_pref.description    Cockpit computer voiceover is controlled by the COMPUTER MESSAGE preference instead of the PILOT MESSAGE preference.
 tweak.flash_through_second_hit.display_name    Keep damage flash on a second hit
@@ -63,6 +65,10 @@ tweak.fix_raptor2_perspective.display_name  Fix Raptor II Perspective
 tweak.fix_raptor2_perspective.description   Puts the Raptor II's cockpit view in its cockpit. In retail the view sits above the top of the HERC. Turret tracking and gun convergence move with it.
 tweak.reset_counters_on_replay.display_name  Fix "Replay Mission" flags
 tweak.reset_counters_on_replay.description   Fix mission flags not getting reset when you choose to replay a mission (after dying during the mission), which could cause unlocks to fail or other unexpected behavior.
+tweak.auto_fill_save_name.display_name  Always auto-fill save name
+tweak.auto_fill_save_name.description   When you click SAVE, a name is auto-filled. You must still click accept. The name is always auto-filled while using a controller.
+tweak.auto_save_slot_10.display_name  Auto-save in slot 10
+tweak.auto_save_slot_10.description   After each mission's debrief, your game is saved in slot 10 of the SAVED GAMES screen. This replaces whatever slot 10 held.
 tweaks.title                   Tweaks
 tweaks.description             Tweaks alter game behavior, generally either to fix bugs or provide quality-of-life enhancements. For the closest-to-vanilla experience (bugs included), click "None" to disable all tweaks.
 tweaks.note                    Some minor cosmetic bugs and potential crashes are not reproduced in HERCULAN. Support for modern input devices and alternate control schemes is always available via the Controller menu.
@@ -99,6 +105,8 @@ install_prompt.no_path         Type or paste the path to the Earthsiege 2 folder
 install_prompt.not_an_install  {0} is not an Earthsiege 2 folder: it has no {1} folder in it.
 mission_load.window_title      HERCULAN Engine — Error
 mission_load.missing_file      The mission cannot start: {0} is missing. Start the mission from the menus, which write this file.
+save.auto_name                 {0} {1} Mission {2}
+save.auto_save_name            AUTO SAVE {0}
 crash.window_title            HERCULAN Engine — Error
 crash.message                 HERCULAN stopped because of an error: {0} The details are in {1}.
 menu.debug                     Debug
@@ -116,6 +124,7 @@ pause.preferences              Preferences
 pause.quit                     Quit
 about.title                    About
 about.license                  License
+manual.loading                 Opening the on-line manual…
 welcome.title                  Welcome
 welcome.message                Welcome to the HERCULAN Engine! HERCULAN includes a variety of optional tweaks to customize your play experience. To access HERCULAN's menu bar, press Shift-Esc at any time.
 welcome.view_tweaks            View Tweaks

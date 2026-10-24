@@ -12,10 +12,11 @@ sealed class SaveRestoreTab {
 	private readonly TabNavigation _navigation;
 	private readonly ShellScreen _screen;
 	private readonly WidgetEvents _widgets;
+	private readonly SaveNames _names;
 	private readonly Action _repaint;
 
 	public SaveRestoreTab(ShellSaveScreen saveScreen, GameInProgress game, CampaignScreens loop, MissionTabScreens mission,
-			TabNavigation navigation, ShellScreen screen, WidgetEvents widgets, Action repaint) {
+			TabNavigation navigation, ShellScreen screen, WidgetEvents widgets, SaveNames names, Action repaint) {
 		_saveScreen = saveScreen;
 		_game = game;
 		_loop = loop;
@@ -23,6 +24,7 @@ sealed class SaveRestoreTab {
 		_navigation = navigation;
 		_screen = screen;
 		_widgets = widgets;
+		_names = names;
 		_repaint = repaint;
 
 		widgets.Handle(ShellWidgetKind.SaveRow, widget => SelectSaveSlot(widget.Index));
@@ -66,24 +68,38 @@ sealed class SaveRestoreTab {
 		}
 	}
 
+	/// <summary>
+	/// A gamepad's A: a click on ACCEPT while a rename is live on this tab, wherever the pointer is. This engine's own, so a
+	/// name SAVE filled in for a gamepad click is accepted without steering to the button.
+	/// </summary>
+	public void PadAccept() => PadClick(ShellSaveButton.Accept);
+
+	/// <summary>A gamepad's B: a click on CANCEL while a rename is live on this tab, wherever the pointer is, as <see cref="PadAccept"/>.</summary>
+	public void PadCancel() => PadClick(ShellSaveButton.Cancel);
+
+	private void PadClick(ShellSaveButton button) {
+		if (_screen.SelectedTab != ShellScreen.SaveTab || !_saveScreen.IsEnabled(button)) {
+			return;
+		}
+
+		var rect = _saveScreen.ButtonRect(button);
+		_widgets.Click(ShellHit.Button(new ShellWidget(ShellWidgetKind.SaveButton, (int)button), rect,
+			(rect.X0 + rect.X1) / 2f, (rect.Y0 + rect.Y1) / 2f));
+	}
+
 	// SAVE, SaveScreen_OnSave (00437bd3): the rename starts, and the pointer is taken onto the row so
-	// that keystrokes reach it.
+	// that keystrokes reach it. The row starts with the game's name where SaveNames gives one.
 	private void BeginRename() {
 		int slot = _saveScreen.SelectedSlot;
-		_saveScreen.BeginRename();
+		_saveScreen.BeginRename(_names.RenameFill(), _names.Font);
 		_widgets.Grab(new ShellHit(new ShellWidget(ShellWidgetKind.SaveRow, slot), ShellHandler.EditField));
 		_repaint();
 	}
 
-	// ACCEPT, SaveScreen_OnAccept (00437ffa): Game_SaveSlot under the row's string, then
-	// Stats_StageCurrentGame for the slot's summary.
+	// ACCEPT, SaveScreen_OnAccept (00437ffa): the row's string saved and the slot's summary staged.
 	private void AcceptRename() {
 		int slot = _saveScreen.SelectedSlot;
-		string label = _saveScreen.RowText(slot);
-		if (_game.Save(slot, label) is { } entry && _game.LoadedGame != null) {
-			_saveScreen.SetSlot(slot, entry with { Summary = ShellSaveSummary.From(_game.LoadedGame) });
-		}
-
+		_game.SaveNamed(slot, _saveScreen.RowText(slot));
 		_saveScreen.EndRename();
 		_repaint();
 	}

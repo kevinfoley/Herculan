@@ -121,7 +121,7 @@ sealed class PadRadial(int clickButton, int xAxis, int count, float labelRadius)
 
 	/// <summary>
 	/// Draws the radial while it is up, over everything else ImGui draws, each choice labelled with
-	/// <paramref name="label"/>'s text for it in <paramref name="font"/> (<see cref="ScaledImGui.LargeFont"/>). Call once per
+	/// <paramref name="label"/>'s text for it in <paramref name="font"/> (<see cref="ScaledImGui.RadialFont"/>). Call once per
 	/// frame inside the ImGui frame.
 	/// </summary>
 	public void Draw(Func<int, string> label, ImFontPtr font) {
@@ -131,7 +131,7 @@ sealed class PadRadial(int clickButton, int xAxis, int count, float labelRadius)
 
 		var draw = ImGui.GetForegroundDrawList();
 		var centre = ImGui.GetMainViewport().GetCenter();
-		float fontSize = ScaledImGui.LargeFontSize;
+		float fontSize = ScaledImGui.RadialFontSize;
 		float labelWidth = ScaledImGui.Scaled(LabelWidth);
 		float radius = ScaledImGui.Scaled(labelRadius);
 		float discRadius = radius + labelWidth / 2f + ScaledImGui.Scaled(DiscMargin);

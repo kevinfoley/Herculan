@@ -13,7 +13,11 @@ namespace Herculan.Engine.Cockpit;
 /// </summary>
 /// <param name="Weapons">
 /// One entry per <c>.GAU</c> weapon row, in row order — see <see cref="WeaponRowState"/>. A row no
-/// mount claims draws its plate and number with no name rather than an invented one.
+/// mount claims is not drawn.
+/// </param>
+/// <param name="WeaponPaintOrder">
+/// The rows' slots in the order to draw them, the most recently repainted last — see
+/// <see cref="WeaponRowRepaintOrder"/>. Null draws them in slot order.
 /// </param>
 /// <param name="ShieldFront">
 /// Front shield readout, 0-200. This is the shield <i>balance</i>, not the charge — the original
@@ -197,7 +201,8 @@ public readonly record struct CockpitHudState(
 	bool MissileCamHolding = false,
 	AltitudeReading? Altitude = null,
 	bool TrackHidden = false,
-	IReadOnlyList<CockpitWidgetId>? FlashingWidgets = null) {
+	IReadOnlyList<CockpitWidgetId>? FlashingWidgets = null,
+	IReadOnlyList<int>? WeaponPaintOrder = null) {
 
 	/// <summary>
 	/// Whether <paramref name="id"/> is in its pressed state, the original's state byte <c>+0x1b</c> at 1: held

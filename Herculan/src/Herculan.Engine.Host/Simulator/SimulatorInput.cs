@@ -11,6 +11,13 @@ sealed class SimulatorInput : ISimulatorInput {
 	private readonly TapePlayback _tape;
 	private readonly Func<FrameFit> _fit;
 
+	// Whether a warped pointer is drawn by this engine rather than left to the system: under gamescope, which shows its
+	// cursor only for a mouse's own moves (GamepadPointer.UnderGamescope).
+	private static readonly bool DrawsWarpedPointer = GamepadPointer.UnderGamescope();
+
+	// Where the last warp put the window's cursor, in window coordinates, while DrawsWarpedPointer; null otherwise.
+	private System.Numerics.Vector2? _warpedTo;
+
 	/// <param name="fit">Where the mission's frame sits in the window this frame, which the pointer is placed in.</param>
 	public SimulatorInput(EngineWindow window, TapePlayback tape, CockpitInput cockpitInput, Func<FrameFit> fit) {
 		_window = window;
@@ -127,7 +134,21 @@ sealed class SimulatorInput : ISimulatorInput {
 		Mouse.Position = new System.Numerics.Vector2(
 			windowX * client.X / Math.Max(fit.Window.X, 1),
 			windowY * client.Y / Math.Max(fit.Window.Y, 1));
+		if (DrawsWarpedPointer) {
+			_warpedTo = Mouse.Position;
+		}
 	}
+
+	/// <summary>
+	/// Where <see cref="WarpPointer"/> last put the cursor, in window coordinates, where the system will not show it there
+	/// and this engine has to draw it: under gamescope, the Steam Deck's Game Mode, whose cursor stays hidden while a
+	/// controller is in use, so a panel's focus moved by the pad would leave the pointer unseen on its button. Null
+	/// elsewhere, and once the mouse has moved the cursor since, which gamescope then shows itself.
+	/// </summary>
+	public System.Numerics.Vector2? WarpedPointer =>
+		_warpedTo is { } warped && Mouse != null && System.Numerics.Vector2.Distance(Mouse.Position, warped) <= 0.5f
+			? warped
+			: null;
 
 	/// <summary>A window-client position as a pixel of the mission's frame, through the framebuffer's pixels.</summary>
 	private (float X, float Y) ToFrame(System.Numerics.Vector2 position, FrameFit fit) {

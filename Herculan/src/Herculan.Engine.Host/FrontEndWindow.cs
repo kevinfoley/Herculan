@@ -143,11 +143,20 @@ sealed class FrontEndWindow : IDisposable {
 	/// <summary>Whether a gamepad's trigger is pulled as the left button (<see cref="GamepadPointer"/>).</summary>
 	public bool PadClickHeld => _padPointer.ClickHeld;
 
+	/// <summary>Whether a gamepad's other trigger is pulled as the right button (<see cref="GamepadPointer"/>).</summary>
+	public bool PadRightClickHeld => _padPointer.RightClickHeld;
+
 	/// <summary>
 	/// Whether a gamepad button is held as a skip key (<see cref="GamepadPointer"/>); never while the bar is up, where the
 	/// buttons work the bar.
 	/// </summary>
 	public bool PadSkipHeld => _padPointer.SkipHeld && !_menuBar.Visible;
+
+	/// <summary>Whether a gamepad's A is held (<see cref="GamepadPointer.AHeld"/>); never while the bar is up, as <see cref="PadSkipHeld"/>.</summary>
+	public bool PadAHeld => _padPointer.AHeld && !_menuBar.Visible;
+
+	/// <summary>Whether a gamepad's B is held (<see cref="GamepadPointer.BHeld"/>); never while the bar is up, as <see cref="PadSkipHeld"/>.</summary>
+	public bool PadBHeld => _padPointer.BHeld && !_menuBar.Visible;
 
 	/// <summary>
 	/// Moves the pointer by a gamepad's stick and reads its triggers and its buttons, once an update before the
