@@ -289,7 +289,7 @@ public struct BehaviourBlock {
 
 	/// <summary>
 	/// Puts the jitter counter back to the zero DBSIM starts each mission from. Retail gets that by
-	/// flying one mission per process; this host flies several in one, so every
+	/// running one mission per process; this host can run several missions in one process, so every
 	/// <see cref="SimWorld"/> calls this as it is built. The counter stays a static rather than a
 	/// field of the world because the state changes that step it carry no world reference.
 	/// </summary>

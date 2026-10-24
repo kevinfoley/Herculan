@@ -28,10 +28,10 @@ public enum MfdSilhouetteKind {
 /// current entry for mode 0 (<see cref="MfdStatusRoster"/>), <c>CockpitView+0x210</c> (the selection)
 /// for mode 4.
 ///
-/// <para>Everything here is read by the screen's paint (<c>MfdStatusScreen_Paint</c>, <c>0043a5a0</c>). The choices that look
-/// like mode differences are really subject differences: <c>ID:</c> versus <c>TARGET:</c> is "is this
-/// the machine I am flying (or one of my squad)", and the integrity readout versus the range readout
-/// is "is this one of ours", both decided from the subject alone.</para>
+/// <para>Everything here is read by the screen's paint (<c>MfdStatusScreen_Paint</c>, <c>0043a5a0</c>).
+/// The choices that look like mode differences are really subject differences: <c>ID:</c> versus
+/// <c>TARGET:</c> is "is this the machine I am piloting (or one of my squad)", and the integrity readout
+/// versus the range readout is "is this one of ours", both decided from the subject alone.</para>
 ///
 /// <para>A flyer's name comes from <c>FLYERS.DAT</c> <c>NameBytes</c>, the same <c>+0x12</c> the paint
 /// reads, and a HERC's from its type record's (<see cref="Sim.MechObject.TypeName"/>).</para>

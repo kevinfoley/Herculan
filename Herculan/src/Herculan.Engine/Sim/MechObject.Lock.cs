@@ -11,7 +11,7 @@ namespace Herculan.Engine.Sim;
 /// roll are in docs/retail/simulation/missile-lock.md. The genuine ammunition count is the separate array
 /// <see cref="WeaponMounts.RoundsByMissileType"/> fills, which this block uses only to decide which
 /// timers to run. The anti-radiation subtype's flags are the pair its guidance homes on (see
-/// <see cref="Rocket"/>); subtype 3 is never locked, because the pilot flies it — see
+/// <see cref="Rocket"/>); subtype 3 is never locked, because the pilot steers it — see
 /// <see cref="Rocket.PlayerFlownSubtype"/> and <see cref="SimWorld.FireRocket"/>.</para>
 /// </summary>
 public sealed partial class MechObject {

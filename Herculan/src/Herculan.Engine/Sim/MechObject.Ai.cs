@@ -735,7 +735,7 @@ public partial class MechObject {
 
 	/// <summary>
 	/// <c>mech+0x26b</c> — a countdown that holds the radar off. <c>Mech_DirectFireHitTest</c> loads it
-	/// with <see cref="RadarSilenceOnArmHit"/> when an anti-radiation round lands: the machine goes
+	/// with <see cref="RadarSilenceOnArmHit"/> when an anti-radiation missile lands: the machine goes
 	/// dark and stays dark long enough for the seeker to lose it. See docs/retail/simulation/target-selection.md
 	/// ("How an AI machine's radar is set").
 	/// </summary>
@@ -746,8 +746,8 @@ public partial class MechObject {
 
 	/// <summary>
 	/// <c>Mech_DirectFireHitTest</c>'s radar reaction, which runs on a hit against any machine but the
-	/// player's. A round of the two radar-guided launcher classes lights the target's scanner up; an
-	/// anti-radiation round (class 2) shuts it down and silences it, which is the whole point of the
+	/// player's. A missile of the two radar-guided launcher classes lights the target's scanner up; an
+	/// anti-radiation missile (class 2) shuts it down and silences it, which is the whole point of the
 	/// weapon.
 	/// </summary>
 	private void RadarReactionToHit(short weaponClass) {

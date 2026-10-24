@@ -482,7 +482,7 @@ public static class HddMap {
 	/// are classes the switch does not recognise.
 	/// </summary>
 	/// <param name="subject">The object.</param>
-	/// <param name="player">The machine the player is flying, which takes an icon of its own.</param>
+	/// <param name="player">The machine the player is piloting, which takes an icon of its own.</param>
 	/// <param name="squadSlot">Its squad comm-box slot, or -1 — <c>Squad_IndexOf</c>.</param>
 	public static HddMapMarker? MarkerFor(SimObject subject, SimObject? player, int squadSlot) {
 		ArgumentNullException.ThrowIfNull(subject);

@@ -45,8 +45,7 @@ public sealed class PlayerCockpitUpdate(CockpitDisplays displays, CockpitView vi
 		displays.NavMarker.Tick(pilotMech.Position, ports.Computer);
 
 		// Player_ResolveTargetAimPoint, once a frame and once only: it runs the Targeting Pod's decay
-		// countdown as a side effect, so asking twice would halve how long a damaged pod holds a
-		// component. Both consumers — the front-window target box and the MFD's F5 doll — read this.
+		// countdown as a side effec. Both consumers — the front-window target box and the MFD's F5 doll — read this.
 		var targetAim = pilotMech.ResolveTargetAimPoint();
 
 		// Cockpit_PowerUpTick's arming pass, which runs from the cockpit's own per-frame update.
@@ -194,7 +193,7 @@ public sealed class PlayerCockpitUpdate(CockpitDisplays displays, CockpitView vi
 		var missileCam = hudState.MissileCam;
 		if (missileCamUpdating && scene.World is { } camWorld) {
 			missileCam = displays.MissileCamScreen.Update(camWorld, pilotMech.LockAcquired,
-				MfdMissileCam.LauncherRounds(pilotMech.Weapons, weaponRows), ports.CoarseTicks,
+				MfdMissileCam.LauncherAmmo(pilotMech.Weapons, weaponRows), ports.CoarseTicks,
 				repaint: !displays.MissileCamUpdatedLastFrame);
 		}
 

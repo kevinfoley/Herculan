@@ -76,7 +76,7 @@ public sealed class WeaponMounts {
 	/// sets and clears it (<c>WeaponMounts_SetTrackLatch</c> (<c>00410f04</c>) and <c>WeaponMounts_PerFrameUpdate</c>'s own else branch), which is
 	/// why TRACK is the one console button that stays lit, and so does the [T] command.
 	///
-	/// <para>Read by <see cref="MechObject.TorsoTick"/>, which flies the turret at the selected
+	/// <para>Read by <see cref="MechObject.TorsoTick"/>, which aims the turret at the selected
 	/// target while it is set. Both centring commands clear it — see
 	/// <see cref="MechObject.LatchCenterTorso"/>.</para>
 	/// </summary>

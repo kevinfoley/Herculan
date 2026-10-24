@@ -17,7 +17,7 @@ namespace Herculan.Engine.Shell;
 /// <see cref="ShellTrainingLaunch"/>, as <c>Begin Mission</c> on its row would, or <c>INSTANT ACTION</c> for a
 /// row past the practice list, with the practice options <c>data\prefs.cfg</c> holds.</item>
 /// <item>A mission <c>gam\career.dat</c> does not list (<c>DEMO2.MSN</c>) takes the same half as
-/// <c>INSTANT ACTION</c>, through the typed path the DEBUG dialog loads, so its player flies the mission's own
+/// <c>INSTANT ACTION</c>, through the typed path the DEBUG dialog loads, so its player pilots the mission's own
 /// group-0 machine.</item>
 /// <item>Any other takes the campaign half, <see cref="ShellCampaignLaunch"/>, with a career that has no
 /// history: an empty campaign flag array, which the load then seeds with the position, and the player's

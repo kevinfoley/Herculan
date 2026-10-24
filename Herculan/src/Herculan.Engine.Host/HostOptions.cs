@@ -43,7 +43,7 @@ sealed class HostOptions {
 	public string? RecordTape { get; private set; }
 	public bool DeveloperMode { get; private set; }
 
-	/// <summary>Whether one mission flies in place of the front end, which is the default.</summary>
+	/// <summary>Whether a mission is started directly instead of starting in the front end.</summary>
 	public bool RunMission { get; private set; }
 
 	public string? InstallSource { get; private set; }
