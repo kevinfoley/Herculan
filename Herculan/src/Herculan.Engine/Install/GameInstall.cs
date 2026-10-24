@@ -80,6 +80,28 @@ public static class GameInstall {
 		Directory.Exists(path) && Directory.Exists(ArchiveDirectory(path));
 
 	/// <summary>
+	/// Whether <paramref name="path"/> is on a CD or DVD, or a disc image mounted as one: the drive holding it, the
+	/// one with the longest root that contains it, reports <see cref="DriveType.CDRom"/>. A disc holds an install's
+	/// folders but takes no writes, and the game writes its saves and its mission handoff into the install, so a disc
+	/// is never the install. False when the drives cannot be read.
+	/// </summary>
+	public static bool IsOnDisc(string path) {
+		try {
+			string full = Path.GetFullPath(path);
+			var comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+			bool Holds(DriveInfo drive) {
+				string root = drive.RootDirectory.FullName;
+				return full.Equals(root, comparison) || full.StartsWith(Path.EndsInDirectorySeparator(root)
+					? root : root + Path.DirectorySeparatorChar, comparison);
+			}
+
+			return DriveInfo.GetDrives().Where(Holds).MaxBy(drive => drive.RootDirectory.FullName.Length)?.DriveType == DriveType.CDRom;
+		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException) {
+			return false;
+		}
+	}
+
+	/// <summary>
 	/// The directory the first token of the install's <c>data\drive.cfg</c> names, which on a retail
 	/// install is the disc (docs/retail/formats/vol-archive.md, "Which archives are mounted"), resolved against
 	/// the install root; null when the file is missing, unreadable or holds no token. Retail cannot start

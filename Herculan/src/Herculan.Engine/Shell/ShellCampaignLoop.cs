@@ -58,20 +58,45 @@ public sealed class ShellCampaignLoop {
 	/// the game in progress that saving needs — and Career_LoadSlot's three working files copied into data\.
 	/// Slot 10 is slot 11 in training, as it is to Game_SaveSlot. The mission map is rebuilt, here on the
 	/// briefing's next visit, and the briefing's and debrief's movies play again (DAT_004778ab and
-	/// DAT_004778ac cleared). Returns false for a slot not in use, which the original refuses, or one that
-	/// cannot be read.
+	/// DAT_004778ac cleared). Returns false for a slot not in use, which the original refuses without a word, or one
+	/// that cannot be read or whose working files cannot be copied in, which is reported (<see cref="ShellFailure.SlotLoad"/>).
 	/// </summary>
 	public bool LoadSlot(int slot) {
+		if (TryLoadSlot(slot, out string? failure)) {
+			return true;
+		}
+
+		if (failure != null) {
+			_game.ReportFailure(ShellFailure.SlotLoad, failure);
+		}
+
+		return false;
+	}
+
+	// LoadSlot without the report: false with a null failure for a slot not in use, with the reason for one that will not load.
+	private bool TryLoadSlot(int slot, out string? failure) {
 		if (slot == GameInProgress.CurrentGameSlot && _game.Mode == ShellCampaignMode.Training) {
 			slot = GameInProgress.CurrentGameSlot + 1;
 		}
 
-		if (_saveScreen.Slots.ElementAtOrDefault(slot) is not { InUse: true } entry
-				|| ShellSaveSlots.LoadSave(_installRoot, entry.FileName) is not { } restored) {
+		failure = null;
+		if (_saveScreen.Slots.ElementAtOrDefault(slot) is not { InUse: true } entry) {
 			return false;
 		}
 
-		Adopt(restored, ShellHangar.From(restored), ShellSaveSlots.CopyWorkingFilesIn(_installRoot, slot));
+		if (ShellSaveSlots.LoadSave(_installRoot, entry.FileName) is not { } restored) {
+			failure = $"{CaseInsensitivePath.Combine(ShellSaveSlots.Directory(_installRoot), entry.FileName)} could not be read.";
+			Console.WriteLine($"Could not load slot {slot}: {failure}");
+			return false;
+		}
+
+		ShellWorkingFiles? files = null;
+		if (!ShellWorkingFiles.TryWrite(() => files = ShellSaveSlots.CopyWorkingFilesIn(_installRoot, slot), out failure)) {
+			Console.WriteLine($"Could not load slot {slot}: {failure}");
+			return false;
+		}
+
+		Adopt(restored, ShellHangar.From(restored), files!);
 		SlotLoaded?.Invoke(entry);
 		return true;
 	}
@@ -81,22 +106,26 @@ public sealed class ShellCampaignLoop {
 	/// Game_ProcessMissionResults (0040eae7) over the results.dat and mission.var the simulator left in data\,
 	/// which the load's copies do not touch. Returns the debrief, whose state says where the debrief goes next
 	/// (docs/retail/shell/campaign-loop.md#where-the-debrief-goes-next). A slot 10 not in use, or no results, cannot
-	/// come from a mission this shell launched; that, and a debrief that fails, is reported and returns null, and
-	/// the menu comes up.
+	/// come from a mission this shell launched; that, and a debrief that fails, is reported (<see cref="ShellFailure.Debrief"/>)
+	/// and returns null, and the menu comes up.
 	/// </summary>
 	public ShellDebriefResult? ReturnFromMission() {
 		string resultsPath = CaseInsensitivePath.Combine(DataDirectory, MissionResults.FileName);
 		string countersPath = CaseInsensitivePath.Combine(DataDirectory, MissionLoader.CountersFileName);
-		if (!LoadSlot(GameInProgress.CurrentGameSlot) || _game.LoadedGame == null || !File.Exists(resultsPath) || !File.Exists(countersPath)) {
-			Console.WriteLine($"Back from the mission, but slot 10 or {resultsPath} could not be read — main menu.");
-			return null;
+		ShellDebriefResult? result = null;
+		if (!TryLoadSlot(GameInProgress.CurrentGameSlot, out string? failure) || _game.LoadedGame is not { } game) {
+			failure ??= "No current game is saved.";
+		} else if (!File.Exists(resultsPath) || !File.Exists(countersPath)) {
+			failure = $"The mission left no {resultsPath} or {countersPath}.";
+		} else {
+			result = ShellDebrief.Process(game, _game.Hangar, _content, File.ReadAllBytes(countersPath), File.ReadAllBytes(resultsPath),
+				_game.Mode == ShellCampaignMode.Campaign, _game.Options[GameInProgress.RepairOption], _game.ManualWeaponBuild(),
+				bound => _random.NextBelow(bound), out failure);
 		}
 
-		var result = ShellDebrief.Process(_game.LoadedGame, _game.Hangar, _content, File.ReadAllBytes(countersPath),
-			File.ReadAllBytes(resultsPath), _game.Mode == ShellCampaignMode.Campaign, _game.Options[GameInProgress.RepairOption],
-			_game.ManualWeaponBuild(), bound => _random.NextBelow(bound), out string? failure);
 		if (result == null) {
 			Console.WriteLine($"Debrief: {failure} Main menu.");
+			_game.ReportFailure(ShellFailure.Debrief, failure ?? string.Empty);
 			return null;
 		}
 
@@ -117,6 +146,7 @@ public sealed class ShellCampaignLoop {
 		if (ShellCampaignLaunch.NewCareer(_content, name, skill, ShellCampaignMode.Campaign, bound => _random.NextBelow(bound),
 				_game.HeldGame(), out string? failure) is not { } game) {
 			Console.WriteLine($"Accept: {failure} No career started; main menu.");
+			_game.ReportFailure(ShellFailure.NewCareer, failure ?? string.Empty);
 			return false;
 		}
 
@@ -134,6 +164,7 @@ public sealed class ShellCampaignLoop {
 		if (ShellTrainingLaunch.NewCareer(_content, _game.Options, row, bound => _random.NextBelow(bound), _game.HeldGame(),
 				out string? failure) is not var (game, hangar)) {
 			Console.WriteLine($"{label}: {failure}");
+			_game.ReportFailure(ShellFailure.NewCareer, failure ?? string.Empty);
 			return false;
 		}
 
@@ -166,6 +197,7 @@ public sealed class ShellCampaignLoop {
 			_game.Hangar, out string? failure);
 		if (handoff == null) {
 			Console.WriteLine($"{label}: {failure}");
+			_game.ReportFailure(ShellFailure.MissionLoad, failure ?? string.Empty);
 			return null;
 		}
 
@@ -198,6 +230,7 @@ public sealed class ShellCampaignLoop {
 		if (ShellCampaignLaunch.LoadCareerMission(DataDirectory, _content, game, hangar, _clearList,
 				bound => _random.NextBelow(bound), out string? failure, missionPath) is not { } mission) {
 			Console.WriteLine($"Mission load: {failure} Main menu.");
+			_game.ReportFailure(ShellFailure.MissionLoad, failure ?? string.Empty);
 			return false;
 		}
 
@@ -211,20 +244,24 @@ public sealed class ShellCampaignLoop {
 	/// REPLAY MISSION?'s Yes (ReplayDialog_OnYes, 0044cb44), after the dialog is down: slot 10 loaded again, for the
 	/// shell to end on exit code 2 — so the simulator uses what the load's Career_LoadSlot copied in: the slot's
 	/// script.dat, mission.str and player.mec, beside the mission.var the simulator itself last wrote, which no one
-	/// rewrites. Returns the launch, or null when the slot cannot be read.
+	/// rewrites. Returns the launch, or null when the slot cannot be read or mission.var written, which is reported
+	/// (<see cref="ShellFailure.MissionLoad"/>).
 	/// <para>Under <see cref="TweakSettingDefinitions.ResetCountersOnReplay"/>, mission.var is written again from the
 	/// slot's own flag array. The shell autosaves slot 10 on its way out to a mission, from the same game the handoff's
 	/// mission.var was written from, so the replay starts from the counters the failed attempt started from
 	/// (docs/retail/campaign-continuity.md#replaying-a-mission).</para>
 	/// </summary>
 	public ShellLaunch? Replay() {
-		if (!LoadSlot(GameInProgress.CurrentGameSlot)) {
-			Console.WriteLine("Replay: slot 10 could not be read — main menu.");
-			return null;
+		if (!TryLoadSlot(GameInProgress.CurrentGameSlot, out string? failure)) {
+			failure ??= "No current game is saved.";
+		} else if (TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.ResetCountersOnReplay) && _game.LoadedGame is { } game) {
+			ShellWorkingFiles.TryWrite(() => ShellMissionLaunch.WriteCampaignFlags(DataDirectory, game), out failure);
 		}
 
-		if (TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.ResetCountersOnReplay) && _game.LoadedGame is { } game) {
-			ShellMissionLaunch.WriteCampaignFlags(DataDirectory, game);
+		if (failure != null) {
+			Console.WriteLine($"Replay: {failure} Main menu.");
+			_game.ReportFailure(ShellFailure.MissionLoad, failure);
+			return null;
 		}
 
 		Console.WriteLine($"Replay: yes — slot 10's mission copied to {DataDirectory}; launching it.");

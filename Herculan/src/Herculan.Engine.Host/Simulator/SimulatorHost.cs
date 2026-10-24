@@ -11,6 +11,7 @@ using Herculan.Engine.Platform;
 using Herculan.Engine.Render;
 using Herculan.Engine.Scene;
 using Herculan.Engine.Settings;
+using Herculan.Engine.Shell;
 using Herculan.Engine.Sim;
 using Herculan.Engine.Sim.Ai;
 using Herculan.Engine.World;
@@ -286,10 +287,15 @@ sealed class SimulatorHost : IDisposable {
 		if ((_start.ShellLaunch != null || _start.TapePlayer != null) && _scene.World.PlayerMech is { } endPlayer) {
 			var (results, counters) = MissionResults.Write(_scene.World, endPlayer);
 			string resultsFolder = Path.GetDirectoryName(_start.ScriptPath) ?? ".";
-			File.WriteAllBytes(CaseInsensitivePath.Combine(resultsFolder, MissionResults.FileName), results);
-			File.WriteAllBytes(CaseInsensitivePath.Combine(resultsFolder, MissionLoader.CountersFileName), counters);
-			Console.WriteLine($"Wrote {MissionResults.FileName} ({results.Length} bytes, {_scene.World.Mission.Salvage.Count} salvaged "
-				+ $"weapon(s)) and {MissionLoader.CountersFileName} to {resultsFolder}.");
+			if (ShellWorkingFiles.TryWrite(() => {
+					File.WriteAllBytes(CaseInsensitivePath.Combine(resultsFolder, MissionResults.FileName), results);
+					File.WriteAllBytes(CaseInsensitivePath.Combine(resultsFolder, MissionLoader.CountersFileName), counters);
+				}, out string? failure)) {
+				Console.WriteLine($"Wrote {MissionResults.FileName} ({results.Length} bytes, {_scene.World.Mission.Salvage.Count} salvaged "
+					+ $"weapon(s)) and {MissionLoader.CountersFileName} to {resultsFolder}.");
+			} else {
+				Console.WriteLine($"Could not write the mission's results to {resultsFolder}: {failure}");
+			}
 		}
 
 		return _options.ScreenshotPath != null ? 0 : MissionResults.ExitCode(_start.DemoTape, _outcome.QuitGame);

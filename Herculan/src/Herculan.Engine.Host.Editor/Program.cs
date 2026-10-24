@@ -14,6 +14,10 @@ if (installRoot == null) {
 		$"The path should be the folder containing the '{GameInstall.ArchiveFolderName}' directory.");
 	return 1;
 }
+if (GameInstall.IsOnDisc(installRoot)) {
+	Console.Error.WriteLine($"{installRoot}: The CD cannot be used as the install location because save files cannot be written to the CD.");
+	return 1;
+}
 GameInstall.Remember(installRoot);
 
 // A mission named on the command line has to be there; without one the editor opens DATA\script.dat, or no mission

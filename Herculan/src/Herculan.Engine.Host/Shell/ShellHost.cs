@@ -212,6 +212,10 @@ sealed class ShellHost : IDisposable {
 		_window = new FrontEndWindow(session, window, "HERCULAN Engine — shell", screenshotPath,
 			() => _outcome.ExitCode = SettingsRestartCode, () => _outcome.ExitCode = EditorExitCode);
 
+		// A step that fails says so to the player, what failed over why.
+		var localization = session.Localization;
+		_game.Failed += (step, reason) => _window.ShowError(localization.GetStringOrKey(FailureKey(step)), reason);
+
 		_startup = new StartupScreen(_canvas, content, _audio, repaint);
 		if (!_fromMission && startTab == ShellScreen.MainMenuTab && !startPractice && screenshotPath == null) {
 			_startup.Begin();
@@ -257,6 +261,15 @@ sealed class ShellHost : IDisposable {
 	}
 
 	public void Dispose() => _window.Dispose();
+
+	// The localization key of the error notice's first line for each failed step.
+	private static string FailureKey(ShellFailure step) => step switch {
+		ShellFailure.NewCareer => "error.new_career",
+		ShellFailure.MissionLoad => "error.mission_load",
+		ShellFailure.SlotLoad => "error.slot_load",
+		ShellFailure.Save => "error.save",
+		_ => "error.debrief",
+	};
 
 	// Every component's repaint, which reaches the canvas built last, over all of them.
 	private void Repaint() => _content.Repaint();

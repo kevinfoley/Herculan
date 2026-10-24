@@ -107,12 +107,20 @@ install_prompt.install         Von einem Datenträger installieren...
 install_prompt.quit            Beenden
 install_prompt.no_path         Geben Sie den Pfad zum Earthsiege-2-Ordner ein oder fügen Sie ihn ein.
 install_prompt.not_an_install  {0} ist kein Earthsiege-2-Ordner: Er enthält keinen Ordner {1}.
+install_prompt.on_disc         Die CD kann nicht als Installationsort verwendet werden, weil Spielstände nicht auf die CD geschrieben werden können.
 mission_load.window_title      HERCULAN Engine — Fehler
 mission_load.missing_file      Die Mission kann nicht starten: {0} fehlt. Starten Sie die Mission über die Menüs, die diese Datei schreiben.
 save.auto_name                 {0} {1} Mission {2}
 save.auto_save_name            AUTOSPEICHERUNG {0}
 crash.window_title            HERCULAN Engine — Fehler
 crash.message                 HERCULAN wurde wegen eines Fehlers beendet: {0} Die Details stehen in {1}.
+error.title                    Fehler
+error.window_title             HERCULAN Engine — Fehler
+error.new_career               Das neue Spiel konnte nicht gestartet werden.
+error.mission_load             Die Mission konnte nicht geladen werden.
+error.slot_load                Der Spielstand konnte nicht geladen werden.
+error.save                     Das Spiel konnte nicht gespeichert werden.
+error.debrief                  Die Ergebnisse der Mission konnten nicht gelesen werden.
 menu.debug                     Debug
 menu.tweaks                    Optimierungen
 menu.accessibility             Barrierefreiheit

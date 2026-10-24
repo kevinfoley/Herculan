@@ -5,7 +5,7 @@ The keys the engine adds to retail's. Every retail key works as [`../retail/key-
 | Key | What it does |
 |---|---|
 | `Shift+Esc` | Raise the menu bar: in a mission with the Debug, Settings, Controller, Keys, Tweaks, Accessibility and About panels, in the front end with Settings, Controller, Keys, Tweaks, Accessibility and About. Keys lists the keyboard keys in this table and retail's mission keys, less the developer keys, each named as the player's own keyboard prints it. Press again to back out. It works the same over a mission's pause, objectives and other panels, a movie and the briefing map's opening, and nothing of retail's sees the press: it closes no panel and skips nothing. Retail takes `Shift+Esc` as `Esc`.
-| `Esc` | While the menu bar or one of its panels is up, or the welcome the front end shows on its first start, or its notice of a newer release, back out of it, unless a mission's pause, objectives or other panel is up, which takes it as retail's does. Otherwise `Esc` is retail's everywhere.
+| `Esc` | While the menu bar or one of its panels is up, or the welcome the front end shows on its first start, its notice of a newer release, or its notice that something failed, back out of it, unless a mission's pause, objectives or other panel is up, which takes it as retail's does. Otherwise `Esc` is retail's everywhere.
 | Gamepad Back | Raise the menu bar or back out of it, as `Shift+Esc` does, in a mission and in the front end. While the bar stays up, the highlight goes on its first item ([Gamepad in the menus](#gamepad-in-the-menus)). |
 | Gamepad Start | In a mission, pause and raise the pause menu, or resume from it ([The pause menu](#the-pause-menu)). Retail's own pause panel stays on `P`. |
 | Gamepad left stick click | In a mission, hold for the squad orders ([Squad orders on a gamepad](#squad-orders-on-a-gamepad)). |
@@ -35,7 +35,7 @@ The menu bar and its windows work with a gamepad alone, in a mission and in the 
 | Left stick | Scroll the window. |
 | Y | Type into a text field, which needs a keyboard, or Steam's on-screen keyboard on a Steam Deck. |
 
-Closing a window with one of its own buttons also puts the highlight back on the bar's first item. While the menu bar or one of its windows is up, a mission's stick drives nothing, and after they close it stays quiet until every button is let go, so a button pressed to choose an item does not also fire its action. While the Controller window's Detect is listening, the pad moves nothing in the window, so the control moved to bind it is only bound.
+The front end's notice that something failed, such as a mission that could not be loaded, comes up with the highlight on its OK, so A takes it down. For its first 0.75 seconds OK ignores A and clicks, so a press already on its way does not close it unread; Back and `Esc` close it at once. Closing a window with one of its own buttons also puts the highlight back on the bar's first item. While the menu bar or one of its windows is up, a mission's stick drives nothing, and after they close it stays quiet until every button is let go, so a button pressed to choose an item does not also fire its action. While the Controller window's Detect is listening, the pad moves nothing in the window, so the control moved to bind it is only bound.
 
 ## Gamepad in the front end
 

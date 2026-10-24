@@ -100,6 +100,23 @@ public sealed record ShellWorkingFiles(string? Script, string? Text, string? Pla
 	/// shorter mission leaves the longer one's tail in place (docs/retail/formats/save-games.md#streams-never-truncate).
 	/// </summary>
 	public static void WriteMissionFile(string path, byte[] bytes) => ShellSaveSlots.WriteInPlace(path, bytes);
+
+	/// <summary>
+	/// Runs <paramref name="write"/>, and returns false with the reason when the file system refuses it — an install
+	/// on a disc or in a protected folder, or a file marked read-only or held open — so the caller reports it as it
+	/// reports a missing file instead of throwing.
+	/// </summary>
+	public static bool TryWrite(Action write, out string? failure) {
+		try {
+			write();
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+			failure = e.Message;
+			return false;
+		}
+
+		failure = null;
+		return true;
+	}
 }
 
 /// <summary>
@@ -215,7 +232,7 @@ public static class ShellSaveSlots {
 				string target = CaseInsensitivePath.Combine(folder, to);
 				if (from != null && File.Exists(from) && !string.Equals(Path.GetFullPath(from), Path.GetFullPath(target),
 						StringComparison.OrdinalIgnoreCase)) {
-					File.Copy(from, target, overwrite: true);
+					CopyFile(from, target);
 				}
 			}
 		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
@@ -246,12 +263,20 @@ public static class ShellSaveSlots {
 		System.IO.Directory.CreateDirectory(ShellWorkingFiles.DataDirectory(installRoot));
 		foreach (var (from, to) in new[] { (slotFiles.Script, data.Script), (slotFiles.Text, data.Text), (slotFiles.Player, data.Player) }) {
 			if (File.Exists(from)) {
-				File.Copy(from, to!, overwrite: true);
+				CopyFile(from, to!);
 			}
 		}
 
 		return data;
 	}
+
+	/// <summary>
+	/// <c>FileUtil_CopyFile</c> (<c>0040d4d5</c>), the copy both slot handoffs make: the source read whole and written
+	/// over the destination, which is created or truncated (docs/retail/formats/save-games.md#the-slot-handoff). Only the
+	/// bytes go across, so a source marked read-only, as files copied off a disc are, does not make the copy read-only,
+	/// which <see cref="File.Copy(string, string, bool)"/>'s would.
+	/// </summary>
+	internal static void CopyFile(string from, string to) => File.WriteAllBytes(to, File.ReadAllBytes(from));
 
 	/// <summary>The save's last three blocks: 2000 bytes of flags, 2 of game state and 20 more.</summary>
 	private const int SaveTailLength = PlayerSave.CampaignFlagCount * 2 + 2 + 20;
