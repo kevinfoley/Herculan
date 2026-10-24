@@ -29,15 +29,15 @@ The data holds the bank pointer `MfdRadar_RadarBank` (`0009385c`), `MFDRadarVtab
 | `+0x3c`, `+0x40` | the `RNG:` caption and the range | `+0x38`, `+0x3c` |
 | `+0x44` | a rect, constructed and not written ([Open](#open)) | — |
 
-It loads the `radar` bank once from the folder `000980f8` names into `MfdRadar_RadarBank` and keeps its first frame. The five labels are `Label_Ctor`s in `ColorSchemePanels`' `cpblue` with no fill color and zero margins, placed with `Label_SetRect` relative to the rect's top-left:
+It loads the `radar` bank once from the folder `000980f8` names into `MfdRadar_RadarBank` and keeps its first frame. The five labels are `Label_Ctor`s in `ColorSchemePanels[0]` (`cpblue`) with no fill color and zero margins, placed with `Label_SetRect` relative to the rect's top-left, whose flags 2 center the text, 4 right-align it and any other value, 1 here, left-aligns it ([labels](cockpit-widgets.md#labels)):
 
-| Label | Rect | Align | Text |
+| Label | Rect | Flags | Text |
 |---|---|---|---|
-| `+0x3c` | `3, 0x21` – `0xf, 0x26` | left | `RNG:` |
-| `+0x40` | `3, 0x26` – `0x13, 0x2b` | left | the range in meters |
-| `+0x34` | `0x36, 0x21` – `0x42, 0x26` | right | `DST:` |
-| `+0x38` | `0x32, 0x26` – `0x42, 0x2b` | right | the target's distance in meters |
-| `+0x30` | `1, 2` – `0xf, 7` | centered | `ACT` or `PASS` |
+| `+0x3c` | `3, 0x21` – `0xf, 0x26` | 1, left | `RNG:` |
+| `+0x40` | `3, 0x26` – `0x13, 0x2b` | 1, left | the range in meters |
+| `+0x34` | `0x36, 0x21` – `0x42, 0x26` | 4, right | `DST:` |
+| `+0x38` | `0x32, 0x26` – `0x42, 0x2b` | 4, right | the target's distance in meters |
+| `+0x30` | `1, 2` – `0xf, 7` | 2, centered | `ACT` or `PASS` |
 
 So the readouts sit at the bottom left and bottom right, where ES2's are at the dish's four corners ([readouts](../../retail/simulation/mfd-scanner.md#readouts)). No coordinate is shifted by a video mode.
 
@@ -47,31 +47,36 @@ So the readouts sit at the bottom left and bottom right, where ES2's are at the 
 
 **`MfdRadarScreen_Paint` (`000355a4`)**, (screen):
 
-1. When the range (the block's `+0xc`, the display's `+0x86`: 120000 at first, and 30000, 80000 and 120000 in turn at each `RANGE` press or [Alt]+R, [the display's ranges](mfd-display.md#modes)) differs from `+0x28`, it stores it there and sets `+0x24` to range / 21, truncated. ES2's divides by 25 and shifts by `VideoMode_XCoordShift` every paint ([plot](../../retail/simulation/mfd-scanner.md#plot)).
-2. It installs a pen and a brush, both {0, 0}, at the render context's (`000bdbda`) `+0x228` and `+0x22c`, and blits frame 0 of `radar` at `+0x10` with `Bitmap_Blit`. ES2's floods its dish and draws the dish, wedge and ring from `MFD` frames 14 and 15 ([paint order](../../retail/simulation/mfd-scanner.md#paint-order)).
-3. `+0x2c` becomes 1 when the byte `+0x90` of the cockpit's machine (`CockpitViewInstance`'s `+0x1ff`; ES2's radar mode `+0x96`) is 0, else 0. `Mech_ToggleRadarMode` flips that byte ([the HERC's cockpit](mech.md#the-cockpit)), on `R` and on the display's `MODE` button, which `D` presses ([the display's clicks and keys](mfd-display.md#clicks-and-keys)). The legend `+0x30` takes `ColorSchemePanels`' `cpred` and `STRINGS0.STR` group 25 entry 1, `PASS`, when it is 1, and `cpgreen` and entry 0, `ACT`, when it is 0 ([the groups](../formats/str-strings.md#the-groups)).
-4. It plots each object of `LiveObjectList` as below.
-5. When the selection was plotted, it outlines the square from (*x* − 2, *y* − 2) to (*x* + 2, *y* + 2) around its pixel with `Raster_FillRect` and the brush {4, `0x3b`} ([outlines](../../retail/rendering/polygon-fill.md#rectangles-and-ellipses)), where ES2's blits `MFD` frame 16.
-6. It writes `DST:` (group 27) into `+0x34`, the selection's distance into `+0x38`, `RNG:` (group 26) into `+0x3c` and the range in meters into `+0x40`, each number through `Hud_WorldUnitsToMetres` and `ltoa` and then right-aligned and zero-padded in a four-character field, as ES2's are.
+1. Before anything else it reads the heading *h* of the plot: the `int16` `+0x10` of the active view object, which `View_GetActiveObject` (`00059280`) returns from `ViewObjectPtr` (`000b5b8a`; [the camera](external-views.md#the-camera)).
+2. When the range (the block's `+0xc`, the display's `+0x86`: 120000 at first, and 30000, 80000 and 120000 in turn at each `RANGE` press or [Alt]+R, [the display's ranges](mfd-display.md#modes)) differs from `+0x28`, it stores it there and sets `+0x24` to range / `+0x20`, 21, the `IDIV` truncating. ES2's divides by 25 and shifts by `VideoMode_XCoordShift` every paint ([plot](../../retail/simulation/mfd-scanner.md#plot)).
+3. It installs a pen at the render context's (`000bdbda`) `+0x228` and a brush at its `+0x22c`, both of mode 0 and on its own stack: the pen's color is written before each contact's pixel, the brush's never. Both stay installed when the paint returns, the brush replaced by step 6's when a selection was plotted. It then blits frame 0 of `radar` at `+0x10` with `Bitmap_Blit`. ES2's floods its dish and draws the dish, wedge and ring from `MFD` frames 14 and 15 ([paint order](../../retail/simulation/mfd-scanner.md#paint-order)).
+4. `+0x2c` becomes 1 when the byte `+0x90` of the cockpit's machine (`CockpitViewInstance`'s `+0x1ff`; ES2's radar mode `+0x96`) is 0, else 0. `Mech_ToggleRadarMode` flips that byte ([the HERC's cockpit](mech.md#the-cockpit)), on `R` and on the display's `MODE` button, which `D` presses ([the display's clicks and keys](mfd-display.md#clicks-and-keys)). The legend `+0x30` takes the font `ColorSchemePanels[2]` (`cpred`) at its `+0`, and then `STRINGS0.STR` group 25 entry 1, `PASS`, when it is 1; and `ColorSchemePanels[1]` (`cpgreen`) and entry 0, `ACT`, when it is 0 ([the groups](../formats/str-strings.md#the-groups)). The machine's radar is off when a mission starts ([construction](mech.md#construction)), so the legend opens on a red `PASS`.
+5. It plots each object of `LiveObjectList` as below.
+6. When the selection was plotted, it outlines the square from (*x* − 2, *y* − 2) to (*x* + 2, *y* + 2) around its pixel with `Raster_FillRect` and the brush {4, `0x3b`} ([outlines](../../retail/rendering/polygon-fill.md#rectangles-and-ellipses)), where ES2's blits `MFD` frame 16.
+7. It writes `DST:` (group 27) into `+0x34`, the selection's distance into `+0x38`, `RNG:` (group 26) into `+0x3c` and the range in meters into `+0x40`, each number through `Hud_WorldUnitsToMetres` and `ltoa` and then right-aligned and zero-padded in a four-character field, as ES2's are.
+
+The paint makes no `Widget_DrawToCockpit` call, where the status screen's update and the NAV MAP's paint each end with one ([the status screen](mfd-status-screen.md#the-screen-object), [the NAV MAP](mfd-nav-map.md#the-paint)); the display copies the screen's rect itself only on the frame after a repaint ([drawing the display](mfd-display.md#drawing-it), step 3; [Open](#open)).
 
 ### The contacts
 
-An object is skipped when it is the cockpit's machine, when its byte `+0x9e` or `+0x93` is set (ES2's `+0xa4` and `+0x99`), or when the dword `+0x16` of its group (`+0x3f`) is non-zero (ES2's group `+0x14`). Its position is its `+0x20`/`+0x24` when its byte `+0x8f` (ES2's `+0x95`) is set or its side byte (the group's `+0x14`) is not 1. Otherwise, on a paint while bit `0x20` of the clock `000981c4` is clear, it is the point at `+0x164` when the byte `+0xa1` is clear, and the object is skipped in every other case: ES2's blinking last-known position, with `+0xa1` and `+0x164` at ES2's `+0xa7` and `+0x1aa` less 6 and `0x46` ([the ghost contact](../../retail/simulation/mfd-scanner.md#the-blinking-ghost-contact), [Open](#open)). ES2's also skips an indestructible structure type; ES1's has no such test.
+An object is skipped when it is the cockpit's machine, when its byte `+0x9e` or `+0x93` is set (ES2's `+0xa4` and `+0x99`), or when the dword `+0x16` of its group (`+0x3f`) is non-zero (ES2's group `+0x14`). Its position is its `+0x20`/`+0x24` when its byte `+0x8f` (ES2's `+0x95`) is set or its side byte (the group's `+0x14`) is not 1. Otherwise, on a paint while bit `0x20` of the clock `000981c4` is clear, it is the point at `+0x164` when the byte `+0xa1` is clear, and the object is skipped in every other case: ES2's blinking last-known position, with `+0xa1` and `+0x164` at ES2's `+0xa7` and `+0x1aa` less 6 and `0x46` ([the ghost contact](../../retail/simulation/mfd-scanner.md#the-blinking-ghost-contact)). `Mech_Constructor` sets `+0xa1` to 1 (`00011409`), as do the second pass's structure and flyer builders (`00003cbc` at `00003dfa`, `00003f60` and `000040ca`; `0001ac58` at `0001ad31`; [the second pass](../formats/script-dat.md#the-second-pass)), as ES2's constructors set `+0xa7`. While the byte stays set the branch skips the object, so a side-1 object is plotted only while it is radar-visible, its `+0x8f` set ([the sensor model](sensor-model.md#the-fields), [Open](#open)). ES2's also skips an indestructible structure type; ES1's has no such test.
 
-With (*dx*, *dy*) the position less the machine's `+0x20`/`+0x24`, and *h* the `int16` `+0x10` of the view object (`View_GetActiveObject`, the camera's heading; [the camera](external-views.md#the-camera)):
+With (*dx*, *dy*) the position less the machine's `+0x20`/`+0x24`, and *h* the heading of step 1:
 
 ```
 d = Math_FastMagnitude2D(dx, dy), 1 if 0
 skip unless d < range (+0x28)
 if dy > 0:  d = -d
-a = 0x4000 - Math_AsinBam((dx << 14) / d) + h          -- int16
-x = Q14(d, Math_CosBam(a))          / +0x24 + center.x
-y = Q14(d, Math_CosBam(a - 0x4000)) / +0x24 + center.y  -- each division truncated
+a = 0x4000 - Math_AsinBam((dx << 14) / d) + h                       -- int16
+x = Math_Q14Multiply(d, Math_CosBam(a))          / +0x24 + center.x
+y = Math_Q14Multiply(d, Math_CosBam(a - 0x4000)) / +0x24 + center.y  -- each division truncated
 ```
+
+`Math_Q14Multiply` (`0005e838`) is ES1's rounding Q14 product of an `int32` and an `int16` ([the primitives](fixed-point-math.md#the-primitives)). `Math_FastMagnitude2D` (`00063234`) is max(|*dx*|, |*dy*|) + (min(|*dx*|, |*dy*|) >> 1), so it is at least |*dx*| while that sum stays below 2³¹ (components under 2³⁰ in magnitude are enough), and it is 0 only at *dx* = *dy* = 0, where the substitute 1 makes the argument 0. Past the range test |*dx*| ≤ |*d*| < 120000 < 2¹⁷, so *dx* << 14 fits in 32 bits and the arcsine's argument, the `IDIV` truncating toward zero, lies within ±`0x4000`, at an end when *dy* is 0.
 
 With *h* 0 this puts the contact at (*dx*, −*dy*) / scale from the center, north up; *h* turns the plot. ES2's rotates by the machine's own heading with `Math_BuildRotation2D` ([plot](../../retail/simulation/mfd-scanner.md#plot)). A contact at the range lands 21 pixels from the center.
 
-The contact is one pixel, `Gfx_PlotPixel` with the pen {0, *color*}, *color* a palette index:
+The contact is one pixel, `Gfx_PlotPixel` ([pixels](../rendering/screen-pages.md#pixels)) with the pen {0, *color*}, *color* a palette index:
 
 | Side 0 | Otherwise: class 0 | class 1 | class 2 | any other class |
 |---|---|---|---|---|
@@ -79,7 +84,7 @@ The contact is one pixel, `Gfx_PlotPixel` with the pen {0, *color*}, *color* a p
 
 The class is the object's `int16` `+0x162`. ES2's draws a 2 × 2 block in a `COLORS.DAT` color for each class and side ([contact colours](../../retail/simulation/mfd-scanner.md#contact-colours)).
 
-When the object is the cockpit's selection (`+0x20c`), the paint keeps its pixel for step 5 and its distance, `Hud_WorldUnitsToMetres`(|*d*|), for `+0x38`. The distance starts at 0 on every paint, so it reads `0000` while the selection is not plotted.
+When the object is the cockpit's selection (`+0x20c`), the paint keeps its pixel for step 6 and its distance, `Hud_WorldUnitsToMetres`(|*d*|), for `+0x38`. The distance starts at 0 on every paint, so it reads `0000` while the selection is not plotted.
 
 ## Functions
 
@@ -100,7 +105,7 @@ When the object is the cockpit's selection (`+0x20c`), the paint keeps its pixel
 - **Open:** what calls `HeapPtr_DtorScannerCopy`, to which `es2_xref.py` finds no branch or stored pointer.
 - **Open:** what the rect at `+0x44` is for: the constructor builds it and `MfdRadarScreen_Paint` does not read it.
 - **Open:** whether the view object's heading is the hull's or the turret's while the player is in the cockpit, and so whether the plot is hull-relative as ES2's is.
-- **Open:** whether ES1's constructors set `+0xa1` before an object enters the list, as ES2's set `+0xa7`, which would leave the blinking last-known position unreachable here too; and what `+0x164` holds.
+- **Open:** whether anything clears a simulator object's `+0xa1` or writes its `+0x164`, which the last-known position needs. `es2_fieldscan.py --binary ES1DBSIM a1 --writes-only` finds, on an object, the five stores of 1 above; its other hits are the gauges' own `+0xa1`, `0003c258`'s, `00040254`'s and `000424f8`'s structures, and bulk copies of render contexts. `es2_fieldscan.py 164 --writes-only` finds no write to an object (two stores in `0003ee58`, which `0003c258` calls, to its own structure, and the same bulk copies); positive control: both scans find the paint's reads at `000357e0` and `00035804`. A bulk copy or an alias neither scan resolves would escape them.
+- **Open:** what puts the scanner's later frames on the screen, its paint making no `Widget_DrawToCockpit` call: which page the canvas context draws on between `Cockpit_DrawFrame`'s push and pop. A retail check: with SCANNER up and the HERC turning in place, the contacts turn smoothly, frame by frame.
 - **Open:** what the `radar` bank's frame 0 shows, and how many frames the bank has.
-- **Open:** what the machine's radar byte `+0x90` holds when a mission starts, which decides whether the legend opens on `ACT` or `PASS`: `Mech_ToggleRadarMode`'s flip is the writer read.
 - **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: with the scanner up and a target selected, `BP <CS>:000355a4` fires each frame, and the screen shows a 5 × 5 square around one contact and `DST:` over a nonzero four-digit distance.

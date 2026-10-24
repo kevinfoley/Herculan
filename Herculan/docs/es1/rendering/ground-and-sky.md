@@ -202,10 +202,8 @@ ES2's `TexPoly_DrawAtPoints` (`0042fa18`) also sets the depth fade to 0 and hold
 
 1. clears the model transform (`Raster_SetModelTransform(0)`) and installs a pixel brush `{0, colour}` from its own stack at the render context's `+0x228`, which it leaves there when it returns;
 2. the camera has moved when any of its coordinates differs from the centre `+9`, `+0xd`, `+0x11`; *mid* is ((centre + camera) >> 1) in *x* and *y*;
-3. for each of the first `+7` points, *d* being `Math_FastMagnitude2D` of its *x* and *y* less the camera's: when the camera has moved and *d* exceeds 70000, the point is reflected through *mid* in *x* and *y*. It is moved into the view with `Raster_ModelToView` and drawn when its depth (the view point's `+4`) exceeds the camera's near plane `+0x1e`: `Raster_PerspectiveDivide` and `Raster_ProjectToScreen` give the pixel (*x*, *y*), and `Gfx_PlotPixel` plots (*x*, *y*) in colour *c*, short 8 (`+0x15`); when *d* is below 30000 also (*x* + 1, *y*) in *c*; when it is below 20000 also (*x* + 2, *y*) and (*x* + 2, *y* − 1) in *c* − 2 and (*x* + 1, *y* − 1) in *c* − 4;
+3. for each of the first `+7` points, *d* being `Math_FastMagnitude2D` of its *x* and *y* less the camera's: when the camera has moved and *d* exceeds 70000, the point is reflected through *mid* in *x* and *y*. It is moved into the view with `Raster_ModelToView` and drawn when its depth (the view point's `+4`) exceeds the camera's near plane `+0x1e`: `Raster_PerspectiveDivide` and `Raster_ProjectToScreen` give the pixel (*x*, *y*), and `Gfx_PlotPixel` ([pixels](screen-pages.md#pixels)) plots (*x*, *y*) in colour *c*, short 8 (`+0x15`); when *d* is below 30000 also (*x* + 1, *y*) in *c*; when it is below 20000 also (*x* + 2, *y*) and (*x* + 2, *y* − 1) in *c* − 2 and (*x* + 1, *y* − 1) in *c* − 4;
 4. stores the camera's position as the centre.
-
-`Gfx_PlotPixel` (`00069058`) is ES2's (`Gfx_PlotPixel`, `004894e0`): it reads the brush through the canvas's `+0x224` (the render context's `+0x228`, the canvas being the context's `+4`). With mode 0 it resolves the colour by its top byte as a fill's brush does ([the colour ramps](polygon-shading.md#the-colour-ramps)) and plots through the display driver's routine at `0009dee8`; with mode 2 it hands the brush's `+4` to `0009deec`; with any other mode, or a colour it cannot resolve, it plots nothing. It moves the point by the canvas's origin when `+0x208` is set, and clips it when the canvas's `+0x204` is 1 to the rect `+0x20c`–`+0x218`, and otherwise when it is not 0 to the canvas's list of rects and span lists.
 
 ## The pitch gradient (palette entries 64–79)
 
@@ -246,7 +244,7 @@ ES2's `TexPoly_DrawAtPoints` (`0042fa18`) also sets the depth fade to 0 and hold
 | `GndTex_AllocSelector`, `GndTex_FreeSelector`, `GndTex_DrawSpan` | `000298b8`, `000298fe`, `0002991d` | the span's unrolled steps have no Ghidra function |
 | `Math_TransposeRotation2D`, `Math_BuildRotation2D`, `Transform2D_ApplyToPoint` | `00063df0`, `000694b8`, `00069448` | the three that [`fixed-point-math.md`](../simulation/fixed-point-math.md#the-assembly-library) lists as ES2's code |
 | `TSGroup_Ctor`, `TSGroup_Dtor` | `000547b4`, `00054888` | `Hzline`'s base, ES2's (`004757a8`, `004757f4`): the constructor allocates `0x28` bytes when given none, stores the vptrs `000961ca`, `000961ee`, `0009621a` and `0009624e` in turn and zeroes `+0x10` to `+0x1c`; the destructor stores `0009624e`, frees `+0x10`, `+0x14` (through `__vec_delete`) and `+0x18`, calls slot `+0x1c` with flags 3 on each non-null pointer of the `+0x26` (`uint16`) in the array `+0x1c` and frees the array, stores `0009621a`, calls `TSBase_Dtor` and frees the object on bit 0 of the flags |
-| `Bitmap_BlitRotatedUnpacked`, `Gfx_PlotPixel`, `Bitmap_BlitRotatedScaled` | `00067214`, `00069058`, `00076630` | |
+| `Bitmap_BlitRotatedUnpacked`, `Bitmap_BlitRotatedScaled` | `00067214`, `00076630` | |
 
 ## Globals
 
