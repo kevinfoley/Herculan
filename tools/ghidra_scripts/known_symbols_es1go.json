@@ -6796,7 +6796,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TtmScript_NextPage",
-      "description": "(script): moves to the next page: the word +0x1ac when it is not -1, which it then sets to -1; else the word +0x1ae likewise; else the current page +2 plus 1, unless the mode +0x3c is 3, when the page stays. Clears the bytes +0x40, +0x41 and +0x42. When the page has reached the page count +0, calls TtmScript_Reset (0004b3c6) and sets the mode to 0 when the loop flag +0x43 is 1, and sets the mode to 2 otherwise.",
+      "description": "(script): moves to the next page: the word +0x1ac when it is not -1, which it then sets to -1; else the word +0x1ae likewise; else the current page +2 plus 1, unless the mode +0x3c is 3, when the page stays. Clears the bytes +0x40, +0x41 and +0x42. When the page has reached the page count +0: with the loop flag +0x43 1, calls TtmScript_Reset (0004b3c6) and sets the mode to 0; with any other loop flag, sets the mode to 2 and leaves the script as it is.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#running-a-script",
       "verified": {
         "bytes": "00046e7c+176",
@@ -6811,13 +6811,13 @@
       "type": "function",
       "confidence": "high",
       "name": "TtmScript_Run",
-      "description": "(script, ticks) in stack order, callee-cleaned: installs the script's render context +0x2c, or 00082a98 when that is 0, storing its +4 at +0x40 of the display object 00082a94 (through Raster_SetClipBlock when the display slot 000ab7a0 holds it) and calling Raster_InstallRenderContext; subtracts ticks from the delay +0x1b8. When the delay is above 0 or the byte +0x42 is 0: unless the mode +0x3c is 2, runs the page +2 with TtmScript_RunPage (00048218), sets +0x42 to 1 and, when the delay is 0 or less, reloads it from +0x1ba and calls TtmScript_NextPage (00046e7c). Otherwise: when the byte +0x1c0 is 1, subtracts ticks from +0x1bc and, when it falls below 0, reloads it from +0x1be and calls TtmScript_CyclePalette (000472d0); reloads the delay from +0x1ba; then for mode 0 runs the page and calls TtmScript_NextPage, for mode 1 runs the page, for mode 3 calls TtmScript_Reset (0004b3c6) and sets mode 0 when the loop flag +0x43 is 1 and sets mode 2 otherwise, and for mode 2 goes straight to the return. Returns 1.",
+      "description": "(script, ticks) in stack order, callee-cleaned: installs the script's render context +0x2c, or 00082a98 when that is 0, storing its +4 at +0x40 of the display object 00082a94 (through Raster_SetClipBlock when the display slot 000ab7a0 holds it) and calling Raster_InstallRenderContext; subtracts ticks from the delay +0x1b8. When the delay is above 0 or the byte +0x42 is 0: unless the mode +0x3c is 2, runs the page +2 with TtmScript_RunPage (00048218), sets +0x42 to 1 and, when the delay is 0 or less, reloads it from +0x1ba and calls TtmScript_NextPage (00046e7c). Otherwise: when the byte +0x1c0 is 1, subtracts ticks from +0x1bc and, when it falls below 0, reloads it from +0x1be and calls TtmScript_CyclePalette (000472d0); reloads the delay from +0x1ba; then for mode 0 runs the page and calls TtmScript_NextPage, for mode 1 runs the page, for mode 3 with the loop flag +0x43 1 calls TtmScript_Reset (0004b3c6) and sets mode 0, and for mode 3 with any other loop flag sets mode 2 and leaves the script as it is; mode 2 and any other mode go straight to the return. Returns 1.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#running-a-script",
       "verified": {
         "bytes": "00046f2c+443",
         "sha1": "87712140c21f",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {

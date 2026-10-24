@@ -18472,13 +18472,13 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitClock_Tick",
-      "description": "(clock): slot +0xc of the clock's vtable 00094b5a, entered at 000435bf. Sets the mark +0x75 to 2 while the published view manager's +0x18 is set; while +0x75 is set draws the rect from +4 of the hour label +0x7a to +0xc of the minute label +0x7e with Widget_DrawToCockpit(0, rect, 0) and clears it; when the count 000981c4 is past +0x86 calls CockpitClock_Advance (00043658), sets +0x86 to the count + 30 and +0x75 to 1.",
+      "description": "(clock): slot +0xc of the clock's vtable 00094b5a, entered at 000435bf. Sets the mark +0x75 to 2 while the published view manager's +0x18 is set; while +0x75 is set draws the rect from +4 of the hour label +0x7a to +0xc of the minute label +0x7e with Widget_DrawToCockpit(0, rect, 0) and clears it; when the count 000981c4 is above +0x86, compared unsigned, calls CockpitClock_Advance (00043658), sets +0x86 to the count as read before the call + 30 and +0x75 to 1.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-cockpit-clock",
       "verified": {
         "bytes": "000435c0+151",
         "sha1": "221266f984d5",
         "scope": "body",
-        "via": "decompile"
+        "via": "disasm"
       }
     },
     {
@@ -34690,13 +34690,13 @@
       "type": "function",
       "confidence": "high",
       "name": "TtmScript_Run",
-      "description": "(script, ticks) in stack order, callee-cleaned: notes the default render context 0009f248 and, when the script's +0x1bd is not 0, sets 0009f248 to it and installs it with Raster_InstallRenderContext. Subtracts ticks from the wait +0x182. While it is above 0: unless the mode dword +0xe is 2, runs the page byte +1 with TtmScript_RunPage (0007aa58). Otherwise: when the byte +0x18a is 1 subtracts ticks from +0x186 and, below 0, reloads it from +0x188 and calls TtmScript_CyclePalette (00079d90); reloads the wait from +0x184; then through the table 0009f2f4 by mode: 0 runs the page, then takes the page +0x178 when it is not -1 (setting it to -1) or else adds 1 to the page and clears the byte +0x12, and when the page has reached the count byte +0 resets the script with TtmScript_Reset (0007ca44) and sets the mode to 0 when the loop dword +0x13 is 1, to 2 otherwise; 1 runs the page; 3 resets and sets the mode as at the end; 2 does nothing. Finally restores and installs the noted context and returns 1. es2_xref finds one call, from Ttm_RunAll (000695e0).",
+      "description": "(script, ticks) in stack order, callee-cleaned: notes the default render context 0009f248 and, when the script's +0x1bd is not 0, sets 0009f248 to it and installs it with Raster_InstallRenderContext. Subtracts ticks from the wait word +0x182. While it is above 0: unless the mode dword +0xe is 2, runs the page byte +1 with TtmScript_RunPage (0007aa58). Otherwise: when the byte +0x18a is 1 subtracts ticks from +0x186 and, below 0, reloads it from +0x188 and calls TtmScript_CyclePalette (00079d90); reloads the wait from +0x184; then, for a mode of 3 or less by an unsigned test, through the table 0009f2f4: 0 runs the page, then takes the page +0x178 when it is not -1 (setting it to -1) or else adds 1 to the page and clears the byte +0x12, and when the page has reached the count byte +0 does as mode 3; 1 runs the page; 3, with the loop dword +0x13 1, resets the script with TtmScript_Reset (0007ca44) and sets the mode to 0, and otherwise sets the mode to 2 and leaves the script as it is; 2 goes to the end, as a mode above 3 does. Finally restores and installs the noted context and returns 1. es2_xref finds one call, from Ttm_RunAll (000695e0).",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-run",
       "verified": {
         "bytes": "00079a14+318",
         "sha1": "35bb43e0e44f",
         "scope": "body",
-        "via": "both"
+        "via": "disasm"
       }
     },
     {
