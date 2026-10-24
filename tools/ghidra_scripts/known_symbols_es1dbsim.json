@@ -24862,7 +24862,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Raster_FillRect",
-      "description": "(rect), C convention: fills the inclusive rect {x0, y0, x1, y1} with the brush at the installed clip block's +0x228 (the block 00098d64 points at). Brush mode 0 fills through g_RasterRoutines slot 2 (0009dedc), mode 6 remaps through slot 3 (0009dee0), and mode 4 draws the rect's outline with Raster_DrawLine under a temporary pen at +0x224; a colour whose top byte is 4 is read from the colour-ramp records at 0009a6f5. The rect moves by the block's translation when +0x208 is set and is clipped by its mode +0x204: 0 none, 1 the rect at +0x20c (00073dc4), otherwise each region of the list at +0, a rect region through 00073dc4 and a span region through 00073d8c and 00073b7c. ES2's Raster_FillRect (DBSIM 004865f8), statement for statement.",
+      "description": "(rect), C convention: fills the inclusive rect {x0, y0, x1, y1} with the brush at the installed clip block's +0x228 (the block 00098d64 points at). Brush mode 0 fills through g_RasterRoutines slot 2 (0009dedc), mode 6 remaps through slot 3 (0009dee0), and mode 4 draws the rect's outline with Raster_DrawLine under a temporary pen at +0x224; a colour whose top byte is 4 is read from the colour-ramp records at 0009a6f5. The rect moves by the block's translation when +0x208 is set and is clipped by its mode +0x204: 0 none, 1 the rect at +0x20c (00073dc4), otherwise each region of the list at +0, a rect region through 00073dc4 and a span region through 00073d8c and SpanRegion_Intersect (00073b7c). ES2's Raster_FillRect (DBSIM 004865f8), statement for statement.",
       "source": "ES1DBSIM decompile at 00053d9c, against ES2's Raster_FillRect",
       "verified": {
         "bytes": "00053d9c+664",
@@ -32293,7 +32293,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Raster_DrawPolygonDispatch",
-      "description": "(count, points), C convention: draws a polygon with the brush {mode, colour} at the installed clip block's (00098d64) +0x228, translating the points by (+0x20c - +0x21c, +0x210 - +0x220) first when +0x208 is set. Fewer than three points, or brush mode 4, draw in the brush colour through a temporary brush at +0x224: one point through Gfx_PlotPixel (00069058), two through Raster_DrawLine, more as a line loop. For three or more: mode 0 fills through g_RasterRoutines slot 0 with the colour (a palette index for top byte 0, the ramp entry from 0009a6f5 for top byte 4, nothing otherwise), mode 1 goes to 0007965c, modes 5 and 7 to the routine at 0009df58, mode 6 fills through slot 1 (0009ded8) with the brush's second field. The fills scan-convert with Poly_ScanConvertToSpanRegion (00076f54) and clip per the clip mode +0x204: 0 none, 1 through Poly_ClipToRect (000788e4) against the rect at +0x20c, otherwise against each region of the block's list (rects through Poly_ClipToRect (000788e4), span regions through 00073b7c). es2_naming.py diff finds it identical to ES2's Raster_DrawPolygonDispatch (DBSIM 00483dac) but for labels.",
+      "description": "(count, points), C convention: draws a polygon with the brush {mode, colour} at the installed clip block's (00098d64) +0x228, translating the points by (+0x20c - +0x21c, +0x210 - +0x220) first when +0x208 is set. Fewer than three points, or brush mode 4, draw in the brush colour through a temporary brush at +0x224: one point through Gfx_PlotPixel (00069058), two through Raster_DrawLine, more as a line loop. For three or more: mode 0 fills through g_RasterRoutines slot 0 with the colour (a palette index for top byte 0, the ramp entry from 0009a6f5 for top byte 4, nothing otherwise), mode 1 goes to 0007965c, modes 5 and 7 to the routine at 0009df58, mode 6 fills through slot 1 (0009ded8) with the brush's second field. The fills scan-convert with Poly_ScanConvertToSpanRegion (00076f54) and clip per the clip mode +0x204: 0 none, 1 through Poly_ClipToRect (000788e4) against the rect at +0x20c, otherwise against each region of the block's list (rects through Poly_ClipToRect (000788e4), span regions through SpanRegion_Intersect (00073b7c)). es2_naming.py diff finds it identical to ES2's Raster_DrawPolygonDispatch (DBSIM 00483dac) but for labels.",
       "source": "ES1DBSIM decompile at 00068be0, against ES2's Raster_DrawPolygonDispatch",
       "verified": {
         "bytes": "00068be0+867",
@@ -32812,7 +32812,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Raster_DrawLine",
-      "description": "(from, to), C convention: draws a line between two {x, y} points with the pen at the installed clip block's +0x224 (the block 00098d64 points at): mode 0 a flat colour, mode 2 a span remap through g_RasterRoutines slot 1 (0009ded8), a colour whose top byte is 4 read from the colour ramps at 0009a6f5. The points move by the block's translation when +0x208 is set. Clip mode 0 draws the whole line and mode 1 the line clipped to the rect at +0x20c (Line_ClipToRect (0007d4a4)): a flat colour through slot 34 (0009df5c), a remap as the spans 0007d358 scan-converts it to. Other modes take each region of the list at +0: a rect region clips the line with Line_ClipToRect (0007d4a4), a span region intersects the line's spans with it through 00073b7c, and each piece goes to the pen's span routine. ES2's Raster_DrawLine (DBSIM 004838f8), statement for statement.",
+      "description": "(from, to), C convention: draws a line between two {x, y} points with the pen at the installed clip block's +0x224 (the block 00098d64 points at): pen mode 0 a flat colour, mode 2 a span remap through g_RasterRoutines slot 1 (0009ded8), any other mode nothing; a colour whose top byte is 4 is read from the colour ramps at 0009a6f5. The points move by the block's translation, (+0x20c - +0x21c, +0x210 - +0x220), when +0x208 is set. Clip mode 0 draws the whole line and mode 1 the line cut to the rect at +0x20c by Line_ClipToRect (0007d4a4), nothing when that answers 0: a flat colour through slot 34 (0009df5c), a remap as the span list Line_ScanConvertToSpanRegion (0007d358) makes of it in the list 00098de1 points at. Any other clip mode takes the regions of the list at +0 from the last to the first: a rect region (type 0) cuts a copy of the line to its rect with Line_ClipToRect and draws the piece's span list; at the first span region (type 2) the line itself is cut to the rect at +0x20c, the function returning when nothing of it is left, and made once into a span list in the list 00098de5 points at, which SpanRegion_Intersect (00073b7c) intersects with each span region; other region types are passed over. In those modes each piece goes to the pen's span routine, slot 0 for a flat colour. ES2's Raster_DrawLine (DBSIM 004838f8), statement for statement.",
       "source": "ES1DBSIM decompile at 0006a064, against ES2's Raster_DrawLine",
       "verified": {
         "bytes": "0006a064+614",
@@ -34724,6 +34724,21 @@
       }
     },
     {
+      "address": "00073b7c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SpanRegion_Intersect",
+      "description": "(a, b, out), C convention: intersects two span regions ({int16 top row, int16 row count, then an int16 {x0, x1} pair per row}) row by row into out over the rows both cover, a row's run being {max x0, min x1}. The result starts at the first row whose two runs overlap and ends at the last, a row between them whose runs do not overlap being written {1, 0}. Returns out, or 0 when no row overlaps. es2_xref finds five calls, one each from Raster_DrawLine (0006a064), Raster_DrawPolygonDispatch (00068be0), Raster_FillRect (00053d9c), Raster_FillSpanList (0008f68c) and Region_CopySpansBetweenPages (000667c1). ES2's SpanRegion_Intersect (DBSIM 00486af4), the same statements.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#lines-and-clipped-bitmaps; ES1DBSIM decompile at 00073b7c, against ES2's SpanRegion_Intersect",
+      "verified": {
+        "bytes": "00073b7c+277",
+        "sha1": "482a7f64d48b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00073e24",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -36114,6 +36129,21 @@
       "verified": {
         "bytes": "0007d0e0+629",
         "sha1": "d5093943e820",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0007d358",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Line_ScanConvertToSpanRegion",
+      "description": "(a, b, out), C convention: writes the int16 span region of a one-pixel line between the int32 points a and b: the top row min(y), the row count |dy| + 1, then an {x0, x1} pair per row from the top. A single point is one row {x, x}; a horizontal line one row {min x, max x}; a vertical line {x, x} on each row; any other the run of x a Bresenham walk from the smaller-x end puts on each row, its error starting at 2dy - dx for a shallow line and 2dx - dy for a steep one, the rows written from the last back when y falls along the walk. es2_xref finds three calls, all from Raster_DrawLine (0006a064). ES2's Line_ScanConvertToSpanRegion (DBSIM 00483c60), the same statements.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#lines-and-clipped-bitmaps; ES1DBSIM decompile at 0007d358, against ES2's Line_ScanConvertToSpanRegion",
+      "verified": {
+        "bytes": "0007d358+331",
+        "sha1": "3d3e84785c9a",
         "scope": "body",
         "via": "decompile"
       }

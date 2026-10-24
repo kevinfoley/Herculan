@@ -38,7 +38,19 @@ A crossing is always computed from the outside endpoint `a` toward the other end
 
 ### Clipping a line
 
-`Line_ClipToRect(a, b, rect)` (`0045554c`; DBSIM `00483b60`) cuts the segment between the points `a` and `b`, in place, to `rect = {x0, y0, x1, y1}`, inclusive, and returns 1, or 0 when nothing of it is left. It takes the bounds once each, in the order `y0`, `x0`, `y1`, `x1`. When both endpoints lie beyond a bound it returns 0, leaving both points as they were; when one does, that endpoint moves onto the bound, at the crossing computed from it toward the other as [the rectangle clipper's](#clipping-to-a-rectangle) is, in 64 bits with the division truncating toward zero; when neither does, nothing changes. A point on a bound is inside. To move `b` it first swaps the two points and leaves them swapped, so each bound that moves `b` reverses their order: the result can hold the endpoints the other way round. `Raster_DrawLine` (DBSIM `004838f8`) cuts a line through it in clip mode 1 and for each rect region of a clip list.
+`Line_ClipToRect(a, b, rect)` (`0045554c`; DBSIM `00483b60`) cuts the segment between the points `a` and `b`, in place, to `rect = {x0, y0, x1, y1}`, inclusive, and returns 1, or 0 when nothing of it is left. It takes the bounds once each, in the order `y0`, `x0`, `y1`, `x1`. When both endpoints lie beyond a bound it returns 0, leaving both points as they were; when one does, that endpoint moves onto the bound, at the crossing computed from it toward the other as [the rectangle clipper's](#clipping-to-a-rectangle) is, in 64 bits with the division truncating toward zero; when neither does, nothing changes. A point on a bound is inside. To move `b` it first swaps the two points and leaves them swapped, so each bound that moves `b` reverses their order: the result can hold the endpoints the other way round. [`Raster_DrawLine`](#drawing-a-line) cuts a line through it in clip mode 1 and for each rect region of a clip list.
+
+### Drawing a line
+
+**`Raster_DrawLine` (DBSIM `004838f8`), (from, to), draws a line with both its end pixels, whole, cut to the clip block's rect, or in pieces, one for each region of the block's clip list it crosses.** The pen is at the block's `+0x224`: mode 0 a colour, its top byte resolved as [the brush colour](#the-brush-colour)'s; mode 2 a remap through `g_RasterRoutines_RemapSpans` with the pen's `+4`; any other mode draws nothing. Both points move by the block's translation, (`+0x20c` − `+0x21c`, `+0x210` − `+0x220`), when `+0x208` is set. Then, by the clip mode `+0x204`:
+
+- **0** draws the line whole, and **1** cuts it to the block's rect `+0x20c` with `Line_ClipToRect`, drawing nothing when nothing is left. A colour then goes through `g_RasterRoutines_DrawLine`; a remap is made into a span list at `004a36a9` by `Line_ScanConvertToSpanRegion` (DBSIM `00483c60`) and goes to the pen's span routine.
+- **Any other** walks the block's list from its last region to its first:
+  - a rect region cuts a copy of the line to its own rect with `Line_ClipToRect` and scan-converts the piece;
+  - at the first span region the line itself is cut to the block's rect `+0x20c`, and when nothing of it is left `Raster_DrawLine` returns, drawing no piece for the regions the walk has not reached; what is left is scan-converted once into `004a36ad`, which `SpanRegion_Intersect` (DBSIM `00486af4`) cuts to this span region and to each span region after it in the walk;
+  - a region of any other type is passed over.
+
+  Each piece goes to the pen's span routine, `g_RasterRoutines`' for a colour.
 
 ### Scan conversion
 
@@ -69,7 +81,7 @@ A shallow edge's value is the outermost pixel its Bresenham line puts on that ro
 `Raster_FillRect` (DBSIM `004865f8`), given an inclusive rect {*x0*, *y0*, *x1*, *y1*}, by the brush's mode:
 
 - **0** fills it with the colour through `g_RasterRoutines` slot 2; **6** remaps it through slot 3 with the brush's second field. The rect first moves by the block's translation, (`+0x20c` − `+0x21c`, `+0x210` − `+0x220`), when `+0x208` is set, and is clipped by the clip mode `+0x204`: 0 not at all, 1 to the block's rect at `+0x20c`, otherwise to each region of the block's list, from its last entry to its first: a rect region's intersection goes to the mode's routine, and a span region's intersection with the rect, as a span list, to slot 0 whatever the mode.
-- **4** draws four lines, the rect's edges, both ends included: (*x1*, *y0*) to (*x0*, *y0*), (*x0*, *y1*) to (*x0*, *y0*), (*x0*, *y1*) to (*x1*, *y1*) and (*x1*, *y0*) to (*x1*, *y1*). The lines move and clip as lines do ([clipping a line](#clipping-a-line)).
+- **4** draws four lines, the rect's edges, both ends included: (*x1*, *y0*) to (*x0*, *y0*), (*x0*, *y1*) to (*x0*, *y0*), (*x0*, *y1*) to (*x1*, *y1*) and (*x1*, *y0*) to (*x1*, *y1*). The lines move and clip as lines do ([drawing a line](#drawing-a-line)).
 - Any other mode draws nothing.
 
 ### Ellipses

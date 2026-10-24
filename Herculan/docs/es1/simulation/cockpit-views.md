@@ -53,7 +53,7 @@ It does not set the current view `+0x10`, which ES2's sets to −1. The manager 
 4. `Palette_FlushDirtyRange`, which sends the changed entries to the display ([the upload](../rendering/palette.md#differences-from-es2));
 5. slot `+0x1c` of the `dpl\cockpit` palette with 3, its destructor, which in `GLPalette`'s table (`0009b3b6`) is `GLPalette_Dtor` (`00069258`): the colors and the palette are freed. `CockpitPaletteSingleton` keeps the freed pointer.
 
-`Palette_InstallRange` (`00027e98`), (source, count, base), copies *count* colors to the live palette from entry *base* and widens the dirty range over them; `Palette_GetEntry` (`00027f54`), (index), returns the live palette's color at the `int16` index ([the palette module](../rendering/palette.md)).
+`Palette_InstallRange` (`00027e98`) puts colors into the live palette, which reach the display at the frame's end ([installing colors](../rendering/palette.md#installing-colors)); `Palette_GetEntry` (`00027f54`), (index), returns the live palette's color at the `int16` index ([the palette module](../rendering/palette.md)).
 
 `CockpitScheme_ColorIndices` holds eight words, `0x2c`, `0x25`, `0x2d`, `0x27`, `0x2d`, `0x2d`, `0x2d`, `0x28`, each inside step 1's range, so entry `0x40` becomes `dpl\cockpit` entry 32*s* + the word − `0x20`:
 
