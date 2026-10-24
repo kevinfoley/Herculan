@@ -11,8 +11,8 @@ namespace HercWorks.Query;
 /// </summary>
 internal static class Program {
 	private const string Usage = """
-		HercWorks.Query — search the retail .MSN missions and chassis records of an Earthsiege 2 or a
-		Metaltech: Earthsiege (ES1) install. The install is ES1's when its root holds GO.EXE, else ES2's.
+		HercWorks.Query — search the retail .MSN missions, chassis records and ES1 cockpit layouts of an
+		Earthsiege 2 or a Metaltech: Earthsiege (ES1) install. The install is ES1's when its root holds GO.EXE, else ES2's.
 		Rows are numbered in each game's own order: ES2's #1-#17, ES1's 1-11.
 
 		Both games:
@@ -40,6 +40,11 @@ internal static class Program {
 		                                   through the HercWorks reader bound to it, written back and
 		                                   compared: per archive and type, how many round-trip, parse,
 		                                   fail or have no reader, then each failure's cursor offset
+		  chassis [--field <name|offset>]  every chassis' dat\<name>.DAT type record, in MECHS.NAM order:
+		                                   with --field, each chassis' value of that field in decimal
+		                                   and hex; without, the record's fields with their offsets and
+		                                   types. ES2's records are 216 bytes, ES1's 192. --type picks
+		                                   the chassis (default all)
 
 		ES2 only (over an ES1 install each prints one line saying why, and exits 0):
 		  flag <n>                         every record testing or writing campaign flag n
@@ -57,10 +62,16 @@ internal static class Program {
 		  text <mission>... [--ids LO-HI]  the named missions' .ENG text records in file order, each with
 		                                   its decoded condition; a later record of an id replaces the
 		                                   line when its condition holds
-		  chassis [--field <name|offset>]  every chassis' dat\<name>.DAT type record, in MECHS.NAM order:
-		                                   with --field, each chassis' value of that field in decimal
-		                                   and hex; without, the record's fields with their offsets and
-		                                   types. --type picks the chassis (default all)
+
+		ES1 only (over an ES2 install it prints one line saying why, and exits 0):
+		  gau [--block <name|offset>]      every chassis' gau\<name>.GAU cockpit layout, in MECHS.NAM
+		                                   order: with --block, each chassis' int32 of that member, or
+		                                   from that file offset to the end of the member it falls in,
+		                                   with each int32's offset; without, the layout's members with
+		                                   their offsets and lengths. The values are the layout as
+		                                   Gau_Load leaves it, after its origin add, which is what the
+		                                   simulator draws with; --as-read gives the file's own. --type
+		                                   picks the chassis (default all)
 
 		Options:
 		  --install <dir>   the install to read (default: the nearest ES2\ folder above the working
@@ -78,7 +89,11 @@ internal static class Program {
 		  --field <f>       chassis: a record field, by name (whole, then prefix) or by record offset
 		                    (0x52, 82). An offset that starts no field prints the word stored there
 		                    and names the field it falls in. Record offset N is the exe's type-record
-		                    offset N+2.
+		                    offset N+2, in both games.
+		  --block <b>       gau: a layout member, by name (whole, then prefix) or by file offset, a
+		                    multiple of 4 (1104, 0x450)
+		  --ints <n|LO-HI>  gau: n int32 from the block's start, or its int32 LO to HI (--ints 0x10-0x11)
+		  --as-read         gau: the file's int32 as read, before Gau_Load's origin add
 		  --json            print the raw result as JSON
 
 		A type is a decimal or 0x-hex index, a name matched whole and then as a prefix, or all
@@ -95,8 +110,8 @@ internal static class Program {
 	}
 
 	internal static int Run(string[] args, TextWriter output) {
-		string? install = null, type = null, against = null, ids = null, field = null;
-		bool json = false, variants = false, routeSwitch = false, withPoint = false;
+		string? install = null, type = null, against = null, ids = null, field = null, block = null, ints = null;
+		bool json = false, variants = false, routeSwitch = false, withPoint = false, asRead = false;
 		var positional = new List<string>();
 		for (int i = 0; i < args.Length; i++) {
 			switch (args[i].ToLowerInvariant()) {
@@ -114,6 +129,15 @@ internal static class Program {
 					break;
 				case "--ids" when i + 1 < args.Length:
 					ids = args[++i];
+					break;
+				case "--block" when i + 1 < args.Length:
+					block = args[++i];
+					break;
+				case "--ints" when i + 1 < args.Length:
+					ints = args[++i];
+					break;
+				case "--as-read":
+					asRead = true;
 					break;
 				case "--json":
 					json = true;
@@ -163,7 +187,7 @@ internal static class Program {
 
 		var data = RetailData.Load(install);
 		bool es1 = data.Game == RetailGame.Earthsiege1;
-		if (es1 && Es2Only(command) is { } why) {
+		if ((es1 ? Es2Only(command) : Es1Only(command)) is { } why) {
 			output.WriteLine(why);
 			return 0;
 		}
@@ -185,6 +209,10 @@ internal static class Program {
 
 		if (command == "chassis") {
 			return Chassis(output, data, type, field, json);
+		}
+
+		if (command == "gau") {
+			return Gau(output, data, type, block, ints, !asRead, json);
 		}
 
 		if (command == "missions" && es1) {
@@ -408,7 +436,12 @@ internal static class Program {
 		"actions" => "actions reads ES2's row #10 actions, their counters, messages and timers; it has no ES1 counterpart.",
 		"routes" => "routes reads ES2's row #8 routes and the row #15 orders and row #17 objectives naming them; it has no ES1 counterpart.",
 		"lint" => "lint checks the script.dat ES2's mission load writes; it has no ES1 counterpart.",
-		"chassis" => "chassis reads ES2's 216-byte dat\\<name>.DAT records; ES1's 192-byte records have their own reader (docs/es1/formats/chassis-dat.md), which this command does not use.",
+		_ => null,
+	};
+
+	/// <summary>The line an ES1-only command prints over an ES2 install: why it has no ES2 answer. Null for any other command.</summary>
+	private static string? Es1Only(string command) => command switch {
+		"gau" => "gau reads ES1's gau\\<name>.GAU cockpit layouts; ES2's layout (docs/retail/formats/gau-cockpit-layout.md) has its own reader, which this command does not use.",
 		_ => null,
 	};
 
@@ -417,15 +450,9 @@ internal static class Program {
 			return Fail($"No chassis record in {RetailData.SimulatorArchive}.");
 		}
 
-		var fields = ChassisQuery.Fields(sample.Length);
-		var chassis = data.Chassis;
-		if (type != null) {
-			if (TypeQuery.ResolveTypes(data, RosterKind.Mech, type) is not { } types
-					|| chassis.Where(c => types.Contains(c.Index)).ToList() is not { Count: > 0 } picked) {
-				return Fail($"No chassis is named {type}; `types mechs` lists them.");
-			}
-
-			chassis = picked;
+		var fields = ChassisQuery.Fields(data.ChassisModel, sample.Length);
+		if (PickChassis(data, data.Chassis, c => c.Index, type) is not { } chassis) {
+			return Fail($"No chassis is named {type}; `types mechs` lists them.");
 		}
 
 		if (spec == null) {
@@ -442,7 +469,7 @@ internal static class Program {
 			return Fail(error!);
 		}
 
-		var result = ChassisQuery.Run(chassis, fields, offset, named);
+		var result = ChassisQuery.Run(data.ChassisModel, chassis, fields, offset, named);
 		if (json) {
 			WriteJson(output, result);
 		} else {
@@ -450,6 +477,55 @@ internal static class Program {
 		}
 
 		return 0;
+	}
+
+	private static int Gau(TextWriter output, RetailData data, string? type, string? spec, string? ints, bool loaded, bool json) {
+		if (data.CockpitLayouts.All(l => l.File == null)) {
+			return Fail($"No cockpit layout in {RetailData.SimulatorArchive}.");
+		}
+
+		var blocks = GauQuery.Blocks();
+		if (PickChassis(data, data.CockpitLayouts, l => l.Index, type) is not { } layouts) {
+			return Fail($"No chassis is named {type}; `types mechs` lists them.");
+		}
+
+		if (spec == null) {
+			if (ints != null) {
+				return Fail("--ints takes a window of the block --block names.");
+			}
+
+			if (json) {
+				WriteJson(output, blocks);
+			} else {
+				GauQuery.WriteBlocks(output, blocks);
+			}
+
+			return 0;
+		}
+
+		if (GauQuery.ResolveWindow(blocks, spec, ints, out var block, out string? error) is not { } offsets) {
+			return Fail(error!);
+		}
+
+		var result = GauQuery.Run(layouts, blocks, offsets, block, loaded);
+		if (json) {
+			WriteJson(output, result);
+		} else {
+			GauQuery.Write(output, result);
+		}
+
+		return 0;
+	}
+
+	/// <summary>The entries of the chassis <paramref name="type"/> names (all when null), or null when it names none of them.</summary>
+	private static IReadOnlyList<T>? PickChassis<T>(RetailData data, IReadOnlyList<T> entries, Func<T, int> index, string? type) {
+		if (type == null) {
+			return entries;
+		}
+
+		return TypeQuery.ResolveTypes(data, RosterKind.Mech, type) is { } types && entries.Where(e => types.Contains(index(e))).ToList() is { Count: > 0 } picked
+			? picked
+			: null;
 	}
 
 	private static RosterKind? RosterOf(string word) => word.ToLowerInvariant() switch {

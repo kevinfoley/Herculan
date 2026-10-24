@@ -1,6 +1,7 @@
 using HercWorks.Core.Data.File;
 using HercWorks.Core.Data.File.Cfg;
 using HercWorks.Core.Data.File.Dat.Sim;
+using HercWorks.Core.Data.File.Gau;
 using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Data.File.Msn.Es1;
 using HercWorks.Core.Io;
@@ -34,15 +35,24 @@ internal sealed record Es1MissionSummary(string Mission, bool OtherLayout, IRead
 
 /// <summary>One chassis: a <c>MECHS.NAM</c> entry and the <c>dat\&lt;name&gt;.DAT</c> type record it names.</summary>
 /// <param name="Index">Its position in <c>MECHS.NAM</c>, which is its mech type index.</param>
-/// <param name="Record">The parsed record, null when the archive has no such file.</param>
+/// <param name="Record">
+/// The parsed record, of the install's <see cref="ChassisModel"/>: a <see cref="HercSimDat"/> or an
+/// <see cref="Es1HercSimDat"/>. Null when the archive has no such file.
+/// </param>
 /// <param name="Bytes">The record as stored, null when the archive has no such file.</param>
-internal sealed record Chassis(int Index, string Name, HercSimDat? Record, byte[]? Bytes);
+internal sealed record Chassis(int Index, string Name, object? Record, byte[]? Bytes);
+
+/// <summary>One ES1 chassis' cockpit layout: a <c>MECHS.NAM</c> entry and the <c>gau\&lt;name&gt;.GAU</c> it names.</summary>
+/// <param name="Index">Its position in <c>MECHS.NAM</c>, which is its mech type index.</param>
+/// <param name="File">The parsed layout, as read; null when the archive has no such file.</param>
+internal sealed record CockpitLayout(int Index, string Name, Es1GauFile? File);
 
 /// <summary>
 /// Everything a query reads out of an install, parsed by HercWorks.Core: every <c>MSN\*.MSN</c> and its
 /// <c>.ENG</c> out of <c>ZONES.VOL</c>, and the type tables that name what the rosters place —
 /// <c>dat\BASES.DAT</c>, <c>nam\MECHS.NAM</c>, <c>nam\FLYERS.NAM</c> and <c>str\STRINGS0.STR</c> — and
-/// the <c>dat\&lt;name&gt;.DAT</c> chassis record of every <c>MECHS.NAM</c> name, out of <c>SIMVOL0.VOL</c>.
+/// the <c>dat\&lt;name&gt;.DAT</c> chassis record of every <c>MECHS.NAM</c> name, out of <c>SIMVOL0.VOL</c>;
+/// for ES1 also every name's <c>gau\&lt;name&gt;.GAU</c> cockpit layout.
 ///
 /// <para>The install's game is <see cref="RetailGameDetector.Detect"/>'s. An ES1 install's missions are
 /// read by <see cref="Es1MissionFileTransformer"/> into <see cref="Es1Missions"/>, without their
@@ -70,7 +80,7 @@ internal sealed class RetailData {
 
 	private RetailData(RetailGame game, string installRoot, string missionArchive, IReadOnlyList<Mission> missions,
 			IReadOnlyList<Es1Mission> es1Missions, BasesDat? bases, Es1BasesDat? es1Bases, NameList? mechs, NameList? flyers,
-			StringFile? strings, IReadOnlyList<Chassis> chassis) {
+			StringFile? strings, IReadOnlyList<Chassis> chassis, IReadOnlyList<CockpitLayout> cockpitLayouts) {
 		Game = game;
 		InstallRoot = installRoot;
 		MissionArchivePath = missionArchive;
@@ -82,6 +92,7 @@ internal sealed class RetailData {
 		FlyerNames = flyers;
 		SimStrings = strings;
 		Chassis = chassis;
+		CockpitLayouts = cockpitLayouts;
 	}
 
 	/// <summary>The game the install holds, which decides whether <see cref="Missions"/> or <see cref="Es1Missions"/> is filled.</summary>
@@ -107,6 +118,12 @@ internal sealed class RetailData {
 
 	/// <summary>One per <c>MECHS.NAM</c> entry, in its order; empty when <c>SIMVOL0.VOL</c> or <c>MECHS.NAM</c> is missing.</summary>
 	public IReadOnlyList<Chassis> Chassis { get; }
+
+	/// <summary>The reader of the install's <see cref="Chassis"/> records.</summary>
+	public ChassisModel ChassisModel => Game == RetailGame.Earthsiege1 ? ChassisModel.Es1 : ChassisModel.Es2;
+
+	/// <summary>An ES1 install's cockpit layouts, one per <c>MECHS.NAM</c> entry, in its order; empty for an ES2 install.</summary>
+	public IReadOnlyList<CockpitLayout> CockpitLayouts { get; }
 
 	/// <summary>
 	/// The install to read when none is given: the nearest <c>ES2</c> folder holding
@@ -166,6 +183,7 @@ internal sealed class RetailData {
 		NameList? mechs = null, flyers = null;
 		StringFile? strings = null;
 		var chassis = new List<Chassis>();
+		var cockpitLayouts = new List<CockpitLayout>();
 		if (FindArchive(installRoot, SimulatorArchive) is { } sim) {
 			var simVol = VolFileReader.ParseVolFile(sim);
 			if (Find(simVol, "DAT", "BASES.DAT") is { RawBytes: { } b }) {
@@ -179,16 +197,20 @@ internal sealed class RetailData {
 			mechs = Find(simVol, "NAM", "MECHS.NAM") is { RawBytes: { } m } ? new NameListTransformer().Parse(m) : null;
 			flyers = Find(simVol, "NAM", "FLYERS.NAM") is { RawBytes: { } f } ? new NameListTransformer().Parse(f) : null;
 			strings = Find(simVol, "STR", "STRINGS0.STR") is { RawBytes: { } s } ? new StringFileTransformer().Parse(s) : null;
-			// ES2's chassis records alone: ES1's are 192 bytes, read by Es1HercSimDat, which chassis does not use.
-			string[] names = game == RetailGame.Earthsiege1 ? [] : mechs?.Names ?? [];
+			var model = game == RetailGame.Earthsiege1 ? ChassisModel.Es1 : ChassisModel.Es2;
+			string[] names = mechs?.Names ?? [];
 			for (int i = 0; i < names.Length; i++) {
 				byte[]? record = Find(simVol, "DAT", names[i] + ".DAT")?.RawBytes;
-				chassis.Add(new Chassis(i, names[i], record != null ? new HercSimDataTransformer().Parse(record) : null, record));
+				chassis.Add(new Chassis(i, names[i], record != null ? model.Parse(record) : null, record));
+				if (game == RetailGame.Earthsiege1) {
+					byte[]? layout = Find(simVol, "GAU", names[i] + ".GAU")?.RawBytes;
+					cockpitLayouts.Add(new CockpitLayout(i, names[i], layout != null ? new Es1GauFileTransformer().Parse(layout) : null));
+				}
 			}
 		}
 
 		return new RetailData(game, Path.GetFullPath(installRoot), Path.GetFullPath(zones), missions, es1Missions,
-			bases, es1Bases, mechs, flyers, strings, chassis);
+			bases, es1Bases, mechs, flyers, strings, chassis, cockpitLayouts);
 	}
 
 	/// <summary>

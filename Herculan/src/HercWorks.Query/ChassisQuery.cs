@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Globalization;
-using System.Reflection;
 using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Io.Transform.Dbsim;
 
@@ -31,43 +30,36 @@ internal sealed record ChassisQueryResult(
 	int Offset, int TypeRecordOffset, string Type, ChassisField? Field, string? Located,
 	IReadOnlyList<string> AlsoStarting, IReadOnlyList<ChassisValue> Values);
 
+/// <summary>A game's chassis record model, which the query reflects over, and the HercWorks.Core reader that fills it.</summary>
+internal sealed record ChassisModel(Type Type, Func<byte[], object?> Parse) {
+	/// <summary>ES2's 216-byte record, read by <see cref="HercSimDataTransformer"/>.</summary>
+	public static readonly ChassisModel Es2 = new(typeof(HercSimDat), b => new HercSimDataTransformer().Parse(b));
+
+	/// <summary>ES1's 192-byte record, read by <see cref="Es1HercSimDataTransformer"/>.</summary>
+	public static readonly ChassisModel Es1 = new(typeof(Es1HercSimDat), b => new Es1HercSimDataTransformer().Parse(b));
+}
+
 /// <summary>
-/// <c>chassis</c>: one field of every chassis' <c>dat\&lt;name&gt;.DAT</c> type record, as
-/// <see cref="HercSimDataTransformer"/> reads it.
+/// <c>chassis</c>: one field of every chassis' <c>dat\&lt;name&gt;.DAT</c> type record, as the install's
+/// <see cref="ChassisModel"/> reads it.
 ///
-/// <para>Which member sits at which record offset is not tabled here: <see cref="Fields"/> finds it by
-/// parsing a zero record with one byte set at a time and seeing which member changes, so it follows
-/// the reader.</para>
+/// <para>Which member sits at which record offset is not tabled here: <see cref="Fields"/> finds it with
+/// <see cref="RecordLayout.Probe"/>, so it follows the reader.</para>
 /// </summary>
 internal static class ChassisQuery {
 	/// <summary>
-	/// Record offset N is the exe's type-record offset N+2: DBSIM loads the record at
-	/// <c>MECH_TYPE_DATA[i]+2</c> (<see cref="HercSimDat"/>).
+	/// Record offset N is the exe's type-record offset N+2 in both games: each simulator loads the record at its type
+	/// record's <c>+2</c> (<see cref="HercSimDat"/>, <see cref="Es1HercSimDat"/>).
 	/// </summary>
 	public const int TypeRecordBase = 2;
 
 	/// <summary>The reader's members, in record order, as found over a record of <paramref name="recordLength"/> bytes.</summary>
-	public static IReadOnlyList<ChassisField> Fields(int recordLength) {
-		var reader = new HercSimDataTransformer();
-		var properties = typeof(HercSimDat).GetProperties(BindingFlags.Public | BindingFlags.Instance);
-		var zero = reader.Parse(new byte[recordLength])!;
-		var full = reader.Parse(Enumerable.Repeat((byte)0xff, recordLength).ToArray())!;
-		var touched = properties.ToDictionary(p => p, _ => new List<int>());
-		for (int k = 0; k < recordLength; k++) {
-			var probe = new byte[recordLength];
-			probe[k] = 1;
-			var parsed = reader.Parse(probe)!;
-			foreach (var property in properties) {
-				if (!Same(property.GetValue(zero), property.GetValue(parsed))) {
-					touched[property].Add(k);
-				}
-			}
-		}
-
-		return properties
-			.Where(p => touched[p].Count > 0)
-			.Select(p => {
-				var offsets = touched[p];
+	public static IReadOnlyList<ChassisField> Fields(ChassisModel model, int recordLength) {
+		var zero = model.Parse(new byte[recordLength])!;
+		var full = model.Parse(Enumerable.Repeat((byte)0xff, recordLength).ToArray())!;
+		return RecordLayout.Probe(model.Type, model.Parse, recordLength)
+			.Select(member => {
+				var (p, offsets) = member;
 				// A list whose length a byte's sign decides parses to different lengths from all-zero and all-0xff bytes.
 				bool variable = p.GetValue(zero) is IList a && p.GetValue(full) is IList b && a.Count != b.Count;
 				string type = p.GetValue(zero) switch {
@@ -91,11 +83,7 @@ internal static class ChassisQuery {
 	public static int? ResolveOffset(IReadOnlyList<ChassisField> fields, string spec, int recordLength, out ChassisField? named, out string? error) {
 		named = null;
 		error = null;
-		int offset;
-		bool isOffset = spec.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
-			? int.TryParse(spec[2..], NumberStyles.HexNumber, null, out offset)
-			: int.TryParse(spec, out offset);
-		if (isOffset) {
+		if (RecordLayout.TryParseNumber(spec, out int offset)) {
 			if (offset < 0 || offset + 1 >= recordLength) {
 				error = $"A record offset is 0-{recordLength - 2}; the record is {recordLength} bytes.";
 				return null;
@@ -104,17 +92,8 @@ internal static class ChassisQuery {
 			return offset;
 		}
 
-		var exact = fields.Where(f => string.Equals(f.Name, spec, StringComparison.OrdinalIgnoreCase)).ToList();
-		var matches = exact.Count > 0 ? exact : fields.Where(f => f.Name.StartsWith(spec, StringComparison.OrdinalIgnoreCase)).ToList();
-		if (matches.Count != 1) {
-			error = matches.Count == 0
-				? $"No chassis field is named {spec}; `chassis` with no --field lists them."
-				: $"{spec} names {string.Join(", ", matches.Select(f => f.Name))}; name one.";
-			return null;
-		}
-
-		named = matches[0];
-		return named.Offset;
+		named = RecordLayout.MatchName(fields, f => f.Name, spec, $"No chassis field is named {spec}; `chassis` with no --field lists them.", out error);
+		return named?.Offset;
 	}
 
 	/// <summary>
@@ -122,7 +101,7 @@ internal static class ChassisQuery {
 	/// starts there (<paramref name="named"/> picks it when several do); otherwise the little-endian word
 	/// the record holds there.
 	/// </summary>
-	public static ChassisQueryResult Run(IReadOnlyList<Chassis> chassis, IReadOnlyList<ChassisField> fields, int offset, ChassisField? named) {
+	public static ChassisQueryResult Run(ChassisModel model, IReadOnlyList<Chassis> chassis, IReadOnlyList<ChassisField> fields, int offset, ChassisField? named) {
 		var field = named ?? fields.FirstOrDefault(f => f.Offset == offset && f.Length != null) ?? fields.FirstOrDefault(f => f.Offset == offset);
 		var also = fields.Where(f => f.Offset == offset && f != field).Select(f => f.Name).ToList();
 		if (field == null) {
@@ -134,7 +113,7 @@ internal static class ChassisQuery {
 			return new ChassisQueryResult(offset, offset + TypeRecordBase, "short", null, located, also, words);
 		}
 
-		var property = typeof(HercSimDat).GetProperty(field.Name)!;
+		var property = model.Type.GetProperty(field.Name)!;
 		bool text = IsText(chassis.Select(c => c.Record == null ? null : property.GetValue(c.Record)).ToList());
 		var values = chassis.Select(c => c.Record == null ? new ChassisValue(c.Index, c.Name, null, null) : property.GetValue(c.Record) switch {
 			short s => Number(c, s),
@@ -168,11 +147,6 @@ internal static class ChassisQuery {
 			&& arrays.All(b => b.SkipWhile(x => x is >= 0x20 and < 0x7f).All(x => x == 0));
 	}
 
-	private static bool Same(object? a, object? b) => (a, b) switch {
-		(IList x, IList y) => x.Count == y.Count && x.Cast<object>().SequenceEqual(y.Cast<object>()),
-		_ => Equals(a, b),
-	};
-
 	/// <summary>The record's members and the bytes no member covers, in record order.</summary>
 	public static void WriteFields(TextWriter output, IReadOnlyList<ChassisField> fields, int recordLength) {
 		output.WriteLine($"{"Record",6}  {"Hex",-5} {"Type record",11}  {"Field",-26}Type");
@@ -195,7 +169,8 @@ internal static class ChassisQuery {
 			output.WriteLine(row.Line);
 		}
 
-		output.WriteLine($"Record offset N is the exe's type-record offset N+{TypeRecordBase}. A byte[] runs to its first negative byte.");
+		output.WriteLine($"Record offset N is the exe's type-record offset N+{TypeRecordBase}."
+			+ (fields.Any(f => f.Length == null) ? " A byte[] runs to its first negative byte." : ""));
 	}
 
 	private static string Row(int offset, string name, string type) =>
