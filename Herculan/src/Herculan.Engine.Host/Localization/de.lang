@@ -107,6 +107,7 @@ install_prompt.install         Von einem Datenträger installieren...
 install_prompt.quit            Beenden
 install_prompt.no_path         Geben Sie den Pfad zum Earthsiege-2-Ordner ein oder fügen Sie ihn ein.
 install_prompt.not_an_install  {0} ist kein Earthsiege-2-Ordner: Er enthält keinen Ordner {1}.
+install_prompt.on_disc         Die CD kann nicht als Installationsort verwendet werden, weil Spielstände nicht auf die CD geschrieben werden können.
 mission_load.window_title      HERCULAN Engine — Fehler
 mission_load.missing_file      Die Mission kann nicht starten: {0} fehlt. Starten Sie die Mission über die Menüs, die diese Datei schreiben.
 save.auto_name                 {0} {1} Mission {2}

@@ -20,25 +20,33 @@ static class InstallPrompt {
 	internal const int WindowHeight = 260;
 
 	/// <summary>
-	/// The prompt's body: <c>install_prompt</c>'s strings, refusing any folder that is not an install.
+	/// The prompt's body: <c>install_prompt</c>'s strings, refusing any folder that is not an install, and one on a
+	/// disc (<see cref="GameInstall.IsOnDisc"/>), which can hold every folder of an install but none of its saves.
 	/// <paramref name="dismissKey"/> is the string of the button that gives up, and <paramref name="messageKey"/>
 	/// the message's, when not the startup's own.
 	/// </summary>
 	public static PathPrompt Create(LocalizationTable localization, string dismissKey, string initialPath = "",
 			string? messageKey = null, string? alternativeKey = null) =>
-		new(localization, "install_prompt", dismissKey, path => GameInstall.IsInstallRoot(path)
-			? null
-			: string.Format(localization.GetStringOrKey("install_prompt.not_an_install"),
-				path, GameInstall.ArchiveFolderName), initialPath, messageKey, alternativeKey: alternativeKey);
+		new(localization, "install_prompt", dismissKey, path => Refusal(localization, path), initialPath, messageKey,
+			alternativeKey: alternativeKey);
+
+	/// <summary>Why <paramref name="path"/> cannot be the install, in the player's language, or null when it can.</summary>
+	public static string? Refusal(LocalizationTable localization, string path) =>
+		!GameInstall.IsInstallRoot(path)
+			? string.Format(localization.GetStringOrKey("install_prompt.not_an_install"), path, GameInstall.ArchiveFolderName)
+			: GameInstall.IsOnDisc(path) ? localization.GetStringOrKey("install_prompt.on_disc")
+			: null;
 
 	/// <summary>
 	/// Shows the prompt until the player picks an install, makes one from a disc, or gives up. Returns the
 	/// install root, or null when the player chose Quit or closed the window. <paramref name="fontPath"/> is
-	/// the ImGui font.
+	/// the ImGui font. <paramref name="refused"/> is a folder found at startup that cannot be the install, which the
+	/// prompt first opens on with the reason showing.
 	/// </summary>
-	public static string? Run(LocalizationTable localization, string fontPath) {
+	public static string? Run(LocalizationTable localization, string fontPath, string? refused = null) {
 		while (true) {
-			var (chosen, install) = RunPrompt(localization, fontPath);
+			var (chosen, install) = RunPrompt(localization, fontPath, refused);
+			refused = null;
 			if (!install) {
 				return chosen;
 			}
@@ -50,8 +58,12 @@ static class InstallPrompt {
 	}
 
 	// The prompt's window: the folder chosen, or whether the player asked to install from a disc instead.
-	private static (string? Chosen, bool Install) RunPrompt(LocalizationTable localization, string fontPath) {
-		var prompt = Create(localization, "install_prompt.quit", alternativeKey: "install_prompt.install");
+	private static (string? Chosen, bool Install) RunPrompt(LocalizationTable localization, string fontPath, string? refused) {
+		var prompt = Create(localization, "install_prompt.quit", refused ?? "", alternativeKey: "install_prompt.install");
+		if (refused != null) {
+			prompt.Accept();
+		}
+
 		var language = new InterfaceLanguageCombo(localization);
 		bool install = false;
 		string Title() => localization.GetStringOrKey("install_prompt.window_title");

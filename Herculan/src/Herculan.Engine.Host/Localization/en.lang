@@ -107,6 +107,7 @@ install_prompt.install         Install from a Disc...
 install_prompt.quit            Quit
 install_prompt.no_path         Type or paste the path to the Earthsiege 2 folder.
 install_prompt.not_an_install  {0} is not an Earthsiege 2 folder: it has no {1} folder in it.
+install_prompt.on_disc         The CD cannot be used as the install location because save files cannot be written to the CD.
 mission_load.window_title      HERCULAN Engine — Error
 mission_load.missing_file      The mission cannot start: {0} is missing. Start the mission from the menus, which write this file.
 save.auto_name                 {0} {1} Mission {2}
