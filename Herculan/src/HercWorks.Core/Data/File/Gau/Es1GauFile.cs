@@ -50,8 +50,8 @@ public class Es1GauFile {
 	/// <summary>Offset 340.</summary>
 	public Es1GauPodRowBlock PodRow { get; set; } = new();
 
-	/// <summary>Offset 372: three rects.</summary>
-	public Es1GauRect[] Rects372 { get; set; } = new Es1GauRect[3];
+	/// <summary>Offset 388: two rects, the last two of the three <c>Gau_Load</c> constructs from 372.</summary>
+	public Es1GauRect[] Rects388 { get; set; } = new Es1GauRect[2];
 
 	/// <summary>Offsets 420-451, which the doc does not name.</summary>
 	public byte[] Bytes420 { get; set; } = new byte[32];
@@ -86,8 +86,8 @@ public class Es1GauFile {
 	/// <summary>Offset 1212, 392 bytes.</summary>
 	public Es1GauPilotRosterBlock PilotRosterBlock { get; set; } = new();
 
-	/// <summary>Offsets 1604-1667: the cockpit clock's block (docs/es1/formats/ttm-scripts.md#the-cockpit-clock), kept whole.</summary>
-	public byte[] ClockBlock { get; set; } = new byte[64];
+	/// <summary>Offset 1604, 64 bytes: the cockpit clock's block.</summary>
+	public Es1GauClockBlock ClockBlock { get; set; } = new();
 
 	/// <summary>Offset 1668: the pilot channel's box.</summary>
 	public Es1GauRect PilotChannelBox { get; set; }

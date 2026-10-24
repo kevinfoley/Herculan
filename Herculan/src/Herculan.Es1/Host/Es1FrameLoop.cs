@@ -144,16 +144,10 @@ public sealed class Es1FrameLoop : IEs1Frame {
 		// to send; then Sim_RenderFrame.
 		RenderFrame();
 
-		// Step 15: 000b5bca cleared; Widget_DrawToCockpit(0, {0, 0, 320, 400}, 1), page +0x8c copied onto +0x88 and the
-		// draw page put back.
+		// Step 15: 000b5bca cleared; Widget_DrawToCockpit(0, {0, 0, 320, 400}, 1), page +0x8c copied onto +0x88 through
+		// the canvas context and the draw page put back.
 		Views.Cockpit.BringUp = false;
-		// PLACEHOLDER: retail tests CockpitView_RectCornerVisible against the cockpit's canvas context and copies under
-		// that context's clip block, both the cockpit object's (plan step 6); the copy here is unclipped.
-		int draw = display.DrawPage;
-		display.SourcePage = display.PairDrawn;
-		display.DrawPage = display.PairVisible;
-		display.CopyRect(0, 0, 320, 400, 0, 0);
-		display.DrawPage = draw;
+		Views.Cockpit.DrawToCockpit(new Es1Rect(0, 0, 320, 400));
 		// The driver's slot 30 (0009df4c) shows the cursor; and with no tape playing, CockpitMouseLive is set.
 		display.Cursor.Show();
 		Views.Mouse.Live = true;

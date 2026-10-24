@@ -116,6 +116,43 @@ public sealed class Es1SimClock {
 		_phase -= interrupts * TimeSpan.TicksPerSecond;
 		_interrupts += interrupts;
 		_countdown = (short)Math.Max(0L, _countdown - interrupts);
+		for (long i = 0; i < interrupts && _callbacks.Count > 0; i++) {
+			RunCallbacks();
+		}
+	}
+
+	/// <summary>
+	/// <c>Timer_AddCallback</c> (<c>0006d289</c>)(<paramref name="count"/>, <paramref name="callback"/>): the callback run
+	/// on every <paramref name="count"/>th interrupt from now, after the slots taken before it
+	/// (docs/es1/simulation/timer.md#callbacks). Returns the slot + 1. <c>Time_SimClockTimerTick</c>, slot 0 in retail,
+	/// is this clock's own count and not a slot here.
+	/// </summary>
+	public int AddCallback(int count, Action callback) {
+		ArgumentOutOfRangeException.ThrowIfLessThan(count, 1);
+		_callbacks.Add(new TimerCallback(count, callback) { Counter = count });
+		return _callbacks.Count;
+	}
+
+	/// <summary>One interrupt's pass over the slots, lowest first: each counter down by 1, and at 0 its callback run and the counter reloaded.</summary>
+	private void RunCallbacks() {
+		foreach (var slot in _callbacks) {
+			if (--slot.Counter == 0) {
+				slot.Counter = slot.Period;
+				slot.Callback();
+			}
+		}
+	}
+
+	/// <summary>The periodic slots <see cref="AddCallback"/> took, in slot order.</summary>
+	private readonly List<TimerCallback> _callbacks = [];
+
+	/// <summary>A periodic slot: its period <c>0009ce6c</c>, counter <c>0009cdec</c> and callback <c>0009cd6c</c>.</summary>
+	private sealed class TimerCallback(int period, Action callback) {
+		public int Period { get; } = period;
+
+		public Action Callback { get; } = callback;
+
+		public int Counter { get; set; }
 	}
 
 	/// <summary>

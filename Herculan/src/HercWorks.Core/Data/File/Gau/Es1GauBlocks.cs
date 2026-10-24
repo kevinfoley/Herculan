@@ -51,8 +51,11 @@ public class Es1GauPodRowBlock {
 	/// <summary>Offset 340: the scratch rect the factory copies a row's rect to before building the row's gauge.</summary>
 	public Es1GauRect Scratch { get; set; }
 
-	/// <summary>Offsets 356-371, which the doc does not name.</summary>
-	public byte[] Bytes356 { get; set; } = new byte[16];
+	/// <summary>Offset 356: the select button's rect.</summary>
+	public Es1GauRect SelectButton { get; set; }
+
+	/// <summary>Offset 372: the label's rect, the first of the three <c>Gau_Load</c> constructs from 372.</summary>
+	public Es1GauRect Label { get; set; }
 }
 
 /// <summary>The console buttons' block at 452 of <see cref="Es1GauFile"/> (docs/es1/formats/gau-cockpit-layout.md#differences-from-es2).</summary>
@@ -112,6 +115,22 @@ public class Es1GauPilotRosterBlock {
 
 	/// <summary>Offsets 1580-1603, which the doc does not name.</summary>
 	public byte[] Bytes1580 { get; set; } = new byte[24];
+}
+
+/// <summary>
+/// The cockpit clock's block at 1604 of <see cref="Es1GauFile"/>, which <c>CockpitClock_Create</c> (<c>0002ce98</c>) hands
+/// <c>CockpitClock_Ctor</c> (<c>000433cc</c>) (docs/es1/formats/ttm-scripts.md#the-cockpit-clock): the constructor reads
+/// the rect at 1620 alone, as the gauge base's rect and its three labels'.
+/// </summary>
+public class Es1GauClockBlock {
+	/// <summary>Offsets 1604-1619, which the clock does not read.</summary>
+	public byte[] Bytes1604 { get; set; } = new byte[16];
+
+	/// <summary>Offset 1620: the clock's rect, the block + <c>0x10</c>.</summary>
+	public Es1GauRect Rect { get; set; }
+
+	/// <summary>Offsets 1636-1667, which the clock does not read.</summary>
+	public byte[] Bytes1636 { get; set; } = new byte[32];
 }
 
 /// <summary>

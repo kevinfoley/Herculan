@@ -41,8 +41,8 @@ public class Es1GauFileTransformer : ByteTransformer<Es1GauFile> {
 				ChargeBarArgument = IndexIntLE(),
 				Bytes308 = IndexSegment(32),
 			},
-			PodRow = new Es1GauPodRowBlock { Scratch = ReadRect(), Bytes356 = IndexSegment(16) },
-			Rects372 = ReadRects(3),
+			PodRow = new Es1GauPodRowBlock { Scratch = ReadRect(), SelectButton = ReadRect(), Label = ReadRect() },
+			Rects388 = ReadRects(2),
 			Bytes420 = IndexSegment(32),
 			ConsoleButtons = new Es1GauConsoleButtonsBlock { Header = ReadRect(), Buttons = ReadRects(Es1GauFile.ConsoleButtonCount) },
 			EnergyMeterBlock = ReadInstrumentBlock(68),
@@ -77,7 +77,11 @@ public class Es1GauFileTransformer : ByteTransformer<Es1GauFile> {
 				Rects1532 = ReadRects(3),
 				Bytes1580 = IndexSegment(24),
 			},
-			ClockBlock = IndexSegment(64),
+			ClockBlock = new Es1GauClockBlock {
+				Bytes1604 = IndexSegment(16),
+				Rect = ReadRect(),
+				Bytes1636 = IndexSegment(32),
+			},
 			PilotChannelBox = ReadRect(),
 			TickerBox = ReadRect(),
 		};
@@ -130,9 +134,10 @@ public class Es1GauFileTransformer : ByteTransformer<Es1GauFile> {
 		w.Write(source.EnergyRow.Bytes308);
 
 		Rect(source.PodRow.Scratch);
-		w.Write(source.PodRow.Bytes356);
+		Rect(source.PodRow.SelectButton);
+		Rect(source.PodRow.Label);
 
-		Rects(source.Rects372);
+		Rects(source.Rects388);
 		w.Write(source.Bytes420);
 
 		Rect(source.ConsoleButtons.Header);
@@ -176,7 +181,10 @@ public class Es1GauFileTransformer : ByteTransformer<Es1GauFile> {
 		Rects(roster.Rects1532);
 		w.Write(roster.Bytes1580);
 
-		w.Write(source.ClockBlock);
+		var clock = source.ClockBlock;
+		w.Write(clock.Bytes1604);
+		Rect(clock.Rect);
+		w.Write(clock.Bytes1636);
 		Rect(source.PilotChannelBox);
 		Rect(source.TickerBox);
 

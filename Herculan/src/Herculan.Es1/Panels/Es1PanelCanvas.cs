@@ -149,41 +149,330 @@ public sealed class Es1PanelCanvas {
 
 	/// <summary>
 	/// <c>Raster_DrawLineColour</c> (<c>00044ec0</c>)(<paramref name="color"/>, end, start): <c>Raster_DrawLine</c>
-	/// (<c>0006a064</c>)(start, end) under the pen {0, color}, cut to <see cref="Rect"/> with both end pixels drawn, as the driver's line routine, <c>VGA8_DrawLine</c>
-	/// (<c>0008cb90</c>, slot 34), draws them (docs/es1/rendering/screen-pages.md#lines-and-clipped-bitmaps). The panels
-	/// draw only horizontal and vertical lines, so a sloped line's walk is not ported.
+	/// (<c>0006a064</c>)(start, end) under the pen {0, color}: the two points translated, cut to <see cref="Rect"/> by
+	/// <c>Line_ClipToRect</c> (<c>0007d4a4</c>, docs/retail/rendering/polygon-fill.md#clipping-a-line), nothing drawn when
+	/// nothing is left, and the rest walked as the driver's line routine, <c>VGA8_DrawLine</c> (<c>0008cb90</c>, slot 34),
+	/// walks it, both end pixels drawn (docs/es1/rendering/screen-pages.md#lines-and-clipped-bitmaps).
 	/// </summary>
-	/// <exception cref="ArgumentException">The line is neither horizontal nor vertical.</exception>
 	public void DrawLine(int x0, int y0, int x1, int y1, byte color) {
-		if (x0 != x1 && y0 != y1) {
-			throw new ArgumentException("Only a horizontal or vertical line is drawn.");
+		var (dx, dy) = Translation;
+		DrawLineTranslated((x0 + dx, y0 + dy), (x1 + dx, y1 + dy), color);
+	}
+
+	/// <summary><see cref="DrawLine"/> of two points already translated, as <c>Raster_DrawPolygonDispatch</c>'s line loop hands them on with the translation flag cleared.</summary>
+	private void DrawLineTranslated((int X, int Y) a, (int X, int Y) b, byte color) {
+		if (!ClipLine(ref a, ref b, Rect)) {
+			return;
 		}
 
-		for (int y = Math.Min(y0, y1); y <= Math.Max(y0, y1); y++) {
-			for (int x = Math.Min(x0, x1); x <= Math.Max(x0, x1); x++) {
-				Plot(x, y, color);
+		if (b.X < a.X) {
+			(a, b) = (b, a);
+		}
+
+		int runX = b.X - a.X, runY = Math.Abs(b.Y - a.Y), stepY = b.Y < a.Y ? -1 : 1;
+		if (runY == 0) {
+			for (int i = 0; i <= runX; i++) {
+				Display.Plot(a.X + i, a.Y, color);
+			}
+		} else if (runX == 0) {
+			for (int i = 0; i <= runY; i++) {
+				Display.Plot(a.X, a.Y + stepY * i, color);
+			}
+		} else if (runX <= runY) {
+			for (int i = 0; i <= runY; i++) {
+				Display.Plot(a.X + i * (runX + 1) / (runY + 1), a.Y + stepY * i, color);
+			}
+		} else {
+			for (int j = 0; j <= runX; j++) {
+				Display.Plot(a.X + j, a.Y + stepY * (j * (runY + 1) / (runX + 1)), color);
 			}
 		}
 	}
 
 	/// <summary>
-	/// <c>Bitmap_Blit</c>(<paramref name="bitmap"/>, 0, point): the bitmap with its top-left at the panel's
-	/// (<paramref name="x"/>, <paramref name="y"/>), unmirrored, a 0 byte leaving the pixel unless the bitmap's flags have
-	/// bit 4 (docs/es1/rendering/screen-pages.md#the-cursor, "Index 0").
+	/// <c>Line_ClipToRect</c>: the segment cut, in place, to the inclusive <paramref name="rect"/>, the bounds taken in the
+	/// order <i>y0</i>, <i>x0</i>, <i>y1</i>, <i>x1</i>: both ends beyond one, false; one end beyond, that end moved onto
+	/// it at the crossing computed from it toward the other in 64 bits, truncating. The ends may come back swapped, which
+	/// the walk does not show.
 	/// </summary>
-	public void Blit(DynamixBitmap? bitmap, int x, int y) {
+	internal static bool ClipLine(ref (int X, int Y) a, ref (int X, int Y) b, Es1Rect rect) {
+		return Cut(ref a, ref b, rect.Y0, vertical: false, below: true)
+			&& Cut(ref a, ref b, rect.X0, vertical: true, below: true)
+			&& Cut(ref a, ref b, rect.Y1, vertical: false, below: false)
+			&& Cut(ref a, ref b, rect.X1, vertical: true, below: false);
+
+		static bool Cut(ref (int X, int Y) a, ref (int X, int Y) b, int bound, bool vertical, bool below) {
+			bool aOut = Beyond(a), bOut = Beyond(b);
+			if (aOut && bOut) {
+				return false;
+			}
+
+			if (aOut) {
+				a = Crossing(a, b);
+			} else if (bOut) {
+				b = Crossing(b, a);
+			}
+
+			return true;
+
+			bool Beyond((int X, int Y) p) {
+				int along = vertical ? p.X : p.Y;
+				return below ? along < bound : along > bound;
+			}
+
+			(int X, int Y) Crossing((int X, int Y) outside, (int X, int Y) other) => vertical
+				? (bound, (int)(outside.Y + (long)(bound - outside.X) * (other.Y - outside.Y) / (other.X - outside.X)))
+				: ((int)(outside.X + (long)(bound - outside.Y) * (other.X - outside.X) / (other.Y - outside.Y)), bound);
+		}
+	}
+
+	/// <summary>
+	/// <c>Raster_FillRect</c> (<c>ES2 DBSIM 004865f8</c>) under the brush {4, <paramref name="color"/>}: the inclusive rect's
+	/// four edges as lines, (<i>x1</i>, <i>y0</i>) to (<i>x0</i>, <i>y0</i>), (<i>x0</i>, <i>y1</i>) to (<i>x0</i>,
+	/// <i>y0</i>), (<i>x0</i>, <i>y1</i>) to (<i>x1</i>, <i>y1</i>) and (<i>x1</i>, <i>y0</i>) to (<i>x1</i>, <i>y1</i>)
+	/// (docs/retail/rendering/polygon-fill.md#rectangles).
+	/// </summary>
+	public void OutlineRect(int x0, int y0, int x1, int y1, byte color) {
+		DrawLine(x1, y0, x0, y0, color);
+		DrawLine(x0, y1, x0, y0, color);
+		DrawLine(x0, y1, x1, y1, color);
+		DrawLine(x1, y0, x1, y1, color);
+	}
+
+	/// <summary>
+	/// <c>Raster_DrawEllipse</c> (<c>000831f4</c>) of <paramref name="rect"/> under the brush {0 or 4,
+	/// <paramref name="color"/>}: ES2's walk (docs/retail/rendering/polygon-fill.md#ellipses) with the simulator's one
+	/// difference, a span list of the rows on the display alone, from row −min(<i>b</i>, <i>cy</i>) to before
+	/// min(<i>b</i>, 199 − <i>cy</i>) about the centre, <i>cy</i> before the translation
+	/// (docs/es1/rendering/screen-pages.md#ellipses-outlines-and-scaled-bitmaps); each list filled at the centre,
+	/// translated and cut to <see cref="Rect"/> as <c>Raster_FillSpanList</c> (<c>0008f68c</c>) does in clip mode 1.
+	/// <paramref name="outline"/> draws the one-pixel ring, mode 4.
+	/// </summary>
+	public void DrawEllipse(Es1Rect rect, byte color, bool outline) {
+		int cx = (rect.X0 + rect.X1) >> 1, cy = (rect.Y0 + rect.Y1) >> 1;
+		int a = Math.Abs(rect.X1 - rect.X0) >> 1, b = Math.Abs(rect.Y1 - rect.Y0) >> 1;
+		if (a == 0 || b == 0) {
+			// PLACEHOLDER: the degenerate ellipse's line, drawn under a pen whose mode is a stack word the function never
+			// writes (docs/retail/rendering/polygon-fill.md#ellipses); what it draws is not settled, so nothing is drawn.
+			return;
+		}
+
+		int low = -Math.Min(b, cy), high = Math.Min(b, Es1CockpitViews.ScreenHeight - 1 - cy);
+		if (outline) {
+			FillSpans(Walk(a, b, (x, s) => (-x, -s)));
+			FillSpans(Walk(a, b, (x, s) => (s, x)));
+		} else {
+			FillSpans(Walk(a, b, (x, _) => (-x, x)));
+		}
+
+		void FillSpans(Dictionary<int, (int X0, int X1)> rows) {
+			var (dx, dy) = Translation;
+			foreach (var (row, (x0, x1)) in rows) {
+				for (int x = x0; x <= x1; x++) {
+					int screenX = cx + x + dx, screenY = cy + row + dy;
+					if (Rect.Contains(screenX, screenY)) {
+						Display.Plot(screenX, screenY, color);
+					}
+				}
+			}
+		}
+
+		// The walk, each emit's span from span(x, s) written into rows −y and y − 1 when they lie in [low, high).
+		Dictionary<int, (int X0, int X1)> Walk(int a, int b, Func<int, int, (int X0, int X1)> span) {
+			var rows = new Dictionary<int, (int, int)>();
+			int a2 = a * a, b2 = b * b;
+			int x = 0, y = b, px = 0, py = 2 * a2 * b, s = 0;
+			int d = a2 / 4 + b2 - a2 * b;
+			while (px < py) {
+				if (d > 0) {
+					Emit(x, y);
+					s = x + 1;
+					y--;
+					py -= 2 * a2;
+					d -= py;
+				}
+
+				x++;
+				px += 2 * b2;
+				d += px + b2;
+			}
+
+			d += ((a2 - b2) * 3 / 2 - (px + py)) / 2;
+			while (y > 0) {
+				Emit(x, y);
+				if (d < 0) {
+					x++;
+					s = x;
+					px += 2 * b2;
+					d += px;
+				}
+
+				y--;
+				py -= 2 * a2;
+				d += a2 - py;
+			}
+
+			return rows;
+
+			void Emit(int ex, int ey) {
+				var value = span(ex, s);
+				foreach (int row in (ReadOnlySpan<int>)[-ey, ey - 1]) {
+					if (row >= low && row < high) {
+						rows[row] = value;
+					}
+				}
+			}
+		}
+	}
+
+	/// <summary>
+	/// <c>Raster_DrawPolygonEitherWinding</c> of <paramref name="points"/> under the brush {0 or 4, <paramref name="color"/>}
+	/// (docs/retail/rendering/polygon-fill.md#filling-a-polygon): an outline of three points or more whose
+	/// <c>x[i]·y[i+1] − x[i+1]·y[i]</c> sum is 0 or less taken in reverse order; then <c>Raster_DrawPolygonDispatch</c>
+	/// (<c>00068be0</c>) on the translated points, the translation flag cleared for the call: one point a pixel, two a line,
+	/// and with <paramref name="outline"/>, mode 4, the line loop round the points, each under the pen {0, color};
+	/// otherwise the fill (<see cref="FillPolygon"/>).
+	/// </summary>
+	public void DrawPolygon(IReadOnlyList<(int X, int Y)> points, byte color, bool outline) {
+		if (points.Count == 0) {
+			return;
+		}
+
+		var ring = points.ToList();
+		if (ring.Count >= 3) {
+			long sum = 0;
+			for (int i = 0; i < ring.Count; i++) {
+				var p = ring[i];
+				var q = ring[(i + 1) % ring.Count];
+				sum += (long)p.X * q.Y - (long)q.X * p.Y;
+			}
+
+			if (sum <= 0) {
+				ring.Reverse();
+			}
+		}
+
+		if (ring.Count >= 3 && !outline) {
+			FillPolygon(ring, color);
+			return;
+		}
+
+		var (dx, dy) = Translation;
+		var moved = ring.Select(p => (p.X + dx, p.Y + dy)).ToList();
+		if (moved.Count == 1) {
+			if (Rect.Contains(moved[0].Item1, moved[0].Item2)) {
+				Display.Plot(moved[0].Item1, moved[0].Item2, color);
+			}
+
+			return;
+		}
+
+		if (moved.Count == 2) {
+			DrawLineTranslated(moved[1], moved[0], color);
+			return;
+		}
+
+		for (int i = 0; i + 1 < moved.Count; i++) {
+			DrawLineTranslated(moved[i + 1], moved[i], color);
+		}
+
+		DrawLineTranslated(moved[0], moved[^1], color);
+	}
+
+	/// <summary>
+	/// <c>Bitmap_Blit</c>(<paramref name="bitmap"/>, <paramref name="flags"/>, point): the bitmap with its top-left at the
+	/// panel's (<paramref name="x"/>, <paramref name="y"/>), cut to <see cref="Rect"/>, a 0 byte leaving the pixel unless
+	/// the bitmap's flags have bit 4 (docs/es1/rendering/screen-pages.md#the-cursor, "Index 0"). Flag 1 runs the rows from
+	/// the bottom and flag 2 the columns from the right, as the blits read them
+	/// (docs/es1/rendering/screen-pages.md#ellipses-outlines-and-scaled-bitmaps).
+	/// </summary>
+	public void Blit(DynamixBitmap? bitmap, int x, int y, int flags = 0) {
 		if (bitmap?.ImageData is not { } pixels) {
 			return;
 		}
 
 		bool opaque = (bitmap.Flags & OpaqueFlag) != 0;
 		for (int row = 0; row < bitmap.Rows; row++) {
+			int sourceRow = (flags & 1) != 0 ? bitmap.Rows - 1 - row : row;
 			for (int column = 0; column < bitmap.Cols; column++) {
-				int source = row * bitmap.Cols + column;
+				int sourceColumn = (flags & 2) != 0 ? bitmap.Cols - 1 - column : column;
+				int source = sourceRow * bitmap.Cols + sourceColumn;
 				if (source < pixels.Length && (opaque || pixels[source] != 0)) {
 					Plot(x + column, y + row, pixels[source]);
 				}
 			}
+		}
+	}
+
+	/// <summary>
+	/// <c>Bitmap_BlitScaled</c> (<c>00067178</c>)(<paramref name="bitmap"/>, size, <paramref name="flags"/>, point) in clip
+	/// mode 1: the point translated and the bitmap stretched over <paramref name="width"/> × <paramref name="height"/>
+	/// pixels from it, cut to <see cref="Rect"/>, as <c>VGA8_BlitBitmapScaled</c> walks it
+	/// (docs/es1/rendering/screen-pages.md#ellipses-outlines-and-scaled-bitmaps): the steps
+	/// ((<i>columns</i> − 1) · 65536) / (<i>w</i> − 1) and ((<i>rows</i> − 1) · 65536) / (<i>h</i> − 1), each walk from
+	/// its fraction, the column fraction carried from row to row after a cut at the left, and a 0 byte not written.
+	/// </summary>
+	public void BlitScaled(DynamixBitmap? bitmap, int width, int height, int flags, int x, int y) {
+		if (bitmap?.ImageData is not { } pixels || bitmap.Cols <= 0 || bitmap.Rows <= 0 || width <= 0 || height <= 0) {
+			return;
+		}
+
+		var (dx, dy) = Translation;
+		x += dx;
+		y += dy;
+		if (x > Rect.X1 || x + width - 1 < Rect.X0 || y > Rect.Y1 || y + height - 1 < Rect.Y0) {
+			return;
+		}
+
+		int left = Math.Max(0, Rect.X0 - x), right = Math.Max(0, x + width - 1 - Rect.X1);
+		int top = Math.Max(0, Rect.Y0 - y), bottom = Math.Max(0, y + height - 1 - Rect.Y1);
+		if (width - left - right <= 0 || height - top - bottom <= 0) {
+			return;
+		}
+
+		int columns = bitmap.Cols, rows = bitmap.Rows;
+		long stepX = width == 1 ? 0 : (long)(columns - 1) * 65536 / (width - 1);
+		long stepY = height == 1 ? 0 : (long)(rows - 1) * 65536 / (height - 1);
+		if ((flags & 2) != 0) {
+			stepX = -stepX;
+		}
+
+		long fractionX = Start(stepX, width), fractionY = Start(stepY, height);
+		long walkY = fractionY + top * stepY;
+		long offset = (walkY >> 16) * columns;
+		long stride = columns;
+		if ((flags & 1) != 0) {
+			offset = (long)columns * rows - columns - offset;
+			stride = -columns;
+		}
+
+		if ((flags & 2) != 0) {
+			offset += columns - 1;
+		}
+
+		fractionY = walkY & 0xffff;
+		for (int row = top; row < height - bottom; row++) {
+			long a = left * stepX + fractionX;
+			fractionX = a & 0xffff;
+			for (int column = left; column < width - right; column++) {
+				long source = (a + 65536 * offset + (column - left) * stepX) >> 16;
+				if (source >= 0 && source < pixels.Length && pixels[source] != 0) {
+					Display.Plot(x + column, y + row, pixels[source]);
+				}
+			}
+
+			fractionY += stepY;
+			offset += (fractionY >> 16) * stride;
+			fractionY &= 0xffff;
+		}
+
+		static long Start(long step, int size) {
+			if (size == 1) {
+				return 0;
+			}
+
+			long magnitude = Math.Abs(step);
+			return magnitude >= 0x8000 ? magnitude % 65536 : 0x8000;
 		}
 	}
 

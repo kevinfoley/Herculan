@@ -61,10 +61,12 @@ public sealed class Es1CockpitViews {
 	/// <param name="pushButtons">The frames of <c>dba\pbuttons</c>; none when null.</param>
 	/// <param name="throttleLights">The frames of the throttle's light file; none when null.</param>
 	/// <param name="systemStrings"><c>str\system.str</c>; none when null.</param>
+	/// <param name="resources">The reader <see cref="Resources"/> holds; none when null.</param>
 	internal Es1CockpitViews(string name, Vue.Entry[] records, Es1ClipBlock[] clips, DynamixBitmap?[] canopies,
 			DynamixPalette? palette, Es1GauFile? layout = null, Es1CursorImage?[]? cursors = null, HudFont?[]? fonts = null,
 			Es1GunsightBanks? gunsightBanks = null, IReadOnlyList<DynamixBitmap>? pushButtons = null,
-			IReadOnlyList<DynamixBitmap>? throttleLights = null, StringFile? systemStrings = null) {
+			IReadOnlyList<DynamixBitmap>? throttleLights = null, StringFile? systemStrings = null,
+			Func<string, string, byte[]?>? resources = null) {
 		Name = name;
 		_records = records;
 		_clips = clips;
@@ -77,7 +79,15 @@ public sealed class Es1CockpitViews {
 		PushButtons = pushButtons;
 		ThrottleLights = throttleLights;
 		SystemStrings = systemStrings;
+		Resources = resources;
 	}
+
+	/// <summary>
+	/// The volumes' reader, (folder, name) to a file's bytes or null, through which the <c>.TTM</c> manager opens the
+	/// HERC's script and the script's commands open their files while the mission runs
+	/// (docs/es1/formats/ttm-scripts.md#the-simulator); none when null.
+	/// </summary>
+	public Func<string, string, byte[]?>? Resources { get; }
 
 	/// <summary>
 	/// The seven <c>dci\</c> cursors in the order <c>ColorSchemePanels_LoadAll</c> loads them into
@@ -187,6 +197,6 @@ public sealed class Es1CockpitViews {
 			: null;
 		return new Es1CockpitViews(name, records, clips, canopies, palette, loaded, cursors, fonts,
 			Es1GunsightBanks.Load(content), Es1WidgetResources.LoadFrames(content, "PBUTTONS"), lights,
-			SimStrings.LoadUntranslated(content, "SYSTEM.STR"));
+			SimStrings.LoadUntranslated(content, "SYSTEM.STR"), content.Read);
 	}
 }
