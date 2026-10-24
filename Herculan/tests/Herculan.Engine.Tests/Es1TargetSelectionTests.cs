@@ -330,8 +330,10 @@ public class Es1TargetSelectionTests {
 	private sealed class PickingLayer(object answer) : IEs1WorldLayer {
 		public List<(int X, int Y)> Asked { get; } = [];
 
-		public void DrawWorld(int x, int y, int width, int height) {
+		public void DrawWorld(int x, int y, int width, int height, IReadOnlyList<(int X, int Y, int Width)> keep) {
 		}
+
+		public bool[] DrawWorldView(int x, int y, int width, int height, Es1RectView view) => new bool[width * height];
 
 		public void Copy(int sourceX, int sourceY, int targetX, int targetY, int width, int height) {
 		}

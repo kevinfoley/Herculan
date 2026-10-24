@@ -25,6 +25,7 @@ public sealed class Es1WorldDraw {
 	private readonly Es1ZoneScene _scene;
 	private readonly Es1AppliedDetail _detail;
 	private readonly List<(SceneItem Item, Es1PlacedShape Shape, object Object)> _zoneItems = new();
+	private readonly List<SceneItem> _flatZoneItems = new();
 	private readonly List<MechItems> _mechs = new();
 	private readonly List<(SceneItem Item, Es1Shadow Shadow)> _shadowItems = new();
 
@@ -50,6 +51,7 @@ public sealed class Es1WorldDraw {
 			// The zone's shape object, Zone_ShapeObjects' entry for the record, boxed once so the pick answers one object for it.
 			object zoneObject = index < scene.ZoneShapes.Objects.Count ? scene.ZoneShapes.Objects[index] : shape;
 			_zoneItems.Add((new SceneItem(mesh, WorldScale.ToRenderMatrix(shape.Frame)), shape, zoneObject));
+			_flatZoneItems.Add(new SceneItem(mesh, WorldScale.ToRenderMatrix(shape.Frame)) { RampBlock = scene.Shading.FlatBlock });
 		}
 
 		foreach (var mech in world.MechPool) {
@@ -64,6 +66,13 @@ public sealed class Es1WorldDraw {
 
 	/// <summary>The shadows' items, drawn first.</summary>
 	public IEnumerable<SceneItem> Shadows => _shadowItems.Select(entry => entry.Item);
+
+	/// <summary>
+	/// The zone shapes as <see cref="View.Es1RectScene.FlatZoneShapes"/> draws them, apart from the frame's own items:
+	/// each of them, in <c>Zone_ShapeObjects</c>' order, always visible, with the ramps <c>WorldShades_ResetRamps</c>
+	/// leaves (<see cref="Es1Shading.FlatBlock"/>).
+	/// </summary>
+	public IReadOnlyList<SceneItem> FlatZoneShapes => _flatZoneItems;
 
 	/// <summary>The zone shapes' and the HERCs' items.</summary>
 	public IEnumerable<SceneItem> Objects => _zoneItems.Select(entry => entry.Item).Concat(_mechs.SelectMany(m => m.Items));

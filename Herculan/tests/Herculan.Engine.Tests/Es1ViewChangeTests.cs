@@ -186,7 +186,10 @@ public class Es1ViewChangeTests {
 
 		public List<(int, int, int, int, int, int)> Copied { get; } = [];
 
-		public void DrawWorld(int x, int y, int width, int height) => Drawn.Add((x, y, width, height));
+		public void DrawWorld(int x, int y, int width, int height, IReadOnlyList<(int X, int Y, int Width)> keep) =>
+			Drawn.Add((x, y, width, height));
+
+		public bool[] DrawWorldView(int x, int y, int width, int height, Es1RectView view) => new bool[width * height];
 
 		public void Copy(int sourceX, int sourceY, int targetX, int targetY, int width, int height) =>
 			Copied.Add((sourceX, sourceY, targetX, targetY, width, height));

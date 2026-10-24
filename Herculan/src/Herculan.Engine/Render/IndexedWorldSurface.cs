@@ -35,6 +35,12 @@ public sealed class IndexedWorldSurface : IDisposable {
 	private int _cursorWidth, _cursorRows;
 	private bool _cursorOpaque;
 
+	// KeepWorld's runs, the store row its first row of kept pixels holds, and the kept pixels' target.
+	private IReadOnlyList<(int X, int Y, int Width)> _kept = [];
+	private int _keptTop;
+	private uint _keptFramebuffer, _keptColor;
+	private (int Width, int Height) _keptSize;
+
 	/// <summary>A store of <paramref name="width"/> × <paramref name="rows"/> cells, all palette index 0, and a world layer at scale 1.</summary>
 	public IndexedWorldSurface(GL gl, int width, int rows) {
 		ArgumentOutOfRangeException.ThrowIfNegativeOrZero(width);
@@ -205,6 +211,161 @@ public sealed class IndexedWorldSurface : IDisposable {
 		return pixel;
 	}
 
+	/// <summary>
+	/// Draws the rect of <paramref name="width"/> × <paramref name="height"/> cells at (<paramref name="x"/>,
+	/// <paramref name="y"/>) into the world layer as <see cref="Present"/> shows a cell holding a palette index, through
+	/// the live palette, so the layer under the rect starts as the picture the cells make; a cell holding
+	/// <see cref="WorldCell"/> keeps the layer's pixels it has. The cells are read as <see cref="UploadCells"/> last sent
+	/// them. With no palette set nothing is drawn. Leaves the world layer bound.
+	/// </summary>
+	public void PaintCells(int x, int y, int width, int height) {
+		if (width <= 0 || height <= 0 || _palette == null) {
+			return;
+		}
+
+		var rect = (X: x * Scale, Y: (Rows - (y + height)) * Scale, Width: width * Scale, Height: height * Scale);
+		_gl.BindFramebuffer(FramebufferTarget.Framebuffer, _framebuffer);
+		_gl.Viewport(rect.X, rect.Y, (uint)rect.Width, (uint)rect.Height);
+		_gl.Enable(EnableCap.ScissorTest);
+		_gl.Scissor(rect.X, rect.Y, (uint)rect.Width, (uint)rect.Height);
+		_gl.Disable(EnableCap.DepthTest);
+		_shader.Use();
+		_shader.SetSamplerTexture("uCells", _cells, 0);
+		_shader.SetSamplerTexture("uPalette", _palette.Handle, 1);
+		// The layer is the target: it is not sampled, a world cell discarding its pixel.
+		_shader.SetSamplerTexture("uWorld", 0u, 2);
+		_shader.SetInt("uStart", y * Width + x);
+		_shader.SetInt("uWidth", Width);
+		_shader.SetInt("uCellCount", Width * Rows);
+		_shader.SetInt("uScale", Scale);
+		_shader.SetInt("uWorldHeight", Rows * Scale);
+		_shader.SetUInt("uWorldCell", WorldCell);
+		_shader.SetInt("uKeepWorld", 1);
+		_shader.SetInt("uWindowWidth", width);
+		_shader.SetInt("uWindowRows", height);
+		_shader.SetInt("uCursorShown", 0);
+		_gl.BindVertexArray(_vertexArray);
+		_gl.DrawArrays(PrimitiveType.TriangleStrip, 0, 4);
+		_gl.BindVertexArray(0);
+		for (int unit = 1; unit >= 0; unit--) {
+			_gl.ActiveTexture(TextureUnit.Texture0 + unit);
+			_gl.BindTexture(TextureTarget.Texture2D, 0);
+		}
+
+		_gl.Enable(EnableCap.DepthTest);
+	}
+
+	/// <summary>
+	/// After a <see cref="BeginWorld"/> pass into the rect of <paramref name="width"/> × <paramref name="height"/> cells
+	/// at (<paramref name="x"/>, <paramref name="y"/>), the cells it drew into, row by row from the rect's top-left: a
+	/// cell is drawn into when any of its <see cref="Scale"/> × <see cref="Scale"/> pixels holds a depth nearer than
+	/// the far plane's 1, to which <see cref="BeginWorld"/> clears it. So it answers for a pass whose every fragment
+	/// writes its depth, as the depth-tested geometry of a 3D pass does, and not for one that paints without it, such as
+	/// a backdrop. Read back at once, waiting for the pass to finish. Leaves the world layer bound.
+	/// </summary>
+	public bool[] ReadWorldCoverage(int x, int y, int width, int height) {
+		var covered = new bool[Math.Max(width, 0) * Math.Max(height, 0)];
+		if (covered.Length == 0) {
+			return covered;
+		}
+
+		int k = Scale, pixelsWide = width * k, pixelsHigh = height * k;
+		var depths = new float[pixelsWide * pixelsHigh];
+		_gl.BindFramebuffer(FramebufferTarget.Framebuffer, _framebuffer);
+		_gl.PixelStore(PixelStoreParameter.PackAlignment, 4);
+		unsafe {
+			fixed (float* pixels = depths) {
+				_gl.ReadPixels(x * k, (Rows - (y + height)) * k, (uint)pixelsWide, (uint)pixelsHigh,
+					PixelFormat.DepthComponent, PixelType.Float, pixels);
+			}
+		}
+
+		// The read starts at the rect's bottom row of pixels; the cells' rows run down from its top.
+		for (int row = 0; row < pixelsHigh; row++) {
+			int cellRow = height - 1 - row / k;
+			for (int column = 0; column < pixelsWide; column++) {
+				if (depths[row * pixelsWide + column] < 1f) {
+					covered[cellRow * width + column / k] = true;
+				}
+			}
+		}
+
+		return covered;
+	}
+
+	/// <summary>
+	/// Sets the world layer's pixels under <paramref name="runs"/> aside, each a run of <c>Width</c> cells along row
+	/// <c>Y</c> from column <c>X</c>, for <see cref="RestoreWorld"/> to put back once a pass that draws over them has
+	/// run; the runs replace any kept before. The scale must not change between the two.
+	/// </summary>
+	public void KeepWorld(IReadOnlyList<(int X, int Y, int Width)> runs) {
+		_kept = runs;
+		if (runs.Count == 0) {
+			return;
+		}
+
+		_keptTop = runs.Min(run => run.Y);
+		int k = Scale, width = Width * k, height = (runs.Max(run => run.Y) - _keptTop + 1) * k;
+		if (_keptFramebuffer == 0 || _keptSize.Width != width || _keptSize.Height < height) {
+			DeleteKept();
+			CreateKept(width, height);
+		}
+
+		BlitRuns(toKept: true);
+	}
+
+	/// <summary>Puts back the pixels <see cref="KeepWorld"/> last set aside, and forgets them.</summary>
+	public void RestoreWorld() {
+		if (_kept.Count > 0) {
+			BlitRuns(toKept: false);
+		}
+
+		_kept = [];
+	}
+
+	/// <summary>Each kept run blitted between its place in the world layer and its row of the kept pixels, the scissor off.</summary>
+	private void BlitRuns(bool toKept) {
+		int k = Scale;
+		_gl.Disable(EnableCap.ScissorTest);
+		_gl.BindFramebuffer(FramebufferTarget.ReadFramebuffer, toKept ? _framebuffer : _keptFramebuffer);
+		_gl.BindFramebuffer(FramebufferTarget.DrawFramebuffer, toKept ? _keptFramebuffer : _framebuffer);
+		foreach (var (x, y, width) in _kept) {
+			int layerBottom = (Rows - 1 - y) * k, keptBottom = (y - _keptTop) * k;
+			int fromBottom = toKept ? layerBottom : keptBottom, toBottom = toKept ? keptBottom : layerBottom;
+			_gl.BlitFramebuffer(x * k, fromBottom, (x + width) * k, fromBottom + k, x * k, toBottom, (x + width) * k,
+				toBottom + k, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Nearest);
+		}
+
+		_gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+	}
+
+	private void CreateKept(int width, int height) {
+		_keptColor = _gl.GenTexture();
+		_gl.BindTexture(TextureTarget.Texture2D, _keptColor);
+		unsafe {
+			_gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)width, (uint)height, 0, PixelFormat.Rgba,
+				PixelType.UnsignedByte, null);
+		}
+
+		_gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+		_gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+		_gl.BindTexture(TextureTarget.Texture2D, 0);
+		_keptFramebuffer = _gl.GenFramebuffer();
+		_gl.BindFramebuffer(FramebufferTarget.Framebuffer, _keptFramebuffer);
+		_gl.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0,
+			TextureTarget.Texture2D, _keptColor, 0);
+		_gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+		_keptSize = (width, height);
+	}
+
+	private void DeleteKept() {
+		if (_keptFramebuffer != 0) {
+			_gl.DeleteFramebuffer(_keptFramebuffer);
+			_gl.DeleteTexture(_keptColor);
+			_keptFramebuffer = _keptColor = 0;
+		}
+	}
+
 	/// <summary>Ends <see cref="BeginWorld"/>'s pass or <see cref="BeginWorldPixel"/>'s binding: the scissor off and the window's framebuffer bound.</summary>
 	public void EndWorld() {
 		_gl.Disable(EnableCap.ScissorTest);
@@ -268,6 +429,7 @@ public sealed class IndexedWorldSurface : IDisposable {
 		_shader.SetInt("uScale", Scale);
 		_shader.SetInt("uWorldHeight", Rows * Scale);
 		_shader.SetUInt("uWorldCell", WorldCell);
+		_shader.SetInt("uKeepWorld", 0);
 		_shader.SetInt("uWindowWidth", windowWidth);
 		_shader.SetInt("uWindowRows", windowRows);
 		bool cursor = cursorAt != null && _cursorWidth > 0;
@@ -342,6 +504,7 @@ public sealed class IndexedWorldSurface : IDisposable {
 		_gl.DeleteFramebuffer(_framebuffer);
 		_gl.DeleteTexture(_worldColor);
 		_gl.DeleteRenderbuffer(_worldDepthStencil);
+		DeleteKept();
 		if (_cursor != 0) {
 			_gl.DeleteTexture(_cursor);
 		}

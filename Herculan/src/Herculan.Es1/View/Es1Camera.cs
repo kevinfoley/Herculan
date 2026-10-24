@@ -205,10 +205,33 @@ public sealed class Es1Camera {
 	/// <summary>The window's projection on <paramref name="camera"/>, for a viewport the window's own size in the screen's pixels.</summary>
 	public static void ApplyProjection(Camera camera, Es1ViewWindow window) {
 		var (width, height) = Size(window);
-		camera.FieldOfView = 2f * MathF.Atan(height / 2f / FocalPixels);
-		camera.PrincipalPoint = new System.Numerics.Vector2((window.CentreX - window.X0) / (float)width,
-			(window.CentreY - window.Y0) / (float)height);
-		camera.NearPlane = WorldScale.DistanceToRender(NearPlane);
+		ApplyProjection(camera, width, height, (window.CentreX - window.X0, window.CentreY - window.Y0), NearPlane,
+			FocalPixels);
+	}
+
+	/// <summary>
+	/// <paramref name="view"/>'s camera put on <paramref name="camera"/>, as <see cref="ApplyTo(Camera, Es1ViewWindow)"/>
+	/// puts this one's, with the view's own projection for a rect of <paramref name="width"/> × <paramref name="height"/>
+	/// screen pixels.
+	/// </summary>
+	public static void ApplyTo(Camera camera, Es1RectView view, int width, int height) {
+		camera.Position = view.Position;
+		camera.Pitch = view.Angles.Pitch;
+		camera.Roll = view.Angles.Roll;
+		camera.Yaw = -view.Angles.Heading;
+		ApplyProjection(camera, Math.Max(width, 1), Math.Max(height, 1), view.Centre, view.NearPlane, 1 << view.FocalShift);
+	}
+
+	/// <summary>
+	/// A projection of <paramref name="focalPixels"/> in the screen's pixels on <paramref name="camera"/>, for a viewport
+	/// of <paramref name="width"/> × <paramref name="height"/> of them with its axis at <paramref name="centre"/> from
+	/// the top-left, and the near plane <paramref name="nearPlane"/> in world units.
+	/// </summary>
+	private static void ApplyProjection(Camera camera, int width, int height, (int X, int Y) centre, int nearPlane,
+			int focalPixels) {
+		camera.FieldOfView = 2f * MathF.Atan(height / 2f / focalPixels);
+		camera.PrincipalPoint = new System.Numerics.Vector2(centre.X / (float)width, centre.Y / (float)height);
+		camera.NearPlane = WorldScale.DistanceToRender(nearPlane);
 	}
 
 	/// <summary>The window's size in screen pixels, its right column and bottom row included and held to the screen.</summary>

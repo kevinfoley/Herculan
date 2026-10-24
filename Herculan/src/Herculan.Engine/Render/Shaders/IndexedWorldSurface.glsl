@@ -4,7 +4,8 @@
 // window is a cell of the store, read from the start address in the store's own linear order, rows of uWidth cells
 // wrapping at uCellCount; a cell holding a palette index shows that entry of the live palette, and a cell holding the
 // world marker shows the world layer's pixels for that cell, drawn at uScale times the store's resolution. A cursor
-// sprite, when shown, is drawn over the window in the same palette.
+// sprite, when shown, is drawn over the window in the same palette. The same program paints a rect of the cells into
+// the world layer (uKeepWorld), the world cells left as the layer holds them.
 
 #if defined(VERTEX_SHADER)
 	#define VARYING out
@@ -44,6 +45,8 @@ uniform int uCellCount;
 uniform int uScale;
 uniform int uWorldHeight;
 uniform uint uWorldCell;
+// Set while the cells are painted into the world layer itself: a world cell then keeps the layer's pixel.
+uniform int uKeepWorld;
 // A sprite over the window, in the window's cells: its palette indices, its rect (x, y, width, height), whether it is
 // shown, and whether index 0 is drawn or leaves the window's pixel.
 uniform usampler2D uCursor;
@@ -78,7 +81,9 @@ void main() {
 
 	ivec2 cell = ivec2(address % uWidth, address / uWidth);
 	uint value = texelFetch(uCells, cell, 0).r;
-	if (value == uWorldCell) {
+	if (value == uWorldCell && uKeepWorld != 0) {
+		discard;
+	} else if (value == uWorldCell) {
 		ivec2 within = clamp(ivec2(floor(fract(position) * float(uScale))), ivec2(0), ivec2(uScale - 1));
 		ivec2 world = cell * uScale + within;
 		// The world layer keeps GL's bottom-left origin; the store's rows run down.

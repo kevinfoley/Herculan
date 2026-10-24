@@ -32,6 +32,15 @@ public sealed class Es1Shading {
 	/// <summary>The tags whose bands the table holds, in block order: the zone shapes' and the HERCs'.</summary>
 	public static IReadOnlyList<byte> Tags { get; } = [ZoneShapeTag, 7];
 
+	/// <summary>
+	/// The ramps <c>WorldShades_ResetRamps</c> (<c>00025e88</c>) points at <see cref="FlatRange"/>: 0, 2, 4, 6, 8, 10,
+	/// 12 and 14 (docs/es1/rendering/polygon-shading.md#the-distance-bands).
+	/// </summary>
+	private static readonly int[] FlatRamps = [0, 2, 4, 6, 8, 10, 12, 14];
+
+	/// <summary><c>WorldShades_ResetRamps</c>' range {16, 16}: palette indices 16 to 31.</summary>
+	private static readonly (short Start, short Length) FlatRange = (16, 16);
+
 	private readonly int[] _tag0Thresholds;
 	private readonly int[] _taggedThresholds;
 	private readonly int _bands;
@@ -78,8 +87,8 @@ public sealed class Es1Shading {
 		int bands = world.RampRows;
 
 		// Block (t, b) is the raster's ramp table once WorldShades_ApplyForObject has re-pointed tag t's ramps at band b
-		// (Palette_SetRampsToRange: a range's consecutive indices).
-		var blocks = new IReadOnlyList<short[]>[Tags.Count * bands];
+		// (Palette_SetRampsToRange: a range's consecutive indices); the last, FlatBlock, once WorldShades_ResetRamps has.
+		var blocks = new IReadOnlyList<short[]>[Tags.Count * bands + 1];
 		for (int t = 0; t < Tags.Count; t++) {
 			var pairs = shades.Lists.FirstOrDefault(list => list.Tag == Tags[t])?.Pairs ?? [];
 			for (int band = 0; band < bands; band++) {
@@ -95,6 +104,13 @@ public sealed class Es1Shading {
 			}
 		}
 
+		var flat = palette.ShadeRamps.ToArray();
+		foreach (int ramp in FlatRamps.Where(ramp => ramp < flat.Length)) {
+			flat[ramp] = Enumerable.Range(FlatRange.Start, FlatRange.Length).Select(i => (short)i).ToArray();
+		}
+
+		blocks[^1] = flat;
+
 		byte? Entry(int ramp, int shade, int block) =>
 			ramp < blocks[block].Count && blocks[block][ramp] is { Length: > 0 } entries
 				? (byte)entries[shade * entries.Length >> 8]
@@ -107,6 +123,13 @@ public sealed class Es1Shading {
 			palette);
 		return new Es1Shading(surfaces, table, tag0, tagged, bands);
 	}
+
+	/// <summary>
+	/// The block of the ramps as <c>WorldShades_ResetRamps</c> leaves them, <see cref="FlatRamps"/> on palette indices 16
+	/// to 31 and every other ramp the palette's own, which a draw outside the object list reads, by no band; null
+	/// without a table.
+	/// </summary>
+	public int? FlatBlock => Table != null ? Tags.Count * _bands : null;
 
 	/// <summary>The block an object of <paramref name="tag"/> at <paramref name="distance"/> reads, or null without a table.</summary>
 	public int? Block(byte tag, int distance) {

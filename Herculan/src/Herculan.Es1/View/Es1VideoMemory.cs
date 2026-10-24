@@ -4,13 +4,24 @@ using Herculan.Engine.Render;
 namespace Herculan.Es1.View;
 
 /// <summary>
-/// What draws the world layer under <see cref="Es1VideoMemory"/>'s cells: the 3D pass into a rect of the store, and a
-/// copy of a rect from one place of the store to another. Positions and sizes are in the store's cells, rows counted
-/// down from its top.
+/// What draws the world layer under <see cref="Es1VideoMemory"/>'s cells: the 3D pass into a rect of the store, a
+/// camera's view into a rect of the cockpit, and a copy of a rect from one place of the store to another. Positions
+/// and sizes are in the store's cells, rows counted down from its top.
 /// </summary>
 public interface IEs1WorldLayer {
-	/// <summary>Draws the world into the rect of <paramref name="width"/> × <paramref name="height"/> cells at (<paramref name="x"/>, <paramref name="y"/>).</summary>
-	void DrawWorld(int x, int y, int width, int height);
+	/// <summary>
+	/// Draws the world into the rect of <paramref name="width"/> × <paramref name="height"/> cells at (<paramref name="x"/>,
+	/// <paramref name="y"/>), the world pixels of <paramref name="keep"/>'s runs, each <c>Width</c> cells along row
+	/// <c>Y</c> from column <c>X</c>, left as they were.
+	/// </summary>
+	void DrawWorld(int x, int y, int width, int height, IReadOnlyList<(int X, int Y, int Width)> keep);
+
+	/// <summary>
+	/// Draws <paramref name="view"/> into the rect of <paramref name="width"/> × <paramref name="height"/> cells at
+	/// (<paramref name="x"/>, <paramref name="y"/>) and answers, row by row from its top-left, which cells it drew
+	/// into; a cell it did not draw into keeps its world pixels.
+	/// </summary>
+	bool[] DrawWorldView(int x, int y, int width, int height, Es1RectView view);
 
 	/// <summary>Copies the world pixels of one rect of cells onto another; the two never overlap.</summary>
 	void Copy(int sourceX, int sourceY, int targetX, int targetY, int width, int height);
@@ -281,7 +292,9 @@ public sealed class Es1VideoMemory {
 
 	/// <summary>
 	/// The 3D pass of <c>Sim_RenderFrame</c> into the draw page: the world drawn in <paramref name="window"/>'s rect, held
-	/// to the page, of which the pixels inside <paramref name="clip"/>'s regions take it, clip mode 2.
+	/// to the page, of which the pixels inside <paramref name="clip"/>'s regions take it, clip mode 2. The layer's pass
+	/// covers the whole rect, so the world cells it holds outside the regions, which another pass drew
+	/// (<see cref="DrawWorldView"/>), keep their world pixels.
 	/// </summary>
 	public void DrawWorld(Es1ViewWindow window, Es1ClipBlock clip) {
 		_worldPass = null;
@@ -291,10 +304,26 @@ public sealed class Es1VideoMemory {
 		}
 
 		int width = x1 - window.X0 + 1, rows = y1 - window.Y0 + 1;
+		var keep = new List<(int X, int Y, int Width)>();
 		for (int y = window.Y0; y <= y1; y++) {
-			for (int x = window.X0; x <= x1; x++) {
-				if (clip.Contains(x, y)) {
-					Write(Address(DrawPage, x, y), WorldCell);
+			int runStart = -1;
+			for (int x = window.X0; x <= x1 + 1; x++) {
+				bool kept = false;
+				if (x <= x1) {
+					int address = Address(DrawPage, x, y);
+					if (clip.Contains(x, y)) {
+						Write(address, WorldCell);
+					} else {
+						kept = Cells[address] == WorldCell;
+					}
+				}
+
+				if (kept && runStart < 0) {
+					runStart = x;
+				} else if (!kept && runStart >= 0) {
+					int start = Address(DrawPage, runStart, y);
+					keep.Add((start % Width, start / Width, x - runStart));
+					runStart = -1;
 				}
 			}
 		}
@@ -302,8 +331,35 @@ public sealed class Es1VideoMemory {
 		int corner = Address(DrawPage, window.X0, window.Y0);
 		int left = corner % Width, top = corner / Width;
 		if (Layer != null && left + width <= Width && top + rows <= StoreRows) {
-			Layer.DrawWorld(left, top, width, rows);
+			Layer.DrawWorld(left, top, width, rows, keep);
 			_worldPass = (DrawPage, window.X0, window.Y0, x1, y1, clip);
+		}
+	}
+
+	/// <summary>
+	/// A world pass into the draw page's inclusive rect <paramref name="rect"/>: <paramref name="view"/> drawn into the
+	/// world layer under it, and <see cref="WorldCell"/> written to exactly the cells the pass drew into, every other
+	/// cell left as the 2D drawing wrote it (docs/herculan/plan-es1-first-mission.md#decisions, decision 17, this
+	/// engine's departure: retail rasterizes the view into the rect's palette indices). It is drawn at once, so the rest
+	/// of the frame's 2D drawing goes over it and a copy between pages carries it. It leaves the last
+	/// <see cref="DrawWorld"/>, which <see cref="WorldObjectAt"/> answers for, as it was. With no layer, or a rect that
+	/// does not lie in one piece in the store, nothing is drawn, an engine guard.
+	/// </summary>
+	public void DrawWorldView(Es1Rect rect, Es1RectView view) {
+		int width = rect.X1 - rect.X0 + 1, rows = rect.Y1 - rect.Y0 + 1;
+		int corner = Address(DrawPage, rect.X0, rect.Y0);
+		int left = corner % Width, top = corner / Width;
+		if (Layer == null || width <= 0 || rows <= 0 || left + width > Width || top + rows > StoreRows) {
+			return;
+		}
+
+		var covered = Layer.DrawWorldView(left, top, width, rows, view);
+		for (int y = 0; y < rows; y++) {
+			for (int x = 0; x < width; x++) {
+				if (covered[y * width + x]) {
+					Write(Address(DrawPage, rect.X0 + x, rect.Y0 + y), WorldCell);
+				}
+			}
 		}
 	}
 

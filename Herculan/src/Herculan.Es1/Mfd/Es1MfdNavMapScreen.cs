@@ -59,9 +59,12 @@ public sealed class Es1MfdNavMapScreen : Es1MfdScreen {
 	/// rect filled in <see cref="Fill"/> in the canvas context; then a context whose rect is the rect less the canvas
 	/// context's origin and whose origin is <see cref="ViewportOrigin"/>, its clip mode left at 1; the camera put at the
 	/// active view object's <i>x</i> and <i>y</i> at <see cref="Height"/>, turned with that object's roll and heading;
-	/// the cross plotted in <see cref="CrossColor"/> about the new origin, the rect's center; and the rect copied from
-	/// the page drawn to the page on the screen (<see cref="Es1Cockpit.DrawToCockpit"/> with 1). With no view object
-	/// the camera stays where it was, an engine guard.
+	/// the zone's shapes seen from it, clipped to the new context's rect, with the projection centre at its origin, the
+	/// rect's center, and <c>WorldShades_ResetRamps</c>' ramps (<see cref="Es1RectScene.FlatZoneShapes"/>), drawn as a
+	/// world pass into that rect (<see cref="Es1VideoMemory.DrawWorldView"/>); the cross plotted in
+	/// <see cref="CrossColor"/> over them about the same origin; and the rect copied from the page drawn to the page on
+	/// the screen (<see cref="Es1Cockpit.DrawToCockpit"/> with 1). With no view object the camera stays where it was,
+	/// an engine guard.
 	/// </summary>
 	public override void Update() {
 		var canvas = Cockpit.PushCanvasContext();
@@ -74,11 +77,8 @@ public sealed class Es1MfdNavMapScreen : Es1MfdScreen {
 			CameraAngles = (Pitch, view.View.Y, view.View.Z);
 		}
 
-		// PLACEHOLDER: Raster_InstallViewProjection of the camera, a null model transform, WorldShades_ResetRamps' flat
-		// ramps and each of Zone_ShapeObjects drawn through TSObj_RenderCopy (docs/es1/simulation/mfd-nav-map.md#the-paint,
-		// step 4). The port draws the world only in the 3D pass of the view window (Es1VideoMemory.DrawWorld); a world
-		// pass into a cockpit rect, which the missile camera (plan step 6c5 part C) needs too, is not built, so no
-		// shape is drawn.
+		canvas.Display.DrawWorldView(map.Rect, new Es1RectView(CameraPosition, CameraAngles, NearPlane, FocalShift,
+			(-ViewportOrigin.X, -ViewportOrigin.Y), Es1RectScene.FlatZoneShapes));
 		foreach (var (x, y) in Cross) {
 			map.Plot(x, y, CrossColor);
 		}

@@ -223,6 +223,10 @@ public static class Es1ZoneViewer {
 				var sceneRenderer = renderer;
 				monitor.WorldPass = (x, y, width, height) =>
 					DrawWorld(gl, sceneRenderer, backdrop, worldDraw, cockpitCamera, x, y, width, height);
+				// A cockpit rect's view, the NAV MAP's, from a camera of its own (plan decision 17).
+				var rectCamera = new Camera();
+				monitor.ViewPass = (view, size, viewport) =>
+					DrawRectView(sceneRenderer, worldDraw, rectCamera, view, size, viewport);
 				// The gunsight's pick, answered from what that pass drew (plan decision 16).
 				var pick = new Es1WorldPick(gl, sceneRenderer, worldDraw);
 				disposables.Add(pick);
@@ -370,5 +374,25 @@ public static class Es1ZoneViewer {
 		gl.Clear(Silk.NET.OpenGL.ClearBufferMask.DepthBufferBit);
 		renderer.Backdrop = null;
 		renderer.Render(camera, draw.Objects, x, y, width, height);
+	}
+
+	/// <summary>
+	/// A camera's view into a cockpit rect of <paramref name="size"/> screen pixels, drawn in <paramref name="viewport"/>
+	/// from <paramref name="camera"/> placed and projected as <paramref name="view"/> says, with no backdrop: for
+	/// <see cref="Es1RectScene.FlatZoneShapes"/>, <see cref="Es1WorldDraw.FlatZoneShapes"/>.
+	/// </summary>
+	private static void DrawRectView(SceneRenderer renderer, Es1WorldDraw draw, Camera camera, Es1RectView view,
+			(int Width, int Height) size, (int X, int Y, int Width, int Height) viewport) {
+		Es1Camera.ApplyTo(camera, view, size.Width, size.Height);
+		IReadOnlyList<SceneItem> items = view.Scene switch {
+			Es1RectScene.FlatZoneShapes => draw.FlatZoneShapes,
+			_ => [],
+		};
+
+		// PLACEHOLDER: the faces take the sun alone. Retail draws the view outside the object list's per-object light
+		// selection (docs/es1/rendering/polygon-shading.md#effect-lights), and which effect lights its faces then take
+		// is not settled; this engine's ES1 draw lights nothing else either.
+		renderer.Backdrop = null;
+		renderer.Render(camera, items, viewport.X, viewport.Y, viewport.Width, viewport.Height);
 	}
 }

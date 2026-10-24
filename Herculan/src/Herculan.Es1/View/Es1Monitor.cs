@@ -11,7 +11,7 @@ namespace Herculan.Es1.View;
 /// shown at 4:3 as a CRT showed it (docs/herculan/plan-es1-first-mission.md, decision 7), each cell's palette index
 /// through the live palette and each world cell from the world layer under it (<see cref="IndexedWorldSurface"/>). It
 /// is the display's world layer: the 3D pass is drawn into it where <see cref="Es1VideoMemory.DrawWorld"/> marks the
-/// cells, at a whole scale <i>k</i>, the least that fills the window's 4:3 rect's height, so the projection computed in
+/// cells, and a camera's view into a cockpit rect where <see cref="Es1VideoMemory.DrawWorldView"/> does, at a whole scale <i>k</i>, the least that fills the window's 4:3 rect's height, so the projection computed in
 /// the screen's own pixels keeps its shape.
 /// </summary>
 public sealed class Es1Monitor : IEs1WorldLayer, IDisposable {
@@ -41,6 +41,14 @@ public sealed class Es1Monitor : IEs1WorldLayer, IDisposable {
 	/// Null answers no object.
 	/// </summary>
 	public Func<(int X, int Y, int Width, int Height), object?>? WorldPick { get; set; }
+
+	/// <summary>
+	/// A camera's view into a rect of the cockpit (<see cref="Es1VideoMemory.DrawWorldView"/>), given the view, the
+	/// rect's size in the screen's pixels and the GL viewport (x, y, width, height, from the bottom-left) in the world
+	/// layer it draws into. Whatever it draws must write its depth, which tells the cells it drew into
+	/// (<see cref="IndexedWorldSurface.ReadWorldCoverage"/>).
+	/// </summary>
+	public Action<Es1RectView, (int Width, int Height), (int X, int Y, int Width, int Height)>? ViewPass { get; set; }
 
 	// The GL viewport of the last world pass.
 	private (int X, int Y, int Width, int Height)? _worldViewport;
@@ -135,11 +143,33 @@ public sealed class Es1Monitor : IEs1WorldLayer, IDisposable {
 	public static ScreenPointer Pointer(Vector2D<int> framebufferSize, Vector2D<int> clientSize) =>
 		new(new FrameFit(DisplayFrame, framebufferSize), clientSize, new Vector2D<int>(Es1VideoMemory.PageWidth, Es1VideoMemory.PageHeight));
 
-	void IEs1WorldLayer.DrawWorld(int x, int y, int width, int height) {
+	void IEs1WorldLayer.DrawWorld(int x, int y, int width, int height, IReadOnlyList<(int X, int Y, int Width)> keep) {
+		_surface.KeepWorld(keep);
 		var (glX, glY, glWidth, glHeight) = _surface.BeginWorld(x, y, width, height);
 		_worldViewport = (glX, glY, glWidth, glHeight);
 		WorldPass?.Invoke(glX, glY, glWidth, glHeight);
+		_surface.RestoreWorld();
 		_surface.EndWorld();
+	}
+
+	/// <summary>
+	/// The cells written so far sent and painted into the layer under the rect, so a cell the view draws only part of
+	/// shows the 2D drawing's colour in the rest; then the view's pass (<see cref="ViewPass"/>) and the cells it drew
+	/// into, read back at once. Without a pass no cell is drawn into.
+	/// </summary>
+	bool[] IEs1WorldLayer.DrawWorldView(int x, int y, int width, int height, Es1RectView view) {
+		if (ViewPass == null) {
+			return new bool[width * height];
+		}
+
+		var (firstRow, rowCount) = Display.TakeDirtyRows();
+		_surface.UploadCells(Display.Cells, firstRow, rowCount);
+		_surface.PaintCells(x, y, width, height);
+		var viewport = _surface.BeginWorld(x, y, width, height);
+		ViewPass(view, (width, height), viewport);
+		var covered = _surface.ReadWorldCoverage(x, y, width, height);
+		_surface.EndWorld();
+		return covered;
 	}
 
 	/// <summary>
