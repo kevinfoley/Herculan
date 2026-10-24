@@ -375,3 +375,4 @@ Fields outside the block:
 ## Open
 
 - **Open:** whether anything reaches the second body in `Mech_BehaviourDriveOffThink` (`0041df1b`–`0041e0d6`). The function's own code before it branches only to `0041df0f` and the epilogue, and `es2_xref.py` run on every instruction start in the range finds no rel32 branch into it and one stored-pointer hit, at `00492064`, which is the operand bytes of a `CALL` inside another function.
+- **Open:** whether anything besides a direct-fire hit adds to `mech+0x288`, the damage that arms the circling break-off. `es2_fieldscan.py 288 --writes-only` finds three writes: two adds in `Mech_DirectFireHitTest` (`00418ba8`) and the window's reset in `Mech_PerTickSystemsUpdate` (`0041aa5c`). `Mech_ApplyExplosiveDamage` (`004187d0`) has no write of it in its own body, so as far as found a blast, a collision or a direct hit's splash share does not count toward the break-off.

@@ -52,6 +52,19 @@ sealed class KeyboardRouting {
 		_fields.DeliverKey(key, released: false);
 	}
 
+	/// <summary>
+	/// An auto-repeat of the key held last, which retail takes as a fresh key-down: the display keys and the edit fields
+	/// see it again. A key the menu bar took stays the bar's while it is held, so its repeats reach nothing.
+	/// </summary>
+	public void KeyRepeat(Key key) {
+		if (key == _menuBarKey && _escapeIsMenuBars) {
+			return;
+		}
+
+		DisplayHotkey(key, released: false);
+		_fields.DeliverKey(key, released: false);
+	}
+
 	public void KeyUp(Key key) {
 		DisplayHotkey(key, released: true);
 		if (key != _menuBarKey || !_escapeIsMenuBars) {

@@ -3,34 +3,21 @@ using Herculan.Engine.World;
 namespace Herculan.Engine.Sim;
 
 /// <summary>
-/// <c>Actions_EvaluateTriggers</c> (<c>00426b70</c>) — the mission's trigger layer, run once a frame
-/// from <c>Sim_MainTick</c> with the player's machine.
-///
-/// <para>It walks the whole action array and, for each action, decides <b>whose position</b> is
-/// offered to that action's areas. Nothing else in the simulation looks at where anything is on the
-/// mission's behalf: this is the one place a mission notices that something has happened.</para>
+/// <c>Actions_EvaluateTriggers</c> (<c>00426b70</c>) — the mission's trigger areas, run once a frame
+/// from <c>Sim_MainTick</c> with the player's machine: for each action it decides <b>whose
+/// position</b> is offered to that action's areas. Retail behavior:
+/// docs/retail/simulation/mission-deployment.md#trigger-areas--actions_evaluatetriggers-00426b70.
 /// </summary>
 public static class MissionTriggers {
 	/// <summary>
-	/// One pass over the action array. The subject an action's <see cref="MissionAction.Type"/>
-	/// selects:
+	/// One pass over the action array. An action's <see cref="MissionAction.Type"/> selects the
+	/// subject — the player, the player's group, every deployed group of a side or class, or the
+	/// action's own resolved target object or group; the doc's table maps each value.
 	///
-	/// <list type="table">
-	/// <item><term>0</term><description>the player's machine</description></item>
-	/// <item><term>1</term><description>every member of the player's group</description></item>
-	/// <item><term>2 / 3</term><description>every member of every <i>deployed</i> human / Cybrid group</description></item>
-	/// <item><term>4 / 5 / 6</term><description>every member of every <i>deployed</i> mech / flyer / base group</description></item>
-	/// <item><term>7 / 8 / 9</term><description>the action's own resolved target object</description></item>
-	/// <item><term>10</term><description>every member of the action's own resolved target group</description></item>
-	/// </list>
-	///
-	/// <para><b>The deployment gate is part of the trigger test.</b> Types 2-6 skip a group that has
-	/// not entered the mission, so an undeployed group cannot trip an action — including, notably, the
-	/// one it is itself waiting on.</para>
-	///
-	/// <para>The group sweeps stop at the first group that fires the action, as the original's
-	/// short-circuiting loop condition does; an action with no player and no resolved target simply
-	/// finds no subject and is offered nothing.</para>
+	/// <para>Types 2-6 skip a group that has not entered the mission, so an undeployed group cannot
+	/// trip an action, including the one it is itself waiting on. The group sweeps stop at the first
+	/// group that fires the action, as the original's short-circuiting loop condition does; an action
+	/// with no player and no resolved target finds no subject and is offered nothing.</para>
 	/// </summary>
 	public static void Evaluate(SimWorld world) {
 		var actions = world.Mission.Actions;

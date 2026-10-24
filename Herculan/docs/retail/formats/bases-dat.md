@@ -12,7 +12,7 @@ It reaches the file through a plain-file-read helper with no container header, s
 |---|---|---|
 | `+0x02` | `int16` | shape index into the selected library |
 | `+0x04` | `int16` | wreck type index into `dgs\BHULKS.DGS`, `-1` for none |
-| `+0x06` | `int16` | how many animation threads the constructor builds — [`structure-behaviour.md`](../simulation/structure-behaviour.md#the-animation-threads). The eight types that state a non-zero count are exactly the eight drawn from `dts\BASES_AN.DTS` rather than `dgs\BASES.DGS`, but the library is picked per case in the switch and not from this field |
+| `+0x06` | `int16` | how many animation threads the constructor builds — [`structure-behaviour.md`](../simulation/structure-behaviour.md#the-animation-threads). The shape loader picks the library from it too (`0` → `dgs\BASES.DGS`, else `dts\BASES_AN.DTS`), while the constructor's switch picks the library per case; the two agree on every retail type — [`structure-behaviour.md`](../simulation/structure-behaviour.md#five-classes-one-switch) |
 | `+0x08` | `int16` | whole-structure fire shape, `-1` for none |
 | `+0x0a` | `int16`×3 | where that fire sits, in the structure's own frame |
 | `+0x10` | `int16` | whole-structure death sequence, used in place of the last part's own |
@@ -31,6 +31,8 @@ It reaches the file through a plain-file-read helper with no container header, s
 | `+0x38` | ptr | runtime only: the installed `BASECOL.DAT` model. Null selects the volume hit path **and** makes the type immune to blasts |
 
 Unread: `+0x00` and `+0x18` (6 bytes).
+
+Walking this shape consumes the retail file's 6,422 content bytes exactly. The eight types drawn from `dts\BASES_AN.DTS` reference its eight roots as shapes 0–7.
 
 ## The component record, 30 bytes
 

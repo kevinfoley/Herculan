@@ -40,7 +40,7 @@ The contribution is gated on `dot < 0`, so the light's direction field points th
 
 ## The sun
 
-**This section is the canonical derivation**; [`dts-texture-binding.md`](dts-texture-binding.md) and `Render/MissionSun` reference it.
+**This section is the canonical derivation**; [`dts-texture-binding.md`](dts-texture-binding.md) references it.
 
 One hardcoded directional light per mission, created unconditionally by `Light_CreateMissionSun` (`00461240`) from constants compiled into DBSIM. No mission or theater file contributes, and no ambient light is created anywhere in the binary.
 

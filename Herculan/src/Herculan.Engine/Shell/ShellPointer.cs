@@ -256,6 +256,23 @@ public sealed class ShellPointer {
 	}
 
 	/// <summary>
+	/// A left press and release delivered at <paramref name="hit"/> wherever the pointer is, then the pointer back on
+	/// what it is over: this engine's own, for a gamepad button that stands for a click on one widget. A locked edit field
+	/// gives up the focus and the lock first, as the press of a click elsewhere makes it.
+	/// </summary>
+	public void Click(ShellHit hit, Action<ShellWidget> fire) {
+		if (Locked) {
+			ReleaseFocus();
+		}
+
+		var under = _underPointer;
+		Move(hit);
+		Press(ShellMouseButton.Left, fire);
+		Release(ShellMouseButton.Left, fire);
+		Move(under);
+	}
+
+	/// <summary>
 	/// A move to wherever <paramref name="hit"/> is. When the hit differs from the target, the target is
 	/// sent a leave and the new hit becomes the target, as <c>EventQueue_Pump</c> (<c>00469ba4</c>)
 	/// does; none of these classes acts on the enter that follows. While the pointer is locked the pump

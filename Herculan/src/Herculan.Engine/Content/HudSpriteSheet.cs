@@ -20,29 +20,20 @@ public readonly record struct HudSprite(AtlasRect Rect, int Width, int Height, i
 /// Every HUD sprite the cockpit draws, from several <c>.HBA</c> banks, packed into one atlas so the
 /// whole HUD costs a single texture bind.
 ///
-/// <para><b>Why <c>hba</c> and not <c>dba</c>.</b> The game ships each HUD sprite bank twice under the
-/// same name — <c>dba\NAME.DBA</c> for its 320-wide mode and <c>hba\NAME.HBA</c> for its 640-wide one,
-/// the latter being exactly twice the former on both axes, frame for frame. DBSIM picks between them
-/// at load time off a video-mode global, with the literal folder names sitting adjacent to each bank
-/// name in its .rdata (<c>"NAME\0hba\0dba\0"</c>). The same <c>d</c>/<c>h</c> split runs through the
-/// whole resource set: <c>db0</c>/<c>hb0</c> canopy art, <c>dfn</c>/<c>hfn</c> fonts, <c>edg</c>/
-/// <c>hdg</c> clip regions. This engine renders the 640x480 <c>.HB0</c> canopy, so it takes the <c>hba</c> half
-/// throughout — mixing the two would put half-scale sprites on full-scale art.</para>
-///
-/// <para>That same video mode is what <see cref="CockpitArt.GauToPixelScale"/> is: the original's
-/// hardcoded widget coordinates appear in the disassembly as <c>value &lt;&lt; (shift &amp; 0x1f)</c>
-/// against per-axis resolution-shift globals, so <c>.GAU</c> coordinates are authored in the 320-wide
-/// space and doubled for the 640-wide one.</para>
+/// <para><b>The banks come from <c>hba</c>, the 640-wide half.</b> Retail ships each bank as a
+/// 320-wide <c>dba</c> and a 640-wide <c>hba</c> copy and picks one by video mode
+/// (docs/retail/simulation/cockpit-views.md#video-modes). This engine draws the 640x480 <c>.HB0</c>
+/// canopy, so it takes <c>hba</c> throughout; a bank with no <c>hba</c> copy loads from
+/// <see cref="LoResResourceFolder"/> and draws doubled.</para>
 ///
 /// <para>Index 0 decodes to alpha 0 here, meaning "leave the console art showing through". The canopy
-/// frames in <see cref="CockpitArt"/> no longer use index 0 for anything: their cutout comes from the
-/// herc's own <see cref="CockpitClipRegions"/> data, so black console detail stays opaque there.</para>
+/// frames in <see cref="CockpitArt"/> take their cutout from <see cref="CockpitClipRegions"/>
+/// instead, so black console detail stays opaque there.</para>
 ///
-/// <para><b>Some banks do sit inside the per-herc cockpit scheme window.</b> Most author in the
-/// 12-35 band, which the theater palette owns outright, but <c>WPN_DMG</c> is 1552/1568 pixels of
-/// index 46 in frame 0 and <c>PWEAPONS</c> frame 1 is entirely index 42 — both inside slots 42-65,
-/// which <see cref="CockpitPalette"/> replaces per herc. That is deliberate: those plates are meant
-/// to match the console they sit on.</para>
+/// <para><b>Some banks author inside the per-herc cockpit scheme window.</b> Most use the 12-35 band,
+/// which the theater palette owns, but <c>WPN_DMG</c>'s row underlay is index 46 and <c>PWEAPONS</c>'
+/// unselected row plate index 42 — inside slots 42-65, which <see cref="CockpitPalette"/> replaces
+/// per herc, so those plates match the console they sit on.</para>
 /// </summary>
 public sealed class HudSpriteSheet {
 	/// <summary>Resource folder for the 640-wide sprite banks, and their extension.</summary>

@@ -29,17 +29,15 @@ public enum MissionObjectiveSubject {
 /// <para>An objective is a <b>question about one subject</b> plus what answering it does. The
 /// question is <see cref="ConditionCode"/> asked of <see cref="SubjectKind"/>/<see cref="SubjectRef"/>;
 /// the answer is read two different ways depending on <see cref="Required"/>, and the first time it
-/// comes back true the record's ten counter slots are applied and the record latches.</para>
-///
-/// <para><b>The field-to-offset mapping is the spawn pass's read order</b>, which is the only
-/// statement of it: seven shorts, then ten counter refs, then ten operations. See
-/// docs/retail/simulation/mission-objectives.md.</para>
+/// comes back true the record's ten counter slots are applied and the record latches. See
+/// docs/retail/simulation/mission-objectives.md; the record's layout is
+/// docs/retail/formats/script-dat.md#block-12-in-memory--76-bytes-0x4c.</para>
 /// </summary>
-/// <param name="Required"><inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptObjective.Required"/></param>
+/// <param name="Required"><inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptObjective.Required" path="/summary/node()"/></param>
 /// <param name="ConditionCode">Record <c>+0x02</c> — which question is asked. See the constants below.</param>
-/// <param name="SubjectKind"><inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptObjective.SubjectKind"/></param>
+/// <param name="SubjectKind"><inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptObjective.SubjectKind" path="/summary/node()"/></param>
 /// <param name="SubjectRef">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptObjective.SubjectRef"/>
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptObjective.SubjectRef" path="/summary/node()"/>
 /// Carried before resolution.
 /// </param>
 /// <param name="Point">
@@ -47,20 +45,20 @@ public enum MissionObjectiveSubject {
 /// it; no reader is found (see docs/retail/simulation/mission-objectives.md#open).
 /// </param>
 /// <param name="RouteRef">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptObjective.RouteRef"/>
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptObjective.RouteRef" path="/summary/node()"/>
 /// It is the only field <see cref="ConditionOrderComplete"/> uses besides the subject.
 /// </param>
 /// <param name="TextRef">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptObjective.TextRef"/>
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptObjective.TextRef" path="/summary/node()"/>
 /// The failure alert prints it and the lines after it, <see cref="TextLines"/> in all.
 /// </param>
 /// <param name="CounterRefs">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptObjective.CounterRefs"/>
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptObjective.CounterRefs" path="/summary/node()"/>
 /// Written when the objective is satisfied, to the same 1,000-short array <c>Action_Activate</c>
 /// writes; see <see cref="Sim.MissionRuntime.Counters"/>.
 /// </param>
 /// <param name="CounterOps">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptObjective.CounterOps"/>
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptObjective.CounterOps" path="/summary/node()"/>
 /// <b>The operation codes are not the action record's</b> — see the four constants below.
 /// </param>
 public sealed record MissionObjective(

@@ -39,7 +39,7 @@ public sealed class PilotControls {
 	private bool _joystickCenterBody;
 
 	// Input_LatchButton(1, 1), the first button row — always FIRE — held masked until it is let go, which
-	// also holds the axes still. Two things latch it: a flown round ending, and AlertPanel_Enter (00454630)
+	// also holds the axes still. Two things latch it: a flown missile ending, and AlertPanel_Enter (00454630)
 	// opening any modal panel. The joystick's own latches are JoystickBindings'; this one also masks
 	// [Space], the row's key. DAT_0049ebe5 is the keyboard hold that goes with it. A replay never lets it go:
 	// playback skips the release loop, so the latch holds until the tape ends — see
@@ -94,7 +94,7 @@ public sealed class PilotControls {
 		&& Bindings.Assignment(_preferences, 0) == JoystickAxisAssignment.Turret;
 
 	/// <summary>
-	/// The frame's pilot input: the machine's controls, the camera's axes, the round's steering, and the observer
+	/// The frame's pilot input: the machine's controls, the camera's axes, the missile's steering, and the observer
 	/// camera's keys — from the player, the tape, or nobody while a modal is up.
 	/// </summary>
 	/// <param name="gunsightPointer">The pointer the gunsight drag reads, in the forward view's art pixels.</param>
@@ -190,8 +190,8 @@ public sealed class PilotControls {
 			Bindings.Suspend(Joystick?.Read() ?? JoystickReading.Neutral);
 		}
 
-		// What a round the player is flying reads out of the input block: the two axes its camera-axis
-		// pointers address and the trigger. While the controls are on a camera, or on the round, they are
+		// What a missile the player is flying reads out of the input block: the two axes its camera-axis
+		// pointers address and the trigger. While the controls are on a camera, or on the missile, they are
 		// the steering and throttle axes; otherwise they follow the JOYSTICK row, as Input_BuildPlayerDevice
 		// sets them at its tail. Built from the controls just made, before the machine is handed none of
 		// them below.
@@ -205,15 +205,15 @@ public sealed class PilotControls {
 		}
 
 		// The controls on the camera — the outside view's default, [Enter]'s swap and [Ctrl+T]'s hand-off —
-		// or on an electro-optical round in flight, over whichever of the two above built them. The axes
-		// went to the view's camera axes and the round instead; the two centring commands are dispatcher
+		// or on an electro-optical missile in flight, over whichever of the two above built them. The axes
+		// went to the view's camera axes and the missile instead; the two centring commands are dispatcher
 		// cases and still reach the machine. In the original, Sim_PollPlayerInput's camera branch tests
 		// InputDrivesCamera alone: under it the machine gets no steering, throttle or twist, skips
 		// Mech_PlayerFireTick and Mech_ApplyThrottleInput ignores a lever, but it keeps the pitch axis
 		// while a stick with a throttle answers, which a lever on the turret pair or the hat under HAT = 2
 		// can be moving (docs/retail/simulation/joystick-input.md, "While the camera has the controls"). That
 		// gate is the live stick's even during a replay, the capability block being rebuilt from the device
-		// on every call. A round flown with InputDrivesCamera clear takes the original's ordinary branch,
+		// on every call. A missile flown with InputDrivesCamera clear takes the original's ordinary branch,
 		// which this neutralises as well. A RAZOR's flight model runs under either branch and makes its own
 		// throttle test, so that test is carried through.
 		if (pilotInput && pilotMech != null && _view.ControlsOnCamera) {
@@ -228,7 +228,7 @@ public sealed class PilotControls {
 		}
 
 		// The gunsight drag, added after either branch to what the machine is handed, and not to the input block the
-		// round and the tape read. A replay's block has no pointer or buttons, so it never arms there.
+		// missile and the tape read. A replay's block has no pointer or buttons, so it never arms there.
 		if (pilotInput && pilotMech != null && controls != null && !modalPanelOpen
 				&& _displays.Art?.Gau.GunsightComplex is { } complex) {
 			const float shift = CockpitArt.GauToPixelScale;
@@ -249,7 +249,7 @@ public sealed class PilotControls {
 	/// The machine's controls from one tape frame: its axes, with this install's keyjoy.cfg Backturn applied as
 	/// the original applies it on playback, and its trigger.
 	///
-	/// <para>A flown round ending since the last frame latches the first button row here, as it does on the live
+	/// <para>A flown missile ending since the last frame latches the first button row here, as it does on the live
 	/// path, and nothing on this path lets it go. While it holds, the pair the camera-axis pointers address
 	/// reads zero, as in the live build; the trigger stays the tape's, since playback's jump skips the trigger
 	/// scan as well as the release loop.</para>
@@ -288,7 +288,7 @@ public sealed class PilotControls {
 	// keyboard turret set. The turret's axes are rates, so holding a key sweeps it rather than
 	// putting it somewhere; [Backspace] latches until either axis is touched again.
 	//
-	// [\] is the other half of that pair, Center Body: it walks the legs round under the turret
+	// [\] is the other half of that pair, Center Body: it walks the legs around under the turret
 	// instead of bringing the turret back, taking the steering and the twist axis until they line
 	// up. It latches on the keypress, and [Backspace] cancels it.
 	// A held key is worth MechControls.KeyboardAxis, half a stick's travel — DBSIM's own keyboard
@@ -312,7 +312,7 @@ public sealed class PilotControls {
 	// stick reaches at all is the twelve binding bytes' business — see JoystickBindings.
 	private void PilotFromLiveInput(MechObject mech, IKeyState keys, bool commandHasKeys,
 			JoystickReading stickReading) {
-		// The first button row's latch: a flown round's end and a modal panel ask for it, and letting go
+		// The first button row's latch: a flown missile's end and a modal panel ask for it, and letting go
 		// of the row — [Space] and the stick's first button — drops it. While it holds, the trigger reads
 		// released and the axes are held below.
 		if (_scene.World.PlayerMissile.TakeFireRowLatch()) {
@@ -344,8 +344,8 @@ public sealed class PilotControls {
 			TurretAxis(keyboardAxes.TorsoPitch, _staging.HeldPitch));
 
 		// DAT_0049ebe5: the keyboard's first pair goes dead from the moment the first button row is
-		// latched while a round is being flown until that row is let go, so the arrows steering the
-		// round do not walk the machine off once it has gone.
+		// latched while a missile is being flown until that row is let go, so the arrows steering the
+		// missile do not walk the machine off once it has gone.
 		if (_scene.World.PlayerMissile.Flown) {
 			_missileKeyboardHold = 1;
 		}
@@ -360,14 +360,14 @@ public sealed class PilotControls {
 			keyboardAxes = keyboardAxes with { Steer = 0, Throttle = 0 };
 		}
 
-		// Flying the round, the keyboard's pitch is the other way up unless keyjoy.cfg's Missile says
+		// Flying the missile, the keyboard's pitch is the other way up unless keyjoy.cfg's Missile says
 		// Reverse. The stick's is left alone.
 		if (_scene.World.PlayerMissile.Flown && !Bindings.Keyjoy.ReverseMissile) {
 			keyboardAxes = keyboardAxes with { Throttle = (short)-keyboardAxes.Throttle };
 		}
 
-		// While the controls drive the camera or the round the stick is re-pointed first, and what the
-		// tape records is that — the device's own axes, which the camera and the round read.
+		// While the controls drive the camera or the missile the stick is re-pointed first, and what the
+		// tape records is that — the device's own axes, which the camera and the missile read.
 		bool onCamera = _view.ControlsOnCamera;
 		var recordedAxes = onCamera
 			? Bindings.CombineForCamera(stickReading, StickCapabilities, _preferences, keyboardAxes)
@@ -419,7 +419,7 @@ public sealed class PilotControls {
 	/// <summary>
 	/// Whether the keys that aim the turret are worth a full stick this frame (<see cref="KeyboardAxes.AtStickRate"/>):
 	/// the tweak is on and a walker's turret is what they aim. Not in a RAZOR, whose second pair is its rudder and
-	/// throttle; not while the controls drive a camera; and not while a round is flown, which the turret pair can steer.
+	/// throttle; not while the controls drive a camera; and not while a missile is flown, which the turret pair can steer.
 	/// </summary>
 	private bool FasterKeyboardAiming =>
 		TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.FasterKeyboardAiming)

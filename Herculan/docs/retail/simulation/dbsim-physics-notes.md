@@ -48,6 +48,15 @@ An alpha-max-plus-beta-min-style approximation that avoids a real `sqrt`. It is 
 
 **`Math_FastMagnitude2D(dx, dy)` (`0047dd40`) — the 2D counterpart.** `max(|dx|,|dy|) + min(|dx|,|dy|)/2`, the octagonal estimate: exact on an axis and up to about 11.8% high on a diagonal. It measures ground-plane distances (the detection sweep's decay range, a locomotion slide, the scanner's range test) and is the distance both HUD range readouts display, so the original's own on-screen ranges carry the error.
 
+**The trigonometry tables.** `BuildEulerRotationMatrixQ14` (`0047eaac`), `Math_Atan2Bam` (`0047d220`) and `Math_AsinBam` (`0047d940`) read four tables that sit back to back in `.data` — the fine arcsine ends where the coarse one begins, and the cosine table starts eight bytes later — which fixes each one's entry count. They are coarser than a 16-bit angle: a rotation matrix built from an angle quantizes it to 1/4096 of a turn. Each regenerates from the formula below, compared entry by entry against the binary's copy:
+
+| Table | Entries | Content | Regenerated |
+|---|---|---|---|
+| `DAT_004a25dc` | 1024 (plus a zero at the half turn) | quarter-wave cosine in Q14, one entry per 16 BAM: `round(cos(i·2π/4096) · 0x4000)` | 1020 exact; 4 are one Q14 unit higher, each rounding up from a fraction below .5, which no rounding rule reproduces |
+| `DAT_004a1c4c` | 513 | `atan(i/512)` in 1/0x4000 turn, rounded, stored as the byte correction to add to `i*4` | all exact |
+| `DAT_004a1e54` | 448 | coarse arcsine of a magnitude in Q12, step 8, below `0xe00`, truncated to BAM | all exact |
+| `DAT_004a05d4` | 513 | fine arcsine, step 1, from `0xe00`, truncated to BAM | all exact |
+
 ## Timer units
 
 Every countdown in the simulation is in `SimTickDelta` counts, and **a count is not a millisecond**. `Math_CountdownTimerTick` and `Timer_CountDown` subtract `SimTickDelta`, which is Q8 with 1.0 = 125 ms and 81 on hardware that keeps up with the 40 ms frame cap. So one count is 125/256 ms, about 0.49 ms, and a stated reload of 10000 expires in about 4.9 seconds. Reading a stated constant as milliseconds overstates the interval by a factor of about two.

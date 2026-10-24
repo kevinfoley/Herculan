@@ -21,22 +21,13 @@ namespace Herculan.Engine.Terrain;
 public sealed partial class HeightGrid {
 	/// <summary>
 	/// Walks the grid from <paramref name="start"/> to <paramref name="end"/> and reports the first
-	/// point at which the segment passes into the ground.
+	/// point at which the segment passes into the ground — mode 0, the thin ray.
 	///
-	/// <para>The walk is a DDA over cells. Each step produces the point where the segment leaves the
-	/// current cell and which of the cell's four edges it leaves through; the edge's two corner
-	/// heights say whether the segment is already below the surface there
-	/// (<see cref="ExitBelowSurface"/>). The last step — the one that ends at
-	/// <paramref name="end"/> rather than at a cell boundary — has no exit edge and falls back to a
-	/// plain height query at each end of it instead. Only once a step reports a crossing is the
-	/// exact point solved for, by intersecting the segment with the cell's own triangle planes
-	/// (<see cref="SurfaceIntersection"/>).</para>
-	///
-	/// <para>The start point is height-queried only when the last step is also the first, the whole
-	/// segment lying in one cell.</para>
-	///
-	/// <para>Returns false — no hit — for a segment starting outside the grid, or one that walks off
-	/// its edge, exactly as the original does.</para>
+	/// <para>Each cell step tests the edge it leaves through (<see cref="ExitBelowSurface"/>); the last
+	/// step, which ends at <paramref name="end"/>, height-queries its endpoint instead, and its start
+	/// too when it is also the first. A crossing is placed on the cell's triangle planes
+	/// (<see cref="SurfaceIntersection"/>). A segment starting outside the grid, or walking off it, is
+	/// no hit. See docs/retail/simulation/terrain-heightmap.md#mode-0--the-thin-ray.</para>
 	/// </summary>
 	/// <param name="rules">Which release's handling of a crossing the solve cannot place, and the tweak — see <see cref="ThinRayRules"/>.</param>
 	/// <param name="hitPoint">Where the segment met the ground; only meaningful when this returns true.</param>
@@ -391,7 +382,8 @@ public sealed partial class HeightGrid {
 
 	/// <summary>
 	/// A Q16 scale that is either the sim's usual 64-bit one or the truncating 32-bit form the
-	/// original compiled into six of the walk's arms — see the note in <see cref="RayWalk"/>.
+	/// original compiled into six of the walk's arms — see
+	/// docs/retail/simulation/terrain-heightmap.md#ray-versus-terrain--terrain_raywalk-0046e87c.
 	/// </summary>
 	private static int Scale(int value, int slope, bool truncate) =>
 		truncate ? unchecked(value * slope) >> 16 : SimMath.Q16Multiply(value, slope);
@@ -455,24 +447,15 @@ public sealed partial class HeightGrid {
 	}
 
 	/// <summary>
-	/// <c>Terrain_CellSurfaceIntersect</c> (<c>0047068c</c>) — where exactly the segment meets the ground inside one cell, solved
-	/// against the cell's own two triangle planes rather than by interpolating along the walk.
+	/// <c>Terrain_CellSurfaceIntersect</c> (<c>0047068c</c>) — where exactly the segment meets the
+	/// ground inside one cell, solved against the cell's two triangle planes: the face normals
+	/// <see cref="BuildSurface"/> built, each through a corner its triangle contains.
 	///
-	/// <para>Each plane is one of the face normals <see cref="BuildSurface"/> already built, put
-	/// through a corner that triangle contains. Which triangle a hit belongs to is decided by the
-	/// same diagonal split <see cref="HeightAtWorld"/> uses, and the near triangle is tried first; a
-	/// hit outside it falls through to the far one. For the anti-diagonal split (selector 0) the far
-	/// triangle has no corner in common with this cell's own record, so the original shifts a cell
-	/// east and takes that corner instead — which is why the two selectors are not symmetric
-	/// here.</para>
-	///
-	/// <para>One quirk is reproduced unless <paramref name="exactFarPlane"/> asks otherwise. For the
-	/// diagonal split (selector 2) the far plane's constant is <b>not</b> recomputed against the far
-	/// normal: the original leaves the near triangle's value in place, so the far plane sits
-	/// <c>h00 · (nzNear − nzFar) / nzFar</c> off the true one. That moves the point found on the far
-	/// half of such a cell, by metres on high ground, and can move it off the segment altogether,
-	/// leaving no point — see docs/retail/simulation/terrain-heightmap.md, "When the solve finds no
-	/// point".</para>
+	/// <para>The near triangle, by the diagonal split <see cref="HeightAtWorld"/> uses, is tried first
+	/// and a hit outside it falls through to the far one. For selector 0 the far plane's corner comes
+	/// from the cell to the east; for selector 2 the far plane keeps the near triangle's constant, as
+	/// the original's does, unless <paramref name="exactFarPlane"/> is set. See
+	/// docs/retail/simulation/terrain-heightmap.md#mode-0--the-thin-ray.</para>
 	/// </summary>
 	/// <param name="exactFarPlane">
 	/// The <see cref="Settings.TweakSettingDefinitions.FixTerrainHitPoint"/> tweak: recompute the far

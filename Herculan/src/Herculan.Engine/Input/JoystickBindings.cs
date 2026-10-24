@@ -44,7 +44,7 @@ public sealed class JoystickBindings {
 
 	/// <summary>
 	/// The four axis-sense switches from <c>data\keyjoy.cfg</c>. Three are applied here;
-	/// <see cref="Keyjoy.ReverseMissile"/> is the host's, which builds the keyboard axes a flown round
+	/// <see cref="Keyjoy.ReverseMissile"/> is the host's, which builds the keyboard axes a flown missile
 	/// reads.
 	/// </summary>
 	public Keyjoy Keyjoy { get; set; } = new Keyjoy();

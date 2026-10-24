@@ -1,5 +1,6 @@
 using HercWorks.Core.Io;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using HercWorks.Help;
 using HercWorks.Help.Html;
 using Herculan.Engine.Content;
@@ -32,44 +33,53 @@ internal static class OnlineManual {
 	private static readonly object Gate = new();
 	private static string? _page;
 	private static string? _pageSource;
-	private static bool _converting;
+	private static volatile bool _opening;
 
 	/// <summary>
-	/// Opens the manual, converting it first if this run has not for this install and language. The conversion
-	/// runs off the calling thread so the window keeps drawing; failures are reported on the console.
+	/// Whether an <see cref="Open"/> is under way: from the call until the page has been handed to the browser, or the
+	/// conversion has failed. Reading the help file off a CD can take seconds, so the menu bar shows a notice meanwhile
+	/// (<see cref="Settings.HostMenuBar"/>). When the browser has finished drawing the page is not known here.
+	/// </summary>
+	public static bool Opening => _opening;
+
+	/// <summary>
+	/// Opens the manual, converting it first if this run has not for this install and language. The conversion and the
+	/// browser's launch run off the calling thread so the window keeps drawing; failures are reported on the console.
 	/// </summary>
 	public static void Open(string installRoot, GameDisc? disc) {
 		string source = CaseInsensitivePath.Combine(installRoot, Language(installRoot).Folder);
+		string? converted;
 		lock (Gate) {
-			if (_converting) {
+			if (_opening) {
 				return;
 			}
 
-			if (_page != null && _pageSource == source) {
-				Launch(_page);
-				return;
-			}
-
-			_converting = true;
+			converted = _page != null && _pageSource == source ? _page : null;
+			_opening = true;
 		}
 
 		Task.Run(() => {
-			string? page = null;
+			string? page = converted;
 			try {
-				page = Convert(installRoot, disc);
-			} catch (Exception e) when (e is IOException or UnauthorizedAccessException or ObjectDisposedException
-					or HercWorks.Disc.DiscFormatException) {
-				Console.WriteLine($"The on-line manual could not be written: {e.Message}");
-			} finally {
-				lock (Gate) {
-					_page = page;
-					_pageSource = source;
-					_converting = false;
-				}
-			}
+				if (page == null) {
+					try {
+						page = Convert(installRoot, disc);
+					} catch (Exception e) when (e is IOException or UnauthorizedAccessException or ObjectDisposedException
+							or HercWorks.Disc.DiscFormatException) {
+						Console.WriteLine($"The on-line manual could not be written: {e.Message}");
+					}
 
-			if (page != null) {
-				Launch(page);
+					lock (Gate) {
+						_page = page;
+						_pageSource = source;
+					}
+				}
+
+				if (page != null) {
+					Launch(page);
+				}
+			} finally {
+				_opening = false;
 			}
 		});
 	}
@@ -145,12 +155,25 @@ internal static class OnlineManual {
 	}
 
 	// The page is this class's own file at a path it built, so handing it to the shell opens it in
-	// whatever the user has registered for .html — nothing the help file says is passed along.
+	// whatever the user has registered for .html — nothing the help file says is passed along. The game stays full
+	// screen behind the browser, so the browser is let take the foreground: one already running is a process this did
+	// not start, which Windows' foreground lock would otherwise leave flashing in the taskbar behind the game.
 	private static void Launch(string page) {
 		try {
+			if (OperatingSystem.IsWindows()) {
+				AllowSetForegroundWindow(AnyProcess);
+			}
+
 			Process.Start(new ProcessStartInfo(page) { UseShellExecute = true })?.Dispose();
 		} catch (Exception e) when (e is System.ComponentModel.Win32Exception or InvalidOperationException) {
 			Console.WriteLine($"The on-line manual could not be opened: {e.Message}. It is at {page}.");
 		}
 	}
+
+	// ASFW_ANY.
+	private const int AnyProcess = -1;
+
+	[DllImport("user32.dll")]
+	[System.Runtime.Versioning.SupportedOSPlatform("windows")]
+	private static extern bool AllowSetForegroundWindow(int processId);
 }

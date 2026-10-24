@@ -136,6 +136,9 @@ public sealed class CockpitDisplays {
 
 	public MfdFlashCommScreen FlashComm { get; } = new();
 
+	/// <summary>The order the weapon rows were last repainted in, fed each frame's rows.</summary>
+	public WeaponRowRepaintOrder WeaponRepaints { get; } = new();
+
 	public SquadCommChannel SquadComm { get; }
 
 	/// <summary>Who sits in each comm box, in comm-box order; empty boxes are null.</summary>

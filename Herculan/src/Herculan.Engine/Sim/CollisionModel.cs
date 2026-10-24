@@ -54,11 +54,9 @@ public static class CollisionModel {
 	/// clusters in the object frame, which is the same answer for an object with no animated shape.
 	/// <see cref="SimObject.NodeFrame"/> is the resolver.
 	///
-	/// <para><b>This is the whole of a HERC's hit geometry.</b> A mech <c>.COL</c> places every one
-	/// of its clusters on a node — SPIDER has thirteen, PITBULL ten — with spheres of radius 40 to
-	/// 600 world units sitting in node-local space, so the hit volume walks with the legs and swings
-	/// with the torso. A structure's model is the opposite: its body is in the object frame, and only
-	/// six animated types put a cluster on a node.</para>
+	/// <para>Every cluster of a HERC's model is node-placed, so its hit volume walks with the legs and
+	/// swings with the torso; a structure keeps its body in the object frame
+	/// (docs/retail/simulation/hit-detection.md#the-test--mech_selectstruckcomponent-0040c9d4).</para>
 	/// </param>
 	/// <returns>The nearest component struck, or null for a miss.</returns>
 	public static Hit? Test(ColliderNode[] model, in Transform3 toMuzzleSpace, int distance,

@@ -161,10 +161,10 @@ internal static class FlightPhysics {
 	/// <summary>
 	/// One step of the model. <paramref name="analogueThrottle"/> is the original's
 	/// input-preferences test, <see cref="Input.JoystickBindings.FlightThrottleIsLever"/>: when it holds
-	/// the axis is read as a position rather than a rate. It is a global in DBSIM, so it applies to <i>every</i> airframe in the mission
-	/// rather than only to the one the player flies — and an AI flyer passes a zero throttle axis, so
-	/// with such a device configured every Cybrid flyer's throttle is held at the middle of its range;
-	/// see <see cref="FlyerObject"/>.
+	/// the axis is read as a position rather than a rate. It is a global in DBSIM, so it applies to
+	/// <i>every</i> airframe in the mission rather than only to the one the player flies — and an AI
+	/// flyer passes a zero throttle axis, so with such a device configured every Cybrid flyer's
+	/// throttle is held at the middle of its range; see <see cref="FlyerObject"/>.
 	/// </summary>
 	public static void Step(IFlightBody body, ref FlightBlock state, FlightModelRecord flight,
 			short aileron, short elevator, short rudder, short throttleAxis, int groundHeight,

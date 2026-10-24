@@ -13,17 +13,18 @@ public static class LocalizedImGuiHelpers {
 	/// <param name="buttons">Each button's localization key and the action a click runs. The key is pushed as the
 	/// button's ImGui ID, so two buttons whose translations match stay distinct.</param>
 	public static void DrawButtonRow(LocalizationTable table, params (string key, Action callback)[] buttons) {
-		var buttonSize = ImGuiHelpers.ButtonRowSize(buttons.Length);
+		Span<float> widths = stackalloc float[buttons.Length];
 		for (int i = 0; i < buttons.Length; i++) {
-			var (key, callback) = buttons[i];
+			widths[i] = ButtonRow.LabelWidth(table.GetStringOrKey(buttons[i].key));
+		}
+
+		var row = new ButtonRow(widths);
+		foreach (var (key, callback) in buttons) {
 			ImGui.PushID(key);
-			bool clicked = ImGui.Button(table.GetStringOrKey(key), buttonSize);
+			bool clicked = row.Button(table.GetStringOrKey(key));
 			ImGui.PopID();
 			if (clicked) {
 				callback.Invoke();
-			}
-			if (i < buttons.Length - 1) {
-				ImGui.SameLine();
 			}
 		}
 	}

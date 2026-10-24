@@ -27,24 +27,25 @@ public enum MissionOrderSubject {
 /// <summary>
 /// One of the ten orders a mission group works through — the 22-byte record
 /// <c>DBSim_SpawnMissionObjects</c> (<c>004253d8</c>) builds from one <c>script.dat</c> block-10
-/// entry, with each of its refs resolved. See docs/retail/formats/script-dat.md, "Block 10 in memory", for
-/// the layout and docs/retail/simulation/ai-goals.md for what each verb means;
+/// entry, with each of its refs resolved. See
+/// docs/retail/formats/script-dat.md#block-10-in-memory--22-bytes-0x16 for the layout and
+/// docs/retail/simulation/ai-goals.md for what each verb means;
 /// <see cref="Sim.MissionGroup"/> is what runs them.
 ///
 /// <para>The two record fields with no reader found — the order's own point and the short beside the
 /// verb (docs/retail/simulation/ai-goals.md#open) — are not carried here.</para>
 /// </summary>
 /// <param name="Verb">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptOrder.Verb"/>
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptOrder.Verb" path="/summary/node()"/>
 /// Kept as the raw number rather than turned into an enum that would need a name for each of its
 /// two readers' roles.
 /// </param>
 /// <param name="SubjectKind">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptOrder.SubjectKind"/>
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptOrder.SubjectKind" path="/summary/node()"/>
 /// A value the enum does not name is read as <see cref="MissionOrderSubject.None"/>.
 /// </param>
 /// <param name="SubjectRef">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptOrder.SubjectRef"/>
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptOrder.SubjectRef" path="/summary/node()"/>
 /// Carried before resolution.
 /// </param>
 /// <param name="Route">
@@ -52,13 +53,13 @@ public enum MissionOrderSubject {
 /// route; see <see cref="Sim.MissionGroup.Route"/>.
 /// </param>
 /// <param name="RouteRef">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptOrder.RouteRef"/>
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptOrder.RouteRef" path="/summary/node()"/>
 /// Carried <i>unresolved</i>, which the AI never wants but the mission objective layer does: a "get
 /// there" objective names the order it is about by the route that order runs on rather than by
 /// slot. See <see cref="Sim.MissionGroup.OrderCompletedForRoute"/>.
 /// </param>
 /// <param name="ActionRef">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptOrder.ActionRef"/>
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptOrder.ActionRef" path="/summary/node()"/>
 /// A ref outside block 5 is read as <c>-1</c>. See <see cref="Sim.MissionGroup.AiTick"/>.
 /// </param>
 public sealed record MissionOrder(

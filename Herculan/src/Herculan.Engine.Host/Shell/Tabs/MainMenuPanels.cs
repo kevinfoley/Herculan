@@ -22,8 +22,7 @@ sealed class MainMenuPanels {
 	/// </summary>
 	private const int ContinuingGameState = 2;
 
-	private readonly string _installRoot;
-	private readonly GameDisc? _disc;
+	private readonly ShellManual _manual;
 	private readonly GameContent _content;
 	private readonly FrontEndWindow _window;
 	private readonly ShellScreen _screen;
@@ -53,12 +52,11 @@ sealed class MainMenuPanels {
 	// and the skill it holds survive a CANCEL. It stands in for the main menu while it is up.
 	private readonly ShellRegistrationScreen _registration = new();
 
-	public MainMenuPanels(string installRoot, GameDisc? disc, GameContent content, FrontEndWindow window, ShellScreen screen,
+	public MainMenuPanels(ShellManual manual, GameContent content, FrontEndWindow window, ShellScreen screen,
 			WidgetEvents widgets, GameInProgress game, ShellSaveScreen saveScreen, ShellMainMenu mainMenu, ShellDialogs dialogs,
 			ShellMovies movies, ShellAudio audio, ShellOutcome outcome, CampaignScreens loop, TabNavigation navigation,
 			Action repaint) {
-		_installRoot = installRoot;
-		_disc = disc;
+		_manual = manual;
 		_content = content;
 		_window = window;
 		_screen = screen;
@@ -132,7 +130,7 @@ sealed class MainMenuPanels {
 	private void ClickMainMenuButton(ShellMainMenuButton button) {
 		switch (button) {
 			case ShellMainMenuButton.OnlineManual:
-				OpenOnlineManual();
+				_manual.Open();
 				break;
 			case ShellMainMenuButton.StartNewGame:
 				StartNewGame();
@@ -165,21 +163,6 @@ sealed class MainMenuPanels {
 				Console.WriteLine($"{button} — the button is live and its action is not ported yet.");
 				break;
 		}
-	}
-
-	// ONLINE MANUAL, 004317ea: out of full screen with option 6 written to match, the options committed
-	// and all 54 saved, the shell's sound stopped, then the help file — here through OnlineManual,
-	// since there is no WinHelp to hand it to.
-	private void OpenOnlineManual() {
-		if (_window.FullScreen) {
-			_window.ToggleFullScreen();
-		}
-
-		_game.Options.Set(Prefs.DisplayModeOption, 0);
-		_game.Options.Commit();
-		_game.Options.Save(Enumerable.Range(0, Prefs.Length).ToArray());
-		_audio.Sound?.Stop();
-		OnlineManual.Open(_installRoot, _disc);
 	}
 
 	// INSTANT ACTION, 004312a6: InstantAction_Active (0047363c) set, training mode, then InstantAction_SelectDemo (0044befb) —

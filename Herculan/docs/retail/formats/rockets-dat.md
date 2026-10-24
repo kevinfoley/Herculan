@@ -1,6 +1,6 @@
-# `dat\ROCKETS.DAT` and `dts\ROCKETS.DTS` (launcher round type table and shapes)
+# `dat\ROCKETS.DAT` and `dts\ROCKETS.DTS` (missile type table and shapes)
 
-The two resources `Rocket_LoadTypeTable_Unguided` (`0040a818`) loads once at startup. The table is read as `int16 count` then that many 14-byte records into `maybe_RocketTypeTable_Unguided`, and the shape file is loaded into `DAT_004a975c`. How the round flies, steers and animates from them is in [`../simulation/rockets.md`](../simulation/rockets.md).
+The two resources `Rocket_LoadTypeTable_Unguided` (`0040a818`) loads once at startup. The table is read as `int16 count` then that many 14-byte records into `maybe_RocketTypeTable_Unguided`, and the shape file is loaded into `DAT_004a975c`. How the missile flies, steers and animates from them is in [`../simulation/rockets.md`](../simulation/rockets.md).
 
 ## `dat\ROCKETS.DAT`
 

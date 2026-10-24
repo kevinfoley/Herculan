@@ -28,11 +28,10 @@ public sealed class HeadsDownPainter {
 	/// <para>The art itself is placed exactly as <see cref="CanopyPanelPainter.Draw"/> places a cockpit panel: fit by
 	/// height at its own 4:3 aspect ratio, horizontally centered, never stretched. On a window wider
 	/// than 4:3 that leaves a margin on each side, and this fills those margins by stretching the
-	/// art's own outermost pixel column outward. That is a Herculan addition with no original behind
-	/// it — DBSIM only ever ran at 4:3 and had no margins to fill — chosen because the HDD's art is a
-	/// flat console surround whose edge columns are near-uniform, so the stretch reads as the panel
-	/// continuing rather than as a smear. The alternative, letting the cleared framebuffer show
-	/// through at the flanks, reads as a hole in the cockpit.</para>
+	/// art's own outermost pixel column outward. That is an engine invention — DBSIM only ever ran at
+	/// 4:3 and had no margins to fill. The HDD's art is a flat console surround whose edge columns are
+	/// near-uniform, so the stretch reads as the panel continuing, where the cleared framebuffer would
+	/// read as a hole in the cockpit.</para>
 	/// </summary>
 	/// <param name="hud">
 	/// The cockpit whose Heads-Down Display widgets to overlay, or null to draw the <c>.HB1</c> art
@@ -454,18 +453,15 @@ public sealed class HeadsDownPainter {
 	/// down the right, thirteen component rows — a name and a percentage each. The subject is the player,
 	/// a squadmate or the target, whichever <see cref="HddDamageSubject"/> the arrows have stepped to.
 	///
-	/// <para>A row is a <c>.PDG</c> region rather than a table entry: the update walks the view's region
-	/// vector in file order and uses each region's id to index both the name group and the readout
-	/// buffer. The two orders differ in every retail internal view — a pilotable chassis lists its regions
-	/// 0,1,2,5,6,7,8,3,4,9 — so reading the group top to bottom would mislabel the rows. The percentage column's width is
-	/// the measured width of the literal "100", which the constructor reserves before placing either
-	/// label, so an undamaged component fills its column exactly. Both labels are re-fonted together
-	/// from the row's state, giving the manual's green through red plus grey for inoperative — see
+	/// <para>A row is a <c>.PDG</c> region rather than a table entry: rows run in the view's region
+	/// order, each region's id indexing both the name group and the readout buffer. The percentage
+	/// column's width is the measured width of the literal "100", which the constructor reserves before
+	/// placing either label. Both labels are re-fonted together from the row's state — see
 	/// <see cref="PaperDollDamage.RowFont"/>.</para>
 	///
-	/// <para>The rows do not scroll, in the original either: its row offset stays 0 on every path found,
-	/// so a view with more regions than <see cref="HddLayout.DamageRowCount"/> labels its first thirteen
-	/// and the doll still tints the rest — docs/retail/simulation/heads-down-display.md#damage-detail--page-1.</para>
+	/// <para>The rows do not scroll: a view with more regions than <see cref="HddLayout.DamageRowCount"/>
+	/// labels its first thirteen and the doll still tints the rest, as retail's row offset is left at 0
+	/// (docs/retail/simulation/heads-down-display.md#damage-detail--page-1).</para>
 	///
 	/// <para>The paper doll is the subject chassis's own <c>.PDG</c> view for the category — front for structural,
 	/// rear for internal — blitted at the screen rect's top-left plus that view's own origin, which is
@@ -522,20 +518,32 @@ public sealed class HeadsDownPainter {
 			regions = view == HddDamageView.Weapons ? null : doll.Regions;
 			iconEntries = paperDoll.Hardpoints?.Length;
 
-			PaperDollPainter.AddHddWeaponIcons(hud, sprites, view, bank, doll, dollView, paperDoll.Hardpoints, hardpoints,
-				readings, dollLeft, dollTop, blit, fillRect);
-
 			// One tint per row, in the row's own order — the structural view's first two rows share a
 			// rect (both cockpit halves) and the second of them draws nothing, which is why the reading
 			// comes from PaperDollDamage.TintReading rather than from the row's printed number. Drawn
-			// after the icons, as the original's per-row pass is, so a worn limb's tint runs under an
-			// icon wherever the doll's art holds the limb's colour.
-			if (regions != null && readings != null) {
-				for (int i = 0; i < regions.Length; i++) {
-					PaperDollPainter.AddPaperDollTint(hud, sprites, bank, dollView, regions[i],
-						PaperDollDamage.TintReading(view, regions, i, inspected.FlyerVariant, readings),
-						dollLeft, dollTop, fillRect);
+			// after the icons, as the original's per-row pass is, and repainting undamaged regions too,
+			// so the doll's region colours end up over the icons wherever its art holds them. The
+			// HddWeaponIconsOnTop tweak draws them before the icons instead.
+			void AddTints() {
+				if (regions != null && readings != null) {
+					for (int i = 0; i < regions.Length; i++) {
+						PaperDollPainter.AddPaperDollTint(hud, sprites, bank, dollView, regions[i],
+							PaperDollDamage.TintReading(view, regions, i, inspected.FlyerVariant, readings),
+							repaintIntact: true, dollLeft, dollTop, fillRect);
+					}
 				}
+			}
+
+			bool iconsOnTop = TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.HddWeaponIconsOnTop);
+			if (iconsOnTop) {
+				AddTints();
+			}
+
+			PaperDollPainter.AddHddWeaponIcons(hud, sprites, view, bank, doll, dollView, paperDoll.Hardpoints, hardpoints,
+				readings, iconsOnTop, dollLeft, dollTop, blit, fillRect);
+
+			if (!iconsOnTop) {
+				AddTints();
 			}
 		}
 

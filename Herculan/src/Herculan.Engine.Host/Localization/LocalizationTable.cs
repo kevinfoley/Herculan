@@ -75,6 +75,16 @@ public class LocalizationTable {
 		}
 	}
 
+	/// <summary>
+	/// Loads <paramref name="locale"/>, with the default's strings behind it, without reading or writing the
+	/// player's choice: for laying the panels out in each language. Throws when its file does not load.
+	/// </summary>
+	internal LocalizationTable(string locale) {
+		if (!Apply(locale, persist: false)) {
+			throw new InvalidOperationException($"Localization file '{PathFor(locale)}' is missing or unreadable.");
+		}
+	}
+
 	// Switches to locale, with the default's strings behind it; false, with nothing changed, when its file is
 	// missing or unreadable.
 	private bool Apply(string locale, bool persist) {

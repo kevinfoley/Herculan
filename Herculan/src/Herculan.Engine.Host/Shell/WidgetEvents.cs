@@ -51,4 +51,10 @@ sealed class WidgetEvents {
 
 	/// <summary>The pointer taken onto an edit field, with a left press posted at it, so that keys reach it at once.</summary>
 	public void Grab(ShellHit field) => _pointer.Grab(field, Fire);
+
+	/// <inheritdoc cref="ShellPointer.Click"/>
+	public void Click(ShellHit hit) {
+		EventButton = ShellMouseButton.Left;
+		_pointer.Click(hit, Fire);
+	}
 }

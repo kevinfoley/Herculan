@@ -31,9 +31,9 @@ public enum AlertPanelVariant {
 ///
 /// <para>Its text is a row of <c>str\GNL_ALRT.STR</c> chosen by the status — a title, up to two
 /// button captions and up to four body lines. <see cref="MissionStatus.InProgress"/> is the
-/// exception and the interesting one: its body is replaced with the <b>mission's own</b> failure
-/// text, the three <c>data\mission.str</c> lines carried by the first mandatory objective that is
-/// not satisfied. That is why [Q] reads differently from mission to mission.</para>
+/// exception: its body is replaced with the <b>mission's own</b> failure text, the three
+/// <c>data\mission.str</c> lines carried by the first mandatory objective that is not satisfied, so
+/// [Q] reads differently from mission to mission.</para>
 ///
 /// <para><b>The pause panel is statuses 0 and 1</b> — <c>PAUSE</c>, raised by [P], and
 /// <c>EXIT EARTHSIEGE?</c>, raised by [Ctrl+Q]. Neither row carries any body text, which is the only

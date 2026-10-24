@@ -6,8 +6,8 @@ namespace Herculan.Engine.Audio;
 
 /// <summary>
 /// Keeps an <see cref="OpenAlBackend"/>'s device on the system's default output: brings it back when
-/// its output goes, and moves it when the default changes. This engine's own; retail's
-/// sound driver is not the model, and what retail does when its output goes has not been looked into.
+/// its output goes, and moves it when the default changes. This engine's own, not modeled on
+/// retail's sound driver.
 ///
 /// <para><b>Moving is <c>alcReopenDeviceSOFT</c></b> (<c>ALC_SOFT_reopen_device</c>) with no name,
 /// which reopens the same device on the default output. The context, every source and every buffer

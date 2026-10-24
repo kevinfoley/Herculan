@@ -3,39 +3,32 @@ namespace Herculan.Engine.Sim;
 /// <summary>
 /// The five non-firing "pods" a HERC can carry, resolved out of its hardpoint fit.
 ///
-/// <para>DBSIM does not model these as a separate equipment category: a pod is an ordinary weapon
-/// mount, built from an ordinary hardpoint by the same factory every gun goes through, and it
-/// occupies a hardpoint like any other. What sets them apart is one pass at the end of
-/// <c>Mech_ConfigureLoadout</c> (<c>004175dc</c>): <c>MechLoadout_FileEquipmentPods</c> walks the
-/// finished mount list and files five specific weapon ids into a five-pointer array at
-/// <c>mech+0x307</c>, one slot per id. <b>It is a pointer array, not a set of flags</b> — a consumer
-/// that wants the pod's own condition reads it back off the mount, which is why the slots here are
-/// the mounts and the <c>bool</c>s are derived.</para>
-///
-/// <para>The slot/id table, why the ids are the shell catalog's, why slot order is not id order, and
-/// the shared pod damage curve are in docs/retail/simulation/equipment-pods.md. The
-/// constants below are the ids that document names; the last mount in hardpoint order wins a slot,
-/// which is reproduced here.</para>
+/// <para>A pod is an ordinary weapon mount on an ordinary hardpoint. What makes it a pod is
+/// <c>MechLoadout_FileEquipmentPods</c> (<c>0040fb2c</c>), the last pass of
+/// <c>Mech_ConfigureLoadout</c> (<c>004175dc</c>), which files five weapon ids from the finished
+/// mount list into a five-pointer array at <c>mech+0x307</c> — see <see cref="FromLoadout"/> and
+/// docs/retail/simulation/equipment-pods.md. The slots here are therefore the mounts, which a
+/// consumer reads the pod's own condition back off, and the <c>bool</c>s are derived.</para>
 /// </summary>
-/// <param name="EcmMount">Slot 0, <c>mech+0x307</c> — the ECM pod (catalog id 18).</param>
+/// <param name="EcmMount">Slot 0, <c>mech+0x307</c> — the ECM pod, <see cref="EcmWeaponId"/>.</param>
 /// <param name="TargetingMount">
-/// Slot 1, <c>mech+0x30b</c> — the Targeting Pod (id 29), which lets [Tab] single out one component
-/// of the selected machine; see docs/retail/simulation/target-selection.md.
+/// Slot 1, <c>mech+0x30b</c> — the Targeting Pod, <see cref="TargetingWeaponId"/>, which lets [Tab]
+/// single out one component of the selected HERC; see <see cref="TargetingPodLock"/>.
 /// </param>
 /// <param name="ShieldPodMount">
-/// Slot 2, <c>mech+0x30f</c> — the Shield Pod (id 30). Read by <c>Mech_ComputeShieldCapacity</c>,
-/// which adds its bonus to shield capacity, and by nothing else: the pod class overrides no
-/// behaviour, holds no state and has no button on its cockpit row, so the mount and its damage are
-/// the whole of it. See <see cref="ShieldCharge"/>.
+/// Slot 2, <c>mech+0x30f</c> — the Shield Pod, <see cref="ShieldPodWeaponId"/>, whose one reader
+/// found is <c>Mech_ComputeShieldCapacity</c> (<c>00417bec</c>): it adds the pod's bonus to shield
+/// capacity. Otherwise the pod is inert. See <see cref="ShieldCharge"/>.
 /// </param>
 /// <param name="EnergyPodMount">
-/// Slot 3, <c>mech+0x313</c> — the Energy Pod (id 32). Read by <c>Mech_ComputeReactorRate</c>, which
-/// adds its bonus to reactor output, and like the Shield Pod inert in every other respect; see
-/// <see cref="MechObject.ReactorOutputRate"/>.
+/// Slot 3, <c>mech+0x313</c> — the Energy Pod, <see cref="EnergyPodWeaponId"/>, whose one reader
+/// found is <c>Mech_ComputeReactorRate</c> (<c>00417d08</c>): it adds the pod's bonus to reactor
+/// output. Otherwise the pod is inert. See <see cref="MechObject.ReactorOutputRate"/>.
 /// </param>
 /// <param name="TurboPodMount">
-/// Slot 4, <c>mech+0x317</c> — the Turbo Pod (id 31), read by the locomotion tick. It is the one pod
-/// that draws on the Master Energy Pool, through its own <c>+0x34</c> override.
+/// Slot 4, <c>mech+0x317</c> — the Turbo Pod, <see cref="TurboPodWeaponId"/>, read by the
+/// locomotion tick. It is the one pod that draws on the Master Energy Pool, through its own
+/// <c>+0x34</c> override.
 /// </param>
 public readonly record struct MechPods(
 	WeaponMount? EcmMount,
@@ -88,13 +81,9 @@ public readonly record struct MechPods(
 	/// it. Answers 0 for an absent pod or a machine with no component model, which is the reading a
 	/// pristine pod gives and so leaves the bonus at full.</para>
 	///
-	/// <para><b>Live, not cached.</b> The Shield and Energy pods take this route; the Targeting Pod
-	/// is the one that caches its reading in <c>+0x7f</c> from its vtable <c>+0x68</c> instead, and
-	/// every one of its four thresholds wants that cache rather than this — see
-	/// <see cref="TargetingPodLock.ComponentDamage"/>. The two agree in practice, from a zeroed
-	/// pod block at spawn and a per-mount notification on every damage write, but they are reached
-	/// by different code and only one of them is what the pod's readers test. See
-	/// docs/retail/simulation/equipment-pods.md.</para>
+	/// <para><b>Live, not cached.</b> The Shield and Energy pods read this; the Targeting Pod's
+	/// thresholds test its own cached reading, <see cref="TargetingPodLock.ComponentDamage"/>,
+	/// instead.</para>
 	/// </summary>
 	public static short DamageOf(WeaponMount? pod, ComponentDamage? damage) =>
 		pod == null || damage == null
@@ -104,7 +93,8 @@ public readonly record struct MechPods(
 	/// <summary>
 	/// <c>MechLoadout_FileEquipmentPods</c>'s pass over the finished mount list. It runs against the
 	/// mounts, not the raw fit: a weapon id sitting in a fit slot no hardpoint addresses builds no
-	/// mount and so fits no pod.
+	/// mount and so fits no pod. A second copy of a pod takes the slot from the first, so the last
+	/// mount in hardpoint order wins.
 	/// </summary>
 	public static MechPods FromLoadout(WeaponMounts mounts) {
 		WeaponMount? ecm = null, targeting = null, shieldPod = null, energyPod = null, turboPod = null;

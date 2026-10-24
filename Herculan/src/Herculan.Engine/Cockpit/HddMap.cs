@@ -65,19 +65,14 @@ public readonly record struct HddMarkerPlacement(float X, float Y, int Half);
 /// that is what it is: state the buttons and keys move and the paint reads.
 /// </summary>
 /// <remarks>
-/// <para>The <see cref="MissionBox"/> is the map's whole frame of reference: the command screen copies
-/// it into its own <c>+0x160</c> rect and draws it as the manual's red mission border, its zoom fit
-/// is the box's half-extent over the viewport's half-extent, and its pan clamp is the box grown by
-/// <see cref="HddMap.Margin"/> on every side.</para>
+/// <para>The <see cref="MissionBox"/> is the map's whole frame of reference: the red mission border,
+/// the zoom fit, and the pan clamp, the box grown by <see cref="HddMap.Margin"/> on every side.</para>
 ///
-/// <para><b>The projection is a divide, not a matrix.</b> The screen installs a view projection
-/// carrying only the centre and the scale (<c>HddMap_ClampAndInstallView</c> writes exactly those three fields)
-/// and every point goes through <c>Raster_PerspectiveDivide</c> with a focal length of
-/// <c>1 &lt;&lt; DAT_0049d6bc</c> = 256. So a world point lands at
+/// <para><b>The projection is a divide, not a matrix:</b> a world point lands at
 /// <c>(world - centre) * 256 / scale</c> device pixels from the viewport's own centre, with y
 /// negated — <see cref="ToScreenX"/> and <see cref="ToScreenY"/>. <see cref="Scale"/> is therefore
-/// world units per pixel in 8.8 fixed point, and everything below is arithmetic on that one
-/// number.</para>
+/// world units per pixel in 8.8 fixed point. See
+/// docs/retail/simulation/heads-down-display.md#the-maps-frame-of-reference.</para>
 /// </remarks>
 public sealed class HddMapView {
 	/// <summary>Fractional bits in <see cref="Scale"/> — <c>DAT_0049d6bc</c>, 8.</summary>
@@ -482,7 +477,7 @@ public static class HddMap {
 	/// are classes the switch does not recognise.
 	/// </summary>
 	/// <param name="subject">The object.</param>
-	/// <param name="player">The machine the player is flying, which takes an icon of its own.</param>
+	/// <param name="player">The machine the player is piloting, which takes an icon of its own.</param>
 	/// <param name="squadSlot">Its squad comm-box slot, or -1 — <c>Squad_IndexOf</c>.</param>
 	public static HddMapMarker? MarkerFor(SimObject subject, SimObject? player, int squadSlot) {
 		ArgumentNullException.ThrowIfNull(subject);

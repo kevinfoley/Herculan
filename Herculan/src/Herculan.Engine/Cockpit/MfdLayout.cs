@@ -30,28 +30,15 @@ public enum MfdMode {
 
 /// <summary>
 /// The multi-function display's geometry, decoded from <c>MfdDisplay_Ctor</c> (<c>00445218</c>) and
-/// the per-screen constructors it builds. See docs/retail/simulation/cockpit-hud-widgets.md for the surrounding
-/// cockpit; this type covers the MFD sub-widgets that document lists as undecoded.
+/// the per-screen constructors it builds: docs/retail/simulation/mfd.md#geometry.
 /// </summary>
-/// 
+///
 /// <remarks>
 /// <para><b>Where the numbers live.</b> Only one rect comes from the herc's <c>.GAU</c> — the panel
 /// bounding box at offset 952 (<see cref="GAUFile.MfdPanel"/>). Everything inside it is hardcoded in
-/// DBSIM: the constructor reads its 13 button rects out of four parallel <c>int16</c> tables in
-/// <c>.rdata</c> (<c>0049cacc</c> x0, <c>0049cae6</c> y0, <c>0049cb00</c> x1, <c>0049cb1a</c> y1) and
-/// its label rects from immediates. That is why the MFD looks the same in every cockpit while its
-/// position moves: the <c>.GAU</c> supplies the position and nothing else. The <c>.GAU</c> does carry
-/// 13 rect-shaped slots at 744-951, which <c>MfdGau_ApplyCoordShift</c> (<c>00447650</c>) even coordinate-shifts, but they are
-/// zero in all nine retail files and the constructor never reads them.</para>
-///
-/// <para><b>The 18-unit inset.</b> The constructor immediately does
-/// <c>x0 += 0x12 &lt;&lt; XCoordShift</c> and keeps <c>x1</c>, <c>y0</c>, <c>y1</c> as they came, then
-/// works relative to that inset origin for the rest of its life. The strip to the left of the inset
-/// is where the F-key column goes — its table x values are negative for exactly that reason. The
-/// inset region is <c>98 x 61</c> GAU inclusive, which is <c>196 x 122</c> device pixels, which is
-/// exactly the size of <c>MFD</c> bank frames 0-2. Every one of the other rect sizes likewise matches
-/// a frame in that bank to the pixel (15x8 the F-keys, 46x10 SELECT/XMIT, 27x10 the four scanner
-/// buttons), which is what confirms the whole layout.</para>
+/// DBSIM, so the MFD looks the same in every cockpit while its position moves. The screen area is
+/// inset <see cref="ScreenInsetX"/> units from the panel's left edge, and the F-key column fills the
+/// strip to its left.</para>
 ///
 /// <para>All coordinates here are GAU (320-wide) units, as authored; multiply by
 /// <see cref="CockpitArt.GauToPixelScale"/> for the 640-wide space the sprites and fonts live in.

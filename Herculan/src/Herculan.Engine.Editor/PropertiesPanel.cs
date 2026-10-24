@@ -72,7 +72,7 @@ internal sealed class PropertiesPanel {
 		ImGui.Separator();
 		ImGui.Text($"Kind: {placement.Kind}");
 		ImGui.Text($"Type index: {placement.TypeIndex}");
-		ImGui.Text(placement.IsPlayerLance ? "Player squad" : $"Roster slot: {placement.SlotIndex}");
+		ImGui.Text(placement.IsPlayerSquad ? "Player squad" : $"Roster slot: {placement.SlotIndex}");
 		ImGui.Text($"Side: {placement.Side}");
 		ImGui.AlignTextToFramePadding();
 		ImGui.Text("Group:");
@@ -96,7 +96,7 @@ internal sealed class PropertiesPanel {
 		ImGui.Text($"Heading: {MissionText.Heading(sel.Object.Heading)}");
 		ImGui.Text($"Hit radius: {sel.Object.HitRadius} units");
 
-		if (!placement.IsPlayerLance) {
+		if (!placement.IsPlayerSquad) {
 			ImGui.Text($"Starting condition: {placement.StartingCondition}%");
 		}
 

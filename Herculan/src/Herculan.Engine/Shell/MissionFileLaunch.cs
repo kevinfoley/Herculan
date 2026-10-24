@@ -8,20 +8,20 @@ using Herculan.Engine.World;
 namespace Herculan.Engine.Shell;
 
 /// <summary>
-/// A <c>.MSN</c> named by file, loaded the way VSHELL loads the career position that holds it and written as a
-/// handoff to fly or open. The original has no such path — a mission reaches the simulator only through a career —
-/// so what stands in for the career here is this engine's:
+/// Starts a mission named by its <c>.MSN</c> file, loaded the way VSHELL loads the career position that holds it
+/// and written as a handoff to play or open. The original has no such path — a mission reaches the simulator only
+/// through a career — so what stands in for the career here is this engine's invention:
 ///
 /// <list type="bullet">
 /// <item>A stage-0 mission (the practice missions and the demos) takes the training half whole,
 /// <see cref="ShellTrainingLaunch"/>, as <c>Begin Mission</c> on its row would, or <c>INSTANT ACTION</c> for a
 /// row past the practice list, with the practice options <c>data\prefs.cfg</c> holds.</item>
 /// <item>A mission <c>gam\career.dat</c> does not list (<c>DEMO2.MSN</c>) takes the same half as
-/// <c>INSTANT ACTION</c>, through the typed path the DEBUG dialog loads, so its player flies the mission's own
+/// <c>INSTANT ACTION</c>, through the typed path the DEBUG dialog loads, so its player pilots the mission's own
 /// group-0 machine.</item>
 /// <item>Any other takes the campaign half, <see cref="ShellCampaignLaunch"/>, with a career that has no
 /// history: an empty campaign flag array, which the load then seeds with the position, and the player's
-/// lance and skill taken from the install's <c>DATA\player.mec</c> — the last handoff written — in
+/// squad and skill taken from the install's <c>DATA\player.mec</c> — the last handoff written — in
 /// place of the export a career's hangar would make.</item>
 /// </list>
 ///
@@ -88,7 +88,7 @@ public static class MissionFileLaunch {
 		string playerPath = CaseInsensitivePath.Combine(installData, MissionLoader.PlayerFileName);
 		byte[]? playerBytes = File.Exists(playerPath) ? File.ReadAllBytes(playerPath) : null;
 		if (playerBytes == null || new MecFileTransformer().Parse(playerBytes) is not MecFile { Entries: [var player, ..] }) {
-			failure = $"A campaign mission flies the player's lance from {playerPath}, and there is no readable one.";
+			failure = $"A campaign mission starts the player's squad from {playerPath}, and there is no readable one.";
 			return null;
 		}
 
@@ -109,7 +109,7 @@ public static class MissionFileLaunch {
 		}
 
 		Console.WriteLine($"{campaign.MissionPath}: stage {stage} mission {mission}, loaded as a campaign mission at "
-			+ $"skill {player.Skill} — {campaign.SquadPositions} squad position(s), the lance from {playerPath}, "
+			+ $"skill {player.Skill} — {campaign.SquadPositions} squad position(s), the squad from {playerPath}, "
 			+ $"handoff written to {directory}.");
 		return campaign.ScriptPath;
 	}

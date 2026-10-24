@@ -93,6 +93,8 @@ The setting is **option 7** of the simulator's option array, and it has no write
 
 **Option 8**, the panel's TERRAIN TEXTURE row, reaches the draw path as `TerrainTexturingEnabled` (`004aab2c`), which `Terrain_DrawCellQuad` tests per triangle: 1 picks the textured span writers and 0 the flat ones. Two things write it — the option's own handler (`00459d4c`) and `Terrain_LoadZone`, from the same byte — so the setting lands on the next zone whether or not the handler ever runs. `MfdMissileViewScreen_Paint` (`0043fe1c`) saves it, forces it to 0 and restores it around the MISSILE CAM screen's terrain pass, which is why that view's terrain is never textured however the setting reads.
 
+The flat writer is `Terrain_FillCellUntextured` (`0046bb40`), and it ignores the cell's material. Its arm for shade mode 1, the mode its draw runs in, fills a triangle with `Raster_ShadeRampRow(0x4b)[Palette_ShadeRampLookup(2, shade)]`: palette material ramp 2 at the triangle's baked shade byte ([`terrain-lighting.md`](terrain-lighting.md)), read through the theater ramp's row for the fixed shade `0x4b` plus the cell's depth slice ([`distance-fog-and-sky.md`](distance-fog-and-sky.md)).
+
 ## Who writes `cell[+0xf]`
 
 The byte holds two fields: the low two bits are the diagonal-split selector, bits `[2:7]` the material index this document's texture lookup uses. Four functions write it, and **the render path is not among them** — every reference there is a read, `>> 2` for the material and `& 3` for the selector, the latter tested in four places in `Terrain_EdgeFaceBlocks` (`0046ff74`), all against `== 0`.

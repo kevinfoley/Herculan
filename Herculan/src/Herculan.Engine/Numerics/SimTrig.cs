@@ -1,26 +1,13 @@
 ﻿namespace Herculan.Engine.Numerics;
 
 /// <summary>
-/// DBSIM's own trigonometry tables, ported. These are the ones the rotation-matrix and
-/// euler-extraction code uses (<c>BuildEulerRotationMatrixQ14</c> <c>0047eaac</c>,
-/// <c>Math_Atan2Bam</c> (<c>0047d220</c>), <c>Math_AsinBam</c> (<c>0047d940</c>)) and they are deliberately <i>coarser</i> than
-/// <see cref="BinaryAngle"/>: the cosine table has one entry per 16 BAM, so a matrix built from an
-/// angle quantizes it to 1/4096 of a turn. Reproducing that quantization is the point — it is what
-/// the original's animation and object transforms actually see.
-///
-/// <para><b>Verified against DBSIM.EXE's own tables</b>, by locating each table in the
-/// retail binary and comparing every entry against the value generated here:</para>
-/// <list type="bullet">
-/// <item><c>DAT_004a25dc</c> quarter-wave cosine, 1024 entries — 1020 exact, 4 differ by one Q14
-/// unit (0.006%). The four all round up from a fraction below .5, so the original's generator was
-/// marginally less precise than <see cref="System.Math.Cos"/>; no rounding rule reproduces them.</item>
-/// <item><c>DAT_004a1c4c</c> arctangent correction bytes, 513 entries — <b>all exact</b>.</item>
-/// <item><c>DAT_004a1e54</c> coarse arcsine, 448 entries — <b>all exact</b> (truncated, not rounded).</item>
-/// <item><c>DAT_004a05d4</c> fine arcsine, 513 entries — <b>all exact</b> (truncated).</item>
-/// </list>
-/// <para>The four tables sit back to back in <c>.data</c> — fine arcsine ends where the coarse one
-/// begins and the cosine table starts eight bytes later — which independently confirms each one's
-/// entry count and index range.</para>
+/// DBSIM's own trigonometry tables, regenerated at startup: the ones the rotation-matrix and
+/// euler-extraction code uses (<c>BuildEulerRotationMatrixQ14</c> (<c>0047eaac</c>),
+/// <c>Math_Atan2Bam</c> (<c>0047d220</c>), <c>Math_AsinBam</c> (<c>0047d940</c>)). They are coarser than
+/// <see cref="BinaryAngle"/>, and reproducing that quantization is the point: it is what the
+/// original's animation and object transforms see. The tables, and how the regenerated entries
+/// compare with the binary's (four cosine entries are one Q14 unit low here), are
+/// docs/retail/simulation/dbsim-physics-notes.md#fixed-point-math-toolkit, "The trigonometry tables".
 /// </summary>
 public static class SimTrig {
 	/// <summary>Fixed-point scale of <see cref="Cos"/>/<see cref="Sin"/>: 1.0 == 0x4000.</summary>
@@ -32,8 +19,8 @@ public static class SimTrig {
 	/// <summary>Quarter turn in table indices — the table's length.</summary>
 	private const int QuarterTurnIndices = 0x400;
 
-	// cos(i * 2pi / 4096) in Q14, one entry per 16 BAM over a quarter turn. See the type summary
-	// for how this compares against the retail binary's own copy.
+	// cos(i * 2pi / 4096) in Q14, one entry per 16 BAM over a quarter turn. The doc the type summary
+	// links has how this compares against the retail binary's own copy.
 	private static readonly short[] Cosine = BuildCosine();
 
 	// atan(i / 512) in units of 1/0x4000 turn, stored as the correction to add to i*4 -- exactly the

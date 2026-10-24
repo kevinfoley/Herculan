@@ -10,8 +10,8 @@ namespace Herculan.Engine.Host.Install;
 /// player has no install yet.
 /// </summary>
 static class InstallWindow {
-	private const int WindowWidth = 720;
-	private const int WindowHeight = 600;
+	internal const int WindowWidth = 720;
+	internal const int WindowHeight = 650;
 
 	/// <summary>
 	/// Shows the panel until the player installs and chooses to use the install, or gives up. Returns the install
@@ -37,13 +37,7 @@ static class InstallWindow {
 			gl.ClearColor(0.1f, 0.1f, 0.1f, 1f);
 			gl.Clear(ClearBufferMask.ColorBufferBit);
 
-			var viewport = ImGui.GetMainViewport();
-			ImGui.SetNextWindowPos(viewport.WorkPos);
-			ImGui.SetNextWindowSize(viewport.WorkSize);
-			ImGui.Begin("##install_window", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoMove
-				| ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoBringToFrontOnFocus);
-			var outcome = panel.Draw(window.View.Native?.Win32?.Hwnd ?? 0);
-			ImGui.End();
+			var outcome = Draw(panel, window.View.Native?.Win32?.Hwnd ?? 0);
 			if (outcome == InstallPanel.Outcome.Installed) {
 				installed = panel.Installed;
 			}
@@ -63,5 +57,17 @@ static class InstallWindow {
 
 		window.Run();
 		return installed;
+	}
+
+	/// <summary>The window's one frame of content: the panel, filling the viewport.</summary>
+	internal static InstallPanel.Outcome Draw(InstallPanel panel, nint owner) {
+		var viewport = ImGui.GetMainViewport();
+		ImGui.SetNextWindowPos(viewport.WorkPos);
+		ImGui.SetNextWindowSize(viewport.WorkSize);
+		ImGui.Begin("##install_window", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoMove
+			| ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoBringToFrontOnFocus);
+		var outcome = panel.Draw(owner);
+		ImGui.End();
+		return outcome;
 	}
 }

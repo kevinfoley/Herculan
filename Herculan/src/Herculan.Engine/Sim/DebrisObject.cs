@@ -3,22 +3,21 @@
 namespace Herculan.Engine.Sim;
 
 /// <summary>
-/// One thrown piece of wreckage — DBSIM's <c>debris.cpp</c> class, built by <c>Debris_Construct</c> and
-/// advanced by <c>Debris_TickUpdate</c> (<c>Debris_TickUpdate</c>), allocated from the 150-entry pool at
-/// <c>g_DebrisPool</c>.
+/// One thrown piece of wreckage — DBSIM's <c>debris.cpp</c> class, built by <c>Debris_Construct</c>
+/// (<c>00408940</c>) and advanced by <c>Debris_TickUpdate</c> (<c>00408bd8</c>), allocated from the
+/// 150-entry pool at <c>g_DebrisPool</c> (<c>004a96c6</c>).
 ///
-/// <para>A piece is a root of a shape file thrown on a ballistic arc: it spins about
-/// its own X axis, falls under a flat gravity, loses horizontal speed to drag, and bounces off the
-/// terrain until it is moving slowly enough to settle. Nothing steers it and nothing can shoot it —
-/// like a <see cref="BeamTracer"/> or an <see cref="ImpactEffect"/> it comes out of the effect pool
-/// <c>Sim_MainTick</c> walks ahead of the machine list, not out of the object list.</para>
+/// <para>A piece is a root of a shape file thrown on a ballistic arc: it tumbles, falls, and bounces
+/// off the terrain until it settles (see <see cref="Tick"/>). Nothing steers it and nothing can shoot
+/// it — like a <see cref="BeamTracer"/> or an <see cref="ImpactEffect"/> it comes out of the effect
+/// pool <c>Sim_MainTick</c> walks ahead of the machine list, not out of the object list.</para>
 ///
 /// <para><b>A piece can burst.</b> One that names a <see cref="ChildGroup"/> carries a random
 /// countdown of its own; when that runs out, or when it comes to rest, it sets off its
-/// <see cref="DestroyEffect"/> and throws that group in turn — out of the database it was itself
-/// thrown from, which is why it carries one. The throw window is tightened for the second
-/// generation (<see cref="ChildThrowPitchMin"/>) so a burst scatters closer than the throw that made
-/// it. A piece with no child group never bursts and lives until it settles.</para>
+/// <see cref="DestroyEffect"/> and throws that group in turn, out of the database it was itself
+/// thrown from (<see cref="ChildTable"/>), with a tighter throw window
+/// (<see cref="ChildThrowPitchMin"/>). A piece with no child group never bursts and lives until it
+/// settles.</para>
 ///
 /// <para>Two things spawn one: a <see cref="DebrisGroup"/> through
 /// <see cref="EffectPools.SpawnDebris(short, in Transform3, DebrisDatabase?, short, short, int)"/>, and a weapon mount shot off its hardpoint, which throws its
@@ -130,8 +129,9 @@ public sealed class DebrisObject {
 	public short SpinRate { get; }
 
 	/// <summary>
-	/// <c>Debris_TickUpdate</c> (<c>Debris_TickUpdate</c>), vtable <c>+0x14</c>. Returns whether the piece
-	/// is finished and should be freed.
+	/// <c>Debris_TickUpdate</c> (<c>00408bd8</c>), vtable <c>+0x14</c>. Returns whether the piece
+	/// is finished and should be freed. See
+	/// docs/retail/simulation/destruction-effects.md#the-piece--debris_tickupdate-00408bd8.
 	///
 	/// <list type="number">
 	/// <item><b>Spin and gravity</b> — the tumble is integrated into X, and

@@ -8,21 +8,16 @@ namespace Herculan.Engine.Audio;
 /// variation rolls, the category split, the distance cutoff and the stereo pan. See
 /// docs/retail/simulation/audio.md for where each of them comes from.
 ///
-/// <para><b>One record per catalog id; copies of it overlap.</b> The original allocates exactly one
-/// <c>SFX</c> voice per row of <c>SOUNDS.STR</c> and keeps it for the mission, but that record is
-/// bookkeeping rather than a channel: <c>Sfx_Play</c> (<c>00463f34</c>) never tests the voice's own
-/// <c>0x100</c> playing flag and issues a fresh <c>sosDIGIStartSample</c> every call, so two
-/// machines firing the same weapon in the same tick are heard twice. The record holds this id's
-/// current volume, pan and pitch and the handle of the <b>newest</b> playback only — see
-/// docs/retail/simulation/audio.md, "A repeated play layers; it does not restart".</para>
+/// <para><b>One record per catalog id; copies of it overlap.</b> As in the original, each row of
+/// <c>SOUNDS.STR</c> has one record holding the id's current volume, pan and pitch and the handle of
+/// its <b>newest</b> playback only, and a play never restarts a copy already sounding: two machines
+/// firing the same weapon in the same tick are heard twice.</para>
 ///
-/// <para>One consequence is worth knowing before it looks like a bug: because the settings are the
-/// id's and not the copy's, placing a new copy retunes the previous one. <see cref="Place"/> writes
-/// the volume and pan for the sound it is about to start, and <see cref="SetVolume"/> pushes them at
-/// whatever handle the record currently names — which until <see cref="Start"/> runs is the copy
-/// already sounding. The original does exactly this: <c>Sfx_SetVolume</c> (<c>00464514</c>) writes
-/// the record and then applies it to the backend handle at <c>+0x24</c> whenever the record is
-/// marked playing.</para>
+/// <para>Because the settings are the id's and not the copy's, placing a new copy retunes the
+/// previous one, as retail's does: <see cref="Place"/> writes the volume and pan for the sound it is
+/// about to start, and <see cref="SetVolume"/> pushes them at whatever handle the record currently
+/// names — which until <see cref="Start"/> runs is the copy already sounding. See
+/// docs/retail/simulation/audio.md, "A repeated play layers; it does not restart".</para>
 /// </summary>
 public sealed class SoundDirector : IDisposable {
 	/// <summary>The pan value that is dead centre — HMI SOS's own, and the voice default.</summary>

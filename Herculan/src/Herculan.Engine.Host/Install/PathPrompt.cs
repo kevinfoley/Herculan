@@ -113,21 +113,29 @@ sealed class PathPrompt {
 			ImGui.TextDisabled(_localization.GetStringOrKey("install_prompt.picker_open"));
 		}
 
-		// The buttons sit at the foot of the window, sharing its width.
-		int buttons = _alternativeKey == null ? 2 : 3;
-		var buttonSize = new Vector2((ImGui.GetContentRegionAvail().X - spacing * (buttons - 1)) / buttons, 0f);
-		ImGui.SetCursorPosY(ImGui.GetWindowHeight() - ImGui.GetFrameHeight() - ImGui.GetStyle().WindowPadding.Y);
-		if (ImGui.Button(_localization.GetStringOrKey(_keyPrefix + ".accept"), buttonSize) && Accept()) {
+		// The buttons sit at the foot of the window, sharing its width, or under the content when that runs past the foot.
+		string acceptLabel = _localization.GetStringOrKey(_keyPrefix + ".accept");
+		string? alternativeLabel = _alternativeKey == null ? null : _localization.GetStringOrKey(_alternativeKey);
+		string dismissLabel = _localization.GetStringOrKey(_dismissKey);
+		Span<float> widths = stackalloc float[alternativeLabel == null ? 2 : 3];
+		widths[0] = ButtonRow.LabelWidth(acceptLabel);
+		widths[^1] = ButtonRow.LabelWidth(dismissLabel);
+		if (alternativeLabel != null) {
+			widths[1] = ButtonRow.LabelWidth(alternativeLabel);
+		}
+
+		var row = new ButtonRow(widths);
+		float foot = ImGui.GetWindowHeight() - row.Height - ImGui.GetStyle().WindowPadding.Y;
+		if (ImGui.GetCursorPosY() < foot) {
+			ImGui.SetCursorPosY(foot);
+		}
+		if (row.Button(acceptLabel) && Accept()) {
 			outcome = Outcome.Accepted;
 		}
-		ImGui.SameLine();
-		if (_alternativeKey != null) {
-			if (ImGui.Button(_localization.GetStringOrKey(_alternativeKey), buttonSize)) {
-				outcome = Outcome.Alternative;
-			}
-			ImGui.SameLine();
+		if (alternativeLabel != null && row.Button(alternativeLabel)) {
+			outcome = Outcome.Alternative;
 		}
-		if (ImGui.Button(_localization.GetStringOrKey(_dismissKey), buttonSize)) {
+		if (row.Button(dismissLabel)) {
 			outcome = Outcome.Dismissed;
 		}
 
@@ -136,7 +144,7 @@ sealed class PathPrompt {
 	}
 
 	/// <summary>Takes the path field's path if <c>refusal</c> has nothing against it; otherwise says why not.</summary>
-	private bool Accept() {
+	internal bool Accept() {
 		string path = _path.Trim().Trim('"');
 		_error = path.Length == 0 ? _localization.GetStringOrKey(_keyPrefix + ".no_path") : _refusal(path);
 		if (_error != null) {

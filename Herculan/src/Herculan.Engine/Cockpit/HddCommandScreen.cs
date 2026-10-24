@@ -462,7 +462,7 @@ public sealed class HddCommandScreen {
 	}
 
 	/// <summary>This frame's snapshot for the renderer.</summary>
-	/// <param name="player">The machine the player is flying.</param>
+	/// <param name="player">The machine the player is piloting.</param>
 	/// <param name="objects">Everything live, in the order the marker list wants it.</param>
 	/// <param name="route">The player squad's route, for the numbered waypoint markers.</param>
 	/// <param name="strings">For the message row and the comm boxes' text.</param>
@@ -664,7 +664,7 @@ public sealed class HddCommandScreen {
 	/// </summary>
 	private string PilotName(int slot, SimObject mate) =>
 		PilotNameOf?.Invoke(slot) is { Length: > 0 } pilot ? pilot
-			: mate is MechObject mech ? mech.Name.ToUpperInvariant() : $"WING {slot + 1}";
+			: mate is MechObject mech ? mech.TypeName.ToUpperInvariant() : $"WING {slot + 1}";
 
 	/// <summary>
 	/// <c>HddGauge_ConditionIndex</c>: the mean of the machine's structural readings, bucketed into

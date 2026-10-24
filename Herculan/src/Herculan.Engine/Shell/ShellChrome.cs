@@ -162,11 +162,9 @@ public static class ShellChrome {
 	/// a diagonal hatch and a clear plate for its title, a divider under it, and a body that is either
 	/// filled or dithered.
 	///
-	/// <para><b>The body is dithered when it is not filled.</b> The two are alternatives on the same
-	/// flag: <paramref name="fill"/> set clears the body to <see cref="InteriorColor"/>, and clear
-	/// leaves it to a 50% checkerboard in <paramref name="bodyDitherColor"/> — which over an untouched
-	/// surface means the shell's one backdrop bitmap shows through at half strength. The save screen
-	/// takes the second path.</para>
+	/// <para><paramref name="fill"/> set clears the body to <see cref="InteriorColor"/>; clear, the body
+	/// is a 50% checkerboard in <paramref name="bodyDitherColor"/> that the backdrop shows through
+	/// (docs/retail/shell/widgets.md#how-a-widget-paints).</para>
 	/// </summary>
 	/// <param name="headerHeight">
 	/// The widget's <c>+0x61</c>, and the constructor's last argument: how tall the header strip is, and

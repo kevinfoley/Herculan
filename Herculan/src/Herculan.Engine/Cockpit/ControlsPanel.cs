@@ -13,21 +13,15 @@ namespace Herculan.Engine.Cockpit;
 /// <see cref="ControlsPanelLayout"/> and its pixels are drawn by
 /// <see cref="Render.Cockpit.AlertPanelPainter.DrawControlsPanel"/>.</para>
 ///
-/// <para><b>It is two panels in one file.</b> <c>str\CTL_ALRT.STR</c> carries thirteen groups, and
-/// the constructor reads eight of them — title, the fourteen captions, the twenty-one action names,
-/// the OPTIONS caption, then a three-word set for each axis row. When <c>PilotingRazor</c> (<c>004d25f5</c>) is set it
-/// then reads five <i>more</i> and overwrites the title and all four axis sets with them, which is
-/// how the same panel becomes RAZOR CONTROLS with flight words (PITCH / ROLL, YAW) in place of the
-/// walker's. That flag is set by <c>DBSim_LoadScriptDat</c> as
-/// <c>playerMechType == 8</c> — <see cref="RazorTypeIndex"/>, the RAZOR — and nothing else writes
-/// it.</para>
+/// <para><b>It is two panels in one file:</b> piloting the RAZOR (<see cref="RazorTypeIndex"/>), it
+/// becomes RAZOR CONTROLS, with flight words in place of the walker's axis words
+/// (docs/retail/simulation/preferences.md#it-is-two-panels-in-one-file).</para>
 ///
 /// <para><b>The bindings are twelve bytes of <c>data\prefs.cfg</c></b>, at
-/// <see cref="Prefs.HercControlsBase"/> for a walker and
-/// <see cref="Prefs.RazorControlsBase"/> for the RAZOR — a machine's set is its own.
-/// An axis row's byte indexes its three-word set directly; a button row's byte is an action code
-/// into the twenty-one names, also directly. See <see cref="ActionsFor"/> for the separate table
-/// that says which of those actions a given button is <i>allowed</i>.</para>
+/// <see cref="Prefs.HercControlsBase"/> for a walker and <see cref="Prefs.RazorControlsBase"/> for
+/// the RAZOR — a machine's set is its own. An axis row's byte indexes its three-word set; a button
+/// row's byte is an action code. See <see cref="ActionsFor"/> for which actions a given button is
+/// <i>allowed</i>, and docs/retail/simulation/preferences.md#the-bindings-are-twelve-bytes-of-the-same-file.</para>
 /// </summary>
 public sealed class ControlsPanel {
 	/// <summary>The panel's own string table.</summary>
@@ -572,20 +566,16 @@ public sealed class ControlsPanel {
 	/// between selecting and acting, and <c>ControlsPanel_Run</c> (<c>00458650</c>)'s switch, which does the
 	/// acting.
 	///
-	/// <para><b>A button row takes two clicks to change.</b> The click handler selects the row only
-	/// when it is not already the selected one; when it is, it queues the row's action instead, which
-	/// steps it. So the first click on a button row points the OPTIONS list at it and the second and
-	/// subsequent clicks walk it down that list. An axis row is never "selected", so every click on
-	/// one steps it — and clears the list selection, which is why clicking an axis row after a button
-	/// row empties the OPTIONS box.</para>
+	/// <para><b>A button row takes two clicks to change:</b> the first points the OPTIONS list at it,
+	/// the second and later ones step it. Every click on an axis row steps it and clears the list
+	/// selection. See docs/retail/simulation/preferences.md#what-a-click-does--controlspanel_run-00458650.</para>
 	///
-	/// <para><b>The switch runs only with a capability block</b> — a stick <c>Input_GetDevice(3)</c> answered
-	/// for. Without one every row is greyed and cannot be clicked, RECOMMEND does nothing, and DONE takes the
-	/// panel down without writing the options back. With one, DONE calls <c>ControlsPanel_Save</c>
-	/// (<c>00459140</c>) and then <c>Prefs_CommitOptions</c> (<c>00459878</c>), which write this panel's own
-	/// options and nothing else (<see cref="SimulatorPreferences.Save"/>,
-	/// <see cref="SimulatorPreferences.Commit"/>), and RECOMMEND writes the recommended set. Every write goes
-	/// through <see cref="SimulatorPreferences.Set"/>, which runs the option's handler as the original's
+	/// <para><b>The switch runs only with a capability block</b> — a stick <c>Input_GetDevice(3)</c>
+	/// answered for. Without one, RECOMMEND does nothing and DONE takes the panel down without writing
+	/// the options back. With one, DONE calls <c>ControlsPanel_Save</c> (<c>00459140</c>) and then
+	/// <c>Prefs_CommitOptions</c> (<c>00459878</c>) (<see cref="SimulatorPreferences.Save"/>,
+	/// <see cref="SimulatorPreferences.Commit"/>), and RECOMMEND writes the recommended set. Every write
+	/// goes through <see cref="SimulatorPreferences.Set"/>, which runs the option's handler as
 	/// <c>Prefs_SetOption</c> does.</para>
 	///
 	/// <para>DONE also sets the close flag, so the panel comes down at the frame's <see cref="Present"/>.</para>

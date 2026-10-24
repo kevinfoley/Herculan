@@ -31,7 +31,7 @@ Six indices — `0x0a`, `0x35`, `0x36`, `0x3e`-`0x40` — match no case, and nor
 
 **An ordinary building is born disarmed.** `Base_Construct` sets `+0xa5` ([the disarmed byte](component-damage.md#the-three-out-of-the-fight-bytes--0x99-0xa4-0xa5)) at spawn for exactly the two classes that keep the stub, Plain and Radar mast, and for none of the armed families. That the structure branch and the mech branch arrive at the same meaning from opposite directions is what settles the reading.
 
-The library the shape comes from is picked per case too — the four Radar and four Armed cases construct from `dts\BASES_AN.DTS` and every other case from `dgs\BASES.DGS`. The switch alone decides it, not `+0x06`, though the two agree on every retail type.
+The library the shape comes from is picked twice. At mission load `BaseType_LoadShape` (`00405ebc`) loads each placed type's shape (`+0x02`) into one of two per-library shape tables, choosing by `+0x06`: zero loads it from `dgs\BASES.DGS`, anything else from `dts\BASES_AN.DTS`. The switch then constructs each case from a fixed one of the two tables — the four Radar and four Armed cases from the `BASES_AN.DTS` table and every other case from the `BASES.DGS` table. The two choices agree on every retail type.
 
 The two constructors differ in what they leave at `+0x34`. The `BASES_AN.DTS` cases (`SimObjectBase_ConstructAnimated`, `0040332c`) build a full shape instance and set the root-motion-enabled byte at `+0x39`, so threads can attach and `SimObject_ApplyRootMotionIfEnabled` steps them. The `BASES.DGS` cases (`SimObjectBase_ConstructStatic`, `00403368`) leave a two-field cell-frame holder and that byte clear, so no thread can exist on them and the same call does nothing.
 

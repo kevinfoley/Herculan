@@ -69,6 +69,10 @@ public sealed partial class MechObject : SimObject {
 			FlightModel? flightModel = null) {
 		Name = name;
 		SimData = simData;
+		TypeName = simData.NameBytes is { } nameBytes
+			&& System.Text.Encoding.ASCII.GetString(nameBytes).Split('\0')[0].Trim() is { Length: > 0 } typeName
+				? typeName
+				: name;
 		Type = new MechTypeRecord(simData);
 		_shapeRadius = shapeRadius;
 		Loadout = loadout;
@@ -132,6 +136,12 @@ public sealed partial class MechObject : SimObject {
 
 	/// <summary>Base name of the mech's data files, e.g. <c>SAMSON</c> for <c>dat\SAMSON.DAT</c>.</summary>
 	public string Name { get; }
+
+	/// <summary>
+	/// The chassis' own name, <see cref="HercSimDat.NameBytes"/> (the original's <c>typeRec+0x58</c>), as text.
+	/// Falls back to <see cref="Name"/> when the field is empty.
+	/// </summary>
+	public string TypeName { get; }
 
 	/// <summary>The mech type's stats, straight out of the game's own per-mech <c>.DAT</c>.</summary>
 	public HercSimDat SimData { get; }
@@ -221,21 +231,20 @@ public sealed partial class MechObject : SimObject {
 	/// <summary>
 	/// <c>Mech_ToggleRadarMode</c> (<c>0041b468</c>) — the manual's [R]. The F4 scanner screen's
 	/// PASS/ACTIVE button pair is a different path, <see cref="SetScanner"/>; see
-	/// docs/retail/simulation/target-selection.md, "Radar mode". <b>Only the machine the player is flying toggles</b>: the
-	/// original gates the flip on <c>mech+0xa3</c> and then repaints the console lights for whatever
-	/// the mode now is, so calling it on an AI machine only refreshes the display.
+	/// docs/retail/simulation/target-selection.md#radar-mode. <b>Only the machine the player is
+	/// piloting toggles</b>: the original gates the flip on <c>mech+0xa3</c>.
 	///
-	/// <para>The tone the flip plays is the cockpit's own confirmation, one sound for each mode —
-	/// <c>gnract</c> going active and <c>gnrdact</c> going passive. It is not positional: the
-	/// original plays it through <c>Sound_Play</c>, because it is a noise the cockpit makes rather
-	/// than one the world does.</para>
+	/// <para>The flip plays the cockpit's own confirmation tone, one sound for each mode —
+	/// <c>gnract</c> going active and <c>gnrdact</c> going passive — through the non-positional
+	/// <c>Sound_Play</c>. It also posts the computer message that says the new mode aloud, and
+	/// withdraws <b>both</b> radar-mode messages first, so flipping twice in quick succession announces
+	/// where it ended up rather than reading out the whole sequence. The original plays the tone and
+	/// posts the message for a machine that is not locally piloted too, without flipping it; this
+	/// method returns first, and both its callers pass the player's machine.</para>
 	///
-	/// <para>The tone is only half of it. The flip also posts the computer message that says the new
-	/// mode aloud, and withdraws <b>both</b> of them first — so flipping twice in quick succession
-	/// leaves the machine announcing where it ended up rather than reading out the whole sequence.
-	/// </para>
-	///
-	/// <para>The two console lights are not ported.</para>
+	/// <para>The flip lights nothing itself, in the original or here: the scanner screen's PASS and
+	/// ACTIVE buttons follow the mode, lit by <see cref="Cockpit.CockpitWidgets"/> from
+	/// <see cref="Scanner"/> (docs/retail/simulation/mfd-scanner.md#buttons).</para>
 	/// </summary>
 	/// <param name="world">
 	/// Optional, and only so the tone has somewhere to go. A call with none still flips the mode.
@@ -575,7 +584,7 @@ public sealed partial class MechObject : SimObject {
 
 /// <summary>
 /// A mech's weapon fit, as the mission states it. AI machines get theirs from <c>script.dat</c>
-/// block 7's own weapon array; the player's lance gets theirs from <c>player.mec</c>. Both feed the
+/// block 7's own weapon array; the player's squad gets theirs from <c>player.mec</c>. Both feed the
 /// same <c>Mech_ConfigureLoadout</c> in the original.
 /// </summary>
 /// <param name="WeaponIds">

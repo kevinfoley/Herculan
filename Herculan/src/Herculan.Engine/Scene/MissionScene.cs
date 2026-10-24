@@ -44,7 +44,7 @@ public sealed record SceneObject(SimObject Object, SceneModel? Model, MissionPla
 /// <para>Nothing here is configured by hand. The zone, the theater and its variant come out of
 /// <c>script.dat</c>'s header; the units, their types, positions and headings come out of its
 /// rosters and activation records (see <see cref="MissionLoader"/> for the rule and the RE behind
-/// it); the player's own lance comes out of <c>player.mec</c>. The previous milestone's single
+/// it); the player's own squad comes out of <c>player.mec</c>. The previous milestone's single
 /// hardcoded mech at the middle of the zone is gone.</para>
 ///
 /// <para>Everything is CPU-side on purpose. It loads files, builds a <see cref="SimWorld"/> and
@@ -214,14 +214,16 @@ public sealed class MissionScene {
 
 		var objects = new List<SceneObject>(mission.Placements.Count);
 		SceneObject? playerObject = null;
-		foreach (var placement in mission.Placements) {
+		bool squadmateClear = world.Tweaks.GetSettingValue(TweakSettingDefinitions.SquadmateClearOfTransport);
+		foreach (var listed in mission.Placements) {
+			var placement = squadmateClear ? StuckSquadmateFix.Adjust(listed, mission.Placements) : listed;
 			var spawned = Spawn(placement, models, baseTypes, baseCollision, weapons, transportArmament,
 				world.Random, world.Tweaks);
 			if (spawned == null) {
 				continue;
 			}
 
-			if (ReferenceEquals(placement, mission.Player)) {
+			if (ReferenceEquals(listed, mission.Player)) {
 				playerObject = spawned;
 				if (spawned.Object is MechObject playerMech) {
 					playerMech.IsPlayer = true;

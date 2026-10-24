@@ -38,13 +38,13 @@ public sealed partial class MissionGroup {
 	/// 150,000 units from the player and <b>the gate stays set</b>. The pod carries the group and
 	/// clears it when it lands and opens, so arrival happens seconds later and somewhere the pod
 	/// decides. Verb 2 scatters the bearing across the half-circle ahead of the player, verb 3 keeps
-	/// it near his own heading. The launch is latched so a group only ever gets one pod.</item>
+	/// it near the player's own heading. The launch is latched so a group only ever gets one pod.</item>
 	/// <item><b>On foot</b> (verbs 4 and 5) — the leader is put down at a picked point, facing away
 	/// from the bearing it was found on, the rest of the group is dressed around it by the same
 	/// formation offsets that spread it at spawn, and the gate is cleared at once. Verb 4 walks the
 	/// group on 90,000 units behind the player, verb 5 150,000 ahead. Implemented from the decompile
 	/// and unexercised: no retail <c>.MSN</c> authors verb 4 or 5. The arrival rules are in
-	/// docs/retail/simulation/mission-deployment.md, "Arrival".</item>
+	/// docs/retail/simulation/mission-deployment.md#arrival--group_deploymentcheck-004236c4.</item>
 	/// <item><b>In place</b> (any other verb, which in retail data means verb 1) — the gate is
 	/// cleared and nothing moves, so the group goes live exactly where the mission placed it. This is
 	/// the one arrival for which the placed position is not a placeholder.</item>

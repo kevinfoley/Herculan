@@ -8,24 +8,15 @@ namespace Herculan.Engine.Terrain;
 /// <summary>
 /// Port of DBSIM's zone-loading pipeline — <c>Terrain_LoadZone</c> (<c>0042789c</c>),
 /// <c>TerrainZone_LoadHeightmap</c> (<c>0046c650</c>) and <c>TerrainZone_PopulateFromBitmap</c>
-/// (<c>0046c3c0</c>) — producing a ready <see cref="HeightGrid"/>. See
-/// docs/retail/formats/zone-terrain.md for the byte-level verification of each step against the
-/// real files in <c>ES2/VOL/ZONES.VOL</c>, and docs/retail/simulation/terrain-heightmap.md for the
-/// grid it builds.
+/// (<c>0046c3c0</c>) — turning a zone's two files into a ready <see cref="HeightGrid"/>: the
+/// 16-byte <c>dat\zoneNNNN.dat</c> header (<see cref="HercWorks.Core.Data.File.Dat.Sim.ZoneDat"/>),
+/// of which the cell shift and height scale are kept, and the <c>dba\zoneNNNN.dba</c>
+/// <see cref="DynamixBitmapArray"/>, whose one 8-bit image is the heightmap. See
+/// docs/retail/formats/zone-terrain.md#loading-pipeline and
+/// docs/retail/simulation/terrain-heightmap.md.
 ///
-/// <para>Two files per zone, both keyed off the same <c>zoneNNNN</c> base name the original builds
-/// with <c>_itoa</c>:</para>
-/// <list type="number">
-/// <item><c>dat\zoneNNNN.dat</c> — the 16-byte <see cref="HercWorks.Core.Data.File.Dat.Sim.ZoneDat"/>
-/// header, of which the original keeps the cell shift and height scale.</item>
-/// <item><c>dba\zoneNNNN.dba</c> — an ordinary <see cref="DynamixBitmapArray"/> holding a single
-/// 8-bit image, the same container format as any other texture in the game. Its pixels
-/// <i>are</i> the heightmap.</item>
-/// </list>
-///
-/// <para>The ASCII <c>fopen</c>/<c>fscanf</c> fallback path in <c>TerrainZone_LoadHeightmap</c> (for
-/// any extension other than <c>.dba</c>) is not ported: no loose files in that format exist in
-/// retail data, and it is almost certainly a level-design/debug-only path.</para>
+/// <para>Only the <c>.dba</c> path is ported. The original's ASCII fallback for any other
+/// extension is not, since no retail file uses it.</para>
 /// </summary>
 public static class TerrainZoneLoader {
 	/// <summary>Resource folder holding the per-zone 16-byte header.</summary>
@@ -97,25 +88,17 @@ public static class TerrainZoneLoader {
 	}
 
 	/// <summary>
-	/// Port of <c>TerrainZone_PopulateFromBitmap</c>. Walks the heightmap image row by row, writing
-	/// each pixel (minus the bias) into a cell's raw height, and assigns each cell's material index.
+	/// Port of <c>TerrainZone_PopulateFromBitmap</c> (<c>0046c3c0</c>): walks the heightmap image row
+	/// by row, writing each pixel (minus the bias) into a cell's raw height, and rolls each cell's
+	/// material.
 	///
-	/// <para>Two details that only show up in the disassembly and matter here. The grid is stored
-	/// <b>vertically flipped</b> relative to the image: image row 0 becomes the grid's highest cell
-	/// row, which is what makes a heightmap authored as a top-down picture line up with a
-	/// world whose +Y runs north. And the material roll is <b>sparse</b> — only cells on a block
-	/// boundary roll, and every other cell in that block copies the roll's result, so terrain detail
-	/// comes in patches rather than per-cell noise.</para>
-	///
-	/// <para>The roll itself is <c>~30%</c> (<c>rand() &amp; 0xfff &lt; 0x4ce</c>) for material 1,
-	/// otherwise material 0 — note the bitmap path hardcodes a ceiling of two materials, unlike the
-	/// ASCII fallback which loops over the whole <c>mat0</c> table. The diagonal-selector bits
-	/// (<see cref="HeightGrid.DiagonalSelectorAt"/>) are deliberately <i>not</i> written here: every
-	/// assignment in this function masks the flag byte with <c>&amp; 2</c>, preserving bit 1 and
-	/// clearing bit 0, and the cells arrive freshly zeroed. The writer is the per-cell normal builder
-	/// that runs after loading (<c>Terrain_BuildCellSurface</c> (<c>0046bed8</c>), driven over the whole grid by
-	/// <c>Terrain_BuildSurface</c> (<c>0046c1dc</c>)), which derives each cell's diagonal from its own corner heights —
-	/// see <see cref="HeightGrid"/>, which does the same in its constructor.</para>
+	/// <para>Image row 0 becomes the grid's highest cell row. Only cells on a block boundary roll —
+	/// about 30% material 1, otherwise material 0 — and the rest of each block copies that roll. The
+	/// diagonal selector (<see cref="HeightGrid.DiagonalSelectorAt"/>) is not written here:
+	/// <see cref="HeightGrid"/>'s constructor derives it, as <c>Terrain_BuildSurface</c>
+	/// (<c>0046c1dc</c>) does after the original's load. See
+	/// docs/retail/formats/zone-terrain.md#loading-pipeline and
+	/// docs/retail/simulation/terrain-heightmap.md#per-cell-record-16-bytes.</para>
 	/// </summary>
 	private static HeightGrid PopulateFromBitmap(DynamixBitmap image, int cellShift, int heightScale,
 			TerrainMaterialTable materials, SimRandom random, byte heightBias, int detailLevel) {

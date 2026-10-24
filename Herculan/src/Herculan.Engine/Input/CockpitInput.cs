@@ -63,21 +63,14 @@ public readonly record struct CockpitDrag(CockpitWidgetId Id, CockpitSurface Sur
 /// <see cref="DoubleClickSeconds"/> marks its click a <see cref="CockpitClick.DoubleClick"/> (§4).</para>
 ///
 /// <para>A held button's widget draws depressed while the pointer is on it and pops back up when the
-/// pointer leaves — see <see cref="Depressed"/>. There is deliberately <b>no hover state</b>: the
-/// original has none, and the function long mistaken for one turns out to be this same press
-/// tracking.</para>
+/// pointer leaves — see <see cref="Depressed"/>. There is no hover state, as the original has
+/// none.</para>
 ///
-/// <para><b>Drag capture</b> (§7) is reproduced, because one retail control does use it. A press on a
-/// widget whose <c>+0x1d</c> flag is set — the slider base <c>004524a8</c> sets it, every button class
-/// leaves it clear — latches the pointer to that widget until the button comes back up, and every
-/// move in between is delivered to it wherever the pointer has got to. The throttle slider is the one such
-/// widget a press can reach — the energy rows' charge bars carry the flag but lie wholly under their
-/// rows' select gadgets — which is why it is the only one that can be dragged, unless
-/// <see cref="Settings.TweakSettingDefinitions.ChargeBarPowerLevel"/> lists the bars first. Read §7
-/// without tracing that flag to its one setter and the cockpit looks entirely undraggable.
-/// A captured
-/// release fires no click: the original's release path skips <c>Widget_OnMouseUp</c> entirely while
-/// the capture flag is set.</para>
+/// <para><b>Drag capture</b> (§7): a press on a widget whose <c>+0x1d</c> flag is set latches the
+/// pointer to that widget until the button comes back up, and every move in between is delivered to
+/// it wherever the pointer has got to. A captured release fires no click. The throttle slider is the
+/// only such widget a press can reach in retail; <see cref="Settings.TweakSettingDefinitions.ChargeBarPowerLevel"/>
+/// makes the energy rows' charge bars reachable too.</para>
 ///
 /// <para><b>What is not.</b> The Win32 hook chain and the two ten-slot subscriber tables the original
 /// routes events through (§1-2) are a message-pump workaround with no purpose here. The cursor (§9) is

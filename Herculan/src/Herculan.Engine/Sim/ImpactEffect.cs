@@ -4,39 +4,26 @@ using Herculan.Engine.Numerics;
 namespace Herculan.Engine.Sim;
 
 /// <summary>
-/// What happens where a shot lands — DBSIM's explosion class, built by <c>Explosion_Construct</c> (<c>00407f1c</c>) and
-/// advanced by <c>Explosion_TickUpdate</c> (<c>0040813c</c>), allocated from the pool at <c>g_ExplosionPool</c> (<c>004a96a2</c>)
-/// (docs/retail/simulation/impact-effects.md).
+/// What happens where a shot lands: a <c>dts\EXPLOS.DTS</c> root standing still at the point of
+/// impact, playing its flipbook through once. DBSIM's explosion class, built by
+/// <c>Explosion_Construct</c> (<c>00407f1c</c>) and advanced by <c>Explosion_TickUpdate</c>
+/// (<c>0040813c</c>); its retail behavior is docs/retail/simulation/impact-effects.md.
 ///
-/// <para>An effect is a <c>dts\EXPLOS.DTS</c> root standing still at the point of impact, playing
-/// its flipbook of billboards through exactly once. <c>Explosion_TickUpdate</c> is the whole of its life:
-/// count the type's <see cref="ExplosionTypeEntry.FrameInterval"/> down, step the shape's
-/// cell-animation frame when it expires, and end the effect on the step that wraps the frame back to
-/// zero. Nothing moves it and nothing else can stop it.</para>
+/// <para>It is not a <see cref="SimObject"/>, as a <see cref="BeamTracer"/> and a
+/// <see cref="Projectile"/> are not: it lives in a pool of <see cref="PoolSize"/> that the tick walks
+/// ahead of the machine list, and keeps its slot after it has played out until the render-time
+/// flush — see <see cref="EffectPools.SpawnImpactEffect"/> and <see cref="EffectPools.ImpactEffects"/>.</para>
 ///
-/// <para>Like a <see cref="BeamTracer"/> and a <see cref="Projectile"/> it is <b>not</b> a
-/// <see cref="SimObject"/> in the original either — it comes from a pool of its own that
-/// <c>Sim_MainTick</c> walks ahead of the machine list, so nothing can shoot it and nothing collides
-/// with it. The pool holds <see cref="PoolSize"/>, and an effect that has played out keeps its slot until
-/// the next render-time flush — see <see cref="EffectPools.SpawnImpactEffect"/> and
-/// <see cref="EffectPools.ImpactEffects"/>.</para>
+/// <para>Its <see cref="Owner"/>, the object it was spawned on, decides whether it is drawn
+/// (<see cref="HiddenFromOwnerCockpit"/>) and which terrain cell it is filed under
+/// (<see cref="Render.ObjectDrawTable"/>).</para>
 ///
-/// <para>An effect may have an <see cref="Owner"/>, the object it was spawned on, which decides whether
-/// it is drawn — <see cref="HiddenFromOwnerCockpit"/> — and under which terrain cell it is filed for
-/// drawing: the owner's rather than its own (<see cref="Render.ObjectDrawTable"/>,
-/// docs/retail/simulation/impact-effects.md#drawing).</para>
-///
-/// <para>A row with a nonzero <see cref="ExplosionTypeEntry.LightMode"/> also claims a dynamic
-/// light for as long as the flipbook runs, and one frame more (<see cref="Destruct"/>) —
-/// <see cref="EffectLightField"/>, whose slot this drives
-/// from the row's per-frame intensity ramp. <c>LightMode</c> 1 and 2 reach the same code; the
-/// original tests the field only against zero. A flipbook longer than the row's twelve ramp entries
-/// reads on into the row's later fields, as the original does — <see cref="ExplosionCatalog.RampWord"/>.</para>
-///
-/// <para>A row with a nonzero <see cref="ExplosionTypeEntry.GroundShape"/> lays a
-/// <see cref="Sim.GroundShape"/> under the effect for as long as it runs, stepping its cell with the
-/// flipbook. No retail row asks for one. The proximity radius the type's own query slot reports on is
-/// unread — nothing queries it.</para>
+/// <para>A row with a nonzero <see cref="ExplosionTypeEntry.LightMode"/> holds an
+/// <see cref="EffectLightField"/> slot from construction to <see cref="Destruct"/>, driven from the
+/// row's per-frame intensity ramp; one with a nonzero <see cref="ExplosionTypeEntry.GroundShape"/>
+/// lays a <see cref="Sim.GroundShape"/> that steps with the flipbook. The row's proximity radius is
+/// not read: its one reader in the original, <c>Explosion_ProximityTest</c> (<c>00408100</c>), has no
+/// reference found (docs/retail/formats/explos-dat.md).</para>
 /// </summary>
 public sealed class ImpactEffect {
 	/// <summary>
@@ -107,9 +94,9 @@ public sealed class ImpactEffect {
 	public short TypeId { get; }
 
 	/// <summary>
-	/// <c>effect+0x57</c> — the object the effect was spawned on, or null. Which sites pass one is
-	/// docs/retail/simulation/impact-effects.md#construction--explosion_construct-00407f1c's; nothing reads it
-	/// but the draw: <see cref="HiddenFromOwnerCockpit"/>, and the owner's terrain cell the effect is
+	/// <c>effect+0x57</c> — the object the effect was spawned on, or null. Which sites pass one is in
+	/// docs/retail/simulation/impact-effects.md#construction--explosion_construct-00407f1c. The draw
+	/// reads it: <see cref="HiddenFromOwnerCockpit"/>, and the owner's terrain cell the effect is
 	/// filed under (<c>Explosion_GetOwnerDrawCell</c>, <c>00408228</c>).
 	/// </summary>
 	public SimObject? Owner { get; }

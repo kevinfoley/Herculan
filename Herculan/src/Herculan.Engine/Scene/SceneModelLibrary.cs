@@ -45,7 +45,7 @@ namespace Herculan.Engine.Scene;
 /// The same geometry as <paramref name="Mesh"/> split by the cell each piece stands on, for an
 /// object whose shape loses parts to damage but does not animate — see
 /// <see cref="DtsMeshBuilder.BuildCells"/> — or by <c>TSDetailPart</c> level alone, for a weapon, a
-/// launcher round or a piece of debris, whose levels are chosen per frame but whose flipbook cell is
+/// missile or a piece of debris, whose levels are chosen per frame but whose flipbook cell is
 /// already baked (<see cref="DtsMeshBuilder.BuildDetailLevels"/>). A caller draws either
 /// <paramref name="Mesh"/> or these, never both. Empty for every roster that does not ask for it, and
 /// for a leveled shape that has no detail part.
@@ -439,24 +439,16 @@ public sealed class SceneModelLibrary {
 	public const string BulletBankName = "BULLETS";
 
 	/// <summary>
-	/// The shapes a launcher's round is drawn as — a root of <c>dts\ROCKETS.DTS</c>, one entry per
-	/// cell of its flipbook, and <b>untextured</b>. <c>Rocket_LoadTypeTable_Unguided</c>
-	/// (<c>0040a818</c>) loads the table and the shape file and stops: unlike the bullet module's init
-	/// it opens no <c>.DBA</c> and binds no bank to any of the shapes it just read, and there is no
-	/// <c>ROCKETS.DBA</c> in the install to open. So a rocket is <c>TSSolidPoly</c> geometry coloured
-	/// through the theater's own ramp, the same way a flyer with no bank is.
+	/// The shapes a missile is drawn as — a root of <c>dts\ROCKETS.DTS</c>, one entry per cell of its
+	/// flipbook, and <b>untextured</b>: <c>Rocket_LoadTypeTable_Unguided</c> (<c>0040a818</c>) binds
+	/// no bank, so the shape is ramp-coloured geometry, as a flyer with no bank is
+	/// (docs/retail/formats/rockets-dat.md#dtsrocketsdts).
 	///
-	/// <para><b>Why a list.</b> A rocket's <see cref="TSCellAnimPart"/>s hold <i>geometry</i>, not
-	/// billboards — the flipbook is the exhaust flame, two alternate cones of flat polys at the tail
-	/// in the palette's red/orange/white range (indices 109, 94/93, 87/88, 86), sitting beside the
-	/// static grey body (index 200). Both retail roots carry one sequence of two cells, and both
-	/// cell-anim parts in each read sequence 0 — the same sequence every <c>ROCKETS.DAT</c> record
-	/// names. So the record's frame interval really does drive them, and the shape has to be built
-	/// once per cell for the flame to move. See <see cref="DtsMeshBuilder.CellFrameCount"/>.</para>
+	/// <para>It is a list because the shape's <see cref="TSCellAnimPart"/>s hold geometry, not
+	/// billboards: the flipbook is the exhaust flame, so the shape is built once per cell for the
+	/// flame to move. See <see cref="DtsMeshBuilder.CellFrameCount"/>.</para>
 	///
-	/// <para><paramref name="modelId"/> is the <c>ROCKETS.DAT</c> record's first field. Retail ships
-	/// two roots and the five records name both: root 0 for the four ordinary rockets, root 1 for
-	/// <c>BMSL</c>.</para>
+	/// <para><paramref name="modelId"/> is the <c>ROCKETS.DAT</c> record's first field.</para>
 	/// </summary>
 	/// <returns>The cells in order, or empty when the shape file or the index is missing.</returns>
 	public IReadOnlyList<SceneModel> Rocket(int modelId) {
@@ -481,21 +473,15 @@ public sealed class SceneModelLibrary {
 	/// The model a fitted weapon is drawn as, one entry per cell of its muzzle-flash flipbook — a
 	/// root of <c>dts\MECHWPNS.DTS</c>, textured from <c>dba\WPNTEX.DBA</c>.
 	///
-	/// <para><b>The muzzle flash is the weapon's own model.</b> DBSIM spawns no separate effect for
-	/// it: the base mount constructor (<c>WeaponMount_CtorBase</c>, <c>0040df30</c>) gives every visibly-mounted hardpoint a
-	/// private copy of this shape through <c>WeaponMount_ShapeForMountingCode</c> (<c>0040fab0</c>), and firing steps that copy's
-	/// <see cref="TSCellAnimPart"/>s one cell a tick. Cell zero is the gun at rest and the rest are
-	/// the flash, as real geometry rather than billboards — see
-	/// <see cref="Sim.WeaponMount.FlashCell"/>.</para>
-	///
-	/// <para>The bank binding is <c>WeaponMount_ShapeForMountingCode</c>'s own <c>shape+0x26 = &amp;DAT_004a9b6c</c>,
-	/// which is the atlas <c>Weapons_LoadResourceTables</c> packed <c>wpntex</c> into and hands to
-	/// every shape in <c>mechwpn2</c> as well.</para>
+	/// <para><b>The muzzle flash is the weapon's own model</b>, shape and bank both from
+	/// <c>WeaponMount_ShapeForMountingCode</c> (<c>0040fab0</c>): cell zero is the gun at rest and
+	/// the rest are the flash, as real geometry rather than billboards — see
+	/// <see cref="Sim.WeaponMount.FlashCell"/> and
+	/// docs/retail/simulation/weapon-mounts.md#the-muzzle-flash.</para>
 	///
 	/// <para><paramref name="shapeIndex"/> is one of the four
-	/// <see cref="Weapons.WeaponMountTemplate.ModelShapeIndex"/> entries — which one depends on how
-	/// the hardpoint hangs off the chassis, so the same gun is a different root on a left-side mount
-	/// than on a top one.</para>
+	/// <see cref="Weapons.WeaponMountTemplate.ModelShapeIndex"/> entries, chosen by how the hardpoint
+	/// hangs off the chassis.</para>
 	/// </summary>
 	/// <returns>The cells in order, or empty when the shape file or the index is missing.</returns>
 	public IReadOnlyList<SceneModel> MechWeapon(int shapeIndex) {

@@ -685,15 +685,13 @@ public sealed partial class MechObject {
 	private const short CollapseImpactOdds = 0x78;
 
 	/// <summary>
-	/// <c>Mech_LocomotionTick</c>'s immobilised arm — <b>the fall</b>, and the answer to why a HERC
-	/// that loses a leg ends up face down rather than standing still.
+	/// <c>Mech_LocomotionTick</c>'s immobilised arm — <b>the fall</b>: how a HERC that loses a leg
+	/// ends up face down rather than standing still. Retail behavior:
+	/// docs/retail/simulation/mech-locomotion.md#going-down.
 	///
-	/// <para>It is an animation, not a physics result. Every walking chassis ships a full-body
-	/// sequence at <see cref="MechTypeRecord.DeathSequence"/> that nothing else references, and this
-	/// is its one consumer: the machine is asked to transition into it, plays it out, and the pose
-	/// at its last frame is where it stays. There is no rigid body, no angular velocity and no
-	/// ground contact solve anywhere in DBSIM's mech path — the pitch in the final pose is
-	/// keyframed.</para>
+	/// <para>It is an animation, not a physics result: the machine transitions into its chassis'
+	/// full-body <see cref="MechTypeRecord.DeathSequence"/>, plays it out, and stays in the pose at
+	/// its last frame.</para>
 	///
 	/// <list type="number">
 	/// <item><b>Entering.</b> With neither the running nor the targeted sequence being the death
@@ -787,26 +785,14 @@ public sealed partial class MechObject {
 	/// <summary>
 	/// <c>Mech_ApplyStartingCondition</c> (<c>004178e8</c>) — applies a machine's <b>starting condition</b> as the mission file states
 	/// it, called once from the spawn path before the machine has ever been shot at. The argument is
-	/// a percentage: 100 is pristine and the bands widen downwards.
-	///
-	/// <list type="table">
-	/// <item><term>80-100, or negative</term><description>untouched.</description></item>
-	/// <item><term>60-79</term><description>a light knocking about: 50 damage at 75/256 a component.</description></item>
-	/// <item><term>40-59</term><description>80 at 105.</description></item>
-	/// <item><term>20-39</term><description>120 at 145, and the <b>reactor is written off outright</b>
-	/// — the dependent is set to its own maximum rather than damaged toward it.</description></item>
-	/// <item><term>under 20</term><description>a <b>wreck</b>: one leg destroyed (one of the rear pair
-	/// too, on a four-legged chassis), immobilised and collapsed where it stands, then 150 at 175 over
-	/// everything else. This is a derelict placed as scenery, not a machine that will fight.</description></item>
-	/// </list>
-	///
-	/// <para>The odds are always the damage figure plus 25, which is the original's own arithmetic
-	/// rather than four separate constants.</para>
+	/// a percentage: 100 is pristine, and each band below 80 spreads more damage over the machine
+	/// (<see cref="SpreadImpactDamage"/>, at odds of the damage figure plus 25). The 20-39 band also
+	/// writes the reactor off outright, and under 20 places a <b>wreck</b>: a leg destroyed, immobilised
+	/// and collapsed where it stands. The two worst grades also raise <see cref="WorthNoSalvage"/>.
+	/// The band table is docs/retail/simulation/component-damage.md#starting-condition--mech_applystartingcondition-004178e8.
 	///
 	/// <para>The retail <c>.MSN</c> mech rows state 100 or 50, so the campaign exercises the 40-59
 	/// band alone — see docs/retail/formats/msn-mission-file.md.</para>
-	///
-	/// <para>The two worst grades also raise <see cref="WorthNoSalvage"/>.</para>
 	/// </summary>
 	internal void ApplyStartingCondition(SimWorld world, short condition) {
 		if (_damage == null) {
@@ -876,17 +862,10 @@ public sealed partial class MechObject {
 	/// the gauge to follow. Either way both hold the same number when this returns, which is what
 	/// makes the slider track the keyboard and the keyboard pick up where a drag left off.</para>
 	///
-	/// <para><b>A flyer takes the gauge's value twice.</b> The original's own line here is gated on
-	/// the type record's flyer flag and writes <c>mech+0x2d7</c> as well as <c>mech+0x290</c> —
-	/// <see cref="FlightThrottle"/> as well as <see cref="Throttle"/> — because the flight model
-	/// reads its own copy and nothing else would ever reach it. So the cockpit slider is a working
-	/// throttle on a RAZOR, and on a chassis with no keyboard throttle binding it is the <i>only</i>
-	/// one.</para>
-	///
-	/// <para>The gauge's <b>speed</b> half is a different matter: the original feeds it
-	/// <c>mech+0x28e</c>, the walker speed scalar, which no flight path ever writes. A RAZOR's
-	/// throttle bar therefore moves and its speed bar does not — a retail quirk, not an omission
-	/// here. <see cref="DisplaySpeedKph"/> takes the flyer branch and does read airspeed.</para>
+	/// <para><b>A flyer takes the gauge's value twice</b>, into <see cref="FlightThrottle"/> as well
+	/// as <see cref="Throttle"/>, so the cockpit slider is a working throttle on a RAZOR. Its speed
+	/// bar does not move, as in retail; <see cref="DisplaySpeedKph"/> does read airspeed. See
+	/// docs/retail/simulation/razor-flight.md#throttle.</para>
 	/// </summary>
 	/// <param name="gaugeThrottle">The gauge's current value, Q10 in the same ±0x400 range.</param>
 	/// <returns>The value both should now read.</returns>

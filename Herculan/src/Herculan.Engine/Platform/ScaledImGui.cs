@@ -30,8 +30,8 @@ public sealed class ScaledImGui : IDisposable {
 	/// <summary>The font's size in pixels on a 100% display under <see cref="A11ySettingDefinitions.LargerFont"/>.</summary>
 	public const float LargerFontSize = 40f;
 
-	/// <summary>How many times <see cref="FontSize"/> <see cref="LargeFont"/> is.</summary>
-	public const float LargeFontScale = 2f;
+	/// <summary>Font size multiplier for large font.</summary>
+	public const float RadialFontScale = 1.5f;
 
 	// The characters every font is baked with: ImGui's default Basic Latin and Latin-1 Supplement, and General
 	// Punctuation for the .lang files' dashes, ellipsis and German quotes, which would otherwise draw as '?'. Pinned for
@@ -67,10 +67,10 @@ public sealed class ScaledImGui : IDisposable {
 	public static float Scaled(float size) => size * ImGui.GetFontSize() / FontSize;
 
 	/// <summary>
-	/// The same font rasterised at <see cref="LargeFontScale"/> times the size, for text drawn that large, which the
-	/// ordinary font would draw blurred. Drawn at <see cref="LargeFontSize"/>.
+	/// The same font rasterised at <see cref="RadialFontScale"/> times the size, for text drawn that large, which the
+	/// ordinary font would draw blurred. Drawn at <see cref="RadialFontSize"/>.
 	/// </summary>
-	public ImFontPtr LargeFont { get; private set; }
+	public ImFontPtr RadialFont { get; private set; }
 
 	/// <summary>
 	/// The font's italic face at the ordinary size, or null when the constructor was given none. Rebuilt with the
@@ -78,8 +78,8 @@ public sealed class ScaledImGui : IDisposable {
 	/// </summary>
 	public ImFontPtr? ItalicFont { get; private set; }
 
-	/// <summary>The size <see cref="LargeFont"/> is drawn at in the current ImGui frame, as <see cref="Scaled(float)"/>.</summary>
-	public static float LargeFontSize => ImGui.GetFontSize() * LargeFontScale;
+	/// <summary>The size <see cref="RadialFont"/> is drawn at in the current ImGui frame, as <see cref="Scaled(float)"/>.</summary>
+	public static float RadialFontSize => ImGui.GetFontSize() * RadialFontScale;
 
 	/// <inheritdoc cref="Scaled(float)"/>
 	public static Vector2 Scaled(Vector2 size) => size * (ImGui.GetFontSize() / FontSize);
@@ -200,26 +200,47 @@ public sealed class ScaledImGui : IDisposable {
 		}
 	}
 
-	// The font is baked at the display's pixel size, and drawn at the window-coordinate size: on Windows the two are
-	// the same; where window coordinates are already scaled (macOS), FontGlobalScale takes the pixel-sized atlas back
-	// down so the text stays sharp. The style is a 100% display's until scaled here; the constructor's frame, which
-	// has already begun with it, holds nothing and is never drawn.
+	// The style is a 100% display's until scaled here; the constructor's frame, which has already begun with it, holds
+	// nothing and is never drawn. Silk's controller adds no font of its own when given no font config.
 	private ImGuiController Build() {
 		_builtContentScale = _window.ContentScale;
 		_builtClientScale = _window.ClientScale ?? _builtContentScale;
 		_builtFontSize = ChosenFontSize;
-		float pixels = MathF.Round(_builtFontSize * _builtContentScale);
-		var fontConfig = new ImGuiFontConfig(_fontPath, (int)pixels, _ => GlyphRangesPointer);
-		var controller = new ImGuiController(_gl, _window.View, _input, fontConfig, () => {
-			var fonts = ImGui.GetIO().Fonts;
-			LargeFont = fonts.AddFontFromFileTTF(_fontPath, pixels * LargeFontScale, default, GlyphRangesPointer);
-			ItalicFont = _italicFontPath != null
-				? fonts.AddFontFromFileTTF(_italicFontPath, pixels, default, GlyphRangesPointer)
-				: null;
+		var controller = new ImGuiController(_gl, _window.View, _input, null, () => {
+			(RadialFont, ItalicFont) = AddFonts(ImGui.GetIO().Fonts, _fontPath, _italicFontPath, _builtFontSize, _builtContentScale);
 		});
-		ImGui.GetIO().FontGlobalScale = _builtClientScale / _builtContentScale;
-		ImGui.GetStyle().ScaleAllSizes(_builtClientScale);
-		ImGui.GetStyle().Colors[(int)ImGuiCol.WindowBg].W = .975f;
+		ApplyScale(_builtContentScale, _builtClientScale, _builtFontSize);
 		return controller;
+	}
+
+	/// <summary>
+	/// Adds the fonts every ImGui window is drawn in to <paramref name="fonts"/>, before the atlas is built:
+	/// <paramref name="fontPath"/> at <paramref name="fontSize"/> on a display of <paramref name="contentScale"/>, first
+	/// so that it is the default, then the <see cref="RadialFont"/> and <see cref="ItalicFont"/> faces, which it returns.
+	/// The hosts' windows add them through Silk's controller, and a test that lays the panels out without a window
+	/// adds them to its own context.
+	/// </summary>
+	public static (ImFontPtr Radial, ImFontPtr? Italic) AddFonts(ImFontAtlasPtr fonts, string fontPath, string? italicFontPath,
+			float fontSize, float contentScale) {
+		float pixels = MathF.Round(fontSize * contentScale);
+		fonts.AddFontFromFileTTF(fontPath, pixels, default, GlyphRangesPointer);
+		var radial = fonts.AddFontFromFileTTF(fontPath, pixels * RadialFontScale, default, GlyphRangesPointer);
+		ImFontPtr? italic = italicFontPath != null ? fonts.AddFontFromFileTTF(italicFontPath, pixels, default, GlyphRangesPointer) : null;
+		return (radial, italic);
+	}
+
+	/// <summary>
+	/// Scales the current context's style, which is a 100% display's until then, to the display, once the fonts are
+	/// added (<see cref="AddFonts"/>) at <paramref name="fontSize"/>. The font is baked at the display's pixel size, and
+	/// drawn at the window-coordinate size: on Windows the two are the same; where window coordinates are already scaled
+	/// (macOS), FontGlobalScale takes the pixel-sized atlas back down so the text stays sharp. The scroll bars grow with
+	/// the font, so <see cref="LargerFontSize"/> doubles their width.
+	/// </summary>
+	public static void ApplyScale(float contentScale, float clientScale, float fontSize) {
+		var style = ImGui.GetStyle();
+		ImGui.GetIO().FontGlobalScale = clientScale / contentScale;
+		style.ScaleAllSizes(clientScale);
+		style.ScrollbarSize *= fontSize / FontSize;
+		style.Colors[(int)ImGuiCol.WindowBg].W = .975f;
 	}
 }

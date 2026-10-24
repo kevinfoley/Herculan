@@ -48,29 +48,14 @@ public sealed partial class BaseObject {
 
 	/// <summary>
 	/// <c>Base_DirectFireHitTest</c> (<c>00405038</c>) — the vtable <c>+0x20</c> every structure
-	/// class shares (all five of the type-switched vtables <c>Base_Construct</c> (<c>00405314</c>) installs point at it),
-	/// and, as everywhere else along this path, the hit test and the damage application in one call.
+	/// class shares: the hit test and the damage application in one call.
 	///
-	/// <para><b>There are two completely different pieces of hit geometry</b>, and which one runs is
-	/// the type's <see cref="BaseType.HasCollisionModel"/> flag:</para>
-	/// <list type="bullet">
-	/// <item><b>The sphere model</b> — <c>dat\BASECOL.DAT</c>'s hand-authored clusters, one per
-	/// destructible component. This is the path that can say <i>which part</i> of a building was
-	/// struck, so it is the one that makes a structure come apart section by section. 25 of the 65
-	/// retail types use it.</item>
-	/// <item><b>The shape's collision volume</b> — the coarse height field in the <c>.DGS</c> record
-	/// (see <see cref="ShapeVolume"/>), which knows only "solid here". Everything it hits is
-	/// component 0.</item>
-	/// </list>
-	///
-	/// <para>A <see cref="Wrecked"/> structure is switched over to the volume path whichever it was
-	/// using — the wreck is a different shape with different geometry, and its spheres would be the
-	/// standing building's. Before component 0 reaches its collapse stage a fallen sphere-model
-	/// structure is still on the sphere path, where every cluster belongs to a destroyed component and
-	/// is skipped.</para>
-	///
-	/// <para>It also rolls <see cref="HitDebrisOdds"/> in 4096 on every hit — a shade over a quarter —
-	/// to shed <see cref="HitDebrisGroup"/> off the impact point.</para>
+	/// <para>The type's <see cref="BaseType.HasCollisionModel"/> flag picks the hit geometry: the
+	/// sphere model, <c>dat\BASECOL.DAT</c>'s clusters, which names the struck component, or the
+	/// shape's collision volume (<see cref="ShapeVolume"/>), where everything hit is component 0. A
+	/// <see cref="Wrecked"/> structure takes the volume path whichever it used standing. Every hit
+	/// rolls <see cref="HitDebrisOdds"/> in 4096 to shed <see cref="HitDebrisGroup"/> off the impact
+	/// point. See docs/retail/simulation/hit-detection.md#base_directfirehittest--00405038.</para>
 	/// </summary>
 	public override int DirectFireHitTest(SimWorld world, WeaponShot shot) {
 		short component = -1;
@@ -152,14 +137,14 @@ public sealed partial class BaseObject {
 	/// structure list.
 	///
 	/// <para>Two rejects before any grid work: <see cref="WithinReach"/>, then the structure's centre
-	/// brought into the ray's frame and tested against a box — <b>X and Y only</b>, with Z left out
-	/// entirely, which is the original's own test and not an omission here. Only then is the ray
-	/// brought into shape space and marched (docs/retail/simulation/hit-detection.md, "The collision
-	/// volume").</para>
+	/// brought into the ray's frame and tested against a box on X and Y only, as the original tests
+	/// it. Only then is the ray brought into shape space and marched
+	/// (docs/retail/simulation/hit-detection.md#the-collision-volume--the-dgs-records-height-field).</para>
 	///
-	/// <para>The original also lowers a global minimum distance here (<c>004aab54</c>). Its only other
-	/// writer zeroes it and every distance is non-negative, so it never holds anything but zero, and
-	/// it is not carried.</para>
+	/// <para>The original also lowers <c>RaycastShapeMinDistance</c> (<c>004aab54</c>) here. The
+	/// writers known so far are this, which only lowers it toward a non-negative distance, and
+	/// <c>RaycastShapeMinDistance_Clear</c> (<c>00427d98</c>), which zeroes it, so it holds zero and is
+	/// not carried.</para>
 	/// </summary>
 	/// <param name="muzzle">The ray's frame: its start in the translation, running down its Y axis.</param>
 	/// <param name="muzzleInverse">World to ray space — <paramref name="muzzle"/> inverted.</param>
@@ -222,11 +207,9 @@ public sealed partial class BaseObject {
 	/// <c>Base_ApplyDamage</c> (<c>00404d70</c>), the vtable <c>+0x74</c> — writes one
 	/// component's health and, if that finished it, checks whether the structure has fallen.
 	///
-	/// <para><b>A component can die early, at random.</b> Past half its maximum, the original rolls
-	/// once per tenth of the component's health the shot moved it through, each roll a 10% chance of
-	/// finishing it outright (<c>rand &amp; 0xfff &lt;= 0x199</c>). So a big hit on a half-wrecked
-	/// section is likely to bring it down before its stated hit points run out, and the same hit
-	/// twice does not do the same thing.</para>
+	/// <para>Past half its maximum a component can die early, at random: one ~10% roll per tenth of
+	/// its health the shot moved it through
+	/// (docs/retail/simulation/structure-behaviour.md#taking-damage--base_applydamage-00404d70).</para>
 	///
 	/// <para><b>Nothing here tests <see cref="Destroyed"/></b>, so the fallen-structure branch runs
 	/// whenever the fraction comes out full. A part that is alive at full damage is the only way to

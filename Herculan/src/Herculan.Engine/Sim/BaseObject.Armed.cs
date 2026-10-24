@@ -42,7 +42,7 @@ public sealed partial class BaseObject {
 	/// per-sequence cell array the plain tick free-runs, driven as a one-shot instead: firing kicks
 	/// the timer, and the timer stops reloading itself the moment the cell wraps back to zero.</item>
 	/// <item><b>Lead</b> — a gun tower offsets its aim point along the target's own heading by
-	/// <c>range * targetSpeed / projectileSpeed</c>. A missile tower does not: its rounds track.</item>
+	/// <c>range * targetSpeed / projectileSpeed</c>. A missile tower does not: its missiles track.</item>
 	/// <item><b>Aim</b> through <see cref="AimTurret"/>, which is also what drives the turret's two
 	/// animation threads.</item>
 	/// <item><b>Fire</b>, gated on the refire countdown, on the aim error being inside
@@ -50,6 +50,8 @@ public sealed partial class BaseObject {
 	/// and on the firing window being open. That last is a plain five-seconds-on, five-seconds-off
 	/// duty cycle, so a tower spends half its life not shooting at all.</item>
 	/// </list>
+	///
+	/// <para>See docs/retail/simulation/structure-behaviour.md#the-armed-tick--00404100.</para>
 	/// </summary>
 	private void ArmedThinkTick(SimWorld world) {
 		if (Destroyed) {

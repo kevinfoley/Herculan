@@ -180,23 +180,10 @@ public partial class MechObject {
 	/// How long the link has to be held before each of the four lines — the table at
 	/// <c>0049a318</c>, read straight, in <see cref="SimMath.TimerCountDown"/>'s unit rather than
 	/// milliseconds. <b>The delay is written before the line it precedes is posted</b>,
-	/// so entry <i>n</i> is the wait between line <i>n</i> and line <i>n+1</i>.
-	///
-	/// <para><b>The link takes about five seconds of holding station</b>: two waits of 5000 counts,
-	/// about 2.4 seconds each, then nothing. The third
-	/// entry is stored negative (<c>0xffff9c40</c>) and <c>Timer_CountDown</c> clamps at zero, so the
-	/// fourth step imposes no wait of its own and <c>DATA TRANSFER COMPLETE</c> is queued the tick
-	/// after <c>TRANSFERRING DATA</c>.</para>
-	///
-	/// <para><b>That is not what the player sees.</b> The two lines are queued a tick apart but shown
-	/// ten seconds apart, because <c>TRANSFERRING DATA</c> is the one entry in <c>SYSTEM.STR</c> whose
-	/// display timings are 10 s and 20 s rather than 3 s and 6 s, and the port will not let a message
-	/// yield before its minimum — see <see cref="Cockpit.MessagePort"/>. So the transfer reads on
-	/// screen as a long operation while the simulation has already finished it.</para>
-	///
-	/// <para>The stored <c>0x9c40</c> is 40000, which is what the entry would hold if the sign half
-	/// were zero; whether that is the author's intent or a coincidence is not established, and the
-	/// value is kept as the file has it either way.</para>
+	/// so entry <i>n</i> is the wait between line <i>n</i> and line <i>n+1</i>. The third entry is
+	/// negative and kept as retail stores it; the countdown clamps it to no wait. What that does to
+	/// the link's pacing on screen (with <see cref="Cockpit.MessagePort"/>) is
+	/// docs/retail/simulation/mission-objectives.md#the-data-link.
 	/// </summary>
 	public static readonly int[] DataLinkStepDelays = [5000, 5000, unchecked((int)0xffff9c40), 0];
 

@@ -12,7 +12,7 @@ internal sealed record EditorFinding(ScriptLintFinding Finding, EditorSelection?
 /// </summary>
 internal sealed class MissionLint {
 	public MissionLint(MissionIndex index, ScriptDat script) {
-		int squad = index.Mission.Placements.Count(placement => placement.IsPlayerLance);
+		int squad = index.Mission.Placements.Count(placement => placement.IsPlayerSquad);
 		Findings = ScriptDatLint.Check(script, squad)
 			.Select(finding => new EditorFinding(finding, TargetOf(finding, index, script)))
 			.ToList();

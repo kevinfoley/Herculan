@@ -19,11 +19,7 @@ namespace Herculan.Engine.Input;
 /// any retail binary: a key whose GLFW name is a letter is that letter, a key in a letter's US place whose name is
 /// no letter is no key (its letter is elsewhere on the layout), and the digits and symbols stay where they are.</para>
 ///
-/// <para><see cref="Printed"/> names a game key for a key list by what is printed on the key that makes it, refreshed
-/// with the translation. A letter or a digit is itself on any layout, since the key that sends its virtual-key code is
-/// the one printed with it. On Windows a symbol is the character the layout gives the US symbol's virtual-key code,
-/// from <c>MapVirtualKeyExW</c>'s <c>MAPVK_VK_TO_CHAR</c>; elsewhere it is GLFW's name for the key in the symbol's US
-/// place, where the translation leaves it. When neither gives a character, it is the US symbol.</para>
+/// <para><see cref="Printed"/> names a game key for a key list by what is printed on the key that makes it.</para>
 /// </summary>
 public sealed class KeyboardLayout {
 	/// <summary>
@@ -95,6 +91,12 @@ public sealed class KeyboardLayout {
 	/// <summary>
 	/// What is printed on the key that makes the game's <paramref name="key"/>, upper-cased, for a key a layout can move;
 	/// null for every other key, which a key list names rather than reads off the keyboard.
+	///
+	/// <para>A letter or a digit is itself on any layout, since the key that sends its virtual-key code is the one
+	/// printed with it. On Windows a symbol is the character the layout gives the US symbol's virtual-key code, from
+	/// <c>MapVirtualKeyExW</c>'s <c>MAPVK_VK_TO_CHAR</c>; elsewhere it is GLFW's name for the key in the symbol's US
+	/// place, where the translation leaves it. When neither gives a character, it is the US symbol. Refreshed with the
+	/// translation (<see cref="Refresh"/>).</para>
 	/// </summary>
 	public string? Printed(Key key) {
 		int index = Array.IndexOf(Movable, key);

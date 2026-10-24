@@ -71,11 +71,11 @@ The survivor is rotated into the machine's own frame by `Math_BuildRotation2D(-h
 
 **Friendlies always plot; a Cybrid plots only once something has painted it** (`obj+0x95`, [`target-selection.md`](target-selection.md)). That is what makes the PASS/ACTIVE choice visible on this screen.
 
-### The blinking ghost contact is dead code
+### The blinking ghost contact
 
 The hostile branch does not simply skip. On every other coarse tick (`Time_GetCoarseTicks() & 0x20`) it looks for a stored position at `obj+0x1aa`, gated on `obj+0xa7 == 0`, and plots that instead — a blinking last-known-position marker.
 
-**It can never run.** `Mech_Constructor`, `Flyer_Constructor` and the base-object prologue `Base_Construct` inlines five times all set `obj+0xa7 = 1` immediately before `ObjectList_Add`, and nothing in the image clears it. Nothing writes `obj+0x1aa` either. The same idiom appears in `Mech_ReceiveSquadOrder` (`00420ad4`) and `HddCommandScreen_DrawMarker` (`0044e92c`) and is equally dead there.
+**The branch needs `obj+0xa7` cleared after construction, and no write that clears it has been found** ([Open](#open)). `Mech_Constructor`, `Flyer_Constructor` and the base-object prologue `Base_Construct` inlines five times all set `obj+0xa7 = 1` immediately before `ObjectList_Add`. The same `+0xa7`/`+0x1aa` test appears in `Mech_ReceiveSquadOrder` (`00420ad4`) and `HddCommandScreen_DrawMarker` (`0044e92c`) and hinges on the same byte.
 
 ## Paint order
 
@@ -156,3 +156,7 @@ Nothing it shares with the screen beyond two sprites — no dish, no wedge sprit
 5. `MFD` frame 16, the target bracket, over the selected contact.
 
 Verified against `Reference/Targeting.png`: SAMSON's `51,5` puts the circle at device `102,10 - 194,102`, which is where that capture's is.
+
+## Open
+
+- **Open:** whether anything clears `obj+0xa7` or writes `obj+0x1aa`, which the [blinking ghost contact](#the-blinking-ghost-contact) needs. `es2_fieldscan.py a7 --writes-only` finds the seven constructor stores of 1 (`Mech_Constructor`, `Flyer_Constructor`, `Base_Construct` five times) and one alias hit in `HddCommandScreen_CommitPick` that addresses the command screen's own order records, not an object; `es2_fieldscan.py 1aa` finds three reads (`MfdRadarScreen_Update`, `HddCommandScreen_DrawMarker` twice) and no write. A bulk copy or an alias the scan cannot resolve would escape both.

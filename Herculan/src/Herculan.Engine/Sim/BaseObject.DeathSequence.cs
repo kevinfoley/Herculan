@@ -18,7 +18,7 @@ public sealed partial class BaseObject {
 		index >= 0 && index < _deathStage.Length && _deathStage[index] != 0;
 
 	/// <summary>
-	/// <c>Base_DeathSequenceTick</c> — steps every part that is coming down through the next stage of its
+	/// <c>Base_DeathSequenceTick</c> (<c>00403914</c>) — steps every part that is coming down through the next stage of its
 	/// <see cref="StructureDeathSequence"/>. This is the whole of how a building collapses, and it
 	/// runs backwards: the stage counter starts at the sequence's own length and each expiry of the
 	/// stage timer takes one off it.

@@ -27,31 +27,22 @@ public sealed partial class WeaponMount {
 	public short RefireScale { get; private set; } = RefireScaleFull;
 
 	/// <summary>
-	/// <c>WeaponMount_Destroy</c> (<c>0040f57c</c>) — the mount side of losing a hardpoint, reached
-	/// from the destruction roll a band change on one of the machine's mount components makes (see
-	/// <c>MechObject</c>'s <c>ApplyDirectFireDamage</c>) and from the mount's own condition
-	/// notification (<c>WeaponMount_ConditionChangedBase</c>, <c>0040ee0c</c>) when that reports a fully-damaged component.
+	/// <c>WeaponMount_Destroy</c> (<c>0040f57c</c>) — knocks the mount out. It drops the mount's
+	/// model, so the gun is no longer drawn on the chassis, and sets <see cref="Disabled"/>, which
+	/// stops the mount charging, firing and being armed and shows its cockpit row as "OFFLINE". A
+	/// second call does nothing. Reached from <see cref="ConditionChanged"/> and from the destruction
+	/// roll, <c>MechObject.RollWeaponMountDestruction</c>; see
+	/// docs/retail/simulation/weapon-mounts.md#losing-a-mount.
 	///
-	/// <para>Two writes, and they are the whole of the state change: the weapon model at
-	/// <c>mount+0x10</c> is dropped, so the gun stops being drawn on the chassis, and the destroyed
-	/// byte at <c>+0x49</c> is set, which is what stops the mount charging, firing and being armed,
-	/// and turns its cockpit row into <c>OFFLINE</c>. It is idempotent in the original too: the whole
-	/// body is under a test of that byte.</para>
-	///
-	/// <para><b>And the gun goes flying.</b> A visibly-mounted hardpoint (<c>.GL +6 &lt;</c>
-	/// <see cref="InvisibleMounting"/>) throws its own model — the same shape index, out of
-	/// <see cref="DebrisShapeLibraryName"/> rather than the library it was drawn from — off the mount
-	/// point as a <see cref="DebrisObject"/>, on a <c>Math_EulerToward</c> bearing away from the
-	/// machine's aim point, at the hardpoint's own stated pitch and a flat <see cref="DebrisMass"/>.
-	/// It keeps the muzzle frame's attitude, so it tumbles from the angle it was mounted at.</para>
-	///
-	/// <para><b>The two ways of losing a mount throw different wreckage.</b>
-	/// <paramref name="rolled"/> is the original's third argument, and it decides the pair: the
-	/// certain path through <see cref="ConditionChanged"/> passes 0 and gets a piece that bursts —
-	/// group <see cref="ComponentDamage.DefaultDebrisGroup"/> with <see cref="DebrisBurstEffect"/>
-	/// behind it — while the destruction roll passes 1 and gets a plain piece that just falls. So a
-	/// gun lost because its bracket was shot away goes up, and one lost to the roll simply
-	/// drops.</para>
+	/// <para><b>A visibly-mounted gun is thrown off as wreckage.</b> When the hardpoint's mounting
+	/// code is under <see cref="InvisibleMounting"/>, the gun's own shape, out of
+	/// <see cref="DebrisShapeLibraryName"/>, leaves the mount point as a <see cref="DebrisObject"/>
+	/// heading away from the machine's aim point, at the hardpoint's own pitch and
+	/// <see cref="DebrisMass"/>, keeping the mount's attitude. <paramref name="rolled"/> picks the
+	/// kind: the certain path throws a piece that bursts, group
+	/// <see cref="ComponentDamage.DefaultDebrisGroup"/> with <see cref="DebrisBurstEffect"/>, and the
+	/// roll a plain piece that just falls. See
+	/// docs/retail/simulation/destruction-effects.md#spawn-sites.</para>
 	/// </summary>
 	/// <param name="world">Where the wreckage goes, or null to change the state alone.</param>
 	/// <param name="owner">The machine the mount hangs off, which places the throw.</param>
@@ -106,37 +97,35 @@ public sealed partial class WeaponMount {
 	public const short DebrisBurstEffect = 0x14;
 
 	/// <summary>
-	/// The mount's vtable slot <c>0x68</c>, the condition notification — <c>WeaponMount_ConditionChangedBase</c> (<c>0040ee0c</c>) for the
-	/// base class and the pods, <c>WeaponMount_ConditionChanged</c> (<c>0040ee90</c>) for the ammunition class,
-	/// <c>WeaponMount_ConditionChangedEnergy</c> (<c>0040ee38</c>) for the energy and ELF classes, and
-	/// <c>TargetingPod_ConditionChanged</c> (<c>0040ef6c</c>) for the Targeting Pod.
-	/// <c>Mech_ComponentDamageWrite</c> reads every mount's component before its write and again
-	/// after, and hands both readings to every mount on the machine, so this runs on all of them for
-	/// any hit anywhere and is a no-op wherever the two agree.
+	/// What a hit on the machine does to this mount: a mount whose component is fully damaged is
+	/// knocked out, and past half damage a launcher may cook off, a gun's refire delay changes and an
+	/// energy weapon recharges more slowly.
+	///
+	/// <para>The mount's vtable slot <c>0x68</c>, the condition notification, which
+	/// <c>Mech_ComponentDamageWrite</c> (<c>00417de4</c>) calls on every mount after every component
+	/// write with the mount's component reading before and after. The original's four overrides are
+	/// one method here, branching on the mount's class: <c>WeaponMount_ConditionChangedBase</c>
+	/// (<c>0040ee0c</c>) for the base class and the pods, <c>WeaponMount_ConditionChanged</c>
+	/// (<c>0040ee90</c>) for the ammunition class, <c>WeaponMount_ConditionChangedEnergy</c>
+	/// (<c>0040ee38</c>) for the energy and ELF classes, and <c>TargetingPod_ConditionChanged</c>
+	/// (<c>0040ef6c</c>) for the Targeting Pod. See
+	/// docs/retail/simulation/weapon-mounts.md#the-certain-path--the-condition-notification.</para>
 	///
 	/// <list type="number">
-	/// <item><b>A component that reads <see cref="MechObject.FullyDamaged"/> destroys its mount</b>,
-	/// with no roll. That is the base class' whole slot, and the certain half of losing a
-	/// hardpoint — the roll in <c>MechObject.RollWeaponMountDestruction</c> is the other, and takes
-	/// mounts out before their component is gone.</item>
-	/// <item><b>A launcher cooks off.</b> Past <see cref="MountDamageOnset"/> — half damage — a
-	/// <c>Rocket</c> mount rolls <see cref="MountCookOffOdds"/> in 1024 once for every
-	/// <see cref="MountDamageStep"/> the reading crossed, and the first success destroys it. A hit
-	/// that takes the component from pristine to nearly gone therefore rolls five or six times.</item>
-	/// <item><b>A gun's refire scale moves instead</b>, by
-	/// <see cref="RefireScalePerDamageStep"/> per step over the same range — see
-	/// <see cref="RefireScale"/>. A <c>Bullet</c> mount is never rolled for and a beam mount is
-	/// neither rolled for nor rescaled.</item>
-	/// <item><b>An energy mount charges more slowly instead.</b> Its <see cref="ChargeRate"/> is
-	/// reset to <see cref="EnergyChargeRate"/> on every notification and, past the same onset, loses
-	/// <c>Q10(20, steps * 100)</c> — 19, 17, 15, 13, 11 over the five steps. Neither the cook-off nor
-	/// the refire scale applies to it, whatever its projectile type.</item>
+	/// <item><b>Every class:</b> a reading of <see cref="MechObject.FullyDamaged"/> calls
+	/// <see cref="Destroy"/>, with no roll.</item>
+	/// <item><b>The Targeting Pod</b> caches the reading in
+	/// <see cref="TargetingPodLock.ComponentDamage"/>.</item>
+	/// <item><b>An energy mount</b> resets <see cref="ChargeRate"/> to <see cref="EnergyChargeRate"/>
+	/// and, past <see cref="MountDamageOnset"/>, lowers it by <c>Q10(20, steps * 100)</c>.</item>
+	/// <item><b>A loaded ammunition mount</b> (<see cref="ChargeTarget"/> nonzero), past
+	/// <see cref="MountDamageOnset"/>: a <c>Rocket</c> mount rolls <see cref="MountCookOffOdds"/> in
+	/// 1024 for each <see cref="MountDamageStep"/> the reading crossed and is destroyed on the first
+	/// success; a <c>Bullet</c> mount sets <see cref="RefireScale"/>; a <c>Beam</c> mount does
+	/// neither.</item>
 	/// </list>
-	///
-	/// <para><b>An empty ammunition mount is exempt from both of its effects</b> — the original gates
-	/// them on <c>+0x7b</c>, <see cref="ChargeTarget"/>, so a launcher out of missiles cannot cook
-	/// off.</para>
 	/// </summary>
+	/// <param name="random">The simulation's generator, which the cook-off rolls draw from.</param>
 	/// <param name="world">Where the wreckage the mount throws goes — see <see cref="Destroy"/>.</param>
 	/// <param name="owner">The machine the mount hangs off.</param>
 	/// <param name="debris">Its own debris table.</param>

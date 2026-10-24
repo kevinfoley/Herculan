@@ -21,13 +21,10 @@ public sealed record ShellImage(byte[] Pixels, int Width, int Height);
 /// its own size with no doubling. The same goes for <c>dfn\</c>: the shell has no <c>hfn\</c> half,
 /// and its fonts are the text at canvas scale rather than a half-scale set to double.</para>
 ///
-/// <para><b>The palette comes from the table, by index.</b> VSHELL selects one with
-/// <c>Shell_InstallPalette(index)</c> (<c>004075b2</c>) into the pointer table at <c>0046dcdc</c>, and that table is decoded —
-/// see <see cref="ShellPalette"/>, which also carries which screen picks which. Index 1,
-/// <c>dpl\palette.dpl</c>, is what the shell installs on entry (<c>EsGlobal_Init</c>,
-/// <c>004073bc</c>) and what the service bay re-installs whenever it is shown (<c>0043b23d</c>),
-/// hence <see cref="DefaultPaletteName"/>. Pass another name to <see cref="Load"/> to draw the frame
-/// through one of the other nineteen.</para>
+/// <para><b>The palette comes from VSHELL's palette table, by index</b> — see
+/// <see cref="ShellPalette"/> and docs/retail/shell/screen-layout.md#the-palette. Index 1 is what
+/// the shell installs on entry, hence <see cref="DefaultPaletteName"/>. Pass another name to
+/// <see cref="Load"/> to draw the frame through one of the other nineteen.</para>
 /// </summary>
 public sealed class ShellArt {
 	/// <summary>

@@ -10,7 +10,7 @@ namespace Herculan.Engine.Render;
 ///
 /// <para>The original draws a group's polys in file order and a part list's children in order, with no
 /// depth test between them, so a later poly covers an earlier one wherever the two overlap on screen
-/// (docs/retail/rendering/dts-texture-binding.md, "Poly order within a group"). The depth buffer cannot
+/// (docs/retail/rendering/dts-texture-binding.md#poly-order-within-a-group). The depth buffer cannot
 /// say which of two coplanar faces is in front, and some decals sit a little behind their wall's plane
 /// over part of their area, so either would flicker or sink. Instead each <i>slot</i> — the children of
 /// a <c>TSBSPPart</c> one by one, and the geometry outside every part as one more — has its paint order

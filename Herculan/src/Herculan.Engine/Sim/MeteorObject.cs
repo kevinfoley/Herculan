@@ -123,8 +123,9 @@ public sealed class MeteorObject {
 	}
 
 	/// <summary>
-	/// <c>Meteor_Tick</c> (<c>00409d2c</c>) — two phases, and the pod spends its whole life in one
-	/// then the other.
+	/// <c>Meteor_Tick</c> (<c>00409d2c</c>) — moves the drop pod one tick: it falls, then lands and
+	/// opens, two phases it passes through in order. Retail behavior:
+	/// docs/retail/simulation/mission-deployment.md#the-drop-pod--meteor.
 	///
 	/// <para><b>Falling.</b> Integrate by the constant velocity, then ask the terrain how high the
 	/// ground is under the new position. Under it means down: the pod snaps to ground height, stands

@@ -4,31 +4,6 @@ using Herculan.Engine.Sim.Ai;
 namespace Herculan.Engine.Cockpit;
 
 /// <summary>
-/// The MFD's FLASH COMM page (<c>MfdFlashCommScreen_Ctor</c>, <c>0043f5d8</c>) — six order rows, one
-/// of them selected, and XMIT. Derivation: docs/retail/simulation/mfd.md and
-/// docs/retail/simulation/ai-squadmates.md.
-///
-/// <para><b>Six positions, not six orders.</b> Each row names one of two verbs from
-/// <c>STRINGS0.STR</c> group 0: its own index, or that index <b>+ 3</b> when the row's state byte
-/// (<c>screen+0x2c + row</c>) has bit 1 set. Only rows 4 and 5 ever toggle — <c>MfdFlashComm_ToggleRowVariant</c> (<c>0043f9d0</c>)
-/// flips the bit after a transmission and returns immediately for any other row — so the page reads
-/// <c>SCAN FOR HOSTILES</c>/<c>EMCON</c> and <c>FIRE AT WILL</c>/<c>HOLD YOUR FIRE</c> and the first
-/// four rows are fixed.</para>
-///
-/// <para><b>Two selections, not one.</b> The row the page draws lives in the display's shared state
-/// block (<c>display+0xb1</c>, <see cref="SelectedRow"/>); the row XMIT actually sends lives on the
-/// screen (<c>screen+0x32</c>, <see cref="Row"/>). The paint copies the first into the second every
-/// time FLASH COMM is repainted, which is what <see cref="Sync"/> is. They come apart for exactly one
-/// input: an <c>[Alt]</c> hotkey pressed while another MFD screen is up transmits from the screen's
-/// own row without the display's ever moving, because <c>MfdFlashComm_SelectRow</c> (<c>00447130</c>) refuses to write the shared
-/// block outside mode 1.</para>
-///
-/// <para><b>Availability is dead in retail.</b> Bit 0 of a row's state byte greys it out and takes it
-/// out of the <c>[,]</c>/<c>[.]</c> walk, but the two functions that set and clear it
-/// (<c>FUN_0043fa14</c>, <c>FUN_0043f9f4</c>) have no callers in the image, so every row is always
-/// available. It is modelled because the paint and the walk both read it.</para>
-/// </summary>
-/// <summary>
 /// What the FLASH COMM page draws, snapshotted for the renderer: which row the cursor is on, and for
 /// each row the verb it currently names and whether the squad can take it.
 /// </summary>
@@ -52,6 +27,27 @@ public readonly record struct MfdFlashCommState(
 	public bool CanTake(int row) => Available is { } available && row >= 0 && row < available.Count && available[row];
 }
 
+/// <summary>
+/// The MFD's FLASH COMM page (<c>MfdFlashCommScreen_Ctor</c>, <c>0043f5d8</c>) — six order rows, one
+/// of them selected, and XMIT. See docs/retail/simulation/mfd.md#mfdflashcomm--mode-1 and
+/// docs/retail/simulation/ai-squadmates.md.
+///
+/// <para><b>Six positions, not six orders.</b> Each row names its own <c>STRINGS0.STR</c> group 0
+/// verb, or the one <see cref="ToggledVerbStep"/> past it once a transmission has toggled the row;
+/// only rows 4 and 5 toggle, so the page reads <c>SCAN FOR HOSTILES</c>/<c>EMCON</c> and
+/// <c>FIRE AT WILL</c>/<c>HOLD YOUR FIRE</c> and the first four rows are fixed.</para>
+///
+/// <para><b>Two selections, not one.</b> The row the page draws lives in the display's shared state
+/// block (<see cref="SelectedRow"/>); the row XMIT sends lives on the screen (<see cref="Row"/>).
+/// <see cref="Sync"/> copies the first into the second on every FLASH COMM paint. They come apart
+/// for one input: an <c>[Alt]</c> hotkey pressed while another MFD screen is up transmits from the
+/// screen's own row without the display's moving.</para>
+///
+/// <para><b>Availability.</b> Bit 0 of a row's state byte grays it out and takes it out of the
+/// <c>[,]</c>/<c>[.]</c> walk. Its setter, <c>MfdFlashComm_DisableRow</c> (<c>0043fa14</c>), has no
+/// caller <c>es2_xref.py</c> finds, so in retail every row is available; it is modeled because the
+/// paint and the walk both read it.</para>
+/// </summary>
 public sealed class MfdFlashCommScreen {
 	/// <summary>How many rows the page lists — the constructor's own loop bound.</summary>
 	public const int RowCount = MfdLayout.FlashCommRowCount;
@@ -74,7 +70,9 @@ public sealed class MfdFlashCommScreen {
 
 	/// <summary>
 	/// The row the display's shared state block holds — what the page draws its plate and its
-	/// <c>CPYLW</c> row on. <c>MfdDisplay_SetSharedRow</c> (<c>0044707c</c>) is the only writer.
+	/// <c>CPYLW</c> row on. Every row change goes through <c>MfdDisplay_SetSharedRow</c>
+	/// (<c>0044707c</c>); <c>es2_fieldscan</c> finds that and <c>MfdDisplay_Ctor</c>'s initial store
+	/// as the writes of <c>display+0xb1</c> in MFD display code.
 	/// </summary>
 	public int SelectedRow { get; private set; }
 
@@ -109,8 +107,9 @@ public sealed class MfdFlashCommScreen {
 	public void Sync() => _row = SelectedRow;
 
 	/// <summary>
-	/// <c>FUN_0043f9b8</c> — moves the screen's own row. The display's row moves with it only when
-	/// FLASH COMM is up, which is <c>MfdFlashComm_SelectRow</c>'s mode test.
+	/// <c>MfdFlashComm_SetScreenRow</c> (<c>0043f9b8</c>) — moves the screen's own row. The display's
+	/// row moves with it only when FLASH COMM is up, which is <c>MfdFlashComm_SelectRow</c>
+	/// (<c>00447130</c>)'s mode test.
 	/// </summary>
 	public void Select(int row, bool flashCommIsUp) {
 		if (row < 0 || row >= RowCount) {
@@ -124,9 +123,12 @@ public sealed class MfdFlashCommScreen {
 	}
 
 	/// <summary>
-	/// <c>FUN_00447014</c> and <c>FUN_00447048</c> — <c>[.]</c> and <c>[,]</c>, which walk the
-	/// display's row forward and back past any row the squad cannot take. Both wrap, and both write
-	/// the shared block directly rather than going through <see cref="Select"/>.
+	/// <c>MfdFlashComm_NextAvailableRow</c> (<c>00447014</c>) and <c>MfdFlashComm_PrevAvailableRow</c>
+	/// (<c>00447048</c>) — <c>[.]</c> and <c>[,]</c>, which walk the display's row forward and back
+	/// past any row the squad cannot take. Both wrap and store through
+	/// <c>MfdDisplay_SetSharedRow</c>, not <see cref="Select"/>'s path. They move only the display's
+	/// row, which the next FLASH COMM paint copies to the screen's (<see cref="Sync"/>); this method
+	/// moves both at once.
 	///
 	/// <para>The walk is a do-while with no guard against every row being unavailable; nothing in
 	/// retail ever makes one so, and this stops after a full lap rather than spinning.</para>

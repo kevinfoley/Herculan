@@ -3,19 +3,15 @@ using Herculan.Engine.Cockpit;
 namespace Herculan.Engine.Input;
 
 /// <summary>
-/// What the input layer reports a stick can do — the eight-byte block <c>Input_QueryCapabilities</c> (<c>004777f8</c>)
-/// (<c>DAT_006bb72c</c>) rebuilds on every call, and the whole of what the CONTROLS panel greys its
-/// rows against.
-///
-/// <para>The panel reaches it in two steps. <c>Input_GetDevice(3)</c> (<c>0045c508</c>) is asked first, and when it comes
-/// back null or with its low bit clear the panel takes <b>no</b> capability block at all and
-/// disables all twelve rows at once — which is what a modern USB stick the retail code cannot
-/// enumerate produces, and what the reference capture shows. Only past that gate does it read the
-/// block below and disable rows one at a time.</para>
+/// What the input layer reports a stick can do, which is all the CONTROLS panel greys its rows
+/// against — the eight-byte block <c>Input_QueryCapabilities</c> (<c>004777f8</c>)
+/// (<c>DAT_006bb72c</c>) rebuilds on every call, behind the gate on whether a stick enumerated at all
+/// (docs/retail/simulation/joystick-input.md#the-capability-block--input_querycapabilities-004777f8,
+/// docs/retail/simulation/joystick-input.md#a-stick-that-does-not-enumerate).
 /// </summary>
 /// <param name="Present">
-/// Whether a stick was enumerated at all. False greys every row. This engine has no joystick input
-/// of its own yet, so it is the default.
+/// Whether a stick was enumerated at all — retail's <c>Input_GetDevice(3)</c> (<c>0045c508</c>) gate.
+/// False greys every row, and is the default.
 /// </param>
 /// <param name="ButtonCount">
 /// How many buttons the stick reports, capped at eight — the block's <c>+2</c>, built as
@@ -35,8 +31,8 @@ public readonly record struct JoystickCapabilities(
 	public const int MaxButtons = 8;
 
 	/// <summary>
-	/// No stick — what this engine reports until it grows joystick input, and what retail reports for
-	/// a device it cannot enumerate.
+	/// No stick — what is reported with nothing attached, and what retail reports for a device it
+	/// cannot enumerate.
 	/// </summary>
 	public static readonly JoystickCapabilities None = new();
 

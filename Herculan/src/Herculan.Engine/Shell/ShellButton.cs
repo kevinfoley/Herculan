@@ -7,11 +7,9 @@ public readonly record struct ShellSprite(string Bank, int Frame);
 /// One of the shell's framed buttons: a rect, two sprites, and a caption centred on whichever sprite
 /// is showing.
 ///
-/// <para><b>Two, though the constructor takes three.</b> <c>ESButtonBitmap_Ctor</c> (<c>00409d14</c>)
-/// stores three frame pointers at <c>+0x51</c>, <c>+0x55</c> and <c>+0x59</c>, and both of the
-/// class's paints (<c>ESButtonBitmap_Paint</c>, <c>0040a05d</c>, and its subclass's <c>ESRadioButton_Paint</c>, <c>0040a26d</c>) pick between the first two on
-/// the lit flag and never read the third. So a button has an unlit and a lit face and nothing
-/// else.</para>
+/// <para><b>Two sprites, though <c>ESButtonBitmap_Ctor</c> (<c>00409d14</c>) takes three</b>: the
+/// paints never read the third, so a button has an unlit and a lit face and nothing else
+/// (docs/retail/shell/screen-layout.md#the-tab-strip).</para>
 ///
 /// <para>Each is a bank <i>and</i> a frame rather than an index into one bank, which the tab strip's
 /// leftmost button needs: its two faces come from <c>dba\online.dba</c> while the eight tabs' come

@@ -135,6 +135,20 @@ public sealed class GameInProgress {
 		return entry;
 	}
 
+	/// <summary>
+	/// ACCEPT's save (SaveScreen_OnAccept, 00437ffa): Game_SaveSlot under <paramref name="label"/>, then Stats_StageCurrentGame,
+	/// so the slot's summary is the game just written. Returns the slot as the screen now shows it.
+	/// </summary>
+	public ShellSaveSlot? SaveNamed(int slot, string label) {
+		if (Save(slot, label) is not { } entry || LoadedGame == null) {
+			return null;
+		}
+
+		var staged = entry with { Summary = ShellSaveSummary.From(LoadedGame) };
+		_saveScreen.SetSlot(slot, staged);
+		return staged;
+	}
+
 	/// <summary>Game_SaveSlot(10, NULL), the current-game autosave.</summary>
 	public void AutoSave() => Save(CurrentGameSlot, null);
 }

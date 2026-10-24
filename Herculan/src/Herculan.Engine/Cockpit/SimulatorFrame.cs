@@ -74,6 +74,7 @@ public sealed class SimulatorFrame {
 		Keyboard = new CockpitKeyboard(displays, view, Commands, _scene, _audio, keyMap);
 		CockpitUpdate = new PlayerCockpitUpdate(displays, view, Commands, _scene, _ports);
 		Stepper = new SimulationStepper(_scene.World, tape, recording, panels, outcome, developerKeys, view, Pilot, input);
+		Stepper.Ticked += _ports.NoteRetailFrame;
 	}
 
 	public CockpitCommands Commands { get; }

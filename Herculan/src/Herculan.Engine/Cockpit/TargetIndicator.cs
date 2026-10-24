@@ -11,9 +11,11 @@ namespace Herculan.Engine.Cockpit;
 /// widget's own update rather than its paint: it depends on the view, and the view is the host's.
 /// It is the original's own projection, not the GL one — <c>screen = centre ± (v * focal / depth)</c>
 /// against the herc's <c>.VUE</c> projection centre — which lands in the same place because the
-/// camera's field of view is derived from that same focal length. The original's paint also
-/// discards a projection whose view-space z exceeds the approximate 3D magnitude; that guard has no
-/// counterpart here, being unreachable in exact arithmetic.</para>
+/// camera's field of view is derived from that same focal length. The original's paint also treats
+/// as behind a target whose view-space z exceeds its approximate 3D distance, which the
+/// approximation's low reading makes possible with the view tilted; <see cref="InFront"/> has no
+/// such test, so here that target's arrow points at it rather than level
+/// (docs/retail/simulation/hud-target-indicator.md#the-arrow).</para>
 /// </summary>
 /// <param name="ScreenX">
 /// Where the target's aim point projects, in cockpit device pixels from the canopy art's top-left —

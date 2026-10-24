@@ -98,6 +98,12 @@ public sealed class GamepadPointer {
 	/// </summary>
 	public bool SkipHeld { get; private set; }
 
+	/// <summary>Whether the A button is held, which a host may read as a key of its own as well as a skip.</summary>
+	public bool AHeld { get; private set; }
+
+	/// <summary>Whether the B button is held, which a host may read as a key of its own as well as a skip.</summary>
+	public bool BHeld { get; private set; }
+
 	/// <summary>
 	/// Where the pad has put the pointer, in window coordinates, while the window's cursor could not follow it and is
 	/// hidden; null while the pointer is the cursor.
@@ -129,6 +135,8 @@ public sealed class GamepadPointer {
 			ClickHeld = false;
 			RightClickHeld = false;
 			SkipHeld = false;
+			AHeld = false;
+			BHeld = false;
 			_waitForRelease = !active;
 			return;
 		}
@@ -148,6 +156,8 @@ public sealed class GamepadPointer {
 		ClickHeld = !_waitForRelease && Held(ClickHeld, clickPull);
 		RightClickHeld = !_waitForRelease && Held(RightClickHeld, rightClickPull);
 		SkipHeld = !_waitForRelease && skip;
+		AHeld = !_waitForRelease && pad.Buttons.Any(button => button.Pressed && button.Name == ButtonName.A);
+		BHeld = !_waitForRelease && pad.Buttons.Any(button => button.Pressed && button.Name == ButtonName.B);
 
 		int stickIndex = Settings.CursorStick == GamepadSide.Right ? RightStick : LeftStick;
 		if (mouse != null && stickIndex < pad.Thumbsticks.Count) {

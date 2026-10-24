@@ -11,11 +11,8 @@ namespace Herculan.Engine.Content;
 /// (<c>dat\zone504</c>, <c>dba\zone504.dba</c>, <c>dts\samson.dts</c>, ...). DBSIM builds each such
 /// path with <c>ResourcePath_BuildFolderName</c> (<c>00492ae0</c>).
 ///
-/// <para><see cref="MountInstall"/> mounts what the program would: every <c>vol\*.vol</c> in the
-/// install and then in the <c>drive.cfg</c> directory whose program mask shares a bit with the
-/// program's, in descending order of search precedence (<see cref="Voln.VolOrderNum"/>), the first
-/// archive holding a <c>folder\name</c> answering for it (docs/retail/formats/vol-archive.md, "Which
-/// archives are mounted").</para>
+/// <para><see cref="MountInstall"/> mounts the archives the program would, in its search order
+/// (docs/retail/formats/vol-archive.md, "Which archives are mounted").</para>
 ///
 /// <para>A file on disk at <c>folder\name</c> under the install answers before any archive, as
 /// <c>VolRStream_Open</c> (VSHELL <c>00402d25</c>, DBSIM <c>00472fdc</c>) tries <c>_open</c> on the relative path
@@ -27,9 +24,8 @@ namespace Herculan.Engine.Content;
 /// <para>It also carries the program's <see cref="Language"/>, which the readers of translated resources take
 /// their folder or extension from.</para>
 ///
-/// Parsing is delegated wholesale to <see cref="VolFileReader"/> in HercWorks.Vol; this type adds
-/// only the index and the load-order rule. Per docs/herculan/planning.md's repo-structure decision
-/// the engine talks to HercWorks.Core/HercWorks.Vol directly.
+/// <para>Parsing is <see cref="VolFileReader"/>'s, in HercWorks.Vol; this type adds only the index and
+/// the load-order rule.</para>
 /// </summary>
 public sealed class GameContent {
 	/// <summary>The most archives a program's volume group holds (<c>VolumeGroup_SetGroup</c>, <c>00467bd4</c>).</summary>

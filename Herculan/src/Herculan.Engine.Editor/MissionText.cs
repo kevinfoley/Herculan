@@ -13,7 +13,7 @@ internal static class MissionText {
 	public static string Describe(SceneObject placed) {
 		var placement = placed.Placement;
 		string type = placement.TypeName ?? $"{placement.Kind} type {placement.TypeIndex}";
-		string where = placement.IsPlayerLance
+		string where = placement.IsPlayerSquad
 			? "player squad"
 			: $"{placement.Kind.ToString().ToLowerInvariant()} slot {placement.SlotIndex}";
 		return $"{type} ({where})";

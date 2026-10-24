@@ -13,20 +13,13 @@ public readonly record struct AtlasRect(float U0, float V0, float U1, float V1);
 /// packs them into one RGBA image, so a whole mech draws in a single call with a single texture
 /// bound.
 ///
-/// <para><b>The original does not ship a packed atlas.</b> A <c>.DBA</c> on disk is an array of
-/// independently-sized <see cref="DynamixBitmap"/> frames, and DBSIM's software rasterizer has no
-/// reason to merge them — it rasterizes one poly at a time against whichever frame that poly
-/// resolved to, so switching "textures" costs it nothing. A GPU pays per texture bind, so packing
-/// here is an engine-side optimisation, not a reproduction of an original data layout. It is also
-/// the *smaller* change: the alternative is splitting each mech mesh into one sub-mesh per referenced
-/// frame and issuing a draw call each, which is more machinery and more per-frame cost.</para>
-///
-/// <para>Packing is purely a relocation — a frame's UV corners still span its own full extent, so
-/// the RE-confirmed corner order in <see cref="DtsMeshBuilder"/> is unaffected (see
-/// docs/retail/rendering/dts-texture-binding.md's "Render path and UV generation"; the exe builds the same
-/// rect-corner mapping from a per-frame descriptor whose top-left is assumed, not confirmed, to be
-/// (0,0)). Frames are padded apart by one pixel, and sampling is nearest-neighbour at the GL end,
-/// so neighbours cannot bleed into each other.</para>
+/// <para>This packing is this engine's own layout, chosen because a GPU pays per texture bind; a
+/// <c>.DBA</c> on disk is an array of independently sized <see cref="DynamixBitmap"/> frames. It is
+/// purely a relocation: a frame's UV corners still span its own full extent, so the corner order in
+/// <see cref="DtsMeshBuilder"/> is unaffected
+/// (docs/retail/rendering/dts-texture-binding.md#render-path-and-uv-generation). Frames are padded
+/// apart by one pixel, and sampling is nearest-neighbor at the GL end, so neighbors cannot bleed into
+/// each other.</para>
 ///
 /// <para>CPU-side on purpose: nothing but <see cref="Upload"/> touches GL, so
 /// <see cref="Scene.MissionScene"/> stays buildable headlessly.</para>

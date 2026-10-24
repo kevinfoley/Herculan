@@ -37,7 +37,7 @@ public enum CommBoxState {
 /// These are the bank's own 320-wide pixels and are added raw, while the frame is blitted doubled.
 /// Static publishes (0, 0).
 /// </param>
-/// <param name="OffsetY"><inheritdoc cref="OffsetX"/></param>
+/// <param name="OffsetY"><inheritdoc cref="SquadTransmission" path="/param[@name='OffsetX']/node()"/></param>
 /// <param name="Name">The speaker's name, for the caption plate.</param>
 /// <param name="NameColorId">
 /// The <c>COLORS.DAT</c> id the plate is filled with — the speaker's own comm-box colour,
@@ -362,7 +362,7 @@ public sealed class SquadCommChannel {
 
 	/// <summary>
 	/// Runs every box for one frame at <paramref name="coarseTicks"/> — the service loop's own state
-	/// machine, minus the painting. Call once a frame, after <see cref="SquadMessagePort.Update"/>.
+	/// machine, minus the painting. Call once per retail frame — see <see cref="MessagePorts.NoteRetailFrame"/>.
 	/// </summary>
 	public void Update(long coarseTicks) {
 		_now = coarseTicks;

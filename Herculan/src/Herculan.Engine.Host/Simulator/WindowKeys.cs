@@ -37,16 +37,10 @@ sealed class WindowKeys : ISystemButtonActions {
 
 	/// <summary>
 	/// OnlineManual_Raise (0045f054) then Help_Show (004668c0), which leaves full screen before its WinHelpA
-	/// call — here before OnlineManual hands the page to the browser. The [/] key and the right-hand system
+	/// call; this stays full screen behind the browser (KNOWN_ISSUES.md). The [/] key and the right-hand system
 	/// button both come here.
 	/// </summary>
-	public void OpenManual() {
-		if (_window.FullScreen) {
-			ToggleFullScreen();
-		}
-
-		OnlineManual.Open(_manualRoot, _disc);
-	}
+	public void OpenManual() => OnlineManual.Open(_manualRoot, _disc);
 
 	/// <summary>
 	/// Video_ToggleFullscreen (004666c4). Retail takes DirectDraw exclusive at the 3D view's size, an 8-bit

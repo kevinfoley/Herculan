@@ -3,33 +3,21 @@ using Herculan.Engine.Numerics;
 namespace Herculan.Engine.Sim;
 
 /// <summary>
-/// The Targeting Pod's own state — catalog id 29, <c>mech+0x30b</c>, the pod that lets the player
-/// aim at one part of the selected machine instead of at its aim node. The manual: select with
-/// <c>[Enter]</c>, then <c>[Tab]</c> cycles through that target's components, and Automatic Turret
-/// Tracking follows the part rather than centre mass.
+/// The Targeting Pod's own state — the pod that lets the player aim at one part of the selected
+/// HERC instead of at its aim node (<see cref="MechPods.TargetingWeaponId"/>). The manual: select
+/// with <c>[Enter]</c>, then <c>[Tab]</c> cycles through that target's components, and Automatic
+/// Turret Tracking follows the part rather than center mass. The retail behavior is
+/// docs/retail/simulation/target-selection.md#component-targeting--the-targeting-pod.
 ///
 /// <para>In the original this is a weapon-mount subclass, built by <c>TargetingPod_Ctor</c>
-/// (<c>0040e308</c>) over <c>0x8a</c> bytes. Its four fields sit past every other mount class'; they
-/// are gathered here rather than added to <see cref="WeaponMount"/> so that the one mount that has
-/// them is the one that carries them, which is what <see cref="WeaponMount.ComponentLock"/> is.</para>
+/// (<c>0040e308</c>), whose own four fields start at <c>+0x7d</c>, where other mount classes keep
+/// fields of their own. This engine keeps them here, on the one mount that has them, as
+/// <see cref="WeaponMount.ComponentLock"/>. All four start at zero, as the original's
+/// zero-allocated block does.</para>
 ///
-/// <para><b>The constructor writes none of them.</b> It writes the gauge handle and the catalog id
-/// and stops, so what the four hold at spawn is whatever the block held — and the block is zeroed:
-/// <c>MechLoadout_ConstructWeaponMounts</c> (<c>0040fff8</c>) opens by pushing a 200000-byte arena
-/// that <c>Arena_Push</c> has just <c>calloc</c>'d and bump-allocates every mount out of it, and the
-/// fallback that bump allocator drops to when the arena is absent or full
-/// (<c>Mem_NewArray</c>) zeroes what it hands back anyway. So a
-/// pristine pod starts with cursor 0, component 0, no cached damage and an expired decay timer, and
-/// <see cref="ComponentDamage"/> agrees with <see cref="MechPods.DamageOf"/>'s live reading until
-/// the first hit — after which <c>Mech_ComponentDamageWrite</c> hands every mount its component's
-/// new reading, so the two never part company. <b>They are still not interchangeable</b>: the live
-/// reading is a function of the damage model at the instant it is asked, and the cache is only as
-/// current as the last write. See docs/retail/simulation/target-selection.md.</para>
-///
-/// <para><b>Nothing here is reached for an AI machine.</b> All three drivers hang off the player's
-/// per-frame cockpit update or the <c>[Tab]</c> command, so an AI machine carrying a pod uses it for
-/// exactly one thing: <see cref="ComponentDamage"/>'s <see cref="AiSystemsBandLimit"/> threshold in
-/// <c>Mech_AiSelectAimComponent</c>.</para>
+/// <para><b>Only the player's machine drives the lock</b>: its three entry points are called from
+/// the cockpit's per-frame update and the <c>[Tab]</c> command. An AI machine's pod matters only
+/// through <see cref="ComponentDamage"/>'s <see cref="AiSystemsBandLimit"/> threshold.</para>
 /// </summary>
 public sealed class TargetingPodLock {
 	/// <summary>
@@ -143,11 +131,8 @@ public sealed class TargetingPodLock {
 	/// own aim node and false. Otherwise it asks whether the locked component is still there,
 	/// cycling once if it is not — <b>without re-testing</b>, so a target that has run out of parts
 	/// is asked for the position of component <see cref="NoComponent"/>, which every class answers
-	/// with its own origin.</para>
-	///
-	/// <para>The original's fourth parameter is dead: <c>Player_ResolveTargetAimPoint</c> passes the
-	/// target's occupancy array and the body never touches it. The pod reaches the same array through
-	/// the target's own slots instead.</para>
+	/// with its own origin. The original's unused fourth parameter has no counterpart here — see
+	/// docs/retail/simulation/target-selection.md#a-damaged-pod-degrades-in-four-steps.</para>
 	/// </summary>
 	/// <param name="target">The selected object — always a HERC by the time the lock is non-negative.</param>
 	/// <param name="point">Where to aim.</param>

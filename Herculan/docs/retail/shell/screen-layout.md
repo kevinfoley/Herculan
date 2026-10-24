@@ -57,7 +57,7 @@ Every tab has its own handler, and the eight are the same function with three or
 
 | Tab | Handler | Builds | Roster |
 |---|---|---|---|
-| square button | `00439f2d` | `004317ea` (`wmain.cpp`) | |
+| square button | `00439f2d` | nothing: past the `Shell_MainLoopStarted` check it runs none of the steps above and only opens the on-line manual, `OnlineManual_Open` (`004317ea`, `wmain.cpp`), as the main menu's [`ONLINE MANUAL`](main-menu.md#the-main-menu) does | |
 | 0 `MAIN MENU` | `00439fdc` | `004310a0`, after `Game_SaveSlot(10, NULL)` | |
 | 1 `SAVE` | `0043a0d8` | `00439b0c`, after `DAT_0048d344 = 8` | |
 | 2 `WEAPONS` | `0043a1d2` | `0043f548` | yes |

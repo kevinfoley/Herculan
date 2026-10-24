@@ -261,13 +261,11 @@ public sealed class SimulatorPreferences {
 	/// Writes the named options back into the file — <c>Prefs_SaveSelectedOptions</c>
 	/// (<c>00459b78</c>), and the only shape of save the original performs.
 	///
-	/// <para><b>It is a read-modify-write, not a dump.</b> The file on disk is re-read, only the
-	/// options <paramref name="indices"/> names are copied out of this array over it, and the merged
-	/// bytes go back. So an option this call does not name keeps whatever is on disk rather than
-	/// whatever is in memory, which is what lets each panel own its own rows: the CONTROLS panel
-	/// cannot push out a sound setting, and neither can push out the nineteen options nothing here
-	/// interprets. <c>Prefs_SaveAllOptions</c> (<c>0045981c</c>) is the dump, and nothing in the
-	/// original calls it.</para>
+	/// <para><b>It is a read-modify-write, not a dump</b>
+	/// (docs/retail/simulation/preferences.md#writing-it-back--prefs_saveselectedoptions-00459b78): an
+	/// option this call does not name keeps whatever is on disk rather than whatever is in memory, so
+	/// each panel owns its own rows — the CONTROLS panel cannot push out a sound setting, and neither
+	/// can push out the nineteen options nothing here interprets.</para>
 	///
 	/// <para>The file's own length is kept: a longer-than-54-byte file keeps its tail, and a file
 	/// that has gone missing or short since it was read is not written at all rather than being

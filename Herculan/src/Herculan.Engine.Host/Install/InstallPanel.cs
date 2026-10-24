@@ -78,7 +78,7 @@ sealed class InstallPanel : IDisposable {
 		string folderLabel = _localization.GetStringOrKey("install.browse_folder");
 		string imageLabel = _localization.GetStringOrKey("install.browse_image");
 		float buttonsWidth = NativePathPicker.IsAvailable
-			? ButtonWidth(folderLabel) + ButtonWidth(imageLabel) + spacing * 2
+			? ButtonRow.LabelWidth(folderLabel) + ButtonRow.LabelWidth(imageLabel) + spacing * 2
 			: 0f;
 		ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - buttonsWidth);
 		if (ImGui.InputTextWithHint("##source", _localization.GetStringOrKey("install.source_hint"), ref _sourcePath, 1024,
@@ -139,7 +139,7 @@ sealed class InstallPanel : IDisposable {
 		ImGui.SeparatorText(_localization.GetStringOrKey("install.destination"));
 		string browseLabel = _localization.GetStringOrKey("install_prompt.browse");
 		ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X
-			- (NativePathPicker.IsAvailable ? ButtonWidth(browseLabel) + spacing : 0f));
+			- (NativePathPicker.IsAvailable ? ButtonRow.LabelWidth(browseLabel) + spacing : 0f));
 		ImGui.InputTextWithHint("##destination", _localization.GetStringOrKey("install.destination_hint"), ref _destination, 1024);
 		if (NativePathPicker.IsAvailable) {
 			ImGui.SameLine();
@@ -173,27 +173,29 @@ sealed class InstallPanel : IDisposable {
 			ImGui.TextWrapped(_done);
 		}
 
-		// The two buttons sit at the foot of the window, half its width each.
-		var buttonSize = new Vector2((ImGui.GetContentRegionAvail().X - spacing) * 0.5f, 0f);
-		float foot = ImGui.GetWindowHeight() - ImGui.GetFrameHeight() - ImGui.GetStyle().WindowPadding.Y;
+		// The two buttons sit at the foot of the window, sharing its width.
+		string goLabel = _localization.GetStringOrKey(_done != null ? "install.use" : "install.install");
+		string stopLabel = _localization.GetStringOrKey(Busy ? "general.cancel" : "general.close");
+		Span<float> widths = [ButtonRow.LabelWidth(goLabel), ButtonRow.LabelWidth(stopLabel)];
+		var row = new ButtonRow(widths);
+		float foot = ImGui.GetWindowHeight() - row.Height - ImGui.GetStyle().WindowPadding.Y;
 		if (ImGui.GetCursorPosY() < foot) {
 			ImGui.SetCursorPosY(foot);
 		}
 
 		if (_done != null) {
-			if (ImGui.Button(_localization.GetStringOrKey("install.use"), buttonSize)) {
+			if (row.Button(goLabel)) {
 				outcome = Outcome.Installed;
 			}
 		} else {
 			ImGui.BeginDisabled(locked || _installer == null);
-			if (ImGui.Button(_localization.GetStringOrKey("install.install"), buttonSize)) {
+			if (row.Button(goLabel)) {
 				StartInstall();
 			}
 			ImGui.EndDisabled();
 		}
 
-		ImGui.SameLine();
-		if (ImGui.Button(_localization.GetStringOrKey(Busy ? "general.cancel" : "general.close"), buttonSize)) {
+		if (row.Button(stopLabel)) {
 			if (Busy) {
 				_cancellation?.Cancel();
 			} else {
@@ -385,8 +387,6 @@ sealed class InstallPanel : IDisposable {
 		RetailInstaller.Language.German => "install.language_german",
 		_ => "install.language_english",
 	};
-
-	private static float ButtonWidth(string label) => ImGui.CalcTextSize(label).X + ImGui.GetStyle().FramePadding.X * 2;
 
 	private static void Error(string text) {
 		ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1f, 0.45f, 0.4f, 1f));

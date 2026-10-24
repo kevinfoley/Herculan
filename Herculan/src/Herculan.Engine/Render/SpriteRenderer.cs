@@ -31,37 +31,30 @@ public readonly record struct SpriteBatch(
 	DrawEntry? Filing = null);
 
 /// <summary>
-/// Draws <see cref="SpriteQuad"/> billboards — the GPU counterpart of <c>TSBitmapPart_Render</c>
-/// (<c>004762e8</c>), which is the one <c>TSObject</c> render slot that puts a bitmap on the screen
-/// without a polygon anywhere in it.
+/// Draws <see cref="SpriteQuad"/> billboards, the flat camera-facing bitmaps that impact effects and
+/// the EMP cannons' rounds are made of — the GPU counterpart of <c>TSBitmapPart_Render</c>
+/// (<c>004762e8</c>), whose scale, rotation, squash and anchor are
+/// docs/retail/rendering/dts-billboards.md#tsbitmappart_render-004762e8.
 ///
-/// <para><b>What the original does</b> is a screen-space blit of a rotated, scaled quad, built from
-/// four things — a scale off the part's radius, a rotation and a vertical squash both measured from
-/// the model's own up axis probed at <c>(0, 0, 0x800)</c>, and an anchor pixel. All four are traced
-/// in docs/retail/rendering/dts-billboards.md's "<c>TSBitmapPart_Render</c> (<c>004762e8</c>)". The one
-/// consequence that has to be reproduced here rather than looked up is that the projection constant
-/// cancels out of the scale: <b>one bitmap pixel is <c>radius / 64</c> world units</b>, whatever the
-/// field of view is, which is what makes this drawable without knowing the original's focal
-/// length.</para>
+/// <para>The original blits in screen pixels; this builds the same quad in view space, in the plane
+/// parallel to the image plane at the sprite's depth, from a right/down basis derived from the
+/// projected model up axis and sized in <see cref="WorldUnitsPerPixelPerRadius"/>. Perspective then
+/// reproduces the <c>1 / depth</c> scaling exactly. The squash and the anchor are the original's
+/// formulas; only the rotation's own perspective skew differs, which the original does not model
+/// either.</para>
 ///
-/// <para><b>What this does.</b> The same construction, in the camera's own view space rather than in
-/// screen pixels: the quad's four corners are built in the plane parallel to the image plane at the
-/// sprite's depth, from a right/down basis derived from the projected model up axis, sized in those
-/// world units. Perspective then reproduces the <c>1 / depth</c> scaling for free and exactly. The
-/// squash and the anchor are the original's formulas verbatim; only the rotation's own perspective
-/// skew differs, which the original does not model either.</para>
-///
-/// <para>Transparency is <b>palette index 0</b>, which the bank is decoded with — see
+/// <para>Transparency is palette index 0, which the bank is decoded with — see
 /// <c>Scene.SceneModelLibrary</c>. Alpha is tested rather than blended, matching a rasterizer that
 /// either wrote a palette byte or skipped the pixel. Depth testing is on with writes off, as
-/// <see cref="BeamRenderer"/> has it and for the same reason: the original submits these through a
-/// depth-sorted per-cell draw list rather than a depth buffer, but testing against the world already
-/// drawn is what keeps a puff from painting over the ridge in front of it.</para>
+/// <see cref="BeamRenderer"/> has it: the original submits these through a depth-sorted per-cell
+/// draw list rather than a depth buffer, but testing against the world already drawn is what keeps a
+/// puff from painting over the ridge in front of it.</para>
 /// </summary>
 public sealed class SpriteRenderer : IDisposable {
 	/// <summary>
 	/// World units one bitmap pixel spans, per world unit of the part's radius: the
-	/// <c>radius * 4 ... / 256</c> the original's Q8 scale works out to. See this type's doc comment.
+	/// <c>radius * 4 ... / 256</c> the original's Q8 scale works out to, whatever the field of view —
+	/// docs/retail/rendering/dts-billboards.md#tsbitmappart_render-004762e8.
 	/// </summary>
 	private const float WorldUnitsPerPixelPerRadius = 1f / 64f;
 

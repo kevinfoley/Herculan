@@ -14,7 +14,7 @@ public enum ShellReplayButton {
 /// startup by <c>ReplayDialog_Build</c> (<c>0044c71c</c>): a full-display picture of the shell's backdrop with a
 /// titled panel over it, two centred lines and <c>Yes</c> and <c>No</c>. Filled and put up by
 /// <c>ReplayDialog_Show(state)</c> (<c>0044ca57</c>). <c>Yes</c> (<c>ReplayDialog_OnYes</c>, <c>0044cb44</c>) takes it down,
-/// loads slot 10 again and flies the mission from it; <c>No</c> (<c>ReplayDialog_OnNo</c>, <c>0044cbbd</c>) saves
+/// loads slot 10 again and starts the mission from it; <c>No</c> (<c>ReplayDialog_OnNo</c>, <c>0044cbbd</c>) saves
 /// slot 10, takes it down and shows the main menu. Both are the host's to do. See
 /// docs/retail/shell/campaign-loop.md#where-the-debrief-goes-next.
 /// </summary>

@@ -15,9 +15,8 @@ namespace Herculan.Engine.Audio;
 ///
 /// <para><b>One buffer per sample, sources from a pool.</b> A play claims a free source, binds the
 /// sample's buffer to it and starts it, so the same sample sounding twice occupies two sources and
-/// is heard twice — the original's arrangement, where <c>Sfx_Play</c> starts a fresh
-/// <c>sosDIGIStartSample</c> on every call. See docs/retail/simulation/audio.md, "A repeated play layers; it
-/// does not restart".</para>
+/// is heard twice, as in the original — see docs/retail/simulation/audio.md, "A repeated play
+/// layers; it does not restart".</para>
 ///
 /// <para><b>The device follows the system's default output</b>, through a lost output and a changed
 /// default alike, with every sample id and play handle staying valid; see

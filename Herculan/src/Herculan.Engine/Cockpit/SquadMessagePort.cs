@@ -1,5 +1,6 @@
 using Herculan.Engine.Content;
 using Herculan.Engine.Numerics;
+using Herculan.Engine.Settings;
 
 namespace Herculan.Engine.Cockpit;
 
@@ -103,7 +104,8 @@ public sealed class SquadMessagePort {
 	/// Posts what <paramref name="slot"/>'s squadmate has to say — <c>Ai_PostSquadMessage</c>
 	/// (<c>00420a98</c>) through the port's vtable slot 0. The id names a line in that pilot's own
 	/// message set, and the recording is rolled among that id's variants here rather than at play
-	/// time, so the portrait script and the clip agree.
+	/// time, so the portrait script and the clip agree. Queued as <see cref="MessagePort.Post"/>
+	/// queues, departure from retail included.
 	/// </summary>
 	public void Post(int messageId, int slot, object? speaker = null) {
 		var catalog = _catalogs(slot);
@@ -113,7 +115,8 @@ public sealed class SquadMessagePort {
 
 		SquadMessages.Entry? picked = Training
 			? sentences.Count > 0 ? sentences[0] : null
-			: catalog?.Pick(messageId, _random);
+			: catalog?.Pick(messageId, _random,
+				TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.EverySquadmateReply));
 
 		if (picked is not { } message) {
 			return;

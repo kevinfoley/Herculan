@@ -173,23 +173,20 @@ public sealed partial class MechObject {
 	/// The pods' own <c>+0x50</c> tick — <c>EcmPod_Tick</c> (<c>0040f184</c>) and
 	/// <c>TurboPod_Tick</c> (<c>0040f1f0</c>), the two overrides that read their cockpit row's button.
 	/// The other three pods inherit <c>Pod_TickBase</c>, which refreshes the row's display and touches
-	/// no pod field, so there is nothing here for them.
+	/// no pod field, so there is nothing here for them. Retail behavior:
+	/// docs/retail/simulation/equipment-pods.md#what-the-two-ticks-do-with-the-button.
 	///
-	/// <para><b>It runs on the player's machine only.</b> The original's one call site is inside
-	/// <c>WeaponMounts_PerFrameUpdate</c> (<c>00410b40</c>), whose own one caller is
-	/// <c>Player_PerFrameCockpitUpdate</c> — an AI machine's pods are never ticked at all. That is why
-	/// a squadmate fitted with a Turbo Pod never engages it from here, and why an AI machine's ECM
-	/// follows its radar mode instead (see <see cref="JammerTick"/>): neither has a row to press.</para>
+	/// <para><b>It runs on the player's machine only</b>, as the original's one call path, from
+	/// <c>Player_PerFrameCockpitUpdate</c>, does: an AI machine's pods are never ticked, so its ECM
+	/// follows its radar mode instead (see <see cref="JammerTick"/>).</para>
 	///
-	/// <para><b>Every pod mount ticks, not just the filed one.</b> That pass calls vtable <c>+0x50</c>
-	/// on each mount in turn, so a second ECM or Turbo Pod runs its own tick off its own row. What it
-	/// does not get is a reader: the jammer and the locomotion term both read the pod
-	/// <see cref="MechPods"/> filed, the last of its kind in hardpoint order.</para>
+	/// <para><b>Every pod mount ticks, not just the filed one</b>, so a second ECM or Turbo Pod runs
+	/// its own tick off its own row; the jammer and the locomotion term read only the pod
+	/// <see cref="MechPods"/> filed.</para>
 	///
 	/// <list type="bullet">
 	/// <item><b>ECM</b> copies the button into the mount's <see cref="WeaponMount.EcmSwitch"/> and
-	/// announces the change. It posts rather than replaces, so unlike the radar and auto-track toggles
-	/// a run of quick presses reads the whole sequence out.</item>
+	/// announces each change.</item>
 	/// <item><b>Turbo</b> engages on a button that is on over <see cref="WeaponMount.TurboEngageCharge"/>
 	/// of charge, cuts out when the tank empties, and <b>clears its own button</b> whenever it is not
 	/// engaged — so a row pressed with an empty tank lights for one frame and goes out again.</item>
@@ -351,7 +348,8 @@ public sealed partial class MechObject {
 
 	/// <summary>
 	/// The reactor/energy half of <c>Mech_PerTickSystemsUpdate</c> — its first five statements, in
-	/// order, and the only place the pool moves.
+	/// order, and the only place the pool moves. Retail behavior:
+	/// docs/retail/simulation/reactor-energy-pool.md#the-per-tick-cycle--mech_perticksystemsupdate-0041aa5c.
 	///
 	/// <list type="number">
 	/// <item>The reactor's rate is integrated over this tick and added to the pool.</item>
@@ -365,15 +363,10 @@ public sealed partial class MechObject {
 	/// holds more than <see cref="ShieldsDownAlertClearCharge"/>.</item>
 	/// </list>
 	///
-	/// <para>The ordering is the answer to the manual's claim that energy goes to "movement, shields,
-	/// and weapons, in that order". It is weapons and then shields, and movement takes nothing at all
-	/// — the locomotion tick never reads the pool. What the manual gets right is the consequence:
-	/// because weapons are served first and the shields only ever get the leftovers, a machine firing
-	/// hard stops replenishing its shields long before it stops shooting.</para>
+	/// <para>Weapons are served before shields, so a machine firing hard stops replenishing its
+	/// shields long before it stops shooting; movement takes nothing from the pool.</para>
 	///
-	/// <para>All of it is 16-bit, and deliberately so — the original's adds are word-sized and wrap.
-	/// Nothing in the real ranges gets anywhere near an overflow, but the arithmetic is kept faithful
-	/// rather than widened.</para>
+	/// <para>All of it is 16-bit and wraps, as the original's word-sized adds do.</para>
 	/// </summary>
 	private void PowerTick(SimWorld world) {
 		EnergyPool = unchecked((short)(EnergyPool + SimMath.IntegrateRateOverTick(ReactorOutputRate)));

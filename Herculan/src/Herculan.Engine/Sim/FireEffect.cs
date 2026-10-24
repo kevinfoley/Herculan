@@ -5,13 +5,13 @@ namespace Herculan.Engine.Sim;
 /// <summary>
 /// A fire burning on something — DBSIM's <c>fire.cpp</c> class, built by <c>FireEffect_Ctor</c>
 /// (<c>0046b388</c>) and advanced by <c>FireEffect_TickUpdate</c>, out of the ten-entry pool at
-/// <c>g_FirePool</c>.
+/// <c>g_FirePool</c>. Its retail behavior is docs/retail/simulation/destruction-effects.md#fire.
 ///
 /// <para>It is <b>not</b> the muzzle flash and not an impact effect: it is the flame that sits on a
 /// wrecked machine or a collapsing building and keeps burning. Where an
 /// <see cref="ImpactEffect"/> plays its flipbook once and ends, a fire <i>loops</i> — it counts
 /// <see cref="LoopsRemaining"/> passes of <c>dts\FIRE.DTS</c>'s billboards down to zero and only
-/// then goes out. Thirty passes, or five on the Moon.</para>
+/// then goes out (<see cref="LoopCount"/>).</para>
 ///
 /// <para><b>It rides its owner.</b> Every tick it re-places itself from where the owner is now, so
 /// a burning HERC's fires walk with it and the fire on a component walks with that component. The
@@ -19,9 +19,8 @@ namespace Herculan.Engine.Sim;
 /// <see cref="EffectPools.ReleaseFires"/>.</para>
 ///
 /// <para>Like every other effect class it lives in the effect pool rather than the object list, so
-/// nothing can shoot a fire and nothing collides with one. The pool is small and the acquire is
-/// an <i>evict</i>: with all ten busy, the original takes the one with the fewest passes left
-/// rather than refusing — see <see cref="EffectPools.SpawnFire"/>.</para>
+/// nothing can shoot a fire and nothing collides with one. A full pool evicts rather than refusing
+/// — see <see cref="PoolSize"/>.</para>
 /// </summary>
 public sealed class FireEffect {
 	private readonly int _frameCount;

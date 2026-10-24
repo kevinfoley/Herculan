@@ -14,11 +14,11 @@ namespace Herculan.Engine.Cockpit;
 /// <see cref="PreferencesPanelLayout"/> and its pixels are drawn by
 /// <see cref="Render.Cockpit.AlertPanelPainter.DrawPreferencesPanel"/>.</para>
 ///
-/// <para><b>The captions are all in one file.</b> <c>str\PRF_ALRT.STR</c> carries five groups, and
-/// the constructor loads them into five fields with the counts 1, 11, 2, 3 and 5 — the title, the
-/// eleven button captions, and three sets of value words the readouts pick from. Which set an option
-/// draws from, and how its byte indexes that set, is <c>PreferencesPanel_RefreshRow</c> (<c>004571f4</c>)'s nine-case switch; that
-/// mapping is <see cref="Options"/>.</para>
+/// <para><b>The captions are all in one file,</b> <c>str\PRF_ALRT.STR</c>: the title, the eleven
+/// button captions, and three sets of value words the readouts pick from. Which set an option draws
+/// from, and how its byte indexes that set, is <see cref="Options"/> —
+/// <c>PreferencesPanel_RefreshRow</c> (<c>004571f4</c>)'s nine-case switch
+/// (docs/retail/simulation/preferences.md#its-text).</para>
 ///
 /// <para><b>Modal, and the simulation does not tick behind it</b> — <c>PreferencesPanel_Raise</c>
 /// raises <c>DAT_004d2576</c> for as long as the panel is up and restores whatever it was on the way
