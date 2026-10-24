@@ -8,9 +8,9 @@ using Herculan.Engine.World;
 namespace Herculan.Engine.Shell;
 
 /// <summary>
-/// A <c>.MSN</c> named by file, loaded the way VSHELL loads the career position that holds it and written as a
-/// handoff to fly or open. The original has no such path — a mission reaches the simulator only through a career —
-/// so what stands in for the career here is this engine's:
+/// Starts a mission named by its <c>.MSN</c> file, loaded the way VSHELL loads the career position that holds it
+/// and written as a handoff to play or open. The original has no such path — a mission reaches the simulator only
+/// through a career — so what stands in for the career here is this engine's invention:
 ///
 /// <list type="bullet">
 /// <item>A stage-0 mission (the practice missions and the demos) takes the training half whole,

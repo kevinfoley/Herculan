@@ -46,8 +46,7 @@ public enum ShellSaveExitTarget {
 /// <para><b>Every rect here is a literal in the executable</b>, written as four immediates onto the
 /// builder's own stack, and they are kept parent-relative exactly as the builder writes them — the
 /// panel is placed in the canvas, the list and the button column in the panel, and the two inner
-/// buttons in the list. Composing them the same way the widget tree does is what makes each number
-/// checkable against the decompilation instead of a pre-added absolute nobody can trace back. See
+/// buttons in the list, so each number can be checked against the decompilation. See
 /// docs/retail/shell/main-menu.md.</para>
 ///
 /// <para><b>The screen names itself.</b> Its title, all five button captions, every field label and

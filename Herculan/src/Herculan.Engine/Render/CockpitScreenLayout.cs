@@ -10,7 +10,7 @@ namespace Herculan.Engine.Render;
 ///
 /// <para><b>Why this exists.</b> DBSIM blits the cockpit at a fixed canvas origin, so a widget's
 /// authored rect <i>is</i> a screen rect and its mouse code hit-tests authored coordinates directly
-/// (docs/retail/simulation/cockpit-input.md §4-6). Herculan does not: it fits the art by height, centres a
+/// (docs/retail/simulation/cockpit-input.md §4-6). This engine does not: it fits the art by height, centres a
 /// three-panel content block whose width depends on the window, and offsets vertically by the
 /// heads-down pan — with the forward and heads-down art on two separately placed surfaces. Screen to
 /// widget is therefore a real transform, and it has to be the <i>same</i> transform the art was drawn

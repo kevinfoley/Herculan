@@ -60,7 +60,7 @@ public sealed class EffectPools {
 	///
 	/// <para>Silently does nothing when the table did not load or the id is outside it. A retail
 	/// <c>ImpactFX</c> array can hold an id no type row exists for, and the original bounds nothing
-	/// here — reading past the table is not a behaviour worth reproducing.</para>
+	/// here and reads past the table; the bound is this engine's own.</para>
 	/// </summary>
 	/// <param name="typeId">The <c>EXPLOS.DAT</c> type, out of a <c>PROJ.DAT</c> <c>ImpactFX</c> array.</param>
 	/// <param name="position">Where the shot landed, in world units.</param>
@@ -128,23 +128,15 @@ public sealed class EffectPools {
 	public IReadOnlyList<FireEffect> Fires => _fires;
 
 	/// <summary>
-	/// <c>Debris_ThrowGroup</c> — throws one debris group at <paramref name="frame"/>.
+	/// <c>Debris_ThrowGroup</c> (<c>004086bc</c>) — throws one debris group at <paramref name="frame"/>,
+	/// all its pieces or a weighted random draw of them as <see cref="DebrisGroup"/> describes.
 	///
-	/// <para><b>Two ways of reading a group</b>, on its own throw count: zero throws every piece it
-	/// holds, once each; anything else throws exactly that many pieces drawn from it at random,
-	/// weighted by each piece's share of the group's total — so a five-throw group of six pieces can
-	/// throw the same one twice and skip two others.</para>
-	///
-	/// <para>Each piece is placed by <c>Debris_Throw</c>: a piece that states an orientation yaw has
-	/// it composed onto <paramref name="frame"/> and keeps the result as its own attitude, and one
-	/// that states a throw yaw is launched along that bearing relative to it. A piece that states
-	/// neither is thrown on a wholly random bearing from the frame's translation, which is what every
-	/// <c>DEF_DEB</c> group does.</para>
-	///
-	/// <para>The launch itself is <c>Debris_Launch</c>: the pitch is drawn between
-	/// <paramref name="pitchMin"/> and <paramref name="pitchMax"/>, and the speed is
-	/// <paramref name="speedScale"/> shifted up ten over the piece's own mass, plus
-	/// <see cref="DebrisCarrierVelocity"/>.</para>
+	/// <para>Each piece is placed by <c>Debris_Throw</c> (<c>00408588</c>) from its own yaws, or on a
+	/// random bearing from the frame's translation when it states neither, and launched by
+	/// <c>Debris_Launch</c> (<c>004089e4</c>): the pitch drawn between <paramref name="pitchMin"/> and
+	/// <paramref name="pitchMax"/>, the speed <paramref name="speedScale"/> shifted up ten over the
+	/// piece's own mass, plus <see cref="DebrisCarrierVelocity"/>. See
+	/// docs/retail/simulation/destruction-effects.md#throwing-a-group.</para>
 	/// </summary>
 	/// <param name="groupIndex">The group, in the two-database index space — see <see cref="DebrisCatalog"/>.</param>
 	/// <param name="frame">Where and how it is thrown from.</param>
@@ -368,20 +360,14 @@ public sealed class EffectPools {
 	/// <summary>
 	/// <c>FireEffect_Ctor</c> (<c>0046b388</c>) — sets something alight.
 	///
-	/// <para><b>The pool is small and full is not a refusal.</b> With all
-	/// <see cref="FireEffect.PoolSize"/> slots busy the original takes the fire with the fewest
-	/// passes left and rebuilds it, so the newest fire always gets a slot and the one nearest going
-	/// out is what pays. That is <c>FireEffect_AcquireSlot</c>, and it is reproduced here.</para>
+	/// <para>A full pool is not a refusal: with all <see cref="FireEffect.PoolSize"/> slots busy the
+	/// fire with the fewest passes left is rebuilt (<c>FireEffect_AcquireSlot</c>, <c>0046b32c</c>).
+	/// The shared burning sound starts on the first live fire and stops on the last, which
+	/// <see cref="ReleaseFires"/> holds the other end of.</para>
 	///
-	/// <para>The original also starts the shared burning sound on the first live fire and stops it on
-	/// the last, which <see cref="ReleaseFires"/> holds the other end of.</para>
-	///
-	/// <para><b>On the Moon only shapes 1 and 3 burn.</b> The constructor puts any other shape
-	/// straight back on the free list — <i>after</i> the slot was taken, so with the pool full a
-	/// filtered fire still evicts the weakest one and lights nothing in its place. A machine's own
-	/// destruction lights shapes 0 and 2 only, so on the Moon a machine never burns, though the
-	/// whole-object branch still puts out what was burning on it. The fires that do light play
-	/// <see cref="FireEffect.MoonLoopCount"/> passes.</para>
+	/// <para>On the Moon only shapes 1 and 3 burn, the filter running after the slot is taken, and
+	/// those play <see cref="FireEffect.MoonLoopCount"/> passes. See
+	/// docs/retail/simulation/destruction-effects.md#fire.</para>
 	/// </summary>
 	/// <param name="owner">What is burning.</param>
 	/// <param name="componentIndex">Which of its components, or <c>-1</c> — see <see cref="FireEffect"/>.</param>

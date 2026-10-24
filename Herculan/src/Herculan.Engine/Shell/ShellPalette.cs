@@ -19,25 +19,11 @@ public enum ShellMissionView {
 /// <summary>
 /// The shell's palettes, and which one each screen is drawn through.
 ///
-/// <para><b>The palette is a widget, not a call.</b> Every tab screen's builder makes one more child
-/// than the tab strip — a <see cref="ShellLayout.PaletteScope"/>-sized window of its own class
-/// (<c>0040ca6c</c>, vtable <c>PTR_FUN_0046ef04</c>) held in <c>PaletteScopeWidget</c> (<c>0048d444</c>), whose <c>+0x45</c>
-/// is a palette index. Its event handler (<c>0040cab7</c>) installs that index's palette when it is
-/// shown, so the shell changes palette by hiding the widget, writing <c>+0x45</c> and showing it again
-/// — which is the whole of <c>Shell_SetPaletteScope(index)</c> (<c>00439da0</c>).</para>
-///
-/// <para><see cref="Names"/> is the table at <c>0046dcdc</c> that <c>Shell_InstallPalette(index)</c> (<c>004075b2</c>) indexes,
-/// read out of the executable's data segment: twenty <c>dpl\*.dpl</c> paths, in this order. The
-/// entries past the first three are what tie the campaign's five stages to their art — five briefing
-/// palettes, five debrief palettes and five theater palettes, all indexed by the stage number. The
-/// campaign's stages are 1-5 — stage 0 holds the practice missions — so stage 1 lands on each run's first entry.</para>
-///
-/// <para><b>Stage 5 is the Moon.</b> The three per-stage runs end on <c>luna</c>, the campaign map
-/// switches from <c>cam_er</c> to <c>cam_moon</c> at exactly the same stage, and the mission tab's
-/// location art (<c>maybe_Mission_UpdateLocationTab</c>, <c>004446xx</c>) carries only four
-/// <c>dba\</c> names — <c>alph2</c>, <c>delt1</c>, <c>omic1</c>, <c>brav1</c> — and branches away
-/// entirely when <c>stage - 1 == 4</c>. Three independent tables agreeing on the same boundary is what
-/// makes this a reading rather than a guess.</para>
+/// <para>A screen changes palette through a palette-scope widget whose <c>+0x45</c> is the index,
+/// <c>Shell_SetPaletteScope(index)</c> (<c>00439da0</c>). <see cref="Names"/> is the table
+/// <c>Shell_InstallPalette(index)</c> (<c>004075b2</c>) indexes: past the first five entries are three
+/// runs of five — briefing, debrief and theater palettes — indexed by the campaign stage, 1-5, of
+/// which stage 5 is the Moon. See docs/retail/shell/screen-layout.md#the-palette.</para>
 /// </summary>
 public static class ShellPalette {
 	/// <summary>

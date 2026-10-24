@@ -8,22 +8,15 @@ namespace Herculan.Engine.Cockpit;
 /// that shows how far the turret is turned off centre, green while it is centred and yellow once it
 /// is not.
 ///
-/// <para>Reverse-engineered from <c>Gau_RovingGunsightWidget</c> (<c>0043c7d8</c>), which builds it
-/// as one of the gunsight complex's children, its class constructor <c>HudRotationIndicator_Ctor</c> (<c>0043b438</c>), the shared
-/// slide-bar base <c>HudSlideBar_CtorBase</c> (<c>0043b378</c>) and the paint at <c>HudRotationIndicator_Paint</c> (<c>0043b4a4</c>).</para>
+/// <para>Ports the gunsight complex's child built by <c>HudRotationIndicator_Ctor</c>
+/// (<c>0043b438</c>) and painted by <c>HudRotationIndicator_Paint</c> (<c>0043b4a4</c>); see
+/// docs/retail/simulation/cockpit-gunsight-hud.md#rotation-indicator.</para>
 ///
-/// <para><b>Where it comes from.</b> Not a <c>.GAU</c> rect of its own. The complex reads the rect
-/// at offset 1104 — the heading tape's box, <see cref="HHeadingTape"/> — and derives
-/// this bar from it with literals in the constructor: <c>+15, -10</c> from the rect's top-left, 90
-/// wide and 4 tall. Every retail file puts that rect at <c>100,y - 220,y+17</c>, so the bar lands
-/// horizontally centred on the 320-wide HUD.</para>
+/// <para><b>Where it comes from.</b> Not a <c>.GAU</c> rect of its own: it is derived from the
+/// heading tape's box, <see cref="HHeadingTape"/>, with the constructor's literals.</para>
 ///
-/// <para><b>What it shows.</b> <c>Player_PerFrameCockpitUpdate</c> (<c>0041b130</c>) hands the
-/// gunsight complex the machine's heading, twist angle and pitch angle each frame, and the complex
-/// forwards each one's <i>delta</i> to a child. This is the twist angle's child, so its value tracks
-/// <c>mech+0x298</c> exactly, clamped to the <see cref="Limit"/> its constructor is given — wider
-/// than the 14000 twist limit every player chassis states, so the bar never actually reaches its
-/// end stops.</para>
+/// <para><b>What it shows.</b> The twist angle, <c>mech+0x298</c>, clamped to
+/// <see cref="Limit"/> (docs/retail/simulation/cockpit-gunsight-hud.md#live-values).</para>
 ///
 /// <para><b>Units.</b> Device pixels, the 640-wide space the sprite banks and the rest of the
 /// cockpit art live in: the loader shifts the whole <c>.GAU</c> block by the video mode's coordinate

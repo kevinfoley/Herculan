@@ -5,39 +5,23 @@ namespace Herculan.Engine.View;
 
 /// <summary>
 /// The cockpit's damage shake — what a hit on the player's own cockpit, or the landing at the bottom
-/// of a long slide, does to the view for <c>0x3c</c> coarse ticks (0.96 s).
+/// of a long slide, does to the view for <c>0x3c</c> coarse ticks (0.96 s): the picture jitters and
+/// the palette flashes to the theater's impact palette. See
+/// docs/retail/rendering/cockpit-canopy-palette.md#the-damage-shake.
 ///
-/// <para><b>It moves the display window over the cockpit canvas</b>, as the heads-down pan does, not
-/// the camera: <c>CockpitView_SetShakeBand</c> (<c>0042d2f8</c>) seeds a vertical band at the window's
-/// resting origin and <c>CockpitView_StepShake</c> (<c>0042d4a8</c>) walks the origin inside it once a
-/// frame, carrying the canopy, the instruments and the world's projection with it, so the whole picture
-/// jitters as one. <see cref="Cockpit.CockpitView.WindowOffsetRows"/> is where this offset meets the
-/// pan's. The step kick (<see cref="CockpitViewKick"/>) is the other mechanism: it moves only the
-/// projection centre, behind a cockpit that holds still. The derivation is in
-/// docs/retail/rendering/cockpit-canopy-palette.md, "The damage shake".</para>
+/// <para>The shake moves the display window over the cockpit canvas, not the camera, so the canopy,
+/// the instruments and the world move as one picture; <see cref="Cockpit.CockpitView.WindowOffsetRows"/>
+/// is where this offset meets the heads-down pan's. The step kick (<see cref="CockpitViewKick"/>)
+/// moves only the projection centre. Inside its <see cref="BandPixels"/> band the walk
+/// (<see cref="StepBand"/>) ranges over 1 to 8 rows from the rest, 1 to 9 in the Heads-Down
+/// Display.</para>
 ///
-/// <para><b>The walk never settles, and it never reaches the band's limits.</b> Each step moves
-/// toward whichever of the two limits is <i>farther</i> away, and which one that is flips at the
-/// middle — so the walk reverses on every crossing, and moving outward requires already being on the
-/// near side. With <see cref="BandPixels"/> and steps of 0-4 the offset starts at the limit at the
-/// window's rest and thereafter ranges over 1 to 8 rows from it (1 to 9 in the Heads-Down Display, see
-/// <see cref="StepBand"/>): the band is wider than the excursion it produces, which is why reading the
-/// amplitude as the travel overstates the effect.</para>
+/// <para><see cref="FlashActive"/> is the palette switch; the host follows <see cref="FlashShown"/>
+/// into <see cref="SceneRenderer.ImpactPaletteActive"/> and the canopy's own flash buffer, and
+/// <see cref="Scene.ImpactFlash"/> says what follows a swap in this renderer.</para>
 ///
-/// <para><b>The palette flash runs beside it.</b> The original swaps the whole live palette to the
-/// theater's <c>IMPACT&lt;n&gt;.DPL</c> — a heavy red shift of the theater's own — and alternates the
-/// two every 0-9 coarse ticks. <see cref="FlashActive"/> is that switch; the host follows
-/// <see cref="FlashShown"/> into <see cref="SceneRenderer.ImpactPaletteActive"/> and the canopy's own flash buffer. See
-/// <see cref="Scene.ImpactFlash"/> for what does and does not follow a swap in this renderer.</para>
-///
-/// <para><b>Retriggering does not compound — it stops the shake.</b> A second trigger inside the
-/// window clears the band and restores the palette, then re-arms only if no shake was running, which
-/// it was. So the timer is extended while the view goes still for the rest of it. That is the
-/// original's own behaviour, not a simplification; see KNOWN_ISSUES.md.</para>
-///
-/// <para><b>What the flash does after a restart depends on its phase</b>, as in the original: the
-/// restore leaves the toggle's swap partner alone, so a restart on a theater phase carries on
-/// flashing and one on an impact phase leaves the theater palette in both slots, and the flash stops.
+/// <para>As in the original, a second trigger inside the window stops the shake rather than
+/// compounding it, and whether the flash carries on depends on its phase.
 /// <see cref="FlashSurvivesRestart"/> is the
 /// <see cref="Settings.TweakSettingDefinitions.FlashThroughSecondHit"/> tweak, under which the flash
 /// carries on from either phase.</para>
@@ -45,8 +29,7 @@ namespace Herculan.Engine.View;
 /// <para>Three parts of the original have no counterpart here. A view change clears a running band
 /// (<c>CockpitView_ApplyViewState</c>), where this one carries on through a heads-down pan; a finished
 /// view slide can re-seed a disarmed band; and each step also pulls the 3D rect's right edge in by the
-/// step, besides its bottom, which the cockpit's layout does not follow. See
-/// docs/retail/rendering/cockpit-canopy-palette.md, "The damage shake".</para>
+/// step, besides its bottom, which the cockpit's layout does not follow.</para>
 /// </summary>
 public sealed class CockpitHitShake {
 	/// <summary>

@@ -44,34 +44,16 @@ public enum HddDamageView {
 /// <see cref="MfdLayout"/> for the closest precedent.
 /// </summary>
 /// <remarks>
-/// <para><b>Where the numbers live.</b> Unlike the MFD, whose per-herc <c>.GAU</c> supplies one panel
-/// rect and nothing else, the whole HDD is authored per herc: the block at <c>.GAU</c> offset 1212
-/// carries an origin, four region rects, fifteen widget rects, three marker rects and two mode
-/// values. Only the sub-layouts <i>inside</i> those regions — the map's inset, the nine order rows,
-/// the thirteen damage rows — are hardcoded in DBSIM. That is why the retail hercs differ so much
-/// here: TOMAHAWK puts its comm boxes above the map, OUTLAW and RAZOR stack their two page buttons
-/// vertically, and APOCA, COLOSSUS and MAVERICK put the whole button strip below the map instead of
-/// above it.</para>
+/// <para><b>Where the numbers live.</b> Unlike the MFD, the whole HDD is authored per herc in the
+/// <c>.GAU</c> block at offset 1212; only the sub-layouts inside its regions — the map's inset, the
+/// nine order rows, the thirteen damage rows — are hardcoded in DBSIM. See
+/// docs/retail/formats/gau-cockpit-layout.md#gau-block-at-1212.</para>
 ///
-/// <para><b>Coordinates are device pixels relative to the <c>.HB1</c> art's own top-left.</b> The
-/// file's values are authored in the 320-wide space, and <c>HddGau_ApplyCoordShift</c> (<c>0044bed0</c>) shifts every one of them
-/// by <c>VideoMode_X/YCoordShift</c> before the constructor adds the block's origin — which it first
-/// biases by <c>+0x28</c> on the y axis (<c>param_1[1] = param_1[1] + 0x28</c>, the function's first
-/// statement). Every retail file authors that origin as <c>(0, 197)</c>, so the bias makes it
-/// <c>(0, 237)</c>: exactly the canvas origin the herc's own <c>.VUE</c> gives view 1, i.e. the row
-/// the <c>.HB1</c> art is blitted at. Subtracting that origin back off is what turns a canvas
-/// coordinate into an art-local one, and it is the check that confirms the whole block — a stray
-/// <c>+0x28</c> reading as anything else would not land the art exactly.</para>
-///
-/// <para><b>What confirms the widget mapping.</b> Every widget that has art of its own was checked
-/// against that art's own frame size in <c>hba\HDD.HBA</c>, across all nine retail <c>.GAU</c> files
-/// — the same method the MFD's button table passed. Six of the ten sizes match to the pixel in every
-/// file: both arrow sets and both magnifiers, 54 exact matches. The two that do not are the two the
-/// original itself does not match: the page buttons' plate is two rows taller than their rect, the
-/// same overhang the weapon-row plates have, and XMIT and CANCEL have a 54x20 plate inside a 70x18
-/// click rect that overlaps its neighbour by two authored units — which is why their captions
-/// centre on <see cref="TransmitCaptionBox"/> rather than on the widget. <see cref="Screen"/> is 459x201 device
-/// pixels in all nine files with only its position varying, exactly as the MFD's panel rect is.</para>
+/// <para><b>Coordinates are device pixels relative to the <c>.HB1</c> art's own top-left:</b> the
+/// block's values shifted by <c>VideoMode_X/YCoordShift</c>, plus its origin biased by
+/// <see cref="OriginYBias"/>, less the <c>.VUE</c>'s view-1 canvas origin. XMIT and CANCEL's
+/// captions center on <see cref="TransmitCaptionBox"/>, their plate's size, rather than on their
+/// wider click rect (docs/retail/simulation/heads-down-display.md#frame-to-widget-confirmation).</para>
 ///
 /// <para><b>What this type is and is not.</b> It is the geometry and the string-table indices, both
 /// of which are entirely in the data files. Everything that moves — the map camera and its markers,
@@ -89,8 +71,8 @@ public sealed class HddLayout {
 	public const int GauBlockOffset = 1212;
 
 	/// <summary>
-	/// Added to the block origin's y before anything else, by <c>HddGau_ApplyCoordShift</c> (<c>0044bed0</c>). See the remarks on
-	/// this class for why 197 + 40 landing on the <c>.VUE</c>'s own 237 is the confirmation.
+	/// Added to the block origin's y before anything else, by <c>HddGau_ApplyCoordShift</c> (<c>0044bed0</c>):
+	/// every retail file's 197 becomes the <c>.VUE</c>'s own 237 (docs/retail/formats/gau-cockpit-layout.md#gau-block-at-1212).
 	/// </summary>
 	public const int OriginYBias = 0x28;
 

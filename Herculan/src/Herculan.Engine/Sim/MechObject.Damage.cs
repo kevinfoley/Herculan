@@ -264,8 +264,9 @@ public sealed partial class MechObject {
 	private const short OutnumberedImpactDamage = 0x40;
 
 	/// <summary>
-	/// <c>Mech_DirectFireHitTest</c> (<c>00418ba8</c>), the mech's vtable <c>+0x20</c> — the hit test
-	/// and the damage application in one call, exactly as the original has it.
+	/// <c>Mech_DirectFireHitTest</c> (<c>00418ba8</c>), the mech's vtable <c>+0x20</c> — whether a
+	/// shot struck this machine, and the damage if it did, in one call as in the original. Retail
+	/// behavior: docs/retail/simulation/damage-system.md#direct-fire-damage-armor-then-part-deterministic-shield-gated.
 	///
 	/// <list type="number">
 	/// <item><b>Reject by distance.</b> Muzzle to machine, against the ray's remaining length plus
@@ -388,37 +389,29 @@ public sealed partial class MechObject {
 
 	/// <summary>
 	/// <c>Mech_ApplyDirectFireDamage</c> (<c>004188c8</c>) — what a named component does with the
-	/// damage that reached it.
+	/// damage that reached it. Retail behavior: step 4 of
+	/// docs/retail/simulation/damage-system.md#direct-fire-damage-armor-then-part-deterministic-shield-gated.
 	///
 	/// <para><b>The shot's splash fraction is taken off the top.</b>
 	/// <see cref="WeaponShot.SplashFactor"/> is a Q10 multiplier, and the share it names is
 	/// <i>diverted</i> away from the struck component into a small explosion of its own — the mech's
 	/// own vtable <c>+0x70</c>, <see cref="ExplosiveDamage"/>, at
-	/// <see cref="SecondaryBlastRadius"/> — and the struck component gets only the remainder. Every
-	/// retail beam states zero, so on a beam the whole shot still lands on the one component; the
-	/// rocket records and the plasma round are what state a share.</para>
-	///
-	/// <para><b>The share is absorbed a second time on its way in.</b> The explosion path opens with
-	/// its own shield absorption, and the original does not exempt a blast that came out of a shot
-	/// which has already been through the other one — so a machine with charge left keeps far more of
-	/// a splashing weapon off its structure than the two damage figures alone suggest.</para>
+	/// <see cref="SecondaryBlastRadius"/> — and the struck component gets only the remainder. That
+	/// explosion runs its own shield absorption, so the share meets the shields a second time. Which
+	/// records state a share is docs/retail/formats/proj-dat.md.</para>
 	///
 	/// <para>The effect a hit spawns depends on whether the component's damage reading crossed one of
 	/// its eight bands: it did not, and the shot draws from
 	/// <see cref="WeaponShot.ImpactFxGroup.Ground"/>; it did, and the shot draws from
-	/// <see cref="WeaponShot.ImpactFxGroup.Armor"/> instead. This is the branch that made the two
-	/// arrays distinct, and it is now reachable — though on retail data all 27 projectile records
-	/// carry byte-identical arrays for the two, so the same effect is drawn either way.</para>
+	/// <see cref="WeaponShot.ImpactFxGroup.Armor"/> instead. On retail data the two arrays are
+	/// identical (docs/retail/simulation/impact-effects.md).</para>
 	///
 	/// <para><b>A band change on a mount component rolls to knock that mount out</b> — see
 	/// <see cref="RollWeaponMountDestruction"/>, which is the other half of this function.</para>
 	///
-	/// <para><b><c>0x12</c> <c>DAMAGE LEVEL CRITICAL</c> is never said.</b> Its call site sits
-	/// between the two readings and needs the later one to have <i>fallen</i> below the earlier; no
-	/// retail <c>PROJ.DAT</c> record can make the write negative, so the line is unreachable — see
-	/// docs/retail/simulation/cockpit-messages.md, "Posters". The cockpit jolt that shares its gate is a
-	/// separate effect and is raised, through <see cref="CockpitHits"/>. What the test reads as
-	/// having been meant is implemented beside that jolt under the
+	/// <para><b><c>0x12</c> <c>DAMAGE LEVEL CRITICAL</c> is never said</b> in retail: its call site
+	/// cannot be reached (docs/retail/simulation/cockpit-messages.md). The cockpit jolt beside it is
+	/// raised, through <see cref="CockpitHits"/>, and the message is said under the
 	/// <see cref="TweakSettingDefinitions.CriticalDamageMessage"/> tweak.</para>
 	/// </summary>
 	private void ApplyDirectFireDamage(SimWorld world, short componentIndex, WeaponShot shot, Vec3i hitPoint) {
@@ -502,7 +495,8 @@ public sealed partial class MechObject {
 	/// <c>Mech_ApplyExplosiveDamage</c> (<c>004187d0</c>), the mech's vtable <c>+0x70</c> — <b>the other
 	/// damage model</b>, and not a setting of the direct-fire one. Where a beam picks exactly one
 	/// component out of the hit geometry and hands it the whole shot, a blast rolls every component
-	/// the machine has and scales what each takes by how far it stood from the bang.
+	/// the machine has and scales what each takes by how far it stood from the bang. Retail behavior:
+	/// docs/retail/simulation/damage-system.md#a-mech--mech_applyexplosivedamage-004187d0.
 	///
 	/// <list type="number">
 	/// <item><b>The facing</b> is the bearing from the machine to the blast against its own heading,
@@ -521,10 +515,10 @@ public sealed partial class MechObject {
 	/// <see cref="ComponentDamageWrite"/> endpoint a beam's damage ends in.</item>
 	/// </list>
 	///
-	/// <para>Reached from two places, as in the original: the world sweep
-	/// (<see cref="HitTests.ExplosiveBlastSweep"/>) for a shot that goes off in the open, and this
-	/// machine's own direct-fire path for the splash share of a shot that hit it — see
-	/// <see cref="ApplyDirectFireDamage"/>.</para>
+	/// <para>Reached from three places, as in the original: the world sweep
+	/// (<see cref="HitTests.ExplosiveBlastSweep"/>), this machine's own direct-fire path for the
+	/// splash share of a shot that hit it (<see cref="ApplyDirectFireDamage"/>), and two machines
+	/// walking into each other (<see cref="CollisionDamage"/>).</para>
 	///
 	/// <para>The computer's damage warnings are posted from the shared endpoint, so a blast raises
 	/// them exactly as a beam does. The debris a component lost this way throws goes through
@@ -688,12 +682,12 @@ public sealed partial class MechObject {
 	/// <summary>
 	/// The weapon-mount half of <c>Mech_ApplyDirectFireDamage</c>: a hit that moved one of the
 	/// machine's mount components (<see cref="WeaponMounts.FirstMountComponent"/> and up) into a new
-	/// damage band rolls once to take that mount out for good.
+	/// damage band rolls once to take that mount out for good. Retail behavior:
+	/// docs/retail/simulation/weapon-mounts.md#the-chance-path--the-destruction-roll.
 	///
 	/// <para><b>The odds depend on whose machine it is.</b> The roll is a draw of the low twelve bits
-	/// against the side's own figure times <see cref="MountDestructionOddsScale"/> — 3 in
-	/// 4096-per-41, about 3%, for the player's side, and 10 for the Cybrids, about 10%. So a Cybrid
-	/// machine sheds its guns more than three times as readily as one of ours does.</para>
+	/// against the side's own figure times <see cref="MountDestructionOddsScale"/>: about 3% for the
+	/// player's side and about 10% for the Cybrids.</para>
 	///
 	/// <para><b>The chassis has to allow it at all</b> — see
 	/// <see cref="MechTypeRecord.WeaponMountsDestructible"/>, which the PITBULL alone states zero
@@ -790,8 +784,8 @@ public sealed partial class MechObject {
 	///
 	/// <para>The computer's warnings this posts along the way — the shield generator's two, the
 	/// weapon-mount one, the leg grade's pair, the reactor's and the kill announcement — are all
-	/// gated on <see cref="SimObject.LocallyPiloted"/>, so only the machine the player is flying
-	/// says anything. See docs/retail/simulation/component-damage.md.</para>
+	/// gated on <see cref="SimObject.LocallyPiloted"/>, so only the machine the player is piloting
+	/// says anything. See docs/retail/simulation/component-damage.md#what-the-endpoint-announces.</para>
 	/// </summary>
 	public override void ApplyComponentDamage(SimWorld world, int componentIndex, short damage,
 			SimObject? attacker) =>

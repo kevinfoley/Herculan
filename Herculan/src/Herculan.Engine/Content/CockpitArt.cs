@@ -39,30 +39,24 @@ public sealed record CockpitFrame(byte[] Pixels, int Width, int Height) {
 }
 
 /// <summary>
-/// A herc's cockpit canopy art and HUD widget layout — see docs/retail/rendering/cockpit-canopy-palette.md and
-/// docs/retail/simulation/cockpit-hud-widgets.md (Milestone 8
-/// Phase 0) for the RE and the real-data verification behind every constant here.
+/// A herc's cockpit canopy art and HUD widget layout. The retail behavior is
+/// docs/retail/rendering/cockpit-canopy-palette.md and docs/retail/simulation/cockpit-hud-widgets.md.
 ///
 /// <para><see cref="Front"/> is <c>(herc).HB0</c> (the center/front view) and <see cref="Side"/> is
-/// <c>(herc).HB2</c> (a real, distinct side view — not a duplicate of the front). There is no
-/// separate mirrored asset: the left panel reuses <see cref="Side"/> with its UVs flipped
-/// horizontally at draw time. <see cref="HeadsDown"/> is <c>(herc).HB1</c>, DBSIM's view 1 — the
-/// Heads-Down Display below the dashboard that <c>[F7]</c>/<c>[F8]</c> pan down to.</para>
+/// <c>(herc).HB2</c> (a distinct side view). There is no separate mirrored asset: the left panel
+/// reuses <see cref="Side"/> with its UVs flipped horizontally at draw time. <see cref="HeadsDown"/>
+/// is <c>(herc).HB1</c>, DBSIM's view 1 — the Heads-Down Display below the dashboard that
+/// <c>[F7]</c>/<c>[F8]</c> pan down to.</para>
 ///
-/// <para>Both frames decode through the live palette (<see cref="CockpitPalette"/>): the theater
-/// palette in full, with this herc's own 24-entry cockpit colour scheme installed over slots 42-65.
-/// Indices are used <b>as authored</b> — no shift, no offset. The per-herc canopy colour difference
-/// is entirely a property of which scheme window gets installed, resolved from the herc's own data
-/// file (see <see cref="ColorSchemeIndex"/>).</para>
+/// <para>The frames decode through the live palette (<see cref="CockpitPalette"/>): the theater
+/// palette with this herc's 24-entry cockpit colour scheme over slots 42-65 (see
+/// <see cref="ColorSchemeIndex"/>). Indices are used as authored, with no shift or offset.</para>
 ///
-/// <para><b>The 3D-viewport cutout is data, not a colour key.</b> Each herc ships a per-view region
-/// file — <c>hd0</c> for the forward view, <c>hd2</c> for the side view — that states per scanline
-/// exactly which columns the live 3D scene shows through; DBSIM's rasterizer is physically span-clipped
-/// to it (see <see cref="CockpitClipRegions"/>). <see cref="Load"/> punches those spans into each
-/// frame's alpha channel (0 = viewport hole, 255 = opaque art). The previous border-flood-fill over
-/// pure-black pixels survives only as a fallback for when the region file can't be read: it inferred
-/// the hole from art that happens to be black there, which is close but not the same thing, and it had
-/// no way to know about the rows the original leaves opaque despite their colour.</para>
+/// <para><b>The 3D-viewport cutout comes from the herc's region files</b> (<c>hd0</c> forward,
+/// <c>hd2</c> side; see <see cref="CockpitClipRegions"/>): <see cref="Load"/> punches their spans
+/// into each frame's alpha channel (0 = viewport hole, 255 = opaque art). When a region file can't be
+/// read, an engine fallback infers the hole from black pixels instead
+/// (<see cref="CutViewportHoleByColor"/>, <see cref="ClipRegionsLoaded"/>).</para>
 /// </summary>
 public sealed class CockpitArt {
 	/// <summary>
@@ -87,27 +81,21 @@ public sealed class CockpitArt {
 	public const int SideViewIndex = 2;
 
 	/// <summary>
-	/// The sprite banks this milestone draws, all from <c>hba\</c> — see <see cref="HudSpriteSheet"/>
-	/// for why the <c>hba</c> half and not <c>dba</c>, and <see cref="Sprites"/> for which widget each
-	/// one serves.
+	/// The cockpit's sprite banks, all from <c>hba\</c> (see <see cref="HudSpriteSheet"/>), loaded up
+	/// front and packed into one atlas. Retail loads <c>ICONS</c> (the map markers, <see cref="HddMap"/>)
+	/// when the first marker is built and each alert panel's plates when the panel is constructed;
+	/// loading them here instead costs one atlas entry each and keeps a panel to a single texture
+	/// bind.
 	///
-	/// <para><c>ICONS</c> is loaded here rather than where it is used, unlike the original: its own
-	/// gadget constructor (<c>HddMarker_Ctor</c>) loads it lazily the first time a map marker
-	/// is built. Ninety frames of nine-frame rotation groups, and the only consumer is the command
-	/// display's map — see <see cref="HddMap"/>.</para>
+	/// <para><c>WEAPONS</c> is the damage detail's weapon icons; it is kept indexed as well, because the
+	/// icons are recolored by palette index the way a doll region is (<see cref="PaperDollDamage"/>).
+	/// <c>OBJ_ALRT</c> and <c>GNL_ALRT</c> are two of the modal alert panels' plates and <c>ALERT</c>
+	/// the button plate they share (<see cref="ObjectivesPanel"/>, <see cref="StatusAlertPanel"/>);
+	/// <c>PRF_ALRT</c> and <c>CTL_ALRT</c> are the preferences and controls panels', which carry their
+	/// own button art (<see cref="PreferencesPanel"/>, <see cref="ControlsPanel"/>). The alert banks
+	/// come from SIMALERT.VOL. <c>SYSBUTTN</c> is the two system buttons' art
+	/// (<see cref="SystemButtons"/>).</para>
 	/// </summary>
-	/// <para><c>WEAPONS</c> is the damage detail's weapon icons, which <c>PaperDoll_InitTables</c>
-	/// loads once with the rest of the paper-doll data; it is kept indexed as well, because the icons
-	/// are recoloured by palette index the way a doll region is (<see cref="PaperDollDamage"/>).</para>
-	/// <para><c>OBJ_ALRT</c> and <c>GNL_ALRT</c> are two of the modal alert panels' plates and
-	/// <c>ALERT</c> the button plate they share (<see cref="ObjectivesPanel"/>,
-	/// <see cref="StatusAlertPanel"/>); <c>PRF_ALRT</c> and <c>CTL_ALRT</c> are the preferences and
-	/// controls panels', which carry their own button art rather than sharing that one
-	/// (<see cref="PreferencesPanel"/>, <see cref="ControlsPanel"/>).
-	/// They come from SIMALERT.VOL rather than the main archive, and
-	/// the original loads each when its panel is constructed rather than up front; packing them with
-	/// the rest costs one atlas entry each and keeps a panel to a single texture bind.</para>
-	/// <para><c>SYSBUTTN</c> is the two system buttons' art (<see cref="SystemButtons"/>).</para>
 	public static readonly string[] HudBankNames = {
 		"HUD", "HUDHTICK", "MFD", SensorDropout.MfdBank, "RADAR", "THROTTLE", SensorDropout.RowBank, "PWEAPONS",
 		"HDD", "BASES", "VEHICLES", MfdLayout.FlyerBank, PaperDollDamage.WeaponIconBank,
@@ -123,33 +111,13 @@ public sealed class CockpitArt {
 	public static readonly string[] LoResHudBankNames = { SquadCommChannel.StaticBank };
 
 	/// <summary>
-	/// The <c>.HFN</c> fonts the cockpit draws text with, out of the 18 <c>ColorSchemePanels</c>
-	/// (<c>0049b0ac</c>) DBSIM loads. In this format the font is the colour — each file is the same
-	/// typeface stencilled in one palette index — so a widget picks its text colour by picking a font.
-	/// These are the ones the widgets reached so far name: <c>WHITE</c> (shield readouts, the selected
-	/// weapon's name, an idle hardpoint digit), <c>GRAY</c> (an unselected weapon's name and its round
-	/// count), <c>GREEN</c> (the selected weapon's round count), <c>DARK</c> (a lit hardpoint digit),
-	/// and <c>HUD1</c>/<c>HUD2</c>/<c>HUD3</c>, the three theater-coloured fonts the gunsight
-	/// complex's readouts use.
+	/// The <c>.HFN</c> fonts the cockpit draws text with. Each file is one typeface in one palette
+	/// index, so a widget picks its text color by picking a font. The first seventeen are from the
+	/// <c>ColorSchemePanels</c> (<c>0049b0ac</c>) set and the rest are the alert panels' fonts that
+	/// <c>CockpitFontsAndCorners_Init</c> (<c>004544a4</c>) loads beside it; which widget takes which
+	/// is docs/retail/simulation/cockpit-hud-widgets.md#hud-fonts, and each widget's own doc names its
+	/// font.
 	/// </summary>
-	/// <para><c>CPGREEN</c> is <c>ColorSchemePanels[1]</c>, the font the MFD's FLASH COMM screen lists
-	/// its squadmate orders in, with <c>CPRED</c> (<c>[2]</c>) as each row's alternate for its hotkey
-	/// character and <c>CPOFF</c> (<c>[6]</c>) for a row the squad cannot take — see
-	/// <see cref="MfdFlashCommScreen"/>, whose remarks say why no retail row ever reads the last.</para>
-	/// <para><c>CPON</c> and <c>CPPRESS</c> are <c>[4]</c> and <c>[5]</c>, which the Heads-Down
-	/// Display's XMIT and CANCEL buttons caption themselves in unlit and lit
-	/// (<see cref="HddLayout.TransmitButtonFont"/>); <c>CPYLW</c> is <c>[3]</c>, that display's
-	/// subject caption.</para>
-	/// <para><c>CPGREY</c> and <c>CPORANGE</c> are <c>[7]</c> and <c>[9]</c>, two of the five a damage
-	/// detail row cycles through as its component is worn down — see
-	/// <see cref="PaperDollDamage.RowFont"/>.</para>
-	/// <para><c>TITLE</c>, <c>ACTIVE</c>, <c>PUSHED</c>, <c>INACTIVE</c> and <c>GREEN6X8</c> are five
-	/// of the seven <c>CockpitFontsAndCorners_Init</c> (<c>004544a4</c>) loads outside the
-	/// <c>ColorSchemePanels</c> set, and they are the alert family's. A panel titles itself in the
-	/// first and captions its buttons in the next three — at rest, held and disabled, which is
-	/// <c>PanelButton_Ctor</c>'s own four-entry table. The last is both the status alert's body and
-	/// the preferences and controls panels' value readouts
-	/// (<see cref="PreferencesPanelLayout.ValueFont"/>).</para>
 	public static readonly string[] HudFontNames = {
 		"WHITE", "GRAY", "GREEN", "DARK", "RED", "HUD1", "HUD2", "HUD3",
 		"CPGREEN", "CPRED", "CPON", "CPPRESS", "CPYLW", "CPBLUE", "CPORANGE", "CPGREY", "CPOFF",

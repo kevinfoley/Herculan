@@ -4,32 +4,16 @@ namespace Herculan.Engine.View;
 /// The cockpit's vertical pan between the forward view and the heads-down display — how far down the
 /// cockpit canvas the display window currently sits, and how it travels there over time.
 ///
-/// <para><b>What the original does.</b> The transition is
-/// <c>CockpitView_StepViewTransition</c> (<c>0042a9c0</c>), called once per frame from the
-/// end-of-frame routine <c>0045fa98</c>, immediately before
-/// <c>CockpitView_ProcessViewCommand</c>. The sequence for a heads-down request is three frames deep:
-/// a key sets a pending command via <c>CockpitView_QueueViewCommand</c> (<c>0042a3f4</c>, command 0
-/// down / 1 up, each gated on already being in the other view); the next
-/// <c>CockpitView_ProcessViewCommand</c> installs the destination view's clip block and canvas origin
-/// on the back page and arms the transition flag at <c>+0x1c</c>; the next frame's stepper runs the
-/// whole slide, then advances the current view index, clears the pending command to -1 and parks a
-/// two-frame cooldown at <c>+0x1d</c> before another view change can start.</para>
+/// <para>In the original the slide is <c>CockpitView_StepViewTransition</c> (<c>0042a9c0</c>), run
+/// the frame after the view command is processed and followed by a two-frame cooldown — see
+/// docs/retail/simulation/cockpit-views.md#heads-down-pan--cockpitview_stepviewtransition-0042a9c0.</para>
 ///
-/// <para><b>Why the speed here is not the original's.</b> That slide is a plain
-/// <c>for (i = 0; i &lt; travel; i += 10)</c> loop that writes the display start register once per
-/// iteration and never waits for anything — no timer, no retrace poll, no frame boundary. Its
-/// real-time duration is therefore whatever the host CPU and the CRT's refresh happen to make it, and
-/// on period hardware most of the intermediate positions were never scanned out at all. There is no
-/// original timing to recover, only an original <i>step count</i>: 10 canvas rows per step over the
-/// 237-row travel of its 320-wide mode is 24 steps. <see cref="DurationSeconds"/> is that step count
-/// at one step per 60 Hz refresh, so Herculan's pan takes the same fixed real time on every machine.
-/// It is expressed as a duration rather than as rows per second on purpose — the original's step is
-/// in device rows, so its 640x480 mode covers the same visual distance in twice as many steps, and
-/// pinning the duration keeps one speed across both.</para>
-///
-/// <para>The motion itself is continuous rather than quantised to 10-row jumps. The original's
-/// stepping is a consequence of running the slide as fast as the hardware allowed, not an intended
-/// look.</para>
+/// <para>The speed is this engine's. The original's slide is an untimed loop, so only its step
+/// count is recoverable: 10 canvas rows a step over the 237-row travel of its 320-wide mode, 24
+/// steps. <see cref="DurationSeconds"/> is that count at one step per 60 Hz refresh, so the pan
+/// takes the same real time on every machine. It is a duration rather than a rate because the
+/// original's step is in device rows, so its 640x480 mode covers the same visual distance in twice
+/// as many steps. The motion is continuous rather than in 10-row jumps.</para>
 /// </summary>
 public sealed class CockpitPan {
 	/// <summary>Canvas rows the original advances per iteration of its slide loop (<c>0042a9c0</c>).</summary>

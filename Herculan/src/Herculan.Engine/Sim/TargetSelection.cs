@@ -166,26 +166,18 @@ public sealed class TargetSelection {
 	}
 
 	/// <summary>
-	/// <c>TargetSelect_Cycle</c> (<c>0043349c</c>) — the [Enter] key, and the one that does the real work.
+	/// <c>TargetSelect_Cycle</c> (<c>0043349c</c>) — the [Enter] key: selects what is nearest the
+	/// crosshair, or the next candidate on a repeat press.
 	///
 	/// <para>Everything selectable and inside <see cref="InForwardCone"/> is filed into one of four
-	/// buckets by <i>how far off the crosshair it is</i> — <see cref="BucketWidth"/> of bearing error
-	/// per bucket — and sorted by range within its bucket, nearest first, keeping four. Flattening
-	/// the buckets in order gives <see cref="Shortlist"/>: what is closest to the crosshair wins, and
-	/// range only breaks ties inside a band. That is what makes pressing [Enter] pick the thing you
-	/// are looking at rather than the thing that is nearest.</para>
+	/// buckets by bearing error — <see cref="BucketWidth"/> per bucket — and sorted by range within its
+	/// bucket, nearest first, keeping four; the buckets in order give <see cref="Shortlist"/>. If the
+	/// rebuilt head is the previous head or is already selected, the entry after the current selection
+	/// is taken instead — the manual's "keep pressing [Enter] to cycle through all targets".</para>
 	///
-	/// <para><b>A repeat press steps.</b> If the rebuilt head is the same object the previous
-	/// shortlist began with, or is already selected, the current selection is looked up in the new
-	/// shortlist and the entry after it is taken instead — which is the manual's "keep pressing
-	/// [Enter] to cycle through all targets".</para>
-	///
-	/// <para><b>One correction that is not applied because the original does not apply it.</b> The
-	/// bucket is computed from the raw bearing error less the target's own angular half-width, which
-	/// <c>TargetSelect_Cycle</c> works out from its range and shape radius and then passes through
-	/// <c>Math_Q10Multiply</c> with a <b>literal zero</b> as the other operand (<c>PUSH 0x0</c> at
-	/// <c>004335d0</c>). The correction is therefore always zero and a large target near the edge of
-	/// a band is not promoted. Reproduced by omission.</para>
+	/// <para>The bucket uses the raw bearing error: the target's angular-size correction, which the
+	/// original multiplies by zero, is left out. See
+	/// docs/retail/simulation/target-selection.md#cycles-shortlist--targetselect_cycle-0043349c.</para>
 	/// </summary>
 	/// <returns>The selection after the press, which may be unchanged.</returns>
 	public SimObject? Cycle() {

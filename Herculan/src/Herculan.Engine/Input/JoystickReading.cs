@@ -11,15 +11,8 @@ namespace Herculan.Engine.Input;
 /// <c>Input_PollDeviceBlock</c> (<c>0045ba8c</c>) copies to <c>DAT_004d2487</c> (the device struct's <c>+0x0d</c> onwards): the
 /// four normalised axes at <c>+0x0d</c>/<c>+0x11</c>/<c>+0x15</c>/<c>+0x19</c>, the eight button
 /// bytes at <c>+0x1d</c>..<c>+0x24</c> and the four hat bytes at <c>+0x25</c>..<c>+0x28</c>.
-/// <b>Nothing in it names hardware</b>, which is the whole reason a modern stick can drive a retail
-/// <c>prefs.cfg</c> unchanged — see <see cref="JoystickDeviceMap"/> for the layer that decides which
-/// physical control fills which field here.</para>
-///
-/// <para><b>The retail axis roles are fixed.</b> <c>Joystick_Poll</c> (<c>00477614</c>) reads <c>joyGetPosEx</c>'s X and
-/// Y for the stick, Z for the throttle and R for the rudder, falling back to a <i>second</i> stick's
-/// X and Y when the first reports no <c>JOYCAPS_HASZ</c>/<c>HASR</c>. U and V are not even requested
-/// in its <c>dwFlags</c> (<c>0xccf</c>), so a fourth and fifth analogue control has nowhere to go in
-/// the original. The map is what lets this engine point them at these four fields anyway.</para>
+/// Nothing in it names hardware; <see cref="JoystickDeviceMap"/> decides which physical control
+/// fills which field.</para>
 /// </summary>
 /// <param name="StickX">The stick's left/right axis, <see cref="Sim.MechControls.AxisFull"/> at full right.</param>
 /// <param name="StickY">The stick's fore/aft axis, positive pulled back.</param>
@@ -62,25 +55,13 @@ public readonly record struct JoystickReading(
 		index >= 0 && index < JoystickCapabilities.MaxButtons && (Buttons & (1 << index)) != 0;
 
 	/// <summary>
-	/// The response curve every joystick axis goes through — <c>Joystick_ReadWithResponse</c> (<c>0045c314</c>)'s arm for response
-	/// mode 1, which is the mode the joystick device is built with:
-	/// <c>Joystick_InitAndSeedBindings</c> (<c>00459dd4</c>) constructs it as <c>JoystickDevice_Ctor(obj, 3, 0x201, 0xf, 1)</c> (<c>0045c27c</c>), and that last
-	/// argument is the field at <c>+0x28</c> the curve is selected on. (Modes 0 and 2 exist; nothing
-	/// constructs a joystick with either — see docs/retail/simulation/joystick-input.md.)
+	/// The response curve every joystick axis goes through — <c>Joystick_ReadWithResponse</c>
+	/// (<c>0045c314</c>)'s arm for response mode 1, the mode the joystick device is built with
+	/// (docs/retail/simulation/joystick-input.md#normalising-an-axis).
 	///
-	/// <para><b>It is a squared curve, and it is what makes a stick reach full scale.</b> The
-	/// deadzone is subtracted to give <c>±103</c>, then the result is squared and divided by
-	/// <c>(103² >> 8) = 41</c>, so full deflection comes out at <c>103² / 41 = 258</c> — a shade over
-	/// <see cref="Sim.MechControls.AxisFull"/>, which the control laws clamp it to. Reading the
-	/// deadzone as a linear rescale instead lands full deflection on <c>0x80</c>, and everything
-	/// downstream is then half-scale: half the turn rate, half the throttle ramp, and a physical
-	/// throttle lever that can neither idle nor open fully, because
-	/// <see cref="Sim.MechObject"/>'s absolute-lever read measures <c>|axis − 0x100| × 2</c> and only
-	/// spans the throttle's whole range if the axis really does reach <c>±0x100</c>.</para>
-	///
-	/// <para>The curve is also why a stick feels fine to fly with a deadzone this wide: the first
-	/// third of the travel past the band is worth almost nothing, so the centre is soft rather than
-	/// stepped.</para>
+	/// <para>The deadzone is subtracted, then the result is squared and scaled, so full deflection
+	/// comes out at 258 — a shade over <see cref="Sim.MechControls.AxisFull"/>, which the control laws
+	/// clamp it to — and the first stretch of travel past the band is worth almost nothing.</para>
 	/// </summary>
 	/// <param name="raw">One axis in <see cref="RawFull"/> units, as the normalisation leaves it.</param>
 	/// <param name="deadzone">The centre band, <see cref="Deadzone"/> unless the device map moved it.</param>

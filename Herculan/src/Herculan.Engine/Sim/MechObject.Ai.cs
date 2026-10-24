@@ -93,10 +93,8 @@ public partial class MechObject {
 	/// all. An engage whose target is already destroyed clears the order and re-enters.</item>
 	/// <item><b>A mission group order</b> maps verbs 0-6 onto seven states. A null order slot reads as
 	/// verb <c>0x0b</c> and matches no case, so no descriptor is installed and the machine keeps the
-	/// state it already had — <b>which is not what the original does</b>: there the descriptor to
-	/// install is a register nothing on that path wrote — zero through the reassess dispatcher, 4 through
-	/// the re-entry after a destroyed engage target — so the original faults. See
-	/// docs/retail/simulation/ai-goals.md, "A group with no order at all". No retail mission reaches it.</item>
+	/// state it already had. <b>The original faults there instead</b>, on a stale register, though no
+	/// retail mission reaches it — docs/retail/simulation/ai-goals.md#a-group-with-no-order-at-all.</item>
 	/// </list>
 	///
 	/// <para><b>Every path that installs a state here drops the target</b> — the player branch, squad

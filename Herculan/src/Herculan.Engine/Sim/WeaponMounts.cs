@@ -273,28 +273,23 @@ public sealed class WeaponMounts {
 	}
 
 	/// <summary>
-	/// A press on cockpit weapon row <paramref name="gaugeSlot"/>, dispatched the way the original
-	/// dispatches it: <b>by the row's gauge class</b>, not by a switch on what the mount is.
+	/// A press on cockpit weapon row <paramref name="gaugeSlot"/>, dispatched by the row's gauge class
+	/// as the original does:
 	///
 	/// <list type="bullet">
-	/// <item>An energy or ammunition row (<c>EnergyWeaponGauge_OnChildClick</c> (<c>00440ef0</c>) / <c>AmmoWeaponGauge_OnChildClick</c> (<c>004414b4</c>)) branches on the
-	/// mouse-button bit its <c>GetValue</c> slot handed it: the left button arms the mount, the right
-	/// button toggles its membership of the current fire chain.</item>
-	/// <item>An ECM or Turbo row (<c>TogglePodGauge_OnClick</c>, <c>004419fc</c>) flips its button
-	/// byte. <b>It never looks at which button pressed it</b> — the slot takes only the gauge and the
-	/// child — so a right press toggles the pod exactly as a left one does, and neither arms nor
-	/// chains anything.</item>
-	/// <item>A Shield, Targeting or Energy pod row (<c>PodGauge_OnClick</c>, <c>00441988</c>) marks
-	/// itself for repaint and returns. It clicks, it sounds, and nothing changes.</item>
+	/// <item>A weapon row (<c>EnergyWeaponGauge_OnChildClick</c> (<c>00440ef0</c>) /
+	/// <c>AmmoWeaponGauge_OnChildClick</c> (<c>004414b4</c>)): the left button arms the mount, the right
+	/// toggles its membership of the current fire chain.</item>
+	/// <item>An ECM or Turbo pod row (<c>TogglePodGauge_OnClick</c>, <c>004419fc</c>): either button
+	/// toggles the pod.</item>
+	/// <item>A Shield, Targeting or Energy pod row (<c>PodGauge_OnClick</c>, <c>00441988</c>): nothing
+	/// changes.</item>
 	/// </list>
 	///
-	/// <para>Both the mouse and the number keys arrive here. <c>CockpitWidgets_HandleCommand</c>
-	/// (<c>00432bc8</c>) answers codes <c>0x02</c>-<c>0x0b</c> by calling
-	/// <c>WeaponMounts_SelectByGauge</c> on the gauge <i>and</i> pressing its select gadget with the
-	/// left-button bit, so a number key runs the arm twice over on a weapon row and reaches the pod
-	/// toggle on a pod row. <c>[Alt]</c> and a number is a different command bank entirely
-	/// (<c>0x202</c>-<c>0x20b</c>), answered by the weapon manager rather than by the gauge, which is
-	/// why it chains and never toggles a pod.</para>
+	/// <para>A number key arrives here as a left press, since <c>CockpitWidgets_HandleCommand</c>
+	/// (<c>00432bc8</c>) presses the row's select gadget as well as arming it; <c>[Alt]</c> and a number
+	/// is <see cref="ToggleChain"/>. See
+	/// docs/retail/simulation/weapon-mounts.md#arming-chaining-and-linking.</para>
 	/// </summary>
 	/// <param name="gaugeSlot">The row pressed, zero-based — the number it prints minus one.</param>
 	/// <param name="rightButton">Whether the right button completed the press.</param>
@@ -481,23 +476,18 @@ public sealed class WeaponMounts {
 	/// drives those directly) and the auto-fire it performs.
 	///
 	/// <list type="bullet">
-	/// <item><b>The chain advances the armed weapon.</b> Unless <see cref="SingleFire"/> is set, a
-	/// mount that could not fire hands the selection to the next one in the chain that could. This is
-	/// what makes a chain a chain.</item>
-	/// <item><b>A destroyed mount breaks its link.</b> A linked pair whose half is destroyed or out
-	/// of ammunition unlinks both halves and hands the selection to the partner.</item>
+	/// <item>Unless <see cref="SingleFire"/> is set, an armed mount that cannot fire hands the
+	/// selection to the next one in the chain that can.</item>
+	/// <item>A linked pair whose half is destroyed or out of ammunition unlinks both halves and hands
+	/// the selection to the partner.</item>
 	/// </list>
 	///
-	/// <para>The range comes in first, before the advance, exactly as the original orders it: a
-	/// weapon that cannot reach the selected target is not ready, so the chain steps past it and its
-	/// row lights red. The armed weapon still fires — <see cref="FireTick"/> asks the mount alone
-	/// and never consults this.</para>
-	///
-	/// <para><b>An electro-optical round holds the chain.</b> While one is being flown
-	/// (<paramref name="missileFlown"/>) the advance does not run at all — <c>WeaponMounts_ChainReady</c>
-	/// (<c>00410a04</c>) answers ready without asking, as it does for <see cref="SingleFire"/>. Once
-	/// the flight is over, <see cref="ElectroOpticalFired"/> steps the selection on by one and gives
-	/// the chain the selection back, before anything else in the pass.</para>
+	/// <para>The range is stored before the advance, so a weapon that cannot reach the selected target
+	/// is stepped past and its row lights red; it still fires if armed, since <see cref="FireTick"/>
+	/// does not consult this. While an electro-optical missile is being flown
+	/// (<paramref name="missileFlown"/>) the advance does not run (<c>WeaponMounts_ChainReady</c>,
+	/// <c>00410a04</c>); once the flight is over, <see cref="ElectroOpticalFired"/> steps the selection
+	/// on by one first. See docs/retail/simulation/weapon-mounts.md#arming-chaining-and-linking.</para>
 	/// </summary>
 	/// <param name="targetRange">
 	/// Distance to the selected target in world units, or zero when nothing is selected — see
@@ -586,23 +576,17 @@ public sealed class WeaponMounts {
 	}
 
 	/// <summary>
-	/// <c>WeaponMounts_FireTrigger</c> (<c>00410dbc</c>) — the manager's fire entry, and the whole of what pulling the trigger does.
+	/// <c>WeaponMounts_FireTrigger</c> (<c>00410dbc</c>) — what pulling the trigger does: fires the armed
+	/// mount and, when linked, its partner.
 	///
-	/// <para>Its order is worth keeping: <b>both halves of a linked pair are tested before either
-	/// fires</b>, so a pair whose second half is still charging does not fire its first half alone.
-	/// The same goes for the trigger itself, which is asked of each mount separately (vtable
-	/// <c>+0x30</c>) even though every mount answers from the same device byte.</para>
-	///
-	/// <para>Firing clears <see cref="SingleFire"/> the moment the armed mount is no longer ready,
-	/// which is what "once you fire, the current firing chain will resume" means in the manual: a
-	/// weapon armed by hand keeps the selection until its shot leaves it unready, and then the chain
-	/// takes over again on the next <see cref="PerFrameUpdate"/>.</para>
-	///
-	/// <para>When the armed mount's <see cref="WeaponMount.AmmoType"/> is
-	/// <see cref="Rocket.PlayerFlownSubtype"/> — it has just launched an electro-optical round — the
-	/// shot raises <see cref="ElectroOpticalFired"/> and <see cref="PlayerMissileState.Flown"/>, so the
-	/// controls go to the round from the next tick. Only the locally piloted machine's trigger reaches
-	/// this in the original, which is what the owner test stands for here.</para>
+	/// <para>Both halves of a linked pair must be ready, and then both must take the trigger as held,
+	/// before either fires. Once the armed mount is no longer ready <see cref="SingleFire"/> clears, so
+	/// the chain takes the selection back on the next <see cref="PerFrameUpdate"/>. An armed mount of
+	/// <see cref="Rocket.PlayerFlownSubtype"/> raises <see cref="ElectroOpticalFired"/> and
+	/// <see cref="PlayerMissileState.Flown"/>, so the controls go to the electro-optical missile from
+	/// the next tick. Only the locally piloted machine's trigger reaches this in the original, which is
+	/// what the owner test stands for here. See
+	/// docs/retail/simulation/weapon-firing.md#weaponmounts_firetrigger-in-order.</para>
 	/// </summary>
 	/// <param name="owner">The machine firing, which the shot's geometry and the raycast both need.</param>
 	/// <param name="world">The world the shot is resolved against.</param>
@@ -714,27 +698,13 @@ public sealed class WeaponMounts {
 	/// <c>WeaponMounts_ArbitrateEnergy</c> (<c>004107e4</c>), called from <c>Mech_PerTickSystemsUpdate</c> between the reactor's
 	/// contribution and the shields'.
 	///
-	/// <para>Mounts are served one at a time, and the order is not the mount order:</para>
-	/// <list type="number">
-	/// <item>The armed mount goes first, before the ranking is consulted at all. An AI machine
-	/// passes -1 for it and starts straight at the ranking.</item>
-	/// <item>Every pass after that picks the highest-priority mount not yet served — priority being
-	/// <see cref="WeaponMount.EnergyPriority"/>, which a mount mid-charge reports as 10000 so that it
-	/// finishes before anything else starts.</item>
-	/// <item>Once any mount reports itself mid-charge, every mount served after it this tick is told
-	/// to target zero instead and bleeds its own capacitor back into the pool.</item>
-	/// </list>
-	///
-	/// <para><b>The burst follow-up fires from here</b>, not from the trigger: a mount served this
-	/// pass that reports <see cref="WeaponMount.AutoFireDue"/> is dispatched again immediately, with
-	/// no trigger read and no readiness test. Only the charge-up gun branch ever arms that, and only
-	/// on <c>EMP2</c>, so this is the second of that weapon's two volleys and nothing else.</para>
-	///
-	/// <para><b>The energy half of the unlimited-ammunition cheat is here</b>, and it is a refund
-	/// rather than a suspension: the mounts are served and charged exactly as they otherwise would
-	/// be, and then the budget the pool gets back is the one it came in with, so a player machine
-	/// with the cheat set never spends reactor energy on its guns. See
-	/// <see cref="SimWorld.UnlimitedAmmunition"/>.</para>
+	/// <para>The armed mount (<paramref name="selected"/>) is served first, then the rest one at a
+	/// time by <see cref="WeaponMount.EnergyPriority"/>; once any mount reports itself mid-charge,
+	/// every mount served after it this tick bleeds its capacitor back into the pool instead. A served
+	/// mount whose <see cref="WeaponMount.AutoFireDue"/> is set fires its burst follow-up here, with no
+	/// trigger read or readiness test. With <see cref="SimWorld.UnlimitedAmmunition"/> on the player's
+	/// machine the pool gets its whole budget back. See
+	/// docs/retail/simulation/reactor-energy-pool.md#weapon-energy-arbitration--weaponmounts_arbitrateenergy-004107e4.</para>
 	/// </summary>
 	/// <param name="budget">The pool less its reserve.</param>
 	/// <param name="selected">

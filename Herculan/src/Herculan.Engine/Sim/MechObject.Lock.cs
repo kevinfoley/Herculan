@@ -93,8 +93,9 @@ public sealed partial class MechObject {
 	private bool _lockToneSounded;
 
 	/// <summary>
-	/// <c>Mech_LockTonePlay</c> (<c>0041b0bc</c>) — the cockpit's lock audio. Three sounds come out
-	/// of one flag:
+	/// <c>Mech_LockTonePlay</c> (<c>0041b0bc</c>) — the cockpit's lock audio
+	/// (docs/retail/simulation/missile-lock.md#the-lock-lamp). Three sounds come out of one
+	/// flag:
 	///
 	/// <list type="bullet">
 	/// <item>Holding lock: <see cref="SoundId.LockTone"/> once per blink phase.</item>
@@ -292,10 +293,10 @@ public sealed partial class MechObject {
 
 	/// <summary>
 	/// <c>Mech_PerTickSystemsUpdate</c>'s jammer block, through <c>Mech_IsEcmSwitchedOn</c> (<c>0041aa10</c>) — the only writer
-	/// of <c>mech+0xa1</c>.
+	/// of <c>mech+0xa1</c>. Retail behavior: docs/retail/simulation/missile-lock.md#ecm.
 	///
 	/// <para>An ECM pod is the outer gate: without one the answer is false and nothing else is
-	/// consulted. With one, who is flying decides which switch is read.</para>
+	/// consulted. With one, whether the player is piloting decides which switch is read.</para>
 	///
 	/// <list type="bullet">
 	/// <item><b>An AI machine reads its radar mode.</b> It jams exactly while its scanner is ACTIVE,

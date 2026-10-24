@@ -12,22 +12,12 @@ namespace Herculan.Engine.Scene;
 /// than chosen: how far the original draws, where inside that its fade begins, what colour it ends
 /// on, and the banded sky above it.
 ///
-/// <para>Both numbers come out of <c>Terrain_DrawCellQuad</c>, which per cell installs the
-/// visibility range as <c>grid[+0x10c] &lt;&lt; grid[+0x108]</c> — the view radius in cells scaled
-/// to world units (<see cref="HeightGrid.VisibilityRange"/>) — and then fades against it through
-/// <c>Raster_SetDepthFadeFromDistance</c>, which is flat until half the range and saturated at it
-/// (<see cref="ShadeRamp.DepthSliceFor"/>). The colour is the theater ramp's own far slice
-/// (<see cref="ShadeRamp.FogColor"/>).</para>
-///
-/// <para>Retail zones run 344 m to 1376 m at the highest detail setting, and 6/14ths of that at the
-/// lowest (see <see cref="TerrainDetail"/>) — a far shorter draw distance than the engine's
-/// previous hand-picked 900 m/9000 m, which was a guess made before any of this was traced and left
-/// distant terrain unfogged where the original has it fully washed out.</para>
-///
-/// <para>The engine spends this the original's own way, by reading the theater ramp at one of its
-/// twelve depth slices — see <see cref="ShadeRamp"/> and <see cref="Render.PaletteRampTable"/>. The
-/// two numbers here are what the slice is chosen against, and what the blend fallback for a surface
-/// with no ramp row fades over.</para>
+/// <para>The range is <see cref="HeightGrid.VisibilityRange"/>, the fade runs over its outer half
+/// (<see cref="ShadeRamp.DepthSliceFor"/>), and the colour is the theater ramp's own far slice
+/// (<see cref="ShadeRamp.FogColor"/>) — docs/retail/rendering/distance-fog-and-sky.md#visibility-range.
+/// The renderer fogs by reading the theater ramp at one of its depth slices (see
+/// <see cref="Render.PaletteRampTable"/>); the two distances here are what the slice is chosen
+/// against, and what the blend fallback for a surface with no ramp row fades over.</para>
 /// </summary>
 /// <param name="FogStart">Render units (metres) at which the fade begins — half the visibility range.</param>
 /// <param name="FogEnd">Render units at which it is total — the visibility range.</param>

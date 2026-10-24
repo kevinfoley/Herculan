@@ -19,11 +19,11 @@ internal static class ShellWeaponProse {
 	///
 	/// <list type="bullet">
 	/// <item><b>Range.</b> <c>L100</c>'s template is 55000 units, 330 m, where both files print 320. A
-	/// launcher's round flies about 315 m whatever it is loaded with
+	/// missile flies about 315 m whatever the launcher is loaded with
 	/// (docs/retail/simulation/rockets.md#flight--rocket_tickupdate-0040a538), printed as 320 m, to the
 	/// nearest 10 m as the prose prints every other range: the files give the four guidance kinds 510,
 	/// 420, 420 and 360 m and the racks nothing or "Varies".</item>
-	/// <item><b>Warhead damage.</b> The four guidance kinds' rounds carry one <c>PROJ.DAT</c> figure
+	/// <item><b>Warhead damage.</b> The four guidance kinds' missiles carry one <c>PROJ.DAT</c> figure
 	/// pair, 400 shield and 1600 armour (docs/retail/formats/proj-dat.md#the-retail-records), where
 	/// the prose gives 3000, 2250, 2500 and 3500. Each prints the sum, 2000, to the nearest 100. The
 	/// splash factor is not added: it is a share of the armour figure, not damage on top of it

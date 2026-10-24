@@ -168,27 +168,13 @@ internal sealed class GunsightPainter {
 
 	/// <summary>
 	/// The target box, emitted as its own batch so it can be drawn <b>under</b> the canopy art. It is
-	/// the one HUD element the cockpit frame covers, and that is a real distinction in the original
-	/// rather than a layering choice here.
+	/// the one HUD element the cockpit frame covers: retail paints it alone in the view's canopy-cutout
+	/// clip rather than the cockpit canvas's
+	/// (docs/retail/simulation/hud-target-indicator.md#why-the-box-goes-behind-the-cockpit-frame).
 	///
-	/// <para>Every widget the cockpit paints goes through a render context whose clip block decides
-	/// what it may touch. <c>Gau_BuildCockpitWidgets</c> (<c>00431bf8</c>) builds one covering the
-	/// whole cockpit canvas in the plain single-rect clip mode and stores it at
-	/// <c>CockpitViewInstance+4</c>; <c>Cockpit_PushCanvasContext</c> (<c>004311e0</c>) installs it and <c>Cockpit_PopRenderContext</c> (<c>00431210</c>) restores
-	/// whatever was there before. The context underneath is the one
-	/// <c>CockpitView_ApplyViewState</c> (<c>00429e60</c>) loaded the current view's own
-	/// <c>0x204</c>-byte clip block into — the herc's <c>.HD</c>/<c>.ED</c> canopy cutout — putting it
-	/// in clip <b>mode 2</b>, the region-list mode, in which a bitmap is cut to the canopy opening
-	/// scanline by scanline — following the A-pillars, not a rectangle (see
-	/// docs/retail/simulation/hud-target-indicator.md, "Why the box goes behind the cockpit frame").</para>
-	///
-	/// <para><b>Child 5 is the only widget that opts into it</b>: its paint calls
-	/// <c>Cockpit_PopRenderContext</c> before the box and <c>Cockpit_PushCanvasContext</c> after, dropping out of the canvas
-	/// context for those blits alone. The reticle, the heading tape, the rotation indicator, the
-	/// readouts and the off-screen arrow all stay in the canvas context and are never cut. Reproduced
-	/// here by draw order: this batch goes down before the canopy quad, whose art is opaque everywhere
-	/// but the cutout (see <see cref="CockpitClipRegions"/>, which is the same region data), so the
-	/// frame covers it exactly where the original's clip block would have.</para>
+	/// <para>This engine reproduces that by draw order: this batch goes down before the canopy quad,
+	/// whose art is opaque everywhere but the cutout (<see cref="CockpitClipRegions"/>, the same region
+	/// data), so the frame covers the box exactly where the original's clip would.</para>
 	/// </summary>
 	internal void AddTargetBoxLayer(GAUFile gau, HudSpriteSheet sprites, CockpitHudState state,
 			float scale, float quadX0) {

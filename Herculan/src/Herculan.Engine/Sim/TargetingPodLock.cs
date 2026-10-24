@@ -131,11 +131,8 @@ public sealed class TargetingPodLock {
 	/// own aim node and false. Otherwise it asks whether the locked component is still there,
 	/// cycling once if it is not — <b>without re-testing</b>, so a target that has run out of parts
 	/// is asked for the position of component <see cref="NoComponent"/>, which every class answers
-	/// with its own origin.</para>
-	///
-	/// <para>The original's fourth parameter is dead: <c>Player_ResolveTargetAimPoint</c> passes the
-	/// target's occupancy array and the body never touches it. The pod reaches the same array through
-	/// the target's own slots instead.</para>
+	/// with its own origin. The original's unused fourth parameter has no counterpart here — see
+	/// docs/retail/simulation/target-selection.md#a-damaged-pod-degrades-in-four-steps.</para>
 	/// </summary>
 	/// <param name="target">The selected object — always a HERC by the time the lock is non-negative.</param>
 	/// <param name="point">Where to aim.</param>

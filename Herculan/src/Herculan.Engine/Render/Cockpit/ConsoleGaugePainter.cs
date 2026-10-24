@@ -14,35 +14,16 @@ namespace Herculan.Engine.Render.Cockpit;
 /// </summary>
 internal static class ConsoleGaugePainter {
 	/// <summary>
-	/// One row per fitted hardpoint, built the way <c>WeaponGauge_Ctor</c> (<c>0044080c</c>) and its
-	/// select-gadget child (<c>ChainedWeaponSelectGadget_Ctor</c> (<c>00442488</c>), painted by <c>WeaponSelectGadget_Paint</c> (<c>004426c0</c>)) build it:
-	///
-	/// <list type="bullet">
-	/// <item>the row plate from <c>PWEAPONS</c> — frame 0 selected, frame 1 not — blitted
-	/// <see cref="RowPlateBezel"/> device pixels up and left of the <c>.GAU</c> rect;</item>
-	/// <item>the hardpoint's state box from <c>PWEAPONS</c> frames 4 and 5 (6x14) at the rect's
-	/// <c>+12</c> device offset — the constructor's own <c>+6</c> GAU literal. It is drawn only for a
-	/// mount that is armed or in the current fire group, lit (frame 4) when the mount could fire and
-	/// dark (frame 5) when it could not, which is why a pod's row never has one;</item>
-	/// <item>the slot number, centred in the label <c>WeaponSelectGadget_Ctor</c> (<c>004421dc</c>) builds at
-	/// <c>+2..+5</c> GAU, then the weapon's name in the label rect the constructor puts at <c>+11..+35</c> GAU.
-	/// Colour is the font: the name <c>WHITE</c> for the selected row and the number <c>GREEN</c>, both
-	/// <c>GRAY</c> on the rest.</item>
-	/// <item>and, on a pod row whose button is on, that label rect flooded green first — see
-	/// <see cref="PodPlateColorId"/>.</item>
-	/// <item>the value field past the name, at <c>+0x24..+0x35</c> GAU — a round count for an
-	/// ammunition mount (<c>AmmoWeaponGauge_Paint</c> (<c>004411b4</c>) prints <c>itoa(rounds)</c> there) and an LED charge bar
-	/// for an energy one (<c>WeaponSliderGadget_Paint</c> (<c>00442b38</c>) paints one across the same span). A pod has neither: its
-	/// own constructor widens the name label across both fields instead.</item>
-	/// </list>
-	///
-	/// <para>Under all of it, <c>WPN_DMG</c> frame 0 fills the plate's hole — <c>WeaponSelectGadget_PaintUnderlay</c> (<c>00442394</c>)'s
-	/// underlay, a flat plate in the row's own background colour. The bank's other nine frames are the
-	/// row's sensor-dropout wipe: while <see cref="WeaponRowState.DropoutHidden"/> every paint but the
-	/// plate's bezel holds back, and the wipe's frame stands in the hole instead.</para>
-	///
-	/// <para>A pod row has no plate: its select gadget is the plain class, whose paint is the underlay and the
-	/// number alone (<c>WeaponSelectGadget_PaintUnderlay</c>).</para>
+	/// One row per fitted hardpoint, as <c>WeaponGauge_Ctor</c> (<c>0044080c</c>) and its select gadget
+	/// (<c>ChainedWeaponSelectGadget_Ctor</c> (<c>00442488</c>), painted by
+	/// <c>WeaponSelectGadget_Paint</c> (<c>004426c0</c>)) build and paint it
+	/// (docs/retail/simulation/cockpit-hud-widgets.md#weapon-hardpoint-rows): the <c>WPN_DMG</c>
+	/// underlay, the <c>PWEAPONS</c> row plate <see cref="RowPlateBezel"/> device pixels up and left of
+	/// the <c>.GAU</c> rect, the hardpoint's state box, the slot number and weapon name, and the value
+	/// field (an ammunition count or an LED charge bar). A pod row has no plate, and its label rect
+	/// floods green while its button is on (<see cref="PodPlateColorId"/>). While
+	/// <see cref="WeaponRowState.DropoutHidden"/>, only the plate is drawn, with the sensor-dropout
+	/// wipe's frame in its hole.
 	///
 	/// <para>The rows are drawn in <see cref="CockpitHudState.WeaponPaintOrder"/>, the most recently repainted
 	/// last, because a plate's bezel overhangs its rect and the RAZOR's rows 3 and 6 share two columns.</para>

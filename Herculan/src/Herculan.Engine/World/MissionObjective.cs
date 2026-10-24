@@ -29,11 +29,9 @@ public enum MissionObjectiveSubject {
 /// <para>An objective is a <b>question about one subject</b> plus what answering it does. The
 /// question is <see cref="ConditionCode"/> asked of <see cref="SubjectKind"/>/<see cref="SubjectRef"/>;
 /// the answer is read two different ways depending on <see cref="Required"/>, and the first time it
-/// comes back true the record's ten counter slots are applied and the record latches.</para>
-///
-/// <para><b>The field-to-offset mapping is the spawn pass's read order</b>, which is the only
-/// statement of it: seven shorts, then ten counter refs, then ten operations. See
-/// docs/retail/simulation/mission-objectives.md.</para>
+/// comes back true the record's ten counter slots are applied and the record latches. See
+/// docs/retail/simulation/mission-objectives.md; the record's layout is
+/// docs/retail/formats/script-dat.md#block-12-in-memory--76-bytes-0x4c.</para>
 /// </summary>
 /// <param name="Required"><inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptObjective.Required" path="/summary/node()"/></param>
 /// <param name="ConditionCode">Record <c>+0x02</c> — which question is asked. See the constants below.</param>

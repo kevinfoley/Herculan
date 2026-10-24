@@ -4,31 +4,21 @@ using Herculan.Engine.Content;
 namespace Herculan.Engine.Terrain;
 
 /// <summary>
-/// One record from <c>dat\mat0</c> — the shared (not per-zone) terrain material/detail-type table
-/// DBSIM loads alongside every zone heightmap, into <c>HeightGrid+0x121</c>. Records are 8 bytes:
-/// two little-endian <see cref="int"/>s.
+/// One record from <c>dat\mat0</c>, the shared terrain material table DBSIM loads with every zone
+/// heightmap, into <c>HeightGrid+0x121</c>: two little-endian <see cref="int"/>s. See
+/// docs/retail/formats/zone-terrain.md#datmat0--the-material-table.
 /// </summary>
 /// <param name="Index">
-/// First field. Runs 0, 1, 2, ... in file order in the real <c>MAT0.DAT</c>, so it reads like a
-/// self-index — but it is <b>a frame index into the zone's terrain texture bank</b>.
-/// <c>Terrain_ResolveCellTexture</c> uses it as <c>descriptorTable[Index * 0x14]</c> against the
-/// same 20-byte-per-frame descriptor table the mech texture path uses. See
-/// docs/retail/rendering/terrain-texturing.md.
+/// The frame of the theater's terrain texture bank this material draws. It runs 0, 1, 2, … in file
+/// order, so it reads like a self-index, but it is a frame index — see
+/// docs/retail/rendering/terrain-texturing.md#mat0s-two-fields.
 /// </param>
 /// <param name="BlockShift">
-/// Second field, with two distinct consumers.
-///
-/// <para><b>At load:</b> <c>TerrainZone_PopulateFromBitmap</c> reads record 0's copy to size the
-/// block over which one material roll is shared —
-/// <c>blockMask = (1 &lt;&lt; (0x15 - BlockShift - CellShift)) - 1</c>. With the retail values
-/// (record 0's BlockShift = 6, CellShift = 14) that is a 2x2-cell block.</para>
-///
-/// <para><b>At render:</b> it selects how the frame is placed on a cell. Zero means the frame's own
-/// UV corners are used verbatim (stretched across the quad). Non-zero tiles it:
-/// <c>shift = CellShift + BlockShift - 13</c>, then the cell's rect is
-/// <c>u0 = (cellX &lt;&lt; shift) &amp; 0xff</c>, <c>v0 = (cellY &lt;&lt; shift) &amp; 0xff</c>,
-/// spanning <c>1 &lt;&lt; shift</c> texels, V negated. The <c>&amp; 0xff</c> is a 256-texel wrap —
-/// which is why terrain banks ship as 256x256 and must be edge-tileable.</para>
+/// How the frame is placed on a cell: zero stretches the whole frame across the quad, non-zero tiles
+/// it at <c>1 &lt;&lt; (CellShift + BlockShift - 13)</c> texels per cell, wrapping at 256 — see
+/// docs/retail/rendering/terrain-texturing.md#mat0s-two-fields. Record 0's copy also sizes the
+/// block of cells that shares one material roll at zone load
+/// (docs/retail/simulation/terrain-heightmap.md#per-cell-record-16-bytes).
 /// </param>
 public readonly record struct TerrainMaterial(int Index, int BlockShift);
 

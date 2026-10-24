@@ -62,23 +62,16 @@ public sealed class TerrainTextureBank {
 	/// its material or frame does not resolve — in which case the caller falls back to flat shading
 	/// for that cell rather than sampling an arbitrary part of the atlas.
 	///
-	/// <para>A literal transcription of <c>Terrain_ResolveCellTexture</c> (<c>0046bcf4</c>):</para>
-	/// <code>
-	/// BlockShift == 0 : the frame's own corners, i.e. one frame stretched over the quad
-	/// BlockShift != 0 : shift = cellShift + BlockShift - 13
-	///                   u0 = (cellX &lt;&lt; shift) &amp; 0xff, spanning 1 &lt;&lt; shift texels
-	///                   v0 = (cellY &lt;&lt; shift) &amp; 0xff, likewise, with V negated
-	/// </code>
+	/// <para><c>Terrain_ResolveCellTexture</c> (<c>0046bcf4</c>), whose placement modes are
+	/// docs/retail/rendering/terrain-texturing.md#mat0s-two-fields. The wrap never splits a cell's
+	/// rect: <c>u0</c> is always a multiple of the span, so <c>u0 + span</c> lands at or below 256.
+	/// That is what lets the bank be packed into an atlas, each cell sampling only its own sub-rect
+	/// with no texture-space repeat.</para>
 	///
-	/// <para>Note the wrap can never split a cell's rect: <c>u0</c> is always a multiple of the span,
-	/// so <c>u0 + span</c> lands at or below 256. That is what lets the bank be packed into an atlas
-	/// at all — no cell needs texture-space repeat, only its own sub-rect.</para>
-	///
-	/// <para><b>Corner order is the original's too, and V1 is the smaller value.</b> <c>u</c> rises
-	/// with <c>cellX</c> but <c>v</c> falls with <c>cellY</c>, and <see cref="AtlasRect.V1"/> is the V
-	/// at corner <c>cellY + 1</c>. Handing the pair over the other way mirrors every cell against the
-	/// row below it. See docs/retail/rendering/terrain-texturing.md, "Which quad corner takes which UV", for
-	/// how the mapping is read off <c>Terrain_DrawCellQuad</c>.</para>
+	/// <para><b>V1 is the smaller value.</b> <see cref="AtlasRect.V1"/> is the V at corner
+	/// <c>cellY + 1</c>, since <c>v</c> falls with <c>cellY</c>
+	/// (docs/retail/rendering/terrain-texturing.md#which-quad-corner-takes-which-uv). Handing the pair
+	/// over the other way mirrors every cell against the row below it.</para>
 	/// </summary>
 	public AtlasRect? CellRect(HeightGrid grid, int cellX, int cellY) {
 		int material = grid.MaterialIndexAt(cellX, cellY);

@@ -334,8 +334,8 @@ public static partial class DtsMeshBuilder {
 	/// <summary>
 	/// Two triangles over the same surface — same rounded centroid, same axis — both drawn, would tie
 	/// in the depth buffer. The original paints one after the other, so the later one in the shape's
-	/// paint order is what shows (docs/retail/rendering/dts-texture-binding.md, "Poly order within a
-	/// group"), and that is the one kept, per side it is seen from. Dropping the earlier puts the same
+	/// paint order is what shows (docs/retail/rendering/dts-texture-binding.md#poly-order-within-a-group),
+	/// and that is the one kept, per side it is seen from. Dropping the earlier puts the same
 	/// pixels on screen as painting the later over it, without spending a paint layer
 	/// (<see cref="PaintLayers"/>) on it; a twin fanned from a different corner matches no triangle
 	/// here and is left to the layers.

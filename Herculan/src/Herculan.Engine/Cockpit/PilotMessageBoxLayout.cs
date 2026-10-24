@@ -8,26 +8,21 @@ namespace Herculan.Engine.Cockpit;
 /// geometry and colour half of <see cref="SquadMessagePort"/>, the way
 /// <see cref="MessageTickerLayout"/> is the computer ticker's.
 ///
-/// <para>The two ports are separate instances of the same class, built side by side from adjacent
-/// <c>.GAU</c> rects (<see cref="GAUFile.PilotMessagePort"/> at content offset 1668, the ticker's at
-/// 1684), and they look nothing alike. The computer's is a fixed 120-unit box with a scrolling line
-/// in it. This one is <b>sized to its text and centred on the screen</b>: the paint measures the
-/// composed line, sets the box to that width plus <see cref="HorizontalPadding"/> on each side, and
-/// centres the pair on the screen's midline every time it draws. Only the authored rect's vertical
-/// half survives — the box's y pair is the <c>.GAU</c>'s, its x pair is recomputed.</para>
+/// <para>Unlike the computer's fixed box with a scrolling line, this one is <b>sized to its text and
+/// centered on the screen</b>: the paint sets the box to the composed line's width plus
+/// <see cref="HorizontalPadding"/> on each side and centers it on the screen's midline every time
+/// it draws. Only the vertical half of the authored rect (<see cref="GAUFile.PilotMessagePort"/>)
+/// is used.</para>
 ///
-/// <para><b>The colours are the speaker's, not the port's.</b> A message from a squadmate fills with
-/// that pilot's own comm-box colour — <see cref="HudColorTable.PilotColorId"/>, in retail green for
-/// slot 0 and yellow for slot 1, the colours their markers wear on the [F7] map — and frames it in the palette entry <i>one below</i>
-/// the fill. That subtraction is raw palette arithmetic on the already-resolved index, not a second
-/// <c>COLORS.DAT</c> id, and it is what puts a yellow frame (palette 13) around slot 0's green
-/// (palette 14). Only a message with no squadmate behind it falls back to the computer's own black
-/// and red, through <see cref="NoSpeakerFillColorId"/>.</para>
+/// <para><b>The colors are the speaker's, not the port's.</b> A message from a squadmate fills with
+/// that pilot's own comm-box color, <see cref="HudColorTable.PilotColorId"/>, and is framed in the
+/// palette entry <i>one below</i> the fill — raw palette arithmetic on the resolved index, not a
+/// second <c>COLORS.DAT</c> id. A message with no squadmate behind it falls back to the computer's
+/// own black and red, through <see cref="NoSpeakerFillColorId"/>.</para>
 ///
-/// <para>Derivation: <c>PilotMessagePort_Speak</c> (<c>00435d9c</c>), which paints this box as well
-/// as dispatching the voice. The training mission's port class paints a different thing
-/// (<c>0043660c</c>) — several word-wrapped lines in the computer's black and red — and it is the
-/// speaker-coloured single line that is on screen in <c>Reference/MFD_Talking_head.png</c>.</para>
+/// <para>Ports the box half of <c>PilotMessagePort_Speak</c> (<c>00435d9c</c>); see
+/// docs/retail/simulation/cockpit-messages.md#its-box. The training port paints a different box,
+/// <see cref="TrainingMessageLayout"/>.</para>
 /// </summary>
 /// <param name="Top">Device-pixel top edge, from the <c>.GAU</c>.</param>
 /// <param name="Bottom">Device-pixel bottom edge, from the same rect.</param>

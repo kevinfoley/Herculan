@@ -7,7 +7,7 @@ namespace Herculan.Engine.Sim;
 /// Who knows about whom — the sensor model the whole of target selection stands on.
 ///
 /// <para>There are <b>two separate notions of "seen"</b> in the original and they are not
-/// interchangeable, which is the thing to get right before reading anything below:</para>
+/// interchangeable:</para>
 /// <list type="bullet">
 /// <item><b>Radar visibility</b> (<see cref="SimObject.RadarVisible"/>, <c>obj+0x95</c>) is a
 /// property of one object. Something with an active scanner painted it, so it is showing on
@@ -23,11 +23,11 @@ namespace Herculan.Engine.Sim;
 /// radar-visible object out to <see cref="RadarTargetingRange"/>, a known contact out to the
 /// scanner's own setting.</para>
 ///
-/// <para><b>The sweep is asymmetric and that is deliberate in the original.</b>
-/// <see cref="Tick"/> runs <see cref="Sweep"/> for human-side objects only, and each sweep looks
-/// only at Cybrid ones — but the pass writes both objects' tables, so a Cybrid machine ends up
-/// knowing about the human that spotted it without ever running a sweep of its own. Half the loops
-/// are missing because they are not needed, not because they were dropped here.</para>
+/// <para><b>The sweep is asymmetric, as in the original.</b> <see cref="Tick"/> runs
+/// <see cref="Sweep"/> for human-side objects only, and each sweep looks only at Cybrid ones, but
+/// the pass writes both objects' tables, so a Cybrid machine knows about the human that spotted it
+/// without running a sweep of its own. See
+/// docs/retail/simulation/target-selection.md#the-sensor-model--sim_detectiontick-004123ac.</para>
 /// </summary>
 public static class Detection {
 	/// <summary>

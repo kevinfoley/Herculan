@@ -131,11 +131,9 @@ internal static class PaperDollPainter {
 	/// docs/retail/simulation/heads-down-display.md#damage-detail--page-1.</para>
 	///
 	/// <para>The rect is the file's inclusive corner pair, doubled and its far corner nudged one
-	/// further, because the loader shifts every <c>.PDG</c> coordinate by the video mode's
-	/// <c>X/YCoordShift</c> and adds that <c>+1</c> with the hi-res banks (<c>VideoMode_UseHiResBanks</c>),
-	/// whose <c>.HBA</c> art this draws — so the region covers the
-	/// full 2x2 device footprint of each source pixel. Matching pixels go out as merged horizontal
-	/// runs rather than one quad each.</para>
+	/// further, as the loader places it for the hi-res banks this draws
+	/// (docs/retail/formats/pdg-paper-doll.md#views). Matching pixels go out as merged horizontal runs
+	/// rather than one quad each.</para>
 	/// </summary>
 	internal static void AddPaperDollTint(CockpitArt hud, HudSpriteSheet sprites, string bank, int frame,
 			PaperDollGraphic.ViewRegion region, int? reading, bool repaintIntact, float dollLeft, float dollTop,

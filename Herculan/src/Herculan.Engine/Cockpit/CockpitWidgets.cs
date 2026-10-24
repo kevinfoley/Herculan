@@ -234,9 +234,8 @@ public readonly record struct CockpitWidgetId(CockpitWidgetKind Kind, int Index)
 /// </param>
 /// <param name="Draggable">
 /// Whether pressing this widget captures the pointer — the original's per-widget <c>+0x1d</c> flag,
-/// which <c>Widget_OnMouseDown</c> (<c>004527a0</c>) tests before latching the global drag capture
-/// and dispatching the widget's own drag handler. Every button class leaves it clear; the slider
-/// base (<c>004524a8</c>) sets it, which is the whole of what makes the throttle draggable (the energy rows' charge bars carry it too, under their rows' select gadgets).
+/// which <c>Widget_OnMouseDown</c> (<c>004527a0</c>) tests. Only sliders carry it: the throttle, and
+/// the energy rows' charge bars (docs/retail/simulation/cockpit-input.md §7).
 /// </param>
 public readonly record struct CockpitWidget(CockpitWidgetId Id, CockpitSurface Surface,
 		int X0, int Y0, int X1, int Y1, bool Lit, bool Selected = false, bool Draggable = false) {
@@ -268,16 +267,11 @@ public readonly record struct CockpitWidget(CockpitWidgetId Id, CockpitSurface S
 /// <see cref="CockpitScreenLayout"/>: that type gets a click from the window down to a surface's art
 /// pixel, this one says which widget is under it.</para>
 ///
-/// <para><b>Faithful to the original in the part that matters.</b> DBSIM keeps one flat, cockpit-wide
-/// clickable list rather than a per-panel tree — every widget anywhere in the cockpit is appended to
-/// the same array by <c>Widget_RegisterClickable</c> (<c>00452c44</c>), and
-/// <c>Widget_HitTestChildren</c> (<c>00452a00</c>) linear-scans the whole thing. Nothing is removed
-/// when a panel stops showing; a hidden widget is skipped because its state byte says so
-/// (docs/retail/simulation/cockpit-input.md §5). What is reproduced here is that <i>rule</i> — hidden means not
-/// hit — via the layouts' own visibility tables, which are the decoded form of the same state byte.
-/// The flat array itself is not reproduced as a mutable registry: widgets are enumerated on demand
-/// from the layout tables, since nothing in Herculan needs to register or unregister one at
-/// runtime.</para>
+/// <para>DBSIM keeps one flat, cockpit-wide clickable list, and its hit test skips a hidden widget by
+/// its state byte (docs/retail/simulation/cockpit-input.md §5). This reproduces that rule — hidden
+/// means not hit — through the layouts' own visibility tables, the decoded form of the same state
+/// byte. The list is not kept as a mutable registry: widgets are enumerated on demand from the
+/// layout tables, since nothing in this engine registers or unregisters one at runtime.</para>
 ///
 /// <para><b>Clickable is not the same as drawable.</b> Every widget listed here is hit-testable,
 /// including ones with no sprite of their own — the Heads-Down Display's title box and its dead slot
@@ -291,21 +285,16 @@ public static class CockpitWidgets {
 	/// original's hit test skips them just as completely.
 	///
 	/// <para><b>The order is the original's registration order, and it is load-bearing:</b>
-	/// <see cref="HitTest"/> takes the first match, exactly as <c>Widget_HitTestChildren</c> takes the
-	/// first entry of the flat list <c>Widget_RegisterClickable</c> appended to. That list is built by
-	/// <c>Gau_BuildCockpitWidgets</c> (<c>00431bf8</c>) in the order the seven top-level gauges are
-	/// constructed — console buttons (<c>ConsoleButtons_Ctor</c>), energy meter (no clickables),
-	/// shield facings, the multi-function display, the throttle, the roving gunsight, then the
-	/// Heads-Down Display — followed by the weapon rows, which the function's closing
-	/// <c>WeaponMounts_BuildGauges</c> builds one per mount, and finally the screen-edge strips on
-	/// the first cockpit frame.</para>
+	/// <see cref="HitTest"/> takes the first match, as <c>Widget_HitTestChildren</c>
+	/// (<c>00452a00</c>) does — see docs/retail/simulation/cockpit-input.md, "Registration order is
+	/// precedence".</para>
 	///
 	/// <para>Two of the original's entries are not in this list. The pair of <c>SystemGadget</c>s
-	/// <c>SystemButtons_Ctor</c> registers ahead of everything stays on the same screen pixels in every
-	/// view rather than on any art, so <see cref="SystemButtons"/> places them and
-	/// <see cref="Input.CockpitInput"/> tests them before this list. The roving gunsight's click surface
-	/// covers the 3D window and is not implemented; it overlaps no widget that is, so leaving it out
-	/// costs nothing but its own behaviour.</para>
+	/// stays on the same screen pixels in every view rather than on any art, so
+	/// <see cref="SystemButtons"/> places them and <see cref="Input.CockpitInput"/> tests them before
+	/// this list, as their registering first does in retail. The roving gunsight's click surface over
+	/// the 3D window is left out: its click does nothing
+	/// (docs/retail/simulation/cockpit-gunsight-hud.md) and it overlaps no widget listed here.</para>
 	/// </summary>
 	public static IEnumerable<CockpitWidget> Visible(CockpitArt art, CockpitHudState state) {
 		ArgumentNullException.ThrowIfNull(art);
@@ -359,18 +348,15 @@ public static class CockpitWidgets {
 	/// has no <c>.HB1</c> to pan to.
 	///
 	/// <para><b>One widget, two screen edges.</b> <c>CockpitView_BuildScrollTriggers</c>
-	/// (<c>00433770</c>) makes this a band across the bottom of the forward view's own window, and the
-	/// original's widget rects are in cockpit-canvas space: <c>Widget_OnMouseDown</c> hit-tests
-	/// <c>point - root-&gt;rect</c>, and <c>Widget_TranslateRootForView</c> (<c>00452734</c>) moves
-	/// that root origin by the view delta on every view change. Because the heads-down view's canvas
-	/// origin is only 237 authored rows down a 240-row window, the band it occupies is the bottom of
-	/// the forward view and the top of the heads-down view at the same time — which is why retail pans
-	/// down on a click at the bottom of the screen and back up on a click at the <i>top</i>.</para>
+	/// (<c>00433770</c>) builds one band that is the bottom of the forward view and the top of the
+	/// heads-down view at once, so retail pans down on a click at the bottom of the screen and back up
+	/// on a click at the <i>top</i> (docs/retail/simulation/cockpit-input.md, "A strip changes edge
+	/// with the view").</para>
 	///
-	/// <para>Herculan reaches the same behaviour without a canvas: the band is the bottom of the
+	/// <para>This engine reaches the same behaviour without a canvas: the band is the bottom of the
 	/// forward surface's art, and <see cref="CockpitScreenLayout.WindowToArt"/> already resolves the
-	/// overlap in the forward surface's favour, so once the pan has carried that art to the top of the
-	/// screen the same rect answers a click there. See docs/retail/simulation/cockpit-input.md §10.</para>
+	/// overlap in the forward surface's favor, so once the pan has carried that art to the top of the
+	/// screen the same rect answers a click there.</para>
 	///
 	/// <para>The two side strips are not art-space widgets here; see
 	/// <see cref="Render.CockpitScreenLayout.SideViewEdgeAt"/>.</para>

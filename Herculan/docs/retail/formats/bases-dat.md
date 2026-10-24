@@ -32,6 +32,8 @@ It reaches the file through a plain-file-read helper with no container header, s
 
 Unread: `+0x00` and `+0x18` (6 bytes).
 
+Walking this shape consumes the retail file's 6,422 content bytes exactly. The eight types drawn from `dts\BASES_AN.DTS` reference its eight roots as shapes 0–7.
+
 ## The component record, 30 bytes
 
 | Offset | Meaning |

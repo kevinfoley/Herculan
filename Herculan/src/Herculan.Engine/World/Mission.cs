@@ -192,7 +192,7 @@ public enum MissionGroupPointSource {
 
 	/// <summary>
 	/// The first waypoint of the route its order slot 0 names, which is where a group with no point
-	/// of its own stands — see <see cref="MissionLoader"/>, step 3.
+	/// of its own stands — see docs/retail/formats/script-dat.md#placement--the-actual-rule.
 	/// </summary>
 	RouteStart,
 

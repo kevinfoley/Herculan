@@ -27,8 +27,9 @@ public enum MissionOrderSubject {
 /// <summary>
 /// One of the ten orders a mission group works through — the 22-byte record
 /// <c>DBSim_SpawnMissionObjects</c> (<c>004253d8</c>) builds from one <c>script.dat</c> block-10
-/// entry, with each of its refs resolved. See docs/retail/formats/script-dat.md, "Block 10 in memory", for
-/// the layout and docs/retail/simulation/ai-goals.md for what each verb means;
+/// entry, with each of its refs resolved. See
+/// docs/retail/formats/script-dat.md#block-10-in-memory--22-bytes-0x16 for the layout and
+/// docs/retail/simulation/ai-goals.md for what each verb means;
 /// <see cref="Sim.MissionGroup"/> is what runs them.
 ///
 /// <para>The two record fields with no reader found — the order's own point and the short beside the

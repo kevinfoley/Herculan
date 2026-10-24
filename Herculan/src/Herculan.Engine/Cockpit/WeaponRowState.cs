@@ -46,10 +46,10 @@ namespace Herculan.Engine.Cockpit;
 /// </param>
 /// <param name="PodButton">
 /// Whether this pod row's on/off button is on — <c>gauge+0xc2</c>, which only the ECM and Turbo rows
-/// ever have moved. It is what <c>PodGauge_Paint</c> (<c>0044171c</c>), the pod row's paint, re-dresses the name on: off
-/// draws it in the <c>gray</c> font the constructor seeded over the plate's own background, and on
-/// draws it in <c>dark</c> over a green plate flooded across the whole name label. Always false on a
-/// row that is not a pod, and on a destroyed one.
+/// have (docs/retail/simulation/equipment-pods.md#only-two-pods-have-a-button). <c>PodGauge_Paint</c>
+/// (<c>0044171c</c>) draws the name in <c>gray</c> over the plate's own background while it is off,
+/// and in <c>dark</c> over a green plate across the whole name label while it is on. Always false on
+/// a row that is not a pod, and on a destroyed one.
 /// </param>
 /// <param name="Powered">
 /// Whether the cockpit's power-up has reached this row yet. A row it has not is not drawn at all —
@@ -116,14 +116,11 @@ public readonly record struct WeaponRowState(
 	/// Lays out one machine's weapon panel: <paramref name="slots"/> rows, each filled by whichever
 	/// mount claims it.
 	///
-	/// <para>Naming follows the gauge constructors exactly. An energy or ammunition row takes the
-	/// mount's name as it is; a pod row is built as <c>" " + name</c> capped at
-	/// <see cref="PodNameLength"/> and then <c>" POD"</c> appended into whatever room is left, so
-	/// <c>SHIELD</c> becomes <c>" SHIELD POD"</c> and <c>ENERGY</c> becomes <c>" ENERGY POD"</c>
-	/// exactly filling the buffer. The Turbo Pod is the exception: <c>TurboPodGauge_Ctor</c> overwrites
-	/// that buffer with a plain <c>strncpy</c> of the mount name, so its row reads <c>TURBO</c> with
-	/// neither the leading space nor the suffix — its value field is taken by the charge bar and there
-	/// is no room for either. A destroyed mount prints <c>OFFLINE</c> instead of any of it.</para>
+	/// <para>Names follow the gauge constructors: an energy or ammunition row takes the mount's name as
+	/// it is; a pod row is <c>" " + name</c> capped at <see cref="PodNameLength"/> with <c>" POD"</c>
+	/// appended into the room left, so <c>SHIELD</c> becomes <c>" SHIELD POD"</c>; the Turbo Pod's row
+	/// is the bare name, <c>TURBO</c>; and a destroyed mount prints <c>OFFLINE</c> instead. See
+	/// docs/retail/simulation/cockpit-hud-widgets.md#weapon-hardpoint-rows.</para>
 	/// </summary>
 	/// <param name="mounts">The machine's mounts.</param>
 	/// <param name="slots">How many weapon rows this herc's <c>.GAU</c> declares.</param>

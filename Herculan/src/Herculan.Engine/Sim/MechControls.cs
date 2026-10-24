@@ -32,17 +32,14 @@ namespace Herculan.Engine.Sim;
 /// Whether a physical throttle lever is driving the throttle, in what mode, and which way round.
 /// Magnitude picks the mode and sign picks the sense: 0 for no lever — keyboard and plain stick —
 /// <see cref="ThrottleLeverUnipolar"/> for retail's lever, and
-/// <see cref="ThrottleLeverBipolar"/> for this engine's centre-zero one. A negative value is
-/// either mode read upside down.
+/// <see cref="ThrottleLeverBipolar"/> for this engine's centre-zero one, which retail does not
+/// have. A negative value is either mode read upside down.
 ///
 /// <para>This is the original's <c>ThrottleLeverMode</c> (<c>0049a06e</c>), which gates the
 /// throttle clamp: at 0 the setting may take either sign, and with a unipolar lever present the
 /// clamp closes to one side of zero. Despite its symbol name it is not a forward/reverse gear
-/// selector; docs/retail/simulation/mech-locomotion.md has why.</para>
-///
-/// <para><b><see cref="ThrottleLeverBipolar"/> is this engine's invention, not retail behaviour.</b>
-/// DBSIM has only the unipolar mode: its lever spends its whole travel on one direction and
-/// <c>CHANGE DIRECTION</c> flips which. See docs/retail/simulation/joystick-input.md.</para>
+/// selector; docs/retail/simulation/mech-locomotion.md has why, and
+/// docs/retail/simulation/joystick-input.md has retail's lever.</para>
 /// </param>
 /// <param name="TorsoTwist">
 /// The turret axis, left/right. Full deflection at ±0x100, as the two above. It is a

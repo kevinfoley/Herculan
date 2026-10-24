@@ -12,16 +12,11 @@ namespace Herculan.Engine.Sim;
 /// <see cref="BaseType"/>), which is also what names its model, its texture bank and its
 /// destructible parts.
 ///
-/// <para>Structures are the bulk of a mission's object count and none of its motion: they sit where
-/// the mission puts them. The one thing the original does that this does not is flatten the terrain
-/// underneath a structure as it places it (<c>Terrain_MarkStructureFootprint</c> (<c>00470dc8</c>), called with the object's radius just
-/// before the height query) — that writes to the loaded heightmap, so it belongs with terrain
-/// deformation rather than here, and leaving it out means a structure on a slope stands on the
-/// interpolated surface instead of a levelled pad.</para>
+/// <para>Structures are the bulk of a mission's object count and, but for the ground vehicle, none of
+/// its motion: they sit where the mission puts them. The ground under each is leveled at placement
+/// by <see cref="Terrain.HeightGrid.MarkStructureFootprint"/>.</para>
 ///
-/// <para><b>They are shootable</b>, which is what <see cref="DirectFireHitTest"/> and
-/// <see cref="ApplyDamage"/> are; see those for the two very different pieces of geometry that
-/// answer "did this shot hit this building".</para>
+/// <para>They are shootable through <see cref="DirectFireHitTest"/> and <see cref="ApplyDamage"/>.</para>
 /// </summary>
 public sealed partial class BaseObject : SimObject {
 	private readonly ShapeVolume? _volume;
@@ -51,16 +46,15 @@ public sealed partial class BaseObject : SimObject {
 	/// <param name="volume">
 	/// The shape's collision volume, or null for a type whose shape has none — every
 	/// <see cref="BaseShapeSource.AnimatedLibrary"/> type, since the volume is a field of the
-	/// <c>.DGS</c> record and those shapes are ordinary DTS. That costs nothing on retail data:
-	/// all eight animated types set <see cref="BaseType.HasCollisionModel"/>, so none of them would
-	/// reach the volume path while standing. A wreck is tested against <paramref name="hulk"/>'s
-	/// volume instead.
+	/// <c>.DGS</c> record and those shapes are ordinary DTS. All eight animated retail types set
+	/// <see cref="BaseType.HasCollisionModel"/>, so none of them reaches the volume path while
+	/// standing. A wreck is tested against <paramref name="hulk"/>'s volume instead.
 	/// </param>
 	/// <param name="collision">The type's <c>BASECOL.DAT</c> sphere model — see <see cref="CollisionModel"/>.</param>
 	/// <param name="shapeRadius">
 	/// The shape's own bounding radius — the original's vtable <c>+0x10</c> (<c>SimObject_GetShapeRadius</c>, <c>0046b80c</c>),
-	/// which is simply <c>shape+8</c>, for a static type its <c>.DGS</c> record's and for an
-	/// animated one its <c>BASES_AN.DTS</c> root's. Both hit paths open with a coarse reject against
+	/// <c>shape+8</c>: for a static type its <c>.DGS</c> record's and for an animated one its
+	/// <c>BASES_AN.DTS</c> root's. Both hit paths open with a coarse reject against
 	/// it, and placement marks the ground it levels with it (<see cref="Terrain.HeightGrid.MarkStructureFootprint"/>).
 	///
 	/// <para>Distinct from <see cref="HitRadius"/>, which is the <i>type</i>'s stated figure and is

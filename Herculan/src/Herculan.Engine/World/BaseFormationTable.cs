@@ -18,7 +18,8 @@ public readonly record struct BaseFormationOffset(int X, int Y, short HeadingNud
 /// <summary>
 /// A formation's terrain layout: which <c>dat\mat0</c> material its ground is painted with, and the
 /// square occupancy map that accompanies it. Eleven of the seventeen retail formations carry one;
-/// the other six carry <c>-1</c> and no map, and their groups leave the ground alone.
+/// the other six carry <c>-1</c> and no map, and their groups leave the ground alone. See
+/// docs/retail/formats/script-dat.md#the-per-formation-trailer.
 /// </summary>
 /// <param name="MaterialIndex">
 /// Index into <c>dat\mat0</c>, whose <c>Index</c> field is the theater bank frame that gets drawn —
@@ -70,40 +71,22 @@ public sealed record BaseFormationLayout(int MaterialIndex, int Dimension,
 }
 
 /// <summary>
-/// <c>dat\BFORMS.DAT</c> — per-formation spread offsets for a <c>script.dat</c> block-11 base/
-/// structure group. This is what stops a multi-structure group (a fortress cluster, a turret ring)
-/// from placing every member on the group's single point.
+/// <c>dat\BFORMS.DAT</c> — per-formation spread offsets for a <c>script.dat</c> block-11 structure
+/// group, so a multi-structure group (a fortress cluster, a turret ring) does not stand every
+/// member on the group's single point.
 ///
-/// <para>Read from the base-group-attach chain: <c>DBSim_BuildGroupRecord</c> (<c>00423b34</c>)
-/// carries the group's formation id (script.dat block-11's <c>FormationId</c> field, raw msn
-/// offset <c>0x30</c> — see <c>docs/retail/formats/msn-mission-file.md</c>'s row #16 decode) into
-/// <c>Base_AttachToGroup</c> (<c>00405c3c</c>), which stores it at the attached object's group-relative member index
-/// (<c>+0x49</c>, the object's position within the group's <c>MemberRefs</c> array — <b>not</b>
-/// a compacted live-member count) and then unconditionally calls the object's own vtable
-/// <c>+0x78</c>. For every base subtype's vtable that slot is <c>Base_ApplyFormationOffset</c> (<c>00405c04</c>), which — when the
-/// member index is nonzero, i.e. every member but the group's first-claimed ("leader") slot — looks
-/// up this table's <c>(formationId, memberIndex-1)</c> entry via <c>BaseFormation_GetSlotOffset</c> (<c>00405b9c</c>) and rotates it
-/// into world space by the leader's heading (<c>Formation_RotateAndAddOffset</c>, <c>00411d64</c>)
-/// before adding it to the group's position — mirrors <c>Mech_ApplyFormationOffset</c>
-/// (<c>00417898</c>): same vtable slot, same "member index 0 gets no offset" rule. Load site:
-/// <c>Base_LoadResources</c> (<c>00405fac</c>) streams the table from a file literally named <c>"bforms"</c>. Byte-exact: the
-/// retail file is 3,186 content bytes, formation count 17 (matches block-11 formation id's 0-16
-/// range), formation 0's seven offsets a symmetric wedge — one point ahead, three mirrored pairs
-/// behind.</para>
+/// <para>Loaded by <c>Base_LoadResources</c> (<c>00405fac</c>) and read through
+/// <c>Base_ApplyFormationOffset</c> (<c>00405c04</c>), every structure class's vtable <c>+0x78</c>:
+/// each member but the one in member slot 0 takes its slot's offset (<see cref="OffsetFor"/>),
+/// rotated by the leader's heading. A slot also turns its structure (<see cref="HeadingNudgeFor"/>).
+/// See docs/retail/formats/script-dat.md#placement--the-actual-rule.</para>
 ///
-/// <para><b>A slot turns its structure as well as placing it</b> — see
-/// <see cref="HeadingNudgeFor"/>. That half arrives by a different path (<c>Base_AttachToGroup</c>
-/// itself, not the vtable slot above) and was missed when this table was first read, which left one
-/// structure of a group standing in the right place facing the wrong way.</para>
-///
-/// <para><b>The trailer describes the formation's ground, and where the group stands on it</b> —
-/// see <see cref="BaseFormationLayout"/>. When the block-11 record's own <c>PaintsGround</c> (raw msn
-/// offset <c>0x06</c>) is set, the group's shared anchor is moved to that formation's fixed
-/// position within its terrain tile before any per-member offset above is added
-/// (<see cref="BaseFormationLayout.SnapAnchor"/>), and the same tile is painted with the
-/// formation's material by <see cref="Herculan.Engine.Terrain.HeightGrid.PaintFormationPad"/>.
-/// The two go together: the move is what puts the structures on the pad. Trailer layout, the
-/// derivation and the evidence are in docs/retail/formats/script-dat.md, "Base formation terrain".</para>
+/// <para>Each formation's trailer describes the ground it paints and where the group stands on it
+/// (<see cref="BaseFormationLayout"/>). When the group's <c>PaintsGround</c> is set, its anchor is
+/// moved onto the formation's spot in its terrain tile (<see cref="BaseFormationLayout.SnapAnchor"/>)
+/// before any member offset is added, and the tile is painted with the formation's material
+/// (<see cref="Herculan.Engine.Terrain.HeightGrid.PaintFormationPad"/>). See
+/// docs/retail/formats/script-dat.md#base-formation-terrain.</para>
 /// </summary>
 public sealed class BaseFormationTable {
 	/// <summary>VOL folder and name of the table.</summary>
@@ -143,24 +126,10 @@ public sealed class BaseFormationTable {
 	/// How far this slot's structure is turned relative to its group, in binary-angle units. Zero for
 	/// the group's first-claimed member and for any slot the table does not reach.
 	///
-	/// <para><b>This is not the same thing as the spread offset</b>, and missing it is why one
-	/// structure of a group could stand at the right spot facing the wrong way.
-	/// <c>Base_AttachToGroup</c> (<c>00405c3c</c>) fills a structure's heading only when its own
-	/// record names none (the <c>-0x8000</c> sentinel — a block-9 record whose heading ref is -1),
-	/// and when it does, it adds this slot's turn on top of the group's:</para>
-	/// <code>
-	/// h = group.heading;
-	/// if (slot != 0) h += formation.slots[slot - 1].headingNudge;   // +405c9a, the slot's trailing int16
-	/// object.heading = (short)h;
-	/// </code>
-	/// <para>Note this is applied at <i>attach</i> time and is entirely separate from
-	/// <c>Base_ApplyFormationOffset</c>, which reads the same slot record's two <c>int32</c>s and only
-	/// moves the structure. The heading is a short in the original, so the sum wraps.</para>
-	///
-	/// <para>Confirmed on the Scramble training base: its group uses formation 9, whose slots 6 and 8
-	/// carry 16380 (90 degrees) and 32760 (180). Roster slots 6 and 8 of that group are two of the
-	/// three identical silo-cluster structures, and in retail they stand turned by exactly those
-	/// amounts while the third does not.</para>
+	/// <para><c>Base_AttachToGroup</c> (<c>00405c3c</c>) adds it to the group's heading, wrapping as a
+	/// short, for a structure whose own record names no heading. It is separate from the spread
+	/// offset, which only moves the structure. See
+	/// docs/retail/formats/script-dat.md#placement--the-actual-rule.</para>
 	/// </summary>
 	public short HeadingNudgeFor(int formationId, int memberIndex) =>
 		OffsetFor(formationId, memberIndex)?.HeadingNudge ?? 0;

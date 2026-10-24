@@ -179,13 +179,13 @@ public sealed class Rocket {
 
 	/// <summary>
 	/// <c>Rocket_TickUpdate</c> (<c>0040a538</c>), vtable <c>+0x14</c> — one step of flight and the
-	/// hit test that goes with it.
+	/// hit test that goes with it. Retail behavior:
+	/// docs/retail/simulation/rockets.md#flight--rocket_tickupdate-0040a538.
 	///
 	/// <list type="number">
 	/// <item><b>Animation</b>, when the record asks for it.</item>
 	/// <item><b>Age.</b> One per tick, against the record's lifetime. A missile that outlives it is
-	/// dropped where it is, with no impact of any kind — a rocket burns out, it does not detonate on
-	/// a timer.</item>
+	/// dropped where it is, with no impact of any kind.</item>
 	/// <item><b>Acceleration</b>, see below.</item>
 	/// <item><b>Guidance</b> — the seeker, or the player's own stick for
 	/// <see cref="PlayerFlownSubtype"/> fired by the locally-simulated machine.</item>
@@ -196,11 +196,9 @@ public sealed class Rocket {
 	/// — see <see cref="InboundWarningTick"/>.</item>
 	/// </list>
 	///
-	/// <para><b>The acceleration is damped, not linear.</b> The original adds the record's rate to
-	/// the speed and then averages the result with the speed it started the tick at —
-	/// <c>speed = (speed + rate·dt + speed) / 2</c> — so the missile takes half the step it would
-	/// otherwise, and the whole climb is capped at the <c>PROJ.DAT</c> record's <c>Speed</c>. Kept
-	/// literally: it is what the burn curve is.</para>
+	/// <para><b>The acceleration is damped, not linear</b>:
+	/// <c>speed = (speed + rate·dt + speed) / 2</c>, capped at the <c>PROJ.DAT</c> record's
+	/// <c>Speed</c>.</para>
 	///
 	/// <para><b>When the missile ends</b>, by burning out or by striking something, a missile the player
 	/// is still flying releases the trigger and latches the first button row

@@ -48,7 +48,8 @@ public sealed partial class MechObject {
 
 	/// <summary>
 	/// <c>Mech_CollisionTest</c> (<c>00418f74</c>) — whether the machine's new position is refused,
-	/// either by another object or by the ground being too steep to stand on.
+	/// either by another object or by the ground being too steep to stand on. Retail behavior:
+	/// docs/retail/simulation/mech-locomotion.md#collision.
 	///
 	/// <para><b>The gap is asymmetric</b>, as the original's is: this machine contributes its own
 	/// <see cref="HitRadius"/> and the other object its <see cref="SimObject.CollisionRadius"/>,
@@ -61,11 +62,8 @@ public sealed partial class MechObject {
 	///
 	/// <para>Running into another machine hurts both of them — see
 	/// <see cref="CollisionDamage"/>. The sweep also records <see cref="StandingIn"/>, ahead of the gap
-	/// test.</para>
-	///
-	/// <para>The sweep's first test <i>is</i> here: an object whose mission group carries an action
-	/// is skipped outright, before any distance is measured. See
-	/// <see cref="SimObject.AwaitingDeployment"/> for why the retail missions depend on it.</para>
+	/// test, and skips an object still <see cref="SimObject.AwaitingDeployment"/> before measuring
+	/// anything.</para>
 	/// </summary>
 	private bool CollisionTest(SimWorld world) {
 		var position = Position;
@@ -195,25 +193,17 @@ public sealed partial class MechObject {
 	}
 
 	/// <summary>
-	/// The landing at the bottom of a slide — the fourth and last thing
-	/// <see cref="SimWorld.Difficulty"/> scales, and the player's alone, since only the player's
-	/// machine slides.
+	/// The damage the player's legs take at the bottom of a fast slide down steep ground — the fourth
+	/// and last thing <see cref="SimWorld.Difficulty"/> scales, and the player's alone, since only the
+	/// player's machine slides. Retail behavior: docs/retail/simulation/mech-locomotion.md#the-landing.
 	///
 	/// <para>Six leg components are each written a figure drawn independently: a base of
-	/// <c>slideSpeed</c> scaled by the difficulty, plus a roll over three times that base. So the
-	/// spread is wide and no two legs take the same damage, and a harder setting hurts more — this
-	/// is the one difficulty table that runs against the player in both directions at once, since it
-	/// is their own machine it is applied to.</para>
+	/// <c>slideSpeed</c> scaled by the difficulty, plus a roll over three times that base. The
+	/// damage goes through <see cref="ComponentDamageWrite"/> with no attacker, so it cascades as a
+	/// shot would, credits nobody, and spares an invulnerable machine.</para>
 	///
-	/// <para>The damage goes through <see cref="ComponentDamageWrite"/> with no attacker, so it
-	/// cascades and can cripple or immobilise exactly as a shot would, and nothing is credited with
-	/// the kill if it finishes the machine off. An invulnerable machine takes none of it, because
-	/// that gate is inside the write.</para>
-	///
-	/// <para>The landing also jolts the cockpit, through <see cref="CockpitHits"/> — the second of
-	/// the shake's two triggers, and the ungated one: the direct-fire site tests who is flying and
-	/// how far gone the cockpit is, and this one calls it on any landing that got past the speed
-	/// threshold. See docs/retail/rendering/cockpit-canopy-palette.md, "The damage shake".</para>
+	/// <para>The landing also jolts the cockpit through <see cref="CockpitHits"/>, on any landing past
+	/// the speed threshold.</para>
 	/// </summary>
 	private void SlideLandingDamage(SimWorld world, int slideSpeed) {
 		if (slideSpeed <= SlideDamageMinimumSpeed) {

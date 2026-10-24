@@ -28,8 +28,7 @@ public sealed class SimWorld {
 	/// <param name="terrain">The loaded zone.</param>
 	/// <param name="bullets">
 	/// <c>dat\BULLETS.DAT</c>, which everything that fires a travelling shot needs — see
-	/// <see cref="FireBullet"/>. Null leaves those weapons firing blanks, the same way an unported
-	/// branch does.
+	/// <see cref="FireBullet"/>. Null leaves those weapons firing blanks.
 	/// </param>
 	/// <param name="explosions">
 	/// <c>dat\EXPLOS.DAT</c>, which everything that lands needs — see
@@ -47,7 +46,7 @@ public sealed class SimWorld {
 	/// </param>
 	/// <param name="debris">
 	/// The debris databases, headed by <c>DEF_DEB</c> — see <see cref="EffectPools.SpawnDebris(short, in Transform3, DebrisDatabase?, short, short, int)"/>. Null leaves
-	/// every destruction throwing nothing, which is what this engine did before the pool existed.
+	/// every destruction throwing nothing.
 	/// </param>
 	/// <param name="random">
 	/// The generator this world rolls on. DBSIM's simulation shares one, from the load-time terrain
@@ -608,20 +607,18 @@ public sealed class SimWorld {
 	/// <summary>
 	/// <c>Rocket_Fire</c> (<c>0040a9c4</c>) — spawns one missile. There is no powered form: a
 	/// rocket comes off a rack, never out of a capacitor, so the record's damage is what it does.
+	/// Retail behavior: docs/retail/simulation/rockets.md#spawning--rocket_fire-0040a9c4.
 	///
 	/// <para><b>A target is attached only when this class of launcher has lock</b> — the launcher's
-	/// vtable <c>+0x6c</c> (<c>Mech_MissileLockState</c>, <c>004155ac</c>), which
-	/// reads the per-subtype lock flags at <c>manager+0x0a</c> rather than any ammunition count. See
-	/// <see cref="MechObject.MissileLockTick"/> for what builds them. A missile fired without lock
-	/// flies where it was pointed, which is exactly what the original does. <b>Every other class's
-	/// slot is a <c>return 1</c> stub</b> (<c>SimObject_MissileLockState_Always</c>, <c>00411b04</c>),
-	/// so a <see cref="FlyerObject"/>'s or a <see cref="BaseObject"/>'s missiles always take the
-	/// launcher's selected target.</para>
+	/// vtable <c>+0x6c</c> (<c>Mech_MissileLockState</c>, <c>004155ac</c>), whose lock flags
+	/// <see cref="MechObject.MissileLockTick"/> builds. A missile fired without lock flies where it
+	/// was pointed. Every other class's slot is a <c>return 1</c> stub
+	/// (<c>SimObject_MissileLockState_Always</c>, <c>00411b04</c>), so a <see cref="FlyerObject"/>'s or
+	/// a <see cref="BaseObject"/>'s missiles always take the launcher's selected target.</para>
 	///
-	/// <para>The one exception is the original's own: a machine that is <b>not</b> locally piloted
-	/// firing <see cref="Rocket.PlayerFlownSubtype"/> skips the lock gate outright, because that
-	/// subtype is the missile the player flies by hand and so never builds a lock — which is how an
-	/// AI opponent's electro-optical missile still tracks.</para>
+	/// <para>A machine that is <b>not</b> locally piloted firing
+	/// <see cref="Rocket.PlayerFlownSubtype"/> skips the lock gate outright, so an AI opponent's
+	/// electro-optical missile always tracks.</para>
 	///
 	/// <para>A target, once attached, is asked which of its components the missile locks on to
 	/// (<see cref="Rocket.LockComponent"/>).</para>

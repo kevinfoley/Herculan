@@ -201,20 +201,14 @@ public sealed partial class FlyerObject {
 	/// <item>0 <c>search and destroy</c> → <see cref="FlyerBehaviourState.SearchAndDestroy"/></item>
 	/// <item>3 <c>patrol</c> → <see cref="FlyerBehaviourState.Patrolling"/></item>
 	/// <item>4 <c>sleep</c> → <see cref="FlyerBehaviourState.Sleeping"/>, and the aircraft is marked
-	/// out of the fight</item>
+	/// out of the fight (<see cref="Disarmed"/>)</item>
 	/// <item>5 <c>travel</c> → <see cref="FlyerBehaviourState.Scouting"/>, same</item>
 	/// </list>
 	///
 	/// <para><b>Verbs 1, 2 and 6 install nothing here</b>, and neither does an empty order slot. The
-	/// original's switch has no default and hands <c>Behaviour_SetState</c> whatever <c>ECX</c> holds
-	/// — its own address, which puts the aircraft in a "state" made of opcode bytes and calls a wild
-	/// address on the same tick. This engine leaves the aircraft in the state it has instead. See
-	/// docs/retail/simulation/ai-flyers.md, "Orders", and KNOWN_ISSUES.md.</para>
-	///
-	/// <para><b>Sleeping and scouting latch <see cref="SimObject.OutOfAction"/>.</b> That is not a
-	/// side effect — it is what keeps an aircraft that was sent somewhere rather than sent to fight
-	/// from counting as something the other side has to contest, and no write that clears it is
-	/// known (docs/retail/simulation/ai-flyers.md, Open).</para>
+	/// original puts the aircraft in a "state" made of its own code bytes
+	/// (docs/retail/simulation/ai-flyers.md#orders--flyer_aiselectbehaviour-00422d00, and
+	/// KNOWN_ISSUES.md); this engine leaves the aircraft in the state it has instead.</para>
 	/// </summary>
 	private void SelectBehaviour() {
 		switch (Group?.OrderVerb ?? MissionGroup.NoOrder) {
@@ -480,8 +474,8 @@ public sealed partial class FlyerObject {
 	/// <c>Flyer_AttackRun</c> (<c>004226a0</c>) — the attack run, and the only place a Cybrid flyer shoots. It is a
 	/// two-phase circuit rather than a pursuit: an aircraft <b>extends away</b> from its target until
 	/// it has <see cref="AttackTurnInRange"/> of room, turns back in, makes one pass, and breaks off
-	/// again the moment the pass is over. A flight therefore keeps coming round rather than trying to
-	/// stay on something that can turn inside it.
+	/// again the moment the pass is over. Retail behavior:
+	/// docs/retail/simulation/ai-flyers.md#the-attack-run--flyer_attackrun-004226a0.
 	///
 	/// <list type="number">
 	/// <item><b>Extending</b> (<see cref="_attackPhase"/> 0). The steering command is reversed — the
@@ -497,15 +491,13 @@ public sealed partial class FlyerObject {
 	/// flight time of the shot, at the projectile's speed rather than the aircraft's once the run is
 	/// close enough to shoot.</para>
 	///
-	/// <para><b>The first shot of a pass is a missile.</b> A flag on the aircraft (<c>flyer+0x5a</c>,
-	/// cleared every tick it spends extending and on entering <c>attacking</c>) lets one round off the rail inside
-	/// <see cref="MissileRange"/>, and every shot after it on that pass is a pair of gun rounds from
-	/// the mirrored muzzle points.</para>
+	/// <para><b>The first shot of a pass is a missile</b>, inside <see cref="MissileRange"/>; every
+	/// shot after it on that pass is a pair of gun rounds from the mirrored muzzle points.</para>
 	///
-	/// <para>Two tests are not reproduced, each on a field the zero-filled flyer pool leaves at 0 and
-	/// for which no writer has been found (docs/retail/simulation/ai-flyers.md, Open): the fire gate
-	/// <c>|flyer+0x1f4| &lt; 10</c>, which therefore passes, and the run-in's test of the base
-	/// object's <c>+0xae</c>, which therefore always aims at the target.</para>
+	/// <para>Two retail tests are left out, each on a field no retail writer has been found for, which
+	/// therefore stays at 0 (docs/retail/simulation/ai-flyers.md#open): the fire gate
+	/// <c>|flyer+0x1f4| &lt; 10</c>, so it always passes, and the run-in's test of the base object's
+	/// <c>+0xae</c>, so the run-in always aims at the target.</para>
 	/// </summary>
 	private void AttackRun(SimWorld world, SimObject target) {
 		var aim = target.Position;

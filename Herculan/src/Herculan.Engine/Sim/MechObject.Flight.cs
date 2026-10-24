@@ -165,6 +165,7 @@ public sealed partial class MechObject : IFlightBody {
 	/// <c>Razor_MovementTick</c> (<c>004198f4</c>) — the flyer's move, in place of
 	/// <c>Mech_MovementTick</c>. It integrates
 	/// the velocity the flight model settled on, then runs six contact probes over the airframe.
+	/// Retail behavior: docs/retail/simulation/razor-flight.md#contact-probes.
 	///
 	/// <para><b>The probes are the collision model.</b> There is no swept body test and no terrain
 	/// clamp on the airframe as a whole. Six points — the two wings, the two nacelles, the cockpit
@@ -182,18 +183,15 @@ public sealed partial class MechObject : IFlightBody {
 	/// contact point, and only on the contact that destroys the component. The four probes that
 	/// cannot end the flight throw nothing however hard they hit.</para>
 	///
-	/// <para><b>The probes share one stale transform, as in the original.</b> One copy of the
-	/// transform is taken before the move and never refreshed after a contact kick; the five probe
-	/// points are computed from it up front, and each ray probe writes its point into the copy's
-	/// translation and leaves it there. So every probe but the fuselage tests the pre-move position,
-	/// and the left wing, cockpit and look-ahead ground tests sample displaced points, which a contact
-	/// then reports. A retail bug, reproduced — see docs/retail/simulation/razor-flight.md ("The probes share
-	/// one transform") and KNOWN_ISSUES.md.</para>
+	/// <para><b>The probes share one stale transform, as in the original</b>, taken before the move
+	/// and written into by each ray probe, so most probes test the pre-move position or a displaced
+	/// point. A retail bug, reproduced — see
+	/// docs/retail/simulation/razor-flight.md#the-probes-share-one-transform and KNOWN_ISSUES.md.</para>
 	///
 	/// <para><b>It closes with the gun convergence</b>, every tick and whatever state the airframe is
 	/// in: the guns toe in on the range to the selected target (<see cref="GunConvergenceRange"/>) or
 	/// square up with none. A walker reaches the convergence from its turret pitch tick, which a flyer
-	/// does not run. See docs/retail/simulation/razor-flight.md ("Gun convergence").</para>
+	/// does not run. See docs/retail/simulation/razor-flight.md#gun-convergence.</para>
 	/// </summary>
 	private void FlyerMovementTick(SimWorld world, FlightModelRecord flight) {
 		// The original's local copy of the airframe transform (00419a03-00419a97), taken before the

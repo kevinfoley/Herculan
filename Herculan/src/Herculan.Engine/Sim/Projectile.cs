@@ -6,28 +6,23 @@ using Herculan.Engine.Numerics;
 namespace Herculan.Engine.Sim;
 
 /// <summary>
-/// A travelling shot — DBSIM's <c>Bullet</c> class, built by <c>Bullet_Construct</c>
-/// (<c>0040af6c</c>, vtable <c>PTR_FUN_00498628</c>) and advanced by <c>Bullet_TickUpdate</c>
-/// (<c>0040b124</c>, vtable <c>+0x14</c>).
+/// A travelling shot — an autocannon, EMP cannon or plasma cannon round that crosses the ground
+/// over several ticks. DBSIM's <c>Bullet</c> class, built by <c>Bullet_Construct</c>
+/// (<c>0040af6c</c>, vtable <c>BulletVtable</c>, <c>00498628</c>) and advanced by
+/// <c>Bullet_TickUpdate</c> (<c>0040b124</c>, vtable <c>+0x14</c>). Its retail behavior is
+/// docs/retail/simulation/projectiles.md.
 ///
-/// <para>This is the other half of the fire dispatch. A <c>PROJ.DAT</c> record of type
-/// <see cref="ProjectileType.Beam"/> carries <c>Speed == 0</c> and resolves its whole life inside
-/// the call that fired it (see <see cref="BeamTracer"/>); a record of type
-/// <see cref="ProjectileType.Bullet"/> carries a real speed and becomes one of these, which crosses
-/// the ground between the muzzle and whatever it hits over several ticks. Every autocannon, every
-/// EMP cannon and the plasma cannon fire one.</para>
+/// <para>A <c>PROJ.DAT</c> record of type <see cref="ProjectileType.Bullet"/> becomes one of these;
+/// a <see cref="ProjectileType.Beam"/> record resolves inside the call that fired it instead (see
+/// <see cref="BeamTracer"/>).</para>
 ///
-/// <para>Like a tracer it is <b>not</b> a <see cref="SimObject"/> in the original either: it is
-/// allocated from the same effect pool (<c>g_ProjectilePool</c> (<c>004a9746</c>)) that tracers come from, which
-/// <c>Sim_MainTick</c> walks ahead of the machine list, and it is not in the list the shared raycast
-/// sweeps. So a bullet cannot be shot down and cannot be shot at, only shot with.</para>
+/// <para>Like a tracer it is <b>not</b> a <see cref="SimObject"/>: it lives in the effect pool, not
+/// the list the shared raycast sweeps, so it cannot be shot at.</para>
 ///
-/// <para><b>A shot's whole geometry is one transform.</b> The object carries a euler triple
-/// (<c>+0x0c</c>) and a transform (<c>+0x12</c>) whose translation <i>is</i> the shot's position
-/// (<c>+0x26</c>); the transform is rebuilt from the triple whenever the frame-valid word at <c>+0x32</c>
-/// is 0, which the homing steer stores after moving the angles, which for everything but the homing branch means once, on the first tick.
-/// Flight is then <c>position = transform * (0, step, 0)</c> — the same "forward is model Y"
-/// convention the muzzle frame and the beam ray both use.</para>
+/// <para><b>A shot's whole geometry is one transform</b>, rebuilt from the euler triple whenever the
+/// angles move — for everything but the homing branch, once, on the first tick. Flight is
+/// <c>position = transform * (0, step, 0)</c>, the "forward is model Y" convention the muzzle frame
+/// and the beam ray share.</para>
 /// </summary>
 public sealed class Projectile {
 	private readonly BulletType _record;
@@ -155,35 +150,27 @@ public sealed class Projectile {
 
 	/// <summary>
 	/// <c>Bullet_TickUpdate</c> (<c>0040b124</c>), vtable <c>+0x14</c> — one step of flight and the
-	/// hit test that goes with it.
+	/// hit test that goes with it. Retail behavior:
+	/// docs/retail/simulation/projectiles.md#flight--bullet_tickupdate-0040b124.
 	///
 	/// <list type="number">
-	/// <item><b>Age.</b> A flat <c>0x200</c> per 125 ms, against the record's lifetime scaled by the
-	/// same figure. A shot that outlives it is dropped where it is, with no impact of any kind.</item>
+	/// <item><b>Age.</b> A shot that outlives the record's lifetime is dropped where it is, with no
+	/// impact of any kind.</item>
 	/// <item><b>Homing</b>, for the plasma subtype alone and only when it was given a target.</item>
 	/// <item><b>The step</b>, <c>IntegrateRateOverTick(speed)</c>, taken along the frame's Y axis.</item>
-	/// <item><b>The hit test is a raycast over that step alone</b> — the shot record is built with the
-	/// current frame and the step as the ray's length, so a bullet sweeps the segment it is about to
-	/// cross rather than testing a point. That is what stops a fast round from tunnelling through a
-	/// machine between ticks, and it is why the same <see cref="WeaponShot"/> a beam uses serves
-	/// here.</item>
+	/// <item><b>The hit test is a raycast over that step alone</b>, through the same
+	/// <see cref="WeaponShot"/> a beam uses, so a fast round cannot tunnel through a machine between
+	/// ticks. The record's <c>ClipRadius</c> is the shot's slack in place of a beam's literal
+	/// 200.</item>
 	/// <item>Struck anything and the shot ends; struck nothing and it moves.</item>
 	/// </list>
 	///
-	/// <para>The record's <c>ClipRadius</c> takes the place of the beam's literal 200 as the shot
-	/// record's slack, which is what makes the big EMP round (200) forgiving where an autocannon
-	/// round (100) is not.</para>
-	///
-	/// <para><b>The plasma round ends differently.</b> <see cref="PlasmaSubtype"/> detonates rather
-	/// than striking: <see cref="HitTests.ExplosiveBlastSweep"/> at
-	/// <see cref="PlasmaBlastRadius"/>, either where it touched something or, through its proximity
-	/// fuze, the moment it has passed its target — see <see cref="PlasmaProximityFuze"/>.</para>
-	///
-	/// <para><b>The blast is the whole of the weapon.</b> The round empties its own shot record
-	/// before it raycasts (<see cref="WeaponShot.StashDamage"/>), so the raycast reports contact and
-	/// nothing more, and everything the round does it does through the sweep — which is why the
-	/// struck object is <i>not</i> excluded from it. The one thing the stash is read back for is a
-	/// structure struck on its collision-volume path; see <see cref="BaseObject.DirectFireHitTest"/>.</para>
+	/// <para><b>The plasma round detonates instead of striking</b>:
+	/// <see cref="HitTests.ExplosiveBlastSweep"/> at <see cref="PlasmaBlastRadius"/>, either where it
+	/// touched something or once it has passed its target (<see cref="PlasmaProximityFuze"/>). It
+	/// empties its own shot record before it raycasts (<see cref="WeaponShot.StashDamage"/>), so the
+	/// blast, which excludes nothing, is the whole of the weapon; the stash is read back only by
+	/// <see cref="BaseObject.DirectFireHitTest"/>.</para>
 	/// </summary>
 	/// <returns>Whether the shot is finished and should be freed.</returns>
 	internal bool Tick(SimWorld world) {

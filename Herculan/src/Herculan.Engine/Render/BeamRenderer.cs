@@ -30,9 +30,8 @@ namespace Herculan.Engine.Render;
 ///
 /// <para><b>The muzzle stub a chain tracer leaves is drawn once.</b> The stub is retail's
 /// (docs/retail/simulation/beam-visuals.md#the-muzzle-stub-is-a-retail-fall-through, logged in
-/// KNOWN_ISSUES.md), and the
-/// original redraws it once per chain quad; once per tracer is pixel-identical because the fill is
-/// opaque.</para>
+/// KNOWN_ISSUES.md), and the original redraws it once per chain quad; once per tracer is
+/// pixel-identical because the fill is opaque.</para>
 /// </summary>
 public sealed class BeamRenderer : IDisposable {
 	/// <summary>

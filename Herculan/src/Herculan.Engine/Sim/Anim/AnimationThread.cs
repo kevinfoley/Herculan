@@ -324,7 +324,7 @@ public sealed class AnimationThread {
 	/// <para>Not retail, with <paramref name="keepFraction"/> set — the
 	/// <see cref="Settings.TweakSettingDefinitions.SmootherTurretMovement"/> tweak: the sub-tick
 	/// remainder the original's Q14 scale-down truncates away is kept, and
-	/// <see cref="FrameFraction"/> spends it, so a seeked pose is no longer quantised to a whole
+	/// <see cref="FrameFraction"/> spends it, so a seeked pose is not quantized to a whole
 	/// animation tick (docs/retail/simulation/torso-aim.md, "Angle to pose"). On OUTLAW that is
 	/// 1747 drawn twist poses from centre to limit where retail has 170, and the drawn view moves
 	/// every tick from half stick up rather than from three quarters. Clear, it is the original's

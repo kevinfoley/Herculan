@@ -80,16 +80,16 @@ public readonly record struct HddPilotSlot(bool Occupied, string Name, int Condi
 /// <param name="Pilots">The three comm boxes.</param>
 /// <param name="SelectedPilot">
 /// Which comm box is selected, or -1 — the display's <c>+0x517</c>. <b>It gates the whole
-/// screen</b>: with no pilot selected every order draws unavailable, because
-/// <c>HddDisplay_SelectPilot</c> is the only thing that ever sets the availability bytes and
-/// deselecting clears them again.
+/// screen</b>: with no pilot selected every order draws unavailable, because selecting a pilot sets
+/// all the availability bytes and deselecting clears them
+/// (docs/retail/simulation/heads-down-display.md).
 /// </param>
 /// <param name="SelectedOrder">
 /// Which order is armed, or null — the screen's <c>+0x5d</c>, held as a group-0 entry index there
 /// and as its own enum here.
 /// </param>
 /// <param name="ChosenBox">
-/// Where the box round the unit last picked for an ATTACK ENEMY or DEFEND POSITION goes, or null: that
+/// Where the box around the unit last picked for an ATTACK ENEMY or DEFEND POSITION goes, or null: that
 /// unit's marker where it was last drawn, which is not where it is now once the marker stops being drawn
 /// (docs/retail/simulation/heads-down-display.md#the-chosen-units-box). Null too for a unit whose marker has never
 /// been drawn, which retail frames off the map.

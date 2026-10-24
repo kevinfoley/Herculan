@@ -8,27 +8,18 @@ namespace Herculan.Engine.Sim;
 
 /// <summary>
 /// One fitted hardpoint — DBSIM's weapon-mount object, built by
-/// <c>MechLoadout_ConstructWeaponMounts</c> (<c>0040fff8</c>) from three things that have to be
-/// joined: the machine type's own hardpoint list (<c>gl\&lt;HERC&gt;.GL</c>), the fit the mission
-/// gave it (<c>player.mec</c> or <c>script.dat</c>), and the weapon id's template
-/// (<see cref="WeaponCatalog"/>).
+/// <c>MechLoadout_ConstructWeaponMounts</c> (<c>0040fff8</c>) from the machine type's hardpoint
+/// list (<c>gl\&lt;HERC&gt;.GL</c>), the fit the mission gave it (<c>player.mec</c> or
+/// <c>script.dat</c>) and the weapon id's template (<see cref="WeaponCatalog"/>). The hardpoint list
+/// drives the join and addresses the fit through each record's fit slot — see
+/// docs/retail/simulation/weapon-mounts.md#the-join--mechloadout_constructweaponmounts-0040fff8.
 ///
-/// <para><b>The hardpoint list drives the join, not the fit.</b> The factory walks the <c>.GL</c>
-/// records in file order and reads each one's byte at <c>+0x17</c> as an index into the fit's two
-/// parallel arrays — so a machine's mounts are ordered by its own chassis, and the fit is addressed
-/// through it rather than iterated. That is why the same <c>player.mec</c> entry produces a
-/// different-looking weapon panel on two different HERCs, and why reading the fit array in order
-/// gets the order wrong.</para>
+/// <para><c>+0x7b</c> and <c>+0x7d</c> mean different things per class — rounds on an ammunition
+/// mount, a charge target and a capacitor level on an energy or ELF one — and are modelled here
+/// under the names each class gives them, with the raw offsets noted.</para>
 ///
-/// <para><b>Fields are shared, not per-class.</b> <c>+0x7b</c> and <c>+0x7d</c> mean different
-/// things depending on which class holds them: rounds for an ammunition mount, a charge target and a
-/// capacitor level for an energy or ELF one. They are modelled here under the names each class gives
-/// them, with the raw offsets noted, rather than as one abstract "level".</para>
-///
-/// <para><b>The constructor does not decide the class.</b> The factory builds an ELF by running the
-/// energy constructor and then swapping the object's vtable — see <see cref="WeaponMountKind.Elf"/>.
-/// That is why <see cref="Kind"/> is what everything here branches on rather than which fields were
-/// initialised.</para>
+/// <para>The factory builds an ELF by running the energy constructor and swapping the vtable
+/// (<see cref="WeaponMountKind.Elf"/>), so everything here branches on <see cref="Kind"/>.</para>
 /// </summary>
 public sealed partial class WeaponMount {
 	/// <summary>The catalog id of a mount the factory builds nothing for.</summary>

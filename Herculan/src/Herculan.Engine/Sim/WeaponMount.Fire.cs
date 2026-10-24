@@ -177,26 +177,17 @@ public sealed partial class WeaponMount {
 	}
 
 	/// <summary>
-	/// Vtable slot <c>0x30</c>, the trigger read — <c>WeaponMount_TriggerHeld</c> for every class but
-	/// the ELF, which is the device's fire byte handed straight back, and
-	/// <c>ElfMount_TriggerHeld</c> (<c>0040e680</c>) for the ELF, which is a <b>spin-up</b>.
+	/// Vtable slot <c>0x30</c>, the trigger read: whether this mount takes the trigger as pulled this
+	/// tick. Every class but the ELF hands the device's fire byte straight back
+	/// (<c>WeaponMount_TriggerHeld</c>); the ELF's <c>ElfMount_TriggerHeld</c> (<c>0040e680</c>) is a
+	/// spin-up.
 	///
-	/// <para>The first press of an ELF's trigger fires nothing. It sets <c>+0x47</c> and returns
-	/// zero; <see cref="SpinUpTick"/> then walks the muzzle-flash flipbook one cell a tick, and at
-	/// the last cell latches <c>+0x48</c> and clears <c>+0x47</c>. From then on this returns the
-	/// trigger byte itself and the weapon fires every tick until release, which drops the latch and
-	/// rewinds the book to cell zero. The spin-up is therefore exactly
-	/// <see cref="FlashCellCount"/> ticks long — seven for both ELFs, about a third of a second —
-	/// and it is the weapon model's own flipbook that sets that length.</para>
-	///
-	/// <para><b><c>ELF2</c> skips it.</b> The function opens by forcing both flags set when the
-	/// template's self-index (<c>+0x56</c>, which is the catalog id) is
-	/// <see cref="Elf2WeaponId"/>, so the second-generation weapon fires on the press.</para>
-	///
-	/// <para><b>It is only asked of a mount that is ready</b> — <see cref="WeaponMounts.FireTick"/>
-	/// tests <see cref="CanFire"/> first and returns without reaching this. So an ELF whose
-	/// capacitor is still filling does not spin up, and one that empties mid-burst keeps its latch
-	/// until the trigger is released after it has recharged.</para>
+	/// <para>An ELF's first press fires nothing: it starts <see cref="SpinUpTick"/>, which walks the
+	/// muzzle-flash flipbook one cell a tick and latches the trigger through at the last cell, so the
+	/// spin-up lasts <see cref="FlashCellCount"/> ticks. Release drops the latch and rewinds the book.
+	/// <see cref="Elf2WeaponId"/> is latched on the press and fires at once. Only a mount that passes
+	/// <see cref="CanFire"/> is asked (<see cref="WeaponMounts.FireTick"/>), so an ELF still charging
+	/// does not spin up. See docs/retail/simulation/weapon-mounts.md#elf-and-elf2.</para>
 	/// </summary>
 	/// <param name="held">The device's fire byte — see <see cref="MechControls.Fire"/>.</param>
 	/// <returns>Whether this mount considers the trigger pulled <i>this</i> tick.</returns>
@@ -276,28 +267,21 @@ public sealed partial class WeaponMount {
 	public const int ElfWeaponId = 6;
 
 	/// <summary>
-	/// Vtable slot <c>0x28</c>, the fire dispatch — <c>WeaponMount_FireDispatch_GunBeam</c>
-	/// (<c>0040ea58</c>) for the energy class and <c>WeaponMount_FireDispatch_Missile</c>
-	/// (<c>0040e964</c>) for the ammunition one. Both open with the same prologue
-	/// (<c>WeaponMount_PrepareShot</c>, <c>0040e788</c>), which works out where the muzzle is and arms the refire delay, and then
-	/// branch on the resolved <c>PROJ.DAT</c> record's own type.
+	/// Vtable slot <c>0x28</c>, the fire dispatch: spends the shot and sends it on its way —
+	/// <c>WeaponMount_FireDispatch_GunBeam</c> (<c>0040ea58</c>) for the energy class,
+	/// <c>ElfMount_FireDispatch</c> (<c>0040ec64</c>) for the ELF and
+	/// <c>WeaponMount_FireDispatch_Missile</c> (<c>0040e964</c>) for the ammunition class. Each opens
+	/// with <see cref="PrepareShot"/> and branches on the resolved <c>PROJ.DAT</c> record's type.
 	///
-	/// <para><b>All three branches are live.</b> A <see cref="ProjectileType.Beam"/> record resolves
-	/// its hit synchronously and is over inside this call; a <see cref="ProjectileType.Bullet"/>
-	/// record becomes a travelling <see cref="Projectile"/>; a <see cref="ProjectileType.Rocket"/>
-	/// record becomes a <see cref="Rocket"/>. <see cref="ProjectileType.Grenade"/> is the fourth value
-	/// and no dispatch tests for it — no weapon template names those records, and their class is
-	/// built by <c>Grenade_Construct</c> (<c>0040ac3c</c>), to which no reference is found
-	/// (docs/retail/formats/proj-dat.md#open).</para>
-	///
-	/// <para>Both dispatches also set a flag at <c>mount+0x44</c> whenever the hardpoint's mounting
-	/// code says it is visible (<c>.GL +6 &lt; 4</c>). It is the muzzle flash, and nothing here draws
-	/// one.</para>
+	/// <para>A <see cref="ProjectileType.Beam"/> record resolves its hit inside this call; a
+	/// <see cref="ProjectileType.Bullet"/> record becomes a travelling <see cref="Projectile"/>; a
+	/// <see cref="ProjectileType.Rocket"/> record becomes a <see cref="Rocket"/>. No dispatch tests for
+	/// <see cref="ProjectileType.Grenade"/> (docs/retail/formats/proj-dat.md#open). See
+	/// docs/retail/simulation/weapon-firing.md#the-fire-dispatch--vtable-0x28.</para>
 	/// </summary>
 	/// <param name="freeShot">
-	/// The mission's unlimited-ammunition cheat, <see cref="SimWorld.UnlimitedAmmunition"/>, reaching
-	/// the dispatch as the third argument every one of them takes. <b>Only the ammunition class reads
-	/// it</b> — the other two take it and hand it to the shared prologue, which has two parameters.
+	/// The mission's unlimited-ammunition cheat, <see cref="SimWorld.UnlimitedAmmunition"/>. Only the
+	/// ammunition class reads it.
 	/// </param>
 	internal void Fire(MechObject owner, SimWorld world, bool freeShot = false) {
 		var (bone, muzzle) = PrepareShot(owner);
@@ -352,23 +336,19 @@ public sealed partial class WeaponMount {
 	///
 	/// <list type="bullet">
 	/// <item><b>A beam</b> spends <c>min(cost, charge)</c> and resolves its hit here and now.</item>
-	/// <item><b>A charge-up gun</b> — the branch taken when the capacitor holds less than the cost,
-	/// which for every retail energy gun is <i>always</i>, since they all read a 10000 cost against a
-	/// capacitor scaled to 1200. It fires travelling shots worth the whole charge, then either arms a
+	/// <item><b>A charge-up gun</b>, taken when the capacitor holds less than the cost — every retail
+	/// energy gun, every shot — fires travelling shots worth the whole charge, then either arms a
 	/// burst follow-up or empties the capacitor.</item>
-	/// <item><b>A fixed-cost gun</b> subtracts the cost and fires one unpowered shot. <b>Nothing in
-	/// retail reaches it</b>, for the reason above; it is here because it is the branch that exists,
-	/// and because it is what a hand-edited template with a real cost would take.</item>
+	/// <item><b>A fixed-cost gun</b> subtracts the cost and fires one unpowered shot. No retail
+	/// template reaches it.</item>
 	/// </list>
 	///
-	/// <para>Two multi-shot rules sit on the charge-up branch, and both are keyed off template fields
-	/// that identify exactly one weapon each. <c>+0x3c == 3</c> is the big EMP cannon (catalog id 19,
-	/// which the simulator also calls <c>EMP</c>): it fires <b>three</b> shots, from barrels at
-	/// <c>-x</c>, <c>0</c> and <c>+x</c> of the template's own muzzle offset. <c>+0x3e == 0x13</c> is
-	/// <c>EMP2</c> (id 23) — that field is <see cref="Weapons.WeaponMountTemplate.ProjDatIndex"/>, and
-	/// 0x13 is <c>EMP2</c>'s own <c>PROJ.DAT</c> row, so the test is a weapon check spelled as a data
-	/// comparison. It arms <see cref="Bursting"/>, which fires the mount a second time a quarter of a
-	/// refire delay later and <i>then</i> empties the capacitor: two volleys per trigger pull.</para>
+	/// <para>On the charge-up branch, a template whose <see cref="Barrels"/> is
+	/// <see cref="MultiBarrelCode"/> fires three shots from barrels across its muzzle offset, and one
+	/// whose <see cref="Weapons.WeaponMountTemplate.ProjDatIndex"/> is
+	/// <see cref="BurstProjectileIndex"/> arms <see cref="Bursting"/>, firing a second volley a quarter
+	/// of a refire delay later before it empties the capacitor. See
+	/// docs/retail/simulation/weapon-firing.md#the-gun-branches.</para>
 	/// </summary>
 	private void FireGunOrBeam(MechObject owner, SimWorld world, ProjectileData.Projectile projectile,
 			in Transform3 bone, Vec3i muzzle) {
@@ -425,24 +405,15 @@ public sealed partial class WeaponMount {
 	/// <c>WeaponMount_FireDispatch_Missile</c> (<c>0040e964</c>) past the prologue — the ammunition
 	/// class, which is a magazine and two projectile branches.
 	///
-	/// <para><b>The round is now spent</b>, which it was not while nothing left the barrel: the
-	/// magazine drops by the template's <c>+0x38</c> — the same field that is a shot's energy cost on
-	/// the other class, and 5 on every autocannon against magazines of 500 to 2000 — and a magazine
-	/// that reaches zero clears <see cref="Selectable"/>, dropping the weapon out of the selection
-	/// cycle rather than leaving it armed and dry.</para>
+	/// <para>The magazine drops by the template's <c>+0x38</c> before the projectile type is looked
+	/// at, so a launcher pays as a gun does, and a magazine that reaches zero clears
+	/// <see cref="Selectable"/>, dropping the weapon out of the selection cycle. A free shot
+	/// (<paramref name="freeShot"/>) skips both.</para>
 	///
-	/// <para><b>A launcher now pays for its round too.</b> The spend used to be skipped on the
-	/// <see cref="ProjectileType.Rocket"/> branch, because the branch fired nothing and a faithful
-	/// spend would have emptied a rack for free. The original does it before it looks at the type at
-	/// all, and it does it here now.</para>
-	///
-	/// <para>The two branches are a gun and a launcher — <c>Bullet_Fire</c> for anything that is not
-	/// a <see cref="ProjectileType.Rocket"/>, <c>Rocket_Fire</c> for one that is. Only the gun branch
-	/// raises the muzzle-flash flag at <c>mount+0x44</c>; a rocket comes off a rail rather than out of
-	/// a barrel and the original lights nothing for it.</para>
-	///
-	/// <para>The original also passes the dispatch a "this shot is free" flag off a pair of debug
-	/// globals, which is the one thing that can skip the spend. Nothing in the engine sets it.</para>
+	/// <para><c>Bullet_Fire</c> takes anything that is not a <see cref="ProjectileType.Rocket"/>,
+	/// <c>Rocket_Fire</c> one that is. Only the gun branch raises the muzzle flash
+	/// (<see cref="StartMuzzleFlash"/>). See
+	/// docs/retail/simulation/weapon-firing.md#the-ammunition-dispatch.</para>
 	/// </summary>
 	private void FireAmmunition(MechObject owner, SimWorld world, ProjectileData.Projectile projectile,
 			in Transform3 bone, Vec3i muzzle, bool freeShot) {

@@ -8,38 +8,24 @@ namespace Herculan.Engine.Render;
 /// <summary>
 /// Turns a loaded <see cref="HeightGrid"/> into drawable triangles.
 ///
-/// <para>The triangulation deliberately mirrors <see cref="HeightGrid.HeightAtWorld"/> exactly:
-/// each quad is split along the diagonal that cell's own selector bits choose, so the surface being
-/// drawn is the same surface the simulation queries. If the renderer used a fixed diagonal instead,
-/// objects would visibly sit slightly above or below the ground on sloped cells — a whole class of
-/// "why is the mech floating" bug avoided by construction rather than by tuning an offset later.</para>
+/// <para>Each quad is split along the diagonal that cell's own selector bits choose, the same split
+/// <see cref="HeightGrid.HeightAtWorld"/> uses, so the surface drawn is the surface the simulation
+/// queries and objects sit on the ground on sloped cells.</para>
 ///
-/// <para>Flat-shaded lighting: one normal per triangle, no smoothing — which is what the original's
-/// per-polygon terrain fill does, and keeps the mesh honest about the geometry actually being tested
-/// against. Surface <i>colour</i> comes from the theater's texture bank when one is supplied (see
-/// <see cref="TerrainTextureBank"/>).</para>
+/// <para>One normal per triangle, no smoothing, as the original's per-polygon terrain fill has it.
+/// Surface colour comes from the theater's texture bank when one is supplied (see
+/// <see cref="TerrainTextureBank"/>). Every triangle also carries its untextured colour, the palette
+/// index the flat fill uses when terrain texturing is off — <see cref="UntexturedRamp"/> at the
+/// triangle's shade, which the shader reads through the ramp row for
+/// <see cref="UntexturedRowShade"/> (<see cref="SceneItem.GroundFill"/>); see
+/// docs/retail/rendering/terrain-texturing.md#the-terrain-texture-switch.</para>
 ///
-/// <para><b>Every triangle also carries its untextured colour</b>, as the palette index
-/// <c>Terrain_FillCellUntextured</c> (<c>0046bb40</c>) fills it with when terrain texturing is off —
-/// TERRAIN TEXTURE in the preferences, and always in the MFD's missile camera. That fill ignores the
-/// cell's material: it takes the palette's own material ramp <see cref="UntexturedRamp"/> at the
-/// triangle's baked shade, and reads the result through the theater ramp's row for
-/// <see cref="UntexturedRowShade"/> plus the cell's depth slice, which the shader does
-/// (<see cref="SceneItem.GroundFill"/>). That is <c>Raster_ShadeRampRow(0x4b)[Palette_ShadeRampLookup(2,
-/// shade)]</c>, the original's arm for shade mode 1, the one its draw runs in.</para>
-///
-/// <para><b>The light is baked here, not at draw time.</b> The original lights terrain exactly once,
-/// at zone load: <c>Terrain_BuildSurface</c> walks every cell, normalises its two face normals to
-/// length <c>0x800</c> and stores a shade byte per triangle in the cell itself (<c>+0xd</c> near,
-/// <c>+0xe</c> far). <c>Terrain_DrawCellQuad</c> then hands that byte straight to the span setup as
-/// the ramp row, and nothing recomputes it per frame. So the shade belongs in the mesh —
-/// <see cref="MissionSun.ShadeFor"/> is the byte, and the shader spends it exactly as the original
-/// does, by picking that row of the theater ramp and looking each texel's palette index up in it
-/// (<see cref="PaletteRampTable"/>). Without a ramp or a palette for the theater there is no table
-/// to look anything up in, and the mesh draws its texture unshaded.</para>
-///
-/// <para>Note this is the <b>terrain</b> shade curve, <c>Light_ComputeShadeForNormal</c> (<c>0048c060</c>) — not the one a shape's
-/// polys use. See <see cref="MissionSun"/> for why they differ.</para>
+/// <para>The light is baked into the mesh, as the original bakes a shade byte per triangle into the
+/// cell at zone load (docs/retail/rendering/terrain-lighting.md): <see cref="MissionSun.ShadeFor"/>
+/// is the byte, the terrain curve <c>Light_ComputeShadeForNormal</c> (<c>0048c060</c>) rather than
+/// the shapes' one, and the shader spends it by picking that row of the theater ramp and looking each
+/// texel's palette index up in it (<see cref="PaletteRampTable"/>). Without a ramp or a palette for
+/// the theater the mesh draws its texture unshaded.</para>
 /// </summary>
 public static class TerrainMeshBuilder {
 	/// <summary>

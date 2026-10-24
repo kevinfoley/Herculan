@@ -22,26 +22,17 @@ public enum ShellCampaignMode {
 ///
 /// <para>What is built here is the <b>frame</b> — the backdrop-textured root, the square button at the
 /// far left of the strip, and the eight tabs. Every tab screen in VSHELL builds its own copy of that
-/// strip at the same coordinates and then adds its own content beneath it, so the frame is the part
-/// that is the same on all eight and the part worth having first. The content panels are not built
-/// yet; see Herculan/ROADMAP.md.</para>
+/// strip at the same coordinates and adds its own content beneath it; the content is each tab's own
+/// screen class.</para>
 ///
-/// <para><b>The tabs name themselves.</b> Each caption is an <c>estext.bin</c> entry, consecutive from
-/// <see cref="ShellLayout.FirstTabCaption"/>, exactly as the builder fetches them — so nothing here
-/// hardcodes what the tabs are called or has to be corrected when the string table is read properly.
-/// A tab with no caption available draws its plate and no text.</para>
+/// <para>Each tab caption is an <c>estext.bin</c> entry, consecutive from
+/// <see cref="ShellLayout.FirstTabCaption"/>, as the builder fetches them. A tab with no caption
+/// available draws its plate and no text.</para>
 ///
-/// <para><b>Three tabs are gated in training mode.</b> The builder clears <c>+0x49</c> on tab
-/// 5 as it constructs it, and the strip's refresh (<c>0043b0c8</c>) rewrites that flag on tabs 2 to 6
-/// from <c>CampaignModeFlag</c> (<c>0048260c</c>) — REPAIR, BUILD and ARMORY off in training, everything on in the
-/// campaign. See <see cref="ApplyTabGate"/>.</para>
-///
-/// <para><b>Tabs 0 and 1 never latch.</b> Every handler starts by clearing the lit flag on all nine
-/// strip buttons (<c>00439dcb</c>); the six from WEAPONS on then write their own back to 1, and the
-/// main menu's and the save screen's do not — <see cref="SelectedTab"/> is <c>CurrentTabIndex</c> (<c>0047581c</c>), which
-/// screen is up, and the latch is the lit flag, which only six of the eight ever take. Those two
-/// hide the strip outright instead, and <see cref="StripVisible"/> carries that; see
-/// <see cref="SelectTab"/>.</para>
+/// <para>REPAIR, BUILD and ARMORY are gated in training mode — see <see cref="ApplyTabGate"/>. Tabs 0
+/// and 1 never latch: <see cref="SelectedTab"/> is which screen is up, while the latch is the lit
+/// flag, which only the six from WEAPONS on take; the other two hide the strip instead
+/// (<see cref="StripVisible"/>). See <see cref="SelectTab"/>.</para>
 /// </summary>
 public sealed class ShellScreen {
 	/// <summary>Id of the square button at the left of the strip, past the eight tab ids.</summary>

@@ -163,33 +163,27 @@ public sealed partial class FlyerObject : SimObject {
 	public Transform3 WorldTransform => WorldFrame;
 
 	/// <summary>
-	/// <c>Flyer_DirectFireHitTest</c> (<c>00421c8c</c>), the flyer's vtable <c>+0x20</c> — the
-	/// shortest of the three hit tests in the simulation, and the only one with no second piece of
-	/// geometry behind it.
+	/// <c>Flyer_DirectFireHitTest</c> (<c>00421c8c</c>), the flyer's vtable <c>+0x20</c> — whether a
+	/// shot struck this aircraft, and the damage, effect and wreckage if it did. Retail behavior:
+	/// docs/retail/simulation/hit-detection.md#flyer_directfirehittest--00421c8c.
 	///
 	/// <list type="number">
 	/// <item><b>The same coarse reject</b> every hit test opens with: muzzle to aircraft, against the
 	/// ray's length plus the shape's radius plus the shot's clearance.</item>
 	/// <item><b>The sphere model</b>, straight away — <see cref="CollisionModel.Test"/> against the
-	/// type's <c>.COL</c>, in the flyer's own frame. There are no shields to absorb anything first
-	/// and no collision volume to fall back on.</item>
+	/// type's <c>.COL</c>, in the flyer's own frame. There are no shields and no collision
+	/// volume.</item>
 	/// <item><b>Damage</b> to whichever component the geometry named, which for a flyer is always the
 	/// only one it has.</item>
 	/// </list>
 	///
-	/// <para>The effect a hit spawns is the shot's <see cref="WeaponShot.ImpactFxGroup.Armor"/> array
-	/// — the same array a structure hit uses — <b>unless this hit brought the flyer down</b>, in which
-	/// case the original substitutes a fixed effect id of its own instead of anything the shot
-	/// carries. The test reads <see cref="Destroyed"/> after the write; a flyer destroyed earlier
-	/// cannot be struck, its one component's alive flag being clear.</para>
+	/// <para>The effect a hit spawns is the shot's <see cref="WeaponShot.ImpactFxGroup.Armor"/> array,
+	/// or a fixed effect id when this hit brought the flyer down (<see cref="Destroyed"/> read after
+	/// the write).</para>
 	///
-	/// <para>The original also opens with the spectator flag (<c>DAT_0049ef5c</c>): set, the watched
-	/// flyer cannot be struck at all. Nothing in retail sets the flag, and this engine has no
-	/// spectator mode, so the gate is not carried — docs/retail/simulation/external-views.md, "The
-	/// spectator flag".</para>
-	///
-	/// <para>Wreckage follows every hit, and the hit that brings the aircraft down throws a different
-	/// group — see docs/retail/simulation/hit-detection.md, "<c>Flyer_DirectFireHitTest</c>".</para>
+	/// <para>The original also opens with the spectator flag (<c>DAT_0049ef5c</c>), for which no retail
+	/// store has been found (docs/retail/simulation/external-views.md#the-spectator-flag--dat_0049ef5c).
+	/// This engine has no spectator mode and leaves the gate out.</para>
 	/// </summary>
 	public override int DirectFireHitTest(SimWorld world, WeaponShot shot) {
 		var muzzle = new Vec3i(shot.Muzzle.X, shot.Muzzle.Y, shot.Muzzle.Z);

@@ -441,17 +441,14 @@ public static class MissionLoader {
 	/// action. Reducing it to a bool loses the arrival — see <see cref="Sim.MissionGroup.DeploymentCheck"/>.
 	/// </param>
 	/// <param name="Side">
-	/// The record's <c>0x6e</c> — <c>ScriptGroup.Side</c>, which lands at the
-	/// in-memory group record's <c>+0x12</c> (<c>DBSim_BuildGroupRecord</c>, <c>00423b34</c>:
-	/// <c>group[+0x12] = record[0x6e]</c>). Anything other than 1 is taken as human, which is what
-	/// every comparison in the simulation amounts to — the sweep in <c>Detection</c> is the only
-	/// place that tests for a literal value, and it tests for Cybrid.
+	/// The record's <c>0x6e</c> — see <see cref="MissionSide"/>. Anything other than 1 is taken as
+	/// human, since the detection sweep is the only place that tests for a literal value, and it tests
+	/// for Cybrid.
 	/// </param>
 	/// <param name="PaintsGround">
-	/// The record's <c>PaintsGround</c> (raw msn offset <c>0x06</c>), set on 39 of the 61 retail
-	/// block-11 records. For a base group it gates both halves of the base-formation terrain pass:
-	/// the anchor move applied below, and the repaint of the same tile — see
-	/// <see cref="MissionBasePad"/> and <see cref="BaseFormationLayout"/>.
+	/// <inheritdoc cref="MissionGroupSetup" path="/param[@name='PaintsGround']/node()"/>
+	/// For a base group it gates both the anchor move applied below and the repaint of the same tile —
+	/// see <see cref="MissionBasePad"/> and <see cref="BaseFormationLayout"/>.
 	/// </param>
 	/// <param name="Orders">
 	/// The record's ten row-15 links resolved into order records, nulls kept in the slots it left
@@ -765,20 +762,13 @@ public static class MissionLoader {
 	/// Reads the player's squad and places it around block 11's reserved record-0 point. Returns the
 	/// entry the player themself pilots, which is the one worth putting a camera on.
 	///
-	/// <para>The squad spreads exactly as any other group does, because in the original it <i>is</i>
-	/// one: <c>DBSim_SpawnMissionObjects</c> (<c>004253d8</c>) gives every <c>player.mec</c> entry
-	/// the unset-position sentinel and writes the entries into record 0's member array in file
-	/// order, so <c>DBSim_BuildGroupRecord</c> (<c>00423b34</c>) attaches entry <i>i</i> as member
-	/// slot <i>i</i> and <c>Mech_ApplyFormationOffset</c> (<c>00417898</c>) spreads every slot past
-	/// the first. The same offset is the squadmate's post every tick it keeps formation on the
-	/// player (<see cref="Sim.MechObject.FormationOffset"/>); without it the post is the player's own
-	/// position, and <c>Mech_CollisionTest</c> refuses a position that overlaps another machine.</para>
-	///
-	/// <para>Entry <i>i</i> takes as its <see cref="MissionPlacement.SlotIndex"/> the block-7 slot that
-	/// record 0's member ref <i>i</i> names, or -1 when that ref is unset, so the mission's own mech
-	/// refs to that slot resolve to it. The squad is added after the roster, so where a live group
+	/// <para>The squad spreads as any other group does: entry <i>i</i> attaches as member slot
+	/// <i>i</i> and takes that slot's formation offset, which is also the squadmate's post while it
+	/// keeps formation on the player (<see cref="Sim.MechObject.FormationOffset"/>). Its
+	/// <see cref="MissionPlacement.SlotIndex"/> is the block-7 slot record 0's member ref <i>i</i>
+	/// names, or -1 when that ref is unset; the squad is added after the roster, so where a live group
 	/// names the same slot the squad member wins. See
-	/// docs/retail/formats/script-dat.md#placement--the-actual-rule, rule 6.</para>
+	/// docs/retail/formats/script-dat.md#placement--the-actual-rule, rules 6 and 7.</para>
 	///
 	/// <para>A missing <c>player.mec</c> throws <see cref="MissingHandoffFileException"/>, as the
 	/// original asserts on it — see docs/retail/formats/script-dat.md#call-chain--confirmed.</para>

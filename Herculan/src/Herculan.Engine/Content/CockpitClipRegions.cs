@@ -14,31 +14,24 @@ public readonly record struct ClipSpan(int Start, int Length);
 /// <c>.ED0</c>-<c>.ED3</c> (320-wide) file. These say, per scanline, exactly which columns the live
 /// 3D scene shows through the canopy.
 ///
-/// <para>On-disk layout and the parse verification against the retail files are in
-/// docs/retail/formats/hd-ed-clip-regions.md; why this is the viewport cutout mechanism (DBSIM never
-/// colour-keys the canopy art) is docs/retail/simulation/cockpit-views.md, "The viewport cutout". The 9-byte VOL entry prefix that layout is written against has already been stripped by
-/// <see cref="GameContent"/>. Blocks may overlap and repeat; this parser accumulates every source
-/// region per row, as the original's flattening step does.</para>
+/// <para>The file layout and retail values are docs/retail/formats/hd-ed-clip-regions.md, and its role
+/// as the cutout is docs/retail/simulation/cockpit-views.md#the-viewport-cutout. <see cref="GameContent"/>
+/// has already stripped the 9-byte VOL entry prefix. Overlapping and repeated blocks accumulate per
+/// row, as the original's flattening step does.</para>
 ///
-/// <para><b>An empty file is meaningful, not a failure.</b> <c>APOCA.HD1</c> is 16 bytes — both counts
-/// zero — because APOCA's heads-down display, view 1, shows no 3D at all, and its <c>.VUE</c>
-/// record agrees with a zero-size viewport rect. Only RAZOR's has spans. So a region list that produces no spans is a valid
-/// parse and must not be reported as one that failed.</para>
+/// <para><b>A file with no spans is a valid parse</b>, not a failure: every herc's heads-down view
+/// file but RAZOR's is empty.</para>
 ///
-/// <para><b>One deliberate divergence.</b> A rect's fourth field is an inclusive <c>x1</c> here.
-/// DBSIM's own flattening step feeds it to the rasterizer as a span <i>length</i> instead
-/// (<c>piVar4[1] = piVar1[3]</c>, against <c>end - start + 1</c> for the span-block path), which would
-/// make it one column short. Every rect in every retail file has <c>x0 == 0</c>, so the two readings
-/// differ by exactly one pixel at the right edge and nothing else; the inclusive reading is taken
-/// because the loader's own coordinate doubling for the 320-wide art (<c>x1 = (x1 &lt;&lt; shift) +
-/// (1 &lt;&lt; shift) - 1</c>) is inclusive-end arithmetic.</para>
+/// <para><b>This engine reads a rect's fourth field as an inclusive <c>x1</c></b>, as the loader's
+/// own shift arithmetic does, where DBSIM's flattening step passes it on as a span length. The
+/// cutout is one column wider at the right edge than retail's, and in retail data nothing else
+/// differs (docs/retail/formats/hd-ed-clip-regions.md#layout).</para>
 ///
 /// <para>With all three panels shown at once, each carries its own view's rect: the forward panel
 /// view 0, the unmirrored side panel view 2 and the mirrored side panel view 3, whose rect is
 /// reflected about the view width as its art is. All three render one camera into one viewport
-/// (<see cref="Render.CockpitScreenLayout.World"/>) and the rects are the scissors that divide it.
-/// Pairing the mirrored panel with view 2's rect would clip a band off its outer edge that retail
-/// does not (docs/retail/formats/vue-view-geometry.md, "Retail files").</para>
+/// (<see cref="Render.CockpitScreenLayout.World"/>) and the rects are the scissors that divide it
+/// (docs/retail/formats/vue-view-geometry.md#retail-files).</para>
 /// </summary>
 public sealed class CockpitClipRegions {
 	/// <summary>Resource folder stem for the 640-wide clip files, per <see cref="HudSpriteSheet.ResourceFolder"/>'s reasoning.</summary>
