@@ -522,20 +522,32 @@ public sealed class HeadsDownPainter {
 			regions = view == HddDamageView.Weapons ? null : doll.Regions;
 			iconEntries = paperDoll.Hardpoints?.Length;
 
-			PaperDollPainter.AddHddWeaponIcons(hud, sprites, view, bank, doll, dollView, paperDoll.Hardpoints, hardpoints,
-				readings, dollLeft, dollTop, blit, fillRect);
-
 			// One tint per row, in the row's own order — the structural view's first two rows share a
 			// rect (both cockpit halves) and the second of them draws nothing, which is why the reading
 			// comes from PaperDollDamage.TintReading rather than from the row's printed number. Drawn
-			// after the icons, as the original's per-row pass is, so a worn limb's tint runs under an
-			// icon wherever the doll's art holds the limb's colour.
-			if (regions != null && readings != null) {
-				for (int i = 0; i < regions.Length; i++) {
-					PaperDollPainter.AddPaperDollTint(hud, sprites, bank, dollView, regions[i],
-						PaperDollDamage.TintReading(view, regions, i, inspected.FlyerVariant, readings),
-						dollLeft, dollTop, fillRect);
+			// after the icons, as the original's per-row pass is, and repainting undamaged regions too,
+			// so the doll's region colours end up over the icons wherever its art holds them. The
+			// HddWeaponIconsOnTop tweak draws them before the icons instead.
+			void AddTints() {
+				if (regions != null && readings != null) {
+					for (int i = 0; i < regions.Length; i++) {
+						PaperDollPainter.AddPaperDollTint(hud, sprites, bank, dollView, regions[i],
+							PaperDollDamage.TintReading(view, regions, i, inspected.FlyerVariant, readings),
+							repaintIntact: true, dollLeft, dollTop, fillRect);
+					}
 				}
+			}
+
+			bool iconsOnTop = TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.HddWeaponIconsOnTop);
+			if (iconsOnTop) {
+				AddTints();
+			}
+
+			PaperDollPainter.AddHddWeaponIcons(hud, sprites, view, bank, doll, dollView, paperDoll.Hardpoints, hardpoints,
+				readings, iconsOnTop, dollLeft, dollTop, blit, fillRect);
+
+			if (!iconsOnTop) {
+				AddTints();
 			}
 		}
 

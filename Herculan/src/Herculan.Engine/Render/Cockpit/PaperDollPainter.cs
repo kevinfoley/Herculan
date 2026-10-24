@@ -20,16 +20,22 @@ internal static class PaperDollPainter {
 	/// <list type="bullet">
 	/// <item><b>Structural and internal.</b> The icons are blitted over the doll, then every
 	/// <see cref="PaperDollDamage.OkColorId"/> pixel inside each icon's rect goes
-	/// <see cref="PaperDollDamage.WeaponIconColorId"/> — doll pixels the rect covers included.</item>
+	/// <see cref="PaperDollDamage.WeaponIconColorId"/> — doll pixels the rect covers included. The
+	/// region tints that follow put the doll's own region colours back over both
+	/// (<see cref="AddPaperDollTint"/>).</item>
 	/// <item><b>Weapons.</b> The doll goes blue first: its view rect's id-12 pixels, then each region
 	/// authored in another colour, over that region's rect. The icons are blitted over it and each is
 	/// tinted from its hardpoint's reading, the green-to-grey ladder a doll region takes, so an intact
 	/// weapon stays green. The doll under them is blue by then and takes no part.</item>
 	/// </list>
+	///
+	/// <para><paramref name="iconsOnTop"/> is the <see cref="Settings.TweakSettingDefinitions.HddWeaponIconsOnTop"/>
+	/// tweak, a HERCULAN departure: the caller draws the region tints first, and the structural and internal
+	/// recolour then turns only the icons' own pixels blue, leaving the doll under an icon's rect as it is.</para>
 	/// </summary>
 	internal static void AddHddWeaponIcons(CockpitArt hud, HudSpriteSheet sprites, HddDamageView view,
 			string dollBank, PaperDollGraphic.ViewEntry doll, int dollView, PaperDollGraphic.HardpointEntry[]? entries,
-			IReadOnlyList<DamageHardpoint?> hardpoints, IReadOnlyList<short>? readings, float dollLeft,
+			IReadOnlyList<DamageHardpoint?> hardpoints, IReadOnlyList<short>? readings, bool iconsOnTop, float dollLeft,
 			float dollTop, Action<string, int, float, float> blit,
 			Action<float, float, float, float, Vector3> fillRect) {
 		const int S = (int)CockpitArt.GauToPixelScale;
@@ -91,7 +97,7 @@ internal static class PaperDollPainter {
 
 			if (view != HddDamageView.Weapons) {
 				int ScreenAt(int x, int y) => IconAt(x, y) is var pixel and >= 0 ? pixel
-					: dollArt is { } art && x >= 0 && y >= 0 && x < art.Width && y < art.Height
+					: !iconsOnTop && dollArt is { } art && x >= 0 && y >= 0 && x < art.Width && y < art.Height
 						? art.Pixels[y * art.Width + x]
 						: -1;
 				RasterPrimitives.AddIndexedRecolor(icon.X, icon.Y, x1, y1, ScreenAt, green, blue, dollLeft, dollTop, fillRect);
@@ -110,16 +116,19 @@ internal static class PaperDollPainter {
 	}
 
 	/// <summary>
-	/// One paper-doll region repainted at its current damage — <c>PaperDoll_RecolorRect</c> in its mode 0 arm,
-	/// the only arm the retail <c>.PDG</c> files reach. It walks the region's rect a pixel at a time
-	/// and rewrites just the pixels still holding the colour the art drew that body part in, which is
-	/// why the outlines and rivets over a limb survive the recolour.
+	/// One paper-doll region repainted at its current damage — the mode 0 arm of <c>PaperDoll_RecolorRect</c>
+	/// (the MFD) or <c>PaperDoll_RecolorRectFromArt</c> (the Heads-Down Display), the only arm the retail
+	/// <c>.PDG</c> files reach. It walks the region's rect a pixel at a time and rewrites just the pixels
+	/// where the art holds the colour it drew that body part in, which is why the outlines and rivets over
+	/// a limb survive the recolour.
 	///
 	/// <para>Both colours are palette indices: the region's own is the <c>COLORS.DAT</c> id the file
 	/// carries, resolved at load in the original (<c>PaperDoll_Load</c>) and here at draw time, and
-	/// the tint is <see cref="PaperDollDamage.TintColorId"/>'s. When the two agree the original skips
-	/// the walk outright, and so does this — an undamaged region is already the colour it should
-	/// be.</para>
+	/// the tint is <see cref="PaperDollDamage.TintColorId"/>'s. When the two agree
+	/// <c>PaperDoll_RecolorRect</c> skips the walk, and so does this unless <paramref name="repaintIntact"/>
+	/// is set: <c>PaperDoll_RecolorRectFromArt</c> walks anyway, and on the Heads-Down Display, which runs
+	/// it after the weapon icons, that is what puts an undamaged region's pixels back over them —
+	/// docs/retail/simulation/heads-down-display.md#damage-detail--page-1.</para>
 	///
 	/// <para>The rect is the file's inclusive corner pair, doubled and its far corner nudged one
 	/// further, because the loader shifts every <c>.PDG</c> coordinate by the video mode's
@@ -129,7 +138,7 @@ internal static class PaperDollPainter {
 	/// runs rather than one quad each.</para>
 	/// </summary>
 	internal static void AddPaperDollTint(CockpitArt hud, HudSpriteSheet sprites, string bank, int frame,
-			PaperDollGraphic.ViewRegion region, int? reading, float dollLeft, float dollTop,
+			PaperDollGraphic.ViewRegion region, int? reading, bool repaintIntact, float dollLeft, float dollTop,
 			Action<float, float, float, float, Vector3> fillRect) {
 		const int S = (int)CockpitArt.GauToPixelScale;
 
@@ -140,7 +149,7 @@ internal static class PaperDollPainter {
 		}
 
 		int tintId = PaperDollDamage.TintColorId(PaperDollDamage.State(damage));
-		if (hud.Colors.PaletteIndex(tintId) == key || hud.LogicalColor(tintId) is not { } tint) {
+		if ((!repaintIntact && hud.Colors.PaletteIndex(tintId) == key) || hud.LogicalColor(tintId) is not { } tint) {
 			return;
 		}
 

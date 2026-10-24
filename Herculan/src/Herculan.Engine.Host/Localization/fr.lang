@@ -19,6 +19,8 @@ tweak.critical_damage_message.display_name     Message « Damage Level Critical 
 tweak.critical_damage_message.description      Joue « Damage Level Critical » lorsque le joueur subit des dégâts critiques. Ne fonctionne pas dans le jeu original à cause d'une faute de frappe dans le code.
 tweak.show_squadmate_number.display_name       Afficher le numéro des coéquipiers
 tweak.show_squadmate_number.description        Sur le Heads Down Display, affiche le numéro de chaque coéquipier (correspondant à la touche numérique servant à le sélectionner) à l'aide d'une étiquette inutilisée et masquée dans le jeu original
+tweak.hdd_weapon_icons_on_top.display_name   Armes HDD au premier plan
+tweak.hdd_weapon_icons_on_top.description    Sur l'écran de dégâts du Heads Down Display, dessine les icônes d'armes par-dessus le schéma du HERC dans les vues structure et interne, et ne colore en bleu que les icônes. Dans le jeu original, des parties du schéma sont dessinées par-dessus les icônes, et les traits du schéma sous une icône deviennent bleus avec elle.
 tweak.every_squadmate_reply.display_name       Réponses variées des coéquipiers
 tweak.every_squadmate_reply.description        Les coéquipiers choisissent au hasard parmi toutes leurs réponses enregistrées, si bien qu'un coéquipier qui acquiesce peut aussi dire « Compris. » Dans le jeu original, il dit « D'accord. » deux fois sur trois et « Affirmatif ! » le reste du temps, jamais « Compris. »
 tweak.fix_computer_message_pref.display_name   Corriger la préférence COMPUTER MESSAGE

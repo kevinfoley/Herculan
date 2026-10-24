@@ -468,7 +468,7 @@ internal sealed class MfdPainter {
 						PaperDollPainter.AddPaperDollTint(hud, dollSprites, subject.SilhouetteBank,
 							MfdLayout.WireframeViewIndex, region,
 							PaperDollDamage.StatusRegionReading(region.Index, subject.FlyerVariant, readings),
-							dollLeft, dollTop, fillRect);
+							repaintIntact: false, dollLeft, dollTop, fillRect);
 					}
 				}
 
