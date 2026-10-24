@@ -67,6 +67,8 @@ tweak.fix_raptor2_perspective.display_name  Raptor-II-Perspektive korrigieren
 tweak.fix_raptor2_perspective.description   Setzt die Cockpitansicht des Raptor II in sein Cockpit. Im Originalspiel liegt die Ansicht über der Oberkante des HERC. Turmnachführung und Waffenkonvergenz wandern mit.
 tweak.reset_counters_on_replay.display_name  Flags bei „Einsatz noch mal?“ korrigieren
 tweak.reset_counters_on_replay.description   Behebt, dass Einsatz-Flags nicht zurückgesetzt werden, wenn Sie einen Einsatz wiederholen (nachdem Sie im Einsatz getötet wurden). Das konnte Freischaltungen verhindern oder anderes unerwartetes Verhalten auslösen.
+tweak.c5_05_squadmate_clear.display_name  Luna-Einsatz 5 korrigieren
+tweak.c5_05_squadmate_clear.description   In der Mission zur Verteidigung des Mondaußenpostens startet Ihr erster Staffelkamerad einige Meter neben dem Versorgungstransporter der Basis und kann sich so von Beginn an bewegen. Im Originalspiel startet er teilweise im Transporter und kann sich nicht bewegen, bis der Transporter zerstört ist.
 tweak.auto_fill_save_name.display_name  Spielstandnamen immer vorschlagen
 tweak.auto_fill_save_name.description   Wenn Sie auf SPEICHERN klicken, wird ein Name automatisch ausgefüllt. Sie müssen trotzdem noch auf ANNEHMEN klicken. Mit einem Controller wird der Name immer automatisch ausgefüllt.
 tweak.auto_save_slot_10.display_name  Autospeichern in Platz 10

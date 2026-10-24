@@ -269,6 +269,13 @@ public static class TweakSettingDefinitions {
 	public static readonly TweakSettingDefinition<bool> ResetCountersOnReplay = new("tweak.reset_counters_on_replay", TweakCategory.Functional, defaultValue: true, recommendedValue: true);
 
 	/// <summary>
+	/// In <c>C5_05</c>, the first squadmate starts a short way clear of the lunar outpost's supply transport. Retail
+	/// starts it inside the vehicle's collision volume, which refuses every step it tries until the transport is destroyed. See
+	/// <see cref="World.StuckSquadmateFix"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> SquadmateClearOfTransport = new("tweak.c5_05_squadmate_clear", TweakCategory.Functional, defaultValue: false, recommendedValue: true);
+
+	/// <summary>
 	/// SAVE starts the slot's new name filled in as the pilot's name, the sector and the mission number, for the player to
 	/// edit or ACCEPT, as it always does when clicked with a gamepad. Retail empties the name. See
 	/// <see cref="Shell.ShellSaveScreen.AutoName"/>.
@@ -290,7 +297,7 @@ public static class TweakSettingDefinitions {
 		PreserveSoundPosition, CriticalDamageMessage, ShowSquadmateNumber, HddWeaponIconsOnTop, EverySquadmateReply, FixComputerMessagePreference,
 		SmootherTurretMovement, MouseExternalView, FixDefendPositionOrder, FixWeaponDamageRecords,
 		ChargeBarPowerLevel, FlashThroughSecondHit, ShowAltitudeTape, DropPodSoundFromPod, FixRepairDiagramSides,
-		FixTerrainHitPoint, FlyerIgnoresPlayerThrottle, StrandedStingrayClosesIn, GuardHoldsUntilDestroyed, FasterKeyboardAiming, FixGunsightDrag, FixRaptorIIPerspective, ResetCountersOnReplay,
+		FixTerrainHitPoint, FlyerIgnoresPlayerThrottle, StrandedStingrayClosesIn, GuardHoldsUntilDestroyed, FasterKeyboardAiming, FixGunsightDrag, FixRaptorIIPerspective, ResetCountersOnReplay, SquadmateClearOfTransport,
 		AutoFillSaveName, AutoSaveSlot10, PlayLastMusicTrack, ShuffleMissionMusic, ChangePbwBeamHue,
 	};
 }

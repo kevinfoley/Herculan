@@ -172,7 +172,7 @@ public static class MissionLoader {
 			placements);
 
 		var counters = LoadCounters(CaseInsensitivePath.Combine(Path.GetDirectoryName(scriptPath) ?? ".", CountersFileName));
-		var player = LoadPlayerLance(scriptPath, script, groups, mechFormations, mechNames, placements);
+		var player = LoadPlayerSquad(scriptPath, script, groups, mechFormations, mechNames, placements);
 		var basePads = ResolveBasePads(groups, claims[MissionUnitKind.Base], baseFormations, placements);
 
 		var coordinates = new List<Vec3i>(script.Coordinates.Length);
@@ -825,7 +825,7 @@ public static class MissionLoader {
 	/// <para>A missing <c>player.mec</c> throws <see cref="MissingHandoffFileException"/>, as the
 	/// original asserts on it — see docs/retail/formats/script-dat.md#call-chain--confirmed.</para>
 	/// </summary>
-	private static MissionPlacement? LoadPlayerLance(string scriptPath, ScriptDat script, Group[] groups,
+	private static MissionPlacement? LoadPlayerSquad(string scriptPath, ScriptDat script, Group[] groups,
 			MechFormationTable mechFormations, UnitTypeNames mechNames,
 			List<MissionPlacement> placements) {
 		string playerPath = PlayerPathFor(scriptPath);
