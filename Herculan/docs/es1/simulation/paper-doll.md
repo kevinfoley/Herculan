@@ -17,7 +17,7 @@ The data holds, after the run's tables, `PaperDoll_TypeTable` (`00093348`), the 
 
 ## The records
 
-**`PaperDoll_InitTables` (`00030288`)** and **`PaperDoll_Load` (`00030388`)** read `pdg\weapons` and each chassis' `pdg\<name>` ([the chassis files](../formats/chassis-dat.md#the-load)) into ES2's records: a `0x5c`-byte record per chassis type in `PaperDoll_TypeTable`, three `0x1c`-byte views, their `0x1c`-byte regions and the `0x14`-byte hardpoints ([`.PDG`](../../retail/formats/pdg-paper-doll.md)), with no coordinate shift and no color lookup. A region's `colorId` is therefore a palette index as the file states it. ES1's 17 `.PDG` files have ES2's layout ([what HercWorks reads](../../herculan/plan-es1-support.md#what-hercworks-reads)); `pdg\WEAPONS.PDG` holds 12 sizes, which fill `WeaponIconSizes`: 11×32, 9×9, 5×25, 8×7, 7×20, 7×7, 10×25, 12×9, 5×35, 10×6, 9×6 and 9×6.
+**`PaperDoll_InitTables` (`00030288`)** and **`PaperDoll_Load` (`00030388`)** read `pdg\weapons` and each chassis' `pdg\<name>` ([the chassis files](../formats/chassis-dat.md#the-load)) into ES2's records: a `0x5c`-byte record per chassis type in `PaperDoll_TypeTable`, three `0x1c`-byte views, their `0x1c`-byte regions and the `0x14`-byte hardpoints ([`.PDG`](../../retail/formats/pdg-paper-doll.md)), with no coordinate shift and no color lookup. A region's `colorId` is therefore a palette index as the file states it. `PaperDoll_Load`, (slot, name), first loads the bank `dba\<name>` with `ClassItem_LoadFromFile`, its folder the string the pointer at `000980f8` names, `dba` (ES2's picks its folder by the hi-res banks setting); view *v*'s picture, the view's dword `+0x00`, is frame *v* of that bank, entry *v* of its frame array at `+8`, and the view's two 8-byte points at `+0x04` and `+0x0c`, region count `+0x14` and regions `+0x18` follow it from the file. It returns the slot's record. Its body has no test of whether `pdg\<name>` opened, where ES2's asserts when it does not. ES1's 17 `.PDG` files have ES2's layout ([what HercWorks reads](../../herculan/plan-es1-support.md#what-hercworks-reads)); `pdg\WEAPONS.PDG` holds 12 sizes, which fill `WeaponIconSizes`: 11×32, 9×9, 5×25, 8×7, 7×20, 7×7, 10×25, 12×9, 5×35, 10×6, 9×6 and 9×6.
 
 The element constructors each allocate their record when given none and return it, constructing in place the points and rects inside it, as the compiler builds a subobject ([constructors](../formats/compiler.md#constructors-and-destructors)):
 
@@ -54,7 +54,7 @@ It finds each hardpoint's gun through **`Mech_GetGunLayout` (`0001a0f8`)**, (mac
 
 `PaperDoll_RecolorRectFromArt`'s mode 0 tests the art's pixel instead of the screen's: from `art`'s pixels (`+0xe`), *width* its `int16` `+6`, at the rect's offset from `artOrigin`, offset the same way, one byte a pixel, adding *width* − (*x1* − *x0*) − 1 at each row's end. ES2's modes 0 and 3 test the key alone, its mode 2 spares `COLORS.DAT` id 19's index, it writes a doubled block per pixel when the bank is drawn doubled, and it does nothing when the rect's top row is above the screen.
 
-**`Damage_PickRegionTint` (`00030dc4`)**, (out, region, damage), ES2's (`00438624`) on `Damage_ToConditionState`'s bands, writes the state and a palette index to the two dwords at *out*:
+**`Damage_PickRegionTint` (`00030dc4`)**, (out, region, damage), ES2's (`00438624`) on `Damage_ToConditionState`'s bands, writes the state and a palette index to the two dwords at *out*, by the region's mode, its dword `+0x18` (`recolorMode`), and from its `colorId`, its dword `+0x14`:
 
 | Intact | State | Mode 0, 2 or 3 | Mode 1 |
 |---|---|---|---|
@@ -64,9 +64,9 @@ It finds each hardpoint's gun through **`Mech_GetGunLayout` (`0001a0f8`)**, (mac
 | ≥ 1% | 3 | 51 | 48 |
 | 0 | 4 | 62 | 62 |
 
-ES2's reads the five colors through its color table, ids 12, 15, 20, 9 and 18, and in mode 1 keeps `colorId` for states 1 and 2 and takes ids 6 and 17 for 3 and 4. A mode above 3 writes whatever `EDX` and `EDI` held.
+ES2's reads the five colors through its color table, ids 12, 15, 20, 9 and 18, and in mode 1 keeps `colorId` for states 1 and 2 and takes ids 6 and 17 for 3 and 4. The mode's test is unsigned, so a mode above 3 or below 0 writes whatever `EDX` and `EDI` held.
 
-**`Damage_ToConditionState` (`00030eb8`)**, (damage): ES2's (`00438700`), the same statements. `es2_xref.py` finds calls from `Player_DependentCondition` ([the squadmates](cockpit-panel.md#squadmate-and-pilot-helpers)) and `MfdStatusScreen_SetCondition` (`000336b0`, [the condition line](mfd-status-screen.md#the-condition-line)).
+**`Damage_ToConditionState` (`00030eb8`)**, (damage): ES2's (`00438700`), the same statements. With intact = (256 − damage) × 100 `>> 8`, an arithmetic shift that rounds down, it returns 0 at 90 or more, 1 at 74 or more, 2 at 51 or more, 3 at 1 or more and 4 below 1. A damage above 256 gives a negative intact and so 4, rounded down or not. `es2_xref.py` finds calls from `Player_DependentCondition` ([the squadmates](cockpit-panel.md#squadmate-and-pilot-helpers)) and `MfdStatusScreen_SetCondition` (`000336b0`, [the condition line](mfd-status-screen.md#the-condition-line)).
 
 `es2_xref.py` finds `PaperDoll_RecolorRect` called once from `MfdStatusScreen_Paint` (`000330b4`) and five times from `000424f8`, `PaperDoll_RecolorRectFromArt` once from `000424f8`, and `Damage_PickRegionTint` once from `MfdStatusScreen_Paint` and four times from `000424f8` ([Open](#open)). The status screen tints view 2 by ES2's walker table, each region in its own `recolorMode` ([a HERC on the status screen](mfd-status-screen.md#a-herc)).
 

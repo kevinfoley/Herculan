@@ -56,9 +56,11 @@ The font functions the labels reach, in the library region:
 
 The display's update stores `Player_DependentCondition`(4) at `+0x68` and runs **`PanelGauge_TickDropout` (`00031400`)**, (gauge), when it is non-zero; `Gunsight_UpdateAndPaint` (`00034f3c`) does so, outside view 4 ([the gunsight's update](cockpit-gunsight-hud.md#painting-and-the-per-frame-update)), as does the MFD's `MfdDisplay_Update` (`0003a2a8`, [the MFD's dropout](mfd-display.md#the-dropout)), and `es2_xref.py` finds the third call in `0003cd28` ([Open](#open)). The tick:
 
-1. Condition 3 sets dark and returns.
-2. Otherwise, while the clock is past `+0x6c` and short of `+0x6c` + `+0x6a`, each time it passes `+0x70` the state flips, `+0x75` becomes 2, `+0x70` becomes the clock + 1 + (*r* mod 30), and a flip to dark plays sound `0x1c` (`Sound_Play`).
-3. Once the clock reaches `+0x6c` + `+0x6a`, it runs `PanelGauge_ScheduleDropout`, sets the state dark for condition 2 or more and shown for condition 1, and `+0x75` to 2.
+1. Condition 3 sets dark and returns, leaving `+0x75` as it is.
+2. Otherwise, while the clock is past `+0x6c` and short of `+0x6c` + `+0x6a`, the window open at both ends, each time it is past `+0x70` the state flips, `+0x75` becomes 2, `+0x70` becomes the clock + 1 + (*r* mod 30), and a flip to dark plays sound `0x1c` (`Sound_Play`).
+3. Once the clock, past `+0x6c`, reaches `+0x6c` + `+0x6a`, it runs `PanelGauge_ScheduleDropout`, sets the state dark for condition 2 or more and shown below 2, and `+0x75` to 2.
+
+The three compares of the clock are unsigned (`JBE`); the burst's end is `+0x6c` plus the `int16` `+0x6a` sign-extended. The condition is an `int16` the tick tests against 3 and 2 alone.
 
 **`PanelGauge_ScheduleDropout` (`000313a4`)**, (gauge): `+0x6c` and `+0x70` = the clock + (*r* mod 6 + 2) × 60, and `+0x6a` = *r'* mod 240 + 1. A gauge from the zero-filled heap ([the heap](memory.md#the-heap)) has these at 0, so its first tick schedules a burst. A condition of 4 flickers as 2 does, dark between bursts, rather than staying dark as 3 does.
 
