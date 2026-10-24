@@ -3412,7 +3412,7 @@
       "type": "function",
       "confidence": "high",
       "name": "EcmMount_PushGaugeState",
-      "description": "(mount, armed, in the chain, ready) in stack order, callee-cleaned, RET 0x10: the ECM's gauge-push slot +0x54. Reads only the mount: copies the low byte of the first word of the block 00037b50(the gauge +0x77) returns into the int16 +0x7b and +0x7d. ES2's EcmPod_Tick (DBSIM 0040f184) posts a jamming message when that byte changes and writes the block back; this posts nothing and writes nothing back.",
+      "description": "(mount, armed, in the chain, ready) in stack order, callee-cleaned, RET 0x10: the ECM's gauge-push slot +0x54. Reads only the mount: copies the low byte of the first word of the block PodGauge_GetStateBlock (00037b50)(the gauge +0x77) returns into the int16 +0x7b and +0x7d. ES2's EcmPod_Tick (DBSIM 0040f184) posts a jamming message when that byte changes and writes the block back; this posts nothing and writes nothing back.",
       "source": "Herculan/docs/es1/simulation/weapon-mount-classes.md#gauges; ES1DBSIM disassembly at 0000b588",
       "verified": {
         "bytes": "0000b588+48",
@@ -4417,7 +4417,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMounts_SetChain",
-      "description": "(manager, chain) in stack order, callee-cleaned: when the chain differs from the signed byte +0x1c, stores it there, calls WeaponMounts_StepSelection (0000cb54)(manager, 1) when a mount is armed (+0x1d not negative) and its int16 entry in the new chain's array (+0x1f + chain * 6) is 0, and passes (the dword +0x1dd of CockpitViewInstance (00092d1c), chain) to 00037ce4. ES2's WeaponMounts_SetChain (DBSIM 00410ae4), which passes the chain to ConsoleButtons_SetChainNumber (DBSIM 00441f68).",
+      "description": "(manager, chain) in stack order, callee-cleaned: when the chain differs from the signed byte +0x1c, stores it there, calls WeaponMounts_StepSelection (0000cb54)(manager, 1) when a mount is armed (+0x1d not negative) and its int16 entry in the new chain's array (+0x1f + chain * 6) is 0, and passes (the dword +0x1dd of CockpitViewInstance (00092d1c), chain) to ConsoleButtons_SetChainNumber (00037ce4). ES2's WeaponMounts_SetChain (DBSIM 00410ae4), which passes the chain to ConsoleButtons_SetChainNumber (DBSIM 00441f68).",
       "source": "Herculan/docs/es1/simulation/weapon-mounts.md#arming-chaining-and-linking; ES1DBSIM disassembly at 0000cf10",
       "verified": {
         "bytes": "0000cf10+102",
@@ -4432,7 +4432,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMounts_PerFrameUpdate",
-      "description": "(manager, range) in stack order, callee-cleaned: when the word maybe_WeaponChain_EoStepPending (000b5bc8) is set and maybe_WeaponChain_EoHold (000b5bc6) clear, WeaponMounts_StepSelection (0000cb54)(manager, 1) and the byte +0x18 cleared; stores range at the dword +0x31 and runs WeaponMounts_AdvanceToReady (0000ce54)(manager); reads the dword 00037ed4 returns for the console panel, the dword +0x1dd of CockpitViewInstance (00092d1c): with the byte +0x16 set it clears it and puts the byte +0x1c in the block's low word, otherwise WeaponMounts_SetChain (0000cf10)(manager, the block); with the block's byte 2 set WeaponMounts_SetTrackLatch (0000d408)(manager), else the byte +0x14 cleared; with its byte 3 set WeaponMounts_ToggleLink (0000d41c)(manager); then clears byte 3 and passes (panel, block) to 00037e78. For each non-null mount the armed flag is (index == +0x1d); a linked mount (+0x4b) with its own +0x49 clear and +0x4c set is armed also when its partner (index + its hardpoint's byte +0x16) is the armed one, and one with +0x49 set or +0x4c clear has its and its partner's +0x4b flipped and WeaponMounts_SetSelection (0000cb00)(manager, the partner's index); then its slot +0x54(mount, WeaponMounts_MountIsReady (0000cdb0)(manager, mount), its int16 entry in the current chain, a dword with the armed flag in its low word). ES2's WeaponMounts_PerFrameUpdate (DBSIM 00410b40). es2_xref finds one call, from Player_PerFrameCockpitUpdate (000155a8).",
+      "description": "(manager, range) in stack order, callee-cleaned: when the word maybe_WeaponChain_EoStepPending (000b5bc8) is set and maybe_WeaponChain_EoHold (000b5bc6) clear, WeaponMounts_StepSelection (0000cb54)(manager, 1) and the byte +0x18 cleared; stores range at the dword +0x31 and runs WeaponMounts_AdvanceToReady (0000ce54)(manager); reads the dword ConsoleButtons_GetStateBlock (00037ed4) returns for the console panel, the dword +0x1dd of CockpitViewInstance (00092d1c): with the byte +0x16 set it clears it and puts the byte +0x1c in the block's low word, otherwise WeaponMounts_SetChain (0000cf10)(manager, the block); with the block's byte 2 set WeaponMounts_SetTrackLatch (0000d408)(manager), else the byte +0x14 cleared; with its byte 3 set WeaponMounts_ToggleLink (0000d41c)(manager); then clears byte 3 and passes (panel, block) to ConsoleButtons_SetStateBlock (00037e78). For each non-null mount the armed flag is (index == +0x1d); a linked mount (+0x4b) with its own +0x49 clear and +0x4c set is armed also when its partner (index + its hardpoint's byte +0x16) is the armed one, and one with +0x49 set or +0x4c clear has its and its partner's +0x4b flipped and WeaponMounts_SetSelection (0000cb00)(manager, the partner's index); then its slot +0x54(mount, WeaponMounts_MountIsReady (0000cdb0)(manager, mount), its int16 entry in the current chain, a dword with the armed flag in its low word). ES2's WeaponMounts_PerFrameUpdate (DBSIM 00410b40). es2_xref finds one call, from Player_PerFrameCockpitUpdate (000155a8).",
       "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-per-frame-pass--weaponmounts_perframeupdate-0000cf78; ES1DBSIM disassembly at 0000cf78",
       "verified": {
         "bytes": "0000cf78+519",
@@ -4522,7 +4522,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMounts_ToggleLink",
-      "description": "(manager), callee-cleaned: with the signed byte +0x1d not negative, takes the armed mount's hardpoint's (+0x18) signed byte +0x16 as an offset; when it is not 0, the mount at the armed index + offset is not null and the two mounts' templates (+0x1c) agree on the int16 +0x56, XORs 1 into both mounts' +0x4b. ES2's WeaponMounts_ToggleLink (DBSIM 00410f14). es2_xref finds two calls, from WeaponMounts_PerFrameUpdate (0000cf78) and 00038034.",
+      "description": "(manager), callee-cleaned: with the signed byte +0x1d not negative, takes the armed mount's hardpoint's (+0x18) signed byte +0x16 as an offset; when it is not 0, the mount at the armed index + offset is not null and the two mounts' templates (+0x1c) agree on the int16 +0x56, XORs 1 into both mounts' +0x4b. ES2's WeaponMounts_ToggleLink (DBSIM 00410f14). es2_xref finds two calls, from WeaponMounts_PerFrameUpdate (0000cf78) and ConsoleButtons_HandleCommand (00038034).",
       "source": "Herculan/docs/es1/simulation/weapon-mounts.md#arming-chaining-and-linking; ES1DBSIM disassembly at 0000d41c",
       "verified": {
         "bytes": "0000d41c+149",
@@ -12472,7 +12472,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_CreatePodGauge",
-      "description": "(cockpit, mount, row) in stack order, callee-cleaned: copies the weapon-row rect at CockpitGauRecord + 0x14 + 16 x row to the struct's +0x154, builds the gauge with 00037810(0, mount, row, cockpit, struct + 0x154), adds 1 to the widget count +0x6c without storing the gauge in the list, stores it at +0x1d8 and the int16 row at +0x23b, and returns it. es2_xref finds one call, from EcmMount_CreateGauge (0000abec), which passes CockpitViewInstance, the mount and the signed byte +7 of the mount's +0x18 record, and stores the gauge at the mount's +0x77. ES2's CockpitView_CreatePodGauge (DBSIM 004321d4), which picks one of three pod gauge classes, uses +0x164 and registers the gauge in its row.",
+      "description": "(cockpit, mount, row) in stack order, callee-cleaned: copies the weapon-row rect at CockpitGauRecord + 0x14 + 16 x row to the struct's +0x154, builds the gauge with PodGauge_Ctor (00037810)(0, mount, row, cockpit, struct + 0x154), adds 1 to the widget count +0x6c without storing the gauge in the list, stores it at +0x1d8 and the int16 row at +0x23b, and returns it. es2_xref finds one call, from EcmMount_CreateGauge (0000abec), which passes CockpitViewInstance, the mount and the signed byte +7 of the mount's +0x18 record, and stores the gauge at the mount's +0x77. ES2's CockpitView_CreatePodGauge (DBSIM 004321d4), which picks one of three pod gauge classes, uses +0x164 and registers the gauge in its row.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-weapon-rows",
       "verified": {
         "bytes": "0002cc74+98",
@@ -12487,7 +12487,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Gau_WeaponButtonsWidget",
-      "description": "(cockpit, record) in stack order, callee-cleaned: builds the console buttons with 00037bd0(0, cockpit, record + 0x1c4), calls 00037ce4(them, 2), sets the byte +0x1dc to 1, the dword +0x1d0 to 0 and +0x1d4 to the dword at +0x168, appends them to the widget list +8 (count +0x6c) and returns them. es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8) by its padding entry 0002ccd6, which stores the result at +0x1dd. ES2's Gau_WeaponButtonsWidget (DBSIM 00432340), which shifts its block, +0x1d4, first and writes +0x1e0, +0x1d4 and +0x1d8 from +0x16c.",
+      "description": "(cockpit, record) in stack order, callee-cleaned: builds the console buttons with ConsoleButtons_Ctor (00037bd0)(0, cockpit, record + 0x1c4), calls ConsoleButtons_SetChainNumber (00037ce4)(them, 2), sets the byte +0x1dc to 1, the dword +0x1d0 to 0 and +0x1d4 to the dword at +0x168, appends them to the widget list +8 (count +0x6c) and returns them. es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8) by its padding entry 0002ccd6, which stores the result at +0x1dd. ES2's Gau_WeaponButtonsWidget (DBSIM 00432340), which shifts its block, +0x1d4, first and writes +0x1e0, +0x1d4 and +0x1d8 from +0x16c.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#building-it",
       "verified": {
         "bytes": "0002ccd8+97",
@@ -12697,7 +12697,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitWidgets_HandleCommand",
-      "description": "(cockpit, code) in stack order, its arguments removed by this function (RET 8): returns 0 while +0x20b is set. With v the published manager's view +0x10, REPNE SCASD finds the code among the 24 dwords of CockpitWidgets_CommandCodes (00092f34) and jumps through the 24 after them (00092f94). 0 returns 0. 2-10 (keys 1-9): in view 1 as an unlisted code; otherwise row code-2: the pod row (+0x23b) flips bit 0 of the first word of the block 00037b50(the pod gauge +0x1d8) returns and hands the copy to 00037b14(gauge, copy); another row's gauge (+0x70 + 4*row), when set, goes to CockpitView_ArmWeaponByGauge (0002d098). 0x3b-0x40 (F1-F6) and 0x41-0x42 (F7, F8) press button code-0x3b of the MFD +0x1e9 or code-0x41 of +0x1f5 (the button at +0x14 + 4*index), calling the +0xc slot of the button's vtable at +0x1c with (button, 1) unless its int16 +0x17 is 2 or 3; F1-F6 then queue view command 1 from view 1 or 6 from views 2-3 (table 00092ff4, by the view), F7-F8 command 0. 0x43 (F9) queues 5 from view 0 or 6 from view 2; 0x44 (F10) 4 from view 0 or 6 from view 3. 0x01 (Esc) queues 0, 1 or 6 from views 0, 1 and 2-3 (table 00093008, by the view). 0x0f (Tab) returns 0 in view 4, takes the unlisted path in view 1, and otherwise runs TargetSelect_Cycle (0002d898). 0x57 (F11): ObjectivesPanel_Ctor (0004a1b4)(0, 0, 1), the +0xc slot of the vtable at that object's +0x314, then Alert_Dtor (00045d0c)(object, 3). 0x13 (R): Mech_ToggleRadarMode (000157f4)(the machine +0x1ff of CockpitViewInstance (00092d1c)). An unlisted code goes to MfdFlashComm_HandleAltKey (0003a890)(+0x1e9, code), then in view 1 to the +0x10 slot (vtable at +0x76) of +0x1f5 alone, and in any other view to the +0x10 slots of +0x1d4 (when set), +0x1dd, +0x1e1, +0x1e5, +0x1ed, +0x1f1 and +0x1e9, stopping at the first that returns nonzero. Returns 1 for a code a case took or a slot accepted, else 0. es2_xref finds one call, from Sim_DispatchCommand (00059df8). ES2's CockpitWidgets_HandleCommand (DBSIM 00432bc8), which takes 0x02-0x0b and presses the row through Widget_PressChild, answers 0x27, Enter and Alt+D, steps the Targeting Pod on Tab and builds an objectives panel on F11.",
+      "description": "(cockpit, code) in stack order, its arguments removed by this function (RET 8): returns 0 while +0x20b is set. With v the published manager's view +0x10, REPNE SCASD finds the code among the 24 dwords of CockpitWidgets_CommandCodes (00092f34) and jumps through the 24 after them (00092f94). 0 returns 0. 2-10 (keys 1-9): in view 1 as an unlisted code; otherwise row code-2: the pod row (+0x23b) flips bit 0 of the first word of the block PodGauge_GetStateBlock (00037b50)(the pod gauge +0x1d8) returns and hands the copy to PodGauge_SetStateBlock (00037b14)(gauge, copy); another row's gauge (+0x70 + 4*row), when set, goes to CockpitView_ArmWeaponByGauge (0002d098). 0x3b-0x40 (F1-F6) and 0x41-0x42 (F7, F8) press button code-0x3b of the MFD +0x1e9 or code-0x41 of +0x1f5 (the button at +0x14 + 4*index), calling the +0xc slot of the button's vtable at +0x1c with (button, 1) unless its int16 +0x17 is 2 or 3; F1-F6 then queue view command 1 from view 1 or 6 from views 2-3 (table 00092ff4, by the view), F7-F8 command 0. 0x43 (F9) queues 5 from view 0 or 6 from view 2; 0x44 (F10) 4 from view 0 or 6 from view 3. 0x01 (Esc) queues 0, 1 or 6 from views 0, 1 and 2-3 (table 00093008, by the view). 0x0f (Tab) returns 0 in view 4, takes the unlisted path in view 1, and otherwise runs TargetSelect_Cycle (0002d898). 0x57 (F11): ObjectivesPanel_Ctor (0004a1b4)(0, 0, 1), the +0xc slot of the vtable at that object's +0x314, then Alert_Dtor (00045d0c)(object, 3). 0x13 (R): Mech_ToggleRadarMode (000157f4)(the machine +0x1ff of CockpitViewInstance (00092d1c)). An unlisted code goes to MfdFlashComm_HandleAltKey (0003a890)(+0x1e9, code), then in view 1 to the +0x10 slot (vtable at +0x76) of +0x1f5 alone, and in any other view to the +0x10 slots of +0x1d4 (when set), +0x1dd, +0x1e1, +0x1e5, +0x1ed, +0x1f1 and +0x1e9, stopping at the first that returns nonzero. Returns 1 for a code a case took or a slot accepted, else 0. es2_xref finds one call, from Sim_DispatchCommand (00059df8). ES2's CockpitWidgets_HandleCommand (DBSIM 00432bc8), which takes 0x02-0x0b and presses the row through Widget_PressChild, answers 0x27, Enter and Alt+D, steps the Targeting Pod on Tab and builds an objectives panel on F11.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#keys-and-the-view-device",
       "verified": {
         "bytes": "0002d24c+910",
@@ -14752,7 +14752,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HSliderGadget_OnClick",
-      "description": "(slider, value) in stack order, callee-cleaned: slot +4 of the table at owner+0x76 with (owner, value, slider), the owner being +0x3e; the slider's slot +8 through its vptr +0x1c; slot +0xc of the mixin table at +0x42 on slider+0x3e. The value is not tested. ES2's HSliderGadget_OnClick (DBSIM 0043901c). es2_xref finds it at +0xc of five tables, 00093d06, 00093d4a, 000943b6, ThrottleHSliderGadgetVtable (000943fa) and 00095006, whose value slot +0x14 is SliderWidget_GetValueH (00043ac8), which reads the knob's +0x2e against the slider's x0.",
+      "description": "(slider, value) in stack order, callee-cleaned: slot +4 of the table at owner+0x76 with (owner, value, slider), the owner being +0x3e; the slider's slot +8 through its vptr +0x1c; slot +0xc of the mixin table at +0x42 on slider+0x3e. The value is not tested. ES2's HSliderGadget_OnClick (DBSIM 0043901c). es2_xref finds it at +0xc of five tables, 00093d06, WeaponSliderGadgetVtable (00093d4a), 000943b6, ThrottleHSliderGadgetVtable (000943fa) and 00095006, whose value slot +0x14 is SliderWidget_GetValueH (00043ac8), which reads the knob's +0x2e against the slider's x0.",
       "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases",
       "verified": {
         "bytes": "0003166c+49",
@@ -16837,7 +16837,7 @@
       "type": "function",
       "confidence": "high",
       "name": "PanelGauge_KeyDispatchNoneWeaponGaugeCopy",
-      "description": "Frameless: returns 0; a NOP, then xor eax,eax and RET 8. Slot +0x10 of WeaponGaugeVtable (00093a6e), and entered at 00036f8c from slot +0x10 of the energy, ammunition and pod rows' tables 00093a8e, 00093aae and 00093ace; the code of PanelGauge_KeyDispatchNone (0003139b).",
+      "description": "Frameless: returns 0; a NOP, then xor eax,eax and RET 8. Slot +0x10 of WeaponGaugeVtable (00093a6e), and entered at 00036f8c from slot +0x10 of the energy, ammunition and pod rows' tables 00093a8e, 00093aae and PodGaugeVtable (00093ace); the code of PanelGauge_KeyDispatchNone (0003139b).",
       "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-row-gauge-base; the image at 00036f8b",
       "verified": {
         "bytes": "00036f8b+6",
@@ -16852,7 +16852,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponGauge_SetStateNoOp",
-      "description": "Frameless: three NOPs and RET 8. Slot +0x14 of WeaponGaugeVtable (00093a6e), and entered at 00036f94 from slot +0x14 of the pod row's table 00093ace. ES2's WeaponGauge_SetStateNoOp (DBSIM 00443417).",
+      "description": "Frameless: three NOPs and RET 8. Slot +0x14 of WeaponGaugeVtable (00093a6e), and entered at 00036f94 from slot +0x14 of the pod row's table PodGaugeVtable (00093ace). ES2's WeaponGauge_SetStateNoOp (DBSIM 00443417).",
       "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-row-gauge-base; the image at 00036f91",
       "verified": {
         "bytes": "00036f91+6",
@@ -16897,7 +16897,7 @@
       "type": "function",
       "confidence": "high",
       "name": "EnergyWeaponGauge_Ctor",
-      "description": "(gauge, mount, name, row, cockpit, block) in stack order, callee-cleaned (RET 0x18): allocates 0xa4 bytes with operator_new (000015a4) when gauge is null, returning 0 when that fails; WeaponGauge_Ctor (00036f50)(gauge, mount, cockpit, block); stores WeaponGaugeVtable (00093a6e) at +0x76, the int16 row at +0xa2 and EnergyWeaponGaugeVtable (00093a8e) at +0x76. With (x, y) the block's first two dwords and the root widget at +0 of CockpitViewInstance (00092d1c): child 0 = 00038338(0, row, gauge, the block's rect +0x10 moved by (x, y)) at +0x14, registered with Widget_RegisterClickable (000443d4)(child, root); strncpy (0006745c)(+0x7a, name, 0xc); child 1 = 000386a0(0, the block's dword +0x3c, gauge, the block's rect +0x20 moved by (x, y)) at +0x18, registered; +0x64 = 2; +0x8f = 800; memset (00060b40)(+0x8b, 0, 0x17), which clears the 800. Returns gauge. ES2's EnergyWeaponGauge_Ctor (DBSIM 00440a68).",
+      "description": "(gauge, mount, name, row, cockpit, block) in stack order, callee-cleaned (RET 0x18): allocates 0xa4 bytes with operator_new (000015a4) when gauge is null, returning 0 when that fails; WeaponGauge_Ctor (00036f50)(gauge, mount, cockpit, block); stores WeaponGaugeVtable (00093a6e) at +0x76, the int16 row at +0xa2 and EnergyWeaponGaugeVtable (00093a8e) at +0x76. With (x, y) the block's first two dwords and the root widget at +0 of CockpitViewInstance (00092d1c): child 0 = ChainedWeaponSelectGadget_Ctor (00038338)(0, row, gauge, the block's rect +0x10 moved by (x, y)) at +0x14, registered with Widget_RegisterClickable (000443d4)(child, root); strncpy (0006745c)(+0x7a, name, 0xc); child 1 = WeaponSliderGadget_Ctor (000386a0)(0, the block's dword +0x3c, gauge, the block's rect +0x20 moved by (x, y)) at +0x18, registered; +0x64 = 2; +0x8f = 800; memset (00060b40)(+0x8b, 0, 0x17), which clears the 800. Returns gauge. ES2's EnergyWeaponGauge_Ctor (DBSIM 00440a68).",
       "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-energy-row; ES1DBSIM decompile and disassembly at 0003700c",
       "verified": {
         "bytes": "0003700c+310",
@@ -16987,7 +16987,7 @@
       "type": "function",
       "confidence": "high",
       "name": "AmmoWeaponGauge_Ctor",
-      "description": "(gauge, mount, name, row, cockpit, block) in stack order, callee-cleaned (RET 0x18): allocates 0xb8 bytes with operator_new (000015a4) when gauge is null, returning 0 when that fails; WeaponGauge_Ctor (00036f50)(gauge, mount, cockpit, block); WeaponGaugeVtable (00093a6e) at +0x76, the int16 row at +0xa2, the inlined constructor of the rect +0xa8, ProjectileWeaponGaugeVtable (00093aae) at +0x76. With (x, y) the block's first two dwords: child 0 = 00038338(0, row, gauge, the block's rect +0x10 moved by (x, y)) at +0x14, registered with Widget_RegisterClickable (000443d4) in the root widget of CockpitViewInstance (00092d1c); strncpy (0006745c)(+0x7a, name, 0xc); +0xa8..+0xb4 = the block's rect +0x20 moved by (x, y); the label Label_Ctor (00030f44)(0, ColorSchemePanels[3] at 00092d4c) at +0xa4, placed by Label_SetRect (00031080)(label, 1, +0xa8, zero margins), its fill +0x1c = 0x3f; +0x64 = 1; memset (00060b40)(+0x8b, 0, 0x17). Returns gauge. ES2's AmmoWeaponGauge_Ctor (DBSIM 00440f78).",
+      "description": "(gauge, mount, name, row, cockpit, block) in stack order, callee-cleaned (RET 0x18): allocates 0xb8 bytes with operator_new (000015a4) when gauge is null, returning 0 when that fails; WeaponGauge_Ctor (00036f50)(gauge, mount, cockpit, block); WeaponGaugeVtable (00093a6e) at +0x76, the int16 row at +0xa2, the inlined constructor of the rect +0xa8, ProjectileWeaponGaugeVtable (00093aae) at +0x76. With (x, y) the block's first two dwords: child 0 = ChainedWeaponSelectGadget_Ctor (00038338)(0, row, gauge, the block's rect +0x10 moved by (x, y)) at +0x14, registered with Widget_RegisterClickable (000443d4) in the root widget of CockpitViewInstance (00092d1c); strncpy (0006745c)(+0x7a, name, 0xc); +0xa8..+0xb4 = the block's rect +0x20 moved by (x, y); the label Label_Ctor (00030f44)(0, ColorSchemePanels[3] at 00092d4c) at +0xa4, placed by Label_SetRect (00031080)(label, 1, +0xa8, zero margins), its fill +0x1c = 0x3f; +0x64 = 1; memset (00060b40)(+0x8b, 0, 0x17). Returns gauge. ES2's AmmoWeaponGauge_Ctor (DBSIM 00440f78).",
       "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-ammunition-row; ES1DBSIM decompile and disassembly at 000373a4",
       "verified": {
         "bytes": "000373a4+413",
@@ -17067,6 +17067,801 @@
       "verified": {
         "bytes": "00037784+137",
         "sha1": "1b0e230b1bca",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00037810",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PodGauge_Ctor",
+      "description": "(gauge, mount, row, cockpit, block) in stack order, its arguments removed by this function: the ECM's pod row. Allocates 0xa1 bytes when given none (0 on failure), runs WeaponGauge_Ctor (00036f50)(gauge, mount, cockpit, block) and stores PodGaugeVtable (00093ace) at +0x76. With (x, y) the block's top-left: child 0 = WeaponSelectGadget_Ctor (000380fc)(0, row, gauge, the block's rect at +0x10 moved by (x, y)) at +0x14, registered with Widget_RegisterClickable on CockpitViewInstance's root widget; strncpy of 12 bytes of STRINGS0.STR group 3's string (000bd2c8, ECM) to +0x7a; the label rect +0x91 = the block's rect at +0x20 moved by (x, y), the label Label_Ctor(0, cpred 00092d48) at +0x8d placed by Label_SetRect(label, 2, rect, {0, 0}) with fill 0x3f; child count +0x64 = 1; memset(+0x8b, 0, 2), the switch and the destroyed byte. Returns the gauge. ES2's PodGauge_Ctor (DBSIM 00441524) with TogglePodGauge_Ctor (DBSIM 00441998), which build the name from the mount and place the label at fixed offsets.",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-pod-row; ES1DBSIM decompile and disassembly",
+      "verified": {
+        "bytes": "00037810+396",
+        "sha1": "61b53730b655",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003799c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PodGauge_Paint",
+      "description": "(gauge), its argument removed by this function; slot +8 of PodGaugeVtable (00093ace). Calls child 0's paint (slot +4 of the table at its +0x1c); then, when CockpitView_RectCornerVisible passes the label's rect and child 0's int16 state +0x17 is not 2, installs a stack brush at the render context's +0x22c and writes the label with Label_SetText in cpylw (00092d4c): with the destroyed byte +0x8c clear, the name +0x7a on fill 0x38 while the switch +0x8b is set and 0x3f while it is clear; with it set, OFFLINE (000bd2c4) on 0x3f, the label placed again by Label_SetRect(label, 2, {child 0's x0, y0, the label's x1, y1}, {0, 0}), and child 0's state set to 2. ES2's PodGauge_Paint (DBSIM 0044171c), which also gates on armed, dark and mid-wipe.",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-pod-row; ES1DBSIM decompile",
+      "verified": {
+        "bytes": "0003799c+288",
+        "sha1": "1243b2aab8c0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00037abc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PodGauge_Update",
+      "description": "(gauge), its argument removed by this function; slot +0xc of PodGaugeVtable (00093ace). Steps the repaint counter +0x75: at 2 the paint (slot +8 of the table at +0x76), at 1 Widget_DrawToCockpit(0, the label's rect, 0), each lowering it by 1; at 0 child 0's per-frame slot +0x10. ES2's PodGauge_Update (DBSIM 00441850) without its gates, power-up and sensor dropout.",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-pod-row; ES1DBSIM decompile",
+      "verified": {
+        "bytes": "00037abc+86",
+        "sha1": "110718f00fe9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00037b14",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PodGauge_SetStateBlock",
+      "description": "(gauge, block), its arguments removed by this function: when the block's byte 0 or byte 1 differs from the gauge's +0x8b or +0x8c, copies the two bytes to +0x8b and sets the repaint counter +0x75 to 2. es2_xref finds one call, from CockpitWidgets_HandleCommand (0002d24c). ES2's TogglePodGauge_SetStateBlock (DBSIM 004419c4), which also copies the next dword.",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-pod-row; ES1DBSIM decompile",
+      "verified": {
+        "bytes": "00037b14+58",
+        "sha1": "7c02ee2fdcef",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00037b50",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PodGauge_GetStateBlock",
+      "description": "Frameless: MOV EAX,[ESP+4], ADD EAX,0x8b, RET 4: (gauge) returns gauge + 0x8b, the pod row's state block (byte 0 the switch, byte 1 the destroyed byte). es2_xref finds calls from CockpitWidgets_HandleCommand (0002d24c) and EcmMount_PushGaugeState (0000b588). ES2's PodGauge_GetStateBlock (DBSIM 00441978).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-pod-row; ES1DBSIM disassembly at 00037b50",
+      "verified": {
+        "bytes": "00037b50+12",
+        "sha1": "b88b073ae180",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00037b5c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PodGauge_OnChildClick",
+      "description": "(gauge, value, child) in stack order, its arguments removed by this function; slot +4 of PodGaugeVtable (00093ace): when the child is child 0 (+0x14, among +0x64 children), flips byte 0 of +0x8b, the switch, and sets the repaint counter +0x75 to 2, whatever the value. ES2's TogglePodGauge_OnClick (DBSIM 004419fc).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-pod-row; ES1DBSIM decompile",
+      "verified": {
+        "bytes": "00037b5c+115",
+        "sha1": "c0f2c359cd34",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00037bd0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConsoleButtons_Ctor",
+      "description": "(console, cockpit, block) in stack order, its arguments removed by this function: allocates 0x7e bytes when given none (0 on failure), runs PanelGauge_Ctor (00031318)(console, cockpit, block) and stores WeaponRangeGaugeVtable (00093aee) at +0x76. With (x, y) the block's first two int32, for i 0 to 4: the block's rect at +0x10 + 16i moved by (x, y); WeaponRangeSelectGadget_Ctor (00038ce4)(0, console, rect), registered with Widget_RegisterClickable on CockpitViewInstance's root widget and stored at +0x14 + 4i; a label Label_Ctor(0, cpgreen 00092d44) placed by Label_SetRect(label, 2, rect, {0, 0}) at the button's +0x2c, and i at its +0x28. Count +0x64 = 5, +0x7c = 0; it writes neither +0x7a nor +0x7d. The buttons are I, II, III, LINK and TRACK. ES2's ConsoleButtons_Ctor (DBSIM 00441dd0) builds four.",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-console-buttons; ES1DBSIM decompile",
+      "verified": {
+        "bytes": "00037bd0+273",
+        "sha1": "e8e86e6739a7",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00037ce4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConsoleButtons_SetChainNumber",
+      "description": "(console, chain), its arguments removed by this function: stores the int16 chain at +0x7a; for 0, 1 or 2 sets that chain button's lamp byte +0x3c (+0x14, +0x18 or +0x1c) to 1 and the other two's to 0, repainting (slot +8 of the button's table at +0x1c) only a button whose lamp changes. es2_xref finds calls from Gau_WeaponButtonsWidget (0002ccd8), WeaponMounts_SetChain (0000cf10), ConsoleButtons_SetStateBlock (00037e78) and, twice, ConsoleButtons_HandleCommand (00038034). ES2's ConsoleButtons_SetChainNumber (DBSIM 00441f68), which stores the number alone.",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-console-buttons; ES1DBSIM decompile",
+      "verified": {
+        "bytes": "00037ce4+274",
+        "sha1": "580b6a2a29c7",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00037df8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConsoleButtons_ToggleAutoTrack",
+      "description": "(console), its argument removed by this function: flips the tracking latch byte +0x7c. ES2's ConsoleButtons_ToggleAutoTrack (DBSIM 00441f7c), which also refuses a state-2 TRACK button, copies the latch to its lamp, repaints it and posts the AUTO TRACKING messages.",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-console-buttons; ES1DBSIM decompile",
+      "verified": {
+        "bytes": "00037df8+17",
+        "sha1": "4f861a1df276",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00037e0c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConsoleButtons_SetLinkLatch",
+      "description": "(console, value), its arguments removed by this function: stores the byte value at +0x7d, the link request. ES2's ConsoleButtons_SetLinkLatch (DBSIM 0044202c), which also runs WeaponMounts_ToggleLink.",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-console-buttons; ES1DBSIM decompile",
+      "verified": {
+        "bytes": "00037e0c+18",
+        "sha1": "8dad2656cd15",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00037e20",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConsoleButtons_Paint",
+      "description": "(console), its argument removed by this function; slot +8 of WeaponRangeGaugeVtable (00093aee): calls slot +4, the paint, of each of the five buttons at +0x14 (each's table at its +0x1c). ES2's ConsoleButtons_Paint (DBSIM 00442058), over four.",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-console-buttons; ES1DBSIM decompile",
+      "verified": {
+        "bytes": "00037e20+41",
+        "sha1": "1e80cacd04cf",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00037e4c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConsoleButtons_Update",
+      "description": "(console), its argument removed by this function; slot +0xc of WeaponRangeGaugeVtable (00093aee): calls slot +0x10, the per-frame flush, of each of the five buttons at +0x14. ES2's ConsoleButtons_Update (DBSIM 0044207c), over four.",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-console-buttons; ES1DBSIM decompile",
+      "verified": {
+        "bytes": "00037e4c+41",
+        "sha1": "d6abe0adef5b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00037e78",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConsoleButtons_SetStateBlock",
+      "description": "(console, block), its arguments removed by this function: a block int16 +0 other than +0x7a is stored there and handed to ConsoleButtons_SetChainNumber (00037ce4); a byte +2 other than +0x7c runs ConsoleButtons_ToggleAutoTrack (00037df8); a byte +3 other than +0x7d goes to ConsoleButtons_SetLinkLatch (00037e0c). es2_xref finds one call, from WeaponMounts_PerFrameUpdate (0000cf78). ES2's ConsoleButtons_SetStateBlock (DBSIM 004420a0) on ES1's offsets.",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-console-buttons; es2_naming.py diff against DBSIM 004420a0",
+      "verified": {
+        "bytes": "00037e78+92",
+        "sha1": "dee004b1defa",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00037ed4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConsoleButtons_GetStateBlock",
+      "description": "(console), its argument removed by this function: copies the chain int16 +0x7a, the tracking latch +0x7c and the link request +0x7d into the four bytes of ConsoleButtons_StateBlock (000b13e8) and returns its address. es2_xref finds one call, from WeaponMounts_PerFrameUpdate (0000cf78). ES2's ConsoleButtons_GetStateBlock (DBSIM 004420f8) on ES1's offsets.",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-console-buttons; es2_naming.py diff against DBSIM 004420f8",
+      "verified": {
+        "bytes": "00037ed4+43",
+        "sha1": "5603a7897e52",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00037f00",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConsoleButtons_OnChildClick",
+      "description": "(console, flags, button) in stack order, its arguments removed by this function; slot +4 of WeaponRangeGaugeVtable (00093aee): finds the button's index among the +0x64 at +0x14. For 0, 1 or 2 it puts out the other two chain buttons' lamps +0x3c, repainting (slot +8) each that was lit, and stores the index at +0x7a; for 3 (LINK) ConsoleButtons_SetLinkLatch (00037e0c)(console, 1); for 4 (TRACK) ConsoleButtons_ToggleAutoTrack (00037df8). ES2's ConsoleButtons_OnChildClick (DBSIM 0044212c), whose button 0 steps the chain.",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-console-buttons; ES1DBSIM decompile",
+      "verified": {
+        "bytes": "00037f00+308",
+        "sha1": "6251735b3623",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00038034",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConsoleButtons_HandleCommand",
+      "description": "(console, code), its arguments removed by this function; slot +0x10 of WeaponRangeGaugeVtable (00093aee): REPNE SCASD over the four codes of ConsoleButtons_CommandCodes (00093b1c), jumping through the four dwords after them; returns 1 in AL for these and 0 for any other. 0x29 (backquote): +0x7a + 1, 3 wrapping to 0; 0x229 (Alt+backquote): +0x7a - 1, -1 wrapping to 2, each then ConsoleButtons_SetChainNumber (00037ce4); 0x214 (Alt+T): unless the TRACK button's (+0x24) int16 state +0x17 is 2 or 3, its click slot +0xc with (button, 1); 0x26 (L): WeaponMounts_ToggleLink (0000d41c) on the weapon manager +0x198 of CockpitViewInstance's machine +0x1ff, then Sound_Play (0004de84)(0x11). ES2's ConsoleButtons_HandleCommand (DBSIM 004421a0).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-console-buttons; ES1DBSIM disassembly 00038034-000380fa (capstone for the undefined cases)",
+      "verified": {
+        "bytes": "00038034+199",
+        "sha1": "02a8f266d4f9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000380fc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponSelectGadget_Ctor",
+      "description": "(gadget, row, gauge, rect) in stack order, its arguments removed by this function: a weapon row's number button. Allocates 0x42 bytes when given none (0 on failure); Widget_CtorRect on the rect with the button base table copy CTLButtonControlVtableWeaponGaugeCopy (00093b3e) at +0x1c and 0 at +0x19; PanelSelectGadget's tables 00093b66 (+0x24) and 00093b7e (+0x1c), the gauge at +0x20, the row at +0x28, the state +0x17 0; WeaponSelectGadgetVtable (00093bbe) and its mixin table 00093ba6. The digit label at +0x3c is Label_Ctor(0, cpon 00092d50) placed by Label_SetRect(label, 2, {x0, y0, x0 + 9, y1}, {0, 0}); the digit row + '1' goes to +0x40 and 0 to +0x42, a byte past the 0x42 allocated; then its own rect's x1 = x0 + 8 and y1 = y0 + the int16 +4 of dba\\pbuttons' frame 0 (CockpitPButtonsBank 00092d68). es2_xref finds calls from PodGauge_Ctor (00037810) and ChainedWeaponSelectGadget_Ctor (00038338). ES2's WeaponSelectGadget_Ctor (DBSIM 004421dc).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-plain-button; ES1DBSIM decompile",
+      "verified": {
+        "bytes": "000380fc+275",
+        "sha1": "4f5fa3fa8cce",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003820f",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLButtonControl_PaintNoOpWeaponGaugeCopy",
+      "description": "Frameless: a NOP and RET 4. Slot +4 of the vtable CTLButtonControlVtableWeaponGaugeCopy (00093b3e), and slot +4 of the vtable 00093b7e, and slot +4 of the vtable 00093d76 (entered at 00038210); the code of CTLButtonControl_PaintNoOpGadgetsCopy (00031523). ES2's CTLButtonControl_PaintNoOp (DBSIM 00455545).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#functions; ES1DBSIM disassembly at 0003820f",
+      "verified": {
+        "bytes": "0003820f+4",
+        "sha1": "5d5ba9489eeb",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00038213",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_InvalidateNoOpWeaponGaugeCopy",
+      "description": "Frameless: a NOP and RET 4. Slot +8 of the vtable CTLButtonControlVtableWeaponGaugeCopy (00093b3e), the module's copy of the button base table; the code of CTLControl_InvalidateNoOpPanelCopy (0002dae3). ES2's CTLControl_InvalidateNoOp (DBSIM 00452ab7).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-modules-tables; ES1DBSIM disassembly at 00038213",
+      "verified": {
+        "bytes": "00038213+4",
+        "sha1": "5d5ba9489eeb",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00038217",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_OnClickNoOpWeaponGaugeCopy",
+      "description": "Frameless: a NOP and RET 8. Slot +0xc of the vtable CTLButtonControlVtableWeaponGaugeCopy (00093b3e), and of the vtable CTLSliderControlVtableWeaponGaugeCopy (00093c26) (entered at 00038218); the code of CTLControl_OnClickNoOpPanelCopy (0002dae7). ES2's CTLControl_OnClickNoOp (DBSIM 0045555e).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-modules-tables; ES1DBSIM disassembly at 00038217",
+      "verified": {
+        "bytes": "00038217+4",
+        "sha1": "da32ac57381a",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0003821b",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_FlushDeferredPaintNoOpWeaponGaugeCopy",
+      "description": "Frameless: a NOP and RET 4. Slot +0x10 of the vtables CTLButtonControlVtableWeaponGaugeCopy (00093b3e) and 00093b7e, and of CTLSliderControlVtableWeaponGaugeCopy (00093c26), 00093d06 and 00093d76 (entered at 0003821c); the code of CTLControl_FlushDeferredPaintNoOpPanelCopy (0002daeb). ES2's CTLControl_FlushDeferredPaintNoOp (DBSIM 0045554a).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-modules-tables; ES1DBSIM disassembly at 0003821b",
+      "verified": {
+        "bytes": "0003821b+4",
+        "sha1": "5d5ba9489eeb",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0003821f",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_GetButtonValueWeaponGaugeCopy",
+      "description": "Frameless: a NOP, then MOV AX,WORD PTR [0x94b84] and RET 4. Slot +0x14 of the vtable CTLButtonControlVtableWeaponGaugeCopy (00093b3e), and slot +0x14 of the vtable 00093b7e, and slot +0x14 of the vtable WeaponSelectGadgetVtable (00093bbe), and slot +0x14 of the vtable ChainedWeaponSelectGadgetVtable (00093bfe) (entered at 00038220), and slot +0x14 of the vtable 00093d76 (entered at 00038220), and slot +0x14 of the vtable WeaponRangeSelectGadgetVtable (00093db6) (entered at 00038220); the code of Widget_GetButtonValuePanelCopy (0002daef). ES2's Widget_GetButtonValue (DBSIM 00455530).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#functions; ES1DBSIM disassembly at 0003821f",
+      "verified": {
+        "bytes": "0003821f+10",
+        "sha1": "f62f57a4a511",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00038229",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_SetValueNoOpWeaponGaugeCopy",
+      "description": "Frameless: three NOPs and RET 8. Slot +0x18 of the vtable CTLButtonControlVtableWeaponGaugeCopy (00093b3e), and slot +0x18 of the vtable 00093b7e, and slot +0x18 of the vtable WeaponSelectGadgetVtable (00093bbe), and slot +0x18 of the vtable ChainedWeaponSelectGadgetVtable (00093bfe) (entered at 0003822c), and slot +0x18 of the vtable 00093d76 (entered at 0003822c), and slot +0x18 of the vtable WeaponRangeSelectGadgetVtable (00093db6) (entered at 0003822c); the code of CTLControl_SetValueNoOpPanelCopy (0002daf9). ES2's CTLControl_SetValueNoOp (DBSIM 0045553b).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#functions; ES1DBSIM disassembly at 00038229",
+      "verified": {
+        "bytes": "00038229+6",
+        "sha1": "fe14fe2186bc",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0003822f",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_DragMoveNoOpWeaponGaugeCopy",
+      "description": "Frameless: a NOP and RET 8. Slot +0x1c of the vtable CTLButtonControlVtableWeaponGaugeCopy (00093b3e), and slot +0x1c of the vtable 00093b7e, and slot +0x1c of the vtable WeaponSelectGadgetVtable (00093bbe), and slot +0x1c of the vtable ChainedWeaponSelectGadgetVtable (00093bfe) (entered at 00038230), and slot +0x1c of the vtable 00093d76 (entered at 00038230), and slot +0x1c of the vtable WeaponRangeSelectGadgetVtable (00093db6) (entered at 00038230); the code of CTLControl_DragMoveNoOpPanelCopy (0002daff). ES2's CTLControl_DragMoveNoOp (DBSIM 00455540).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#functions; ES1DBSIM disassembly at 0003822f",
+      "verified": {
+        "bytes": "0003822f+4",
+        "sha1": "da32ac57381a",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00038234",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_InvalidateDeferredWeaponGaugeCopy",
+      "description": "(gadget), callee-cleaned: slot +8 of the vtable 00093b7e (entered at its padding 00038233), and slot +8 of the vtable WeaponSelectGadgetVtable (00093bbe) (entered at its padding 00038233), and slot +8 of the vtable ChainedWeaponSelectGadgetVtable (00093bfe), and slot +8 of the vtable 00093d76, and slot +8 of the vtable WeaponRangeSelectGadgetVtable (00093db6): byte for byte the code of Widget_InvalidateDeferredGadgetsCopy (00031528), relocated operands aside. ES2's Widget_InvalidateDeferred (DBSIM 00455524).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#functions; ES1DBSIM disassembly at 00038234",
+      "verified": {
+        "bytes": "00038234+16",
+        "sha1": "9e51e63401e5",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00038244",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponSelectGadget_PaintUnderlayThunk",
+      "description": "Frameless: ADD dword ptr [ESP+4], -0x20 and a jump to WeaponSelectGadget_PaintUnderlay (0003825c), by its padding 0003825a. Slot +4 of the mixin table 00093ba6. ES2's WeaponSelectGadget_PaintUnderlayThunk (DBSIM 0044340d).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-plain-button; ES1DBSIM disassembly at 00038244",
+      "verified": {
+        "bytes": "00038244+24",
+        "sha1": "c8e6cf0920b3",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00038250",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponSelectGadget_FlushDeferredPaintThunk",
+      "description": "Frameless: ADD dword ptr [ESP+4], -0x20 and a jump to WeaponSelectGadget_FlushDeferredPaint (000382cc). Slot +8 of the mixin table 00093ba6. ES2's WeaponSelectGadget_FlushDeferredPaintThunk (DBSIM 00443403).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-plain-button; ES1DBSIM disassembly at 00038250",
+      "verified": {
+        "bytes": "00038250+10",
+        "sha1": "9f444329608e",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003825c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponSelectGadget_PaintUnderlay",
+      "description": "(gadget), its argument removed by this function; slot +4 of WeaponSelectGadgetVtable (00093bbe): when CockpitView_RectCornerVisible passes the gadget's rect, Bitmap_Blit of dba\\pbuttons' frame +0x17 (the int16 state) at the rect's top-left, then the digit +0x40 into the label +0x3c with Label_SetText in ColorSchemePanels[4 + state] (cpon, cppress, cpoff, cpgrey). es2_xref also finds calls from WeaponSelectGadget_Paint (00038464) and ChainedWeaponSelectGadget_FlushDeferredPaint (0003861c). ES2's WeaponSelectGadget_PaintUnderlay (DBSIM 00442394).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-plain-button; ES1DBSIM decompile",
+      "verified": {
+        "bytes": "0003825c+112",
+        "sha1": "5bc7659f94c6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000382cc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponSelectGadget_FlushDeferredPaint",
+      "description": "(gadget), its argument removed by this function; slot +0x10 of WeaponSelectGadgetVtable (00093bbe): at a paint counter +0x1b of 2, the paint (slot +4); at 1, Widget_DrawToCockpit(0, the gadget's rect, 0); each lowering it by 1. ES2's WeaponSelectGadget_FlushDeferredPaint (DBSIM 00442424).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-plain-button; ES1DBSIM decompile",
+      "verified": {
+        "bytes": "000382cc+55",
+        "sha1": "ffd681f87886",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00038304",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponSelectGadget_OnClick",
+      "description": "(gadget, flags), its arguments removed by this function; slot +0xc of WeaponSelectGadgetVtable (00093bbe): whatever the flags, slot +4 of the owner's (+0x20) table at its +0x76 with (owner, flags, gadget), then the gadget's own slot +8 and the mixin's (+0x24) slot +0xc on the mixin, Widget_ClickSound. ES2's WeaponSelectGadget_OnClick (DBSIM 00442458).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-plain-button; ES1DBSIM decompile",
+      "verified": {
+        "bytes": "00038304+49",
+        "sha1": "bbed4e3a8b7c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00038338",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ChainedWeaponSelectGadget_Ctor",
+      "description": "(gadget, row, gauge, rect) in stack order, its arguments removed by this function: an energy or ammunition row's number button with the name and the state box. Allocates 0x5a bytes when given none (0 on failure), runs WeaponSelectGadget_Ctor (000380fc) with its arguments, stores ChainedWeaponSelectGadgetVtable (00093bfe) and its mixin table 00093be6. The box's top-left +0x42, +0x46 = (the digit label's x1 + 2, the rect's y0); the name label +0x2c = Label_Ctor(0, cpylw 00092d4c) placed by Label_SetRect(label, 1, {box x + 4, y0, x1, y1}, {1, 0}); the second rect +0x4a = {box x, y0, x1, y1}. es2_xref finds calls from EnergyWeaponGauge_Ctor (0003700c) and AmmoWeaponGauge_Ctor (000373a4). ES2's ChainedWeaponSelectGadget_Ctor (DBSIM 00442488), which places its parts at fixed offsets.",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-chained-button; ES1DBSIM decompile",
+      "verified": {
+        "bytes": "00038338+275",
+        "sha1": "cc651f636598",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003844c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ChainedWeaponSelectGadget_PaintThunk",
+      "description": "Frameless: ADD dword ptr [ESP+4], -0x20 and a jump to WeaponSelectGadget_Paint (00038464), by its padding 00038462. Slot +4 of the mixin table 00093be6. ES2's ChainedWeaponSelectGadget_PaintThunk (DBSIM 004433ef).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-chained-button; ES1DBSIM disassembly at 0003844c",
+      "verified": {
+        "bytes": "0003844c+24",
+        "sha1": "caf4f40873b6",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00038458",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ChainedWeaponSelectGadget_FlushDeferredPaintThunk",
+      "description": "Frameless: ADD dword ptr [ESP+4], -0x20 and a jump to ChainedWeaponSelectGadget_FlushDeferredPaint (0003861c), by its padding 0003861a. Slot +8 of the mixin table 00093be6. ES2's ChainedWeaponSelectGadget_FlushDeferredPaintThunk (DBSIM 004433e5).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-chained-button; ES1DBSIM disassembly at 00038458",
+      "verified": {
+        "bytes": "00038458+452",
+        "sha1": "13cfc44ee0b9",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00038464",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponSelectGadget_Paint",
+      "description": "(gadget), its argument removed by this function; slot +4 of ChainedWeaponSelectGadgetVtable (00093bfe): when CockpitView_RectCornerVisible passes the rect, WeaponSelectGadget_PaintUnderlay (0003825c); then, with the owner's (+0x20) destroyed byte +0x9c clear, the name +0x7a in cpylw on fill 0x35 while armed (+0x9f) and in cpgreen on 0x3f otherwise, and the state box: while armed or in the chain (+0xa0), dba\\pbuttons' frame 55 when ready (+0xa1) and 56 when not, blitted at (+0x42, +0x46), else Raster_FillRect of 0x3f over {bx, by, bx + 2, by + 7}. With the destroyed byte set, its rect's x1, y1 become the owner's +8, +0xc, the label is placed again centred over it (Label_SetRect flag 2) with OFFLINE (000bd2c4) in cpylw on 0x3f, and the box is frame 57. ES2's WeaponSelectGadget_Paint (DBSIM 004426c0).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-chained-button; ES1DBSIM decompile",
+      "verified": {
+        "bytes": "00038464+438",
+        "sha1": "2589d4a1a611",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003861c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ChainedWeaponSelectGadget_FlushDeferredPaint",
+      "description": "(gadget), its argument removed by this function; slot +0x10 of ChainedWeaponSelectGadgetVtable (00093bfe): at a paint counter +0x1b of 2, WeaponSelectGadget_PaintUnderlay (0003825c) and the paint (slot +4); at 1, Widget_DrawToCockpit(0, rect, 0) on the rect and on the second rect +0x4a; each lowering it by 1. ES2's ChainedWeaponSelectGadget_FlushDeferredPaint (DBSIM 004428d4).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-chained-button; ES1DBSIM decompile",
+      "verified": {
+        "bytes": "0003861c+80",
+        "sha1": "4362c2021bd0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003866c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ChainedWeaponSelectGadget_OnClick",
+      "description": "(gadget, flags), its arguments removed by this function; slot +0xc of ChainedWeaponSelectGadgetVtable (00093bfe): the statements of WeaponSelectGadget_OnClick (00038304), the owner's slot +4 with (owner, flags, gadget), its own slot +8 and the mixin's click sound. ES2's ChainedWeaponSelectGadget_OnClick (DBSIM 00442920).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-chained-button; ES1DBSIM decompile",
+      "verified": {
+        "bytes": "0003866c+49",
+        "sha1": "bbed4e3a8b7c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000386a0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponSliderGadget_Ctor",
+      "description": "(bar, colors, gauge, rect) in stack order, its arguments removed by this function: an energy row's charge bar. Allocates 0x7e bytes when given none; SliderWidget_CtorBase (000439d4)(bar, 1, 0, 0x100, 0, rect), the slider base copy CTLSliderControlVtableWeaponGaugeCopy (00093c26), SliderWidget_RecomputeScaleH; the gauge at +0x3e; the GLRectangleRegion at +0x56 built in place (tables 00093c76, 00093c9e, 00093cc6, its +4 0); tables 00093cee/00093d06, state 0, then WeaponSliderGadgetVtable (00093d4a) and its mixin table 00093d32. The knob: dba\\pbuttons' frame 26 at +0x4e, length +0x2c 1, rect {x0, y0 - 1, x0 + 1, y1 + 1}; the save buffer +0x52 = operator_new(its columns x rows + 0x20). LedBarGraph_Ctor (00031e28)(0, 0x400, rect) at +0x46, given the shades 0x32 and 0x31 and the unlit color 0x3f when colors is 0. +0x4a and +0x7a cleared, the position and previous position the rect's x0, the maximum 0x400, SliderWidget_RecomputeScaleH again. ES2's WeaponSliderGadget_Ctor (DBSIM 00442950), which has no knob bitmap.",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-charge-bar--weaponslidergadget; ES1DBSIM decompile",
+      "verified": {
+        "bytes": "000386a0+605",
+        "sha1": "ac0cd18ab3f8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000388fd",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLSliderControl_PaintNoOpWeaponGaugeCopy",
+      "description": "Frameless: three NOPs and RET 4. Slot +4 of the vtables CTLSliderControlVtableWeaponGaugeCopy (00093c26), the module's copy of the slider base table, and 00093d06; the code of CTLSliderControl_PaintNoOp (00043a5e). ES2's CTLSliderControl_PaintNoOp (DBSIM 0045571c).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-modules-tables; ES1DBSIM disassembly at 000388fd",
+      "verified": {
+        "bytes": "000388fd+6",
+        "sha1": "0011b5e9ac52",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00038903",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLSliderControl_InvalidateNoOpWeaponGaugeCopy",
+      "description": "Frameless: a NOP and RET 4. Slot +8 of the vtable CTLSliderControlVtableWeaponGaugeCopy (00093c26); the code of CTLSliderControl_InvalidateNoOp (00043a63). ES2's CTLSliderControl_InvalidateNoOp (DBSIM 00455721).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-modules-tables; ES1DBSIM disassembly at 00038903",
+      "verified": {
+        "bytes": "00038903+4",
+        "sha1": "5d5ba9489eeb",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00038908",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLBase_DtorWeaponGaugeCopy",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of the vtable 00093c76 (entered at its padding 00038907): byte for byte the code of GLBase_DtorMechviewCopy (00024318), relocated operands aside, storing 00093c76 where that stores 00092712.",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#functions; ES1DBSIM disassembly at 00038908",
+      "verified": {
+        "bytes": "00038908+34",
+        "sha1": "68388959e087",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003892c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRegion_DtorWeaponGaugeCopy",
+      "description": "(object, flags) in stack order, its arguments removed by this function: slot +0x1c of the vtable 00093c9e: identical after normalisation to GLRegion_DtorGadgetsCopy (0003161c), storing 00093c9e and 00093c76 at +0 in turn and freeing the object when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-charge-bar--weaponslidergadget; es2_naming.py diff against 0003161c",
+      "verified": {
+        "bytes": "0003892c+40",
+        "sha1": "f28777676100",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00038954",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRectangleRegion_DtorWeaponGaugeCopy",
+      "description": "(region, flags): slot +0x1c of the vtable 00093cc6: byte for byte the code of GLRectangleRegion_Dtor (0007999c), relocated operands aside, storing 00093cc6 and 00093c9e and 00093c76 where that stores 0009f2ce and 0009f2a6 and 0009f27e.",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#functions; ES1DBSIM disassembly at 00038954",
+      "verified": {
+        "bytes": "00038954+46",
+        "sha1": "bb90ddd1a784",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00038984",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HSliderGadget_InvalidateDeferredWeaponGaugeCopy",
+      "description": "(slider), its argument removed by this function: +0x1b = 2. Slot +8 of the vtables 00093d06 and WeaponSliderGadgetVtable (00093d4a); identical after normalisation to HSliderGadget_InvalidateDeferred (00046c78).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-charge-bar--weaponslidergadget; es2_naming.py diff against 00046c78",
+      "verified": {
+        "bytes": "00038984+16",
+        "sha1": "9e51e63401e5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00038994",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponSliderGadget_PaintThunk",
+      "description": "Frameless: ADD dword ptr [ESP+4], -0x3e and a jump to WeaponSliderGadget_Paint (000389ac), by its padding 000389aa. Slot +4 of the mixin table 00093d32. ES2's WeaponSliderGadget_PaintThunk (DBSIM 004433d1).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-charge-bar--weaponslidergadget; ES1DBSIM disassembly at 00038994",
+      "verified": {
+        "bytes": "00038994+24",
+        "sha1": "5f3db00f3fa9",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000389a0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponSliderGadget_FlushDeferredPaintThunk",
+      "description": "Frameless: ADD dword ptr [ESP+4], -0x3e and a jump to WeaponSliderGadget_FlushDeferredPaint (00038b30), by its padding 00038b2d. Slot +8 of the mixin table 00093d32. ES2's WeaponSliderGadget_FlushDeferredPaintThunk (DBSIM 004433c7).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-charge-bar--weaponslidergadget; ES1DBSIM disassembly at 000389a0",
+      "verified": {
+        "bytes": "000389a0+400",
+        "sha1": "5d2c673e176b",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000389ac",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponSliderGadget_Paint",
+      "description": "(bar), its argument removed by this function; slot +4 of WeaponSliderGadgetVtable (00093d4a): when CockpitView_RectCornerVisible passes the rect and the state +0x17 is not 2: Region_Restore(region +0x5a, +0x6e, buffer +0x52) when the knob's x0 +0x2e differs from the position +0x28; the bar's (+0x46) reset slot +0xc and paint slot +4 with +0x7a, +0x7a to +0x4a; the knob's x0 = position and x1 = position + length; the display's (000bdd28) +0x3c to +0x38, through 00098dd6 and the raster slot 0009df14 when it is the current one; the region's rect +0x5e = the knob's moved by the canvas context's +0x220/+0x224; Region_Save(region, buffer); Bitmap_Blit(knob +0x4e, 0, knob top-left); +0x6e/+0x72 = the knob's top-left. ES2's WeaponSliderGadget_Paint (DBSIM 00442b38), which paints the bar alone.",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-charge-bar--weaponslidergadget; ES1DBSIM decompile",
+      "verified": {
+        "bytes": "000389ac+385",
+        "sha1": "529371c93024",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00038b30",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponSliderGadget_FlushDeferredPaint",
+      "description": "(bar), its argument removed by this function; slot +0x10 of WeaponSliderGadgetVtable (00093d4a): with the paint counter +0x1b at 2, the rect on screen (CockpitView_RectCornerVisible) and the state not 2: restores the screen under the knob, repaints the bar (slot +4) to +0x7a only when that differs from +0x4a, moves, saves and blits the knob as WeaponSliderGadget_Paint (000389ac) does, then Widget_DrawToCockpit(0, {the bar's +0x14, the knob's y0, the bar's +0x18, the knob's y1}, 1) and +0x1b = 0. ES2's WeaponSliderGadget_FlushDeferredPaint (DBSIM 00442be8).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-charge-bar--weaponslidergadget; ES1DBSIM decompile",
+      "verified": {
+        "bytes": "00038b30+436",
+        "sha1": "0caaa474a740",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00038ce4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponRangeSelectGadget_Ctor",
+      "description": "(button, console, rect) in stack order, its arguments removed by this function: a console button. Allocates 0x3d bytes when given none (0 on failure); Widget_CtorRect with the button base table copy CTLButtonControlVtableWeaponGaugeCopy (00093b3e) and 0 at +0x19; PanelSelectGadget's tables 00093b66 and 00093b7e, the console at +0x20, the index +0x28 and the state +0x17 0; PanelStateGadget's table 00093d76 and the lamp +0x3c 0; WeaponRangeSelectGadgetVtable (00093db6) and its mixin table 00093d9e. es2_xref finds one call, from ConsoleButtons_Ctor (00037bd0). ES2's WeaponRangeSelectGadget_Ctor (DBSIM 00442c00).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-console-button--weaponrangeselectgadget; ES1DBSIM decompile",
+      "verified": {
+        "bytes": "00038ce4+148",
+        "sha1": "57fa54ebbf8e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00038d78",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponRangeSelectGadget_PaintThunk",
+      "description": "Frameless: ADD dword ptr [ESP+4], -0x20 and a jump to ConsoleButton_Paint (00038d90), by its padding 00038d8e. Slot +4 of the mixin table 00093d9e. ES2's WeaponRangeSelectGadget_PaintThunk (DBSIM 004433b3).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-console-button--weaponrangeselectgadget; ES1DBSIM disassembly at 00038d78",
+      "verified": {
+        "bytes": "00038d78+24",
+        "sha1": "dba98296b6f5",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00038d84",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponRangeSelectGadget_FlushDeferredPaintThunk",
+      "description": "Frameless: ADD dword ptr [ESP+4], -0x20 and a jump to WeaponRangeSelectGadget_FlushDeferredPaint (00038e88), by its padding 00038e85. Slot +8 of the mixin table 00093d9e. ES2's WeaponRangeSelectGadget_FlushDeferredPaintThunk (DBSIM 004433a9).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-console-button--weaponrangeselectgadget; ES1DBSIM disassembly at 00038d84",
+      "verified": {
+        "bytes": "00038d84+260",
+        "sha1": "001bb2769ed3",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00038d90",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConsoleButton_Paint",
+      "description": "(button), its argument removed by this function; slot +4 of WeaponRangeSelectGadgetVtable (00093db6): when CockpitView_RectCornerVisible passes the rect, writes STRINGS0.STR group 4's entry +0x28 (000bd2cc: I, II, III, LINK, TRACK) into the label +0x2c with Label_SetText. Index 0-2: a stack brush at the render context's +0x22c, the label's fill 0x3f, font cpylw while the lamp +0x3c is set and cpblue while it is clear; index 3-4: Bitmap_Blit of dba\\pbuttons' frame 6 + the int16 state +0x17 at the rect's top-left, font cppress while the lamp is set and cpon while it is clear. ES2's ConsoleButton_Paint (DBSIM 00442c88).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-console-button--weaponrangeselectgadget; ES1DBSIM decompile",
+      "verified": {
+        "bytes": "00038d90+245",
+        "sha1": "5f316ff81ad9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00038e88",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponRangeSelectGadget_FlushDeferredPaint",
+      "description": "(button), its argument removed by this function; slot +0x10 of WeaponRangeSelectGadgetVtable (00093db6): at a paint counter +0x1b of 2, the paint (slot +4); at 1, Widget_DrawToCockpit(0, the rect, 0); each lowering it by 1. ES2's WeaponRangeSelectGadget_FlushDeferredPaint (DBSIM 00442d94).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-console-button--weaponrangeselectgadget; ES1DBSIM decompile",
+      "verified": {
+        "bytes": "00038e88+55",
+        "sha1": "b6c5bd6ee962",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00038ec0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponRangeSelectGadget_OnClick",
+      "description": "(button, flags), its arguments removed by this function; slot +0xc of WeaponRangeSelectGadgetVtable (00093db6): with bit 0 of flags set, the lamp +0x3c set to 1 for index +0x28 0-2, then the mixin's (+0x24) slot +0xc on the mixin, Widget_ClickSound, and slot +4 of the console's (+0x20) table at its +0x76, ConsoleButtons_OnChildClick (00037f00), with (console, flags, button). ES2's WeaponRangeSelectGadget_OnClick (DBSIM 00442dc8), which lights nothing.",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-console-button--weaponrangeselectgadget; ES1DBSIM decompile",
+      "verified": {
+        "bytes": "00038ec0+73",
+        "sha1": "6e8fbf883f3c",
         "scope": "body",
         "via": "decompile"
       }
@@ -17767,7 +18562,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SliderWidget_CtorBase",
-      "description": "(slider, knob length, position, maximum, minimum, rect) in stack order, its arguments removed by this function: Widget_CtorRect (000438fc) on the rect, the knob's 16-byte rect at +0x2e constructed in place, CTLSliderControlVtable 00094bb2 at +0x1c, the scale +0x20 = 0, the int16 minimum +0x24, maximum +0x26, position +0x28 and +0x2a, knob length +0x2c, and the drag flag +0x19 = 1. ES2's SliderWidget_CtorBase (DBSIM 004524a8), arguments in reverse. es2_xref finds calls from 000386a0, ThrottleSlider_CtorV (0003b2c8), ThrottleSlider_CtorFixed (0003ba74) and AlertSliderGadget_Ctor (000469ec).",
+      "description": "(slider, knob length, position, maximum, minimum, rect) in stack order, its arguments removed by this function: Widget_CtorRect (000438fc) on the rect, the knob's 16-byte rect at +0x2e constructed in place, CTLSliderControlVtable 00094bb2 at +0x1c, the scale +0x20 = 0, the int16 minimum +0x24, maximum +0x26, position +0x28 and +0x2a, knob length +0x2c, and the drag flag +0x19 = 1. ES2's SliderWidget_CtorBase (DBSIM 004524a8), arguments in reverse. es2_xref finds calls from WeaponSliderGadget_Ctor (000386a0), ThrottleSlider_CtorV (0003b2c8), ThrottleSlider_CtorFixed (0003ba74) and AlertSliderGadget_Ctor (000469ec).",
       "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-slider-base",
       "verified": {
         "bytes": "000439d4+138",
@@ -17857,7 +18652,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SliderWidget_RecomputeScaleH",
-      "description": "(slider) in stack order, its arguments removed by this function: sets the scale +0x20 to ((x1 - (the dword +0x36 - the dword +0x2e) - x0) << 16) / (the int16 maximum +0x26 - the int16 minimum +0x24). ES2's SliderWidget_RecomputeScaleH (DBSIM 004525a8). es2_xref finds six calls, from 000386a0, ThrottleSlider_CtorFixed (0003ba74) and AlertSliderGadget_Ctor (000469ec).",
+      "description": "(slider) in stack order, its arguments removed by this function: sets the scale +0x20 to ((x1 - (the dword +0x36 - the dword +0x2e) - x0) << 16) / (the int16 maximum +0x26 - the int16 minimum +0x24). ES2's SliderWidget_RecomputeScaleH (DBSIM 004525a8). es2_xref finds six calls, from WeaponSliderGadget_Ctor (000386a0), ThrottleSlider_CtorFixed (0003ba74) and AlertSliderGadget_Ctor (000469ec).",
       "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-slider-base",
       "verified": {
         "bytes": "00043b4c+52",
@@ -36683,6 +37478,87 @@
       "source": "es1_naming.py vtables ES1DBSIM; the image at 00093aae"
     },
     {
+      "address": "00093ace",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PodGaugeVtable",
+      "description": "The pod row's vtable, which PodGauge_Ctor (00037810) stores at +0x76: a zero dword, then PodGauge_OnChildClick (00037b5c), PodGauge_Paint (0003799c), PodGauge_Update (00037abc), PanelGauge_KeyDispatchNoneWeaponGaugeCopy by 00036f8c and WeaponGauge_SetStateNoOp by 00036f94.",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-pod-row; es2_peek"
+    },
+    {
+      "address": "00093aee",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WeaponRangeGaugeVtable",
+      "description": "The console buttons' vtable, which ConsoleButtons_Ctor (00037bd0) stores at +0x76: a zero dword, then ConsoleButtons_OnChildClick (00037f00), ConsoleButtons_Paint (00037e20), ConsoleButtons_Update (00037e4c) and ConsoleButtons_HandleCommand (00038034). ES2's WeaponRangeGaugeVtable (DBSIM 0049c85c).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-console-buttons; es1_naming.py vtables"
+    },
+    {
+      "address": "00093b1c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ConsoleButtons_CommandCodes",
+      "description": "ConsoleButtons_HandleCommand's case table: the four codes 0x29, 0x229, 0x214, 0x26, then their four handlers 0003805b, 0003807a, 00038098, 000380c4.",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-console-buttons; es2_peek"
+    },
+    {
+      "address": "00093b3e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CTLButtonControlVtableWeaponGaugeCopy",
+      "description": "The module's copy of the button base table, which WeaponSelectGadget_Ctor (000380fc) and WeaponRangeSelectGadget_Ctor (00038ce4) store first: a zero dword, then CTLButtonControl_PaintNoOpWeaponGaugeCopy (0003820f), CTLControl_InvalidateNoOpWeaponGaugeCopy (00038213), CTLControl_OnClickNoOpWeaponGaugeCopy (00038217), CTLControl_FlushDeferredPaintNoOpWeaponGaugeCopy (0003821b), Widget_GetButtonValueWeaponGaugeCopy (0003821f), CTLControl_SetValueNoOpWeaponGaugeCopy (00038229) and CTLControl_DragMoveNoOpWeaponGaugeCopy (0003822f).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-modules-tables; es1_naming.py vtables"
+    },
+    {
+      "address": "00093bbe",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WeaponSelectGadgetVtable",
+      "description": "The plain number button's vtable, which WeaponSelectGadget_Ctor (000380fc) stores last at +0x1c: WeaponSelectGadget_PaintUnderlay (0003825c), Widget_InvalidateDeferredWeaponGaugeCopy (00038234), WeaponSelectGadget_OnClick (00038304), WeaponSelectGadget_FlushDeferredPaint (000382cc) and the button base's three value slots. Its mixin table is 00093ba6. ES2's WeaponSelectGadgetVtable (DBSIM 0049c81c).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-plain-button; es1_naming.py vtables"
+    },
+    {
+      "address": "00093bfe",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ChainedWeaponSelectGadgetVtable",
+      "description": "The chained number button's vtable, which ChainedWeaponSelectGadget_Ctor (00038338) stores at +0x1c: WeaponSelectGadget_Paint (00038464), Widget_InvalidateDeferredWeaponGaugeCopy (00038234), ChainedWeaponSelectGadget_OnClick (0003866c), ChainedWeaponSelectGadget_FlushDeferredPaint (0003861c) and the button base's three value slots. Its mixin table is 00093be6. ES2's ChainedWeaponSelectGadgetVtable (DBSIM 0049c7dc).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-chained-button; es1_naming.py vtables"
+    },
+    {
+      "address": "00093c26",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CTLSliderControlVtableWeaponGaugeCopy",
+      "description": "The module's copy of the slider base table, which WeaponSliderGadget_Ctor (000386a0) stores first: CTLSliderControl_PaintNoOpWeaponGaugeCopy (000388fd), CTLSliderControl_InvalidateNoOpWeaponGaugeCopy (00038903), the button base copy's click and flush stubs by 00038218 and 0003821c, SliderWidget_GetValueH, SliderWidget_SetValueH, SliderWidget_DragToPointH and SliderWidget_RecomputeScaleH.",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-modules-tables; es1_naming.py vtables"
+    },
+    {
+      "address": "00093d4a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WeaponSliderGadgetVtable",
+      "description": "The charge bar's vtable, which WeaponSliderGadget_Ctor (000386a0) stores last at +0x1c: WeaponSliderGadget_Paint (000389ac), HSliderGadget_InvalidateDeferredWeaponGaugeCopy (00038984), HSliderGadget_OnClick (0003166c), WeaponSliderGadget_FlushDeferredPaint (00038b30), then SliderWidget_GetValueH, SliderWidget_SetValueH, SliderWidget_DragToPointH and SliderWidget_RecomputeScaleH. Its mixin table is 00093d32.",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-charge-bar--weaponslidergadget; es1_naming.py vtables"
+    },
+    {
+      "address": "00093db6",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WeaponRangeSelectGadgetVtable",
+      "description": "The console button's vtable, which WeaponRangeSelectGadget_Ctor (00038ce4) stores last at +0x1c: ConsoleButton_Paint (00038d90), Widget_InvalidateDeferredWeaponGaugeCopy (00038234), WeaponRangeSelectGadget_OnClick (00038ec0), WeaponRangeSelectGadget_FlushDeferredPaint (00038e88) and the button base's three value slots. Its mixin table is 00093d9e.",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-console-button--weaponrangeselectgadget; es1_naming.py vtables"
+    },
+    {
       "address": "00094206",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -38535,6 +39411,15 @@
       "name": "MfdMapScreen_ViewAngles",
       "description": "Three int16, {0xc000, 0, 0} from MfdMapScreen_StaticInit (00036e9c): the NAV MAP camera's orientation at construction, and the first word its paint copies into the camera's pitch. ES2's MfdMapScreen_ViewAngles (DBSIM 0049c454).",
       "source": "Herculan/docs/es1/simulation/mfd-nav-map.md#where-the-object-file-starts-and-ends; es2_xref finds 00036c05, 00036d38 and 00036e9f"
+    },
+    {
+      "address": "000b13e8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ConsoleButtons_StateBlock",
+      "description": "Four bytes ConsoleButtons_GetStateBlock (00037ed4) fills and returns: the console's chain int16, the tracking latch and the link request, for WeaponMounts_PerFrameUpdate (0000cf78). ES2's 004d1ae0.",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-console-buttons; es2_xref"
     },
     {
       "address": "000b16c0",

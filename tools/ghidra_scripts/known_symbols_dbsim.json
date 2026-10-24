@@ -16355,7 +16355,13 @@
       "confidence": "high",
       "name": "WeaponSliderGadget_FlushDeferredPaint",
       "description": "WeaponSliderGadgetVtable +0x0c: calls slot 0 of the vtable at +0x17 when the pending-paint count +0x1f is 2, and does nothing at 1 and never decrements it.",
-      "source": "DBSIM decompile at 00442be8; es2_xref.py"
+      "source": "DBSIM decompile at 00442be8; es2_xref.py",
+      "verified": {
+        "bytes": "00442be8+23",
+        "sha1": "22dd5c1fb235",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00442c00",
@@ -16388,7 +16394,13 @@
       "confidence": "high",
       "name": "WeaponRangeSelectGadget_FlushDeferredPaint",
       "description": "WeaponRangeSelectGadgetVtable +0x0c: the same body as WeaponSelectGadget_FlushDeferredPaint.",
-      "source": "DBSIM decompile at 00442d94; es2_xref.py"
+      "source": "DBSIM decompile at 00442d94; es2_xref.py",
+      "verified": {
+        "bytes": "00442d94+50",
+        "sha1": "401d2f67f05e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00442dc8",

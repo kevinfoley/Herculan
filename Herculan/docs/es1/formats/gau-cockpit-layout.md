@@ -8,7 +8,7 @@
 
 Nothing shifts the rects into device pixels: ES1's builders pass each block to its constructor as read.
 
-**The eight retail files**, `gau\ROADRUNN` to `gau\COLOSSUS` in `SIMVOL0.VOL` as HercWorks.Core reads them, are 1,700 bytes each with the origin pair (0, 0), so `Gau_Load` moves nothing. The rows in use, the `int32` at 16, are 3, 3, 4, 5, 6, 7, 8 and 9 in chassis order (`ROADRUNN`, `GUNSLING`, `RAPTOR`, `TOMAHAWK`, `PATRIOT`, `PANTHER`, `HERCULES`, `COLOSSUS`). The in-use row rects lie between screen rows 1 and 189, each 7 or 8 rows high, and the parts' rects at 180, 196, 260 and 276 span rows 0 to 7 from a row's top, inside every in-use row. The console block's 16-byte header at 452 is not zero in `PATRIOT`, `HERCULES` and `COLOSSUS`, and in `HERCULES` and `COLOSSUS` the five rects from 468 lie where they would relative to it ([Open](#open)).
+**The eight retail files**, `gau\ROADRUNN` to `gau\COLOSSUS` in `SIMVOL0.VOL` as HercWorks.Core reads them, are 1,700 bytes each with the origin pair (0, 0), so `Gau_Load` moves nothing. The rows in use, the `int32` at 16, are 3, 3, 4, 5, 6, 7, 8 and 9 in chassis order (`ROADRUNN`, `GUNSLING`, `RAPTOR`, `TOMAHAWK`, `PATRIOT`, `PANTHER`, `HERCULES`, `COLOSSUS`). The in-use row rects lie between screen rows 1 and 189, each 7 or 8 rows high, and the parts' rects at 180, 196, 260 and 276 span rows 0 to 7 from a row's top, inside every in-use row. The console block's 16-byte header at 452 is zero in five files; its first pair, the origin of the console's five rects, is (2, 61) in `PATRIOT`, (1, 177) in `HERCULES` and (3, 177) in `COLOSSUS`.
 
 ## Differences from ES2
 
@@ -16,9 +16,9 @@ Nothing shifts the rects into device pixels: ES1's builders pass each block to i
 |---|---|---|
 | 0, 16 | the origin pair, the number of weapon rows in use | the same |
 | 20 | nine weapon-row rects, indexed by the row the mount's factory is given | 20, ten rects |
-| 164, 244, 340 | the blocks of the ammunition, energy and pod rows, each opening with the scratch rect its factory copies a row's rect to before building the row's gauge ([the weapon rows](../simulation/cockpit-panel.md#the-weapon-rows)). The ammunition and energy blocks hold at 180 and 260 the select button's rect and at 196 and 276 the round count's or charge bar's, each relative to the row's top-left, and the energy block at 304 an `int32` its gauge hands the charge bar's constructor ([the weapon rows' gauges](../simulation/cockpit-weapon-gauges.md#the-energy-row)) | 180, 260, 356; ES2's gauges place their parts at fixed offsets from the row's rect, and read a mirror flag from a byte of the block |
-| 372 | three rects | 388 |
-| 452 | the console buttons' block: a 16-byte header, then five rects from 468 | 468, four rects from 484 |
+| 164, 244, 340 | the blocks of the ammunition, energy and pod rows, each opening with the scratch rect its factory copies a row's rect to before building the row's gauge ([the weapon rows](../simulation/cockpit-panel.md#the-weapon-rows)). The three hold at 180, 260 and 356 the number button's rect, {0, 0, 38, 7} in the energy and ammunition blocks of all eight files and {0, 0, 9, 7} in the pod's, whose right and bottom the button replaces ([the number button](../simulation/cockpit-weapon-gauges.md#the-plain-button)); at 196 and 276 the round count's or charge bar's rect; and at 372, which runs the pod block to 387, the pod's label rect, {11, 0, 59, 7}; each relative to the row's top-left. The energy block at 304 holds an `int32` its gauge hands the charge bar's constructor ([the charge bar](../simulation/cockpit-weapon-gauges.md#the-charge-bar--weaponslidergadget)), 0 in all eight | 180, 260, 356; ES2's gauges place their parts at fixed offsets from the row's rect, and read a mirror flag from a byte of the block |
+| 388 | two rects, zero in the eight files | 388, three rects |
+| 452 | the console buttons' block: its first 16 bytes the console's rect, of which the first pair is the origin `ConsoleButtons_Ctor` adds to each of the five rects from 468, the buttons `I`, `II`, `III`, `LINK` and `TRACK` in that order ([the console buttons](../simulation/cockpit-weapon-gauges.md#the-console-buttons)) | 468, four rects from 484 |
 | 548, 616, 728 | the blocks of the instruments at the cockpit's `+0x1e1` to `+0x1e9` | the same |
 | 1000 | the throttle's block, [below](#the-throttle-block-at-1000) | the same, with the centre tick's nudge |
 | 1104 | the gunsight's block, [below](#the-gunsight-block-at-1104) | 1088 |
@@ -72,5 +72,5 @@ So the `RAPTOR`'s throttle runs across, its forward bar right of the track's mid
 
 ## Open
 
-- **Open:** what the console block's header at 452 is to its five rects from 468: whether the console's constructors (`00037bd0`, `00037ce4`, unread) add it to them, which `HERCULES`' and `COLOSSUS`' rects suggest, and whether the five are the console buttons.
+- **Open:** what the energy block's `int32` at 292 and 296 hold, 2 and 9 in all eight files: the energy row's constructor reads neither.
 - **Open:** what the instrument at 1212 is; its constructor (`0003c258`) is unread, as are those of the other blocks but 1000's and 1104's. What the gunsight block's `int32` 2 and 3 (1112, 1116) and its bytes from 1180 to 1211 hold: the builder reads neither, and `Gau_Load` adds the origin to `int32` 2 and 3.
