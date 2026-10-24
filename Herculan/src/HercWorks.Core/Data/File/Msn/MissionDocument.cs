@@ -755,6 +755,22 @@ public sealed class MissionDocument {
 		return End(before);
 	}
 
+	/// <summary>
+	/// Points text slot <paramref name="slot"/> of row-5 debrief record <paramref name="record"/> at <c>.ENG</c> id
+	/// <paramref name="id"/>. Row 5 has no GUID and nothing names one of its records, so the record is the one that supplies
+	/// what it holds (docs/retail/formats/msn-mission-file.md#row-5--the-debrief); its layout is <see cref="DebriefText"/>'s.
+	/// </summary>
+	public MsnEdit SetDebriefLine(int record, int slot, short id) {
+		var bytes = Mission.DebriefBytes ?? [];
+		if (record < 0 || (record + 1) * DebriefText.RecordLength > bytes.Length || slot < 0 || slot >= DebriefText.Slots) {
+			throw new InvalidOperationException($"The debrief has no record {record} slot {slot}.");
+		}
+
+		var before = Begin(5);
+		BitConverter.TryWriteBytes(Mission.DebriefBytes.AsSpan(DebriefText.SlotOffset(record, slot)), id);
+		return End(before);
+	}
+
 	// ---- Internals --------------------------------------------------------------------------------
 
 	private static void CheckUnkeyed(int row) {

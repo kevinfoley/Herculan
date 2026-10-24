@@ -48,16 +48,23 @@ internal static class PresenceSentences {
 		return $"Its {List(named.Select(part => part.Words).ToList())} {(plural ? "change" : "changes")} {when}.";
 	}
 
+	/// <summary>
+	/// A debrief outcome's or loss case's heading: "When the mission was won and campaign variable 250 is 1", its variables
+	/// as the debrief's reload reads them (<see cref="CampaignVariableLabels.Phrase(int, bool)"/>), its roll made at the debrief.
+	/// </summary>
+	public static string When(PresenceRule rule) => $"When {Clauses(rule, atDebrief: true)}";
+
 	// "campaign variable 30 is more than 0 and in about 50% of loads", "the previous mission was won"; the variables, then
 	// the chance.
-	private static string Clauses(PresenceRule rule) {
-		var parts = rule.Variables.Select(clause => CampaignVariableLabels.MeaningOf(clause)?.Sentence
-			?? $"{CampaignVariableLabels.Phrase(clause.Variable)} {Operator(clause.Operator)} {clause.Value}").ToList();
+	private static string Clauses(PresenceRule rule, bool atDebrief = false) {
+		var parts = rule.Variables.Select(clause => CampaignVariableLabels.MeaningOf(clause, atDebrief)?.Sentence
+			?? $"{CampaignVariableLabels.Phrase(clause.Variable, atDebrief)} {Operator(clause.Operator)} {clause.Value}").ToList();
 		// The roll is made only where the variables hold (PresenceRules), so its share is of those loads.
+		string rolls = atDebrief ? "debriefs" : "loads";
 		if (rule.Chance is { } chance) {
 			return parts.Count == 0
-				? $"in about {chance.Percent}% of loads"
-				: $"{string.Join(" and ", parts)}, and then in about {chance.Percent}% of those loads";
+				? $"in about {chance.Percent}% of {rolls}"
+				: $"{string.Join(" and ", parts)}, and then in about {chance.Percent}% of those {rolls}";
 		}
 
 		return string.Join(" and ", parts);

@@ -55,9 +55,20 @@ internal static class CampaignVariableLabels {
 
 	/// <summary>
 	/// Variable <paramref name="flag"/> as a sentence names it: what it holds where <see cref="Label"/> says, else "campaign
-	/// variable N", with what the game does with it after (<see cref="Effect"/>) where it reads it.
+	/// variable N", with what the game does with it after (<see cref="Effect"/>) where it reads it. With
+	/// <paramref name="atDebrief"/>, as the debrief's conditions read it: the debrief has just written 0, 8 and 9 from the
+	/// mission flown, and 10 is that mission's count (docs/retail/shell/campaign-loop.md#the-debrief--game_processmissionresults-0040eae7).
 	/// </summary>
-	public static string Phrase(int flag) => flag switch {
+	public static string Phrase(int flag, bool atDebrief = false) => (flag, atDebrief) switch {
+		(0, true) => "the outcome of the mission",
+		(8, true) => "the number of squad HERCs written off after the mission",
+		(9, true) => "the number of squadmates killed in the mission",
+		(10, true) => "the number of squadmates the player took down in the mission",
+		_ => PlainPhrase(flag),
+	};
+
+	// What the variable holds as a later mission's conditions read it.
+	private static string PlainPhrase(int flag) => flag switch {
 		0 => "the outcome of the previous mission",
 		1 => "the campaign chapter",
 		2 => "the mission index in its chapter",
@@ -147,21 +158,27 @@ internal static class CampaignVariableLabels {
 	/// <summary>
 	/// The values of variable <paramref name="flag"/> the retail docs give a meaning, each with the test written for it; empty
 	/// for a number. Won is written <c>&gt; 0</c> and Not won <c>&lt; 1</c>, the two tests of flag 0 retail writes most, 53 and
-	/// 24 of its 90 (<c>HercWorks.Query flag 0</c>).
+	/// 24 of its 90 (<c>HercWorks.Query flag 0</c>). With <paramref name="atDebrief"/>, the sentences read as the debrief's
+	/// conditions do (<see cref="Phrase(int, bool)"/>).
 	/// </summary>
-	public static IReadOnlyList<VariableMeaning> Meanings(int flag) => flag == 0
-		? [
-			new VariableMeaning(Won, "Won", "the previous mission was won", MissionGenerator.OpGreater, 0),
-			new VariableMeaning(NotWon, "Not won", "the previous mission was not won", MissionGenerator.OpLess, 1),
-		]
-		: [];
+	public static IReadOnlyList<VariableMeaning> Meanings(int flag, bool atDebrief = false) {
+		if (flag != 0) {
+			return [];
+		}
+
+		string mission = atDebrief ? "the mission" : "the previous mission";
+		return [
+			new VariableMeaning(Won, "Won", $"{mission} was won", MissionGenerator.OpGreater, 0),
+			new VariableMeaning(NotWon, "Not won", $"{mission} was not won", MissionGenerator.OpLess, 1),
+		];
+	}
 
 	/// <summary>
 	/// The meaning <paramref name="clause"/> tests for: the one of its variable's <see cref="Meanings"/> whose value alone of
 	/// theirs the test holds for (<c>&gt; 0</c>, <c>= 1</c> and <c>&gt;= 1</c> all test for Won); null when there is none.
 	/// </summary>
-	public static VariableMeaning? MeaningOf(VariableClause clause) {
-		var meanings = Meanings(clause.Variable);
+	public static VariableMeaning? MeaningOf(VariableClause clause, bool atDebrief = false) {
+		var meanings = Meanings(clause.Variable, atDebrief);
 		var held = meanings.Where(meaning => Holds(clause, meaning.Value)).ToList();
 		return held.Count == 1 ? held[0] : null;
 	}

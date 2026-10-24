@@ -8,7 +8,7 @@ The editor, `Herculan.Engine.Editor`, run on its own by `Herculan.Engine.Host.Ed
 | [handoff-editor-viewing.md](handoff-editor-viewing.md) | opening, New mission, theater and time of day, selection, camera, picking, overlays, groups, waiting groups, the mission check |
 | [handoff-editor-placement.md](handoff-editor-placement.md) | moving objects, waypoints, groups and area corners; routes; trigger areas |
 | [handoff-editor-roster.md](handoff-editor-roster.md) | adding hercs, flyers, ground vehicles and structures; type and fit; sides; deleting; the player's squad |
-| [handoff-editor-mission-logic.md](handoff-editor-mission-logic.md) | orders, wiring, campaign variable writes, triggers, countdowns, objectives, the mission's text |
+| [handoff-editor-mission-logic.md](handoff-editor-mission-logic.md) | orders, wiring, campaign variable writes, triggers, countdowns, objectives, the mission's text and its debrief |
 | [handoff-editor-conditions.md](handoff-editor-conditions.md) | what the editor shows, conditions, variant tables, Present when |
 | [handoff-editor-ux-plan.md](handoff-editor-ux-plan.md) | the planned UI redesign, by phase; its evidence is [handoff-editor-ux-review.md](handoff-editor-ux-review.md) |
 
@@ -47,7 +47,7 @@ Beyond the gaps each doc lists:
 |---|---|
 | 1, conditions | a variant table's requirement; route tables, squad tables and tables under a shared key; a condition's place in the row |
 | 2, header | the objective type (offset 6, which picks the player's objective arm) and the training mission number; the zone after New mission. The difficulty and the two training cheats are overwritten at every shell load |
-| 3, movies; 5, debrief | not shown |
+| 3, movies; 5, debrief | the movies (the debrief's shown by number); the debrief's outcomes and their clauses; the loss line |
 | 4 (13), text package | the briefing movie (`0x8E`); the records after the first; a line's trailing newline |
 | 7 (2), headings | a heading for an object or a group |
 | 8 (3), routes | naming one from a group's own route field (row 16) |
@@ -65,8 +65,8 @@ Beyond the gaps each doc lists:
 
 | Slice | Size |
 |---|---|
-| **Next:** the rest of the campaign layer, the debrief | — |
-| Mission text: debrief lines, action lines, the briefing and debrief movies | small–medium |
+| **Next:** the rest of the campaign layer: the debrief's movie, outcomes and loss line ([phase 7](handoff-editor-ux-plan.md#7-debrief)) | — |
+| Mission text: action lines, the briefing movie | small–medium |
 | Edit roster and group fields | medium |
 | The objective type and the training mission number | small |
 | A line-length check against the mission screen's wrap, and a line's trailing newline | small |

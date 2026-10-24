@@ -5,7 +5,7 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// The Properties panel's view of the mission as a whole: its name and zone, the zone with its size and the retail missions
 /// played in it (<see cref="ZoneCatalog"/>), then the theater it is played on and the time of day, changed through
-/// <see cref="TheaterChanger"/>, then its text (<see cref="MissionTextView"/>).
+/// <see cref="TheaterChanger"/>, then its text (<see cref="MissionTextView"/>) and its debrief (<see cref="DebriefView"/>).
 /// </summary>
 internal sealed class MissionView {
 	private readonly Func<string> _name;
@@ -13,17 +13,19 @@ internal sealed class MissionView {
 	private readonly TheaterChanger _theaters;
 	private readonly IReadOnlyList<string> _labels;
 	private readonly MissionTextView _text;
+	private readonly DebriefView _debrief;
 
 	/// <param name="name">What the window title calls the mission, which a Save As changes.</param>
 	/// <param name="zone">The zone the mission is played in, as the launch plays it (<see cref="EditorMission.Zone"/>), described by <see cref="ZoneCatalog.Describe"/>.</param>
 	/// <param name="labels">Each theater's label, in theater order (<see cref="TheaterNames.Labels"/>).</param>
 	public MissionView(Func<string> name, Func<string> zone, TheaterChanger theaters, IReadOnlyList<string> labels,
-			MissionTextView text) {
+			MissionTextView text, DebriefView debrief) {
 		_name = name;
 		_zone = zone;
 		_theaters = theaters;
 		_labels = labels;
 		_text = text;
+		_debrief = debrief;
 	}
 
 	public void Draw() {
@@ -73,6 +75,7 @@ internal sealed class MissionView {
 		}
 
 		_text.Draw();
+		_debrief.Draw();
 	}
 
 	// The combo's label for <theater>: its own, or its number for one past the list.

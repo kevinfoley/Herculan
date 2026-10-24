@@ -764,6 +764,7 @@ public sealed class EditorHost {
 		mission.Presence.RunRequest();
 		mission.Objectives.RunRequest();
 		mission.Texts.RunRequest();
+		mission.Debrief.RunRequest();
 		mission.Placing.RunRequest();
 		mission.AreaPlacing.RunRequest();
 

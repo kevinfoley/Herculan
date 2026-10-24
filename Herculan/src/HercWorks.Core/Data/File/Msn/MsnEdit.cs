@@ -255,7 +255,10 @@ internal static class MsnRows {
 	private static readonly MethodInfo ShallowCopy =
 		typeof(object).GetMethod("MemberwiseClone", BindingFlags.Instance | BindingFlags.NonPublic)!;
 
-	/// <summary>Row <paramref name="row"/>'s records. Row 5 is kept raw (<see cref="MissionFile.DebriefBytes"/>) and is not one.</summary>
+	/// <summary>
+	/// Row <paramref name="row"/>'s records. Row 5 is kept raw (<see cref="MissionFile.DebriefBytes"/>): its array is the
+	/// row's bytes, which an edit snapshots and puts back whole.
+	/// </summary>
 	public static Array Get(MissionFile file, int row) =>
 		Find(file, row) ?? throw new InvalidOperationException($"The mission file has no row {row}.");
 
@@ -266,6 +269,7 @@ internal static class MsnRows {
 			2 => file.SettingsPatches,
 			3 => file.Variants,
 			4 => file.Texts,
+			5 => file.DebriefBytes,
 			6 => file.Points,
 			7 => file.Headings,
 			8 => file.WaypointGroups,
@@ -278,7 +282,7 @@ internal static class MsnRows {
 			15 => file.Orders,
 			16 => file.Groups,
 			17 => file.Objectives,
-			_ => throw new ArgumentOutOfRangeException(nameof(row), row, "Rows 1 to 4 and 6 to 17 hold records."),
+			_ => throw new ArgumentOutOfRangeException(nameof(row), row, "The mission file has rows 1 to 17."),
 		};
 
 	public static void Set(MissionFile file, int row, Array records) {
@@ -287,6 +291,7 @@ internal static class MsnRows {
 			case 2: file.SettingsPatches = (MissionSettingsPatch[])records; break;
 			case 3: file.Variants = (VariantValue8[])records; break;
 			case 4: file.Texts = (MissionText144[])records; break;
+			case 5: file.DebriefBytes = (byte[])records; break;
 			case 6: file.Points = (MapPoint22[])records; break;
 			case 7: file.Headings = (Heading10[])records; break;
 			case 8: file.WaypointGroups = (WaypointGroup[])records; break;
@@ -299,7 +304,7 @@ internal static class MsnRows {
 			case 15: file.Orders = (MissionOrder22[])records; break;
 			case 16: file.Groups = (MissionGroup164[])records; break;
 			case 17: file.Objectives = (MissionObjective58?[])records; break;
-			default: throw new ArgumentOutOfRangeException(nameof(row), row, "Rows 1 to 4 and 6 to 17 hold records.");
+			default: throw new ArgumentOutOfRangeException(nameof(row), row, "The mission file has rows 1 to 17.");
 		}
 	}
 
@@ -311,6 +316,10 @@ internal static class MsnRows {
 
 	/// <summary>A copy of <paramref name="records"/> sharing nothing with it: each record and each array it holds copied.</summary>
 	public static Array Copy(Array records) {
+		if (records is byte[] bytes) {
+			return (byte[])bytes.Clone();
+		}
+
 		var copy = Array.CreateInstance(records.GetType().GetElementType()!, records.Length);
 		for (int i = 0; i < records.Length; i++) {
 			copy.SetValue(records.GetValue(i) is { } record ? CopyRecord(record) : null, i);

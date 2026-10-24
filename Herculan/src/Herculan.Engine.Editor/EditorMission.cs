@@ -52,6 +52,7 @@ internal sealed class EditorMission {
 		Orders = new OrderEditor(source, Mover, Sync);
 		Objectives = new ObjectiveEditor(source, Mover, Sync, Selection);
 		Texts = new MissionTextEditor(source, Mover, Sync);
+		Debrief = new DebriefEditor(source, Mover, Sync, () => squad.PlayerMachine == PlayerMachineSource.CareerSquad);
 		Actions = new ActionEditor(source, Mover, Sync, Selection);
 		Timers = new TimerEditor(source, Mover, Sync, Selection);
 		Conditions = new ConditionEditor(source, sceneIndex, Names, Mover, Sync, Selection, Deleter);
@@ -69,7 +70,7 @@ internal sealed class EditorMission {
 		Properties = new PropertiesPanel(sceneIndex, Selection, source, Mover, Sides, Deleter,
 			new SquadMachinePanel(Fitter, Squad, squad), new RosterFitView(Fitter, Types, Variants, choices, new UnitTypeCatalog(content)),
 			new MissionView(() => Name, () => zones.Describe(Zone), Theater, TheaterNames.Labels(content),
-				new MissionTextView(Texts)),
+				new MissionTextView(Texts), new DebriefView(Debrief)),
 			Routes, Placing, Areas, AreaPlacing, Orders, Objectives, Actions, Timers, Conditions, Presence, Variants,
 			choices, new TriggerMessages(content), Names);
 	}
@@ -139,6 +140,9 @@ internal sealed class EditorMission {
 
 	/// <summary>Edits the objective, briefing and intelligence lines of <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public MissionTextEditor Texts { get; }
+
+	/// <summary>Edits the debrief text of <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	public DebriefEditor Debrief { get; }
 
 	/// <summary>
 	/// Creates, edits and deletes actions in <see cref="Source"/>, and wires them into groups and objects, as steps of

@@ -26,7 +26,9 @@ public readonly record struct TextOwner(int Row, int Record, MissionTextList? Li
 ///
 /// <list type="bullet">
 /// <item>An edit of a line writes the <c>.ENG</c> record whose text the line shows (<see cref="LayoutLine.Supplier"/>), the
-/// last record of its id carrying the first one's condition, as every edit writes the record that supplies the value.</item>
+/// last record of its id carrying the first one's condition, as every edit writes the record that supplies the value; an
+/// edit of its replacement under a condition (<see cref="SetLineUnder"/>) writes the last record of the id carrying that
+/// condition, as the debrief's outcomes do (<see cref="DebriefText"/>).</item>
 /// <item>Rows 4, 5, 10 and 17 reference text by id, the only rows that do (<c>Msn_ResolveTextRef</c> (<c>00415a7c</c>) is
 /// called for them alone). An objective's failure text is three consecutive <c>mission.str</c> lines from the one it
 /// references (docs/retail/formats/script-dat.md#block-12-in-memory--76-bytes-0x4c), taken here as its id and the next two
@@ -103,11 +105,10 @@ public static class MissionTextEditing {
 			}
 		}
 
-		// Row 5, 32 words a record: its condition, thirty text refs and a row-3 ref (docs/retail/formats/msn-mission-file.md#row-5--the-debrief).
 		var debrief = mission.DebriefBytes ?? [];
-		for (int record = 0; record < debrief.Length / 64; record++) {
-			for (int slot = 0; slot < 30; slot++) {
-				short id = BitConverter.ToInt16(debrief, record * 64 + (1 + slot) * 2);
+		for (int record = 0; record < debrief.Length / DebriefText.RecordLength; record++) {
+			for (int slot = 0; slot < DebriefText.Slots; slot++) {
+				short id = BitConverter.ToInt16(debrief, DebriefText.SlotOffset(record, slot));
 				if (id != -1) {
 					yield return (new TextOwner(5, record, null, slot), id);
 				}
@@ -187,7 +188,7 @@ public static class MissionTextEditing {
 
 	/// <summary>
 	/// Sets the text of part <paramref name="part"/> of what <paramref name="owner"/> references — a failure text's line 0 to
-	/// 2, or a row-4 slot's one line, part 0 — to <paramref name="text"/>, in the record its line holds, keeping that record's
+	/// 2, or a row-4 or row-5 slot's one line, part 0 — to <paramref name="text"/>, in the record its line holds, keeping that record's
 	/// trailing newline. A field shared with another (<see cref="Shared"/>) is first given its own copy. Throws
 	/// <see cref="InvalidOperationException"/> for a part with no line, and for a copy that would take the text past
 	/// <see cref="LineCap"/> lines.
@@ -202,6 +203,50 @@ public static class MissionTextEditing {
 			throw new InvalidOperationException("That line is not in the mission's text.");
 		}
 
+		return SetRecord(document, owner, ids, part, supplier, text);
+	}
+
+	/// <summary>
+	/// The index of the <c>.ENG</c> record of <paramref name="id"/> carrying <paramref name="condition"/>, <c>-1</c> for none:
+	/// the last such, as a later record of the id replaces an earlier one's text
+	/// (docs/retail/formats/msn-mission-file.md#the-eng-string-table); null when no record of the id carries it.
+	/// </summary>
+	public static int? RecordUnder(MissionDocument document, short id, short condition) {
+		var strings = document.Text?.Strings ?? [];
+		for (int i = strings.Length - 1; i >= 0; i--) {
+			if (strings[i].Guid == id && strings[i].ConditionRef == condition) {
+				return i;
+			}
+		}
+
+		return null;
+	}
+
+	/// <summary>The text <paramref name="id"/>'s record under <paramref name="condition"/> holds (<see cref="RecordUnder"/>), as <see cref="LineText"/> shows it; null for none.</summary>
+	public static string? TextUnder(MissionDocument document, short id, short condition) =>
+		RecordUnder(document, id, condition) is { } record ? Shown(document.Text!.Strings![record].Val) : null;
+
+	/// <summary>
+	/// <see cref="SetLine"/> for the record of the line carrying <paramref name="condition"/> (<see cref="RecordUnder"/>) in
+	/// place of its base, so a replacement under one condition is edited and the line's other records keep their text. Throws
+	/// <see cref="InvalidOperationException"/> when no record of the line carries the condition.
+	/// </summary>
+	public static MsnEdit SetLineUnder(MissionDocument document, TextOwner owner, int part, short condition, string text) {
+		var ids = IdsOf(document, owner);
+		if (part < 0 || part >= ids.Count) {
+			throw new InvalidOperationException("There is no such line to edit.");
+		}
+
+		if (RecordUnder(document, ids[part], condition) is not { } record) {
+			throw new InvalidOperationException("That line has no text under that condition.");
+		}
+
+		return SetRecord(document, owner, ids, part, record, text);
+	}
+
+	// Sets .ENG record <supplier>, of line <part> of <ids>, which <owner> references, to <text>, giving <owner> its own copy
+	// first when it shares the ids.
+	private static MsnEdit SetRecord(MissionDocument document, TextOwner owner, IReadOnlyList<short> ids, int part, int supplier, string text) {
 		int lines = Lines(document);
 		return document.Change(() => {
 			int record = supplier;
@@ -339,7 +384,7 @@ public static class MissionTextEditing {
 	internal static short[] Unset(int count) => Enumerable.Repeat((short)-1, count).ToArray();
 
 	// The text a record's line shows: without its NUL and one trailing newline.
-	private static string Shown(string? value) {
+	internal static string Shown(string? value) {
 		string text = (value ?? string.Empty).TrimEnd('\0');
 		return text.EndsWith('\n') ? text[..^1] : text;
 	}
@@ -377,8 +422,10 @@ public static class MissionTextEditing {
 			document.Rewrite<MissionObjective58>(17, owner.Record, objective => objective.TextRef = first);
 		} else if (owner is { Row: 4, List: { } list }) {
 			document.Rewrite<MissionText144>(4, owner.Record, package => LinesOf(package, list)[owner.Slot] = first);
+		} else if (owner.Row == 5) {
+			document.SetDebriefLine(owner.Record, owner.Slot, first);
 		} else {
-			throw new InvalidOperationException("Only an objective's failure text and the text package's lines are edited.");
+			throw new InvalidOperationException("Only an objective's failure text, the text package's lines and the debrief's are edited.");
 		}
 
 		short copied = (short)(first + ids.ToList().IndexOf(id));
