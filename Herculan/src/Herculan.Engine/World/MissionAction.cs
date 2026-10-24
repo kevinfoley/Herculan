@@ -68,19 +68,15 @@ public readonly record struct MissionTriggerArea(
 /// offered to <see cref="Areas"/> every frame; the first area that catches its subject fires the
 /// action, once and for good. What firing then means is read by whoever is watching: a mission group
 /// waiting to arrive reads <see cref="Verb"/> for how it turns up, and a group working its orders
-/// moves to the next one. See docs/retail/simulation/mission-deployment.md.</para>
-///
-/// <para><b>The field-to-offset mapping is the load pass's read order</b>, which is the only place
-/// it is stated: two shorts into <c>+0x00</c>/<c>+0x02</c>, sixteen bytes of block-4 refs into a
-/// stack buffer, twenty bytes into <c>+0x0c</c>, twenty more into <c>+0x20</c>, ten bytes read and
-/// dropped, then <c>+0x34</c> and <c>+0x36</c>. See docs/retail/formats/script-dat.md.</para>
+/// moves to the next one. See docs/retail/simulation/mission-deployment.md; the record's layout is
+/// docs/retail/formats/script-dat.md#block-5-in-memory--58-bytes-0x3a.</para>
 /// </summary>
 /// <param name="Type">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptAction.Type"/>
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptAction.Type" path="/summary/node()"/>
 /// See <see cref="Sim.MissionTriggers.Evaluate"/> for the table.
 /// </param>
 /// <param name="Verb">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptAction.Verb"/>
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptAction.Verb" path="/summary/node()"/>
 /// See <see cref="Sim.MissionGroup.DeploymentCheck"/>.
 /// </param>
 /// <param name="Areas">
@@ -89,10 +85,10 @@ public readonly record struct MissionTriggerArea(
 /// exactly that many, so a populated slot behind a gap is never tested.
 /// </param>
 /// <param name="CounterRefs">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptAction.CounterRefs"/>
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptAction.CounterRefs" path="/summary/node()"/>
 /// </param>
 /// <param name="CounterOps">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptAction.CounterOps"/>
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptAction.CounterOps" path="/summary/node()"/>
 /// <see cref="CounterIncrement"/> and <see cref="CounterClear"/> are the two that do anything; any
 /// other value does nothing.
 /// </param>
@@ -103,7 +99,7 @@ public readonly record struct MissionTriggerArea(
 /// docs/retail/simulation/mission-deployment.md.
 /// </param>
 /// <param name="TargetRef">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptAction.TargetRef"/>
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptAction.TargetRef" path="/summary/node()"/>
 /// Carried as the raw ref the file states. The original resolves it to a pointer during the spawn
 /// pass; <see cref="Sim.MissionActionState"/> holds the resolved form.
 /// </param>
@@ -178,35 +174,29 @@ public sealed record MissionAction(
 /// One <b>action timer</b> — a <c>script.dat</c> block-6 record. It names a primary action, a
 /// delay, and up to ten actions to activate when that delay runs out.
 ///
-/// <para><c>ActionTimer_Tick</c> (<c>004230a4</c>), walked every frame from <c>Sim_MainTick</c>,
-/// counts the delay down only while the primary action has activated — or unconditionally when the
-/// record names no primary. So a timer is either "N seconds into the mission, do this" or "N
-/// seconds after that happened, do this", and chaining two of them is how a mission staggers a
-/// sequence: <c>script6.dat</c> has action 1 arm a 92-second timer that activates action 2, which
-/// arms a 123-second timer that activates action 3.</para>
-///
-/// <para><b>This is the second of four ways an action activates</b>, and the reason an action
-/// carrying no trigger area of its own is ordinary rather than dead. The other three are its own areas, an
-/// object being engaged, and an object being destroyed — see
-/// <see cref="Sim.MissionActionState"/>.</para>
+/// <para><c>ActionTimer_Tick</c> (<c>004230a4</c>) counts the delay down only while the primary
+/// action has activated, or unconditionally when the record names no primary, so a timer is either
+/// "N seconds into the mission, do this" or "N seconds after that happened, do this". It is one of
+/// the four ways an action activates — see <see cref="Sim.MissionActionState"/> and
+/// docs/retail/simulation/mission-deployment.md#action-timers--actiontimer_tick-004230a4.</para>
 /// </summary>
 /// <param name="PrimaryActionRef">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptActionTimer.PrimaryActionRef"/>
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptActionTimer.PrimaryActionRef" path="/summary/node()"/>
 /// A ref outside block 5 is read as <c>-1</c>.
 /// </param>
 /// <param name="Delay">
 /// How long the timer runs, in <see cref="Numerics.SimMath.TickDelta"/>'s timer unit. The file
-/// states it in <see cref="DelayShift"/>-bit units, which <c>FUN_004679c0</c> converts on the way
-/// in.
+/// states it in seconds, which <c>ActionTimer_SetDelay</c> (<c>004679c0</c>) shifts by
+/// <see cref="DelayShift"/> on the way in.
 /// </param>
-/// <param name="SequenceRefs"><inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptActionTimer.SequenceRefs"/></param>
+/// <param name="SequenceRefs"><inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptActionTimer.SequenceRefs" path="/summary/node()"/></param>
 public sealed record MissionActionTimer(int PrimaryActionRef, int Delay, IReadOnlyList<short> SequenceRefs) {
 	/// <summary>Actions one timer can activate.</summary>
 	public const int SequenceSlots = 10;
 
 	/// <summary>
 	/// What the file's stored delay is shifted by to reach the simulation's timer unit —
-	/// <c>FUN_004679c0</c>'s own <c>value &lt;&lt; 11</c>. 2048 counts is 1000 ms exactly, so the
+	/// <c>ActionTimer_SetDelay</c>'s own <c>value &lt;&lt; 11</c>. 2048 counts is 1000 ms exactly, so the
 	/// on-disk unit is one second and a stored 30 is half a minute.
 	/// </summary>
 	public const int DelayShift = 11;

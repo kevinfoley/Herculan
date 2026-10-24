@@ -7,7 +7,7 @@ namespace Herculan.Engine.Sim;
 /// Who knows about whom — the sensor model the whole of target selection stands on.
 ///
 /// <para>There are <b>two separate notions of "seen"</b> in the original and they are not
-/// interchangeable, which is the thing to get right before reading anything below:</para>
+/// interchangeable:</para>
 /// <list type="bullet">
 /// <item><b>Radar visibility</b> (<see cref="SimObject.RadarVisible"/>, <c>obj+0x95</c>) is a
 /// property of one object. Something with an active scanner painted it, so it is showing on
@@ -16,18 +16,18 @@ namespace Herculan.Engine.Sim;
 /// <item><b>A contact</b> (<see cref="SimObject.Detects"/>, <c>obj+0xc2</c>) is a property of a
 /// <i>pair</i>: this object knows where that one is. Contacts are made by looking — a bearing inside
 /// the sensor arc with clear line of sight — and they are shared sideways to everything on the same
-/// side within 100000 units, which is how a group fights as a unit.</item>
+/// side within 100000 units, which is how a squad fights as a unit.</item>
 /// </list>
 ///
 /// <para><see cref="TargetSelection.CanTarget"/> accepts either one, at a different range each: a
 /// radar-visible object out to <see cref="RadarTargetingRange"/>, a known contact out to the
 /// scanner's own setting.</para>
 ///
-/// <para><b>The sweep is asymmetric and that is deliberate in the original.</b>
-/// <see cref="Tick"/> runs <see cref="Sweep"/> for human-side objects only, and each sweep looks
-/// only at Cybrid ones — but the pass writes both objects' tables, so a Cybrid machine ends up
-/// knowing about the human that spotted it without ever running a sweep of its own. Half the loops
-/// are missing because they are not needed, not because they were dropped here.</para>
+/// <para><b>The sweep is asymmetric, as in the original.</b> <see cref="Tick"/> runs
+/// <see cref="Sweep"/> for human-side objects only, and each sweep looks only at Cybrid ones, but
+/// the pass writes both objects' tables, so a Cybrid machine knows about the human that spotted it
+/// without running a sweep of its own. See
+/// docs/retail/simulation/target-selection.md#the-sensor-model--sim_detectiontick-004123ac.</para>
 /// </summary>
 public static class Detection {
 	/// <summary>
@@ -127,7 +127,7 @@ public static class Detection {
 	/// <item><b>Timers.</b> Every object's line-of-sight cache and contact-decay countdowns tick, and
 	/// an expired decay countdown re-examines that object's contact list on the spot.</item>
 	/// <item><b>The sweeps.</b> Every live human-side object looks for Cybrids — except the machine
-	/// the player is flying, which is held back and swept last, so that contacts its squadmates make
+	/// the player pilots, which is held back and swept last, so that contacts its squadmates make
 	/// this tick have already been shared to it by the time it looks.</item>
 	/// <item><b>The ECM gate</b> (<see cref="SimObject.EngagementActionHeld"/>) cleared on
 	/// everything, for the per-mech systems pass that follows to raise again.</item>

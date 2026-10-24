@@ -122,29 +122,22 @@ public static class SimMath {
 	public static bool PerTickStepsScaled { get; set; } = true;
 
 	/// <summary>
-	/// <b>Not a DBSIM function — a deliberate deviation.</b> Converts a constant the original
-	/// applied as a raw per-tick step into this tick's equivalent:
-	/// <c>step * TickDelta / VanillaTickDelta</c>.
+	/// Converts a constant the original applied as a raw per-tick step into this tick's equivalent,
+	/// <c>step * TickDelta / VanillaTickDelta</c>. <b>An engine invention, not a DBSIM function.</b>
 	///
 	/// <para>DBSIM feeds a handful of constants — the locomotion accel/decel pair, notably —
 	/// straight into <see cref="RateLimitedMoveToward"/> without routing them through
 	/// <see cref="IntegrateRateOverTick"/>, so their ramps take a fixed number of <i>ticks</i>
-	/// rather than a fixed amount of <i>time</i>. On the original that made acceleration and turn
-	/// ramp frame-rate dependent; here it would tie them to the engine's chosen tick rate. This
-	/// rescales them to be tick-rate independent instead.</para>
-	///
-	/// <para>It is exact at <see cref="VanillaTickDelta"/>, which is what the engine's fixed
-	/// timestep runs at, so it changes nothing today. <see cref="IntegrateRateOverTick"/> cannot be
-	/// used directly for this: its Q8 unit is 125 ms, so it would return about a third of the step
-	/// and visibly slacken the ramp.</para>
+	/// rather than a fixed amount of <i>time</i>, and acceleration and turn ramp are frame-rate
+	/// dependent. This rescales them to be tick-rate independent. It is exact at
+	/// <see cref="VanillaTickDelta"/>, the engine's fixed timestep, where it changes nothing.
+	/// <see cref="IntegrateRateOverTick"/> cannot do this job: its Q8 unit is 125 ms, so it would
+	/// return about a third of the step.</para>
 	///
 	/// <para>Steps are slew rates and non-negative. A non-zero step never scales to zero — at a
 	/// tick short enough to round it away the result is pinned to 1, so a ramp cannot stall
-	/// outright. Below the vanilla tick length that pin is the quantization floor of a fixed-point
-	/// port with no fractional carry, and the accel constants would want re-checking there.</para>
-	///
-	/// <para>Off while <see cref="PerTickStepsScaled"/> is false, which is how a replayed tape gets
-	/// the original's own frame-rate-dependent ramps back.</para>
+	/// outright. Below the vanilla tick length that pin is the quantization floor, as there is no
+	/// fractional carry. Off while <see cref="PerTickStepsScaled"/> is false.</para>
 	/// </summary>
 	public static short ScalePerTickStep(short step) {
 		if (step <= 0 || !PerTickStepsScaled) {

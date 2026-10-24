@@ -43,10 +43,11 @@ sealed class SettingsWindow : IDisposable {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
 	private const float PanelWidth = 520f;
 	private static readonly Vector2 PromptSize = new(640f, 240f);
-	private static readonly Vector2 InstallSize = new(720f, 600f);
+	// Taller than the startup's own install window by its title bar.
+	private static readonly Vector2 InstallSize = new(720f, 680f);
 	private const string PromptId = "##folder_prompt";
 
-	private enum PromptKind {
+	internal enum PromptKind {
 		Install,
 		DiscFolder,
 		DiscImage,
@@ -56,6 +57,7 @@ sealed class SettingsWindow : IDisposable {
 	private readonly Action? _restartShell;
 	private PathPrompt? _prompt;
 	private PromptKind _promptKind;
+	private bool _promptRaised;
 	private InstallPanel? _install;
 	private bool _open;
 	private string? _error;
@@ -120,21 +122,19 @@ sealed class SettingsWindow : IDisposable {
 			ImGui.SeparatorText(_session.Localization.GetStringOrKey("settings.folders"));
 			string installRoot = _session.InstallRoot;
 			if (FolderRow(_session.Localization.GetStringOrKey("settings.install_folder"), installRoot, "##change_install")) {
-				OpenPrompt(InstallPrompt.Create(_session.Localization, "general.cancel", installRoot,
-					"settings.install_message"), PromptKind.Install);
+				OpenPrompt(PromptKind.Install);
 			}
 
 			ImGui.BeginDisabled(_restartShell == null || _install != null);
 			if (ImGui.Button(_session.Localization.GetStringOrKey("settings.install_from_disc"))) {
-				_install = new InstallPanel(_session.Localization);
+				OpenInstall();
 			}
 			ImGui.EndDisabled();
 
 			string? image = GameInstall.DiscImagePath(installRoot);
 			string? disc = GameInstall.DiscDirectory(installRoot);
 			if (FolderRow(_session.Localization.GetStringOrKey("settings.disc_folder"), disc ?? _session.Localization.GetStringOrKey("settings.no_disc"), "##change_disc")) {
-				OpenPrompt(new PathPrompt(_session.Localization, "disc_prompt", "general.cancel", DiscRefusal, disc ?? ""),
-					PromptKind.DiscFolder);
+				OpenPrompt(PromptKind.DiscFolder);
 			}
 			if (image != null) {
 				ImGui.TextDisabled(_session.Localization.GetStringOrKey("settings.image_overrides"));
@@ -142,9 +142,7 @@ sealed class SettingsWindow : IDisposable {
 
 			if (FolderRow(_session.Localization.GetStringOrKey("settings.disc_image"), image ?? _session.Localization.GetStringOrKey("settings.no_disc_image"), "##change_image",
 					removable: image != null)) {
-				OpenPrompt(new PathPrompt(_session.Localization, "image_prompt", "general.cancel", ImageRefusal, image ?? "",
-					fileFilter: new NativePathPicker.FileFilter(_session.Localization.GetStringOrKey("install.image_filter"), ["iso", "bin", "cue"])),
-					PromptKind.DiscImage);
+				OpenPrompt(PromptKind.DiscImage);
 			}
 
 			ImGui.SeparatorText(_session.Localization.GetStringOrKey("settings.languages"));
@@ -355,17 +353,41 @@ sealed class SettingsWindow : IDisposable {
 		}
 	}
 
-	private void OpenPrompt(PathPrompt prompt, PromptKind kind) {
-		_prompt = prompt;
+	/// <summary>
+	/// Raises the folder prompt of <paramref name="kind"/> over the window, starting from the folder or image the
+	/// install names now. The window's Change buttons raise it; a test lays it out without one.
+	/// </summary>
+	internal void OpenPrompt(PromptKind kind) {
+		string installRoot = _session.InstallRoot;
+		_prompt = kind switch {
+			PromptKind.Install => InstallPrompt.Create(_session.Localization, "general.cancel", installRoot, "settings.install_message"),
+			PromptKind.DiscFolder => new PathPrompt(_session.Localization, "disc_prompt", "general.cancel", DiscRefusal,
+				GameInstall.DiscDirectory(installRoot) ?? ""),
+			_ => new PathPrompt(_session.Localization, "image_prompt", "general.cancel", ImageRefusal,
+				GameInstall.DiscImagePath(installRoot) ?? "",
+				fileFilter: new NativePathPicker.FileFilter(_session.Localization.GetStringOrKey("install.image_filter"), ["iso", "bin", "cue"])),
+		};
 		_promptKind = kind;
+		_promptRaised = false;
 		_error = null;
-		ImGui.OpenPopup(PromptId);
 	}
 
-	// The prompt as a modal over the window, the size of the startup's own.
+	/// <summary>The prompt <see cref="OpenPrompt"/> raised, while it is up.</summary>
+	internal PathPrompt? Prompt => _prompt;
+
+	/// <summary>Opens the install window beside the window, as its Install from a Disc button does.</summary>
+	internal void OpenInstall() => _install = new InstallPanel(_session.Localization);
+
+	// The prompt as a modal over the window, the size of the startup's own. It is opened here rather than by the
+	// Change button so that its popup ID is the window's whoever raised it.
 	private void DrawPrompt(nint owner, ImGuiCond centre) {
 		if (_prompt == null) {
 			return;
+		}
+
+		if (!_promptRaised) {
+			ImGui.OpenPopup(PromptId);
+			_promptRaised = true;
 		}
 
 		ImGui.SetNextWindowSize(ScaledImGui.Scaled(PromptSize));

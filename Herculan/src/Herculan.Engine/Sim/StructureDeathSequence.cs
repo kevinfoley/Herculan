@@ -11,27 +11,26 @@ namespace Herculan.Engine.Sim;
 /// them one at a time. The early stages throw up smoke and secondary explosions inside the part's
 /// own <see cref="World.BaseComponentType.SmokeSpread"/>; the last two do the collapse itself and
 /// then set it alight. So a building takes several seconds to come down, and its parts come down in
-/// whatever order they were shot.</para>
+/// whatever order they were shot. Retail behavior:
+/// docs/retail/simulation/destruction-effects.md#a-structure-coming-down.</para>
 /// </summary>
 /// <param name="Explosion">
-/// <c>004973fc</c> — the <c>EXPLOS.DAT</c> type the collapse stage sets off. Sequence 0 uses 16,
-/// sequence 1 uses 21, and the other two use 15.
+/// <c>004973fc</c> — the <c>EXPLOS.DAT</c> type the collapse stage sets off.
 /// </param>
 /// <param name="CollapseHold">
-/// <c>00497404</c> — how long the last stage is held for after the collapse. Only sequence 0 states
-/// one (2000); the other three drop straight through, so their fire arrives on the next tick.
+/// <c>00497404</c> — how long the last stage is held for after the collapse. A sequence stating 0
+/// drops straight through, so its fire arrives on the next tick.
 /// </param>
 /// <param name="ExplodeAtOrigin">
 /// <c>0049740c</c> — whether the collapse explosion goes off at the structure's own origin rather
-/// than at the part's emission point. Only sequence 0 does, which is what makes it the sequence
-/// whole buildings use.
+/// than at the part's emission point.
 /// </param>
 /// <param name="SmokeExplosion">
-/// <c>00497414</c> — the <c>EXPLOS.DAT</c> type the smoke stages scatter. All four state 15.
+/// <c>00497414</c> — the <c>EXPLOS.DAT</c> type the smoke stages scatter.
 /// </param>
 /// <param name="StageCount">
-/// <c>0049741c</c> — how many stages the sequence runs: 8, 6, 6 and 2. That is the whole of how long
-/// a part takes to fall.
+/// <c>0049741c</c> — how many stages the sequence runs, which is the whole of how long a part takes
+/// to fall.
 /// </param>
 public readonly record struct StructureDeathSequence(
 	short Explosion, short CollapseHold, bool ExplodeAtOrigin, short SmokeExplosion, short StageCount) {

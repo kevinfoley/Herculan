@@ -12,25 +12,17 @@ public static class HitTests {
 	/// <c>Sim_RaycastObjectList</c> (<c>00426528</c>) — the shared ray-versus-live-object query, which
 	/// is a hit test and a damage application at once: each candidate's own
 	/// <see cref="SimObject.DirectFireHitTest"/> resolves the geometry and applies whatever got
-	/// through in the same call.
+	/// through in the same call. Retail behavior:
+	/// docs/retail/simulation/hit-detection.md#the-sweep--sim_raycastobjectlist-00426528.
 	///
-	/// <para>The sweep <b>shortens the ray as it goes</b> and does not stop at the first hit: a
-	/// candidate found later, but nearer, overwrites the one before it, because every subsequent
-	/// candidate is tested against the shortened <see cref="WeaponShot.Distance"/> and can only pass
-	/// if it is nearer still. It ends early only for a hit inside
-	/// <see cref="WeaponShot.MinimumScanDistance"/>, which nothing can beat.</para>
+	/// <para>The terrain goes first: <see cref="RaycastTerrain"/> shortens the ray at the ground, so a
+	/// machine behind a ridge cannot be shot through it. Each object hit then shortens
+	/// <see cref="WeaponShot.Distance"/> again, so the nearest candidate wins whatever the list
+	/// order; a hit inside <see cref="WeaponShot.MinimumScanDistance"/> ends the sweep.</para>
 	///
-	/// <para>The terrain goes first, and is the reason an object sweep on its own would not do:
-	/// <see cref="RaycastTerrain"/> shortens the ray at the ground before a single object is tested,
-	/// so a machine standing behind a ridge cannot be shot through it.</para>
-	///
-	/// <para>Both of the original's exclusions are here: the attacker at the shot record's
-	/// <c>+0x0e</c> (<see cref="WeaponShot.Owner"/>) and the second one at <c>+0x14</c>
-	/// (<see cref="WeaponShot.Excluded"/>), which only a flyer's airframe contact probe ever fills.</para>
-	///
-	/// <para>The AI "something just shot at me" notification on each candidate's <c>+0x50</c> slot is
-	/// here, and so is the friendly-fire complaint the original raises beside it, and the engagement
-	/// pair below.</para>
+	/// <para>The sweep skips <see cref="WeaponShot.Owner"/> and <see cref="WeaponShot.Excluded"/>, and
+	/// raises the engagement pair, the friendly-fire complaint, the "something just shot at me"
+	/// notification and the blocked-line-of-fire report beside the hits.</para>
 	/// </summary>
 	/// <returns>The distance the shot travelled before it hit something, or zero if it hit nothing.</returns>
 	public static int Raycast(SimWorld world, WeaponShot shot) {
@@ -225,15 +217,14 @@ public static class HitTests {
 	/// <see cref="SimObject.HitRadius"/> is subtracted before the comparison, so a large machine is
 	/// caught by a blast that a small one standing in the same place would be outside of.</para>
 	///
-	/// <para>What the blast then does is the object's own business — <see cref="SimObject.ExplosiveDamage"/>,
-	/// which is implemented for a machine and nothing else. Unlike the raycast the sweep does not
-	/// stop, shorten or care about order: everything in range is hit, and a wall between two of them
-	/// does not shield either, which is the original's behaviour and not a simplification.</para>
+	/// <para>What the blast then does is the object's own business —
+	/// <see cref="SimObject.ExplosiveDamage"/>. Unlike the raycast the sweep does not stop, shorten or
+	/// care about order: everything in range is hit, and a wall between two of them does not shield
+	/// either, as in the original.</para>
 	///
-	/// <para>Exactly three call sites, all terminal events rather than routine fire, and all three
-	/// reach it here: the drop pod touching down (<see cref="MeteorObject"/>), a plasma round going
-	/// off (<see cref="Projectile"/>), and a machine ending its ramming charge on something — see
-	/// MechObject.Ramming.cs.</para>
+	/// <para>Its callers are the drop pod touching down (<see cref="MeteorObject"/>), a plasma round
+	/// going off (<see cref="Projectile"/>), and a machine ending its ramming charge — the original's
+	/// three, docs/retail/simulation/damage-system.md#the-sweep--damage_explosiveblastsweep-00426a20.</para>
 	/// </summary>
 	/// <param name="world">The world whose objects the blast reaches.</param>
 	/// <param name="hitPoint">Where the explosion went off, in world units.</param>
@@ -286,9 +277,11 @@ public static class HitTests {
 	/// carries that approximation's direction-dependent error, as every other 3D range in the
 	/// simulation does.</para>
 	///
-	/// <para>The original also hands the sweep a pseudo-object standing in for the ground, so that
-	/// the AI notification path has something to name. Nothing here consumes that yet, so a terrain
-	/// clip leaves <see cref="WeaponShot.HitObject"/> null and records the point instead.</para>
+	/// <para>The original also hands the sweep a pseudo-object standing in for the ground, which the
+	/// sweep uses as its non-null "something was struck" value (docs/retail/simulation/hit-detection.md, "The
+	/// sweep"). Here a terrain clip leaves <see cref="WeaponShot.HitObject"/> null and returns true,
+	/// and the sweep's ground impact and blocked-line-of-fire report read that flag in its
+	/// place.</para>
 	/// </summary>
 	/// <returns>Whether the shot was clipped at the ground.</returns>
 	private static bool RaycastTerrain(SimWorld world, WeaponShot shot) {

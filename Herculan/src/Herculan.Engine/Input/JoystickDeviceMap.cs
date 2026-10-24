@@ -7,26 +7,22 @@ using HercWorks.Core.Io.Read;
 namespace Herculan.Engine.Input;
 
 /// <summary>
-/// Which physical control on a real stick fills each field of a <see cref="JoystickReading"/> —
-/// the one layer of joystick configuration the original does not have, and the reason a modern USB
-/// device can drive a retail <c>prefs.cfg</c> without changing a byte of it.
+/// Which physical control on a real stick fills each field of a <see cref="JoystickReading"/>, so a
+/// modern USB device can drive a retail <c>prefs.cfg</c> without changing a byte of it.
 ///
-/// <para><b>This is Herculan's invention, not vanilla behaviour.</b> Retail has no equivalent and no
-/// need of one: <c>Joystick_Poll</c> (<c>00477614</c>) reads <c>joyGetPosEx</c>'s X, Y, Z and R in that fixed order,
-/// falls back to a second stick's X and Y for the throttle and rudder when <c>JOYCAPS</c> reports no
-/// <c>HASZ</c>/<c>HASR</c>, and never asks which physical control any of them is. That works because
-/// a 1996 gameport stick had exactly those controls in exactly that order. A modern HOTAS does not:
-/// its twist is as likely to be axis 2 as its throttle, it can carry six axes where the original
-/// requests four, and it can carry thirty buttons where the original binds eight.</para>
+/// <para><b>This is an engine invention; retail has no equivalent.</b> <c>Joystick_Poll</c>
+/// (<c>00477614</c>) reads fixed axes and never asks which physical control any of them is
+/// (docs/retail/simulation/joystick-input.md#reading-the-hardware), which fit a 1996 gameport stick.
+/// A modern HOTAS can put its twist where the throttle was expected and carry more axes and buttons
+/// than the original reads.</para>
 ///
-/// <para>So the split is: <c>prefs.cfg</c> keeps owning what each control <i>does</i>, byte for byte
-/// as retail wrote it, and this owns which piece of hardware each control <i>is</i>. Retail never
-/// reads it. One map is one section of <see cref="JoystickMapFile"/>, and a device without one works
-/// from <see cref="ForDevice"/>'s defaults.</para>
+/// <para><c>prefs.cfg</c> keeps owning what each control <i>does</i>, byte for byte as retail wrote
+/// it, and this owns which piece of hardware each control <i>is</i>. One map is one section of
+/// <see cref="JoystickMapFile"/>, and a device without one works from <see cref="ForDevice"/>'s
+/// defaults.</para>
 ///
-/// <para><b>What still cannot be expressed</b> is anything the twelve bytes have no room for: a
-/// fifth axis, a ninth button, a second hat, or a hat diagonal. Those are limits of the retail
-/// format, not of this map, and keeping the file compatible means keeping them.</para>
+/// <para>Anything the twelve <c>prefs.cfg</c> bytes have no room for — a fifth axis, a ninth button,
+/// a second hat, a hat diagonal — stays unbindable, to keep the file compatible.</para>
 /// </summary>
 public sealed record JoystickDeviceMap {
 	/// <summary>Means "no physical control fills this field".</summary>

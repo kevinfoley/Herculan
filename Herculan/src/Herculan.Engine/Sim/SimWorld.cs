@@ -28,8 +28,7 @@ public sealed class SimWorld {
 	/// <param name="terrain">The loaded zone.</param>
 	/// <param name="bullets">
 	/// <c>dat\BULLETS.DAT</c>, which everything that fires a travelling shot needs — see
-	/// <see cref="FireBullet"/>. Null leaves those weapons firing blanks, the same way an unported
-	/// branch does.
+	/// <see cref="FireBullet"/>. Null leaves those weapons firing blanks.
 	/// </param>
 	/// <param name="explosions">
 	/// <c>dat\EXPLOS.DAT</c>, which everything that lands needs — see
@@ -47,7 +46,7 @@ public sealed class SimWorld {
 	/// </param>
 	/// <param name="debris">
 	/// The debris databases, headed by <c>DEF_DEB</c> — see <see cref="EffectPools.SpawnDebris(short, in Transform3, DebrisDatabase?, short, short, int)"/>. Null leaves
-	/// every destruction throwing nothing, which is what this engine did before the pool existed.
+	/// every destruction throwing nothing.
 	/// </param>
 	/// <param name="random">
 	/// The generator this world rolls on. DBSIM's simulation shares one, from the load-time terrain
@@ -609,63 +608,61 @@ public sealed class SimWorld {
 	}
 
 	/// <summary>
-	/// <c>Rocket_Fire</c> (<c>0040a9c4</c>) — spawns one launcher round. There is no powered form: a
+	/// <c>Rocket_Fire</c> (<c>0040a9c4</c>) — spawns one missile. There is no powered form: a
 	/// rocket comes off a rack, never out of a capacitor, so the record's damage is what it does.
+	/// Retail behavior: docs/retail/simulation/rockets.md#spawning--rocket_fire-0040a9c4.
 	///
 	/// <para><b>A target is attached only when this class of launcher has lock</b> — the launcher's
-	/// vtable <c>+0x6c</c> (<c>Mech_MissileLockState</c>, <c>004155ac</c>), which
-	/// reads the per-subtype lock flags at <c>manager+0x0a</c> rather than any ammunition count. See
-	/// <see cref="MechObject.MissileLockTick"/> for what builds them. A round fired without lock
-	/// flies where it was pointed, which is exactly what the original does. <b>Every other class's
-	/// slot is a <c>return 1</c> stub</b> (<c>SimObject_MissileLockState_Always</c>, <c>00411b04</c>),
-	/// so a <see cref="FlyerObject"/>'s or a <see cref="BaseObject"/>'s rounds always take the
-	/// launcher's selected target.</para>
+	/// vtable <c>+0x6c</c> (<c>Mech_MissileLockState</c>, <c>004155ac</c>), whose lock flags
+	/// <see cref="MechObject.MissileLockTick"/> builds. A missile fired without lock flies where it
+	/// was pointed. Every other class's slot is a <c>return 1</c> stub
+	/// (<c>SimObject_MissileLockState_Always</c>, <c>00411b04</c>), so a <see cref="FlyerObject"/>'s or
+	/// a <see cref="BaseObject"/>'s missiles always take the launcher's selected target.</para>
 	///
-	/// <para>The one exception is the original's own: a machine that is <b>not</b> locally piloted
-	/// firing <see cref="Rocket.PlayerFlownSubtype"/> skips the lock gate outright, because that
-	/// subtype is the missile the player flies by hand and so never builds a lock — which is how an
-	/// AI opponent's electro-optical missile still tracks.</para>
+	/// <para>A machine that is <b>not</b> locally piloted firing
+	/// <see cref="Rocket.PlayerFlownSubtype"/> skips the lock gate outright, so an AI opponent's
+	/// electro-optical missile always tracks.</para>
 	///
-	/// <para>A target, once attached, is asked which of its components the round locks on to
+	/// <para>A target, once attached, is asked which of its components the missile locks on to
 	/// (<see cref="Rocket.LockComponent"/>).</para>
 	///
-	/// <para>Every round the locally piloted machine launches becomes <see cref="PlayerMissileState.Round"/>, the
+	/// <para>Every missile the locally piloted machine launches becomes <see cref="PlayerMissileState.Missile"/>, the
 	/// one the MFD's missile camera rides.</para>
 	/// </summary>
 	/// <param name="projectile">The firing <c>PROJ.DAT</c> record.</param>
 	/// <param name="muzzle">The world muzzle point the fire prologue worked out.</param>
 	/// <param name="aim">The shot transform's euler triple. A rocket has no scatter to apply to it.</param>
-	/// <param name="ownerSpeed">The launching machine's travel speed, which the round inherits.</param>
+	/// <param name="ownerSpeed">The launching machine's travel speed, which the missile inherits.</param>
 	/// <param name="owner">The machine that fired.</param>
-	/// <returns>The round, or null when <see cref="Rockets"/> has no record for its subtype.</returns>
+	/// <returns>The missile, or null when <see cref="Rockets"/> has no record for its subtype.</returns>
 	internal Rocket? FireRocket(ProjectileData.Projectile projectile, Vec3i muzzle,
 			(short X, short Y, short Z) aim, short ownerSpeed, SimObject? owner) {
 		if (Rockets?.Record(projectile.SubtypeId) is not { } record) {
 			return null;
 		}
 
-		var round = new Rocket(projectile, record, muzzle, aim, ownerSpeed, owner);
+		var missile = new Rocket(projectile, record, muzzle, aim, ownerSpeed, owner);
 
 		// ROCKETS.DAT's layout is not BULLETS.DAT's: the launch sound is at +0x0c, not the guns' +0x08.
 		PlayTableSound(record.FireSoundId, muzzle);
 
 		if (owner is { LocallyPiloted: true }) {
-			PlayerMissile.Round = round;
+			PlayerMissile.Missile = missile;
 		}
 
 		if (owner is MechObject launching
 				&& (launching.MissileLocked(projectile.SubtypeId)
 					|| (!launching.LocallyPiloted && projectile.SubtypeId == Rocket.PlayerFlownSubtype))) {
-			round.Lock(launching.Target);
+			missile.Lock(launching.Target);
 		} else if (owner is not null and not MechObject) {
 			// The lock gate is the launcher's own vtable +0x6c, and every class but the mech installs a
 			// `return 1` stub (SimObject_MissileLockState_Always (00411b04)) -- so a Cybrid flyer's or a
-			// missile tower's round is always given the launcher's selected target.
-			round.Lock(owner.Target);
+			// missile tower's missile is always given the launcher's selected target.
+			missile.Lock(owner.Target);
 		}
 
-		_rockets.Add(round);
-		return round;
+		_rockets.Add(missile);
+		return missile;
 	}
 
 	/// <summary>Records a travelling shot's impact for <see cref="Impacts"/>. Not part of the original.</summary>

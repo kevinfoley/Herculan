@@ -6,17 +6,14 @@ namespace Herculan.Engine.Cockpit;
 /// The front-window HUD's <b>target indicator</b>: the green box drawn over whatever is selected,
 /// and the arrow that replaces it when the selection is off to one side.
 ///
-/// <para>Reverse-engineered from child 5 of the roving-gunsight complex — constructed by
-/// <c>Gau_RovingGunsightWidget</c> (<c>0043c7d8</c>) through <c>Gunsight_TargetIndicator_Ctor</c> (<c>0043b928</c>) and painted by
-/// <c>Gunsight_TargetIndicatorPaint</c> (<c>0043b950</c>). The complex feeds it a 38-byte state block once a frame
-/// (<c>Gunsight_SetValues</c>, <c>0043d98c</c>) that <c>Gunsight_UpdateAndPaint</c> (<c>0043d6dc</c>) has just filled from
-/// <c>CockpitView+0x26c</c>..<c>+0x27e</c> — the selected object, its world aim point, and the
-/// component the Targeting Pod has picked out of it.</para>
+/// <para>Ports child 5 of the roving-gunsight complex, <c>Gunsight_TargetIndicator_Ctor</c>
+/// (<c>0043b928</c>) and its paint <c>Gunsight_TargetIndicatorPaint</c> (<c>0043b950</c>), fed once a
+/// frame with the selected object, its world aim point and the Targeting Pod's component — see
+/// docs/retail/simulation/hud-target-indicator.md.</para>
 ///
-/// <para><b>Everything is measured from the reticle point</b>, the <c>.GAU</c>'s offset-1136 point
-/// (<see cref="HercWorks.Core.Data.File.Gau.HReticle"/>), not from the middle of the view — and
-/// that point is also the projection centre the herc's <c>.VUE</c> states, so a target dead ahead
-/// projects exactly onto it.</para>
+/// <para><b>Everything is measured from the reticle point</b>
+/// (<see cref="HercWorks.Core.Data.File.Gau.HReticle"/>), not from the middle of the view; it is
+/// also the <c>.VUE</c>'s projection center, so a target dead ahead projects exactly onto it.</para>
 ///
 /// <para><b>Two states, never both.</b> Inside <see cref="OnTargetTolerance"/> of the reticle the box
 /// is not drawn at all: the crosshair sprite itself changes frame instead (child 4,

@@ -32,8 +32,8 @@ public sealed record ShellCampaignMission(string ScriptPath, string MissionPath,
 /// (<c>0044d4cc</c>) makes for the career position: the flags seeded with the position, the mission loaded
 /// (<see cref="MissionGenerator"/>), the header's theater, cheat and difficulty fields set, <c>script.dat</c>
 /// and <c>mission.str</c> written, and the career block's text taken from row 4. Unlike the training half
-/// (<see cref="ShellTrainingLaunch"/>) it builds no machines: a campaign flies the hangar it has, with its
-/// squad positions in play set from the mission's group 0. See docs/retail/shell/campaign-loop.md and
+/// (<see cref="ShellTrainingLaunch"/>), the mechs assigned to the player and squadmates in the mission file
+/// are not used - the player's mechs out of their own bay are used, and the mission's group 0 sets only which squad positions are in play. See docs/retail/shell/campaign-loop.md and
 /// docs/retail/formats/script-dat.md#the-training-fields.
 /// </summary>
 public static class ShellCampaignLaunch {

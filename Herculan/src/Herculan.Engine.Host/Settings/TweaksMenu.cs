@@ -19,7 +19,7 @@ namespace Herculan.Engine.Host.Settings;
 /// </summary>
 public sealed class TweaksMenu {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
-	private const float PanelWidth = 400f;
+	private const float PanelWidth = 440f;
 
 	// The visible settings in the order they are drawn, grouped once rather than every frame.
 	private static readonly (TweakCategory Category, TweakSettingDefinition<bool>[] Settings)[] VisibleByCategory =

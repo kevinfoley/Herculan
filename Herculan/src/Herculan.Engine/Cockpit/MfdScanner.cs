@@ -84,7 +84,7 @@ public readonly record struct MfdScannerState(
 /// slot <c>MfdRadarScreen_Update</c> (<c>0043ebe0</c>) and its paint <c>MfdRadarScreen_Paint</c> (<c>0043eecc</c>). The rest of the display — the F-key
 /// column, the four aux buttons, the background chrome and the title — is <see cref="MfdLayout"/>.
 ///
-/// <para><b>What the screen is.</b> A plan view centred on the machine being flown, rotated so its
+/// <para><b>What the screen is.</b> A plan view centred on the piloted machine, rotated so its
 /// own nose is up, with the turret's 90-degree arc drawn as a filled wedge over it. Everything on it
 /// is <c>MFD</c> bank art the rest of the display never touches — frames 14-18.</para>
 ///
@@ -103,8 +103,7 @@ public readonly record struct MfdScannerState(
 /// inset screen origin; multiply by <see cref="CockpitArt.GauToPixelScale"/> for device pixels.</para>
 ///
 /// <para>The contact list is rebuilt every frame while F4 is up, rather than by whichever of the two
-/// scanners is up, which is the same result by a shorter route. The ghost-contact branch is
-/// transcribed as the skip it is.</para>
+/// scanners is up, which gives the same result.</para>
 /// </summary>
 public static class MfdScanner {
 	/// <summary>The bank every frame here comes from — the display's own.</summary>
@@ -305,19 +304,16 @@ public static class MfdScanner {
 	/// dropped</b>: friendlies always plot, hostiles only once something has painted them, which is
 	/// what makes the PASS/ACTIVE choice visible on this screen.</para>
 	///
-	/// <para><b>The blinking last-known-position contact is dead code.</b> The original's hostile
-	/// branch does not simply skip: on every other coarse tick it looks for a stored position at
-	/// <c>obj+0x1aa</c>, gated on <c>obj+0xa7 == 0</c>. All three constructors — <c>Mech_Constructor</c>,
-	/// <c>Flyer_Constructor</c> and the base-object prologue <c>Base_Construct</c> inlines five times —
-	/// set that byte to 1 the moment the object is built, and nothing in the image ever clears it, so
-	/// the branch always falls through to the skip. Nothing writes <c>+0x1aa</c> either. It is
-	/// transcribed here as the skip it actually is.</para>
+	/// <para>The original's hostile branch also has a blinking last-known-position contact, gated on
+	/// <c>obj+0xa7 == 0</c>; every constructor sets that byte to 1 and no write found clears it, so
+	/// the branch is transcribed as the skip. See docs/retail/simulation/mfd-scanner.md, "The blinking
+	/// ghost contact".</para>
 	///
 	/// <para>Range is the ground-plane approximation, not the 3D one, and the test is against the
 	/// current display range — so zooming in genuinely drops distant contacts rather than just
 	/// rescaling them.</para>
 	/// </summary>
-	/// <param name="viewer">The machine being flown — <c>CockpitView+0x203</c>.</param>
+	/// <param name="viewer">The piloted machine — <c>CockpitView+0x203</c>.</param>
 	/// <param name="objects">The live object list.</param>
 	/// <param name="selected">The current target, whose blip gets the bracket and whose range fills <c>TRG:</c>.</param>
 	/// <param name="previous">Last frame's state, for the range index and the sticky <c>TRG:</c> value.</param>

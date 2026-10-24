@@ -37,7 +37,9 @@ public static class Deployment {
 	/// <summary>
 	/// Picks a clear point at <paramref name="distance"/> from the player along
 	/// (player heading + <paramref name="bearing"/>), stepping outward in
-	/// <see cref="SearchStep"/> increments until it clears everything that could be standing there.
+	/// <see cref="SearchStep"/> increments until it clears everything that could be standing there —
+	/// <c>Deployment_PickPointNearPlayer</c> (<c>0042354c</c>), see
+	/// docs/retail/simulation/mission-deployment.md#picking-the-point--deployment_pickpointnearplayer-0042354c.
 	///
 	/// <para>Three tests, in the original's order and with the original's asymmetry:</para>
 	/// <list type="number">

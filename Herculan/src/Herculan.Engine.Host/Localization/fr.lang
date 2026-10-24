@@ -19,6 +19,8 @@ tweak.critical_damage_message.display_name     Message « Damage Level Critical 
 tweak.critical_damage_message.description      Joue « Damage Level Critical » lorsque le joueur subit des dégâts critiques. Ne fonctionne pas dans le jeu original à cause d'une faute de frappe dans le code.
 tweak.show_squadmate_number.display_name       Afficher le numéro des coéquipiers
 tweak.show_squadmate_number.description        Sur le Heads Down Display, affiche le numéro de chaque coéquipier (correspondant à la touche numérique servant à le sélectionner) à l'aide d'une étiquette inutilisée et masquée dans le jeu original
+tweak.hdd_weapon_icons_on_top.display_name   Armes HDD au premier plan
+tweak.hdd_weapon_icons_on_top.description    Sur l'écran de dégâts du Heads Down Display, dessine les icônes d'armes par-dessus le schéma du HERC dans les vues structure et interne, et ne colore en bleu que les icônes. Dans le jeu original, des parties du schéma sont dessinées par-dessus les icônes, et les traits du schéma sous une icône deviennent bleus avec elle.
 tweak.every_squadmate_reply.display_name       Réponses variées des coéquipiers
 tweak.every_squadmate_reply.description        Les coéquipiers choisissent au hasard parmi toutes leurs réponses enregistrées, si bien qu'un coéquipier qui acquiesce peut aussi dire « Compris. » Dans le jeu original, il dit « D'accord. » deux fois sur trois et « Affirmatif ! » le reste du temps, jamais « Compris. »
 tweak.fix_computer_message_pref.display_name   Corriger la préférence COMPUTER MESSAGE
@@ -65,6 +67,8 @@ tweak.fix_raptor2_perspective.display_name  Corriger la perspective du Raptor II
 tweak.fix_raptor2_perspective.description   Place la vue cockpit du Raptor II dans son cockpit. Dans le jeu original, la vue se trouve au-dessus du sommet du HERC. Le suivi de la tourelle et la convergence des armes suivent ce changement.
 tweak.reset_counters_on_replay.display_name  Corriger les indicateurs de « Rejouer la mission »
 tweak.reset_counters_on_replay.description   Corrige les indicateurs de mission qui ne sont pas réinitialisés quand vous choisissez de rejouer une mission (après avoir été tué pendant la mission), ce qui pouvait faire échouer des déblocages ou causer d'autres comportements inattendus.
+tweak.c5_05_squadmate_clear.display_name  Corriger la mission Luna 5
+tweak.c5_05_squadmate_clear.description   Dans la mission de défense de l'avant-poste lunaire, votre premier coéquipier démarre à quelques mètres du transport de ravitaillement de la base, si bien qu'il peut se déplacer dès le début. Dans le jeu original, il démarre en partie à l'intérieur du transport et ne peut pas bouger tant que le transport n'est pas détruit.
 tweak.auto_fill_save_name.display_name  Nommer les sauvegardes automatiquement
 tweak.auto_fill_save_name.description   Quand vous cliquez sur SAUVEGARDER, un nom est rempli automatiquement. Vous devez quand même cliquer sur ACCEPTER. Avec une manette, le nom est toujours rempli automatiquement.
 tweak.auto_save_slot_10.display_name  Sauvegarde automatique emplacement 10

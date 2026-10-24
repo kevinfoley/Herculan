@@ -10,32 +10,16 @@ namespace Herculan.Engine.Content;
 /// original passes its colour through before it reaches the framebuffer.
 ///
 /// <para><b>Layout</b> — parsed by <see cref="TerrainRampFile"/> in HercWorks.Core, which carries
-/// the format writeup. In short: <c>int32 shadeLevels</c>, <c>int32 depthSlices</c>, then
-/// <c>depthSlices * shadeLevels * 256</c> bytes, reading 32 and 12 in every retail file. A row is
-/// 256 palette bytes — "this colour, at this brightness" — so the whole file is one colour ramp per
-/// palette index, sampled 32 ways for light and 12 ways for distance. Hue is preserved throughout,
-/// which is what makes it a ramp rather than a remap.</para>
+/// the format writeup: <see cref="ShadeLevels"/> brightness rows times <see cref="DepthSlices"/>
+/// distance slices, each row 256 palette bytes — one color ramp per palette index. The rows brighten
+/// as well as darken (docs/retail/rendering/terrain-lighting.md#the-ramp-rows-are-not-a-01-fade);
+/// <see cref="Render.PaletteRampTable"/> is the table expanded through the palette at load.</para>
 ///
-/// <para><b>The rows are not a 0..1 fade.</b> Row <c>0</c> lands at <b>0.36x</b> the source colour
-/// and row <c>31</c> at <b>1.16x</b> — the ramp brightens as well as darkens, and passes through
-/// unity around row 23, so the neutral row is not the top one. Measured in
-/// docs/retail/rendering/terrain-lighting.md's "The ramp rows are not a 0..1 fade".
-/// <see cref="Render.PaletteRampTable"/> is that table, expanded through the palette at load.</para>
-///
-/// <para>The consumer is <c>Raster_ShadeRampRow</c> (<c>00468054</c>), which is the whole of the address arithmetic:</para>
-/// <code>
-/// row = ((shade * (shadeLevels - 1) + depthBias) &amp; ~0xFF) + rampBase
-/// </code>
-/// <para>with <c>depthBias</c> a whole number of 8192-byte depth slices that
-/// <c>Raster_SetDepthFadeFromDistance(distance)</c> sets from how far the object being drawn is —
-/// zero for anything inside half the visibility range, climbing to the last slice at the far edge.
-/// That is the original's distance fog. <see cref="DepthSliceFor"/> is that calculation and
-/// <see cref="FogColor"/> is where it ends up.</para>
-///
-/// <para><b>Who gets faded:</b> terrain cells and every drawn object, projectiles included, each
-/// from its own range. A flat solid face is <i>not</i> pinned to row 15 at distance. The three
-/// callers and the trace behind that are docs/retail/rendering/distance-fog-and-sky.md's "What gets
-/// faded".</para>
+/// <para>The reader is <c>Raster_ShadeRampRow</c> (<c>00468054</c>), and the depth slice it adds is
+/// the original's distance fog (docs/retail/rendering/distance-fog-and-sky.md#the-fade--raster_setdepthfadefromdistance-00467fec;
+/// what gets faded: docs/retail/rendering/distance-fog-and-sky.md#what-gets-faded).
+/// <see cref="DepthSliceFor"/> is that calculation and <see cref="FogColor"/> is where it ends
+/// up.</para>
 ///
 /// <para>The engine renders that fade the same way, as a ramp row: both
 /// <see cref="Render.PaletteRampTable"/> and <see cref="Render.SurfaceRampTable"/> carry every slice

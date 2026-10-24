@@ -37,14 +37,11 @@ public enum BaseArmament {
 }
 
 /// <summary>
-/// One destructible part of a structure — the 30-byte sub-record a type's nested array holds, of
-/// which four fields are read by the two damage paths (<c>Base_ApplyDamage</c>, <c>00404d70</c>, and
-/// the blast sweep's position accessor <c>Base_ComponentPosition</c>) and the rest are not touched by anything
-/// traced.
+/// One destructible part of a structure — the 30-byte component record a type's nested array holds
+/// (docs/retail/formats/bases-dat.md#the-component-record-30-bytes).
 ///
-/// <para>Every structure has at least one of these, so "the building's hit points" is really "its
-/// components' hit points": a structure falls when <i>all</i> of them are destroyed, which is what
-/// <see cref="Herculan.Engine.Sim.BaseObject.DamageFraction"/> measures.</para>
+/// <para>Every structure has at least one, and it falls when <i>all</i> of them are destroyed,
+/// which is what <see cref="Herculan.Engine.Sim.BaseObject.DamageFraction"/> measures.</para>
 /// </summary>
 /// <param name="MaxDamage">
 /// <c>+0</c> — how much damage this part absorbs before it is destroyed. Retail values are 1000 to
@@ -81,8 +78,8 @@ public enum BaseArmament {
 /// <c>+0x10</c> — where this part sits in the structure's own frame, the point
 /// <see cref="Herculan.Engine.Sim.BaseObject.ComponentPosition"/> hands out and a blast measures its
 /// falloff from. Retail values are body-scale offsets in world units — the three sections of a
-/// three-part hangar sit at <c>(0, ±3500, 1000)</c> — and the eight-metre spread across a large
-/// building is the whole reason one end of it can be levelled by a blast while the other stands.
+/// three-part hangar sit at <c>(0, ±3500, 1000)</c> — so a blast can level one end of a large
+/// building while the other stands.
 /// </param>
 /// <param name="SmokeSpread">
 /// <c>+0x16</c> — the box, half-extents, that the death sequence scatters its smoke and secondary
@@ -115,9 +112,8 @@ public readonly record struct BaseComponentType(
 /// </param>
 /// <param name="HitRadius">
 /// <c>+0x2a</c> — the coarse collision radius, in world units, that the type's vtable <c>+0x5c</c>
-/// hands out (<c>Base_GetBodyRadius</c>, <c>004035a4</c>). <b>This is the type's own stated figure, not a measurement of
-/// the model</b>, which is what the engine substituted before; retail values run 1000 to 9600, and
-/// four types state zero.
+/// hands out (<c>Base_GetBodyRadius</c>, <c>004035a4</c>): the type's own stated figure, not a
+/// measurement of the model. Retail values run 1000 to 9600, and four types state zero.
 /// </param>
 /// <param name="Invulnerable">
 /// <c>+0x1e != 0</c> — the type takes no damage at all. Both damage entry points
@@ -136,9 +132,8 @@ public readonly record struct BaseComponentType(
 /// <c>+0x28</c> - which silhouette the MFD status screen draws for this type, and which type name
 /// it prints. It indexes the <c>BASES</c> sprite bank and <c>STRINGS0.STR</c> group 23 for a
 /// structure, and the <c>VEHICLES</c> bank and group 24 for a vehicle - which is what
-/// <paramref name="IsVehicle"/> selects between. Confirmed by construction: every structure type
-/// states 0-30 against group 23's 31 names and the bank's 31 frames, and every vehicle type
-/// states 0-3 against group 24's four names and that bank's four frames.
+/// <paramref name="IsVehicle"/> selects between. See
+/// docs/retail/simulation/mfd.md#viewport-and-condition-per-class.
 /// </param>
 /// <param name="IsVehicle">
 /// <c>+0x32 != 0</c> - the same field that picks <c>VEHTEX</c> over <c>BASETEX</c>. Types 45-64 set
@@ -158,12 +153,10 @@ public readonly record struct BaseComponentType(
 /// fire.
 /// </param>
 /// <param name="AimPointHeight">
-/// <c>+0x2c</c> — how far up the structure anything aiming at it aims, in world units. Two vtable
-/// slots carry it: <c>+0x24</c> (<c>Base_GetAimNodeTransform</c>, <c>00403548</c>) as the translation of
-/// a node transform, and <c>+0x30</c> (<c>Base_GetAimPoint</c>, <c>0040351c</c>) as the Z of an offset
-/// triple that the tower ticks add to the target's position unrotated while the camera attach
-/// rotates it (docs/retail/simulation/structure-behaviour.md, "What a structure is aimed at"). All 65 retail
-/// types state one, 1000 to 2000, so a building is never shot at its own ground origin.
+/// <c>+0x2c</c> — how far up the structure anything aiming at it aims, in world units, handed out
+/// by vtable <c>+0x24</c> (<c>Base_GetAimNodeTransform</c>, <c>00403548</c>) and <c>+0x30</c>
+/// (<c>Base_GetAimPoint</c>, <c>0040351c</c>). All 65 retail types state 1000 to 2000. See
+/// docs/retail/simulation/structure-behaviour.md#what-a-structure-is-aimed-at.
 /// </param>
 /// <param name="Armament">
 /// <c>+0x2e</c> — what the type shoots, and the same field <see cref="ThreatensAttackers"/> reads as
@@ -172,13 +165,11 @@ public readonly record struct BaseComponentType(
 /// <param name="AnimThreadCount">
 /// <c>+0x06</c> — how many animation threads <c>Base_Construct</c> (<c>00405314</c>) builds on the
 /// structure, one per sequence of its shape from sequence 0 up. Retail states 0, 1 or 2, and the
-/// eight types that state a non-zero count are exactly the eight the constructor draws from
-/// <see cref="BaseShapeSource.AnimatedLibrary"/> — each of whose roots carries an <c>ANAnimList</c>
-/// with exactly this many sequences.
-///
-/// <para>The library choice itself is <i>not</i> read from this field: the original hardcodes it per
-/// case in the constructor's switch, and the two agree on retail data. <see cref="Source"/> is
-/// derived from this field anyway, which is the same answer everywhere the shipped table reaches.</para>
+/// eight types that state a non-zero count are exactly the eight drawn from
+/// <see cref="BaseShapeSource.AnimatedLibrary"/>. <see cref="Source"/> follows this field, as the
+/// original's shape loader does; the original's constructor picks the library per switch case
+/// instead, which gives the same answer for every retail type. See
+/// docs/retail/simulation/structure-behaviour.md#five-classes-one-switch.
 /// </param>
 /// <param name="AnimThreadRates">
 /// <c>+0x20</c> — two <c>short</c>s, the playback rate each of those threads is started at. A rate
@@ -189,7 +180,8 @@ public readonly record struct BaseComponentType(
 /// <c>+0x2e != 0</c> — the AI treats this type as dangerous. Nonzero on the two armed structures
 /// (gun tower, missile tower), the mobile missile vehicle, the generator and the transport, and it
 /// changes two decisions: a crippled machine flees from one instead of pressing the attack, and an
-/// attacking machine circles one instead of standing off. See docs/retail/simulation/ai-combat-states.md.
+/// attacking machine circles one instead of standing off. See
+/// docs/retail/simulation/ai-combat-states.md#basesdat-0x2e.
 /// </param>
 /// <param name="AnimCellSequence">
 /// <c>+0x24</c> — which cell sequence <c>Base_ThinkTick</c> (<c>00403ca8</c>) steps to animate the
@@ -215,7 +207,6 @@ public readonly record struct BaseType(
 	short AnimCellSequence, short AnimCellInterval,
 	short AnimThreadCount, short[] AnimThreadRates, BaseComponentType[] Components) {
 
-	/// <inheritdoc cref="BaseTypeTable"/>
 	/// <summary>
 	/// <c>+0x2e != 0</c> — see <see cref="Armament"/>, which is the same field read as the value it
 	/// is.
@@ -230,30 +221,25 @@ public readonly record struct BaseType(
 ///
 /// <para>Read from <c>Base_LoadResources</c> (<c>00405fac</c>, <c>base.cpp</c>'s resource-load
 /// sequence), which streams a count and then fixed-shape records with one nested variable-length
-/// array each, and from <c>BaseType_LoadShape</c> (<c>00405ebc</c>), which is the whole of the model
-/// selection:</para>
+/// array each, and from <c>BaseType_LoadShape</c> (<c>00405ebc</c>), which loads each placed type's
+/// model at mission load:</para>
 /// <code>
 /// rec = typeIndex * 0x3c + table
 /// if (rec[6] == 0) shape = load("dgs\bases",    rec[2])   // static
 /// else             shape = load("dts\bases_an", rec[2])   // animated
-/// texture = rec[0x32] == 0 ? basetex : (typeIndex == 0x34 ? razortex : vehtex)
+/// texture = rec[0x32] == 0 ? basetex : (typeIndex == 0x34 ? razortex : vehtex)   // 0x34 test on the static branch only
 /// </code>
 ///
-/// <para>That lone <c>typeIndex == 0x34</c> case is in the original exactly as written — type 52
-/// borrows RAZOR's mech texture bank rather than either structure bank.</para>
+/// <para>The constructor's switch then picks which of the two loaded libraries a structure is
+/// built from, per case (docs/retail/simulation/structure-behaviour.md#five-classes-one-switch).</para>
 ///
-/// <para><b>The file's field order is the runtime record's field order.</b>
-/// <c>Base_LoadResources</c> reads straight into a 60-byte struct offset by offset, and the only
-/// place the two diverge is the nested component array, inline on disk and a pointer at
-/// <c>+0x14</c> in memory. So every offset named in this file's doc comments is both.</para>
+/// <para>Type 52 (<c>0x34</c>) borrows RAZOR's mech texture bank rather than either structure
+/// bank.</para>
 ///
-/// <para>The record shape is confirmed by construction: walking it consumes the retail file's 6,422
-/// content bytes exactly, with nothing left over. It also lines up with the model libraries on the
-/// other side — exactly eight types select the animated library, and <c>BASES_AN.DTS</c> holds
-/// exactly eight roots, numbered 0-7 the way those eight types reference them.</para>
-///
-/// <para>The file is parsed by <see cref="BasesDatTransformer"/>; this table carries every field but
-/// the two nothing traced reads, <c>+0x00</c> and <c>+0x18</c> (6 bytes).</para>
+/// <para>The file's field order is the runtime record's, so every offset named in this file's doc
+/// comments is both (docs/retail/formats/bases-dat.md#the-type-record). The file is parsed by
+/// <see cref="BasesDatTransformer"/>; this table carries every field but the unread <c>+0x00</c>
+/// and <c>+0x18</c>.</para>
 /// </summary>
 public sealed class BaseTypeTable {
 	/// <summary>VOL folder and name of the table.</summary>

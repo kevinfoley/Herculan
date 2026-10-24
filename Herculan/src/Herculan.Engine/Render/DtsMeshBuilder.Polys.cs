@@ -508,18 +508,15 @@ public static partial class DtsMeshBuilder {
 	/// along <c>p1→p3</c>, the corners take <c>1/(1-s), 1/(1-t), 1/s, 1/t</c>.</para>
 	///
 	/// <para>Why: the original hands its rasterizer the whole quad with the frame rect's corners on
-	/// the poly's corners (docs/retail/rendering/dts-texture-binding.md, "Render path and UV generation"), so
+	/// the poly's corners (docs/retail/rendering/dts-texture-binding.md#render-path-and-uv-generation), so
 	/// one map covers the face. A GPU splits the quad, and two triangles with plain UVs each get
 	/// their own affine map; the two agree only on a parallelogram, and everywhere else the texture
-	/// kinks along the shared diagonal — plainly on base type 37's trapezoidal pyramid faces. The map
-	/// taking a quad's corners to a rect's corners is projective, and interpolating
-	/// <c>(u·w, v·w)</c> against <c>w</c> and dividing per fragment produces exactly that. A
-	/// parallelogram gives <c>s = t = ½</c> and equal weights, the affine map this replaces, so a quad
-	/// that was already right is untouched; a degenerate or non-convex quad stays affine rather than
-	/// being guessed at. Retail's own fill is neither this map nor the GPU's perspective-correct
-	/// one: it steps u and v linearly in screen space down the quad's edges and across each row
-	/// (docs/retail/rendering/dts-texture-binding.md, "Screen-linear and perspective-correct fills"). That
-	/// is free of the kink too, but differs from this map wherever the quad's depth varies across
+	/// kinks along the shared diagonal. The map taking a quad's corners to a rect's corners is
+	/// projective, and interpolating <c>(u·w, v·w)</c> against <c>w</c> and dividing per fragment
+	/// produces exactly that. A parallelogram gives <c>s = t = ½</c> and equal weights, the plain affine
+	/// map; a degenerate or non-convex quad stays affine. Retail's own fill steps u and v linearly in
+	/// screen space (docs/retail/rendering/dts-texture-binding.md#screen-linear-and-perspective-correct-fills),
+	/// which is also free of the kink but differs from this map wherever the quad's depth varies across
 	/// it; KNOWN_ISSUES.md lists the divergence.</para>
 	///
 	/// <para>The crossing is solved as a least-squares one rather than a planar intersection because
@@ -605,11 +602,10 @@ public static partial class DtsMeshBuilder {
 	/// <summary>
 	/// A poly's own stored normal, in render space, or null when its index does not resolve.
 	///
-	/// <para><see cref="TSPoly.Normal"/> is a <b>point index</b>, dereferenced with the same 6-byte
-	/// Vec3Short stride as a corner — <c>*(ushort *)(poly + 4) * 6 + DAT_006c696c</c> in every one of
-	/// <c>TSSolidPoly_Render</c>, <c>TSShadedPoly_Render</c> and <c>TSTexture4Poly_Render</c>. It is
-	/// what <c>TSPoly_FrontBackVisibilityTest</c> (<c>0048c620</c>) tests with, so it is what the
-	/// front/back sign has to be derived from here.</para>
+	/// <para><see cref="TSPoly.Normal"/> is a <b>point index</b> into the group's point list
+	/// (docs/retail/rendering/dts-texture-binding.md#normals-live-in-the-point-list). It is what
+	/// <c>TSPoly_FrontBackVisibilityTest</c> (<c>0048c620</c>) tests with, so it is what the front/back
+	/// sign has to be derived from here.</para>
 	///
 	/// <para>It is <i>not</i> interchangeable with the winding — see <see cref="EmitTriangle"/> for
 	/// the measurement and for what using the winding instead did to Gouraud polys.</para>
@@ -628,19 +624,9 @@ public static partial class DtsMeshBuilder {
 	/// A <see cref="TSGouraudPoly"/>'s own per-corner normals, in render space, or null for any other
 	/// poly — which is what makes it Gouraud rather than flat.
 	///
-	/// <para><b>The shape stores normals as extra entries in its point list.</b> Every poly carries
-	/// <see cref="TSPoly.Normal"/>, a <i>point index</i> that DBSIM's renderers dereference as
-	/// <c>points[index]</c> with the 6-byte Vec3Short stride (<c>*(ushort *)(poly + 4) * 6 +
-	/// DAT_006c696c</c>, in all three of <c>TSSolidPoly_Render</c>, <c>TSShadedPoly_Render</c> and
-	/// <c>TSTexture4Poly_Render</c>). <c>TSGouraudPoly.NormalList</c> is the per-vertex form of the
-	/// same thing: an offset into the group's index array running parallel to
-	/// <see cref="TSPoly.VertexList"/>, whose entries are point indices of normals rather than of
-	/// corners.</para>
-	///
-	/// <para>Confirmed on <c>BASES.DGS</c> shape 11's eight side panels: every entry the list reaches
-	/// has length <b>2048</b> — <see cref="MissionSun.NormalLength"/>, the <c>0x800</c> the shade
-	/// calculation is scaled around — and adjacent panels share the normal at the edge between them,
-	/// which is what wraps a smooth gradient around the mass instead of stepping it.</para>
+	/// <para><c>TSGouraudPoly.NormalList</c> is an offset into the group's index array running parallel
+	/// to <see cref="TSPoly.VertexList"/>, whose entries are point indices of normals rather than of
+	/// corners (docs/retail/rendering/dts-texture-binding.md#normals-live-in-the-point-list).</para>
 	///
 	/// <para>Returns null rather than a partial set if any entry is out of range, so a malformed list
 	/// falls back to flat shading instead of half-smooth shading.</para>
@@ -709,13 +695,10 @@ public static partial class DtsMeshBuilder {
 	/// object's distance installs, so that test is the shader's, per fragment: the line goes up
 	/// whenever it names a different index, and <see cref="MeshVertex.OutlineFillRamp"/> carries the
 	/// fill's index for the comparison. Its colour here is the unfogged one, the fallback for a theater
-	/// whose palette ramp did not load. <c>TSSolidPoly_Render</c>
-	/// (<c>00474db4</c>) is traced in docs/retail/rendering/dts-texture-binding.md's "<c>TSSolidPoly</c> —
-	/// palette index, unlit, fill plus outline"; <see cref="Content.ShadeRamp"/> is the table.</para>
-	///
-	/// <para>This is the plain type only. Its lit siblings <c>TSShadedPoly</c> and
-	/// <c>TSGouraudPoly</c>, which are almost every surface of a HERC or a building, go through
-	/// <see cref="ResolveShadeRamp"/> and the renderer's own lighting instead.</para>
+	/// whose palette ramp did not load. <c>TSSolidPoly_Render</c> (<c>00474db4</c>) is
+	/// docs/retail/rendering/dts-texture-binding.md#tssolidpoly--palette-index-unlit-fill-plus-outline;
+	/// <see cref="Content.ShadeRamp"/> is the table. The lit types go through
+	/// <see cref="ResolveShadeRamp"/> instead.</para>
 	///
 	/// <para>Returns null when there is no ramp loaded or when the fill entry carries a nonzero flag —
 	/// the flag occupies the high half of the same int32 the original indexes the ramp row with, so a

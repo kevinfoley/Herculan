@@ -24,8 +24,8 @@ namespace Herculan.Engine.Platform;
 /// hidden and shows them after this has run.</para>
 ///
 /// <para>The window class's icons are set to the executable's as well, at the system's sizes: GLFW registers its class
-/// with the system's default application icon, which a window that starts full screen showed on its taskbar button
-/// with only the window's own icons set.</para>
+/// with the system's default application icon, which a window that starts full screen shows on its taskbar button
+/// when only the window's own icons are set.</para>
 /// </summary>
 [System.Runtime.Versioning.SupportedOSPlatform("windows")]
 internal sealed class ExecutableIcon : IDisposable {

@@ -28,6 +28,10 @@ other call"); both still print the sentences, so the choice is made looking at t
 A stamp vouches for what the function's own code does. A negative goes in it only when the data or a
 retail observation settles it; a search that found nothing never does, because it is only "not found
 by <search>" -- an Open item in the doc, never a fact.
+
+Re-stamping keeps the negatives the entry's stamp already has, since some record a retail observation
+nothing else holds: a --negative with the same claim text replaces one, and only --drop-negative CLAIM
+removes one. The run prints each negative as kept, replaced, dropped or added.
     python tools/scripts/es2_stamp.py check            # every stamp, both binaries; exit 1 on any void
     python tools/scripts/es2_stamp.py lint             # stamped descriptions the stamp-time checks flag
     python tools/scripts/es2_stamp.py list
@@ -119,6 +123,36 @@ def parse_negative(text: str) -> dict:
     return {"claim": parts[0], "evidence": parts[1], "how": parts[2]}
 
 
+def merge_negatives(old: list[dict], new: list[dict], drop: list[str]) -> list[dict]:
+    """The stamp's existing negatives with the --negative ones merged in by claim text (case and
+    surrounding space ignored; a new one replaces the old one with its claim), less the --drop-negative
+    claims. Prints what happened to each, so a re-stamp never loses recorded evidence unseen."""
+    key = lambda claim: claim.strip().casefold()
+    drops = {key(c) for c in drop}
+    news = {key(n["claim"]) for n in new}
+    if drops & news:
+        raise SystemExit("--drop-negative and --negative name the same claim; pass --negative alone to replace it")
+    missing = drops - {key(n["claim"]) for n in old}
+    if missing:
+        raise SystemExit("--drop-negative names no negative this stamp has: %s"
+                         % "; ".join(c for c in drop if key(c) in missing))
+    out = []
+    for n in old:
+        k = key(n["claim"])
+        if k in drops:
+            print("dropped negative:  %s" % n["claim"])
+        elif k in news:
+            print("replaced negative: %s" % n["claim"])
+        else:
+            print("kept negative:     %s" % n["claim"])
+            out.append(n)
+    olds = {key(n["claim"]) for n in old}
+    for n in new:
+        if key(n["claim"]) not in olds:
+            print("added negative:    %s" % n["claim"])
+    return out + new
+
+
 def load(binary: str):
     """The file's header and entries, after checking that rewriting them reproduces the file exactly,
     so a stamp can never reformat or drop anything it did not mean to touch."""
@@ -147,7 +181,8 @@ def cmd_stamp(args) -> int:
         "sha1": digest(Image(BINARIES[args.binary]), target, size),
         "scope": args.scope,
     }
-    negatives = [parse_negative(n) for n in args.negative]
+    negatives = merge_negatives(entry.get("verified", {}).get("negatives", []),
+                                [parse_negative(n) for n in args.negative], args.drop_negative)
     callers, negs = claim_findings(entry.get("description", ""), negatives)
     refused = False
     for label, found, accepted, flag in (
@@ -245,14 +280,17 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
 
-    s = sub.add_parser("stamp", help="stamp one function entry, replacing any stamp it had")
+    s = sub.add_parser("stamp", help="stamp one function entry, replacing any stamp it had but keeping its negatives")
     s.add_argument("target", help="hex address or known_symbols name")
     s.add_argument("--binary", default="DBSIM", choices=es2_symbols.BINARIES)
     s.add_argument("--scope", default="body", choices=SCOPES,
                    help="body: the function's own code; callees: also every callee the description relies on")
     s.add_argument("--negative", action="append", default=[],
                    help="'claim :: data|retail :: how' -- a negative claim the description makes that the data or a "
-                        "retail observation settles. Never a search result: that is an Open item in the doc")
+                        "retail observation settles. Never a search result: that is an Open item in the doc. "
+                        "The stamp's existing negatives are kept; one with the same claim is replaced")
+    s.add_argument("--drop-negative", action="append", default=[], metavar="CLAIM",
+                   help="remove the existing negative with this claim text (case ignored)")
     s.add_argument("--via", required=True, choices=VIA,
                    help="how the body was read: the decompile, the disassembly, or both. A claim that rests on an "
                         "argument value, a register, or where one function ends wants the disassembly")

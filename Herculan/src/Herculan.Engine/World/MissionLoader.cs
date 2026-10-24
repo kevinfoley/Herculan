@@ -9,33 +9,20 @@ namespace Herculan.Engine.World;
 
 /// <summary>
 /// Turns the game's own mission handoff — <c>DATA\script.dat</c>, with the <c>mission.var</c> and
-/// <c>player.mec</c> beside it — into a <see cref="Mission"/>.
+/// <c>player.mec</c> beside it — into a <see cref="Mission"/>: one <see cref="MissionPlacement"/> per
+/// object the mission spawns, the player's squad last, with the groups' orders, the actions, timers,
+/// objectives and text.
 ///
-/// <para><b>The two-pass structure below is DBSIM's, not an invention.</b> It is easy to read
-/// <c>DBSim_LoadScriptDat</c> (<c>00424308</c>) and conclude the format throws its placement data
-/// away: that function reads all 134 bytes of a block-7 record and keeps only the type field, and it
-/// reads block 11 into a stack buffer and keeps only which slots the record marks live. It does not
-/// place anything because placing is not its job — it counts live objects and allocates the pools.
-/// <c>DBSim_SpawnMissionObjects</c> (<c>004253d8</c>) then <b>re-opens the same file</b> and walks it again, and that is the pass
-/// that builds objects. Anything reading only the first pass will conclude, wrongly, that
-/// <c>script.dat</c> carries no positions.</para>
+/// <para>One pass over the file stands in for DBSIM's two (<c>DBSim_LoadScriptDat</c> (<c>00424308</c>)
+/// counts and allocates, <c>DBSim_SpawnMissionObjects</c> (<c>004253d8</c>) places) and yields what the
+/// second leaves: which group claims each roster slot, where each object stands and faces, and the squad
+/// (<see cref="LoadPlayerSquad"/>). <see cref="MissionPlacementRules"/> places them from the points, headings,
+/// routes and member refs this loader resolves out of the blocks. The rule and its RE are
+/// docs/retail/formats/script-dat.md#placement--the-actual-rule.</para>
 ///
-/// <para>The placement rule that pass implements is <see cref="MissionPlacementRules"/>, which this loader calls with the
-/// points, headings, routes and member refs it resolves out of the blocks.</para>
-///
-/// <para><b>Not every group is in the mission when it starts.</b> A block-11 record whose
-/// <c>ActionRef</c> names a block-5 action is <i>waiting on that action</i>, and until it fires the
-/// group is not in the world at all — see <see cref="Sim.SimObject.AwaitingDeployment"/> for the
-/// three places the original tests it. Such a group's placed position is a placeholder, which is
-/// why retail missions happily leave several of them stacked on the player's own spawn point: the
-/// three DIABLO groups in the shipped mission-10 handoff all sit exactly there, invisible, until
-/// they arrive somewhere else entirely.</para>
-///
-/// <para><b>Arrival</b> is <c>Group_DeploymentCheck</c> (<c>004236c4</c>), whose per-verb rules —
-/// drop pod, on foot, or in place — are in docs/retail/simulation/mission-deployment.md and implemented in
-/// <see cref="Sim.MissionGroup.DeploymentCheck"/>. What this loader owes it is <b>which</b> action a
-/// group waits on, not merely that it waits on one: the same record carries the verb the group
-/// arrives on.</para>
+/// <para>A group waiting on a deployment action is placed like any other, and its position is a
+/// placeholder its arrival replaces; the loader keeps which action it waits on, since the arrival
+/// verb is read off that action — see docs/retail/simulation/mission-deployment.md.</para>
 /// </summary>
 public static class MissionLoader {
 	/// <summary>Folder inside an install root holding the loose mission handoff files.</summary>
@@ -430,15 +417,12 @@ public static class MissionLoader {
 	/// <b>Which</b> block-5 action the record names (its <c>DeploymentActionRef</c>), or <c>-1</c>. DBSIM
 	/// resolves it into the group record's <c>+0x14</c> action pointer, and that pointer is both the
 	/// gate and the arrival instruction: which verb the group turns up on is read off this very
-	/// action. Reducing it to a bool loses the arrival — see this class's doc comment, and
-	/// <see cref="Sim.MissionGroup.DeploymentCheck"/>.
+	/// action. Reducing it to a bool loses the arrival — see <see cref="Sim.MissionGroup.DeploymentCheck"/>.
 	/// </param>
 	/// <param name="Side">
-	/// The record's <c>0x6e</c> — <c>ScriptGroup.Side</c>, which lands at the
-	/// in-memory group record's <c>+0x12</c> (<c>DBSim_BuildGroupRecord</c>, <c>00423b34</c>:
-	/// <c>group[+0x12] = record[0x6e]</c>). Anything other than 1 is taken as human, which is what
-	/// every comparison in the simulation amounts to — the sweep in <c>Detection</c> is the only
-	/// place that tests for a literal value, and it tests for Cybrid.
+	/// The record's <c>0x6e</c> — see <see cref="MissionSide"/>. Anything other than 1 is taken as
+	/// human, since the detection sweep is the only place that tests for a literal value, and it tests
+	/// for Cybrid.
 	/// </param>
 	/// <param name="Orders">
 	/// The record's ten row-15 links resolved into order records, nulls kept in the slots it left
@@ -599,7 +583,7 @@ public static class MissionLoader {
 	/// record 0's member ref <i>i</i> names, or -1 when that ref is unset, so the mission's own mech
 	/// refs to that slot resolve to it. The squad is added after the roster, so where a live group
 	/// names the same slot the squad member wins. See
-	/// docs/retail/formats/script-dat.md#placement--the-actual-rule, rule 6.</para>
+	/// docs/retail/formats/script-dat.md#placement--the-actual-rule, rules 6 and 7.</para>
 	///
 	/// <para>A missing <c>player.mec</c> throws <see cref="MissingHandoffFileException"/>, as the
 	/// original asserts on it — see docs/retail/formats/script-dat.md#call-chain--confirmed.</para>

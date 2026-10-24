@@ -11,29 +11,17 @@ namespace Herculan.Engine.Sim;
 /// the four functions that read and write it. Structures have their own, much simpler one; see
 /// <see cref="BaseObject.ApplyDamage"/>.
 ///
-/// <para><b>Three arrays, and they are damage taken rather than health left</b> — every entry
-/// starts at zero and climbs, and <c>-1</c> is the destroyed sentinel:</para>
-/// <list type="bullet">
-/// <item><see cref="Damage"/>, one entry per <i>main</i> component — 29 for a mech, 1 for a flyer,
-/// both hard-coded at the constructor's call site rather than taken from the file.</item>
-/// <item>A parallel <i>dependent sub-piece</i> array — 22 for a mech, 1 for a flyer. These are the
-/// finer parts a main component's reading aggregates: servos, the sensor array, the shield
-/// generator, the engine.</item>
-/// <item>An <i>active</i> flag per main component, cleared when that component is destroyed. It is
-/// what the hit test reads to stop offering a lost component as a target.</item>
-/// </list>
+/// <para><b>The arrays count damage taken rather than health left</b>: every entry starts at zero
+/// and climbs, and <see cref="Destroyed"/> is the destroyed sentinel. <see cref="Damage"/> holds one
+/// entry per main component, a parallel array one per dependent sub-piece (the internals a main
+/// component's reading aggregates: servos, the sensor array, the shield generator, the engine), and
+/// an active flag per main component is cleared when it is destroyed.</para>
 ///
-/// <para>The maxima are not here: they are the <c>dmg\&lt;NAME&gt;.DMG</c> file, which supplies both
-/// an 18-byte record per main component (its armour, its parent component, its destruction flags, and its
-/// weighted list of dependents) and a flat maximum per dependent. That file is
-/// <see cref="HercSimDamage"/>, already parsed by HercWorks.Core. A weapon mount is the exception:
-/// its fitted weapon brings its own record and maximum (<see cref="FitWeapon"/>).</para>
-///
-/// <para><b>Overflow spills sideways.</b> A hit that finishes a main component does not stop there:
-/// the excess is handed to <see cref="SpillIntoDependents"/>, which picks one of the component's
-/// live dependents at random — weighted by the per-dependent figure the <c>.DMG</c> calls a crit
-/// chance — and pours the excess into it, repeating for as long as each spill destroys something.
-/// That is how shooting a leg off takes the servo in it with it.</para>
+/// <para>The maxima come from the <c>dmg\&lt;NAME&gt;.DMG</c> file, <see cref="HercSimDamage"/>; a
+/// weapon mount's fitted weapon brings its own record and maximum (<see cref="FitWeapon"/>). The
+/// excess of a hit that finishes a main component spills into its dependents through
+/// <see cref="SpillIntoDependents"/>. See
+/// docs/retail/simulation/component-damage.md#the-component-damage-system.</para>
 /// </summary>
 public sealed class ComponentDamage {
 	/// <summary>
@@ -426,7 +414,8 @@ public sealed class ComponentDamage {
 
 	/// <summary>
 	/// <c>Component_ApplyDamageAndCascade</c> (<c>0040da38</c>) — the write half, and the endpoint
-	/// both damage pathways converge on.
+	/// both damage pathways converge on
+	/// (docs/retail/simulation/component-damage.md#the-component-damage-system).
 	///
 	/// <list type="number">
 	/// <item>Add the damage to the component. Under its maximum, that is the whole of it.</item>
@@ -568,7 +557,8 @@ public sealed class ComponentDamage {
 	/// its falloff from. The original looks the cluster up and reads the point through the result
 	/// unchecked; every live component on retail data has one. A component the <c>.COL</c> never
 	/// names falls back to the machine's own origin here, where the original would read the point
-	/// through a null cluster. Retail data never reaches it, and the user accepted the fallback.</para>
+	/// through a null cluster: that fallback is this engine's own, and retail data never reaches
+	/// it.</para>
 	/// </summary>
 	private void DestructionEffects(int index, HercSimDamage.HercPiece piece, SimWorld? world,
 			SimObject? owner, DebrisDatabase? debris) {

@@ -10,23 +10,13 @@ namespace Herculan.Engine.Cockpit;
 /// position a point on it means. Used only under
 /// <see cref="Settings.TweakSettingDefinitions.ChargeBarPowerLevel"/>; in retail no press reaches it.
 ///
-/// <para><b>What retail builds.</b> <c>EnergyWeaponGauge_Ctor</c> (<c>00440a68</c>) hands
-/// <c>WeaponSliderGadget_Ctor</c> (<c>00442950</c>) the row's value field, <c>x0+0x24..x0+0x35</c>,
-/// <c>y0..y0+5</c> GAU, as its rect. That constructor runs <c>SliderWidget_CtorBase</c>
-/// (<c>004524a8</c>), which sets the drag flag, then makes the knob one GAU unit wide and the range
-/// 0..<see cref="WeaponMount.ChargeBarRange"/>. Its drag handler (<c>SliderWidget_DragToPointH</c>, <c>004524f8</c>)
-/// clamps the pointer into <c>[left, right - knobWidth]</c> and its getter
-/// (<c>SliderWidget_GetValueH</c>, <c>00452544</c>) reads <c>(x - left) * 0x10000 / scale</c> with the
-/// scale from <c>SliderWidget_RecomputeScaleH</c> (<c>004525a8</c>), so the 32 device pixels of travel
-/// span the whole range. Nothing draws the knob: <c>WeaponSliderGadget_Paint</c> (<c>00442b38</c>)
-/// paints the LED bar alone.</para>
-///
-/// <para><b>Why it is unreachable, and what the tweak changes.</b> The row's
-/// <c>ChainedWeaponSelectGadget</c> is registered first and its rect is the whole hardpoint rect,
-/// which contains the bar in every retail <c>.GAU</c>; first hit wins. The tweak lists the bar ahead
-/// of its row instead, so the bar takes presses on its own span and the rest of the row still arms
-/// the weapon. See docs/retail/simulation/cockpit-input.md, "Where retail rects overlap", and
-/// docs/retail/simulation/weapon-firing.md#the-charge-bar.</para>
+/// <para>The slider is <c>WeaponSliderGadget_Ctor</c>'s (<c>00442950</c>): the row's value field,
+/// a knob one GAU unit wide, and the range 0..<see cref="WeaponMount.ChargeBarRange"/>
+/// (docs/retail/simulation/weapon-firing.md#the-charge-bar). In retail the row's select gadget,
+/// registered first over the whole hardpoint rect, takes every press on it
+/// (docs/retail/simulation/cockpit-input.md, "Where retail rects overlap"). The tweak lists the bar
+/// ahead of its row instead, so the bar takes presses on its own span and the rest of the row still
+/// arms the weapon.</para>
 /// </summary>
 public readonly struct ChargeBarSlider {
 	private const int Scale = (int)CockpitArt.GauToPixelScale;
@@ -96,8 +86,9 @@ public readonly struct ChargeBarSlider {
 			Left, Top, TrackRight + Scale - 1, Bottom + Scale - 1, Lit: false, Draggable: true);
 
 	/// <summary>
-	/// The position a pointer at <paramref name="deviceX"/> commits: the drag handler's clamp, then the
-	/// getter's arithmetic. A pointer past either end pins the slider there.
+	/// The position a pointer at <paramref name="deviceX"/> commits: the drag handler's clamp
+	/// (<c>SliderWidget_DragToPointH</c>, <c>004524f8</c>), then the getter's arithmetic
+	/// (<c>SliderWidget_GetValueH</c>, <c>00452544</c>). A pointer past either end pins the slider there.
 	/// </summary>
 	public int PositionAt(float deviceX) {
 		if (Travel <= 0) {

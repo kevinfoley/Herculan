@@ -58,18 +58,14 @@ public sealed class EditorSettingsPanel {
 
 			ImGui.Separator();
 
-			float spacing = ImGui.GetStyle().ItemSpacing.X;
-			float buttonWidth = (ImGui.GetContentRegionAvail().X - spacing) * 0.5f;
-			var buttonSize = new Vector2(buttonWidth, 0f);
-
-			if (ImGui.Button("Save", buttonSize)) {
+			Span<float> widths = [ButtonRow.LabelWidth("Save"), ButtonRow.LabelWidth("Cancel")];
+			var row = new ButtonRow(widths);
+			if (row.Button("Save")) {
 				_settings.Save();
 				_snapshot = null;
 			}
 
-			ImGui.SameLine();
-
-			if (ImGui.Button("Cancel", buttonSize)) {
+			if (row.Button("Cancel")) {
 				Cancel();
 			}
 		}

@@ -116,20 +116,12 @@ public static class AiTargeting {
 	/// machines, aircraft and armed structures. Walks the live object list and returns the
 	/// best-scoring candidate, or null.
 	///
-	/// <para>Two bars come before the score. The <b>tier</b> is <c>2 * designated + alive</c>, where
-	/// designated means the candidate is what the group's current order names <i>and</i> that order's
-	/// verb is 0; it starts at 1 and drops to 0 under order verb 3, so with
-	/// <see cref="TargetFilter.MissionTargetOnly"/> clear every candidate clears it and with the bit
-	/// set only one not <see cref="SimObject.OutOfAction"/> does. The <b>range cap</b> is <see cref="DesignatedRange"/> for the
-	/// designated target and <see cref="OrdinaryRange"/> for everything else. A candidate that is
-	/// crippled (<c>+0xa4</c>) is skipped outright unless it is designated and this object is Cybrid
-	/// — human-side machines leave a crippled target alone, Cybrids finish it.</para>
-	///
-	/// <para>The score is bearing-led but <b>range takes over inside 60000</b>: at point-blank the
-	/// proximity term is an order of magnitude above the bearing term, so a close enemy outranks a
-	/// better-aligned distant one. Four weight tables then apply, three of them indexed by
-	/// <see cref="MechObject.CompareCombatRating"/> and the fourth by the candidate's object class,
-	/// and finally the candidate is discounted by how many other machines already hold it.</para>
+	/// <para>A tier bar comes before the score, and the range cap is <see cref="DesignatedRange"/> for
+	/// the designated target and <see cref="OrdinaryRange"/> for everything else. The score is
+	/// bearing-led with range taking over at close quarters, weighted by
+	/// <see cref="MechObject.CompareCombatRating"/> and the candidate's object class, and divided by
+	/// how many others already hold the candidate. See
+	/// docs/retail/simulation/ai-targeting.md#acquisition--ai_selecttarget-00411fa0.</para>
 	/// </summary>
 	/// <param name="self">The object asking. Its group supplies the side, the order verb and the designation.</param>
 	/// <param name="filter">The original's mask argument.</param>

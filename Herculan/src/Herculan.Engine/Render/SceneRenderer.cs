@@ -500,7 +500,7 @@ public sealed class SceneRenderer : IDisposable {
 	///
 	/// <para>The original paints each ground shape straight after its own cell's ground, so the
 	/// ground of every cell its walk paints later covers it and it covers everything painted
-	/// before (docs/retail/simulation/ground-shapes.md, "The draw pass"). Here each shape is filed under the
+	/// before (docs/retail/simulation/ground-shapes.md#the-draw-pass). Here each shape is filed under the
 	/// cell <see cref="HeightGrid.PickDrawCell"/> picks, as the original's submit files it, takes that
 	/// cell's <see cref="TerrainPaintOrder.Rank"/>, and is drawn with depth testing off, keeping only
 	/// the pixels where the ground showing ranks no later — <see cref="TerrainPaintRankBuffer"/>. Where
@@ -512,7 +512,7 @@ public sealed class SceneRenderer : IDisposable {
 	/// <para>A structure's ground plane — its shadow and floor plates, <see cref="MeshCell.Ground"/> —
 	/// is drawn in the same pass, ranked by the cell its object was filed under, after that cell's
 	/// shapes. The original paints the whole structure over its own cell's ground
-	/// (docs/retail/rendering/terrain-drawing.md, "Objects in the walk"), and these polys lie in the
+	/// (docs/retail/rendering/terrain-drawing.md#objects-in-the-walk), and these polys lie in the
 	/// terrain's own plane on a level pad, where a depth test could only tie with the ground.</para>
 	///
 	/// <para>Everything else is drawn afterwards with the depth test, so a machine stands over its
@@ -740,10 +740,10 @@ public sealed class SceneRenderer : IDisposable {
 
 		// The original paints a TSBSPPart's children one after another in its tree's order, back to
 		// front from the eye, with no depth buffer: wherever two children overlap on screen, the one
-		// the walk reaches later is what shows, whichever is nearer. That is docs/retail/formats/
-		// dts-texture-binding.md's "TSBSPPart child selection". The rest of this scene is depth-
-		// buffered, between objects and between the polys of one child, so the part's own order is
-		// laid over the depth test with the stencil buffer:
+		// the walk reaches later is what shows, whichever is nearer
+		// (docs/retail/rendering/dts-texture-binding.md#tsbsppart-child-selection). The rest of this
+		// scene is depth-buffered, between objects and between the polys of one child, so the part's
+		// own order is laid over the depth test with the stencil buffer:
 		//
 		// - The children are drawn in REVERSE paint order, each with its own stencil value, the
 		//   later-painted child the higher value, and a fragment passes only where the stencil holds

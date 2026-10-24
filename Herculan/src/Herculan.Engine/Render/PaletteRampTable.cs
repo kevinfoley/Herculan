@@ -14,25 +14,17 @@ namespace Herculan.Engine.Render;
 /// <para>— the light level picks a <i>row</i> of the ramp and the texel picks the column within it,
 /// per pixel. Row <c>r</c>, column <c>i</c> of this table is that lookup's result expanded to RGB,
 /// so a shader that samples <see cref="TextureAtlas.IndexPixels"/> for <c>i</c> and this for the row
-/// produces the exact byte the original would have written.</para>
-///
-/// <para><b>It is not a brightness multiplier</b>, which is the shape of thing an RGB pipeline
-/// reaches for: take the texel's expanded colour and scale it by how bright the ramp row is on
-/// average. That is a different operation. The ramp is not a uniform dimmer — it is a per-colour
-/// remap that preserves hue and compresses unevenly, and near its ends it collapses distinct colours
-/// together, which no multiplier does.</para>
+/// produces the exact byte the original would have written. A brightness multiplier over the
+/// expanded texel cannot stand in for it
+/// (docs/retail/rendering/terrain-lighting.md#rejected-readings).</para>
 ///
 /// <para><b>Distance is in here too.</b> The original fogs by adding whole depth slices to that same
-/// row offset (<c>Raster_ShadeRampRow</c>, and the span setups do the identical arithmetic inline),
+/// row offset (docs/retail/rendering/distance-fog-and-sky.md#the-fade--raster_setdepthfadefromdistance-00467fec),
 /// so the table carries every slice: rows run slice-major, slice <c>s</c> occupying rows
 /// <c>s * ShadeRows</c> through <c>s * ShadeRows + ShadeRows - 1</c>. The fragment shader picks
 /// <c>s</c> from its own distance with <see cref="ShadeRamp.DepthSliceFor"/>'s formula, so a fogged
-/// pixel is still one sample and still the exact byte the original would have written.</para>
-///
-/// <para>A blend toward a flat fog colour is not the same operation, even though the ramp's slices
-/// average out to about that much fade: the ramp fogs each palette index at its own rate and keeps
-/// them distinguishable almost to the last slice, where a uniform blend flattens the whole surface
-/// evenly and washes distant terrain into featureless pastel.</para>
+/// pixel is still one sample and still the exact byte the original would have written, where a blend
+/// toward a flat fog color would not be (docs/retail/rendering/distance-fog-and-sky.md#rejected-readings).</para>
 /// </summary>
 public sealed class PaletteRampTable {
 	/// <summary>Palette indices across — one column each.</summary>

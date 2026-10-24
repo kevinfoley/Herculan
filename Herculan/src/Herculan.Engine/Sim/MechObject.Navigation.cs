@@ -199,7 +199,8 @@ public partial class MechObject {
 	/// <summary>
 	/// <c>Mech_AiObstacleAvoidance</c> (<c>00416274</c>) — amends a steering and speed decision the
 	/// think function has already made. <see cref="LocomotionTick"/> calls it for every machine but
-	/// the player's, so it runs on the player's own squadmates as well as on the enemy.
+	/// the player's, so it runs on the player's own squadmates as well as on the enemy. Retail
+	/// behavior: docs/retail/simulation/ai-navigation.md#obstacle-avoidance--mech_aiobstacleavoidance-00416274.
 	///
 	/// <para>It reduces to the range of the nearest obstruction on each side, both starting at
 	/// <see cref="AvoidanceRange"/> for "nothing there", and turns the closer of the two into a steer
@@ -214,14 +215,11 @@ public partial class MechObject {
 	/// counted twice and none is missed.</para>
 	///
 	/// <para>The terrain half goes through <see cref="Terrain.HeightGrid.RayWalkVolume"/>, the
-	/// original's own mode 1, and it has to: the probes lie flat on the ground, so the thin-ray query
-	/// would report a graze on every tick and pin the steer hard over. Mode 1 asks whether the face
-	/// is too steep to walk, which is the question this is trying to answer.</para>
+	/// original's own mode 1, which asks whether the face is too steep to walk.</para>
 	///
-	/// <para>The original also carries a complete mirrored mode for a machine walking backwards — the
-	/// probe length goes negative and every bearing test rotates by a half turn — behind a flag it
-	/// writes zero at the top of the function and never anywhere else. It is not transcribed, and
-	/// neither is the half-speed arm of the speed override, which only that flag can reach.</para>
+	/// <para>The original's mirrored mode for a machine walking backwards, and the half-speed arm of
+	/// the speed override, sit behind a flag the function itself sets to zero
+	/// (docs/retail/simulation/ai-navigation.md#rejected-readings); neither is carried here.</para>
 	/// </summary>
 	/// <param name="ignoreObstacles">
 	/// Bit 0 of the original's fourth argument: skip the two probes and the machine sweep, leaving

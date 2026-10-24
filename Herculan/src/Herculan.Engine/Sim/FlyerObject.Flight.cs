@@ -399,7 +399,8 @@ public sealed partial class FlyerObject : IFlightBody {
 	/// <summary>
 	/// <c>Flyer_SteerAndFly</c> (<c>004222fc</c>) — the flyer's whole steering channel, and the one function every
 	/// movement step ends in. It turns a heading error into a bank, decides whether the aircraft may hold that
-	/// bank, and runs the flight model.
+	/// bank, and runs the flight model. Retail behavior:
+	/// docs/retail/simulation/ai-flyers.md#the-control-law.
 	///
 	/// <list type="number">
 	/// <item>The <b>bank command</b> is the steering error, the heading rate the current bank is
@@ -414,10 +415,9 @@ public sealed partial class FlyerObject : IFlightBody {
 	/// </list>
 	///
 	/// <para>The original also takes a leader term off the bank heading rate when station keeping
-	/// hands it the leader, scaled by the leader's <c>+0x1f8</c>. The flyer pool is zero-filled and no
-	/// writer of that field is known
-	/// (docs/retail/simulation/ai-flyers.md, Open), so the term contributes nothing and the branch is not
-	/// reproduced.</para>
+	/// hands it the leader, scaled by the leader's <c>+0x1f8</c>. No retail writer of that field has
+	/// been found, so it stays at 0 (docs/retail/simulation/ai-flyers.md#open), the term contributes
+	/// nothing, and the branch is left out.</para>
 	/// </summary>
 	private void SteerAndFly(SimWorld world, short turn, int elevator) {
 		short maxBank = MaxBankAngle;

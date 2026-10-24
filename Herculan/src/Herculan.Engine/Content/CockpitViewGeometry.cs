@@ -149,8 +149,8 @@ public sealed class CockpitViewGeometry {
 	///
 	/// <para><b>This is a crop, not a second projection.</b> The rect bounds where pixels may land;
 	/// it does not move the projection centre and does not change how large anything is drawn —
-	/// <see cref="ProjectionCenter"/> is the only thing that moves the axis, and the centre is
-	/// deliberately not the middle of this rect.</para>
+	/// <see cref="ProjectionCenter"/> is the only thing that moves the axis, and the centre is not the
+	/// middle of this rect (docs/retail/simulation/cockpit-views.md#the-projection-centre-is-not-the-middle-of-the-view).</para>
 	///
 	/// <para>It is a separate mechanism from the <c>.HD&lt;n&gt;</c> scanline spans, which cut the
 	/// canopy's own silhouette out of the same view (see <c>CockpitClipRegions</c>): the rect is the

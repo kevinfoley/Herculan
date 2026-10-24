@@ -78,7 +78,7 @@ A terrain ray between the two objects' aim nodes (`+0x1c` of the vtable `+0x24` 
 
 `mech+0x96` is PASSIVE/ACTIVE. The player has two switches, and they are not the same code:
 
-- **[R]** is `Mech_ToggleRadarMode` (`0041b468`), called from `CockpitWidgets_HandleCommand` ([Open](#open)). It flips the field only when `obj+0xa3` is set, then posts the radar-mode message and plays the mode tone ([`cockpit-messages.md`](cockpit-messages.md), [`audio.md`](audio.md)).
+- **[R]** is `Mech_ToggleRadarMode` (`0041b468`), called from `CockpitWidgets_HandleCommand` ([Open](#open)). It flips the field only when `obj+0xa3` is set, and whether or not it flipped plays the tone and posts the radar-mode message for the mode the field now holds ([`cockpit-messages.md`](cockpit-messages.md), [`audio.md`](audio.md)).
 - **The F4 scanner's PASS and ACTIVE buttons** are `MfdButton_OnClick` (`0044681c`), which *sets* the field to 0 or 1 on the viewed machine (`view+0x203`) directly — no `obj+0xa3` test, no message, no tone. See [`mfd-scanner.md`](mfd-scanner.md#buttons).
 
 **The player's HERC starts each mission passive** in retail ([Open](#open)). `Base_Construct` latches it on for structure types 5, 6, `0x1d`, `0x1e` — the radar masts. An AI machine's radar is set by the writers [below](#how-an-ai-machines-radar-is-set); an anti-radiation hit and destruction clear it.

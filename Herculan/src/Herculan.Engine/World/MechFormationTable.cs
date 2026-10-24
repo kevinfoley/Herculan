@@ -7,30 +7,16 @@ namespace Herculan.Engine.World;
 public readonly record struct MechFormationOffset(int X, int Y);
 
 /// <summary>
-/// <c>dat\MFORMS.DAT</c> — per-formation spread offsets for a <c>script.dat</c> block-7 mech group.
-/// The mech equivalent of <see cref="BaseFormationTable"/>; stops a multi-mech group from
-/// placing every member on the group's single point.
+/// <c>dat\MFORMS.DAT</c> — per-formation spread offsets for a mech group, so a multi-mech group (a
+/// squad) does not stand every member on the group's single point. The mech equivalent of
+/// <see cref="BaseFormationTable"/>, with fixed 28-byte formations of seven (x, y) <c>int16</c>
+/// pairs: no slot count, no per-slot heading and no terrain trailer.
 ///
-/// <para>Load site: <c>Mech_LoadResources</c> (<c>0041fdb0</c>) opens <c>dat\mforms</c> (string
-/// <c>"mforms"</c> at <c>0049a46b</c>, joined via the shared folder-prefix helper
-/// <c>ResourcePath_BuildFolderName</c> (<c>00492ae0</c>)), reads a 2-byte record count into <c>DAT_004a9dec</c>, allocates that many
-/// 28-byte vector elements (<c>Rtl_VectorNew(..., 0x1c, count, ...)</c>), stores the vector pointer
-/// into <c>_DAT_004a9df0</c> — the global <c>Formation_GetSlotOffset</c> (<c>004205cc</c>) reads —
-/// then reads <c>count * 28</c> bytes from the file into it. Registered into DBSIM's
-/// subsystem-loader table via a thunk at <c>00420654</c> (<c>RegisterSubsystemLoader(Mech_LoadResources, 2)</c>, <c>00401d64</c>).
-/// Prior analysis had no reference to <c>_DAT_004a9df0</c>'s write because <c>Mech_LoadResources</c>
-/// itself had never been disassembled (no call-graph edge into it from anything already found).</para>
-///
-/// <para>Byte-exact against the retail file: 2-byte count (5) + 5 fixed 28-byte formations (seven
-/// (x, y) <c>int16</c> pairs each) consumes all 142 content bytes, nothing left over. Unlike
-/// <see cref="BaseFormationTable"/>, mech formations are fixed-size records — no per-formation slot
-/// count and no terrain trailer.</para>
-///
-/// <para>Consuming side mirrors <see cref="BaseFormationTable"/>: <c>Mech_ApplyFormationOffset</c>
-/// (<c>00417898</c>, mech vtable <c>+0x78</c>) no-ops for member-index 0 (the leader) and otherwise
-/// looks up <c>Formation_GetSlotOffset(formationId, memberIndex)</c>, rotated into world space by
-/// <c>Formation_RotateAndAddOffset</c> (<c>00411d64</c>) — same plain 2D rotation
-/// <see cref="MissionPlacementRules.FormationSpread"/> implements for every kind.</para>
+/// <para>Loaded by <c>Mech_LoadResources</c> (<c>0041fdb0</c>) and read through
+/// <c>Mech_ApplyFormationOffset</c> (<c>00417898</c>, mech vtable <c>+0x78</c>): each member but
+/// the one in member slot 0 takes <c>Formation_GetSlotOffset</c> (<c>004205cc</c>)'s offset for its
+/// slot, rotated by the leader's heading. See
+/// docs/retail/formats/script-dat.md#placement--the-actual-rule.</para>
 /// </summary>
 public sealed class MechFormationTable {
 	/// <summary>VOL folder and name of the table.</summary>

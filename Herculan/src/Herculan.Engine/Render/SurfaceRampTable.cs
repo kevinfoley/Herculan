@@ -4,22 +4,20 @@ namespace Herculan.Engine.Render;
 /// The theater's shaded-surface colours, every ramp against every light level, as one small RGBA
 /// image the fragment shader indexes instead of doing two table lookups per pixel.
 ///
-/// <para>Row <c>r</c>, column <c>s</c> is <see cref="SurfaceShading.ShadedColor"/> for ramp
-/// <c>r</c> at shade <c>s</c> — so this is not an approximation of the original's colouring, it
-/// <i>is</i> the original's colouring, evaluated once for all 65536 combinations at load. Sampling
-/// it nearest-neighbour reproduces the exact palette byte a <c>TSShadedPoly</c> would have been
-/// filled with, quantisation included.</para>
+/// <para>Row <c>r</c>, column <c>s</c> of a shaded-chain block is
+/// <see cref="SurfaceShading.ShadedColor"/> for ramp <c>r</c> at shade <c>s</c>, evaluated for every
+/// combination at load, so sampling it nearest-neighbour reproduces the exact palette byte a
+/// <c>TSShadedPoly</c> would have been filled with, quantization included.</para>
 ///
-/// <para>Why a table rather than a bake: the shade a face is drawn at comes from its <b>world</b>
-/// normal (<see cref="MissionSun.ShadeForFace"/>), and one built mesh is shared by every object of a
-/// type standing at its own heading. See <see cref="Gl.MeshVertex.ShadeRamp"/>.</para>
+/// <para>It is a table rather than a bake because the shade a face is drawn at comes from its
+/// <b>world</b> normal (<see cref="MissionSun.ShadeForFace"/>), and one built mesh is shared by every
+/// object of a type standing at its own heading. See <see cref="Gl.MeshVertex.ShadeRamp"/>.</para>
 ///
 /// <para>The shaded chain's alpha channel carries the palette byte itself
 /// (<see cref="SurfaceShading.ShadedByte"/>), which is what a <c>TSShadedPoly</c>'s outline is
 /// tested on — see <see cref="Gl.MeshVertex.OutlineFillRamp"/>. The Gouraud block's alpha carries
 /// the ramp entry's palette index (<see cref="SurfaceShading.RampedPaletteIndex"/>), which is what a
-/// <c>TSGouraudPoly</c>'s corners interpolate, and the last row is the palette itself, which the bands
-/// between them are drawn in — see <see cref="PaletteRow"/>.</para>
+/// <c>TSGouraudPoly</c>'s corners interpolate. The layout of the blocks is <see cref="Height"/>.</para>
 /// </summary>
 public sealed class SurfaceRampTable {
 	/// <summary>Light levels across — one column per shade byte.</summary>

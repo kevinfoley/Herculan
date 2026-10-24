@@ -49,43 +49,50 @@ public enum MissionSide {
 /// </param>
 /// <param name="SlotIndex">
 /// The roster slot the mission's refs name it by: its record index within its <c>script.dat</c>
-/// block, or for a machine of the player's squad the block-7 slot block 11 record 0 names in its
-/// position, -1 when none. Order subjects, action targets and objective subjects resolve through it.
+/// block. For a machine of the player's squad it is the block-7 slot that block 11 record 0's member
+/// ref names at the machine's place in the squad, or -1 when that ref is unset. Order subjects,
+/// action targets and objective subjects resolve through it.
 /// </param>
 /// <param name="GroupIndex">The block-11 record that activated and placed it.</param>
 /// <param name="Position">Spawn position in world units. Z is left at zero — the ground under a
 /// spawn point is a terrain query the scene does once the zone is loaded, exactly as DBSIM does.</param>
 /// <param name="Heading">Facing as a binary angle, already converted from the file's degrees.</param>
 /// <param name="WeaponRefs">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptMechRecord.WeaponRefs"/>
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptMechRecord.WeaponRefs" path="/summary/node()"/>
 /// Empty for anything but a mech, and <c>player.mec</c>'s for the player's squad; carried as the
 /// file states it, holes and all, since the chassis' <c>.GL</c> hardpoint list indexes it.
 /// </param>
 /// <param name="WeaponSecondary">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptMechRecord.WeaponSecondary"/>
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptMechRecord.WeaponSecondary" path="/summary/node()"/>
 /// Empty for anything but a mech. See <see cref="Herculan.Engine.Sim.MechLoadout.SecondaryKeys"/>.
 /// </param>
 /// <param name="IsPlayerSquad">
 /// Whether this came from <c>player.mec</c> rather than the mission's own roster.
 /// </param>
 /// <param name="PilotIndex">
-/// Which of <c>str\PILOTS.STR</c>'s 36 pilots flies it, or -1 for a machine no pilot is named for.
-/// Only the player's own squad carries one: <c>DBSim_SpawnMissionObjects</c> (<c>004253d8</c>) stamps
-/// <c>player.mec</c>'s own <see cref="HercWorks.Core.Data.File.Sav.MecEntry.PilotNameIndex"/> onto the
-/// machine at <c>mech+0x29c</c> and nothing else ever writes that field. It is what names a comm box
-/// and picks the portrait that talks in it — see <see cref="Sim.MechObject.PilotIndex"/>.
+/// <inheritdoc cref="Sim.SimObject.PilotIndex" path="/summary/node()"/>
+/// Taken from the squad machine's <see cref="HercWorks.Core.Data.File.Sav.MecEntry.PilotNameIndex"/>.
 /// </param>
 /// <param name="Side">
 /// Whose side the group that placed it is on — see <see cref="MissionSide"/>. Carried per placement
-/// rather than per group because that is the form everything downstream wants: the simulation reads
-/// it off the object, not off a group record it does not have.
+/// because the simulation reads it off the object, <see cref="Sim.SimObject.Side"/>.
 /// </param>
 /// <param name="AiCruiseSpeed">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptMechRecord.AiCruiseSpeed"/>
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptMechRecord.AiCruiseSpeed" path="/summary/node()"/>
 /// </param>
 /// <param name="AiRadarActive">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptMechRecord.AiRadarActive"/>
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptMechRecord.AiRadarActive" path="/summary/node()"/>
 /// Carried as a bool: any nonzero value is ACTIVE.
+/// </param>
+/// <param name="FormationOffset">
+/// This member's unrotated spread offset out of <c>MFORMS.DAT</c>, or null for the group's slot 0
+/// and for a formation that names none. Resolved here because it is wanted twice: once to place the
+/// machine, and again every tick a follower holds formation on its leader.
+/// </param>
+/// <param name="FlyerFormationOffset">
+/// The flyer twin of <paramref name="FormationOffset"/>, out of <c>FFORMS.DAT</c> and carrying a Z
+/// as well — see <see cref="FlyerFormationTable"/>. A flyer following its leader re-reads it every
+/// tick it holds formation, through <see cref="Sim.FlyerObject.FormationOffset"/>.
 /// </param>
 /// <param name="EngagementActionRef">
 /// The roster record's engagement action —
@@ -110,11 +117,6 @@ public enum MissionSide {
 /// <see cref="Sim.BaseObject.ApplyStartingCondition"/>. <see cref="PristineCondition"/> for anything
 /// else.
 /// </param>
-/// <param name="FormationOffset">
-/// This member's unrotated spread offset out of <c>MFORMS.DAT</c>, or null for the group's slot 0
-/// and for a formation that names none. Resolved here because it is wanted twice: once to place the
-/// machine, and again every tick a follower holds formation on its leader.
-/// </param>
 /// <param name="OutOfActionReport">
 /// The roster record's ten mission-counter writes, made when the object goes out of the fight. See
 /// <see cref="Herculan.Engine.Sim.SimObject.OutOfActionReport"/>; null for the player's squad, which
@@ -123,11 +125,6 @@ public enum MissionSide {
 /// <param name="SquadCondition">
 /// The condition a squad machine carries in from its <c>player.mec</c> entry; null for anything the
 /// mission's own roster places, which takes <paramref name="StartingCondition"/> instead.
-/// </param>
-/// <param name="FlyerFormationOffset">
-/// The flyer twin of <paramref name="FormationOffset"/>, out of <c>FFORMS.DAT</c> and carrying a Z
-/// as well — see <see cref="FlyerFormationTable"/>. A flyer wingman re-reads it every tick it holds
-/// station, through <see cref="Sim.FlyerObject.FormationOffset"/>.
 /// </param>
 /// <param name="GroundPoint">
 /// Where a mech's spawn height is read off the terrain: its group's point, before the formation
@@ -195,7 +192,7 @@ public enum MissionGroupPointSource {
 
 	/// <summary>
 	/// The first waypoint of the route its order slot 0 names, which is where a group with no point
-	/// of its own stands — see <see cref="MissionPlacementRules.GroupSetup"/>.
+	/// of its own stands — see docs/retail/formats/script-dat.md#placement--the-actual-rule.
 	/// </summary>
 	RouteStart,
 
@@ -222,11 +219,11 @@ public enum MissionGroupPointSource {
 /// first leg (zero for a route of fewer than two waypoints).
 /// </param>
 /// <param name="FormationId">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptGroup.FormationId"/>
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptGroup.FormationId" path="/summary/node()"/>
 /// An index into the formation table of the group's own kind.
 /// </param>
 /// <param name="PaintsGround">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptGroup.PaintsGround"/>
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptGroup.PaintsGround" path="/summary/node()"/>
 /// </param>
 public sealed record MissionGroupSetup(
 	Vec3i Point,

@@ -100,6 +100,8 @@ Every mission must be won. One result is carried: the lunar outpost captured in 
 
 `C5_05`'s briefing asks the player to choose between the base and the landers. Its only objectives are the base's group (group 111) clear of threats and not lost; nothing records what happened to the landers.
 
+`C5_05` also starts the squad inside that base, and its first squadmate inside a vehicle. Group 0 names no point, so the squad stands at route 48's first waypoint, (999436, 1012540), spread by formation 0 ([`formats/script-dat.md`](formats/script-dat.md#placement--the-actual-rule)). Formation slot 1 lands at (1013554, 1013358), 1918 units from the base's SUPPLY TRANSPORT (group 111's member 8, `BASES.DAT` type `0x37`), inside its 3422-unit bounding radius and on a solid column of its collision volume, so the walking test refuses every step that squadmate tries until the transport is destroyed ([`simulation/hit-detection.md`](simulation/hit-detection.md#the-collision-volume--the-dgs-records-height-field)). Every load places both the same, in v1.0 and v1.10.
+
 ## Persistent bases
 
 A base that several missions place carries its damage between them, one flag per structure. Each structure's out-of-action report adds 1 to its flag, and every mission placing the base repeats the structure's record conditioned on that flag being above 0, with a starting condition of 0, which places it collapsed ([`simulation/structure-behaviour.md`](simulation/structure-behaviour.md#starting-condition)). Damage short of destruction does not carry: a structure comes back either whole or collapsed.

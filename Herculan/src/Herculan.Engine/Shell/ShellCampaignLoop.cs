@@ -209,7 +209,7 @@ public sealed class ShellCampaignLoop {
 
 	/// <summary>
 	/// REPLAY MISSION?'s Yes (ReplayDialog_OnYes, 0044cb44), after the dialog is down: slot 10 loaded again, for the
-	/// shell to end on exit code 2 — so the simulator flies what the load's Career_LoadSlot copied in: the slot's
+	/// shell to end on exit code 2 — so the simulator uses what the load's Career_LoadSlot copied in: the slot's
 	/// script.dat, mission.str and player.mec, beside the mission.var the simulator itself last wrote, which no one
 	/// rewrites. Returns the launch, or null when the slot cannot be read.
 	/// <para>Under <see cref="TweakSettingDefinitions.ResetCountersOnReplay"/>, mission.var is written again from the

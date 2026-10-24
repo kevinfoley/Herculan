@@ -14,6 +14,7 @@ public sealed partial class MechObject {
 	/// <see cref="ComponentDamageWrite"/>'s branches, from <see cref="BaseObject.ApplyDamage"/> and from
 	/// <see cref="FlyerObject.ApplyComponentDamage"/>. The base class' slot
 	/// (<c>SimObject_CreditNeutralisedTargetNoOp</c> (<c>00411b2c</c>)) is an empty stub, so only a HERC credits anything.
+	/// Retail behavior: docs/retail/simulation/component-damage.md#what-the-attacker-is-told--mech_creditneutralisedtarget-00415710.
 	///
 	/// <para><paramref name="wasImmobilised"/> is the victim's reading from <i>before</i> this
 	/// change, and it is what stops a machine being counted twice: a HERC whose legs went first was

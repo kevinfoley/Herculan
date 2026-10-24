@@ -93,10 +93,8 @@ public partial class MechObject {
 	/// all. An engage whose target is already destroyed clears the order and re-enters.</item>
 	/// <item><b>A mission group order</b> maps verbs 0-6 onto seven states. A null order slot reads as
 	/// verb <c>0x0b</c> and matches no case, so no descriptor is installed and the machine keeps the
-	/// state it already had — <b>which is not what the original does</b>: there the descriptor to
-	/// install is a register nothing on that path wrote — zero through the reassess dispatcher, 4 through
-	/// the re-entry after a destroyed engage target — so the original faults. See
-	/// docs/retail/simulation/ai-goals.md, "A group with no order at all". No retail mission reaches it.</item>
+	/// state it already had. <b>The original faults there instead</b>, on a stale register, though no
+	/// retail mission reaches it — docs/retail/simulation/ai-goals.md#a-group-with-no-order-at-all.</item>
 	/// </list>
 	///
 	/// <para><b>Every path that installs a state here drops the target</b> — the player branch, squad
@@ -735,7 +733,7 @@ public partial class MechObject {
 
 	/// <summary>
 	/// <c>mech+0x26b</c> — a countdown that holds the radar off. <c>Mech_DirectFireHitTest</c> loads it
-	/// with <see cref="RadarSilenceOnArmHit"/> when an anti-radiation round lands: the machine goes
+	/// with <see cref="RadarSilenceOnArmHit"/> when an anti-radiation missile lands: the machine goes
 	/// dark and stays dark long enough for the seeker to lose it. See docs/retail/simulation/target-selection.md
 	/// ("How an AI machine's radar is set").
 	/// </summary>
@@ -746,8 +744,8 @@ public partial class MechObject {
 
 	/// <summary>
 	/// <c>Mech_DirectFireHitTest</c>'s radar reaction, which runs on a hit against any machine but the
-	/// player's. A round of the two radar-guided launcher classes lights the target's scanner up; an
-	/// anti-radiation round (class 2) shuts it down and silences it, which is the whole point of the
+	/// player's. A missile of the two radar-guided launcher classes lights the target's scanner up; an
+	/// anti-radiation missile (class 2) shuts it down and silences it, which is the whole point of the
 	/// weapon.
 	/// </summary>
 	private void RadarReactionToHit(short weaponClass) {

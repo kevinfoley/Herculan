@@ -21,26 +21,13 @@ public enum FlyerThinkSlot {
 }
 
 /// <summary>
-/// One of the <b>seven</b> behaviour state descriptors the <c>Flyer</c> class has of its own — the
-/// <c>0x3c</c>-byte records at <c>00499cf8</c> that <c>Flyer_BuildStateTable</c> (<c>00414c68</c>) fills at startup, which is
-/// the flyer's counterpart of <c>Behaviour_BuildStateTable</c>'s 22-entry mech table
-/// (<see cref="BehaviourState"/>). The two tables share nothing but their shape: a flyer's states
-/// have their own names, their own dwell times and their own thinks, and the stride is two bytes
-/// shorter because a flyer descriptor carries no <c>OBJECTIVE:</c> string index — an aircraft never
-/// appears on the player's [F7] comm page.
-///
-/// <para>The dispatch is identical, though, and deliberately so: the flyer's vtable slots
-/// <c>+0x14</c>/<c>+0x18</c>/<c>+0x1c</c> (<c>Flyer_DispatchMove</c> (<c>004217fc</c>), <c>Flyer_DispatchThink</c> (<c>0042184c</c>),
-/// <c>Flyer_DispatchReassess</c> (<c>00421888</c>)) are the same three descriptor dispatchers a machine has, so
-/// <c>Mech_AiTick</c> (<c>00411cec</c>) drives an aircraft exactly as it drives a HERC. See
-/// docs/retail/simulation/ai-dispatch.md for the model and docs/retail/simulation/ai-flyers.md for this
-/// table.</para>
-///
-/// <para><b>Five of the seven reassess, all through one function</b> — <c>Flyer_AiSelectBehaviour</c>
-/// (<c>00422d00</c>), which maps the group's current order verb onto a state. <c>sleeping</c> and
-/// <c>dead</c> carry a null reassess triple. There is no combat reassess: an aircraft picks its
-/// target inside its think and leaves the state alone. See docs/retail/simulation/ai-flyers.md, "The
-/// seven states".</para>
+/// One of the seven behavior states a Cybrid aircraft can be in — the descriptors at
+/// <c>00499cf8</c> that <c>Flyer_BuildStateTable</c> (<c>00414c68</c>) fills at startup, the
+/// flyer's counterpart of the mech table (<see cref="BehaviourState"/>). The two tables share their
+/// shape and their dispatch, so <c>Mech_AiTick</c> (<c>00411cec</c>) drives an aircraft as it
+/// drives a HERC, but a flyer's states have their own names, dwell times and thinks. Five of the
+/// seven reassess, all through <c>Flyer_AiSelectBehaviour</c> (<c>00422d00</c>). See
+/// docs/retail/simulation/ai-flyers.md#the-seven-states.
 /// </summary>
 public sealed class FlyerBehaviourState {
 	private FlyerBehaviourState(int index, string name, int dwell, int flags,

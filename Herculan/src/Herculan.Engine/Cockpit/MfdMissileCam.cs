@@ -15,21 +15,21 @@ public enum MfdMissileCamPicture {
 	/// <summary>The whole screen in one colour, the flash that follows a hit — <see cref="MfdMissileCamState.FlashColorId"/>.</summary>
 	Flash,
 
-	/// <summary>The world from the round, under a cross and a ring — <see cref="MfdMissileCamState.View"/>.</summary>
+	/// <summary>The world from the missile, under a cross and a ring — <see cref="MfdMissileCamState.View"/>.</summary>
 	View,
 
-	/// <summary>No round: the flooded screen and its labels.</summary>
+	/// <summary>No missile: the flooded screen and its labels.</summary>
 	Labels,
 }
 
 /// <summary>
-/// Where the missile camera stands and which way it looks: the round's position pushed sideways by
-/// <see cref="MfdMissileCam.CameraOffset"/>, and the round's own euler triple.
+/// Where the missile camera stands and which way it looks: the missile's position pushed sideways by
+/// <see cref="MfdMissileCam.CameraOffset"/>, and the missile's own euler triple.
 /// </summary>
 /// <param name="Eye">The camera's position, world units.</param>
-/// <param name="Pitch">The round's euler X.</param>
-/// <param name="Roll">The round's euler Y.</param>
-/// <param name="Heading">The round's euler Z.</param>
+/// <param name="Pitch">The missile's euler X.</param>
+/// <param name="Roll">The missile's euler Y.</param>
+/// <param name="Heading">The missile's euler Z.</param>
 public readonly record struct MissileCamView(Vec3i Eye, short Pitch, short Roll, short Heading);
 
 /// <summary>One paint of the MISSILE CAM screen — see <see cref="MfdMissileCamScreen"/>.</summary>
@@ -53,7 +53,7 @@ public readonly record struct MfdMissileCamState(MfdMissileCamPicture Picture, i
 /// </summary>
 public static class MfdMissileCam {
 	/// <summary>
-	/// How far the camera stands from the round, world units, along the round's own X axis — its right,
+	/// How far the camera stands from the missile, world units, along the missile's own X axis — its right,
 	/// level, whatever its pitch: the paint adds <c>Q14(500, cos h)</c> to x and
 	/// <c>Q14(500, cos(h - 0x4000))</c> to y.
 	/// </summary>
@@ -143,11 +143,11 @@ public static class MfdMissileCam {
 		MfdLayout.ScreenCentre(gau) is { } centre ? -(-centre.Y >> 1) : 0;
 
 	/// <summary>
-	/// The camera <c>MfdMissileViewScreen_Paint</c> places for <paramref name="round"/>.
+	/// The camera <c>MfdMissileViewScreen_Paint</c> places for <paramref name="missile"/>.
 	/// </summary>
-	public static MissileCamView ViewFrom(Rocket round) {
-		var (pitch, roll, heading) = round.Euler;
-		var position = round.Position;
+	public static MissileCamView ViewFrom(Rocket missile) {
+		var (pitch, roll, heading) = missile.Euler;
+		var position = missile.Position;
 		return new MissileCamView(
 			new Vec3i(
 				position.X + SimMath.Q14Multiply(CameraOffset, SimTrig.Cos(heading)),
@@ -173,19 +173,19 @@ public static class MfdMissileCam {
 	};
 
 	/// <summary>
-	/// <c>CockpitView_SumLauncherCounts</c> (<c>00440348</c>): the rounds left across every weapon row
+	/// <c>CockpitView_SumLauncherCounts</c> (<c>00440348</c>): the ammo left across every weapon row
 	/// whose mount is a launcher.
 	/// </summary>
 	/// <param name="rowCount">How many weapon rows the cockpit has — the herc's <c>.GAU</c> row count.</param>
-	public static int LauncherRounds(WeaponMounts weapons, int rowCount) {
-		int rounds = 0;
+	public static int LauncherAmmo(WeaponMounts weapons, int rowCount) {
+		int ammo = 0;
 		foreach (var mount in weapons.Mounts) {
 			if (mount.GaugeSlot >= 0 && mount.GaugeSlot < rowCount && mount.AmmoType != WeaponMount.NotAMissile) {
-				rounds += mount.AmmoRounds;
+				ammo += mount.AmmoRounds;
 			}
 		}
 
-		return rounds;
+		return ammo;
 	}
 }
 
@@ -291,18 +291,18 @@ public sealed class MfdMissileCamScreen {
 	private MfdMissileCamState _shown;
 
 	/// <summary>
-	/// <c>MfdMissileViewScreen_Update</c>: paints when there is a round to ride, when the machine has
+	/// <c>MfdMissileViewScreen_Update</c>: paints when there is a missile to ride, when the machine has
 	/// lock, or when the display asks for a full repaint, and otherwise leaves the last paint up.
 	/// </summary>
-	/// <param name="world">The world whose <see cref="PlayerMissileState.Round"/> the camera rides.</param>
+	/// <param name="world">The world whose <see cref="PlayerMissileState.Missile"/> the camera rides.</param>
 	/// <param name="locked"><see cref="MechObject.LockAcquired"/>.</param>
-	/// <param name="launcherRounds"><see cref="MfdMissileCam.LauncherRounds"/>.</param>
+	/// <param name="launcherAmmo"><see cref="MfdMissileCam.LauncherAmmo"/>.</param>
 	/// <param name="coarseTicks">The coarse clock.</param>
 	/// <param name="repaint">Whether the display repaints the whole screen this frame.</param>
-	public MfdMissileCamState Update(SimWorld world, bool locked, int launcherRounds, long coarseTicks,
+	public MfdMissileCamState Update(SimWorld world, bool locked, int launcherAmmo, long coarseTicks,
 			bool repaint) {
-		if (world.PlayerMissile.Round != null || locked || repaint) {
-			_shown = Paint(world, locked, launcherRounds, coarseTicks);
+		if (world.PlayerMissile.Missile != null || locked || repaint) {
+			_shown = Paint(world, locked, launcherAmmo, coarseTicks);
 		}
 
 		return _shown;
@@ -310,14 +310,14 @@ public sealed class MfdMissileCamScreen {
 
 	/// <summary>
 	/// <c>MfdMissileViewScreen_Paint</c> (<c>0043fe1c</c>), in its own order: a pending flash takes
-	/// the whole paint; otherwise the round is looked for among those in flight and, when it is still
-	/// there, the camera rides it; when it is not, the round is forgotten and the labels go up.
+	/// the whole paint; otherwise the missile is looked for among those in flight and, when it is still
+	/// there, the camera rides it; when it is not, the missile is forgotten and the labels go up.
 	///
 	/// <para>The flash alternates its colours once a paint, and the original paints once per
 	/// simulation tick, so the alternation is counted in ticks here: the host draws many frames to a
 	/// tick.</para>
 	/// </summary>
-	private MfdMissileCamState Paint(SimWorld world, bool locked, int launcherRounds, long coarseTicks) {
+	private MfdMissileCamState Paint(SimWorld world, bool locked, int launcherAmmo, long coarseTicks) {
 		if (world.PlayerMissile.Struck) {
 			if (!_flashStarted) {
 				_flashDeadline = coarseTicks + MfdMissileCam.FlashTicks;
@@ -335,17 +335,17 @@ public sealed class MfdMissileCamScreen {
 			world.PlayerMissile.Struck = false;
 		}
 
-		if (world.PlayerMissile.Round is { } round) {
-			if (world.RocketsInFlight.Contains(round)) {
-				return new MfdMissileCamState(MfdMissileCamPicture.View, 0, MfdMissileCam.ViewFrom(round),
+		if (world.PlayerMissile.Missile is { } missile) {
+			if (world.RocketsInFlight.Contains(missile)) {
+				return new MfdMissileCamState(MfdMissileCamPicture.View, 0, MfdMissileCam.ViewFrom(missile),
 					false, false, false);
 			}
 
-			world.PlayerMissile.Round = null;
+			world.PlayerMissile.Missile = null;
 		}
 
 		return new MfdMissileCamState(MfdMissileCamPicture.Labels, 0, default,
-			ReadyToLaunch: launcherRounds != 0,
+			ReadyToLaunch: launcherAmmo != 0,
 			Locked: locked,
 			LockBlinkLit: (coarseTicks & MfdMissileCam.LockBlinkBit) != 0);
 	}

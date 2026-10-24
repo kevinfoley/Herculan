@@ -18,13 +18,9 @@ public enum GlanceSide {
 /// The cockpit's sideways glance — how far the three-panel strip has slid toward one of the side
 /// windows, and how it travels there over time. The horizontal sibling of <see cref="CockpitPan"/>.
 ///
-/// <para><b>What the original does.</b> A glance is view command 4 (to view 2) or 5 (to view 3),
-/// queued by <c>CockpitView_QueueViewCommand</c> (<c>0042a3f4</c>) and run by the same stepper as the
-/// heads-down pan, <c>CockpitView_StepViewTransition</c> (<c>0042a9c0</c>), scrolling on x in steps of
-/// <c>0x14</c> rather than on y in steps of 10. Command 6 returns to the forward view. The gates are
-/// the queue's: a glance starts only from the forward view, the opposite glance's command from a
-/// glance is a return, and the same one is ignored. See docs/retail/simulation/cockpit-views.md, "View
-/// switching".</para>
+/// <para>In the original a glance is view command 4 (to view 2) or 5 (to view 3), and command 6
+/// returns; <c>CockpitView_StepViewTransition</c> (<c>0042a9c0</c>), the heads-down pan's stepper,
+/// slides it on x — see docs/retail/simulation/cockpit-views.md#view-switching.</para>
 ///
 /// <para><b>Where this engine diverges.</b> Retail's glance slides one whole panel, which in its 4:3
 /// frame takes the forward view entirely off screen. This engine shows all three panels at once, so

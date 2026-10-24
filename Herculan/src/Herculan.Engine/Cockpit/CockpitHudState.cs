@@ -5,11 +5,6 @@ namespace Herculan.Engine.Cockpit;
 /// <summary>
 /// The live values the cockpit's readouts display. Separate from <see cref="CockpitArt"/>, which is
 /// the herc's layout and art and is loaded once: this is what changes frame to frame.
-///
-/// <para>Some of it is not wired to the simulation yet. <see cref="Default"/> is the state a herc
-/// powers up in — full pool, an even shield balance, no weapons fitted, unchained, unlinked —
-/// which is also what the retail reference screenshots show, so what the engine draws can be
-/// compared against them directly. Fields become live as the sim grows the state behind them.</para>
 /// </summary>
 /// <param name="Weapons">
 /// One entry per <c>.GAU</c> weapon row, in row order — see <see cref="WeaponRowState"/>. A row no
@@ -21,7 +16,7 @@ namespace Herculan.Engine.Cockpit;
 /// </param>
 /// <param name="ShieldFront">
 /// Front shield readout, 0-200. This is the shield <i>balance</i>, not the charge — the original
-/// prints `balance * 200 >> 10` here and its complement below, so the pair always sums to 200 even
+/// prints <c>balance * 200 &gt;&gt; 10</c> here and its complement below, so the pair always sums to 200 even
 /// on an empty array. Charge is shown by the meter rings instead.
 /// </param>
 /// <param name="ShieldRear">Rear shield readout — exactly 200 minus <see cref="ShieldFront"/>.</param>
@@ -69,10 +64,8 @@ namespace Herculan.Engine.Cockpit;
 /// <param name="PressedWidget">
 /// The widget currently held down under the pointer, drawn in its lit frame for as long as it is —
 /// the original's own <c>Widget_PressedIndex</c> (<c>0049dbdc</c>) plus the state byte it sets (docs/retail/simulation/cockpit-input.md
-/// §7). Transient input state rather than simulation state, and it lives here for the same reason the
-/// rest does: <see cref="CockpitWidgets"/> folds it into each widget's lit flag, so the one place that
-/// decides what a widget looks like stays the one place, and no renderer needs a second parameter
-/// threaded through it. Read it through <see cref="ShowsPressed"/>.
+/// §7). Input state rather than simulation state, carried here so that <see cref="CockpitWidgets"/>
+/// can fold it into each widget's lit flag. Read it through <see cref="ShowsPressed"/>.
 /// </param>
 /// <param name="Target">
 /// The front-window target indicator's resolved state, or null when nothing is selected (or the
@@ -106,7 +99,7 @@ namespace Herculan.Engine.Cockpit;
 /// machine. See <see cref="MfdScannerState"/>.
 /// </param>
 /// <param name="NavMap">
-/// Where F3's NAV MAP is centred and which way it is turned — the machine being flown — and the
+/// Where F3's NAV MAP is centred and which way it is turned — the piloted machine — and the
 /// terrain raster it draws. See <see cref="MfdNavMapState"/>.
 /// </param>
 /// <param name="PilotVideos">

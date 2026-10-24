@@ -77,6 +77,17 @@ public static class TweakSettingDefinitions {
 	public static readonly TweakSettingDefinition<bool> ShowSquadmateNumber = new("tweak.show_squadmate_number", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: false);
 
 	/// <summary>
+	/// On the Heads-Down Display's structural and internal damage views, draw the weapon icons over the paper doll, and
+	/// turn only the icons blue. Retail tints the doll's regions after blitting the icons, so a region's own colour is
+	/// drawn back over any icon on it, and the doll's other green inside an icon's rect turns blue with the icon. The
+	/// weapons view already draws its icons last. See <see cref="Render.Cockpit.PaperDollPainter.AddHddWeaponIcons"/>.
+	/// </summary>
+	/// <remarks>
+	/// This setting is recommended, because retail's draw order looks like a bug.
+	/// </remarks>
+	public static readonly TweakSettingDefinition<bool> HddWeaponIconsOnTop = new("tweak.hdd_weapon_icons_on_top", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
+
+	/// <summary>
 	/// A squadmate picks evenly among every recording of a reply, so a yes can be <c>ROGER.</c> Retail picks the
 	/// first recording or the one after it, never a third, so a yes is <c>YES SIR.</c> two times in three and
 	/// <c>AFFIRMATIVE!</c> otherwise. See <see cref="Content.SquadMessages.Pick"/>.
@@ -258,6 +269,13 @@ public static class TweakSettingDefinitions {
 	public static readonly TweakSettingDefinition<bool> ResetCountersOnReplay = new("tweak.reset_counters_on_replay", TweakCategory.Functional, defaultValue: true, recommendedValue: true);
 
 	/// <summary>
+	/// In <c>C5_05</c>, the first squadmate starts a short way clear of the lunar outpost's supply transport. Retail
+	/// starts it inside the vehicle's collision volume, which refuses every step it tries until the transport is destroyed. See
+	/// <see cref="World.StuckSquadmateFix"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> SquadmateClearOfTransport = new("tweak.c5_05_squadmate_clear", TweakCategory.Functional, defaultValue: false, recommendedValue: true);
+
+	/// <summary>
 	/// SAVE starts the slot's new name filled in as the pilot's name, the sector and the mission number, for the player to
 	/// edit or ACCEPT, as it always does when clicked with a gamepad. Retail empties the name. See
 	/// <see cref="Shell.ShellSaveScreen.AutoName"/>.
@@ -276,10 +294,10 @@ public static class TweakSettingDefinitions {
 	/// <summary>Every defined <c>bool</c> tweak setting, keyed by ID for <see cref="TweakSettings"/> save/load.</summary>
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> All = new[] {
 		HighResolutionWidescreen, ShowCorrectStats, ShowAccurateSpeed, RoundShieldBalance, ShowTargetDistanceInMeters, FixNacelleImpactEffectPosition,
-		PreserveSoundPosition, CriticalDamageMessage, ShowSquadmateNumber, EverySquadmateReply, FixComputerMessagePreference,
+		PreserveSoundPosition, CriticalDamageMessage, ShowSquadmateNumber, HddWeaponIconsOnTop, EverySquadmateReply, FixComputerMessagePreference,
 		SmootherTurretMovement, MouseExternalView, FixDefendPositionOrder, FixWeaponDamageRecords,
 		ChargeBarPowerLevel, FlashThroughSecondHit, ShowAltitudeTape, DropPodSoundFromPod, FixRepairDiagramSides,
-		FixTerrainHitPoint, FlyerIgnoresPlayerThrottle, StrandedStingrayClosesIn, GuardHoldsUntilDestroyed, FasterKeyboardAiming, FixGunsightDrag, FixRaptorIIPerspective, ResetCountersOnReplay,
+		FixTerrainHitPoint, FlyerIgnoresPlayerThrottle, StrandedStingrayClosesIn, GuardHoldsUntilDestroyed, FasterKeyboardAiming, FixGunsightDrag, FixRaptorIIPerspective, ResetCountersOnReplay, SquadmateClearOfTransport,
 		AutoFillSaveName, AutoSaveSlot10, PlayLastMusicTrack, ShuffleMissionMusic, ChangePbwBeamHue,
 	};
 }

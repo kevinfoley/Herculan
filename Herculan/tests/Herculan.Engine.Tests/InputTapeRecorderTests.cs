@@ -20,7 +20,7 @@ public class InputTapeRecorderTests : IDisposable {
 
 	[Fact]
 	public void RecordsTheBundleAndFramesPlaybackReadsBack() {
-		// A save-slot pair, so the squad file has to be found by the slot's own name.
+		// A save-slot pair, so the .mec file has to be found by the slot's own name.
 		string script = Path.Combine(_directory, "script3.dat");
 		File.WriteAllBytes(script, new byte[] { 1, 2, 3 });
 		File.WriteAllBytes(Path.Combine(_directory, "player3.mec"), new byte[] { 4, 5 });

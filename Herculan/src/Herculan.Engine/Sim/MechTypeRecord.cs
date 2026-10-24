@@ -10,17 +10,14 @@ namespace Herculan.Engine.Sim;
 /// applies the rescale and names each field for the role the sim gives it, leaving the parsed file
 /// untouched.
 ///
-/// <para><b>The load-time rescale.</b> Record fields 194 and 196 are a stride-calibration pair, not
-/// the friction coefficients they were once taken for:</para>
+/// <para><b>The load-time rescale.</b> Record fields 194 and 196 are a stride-calibration pair:</para>
 /// <code>
 ///   scale = Q16Divide(rec196 * 400, rec194)
 ///   MaxReverse, MaxForward, GaitThreshold, ReverseGaitThreshold  *= scale
 ///   MaxTurnRate is NOT rescaled
 /// </code>
-/// <para>What it normalises is the designer's speed points against the model's actual stride length,
-/// so that <c>maxSpeed x strideLengthPerTick</c> lands on the same real speed for every machine.
-/// Verified across all 18 HERCs by predicting run-gait top speed from the animation data alone —
-/// see docs/retail/simulation/mech-locomotion.md. Without it, APOCA comes out 2x wrong.</para>
+/// <para>It normalizes the designer's speed points against the model's actual stride length — see
+/// docs/retail/simulation/mech-locomotion.md#load-time-speed-rescale.</para>
 ///
 /// <para>Only non-flyers are rescaled; the Razor (<see cref="IsFlyer"/>) keeps its raw numbers and
 /// takes different code paths throughout.</para>

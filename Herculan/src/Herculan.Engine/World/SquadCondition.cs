@@ -10,9 +10,9 @@ namespace Herculan.Engine.World;
 /// docs/retail/simulation/component-damage.md#a-squad-machines-condition--mech_applysquadcondition-00415068;
 /// <see cref="Sim.ComponentDamage.ApplySquadCondition"/> writes it.
 /// </summary>
-/// <param name="External"><inheritdoc cref="MecEntry.ExternalConditions"/></param>
-/// <param name="Internal"><inheritdoc cref="MecEntry.InternalConditions"/></param>
-/// <param name="Hardpoint"><inheritdoc cref="MecEntry.HardpointConditions"/></param>
+/// <param name="External"><inheritdoc cref="MecEntry.ExternalConditions" path="/summary/node()"/></param>
+/// <param name="Internal"><inheritdoc cref="MecEntry.InternalConditions" path="/summary/node()"/></param>
+/// <param name="Hardpoint"><inheritdoc cref="MecEntry.HardpointConditions" path="/summary/node()"/></param>
 public sealed record SquadCondition(IReadOnlyList<short> External, IReadOnlyList<short> Internal,
 		IReadOnlyList<short> Hardpoint) {
 	/// <summary>The three spans of one <c>player.mec</c> entry.</summary>

@@ -159,13 +159,15 @@ public sealed class MissionScene {
 
 		var objects = new List<SceneObject>(mission.Placements.Count);
 		SceneObject? playerObject = null;
-		foreach (var placement in mission.Placements) {
+		bool squadmateClear = world.Tweaks.GetSettingValue(TweakSettingDefinitions.SquadmateClearOfTransport);
+		foreach (var listed in mission.Placements) {
+			var placement = squadmateClear ? StuckSquadmateFix.Adjust(listed, mission.Placements) : listed;
 			var spawned = Spawn(placement, models, tables, world.Random, world.Tweaks);
 			if (spawned == null) {
 				continue;
 			}
 
-			if (ReferenceEquals(placement, mission.Player)) {
+			if (ReferenceEquals(listed, mission.Player)) {
 				playerObject = spawned;
 				if (spawned.Object is MechObject playerMech) {
 					playerMech.IsPlayer = true;

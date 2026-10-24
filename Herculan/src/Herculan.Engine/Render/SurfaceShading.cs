@@ -29,19 +29,11 @@ public sealed record SurfaceShading(ShadeRamp Ramp, DynamixPalette? Palette) {
 	public bool HasShadeRamps => Palette is { ShadeRamps.Count: > 0 };
 
 	/// <summary>
-	/// The colour a <c>TSShadedPoly</c> surface draws at one light level — the whole of
-	/// <c>TSShadedPoly_Render</c> (<c>0047542c</c>)'s colour resolution, which is two lookups and
-	/// not one:
-	/// <code>
-	/// paletteIndex = Palette_ShadeRampLookup(surface.value, shade)        // 00430e34
-	/// byte         = Raster_ShadeRampRow(0x80)[paletteIndex]              // 00468054
-	/// </code>
-	///
-	/// <para>The first is <see cref="RampedPaletteIndex"/> — the surface value names one of the
-	/// palette's material ramps and <paramref name="shade"/> picks a step along it. The second is
-	/// the theater <c>.RMP</c> at the <i>fixed</i> <see cref="ShadeRamp.UnlitShade"/>, the same
-	/// literal <c>0x80</c> the solid renderer passes: all of a shaded face's lighting is in the
-	/// first lookup, and the ramp row it lands on afterwards never varies.</para>
+	/// The colour a <c>TSShadedPoly</c> surface draws at one light level — the colour resolution of
+	/// <c>TSShadedPoly_Render</c> (<c>0047542c</c>): <see cref="RampedPaletteIndex"/> picks a step of
+	/// the surface's material ramp, and the theater <c>.RMP</c> at the fixed
+	/// <see cref="ShadeRamp.UnlitShade"/> turns it into a palette byte. See
+	/// docs/retail/rendering/dts-texture-binding.md#tsshadedpoly--shade-ramp-number-per-face-light-fixed-rmp-row.
 	///
 	/// <para>Returns null when the palette has no ramp table, when the surface names a ramp outside
 	/// it, or when the resolved byte has no palette entry — callers fall back to their own colour

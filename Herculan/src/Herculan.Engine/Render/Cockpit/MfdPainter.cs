@@ -28,24 +28,20 @@ internal sealed class MfdPainter {
 	/// <see cref="MfdLayout.BackgroundFrame"/>, and note that frame 0 is never one of them — at the
 	/// panel rect inset 18 GAU units from the left; its 196x122 art fills that inset region exactly;</item>
 	/// <item>the F1-F6 mode column down the strip the inset left free, each button lit (frame 4) for
-	/// the current screen and unlit (frame 3) otherwise, captioned "F1".."F6" — the original composes
-	/// those from its own <c>"Fx"</c> literal rather than storing six strings;</item>
+	/// the current screen and unlit (frame 3) otherwise, captioned "F1".."F6" in <c>DARK</c> lit and
+	/// <c>WHITE</c> unlit, as <c>MfdButton_Repaint</c> (<c>004474e4</c>) captions them;</item>
 	/// <item>the aux buttons the current screen shows, from the 6x13 visibility table — SELECT on the
 	/// two status screens, XMIT on FLASH COMM, PASS/ACTIVE/RANGE/TARGET on the scanner, none on the
 	/// nav map or missile cam;</item>
-	/// <item>the screen title, and then whichever screen's own content is implemented.</item>
+	/// <item>the screen title, and then the screen's own content.</item>
 	/// </list>
-	///
-	/// <para>A lit button captions in <c>DARK</c> and an unlit one in <c>WHITE</c>, which is
-	/// <c>MfdButton_Repaint</c> (<c>004474e4</c>)'s own choice: it picks <c>ColorSchemePanels[12]</c> when the button's
-	/// <c>+0x40</c> lit flag is set and <c>[10]</c> when it is clear.</para>
 	///
 	/// <para><b>Each screen draws its own content.</b> STATUS and TARGET STATUS share one
 	/// method off one <see cref="MfdStatusSubject"/> — the squad roster's current entry for F1, the
 	/// current selection for F5 — SCANNER plots live contacts, and FLASH COMM lists the string table's order
 	/// rows. NAV MAP draws the terrain raster turned to the machine's heading, through
 	/// <paramref name="drawNavMapTerrain"/>, and its centre cross; MISSILE CAM draws whatever its
-	/// screen last painted, the world from the round going through <paramref name="drawMissileView"/>.</para>
+	/// screen last painted, the world from the missile going through <paramref name="drawMissileView"/>.</para>
 	/// </summary>
 	internal static void AddMfd(CockpitArt hud, CockpitHudState state,
 			Action<string, int, float, float> blitDevice,
@@ -468,7 +464,7 @@ internal sealed class MfdPainter {
 						PaperDollPainter.AddPaperDollTint(hud, dollSprites, subject.SilhouetteBank,
 							MfdLayout.WireframeViewIndex, region,
 							PaperDollDamage.StatusRegionReading(region.Index, subject.FlyerVariant, readings),
-							dollLeft, dollTop, fillRect);
+							repaintIntact: false, dollLeft, dollTop, fillRect);
 					}
 				}
 

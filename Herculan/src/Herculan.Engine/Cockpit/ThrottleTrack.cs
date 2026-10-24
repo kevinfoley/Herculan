@@ -5,33 +5,22 @@ namespace Herculan.Engine.Cockpit;
 
 /// <summary>
 /// The console's throttle slider, as geometry: where the knob sits for a given throttle setting, and
-/// what setting a point on the track means. Reverse-engineered from <c>ThrottleGauge_Ctor</c>
-/// (<c>00447b84</c>), its vertical slider child (<c>00447e24</c>) and the shared slider base
-/// (<c>004524a8</c> and the value/position pair at <c>00452644</c> / <c>00452628</c>).
+/// what setting a point on the track means. Ports <c>ThrottleGauge_Ctor</c> (<c>00447b84</c>), its
+/// vertical slider child (<c>00447e24</c>) and the shared slider base's value/position pair
+/// (<c>SliderWidget_SetValueV</c> <c>00452644</c>, <c>SliderWidget_GetValueV</c> <c>00452628</c>);
+/// see docs/retail/simulation/cockpit-hud-widgets.md#throttle-gauge.
 ///
-/// <para><b>The track and the two bars.</b> The <c>.GAU</c> block at offset 1000 is one widget
-/// record: the gauge constructor reads ints 4-7 as the slider's track rect and ints 8-15 as
-/// <i>two more rects</i> (<see cref="HThrottle.BarCorners"/>), which it hands to the vertical
-/// LED-bar constructor (<c>00439344</c>) with ranges <c>+0x400</c> and <c>-0x400</c> — the forward
-/// and reverse fill bars either side of centre.</para>
-///
-/// <para><b>The bars are a cut feature, and not drawing them is faithful.</b> DBSIM does not draw
-/// them either: the slider keeps them as private fields, never registers them with the widget tree,
-/// and its paint reads them only for their rects, which it unions into the region it invalidates.
-/// Their bar-graph draw routines have no callers anywhere in the image. The gauge's <c>+0xb1</c>
-/// speed-fraction value is the other half of the same cut feature — the knob shows the throttle
-/// asked for, the bars would have shown the speed reached.</para>
+/// <para><b>The two fill bars are not drawn</b>, as in retail: the <c>.GAU</c> block at offset 1000
+/// carries their rects (<see cref="HThrottle.BarCorners"/>) beside the track's, but the slider
+/// never registers them with the widget tree, so nothing paints them.</para>
 ///
 /// <para><b>Units.</b> Everything here is device pixels, the 640-wide space the rest of the cockpit
-/// art and the sprite banks live in — <c>GauThrottle_ApplyCoordShift</c> (<c>004488cc</c>) shifts the whole block left by the video
-/// mode's coordinate shift before the gauge ever sees it, which is
-/// <see cref="CockpitArt.GauToPixelScale"/>.</para>
+/// art and the sprite banks live in — the block shifted by <see cref="CockpitArt.GauToPixelScale"/>,
+/// as <c>GauThrottle_ApplyCoordShift</c> (<c>004488cc</c>) shifts it.</para>
 ///
-/// <para><b>Sign.</b> Up the track is forward. The original arrives at that through two sign flips
-/// that cancel — the slider's own getter reads the top of the track as its minimum, and the gauge
-/// negates what it reads (<c>00447de0</c>, gated on the vertical variant's <c>+0xc1 == 0</c>) — so
-/// what this type exposes is the settled convention: positive is forward, and the knob's travel is
-/// linear in it.</para>
+/// <para><b>Sign.</b> Positive is forward, up the track, and the knob's travel is linear in it —
+/// the net of the original's two sign flips that cancel
+/// (docs/retail/simulation/cockpit-hud-widgets.md#slider-geometry).</para>
 /// </summary>
 public readonly struct ThrottleTrack {
 	/// <summary>Full throttle either way, the slider's own <c>±0x400</c> limits.</summary>

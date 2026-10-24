@@ -9,19 +9,18 @@ namespace Herculan.Engine.Render.Cockpit;
 /// <summary>
 /// Draws one panel's cockpit-art quad — at its own native aspect ratio, never stretched — plus, for
 /// the center panel only, the herc's HUD widgets over it, positioned from its own <c>.GAU</c> and
-/// drawn in the game's own sprite art and fonts. See docs/retail/simulation/cockpit-hud-widgets.md and
-/// docs/herculan/planning.md's Milestone 8.
+/// drawn in the game's own sprite art and fonts. See docs/retail/simulation/cockpit-hud-widgets.md.
 ///
 /// <para>Widgets draw the game's own <c>.HBA</c> sprite art (see <see cref="HudSpriteSheet"/>),
 /// positioned by their <c>.GAU</c> rects scaled by <see cref="CockpitArt.GauToPixelScale"/>. That
 /// costs a second texture bind per panel — the canopy quad and the sprite quads come from different
 /// textures — so the two go out as separate draws against the same shader and vertex format.</para>
 ///
-/// <para>Widgets whose art is not yet identified draw nothing rather than a placeholder shape: their
-/// bezels are already painted into the canopy art, so an empty overlay reads as correct where a green
-/// rectangle read as unfinished. Everything that is drawn picks its frame from live state in
-/// <see cref="CockpitHudState"/> the way the original's own repaint does — a button's lit plate, the
-/// MFD's per-mode background, the throttle knob's height, the reticle's on-target frame.</para>
+/// <para>A widget with no sprite art to draw draws nothing rather than a placeholder shape, since its
+/// bezel is already painted into the canopy art. Everything that is drawn picks its frame from live
+/// state in <see cref="CockpitHudState"/> the way the original's own repaint does — a button's lit
+/// plate, the MFD's per-mode background, the throttle knob's height, the reticle's on-target
+/// frame.</para>
 ///
 /// <para><see cref="AddWidgets"/> lays the panel down in paint order and hands the gunsight, the
 /// console gauges, the MFD and the message ports to <see cref="GunsightPainter"/>,

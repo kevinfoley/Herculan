@@ -34,15 +34,10 @@ public sealed partial class HeightGrid {
 	/// Paints one base formation's material over the terrain tile <paramref name="worldX"/>,
 	/// <paramref name="worldY"/> falls in.
 	///
-	/// <para>The tile is the extent one <c>mat0</c> frame covers at
-	/// <paramref name="blockShift"/> — <c>1 &lt;&lt; (0x15 - blockShift)</c> world units square,
-	/// independent of <see cref="CellShift"/> — and <paramref name="dimension"/> is the side of the
-	/// formation's layout map, which spans exactly that tile. So a map entry is
-	/// <c>1 &lt;&lt; (CellShift - 13)</c> per cell along each axis: one map entry per cell at cell
-	/// shift 13, a 2x2 block of entries per cell at 14.</para>
-	///
-	/// <para><b>Rows run north to south.</b> The original indexes row 0 at the tile's <i>high</i>-y
-	/// edge and counts down.</para>
+	/// <para>The tile, one <c>mat0</c> frame, is <c>1 &lt;&lt; (0x15 - blockShift)</c> world units
+	/// square whatever <see cref="CellShift"/> is, and the layout map spans it, so each cell takes
+	/// <c>1 &lt;&lt; (CellShift - 13)</c> map entries along each axis. Map row 0 is the tile's high-y
+	/// (north) edge. See docs/retail/rendering/terrain-texturing.md#base-formation-pads.</para>
 	///
 	/// <para>Cells outside the grid are skipped, where the original clamps an out-of-range index to
 	/// zero and paints cell 0 instead — the same deviation, and for the same reason, as

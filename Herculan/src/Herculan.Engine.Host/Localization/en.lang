@@ -19,6 +19,8 @@ tweak.critical_damage_message.display_name     "Damage Level Critical" message
 tweak.critical_damage_message.description      Play "Damage Level Critical" when the player takes critical damage. Does not work in retail due to a typo in the code.
 tweak.show_squadmate_number.display_name       Show squadmate number
 tweak.show_squadmate_number.description        On the Heads Down Display, shows each squadmate's number (corresponding to the number key used to select them) using a label that is unused and hidden in retail
+tweak.hdd_weapon_icons_on_top.display_name   HDD weapon icons on top
+tweak.hdd_weapon_icons_on_top.description    On the Heads Down Display's damage screen, draw the weapon icons over the HERC diagram on the structural and internal views, and color only the icons blue. In retail, parts of the diagram are drawn over the icons, and the diagram's lines under an icon turn blue with it.
 tweak.every_squadmate_reply.display_name       Varied squadmate replies
 tweak.every_squadmate_reply.description        Squadmates choose evenly among all their recorded replies, so a squadmate who agrees can also say "Roger." In retail they say "Yes sir" two times in three and "Affirmative!" otherwise, and never "Roger."
 tweak.fix_computer_message_pref.display_name   Fix COMPUTER MESSAGE Preference
@@ -65,6 +67,8 @@ tweak.fix_raptor2_perspective.display_name  Fix Raptor II Perspective
 tweak.fix_raptor2_perspective.description   Puts the Raptor II's cockpit view in its cockpit. In retail the view sits above the top of the HERC. Turret tracking and gun convergence move with it.
 tweak.reset_counters_on_replay.display_name  Fix "Replay Mission" flags
 tweak.reset_counters_on_replay.description   Fix mission flags not getting reset when you choose to replay a mission (after dying during the mission), which could cause unlocks to fail or other unexpected behavior.
+tweak.c5_05_squadmate_clear.display_name  Fix Luna Sector Mission 5
+tweak.c5_05_squadmate_clear.description   In the mission to defend the lunar outpost, your first squadmate starts a few meters clear of the base's supply transport, so it can move from the start. In retail it starts partly inside the transport and cannot move until the transport is destroyed.
 tweak.auto_fill_save_name.display_name  Always auto-fill save name
 tweak.auto_fill_save_name.description   When you click SAVE, a name is auto-filled. You must still click accept. The name is always auto-filled while using a controller.
 tweak.auto_save_slot_10.display_name  Auto-save in slot 10

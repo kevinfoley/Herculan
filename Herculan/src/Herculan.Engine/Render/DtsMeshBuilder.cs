@@ -17,9 +17,9 @@ namespace Herculan.Engine.Render;
 /// (<see cref="Sim.ShapeCellFrames"/>).
 ///
 /// <para><see cref="Ungated"/> is geometry under no cell-animation part at all, which is always
-/// drawn. No retail shape nests one cell-animation part inside another — checked across every
-/// <c>.DTS</c> a mission loads and both <c>.DGS</c> libraries — so one gate per piece of geometry is
-/// the whole of the condition rather than the innermost of a chain.</para>
+/// drawn. One gate per piece of geometry is the whole of the condition, as no retail shape nests one
+/// cell-animation part inside another
+/// (docs/retail/rendering/mech-shape-drawing.md#a-destroyed-component-hides-its-own-geometry).</para>
 /// </summary>
 /// <param name="Sequence">The part's <see cref="TSCellAnimPart.AnimSequence"/>, or -1 for ungated.</param>
 /// <param name="Frame">Which child of that part, or -1 for ungated.</param>
@@ -28,9 +28,9 @@ namespace Herculan.Engine.Render;
 /// second thing that decides whether a piece is drawn, and per frame rather than per damage state.
 /// Only <see cref="DtsMeshBuilder.BuildCells"/>, <see cref="DtsMeshBuilder.BuildSegments"/> and
 /// <see cref="DtsMeshBuilder.BuildDetailLevels"/> build every level; the other builds take the finest
-/// and leave this null. No retail shape nests a detail
-/// part inside another or inside a cell-animation part, though cells inside a level are common, so
-/// one detail gate and one cell gate are the whole of the condition.
+/// and leave this null. One detail gate and one cell gate are the whole of the condition, as no
+/// retail shape nests a detail part inside another or inside a cell-animation part
+/// (docs/retail/rendering/dts-texture-binding.md#where-the-bias-comes-from).
 /// </param>
 /// <param name="Level">Which level of <paramref name="Detail"/>, or -1.</param>
 public readonly record struct CellGate(short Sequence, short Frame, PartDetail? Detail = null,
@@ -102,19 +102,12 @@ public readonly record struct MeshCell(CellGate Gate, MeshVertex[] Vertices, int
 /// A built mesh: filled triangles first, then the outline edges that are drawn over them as lines,
 /// then single points, in one array so a single vertex buffer carries all three.
 ///
-/// <para>The outline is not decoration. <c>TSSolidPoly_Render</c> (<c>00474db4</c>) resolves
-/// <i>two</i> colours for every flat solid face — the side's fill and line entries, both through the
-/// theater ramp at the same fixed shade — and hands both to the polygon fill
-/// <c>PolyFill_FillThenOutline</c> (<c>0048d518</c>), which fills in the first and then, whenever
-/// the two resolve differently, re-draws the same polygon's edge loop in the second. That second
-/// pass is the line range. See <see cref="DtsMeshBuilder"/>'s <c>ResolveSolidColors</c>.
-/// <c>TSShadedPoly_Render</c> (<c>0047542c</c>) does the same with its line entry run through the
-/// shaded chain at the face's light, which the range carries as a ramp for the shader to resolve —
-/// see <see cref="MeshVertex.OutlineFillRamp"/>.</para>
-///
-/// <para>The points are one-vertex polys, which the same fill draws as a single pixel
-/// (docs/retail/rendering/dts-texture-binding.md, "<c>TSSolidPoly</c> — palette index, unlit, fill plus
-/// outline").</para>
+/// <para>The line range is the second pass of retail's <c>PolyFill_FillThenOutline</c>
+/// (<c>0048d518</c>), which re-draws a face's edge loop in its line entry whenever that resolves
+/// differently from its fill, and the points are one-vertex polys, which the same fill draws as a
+/// single pixel (docs/retail/rendering/dts-texture-binding.md#tssolidpoly--palette-index-unlit-fill-plus-outline).
+/// A solid face's outline is resolved by <see cref="DtsMeshBuilder"/>'s <c>ResolveSolidColors</c>, a
+/// shaded face's carries a ramp for the shader (<see cref="MeshVertex.OutlineFillRamp"/>).</para>
 /// </summary>
 /// <param name="Vertices">Triangle corners in <c>[0, TriangleVertexCount)</c>, line-segment
 /// endpoint pairs after it, and the last <paramref name="PointVertexCount"/> points.</param>
@@ -512,31 +505,19 @@ public static partial class DtsMeshBuilder {
 	/// attachment slots</b>: the parts DBSIM overwrites every frame, and so never draws as the file
 	/// ships them.
 	///
-	/// <para><b>The mechanism.</b> <c>MechType_InitOne</c> (<c>004201a8</c>) builds, per LOD root, a
-	/// list of part slots — one per hardpoint — through <c>GunLayout_CollectHardpointBones</c> (<c>0040fc50</c>), which emits each
-	/// <c>.GL</c> record's <see cref="GunLayout.HardpointEntry.BoneId"/> when its mounting code is
-	/// under <see cref="Sim.WeaponMount.InvisibleMounting"/> and <c>-1</c> otherwise, and
-	/// <c>MechType_BindHardpointSlots</c> (<c>0040304c</c>), which resolves each id to the address of the shape's part slot holding
-	/// the part with that id. The mech's own draw (<c>Mech_Draw</c> (<c>004174c8</c>), mech vtable <c>+0</c>) then
-	/// runs <c>Mech_SpliceHardpointShapes</c> (<c>004030d0</c>) before rendering anything, replacing each slot's contents with either
-	/// the fitted mount itself, drawn through its own render, or a blank record from <c>typeRec+0xec</c>, inheriting the
-	/// placeholder's node transform and id. Empty or fitted, the shipped geometry is always
-	/// overwritten.</para>
+	/// <para>Retail's <c>Mech_SpliceHardpointShapes</c> (<c>004030d0</c>) replaces each such slot, every
+	/// frame, with the fitted mount or a blank record, so the shipped placeholder is never drawn
+	/// (docs/retail/rendering/mech-shape-drawing.md#hardpoint-attachment-slots-are-overwritten-every-frame).
+	/// The slots are the <c>.GL</c> records' <see cref="GunLayout.HardpointEntry.BoneId"/>s, less any
+	/// under the <see cref="Sim.WeaponMount.InvisibleMounting"/>.</para>
 	///
-	/// <para><b>Why the engine skips them instead of splicing.</b> The fitted case is already drawn,
-	/// out of <c>MECHWPNS.DTS</c> at the mount's own frame — see
-	/// <see cref="Scene.SceneModelLibrary.MechWeapon"/>. What was missing was the other half: an
-	/// unspliced placeholder was being drawn as flat untextured geometry standing at every hardpoint,
-	/// which retail shows on no machine.</para>
+	/// <para><b>This engine hides the slots instead of splicing</b>, since the fitted weapon is
+	/// already drawn on its own, out of <c>MECHWPNS.DTS</c> at the mount's frame — see
+	/// <see cref="Scene.SceneModelLibrary.MechWeapon"/>.</para>
 	///
-	/// <para>Verified against all four retail chassis, where the ids are exactly the visible
-	/// hardpoints' bones: SAMSON 7 (8, 9, 10, 11, 18, 66, 77), OUTLAW 3, APOCA 4 and PITBULL 1. The
-	/// invisible mounting is excluded on its own merits — SAMSON's bone 5 carries a real torso part,
-	/// and splicing it would delete the machine's middle.</para>
-	///
-	/// <para><b>Bone id 0 is not supported</b>, and no retail chassis uses it: the original resolves
-	/// one slot per hardpoint, where matching on the id here would hide every part that carries the
-	/// default id of zero.</para>
+	/// <para><b>Bone id 0 is skipped</b>, and no retail chassis uses it: the original resolves one slot
+	/// per hardpoint, where matching on the id here would hide every part that carries the default id of
+	/// zero.</para>
 	/// </summary>
 	public static IReadOnlySet<short> AttachmentPartIds(GunLayout? hardpoints) {
 		var ids = new HashSet<short>();
@@ -586,17 +567,14 @@ public static partial class DtsMeshBuilder {
 	/// The same geometry as <see cref="BuildRoot"/>, split by the node each part hangs from and left
 	/// in that node's own space — what a shape has to be to animate.
 	///
-	/// <para>DBSIM draws a shape exactly this way. <c>TSGroup_RenderPolys</c> (<c>004758c8</c>)
-	/// begins by calling <c>00476014</c>, which takes the group's own <c>TSBasePart.Transform</c>
-	/// (field +4), looks the node's world transform up in the shape instance's per-node array, and
-	/// composes it with the current object-to-view transform before a single poly is drawn
-	/// (<c>Concat(nodeWorld[transform], objectToView)</c>, then <c>Raster_SetModelTransform</c> (<c>0048c338</c>) installs it). Every
-	/// group in the shape is placed by its own node, and it is the animation thread that moves those
+	/// <para>DBSIM draws a shape this way: <c>TSGroup_RenderPolys</c> (<c>004758c8</c>) places every
+	/// group by its own node's posed transform before drawing a poly
+	/// (docs/retail/rendering/dts-node-posing.md#the-draw-path), and the animation thread moves those
 	/// nodes.</para>
 	///
 	/// <para>Contrast <see cref="BuildRoot"/>, which bakes each group at the rest pose that
-	/// <see cref="ResolveGroupOffset"/> works out and hands back one rigid mesh. That is still what a
-	/// structure wants — nothing animates it — but it is why a HERC's legs never moved.</para>
+	/// <see cref="ResolveGroupOffset"/> works out and hands back one rigid mesh, for shapes nothing
+	/// animates.</para>
 	///
 	/// <para>Coincident-twin removal (<see cref="DropCoincidentTwins"/>) and the paint layers
 	/// (<see cref="PaintLayers"/>) run across the whole shape first, in the shared rest-pose space.</para>

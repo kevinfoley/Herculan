@@ -1000,8 +1000,14 @@
       "type": "function",
       "confidence": "high",
       "name": "BaseType_LoadShape",
-      "description": "The whole of a structure type's model selection, indexing dat\\BASES.DAT's table at typeIndex * 0x3c: the field at +6 picks the library (0 -> dgs\\bases via BaseType_ResolveShape with classId 0x2bc0001, else dts\\bases_an via the animated-library path with 0x1e0003) and the field at +2 is the shape index within it; the field at +0x32 picks the texture bank (0 -> basetex, else vehtex, except type 0x34 which borrows RAZOR's mech bank). Cross-check: exactly eight types select the animated library and BASES_AN.DTS holds exactly eight roots, numbered as those eight reference them. The 0x2bc0001/0x1e0003 constants are ClassItem registry classIds, not recordSize<<16|version, and 0x2bc0001 is literally BASES.DGS's own leading 4 bytes. See dgs-hd0-notes.md.",
-      "source": "docs/retail/formats/dgs-hd0-notes.md"
+      "description": "Loads a structure type's model at mission load; DBSim_LoadScriptDat calls it for each type a live block-9 record names. Indexes dat\\BASES.DAT's table at typeIndex * 0x3c: the field at +6 picks the library (0 -> dgs\\bases via BaseType_ResolveShape with classId 0x2bc0001, stored in the static shape table DAT_004a9600; else dts\\bases_an with 0x1e0003, stored in the animated shape table DAT_004a95f8), the field at +2 is the shape index and the table slot, and a slot already filled is left as it is. On a fresh load the field at +0x32 picks the shape's texture bank (shape +0x26): 0 -> basetex, else vehtex, except that on the static branch type 0x34 borrows RAZOR's mech bank; the animated branch has no 0x34 case. Which of the two tables a structure is built from is decided by Base_Construct's switch case, not by +6; the two agree on every retail type. Cross-check: exactly eight types select the animated library and BASES_AN.DTS holds exactly eight roots, numbered as those eight reference them. The 0x2bc0001/0x1e0003 constants are ClassItem registry classIds, not recordSize<<16|version, and 0x2bc0001 is literally BASES.DGS's own leading 4 bytes. See dgs-hd0-notes.md and structure-behaviour.md.",
+      "source": "docs/retail/formats/dgs-hd0-notes.md",
+      "verified": {
+        "bytes": "00405ebc+237",
+        "sha1": "a23897176ef3",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00405fac",
@@ -6879,7 +6885,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_ToggleRadarMode",
-      "description": "The manual's [R]. es2_xref finds one caller, CockpitWidgets_HandleCommand. Flips mech+0x96 between PASSIVE and ACTIVE, gated on +0xa3 so only the locally-piloted machine toggles, then withdraws and posts the radar-mode message (0x2c/0x2d) and plays the mode tone. The F4 scanner's PASS/ACTIVE buttons go through MfdButton_OnClick, which writes +0x96 directly. The player's HERC starts each mission PASSIVE in retail; es2_fieldscan finds no write of +0x96 in a machine constructor. Base_Construct latches it on for structure types 5, 6, 0x1d and 0x1e, the radar masts.",
+      "description": "The manual's [R]. es2_xref finds one caller, CockpitWidgets_HandleCommand, which passes CockpitView+0x203. Flips mech+0x96 between PASSIVE and ACTIVE, gated on +0xa3 so only the locally-piloted machine toggles; whether or not it flipped, it then plays the mode tone for the current mode (Sound_Play 0x1a active, 0x1b passive), withdraws both radar-mode messages (0x2c, 0x2d) from the cockpit message port and posts the one for the current mode. It lights no button itself: the F4 scanner's PASS/ACTIVE pair follows +0x96 through MfdRadarScreen_Update, and a click on either goes through MfdButton_OnClick, which writes +0x96 directly. The player's HERC starts each mission PASSIVE in retail; es2_fieldscan finds no write of +0x96 in a machine constructor. Base_Construct latches it on for structure types 5, 6, 0x1d and 0x1e, the radar masts.",
       "source": "docs/retail/simulation/target-selection.md",
       "verified": {
         "bytes": "0041b468+130",
@@ -14924,8 +14930,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Gunsight_TargetIndicatorPaint",
-      "description": "Gunsight child 5's paint: the HUD target box (pip, four mirrored corner brackets, four edge ticks -- HUD frames 3-6 unlocked, 7-10 locked) and, when the target does not project inside the .GAU's offset-1148 rect, a flat-filled arrow at that rect's border pointing at it. Box side is clamp(2*(shapeRadius>>1)*focal/distance, 25, 75) device pixels, the clamp NOT coordinate-shifted. It is the only widget that calls Cockpit_PopRenderContext before drawing and Cockpit_PushCanvasContext after, so the box alone is clipped to the canopy cutout and goes behind the cockpit frame.",
-      "source": "docs/retail/simulation/hud-target-indicator.md"
+      "description": "Gunsight child 5's paint: the HUD target box (pip, four mirrored corner brackets, four edge ticks -- HUD frames 3-6 unlocked, 7-10 locked) when the aim point is in front and more than 5 shifted by VideoMode_XCoordShift / VideoMode_YCoordShift from the reticle point on either axis, and, when the projected point is outside the .GAU's offset-1148 rect or the target is behind, a flat-filled arrow at that rect's border pointing at it. A target is behind when its view-space depth is inside the near plane (view+0x1e); for the arrow it is also behind when its view-space z exceeds Math_FastMagnitude3D of the eye-to-aim-point vector, which the approximation's low reading allows with the view tilted. A behind target's arrow is aimed at the re-projected view-space point (+-10000, 1024, 0) by the sign of its view-space x, so it points level. Box side is clamp(2*(shapeRadius>>1)*focal/distance, 25, 75) device pixels, the clamp NOT coordinate-shifted. Cockpit_PopRenderContext before the box and Cockpit_PushCanvasContext after it clip the box to the canopy cutout, so it goes behind the cockpit frame. See hud-target-indicator.md.",
+      "source": "docs/retail/simulation/hud-target-indicator.md",
+      "verified": {
+        "bytes": "0043b950+1999",
+        "sha1": "7bf5b063954a",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043c120",
@@ -15480,13 +15492,13 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdFlashComm_SetScreenRow",
-      "description": "(screen, row) copies screen +0x32 into the previous-row word +0x37, then stores row at +0x32. Seven calls from MfdFlashComm_HandleAltKey.",
+      "description": "(screen, row) copies screen +0x32 into the previous-row word +0x37, then stores row at +0x32. es2_xref finds seven calls, all from MfdFlashComm_HandleAltKey.",
       "source": "docs/retail/simulation/mfd.md",
       "verified": {
         "bytes": "0043f9b8+22",
         "sha1": "a0bc6997fcc6",
         "scope": "body",
-        "via": "disasm"
+        "via": "decompile"
       }
     },
     {
@@ -17206,8 +17218,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdFlashComm_NextAvailableRow",
-      "description": "(display) steps display+0xb1 forward with wrap 5->0, skipping rows whose state byte has bit 0, then MfdDisplay_SetSharedRow. The . key (0x34) via MfdDisplay_KeyDispatch.",
-      "source": "docs/retail/simulation/mfd.md"
+      "description": "(display) steps display+0xb1 forward with wrap 5->0, skipping rows whose state byte (comm screen at display+0xd1, +0x2c + row) has bit 0, then stores it through MfdDisplay_SetSharedRow. The loop has no guard against every row being unavailable. The . key (0x34); es2_xref finds one call, from MfdDisplay_KeyDispatch.",
+      "source": "docs/retail/simulation/mfd.md",
+      "verified": {
+        "bytes": "00447014+49",
+        "sha1": "d3c3db15366d",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00447048",
@@ -17215,8 +17233,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdFlashComm_PrevAvailableRow",
-      "description": "(display) as MfdFlashComm_NextAvailableRow but backwards, wrapping 0->5. The , key (0x33) via MfdDisplay_KeyDispatch.",
-      "source": "docs/retail/simulation/mfd.md"
+      "description": "(display) as MfdFlashComm_NextAvailableRow but backwards, wrapping 0->5. The , key (0x33); es2_xref finds one call, from MfdDisplay_KeyDispatch.",
+      "source": "docs/retail/simulation/mfd.md",
+      "verified": {
+        "bytes": "00447048+51",
+        "sha1": "06f96f1807ed",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044707c",
@@ -17224,8 +17248,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdDisplay_SetSharedRow",
-      "description": "(display, row): stores row at display+0xb1, the first int of the screen-shared state block, when it differs from what is there. Direct callers: MfdFlashComm_SelectRow, MfdFlashComm_HandleListClick, 00447014 and 00447048.",
-      "source": "DBSIM decompile and disassembly at 0044707c"
+      "description": "(display, row): stores row at display+0xb1, the first int of the screen-shared state block, when it differs from what is there. es2_xref finds four calls: MfdFlashComm_SelectRow, MfdFlashComm_HandleListClick, MfdFlashComm_NextAvailableRow and MfdFlashComm_PrevAvailableRow.",
+      "source": "DBSIM decompile and disassembly at 0044707c",
+      "verified": {
+        "bytes": "0044707c+25",
+        "sha1": "ec69b58b9a1e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00447098",
@@ -19396,8 +19426,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HddDamageScreen_Update",
-      "description": "Per-frame update and repaint. Picks the name table by category and subject type -- STRINGS0 groups 13/14 for structural (walker/flyer), 15/16 for internal, the mech's own weapon names for weapons -- floods the screen with colour id 3, sets the subject caption, blits the .PDG view for the category (0 structural, 1 internal) at the screen rect's top-left plus the view's own origin, tints its regions through PaperDoll_RecolorRectFromArt, and refills the rows. A row is a .PDG region in file order, not a table entry: the region's index selects both the name and the reading (armour entry 1+id for structural, dependent entry 20+id for internal, combined entry 32+slot for a weapon mount). Both of a row's labels are re-fonted from Damage_PickRegionTint's state through ColorSchemePanels 1, 3, 9, 2, 7. Structural regions 0 and 1 share a rect, so row 0 tints on the mean of both cockpit halves and row 1 tints nothing. Its flag argument gates only the Widget_DrawToCockpit calls, which copy each redrawn rect to the other display page: HddDamageScreen_Tick passes 1, HddDamageScreen_Repaint 0. See docs/retail/simulation/heads-down-display.md.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "description": "Per-frame update and repaint. Picks the name table by category and subject type -- STRINGS0 groups 13/14 for structural (walker/flyer), 15/16 for internal, the mech's own weapon names for weapons -- floods the screen with colour id 3, sets the subject caption, blits the .PDG view for the category (0 structural and weapons, 1 internal) at the screen rect's top-left plus the view's own origin, and the weapon icons over it through HddDamageScreen_BlitWeaponIcons. Structural and internal recolour each icon's rect from id 12 to id 6 in mode 1 after the icons; weapons recolours the whole view to id 6 in mode 3 before them. The row pass comes last: it tints structural and internal regions through PaperDoll_RecolorRectFromArt, on a full repaint even where tint and key agree, so region pixels of the art go back over the icons, and each weapon icon's rect through PaperDoll_RecolorRect; a later update re-tints a row only when its state changes. A row is a .PDG region in file order, not a table entry: the region's index selects both the name and the reading (armour entry 1+id for structural, dependent entry 20+id for internal, combined entry 32+slot for a weapon mount). Both of a row's labels are re-fonted from Damage_PickRegionTint's state through ColorSchemePanels 1, 3, 9, 2, 7. Structural regions 0 and 1 share a rect, so row 0 tints on the mean of both cockpit halves and row 1 tints nothing. Its flag argument gates only the Widget_DrawToCockpit calls, which copy each redrawn rect to the other display page: HddDamageScreen_Tick passes 1, HddDamageScreen_Repaint 0. See docs/retail/simulation/heads-down-display.md.",
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "00450c54+4414",
+        "sha1": "237b6273e69d",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00451d94",
@@ -19415,7 +19451,13 @@
       "confidence": "high",
       "name": "HddDamageScreen_BlitWeaponIcons",
       "description": "Blits every non-null bitmap of a weapon-icon list at its position plus the doll origin, with the entry's blit flags. HddDamageScreen_Update calls it in both of its category branches.",
-      "source": "docs/retail/simulation/heads-down-display.md (Damage detail)"
+      "source": "docs/retail/simulation/heads-down-display.md (Damage detail)",
+      "verified": {
+        "bytes": "00451db8+90",
+        "sha1": "739528a260ec",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00451e86",
@@ -25741,13 +25783,13 @@
       "type": "function",
       "confidence": "high",
       "name": "TerrainZone_PopulateFromBitmap",
-      "description": "(grid, bitmap, bias): the retail zone heightmap loader; TerrainZone_LoadHeightmap calls it for a .dba path. Treats the Dynamix bitmap's 8-bit pixel grid as the heightmap: the width and height shifts (+0x100, +0x104) are the log2 of the bitmap's width (+6) and height (+4), the 16-byte cell array (+0xec) and the per-cell scratch byte array (+0xf0) are allocated, and rows are read bottom-up from the pixel pointer at bitmap+0xe. Each pixel less the bias byte becomes the cell's raw height (+0), the scratch byte is zeroed through HeightGrid_SetCellScratchByte, and +0x114 keeps the largest raw height seen. The +0xf material bits are set with the selector bit 1 kept (& 2): a cell on a block boundary rolls Math_RandomNext() & 0xfff < 0x4ce (about 30%) for material 1 against 0 -- the roll's upper bound is the literal 2 (CMP EBX,0x2 at 0046c5ca), not the mat0 count -- and every other cell copies its block's base cell, the block mask being (1 << (0x15 - mat0[0]+4 - cellShift)) - 1. Afterwards +0x110 (height base) is 0, +0x114 is multiplied by the height scale +0x118 into the zone's highest world height, and HeightOffsetTable_SetScale(grid+0xd0, base, scale) and HeightOffsetTable_Reset run. Every retail ZONE*.DBA is 128x128 (16418 bytes) or 256x256 (65570 bytes), the pixel count plus a 34-byte bitmap header.",
+      "description": "(grid, bitmap, bias): the retail zone heightmap loader; es2_xref finds one call, from TerrainZone_LoadHeightmap. Treats the Dynamix bitmap's 8-bit pixel grid as the heightmap: the width and height shifts (+0x100, +0x104) are the log2 of the bitmap's width (+6) and height (+4), the 16-byte cell array (+0xec) and the per-cell scratch byte array (+0xf0) are allocated, and rows are read bottom-up from the pixel pointer at bitmap+0xe. Each pixel less the bias byte becomes the cell's raw height (+0), the scratch byte is zeroed through HeightGrid_SetCellScratchByte, and +0x114 keeps the largest raw height seen. The +0xf material bits are set with the selector bit 1 kept (& 2): a cell on a block boundary rolls Math_RandomNext() & 0xfff < 0x4ce (about 30%) for material 1 against 0 -- the roll's upper bound is the literal 2 (CMP EBX,0x2 at 0046c5ca), not the mat0 count -- and every other cell copies its block's base cell, the block mask being (1 << (0x15 - mat0[0]+4 - cellShift)) - 1. Afterwards +0x110 (height base) is 0, +0x114 is multiplied by the height scale +0x118 into the zone's highest world height, and HeightOffsetTable_SetScale(grid+0xd0, base, scale) and HeightOffsetTable_Reset run. Every retail ZONE*.DBA is 128x128 (16418 bytes) or 256x256 (65570 bytes), the pixel count plus a 34-byte bitmap header.",
       "source": "memory project_es2_exe_recon (terrain data-structure session)",
       "verified": {
         "bytes": "0046c3c0+653",
         "sha1": "52bbd1b994b7",
         "scope": "body",
-        "via": "disasm"
+        "via": "decompile"
       }
     },
     {
