@@ -230,6 +230,16 @@ public sealed class Es1Mech : IEs1SimObject {
 	/// <summary><c>+0x90</c>, the radar, on or off; no constructor step writes it (docs/es1/simulation/mech.md#construction).</summary>
 	public bool RadarOn { get; set; }
 
+	/// <summary>
+	/// <c>+0xac</c>, a squadmate's radar is kept on (docs/es1/simulation/mech-ai.md#the-fields), which the squad order's
+	/// radar verbs write (<see cref="ReceiveSquadOrder"/>). PLACEHOLDER: its reader, <c>Ai_UpdateWeaponsFree</c>
+	/// (<c>000161dc</c>), is plan step 8's, so nothing reads it yet.
+	/// </summary>
+	public bool RadarKeptOn { get; set; }
+
+	/// <summary>Slot <c>+0x2c</c>, the squad order's receiver, <see cref="Es1SquadOrders.Receive"/>.</summary>
+	public short ReceiveSquadOrder(short reply, Es1SquadOrder order) => Es1SquadOrders.Receive(this, reply, order);
+
 	/// <summary><c>+0xa</c>, the heading, the last of <see cref="Rotation"/>.</summary>
 	public short Heading => Rotation.Z;
 

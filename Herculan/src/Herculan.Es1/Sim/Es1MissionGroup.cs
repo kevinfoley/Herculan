@@ -125,6 +125,79 @@ public sealed class Es1MissionGroup {
 	};
 
 	/// <summary>
+	/// <c>Squad_BroadcastOrder</c> (<c>0001c950</c>)(group, <paramref name="order"/>)
+	/// (docs/es1/simulation/mission-groups.md#the-squad-order-broadcast): each pass scores the members not yet told, not
+	/// destroyed and not the issuer (<see cref="OrderScore"/>), keeps the highest, a tie going to the nearer to the issuer
+	/// (<c>Math_DistanceBetweenPoints</c>), and sends it the order through its slot <c>+0x2c</c>
+	/// (<see cref="Es1Mech.ReceiveSquadOrder"/>) with the reply so far: an acceptance makes the reply 2, a refusal a reply
+	/// of 0 into 1. Verbs 0 and 2 stop at a reply of 2, the others once no member is left to tell. Answers whether the
+	/// reply is 2, someone accepted. Retail reads every member as a machine; a member that is not a HERC, and an order
+	/// with no issuer, are passed over here, engine guards.
+	/// </summary>
+	public bool BroadcastOrder(Es1SquadOrder order) {
+		if (order.Issuer is not { } issuer) {
+			return false;
+		}
+
+		var told = new bool[Members.Count];
+		short reply = 0;
+		while (true) {
+			int nearest = int.MaxValue, chosenIndex = 0;
+			short best = -1;
+			Es1Mech? chosen = null;
+			for (int i = 0; i < Members.Count; i++) {
+				if (told[i] || Members[i] is not Es1Mech member || member.Destroyed || ReferenceEquals(member, issuer)
+						|| OrderScore(member, order.Verb) is not { } score || best > score) {
+					continue;
+				}
+
+				int distance = issuer.Position.ApproxDistanceTo(member.Position);
+				if (distance < nearest || best < score) {
+					best = score;
+					chosenIndex = i;
+					chosen = member;
+					nearest = distance;
+				}
+			}
+
+			if (chosen == null) {
+				break;
+			}
+
+			if (chosen.ReceiveSquadOrder(reply, order) != 0) {
+				reply = 2;
+			} else if (reply == 0) {
+				reply = 1;
+			}
+
+			told[chosenIndex] = true;
+			if (order.Verb is 0 or 2 && reply == 2) {
+				break;
+			}
+		}
+
+		return reply == 2;
+	}
+
+	/// <summary>
+	/// The broadcast's score of <paramref name="member"/> for <paramref name="verb"/>, 1 or 0: for verbs 0, 2 and 5 its
+	/// behaviour state's flag 1 (the descriptor's byte <c>+9</c>) clear, for 1, 8 and <c>0xf</c> set; for 4 its radar
+	/// <c>+0x90</c> off, for 7 on. PLACEHOLDER: for any other verb retail assigns no score, and every member carries the one
+	/// leftover stack value, told in range order when it is −1 or more and not at all below; the stack value is not known,
+	/// so here no member is scored and none is told.
+	/// </summary>
+	private static short? OrderScore(Es1Mech member, short verb) {
+		bool committed = member.Behaviour.Descriptor?.Flags[1] ?? false;
+		return verb switch {
+			0 or 2 or 5 => committed ? (short)0 : (short)1,
+			1 or 8 or 0xf => committed ? (short)1 : (short)0,
+			Es1SquadOrder.RadarOnVerb => member.RadarOn ? (short)0 : (short)1,
+			Es1SquadOrder.RadarOffVerb => member.RadarOn ? (short)1 : (short)0,
+			_ => null,
+		};
+	}
+
+	/// <summary>
 	/// <c>Math_HeadingToward</c> (<c>ES1DBSIM 00063cc8</c>), ES2's: the ground bearing from <paramref name="from"/> to
 	/// <paramref name="to"/> less the quarter turn every bearing carries (docs/es1/simulation/fixed-point-math.md#helpers-that-match).
 	/// </summary>

@@ -47,6 +47,12 @@ public sealed class Es1Label {
 	public int FillColor { get; set; }
 
 	/// <summary>
+	/// <c>+0x20</c>, the hotkey font of a <c>Label_CtorWithAltFont</c> (<c>00031250</c>) label, which
+	/// <see cref="SetTextWithHotkey"/> draws its one character in; a plain label has none.
+	/// </summary>
+	public HudFont? HotkeyFont { get; set; }
+
+	/// <summary>
 	/// <c>Label_SetRect</c>(label, <paramref name="flags"/>, <paramref name="rect"/>, margin): the rect kept; the
 	/// anchor's x at the rect's middle, ((<i>x1</i> − <i>x0</i>) &gt;&gt; 1) + <i>x0</i> + <paramref name="marginX"/>,
 	/// for flags 2, at <i>x1</i> − <paramref name="marginX"/> + 1 for flags 4, and at <i>x0</i> +
@@ -78,15 +84,34 @@ public sealed class Es1Label {
 			return;
 		}
 
-		int pen = (Flags & Centered) != 0
-			? Anchor.X - ((Font.Measure(text) - 1) >> 1)
-			: (Flags & RightAligned) != 0
-				? Anchor.X - (Font.Measure(text) - 1)
-				: Anchor.X;
 		if (FillColor != 0) {
 			canvas.FillRect(Rect.X0, Rect.Y0, Rect.X1, Rect.Y1, (byte)FillColor);
 		}
 
-		canvas.DrawString(Font, text, pen, Anchor.Y);
+		canvas.DrawString(Font, text, Pen(Font, text), Anchor.Y);
 	}
+
+	/// <summary>
+	/// <c>Label_SetTextWithHotkey</c> (<c>00031294</c>)(label, <paramref name="index"/>, <paramref name="text"/>)
+	/// (docs/es1/simulation/cockpit-widgets.md#labels): <see cref="SetText"/>, then character <paramref name="index"/>
+	/// drawn again in <see cref="HotkeyFont"/> with the pen moved right by the width of the characters before it. For an
+	/// index at the text's length retail draws the terminating NUL, which no font has a glyph for, and past it a character
+	/// and width from two stack locals it never wrote; nothing is drawn here for either, an engine guard.
+	/// </summary>
+	public void SetTextWithHotkey(IEs1LabelSurface canvas, int index, string? text) {
+		SetText(canvas, text);
+		if (Font == null || text == null || index >= text.Length) {
+			return;
+		}
+
+		canvas.DrawString(HotkeyFont, text[index].ToString(), Pen(Font, text) + Font.Measure(text[..index]), Anchor.Y);
+	}
+
+	/// <summary>The pen's x <see cref="SetText"/> starts the text at.</summary>
+	private int Pen(HudFont font, string text) =>
+		(Flags & Centered) != 0
+			? Anchor.X - ((font.Measure(text) - 1) >> 1)
+			: (Flags & RightAligned) != 0
+				? Anchor.X - (font.Measure(text) - 1)
+				: Anchor.X;
 }

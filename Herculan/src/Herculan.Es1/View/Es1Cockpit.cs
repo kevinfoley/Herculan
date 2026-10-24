@@ -242,6 +242,18 @@ public sealed class Es1Cockpit {
 		return null;
 	}
 
+	/// <summary>
+	/// <c>Squad_BroadcastOrderFromCockpit</c> (<c>0002b448</c>)(cockpit, <paramref name="order"/>)
+	/// (docs/es1/simulation/cockpit-panel.md#the-squadmates): the machine stored as the order's issuer, and
+	/// <see cref="Es1MissionGroup.BroadcastOrder"/> of <c>CockpitSquadGroup</c> (<c>00092d6c</c>) answered. That global
+	/// is the group of the player's machine, which <c>Cockpit_LoadSquadmatePilots</c> stores at the mission's start; it is
+	/// read from the machine here. With no group, where retail reads through a null pointer, false, an engine guard.
+	/// </summary>
+	internal bool BroadcastOrder(Es1SquadOrder order) {
+		order.Issuer = Machine;
+		return Machine?.Group is { } group && group.BroadcastOrder(order);
+	}
+
 	/// <summary><c>+0x216</c>, <c>+0x21a</c>, <c>+0x21e</c>, the bottom, left and right screen-edge strips, once built.</summary>
 	public Es1ScrollTrigger? BottomStrip { get; private set; }
 

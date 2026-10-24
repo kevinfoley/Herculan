@@ -45,8 +45,17 @@ public sealed class Es1MfdDisplay {
 	/// <summary>The keys FLASH COMM takes for its rows, the table <c>00094084</c>: <c>A</c>, <c>G</c>, <c>H</c>, <c>O</c>, <c>C</c>, <c>E</c> and <c>F</c>.</summary>
 	public static readonly ushort[] RowKeys = [0x1e, 0x22, 0x23, 0x18, 0x2e, 0x12, 0x21];
 
-	/// <summary>The row each of <see cref="RowKeys"/> selects.</summary>
+	/// <summary>The keys <see cref="HandleAltKey"/> takes, the table <c>000940bc</c>: [Alt] with each of <see cref="RowKeys"/>.</summary>
+	public static readonly ushort[] AltRowKeys = [0x21e, 0x222, 0x223, 0x218, 0x22e, 0x212, 0x221];
+
+	/// <summary>The row each of <see cref="RowKeys"/> and <see cref="AltRowKeys"/> selects.</summary>
 	public static readonly int[] RowKeyRows = [0, 1, 2, 3, 4, 4, 5];
+
+	/// <summary>
+	/// The order <see cref="Es1MfdFlashCommScreen.SelectedVerb"/> must answer after [Alt]+C and [Alt]+E, the keys of row
+	/// 4's two orders, for the key to transmit: 4 and 7.
+	/// </summary>
+	private static readonly int[] AltKeyVerbs = [-1, -1, -1, -1, Es1SquadOrder.RadarOnVerb, Es1SquadOrder.RadarOffVerb, -1];
 
 	/// <summary>
 	/// <c>MfdScannerRanges</c> (<c>000bd4f4</c>), in world units, which the constructor stores; the last is the radar
@@ -126,7 +135,7 @@ public sealed class Es1MfdDisplay {
 		Shared.ScannerRange = ScannerRanges[RangeIndex];
 
 		_screens[Status] = new Es1MfdStatusScreen(cockpit, ScreenRect, Shared, fonts, strings, flyers);
-		_screens[FlashComm] = new Es1MfdPlaceholderScreen(cockpit, ScreenRect, Shared);
+		_screens[FlashComm] = FlashCommScreen = new Es1MfdFlashCommScreen(cockpit, this, ScreenRect, Shared, fonts, strings);
 		_screens[NavMap] = new Es1MfdNavMapScreen(cockpit, ScreenRect, Shared);
 		_screens[Scanner] = new Es1MfdScannerScreen(cockpit, ScreenRect, Shared, fonts, strings, radar);
 		_screens[TargetStatus] = new Es1MfdStatusScreen(cockpit, ScreenRect, Shared, fonts, strings, flyers);
@@ -164,6 +173,15 @@ public sealed class Es1MfdDisplay {
 
 	/// <summary><c>+0x96</c>–<c>+0xaa</c>, the six screens by mode.</summary>
 	public IReadOnlyList<Es1MfdScreen> Screens => _screens;
+
+	/// <summary><c>+0x9a</c>, mode 1's screen, FLASH COMM, which the order helpers read whatever the mode.</summary>
+	public Es1MfdFlashCommScreen FlashCommScreen { get; }
+
+	/// <summary>
+	/// The order record <c>000b0ddc</c>, a global <see cref="Transmit"/> fills and broadcasts; kept with the display here,
+	/// as <see cref="OfflineLabel"/>.
+	/// </summary>
+	public Es1SquadOrder Order { get; } = new();
 
 	/// <summary><c>+0xae</c>–<c>+0xb3</c>, a byte a mode: while the current mode's is set, <see cref="Update"/> runs its screen's update.</summary>
 	public IReadOnlyList<bool> ScreenFlags => _screenFlags;
@@ -471,54 +489,125 @@ public sealed class Es1MfdDisplay {
 
 	/// <summary>
 	/// <c>MfdFlashComm_HandleAltKey</c> (<c>0003a890</c>)(display, <paramref name="code"/>), which the cockpit asks first
-	/// with every code its own cases do not take: [Alt] with <c>A</c>, <c>G</c>, <c>H</c>, <c>O</c>, <c>C</c>, <c>E</c>
-	/// or <c>F</c> picks and transmits a FLASH COMM order, answering 1. PLACEHOLDER: FLASH COMM is plan step 6c5 part C;
-	/// until then it takes no code and answers 0.
+	/// with every code its own cases do not take (docs/es1/simulation/mfd-flash-comm.md#the-order-helpers): one of
+	/// <see cref="AltRowKeys"/>, from any screen, puts its row in FLASH COMM's
+	/// <see cref="Es1MfdFlashCommScreen.SetScreenRow"/>, transmits it and selects it (<see cref="SelectRow"/>, which acts in
+	/// mode 1 alone), and answers 1; [Alt]+C and [Alt]+E, both row 4, transmit and select only when the screen's verb is
+	/// then 4 and 7, the order the row shows. Any other code answers 0.
 	/// </summary>
 	public short HandleAltKey(ushort code) {
-		_ = code;
-		return 0;
+		int key = Array.IndexOf(AltRowKeys, code);
+		if (key < 0) {
+			return 0;
+		}
+
+		int row = RowKeyRows[key];
+		FlashCommScreen.SetScreenRow(row);
+		if (AltKeyVerbs[key] < 0 || FlashCommScreen.SelectedVerb() == AltKeyVerbs[key]) {
+			Transmit();
+			SelectRow(row, ClickSurface);
+		}
+
+		return 1;
 	}
 
 	/// <summary>
 	/// <c>MfdFlashComm_HandleListClick</c> (<c>0003ac04</c>)(display, <paramref name="point"/>, <paramref name="surface"/>),
-	/// the click surface's left click. PLACEHOLDER: FLASH COMM's row pick, plan step 6c5 part C; until then it does nothing.
+	/// the click surface's left click (docs/es1/simulation/mfd-flash-comm.md#picking-a-row): in mode 1 alone, the first
+	/// of FLASH COMM's row labels, in row order, whose rect holds the point, all four edges inclusive. A hit on another row
+	/// than the selected one, or any hit without a double click, selects it (<see cref="SetSharedRow"/>) and sets the
+	/// mode's byte; a double click on the selected row presses <c>XMIT</c> (<see cref="PressButton"/>), whose click
+	/// transmits nothing while the double click is set (<see cref="OnChildClick"/>), so it sends no order. That is the
+	/// code as it reads; whether retail's double click transmits is docs/es1/simulation/mfd-flash-comm.md#open.
 	/// </summary>
 	public void HandleListClick((int X, int Y) point, Es1MfdClickSurface surface) {
-		_ = point;
 		_ = surface;
+		if (Mode != FlashComm) {
+			return;
+		}
+
+		for (int row = 0; row < Es1MfdFlashCommScreen.RowCount; row++) {
+			var rect = FlashCommScreen.Rows[row].Rect;
+			if (point.Y < rect.Y0 || point.Y > rect.Y1 || point.X < rect.X0 || point.X > rect.X1) {
+				continue;
+			}
+
+			if (!Cockpit.MouseDoubleClick || Shared.FlashCommRow != row) {
+				SetSharedRow(row);
+				_screenFlags[FlashComm] = true;
+				return;
+			}
+
+			PressButton(XmitButton);
+			return;
+		}
 	}
 
 	/// <summary>
 	/// <c>MfdFlashComm_Transmit</c> (<c>0003adc8</c>)(display), the order transmit
-	/// (docs/es1/simulation/mfd-flash-comm.md#the-order-helpers). PLACEHOLDER: plan step 6c5 part C; until then it does
-	/// nothing.
+	/// (docs/es1/simulation/mfd-flash-comm.md#the-order-helpers): FLASH COMM's
+	/// <see cref="Es1MfdFlashCommScreen.SelectedVerb"/> stored as <see cref="Order"/>'s verb, the order broadcast from the
+	/// cockpit (<see cref="Es1Cockpit.BroadcastOrder"/>), and, when someone accepted, the screen's row switched to its
+	/// other order (<see cref="Es1MfdFlashCommScreen.ToggleRowVariant"/>).
 	/// </summary>
 	public void Transmit() {
+		Order.Verb = (short)FlashCommScreen.SelectedVerb();
+		if (Cockpit.BroadcastOrder(Order)) {
+			FlashCommScreen.ToggleRowVariant();
+		}
 	}
 
 	/// <summary>
-	/// <c>MfdFlashComm_PrevAvailableRow</c> (<c>0003abac</c>)(display), button 11's. PLACEHOLDER: plan step 6c5 part C;
-	/// until then it does nothing.
+	/// <c>MfdFlashComm_PrevAvailableRow</c> (<c>0003abac</c>)(display), button 11's
+	/// (docs/es1/simulation/mfd-flash-comm.md#picking-a-row): <see cref="StepAvailableRow"/> back, 0 wrapping to 5.
 	/// </summary>
-	public void PreviousAvailableRow() {
-	}
+	public void PreviousAvailableRow() => StepAvailableRow(-1);
 
 	/// <summary>
-	/// <c>MfdFlashComm_NextAvailableRow</c> (<c>0003ab70</c>)(display), button 12's. PLACEHOLDER: plan step 6c5 part C;
-	/// until then it does nothing.
+	/// <c>MfdFlashComm_NextAvailableRow</c> (<c>0003ab70</c>)(display), button 12's
+	/// (docs/es1/simulation/mfd-flash-comm.md#picking-a-row): <see cref="StepAvailableRow"/> forward, 5 wrapping to 0.
 	/// </summary>
-	public void NextAvailableRow() {
-	}
+	public void NextAvailableRow() => StepAvailableRow(1);
 
 	/// <summary>
 	/// <c>MfdFlashComm_SelectRow</c> (<c>0003acd4</c>)(display, <paramref name="row"/>, <paramref name="surface"/>), a row
-	/// key's pick (docs/es1/simulation/mfd-flash-comm.md#picking-a-row). PLACEHOLDER: plan step 6c5 part C; until then it
-	/// does nothing.
+	/// key's pick (docs/es1/simulation/mfd-flash-comm.md#picking-a-row): only for the display's own click surface and in
+	/// mode 1, <see cref="SetSharedRow"/> and the mode's byte set.
 	/// </summary>
 	public void SelectRow(int row, Es1MfdClickSurface surface) {
-		_ = row;
-		_ = surface;
+		if (!ReferenceEquals(surface, ClickSurface) || Mode != FlashComm) {
+			return;
+		}
+
+		SetSharedRow(row);
+		_screenFlags[FlashComm] = true;
+	}
+
+	/// <summary>
+	/// <c>MfdDisplay_SetSharedRow</c> (<c>0003abe8</c>)(display, <paramref name="row"/>): the row stored as the shared
+	/// block's <see cref="Es1MfdSharedBlock.FlashCommRow"/> when it differs.
+	/// </summary>
+	public void SetSharedRow(int row) {
+		if (Shared.FlashCommRow != row) {
+			Shared.FlashCommRow = row;
+		}
+	}
+
+	/// <summary>
+	/// The two arrows' step: from the shared block's row, by <paramref name="step"/>, wrapping within the six, past every
+	/// row whose state has <see cref="Es1MfdFlashCommScreen.Unavailable"/> set, then <see cref="SetSharedRow"/>. With all
+	/// six unavailable retail steps forever; here it stops after six steps, on the row it started from, an engine guard.
+	/// </summary>
+	private void StepAvailableRow(int step) {
+		int row = Shared.FlashCommRow;
+		for (int i = 0; i < Es1MfdFlashCommScreen.RowCount; i++) {
+			row = (row + step + Es1MfdFlashCommScreen.RowCount) % Es1MfdFlashCommScreen.RowCount;
+			if ((FlashCommScreen.States[row] & Es1MfdFlashCommScreen.Unavailable) == 0) {
+				break;
+			}
+		}
+
+		SetSharedRow(row);
 	}
 
 	/// <summary>
