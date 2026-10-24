@@ -209,14 +209,19 @@ def is_stub(key):
 
 
 def split_scores(names):
-    """{copy name: base}: each '<base><Tag>Copy' name split where the base recurs with the most tags
-    and the tag with the most bases; a tag must start with a capital, recur under two bases, and leave
-    a base with a method part ('Class_Method'), and the base or one of the tag's bases must be an
-    original's name, or the tag or the base recur three times. A name whose whole stem is itself the
-    base of tagged copies is untagged. Those two tests keep an untagged copy whole:
-    'TSObj_GetRadiusCopy' and 'Drawable_GetRadiusCopy' would otherwise make 'Radius' a tag under
-    'TSObj_Get' and 'Drawable_Get', neither a function. A name no split fits is its own base less
-    'Copy'."""
+    """{copy name: base}: each '<base><Tag>Copy' name split where the product of the base's tag count
+    and the tag's base count is largest, an original's name as the base winning a tie; a tag must
+    start with a capital, recur under two bases, and leave a base with a method part ('Class_Method'),
+    and the base or one of the tag's bases must be an original's name, or the tag or the base recur
+    three times. The product keeps a two-word tag whole: 'Gauge' recurs under every '*Gauge' module's
+    base ('X_PaintNoOpWeapon', 'X_PaintNoOpShields'), each with one tag, where 'WeaponGauge' recurs
+    under bases that carry many. A name whose whole stem is itself the base of tagged copies is
+    untagged, unless those copies' tags are the second words of two-word tags that recur under two
+    bases: 'HeapPtr_DtorMechCopy' is tagged although 'HeapPtr_DtorMechSysCopy' makes
+    'HeapPtr_DtorMech' a base, since 'MechSys' recurs. Those tests keep an untagged copy
+    whole: 'TSObj_GetRadiusCopy' and 'Drawable_GetRadiusCopy' would otherwise make 'Radius' a tag
+    under 'TSObj_Get' and 'Drawable_Get', neither a function. A name no split fits is its own base
+    less 'Copy'."""
     copies = [n for n in names if n.endswith("Copy") and len(n) > 4]
     originals = {n for n in names if not n.endswith("Copy")}
     splits = {}
@@ -231,13 +236,15 @@ def split_scores(names):
             by_base[b].add(t)
     out = {}
     for n, ss in splits.items():
-        if by_base[n[:-4]]:
-            out[n] = n[:-4]       # the whole stem is the base of tagged copies: this one is untagged
-            continue
-        good = [(len(by_base[b]) + len(by_tag[t]) + (b in originals), b) for b, t in ss
+        good = [(len(by_base[b]) * len(by_tag[t]), b in originals, len(by_base[b]), b) for b, t in ss
                 if (len(by_tag[t]) >= 2 or len(by_base[b]) >= 2)
                 and (b in originals or by_tag[t] & originals or len(by_tag[t]) >= 3 or len(by_base[b]) >= 3)]
-        out[n] = max(good)[1] if good else n[:-4]
+        tags = by_base[n[:-4]]
+        two_word = any(all(len(by_tag[t + u]) >= 2 for u in tags) for _b, t in ss)
+        if tags and not two_word:
+            out[n] = n[:-4]       # the whole stem is the base of tagged copies: this one is untagged
+            continue
+        out[n] = max(good)[3] if good else n[:-4]
     return out
 
 
