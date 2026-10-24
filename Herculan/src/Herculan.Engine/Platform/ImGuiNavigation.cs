@@ -31,6 +31,19 @@ public static class ImGuiNavigation {
 		igNavRestoreHighlightAfterMove();
 	}
 
+	/// <summary>
+	/// Focuses the window being drawn and puts the keyboard and gamepad navigation on its body, with the highlight on
+	/// its first item, or the one <c>SetItemDefaultFocus</c> names, from the next frame. Call between the window's
+	/// <c>Begin</c> and its first item, on the frame it appears: a popup raised while the mouse was last used otherwise
+	/// comes up with the highlight hidden, which a gamepad's A does not press.
+	/// </summary>
+	public static void FocusWindowItems() {
+		nint window = igGetCurrentWindow();
+		igFocusWindow(window, 0);
+		igNavInitWindow(window, true);
+		igNavRestoreHighlightAfterMove();
+	}
+
 	[StructLayout(LayoutKind.Sequential)]
 	private struct ImRect {
 		public Vector2 Min;

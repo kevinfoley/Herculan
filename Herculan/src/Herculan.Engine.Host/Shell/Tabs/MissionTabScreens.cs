@@ -279,10 +279,12 @@ sealed class MissionTabScreens {
 		}
 
 		string dataDirectory = ShellWorkingFiles.DataDirectory(_installRoot);
+		string? failure = "There is no game in progress to launch.";
 		string? scriptPath = _game.LoadedGame == null ? null
-			: ShellMissionLaunch.WriteHandoff(dataDirectory, _game.WorkingFiles, _game.LoadedGame, _game.Hangar);
+			: ShellMissionLaunch.WriteHandoff(dataDirectory, _game.WorkingFiles, _game.LoadedGame, _game.Hangar, out failure);
 		if (scriptPath == null) {
-			Console.WriteLine($"Rock & Roll: no working script.dat ({_game.WorkingFiles.Script}) to launch.");
+			Console.WriteLine($"Rock & Roll: {failure}");
+			_game.ReportFailure(ShellFailure.MissionLoad, failure ?? string.Empty);
 			return;
 		}
 

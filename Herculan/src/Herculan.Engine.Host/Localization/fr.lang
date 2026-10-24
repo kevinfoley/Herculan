@@ -107,12 +107,20 @@ install_prompt.install         Installer depuis un disque...
 install_prompt.quit            Quitter
 install_prompt.no_path         Tapez ou collez le chemin du dossier d'Earthsiege 2.
 install_prompt.not_an_install  {0} n'est pas un dossier d'Earthsiege 2 : il ne contient aucun dossier {1}.
+install_prompt.on_disc         Le CD ne peut pas servir d'emplacement d'installation, car les sauvegardes ne peuvent pas être écrites sur le CD.
 mission_load.window_title      HERCULAN Engine — Erreur
 mission_load.missing_file      La mission ne peut pas démarrer : {0} est manquant. Lancez la mission depuis les menus, qui écrivent ce fichier.
 save.auto_name                 {0} {1} Mission {2}
 save.auto_save_name            SAUVEGARDE AUTO {0}
 crash.window_title            HERCULAN Engine — Erreur
 crash.message                 HERCULAN s'est arrêté à cause d'une erreur : {0} Les détails se trouvent dans {1}.
+error.title                    Erreur
+error.window_title             HERCULAN Engine — Erreur
+error.new_career               La nouvelle partie n'a pas pu démarrer.
+error.mission_load             La mission n'a pas pu être chargée.
+error.slot_load                La partie sauvegardée n'a pas pu être chargée.
+error.save                     La partie n'a pas pu être sauvegardée.
+error.debrief                  Les résultats de la mission n'ont pas pu être lus.
 menu.debug                     Débogage
 menu.tweaks                    Ajustements
 menu.accessibility             Accessibilité

@@ -54,11 +54,22 @@ string imguiItalicFontPath = Path.Combine(AppContext.BaseDirectory,
 string? installRoot = options.InstallPath != null ? GameInstall.Locate(options.InstallPath)
 	: options.AskForInstall ? null
 	: GameInstall.Locate();
+
+// A disc is never the install, however it was found: the prompt opens on it with the reason, and a command line or a
+// --screenshot run, with no prompt, stops with it.
+string? onDisc = installRoot != null && GameInstall.IsOnDisc(installRoot) ? installRoot : null;
+if (onDisc != null) {
+	installRoot = null;
+}
 if (installRoot == null && options.InstallPath == null && options.ScreenshotPath == null) {
-	installRoot = InstallPrompt.Run(localization, imguiFontPath);
+	installRoot = InstallPrompt.Run(localization, imguiFontPath, onDisc);
 	if (installRoot == null) {
 		return 1;
 	}
+}
+if (installRoot == null && onDisc != null) {
+	HostLog.Fail($"{onDisc}: {localization.GetStringOrKey("install_prompt.on_disc")}");
+	return 1;
 }
 if (installRoot == null) {
 	HostLog.Fail(

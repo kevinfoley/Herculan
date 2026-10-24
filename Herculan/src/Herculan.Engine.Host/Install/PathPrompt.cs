@@ -7,7 +7,7 @@ namespace Herculan.Engine.Host.Install;
 /// <summary>
 /// The body of a "choose a folder" or "choose a file" prompt: a message, a path field with the platform's own
 /// picker beside it (<see cref="NativePathPicker"/>), the reason the last choice was refused, and an accept and
-/// a dismiss button at the foot. It draws into whatever ImGui window is current, so <see cref="InstallPrompt"/>
+/// a dismiss button at the foot, accept greyed while the refused choice is still in the field. It draws into whatever ImGui window is current, so <see cref="InstallPrompt"/>
 /// shows it as a window of its own and <see cref="Settings.SettingsWindow"/> as a modal.
 /// </summary>
 sealed class PathPrompt {
@@ -30,6 +30,9 @@ sealed class PathPrompt {
 	private readonly string? _alternativeKey;
 	private string _path;
 	private string? _error;
+	// The path field as it stood when Accept refused it, while the refusal stands: accept is greyed until the field
+	// changes, which takes the refusal down.
+	private string? _refusedPath;
 	private Task<string?>? _picking;
 
 	/// <param name="keyPrefix">
@@ -97,9 +100,16 @@ sealed class PathPrompt {
 			outcome = Outcome.Accepted;
 		}
 
+		// A path typed since the refusal is a new choice, which the refusal no longer speaks for.
+		if (_refusedPath != null && _path != _refusedPath) {
+			_refusedPath = null;
+			_error = null;
+		}
+
 		if (canBrowse) {
 			ImGui.SameLine();
 			if (ImGui.Button(browseLabel)) {
+				_refusedPath = null;
 				_error = null;
 				_picking = NativePathPicker.PickAsync(_localization.GetStringOrKey(_keyPrefix + ".picker_title"), _path, owner, _fileFilter);
 			}
@@ -129,9 +139,11 @@ sealed class PathPrompt {
 		if (ImGui.GetCursorPosY() < foot) {
 			ImGui.SetCursorPosY(foot);
 		}
+		ImGui.BeginDisabled(_refusedPath != null);
 		if (row.Button(acceptLabel) && Accept()) {
 			outcome = Outcome.Accepted;
 		}
+		ImGui.EndDisabled();
 		if (alternativeLabel != null && row.Button(alternativeLabel)) {
 			outcome = Outcome.Alternative;
 		}
@@ -143,11 +155,15 @@ sealed class PathPrompt {
 		return outcome;
 	}
 
-	/// <summary>Takes the path field's path if <c>refusal</c> has nothing against it; otherwise says why not.</summary>
+	/// <summary>
+	/// Takes the path field's path if <c>refusal</c> has nothing against it; otherwise says why not, and greys the accept
+	/// button until the field changes.
+	/// </summary>
 	internal bool Accept() {
 		string path = _path.Trim().Trim('"');
 		_error = path.Length == 0 ? _localization.GetStringOrKey(_keyPrefix + ".no_path") : _refusal(path);
 		if (_error != null) {
+			_refusedPath = _path;
 			return false;
 		}
 

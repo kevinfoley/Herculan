@@ -157,10 +157,14 @@ public static class ShellTrainingLaunch {
 		var mission = MissionGenerator.Load(msn, text, flags, clearList, roll);
 		MissionGeneration.WriteHeader(mission.Header, header);
 
-		Directory.CreateDirectory(directory);
 		string scriptPath = CaseInsensitivePath.Combine(directory, MissionLoader.ScriptFileName);
-		ShellWorkingFiles.WriteMissionFile(scriptPath, mission.WriteScriptDat());
-		ShellWorkingFiles.WriteMissionFile(CaseInsensitivePath.Combine(directory, MissionLoader.TextFileName), mission.WriteMissionText());
+		if (!ShellWorkingFiles.TryWrite(() => {
+				Directory.CreateDirectory(directory);
+				ShellWorkingFiles.WriteMissionFile(scriptPath, mission.WriteScriptDat());
+				ShellWorkingFiles.WriteMissionFile(CaseInsensitivePath.Combine(directory, MissionLoader.TextFileName), mission.WriteMissionText());
+			}, out failure)) {
+			return null;
+		}
 
 		int positions = BuildSquad(content, options, row, instantAction, mission, hangar);
 
@@ -171,10 +175,13 @@ public static class ShellTrainingLaunch {
 
 		var flagBytes = new byte[flags.Length * 2];
 		Buffer.BlockCopy(flags, 0, flagBytes, 0, flagBytes.Length);
-		File.WriteAllBytes(CaseInsensitivePath.Combine(directory, ShellMissionLaunch.MissionVarFileName), flagBytes);
-		File.WriteAllBytes(CaseInsensitivePath.Combine(directory, MissionLoader.PlayerFileName), ShellMissionLaunch.ExportPlayerMec(hangar));
+		if (!ShellWorkingFiles.TryWrite(() => {
+				File.WriteAllBytes(CaseInsensitivePath.Combine(directory, ShellMissionLaunch.MissionVarFileName), flagBytes);
+				File.WriteAllBytes(CaseInsensitivePath.Combine(directory, MissionLoader.PlayerFileName), ShellMissionLaunch.ExportPlayerMec(hangar));
+			}, out failure)) {
+			return null;
+		}
 
-		failure = null;
 		return new ShellTrainingHandoff(scriptPath, missionPath, game, hangar, positions);
 	}
 
