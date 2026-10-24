@@ -68,16 +68,62 @@ public class Es1GauConsoleButtonsBlock {
 }
 
 /// <summary>
-/// An instrument's block of <see cref="Es1GauFile"/> whose bytes the doc names only as a block
-/// (docs/es1/formats/gau-cockpit-layout.md#differences-from-es2): its first 16 bytes, which <see cref="Es1GauFile.Loaded"/>
-/// offsets as a rect, and the rest kept whole.
+/// The energy meter's block at 548 of <see cref="Es1GauFile"/>, the <c>int32</c> from 548 to 595 that
+/// <c>EnergyPoolGauge_Ctor</c> (<c>00039818</c>) reads (docs/es1/formats/gau-cockpit-layout.md#the-energy-meter-block-at-548),
+/// then 20 bytes it does not.
 /// </summary>
-public class Es1GauInstrumentBlock {
-	/// <summary>The block's first 16 bytes.</summary>
-	public Es1GauRect Header { get; set; }
+public class Es1GauEnergyMeterBlock {
+	/// <summary><c>int32</c> 0 and 1, offset 548: the origin, added to the bar's rect.</summary>
+	public PixelPoint Origin { get; set; }
 
-	/// <summary>The block's bytes past <see cref="Header"/>.</summary>
-	public byte[] Rest { get; set; } = [];
+	/// <summary><c>int32</c> 2, offset 556: unread; the gauge base copies it with the origin as its rect, which the constructor replaces.</summary>
+	public int Int2 { get; set; }
+
+	/// <summary><c>int32</c> 3, offset 560: unread, as <see cref="Int2"/>.</summary>
+	public int Int3 { get; set; }
+
+	/// <summary><c>int32</c> 4 to 7, offset 564: the bar's rect.</summary>
+	public Es1GauRect Bar { get; set; }
+
+	/// <summary><c>int32</c> 8, offset 580: 3 builds a horizontal LED bar graph, 4 a vertical one, and any other value no bar.</summary>
+	public int Orientation { get; set; }
+
+	/// <summary><c>int32</c> 9, offset 584: 0 for no clip shape, else <i>n</i> of the clip file <c>edg\ENG_CLP</c><i>n</i>.</summary>
+	public int ClipFile { get; set; }
+
+	/// <summary><c>int32</c> 0xa, offset 588: the bar's even stripes' shade.</summary>
+	public int EvenShade { get; set; }
+
+	/// <summary><c>int32</c> 0xb, offset 592: the bar's odd stripes' shade.</summary>
+	public int OddShade { get; set; }
+
+	/// <summary>Offsets 596-615, which the constructor does not read.</summary>
+	public byte[] Bytes596 { get; set; } = new byte[20];
+}
+
+/// <summary>
+/// The shield display's block at 616 of <see cref="Es1GauFile"/>, the <c>int32</c> from 616 to 695 that
+/// <c>ShieldsGauge_Ctor</c> (<c>00038f34</c>) reads (docs/es1/formats/gau-cockpit-layout.md#the-shield-display-block-at-616),
+/// then 32 bytes it does not.
+/// </summary>
+public class Es1GauShieldDisplayBlock {
+	/// <summary><c>int32</c> 0 to 3, offset 616: the gauge's rect, whose first pair is the origin added to the four rects below.</summary>
+	public Es1GauRect Rect { get; set; }
+
+	/// <summary><c>int32</c> 4 to 7, offset 632: the front button's rect.</summary>
+	public Es1GauRect FrontButton { get; set; }
+
+	/// <summary><c>int32</c> 8 to 0xb, offset 648: the rear button's rect.</summary>
+	public Es1GauRect RearButton { get; set; }
+
+	/// <summary><c>int32</c> 0xc to 0xf, offset 664: the front readout's rect.</summary>
+	public Es1GauRect FrontReadout { get; set; }
+
+	/// <summary><c>int32</c> 0x10 to 0x13, offset 680: the rear readout's rect.</summary>
+	public Es1GauRect RearReadout { get; set; }
+
+	/// <summary>Offsets 696-727, which the constructor does not read.</summary>
+	public byte[] Bytes696 { get; set; } = new byte[32];
 }
 
 /// <summary>

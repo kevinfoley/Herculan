@@ -32,6 +32,17 @@ public sealed class Es1ClipBlock {
 		regions.Rects.Select(rect => (0, (int)rect.Top, Es1CockpitViews.ScreenWidth - 1, (int)rect.Bottom)).ToArray(),
 		regions.Blocks);
 
+	/// <summary>
+	/// The energy meter's shift of its <c>edg\ENG_CLP</c> regions (docs/es1/formats/hd-ed-clip-regions.md#which-files): each
+	/// span block's first row moved down by <paramref name="dy"/> and each of its spans' two columns right by
+	/// <paramref name="dx"/>, as <c>int16</c>. Retail reads every region's data as a span block's; a rect region, which no
+	/// retail <c>ENG_CLP</c> file holds, is kept as loaded here, an engine guard.
+	/// </summary>
+	public Es1ClipBlock Shifted(int dx, int dy) => new(_rects, _spans.Select(block => new Es1ClipSpanBlock {
+		FirstRow = (short)(block.FirstRow + dy),
+		Rows = block.Rows.Select(span => new Es1ClipSpan { Start = (short)(span.Start + dx), End = (short)(span.End + dx) }).ToArray(),
+	}).ToArray());
+
 	/// <summary>A block of the one rect region {<paramref name="x0"/>, <paramref name="y0"/>, <paramref name="x1"/>, <paramref name="y1"/>}, its bounds included.</summary>
 	public static Es1ClipBlock FromRect(int x0, int y0, int x1, int y1) => new([(x0, y0, x1, y1)], []);
 

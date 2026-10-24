@@ -45,8 +45,25 @@ public class Es1GauFileTransformer : ByteTransformer<Es1GauFile> {
 			Rects388 = ReadRects(2),
 			Bytes420 = IndexSegment(32),
 			ConsoleButtons = new Es1GauConsoleButtonsBlock { Header = ReadRect(), Buttons = ReadRects(Es1GauFile.ConsoleButtonCount) },
-			EnergyMeterBlock = ReadInstrumentBlock(68),
-			ShieldDisplayBlock = ReadInstrumentBlock(112),
+			EnergyMeterBlock = new Es1GauEnergyMeterBlock {
+				Origin = ReadPoint(),
+				Int2 = IndexIntLE(),
+				Int3 = IndexIntLE(),
+				Bar = ReadRect(),
+				Orientation = IndexIntLE(),
+				ClipFile = IndexIntLE(),
+				EvenShade = IndexIntLE(),
+				OddShade = IndexIntLE(),
+				Bytes596 = IndexSegment(20),
+			},
+			ShieldDisplayBlock = new Es1GauShieldDisplayBlock {
+				Rect = ReadRect(),
+				FrontButton = ReadRect(),
+				RearButton = ReadRect(),
+				FrontReadout = ReadRect(),
+				RearReadout = ReadRect(),
+				Bytes696 = IndexSegment(32),
+			},
 			MfdPanelBlock = new Es1GauMfdPanelBlock { Header = ReadRect(), Rects744 = ReadRects(13), Bytes952 = IndexSegment(48) },
 			ThrottleBlock = new Es1GauThrottleBlock {
 				Origin = ReadPoint(),
@@ -92,8 +109,6 @@ public class Es1GauFileTransformer : ByteTransformer<Es1GauFile> {
 	private Es1GauRect ReadRect() => new(IndexIntLE(), IndexIntLE(), IndexIntLE(), IndexIntLE());
 
 	private Es1GauRect[] ReadRects(int count) => Enumerable.Range(0, count).Select(_ => ReadRect()).ToArray();
-
-	private Es1GauInstrumentBlock ReadInstrumentBlock(int length) => new() { Header = ReadRect(), Rest = IndexSegment(length - 16) };
 
 	public override byte[]? Write(Es1GauFile source) {
 		using var o = new MemoryStream();
@@ -143,10 +158,24 @@ public class Es1GauFileTransformer : ByteTransformer<Es1GauFile> {
 		Rect(source.ConsoleButtons.Header);
 		Rects(source.ConsoleButtons.Buttons);
 
-		foreach (var block in new[] { source.EnergyMeterBlock, source.ShieldDisplayBlock }) {
-			Rect(block.Header);
-			w.Write(block.Rest);
-		}
+		var energy = source.EnergyMeterBlock;
+		Point(energy.Origin);
+		w.Write(energy.Int2);
+		w.Write(energy.Int3);
+		Rect(energy.Bar);
+		w.Write(energy.Orientation);
+		w.Write(energy.ClipFile);
+		w.Write(energy.EvenShade);
+		w.Write(energy.OddShade);
+		w.Write(energy.Bytes596);
+
+		var shields = source.ShieldDisplayBlock;
+		Rect(shields.Rect);
+		Rect(shields.FrontButton);
+		Rect(shields.RearButton);
+		Rect(shields.FrontReadout);
+		Rect(shields.RearReadout);
+		w.Write(shields.Bytes696);
 
 		Rect(source.MfdPanelBlock.Header);
 		Rects(source.MfdPanelBlock.Rects744);

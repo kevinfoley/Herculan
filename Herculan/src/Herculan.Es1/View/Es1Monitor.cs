@@ -1,4 +1,5 @@
 using HercWorks.Core.Data.File.Dyn;
+using HercWorks.Core.Data.Struct;
 using Herculan.Engine.Render;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
@@ -65,6 +66,40 @@ public sealed class Es1Monitor : IEs1WorldLayer, IDisposable {
 		_surface.SetPalette(rgba);
 		_palette = palette;
 		_paletteSet = true;
+	}
+
+	/// <summary>
+	/// <c>Palette_InstallRange</c> (<c>ES1DBSIM 00027e98</c>)(<paramref name="entries"/>, count, <paramref name="first"/>)
+	/// on the live palette: a copy of it with the entries from <paramref name="first"/> replaced and sent as
+	/// <see cref="SetPalette"/> sends one. Each entry is retail's palette dword, six-bit red, green and blue from the low
+	/// byte up, scaled by the live palette's <see cref="DynamixPalette.Scalar"/> as the palette reader scales a
+	/// <c>.DPL</c>'s. With no live palette nothing is installed.
+	/// </summary>
+	public void InstallRange(int first, IReadOnlyList<uint> entries) {
+		if (_palette is not { } live) {
+			return;
+		}
+
+		var colors = new Dictionary<int, ColorBytes>(live.Colors);
+		int scale = live.Scalar;
+		for (int i = 0; i < entries.Count; i++) {
+			int r = Math.Min((int)(entries[i] & 0xff) * scale, 255), g = Math.Min((int)(entries[i] >> 8 & 0xff) * scale, 255);
+			int b = Math.Min((int)(entries[i] >> 16 & 0xff) * scale, 255);
+			var color = new ColorBytes((byte)r, (byte)g, (byte)b, 255);
+			color.SetColor(RgbaColor.FromArgb(255, r, g, b));
+			colors[first + i] = color;
+		}
+
+		SetPalette(new DynamixPalette {
+			ColorCount = live.ColorCount,
+			Scalar = live.Scalar,
+			PaletteSizeByte = live.PaletteSizeByte,
+			RawIndexBytes = live.RawIndexBytes,
+			Colors = colors,
+			Index0AlphaKey = live.Index0AlphaKey,
+			ShadeRamps = live.ShadeRamps,
+			ShadeRampBytes = live.ShadeRampBytes,
+		});
 	}
 
 	/// <summary>Sets the world layer's scale for a window of <paramref name="windowSize"/>.</summary>

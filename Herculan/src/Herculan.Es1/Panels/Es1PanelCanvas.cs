@@ -51,11 +51,27 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	/// <summary>The translation a point is moved by: the rect's corner less the origin.</summary>
 	public (int X, int Y) Translation => (Rect.X0 - Origin.X, Rect.Y0 - Origin.Y);
 
-	/// <summary>One pixel at the context's (<paramref name="x"/>, <paramref name="y"/>), unless it lies outside <see cref="Rect"/> once translated.</summary>
+	/// <summary>
+	/// Clip mode 2's region list, the block at <c>+4</c>, or null for clip mode 1: the energy meter's clip context
+	/// (docs/es1/simulation/cockpit-energy-shields.md#building-it--energypoolgauge_ctor-00039818). With it a pixel is drawn
+	/// only when it also lies in a region once translated, as <c>Raster_DrawLine</c> (<c>0006a064</c>) cuts a line to the
+	/// rect <c>+0x20c</c> and then to each span region. Only <see cref="Plot"/>, <see cref="FillRect"/> and
+	/// <see cref="DrawLine"/> read it, the draws the meter's bar makes.
+	/// </summary>
+	public Es1ClipBlock? Regions { get; init; }
+
+	/// <summary>One pixel at the context's (<paramref name="x"/>, <paramref name="y"/>), unless it lies outside <see cref="Rect"/> or <see cref="Regions"/> once translated.</summary>
 	public void Plot(int x, int y, byte color) {
 		int screenX = x + Translation.X, screenY = y + Translation.Y;
 		if (Rect.Contains(screenX, screenY)) {
-			Display.Plot(screenX, screenY, color);
+			PlotInRegions(screenX, screenY, color);
+		}
+	}
+
+	/// <summary>A screen pixel already cut to <see cref="Rect"/>, drawn unless <see cref="Regions"/> is set and holds it in no region.</summary>
+	private void PlotInRegions(int x, int y, byte color) {
+		if (Regions == null || Regions.Contains(x, y)) {
+			Display.Plot(x, y, color);
 		}
 	}
 
@@ -172,19 +188,19 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 		int runX = b.X - a.X, runY = Math.Abs(b.Y - a.Y), stepY = b.Y < a.Y ? -1 : 1;
 		if (runY == 0) {
 			for (int i = 0; i <= runX; i++) {
-				Display.Plot(a.X + i, a.Y, color);
+				PlotInRegions(a.X + i, a.Y, color);
 			}
 		} else if (runX == 0) {
 			for (int i = 0; i <= runY; i++) {
-				Display.Plot(a.X, a.Y + stepY * i, color);
+				PlotInRegions(a.X, a.Y + stepY * i, color);
 			}
 		} else if (runX <= runY) {
 			for (int i = 0; i <= runY; i++) {
-				Display.Plot(a.X + i * (runX + 1) / (runY + 1), a.Y + stepY * i, color);
+				PlotInRegions(a.X + i * (runX + 1) / (runY + 1), a.Y + stepY * i, color);
 			}
 		} else {
 			for (int j = 0; j <= runX; j++) {
-				Display.Plot(a.X + j, a.Y + stepY * (j * (runY + 1) / (runX + 1)), color);
+				PlotInRegions(a.X + j, a.Y + stepY * (j * (runY + 1) / (runX + 1)), color);
 			}
 		}
 	}

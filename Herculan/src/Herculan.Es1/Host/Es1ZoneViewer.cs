@@ -214,8 +214,10 @@ public static class Es1ZoneViewer {
 				monitor = new Es1Monitor(gl, manager.Display);
 				disposables.Add(monitor);
 				monitor.SetPalette(scene.Palette);
-				// The cockpit script's palette commands upload to the same live palette.
+				// The cockpit script's palette commands upload to the same live palette, and the shield display's rings are
+				// installed into it.
 				manager.Cockpit.Scripts.UploadPalette = monitor.SetPalette;
+				manager.Cockpit.Shields.InstallPaletteRange = monitor.InstallRange;
 				monitor.Fit(window.FramebufferSize);
 				var worldDraw = draw;
 				var sceneRenderer = renderer;

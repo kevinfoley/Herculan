@@ -63,13 +63,13 @@ public class Es1GauFile {
 	/// Offset 548, 68 bytes: the block <c>Gau_EnergyMeterWidget</c> (<c>0002cd3c</c>) hands the instrument at the cockpit's
 	/// <c>+0x1e1</c> (docs/es1/simulation/cockpit-panel.md#building-it).
 	/// </summary>
-	public Es1GauInstrumentBlock EnergyMeterBlock { get; set; } = new() { Rest = new byte[52] };
+	public Es1GauEnergyMeterBlock EnergyMeterBlock { get; set; } = new();
 
 	/// <summary>
 	/// Offset 616, 112 bytes: the block <c>Gau_ShieldDisplayWidget</c> (<c>0002cd74</c>) hands the instrument at the cockpit's
 	/// <c>+0x1e5</c>.
 	/// </summary>
-	public Es1GauInstrumentBlock ShieldDisplayBlock { get; set; } = new() { Rest = new byte[96] };
+	public Es1GauShieldDisplayBlock ShieldDisplayBlock { get; set; } = new();
 
 	/// <summary>Offset 728, 272 bytes.</summary>
 	public Es1GauMfdPanelBlock MfdPanelBlock { get; set; } = new();
