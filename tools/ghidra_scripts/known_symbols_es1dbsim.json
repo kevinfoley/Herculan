@@ -3412,13 +3412,13 @@
       "type": "function",
       "confidence": "high",
       "name": "EcmMount_PushGaugeState",
-      "description": "(mount, armed, in the chain, ready) in stack order, callee-cleaned, RET 0x10: the ECM's gauge-push slot +0x54. Reads only the mount: copies the low byte of the first word of the block PodGauge_GetStateBlock (00037b50)(the gauge +0x77) returns into the int16 +0x7b and +0x7d. ES2's EcmPod_Tick (DBSIM 0040f184) posts a jamming message when that byte changes and writes the block back; this posts nothing and writes nothing back.",
+      "description": "(mount, ready, in the chain, armed) in stack order, callee-cleaned, RET 0x10: the ECM's gauge-push slot +0x54. Reads only the mount: copies the low byte of the first word of the block PodGauge_GetStateBlock (00037b50)(the gauge +0x77) returns into the int16 +0x7b and +0x7d. ES2's EcmPod_Tick (DBSIM 0040f184) posts a jamming message when that byte changes and writes the block back; this posts nothing and writes nothing back.",
       "source": "Herculan/docs/es1/simulation/weapon-mount-classes.md#gauges; ES1DBSIM disassembly at 0000b588",
       "verified": {
         "bytes": "0000b588+48",
         "sha1": "a3ca352b692d",
         "scope": "body",
-        "via": "both"
+        "via": "disasm"
       }
     },
     {
@@ -3427,7 +3427,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMount_PushEnergyGaugeState",
-      "description": "(mount, b16, b15, b14) in stack order, callee-cleaned: the energy and ELF gauge-push slot +0x54. Copies the block EnergyWeaponGauge_GetState(+0x77) returns; with +0x34 clear the block's dword +4 comes back as the charge target, +0x7b = dword * 1200 >> 10, and with it set +0x7b goes out as (+0x7b << 10) / 1200; dword +0 = (+0x7d << 10) / 1200, byte +0x11 the destroyed byte +0x49, +0x12 the mid-charge byte +0x43, and +0x14, +0x15 and +0x16 its fourth, third and second arguments; then the gauge's slot +0x14 through the vptr at its +0x76. ES2's WeaponMount_PushEnergyGaugeState (DBSIM 0040f288), slot +0x50.",
+      "description": "(mount, ready, in the chain, armed) in stack order, callee-cleaned: the energy and ELF gauge-push slot +0x54. Copies the block EnergyWeaponGauge_GetState(+0x77) returns; with +0x34 clear the block's dword +4 comes back as the charge target, +0x7b = dword * 1200 >> 10, and with it set +0x7b goes out as (+0x7b << 10) / 1200; dword +0 = (+0x7d << 10) / 1200, byte +0x11 the destroyed byte +0x49, +0x12 the mid-charge byte +0x43, +0x14 armed, +0x15 in the chain and +0x16 ready, its fourth, third and second arguments; then the gauge's slot +0x14 through the vptr at its +0x76. ES2's WeaponMount_PushEnergyGaugeState (DBSIM 0040f288), slot +0x50.",
       "source": "Herculan/docs/es1/simulation/weapon-mount-classes.md#gauges; ES1DBSIM disassembly at 0000b5b8",
       "verified": {
         "bytes": "0000b5b8+195",
@@ -3442,7 +3442,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMount_PushAmmoGaugeState",
-      "description": "(mount, b16, b15, b14) in stack order, callee-cleaned: the ammunition gauge-push slot +0x54. Copies the block AmmoWeaponGauge_GetState(+0x77) returns; moves the dword +0x7d down by Math_IntegrateRateOverTick(250) while above the rounds +0x7b × 256, and up to it when below; block dword +0 = +0x7d >> 8, byte +0x11 the destroyed byte +0x49, +0x14, +0x15 and +0x16 its fourth, third and second arguments; then the gauge's slot +0x14 through the vptr at its +0x76. ES2's WeaponMount_PushAmmoGaugeState (DBSIM 0040f330), slot +0x50.",
+      "description": "(mount, ready, in the chain, armed) in stack order, callee-cleaned: the ammunition gauge-push slot +0x54. Copies the block AmmoWeaponGauge_GetState(+0x77) returns; moves the dword +0x7d down by Math_IntegrateRateOverTick(250) while above the rounds +0x7b x 256, and up to it when below; block dword +0 = +0x7d >> 8, byte +0x11 the destroyed byte +0x49, +0x14 armed, +0x15 in the chain and +0x16 ready, its fourth, third and second arguments; then the gauge's slot +0x14 through the vptr at its +0x76. ES2's WeaponMount_PushAmmoGaugeState (DBSIM 0040f330), slot +0x50.",
       "source": "Herculan/docs/es1/simulation/weapon-mount-classes.md#gauges; ES1DBSIM disassembly at 0000b67c",
       "verified": {
         "bytes": "0000b67c+152",
@@ -17017,13 +17017,13 @@
       "type": "function",
       "confidence": "high",
       "name": "AmmoWeaponGauge_Update",
-      "description": "(gauge) in stack order, callee-cleaned: slot +0xc of ProjectileWeaponGaugeVtable (00093aae). Calls slot +0x10 of child +0x14's table. With the byte +0x75 at 2 and CockpitView_RectCornerVisible (0002b214)(the label +0xa4's rect +4) passing: unless +0x9c is set, fills +0xa8 with the brush {0, 0x3f} (Raster_FillRect (00053d9c)) and writes ltoa (00064720)(+0x8b) into the label (Label_SetText (0003114c)); then lowers +0x75. With +0x75 at 1: unless +0x9c is set, Widget_DrawToCockpit (0002b058)(0, the label's rect, 0); then lowers +0x75. ES2's AmmoWeaponGauge_Update (DBSIM 00441268).",
+      "description": "(gauge) in stack order, callee-cleaned: slot +0xc of ProjectileWeaponGaugeVtable (00093aae). Calls slot +0x10 of child +0x14's table. With the byte +0x75 at 2 and CockpitView_RectCornerVisible (0002b214)(the label +0xa4's rect +4) passing: unless +0x9c is set, fills +0xa8 with the brush {0, 0x3f} (Raster_FillRect (00053d9c)) and writes ltoa (00064720)(+0x8b) into the label (Label_SetText (0003114c)); then lowers +0x75. The lowering at 2 is inside the visibility test, so a label off screen keeps +0x75 at 2. With +0x75 at 1: unless +0x9c is set, Widget_DrawToCockpit (0002b058)(0, the label's rect, 0); then lowers +0x75. ES2's AmmoWeaponGauge_Update (DBSIM 00441268).",
       "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-ammunition-row; ES1DBSIM decompile at 000375e4",
       "verified": {
         "bytes": "000375e4+205",
         "sha1": "425166eb64ea",
         "scope": "body",
-        "via": "decompile"
+        "via": "disasm"
       }
     },
     {
@@ -17857,13 +17857,13 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponRangeSelectGadget_OnClick",
-      "description": "(button, flags), its arguments removed by this function; slot +0xc of WeaponRangeSelectGadgetVtable (00093db6): with bit 0 of flags set, the lamp +0x3c set to 1 for index +0x28 0-2, then the mixin's (+0x24) slot +0xc on the mixin, Widget_ClickSound, and slot +4 of the console's (+0x20) table at its +0x76, ConsoleButtons_OnChildClick (00037f00), with (console, flags, button). ES2's WeaponRangeSelectGadget_OnClick (DBSIM 00442dc8), which lights nothing.",
+      "description": "(button, flags), its arguments removed by this function; slot +0xc of WeaponRangeSelectGadgetVtable (00093db6): returns at once unless bit 0 of flags is set; then the lamp +0x3c set to 1 for index +0x28 0-2, the mixin's (+0x24) slot +0xc on the mixin, Widget_ClickSound, and slot +4 of the console's (+0x20) table at its +0x76, ConsoleButtons_OnChildClick (00037f00), with (console, flags, button). ES2's WeaponRangeSelectGadget_OnClick (DBSIM 00442dc8), which lights nothing.",
       "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-console-button--weaponrangeselectgadget; ES1DBSIM decompile",
       "verified": {
         "bytes": "00038ec0+73",
         "sha1": "6e8fbf883f3c",
         "scope": "body",
-        "via": "decompile"
+        "via": "disasm"
       }
     },
     {
