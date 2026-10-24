@@ -4867,7 +4867,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_TargetStateTier",
-      "description": "(object), callee-cleaned: with a behaviour descriptor at +0x47, 2 when its byte +0xd is set, 1 when its byte +0xc is, otherwise 0; 0 with no descriptor. ES2's Ai_TargetStateTier (DBSIM 00411cb4). es2_xref finds four calls, from Ai_ShouldAbandonTarget (000162b4) and three from 0001a1cc.",
+      "description": "(object), callee-cleaned: with a behaviour descriptor at +0x47, 2 when its byte +0xd is set, 1 when its byte +0xc is, otherwise 0; 0 with no descriptor. ES2's Ai_TargetStateTier (DBSIM 00411cb4). es2_xref finds four calls, from Ai_ShouldAbandonTarget (000162b4) and three from Mech_ReceiveSquadOrder (0001a1cc).",
       "source": "Herculan/docs/es1/simulation/sim-object-base.md#what-an-ai-machine-knows-and-may-target; ES1DBSIM disassembly at 0000d880",
       "verified": {
         "bytes": "0000d880+103",
@@ -7117,7 +7117,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_AiEngageOrderedTarget",
-      "description": "(machine, target), callee-cleaned: makes the target the machine's own (+0x15e, the holders' counts +0x15c, +0x97 set when it changes); a target of class (+0x162) 1 installs attacking base, class 0 sets +0xa6 and runs Mech_AiEnterCombat (000174cc), class 2 installs attacking flyer, and any other class nothing. es2_xref finds five calls, all in 0001a1cc. ES2's Mech_AiEngageOrderedTarget (DBSIM 0041c0f4), which also sends class 3 to attacking base.",
+      "description": "(machine, target), callee-cleaned: makes the target the machine's own (+0x15e, the holders' counts +0x15c, +0x97 set when it changes); a target of class (+0x162) 1 installs attacking base, class 0 sets +0xa6 and runs Mech_AiEnterCombat (000174cc), class 2 installs attacking flyer, and any other class nothing. es2_xref finds five calls, all in Mech_ReceiveSquadOrder (0001a1cc). ES2's Mech_AiEngageOrderedTarget (DBSIM 0041c0f4), which also sends class 3 to attacking base.",
       "source": "Herculan/docs/es1/simulation/mech-ai.md#targets-and-orders; ES1DBSIM decompile at 00015edc",
       "verified": {
         "bytes": "00015edc+161",
@@ -8252,6 +8252,21 @@
       }
     },
     {
+      "address": "0001a1cc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mech_ReceiveSquadOrder",
+      "description": "(machine, reply so far, order) in stack order, callee-cleaned (RET 0xc): slot +0x2c of MechVtable (00091ae6). Keeps a reply id from 0xffff and a taken flag from 0 and switches on the order's int16 verb through the jump table 00091ebc over 0-0x11, out of action meaning +0x9f, +0x9e or +0x93 set and committed the behaviour descriptor's (+0x47) byte +9. 0: clears +0x94; refuses 0x1b out of action, 0xd for the descriptor's byte +0xc, 0x12 for no selection (CockpitViewInstance (00092d1c) +0x20c) or one immobilised or destroyed, 0x10 for one farther than 130000 by Math_DistanceBetweenPoints (00063c20), 0xf when +0x1d2 is 4 with +0x1dc the selection; else +0x1d2 = 4, +0x1dc = it, +0x1e4 = Ai_TargetStateTier (0000d880), Mech_AiEngageOrderedTarget (00015edc), +0x217 = 0, taken 0x11. 1: 0x1e out of action, 0x12 no selection, 0xf with +0x94 set; else +0x94 = 1, taken 0x16, and a committed machine whose +0x15e is the selection zeroes the dword +0x4c with the descriptor's +0xa set, else Ai_SelectTarget (0000ddf4)(machine, 1) and Mech_AiEngageOrderedTarget on a find or Mech_AiSelectBehaviour (0001892c) on none. 2: 0x1b out of action; the nearest machine of g_MechPool (000af68c, Pool_Prev (00063a20)) not out of action whose +0x15e is PlayerMech (000bc42a), within 60000 of it, else 0x1d; 0x1a when it is already +0x15e and the machine committed; else as verb 0 on it, taken 0xb. 3, 0xa, 0xf: 0x1b immobilised; else Behaviour_SetState (0000fdfc)(+0x47, 000af384), +0x1d2 = 0, +0x217 = 0, taken 0x1e within 25000 of the group's first member, else 0x14. 4, 0x10: +0x90 = 1 with 0x26, or 0xf when set; +0xac = 1; taken. 5: clears +0x94; 0x1b out of action; committed: taken 0x20; else Ai_SelectTarget(machine, 1): none refuses 0xe; a find, in a group whose word +4 is 6, sets +0x1d2 = 4, +0x1dc = 0 and runs Mech_AiSelectBehaviour, else +0x1d2 = 0 and Mech_AiEngageOrderedTarget; taken 0x1c. 7, 0x11: +0x90 = 0, +0xac = 0, taken 0x28. 8: committed: Mech_AiSelectBehaviour, +0x1d2 = 0, taken; else taken only when Ai_SelectTarget(machine, 0) finds one, which it does not use; reply 0xc; +0x217 = 0. 0xb: clears +0x94; 0x1b out of action; 0xf when +0x1d2 is 4 with +0x1dc the order's +0x12; 0x1d for that subject immobilised or destroyed; else as verb 0 on it, taken 0x11. 0xc: 0x1b out of action; 0x20 when +0x1d2 is 6 and Math_DistanceBetweenPoints2D (00063c64)(order + 6, +0x1d4) is under 1000; else Behaviour_SetState(+0x47, 000af474), +0x1d2 = 6, taken 0x17. 0xd and 0xe: 0x1b immobilised; 0x20 when +0x1d2 is already 2 (or 1) and Math_DistanceBetweenPoints(+0x20, order + 6) is under 2000; else Behaviour_SetState(+0x47, 000af384), +0x1d2 = 2 (or 1), taken 0x2a. 0xc to 0xe copy the order's dwords +6 and +0xa to +0x1d4 and +0x1d8 either way. 6, 9 and above 0x11 keep 0xffff, not taken. Then Ai_PostSquadMessage (0001a188)(machine, 0, the reply id) when the reply so far is 0, or 1 with the order taken; returns the taken flag in AX. es2_xref finds its address once, the dword 00091b12. ES2's Mech_ReceiveSquadOrder (DBSIM 00420ad4), which has no range test in verb 0, clears a standing engage on the selection in verb 1, writes +0xb6 in verbs 5 and 8, always takes 5 and 8, and stores verb 0xc's subject.",
+      "source": "Herculan/docs/es1/simulation/mech-ai.md#receiving-a-squad-order--mech_receivesquadorder-0001a1cc",
+      "verified": {
+        "bytes": "0001a1cc+2440",
+        "sha1": "b15d1cc52544",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0001ac34",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -8497,13 +8512,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Squad_BroadcastOrder",
-      "description": "(group, order), callee-cleaned: ES2's Squad_BroadcastOrder (DBSIM 004231a4) with ES1's offsets. Each pass scores every member of the group (array +0xe, count +0x12) not yet told, not destroyed (+0x93) and not the issuer (order +2): verbs 0, 2 and 5 by the behaviour descriptor's (+0x47) byte +9 being clear, 1, 8 and 0xf by its being set, 4 and 7 by the byte +0x90 being clear or set, and no score for the other verbs to 0xf (the local keeps what it held); keeps the highest, ties going to the nearer to the issuer by Math_DistanceBetweenPoints of +0x20, and sends to it through its vtable (at +2) slot +0x2c with the reply so far and the order. A send answering non-zero makes the reply 2, a zero answer makes a reply of 0 into 1; verbs 0 and 2 stop at a reply of 2. Returns whether the reply is 2. es2_xref finds one call, from Squad_BroadcastOrderFromCockpit (0002b448).",
+      "description": "(group, order) in stack order, callee-cleaned (RET 8): ES2's Squad_BroadcastOrder (DBSIM 004231a4) with ES1's offsets. Zeroes a 10-byte told array with memset (00060b40) and a reply word, then makes passes: each starts with the best score -1, the nearest distance 0x7fffffff and no choice, and walks the members (array +0xe, int16 count +0x12) not yet told, not destroyed (+0x93) and not the issuer (order +2). It reads the behaviour descriptor's (+0x47) byte +9 with no null test and scores the member through the jump table 000921a8 over verbs 0-0xf: 0, 2 and 5 score 1 when the byte is 0, else 0; 1, 8 and 0xf the byte; 4 scores 1 when the byte +0x90 is 0, else 0; 7 the byte +0x90. Verbs 3, 6, 9-0xe and above 0xf leave the score word [EBP-0x2e] as the stack held it. A member scoring below the best is skipped; otherwise it becomes the choice when Math_DistanceBetweenPoints (00063c20)(issuer +0x20, member +0x20) is below the nearest or its score above the best. The choice gets the order through slot +0x2c of the table at its +2 with (member, the reply word pushed as a dword whose high word the function never writes, order); a non-zero AX makes the reply 2, a zero one makes a reply of 0 into 1, the member is marked told, and verbs 0 and 2 stop at a reply of 2. A pass with no choice ends it. Returns 1 when the reply is 2, else 0. es2_xref finds one call, from Squad_BroadcastOrderFromCockpit (0002b448).",
       "source": "Herculan/docs/es1/simulation/mission-groups.md#the-squad-order-broadcast",
       "verified": {
         "bytes": "0001c950+504",
         "sha1": "16fd2db226cd",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -18712,13 +18727,13 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdFlashComm_Transmit",
-      "description": "(display) in stack order, callee-cleaned (RET 4): stores MfdFlashComm_SelectedVerb (00035f4c) of the screen at +0x9a in the dword 000b0ddc, calls Squad_BroadcastOrderFromCockpit (0002b448)(the display's +0x10, 000b0ddc) and, when that returns non-zero, MfdFlashComm_ToggleRowVariant (00035f9c) on the screen. ES2's MfdFlashComm_Transmit (DBSIM 00447220), which stores a word.",
+      "description": "(display) in stack order, callee-cleaned (RET 4): stores MfdFlashComm_SelectedVerb (00035f4c) of the screen at +0x9a as a word (MOV [000b0ddc],AX), the verb at +0 of the order record 000b0ddc, calls Squad_BroadcastOrderFromCockpit (0002b448)(the display's +0x10, 000b0ddc), which stores the issuer at +2, and, when that returns non-zero, MfdFlashComm_ToggleRowVariant (00035f9c) on the screen. ES2's MfdFlashComm_Transmit (DBSIM 00447220).",
       "source": "Herculan/docs/es1/simulation/mfd-flash-comm.md#the-order-helpers; ES1DBSIM decompile at 0003adc8",
       "verified": {
         "bytes": "0003adc8+55",
         "sha1": "f3fadadc4855",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -29237,7 +29252,13 @@
       "confidence": "high",
       "name": "memset",
       "description": "Symantec C++ runtime `memset`, from `strings.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 49 bytes from here.",
-      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+      "source": "Herculan/docs/es1/formats/compiler.md#identification",
+      "verified": {
+        "bytes": "00060b40+49",
+        "sha1": "f13bee353f01",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00060b74",

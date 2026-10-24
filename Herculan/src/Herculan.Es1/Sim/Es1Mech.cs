@@ -272,7 +272,8 @@ public sealed class Es1Mech : IEs1SimObject {
 
 	/// <summary>
 	/// <c>+0x1d2</c>, the standing squad order's verb (docs/es1/simulation/mech-ai.md#the-fields). PLACEHOLDER: its writer,
-	/// the squad order <c>0001a1cc</c>, is plan step 8's, so it holds 0 in the slice.
+	/// the squad order's receiver <c>Mech_ReceiveSquadOrder</c> (<c>0001a1cc</c>), is plan step 8's in the verbs that
+	/// write it, so it holds 0 in the slice.
 	/// </summary>
 	public short SquadVerb { get; set; }
 

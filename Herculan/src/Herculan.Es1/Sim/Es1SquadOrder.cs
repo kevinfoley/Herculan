@@ -12,7 +12,7 @@ public sealed class Es1SquadOrder {
 	/// <summary>The verbs the receiver takes as <see cref="RadarOnVerb"/> and <see cref="RadarOffVerb"/>.</summary>
 	public const short RadarOnVerbAlias = 0x10, RadarOffVerbAlias = 0x11;
 
-	/// <summary><c>+0</c>, the verb: FLASH COMM's stores the whole dword, its row's order.</summary>
+	/// <summary><c>+0</c>, the verb: FLASH COMM's stores its row's order as a word.</summary>
 	public short Verb { get; set; }
 
 	/// <summary><c>+2</c>, the issuer, which the cockpit's sender stores and the broadcast passes over.</summary>
@@ -20,15 +20,16 @@ public sealed class Es1SquadOrder {
 }
 
 /// <summary>
-/// A HERC's slot <c>+0x2c</c>, the squad order's receiver <c>0001a1cc</c> (<c>ES1DBSIM</c>), read from the decompile:
-/// it acts on the order by its verb, answers whether it accepted, and posts its reply on the pilot channel.
+/// A HERC's slot <c>+0x2c</c>, the squad order's receiver <c>Mech_ReceiveSquadOrder</c> (<c>ES1DBSIM 0001a1cc</c>)
+/// (docs/es1/simulation/mech-ai.md#receiving-a-squad-order--mech_receivesquadorder-0001a1cc): it acts on the order by
+/// its verb, answers whether it accepted, and posts its reply on the pilot channel.
 /// </summary>
 public static class Es1SquadOrders {
 	/// <summary>The receiver's reply message ids for radar on (already on, and switched on) and radar off.</summary>
 	public const byte RadarAlreadyOnMessage = 0xf, RadarOnMessage = 0x26, RadarOffMessage = 0x28;
 
 	/// <summary>
-	/// <c>0001a1cc</c>(<paramref name="mech"/>, <paramref name="reply"/>, <paramref name="order"/>), with the broadcast's
+	/// <c>Mech_ReceiveSquadOrder</c>(<paramref name="mech"/>, <paramref name="reply"/>, <paramref name="order"/>), with the broadcast's
 	/// reply so far: for <see cref="Es1SquadOrder.RadarOnVerb"/> (or <c>0x10</c>) the radar <c>+0x90</c> switched on,
 	/// message <see cref="RadarOnMessage"/>, or <see cref="RadarAlreadyOnMessage"/> when it was on, and
 	/// <see cref="Es1Mech.RadarKeptOn"/> set; for <see cref="Es1SquadOrder.RadarOffVerb"/> (or <c>0x11</c>) the radar

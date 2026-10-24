@@ -44,7 +44,7 @@ The HERC's twenty states and the think, move and reassess each holds are in [the
 
 Any other word, 0–11 or outside it, installs whatever descriptor `EDI` held when the function was called ([Open](#open)). It reads no standing squad order, where ES2's second path takes the squad order's verb. On every path it then releases a target it holds (`+0x15e` not 0): the target's `+0x15c` down by 1, `+0x15e` cleared and `+0x97` set; with no target it changes neither `+0x15e` nor `+0x97`. ES2's releases it on four paths. It returns 1.
 
-`es2_xref.py` finds the ten descriptors that hold it in `Behaviour_BuildStateTable` and six calls: `Mech_AiFleeCheck`, `Mech_AiCombatReassess`, `Mech_AiOnTakingFire` and three in `0001a1cc`, the HERC's slot `+0x2c` ([the HERC's table](mech.md#the-hercs-table)).
+`es2_xref.py` finds the ten descriptors that hold it in `Behaviour_BuildStateTable` and six calls: `Mech_AiFleeCheck`, `Mech_AiCombatReassess`, `Mech_AiOnTakingFire` and three in `Mech_ReceiveSquadOrder` ([below](#receiving-a-squad-order--mech_receivesquadorder-0001a1cc)).
 
 ## The combat reassess — `Mech_AiCombatReassess` (`00016e04`)
 
@@ -102,9 +102,34 @@ The shared shape is ES2's ([the shape they share](../../retail/simulation/ai-com
 
 ## Targets and orders
 
-- **`Mech_AiEngageOrderedTarget` (`00015edc`)**, (machine, target): makes the target the machine's own; a class-1 target installs `attacking base`, class 0 sets `+0xa6` and runs `Mech_AiEnterCombat`, class 2 installs `attacking flyer`, and any other class nothing. ES2's ([the AI writers](../../retail/simulation/ai-targeting.md#the-ai-writers-of-0x1a4)) sends class 3 to `attacking base`. `es2_xref.py` finds five calls, all in `0001a1cc`.
+- **`Mech_AiEngageOrderedTarget` (`00015edc`)**, (machine, target): makes the target the machine's own; a class-1 target installs `attacking base`, class 0 sets `+0xa6` and runs `Mech_AiEnterCombat`, class 2 installs `attacking flyer`, and any other class nothing. ES2's ([the AI writers](../../retail/simulation/ai-targeting.md#the-ai-writers-of-0x1a4)) sends class 3 to `attacking base`. `es2_xref.py` finds five calls, all in `Mech_ReceiveSquadOrder` ([below](#receiving-a-squad-order--mech_receivesquadorder-0001a1cc)).
 - **`Ai_ShouldAbandonTarget` (`000162b4`)**, (machine): ES2's ([abandoning a target](../../retail/simulation/ai-targeting.md#abandoning-a-target--ai_shouldabandontarget-0041c4a8)) on the squad verb 4, its target `+0x1dc` and threshold `+0x1e4`, with `Ai_TargetStateTier` (`0000d880`); a target the group's order names is abandoned when destroyed on either side, where ES2's human side also abandons one immobilized. `es2_xref.py` finds four calls: `attacking`, `facing off`, `flanking` and `driving off en`.
 - **`Mech_GetGroupSide` (`00016388`)**, (machine): the side byte `+0x14` of the machine's group, sign-extended. `es2_xref.py` finds no branch or stored pointer to it ([Open](#open)).
+
+## Receiving a squad order — `Mech_ReceiveSquadOrder` (`0001a1cc`)
+
+**A squadmate told an order takes it or refuses it, says why on the radio when it is its turn to speak, and answers whether it took it.** `Mech_ReceiveSquadOrder` is the HERC's slot `+0x2c` ([the HERC's table](mech.md#the-hercs-table)), ES2's (`00420ad4`, [receiving one](../../retail/simulation/ai-squadmates.md#receiving-one--mech_receivesquadorder-00420ad4-mech-vtable-0x28)), in the object file that opens at `0001a12c` after [`mechsys.cpp`'s](mechsys.md#where-the-object-file-starts-and-ends). It takes (machine, reply so far, order) in stack order, the order record's verb at `+0`, its point at `+6` and its subject at `+0x12` ([the order record](../../retail/simulation/ai-squadmates.md#the-order-record--22-bytes)). It keeps a reply id, starting at `0xffff`, and a taken flag, starting at 0, and switches on the verb through the jump table `00091ebc` over 0–`0x11`. "Out of action" is `+0x9f` (disarmed), `+0x9e` (immobilized) or `+0x93` (destroyed) set; "committed" is the behaviour descriptor's (`+0x47`) byte `+9`; the player's selection is `CockpitViewInstance`'s `+0x20c` ([the target selection](cockpit-panel.md#the-target-selection)).
+
+| Verb | Refused when (reply) | Otherwise, taken (reply) |
+|---|---|---|
+| 0 | `+0x94` is cleared first; then out of action (`0x1b`); the descriptor's byte `+0xc` set (`0xd`); no selection, or the selection immobilized or destroyed (`0x12`); the selection farther than 130000 from the machine, `Math_DistanceBetweenPoints` (`0x10`); squad verb `+0x1d2` already 4 with `+0x1dc` the selection (`0xf`) | `+0x1d2` = 4, `+0x1dc` = the selection, `+0x1e4` = `Ai_TargetStateTier` (`0000d880`) of it, `Mech_AiEngageOrderedTarget`(machine, selection), `+0x217` = 0 (`0x11`) |
+| 1 | out of action (`0x1e`); no selection (`0x12`); `+0x94` already set (`0xf`) | `+0x94` = 1 (`0x16`); then a committed machine whose target `+0x15e` is the selection zeroes its dwell count `+0x4c` when the descriptor's byte `+0xa` is set, and otherwise takes `Ai_SelectTarget` (`0000ddf4`)(machine, 1): `Mech_AiEngageOrderedTarget` on what it finds, `Mech_AiSelectBehaviour` on nothing |
+| 2 | out of action (`0x1b`); no machine of `g_MechPool` (`000af68c`, walked with `Pool_Prev`) that is not out of action, whose target `+0x15e` is `PlayerMech` (`000bc42a`) and that is within 60000 of it (`0x1d`); the nearest such already the machine's target with the machine committed (`0x1a`) | as verb 0 against the nearest such machine (`0xb`) |
+| 3, `0xa`, `0xf` | immobilized (`0x1b`) | `Behaviour_SetState` (`0000fdfc`)(`+0x47`, `patrolling` at `000af384`), `+0x1d2` = 0, `+0x217` = 0; `0x1e` within 25000 of the group's first member (array `+0xe` of the group `+0x3f`), else `0x14` |
+| 4, `0x10` | — | the radar `+0x90` = 1 (`0x26`), or `0xf` when it was already set; `+0xac` = 1 either way |
+| 5 | `+0x94` is cleared first; then out of action (`0x1b`); not committed and `Ai_SelectTarget`(machine, 1) finding nothing (`0xe`) | committed: nothing more (`0x20`). Otherwise, with the target found: in a group whose word `+4` is 6, `guarding`, `+0x1d2` = 4 with `+0x1dc` = 0 and `Mech_AiSelectBehaviour`; in any other, `+0x1d2` = 0 and `Mech_AiEngageOrderedTarget` on it (`0x1c`) |
+| 7, `0x11` | — | the radar `+0x90` = 0 and `+0xac` = 0 (`0x28`) |
+| 8 | not committed and `Ai_SelectTarget`(machine, 0) finding nothing (`0xc`) | committed: `Mech_AiSelectBehaviour`, then `+0x1d2` = 0. Not committed, with a target found: nothing more, the target unused (`0xc`). `+0x217` = 0, taken or not |
+| `0xb` | `+0x94` is cleared first; then out of action (`0x1b`); `+0x1d2` already 4 with `+0x1dc` the order's subject (`0xf`); the subject immobilized or destroyed, read with no null test (`0x1d`) | as verb 0 against the subject (`0x11`) |
+| `0xc` | out of action (`0x1b`); `+0x1d2` already 6 and the order's point within 1000 of `+0x1d4` by `Math_DistanceBetweenPoints2D` (`0x20`) | `Behaviour_SetState`(`+0x47`, `guarding` at `000af474`), `+0x1d2` = 6 (`0x17`) |
+| `0xd` | immobilized (`0x1b`); `+0x1d2` already 2 and the machine's `+0x20` within 2000 of the order's point by `Math_DistanceBetweenPoints`, in 3D (`0x20`) | `patrolling`, `+0x1d2` = 2 (`0x2a`) |
+| `0xe` | as `0xd`, with `+0x1d2` already 1 | `patrolling`, `+0x1d2` = 1 (`0x2a`) |
+
+Verbs `0xc`, `0xd` and `0xe` copy the order's `+6` and `+0xa`, the point's ground plane, to `+0x1d4` and `+0x1d8`, taken or not. Verbs 6, 9 and above `0x11` have no case: the reply stays `0xffff` and the order is not taken. Then, when the reply so far is 0, or is 1 and this machine took the order, it posts `Ai_PostSquadMessage` (`0001a188`)(machine, 0, the reply id) ([posting](cockpit-messages.md#posting)); it returns the taken flag in `AX`, the rest of `EAX` left as it was. [The broadcast](mission-groups.md#the-squad-order-broadcast) passes a reply so far of 0, then 1 after a refusal and 2 after a take, so the first machine told answers whatever it does, a later one only when it takes the order, and none after a take. `Squad_SendOrderToSlot` (`0002b3e8`, [the squadmates](cockpit-panel.md#the-squadmates)) passes 0.
+
+ES2's differs in five arms. Verb 0 has no range test. Verb 1 first clears a standing engage order on the selection. Verb 5 sets ES2's FIRE AT WILL latch `+0xb6`, which ES1 has no counterpart of, is taken with `0x1c` even when nothing is found, and re-enters `Mech_AiSelectBehaviour` only when the group's current order is to guard and the machine is within 100000 of the group's target, clearing the verb where ES1's sets verb 4 with no target. Verb 8 clears `+0xb6` and is always taken. Verb `0xc` compares and stores the order's subject as well as its point; ES1's stores no subject. The latches are ES1's `+0x94` for ES2's `+0x9a` and `+0xac` for `+0xb2`, and `+0x217` is ES2's `+0x281`.
+
+`es2_xref.py` finds the function's address once, as slot `+0x2c` of `MechVtable` (`00091b12`). A grep of the disassembly for calls through `+0x2c` finds two through an object's table, `Squad_BroadcastOrder`'s and `Squad_SendOrderToSlot`'s; the others are a weapon mount's fire slot, sound and animation objects' and a textured poly's. Both skip the cockpit's machine, the player's, so through them the order, and verb 4's write of 1 to the radar `+0x90` (`0001a617`), reaches only squadmates. The base tables' slot `+0x2c` is `SimObject_ReceiveSquadOrder_Refuse` (`0000d6d8`, [the base class's own functions](sim-object-base.md#the-base-classs-own-functions)), which answers 0.
 
 ## Taking fire — `Mech_AiOnTakingFire` (`00019338`)
 
@@ -196,6 +221,7 @@ The fields this file adds to [the HERC's](mech.md#the-fields). The behavior bloc
 | `Mech_AiSelectBehaviour`, `Mech_ComputeCombatRating`, `Cockpit_TargetAnglesFromCameraBone` | `0001892c`, `000189f0`, `00018b78` | `0041eb34`, `0041edd8`, `0041ef14` |
 | `Ai_ChooseWeapon`, `Ai_FireAtPoint`, `Mech_AiFriendlyFireComplaint`, `Mech_AiOnTakingFire` | `00018e50`, `000190ec`, `00019300`, `00019338` | `0041f358`, `0041f5a0`, `0041f790`, `0041f7b8` |
 | `Ai_DriveToPoint`, `Ai_FollowRoute`, `Ai_KeepFormation`, `MechAi_StaticInitNoOp` | `00019580`, `00019604`, `00019660`, `00019850` | `0041fac4`, `0041fb60`, `0041fbb8`, `0041fdac` |
+| `Mech_ReceiveSquadOrder`, in the file from `0001a12c` | `0001a1cc` | `00420ad4` |
 
 Callees of other files read for them: `Component_ReadDamagePercent` (`0000a16c`), `Math_OffsetPointByBearing` (`00063d8c`), `Timer_CountDown` (`00064178`) and `Math_MapRange` (`00065480`), ES2's `0040dbc0`, `004928f0`, `004679a4` and `0047de3c`; `Math_MapRange` keeps the C convention and ES2's argument order.
 
@@ -214,6 +240,5 @@ Callees of other files read for them: `Component_ReadDamagePercent` (`0000a16c`)
 
 - **Open:** what `EDI` holds when `Mech_AiSelectBehaviour` is reached with a group word it has no case for (0, 2, 4, 5, 9, or above 11), through `Behaviour_DispatchReassess` and its six direct callers; and which group words the retail missions' `.MSN` group `0x32` carries.
 - **Open:** what reaches `HeapPtr_DtorMechAiCopy`, `Mech_GetGroupSide` and `Ai_NavigationStepThunk`, to which `es2_xref.py` finds no branch or stored pointer; and the four dword occurrences of `Ai_AimAndFire`'s padding entry, which may be instruction bytes.
-- **Open:** the callers `es2_xref.py` finds and this batch did not read: `0001a1cc` (the squad order, slot `+0x2c`).
 - **Open:** whether the out-of-action machine's loop through `fleeing` and the combat reassess every tick shows in play. A retail check: disarm an enemy HERC (shoot off its weapons) and watch whether it runs off steadily or jitters from side to side.
 - **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: put a guard group's enemy in sight and watch it walk out toward the enemy rather than standing where it was (`driving off en`); or `BP <CS>:00017c84` fires once a tick for such a machine.
