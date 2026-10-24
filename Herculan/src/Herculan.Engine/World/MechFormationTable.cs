@@ -8,7 +8,7 @@ public readonly record struct MechFormationOffset(int X, int Y);
 
 /// <summary>
 /// <c>dat\MFORMS.DAT</c> — per-formation spread offsets for a <c>script.dat</c> block-7 mech group.
-/// The mech equivalent of <see cref="BaseFormationTable"/>; stops a multi-mech group (a lance) from
+/// The mech equivalent of <see cref="BaseFormationTable"/>; stops a multi-mech group (a squad) from
 /// placing every member on the group's single point.
 ///
 /// <para>Load site: <c>Mech_LoadResources</c> (<c>0041fdb0</c>) opens <c>dat\mforms</c> (string

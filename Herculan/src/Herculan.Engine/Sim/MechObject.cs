@@ -585,7 +585,7 @@ public sealed partial class MechObject : SimObject {
 
 /// <summary>
 /// A mech's weapon fit, as the mission states it. AI machines get theirs from <c>script.dat</c>
-/// block 7's own weapon array; the player's lance gets theirs from <c>player.mec</c>. Both feed the
+/// block 7's own weapon array; the player's squad gets theirs from <c>player.mec</c>. Both feed the
 /// same <c>Mech_ConfigureLoadout</c> in the original.
 /// </summary>
 /// <param name="WeaponIds">

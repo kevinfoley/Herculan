@@ -51,7 +51,7 @@ public sealed class InputTapeRecorder : IDisposable {
 
 	/// <summary>
 	/// Starts a tape at <paramref name="path"/> and writes its bundle: the mission file itself, its
-	/// lance file (<see cref="MissionLoader.PlayerPathFor"/>), and the other five files from
+	/// squad file (<see cref="MissionLoader.PlayerPathFor"/>), and the other five files from
 	/// <paramref name="dataDirectory"/>. A file that is not there is an empty entry, as
 	/// <c>Tape_PackFile</c> writes one it cannot open.
 	/// </summary>

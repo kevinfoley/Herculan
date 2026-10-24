@@ -21,7 +21,7 @@ namespace Herculan.Engine.Shell;
 /// group-0 machine.</item>
 /// <item>Any other takes the campaign half, <see cref="ShellCampaignLaunch"/>, with a career that has no
 /// history: an empty campaign flag array, which the load then seeds with the position, and the player's
-/// lance and skill taken from the install's <c>DATA\player.mec</c> — the last handoff written — in
+/// squad and skill taken from the install's <c>DATA\player.mec</c> — the last handoff written — in
 /// place of the export a career's hangar would make.</item>
 /// </list>
 ///
@@ -88,7 +88,7 @@ public static class MissionFileLaunch {
 		string playerPath = CaseInsensitivePath.Combine(installData, MissionLoader.PlayerFileName);
 		byte[]? playerBytes = File.Exists(playerPath) ? File.ReadAllBytes(playerPath) : null;
 		if (playerBytes == null || new MecFileTransformer().Parse(playerBytes) is not MecFile { Entries: [var player, ..] }) {
-			failure = $"A campaign mission flies the player's lance from {playerPath}, and there is no readable one.";
+			failure = $"A campaign mission starts the player's squad from {playerPath}, and there is no readable one.";
 			return null;
 		}
 
@@ -109,7 +109,7 @@ public static class MissionFileLaunch {
 		}
 
 		Console.WriteLine($"{campaign.MissionPath}: stage {stage} mission {mission}, loaded as a campaign mission at "
-			+ $"skill {player.Skill} — {campaign.SquadPositions} squad position(s), the lance from {playerPath}, "
+			+ $"skill {player.Skill} — {campaign.SquadPositions} squad position(s), the squad from {playerPath}, "
 			+ $"handoff written to {directory}.");
 		return campaign.ScriptPath;
 	}

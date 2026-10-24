@@ -65,7 +65,7 @@ public enum MissionSide {
 /// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptMechRecord.WeaponSecondary"/>
 /// Empty for anything but a mech. See <see cref="Herculan.Engine.Sim.MechLoadout.SecondaryKeys"/>.
 /// </param>
-/// <param name="IsPlayerLance">
+/// <param name="IsPlayerSquad">
 /// Whether this came from <c>player.mec</c> rather than the mission's own roster.
 /// </param>
 /// <param name="PilotIndex">
@@ -145,7 +145,7 @@ public sealed record MissionPlacement(
 	int Heading,
 	IReadOnlyList<short> WeaponRefs,
 	IReadOnlyList<short> WeaponSecondary,
-	bool IsPlayerLance = false,
+	bool IsPlayerSquad = false,
 	int PilotIndex = -1,
 	MissionSide Side = MissionSide.Human,
 	short AiCruiseSpeed = 0,

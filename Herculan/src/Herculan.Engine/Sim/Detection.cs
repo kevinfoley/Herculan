@@ -16,7 +16,7 @@ namespace Herculan.Engine.Sim;
 /// <item><b>A contact</b> (<see cref="SimObject.Detects"/>, <c>obj+0xc2</c>) is a property of a
 /// <i>pair</i>: this object knows where that one is. Contacts are made by looking — a bearing inside
 /// the sensor arc with clear line of sight — and they are shared sideways to everything on the same
-/// side within 100000 units, which is how a lance fights as a unit.</item>
+/// side within 100000 units, which is how a squad fights as a unit.</item>
 /// </list>
 ///
 /// <para><see cref="TargetSelection.CanTarget"/> accepts either one, at a different range each: a

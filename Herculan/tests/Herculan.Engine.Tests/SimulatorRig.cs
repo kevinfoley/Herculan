@@ -130,7 +130,7 @@ sealed class SimulatorRig {
 		SimMath.PerTickStepsScaled = true;
 
 		var squad = scene.Objects
-			.Where(o => o.Placement.IsPlayerLance && !ReferenceEquals(o.Object, scene.PlayerObject?.Object))
+			.Where(o => o.Placement.IsPlayerSquad && !ReferenceEquals(o.Object, scene.PlayerObject?.Object))
 			.Take(SquadCommChannel.SlotCount)
 			.ToList();
 

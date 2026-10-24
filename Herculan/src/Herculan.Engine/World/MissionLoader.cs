@@ -16,9 +16,9 @@ namespace Herculan.Engine.World;
 /// away: that function reads all 134 bytes of a block-7 record and keeps only the type field, and it
 /// reads block 11 into a stack buffer and keeps only which slots the record marks live. It does not
 /// place anything because placing is not its job — it counts live objects and allocates the pools.
-/// <c>DBSim_SpawnMissionObjects</c> (<c>004253d8</c>) then <b>re-opens the same file</b> and walks it again, and that is the pass
-/// that builds objects. Anything reading only the first pass will conclude, wrongly, that
-/// <c>script.dat</c> carries no positions.</para>
+/// <c>DBSim_SpawnMissionObjects</c> (<c>004253d8</c>) then <b>re-opens the same file</b> and walks
+/// it again, and that is the pass that builds objects. Anything reading only the first pass will
+/// conclude, wrongly, that <c>script.dat</c> carries no positions.</para>
 ///
 /// <para>The placement rule that pass implements, with the RE for each step:</para>
 /// <list type="number">
@@ -27,29 +27,29 @@ namespace Herculan.Engine.World;
 /// Each ref marks that roster slot live. Records that mark nothing spawn nothing, which is why a
 /// mission's roster is routinely larger than its live object count.</item>
 /// <item><b>Where they stand.</b> The same block-11 record carries a position ref, a heading ref and
-/// a route, and <c>DBSim_BuildGroupRecord</c> (<c>00423b34</c>) builds it into a group record holding all three. Each member is
-/// then attached by <c>Mech_AttachToGroup</c> (<c>00417aa8</c>), which fills in the member's position <i>only if the object
-/// does not already have one of its own</i> — so a roster record's own position ref wins where it is
-/// set, and the group's is the fallback. In retail data the roster refs are always unset, so in
-/// practice every object stands at its group's point.</item>
+/// a route, and <c>DBSim_BuildGroupRecord</c> (<c>00423b34</c>) builds it into a group record holding
+/// all three. Each member is then attached by <c>Mech_AttachToGroup</c> (<c>00417aa8</c>), which fills
+/// in the member's position <i>only if the object does not already have one of its own</i> — so a
+/// roster record's own position ref wins where it is set, and the group's is the fallback. In retail 
+/// data the roster refs are always unset, so in practice every object stands at its group's point.</item>
 /// <item><b>Groups with no point of their own</b> fall back to their route: the group's row-15 links
-/// resolve to a waypoint group, and <c>Route_WaypointAt</c> (<c>00423b0c</c>) takes a waypoint from it. Patrol lances are
-/// placed this way — the retail mission's three mech lances all are.</item>
-/// <item><b>The player's lance</b> is not in <c>script.dat</c>'s roster at all. Block 11's
+/// resolve to a waypoint group, and <c>Route_WaypointAt</c> (<c>00423b0c</c>) takes a waypoint from it.
+/// Patrol squads are placed this way — the retail mission's three mech squads all are.</item>
+/// <item><b>The player's squad</b> is not in <c>script.dat</c>'s roster at all. Block 11's
 /// <b>record 0</b> exists only to hold its spawn point: <c>DBSim_LoadScriptDat</c> skips it during
-/// activation, and <c>DBSim_SpawnMissionObjects</c> (<c>004253d8</c>) overwrites its member list with the entries read from
-/// <c>player.mec</c>.</item>
+/// activation, and <c>DBSim_SpawnMissionObjects</c> (<c>004253d8</c>) overwrites its member list 
+/// with the entries read from <c>player.mec</c>.</item>
 /// </list>
 ///
 /// <para><b>Formation offsets: mechs and bases implemented, flyers still a known gap.</b> Every
 /// member of a group is placed on the group's own point by the rule above; the original then
 /// spreads non-leader members off that point via a per-kind vtable <c>+0x78</c> call
-/// (<c>Mech_ApplyFormationOffset</c> (<c>00417898</c>) for mechs, <c>Base_ApplyFormationOffset</c> (<c>00405c04</c>) for bases —
-/// same slot, same "member index 0 takes no offset" rule). Both tables are implemented:
-/// <see cref="MechFormationTable"/> (<c>dat\MFORMS.DAT</c>) and <see cref="BaseFormationTable"/>
-/// (<c>dat\BFORMS.DAT</c>) — see each class's doc comment for its load-site RE and byte-exact
-/// verification. Flyers remain unfixed; retail missions were not seen putting more than one flyer
-/// in a group.</para>
+/// (<c>Mech_ApplyFormationOffset</c> (<c>00417898</c>) for mechs, <c>Base_ApplyFormationOffset</c>
+/// (<c>00405c04</c>) for bases — same slot, same "member index 0 takes no offset" rule). Both 
+/// tables are implemented: <see cref="MechFormationTable"/> (<c>dat\MFORMS.DAT</c>) and 
+/// <see cref="BaseFormationTable"/> (<c>dat\BFORMS.DAT</c>) — see each class's doc comment for
+/// its load-site RE and byte-exact verification. Flyers remain unfixed; retail missions were not
+/// seen putting more than one flyer in a group.</para>
 ///
 /// <para><b>Not every group is in the mission when it starts.</b> A block-11 record whose
 /// <c>ActionRef</c> names a block-5 action is <i>waiting on that action</i>, and until it fires the
@@ -72,7 +72,7 @@ public static class MissionLoader {
 	/// <summary>The mission handoff itself.</summary>
 	public const string ScriptFileName = "script.dat";
 
-	/// <summary>The player's lance, written beside it.</summary>
+	/// <summary>The player's squad, written beside it.</summary>
 	public const string PlayerFileName = "player.mec";
 
 	/// <summary>The mission's own text, written beside it as well.</summary>
@@ -82,7 +82,7 @@ public static class MissionLoader {
 	public const string CountersFileName = "mission.var";
 
 	/// <summary>
-	/// The lance file that goes with a mission file. The live pair in <c>DATA\</c> is
+	/// The squad file that goes with a mission file. The live pair in <c>DATA\</c> is
 	/// <c>script.dat</c>/<c>player.mec</c>; the save-slot snapshots in <c>SAV\</c> keep the same
 	/// pairing with a slot number on both halves (<c>script3.dat</c>/<c>player3.mec</c>).
 	/// </summary>
@@ -124,7 +124,7 @@ public static class MissionLoader {
 	/// </summary>
 	private const int DegreesToBinaryAngle = 0xb6;
 
-	/// <summary>The block-11 record reserved for the player's lance; it activates nothing.</summary>
+	/// <summary>The block-11 record reserved for the player's squad; it activates nothing.</summary>
 	private const int PlayerGroupIndex = 0;
 
 	/// <summary>Members a block-11 record can name.</summary>
@@ -838,7 +838,7 @@ public static class MissionLoader {
 			return null;
 		}
 
-		if (new MecFileTransformer().Parse(File.ReadAllBytes(playerPath)) is not MecFile lance) {
+		if (new MecFileTransformer().Parse(File.ReadAllBytes(playerPath)) is not MecFile squad) {
 			return null;
 		}
 
@@ -846,8 +846,8 @@ public static class MissionLoader {
 		var squadRefs = script.Groups[PlayerGroupIndex].MemberRefs;
 		MissionPlacement? player = null;
 
-		for (int i = 0; i < lance.Entries.Length; i++) {
-			var entry = lance.Entries[i];
+		for (int i = 0; i < squad.Entries.Length; i++) {
+			var entry = squad.Entries[i];
 			int slot = i < GroupMemberSlots && i < squadRefs.Length && squadRefs[i] >= 0
 				? squadRefs[i]
 				: -1;
@@ -863,7 +863,7 @@ public static class MissionLoader {
 				spawn.Heading,
 				entry.WeaponRefs,
 				entry.WeaponAmmoTypes,
-				IsPlayerLance: true,
+				IsPlayerSquad: true,
 				PilotIndex: entry.PilotNameIndex,
 				Side: spawn.Side,
 				FormationOffset: offset is { } o ? (o.X, o.Y) : null,
@@ -871,7 +871,7 @@ public static class MissionLoader {
 				GroundPoint: spawn.Position);
 
 			placements.Add(placement);
-			if (i == lance.PlayerEntryIndex) {
+			if (i == squad.PlayerEntryIndex) {
 				player = placement;
 			}
 		}
