@@ -438,7 +438,7 @@ for component in 7..12:                                          // upper legs, 
 
 Every component is rolled separately over a window three times the base wide, so the six readings scatter rather than moving together. The write is the ordinary damage endpoint, so the landing cascades, can cripple or immobilise, and is stopped by the invulnerability setting like anything else ([`difficulty.md`](difficulty.md#the-two-sibling-cheats)). It carries no attacker, so nothing is credited if it kills.
 
-It then calls `Cockpit_StartHitShake` (`00434010`), the same view shake and palette flash a hit on the cockpit raises ([`../rendering/cockpit-canopy-palette.md`](../rendering/cockpit-canopy-palette.md#the-damage-shake)), and `Sound_Play(0x29)`, the collision thump. This is the shake's ungated trigger: the direct-fire one tests who is flying and how far gone the cockpit is, and this one fires on any landing that got past the distance threshold.
+It then calls `Cockpit_StartHitShake` (`00434010`), the same view shake and palette flash a hit on the cockpit raises ([`../rendering/cockpit-canopy-palette.md`](../rendering/cockpit-canopy-palette.md#the-damage-shake)), and `Sound_Play(0x29)`, the collision thump. This is the shake's ungated trigger: the direct-fire one tests whether the machine hit is the one the player pilots and how far gone the cockpit is, and this one fires on any landing that got past the distance threshold.
 
 ## Open
 

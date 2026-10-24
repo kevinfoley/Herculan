@@ -127,7 +127,7 @@ public static class Detection {
 	/// <item><b>Timers.</b> Every object's line-of-sight cache and contact-decay countdowns tick, and
 	/// an expired decay countdown re-examines that object's contact list on the spot.</item>
 	/// <item><b>The sweeps.</b> Every live human-side object looks for Cybrids — except the machine
-	/// the player is flying, which is held back and swept last, so that contacts its squadmates make
+	/// the player pilots, which is held back and swept last, so that contacts its squadmates make
 	/// this tick have already been shared to it by the time it looks.</item>
 	/// <item><b>The ECM gate</b> (<see cref="SimObject.EngagementActionHeld"/>) cleared on
 	/// everything, for the per-mech systems pass that follows to raise again.</item>

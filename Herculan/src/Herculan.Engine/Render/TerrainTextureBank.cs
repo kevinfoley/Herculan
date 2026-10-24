@@ -42,8 +42,7 @@ public sealed class TerrainTextureBank {
 	/// <summary>
 	/// Loads and packs the theater's terrain bank, decoded through <paramref name="palette"/> — the
 	/// scene's live palette, <see cref="Scene.SceneModelLibrary.Palette"/>. Returns null when the bank
-	/// is missing or holds no usable frames, in which case terrain draws flat-shaded exactly as it did
-	/// before.
+	/// is missing or holds no usable frames, in which case terrain draws every cell flat-shaded.
 	/// </summary>
 	public static TerrainTextureBank? Load(GameContent content, TheaterDescriptor theater,
 			TerrainMaterialTable materials, DynamixPalette? palette) {

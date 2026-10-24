@@ -277,9 +277,11 @@ public static class HitTests {
 	/// carries that approximation's direction-dependent error, as every other 3D range in the
 	/// simulation does.</para>
 	///
-	/// <para>The original also hands the sweep a pseudo-object standing in for the ground, so that
-	/// the AI notification path has something to name. Nothing here consumes that yet, so a terrain
-	/// clip leaves <see cref="WeaponShot.HitObject"/> null and records the point instead.</para>
+	/// <para>The original also hands the sweep a pseudo-object standing in for the ground, which the
+	/// sweep uses as its non-null "something was struck" value (docs/retail/simulation/hit-detection.md, "The
+	/// sweep"). Here a terrain clip leaves <see cref="WeaponShot.HitObject"/> null and returns true,
+	/// and the sweep's ground impact and blocked-line-of-fire report read that flag in its
+	/// place.</para>
 	/// </summary>
 	/// <returns>Whether the shot was clipped at the ground.</returns>
 	private static bool RaycastTerrain(SimWorld world, WeaponShot shot) {

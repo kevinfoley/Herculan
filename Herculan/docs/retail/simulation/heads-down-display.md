@@ -259,7 +259,7 @@ Whenever that is less than the icon bitmap's `+4` word, `HddMarker_Paint` draws 
 `HddCommandScreen_DrawMarker` (`0044e92c`) decides on every repaint whether a marker with an object is drawn, before it moves the gadget, by the object's group side byte (`+0x45`, `+0x12`, non-zero for a hostile):
 
 - A hostile that is destroyed (`+0x99`) or immobilised (`+0xa4`) is not drawn. A friendly wreck stays.
-- An object whose radar flag `+0x95` is clear, on a hostile group or on one still awaiting deployment (`+0x14`), is not drawn at its position. It takes the branch the MFD scanner's contact list also has, which would blink it at a stored point `+0x1aa` but skips whenever `+0xa7` is set, and every object constructor sets it ([`mfd-scanner.md`](mfd-scanner.md#the-blinking-ghost-contact-is-dead-code)).
+- An object whose radar flag `+0x95` is clear, on a hostile group or on one still awaiting deployment (`+0x14`), is not drawn at its position. It takes the branch the MFD scanner's contact list also has, which would blink it at a stored point `+0x1aa` but skips whenever `+0xa7` is set, and every object constructor sets it ([`mfd-scanner.md`](mfd-scanner.md#the-blinking-ghost-contact)).
 
 So a hostile is on the map only while something is painting it on radar ([`target-selection.md`](target-selection.md#the-sensor-model--sim_detectiontick-004123ac)), the same rule the scanner plots by. A marker that is not drawn keeps its gadget where it was last placed.
 

@@ -70,7 +70,9 @@ public sealed class MfdFlashCommScreen {
 
 	/// <summary>
 	/// The row the display's shared state block holds — what the page draws its plate and its
-	/// <c>CPYLW</c> row on. <c>MfdDisplay_SetSharedRow</c> (<c>0044707c</c>) is the only writer.
+	/// <c>CPYLW</c> row on. Every row change goes through <c>MfdDisplay_SetSharedRow</c>
+	/// (<c>0044707c</c>); <c>es2_fieldscan</c> finds that and <c>MfdDisplay_Ctor</c>'s initial store
+	/// as the writes of <c>display+0xb1</c> in MFD display code.
 	/// </summary>
 	public int SelectedRow { get; private set; }
 
@@ -105,8 +107,9 @@ public sealed class MfdFlashCommScreen {
 	public void Sync() => _row = SelectedRow;
 
 	/// <summary>
-	/// <c>FUN_0043f9b8</c> — moves the screen's own row. The display's row moves with it only when
-	/// FLASH COMM is up, which is <c>MfdFlashComm_SelectRow</c>'s mode test.
+	/// <c>MfdFlashComm_SetScreenRow</c> (<c>0043f9b8</c>) — moves the screen's own row. The display's
+	/// row moves with it only when FLASH COMM is up, which is <c>MfdFlashComm_SelectRow</c>
+	/// (<c>00447130</c>)'s mode test.
 	/// </summary>
 	public void Select(int row, bool flashCommIsUp) {
 		if (row < 0 || row >= RowCount) {
@@ -120,9 +123,12 @@ public sealed class MfdFlashCommScreen {
 	}
 
 	/// <summary>
-	/// <c>FUN_00447014</c> and <c>FUN_00447048</c> — <c>[.]</c> and <c>[,]</c>, which walk the
-	/// display's row forward and back past any row the squad cannot take. Both wrap, and both write
-	/// the shared block directly rather than going through <see cref="Select"/>.
+	/// <c>MfdFlashComm_NextAvailableRow</c> (<c>00447014</c>) and <c>MfdFlashComm_PrevAvailableRow</c>
+	/// (<c>00447048</c>) — <c>[.]</c> and <c>[,]</c>, which walk the display's row forward and back
+	/// past any row the squad cannot take. Both wrap and store through
+	/// <c>MfdDisplay_SetSharedRow</c>, not <see cref="Select"/>'s path. They move only the display's
+	/// row, which the next FLASH COMM paint copies to the screen's (<see cref="Sync"/>); this method
+	/// moves both at once.
 	///
 	/// <para>The walk is a do-while with no guard against every row being unavailable; nothing in
 	/// retail ever makes one so, and this stops after a full lap rather than spinning.</para>

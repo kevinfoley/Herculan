@@ -166,10 +166,10 @@ public readonly record struct BaseComponentType(
 /// <c>+0x06</c> — how many animation threads <c>Base_Construct</c> (<c>00405314</c>) builds on the
 /// structure, one per sequence of its shape from sequence 0 up. Retail states 0, 1 or 2, and the
 /// eight types that state a non-zero count are exactly the eight drawn from
-/// <see cref="BaseShapeSource.AnimatedLibrary"/>. The original picks the library per case in the
-/// constructor's switch; <see cref="Source"/> is derived from this field instead, which gives the
-/// same answer for every retail type. See
-/// docs/retail/simulation/structure-behaviour.md#the-animation-threads.
+/// <see cref="BaseShapeSource.AnimatedLibrary"/>. <see cref="Source"/> follows this field, as the
+/// original's shape loader does; the original's constructor picks the library per switch case
+/// instead, which gives the same answer for every retail type. See
+/// docs/retail/simulation/structure-behaviour.md#five-classes-one-switch.
 /// </param>
 /// <param name="AnimThreadRates">
 /// <c>+0x20</c> — two <c>short</c>s, the playback rate each of those threads is started at. A rate
@@ -207,7 +207,6 @@ public readonly record struct BaseType(
 	short AnimCellSequence, short AnimCellInterval,
 	short AnimThreadCount, short[] AnimThreadRates, BaseComponentType[] Components) {
 
-	/// <inheritdoc cref="BaseTypeTable"/>
 	/// <summary>
 	/// <c>+0x2e != 0</c> — see <see cref="Armament"/>, which is the same field read as the value it
 	/// is.
@@ -222,14 +221,17 @@ public readonly record struct BaseType(
 ///
 /// <para>Read from <c>Base_LoadResources</c> (<c>00405fac</c>, <c>base.cpp</c>'s resource-load
 /// sequence), which streams a count and then fixed-shape records with one nested variable-length
-/// array each, and from <c>BaseType_LoadShape</c> (<c>00405ebc</c>), which is the whole of the model
-/// selection:</para>
+/// array each, and from <c>BaseType_LoadShape</c> (<c>00405ebc</c>), which loads each placed type's
+/// model at mission load:</para>
 /// <code>
 /// rec = typeIndex * 0x3c + table
 /// if (rec[6] == 0) shape = load("dgs\bases",    rec[2])   // static
 /// else             shape = load("dts\bases_an", rec[2])   // animated
-/// texture = rec[0x32] == 0 ? basetex : (typeIndex == 0x34 ? razortex : vehtex)
+/// texture = rec[0x32] == 0 ? basetex : (typeIndex == 0x34 ? razortex : vehtex)   // 0x34 test on the static branch only
 /// </code>
+///
+/// <para>The constructor's switch then picks which of the two loaded libraries a structure is
+/// built from, per case (docs/retail/simulation/structure-behaviour.md#five-classes-one-switch).</para>
 ///
 /// <para>Type 52 (<c>0x34</c>) borrows RAZOR's mech texture bank rather than either structure
 /// bank.</para>

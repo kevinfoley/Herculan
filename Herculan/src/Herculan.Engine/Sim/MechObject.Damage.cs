@@ -535,11 +535,9 @@ public sealed partial class MechObject {
 
 		short overflow = Shields.AbsorbExplosion(front, damage);
 
-		// Not ported: no retail write of DamageTaken (mech+0x288) on the blast path has been found yet.
-		// Mech_ApplyExplosiveDamage and Mech_ShieldAbsorb_Explosive were searched; the only writes
-		// found are Mech_DirectFireHitTest's. Counting blasts would let them arm the circling
-		// break-off, so the line stays out until something in retail is found that does this.
-		// DamageTaken += damage - overflow;
+		// A blast does not add to DamageTaken (mech+0x288), so it cannot arm the circling break-off:
+		// the writes of that field found in retail are Mech_DirectFireHitTest's. See the Open item in
+		// docs/retail/simulation/ai-combat-states.md#open.
 
 		if (overflow <= 0) {
 			return;

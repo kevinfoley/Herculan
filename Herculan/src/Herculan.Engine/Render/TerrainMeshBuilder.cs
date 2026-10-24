@@ -114,8 +114,7 @@ public static class TerrainMeshBuilder {
 		//
 		// The byte itself, not a brightness derived from it: the shader picks a ramp row with it and
 		// looks each texel's palette index up in that row, which is what Terrain_DrawCellQuad does
-		// with the cell's stored byte. A per-poly multiplier over an expanded RGB texel was the
-		// stand-in for that per-texel lookup, and is gone.
+		// with the cell's stored byte.
 		float shade = bakeShade ? MissionSun.ShadeFor(normal) : 255f;
 
 		// The untextured fill's palette index for this triangle, and the colour it resolves to unfogged

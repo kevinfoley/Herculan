@@ -307,7 +307,7 @@ public static class MfdScanner {
 	/// <para>The original's hostile branch also has a blinking last-known-position contact, gated on
 	/// <c>obj+0xa7 == 0</c>; every constructor sets that byte to 1 and no write found clears it, so
 	/// the branch is transcribed as the skip. See docs/retail/simulation/mfd-scanner.md, "The blinking
-	/// ghost contact is dead code".</para>
+	/// ghost contact".</para>
 	///
 	/// <para>Range is the ground-plane approximation, not the 3D one, and the test is against the
 	/// current display range — so zooming in genuinely drops distant contacts rather than just

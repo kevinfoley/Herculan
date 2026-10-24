@@ -61,12 +61,9 @@ public sealed record CockpitFrame(byte[] Pixels, int Width, int Height) {
 public sealed class CockpitArt {
 	/// <summary>
 	/// GAU widget coordinates address a 320x400 logical space; cockpit art is 640x480 pixels. A plain
-	/// uniform 2x scale on both axes maps one onto the other — confirmed by overlaying five
-	/// independently-positioned real widgets (MFD panel, shield display, throttle, chain button,
-	/// energy meter) on real <c>APOCA.HB0</c> art and finding every one lands exactly on its physical
-	/// console graphic at this scale, and no other tried combination (1x, 2x/1x, 2x/1.2x) fits more
-	/// than one widget at once. The original's mechanism is <c>VideoMode_XCoordShift</c>
-	/// (<c>004d25be</c>) and its Y twin, a shift of 1 in the 640-wide mode. See
+	/// uniform 2x scale on both axes maps one onto the other: the original shifts every widget
+	/// coordinate by <c>VideoMode_XCoordShift</c> (<c>004d25be</c>) and its Y twin, a shift of 1 in
+	/// the 640-wide mode. See
 	/// docs/retail/simulation/cockpit-hud-widgets.md, "<c>.GAU</c> widget tree".
 	/// </summary>
 	public const float GauToPixelScale = 2f;
