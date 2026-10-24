@@ -44,6 +44,9 @@ public sealed class Es1WeaponMount {
 	/// <summary>The charge target <c>WeaponMount_WakeCapacitor</c> sets.</summary>
 	public const short WakeCharge = 0x334;
 
+	/// <summary>What the ammunition subtype slot, <see cref="AmmunitionSubtype"/>, answers for a mount that fires no rocket.</summary>
+	public const short NotALauncher = 5;
+
 	/// <summary>
 	/// The templates' names, the 17-entry table at <c>000911fc</c> the loader stores at each template's <c>+0x52</c>
 	/// (docs/es1/formats/weapons-dat-sim.md#the-load), by weapon id.
@@ -184,6 +187,24 @@ public sealed class Es1WeaponMount {
 	/// the ECM's, <c>WeaponMount_MatchGaugeNever</c> (<c>0000a4f0</c>), never.
 	/// </summary>
 	public bool MatchesGauge(Es1WeaponGauge gauge) => Kind != Es1MountKind.Ecm && ReferenceEquals(gauge, Gauge);
+
+	/// <summary>
+	/// Slot <c>+0x64</c>, the ammunition subtype (docs/es1/simulation/weapon-mount-classes.md#the-slots): an ammunition or
+	/// grenade mount's <c>WeaponMount_GetAmmoType</c> (<c>0000ac70</c>), for a rocket record (its type 0) the record's
+	/// subtype with the rounds <see cref="ChargeTarget"/> in <paramref name="rounds"/>; any other mount's, and an
+	/// ammunition mount's without a rocket record, <c>WeaponMount_GetEnergyAmmoType</c> (<c>0000ac54</c>),
+	/// <see cref="NotALauncher"/> with 0. A mount with no record, where retail reads one through its pointer, takes the
+	/// second, an engine guard.
+	/// </summary>
+	public short AmmunitionSubtype(out short rounds) {
+		if (Kind is Es1MountKind.Ammunition or Es1MountKind.Grenade && Projectile is { Type.Val: 0 } rocket) {
+			rounds = ChargeTarget;
+			return rocket.SubtypeId;
+		}
+
+		rounds = 0;
+		return NotALauncher;
+	}
 
 	/// <summary>
 	/// Slot <c>+0x4c</c>, the energy priority: an energy or ELF mount's <c>WeaponMount_GetEnergyPriority</c>

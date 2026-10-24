@@ -139,7 +139,7 @@ public sealed class Es1MfdDisplay {
 		_screens[NavMap] = new Es1MfdNavMapScreen(cockpit, ScreenRect, Shared);
 		_screens[Scanner] = new Es1MfdScannerScreen(cockpit, ScreenRect, Shared, fonts, strings, radar);
 		_screens[TargetStatus] = new Es1MfdStatusScreen(cockpit, ScreenRect, Shared, fonts, strings, flyers);
-		_screens[MissileCam] = new Es1MfdPlaceholderScreen(cockpit, ScreenRect, Shared);
+		_screens[MissileCam] = new Es1MfdMissileCamScreen(cockpit, ScreenRect, Shared, fonts, strings);
 
 		RefreshDeadline = cockpit.Globals.Clock.Clock + RefreshCounts;
 		OfflineLabel = new Es1Label(red) { FillColor = LabelFill };
