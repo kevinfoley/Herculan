@@ -1,4 +1,5 @@
 using Herculan.Engine.Render;
+using Herculan.Engine.Content;
 using Herculan.Es1.Panels;
 
 namespace Herculan.Es1.View;
@@ -9,7 +10,7 @@ namespace Herculan.Es1.View;
 /// state copied in, the translation flag 0, so a point goes to the draw page as it is, and each draw is cut to every
 /// region of the list. <see cref="Es1VideoMemory.DrawWorld"/> fills the same regions with the world.
 /// </summary>
-public sealed class Es1SceneCanvas {
+public sealed class Es1SceneCanvas : IEs1LabelSurface {
 	public Es1SceneCanvas(Es1VideoMemory display, Es1ClipBlock clip) {
 		Display = display;
 		Clip = clip;
@@ -38,6 +39,55 @@ public sealed class Es1SceneCanvas {
 					Display.Plot(x, y, color);
 				}
 			}
+		}
+	}
+
+	/// <summary>
+	/// <c>Raster_FillRect</c> under the brush {0, <paramref name="color"/>} in clip mode 2: the inclusive rect filled,
+	/// cut to each region of the list (docs/retail/rendering/polygon-fill.md#rectangles).
+	/// </summary>
+	public void FillRect(int x0, int y0, int x1, int y1, byte color) {
+		for (int y = y0; y <= y1; y++) {
+			for (int x = x0; x <= x1; x++) {
+				if (Clip.Contains(x, y)) {
+					Display.Plot(x, y, color);
+				}
+			}
+		}
+	}
+
+	/// <summary>
+	/// <c>HudFont_DrawString</c> (<c>00069e38</c>) from the pen (<paramref name="x"/>, <paramref name="y"/>) in clip mode
+	/// 2: each glyph blitted with its top row at <paramref name="y"/> less the font's ink height, its 0 bytes left unless
+	/// the glyph's flags have bit 4, each row cut to each region of the list
+	/// (docs/es1/rendering/screen-pages.md#lines-and-clipped-bitmaps), the pen moving right by its width.
+	/// </summary>
+	public void DrawString(HudFont? font, string? text, int x, int y) {
+		if (font == null || text == null) {
+			return;
+		}
+
+		int pen = x;
+		foreach (char c in text) {
+			if (font.GlyphIndex(c) is not { } index) {
+				continue;
+			}
+
+			var glyph = font.Glyphs[index];
+			if (glyph.ImageData is { } pixels) {
+				bool opaque = (glyph.Flags & 0x10) != 0;
+				int top = y - font.InkHeight;
+				for (int row = 0; row < glyph.Rows; row++) {
+					for (int column = 0; column < glyph.Cols; column++) {
+						int source = row * glyph.Cols + column;
+						if (source < pixels.Length && (opaque || pixels[source] != 0) && Clip.Contains(pen + column, top + row)) {
+							Display.Plot(pen + column, top + row, pixels[source]);
+						}
+					}
+				}
+			}
+
+			pen += glyph.Cols;
 		}
 	}
 

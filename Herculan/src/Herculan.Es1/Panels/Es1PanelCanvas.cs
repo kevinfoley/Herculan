@@ -29,7 +29,7 @@ namespace Herculan.Es1.Panels;
 /// <para>In this engine the context is passed to what draws rather than installed in <c>000bdbda</c>: no other
 /// drawing runs while a panel is up, and the cockpit's is made afresh at each push from the cockpit's rect and origin.</para>
 /// </summary>
-public sealed class Es1PanelCanvas {
+public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	/// <summary>The bitmap flag that has every byte written; without it a 0 byte leaves the pixel.</summary>
 	private const byte OpaqueFlag = 0x10;
 

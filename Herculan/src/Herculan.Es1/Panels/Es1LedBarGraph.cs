@@ -5,10 +5,9 @@ namespace Herculan.Es1.Panels;
 /// <summary>
 /// A horizontal LED bar graph, <c>LEDBarGraphH</c> (docs/es1/simulation/cockpit-widgets.md#led-bar-graphs): a
 /// <c>BarGraphH</c>'s rect, span, start, end and position, its unlit color <c>+0x20</c> and its two shades
-/// <c>+0x2c</c> and <c>+0x30</c>, drawn through the render context installed when it draws. As far as the preferences
-/// panel calls it: the constructor and slot <c>+8</c>, <see cref="RepaintToValue"/>; the paint slot <c>+4</c>, which
-/// repaints only the strip that changed, is the cockpit's instruments', plan step 6c. Here the render context is the
-/// panel's canvas, which the draws take.
+/// <c>+0x2c</c> and <c>+0x30</c>, drawn through the render context installed when it draws: the constructor, the paint
+/// slot <c>+4</c> (<see cref="PaintToValue"/>), the repaint slot <c>+8</c> (<see cref="RepaintToValue"/>) and the reset
+/// slot <c>+0xc</c> (<see cref="Reset"/>). Here the render context is the canvas the caller hands the draws.
 /// </summary>
 public sealed class Es1LedBarGraph {
 	/// <summary>
@@ -22,10 +21,13 @@ public sealed class Es1LedBarGraph {
 		Span = (rect.X1 - rect.X0) * 0x10000 / range;
 		Start = rect.X0;
 		End = rect.X1;
-		Position = Span < 1 ? End : Start;
+		Reset();
 	}
 
-	/// <summary><c>+0</c>, the rect, whose rows every fill takes.</summary>
+	/// <summary>
+	/// <c>+0</c>, the rect, whose rows every fill takes. Retail writes each fill's columns into the rect's <i>x0</i> and
+	/// <i>x1</i> and leaves them there; nothing ported reads them, so the rect is kept as built.
+	/// </summary>
 	public Es1Rect Rect { get; }
 
 	/// <summary><c>+0x10</c>, the span; its sign picks the edge the bar fills from.</summary>
@@ -38,7 +40,7 @@ public sealed class Es1LedBarGraph {
 	public int End { get; }
 
 	/// <summary><c>+0x1c</c>, the fill position the paint keeps; the repaint leaves it.</summary>
-	public int Position { get; }
+	public int Position { get; private set; }
 
 	/// <summary><c>+0x20</c>, the unlit color.</summary>
 	public byte UnlitColor { get; init; }
@@ -50,12 +52,55 @@ public sealed class Es1LedBarGraph {
 	public byte OddShade { get; init; }
 
 	/// <summary>
+	/// Slot <c>+0xc</c>, <c>BarGraphH_ResetToEmpty</c> (<c>000317a4</c>): the position at the end for a span below 1 and
+	/// at the start otherwise. Nothing is drawn.
+	/// </summary>
+	public void Reset() => Position = Span < 1 ? End : Start;
+
+	/// <summary>
+	/// Slot <c>+4</c>, <c>LedBarGraph_PaintToValue</c> (<c>00031e5c</c>)(bar, <paramref name="value"/>): the new position
+	/// <i>p</i>, start + (value · span &gt;&gt; 16) for a span of 1 or more and end − (value · span &gt;&gt; 16)
+	/// otherwise; nothing when it is the stored <i>q</i>. Otherwise the strip that becomes lit, <i>q</i> to <i>p</i>, drawn
+	/// through <see cref="FillPinstripe"/>, and the strip that becomes unlit filled in <see cref="UnlitColor"/>, from
+	/// <i>p</i> + 1 to <i>q</i> for a bar filling from its start and from <i>q</i> to <i>p</i> for one filling from its
+	/// end; then <i>p</i> stored.
+	/// </summary>
+	public void PaintToValue(Es1PanelCanvas canvas, short value) {
+		if (Span < 1) {
+			int p = End - (value * Span >> 16);
+			if (p == Position) {
+				return;
+			}
+
+			if (Position < p) {
+				canvas.FillRect(Position, Rect.Y0, p, Rect.Y1, UnlitColor);
+			} else {
+				FillPinstripe(canvas, p, Position);
+			}
+
+			Position = p;
+		} else {
+			int p = Start + (value * Span >> 16);
+			if (p == Position) {
+				return;
+			}
+
+			if (p < Position) {
+				canvas.FillRect(p + 1, Rect.Y0, Position, Rect.Y1, UnlitColor);
+			} else {
+				FillPinstripe(canvas, Position, p);
+			}
+
+			Position = p;
+		}
+	}
+
+	/// <summary>
 	/// <c>LedBarGraph_RepaintToValue</c> (<c>00031fac</c>)(bar, a, <paramref name="value"/>), slot <c>+8</c>, its
 	/// <i>a</i> not read: the whole bar for the value, which it does not store. The position <i>p</i> is start +
 	/// (value · span &gt;&gt; 16) for a span of 1 or more and end − (value · span &gt;&gt; 16) otherwise; start to
 	/// <i>p</i> is drawn through <see cref="FillPinstripe"/>, and <i>p</i> + 1 to end filled through the brush
-	/// {0, <see cref="UnlitColor"/>}, both on the rect's rows. Retail writes each run's columns into the rect's
-	/// <i>x0</i> and <i>x1</i> for the fill and leaves them there; nothing the panel calls reads them.
+	/// {0, <see cref="UnlitColor"/>}, both on the rect's rows.
 	/// </summary>
 	public void RepaintToValue(Es1PanelCanvas canvas, int value) {
 		int p = Span < 1 ? End - (value * Span >> 16) : Start + (value * Span >> 16);

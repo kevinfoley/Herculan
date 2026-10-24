@@ -419,10 +419,8 @@ public sealed class Es1Simulation {
 	/// to the target <c>+0x15e</c> by <c>Math_DistanceBetweenPoints</c>, 0 with none: disabled it centres; with no twist or
 	/// pitch input, TRACK's latch and a target not destroyed, it tracks the target's position plus its slot <c>+0x34</c>
 	/// offset (<see cref="Es1Turret.TrackPoint"/>) and the centring stops; with input the centring stops; then the centring
-	/// tick, or unless tracking the two axis ticks.
-	///
-	/// <para>TRACK's latch stays clear until plan step 6c's console panel sets it (<see cref="Es1WeaponMounts.TrackLatch"/>),
-	/// so until then the turret never tracks.</para>
+	/// tick, or unless tracking the two axis ticks. TRACK's latch is <see cref="Es1WeaponMounts.TrackLatch"/>, which the
+	/// console's <c>TRACK</c> sets through the weapon manager's per-frame pass.
 	/// </summary>
 	private void TickPlayersMachine(short steer, short throttle, short twist, short pitch) {
 		var player = LocalPlayer;

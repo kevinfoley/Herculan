@@ -3,6 +3,7 @@ using Herculan.Engine.Content;
 using Herculan.Es1.Input;
 using Herculan.Es1.Panels;
 using Herculan.Es1.View;
+using Herculan.Es1.WeaponRows;
 
 namespace Herculan.Es1.Gunsight;
 
@@ -26,6 +27,11 @@ public sealed class Es1Gunsight {
 	/// <summary>The value the update stores at the state block's offset <c>0x20</c> with a selection.</summary>
 	public const int SelectionLiteral = 2000;
 
+	/// <summary><c>STRINGS0.STR</c>'s group of <c>ATT</c>, <c>000bd4a8</c>.</summary>
+	public const int AttGroup = 33;
+
+	private readonly string? _attText;
+
 	private readonly Es1Cockpit _cockpit;
 	private readonly List<Es1GunsightChild> _children = new(ChildCapacity);
 
@@ -37,9 +43,11 @@ public sealed class Es1Gunsight {
 	/// </summary>
 	/// <param name="fonts"><c>ColorSchemePanels</c> (<c>00092d40</c>), whose <c>cpgreen</c> captions the waypoint and <c>cpblack</c> writes <c>ATT</c>.</param>
 	/// <param name="mouse">The cockpit's mouse, whose cursor and driver the pointer's move reaches.</param>
+	/// <param name="attText"><c>STRINGS0.STR</c> group 33's <c>ATT</c>; nothing is written when null.</param>
 	internal Es1Gunsight(Es1Cockpit cockpit, Es1GauGunsightBlock block, Es1GunsightBanks banks, IReadOnlyList<HudFont?> fonts,
-			Es1CockpitMouse mouse) {
+			Es1CockpitMouse mouse, string? attText = null) {
 		_cockpit = cockpit;
+		_attText = attText;
 		Rect = new Es1Rect(block.Origin.X, block.Origin.Y, block.Int2, block.Int3);
 		int ox = block.Origin.X, oy = block.Origin.Y;
 		var p = block.ReticleCentre;
@@ -242,12 +250,15 @@ public sealed class Es1Gunsight {
 	private void AddChild(Es1GunsightChild child) => _children.Add(child);
 
 	/// <summary>
-	/// The <c>ATT</c> legend both paints end with. PLACEHOLDER: while the byte <c>+0x7c</c> of the weapon buttons (the
-	/// cockpit's <c>+0x1dd</c>) is set, <c>Label_SetText</c> of <see cref="AttLabel"/> with <c>STRINGS0.STR</c> group 33's
-	/// <c>ATT</c> (<c>000bd4a8</c>) in the render context installed then, the scene's; the weapon buttons are plan step
-	/// 6c's console panel, and until then the byte reads clear.
+	/// The <c>ATT</c> legend both paints end with: while the console buttons' tracking latch <c>+0x7c</c> (the cockpit's
+	/// <c>+0x1dd</c>, <see cref="Es1ConsoleButtons.Tracking"/>) is set, <c>Label_SetText</c> of <see cref="AttLabel"/>
+	/// with <c>ATT</c> in the render context installed then, the scene's
+	/// (docs/es1/simulation/cockpit-gunsight-hud.md#what-the-box-is-drawn-through).
 	/// </summary>
-	private static void PaintAttLegend() {
+	private void PaintAttLegend() {
+		if (_cockpit.ConsoleButtons.Tracking) {
+			AttLabel.SetText(_cockpit.SceneCanvas(), _attText);
+		}
 	}
 
 	private static HudFont? Font(IReadOnlyList<HudFont?> fonts, int index) => index < fonts.Count ? fonts[index] : null;

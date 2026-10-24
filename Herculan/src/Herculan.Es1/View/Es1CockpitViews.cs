@@ -62,11 +62,12 @@ public sealed class Es1CockpitViews {
 	/// <param name="throttleLights">The frames of the throttle's light file; none when null.</param>
 	/// <param name="systemStrings"><c>str\system.str</c>; none when null.</param>
 	/// <param name="resources">The reader <see cref="Resources"/> holds; none when null.</param>
+	/// <param name="simulatorStrings"><c>str\strings0.str</c>; none when null.</param>
 	internal Es1CockpitViews(string name, Vue.Entry[] records, Es1ClipBlock[] clips, DynamixBitmap?[] canopies,
 			DynamixPalette? palette, Es1GauFile? layout = null, Es1CursorImage?[]? cursors = null, HudFont?[]? fonts = null,
 			Es1GunsightBanks? gunsightBanks = null, IReadOnlyList<DynamixBitmap>? pushButtons = null,
 			IReadOnlyList<DynamixBitmap>? throttleLights = null, StringFile? systemStrings = null,
-			Func<string, string, byte[]?>? resources = null) {
+			Func<string, string, byte[]?>? resources = null, StringFile? simulatorStrings = null) {
 		Name = name;
 		_records = records;
 		_clips = clips;
@@ -80,6 +81,7 @@ public sealed class Es1CockpitViews {
 		ThrottleLights = throttleLights;
 		SystemStrings = systemStrings;
 		Resources = resources;
+		SimulatorStrings = simulatorStrings;
 	}
 
 	/// <summary>
@@ -103,8 +105,12 @@ public sealed class Es1CockpitViews {
 	public static readonly string[] FontNames =
 		["CPBLUE", "CPGREEN", "CPRED", "CPYLW", "CPON", "CPPRESS", "CPOFF", "CPGREY", "CPBLACK", "CPORANGE"];
 
-	/// <summary>The indices of <c>cpgreen</c> (<c>00092d44</c>), <c>cpred</c> (<c>00092d48</c>) and <c>cpblack</c> (<c>00092d60</c>) in <see cref="Fonts"/>.</summary>
-	public const int CpGreen = 1, CpRed = 2, CpBlack = 8;
+	/// <summary>
+	/// The indices in <see cref="Fonts"/> of <c>cpblue</c> (<c>00092d40</c>), <c>cpgreen</c> (<c>00092d44</c>),
+	/// <c>cpred</c> (<c>00092d48</c>), <c>cpylw</c> (<c>00092d4c</c>), <c>cpon</c> (<c>00092d50</c>), <c>cppress</c>
+	/// (<c>00092d54</c>) and <c>cpblack</c> (<c>00092d60</c>).
+	/// </summary>
+	public const int CpBlue = 0, CpGreen = 1, CpRed = 2, CpYellow = 3, CpOn = 4, CpPress = 5, CpBlack = 8;
 
 	/// <summary>
 	/// <c>str\system.str</c>, the computer's lines, which the first message port built loads into
@@ -112,6 +118,13 @@ public sealed class Es1CockpitViews {
 	/// does not parse.
 	/// </summary>
 	public StringFile? SystemStrings { get; }
+
+	/// <summary>
+	/// <c>str\strings0.str</c>, the cockpit's captions and labels, which <c>ColorSchemePanels_LoadAll</c> hands
+	/// <c>SimStrings_LoadAll</c> from the untranslated folder (docs/es1/formats/str-strings.md#the-groups); null when it
+	/// is missing or does not parse.
+	/// </summary>
+	public StringFile? SimulatorStrings { get; }
 
 	/// <summary><c>ColorSchemePanels</c>, in <see cref="FontNames"/>' order; null for a font whose file is missing.</summary>
 	public IReadOnlyList<HudFont?> Fonts { get; }
@@ -158,7 +171,7 @@ public sealed class Es1CockpitViews {
 	/// for each view and <c>db&lt;n&gt;\&lt;name&gt;</c> for each canopy, view 3 sharing view 2's
 	/// (<c>CockpitCanopy_LoadViewBitmap</c>, <c>00022184</c>); <c>dpl\cockpit</c>; the seven cursors; and
 	/// <c>gau\&lt;name&gt;</c> (<c>Gau_Load</c>, <c>0002b5c4</c>); the ten fonts; <c>dba\pbuttons</c>; the gunsight's banks;
-	/// the throttle's light file; and <c>str\system.str</c> from the untranslated folder, as
+	/// the throttle's light file; and <c>str\system.str</c> and <c>str\strings0.str</c> from the untranslated folder, as
 	/// <c>ResourcePath_BuildFolderName</c> names it. Null when the
 	/// <c>.VUE</c> is missing, or the <c>.GAU</c>,
 	/// whose absence <c>Gau_Load</c> asserts on.
@@ -197,6 +210,7 @@ public sealed class Es1CockpitViews {
 			: null;
 		return new Es1CockpitViews(name, records, clips, canopies, palette, loaded, cursors, fonts,
 			Es1GunsightBanks.Load(content), Es1WidgetResources.LoadFrames(content, "PBUTTONS"), lights,
-			SimStrings.LoadUntranslated(content, "SYSTEM.STR"), content.Read);
+			SimStrings.LoadUntranslated(content, "SYSTEM.STR"), content.Read,
+			SimStrings.LoadUntranslated(content, SimStrings.SimulatorStrings));
 	}
 }

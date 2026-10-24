@@ -11,6 +11,7 @@ using Herculan.Es1.Gunsight;
 using Herculan.Es1.Host;
 using Herculan.Es1.Sim;
 using Herculan.Es1.View;
+using Herculan.Es1.WeaponRows;
 using Xunit;
 
 namespace Herculan.Engine.Tests;
@@ -124,9 +125,10 @@ public class Es1GunsightTests {
 	}
 
 	/// <summary>
-	/// The click surface's gadget is the root's second widget, after the throttle's slider, which <c>Cockpit_LoadPanel</c>
-	/// builds first, and ahead of the strips the first frame builds; and a click arms the pick only with the left button.
-	/// Catches the gadget registered after the strips (which take an overlapping click first) or the button's bit misread.
+	/// The click surface's gadget is the root's seventh widget, after the console's five buttons and the throttle's
+	/// slider, which <c>Cockpit_LoadPanel</c> builds first, and ahead of the strips the first frame builds; and a click
+	/// arms the pick only with the left button. Catches the gadget registered after the strips (which take an overlapping
+	/// click first) or the button's bit misread.
 	/// </summary>
 	[Fact]
 	public void ClickGadgetComesBeforeTheStripsAndArmsOnTheLeftButton() {
@@ -134,9 +136,11 @@ public class Es1GunsightTests {
 		new Es1FrameLoop(rig.Views, () => { }).StartMission();
 		var root = rig.Views.Cockpit.Root;
 
-		Assert.Same(rig.Views.Cockpit.Throttle.Slider, root.Clickables[0]);
-		Assert.Same(rig.Gunsight.ClickSurface.Gadget, root.Clickables[1]);
-		Assert.Same(rig.Views.Cockpit.BottomStrip, root.Clickables[2]);
+		Assert.Equal<Es1Widget>(rig.Views.Cockpit.ConsoleButtons.Buttons,
+			root.Clickables.Take(Es1ConsoleButtons.ButtonCount));
+		Assert.Same(rig.Views.Cockpit.Throttle.Slider, root.Clickables[5]);
+		Assert.Same(rig.Gunsight.ClickSurface.Gadget, root.Clickables[6]);
+		Assert.Same(rig.Views.Cockpit.BottomStrip, root.Clickables[7]);
 		rig.Gunsight.ClickSurface.Gadget.OnClick(2);
 		Assert.False(rig.Gunsight.PickArmed);
 		rig.Gunsight.ClickSurface.Gadget.OnClick(1);

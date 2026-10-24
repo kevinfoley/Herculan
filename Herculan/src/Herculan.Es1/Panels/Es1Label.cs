@@ -4,6 +4,18 @@ using Herculan.Es1.View;
 namespace Herculan.Es1.Panels;
 
 /// <summary>
+/// The render context a label writes into, the one installed when <c>Label_SetText</c> runs: a panel's or the
+/// cockpit's canvas context (<see cref="Es1PanelCanvas"/>), or the scene's (<see cref="Es1SceneCanvas"/>).
+/// </summary>
+public interface IEs1LabelSurface {
+	/// <summary><c>Raster_FillRect</c> under the brush {0, <paramref name="color"/>}: the inclusive rect filled.</summary>
+	void FillRect(int x0, int y0, int x1, int y1, byte color);
+
+	/// <summary><c>HudFont_DrawString</c> (<c>00069e38</c>) from the pen (<paramref name="x"/>, <paramref name="y"/>).</summary>
+	void DrawString(HudFont? font, string? text, int x, int y);
+}
+
+/// <summary>
 /// The simulator's label, <c>Label_Ctor</c> (<c>ES1DBSIM 00030f44</c>), placed by <c>Label_SetRect</c>
 /// (<c>00031080</c>) and drawn by <c>Label_SetText</c> (<c>0003114c</c>) (docs/es1/simulation/cockpit-widgets.md#labels):
 /// its font <c>+0</c>, rect <c>+4</c>, anchor <c>+0x14</c>/<c>+0x16</c>, flags <c>+0x18</c> and fill color
@@ -61,7 +73,7 @@ public sealed class Es1Label {
 	/// (<c>HudFont_MeasureString</c>); the rect filled in the fill color when it is not 0; then the text drawn from the
 	/// pen. With no font nothing is drawn.
 	/// </summary>
-	public void SetText(Es1PanelCanvas canvas, string? text) {
+	public void SetText(IEs1LabelSurface canvas, string? text) {
 		if (Font == null || text == null) {
 			return;
 		}

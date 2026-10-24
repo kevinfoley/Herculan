@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using HercWorks.Core.Data.File.Gau;
 using Herculan.Es1.Gunsight;
 using Herculan.Es1.Input;
 using Herculan.Es1.Messages;
@@ -7,6 +8,7 @@ using Herculan.Es1.Panels;
 using Herculan.Es1.Sim;
 using Herculan.Es1.Throttle;
 using Herculan.Es1.Ttm;
+using Herculan.Es1.WeaponRows;
 
 namespace Herculan.Es1.View;
 
@@ -17,7 +19,9 @@ namespace Herculan.Es1.View;
 /// widgets-off byte and the view device's button latch, with <c>CockpitWidgets_HandleCommand</c> (<c>0002d24c</c>) and
 /// <c>CockpitView_PollViewDevice</c> (<c>0002d1a0</c>) (docs/es1/simulation/cockpit-panel.md#keys-and-the-view-device);
 /// and the screen-edge strips and the cursor slots (docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors),
-/// with <c>Cockpit_DrawFrame</c>'s steps that reach them; the throttle gauge <c>+0x1ed</c> and the roving gunsight
+/// with <c>Cockpit_DrawFrame</c>'s steps that reach them; the weapon rows <c>+0x70</c>, the pod row <c>+0x1d8</c> and
+/// the console buttons <c>+0x1dd</c> (docs/es1/simulation/cockpit-panel.md#the-weapon-rows,
+/// docs/es1/simulation/cockpit-weapon-gauges.md); the throttle gauge <c>+0x1ed</c> and the roving gunsight
 /// <c>+0x1f1</c> with the canvas context they draw through and <c>Widget_DrawToCockpit</c>
 /// (docs/es1/simulation/cockpit-panel.md#drawing-it); the clock <c>+0x1f9</c> and the <c>.TTM</c> manager
 /// <c>CockpitTtmManager</c> (docs/es1/formats/ttm-scripts.md#the-simulator); the computer's ticker <c>+0x207</c>
@@ -117,6 +121,33 @@ public sealed class Es1Cockpit {
 	/// <summary><c>CockpitTtmManager</c> (<c>00092d70</c>), the <c>.TTM</c> manager <c>Cockpit_LoadPanel</c> makes.</summary>
 	public Es1TtmManager Scripts { get; private set; }
 
+	/// <summary><c>+0x1dd</c>, the console buttons, which <c>Gau_WeaponButtonsWidget</c> (<c>0002ccd8</c>) builds on the <c>.GAU</c> block at 452.</summary>
+	public Es1ConsoleButtons ConsoleButtons { get; private set; }
+
+	/// <summary><c>+0x70</c>, the nine weapon rows' gauges by row, null where none is built.</summary>
+	public IReadOnlyList<Es1WeaponRowGauge?> WeaponRows => _weaponRows;
+
+	/// <summary><c>+0x94</c>, the weapon rows registered.</summary>
+	public int WeaponRowCount { get; private set; }
+
+	/// <summary>
+	/// <c>+0x1d4</c>, the first weapon row registered while it was empty, whose key slot the key chain asks first.
+	/// <c>Gau_WeaponButtonsWidget</c> first sets it to the cockpit's dword <c>+0x168</c>, a field nothing ported writes,
+	/// which this engine reads as 0 (docs/es1/simulation/cockpit-panel.md#building-it).
+	/// </summary>
+	public Es1WeaponRowGauge? FirstWeaponRow { get; private set; }
+
+	/// <summary><c>+0x1d8</c>, the pod row's gauge, the ECM's.</summary>
+	public Es1PodGauge? PodRow { get; private set; }
+
+	/// <summary><c>+0x23b</c>, the pod row's row, −1 for none.</summary>
+	public short PodRowIndex { get; private set; } = -1;
+
+	private readonly Es1WeaponRowGauge?[] _weaponRows = new Es1WeaponRowGauge?[Es1GauFile.WeaponRowSlots];
+
+	/// <summary><c>STRINGS0.STR</c> group 2's <c>OFFLINE</c> (<c>000bd2c4</c>) and group 3's <c>ECM</c> (<c>000bd2c8</c>).</summary>
+	private const int OfflineGroup = 2, EcmGroup = 3;
+
 	/// <summary>
 	/// <c>000b5bca</c>, a global: set while <c>Sim_StartMission</c> brings the cockpit up, from its step 13 to its step 15
 	/// (docs/es1/simulation/main-loop.md#the-mission-start--sim_startmission-0005a9dc), when <see cref="DrawToCockpit"/>
@@ -193,7 +224,8 @@ public sealed class Es1Cockpit {
 	/// <c>Cockpit_DrawFrame</c> (<c>0002cf28</c>)(cockpit), once a frame from <c>Sim_RenderFrame</c> before the 3D pass:
 	/// nothing while <see cref="SkipFrameDraw"/> is set; the strips built the first time; at step 2 the clock's tick
 	/// (<see cref="Es1CockpitClock.Tick"/>); with the widgets off nothing more this engine draws; otherwise, at step 5,
-	/// the throttle gauge's per-frame slot inside the canvas push, at step 6 <see cref="RunTtmScripts"/>, the ticker's
+	/// the per-frame slots of the weapon rows, the pod row, the console buttons and the throttle gauge inside the canvas
+	/// push, at step 6 <see cref="RunTtmScripts"/>, the ticker's
 	/// slot (<see cref="Es1MessageTicker.Update"/>) and the edge cursor, and at step 7 the selection dropped when
 	/// <see cref="Es1TargetSelection.CanTarget"/> refuses it.
 	/// </summary>
@@ -217,7 +249,13 @@ public sealed class Es1Cockpit {
 
 		// 4. PLACEHOLDER: PilotMessagePort_RestoreBackground while no view change is staged, plan step 6c.
 		// 5. Between the canvas push and pop, slot +0xc of each set weapon row, the pod row, +0x1dd, +0x1e1, +0x1e5,
-		// +0x1ed, +0x1e9 and +0x1f5. PLACEHOLDER: all but the throttle gauge +0x1ed, plan step 6c's instruments.
+		// +0x1ed, +0x1e9 and +0x1f5. PLACEHOLDER: +0x1e1, +0x1e5, +0x1e9 and +0x1f5, plan step 6c's instruments.
+		foreach (var row in _weaponRows) {
+			row?.Update();
+		}
+
+		PodRow?.Update();
+		ConsoleButtons.Update();
 		Throttle.Update();
 		// 6.
 		RunTtmScripts();
@@ -283,9 +321,10 @@ public sealed class Es1Cockpit {
 
 	/// <summary>
 	/// <c>CockpitView_InvalidateWidgets</c> (<c>0002b4a0</c>)(cockpit), which <c>CockpitView_SetView</c> runs for views 0
-	/// to 3: unless the widgets are off, the instruments' slot <c>+8</c>, of which the throttle gauge's,
-	/// <see cref="Es1ThrottleGauge.Paint"/>, the gunsight's, <see cref="Es1Gunsight.Paint"/>, and the clock's,
-	/// <see cref="Es1CockpitClock.Update"/>, are ported; then <see cref="RunTtmScripts"/>.
+	/// to 3: unless the widgets are off, the widgets' slot <c>+8</c>, of which the weapon rows', the pod row's, the
+	/// console buttons', the throttle gauge's, <see cref="Es1ThrottleGauge.Paint"/>, the gunsight's,
+	/// <see cref="Es1Gunsight.Paint"/>, and the clock's, <see cref="Es1CockpitClock.Update"/>, are ported; then
+	/// <see cref="RunTtmScripts"/>.
 	/// </summary>
 	public void InvalidateWidgets() {
 		if (WidgetsOff) {
@@ -293,7 +332,13 @@ public sealed class Es1Cockpit {
 		}
 
 		// Between the canvas push and pop, slot +8 of the nine weapon rows, the pod row +0x1d8, +0x1dd, +0x1e1, +0x1e5,
-		// +0x1ed, +0x1e9 and +0x1f5. PLACEHOLDER: all but the throttle gauge +0x1ed, plan step 6c's instruments.
+		// +0x1ed, +0x1e9 and +0x1f5. PLACEHOLDER: +0x1e1, +0x1e5, +0x1e9 and +0x1f5, plan step 6c's instruments.
+		foreach (var row in _weaponRows) {
+			row?.Paint();
+		}
+
+		PodRow?.Paint();
+		ConsoleButtons.Paint();
 		Throttle.Paint();
 		Gunsight.Paint();
 		Clock.Update();
@@ -381,10 +426,13 @@ public sealed class Es1Cockpit {
 			case 0:
 				break;
 			case >= Key1 and <= Key9:
-				// PLACEHOLDER: outside view 1, row code - 2: the pod row (+0x23b) flips bit 0 of 00037b50's block and hands it
-				// to 00037b14, another row's gauge (+0x70 + 4 x row), when set, goes to CockpitView_ArmWeaponByGauge
-				// (0002d098); the weapon rows are plan step 6c's, and until then no row has a gauge.
-				answer.Value = view == 1 ? Unlisted(code, view) : (short)1;
+				if (view == 1) {
+					answer.Value = Unlisted(code, view);
+					break;
+				}
+
+				SelectRow((short)(code - Key1));
+				answer.Value = 1;
 				break;
 			case >= F1 and <= F6:
 				// PLACEHOLDER: the press of the MFD's (+0x1e9) button code - F1; the MFD is plan step 6c's.
@@ -483,12 +531,14 @@ public sealed class Es1Cockpit {
 	/// <c>.TTM</c> manager, <c>Ttm_ManagerCtor</c>(0, 0, the installed render context, 10), its prefix <c>ttm\</c> and
 	/// <c>Ttm_AllocHandles</c> with a timer count of 2, every second interrupt of the PC timer
 	/// (docs/es1/simulation/timer.md#the-rate); the ticker <c>+0x207</c> on the record + 1684; then, of the instruments
-	/// in retail's order, the throttle gauge <c>+0x1ed</c> on the block at 1000, the gunsight <c>+0x1f1</c> on the block
-	/// at 1104 and the clock <c>+0x1f9</c> on the block at 1604, which opens the HERC's script; and last
-	/// <c>Ttm_RunAll</c>. The throttle's slider and the gunsight register their gadgets on the root in that order, both
-	/// before the strips the first frame builds, so each wins where a later one overlaps it.
+	/// in retail's order, the console buttons <c>+0x1dd</c> on the block at 452, the throttle gauge <c>+0x1ed</c> on the
+	/// block at 1000, the gunsight <c>+0x1f1</c> on the block at 1104 and the clock <c>+0x1f9</c> on the block at 1604,
+	/// which opens the HERC's script; and last <c>Ttm_RunAll</c>. The console's buttons, the throttle's slider and the
+	/// gunsight register their gadgets on the root in that order, all before the weapon rows <c>Sim_StartMission</c>
+	/// builds and the strips the first frame builds, so each wins where a later one overlaps it.
 	/// </summary>
-	[MemberNotNull(nameof(Root), nameof(Ticker), nameof(Throttle), nameof(Gunsight), nameof(Clock), nameof(Scripts))]
+	[MemberNotNull(nameof(Root), nameof(Ticker), nameof(ConsoleButtons), nameof(Throttle), nameof(Gunsight), nameof(Clock),
+		nameof(Scripts))]
 	private void LoadPanel(Es1CockpitViews files) {
 		var layout = files.Layout;
 		var head = new Es1Rect(layout.Origin.X, layout.Origin.Y, BitConverter.ToInt32(layout.Bytes8, 0), BitConverter.ToInt32(layout.Bytes8, 4));
@@ -504,9 +554,15 @@ public sealed class Es1Cockpit {
 		// first, and its MessagePort_CtorBase loads str\system.str; with no pilot channel, the ticker's loads it.
 		Ticker = new Es1MessageTicker(this, Es1Rect.From(layout.TickerBox), MessageTables, files.SystemStrings,
 			files.Fonts[Es1CockpitViews.CpRed]);
-		// PLACEHOLDER: the instruments +0x1dd, +0x1e1, +0x1e5 and +0x1e9 before the throttle gauge: plan step 6c.
+		// Gau_WeaponButtonsWidget: the console and ConsoleButtons_SetChainNumber(it, 2). It also sets +0x1dc to 1 and
+		// +0x1d0 to 0, which only CockpitView_SetConsoleButtonsLatch and CockpitView_UnlightConsoleButtons read, to which
+		// es2_xref.py finds no reference, and +0x1d4 to +0x168 (FirstWeaponRow).
+		ConsoleButtons = new Es1ConsoleButtons(this, layout.ConsoleButtons, files.Fonts, files.PushButtons, files.SimulatorStrings);
+		ConsoleButtons.SetChainNumber(2);
+		// PLACEHOLDER: the instruments +0x1e1, +0x1e5 and +0x1e9 before the throttle gauge: plan step 6c.
 		Throttle = new Es1ThrottleGauge(this, layout.ThrottleBlock, files.ThrottleLights, files.PushButtons);
-		Gunsight = new Es1Gunsight(this, layout.Gunsight, files.GunsightBanks, files.Fonts, _mouse);
+		Gunsight = new Es1Gunsight(this, layout.Gunsight, files.GunsightBanks, files.Fonts, _mouse,
+			files.SimulatorStrings?.Text(Es1Gunsight.AttGroup, 0));
 		// PLACEHOLDER: the instrument +0x1f5 before the clock: plan step 6c.
 		Clock = new Es1CockpitClock(this, layout.ClockBlock, Scripts, files.Fonts[0], Globals.Clock.Clock);
 		Scripts.RunAll();
@@ -594,17 +650,127 @@ public sealed class Es1Cockpit {
 	/// An unlisted code: <c>MfdFlashComm_HandleAltKey</c> (<c>0003a890</c>)(the MFD <c>+0x1e9</c>, code); when that answers
 	/// 0, in view 1 the key slot of <c>+0x1f5</c> alone, and in any other view the key slots of <c>+0x1d4</c> when set,
 	/// <c>+0x1dd</c>, <c>+0x1e1</c>, <c>+0x1e5</c>, <c>+0x1ed</c>, <c>+0x1f1</c> and <c>+0x1e9</c>, to the first that
-	/// accepts; 1 when one does, else 0. The throttle gauge's and the gunsight's slots take no key.
+	/// accepts; 1 when one does, else 0. A weapon row's, the throttle gauge's and the gunsight's slots take no key; the
+	/// console's (<see cref="Es1ConsoleButtons.HandleCommand"/>) takes four.
 	/// </summary>
-	private static short Unlisted(ushort code, int view) {
+	private short Unlisted(ushort code, int view) {
 		// PLACEHOLDER: MfdFlashComm_HandleAltKey on the MFD +0x1e9, and in view 1 the key slot of +0x1f5, plan step 6c's
 		// instruments; until then neither accepts.
 		if (view == 1) {
 			return 0;
 		}
 
-		// PLACEHOLDER: the key slots of +0x1d4, +0x1dd, +0x1e1 and +0x1e5 before the throttle gauge's, and of +0x1e9 after
-		// the gunsight's, plan step 6c's instruments; until then none accepts.
-		return Es1ThrottleGauge.KeyDispatch(code) != 0 || Es1Gunsight.KeyDispatch(code) != 0 ? (short)1 : (short)0;
+		if (FirstWeaponRow != null && Es1WeaponGauge.KeyDispatch(code) != 0) {
+			return 1;
+		}
+
+		// PLACEHOLDER: the key slots of +0x1e1 and +0x1e5 before the throttle gauge's, and of +0x1e9 after the
+		// gunsight's, plan step 6c's instruments; until then none accepts.
+		return ConsoleButtons.HandleCommand(code) != 0 || Es1ThrottleGauge.KeyDispatch(code) != 0
+			|| Es1Gunsight.KeyDispatch(code) != 0 ? (short)1 : (short)0;
 	}
+
+	/// <summary>
+	/// The number keys' case for row <paramref name="row"/>, outside view 1: the pod row's
+	/// (<see cref="PodRowIndex"/>) switch flipped in a copy of its block (<see cref="Es1PodGauge.GetStateBlock"/>) handed
+	/// back to <see cref="Es1PodGauge.SetStateBlock"/>; another row's gauge, when set, armed through
+	/// <see cref="ArmWeaponByGauge"/>.
+	/// </summary>
+	private void SelectRow(short row) {
+		if (PodRowIndex == row) {
+			if (PodRow != null) {
+				var block = PodRow.GetStateBlock();
+				PodRow.SetStateBlock(block with { Switch = !block.Switch });
+			}
+
+			return;
+		}
+
+		if (_weaponRows[row] is { } gauge) {
+			ArmWeaponByGauge(gauge);
+		}
+	}
+
+	/// <summary>
+	/// <c>CockpitView_ArmWeaponByGauge</c> (<c>0002d098</c>)(cockpit, <paramref name="gauge"/>):
+	/// <see cref="Es1WeaponMounts.SelectByGauge"/> on the machine's weapon manager; true when that arms a mount.
+	/// </summary>
+	public bool ArmWeaponByGauge(Es1WeaponGauge gauge) {
+		if (Machine?.Mounts?.SelectByGauge(gauge) != true) {
+			return false;
+		}
+
+		// PLACEHOLDER: Sound_Play(0x1a); no plan step ports ES1's sound yet.
+		return true;
+	}
+
+	/// <summary>
+	/// <c>CockpitView_CreateEnergyWeaponGauge</c> (<c>0002cbbc</c>)(cockpit, <paramref name="mount"/>,
+	/// <paramref name="name"/>, <paramref name="row"/>) (docs/es1/simulation/cockpit-panel.md#the-weapon-rows): the row's
+	/// rect, the <c>.GAU</c>'s rect at 20 + 16 × row, copied into the energy block at 244, the gauge built on that block
+	/// and registered (<see cref="RegisterWeaponGauge"/>). A row outside the nine, whose rect retail reads from the bytes
+	/// before or after the rects, builds nothing, an engine guard; no retail <c>.GL</c> holds one.
+	/// </summary>
+	public Es1EnergyWeaponGauge? CreateEnergyWeaponGauge(Es1WeaponMount mount, string? name, short row) {
+		if (RowRect(row) is not { } rect) {
+			return null;
+		}
+
+		var files = _views.Files;
+		var gauge = new Es1EnergyWeaponGauge(this, mount, name, row, rect, files.Layout.EnergyRow, files.Fonts,
+			files.PushButtons, files.SimulatorStrings?.Text(OfflineGroup, 0));
+		RegisterWeaponGauge(row, gauge);
+		return gauge;
+	}
+
+	/// <summary>
+	/// <c>CockpitView_CreateAmmoWeaponGauge</c> (<c>0002cc18</c>): <see cref="CreateEnergyWeaponGauge"/>'s steps on the
+	/// ammunition block at 164.
+	/// </summary>
+	public Es1AmmoWeaponGauge? CreateAmmoWeaponGauge(Es1WeaponMount mount, string? name, short row) {
+		if (RowRect(row) is not { } rect) {
+			return null;
+		}
+
+		var files = _views.Files;
+		var gauge = new Es1AmmoWeaponGauge(this, mount, name, row, rect, files.Layout.AmmunitionRow, files.Fonts,
+			files.PushButtons, files.SimulatorStrings?.Text(OfflineGroup, 0));
+		RegisterWeaponGauge(row, gauge);
+		return gauge;
+	}
+
+	/// <summary>
+	/// <c>CockpitView_CreatePodGauge</c> (<c>0002cc74</c>)(cockpit, <paramref name="mount"/>, <paramref name="row"/>): the
+	/// row's rect copied into the pod block at 340, the gauge built on it, kept at <c>+0x1d8</c> and its row at
+	/// <c>+0x23b</c>. Retail also adds 1 to the widget list's count without storing the gauge in the list, which this
+	/// engine does not keep. A row outside the nine builds nothing, as for <see cref="CreateEnergyWeaponGauge"/>.
+	/// </summary>
+	public Es1PodGauge? CreatePodGauge(Es1WeaponMount mount, short row) {
+		if (RowRect(row) is not { } rect) {
+			return null;
+		}
+
+		var files = _views.Files;
+		var strings = files.SimulatorStrings;
+		PodRow = new Es1PodGauge(this, mount, row, rect, files.Layout.PodRow, files.Fonts, files.PushButtons,
+			strings?.Text(EcmGroup, 0), strings?.Text(OfflineGroup, 0));
+		PodRowIndex = row;
+		return PodRow;
+	}
+
+	/// <summary>
+	/// <c>CockpitView_RegisterWeaponGauge</c> (<c>0002cb54</c>)(cockpit, <paramref name="row"/>, <paramref name="gauge"/>):
+	/// the gauge kept as <see cref="FirstWeaponRow"/> while that is empty and in its row's slot, and the count raised.
+	/// Retail also appends it to the widget list, which this engine does not keep, and takes the first empty slot for a
+	/// row of −1, which the factories' guard leaves no caller of.
+	/// </summary>
+	private void RegisterWeaponGauge(short row, Es1WeaponRowGauge gauge) {
+		FirstWeaponRow ??= gauge;
+		_weaponRows[row] = gauge;
+		WeaponRowCount++;
+	}
+
+	/// <summary>The <c>.GAU</c>'s weapon-row rect <paramref name="row"/>, or null for a row outside the nine.</summary>
+	private Es1Rect? RowRect(short row) =>
+		row >= 0 && row < Es1GauFile.WeaponRowSlots ? Es1Rect.From(_views.Files.Layout.WeaponRows[row]) : null;
 }
