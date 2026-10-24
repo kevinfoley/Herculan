@@ -71,7 +71,10 @@ public class Es1GauFile {
 	/// </summary>
 	public Es1GauShieldDisplayBlock ShieldDisplayBlock { get; set; } = new();
 
-	/// <summary>Offset 728, 272 bytes.</summary>
+	/// <summary>
+	/// Offset 728, 272 bytes: the block <c>Gau_MfdPanelWidget</c> (<c>0002cdac</c>) hands the instrument at the cockpit's
+	/// <c>+0x1e9</c>.
+	/// </summary>
 	public Es1GauMfdPanelBlock MfdPanelBlock { get; set; } = new();
 
 	/// <summary>

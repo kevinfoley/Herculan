@@ -125,9 +125,9 @@ public class Es1GunsightTests {
 	}
 
 	/// <summary>
-	/// The click surface's gadget is the root's ninth widget, after the console's five buttons, the shield display's two
-	/// and the throttle's slider, which <c>Cockpit_LoadPanel</c> builds first, and ahead of the strips the first frame
-	/// builds; and a click arms the pick only with the left button. Catches the gadget registered after the strips (which
+	/// The click surface's gadget is the root's 23rd widget, after the console's five buttons, the shield display's two,
+	/// the MFD's 13 buttons and its click surface, and the throttle's slider, which <c>Cockpit_LoadPanel</c> builds first,
+	/// and ahead of the strips the first frame builds; and a click arms the pick only with the left button. Catches the gadget registered after the strips (which
 	/// take an overlapping click first) or the button's bit misread.
 	/// </summary>
 	[Fact]
@@ -140,9 +140,11 @@ public class Es1GunsightTests {
 			root.Clickables.Take(Es1ConsoleButtons.ButtonCount));
 		Assert.Same(rig.Views.Cockpit.Shields.FrontButton, root.Clickables[5]);
 		Assert.Same(rig.Views.Cockpit.Shields.RearButton, root.Clickables[6]);
-		Assert.Same(rig.Views.Cockpit.Throttle.Slider, root.Clickables[7]);
-		Assert.Same(rig.Gunsight.ClickSurface.Gadget, root.Clickables[8]);
-		Assert.Same(rig.Views.Cockpit.BottomStrip, root.Clickables[9]);
+		Assert.Equal<Es1Widget>(rig.Views.Cockpit.Mfd.Buttons, root.Clickables.Skip(7).Take(13));
+		Assert.Same(rig.Views.Cockpit.Mfd.ClickSurface, root.Clickables[20]);
+		Assert.Same(rig.Views.Cockpit.Throttle.Slider, root.Clickables[21]);
+		Assert.Same(rig.Gunsight.ClickSurface.Gadget, root.Clickables[22]);
+		Assert.Same(rig.Views.Cockpit.BottomStrip, root.Clickables[23]);
 		rig.Gunsight.ClickSurface.Gadget.OnClick(2);
 		Assert.False(rig.Gunsight.PickArmed);
 		rig.Gunsight.ClickSurface.Gadget.OnClick(1);

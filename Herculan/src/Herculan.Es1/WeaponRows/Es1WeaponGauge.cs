@@ -48,6 +48,15 @@ public abstract class Es1WeaponGauge {
 	/// <summary><c>+0x86</c>, the mount whose row this is.</summary>
 	public Es1WeaponMount Mount { get; }
 
+	/// <summary>
+	/// <c>WeaponGauge_MountProjectileType</c> (<c>ES1DBSIM 00036f98</c>)(gauge): the <c>int16</c> <c>+0</c> of the mount's
+	/// projectile record, −1 with none (docs/es1/simulation/cockpit-weapon-gauges.md#the-row-gauge-base).
+	/// </summary>
+	public short MountProjectileType() => Mount.Projectile is { } record ? (short)(record.Type?.Val ?? -1) : (short)-1;
+
+	/// <summary><c>WeaponGauge_MountProjectileSubtype</c> (<c>00036fd0</c>)(gauge): the record's <c>int16</c> <c>+2</c>, its subtype, −1 with none.</summary>
+	public short MountProjectileSubtype() => Mount.Projectile?.SubtypeId ?? -1;
+
 	/// <summary><c>+0</c>–<c>+0xc</c>, the row's rect from the <c>.GAU</c>.</summary>
 	public Es1Rect Rect { get; }
 

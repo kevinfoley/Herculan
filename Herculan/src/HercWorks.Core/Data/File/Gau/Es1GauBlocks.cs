@@ -127,18 +127,31 @@ public class Es1GauShieldDisplayBlock {
 }
 
 /// <summary>
-/// The block at 728 of <see cref="Es1GauFile"/>, which <c>Gau_MfdPanelWidget</c> (<c>0002cdac</c>) hands its instrument
-/// (docs/es1/simulation/cockpit-panel.md#building-it), with the 13 rects <c>Gau_Load</c> constructs at 744.
+/// The MFD's block at 728 of <see cref="Es1GauFile"/>, the <c>int32</c> from 728 to 967 that <c>MfdDisplay_Ctor</c>
+/// (<c>00039c64</c>) reads (docs/es1/formats/gau-cockpit-layout.md#the-mfd-block-at-728), with the 13 rects
+/// <c>Gau_Load</c> constructs at 744, then 32 bytes it does not.
 /// </summary>
 public class Es1GauMfdPanelBlock {
-	/// <summary>Offset 728: the block's first 16 bytes, which <see cref="Es1GauFile.Loaded"/> offsets as a rect.</summary>
-	public Es1GauRect Header { get; set; }
+	/// <summary>The buttons' rects in <see cref="Buttons"/>.</summary>
+	public const int ButtonCount = 13;
 
-	/// <summary>Offset 744: thirteen rects.</summary>
-	public Es1GauRect[] Rects744 { get; set; } = new Es1GauRect[13];
+	/// <summary>
+	/// <c>int32</c> 0 to 3, offset 728: the gauge's rect, whose first pair is the origin added to every rect below; the
+	/// second pair is unread.
+	/// </summary>
+	public Es1GauRect Rect { get; set; }
 
-	/// <summary>Offsets 952-999, which the doc does not name.</summary>
-	public byte[] Bytes952 { get; set; } = new byte[48];
+	/// <summary>
+	/// <c>int32</c> 4 to 0x37, offset 744: the 13 buttons' rects, button <i>i</i> at 744 + 16<i>i</i>: 0 to 5 the F-key
+	/// buttons, 6 the title, 7 <c>MODE</c>, 8 <c>RANGE</c>, 9 <c>TARGET</c>, 10 <c>XMIT</c>, 11 and 12 the row arrows.
+	/// </summary>
+	public Es1GauRect[] Buttons { get; set; } = new Es1GauRect[ButtonCount];
+
+	/// <summary><c>int32</c> 0x38 to 0x3b, offset 952: the screen's rect, which the screens draw in and the click surface covers.</summary>
+	public Es1GauRect Screen { get; set; }
+
+	/// <summary>Offsets 968-999, which the constructor does not read.</summary>
+	public byte[] Bytes968 { get; set; } = new byte[32];
 }
 
 /// <summary>

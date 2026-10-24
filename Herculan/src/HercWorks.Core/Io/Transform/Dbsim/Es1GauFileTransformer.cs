@@ -64,7 +64,12 @@ public class Es1GauFileTransformer : ByteTransformer<Es1GauFile> {
 				RearReadout = ReadRect(),
 				Bytes696 = IndexSegment(32),
 			},
-			MfdPanelBlock = new Es1GauMfdPanelBlock { Header = ReadRect(), Rects744 = ReadRects(13), Bytes952 = IndexSegment(48) },
+			MfdPanelBlock = new Es1GauMfdPanelBlock {
+				Rect = ReadRect(),
+				Buttons = ReadRects(Es1GauMfdPanelBlock.ButtonCount),
+				Screen = ReadRect(),
+				Bytes968 = IndexSegment(32),
+			},
 			ThrottleBlock = new Es1GauThrottleBlock {
 				Origin = ReadPoint(),
 				Int2 = IndexIntLE(),
@@ -177,9 +182,11 @@ public class Es1GauFileTransformer : ByteTransformer<Es1GauFile> {
 		Rect(shields.RearReadout);
 		w.Write(shields.Bytes696);
 
-		Rect(source.MfdPanelBlock.Header);
-		Rects(source.MfdPanelBlock.Rects744);
-		w.Write(source.MfdPanelBlock.Bytes952);
+		var mfd = source.MfdPanelBlock;
+		Rect(mfd.Rect);
+		Rects(mfd.Buttons);
+		Rect(mfd.Screen);
+		w.Write(mfd.Bytes968);
 
 		var throttle = source.ThrottleBlock;
 		Point(throttle.Origin);

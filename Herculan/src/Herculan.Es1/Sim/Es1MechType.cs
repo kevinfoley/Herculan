@@ -17,8 +17,7 @@ namespace Herculan.Es1.Sim;
 /// (docs/es1/formats/chassis-dat.md#the-load): the chassis file, the shape's roots and each root's hardpoint slots, the
 /// gun layout and the texture bank.
 ///
-/// <para>Not loaded: the paper doll (<c>PaperDoll_Load</c>), which the cockpit draws; this is PLACEHOLDER: step 6 loads
-/// it. The low-memory skip of the first roots and texture banks is not taken: the engine runs as a machine with the
+/// <para>The low-memory skip of the first roots and texture banks is not taken: the engine runs as a machine with the
 /// memory <c>g_LowMemory</c> asks for (docs/es1/formats/chassis-dat.md#low-memory).</para>
 /// </summary>
 public sealed class Es1MechType {
@@ -85,6 +84,23 @@ public sealed class Es1MechType {
 	/// <summary>The texture bank every root's <c>+0x26</c> takes, <c>dba\</c>&lt;bank&gt;; null when the install lacks it.</summary>
 	public DynamixBitmapArray? TextureBank { get; private init; }
 
+	/// <summary>
+	/// <c>+0xc2</c>, the paper doll <c>PaperDoll_Load</c> (<c>00030388</c>) reads from <c>pdg\&lt;name&gt;</c>
+	/// (docs/es1/simulation/paper-doll.md#the-records): its views' origins and sizes and their regions, as the file
+	/// states them; null when the install lacks the file.
+	/// </summary>
+	public PaperDollGraphic? PaperDoll { get; private init; }
+
+	/// <summary>
+	/// The frames of <c>dba\&lt;name&gt;</c>, of which <c>PaperDoll_Load</c> gives view <i>v</i> frame <i>v</i> as its
+	/// picture; null when the install lacks the file.
+	/// </summary>
+	public IReadOnlyList<DynamixBitmap>? PaperDollArt { get; private init; }
+
+	/// <summary>View <paramref name="view"/>'s picture, frame <paramref name="view"/> of <see cref="PaperDollArt"/>; null when either is missing.</summary>
+	public DynamixBitmap? PaperDollPicture(int view) =>
+		PaperDollArt is { } art && view >= 0 && view < art.Count ? art[view] : null;
+
 	/// <summary>The chassis' cockpit name, the 8 characters at the record's <c>+0x58</c> (file offset 86), upper-cased.</summary>
 	public string CockpitName {
 		get {
@@ -97,7 +113,8 @@ public sealed class Es1MechType {
 	public int ShapeRadius => Roots.Count > 0 && Roots[0] is TSBasePart root ? root.Radius : 0;
 
 	/// <summary>
-	/// <c>MechType_InitOne</c> for type <paramref name="type"/>, given its slot. Null when <c>dat\&lt;name&gt;</c> or
+	/// <c>MechType_InitOne</c> for type <paramref name="type"/>, given its slot, with its last step, <c>PaperDoll_Load</c>.
+	/// Null when <c>dat\&lt;name&gt;</c> or
 	/// <c>dts\&lt;name&gt;</c> is missing, where the original asserts (<c>util\ovl.cpp</c>).
 	/// </summary>
 	public static Es1MechType? Load(GameContent content, NameList names, short type, short slot) {
@@ -116,7 +133,11 @@ public sealed class Es1MechType {
 			? new DynamixBitmapArrayTransformer().Parse(bankBytes)
 			: null;
 
-		return new Es1MechType(type, slot, name, chassis, roots, gunLayout) { TextureBank = bank };
+		return new Es1MechType(type, slot, name, chassis, roots, gunLayout) {
+			TextureBank = bank,
+			PaperDollArt = content.Read("dba", name + ".DBA") is { } artBytes ? new DynamixBitmapArrayTransformer().Parse(artBytes)?.Images : null,
+			PaperDoll = content.Read("pdg", name + ".PDG") is { } dollBytes ? new PaperDiagramGraphTransformer().Parse(dollBytes) : null,
+		};
 	}
 
 	/// <summary>

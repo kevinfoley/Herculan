@@ -38,7 +38,7 @@ public readonly record struct Es1ViewWindow(int X0, int Y0, int X1, int Y1, int 
 /// its slider's constructor loads (docs/es1/simulation/cockpit-throttle-gauge.md#building-it).
 /// <see cref="Es1ViewManager"/> switches between the views.
 ///
-/// <para>Not loaded: the other instruments' files, which plan step 6c ports.</para>
+/// <para>Not loaded: the files of the instruments plan step 6c has still to port.</para>
 /// </summary>
 public sealed class Es1CockpitViews {
 	/// <summary>The screen the simulator draws on, 320 by 200 (docs/es1/rendering/polygon-shading.md#the-display-drivers).</summary>
@@ -63,11 +63,13 @@ public sealed class Es1CockpitViews {
 	/// <param name="systemStrings"><c>str\system.str</c>; none when null.</param>
 	/// <param name="resources">The reader <see cref="Resources"/> holds; none when null.</param>
 	/// <param name="simulatorStrings"><c>str\strings0.str</c>; none when null.</param>
+	/// <param name="statusFlyers">The frames of <c>dba\flyers</c>; none when null.</param>
 	internal Es1CockpitViews(string name, Vue.Entry[] records, Es1ClipBlock[] clips, DynamixBitmap?[] canopies,
 			DynamixPalette? palette, Es1GauFile? layout = null, Es1CursorImage?[]? cursors = null, HudFont?[]? fonts = null,
 			Es1GunsightBanks? gunsightBanks = null, IReadOnlyList<DynamixBitmap>? pushButtons = null,
 			IReadOnlyList<DynamixBitmap>? throttleLights = null, StringFile? systemStrings = null,
-			Func<string, string, byte[]?>? resources = null, StringFile? simulatorStrings = null) {
+			Func<string, string, byte[]?>? resources = null, StringFile? simulatorStrings = null,
+			IReadOnlyList<DynamixBitmap>? statusFlyers = null) {
 		Name = name;
 		_records = records;
 		_clips = clips;
@@ -82,6 +84,7 @@ public sealed class Es1CockpitViews {
 		SystemStrings = systemStrings;
 		Resources = resources;
 		SimulatorStrings = simulatorStrings;
+		StatusFlyers = statusFlyers;
 	}
 
 	/// <summary>
@@ -108,9 +111,9 @@ public sealed class Es1CockpitViews {
 	/// <summary>
 	/// The indices in <see cref="Fonts"/> of <c>cpblue</c> (<c>00092d40</c>), <c>cpgreen</c> (<c>00092d44</c>),
 	/// <c>cpred</c> (<c>00092d48</c>), <c>cpylw</c> (<c>00092d4c</c>), <c>cpon</c> (<c>00092d50</c>), <c>cppress</c>
-	/// (<c>00092d54</c>) and <c>cpblack</c> (<c>00092d60</c>).
+	/// (<c>00092d54</c>), <c>cpoff</c> (<c>00092d58</c>) and <c>cpblack</c> (<c>00092d60</c>).
 	/// </summary>
-	public const int CpBlue = 0, CpGreen = 1, CpRed = 2, CpYellow = 3, CpOn = 4, CpPress = 5, CpBlack = 8;
+	public const int CpBlue = 0, CpGreen = 1, CpRed = 2, CpYellow = 3, CpOn = 4, CpPress = 5, CpOff = 6, CpBlack = 8;
 
 	/// <summary>
 	/// <c>str\system.str</c>, the computer's lines, which the first message port built loads into
@@ -142,6 +145,13 @@ public sealed class Es1CockpitViews {
 	/// </summary>
 	public IReadOnlyList<DynamixBitmap>? ThrottleLights { get; }
 
+	/// <summary>
+	/// <c>MfdStatus_FlyersBank</c> (<c>000935f8</c>), the frames of <c>dba\flyers</c>, which the MFD's status screen loads
+	/// (docs/es1/simulation/mfd-status-screen.md#the-screen-object); null when the file is missing. Its <c>dba\bases</c>
+	/// waits for the structures it draws.
+	/// </summary>
+	public IReadOnlyList<DynamixBitmap>? StatusFlyers { get; }
+
 	/// <summary><c>CockpitGauRecord</c> (<c>00092d3c</c>): <c>gau\&lt;name&gt;</c> after <c>Gau_Load</c>'s origin add.</summary>
 	public Es1GauFile Layout { get; }
 
@@ -171,7 +181,7 @@ public sealed class Es1CockpitViews {
 	/// for each view and <c>db&lt;n&gt;\&lt;name&gt;</c> for each canopy, view 3 sharing view 2's
 	/// (<c>CockpitCanopy_LoadViewBitmap</c>, <c>00022184</c>); <c>dpl\cockpit</c>; the seven cursors; and
 	/// <c>gau\&lt;name&gt;</c> (<c>Gau_Load</c>, <c>0002b5c4</c>); the ten fonts; <c>dba\pbuttons</c>; the gunsight's banks;
-	/// the throttle's light file; and <c>str\system.str</c> and <c>str\strings0.str</c> from the untranslated folder, as
+	/// the throttle's light file; <c>dba\flyers</c>; and <c>str\system.str</c> and <c>str\strings0.str</c> from the untranslated folder, as
 	/// <c>ResourcePath_BuildFolderName</c> names it. Null when the
 	/// <c>.VUE</c> is missing, or the <c>.GAU</c>,
 	/// whose absence <c>Gau_Load</c> asserts on.
@@ -211,6 +221,6 @@ public sealed class Es1CockpitViews {
 		return new Es1CockpitViews(name, records, clips, canopies, palette, loaded, cursors, fonts,
 			Es1GunsightBanks.Load(content), Es1WidgetResources.LoadFrames(content, "PBUTTONS"), lights,
 			SimStrings.LoadUntranslated(content, "SYSTEM.STR"), content.Read,
-			SimStrings.LoadUntranslated(content, SimStrings.SimulatorStrings));
+			SimStrings.LoadUntranslated(content, SimStrings.SimulatorStrings), Es1WidgetResources.LoadFrames(content, "FLYERS"));
 	}
 }
