@@ -9,61 +9,20 @@ namespace Herculan.Engine.World;
 
 /// <summary>
 /// Turns the game's own mission handoff — <c>DATA\script.dat</c>, with the <c>mission.var</c> and
-/// <c>player.mec</c> beside it — into a <see cref="Mission"/>.
+/// <c>player.mec</c> beside it — into a <see cref="Mission"/>: one <see cref="MissionPlacement"/> per
+/// object the mission spawns, the player's squad last, with the groups' orders, the actions, timers,
+/// objectives and text.
 ///
-/// <para><b>The two-pass structure below is DBSIM's, not an invention.</b> It is easy to read
-/// <c>DBSim_LoadScriptDat</c> (<c>00424308</c>) and conclude the format throws its placement data
-/// away: that function reads all 134 bytes of a block-7 record and keeps only the type field, and it
-/// reads block 11 into a stack buffer and keeps only which slots the record marks live. It does not
-/// place anything because placing is not its job — it counts live objects and allocates the pools.
-/// <c>DBSim_SpawnMissionObjects</c> (<c>004253d8</c>) then <b>re-opens the same file</b> and walks
-/// it again, and that is the pass that builds objects. Anything reading only the first pass will
-/// conclude, wrongly, that <c>script.dat</c> carries no positions.</para>
+/// <para>One pass over the file stands in for DBSIM's two (<c>DBSim_LoadScriptDat</c> (<c>00424308</c>)
+/// counts and allocates, <c>DBSim_SpawnMissionObjects</c> (<c>004253d8</c>) places) and yields what the
+/// second leaves: which group claims each roster slot (<see cref="ClaimSlots"/>), where each object
+/// stands and faces (<see cref="ResolveGroups"/>, <see cref="AddRoster"/>), and the squad
+/// (<see cref="LoadPlayerSquad"/>). The rule and its RE are
+/// docs/retail/formats/script-dat.md#placement--the-actual-rule.</para>
 ///
-/// <para>The placement rule that pass implements, with the RE for each step:</para>
-/// <list type="number">
-/// <item><b>Which objects exist.</b> Every block-11 record past the first is an activation
-/// directive: a 3-way discriminator naming a roster (mech/flyer/base) and up to 20 refs into it.
-/// Each ref marks that roster slot live. Records that mark nothing spawn nothing, which is why a
-/// mission's roster is routinely larger than its live object count.</item>
-/// <item><b>Where they stand.</b> The same block-11 record carries a position ref, a heading ref and
-/// a route, and <c>DBSim_BuildGroupRecord</c> (<c>00423b34</c>) builds it into a group record holding
-/// all three. Each member is then attached by <c>Mech_AttachToGroup</c> (<c>00417aa8</c>), which fills
-/// in the member's position <i>only if the object does not already have one of its own</i> — so a
-/// roster record's own position ref wins where it is set, and the group's is the fallback. In retail 
-/// data the roster refs are always unset, so in practice every object stands at its group's point.</item>
-/// <item><b>Groups with no point of their own</b> fall back to their route: the group's row-15 links
-/// resolve to a waypoint group, and <c>Route_WaypointAt</c> (<c>00423b0c</c>) takes a waypoint from it.
-/// Patrol squads are placed this way — the retail mission's three mech squads all are.</item>
-/// <item><b>The player's squad</b> is not in <c>script.dat</c>'s roster at all. Block 11's
-/// <b>record 0</b> exists only to hold its spawn point: <c>DBSim_LoadScriptDat</c> skips it during
-/// activation, and <c>DBSim_SpawnMissionObjects</c> (<c>004253d8</c>) overwrites its member list 
-/// with the entries read from <c>player.mec</c>.</item>
-/// </list>
-///
-/// <para><b>Formation offsets: mechs and bases implemented, flyers still a known gap.</b> Every
-/// member of a group is placed on the group's own point by the rule above; the original then
-/// spreads non-leader members off that point via a per-kind vtable <c>+0x78</c> call
-/// (<c>Mech_ApplyFormationOffset</c> (<c>00417898</c>) for mechs, <c>Base_ApplyFormationOffset</c>
-/// (<c>00405c04</c>) for bases — same slot, same "member index 0 takes no offset" rule). Both 
-/// tables are implemented: <see cref="MechFormationTable"/> (<c>dat\MFORMS.DAT</c>) and 
-/// <see cref="BaseFormationTable"/> (<c>dat\BFORMS.DAT</c>) — see each class's doc comment for
-/// its load-site RE and byte-exact verification. Flyers remain unfixed; retail missions were not
-/// seen putting more than one flyer in a group.</para>
-///
-/// <para><b>Not every group is in the mission when it starts.</b> A block-11 record whose
-/// <c>ActionRef</c> names a block-5 action is <i>waiting on that action</i>, and until it fires the
-/// group is not in the world at all — see <see cref="Sim.SimObject.AwaitingDeployment"/> for the
-/// three places the original tests it. Such a group's placed position is a placeholder, which is
-/// why retail missions happily leave several of them stacked on the player's own spawn point: the
-/// three DIABLO groups in the shipped mission-10 handoff all sit exactly there, invisible, until
-/// they arrive somewhere else entirely.</para>
-///
-/// <para><b>Arrival</b> is <c>Group_DeploymentCheck</c> (<c>004236c4</c>), whose per-verb rules —
-/// drop pod, on foot, or in place — are in docs/retail/simulation/mission-deployment.md and implemented in
-/// <see cref="Sim.MissionGroup.DeploymentCheck"/>. What this loader owes it is <b>which</b> action a
-/// group waits on, not merely that it waits on one: the same record carries the verb the group
-/// arrives on.</para>
+/// <para>A group waiting on a deployment action is placed like any other, and its position is a
+/// placeholder its arrival replaces; the loader keeps which action it waits on, since the arrival
+/// verb is read off that action — see docs/retail/simulation/mission-deployment.md.</para>
 /// </summary>
 public static class MissionLoader {
 	/// <summary>Folder inside an install root holding the loose mission handoff files.</summary>
@@ -479,8 +438,7 @@ public static class MissionLoader {
 	/// <b>Which</b> block-5 action the record names (its <c>DeploymentActionRef</c>), or <c>-1</c>. DBSIM
 	/// resolves it into the group record's <c>+0x14</c> action pointer, and that pointer is both the
 	/// gate and the arrival instruction: which verb the group turns up on is read off this very
-	/// action. Reducing it to a bool loses the arrival — see this class's doc comment, and
-	/// <see cref="Sim.MissionGroup.DeploymentCheck"/>.
+	/// action. Reducing it to a bool loses the arrival — see <see cref="Sim.MissionGroup.DeploymentCheck"/>.
 	/// </param>
 	/// <param name="Side">
 	/// The record's <c>0x6e</c> — <c>ScriptGroup.Side</c>, which lands at the
@@ -501,9 +459,9 @@ public static class MissionLoader {
 	/// into <c>group+0x44</c>, and <c>Group_OrderTick</c> reads it by index. See
 	/// docs/retail/simulation/ai-goals.md.
 	/// </param>
-	/// <param name="AuthoredPoint"><inheritdoc cref="MissionGroupSetup.AuthoredPoint"/></param>
-	/// <param name="PointSource"><inheritdoc cref="MissionGroupSetup.PointSource"/></param>
-	/// <param name="HeadingFromRoute"><inheritdoc cref="MissionGroupSetup.HeadingFromRoute"/></param>
+	/// <param name="AuthoredPoint"><inheritdoc cref="MissionGroupSetup" path="/param[@name='AuthoredPoint']/node()"/></param>
+	/// <param name="PointSource"><inheritdoc cref="MissionGroupSetup" path="/param[@name='PointSource']/node()"/></param>
+	/// <param name="HeadingFromRoute"><inheritdoc cref="MissionGroupSetup" path="/param[@name='HeadingFromRoute']/node()"/></param>
 	private readonly record struct Group(int Index, MissionUnitKind Kind, Vec3i Position, int Heading,
 		int FormationId, int DeploymentAction, MissionSide Side, bool PaintsGround,
 		MissionOrder?[] Orders, Vec3i AuthoredPoint, MissionGroupPointSource PointSource,

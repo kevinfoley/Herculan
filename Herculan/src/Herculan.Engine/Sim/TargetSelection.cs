@@ -1,39 +1,26 @@
 namespace Herculan.Engine.Sim;
 
 /// <summary>
-/// The player's target selection — the cockpit's own, not the machine's.
+/// The player's target selection: what [Enter], ['] and [;] pick, held by the cockpit and copied
+/// onto the pilot's machine once a frame (<see cref="PushToPilot"/>).
 ///
-/// <para><b>Where this lives is the finding, and it is not where it looks.</b> The selected target
-/// the simulation reads is <c>mech+0x1a4</c>, and every homing weapon and half the AI reads it — but
-/// for the player's machine nothing in the simulation ever writes it. It is written once a frame by
-/// <c>Player_PerFrameCockpitUpdate</c> (<c>0041b130</c>), which copies it out of the cockpit widget
-/// tree's <c>+0x210</c>. The selection itself is made in the cockpit
-/// (<c>TargetSelect_SetObject</c> (<c>004332dc</c>)/<c>TargetSelect_Nearest</c> (<c>004333c8</c>)/<c>TargetSelect_Cycle</c> (<c>0043349c</c>), all taking that widget tree as
-/// their subject), and the machine is told afterwards. That is why this class is a peer of
-/// <see cref="MechObject"/> rather than a property of it, and it is also why an AI machine's target
-/// gets there by a different route entirely — the AI's own writers, docs/retail/simulation/ai-targeting.md
-/// ("The AI writers of +0x1a4").</para>
+/// <para>The cockpit owns the selection, not the machine: in the original it is the cockpit widget
+/// tree's <c>+0x210</c>, which <c>Player_PerFrameCockpitUpdate</c> (<c>0041b130</c>) copies into
+/// the machine's selected target <c>mech+0x1a4</c>. This class is therefore a peer of
+/// <see cref="MechObject"/> rather than a property of it, and an AI machine's target reaches
+/// <c>+0x1a4</c> by the AI's own writers instead. See
+/// docs/retail/simulation/target-selection.md#where-the-selection-lives.</para>
 ///
-/// <para><b>The three commands</b> are the manual's, confirmed against
-/// <c>CockpitWidgets_HandleCommand</c> and <c>Sim_DispatchCommand</c> by scancode:</para>
 /// <list type="bullet">
-/// <item><c>Enter</c> (<c>0x1c</c>) — <see cref="Cycle"/>, the manual's "Select Target". Rebuilds the
-/// four-deep shortlist and takes its head, or steps to the next entry when that would not change
-/// anything.</item>
-/// <item><c>'</c> (<c>0x28</c>) — <see cref="SelectNearest"/>, the manual's "Nearest Target". Ignores
-/// where the machine is pointing entirely, and considers only HERCs and flyers.</item>
-/// <item><c>;</c> (<c>0x27</c>) — <see cref="Clear"/>. Undocumented; it is
-/// <c>TargetSelect_SetObject(view, 0)</c>.</item>
+/// <item>[Enter] — <see cref="Cycle"/>, the manual's "Select Target", which the MFD scanner's
+/// "TARGET" button runs too.</item>
+/// <item>['] — <see cref="SelectNearest"/>, the manual's "Nearest Target".</item>
+/// <item>[;] — <see cref="Clear"/>, which the manual does not list.</item>
 /// </list>
 ///
-/// <para>A click on the gunsight selects nothing: the gunsight's click slot,
-/// <c>Gunsight_ClickGadget_OnClickNoOp</c> (<c>0043b338</c>), returns without acting. See
-/// docs/retail/simulation/cockpit-gunsight-hud.md. The MFD scanner's TARGET button runs
-/// <see cref="Cycle"/>, as [Enter] does.</para>
-///
-/// <para>Each of the three ends by pushing the new target into the gunsight widget
-/// (<c>Gunsight_SetValues</c>), which draws the HUD target box —
-/// see <see cref="Cockpit.TargetBox"/> and docs/retail/simulation/hud-target-indicator.md.</para>
+/// <para>Each pushes the new target into the gunsight, which draws the HUD target box — see
+/// <see cref="Cockpit.TargetBox"/> and docs/retail/simulation/hud-target-indicator.md. A click on
+/// the gunsight selects nothing (docs/retail/simulation/cockpit-gunsight-hud.md).</para>
 /// </summary>
 public sealed class TargetSelection {
 	/// <summary>

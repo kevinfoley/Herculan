@@ -10,43 +10,29 @@ namespace Herculan.Engine.Render;
 
 /// <summary>
 /// Draws the live <see cref="BeamTracer"/>s — the GPU counterpart of <c>BeamTracer_Draw</c>
-/// (<c>0040bc14</c>), the tracer class's own paint method.
+/// (<c>0040bc14</c>). What the original draws is docs/retail/simulation/beam-visuals.md#drawing--beamtracer_draw-0040bc14-vtable-slot-0.
 ///
-/// <para><b>What the original does.</b> It brings the tracer's two stored points into view space,
-/// clips the pair against the near plane (<c>Beam_ClipSegmentToNearPlane</c>, <c>0040bb4c</c>), projects both to screen, and then
-/// builds a four-vertex poly by stepping each screen point along the 2D perpendicular of the segment
-/// by that end's own projected half-width — <c>(halfWidth &lt;&lt; shift) / viewZ</c>, floored at two
-/// pixels, which floors the <i>half</i>-width and so keeps a beam four pixels across at worst. The
-/// quad's UVs put the profile frame's u across the beam's <i>length</i> and its v across the width,
-/// and nothing writes a z, so it is drawn flat over what is already there.</para>
+/// <para><b>A straight beam is an opaque textured ribbon.</b> The fragment shader is one fetch of the
+/// subtype's cross-section profile, uploaded fully opaque, as the original's fill is a plain texture
+/// copy; <see cref="BeamAppearance"/> has why the record's color index plays no part.</para>
 ///
-/// <para><b>The fill is a plain texture copy.</b> The poly goes to <c>Raster_DrawPolygon</c> (<c>00468310</c>) as mode
-/// <c>0</c> with its last argument zero, which selects <c>Raster_SpanTextured</c> (<c>0046ab10</c>)'s opaque half: fetch
-/// <c>atlasPage[v][u]</c>, store that palette byte, step the fixed-point u/v, repeat. No shade level,
-/// no colour lookup, no transparency test, no blending of any kind — so the fragment shader here is
-/// the same single texture fetch, and the profile is uploaded fully opaque. See
-/// <see cref="BeamAppearance"/> for why the record's colour index does not enter into it.</para>
+/// <para><b>This engine builds the ribbon in 3D, where the original builds it on screen.</b> The
+/// original steps each projected end along the segment's 2D perpendicular; the vertex shader here
+/// offsets each end along <c>cross(axis, toCamera)</c> in clip space, at that end's own depth, so the
+/// ribbon faces the viewer. The four-pixel minimum width is kept (<see cref="MinimumHalfPixels"/>),
+/// measured in the framebuffer the panel is drawn into. Depth testing is on with depth writes off,
+/// where the original has no depth here at all: a beam already ends at whatever it hit, so the test
+/// changes nothing visible except that a shot fired past a ridge is not painted over it.</para>
 ///
-/// <para><b>What this does instead, and why.</b> The expansion happens in the vertex shader in clip
-/// space: the perpendicular is <c>cross(axis, toCamera)</c> so the quad faces the viewer in three
-/// dimensions rather than two, and the offset is applied at each vertex's own depth, which is the
-/// same construction the original approximates and is exact rather than interpolated. The half-width
-/// floor is kept literally, measured in the framebuffer the panel is drawn into. Depth testing is on
-/// with depth writes off: the original has no depth at all here, but a beam already stops at
-/// whatever it hit, so testing costs nothing visible and stops a shot fired past a ridge from being
-/// painted over it.</para>
+/// <para><b>ELF and ELF2 are flat-colored zigzags.</b> A chain tracer's quads are drawn as
+/// <see cref="BeamTracer"/> built them, untextured, in the record's color, and not turned toward the
+/// viewer — see docs/retail/simulation/beam-visuals.md#elf-and-elf2--the-jagged-branch.</para>
 ///
-/// <para><b>The jagged form — ELF and ELF2.</b> A chain tracer (see <see cref="BeamTracer"/>) is
-/// painted one quad at a time through the shape renderer's point-list path instead, and that fill is
-/// <b>flat-coloured with no texture</b>: the record's colour index is the rasterizer's fill brush.
-/// The quads are not turned to face the viewer either — the width is a z offset baked into the
-/// geometry, so an ELF seen from directly above is edge-on. See docs/retail/simulation/beam-visuals.md,
-/// "ELF and ELF2 — the jagged branch".</para>
-///
-/// <para><b>The muzzle stub is retail's, not a bug here.</b> The jagged branch falls through into the
-/// straight-beam code, which draws the tracer's first two points — for a chain, a stub one half-width
-/// long at the muzzle — once per chain quad. This draws it once, which is pixel-identical because the
-/// fill is opaque. Logged in KNOWN_ISSUES.md.</para>
+/// <para><b>The muzzle stub a chain tracer leaves is drawn once.</b> The stub is retail's
+/// (docs/retail/simulation/beam-visuals.md#the-muzzle-stub-is-a-retail-fall-through, logged in
+/// KNOWN_ISSUES.md), and the
+/// original redraws it once per chain quad; once per tracer is pixel-identical because the fill is
+/// opaque.</para>
 /// </summary>
 public sealed class BeamRenderer : IDisposable {
 	/// <summary>

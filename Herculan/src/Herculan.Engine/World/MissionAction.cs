@@ -76,11 +76,11 @@ public readonly record struct MissionTriggerArea(
 /// dropped, then <c>+0x34</c> and <c>+0x36</c>. See docs/retail/formats/script-dat.md.</para>
 /// </summary>
 /// <param name="Type">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptAction.Type"/>
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptAction.Type" path="/summary/node()"/>
 /// See <see cref="Sim.MissionTriggers.Evaluate"/> for the table.
 /// </param>
 /// <param name="Verb">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptAction.Verb"/>
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptAction.Verb" path="/summary/node()"/>
 /// See <see cref="Sim.MissionGroup.DeploymentCheck"/>.
 /// </param>
 /// <param name="Areas">
@@ -89,10 +89,10 @@ public readonly record struct MissionTriggerArea(
 /// exactly that many, so a populated slot behind a gap is never tested.
 /// </param>
 /// <param name="CounterRefs">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptAction.CounterRefs"/>
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptAction.CounterRefs" path="/summary/node()"/>
 /// </param>
 /// <param name="CounterOps">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptAction.CounterOps"/>
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptAction.CounterOps" path="/summary/node()"/>
 /// <see cref="CounterIncrement"/> and <see cref="CounterClear"/> are the two that do anything; any
 /// other value does nothing.
 /// </param>
@@ -103,7 +103,7 @@ public readonly record struct MissionTriggerArea(
 /// docs/retail/simulation/mission-deployment.md.
 /// </param>
 /// <param name="TargetRef">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptAction.TargetRef"/>
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptAction.TargetRef" path="/summary/node()"/>
 /// Carried as the raw ref the file states. The original resolves it to a pointer during the spawn
 /// pass; <see cref="Sim.MissionActionState"/> holds the resolved form.
 /// </param>
@@ -191,7 +191,7 @@ public sealed record MissionAction(
 /// <see cref="Sim.MissionActionState"/>.</para>
 /// </summary>
 /// <param name="PrimaryActionRef">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptActionTimer.PrimaryActionRef"/>
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptActionTimer.PrimaryActionRef" path="/summary/node()"/>
 /// A ref outside block 5 is read as <c>-1</c>.
 /// </param>
 /// <param name="Delay">
@@ -199,7 +199,7 @@ public sealed record MissionAction(
 /// states it in <see cref="DelayShift"/>-bit units, which <c>FUN_004679c0</c> converts on the way
 /// in.
 /// </param>
-/// <param name="SequenceRefs"><inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptActionTimer.SequenceRefs"/></param>
+/// <param name="SequenceRefs"><inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptActionTimer.SequenceRefs" path="/summary/node()"/></param>
 public sealed record MissionActionTimer(int PrimaryActionRef, int Delay, IReadOnlyList<short> SequenceRefs) {
 	/// <summary>Actions one timer can activate.</summary>
 	public const int SequenceSlots = 10;

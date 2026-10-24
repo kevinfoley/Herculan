@@ -1292,9 +1292,9 @@ public sealed class MissionGenerator {
 /// One row-12 record as <c>MsnGen_LoadMission</c> builds a squad machine from it: its chassis, ten
 /// weapons and ten ammunition types.
 /// </summary>
-/// <param name="Chassis"><inheritdoc cref="MechRosterEntry144.TypeIndex"/></param>
-/// <param name="Weapons"><inheritdoc cref="MechRosterEntry144.WeaponRefs"/></param>
-/// <param name="AmmoTypes"><inheritdoc cref="MechRosterEntry144.WeaponSecondary"/></param>
+/// <param name="Chassis"><inheritdoc cref="MechRosterEntry144.TypeIndex" path="/summary/node()"/></param>
+/// <param name="Weapons"><inheritdoc cref="MechRosterEntry144.WeaponRefs" path="/summary/node()"/></param>
+/// <param name="AmmoTypes"><inheritdoc cref="MechRosterEntry144.WeaponSecondary" path="/summary/node()"/></param>
 public sealed record MissionHerc(short Chassis, short[] Weapons, short[] AmmoTypes);
 
 /// <summary>

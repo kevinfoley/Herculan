@@ -8,7 +8,7 @@ using Herculan.Engine.World;
 namespace Herculan.Engine.Shell;
 
 /// <summary>One base the map draws.</summary>
-/// <param name="TypeIndex"><inheritdoc cref="ScriptBaseRecord.TypeIndex"/></param>
+/// <param name="TypeIndex"><inheritdoc cref="ScriptBaseRecord.TypeIndex" path="/summary/node()"/></param>
 /// <param name="Point">The <c>script.dat</c> block-1 point it stands on.</param>
 /// <param name="Shown">Block 9's <c>+0x1a</c> as the map's copy holds it: the record's first out-of-action operation, replaced by its type-2 group's <see cref="ScriptGroup.MapShown"/> (docs/retail/shell/mission-map.md#what-it-reads).</param>
 public readonly record struct ShellMapBase(int TypeIndex, int Point, int Shown);

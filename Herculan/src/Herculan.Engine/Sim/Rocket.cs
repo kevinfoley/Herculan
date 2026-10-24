@@ -6,44 +6,27 @@ using Herculan.Engine.Numerics;
 namespace Herculan.Engine.Sim;
 
 /// <summary>
-/// A launcher's round — DBSIM's <c>ROCKET</c> class, built by <c>Rocket_Construct</c>
-/// (<c>0040a948</c>, vtable <c>PTR_Bullet_Draw_00498448</c>) and advanced by
-/// <c>Rocket_TickUpdate</c> (<c>0040a538</c>, vtable <c>+0x14</c>). It is the third and last fire
-/// branch, and the one weapon class that fired nothing at all until now.
+/// A launcher's round, a missile that accelerates and can home on its target — DBSIM's
+/// <c>ROCKET</c> class, built by <c>Rocket_Construct</c> (<c>0040a948</c>, vtable
+/// <c>RocketVtable</c>, <c>00498448</c>) and advanced by <c>Rocket_TickUpdate</c>
+/// (<c>0040a538</c>, vtable <c>+0x14</c>). Its retail behavior is docs/retail/simulation/rockets.md.
 ///
-/// <para>Mechanically it is a <see cref="Projectile"/> with a different engine in it. Both are
-/// allocated out of the same effect pool (<c>g_ProjectilePool</c> (<c>004a9746</c>)) that <c>Sim_MainTick</c> walks ahead
-/// of the machine list, both carry a euler triple plus a transform whose translation is the
-/// position, and both sweep the segment they are about to cross rather than testing a point. What is
-/// different is everything about how they move:</para>
+/// <para>It shares a <see cref="Projectile"/>'s pool, frame and segment sweep, and differs in how
+/// it moves:</para>
 ///
 /// <list type="bullet">
-/// <item><b>It accelerates.</b> A gun round leaves the barrel at its final speed; a rocket leaves at
-/// a flat <see cref="LaunchSpeed"/> over the launching machine's own travel speed and climbs from
-/// there toward the <c>PROJ.DAT</c> record's <c>Speed</c>. That ceiling is 6000 on every retail
-/// launcher and the round never reaches it: the burn adds about 39 per tick and the round has 80
-/// ticks to live, so it burns out at roughly 3600 — a rocket is slow off the rail and still
-/// accelerating when it arrives.</item>
-/// <item><b>Its lifetime is in ticks.</b> A bullet ages by <c>0x200</c> per tick against
-/// <c>Lifetime * 0x200</c>; a rocket's counter is a plain <c>+1</c> against <c>Lifetime</c>
-/// directly.</item>
-/// <item><b>It has no firing scatter</b> and no power scaling — a launcher is neither a magazine
-/// weapon that disperses nor a capacitor weapon whose shot is worth what it was charged to. The
-/// aim angles go in exactly as the mount handed them over and the record's damage applies at face
-/// value.</item>
-/// <item><b>It is the class guidance was written for.</b> The plasma round borrows a cut-down
-/// version; this one steers at a component of its target, has a per-subtype gate on whether it may
-/// lock at all, and a player-flown branch. See <see cref="HomingTick"/>.</item>
+/// <item><b>It accelerates</b> from <see cref="LaunchSpeed"/> over the launching machine's own
+/// travel speed — see <see cref="Speed"/>.</item>
+/// <item><b>Its lifetime is a plain tick count</b> — see <see cref="Age"/>.</item>
+/// <item><b>It has no firing scatter and no power scaling</b>: the aim angles go in as the mount
+/// handed them over and the record's damage applies at face value.</item>
+/// <item><b>It steers</b>, at a component of its target, or by the player's stick — see
+/// <see cref="GuidanceTick"/>.</item>
 /// </list>
 ///
-/// <para>Only <c>PROJ.DAT</c> <see cref="ProjectileType.Rocket"/> records reach here.
-/// <see cref="ProjectileType.Grenade"/> (type 3) records exist in retail data and no weapon template
-/// names them: <c>Grenade_Construct</c> (<c>0040ac3c</c>) builds their class and no reference to it is
-/// found (docs/retail/formats/proj-dat.md#open), and its
-/// vtable's per-tick slot is <c>Grenade_TickNoOp</c> (<c>0040acb4</c>), a bare <c>return 0</c>, so an instance would never
-/// move and never die. The ammunition dispatch tests for type 0 and nothing else. What settles the
-/// class name and the unreachability is in docs/retail/simulation/weapon-damage-types.md, "Type — a
-/// firing-mechanism selector".</para>
+/// <para>Only <c>PROJ.DAT</c> <see cref="ProjectileType.Rocket"/> records reach here. No weapon
+/// fires the <see cref="ProjectileType.Grenade"/> records retail data carries — see
+/// docs/retail/simulation/weapon-damage-types.md#type--a-firing-mechanism-selector.</para>
 /// </summary>
 public sealed class Rocket {
 	private RocketType _record;

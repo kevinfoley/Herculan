@@ -2,12 +2,12 @@ namespace Herculan.Engine.Sim;
 
 /// <summary>
 /// One tick's worth of pilot input for a HERC, in the axis convention DBSIM's own device layer
-/// hands to <c>Mech_ApplyThrottleInput</c> (<c>004160dc</c>): two signed stick axes, full deflection
-/// at ±0x100, and the throttle-lever mode the original keeps as a global because only the player
-/// has one.
+/// hands to <c>Mech_ApplyThrottleInput</c> (<c>004160dc</c>): four signed axes, two for the legs and
+/// two for the turret, full deflection at ±0x100, plus the buttons and the throttle-lever mode the
+/// original keeps as a global because only the player has one.
 ///
 /// <para><b>A flyer reads the same four axes differently.</b> The device layer makes no distinction;
-/// <c>Sim_PollPlayerInput</c> hands them to a different control law, which takes
+/// <c>Sim_PollPlayerInput</c> (<c>00460764</c>) hands them to a different control law, which takes
 /// <see cref="Turn"/> as the aileron, <see cref="Throttle"/> as the elevator,
 /// <see cref="TorsoTwist"/> as the rudder and <see cref="TorsoPitch"/> as the throttle. The field
 /// names here are the walker's roles, which are also the device axes' own names. See
@@ -21,12 +21,9 @@ namespace Herculan.Engine.Sim;
 /// <param name="Throttle">
 /// Stick Y, applied as a rate: each tick moves the throttle setting by
 /// <c>Q8(0x91, -Throttle)</c>, so holding full deflection covers the whole range in about seven
-/// ticks. Negative (stick forward) opens the throttle.
-///
-/// <para>Held against the stop it runs the setting all the way from full forward to full reverse,
-/// pausing exactly one tick at zero on the way through — the sign-crossing guard snaps to zero
-/// rather than stepping past it, and the following tick starts again from there. That one-tick
-/// detent is what the manual means by "Centered is stopped".</para>
+/// ticks. Negative (stick forward) opens the throttle. Held against the stop it runs from full
+/// forward to full reverse with a one-tick pause at zero, the manual's "Centered is stopped" — see
+/// docs/retail/simulation/mech-locomotion.md.
 ///
 /// <para>When <see cref="ThrottleLever"/> is set this axis is read as an absolute lever position
 /// instead, and the rate path is skipped.</para>
@@ -38,10 +35,10 @@ namespace Herculan.Engine.Sim;
 /// <see cref="ThrottleLeverBipolar"/> for this engine's centre-zero one. A negative value is
 /// either mode read upside down.
 ///
-/// <para>This is the original's <c>ThrottleLeverMode</c> (<c>0049a06e</c>), which is <b>not</b> a forward/reverse gear
-/// selector despite the name in the symbol table — docs/retail/simulation/mech-locomotion.md carries the
-/// argument. What matters here is that it gates the throttle clamp: at 0 the setting is free to
-/// take either sign, and with a unipolar lever present the clamp closes to one side of zero.</para>
+/// <para>This is the original's <c>ThrottleLeverMode</c> (<c>0049a06e</c>), which gates the
+/// throttle clamp: at 0 the setting may take either sign, and with a unipolar lever present the
+/// clamp closes to one side of zero. Despite its symbol name it is not a forward/reverse gear
+/// selector; docs/retail/simulation/mech-locomotion.md has why.</para>
 ///
 /// <para><b><see cref="ThrottleLeverBipolar"/> is this engine's invention, not retail behaviour.</b>
 /// DBSIM has only the unipolar mode: its lever spends its whole travel on one direction and
@@ -73,11 +70,9 @@ namespace Herculan.Engine.Sim;
 /// The manual's [Space] "Fire Active Weapon" — the device struct's own byte at <c>+0x0d</c>, which
 /// is the joystick trigger and whatever key is bound alongside it.
 ///
-/// <para><b>Held, not pressed.</b> It reaches the weapon manager as a mount vtable call
-/// (<c>+0x30</c>, <c>WeaponMount_TriggerHeld</c> (<c>0040f8ad</c>)) that does nothing but return that byte, and the whole trigger
-/// path is re-run every frame — so a held trigger fires again as soon as the refire delay expires
-/// and the capacitor is back over its threshold. Nothing along the path looks at edges, which is why
-/// there is no scancode case for [Space] anywhere in the command dispatcher.</para>
+/// <para><b>Held, not pressed.</b> The trigger path re-reads it every frame, so a held trigger fires
+/// again as soon as the weapon is ready — see
+/// docs/retail/simulation/weapon-firing.md#the-trigger-is-polled-not-dispatched.</para>
 /// </param>
 /// <param name="FlightThrottleLever">
 /// Whether a flyer's control law reads <see cref="TorsoPitch"/> as a lever position rather than a
