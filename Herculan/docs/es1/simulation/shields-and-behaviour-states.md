@@ -88,7 +88,7 @@ The names are the strings at `000918a0`.
 | `HeapPtr_DtorStateTableCopy`, `Behaviour_BuildStateTable`, `Behaviour_ExpandFlagBits` | `0000febc`, `0000fee4`, `00010578` | —, `00413ed4`, `00415028` |
 | `Flyer_BuildStateTable`, `Behaviour_ExpandFlagBitsFlyerStatesCopy` | `000105b0`, `000107b8` | `00414c68`, — |
 
-Callees of another file read for them: `ShieldsGauge_GetStateBlock` (`00039334`) and `ShieldsGauge_SetStateBlock` (`000392d0`), ES2's `004438e0` and `00443858`.
+Callees of another file read for them: `ShieldsGauge_GetStateBlock` (`00039334`) and `ShieldsGauge_SetStateBlock` (`000392d0`), ES2's `004438e0` and `00443858`, in [the shield display's file](cockpit-energy-shields.md#the-shield-display).
 
 ## Globals
 

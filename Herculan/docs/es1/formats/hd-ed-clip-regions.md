@@ -20,7 +20,7 @@ blockCount x {
 
 **The cockpit views.** `CockpitViewManager_LoadViews` (`00021fb0`) takes the manager and the HERC's name. It reads `vue\<name>`: an `int32` view count into `+0x00`, and that many 32-byte records into the array `000afaa4`, whose address it stores at `+0x04`. It allocates 0x10 bytes for `+0x08` and 0x810, four 0x204-byte blocks, for `+0x0c`. For each view `i` it writes `i` with `ltoa` over the `g` of the string `edg` (`00092670`), which makes the folder `ed0` to `ed3`, and loads `ed<i>\<name>` into block `i`. It then loads the view's canopy art with `CockpitCanopy_LoadViewBitmap` (`00022184`), or under `g_LowMemory` clears slot `i` of `+0x08` instead ([the view manager](../simulation/cockpit-views.md#the-view-manager), [ES2's sequence](../../retail/simulation/cockpit-views.md#cockpitviewmanager_loadviews-sequence)).
 
-**The `edg\` files.** `00039818` builds `edg\ENG_CLP<n>` from the table `000932c8`, `n` from 1 to 4 being its third argument's dword 9, and loads it into `000b13f4`; it loads none when that dword is 0. It then moves each block's first row down by the top it computes, its third argument's dwords 5 and 1 summed, and each span's two columns right by the left, dwords 4 and 0.
+**The `edg\` files.** The energy meter's constructor, `EnergyPoolGauge_Ctor` (`00039818`), builds `edg\ENG_CLP<n>` from the table `EnergyMeter_ClipFileNames` (`000932c8`), `n` from 1 to 4 being the `.GAU` block's dword 9, and loads it into `EnergyMeter_ClipRegions` (`000b13f4`); it loads none when that dword is 0. It then moves each block's first row down by the bar's top, the block's dwords 5 and 1 summed, and each span's two columns right by its left, dwords 4 and 0, and makes the regions the clip shape the meter's bar is drawn through ([the energy meter](../simulation/cockpit-energy-shields.md#building-it--energypoolgauge_ctor-00039818)).
 
 ## Retail files
 
@@ -42,5 +42,4 @@ Every file ends in 2 bytes past its last block, which the loader does not read: 
 ## Open
 
 - **Open:** what the bytes past the last block are; the bytes read as a third list that the loader skips.
-- **Open:** what instrument `00039818` builds around the `edg\` file. `Gau_EnergyMeterWidget` (`0002cd3c`) calls it with the `.GAU` block at 548 and keeps it at the cockpit's `+0x1e1`; ES2 builds its energy pool meter from that block ([the cockpit object](../simulation/cockpit-panel.md#the-cockpit-object)).
 - **Open:** how the simulator draws through the regions, and whether a span's `xEnd` is inclusive as ES2's is.

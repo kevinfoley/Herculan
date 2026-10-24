@@ -19,12 +19,69 @@ Nothing shifts the rects into device pixels: ES1's builders pass each block to i
 | 164, 244, 340 | the blocks of the ammunition, energy and pod rows, each opening with the scratch rect its factory copies a row's rect to before building the row's gauge ([the weapon rows](../simulation/cockpit-panel.md#the-weapon-rows)). The three hold at 180, 260 and 356 the number button's rect, {0, 0, 38, 7} in the energy and ammunition blocks of all eight files and {0, 0, 9, 7} in the pod's, whose right and bottom the button replaces ([the number button](../simulation/cockpit-weapon-gauges.md#the-plain-button)); at 196 and 276 the round count's or charge bar's rect; and at 372, which runs the pod block to 387, the pod's label rect, {11, 0, 59, 7}; each relative to the row's top-left. The energy block at 304 holds an `int32` its gauge hands the charge bar's constructor ([the charge bar](../simulation/cockpit-weapon-gauges.md#the-charge-bar--weaponslidergadget)), 0 in all eight | 180, 260, 356; ES2's gauges place their parts at fixed offsets from the row's rect, and read a mirror flag from a byte of the block |
 | 388 | two rects, zero in the eight files | 388, three rects |
 | 452 | the console buttons' block: its first 16 bytes the console's rect, of which the first pair is the origin `ConsoleButtons_Ctor` adds to each of the five rects from 468, the buttons `I`, `II`, `III`, `LINK` and `TRACK` in that order ([the console buttons](../simulation/cockpit-weapon-gauges.md#the-console-buttons)) | 468, four rects from 484 |
-| 548, 616, 728 | the blocks of the instruments at the cockpit's `+0x1e1` to `+0x1e9` | the same |
+| 548 | the energy meter's block, [below](#the-energy-meter-block-at-548) | the same |
+| 616 | the shield display's block, [below](#the-shield-display-block-at-616) | the same |
+| 728 | the block of the instrument at the cockpit's `+0x1e9` | the same |
 | 1000 | the throttle's block, [below](#the-throttle-block-at-1000) | the same, with the centre tick's nudge |
 | 1104 | the gunsight's block, [below](#the-gunsight-block-at-1104) | 1088 |
 | 1212 | the block of the instrument at `+0x1f5`, with 15 rects at 1292 and 3 at 1532 | the same, the Heads-Down Display |
 | 1604 | the cockpit clock's block ([the cockpit clock](ttm-scripts.md#the-cockpit-clock)) | the same, `PanelAmbience`'s |
 | 1668, 1684 | the pilot channel's box and the ticker's | the same |
+
+## The energy meter block at 548
+
+`EnergyPoolGauge_Ctor` (`00039818`) reads the block's `int32` from 548 to 595 ([building the energy meter](../simulation/cockpit-energy-shields.md#building-it--energypoolgauge_ctor-00039818)), unshifted:
+
+| int | Offset | ES1 | ES2's |
+|---|---|---|---|
+| `[0]`, `[1]` | 548, 552 | the origin, added to the bar's rect | the same |
+| `[2]`, `[3]` | 556, 560 | unread: `PanelGauge_Ctor` copies `[0..3]` as the gauge's rect, which the constructor then replaces with the bar's | the same |
+| `[4..7]` | 564–576 | the bar's rect | the same |
+| `[8]` | 580 | 3 builds an `LEDBarGraphH` and 4 an `LEDBarGraphV`; any other value builds no bar | overwritten with 0, and an `LEDBarGraphH` built |
+| `[9]` | 584 | 0 for no clip shape, else *n* of the clip file `edg\ENG_CLP`*n* | none |
+| `[0xa]`, `[0xb]` | 588, 592 | the bar's two stripe shades, its `+0x2c` and `+0x30` | overwritten with the color ids 6 and 5 |
+| `[0xc..0x10]` | 596–612 | unread; 0 in all eight files | |
+
+The eight retail files hold:
+
+| File | Origin | `[2]`, `[3]` | Bar | `[8]` | `[9]` | Shades |
+|---|---|---|---|---|---|---|
+| `ROADRUNN` | 0, 0 | 0, 0 | 22, 152, 31, 186 | 4 | 2 | 50, 48 |
+| `GUNSLING` | 0, 0 | 0, 0 | 277, 153, 286, 187 | 4 | 2 | 50, 59 |
+| `RAPTOR` | 0, 0 | 0, 0 | 253, 139, 281, 161 | 4 | 1 | 50, 48 |
+| `TOMAHAWK` | 0, 0 | 0, 0 | 64, 125, 112, 134 | 3 | 4 | 50, 48 |
+| `PATRIOT` | 75, 164 | 79, 185 | 0, 0, 4, 21 | 4 | 0 | 53, 51 |
+| `PANTHER` | 0, 0 | 0, 0 | 257, 162, 275, 186 | 4 | 3 | 50, 48 |
+| `HERCULES` | 108, 179 | 248, 196 | 0, 0, 37, 4 | 3 | 0 | 53, 56 |
+| `COLOSSUS` | 197, 186 | 234, 190 | 0, 0, 37, 4 | 3 | 0 | 56, 54 |
+
+So the bar runs up in five chassis and across in `TOMAHAWK`, `HERCULES` and `COLOSSUS`, and `PATRIOT`, `HERCULES` and `COLOSSUS` give it no clip shape.
+
+## The shield display block at 616
+
+`ShieldsGauge_Ctor` (`00038f34`) reads the block's `int32` from 616 to 695 ([building the shield display](../simulation/cockpit-energy-shields.md#building-it--shieldsgauge_ctor-00038f34)), on the plan of ES2's block ([ES2's](../../retail/formats/gau-cockpit-layout.md#gau-block-at-616)), unshifted:
+
+| int | Offset | ES1 | ES2's |
+|---|---|---|---|
+| `[0..3]` | 616–628 | the gauge's rect, whose corners the display's per-frame update tests; its first pair the origin, added to the four rects below | the same origin |
+| `[4..7]` | 632–644 | the front button's rect | the front facing's |
+| `[8..0xb]` | 648–660 | the rear button's rect | the rear facing's |
+| `[0xc..0xf]` | 664–676 | the front readout's rect | the same |
+| `[0x10..0x13]` | 680–692 | the rear readout's rect | the same |
+| `[0x14..0x1b]` | 696–724 | unread; 0 in all eight files | |
+
+The eight retail files hold:
+
+| File | `[0..3]` | Front button | Rear button | Front readout | Rear readout |
+|---|---|---|---|---|---|
+| `ROADRUNN` | 0, 0, 0, 0 | 287, 152, 299, 160 | 287, 181, 299, 189 | 301, 154, 314, 160 | 301, 182, 314, 188 |
+| `GUNSLING` | 0, 0, 0, 0 | 240, 134, 252, 142 | 240, 164, 252, 172 | 254, 135, 267, 141 | 254, 166, 267, 172 |
+| `RAPTOR` | 0, 0, 0, 0 | 253, 172, 265, 180 | 253, 186, 265, 194 | 275, 174, 288, 180 | 275, 188, 288, 194 |
+| `TOMAHAWK` | 0, 0, 0, 0 | 287, 155, 299, 163 | 287, 187, 299, 195 | 287, 166, 300, 172 | 287, 179, 300, 185 |
+| `PATRIOT` | 237, 161, 280, 191 | 5, 21, 17, 29 | 27, 21, 39, 29 | 28, 1, 40, 6 | 28, 12, 40, 17 |
+| `PANTHER` | 0, 0, 0, 0 | 33, 184, 45, 192 | 46, 184, 58, 192 | 50, 161, 63, 167 | 50, 176, 63, 182 |
+| `HERCULES` | 223, 180, 248, 196 | 14, 0, 26, 8 | 14, 9, 26, 17 | 0, 0, 13, 6 | 0, 9, 13, 15 |
+| `COLOSSUS` | 237, 3, 263, 19 | 14, 0, 26, 8 | 14, 9, 26, 17 | 0, 0, 13, 6 | 0, 9, 13, 15 |
 
 ## The throttle block at 1000
 
@@ -73,4 +130,4 @@ So the `RAPTOR`'s throttle runs across, its forward bar right of the track's mid
 ## Open
 
 - **Open:** what the energy block's `int32` at 292 and 296 hold, 2 and 9 in all eight files: the energy row's constructor reads neither.
-- **Open:** what the instrument at 1212 is; its constructor (`0003c258`) is unread, as are those of the other blocks but 1000's and 1104's. What the gunsight block's `int32` 2 and 3 (1112, 1116) and its bytes from 1180 to 1211 hold: the builder reads neither, and `Gau_Load` adds the origin to `int32` 2 and 3.
+- **Open:** what the instrument at 1212 is; its constructor (`0003c258`) is unread, as is that of the block at 728. What the gunsight block's `int32` 2 and 3 (1112, 1116) and its bytes from 1180 to 1211 hold: the builder reads neither, and `Gau_Load` adds the origin to `int32` 2 and 3.

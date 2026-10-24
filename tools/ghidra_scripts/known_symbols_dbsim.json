@@ -16942,7 +16942,7 @@
       "type": "function",
       "confidence": "high",
       "name": "EnergyMeter_SetValue",
-      "description": "(meter, &value): stores value at meter+0xb1 and, when it differs from the previous one, sets the paint count +0xb0 to 2. Player_PerFrameCockpitUpdate passes CockpitViewInstance+0x1e5 and energyPool << 10 / 10000 (0..0x400, the range of the LEDBarGraphV 00444edc builds).",
+      "description": "(meter, &value): stores value at meter+0xb1 and, when it differs from the previous one, sets the paint count +0xb0 to 2. Player_PerFrameCockpitUpdate passes CockpitViewInstance+0x1e5 and energyPool << 10 / 10000 (0..0x400, the range of the LEDBarGraphH that EnergyPoolGauge_Ctor (00444d5c) builds).",
       "source": "DBSIM decompile at 004450d0"
     },
     {

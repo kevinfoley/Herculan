@@ -6892,7 +6892,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Player_PerFrameCockpitUpdate",
-      "description": "(machine), callee-cleaned: EnergyMeter_Value (000af6fc) = (pool +0x228 << 10) / 10000 to 00039b78(CockpitViewInstance +0x1e1, &value); Shield_BalanceInputRead (0000fbb4)(+0x1b8); WeaponMounts_PerFrameUpdate (0000cf78)(manager +0x198, the distance to the target +0x15e or 0); the throttle exchange through ThrottleGauge_GetValues (0003b250) and ThrottleGauge_SetValues (0003b200) on +0x1ed (with +0x8d clear the gauge's value to +0x226, otherwise +0x226 to the gauge and +0x8d cleared) and the speed fraction (speed << 10) / top; then a copy of Gunsight_GetStateBlock (00035180)(+0x1f1): the pitch +0x230 at offset 4, the heading +0xa and twist +0x22e at 0 and 2 unless +0x9e is set; when its target at offset 6 differs from +0x15e: +0x95 cleared, 1 taken from the old target's holders' count +0x15c when there is an old target, the block's target stored at +0x15e and 1 added to its count when it is not null, +0x97 set, and with no new target and the manager's +0x14 set, g_CenterTurretMode (000b5ba4) = 1; +0x95 at 0x25; Gunsight_SetValues (00035090). es2_xref finds two calls, from Sim_RenderFrame (00059c08) and Sim_StartMission (0005a9dc). ES2's Player_PerFrameCockpitUpdate (DBSIM 0041b130), which takes the target from the cockpit and resolves its aim point.",
+      "description": "(machine), callee-cleaned: EnergyMeter_Value (000af6fc) = (pool +0x228 << 10) / 10000 to EnergyMeter_SetValue (00039b78)(CockpitViewInstance +0x1e1, &value); Shield_BalanceInputRead (0000fbb4)(+0x1b8); WeaponMounts_PerFrameUpdate (0000cf78)(manager +0x198, the distance to the target +0x15e or 0); the throttle exchange through ThrottleGauge_GetValues (0003b250) and ThrottleGauge_SetValues (0003b200) on +0x1ed (with +0x8d clear the gauge's value to +0x226, otherwise +0x226 to the gauge and +0x8d cleared) and the speed fraction (speed << 10) / top; then a copy of Gunsight_GetStateBlock (00035180)(+0x1f1): the pitch +0x230 at offset 4, the heading +0xa and twist +0x22e at 0 and 2 unless +0x9e is set; when its target at offset 6 differs from +0x15e: +0x95 cleared, 1 taken from the old target's holders' count +0x15c when there is an old target, the block's target stored at +0x15e and 1 added to its count when it is not null, +0x97 set, and with no new target and the manager's +0x14 set, g_CenterTurretMode (000b5ba4) = 1; +0x95 at 0x25; Gunsight_SetValues (00035090). es2_xref finds two calls, from Sim_RenderFrame (00059c08) and Sim_StartMission (0005a9dc). ES2's Player_PerFrameCockpitUpdate (DBSIM 0041b130), which takes the target from the cockpit and resolves its aim point.",
       "source": "Herculan/docs/es1/simulation/mech.md#the-cockpit; ES1DBSIM decompile at 000155a8",
       "verified": {
         "bytes": "000155a8+561",
@@ -10522,7 +10522,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitClipRegions_Load",
-      "description": "(regions, path) in stack order, callee-cleaned: opens path with VolRStream_CtorFromPath (000567cc) and reads through the read slot +0x1c: an int16 rect count, and per rect two int16 rows into a 0x18-byte region from operator_new (000015a4) with vtable 00092846, +4 the type 0, +8 0, +0xc the first row, +0x10 0x13f, +0x14 the last row; then an int16 block count, and per block an int16 first row and row count into an 8-byte region tagged 2, whose data of rowCount x 4 + 8 bytes holds the two words and then the spans, read in one read. Stores each region's pointer (a rect's +4) in turn from regions +4 and the count at regions +0; destroys the stream with VolRStream_Dtor (00056824). ES2's CockpitClipRegions_Load reads four values per rect and shifts every coordinate by the caller's shifts. es2_xref finds calls from CockpitViewManager_LoadViews (00021fb0) and 00039818.",
+      "description": "(regions, path) in stack order, callee-cleaned: opens path with VolRStream_CtorFromPath (000567cc) and reads through the read slot +0x1c: an int16 rect count, and per rect two int16 rows into a 0x18-byte region from operator_new (000015a4) with vtable 00092846, +4 the type 0, +8 0, +0xc the first row, +0x10 0x13f, +0x14 the last row; then an int16 block count, and per block an int16 first row and row count into an 8-byte region tagged 2, whose data of rowCount x 4 + 8 bytes holds the two words and then the spans, read in one read. Stores each region's pointer (a rect's +4) in turn from regions +4 and the count at regions +0; destroys the stream with VolRStream_Dtor (00056824). ES2's CockpitClipRegions_Load reads four values per rect and shifts every coordinate by the caller's shifts. es2_xref finds calls from CockpitViewManager_LoadViews (00021fb0) and EnergyPoolGauge_Ctor (00039818).",
       "source": "Herculan/docs/es1/formats/hd-ed-clip-regions.md#layout",
       "verified": {
         "bytes": "00024d44+594",
@@ -12502,7 +12502,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Gau_EnergyMeterWidget",
-      "description": "(cockpit, record) in stack order, callee-cleaned: builds the instrument with 00039818(0, cockpit, record + 0x224), appends it to the widget list +8 (count +0x6c) and returns it. es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8) by its padding entry 0002cd39, which stores the result at +0x1e1. ES2's Gau_EnergyMeterWidget (DBSIM 004323e0), which shifts the block first.",
+      "description": "(cockpit, record) in stack order, callee-cleaned: builds the instrument with EnergyPoolGauge_Ctor (00039818)(0, cockpit, record + 0x224), appends it to the widget list +8 (count +0x6c) and returns it. es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8) by its padding entry 0002cd39, which stores the result at +0x1e1. ES2's Gau_EnergyMeterWidget (DBSIM 004323e0), which shifts the block first.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#building-it",
       "verified": {
         "bytes": "0002cd3c+56",
@@ -12517,7 +12517,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Gau_ShieldDisplayWidget",
-      "description": "(cockpit, record) in stack order, callee-cleaned: builds the instrument with 00038f34(0, cockpit, record + 0x268), appends it to the widget list +8 (count +0x6c) and returns it. es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8), which stores the result at +0x1e5. ES2's Gau_ShieldDisplayWidget (DBSIM 00432454), which shifts the block first.",
+      "description": "(cockpit, record) in stack order, callee-cleaned: builds the instrument with ShieldsGauge_Ctor (00038f34)(0, cockpit, record + 0x268), appends it to the widget list +8 (count +0x6c) and returns it. es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8), which stores the result at +0x1e5. ES2's Gau_ShieldDisplayWidget (DBSIM 00432454), which shifts the block first.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#building-it",
       "verified": {
         "bytes": "0002cd74+56",
@@ -14542,7 +14542,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Widget_ForwardClickToOwner",
-      "description": "(gadget, flags) in stack order, callee-cleaned: with flags bit 0 set, calls slot +4 of the table at owner+0x76 with (owner, flags, gadget), the owner being the gadget's +0x20; then the gadget's slot +8 (invalidate) through its vptr +0x1c, and slot +0xc (the click sound) of the mixin table at +0x24 on gadget+0x20. ES2's Widget_ForwardClickToOwner (DBSIM 00438e3c). es2_xref finds it in eight tables, at +0xc of PanelSelectGadgetVtable (000933aa), 00093b7e, 00093e6e, 00093eae, 00094136, 00094176, 0009470e and 00094f56.",
+      "description": "(gadget, flags) in stack order, callee-cleaned: with flags bit 0 set, calls slot +4 of the table at owner+0x76 with (owner, flags, gadget), the owner being the gadget's +0x20; then the gadget's slot +8 (invalidate) through its vptr +0x1c, and slot +0xc (the click sound) of the mixin table at +0x24 on gadget+0x20. ES2's Widget_ForwardClickToOwner (DBSIM 00438e3c). es2_xref finds it in eight tables, at +0xc of PanelSelectGadgetVtable (000933aa), 00093b7e, 00093e6e, ShieldsSelectGadgetVtable (00093eae), 00094136, 00094176, 0009470e and 00094f56.",
       "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases",
       "verified": {
         "bytes": "000314ac+54",
@@ -14812,7 +14812,7 @@
       "type": "function",
       "confidence": "high",
       "name": "BarGraph_GetRect",
-      "description": "(bar), callee-cleaned, frameless: MOV EAX,[ESP+4] and RET 4, returning the bar, whose rect is at +0. ES2's BarGraph_GetRect (DBSIM 004390b8) returns bar + 4. es2_xref finds ten calls, one each from 00039a28 and 00039abc and four each from ThrottleSlider_PaintV (0003b804) and ThrottleSlider_FlushPaintH (0003bf18), the counts of ES2's calls from EnergyPoolGauge_Paint, EnergyPoolGauge_Update, ThrottleSlider_PaintV and ThrottleSlider_FlushPaintH; 00039a28 passes the object at its +0x7e and calls that object's slot +8 through its +0x28, where a bar graph keeps its vtable.",
+      "description": "(bar), callee-cleaned, frameless: MOV EAX,[ESP+4] and RET 4, returning the bar, whose rect is at +0. ES2's BarGraph_GetRect (DBSIM 004390b8) returns bar + 4. es2_xref finds ten calls, one each from EnergyPoolGauge_Paint (00039a28) and EnergyPoolGauge_Update (00039abc) and four each from ThrottleSlider_PaintV (0003b804) and ThrottleSlider_FlushPaintH (0003bf18), the counts of ES2's calls from EnergyPoolGauge_Paint, EnergyPoolGauge_Update, ThrottleSlider_PaintV and ThrottleSlider_FlushPaintH; EnergyPoolGauge_Paint (00039a28) passes the object at its +0x7e and calls that object's slot +8 through its +0x28, where a bar graph keeps its vtable.",
       "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bar-graphs",
       "verified": {
         "bytes": "00031738+7",
@@ -17867,6 +17867,96 @@
       }
     },
     {
+      "address": "00038f0c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorShieldsGaugeCopy",
+      "description": "(p, flags) in stack order, its arguments removed by this function: the shield display's object file opens with this lone copy of the 40-byte destructor that opens a run of ConfigPart's module copies. For a non-null p, frees the block p points at with operator_delete (000015f8) when it is set, then p when bit 0 of flags is set. The code of HeapPtr_DtorShieldsCopy (0000fa20). No branch or stored pointer to it found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#where-the-object-files-start-and-end; ES1DBSIM decompile at 00038f0c",
+      "verified": {
+        "bytes": "00038f0c+40",
+        "sha1": "a6138409df0c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00038f34",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShieldsGauge_Ctor",
+      "description": "(gauge, cockpit, block) in stack order, its arguments removed by this function: the shield display's constructor. Allocates 0x95 bytes with operator_new (000015a4) when given none, runs PanelGauge_Ctor (00031318) and stores ShieldsGaugeVtable (00093e12) at +0x76. With (x, y) the block's first two int32, for each facing i, 0 the front and 1 the rear: builds it with ShieldsGauge_FacingCtor (000396ac)(0, gauge, the block's rect at +0x10 + 16i moved by (x, y)), stores it at +0x14 + 4i and registers it with Widget_RegisterClickable (000443d4) on the root widget at CockpitViewInstance's +0; gives it frames 58 + 3i, 59 + 3i and 60 + 3i of CockpitPButtonsBank (00092d68) at its +0x30, +0x34 and +0x38; builds a label with Label_Ctor (00030f44)(0, ColorSchemePanels[1], the font cpgreen), places it centered with Label_SetRect (00031080)(label, 2, the block's rect at +0x30 + 16i moved by (x, y), margin (0, 0)), sets its fill color +0x1c to 0x3f and stores it at +0x8d + 4i. Then stores 2 at +0x64, stores at ShieldRingBaseEntry (000b13ec) the palette dword {25, 59, 23, 1} built from ShieldRingColors (00093e04), clears the 15-byte state block +0x7e with memset (00060b40) and runs ShieldsGauge_UpdateRingPalette (00039340). es2_xref finds one call, from Gau_ShieldDisplayWidget (0002cd74), which passes the .GAU block at 616. ES2's ShieldsGauge_Ctor (DBSIM 004434fc), whose facings get no pictures.",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#building-it--shieldsgauge_ctor-00038f34; ES1DBSIM decompile at 00038f34, against ES2's ShieldsGauge_Ctor",
+      "verified": {
+        "bytes": "00038f34+571",
+        "sha1": "ed5663f2e21f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003916f",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PanelGauge_KeyDispatchNoneShieldsGaugeCopy",
+      "description": "Frameless, with no Ghidra function: a NOP, then XOR EAX,EAX and RET 8: returns 0. Slot +0x10, the key slot, of ShieldsGaugeVtable (00093e12). The code of PanelGauge_KeyDispatchNone (0003139b).",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#the-display-object; ES1DBSIM disassembly at 0003916f",
+      "verified": {
+        "bytes": "0003916f+6",
+        "sha1": "ae2a5ee89632",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00039178",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShieldsGauge_Paint",
+      "description": "(gauge) in stack order, its arguments removed by this function: slot +8 of ShieldsGaugeVtable (00093e12), by its padding 00039175, the slot a view change calls. Runs ShieldsGauge_UpdateRingPalette (00039340) and ShieldsGauge_UpdateReadouts (00039628), then the paint slot +4 of each facing's table at its +0x1c, the facing at +0x14 first and then +0x18. ES2's ShieldsGauge_Paint (DBSIM 00443730), which paints no facing.",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#drawing-the-display; ES1DBSIM decompile at 00039178, against ES2's ShieldsGauge_Paint",
+      "verified": {
+        "bytes": "00039178+50",
+        "sha1": "6b6e70ae46f0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000391ac",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShieldsGauge_Update",
+      "description": "(gauge) in stack order, its arguments removed by this function: slot +0xc of ShieldsGaugeVtable (00093e12), by its padding 000391aa, the per-frame slot. When CockpitView_RectCornerVisible (0002b214) passes the gauge's rect: with the paint count +0x75 at 2, calls the flush slot +0x10 of both facings (+0x14, +0x18), ShieldsGauge_UpdateRingPalette (00039340) and ShieldsGauge_UpdateReadouts (00039628); at 1, the flush of both facings and Widget_DrawToCockpit (0002b058)(0, the label's rect at its +4, 0) for the labels +0x8d and +0x91; in both cases it takes 1 off the count. ES2's ShieldsGauge_Update (DBSIM 00443748), which runs only once the gauge is armed, runs its power-up fill until done, and at 1 only takes 1 off.",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#drawing-the-display; ES1DBSIM decompile at 000391ac, against ES2's ShieldsGauge_Update",
+      "verified": {
+        "bytes": "000391ac+166",
+        "sha1": "b8abe709d704",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00039254",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShieldsGauge_OnClick",
+      "description": "(gauge, flags, facing) in stack order, its arguments removed by this function: slot +4 of ShieldsGaugeVtable (00093e12), by its padding 00039252, which Widget_ForwardClickToOwner (000314ac) calls for a facing's click. Finds the facing among the +0x64 facings from +0x14: for the front (index 0) sets the press flag +0x8b and clears +0x8c, for the rear (index 1) sets +0x8c and clears +0x8b. Shield_BalanceInputRead (0000fbb4) takes the flags through the state block. ES2's ShieldsGauge_OnClick (DBSIM 0044380c).",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#the-click--shieldsgauge_onclick-00039254; ES1DBSIM decompile at 00039254, against ES2's ShieldsGauge_OnClick",
+      "verified": {
+        "bytes": "00039254+123",
+        "sha1": "84a84dbd3ea4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000392d0",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -17894,6 +17984,351 @@
         "sha1": "fd361f87bee6",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00039340",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShieldsGauge_UpdateRingPalette",
+      "description": "(gauge) in stack order, its arguments removed by this function: for the front reading +0x7e and then the rear +0x82, with f = reading * 100 >> 9 (arithmetic), builds three palette dwords {max(25 - d, 0), max(59 - d, 0), max(23 - d, 0), 1} from ShieldRingColors (00093e04), d being for the first f > 125 ? 0 : f < 25 ? 50 : 125 - f, for the second f > 150 ? 0 : f < 50 ? 50 : (150 - f) >> 1, and for the third (200 - f) >> 2; and installs the six, the front's three first, with Palette_InstallRange (00027e98)(colors, 6, 0x50), entries 80 to 85. ShieldsGauge_Ctor (00038f34), ShieldsGauge_Paint (00039178) and ShieldsGauge_Update (000391ac) call it, by es2_xref. It has the role of ES2's ShieldsGauge_UpdateRingPalette (DBSIM 004438f0).",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#the-ring-colors--shieldsgauge_updateringpalette-00039340; ES1DBSIM decompile and disassembly at 00039340",
+      "verified": {
+        "bytes": "00039340+743",
+        "sha1": "dcfb6117b487",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00039628",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShieldsGauge_UpdateReadouts",
+      "description": "(gauge) in stack order, its arguments removed by this function: when CockpitView_RectCornerVisible (0002b214) passes the front label's rect (+0x8d's +4), n = the balance +0x86 * 200 >> 10; writes n into the front label +0x8d and 200 - n into the rear label +0x91, each through ltoa (00064720) in base 10 and Label_SetText (0003114c). ES2's ShieldsGauge_UpdateReadouts (DBSIM 00444a68).",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#the-readouts--shieldsgauge_updatereadouts-00039628; ES1DBSIM decompile at 00039628, against ES2's ShieldsGauge_UpdateReadouts",
+      "verified": {
+        "bytes": "00039628+132",
+        "sha1": "93922395781e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000396ac",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShieldsGauge_FacingCtor",
+      "description": "(facing, gauge, rect) in stack order, its arguments removed by this function: a shield button. Allocates 0x3c bytes with operator_new (000015a4) when given none, returning 0 when that fails; runs Widget_CtorRect (000438fc) on the rect, storing CTLButtonControlVtableShieldsGaugeCopy (00093e2e) at +0x1c and 0 at the drag flag +0x19; then the mixin table 00093e56 at +0x24, the gauge at +0x20, PanelSelectGadget's table 00093e6e at +0x1c, 0 at +0x28 and the state +0x17 0; then ShieldsSelectGadget_PanelGadgetVtable (00093e96) at +0x24 and ShieldsSelectGadgetVtable (00093eae) at +0x1c. ShieldsGauge_Ctor (00038f34) gives it its three pictures at +0x30, +0x34 and +0x38. ES2's ShieldsGauge_FacingCtor (DBSIM 00444aec).",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#the-facings--shieldsgauge_facingctor-000396ac; ES1DBSIM decompile at 000396ac, against ES2's ShieldsGauge_FacingCtor",
+      "verified": {
+        "bytes": "000396ac+137",
+        "sha1": "531c4ccf7acd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00039735",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLButtonControl_PaintNoOpShieldsGaugeCopy",
+      "description": "Frameless, with no Ghidra function: three NOPs and RET 4. Slot +4 of CTLButtonControlVtableShieldsGaugeCopy (00093e2e) and of 00093e6e. The code of CTLButtonControl_PaintNoOpWeaponGaugeCopy.",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#the-facings--shieldsgauge_facingctor-000396ac; ES1DBSIM disassembly at 00039735",
+      "verified": {
+        "bytes": "00039735+6",
+        "sha1": "0011b5e9ac52",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0003973b",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_InvalidateNoOpShieldsGaugeCopy",
+      "description": "Frameless, with no Ghidra function: a NOP and RET 4. Slot +8 of CTLButtonControlVtableShieldsGaugeCopy (00093e2e). The code of CTLControl_InvalidateNoOpWeaponGaugeCopy.",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#the-facings--shieldsgauge_facingctor-000396ac; ES1DBSIM disassembly at 0003973b",
+      "verified": {
+        "bytes": "0003973b+4",
+        "sha1": "5d5ba9489eeb",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0003973f",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_OnClickNoOpShieldsGaugeCopy",
+      "description": "Frameless, with no Ghidra function: a NOP and RET 8. Slot +0xc of CTLButtonControlVtableShieldsGaugeCopy (00093e2e). The code of CTLControl_OnClickNoOpWeaponGaugeCopy.",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#the-facings--shieldsgauge_facingctor-000396ac; ES1DBSIM disassembly at 0003973f",
+      "verified": {
+        "bytes": "0003973f+4",
+        "sha1": "da32ac57381a",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00039743",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_FlushDeferredPaintNoOpShieldsGaugeCopy",
+      "description": "Frameless, with no Ghidra function: a NOP and RET 4. Slot +0x10 of CTLButtonControlVtableShieldsGaugeCopy (00093e2e) and of 00093e6e. The code of CTLControl_FlushDeferredPaintNoOpWeaponGaugeCopy.",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#the-facings--shieldsgauge_facingctor-000396ac; ES1DBSIM disassembly at 00039743",
+      "verified": {
+        "bytes": "00039743+4",
+        "sha1": "5d5ba9489eeb",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00039747",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_GetButtonValueShieldsGaugeCopy",
+      "description": "Frameless, with no Ghidra function: a NOP, then MOV AX,[Widget_ClickButtons (00094b84)] and RET 4. Slot +0x14 of CTLButtonControlVtableShieldsGaugeCopy (00093e2e), of 00093e6e and of ShieldsSelectGadgetVtable (00093eae). The code of Widget_GetButtonValueWeaponGaugeCopy.",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#the-facings--shieldsgauge_facingctor-000396ac; ES1DBSIM disassembly at 00039747",
+      "verified": {
+        "bytes": "00039747+10",
+        "sha1": "f62f57a4a511",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00039751",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_SetValueNoOpShieldsGaugeCopy",
+      "description": "Frameless, with no Ghidra function: three NOPs and RET 8. Slot +0x18 of CTLButtonControlVtableShieldsGaugeCopy (00093e2e), of 00093e6e and of ShieldsSelectGadgetVtable (00093eae). The code of CTLControl_SetValueNoOpWeaponGaugeCopy.",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#the-facings--shieldsgauge_facingctor-000396ac; ES1DBSIM disassembly at 00039751",
+      "verified": {
+        "bytes": "00039751+6",
+        "sha1": "fe14fe2186bc",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00039757",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_DragMoveNoOpShieldsGaugeCopy",
+      "description": "Frameless, with no Ghidra function: a NOP and RET 8. Slot +0x1c of CTLButtonControlVtableShieldsGaugeCopy (00093e2e), of 00093e6e and of ShieldsSelectGadgetVtable (00093eae). The code of CTLControl_DragMoveNoOpWeaponGaugeCopy.",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#the-facings--shieldsgauge_facingctor-000396ac; ES1DBSIM disassembly at 00039757",
+      "verified": {
+        "bytes": "00039757+4",
+        "sha1": "da32ac57381a",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0003975c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_InvalidateDeferredShieldsGaugeCopy",
+      "description": "(gadget) in stack order, its arguments removed by this function: sets the paint count +0x1b to 2. Slot +8 of 00093e6e and of ShieldsSelectGadgetVtable (00093eae), by its padding 0003975b. The code of Widget_InvalidateDeferredWeaponGaugeCopy; ES2's Widget_InvalidateDeferred (DBSIM 00455524), on +0x1f.",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#the-facings--shieldsgauge_facingctor-000396ac; ES1DBSIM decompile at 0003975c",
+      "verified": {
+        "bytes": "0003975c+16",
+        "sha1": "9e51e63401e5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003976c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShieldsSelectGadget_PaintThunk",
+      "description": "Frameless this-adjusting thunk with no Ghidra function: ADD [ESP+4],-0x20 and JMP to ShieldFacing_Paint (00039784) by its padding 00039782. Slot +4 of ShieldsSelectGadget_PanelGadgetVtable (00093e96), the mixin's table.",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#the-facings--shieldsgauge_facingctor-000396ac; ES1DBSIM disassembly at 0003976c",
+      "verified": {
+        "bytes": "0003976c+24",
+        "sha1": "aec2c707e209",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00039778",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShieldsSelectGadget_FlushDeferredPaintThunk",
+      "description": "Frameless this-adjusting thunk with no Ghidra function: ADD [ESP+4],-0x20 and JMP to ShieldFacing_FlushDeferredPaint (000397b8) by its padding 000397b6. Slot +8 of ShieldsSelectGadget_PanelGadgetVtable (00093e96), the mixin's table.",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#the-facings--shieldsgauge_facingctor-000396ac; ES1DBSIM disassembly at 00039778",
+      "verified": {
+        "bytes": "00039778+64",
+        "sha1": "a371741c40c1",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00039784",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShieldFacing_Paint",
+      "description": "(facing) in stack order, its arguments removed by this function: slot +4 of ShieldsSelectGadgetVtable (00093eae), by its padding 00039782. When CockpitView_RectCornerVisible (0002b214) passes its rect, blits the picture at +0x30 + 4 * the int16 state +0x17 with Bitmap_Blit (00067048)(picture, 0, the facing's rect), at its top-left. ES2's ShieldFacing_Paint (DBSIM 00444b5c), which only makes the visibility test.",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#the-facings--shieldsgauge_facingctor-000396ac; ES1DBSIM decompile at 00039784, against ES2's ShieldFacing_Paint",
+      "verified": {
+        "bytes": "00039784+50",
+        "sha1": "eb2a4f4dce8e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000397b8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShieldFacing_FlushDeferredPaint",
+      "description": "(facing) in stack order, its arguments removed by this function: slot +0x10 of ShieldsSelectGadgetVtable (00093eae), by its padding 000397b6. With the paint count +0x1b at 2, calls its paint slot +4 and takes 1 off; at 1, Widget_DrawToCockpit (0002b058)(0, facing, 0) and takes 1 off. ES2's ShieldFacing_FlushDeferredPaint (DBSIM 00444b70), which at 2 only takes 1 off.",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#the-facings--shieldsgauge_facingctor-000396ac; ES1DBSIM decompile at 000397b8, against ES2's ShieldFacing_FlushDeferredPaint",
+      "verified": {
+        "bytes": "000397b8+55",
+        "sha1": "93c6ed6bfcbf",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000397f0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorEnergyGaugeCopy",
+      "description": "(p, flags) in stack order, its arguments removed by this function: the energy meter's object file opens with this lone copy of the 40-byte destructor that opens a run of ConfigPart's module copies. For a non-null p, frees the block p points at with operator_delete (000015f8) when it is set, then p when bit 0 of flags is set. The code of HeapPtr_DtorShieldsCopy (0000fa20). No branch or stored pointer to it found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#where-the-object-files-start-and-end; ES1DBSIM decompile at 000397f0",
+      "verified": {
+        "bytes": "000397f0+40",
+        "sha1": "3a7103059db6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00039818",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "EnergyPoolGauge_Ctor",
+      "description": "(gauge, cockpit, block) in stack order, its arguments removed by this function: the energy meter's constructor. Allocates 0x8c bytes with operator_new (000015a4) when given none, runs PanelGauge_Ctor (00031318) and stores EnergyPoolGaugeVtable (00093ed6) at +0x76. With b the block's int32 and (x, y) = (b[0], b[1]): stores GLViewport_Ctor (00069a84)(0) at EnergyMeter_ClipContext (000b13f0); sets the rect +0 to b[4..7] moved by (x, y) and clears the value +0x7a with memset (00060b40); with b[9] 0 stores 0 at +0x88, otherwise sets the context's +0x208 to 2 and +0x20c to 1, loads ResourcePath_BuildFolderName (00060698)(edg, EnergyMeter_ClipFileNames (000932c8)[b[9]]) into EnergyMeter_ClipRegions (000b13f4) with CockpitClipRegions_Load (00024d44), adds the rect's y0 to each region's first row and its x0 to each of its spans' columns, copies the 0x81 dwords of the region list over the context's +4 and stores the context at +0x88. Then for b[8] 3 builds LedBarGraph_Ctor (00031e28)(0, 0x400, gauge), for 4 LEDBarGraphV_Ctor (0003216c)(0, 0x400, gauge), the rect at +0 being the bar's, sets the bar's +0x2c to b[10], +0x30 to b[11] and +0x20 to 0x3f, and stores it at +0x7e. es2_xref finds one call, from Gau_EnergyMeterWidget (0002cd3c), which passes the .GAU block at 548. ES2's EnergyPoolGauge_Ctor (DBSIM 00444d5c), which always builds the horizontal bar, with no clip file.",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#building-it--energypoolgauge_ctor-00039818; ES1DBSIM decompile at 00039818, against ES2's EnergyPoolGauge_Ctor",
+      "verified": {
+        "bytes": "00039818+517",
+        "sha1": "4d278f5fdf6d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00039a1d",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PanelGauge_KeyDispatchNoneEnergyGaugeCopy",
+      "description": "Frameless, with no Ghidra function: three NOPs, then XOR EAX,EAX and RET 8: returns 0. Slot +0x10, the key slot, of EnergyPoolGaugeVtable (00093ed6). The code of PanelGauge_KeyDispatchNone (0003139b).",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#the-meter-object; ES1DBSIM disassembly at 00039a1d",
+      "verified": {
+        "bytes": "00039a1d+8",
+        "sha1": "14fac6e555be",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00039a28",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "EnergyPoolGauge_Paint",
+      "description": "(gauge) in stack order, its arguments removed by this function: slot +8 of EnergyPoolGaugeVtable (00093ed6), by its padding 00039a25, the slot a view change calls. When CockpitView_RectCornerVisible (0002b214) passes BarGraph_GetRect (00031738)(the bar +0x7e): with a clip context at +0x88, copies the installed render context's (000bdbda) +0x210 to +0x21c and +0x220, +0x224 into it and installs it with Raster_InstallRenderContext (00069be0); calls the bar's repaint, slot +8 of its table at +0x28, with (bar, 0, the value +0x7a); and reinstalls the saved context. ES2's EnergyPoolGauge_Paint (DBSIM 00444f20), which installs a temporary brush and calls the bar's paint.",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#drawing-the-meter; ES1DBSIM decompile at 00039a28, against ES2's EnergyPoolGauge_Paint",
+      "verified": {
+        "bytes": "00039a28+146",
+        "sha1": "1eb1de932526",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00039abc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "EnergyPoolGauge_Update",
+      "description": "(gauge) in stack order, its arguments removed by this function: slot +0xc of EnergyPoolGaugeVtable (00093ed6), by its padding 00039aba, the per-frame slot. When CockpitView_RectCornerVisible (0002b214) passes BarGraph_GetRect (00031738)(the bar +0x7e) and the paint count +0x75 is 2: with a clip context at +0x88, copies the installed render context's (000bdbda) +0x210 to +0x21c and +0x220, +0x224 into it and installs it with Raster_InstallRenderContext (00069be0); calls the bar's paint, slot +4 of its table at +0x28, with (bar, the value +0x7a); Widget_DrawToCockpit (0002b058)(0, gauge, 1); reinstalls the saved context when it installed one; and sets the count to 0. ES2's EnergyPoolGauge_Update (DBSIM 00444fe0), which installs a temporary brush first.",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#drawing-the-meter; ES1DBSIM decompile at 00039abc, against ES2's EnergyPoolGauge_Update",
+      "verified": {
+        "bytes": "00039abc+188",
+        "sha1": "38b4c3a57dfa",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00039b78",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "EnergyMeter_SetValue",
+      "description": "(gauge, &value) in stack order, its arguments removed by this function: stores the value at +0x7a and sets the paint count +0x75 to 2 when it differs from the one there. es2_xref finds one call, from Player_PerFrameCockpitUpdate (000155a8), which passes the cockpit's +0x1e1 and EnergyMeter_Value (000af6fc). ES2's EnergyMeter_SetValue (DBSIM 004450d0), on +0xb1 and +0xb0.",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#drawing-the-meter; ES1DBSIM decompile and disassembly at 00039b78, against ES2's EnergyMeter_SetValue",
+      "verified": {
+        "bytes": "00039b78+46",
+        "sha1": "a7e9dc113a40",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00039ba8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "EnergyPoolGauge_ReturnZero",
+      "description": "Frameless, with no Ghidra function: XOR EAX,EAX and RET 4: returns 0. Between EnergyMeter_SetValue (00039b78) and the slot functions after it, as ES2's EnergyPoolGauge_ReturnZero (DBSIM 00445100) stands. No branch or stored pointer to it found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#drawing-the-meter; ES1DBSIM disassembly at 00039ba8",
+      "verified": {
+        "bytes": "00039ba8+5",
+        "sha1": "0f864a8a1b9e",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00039bad",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PanelGauge_OnChildClickNoOpEnergyGaugeCopy",
+      "description": "Frameless, with no Ghidra function: three NOPs and RET 0xc. Slot +4, the child-click slot, of EnergyPoolGaugeVtable (00093ed6); its RET at 00039bb0 is the energy meter's file's last code. The code of PanelGauge_OnChildClickNoOp (00031395); ES2's EnergyPoolGauge_OnChildClickNoOp (DBSIM 00445108).",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#the-meter-object; ES1DBSIM disassembly at 00039bad",
+      "verified": {
+        "bytes": "00039bad+6",
+        "sha1": "8cb6c4e97d30",
+        "scope": "body",
+        "via": "raw"
       }
     },
     {
@@ -37127,6 +37562,15 @@
       "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-ticker"
     },
     {
+      "address": "000932c8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "EnergyMeter_ClipFileNames",
+      "description": "Five string pointers, indexed by the .GAU energy block's dword 9: an empty string, then ENG_CLP1 to ENG_CLP4, the edg files EnergyPoolGauge_Ctor (00039818) loads.",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#building-it--energypoolgauge_ctor-00039818; ES1DBSIM image at 000932c8"
+    },
+    {
       "address": "00093348",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -37557,6 +38001,60 @@
       "name": "WeaponRangeSelectGadgetVtable",
       "description": "The console button's vtable, which WeaponRangeSelectGadget_Ctor (00038ce4) stores last at +0x1c: ConsoleButton_Paint (00038d90), Widget_InvalidateDeferredWeaponGaugeCopy (00038234), WeaponRangeSelectGadget_OnClick (00038ec0), WeaponRangeSelectGadget_FlushDeferredPaint (00038e88) and the button base's three value slots. Its mixin table is 00093d9e.",
       "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-console-button--weaponrangeselectgadget; es1_naming.py vtables"
+    },
+    {
+      "address": "00093e04",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShieldRingColors",
+      "description": "Three int32, 25, 59 and 23: the shield rings' base color, which ShieldsGauge_UpdateRingPalette (00039340) dims and ShieldsGauge_Ctor (00038f34) stores whole at ShieldRingBaseEntry (000b13ec). ES2's ShieldRingColors (DBSIM 0049c9cb) base.",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#the-ring-colors--shieldsgauge_updateringpalette-00039340; ES1DBSIM image at 00093e04"
+    },
+    {
+      "address": "00093e12",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShieldsGaugeVtable",
+      "description": "ShieldsGauge's vtable, which ShieldsGauge_Ctor (00038f34) stores at +0x76: a zero dword, then ShieldsGauge_OnClick (00039254) at +4, ShieldsGauge_Paint (00039178) at +8, ShieldsGauge_Update (000391ac) at +0xc, each by its padding, and PanelGauge_KeyDispatchNoneShieldsGaugeCopy (0003916f) at +0x10.",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#the-display-object; ES1DBSIM image at 00093e12"
+    },
+    {
+      "address": "00093e2e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CTLButtonControlVtableShieldsGaugeCopy",
+      "description": "The shield display file's copy of the button base table, which ShieldsGauge_FacingCtor (000396ac) stores first: a zero dword, then the file's seven no-op and value slots CTLButtonControl_PaintNoOpShieldsGaugeCopy (00039735), CTLControl_InvalidateNoOpShieldsGaugeCopy (0003973b), CTLControl_OnClickNoOpShieldsGaugeCopy (0003973f), CTLControl_FlushDeferredPaintNoOpShieldsGaugeCopy (00039743), Widget_GetButtonValueShieldsGaugeCopy (00039747), CTLControl_SetValueNoOpShieldsGaugeCopy (00039751) and CTLControl_DragMoveNoOpShieldsGaugeCopy (00039757) at +4 to +0x1c.",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#the-facings--shieldsgauge_facingctor-000396ac; ES1DBSIM image at 00093e2e"
+    },
+    {
+      "address": "00093e96",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShieldsSelectGadget_PanelGadgetVtable",
+      "description": "The shield button's mixin table, which ShieldsGauge_FacingCtor (000396ac) stores at +0x24 last: a zero dword, then ShieldsSelectGadget_PaintThunk (0003976c) at +4, ShieldsSelectGadget_FlushDeferredPaintThunk (00039778) at +8 and Widget_ClickSound (000314a0) at +0xc. ES2's ShieldsSelectGadget_PanelGadgetVtable (DBSIM).",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#the-facings--shieldsgauge_facingctor-000396ac; ES1DBSIM image at 00093e96"
+    },
+    {
+      "address": "00093eae",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShieldsSelectGadgetVtable",
+      "description": "The shield button's vtable, which ShieldsGauge_FacingCtor (000396ac) stores at +0x1c last: a zero dword, then ShieldFacing_Paint (00039784) at +4, Widget_InvalidateDeferredShieldsGaugeCopy (0003975c) at +8, Widget_ForwardClickToOwner (000314ac) at +0xc, ShieldFacing_FlushDeferredPaint (000397b8) at +0x10 and the copies Widget_GetButtonValueShieldsGaugeCopy (00039747), CTLControl_SetValueNoOpShieldsGaugeCopy (00039751) and CTLControl_DragMoveNoOpShieldsGaugeCopy (00039757) at +0x14 to +0x1c. ES2's ShieldsSelectGadgetVtable (DBSIM).",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#the-facings--shieldsgauge_facingctor-000396ac; ES1DBSIM image at 00093eae"
+    },
+    {
+      "address": "00093ed6",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "EnergyPoolGaugeVtable",
+      "description": "EnergyPoolGauge's vtable, which EnergyPoolGauge_Ctor (00039818) stores at +0x76: a zero dword, then PanelGauge_OnChildClickNoOpEnergyGaugeCopy (00039bad) at +4, EnergyPoolGauge_Paint (00039a28) at +8 and EnergyPoolGauge_Update (00039abc) at +0xc, each by its padding, and PanelGauge_KeyDispatchNoneEnergyGaugeCopy (00039a1d) at +0x10. ES2's EnergyPoolGaugeVtable (DBSIM).",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#the-meter-object; ES1DBSIM image at 00093ed6"
     },
     {
       "address": "00094206",
@@ -38941,7 +39439,7 @@
       "type": "data",
       "confidence": "high",
       "name": "EnergyMeter_Value",
-      "description": "dword: Player_PerFrameCockpitUpdate (000155a8) stores the energy pool as (pool << 10) / 10000 here and passes its address to the meter's setter 00039b78.",
+      "description": "dword: Player_PerFrameCockpitUpdate (000155a8) stores the energy pool as (pool << 10) / 10000 here and passes its address to the meter's setter EnergyMeter_SetValue (00039b78).",
       "source": "Herculan/docs/es1/simulation/mech.md#the-cockpit; ES1DBSIM image at 000af6fc"
     },
     {
@@ -39420,6 +39918,33 @@
       "name": "ConsoleButtons_StateBlock",
       "description": "Four bytes ConsoleButtons_GetStateBlock (00037ed4) fills and returns: the console's chain int16, the tracking latch and the link request, for WeaponMounts_PerFrameUpdate (0000cf78). ES2's 004d1ae0.",
       "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-console-buttons; es2_xref"
+    },
+    {
+      "address": "000b13ec",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShieldRingBaseEntry",
+      "description": "dword: ShieldsGauge_Ctor (00038f34) stores here the palette dword {25, 59, 23, 1} built from ShieldRingColors (00093e04). es2_xref --decode finds that store and no read.",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#building-it--shieldsgauge_ctor-00038f34; ES1DBSIM disassembly at 00039145"
+    },
+    {
+      "address": "000b13f0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "EnergyMeter_ClipContext",
+      "description": "Pointer: the 0x239-byte render context EnergyPoolGauge_Ctor (00039818) builds with GLViewport_Ctor (00069a84) and, with a clip file, gives clip mode 2 and the regions of EnergyMeter_ClipRegions (000b13f4).",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#building-it--energypoolgauge_ctor-00039818; ES1DBSIM disassembly at 00039867"
+    },
+    {
+      "address": "000b13f4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "EnergyMeter_ClipRegions",
+      "description": "The energy meter's clip region list, 0x204 bytes: an int32 count and 128 region pointers, which EnergyPoolGauge_Ctor (00039818) loads from edg\\ENG_CLP<n> with CockpitClipRegions_Load (00024d44), moves to the bar's position and copies into EnergyMeter_ClipContext (000b13f0)'s +4.",
+      "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#building-it--energypoolgauge_ctor-00039818; ES1DBSIM disassembly at 000398ee"
     },
     {
       "address": "000b16c0",
