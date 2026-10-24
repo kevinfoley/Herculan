@@ -21,7 +21,7 @@ Nothing shifts the rects into device pixels: ES1's builders pass each block to i
 | 452 | the console buttons' block: its first 16 bytes the console's rect, of which the first pair is the origin `ConsoleButtons_Ctor` adds to each of the five rects from 468, the buttons `I`, `II`, `III`, `LINK` and `TRACK` in that order ([the console buttons](../simulation/cockpit-weapon-gauges.md#the-console-buttons)) | 468, four rects from 484 |
 | 548 | the energy meter's block, [below](#the-energy-meter-block-at-548) | the same |
 | 616 | the shield display's block, [below](#the-shield-display-block-at-616) | the same |
-| 728 | the block of the instrument at the cockpit's `+0x1e9` | the same |
+| 728 | the MFD's block, [below](#the-mfd-block-at-728) | the same, its panel rect alone |
 | 1000 | the throttle's block, [below](#the-throttle-block-at-1000) | the same, with the centre tick's nudge |
 | 1104 | the gunsight's block, [below](#the-gunsight-block-at-1104) | 1088 |
 | 1212 | the block of the instrument at `+0x1f5`, with 15 rects at 1292 and 3 at 1532 | the same, the Heads-Down Display |
@@ -83,6 +83,33 @@ The eight retail files hold:
 | `HERCULES` | 223, 180, 248, 196 | 14, 0, 26, 8 | 14, 9, 26, 17 | 0, 0, 13, 6 | 0, 9, 13, 15 |
 | `COLOSSUS` | 237, 3, 263, 19 | 14, 0, 26, 8 | 14, 9, 26, 17 | 0, 0, 13, 6 | 0, 9, 13, 15 |
 
+## The MFD block at 728
+
+`MfdDisplay_Ctor` (`00039c64`) reads the block's `int32` from 728 to 967 ([building the display](../simulation/mfd-display.md#building-it)), where ES2's display reads only the panel rect and places everything else itself ([ES2's](../../retail/formats/gau-cockpit-layout.md#gau-block-at-728)), unshifted:
+
+| int | Offset | ES1 |
+|---|---|---|
+| `[0]`, `[1]` | 728, 732 | the origin, added to every rect below |
+| `[2]`, `[3]` | 736, 740 | unread by the constructor: `PanelGauge_Ctor` copies `[0..3]` as the gauge's rect `+0`, and the display's visibility tests and copies take the screen's rect instead |
+| `[4..0x37]` | 744–951 | the 13 buttons' rects, button *i* at 744 + 16*i*: 0 to 5 the F-key buttons, 6 the title, 7 `MODE`, 8 `RANGE`, 9 `TARGET`, 10 `XMIT`, 11 and 12 the row arrows ([the buttons](../simulation/mfd-display.md#the-buttons)) |
+| `[0x38..0x3b]` | 952–967 | the screen's rect, which the screens draw in and the click surface covers |
+| `[0x3c..0x43]` | 968–999 | unread; 0 in all eight files |
+
+The eight retail files hold, each rect {*x0*, *y0*, *x1*, *y1*} before the origin is added, and the F-key buttons 0 to 5 by their top-left corners, each 14 columns and 6 rows past its corner:
+
+| File | `[0..3]` | 0–5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | Screen |
+|---|---|---|---|---|---|---|---|---|---|---|
+| `ROADRUNN` | 0, 0, 0, 0 | 96,161; 96,171; 96,181; 183,161; 183,171; 183,181 | 149, 127, 202, 134 | 65, 126, 92, 136 | 93, 126, 120, 136 | 65, 137, 92, 147 | 65, 148, 92, 158 | 121, 126, 134, 136 | 134, 126, 147, 136 | 113, 142, 181, 186 |
+| `GUNSLING` | 0, 0, 0, 0 | 133,176; 151,176; 169,176; 187,176; 205,176; 223,176 | 192, 186, 237, 194 | 105, 174, 132, 184 | 105, 185, 132, 195 | 133, 185, 160, 195 | 240, 174, 267, 184 | 162, 185, 174, 195 | 175, 185, 187, 195 | 151, 113, 219, 158 |
+| `RAPTOR` | 0, 0, 0, 0 | 48,140; 77,140; 48,149; 77,149; 48,158; 77,158 | 184, 131, 237, 138 | 211, 141, 238, 151 | 183, 152, 210, 162 | 211, 152, 238, 162 | 183, 163, 210, 173 | 183, 141, 196, 151 | 196, 141, 209, 151 | 109, 128, 177, 172 |
+| `TOMAHAWK` | 0, 0, 0, 0 | 53,159; 72,159; 91,159; 214,159; 233,159; 252,159 | 214, 169, 267, 176 | 52, 168, 79, 178 | 80, 168, 107, 178 | 52, 180, 79, 190 | 241, 180, 268, 190 | 213, 180, 226, 190 | 226, 180, 239, 190 | 124, 148, 192, 192 |
+| `PATRIOT` | 105, 126, 215, 196 | 2,21; 2,30; 2,39; 93,21; 93,30; 93,39 | 0, 50, 52, 57 | 56, 48, 83, 58 | 84, 48, 111, 58 | 56, 59, 83, 69 | 84, 59, 111, 69 | 29, 59, 41, 69 | 42, 59, 54, 69 | 20, 0, 88, 45 |
+| `PANTHER` | 0, 0, 0, 0 | 87,144; 106,144; 125,144; 87,154; 106,154; 125,154 | 87, 166, 140, 173 | 217, 142, 244, 152 | 217, 154, 244, 164 | 217, 166, 244, 176 | 86, 176, 113, 186 | 114, 176, 127, 186 | 127, 176, 140, 186 | 143, 142, 211, 186 |
+| `HERCULES` | 98, 128, 246, 180 | 72,1; 72,10; 72,19; 72,28; 72,37; 72,46 | 95, 7, 147, 14 | 95, 16, 122, 26 | 122, 16, 149, 26 | 95, 27, 122, 37 | 122, 27, 149, 37 | 94, 38, 106, 48 | 108, 38, 146, 48 | 0, 0, 68, 45 |
+| `COLOSSUS` | 107, 122, 239, 181 | 8,0; 27,0; 46,0; 8,54; 27,54; 46,54 | 78, 18, 131, 25 | 78, 27, 105, 37 | 106, 27, 133, 37 | 78, 38, 105, 48 | 106, 38, 133, 48 | 78, 49, 91, 58 | 92, 49, 104, 58 | 0, 8, 68, 52 |
+
+So the screen is 68 columns by 44 or 45 rows past its corner in every file and the four captioned buttons 27 by 10, while the title's and the arrows' sizes vary from file to file.
+
 ## The throttle block at 1000
 
 `ThrottleGauge_Ctor` (`0003b0d4`) and the two slider constructors read the block's `int32` from 1000 to 1071 ([the throttle gauge](../simulation/cockpit-throttle-gauge.md#the-gauge--throttlegauge_ctor-0003b0d4)), on the plan of ES2's block at 1000 ([ES2's](../../retail/formats/gau-cockpit-layout.md#gau-block-at-1000)), unshifted:
@@ -130,4 +157,4 @@ So the `RAPTOR`'s throttle runs across, its forward bar right of the track's mid
 ## Open
 
 - **Open:** what the energy block's `int32` at 292 and 296 hold, 2 and 9 in all eight files: the energy row's constructor reads neither.
-- **Open:** what the instrument at 1212 is; its constructor (`0003c258`) is unread, as is that of the block at 728. What the gunsight block's `int32` 2 and 3 (1112, 1116) and its bytes from 1180 to 1211 hold: the builder reads neither, and `Gau_Load` adds the origin to `int32` 2 and 3.
+- **Open:** what the instrument at 1212 is; its constructor (`0003c258`) is unread. What the gunsight block's `int32` 2 and 3 (1112, 1116) and its bytes from 1180 to 1211 hold: the builder reads neither, and `Gau_Load` adds the origin to `int32` 2 and 3.

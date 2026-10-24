@@ -14,7 +14,7 @@ Addresses are `ES1DBSIM` image addresses ([the X-32 executable](../formats/x32-e
 
 The file's code is `0003b0ac`–`0003c18b` and its tables `00094206`–`0009441d`. It opens with a lone copy of the 40-byte destructor, `HeapPtr_DtorThrottleGaugeCopy` (`0003b0ac`), after the previous file's `RET 8` at `0003b0a7` and two zero bytes; it ends with `ThrottleSlider_FlushPaintH`'s `RET 4` at `0003c186` and three zero bytes, before the run of `ConfigPart`'s copies at `0003c18c` that opens the next file ([where object files meet](../formats/compiler.md#where-object-files-meet-in-the-code)). It has no static initializer. The `C2` bytes at `0003b67c` and `0003bd94`, which read as a `RET 0xce9` followed by a zero byte, are the −`0x3e` operands of the this-adjusting thunks at `0003b678` and `0003bd90`.
 
-The tables before `00094206`, from `000941e2`, hold the previous file's code addresses (`0003aee8`–`0003b087`).
+The tables before `00094206`, from `000941e2`, are the slots of `MFDListGadgetVtable` (`000941de`), the previous file's ([the MFD's click surface](mfd-display.md#the-click-surface)).
 
 ## The gauge — `ThrottleGauge_Ctor` (`0003b0d4`)
 

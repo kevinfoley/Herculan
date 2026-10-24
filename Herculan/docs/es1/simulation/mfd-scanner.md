@@ -10,7 +10,7 @@ The data holds the bank pointer `MfdRadar_RadarBank` (`0009385c`), `MFDRadarVtab
 
 ## The screen object
 
-**`MfdRadarScreen_Ctor` (`00035298`)**, (screen, rect), allocates `0x54` bytes when given none and runs the base `MFDisplay_Ctor` (`00039c50`), which stores the rect at `+0`. The display's constructor (`00039c64`) builds it as the screen of mode 3, at the display's `+0xa2`, with the display's `+0xb4` as its rect, and points its `+4` at the display's `+0x7a`, as it does for every screen ([the status screen](mfd-status-screen.md#the-screen-object)).
+**`MfdRadarScreen_Ctor` (`00035298`)**, (screen, rect), allocates `0x54` bytes when given none and runs the base `MFDisplay_Ctor` (`00039c50`), which stores the rect at `+0`. `MfdDisplay_Ctor` (`00039c64`, [building the display](mfd-display.md#building-it)) builds it as the screen of mode 3, at the display's `+0xa2`, with the display's `+0xb4` as its rect, and points its `+4` at the display's `+0x7a`, as it does for every screen ([the status screen](mfd-status-screen.md#the-screen-object)).
 
 | Offset | Holds | ES2's |
 |---|---|---|
@@ -41,15 +41,15 @@ It loads the `radar` bank once from the folder `000980f8` names into `MfdRadar_R
 
 So the readouts sit at the bottom left and bottom right, where ES2's are at the dish's four corners ([readouts](../../retail/simulation/mfd-scanner.md#readouts)). No coordinate is shifted by a video mode.
 
-`MFDRadarVtable` holds a zero dword, the paint and the update. **`MfdRadarScreen_Update` (`0003558c`)**, (screen), slot `+8`, calls the paint, slot `+4`. ES2's update slot rebuilds the contact list before its paint ([update cadence](../../retail/simulation/mfd-scanner.md#update-cadence)); ES1's paint does that work itself and keeps no list.
+`MFDRadarVtable` holds a zero dword, the paint and the update. **`MfdRadarScreen_Update` (`0003558c`)**, (screen), slot `+8`, calls the paint, slot `+4`; the display calls it every frame the screen is up ([drawing the display](mfd-display.md#drawing-it)). ES2's update slot rebuilds the contact list before its paint ([update cadence](../../retail/simulation/mfd-scanner.md#update-cadence)); ES1's paint does that work itself and keeps no list.
 
 ## The paint
 
 **`MfdRadarScreen_Paint` (`000355a4`)**, (screen):
 
-1. When the range (the block's `+0xc`) differs from `+0x28`, it stores it there and sets `+0x24` to range / 21, truncated. ES2's divides by 25 and shifts by `VideoMode_XCoordShift` every paint ([plot](../../retail/simulation/mfd-scanner.md#plot)).
+1. When the range (the block's `+0xc`, the display's `+0x86`: 120000 at first, and 30000, 80000 and 120000 in turn at each `RANGE` press or [Alt]+R, [the display's ranges](mfd-display.md#modes)) differs from `+0x28`, it stores it there and sets `+0x24` to range / 21, truncated. ES2's divides by 25 and shifts by `VideoMode_XCoordShift` every paint ([plot](../../retail/simulation/mfd-scanner.md#plot)).
 2. It installs a pen and a brush, both {0, 0}, at the render context's (`000bdbda`) `+0x228` and `+0x22c`, and blits frame 0 of `radar` at `+0x10` with `Bitmap_Blit`. ES2's floods its dish and draws the dish, wedge and ring from `MFD` frames 14 and 15 ([paint order](../../retail/simulation/mfd-scanner.md#paint-order)).
-3. `+0x2c` becomes 1 when the byte `+0x90` of the cockpit's machine (`CockpitViewInstance`'s `+0x1ff`; ES2's radar mode `+0x96`) is 0, else 0. The legend `+0x30` takes `ColorSchemePanels`' `cpred` and `STRINGS0.STR` group 25 entry 1, `PASS`, when it is 1, and `cpgreen` and entry 0, `ACT`, when it is 0 ([the groups](../formats/str-strings.md#the-groups)).
+3. `+0x2c` becomes 1 when the byte `+0x90` of the cockpit's machine (`CockpitViewInstance`'s `+0x1ff`; ES2's radar mode `+0x96`) is 0, else 0. `Mech_ToggleRadarMode` flips that byte ([the HERC's cockpit](mech.md#the-cockpit)), on `R` and on the display's `MODE` button, which `D` presses ([the display's clicks and keys](mfd-display.md#clicks-and-keys)). The legend `+0x30` takes `ColorSchemePanels`' `cpred` and `STRINGS0.STR` group 25 entry 1, `PASS`, when it is 1, and `cpgreen` and entry 0, `ACT`, when it is 0 ([the groups](../formats/str-strings.md#the-groups)).
 4. It plots each object of `LiveObjectList` as below.
 5. When the selection was plotted, it outlines the square from (*x* − 2, *y* − 2) to (*x* + 2, *y* + 2) around its pixel with `Raster_FillRect` and the brush {4, `0x3b`} ([outlines](../../retail/rendering/polygon-fill.md#rectangles-and-ellipses)), where ES2's blits `MFD` frame 16.
 6. It writes `DST:` (group 27) into `+0x34`, the selection's distance into `+0x38`, `RNG:` (group 26) into `+0x3c` and the range in meters into `+0x40`, each number through `Hud_WorldUnitsToMetres` and `ltoa` and then right-aligned and zero-padded in a four-character field, as ES2's are.
@@ -102,5 +102,5 @@ When the object is the cockpit's selection (`+0x20c`), the paint keeps its pixel
 - **Open:** whether the view object's heading is the hull's or the turret's while the player is in the cockpit, and so whether the plot is hull-relative as ES2's is.
 - **Open:** whether ES1's constructors set `+0xa1` before an object enters the list, as ES2's set `+0xa7`, which would leave the blinking last-known position unreachable here too; and what `+0x164` holds.
 - **Open:** what the `radar` bank's frame 0 shows, and how many frames the bank has.
-- **Open:** what writes the range, the dword at the display's `+0x86` (`+0xc` of the block at `+0x7a`), and what writes the machine's `+0x90`; ES1's display code from `00039c64` is unread beyond its screen constructors.
+- **Open:** what the machine's radar byte `+0x90` holds when a mission starts, which decides whether the legend opens on `ACT` or `PASS`: `Mech_ToggleRadarMode`'s flip is the writer read.
 - **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: with the scanner up and a target selected, `BP <CS>:000355a4` fires each frame, and the screen shows a 5 × 5 square around one contact and `DST:` over a nonzero four-digit distance.

@@ -10,7 +10,7 @@ The file's static initializer is not its last code. `MfdMissileView_StaticInit` 
 
 ## The screen object
 
-**`MfdMissileViewScreen_Ctor` (`000360c0`)**, (screen, rect), allocates `0x41` bytes when given none and runs `MFDisplay_Ctor`. The display's constructor (`00039c64`) builds it as the screen of mode 5, at its `+0xaa`, with the rect `+0xb4` and the block `+0x7a` ([the status screen](mfd-status-screen.md#the-screen-object)).
+**`MfdMissileViewScreen_Ctor` (`000360c0`)**, (screen, rect), allocates `0x41` bytes when given none and runs `MFDisplay_Ctor`. `MfdDisplay_Ctor` (`00039c64`, [building the display](mfd-display.md#building-it)) builds it as the screen of mode 5, at its `+0xaa`, with the rect `+0xb4` and the block `+0x7a` ([the status screen](mfd-status-screen.md#the-screen-object)).
 
 | Offset | Holds | ES2's |
 |---|---|---|
@@ -53,7 +53,7 @@ The widths and heights are ES2's; ES2's sit 15 further right, labels 0 and 1 20 
 
 ## Painting
 
-**`MfdMissileViewScreen_Update` (`000368cc`)**, (screen), slot `+8`, is ES2's on ES1's fields: it raises the counter `+0x3f` to 2 while there is a tracked round (`MfdMissileView_TrackedRound`, `00093914`), a flash (`+0x18`) or lock, the byte `+0x9f` of the gunsight instrument (the cockpit's `+0x1f1`), which is its state block's byte `0x25` ([the state block](cockpit-gunsight-hud.md#the-state-block)); at 2 it runs the paint, slot `+4`, and at 1 `Widget_DrawToCockpit` over the rect, lowering the counter either way.
+**`MfdMissileViewScreen_Update` (`000368cc`)**, (screen), slot `+8`, which the display calls every frame the screen is up ([drawing the display](mfd-display.md#drawing-it)), the display switching to it on its own while the armed launcher's projectile record has type 0 and subtype 3 ([the missile camera switch](mfd-display.md#the-missile-camera-switch)), is ES2's on ES1's fields: it raises the counter `+0x3f` to 2 while there is a tracked round (`MfdMissileView_TrackedRound`, `00093914`), a flash (`+0x18`) or lock, the byte `+0x9f` of the gunsight instrument (the cockpit's `+0x1f1`), which is its state block's byte `0x25` ([the state block](cockpit-gunsight-hud.md#the-state-block)); at 2 it runs the paint, slot `+4`, and at 1 `Widget_DrawToCockpit` over the rect, lowering the counter either way.
 
 **`MfdMissileViewScreen_Paint` (`000364f8`)**, (screen), takes the first of these that applies:
 

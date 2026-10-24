@@ -22,7 +22,7 @@ The file holds, in ES2's order, the row gauge base, the energy and ammunition ro
 | `+0x10` | `PanelGauge_KeyDispatchNoneWeaponGaugeCopy` (`00036f8b`) | `NOP`, `XOR EAX,EAX`, `RET 8`, the code of `PanelGauge_KeyDispatchNone` (`0003139b`); the energy and ammunition tables enter it at `00036f8c` |
 | `+0x14` | `WeaponGauge_SetStateNoOp` (`00036f91`) | three `NOP`s and `RET 8`, ES2's `00443417`; the pod row's table enters it at `00036f94` |
 
-**`WeaponGauge_MountProjectileType` (`00036f98`)** and **`WeaponGauge_MountProjectileSubtype` (`00036fd0`)**, (gauge), are ES2's (`00440a14`, `00440a3c`) on ES1's offsets: the `int16` `+0` or `+2` of the record at the mount's `+0x20`, or −1 with no record. With no mount they return −1 in `AX` alone. `es2_xref.py` finds one call of each, from `0003ad08` ([Open](#open)).
+**`WeaponGauge_MountProjectileType` (`00036f98`)** and **`WeaponGauge_MountProjectileSubtype` (`00036fd0`)**, (gauge), are ES2's (`00440a14`, `00440a3c`) on ES1's offsets: the `int16` `+0` or `+2` of the record at the mount's `+0x20`, or −1 with no record. With no mount they return −1 in `AX` alone. `es2_xref.py` finds one call of each, from `MfdDisplay_SyncMissileCamMode` (`0003ad08`), which switches the MFD to the missile camera while the armed mount's record has type 0 and subtype 3 ([the missile camera switch](mfd-display.md#the-missile-camera-switch)).
 
 ## The rows' fields
 
@@ -350,7 +350,6 @@ The other tables reuse these: the derived ones enter the slots at their first by
 
 ## Open
 
-- **Open:** `0003ad08`, which `es2_xref.py` finds calling the two projectile getters, in the place of ES2's `MfdDisplay_SyncMissileCamMode`.
 - **Open:** a write of the pod row's destroyed byte `+0x8c` other than the two above: `es2_xref.py` finds `PodGauge_GetStateBlock` called from `CockpitWidgets_HandleCommand` and `EcmMount_PushGaugeState`, which write nothing through the block it returns, and a store through the gauge's base would not show in that search. Retail check: with the ECM's hardpoint destroyed, the ECM's row still reads `ECM` and still switches.
 - **Open:** whether a press on an energy row's charge bar reaches it in retail. The number button's rect ends 8 columns into the row and the bar starts 40 in, in the eight retail files, and the instruments `Cockpit_LoadPanel` registers before the rows, whose constructors are unread, could cover a row. Retail check: dragging the knob along an energy weapon's charge bar moves it and stays where it is let go, and the weapon then charges to a different level.
 - **Open:** the sizes of `dba\pbuttons`' frames 0 (the number button's rows), 6 and 7 (LINK and TRACK), 26 (the knob) and 55–57 (the state box), for the port.

@@ -20,7 +20,7 @@ Two object files follow [the weapon rows'](cockpit-weapon-gauges.md#where-the-ob
 | `00038f0c`–`000397ef` | `HeapPtr_DtorShieldsGaugeCopy` (`00038f0c`) | [the shield display](#the-shield-display) | `ShieldFacing_FlushDeferredPaint`'s `RET 4` at `000397ec`, then one zero byte |
 | `000397f0`–`00039bb3` | `HeapPtr_DtorEnergyGaugeCopy` (`000397f0`) | [the energy meter](#the-energy-meter) | `PanelGauge_OnChildClickNoOpEnergyGaugeCopy`'s `RET 0xc` at `00039bb0`, then one zero byte |
 
-The run at `00039bb4` follows, opening the MFD display's file. Neither file has a static initializer. `es2_xref.py` finds no reference to either destructor copy ([Open](#open)). The shield display's tables lie from `00093e12` to `00093ed5`, after its ring color at `00093e04`, and the energy meter's from `00093ed6`, followed by its string `edg` (`00093eee`); the next file's copy of `ConfigPart`'s table is at `00093ef6`.
+The run at `00039bb4` follows, opening [the MFD display's file](mfd-display.md#where-the-object-file-starts-and-ends). Neither file has a static initializer. `es2_xref.py` finds no reference to either destructor copy ([Open](#open)). The shield display's tables lie from `00093e12` to `00093ed5`, after its ring color at `00093e04`, and the energy meter's from `00093ed6`, followed by its string `edg` (`00093eee`); the next file's copy of `ConfigPart`'s table is at `00093ef6`.
 
 ## The shield display
 
