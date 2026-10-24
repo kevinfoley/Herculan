@@ -50,10 +50,9 @@ public abstract class Es1MfdScreen {
 }
 
 /// <summary>
-/// PLACEHOLDER: a screen this step does not port, whose paint and update do nothing: FLASH COMM
+/// PLACEHOLDER: a screen not yet ported, whose paint and update do nothing: FLASH COMM
 /// (<c>MfdFlashCommScreen_Ctor</c>, <c>00035c04</c>) and the missile camera (<c>MfdMissileViewScreen_Ctor</c>,
-/// <c>000360c0</c>), plan step 6c5 part C; the NAV MAP (<c>MfdMapScreen_Ctor</c>) and the SCANNER
-/// (<c>MfdRadarScreen_Ctor</c>), part B. Each part replaces it in <see cref="Es1MfdDisplay"/>'s constructor.
+/// <c>000360c0</c>), plan step 6c5 part C, which replaces it in <see cref="Es1MfdDisplay"/>'s constructor.
 /// </summary>
 public sealed class Es1MfdPlaceholderScreen : Es1MfdScreen {
 	internal Es1MfdPlaceholderScreen(Es1Cockpit cockpit, Es1Rect rect, Es1MfdSharedBlock shared)

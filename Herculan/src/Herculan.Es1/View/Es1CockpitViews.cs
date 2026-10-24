@@ -64,12 +64,13 @@ public sealed class Es1CockpitViews {
 	/// <param name="resources">The reader <see cref="Resources"/> holds; none when null.</param>
 	/// <param name="simulatorStrings"><c>str\strings0.str</c>; none when null.</param>
 	/// <param name="statusFlyers">The frames of <c>dba\flyers</c>; none when null.</param>
+	/// <param name="scannerRadar">The frames of <c>dba\radar</c>; none when null.</param>
 	internal Es1CockpitViews(string name, Vue.Entry[] records, Es1ClipBlock[] clips, DynamixBitmap?[] canopies,
 			DynamixPalette? palette, Es1GauFile? layout = null, Es1CursorImage?[]? cursors = null, HudFont?[]? fonts = null,
 			Es1GunsightBanks? gunsightBanks = null, IReadOnlyList<DynamixBitmap>? pushButtons = null,
 			IReadOnlyList<DynamixBitmap>? throttleLights = null, StringFile? systemStrings = null,
 			Func<string, string, byte[]?>? resources = null, StringFile? simulatorStrings = null,
-			IReadOnlyList<DynamixBitmap>? statusFlyers = null) {
+			IReadOnlyList<DynamixBitmap>? statusFlyers = null, IReadOnlyList<DynamixBitmap>? scannerRadar = null) {
 		Name = name;
 		_records = records;
 		_clips = clips;
@@ -85,6 +86,7 @@ public sealed class Es1CockpitViews {
 		Resources = resources;
 		SimulatorStrings = simulatorStrings;
 		StatusFlyers = statusFlyers;
+		ScannerRadar = scannerRadar;
 	}
 
 	/// <summary>
@@ -152,6 +154,12 @@ public sealed class Es1CockpitViews {
 	/// </summary>
 	public IReadOnlyList<DynamixBitmap>? StatusFlyers { get; }
 
+	/// <summary>
+	/// <c>MfdRadar_RadarBank</c> (<c>0009385c</c>), the frames of <c>dba\radar</c>, which the MFD's scanner screen loads
+	/// (docs/es1/simulation/mfd-scanner.md#the-screen-object); null when the file is missing.
+	/// </summary>
+	public IReadOnlyList<DynamixBitmap>? ScannerRadar { get; }
+
 	/// <summary><c>CockpitGauRecord</c> (<c>00092d3c</c>): <c>gau\&lt;name&gt;</c> after <c>Gau_Load</c>'s origin add.</summary>
 	public Es1GauFile Layout { get; }
 
@@ -181,7 +189,7 @@ public sealed class Es1CockpitViews {
 	/// for each view and <c>db&lt;n&gt;\&lt;name&gt;</c> for each canopy, view 3 sharing view 2's
 	/// (<c>CockpitCanopy_LoadViewBitmap</c>, <c>00022184</c>); <c>dpl\cockpit</c>; the seven cursors; and
 	/// <c>gau\&lt;name&gt;</c> (<c>Gau_Load</c>, <c>0002b5c4</c>); the ten fonts; <c>dba\pbuttons</c>; the gunsight's banks;
-	/// the throttle's light file; <c>dba\flyers</c>; and <c>str\system.str</c> and <c>str\strings0.str</c> from the untranslated folder, as
+	/// the throttle's light file; <c>dba\flyers</c>; <c>dba\radar</c>; and <c>str\system.str</c> and <c>str\strings0.str</c> from the untranslated folder, as
 	/// <c>ResourcePath_BuildFolderName</c> names it. Null when the
 	/// <c>.VUE</c> is missing, or the <c>.GAU</c>,
 	/// whose absence <c>Gau_Load</c> asserts on.
@@ -221,6 +229,7 @@ public sealed class Es1CockpitViews {
 		return new Es1CockpitViews(name, records, clips, canopies, palette, loaded, cursors, fonts,
 			Es1GunsightBanks.Load(content), Es1WidgetResources.LoadFrames(content, "PBUTTONS"), lights,
 			SimStrings.LoadUntranslated(content, "SYSTEM.STR"), content.Read,
-			SimStrings.LoadUntranslated(content, SimStrings.SimulatorStrings), Es1WidgetResources.LoadFrames(content, "FLYERS"));
+			SimStrings.LoadUntranslated(content, SimStrings.SimulatorStrings), Es1WidgetResources.LoadFrames(content, "FLYERS"),
+			Es1WidgetResources.LoadFrames(content, "RADAR"));
 	}
 }

@@ -88,6 +88,12 @@ public sealed class Es1ViewManager {
 	/// <summary><c>+0x1b</c>, the cockpit, <c>CockpitViewInstance</c>.</summary>
 	public Es1Cockpit Cockpit { get; }
 
+	/// <summary>
+	/// The chain of views built over this manager, whose camera is <c>ViewObjectPtr</c> (<c>000b5b8a</c>), a global in
+	/// retail that the cockpit's instruments read; the chain's constructor sets it, so it is none before.
+	/// </summary>
+	public Es1ViewChain? Chain { get; internal set; }
+
 	/// <summary>The cockpit's mouse, whose root is the cockpit's and which the view changes' cursor steps reach.</summary>
 	public Es1CockpitMouse Mouse { get; }
 

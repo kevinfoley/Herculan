@@ -190,6 +190,12 @@ public sealed class Es1Cockpit {
 	/// <inheritdoc cref="Es1ViewManager.Projection"/>
 	internal Es1ViewProjection? Projection => _views.Projection;
 
+	/// <summary>
+	/// <c>View_GetActiveObject</c> (<c>00059280</c>): <c>ViewObjectPtr</c> (<c>000b5b8a</c>), the chain of views' current
+	/// camera (<see cref="Es1ViewChain.Camera"/>); none before the chain is built.
+	/// </summary>
+	internal Es1Camera? ActiveViewObject => _views.Chain?.Camera;
+
 	/// <inheritdoc cref="Es1ViewManager.SceneCanvas"/>
 	internal Es1SceneCanvas SceneCanvas() => _views.SceneCanvas();
 
@@ -624,7 +630,7 @@ public sealed class Es1Cockpit {
 		EnergyMeter = new Es1EnergyMeter(this, layout.EnergyMeterBlock, files.Resources);
 		Shields = new Es1ShieldDisplay(this, layout.ShieldDisplayBlock, files.Fonts, files.PushButtons);
 		Mfd = new Es1MfdDisplay(this, layout.MfdPanelBlock, files.Fonts, files.PushButtons, files.SimulatorStrings,
-			files.StatusFlyers);
+			files.StatusFlyers, files.ScannerRadar);
 		Mfd.SetMode(Es1MfdDisplay.Status);
 		Throttle = new Es1ThrottleGauge(this, layout.ThrottleBlock, files.ThrottleLights, files.PushButtons);
 		Gunsight = new Es1Gunsight(this, layout.Gunsight, files.GunsightBanks, files.Fonts, _mouse,

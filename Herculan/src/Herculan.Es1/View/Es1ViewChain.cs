@@ -30,7 +30,8 @@ public sealed class Es1ViewChain {
 	/// <c>Sim_StartMission</c>'s steps 9, 10 and 12 (docs/es1/simulation/main-loop.md#the-mission-start--sim_startmission-0005a9dc):
 	/// <see cref="Viewed"/> and <see cref="Chosen"/> the player's machine; one camera per member of its group (the count
 	/// <c>+0x12</c>), each with no object, mode 0 and no added rotation; and the main camera attached to the player and
-	/// put in mode 2. <c>Main_StaticInit</c> leaves both views at 2 and the preference at 1.
+	/// put in mode 2. <c>Main_StaticInit</c> leaves both views at 2 and the preference at 1. The chain becomes the
+	/// manager's <see cref="Es1ViewManager.Chain"/>.
 	/// </summary>
 	/// <param name="views">The view manager, <c>CockpitViewManagerInstance</c>; null with no cockpit loaded, when no key queues a view command.</param>
 	/// <param name="caption">The caption's font and strings; null draws no caption.</param>
@@ -48,6 +49,9 @@ public sealed class Es1ViewChain {
 		Camera = new Es1Camera();
 		Camera.AttachTo(localPlayer);
 		Camera.Mode = Es1Camera.Attached;
+		if (views != null) {
+			views.Chain = this;
+		}
 	}
 
 	/// <summary><c>LocalPlayerMech</c> (<c>000b5b86</c>).</summary>
