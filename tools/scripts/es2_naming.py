@@ -85,7 +85,8 @@ address operands by different rules (insn_streams).
   edit edits.json [--write]
       [{"binary","address","field","value"} or {"binary","address","fields":{...}}]: rewrite that
       one entry's block, all fields of one edit before validating (so a low entry can take a
-      confidence and a name together). A name change also renames the old name, or the FUN_/DAT_
+      confidence and a name together). "replace": [[old, new], ...], alone or beside them, edits
+      the description in place instead of restating it: each old text must occur exactly once. A name change also renames the old name, or the FUN_/DAT_
       label of a newly named entry, elsewhere in the file (word boundary).
   relink batch.json [--bare] [--write]
       Rewrite FUN_/DAT_<addr> mentions of the batch's named entries in the descriptions of other
@@ -836,7 +837,8 @@ def print_shape_warnings(items):
     for e in items:
         d = e.get("description", e.get("value") if e.get("field") == "description" else
                   (e.get("fields") or {}).get("description", ""))
-        for text, want in shape_warnings(d or ""):
+        d = " ".join([d or ""] + [new for _, new in e.get("replace") or []])
+        for text, want in shape_warnings(d):
             print(f"  SHAPE {e['binary']} {e['address']} {e.get('name', '')}: '{text}' -> write '{want}'")
 
 
@@ -1034,6 +1036,22 @@ def cmd_edit(args):
         print("written")
 
 
+def edit_fields(ed, entry):
+    """The fields edit `ed` sets on `entry`, the known_symbols entry as it stands: its "fields" or its one
+    "field"/"value", then each [old, new] pair of its "replace" applied to the description in order, each
+    old text asserted to occur exactly once in the description as it then stands."""
+    fields = dict(ed.get("fields") or ({ed["field"]: ed["value"]} if "field" in ed else {}))
+    if ed.get("replace"):
+        d = fields.get("description", entry.get("description", ""))
+        for old, new in ed["replace"]:
+            n = d.count(old)
+            assert n == 1, (ed["binary"], ed["address"], "replace text occurs %d times" % n, old)
+            d = d.replace(old, new)
+        fields["description"] = d
+    assert fields, (ed["binary"], ed["address"], "the edit sets nothing")
+    return fields
+
+
 def edit_text(text, edits):
     for ed in edits:
         pat = re.compile(r'    \{\n      "address": "' + ed["address"] + r'",\n      "binary": "' + ed["binary"]
@@ -1043,7 +1061,7 @@ def edit_text(text, edits):
         m = ms[0]
         e = json.loads(m.group(0))
         old = e.get("name")
-        fields = ed.get("fields") or {ed["field"]: ed["value"]}
+        fields = edit_fields(ed, e)
         for k, v in fields.items():
             assert k in FIELDS and k not in ("address", "binary", "verified"), k
             assert not re.search(r"[\x00-\x1f]", v)

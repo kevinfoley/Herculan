@@ -158,16 +158,20 @@ def fix_shapes(steps):
         for e in data:
             holder, key = (e, "description") if "description" in e else \
                 (e, "value") if e.get("field") == "description" else (e.get("fields") or {}, "description")
-            d = holder.get(key)
-            if not d:
-                continue
-            for text, want in es2_naming.shape_warnings(d):
-                d = d.replace(text, want)
-                print("  fixed %s %s: '%s' -> '%s'" % (e["binary"], e["address"], text, want))
-                n += 1
-            if d != holder[key]:
-                holder[key] = d
-                changed = True
+            # A replace pair's new text is written into the description too, so its forms are fixed alike.
+            places = [(holder, key)] + [(pair, 1) for pair in e.get("replace") or []]
+            for place, k in places:
+                d = place.get(k) if isinstance(place, dict) else place[k]
+                if not d:
+                    continue
+                fixed = d
+                for text, want in es2_naming.shape_warnings(d):
+                    fixed = fixed.replace(text, want)
+                    print("  fixed %s %s: '%s' -> '%s'" % (e["binary"], e["address"], text, want))
+                    n += 1
+                if fixed != d:
+                    place[k] = fixed
+                    changed = True
         if changed:
             path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return n
@@ -184,9 +188,15 @@ def precheck(steps, start=1):
     import es2_symbols
     descs, names, types = {}, {}, {}
     items = batch_items(steps)
+    current = {}
     for sub, e in items:
         key = (e["binary"], e["address"].lower())
-        fields = e if sub == "insert" else (e.get("fields") or {e["field"]: e["value"]})
+        if sub == "insert":
+            fields = e
+        else:
+            if e["binary"] not in current:
+                current[e["binary"]] = {x["address"].lower(): x for x in es2_symbols.entries(e["binary"])}
+            fields = es2_naming.edit_fields(e, current[e["binary"]].get(key[1], {}))
         if "description" in fields:
             descs[key] = fields["description"]
         if fields.get("name"):
