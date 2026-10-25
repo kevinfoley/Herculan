@@ -11,7 +11,7 @@ namespace HercWorks.Query;
 /// </summary>
 internal static class Program {
 	private const string Usage = """
-		HercWorks.Query — search the retail .MSN missions, chassis records and ES1 cockpit layouts of an
+		HercWorks.Query — search the retail .MSN missions, chassis records, STRINGS0.STR and ES1 cockpit layouts of an
 		Earthsiege 2 or a Metaltech: Earthsiege (ES1) install. The install is ES1's when its root holds GO.EXE, else ES2's.
 		Rows are numbered in each game's own order: ES2's #1-#17, ES1's 1-11.
 
@@ -45,6 +45,9 @@ internal static class Program {
 		                                   and hex; without, the record's fields with their offsets and
 		                                   types. ES2's records are 216 bytes, ES1's 192. --type picks
 		                                   the chassis (default all)
+		  strings [--group <n>]            the install's STRINGS0.STR: its groups and their entry counts;
+		                                   with --group, that group's entries, each with its text's
+		                                   length and its attribute bytes
 
 		ES2 only (over an ES1 install each prints one line saying why, and exits 0):
 		  flag <n>                         every record testing or writing campaign flag n
@@ -94,6 +97,7 @@ internal static class Program {
 		                    multiple of 4 (1104, 0x450)
 		  --ints <n|LO-HI>  gau: n int32 from the block's start, or its int32 LO to HI (--ints 0x10-0x11)
 		  --as-read         gau: the file's int32 as read, before Gau_Load's origin add
+		  --group <n>       strings: the group to list, by its index in the file
 		  --json            print the raw result as JSON
 
 		A type is a decimal or 0x-hex index, a name matched whole and then as a prefix, or all
@@ -110,7 +114,7 @@ internal static class Program {
 	}
 
 	internal static int Run(string[] args, TextWriter output) {
-		string? install = null, type = null, against = null, ids = null, field = null, block = null, ints = null;
+		string? install = null, type = null, against = null, ids = null, field = null, block = null, ints = null, group = null;
 		bool json = false, variants = false, routeSwitch = false, withPoint = false, asRead = false;
 		var positional = new List<string>();
 		for (int i = 0; i < args.Length; i++) {
@@ -135,6 +139,9 @@ internal static class Program {
 					break;
 				case "--ints" when i + 1 < args.Length:
 					ints = args[++i];
+					break;
+				case "--group" when i + 1 < args.Length:
+					group = args[++i];
 					break;
 				case "--as-read":
 					asRead = true;
@@ -213,6 +220,10 @@ internal static class Program {
 
 		if (command == "gau") {
 			return Gau(output, data, type, block, ints, !asRead, json);
+		}
+
+		if (command == "strings") {
+			return Strings(output, data, group, json);
 		}
 
 		if (command == "missions" && es1) {
@@ -512,6 +523,36 @@ internal static class Program {
 			WriteJson(output, result);
 		} else {
 			GauQuery.Write(output, result);
+		}
+
+		return 0;
+	}
+
+	private static int Strings(TextWriter output, RetailData data, string? spec, bool json) {
+		if (data.SimStrings is not { } strings) {
+			return Fail($"No STRINGS0.STR in {RetailData.SimulatorArchive}.");
+		}
+
+		if (spec == null) {
+			var groups = StringQuery.Groups(strings);
+			if (json) {
+				WriteJson(output, groups);
+			} else {
+				StringQuery.WriteGroups(output, groups);
+			}
+
+			return 0;
+		}
+
+		if (!RecordLayout.TryParseNumber(spec, out int group) || group < 0 || group >= strings.GroupCount) {
+			return Fail($"--group takes a group index, 0-{strings.GroupCount - 1}.");
+		}
+
+		var entries = StringQuery.Entries(strings, group);
+		if (json) {
+			WriteJson(output, entries);
+		} else {
+			StringQuery.WriteEntries(output, group, entries);
 		}
 
 		return 0;

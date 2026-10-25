@@ -201,7 +201,7 @@ They are the same statements laid out differently, the no-ops framed functions, 
 
 ## Open
 
-- **Open:** the callers of `Label_SetTextWithHotkey` at `0003f578` and `00040948` and of `Label_CtorWithAltFont` at `0003ee58`, unread: which font each puts at `+0x20`. Whether any caller passes an index past its text's length, which would draw whatever character the stack held; for the FLASH COMM rows, that is whether an order's attribute byte in the retail `STRINGS0.STR` exceeds its text's length ([Open there](mfd-flash-comm.md#open)).
+- **Open:** the callers of `Label_SetTextWithHotkey` at `0003f578` and `00040948` and of `Label_CtorWithAltFont` at `0003ee58`, unread: which font each puts at `+0x20`. Whether either of those callers passes an index past its text's length, which would draw whatever character the stack held; the FLASH COMM rows' indices all lie inside their texts ([painting](mfd-flash-comm.md#painting)).
 - **Open:** a caller of `Label_SetRectAroundPoint`, `Label_SetNumber`, `PanelSelectGadget_Dtor`, `PanelSliderGadget_Dtor` or `BarGraph_NoOp`: `es2_xref.py` finds no branch to any of them and no stored pointer. It finds `BarGraph_Ctor`'s address also as a dword at `000ac6cc`, among other code addresses.
 - **Open:** which part of the machine `Player_DependentCondition`'s dependent 4, the dropout's condition, is.
 - **Open:** the dropout's third caller, `0003cd28`, unread, and which display it is.
