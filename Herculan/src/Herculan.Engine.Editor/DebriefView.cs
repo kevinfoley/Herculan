@@ -4,7 +4,7 @@ using ImGuiNET;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The mission view's debrief, by outcome (docs/herculan/handoff-editor-mission-logic.md#the-missions-text): each outcome
+/// The Mission Settings window's debrief, by outcome (docs/herculan/handoff-editor-mission-logic.md#the-missions-text): each outcome
 /// headed by its clauses, with the text and movie it shows, the lines it replaces editable and the rest dimmed; then
 /// Otherwise, the unconditioned text and movie; then the loss line, read-only, with its cases (<see cref="DebriefText"/>).
 /// Edits go through <see cref="DebriefEditor"/>. Where the mission screen shows the debrief is

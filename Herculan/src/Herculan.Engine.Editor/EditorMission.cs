@@ -10,7 +10,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// One opened mission and everything the editor builds over it on the CPU: the scene, its objects placed from the
-/// <c>.MSN</c>'s layout (<see cref="Index"/>), the overlays, the picker, the two side panels and the move, add, delete, fit, type, route, trigger area, trigger, countdown, condition, presence, variant, order, objective, text and theater tools, all sharing one
+/// <c>.MSN</c>'s layout (<see cref="Index"/>), the overlays, the picker, the two side panels, the Mission Settings window and the move, add, delete, fit, type, route, trigger area, trigger, countdown, condition, presence, variant, order, objective, text and theater tools, all sharing one
 /// selection. Every edit, undo and redo syncs the scene and the indices with the document in place (<see cref="Sync"/>), and a
 /// change of theater or time of day dresses the scene in its world again in place (<see cref="Theater"/>). Opening another
 /// mission builds a new one of these rather than resetting this one; <see cref="MissionDrawables"/> is its GPU half.
@@ -69,10 +69,10 @@ internal sealed class EditorMission {
 		Outliner.Conditions = Conditions;
 		var choices = new RandomChoices(source, sceneIndex, Names, squad);
 		Outliner.Choices = choices;
+		Settings = new MissionSettingsWindow(() => Name, () => zones.Describe(Zone), Theater, TheaterNames.Labels(content),
+			new MissionTextView(Texts), new DebriefView(Debrief));
 		Properties = new PropertiesPanel(sceneIndex, Selection, source, Mover, Sides, Deleter, Members,
 			new SquadMachinePanel(Fitter, Squad, squad), new RosterFitView(Fitter, Types, Variants, choices, new UnitTypeCatalog(content)),
-			new MissionView(() => Name, () => zones.Describe(Zone), Theater, TheaterNames.Labels(content),
-				new MissionTextView(Texts), new DebriefView(Debrief)),
 			Routes, Placing, Areas, AreaPlacing, Orders, Objectives, Actions, Timers, Conditions, Presence, Variants,
 			choices, new TriggerMessages(content), Names);
 	}
@@ -113,6 +113,9 @@ internal sealed class EditorMission {
 	public MissionOutliner Outliner { get; }
 
 	public PropertiesPanel Properties { get; }
+
+	/// <summary>The Mission Settings window, which Edit &gt; Mission Settings opens.</summary>
+	public MissionSettingsWindow Settings { get; }
 
 	/// <summary>The edits made to <see cref="Source"/>, and their undo history.</summary>
 	public PointMover Mover { get; }

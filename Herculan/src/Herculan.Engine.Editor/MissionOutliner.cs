@@ -7,8 +7,7 @@ using ImGuiNET;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The Mission panel down the left of the window: the mission itself (its theater and time of day,
-/// <see cref="MissionView"/>), then the mission check's findings, then every group (with its members), trigger area,
+/// The Mission panel down the left of the window: the mission check's findings, then every group (with its members), trigger area,
 /// trigger (row-10 action), countdown (row-11 timer), route, win and lose condition (row-17 objective) and random choice as a
 /// list, the objective lines the player reads apart from the win and lose conditions, the trigger areas and routes with the
 /// buttons that start placing a new one, and the triggers, countdowns and win and lose conditions with the buttons that create
@@ -85,8 +84,6 @@ internal sealed class MissionOutliner {
 		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(PanelWidth), display.Y - menuBarHeight));
 		ImGui.Begin("Mission", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse);
 
-		var mission = new MissionSelection();
-		Choose(mission, ImGui.Selectable("Mission##mission", _selection.Is(mission)));
 		DrawProblems();
 		DrawGroups();
 		DrawAreas();

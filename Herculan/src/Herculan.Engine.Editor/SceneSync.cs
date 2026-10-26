@@ -245,7 +245,6 @@ internal sealed class SceneSync {
 	private void Reselect() {
 		_selection.Current = _selection.Current switch {
 			ObjectSelection selected => _index.ObjectOf(selected) != null ? selected : null,
-			MissionSelection => _selection.Current,
 			RouteSelection { Waypoint: >= 0 } route when EditorSelection.InFile(_source.Mission, route) =>
 				route.Waypoint < _index.Route(route.Guid)?.Points.Count ? route : route with { Waypoint = -1 },
 			{ } selected when EditorSelection.InFile(_source.Mission, selected) => selected,

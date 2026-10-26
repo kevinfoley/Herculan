@@ -27,7 +27,6 @@ internal sealed class PropertiesPanel {
 
 	private readonly MissionIndex _index;
 	private readonly SelectionState _selection;
-	private readonly MissionView _mission;
 	private readonly ObjectView _object;
 	private readonly GroupView _group;
 	private readonly RouteView _route;
@@ -39,13 +38,12 @@ internal sealed class PropertiesPanel {
 	private readonly ConditionView _condition;
 
 	public PropertiesPanel(MissionIndex index, SelectionState selection, MissionDocument source, PointMover mover,
-			SideChanger sides, ObjectDeleter deleter, MemberMover members, SquadMachinePanel machine, RosterFitView fit, MissionView mission, RouteEditor routes,
+			SideChanger sides, ObjectDeleter deleter, MemberMover members, SquadMachinePanel machine, RosterFitView fit, RouteEditor routes,
 			RoutePlacing placing, AreaEditor areas, AreaPlacing areaPlacing, OrderEditor orders, ObjectiveEditor objectives,
 			ActionEditor actions, TimerEditor timers, ConditionEditor conditions, PresenceEditor presence, VariantEditor variants,
 			RandomChoices choices, TriggerMessages messages, MissionNames names) {
 		_index = index;
 		_selection = selection;
-		_mission = mission;
 		var links = new PanelLinks(index, names, selection);
 		var sharers = new PointSharers(source, index, links);
 		_trigger = new TriggerView(index, actions, selection, links, messages);
@@ -75,9 +73,6 @@ internal sealed class PropertiesPanel {
 		ImGui.Begin("Properties", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse);
 
 		switch (_selection.Current) {
-			case MissionSelection:
-				_mission.Draw();
-				break;
 			case ObjectSelection selected:
 				if (_index.ObjectOf(selected) is { } placed) {
 					_object.Draw(placed);

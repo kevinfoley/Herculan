@@ -5,7 +5,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// The install's terrain zones (<see cref="MissionZones"/>), each with the retail missions played in it, for File &gt; New
-/// mission's zone choice and the Mission view (docs/herculan/handoff-editor-viewing.md#new-mission): built once per editor
+/// mission's zone choice and the Mission Settings window (docs/herculan/handoff-editor-viewing.md#new-mission): built once per editor
 /// run, the first time either asks, from the missions the archives hold (<see cref="ArchivedMissions"/>). A mission's zone is
 /// header word 1 (<c>script.dat</c> offset 2, docs/retail/formats/script-dat.md#header-format) as its row-2 base patches it
 /// (<see cref="MissionLayout.HeaderWords"/>); no launch writes over it.

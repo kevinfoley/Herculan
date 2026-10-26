@@ -120,8 +120,8 @@ internal sealed class ConditionEditor {
 					shown.Add(new ConditionUse($"Condition {condition}", new ConditionSelection(condition)));
 					continue;
 				case 4 when record.Index == MissionTextEditing.PackageRecord(source):
-					// The text package the Mission view's lines edit.
-					shown.Add(new ConditionUse("The mission's objective, briefing and intelligence lines", new MissionSelection()));
+					// The text package the Mission Settings window's lines edit, which is not a selection.
+					shown.Add(new ConditionUse("The mission's objective, briefing and intelligence lines (Edit > Mission Settings)", null));
 					continue;
 				case 2 or 3 or 4 or 5 or 6 or 7:
 					Unseen(record.Row);
@@ -171,7 +171,7 @@ internal sealed class ConditionEditor {
 	/// <paramref name="count"/> records of row <paramref name="row"/>, one the editor has no view for, by what they do in the
 	/// mission (docs/retail/formats/msn-mission-file.md): a header patch sets the mission's settings, its zone among them, and
 	/// clears the campaign variables it lists as the mission loads; a row-3 value is a briefing's or a debrief's movie; a text
-	/// package other than the one the Mission view edits is another version of the mission's lines and briefing movie; a
+	/// package other than the one the Mission Settings window edits is another version of the mission's lines and briefing movie; a
 	/// row-5 record a version of the debrief; then a point and a heading.
 	/// </summary>
 	private static ConditionUse NoView(int row, int count) {

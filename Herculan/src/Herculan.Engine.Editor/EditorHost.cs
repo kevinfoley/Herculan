@@ -616,6 +616,7 @@ public sealed class EditorHost {
 					ImGui.Separator();
 					mission.AreaPlacing.DrawToolboxEntry();
 				});
+			mission.Settings.Draw();
 		}
 
 		_settingsPanel.Draw();
@@ -959,6 +960,11 @@ public sealed class EditorHost {
 
 			if (ImGui.MenuItem("Redo", "Ctrl+Y", false, _mission.Mover.CanRedo && idle)) {
 				_pendingStep = false;
+			}
+
+			ImGui.Separator();
+			if (ImGui.MenuItem("Mission Settings")) {
+				_mission.Settings.Open();
 			}
 
 			ImGui.EndMenu();

@@ -4,10 +4,11 @@ using ImGuiNET;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The mission view's text: the objective lines the player is shown, the briefing and the intelligence report (row 4),
-/// each line a field that applies when it lets go, with Up, Down and Remove, and Add after the last
-/// (<see cref="MissionTextEditor"/>). Where the game shows each list is docs/retail/simulation/alert-panels.md's (the
-/// objectives panel) and docs/retail/shell/mission-screen.md's (the summary text box).
+/// The Mission Settings window's text: the objective lines the player is shown (<see cref="Draw"/>), and the briefing and the
+/// intelligence report (row 4) the window lists under "Campaign Only" (<see cref="DrawCampaignOnly"/>), each line a field that
+/// applies when it lets go, with Up, Down and Remove, and Add after the last (<see cref="MissionTextEditor"/>). Where the game
+/// shows each list is docs/retail/simulation/alert-panels.md's (the objectives panel) and docs/retail/shell/mission-screen.md's
+/// (the summary text box).
 /// </summary>
 internal sealed class MissionTextView {
 	// The objectives panel builds seven labels and drops an eighth line (ObjectivesPanel_Paint (00457b58)).
@@ -23,10 +24,14 @@ internal sealed class MissionTextView {
 		ImGui.Text("Text");
 		EditorText.Note($"Text used: {_editor.LineCount} of {MissionTextEditing.LineCap} lines (briefing, objective lines, "
 			+ "intelligence report, status alerts and debrief together).");
+		EditorText.Reason(_editor.Failure);
 		DrawList(MissionTextList.Objectives, "Objective lines");
+	}
+
+	/// <summary>The briefing and the intelligence report.</summary>
+	public void DrawCampaignOnly() {
 		DrawList(MissionTextList.Briefing, "Briefing");
 		DrawList(MissionTextList.Intelligence, "Intelligence report");
-		EditorText.Reason(_editor.Failure);
 	}
 
 	private void DrawList(MissionTextList list, string heading) {

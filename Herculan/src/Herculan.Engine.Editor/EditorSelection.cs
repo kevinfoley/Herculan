@@ -35,9 +35,6 @@ internal abstract record EditorSelection {
 		guid != -1 && row?.Any(record => record.GUID == guid) == true;
 }
 
-/// <summary>The mission as a whole: its header's theater and time of day.</summary>
-internal sealed record MissionSelection : EditorSelection;
-
 /// <summary>
 /// One placed object, by the roster record it stands for: its row (12 a herc, the squad's included, 13 a flyer, 14 a
 /// structure or ground vehicle) and GUID (<see cref="MissionIndex.ObjectOf(ObjectSelection)"/>).
