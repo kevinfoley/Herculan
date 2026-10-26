@@ -24,7 +24,7 @@ Nothing shifts the rects into device pixels: ES1's builders pass each block to i
 | 728 | the MFD's block, [below](#the-mfd-block-at-728) | the same, its panel rect alone |
 | 1000 | the throttle's block, [below](#the-throttle-block-at-1000) | the same, with the centre tick's nudge |
 | 1104 | the gunsight's block, [below](#the-gunsight-block-at-1104) | 1088 |
-| 1212 | the block of the instrument at `+0x1f5`, with 15 rects at 1292 and 3 at 1532 | the same, the Heads-Down Display |
+| 1212 | the Heads-Down Display's block, [below](#the-heads-down-display-block-at-1212) | the same, shifted and biased |
 | 1604 | the cockpit clock's block ([the cockpit clock](ttm-scripts.md#the-cockpit-clock)) | the same, `PanelAmbience`'s |
 | 1668, 1684 | the pilot channel's box and the ticker's | the same |
 
@@ -154,7 +154,37 @@ So the `RAPTOR`'s throttle runs across, its forward bar right of the track's mid
 | `[0xe]` | 1160 | the half-size of the square about it that the reticle, the target box and child 6 take as their rect | the same |
 | `[0xf..0x12]` | 1164–1179 | the click surface's rect | the gunsight area |
 
+## The Heads-Down Display block at 1212
+
+`HddDisplay_Ctor` (`0003c258`) reads the block's `int32` from 1212 to 1591 ([the display object](../simulation/heads-down-display.md#the-display-object--hdddisplay_ctor-0003c258)), on the plan of ES2's block ([ES2's](../../retail/formats/gau-cockpit-layout.md#gau-block-at-1212)), with no shift and no bias:
+
+| int | Offset | ES1 | ES2's |
+|---|---|---|---|
+| `[0]`, `[1]` | 1212, 1216 | the origin, added to every rect below | the same, its y biased by `0x28` |
+| `[2]`, `[3]` | 1220, 1224 | unread by the constructor: `PanelGauge_Ctor` copies `[0..3]` as the gauge's rect | |
+| `[4..0x13]` | 1228–1291 | the screen rect, the order column, the damage column and the title indicator | the same |
+| `[0x14..0x4f]` | 1292–1531 | the fifteen buttons' rects | the same |
+| `[0x50..0x5b]` | 1532–1579 | the three comm boxes' marker rects | the same |
+| `[0x5c]` | 1580 | the arrows' first frame in `dba\pbuttons`, 35 or 43; 35 gives them the diamond hit shape | the arrow set, 0 or 1 |
+| `[0x5d]` | 1584 | unread; 0 in all eight files | |
+| `[0x5e]` | 1588 | the comm boxes' highlight mode, 1 in all eight files | the same |
+
+The eight retail files hold, with the origin added:
+
+| File | Origin | Screen rect | `[0x5c]` |
+|---|---|---|---|
+| `ROADRUNN` | 0, 197 | 45, 202, 274, 302 | 35 |
+| `GUNSLING` | 0, 197 | 48, 239, 277, 339 | 43 |
+| `RAPTOR` | 0, 197 | 46, 262, 275, 362 | 35 |
+| `TOMAHAWK` | 0, 197 | 46, 264, 275, 364 | 43 |
+| `PATRIOT` | 0, 197 | 45, 265, 274, 365 | 43 |
+| `PANTHER` | 0, 197 | 60, 262, 289, 362 | 35 |
+| `HERCULES` | 47, 215 | 46, 241, 275, 341 | 35 |
+| `COLOSSUS` | 36, 201 | 47, 215, 275, 315 | 35 |
+
+So the screen is 230 columns by 101 rows in seven files and 229 by 101 in `COLOSSUS`, all in the 400-row canvas's lower half. `[2]` and `[3]` are 0 in six files and (275, 389) in `HERCULES` and (284, 381) in `COLOSSUS`. Button 8's rect is 33 columns by 10 rows in six files, 60 by 10 in `COLOSSUS` and zero in `PANTHER`, where ES2's is zero in every file.
+
 ## Open
 
 - **Open:** what the energy block's `int32` at 292 and 296 hold, 2 and 9 in all eight files: the energy row's constructor reads neither.
-- **Open:** what the instrument at 1212 is; its constructor (`0003c258`) is unread. What the gunsight block's `int32` 2 and 3 (1112, 1116) and its bytes from 1180 to 1211 hold: the builder reads neither, and `Gau_Load` adds the origin to `int32` 2 and 3.
+- **Open:** what the gunsight block's `int32` 2 and 3 (1112, 1116) and its bytes from 1180 to 1211 hold: the builder reads neither, and `Gau_Load` adds the origin to `int32` 2 and 3.

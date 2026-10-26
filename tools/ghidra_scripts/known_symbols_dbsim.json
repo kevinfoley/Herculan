@@ -18062,7 +18062,13 @@
       "confidence": "high",
       "name": "HddDisplay_OnChildClick",
       "description": "HDDGauge vtable +0x00 (0049d64c), (display, child): finds child among the +0x68 children listed from +0x18 and stores its index in the byte +0x528.",
-      "source": "DBSIM decompile at 0044a14c"
+      "source": "DBSIM decompile at 0044a14c",
+      "verified": {
+        "bytes": "0044a14c+42",
+        "sha1": "76a79fd72ef1",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044a178",
@@ -18087,7 +18093,13 @@
       "confidence": "high",
       "name": "HddDisplay_SetPage",
       "description": "Switches the display between its two pages (0 = command display [F7], 1 = damage detail [F8]): unlights the old page button, hides the old page object, shows the new one, lights its button, then applies the 2x15 widget visibility table at HddPageWidgetVisibility -- a 0 moves a widget at state 0 to 2, the value HddButton_Paint refuses to draw at, and a 1 moves one at state 2 back to 0.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044a5e4+246",
+        "sha1": "a6194834592b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044a6dc",
@@ -18096,7 +18108,13 @@
       "confidence": "high",
       "name": "HddDisplay_SetTitle",
       "description": "Fills the title label (+0x51b) from STRINGS0 group 11 entry 0 ('MAP') on page 0, or group 12 indexed by the damage screen's current category (' STRUCT DAMAGE' / ' INTERN DAMAGE' / ' WEAPON DAMAGE') on page 1.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044a6dc+68",
+        "sha1": "4abc01c7b976",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044a720",
@@ -18177,7 +18195,13 @@
       "confidence": "high",
       "name": "HddGauge_PaintScream",
       "description": "The comm box's picture for message 0x25 (the death scream), in place of the .SNC frames: portrait frame 0x1b until the deadline +0x143 passes, then HddGauge_PaintStatic until it passes again, flipping the phase byte +0x148; each flip sets a new deadline max(5, Math_RandomBelow(0x14)) coarse ticks on. +0x149 holds the previous phase.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044b31c+152",
+        "sha1": "5f020adb3a64",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044b3b4",
@@ -18233,7 +18257,13 @@
       "name": "CommBox_PopVideoClip",
       "description": "Pops the render context CommBox_PushVideoClip installed.",
       "source": "docs/retail/simulation/heads-down-display.md",
-      "signature": "void __cdecl CommBox_PopVideoClip(void)"
+      "signature": "void __cdecl CommBox_PopVideoClip(void)",
+      "verified": {
+        "bytes": "0044b8f8+6",
+        "sha1": "199a70783a22",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044b900",
@@ -18273,7 +18303,13 @@
       "confidence": "high",
       "name": "HddDisplay_NextSubject",
       "description": "Steps the damage detail's subject selector (display+0x55c, a short) forward: 5 wraps to 0, and a slot whose machine pointer in the +0x534 array is null is skipped by recursing, except slot 4 (the target), which is a stop empty or not. Returns the new slot's machine. Reached from HddDisplay_HandleWidgetPress's arrow-right (5) case on page 1, which stores the result at +0x524.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044b988+85",
+        "sha1": "e28019bc6209",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044b9e0",
@@ -18282,7 +18318,13 @@
       "confidence": "high",
       "name": "HddDisplay_PrevSubject",
       "description": "Steps the damage detail's subject selector (display+0x55c) back: below 0 wraps to 4 (the target) without testing it; otherwise a slot whose machine pointer in the +0x534 array is null is skipped by recursing. Returns the new slot's machine. Reached from HddDisplay_HandleWidgetPress's arrow-left (4) case on page 1, which stores the result at +0x524.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044b9e0+76",
+        "sha1": "37b55a96c68e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044ba2c",
@@ -18333,7 +18375,13 @@
       "confidence": "high",
       "name": "HddButton_FlushDeferredPaint",
       "description": "HDDSelectGadget vtable +0x0c (0049d60c): while the button is on screen, at stage 2 (+0x1f) repaints it through its own slot +0x00; at stage 1 repaints buttons 10-12 (index +0x28) the same way and copies any other to the cockpit with Widget_DrawToCockpit(0, button); decrements the stage either way.",
-      "source": "DBSIM decompile at 0044bdf0"
+      "source": "DBSIM decompile at 0044bdf0",
+      "verified": {
+        "bytes": "0044bdf0+93",
+        "sha1": "8f9ea8520004",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044be50",

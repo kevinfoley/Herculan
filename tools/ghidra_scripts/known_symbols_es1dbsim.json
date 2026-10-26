@@ -7012,7 +7012,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_SquadOrderLineIndex",
-      "description": "(machine), callee-cleaned: the int16 +0x24 of the behaviour descriptor at +0x47; when the machine is neither immobilised (+0x9e) nor destroyed (+0x93), that is not 5 and the descriptor's +9 is 0, the standing order +0x1d2 overrides it: 1 gives 1, 2 gives 2, 3 or 6 gives 4. es2_xref finds one call, from 0003df60. ES2's Mech_SquadOrderLineIndex (DBSIM 0041bac8), on the descriptor's +0x3c.",
+      "description": "(machine), callee-cleaned: the int16 +0x24 of the behaviour descriptor at +0x47; when the machine is neither immobilised (+0x9e) nor destroyed (+0x93), that is not 5 and the descriptor's +9 is 0, the standing order +0x1d2 overrides it: 1 gives 1, 2 gives 2, 3 or 6 gives 4. es2_xref finds one call, from HddGauge_PaintIdle (0003df60). ES2's Mech_SquadOrderLineIndex (DBSIM 0041bac8), on the descriptor's +0x3c.",
       "source": "Herculan/docs/es1/simulation/mech.md#small-functions; ES1DBSIM decompile at 00015d70",
       "verified": {
         "bytes": "00015d70+140",
@@ -12277,7 +12277,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Cockpit_LoadSquadmatePilots",
-      "description": "(cockpit), callee-cleaned: walks g_MechPool (000af68c) with Pool_Prev (00063a20) to the first machine whose byte +0x9d is set, keeps its group +0x3f at CockpitSquadGroup (00092d6c), and takes up to three of the group's members (the array +0xe, int16 count +0x12, stopping at a null) other than the cockpit's machine +0x1ff into g_SquadmateMachines (000bcc16); for each calls 0003dab4(the cockpit's +0x1f5, the member's int16 +0x232, slot) in stack order. es2_xref finds one call, from Sim_StartMission (0005a9dc). ES2's Cockpit_LoadSquadmatePilots (DBSIM 00431530), which reads +0xa3, +0x45, +0xc, +0x10 and +0x29c and also hands the count to its MFD.",
+      "description": "(cockpit), callee-cleaned: walks g_MechPool (000af68c) with Pool_Prev (00063a20) to the first machine whose byte +0x9d is set, keeps its group +0x3f at CockpitSquadGroup (00092d6c), and takes up to three of the group's members (the array +0xe, int16 count +0x12, stopping at a null) other than the cockpit's machine +0x1ff into g_SquadmateMachines (000bcc16); for each calls HddGauge_LoadPilotFrames (0003dab4)(the cockpit's +0x1f5, the member's int16 +0x232, slot) in stack order. es2_xref finds one call, from Sim_StartMission (0005a9dc). ES2's Cockpit_LoadSquadmatePilots (DBSIM 00431530), which reads +0xa3, +0x45, +0xc, +0x10 and +0x29c and also hands the count to its MFD.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-squadmates",
       "verified": {
         "bytes": "0002b308+223",
@@ -12292,7 +12292,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Squad_SendOrderToSlot",
-      "description": "(cockpit, slot, order) in stack order, callee-cleaned: takes the machine in the int16 slot of g_SquadmateMachines (000bcc16); when it is non-null, not the cockpit's machine +0x1ff and its byte +0x93 is clear, stores the cockpit's machine at the order's +2 and calls slot +0x2c of the vtable at the machine's +2 with (machine, 0, order); then calls MessagePort_Withdraw (0002f370)(the pilot channel +0x203, 0x22, machine) either way. es2_xref finds one call, from 0003d48c. ES2's Squad_SendOrderToSlot (DBSIM 00431610), which tests +0x99, calls vtable +0x28 and withdraws message 0x22 with MessagePort_Withdraw.",
+      "description": "(cockpit, slot, order) in stack order, callee-cleaned: takes the machine in the int16 slot of g_SquadmateMachines (000bcc16); when it is non-null, not the cockpit's machine +0x1ff and its byte +0x93 is clear, stores the cockpit's machine at the order's +2 and calls slot +0x2c of the vtable at the machine's +2 with (machine, 0, order); then calls MessagePort_Withdraw (0002f370)(the pilot channel +0x203, 0x22, machine) either way. es2_xref finds one call, from HddDisplay_HandleWidgetPress (0003d48c). ES2's Squad_SendOrderToSlot (DBSIM 00431610), which tests +0x99, calls vtable +0x28 and withdraws message 0x22 with MessagePort_Withdraw.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-squadmates",
       "verified": {
         "bytes": "0002b3e8+93",
@@ -12592,7 +12592,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Gau_PilotRosterWidget",
-      "description": "(cockpit, record) in stack order, callee-cleaned: builds the instrument with 0003c258(0, cockpit, record + 0x4bc), appends it to the widget list +8 (count +0x6c) and returns it. es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8), which stores the result at +0x1f5. ES2's Gau_PilotRosterWidget (DBSIM 00432634), which shifts the block first.",
+      "description": "(cockpit, record) in stack order, callee-cleaned: builds the instrument with HddDisplay_Ctor (0003c258)(0, cockpit, record + 0x4bc), appends it to the widget list +8 (count +0x6c) and returns it. es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8), which stores the result at +0x1f5. ES2's Gau_PilotRosterWidget (DBSIM 00432634), which shifts the block first.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#building-it",
       "verified": {
         "bytes": "0002ce60+56",
@@ -12727,7 +12727,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Squad_IndexOf",
-      "description": "(object), callee-cleaned: the index 0-2 of object in g_SquadmateMachines (000bcc16), or -1 for a null object or one absent from it. es2_xref finds eight calls, from MessagePort_Post (0002ed94), PilotMessagePort_ComposeLine (0002f454), PilotMessagePort_Show (0002f4f4), 0003e488, 0003e53c, 000403a8, 00040a40 and ViewChain_DrawCaption (00058b68). ES2's Squad_IndexOf (DBSIM 00433134).",
+      "description": "(object), callee-cleaned: the index 0-2 of object in g_SquadmateMachines (000bcc16), or -1 for a null object or one absent from it. es2_xref finds eight calls, from MessagePort_Post (0002ed94), PilotMessagePort_ComposeLine (0002f454), PilotMessagePort_Show (0002f4f4), CommBox_OnMessageBegin (0003e488), CommBox_OnMessageEnd (0003e53c), 000403a8, 00040a40 and ViewChain_DrawCaption (00058b68). ES2's Squad_IndexOf (DBSIM 00433134).",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#squadmate-and-pilot-helpers",
       "verified": {
         "bytes": "0002d5dc+53",
@@ -13027,7 +13027,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Cockpit_SetOffForwardCursor",
-      "description": "(index), callee-cleaned: Cockpit_SetForwardCursor (0002df04) on the slot +0x236 of CockpitViewInstance (00092d1c), the one Cockpit_UseOffForwardCursor (0002dfd4) activates. es2_xref finds seven calls, three from 0003d48c, two from 000405ac, and from 0003fbb8 and 0003fc14. ES2's Cockpit_SetOffForwardCursor (DBSIM 00433e3c), gated on Cockpit_CursorsLive, which skips a repeat of the last index and passes the image whenever the edge slot is inactive.",
+      "description": "(index), callee-cleaned: Cockpit_SetForwardCursor (0002df04) on the slot +0x236 of CockpitViewInstance (00092d1c), the one Cockpit_UseOffForwardCursor (0002dfd4) activates. es2_xref finds seven calls, three from HddDisplay_HandleWidgetPress (0003d48c), two from 000405ac, and from 0003fbb8 and 0003fc14. ES2's Cockpit_SetOffForwardCursor (DBSIM 00433e3c), gated on Cockpit_CursorsLive, which skips a repeat of the last index and passes the image whenever the edge slot is inactive.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors",
       "verified": {
         "bytes": "0002df6c+101",
@@ -13132,7 +13132,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Pilot_PortraitOf",
-      "description": "(pilot), frameless, callee-cleaned (RET 4): pilot / 3, the IDIV truncating. es2_xref finds one call, from 0003dab4. ES2's Pilot_PortraitOf (DBSIM 00434240).",
+      "description": "(pilot), frameless, callee-cleaned (RET 4): pilot / 3, the IDIV truncating. es2_xref finds one call, from HddGauge_LoadPilotFrames (0003dab4). ES2's Pilot_PortraitOf (DBSIM 00434240).",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#squadmate-and-pilot-helpers",
       "verified": {
         "bytes": "0002e2b4+15",
@@ -13147,7 +13147,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Pilot_VoiceBankOf",
-      "description": "(portrait), callee-cleaned (RET 4): portrait / 4 + 1, the IDIV truncating, with 3 made 4. es2_xref finds calls from 0003dab4 and 0003e060. ES2's Pilot_VoiceBankOf (DBSIM 00434260).",
+      "description": "(portrait), callee-cleaned (RET 4): portrait / 4 + 1, the IDIV truncating, with 3 made 4. es2_xref finds calls from HddGauge_LoadPilotFrames (0003dab4) and CommBox_BeginMessage (0003e060). ES2's Pilot_VoiceBankOf (DBSIM 00434260).",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#squadmate-and-pilot-helpers",
       "verified": {
         "bytes": "0002e2c4+32",
@@ -13162,7 +13162,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HudColorTable_Get",
-      "description": "(i), frameless, callee-cleaned (RET 4): the int16 entry i of SquadSlotColors (00092d14), sign-extended. es2_xref finds five calls, from PilotMessagePort_Show (0002f4f4), 0003dab4, 0003e9b8 and twice from 00040d4c. ES2's HudColorTable_Get (DBSIM 00434280), which maps the id at 0049b040[i] through HudColorTable.",
+      "description": "(i), frameless, callee-cleaned (RET 4): the int16 entry i of SquadSlotColors (00092d14), sign-extended. es2_xref finds five calls, from PilotMessagePort_Show (0002f4f4), HddGauge_LoadPilotFrames (0003dab4), HddDamageScreen_SetSubjectCaption (0003e9b8) and twice from 00040d4c. ES2's HudColorTable_Get (DBSIM 00434280), which maps the id at 0049b040[i] through HudColorTable.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#squadmate-and-pilot-helpers",
       "verified": {
         "bytes": "0002e2e4+16",
@@ -13207,7 +13207,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Player_DependentCondition",
-      "description": "(n), callee-cleaned: Damage_ToConditionState (00030eb8) of the int16 that Mech_ReadEntryDamage (00015868)(the machine +0x1ff of CockpitViewInstance (00092d1c), n, 0) returns. es2_xref finds calls from Gunsight_UpdateAndPaint (00034f3c), MfdDisplay_Update (0003a2a8) and 0003cd28. ES2's Player_DependentCondition (DBSIM 004342e0).",
+      "description": "(n), callee-cleaned: Damage_ToConditionState (00030eb8) of the int16 that Mech_ReadEntryDamage (00015868)(the machine +0x1ff of CockpitViewInstance (00092d1c), n, 0) returns. es2_xref finds calls from Gunsight_UpdateAndPaint (00034f3c), MfdDisplay_Update (0003a2a8) and HddDisplay_Update (0003cd28). ES2's Player_DependentCondition (DBSIM 004342e0).",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#squadmate-and-pilot-helpers",
       "verified": {
         "bytes": "0002e334+44",
@@ -14527,7 +14527,7 @@
       "type": "function",
       "confidence": "high",
       "name": "PanelGauge_TickDropout",
-      "description": "(gauge), its arguments removed by this function: the sensor dropout's flicker. With the int16 condition +0x68 equal to 3, sets the dark byte +0x74 and returns, leaving +0x75 as it is. Otherwise, on the clock 000981c4: while the clock is past +0x6c and short of +0x6c + the int16 +0x6a (unsigned compares, both ends excluded), each time it is past +0x70 it flips +0x74, sets +0x75 to 2, puts +0x70 at the clock + 1 + (Math_RandomNext(000b5c48) & 0xffff) % 30 and, on going dark, plays sound 0x1c with Sound_Play; once the clock reaches +0x6c + +0x6a it runs PanelGauge_ScheduleDropout, sets +0x74 to 1 for a condition of 2 or more and to 0 below, and +0x75 to 2. Its RET 4 at 0003149b is followed by two zero bytes and the next object file. ES2's PanelGauge_TickDropout (DBSIM 00438bc0) alternates dark and shown spells of rolled lengths, with a sprite sequencer, and forces dark at condition 0. es2_xref finds three calls, from Gunsight_UpdateAndPaint (00034f3c), MfdDisplay_Update (0003a2a8) and 0003cd28.",
+      "description": "(gauge), its arguments removed by this function: the sensor dropout's flicker. With the int16 condition +0x68 equal to 3, sets the dark byte +0x74 and returns, leaving +0x75 as it is. Otherwise, on the clock 000981c4: while the clock is past +0x6c and short of +0x6c + the int16 +0x6a (unsigned compares, both ends excluded), each time it is past +0x70 it flips +0x74, sets +0x75 to 2, puts +0x70 at the clock + 1 + (Math_RandomNext(000b5c48) & 0xffff) % 30 and, on going dark, plays sound 0x1c with Sound_Play; once the clock reaches +0x6c + +0x6a it runs PanelGauge_ScheduleDropout, sets +0x74 to 1 for a condition of 2 or more and to 0 below, and +0x75 to 2. Its RET 4 at 0003149b is followed by two zero bytes and the next object file. ES2's PanelGauge_TickDropout (DBSIM 00438bc0) alternates dark and shown spells of rolled lengths, with a sprite sequencer, and forces dark at condition 0. es2_xref finds three calls, from Gunsight_UpdateAndPaint (00034f3c), MfdDisplay_Update (0003a2a8) and HddDisplay_Update (0003cd28).",
       "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#sensor-dropout",
       "verified": {
         "bytes": "00031400+158",
@@ -18727,7 +18727,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdFlashComm_Transmit",
-      "description": "(display) in stack order, callee-cleaned (RET 4): stores MfdFlashComm_SelectedVerb (00035f4c) of the screen at +0x9a as a word (MOV [000b0ddc],AX), the verb at +0 of the order record 000b0ddc, calls Squad_BroadcastOrderFromCockpit (0002b448)(the display's +0x10, 000b0ddc), which stores the issuer at +2, and, when that returns non-zero, MfdFlashComm_ToggleRowVariant (00035f9c) on the screen. ES2's MfdFlashComm_Transmit (DBSIM 00447220).",
+      "description": "(display) in stack order, callee-cleaned (RET 4): stores MfdFlashComm_SelectedVerb (00035f4c) of the screen at +0x9a as a word (MOV [HddOrderRecord (000b0ddc)],AX), the verb at +0 of the order record HddOrderRecord (000b0ddc), calls Squad_BroadcastOrderFromCockpit (0002b448)(the display's +0x10, HddOrderRecord (000b0ddc)), which stores the issuer at +2, and, when that returns non-zero, MfdFlashComm_ToggleRowVariant (00035f9c) on the screen. ES2's MfdFlashComm_Transmit (DBSIM 00447220).",
       "source": "Herculan/docs/es1/simulation/mfd-flash-comm.md#the-order-helpers; ES1DBSIM decompile at 0003adc8",
       "verified": {
         "bytes": "0003adc8+55",
@@ -19457,12 +19457,507 @@
       }
     },
     {
+      "address": "0003c18c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorHddCopy",
+      "description": "(p, flags), callee-cleaned: byte for byte the code of HeapPtr_DtorGunlistCopy (0000baf0), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0003c18c",
+      "verified": {
+        "bytes": "0003c18c+40",
+        "sha1": "468ccece8200",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003c1b4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorHddCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 00094426: byte for byte the code of ConfigPart_DtorDetAnimObjCopy (000028e0), relocated operands aside, storing 00094426 and 0009445a where that stores 000903ae and 0009037a. ES2's ConfigPart_Dtor (DBSIM 00420730).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0003c1b4",
+      "verified": {
+        "bytes": "0003c1b4+63",
+        "sha1": "f1ab7084b4e5",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003c1f3",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagHddCopy",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +4 of the vtable 00094426; the code of ConfigPart_GetClassTagDetAnimObjCopy (000028d6).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0003c1f3",
+      "verified": {
+        "bytes": "0003c1f3+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0003c1fc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorHddCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 0009445a (entered at its padding 0003c1f9): byte for byte the code of TSPartBase_Dtor (0005d614), relocated operands aside, storing 0009445a where that stores 000974aa. ES2's TSPartBase_Dtor (DBSIM 0049224b).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0003c1fc",
+      "verified": {
+        "bytes": "0003c1fc+42",
+        "sha1": "a59cbd5d38ee",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003c228",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HDDisplay_Ctor",
+      "description": "(screen, a, b) in stack order, callee-cleaned: the Heads-Down Display pages' base: stores b at +0, a at +4 and HDDisplayVtable (000944fe) at +0xc. es2_xref finds calls from 0003ee58 and 00042164, the command screen's and the damage screen's constructors. ES2's HDDisplay_Ctor (DBSIM 00448cac), which keeps the vptr at +0 and the two arguments at +4 and +8.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-display-object--hdddisplay_ctor-0003c258; ES1DBSIM decompile at 0003c228",
+      "verified": {
+        "bytes": "0003c228+32",
+        "sha1": "108db41533fd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003c248",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HDDisplay_HideNoOp",
+      "description": "Frameless: RET 4. Slot +0xc, the hide, of HDDisplayVtable (000944fe), the pages' base table. ES2's HDDisplay_HideNoOp (DBSIM 00451e86).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-display-object--hdddisplay_ctor-0003c258; ES1DBSIM disassembly at 0003c248",
+      "verified": {
+        "bytes": "0003c248+3",
+        "sha1": "6d2a7422bc83",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0003c24b",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HDDisplay_ShowNoOp",
+      "description": "Frameless: a NOP and RET 4. Slot +0x10, the show, of HDDisplayVtable (000944fe). ES2's HDDisplay_ShowNoOp (DBSIM 0044c1eb).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-display-object--hdddisplay_ctor-0003c258; ES1DBSIM disassembly at 0003c24b",
+      "verified": {
+        "bytes": "0003c24b+4",
+        "sha1": "5d5ba9489eeb",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0003c24f",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HDDisplay_KeyDispatchNone",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 8: returns 0. Slot +0x14, the key slot, of HDDisplayVtable (000944fe), where ES2's base table holds HddDamageScreen_KeyDispatch (DBSIM 00451e8b).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-display-object--hdddisplay_ctor-0003c258; ES1DBSIM disassembly at 0003c24f",
+      "verified": {
+        "bytes": "0003c24f+6",
+        "sha1": "ae2a5ee89632",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0003c258",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDisplay_Ctor",
+      "description": "(display, cockpit, block) in stack order, callee-cleaned: the Heads-Down Display, 0x51f bytes, from the .GAU block at 1212. PanelGauge_Ctor (00031318); the three comm-box gauges at +0xf6 (0x14a bytes, CommBox_ElementCtor (0003cab8)); HDDGaugeVtable (0009451e) at +0x76; the clip context CommBox_ClipContext (000b15f8) from GLViewport_Ctor; dba\\static into HddStaticBank (000944d0) the first time; the screen rect +0x8a, damage column +0x9a, order column +0xaa from int32 4-7, 12-15, 8-11 plus the origin int32 0-1; +0xd2 = -1; the pages 0003ee58(0, display, order column, screen) at +0xca and 00042164(0, display, damage column, screen) at +0xce; the fifteen buttons HddButton_Ctor (0003ea5c)(0, i, display, int32 0x14+4i.. plus origin) at +0x14 + 4i with dba\\pbuttons frames (22-25, the arrows from int32 0x5c with Widget_SetHitShape (00043784)(button, 1) when that is 0x23, 51-54), each registered with Widget_RegisterClickable on the cockpit's root; XMIT's, CANCEL's and the title's (+0x4d8, on button 9's rect) labels in cpred, centered, fill 0x3f; +0x64 = 15; the title indicator +0xba from int32 16-19; each gauge's marker rect +0x2d from int32 0x50+4i and name +0x137 = 0; +0x4e8 = +0x4d4 = -1; HddDisplay_SetPage(display, 0); CommBox_OnMessageBegin and CommBox_OnMessageEnd added to CockpitView_GetSquadMessagePort's port; HddDisplayInstance (000944cc) = display; +0x4e5 = 0xff; the highlight mode +0x4e6 from int32 0x5e; str\\pilots into HddPilotNameTable (000944d4) the first time; the five subjects and names (YOU, three empty, TARGET), +0x4dc = 1, +0x51b = NO TARGET SELECTED. ES2's HddDisplay_Ctor (DBSIM 00448cc8).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-display-object--hdddisplay_ctor-0003c258; ES1DBSIM decompile at 0003c258",
+      "verified": {
+        "bytes": "0003c258+2144",
+        "sha1": "1f57c31e987d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003cab8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CommBox_ElementCtor",
+      "description": "(gauge) callee-cleaned: one comm-box gauge's element constructor for __vec_ctor: allocates 0x14a bytes when given none, returning 0 when that fails, runs the inlined rect constructors of +0x1d and +0x2d and __vec_ctor over the 30 eight-byte offset pairs at +0x3d with Point_DefaultCtorHddCopy (0003cb74) by its padding. ES2's CommBox_ElementCtor (DBSIM 0044c0e7).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-comm-boxes; ES1DBSIM decompile at 0003cab8",
+      "verified": {
+        "bytes": "0003cab8+185",
+        "sha1": "3d91ad54e9eb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003cb74",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Point_DefaultCtorHddCopy",
+      "description": "(p) callee-cleaned: allocates 8 bytes when p is null and returns p; the element constructor of a comm-box gauge's offset pairs, which CommBox_ElementCtor (0003cab8) passes by its padding 0003cb71. The code of Point_DefaultCtorGunsightCopy (000345a0).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-comm-boxes; ES1DBSIM decompile at 0003cb74",
+      "verified": {
+        "bytes": "0003cb74+27",
+        "sha1": "f7f4df04374d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003cb90",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDisplay_Repaint",
+      "description": "(display) callee-cleaned, slot +8 (paint) of HDDGaugeVtable: while CockpitView_RectCornerVisible passes the screen rect +0x8a: each button's paint slot +4, with no state test; the current page's show (+0x10) and repaint (+4) through its +0xc table; the title indicator +0xba filled 0x3b while +0x4dc is set, else 0x39; HddDisplay_SetTitle; for each comm box, button 10+i's rect copied into the gauge's +0x1d and inset there by one pixel, filled 0x3f when the gauge's name +0x137 is 0, else HddGauge_PaintIdle. ES2's HddDisplay_Repaint (DBSIM 00449a50).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#drawing-it; ES1DBSIM decompile at 0003cb90",
+      "verified": {
+        "bytes": "0003cb90+406",
+        "sha1": "9e9d82fa4d3a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003cd28",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDisplay_Update",
+      "description": "(display) callee-cleaned, slot +0xc (per frame) of HDDGaugeVtable: the cockpit's selection +0x20c as subject slot 4 (+0x501), with +0x51b NO TARGET SELECTED when null and NO INFO AVAILABLE (and the subject null) for a class +0x162 other than 0; on a change, the subject +0x4e1 when the selector is 4, HddDisplay_LastTarget (0009456c) and page 1's update flag +0xd9; HddDisplay_HandleWidgetPress; comms-out latches (gauge +0x147) for destroyed (+0x93) squadmates on a frame the view manager's +0x18 is set in view 4, and state 1 for every destroyed and latched box; HddDisplay_ServiceCommBoxes; outside view 4 the sensor dropout on Player_DependentCondition(4) (PanelGauge_TickDropout), a full repaint of the page when +0x74 changes, and while the screen rect is visible each button's slot +0x10, page 1's half-second refresh (+0x4ed, 0x1e counts) and the two-frame paint stages on +0x75 through the page's +4 and +8 slots, the copy of stage 1 lifting the pilot channel's line (its slots +0x14 and +0x18) while one is up. ES2's HddDisplay_Update (DBSIM 00449bd0), with RepaintPage and PaintCurrentScreen inlined.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#drawing-it; ES1DBSIM decompile at 0003cd28",
+      "verified": {
+        "bytes": "0003cd28+1014",
+        "sha1": "47ef09598e5f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003d120",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDisplay_NoOp",
+      "description": "Frameless: RET 8, between HddDisplay_Update and HddDisplay_KeyDispatch, where ES2's HddDisplay_NoOp (DBSIM 00449fbc) stands. es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#keys; ES1DBSIM disassembly at 0003d120",
+      "verified": {
+        "bytes": "0003d120+3",
+        "sha1": "a4f5248d9b7d",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0003d124",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDisplay_ReturnZero",
+      "description": "Frameless: XOR EAX,EAX and RET 4: returns 0. Between HddDisplay_Update and HddDisplay_KeyDispatch, where ES2's HddDisplay_ReturnZero (DBSIM 00449fc4) stands. es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#keys; ES1DBSIM disassembly at 0003d124",
+      "verified": {
+        "bytes": "0003d124+5",
+        "sha1": "0f864a8a1b9e",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0003d12c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDisplay_KeyDispatch",
+      "description": "(display, code) in stack order, callee-cleaned, slot +0x10 (key) of HDDGaugeVtable: REPNE SCASD over the 17 codes of HddDisplay_KeyCodes (00094574), jumping through the 17 dwords after them; any other code goes to the current page's key slot (+0x14 of its +0xc table), whose answer it returns, and a listed one returns 1. Arrows 0x48/0x50/0x4b/0x4d press buttons 2-5, 0x02-0x04 buttons 10-12, 0x0c/0x4a button 6, 0x0d/0x4e button 7 (a press skips state 2 and 3 and calls the click slot with (button, 1)); 0x1f/0x17/0x11 run HddDisplay_SetPage(display, 1) and 000423d8(damage screen, 0/1/2); 0x64b, 0x64d and 0x62b (Ctrl+Alt with keypad 4, keypad 6, backslash) step HddDebugMessageId (00094570) down to 0, up to 0x29, or leave it, after making a negative one 1, and post {that id, g_SquadmateMachines[0]} to the pilot channel with MessagePort_Post. ES2's HddDisplay_KeyDispatch (DBSIM 00449fcc), which has none of the three Ctrl+Alt codes.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#keys; ES1DBSIM decompile at 0003d12c, after ES2RepairFunctionBody's switch preview",
+      "verified": {
+        "bytes": "0003d12c+772",
+        "sha1": "6e7f1fb26735",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003d430",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDisplay_OnChildClick",
+      "description": "(display, value, button) in stack order, callee-cleaned, slot +4 of HDDGaugeVtable: stores the button's index among the +0x64 buttons from +0x14 in the byte +0x4e5. ES2's HddDisplay_OnChildClick (DBSIM 0044a14c).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#presses; ES1DBSIM decompile at 0003d430",
+      "verified": {
+        "bytes": "0003d430+90",
+        "sha1": "5f3f93148ec9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003d48c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDisplay_HandleWidgetPress",
+      "description": "(display) callee-cleaned: switched on the pressed index +0x4e5, which it puts back to 0xff; returns at once at 0xff, and while the display is dark (+0x74) returns for a button above 1 leaving the index. 0/1 HddDisplay_SetPage; 2-7 on page 0 the command screen's 0003fd2c, 0003fd58, 0003fcd4, 0003fd00, 0003fc70, 0003fca4 with page 0's update flag +0xd8 and the stage +0x75 = 2; 2/3 and 9 on page 1 the damage screen's 0004246c or 00042494 with +0xd7; 4/5 on page 1 HddDisplay_PrevSubject/NextSubject into +0x4e1 and the title indicator from the subject's +0x9d (0x3b set, 0x39 clear, copied with Widget_DrawToCockpit); 10-12 (page 1 switching to 0 first) HddDisplay_SelectPilot for a slot not selected whose machine is set and not destroyed (+0x93), then Cockpit_SetOffForwardCursor(2) while the command screen's +0x103 is set; 13 XMIT on page 0: 00040834(screen, 1, 0) with +0x104 clear, else 0004075c, and with a pilot selected the word +0x5d into HddOrderRecord (000b0ddc), 0004070c, Squad_SendOrderToSlot(cockpit +0x10, slot, record), Cockpit_SetOffForwardCursor(0), 000407d4, HddDisplay_SelectPilot(-1); 14 CANCEL: 000407d4, Cockpit_SetOffForwardCursor(0), HddDisplay_SelectPilot(-1). ES2's HddDisplay_HandleWidgetPress (DBSIM 0044a178).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#presses; ES1DBSIM decompile at 0003d48c",
+      "verified": {
+        "bytes": "0003d48c+1062",
+        "sha1": "1381194c24fb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003d8b4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDisplay_SetPage",
+      "description": "(display, page) in stack order, callee-cleaned: when the page differs from +0xd2, the old page's hide (slot +0xc of its +0xc table) unless +0xd2 is -1, +0xd2 = page, the new page's show (+0x10), and HddPageWidgetVisibility (000944dc) row page applied to the buttons, a 1 moving state 2 to 0 and a 0 moving state 0 to 2, each invalidated (slot +8); then, either way, the page's full-repaint flag +0xd6+page and the stage +0x75 = 2. ES2's HddDisplay_SetPage (DBSIM 0044a5e4), which also relights the page buttons.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#pages-and-visibility; ES1DBSIM decompile at 0003d8b4",
+      "verified": {
+        "bytes": "0003d8b4+257",
+        "sha1": "da86dffcefa4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003d9b8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDisplay_SetTitle",
+      "description": "(display) callee-cleaned: Label_SetText on the title label +0x4d8 with MAP (000bd350, STRINGS0 group 10) on page 0, or entry +0x74 of the damage screen (+0xce) of 000bd358 (group 11) on page 1; nothing on another page. ES2's HddDisplay_SetTitle (DBSIM 0044a6dc).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#pages-and-visibility; ES1DBSIM decompile at 0003d9b8",
+      "verified": {
+        "bytes": "0003d9b8+77",
+        "sha1": "7aa3ed7df709",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003da08",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDisplay_SelectPilot",
+      "description": "(display, slot) in stack order, callee-cleaned: with a slot selected (+0x4d4 not -1) clears that comm box's (button 10+slot) lamp +0x3c and invalidates it when it was set; +0x4e8 = +0x4d4, +0x4d4 = slot; for a slot other than -1, sets its box's lamp and invalidates it when it was clear, and posts {0x22, g_SquadmateMachines[slot]} to CockpitView_GetSquadMessagePort's port with MessagePort_Post; last 00040664(command screen +0xca, +0x4d4). ES2's HddDisplay_SelectPilot (DBSIM 0044a720).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#presses; ES1DBSIM decompile at 0003da08",
+      "verified": {
+        "bytes": "0003da08+172",
+        "sha1": "921e594e3bf5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003dab4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddGauge_LoadPilotFrames",
+      "description": "(display, pilot, slot) in stack order, callee-cleaned: for slot 0 the pilot is CommBox0PilotOverride (000944d8) when that is not negative; the portrait p = Pilot_PortraitOf(pilot) at gauge +0x135 and the name at +0x137, entry p of HddPilotNameTable (str\\pilots, by StrTable_FirstString and p StrTable_NextString); SystemMessages_Index(pilot channel, Pilot_VoiceBankOf(p), slot); ofs\\pilot<p> through a VolRStream (assert severity 5, phdd.cpp line 0x3c1) read as 27 entries {int32 k, 8 bytes into pair k at +0x3d}; the bank dba\\pilot<p> at +0x18 with +0x133 = 1, or dba\\pilot<p>s and +0x133 = 0 while g_LowMemory is set (assert at line 0x3d9 when null); six labels on button 10+slot's rect (name in cpred on HudColorTable_Get(slot), then cpblue/cpred/cpblue/cpred at y0+16/24/32/40, a sixth 10x10 at the bottom-left in cpred on 0x3b); clears +0x13f, +0x13b, +0x12e, +0x147, +0x149, +0x148; subject slot 1+slot = the squadmate's machine and its name. ES2's HddGauge_LoadPilotFrames (DBSIM 0044a7c0), which walks the names to the pilot's own number.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#who-is-in-it--hddgauge_loadpilotframes-0003dab4; ES1DBSIM decompile at 0003dab4",
+      "verified": {
+        "bytes": "0003dab4+1057",
+        "sha1": "4994ad0782ba",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003ded8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddGauge_ConditionIndex",
+      "description": "(display, machine) in stack order, callee-cleaned: Mech_ReadDamageReadouts' buffer, the mean of entries 1-19 as (0x100 - mean) * 100 >> 8, bucketed at 90, 74, 51 and 1 into 0-4. ES2's HddGauge_ConditionIndex (DBSIM 0044adf4), identical after normalization but for the buffer's address argument.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-three-paints; ES1DBSIM decompile at 0003ded8",
+      "verified": {
+        "bytes": "0003ded8+133",
+        "sha1": "7649b538baf0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003df60",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddGauge_PaintIdle",
+      "description": "(display, slot) in stack order, callee-cleaned: while CockpitView_RectCornerVisible passes the screen rect +0x8a: with g_SquadmateMachines[slot]'s +0x93 clear, inside Cockpit_PushCanvasContext/PopRenderContext, fills the gauge's video rect +0x1d with 0x3f and sets the five labels: the name, STATUS: (000bd4a0), 000bd46c[HddGauge_ConditionIndex], OBJECTIVE: (000bd4a4) and 000bd4d4[Mech_SquadOrderLineIndex]; with it set, HddGauge_PaintStatic. ES2's HddGauge_PaintIdle (DBSIM 0044ae78).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-three-paints; ES1DBSIM decompile at 0003df60",
+      "verified": {
+        "bytes": "0003df60+256",
+        "sha1": "5ad41d790e8c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003e060",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CommBox_BeginMessage",
+      "description": "(display, gauge, record) in stack order, callee-cleaned: the record's id +0 into the gauge's byte +0x12d; the suffix '_' + the id in two digits + the record's byte +0x16 in three, zero-padded; SpeechLine_Load(script name, voice name) with the script 'P' + ('A' + the portrait +0x135) + suffix and the voice 'P' + Pilot_VoiceBankOf(portrait) + suffix; the slot into +0x12f; returns whether it is set. ES2's CommBox_BeginMessage (DBSIM 0044afc8).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#starting-a-line; ES1DBSIM decompile at 0003e060",
+      "verified": {
+        "bytes": "0003e060+364",
+        "sha1": "582e64d1c26b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003e1cc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddGauge_PaintPilotFrame",
+      "description": "(display, frame, gauge) in stack order, callee-cleaned: while the screen rect +0x8a is visible: fills the video rect +0x1d with 0x3f inside a canvas push and pop; CommBox_PushVideoClip; with +0x133 set, Bitmap_Blit of the bank's (+0x18) frame 24 + Math_RandomNext mod 3 at its own offset pair, then of the frame at its pair; with it clear, the bank's frame 6 at pair 24, then frame HddLowMemFrameMap (00094494)[frame] at the frame's pair; CommBox_PopVideoClip; the name label again inside a push and pop. ES2's HddGauge_PaintPilotFrame (DBSIM 0044b120), which blits the frame alone and publishes it for the MFD.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-three-paints; ES1DBSIM decompile at 0003e1cc",
+      "verified": {
+        "bytes": "0003e1cc+378",
+        "sha1": "892ea6f19842",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003e348",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddGauge_PaintScream",
+      "description": "(display, gauge) in stack order, callee-cleaned: while the screen rect +0x8a is visible: at phase +0x148 0 HddGauge_PaintPilotFrame(display, 0x1b, gauge), and once the clock 000981c4 is past the deadline +0x143 the phase 1; at phase 1 HddGauge_PaintStatic, back to 0 past the deadline; on a phase change the deadline = the clock + max(5, Math_RandomBelow(0x14)); +0x149 = the phase. ES2's HddGauge_PaintScream (DBSIM 0044b31c).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-three-paints; ES1DBSIM decompile at 0003e348",
+      "verified": {
+        "bytes": "0003e348+181",
+        "sha1": "e3f7639f769e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003e400",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddGauge_PaintStatic",
+      "description": "(display, gauge) in stack order, callee-cleaned: while the screen rect +0x8a is visible: CommBox_PushVideoClip; Bitmap_Blit of frame +0x12e of HddStaticBank (000944d0) at HddStaticFramePos (000b15fc); the frame stepped on, 5 wrapping to 0; CommBox_PopVideoClip; the name label again inside a canvas push and pop. ES2's HddGauge_PaintStatic (DBSIM 0044b3b4), which blits through VideoMode_BlitRotated and publishes the frame for the MFD.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-three-paints; ES1DBSIM decompile at 0003e400",
+      "verified": {
+        "bytes": "0003e400+133",
+        "sha1": "9cffd35ca52f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003e488",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CommBox_OnMessageBegin",
+      "description": "(record) callee-cleaned: the pilot channel's begin callback. For a subject (+2) in a squadmate slot (Squad_IndexOf), CommBox_BeginMessage(HddDisplayInstance, that gauge, record); when it fails, the channel's ready +0x462 and cancelled +0x463 latches; when it succeeds, the deadline +0x143 = the clock + 0x14, state +0x13b = 1, Sound_Play(0x1c) unless Sound_IsPlaying(0x1c), and HddDisplay_ServiceCommBoxes while the display's screen rect is visible. ES2's CommBox_OnMessageBegin (DBSIM 0044b4ec).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#starting-a-line; ES1DBSIM decompile at 0003e488",
+      "verified": {
+        "bytes": "0003e488+178",
+        "sha1": "b234fe299954",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003e53c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CommBox_OnMessageEnd",
+      "description": "(record) callee-cleaned: the pilot channel's end callback: for a subject (+2) in a squadmate slot (Squad_IndexOf), clears the byte +0x1c of that slot's gauge. ES2's CommBox_OnMessageEnd (DBSIM 0044b5c0).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#starting-a-line; ES1DBSIM decompile at 0003e53c",
+      "verified": {
+        "bytes": "0003e53c+55",
+        "sha1": "d0c2997b3171",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003e574",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDisplay_ServiceCommBoxes",
+      "description": "(display) callee-cleaned: each named gauge's state +0x13b on the clock 000981c4. 0: while the previous state +0x13f is not 0 or CommBox_IdleRepaintPending (000946bb) is set, HddGauge_PaintIdle and Widget_DrawToCockpit(0, video rect, 1), the flag set when that copied nothing. 1: HddGauge_PaintStatic until the deadline with the latch +0x147 clear, then 2 at once. 2: on entry the channel's ready latch +0x462 and Snc_Start (0004e518), the frame -1 when that returns 0 and otherwise the speech slot's int16 +8, with the scream's (id 0x25) first deadline the clock + 5; after entry the slot's +8. At -1 the channel's cancelled latch +0x463, then for the scream the latch and state 1, otherwise state 3, deadline the clock + 0x14, Sound_Play(0x1c) unless playing and the latch when the machine's +0x93 is set; and static. Otherwise HddGauge_PaintScream or HddGauge_PaintPilotFrame. 3: static until the deadline, then 0 at once. Then +0x13f = the state. ES2's HddDisplay_ServiceCommBoxes (DBSIM 0044b5f8), which drains the .SNC queue first and drops the MFD's published block.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-state-machine--hdddisplay_servicecommboxes-0003e574; ES1DBSIM decompile at 0003e574",
+      "verified": {
+        "bytes": "0003e574+540",
+        "sha1": "62e3a158a6b4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003e790",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CommBox_PushVideoClip",
+      "description": "(gauge) callee-cleaned: Cockpit_PushCanvasContext; keeps the installed render context in CommBox_SavedContext (000bd500); sets the rect +0x210-+0x21c of CommBox_ClipContext (000b15f8) to the gauge's video rect +0x1d less that context's origin +0x220/+0x224; Raster_InstallRenderContext(CommBox_ClipContext). ES2's CommBox_PushVideoClip (DBSIM 0044b83c), which also takes off the coordinate offsets.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-three-paints; ES1DBSIM decompile at 0003e790",
+      "verified": {
+        "bytes": "0003e790+152",
+        "sha1": "b7f132242be3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003e828",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CommBox_PopVideoClip",
+      "description": "No arguments: Cockpit_PopRenderContext. Identical after normalization to ES2's CommBox_PopVideoClip (DBSIM 0044b8f8).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-three-paints; ES1DBSIM decompile at 0003e828",
+      "verified": {
+        "bytes": "0003e828+6",
+        "sha1": "4517a451d2fb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0003e830",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "HddGauge_Name",
-      "description": "(roster, slot) in stack order, callee-cleaned (RET 8): the dword +0x137 of gauge slot, the gauges 0x14a bytes apart from 0xf6 past the pointer at 000944cc; the roster argument is ignored. ES2's HddGauge_Name (DBSIM 0044b900), its gauges 0x14e apart from 0x12d past 0049d230.",
+      "description": "(roster, slot) in stack order, callee-cleaned (RET 8): the dword +0x137 of gauge slot, the gauges 0x14a bytes apart from 0xf6 past the pointer at HddDisplayInstance (000944cc); the roster argument is ignored. ES2's HddGauge_Name (DBSIM 0044b900), its gauges 0x14e apart from 0x12d past 0049d230.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#callees-of-other-modules",
       "verified": {
         "bytes": "0003e830+36",
@@ -19484,6 +19979,306 @@
         "sha1": "caa215c5ea88",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0003e8d4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDisplay_NextSubject",
+      "description": "(display) callee-cleaned: the int16 selector +0x519 plus 1, 5 wrapping to 0; an empty slot of +0x4f1 other than 4 is skipped by recursing; returns the slot's machine. ES2's HddDisplay_NextSubject (DBSIM 0044b988).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#subject-stepping; ES1DBSIM decompile at 0003e8d4",
+      "verified": {
+        "bytes": "0003e8d4+121",
+        "sha1": "a4395fef3284",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003e950",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDisplay_PrevSubject",
+      "description": "(display) callee-cleaned: the int16 selector +0x519 less 1, below 0 wrapping to 4 untested; otherwise an empty slot of +0x4f1 is skipped by recursing; returns the slot's machine. ES2's HddDisplay_PrevSubject (DBSIM 0044b9e0).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#subject-stepping; ES1DBSIM decompile at 0003e950",
+      "verified": {
+        "bytes": "0003e950+101",
+        "sha1": "b18af036dc69",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003e9b8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDamageScreen_SetSubjectCaption",
+      "description": "(display, label) in stack order, callee-cleaned: by the selector +0x519, the label's font +0 and fill +0x1c: cpylw (ColorSchemePanels[3]) on 0x32 for 0, cpred on 0x3b for 4, cpred on HudColorTable_Get(selector - 1) otherwise; then Label_SetText with the name +0x505 + 4 * selector. es2_xref finds one call, from 000424f8. ES2's HddDamageScreen_SetSubjectCaption (DBSIM 0044ba2c).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#subject-stepping; ES1DBSIM decompile at 0003e9b8",
+      "verified": {
+        "bytes": "0003e9b8+151",
+        "sha1": "1d2b78c83b9b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003ea50",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sim_SetCommBox0PilotOverride",
+      "description": "Frameless, (n) callee-cleaned: stores n in CommBox0PilotOverride (000944d8) and RET 4. es2_xref finds one call, from Sim_ParseCommandLine, for -t<n>. ES2's Sim_SetCommBox0PilotOverride (DBSIM 0044ba9c).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#who-is-in-it--hddgauge_loadpilotframes-0003dab4; ES1DBSIM disassembly at 0003ea50",
+      "verified": {
+        "bytes": "0003ea50+12",
+        "sha1": "d95f8276acbc",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0003ea5c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddButton_Ctor",
+      "description": "(button, index, display, rect) in stack order, callee-cleaned: allocates 0x3d bytes when given none, returning 0 when that fails; Widget_CtorRect with the button base's copy 000946ce and the drag flag 0; the mixin's copy 000946f6 at +0x24, the display at +0x20, 0009470e at +0x1c, the index at +0x28, the state +0x17 = 0; 00094736 and the lamp +0x3c = 0; HddButton_MixinVtable (0009475e) at +0x24 and HDDSelectGadgetVtable (00094776) at +0x1c. ES2's HddButton_Ctor (DBSIM 0044baac).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-buttons; ES1DBSIM decompile at 0003ea5c",
+      "verified": {
+        "bytes": "0003ea5c+147",
+        "sha1": "4f3203006ae8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003eaef",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLButtonControl_PaintNoOpHddCopy",
+      "description": "Frameless: a NOP and RET 4. Slot +4 of the vtable 000946ce, and slot +4 of the vtable 0009470e, and slot +4 of the vtable 00094736; the code of CTLButtonControl_PaintNoOpGadgetsCopy (00031523). ES2's CTLButtonControl_PaintNoOp (DBSIM 00455545).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0003eaef",
+      "verified": {
+        "bytes": "0003eaef+4",
+        "sha1": "5d5ba9489eeb",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0003eaf3",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_InvalidateNoOpHddCopy",
+      "description": "Frameless: a NOP and RET 4. Slot +8 of the vtable 000946ce, this file's copy of the button base table; the code of CTLControl_InvalidateNoOpPanelCopy (0002dae3).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-buttons; ES1DBSIM disassembly at 0003eaf3",
+      "verified": {
+        "bytes": "0003eaf3+4",
+        "sha1": "5d5ba9489eeb",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0003eaf7",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_OnClickNoOpHddCopy",
+      "description": "Frameless: a NOP and RET 8. Slot +0xc of the vtable 000946ce; the code of CTLControl_OnClickNoOpPanelCopy (0002dae7). ES2's CTLControl_OnClickNoOp (DBSIM 0045555e).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0003eaf7",
+      "verified": {
+        "bytes": "0003eaf7+4",
+        "sha1": "da32ac57381a",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0003eafb",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_FlushDeferredPaintNoOpHddCopy",
+      "description": "Frameless: a NOP and RET 4. Slot +0x10 of the vtable 000946ce, and slot +0x10 of the vtable 0009470e, and slot +0x10 of the vtable 00094736, and slot +0x10 of the vtable HDDisplayGadgetVtable (000947da) (entered at 0003eafc); the code of CTLControl_FlushDeferredPaintNoOpPanelCopy (0002daeb). ES2's CTLControl_FlushDeferredPaintNoOp (DBSIM 0045554a).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0003eafb",
+      "verified": {
+        "bytes": "0003eafb+4",
+        "sha1": "5d5ba9489eeb",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0003eaff",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_GetButtonValueHddCopy",
+      "description": "Frameless: a NOP, then MOV AX,WORD PTR [0x94b84] and RET 4. Slot +0x14 of the vtable 000946ce, and slot +0x14 of the vtable 0009470e, and slot +0x14 of the vtable 00094736, and slot +0x14 of the vtable HDDSelectGadgetVtable (00094776), and slot +0x14 of the vtable HDDisplayGadgetVtable (000947da) (entered at 0003eb00); the code of Widget_GetButtonValuePanelCopy (0002daef). ES2's Widget_GetButtonValue (DBSIM 00455530).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0003eaff",
+      "verified": {
+        "bytes": "0003eaff+10",
+        "sha1": "f62f57a4a511",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0003eb09",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_SetValueNoOpHddCopy",
+      "description": "Frameless: three NOPs and RET 8. Slot +0x18 of the vtable 000946ce, and slot +0x18 of the vtable 0009470e, and slot +0x18 of the vtable 00094736, and slot +0x18 of the vtable HDDSelectGadgetVtable (00094776), and slot +0x18 of the vtable HDDisplayGadgetVtable (000947da) (entered at 0003eb0c); the code of CTLControl_SetValueNoOpPanelCopy (0002daf9). ES2's CTLControl_SetValueNoOp (DBSIM 0045553b).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0003eb09",
+      "verified": {
+        "bytes": "0003eb09+6",
+        "sha1": "fe14fe2186bc",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0003eb0f",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_DragMoveNoOpHddCopy",
+      "description": "Frameless: a NOP and RET 8. Slot +0x1c of the vtable 000946ce, and slot +0x1c of the vtable 0009470e, and slot +0x1c of the vtable 00094736, and slot +0x1c of the vtable HDDSelectGadgetVtable (00094776), and slot +0x1c of the vtable HDDisplayGadgetVtable (000947da) (entered at 0003eb10); the code of CTLControl_DragMoveNoOpPanelCopy (0002daff). ES2's CTLControl_DragMoveNoOp (DBSIM 00455540).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0003eb0f",
+      "verified": {
+        "bytes": "0003eb0f+4",
+        "sha1": "da32ac57381a",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0003eb14",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_InvalidateDeferredHddCopy",
+      "description": "(gadget), callee-cleaned: slot +8 of the vtable 0009470e (entered at its padding 0003eb13), and slot +8 of the vtable 00094736 (entered at its padding 0003eb13), and slot +8 of the vtable HDDSelectGadgetVtable (00094776) (entered at its padding 0003eb13): byte for byte the code of Widget_InvalidateDeferredGadgetsCopy (00031528), relocated operands aside. ES2's Widget_InvalidateDeferred (DBSIM 00455524).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0003eb14",
+      "verified": {
+        "bytes": "0003eb14+16",
+        "sha1": "9e51e63401e5",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003eb24",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddButton_PaintThunk",
+      "description": "Frameless this-adjusting thunk, slot +4 of HddButton_MixinVtable (0009475e): adds -0x20 to the object and jumps to HddButton_Paint by its padding 0003eb3a. ES2's HDDSelectGadget_PaintThunk (DBSIM 0044c1e1).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-buttons; ES1DBSIM disassembly at 0003eb24",
+      "verified": {
+        "bytes": "0003eb24+24",
+        "sha1": "f322a659909f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003eb30",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddButton_FlushDeferredPaintThunk",
+      "description": "Frameless this-adjusting thunk, slot +8 of HddButton_MixinVtable (0009475e): adds -0x20 to the object and jumps to HddButton_FlushDeferredPaint by its padding 0003ecc5. ES2's HDDSelectGadget_FlushDeferredPaintThunk (DBSIM 0044c1d7).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-buttons; ES1DBSIM disassembly at 0003eb30",
+      "verified": {
+        "bytes": "0003eb30+408",
+        "sha1": "7629218959a9",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003eb3c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddButton_Paint",
+      "description": "(button) callee-cleaned, slot +4 of HDDSelectGadgetVtable, switched on the index +0x28 with no test of the state: 0-7 Bitmap_Blit of frame +0x34 when the state +0x17 is not 0, else +0x30, at the button's top-left; 10-12 by the display's highlight mode +0x4e6: 0 fills the button's rect 0x38 with the lamp +0x3c set and 0x3f with it clear, 1 fills the selected slot's (+0x4d4) gauge marker rect +0x2d with 0x3b while the lamp is set and the previous slot's (+0x4e8) with 0x39 while it is clear, nothing for -1; 13 the label's (+0x2c) fill 0x3b while the state is 1 and the command screen's +0x104 is set, else 0x3f, and XMIT (000bd330); 14 the fill 0x3b while the state is 1, else 0x3f, and CANCEL (000bd334). ES2's HddButton_Paint (DBSIM 0044bb38).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#painting-a-button; ES1DBSIM decompile at 0003eb3c",
+      "verified": {
+        "bytes": "0003eb3c+393",
+        "sha1": "1963fd7bcf20",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003ecc8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddButton_FlushDeferredPaint",
+      "description": "(button) callee-cleaned, slot +0x10 of HDDSelectGadgetVtable: while CockpitView_RectCornerVisible passes its rect, at paint counter +0x1b 2 its paint slot, at 1 the paint again for a comm box (index 10-12) and Widget_DrawToCockpit(0, rect, 0) for any other, either way the counter less 1. ES2's HddButton_FlushDeferredPaint (DBSIM 0044bdf0).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#painting-a-button; ES1DBSIM decompile at 0003ecc8",
+      "verified": {
+        "bytes": "0003ecc8+100",
+        "sha1": "ec3a9172e99b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003ed2c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddButton_OnClick",
+      "description": "(button, value) in stack order, callee-cleaned, slot +0xc of HDDSelectGadgetVtable: slot +4 of the owning display's (+0x20) table at its +0x76 with (display, value, button); the button's invalidate (slot +8); the mixin's (+0x24) slot +0xc, the click sound, on +0x20. It changes nothing on the button. ES2's HddButton_OnClick (DBSIM 0044be50), which toggles the lit byte first and refuses a lit page button.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-buttons; ES1DBSIM decompile at 0003ed2c",
+      "verified": {
+        "bytes": "0003ed2c+49",
+        "sha1": "bbed4e3a8b7c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003ed60",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HDDisplayGadget_Ctor",
+      "description": "(gadget, owner, rect) in stack order, callee-cleaned: given no object, allocates the base's 0x20 bytes for Widget_CtorRect and writes the rest through the null pointer; Widget_CtorRect with the button base's copy 000946ce and the drag flag 0, then HDDisplayGadgetVtable (000947da) at +0x1c, the owner at +0x20 and the state +0x17 = 0. es2_xref finds one call, from 00041c50. ES2's HDDisplayGadget_Ctor (DBSIM 0044be94).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-buttons; ES1DBSIM decompile at 0003ed60",
+      "verified": {
+        "bytes": "0003ed60+76",
+        "sha1": "73975f002b3f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003edac",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDisplay_StaticInit",
+      "description": "Frameless static initializer, entry 000adc48 of the static constructor table: zeroes the two dwords of HddStaticFramePos (000b15fc, 000b1600) and RET; phdd.cpp's last code, three zero bytes after it. ES2's HddDisplay_StaticInit (DBSIM 0044c004).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0003edac",
+      "verified": {
+        "bytes": "0003edac+13",
+        "sha1": "2863916c37ae",
+        "scope": "body",
+        "via": "raw"
       }
     },
     {
@@ -19559,6 +20354,21 @@
         "sha1": "15c3636eb3ae",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "00043784",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_SetHitShape",
+      "description": "(widget, shape) in stack order, callee-cleaned: the hit-shape byte +0x10 = shape; for 1 also the int16 radius +0x15 = (x1 - x0) >> 1 and the int16 center +0x11/+0x13 = (x0 + radius, y0 + radius), the diamond Widget_HitTest tests. es2_xref finds one call, from HddDisplay_Ctor (0003c258). Identical after normalization to ES2's Widget_SetHitShape (DBSIM 0045234c).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#hit-testing; ES1DBSIM decompile at 00043784",
+      "verified": {
+        "bytes": "00043784+74",
+        "sha1": "9e771867088e",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -23452,7 +24262,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SpeechLine_Load",
-      "description": "(sncName, voiceName) in stack order: finds the voice-line slot (000bd734, stride 0x3a, count 000bd73c) whose +0x2b holds 0004e208's key for voiceName; with none, takes a slot from 0004e08c (returning 0 when it gives none), stores the key at +0x2b and 1 at +0x33, and, when the sound manager 000959ac exists and the byte Sound_SpeechEnabled (000959e4) is set, builds simvoice\\<voiceName>.sfx in the slot's +0xe, names it as the slot's index +0x34 with SoundManager_SetSampleName (0004f99c) and loads the slot's sound +0x36 with SoundObject_LoadSample, returning 0 when that fails; then Snc_Load(slot, sound, sncName). Stores 000981c4 at +0x2f and returns the slot. es2_xref finds one call, from 0003e1a8 in 0003e060.",
+      "description": "(sncName, voiceName) in stack order: finds the voice-line slot (000bd734, stride 0x3a, count 000bd73c) whose +0x2b holds 0004e208's key for voiceName; with none, takes a slot from 0004e08c (returning 0 when it gives none), stores the key at +0x2b and 1 at +0x33, and, when the sound manager 000959ac exists and the byte Sound_SpeechEnabled (000959e4) is set, builds simvoice\\<voiceName>.sfx in the slot's +0xe, names it as the slot's index +0x34 with SoundManager_SetSampleName (0004f99c) and loads the slot's sound +0x36 with SoundObject_LoadSample, returning 0 when that fails; then Snc_Load(slot, sound, sncName). Stores 000981c4 at +0x2f and returns the slot. es2_xref finds one call, from 0003e1a8 in CommBox_BeginMessage (0003e060).",
       "source": "Herculan/docs/es1/formats/sound-samples.md#voice-lines",
       "verified": {
         "bytes": "0004e0f0+278",
@@ -23474,6 +24284,21 @@
         "sha1": "544b2a90cc5d",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0004e518",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Snc_Start",
+      "description": "(slot) callee-cleaned: copies the script pointer +0x27 to the cursor +0xa, stores 0004e59c's answer as the int16 frame +8 and 0004e5c4's at +4, and calls 0004e624(slot, that); then, when the slot's object +0 is set, Sound_SpeechEnabled (000959e4) is set and the frame is not 0, returns in AL slot +0x10 of the table at the object's +0x3b, else 1. es2_xref finds one call, from HddDisplay_ServiceCommBoxes (0003e574). ES2's Snc_Start (DBSIM 004632fc).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-state-machine--hdddisplay_servicecommboxes-0003e574; ES1DBSIM disassembly at 0004e518",
+      "verified": {
+        "bytes": "0004e518+94",
+        "sha1": "deb4c2d8c6ed",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -26572,7 +27397,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_ParseCommandLine",
-      "description": "(argv, argc) in stack order, callee-cleaned: for each argument starting '-', looks its next character up in the 16 dwords at 00096e88 by REPNE SCASD and jumps to the target 16 dwords after (cases at 00058ec8-0005921c, outside Ghidra's extent): B sets 000b5bcc; D sets DemoMode (000b5bd0) and TapePlayback (000b5b76) and opens tapes\\<0005771c's name>.tap (Config_BuildPath (00059300), Path_ApplyAltDrive (000592a4), fopen rb) as TapeFile (000b5b82), unpacking as -p does, both flags cleared when it does not open; S sets CmdLine_SinglePage (000b5b67); m sets 000bda94; C calls CockpitChassis_SelectByName (00024394) with the rest; s toggles 000b5b68; P sets 000b5b69; t passes atol of the rest to 0003ea50; V, W and T store atol of the rest in 000b5bb2, 000b5bb4 and 000b5bb6; p takes the rest as TapeStem (000b5b7a) unless set, opens <stem>.tap rb as TapeFile, sets TapePlayback and unpacks seven files with 0005756c (data\\script.dat, data\\player.mec, data\\mission.var, Config_BuildPath of prefs.cfg, data\\restore.dat, data\\object.str, Config_BuildPath of keyjoy.cfg); r opens <stem>.tap wb, packs the same seven with 000574a0 (from data\\, keyjoy.cfg without a folder), closes it and sets TapeRecording (000b5b78); d opens <stem>.dmp as DmpFile (000b5b7e), wb while recording (closing it at once) and rb otherwise; l sets g_LowMemory (000bda98); e compares the rest with 'eggplant' and 'EGGPLANT' and sets Sim_EggplantGiven (000b5bc4) on a match. ES2's Sim_ParseCommandLine (DBSIM 0045e73c).",
+      "description": "(argv, argc) in stack order, callee-cleaned: for each argument starting '-', looks its next character up in the 16 dwords at 00096e88 by REPNE SCASD and jumps to the target 16 dwords after (cases at 00058ec8-0005921c, outside Ghidra's extent): B sets 000b5bcc; D sets DemoMode (000b5bd0) and TapePlayback (000b5b76) and opens tapes\\<0005771c's name>.tap (Config_BuildPath (00059300), Path_ApplyAltDrive (000592a4), fopen rb) as TapeFile (000b5b82), unpacking as -p does, both flags cleared when it does not open; S sets CmdLine_SinglePage (000b5b67); m sets 000bda94; C calls CockpitChassis_SelectByName (00024394) with the rest; s toggles 000b5b68; P sets 000b5b69; t passes atol of the rest to Sim_SetCommBox0PilotOverride (0003ea50); V, W and T store atol of the rest in 000b5bb2, 000b5bb4 and 000b5bb6; p takes the rest as TapeStem (000b5b7a) unless set, opens <stem>.tap rb as TapeFile, sets TapePlayback and unpacks seven files with 0005756c (data\\script.dat, data\\player.mec, data\\mission.var, Config_BuildPath of prefs.cfg, data\\restore.dat, data\\object.str, Config_BuildPath of keyjoy.cfg); r opens <stem>.tap wb, packs the same seven with 000574a0 (from data\\, keyjoy.cfg without a folder), closes it and sets TapeRecording (000b5b78); d opens <stem>.dmp as DmpFile (000b5b7e), wb while recording (closing it at once) and rb otherwise; l sets g_LowMemory (000bda98); e compares the rest with 'eggplant' and 'EGGPLANT' and sets Sim_EggplantGiven (000b5bc4) on a match. ES2's Sim_ParseCommandLine (DBSIM 0045e73c).",
       "source": "Herculan/docs/es1/simulation/main-loop.md#the-command-line; ES1DBSIM decompile and disassembly at 00058e74",
       "verified": {
         "bytes": "00058e74+965",
@@ -38879,6 +39704,141 @@
       "source": "Herculan/docs/es1/simulation/cockpit-throttle-gauge.md#building-it"
     },
     {
+      "address": "00094494",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HddLowMemFrameMap",
+      "description": "28 int16: the low-memory pilot bank's frame for each of the 28 portrait frames, 0-23 to 0-5, 24-26 to 6, 27 to 7, which HddGauge_PaintPilotFrame (0003e1cc) reads while the gauge's +0x133 is clear. The same values as ES2's DAT_0049d1f6.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-three-paints"
+    },
+    {
+      "address": "000944cc",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HddDisplayInstance",
+      "description": "Dword: the Heads-Down Display, which HddDisplay_Ctor (0003c258) stores; the comm-box callbacks and HddGauge_Name/FindByName reach the gauges through it. ES2's 0049d230.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#globals"
+    },
+    {
+      "address": "000944d0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HddStaticBank",
+      "description": "Dword: the dba\\static bank, five frames HddGauge_PaintStatic (0003e400) cycles; HddDisplay_Ctor (0003c258) loads it the first time. ES2's HddStaticBank.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#globals"
+    },
+    {
+      "address": "000944d4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HddPilotNameTable",
+      "description": "Dword: the str\\pilots string table, which HddDisplay_Ctor (0003c258) loads the first time and HddGauge_LoadPilotFrames (0003dab4) walks to a pilot's portrait number for the comm box's name.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#globals"
+    },
+    {
+      "address": "000944d8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CommBox0PilotOverride",
+      "description": "Int, -1 in the image: the -t<n> value Sim_SetCommBox0PilotOverride (0003ea50) stores; HddGauge_LoadPilotFrames (0003dab4) takes it as comm box 0's pilot when it is not negative. ES2's CommBox0PilotOverride.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#globals"
+    },
+    {
+      "address": "000944dc",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HddPageWidgetVisibility",
+      "description": "2 rows x 15 bytes, [page][button], which HddDisplay_SetPage (0003d8b4) applies: page 0 shows buttons 0-7 and 10-14, page 1 buttons 0-5 and 10-12. ES2's HddPageWidgetVisibility, whose rows hide 10-12.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#pages-and-visibility"
+    },
+    {
+      "address": "000944fe",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HDDisplayVtable",
+      "description": "The Heads-Down Display pages' base table, which HDDisplay_Ctor (0003c228) stores at +0xc: +4 and +8 0, +0xc HDDisplay_HideNoOp (0003c248), +0x10 HDDisplay_ShowNoOp (0003c24b), +0x14 HDDisplay_KeyDispatchNone (0003c24f).",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#globals"
+    },
+    {
+      "address": "0009451e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HDDGaugeVtable",
+      "description": "The Heads-Down Display's table, at the display's +0x76: +4 HddDisplay_OnChildClick (0003d430), +8 HddDisplay_Repaint, +0xc HddDisplay_Update, +0x10 HddDisplay_KeyDispatch, the last three by their padding. ES2's HDDGaugeVtable.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#globals"
+    },
+    {
+      "address": "0009456c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HddDisplay_LastTarget",
+      "description": "Dword: the target subject HddDisplay_Update (0003cd28) last saw, to detect a change.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#drawing-it"
+    },
+    {
+      "address": "00094570",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HddDebugMessageId",
+      "description": "Int, -1 in the image: the message id that the Ctrl+Alt keys of HddDisplay_KeyDispatch (0003d12c) step and post for the first squadmate.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#keys"
+    },
+    {
+      "address": "00094574",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HddDisplay_KeyCodes",
+      "description": "17 dwords of key codes and then their 17 handler addresses in HddDisplay_KeyDispatch (0003d12c): 0x64b, 0x64d, 0x62b, 0x48, 0x50, 0x4b, 0x4d, 2, 3, 4, 0xd, 0x4e, 0xc, 0x4a, 0x1f, 0x17, 0x11.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#keys"
+    },
+    {
+      "address": "000946bb",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CommBox_IdleRepaintPending",
+      "description": "Byte: set by HddDisplay_ServiceCommBoxes (0003e574) when an idle box's copy to the other page did nothing (Widget_DrawToCockpit returned 0), so the next frame repaints idle boxes again.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-state-machine--hdddisplay_servicecommboxes-0003e574"
+    },
+    {
+      "address": "0009475e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HddButton_MixinVtable",
+      "description": "The Heads-Down Display buttons' PanelGadget mixin table, at a button's +0x24: +4 HddButton_PaintThunk (0003eb24), +8 HddButton_FlushDeferredPaintThunk (0003eb30), +0xc Widget_ClickSound.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-buttons"
+    },
+    {
+      "address": "00094776",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HDDSelectGadgetVtable",
+      "description": "The Heads-Down Display buttons' primary table, at a button's +0x1c, slots from +4: HddButton_Paint, Widget_InvalidateDeferredHddCopy, HddButton_OnClick (0003ed2c), HddButton_FlushDeferredPaint, then the button base's value, set-value and drag copies. ES2's HDDSelectGadgetVtable.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-buttons"
+    },
+    {
+      "address": "000947da",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HDDisplayGadgetVtable",
+      "description": "The pages' click regions' base table, which HDDisplayGadget_Ctor (0003ed60) stores: paint, invalidate and click 0, then the button base's per-frame, value, set-value and drag copies.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-buttons"
+    },
+    {
       "address": "00094b84",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -39307,7 +40267,7 @@
       "type": "data",
       "confidence": "high",
       "name": "Sound_SpeechEnabled",
-      "description": "Byte, 0 in the image: Prefs_ApplyRadioOption (0004ad30), preferences option 2's handler, stores (value != 0) here, and SpeechLine_Load (0004e0f0) builds and loads a voice line's sample only while it is set. es2_xref --decode finds one more read, in 0004e518. ES2's Sound_SpeechEnabled (DBSIM 0049f97e) has the role.",
+      "description": "Byte, 0 in the image: Prefs_ApplyRadioOption (0004ad30), preferences option 2's handler, stores (value != 0) here, and SpeechLine_Load (0004e0f0) builds and loads a voice line's sample only while it is set. es2_xref --decode finds one more read, in Snc_Start (0004e518). ES2's Sound_SpeechEnabled (DBSIM 0049f97e) has the role.",
       "source": "Herculan/docs/es1/simulation/cockpit-messages.md#open; ES1DBSIM image at 000959e4"
     },
     {
@@ -40571,6 +41531,15 @@
       "source": "ES1DBSIM decompile at 0002b058; disassembly at 0002e404"
     },
     {
+      "address": "000b0ddc",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HddOrderRecord",
+      "description": "The squad order record XMIT fills in HddDisplay_HandleWidgetPress (0003d48c): its first word from the command screen's +0x5d, the rest through 0004070c, then handed to Squad_SendOrderToSlot.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#presses"
+    },
+    {
       "address": "000b0df4",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -40722,6 +41691,24 @@
       "name": "EnergyMeter_ClipRegions",
       "description": "The energy meter's clip region list, 0x204 bytes: an int32 count and 128 region pointers, which EnergyPoolGauge_Ctor (00039818) loads from edg\\ENG_CLP<n> with CockpitClipRegions_Load (00024d44), moves to the bar's position and copies into EnergyMeter_ClipContext (000b13f0)'s +4.",
       "source": "Herculan/docs/es1/simulation/cockpit-energy-shields.md#building-it--energypoolgauge_ctor-00039818; ES1DBSIM disassembly at 000398ee"
+    },
+    {
+      "address": "000b15f8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CommBox_ClipContext",
+      "description": "Dword: the GLViewport HddDisplay_Ctor (0003c258) makes, origin 0, translation and clip mode 1, which CommBox_PushVideoClip (0003e790) clips to a comm box's video rect and installs.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-three-paints"
+    },
+    {
+      "address": "000b15fc",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HddStaticFramePos",
+      "description": "Two ints: the point HddGauge_PaintStatic (0003e400) blits a static frame at; HddDisplay_StaticInit (0003edac) zeroes both. ES2's HddStaticFramePos.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-three-paints"
     },
     {
       "address": "000b16c0",
@@ -42081,6 +43068,15 @@
       "name": "MfdScannerRanges",
       "description": "Three int32, the scanner's ranges in world units, which MfdDisplay_Ctor (00039c64) sets to 30000, 80000 and 120000; MfdDisplay_SetScannerRange (0003ab44) copies the selected one to the display's +0x86, and TargetSelect_CanTarget (0002d624) reads the third as the radar range. ES2's MfdScannerRanges (DBSIM), 50000, 100000 and 200000.",
       "source": "Herculan/docs/es1/simulation/mfd-display.md#building-it; ES1DBSIM disassembly at 0003a039"
+    },
+    {
+      "address": "000bd500",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CommBox_SavedContext",
+      "description": "Dword: the render context installed when CommBox_PushVideoClip (0003e790) ran, whose origin it subtracts from the clip rect.",
+      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-three-paints"
     },
     {
       "address": "000bd50e",

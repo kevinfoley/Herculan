@@ -58,4 +58,4 @@ The player that `maybe_SncList_Load` fills holds one script and its sound:
 
 - **Open:** how often the timer calls a slot registered at count 2, and so the clock's rate ([the timer's Open items](../simulation/debug-monitor.md#open)).
 - **Open:** what sets and clears `0009afed`, which gates the clock, and what reads `0009afee`.
-- **Open:** how `SpeechLine_Load`'s caller, `ES1DBSIM 0003e060`, and `ES1DBSIM 0004e46c` choose the simulator's script name.
+- **Open:** how `ES1DBSIM 0004e46c` chooses the script name it passes `Snc_Load`; the comm boxes' choice is [starting a line](../simulation/heads-down-display.md#starting-a-line)'s.

@@ -59,7 +59,7 @@ Where ES2's `Sim_Run` differs: it reads `data\drive.cfg` instead of the environm
 | `-C<name>` | `CockpitChassis_SelectByName` (`00024394`)(name) | The cockpit's chassis ([the cockpit's scripts](../formats/ttm-scripts.md#the-simulator)) |
 | `-s` | `000b5b68` toggled from 1 | Cleared, `Sim_StartMission` passes `Sound_Init` digital device 0, so no sound manager is made ([the driver](../formats/sound-samples.md#the-driver)) |
 | `-P` | `000b5b69` = 1 | No reader found by `es2_xref.py` besides this store ([Open](#open)) |
-| `-t<n>` | `0003ea50`(`atol`(n)) | |
+| `-t<n>` | `Sim_SetCommBox0PilotOverride` (`0003ea50`)(`atol`(n)) | The pilot in the first squad comm box ([who is in it](heads-down-display.md#who-is-in-it--hddgauge_loadpilotframes-0003dab4)) |
 | `-V<n>`, `-W<n>`, `-T<n>` | `000b5bb2`, `000b5bb4`, `000b5bb6` | Set to -1 by `Main_StaticInit` (`00057414`); no other reader found ([Open](#open)) |
 | `-p<name>` | `TapePlayback` = 1 | Plays `<name>.tap` ([recording and playback](input.md#recording-and-playback)) |
 | `-r<name>` | `TapeRecording` (`000b5b78`) = 1 | Records to `<name>.tap` |
@@ -295,7 +295,7 @@ The flags lie in the block `Main_StaticInit` zeroes, `000b5b5c`–`000b5bd3`.
 
 ## Open
 
-- **Open:** the callees read for none of this file's functions: `00058414` (status 2), `0005771c` (the demo tape's name), `0005756c` and `000574a0` (the bundle) and `00057cf4` and `00057ffc` (the lift), all in the file before; `00056ecc` (the drive prefix), `0003ea50` (`-t`), `0005730c`, `0004e498`, `0004e294`, `00075858`, `00066e00`, `0006a5fc`, and `0001b794` (the flyer's controls).
+- **Open:** the callees read for none of this file's functions: `00058414` (status 2), `0005771c` (the demo tape's name), `0005756c` and `000574a0` (the bundle) and `00057cf4` and `00057ffc` (the lift), all in the file before; `00056ecc` (the drive prefix), `0005730c`, `0004e498`, `0004e294`, `00075858`, `00066e00`, `0006a5fc`, and `0001b794` (the flyer's controls).
 - **Open:** what `000b5b69` (`-P`) and `-V`, `-W` and `-T`'s words feed, and what sets `Sim_StepOnce`; `es2_xref.py` finds only the stores above and the tick's test, and a store through the block's base `000b5b5c` is not covered by that search.
 - **Open:** what the bit `Sim_Main` clears in the display's first byte does.
 - **Open:** the callees of [the frame's sounds](#the-frames-sounds--sim_framesoundtick-00058574) and [the views](#the-views--viewchain_apply-0005894c) read for none of this file's functions: `0004fb60` (the listener's frame), `0004dee4` (it sets `000b1a84` and `000b1b74`), `0006edb3`, `0006f225` and `0006df9d` (the HMI calls); and `0004ad0c`'s callers and what `000b1734` is.
