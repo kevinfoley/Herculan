@@ -23584,8 +23584,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Voice_EvictLru",
-      "description": "Picks the speech slot with the oldest last-use tick (+0x37), closes whatever voice it held and returns it.",
-      "source": "docs/retail/simulation/audio.md"
+      "description": "No arguments: walks the speech slots VoiceSlots (004d2df0), stride 0x42, count 004d2df8, for the first whose last-use tick +0x37 is the lowest, compared unsigned and below 0xffffffff; points its +0x2f at its 100-byte buffer, the slot's index * 100 added to the pointer 004d2df4; when its handle +0 is not -1, closes it with Sfx_Close (SfxManager, handle) while SfxManager is set and sets it to -1; returns the slot. es2_xref finds one call, from Voice_Acquire (00462a98).",
+      "source": "docs/retail/simulation/audio.md",
+      "verified": {
+        "bytes": "00462a2c+106",
+        "sha1": "c2aec986efbe",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00462a98",
@@ -23761,8 +23767,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Snc_ServiceQueue",
-      "description": "Drains the global .SNC event queue (004d2efa, 8-byte {time, slot} entries, count 0049f97c) of everything now due, calling each slot's Snc_Advance.",
-      "source": "docs/retail/simulation/audio.md"
+      "description": "No arguments: with now = Time_GetCoarseTicks (00467724), scans the pointers at 004d2f4c from index count - 1 (the int16 count 0049f97c) down to 0 for the first whose entry's end tick (its dword +0) is at or below now, returning when there is none; moves that pointer and the ones after it to the front of the list, takes its index + 1 off the count, and runs Snc_Advance_Thunk (0046339c) on the slot (+4) of the entry the first pointer then names. es2_xref finds one call, from HddDisplay_ServiceCommBoxes (0044b5f8).",
+      "source": "docs/retail/simulation/audio.md",
+      "verified": {
+        "bytes": "004631c0+113",
+        "sha1": "ffb98f2a71de",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00463238",
@@ -23800,8 +23812,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_InitMissionSessionNoOp",
-      "description": "Empty body. Sim_InitMissionSession calls it after Sound_Init, before Light_ResetSystem.",
-      "source": "DBSIM disassembly at 0046326c"
+      "description": "Empty body: RET. es2_xref finds one call, from Sim_InitMissionSession (004614fc).",
+      "source": "DBSIM disassembly at 0046326c",
+      "verified": {
+        "bytes": "0046326c+1",
+        "sha1": "8bf7b464aaa2",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00463270",
@@ -23818,8 +23836,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Snc_Start",
-      "description": "Points the slot's cursor at the start of its script; an immediately-0xff script sets the frame to 1 and plays without animation, otherwise stamps the start time and runs Snc_Advance. Then plays the voice.",
-      "source": "docs/retail/simulation/audio.md"
+      "description": "(slot): points the cursor +0xa at the script buffer +0x2f. When the buffer's first byte is 0xff, sets the int16 frame +8 to 1; otherwise sets the end tick +4 to Time_GetCoarseTicks (00467724) and runs Snc_Advance (004633ac). Then returns Sfx_Play (00463f34)(SfxManager (0049f904), the handle +0) when SfxManager is set, Sound_SpeechEnabled (0049f97e) is set, the frame is not 0 and the handle is not -1; otherwise 1 in AL. es2_xref finds calls from HddDisplay_ServiceCommBoxes (0044b5f8) and Voice_PlayNamed.",
+      "source": "docs/retail/simulation/audio.md",
+      "verified": {
+        "bytes": "004632fc+99",
+        "sha1": "16cd5f6849dd",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00463360",
@@ -23851,8 +23875,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Snc_Advance",
-      "description": "Reads {frame, delta} pairs, accumulating delta into the slot's next-event time until it passes now, publishes the frame at slot+0x08, and re-inserts the slot into the global event queue. Reaching 0xff sets the frame to -1, which is what tells HddGauge_PaintPilotFrame the message is over.",
-      "source": "docs/retail/simulation/audio.md"
+      "description": "(slot): with now = Time_GetCoarseTicks (00467724), reads a frame byte at the cursor +0xa and then a delta byte, both sign-extended, adding the delta to the end tick +4, and repeats while the end tick is below now; a frame byte of 0xff sets the int16 frame +8 to -1 and returns. Otherwise it stores the last frame read at +8 and queues the slot: when the count 0049f97c is above 0 and the delta, compared unsigned, is below the end tick of the entry the first pointer at 004d2f4c names, it takes 1 off the count and moves the later pointers down one place; then it stores {end tick, slot} in SncEventQueue (004d2efa)[count], points the first pointer at it and adds 1 to the count.",
+      "source": "docs/retail/simulation/audio.md",
+      "verified": {
+        "bytes": "004633ac+188",
+        "sha1": "a844572e4600",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00463468",
@@ -23861,7 +23891,13 @@
       "confidence": "high",
       "name": "Snc_GetFrame",
       "description": "Returns the slot's current portrait frame (slot+0x08); -1 once the script has ended.",
-      "source": "docs/retail/simulation/audio.md"
+      "source": "docs/retail/simulation/audio.md",
+      "verified": {
+        "bytes": "00463468+12",
+        "sha1": "4314c16ed194",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00463474",

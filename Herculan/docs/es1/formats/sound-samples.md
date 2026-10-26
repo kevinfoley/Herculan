@@ -2,6 +2,18 @@
 
 **ES1's sound effects, voice lines and spoken lines are bare sample data: each file is the sound and nothing else.** ES2's are RIFF WAVs ([ES2's sample format](../../retail/formats/sound-samples.md#sample-format)); ES1's `.SFX` and `.RAW` files carry no header, and both programs load a file whole and hand all of it to the sound driver as one sample. The two programs' sound managers are the same code: addresses are `ES1DBSIM` image addresses unless `ES1GO` is named ([the X-32 executable](x32-executable.md#the-image)), and each `ES1GO` copy is given beside its `ES1DBSIM` original. The music, `.HMP`, goes through the same manager and is [`hmp-music.md`](hmp-music.md).
 
+## Where the object files start and end
+
+The simulator's sound file, `0004db14`–`0004e70f`, follows `appinput.cpp`'s exit routine `AppInput_ExitNoOp` (`0004db10`) and three zero bytes, and opens with `Sound_Init` and no `ConfigPart` run. It ends as the files placed from `0001c800` do ([where object files meet](compiler.md#where-object-files-meet-in-the-code)), with its static initializer, its exit routine and the initializer's element constructor, whose `RET 4` at `0004e70d` ends on a 4-byte boundary:
+
+| Function | Address | Table entry | Does |
+|---|---|---|---|
+| `Sound_StaticInit` | `0004e6b0` | `000adc64` | `__vec_ctor` over `SoundCatalog_Positions` (`000b1b74`), 60 elements of 12 bytes, the position a placed catalog sound is given ([the catalog](#the-simulators-catalog)), with `maybe_Point3I_CtorSoundCopy` by its padding `0004e6dd`; then `StringTable_Ctor`(`SoundCatalog_StringTable`, `000b1e44`) |
+| `Sound_StaticDtor` | `0004e6d0` | `000adcc8` | `OwnedArray_Dtor`(`SoundCatalog_StringTable`, 2), which frees the table's buffer, leaving the positions |
+| `maybe_Point3I_CtorSoundCopy` | `0004e6e0` | | the code of `maybe_Point3I_Ctor` (`000633fc`) |
+
+The first two are frameless, with no Ghidra function. ES2's `Sound_StaticInit` (`0046349c`) builds the string table alone, and its `Sound_StaticDtor` (`004634cc`) is ES1's. The lip-sync player is the end of the file, `0004e39c`–`0004e6ae` ([`snc-lip-sync.md`](snc-lip-sync.md#playing-a-line)). `0004e710`, the far call through `000b1ed0` that `SoundManager_LoadDrivers` registers with the timer, follows; the files from there to the [HMI timer's](#the-digital-drivers-timer), and the sound file's source name, are [Open](#open).
+
 ## Which files
 
 | Archive | Folder | Files | What names them |
@@ -154,7 +166,7 @@ Each voice-line slot then gets `SoundManager_CreateObject`(manager, 0, 0, index)
 
 ### Voice lines
 
-`SpeechLine_Load` (`0004e0f0`) takes a script name and a voice name in stack order. It finds the voice-line slot (`000bd734`, `0x3a` bytes each) whose `+0x2b` holds `0004e208`'s key for the voice name, or takes one from `0004e08c` and stores the key. On a new slot, when the manager exists and the byte `Sound_SpeechEnabled` (`000959e4`), which preferences option 2 sets ([the option array](../simulation/preferences.md#the-option-array)), is set, it builds `simvoice\<voice name>.sfx` in the slot's `+0x0e`, names it as the slot's index with `SoundManager_SetSampleName`, and loads the slot's sound with `SoundObject_LoadSample`, returning 0 when that fails; then it loads the script with `Snc_Load` ([`snc-lip-sync.md`](snc-lip-sync.md#the-simulators-scripts)). It stores `000981c4` at `+0x2f` and returns the slot.
+`SpeechLine_Load` (`0004e0f0`) takes a script name and a voice name in stack order. It finds the voice-line slot (`000bd734`, `0x3a` bytes each, [the speech slot](snc-lip-sync.md#the-speech-slot)) whose `+0x2b` holds `0004e208`'s key for the voice name, or takes one from `Voice_EvictLru` (`0004e08c`) and stores the key. On a new slot, when the manager exists and the byte `Sound_SpeechEnabled` (`000959e4`), which preferences option 2 sets ([the option array](../simulation/preferences.md#the-option-array)), is set, it builds `simvoice\<voice name>.sfx` in the slot's `+0x0e`, names it as the slot's index with `SoundManager_SetSampleName`, and loads the slot's sound with `SoundObject_LoadSample`, returning 0 when that fails; then it loads the script with `Snc_Load` ([`snc-lip-sync.md`](snc-lip-sync.md#the-simulators-scripts)). It stores `000981c4` at `+0x2f` and returns the slot.
 
 ## The shell's names
 
@@ -172,4 +184,5 @@ Each voice-line slot then gets `SoundManager_CreateObject`(manager, 0, 0, index)
 - **Open:** how the byte `000959e4`, which `Prefs_ApplyRadioOption` (`0004ad30`) sets for the preferences panel's `VOICE ONLY` and `TEXT / VOICE` ([the option array](../simulation/preferences.md#the-option-array)), gates loading a voice line's sample, and what the caller of `ES1GO 000087ce` does with its answer.
 - **Open:** `ES1GO 00041f64` and `ES1GO 0004240a`, which `ShellSound_Init` calls where `Sound_Init` calls `SoundManager_Ctor` and `SoundManager_LoadDrivers`.
 - **Open:** what `SOUNDS.STR`'s attribute bytes 0 and 1 set, through the slots `+0x28` and `+0x2c`.
+- **Open:** where the object files from `0004e710` to the HMI timer's (`00050d38`) divide, and the source names of these files: a scan of the sound file's code for a pointer to one of the image's 41 `.cpp` paths finds none, where the same scan of the Heads-Down Display's file finds its two `phdd.cpp` asserts.
 - **Open:** what reads `sos\DONS.BNK` and `sos\DRUM.DIG`. A case-insensitive search of both images for `dons` and the bank names finds `sos\melodic.bnk`, `sos\drum.bnk` and `sos\drum32.dig` in each, and no `dons` or `drum.dig`.

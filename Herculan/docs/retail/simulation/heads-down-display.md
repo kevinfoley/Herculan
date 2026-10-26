@@ -442,7 +442,7 @@ The loader sets the `+0x141` label's rect, its font and its background and does 
 
 ### Lip-sync playback
 
-While a box talks, its portrait follows the speaker's [`.SNC` script](../formats/snc-lip-sync.md) for the message. `Snc_Advance` (`004633ac`) reads pairs until the accumulated time passes now, publishes the frame at slot `+0x08`, and re-inserts the slot into a small global event queue (`004d2efa`, 8-byte `{ time, slot }` entries) that `Snc_ServiceQueue` (`004631c0`) drains. Reaching the `0xff` sets the frame to `-1`, which is what tells `HddGauge_PaintPilotFrame` the message is over.
+While a box talks, its portrait follows the speaker's [`.SNC` script](../formats/snc-lip-sync.md#playing-a-script) for the message, one frame per pair for the pair's delta. The script's end sets the frame −1, which is what tells the state machine below the message is over.
 
 ### The state machine — `HddDisplay_ServiceCommBoxes` (`0044b5f8`)
 
