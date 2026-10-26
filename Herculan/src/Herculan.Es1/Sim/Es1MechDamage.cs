@@ -68,7 +68,8 @@ public static class Es1MechDamage {
 	/// starts the hit shake (<see cref="View.Es1HitShake.Start"/>) for component 0 or 1 of the player's machine and runs
 	/// the mount knock-out roll (<see cref="MountKnockOutRoll"/>);</item>
 	/// <item>unless the component now reads full, the generator is drawn for the impact effect, entry 4<i>n</i> + the draw
-	/// &amp; 3 of the shot's effects, <i>n</i> 0 for a stopped shot, 1 for an unchanged band, 2 for a changed one.</item>
+	/// &amp; 3 of the shot's effects, <i>n</i> 0 for a stopped shot, 1 for an unchanged band, 2 for a changed one, and a
+	/// struck component throws debris group <i>n</i> from the point (<see cref="Effects.Es1DebrisPool.ThrowGroup"/>).</item>
 	/// </list>
 	/// Answers the entry distance, or the component's after a strike.
 	/// </summary>
@@ -158,9 +159,10 @@ public static class Es1MechDamage {
 				globals.Explosions.Construct(point, type);
 			}
 
-			// PLACEHOLDER: for a struck component Debris_ThrowGroup (00005fb8)(group `group` of 000bc1c0, point, the roots
-			// 000bc1c6), plan step 7e part B.
-			_ = struck;
+			// Debris_ThrowGroup (00005fb8)(group `group` of 000bc1c0, point, 000bc1c6) for a struck component.
+			if (struck) {
+				globals.Debris.ThrowGroup(group, point, globals.Random);
+			}
 		}
 
 		return distance;
@@ -189,7 +191,7 @@ public static class Es1MechDamage {
 		int slot = component - FirstMountComponent;
 		var mount = machine.Mounts?.Mounts.FirstOrDefault(m => m != null && (sbyte)m.Hardpoint.LoadoutSlot == slot);
 		// Retail destroys the mount it finds unchecked; with none, nothing is destroyed here.
-		mount?.Destroy(true, machine);
+		mount?.Destroy(true, machine, globals);
 		header.Occupied[component] = false;
 		if ((machine.Group?.Side ?? 0) == 1) {
 			short condition = (short)((short)(0x100 - SimMath.Q10MultiplyRounded(500, after)) * 100 >> 8);
@@ -235,7 +237,7 @@ public static class Es1MechDamage {
 			int mountComponent = FirstMountComponent + (sbyte)(mount?.Hardpoint.LoadoutSlot ?? 0);
 			if (mount is { Destroyed: false } && mountComponent >= 0 && mountComponent < Es1DamageHeader.ComponentCount
 					&& !header.Occupied[mountComponent]) {
-				mount.Destroy(false, machine);
+				mount.Destroy(false, machine, globals);
 			}
 		}
 

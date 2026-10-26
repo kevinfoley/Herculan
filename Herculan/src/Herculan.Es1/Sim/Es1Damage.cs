@@ -19,7 +19,7 @@ public sealed class Es1DamagePiece {
 	/// <summary><c>+4</c>, the component it hangs off, which its loss cascades from; −1 for none.</summary>
 	public sbyte Parent { get; init; }
 
-	/// <summary><c>+5</c>, the flags: bit 0 cascades the loss, bit 1 lights a fire, bit 2 is the cascade's big explosion.</summary>
+	/// <summary><c>+5</c>, the flags: bit 0 cascades the loss, bit 1 lights smoke, bit 2 is the cascade's big explosion.</summary>
 	public byte Flags { get; init; }
 
 	/// <summary><c>+6</c> and <c>+8</c>, the dependents: each internal's spill weight and index.</summary>
@@ -72,6 +72,9 @@ public sealed class Es1DamageHeader {
 
 	/// <summary>The debris group of <c>000bc1c0</c> every lost component throws.</summary>
 	public const int LostDebrisGroup = 3;
+
+	/// <summary>The smoke kind a lost component whose flags' bit 1 is set lights.</summary>
+	public const short LostSmokeKind = 0;
 
 	private readonly Es1DamagePiece[] _pieces;
 	private readonly short[] _maxima;
@@ -237,8 +240,10 @@ public sealed class Es1DamageHeader {
 	/// <c>Component_DestroyAndCascade</c> (<c>00009cd4</c>)(header, <paramref name="component"/>)
 	/// (docs/es1/simulation/component-damage.md#losing-a-component--component_destroyandcascade-00009cd4): nothing for a
 	/// component whose occupancy flag is clear; otherwise its entry <see cref="Destroyed"/>, its flag cleared and
-	/// <see cref="FinishOff"/> spilt into its dependents; a piece with a sequence shows <see cref="LostCell"/>; and each
-	/// occupied component whose parent it is queued. Retail's queue holds 10 and is not bounded; this one is not either.
+	/// <see cref="FinishOff"/> spilt into its dependents; a piece with a sequence lights smoke (<see cref="LostSmokeKind"/>)
+	/// for flags bit 1 with the latch clear and shows <see cref="LostCell"/>; the explosion at the anchor with the latch
+	/// clear; <see cref="LostDebrisGroup"/> thrown from the anchor; and each occupied component whose parent it is queued.
+	/// Retail's queue holds 10 and is not bounded; this one is not either.
 	/// </summary>
 	private void DestroyAndCascade(short component, Es1SimGlobals globals) {
 		var random = globals.Random;
@@ -255,9 +260,9 @@ public sealed class Es1DamageHeader {
 		var center = cluster?.Bound ?? default;
 		if (piece.Sequence >= 0) {
 			if (!EffectLatch && (piece.Flags & 2) != 0) {
-				// PLACEHOLDER: maybe_FireEffect_Construct (000069ec)(null, 0, the bound center, part, machine), the fire,
-				// plan step 7e part B.
-				_ = (center, part);
+				// Smoke_Construct (000069ec)(null, kind 0, the bound center, the part id, the machine), its first shape drawn
+				// on the generator 000b5c48.
+				globals.Smoke.Construct(LostSmokeKind, (center.X, center.Y, center.Z), part, Machine, globals.PresentationRandom);
 			}
 
 			Machine.SetCellFrame(piece.Sequence, LostCell);
@@ -282,8 +287,7 @@ public sealed class Es1DamageHeader {
 			globals.Explosions.Construct(anchor, type);
 		}
 
-		// PLACEHOLDER: Debris_ThrowGroup (00005fb8)(group LostDebrisGroup of 000bc1c0, anchor, the roots 000bc1c6), plan
-		// step 7e part B.
+		globals.Debris.ThrowGroup(LostDebrisGroup, anchor, random);
 
 		for (short i = 0; i < ComponentCount; i++) {
 			if (Occupied[i] && Piece(i)?.Parent == component) {

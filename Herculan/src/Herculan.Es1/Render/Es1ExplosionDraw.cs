@@ -36,7 +36,7 @@ public sealed class Es1ExplosionDraw : IDisposable {
 
 	/// <summary>
 	/// Uploads <c>dba\explo0</c> to <c>dba\explo8</c>, every cell of every root of <c>dts\explos</c> and the ground
-	/// shapes' root of the flat set (<see cref="Es1ExplosionPool.FlatShapes"/>), and pulls each root's billboards.
+	/// shapes' root of the flat set (<see cref="Es1FlatObjPool.Shapes"/>), and pulls each root's billboards.
 	/// </summary>
 	public Es1ExplosionDraw(GL gl, GameContent content, Es1ZoneScene scene, Es1ExplosionPool pool) {
 		_gl = gl;
@@ -64,8 +64,8 @@ public sealed class Es1ExplosionDraw : IDisposable {
 			_sprites[root] = DtsSpriteBuilder.Build(pool.Shapes[root]);
 		}
 
-		if (Es1ExplosionPool.GroundShapeRoot < pool.FlatShapes.Count) {
-			_groundCells = UploadCells(pool.FlatShapes[Es1ExplosionPool.GroundShapeRoot], null);
+		if (Es1ExplosionPool.GroundShapeRoot < pool.FlatObjects.Shapes.Count) {
+			_groundCells = UploadCells(pool.FlatObjects.Shapes[Es1ExplosionPool.GroundShapeRoot], null);
 		}
 	}
 

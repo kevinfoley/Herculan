@@ -91,7 +91,11 @@ public sealed class Es1World {
 		// The rounds' phase-2 loads (docs/es1/simulation/projectiles.md#the-projectile-pool).
 		world.Globals.Projectiles = Projectiles.Es1ProjectilePool.Load(content, weapons);
 		// The impact effects' phase-2 load (docs/es1/formats/explos-dat.md#the-load).
-		world.Globals.Explosions = Effects.Es1ExplosionPool.Load(content, world.Globals.EffectLights);
+		world.Globals.Explosions = Effects.Es1ExplosionPool.Load(content, world.Globals.EffectLights, world.Globals.FlatObjects);
+		// The wreckage's and the smoke's phase-2 loads (docs/es1/formats/debris-dat.md#the-load,
+		// docs/es1/simulation/destruction-effects.md#resources--smoke_loadresources-000066ec).
+		world.Globals.Debris = Effects.Es1DebrisPool.Load(content);
+		world.Globals.Smoke = Effects.Es1SmokePool.Load(content);
 		world.Globals.HeaderWord3 = script.Header[3];
 		world.Globals.MissionModeFlag = script.Header[2];
 		world.Globals.UnlimitedAmmoFlag = script.Header[5];
@@ -100,9 +104,9 @@ public sealed class Es1World {
 		world.Globals.HeaderWord8 = script.Header[8];
 		world.Globals.MissionVars = script.Flags;
 		world.SpawnObjects(content, weapons, weaponModels, formations);
-		// Sim_StartMission's step 7, after the second pass: every effect the spawn made deleted. PLACEHOLDER: and every
-		// debris piece, plan step 7e part B.
+		// Sim_StartMission's step 7, after the second pass: every effect and every debris piece the spawn made deleted.
 		world.Globals.Explosions.DeleteAll();
+		world.Globals.Debris.DeleteAll();
 		return world;
 	}
 
@@ -153,7 +157,7 @@ public sealed class Es1World {
 				continue;
 			}
 
-			var mech = new Es1Mech(type, Globals.DwellJitter);
+			var mech = new Es1Mech(type, Globals.DwellJitter, Globals.FlatObjects);
 			MechPool.Add(mech);
 			Globals.AddLiveObject(mech);
 

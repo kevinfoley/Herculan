@@ -40,12 +40,16 @@ public sealed class Es1ExplosionPool {
 	private byte[] _table = [];
 
 	/// <summary>A pool with no tables, as before the phase-2 load: no type builds an effect.</summary>
-	public Es1ExplosionPool(Es1EffectLights lights) {
+	public Es1ExplosionPool(Es1EffectLights lights, Es1FlatObjPool flatObjects) {
 		Lights = lights;
+		FlatObjects = flatObjects;
 	}
 
 	/// <summary>The effect light manager the effects' lights are claimed from.</summary>
 	public Es1EffectLights Lights { get; }
+
+	/// <summary><c>g_FlatObjPool</c> and <c>g_FlatShapes</c>, which the effects' ground shapes are built from.</summary>
+	public Es1FlatObjPool FlatObjects { get; }
 
 	/// <summary>The live effects in allocation order, oldest first, the order a <c>Pool_Prev</c> walk visits them.</summary>
 	public IReadOnlyList<Es1Explosion> Live => _live;
@@ -62,23 +66,14 @@ public sealed class Es1ExplosionPool {
 	/// </summary>
 	public IReadOnlyList<short?> RootBanks { get; private set; } = [];
 
-	/// <summary>
-	/// <c>g_FlatShapes</c> (<c>000bc1d8</c>), the flat shape set's roots, which the host gives once the theater's
-	/// world file names the set (<see cref="LoadFlatShapes"/>); empty until then.
-	/// </summary>
-	public IReadOnlyList<TSObject> FlatShapes { get; private set; } = [];
-
 	/// <summary>The frame count of sequence 0 of the ground shapes' root, 0 without one.</summary>
-	public int GroundShapeFrameCount =>
-		GroundShapeRoot < FlatShapes.Count && FlatShapes[GroundShapeRoot] is TSShape { SequenceList: [var count, ..] }
-			? (ushort)count
-			: 0;
+	public int GroundShapeFrameCount => FlatObjects.FrameCount(GroundShapeRoot);
 
 	/// <summary>
 	/// The phase-2 load through <c>HercWorks.Core</c>: <c>dat\explos</c>, <c>dts\explos</c> and the roots' banks. A
 	/// missing file, where retail asserts on <c>dat\explos</c>, leaves its table empty.
 	/// </summary>
-	public static Es1ExplosionPool Load(GameContent content, Es1EffectLights lights) {
+	public static Es1ExplosionPool Load(GameContent content, Es1EffectLights lights, Es1FlatObjPool flatObjects) {
 		var transformer = new Es1ExplosionDataTransformer();
 		var data = content.Read("dat", "EXPLOS.DAT") is { } bytes ? transformer.Parse(bytes) : null;
 		var shapes = Roots(content, "EXPLOS.DTS");
@@ -90,20 +85,13 @@ public sealed class Es1ExplosionPool {
 			}
 		}
 
-		return new Es1ExplosionPool(lights) {
+		return new Es1ExplosionPool(lights, flatObjects) {
 			Types = types,
 			Shapes = shapes,
 			RootBanks = banks,
 			_table = data != null && transformer.Write(data) is { Length: > 2 } file ? file[2..] : [],
 		};
 	}
-
-	/// <summary>
-	/// <c>FlatObj_LoadResources</c> (<c>00006cf8</c>)'s shapes, <c>dts\flat</c> for a selector of 0 and <c>dts\flat2</c>
-	/// otherwise (docs/es1/formats/wld-world.md#the-ground-shape-set), as <see cref="FlatShapes"/>.
-	/// </summary>
-	public void LoadFlatShapes(GameContent content, int selector) =>
-		FlatShapes = Roots(content, selector == 0 ? "FLAT.DTS" : "FLAT2.DTS");
 
 	private static IReadOnlyList<TSObject> Roots(GameContent content, string name) =>
 		content.Read("dts", name) is { } bytes && new DTSModelTransformer().Parse(bytes) is DynamixThreeSpaceModel { Roots: { } roots }
@@ -163,14 +151,14 @@ public sealed class Es1ExplosionPool {
 	/// <summary>
 	/// <c>Sim_StartMission</c>'s step 7 (docs/es1/simulation/main-loop.md#the-mission-start--sim_startmission-0005a9dc):
 	/// every effect destroyed through slot <c>+0xc</c> with 3, each followed by <c>ExplosionPool_FlushDeletes</c>,
-	/// <c>EffectLightPool_FlushDeletes</c> and <c>FlatObjPool_FlushDeletes</c>, the last with nothing to give back here
-	/// (<see cref="Es1GroundShape"/>).
+	/// <c>EffectLightPool_FlushDeletes</c> and <c>FlatObjPool_FlushDeletes</c>.
 	/// </summary>
 	public void DeleteAll() {
 		while (_live.Count > 0) {
 			Destroy(0);
 			FlushDeletes();
 			Lights.FlushDeletes();
+			FlatObjects.FlushDeletes();
 		}
 	}
 

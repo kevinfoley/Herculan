@@ -112,7 +112,7 @@ public static class Es1ZoneViewer {
 			scene = Es1ZoneScene.Load(content, theater, header[1], scheme);
 			world.Globals.ZoneShapes = scene.ZoneShapes;
 			// The ground shapes FlatObj_LoadResources loads, which the impact effects lay, by the world file's selector.
-			world.Globals.Explosions.LoadFlatShapes(content, scene.World?.FlatSetSelector ?? 0);
+			world.Globals.FlatObjects.LoadShapes(content, scene.World?.FlatSetSelector ?? 0);
 		} catch (Exception ex) when (ex is InvalidDataException or FileNotFoundException) {
 			Console.Error.WriteLine($"Cannot load the mission: {ex.Message}");
 			return 1;
@@ -157,6 +157,8 @@ public static class Es1ZoneViewer {
 		// frame; with none the viewer's own. Sim_StartMission applies the detail setting before the first frame.
 		var backdropOptions = new Es1BackdropOptions(world.LocalPlayer != null ? preferences : null);
 		var detail = new Es1AppliedDetail(preferences);
+		// g_TSDetailBiasForMounts as the detail setting last applied it, which a thrown gun keeps.
+		world.Globals.MountDetailBias = () => detail.Setting.MountBias;
 
 		// Sim_StartMission's steps 9 to 13 that build no GL object: the views and their cockpit, and the chain of views
 		// with its cameras, the main one on the player's eye.
@@ -226,7 +228,12 @@ public static class Es1ZoneViewer {
 			disposables.Add(projectileDraw);
 			var explosionDraw = new Es1ExplosionDraw(gl, content, scene, world.Globals.Explosions);
 			disposables.Add(explosionDraw);
-			draw = new Es1WorldDraw(gl, scene, world, models, detail, disposables, projectileDraw, explosionDraw);
+			var debrisDraw = new Es1DebrisDraw(gl, scene, world.Globals.Debris, models);
+			disposables.Add(debrisDraw);
+			var smokeDraw = new Es1SmokeDraw(gl, content, scene, world.Globals.Smoke);
+			disposables.Add(smokeDraw);
+			draw = new Es1WorldDraw(gl, scene, world, models, detail, disposables, projectileDraw, explosionDraw, debrisDraw,
+				smokeDraw);
 			if (manager != null && chain != null) {
 				monitor = new Es1Monitor(gl, manager.Display);
 				disposables.Add(monitor);

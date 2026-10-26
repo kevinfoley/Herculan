@@ -6,16 +6,6 @@ using Herculan.Es1.View;
 namespace Herculan.Es1.Sim;
 
 /// <summary>
-/// An element of an effect pool the tick walks and destroys at once when its tick answers non-zero
-/// (docs/es1/simulation/main-loop.md#the-tick--sim_maintick-00059700). Destroying it, slot <c>+0xc</c> with 3, takes it
-/// off its pool.
-/// </summary>
-public interface IEs1PoolTicked {
-	/// <summary>One tick; non-zero to be destroyed.</summary>
-	short Tick();
-}
-
-/// <summary>
 /// The simulator's tick on a world: <c>Sim_MainTick</c> (<c>ES1DBSIM 00059700</c>), <c>Sim_DispatchCommand</c>
 /// (<c>00059df8</c>) and <c>Sim_PollPlayerInput</c> (<c>0005a0c0</c>) (docs/es1/simulation/main-loop.md#the-tick--sim_maintick-00059700,
 /// docs/es1/simulation/main-loop.md#commands--sim_dispatchcommand-00059df8,
@@ -127,19 +117,6 @@ public sealed class Es1Simulation {
 	public Es1DevKeySteps DevKeys { get; } = new();
 
 	/// <summary>
-	/// The pools <c>000aef68</c> (<c>0000693c</c>) and <c>000aefd4</c> (<c>00006b28</c>) and the debris (<c>000aeef8</c>,
-	/// <c>000064b8</c>), each in build order. PLACEHOLDER: empty: plan step 7e part B spawns them. The explosions are
-	/// <see cref="Es1SimGlobals.Explosions"/> and the projectiles <see cref="Es1SimGlobals.Projectiles"/>.
-	/// </summary>
-	public List<IEs1PoolTicked> PoolAef68 { get; } = new();
-
-	/// <inheritdoc cref="PoolAef68"/>
-	public List<IEs1PoolTicked> PoolAefd4 { get; } = new();
-
-	/// <inheritdoc cref="PoolAef68"/>
-	public List<IEs1PoolTicked> Debris { get; } = new();
-
-	/// <summary>
 	/// The in-mission panels' shared state, which <c>Sim_StartMission</c>'s display and mouse give; none raises no panel,
 	/// as with no display, which retail always has, an engine guard.
 	/// </summary>
@@ -172,10 +149,12 @@ public sealed class Es1Simulation {
 				// structures step (after step 8) spawns and ticks them.
 			}
 
+			// The explosions, the smoke balls, the smoke emitters and the debris, each element whose tick answers non-zero
+			// destroyed at once.
 			Globals.Explosions.Tick(Globals.Clock);
-			TickPool(PoolAef68);
-			TickPool(PoolAefd4);
-			TickPool(Debris);
+			Globals.Smoke.TickBalls(Globals.Clock);
+			Globals.Smoke.TickEmitters(Globals.Clock);
+			Globals.Debris.Tick();
 			Controls.MissileFlown = false;
 			Globals.Projectiles.Tick(new Projectiles.Es1ProjectileTick(Globals, block, Controls));
 
@@ -543,20 +522,6 @@ public sealed class Es1Simulation {
 		foreach (var member in group.Members) {
 			if (member is Es1Mech mech) {
 				Es1MechBehaviour.AiTick(mech, Globals);
-			}
-		}
-	}
-
-	/// <summary>
-	/// A pool walked with <c>Pool_Prev</c> from the end, oldest first, each element whose tick answers non-zero destroyed
-	/// at once; one built during the walk is reached in it.
-	/// </summary>
-	private static void TickPool(List<IEs1PoolTicked> pool) {
-		for (int i = 0; i < pool.Count;) {
-			if (pool[i].Tick() != 0) {
-				pool.RemoveAt(i);
-			} else {
-				i++;
 			}
 		}
 	}

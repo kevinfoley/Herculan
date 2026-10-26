@@ -34,7 +34,9 @@ public sealed class Es1MechModels : IDisposable {
 	private readonly Dictionary<short, IReadOnlyList<IReadOnlyList<Es1MechPiece>>> _pieces = new();
 	private readonly Dictionary<Es1WeaponMount, IReadOnlyList<Es1MechPiece>> _mountPieces = new();
 	private readonly List<IDisposable> _owned = new();
-	private TextureAtlas? _weaponAtlas;
+
+	/// <summary><c>dba\wpntex</c>'s atlas, which the weapon models and the thrown guns are built from; null when the install lacks it.</summary>
+	public TextureAtlas? WeaponAtlas { get; private set; }
 
 	/// <summary>The flat shape set's roots, by root, null where a root has no geometry.</summary>
 	public IReadOnlyList<GpuMesh?> ShadowRoots { get; private set; } = [];
@@ -67,7 +69,7 @@ public sealed class Es1MechModels : IDisposable {
 		if (scene.Palette != null && content.Read("dba", "WPNTEX.DBA") is { } wpntex
 				&& new DynamixBitmapArrayTransformer().Parse(wpntex) is { } weaponBank
 				&& TextureAtlas.Build(weaponBank, scene.Palette) is { } weaponAtlas) {
-			models._weaponAtlas = weaponAtlas;
+			models.WeaponAtlas = weaponAtlas;
 			var texture = weaponAtlas.Upload(gl, indexed: true);
 			models._owned.Add(texture);
 			models.WeaponTexture = texture.Handle;
@@ -103,7 +105,7 @@ public sealed class Es1MechModels : IDisposable {
 			return known;
 		}
 
-		var pieces = mount.Model != null ? Upload(gl, DtsMeshBuilder.BuildSegments(mount.Model, _weaponAtlas, scene.Shading.Surfaces)) : [];
+		var pieces = mount.Model != null ? Upload(gl, DtsMeshBuilder.BuildSegments(mount.Model, WeaponAtlas, scene.Shading.Surfaces)) : [];
 		_mountPieces[mount] = pieces;
 		return pieces;
 	}

@@ -159,14 +159,35 @@ public sealed class Es1SimGlobals {
 	/// <summary>The effect light manager (<see cref="Effects.Es1EffectLights"/>).</summary>
 	public Effects.Es1EffectLights EffectLights { get; } = new();
 
+	/// <summary><c>g_FlatObjPool</c> and <c>g_FlatShapes</c>, the ground shapes' places and shapes (<see cref="Effects.Es1FlatObjPool"/>).</summary>
+	public Effects.Es1FlatObjPool FlatObjects { get; } = new();
+
 	/// <summary>
 	/// <c>g_ExplosionPool</c> and the impact effects' tables (<see cref="Effects.Es1ExplosionPool"/>); a pool with no
-	/// tables until the world's load gives it its own, on <see cref="EffectLights"/>.
+	/// tables until the world's load gives it its own, on <see cref="EffectLights"/> and <see cref="FlatObjects"/>.
 	/// </summary>
 	public Effects.Es1ExplosionPool Explosions { get; set; }
 
+	/// <summary>
+	/// <c>g_DebrisPool</c> and <c>DEBRIS.DAT</c>'s groups and shapes (<see cref="Effects.Es1DebrisPool"/>); a pool with no
+	/// groups or shapes until the world's load gives it its own.
+	/// </summary>
+	public Effects.Es1DebrisPool Debris { get; set; } = new();
+
+	/// <summary>
+	/// The smoke emitters' and balls' pools and the balls' shapes (<see cref="Effects.Es1SmokePool"/>); with no shapes
+	/// until the world's load gives it its own.
+	/// </summary>
+	public Effects.Es1SmokePool Smoke { get; set; } = new();
+
+	/// <summary>
+	/// <c>g_TSDetailBiasForMounts</c> (<c>000bc2b8</c>) as <c>ShapeDetail_ApplyDetailSetting</c> last set it, which a thrown
+	/// gun keeps (<see cref="Es1WeaponMount.Destroy"/>): the host hands the applied detail setting's in; 0 until it does.
+	/// </summary>
+	public Func<int> MountDetailBias { get; set; } = () => 0;
+
 	public Es1SimGlobals() {
-		Explosions = new Effects.Es1ExplosionPool(EffectLights);
+		Explosions = new Effects.Es1ExplosionPool(EffectLights, FlatObjects);
 	}
 }
 

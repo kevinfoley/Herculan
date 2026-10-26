@@ -10,7 +10,8 @@ namespace Herculan.Es1.Sim;
 /// </summary>
 /// <param name="Root">The flat set's root the chassis list's byte names: 0 under a foot, 2 under the body.</param>
 /// <param name="PartId">The part it follows, the byte five on in the list (file offset 117 on).</param>
-public sealed class Es1Shadow(int root, int partId) {
+/// <param name="pool">The pool whose place it holds until destroyed and flushed; none counts no place.</param>
+public sealed class Es1Shadow(int root, int partId, Effects.Es1FlatObjPool? pool = null) {
 	/// <summary>The depth it is built at, out of the draw's range until it is first placed.</summary>
 	public const int BuildDepth = -100000;
 
@@ -42,7 +43,12 @@ public sealed class Es1Shadow(int root, int partId) {
 	/// Slot <c>+0xc</c> with 3, <c>FlatObj_DtorMechCopy</c> (<c>000119b8</c>): the shadow queued for delete on its pool, so
 	/// drawn no more (docs/es1/simulation/mech.md#the-shadows).
 	/// </summary>
-	public void Destroy() => Destroyed = true;
+	public void Destroy() {
+		if (!Destroyed) {
+			Destroyed = true;
+			pool?.QueueForDelete();
+		}
+	}
 }
 
 /// <summary>
@@ -65,9 +71,11 @@ public sealed class Es1Mech : IEs1SimObject {
 
 	/// <summary>
 	/// <c>Mech_Constructor</c>: steps 1, 5, 7, 8, 9 and 11, with the others' call sites kept. <paramref name="type"/> is the
-	/// chassis' type record; <paramref name="jitter"/> is <c>Behaviour_DwellJitter</c>, which step 9 steps.
+	/// chassis' type record; <paramref name="jitter"/> is <c>Behaviour_DwellJitter</c>, which step 9 steps;
+	/// <paramref name="flatObjects"/> is <c>g_FlatObjPool</c>, which step 8's shadows take their places from, none counting
+	/// none.
 	/// </summary>
-	public Es1Mech(Es1MechType type, Es1DwellJitter jitter) {
+	public Es1Mech(Es1MechType type, Es1DwellJitter jitter, Effects.Es1FlatObjPool? flatObjects = null) {
 		Type = type;
 
 		// Step 1: SimObjectBase_ConstructWithDetailTable on the record's roots, an animated instance on root 0.
@@ -96,10 +104,11 @@ public sealed class Es1Mech : IEs1SimObject {
 
 		WorthNoSalvage = type.Chassis.SalvageScale == 0;
 
-		// Step 8: one shadow per kind byte at +0x72 (file offset 112) up to the first negative one, its part five on.
+		// Step 8: one shadow per kind byte at +0x72 (file offset 112) up to the first negative one, its part five on. With
+		// the pool full retail writes the shadow's depth through the null it gets; here that shadow is null, an engine guard.
 		var bytes = type.Chassis.ShadowBytes;
 		for (int i = 0; i < 5 && (sbyte)bytes[i] >= 0; i++) {
-			Shadows.Add(new Es1Shadow((sbyte)bytes[i], (sbyte)bytes[i + 5]));
+			Shadows.Add(flatObjects?.Alloc() == false ? null : new Es1Shadow((sbyte)bytes[i], (sbyte)bytes[i + 5], flatObjects));
 		}
 
 		// Step 9: deciding, or player when +0x9d is set. The second pass sets +0x9d after the constructor, so every machine

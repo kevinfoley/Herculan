@@ -198,25 +198,48 @@ public sealed class Es1WeaponMount {
 	/// <summary><c>+0x49</c>, destroyed, which <see cref="Destroy"/> sets; the cockpit row's push hands it to the row.</summary>
 	public bool Destroyed { get; private set; }
 
+	/// <summary>The template's <c>int16</c> <c>+0x26</c>, the thrown gun's root of <c>dts\mechwpn2</c>, as an offset into the tail at <c>+0x22</c>.</summary>
+	public const int ThrownGunRootTail = 0x26 - 0x22;
+
 	/// <summary>
 	/// <c>WeaponMount_Destroy</c> (<c>0000b968</c>)(mount, <paramref name="throwGun"/>, <paramref name="machine"/>)
 	/// (docs/es1/simulation/weapon-mount-classes.md#losing-a-mount): for a mount not yet destroyed, the model cleared, so
-	/// the hardpoint draws nothing, and <see cref="Destroyed"/> set. The mount point it then works out in the world feeds
-	/// the thrown gun alone.
+	/// the hardpoint draws nothing, and <see cref="Destroyed"/> set; the mount point, <see cref="MountPointOffset"/>
+	/// through the hardpoint bone's posed node and the machine's frame. With <paramref name="throwGun"/> on a visible
+	/// hardpoint the gun is thrown (docs/es1/simulation/destruction-effects.md#where-pieces-are-thrown): a debris piece
+	/// at the mount point on root <see cref="ThrownGunRootTail"/> of <see cref="Effects.Es1DebrisPool.GunShapes"/>, given
+	/// <see cref="Es1SimGlobals.MountDetailBias"/>, launched (<see cref="Effects.Es1Debris.Launch"/>) with the third angle of
+	/// <c>Math_EulerToward</c> from the machine's aim node (slot <c>+0x28</c>'s translation through its frame) to the mount
+	/// point as its heading and the hardpoint's <see cref="GunLayout.HardpointEntry.DebrisPitch"/> as its pitch, then
+	/// turned to the angles of the node and frame's rotation. With the debris pool full retail writes through the null
+	/// piece; here no gun is thrown, an engine guard. A bone or aim node the shape lacks, which retail reads through a
+	/// null, is the identity here, as is a root past the shapes a piece with no shape.
 	/// </summary>
-	public void Destroy(bool throwGun, Es1Mech machine) {
+	public void Destroy(bool throwGun, Es1Mech machine, Es1SimGlobals globals) {
 		if (Destroyed) {
 			return;
 		}
 
 		Model = null;
 		Destroyed = true;
-		// PLACEHOLDER: with throwGun and the hardpoint's mounting code (.GL +6) below 4, the gun thrown from the mount point
-		// (the muzzle offset through the bone's node and the machine's frame): 00006168(0, the point, the template's +0x26
-		// root of WeaponModels_Mechwpn2Roots) given g_TSDetailBiasForMounts at its +0x4a and launched through 00006378 with
-		// the third angle of the bearing from the machine's slot +0x28 point and the hardpoint's dword +0x18; the debris,
-		// plan step 7e part B.
-		_ = (throwGun, machine);
+		var frame = Transform3.Concat(machine.PartNodeTransform(Hardpoint.BoneId) ?? Transform3.Identity, machine.Frame);
+		var offset = MountPointOffset;
+		var mountPoint = frame.TransformPoint((short)offset.X, (short)offset.Y, (short)offset.Z);
+		if (!throwGun || !VisibleHardpoint) {
+			return;
+		}
+
+		var debris = globals.Debris;
+		short root = Template.Tail is { Length: >= ThrownGunRootTail + 2 } tail ? BitConverter.ToInt16(tail, ThrownGunRootTail) : (short)-1;
+		var aim = machine.AimNodeTransform() ?? Transform3.Identity;
+		var (_, _, heading) = SimTrig.EulerToward(mountPoint, machine.Frame.TransformPoint(aim.X, aim.Y, aim.Z));
+		if (debris.Construct(mountPoint, root >= 0 && root < debris.GunShapes.Count ? debris.GunShapes[root] : null) is not { } gun) {
+			return;
+		}
+
+		gun.DetailBias = globals.MountDetailBias();
+		gun.Launch(heading, Hardpoint.DebrisPitch);
+		gun.Rotation = frame.ToEuler();
 	}
 
 	/// <summary><c>+0x4b</c>, linked with its partner.</summary>

@@ -24,9 +24,9 @@ public sealed class Es1Explosion {
 	/// <c>Explosion_Construct</c> (<c>00005af0</c>)'s fields (docs/es1/simulation/impact-effects.md#construction--explosion_construct-00005af0):
 	/// the root <paramref name="shape"/>, the type byte, the type tag, the frame countdown from the row's <c>+0x06</c>,
 	/// the point, the ground shape when the row's <c>+0x08</c> is not 0 and the light when its <c>+0x0a</c> is not 0.
-	/// A new instance's cell frames are 0, so the row's sequence starts on 0. Retail takes the ground shape from
-	/// <c>g_FlatObjPool</c>'s 150 places, which the HERCs' shadows share; this engine does not count them, so a ground
-	/// shape is always built.
+	/// A new instance's cell frames are 0, so the row's sequence starts on 0. The ground shape takes a place of
+	/// <see cref="Es1FlatObjPool"/>; with the pool full retail writes the shape's position through the null it gets, and
+	/// here no ground shape is built, an engine guard.
 	/// </summary>
 	internal Es1Explosion(Es1ExplosionPool pool, sbyte typeId, TSObject? shape, Vec3i point) {
 		_pool = pool;
@@ -37,8 +37,8 @@ public sealed class Es1Explosion {
 		Tag = row.ObjectClass == 0 ? TypeTag : ClassTypeTag;
 		_countdown = row.FrameInterval;
 		Position = point;
-		if (row.GroundShape != 0) {
-			GroundShape = new Es1GroundShape(point);
+		if (row.GroundShape != 0 && pool.FlatObjects.Alloc()) {
+			GroundShape = new Es1GroundShape(point, pool.FlatObjects);
 		}
 
 		if (row.LightMode != 0) {
@@ -139,9 +139,9 @@ public sealed class Es1Explosion {
 /// An impact effect's ground shape, a <c>FlatObj</c> of <c>g_FlatObjPool</c> on root
 /// <see cref="Es1ExplosionPool.GroundShapeRoot"/> of the flat shape set, built at the effect's point with no angles
 /// (docs/es1/simulation/impact-effects.md#construction--explosion_construct-00005af0). <c>FlatObjVtableExploCopy</c>
-/// (<c>000908a2</c>)'s.
+/// (<c>000908a2</c>)'s. It holds a place of <paramref name="pool"/> until it is destroyed and flushed.
 /// </summary>
-public sealed class Es1GroundShape(Vec3i point) {
+public sealed class Es1GroundShape(Vec3i point, Es1FlatObjPool pool) {
 	/// <summary><c>+0x20</c>, the position; <see cref="PlaceForDraw"/> sets its Z to 0.</summary>
 	public Vec3i Position { get; private set; } = point;
 
@@ -175,5 +175,8 @@ public sealed class Es1GroundShape(Vec3i point) {
 	}
 
 	/// <summary><c>FlatObj_DtorExploCopy</c> (<c>00005cd8</c>) with 3: the instance destroyed and the shape queued on its pool.</summary>
-	internal void Destroy() => Destroyed = true;
+	internal void Destroy() {
+		Destroyed = true;
+		pool.QueueForDelete();
+	}
 }
