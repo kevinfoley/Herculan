@@ -89,9 +89,10 @@ public sealed class Es1ProjectileDraw : IDisposable {
 	/// <summary>
 	/// The pool's elements placed for <paramref name="camera"/>, walked back from the end as <c>ObjList_RebuildFrame</c>
 	/// adds them: each missile and gun round an item on its shape's cell, each beam tracer one of its quads
-	/// (<see cref="BeamItem"/>).
+	/// (<see cref="BeamItem"/>). With <paramref name="flatRamps"/> each takes <c>WorldShades_ResetRamps</c>' ramps
+	/// (<see cref="Es1Shading.FlatBlock"/>) rather than its distance band's.
 	/// </summary>
-	public void Update(Camera camera) {
+	public void Update(Camera camera, bool flatRamps = false) {
 		_items.Clear();
 		foreach (var mesh in _beamMeshes) {
 			mesh.Dispose();
@@ -126,7 +127,7 @@ public sealed class Es1ProjectileDraw : IDisposable {
 
 			uint? texture = projectile is Es1Bullet ? _bulletTexture : null;
 			_items.Add(new SceneItem(mesh, WorldScale.ToRenderMatrix(projectile.Frame), texture) {
-				RampBlock = shading.Block(Es1Projectile.TypeTag, distance),
+				RampBlock = flatRamps ? shading.FlatBlock : shading.Block(Es1Projectile.TypeTag, distance),
 			});
 		}
 	}

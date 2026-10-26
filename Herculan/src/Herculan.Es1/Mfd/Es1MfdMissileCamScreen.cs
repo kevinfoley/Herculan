@@ -1,8 +1,10 @@
 using HercWorks.Core.Data.File;
+using HercWorks.Core.Data.File.Dyn;
 using Herculan.Engine.Content;
 using Herculan.Engine.Numerics;
 using Herculan.Es1.Panels;
 using Herculan.Es1.Projectiles;
+using Herculan.Es1.Scene;
 using Herculan.Es1.Sim;
 using Herculan.Es1.View;
 
@@ -45,6 +47,18 @@ public sealed class Es1MfdMissileCamScreen : Es1MfdScreen {
 	/// <summary>The camera's near plane and perspective shift, <c>TSCamera_Ctor</c>'s: a focal length of 2⁷ = 128 pixels.</summary>
 	public const int NearPlane = 0x80, FocalShift = 7;
 
+	/// <summary>
+	/// The horizon's band height <c>+0x54</c> and count <c>+0x58</c>, and its ground's <c>+0x5c</c> and <c>+0x60</c>,
+	/// which the constructor writes over <c>Hzline_Ctor</c>'s.
+	/// </summary>
+	public const int SkyBandHeight = 1, SkyBandCount = 3, GroundBandHeight = 1, GroundBandCount = 3;
+
+	/// <summary><c>Hzline_SetColors</c>(horizon, <see cref="LineOffset"/>, <see cref="GroundColor"/>, <see cref="ZenithColor"/>).</summary>
+	public const int LineOffset = 0, GroundColor = 0x16, ZenithColor = 0x10;
+
+	/// <summary>The horizon's skyline bank, <c>dba\smlwld2</c>.</summary>
+	public const string SkylineBank = "smlwld2";
+
 	/// <summary>The labels' <i>x</i>, <i>y</i>, width and height from the rect's top-left, the <c>int16</c> tables <c>000938f4</c>, <c>000938fc</c>, <c>00093904</c> and <c>0009390c</c>.</summary>
 	private static readonly int[] LabelX = [0, 0, 0x1b, 0x16], LabelY = [1, 8, 0x14, 0x20],
 		LabelWidth = [0x44, 0x44, 0xe, 0x18], LabelHeight = [0xa, 0xa, 0xa, 0xa];
@@ -60,7 +74,8 @@ public sealed class Es1MfdMissileCamScreen : Es1MfdScreen {
 	/// rect's center, and its rect the same as <see cref="Es1MfdScreen.Rect"/>, which is not kept apart; the camera at
 	/// (0, 0, 0) with no angles; and the four labels in <c>cpred</c>, each centered with no margin over the rect's
 	/// top-left plus its <i>x</i> and <i>y</i> to that point plus its width and height, label 2 then in <c>cpylw</c> on
-	/// <see cref="Label2Fill"/>. The other fields are the heap's zeros. The horizon belongs to the view, below.
+	/// <see cref="Label2Fill"/>. The other fields are the heap's zeros. The horizon is the view's (<see cref="Horizon"/>,
+	/// <see cref="SkylineBank"/>).
 	/// </summary>
 	internal Es1MfdMissileCamScreen(Es1Cockpit cockpit, Es1Rect rect, Es1MfdSharedBlock shared, IReadOnlyList<HudFont?> fonts,
 			StringFile? strings)
@@ -126,7 +141,7 @@ public sealed class Es1MfdMissileCamScreen : Es1MfdScreen {
 	/// <see cref="SavedPosition"/> and <see cref="SavedAngles"/>, or, the missile gone from the pool, the saved pose and
 	/// the missile cleared; then the first explosion within <see cref="FlashReach"/> of the pose starts the flash, kept
 	/// in <see cref="FlashExplosion"/> with <see cref="FlashToggle"/> set and the rect filled in <see cref="FlashColor"/>;
-	/// with none and the missile still tracked, the view from the pose;</item>
+	/// with none and the missile still tracked, the view from the pose (<see cref="DrawView"/>);</item>
 	/// <item>with no missile tracked, after either, the labels: the rect filled in <see cref="Fill"/>; <c>NONE</c> on
 	/// label 1 when <see cref="SumLauncherCounts"/> is 0, else <c>READY TO</c> on label 0 and <c>LAUNCH</c> on label 1;
 	/// and <c>LOCK</c> on label 3, without the gunsight's lock (its state block's <see cref="Herculan.Es1.Gunsight.Es1GunsightState.LockLamp"/>)
@@ -167,15 +182,7 @@ public sealed class Es1MfdMissileCamScreen : Es1MfdScreen {
 			}
 
 			if (TrackedMissile != null) {
-				CameraPosition = position;
-				CameraAngles = angles;
-				// PLACEHOLDER: the view itself, which a tracked missile alone reaches (plan step 7a): the shake offset
-				// (CockpitView_GetShakeOffset) taken out of the viewport's rect, the viewport installed, the camera's
-				// projection installed (Raster_InstallViewProjection), the horizon drawn with Hzline_Draw(horizon, 0,
-				// camera) -- an hzline of bands 1 x 3 and ground bands 1 x 3, Hzline_SetColors(0, 0x16, 0x10), the skyline
-				// dba\smlwld2, no textured ground -- and the objects with ObjList_DrawFrameObjects(0, camera) while
-				// 000928ea is set, then the context put back and the offset added back. Its world pass through
-				// Es1VideoMemory.DrawWorldView needs its own design (docs/es1/simulation/mfd-missile-camera.md#painting).
+				DrawView(canvas.Display, position, angles);
 			}
 		}
 
@@ -252,6 +259,33 @@ public sealed class Es1MfdMissileCamScreen : Es1MfdScreen {
 		int x = position.X + SimMath.Q14MultiplyRounded(CameraOffset, SimTrig.Cos(heading));
 		int y = position.Y + SimMath.Q14MultiplyRounded(CameraOffset, SimTrig.Cos(unchecked((short)(heading - 0x4000))));
 		return (new Vec3i(x, y, position.Z), angles);
+	}
+
+	/// <summary>
+	/// The horizon <c>Hzline_Ctor</c>(0) builds and the constructor sets up, its colours from
+	/// <paramref name="palette"/>: <see cref="SkyBandHeight"/>, <see cref="SkyBandCount"/>,
+	/// <see cref="GroundBandHeight"/> and <see cref="GroundBandCount"/>, <see cref="LineOffset"/>,
+	/// <see cref="GroundColor"/> and <see cref="ZenithColor"/>, and <c>Hzline_Ctor</c>'s <c>+0x6c</c>; its skyline is
+	/// <see cref="SkylineBank"/>, and with <c>+0x70</c> cleared the ground is banded. Null as
+	/// <see cref="Es1Horizon.From(int, int, int, int, int, int, int, int, DynamixPalette?)"/> answers.
+	/// </summary>
+	public static Es1Horizon? Horizon(DynamixPalette? palette) => Es1Horizon.From(ZenithColor, SkyBandHeight, SkyBandCount,
+		GroundColor, GroundBandHeight, GroundBandCount, Es1Horizon.CtorGapField, LineOffset, palette);
+
+	/// <summary>
+	/// The view case of <see cref="Paint"/>: the camera given the pose, and its view drawn as a world pass
+	/// (<see cref="Es1VideoMemory.DrawWorldView"/>, <see cref="Es1RectScene.MissileCamera"/>) into the viewport: the
+	/// rect itself, which the canvas context's origin is not taken from as the NAV MAP's is, less the shake offset
+	/// (<see cref="Es1Cockpit.ShakeOffset"/>), the projection centre at <see cref="ViewportOrigin"/> negated from its
+	/// top-left. The viewport's rect is the shake's only change, so nothing is put back.
+	/// </summary>
+	private void DrawView(Es1VideoMemory display, Vec3i position, (short Pitch, short Roll, short Heading) angles) {
+		CameraPosition = position;
+		CameraAngles = angles;
+		var (shakeX, shakeY) = Cockpit.ShakeOffset;
+		var viewport = new Es1Rect(Rect.X0 - shakeX, Rect.Y0 - shakeY, Rect.X1 - shakeX, Rect.Y1 - shakeY);
+		display.DrawWorldView(viewport, new Es1RectView(CameraPosition, CameraAngles, NearPlane, FocalShift,
+			(-ViewportOrigin.X, -ViewportOrigin.Y), viewport.X0, Es1RectScene.MissileCamera));
 	}
 
 	/// <summary>The labels case of <see cref="Paint"/>.</summary>

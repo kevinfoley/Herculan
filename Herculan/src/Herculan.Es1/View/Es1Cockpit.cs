@@ -272,6 +272,9 @@ public sealed class Es1Cockpit {
 	/// <inheritdoc cref="Es1ViewManager.Projection"/>
 	internal Es1ViewProjection? Projection => _views.Projection;
 
+	/// <inheritdoc cref="Es1ViewManager.ShakeOffset"/>
+	internal (int X, int Y) ShakeOffset => _views.ShakeOffset;
+
 	/// <summary>
 	/// <c>View_GetActiveObject</c> (<c>00059280</c>): <c>ViewObjectPtr</c> (<c>000b5b8a</c>), the chain of views' current
 	/// camera (<see cref="Es1ViewChain.Camera"/>); none before the chain is built.

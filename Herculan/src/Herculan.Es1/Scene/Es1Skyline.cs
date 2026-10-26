@@ -1,4 +1,6 @@
 using HercWorks.Core.Data.File.Dyn;
+using HercWorks.Core.Io.Transform.Common;
+using Herculan.Engine.Content;
 
 namespace Herculan.Es1.Scene;
 
@@ -37,6 +39,13 @@ public sealed class Es1Skyline {
 
 	/// <summary>The image's row count.</summary>
 	public int Height => SlotRows * FrameCount;
+
+	/// <summary>
+	/// <c>Hzline_LoadBitmapBank</c>(<c>dba\</c><paramref name="bank"/>) (<c>ES1DBSIM 00026dc8</c>), the skyline built in
+	/// <paramref name="palette"/>; null when the install lacks the bank or it has no frame to draw.
+	/// </summary>
+	public static Es1Skyline? Load(GameContent content, string bank, DynamixPalette? palette) =>
+		content.Read("dba", bank + ".DBA") is { } bytes ? From(new DynamixBitmapArrayTransformer().Parse(bytes), palette) : null;
 
 	/// <summary>Builds the skyline from the bank, or returns null for a bank with no frame to draw.</summary>
 	public static Es1Skyline? From(DynamixBitmapArray? bank, DynamixPalette? palette) {

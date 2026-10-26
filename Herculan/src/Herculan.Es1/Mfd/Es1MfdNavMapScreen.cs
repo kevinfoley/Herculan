@@ -78,7 +78,7 @@ public sealed class Es1MfdNavMapScreen : Es1MfdScreen {
 		}
 
 		canvas.Display.DrawWorldView(map.Rect, new Es1RectView(CameraPosition, CameraAngles, NearPlane, FocalShift,
-			(-ViewportOrigin.X, -ViewportOrigin.Y), Es1RectScene.FlatZoneShapes));
+			(-ViewportOrigin.X, -ViewportOrigin.Y), map.Rect.X0, Es1RectScene.FlatZoneShapes));
 		foreach (var (x, y) in Cross) {
 			map.Plot(x, y, CrossColor);
 		}

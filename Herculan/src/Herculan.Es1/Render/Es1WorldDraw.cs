@@ -29,6 +29,9 @@ public sealed class Es1WorldDraw {
 	private readonly List<MechItems> _mechs = new();
 	private readonly List<(SceneItem Item, Es1Shadow Shadow)> _shadowItems = new();
 
+	// The camera and ridden machine of the last Update, which DrawFlatView places the items back for.
+	private (Camera Camera, Es1Mech? Ridden)? _placedFor;
+
 	/// <param name="detail">The detail setting the HERCs are drawn at, read on every <see cref="Update"/>.</param>
 	/// <param name="projectiles">The projectile pool's draw; with none no projectile is drawn.</param>
 	public Es1WorldDraw(GL gl, Es1ZoneScene scene, Es1World world, Es1MechModels models, Es1AppliedDetail detail,
@@ -93,19 +96,41 @@ public sealed class Es1WorldDraw {
 
 	/// <summary>Places and culls every item for <paramref name="camera"/>; <paramref name="ridden"/> is the machine the camera rides in, or null.</summary>
 	public void Update(Camera camera, Es1Mech? ridden) {
+		_placedFor = (camera, ridden);
+		Place(camera, ridden, Es1ShapeDetail.FocalShift, flat: false);
+	}
+
+	/// <summary>
+	/// A second view of the frame's objects, <c>ObjList_DrawFrameObjects</c>(0, <paramref name="camera"/>) while
+	/// <c>000928ea</c> is set (docs/es1/rendering/polygon-shading.md#the-distance-bands): every item placed and culled
+	/// for <paramref name="camera"/> as <see cref="Update"/> places them, with no machine ridden, each detail level
+	/// picked under a focal length of 2^<paramref name="focalShift"/>, and every object on <c>WorldShades_ResetRamps</c>'
+	/// ramps (<see cref="Es1Shading.FlatBlock"/>) in place of its band's; then <paramref name="draw"/>; then every item
+	/// placed again for the camera and machine of the last <see cref="Update"/>, so the items stand as the frame's own
+	/// pass placed them, which the pick reads (<see cref="Es1WorldPick"/>).
+	/// </summary>
+	public void DrawFlatView(Camera camera, int focalShift, Action draw) {
+		Place(camera, null, focalShift, flat: true);
+		draw();
+		if (_placedFor is { } last) {
+			Place(last.Camera, last.Ridden, Es1ShapeDetail.FocalShift, flat: false);
+		}
+	}
+
+	private void Place(Camera camera, Es1Mech? ridden, int focalShift, bool flat) {
 		var shading = _scene.Shading;
 		foreach (var (item, shape, _) in _zoneItems) {
 			var frame = shape.Frame;
 			int distance = camera.Position.ApproxDistanceTo(new Vec3i(frame.X, frame.Y, frame.Z));
 			item.Visible = frame.Z >= 0 && !shading.IsBeyondLastBand(Es1Shading.ZoneShapeTag, distance);
-			item.RampBlock = shading.Block(Es1Shading.ZoneShapeTag, distance);
+			item.RampBlock = flat ? shading.FlatBlock : shading.Block(Es1Shading.ZoneShapeTag, distance);
 		}
 
 		foreach (var mech in _mechs) {
-			mech.Update(camera, shading, ridden, _detail.Setting);
+			mech.Update(camera, shading, ridden, _detail.Setting, focalShift, flat);
 		}
 
-		Projectiles?.Update(camera);
+		Projectiles?.Update(camera, flat);
 
 		foreach (var (item, shadow) in _shadowItems) {
 			var frame = shadow.DrawFrame;
@@ -172,7 +197,9 @@ public sealed class Es1WorldDraw {
 			return item;
 		}
 
-		public void Update(Camera camera, Es1Shading shading, Es1Mech? ridden, Es1DetailSetting detail) {
+		/// <param name="focalShift">The installed projection's <c>Raster_FocalShift</c>, which the detail levels are picked under.</param>
+		/// <param name="flat">Whether the ramps are <c>WorldShades_ResetRamps</c>' rather than the distance band's.</param>
+		public void Update(Camera camera, Es1Shading shading, Es1Mech? ridden, Es1DetailSetting detail, int focalShift, bool flat) {
 			_frame = _mech.Frame;
 			int distance = camera.Position.ApproxDistanceTo(_mech.Position);
 
@@ -181,17 +208,17 @@ public sealed class Es1WorldDraw {
 			bool drawn = _mech != ridden && _mech.Position.Z >= 0
 				&& !shading.IsBeyondLastBand((byte)Es1Mech.TypeTag, distance)
 				&& _mech.Group?.Action == null;
-			int? block = shading.Block((byte)Es1Mech.TypeTag, distance);
+			int? block = flat ? shading.FlatBlock : shading.Block((byte)Es1Mech.TypeTag, distance);
 
 			var type = _mech.Type;
 			int root = Es1ShapeDetail.SelectRoot(type.Roots.Count, type.ShapeRadius,
-				Es1ShapeDetail.EyeDistance(_frame, camera.Position), detail, Es1MechType.DetailThresholds);
+				Es1ShapeDetail.EyeDistance(_frame, camera.Position), detail, Es1MechType.DetailThresholds, focalShift);
 
 			// Every component intact stands each cell-animation part on cell 0; a HERC body's detail parts draw with bias 0.
 			foreach (var (item, piece, pieceRoot) in _pieces) {
 				item.Transform = FrameToWorld(piece.TransformId);
 				item.RampBlock = block;
-				item.Visible = drawn && pieceRoot == root && OnScreen(piece.Gate, camera, 0);
+				item.Visible = drawn && pieceRoot == root && OnScreen(piece.Gate, camera, focalShift, 0);
 			}
 
 			// A mount's model shows its own private cell frames, which the muzzle flash and the ELF's spin-up step.
@@ -202,16 +229,16 @@ public sealed class Es1WorldDraw {
 				item.RampBlock = block;
 				int cell = mounts[hardpoint]?.CellFrame(piece.Gate.Sequence) ?? 0;
 				item.Visible = drawn && hardpoint < slots.Length && slots[hardpoint] != null
-					&& OnScreen(piece.Gate, camera, detail.MountBias, transformId, cell);
+					&& OnScreen(piece.Gate, camera, focalShift, detail.MountBias, transformId, cell);
 			}
 		}
 
 		/// <summary>
 		/// Whether a piece's cell is cell <paramref name="cell"/> and its <c>TSDetailPart</c>, if any, picks its level with
-		/// <paramref name="bias"/> from the eye's distance in the part's node, <paramref name="node"/> when given (a mount's
-		/// model, whose parts all carry the stamped node).
+		/// <paramref name="bias"/> under a focal length of 2^<paramref name="focalShift"/> from the eye's distance in the
+		/// part's node, <paramref name="node"/> when given (a mount's model, whose parts all carry the stamped node).
 		/// </summary>
-		private bool OnScreen(CellGate gate, Camera camera, int bias, int? node = null, int cell = 0) {
+		private bool OnScreen(CellGate gate, Camera camera, int focalShift, int bias, int? node = null, int cell = 0) {
 			if (gate.IsGated && gate.Frame != cell) {
 				return false;
 			}
@@ -221,7 +248,7 @@ public sealed class Es1WorldDraw {
 			}
 
 			int eye = Es1ShapeDetail.EyeDistance(NodeFrame(node ?? detail.TransformId), camera.Position);
-			return detail.Select(eye, 1 << Es1ShapeDetail.FocalShift, bias) == gate.Level;
+			return detail.Select(eye, 1 << focalShift, bias) == gate.Level;
 		}
 
 		/// <summary>A node's posed transform in front of the machine's frame, in world units; the frame alone for -1.</summary>

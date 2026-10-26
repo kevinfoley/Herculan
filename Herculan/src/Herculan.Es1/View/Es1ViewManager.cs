@@ -168,6 +168,15 @@ public sealed class Es1ViewManager {
 	public bool ShakeReseedAfterSlide { get; private set; }
 
 	/// <summary>
+	/// <c>CockpitShakeTotal</c> (<c>000afb6c</c>), the sum of the shake's steps. PLACEHOLDER: stays 0 until plan step
+	/// 7's hit shake steps it (<c>CockpitView_StepShake</c>).
+	/// </summary>
+	public short ShakeTotal { get; private set; }
+
+	/// <summary><c>CockpitView_GetShakeOffset</c> (<c>000249d4</c>): {0, <see cref="ShakeTotal"/>} (docs/es1/simulation/cockpit-views.md#the-view-shake).</summary>
+	public (int X, int Y) ShakeOffset => (0, ShakeTotal);
+
+	/// <summary>
 	/// <c>SimInput_SetEnabled</c> (<c>0004d82c</c>), which the pans call after their slides: the keyboard's axis keys
 	/// (<see cref="Input.Es1AxisKeys.SetEnabled"/>), once the host has built the input.
 	/// </summary>

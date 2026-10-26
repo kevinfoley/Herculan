@@ -158,10 +158,7 @@ public sealed class Es1ZoneScene {
 			ZoneShapes = new Es1ZoneShapes(zoneShapes),
 			Horizon = world != null ? Es1Horizon.From(world, palette) : null,
 			Ground = world != null ? LoadGround(content, world) : null,
-			Skyline = world is { SkyBank.Length: > 0 }
-				&& content.Read("dba", world.SkyBank + ".DBA") is { } bankBytes
-					? Es1Skyline.From(new DynamixBitmapArrayTransformer().Parse(bankBytes), palette)
-					: null,
+			Skyline = world is { SkyBank.Length: > 0 } ? Es1Skyline.Load(content, world.SkyBank, palette) : null,
 			Clouds = world is { CloudBank.Length: > 0 }
 				&& content.Read("dba", world.CloudBank + ".DBA") is { } cloudBytes
 					? Es1Clouds.From(world, new DynamixBitmapArrayTransformer().Parse(cloudBytes))

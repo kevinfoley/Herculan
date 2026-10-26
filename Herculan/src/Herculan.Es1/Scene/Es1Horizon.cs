@@ -6,9 +6,10 @@ using Herculan.Engine.Numerics;
 namespace Herculan.Es1.Scene;
 
 /// <summary>
-/// The theater's <c>hzline</c> as ES1's simulator fills it from the world file's shorts 0–7: the sky's bands above the
-/// horizon line and the ground's bands below it (docs/es1/rendering/ground-and-sky.md#the-horizon-line-and-the-sky,
-/// #the-banded-ground), with the line's placement for a view. Measurements are in the original's pixels.
+/// An <c>hzline</c>, the theater's as ES1's simulator fills it from the world file's shorts 0–7 or the MISSILE CAM's:
+/// the sky's bands above the horizon line and the ground's bands below it
+/// (docs/es1/rendering/ground-and-sky.md#the-horizon-line-and-the-sky, #the-banded-ground), with the line's placement
+/// for a view. Measurements are in the original's pixels.
 /// </summary>
 public sealed class Es1Horizon {
 	/// <summary>
@@ -20,13 +21,16 @@ public sealed class Es1Horizon {
 	/// <summary>The most bands either run carries; a file asking for more is clamped to this.</summary>
 	public const int MaxBands = 32;
 
-	private Es1Horizon(Vector3[] sky, Vector3[] ground, Es1WorldData world) {
+	/// <summary><c>+0x6c</c> as <c>Hzline_Ctor</c> (<c>00026180</c>) leaves it, 1, so that <i>t</i> is 0.</summary>
+	public const int CtorGapField = 1;
+
+	private Es1Horizon(Vector3[] sky, Vector3[] ground, int skyBandHeight, int gapField, int groundBandHeight, int lineOffset) {
 		SkyColors = sky;
 		GroundColors = ground;
-		SkyBandHeight = world.SkyBandHeight;
-		HorizonGap = world.HorizonGap >> 1;
-		GroundBandHeight = world.GroundBandHeight;
-		LineOffset = world.HorizonOffset;
+		SkyBandHeight = skyBandHeight;
+		HorizonGap = gapField >> 1;
+		GroundBandHeight = groundBandHeight;
+		LineOffset = lineOffset;
 	}
 
 	/// <summary>
@@ -63,15 +67,27 @@ public sealed class Es1Horizon {
 	/// Builds the horizon from a theater's world file and palette, or returns null when the palette lacks an entry
 	/// either run names or the band fields cannot draw.
 	/// </summary>
-	public static Es1Horizon? From(Es1WorldData world, DynamixPalette? palette) {
-		int skyCount = Math.Min((int)world.SkyBandCount, MaxBands);
-		int groundCount = Math.Min(world.GroundBandCount - 1, MaxBands - 1) + 1;
-		if (palette == null || skyCount < 1 || world.SkyBandHeight < 1 || groundCount < 1) {
+	public static Es1Horizon? From(Es1WorldData world, DynamixPalette? palette) =>
+		From(world.ZenithColor, world.SkyBandHeight, world.SkyBandCount, world.GroundColor, world.GroundBandHeight,
+			world.GroundBandCount, world.HorizonGap, world.HorizonOffset, palette);
+
+	/// <summary>
+	/// Builds the horizon from an <c>hzline</c>'s fields: the zenith colour, which <c>Hzline_SetColors</c> turns into the
+	/// horizon colour <c>+0x28</c>; the band height <c>+0x54</c> and count <c>+0x58</c>; the ground colour <c>+0x2c</c>,
+	/// its band height <c>+0x5c</c> and count <c>+0x60</c>; <c>+0x6c</c>, of which <see cref="HorizonGap"/> is half; and
+	/// the line offset <c>+0x30</c>. Returns null when the palette lacks an entry either run names or the band fields
+	/// cannot draw.
+	/// </summary>
+	public static Es1Horizon? From(int zenithColor, int skyBandHeight, int skyBandCount, int groundColor, int groundBandHeight,
+			int groundBandCount, int gapField, int lineOffset, DynamixPalette? palette) {
+		int skyCount = Math.Min(skyBandCount, MaxBands);
+		int groundCount = Math.Min(groundBandCount - 1, MaxBands - 1) + 1;
+		if (palette == null || skyCount < 1 || skyBandHeight < 1 || groundCount < 1) {
 			return null;
 		}
 
-		int horizonColor = world.ZenithColor + world.SkyBandCount - 1;
-		int groundTop = world.GroundColor + world.GroundBandCount - 1;
+		int horizonColor = zenithColor + skyBandCount - 1;
+		int groundTop = groundColor + groundBandCount - 1;
 		var sky = new Vector3[skyCount];
 		var ground = new Vector3[groundCount];
 		for (int k = 0; k < skyCount; k++) {
@@ -90,22 +106,24 @@ public sealed class Es1Horizon {
 			ground[k] = color;
 		}
 
-		return new Es1Horizon(sky, ground, world);
+		return new Es1Horizon(sky, ground, skyBandHeight, gapField, groundBandHeight, lineOffset);
 	}
 
 	/// <summary>
 	/// How far the projected horizon lies below the projection centre, in the original's pixels along the rolled
 	/// screen vertical: <c>f · tan(pitch)</c>, as <c>Hzline_BuildHorizon</c> (<c>ES1DBSIM 00026348</c>) places the
-	/// line's midpoint, with a pitch whose cosine is 0 taking the cosine of the pitch less one unit.
+	/// line's midpoint, with a pitch whose cosine is 0 taking the cosine of the pitch less one unit; <i>f</i> is
+	/// 2^<c>Raster_FocalShift</c>, the installed projection's.
 	/// </summary>
 	/// <param name="pitch">The camera's pitch, positive looking up, as a binary angle.</param>
-	public static float HorizonDrop(short pitch) {
+	/// <param name="focalPixels"><i>f</i>, in the original's pixels.</param>
+	public static float HorizonDrop(short pitch, float focalPixels = FocalPixels) {
 		float cos = SimTrig.Cos(pitch);
 		if (cos == 0f) {
 			cos = SimTrig.Cos(unchecked((short)(pitch - 1)));
 		}
 
-		return FocalPixels * SimTrig.Sin(pitch) / cos;
+		return focalPixels * SimTrig.Sin(pitch) / cos;
 	}
 
 	/// <summary>Palette entry <paramref name="index"/> as a colour, or null when the palette lacks it.</summary>

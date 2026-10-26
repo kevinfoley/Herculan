@@ -8,6 +8,7 @@ using Herculan.Engine.Platform;
 using Herculan.Engine.Render;
 using Herculan.Engine.View;
 using Herculan.Es1.Input;
+using Herculan.Es1.Mfd;
 using Herculan.Es1.Panels;
 using Herculan.Es1.Render;
 using Herculan.Es1.Scene;
@@ -230,10 +231,21 @@ public static class Es1ZoneViewer {
 				var sceneRenderer = renderer;
 				monitor.WorldPass = (x, y, width, height) =>
 					DrawWorld(gl, sceneRenderer, backdrop, worldDraw, cockpitCamera, x, y, width, height);
-				// A cockpit rect's view, the NAV MAP's, from a camera of its own (plan decision 17).
+				// A cockpit rect's view, the NAV MAP's or the MISSILE CAM's, from a camera of its own (plan decision 17); the
+				// MISSILE CAM's horizon is its own hzline, with no clouds or scattered points.
 				var rectCamera = new Camera();
+				Es1Backdrop? missileHorizon = null;
+				if (scene.Palette is { } palette && Es1MfdMissileCamScreen.Horizon(palette) is { } horizon) {
+					missileHorizon = new Es1Backdrop(gl, horizon, null,
+						Es1Skyline.Load(content, Es1MfdMissileCamScreen.SkylineBank, palette), null, null, palette) {
+						Options = backdropOptions,
+						FocalPixels = 1 << Es1MfdMissileCamScreen.FocalShift,
+					};
+					disposables.Add(missileHorizon);
+				}
+
 				monitor.ViewPass = (view, size, viewport) =>
-					DrawRectView(sceneRenderer, worldDraw, rectCamera, view, size, viewport);
+					DrawRectView(gl, sceneRenderer, worldDraw, missileHorizon, rectCamera, view, size, viewport);
 				// The gunsight's pick, answered from what that pass drew (plan decision 16).
 				var pick = new Es1WorldPick(gl, sceneRenderer, worldDraw);
 				disposables.Add(pick);
@@ -385,12 +397,25 @@ public static class Es1ZoneViewer {
 
 	/// <summary>
 	/// A camera's view into a cockpit rect of <paramref name="size"/> screen pixels, drawn in <paramref name="viewport"/>
-	/// from <paramref name="camera"/> placed and projected as <paramref name="view"/> says, with no backdrop: for
-	/// <see cref="Es1RectScene.FlatZoneShapes"/>, <see cref="Es1WorldDraw.FlatZoneShapes"/>.
+	/// from <paramref name="camera"/> placed and projected as <paramref name="view"/> says: for
+	/// <see cref="Es1RectScene.FlatZoneShapes"/>, <see cref="Es1WorldDraw.FlatZoneShapes"/> with no backdrop; for
+	/// <see cref="Es1RectScene.MissileCamera"/>, the forward view's pass (<see cref="DrawWorld"/>) over
+	/// <paramref name="missileHorizon"/> with the items placed for the camera (<see cref="Es1WorldDraw.DrawFlatView"/>).
 	/// </summary>
-	private static void DrawRectView(SceneRenderer renderer, Es1WorldDraw draw, Camera camera, Es1RectView view,
-			(int Width, int Height) size, (int X, int Y, int Width, int Height) viewport) {
+	private static void DrawRectView(Silk.NET.OpenGL.GL gl, SceneRenderer renderer, Es1WorldDraw draw,
+			Es1Backdrop? missileHorizon, Camera camera, Es1RectView view, (int Width, int Height) size,
+			(int X, int Y, int Width, int Height) viewport) {
 		Es1Camera.ApplyTo(camera, view, size.Width, size.Height);
+		if (view.Scene == Es1RectScene.MissileCamera) {
+			if (missileHorizon != null) {
+				missileHorizon.CentrePageColumn = view.Left + view.Centre.X;
+			}
+
+			draw.DrawFlatView(camera, view.FocalShift,
+				() => DrawWorld(gl, renderer, missileHorizon, draw, camera, viewport.X, viewport.Y, viewport.Width, viewport.Height));
+			return;
+		}
+
 		IReadOnlyList<SceneItem> items = view.Scene switch {
 			Es1RectScene.FlatZoneShapes => draw.FlatZoneShapes,
 			_ => [],

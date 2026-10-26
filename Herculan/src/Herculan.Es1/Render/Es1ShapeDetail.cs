@@ -87,13 +87,14 @@ public static class Es1ShapeDetail {
 	/// the walk from the bias down the thresholds. The threshold cursor is also bounded by the table, which retail's is
 	/// not; no retail root count reaches past it.
 	/// </summary>
+	/// <param name="focalShift">The installed projection's <c>Raster_FocalShift</c>, the main view's unless given.</param>
 	public static int SelectRoot(int rootCount, int radius, int distance, Es1DetailSetting setting,
-			IReadOnlyList<int> thresholds) {
+			IReadOnlyList<int> thresholds, int focalShift = FocalShift) {
 		if (rootCount <= 0) {
 			return 0;
 		}
 
-		int size = ShapeDetail.ProjectedSize(radius, distance, 1 << FocalShift);
+		int size = ShapeDetail.ProjectedSize(radius, distance, 1 << focalShift);
 		int scaled = SimMath.Q10MultiplyRounded(size, (short)setting.SizeScaleQ10); // g_ShapeDetailSizeScaleQ10 is a word.
 		int root = Math.Min(setting.RootBias, rootCount - 1);
 		for (int j = 0; root < rootCount - 1 && j < thresholds.Count && scaled < thresholds[j]; j++) {

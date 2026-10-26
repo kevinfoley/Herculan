@@ -155,7 +155,8 @@ public sealed class Es1Monitor : IEs1WorldLayer, IDisposable {
 	/// <summary>
 	/// The cells written so far sent and painted into the layer under the rect, so a cell the view draws only part of
 	/// shows the 2D drawing's colour in the rest; then the view's pass (<see cref="ViewPass"/>) and the cells it drew
-	/// into, read back at once. Without a pass no cell is drawn into.
+	/// into, read back at once, or every cell for a scene that fills the rect (<see cref="Es1RectView.FillsRect"/>),
+	/// whose backdrop writes no depth. Without a pass no cell is drawn into.
 	/// </summary>
 	bool[] IEs1WorldLayer.DrawWorldView(int x, int y, int width, int height, Es1RectView view) {
 		if (ViewPass == null) {
@@ -167,7 +168,14 @@ public sealed class Es1Monitor : IEs1WorldLayer, IDisposable {
 		_surface.PaintCells(x, y, width, height);
 		var viewport = _surface.BeginWorld(x, y, width, height);
 		ViewPass(view, (width, height), viewport);
-		var covered = _surface.ReadWorldCoverage(x, y, width, height);
+		bool[] covered;
+		if (view.FillsRect) {
+			covered = new bool[width * height];
+			Array.Fill(covered, true);
+		} else {
+			covered = _surface.ReadWorldCoverage(x, y, width, height);
+		}
+
 		_surface.EndWorld();
 		return covered;
 	}

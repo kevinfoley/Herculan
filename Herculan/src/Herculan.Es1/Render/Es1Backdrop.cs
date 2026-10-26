@@ -100,8 +100,22 @@ public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 	/// <summary>The preferences options 3 to 5, which every <see cref="Draw"/> reads; the viewer's own with no simulation.</summary>
 	public Es1BackdropOptions Options { get; init; } = new(null);
 
+	/// <summary>
+	/// 2^<c>Raster_FocalShift</c> of the projection the backdrop is drawn under, in the original's pixels, which the
+	/// horizon's drop and the textured ground's rays are measured with: the main view's
+	/// <see cref="Es1Horizon.FocalPixels"/> unless set.
+	/// </summary>
+	public float FocalPixels { get; init; } = Es1Horizon.FocalPixels;
+
+	/// <summary>
+	/// The page column of the projection centre in the next <see cref="Draw"/>: a level skyline's frames stand at page
+	/// columns (<c>Hzline_BlitHorizonStrip</c>'s level branch), where a rolled one's are placed from the line's
+	/// midpoint as if it stood on column 160. 160, the main view's, unless set.
+	/// </summary>
+	public int CentrePageColumn { get; set; } = CentreColumn;
+
 	public void Draw(Camera camera, int viewportX, int viewportY, int viewportWidth, int viewportHeight) {
-		float scale = camera.FocalPixelsFor(viewportHeight) / Es1Horizon.FocalPixels;
+		float scale = camera.FocalPixelsFor(viewportHeight) / FocalPixels;
 		var centre = camera.PrincipalPointInWindow(viewportX, viewportY, viewportWidth, viewportHeight);
 		short pitch = unchecked((short)camera.Pitch);
 		short roll = unchecked((short)camera.Roll);
@@ -112,7 +126,7 @@ public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 
 		// The line's midpoint lies the horizon's drop along the rolled vertical below the centre, then LineDrop rows
 		// straight down; the ground and the skyline take the line one row further down.
-		float drop = Es1Horizon.HorizonDrop(pitch);
+		float drop = Es1Horizon.HorizonDrop(pitch, FocalPixels);
 		float lineRow = MathF.Floor(drop * cosRoll + _horizon.LineDrop);
 		float lineDown = drop + _horizon.LineDrop * cosRoll;
 		int t = _horizon.HorizonGap;
@@ -243,7 +257,7 @@ public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 		}
 
 		_shader.SetInt("uDistanceCount", compared);
-		_shader.SetFloat("uFocal", Es1Horizon.FocalPixels);
+		_shader.SetFloat("uFocal", FocalPixels);
 		_shader.SetFloat("uHeight", z);
 		_shader.SetFloat("uCosPitch", SimTrig.Cos(pitch) / Q14);
 		_shader.SetFloat("uSinPitch", SimTrig.Sin(pitch) / Q14);
@@ -268,7 +282,7 @@ public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 			_shader.SetFloat(SkylineRowNames[k], skyline.Rows[k]);
 		}
 
-		_shader.SetFloat("uSkylineStart", skyline.StartFor(heading) - CentreColumn);
+		_shader.SetFloat("uSkylineStart", skyline.StartFor(heading) - (rolled ? CentreColumn : CentrePageColumn));
 		_shader.SetFloat("uSkylineMidX", -(_horizon.LineDrop + 1) * sinRoll);
 		_shader.SetFloat("uSkylineLine", rolled ? lineDown + cosRoll : lineRow + 1);
 		_shader.SetFloat("uLineOffset", _horizon.LineOffset);
