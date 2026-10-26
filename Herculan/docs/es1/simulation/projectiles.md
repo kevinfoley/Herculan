@@ -1,4 +1,4 @@
-# DBSIM.EXE — the projectiles: the pool, gun rounds, the thrown round and beams
+# DBSIM.EXE — the projectiles: the pool, gun rounds, the grenade and beams
 
 **ES1's guns fire rounds that cross the ground over several ticks and its beams strike at once and leave a flash for one frame, as ES2's do ([ES2's travelling rounds](../../retail/simulation/projectiles.md), [ES2's beams](../../retail/simulation/beam-visuals.md)); its missiles are [`rocket.cpp`](rockets.md).** What a player would see differently, as far as these files' code decides it ([Open](#open)):
 
@@ -6,7 +6,7 @@
 - how far a gun round flies depends on how long the simulation's ticks are, since its life counts ticks while each step scales with the tick;
 - a laser or particle beam is a flat-colored cross of two ribbons standing in the world, its weapon's width in world units, so it thins with distance, where ES2's is a textured ribbon turned to face the camera and never drawn thinner than four pixels; the color is the weapon's, 88 for the lasers and 10 for the particle beams, where every straight ES2 beam draws the same orange and white;
 - a beam is drawn as one piece from the muzzle to where it stops, where ES2's is cut into 5000-unit pieces;
-- the grenade launcher, `GREN`, spends a round on each throw and launches nothing ([the thrown round](#the-thrown-round)).
+- the grenade launcher, `GREN`, spends a round on each throw and launches nothing ([the grenade](#the-grenade)).
 
 Addresses are `ES1DBSIM` image addresses ([the X-32 executable](../formats/x32-executable.md#the-image)); ES2's are DBSIM's. Every function here removes its own arguments, so argument lists are in stack order ([calling conventions](../formats/compiler.md#calling-conventions)). The mounts' fire dispatches that call these files' shot functions are in [the mount classes](weapon-mount-classes.md#firing).
 
@@ -18,11 +18,11 @@ Four object files and a fifth, `rocket.cpp`, between them ([where object files m
 |---|---|---|---|
 | the projectile pool | `00006d9c`–`00006dfb` | `Projectile_LoadResources`, after the three zero bytes that follow the `RET` at `00006d98` of the exit routine `00006d84` of the file holding `FlatObj_LoadResources` (`00006cf8`) | `Projectile_StaticDtor`'s `RET` at `00006dfb`, on a 4-byte boundary |
 | [`rocket.cpp`](rockets.md#where-the-object-file-starts-and-ends) | `00006dfc`–`00007879` | a run of `ConfigPart`'s copies | `Rocket_RegisterSubsystem` |
-| the thrown round | `0000787c`–`00007b69` | a lone 40-byte destructor, `HeapPtr_DtorGrenadeCopy` | `Grenade_RegisterSubsystem`, its `RET` at `00007b68` and three zero bytes |
+| the grenade | `0000787c`–`00007b69` | a lone 40-byte destructor, `HeapPtr_DtorGrenadeCopy` | `Grenade_RegisterSubsystem`, its `RET` at `00007b68` and three zero bytes |
 | `bullet.cpp` | `00007b6c`–`00008205` | a lone 40-byte destructor, `HeapPtr_DtorBulletCopy` | `Bullet_RegisterSubsystem`, its `RET` at `00008204` and three zero bytes |
 | the beams | `00008208`–`000089d1` | a lone 40-byte destructor, `HeapPtr_DtorBeamCopy` | `Beam_RegisterSubsystem`, its `RET` at `000089d0` and three zero bytes |
 
-The pool's file has no copy of the 40-byte destructor and no `ConfigPart` run; the zero fill before it and the run at `00006dfc` after it bound it, and its static initializer and exit routine are its last code. Each file's static initializer is its last code but for the pool's, whose exit routine follows it; their entries in the static constructor table are `000adbd8` to `000adbe8`, one to each file in address order, and `collide.cpp`'s run follows the beams' file at `000089d4`. `bullet.cpp`'s source path (`00090c08`) is pushed at `00007be6`, in `Bullet_LoadResources`; `es1_boilerplate.py bounds` finds a source path pushed in no other of the four. Each file but the pool's has its own copies of `TS_OBJ`'s, `MAT_OBJ`'s and `DRAWABLE`'s functions and tables, and its own copy of the projectile base's destructor. The files' tables follow one another from `00090a26`: `rocket.cpp`'s to `00090b56`, the thrown round's from `00090b5a`, `bullet.cpp`'s with its names and source path from `00090c00`, and the beams' from `00090cd8`, up to `collide.cpp`'s source path at `00090da4`.
+The pool's file has no copy of the 40-byte destructor and no `ConfigPart` run; the zero fill before it and the run at `00006dfc` after it bound it, and its static initializer and exit routine are its last code. Each file's static initializer is its last code but for the pool's, whose exit routine follows it; their entries in the static constructor table are `000adbd8` to `000adbe8`, one to each file in address order, and `collide.cpp`'s run follows the beams' file at `000089d4`. `bullet.cpp`'s source path (`00090c08`) is pushed at `00007be6`, in `Bullet_LoadResources`; `es1_boilerplate.py bounds` finds a source path pushed in no other of the four. Each file but the pool's has its own copies of `TS_OBJ`'s, `MAT_OBJ`'s and `DRAWABLE`'s functions and tables, and its own copy of the projectile base's destructor. The files' tables follow one another from `00090a26`: `rocket.cpp`'s to `00090b56`, the grenade's from `00090b5a`, `bullet.cpp`'s with its names and source path from `00090c00`, and the beams' from `00090cd8`, up to `collide.cpp`'s source path at `00090da4`.
 
 ## The projectile pool
 
@@ -41,11 +41,11 @@ Four classes share the projectile base, as ES2's `ROCKET`, `GRENADE`, `BULLET` a
 | Class | Constructor | Table | The file's base table |
 |---|---|---|---|
 | missile | `Rocket_Construct` (`000074e4`, [launching](rockets.md#launching--rocket_fire-00007748)) | `RocketVtable` (`00090ad6`) | `ProjectileBaseVtableRocketCopy` (`00090ab2`) |
-| thrown round | `Grenade_Construct` (`000078c4`) | `GrenadeVtable` (`00090b7e`) | `ProjectileBaseVtableGrenadeCopy` (`00090b5a`) |
+| grenade | `Grenade_Construct` (`000078c4`) | `GrenadeVtable` (`00090b7e`) | `ProjectileBaseVtableGrenadeCopy` (`00090b5a`) |
 | gun round | `Bullet_Construct` (`00007d08`, [the load](../formats/bullets-skimmer-dat.md#the-load)) | `BulletVtable` (`00090c56`) | `ProjectileBaseVtableBulletCopy` (`00090c32`) |
 | beam tracer | `BeamTracer_Ctor` (`00008268`) | `BeamTracerVtable` (`00090d1e`) | `ProjectileBaseVtableBeamCopy` (`00090cfa`) |
 
-The tables' slots are ES2's 4 bytes higher ([vtables](../formats/compiler.md#vtables)): `+4` the draw, `+8` the position (the object + `0x20`), `+0xc` the destructor, `+0x10` a stub returning 0, `+0x14` the shape's radius and `+0x18` the tick. The missile's, thrown round's and gun round's draw is their file's copy of `TS_OBJ`'s render, which installs the object's transform and renders the shape instance `+0x2e`; ES2's `Bullet_Draw` also zeroes `DAT_004a5b1c` around it, drawing a round's textured polys fullbright. A class's destructor queues the object on `g_ProjectileDeleteQueue` with `ObjectPool_QueueForDelete` on flags bit 0, where ES2's frees it with `Mem_Delete`. Each file's copy of the base's destructor, `ProjectileBase_DtorRocketCopy` (`000075b4`), `ProjectileBase_DtorGrenadeCopy` (`000079b0`), `ProjectileBase_DtorBulletCopy` (`00007df0`) and `ProjectileBase_DtorBeamCopy` (`00008604`), the slot `+0xc` of the base table, stores that table and the `TS_OBJ` copy's, destroys the shape instance through its slot `+0x1c` with 3 and stores the `MAT_OBJ` and `DRAWABLE` copies', with no null test and no freeing; ES2's `ProjectileBase_Dtor` (`0040c324`) tests for null and frees on flags bit 0.
+The tables' slots are ES2's 4 bytes higher ([vtables](../formats/compiler.md#vtables)): `+4` the draw, `+8` the position (the object + `0x20`), `+0xc` the destructor, `+0x10` a stub returning 0, `+0x14` the shape's radius and `+0x18` the tick. The missile's, grenade's and gun round's draw is their file's copy of `TS_OBJ`'s render, which installs the object's transform and renders the shape instance `+0x2e`; ES2's `Bullet_Draw` also zeroes `DAT_004a5b1c` around it, drawing a round's textured polys fullbright. A class's destructor queues the object on `g_ProjectileDeleteQueue` with `ObjectPool_QueueForDelete` on flags bit 0, where ES2's frees it with `Mem_Delete`. Each file's copy of the base's destructor, `ProjectileBase_DtorRocketCopy` (`000075b4`), `ProjectileBase_DtorGrenadeCopy` (`000079b0`), `ProjectileBase_DtorBulletCopy` (`00007df0`) and `ProjectileBase_DtorBeamCopy` (`00008604`), the slot `+0xc` of the base table, stores that table and the `TS_OBJ` copy's, destroys the shape instance through its slot `+0x1c` with 3 and stores the `MAT_OBJ` and `DRAWABLE` copies', with no null test and no freeing; ES2's `ProjectileBase_Dtor` (`0040c324`) tests for null and frees on flags bit 0.
 
 The fields are ES2's 6 lower, the `TS_OBJ` being `0x3b` bytes to ES2's `0x41`:
 
@@ -93,7 +93,7 @@ Slot `+0x18` of `BulletVtable`, (round), returning 1 when the round ends; ES2's 
 
 **`Bullet_Dtor` (`00007e80`)**, slot `+0xc` of `BulletVtable` by its padding `00007e7f`, is [the class destructor](#the-projectile-classes) on `bullet.cpp`'s tables. **`Bullet_RegisterSubsystem` (`000081f8`)** registers `Bullet_LoadResources` at phase 2, as ES2's does.
 
-## The thrown round
+## The grenade
 
 **The grenade launcher spends a round and launches nothing.** `GrenadeMount_FireDispatch` takes a round off the magazine, unless the shot is free, and calls **`Grenade_FireNoOp` (`00007b44`)** with (throw distance, machine, angles, muzzle point, subtype) ([firing](weapon-mount-classes.md#firing)); it is a lone `RET 0x14`, which removes the five arguments and reads none, so the subtype it is passed, read from the record `GREN`'s projectile index 22 points past the table's end at ([the projectile index](../formats/weapons-dat-sim.md#the-projectile-index)), goes nowhere. ES2's `Grenade_FireNoOp` (`0040acac`) is a bare `RET` and its grenade class serves `LAEW`.
 
@@ -101,7 +101,7 @@ The rest of the file is the class, as ES2's grenade module is:
 
 - **`Grenade_Construct` (`000078c4`)**, (round, subtype), builds the round on the root `g_GrenadeShapes` (`000bc1f0`)[record `+0`] of the 8-byte record `g_GrenadeTypeTable` (`000bc1ea`)[subtype], with [the base's fields](#the-projectile-classes), and stores `Proj_LookupRecord`(subtype, 3) at `+0x48`, the one lookup of a type-3 record. `es2_xref.py` finds no reference to it, nor to **`Grenade_GetTypeRecord` (`000078a4`)**, the table + subtype × 8.
 - **`Grenade_LoadResourcesNoOp` (`000078c0`)**, the phase-2 loader **`Grenade_RegisterSubsystem` (`00007b5c`)** registers, is a lone `RET` after three `NOP`s, so nothing in this file fills the two tables the constructor reads.
-- **`Grenade_TickNoOp` (`00007b47`)**, the tick slot `+0x18` of `GrenadeVtable`, returns 0, so a thrown round would never end; **`Grenade_Dtor` (`00007a40`)**, slot `+0xc`, is [the class destructor](#the-projectile-classes) on this file's tables.
+- **`Grenade_TickNoOp` (`00007b47`)**, the tick slot `+0x18` of `GrenadeVtable`, returns 0, so a grenade would never end; **`Grenade_Dtor` (`00007a40`)**, slot `+0xc`, is [the class destructor](#the-projectile-classes) on this file's tables.
 - **`Grenade_NoOp` (`00007b50`)**, a `RET 4`, and **`Grenade_ReturnZero` (`00007b54`)**, `XOR EAX,EAX; RET 4`, follow the fire stub, each after `NOP` padding, as ES2's two stubs follow its fire stub; `es2_xref.py` finds no reference to either or to their padding.
 
 ## Beams
