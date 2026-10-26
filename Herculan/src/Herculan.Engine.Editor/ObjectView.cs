@@ -16,8 +16,8 @@ namespace Herculan.Engine.Editor;
 /// one the mission as opened leaves out too: its name, its group with a choice that moves it into another
 /// (<see cref="MemberMover"/>) and its group's orders, its Present when, with what it does to a group it would leave empty
 /// (<see cref="PresentWhenView.DrawGroupLeftEmpty"/>), and the random choice it picks from; its
-/// team, type and fit (<see cref="RosterFitView"/>); its position as fields that move it, and its heading; its starting
-/// condition, or for a machine of the player's squad which Herc it is (<see cref="SquadMachinePanel"/>); the two triggers it
+/// team, type and fit (<see cref="RosterFitView"/>); its position as fields that move it, and its heading; a herc's,
+/// structure's or ground vehicle's starting condition (<see cref="StartingConditionField"/>), or for a machine of the player's squad which Herc it is (<see cref="SquadMachinePanel"/>); the two triggers it
 /// fires; the campaign variables it sets when put out of action; the win and lose conditions about it; Delete, or what
 /// refuses it; and, collapsed under Advanced, its type number, model, triangle and texture counts and hit radius.
 /// </summary>
@@ -35,13 +35,14 @@ internal sealed class ObjectView {
 	private readonly VariantView _variants;
 	private readonly ActionEditor _actions;
 	private readonly RelatedObjectives _objectives;
+	private readonly StartingConditionField _condition;
 
 	// The object's point being typed.
 	private readonly PointFields _point = new();
 
 	public ObjectView(MissionIndex index, PanelLinks links, PointMover mover, TeamField team, ObjectDeleter deleter,
 			MemberMover members, SquadMachinePanel machine, RosterFitView fit, PresentWhenView presentWhen, PresenceEditor presence, VariantView variants,
-			ActionEditor actions, RelatedObjectives objectives) {
+			ActionEditor actions, RelatedObjectives objectives, StartingConditionField condition) {
 		_index = index;
 		_links = links;
 		_mover = mover;
@@ -55,6 +56,7 @@ internal sealed class ObjectView {
 		_variants = variants;
 		_actions = actions;
 		_objectives = objectives;
+		_condition = condition;
 	}
 
 	/// <summary>Draws <paramref name="sel"/>'s view; nothing for an object the layout does not place.</summary>
@@ -86,7 +88,7 @@ internal sealed class ObjectView {
 		ImGui.Text($"Heading: {MissionText.Heading(sel.Object.Heading)}");
 
 		if (!planned.Squad) {
-			ImGui.TextUnformatted($"Starting condition: {planned.StartingCondition}%");
+			_condition.Draw(planned.Key);
 			if (planned.Kind == MissionUnitKind.Base && _links.Names.Types.IsInvulnerable(planned.TypeIndex)) {
 				EditorText.Note("Can't be destroyed: a structure of its type takes no damage.");
 			}

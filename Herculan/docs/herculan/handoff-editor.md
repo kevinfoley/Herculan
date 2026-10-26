@@ -52,9 +52,9 @@ Beyond the gaps each doc lists:
 | 7 (2), headings | a heading for an object or a group |
 | 8 (3), routes | naming one from a group's own route field (row 16) |
 | 10 (5), triggers | the leftover text line (`0x44`) |
-| 12 (7), mechs | AI radar and cruise speed, starting condition, the campaign variables it sets when put out of action (shown) |
+| 12 (7), mechs | AI radar and cruise speed, the campaign variables it sets when put out of action (shown) |
 | 13 (8), flyers | the campaign variables it sets when destroyed (shown) |
-| 14 (9), structures and ground vehicles | the starting condition (0 in 29% of retail records), the campaign variables it sets when destroyed (shown; 698 retail records set one) |
+| 14 (9), structures and ground vehicles | the campaign variables it sets when destroyed (shown; 698 retail records set one) |
 | 15 (10), orders | the formation and the point |
 | 16 (11), groups | the formation id (shown under Advanced), paints-ground flag (shown as its base pad), heading, own route (shown under Advanced), the campaign variables it sets when every member is down (shown) and map-shown flag; deleting one other than with its last member |
 | 17 (12), objectives | the condition ref, which the campaign layer authors; their order |

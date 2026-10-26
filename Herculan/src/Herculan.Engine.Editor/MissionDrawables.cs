@@ -2,6 +2,7 @@ using System.Numerics;
 using Herculan.Engine.Gl;
 using Herculan.Engine.Render;
 using Herculan.Engine.Scene;
+using Herculan.Engine.Sim;
 using Silk.NET.OpenGL;
 
 namespace Herculan.Engine.Editor;
@@ -10,7 +11,9 @@ namespace Herculan.Engine.Editor;
 /// The GPU half of an <see cref="EditorMission"/>: its terrain and every model uploaded, and the scene items that
 /// draw them. Nothing ticks, so each object's transform is set as it is uploaded and again only when an edit moves it
 /// (<see cref="Move"/>). An object an edit adds is uploaded then (<see cref="Add"/>), its model too if nothing drawn
-/// so far uses it, and one an edit takes away stops being drawn (<see cref="Remove"/>), its model kept for a redo.
+/// so far uses it, and one an edit takes away stops being drawn (<see cref="Remove"/>), its model kept for a redo. A
+/// structure placed with parts collapsed shows their rubble, and one placed already fallen its wreck, as the object was
+/// built (<see cref="BaseObject.CellFrames"/>, <see cref="BaseObject.ShowingHulk"/>).
 /// Disposing it frees every upload, which is what opening another mission does before building the next one.
 /// </summary>
 internal sealed class MissionDrawables : IDisposable {
@@ -21,6 +24,7 @@ internal sealed class MissionDrawables : IDisposable {
 	private readonly List<SceneItem> _items;
 	private readonly Func<SceneObject, bool> _isWaiting;
 	private readonly Func<SceneObject, bool> _inScene;
+	private readonly MissionScene _scene;
 
 	// The items of the objects out of the scene (MissionIndex.InScene), never drawn.
 	private readonly List<SceneItem> _offScene = new();
@@ -39,7 +43,7 @@ internal sealed class MissionDrawables : IDisposable {
 		_gl = gl;
 		_isWaiting = mission.Index.IsWaiting;
 		_inScene = mission.Index.InScene;
-		var scene = mission.Scene;
+		var scene = _scene = mission.Scene;
 
 		// See Scene.Atmosphere. Without it the renderer has no sky gradient, so DrawSky paints nothing and the
 		// view has no background at all.
@@ -95,21 +99,23 @@ internal sealed class MissionDrawables : IDisposable {
 	/// drawn so far uses it. An object with no model draws nothing.
 	/// </summary>
 	public void Add(SceneObject sceneObject) {
-		if (sceneObject.Model is not { } model || _objects.ContainsKey(sceneObject)) {
+		if (DrawnModel(sceneObject) is not { } model || _objects.ContainsKey(sceneObject)) {
 			return;
 		}
 
 		UploadModel(model);
+		var frames = sceneObject.Object.CellFrames;
 		uint? textureHandle = _modelTextures.TryGetValue(model.Key, out var texture) ? texture.Handle : null;
 		var draw = new ObjectDraw { Transform = MissionScene.TransformOf(sceneObject) };
 		var transform = draw.Transform;
 		if (_modelCells.TryGetValue(model.Key, out var cellMeshes)) {
-			// What the flat mesh is: every sequence on its first cell and every detail part at its finest
-			// level. The ground plane stays with _groundMeshes below.
+			// Every sequence on the cell its object shows, as the simulator gates them (WorldDrawItems): the first,
+			// or for a structure placed with parts collapsed (BaseObject's starting condition) their rubble. Every
+			// detail part at its finest level. The ground plane stays with _groundMeshes below.
 			var groups = new Dictionary<BspTree, BspDrawGroup>();
 			for (int i = 0; i < cellMeshes.Length; i++) {
 				var cell = model.Cells[i];
-				if (cell.Ground || !cell.Gate.VisibleIn(null)
+				if (cell.Ground || !cell.Gate.VisibleIn(frames)
 						|| (cell.Gate.Detail is { } detail && cell.Gate.Level != detail.LevelCount - 1)) {
 					continue;
 				}
@@ -145,6 +151,14 @@ internal sealed class MissionDrawables : IDisposable {
 		_items.AddRange(draw.Items);
 		FileItems(sceneObject, draw);
 	}
+
+	// The model <sceneObject> is drawn as: its own, or for a structure placed already fallen the wreck its type leaves, which
+	// the simulator draws in the building's place (WorldDrawItems.RefreshWreckItems); its own where the type leaves none.
+	// Nothing ticks, so the choice is made once: a starting condition edited builds a new object (SceneSync).
+	private SceneModel? DrawnModel(SceneObject sceneObject) =>
+		sceneObject.Object is BaseObject { ShowingHulk: true } structure && _scene.Hulk(structure.Type.HulkTypeIndex) is { } hulk
+			? hulk
+			: sceneObject.Model;
 
 	/// <summary>Stops drawing <paramref name="sceneObject"/>. Its model's uploads stay, for a redo to draw it again.</summary>
 	public void Remove(SceneObject sceneObject) {

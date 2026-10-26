@@ -205,9 +205,10 @@ internal sealed class SceneSync {
 		}
 	}
 
-	// The object built for <key>, of the placement's type and weapon fit, and not yet placed by this sync. A type that
-	// differs is a chassis changed, or a variant table set, and a fit that differs a fit changed (MachineFitter); either
-	// needs an object of its own, since a mech's loadout is built with it.
+	// The object built for <key>, of the placement's type, weapon fit and starting condition, and not yet placed by this sync.
+	// A type that differs is a chassis changed, or a variant table set, a fit that differs a fit changed (MachineFitter), and
+	// a condition that differs one set (StartingConditionEditor); each needs an object of its own, since a mech's loadout and
+	// a structure's damage are built with it.
 	private SceneObject? Reuse(ObjectKey key, MissionPlacement placement, HashSet<object> placedNow) {
 		if (!_built.TryGetValue(key, out var objects)) {
 			return null;
@@ -216,7 +217,8 @@ internal sealed class SceneSync {
 		var found = objects.Find(built => !placedNow.Contains(built) && built.Placement.Kind == placement.Kind
 			&& built.Placement.TypeIndex == placement.TypeIndex && built.Placement.TypeName == placement.TypeName
 			&& built.Placement.WeaponRefs.SequenceEqual(placement.WeaponRefs)
-			&& built.Placement.WeaponSecondary.SequenceEqual(placement.WeaponSecondary));
+			&& built.Placement.WeaponSecondary.SequenceEqual(placement.WeaponSecondary)
+			&& built.Placement.StartingCondition == placement.StartingCondition);
 		if (found != null) {
 			objects.Remove(found);
 			objects.Insert(0, found);
@@ -257,7 +259,8 @@ internal sealed class SceneSync {
 /// One step of <see cref="PointMover"/>'s undo history that the scene is synced again after: a move
 /// (<see cref="PointMover"/>), a side change (<see cref="SideChanger"/>), an add (<see cref="StructurePlacer"/>,
 /// <see cref="HercPlacer"/>, <see cref="FlyerPlacer"/>, <see cref="VehiclePlacer"/>), a delete (<see cref="ObjectDeleter"/>), a
-/// fit or type change (<see cref="MachineFitter"/>, <see cref="RosterTypeEditor"/>), a squad edit (<see cref="SquadEditor"/>), a
+/// fit or type change (<see cref="MachineFitter"/>, <see cref="RosterTypeEditor"/>), a starting condition set
+/// (<see cref="StartingConditionEditor"/>), a squad edit (<see cref="SquadEditor"/>), a
 /// route edit (<see cref="RouteEditor"/>), a trigger-area edit (<see cref="AreaEditor"/>), an order edit (<see cref="OrderEditor"/>),
 /// an action or wiring edit (<see cref="ActionEditor"/>), a timer edit (<see cref="TimerEditor"/>), a condition edit
 /// (<see cref="ConditionEditor"/>), a Present when set (<see cref="PresenceEditor"/>), a variant table edit

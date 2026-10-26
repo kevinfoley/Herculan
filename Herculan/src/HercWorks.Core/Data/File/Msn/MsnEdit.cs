@@ -249,6 +249,20 @@ public sealed class MsnField {
 		_ => throw new ArgumentOutOfRangeException(nameof(row), row, "Rows 12 to 14 are the rosters."),
 	};
 
+	/// <summary>
+	/// The starting condition of a herc, row 12's <see cref="MechRosterEntry144.StartingCondition"/>, or of a structure or
+	/// ground vehicle, row 14's <see cref="BaseRosterEntry62.StartingCondition"/>. A flyer's record has none.
+	/// </summary>
+	public static MsnField StartingCondition(int row) => row switch {
+		12 => new(12, MechRosterEntry144.StartingConditionWord,
+			record => ((MechRosterEntry144)record).StartingCondition,
+			(record, value) => ((MechRosterEntry144)record).StartingCondition = value),
+		14 => new(14, BaseRosterEntry62.StartingConditionWord,
+			record => ((BaseRosterEntry62)record).StartingCondition,
+			(record, value) => ((BaseRosterEntry62)record).StartingCondition = value),
+		_ => throw new ArgumentOutOfRangeException(nameof(row), row, "Rows 12 and 14 carry a starting condition."),
+	};
+
 	public short Get(MapObject record) => _get(record);
 
 	public void Set(MapObject record, short value) => _set(record, value);

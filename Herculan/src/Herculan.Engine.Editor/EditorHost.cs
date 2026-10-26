@@ -747,6 +747,7 @@ public sealed class EditorHost {
 		mission.Members.RunRequest();
 		mission.Fitter.RunRequest();
 		mission.Types.RunRequest();
+		mission.StartingConditions.RunRequest();
 		mission.Squad.RunRequest();
 		mission.Theater.RunRequest();
 		mission.Routes.RunRequest();

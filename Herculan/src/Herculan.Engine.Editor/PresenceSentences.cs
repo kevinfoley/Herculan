@@ -28,13 +28,7 @@ internal static class PresenceSentences {
 	/// record: "Its chassis and weapons change when ... .", or "Some of its details change ..." where none is named.
 	/// </summary>
 	public static string Variation(int row, IReadOnlyList<RecordAspect> aspects, PresenceRule? rule) {
-		string when = rule switch {
-			null => "in some versions of the mission",
-			{ IsAlways: true } => "in every version of the mission",
-			{ Variables.Count: 0 } => Clauses(rule),
-			_ => $"when {Clauses(rule)}",
-		};
-
+		string when = Occasion(rule);
 		var named = aspects.Where(aspect => aspect != RecordAspect.Other).Select(aspect => Aspect(row, aspect)).ToList();
 		if (named.Count == 0) {
 			return $"Some of its details change {when}.";
@@ -47,6 +41,17 @@ internal static class PresenceSentences {
 		bool plural = named.Count > 1 || named[0].Plural;
 		return $"Its {List(named.Select(part => part.Words).ToList())} {(plural ? "change" : "changes")} {when}.";
 	}
+
+	/// <summary>
+	/// When a variation's <paramref name="rule"/> holds, as it reads after what changes: "when campaign variable 30 is more than
+	/// 0", "in about 50% of loads", "in some versions of the mission" for null.
+	/// </summary>
+	public static string Occasion(PresenceRule? rule) => rule switch {
+		null => "in some versions of the mission",
+		{ IsAlways: true } => "in every version of the mission",
+		{ Variables.Count: 0 } => Clauses(rule),
+		_ => $"when {Clauses(rule)}",
+	};
 
 	/// <summary>
 	/// A debrief outcome's or loss case's heading: "When the mission was won and campaign variable 250 is 1", its variables

@@ -459,6 +459,13 @@ public sealed class MissionScene {
 	public SceneObject? CreateObject(MissionPlacement placement) => Spawn(placement, _library, _tables, World.Random, World.Tweaks);
 
 	/// <summary>
+	/// The wreck <see cref="BaseType.HulkTypeIndex"/> <paramref name="index"/> names, from the model library: the one
+	/// <see cref="MissionModels.Hulks"/> holds for a structure the scene was loaded with, or for a type
+	/// <see cref="CreateObject"/> built since, built now. Null for a root the library does not have.
+	/// </summary>
+	public SceneModel? Hulk(int index) => _library.Hulk(index);
+
+	/// <summary>
 	/// Dresses the scene in theater <paramref name="theaterIndex"/>'s <paramref name="variant"/> in place of the one it
 	/// was loaded with, as <c>World_LoadTheater</c> (<c>0042e010</c>) would have loaded it at the start
 	/// (docs/retail/formats/wld-world.md): the palette and shade ramp every model is built through, the terrain bank, the
