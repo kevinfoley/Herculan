@@ -17,7 +17,16 @@ Its tables run from `00090a26` to `00090b56`: the run's two tables, the names `r
 
 ## The type table — `Rocket_LoadResources` (`000073d0`)
 
-The phase-2 loader is ES2's `Rocket_LoadTypeTable_Unguided` (`0040a818`, [`ROCKETS.DAT`](../../retail/formats/rockets-dat.md)): it opens `dat\rockets`, asserting at severity 5 (line `0xd1`) when the stream status is set, reads an `int16` count into `g_RocketTypeCount` (`000bc1e2`) and that many 14-byte records into `g_RocketTypeTable` (`000bc1de`), keeps the greatest root plus one at `000bc1e8`, and loads `dts\rockets` with `Shape_LoadAllRoots` (tag `0x140008`) into `g_RocketShapes` (`000bc1e4`), binding no bank. The records are ES2's layout, and **`Rocket_GetTypeRecord` (`00006e98`)** reaches one by the missile's subtype byte `+0x3b`, as ES2's does by `+0x41`. The retail values are [Open](#open).
+The phase-2 loader is ES2's `Rocket_LoadTypeTable_Unguided` (`0040a818`, [`ROCKETS.DAT`](../../retail/formats/rockets-dat.md)): it opens `dat\rockets`, asserting at severity 5 (line `0xd1`) when the stream status is set, reads an `int16` count into `g_RocketTypeCount` (`000bc1e2`) and that many 14-byte records into `g_RocketTypeTable` (`000bc1de`), keeps the greatest root plus one at `000bc1e8`, and loads `dts\rockets` with `Shape_LoadAllRoots` (tag `0x140008`) into `g_RocketShapes` (`000bc1e4`), binding no bank. The records are ES2's layout, and **`Rocket_GetTypeRecord` (`00006e98`)** reaches one by the missile's subtype byte `+0x3b`, as ES2's does by `+0x41`.
+
+The retail `dat\rockets` in `SIMVOL0.VOL` is 72 bytes, a count of 5 and five records, as read through `HercWorks.Core`'s reader of ES2's file; they are ES2's retail records ([`ROCKETS.DAT`](../../retail/formats/rockets-dat.md#datrocketsdat)) value for value:
+
+| Subtype | Fired by | Root | Lifetime | Acceleration | Slack | Interval | Sequence | Sound |
+|---|---|---|---|---|---|---|---|---|
+| 0–3 | the pods `6`, `8` and `10` | 0 | 80 | 250 | 200 | 256 | 0 | 5 |
+| 4 | `MISSL` | 1 | 80 | 250 | 300 | 0 | 0 | 5 |
+
+`WeaponMount_FireDispatch_Missile` passes the projectile record's subtype id `+2` as the subtype. `MISSL`'s projectile index 18 names the record of type 0 and subtype id 4 ([the projectile records](../formats/weapons-dat-sim.md#retail-values)). A pod's mount holds the type-0 record whose subtype id is its hardpoint's ammunition type, 5 read as 0 ([the projectile index](../formats/weapons-dat-sim.md#the-projectile-index)): records 10 to 13 for types 0 to 3. `dts\rockets` holds two roots of two cell frames each. With interval 0, the `MISSL`'s flame never steps.
 
 ## Launching — `Rocket_Fire` (`00007748`)
 
@@ -28,6 +37,17 @@ The phase-2 loader is ES2's `Rocket_LoadTypeTable_Unguided` (`0040a818`, [`ROCKE
 - **The target.** A machine whose `+0x9d` (ES2's piloted byte `+0xa3`) is clear firing subtype 3 takes it outright, as in ES2; otherwise the machine's slot `+0x70`(machine, subtype) decides, where ES2's asks slot `+0x6c`. On a HERC that slot is `SimObject_MissileLockState_AlwaysMechCopy`, which answers 1 ([the HERC's table](mech.md#the-hercs-table)), so a HERC's missile always takes the machine's selected target `+0x15e` (ES2's `+0x1a4`) into `+0x50`, lock or no lock. With a target, the component to steer at goes to `+0x54` from the target's slot `+0x58`(target, the missile's angles `+6`), `Mech_ComponentNearestAim` (`00015884`) on a HERC.
 - With the machine's `+0x9d` set, `MfdMissileView_TrackedRound` (`00093914`) becomes the missile, for [the missile camera](mfd-missile-camera.md#painting).
 - `Sound_PlayAt`(muzzle point, the type record's `+0xc` + 10).
+- **The flame countdown.** Neither function writes `+0x56` or its `int16` at `+0x57`, so the missile keeps what the pool element last held there: what the previous projectile in that element left, or, for an element never used, whatever the allocator's block held, `Pool_Init` not zeroing it ([the pool](projectiles.md#the-projectile-pool)). `Bullet_Construct` does load its round's countdown `+0x53` from the type record's `+6` ([the load](../formats/bullets-skimmer-dat.md#the-load)).
+
+The missile's own fields, ES2's 6 lower:
+
+| ES1 | ES2 | Holds |
+|---|---|---|
+| `+0x4c` | `+0x52` | the speed, an `int16` |
+| `+0x4e` | `+0x54` | the age, in ticks |
+| `+0x50` | `+0x56` | the target |
+| `+0x54` | `+0x5a` | the target's component to steer at |
+| `+0x56` | `+0x5c` | the flame countdown, its `int16` at `+0x57` |
 
 `es2_xref.py` finds one other call, from `0001bba4`, which passes its `+0x1c9` as the speed and subtype 0 ([Open](#open)).
 
@@ -35,7 +55,7 @@ The phase-2 loader is ES2's `Rocket_LoadTypeTable_Unguided` (`0040a818`, [`ROCKE
 
 Slot `+0x18` of `RocketVtable`, (missile), returning 1 when the missile ends; ES2's ([flight](../../retail/simulation/rockets.md#flight--rocket_tickupdate-0040a538)) on ES1's fields, in order:
 
-1. **The flame.** With the type record's interval `+8` non-zero, the countdown at `+0x56` (its `int16` at `+0x57`) runs down by `Math_CountdownTimerTick`; at 0 it reloads with the interval and the shape instance's cell frame for the record's sequence `+0xa` steps on, modulo that sequence's frame count.
+1. **The flame.** With the type record's interval `+8` non-zero, the countdown at `+0x56` (its `int16` at `+0x57`) runs down by `Math_CountdownTimerTick`. At 0 it reloads with the interval and the shape instance (`+0x2e`) steps its cell frame for the record's sequence *s* `+0xa`: word *s* of the frame array the instance's `+8` points at becomes (frame + 1) mod word *s* of the frame-count table at its shape's (instance `+4`) `+0x20`. *s*, the frame and the count are read as unsigned 16-bit words (`MOVZX`, then a 32-bit `IDIV` at `00007220`), so a count of 0 would divide by zero; when the result is 0 the code stores 0 into the same word a second time. The first step comes when the count the pool element held runs out ([the flame countdown](#launching--rocket_fire-00007748)).
 2. **Age.** `+0x4e` + 1; past the record's lifetime `+2` the missile ends.
 3. **Burn.** The speed `+0x4c` gains `Math_IntegrateRateOverTick`(record `+4`), is averaged with the speed the tick opened at, and is capped at the projectile record's (`+0x48`) speed `+0xa`.
 4. **Guidance.** With the owner's `+0x9d` set and the subtype 3, `Rocket_PlayerSteer`(missile, `PlayerInputBlock`) and `maybe_WeaponChain_EoHold` (`000b5bc6`) = 1, which `Sim_MainTick` clears before it walks the pool ([the chain hold](weapon-mounts.md#firing--weaponmounts_firetrigger-0000d2bc)); otherwise `Rocket_HomingSteer`.
@@ -82,7 +102,6 @@ Slot `+0x18` of `RocketVtable`, (missile), returning 1 when the missile ends; ES
 
 ## Open
 
-- **Open:** the retail records of `dat\rockets` (count, root, lifetime, acceleration, slack, interval, sequence, sound): `HercWorks.Core` reads ES2's file, whose layout ES1's loader shares; ES1's file has not been read through it.
 - **Open:** `0001bba4`, the other caller of `Rocket_Fire` (`es2_xref.py`), and of `Bullet_Fire` with subtype 2, read only at its calls.
 - **Open:** what reads the owner's `+0xaf`, which homing sets for subtype 3: ES2's AI reads its `+0xb5` ([the fire decision](../../retail/simulation/ai-weapons.md#the-fire-decision--ai_fireatpoint-0041f5a0)), and ES1's AI's selection skip is `+0xaf` ([the AI](mech-ai.md)).
 - **Open:** whether any machine but the player's fires an electro-optical missile in retail, and so whether the trigger latch on its end is ever seen. A retail check: hold the trigger on an autocannon while an enemy's electro-optical missile ends nearby; the gun stops until the trigger is released if the latch is hit.

@@ -49,7 +49,7 @@ A frame drawn within two interrupts therefore advances the simulation 25 ms in 1
 
 ## Rate over tick
 
-The rate-over-tick helpers differ as well. ES1's `Math_IntegrateRateOverTick` (`00063fa4`), which the bullet tick calls where ES2's `Bullet_TickUpdate` calls ES2's, multiplies the rate by `SimTickDelta` through the rounding Q8 multiply, then sign-extends the product from 16 bits before its ±0x7fff clamp, so an out-of-range product wraps where ES2's saturates. `Math_IntegrateRateOverTick2` (`00063fe0`) does the same with `SimTickDelta2`, where ES2's reads `004d3bea`.
+The rate-over-tick helpers differ as well. ES1's `Math_IntegrateRateOverTick` (`00063fa4`), which the bullet tick calls where ES2's `Bullet_TickUpdate` calls ES2's, reads its rate argument as an `int16` (`MOVSX` at `00063fae`), as ES2's does (`0046782c`): a caller that pushes a dword, as the missile's tick does with its type record's `+4`, has only the low word read. It multiplies the rate by `SimTickDelta` through the rounding Q8 multiply, then sign-extends the product from 16 bits before its ±0x7fff clamp, so an out-of-range product wraps where ES2's saturates. `Math_IntegrateRateOverTick2` (`00063fe0`) does the same with `SimTickDelta2`, where ES2's reads `004d3bea`.
 
 ## Helpers that match
 

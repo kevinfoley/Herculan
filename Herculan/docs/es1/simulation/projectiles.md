@@ -4,7 +4,7 @@
 
 - a gun round flies straight from the muzzle at its weapon's speed, with no scatter and nothing added for the firing HERC's own speed;
 - how far a gun round flies depends on how long the simulation's ticks are, since its life counts ticks while each step scales with the tick;
-- a laser or particle beam is a flat-colored cross of two ribbons standing in the world, its weapon's width in world units, so it thins with distance, where ES2's is a textured ribbon turned to face the camera and never drawn thinner than four pixels; the color is the weapon's, 88 for the lasers and 10 for the particle beams, where every straight ES2 beam draws the same orange and white;
+- a laser or particle beam is two flat-colored strips fixed in the world, not turned to the camera: one upright from the muzzle to where the beam stops, and one that twists from a level span across the world's X axis at the muzzle to the first strip's upright span at the far end, so the beam is a cross at the muzzle and a single upright span at its end; their width is the weapon's in world units, so a beam thins with distance, where ES2's is a textured ribbon turned to face the camera and never drawn thinner than four pixels; the color is the weapon's, 88 for the lasers and 10 for the particle beams, where every straight ES2 beam draws the same orange and white;
 - a beam is drawn as one piece from the muzzle to where it stops, where ES2's is cut into 5000-unit pieces;
 - the grenade launcher, `GREN`, spends a round on each throw and launches nothing ([the grenade](#the-grenade)); no retail HERC carries it and the armory never offers it ([cut content](../cut-content.md#weapons)).
 
@@ -87,7 +87,7 @@ The classes' own fields follow in their sections.
 
 Slot `+0x18` of `BulletVtable`, (round), returning 1 when the round ends; ES2's ([flight](../../retail/simulation/projectiles.md#flight--bullet_tickupdate-0040b124)) without the homing and the plasma branch:
 
-1. With the type record's interval `+6` non-zero, the countdown `+0x52` runs down by `Math_CountdownTimerTick`; at 0 it reloads with the interval and the shape instance's first cell frame steps on, modulo the first sequence's frame count.
+1. With the type record's interval `+6` non-zero, the countdown `+0x52` runs down by `Math_CountdownTimerTick`; `Bullet_Construct` loaded it with the interval ([the load](../formats/bullets-skimmer-dat.md#the-load)). At 0 it reloads with the interval and the shape instance (`+0x2e`) steps its cell frame for sequence 0: the first word of the frame array the instance's `+8` points at becomes (frame + 1) mod the first word of the frame-count table at its shape's (instance `+4`) `+0x20`, both read as unsigned 16-bit words (`MOVZX`, then a 32-bit `IDIV`), so a count of 0 would divide by zero. When the result is 0 the code stores 0 into the same word a second time. In `dts\bullets`, roots 2 and 3, the two `EMP` rounds' with interval 256, have four frames ([the records](../formats/bullets-skimmer-dat.md#datbulletsdat)).
 2. **Age.** `+0x4e` + 1; past the record's lifetime `+2` the round ends. ES2's ages by `Math_IntegrateRateOverTick`(`0x200`) against lifetime × `0x200`, a measure of time; ES1's counts ticks, so a round moves *lifetime* times, 17 for the autocannons and 30 for the `EMP`s ([the records](../formats/bullets-skimmer-dat.md#datbulletsdat)), and how far it gets depends on how long the ticks are.
 3. **The sweep.** `Sim_RaycastObjectList` ([shots against objects](world.md#shots-against-objects--sim_raycastobjectlist-0001f1d0)) over the step `Math_IntegrateRateOverTick`(speed) along the frame's Y axis, with the type record's `+4` as the ray's slack and a shot record of the projectile record's armor `+6` and shield `+4`, each `Math_Q10Multiply`'d by the power when it is not 0, its splash factor `+8`, its impact effects `+0xc`, the owner, and 5 at `+0x12`. A strike ends the round; otherwise it moves to the step's end. The difficulty scale is the struck object's hit test's ([the difficulty scale](world.md#the-difficulty-scale--damage_scalebydifficulty-0001f82c)), and so are the damage and the impact effect ([the hit test](mech.md#the-hit-test--mech_directfirehittest-00013b44)); a strike that reaches no object makes its effect in the sweep.
 
@@ -122,9 +122,9 @@ The rest of the file is the class, as ES2's grenade module is:
 | ES1 | ES2 | Holds |
 |---|---|---|
 | `+0x4c` | `+0x52` | the subtype, an `int16` |
-| `+0x4e` | `+0x54` | the quad count |
+| `+0x4e` | `+0x54` | the quad count, an `int8` |
 | `+0x4f` | `+0x55` | the jagged flag: 1 for the `ELF`, 0 otherwise |
-| `+0x50` | `+0x56` | the point count |
+| `+0x50` | `+0x56` | the point count, an `int16` |
 | `+0x52` | `+0x58` | the point array, 12 bytes a point, from `__vec_new` with `maybe_Point3I_CtorBeamCopy` (`00008694`) entered at its padding `00008693` |
 | `+0x56` | `+0x5c` | the life countdown, its `int16` at `+0x57` |
 
@@ -143,8 +143,8 @@ The half-width and colour come from two tables of `int16` in the image, indexed 
 
 These are ES2's `BEAM.DAT` records 0 to 5 but for `ELF`'s color, 104 in ES2. The weapons are the beam records' ([the projectile records](../formats/weapons-dat-sim.md#retail-values)).
 
-- **The `ELF`, subtype 1**, is ES2's jagged chain ([ELF and ELF2](../../retail/simulation/beam-visuals.md#elf-and-elf2--the-jagged-branch)) from the muzzle to the far end: `Math_DistanceBetweenPoints` >> 10, + 1, nodes at `+0x4e`, twice that + 2 points, the step the far end less the muzzle rescaled to `0x400` by `Math_NormalizeVec3ToLength`, the last node the far end itself, every node after the first raised by `Math_RandomNext`(`000b5bd4`) & `0x7f` on each axis, and each node written to points 2*k* and 2*k* + 1 with the half-width added to point 2*k*'s Z.
-- **Every other subtype** has two quads and eight points, two crossed ribbons: points 0 and 1 the muzzle with the half-width added to and taken from Z, 2 and 3 the far end the same; points 4 and 5 the muzzle with the half-width added to and taken from X, 6 and 7 the far end the same. ES2's straight beam is two points drawn as a ribbon facing the camera.
+- **The `ELF`, subtype 1**, is ES2's jagged chain ([ELF and ELF2](../../retail/simulation/beam-visuals.md#elf-and-elf2--the-jagged-branch)) from the muzzle to the far end. The count *n* = (`Math_DistanceBetweenPoints`(far end, muzzle) >> 10) + 1 is stored as a byte at `+0x4e` and read back sign-extended; the point count 2*n* + 2 is a word. The step is the far end less the muzzle, rescaled to `0x400` by `Math_NormalizeVec3ToLength`. Nodes *k* = 0 to *n*, *n* + 1 of them, start from the muzzle and advance by the step, but node *n* is the far end itself. Every node after the first, the far end included, gets `Math_RandomNext`(`000b5bd4`) & `0x7f`, 0 to 127, added to its X, then a second draw to its Y, then a third to its Z. Node *k* is written to points 2*k* + 1 and 2*k*, and the half-width is added to point 2*k*'s Z.
+- **Every other subtype** has two quads and eight points. Points 0, 1, 4 and 5 are the muzzle, and 2, 3, 6 and 7 the far end; the half-width is added to the Z of points 0, 2 and 6, taken from the Z of points 1, 3 and 7, added to the X of point 4 and taken from the X of point 5 (`ADD [ESI+0x50]` at `00008594` and `SUB [EBX+0x5c]` at `00008599` are points 6's and 7's Z). The first quad, points 1, 0, 2 and 3 ([the draw](#drawing--beamtracer_draw-000087e0)), is an upright strip from the muzzle to the far end. The second, points 5, 4, 6 and 7, runs from a level span along the world's X axis at the muzzle to the first quad's own upright span at the far end, points 6 and 7 being points 2 and 3, so its four corners do not lie in one plane and it twists along the beam. Both are fixed to the world's axes, not to the beam's direction. ES2's straight beam is two points drawn as a ribbon facing the camera.
 
 ### Drawing — `BeamTracer_Draw` (`000087e0`)
 
@@ -184,4 +184,4 @@ Slot `+4` of `BeamTracerVtable`, by its padding `000087dd`. Every tracer draws a
 - **Open:** `00003364` and `0001bba4`, which fire gun rounds of subtype 2 (and `0001bba4` a missile), found by `es2_xref.py` and read only at their calls: the structures' and the flyers' guns, if their files say so.
 - **Open:** what the word `000af11c`, which the pool's static initializer zeroes, is: `es2_xref.py` finds that one reference.
 - **Open:** what reads a tracer's `+0x3b`, which holds a stale word.
-- **Open:** the retail look of a beam against these readings: a laser fired away from the camera shows the cross end-on, one fired along the world's X axis shows its upright ribbon alone, and a far beam is thinner on screen than a near one, with no four-pixel floor.
+- **Open:** the retail look of a beam against these readings. A retail check from the outside view: a laser fired across the view should show a cross at the muzzle, an upright and a level span, narrowing to one upright span where the beam stops; one fired along the world's X axis shows the level span edge-on, so its second strip is a wedge from a line at the muzzle to the upright span; and a far beam is thinner on screen than a near one, with no four-pixel floor.
