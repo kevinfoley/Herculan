@@ -96,6 +96,7 @@ public sealed class Es1World {
 		world.Globals.HeaderWord6 = script.Header[6];
 		world.Globals.HeaderWord7 = script.Header[7];
 		world.Globals.HeaderWord8 = script.Header[8];
+		world.Globals.MissionVars = script.Flags;
 		world.SpawnObjects(content, weapons, weaponModels, formations);
 		return world;
 	}

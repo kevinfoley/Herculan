@@ -90,9 +90,9 @@ public sealed class Es1EnergyWeaponGauge : Es1WeaponRowGauge {
 			ChargeBar.Value = block.Value;
 		}
 
-		if (block.Destroyed != State.Destroyed || DestroyedHeld) {
-			// CockpitView_GetShakeOffset (000249d4)'s +4 is 0 while no hit shake is armed, and the hit shake is part B of plan step 7b,
-			// so the change always lands.
+		if ((block.Destroyed != State.Destroyed || DestroyedHeld) && Cockpit.ShakeOffset.Y != 0) {
+			DestroyedHeld = true;
+		} else if (block.Destroyed != State.Destroyed || DestroyedHeld) {
 			State = State with { Destroyed = block.Destroyed };
 			short shown = block.Destroyed ? Es1Widget.Hidden : Es1Widget.Up;
 			SelectButton.State = shown;

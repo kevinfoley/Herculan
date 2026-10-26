@@ -34,6 +34,15 @@ public sealed class Es1Shadow(int root, int partId) {
 			return frame;
 		}
 	}
+
+	/// <summary>Set once the shadow is destroyed, after which it is not drawn.</summary>
+	public bool Destroyed { get; private set; }
+
+	/// <summary>
+	/// Slot <c>+0xc</c> with 3, <c>FlatObj_DtorMechCopy</c> (<c>000119b8</c>): the shadow queued for delete on its pool, so
+	/// drawn no more (docs/es1/simulation/mech.md#the-shadows).
+	/// </summary>
+	public void Destroy() => Destroyed = true;
 }
 
 /// <summary>
@@ -214,8 +223,11 @@ public sealed class Es1Mech : IEs1SimObject {
 	/// <inheritdoc cref="LocomotionThread"/>
 	public AnimationThread? PitchThread { get; }
 
-	/// <summary><c>+0x1cc</c> and <c>+0x1d0</c>, the shadows.</summary>
-	public List<Es1Shadow> Shadows { get; } = new();
+	/// <summary>
+	/// <c>+0x1cc</c> and <c>+0x1d0</c>, the shadows and their count; a slot the damage write has destroyed holds null
+	/// (docs/es1/simulation/mech.md#the-damage-write--mech_componentdamagewrite-00013250).
+	/// </summary>
+	public List<Es1Shadow?> Shadows { get; } = new();
 
 	/// <summary><c>+0x20</c>, the position.</summary>
 	public Vec3i Position { get; set; }
@@ -255,11 +267,37 @@ public sealed class Es1Mech : IEs1SimObject {
 	/// <inheritdoc/>
 	public bool RadarVisible { get; set; }
 
-	/// <summary>
-	/// <c>+0x93</c>, destroyed. PLACEHOLDER: its setter, the damage write's death step, is part B of plan step 7b; clear
-	/// until then.
-	/// </summary>
+	/// <summary><c>+0x93</c>, destroyed, which the damage write's death step sets (<see cref="Es1MechOutOfAction.Death"/>).</summary>
 	public bool Destroyed { get; set; }
+
+	/// <summary>
+	/// <c>+0x32</c>, which the death step sets for a type whose record's <c>+0x4c</c> is set, as it sinks the machine out
+	/// of the world; nothing this engine ports reads it.
+	/// </summary>
+	public bool Byte32Set { get; set; }
+
+	/// <summary>
+	/// <c>+0x23a</c>, the kill tallies, an <c>int16</c> per target class (<c>+0x162</c>) up to the footfall latches, which
+	/// <see cref="CreditNeutralisedTarget"/> counts; nothing this engine ports reads them.
+	/// </summary>
+	public short[] KillTallies { get; } = new short[8];
+
+	/// <summary>Slot <c>+0x64</c>, <see cref="Es1MechOutOfAction.CreditNeutralisedTarget"/>.</summary>
+	public void CreditNeutralisedTarget(bool alreadyImmobilized, Es1Mech victim, Es1SimGlobals globals) =>
+		Es1MechOutOfAction.CreditNeutralisedTarget(this, alreadyImmobilized, victim, globals);
+
+	/// <summary>
+	/// <c>Mech_ReportOutOfAction</c> (<c>0000d77c</c>)(machine)
+	/// (docs/es1/simulation/sim-object-base.md#the-out-of-action-report--mech_reportoutofaction-0000d77c): with a group,
+	/// its report (<see cref="Es1MissionGroup.ReportIfAllOutOfAction"/>); then, with the flag number of
+	/// <see cref="Word174"/> not negative, that flag written by its operation (<see cref="Es1MissionGroup.ApplyOutOfAction"/>).
+	/// </summary>
+	public void ReportOutOfAction(Es1SimGlobals globals) {
+		Group?.ReportIfAllOutOfAction(this, globals);
+		if (Word174.First >= 0) {
+			Es1MissionGroup.ApplyOutOfAction(Word174.First, Word174.Second, globals.MissionVars);
+		}
+	}
 
 	/// <summary><c>+0x19c</c>, the damage header; null for a type without its <c>.DMG</c>, which retail asserts on.</summary>
 	public Es1DamageHeader? Damage { get; }

@@ -65,7 +65,8 @@ public static class Es1MechDamage {
 	/// <item>a struck component adds the armor figure to <see cref="Es1Mech.DamageTaken"/>; the splash is Q10 of the armor
 	/// figure by the shot's factor; the rest goes through <see cref="ComponentDamageWrite"/> and the splash, when there is
 	/// one, through <see cref="ApplyExplosiveDamage"/> at <see cref="SplashRadius"/>. A reading's band (≫ 5) that changed
-	/// runs the mount knock-out roll (<see cref="MountKnockOutRoll"/>);</item>
+	/// starts the hit shake (<see cref="View.Es1HitShake.Start"/>) for component 0 or 1 of the player's machine and runs
+	/// the mount knock-out roll (<see cref="MountKnockOutRoll"/>);</item>
 	/// <item>unless the component now reads full, the generator is drawn for the impact effect, entry 4<i>n</i> + the draw
 	/// &amp; 3 of the shot's effects, <i>n</i> 0 for a stopped shot, 1 for an unchanged band, 2 for a changed one.</item>
 	/// </list>
@@ -135,7 +136,8 @@ public static class Es1MechDamage {
 				} else {
 					group = 2;
 					if (component is 0 or 1 && machine.IsPlayer) {
-						// PLACEHOLDER: Cockpit_StartHitShake (0002e17c), the hit shake, part B of plan step 7b.
+						// With no cockpit built, which retail always has, nothing shakes.
+						globals.CockpitViewInstance?.HitShake.Start();
 					}
 
 					MountKnockOutRoll(machine, component, after, full, globals);
@@ -164,7 +166,8 @@ public static class Es1MechDamage {
 	/// for a component past 18 not left reading full on a chassis whose record's <c>+0x56</c> is not 0, the generator's
 	/// low 12 bits under <see cref="MountRollOddsSide0"/> or, for a machine whose group's side is not 0,
 	/// <see cref="MountRollOddsOther"/>, times <see cref="MountRollScale"/>, take the mount of hardpoint slot component −
-	/// 19 (<c>WeaponMounts_MountForHardpointSlot</c>, <c>0000ca04</c>), clear the component's occupancy flag and write it
+	/// 19 (<c>WeaponMounts_MountForHardpointSlot</c>, <c>0000ca04</c>), destroy it with its gun thrown
+	/// (<see cref="Es1WeaponMount.Destroy"/>), clear the component's occupancy flag and write it
 	/// off with <see cref="MountFinishOff"/> through <see cref="Es1DamageHeader.ApplyDamageAndCascade"/>.
 	/// </summary>
 	private static void MountKnockOutRoll(Es1Mech machine, short component, short after, bool full, Es1SimGlobals globals) {
@@ -180,9 +183,8 @@ public static class Es1MechDamage {
 
 		int slot = component - FirstMountComponent;
 		var mount = machine.Mounts?.Mounts.FirstOrDefault(m => m != null && (sbyte)m.Hardpoint.LoadoutSlot == slot);
-		// PLACEHOLDER: WeaponMount_Destroy (0000b968)(mount, 1, machine), the mount lost with its gun thrown, part B of plan
-		// step 7b. Retail destroys the mount it finds unchecked.
-		_ = mount;
+		// Retail destroys the mount it finds unchecked; with none, nothing is destroyed here.
+		mount?.Destroy(true, machine);
 		header.Occupied[component] = false;
 		if ((machine.Group?.Side ?? 0) == 1) {
 			short condition = (short)((short)(0x100 - SimMath.Q10MultiplyRounded(500, after)) * 100 >> 8);
@@ -202,6 +204,9 @@ public static class Es1MechDamage {
 	/// <item>nothing on the player's machine while the mode is 0 and header word 6 is 1, nor on a component whose
 	/// occupancy flag is clear;</item>
 	/// <item>the cascade, <see cref="Es1DamageHeader.ApplyDamageAndCascade"/>;</item>
+	/// <item>each mount not yet destroyed whose component's occupancy flag reads clear destroyed, its gun not thrown
+	/// (<see cref="Es1WeaponMount.Destroy"/>);</item>
+	/// <item>the legs (<see cref="Es1MechOutOfAction.Legs"/>) and death (<see cref="Es1MechOutOfAction.Death"/>);</item>
 	/// <item>the reactor, while neither grade is set: internal 5's reading sets <see cref="Es1Mech.ReactorCritical"/>
 	/// past <c>0xc0</c>, otherwise <see cref="Es1Mech.ReactorDamaged"/> past <c>0x80</c>.</item>
 	/// </list>
@@ -220,19 +225,17 @@ public static class Es1MechDamage {
 
 		header.ApplyDamageAndCascade(damage, component, globals.Random);
 
-		// PLACEHOLDER: step 3, each mount not destroyed whose component's occupancy flag is now clear lost through
-		// WeaponMount_Destroy (0000b968)(mount, 0, machine), part B of plan step 7b.
-		// PLACEHOLDER: step 5, the legs: internals 0 and 1, and 10 and 11 when the record's +0x4a is above 2, a side
-		// reading full destroying its shadow; while not immobilized, half the legs gone immobilizing the machine (the
-		// attacker's slot +0x64, Mech_ReportOutOfAction, the action +0x170 and disabled while +0x93 is clear, then
-		// +0x9e), otherwise the leg grades +0xa3 at 0xc1 and +0xa2 past 0x80; part B of plan step 7b.
-		// PLACEHOLDER: step 6, in the immobilizing branch, message 7 when the attacker is LocalPlayerMech and the machine
-		// its target; part B of plan step 7b.
-		// PLACEHOLDER: step 7, in the immobilizing branch, the player's disabled turn for LocalPlayerMech; part B of
-		// plan step 7b.
-		// PLACEHOLDER: step 8, death while +0x93 is clear, on component 0 or 1 fully destroyed (Es1DamageHeader
-		// .IsFullyDestroyed) or internal 9 reading full (Es1DamageHeader.InternalReading); part B of plan step 7b.
-		_ = attacker;
+		// Step 3. Retail reads the flag of a hardpoint slot outside the components unchecked; such a mount is kept here.
+		foreach (var mount in machine.Mounts?.Mounts ?? []) {
+			int mountComponent = FirstMountComponent + (sbyte)(mount?.Hardpoint.LoadoutSlot ?? 0);
+			if (mount is { Destroyed: false } && mountComponent >= 0 && mountComponent < Es1DamageHeader.ComponentCount
+					&& !header.Occupied[mountComponent]) {
+				mount.Destroy(false, machine);
+			}
+		}
+
+		Es1MechOutOfAction.Legs(machine, attacker, header, globals);
+		Es1MechOutOfAction.Death(machine, attacker, header, globals);
 
 		if (!machine.ReactorDamaged && !machine.ReactorCritical) {
 			short reading = header.InternalReading(ReactorInternal);

@@ -26,7 +26,7 @@ public readonly record struct Es1Retrace {
 /// <c>CockpitViewManager_Ctor</c> (<c>ES1DBSIM 00021dd4</c>) sets up, the render context's window and clip block the
 /// current view installs, and the view changes on the display's pages: <c>CockpitView_ApplyViewState</c>,
 /// <c>CockpitView_SetView</c>, <c>CockpitViewManager_QueueViewCommand</c>, <c>CockpitView_ProcessViewCommand</c> and
-/// <c>CockpitView_StepViewTransition</c>, with the external view's rect and border.
+/// <c>CockpitView_StepViewTransition</c>, with the external view's rect and border, and the view shake.
 ///
 /// <para>A routine that waits for a vertical retrace in retail, <c>VGA8_ShowPage</c> with
 /// <c>Display_FlipWithoutPan</c> clear or <c>Vga_WaitVerticalRetrace</c>, yields an <see cref="Es1Retrace"/> here, and
@@ -161,20 +161,36 @@ public sealed class Es1ViewManager {
 	/// <summary><c>CockpitViewCanvasOrigin</c> (<c>000afa9c</c>), the current view's canvas origin.</summary>
 	public (int X, int Y) CanvasOrigin { get; private set; }
 
-	/// <summary><c>CockpitViewShakeArmed</c> (<c>000925ec</c>). PLACEHOLDER: never set until the hit shake, part B of plan step 7b, arms it.</summary>
+	/// <summary><c>CockpitViewShakeArmed</c> (<c>000925ec</c>), which <see cref="SetShakeBand"/> sets and <see cref="ClearShake"/> clears.</summary>
 	public bool ShakeArmed { get; private set; }
 
 	/// <summary><c>CockpitShakeReseedAfterSlide</c> (<c>000925ed</c>), set when a view change cleared an armed shake.</summary>
 	public bool ShakeReseedAfterSlide { get; private set; }
 
-	/// <summary>
-	/// <c>CockpitShakeTotal</c> (<c>000afb6c</c>), the sum of the shake's steps. PLACEHOLDER: stays 0 until the hit
-	/// shake, part B of plan step 7b, steps it (<c>CockpitView_StepShake</c>).
-	/// </summary>
+	/// <summary><c>CockpitShakeTotal</c> (<c>000afb6c</c>), the sum of the shake's steps (<see cref="StepShake"/>).</summary>
 	public short ShakeTotal { get; private set; }
 
 	/// <summary><c>CockpitView_GetShakeOffset</c> (<c>000249d4</c>): {0, <see cref="ShakeTotal"/>} (docs/es1/simulation/cockpit-views.md#the-view-shake).</summary>
 	public (int X, int Y) ShakeOffset => (0, ShakeTotal);
+
+	/// <summary><c>CockpitShakeRestOffset</c> (<c>000afb54</c>), the pages' resting offset, and <c>CockpitShakeOffset</c> (<c>000afb5c</c>), the moving one.</summary>
+	public (int X, int Y) ShakeRestOffset { get; private set; }
+
+	/// <inheritdoc cref="ShakeRestOffset"/>
+	public (int X, int Y) ShakeMovingOffset { get; private set; }
+
+	/// <summary><c>CockpitShakeBand</c> (<c>000afb64</c>), the two rows the moving offset's <i>y</i> stays between.</summary>
+	public (int Low, int High) ShakeBand { get; private set; }
+
+	/// <summary><c>CockpitShakeStripRegion</c>'s (<c>000afb78</c>) rect, rows past the screen's foot that a glance's shake fills, bounds included.</summary>
+	public const int StripX0 = 0, StripY0 = 200, StripX1 = 320, StripY1 = 210;
+
+	// CockpitShakeStripPixels (000afb90), the strip as SetShakeBand saved it; null before it is first saved.
+	private ushort[]? _stripPixels;
+
+	// The retrace waits the shake's page moves made where they could not yield, which the frame's end and the view
+	// command yield in turn.
+	private int _owedRetraces;
 
 	/// <summary>
 	/// <c>SimInput_SetEnabled</c> (<c>0004d82c</c>), which the pans call after their slides: the keyboard's axis keys
@@ -362,6 +378,11 @@ public sealed class Es1ViewManager {
 				// The (0, 0, 0) View_GetActiveObject's angles +0x44 take changes nothing: a glance keeps the forward camera.
 				Staged = true;
 				break;
+		}
+
+		// An armed shake the view state cleared moved the page on the monitor.
+		foreach (var wait in TakeOwedRetraces()) {
+			yield return wait;
 		}
 	}
 
@@ -711,24 +732,122 @@ public sealed class Es1ViewManager {
 	}
 
 	/// <summary>
-	/// <c>CockpitView_ClearShake</c> (<c>00024750</c>): while armed and not in view 4. PLACEHOLDER: the body, the pages'
-	/// origins put back, the clip regions and widgets moved back and the strip restored, the hit shake, part B of plan step 7b.
+	/// <c>CockpitView_ClearShake</c> (<c>00024750</c>, docs/es1/simulation/cockpit-views.md#the-view-shake): while armed and
+	/// not in view 4, both pages' origins, <c>+0x8c</c>'s then <c>+0x88</c>'s, put back on their own plus
+	/// <see cref="ShakeRestOffset"/>; the current view's clip regions moved back down by <see cref="ShakeTotal"/>; in views
+	/// 2 and 3 the strip put back on the draw page and on <c>+0x88</c>, <c>+0x8c</c> left the draw page; the cockpit
+	/// moved by (0, total) (<see cref="Es1Cockpit.TranslateForView"/>); the total and the armed byte cleared.
 	/// </summary>
-	private void ClearShake() {
-		if (!ShakeArmed || CurrentView == Es1CockpitViews.ExternalView) {
+	internal void ClearShake() {
+		int view = CurrentView;
+		if (!ShakeArmed || view == Es1CockpitViews.ExternalView) {
 			return;
 		}
+
+		MovePages(ShakeRestOffset);
+		Files.Clip(view).MoveRows(ShakeTotal);
+		if (view is 2 or 3 && _stripPixels is { } strip) {
+			Display.WriteRect(StripX0, StripY0, StripX1, StripY1, strip);
+			Display.DrawPage = Display.PairVisible;
+			Display.WriteRect(StripX0, StripY0, StripX1, StripY1, strip);
+			Display.DrawPage = Display.PairDrawn;
+		}
+
+		Cockpit.TranslateForView(0, ShakeTotal);
+		ShakeTotal = 0;
+		ShakeArmed = false;
 	}
 
 	/// <summary>
-	/// <c>CockpitView_SetShakeBand</c> (<c>000243d4</c>): nothing in view 4 or while a change is staged. PLACEHOLDER: the
-	/// body, the band set on the canvas origin and the shake armed, the hit shake, part B of plan step 7b.
+	/// <c>CockpitView_SetShakeBand</c> (<c>000243d4</c>)(<paramref name="amplitude"/>), nothing in view 4 or while a change
+	/// is staged: both offsets the canvas origin; the band [<i>y</i> − amplitude, <i>y</i>] in view 1 and [<i>y</i>,
+	/// <i>y</i> + amplitude] in the others. In views 2 and 3 both offsets' <i>x</i> is 0 and the strip is saved
+	/// (<c>Region_Save</c>, from the source page) and filled with <see cref="BorderColor"/> on the draw page and on
+	/// <c>+0x88</c>, <c>+0x8c</c> left the draw page, with the clip mode and translation at 0. The total zeroed and the
+	/// shake armed.
 	/// </summary>
-	private void SetShakeBand(int amplitude) {
+	internal void SetShakeBand(int amplitude) {
 		if (CurrentView == Es1CockpitViews.ExternalView || Staged) {
 			return;
 		}
 
-		_ = amplitude;
+		ShakeRestOffset = CanvasOrigin;
+		ShakeMovingOffset = CanvasOrigin;
+		int y = CanvasOrigin.Y;
+		if (CurrentView == 1) {
+			ShakeBand = (y - amplitude, y);
+		} else {
+			if (CurrentView is 2 or 3) {
+				ShakeRestOffset = (0, ShakeRestOffset.Y);
+				ShakeMovingOffset = (0, ShakeMovingOffset.Y);
+				_stripPixels = Display.ReadRect(StripX0, StripY0, StripX1, StripY1);
+				Display.FillRect(StripX0, StripY0, StripX1, StripY1, BorderColor);
+				Display.DrawPage = Display.PairVisible;
+				Display.FillRect(StripX0, StripY0, StripX1, StripY1, BorderColor);
+				Display.DrawPage = Display.PairDrawn;
+			}
+
+			ShakeBand = (y, y + amplitude);
+		}
+
+		ShakeTotal = 0;
+		ShakeArmed = true;
 	}
+
+	/// <summary>
+	/// <c>CockpitView_StepShake</c> (<c>00024564</c>)(<paramref name="step"/>), while armed and not in view 4: the moving
+	/// offset's <i>y</i> moved by up to the step toward the farther of the band's two rows, the low one when both are as
+	/// far; both pages' origins, <c>+0x8c</c>'s then <c>+0x88</c>'s, set to their own plus the moving offset,
+	/// which scrolls the screen; the current view's clip regions moved up by the move
+	/// (<see cref="Es1ClipBlock.MoveRows"/>); the move added to <see cref="ShakeTotal"/>; and the cockpit moved by (0,
+	/// −move) (<see cref="Es1Cockpit.TranslateForView"/>).
+	/// </summary>
+	internal void StepShake(int step) {
+		if (!ShakeArmed || CurrentView == Es1CockpitViews.ExternalView) {
+			return;
+		}
+
+		var offset = ShakeMovingOffset;
+		short below = (short)(offset.Y - ShakeBand.Low), above = (short)(ShakeBand.High - offset.Y);
+		short move = below < above
+			? step < above ? (short)step : above
+			: (short)-(step < below ? step : below);
+		ShakeMovingOffset = (offset.X, offset.Y + move);
+		MovePages(ShakeMovingOffset);
+		Files.Clip(CurrentView).MoveRows(-move);
+		ShakeTotal += move;
+		Cockpit.TranslateForView(0, -move);
+	}
+
+	/// <summary>
+	/// The pages <c>+0x8c</c> and <c>+0x88</c>, in that order, set at their own origins plus <paramref name="offset"/>
+	/// through the driver's slot 15, a wait for the monitor owed for each set that made one.
+	/// </summary>
+	private void MovePages((int X, int Y) offset) {
+		foreach (int page in (ReadOnlySpan<int>)[Display.PairDrawn, Display.PairVisible]) {
+			var origin = Display.PageBase(page);
+			if (Display.SetPageOrigin(page, origin.X + offset.X, origin.Y + offset.Y)) {
+				_owedRetraces++;
+			}
+		}
+	}
+
+	/// <summary>
+	/// The waits for the monitor the shake's page moves owe, each <c>VGA8_ShowPage</c>'s, yielded where the frame can
+	/// stand: retail waits inside the move, which runs within the cockpit's draw and the view state.
+	/// </summary>
+	internal IEnumerable<Es1Retrace> TakeOwedRetraces() {
+		while (_owedRetraces > 0) {
+			_owedRetraces--;
+			yield return default;
+		}
+	}
+
+	/// <summary>
+	/// The projection pair, the render context's <c>+0x220</c>/<c>+0x224</c>, moved by (<paramref name="dx"/>,
+	/// <paramref name="dy"/>): <see cref="Window"/>'s centre, which is its rect's corner less the pair, moved back by it.
+	/// <c>Sim_RenderFrame</c> adds the shake's offset across the frame's draws and takes it out after.
+	/// </summary>
+	internal void MoveProjectionPair(int dx, int dy) =>
+		Window = Window with { CentreX = Window.CentreX - dx, CentreY = Window.CentreY - dy };
 }

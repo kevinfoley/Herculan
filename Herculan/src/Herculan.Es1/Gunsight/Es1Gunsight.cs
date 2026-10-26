@@ -30,6 +30,9 @@ public sealed class Es1Gunsight {
 	/// <summary><c>STRINGS0.STR</c>'s group of <c>ATT</c>, <c>000bd4a8</c>.</summary>
 	public const int AttGroup = 33;
 
+	/// <summary>The dependent whose condition (<c>Player_DependentCondition</c>) the sensor dropout follows.</summary>
+	public const int DropoutDependent = 4;
+
 	private readonly string? _attText;
 
 	private readonly Es1Cockpit _cockpit;
@@ -101,11 +104,11 @@ public sealed class Es1Gunsight {
 	/// <summary><c>+0</c>–<c>+0xc</c>, the gauge's rect, which the gunsight drag tests the pointer against.</summary>
 	public Es1Rect Rect { get; }
 
-	/// <summary><c>+0x68</c>, the condition, 0 intact to 4 destroyed.</summary>
-	public short Condition { get; private set; }
+	/// <summary><c>+0x68</c>–<c>+0x75</c>, the gauge base's sensor dropout, which the update ticks.</summary>
+	public Es1GaugeDropout Dropout { get; } = new();
 
-	/// <summary><c>+0x74</c>, set while the display is dark. PLACEHOLDER: the sensor dropout, part B of plan step 7b, never sets it.</summary>
-	public bool Dark { get; private set; }
+	/// <summary><c>+0x74</c>, set while the display is dark: <see cref="Dropout"/>'s.</summary>
+	public bool Dark => Dropout.Dark;
 
 	/// <summary><c>+0x7a</c>, the state block.</summary>
 	public Es1GunsightState State { get; } = new();
@@ -193,7 +196,9 @@ public sealed class Es1Gunsight {
 
 	/// <summary>
 	/// <c>Gunsight_UpdateAndPaint</c> (<c>00034f3c</c>), slot <c>+0xc</c>, once a frame after the 3D pass: nothing in view
-	/// 4; the condition and the dropout; then, unless the display is dark or <c>CockpitView_RectCornerVisible</c> refuses
+	/// 4; the condition <c>Player_DependentCondition</c>(<see cref="DropoutDependent"/>) stored and, when it is not 0, the
+	/// dropout ticked (<see cref="Es1GaugeDropout.Tick"/>, docs/es1/simulation/cockpit-widgets.md#sensor-dropout); then,
+	/// unless the display is dark or <c>CockpitView_RectCornerVisible</c> refuses
 	/// child 0's rect, the pick handed on, the cockpit's selection into the block, each child's repaint and the
 	/// <c>ATT</c> legend.
 	/// </summary>
@@ -202,9 +207,11 @@ public sealed class Es1Gunsight {
 			return;
 		}
 
-		// PLACEHOLDER: Player_DependentCondition(4) stored at +0x68 and, when it is not 0, PanelGauge_TickDropout, the
-		// sensor dropout of part B of plan step 7b; until then the condition is 0 and the display never goes dark.
-		Condition = 0;
+		Dropout.Condition = _cockpit.DependentCondition(DropoutDependent);
+		if (Dropout.Condition != 0) {
+			Dropout.Tick(_cockpit.Globals.Clock.Clock, _cockpit.Globals.PresentationRandom);
+		}
+
 		if (Dark || !_cockpit.RectCornerVisible(ClickSurface.Rect)) {
 			return;
 		}

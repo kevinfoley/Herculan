@@ -124,6 +124,77 @@ public sealed class Es1MissionGroup {
 		_ => false,
 	};
 
+	/// <summary>The reach within which <see cref="NearestLiveMember"/> takes a member.</summary>
+	public const int NearestMemberRange = 100000;
+
+	/// <summary>
+	/// <c>Group_NearestLiveMember</c> (<c>0001cea4</c>)(group, <paramref name="subject"/>)
+	/// (docs/es1/simulation/mission-groups.md#the-groups-target): of the members other than the subject that are neither
+	/// immobilized nor destroyed, the first nearest it (<c>Math_DistanceBetweenPoints</c>) under
+	/// <see cref="NearestMemberRange"/>, or null. Retail reads every member unchecked; a missing one is passed over here.
+	/// </summary>
+	public IEs1SimObject? NearestLiveMember(IEs1SimObject subject) {
+		int nearest = NearestMemberRange;
+		IEs1SimObject? chosen = null;
+		foreach (var entry in Members) {
+			if (entry is not IEs1SimObject member || ReferenceEquals(member, subject) || member.Immobilized || member.Destroyed) {
+				continue;
+			}
+
+			int distance = subject.Position.ApproxDistanceTo(member.Position);
+			if (distance < nearest) {
+				nearest = distance;
+				chosen = member;
+			}
+		}
+
+		return chosen;
+	}
+
+	/// <summary>
+	/// <c>Group_ReportIfAllOutOfAction</c> (<c>0001d524</c>)(group, <paramref name="subject"/>)
+	/// (docs/es1/simulation/mission-groups.md#going-out-of-the-fight): nothing while a member other than the subject is
+	/// neither immobilized nor destroyed; otherwise, with the flag number of <see cref="OutOfAction"/> not negative, that
+	/// flag written by its operation (<see cref="ApplyOutOfAction"/>). Retail reads every member unchecked; a missing one
+	/// is passed over here.
+	/// </summary>
+	public void ReportIfAllOutOfAction(IEs1SimObject subject, Es1SimGlobals globals) {
+		foreach (var entry in Members) {
+			if (entry is IEs1SimObject member && !ReferenceEquals(member, subject) && !member.Immobilized && !member.Destroyed) {
+				return;
+			}
+		}
+
+		if (OutOfAction.Flag >= 0) {
+			ApplyOutOfAction(OutOfAction.Flag, OutOfAction.Operation, globals.MissionVars);
+		}
+	}
+
+	/// <summary>The out-of-action operations: add 1, clear, and the first and last that store the operation less <see cref="StoreBase"/>.</summary>
+	public const short AddOne = 2, Clear = 1, FirstStore = 0xd, LastStore = 0x10, StoreBase = 0xc;
+
+	/// <summary>
+	/// The write both out-of-action reports make, each looking <paramref name="operation"/> up by <c>REPNE SCASD</c>
+	/// (docs/es1/simulation/sim-object-base.md#the-out-of-action-report--mech_reportoutofaction-0000d77c): flag
+	/// <paramref name="flag"/> of <paramref name="vars"/> (<c>MissionVars</c>) up by 1 for <see cref="AddOne"/>, 0 for
+	/// <see cref="Clear"/>, the operation less <see cref="StoreBase"/> for <see cref="FirstStore"/> to
+	/// <see cref="LastStore"/>; any other operation writes nothing. Retail writes a flag past the array unchecked; nothing
+	/// is written for one here.
+	/// </summary>
+	public static void ApplyOutOfAction(short flag, short operation, short[] vars) {
+		if (flag < 0 || flag >= vars.Length) {
+			return;
+		}
+
+		if (operation == AddOne) {
+			vars[flag]++;
+		} else if (operation == Clear) {
+			vars[flag] = 0;
+		} else if (operation is >= FirstStore and <= LastStore) {
+			vars[flag] = (short)(operation - StoreBase);
+		}
+	}
+
 	/// <summary>
 	/// <c>Squad_BroadcastOrder</c> (<c>0001c950</c>)(group, <paramref name="order"/>)
 	/// (docs/es1/simulation/mission-groups.md#the-squad-order-broadcast): each pass scores the members not yet told, not

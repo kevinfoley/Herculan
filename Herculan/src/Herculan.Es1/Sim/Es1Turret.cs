@@ -165,7 +165,7 @@ public sealed class Es1Turret {
 	}
 
 	/// <summary><c>AnimThread_SeekToPosition</c> (<c>000620c4</c>) of the thread, when there is one, to the unsigned angle shifted right by 2.</summary>
-	private static void Seek(AnimationThread? thread, short sequence, short angle) {
+	internal static void Seek(AnimationThread? thread, short sequence, short angle) {
 		thread?.SeekToPosition(sequence, (short)((ushort)angle >> 2), SeekRounding.RoundToNearest);
 	}
 

@@ -62,7 +62,7 @@ public sealed class Es1WorldDraw {
 		foreach (var mech in world.MechPool) {
 			_mechs.Add(new MechItems(gl, scene, mech, models));
 			foreach (var shadow in mech.Shadows) {
-				if (shadow.Root >= 0 && shadow.Root < models.ShadowRoots.Count && models.ShadowRoots[shadow.Root] is { } mesh) {
+				if (shadow is { Root: >= 0 } && shadow.Root < models.ShadowRoots.Count && models.ShadowRoots[shadow.Root] is { } mesh) {
 					_shadowItems.Add((new SceneItem(mesh, Matrix4x4.Identity), shadow));
 				}
 			}
@@ -135,7 +135,7 @@ public sealed class Es1WorldDraw {
 		foreach (var (item, shadow) in _shadowItems) {
 			var frame = shadow.DrawFrame;
 			item.Transform = WorldScale.ToRenderMatrix(frame);
-			item.Visible = camera.Position.ApproxDistanceTo(new Vec3i(frame.X, frame.Y, frame.Z)) < ShadowRange;
+			item.Visible = !shadow.Destroyed && camera.Position.ApproxDistanceTo(new Vec3i(frame.X, frame.Y, frame.Z)) < ShadowRange;
 		}
 	}
 
@@ -229,8 +229,9 @@ public sealed class Es1WorldDraw {
 			foreach (var (item, piece, hardpoint, transformId) in _mountPieces) {
 				item.Transform = FrameToWorld(transformId);
 				item.RampBlock = block;
+				// A destroyed mount's model is cleared, and the hardpoint draws nothing (WeaponMount_Destroy).
 				int cell = mounts[hardpoint]?.CellFrame(piece.Gate.Sequence) ?? 0;
-				item.Visible = drawn && hardpoint < slots.Length && slots[hardpoint] != null
+				item.Visible = drawn && mounts[hardpoint]?.Model != null && hardpoint < slots.Length && slots[hardpoint] != null
 					&& OnScreen(piece.Gate, camera, focalShift, detail.MountBias, transformId, cell);
 			}
 		}

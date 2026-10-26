@@ -30,6 +30,11 @@ public static class Es1Footfalls {
 		int gait = mech.LocomotionThread?.TargetSequence ?? -1;
 		int latch = 0;
 		foreach (var shadow in mech.Shadows) {
+			// A slot the damage write emptied is passed over, its latch with it.
+			if (shadow == null) {
+				continue;
+			}
+
 			var node = mech.PartTransform(shadow.PartId);
 			shadow.Position = frame.TransformPoint(node.X, node.Y, node.Z);
 			shadow.Heading = mech.Rotation.Z;

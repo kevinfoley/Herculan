@@ -310,9 +310,14 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	/// <summary>
 	/// <c>Sim_EndFrame</c> (<c>00059b40</c>): <c>Display_FlipWithoutPan</c> set unless frozen; the staged view change;
 	/// <c>+0x8c</c> shown and <c>+0x88</c> drawn on, and the pair swapped; the view command. Yields each wait for the
-	/// monitor its routines make.
+	/// monitor its routines make, after those the frame's draw owes (<see cref="Es1ViewManager.TakeOwedRetraces"/>).
 	/// </summary>
 	internal static IEnumerable<Es1Retrace> EndFrame(Es1ViewManager views, bool frozen) {
+		// The hit shake's steps in the frame's draw moved the page on the monitor, each move waiting for it there.
+		foreach (var wait in views.TakeOwedRetraces()) {
+			yield return wait;
+		}
+
 		var display = views.Display;
 		display.FlipWithoutPan = !frozen;
 		foreach (var wait in views.StepViewTransition()) {
@@ -337,19 +342,23 @@ public sealed class Es1FrameLoop : IEs1Frame {
 
 	/// <summary>
 	/// <c>Sim_RenderFrame</c> (<c>00059c08</c>): subsystem phase 5, whose one ported function is <c>Projectile_FlushDeletes</c>
-	/// (<see cref="Projectiles.Es1ProjectilePool.FlushDeletes"/>); the detail setting applied again when option 6 has changed, the cockpit's
+	/// (<see cref="Projectiles.Es1ProjectilePool.FlushDeletes"/>); the detail setting applied again when option 6 has changed, the view
+	/// shake's offset added to the projection pair (<see cref="Es1ViewManager.MoveProjectionPair"/>), the cockpit's
 	/// frame (<c>Cockpit_DrawFrame</c>), then the 3D pass, which installs the current camera's view and draws the world
 	/// into the draw page in the installed window and clip block when the current view is not 1 or a view change is
 	/// staged, answering a pending pixel pick from what it drew (<see cref="Es1ObjectPick.Resolve"/>),
 	/// <c>Player_PerFrameCockpitUpdate</c>, and the gunsight's per-frame update over it
 	/// (<see cref="Gunsight.Es1Gunsight.UpdateAndPaint"/>), which reads the pick's answer in the same frame, as retail's does;
-	/// and last the pilot channel's slot <c>+0x10</c> (<see cref="Messages.Es1PilotChannel.Update"/>).
+	/// and last the pilot channel's slot <c>+0x10</c> (<see cref="Messages.Es1PilotChannel.Update"/>), after which the
+	/// shake's offset is taken back out.
 	/// </summary>
 	private void RenderFrame() {
 		// PLACEHOLDER: phase 5's other eight functions, the effect pools' delete flushes, plan step 7e.
 		Views.Cockpit.Globals.Projectiles.FlushDeletes();
 		_detail?.Refresh();
-		// The shake offset Sim_RenderFrame adds to the projection pair is (0, 0) while no shake is armed (part B of plan step 7b).
+		// The shake's offset, as it stands now, added to the projection pair across the frame's draws and taken out after.
+		var (shakeX, shakeY) = Views.ShakeOffset;
+		Views.MoveProjectionPair(shakeX, shakeY);
 		Views.Cockpit.DrawFrame();
 		if (Views.CurrentView != 1 || Views.Staged) {
 			if (_viewCamera?.Invoke() is { } camera) {
@@ -365,6 +374,7 @@ public sealed class Es1FrameLoop : IEs1Frame {
 		PlayerCockpitUpdate();
 		Views.Cockpit.Gunsight.UpdateAndPaint();
 		Views.Cockpit.PilotChannel.Update();
+		Views.MoveProjectionPair(-shakeX, -shakeY);
 	}
 
 	/// <summary>

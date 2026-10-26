@@ -155,9 +155,9 @@ public sealed class Es1WeaponMount {
 
 	/// <summary>
 	/// <c>+0x10</c>, the weapon's model, a root of <c>dts\mechwpns</c> read for this mount alone and moved to its mount
-	/// point; null for the invisible mounting.
+	/// point; null for the invisible mounting, and once <see cref="Destroy"/> has cleared it.
 	/// </summary>
-	public TSObject? Model { get; }
+	public TSObject? Model { get; private set; }
 
 	/// <summary><c>+0x14</c>, the model's private cell frames, one per sequence of the model; the muzzle flash and the ELF's spin-up step the first.</summary>
 	public short[] CellFrames { get; }
@@ -195,8 +195,29 @@ public sealed class Es1WeaponMount {
 	/// <summary><c>+0x81</c>, the grenade launcher's throw distance (<c>int32</c>).</summary>
 	public int ThrowDistance { get; private set; }
 
-	/// <summary><c>+0x49</c>, destroyed.</summary>
-	public bool Destroyed { get; set; }
+	/// <summary><c>+0x49</c>, destroyed, which <see cref="Destroy"/> sets; the cockpit row's push hands it to the row.</summary>
+	public bool Destroyed { get; private set; }
+
+	/// <summary>
+	/// <c>WeaponMount_Destroy</c> (<c>0000b968</c>)(mount, <paramref name="throwGun"/>, <paramref name="machine"/>)
+	/// (docs/es1/simulation/weapon-mount-classes.md#losing-a-mount): for a mount not yet destroyed, the model cleared, so
+	/// the hardpoint draws nothing, and <see cref="Destroyed"/> set. The mount point it then works out in the world feeds
+	/// the thrown gun alone.
+	/// </summary>
+	public void Destroy(bool throwGun, Es1Mech machine) {
+		if (Destroyed) {
+			return;
+		}
+
+		Model = null;
+		Destroyed = true;
+		// PLACEHOLDER: with throwGun and the hardpoint's mounting code (.GL +6) below 4, the gun thrown from the mount point
+		// (the muzzle offset through the bone's node and the machine's frame): 00006168(0, the point, the template's +0x26
+		// root of WeaponModels_Mechwpn2Roots) given g_TSDetailBiasForMounts at its +0x4a and launched through 00006378 with
+		// the third angle of the bearing from the machine's slot +0x28 point and the hardpoint's dword +0x18; the debris,
+		// plan step 7e.
+		_ = (throwGun, machine);
+	}
 
 	/// <summary><c>+0x4b</c>, linked with its partner.</summary>
 	public bool Linked { get; set; }

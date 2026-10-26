@@ -27,10 +27,29 @@ public sealed class Es1ClipBlock {
 	/// <summary>A block of no region, in which nothing is drawn.</summary>
 	public static Es1ClipBlock Empty { get; } = new([], []);
 
-	/// <summary>The block a view's clip file loads: its rects across the screen's width, columns 0 to 319, then its span blocks.</summary>
+	/// <summary>
+	/// The block a view's clip file loads: its rects across the screen's width, columns 0 to 319, then its span blocks,
+	/// held in an array of its own, so <see cref="MoveRows"/> moves this block's regions and not the file's.
+	/// </summary>
 	public static Es1ClipBlock FromFile(Es1ClipRegions regions) => new(
 		regions.Rects.Select(rect => (0, (int)rect.Top, Es1CockpitViews.ScreenWidth - 1, (int)rect.Bottom)).ToArray(),
-		regions.Blocks);
+		regions.Blocks.ToArray());
+
+	/// <summary>
+	/// Every region moved down by <paramref name="dy"/> rows in place, as the view shake moves the current view's
+	/// (docs/es1/simulation/cockpit-views.md#the-view-shake): a rect's two rows, a span block's first row as an
+	/// <c>int16</c>. A block holds its regions by pointer, so the render context's copy of it moves with it.
+	/// </summary>
+	public void MoveRows(int dy) {
+		for (int i = 0; i < _rects.Length; i++) {
+			var rect = _rects[i];
+			_rects[i] = (rect.X0, rect.Y0 + dy, rect.X1, rect.Y1 + dy);
+		}
+
+		for (int i = 0; i < _spans.Length; i++) {
+			_spans[i] = new Es1ClipSpanBlock { FirstRow = (short)(_spans[i].FirstRow + dy), Rows = _spans[i].Rows };
+		}
+	}
 
 	/// <summary>
 	/// The energy meter's shift of its <c>edg\ENG_CLP</c> regions (docs/es1/formats/hd-ed-clip-regions.md#which-files): each

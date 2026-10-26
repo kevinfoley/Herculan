@@ -70,6 +70,7 @@ public sealed class Es1Simulation {
 		globals.LocalPlayerMech = localPlayer;
 		LocalPlayer = localPlayer;
 		_playerMech = playerMech ?? localPlayer;
+		globals.PlayerMech = _playerMech;
 		ViewChain = viewChain ?? new Es1ViewChain(localPlayer, null);
 		Input = input;
 		// The electro-optical hold's two globals, which the player's weapon manager reads and writes.

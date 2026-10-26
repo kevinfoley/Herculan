@@ -69,6 +69,7 @@ public sealed class Es1Cockpit {
 		Machine = machine;
 		Globals = globals;
 		Preferences = preferences;
+		HitShake = new Es1HitShake(views, globals);
 		Targets = new Es1TargetSelection(this);
 		Cursors = new Es1CockpitCursors(views.Files.Cursors, mouse.Cursor);
 		MessageTables = new Es1MessageTables(views.Files.MessageStrings);
@@ -275,6 +276,9 @@ public sealed class Es1Cockpit {
 	/// <inheritdoc cref="Es1ViewManager.ShakeOffset"/>
 	internal (int X, int Y) ShakeOffset => _views.ShakeOffset;
 
+	/// <summary>The hit shake, which the frame's draw ticks and a hit on the player's cockpit starts.</summary>
+	public Es1HitShake HitShake { get; }
+
 	/// <summary>
 	/// <c>View_GetActiveObject</c> (<c>00059280</c>): <c>ViewObjectPtr</c> (<c>000b5b8a</c>), the chain of views' current
 	/// camera (<see cref="Es1ViewChain.Camera"/>); none before the chain is built.
@@ -389,7 +393,7 @@ public sealed class Es1Cockpit {
 	/// <summary>
 	/// <c>Cockpit_DrawFrame</c> (<c>0002cf28</c>)(cockpit), once a frame from <c>Sim_RenderFrame</c> before the 3D pass:
 	/// nothing while <see cref="SkipFrameDraw"/> is set; the strips built the first time; at step 2 the clock's tick
-	/// (<see cref="Es1CockpitClock.Tick"/>); with the widgets off the Heads-Down Display's (<see cref="Es1HddDisplay.Update"/>)
+	/// (<see cref="Es1CockpitClock.Tick"/>) and the hit shake's (<see cref="Es1HitShake.Tick"/>); with the widgets off the Heads-Down Display's (<see cref="Es1HddDisplay.Update"/>)
 	/// and nothing more; otherwise, at step 4 the pilot channel's screen put back
 	/// (<see cref="Es1PilotChannel.RestoreBackground"/>) while no view change is staged, at step 5 the per-frame slots of
 	/// the weapon rows, the pod row, the console buttons, the energy meter, the shield display, the throttle gauge, the
@@ -408,8 +412,9 @@ public sealed class Es1Cockpit {
 			StripsBuilt = true;
 		}
 
-		// 2. PLACEHOLDER: Cockpit_HitShakeTick after the clock's tick, part B of plan step 7b.
+		// 2.
 		Clock.Tick(Globals.Clock.Clock);
+		HitShake.Tick();
 		// 3.
 		if (WidgetsOff) {
 			Hdd.Update();

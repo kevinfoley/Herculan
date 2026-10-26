@@ -10,6 +10,9 @@ public static class Es1MechBehaviour {
 	/// <summary>The descriptor indices construction and the reassess install.</summary>
 	public const int Deciding = 0, Player = 1;
 
+	/// <summary>The descriptor indices the damage write installs (docs/es1/simulation/mech.md#the-damage-write--mech_componentdamagewrite-00013250).</summary>
+	public const int InLimbo = 17, Dead = 18, Disabled = 19;
+
 	/// <summary><c>BehaviourStateTable</c> (<c>000af26c</c>), descriptor <i>n</i> at <c>+0x28</c> × <i>n</i>.</summary>
 	public static IReadOnlyList<Es1BehaviourDescriptor> States { get; } = BuildStateTable();
 
@@ -82,6 +85,17 @@ public static class Es1MechBehaviour {
 	}
 
 	/// <summary>
+	/// <c>Mech_BehaviourInertThink</c> (<c>00018308</c>), the think of <c>dead</c> and <c>disabled</c>
+	/// (docs/es1/simulation/mech-ai.md#the-combat-states): the control law with no speed asked for and no steer
+	/// (<see cref="Es1Locomotion.LocomotionTick"/>), so the machine walks its speed off, or falls when immobilized; it
+	/// answers 0.
+	/// </summary>
+	private static short InertThink(Es1Mech mech, Es1SimGlobals globals) {
+		mech.Locomotion.LocomotionTick(globals, 0, 0, 0);
+		return 0;
+	}
+
+	/// <summary>
 	/// <c>Behaviour_BuildStateTable</c>: name, dwell, flag mask, think, move, reassess and the <c>+0x24</c> word of each of
 	/// the twenty states, in table order.
 	/// </summary>
@@ -90,7 +104,7 @@ public static class Es1MechBehaviour {
 		Es1StateFunction select = AiSelectBehaviour;
 		var combat = Unported("Mech_AiCombatReassess", 0x00016e04, 8);
 		var travel = Unported("Mech_BehaviourTravelThink", 0x000178a4, 8);
-		var inert = Unported("Mech_BehaviourInertThink", 0x00018308, 8);
+		Es1StateFunction inert = InertThink;
 		return [
 			new("deciding", 0, 0, null, null, select, 3),
 			new("player", 10, 1, Es1PlayerThink.Think, walk, null, 3),

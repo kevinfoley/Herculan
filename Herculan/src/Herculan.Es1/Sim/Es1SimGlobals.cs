@@ -89,6 +89,15 @@ public sealed class Es1SimGlobals {
 	/// <summary><c>LocalPlayerMech</c> (<c>000b5b86</c>), which the simulation stores; none before it is built.</summary>
 	public Es1Mech? LocalPlayerMech { get; set; }
 
+	/// <summary><c>PlayerMech</c> (<c>000bc42a</c>), which the simulation stores; none before it is built.</summary>
+	public Es1Mech? PlayerMech { get; set; }
+
+	/// <summary>
+	/// <c>MissionVars</c> (<c>000bc4b8</c>), the mission's flags (<see cref="Es1MissionScript.Flags"/>), which the
+	/// out-of-action reports write (<see cref="Es1MissionGroup.ApplyOutOfAction"/>); empty until a world is spawned.
+	/// </summary>
+	public short[] MissionVars { get; set; } = [];
+
 	/// <summary><c>g_MechPool</c>'s machines in build order, which the blasts and the outnumbered damage walk from the end.</summary>
 	public IReadOnlyList<Es1Mech> MechPool { get; set; } = [];
 
@@ -243,6 +252,13 @@ public interface IEs1SimObject {
 
 	/// <summary>Slot <c>+0x6c</c>: something ran into it.</summary>
 	void RunInto();
+
+	/// <summary>
+	/// Slot <c>+0x64</c>, what the damage write tells the attacker that put <paramref name="victim"/> out of the fight:
+	/// the base's <c>SimObject_CreditNeutralisedTargetNoOp</c> (<c>0000d774</c>) does nothing.
+	/// </summary>
+	void CreditNeutralisedTarget(bool alreadyImmobilized, Es1Mech victim, Es1SimGlobals globals) {
+	}
 
 	/// <summary><c>+0x96</c>, the ECM spoof, which turns the missiles it fires off their aim (docs/es1/simulation/rockets.md#homing--rocket_homingsteer-00006eb4).</summary>
 	bool EcmSpoofed { get; }
