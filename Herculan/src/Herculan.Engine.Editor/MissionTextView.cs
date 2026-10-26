@@ -37,7 +37,7 @@ internal sealed class MissionTextView {
 		var lines = _editor.Lines(list);
 		EditorText.Note(list == MissionTextList.Objectives
 			? lines.Count > PanelLines ? $"The F11 panel lists the first {PanelLines}." : "The F11 panel lists them."
-			: "The mission screen shows them in a campaign, joined into one text.");
+			: "Combined into one block of text.");
 		if (lines.Any(line => line.Text?.Any(c => c > 127) == true)) {
 			EditorText.Note("Accented letters show as spaces on the mission screen in the original 1.0 release.");
 		}

@@ -94,7 +94,6 @@ internal sealed class MissionOutliner {
 		DrawCountdowns();
 		DrawRoutes();
 		DrawObjectives();
-		DrawObjectiveLines();
 		DrawChoices();
 		DrawAdvanced();
 
@@ -182,27 +181,6 @@ internal sealed class MissionOutliner {
 			string marker = objective.Presence.Always ? string.Empty : NotAlways;
 			Choose(selection, NameText.Selectable(name with { Text = name.Text + marker }, $"objective{objective.Index}",
 				_selection.Is(selection)));
-		}
-	}
-
-	/// <summary>
-	/// The objective lines the player reads on the F11 panel (the text package's), apart from the win and lose conditions:
-	/// nothing reconciles the two (docs/retail/simulation/mission-objectives.md#the-objectives-panel).
-	/// </summary>
-	private void DrawObjectiveLines() {
-		var lines = MissionTextEditing.Filled(_source, MissionTextList.Objectives);
-		if (!ImGui.CollapsingHeader($"Objective list the player reads (F11) ({lines.Count})###objectivelines")) {
-			return;
-		}
-
-		EditorText.Note("These lines are only text: the mission never ticks them off. Win and lose conditions decide it. Edit "
-			+ "them under \"Text\" when you click \"Mission\" at the top of this panel.");
-
-		// Wrapped, as the lines run well past the panel's width.
-		foreach (var (_, id) in lines) {
-			ImGui.BulletText(string.Empty);
-			ImGui.SameLine();
-			EditorText.Wrapped(MissionTextEditing.LineText(_source, id) ?? string.Empty);
 		}
 	}
 
