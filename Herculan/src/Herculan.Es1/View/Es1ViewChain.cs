@@ -176,18 +176,22 @@ public sealed class Es1ViewChain {
 
 	/// <summary>
 	/// <c>ViewChain_DrawCaption</c> (<c>00058b68</c>) on the draw page below the external view's rect: the name is
-	/// <see cref="Es1ViewCaption.YouText"/> for the player. <see cref="Apply"/> calls it while the caption's frames count
-	/// down, and <c>PreferencesPanel_Raise</c> on its return to view 4.
+	/// <see cref="Es1ViewCaption.YouText"/> for the player, <see cref="Es1Cockpit.SquadPilotName"/> of its
+	/// <see cref="Es1Cockpit.SquadIndexOf"/> slot for a squadmate, and the empty string <c>00096d19</c> for any other
+	/// object. <see cref="Apply"/> calls it while the caption's frames count down, and <c>PreferencesPanel_Raise</c> on
+	/// its return to view 4. A squadmate's box with no name, which retail's never is, gives the empty string, an engine
+	/// guard.
 	/// </summary>
 	internal void DrawCaption(Es1ControlsState controls) {
 		if (Manager == null || Caption == null) {
 			return;
 		}
 
-		// PLACEHOLDER: a squadmate's name, Squad_PilotName (0002e2f4) of its Squad_IndexOf slot, is the pilot roster's
-		// (the instrument +0x1f5, HddGauge_Name), which plan step 6c ports; until then it is drawn empty, as retail draws
-		// the name of an object outside the squad (the empty string 00096d19).
-		string name = ReferenceEquals(Camera.Object, LocalPlayer) ? Caption.YouText : string.Empty;
+		var cockpit = Manager.Cockpit;
+		int squad = cockpit.SquadIndexOf(Camera.Object);
+		string name = ReferenceEquals(Camera.Object, LocalPlayer) ? Caption.YouText
+			: squad != -1 ? cockpit.SquadPilotName(squad) ?? string.Empty
+			: string.Empty;
 		Caption.Draw(Manager.Display, Manager.ExternalViewRect.ViewportY1, name, controls.InputDrivesCamera);
 	}
 }

@@ -112,7 +112,7 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	/// The display's part of <c>Sim_StartMission</c>: step 11, the pages at (0, 0), (0, 200), (320, 0) and (320, 200),
 	/// the pair {0, 2}, page 0 shown and page 3 drawn on; step 13, the bring-up flag set (<see cref="Es1Cockpit.BringUp"/>),
 	/// the player's weapon rows built (<c>WeaponMounts_BuildGauges</c>, <see cref="Sim.Es1WeaponMounts.BuildGauges"/>),
-	/// <paramref name="cursor"/> installed on the display's cursor, <c>Player_PerFrameCockpitUpdate</c>, <c>Cam_Update</c>,
+	/// the squadmates and their pilots (<see cref="Es1Cockpit.LoadSquadmatePilots"/>), <paramref name="cursor"/> installed on the display's cursor, <c>Player_PerFrameCockpitUpdate</c>, <c>Cam_Update</c>,
 	/// the draw page 2 again and views 1 and 0 set, so both canopies lie in page 2's half; step 14 without the lift, the
 	/// first frame's 3D pass; and step 15, the flag cleared, the whole of page 2 copied onto page 0, the cursor shown and
 	/// the cockpit's mouse made live.
@@ -134,6 +134,7 @@ public sealed class Es1FrameLoop : IEs1Frame {
 		// Step 13 opens with 000b5bca set, under which Widget_DrawToCockpit copies nothing.
 		Views.Cockpit.BringUp = true;
 		Views.Cockpit.Machine?.Mounts?.BuildGauges(Views.Cockpit);
+		Views.Cockpit.LoadSquadmatePilots();
 		display.Cursor.SetImage(cursor);
 		PlayerCockpitUpdate();
 		_camUpdate();

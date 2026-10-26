@@ -1,6 +1,7 @@
 using HercWorks.Core.Data.File;
 using HercWorks.Core.Data.File.Dyn;
 using HercWorks.Core.Data.File.Gau;
+using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Content;
 using Herculan.Es1.Panels;
 using Herculan.Es1.Sim;
@@ -83,6 +84,7 @@ public sealed class Es1HddDisplay {
 	private readonly IEs1SimObject?[] _subjects = new IEs1SimObject?[SubjectCount];
 	private readonly string?[] _subjectNames = new string?[SubjectCount];
 	private readonly StringFile? _strings;
+	private readonly IReadOnlyList<HudFont?> _fonts;
 
 	/// <summary>
 	/// <c>HddDisplay_Ctor</c> (<c>ES1DBSIM 0003c258</c>)(0, <paramref name="cockpit"/>, <paramref name="block"/>)
@@ -97,23 +99,30 @@ public sealed class Es1HddDisplay {
 	/// press waiting, the highlight mode the block's, the dark byte kept and the damage page's refresh the clock + 30;
 	/// and the five subjects, the player's machine named <c>YOU</c>, three empty and named with an empty string, and the
 	/// target named <c>TARGET</c>, the selector 0 on the player, the indicator's flag set and the no-subject text
-	/// <c>NO TARGET SELECTED</c>.
+	/// <c>NO TARGET SELECTED</c>. The comm boxes' clip context, <c>GLViewport_Ctor</c>(0) at <c>CommBox_ClipContext</c>
+	/// (<c>000b15f8</c>), is made at each draw here (<see cref="Es1HddCommBox.PushVideoClip"/>); <c>dba\static</c> and
+	/// <c>str\pilots</c>, which retail loads into their globals the first time, are loaded with the display, of which
+	/// the simulator builds one.
 	/// </summary>
-	/// <param name="fonts"><c>ColorSchemePanels</c>, whose <c>cpred</c> the labels take.</param>
+	/// <param name="fonts"><c>ColorSchemePanels</c>, whose <c>cpred</c> and <c>cpblue</c> the labels take.</param>
 	/// <param name="pushButtons"><c>CockpitPButtonsBank</c>, the frames of <c>dba\pbuttons</c>; no frame is blitted when it or a frame is missing.</param>
 	/// <param name="strings"><c>STRINGS0.STR</c>; no text is written when null.</param>
+	/// <param name="resources">The volumes' reader, (folder, file name) to a file's bytes, through which the comm boxes' files are read; none when null.</param>
 	internal Es1HddDisplay(Es1Cockpit cockpit, Es1GauHddBlock block, IReadOnlyList<HudFont?> fonts,
-			IReadOnlyList<DynamixBitmap>? pushButtons, StringFile? strings) {
+			IReadOnlyList<DynamixBitmap>? pushButtons, StringFile? strings, Func<string, string, byte[]?>? resources = null) {
 		Cockpit = cockpit;
 		_strings = strings;
+		_fonts = fonts;
+		Resources = resources;
 		Rect = Es1Rect.From(block.Rect);
 		int x = block.Rect.X0, y = block.Rect.Y0;
 		for (int i = 0; i < _commBoxes.Length; i++) {
-			_commBoxes[i] = new Es1HddCommBox();
+			_commBoxes[i] = new Es1HddCommBox(this, i);
 		}
 
-		// PLACEHOLDER: the comm boxes' clip context (GLViewport_Ctor(0) at CommBox_ClipContext, 000b15f8) and dba\static
-		// into HddStaticBank (000944d0), which only the comm boxes' paints read: plan step 6c6's part C.
+		StaticBank = resources?.Invoke("dba", "STATIC.DBA") is { } staticBytes
+			? new DynamixBitmapArrayTransformer().Parse(staticBytes)?.Images
+			: null;
 		ScreenRect = Es1Rect.From(block.Screen).Offset(x, y);
 		DamageColumn = Es1Rect.From(block.DamageColumn).Offset(x, y);
 		OrderColumn = Es1Rect.From(block.OrderColumn).Offset(x, y);
@@ -140,7 +149,7 @@ public sealed class Es1HddDisplay {
 			cockpit.Root.RegisterClickable(button);
 		}
 
-		var red = Es1CockpitViews.CpRed < fonts.Count ? fonts[Es1CockpitViews.CpRed] : null;
+		var red = Font(Es1CockpitViews.CpRed);
 		foreach (int i in new[] { XmitButton, CancelButton }) {
 			var caption = new Es1Label(red) { FillColor = LabelFill };
 			caption.SetRect(Es1Label.Centered, _buttons[i].Rect);
@@ -159,14 +168,13 @@ public sealed class Es1HddDisplay {
 		SelectedSlot = -1;
 		SetPage(CommandPage);
 		// PLACEHOLDER: CommBox_OnMessageBegin and CommBox_OnMessageEnd added to the pilot channel
-		// (MessagePort_AddBeginCallback, MessagePort_AddEndCallback), plan step 6c6's part C.
+		// (MessagePort_AddBeginCallback, MessagePort_AddEndCallback), plan step 6c6's part C2.
 		cockpit.Globals.HddDisplayInstance = this;
 		PressedButton = NoPress;
 		HighlightMode = (short)block.HighlightMode;
 		LastDark = Dropout.Dark;
 		RefreshDeadline = cockpit.Globals.Clock.Clock + RefreshCounts;
-		// PLACEHOLDER: str\pilots into HddPilotNameTable (000944d4) the first time, which only HddGauge_LoadPilotFrames
-		// reads: plan step 6c6's part C.
+		PilotNames = cockpit.MessageTables.Load("pilots");
 		_subjects[PlayerSubject] = cockpit.Machine;
 		_subjectNames[PlayerSubject] = Text(YouGroup, 0);
 		for (int i = PlayerSubject + 1; i < TargetSubject; i++) {
@@ -274,11 +282,41 @@ public sealed class Es1HddDisplay {
 	/// <summary><c>HddDebugMessageId</c> (<c>00094570</c>), a global, −1 in the image: the developer keys' message id; kept with the display, as <see cref="LastTarget"/>.</summary>
 	public int DebugMessageId { get; private set; } = -1;
 
+	/// <summary><c>HddStaticBank</c> (<c>000944d0</c>), a global: the frames of <c>dba\static</c>, the comm boxes' static; none when the file is missing.</summary>
+	public IReadOnlyList<DynamixBitmap>? StaticBank { get; }
+
+	/// <summary><c>HddPilotNameTable</c> (<c>000944d4</c>), a global: <c>str\pilots</c>, the pilots' names; none when the file is missing.</summary>
+	public StringFile? PilotNames { get; }
+
+	/// <summary>
+	/// <c>CommBox0PilotOverride</c> (<c>000944d8</c>), a global, −1 in the image: the first comm box's pilot when not
+	/// negative, which <c>Sim_ParseCommandLine</c>'s <c>-t&lt;n&gt;</c> sets
+	/// (docs/es1/simulation/main-loop.md#the-command-line). This engine takes no <c>-t</c>, so it stays −1.
+	/// </summary>
+	public short CommBox0PilotOverride { get; } = -1;
+
+	/// <summary>The volumes' reader the comm boxes read <c>ofs\</c> and <c>dba\</c> through; none when null.</summary>
+	internal Func<string, string, byte[]?>? Resources { get; }
+
 	/// <summary>The current page, or none before the first <see cref="SetPage"/>.</summary>
 	private Es1HddPage? CurrentPage => Page is >= 0 and < PageCount ? _pages[Page] : null;
 
 	/// <summary><c>STRINGS0.STR</c> group 8's entry <paramref name="entry"/>: <c>XMIT</c> for 0, <c>CANCEL</c> for 1.</summary>
 	public string? ButtonCaption(int entry) => Text(CaptionGroup, entry);
+
+	/// <summary>
+	/// <c>HddGauge_LoadPilotFrames</c> (<c>0003dab4</c>)(display, <paramref name="pilot"/>, <paramref name="slot"/>),
+	/// from <see cref="Es1Cockpit.LoadSquadmatePilots"/>
+	/// (docs/es1/simulation/heads-down-display.md#who-is-in-it--hddgauge_loadpilotframes-0003dab4): for slot 0 the pilot
+	/// <see cref="CommBox0PilotOverride"/> when that is not negative; the slot's box loaded
+	/// (<see cref="Es1HddCommBox.Load"/>); and the slot's squadmate and the box's name put in subject slot 1 + slot.
+	/// </summary>
+	public void LoadPilotFrames(short pilot, int slot) {
+		var box = _commBoxes[slot];
+		box.Load(slot == 0 && CommBox0PilotOverride >= 0 ? CommBox0PilotOverride : pilot);
+		_subjects[PlayerSubject + 1 + slot] = Cockpit.SquadmateMachines[slot];
+		_subjectNames[PlayerSubject + 1 + slot] = box.Name;
+	}
 
 	/// <summary>
 	/// <c>HddDisplay_SetPage</c> (<c>0003d8b4</c>)(display, <paramref name="page"/>)
@@ -331,7 +369,7 @@ public sealed class Es1HddDisplay {
 	/// rect, each button's paint; the current page's show and repaint; the title indicator filled
 	/// <see cref="IndicatorLit"/> or <see cref="IndicatorUnlit"/> by its flag; <see cref="SetTitle"/>; and each comm
 	/// box's video rect set to its button's rect inset by a pixel on every side, then filled <see cref="LabelFill"/> while
-	/// the box has no name.
+	/// the box has no name and painted by <see cref="Es1HddCommBox.PaintIdle"/> while it has.
 	/// </summary>
 	public void Repaint() {
 		if (!Cockpit.RectCornerVisible(ScreenRect)) {
@@ -356,9 +394,9 @@ public sealed class Es1HddDisplay {
 			box.VideoRect = new Es1Rect(rect.X0 + 1, rect.Y0 + 1, rect.X1 - 1, rect.Y1 - 1);
 			if (box.Name == null) {
 				canvas.FillRect(box.VideoRect.X0, box.VideoRect.Y0, box.VideoRect.X1, box.VideoRect.Y1, LabelFill);
+			} else {
+				box.PaintIdle();
 			}
-
-			// PLACEHOLDER: a box with a name is painted by HddGauge_PaintIdle(display, i), plan step 6c6's part C.
 		}
 	}
 
@@ -407,7 +445,7 @@ public sealed class Es1HddDisplay {
 		}
 
 		// PLACEHOLDER: HddDisplay_ServiceCommBoxes (0003e574)(display), the comm boxes' state machine, plan step 6c6's
-		// part C; until then every box has no name and the state machine would pass over each.
+		// part C2; until then a box stays as the last repaint left it.
 		if (Cockpit.CurrentView == Es1CockpitViews.ExternalView) {
 			return;
 		}
@@ -805,7 +843,11 @@ public sealed class Es1HddDisplay {
 		Dropout.Repaint = Es1GaugeDropout.RepaintPasses;
 	}
 
-	private string? Text(int group, int entry) => _strings?.Text(group, entry);
+	/// <summary><c>STRINGS0.STR</c> group <paramref name="group"/>'s entry <paramref name="entry"/>, or none.</summary>
+	internal string? Text(int group, int entry) => _strings?.Text(group, entry);
+
+	/// <summary><c>ColorSchemePanels</c>[<paramref name="index"/>], or none when its file is missing.</summary>
+	internal HudFont? Font(int index) => index < _fonts.Count ? _fonts[index] : null;
 
 	private static bool[] Shows(params int[] buttons) {
 		var row = new bool[Es1GauHddBlock.ButtonCount];

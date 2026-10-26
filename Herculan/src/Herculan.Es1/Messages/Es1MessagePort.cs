@@ -122,9 +122,8 @@ public abstract class Es1MessagePort {
 	/// system table, <see cref="CommandFile"/> <c>commandr</c> into the command table, and a squadmate slot 0 to 2 first,
 	/// when that slot's squadmate leads its group (<see cref="LeadsGroup"/>), <c>commandr</c> with
 	/// <see cref="CommandFile"/>, then <c>pilot&lt;digit&gt;</c> into the slot's pilot table; each indexed by
-	/// <see cref="Es1MessageTable.Index"/>. The Heads-Down Display's <c>HddGauge_LoadPilotFrames</c> (<c>0003dab4</c>) calls
-	/// it for each squadmate with <c>Pilot_VoiceBankOf</c> of the portrait, plan step 6c6's part C; until that is ported
-	/// no pilot table holds a line. Retail is never handed another <paramref name="which"/>; one indexes nothing here, an
+	/// <see cref="Es1MessageTable.Index"/>. The Heads-Down Display's <c>HddGauge_LoadPilotFrames</c> (<c>0003dab4</c>,
+	/// <see cref="Hdd.Es1HddCommBox.Load"/>) calls it for each squadmate with <c>Pilot_VoiceBankOf</c> of the portrait. Retail is never handed another <paramref name="which"/>; one indexes nothing here, an
 	/// engine guard.
 	/// </summary>
 	public void SystemMessagesIndex(byte digit, sbyte which) {

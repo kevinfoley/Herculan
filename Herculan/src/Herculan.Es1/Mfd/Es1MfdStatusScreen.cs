@@ -40,8 +40,8 @@ public sealed class Es1MfdStatusScreen : Es1MfdScreen {
 	/// <summary>The target classes the paint tells apart, the object's <c>+0x162</c>.</summary>
 	public const short HercClass = 0, StructureClass = 1, FlyerClass = 2;
 
-	/// <summary>The damage readings <c>Mech_ReadDamageReadouts</c> fills, of which the condition scans 20 to 31.</summary>
-	private const int ReadingCount = 32, FirstScanned = 20, ScannedCount = 12;
+	/// <summary>The damage readings the condition scans, 20 to 31 of <see cref="Es1Mech.ReadDamageReadouts"/>.</summary>
+	private const int FirstScanned = 20, ScannedCount = 12;
 
 	private static readonly int[] LabelTops = [0, 8, 21, 28, 35];
 
@@ -159,7 +159,7 @@ public sealed class Es1MfdStatusScreen : Es1MfdScreen {
 		var view = doll?.Entries is { } views && DollView < views.Length ? views[DollView] : null;
 		int x = (view?.Origin.X ?? 0) + Rect.X0, y = (view?.Origin.Y ?? 0) + Rect.Y0;
 		canvas.Blit(herc.Type.PaperDollPicture(DollView), x, y);
-		var readings = ReadDamageReadouts(herc);
+		var readings = herc.ReadDamageReadouts();
 		if (!ReferenceEquals(herc, Cockpit.Machine)) {
 			_labels[0].SetText(canvas, Text(TargetGroup, 0));
 			_labels[1].Font = Font(IsFriendly(herc) ? Es1CockpitViews.CpGreen : Es1CockpitViews.CpRed);
@@ -212,15 +212,6 @@ public sealed class Es1MfdStatusScreen : Es1MfdScreen {
 			_ => [],
 		};
 		return picked.Length == 0 ? 0 : picked.Sum(i => readings[i]) / picked.Length;
-	}
-
-	/// <summary>
-	/// <c>Mech_ReadDamageReadouts</c> (<c>0001583c</c>)(machine, buffer). PLACEHOLDER: the damage readings are plan step
-	/// 7's; until then every reading is 0, intact.
-	/// </summary>
-	private static short[] ReadDamageReadouts(Es1Mech herc) {
-		_ = herc;
-		return new short[ReadingCount];
 	}
 
 	/// <summary>The object's <c>+0xaa</c>, shields down. PLACEHOLDER: the shields are plan step 7's; until then it is clear.</summary>

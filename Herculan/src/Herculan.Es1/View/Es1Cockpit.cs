@@ -91,12 +91,15 @@ public sealed class Es1Cockpit {
 	/// <summary>
 	/// <c>g_SquadmateMachines</c> (<c>000bcc16</c>), a global: the three squadmates by comm-box slot, which
 	/// <c>ColorSchemePanels_LoadAll</c> zeroes and <c>Cockpit_LoadSquadmatePilots</c> (<c>0002b308</c>) fills at the
-	/// mission's start (docs/es1/simulation/cockpit-panel.md#the-squadmates). PLACEHOLDER: that fill comes with the
-	/// Heads-Down Display's comm boxes, plan step 6c6's part C; until then every slot is empty, so no machine is a
-	/// squadmate, a post about one goes to the first slot's empty pilot table, and the display's comm-box presses do
-	/// nothing.
+	/// mission's start (docs/es1/simulation/cockpit-panel.md#the-squadmates, <see cref="LoadSquadmatePilots"/>).
 	/// </summary>
 	public Es1Mech?[] SquadmateMachines { get; } = new Es1Mech?[Es1MessageTables.PilotSlots];
+
+	/// <summary>
+	/// <c>CockpitSquadGroup</c> (<c>00092d6c</c>), a global: the player's machine's group, which
+	/// <see cref="LoadSquadmatePilots"/> stores and <see cref="BroadcastOrder"/> reads; none before.
+	/// </summary>
+	public Es1MissionGroup? SquadGroup { get; private set; }
 
 	/// <summary><c>SquadSlotColors</c> (<c>00092d14</c>), the four <c>int16</c> <c>HudColorTable_Get</c> reads.</summary>
 	private static readonly short[] SquadSlotColors = [56, 59, 49, 0];
@@ -111,13 +114,51 @@ public sealed class Es1Cockpit {
 	/// <summary>
 	/// <c>Squad_PilotName</c> (<c>0002e2f4</c>)(<paramref name="slot"/>): <c>HddGauge_Name</c> (<c>0003e830</c>), the name
 	/// <see cref="Es1HddCommBox.Name"/> of comm box <paramref name="slot"/> of <see cref="Es1SimGlobals.HddDisplayInstance"/>;
-	/// none before a display is built. PLACEHOLDER: the names are set by <c>HddGauge_LoadPilotFrames</c>, plan step 6c6's
-	/// part C; until then none.
+	/// none before a display is built or for a box with no pilot.
 	/// </summary>
 	public string? SquadPilotName(int slot) => Globals.HddDisplayInstance?.CommBoxes[slot].Name;
 
 	/// <summary><c>HudColorTable_Get</c> (<c>0002e2e4</c>)(<paramref name="slot"/>): entry <paramref name="slot"/> of <c>SquadSlotColors</c>, a squadmate slot's color.</summary>
 	public static int SquadSlotColor(int slot) => SquadSlotColors[slot];
+
+	/// <summary><c>Pilot_PortraitOf</c> (<c>0002e2b4</c>)(<paramref name="pilot"/>): the pilot's portrait number, <paramref name="pilot"/> / 3, truncating.</summary>
+	public static int PilotPortraitOf(int pilot) => pilot / 3;
+
+	/// <summary><c>Pilot_VoiceBankOf</c> (<c>0002e2c4</c>)(<paramref name="portrait"/>): the voice bank, <paramref name="portrait"/> / 4 + 1, truncating, with 3 made 4.</summary>
+	public static int PilotVoiceBankOf(int portrait) {
+		int bank = portrait / 4 + 1;
+		return bank == 3 ? 4 : bank;
+	}
+
+	/// <summary>
+	/// <c>Cockpit_LoadSquadmatePilots</c> (<c>0002b308</c>)(cockpit), from <c>Sim_StartMission</c>'s step 13
+	/// (docs/es1/simulation/cockpit-panel.md#the-squadmates): the group of the player's machine kept as
+	/// <see cref="SquadGroup"/>; its members in order, up to the first null, put into <see cref="SquadmateMachines"/>
+	/// past the cockpit's own machine until three are in; and for each, in slot order,
+	/// <see cref="Es1HddDisplay.LoadPilotFrames"/> with its pilot index (<see cref="Es1Mech.PilotWord"/>). The player's
+	/// machine is the first <c>Pool_Prev</c> reaches in <c>g_MechPool</c> with <c>+0x9d</c> set, the last such machine
+	/// built, which is the cockpit's machine, <c>LocalPlayerMech</c>. With no machine or group, where retail reads through
+	/// a null pointer, no squadmate, an engine guard.
+	/// </summary>
+	public void LoadSquadmatePilots() {
+		SquadGroup = Machine?.Group;
+		int count = 0;
+		if (SquadGroup != null) {
+			foreach (var member in SquadGroup.Members) {
+				if (count == SquadmateMachines.Length || member is not Es1Mech machine) {
+					break;
+				}
+
+				if (!ReferenceEquals(machine, Machine)) {
+					SquadmateMachines[count++] = machine;
+				}
+			}
+		}
+
+		for (int slot = 0; slot < count; slot++) {
+			Hdd.LoadPilotFrames(SquadmateMachines[slot]!.PilotWord, slot);
+		}
+	}
 
 	/// <summary>
 	/// The in-mission panels' shared state, whose <c>AlertPanel_OpenCount</c> the message boxes' page copy reads; none,
@@ -286,13 +327,12 @@ public sealed class Es1Cockpit {
 	/// <summary>
 	/// <c>Squad_BroadcastOrderFromCockpit</c> (<c>0002b448</c>)(cockpit, <paramref name="order"/>)
 	/// (docs/es1/simulation/cockpit-panel.md#the-squadmates): the machine stored as the order's issuer, and
-	/// <see cref="Es1MissionGroup.BroadcastOrder"/> of <c>CockpitSquadGroup</c> (<c>00092d6c</c>) answered. That global
-	/// is the group of the player's machine, which <c>Cockpit_LoadSquadmatePilots</c> stores at the mission's start; it is
-	/// read from the machine here. With no group, where retail reads through a null pointer, false, an engine guard.
+	/// <see cref="Es1MissionGroup.BroadcastOrder"/> of <see cref="SquadGroup"/> answered. With no group, where retail
+	/// reads through a null pointer, false, an engine guard.
 	/// </summary>
 	internal bool BroadcastOrder(Es1SquadOrder order) {
 		order.Issuer = Machine;
-		return Machine?.Group is { } group && group.BroadcastOrder(order, Globals);
+		return SquadGroup is { } group && group.BroadcastOrder(order, Globals);
 	}
 
 	/// <summary>
@@ -714,7 +754,7 @@ public sealed class Es1Cockpit {
 		Throttle = new Es1ThrottleGauge(this, layout.ThrottleBlock, files.ThrottleLights, files.PushButtons);
 		Gunsight = new Es1Gunsight(this, layout.Gunsight, files.GunsightBanks, files.Fonts, _mouse,
 			files.SimulatorStrings?.Text(Es1Gunsight.AttGroup, 0));
-		Hdd = new Es1HddDisplay(this, layout.HddBlock, files.Fonts, files.PushButtons, files.SimulatorStrings);
+		Hdd = new Es1HddDisplay(this, layout.HddBlock, files.Fonts, files.PushButtons, files.SimulatorStrings, files.Resources);
 		Clock = new Es1CockpitClock(this, layout.ClockBlock, Scripts, files.Fonts[0], Globals.Clock.Clock);
 		Scripts.RunAll();
 	}

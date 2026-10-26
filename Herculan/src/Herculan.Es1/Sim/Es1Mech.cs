@@ -278,6 +278,39 @@ public sealed class Es1Mech : IEs1SimObject {
 	/// </summary>
 	public short SquadVerb { get; set; }
 
+	/// <summary>
+	/// <c>Mech_SquadOrderLineIndex</c> (<c>00015d70</c>)(machine), a comm box's order line, an entry of
+	/// <c>STRINGS0.STR</c> group 34 (docs/es1/simulation/mech.md#small-functions): the behaviour descriptor's
+	/// <see cref="Es1BehaviourDescriptor.LineIndex"/>; while the machine is neither immobilized nor destroyed, that line is
+	/// not 5 (<c>FLEE</c>) and the descriptor's flag 1 (<c>+9</c>) is clear, the standing order overrides it:
+	/// <see cref="SquadVerb"/> 1 gives 1, 2 gives 2, 3 or 6 gives 4. With no descriptor, which the constructor always
+	/// installs, line 0, an engine guard.
+	/// </summary>
+	public short SquadOrderLineIndex() {
+		var descriptor = Behaviour.Descriptor;
+		short line = descriptor?.LineIndex ?? 0;
+		if (!Immobilized && !Destroyed && line != 5 && descriptor?.Flags[1] != true) {
+			line = SquadVerb switch {
+				1 => 1,
+				2 => 2,
+				3 or 6 => 4,
+				_ => line,
+			};
+		}
+
+		return line;
+	}
+
+	/// <summary>The readings <see cref="ReadDamageReadouts"/> fills.</summary>
+	public const int DamageReadingCount = 32;
+
+	/// <summary>
+	/// <c>Mech_ReadDamageReadouts</c> (<c>0001583c</c>)(machine, buffer): the type record's <c>int16</c> <c>+0x6c</c> in
+	/// entry 0 and <c>Component_FillDamageReadouts</c>' readings after it (docs/es1/simulation/damage-readouts.md).
+	/// PLACEHOLDER: the damage readings are plan step 7's; until then every reading is 0, intact.
+	/// </summary>
+	public short[] ReadDamageReadouts() => new short[DamageReadingCount];
+
 	/// <summary><c>+0x1d4</c>, the squad order's point. PLACEHOLDER: written with <see cref="SquadVerb"/>, plan step 8.</summary>
 	public Vec3i SquadPoint { get; set; }
 
