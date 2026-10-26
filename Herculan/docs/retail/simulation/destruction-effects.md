@@ -1,6 +1,6 @@
 # Destruction effects — wreckage, fire, and a structure coming down
 
-What a destroyed thing puts on screen: the shapes it throws (`debris.cpp`, tables in [`../formats/debris-dat.md`](../formats/debris-dat.md)), the flames left burning on it (`fire.cpp`, resources in [`../formats/fire-dat.md`](../formats/fire-dat.md)), and the multi-stage collapse a building runs before it becomes a wreck (`base.cpp`, record fields in [`../formats/bases-dat.md`](../formats/bases-dat.md#the-type-record)). All three are driven by the damage model but are separate from it — the arithmetic of losing a part is in [`component-damage.md`](component-damage.md) for a machine and [`structure-behaviour.md`](structure-behaviour.md#taking-damage--base_applydamage-00404d70) for a structure.
+What a destroyed thing puts on screen: the shapes it throws (`debris.cpp`, tables in [`../formats/debris-dat.md`](../formats/debris-dat.md)), the flames left burning on it (`fire.cpp`, resources in [`../formats/fire-dat.md`](../formats/fire-dat.md)), the smoke an emitter can puff from it ([Smoke](#smoke)), and the multi-stage collapse a building runs before it becomes a wreck (`base.cpp`, record fields in [`../formats/bases-dat.md`](../formats/bases-dat.md#the-type-record)). All three are driven by the damage model but are separate from it — the arithmetic of losing a part is in [`component-damage.md`](component-damage.md) for a machine and [`structure-behaviour.md`](structure-behaviour.md#taking-damage--base_applydamage-00404d70) for a structure.
 
 Impact effects — the puff where a shot lands — are a fourth, different subsystem: [`impact-effects.md`](impact-effects.md). Everything here spawns them, and nothing here is one.
 
@@ -152,6 +152,34 @@ Two sites, and they light different shapes:
 
 - **`Component_DestroyAndCascade`**, for a component whose `.DMG` `+0x03` byte is not `-1` (the same byte that drives its shape sequence — see [`../rendering/mech-shape-drawing.md`](../rendering/mech-shape-drawing.md)), and only while the cascade's latch is clear ([above](#a-machines-component)). The `.DMG` flags byte's (`+0x05`, [bits](../formats/dmg-damage-file.md#the-piece-record)) bit 1 releases every fire already on the machine and lights **shape 0** in their place — the machine going up as a whole. With bit 1 clear, bit 3 lights **shape 2** on that component's own cluster and leaves what is already alight.
 - **`Base_DeathSequenceTick`**, at the last stage of a collapsing part — see below.
+
+## Smoke
+
+**A smoke emitter puffs a ball of smoke at a point on its owner at a fixed interval until it has released its count, and each ball drifts and plays its flipbook once.** In ES2 `es2_xref.py` finds nothing reaching the emitter's constructor ([what constructs `SMOKE`](random-generator.md#open)); ES1's machines and structures light one ([ES1's smoke](../../es1/simulation/destruction-effects.md#smoke)).
+
+`Smoke_LoadResources` (`004090cc`), a phase-2 loader, builds `g_SmokePool`, 20 emitters of `0x2a` bytes, with its delete queue, then `SmokeBall_LoadResources` (`00408fb8`) builds `g_SmokeBallPool`, 200 balls of `0x4c` bytes, with its own, loads the smoke shapes into `g_SmokeShapes` and the smoke bank into `g_SmokeTextures`, and binds that bank to every root's `+0x26`. `Smoke_FlushDeletes` (`00408f9c`), at phase 5, flushes the emitters' queue and then the balls' (`SmokeBall_FlushDeletes`, `00408f84`).
+
+**The emitter — `Smoke_Construct` (`0040923c`)**, (smoke, owner, part id, point, kind):
+
+| Offset | Meaning |
+|---|---|
+| `+0x0c` | 1 when no point was given: puff from the part's node, or from the owner's position for a negative part id; the 8 bytes from here are zeroed first |
+| `+0x15` | the owner |
+| `+0x19` | `int16` part id |
+| `+0x1b` | the point, three `int16`, in the part's frame |
+| `+0x21` | the puff countdown, its `int16` at `+0x22` starting at 0 |
+| `+0x24` | puffs left: `{200, 500, 1000}`[kind], the table at `00497eec` |
+| `+0x26` | the next ball's shape: kind × 4 + `Math_RandomNext` & 3 |
+| `+0x28` | the kind |
+
+**The tick — `Smoke_Tick` (`004092dc`)**, which `es2_xref.py` finds called from `Sim_MainTick`. While puffs are left, each time `Math_CountdownTimerTick` of `+0x21` reaches 0 it reloads the countdown with 200, takes one puff off, and works out where the ball goes:
+
+- with a part id of 0 or more, or with `+0x0c` clear: a local point, the stored one for a negative part id, otherwise from the node of the part slot `+0x20` of the owner's shape finds for the part id, that node's transform in the instance's array at `+0x16` (`0x20` bytes each), or a fixed transform when no part is found or its node is negative; the stored point put through that transform with `Transform_ApplyToShortPoint` when `+0x0c` is clear, the transform's translation when it is set. Then the local point through the owner's orientation, built on demand;
+- with a negative part id and `+0x0c` set: the owner's position.
+
+It takes a ball from `g_SmokeBallPool`, builds it there when the pool gives one, and steps `+0x26` to kind × 4 + ((`+0x26` + 1) & 3), so the balls cycle through the kind's four shapes. It answers finished once no puffs are left.
+
+**The ball — `SmokeBall_Construct` (`00409178`)**, (ball, point, shape), builds a `TS_OBJ` on root *shape* of `g_SmokeShapes` with type tag 4, at the point, with its frame countdown's `int32` at `+0x48` set to 200. It writes no velocity. Its tick, `Effect_DriftAndAnimate` (`004091cc`), from `Sim_MainTick`, adds the three `int16` at `+0x41` to the position, and each time `Timer_CountDown` of `+0x47` reaches 0 reloads it with 200 and steps the instance's sequence 0 to its next cell, answering finished when the cell wraps to 0: a ball plays its flipbook once.
 
 ## A structure coming down
 

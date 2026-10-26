@@ -134,7 +134,7 @@ The three detail-part biases reach `TSDetailPart_Render` through `TSDetailPart_S
 |---|---|---|---|
 | a structure's, slot `+4` of the three tables `00003cbc` stores (`00090522`, `0009059e`, `0009061a`) | `Structure_DrawWithDetailBias` (`00002d18`): the bias, `Shape_DrawAtDetailLevel`, 0 | `g_TSDetailBiasForStructures` | `Structure_DrawWithDetailBias` (`004034f4`), from STRUCTURE DETAIL |
 | a flyer's, slot `+4` of `00091fea`, which `0001ac58` stores | `Flyer_Draw` (`0001ac34`), the same | `g_TSDetailBiasForFlyers` | `Flyer_Draw` (`004215cc`) |
-| a debris piece's, slot `+4` of `000908e6`, which `00006168` stores | `Debris_Draw` (`000065c4`): the bias, `SimObject_InstallModelTransform`, the instance `+0x2e`'s slot `+0x20`, 0 | the piece's own `+0x4a` | `Debris_Draw` (`00408e6c`), from its `+0x50` |
+| a debris piece's, slot `+4` of `DebrisVtable` (`000908e6`), which `Debris_Construct` (`00006168`) stores | `Debris_Draw` (`000065c4`): the bias, `SimObject_InstallModelTransform`, the instance `+0x2e`'s slot `+0x20`, 0 | the piece's own `+0x4a` | `Debris_Draw` (`00408e6c`), from its `+0x50` |
 | a fitted weapon's | `WeaponMount_RenderWithDetailBias` ([the mount classes](weapon-mount-classes.md#the-slots)) | `g_TSDetailBiasForMounts` | `WeaponMount_RenderWithDetailBias` |
 
 These are the four callers of `TSDetailPart_SetBias` `es2_xref.py` finds.

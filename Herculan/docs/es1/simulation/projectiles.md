@@ -16,7 +16,7 @@ Four object files and a fifth, `rocket.cpp`, between them ([where object files m
 
 | File | Code | Opens with | Ends with |
 |---|---|---|---|
-| the projectile pool | `00006d9c`–`00006dfb` | `Projectile_LoadResources`, after the three zero bytes that follow the `RET` at `00006d98` of the exit routine `00006d84` of the file holding `FlatObj_LoadResources` (`00006cf8`) | `Projectile_StaticDtor`'s `RET` at `00006dfb`, on a 4-byte boundary |
+| the projectile pool | `00006d9c`–`00006dfb` | `Projectile_LoadResources`, after the three zero bytes that follow the `RET` at `00006d98` of the exit routine `FlatObj_StaticDtor` (`00006d84`) of the file holding `FlatObj_LoadResources` (`00006cf8`) | `Projectile_StaticDtor`'s `RET` at `00006dfb`, on a 4-byte boundary |
 | [`rocket.cpp`](rockets.md#where-the-object-file-starts-and-ends) | `00006dfc`–`00007879` | a run of `ConfigPart`'s copies | `Rocket_RegisterSubsystem` |
 | the grenade | `0000787c`–`00007b69` | a lone 40-byte destructor, `HeapPtr_DtorGrenadeCopy` | `Grenade_RegisterSubsystem`, its `RET` at `00007b68` and three zero bytes |
 | `bullet.cpp` | `00007b6c`–`00008205` | a lone 40-byte destructor, `HeapPtr_DtorBulletCopy` | `Bullet_RegisterSubsystem`, its `RET` at `00008204` and three zero bytes |

@@ -33,7 +33,7 @@ groupCount × {
 
 `Debris_LoadResources` (`0000607c`, `debris.cpp`) is a phase-2 subsystem loader. The static initialiser `Debris_RegisterSubsystem` (`000065f4`) registers it with `RegisterSubsystemLoader` (`00000ac4`), and `DebrisPool_FlushDeletes` (`00005ebc`), `ObjectPool_FlushDeleteQueue` on the pool below, at phase 5; the exit routine `Debris_StaticDtor` (`00006620`) frees the pool. In order, the loader:
 
-1. builds the pool of thrown pieces with `Pool_Init(0, 0x4e, 0x96)` into `000aeef8`: 150 objects of `0x4e` bytes;
+1. builds the pool of thrown pieces with `Pool_Init(0, 0x4e, 0x96)` into `g_DebrisPool` (`000aeef8`): 150 objects of `0x4e` bytes;
 2. loads `dts\debris` with `Shape_LoadAllRoots` (`000635a8`), tag `0x140008`, its roots to the array at `000bc1c6` and their number to `000bc1ca`;
 3. opens `dat\debris`, asserting at severity 5 (`debris.cpp` line `0x59`) when the stream status is set, reads the group count into `000bc1c4`, allocates count × 10 bytes at `000bc1c0` and reads each group with `Debris_LoadPieceList`;
 4. closes the file.
@@ -45,11 +45,6 @@ A group is 10 bytes: the throw count at `+0`, the piece count at `+2`, the piece
 **A destroyed thing throws a random number of pieces, fewer than its group's throw count, each drawn at random by weight, so the same piece can be thrown twice and none may be thrown at all.** `Debris_ThrowGroup` (`00005fb8`), given the group, a second argument it passes on, and the shape array, in stack order:
 
 1. draws *n* = `Math_RandomBelow` (`00063b3c`)(throw count), 0 to throw count − 1, from the generator at `000b5bd4`;
-2. *n* times, draws *r* = `Math_RandomBelow`(total weight), walks the pieces from the first, taking each one's weight off *r* while *r* is greater than that piece's weight, and throws the piece it stops at: `00006168` with 0, the second argument and the piece's root shape, then `00006480` with the result ([Open](#open)).
+2. *n* times, draws *r* = `Math_RandomBelow`(total weight), walks the pieces from the first, taking each one's weight off *r* while *r* is greater than that piece's weight, and throws the piece it stops at: `Debris_Construct` (`00006168`) with 0, the second argument and the piece's root shape, then `Debris_ThrowRandomBearing` (`00006480`) with the result, a piece launched on a random bearing ([the piece](../simulation/destruction-effects.md#the-piece--debris_construct-00006168)).
 
-ES2's `Debris_ThrowGroup` (`004086bc`) throws exactly the throw count, or every piece once when the count is 0, with the same weighted walk. In ES1 a throw count of 0 would divide by zero in `Math_RandomBelow`; every retail group's is 3 to 7. `es2_xref.py` finds five calls of `Debris_ThrowGroup`, in `00003978`, `00003a58`, `Component_DestroyAndCascade` (`00009cd4`), `Mech_DirectFireHitTest` (`00013b44`) and `0001b370`. The HERC's hit test throws group 1 at the impact for a hit that leaves the struck component's damage band as it was and group 2 for one that changes it, unless the component is gone ([the hit test](../simulation/mech.md#the-hit-test--mech_directfirehittest-00013b44)).
-
-## Open
-
-- **Open:** what `00006168` and `00006480` do with a thrown piece, what the `0x4e`-byte piece object holds, and how it moves and ends.
-- **Open:** which group the callers in `00003978`, `00003a58` and `0001b370` throw, and for what; `Component_DestroyAndCascade` (`00009cd4`) throws group 3 for a lost component ([losing a component](../simulation/component-damage.md#losing-a-component--component_destroyandcascade-00009cd4)).
+ES2's `Debris_ThrowGroup` (`004086bc`) throws exactly the throw count, or every piece once when the count is 0, with the same weighted walk. In ES1 a throw count of 0 would divide by zero in `Math_RandomBelow`; every retail group's is 3 to 7. Which group each caller throws is [where pieces are thrown](../simulation/destruction-effects.md#where-pieces-are-thrown).

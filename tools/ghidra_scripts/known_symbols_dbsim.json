@@ -1997,7 +1997,13 @@
       "confidence": "high",
       "name": "SmokeBall_Construct",
       "description": "SMOKE_BALL (TS_OBJ, vtable 00498084) constructor: shape from g_SmokeShapes[variant], position from the argument, frame timer 200.",
-      "source": "docs/retail/simulation/random-generator.md"
+      "source": "docs/retail/simulation/random-generator.md",
+      "verified": {
+        "bytes": "00409178+83",
+        "sha1": "4b08fe737bb1",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004091cc",
@@ -2005,8 +2011,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Effect_DriftAndAnimate",
-      "description": "(obj): adds the int16 velocity +0x41/+0x43/+0x45 to the position +0x26/+0x2a/+0x2e; when Timer_CountDown(+0x47) expires, reloads +0x48 with 200 and steps the shape's frame counter (*(shape(+0x34)+8)) on modulo the frame count, returning 1 when it wraps to 0. Sim_MainTick runs it on every object of the pool 004a96f2 and queues those returning 1 for delete.",
-      "source": "DBSIM decompile at 004091cc"
+      "description": "(obj): adds the int16 velocity +0x41/+0x43/+0x45 to the position +0x26/+0x2a/+0x2e; when Timer_CountDown(+0x47) expires, reloads +0x48 with 200 and steps the shape's frame counter (*(shape(+0x34)+8)) on modulo the frame count, returning 1 when it wraps to 0. es2_xref finds its call from Sim_MainTick.",
+      "source": "DBSIM decompile at 004091cc",
+      "verified": {
+        "bytes": "004091cc+111",
+        "sha1": "02c2e58759c8",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040923c",
@@ -2014,8 +2026,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Smoke_Construct",
-      "description": "SMOKE (DRAWABLE, vtable 00498064, 0x2a bytes) constructor: owner +0x15, component +0x19, smoke type +0x28, first shape variant +0x26 = type*4 + (Math_RandomNext(0x4d268f) & 3). es2_xref finds nothing reaching it.",
-      "source": "docs/retail/simulation/random-generator.md"
+      "description": "(smoke, owner, part id, point, kind): SMOKE's constructor (DRAWABLE, vtable 00498064, 0x2a bytes). Stores the kind at +0x28 and the count {200, 500, 1000}[kind] (the int16 table 00497eec) at +0x24, zeroes the 8 bytes from +0xc and the countdown's int16 +0x22, stores the owner at +0x15, the part id at +0x19, kind * 4 + (Math_RandomNext(0x4d268f) & 3) at the next ball's shape +0x26, and the point's three int16 at +0x1b, or with a null point sets the byte +0xc. es2_xref finds nothing reaching it.",
+      "source": "Herculan/docs/retail/simulation/destruction-effects.md#smoke",
+      "verified": {
+        "bytes": "0040923c+160",
+        "sha1": "74d30475d433",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004092dc",
@@ -2023,8 +2041,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Smoke_Tick",
-      "description": "Called from Sim_MainTick. Every 200 ticks while the count +0x24 lasts, places a SMOKE_BALL at the owner component's point (or a fixed offset) and steps +0x26 to the next of the type's four variants.",
-      "source": "docs/retail/simulation/random-generator.md"
+      "description": "(smoke): SMOKE's tick; es2_xref finds its call from Sim_MainTick. While the count +0x24 is not 0, when Math_CountdownTimerTick (00467944)(smoke + 0x21) answers 0: the int16 +0x22 = 200, the count less 1, and the point: with the part id +0x19 not negative or the byte +0xc clear, a local point (the int16 point +0x1b for a negative part id; otherwise from the part vtable +0x20 of the owner's (+0x15) shape finds, the 0x20-byte transform its node +4 indexes in the instance's array +0x16, or a fixed transform for no part or a negative node, put to the stored point with Transform_ApplyToShortPoint (004800c8) when +0xc is clear and its translation when set) through the owner's rotation +0x12, built from its angles +0xc while the word +0x32 is 0, with Transform_ApplyToPoint (00480330); otherwise the owner's position +0x26. Then a ball from g_SmokeBallPool, built there with SmokeBall_Construct (00409178)(ball, the point, the shape +0x26) when the pool gives one, and +0x26 = kind +0x28 * 4 + ((+0x26 + 1) & 3). Returns 1 when the count is 0.",
+      "source": "Herculan/docs/retail/simulation/destruction-effects.md#smoke",
+      "verified": {
+        "bytes": "004092dc+431",
+        "sha1": "13e1921965c9",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040948c",

@@ -62,7 +62,7 @@ A type *has a collision model* when its record's `+0x3a`, the 6-byte slot the lo
 1. posts computer message 3 (`Computer_PostMessage`, `0001a154`) when the attacker is the player's machine (`LocalPlayerMech`, `000b5b86`) and its target `+0x15e` is the structure;
 2. sets `+0x18c` to the type's `+0x08` and calls the attacker's slot `+0x64`(attacker, 0, structure);
 3. sets the destroyed byte `+0x93` and clears `+0x90`;
-4. throws the debris group at the dword `000bc1c0` + `0x1e` at the structure's position `+0x20`, with the shapes at the dword `000bc1c6` (`Debris_ThrowGroup`, [throwing a group](../formats/debris-dat.md#throwing-a-group));
+4. throws the debris group at the dword `g_DebrisGroups` (`000bc1c0`) + `0x1e` at the structure's position `+0x20`, with the shapes at the dword `g_DebrisShapes` (`000bc1c6`) (`Debris_ThrowGroup`, [throwing a group](../formats/debris-dat.md#throwing-a-group));
 5. runs `Mech_ReportOutOfAction` (`0000d77c`, [the out-of-action report](sim-object-base.md#the-out-of-action-report--mech_reportoutofaction-0000d77c)) and, when the action `+0x170` is set, `Action_Activate` (`0001cc5c`) of it;
 6. sets the collapse count `+0x1a0` to 8.
 

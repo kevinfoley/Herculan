@@ -157,7 +157,7 @@
       "type": "function",
       "confidence": "high",
       "name": "RegisterSubsystemLoader",
-      "description": "(phase, function) in stack order, callee-cleaned: stores function and the int16 phase in the next 6-byte record at 000bbcb0, the record index being the int16 count at 0009011c, which it increments; Subsystem_RunPhase (00000af4) walks the records. Static initialisers call it, among them Weapons_RegisterSubsystem (0000d67c), Bullet_RegisterSubsystem (000081f8), 00004b80 and 00005e78 for Weapons_LoadResourceTables (0000bf48), Bullet_LoadResources (00007bb0), Base_LoadResources (000046ac) and Explosion_LoadResources (00005764) at phase 2. ES2's RegisterSubsystemLoader (DBSIM 00401d64).",
+      "description": "(phase, function) in stack order, callee-cleaned: stores function and the int16 phase in the next 6-byte record at 000bbcb0, the record index being the int16 count at 0009011c, which it increments; Subsystem_RunPhase (00000af4) walks the records. Static initialisers call it, among them Weapons_RegisterSubsystem (0000d67c), Bullet_RegisterSubsystem (000081f8), 00004b80 and Explosion_RegisterSubsystem (00005e78) for Weapons_LoadResourceTables (0000bf48), Bullet_LoadResources (00007bb0), Base_LoadResources (000046ac) and Explosion_LoadResources (00005764) at phase 2. ES2's RegisterSubsystemLoader (DBSIM 00401d64).",
       "source": "Herculan/docs/es1/formats/weapons-dat-sim.md#the-load",
       "verified": {
         "bytes": "00000ac4+47",
@@ -1387,7 +1387,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Base_ApplyDamage",
-      "description": "(structure, attacker, damage) in stack order, its arguments removed by this function: ES2's Base_ApplyDamage (DBSIM 00404d70) on one damage total. It adds the damage to the int16 +0x18c; when that passes the type record's (+0x188) +0x08 it posts Computer_PostMessage (0001a154)(3) when the attacker is LocalPlayerMech (000b5b86) and its target +0x15e is the structure, sets +0x18c to +0x08, calls the attacker's slot +0x64(attacker, 0, structure), sets the destroyed byte +0x93 and clears +0x90, throws the debris group at the dword 000bc1c0 + 0x1e at the position +0x20 with the shapes at the dword 000bc1c6 (Debris_ThrowGroup (00005fb8)), runs Mech_ReportOutOfAction (0000d77c)(structure) and, when +0x170 is set, Action_Activate (0001cc5c)(+0x170), and sets the collapse count +0x1a0 to 8. es2_xref finds one call, from 00003a58.",
+      "description": "(structure, attacker, damage) in stack order, its arguments removed by this function: ES2's Base_ApplyDamage (DBSIM 00404d70) on one damage total. It adds the damage to the int16 +0x18c; when that passes the type record's (+0x188) +0x08 it posts Computer_PostMessage (0001a154)(3) when the attacker is LocalPlayerMech (000b5b86) and its target +0x15e is the structure, sets +0x18c to +0x08, calls the attacker's slot +0x64(attacker, 0, structure), sets the destroyed byte +0x93 and clears +0x90, throws the debris group at the dword g_DebrisGroups (000bc1c0) + 0x1e at the position +0x20 with the shapes at the dword g_DebrisShapes (000bc1c6) (Debris_ThrowGroup (00005fb8)), runs Mech_ReportOutOfAction (0000d77c)(structure) and, when +0x170 is set, Action_Activate (0001cc5c)(+0x170), and sets the collapse count +0x1a0 to 8. es2_xref finds one call, from 00003a58.",
       "source": "Herculan/docs/es1/simulation/terrain.md#the-structures-tests",
       "verified": {
         "bytes": "00003978+221",
@@ -1732,7 +1732,7 @@
       "type": "function",
       "confidence": "high",
       "name": "EffectLight_SetIntensity",
-      "description": "(handle, byte value), callee-cleaned: LightManager_SetSlotIntensity of the handle's slot +6. ES2's EffectLight_SetIntensity (DBSIM 004076a0). es2_xref finds its caller 00005d74, which passes the low byte of an entry of the explosion row's intensity ramp.",
+      "description": "(handle, byte value), callee-cleaned: LightManager_SetSlotIntensity of the handle's slot +6. ES2's EffectLight_SetIntensity (DBSIM 004076a0). es2_xref finds its caller Explosion_TickUpdate (00005d74), which passes the low byte of an entry of the explosion row's intensity ramp.",
       "source": "ES1DBSIM decompile at 00005578 and its call at 00005e13",
       "verified": {
         "bytes": "00005578+31",
@@ -1897,7 +1897,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ExplosionPool_FlushDeletes",
-      "description": "No arguments: ObjectPool_FlushDeleteQueue(000aee8c, g_ExplosionPool (000aee88)). Registered at phase 5 by the static initialiser at 00005e78. ES2's ExplosionPool_FlushDeletes (DBSIM 00407b3c).",
+      "description": "No arguments: ObjectPool_FlushDeleteQueue(g_ExplosionDeleteQueue (000aee8c), g_ExplosionPool (000aee88)). Registered at phase 5 by the static initialiser at Explosion_RegisterSubsystem (00005e78). ES2's ExplosionPool_FlushDeletes (DBSIM 00407b3c).",
       "source": "Herculan/docs/es1/formats/explos-dat.md#construction",
       "verified": {
         "bytes": "00005750+17",
@@ -1922,12 +1922,162 @@
       }
     },
     {
+      "address": "00005940",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Explosion_Destruct",
+      "description": "(effect, flags), callee-cleaned: slot +0xc of ExplosionVtable (00090822). With the effect non-null stores ExplosionVtable at +2, destroys the ground shape +0x49 and then the light handle +0x4d through slot +0xc of each with 3 when set, stores 00090842, destroys the shape instance +0x2e through its slot +0x1c with 3, stores 00090862 and 00090882, and on flags bit 0 queues the effect on g_ExplosionDeleteQueue (000aee8c) with ObjectPool_QueueForDelete (00063760). ES2's Explosion_Destruct (DBSIM 00407e48), which queues the ground shape and the light on their pools' queues instead.",
+      "source": "Herculan/docs/es1/simulation/impact-effects.md#the-end--explosion_destruct-00005940",
+      "verified": {
+        "bytes": "00005940+134",
+        "sha1": "3ad3656a2204",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000059c8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_RenderExploCopy",
+      "description": "(object): slot +4 of the vtable ExplosionVtable (00090822) (entered at its padding 000059c6), and slot +4 of the vtable 00090842 (entered at its padding 000059c6): byte for byte the code of TSObj_Render (00001cdc), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/impact-effects.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 000059c8",
+      "verified": {
+        "bytes": "000059c8+31",
+        "sha1": "a41ecc0ba95f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000059e8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_GetPositionExploCopy",
+      "description": "(object): slot +8 of the vtable ExplosionVtable (00090822) (entered at its padding 000059e7), and slot +8 of the vtable 00090842 (entered at its padding 000059e7), and slot +8 of the vtable FlatObjVtableExploCopy (000908a2): byte for byte the code of TSObj_GetPosition (00001cfc), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/impact-effects.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 000059e8",
+      "verified": {
+        "bytes": "000059e8+20",
+        "sha1": "a1b95c43ba5f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000059fc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_ReturnZeroExploCopy",
+      "description": "Frameless: XOR EAX,EAX and RET 4: returns 0. Slot +0x10 of the vtable ExplosionVtable (00090822), and slot +0x10 of the vtable 00090842, and slot +0x10 of the vtable 00090862, and slot +0x10 of the vtable 00090882, and slot +0x10 of the vtable FlatObjVtableExploCopy (000908a2); the code of TSObj_ReturnZero (000018e8).",
+      "source": "Herculan/docs/es1/simulation/impact-effects.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 000059fc",
+      "verified": {
+        "bytes": "000059fc+5",
+        "sha1": "0f864a8a1b9e",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00005a04",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_GetRadiusExploCopy",
+      "description": "(object): slot +0x14 of the vtable ExplosionVtable (00090822) (entered at its padding 00005a01), and slot +0x14 of the vtable 00090842 (entered at its padding 00005a01), and slot +0x14 of the vtable FlatObjVtableExploCopy (000908a2): byte for byte the code of TSObj_GetRadius (00001d58), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/impact-effects.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00005a04",
+      "verified": {
+        "bytes": "00005a04+71",
+        "sha1": "81f34db4094a",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00005a4c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_DtorExploCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of the vtable 00090842 (entered at its padding 00005a4b): byte for byte the code of TSObj_Dtor (00001d10), relocated operands aside, storing 00090842 and 00090862 and 00090882 where that stores 000902ea and 000902ca and 0009020a. ES2's TSObj_Dtor (DBSIM 0046b890).",
+      "source": "Herculan/docs/es1/simulation/impact-effects.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00005a4c",
+      "verified": {
+        "bytes": "00005a4c+72",
+        "sha1": "a58aa083cc26",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00005a94",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MatObj_GetPositionExploCopy",
+      "description": "(object): returns object + 0x20. Slot +8 of the vtable 00090862, explo.cpp's copy of MAT_OBJ's table: the code of MatObj_GetPosition (00001c9c), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/impact-effects.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00005a94",
+      "verified": {
+        "bytes": "00005a94+20",
+        "sha1": "a1b95c43ba5f",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00005aa8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MatObj_DtorExploCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of the vtable 00090862: byte for byte the code of MatObj_Dtor (00001cb0), relocated operands aside, storing 00090862 and 00090882 where that stores 000902ca and 0009020a. ES2's MatObj_Dtor (DBSIM 0046b97d).",
+      "source": "Herculan/docs/es1/simulation/impact-effects.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00005aa8",
+      "verified": {
+        "bytes": "00005aa8+42",
+        "sha1": "7978bfab8b55",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00005ad2",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Drawable_GetRadiusExploCopy",
+      "description": "Frameless: two NOPs, then XOR EAX,EAX and RET 4: returns 0. Slot +0x14 of the vtable 00090862, and slot +0x14 of the vtable 00090882; the code of Drawable_GetRadius (000018ed).",
+      "source": "Herculan/docs/es1/simulation/impact-effects.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00005ad2",
+      "verified": {
+        "bytes": "00005ad2+7",
+        "sha1": "caf3d3407fd2",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00005adc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Drawable_DtorExploCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of the vtable 00090882 (entered at its padding 00005ad9): byte for byte the code of Drawable_Dtor (000018d4), relocated operands aside, storing 00090882 where that stores 0009020a. ES2's Drawable_Dtor (DBSIM 00478615).",
+      "source": "Herculan/docs/es1/simulation/impact-effects.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00005adc",
+      "verified": {
+        "bytes": "00005adc+19",
+        "sha1": "7d4510786742",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "00005af0",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Explosion_Construct",
-      "description": "(effect, point, typeId) in stack order, callee-cleaned: when effect is null allocates it from g_ExplosionPool (000aee88), returning 0 when that fails; TSObj_Ctor on the root g_ExplosionShapes (000bc1b6) [row +0x00], vptr 00090822, type byte +0x3b = typeId; type tag 2 when row +0x2a is 0, else 8; frame countdown +0x45 = row +0x06; when row +0x02 is not negative zeroes that sequence's frame counter in the shape instance; copies the point into the frame; when row +0x08 is non-zero builds a ground shape from the pool 000af044 on root 1 of the array at 000bc1d8, vptr 000908a2, at the point, into +0x49 (else 0); when row +0x0a is non-zero stores EffectLight_Construct (000054b0)(0, the dword at row +0x0c, point) at +0x4d (else 0); then Sound_PlayAt(point, row +0x28 + 10). ES2's Explosion_Construct (DBSIM 00407f1c), which also takes an owner and a play-sound flag and plays only a non-negative id.",
+      "description": "(effect, point, typeId) in stack order, callee-cleaned: when effect is null allocates it from g_ExplosionPool (000aee88), returning 0 when that fails; TSObj_Ctor on the root g_ExplosionShapes (000bc1b6) [row +0x00], vptr ExplosionVtable (00090822), type byte +0x3b = typeId; type tag 2 when row +0x2a is 0, else 8; frame countdown +0x45 = row +0x06; when row +0x02 is not negative zeroes that sequence's frame counter in the shape instance; copies the point into the frame; when row +0x08 is non-zero builds a ground shape from the pool g_FlatObjPool (000af044) on root 1 of the array at g_FlatShapes (000bc1d8), vptr FlatObjVtableExploCopy (000908a2), at the point, into +0x49 (else 0); when row +0x0a is non-zero stores EffectLight_Construct (000054b0)(0, the dword at row +0x0c, point) at +0x4d (else 0); then Sound_PlayAt(point, row +0x28 + 10). ES2's Explosion_Construct (DBSIM 00407f1c), which also takes an owner and a play-sound flag and plays only a non-negative id.",
       "source": "Herculan/docs/es1/formats/explos-dat.md#construction",
       "verified": {
         "bytes": "00005af0+437",
@@ -1937,12 +2087,102 @@
       }
     },
     {
+      "address": "00005ca8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FlatObj_DrawExploCopy",
+      "description": "(shadow), callee-cleaned: slot +4 of the vtable FlatObjVtableExploCopy (000908a2) (entered at its padding 00005ca5): byte for byte the code of FlatObj_DrawMechCopy (00011988), relocated operands aside. ES2's FlatObj_Draw (DBSIM 0040991c).",
+      "source": "Herculan/docs/es1/simulation/impact-effects.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00005ca8",
+      "verified": {
+        "bytes": "00005ca8+45",
+        "sha1": "b991a2f0fe4b",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00005cd8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FlatObj_DtorExploCopy",
+      "description": "(shadow, flags), callee-cleaned: slot +0xc of the vtable FlatObjVtableExploCopy (000908a2) (entered at its padding 00005cd5): byte for byte the code of FlatObj_DtorMechCopy (000119b8), relocated operands aside, storing FlatObjVtableExploCopy (000908a2) and 00090842 and 00090862 and 00090882 where that stores 00091b66 and 00091ba6 and 00091bc6 and 00091be6. ES2's FlatObj_Destruct (DBSIM 0041bd46).",
+      "source": "Herculan/docs/es1/simulation/impact-effects.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00005cd8",
+      "verified": {
+        "bytes": "00005cd8+84",
+        "sha1": "a05bffeb419f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00005d2c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Explosion_ProximityTest",
+      "description": "(effect, point), callee-cleaned: returns 1 when the type row's (Explosion_GetTypeRecord (00005734)) light mode +0x0a is 2 and Math_DistanceBetweenPoints (00063c20)(point, the effect's position +0x20) is under the row's int32 +0x24, otherwise 0. No reference found by es2_xref. ES2's Explosion_ProximityTest (DBSIM 00408100), whose row offsets are 4 lower.",
+      "source": "Herculan/docs/es1/simulation/impact-effects.md#the-proximity-test--explosion_proximitytest-00005d2c",
+      "verified": {
+        "bytes": "00005d2c+72",
+        "sha1": "52104d433e3d",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00005d74",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Explosion_TickUpdate",
+      "description": "(effect), callee-cleaned: the impact effect's tick, called from Sim_MainTick (00059700) by es2_xref. Returns 0 while Math_CountdownTimerTick (0006410c)(effect + 0x44) is not 0. Otherwise, with the type row's sequence +0x02 negative returns 1; else steps that sequence's int16 in the shape instance's (+0x2e) array +8 to (frame + 1) modulo the shape's (+4) frame count for it (+0x20 array), returning 1 when that gives 0; else, with a light +0x4d, EffectLight_SetIntensity (00005578)(light, the low byte of the row's int16 at +0x0c + 2 * frame); with a ground shape +0x49, steps its instance's sequence 0 the same way; reloads the countdown's int16 +0x45 from the row's +0x06 and returns 0. ES2's Explosion_TickUpdate (DBSIM 0040813c), which finds the sequence through its shape table.",
+      "source": "Herculan/docs/es1/simulation/impact-effects.md#the-tick--explosion_tickupdate-00005d74",
+      "verified": {
+        "bytes": "00005d74+260",
+        "sha1": "3758f2c3408e",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00005e78",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Explosion_RegisterSubsystem",
+      "description": "No arguments, no Ghidra function: explo.cpp's static initializer, entry 000adbc8 of the static constructor table: RegisterSubsystemLoader (00000ac4)(2, Explosion_LoadResources (00005764)) and (5, ExplosionPool_FlushDeletes (00005750)) in stack order, then zeroes the word 000aeef0 and g_ExplosionPool (000aee88).",
+      "source": "Herculan/docs/es1/simulation/impact-effects.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00005e78",
+      "verified": {
+        "bytes": "00005e78+44",
+        "sha1": "1156c6e5f321",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00005ea4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Explosion_StaticDtor",
+      "description": "No arguments, no Ghidra function: the exit table's entry 000adc90, explo.cpp's exit routine and last code: operator_delete (000015f8)(g_ExplosionPool (000aee88)) when it is set. Its RET at 00005eb8 is followed by three zero bytes before DebrisPool_FlushDeletes (00005ebc).",
+      "source": "Herculan/docs/es1/simulation/impact-effects.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00005ea4",
+      "verified": {
+        "bytes": "00005ea4+21",
+        "sha1": "04c0f08fb349",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "00005ebc",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "DebrisPool_FlushDeletes",
-      "description": "No arguments: ObjectPool_FlushDeleteQueue(000aeefc, the debris pool 000aeef8). The phase-5 subsystem loader Debris_RegisterSubsystem (000065f4) registers.",
+      "description": "No arguments: ObjectPool_FlushDeleteQueue(g_DebrisDeleteQueue (000aeefc), the debris pool g_DebrisPool (000aeef8)). The phase-5 subsystem loader Debris_RegisterSubsystem (000065f4) registers.",
       "source": "Herculan/docs/es1/formats/debris-dat.md#the-load",
       "verified": {
         "bytes": "00005ebc+17",
@@ -1972,7 +2212,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Debris_ThrowGroup",
-      "description": "(group, a, shapes) in stack order, callee-cleaned: draws n = Math_RandomBelow(000b5bd4, the group's throw count +0), 0 to count - 1, and n times draws r = Math_RandomBelow(000b5bd4, the weight total +8), walks the pieces (+4) taking each weight off r while r is greater than it, and passes 00006168(0, a, shapes[the piece's shape]) to 00006480. A throw count of 0 divides by zero. ES2's Debris_ThrowGroup (DBSIM 004086bc), which throws exactly the count, or every piece for 0. Callers found by es2_xref: Base_ApplyDamage (00003978), 00003a58, Component_DestroyAndCascade (00009cd4), Mech_DirectFireHitTest (00013b44), 0001b370.",
+      "description": "(group, a, shapes) in stack order, callee-cleaned: draws n = Math_RandomBelow(000b5bd4, the group's throw count +0), 0 to count - 1, and n times draws r = Math_RandomBelow(000b5bd4, the weight total +8), walks the pieces (+4) taking each weight off r while r is greater than it, and passes Debris_Construct (00006168)(0, a, shapes[the piece's shape]) to Debris_ThrowRandomBearing (00006480). A throw count of 0 divides by zero. ES2's Debris_ThrowGroup (DBSIM 004086bc), which throws exactly the count, or every piece for 0. Callers found by es2_xref: Base_ApplyDamage (00003978), 00003a58, Component_DestroyAndCascade (00009cd4), Mech_DirectFireHitTest (00013b44), 0001b370.",
       "source": "Herculan/docs/es1/formats/debris-dat.md#throwing-a-group",
       "verified": {
         "bytes": "00005fb8+195",
@@ -1987,7 +2227,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Debris_LoadResources",
-      "description": "No arguments, debris.cpp, a phase-2 subsystem loader: Pool_Init(0, 0x4e, 0x96) into 000aeef8 (150 pieces of 0x4e bytes); Shape_LoadAllRoots(0, 0x140008, dts\\debris, 000bc1c6), the root count to 000bc1ca; opens dat\\debris (severity-5 assert, line 0x59, when the stream status is set), reads the int16 group count to 000bc1c4, allocates count * 10 bytes at 000bc1c0 and reads each group with Debris_LoadPieceList (00005ed0); closes the file. ES2's Debris_LoadResources (DBSIM 00408860) with ES2's Debris_LoadDatabase (DBSIM 0040874c) folded in, one database into globals and no texture bank.",
+      "description": "No arguments, debris.cpp, a phase-2 subsystem loader: Pool_Init(0, 0x4e, 0x96) into g_DebrisPool (000aeef8) (150 pieces of 0x4e bytes); Shape_LoadAllRoots(0, 0x140008, dts\\debris, g_DebrisShapes (000bc1c6)), the root count to 000bc1ca; opens dat\\debris (severity-5 assert, line 0x59, when the stream status is set), reads the int16 group count to 000bc1c4, allocates count * 10 bytes at g_DebrisGroups (000bc1c0) and reads each group with Debris_LoadPieceList (00005ed0); closes the file. ES2's Debris_LoadResources (DBSIM 00408860) with ES2's Debris_LoadDatabase (DBSIM 0040874c) folded in, one database into globals and no texture bank.",
       "source": "Herculan/docs/es1/formats/debris-dat.md#the-load",
       "verified": {
         "bytes": "0000607c+235",
@@ -1997,12 +2237,222 @@
       }
     },
     {
+      "address": "00006168",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Debris_Construct",
+      "description": "(piece, point, root) in stack order, callee-cleaned: with a null piece takes one from g_DebrisPool (000aeef8) with Pool_Alloc (000638c8), returning 0 when that gives none; TSObj_Ctor (00001b04)(piece, root), DebrisVtable (000908e6) at +2, the type tag 1 at +0, the point's three int32 at the position +0x20, and 0 in the detail bias dword +0x4a. It writes no velocity. Returns the piece. es2_xref finds two calls, from Debris_ThrowGroup (00005fb8) and WeaponMount_Destroy (0000b968). ES2's Debris_Construct (DBSIM 00408940), which also stores a child group, a death effect, a burst countdown and the database.",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#the-piece--debris_construct-00006168",
+      "verified": {
+        "bytes": "00006168+147",
+        "sha1": "fd778c13cfb0",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000061fc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_GetPositionDebrisCopy",
+      "description": "(object): slot +8 of the vtable DebrisVtable (000908e6) (entered at its padding 000061fb), and slot +8 of the vtable 00090906: byte for byte the code of TSObj_GetPosition (00001cfc), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 000061fc",
+      "verified": {
+        "bytes": "000061fc+20",
+        "sha1": "a1b95c43ba5f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00006210",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Debris_Destruct",
+      "description": "(piece, flags), callee-cleaned: slot +0xc of DebrisVtable (000908e6). With the piece non-null stores DebrisVtable and 00090906 at +2, destroys the shape instance +0x2e through its slot +0x1c with 3 when set, stores 00090926 and 00090946, and on flags bit 0 queues the piece on g_DebrisDeleteQueue (000aeefc) with ObjectPool_QueueForDelete (00063760).",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#drawing-and-deleting",
+      "verified": {
+        "bytes": "00006210+84",
+        "sha1": "ddd31db24f58",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00006264",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_ReturnZeroDebrisCopy",
+      "description": "Frameless: XOR EAX,EAX and RET 4: returns 0. Slot +0x10 of the vtable DebrisVtable (000908e6), and slot +0x10 of the vtable 00090906, and slot +0x10 of the vtable 00090926, and slot +0x10 of the vtable 00090946; the code of TSObj_ReturnZero (000018e8).",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00006264",
+      "verified": {
+        "bytes": "00006264+5",
+        "sha1": "0f864a8a1b9e",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0000626c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_GetRadiusDebrisCopy",
+      "description": "(object): slot +0x14 of the vtable DebrisVtable (000908e6) (entered at its padding 00006269), and slot +0x14 of the vtable 00090906 (entered at its padding 00006269): byte for byte the code of TSObj_GetRadius (00001d58), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0000626c",
+      "verified": {
+        "bytes": "0000626c+71",
+        "sha1": "81f34db4094a",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000062b4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_RenderDebrisCopy",
+      "description": "(object): slot +4 of the vtable 00090906 (entered at its padding 000062b3): byte for byte the code of TSObj_Render (00001cdc), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 000062b4",
+      "verified": {
+        "bytes": "000062b4+31",
+        "sha1": "5cfed68622b7",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000062d4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_DtorDebrisCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of the vtable 00090906 (entered at its padding 000062d3): byte for byte the code of TSObj_Dtor (00001d10), relocated operands aside, storing 00090906 and 00090926 and 00090946 where that stores 000902ea and 000902ca and 0009020a. ES2's TSObj_Dtor (DBSIM 0046b890).",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 000062d4",
+      "verified": {
+        "bytes": "000062d4+72",
+        "sha1": "49329896e717",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000631c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MatObj_GetPositionDebrisCopy",
+      "description": "(object): returns object + 0x20. Slot +8 of the vtable 00090926, debris.cpp's copy of MAT_OBJ's table: the code of MatObj_GetPosition (00001c9c), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0000631c",
+      "verified": {
+        "bytes": "0000631c+20",
+        "sha1": "a1b95c43ba5f",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00006330",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MatObj_DtorDebrisCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of the vtable 00090926: byte for byte the code of MatObj_Dtor (00001cb0), relocated operands aside, storing 00090926 and 00090946 where that stores 000902ca and 0009020a. ES2's MatObj_Dtor (DBSIM 0046b97d).",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00006330",
+      "verified": {
+        "bytes": "00006330+42",
+        "sha1": "afb60e9e286b",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000635a",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Drawable_GetRadiusDebrisCopy",
+      "description": "Frameless: two NOPs, then XOR EAX,EAX and RET 4: returns 0. Slot +0x14 of the vtable 00090926, and slot +0x14 of the vtable 00090946; the code of Drawable_GetRadius (000018ed).",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0000635a",
+      "verified": {
+        "bytes": "0000635a+7",
+        "sha1": "caf3d3407fd2",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00006364",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Drawable_DtorDebrisCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of the vtable 00090946 (entered at its padding 00006361): byte for byte the code of Drawable_Dtor (000018d4), relocated operands aside, storing 00090946 where that stores 0009020a. ES2's Drawable_Dtor (DBSIM 00478615).",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00006364",
+      "verified": {
+        "bytes": "00006364+19",
+        "sha1": "b1663f0ab899",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00006378",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Debris_Launch",
+      "description": "(piece, heading, pitch) in stack order, callee-cleaned: sets the angles +6, +8, +0xa to 0, 0 and heading and zeroes the word +0x2c; with h = Math_Q14Multiply (0005e838)(400, Math_CosBam (0006477c)(pitch)), the velocity +0x44 = Math_Q14Multiply(h, Math_CosBam(heading + 0x4000)), +0x46 = Math_Q14Multiply(h, Math_CosBam(heading)) and +0x48 = Math_Q14Multiply(400, Math_CosBam(pitch - 0x4000)). es2_xref finds two calls, from Debris_ThrowRandomBearing (00006480) and WeaponMount_Destroy (0000b968). ES2's Debris_Launch (DBSIM 004089e4), whose speed comes from a scale and the piece's mass and which adds a carrier velocity and draws a spin.",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#the-launch--debris_launch-00006378",
+      "verified": {
+        "bytes": "00006378+264",
+        "sha1": "7d58fb02d28b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00006480",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Debris_ThrowRandomBearing",
+      "description": "(piece), callee-cleaned: Debris_Launch (00006378)(piece, Math_RandomNext (00063af4)(000b5bd4), Math_RandomBelow (00063b3c)(000b5bd4, 24000) - 10000 as an int16). Called from Debris_ThrowGroup (00005fb8) by es2_xref. ES2's Debris_ThrowRandomBearing (DBSIM 00408bb4) with ES2's Debris_ThrowAtBearing (DBSIM 00408b74), which draws the pitch between two globals, folded in.",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#the-launch--debris_launch-00006378",
+      "verified": {
+        "bytes": "00006480+53",
+        "sha1": "b07f6743164d",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000064b8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Debris_TickUpdate",
+      "description": "(piece), callee-cleaned: the debris piece's tick, called from Sim_MainTick (00059700) by es2_xref. In fixed steps: the angle +6 plus 1500; the velocity's +0x48 less 50; +0x44 and +0x46 each less Math_Q10Multiply (0005e818)(50, itself); the position +0x20 plus the new velocity; with the new Z below 0, Z = 0 and +0x48 = -Math_Q10Multiply(450, +0x48), and the answer 1 when that is under 100; the position and angles stored back and the word +0x2c zeroed. Returns 0 otherwise. ES2's Debris_TickUpdate (DBSIM 00408bd8), which integrates over the tick, moves by the average speed, bounces off the terrain and bursts a piece with a child group.",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#the-tick--debris_tickupdate-000064b8",
+      "verified": {
+        "bytes": "000064b8+265",
+        "sha1": "904514f5c00f",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "000065c4",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Debris_Draw",
-      "description": "(piece), its argument removed by this function: TSDetailPart_SetBias (000530a4)(the piece's dword +0x4a), SimObject_InstallModelTransform (00001854)(piece), the shape instance +0x2e's slot +0x20, TSDetailPart_SetBias(0). Slot +4 of the debris table 000908e6, which 00006168 and 00006210 store. ES2's Debris_Draw (DBSIM 00408e6c), whose bias is at +0x50.",
+      "description": "(piece), its argument removed by this function: TSDetailPart_SetBias (000530a4)(the piece's dword +0x4a), SimObject_InstallModelTransform (00001854)(piece), the shape instance +0x2e's slot +0x20, TSDetailPart_SetBias(0). Slot +4 of the debris table DebrisVtable (000908e6), which Debris_Construct (00006168) and Debris_Destruct (00006210) store. ES2's Debris_Draw (DBSIM 00408e6c), whose bias is at +0x50.",
       "source": "Herculan/docs/es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08",
       "verified": {
         "bytes": "000065c4+46",
@@ -2017,7 +2467,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Debris_RegisterSubsystem",
-      "description": "No arguments, debris.cpp's static initialiser: RegisterSubsystemLoader(2, Debris_LoadResources (0000607c)) and RegisterSubsystemLoader(5, DebrisPool_FlushDeletes (00005ebc)), then 0 to the word 000aef60 and the pool pointer 000aeef8. ES2's Debris_RegisterSubsystem (DBSIM 00408e9c).",
+      "description": "No arguments, debris.cpp's static initialiser: RegisterSubsystemLoader(2, Debris_LoadResources (0000607c)) and RegisterSubsystemLoader(5, DebrisPool_FlushDeletes (00005ebc)), then 0 to the word 000aef60 and the pool pointer g_DebrisPool (000aeef8). ES2's Debris_RegisterSubsystem (DBSIM 00408e9c).",
       "source": "Herculan/docs/es1/formats/debris-dat.md#the-load",
       "verified": {
         "bytes": "000065f4+44",
@@ -2032,7 +2482,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Debris_StaticDtor",
-      "description": "No arguments: operator_delete of the debris pool 000aeef8 when it is not 0. ES2's Debris_StaticDtor (DBSIM 00408ef0).",
+      "description": "No arguments: operator_delete of the debris pool g_DebrisPool (000aeef8) when it is not 0. ES2's Debris_StaticDtor (DBSIM 00408ef0).",
       "source": "Herculan/docs/es1/formats/debris-dat.md#the-load",
       "verified": {
         "bytes": "00006620+21",
@@ -2042,13 +2492,253 @@
       }
     },
     {
+      "address": "00006638",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SmokeBall_FlushDeletes",
+      "description": "No arguments, no Ghidra function: ObjectPool_FlushDeleteQueue (00063784)(g_SmokeBallDeleteQueue (000aef6c), g_SmokeBallPool (000aef68)) in stack order. The smoke file's first code, after the three zero bytes that follow Debris_StaticDtor (00006620). Called from Smoke_FlushDeletes (0000664c) by es2_xref. ES2's SmokeBall_FlushDeletes (DBSIM 00408f84).",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#resources--smoke_loadresources-000066ec; ES1DBSIM disassembly at 00006638",
+      "verified": {
+        "bytes": "00006638+17",
+        "sha1": "a19b00be8b87",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000664c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Smoke_FlushDeletes",
+      "description": "No arguments, no Ghidra function: the smoke file's phase-5 function, which Smoke_RegisterSubsystem (00006c94) registers: ObjectPool_FlushDeleteQueue (00063784)(g_SmokeDeleteQueue (000aefd8), g_SmokePool (000aefd4)) in stack order, then SmokeBall_FlushDeletes (00006638). ES2's Smoke_FlushDeletes (DBSIM 00408f9c).",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#resources--smoke_loadresources-000066ec; ES1DBSIM disassembly at 0000664c",
+      "verified": {
+        "bytes": "0000664c+22",
+        "sha1": "ffc127e79169",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00006664",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SmokeBall_LoadResources",
+      "description": "No arguments: g_SmokeBallPool (000aef68) = Pool_Init (00063878)(0, 0x46, 200); Shape_LoadAllRoots (000635a8)(0, 0x140008, ResourcePath_BuildFolderName (00060698)(dts, smoke), g_SmokeShapes (000bc1d0)), keeping the root count; g_SmokeTextures (000bc1d4) = ClassItem_LoadFromFile (0005760c)(ResourcePath_BuildFolderName(dba, smoke)); then that bank into +0x26 of each root. Called from Smoke_LoadResources (000066ec) by es2_xref. ES2's SmokeBall_LoadResources (DBSIM 00408fb8), which also builds the delete queue.",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#resources--smoke_loadresources-000066ec",
+      "verified": {
+        "bytes": "00006664+134",
+        "sha1": "ca302c707d2c",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000066ec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Smoke_LoadResources",
+      "description": "No arguments, no Ghidra function: the smoke file's phase-2 loader, which Smoke_RegisterSubsystem (00006c94) registers: g_SmokePool (000aefd4) = Pool_Init (00063878)(0, 0x24, 0x14), 20 emitters of 0x24 bytes, then SmokeBall_LoadResources (00006664). ES2's Smoke_LoadResources (DBSIM 004090cc), which also builds the delete queue.",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#resources--smoke_loadresources-000066ec; ES1DBSIM disassembly at 000066ec",
+      "verified": {
+        "bytes": "000066ec+22",
+        "sha1": "babd70a5a254",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00006704",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SmokeBall_Construct",
+      "description": "(ball, shape, point) in stack order, callee-cleaned: with a null ball takes one from g_SmokeBallPool (000aef68) with Pool_Alloc (000638c8), returning 0 when that gives none; TSObj_Ctor (00001b04)(ball, root shape of g_SmokeShapes (000bc1d0)), SmokeBallVtable (0009097a) at +2, the type tag 4 at +0, the point's three int32 at the position +0x20, and 200 in the countdown's int32 +0x42. It writes no velocity at +0x3b. Returns the ball. Called from Smoke_Tick (00006b28) by es2_xref. ES2's SmokeBall_Construct (DBSIM 00409178).",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#the-ball--smokeball_construct-00006704",
+      "verified": {
+        "bytes": "00006704+186",
+        "sha1": "6ae65c53a378",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000067c0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_RenderSmokeCopy",
+      "description": "(object): slot +4 of the vtable SmokeBallVtable (0009097a) (entered at its padding 000067be), and slot +4 of the vtable 0009099a: byte for byte the code of TSObj_Render (00001cdc), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 000067c0",
+      "verified": {
+        "bytes": "000067c0+31",
+        "sha1": "d1d579483ded",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000067e0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_GetPositionSmokeCopy",
+      "description": "(object): slot +8 of the vtable SmokeBallVtable (0009097a) (entered at its padding 000067df), and slot +8 of the vtable 0009099a: byte for byte the code of TSObj_GetPosition (00001cfc), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 000067e0",
+      "verified": {
+        "bytes": "000067e0+20",
+        "sha1": "a1b95c43ba5f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000067f4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SmokeBall_Dtor",
+      "description": "(ball, flags), callee-cleaned: slot +0xc of SmokeBallVtable (0009097a). With the ball non-null stores SmokeBallVtable and 0009099a at +2, destroys the shape instance +0x2e through its slot +0x1c with 3 when set, stores 000909ba and 000909da, and on flags bit 0 queues the ball on g_SmokeBallDeleteQueue (000aef6c) with ObjectPool_QueueForDelete (00063760). ES2's SmokeBall_Dtor (DBSIM 0040970d).",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#the-ball--smokeball_construct-00006704",
+      "verified": {
+        "bytes": "000067f4+84",
+        "sha1": "45401bd73f7c",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00006848",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_ReturnZeroSmokeCopy",
+      "description": "Frameless: XOR EAX,EAX and RET 4: returns 0. Slot +0x10 of the vtable SmokeBallVtable (0009097a), and slot +0x10 of the vtable 0009099a, and slot +0x10 of the vtable 000909ba, and slot +0x10 of the vtable 000909da, and slot +0x10 of the vtable SmokeVtable (000909fa); the code of TSObj_ReturnZero (000018e8).",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00006848",
+      "verified": {
+        "bytes": "00006848+5",
+        "sha1": "0f864a8a1b9e",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00006850",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_GetRadiusSmokeCopy",
+      "description": "(object): slot +0x14 of the vtable SmokeBallVtable (0009097a) (entered at its padding 0000684d), and slot +0x14 of the vtable 0009099a (entered at its padding 0000684d): byte for byte the code of TSObj_GetRadius (00001d58), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00006850",
+      "verified": {
+        "bytes": "00006850+71",
+        "sha1": "81f34db4094a",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00006898",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_DtorSmokeCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of the vtable 0009099a (entered at its padding 00006897): byte for byte the code of TSObj_Dtor (00001d10), relocated operands aside, storing 0009099a and 000909ba and 000909da where that stores 000902ea and 000902ca and 0009020a. ES2's TSObj_Dtor (DBSIM 0046b890).",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00006898",
+      "verified": {
+        "bytes": "00006898+72",
+        "sha1": "1c49569b3890",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000068e0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MatObj_GetPositionSmokeCopy",
+      "description": "(object): returns object + 0x20. Slot +8 of the vtable 000909ba, the smoke file's copy of MAT_OBJ's table: the code of MatObj_GetPosition (00001c9c), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 000068e0",
+      "verified": {
+        "bytes": "000068e0+20",
+        "sha1": "a1b95c43ba5f",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000068f4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MatObj_DtorSmokeCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of the vtable 000909ba: byte for byte the code of MatObj_Dtor (00001cb0), relocated operands aside, storing 000909ba and 000909da where that stores 000902ca and 0009020a. ES2's MatObj_Dtor (DBSIM 0046b97d).",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 000068f4",
+      "verified": {
+        "bytes": "000068f4+42",
+        "sha1": "d55edcc795f5",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000691e",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Drawable_GetRadiusSmokeCopy",
+      "description": "Frameless: two NOPs, then XOR EAX,EAX and RET 4: returns 0. Slot +0x14 of the vtable 000909ba and of 000909da, and, entered at 00006920, of SmokeVtable (000909fa); the code of Drawable_GetRadius (000018ed).",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0000691e",
+      "verified": {
+        "bytes": "0000691e+7",
+        "sha1": "caf3d3407fd2",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00006928",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Drawable_DtorSmokeCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of the vtable 000909da (entered at its padding 00006925): byte for byte the code of Drawable_Dtor (000018d4), relocated operands aside, storing 000909da where that stores 0009020a. ES2's Drawable_Dtor (DBSIM 00478615).",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00006928",
+      "verified": {
+        "bytes": "00006928+19",
+        "sha1": "75eaa85f2504",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000693c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Effect_DriftAndAnimate",
+      "description": "(ball), callee-cleaned: the smoke ball's tick, called from Sim_MainTick (00059700) by es2_xref. Adds the int16 at +0x3b, +0x3d and +0x3f to the position +0x20, +0x24 and +0x28; when Timer_CountDown (00064178)(ball + 0x41) answers 0, stores 200 in the int32 +0x42 and steps the shape instance's (+0x2e) sequence 0 to (cell + 1) modulo its frame count, returning 1 when that gives 0. Returns 0 otherwise. ES2's Effect_DriftAndAnimate (DBSIM 004091cc), its offsets 6 higher.",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#the-ball--smokeball_construct-00006704",
+      "verified": {
+        "bytes": "0000693c+173",
+        "sha1": "2ddfec0b9bc9",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "000069ec",
       "binary": "ES1DBSIM",
       "type": "function",
-      "confidence": "medium",
-      "name": "maybe_FireEffect_Construct",
-      "description": "(effect, kind, point, part id, owner) in stack order, callee-cleaned: with a null effect takes one from the pool 000aefd4 with Pool_Alloc, returning 0 when that gives none; stores the table 000909fa at +2, the kind at +0x22, the int16 the kind indexes at 00090964 at +0x1e, zeroes +6 to +0xd and +0x1c, stores the owner at +0xf, the part id at +0x13, 4 * kind + Math_RandomNext (000b5c48) & 3 at +0x20, and the point's dword and two bytes at +0x15, or with a null point sets +6. es2_xref finds two calls, from 00002df8 and Component_DestroyAndCascade (00009cd4), the second with kind 0 where ES2's lights a fire with FireEffect_Ctor (DBSIM 0046b388), whose body differs.",
-      "source": "Herculan/docs/es1/simulation/component-damage.md#functions; ES1DBSIM decompile at 000069ec",
+      "confidence": "high",
+      "name": "Smoke_Construct",
+      "description": "(smoke, kind, point, part id, owner) in stack order, callee-cleaned: the smoke emitter's constructor. With a null emitter takes one from g_SmokePool (000aefd4) with Pool_Alloc (000638c8), returning 0 when that gives none; stores SmokeVtable (000909fa) at +2, the kind at +0x22, Smoke_PuffCountByKind (00090964)[kind] at the count +0x1e, zeroes +6 to +0xd and the countdown's int16 +0x1c, stores the owner at +0xf, the part id at +0x13, 4 * kind + Math_RandomNext (00063af4)(000b5c48) & 3 at the next ball's shape +0x20, and the point's three int16 at +0x15, or with a null point sets the byte +6. Returns the emitter. es2_xref finds two calls, from 00002df8 and Component_DestroyAndCascade (00009cd4). ES2's Smoke_Construct (DBSIM 0040923c), its offsets 6 higher, which es2_xref finds nothing reaching.",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#the-emitter--smoke_construct-000069ec",
       "verified": {
         "bytes": "000069ec+253",
         "sha1": "c29a5ecb4eae",
@@ -2057,18 +2747,153 @@
       }
     },
     {
+      "address": "00006ae9",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Smoke_DrawNoOp",
+      "description": "Frameless: three NOPs and RET 4. Slot +4 of SmokeVtable (000909fa): a smoke emitter draws nothing. ES2's Smoke_DrawNoOp (DBSIM 004096d7).",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#the-tick--smoke_tick-00006b28; ES1DBSIM disassembly at 00006ae9",
+      "verified": {
+        "bytes": "00006ae9+6",
+        "sha1": "0011b5e9ac52",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00006aef",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Smoke_GetPositionNull",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +8 of SmokeVtable (000909fa), the position slot. ES2's Smoke_GetPositionNull (DBSIM 004096dc).",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#the-tick--smoke_tick-00006b28; ES1DBSIM disassembly at 00006aef",
+      "verified": {
+        "bytes": "00006aef+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00006af8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Smoke_Dtor",
+      "description": "(smoke, flags), callee-cleaned: slot +0xc of SmokeVtable (000909fa), by its padding 00006af5. With the emitter non-null stores SmokeVtable and then 000909da at +2, and on flags bit 0 queues it on g_SmokeDeleteQueue (000aefd8) with ObjectPool_QueueForDelete (00063760). ES2's Smoke_Dtor (DBSIM 004096e3).",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#the-tick--smoke_tick-00006b28",
+      "verified": {
+        "bytes": "00006af8+47",
+        "sha1": "0669b15ee4b0",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00006b28",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Smoke_Tick",
+      "description": "(smoke), callee-cleaned: the smoke emitter's tick, called from Sim_MainTick (00059700) by es2_xref. While the count +0x1e is not 0, when Math_CountdownTimerTick (0006410c)(smoke + 0x1b) answers 0: the int16 +0x1c = 200, the count less 1, and the point: with the part id +0x13 not negative or the byte +6 clear, a local point (the int16 point +0x15 for a negative part id; otherwise from the part slot +0x24 of the owner's (+0xf) shape finds, the transform its node +4 indexes in the instance's 0x20-byte array +0x16, null for no part, put to the stored point with Transform_ApplyToShortPoint (0005e858) when +6 is clear and its translation +0x14 when set) through Context_GetTransform (000016e8)(owner + 6) with Transform_ApplyToPoint (0005f58c); otherwise the owner's position +0x20. Then SmokeBall_Construct (00006704)(0, the shape +0x20, the point) and +0x20 = kind +0x22 * 4 + ((+0x20 + 1) & 3). Returns 1 when the count is 0. ES2's Smoke_Tick (DBSIM 004092dc), which substitutes a fixed transform for a missing part or a negative node.",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#the-tick--smoke_tick-00006b28",
+      "verified": {
+        "bytes": "00006b28+361",
+        "sha1": "498490037528",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00006c94",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Smoke_RegisterSubsystem",
+      "description": "No arguments, no Ghidra function: the smoke file's static initializer, entry 000adbd0 of the static constructor table: RegisterSubsystemLoader (00000ac4)(2, Smoke_LoadResources (000066ec)) and (5, Smoke_FlushDeletes (0000664c)) in stack order, then zeroes the words 000aefd0 and 000af03c and the dwords g_SmokeBallPool (000aef68) and g_SmokePool (000aefd4). ES2's Smoke_RegisterSubsystem (DBSIM 0040948c).",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00006c94",
+      "verified": {
+        "bytes": "00006c94+53",
+        "sha1": "3098fd51e8b1",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00006ccc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Smoke_StaticDtor",
+      "description": "No arguments, no Ghidra function: the exit table's entry 000adc98, the smoke file's exit routine and last code: operator_delete (000015f8) of g_SmokePool (000aefd4) and then of g_SmokeBallPool (000aef68), each when it is set. Its RET at 00006cf4 is followed by three zero bytes before FlatObj_LoadResources (00006cf8).",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00006ccc",
+      "verified": {
+        "bytes": "00006ccc+41",
+        "sha1": "6fcc1a2736b4",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "00006cf8",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "FlatObj_LoadResources",
-      "description": "(selector), callee-cleaned: ES2's FlatObj_LoadResources (DBSIM 004097a8) in part. Shape_LoadAllRoots(0, 0x140008, dts\\flat for a selector of 0 and dts\\flat2 otherwise, &000bc1d8), the root array to 000bc1d8 and its count to 000bc1dc; then Pool_Init(0, 0x3b, 0x96), a pool of 150 elements of 0x3b bytes, to 000af044. It loads no dba bank, binds none to the shapes and builds no delete queue, as ES2's does. World_LoadTheater (000251c4) calls it last with World_FlatSetSelector (000928e2).",
+      "description": "(selector), callee-cleaned: ES2's FlatObj_LoadResources (DBSIM 004097a8) in part. Shape_LoadAllRoots(0, 0x140008, dts\\flat for a selector of 0 and dts\\flat2 otherwise, &g_FlatShapes (000bc1d8)), the root array to g_FlatShapes (000bc1d8) and its count to 000bc1dc; then Pool_Init(0, 0x3b, 0x96), a pool of 150 elements of 0x3b bytes, to g_FlatObjPool (000af044). It loads no dba bank, binds none to the shapes and builds no delete queue, as ES2's does. World_LoadTheater (000251c4) calls it last with World_FlatSetSelector (000928e2).",
       "source": "Herculan/docs/es1/formats/wld-world.md#the-ground-shape-set",
       "verified": {
         "bytes": "00006cf8+87",
         "sha1": "e25566cb8d96",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00006d50",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FlatObjPool_FlushDeletes",
+      "description": "No arguments: the ground-shape file's phase-5 function, which FlatObj_RegisterSubsystem (00006d64) registers: ObjectPool_FlushDeleteQueue (00063784)(g_FlatObjDeleteQueue (000af048), g_FlatObjPool (000af044)) in stack order. es2_xref also finds a call from Sim_StartMission (0005a9dc). ES2's Sim_FlushDeleteQueue (DBSIM 00409904).",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-ground-shape-set",
+      "verified": {
+        "bytes": "00006d50+17",
+        "sha1": "78c8e8dc12ae",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00006d64",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FlatObj_RegisterSubsystem",
+      "description": "No arguments, no Ghidra function: the ground-shape file's static initializer, entry 000adbd4 of the static constructor table: RegisterSubsystemLoader (00000ac4)(5, FlatObjPool_FlushDeletes (00006d50)), then zeroes the word 000af0ac and g_FlatObjPool (000af044).",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-ground-shape-set; ES1DBSIM disassembly at 00006d64",
+      "verified": {
+        "bytes": "00006d64+32",
+        "sha1": "137f9674cb31",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00006d84",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FlatObj_StaticDtor",
+      "description": "No arguments, no Ghidra function: the exit table's entry 000adc9c, the ground-shape file's exit routine and last code: operator_delete (000015f8)(g_FlatObjPool (000af044)) when it is set. Its RET at 00006d98 is followed by three zero bytes before Projectile_LoadResources (00006d9c).",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-ground-shape-set; ES1DBSIM disassembly at 00006d84",
+      "verified": {
+        "bytes": "00006d84+21",
+        "sha1": "fa51a7626967",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -3991,7 +4816,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Component_DestroyAndCascade",
-      "description": "(header, component) in stack order, callee-cleaned: Collision_FindClusterForComponent (0000916c) on the model (+0x10) for the cluster, used unchecked, and its part id. Returns 0 when the component's occupancy flag (+8 array) is clear; otherwise its entry (+4 array) becomes -1 and its flag 0, and Component_SpillIntoDependents (0000979c) gives its dependents 32000. For a piece sequence byte +3 not -1: with ComponentCascade_EffectLatch (000af140) clear and flags (+5) bit 1 set, maybe_FireEffect_Construct (000069ec)(0, 0, the cluster's bound center +8, the part id, the machine +0x14); then the int16 at that sequence in the array at +8 of the machine's shape instance (+0x2e) becomes 2. The anchor: the bound center widened, or through the part's node transform (null for a part the shape lacks) with Transform_ApplyToShortPoint (0005e858); then Context_GetTransform (000016e8)(machine + 6) with Transform_ApplyToPoint (0005f58c). With the latch clear, Explosion_Construct (00005af0)(0, anchor, 10), or 0x11 setting the latch when flags bit 2 is set. Then Debris_ThrowGroup (00005fb8)(000bc1c0's group 3, anchor, 000bc1c6). Last, each of the header's components (+0x18 count) with its flag set whose piece's parent byte +4 is this component is appended to maybe_ComponentDependencyList (00090e04) at its count byte +5, with no capacity test. Returns 1. ES2's Component_DestroyAndCascade (DBSIM 0040d434), which also puts out the machine's fires for bit 1, lights fire 2 for bit 3 and throws the piece's +2 group.",
+      "description": "(header, component) in stack order, callee-cleaned: Collision_FindClusterForComponent (0000916c) on the model (+0x10) for the cluster, used unchecked, and its part id. Returns 0 when the component's occupancy flag (+8 array) is clear; otherwise its entry (+4 array) becomes -1 and its flag 0, and Component_SpillIntoDependents (0000979c) gives its dependents 32000. For a piece sequence byte +3 not -1: with ComponentCascade_EffectLatch (000af140) clear and flags (+5) bit 1 set, Smoke_Construct (000069ec)(0, 0, the cluster's bound center +8, the part id, the machine +0x14); then the int16 at that sequence in the array at +8 of the machine's shape instance (+0x2e) becomes 2. The anchor: the bound center widened, or through the part's node transform (null for a part the shape lacks) with Transform_ApplyToShortPoint (0005e858); then Context_GetTransform (000016e8)(machine + 6) with Transform_ApplyToPoint (0005f58c). With the latch clear, Explosion_Construct (00005af0)(0, anchor, 10), or 0x11 setting the latch when flags bit 2 is set. Then Debris_ThrowGroup (00005fb8)(g_DebrisGroups (000bc1c0)'s group 3, anchor, g_DebrisShapes (000bc1c6)). Last, each of the header's components (+0x18 count) with its flag set whose piece's parent byte +4 is this component is appended to maybe_ComponentDependencyList (00090e04) at its count byte +5, with no capacity test. Returns 1. ES2's Component_DestroyAndCascade (DBSIM 0040d434), which also puts out the machine's fires for bit 1, lights fire 2 for bit 3 and throws the piece's +2 group.",
       "source": "Herculan/docs/es1/simulation/component-damage.md#losing-a-component--component_destroyandcascade-00009cd4; ES1DBSIM disassembly at 00009cd4",
       "verified": {
         "bytes": "00009cd4+601",
@@ -5071,7 +5896,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMount_Destroy",
-      "description": "(mount, throw, machine) in stack order, callee-cleaned: with the destroyed byte +0x49 clear, clears the model +0x10, sets +0x49, and transforms WeaponMount_MuzzleOffset (0000b918)(mount) by the hardpoint bone's node frame (slot +0x24 of the shape instance under the machine's +0x2e) concatenated with Context_GetTransform(machine + 6). With throw non-zero and the hardpoint's byte +6 below 4, it takes the point +0x14 of the machine's slot +0x28 answer through Context_GetTransform(machine + 6), a Math_EulerToward bearing from it to the mount point, creates 00006168(0, the mount point, WeaponModels_Mechwpn2Roots (000bc2c8)[the template's int16 +0x26]), stores the dword at g_TSDetailBiasForMounts (000bc2b8) in its +0x4a, calls 00006378(it, the bearing's third int16, the hardpoint record's dword +0x18), and gives it the frame's angles at +6 and 0 at +0x2c. ES2's WeaponMount_Destroy (DBSIM 0040f57c), which throws a visible gun whatever its third argument and takes that argument as the debris' lifetimes. es2_xref.py finds calls from Mech_ComponentDamageWrite (00013250) (throw 0) and Mech_DirectFireHitTest (00013b44) (throw 1).",
+      "description": "(mount, throw, machine) in stack order, callee-cleaned: with the destroyed byte +0x49 clear, clears the model +0x10, sets +0x49, and transforms WeaponMount_MuzzleOffset (0000b918)(mount) by the hardpoint bone's node frame (slot +0x24 of the shape instance under the machine's +0x2e) concatenated with Context_GetTransform(machine + 6). With throw non-zero and the hardpoint's byte +6 below 4, it takes the point +0x14 of the machine's slot +0x28 answer through Context_GetTransform(machine + 6), a Math_EulerToward bearing from it to the mount point, creates Debris_Construct (00006168)(0, the mount point, WeaponModels_Mechwpn2Roots (000bc2c8)[the template's int16 +0x26]), stores the dword at g_TSDetailBiasForMounts (000bc2b8) in its +0x4a, calls Debris_Launch (00006378)(it, the bearing's third int16, the hardpoint record's dword +0x18), and gives it the frame's angles at +6 and 0 at +0x2c. ES2's WeaponMount_Destroy (DBSIM 0040f57c), which throws a visible gun whatever its third argument and takes that argument as the debris' lifetimes. es2_xref.py finds calls from Mech_ComponentDamageWrite (00013250) (throw 0) and Mech_DirectFireHitTest (00013b44) (throw 1).",
       "source": "Herculan/docs/es1/simulation/weapon-mount-classes.md#losing-a-mount; ES1DBSIM disassembly at 0000b968",
       "verified": {
         "bytes": "0000b968+387",
@@ -7696,7 +8521,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_Constructor",
-      "description": "(mech, type) in stack order, callee-cleaned: builds a mech of the chassis type. Takes mech from the pool g_MechPool (000af68c) when null, returning 0 when that gives none; SimObjectBase_ConstructWithDetailTable (00002ac8)(mech, the type's g_MechTypeTable record + 0xc6); vtable 00091a6a at +2, 0xffff at +0x162, +0x92 and +0xa1 set; ObjectList_Add (0000db10)(LiveObjectList (000bc416), mech); +0x16c and +0x170 zeroed, 0xffff at +0x174; Component_AllocDamageArrays (00009b8c)(+0x19c, 0x15, 0x1c); five 3-byte countdowns at +0x1ee by __vec_ctor (000610cb) with MechLockTimer_ElementCtor (00011904); vtable MechVtable (00091ae6), the word 7 at +0, the record (0x1c4 bytes, by MechTypeSlot_GetIndex (00019a30)) at +0x188, the words +0x222 to +0x230 zeroed but 10000 at +0x228, +0x162 zeroed; Shield_Init (0000fabc)(+0x1b8, record +0xc0); ShapeInst_AddThread (00001f48)(mech, record +0x12) into +0x1c0; +0xad set when the record's +0x54 is 0; the word +6 zeroed in the entries the record's +0x12 and +0x14 index in the pointer array at +6 of the shape's +0x2a; ShapeInst_AddThread (00001f48) for record +0x1c and +0x24 into +0x1c4 and +0x1c8 unless negative; a TSObj per byte of the record's +0x72 list below 0x80, from pool 000af044 on shape 000bc1d8[byte], with vtable FlatObjVtableMechCopy (00091b66) and Z -100000, at +0x1cc with the count at +0x1d0; Behaviour_SetState (0000fdfc)(+0x47, state 0, or state 1 at 000af294 when +0x9d is set); +0x234 and +0x1d2 zeroed; then Damage_LoadMechDmgFile (00009a2c)(dmg\\<g_MechTypeNames[record +0x6c]>) into +0x190, Collision_RegisterObject (00009580)(col\\<same name>) into +0x18c and Component_LinkMaxRefData (00009c28)(+0x19c, that, +0x190, mech); the bytes +0x24a-+0x24d cleared and +0x24e set. One call found by es2_xref, from DBSim_SpawnMissionObjects (0001e638). ES2's Mech_Constructor (DBSIM 00415bb0), whose record is 0x21e bytes and whose damage arrays are 0x1d by 0x16.",
+      "description": "(mech, type) in stack order, callee-cleaned: builds a mech of the chassis type. Takes mech from the pool g_MechPool (000af68c) when null, returning 0 when that gives none; SimObjectBase_ConstructWithDetailTable (00002ac8)(mech, the type's g_MechTypeTable record + 0xc6); vtable 00091a6a at +2, 0xffff at +0x162, +0x92 and +0xa1 set; ObjectList_Add (0000db10)(LiveObjectList (000bc416), mech); +0x16c and +0x170 zeroed, 0xffff at +0x174; Component_AllocDamageArrays (00009b8c)(+0x19c, 0x15, 0x1c); five 3-byte countdowns at +0x1ee by __vec_ctor (000610cb) with MechLockTimer_ElementCtor (00011904); vtable MechVtable (00091ae6), the word 7 at +0, the record (0x1c4 bytes, by MechTypeSlot_GetIndex (00019a30)) at +0x188, the words +0x222 to +0x230 zeroed but 10000 at +0x228, +0x162 zeroed; Shield_Init (0000fabc)(+0x1b8, record +0xc0); ShapeInst_AddThread (00001f48)(mech, record +0x12) into +0x1c0; +0xad set when the record's +0x54 is 0; the word +6 zeroed in the entries the record's +0x12 and +0x14 index in the pointer array at +6 of the shape's +0x2a; ShapeInst_AddThread (00001f48) for record +0x1c and +0x24 into +0x1c4 and +0x1c8 unless negative; a TSObj per byte of the record's +0x72 list below 0x80, from pool g_FlatObjPool (000af044) on shape g_FlatShapes (000bc1d8)[byte], with vtable FlatObjVtableMechCopy (00091b66) and Z -100000, at +0x1cc with the count at +0x1d0; Behaviour_SetState (0000fdfc)(+0x47, state 0, or state 1 at 000af294 when +0x9d is set); +0x234 and +0x1d2 zeroed; then Damage_LoadMechDmgFile (00009a2c)(dmg\\<g_MechTypeNames[record +0x6c]>) into +0x190, Collision_RegisterObject (00009580)(col\\<same name>) into +0x18c and Component_LinkMaxRefData (00009c28)(+0x19c, that, +0x190, mech); the bytes +0x24a-+0x24d cleared and +0x24e set. One call found by es2_xref, from DBSim_SpawnMissionObjects (0001e638). ES2's Mech_Constructor (DBSIM 00415bb0), whose record is 0x21e bytes and whose damage arrays are 0x1d by 0x16.",
       "source": "Herculan/docs/es1/simulation/mech.md#construction",
       "verified": {
         "bytes": "00011330+1322",
@@ -7861,7 +8686,7 @@
       "type": "function",
       "confidence": "high",
       "name": "FlatObj_DtorMechCopy",
-      "description": "(shadow, flags), callee-cleaned, slot +0xc of FlatObjVtableMechCopy (00091b66) by its padding 000119b5: with the shadow non-null stores FlatObjVtableMechCopy (00091b66) and 00091ba6 at +2, destroys the shape instance at +0x2e through its slot +0x1c with 3 when there is one, stores 00091bc6 and 00091be6, and on flags bit 0 queues the shadow on 000af048 with ObjectPool_QueueForDelete (00063760). ES2's FlatObj_Destruct (DBSIM 0041bd46).",
+      "description": "(shadow, flags), callee-cleaned, slot +0xc of FlatObjVtableMechCopy (00091b66) by its padding 000119b5: with the shadow non-null stores FlatObjVtableMechCopy (00091b66) and 00091ba6 at +2, destroys the shape instance at +0x2e through its slot +0x1c with 3 when there is one, stores 00091bc6 and 00091be6, and on flags bit 0 queues the shadow on g_FlatObjDeleteQueue (000af048) with ObjectPool_QueueForDelete (00063760). ES2's FlatObj_Destruct (DBSIM 0041bd46).",
       "source": "Herculan/docs/es1/simulation/mech.md#the-shadows; ES1DBSIM disassembly at 000119b8",
       "verified": {
         "bytes": "000119b8+84",
@@ -8176,7 +9001,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_DirectFireHitTest",
-      "description": "(machine, shot), callee-cleaned, slot +0x24 of MechVtable (00091ae6): 0 when the shot's origin is farther than its length + its int16 +8 + the type record's +0x1a. Copies the shot's +6 and +4, both through Damage_ScaleByDifficulty (0001f82c) when the owner's (+0xe) group side byte is 0; an AI machine's radar +0x90 goes on for shot type +0x12 0 or 1 unless the counter +0x201 runs, off with +0x201 = 6000 for type 2. Mech_ShieldAbsorb_DirectFire (0000fca8)(+0x1b8, the +6 copy, the length, the shot in the machine's frame by Transform_Concat (0005ea08), machine); with an entry: +0x8e cleared, +0x21e raised by what the shields took; a stopped shot makes its impact at the entry; otherwise the player's machine posts Computer_PostMessage (0001a154)(8) once, latched on +0xaa; Mech_SelectStruckComponent (00009064)(+0x18c, +0x1a4, frame, shot, machine) picks the component, and on a strike +0x21e takes the +4 copy, the splash Math_Q10Multiply (0005e818)(+4 copy, shot +8), Component_ReadDamagePercent (0000a16c) before, Mech_ComponentDamageWrite (00013250)(machine, owner, rest, component), Mech_ApplyExplosiveDamage (00013a7c)(machine, owner, 500, point, splash) for a splash; on a band change (>> 5), Cockpit_StartHitShake (0002e17c) for the player's component 0 or 1, and ES2's mount roll with WeaponMounts_MountForHardpointSlot (0000ca04), WeaponMount_Destroy (0000b968), Salvage_QueueWeapon (0001f7e8) and Component_ApplyDamageAndCascade (00009f7c). Unless the component reads 0x100, Explosion_Construct (00005af0)(0, point, effect 4n + random & 3 of the shot's +0xa table) and, for a strike, Debris_ThrowGroup (00005fb8)(group n of 000bc1c0, point, 000bc1c6), n 0 stopped, 1 same band, 2 changed. Returns the entry distance. ES2's Mech_DirectFireHitTest (DBSIM 00418ba8) with Mech_ApplyDirectFireDamage (DBSIM 004188c8).",
+      "description": "(machine, shot), callee-cleaned, slot +0x24 of MechVtable (00091ae6): 0 when the shot's origin is farther than its length + its int16 +8 + the type record's +0x1a. Copies the shot's +6 and +4, both through Damage_ScaleByDifficulty (0001f82c) when the owner's (+0xe) group side byte is 0; an AI machine's radar +0x90 goes on for shot type +0x12 0 or 1 unless the counter +0x201 runs, off with +0x201 = 6000 for type 2. Mech_ShieldAbsorb_DirectFire (0000fca8)(+0x1b8, the +6 copy, the length, the shot in the machine's frame by Transform_Concat (0005ea08), machine); with an entry: +0x8e cleared, +0x21e raised by what the shields took; a stopped shot makes its impact at the entry; otherwise the player's machine posts Computer_PostMessage (0001a154)(8) once, latched on +0xaa; Mech_SelectStruckComponent (00009064)(+0x18c, +0x1a4, frame, shot, machine) picks the component, and on a strike +0x21e takes the +4 copy, the splash Math_Q10Multiply (0005e818)(+4 copy, shot +8), Component_ReadDamagePercent (0000a16c) before, Mech_ComponentDamageWrite (00013250)(machine, owner, rest, component), Mech_ApplyExplosiveDamage (00013a7c)(machine, owner, 500, point, splash) for a splash; on a band change (>> 5), Cockpit_StartHitShake (0002e17c) for the player's component 0 or 1, and ES2's mount roll with WeaponMounts_MountForHardpointSlot (0000ca04), WeaponMount_Destroy (0000b968), Salvage_QueueWeapon (0001f7e8) and Component_ApplyDamageAndCascade (00009f7c). Unless the component reads 0x100, Explosion_Construct (00005af0)(0, point, effect 4n + random & 3 of the shot's +0xa table) and, for a strike, Debris_ThrowGroup (00005fb8)(group n of g_DebrisGroups (000bc1c0), point, g_DebrisShapes (000bc1c6)), n 0 stopped, 1 same band, 2 changed. Returns the entry distance. ES2's Mech_DirectFireHitTest (DBSIM 00418ba8) with Mech_ApplyDirectFireDamage (DBSIM 004188c8).",
       "source": "Herculan/docs/es1/simulation/mech.md#the-hit-test--mech_directfirehittest-00013b44; ES1DBSIM decompile at 00013b44",
       "verified": {
         "bytes": "00013b44+1262",
@@ -11176,7 +12001,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ObjList_RebuildFrame",
-      "description": "(): Sim_RenderFrame's per-frame rebuild of the object list: sets ObjList_Count (00092558) back to ObjList_ZoneShapeCount (000bc596), the zone shapes Sim_StartMission added, then ObjList_Add (00020d5c)s each object of the array LiveObjectList (000bc416) (count LiveObjectList_Count (000bc41c), stopping at a null) whose type record (+0x3f) has a zero int32 at +0x16, then every element of the pools g_ProjectilePool (000af0b4), g_ExplosionPool, 000aeef8 and 000aef68, each walked with Pool_Prev from the end.",
+      "description": "(): Sim_RenderFrame's per-frame rebuild of the object list: sets ObjList_Count (00092558) back to ObjList_ZoneShapeCount (000bc596), the zone shapes Sim_StartMission added, then ObjList_Add (00020d5c)s each object of the array LiveObjectList (000bc416) (count LiveObjectList_Count (000bc41c), stopping at a null) whose type record (+0x3f) has a zero int32 at +0x16, then every element of the pools g_ProjectilePool (000af0b4), g_ExplosionPool, g_DebrisPool (000aeef8) and g_SmokeBallPool (000aef68), each walked with Pool_Prev from the end.",
       "source": "ES1DBSIM decompile at 00020de0",
       "verified": {
         "bytes": "00020de0+351",
@@ -11206,7 +12031,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ObjList_DrawFrameObjects",
-      "description": "(blend, eye) in stack order, callee-cleaned: calls slot +4 of each element of the ground-shape pool 000af044 within 30000 of eye (Math_DistanceBetweenPoints, walked with Pool_Prev); stores blend at ObjList_Blend (000afa98); for each of the ObjList_Count (00092558) objects at ObjList_Objects (000bc58e) that Camera_IsMountedOn (000003ac)(eye, object) returns 0 for and whose slot +8 block has a non-negative int32 +8, fills a 0x36-byte entry (position, slot +0x14 value at +0xc, distance +0xe, object +0x32, +0x12 = 0, or 2 with ZoneShapeObj_WorldSegment (00020738)'s 24 bytes at +0x18 for objects among the first ObjList_ZoneShapeCount (000bc596)) and lists it at ObjList_DrawList (000bc59c) unless WorldShades_IsBeyondLastBand (00025f38) is true. With ObjPick_Pending (000afa45) set it then stores the GL display 000bdd28 at 000afa8c, points the display's +0x38 at its +0x8c (storing that at 00098dd6 and passing it to the driver's routine at 0009df14 when it is still the GL display), saves the pixel the driver's 0009dee4 reads at ObjPick_Point (000afa48) in ObjPick_SavedPixel (000afa90), writes 1 there through 0009dee8 and zeroes ObjPick_Object (000afa50). Then ObjList_SetSortEye (00021554)(eye) and ObjList_SortAndDraw (00021d04)(count, list); with the pick pending it writes ObjPick_SavedPixel back and clears ObjPick_Pending, and with ObjProbe_Armed (0009255a) set it calls ObjProbe_TestCorners (0002146c) by its padding entry 0002146a. Sim_RenderFrame passes the byte 000b5b65, MfdMissileViewScreen_Paint (000364f8) passes 0.",
+      "description": "(blend, eye) in stack order, callee-cleaned: calls slot +4 of each element of the ground-shape pool g_FlatObjPool (000af044) within 30000 of eye (Math_DistanceBetweenPoints, walked with Pool_Prev); stores blend at ObjList_Blend (000afa98); for each of the ObjList_Count (00092558) objects at ObjList_Objects (000bc58e) that Camera_IsMountedOn (000003ac)(eye, object) returns 0 for and whose slot +8 block has a non-negative int32 +8, fills a 0x36-byte entry (position, slot +0x14 value at +0xc, distance +0xe, object +0x32, +0x12 = 0, or 2 with ZoneShapeObj_WorldSegment (00020738)'s 24 bytes at +0x18 for objects among the first ObjList_ZoneShapeCount (000bc596)) and lists it at ObjList_DrawList (000bc59c) unless WorldShades_IsBeyondLastBand (00025f38) is true. With ObjPick_Pending (000afa45) set it then stores the GL display 000bdd28 at 000afa8c, points the display's +0x38 at its +0x8c (storing that at 00098dd6 and passing it to the driver's routine at 0009df14 when it is still the GL display), saves the pixel the driver's 0009dee4 reads at ObjPick_Point (000afa48) in ObjPick_SavedPixel (000afa90), writes 1 there through 0009dee8 and zeroes ObjPick_Object (000afa50). Then ObjList_SetSortEye (00021554)(eye) and ObjList_SortAndDraw (00021d04)(count, list); with the pick pending it writes ObjPick_SavedPixel back and clears ObjPick_Pending, and with ObjProbe_Armed (0009255a) set it calls ObjProbe_TestCorners (0002146c) by its padding entry 0002146a. Sim_RenderFrame passes the byte 000b5b65, MfdMissileViewScreen_Paint (000364f8) passes 0.",
       "source": "Herculan/docs/es1/rendering/polygon-shading.md#which-objects-are-drawn",
       "verified": {
         "bytes": "00021008+593",
@@ -29311,7 +30136,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_MainTick",
-      "description": "No arguments: the simulation tick. The input block from Input_BuildPlayerDevice (0004cb14); during playback SimTickDelta = its int16 +0x29. Unless Sim_Frozen (000b5b92): each g_BasePool element through slot +0x1c; g_ExplosionPool (00005d74), the pools 000aef68 (0000693c), 000aefd4 (00006b28) and 000aeef8 (000064b8), an element whose tick answers non-zero destroyed through slot +0xc with 3; maybe_WeaponChain_EoHold = 0; the pool g_ProjectilePool (000af0b4) through slot +0x18 the same way; then each group of MissionGroups: Group_TickMembers (0001cf60) when its action +0x16 is null, and the action cleared when that action's +0xa is non-zero. Sim_StepOnce (000b5b9c), when set, is cleared and Sim_Frozen set. A non-zero Sim_PollPlayerInput (0005a0c0) returns 1. Then Actions_EvaluateTriggers(LocalPlayerMech) and ViewChain_Apply (0005894c); unless frozen, Sim_DetectionTick and Mech_PerTickSystemsUpdate for each g_MechPool machine whose group +0x3f has no action +0x16 and whose +0x93 is clear. Mission_PollStatus(LocalPlayerMech): status 2 calls 00058414 and returns 1; another status of 0 or more (0x12 in place of 3 when Group_ApplyOutnumberedDamage on the player's group leaves the player destroyed) goes into the panel StatusAlertPanel_Ctor (00046efc)(0, 0, 1, status), run through slot +0xc of its +0x314, and returns 1 when the answer equals the word at 00097158[status], the panel then destroyed by Alert_Dtor (00045d0c)(panel, 3). Returns 0 otherwise. ES2's Sim_MainTick (DBSIM 0045f464).",
+      "description": "No arguments: the simulation tick. The input block from Input_BuildPlayerDevice (0004cb14); during playback SimTickDelta = its int16 +0x29. Unless Sim_Frozen (000b5b92): each g_BasePool element through slot +0x1c; g_ExplosionPool (00005d74), the pools g_SmokeBallPool (000aef68) (Effect_DriftAndAnimate (0000693c)), g_SmokePool (000aefd4) (Smoke_Tick (00006b28)) and g_DebrisPool (000aeef8) (Debris_TickUpdate (000064b8)), an element whose tick answers non-zero destroyed through slot +0xc with 3; maybe_WeaponChain_EoHold = 0; the pool g_ProjectilePool (000af0b4) through slot +0x18 the same way; then each group of MissionGroups: Group_TickMembers (0001cf60) when its action +0x16 is null, and the action cleared when that action's +0xa is non-zero. Sim_StepOnce (000b5b9c), when set, is cleared and Sim_Frozen set. A non-zero Sim_PollPlayerInput (0005a0c0) returns 1. Then Actions_EvaluateTriggers(LocalPlayerMech) and ViewChain_Apply (0005894c); unless frozen, Sim_DetectionTick and Mech_PerTickSystemsUpdate for each g_MechPool machine whose group +0x3f has no action +0x16 and whose +0x93 is clear. Mission_PollStatus(LocalPlayerMech): status 2 calls 00058414 and returns 1; another status of 0 or more (0x12 in place of 3 when Group_ApplyOutnumberedDamage on the player's group leaves the player destroyed) goes into the panel StatusAlertPanel_Ctor (00046efc)(0, 0, 1, status), run through slot +0xc of its +0x314, and returns 1 when the answer equals the word at 00097158[status], the panel then destroyed by Alert_Dtor (00045d0c)(panel, 3). Returns 0 otherwise. ES2's Sim_MainTick (DBSIM 0045f464).",
       "source": "Herculan/docs/es1/simulation/main-loop.md#the-tick--sim_maintick-00059700; ES1DBSIM decompile and disassembly at 00059700",
       "verified": {
         "bytes": "00059700+931",
@@ -29716,7 +30541,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_StartMission",
-      "description": "No arguments: the mission start. Hands Sim_AssertCleanupHook (0005a7b8) to Assert_AddHook (0005730c); Input_BuildSourceTable (0004c95c); Sim_Timer (000b5baa) = DVTimer_Ctor (0006c6f8)(0, 0x26d3); with the byte 000b5b68 set reads resource.cfg's [SoundFX] Driver#, IRQ, DMA and PortAddress and [Music] Driver# and PortAddress (hex through sscanf (0006c871)) for Sound_Init, else digital device 0; Snc_MissionInit (0004e498); with no sound manager 000959ac, Prefs_SetOption(1, 0, i) for options 0-2; Light_ResetSystem, 00075858, 00066e00, Widget_LoadStylesAndFonts; the hooks AlertPanel_EnterHook (00094d80) and AlertPanel_LeaveHook (00094d84) = SimInput_PushDisable (0005a5b4) and SimInput_PopEnable (0005a5d8); Mono_Clear when 000bda94 is set; Subsystem_RunPhase(2); the cursor from Cursor_LoadCursorResource (00057640); DBSim_LoadScriptDat; ObjList_Add (00020d5c) of each Zone_ShapeObjects entry up to Zone_ShapeCount or the first null; CockpitMouse_Init (000441cc); CockpitMouseLive (000bd512) = 0; Time_InitSimClock (00063e64); DBSim_SpawnMissionObjects (0001e638) between Prefs_SetOption(1, 0, 1) and Prefs_RevertOption(1, 1); deletes every element of g_ExplosionPool and of 000aeef8; Light_CreateMissionSun (0005a888); ObjList_ZoneShapeCount (000bc596) = ObjList_Count (00092558); LocalPlayerMech (000b5b86) = the last element of g_MechPool (000af68c) with byte +0x9d set, also ViewChain_Viewed (000bda9a) and ViewChain_Chosen (000b5bbc); a 0x4a-byte camera (TSCamera_CtorDefault, vtable 000972de) per member of the player's group (count +0x12 of +0x3f) into ViewChain_SquadCameras (000bda9e); SimDisplay = Sim_CreateDisplay (0005a5f4), GLDisplay_SetAttribute (0006a824)(display, 0x280, 2), page origins 1-3 (0, 200), (320, 0), (320, 200) at +0x50 through the routine 0009df10, +0x88 = 0, +0x8c and +0x3c = 2 (0 with CmdLine_SinglePage (000b5b67) set), +0x34 = +0x88, +0x3c = 3 without CmdLine_SinglePage (000b5b67); ViewObjectPtr (000b5b8a) = TSCamera_Ctor(camera, (0, 0, 0), (0, -6000, 0), 0x100, 8, 000b5b6e), Cam_AttachTo (0005923c)(ViewChain_Viewed), mode +0x36 = 2; 000b5bca = 1; CockpitViewManager_Ctor(0, player), CockpitViewManager_Publish, WeaponMounts_BuildGauges, Cockpit_LoadSquadmatePilots, PaperDoll_BuildWeaponIcons into each machine's +0x194, Cursor_SetImage, Player_PerFrameCockpitUpdate, Cam_Update, CockpitView_SetView 1 then 0; LiftStart_Pending (000b5bb0) = 1 when a g_BasePool element whose group +0x3f has side byte +0x14 0 lies within 40000 of the player, then 00057cf4, otherwise 000928ee = 8, Palette_BlendRangeByPitch, Palette_FlushDirtyRange and Sim_RenderFrame; 000b5bca = 0; Palette_FlushDirtyRange; Widget_DrawToCockpit(0, {0, 0, 320, 400}, 1); the routine 0009df4c; 000b5b72/000b5b74 = option 6 and ShapeDetail_ApplyDetailSetting (00057c08)(option 6); 000b5b96 = option 5 > 240; 0004e294(1); with the lift 00057ffc; unless TapePlayback, CockpitMouseLive = 1; Sound_Play(0x13). ES2's Sim_InitMissionSession (DBSIM 004614fc).",
+      "description": "No arguments: the mission start. Hands Sim_AssertCleanupHook (0005a7b8) to Assert_AddHook (0005730c); Input_BuildSourceTable (0004c95c); Sim_Timer (000b5baa) = DVTimer_Ctor (0006c6f8)(0, 0x26d3); with the byte 000b5b68 set reads resource.cfg's [SoundFX] Driver#, IRQ, DMA and PortAddress and [Music] Driver# and PortAddress (hex through sscanf (0006c871)) for Sound_Init, else digital device 0; Snc_MissionInit (0004e498); with no sound manager 000959ac, Prefs_SetOption(1, 0, i) for options 0-2; Light_ResetSystem, 00075858, 00066e00, Widget_LoadStylesAndFonts; the hooks AlertPanel_EnterHook (00094d80) and AlertPanel_LeaveHook (00094d84) = SimInput_PushDisable (0005a5b4) and SimInput_PopEnable (0005a5d8); Mono_Clear when 000bda94 is set; Subsystem_RunPhase(2); the cursor from Cursor_LoadCursorResource (00057640); DBSim_LoadScriptDat; ObjList_Add (00020d5c) of each Zone_ShapeObjects entry up to Zone_ShapeCount or the first null; CockpitMouse_Init (000441cc); CockpitMouseLive (000bd512) = 0; Time_InitSimClock (00063e64); DBSim_SpawnMissionObjects (0001e638) between Prefs_SetOption(1, 0, 1) and Prefs_RevertOption(1, 1); deletes every element of g_ExplosionPool and of g_DebrisPool (000aeef8); Light_CreateMissionSun (0005a888); ObjList_ZoneShapeCount (000bc596) = ObjList_Count (00092558); LocalPlayerMech (000b5b86) = the last element of g_MechPool (000af68c) with byte +0x9d set, also ViewChain_Viewed (000bda9a) and ViewChain_Chosen (000b5bbc); a 0x4a-byte camera (TSCamera_CtorDefault, vtable 000972de) per member of the player's group (count +0x12 of +0x3f) into ViewChain_SquadCameras (000bda9e); SimDisplay = Sim_CreateDisplay (0005a5f4), GLDisplay_SetAttribute (0006a824)(display, 0x280, 2), page origins 1-3 (0, 200), (320, 0), (320, 200) at +0x50 through the routine 0009df10, +0x88 = 0, +0x8c and +0x3c = 2 (0 with CmdLine_SinglePage (000b5b67) set), +0x34 = +0x88, +0x3c = 3 without CmdLine_SinglePage (000b5b67); ViewObjectPtr (000b5b8a) = TSCamera_Ctor(camera, (0, 0, 0), (0, -6000, 0), 0x100, 8, 000b5b6e), Cam_AttachTo (0005923c)(ViewChain_Viewed), mode +0x36 = 2; 000b5bca = 1; CockpitViewManager_Ctor(0, player), CockpitViewManager_Publish, WeaponMounts_BuildGauges, Cockpit_LoadSquadmatePilots, PaperDoll_BuildWeaponIcons into each machine's +0x194, Cursor_SetImage, Player_PerFrameCockpitUpdate, Cam_Update, CockpitView_SetView 1 then 0; LiftStart_Pending (000b5bb0) = 1 when a g_BasePool element whose group +0x3f has side byte +0x14 0 lies within 40000 of the player, then 00057cf4, otherwise 000928ee = 8, Palette_BlendRangeByPitch, Palette_FlushDirtyRange and Sim_RenderFrame; 000b5bca = 0; Palette_FlushDirtyRange; Widget_DrawToCockpit(0, {0, 0, 320, 400}, 1); the routine 0009df4c; 000b5b72/000b5b74 = option 6 and ShapeDetail_ApplyDetailSetting (00057c08)(option 6); 000b5b96 = option 5 > 240; 0004e294(1); with the lift 00057ffc; unless TapePlayback, CockpitMouseLive = 1; Sound_Play(0x13). ES2's Sim_InitMissionSession (DBSIM 004614fc).",
       "source": "ES1DBSIM decompile at 0005a9dc",
       "verified": {
         "bytes": "0005a9dc+2808",
@@ -40025,6 +40850,60 @@
       "source": "Herculan/docs/es1/simulation/object-classes.md#the-classes; ES1DBSIM image at 00090406"
     },
     {
+      "address": "00090822",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ExplosionVtable",
+      "description": "The impact effect's vtable: slot +4 TSObj_RenderExploCopy (000059c8), +8 TSObj_GetPositionExploCopy (000059e8), +0xc Explosion_Destruct (00005940), +0x10 TSObj_ReturnZeroExploCopy (000059fc), +0x14 TSObj_GetRadiusExploCopy (00005a04). Explosion_Construct (00005af0) stores it.",
+      "source": "Herculan/docs/es1/simulation/impact-effects.md#where-the-object-file-starts-and-ends"
+    },
+    {
+      "address": "000908a2",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "FlatObjVtableExploCopy",
+      "description": "explo.cpp's copy of the ground shape's vtable, which Explosion_Construct (00005af0) stores on an effect's ground shape: slot +4 FlatObj_DrawExploCopy (00005ca8), +0xc FlatObj_DtorExploCopy (00005cd8).",
+      "source": "Herculan/docs/es1/simulation/impact-effects.md#where-the-object-file-starts-and-ends"
+    },
+    {
+      "address": "000908e6",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "DebrisVtable",
+      "description": "The debris piece's vtable: slot +4 Debris_Draw (000065c4), +8 TSObj_GetPositionDebrisCopy (000061fc), +0xc Debris_Destruct (00006210), +0x10 TSObj_ReturnZeroDebrisCopy (00006264), +0x14 TSObj_GetRadiusDebrisCopy (0000626c). Debris_Construct (00006168) stores it.",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#where-the-object-files-start-and-end"
+    },
+    {
+      "address": "00090964",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Smoke_PuffCountByKind",
+      "description": "int16[3]: 200, 500 and 1000, the number of balls a smoke emitter of kind 0, 1 and 2 puffs, which Smoke_Construct (000069ec) stores at +0x1e. ES2's table at DBSIM 00497eec holds the same.",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#the-emitter--smoke_construct-000069ec"
+    },
+    {
+      "address": "0009097a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "SmokeBallVtable",
+      "description": "The smoke ball's vtable: slot +4 TSObj_RenderSmokeCopy (000067c0), +8 TSObj_GetPositionSmokeCopy (000067e0), +0xc SmokeBall_Dtor (000067f4), +0x10 TSObj_ReturnZeroSmokeCopy (00006848), +0x14 TSObj_GetRadiusSmokeCopy (00006850). SmokeBall_Construct (00006704) stores it.",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#where-the-object-files-start-and-end"
+    },
+    {
+      "address": "000909fa",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "SmokeVtable",
+      "description": "The smoke emitter's vtable: slot +4 Smoke_DrawNoOp (00006ae9), +8 Smoke_GetPositionNull (00006aef), +0xc Smoke_Dtor (00006af8) by its padding, +0x10 TSObj_ReturnZeroSmokeCopy (00006848), +0x14 Drawable_GetRadiusSmokeCopy (0000691e) entered at 00006920. Smoke_Construct (000069ec) stores it.",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#where-the-object-files-start-and-end"
+    },
+    {
       "address": "00090ab2",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -42932,6 +43811,87 @@
       "source": "Herculan/docs/es1/formats/explos-dat.md#the-load"
     },
     {
+      "address": "000aee8c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_ExplosionDeleteQueue",
+      "description": "The impact effects' delete queue, a static block: Explosion_Destruct (00005940) queues an effect on it and ExplosionPool_FlushDeletes (00005750) empties it into g_ExplosionPool (000aee88).",
+      "source": "Herculan/docs/es1/simulation/impact-effects.md#the-end--explosion_destruct-00005940"
+    },
+    {
+      "address": "000aeef8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_DebrisPool",
+      "description": "The debris pieces' pool, Pool_Init(0, 0x4e, 0x96) in Debris_LoadResources (0000607c): 150 pieces of 0x4e bytes, from which Debris_Construct (00006168) takes one.",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#the-piece--debris_construct-00006168"
+    },
+    {
+      "address": "000aeefc",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_DebrisDeleteQueue",
+      "description": "The debris pieces' delete queue, a static block: Debris_Destruct (00006210) queues a piece on it and DebrisPool_FlushDeletes (00005ebc) empties it into g_DebrisPool (000aeef8).",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#drawing-and-deleting"
+    },
+    {
+      "address": "000aef68",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_SmokeBallPool",
+      "description": "The smoke balls' pool, Pool_Init(0, 0x46, 200) in SmokeBall_LoadResources (00006664), from which SmokeBall_Construct (00006704) takes one. ES2's g_SmokeBallPool.",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#resources--smoke_loadresources-000066ec"
+    },
+    {
+      "address": "000aef6c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_SmokeBallDeleteQueue",
+      "description": "The smoke balls' delete queue, a static block: SmokeBall_Dtor (000067f4) queues a ball on it and SmokeBall_FlushDeletes (00006638) empties it into g_SmokeBallPool (000aef68).",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#resources--smoke_loadresources-000066ec"
+    },
+    {
+      "address": "000aefd4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_SmokePool",
+      "description": "The smoke emitters' pool, Pool_Init(0, 0x24, 0x14) in Smoke_LoadResources (000066ec): 20 emitters of 0x24 bytes, from which Smoke_Construct (000069ec) takes one. ES2's g_SmokePool.",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#resources--smoke_loadresources-000066ec"
+    },
+    {
+      "address": "000aefd8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_SmokeDeleteQueue",
+      "description": "The smoke emitters' delete queue, a static block: Smoke_Dtor (00006af8) queues an emitter on it and Smoke_FlushDeletes (0000664c) empties it into g_SmokePool (000aefd4).",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#resources--smoke_loadresources-000066ec"
+    },
+    {
+      "address": "000af044",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_FlatObjPool",
+      "description": "The ground shapes' pool, Pool_Init(0, 0x3b, 0x96) in FlatObj_LoadResources (00006cf8): 150 of 0x3b bytes, from which Explosion_Construct (00005af0) takes an effect's ground shape. ES2's g_FlatObjPool.",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-ground-shape-set"
+    },
+    {
+      "address": "000af048",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_FlatObjDeleteQueue",
+      "description": "The ground shapes' delete queue, a static block that FlatObjPool_FlushDeletes (00006d50) empties into g_FlatObjPool (000af044). ES2's g_FlatObjDeleteQueue.",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-ground-shape-set"
+    },
+    {
       "address": "000af0b4",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -44451,6 +45411,51 @@
       "name": "g_ExplosionShapes",
       "description": "Pointer to dts\\explos's root array, loaded by Explosion_LoadResources (00005764). ES2's g_ExplosionShapes.",
       "source": "Herculan/docs/es1/formats/explos-dat.md#the-load"
+    },
+    {
+      "address": "000bc1c0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_DebrisGroups",
+      "description": "Pointer to dat\\debris's groups, 10 bytes each, which Debris_LoadResources (0000607c) allocates and reads; the count is the int16 at 000bc1c4.",
+      "source": "Herculan/docs/es1/formats/debris-dat.md#the-load"
+    },
+    {
+      "address": "000bc1c6",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_DebrisShapes",
+      "description": "Pointer to dts\\debris's root array, loaded by Debris_LoadResources (0000607c); the count is the int16 at 000bc1ca.",
+      "source": "Herculan/docs/es1/formats/debris-dat.md#the-load"
+    },
+    {
+      "address": "000bc1d0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_SmokeShapes",
+      "description": "Pointer to dts\\smoke's root array, loaded by SmokeBall_LoadResources (00006664). ES2's g_SmokeShapes.",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#resources--smoke_loadresources-000066ec"
+    },
+    {
+      "address": "000bc1d4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_SmokeTextures",
+      "description": "The dba\\smoke bank SmokeBall_LoadResources (00006664) loads and binds to every root of g_SmokeShapes (000bc1d0). ES2's g_SmokeTextures.",
+      "source": "Herculan/docs/es1/simulation/destruction-effects.md#resources--smoke_loadresources-000066ec"
+    },
+    {
+      "address": "000bc1d8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_FlatShapes",
+      "description": "Pointer to dts\\flat's (or dts\\flat2's) root array, loaded by FlatObj_LoadResources (00006cf8); the count is the int16 at 000bc1dc. ES2's g_FlatShapes.",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-ground-shape-set"
     },
     {
       "address": "000bc1de",
