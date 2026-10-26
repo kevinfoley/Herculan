@@ -55,6 +55,12 @@ public sealed class EditorSettings {
 	/// </summary>
 	public SavedWindow? Window { get; set; }
 
+	/// <summary>
+	/// The <c>.MSN</c> the editor last opened or saved, as File's mission lists name it, for the editor to open again when it
+	/// starts with no mission named; null until one is. Like <see cref="Window"/>, Cancel in the settings panel leaves it.
+	/// </summary>
+	public string? LastMission { get; set; }
+
 	/// <summary>Where the settings live: <c>editor-settings.json</c> in <see cref="UserConfig.Folder"/>.</summary>
 	public static string FilePath => UserConfig.PathOf("editor-settings.json");
 

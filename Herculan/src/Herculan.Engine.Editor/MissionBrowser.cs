@@ -5,35 +5,53 @@ using ImGuiNET;
 
 namespace Herculan.Engine.Editor;
 
-/// <summary>One mission the browser lists, by file name, and whether it is a loose file the editor saved into the install.</summary>
+/// <summary>
+/// One mission a browser lists, by file name, and whether it is a loose file the editor saved into the install. One no
+/// archive holds is a custom mission.
+/// </summary>
 /// <param name="File">The <c>.MSN</c> file name, which the load is asked for.</param>
 /// <param name="Saved">Whether the install has it as a loose file, which is what loads (<see cref="SavedMissions"/>).</param>
 /// <param name="InArchive">Whether an archive holds it too, which the loose file overrides.</param>
 internal sealed record BrowsedMission(string File, bool Saved, bool InArchive) {
-	/// <summary>The list's line: the file name, marked "(saved)" over an archive mission and "(new)" for one no archive holds.</summary>
-	public string Label => !Saved ? File : InArchive ? $"{File} (saved)" : $"{File} (new)";
+	/// <summary>The list's line: the file name, marked "(saved)" over an archive mission.</summary>
+	public string Label => Saved && InArchive ? $"{File} (saved)" : File;
 }
 
 /// <summary>
-/// The floating "Load from VOL" window opened from File: every <c>.MSN</c> in the install's archives and every one saved
-/// into the install as a loose file, one of which the user picks to open. The window only asks; the host does the load
-/// (<see cref="TakeRequest"/>) and reports back through <see cref="Loading"/> and <see cref="Failure"/>.
+/// A floating window opened from File that lists missions, one of which the user picks to open: "Load from VOL", every
+/// <c>.MSN</c> in the install's archives, or "Load custom mission", every one saved into the install that no archive holds.
+/// The window only asks; the host does the load (<see cref="TakeRequest"/>) and reports back through <see cref="Loading"/>
+/// and <see cref="Failure"/>.
 /// </summary>
-internal sealed class VolMissionBrowser {
+internal sealed class MissionBrowser {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
 	private const float PanelWidth = 320f;
 	private const float ListHeight = 420f;
 
+	private readonly string _title;
+	private readonly string _none;
 	private readonly Func<IReadOnlyList<BrowsedMission>> _listMissions;
 	private IReadOnlyList<BrowsedMission>? _missions;
 	private string? _highlighted;
 	private string? _request;
 	private bool _open;
 
+	/// <param name="title">The window's title, as File names it.</param>
+	/// <param name="none">What the window says when it lists no missions.</param>
 	/// <param name="listMissions">Lists the missions; called the first time the window opens, and after <see cref="Refresh"/>.</param>
-	public VolMissionBrowser(Func<IReadOnlyList<BrowsedMission>> listMissions) {
+	public MissionBrowser(string title, string none, Func<IReadOnlyList<BrowsedMission>> listMissions) {
+		_title = title;
+		_none = none;
 		_listMissions = listMissions;
 	}
+
+	/// <summary>The archive's missions of <paramref name="missions"/> (<see cref="Merge"/>), "Load from VOL"'s list.</summary>
+	public static IReadOnlyList<BrowsedMission> Archived(IEnumerable<BrowsedMission> missions) =>
+		missions.Where(mission => mission.InArchive).ToList();
+
+	/// <summary>The custom missions of <paramref name="missions"/> (<see cref="Merge"/>), "Load custom mission"'s list.</summary>
+	public static IReadOnlyList<BrowsedMission> Custom(IEnumerable<BrowsedMission> missions) =>
+		missions.Where(mission => !mission.InArchive).ToList();
 
 	/// <summary>
 	/// The archives' missions <paramref name="archive"/> and the install's loose ones <paramref name="saved"/>, by file
@@ -71,6 +89,9 @@ internal sealed class VolMissionBrowser {
 	/// <summary>Why the last load failed, shown under the list until another is asked for.</summary>
 	public string? Failure { get; set; }
 
+	/// <summary>Whether the window is up.</summary>
+	public bool IsOpen => _open;
+
 	public void Open() {
 		_missions ??= _listMissions();
 		_open = true;
@@ -98,7 +119,7 @@ internal sealed class VolMissionBrowser {
 		ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), ImGuiCond.Appearing, new Vector2(0.5f, 0.5f));
 
 		bool stayOpen = true;
-		if (ImGui.Begin("Load from VOL", ref stayOpen, ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize)) {
+		if (ImGui.Begin(_title, ref stayOpen, ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize)) {
 			if (Loading != null) {
 				ImGui.TextUnformatted($"Loading {Loading}...");
 			} else {
@@ -116,7 +137,7 @@ internal sealed class VolMissionBrowser {
 	private void DrawList() {
 		var missions = _missions ??= _listMissions();
 		if (missions.Count == 0) {
-			ImGui.TextWrapped("The install's archives hold no missions.");
+			ImGui.TextWrapped(_none);
 		}
 
 		if (ImGui.BeginListBox("##missions", new Vector2(-1f, ScaledImGui.Scaled(ListHeight)))) {

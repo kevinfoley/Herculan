@@ -64,9 +64,9 @@ public sealed class MissionSavingTests : IDisposable {
 	/// </summary>
 	[Fact]
 	public void BrowserListsEachMissionOnceMarkingSavedOnes() {
-		var listed = VolMissionBrowser.Merge(["C1_01.MSN", "TRAIN1.MSN"], ["c1_01.msn", "MINE.MSN"]);
+		var listed = MissionBrowser.Merge(["C1_01.MSN", "TRAIN1.MSN"], ["c1_01.msn", "MINE.MSN"]);
 
-		Assert.Equal(["C1_01.MSN (saved)", "MINE.MSN (new)", "TRAIN1.MSN"], listed.Select(mission => mission.Label));
+		Assert.Equal(["C1_01.MSN (saved)", "MINE.MSN", "TRAIN1.MSN"], listed.Select(mission => mission.Label));
 	}
 
 	/// <summary>
@@ -75,11 +75,11 @@ public sealed class MissionSavingTests : IDisposable {
 	/// </summary>
 	[Fact]
 	public void MissionArgumentFindsTheListedMissionByName() {
-		var listed = VolMissionBrowser.Merge(["C1_01.MSN", "C1_010.MSN"], ["MINE.MSN"]);
+		var listed = MissionBrowser.Merge(["C1_01.MSN", "C1_010.MSN"], ["MINE.MSN"]);
 
-		Assert.Equal("C1_01.MSN", VolMissionBrowser.Find(listed, "c1_01")?.File);
-		Assert.Equal("MINE.MSN", VolMissionBrowser.Find(listed, "mine.msn")?.File);
-		Assert.Null(VolMissionBrowser.Find(listed, "C1_0"));
+		Assert.Equal("C1_01.MSN", MissionBrowser.Find(listed, "c1_01")?.File);
+		Assert.Equal("MINE.MSN", MissionBrowser.Find(listed, "mine.msn")?.File);
+		Assert.Null(MissionBrowser.Find(listed, "C1_0"));
 	}
 
 	/// <summary>

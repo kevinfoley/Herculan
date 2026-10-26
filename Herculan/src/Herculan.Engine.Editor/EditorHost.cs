@@ -30,9 +30,10 @@ public enum EditorExit {
 /// <param name="FontPath">The font every ImGui window is drawn in.</param>
 public sealed record EditorLaunch(string InstallRoot, GameContent SimulatorContent, Func<GameContent> ShellContent, string FontPath) {
 	/// <summary>
-	/// The mission to open first, named as File &gt; Load from VOL lists it (<c>C1_05</c> or <c>C1_05.MSN</c>), a mission saved
-	/// into the install's <c>MSN\</c> folder included; null for none. The editor starts with no mission and that list up,
-	/// which names the mission being loaded, or says why when no mission has the name or it does not load.
+	/// The mission to open first, named as File &gt; Load from VOL or File &gt; Load custom mission lists it (<c>C1_05</c> or
+	/// <c>C1_05.MSN</c>); null for the one the editor last opened or saved (<see cref="EditorSettings.LastMission"/>). The
+	/// editor starts with no mission and the list that holds it up, which names the mission being loaded, or says why when
+	/// no mission has the name or it does not load.
 	/// </summary>
 	public string? Mission { get; init; }
 
@@ -66,7 +67,8 @@ public sealed class EditorHost {
 	private readonly EngineWindow _window;
 	private readonly EditorSettings _settings = EditorSettings.Load();
 	private readonly EditorSettingsPanel _settingsPanel;
-	private readonly VolMissionBrowser _volBrowser;
+	private readonly MissionBrowser _volBrowser;
+	private readonly MissionBrowser _customBrowser;
 	private readonly MissionSaving _saving;
 	private readonly NewMissionDialog _newMission;
 	private readonly EditorToolbox _toolbox;
@@ -101,13 +103,18 @@ public sealed class EditorHost {
 	// frame and its render, would leave the rest of the frame calling into a destroyed context.
 	private bool _closePending;
 
-	// A load the browser asked for. It runs at the start of the frame after the one that drew the browser's
-	// "Loading" line, so the window says what it is doing before it stops to do it.
-	private string? _pendingLoad;
-	private bool _loadNoticeDrawn;
+	// A mission a browser asked to open, and that browser, which says it is loading and why a load failed.
+	private sealed record LoadRequest(string File, MissionBrowser From);
 
-	// A load the browser asked for that the unsaved-changes prompt has let through, started once the frame is rendered.
-	private string? _approvedLoad;
+	// A load a browser asked for. It runs at the start of the frame after the second that drew the browser's "Loading"
+	// line, so the window says what it is doing before it stops to do it: ImGui hides a window it has just created, whose
+	// height fits its contents, for its first frame, which at start-up is the browser's.
+	private const int LoadNoticeFrames = 2;
+	private LoadRequest? _pendingLoad;
+	private int _loadNoticeFrames;
+
+	// A load a browser asked for that the unsaved-changes prompt has let through, started once the frame is rendered.
+	private LoadRequest? _approvedLoad;
 
 	// A new mission File > New mission asked for, built and opened as a load is: at the start of the frame after the one
 	// that drew the dialog's "Creating" line.
@@ -171,25 +178,21 @@ public sealed class EditorHost {
 		_flyFarPlane = _camera.FarPlane;
 		_padPointer = new GamepadPointer { Settings = JoystickMapFile.LoadIn(_installData).Mouse };
 		_settingsPanel = new EditorSettingsPanel(_settings);
-		_volBrowser = new VolMissionBrowser(() =>
-			VolMissionBrowser.Merge(MissionFileLaunch.List(launch.ShellContent()), SavedMissions.List(launch.InstallRoot)));
+		IReadOnlyList<BrowsedMission> All() =>
+			MissionBrowser.Merge(MissionFileLaunch.List(launch.ShellContent()), SavedMissions.List(launch.InstallRoot));
+		_volBrowser = new MissionBrowser("Load from VOL", "The install's archives hold no missions.",
+			() => MissionBrowser.Archived(All()));
+		_customBrowser = new MissionBrowser("Load custom mission", "No custom missions are saved in the install yet.",
+			() => MissionBrowser.Custom(All()));
 		_saving = new MissionSaving(launch.InstallRoot, launch.ShellContent, _missionCache);
 		_saving.Saved += _volBrowser.Refresh;
+		_saving.Saved += _customBrowser.Refresh;
+		_saving.Saved += () => Remember(_saving.Mission?.Name);
 		_newMission = new NewMissionDialog(_saving, () => _zones.Zones, () => TheaterNames.Labels(launch.SimulatorContent));
 		_toolbox = new EditorToolbox(launch.SimulatorContent);
 
 		Console.WriteLine($"HERCULAN Mission Editor on {launch.InstallRoot}");
-		_volBrowser.Open();
-		if (launch.Mission is { } named) {
-			if (_volBrowser.Find(named) is { } found) {
-				// Loaded as a pick from the list is, once the first frame has drawn its "Loading" line.
-				_pendingLoad = found.File;
-				_volBrowser.Loading = found.File;
-			} else {
-				_volBrowser.Failure = $"No mission is named {named}.";
-				Console.Error.WriteLine(_volBrowser.Failure);
-			}
-		}
+		OpenFirst(launch.Mission);
 
 		Console.WriteLine("RMB + mouse to look, WASD/arrows to move, Q/E down/up, Shift boosts, click to select, "
 			+ "double-click to frame, V toggles top-down, drag a selected object's, waypoint's, group's or trigger area's arrows to move it (Alt detaches a waypoint, group or area corner from what shares its point), drag a herc, a flyer, a ground vehicle or a structure from the Toolbox onto the ground to add it, New route then clicks on the ground place a route (Enter finishes, Esc cancels), New box or New circle then a drag on the ground places a trigger area (Esc cancels), Delete deletes the selected object, route, trigger area, trigger, countdown, objective or condition or removes the selected waypoint, Ctrl+Z/Ctrl+Y undo/redo, Ctrl+S saves, "
@@ -224,6 +227,44 @@ public sealed class EditorHost {
 	}
 
 	private string WindowTitle => _mission?.Title(_saving.Dirty) ?? "HERCULAN Mission Editor";
+
+	// Puts up the list holding <named>, or else the one the editor last opened or saved, and loads it as a pick from that
+	// list is, once the first frame has drawn its "Loading" line. A mission named at launch that no list holds leaves Load
+	// from VOL up saying so; with no mission to open, or a remembered one since deleted, the start dialog comes up
+	// (StartShown).
+	private void OpenFirst(string? named) {
+		string? first = named ?? _settings.LastMission;
+		var browser = first != null && _customBrowser.Find(first) != null ? _customBrowser : _volBrowser;
+		if (first != null && browser.Find(first) is { } found) {
+			browser.Open();
+			_pendingLoad = new LoadRequest(found.File, browser);
+			browser.Loading = found.File;
+		} else if (named != null) {
+			browser.Open();
+			browser.Failure = $"No mission is named {named}.";
+			Console.Error.WriteLine(browser.Failure);
+		}
+	}
+
+	// Whether the start dialog is up: while no mission is open and nothing else is up to open or make one.
+	private bool StartShown => _mission == null && _pendingLoad == null && _approvedLoad == null && _pendingNew == null
+		&& !_volBrowser.IsOpen && !_customBrowser.IsOpen && !_newMission.IsOpen && !_saving.IsOpen;
+
+	// Records <name> as the mission to open next time (EditorSettings.LastMission), into the settings file as it stands
+	// rather than through the open settings, which may hold the Settings panel's edits that were never confirmed.
+	private void Remember(string? name) {
+		if (name == null) {
+			return;
+		}
+
+		string file = name.EndsWith(MissionFileLaunch.MissionExtension, StringComparison.OrdinalIgnoreCase)
+			? name
+			: name + MissionFileLaunch.MissionExtension;
+		_settings.LastMission = file;
+		var saved = EditorSettings.Load();
+		saved.LastMission = file;
+		saved.Save();
+	}
 
 	// The window being closed: let through when nothing is unsaved, else refused while the unsaved-changes prompt asks.
 	private bool OnCloseRequested() {
@@ -361,8 +402,10 @@ public sealed class EditorHost {
 			PadButton(_padPointer.RightClickHeld, ref _padRightHeld, MouseButton.Right);
 		}
 
+		// A key that needs no Ctrl does nothing while Ctrl is held, so Ctrl+S saves without moving the camera back.
+		bool control = _keyboard != null && Control(_keyboard);
 		bool escape = _keyboard?.IsKeyPressed(Key.Escape) == true;
-		bool escapePressed = escape && !_escapeHeld;
+		bool escapePressed = escape && !_escapeHeld && !control;
 		_escapeHeld = escape;
 		bool escapeFree = escapePressed && !_saving.IsOpen && !_newMission.IsOpen;
 		if (escapeFree && _mission?.Placing.Active == true) {
@@ -390,7 +433,7 @@ public sealed class EditorHost {
 			_lastMousePos = pos;
 		}
 
-		bool acceptKeyboard = _imgui == null || !ImGui.GetIO().WantCaptureKeyboard;
+		bool acceptKeyboard = (_imgui == null || !ImGui.GetIO().WantCaptureKeyboard) && !control;
 		_editorCamera.Update(deltaSeconds, _keyboard, lookDelta, _looking, acceptKeyboard);
 		_editorCamera.ApplyTo(_camera);
 		SetClipPlanes();
@@ -443,24 +486,27 @@ public sealed class EditorHost {
 		_drawables = Upload(_gl, _renderer, mission);
 	}
 
+	// Whether either Ctrl key is held, under which the keys that need no Ctrl do nothing.
+	private static bool Control(IKeyboard keyboard) => keyboard.IsKeyPressed(Key.ControlLeft) || keyboard.IsKeyPressed(Key.ControlRight);
+
 	// V toggles the top-down view, Delete deletes the selected object, route, trigger area, trigger, countdown, objective or condition or removes the selected
 	// waypoint, Ctrl+Z undoes and Ctrl+Y or Ctrl+Shift+Z redoes, Ctrl+S saves, unless a text field or a prompt has the keyboard.
 	// None of them while a drag is under way. While a route is placed, Enter finishes it; while a route or an area is placed,
-	// Delete, Undo and Redo do nothing.
+	// Delete, Undo and Redo do nothing. V, Delete and Enter do nothing while Ctrl is held.
 	private void OnKeyDown(IKeyboard keyboard, Key key, int scancode) {
 		if (_mission?.Gizmo.Dragging == true || _saving.IsOpen || _newMission.IsOpen
 				|| (_imgui != null && ImGui.GetIO().WantCaptureKeyboard)) {
 			return;
 		}
 
-		bool control = keyboard.IsKeyPressed(Key.ControlLeft) || keyboard.IsKeyPressed(Key.ControlRight);
+		bool control = Control(keyboard);
 		if (key == Key.V && !control) {
 			ToggleTopDown();
 			return;
 		}
 
 		bool placing = _mission?.PlacingAny == true;
-		if (_mission?.Placing.Active == true && key is Key.Enter or Key.KeypadEnter) {
+		if (_mission?.Placing.Active == true && key is Key.Enter or Key.KeypadEnter && !control) {
 			_mission!.Placing.RequestFinish();
 			return;
 		}
@@ -557,11 +603,11 @@ public sealed class EditorHost {
 	}
 
 	private void OnRender(double deltaSeconds, GL gl) {
-		if (_pendingLoad != null && _loadNoticeDrawn) {
-			LoadFromVol(_pendingLoad);
+		if (_pendingLoad != null && _loadNoticeFrames >= LoadNoticeFrames) {
+			LoadMission(_pendingLoad);
+			_pendingLoad.From.Loading = null;
 			_pendingLoad = null;
-			_loadNoticeDrawn = false;
-			_volBrowser.Loading = null;
+			_loadNoticeFrames = 0;
 		}
 
 		if (_pendingNew != null && _newNoticeDrawn) {
@@ -616,7 +662,22 @@ public sealed class EditorHost {
 		}
 
 		_settingsPanel.Draw();
+		if (StartShown) {
+			switch (StartDialog.Draw()) {
+				case StartChoice.Vanilla:
+					OpenBrowser(_volBrowser);
+					break;
+				case StartChoice.Custom:
+					OpenBrowser(_customBrowser);
+					break;
+				case StartChoice.New:
+					_newMission.Open();
+					break;
+			}
+		}
+
 		_volBrowser.Draw();
+		_customBrowser.Draw();
 		_saving.Draw();
 		_newMission.Draw();
 		_imgui?.Render();
@@ -640,14 +701,14 @@ public sealed class EditorHost {
 		}
 
 		if (_pendingLoad != null) {
-			_loadNoticeDrawn = true;
-		} else if (_volBrowser.TakeRequest() is { } requested) {
-			_saving.Leave($"opening {requested}", () => _approvedLoad = requested);
+			_loadNoticeFrames++;
+		} else if (TakeLoadRequest() is { } requested) {
+			_saving.Leave($"opening {requested.File}", () => _approvedLoad = requested);
 		}
 
 		if (_approvedLoad != null && _pendingLoad == null) {
 			_pendingLoad = _approvedLoad;
-			_volBrowser.Loading = _approvedLoad;
+			_approvedLoad.From.Loading = _approvedLoad.File;
 			_approvedLoad = null;
 		}
 
@@ -802,19 +863,33 @@ public sealed class EditorHost {
 			};
 	}
 
-	// Generates the handoff for the archive mission <name> into the scratch directory, holds the mission as its .MSN and
-	// swaps the editor over to it. On failure the open mission stays, and the browser says why.
-	private void LoadFromVol(string name) {
+	// The mission either browser asked to open since the last frame, with the browser that asked.
+	private LoadRequest? TakeLoadRequest() =>
+		_volBrowser.TakeRequest() is { } archived ? new LoadRequest(archived, _volBrowser)
+		: _customBrowser.TakeRequest() is { } custom ? new LoadRequest(custom, _customBrowser)
+		: null;
+
+	// Opens <browser> in place of the other mission list.
+	private void OpenBrowser(MissionBrowser browser) {
+		(browser == _volBrowser ? _customBrowser : _volBrowser).Close();
+		browser.Open();
+	}
+
+	// Generates the handoff for the mission the request names, an archive's or one saved into the install, into the scratch
+	// directory, holds the mission as its .MSN, swaps the editor over to it and remembers it for the next run. On failure
+	// the open mission stays, and the browser that asked says why.
+	private void LoadMission(LoadRequest request) {
 		if (_gl == null || _renderer == null) {
 			return;
 		}
 
+		string name = request.File;
 		EditorMission opened;
 		try {
 			ClearMissionCache();
 			if (MissionOpener.Open(_launch.ShellContent(), _launch.InstallRoot, name, _missionCache, out var source,
 					out var squad, out string? failure) is not { } generated) {
-				_volBrowser.Failure = failure;
+				request.From.Failure = failure;
 				Console.Error.WriteLine($"Cannot load {name}: {failure}");
 				return;
 			}
@@ -823,14 +898,15 @@ public sealed class EditorHost {
 				source!, squad!, _launch.ShellContent, _cybridWeapons, _zones);
 		} catch (Exception ex) when (ex is MissingHandoffFileException or InvalidDataException or IOException
 				or UnauthorizedAccessException) {
-			_volBrowser.Failure = ex.Message;
+			request.From.Failure = ex.Message;
 			Console.Error.WriteLine($"Cannot load {name}: {ex.Message}");
 			return;
 		}
 
 		SwapTo(_gl, _renderer, opened);
 		_saving.Mission = opened;
-		_volBrowser.Close();
+		request.From.Close();
+		Remember(name);
 	}
 
 	// Builds the new mission File > New mission asked for (NewMission, in HercWorks.Core), generates its handoff into the
@@ -916,7 +992,11 @@ public sealed class EditorHost {
 			}
 
 			if (ImGui.MenuItem("Load from VOL", null, false, _pendingLoad == null)) {
-				_volBrowser.Open();
+				OpenBrowser(_volBrowser);
+			}
+
+			if (ImGui.MenuItem("Load custom mission", null, false, _pendingLoad == null)) {
+				OpenBrowser(_customBrowser);
 			}
 
 			ImGui.Separator();
