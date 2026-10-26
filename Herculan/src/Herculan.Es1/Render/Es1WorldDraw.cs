@@ -194,23 +194,25 @@ public sealed class Es1WorldDraw {
 				item.Visible = drawn && pieceRoot == root && OnScreen(piece.Gate, camera, 0);
 			}
 
-			// A mount's private cell frames start at 0; firing, which steps them, is step 7's.
+			// A mount's model shows its own private cell frames, which the muzzle flash and the ELF's spin-up step.
 			var slots = root < type.HardpointSlots.Count ? type.HardpointSlots[root] : [];
+			var mounts = _mech.Mounts?.Mounts ?? [];
 			foreach (var (item, piece, hardpoint, transformId) in _mountPieces) {
 				item.Transform = FrameToWorld(transformId);
 				item.RampBlock = block;
+				int cell = mounts[hardpoint]?.CellFrame(piece.Gate.Sequence) ?? 0;
 				item.Visible = drawn && hardpoint < slots.Length && slots[hardpoint] != null
-					&& OnScreen(piece.Gate, camera, detail.MountBias, transformId);
+					&& OnScreen(piece.Gate, camera, detail.MountBias, transformId, cell);
 			}
 		}
 
 		/// <summary>
-		/// Whether a piece's cell is cell 0 and its <c>TSDetailPart</c>, if any, picks its level with
+		/// Whether a piece's cell is cell <paramref name="cell"/> and its <c>TSDetailPart</c>, if any, picks its level with
 		/// <paramref name="bias"/> from the eye's distance in the part's node, <paramref name="node"/> when given (a mount's
 		/// model, whose parts all carry the stamped node).
 		/// </summary>
-		private bool OnScreen(CellGate gate, Camera camera, int bias, int? node = null) {
-			if (gate.IsGated && gate.Frame != 0) {
+		private bool OnScreen(CellGate gate, Camera camera, int bias, int? node = null, int cell = 0) {
+			if (gate.IsGated && gate.Frame != cell) {
 				return false;
 			}
 

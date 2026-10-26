@@ -66,6 +66,10 @@ public sealed class Es1Simulation {
 		_playerMech = playerMech ?? localPlayer;
 		ViewChain = viewChain ?? new Es1ViewChain(localPlayer, null);
 		Input = input;
+		// The electro-optical hold's two globals, which the player's weapon manager reads and writes.
+		if (localPlayer.Mounts != null) {
+			localPlayer.Mounts.ChainHold = input.Controls;
+		}
 	}
 
 	/// <summary>The chain of views, its cameras and the view manager its keys queue commands on.</summary>
@@ -205,7 +209,8 @@ public sealed class Es1Simulation {
 			Es1SensorModel.Tick(Globals, _playerMech);
 
 			// PLACEHOLDER: Mech_PerTickSystemsUpdate (00014ee0) for each machine of g_MechPool, last to first, whose group
-			// holds no action and that is not destroyed, plan step 7.
+			// holds no action and that is not destroyed, plan step 7c. Its energy turn (Es1WeaponMounts.EnergyTurn) is
+			// what counts the mounts' refire down and charges their capacitors, so until it runs each weapon fires once.
 		}
 
 		// 7. PLACEHOLDER: Mission_PollStatus (0000f454)(LocalPlayerMech) and the status panel 00046efc it puts up, which
@@ -386,7 +391,10 @@ public sealed class Es1Simulation {
 			TickPlayersMachine(steer, throttle, twist, pitch);
 		}
 
-		// PLACEHOLDER: with the camera not driven, WeaponMounts_FireTrigger (mounts, player, block), plan step 7.
+		// The trigger. Retail's machine always holds a manager; this one has none until Mech_ConfigureLoadout has run.
+		if (!cameraDriven) {
+			LocalPlayer.Mounts?.FireTrigger(Globals, LocalPlayer, block);
+		}
 
 		// Button 2: the target's cycle once a press.
 		if (block.Buttons[2] == 0) {

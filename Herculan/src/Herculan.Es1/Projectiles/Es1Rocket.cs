@@ -105,8 +105,8 @@ public sealed class Es1Rocket : Es1Projectile {
 	/// <summary>
 	/// <c>Rocket_Construct</c>(0, <paramref name="subtype"/>): an element of the pool, none when it is full; the shape, the
 	/// subtype byte, no target and the record <c>Proj_LookupRecord</c>(<paramref name="subtype"/>, 0). The flame's
-	/// countdown <c>+0x56</c> is not written, so it holds what the element last held, the heap's zero in a fresh pool;
-	/// here it starts at 0.
+	/// countdown <c>+0x56</c> is not written, so it holds what the element last held, or what the allocator's block held
+	/// for an element never used (docs/es1/simulation/rockets.md#launching--rocket_fire-00007748); here it starts at 0.
 	/// </summary>
 	private static Es1Rocket? Construct(Es1ProjectilePool pool, short subtype) {
 		if (!pool.CanAllocate) {

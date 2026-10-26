@@ -32,7 +32,7 @@ public static class Es1PlayerCockpitUpdate {
 		cockpit.EnergyMeter.SetValue(globals.EnergyMeterValue);
 		int range = machine.Target?.Position.ApproxDistanceTo(machine.Position) ?? 0;
 		// Retail's machine always holds a manager; this one has none until Mech_ConfigureLoadout has run.
-		machine.Mounts?.PerFrameUpdate(range, cockpit.ConsoleButtons);
+		machine.Mounts?.PerFrameUpdate(range, cockpit.ConsoleButtons, globals.Clock);
 
 		// 2.
 		ExchangeThrottle(machine, cockpit);

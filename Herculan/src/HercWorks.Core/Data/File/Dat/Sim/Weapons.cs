@@ -85,6 +85,20 @@ public class Weapons {
 		public int Range => BitConverter.ToInt32(Tail, 0x0e);
 
 		/// <summary>
+		/// Tail-relative <c>0x0a</c> (in-memory <c>0x2c</c>) — the minimum range, the lower bound
+		/// <c>WeaponMount_RangeAllows</c> tests beside <see cref="Range"/>. See docs/retail/formats/weapons-dat-sim.md.
+		/// </summary>
+		public int MinimumRange => BitConverter.ToInt32(Tail, 0x0a);
+
+		/// <summary>
+		/// Tail-relative <c>0x1e</c>-<c>0x22</c> (in-memory <c>0x40</c>-<c>0x44</c>) — the weapon's own muzzle triple, the
+		/// barrel's length from the mount point, which <c>WeaponMount_PrepareShot</c> adds to the mount point. See
+		/// docs/retail/simulation/weapon-firing.md#where-the-shot-comes-from--weaponmount_prepareshot-0040e788.
+		/// </summary>
+		public (short X, short Y, short Z) MuzzleOffset =>
+			(BitConverter.ToInt16(Tail, 0x1e), BitConverter.ToInt16(Tail, 0x20), BitConverter.ToInt16(Tail, 0x22));
+
+		/// <summary>
 		/// Tail-relative <c>0x14</c> (in-memory <c>0x36</c>) — the lower energy fire threshold. See
 		/// docs/retail/simulation/weapon-mounts.md#energy for how readiness combines it with
 		/// <see cref="ShotCost"/>.

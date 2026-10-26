@@ -52,6 +52,14 @@ public sealed class Es1ControlsState {
 	/// </summary>
 	public bool MissileFlown { get; set; }
 
+	/// <summary>
+	/// <c>maybe_WeaponChain_EoStepPending</c> (<c>000b5bc8</c>): an electro-optical missile was launched and the selection
+	/// has not moved since. The trigger sets it with <see cref="MissileFlown"/>, a change of selection clears it, and the
+	/// weapon manager's per-frame pass steps the selection on while it is set and the missile no longer flown
+	/// (docs/es1/simulation/weapon-mounts.md#firing--weaponmounts_firetrigger-0000d2bc).
+	/// </summary>
+	public bool MissileStepPending { get; set; }
+
 	/// <summary>The four press-once latches, <c>Input_ButtonLatch</c> and <c>Input_ButtonLatchState</c>.</summary>
 	public Es1ButtonLatches Latches { get; } = new();
 

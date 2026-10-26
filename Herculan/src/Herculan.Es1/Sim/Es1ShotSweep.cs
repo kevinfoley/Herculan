@@ -87,7 +87,8 @@ public static class Es1ShotSweep {
 			if (start.Z < 0) {
 				ray.Length = 0;
 			} else if (d != 0) {
-				// Retail divides by zero for a cosine of 0, a ray turned a half turn about; here the length stands.
+				// Math_CosBam answers 0 for d of 1 to 7, a ray dipping under the ground at less than 0.04°, which retail
+				// divides by; here the length stands.
 				short cosine = SimTrig.Cos(unchecked((short)(d - 0x4000)));
 				if (cosine != 0) {
 					ray.Length = unchecked(start.Z << 14) / cosine;

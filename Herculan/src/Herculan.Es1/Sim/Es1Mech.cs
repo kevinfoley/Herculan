@@ -66,7 +66,7 @@ public sealed class Es1Mech : IEs1SimObject {
 
 		// Step 3. PLACEHOLDER: Component_AllocDamageArrays (00009b8c) with 21 internals and 28 components; step 7 ports
 		// the damage header.
-		// Step 4. PLACEHOLDER: the five lock countdowns at +0x1ee; step 7 ports missile lock.
+		// Step 4. PLACEHOLDER: the five lock countdowns at +0x1ee; plan step 7c ports missile lock.
 		// Step 5: the throttle, speed, turn and turret rates and angles start at 0.
 		Energy = InitialEnergy;
 
@@ -283,8 +283,15 @@ public sealed class Es1Mech : IEs1SimObject {
 	/// Slot <c>+0x28</c>, <c>Mech_GetAimNodeTransform</c> (<c>00013204</c>): the posed node of the type record's camera part
 	/// (<c>+0xc</c>), or null when the shape has no such part.
 	/// </summary>
-	public Transform3? AimNodeTransform() {
-		int transformId = Type.Animation?.TransformIdOfPart(Type.Chassis.CameraPartId) ?? -1;
+	public Transform3? AimNodeTransform() => PartNodeTransform(Type.Chassis.CameraPartId);
+
+	/// <summary>
+	/// The posed node of part <paramref name="partId"/>, found through slot <c>+0x24</c> of the shape of the instance
+	/// <c>+0x2e</c>, as <see cref="AimNodeTransform"/> and <c>WeaponMount_PrepareShot</c> find theirs; null when the shape
+	/// has no such part.
+	/// </summary>
+	public Transform3? PartNodeTransform(int partId) {
+		int transformId = Type.Animation?.TransformIdOfPart(partId) ?? -1;
 		return transformId >= 0 && Shape != null ? Shape.NodeTransform(transformId) : null;
 	}
 

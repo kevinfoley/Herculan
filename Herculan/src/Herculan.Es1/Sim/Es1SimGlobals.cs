@@ -65,6 +65,21 @@ public sealed class Es1SimGlobals {
 	/// </summary>
 	public short HeaderWord3 { get; set; }
 
+	/// <summary>
+	/// <c>MissionModeFlag</c> (<c>000bc4a0</c>), script.dat header word 2, the load's mode
+	/// (docs/es1/formats/script-dat.md#the-header), which <see cref="FreeShots"/> tests for 0.
+	/// </summary>
+	public short MissionModeFlag { get; set; }
+
+	/// <summary><c>UnlimitedAmmoFlag</c> (<c>000bc4a6</c>), script.dat header word 5, which <see cref="FreeShots"/> tests for 1.</summary>
+	public short UnlimitedAmmoFlag { get; set; }
+
+	/// <summary>
+	/// <see cref="MissionModeFlag"/> 0 with <see cref="UnlimitedAmmoFlag"/> 1: the trigger's free-shot flag, which spares
+	/// the rounds, and the energy turn's refund of the budget (docs/es1/simulation/weapon-mounts.md#energy--weaponmounts_arbitrateenergy-0000cc2c).
+	/// </summary>
+	public bool FreeShots => MissionModeFlag == 0 && UnlimitedAmmoFlag == 1;
+
 	/// <summary>The player's think's latch and data link (<see cref="Es1PlayerThinkGlobals"/>).</summary>
 	public Es1PlayerThinkGlobals PlayerThink { get; } = new();
 
