@@ -26723,7 +26723,13 @@
       "confidence": "high",
       "name": "Pool_Next",
       "description": "(pool, node): the in-use node after node (link at node-8), or the first in-use node (+0xe) when node is null; returns it as node + 8, or 0 at the end. For a node address below 0x100000 it sprintfs a diagnostic ('array ptr ...') into a local buffer it never uses.",
-      "source": "DBSIM decompile and disassembly at 00471b0c"
+      "source": "DBSIM decompile and disassembly at 00471b0c",
+      "verified": {
+        "bytes": "00471b0c+88",
+        "sha1": "54dc666bb986",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00471b64",

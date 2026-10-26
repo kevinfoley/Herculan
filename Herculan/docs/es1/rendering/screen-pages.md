@@ -124,8 +124,16 @@ Because *f_x* keeps its new value, a row cut at its left, *L* + *l* not 0, start
 | `DirtyList_Insert`, `DirtyList_Prune` | `00083bb4` (entered through its padding at `00083bb1`), `00083ae4` | none |
 | `DirtyList_Flush` | `00083e80` | installs no render context; `es2_xref.py` finds no reference to it ([Open](#open)) |
 | `Raster_DrawEllipse`, `Raster_FillSpanList` | `000831f4`, `0008f68c` | the scratch list `00098de5` points to |
-| `Bitmap_BlitScaled`, `Bitmap_BlitScaledClipDispatch` | `00067178`, `00076884` | none; `VGA_8`'s slot 29 is `0008c744` ([Open](#open)) |
+| `Bitmap_BlitScaled`, `Bitmap_BlitScaledClipDispatch` | `00067178`, `00076884` | none; `VGA_8`'s slot 29 differs, below |
 | `GLBitmapArray_Dtor`, `GLPalette_Dtor` | `000673c8`, `00069258` | none |
+
+**The simulator's scaled blit leaves palette index 0 unwritten, as the shell's does, so a scaled bitmap's 0 bytes are transparent, but it steps through the bitmap differently.** `VGA8_BlitBitmapScaled` (`ES1DBSIM 0008c744`), `VGA_8`'s slot 29, C convention, with its row block `VGA8_BlitScaledRow` (`0008c8d0`) and `VGA8_ScaleStepSetup` (`0008cb75`), clips as [the shell's](#ellipses-outlines-and-scaled-bitmaps) does (its step 1) and draws each row in the same pieces, regions and plane order (its step 4), testing each byte and writing only the non-zero ones whatever the header's flags. Against the shell's:
+
+- **The steps.** *sx* = columns · 65536 / *w*, truncated toward zero, then 1 added away from zero, the columns negated with flag 2; *sy* the same of the rows over *h*, negated with flag 1; a size of 0 gives a step of 0.
+- **No starting fraction.** Each row's walk starts afresh at *A* = (*L* + *l*) · *sx*, and pixel *j* of the run takes byte ⌊(*A* + *j* · *sx*) / 65536⌋ of the source row, the floor of a signed value; nothing carries from one row to the next.
+- **The rows.** With *T* = 0 the first row's offset and fraction are 0; otherwise the offset is (*T* · *sy* >> 16, an arithmetic shift) × columns and the fraction *f* the low 16 bits of (*T* + *B*) · *sy*. Flag 1 adds size − columns, flag 2 adds columns. Destination row *k* from *y* + *T* reads the source row at that offset plus ((*f* + *k* · *sy*) / 65535, truncated toward zero) × columns: the running sum is never reduced, and the divisor is 65535.
+
+So with flag 2 the first pixel of each row reads the byte after the source row, the next row's first.
 
 The cockpit's script draws add their boxes with delay 1. `TtmScript_FixRect` (`ES1DBSIM 00079c38`) passes `DirtyBox_Add` the rect's *x0* and *y0* as the box's corner and its *x1* and *y1* as its width and height, with delay 0.
 
@@ -274,7 +282,6 @@ The two routines are one object file, `00088728`–`0008886f`, between zero fill
 ## Open
 
 - **Open:** whether a mission's dirty boxes are ever copied, and what bounds the list if they are not: `es2_xref.py` finds no reference to the simulator's `DirtyList_Flush` (`ES1DBSIM 00083e80`). The boxes of a script redrawing the same frames merge.
-- **Open:** the simulator's `VGA_8` slot 29 (`ES1DBSIM 0008c744`, with `0008c8d0` and `0008cb75`) is not the shell's code: its instructions differ in length and the decompile handles the flags elsewhere.
 - **Open:** whether `Shell_CreateDisplay`'s display is the current one when it sets attribute 9, and so whether `00084472` is 2, and what else sets `00084472` and `00084476`.
 - **Open:** what sets the cursor's clip rect, the rect `+0x20c` of the clip block `00098b28` (`ES1DBSIM`; the shell's `000843ec`): `es2_xref.py` finds only the cursor routines' pushes of its address, and a store through the block's base is not found by that search.
 - **Open:** whether a mission calls the simulator's slots 20 to 23. A retail check: a breakpoint on `ES1DBSIM 00051c3c` during a glance.

@@ -52,6 +52,21 @@ Each program's `main` makes the heap first and turns it off last:
 - It has inspection functions `ES1DBSIM` does not: `Heap_IsAllocated`, `Heap_IsValidAllocation`, a walker over every block (`HeapIter_Init`, `HeapIter_Next`), and `Heap_DrawMap` (`ES1GO 000016b9`), which draws a rows-by-columns map of the heap on the monochrome monitor (`Mono_Printf`, `ES1GO 0004f904`), one character per cell by how much of its share is allocated: 7 for none, `0xb1` below half, `0xb2` below all, `0xdb` for all.
 - `Heap_IsValidAllocation` takes the heap's end as its base plus 8 times the dword at `+4`, where `Heap_Init` stores the size in bytes, so a block ending at the heap's true end does not pass that test.
 
+## Object pools
+
+**The simulator's short-lived objects, its machines and its structures come from fixed pools, walked oldest first, as ES2's are ([walking a pool](../../retail/simulation/sim-object-layout.md#walking-a-pool--oldest-first)).** The pool functions sit in the library region, `00063784`–`00063aa3`, each removing its own arguments:
+
+| ES1 | Address | ES2 (DBSIM) | Difference |
+|---|---|---|---|
+| `ObjectPool_FlushDeleteQueue` | `00063784` | `00478538` | (queue, pool): each queued object's slot `+0xc` with flags 2, then `Pool_Free`, then the count `+0x50` zeroed |
+| `Pool_LinkFreeList` | `000637e4` | `00471944` | (pool, element size, count, buffer); the header and the node links as ES2's |
+| `Pool_Init` | `00063878` | `004719cc` | (pool, element size, count): no `memset`; the block is `operator_new`'s, which `Heap_Alloc` zero-fills while the heap is on ([the heap](#the-heap)), so a pool built after `Mem_InitHeap` starts zeroed |
+| `Pool_Alloc`, `Pool_Free` | `000638c8`, `0006398c` | `00471a24`, `00471abc` | none |
+| `Pool_AllocThunk`, `Pool_AllocZeroed` | `0006394c`, `0006395c` | | `Pool_Alloc` with a second argument not read, and `Pool_Alloc` with the element zeroed; `es2_xref.py` finds no reference to either |
+| `Pool_Next`, `Pool_Prev`, `Pool_Nth` | `000639ec`, `00063a20`, `00063a78` | `00471b0c`, `00471b64`, `00471ba4` | `Pool_Next` without the diagnostic |
+
+Destroying an object through its slot `+0xc` with 3 queues it and leaves it linked; `Pool_Free`, which `es2_xref.py` finds called from `ObjectPool_FlushDeleteQueue` alone, unlinks it at its pool's phase-5 flush. So a walk that destroys the object it stands on steps on from it ([the tick](main-loop.md#the-tick--sim_maintick-00059700)). A recycled element keeps what its last occupant left in every field its constructor does not write.
+
 ## Open
 
 - **Open:** what `X32_AllocMemory` stores at `00090024` (the extender's `EDX`) and what the circular list at `0009002c`, which `X32_LargestFreeBlock` searches, holds. Both belong to the startup module's memory handling ([compiler.md](../formats/compiler.md#startup)).

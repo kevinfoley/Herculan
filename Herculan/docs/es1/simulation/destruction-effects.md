@@ -45,7 +45,7 @@ vz = Math_Q14Multiply(400, Math_CosBam(pitch - 0x4000))
 
 ES2's `Debris_Launch` (`004089e4`) takes the speed from a scale and the piece's mass, adds a carrier velocity and draws a spin.
 
-**`Debris_ThrowRandomBearing` (`00006480`)**, (piece), launches it with a heading of `Math_RandomNext`(`000b5bd4`) and a pitch of `Math_RandomBelow`(`000b5bd4`, 24000) − 10000, as an `int16`: from about 55° down to 77° up, so a piece can leave downward. ES2 draws the pitch in `Debris_ThrowAtBearing` (`00408b74`) between two globals.
+**`Debris_ThrowRandomBearing` (`00006480`)**, (piece), launches it with a pitch of `Math_RandomBelow`(`000b5bd4`, 24000) − 10000, as an `int16`, drawn first, and then a heading of `Math_RandomNext`(`000b5bd4`): a pitch from about 55° down to 77° up, so a piece can leave downward. ES2 draws the pitch in `Debris_ThrowAtBearing` (`00408b74`) between two globals.
 
 ### The tick — `Debris_TickUpdate` (`000064b8`)
 
@@ -78,7 +78,14 @@ A tick that answers 1 ends the piece: `Sim_MainTick` destroys it through slot `+
 | `00006058` | `Debris_ThrowGroup` | | |
 | `0000ba90` | `WeaponMount_Destroy` ([losing a mount](weapon-mount-classes.md#losing-a-mount)), the thrown gun | | the mount point |
 
-**The thrown gun.** `WeaponMount_Destroy` (`0000b968`) builds the piece with `Debris_Construct`(null, the mount point, the gun's root of `WeaponModels_Mechwpn2Roots`), stores `g_TSDetailBiasForMounts` (`000bc2b8`) at its `+0x4a`, and launches it with `Debris_Launch`(piece, the third angle of the `Math_EulerToward` bearing, the hardpoint's dword `+0x18`). It then moves and ends as any piece does.
+**The thrown gun leaves the mount turned as it was on the machine, heading away from the machine's aim point.** `WeaponMount_Destroy` (`0000b968`) first works out the mount point: the hardpoint bone's node transform (its part found through slot `+0x24` of the machine's shape, a null transform for a part the shape lacks) concatenated with the machine's frame (`Context_GetTransform` of the machine's `+6`) by `Transform_Concat`, and `WeaponMount_MuzzleOffset` (`0000b918`) put through that with `Transform_ApplyToShortPoint`. To throw the gun it:
+
+1. takes the translation `+0x14` of the transform the machine's slot `+0x28` answers (`Mech_GetAimNodeTransform`, `00013204`, on a HERC, read without a test for 0) through the machine's frame, and `Math_EulerToward` (`00063d2c`) from that point to the mount point;
+2. builds the piece with `Debris_Construct`(null, the mount point, the gun's root of `WeaponModels_Mechwpn2Roots`) and stores `g_TSDetailBiasForMounts` (`000bc2b8`) at its `+0x4a`;
+3. launches it with `Debris_Launch`(piece, the bearing's third angle, the hardpoint's dword `+0x18`);
+4. overwrites the angles `Debris_Launch` set, `+6` to `+0xb`, with `Transform_RotationToEuler` (`0005e988`) of the bone-and-frame rotation, and zeroes `+0x2c`.
+
+So the piece's speed and direction are the launch's, its starting orientation the mount's. It then turns, moves and ends as any piece does.
 
 ## Smoke
 
@@ -94,11 +101,18 @@ No arguments, a phase-2 loader with no Ghidra function: `g_SmokePool` (`000aefd4
 
 ### The tick — `Smoke_Tick` (`00006b28`)
 
-(smoke), which `Sim_MainTick` calls on each emitter: ES2's (`004092dc`), its countdown the record `+0x1b` and its count `+0x1e`, with these differences. The part's node is found through slot `+0x24` of the owner's shape, `TSShape`'s part search; for a part the shape lacks the node transform is null and is read through, where ES2's substitutes a fixed transform, and a part with a negative node indexes before the instance's array. The ball is built by `SmokeBall_Construct`(null, the next shape, the point), which takes it from the pool itself. The answer is 1 once no puffs are left, and `Sim_MainTick` then destroys the emitter through slot `+0xc` with 3: **`Smoke_Dtor` (`00006af8`)**, which stores `SmokeVtable` and `000909da` and on flags bit 0 queues the emitter on `g_SmokeDeleteQueue`. Its slot `+4`, `Smoke_DrawNoOp` (`00006ae9`), draws nothing, and `ObjList_RebuildFrame` does not add the emitters to the frame.
+(smoke), which `Sim_MainTick` calls on each emitter: ES2's (`004092dc`), its countdown the record `+0x1b` and its count `+0x1e`, with these differences. The part's node is found through slot `+0x24` of the owner's shape, `TSShape`'s part search; for a part the shape lacks the node transform is null and is read through, where ES2's substitutes a fixed transform, and a part with a negative node indexes before the instance's array. Each puff's point, by the part id `+0x13` and the no-point byte `+6`:
+
+| Part id | A point given (`+6` clear) | No point (`+6` set) |
+|---|---|---|
+| 0 or more | the stored point `+0x15` through the node's transform (`Transform_ApplyToShortPoint`), then the owner's frame | the node's translation `+0x14`, then the owner's frame |
+| negative | the stored point, then the owner's frame | the owner's position `+0x20` |
+
+The owner's frame is `Context_GetTransform` of the owner's `+6`, applied with `Transform_ApplyToPoint`. The ball is built by `SmokeBall_Construct`(null, the shape `+0x20`, the point), which takes it from the pool itself, and `+0x20` then steps to kind × 4 + ((`+0x20` + 1) & 3). The answer is 1 once no puffs are left, and `Sim_MainTick` then destroys the emitter through slot `+0xc` with 3: **`Smoke_Dtor` (`00006af8`)**, which stores `SmokeVtable` and `000909da` and on flags bit 0 queues the emitter on `g_SmokeDeleteQueue`. Its slot `+4`, `Smoke_DrawNoOp` (`00006ae9`), draws nothing, and `ObjList_RebuildFrame` does not add the emitters to the frame.
 
 ### The ball — `SmokeBall_Construct` (`00006704`)
 
-(ball, shape, point): with a null ball it takes one from `g_SmokeBallPool` and returns 0 when that gives none. It runs `TSObj_Ctor` with root *shape* of `g_SmokeShapes`, stores `SmokeBallVtable` and the type tag 4, copies the point to the position `+0x20`, and sets the countdown's `int32` `+0x42` to 200. It writes no velocity at `+0x3b`, and ES1's `Pool_Init` (`00063878`) leaves a pool's block as allocated ([Open](#open)).
+(ball, shape, point): with a null ball it takes one from `g_SmokeBallPool` and returns 0 when that gives none. It runs `TSObj_Ctor` with root *shape* of `g_SmokeShapes`, stores `SmokeBallVtable` and the type tag 4, copies the point to the position `+0x20`, and sets the countdown's `int32` `+0x42` to 200. It writes no velocity at `+0x3b`. The pool's block is zero-filled by the heap when `Pool_Init` (`00063878`) allocates it ([object pools](memory.md#object-pools)), and the pool holds only balls, so a ball's velocity is 0 unless other code stores one ([Open](#open)).
 
 Its tick, **`Effect_DriftAndAnimate` (`0000693c`)**, from `Sim_MainTick`, is ES2's (`004091cc`): the three `int16` at `+0x3b` added to the position, and on each expiry of `Timer_CountDown` (`00064178`) of `+0x41` the countdown reloaded with 200 and the instance's sequence 0 stepped to its next cell; it answers 1 when the cell wraps to 0. **`SmokeBall_Dtor` (`000067f4`)**, slot `+0xc` of `SmokeBallVtable`, destroys the shape instance and on flags bit 0 queues the ball on `g_SmokeBallDeleteQueue`. `ObjList_RebuildFrame` adds every live ball to the frame, drawn through `TSObj_RenderSmokeCopy` (`000067c0`).
 
@@ -106,7 +120,7 @@ Its tick, **`Effect_DriftAndAnimate` (`0000693c`)**, from `Sim_MainTick`, is ES2
 
 `es2_xref.py` finds two calls of `Smoke_Construct`:
 
-- `Component_DestroyAndCascade`, for a piece whose sequence byte `+3` is not −1, with the cascade's latch clear and the flags' bit 1 set: kind 0, the cluster's bound center, the node's part id and the machine ([losing a component](component-damage.md#losing-a-component--component_destroyandcascade-00009cd4)). The emitter puffs 200 balls from that point on the part as the machine moves.
+- `Component_DestroyAndCascade`, for a piece whose sequence byte `+3` is not negative, with the cascade's latch clear and the flags' bit 1 set, before the cascade's cell write, explosion and debris: kind 0, the cluster's bound center, the node's part id and the machine ([losing a component](component-damage.md#losing-a-component--component_destroyandcascade-00009cd4)). The emitter puffs 200 balls from that point on the part as the machine moves.
 - the structure's collapse, `00002df8`, when its count `+0x1a0` reaches 0, after it puts the type's hulk in the shape instance: kind 1, the type record's point `+0x0c`, part id −1 and the structure. The emitter puffs 500 balls from that point through the structure's frame.
 
 ## Functions
@@ -137,7 +151,7 @@ Its tick, **`Effect_DriftAndAnimate` (`0000693c`)**, from `Sim_MainTick`, is ES2
 
 ## Open
 
-- **Open:** whether a smoke ball moves. `SmokeBall_Construct` writes no velocity and `Pool_Init` does not zero the pool, so `Effect_DriftAndAnimate` adds whatever bytes the block held. `es2_fieldscan.py` over `00005734`–`00006d9b` finds no store to `+0x3b`, `+0x3d` or `+0x3f` but `Explosion_Construct`'s byte, an effect's field, and `es2_xref.py --decode` finds the ball pool read by `SmokeBall_Construct`, `Sim_MainTick` and `ObjList_RebuildFrame` alone. A retail check: destroy an enemy HERC's arm and watch whether its smoke rises, drifts or stands in place.
+- **Open:** whether a smoke ball moves. `SmokeBall_Construct` writes no velocity and the pool starts zeroed, so `Effect_DriftAndAnimate` adds 0 unless other code stores to `+0x3b`–`+0x40`. `es2_fieldscan.py` over `00005734`–`00006d9b` finds no store to `+0x3b`, `+0x3d` or `+0x3f` but `Explosion_Construct`'s byte, an effect's field, and `es2_xref.py --decode` finds the ball pool read by `SmokeBall_Construct`, `Sim_MainTick` and `ObjList_RebuildFrame` alone. A retail check: destroy an enemy HERC's arm and watch whether its smoke rises, drifts or stands in place.
 - **Open:** what `0001b290` answers in the flyer's hit test, and the rest of the structure's collapse `00002df8` after its effect calls (from `00002f98`).
 - **Open:** what the words `000aefd0` and `000af03c` the smoke file's static initializer zeroes are; they lie `0x64` past each delete queue's start, beyond the count `+0x50` `ObjectPool_QueueForDelete` keeps.
 - **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: shoot an enemy HERC until a component goes; the pieces bounce and vanish on the flat ground, none bursts; `BP <CS>:00006b28` fires once a tick while smoke is lit, `BP <CS>:00006704` once per ball.

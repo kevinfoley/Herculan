@@ -2077,13 +2077,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Explosion_Construct",
-      "description": "(effect, point, typeId) in stack order, callee-cleaned: when effect is null allocates it from g_ExplosionPool (000aee88), returning 0 when that fails; TSObj_Ctor on the root g_ExplosionShapes (000bc1b6) [row +0x00], vptr ExplosionVtable (00090822), type byte +0x3b = typeId; type tag 2 when row +0x2a is 0, else 8; frame countdown +0x45 = row +0x06; when row +0x02 is not negative zeroes that sequence's frame counter in the shape instance; copies the point into the frame; when row +0x08 is non-zero builds a ground shape from the pool g_FlatObjPool (000af044) on root 1 of the array at g_FlatShapes (000bc1d8), vptr FlatObjVtableExploCopy (000908a2), at the point, into +0x49 (else 0); when row +0x0a is non-zero stores EffectLight_Construct (000054b0)(0, the dword at row +0x0c, point) at +0x4d (else 0); then Sound_PlayAt(point, row +0x28 + 10). ES2's Explosion_Construct (DBSIM 00407f1c), which also takes an owner and a play-sound flag and plays only a non-negative id.",
+      "description": "(effect, point, typeId) in stack order, callee-cleaned: when effect is null allocates it from g_ExplosionPool (000aee88), returning 0 when that fails; TSObj_Ctor on the root g_ExplosionShapes (000bc1b6) [row +0x00], vptr ExplosionVtable (00090822), type byte +0x3b = typeId; type tag 2 when row +0x2a is 0, else 8; frame countdown +0x45 = row +0x06; when row +0x02 is not negative zeroes that sequence's frame counter in the shape instance; sets the angles +6, +8 and +0xa to 0, Math_RandomNext (00063af4)(000b5bd4) and 0 and zeroes +0x2c, then copies the point into the frame; when row +0x08 is non-zero takes a ground shape from the pool g_FlatObjPool (000af044), constructs it on root 1 of the array at g_FlatShapes (000bc1d8) with vptr FlatObjVtableExploCopy (000908a2) when the pool gave one, and stores it at +0x49 and the point at its +0x20 either way, through the null pointer when the pool is full (else +0x49 = 0); when row +0x0a is non-zero stores EffectLight_Construct (000054b0)(0, the dword at row +0x0c, point) at +0x4d (else 0); then Sound_PlayAt(point, row +0x28 + 10). ES2's Explosion_Construct (DBSIM 00407f1c), which also takes an owner and a play-sound flag, plays only a non-negative id and sets no angles.",
       "source": "Herculan/docs/es1/formats/explos-dat.md#construction",
       "verified": {
         "bytes": "00005af0+437",
         "sha1": "91f8f2ff5af0",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -2422,7 +2422,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Debris_ThrowRandomBearing",
-      "description": "(piece), callee-cleaned: Debris_Launch (00006378)(piece, Math_RandomNext (00063af4)(000b5bd4), Math_RandomBelow (00063b3c)(000b5bd4, 24000) - 10000 as an int16). Called from Debris_ThrowGroup (00005fb8) by es2_xref. ES2's Debris_ThrowRandomBearing (DBSIM 00408bb4) with ES2's Debris_ThrowAtBearing (DBSIM 00408b74), which draws the pitch between two globals, folded in.",
+      "description": "(piece), callee-cleaned: Debris_Launch (00006378)(piece, Math_RandomNext (00063af4)(000b5bd4), Math_RandomBelow (00063b3c)(000b5bd4, 24000) - 10000 as an int16), the pitch drawn before the heading. Called from Debris_ThrowGroup (00005fb8) by es2_xref. ES2's Debris_ThrowRandomBearing (DBSIM 00408bb4) with ES2's Debris_ThrowAtBearing (DBSIM 00408b74), which draws the pitch between two globals, folded in.",
       "source": "Herculan/docs/es1/simulation/destruction-effects.md#the-launch--debris_launch-00006378",
       "verified": {
         "bytes": "00006480+53",
@@ -4816,13 +4816,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Component_DestroyAndCascade",
-      "description": "(header, component) in stack order, callee-cleaned: Collision_FindClusterForComponent (0000916c) on the model (+0x10) for the cluster, used unchecked, and its part id. Returns 0 when the component's occupancy flag (+8 array) is clear; otherwise its entry (+4 array) becomes -1 and its flag 0, and Component_SpillIntoDependents (0000979c) gives its dependents 32000. For a piece sequence byte +3 not -1: with ComponentCascade_EffectLatch (000af140) clear and flags (+5) bit 1 set, Smoke_Construct (000069ec)(0, 0, the cluster's bound center +8, the part id, the machine +0x14); then the int16 at that sequence in the array at +8 of the machine's shape instance (+0x2e) becomes 2. The anchor: the bound center widened, or through the part's node transform (null for a part the shape lacks) with Transform_ApplyToShortPoint (0005e858); then Context_GetTransform (000016e8)(machine + 6) with Transform_ApplyToPoint (0005f58c). With the latch clear, Explosion_Construct (00005af0)(0, anchor, 10), or 0x11 setting the latch when flags bit 2 is set. Then Debris_ThrowGroup (00005fb8)(g_DebrisGroups (000bc1c0)'s group 3, anchor, g_DebrisShapes (000bc1c6)). Last, each of the header's components (+0x18 count) with its flag set whose piece's parent byte +4 is this component is appended to maybe_ComponentDependencyList (00090e04) at its count byte +5, with no capacity test. Returns 1. ES2's Component_DestroyAndCascade (DBSIM 0040d434), which also puts out the machine's fires for bit 1, lights fire 2 for bit 3 and throws the piece's +2 group.",
+      "description": "(header, component) in stack order, callee-cleaned: Collision_FindClusterForComponent (0000916c) on the model (+0x10) for the cluster, used unchecked, and its part id. Returns 0 when the component's occupancy flag (+8 array) is clear; otherwise its entry (+4 array) becomes -1 and its flag 0, and Component_SpillIntoDependents (0000979c) gives its dependents 32000. For a piece sequence byte +3 not negative: with ComponentCascade_EffectLatch (000af140) clear and flags (+5) bit 1 set, Smoke_Construct (000069ec)(0, 0, the cluster's bound center +8, the part id, the machine +0x14); then the int16 at that sequence in the array at +8 of the machine's shape instance (+0x2e) becomes 2. The anchor: the bound center widened, or through the part's node transform (null for a part the shape lacks) with Transform_ApplyToShortPoint (0005e858); then Context_GetTransform (000016e8)(machine + 6) with Transform_ApplyToPoint (0005f58c). With the latch clear, Explosion_Construct (00005af0)(0, anchor, 10), or 0x11 setting the latch when flags bit 2 is set. Then, whatever the latch, Debris_ThrowGroup (00005fb8)(g_DebrisGroups (000bc1c0)'s group 3, anchor, g_DebrisShapes (000bc1c6)). Last, each of the header's components (+0x18 count) with its flag set whose piece's parent byte +4 is this component is appended to maybe_ComponentDependencyList (00090e04) at its count byte +5, with no capacity test. Returns 1. ES2's Component_DestroyAndCascade (DBSIM 0040d434), which also puts out the machine's fires for bit 1, lights fire 2 for bit 3 and throws the piece's +2 group.",
       "source": "Herculan/docs/es1/simulation/component-damage.md#losing-a-component--component_destroyandcascade-00009cd4; ES1DBSIM disassembly at 00009cd4",
       "verified": {
         "bytes": "00009cd4+601",
         "sha1": "52a86196f23b",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -5896,13 +5896,13 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMount_Destroy",
-      "description": "(mount, throw, machine) in stack order, callee-cleaned: with the destroyed byte +0x49 clear, clears the model +0x10, sets +0x49, and transforms WeaponMount_MuzzleOffset (0000b918)(mount) by the hardpoint bone's node frame (slot +0x24 of the shape instance under the machine's +0x2e) concatenated with Context_GetTransform(machine + 6). With throw non-zero and the hardpoint's byte +6 below 4, it takes the point +0x14 of the machine's slot +0x28 answer through Context_GetTransform(machine + 6), a Math_EulerToward bearing from it to the mount point, creates Debris_Construct (00006168)(0, the mount point, WeaponModels_Mechwpn2Roots (000bc2c8)[the template's int16 +0x26]), stores the dword at g_TSDetailBiasForMounts (000bc2b8) in its +0x4a, calls Debris_Launch (00006378)(it, the bearing's third int16, the hardpoint record's dword +0x18), and gives it the frame's angles at +6 and 0 at +0x2c. ES2's WeaponMount_Destroy (DBSIM 0040f57c), which throws a visible gun whatever its third argument and takes that argument as the debris' lifetimes. es2_xref.py finds calls from Mech_ComponentDamageWrite (00013250) (throw 0) and Mech_DirectFireHitTest (00013b44) (throw 1).",
+      "description": "(mount, throw, machine) in stack order, callee-cleaned: with the destroyed byte +0x49 clear, clears the model +0x10, sets +0x49, and transforms WeaponMount_MuzzleOffset (0000b918)(mount) by the hardpoint bone's node frame (slot +0x24 of the shape instance under the machine's +0x2e) concatenated with Context_GetTransform(machine + 6). With throw non-zero and the hardpoint's byte +6 below 4, it takes the point +0x14 of the machine's slot +0x28 answer, read without a test for 0, through Context_GetTransform(machine + 6), a Math_EulerToward bearing from it to the mount point, creates Debris_Construct (00006168)(0, the mount point, WeaponModels_Mechwpn2Roots (000bc2c8)[the template's int16 +0x26]), stores the dword at g_TSDetailBiasForMounts (000bc2b8) in its +0x4a, calls Debris_Launch (00006378)(it, the bearing's third int16, the hardpoint record's dword +0x18), and then overwrites its angles +6 to +0xb with Transform_RotationToEuler (0005e988) of the bone-and-frame rotation and zeroes its +0x2c. ES2's WeaponMount_Destroy (DBSIM 0040f57c), which throws a visible gun whatever its third argument and takes that argument as the debris' lifetimes. es2_xref.py finds calls from Mech_ComponentDamageWrite (00013250) (throw 0) and Mech_DirectFireHitTest (00013b44) (throw 1).",
       "source": "Herculan/docs/es1/simulation/weapon-mount-classes.md#losing-a-mount; ES1DBSIM disassembly at 0000b968",
       "verified": {
         "bytes": "0000b968+387",
         "sha1": "224aa6c6619c",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -8521,7 +8521,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_Constructor",
-      "description": "(mech, type) in stack order, callee-cleaned: builds a mech of the chassis type. Takes mech from the pool g_MechPool (000af68c) when null, returning 0 when that gives none; SimObjectBase_ConstructWithDetailTable (00002ac8)(mech, the type's g_MechTypeTable record + 0xc6); vtable 00091a6a at +2, 0xffff at +0x162, +0x92 and +0xa1 set; ObjectList_Add (0000db10)(LiveObjectList (000bc416), mech); +0x16c and +0x170 zeroed, 0xffff at +0x174; Component_AllocDamageArrays (00009b8c)(+0x19c, 0x15, 0x1c); five 3-byte countdowns at +0x1ee by __vec_ctor (000610cb) with MechLockTimer_ElementCtor (00011904); vtable MechVtable (00091ae6), the word 7 at +0, the record (0x1c4 bytes, by MechTypeSlot_GetIndex (00019a30)) at +0x188, the words +0x222 to +0x230 zeroed but 10000 at +0x228, +0x162 zeroed; Shield_Init (0000fabc)(+0x1b8, record +0xc0); ShapeInst_AddThread (00001f48)(mech, record +0x12) into +0x1c0; +0xad set when the record's +0x54 is 0; the word +6 zeroed in the entries the record's +0x12 and +0x14 index in the pointer array at +6 of the shape's +0x2a; ShapeInst_AddThread (00001f48) for record +0x1c and +0x24 into +0x1c4 and +0x1c8 unless negative; a TSObj per byte of the record's +0x72 list below 0x80, from pool g_FlatObjPool (000af044) on shape g_FlatShapes (000bc1d8)[byte], with vtable FlatObjVtableMechCopy (00091b66) and Z -100000, at +0x1cc with the count at +0x1d0; Behaviour_SetState (0000fdfc)(+0x47, state 0, or state 1 at 000af294 when +0x9d is set); +0x234 and +0x1d2 zeroed; then Damage_LoadMechDmgFile (00009a2c)(dmg\\<g_MechTypeNames[record +0x6c]>) into +0x190, Collision_RegisterObject (00009580)(col\\<same name>) into +0x18c and Component_LinkMaxRefData (00009c28)(+0x19c, that, +0x190, mech); the bytes +0x24a-+0x24d cleared and +0x24e set. One call found by es2_xref, from DBSim_SpawnMissionObjects (0001e638). ES2's Mech_Constructor (DBSIM 00415bb0), whose record is 0x21e bytes and whose damage arrays are 0x1d by 0x16.",
+      "description": "(mech, type) in stack order, callee-cleaned: builds a mech of the chassis type. Takes mech from the pool g_MechPool (000af68c) when null, returning 0 when that gives none; SimObjectBase_ConstructWithDetailTable (00002ac8)(mech, the type's g_MechTypeTable record + 0xc6); vtable 00091a6a at +2, 0xffff at +0x162, +0x92 and +0xa1 set; ObjectList_Add (0000db10)(LiveObjectList (000bc416), mech); +0x16c and +0x170 zeroed, 0xffff at +0x174; Component_AllocDamageArrays (00009b8c)(+0x19c, 0x15, 0x1c); five 3-byte countdowns at +0x1ee by __vec_ctor (000610cb) with MechLockTimer_ElementCtor (00011904); vtable MechVtable (00091ae6), the word 7 at +0, the record (0x1c4 bytes, by MechTypeSlot_GetIndex (00019a30)) at +0x188, the words +0x222 to +0x230 zeroed but 10000 at +0x228, +0x162 zeroed; Shield_Init (0000fabc)(+0x1b8, record +0xc0); ShapeInst_AddThread (00001f48)(mech, record +0x12) into +0x1c0; +0xad set when the record's +0x54 is 0; the word +6 zeroed in the entries the record's +0x12 and +0x14 index in the pointer array at +6 of the shape's +0x2a; ShapeInst_AddThread (00001f48) for record +0x1c and +0x24 into +0x1c4 and +0x1c8 unless negative; a TSObj per byte of the record's +0x72 list below 0x80, from pool g_FlatObjPool (000af044) on shape g_FlatShapes (000bc1d8)[byte] with vtable FlatObjVtableMechCopy (00091b66) when the pool gives one, the pointer stored and Z -100000 written through it either way, at +0x1cc with the count at +0x1d0; Behaviour_SetState (0000fdfc)(+0x47, state 0, or state 1 at 000af294 when +0x9d is set); +0x234 and +0x1d2 zeroed; then Damage_LoadMechDmgFile (00009a2c)(dmg\\<g_MechTypeNames[record +0x6c]>) into +0x190, Collision_RegisterObject (00009580)(col\\<same name>) into +0x18c and Component_LinkMaxRefData (00009c28)(+0x19c, that, +0x190, mech); the bytes +0x24a-+0x24d cleared and +0x24e set. One call found by es2_xref, from DBSim_SpawnMissionObjects (0001e638). ES2's Mech_Constructor (DBSIM 00415bb0), whose record is 0x21e bytes and whose damage arrays are 0x1d by 0x16.",
       "source": "Herculan/docs/es1/simulation/mech.md#construction",
       "verified": {
         "bytes": "00011330+1322",
@@ -9001,7 +9001,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_DirectFireHitTest",
-      "description": "(machine, shot), callee-cleaned, slot +0x24 of MechVtable (00091ae6): 0 when the shot's origin is farther than its length + its int16 +8 + the type record's +0x1a. Copies the shot's +6 and +4, both through Damage_ScaleByDifficulty (0001f82c) when the owner's (+0xe) group side byte is 0; an AI machine's radar +0x90 goes on for shot type +0x12 0 or 1 unless the counter +0x201 runs, off with +0x201 = 6000 for type 2. Mech_ShieldAbsorb_DirectFire (0000fca8)(+0x1b8, the +6 copy, the length, the shot in the machine's frame by Transform_Concat (0005ea08), machine); with an entry: +0x8e cleared, +0x21e raised by what the shields took; a stopped shot makes its impact at the entry; otherwise the player's machine posts Computer_PostMessage (0001a154)(8) once, latched on +0xaa; Mech_SelectStruckComponent (00009064)(+0x18c, +0x1a4, frame, shot, machine) picks the component, and on a strike +0x21e takes the +4 copy, the splash Math_Q10Multiply (0005e818)(+4 copy, shot +8), Component_ReadDamagePercent (0000a16c) before, Mech_ComponentDamageWrite (00013250)(machine, owner, rest, component), Mech_ApplyExplosiveDamage (00013a7c)(machine, owner, 500, point, splash) for a splash; on a band change (>> 5), Cockpit_StartHitShake (0002e17c) for the player's component 0 or 1, and ES2's mount roll with WeaponMounts_MountForHardpointSlot (0000ca04), WeaponMount_Destroy (0000b968), Salvage_QueueWeapon (0001f7e8) and Component_ApplyDamageAndCascade (00009f7c). Unless the component reads 0x100, Explosion_Construct (00005af0)(0, point, effect 4n + random & 3 of the shot's +0xa table) and, for a strike, Debris_ThrowGroup (00005fb8)(group n of g_DebrisGroups (000bc1c0), point, g_DebrisShapes (000bc1c6)), n 0 stopped, 1 same band, 2 changed. Returns the entry distance. ES2's Mech_DirectFireHitTest (DBSIM 00418ba8) with Mech_ApplyDirectFireDamage (DBSIM 004188c8).",
+      "description": "(machine, shot), callee-cleaned, slot +0x24 of MechVtable (00091ae6): 0 when the shot's origin is farther than its length + its int16 +8 + the type record's +0x1a. Copies the shot's +6 and +4, both through Damage_ScaleByDifficulty (0001f82c) when the owner's (+0xe) group side byte is 0; an AI machine's radar +0x90 goes on for shot type +0x12 0 or 1 unless the counter +0x201 runs, off with +0x201 = 6000 for type 2. Mech_ShieldAbsorb_DirectFire (0000fca8)(+0x1b8, the +6 copy, the length, the shot in the machine's frame by Transform_Concat (0005ea08), machine); with an entry: +0x8e cleared, +0x21e raised by what the shields took; a stopped shot makes its impact at the entry; otherwise the player's machine posts Computer_PostMessage (0001a154)(8) once, latched on +0xaa; Mech_SelectStruckComponent (00009064)(+0x18c, +0x1a4, frame, shot, machine) picks the component, and on a strike +0x21e takes the +4 copy, the splash Math_Q10Multiply (0005e818)(+4 copy, shot +8), Component_ReadDamagePercent (0000a16c) before, Mech_ComponentDamageWrite (00013250)(machine, owner, rest, component), Mech_ApplyExplosiveDamage (00013a7c)(machine, owner, 500, point, splash) for a splash; on a band change (>> 5), Cockpit_StartHitShake (0002e17c) for the player's component 0 or 1, and ES2's mount roll with WeaponMounts_MountForHardpointSlot (0000ca04), WeaponMount_Destroy (0000b968), Salvage_QueueWeapon (0001f7e8) and Component_ApplyDamageAndCascade (00009f7c). With a non-zero answer and a component reading other than 0x100, Explosion_Construct (00005af0)(0, point, effect 4n + random & 3 of the shot's +0xa table) and, for a strike, Debris_ThrowGroup (00005fb8)(group n of g_DebrisGroups (000bc1c0), point, g_DebrisShapes (000bc1c6)), n 0 stopped, 1 same band, 2 changed. Returns the entry distance. ES2's Mech_DirectFireHitTest (DBSIM 00418ba8) with Mech_ApplyDirectFireDamage (DBSIM 004188c8).",
       "source": "Herculan/docs/es1/simulation/mech.md#the-hit-test--mech_directfirehittest-00013b44; ES1DBSIM decompile at 00013b44",
       "verified": {
         "bytes": "00013b44+1262",
@@ -30136,13 +30136,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_MainTick",
-      "description": "No arguments: the simulation tick. The input block from Input_BuildPlayerDevice (0004cb14); during playback SimTickDelta = its int16 +0x29. Unless Sim_Frozen (000b5b92): each g_BasePool element through slot +0x1c; g_ExplosionPool (00005d74), the pools g_SmokeBallPool (000aef68) (Effect_DriftAndAnimate (0000693c)), g_SmokePool (000aefd4) (Smoke_Tick (00006b28)) and g_DebrisPool (000aeef8) (Debris_TickUpdate (000064b8)), an element whose tick answers non-zero destroyed through slot +0xc with 3; maybe_WeaponChain_EoHold = 0; the pool g_ProjectilePool (000af0b4) through slot +0x18 the same way; then each group of MissionGroups: Group_TickMembers (0001cf60) when its action +0x16 is null, and the action cleared when that action's +0xa is non-zero. Sim_StepOnce (000b5b9c), when set, is cleared and Sim_Frozen set. A non-zero Sim_PollPlayerInput (0005a0c0) returns 1. Then Actions_EvaluateTriggers(LocalPlayerMech) and ViewChain_Apply (0005894c); unless frozen, Sim_DetectionTick and Mech_PerTickSystemsUpdate for each g_MechPool machine whose group +0x3f has no action +0x16 and whose +0x93 is clear. Mission_PollStatus(LocalPlayerMech): status 2 calls 00058414 and returns 1; another status of 0 or more (0x12 in place of 3 when Group_ApplyOutnumberedDamage on the player's group leaves the player destroyed) goes into the panel StatusAlertPanel_Ctor (00046efc)(0, 0, 1, status), run through slot +0xc of its +0x314, and returns 1 when the answer equals the word at 00097158[status], the panel then destroyed by Alert_Dtor (00045d0c)(panel, 3). Returns 0 otherwise. ES2's Sim_MainTick (DBSIM 0045f464).",
+      "description": "No arguments: the simulation tick. The input block from Input_BuildPlayerDevice (0004cb14); during playback SimTickDelta = its int16 +0x29. Unless Sim_Frozen (000b5b92), each pool walked oldest first with Pool_Prev (00063a20) from 0: each g_BasePool element through slot +0x1c; g_ExplosionPool (00005d74), the pools g_SmokeBallPool (000aef68) (Effect_DriftAndAnimate (0000693c)), g_SmokePool (000aefd4) (Smoke_Tick (00006b28)) and g_DebrisPool (000aeef8) (Debris_TickUpdate (000064b8)), an element whose tick answers non-zero destroyed through slot +0xc with 3; maybe_WeaponChain_EoHold = 0; the pool g_ProjectilePool (000af0b4) through slot +0x18 the same way; then each group of MissionGroups: Group_TickMembers (0001cf60) when its action +0x16 is null, and the action cleared when that action's +0xa is non-zero. Sim_StepOnce (000b5b9c), when set, is cleared and Sim_Frozen set. A non-zero Sim_PollPlayerInput (0005a0c0) returns 1. Then Actions_EvaluateTriggers(LocalPlayerMech) and ViewChain_Apply (0005894c); unless frozen, Sim_DetectionTick and Mech_PerTickSystemsUpdate for each g_MechPool machine whose group +0x3f has no action +0x16 and whose +0x93 is clear. Mission_PollStatus(LocalPlayerMech): status 2 calls 00058414 and returns 1; another status of 0 or more (0x12 in place of 3 when Group_ApplyOutnumberedDamage on the player's group leaves the player destroyed) goes into the panel StatusAlertPanel_Ctor (00046efc)(0, 0, 1, status), run through slot +0xc of its +0x314, and returns 1 when the answer equals the word at 00097158[status], the panel then destroyed by Alert_Dtor (00045d0c)(panel, 3). Returns 0 otherwise. ES2's Sim_MainTick (DBSIM 0045f464).",
       "source": "Herculan/docs/es1/simulation/main-loop.md#the-tick--sim_maintick-00059700; ES1DBSIM decompile and disassembly at 00059700",
       "verified": {
         "bytes": "00059700+931",
         "sha1": "f3b367f2c256",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -34018,7 +34018,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Pool_Init",
-      "description": "(pool, elementSize, count) in stack order, callee-cleaned: a constructor, allocating the 0x12-byte pool when pool is null; allocates count * (elementSize + 8) bytes (none for a count of 0) and links them with Pool_LinkFreeList. The block is not zeroed, where ES2's Pool_Init (DBSIM 004719cc) zeroes it.",
+      "description": "(pool, elementSize, count) in stack order, callee-cleaned: a constructor, allocating the 0x12-byte pool when pool is null; allocates count * (elementSize + 8) bytes (none for a count of 0) and links them with Pool_LinkFreeList. It does not zero the block itself; operator_new (000015a4) takes it from Heap_Alloc (00000ec0), which zero-fills it while the heap is on. ES2's Pool_Init (DBSIM 004719cc) zeroes it.",
       "source": "ES1DBSIM decompile at 00063878, against ES2's Pool_Init",
       "verified": {
         "bytes": "00063878+79",
@@ -40653,6 +40653,51 @@
       "verified": {
         "bytes": "0008c41a+809",
         "sha1": "95cfd34e5b9f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0008c744",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_BlitBitmapScaled",
+      "description": "(header, w, h, point, clip, flags), C convention: VGA_8's slot 29 in the simulator, the scaled blit, its code not the shell's. Reads the bitmap's rows (+0), columns (+2), size (+6) and pixels (+0xa). With a clip rect it returns when the box misses it and takes L, R, T and B, how far the box passes the rect's left, right, top and bottom edges, each 0 when it does not; it returns when w - L - R or h - T - B is 0. VGA8_ScaleStepSetup (0008cb75) gives the column step from the columns, negated with flags & 2, over w, and the row step from the rows, negated with flags & 1, over h. With T non-zero the source offset is ((T * row step) >> 16) * columns and the running fraction the low 16 bits of (T + B) * row step, otherwise both 0; flags & 1 adds size - columns to the offset and flags & 2 adds columns. For each of the h - T - B rows from point.y + T it runs VGA8_BlitScaledRow (0008c8d0), then adds the row step to the running fraction, never reduced, and sets the offset to the first row's plus (fraction / 0xffff, signed) * columns.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulator",
+      "verified": {
+        "bytes": "0008c744+396",
+        "sha1": "cb8a3127f8df",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0008c8d0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_BlitScaledRow",
+      "description": "A block of VGA8_BlitBitmapScaled (0008c744), near-called with its frame (EBP) per destination row ([EBP-0x34]): in clip mode +0x204 2 clips the row to each region of the clip block's list in turn, a type-0 rect or a type-2 span region, passing over regions of other types; otherwise draws it once. For each of the four planes, through the sequencer's map mask (port 3C4 index 2), writes that plane's pixels of the run on the draw page, pixel j taking source byte (A + j * column step) >> 16 of the row, A = (L + the region's left cut) * the column step, and writes only the non-zero bytes.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulator",
+      "verified": {
+        "bytes": "0008c8d0+677",
+        "sha1": "18c16d7f96a2",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0008cb75",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_ScaleStepSetup",
+      "description": "Register helper of VGA8_BlitBitmapScaled (0008c744): with EBX, the destination size, non-zero stores at [EDI+4] (EAX << 16) / EBX, the IDIV truncating toward zero, plus 1 when that quotient is not negative and minus 1 when it is; 0 for an EBX of 0.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulator",
+      "verified": {
+        "bytes": "0008cb75+27",
+        "sha1": "03754eaff0c3",
         "scope": "body",
         "via": "disasm"
       }

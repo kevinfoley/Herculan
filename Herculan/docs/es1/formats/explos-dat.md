@@ -35,10 +35,19 @@ Reached as `table + typeId × 0x2c` (`Explosion_GetTypeRecord`, `00005734`, from
 1. It builds the effect pool, `Pool_Init(0, 0x51, 0x28)` into `g_ExplosionPool` (`000aee88`): 40 effects of `0x51` bytes, where ES2's are `0x5b`.
 2. It loads nine banks, `dba\explo0` to `dba\explo8`, from the name template `explo666` (`000907f4`, the index written from the sixth character), into a 9-entry pointer array at `000bc1bc`. ES2's loads fifteen, or thirteen `EXPLO<n>S` in low memory; ES1's has no low-memory set.
 3. It opens `dat\explos`, asserting at severity 5 (`explo.cpp` line `0x3f`) when the stream status is set, reads the count into `000bc1b4` and that many `0x2c`-byte rows into `g_ExplosionTypeTable` (`000bc1b0`), and keeps the greatest `+0x00` plus one at `000bc1ba`.
-4. It loads `dts\explos` with `Shape_LoadAllRoots` (tag `0x140008`) into `g_ExplosionShapes` (`000bc1b6`). For row *i* from 0 to the root count less one, it stores bank `+0x04` of row *i* in the `+0x26` of root `+0x00` of row *i*. A row past the root count binds no bank, and a root no such row names keeps none.
+4. It loads `dts\explos` with `Shape_LoadAllRoots` (tag `0x140008`) into `g_ExplosionShapes` (`000bc1b6`). For row *i* from 0 to the root count less one, it stores bank `+0x04` of row *i* in the `+0x26` of root `+0x00` of row *i*. A row past the root count would bind no bank; the retail file has 18 roots, one per row, so every row binds its bank.
 
 What reads the rows, the effect's construction, tick and end, is [the impact effects](../simulation/impact-effects.md).
 
+## The shapes
+
+Read through `HercWorks.Core`, the retail shapes are:
+
+- **`dts\explos`**, 18 roots. Each is a flipbook of bitmap parts on one cell-animation sequence ([bitmap parts](dts-shape.md#drawing-and-finding-parts)), but root 7, 4 cells of solid faces, and root 1, one bitmap. Roots 6, 8 and 17 have a radius of 0, the radius the draw picks the effect's lights by ([drawing](../simulation/impact-effects.md#drawing)).
+- **The banks.** No row names bank 0, so `dba\explo0` is loaded and never bound.
+- **The ground shape** is root 1 of the ground-shape set, `dts\flat` or `dts\flat2` by the world file's selector ([the ground-shape set](wld-world.md#the-ground-shape-set)); its cells are [Open](#open).
+- **The light ramp.** The lit rows 16 and 17 play 13 frames, so their last step, frame 12, reads the low byte of `+0x24`, the radius 20000's, 32 ([the tick](../simulation/impact-effects.md#the-tick--explosion_tickupdate-00005d74)).
+
 ## Open
 
-- **Open:** the root count of `dts\explos`, and so whether every row binds its bank.
+- **Open:** the cells of root 1 of `dts\flat` and of `dts\flat2`, an impact effect's ground shape, through `HercWorks.Core`: the port's reading found 5 cells of solid faces in one of the two.

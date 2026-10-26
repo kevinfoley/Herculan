@@ -52,6 +52,15 @@ From `+0x209` the structure classes part ways: `GUN_BASE` keeps its turret angle
 
 The short-lived classes are recycled every frame — explosions, debris, fires, drop pods and ground shapes — and those do inherit a predecessor's stale fields.
 
+## Walking a pool — oldest first
+
+**Every pass the simulation makes over a pool with `Pool_Prev` visits the objects in the order they were made, oldest first, and reaches one made during the pass at its end.** The pool keeps its in-use nodes in one doubly linked list: the header holds the `int16` free count at `+0`, the `int16` in-use count at `+2`, the free-list head at `+0xa` and the in-use head at `+0xe`, and a node holds its next link at `+0`, its previous link at `+4` and the object from `+8`. `Pool_Alloc` (`00471a24`) puts each new node at the head of the in-use list, so the head is the newest node and each next link leads to an older one.
+
+- **`Pool_Next` (`00471b0c`)**, (pool, object): with a null object the head's object, otherwise the object of the node after it; 0 at the end. A walk with it runs newest first. For an object below `0x100000` it formats a diagnostic (`array ptr ...`) into a local buffer it never uses.
+- **`Pool_Prev` (`00471b64`)**, (pool, object): with a null object it walks `Pool_Next` to the tail and answers the oldest node's object, a pass over the whole list; otherwise the object of the node before it, the next newer one, or 0 past the head.
+
+A walk that starts from `Pool_Prev`(pool, 0) and steps with `Pool_Prev` therefore ends at the head, and a node allocated while it runs becomes the head, ahead of the walk: the pass reaches it. `Pool_Nth` (`00471ba4`) counts with `Pool_Prev` the same way, so its element 0 is the oldest.
+
 ## Where the base ends — `0x1f2`
 
 `ACTOR`'s record gives `0x1f2`. `SimObject` is never allocated on its own, and the derived classes' constructors agree with the record: each starts writing fields nothing else has at or past that line.
