@@ -3,8 +3,9 @@ using Herculan.Engine.Editor;
 using Herculan.Engine.Install;
 
 // The mission editor on its own: find the install and run the editor (EditorHost) over it. The game runs the
-// same editor as a turn of its own loop. The second argument names a mission to open, as File > Load from VOL lists
-// it (C1_05); without one the editor starts with that list up.
+// same editor as a turn of its own loop, and is built beside this one for Play to start (PlayInGame). The second
+// argument names a mission to open, as File's mission lists name it (C1_05); without one the editor opens the mission
+// it last had open.
 
 string? installRoot = GameInstall.Locate(args.Length > 0 ? args[0] : null);
 if (installRoot == null) {

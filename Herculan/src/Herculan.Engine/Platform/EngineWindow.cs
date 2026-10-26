@@ -151,6 +151,12 @@ public sealed class EngineWindow : IDisposable {
 		}
 	}
 
+	/// <inheritdoc cref="HostWindow.Minimize"/>
+	public void Minimize() => _host.Minimize();
+
+	/// <inheritdoc cref="HostWindow.Raise"/>
+	public void Raise() => _host.Raise();
+
 	/// <inheritdoc cref="HostWindow.PresentBlack"/>
 	public void PresentBlack() => _host.PresentBlack();
 

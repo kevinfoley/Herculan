@@ -9,7 +9,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// File &gt; Save, Save As and Export script.dat, and the prompt that asks to save unsaved changes before the mission is
-/// left, each an ImGui modal. A Save writes the open mission's <c>.MSN</c> and text as loose files in the install
+/// left or played, each an ImGui modal. A Save writes the open mission's <c>.MSN</c> and text as loose files in the install
 /// (<see cref="SavedMissions"/>) under its own name, which the game then loads in place of an archive's copy; a Save As
 /// writes them under a name typed in, which the mission then has. Either runs the mission check over the <c>.MSN</c> first
 /// (<see cref="MissionLint"/>) and, when it finds anything, lists it as the Problems list words it (<see cref="ProblemText"/>)
@@ -57,6 +57,7 @@ internal sealed class MissionSaving {
 	private SaveRequest? _request;
 	private Action? _leaving;
 	private string _leavingWhat = "";
+	private bool _leavingDiscards;
 	private IReadOnlyList<string> _findings = [];
 	private string _message = "";
 	private string _typedName = "";
@@ -128,7 +129,17 @@ internal sealed class MissionSaving {
 	/// first whether to save them, saying the mission is being left for <paramref name="what"/> ("quitting"), and runs it
 	/// after a save or a discard, and not on Cancel. Answers whether it ran now.
 	/// </summary>
-	public bool Leave(string what, Action proceed) {
+	public bool Leave(string what, Action proceed) => Ask(what, proceed, discards: true);
+
+	/// <summary>
+	/// Runs <paramref name="proceed"/>, which reads the mission's saved files, at once when it has no unsaved changes; otherwise
+	/// asks as <see cref="Leave"/> does, for <paramref name="what"/> ("playing it"), except that a new mission no file holds
+	/// yet is offered no Discard, since there would be nothing to read. Answers whether it ran now.
+	/// </summary>
+	public bool SaveFirst(string what, Action proceed) =>
+		Ask(what, proceed, discards: _mission?.Mover.History.NeverSaved != true);
+
+	private bool Ask(string what, Action proceed, bool discards) {
 		if (!Dirty) {
 			proceed();
 			return true;
@@ -136,10 +147,14 @@ internal sealed class MissionSaving {
 
 		_leaving = proceed;
 		_leavingWhat = what;
+		_leavingDiscards = discards;
 		_request = null;
 		Show(Prompt.Unsaved);
 		return false;
 	}
+
+	/// <summary>Puts up <paramref name="message"/> with an OK button.</summary>
+	public void Tell(string message) => ShowMessage(message);
 
 	/// <summary>Draws the prompt that is up, if one is. Call once per frame, inside the ImGui frame, outside any menu.</summary>
 	public void Draw() {
@@ -210,9 +225,13 @@ internal sealed class MissionSaving {
 	};
 
 	private void DrawUnsaved() {
-		ImGui.TextWrapped($"{_mission?.Name} has unsaved changes. Save them before {_leavingWhat}?");
+		ImGui.TextWrapped(_leavingDiscards
+			? $"{_mission?.Name} has unsaved changes. Save them before {_leavingWhat}?"
+			: $"{_mission?.Name} has never been saved. Save it before {_leavingWhat}?");
 		Spacer();
-		switch (Buttons("Save", "Discard", "Cancel")) {
+		// Without Discard, Cancel is the second button.
+		int chosen = _leavingDiscards ? Buttons("Save", "Discard", "Cancel") : Buttons("Save", "Cancel") switch { 1 => 2, var other => other };
+		switch (chosen) {
 			case 0:
 				Continue(new SaveRequest(_mission!.Name, saveAs: false, then: TakeLeaving()));
 				break;

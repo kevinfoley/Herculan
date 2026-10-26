@@ -219,6 +219,31 @@ public sealed class HostWindow : IDisposable {
 		}
 	}
 
+	/// <summary>Minimizes the window to the taskbar. Does nothing on a backend other than GLFW.</summary>
+	public unsafe void Minimize() {
+		if (_window.Native?.Glfw is { } native) {
+			Glfw.GetApi().IconifyWindow((WindowHandle*)native);
+		}
+	}
+
+	/// <summary>
+	/// Brings a minimized window back as it was before, maximized again if it was, and gives it the focus. Does nothing on
+	/// a backend other than GLFW.
+	/// </summary>
+	public unsafe void Raise() {
+		if (_window.Native?.Glfw is not { } native) {
+			return;
+		}
+
+		var glfw = Glfw.GetApi();
+		var handle = (WindowHandle*)native;
+		if (glfw.GetWindowAttrib(handle, WindowAttributeGetter.Iconified)) {
+			glfw.RestoreWindow(handle);
+		}
+
+		glfw.FocusWindow(handle);
+	}
+
 	private nint _fullScreenMonitor;
 	// Both made only on Windows, so null everywhere else; the checks where they are used say so to the compiler.
 	private PrintScreenCapture? _printScreen;

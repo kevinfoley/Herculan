@@ -21,7 +21,18 @@ public enum EditorExit {
 
 	/// <summary>File &gt; Back to game, or Esc pressed in the game's editor.</summary>
 	BackToGame,
+
+	/// <summary>Play, in the game's editor: the game plays <see cref="EditorResult.Play"/> and opens the editor on it again.</summary>
+	Play,
 }
+
+/// <summary>The mission Play asks the game to play: its saved files' name, and the handoff written for it.</summary>
+/// <param name="Mission">The <c>.MSN</c> name, which the editor opens again once the mission ends.</param>
+/// <param name="Launch">The handoff, written into a scratch folder with the install's <c>DATA\</c> for the simulator's settings.</param>
+public sealed record EditorPlay(string Mission, ShellLaunch Launch);
+
+/// <summary>How an editor run ended, and for <see cref="EditorExit.Play"/> what to play.</summary>
+public sealed record EditorResult(EditorExit Exit, EditorPlay? Play);
 
 /// <summary>What an editor run opens on.</summary>
 /// <param name="InstallRoot">The install the missions and settings come from.</param>
@@ -72,6 +83,11 @@ public sealed class EditorHost {
 	private readonly MissionSaving _saving;
 	private readonly NewMissionDialog _newMission;
 	private readonly EditorToolbox _toolbox;
+	private readonly PlayInGame _playInGame = new();
+
+	// Whether the mission Play started the game on still had changes the Discard dropped, so the editor opens its saved
+	// files again once the game exits.
+	private bool _reloadAfterPlay;
 	private readonly Camera _camera = new();
 
 	// How much room the top-down view leaves round the zone, as a share of the height that fits it exactly.
@@ -89,6 +105,11 @@ public sealed class EditorHost {
 	// which its edits write. The simulator's settings are still read from DATA\.
 	private readonly string _installData;
 	private readonly string _missionCache = Path.Combine(Path.GetTempPath(), "herculan-editor");
+
+	// Play's handoff, written from the mission's saved files as the game's own load writes one, into a scratch directory
+	// of its own, where the mission's results are written too, so a played mission leaves the install's DATA\ alone.
+	private readonly string _playCache = Path.Combine(Path.GetTempPath(), "herculan-editor-play");
+	private EditorPlay? _play;
 
 	// What a Cybrid's hardpoints offer, and the zones with the retail missions that use each, read from the install's archived
 	// missions the first time either is asked for, once per run.
@@ -210,7 +231,7 @@ public sealed class EditorHost {
 	}
 
 	/// <summary>Runs the editor until its window closes or its turn in the game's ends, and returns how it ended.</summary>
-	public static EditorExit Run(EditorLaunch launch) {
+	public static EditorResult Run(EditorLaunch launch) {
 		var host = new EditorHost(launch);
 		using var window = host._window;
 		window.Run();
@@ -223,7 +244,7 @@ public sealed class EditorHost {
 			saved.Save();
 		}
 
-		return host._exit;
+		return new EditorResult(host._exit, host._exit == EditorExit.Play ? host._play : null);
 	}
 
 	private string WindowTitle => _mission?.Title(_saving.Dirty) ?? "HERCULAN Mission Editor";
@@ -234,16 +255,29 @@ public sealed class EditorHost {
 	// (StartShown).
 	private void OpenFirst(string? named) {
 		string? first = named ?? _settings.LastMission;
-		var browser = first != null && _customBrowser.Find(first) != null ? _customBrowser : _volBrowser;
-		if (first != null && browser.Find(first) is { } found) {
-			browser.Open();
-			_pendingLoad = new LoadRequest(found.File, browser);
-			browser.Loading = found.File;
-		} else if (named != null) {
-			browser.Open();
-			browser.Failure = $"No mission is named {named}.";
-			Console.Error.WriteLine(browser.Failure);
+		if (first != null && QueueLoad(first)) {
+			return;
 		}
+
+		if (named != null) {
+			_volBrowser.Open();
+			_volBrowser.Failure = $"No mission is named {named}.";
+			Console.Error.WriteLine(_volBrowser.Failure);
+		}
+	}
+
+	// Puts up the list holding <name>, Load custom mission's or else Load from VOL's, and loads it as a pick from that list
+	// is, asking nothing; whether a list holds it.
+	private bool QueueLoad(string name) {
+		var browser = _customBrowser.Find(name) != null ? _customBrowser : _volBrowser;
+		if (browser.Find(name) is not { } found) {
+			return false;
+		}
+
+		OpenBrowser(browser);
+		_pendingLoad = new LoadRequest(found.File, browser);
+		browser.Loading = found.File;
+		return true;
 	}
 
 	// Whether the start dialog is up: while no mission is open and nothing else is up to open or make one.
@@ -407,7 +441,7 @@ public sealed class EditorHost {
 		bool escape = _keyboard?.IsKeyPressed(Key.Escape) == true;
 		bool escapePressed = escape && !_escapeHeld && !control;
 		_escapeHeld = escape;
-		bool escapeFree = escapePressed && !_saving.IsOpen && !_newMission.IsOpen;
+		bool escapeFree = escapePressed && !_saving.IsOpen && !_newMission.IsOpen && !_playInGame.Running;
 		if (escapeFree && _mission?.Placing.Active == true) {
 			// Esc cancels the route being placed, and goes no further.
 			_mission.Placing.Cancel();
@@ -680,6 +714,7 @@ public sealed class EditorHost {
 		_customBrowser.Draw();
 		_saving.Draw();
 		_newMission.Draw();
+		_playInGame.Draw();
 		_imgui?.Render();
 		if (_window.Title != WindowTitle) {
 			_window.Title = WindowTitle;
@@ -698,6 +733,10 @@ public sealed class EditorHost {
 
 		if (_mission != null) {
 			RunEditRequests(_mission);
+		}
+
+		if (_playInGame.TakeExit() is { } exitCode) {
+			EndPlayInGame(exitCode);
 		}
 
 		if (_pendingLoad != null) {
@@ -762,6 +801,74 @@ public sealed class EditorHost {
 	private void Close(EditorExit exit) {
 		_exit = exit;
 		_closePending = true;
+	}
+
+	// Why the menu bar's Play is unavailable, or null when it is. The editor on its own plays in the game beside it.
+	private string? WhyNoPlay =>
+		_mission == null ? "No mission is open."
+		: _playInGame.Running ? $"{_playInGame.Mission} is being played."
+		: !_launch.FromGame && PlayInGame.GamePath == null ? "The game is not beside the editor, so there is nothing to play the mission in."
+		: _mission.Gizmo.Dragging || _mission.PlacingAny || _pendingLoad != null || _pendingNew != null ? "Finish what is under way first."
+		: null;
+
+	// Play, once the mission's saved files hold what is to be played. In the game's editor: writes their handoff into Play's
+	// scratch directory, as the game's own load of a mission named by its .MSN does (MissionFileLaunch), and ends the
+	// editor's turn for the game to play it. On its own: starts the game beside the editor on them (PlayInGame) and
+	// minimizes the editor until the game exits. A play that does not start says why and leaves the editor as it was.
+	private void StartPlay() {
+		if (_mission == null) {
+			return;
+		}
+
+		string name = _mission.Name;
+		if (!_launch.FromGame) {
+			if (_playInGame.Start(_launch.InstallRoot, name, out string? notStarted)) {
+				// Still changed after the prompt let Play through: Discard was chosen, and the game plays the saved files.
+				_reloadAfterPlay = _saving.Dirty;
+				_window.Minimize();
+			} else {
+				Console.Error.WriteLine($"Cannot play {name}: {notStarted}");
+				_saving.Tell($"Cannot play {name}: {notStarted}");
+			}
+
+			return;
+		}
+
+		string? failure;
+		string? script;
+		try {
+			Directory.CreateDirectory(_playCache);
+			ClearMissionCache(_playCache);
+			script = MissionFileLaunch.Write(_launch.ShellContent(), _launch.InstallRoot, name, _playCache, out failure);
+		} catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException) {
+			script = null;
+			failure = ex.Message;
+		}
+
+		if (script == null) {
+			Console.Error.WriteLine($"Cannot play {name}: {failure}");
+			_saving.Tell($"Cannot play {name}: {failure}");
+			return;
+		}
+
+		_play = new EditorPlay(name, new ShellLaunch(script, _installData));
+		Close(EditorExit.Play);
+	}
+
+	// The game Play started has exited with <exitCode>: the editor comes back, opening the mission's saved files again if
+	// the changes Discard dropped are still shown, and says so if the game did not play it (its command line ends a
+	// mission it played with 0, however the mission ended).
+	private void EndPlayInGame(int exitCode) {
+		_window.Raise();
+		if (_reloadAfterPlay && _mission != null) {
+			QueueLoad(_mission.Name);
+		}
+
+		_reloadAfterPlay = false;
+		if (exitCode != 0) {
+			_saving.Tell($"The game ended with code {exitCode}, so it did not play the mission to its end. Its log, "
+				+ @"herculan.log in %LOCALAPPDATA%\Herculan, says why.");
+		}
 	}
 
 	// The herc, flyer or structure group the selection is, or a member of, which a Toolbox add can join, by its row-16 GUID
@@ -960,13 +1067,14 @@ public sealed class EditorHost {
 		ReportLoaded(opened);
 	}
 
-	// Removes the last generated handoff, since the shell's writer does not truncate (ShellWorkingFiles.WriteMissionFile)
-	// and a shorter mission would otherwise keep the longer one's tail.
-	private void ClearMissionCache() {
+	// Removes the last generated handoff from <directory>, the open's scratch directory unless named, since the shell's
+	// writer does not truncate (ShellWorkingFiles.WriteMissionFile) and a shorter mission would otherwise keep the longer
+	// one's tail.
+	private void ClearMissionCache(string? directory = null) {
 		foreach (string file in new[] {
 				MissionLoader.ScriptFileName, MissionLoader.TextFileName, MissionLoader.PlayerFileName,
 				MissionLoader.CountersFileName }) {
-			string path = CaseInsensitivePath.Combine(_missionCache, file);
+			string path = CaseInsensitivePath.Combine(directory ?? _missionCache, file);
 			if (File.Exists(path)) {
 				File.Delete(path);
 			}
@@ -1102,6 +1210,15 @@ public sealed class EditorHost {
 		// click for nothing.
 		if (ImGui.MenuItem("Editor Settings")) {
 			_settingsPanel.Open();
+		}
+
+		string? whyNoPlay = WhyNoPlay;
+		if (ImGui.MenuItem("Play", null, false, whyNoPlay == null)) {
+			_saving.SaveFirst("playing it", StartPlay);
+		}
+
+		if (whyNoPlay != null && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
+			ImGui.SetTooltip(whyNoPlay);
 		}
 
 		float height = ImGui.GetWindowSize().Y;

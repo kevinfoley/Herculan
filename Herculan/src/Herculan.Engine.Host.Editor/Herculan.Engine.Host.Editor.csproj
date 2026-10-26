@@ -11,6 +11,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Herculan.Engine.Editor\Herculan.Engine.Editor.csproj" />
+    <!-- The game, built beside the editor for Play to start as a program of its own (PlayInGame). -->
+    <ProjectReference Include="..\Herculan.Engine.Host\Herculan.Engine.Host.csproj" />
   </ItemGroup>
 
   <ItemGroup>

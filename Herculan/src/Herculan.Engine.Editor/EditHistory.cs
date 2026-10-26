@@ -44,6 +44,9 @@ internal sealed class EditHistory {
 	/// <summary>Takes the document as never saved, a new mission's state: changed whatever is undone, until <see cref="MarkSaved"/>.</summary>
 	public void MarkNeverSaved() => _savedDepth = -1;
 
+	/// <summary>Whether the document has not been saved since <see cref="MarkNeverSaved"/>, so no file holds it.</summary>
+	public bool NeverSaved => _savedDepth == -1;
+
 	private static IEditorEdit? Move(List<IEditorEdit> from, List<IEditorEdit> to) {
 		if (from.Count == 0) {
 			return null;
