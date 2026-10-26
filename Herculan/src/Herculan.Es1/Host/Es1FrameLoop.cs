@@ -341,7 +341,9 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	}
 
 	/// <summary>
-	/// <c>Sim_RenderFrame</c> (<c>00059c08</c>): subsystem phase 5, whose one ported function is <c>Projectile_FlushDeletes</c>
+	/// <c>Sim_RenderFrame</c> (<c>00059c08</c>): subsystem phase 5, whose ported functions are <c>EffectLightPool_FlushDeletes</c>
+	/// (<see cref="Effects.Es1EffectLights.FlushDeletes"/>), <c>ExplosionPool_FlushDeletes</c>
+	/// (<see cref="Effects.Es1ExplosionPool.FlushDeletes"/>) and <c>Projectile_FlushDeletes</c>
 	/// (<see cref="Projectiles.Es1ProjectilePool.FlushDeletes"/>); the detail setting applied again when option 6 has changed, the view
 	/// shake's offset added to the projection pair (<see cref="Es1ViewManager.MoveProjectionPair"/>), the cockpit's
 	/// frame (<c>Cockpit_DrawFrame</c>), then the 3D pass, which installs the current camera's view and draws the world
@@ -353,8 +355,12 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	/// shake's offset is taken back out.
 	/// </summary>
 	private void RenderFrame() {
-		// PLACEHOLDER: phase 5's other eight functions, the effect pools' delete flushes, plan step 7e.
-		Views.Cockpit.Globals.Projectiles.FlushDeletes();
+		// PLACEHOLDER: phase 5's debris and smoke flushes, plan step 7e part B. FlatObjPool_FlushDeletes (00006d50) has
+		// nothing to give back: this engine does not count g_FlatObjPool.
+		var globals = Views.Cockpit.Globals;
+		globals.EffectLights.FlushDeletes();
+		globals.Explosions.FlushDeletes();
+		globals.Projectiles.FlushDeletes();
 		_detail?.Refresh();
 		// The shake's offset, as it stands now, added to the projection pair across the frame's draws and taken out after.
 		var (shakeX, shakeY) = Views.ShakeOffset;

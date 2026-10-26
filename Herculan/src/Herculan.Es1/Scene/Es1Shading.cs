@@ -10,13 +10,15 @@ namespace Herculan.Es1.Scene;
 /// draws its palette index unchanged, and a shaded face takes entry (light · length) &gt;&gt; 8 of its ramp, which
 /// <c>WorldShades_ApplyForObject</c> (<c>ES1DBSIM 00025d44</c>) re-points before each object by its type tag's
 /// <c>SHADES.DAT</c> list and its distance band. Each (tag, band) is one block of <see cref="Table"/>, and a drawn object
-/// reads its own (<see cref="SceneItem.RampBlock"/>, <see cref="Block"/>). The light is <see cref="Es1Sun"/>'s.
+/// reads its own (<see cref="SceneItem.RampBlock"/>, <see cref="Block"/>). The light is <see cref="Es1Sun"/>'s and the
+/// effect lights' within reach (<see cref="Effects.Es1EffectLights"/>).
 ///
 /// <para>A ramp the tag's list does not name keeps whatever the last object drawn left it at, and a block holds the
 /// palette's own range for it. That is the original's state for every face this step draws: a zone shape's shaded faces
 /// are all on ramp 14, which only tag 0's list names (docs/es1/rendering/polygon-shading.md#the-theater-shapes-faces),
 /// and a HERC's root 0 shades only on ramps 0, 2, 4, 6, 8 and 12, which tag 7's list names, and ramp 200, which no list
-/// names. The flyers' and bases' tags, whose lists also name ramps 0 to 12, have no object in this step.</para>
+/// names. The flyers' and bases' tags, whose lists also name ramps 0 to 12, have no object in this step, and the
+/// impact effects' retail shapes hold bitmap parts and solid faces alone, which no ramp colours.</para>
 /// </summary>
 public sealed class Es1Shading {
 	/// <summary>
@@ -29,8 +31,15 @@ public sealed class Es1Shading {
 	/// <summary>The type tag every zone shape object carries (docs/es1/formats/zone-terrain.md#the-zone-shape-object).</summary>
 	public const byte ZoneShapeTag = 0;
 
-	/// <summary>The tags whose bands the table holds, in block order: the zone shapes', the HERCs' and the projectiles'.</summary>
-	public static IReadOnlyList<byte> Tags { get; } = [ZoneShapeTag, 7, Projectiles.Es1Projectile.TypeTag];
+	/// <summary>
+	/// The tags whose bands the table holds, in block order: the zone shapes', the HERCs', the projectiles' and the impact
+	/// effects' two. <c>SHADES.DAT</c> has no list for the effects' tags, so their blocks hold the palette's own ramps.
+	/// </summary>
+	public static IReadOnlyList<byte> Tags { get; } = [ZoneShapeTag, 7, Projectiles.Es1Projectile.TypeTag,
+		Effects.Es1Explosion.TypeTag, Effects.Es1Explosion.ClassTypeTag];
+
+	/// <summary>The tag whose cull <c>WorldShades_IsBeyondLastBand</c> moves by the world file's first distance offset.</summary>
+	private const byte OffsetCullTag = Effects.Es1Explosion.ClassTypeTag;
 
 	/// <summary>
 	/// The ramps <c>WorldShades_ResetRamps</c> (<c>00025e88</c>) points at <see cref="FlatRange"/>: 0, 2, 4, 6, 8, 10,
@@ -44,14 +53,16 @@ public sealed class Es1Shading {
 	private readonly int[] _tag0Thresholds;
 	private readonly int[] _taggedThresholds;
 	private readonly int _bands;
+	private readonly int _cullOffset;
 
 	private Es1Shading(SurfaceShading surfaces, SurfaceRampTable? table, int[] tag0Thresholds, int[] taggedThresholds,
-			int bands) {
+			int bands, int cullOffset) {
 		Surfaces = surfaces;
 		Table = table;
 		_tag0Thresholds = tag0Thresholds;
 		_taggedThresholds = taggedThresholds;
 		_bands = bands;
+		_cullOffset = cullOffset;
 	}
 
 	/// <summary>
@@ -80,7 +91,7 @@ public sealed class Es1Shading {
 		int[] tag0 = world?.DistanceBandsB ?? [];
 		int[] tagged = world?.DistanceBandsA ?? [];
 		if (palette is not { ShadeRamps.Count: > 0 } || world == null || shades == null || world.RampRows < 1) {
-			return new Es1Shading(surfaces, null, tag0, tagged, 0);
+			return new Es1Shading(surfaces, null, tag0, tagged, 0, world?.DistanceOffsetSmall ?? 0);
 		}
 
 		var ranges = LevelRanges(world);
@@ -121,7 +132,7 @@ public sealed class Es1Shading {
 				? (byte)entries[shade * entries.Length >> 8]
 				: null,
 			palette);
-		return new Es1Shading(surfaces, table, tag0, tagged, bands);
+		return new Es1Shading(surfaces, table, tag0, tagged, bands, world.DistanceOffsetSmall);
 	}
 
 	/// <summary>
@@ -154,9 +165,14 @@ public sealed class Es1Shading {
 
 	/// <summary>
 	/// <c>WorldShades_IsBeyondLastBand</c> (<c>00025f38</c>): whether the distance exceeds the tag's table's last threshold,
-	/// unsigned, which leaves the object undrawn.
+	/// unsigned, which leaves the object undrawn; for tag 8, an impact effect's, the distance first takes the world file's
+	/// first distance offset (<c>WorldShades_DistanceOffsets</c> entry 0), clamped at 0.
 	/// </summary>
 	public bool IsBeyondLastBand(byte tag, int distance) {
+		if (tag == OffsetCullTag) {
+			distance = Math.Max(distance + _cullOffset, 0);
+		}
+
 		var thresholds = tag == ZoneShapeTag ? _tag0Thresholds : _taggedThresholds;
 		return thresholds.Length > 0 && (uint)thresholds[^1] < (uint)distance;
 	}

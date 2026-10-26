@@ -155,6 +155,19 @@ public sealed class Es1SimGlobals {
 	/// the world's load gives it its own.
 	/// </summary>
 	public Es1ProjectilePool Projectiles { get; set; } = new();
+
+	/// <summary>The effect light manager (<see cref="Effects.Es1EffectLights"/>).</summary>
+	public Effects.Es1EffectLights EffectLights { get; } = new();
+
+	/// <summary>
+	/// <c>g_ExplosionPool</c> and the impact effects' tables (<see cref="Effects.Es1ExplosionPool"/>); a pool with no
+	/// tables until the world's load gives it its own, on <see cref="EffectLights"/>.
+	/// </summary>
+	public Effects.Es1ExplosionPool Explosions { get; set; }
+
+	public Es1SimGlobals() {
+		Explosions = new Effects.Es1ExplosionPool(EffectLights);
+	}
 }
 
 /// <summary>

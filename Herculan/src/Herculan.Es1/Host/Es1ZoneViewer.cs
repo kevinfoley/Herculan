@@ -111,6 +111,8 @@ public static class Es1ZoneViewer {
 				: (Es1CockpitScheme?)null;
 			scene = Es1ZoneScene.Load(content, theater, header[1], scheme);
 			world.Globals.ZoneShapes = scene.ZoneShapes;
+			// The ground shapes FlatObj_LoadResources loads, which the impact effects lay, by the world file's selector.
+			world.Globals.Explosions.LoadFlatShapes(content, scene.World?.FlatSetSelector ?? 0);
 		} catch (Exception ex) when (ex is InvalidDataException or FileNotFoundException) {
 			Console.Error.WriteLine($"Cannot load the mission: {ex.Message}");
 			return 1;
@@ -137,6 +139,7 @@ public static class Es1ZoneViewer {
 
 		Silk.NET.OpenGL.GL? glContext = null;
 		SceneRenderer? renderer = null;
+		SpriteRenderer? sprites = null;
 		Es1Backdrop? backdrop = null;
 		Es1WorldDraw? draw = null;
 		Es1Monitor? monitor = null;
@@ -207,7 +210,11 @@ public static class Es1ZoneViewer {
 				FogEnabled = false,
 				LightDirection = Es1Sun.Direction,
 				SunShadeSlope = Es1Sun.ShadeSlope,
+				EffectLights = world.Globals.EffectLights,
 			};
+			var spriteRenderer = new SpriteRenderer(gl);
+			sprites = spriteRenderer;
+			disposables.Add(spriteRenderer);
 			renderer.SetShadeRamps(scene.Shading.Table ?? SurfaceRampTable.Build(scene.Shading.Surfaces));
 			renderer.SetPaletteRamp(scene.TheaterPalette != null && scene.Palette != null
 				? Es1TextureShades.RampTable(scene.TheaterPalette, scene.Palette)
@@ -217,7 +224,9 @@ public static class Es1ZoneViewer {
 			disposables.Add(models);
 			var projectileDraw = new Es1ProjectileDraw(gl, content, scene, world.Globals.Projectiles);
 			disposables.Add(projectileDraw);
-			draw = new Es1WorldDraw(gl, scene, world, models, detail, disposables, projectileDraw);
+			var explosionDraw = new Es1ExplosionDraw(gl, content, scene, world.Globals.Explosions);
+			disposables.Add(explosionDraw);
+			draw = new Es1WorldDraw(gl, scene, world, models, detail, disposables, projectileDraw, explosionDraw);
 			if (manager != null && chain != null) {
 				monitor = new Es1Monitor(gl, manager.Display);
 				disposables.Add(monitor);
@@ -230,7 +239,7 @@ public static class Es1ZoneViewer {
 				var worldDraw = draw;
 				var sceneRenderer = renderer;
 				monitor.WorldPass = (x, y, width, height) =>
-					DrawWorld(gl, sceneRenderer, backdrop, worldDraw, cockpitCamera, x, y, width, height);
+					DrawWorld(gl, sceneRenderer, spriteRenderer, backdrop, worldDraw, cockpitCamera, x, y, width, height);
 				// A cockpit rect's view, the NAV MAP's or the MISSILE CAM's, from a camera of its own (plan decision 17); the
 				// MISSILE CAM's horizon is its own hzline, with no clouds or scattered points.
 				var rectCamera = new Camera();
@@ -245,7 +254,7 @@ public static class Es1ZoneViewer {
 				}
 
 				monitor.ViewPass = (view, size, viewport) =>
-					DrawRectView(gl, sceneRenderer, worldDraw, missileHorizon, rectCamera, view, size, viewport);
+					DrawRectView(gl, sceneRenderer, spriteRenderer, worldDraw, missileHorizon, rectCamera, view, size, viewport);
 				// The gunsight's pick, answered from what that pass drew (plan decision 16).
 				var pick = new Es1WorldPick(gl, sceneRenderer, worldDraw);
 				disposables.Add(pick);
@@ -364,7 +373,7 @@ public static class Es1ZoneViewer {
 			if (free || monitor == null) {
 				draw.Update(camera, null);
 				renderer.Clear();
-				DrawWorld(glContext!, renderer, backdrop, draw, camera, 0, 0, size.X, size.Y);
+				DrawWorld(glContext!, renderer, sprites!, backdrop, draw, camera, 0, 0, size.X, size.Y);
 				return;
 			}
 
@@ -383,16 +392,18 @@ public static class Es1ZoneViewer {
 	}
 
 	/// <summary>
-	/// One view of the world: the backdrop and the shadows, then over them the zone's shapes, the HERCs and the projectiles, the two passes
-	/// <see cref="Es1WorldDraw"/> describes. The depth between the passes is cleared so no object is hidden by a shadow.
+	/// One view of the world: the backdrop and the shadows, then over them the zone's shapes, the HERCs, the projectiles
+	/// and the impact effects, the two passes <see cref="Es1WorldDraw"/> describes, and last the effects' billboards. The
+	/// depth between the passes is cleared so no object is hidden by a shadow.
 	/// </summary>
-	private static void DrawWorld(Silk.NET.OpenGL.GL gl, SceneRenderer renderer, Es1Backdrop? backdrop, Es1WorldDraw draw, Camera camera,
-			int x, int y, int width, int height) {
+	private static void DrawWorld(Silk.NET.OpenGL.GL gl, SceneRenderer renderer, SpriteRenderer sprites, Es1Backdrop? backdrop,
+			Es1WorldDraw draw, Camera camera, int x, int y, int width, int height) {
 		renderer.Backdrop = backdrop;
 		renderer.Render(camera, draw.Shadows, x, y, width, height);
 		gl.Clear(Silk.NET.OpenGL.ClearBufferMask.DepthBufferBit);
 		renderer.Backdrop = null;
 		renderer.Render(camera, draw.Objects, x, y, width, height);
+		sprites.Render(camera, draw.Sprites, width, height);
 	}
 
 	/// <summary>
@@ -402,7 +413,7 @@ public static class Es1ZoneViewer {
 	/// <see cref="Es1RectScene.MissileCamera"/>, the forward view's pass (<see cref="DrawWorld"/>) over
 	/// <paramref name="missileHorizon"/> with the items placed for the camera (<see cref="Es1WorldDraw.DrawFlatView"/>).
 	/// </summary>
-	private static void DrawRectView(Silk.NET.OpenGL.GL gl, SceneRenderer renderer, Es1WorldDraw draw,
+	private static void DrawRectView(Silk.NET.OpenGL.GL gl, SceneRenderer renderer, SpriteRenderer sprites, Es1WorldDraw draw,
 			Es1Backdrop? missileHorizon, Camera camera, Es1RectView view, (int Width, int Height) size,
 			(int X, int Y, int Width, int Height) viewport) {
 		Es1Camera.ApplyTo(camera, view, size.Width, size.Height);
@@ -412,7 +423,7 @@ public static class Es1ZoneViewer {
 			}
 
 			draw.DrawFlatView(camera, view.FocalShift,
-				() => DrawWorld(gl, renderer, missileHorizon, draw, camera, viewport.X, viewport.Y, viewport.Width, viewport.Height));
+				() => DrawWorld(gl, renderer, sprites, missileHorizon, draw, camera, viewport.X, viewport.Y, viewport.Width, viewport.Height));
 			return;
 		}
 

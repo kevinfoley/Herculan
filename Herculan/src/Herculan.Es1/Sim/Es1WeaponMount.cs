@@ -215,7 +215,7 @@ public sealed class Es1WeaponMount {
 		// (the muzzle offset through the bone's node and the machine's frame): 00006168(0, the point, the template's +0x26
 		// root of WeaponModels_Mechwpn2Roots) given g_TSDetailBiasForMounts at its +0x4a and launched through 00006378 with
 		// the third angle of the bearing from the machine's slot +0x28 point and the hardpoint's dword +0x18; the debris,
-		// plan step 7e.
+		// plan step 7e part B.
 		_ = (throwGun, machine);
 	}
 

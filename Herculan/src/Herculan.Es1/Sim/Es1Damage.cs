@@ -197,9 +197,11 @@ public sealed class Es1DamageHeader {
 	/// <see cref="AddDamage"/> on the component against its armor, and when that answers destroyed the excess spilt into
 	/// its dependents. A dependent left standing puts the piece's sequence on <see cref="ArmorGoneCell"/>; none left, with
 	/// the flags' bit 0, clears <see cref="EffectLatch"/> and loses the component and then each queued one, last first
-	/// (<see cref="DestroyAndCascade"/>), answering 1. The occupancy flag is not tested.
+	/// (<see cref="DestroyAndCascade"/>), answering 1. The occupancy flag is not tested. The spill draws on
+	/// <paramref name="globals"/>' generator, and a lost component's explosion goes into its pool.
 	/// </summary>
-	public bool ApplyDamageAndCascade(short damage, short component, SimRandom random) {
+	public bool ApplyDamageAndCascade(short damage, short component, Es1SimGlobals globals) {
+		var random = globals.Random;
 		if (Piece(component) is not { } piece || component >= ComponentCount) {
 			return false;
 		}
@@ -221,11 +223,11 @@ public sealed class Es1DamageHeader {
 		}
 
 		EffectLatch = false;
-		DestroyAndCascade(component, random);
+		DestroyAndCascade(component, globals);
 		while (_queue.Count > 0) {
 			short next = _queue[^1];
 			_queue.RemoveAt(_queue.Count - 1);
-			DestroyAndCascade(next, random);
+			DestroyAndCascade(next, globals);
 		}
 
 		return true;
@@ -238,7 +240,8 @@ public sealed class Es1DamageHeader {
 	/// <see cref="FinishOff"/> spilt into its dependents; a piece with a sequence shows <see cref="LostCell"/>; and each
 	/// occupied component whose parent it is queued. Retail's queue holds 10 and is not bounded; this one is not either.
 	/// </summary>
-	private void DestroyAndCascade(short component, SimRandom random) {
+	private void DestroyAndCascade(short component, Es1SimGlobals globals) {
+		var random = globals.Random;
 		var (cluster, part) = Es1HitSpheres.FindClusterForComponent(Model, component);
 		if (!IsOccupied(component) || Piece(component) is not { } piece) {
 			return;
@@ -253,7 +256,7 @@ public sealed class Es1DamageHeader {
 		if (piece.Sequence >= 0) {
 			if (!EffectLatch && (piece.Flags & 2) != 0) {
 				// PLACEHOLDER: maybe_FireEffect_Construct (000069ec)(null, 0, the bound center, part, machine), the fire,
-				// plan step 7e.
+				// plan step 7e part B.
 				_ = (center, part);
 			}
 
@@ -275,13 +278,12 @@ public sealed class Es1DamageHeader {
 				type = BigExplosion;
 			}
 
-			// PLACEHOLDER: Explosion_Construct (00005af0)(null, anchor, type), plan step 7e.
-			_ = type;
+			// Explosion_Construct (00005af0)(null, anchor, type).
+			globals.Explosions.Construct(anchor, type);
 		}
 
 		// PLACEHOLDER: Debris_ThrowGroup (00005fb8)(group LostDebrisGroup of 000bc1c0, anchor, the roots 000bc1c6), plan
-		// step 7e.
-		_ = anchor;
+		// step 7e part B.
 
 		for (short i = 0; i < ComponentCount; i++) {
 			if (Occupied[i] && Piece(i)?.Parent == component) {

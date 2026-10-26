@@ -35,7 +35,7 @@ public sealed class Es1ProjectilePool {
 	public Es1ProjectilePool() {
 	}
 
-	/// <summary>The live projectiles in allocation order, which <c>Pool_Prev</c> walks from the end.</summary>
+	/// <summary>The live projectiles in allocation order, oldest first, the order a <c>Pool_Prev</c> walk visits them.</summary>
 	public IReadOnlyList<Es1Projectile> Live => _live;
 
 	/// <summary>
@@ -104,17 +104,20 @@ public sealed class Es1ProjectilePool {
 	public bool Contains(Es1Projectile? projectile) => projectile != null && _live.Contains(projectile);
 
 	/// <summary>
-	/// <c>Sim_MainTick</c>'s walk (docs/es1/simulation/main-loop.md#the-tick--sim_maintick-00059700): each projectile from the
-	/// last back through its tick, slot <c>+0x18</c>, and one that answers non-zero destroyed through slot <c>+0xc</c> with
-	/// 3, which queues it.
+	/// <c>Sim_MainTick</c>'s walk (docs/es1/simulation/main-loop.md#the-tick--sim_maintick-00059700): each projectile
+	/// through its tick, slot <c>+0x18</c>, oldest first, as <c>Pool_Prev</c> walks from the end of the in-use list, where
+	/// <c>Pool_Alloc</c> puts the newest at its head; one fired during the walk is reached in it. One that answers non-zero
+	/// is destroyed through slot <c>+0xc</c> with 3, which queues it.
 	/// </summary>
 	public void Tick(Es1ProjectileTick tick) {
-		for (int i = _live.Count - 1; i >= 0; i--) {
+		for (int i = 0; i < _live.Count;) {
 			var projectile = _live[i];
 			if (projectile.Tick(tick) != 0) {
 				projectile.Destroy();
 				_live.RemoveAt(i);
 				_deleteQueue.Add(projectile);
+			} else {
+				i++;
 			}
 		}
 	}

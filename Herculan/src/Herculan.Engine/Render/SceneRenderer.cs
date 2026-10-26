@@ -94,6 +94,15 @@ public sealed class SceneItem {
 	public SimObject? LightSubject { get; set; }
 
 	/// <summary>
+	/// What the effect-light pass measures from when <see cref="LightSubject"/> is null: the drawn object's position, in
+	/// world units, and the radius its render entry caches. Earthsiege's items carry no <see cref="SimObject"/> and set
+	/// this instead, from the entry <c>ObjList_DrawEntryRender</c> (<c>ES1DBSIM 00020f40</c>) passes to
+	/// <c>LightManager_SelectLightsForObject</c> (docs/es1/rendering/polygon-shading.md#effect-lights). Null with no
+	/// subject leaves the item lit by the sun alone.
+	/// </summary>
+	public (Herculan.Engine.Numerics.Vec3i Position, int Radius)? LightAnchor { get; set; }
+
+	/// <summary>
 	/// Whether this item takes its fog distance a cell at a time the way <c>Terrain_DrawCellQuad</c>
 	/// does rather than a pixel at a time — see <see cref="SceneRenderer.FogCellSize"/>. Set on the
 	/// terrain, and on the ground shapes, which the original draws under the fade their cell's quad
@@ -275,12 +284,12 @@ public sealed class SceneRenderer : IDisposable {
 	public float SunShadeSlope { get; set; } = MissionSun.FaceShadeSlope;
 
 	/// <summary>
-	/// The impact effects' dynamic lights — <see cref="EffectPools.Lights"/>. Each drawn item
-	/// whose <see cref="SceneItem.LightSubject"/> is set gets its own selection out of these, which
-	/// is what <c>LightManager_SelectLightsForObject</c> (<c>00407098</c>) does per render entry. Null lights the scene by the sun alone,
-	/// which is what a tool with no simulation running gets.
+	/// The impact effects' dynamic lights — <see cref="EffectPools.Lights"/>, or the game's own manager behind the same
+	/// seam. Each drawn item whose <see cref="SceneItem.LightSubject"/> or <see cref="SceneItem.LightAnchor"/> is set gets
+	/// its own selection out of these, which is what <c>LightManager_SelectLightsForObject</c> (<c>00407098</c>) does per
+	/// render entry. Null lights the scene by the sun alone, which is what a tool with no simulation running gets.
 	/// </summary>
-	public EffectLightField? EffectLights { get; set; }
+	public IEffectLightSlots? EffectLights { get; set; }
 
 	/// <summary>
 	/// Installs the theater's shaded-surface colours, which every <c>TSShadedPoly</c> and
@@ -816,9 +825,10 @@ public sealed class SceneRenderer : IDisposable {
 			// LightManager_SelectLightsForObject (00407098), run per drawn object just as ObjList_DrawEntryRender runs it — see
 			// EffectLightSelection.
 			int lightCount = 0;
-			if (anyEffectLights && item.LightSubject is { } subject) {
-				lightCount = EffectLightSelection.Select(EffectLights!, subject.Position,
-					subject.ShapeRadius, _effectLights);
+			(Herculan.Engine.Numerics.Vec3i Position, int Radius)? anchor =
+				item.LightSubject is { } subject ? (subject.Position, subject.ShapeRadius) : item.LightAnchor;
+			if (anyEffectLights && anchor is { } at) {
+				lightCount = EffectLightSelection.Select(EffectLights!, at.Position, at.Radius, _effectLights);
 
 				for (int i = 0; i < lightCount; i++) {
 					var light = _effectLights[i];
@@ -955,8 +965,8 @@ public sealed class SceneRenderer : IDisposable {
 			return false;
 		}
 
-		for (int i = 0; i < field.Slots.Count; i++) {
-			if (field.Slots[i].IsLive) {
+		for (int i = 0; i < field.SlotCount; i++) {
+			if (field.TryGetLive(i, out _, out _, out _)) {
 				return true;
 			}
 		}

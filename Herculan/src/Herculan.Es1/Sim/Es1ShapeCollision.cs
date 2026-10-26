@@ -123,14 +123,14 @@ public static class Es1ShapeTests {
 	}
 
 	/// <summary>
-	/// <c>Structure_GatherWalkCandidates</c> (<c>0000375c</c>): the structures whose type has no collision model, from the
-	/// pool's last back, and <see cref="WalkCollisionTest"/>'s answer over them; 0 with none
+	/// <c>Structure_GatherWalkCandidates</c> (<c>0000375c</c>): the structures whose type has no collision model, oldest
+	/// first as <c>Pool_Prev</c> walks the pool, and <see cref="WalkCollisionTest"/>'s answer over them; 0 with none
 	/// (docs/es1/simulation/terrain.md#the-structures-tests). Retail gathers into a 40-entry stack array it does not bound;
 	/// here the gather has no limit.
 	/// </summary>
 	public static int GatherWalkCandidates(IReadOnlyList<Es1Structure> structures, Vec3i point) {
 		var candidates = new List<Es1ShapeObject>();
-		for (int i = structures.Count - 1; i >= 0; i--) {
+		for (int i = 0; i < structures.Count; i++) {
 			if (!structures[i].HasCollisionModel) {
 				candidates.Add(structures[i].Shape);
 			}

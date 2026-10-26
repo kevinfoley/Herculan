@@ -127,19 +127,16 @@ public sealed class Es1Simulation {
 	public Es1DevKeySteps DevKeys { get; } = new();
 
 	/// <summary>
-	/// The explosions (<c>g_ExplosionPool</c>, their tick <c>00005d74</c>), the pools <c>000aef68</c> (<c>0000693c</c>)
-	/// and <c>000aefd4</c> (<c>00006b28</c>) and the debris (<c>000aeef8</c>, <c>000064b8</c>), each in build order.
-	/// PLACEHOLDER: empty: plan step 7e (effects) spawns them. The projectiles are <see cref="Es1SimGlobals.Projectiles"/>.
+	/// The pools <c>000aef68</c> (<c>0000693c</c>) and <c>000aefd4</c> (<c>00006b28</c>) and the debris (<c>000aeef8</c>,
+	/// <c>000064b8</c>), each in build order. PLACEHOLDER: empty: plan step 7e part B spawns them. The explosions are
+	/// <see cref="Es1SimGlobals.Explosions"/> and the projectiles <see cref="Es1SimGlobals.Projectiles"/>.
 	/// </summary>
-	public List<IEs1PoolTicked> Explosions { get; } = new();
-
-	/// <inheritdoc cref="Explosions"/>
 	public List<IEs1PoolTicked> PoolAef68 { get; } = new();
 
-	/// <inheritdoc cref="Explosions"/>
+	/// <inheritdoc cref="PoolAef68"/>
 	public List<IEs1PoolTicked> PoolAefd4 { get; } = new();
 
-	/// <inheritdoc cref="Explosions"/>
+	/// <inheritdoc cref="PoolAef68"/>
 	public List<IEs1PoolTicked> Debris { get; } = new();
 
 	/// <summary>
@@ -168,14 +165,14 @@ public sealed class Es1Simulation {
 		// 1. The input block. During playback the block's +0x29 would be the tick's length; tapes are not taken.
 		var block = Input.Build();
 
-		// 2. The pools, last to first, and the groups.
+		// 2. The pools, each walked with Pool_Prev from the end, oldest first, and the groups.
 		if (!Frozen) {
-			for (int i = Globals.Structures.Count - 1; i >= 0; i--) {
+			for (int i = 0; i < Globals.Structures.Count; i++) {
 				// PLACEHOLDER: slot +0x1c, the structure's tick, unread with its constructor 00003cbc; the plan's
 				// structures step (after step 8) spawns and ticks them.
 			}
 
-			TickPool(Explosions);
+			Globals.Explosions.Tick(Globals.Clock);
 			TickPool(PoolAef68);
 			TickPool(PoolAefd4);
 			TickPool(Debris);
@@ -215,9 +212,10 @@ public sealed class Es1Simulation {
 		if (!Frozen) {
 			Es1SensorModel.Tick(Globals, _playerMech);
 
-			// The systems tick for each machine of g_MechPool, last to first, whose group holds no action and that is not
-			// destroyed. A machine with no group, which retail reads through, is skipped, an engine guard.
-			for (int i = _mechPool.Count - 1; i >= 0; i--) {
+			// The systems tick for each machine of g_MechPool, oldest first as Pool_Prev walks it, whose group holds no
+			// action and that is not destroyed. A machine with no group, which retail reads through, is skipped, an engine
+			// guard.
+			for (int i = 0; i < _mechPool.Count; i++) {
 				var mech = _mechPool[i];
 				if (mech.Group is { Action: null } && !mech.Destroyed) {
 					Es1MechSystems.PerTickSystemsUpdate(mech, Globals);
@@ -549,11 +547,16 @@ public sealed class Es1Simulation {
 		}
 	}
 
-	/// <summary>A pool walked last to first with <c>Pool_Prev</c>, each element whose tick answers non-zero destroyed at once.</summary>
+	/// <summary>
+	/// A pool walked with <c>Pool_Prev</c> from the end, oldest first, each element whose tick answers non-zero destroyed
+	/// at once; one built during the walk is reached in it.
+	/// </summary>
 	private static void TickPool(List<IEs1PoolTicked> pool) {
-		for (int i = pool.Count - 1; i >= 0; i--) {
+		for (int i = 0; i < pool.Count;) {
 			if (pool[i].Tick() != 0) {
 				pool.RemoveAt(i);
+			} else {
+				i++;
 			}
 		}
 	}

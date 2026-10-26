@@ -26,7 +26,7 @@ namespace Herculan.Engine.Render;
 public readonly record struct SelectedEffectLight(bool Directional, Vector3 Vector, float Intensity);
 
 /// <summary>
-/// <c>LightManager_SelectLightsForObject</c> (<c>00407098</c>) — picks which of <see cref="EffectLightField"/>'s slots light one drawn
+/// <c>LightManager_SelectLightsForObject</c> (<c>00407098</c>) — picks which of a manager's slots (<see cref="IEffectLightSlots"/>, <see cref="EffectLightField"/>'s for Earthsiege 2) light one drawn
 /// object, and what each one looks like from where that object stands.
 ///
 /// <para>The original runs this from <c>ObjList_DrawEntryRender</c> (<c>0042876c</c>), once per
@@ -85,18 +85,17 @@ public static class EffectLightSelection {
 	/// Its drawn radius in world units — <c>SimObject_GetShapeRadius</c> (vtable <c>+0x10</c>), which
 	/// is the figure the original's render entry caches at <c>+0x10</c>.
 	/// </param>
-	public static int Select(EffectLightField field, Vec3i position, int shapeRadius,
+	public static int Select(IEffectLightSlots field, Vec3i position, int shapeRadius,
 			Span<SelectedEffectLight> selected) {
 		int count = 0;
 
-		for (int i = 0; i < field.Slots.Count && count < selected.Length; i++) {
-			var slot = field.Slots[i];
-			if (!slot.IsLive) {
+		for (int i = 0; i < field.SlotCount && count < selected.Length; i++) {
+			if (!field.TryGetLive(i, out var slotPosition, out int intensity, out int cullRadius)) {
 				continue;
 			}
 
-			int distance = position.ApproxDistanceTo(slot.Position);
-			if (distance >= slot.CullRadius) {
+			int distance = position.ApproxDistanceTo(slotPosition);
+			if (distance >= cullRadius) {
 				continue;
 			}
 
@@ -112,17 +111,17 @@ public static class EffectLightSelection {
 				int attenuation = System.Math.Min(EffectLightField.MaxIntensity,
 					(EffectLightField.FalloffRange << 8) / (d + EffectLightField.FalloffOffset));
 
-				Vector3 travel = WorldScale.ToRender(position - slot.Position);
+				Vector3 travel = WorldScale.ToRender(position - slotPosition);
 				if (travel.LengthSquared() > 1e-12f) {
 					selected[count++] = new SelectedEffectLight(true, Vector3.Normalize(travel),
-						slot.Intensity * attenuation >> 8);
+						intensity * attenuation >> 8);
 				}
 
 				continue;
 			}
 
-			selected[count++] = new SelectedEffectLight(false, WorldScale.ToRender(slot.Position),
-				slot.Intensity);
+			selected[count++] = new SelectedEffectLight(false, WorldScale.ToRender(slotPosition),
+				intensity);
 		}
 
 		return count;

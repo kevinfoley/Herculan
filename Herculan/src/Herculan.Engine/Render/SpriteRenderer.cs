@@ -26,9 +26,16 @@ namespace Herculan.Engine.Render;
 /// How the object the billboards belong to is filed by terrain cell — see <see cref="SceneItem.Filing"/>.
 /// A batch whose entry the pass leaves undrawn is skipped.
 /// </param>
+/// <param name="UprightFocalPixels">
+/// Set for Earthsiege's billboard, <c>TSBitmapPart_Render</c> (<c>ES1DBSIM 00052b90</c>,
+/// docs/es1/formats/dts-shape.md#drawing-and-finding-parts): the bitmap is neither turned with the model's up axis nor
+/// squashed, its <see cref="SpriteQuad.OffsetY"/> is read signed, and a sprite is not drawn once its width or height
+/// would reach <see cref="SpriteRenderer.UprightMaxPixels"/> pixels under a projection whose focal length is this many
+/// pixels. Null draws Earthsiege 2's.
+/// </param>
 public readonly record struct SpriteBatch(
 	SpriteQuad[][] Sprites, TextureAtlas Atlas, uint TextureHandle, Matrix4x4 Transform, int Frame,
-	DrawEntry? Filing = null);
+	DrawEntry? Filing = null, int? UprightFocalPixels = null);
 
 /// <summary>
 /// Draws <see cref="SpriteQuad"/> billboards, the flat camera-facing bitmaps that impact effects and
@@ -57,6 +64,9 @@ public sealed class SpriteRenderer : IDisposable {
 	/// docs/retail/rendering/dts-billboards.md#tsbitmappart_render-004762e8.
 	/// </summary>
 	private const float WorldUnitsPerPixelPerRadius = 1f / 64f;
+
+	/// <summary>The size, in the original's screen pixels, at which Earthsiege's billboard is no longer drawn (<see cref="SpriteBatch.UprightFocalPixels"/>).</summary>
+	public const int UprightMaxPixels = 200;
 
 	private readonly GL _gl;
 	private readonly ShaderProgram _shader;
@@ -125,8 +135,9 @@ public sealed class SpriteRenderer : IDisposable {
 
 		// The model's own up axis, brought into view space. Row 1 of a row-vector model matrix is
 		// where model +Y goes, and render +Y is the simulation's +Z — the axis the original probes.
+		// Earthsiege's billboard stands upright whatever the axis does.
 		var upModel = new Vector3(batch.Transform.M21, batch.Transform.M22, batch.Transform.M23);
-		var upView = Vector3.TransformNormal(upModel, view);
+		var upView = batch.UprightFocalPixels != null ? Vector3.UnitY : Vector3.TransformNormal(upModel, view);
 		if (upView.LengthSquared() > 0f) {
 			upView = Vector3.Normalize(upView);
 		} else {
@@ -149,12 +160,12 @@ public sealed class SpriteRenderer : IDisposable {
 		_shader.SetSamplerTexture("uTexture", batch.TextureHandle, 0);
 
 		foreach (var quad in quads) {
-			DrawQuad(quad, batch.Atlas, batch.Transform, view, nearPlane, squash, right, down);
+			DrawQuad(quad, batch.Atlas, batch.Transform, view, nearPlane, squash, right, down, batch.UprightFocalPixels);
 		}
 	}
 
 	private void DrawQuad(in SpriteQuad quad, TextureAtlas atlas, in Matrix4x4 transform,
-			in Matrix4x4 view, float nearPlane, float squash, in Vector3 right, in Vector3 down) {
+			in Matrix4x4 view, float nearPlane, float squash, in Vector3 right, in Vector3 down, int? uprightFocalPixels) {
 		if (atlas.Frame(quad.FrameIndex) is not { } rect) {
 			return;
 		}
@@ -181,9 +192,16 @@ public sealed class SpriteRenderer : IDisposable {
 		float width = unitsPerPixel * columns;
 		float height = unitsPerPixel * heightPixels;
 
+		// Earthsiege's blit draws only below the size limit, measured in its own pixels.
+		if (uprightFocalPixels is { } focal
+				&& (width * focal / -anchor.Z >= UprightMaxPixels || height * focal / -anchor.Z >= UprightMaxPixels)) {
+			return;
+		}
+
 		// OfsY is stated against the bitmap's natural height, so it is squashed with it; OfsX is not,
-		// because the width never changes.
-		float offsetY = quad.OffsetY * heightPixels / rows;
+		// because the width never changes. Earthsiege's reads it signed.
+		int rawOffsetY = uprightFocalPixels != null ? unchecked((sbyte)quad.OffsetY) : quad.OffsetY;
+		float offsetY = rawOffsetY * heightPixels / rows;
 		Vector3 topLeft = anchor
 			- right * (quad.OffsetX * unitsPerPixel)
 			- down * (offsetY * unitsPerPixel);

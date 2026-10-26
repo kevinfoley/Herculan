@@ -109,7 +109,7 @@ public sealed class Es1MfdMissileCamScreen : Es1MfdScreen {
 	public (short Pitch, short Roll, short Heading) CameraAngles { get; private set; }
 
 	/// <summary><c>+0x18</c>, the explosion of <c>g_ExplosionPool</c> the strike flash is showing, or null.</summary>
-	public IEs1PoolTicked? FlashExplosion { get; private set; }
+	public Effects.Es1Explosion? FlashExplosion { get; private set; }
 
 	/// <summary><c>+0x1c</c>, the flash's color toggle: set for <see cref="FlashColor"/>, clear for <see cref="Fill"/>.</summary>
 	public bool FlashToggle { get; private set; }
@@ -310,15 +310,8 @@ public sealed class Es1MfdMissileCamScreen : Es1MfdScreen {
 		lockLabel.SetText(canvas, Text(LockEntry));
 	}
 
-	/// <summary>
-	/// <c>Pool_Prev</c>'s walk of <c>g_ExplosionPool</c> for <paramref name="explosion"/>. PLACEHOLDER: answers false:
-	/// explosions are plan step 7e, and the screen does not yet reach the simulation's pool; with
-	/// <see cref="ExplosionNear"/> finding none, nothing sets <see cref="FlashExplosion"/> to ask about.
-	/// </summary>
-	private static bool InExplosionPool(IEs1PoolTicked explosion) {
-		_ = explosion;
-		return false;
-	}
+	/// <summary><c>Pool_Prev</c>'s walk of <c>g_ExplosionPool</c> for <paramref name="explosion"/>.</summary>
+	private bool InExplosionPool(Effects.Es1Explosion explosion) => Cockpit.Globals.Explosions.Contains(explosion);
 
 	/// <summary>
 	/// <c>Pool_Prev</c>'s walk of the projectile pool <c>000af0b4</c> for <paramref name="missile"/>, and, found, its
@@ -328,14 +321,11 @@ public sealed class Es1MfdMissileCamScreen : Es1MfdScreen {
 		Cockpit.Globals.Projectiles.Contains(missile) ? (missile.Position, missile.Angles) : null;
 
 	/// <summary>
-	/// <c>Pool_Prev</c>'s walk of <c>g_ExplosionPool</c> for the first explosion whose position <c>+0x20</c> lies within
-	/// <see cref="FlashReach"/> of <paramref name="position"/> (<c>Point3I_DistanceBetween</c>). PLACEHOLDER: answers
-	/// none: explosions are plan step 7e.
+	/// <c>Pool_Prev</c>'s walk of <c>g_ExplosionPool</c>, oldest first, for the first explosion whose position
+	/// <c>+0x20</c> lies within <see cref="FlashReach"/> of <paramref name="position"/> (<c>Point3I_DistanceBetween</c>).
 	/// </summary>
-	private static IEs1PoolTicked? ExplosionNear(Vec3i position) {
-		_ = position;
-		return null;
-	}
+	private Effects.Es1Explosion? ExplosionNear(Vec3i position) =>
+		Cockpit.Globals.Explosions.Live.FirstOrDefault(explosion => explosion.Position.ApproxDistanceTo(position) < FlashReach);
 
 	private string? Text(int entry) => _strings?.Text(WordGroup, entry);
 

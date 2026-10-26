@@ -153,9 +153,14 @@ public static class Es1MechDamage {
 				1 => shot.Effects?.ImpactFXGround[k],
 				_ => shot.Effects?.ImpactFXArmor[k],
 			};
-			// PLACEHOLDER: Explosion_Construct (00005af0)(null, point, effect), the impact effect, plan step 7e; and for a
-			// struck component Debris_ThrowGroup (00005fb8)(group `group` of 000bc1c0, point, the roots 000bc1c6), 7e.
-			_ = (point, effect, struck);
+			// Explosion_Construct (00005af0)(null, point, effect); a shot with no effects makes none.
+			if (effect is { } type) {
+				globals.Explosions.Construct(point, type);
+			}
+
+			// PLACEHOLDER: for a struck component Debris_ThrowGroup (00005fb8)(group `group` of 000bc1c0, point, the roots
+			// 000bc1c6), plan step 7e part B.
+			_ = struck;
 		}
 
 		return distance;
@@ -193,7 +198,7 @@ public static class Es1MechDamage {
 			_ = condition;
 		}
 
-		header.ApplyDamageAndCascade(MountFinishOff, component, globals.Random);
+		header.ApplyDamageAndCascade(MountFinishOff, component, globals);
 	}
 
 	/// <summary>
@@ -223,7 +228,7 @@ public static class Es1MechDamage {
 			return;
 		}
 
-		header.ApplyDamageAndCascade(damage, component, globals.Random);
+		header.ApplyDamageAndCascade(damage, component, globals);
 
 		// Step 3. Retail reads the flag of a hardpoint slot outside the components unchecked; such a mount is kept here.
 		foreach (var mount in machine.Mounts?.Mounts ?? []) {
@@ -282,13 +287,13 @@ public static class Es1MechDamage {
 	/// <summary>
 	/// <c>Damage_ExplosiveBlastSweep</c> (<c>0001f75c</c>)(<paramref name="damage"/>, <paramref name="radius"/>,
 	/// <paramref name="point"/>) (docs/es1/simulation/world.md#blasts--damage_explosiveblastsweep-0001f75c): the mech pool
-	/// from its end, each machine whose group holds no action and whose position is nearer the point than the radius
+	/// oldest first, as <c>Pool_Prev</c> walks it from the end, each machine whose group holds no action and whose position is nearer the point than the radius
 	/// taking <see cref="ApplyExplosiveDamage"/> with no attacker; answers whether any did. Retail reads the group
 	/// unchecked; a machine with none is taken as holding no action.
 	/// </summary>
 	public static bool ExplosiveBlastSweep(short damage, short radius, Vec3i point, Es1SimGlobals globals) {
 		bool any = false;
-		for (int i = globals.MechPool.Count - 1; i >= 0; i--) {
+		for (int i = 0; i < globals.MechPool.Count; i++) {
 			var mech = globals.MechPool[i];
 			if (mech.Group?.Action == null && point.ApproxDistanceTo(mech.Position) < radius) {
 				any = true;
@@ -380,7 +385,7 @@ public static class Es1MechDamage {
 	/// <summary>
 	/// <c>Mech_ApplyOutnumberedDamage</c> (<c>00015a5c</c>)(<paramref name="machine"/>)
 	/// (docs/es1/simulation/mech.md#small-functions): unless the machine is clear of threats
-	/// (<see cref="IsClearOfThreats"/>), the HERCs from the mech pool's end that are neither disarmed, immobilized nor
+	/// (<see cref="IsClearOfThreats"/>), the HERCs of the mech pool, oldest first, that are neither disarmed, immobilized nor
 	/// destroyed, whose group holds no action and that stand within <see cref="OutnumberedHercRange"/>, each counting its
 	/// record's <c>+0x54</c> to the friendly sum when its group's side is the machine's and to the hostile one otherwise;
 	/// the friendly sum less <see cref="OutnumberedAllowance"/>, floored at 0; then one <see cref="SpreadImpactDamage"/> of
@@ -392,7 +397,7 @@ public static class Es1MechDamage {
 		}
 
 		int friendly = 0, hostile = 0;
-		for (int i = globals.MechPool.Count - 1; i >= 0; i--) {
+		for (int i = 0; i < globals.MechPool.Count; i++) {
 			var other = globals.MechPool[i];
 			// Retail reads both groups unchecked; a machine with none is not counted here.
 			if (other.Disarmed || other.Immobilized || other.Destroyed || other.Group is not { Action: null } group

@@ -90,6 +90,8 @@ public sealed class Es1World {
 		var world = new Es1World(script, types);
 		// The rounds' phase-2 loads (docs/es1/simulation/projectiles.md#the-projectile-pool).
 		world.Globals.Projectiles = Projectiles.Es1ProjectilePool.Load(content, weapons);
+		// The impact effects' phase-2 load (docs/es1/formats/explos-dat.md#the-load).
+		world.Globals.Explosions = Effects.Es1ExplosionPool.Load(content, world.Globals.EffectLights);
 		world.Globals.HeaderWord3 = script.Header[3];
 		world.Globals.MissionModeFlag = script.Header[2];
 		world.Globals.UnlimitedAmmoFlag = script.Header[5];
@@ -98,6 +100,9 @@ public sealed class Es1World {
 		world.Globals.HeaderWord8 = script.Header[8];
 		world.Globals.MissionVars = script.Flags;
 		world.SpawnObjects(content, weapons, weaponModels, formations);
+		// Sim_StartMission's step 7, after the second pass: every effect the spawn made deleted. PLACEHOLDER: and every
+		// debris piece, plan step 7e part B.
+		world.Globals.Explosions.DeleteAll();
 		return world;
 	}
 

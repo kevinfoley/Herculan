@@ -128,6 +128,8 @@ public sealed class Es1ProjectileDraw : IDisposable {
 			uint? texture = projectile is Es1Bullet ? _bulletTexture : null;
 			_items.Add(new SceneItem(mesh, WorldScale.ToRenderMatrix(projectile.Frame), texture) {
 				RampBlock = flatRamps ? shading.FlatBlock : shading.Block(Es1Projectile.TypeTag, distance),
+				// The effect lights are picked by its position and its shape's radius, slot +0x14's.
+				LightAnchor = (projectile.Position, (shape as TSBasePart)?.Radius ?? 0),
 			});
 		}
 	}

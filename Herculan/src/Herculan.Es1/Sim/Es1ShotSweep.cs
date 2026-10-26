@@ -154,9 +154,11 @@ public static class Es1ShotSweep {
 			}
 
 			int k = globals.Random.Next() & 3;
-			short? effect = shot.Effects?.ImpactFXGround[k];
-			// PLACEHOLDER: Explosion_Construct (00005af0)(null, point, effect), the impact effect, plan step 7e.
-			_ = (point, effect);
+			// Explosion_Construct (00005af0)(null, point, entry 4 + k of the shot's effect table); a shot with no
+			// effects (Effects) makes none.
+			if (shot.Effects?.ImpactFXGround[k] is { } effect) {
+				globals.Explosions.Construct(point, effect);
+			}
 		}
 
 		// 5. The blocked line of fire.

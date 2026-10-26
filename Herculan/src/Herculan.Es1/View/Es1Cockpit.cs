@@ -137,8 +137,8 @@ public sealed class Es1Cockpit {
 	/// <see cref="SquadGroup"/>; its members in order, up to the first null, put into <see cref="SquadmateMachines"/>
 	/// past the cockpit's own machine until three are in; and for each, in slot order,
 	/// <see cref="Es1HddDisplay.LoadPilotFrames"/> with its pilot index (<see cref="Es1Mech.PilotWord"/>). The player's
-	/// machine is the first <c>Pool_Prev</c> reaches in <c>g_MechPool</c> with <c>+0x9d</c> set, the last such machine
-	/// built, which is the cockpit's machine, <c>LocalPlayerMech</c>. With no machine or group, where retail reads through
+	/// machine is the first <c>Pool_Prev</c> reaches in <c>g_MechPool</c> with <c>+0x9d</c> set, the first such machine
+	/// built, oldest first, which is the cockpit's machine, <c>LocalPlayerMech</c>. With no machine or group, where retail reads through
 	/// a null pointer, no squadmate, an engine guard.
 	/// </summary>
 	public void LoadSquadmatePilots() {

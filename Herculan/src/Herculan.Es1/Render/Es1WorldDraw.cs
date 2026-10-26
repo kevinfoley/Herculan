@@ -10,9 +10,11 @@ namespace Herculan.Es1.Render;
 
 /// <summary>
 /// What one frame draws (docs/es1/rendering/polygon-shading.md#which-objects-are-drawn): the shadows, which
-/// <c>ObjList_DrawFrameObjects</c> (<c>ES1DBSIM 00021008</c>) paints first, within 30000 of the camera; then the zone's
-/// shapes and the HERCs, each but the one the camera rides in, one whose Z is negative, one past the last distance band
-/// and one whose group an action still holds out of the mission (<c>ObjList_RebuildFrame</c>, <c>00020de0</c>).
+/// <c>ObjList_DrawFrameObjects</c> (<c>ES1DBSIM 00021008</c>) paints first, within 30000 of the camera, with the impact
+/// effects' ground shapes; then the zone's shapes, the HERCs, the projectiles and the impact effects, each but the one
+/// the camera rides in, one whose Z is negative, one past the last distance band and one whose group an action still
+/// holds out of the mission (<c>ObjList_RebuildFrame</c>, <c>00020de0</c>), each lit by the sun and the effect lights
+/// <c>LightManager_SelectLightsForObject</c> picks for it (<see cref="SceneItem.LightAnchor"/>).
 ///
 /// <para>Retail paints the object list sorted, farthest first, with no depth test; the shapes and HERCs here are drawn
 /// with it, a divergence the user chose (KNOWN_ISSUES.md). The shadows keep retail's order against them: they are drawn
@@ -34,11 +36,13 @@ public sealed class Es1WorldDraw {
 
 	/// <param name="detail">The detail setting the HERCs are drawn at, read on every <see cref="Update"/>.</param>
 	/// <param name="projectiles">The projectile pool's draw; with none no projectile is drawn.</param>
+	/// <param name="explosions">The impact effects' draw; with none no effect is drawn.</param>
 	public Es1WorldDraw(GL gl, Es1ZoneScene scene, Es1World world, Es1MechModels models, Es1AppliedDetail detail,
-			ICollection<IDisposable> owned, Es1ProjectileDraw? projectiles = null) {
+			ICollection<IDisposable> owned, Es1ProjectileDraw? projectiles = null, Es1ExplosionDraw? explosions = null) {
 		_scene = scene;
 		_detail = detail;
 		Projectiles = projectiles;
+		Explosions = explosions;
 
 		var meshes = new Dictionary<int, GpuMesh>();
 		for (int index = 0; index < scene.Shapes.Count; index++) {
@@ -55,7 +59,12 @@ public sealed class Es1WorldDraw {
 
 			// The zone's shape object, Zone_ShapeObjects' entry for the record, boxed once so the pick answers one object for it.
 			object zoneObject = index < scene.ZoneShapes.Objects.Count ? scene.ZoneShapes.Objects[index] : shape;
-			_zoneItems.Add((new SceneItem(mesh, WorldScale.ToRenderMatrix(shape.Frame)), shape, zoneObject));
+			// The effect lights are picked by the object's position and its shape's radius, slot +0x14's.
+			int radius = index < scene.ZoneShapes.Objects.Count ? scene.ZoneShapes.Objects[index].Radius : 0;
+			var frame = shape.Frame;
+			_zoneItems.Add((new SceneItem(mesh, WorldScale.ToRenderMatrix(frame)) {
+				LightAnchor = (new Vec3i(frame.X, frame.Y, frame.Z), radius),
+			}, shape, zoneObject));
 			_flatZoneItems.Add(new SceneItem(mesh, WorldScale.ToRenderMatrix(shape.Frame)) { RampBlock = scene.Shading.FlatBlock });
 		}
 
@@ -69,8 +78,8 @@ public sealed class Es1WorldDraw {
 		}
 	}
 
-	/// <summary>The shadows' items, drawn first.</summary>
-	public IEnumerable<SceneItem> Shadows => _shadowItems.Select(entry => entry.Item);
+	/// <summary>The shadows' items and the impact effects' ground shapes, drawn first.</summary>
+	public IEnumerable<SceneItem> Shadows => _shadowItems.Select(entry => entry.Item).Concat(Explosions?.GroundItems ?? []);
 
 	/// <summary>
 	/// The zone shapes as <see cref="View.Es1RectScene.FlatZoneShapes"/> draws them, apart from the frame's own items:
@@ -79,12 +88,18 @@ public sealed class Es1WorldDraw {
 	/// </summary>
 	public IReadOnlyList<SceneItem> FlatZoneShapes => _flatZoneItems;
 
-	/// <summary>The projectile pool's draw, whose items <see cref="Objects"/> ends with; null for none.</summary>
+	/// <summary>The projectile pool's draw, whose items <see cref="Objects"/> lists after the HERCs'; null for none.</summary>
 	public Es1ProjectileDraw? Projectiles { get; }
 
-	/// <summary>The zone shapes', the HERCs' and the projectiles' items.</summary>
+	/// <summary>The impact effects' draw, whose items <see cref="Objects"/> ends with; null for none.</summary>
+	public Es1ExplosionDraw? Explosions { get; }
+
+	/// <summary>The zone shapes', the HERCs', the projectiles' and the impact effects' items.</summary>
 	public IEnumerable<SceneItem> Objects => _zoneItems.Select(entry => entry.Item).Concat(_mechs.SelectMany(m => m.Items))
-		.Concat(Projectiles?.Items ?? []);
+		.Concat(Projectiles?.Items ?? []).Concat(Explosions?.Items ?? []);
+
+	/// <summary>The impact effects' billboards, drawn after <see cref="Objects"/>.</summary>
+	public IReadOnlyList<SpriteBatch> Sprites => Explosions?.Sprites ?? [];
 
 	/// <summary>
 	/// The objects <c>ObjList_DrawFrameObjects</c> draws, each with its items, in the order <see cref="Objects"/> lists
@@ -131,6 +146,7 @@ public sealed class Es1WorldDraw {
 		}
 
 		Projectiles?.Update(camera, flat);
+		Explosions?.Update(camera, focalShift, flat);
 
 		foreach (var (item, shadow) in _shadowItems) {
 			var frame = shadow.DrawFrame;
@@ -216,9 +232,12 @@ public sealed class Es1WorldDraw {
 
 			// Each cell-animation part shows the cell the damage set for its sequence (Es1Mech.CellFrame); a HERC body's
 			// detail parts draw with bias 0.
+			// The effect lights are picked once for the machine, by its position and slot +0x14's radius.
+			var anchor = (_mech.Position, (int)_mech.ShapeRadius);
 			foreach (var (item, piece, pieceRoot) in _pieces) {
 				item.Transform = FrameToWorld(piece.TransformId);
 				item.RampBlock = block;
+				item.LightAnchor = anchor;
 				item.Visible = drawn && pieceRoot == root
 					&& OnScreen(piece.Gate, camera, focalShift, 0, null, _mech.CellFrame(piece.Gate.Sequence));
 			}
@@ -229,6 +248,7 @@ public sealed class Es1WorldDraw {
 			foreach (var (item, piece, hardpoint, transformId) in _mountPieces) {
 				item.Transform = FrameToWorld(transformId);
 				item.RampBlock = block;
+				item.LightAnchor = anchor;
 				// A destroyed mount's model is cleared, and the hardpoint draws nothing (WeaponMount_Destroy).
 				int cell = mounts[hardpoint]?.CellFrame(piece.Gate.Sequence) ?? 0;
 				item.Visible = drawn && mounts[hardpoint]?.Model != null && hardpoint < slots.Length && slots[hardpoint] != null

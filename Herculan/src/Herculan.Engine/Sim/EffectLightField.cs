@@ -14,7 +14,7 @@ namespace Herculan.Engine.Sim;
 /// <para>The whole derivation — slot layout, the constants, the selection test and the shade terms —
 /// is docs/retail/rendering/effect-lights.md.</para>
 /// </summary>
-public sealed class EffectLightField {
+public sealed class EffectLightField : Render.IEffectLightSlots {
 	/// <summary>
 	/// Slots the manager has, the <c>Rtl_VectorNew</c> count at <c>mgr+0x6c</c>. The original's
 	/// allocator has no full-table guard; <see cref="HandleCount"/> keeps it from being reached.
@@ -61,6 +61,16 @@ public sealed class EffectLightField {
 	/// <see cref="EffectLight.IsLive"/> before lighting with one.
 	/// </summary>
 	public IReadOnlyList<EffectLight> Slots => _slots;
+
+	/// <inheritdoc/>
+	int Render.IEffectLightSlots.SlotCount => SlotCount;
+
+	/// <inheritdoc/>
+	public bool TryGetLive(int slot, out Vec3i position, out int intensity, out int cullRadius) {
+		var light = _slots[slot];
+		(position, intensity, cullRadius) = (light.Position, light.Intensity, light.CullRadius);
+		return light.IsLive;
+	}
 
 	/// <summary>
 	/// <c>EffectLight_Construct</c> (<c>00407604</c>) and <c>LightManager_ClaimSlot</c> (<c>00406f38</c>) — takes a handle
