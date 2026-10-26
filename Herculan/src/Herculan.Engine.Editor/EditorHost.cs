@@ -809,6 +809,7 @@ public sealed class EditorHost {
 		mission.Fitter.RunRequest();
 		mission.Types.RunRequest();
 		mission.StartingConditions.RunRequest();
+		mission.Headings.RunRequest();
 		mission.Squad.RunRequest();
 		mission.Theater.RunRequest();
 		mission.Routes.RunRequest();

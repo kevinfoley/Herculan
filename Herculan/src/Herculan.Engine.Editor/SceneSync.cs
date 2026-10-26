@@ -259,8 +259,8 @@ internal sealed class SceneSync {
 /// One step of <see cref="PointMover"/>'s undo history that the scene is synced again after: a move
 /// (<see cref="PointMover"/>), a side change (<see cref="SideChanger"/>), an add (<see cref="StructurePlacer"/>,
 /// <see cref="HercPlacer"/>, <see cref="FlyerPlacer"/>, <see cref="VehiclePlacer"/>), a delete (<see cref="ObjectDeleter"/>), a
-/// fit or type change (<see cref="MachineFitter"/>, <see cref="RosterTypeEditor"/>), a starting condition set
-/// (<see cref="StartingConditionEditor"/>), a squad edit (<see cref="SquadEditor"/>), a
+/// fit or type change (<see cref="MachineFitter"/>, <see cref="RosterTypeEditor"/>), a starting condition or heading set
+/// (<see cref="StartingConditionEditor"/>, <see cref="StructureHeadingEditor"/>), a squad edit (<see cref="SquadEditor"/>), a
 /// route edit (<see cref="RouteEditor"/>), a trigger-area edit (<see cref="AreaEditor"/>), an order edit (<see cref="OrderEditor"/>),
 /// an action or wiring edit (<see cref="ActionEditor"/>), a timer edit (<see cref="TimerEditor"/>), a condition edit
 /// (<see cref="ConditionEditor"/>), a Present when set (<see cref="PresenceEditor"/>), a variant table edit

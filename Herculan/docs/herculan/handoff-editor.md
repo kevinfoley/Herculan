@@ -49,7 +49,7 @@ Beyond the gaps each doc lists:
 | 2, header | the objective type (offset 6, which picks the player's objective arm) and the training mission number; the zone after New mission. The difficulty and the two training cheats are overwritten at every shell load |
 | 3, movies; 5, debrief | the movies (the debrief's shown by number); the debrief's outcomes and their clauses; the loss line |
 | 4 (13), text package | the briefing movie (`0x8E`); the records after the first; a line's trailing newline |
-| 7 (2), headings | a heading for an object or a group |
+| 7 (2), headings | a heading for a herc, a flyer or a group |
 | 8 (3), routes | naming one from a group's own route field (row 16) |
 | 10 (5), triggers | the leftover text line (`0x44`) |
 | 12 (7), mechs | AI radar and cruise speed, the campaign variables it sets when put out of action (shown) |

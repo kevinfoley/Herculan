@@ -10,7 +10,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// One opened mission and everything the editor builds over it on the CPU: the scene, its objects placed from the
-/// <c>.MSN</c>'s layout (<see cref="Index"/>), the overlays, the picker, the two side panels, the Mission Settings window and the move, add, delete, fit, type, starting condition, route, trigger area, trigger, countdown, condition, presence, variant, order, objective, text and theater tools, all sharing one
+/// <c>.MSN</c>'s layout (<see cref="Index"/>), the overlays, the picker, the two side panels, the Mission Settings window and the move, add, delete, fit, type, starting condition, heading, route, trigger area, trigger, countdown, condition, presence, variant, order, objective, text and theater tools, all sharing one
 /// selection. Every edit, undo and redo syncs the scene and the indices with the document in place (<see cref="Sync"/>), and a
 /// change of theater or time of day dresses the scene in its world again in place (<see cref="Theater"/>). Opening another
 /// mission builds a new one of these rather than resetting this one; <see cref="MissionDrawables"/> is its GPU half.
@@ -62,6 +62,7 @@ internal sealed class EditorMission {
 		Variants = new VariantEditor(source, sceneIndex, Mover, Sync, Selection);
 		Types = new RosterTypeEditor(source, Mover, Sync);
 		StartingConditions = new StartingConditionEditor(source, Mover, Sync);
+		Headings = new StructureHeadingEditor(source, Mover, Sync);
 		Outliner.Placing = Placing;
 		Outliner.AreaPlacing = AreaPlacing;
 		Outliner.Objectives = Objectives;
@@ -75,7 +76,7 @@ internal sealed class EditorMission {
 		Properties = new PropertiesPanel(sceneIndex, Selection, source, Mover, Sides, Deleter, Members,
 			new SquadMachinePanel(Fitter, Squad, squad), new RosterFitView(Fitter, Types, Variants, choices, new UnitTypeCatalog(content)),
 			Routes, Placing, Areas, AreaPlacing, Orders, Objectives, Actions, Timers, Conditions, Presence, Variants,
-			StartingConditions, choices, new TriggerMessages(content), Names);
+			StartingConditions, Headings, choices, new TriggerMessages(content), Names);
 	}
 
 	/// <summary>
@@ -184,6 +185,9 @@ internal sealed class EditorMission {
 
 	/// <summary>Sets the starting condition of hercs, structures and ground vehicles in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public StartingConditionEditor StartingConditions { get; }
+
+	/// <summary>Sets the own headings of structures and ground vehicles in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	public StructureHeadingEditor Headings { get; }
 
 	/// <summary>Adds and removes the player's squadmates in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public SquadEditor Squad { get; }

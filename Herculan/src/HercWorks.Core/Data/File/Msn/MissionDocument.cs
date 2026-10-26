@@ -392,6 +392,28 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
+	/// Unsets <paramref name="field"/> in every base record of GUID <paramref name="guid"/>, those carrying its first record's
+	/// condition, leaving the records under other conditions setting it over the base where they hold, where
+	/// <see cref="SetField"/> unsets it in every record. Throws <see cref="InvalidOperationException"/> for a GUID no record
+	/// carries, and where a variant the base draws then supplies another value, which no overlay can unset.
+	/// </summary>
+	public MsnEdit UnsetBaseField(MsnField field, short guid) {
+		var before = Begin(field.Row);
+		foreach (var id in EntryOf(field.Row, guid).Base) {
+			field.Set(RecordAt(id)!, field.Unset);
+		}
+
+		var edit = End(before);
+		if (field.Get(EntryOf(field.Row, guid).Fields) != field.Unset) {
+			WriteBack(edit, after: false);
+			Rebuild();
+			throw new InvalidOperationException($"A variant supplies that field of row {field.Row}'s GUID {guid}, and an overlay cannot unset it.");
+		}
+
+		return edit;
+	}
+
+	/// <summary>
 	/// Sets header word <paramref name="word"/> (<c>script.dat</c> offset <c>word * 2</c>) as row 2 patches it to
 	/// <paramref name="value"/>. Row 2 patches one header, so the record written is, as for an overlay field, the header's
 	/// supplier of the word (<see cref="LayoutHeader.Supplier"/>), the last base record that sets it, else the first

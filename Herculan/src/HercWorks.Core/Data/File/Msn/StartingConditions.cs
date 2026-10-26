@@ -12,8 +12,9 @@ public sealed record StartingConditionOverride(short Condition, short Value);
 /// mission (docs/retail/campaign-continuity.md), and the edit of the base's value.
 ///
 /// <para>The edit leaves those records alone. A value other than 100 is written in the base's supplier
-/// (<see cref="MissionDocument.SetField"/>); 100, the field's unset value, is written in the base's records only, where
-/// <see cref="MissionDocument.SetField"/> would unset it in every record of the GUID and take the carry-over with it.</para>
+/// (<see cref="MissionDocument.SetField"/>); 100, the field's unset value, is written in the base's records only
+/// (<see cref="MissionDocument.UnsetBaseField"/>), where <see cref="MissionDocument.SetField"/> would unset it in every
+/// record of the GUID and take the carry-over with it.</para>
 /// </summary>
 public static class StartingConditions {
 	/// <summary>Whether row <paramref name="row"/>'s records carry a starting condition: the herc and structure rosters.</summary>
@@ -68,23 +69,16 @@ public static class StartingConditions {
 		}
 
 		var field = MsnField.StartingCondition(row);
-		return document.Change(() => {
-			if (value != field.Unset) {
-				document.SetField(field, guid, value);
-				return;
-			}
+		if (value != field.Unset) {
+			return document.Change(() => document.SetField(field, guid, value));
+		}
 
-			foreach (var record in Entry(document, row, guid).Base) {
-				if (field.Get(document.RecordAt(record)!) != field.Unset) {
-					document.RewriteAt<MapObject>(record.Row, record.Index, written => field.Set(written, field.Unset));
-				}
-			}
-
-			if (Current(document, row, guid) != value) {
-				throw new InvalidOperationException($"The random choice it draws from gives it another starting condition, so it "
-					+ $"can't be set to {value}% here.");
-			}
-		});
+		try {
+			return document.Change(() => document.UnsetBaseField(field, guid));
+		} catch (InvalidOperationException) when (Current(document, row, guid) != value) {
+			throw new InvalidOperationException($"The random choice it draws from gives it another starting condition, so it "
+				+ $"can't be set to {value}% here.");
+		}
 	}
 
 	private static LayoutEntry Entry(MissionDocument document, int row, short guid) =>

@@ -249,6 +249,17 @@ public sealed class MsnField {
 		_ => throw new ArgumentOutOfRangeException(nameof(row), row, "Rows 12 to 14 are the rosters."),
 	};
 
+	/// <summary>The row-7 heading a roster object of row <paramref name="row"/> (12 to 14) names: the records' <c>HeadingRef</c>.</summary>
+	public static MsnField RosterHeading(int row) => row switch {
+		12 => new(12, MechRosterEntry144.HeadingRefWord,
+			record => ((MechRosterEntry144)record).HeadingRef, (record, value) => ((MechRosterEntry144)record).HeadingRef = value),
+		13 => new(13, FlyerRosterEntry102.HeadingRefWord,
+			record => ((FlyerRosterEntry102)record).HeadingRef, (record, value) => ((FlyerRosterEntry102)record).HeadingRef = value),
+		14 => new(14, BaseRosterEntry62.HeadingRefWord,
+			record => ((BaseRosterEntry62)record).HeadingRef, (record, value) => ((BaseRosterEntry62)record).HeadingRef = value),
+		_ => throw new ArgumentOutOfRangeException(nameof(row), row, "Rows 12 to 14 are the rosters."),
+	};
+
 	/// <summary>
 	/// The starting condition of a herc, row 12's <see cref="MechRosterEntry144.StartingCondition"/>, or of a structure or
 	/// ground vehicle, row 14's <see cref="BaseRosterEntry62.StartingCondition"/>. A flyer's record has none.
