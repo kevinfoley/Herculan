@@ -160,7 +160,7 @@ A zone shape is drawn through the object list ([below](#which-objects-are-drawn)
 
 ### The frame's draw
 
-`ObjList_DrawFrameObjects` (`00021008`), given a blend byte and the camera, draws a frame's objects. `Sim_RenderFrame` passes the byte at `000b5b65`, `000364f8` passes 0. It:
+`ObjList_DrawFrameObjects` (`00021008`), given a blend byte and the camera, draws a frame's objects. `Sim_RenderFrame` passes the byte at `000b5b65`, `MfdMissileViewScreen_Paint` (`000364f8`) passes 0. It:
 
 1. stores the camera's position in the [light manager](#effect-lights) with `LightManager_SetCameraPosition` (`00004f60`);
 2. calls slot `+4` of every element of the ground-shape pool `000af044` ([the ground-shape set](../formats/wld-world.md#the-ground-shape-set)) within 30000 of the camera by `Math_DistanceBetweenPoints`, walking it back from the end with `Pool_Prev`;
@@ -192,7 +192,7 @@ The bands are ES2's ([distance colour bands](../../retail/rendering/distance-fog
 
 - **`WorldShades_DistanceBand` (`00025cb4`)** counts the thresholds the distance has reached, unsigned, at most one fewer than there are, from `WorldShades_BandsTagged` (`000afdc4`, count `000bc5b8`) for a non-zero tag and `WorldShades_BandsTag0` (`000afdc8`, count `000bc5ba`) for tag 0, a tag-5 object first adding `WorldShades_DistanceOffsets` (`000bc5c6`) entry 0, or entry 1 when its radius is 5000 or more, clamped at 0.
 - **`WorldShades_ApplyForObject` (`00025d44`)**, given the blend byte, the distance (clamped at 0) and the object, re-points each `{ramp, column}` pair of the tag's `SHADES.DAT` list at range (column × rows + band) of `WorldShades_LevelRanges` (`000afdbc`), rows being `000bc5be`, with `Palette_SetRampsToRange` (`00028044`). With the blend byte set it passes `Palette_SetRampsToRangeList` (`000280e4`, [the palette module](palette.md#differences-from-es2)) a list of two ranges instead: the band's range less its last *q* + 1 indices, *q* being its length >> 2, then *q* + 1 indices from (start + length − *q*) of the band's `WorldShades_BlendRanges` (`000afdc0`) range, the two range pointers in a two-entry array. While `000928ea` is set it runs `WorldShades_ResetRamps` instead.
-- **`WorldShades_ResetRamps` (`00025e88`)** points ramps 0, 2, 4, 6, 8, 10, 12 and 14, one call each, at the range {16, 16}, both words `0x10`: start 16 and length 16, so each of them runs over palette indices 16 to 31. ES2's last is ramp 24. `000364f8` sets `000928ea` around its call of `ObjList_DrawFrameObjects` and clears it after.
+- **`WorldShades_ResetRamps` (`00025e88`)** points ramps 0, 2, 4, 6, 8, 10, 12 and 14, one call each, at the range {16, 16}, both words `0x10`: start 16 and length 16, so each of them runs over palette indices 16 to 31. ES2's last is ramp 24. `MfdMissileViewScreen_Paint` (`000364f8`), [the missile camera's](../simulation/mfd-missile-camera.md#painting), sets `000928ea` around its call of `ObjList_DrawFrameObjects` and clears it after.
 - **`WorldShades_IsBeyondLastBand` (`00025f38`)**, given the distance and the object, takes the same table and offsets, a tag-8 object adding offset entry 0, and is true when the distance exceeds the table's last threshold, unsigned. It is the cull above.
 
 `Palette_SetRampsToRange` (`00028044`), given the range, the count and the first ramp, in stack order, is ES2's: it writes the range's consecutive indices into each record of `g_ShadeRamps` (`00092c34`) from the first, and its length, then copies the records into the raster's table with `Raster_SetColourRamps`.
@@ -232,7 +232,7 @@ Every zone shape object carries tag 0: neither `TSObj_Ctor` nor `Terrain_LoadZon
 
 In `WORLD0`, for one, a near shape's lit faces shade across palette entries 240 to 249, and one in the last band, short of the cull at 271500, is entry 253 whatever its light. Ramp 14 keeps the range of the last object that set it; the lists of tags 1 to 7 leave it alone.
 
-In `000364f8`'s second view, which draws through `ObjList_DrawFrameObjects` with `000928ea` set, ramp 14 takes `WorldShades_ResetRamps`' range {16, 16} instead, and the cull still applies ([above](#the-distance-bands)). Two other views draw the zone's shapes straight through each object's slot `+4`, outside the object list, with no band and no cull:
+In the missile camera's view, which `MfdMissileViewScreen_Paint` (`000364f8`) draws through `ObjList_DrawFrameObjects` with `000928ea` set, ramp 14 takes `WorldShades_ResetRamps`' range {16, 16} instead, and the cull still applies ([above](#the-distance-bands)). Two other views draw the zone's shapes straight through each object's slot `+4`, outside the object list, with no band and no cull:
 
 - **`MfdMapScreen_Paint` (`00036c2c`)**, the MFD's NAV MAP, fills its view with colour `0x17`, puts its camera 200000 above the active view object, calls `WorldShades_ResetRamps`, draws every zone shape, then plots a cross with `Gfx_PlotPixel` ([the NAV MAP](../simulation/mfd-nav-map.md#the-paint)).
 - **`00040d4c`**, a cockpit map, fills with colour `0x36`, draws grid lines in `0x37` every 50000 units, points ramp 14 at the one-entry range {56, 1} with `Palette_SetRampsToRange`, so every lit face is palette entry 56, and draws every zone shape with the word its shape instance's `+8` points at set to 1 for the draw and 0 after.

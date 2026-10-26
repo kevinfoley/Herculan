@@ -91,7 +91,7 @@ The sky is a backdrop of flat palette fills, painted into the view every frame b
 | 6 | `+0x60` | ground band count |
 | 7 | `+0x30` | the line's vertical offset in rows: `Hzline_BuildHorizon` adds it and `Hzline_DrawWithOffset` adds half of it again |
 
-So the sky is the palette run from 208 up to `C` = 223 in `WORLD0`, `WORLD2` and `WORLD6`, and up to `C` = 222 in the other seven, which never draw entry 223. Shorts 4–6 reach only a branch no frame takes ([Below the line](#below-the-line)). `World_LoadTheater` also stores `short4 + short6 - 1` at `0049aee8` ([Open](#open)).
+So the sky is the palette run from 208 up to `C` = 223 in `WORLD0`, `WORLD2` and `WORLD6`, and up to `C` = 222 in the other seven, which never draw entry 223. Shorts 4–6 reach only a branch no frame takes ([Below the line](#below-the-line)). `World_LoadTheater` also stores `short4 + short6 - 1` at `0049aee8` ([Open](#open)). The constructor's defaults stand where nothing overwrites them: `+0x6c` 1, `+0x54` 3, `+0x58` 16, `+0x5c` 1, `+0x60` 8, `+0x64` and `+0x68` 1, the bank `+0x50` 0, `+0x70` 0 and `+0x71` 1.
 
 ### The horizon line
 
