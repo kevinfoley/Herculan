@@ -6,7 +6,7 @@
 - how far a gun round flies depends on how long the simulation's ticks are, since its life counts ticks while each step scales with the tick;
 - a laser or particle beam is a flat-colored cross of two ribbons standing in the world, its weapon's width in world units, so it thins with distance, where ES2's is a textured ribbon turned to face the camera and never drawn thinner than four pixels; the color is the weapon's, 88 for the lasers and 10 for the particle beams, where every straight ES2 beam draws the same orange and white;
 - a beam is drawn as one piece from the muzzle to where it stops, where ES2's is cut into 5000-unit pieces;
-- the grenade launcher, `GREN`, spends a round on each throw and launches nothing ([the grenade](#the-grenade)).
+- the grenade launcher, `GREN`, spends a round on each throw and launches nothing ([the grenade](#the-grenade)); no retail HERC carries it and the armory never offers it ([cut content](../cut-content.md#weapons)).
 
 Addresses are `ES1DBSIM` image addresses ([the X-32 executable](../formats/x32-executable.md#the-image)); ES2's are DBSIM's. Every function here removes its own arguments, so argument lists are in stack order ([calling conventions](../formats/compiler.md#calling-conventions)). The mounts' fire dispatches that call these files' shot functions are in [the mount classes](weapon-mount-classes.md#firing).
 
@@ -183,6 +183,5 @@ Slot `+4` of `BeamTracerVtable`, by its padding `000087dd`. Every tracer draws a
 
 - **Open:** `00003364` and `0001bba4`, which fire gun rounds of subtype 2 (and `0001bba4` a missile), found by `es2_xref.py` and read only at their calls: the structures' and the flyers' guns, if their files say so.
 - **Open:** what the word `000af11c`, which the pool's static initializer zeroes, is: `es2_xref.py` finds that one reference.
-- **Open:** whether any retail HERC carries `GREN`, and so whether a player can throw nothing. A retail check: fire `GREN` with its row armed and watch for a projectile and a hit; the magazine count drops by one a throw.
 - **Open:** what reads a tracer's `+0x3b`, which holds a stale word.
 - **Open:** the retail look of a beam against these readings: a laser fired away from the camera shows the cross end-on, one fired along the world's X axis shows its upright ribbon alone, and a far beam is thinner on screen than a near one, with no four-pixel floor.
