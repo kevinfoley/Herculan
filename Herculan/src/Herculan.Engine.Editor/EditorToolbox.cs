@@ -17,6 +17,16 @@ internal enum ToolboxKind {
 	Structure,
 }
 
+/// <summary>One of the Toolbox's tabs, by what it adds.</summary>
+internal enum ToolboxTab {
+	Routes,
+	TriggerAreas,
+	Hercs,
+	Flyers,
+	GroundVehicles,
+	Structures,
+}
+
 /// <summary>What the toolbox asks the editor to add: a herc, flyer, ground vehicle or structure type, its side, where, and to which group.</summary>
 /// <param name="AtPointer">
 /// Whether it goes on the ground under the pointer, where an entry was dragged and let go over the view; otherwise on
@@ -29,18 +39,20 @@ internal sealed record ToolboxRequest(ToolboxKind Kind, int TypeIndex, MissionSi
 internal readonly record struct ToolboxDrag(ToolboxKind Kind, int TypeIndex, MissionSide Side);
 
 /// <summary>
-/// The Toolbox window: what the editor can add to the open mission, the herc, flyer, ground vehicle and structure types of
-/// <see cref="UnitTypeCatalog"/>, with the types it leaves out named in a note. An entry dragged out and let go over the view asks for it on the ground under
-/// the pointer, a flyer above it; a double-click, or Add with an entry chosen, asks for it at the middle of the view, which
-/// a gamepad's pointer reaches as easily. The side it fights on is chosen above the lists, and a new herc's or flyer's group
+/// The Toolbox, docked in the bottom half of the left of the window under the Mission panel: what the editor can add to the
+/// open mission, one tab each for Routes (the route tool's New route, <see cref="RoutePlacing"/>), Trigger Areas (the
+/// trigger-area tool's New box and New circle, <see cref="AreaPlacing"/>), and the herc, flyer, ground vehicle and structure
+/// types of <see cref="UnitTypeCatalog"/>, with the types it leaves out named in a note. A placing mode started elsewhere
+/// brings its tab up. An entry dragged out and let go over the view asks for it on the ground under
+/// the pointer, a flyer above it; a double-click, or Add with an entry of the tab shown chosen, asks for it at the middle of
+/// the view, which a gamepad's pointer reaches as easily. The side it fights on is chosen above the list, and a new herc's or flyer's group
 /// gets the first order a new group on that side gets (<see cref="HercWorks.Core.Data.File.Msn.HercGroups"/>), which the
 /// lists' notes say; or it joins the selected group instead, a herc a herc group, a flyer a flyer group, and a ground vehicle
 /// or a structure a structure group, taking that group's side, while the join is ticked for that group, as it reads unticked
-/// for any other; while the group cannot take the entry chosen or dragged, by the check its add refuses by, the choice to
-/// join is disabled with the reason under it. While an entry is dragged over the view, what it would add is drawn where it would stand
-/// (<see cref="DropPreview"/>). What an add writes is <see cref="HercPlacer"/>'s, <see cref="FlyerPlacer"/>'s,
-/// <see cref="VehiclePlacer"/>'s and <see cref="StructurePlacer"/>'s. Above the lists the window holds the route tool's
-/// New route (<see cref="RoutePlacing"/>) and the trigger-area tool's New box and New circle (<see cref="AreaPlacing"/>).
+/// for any other; while the group cannot take the tab's kind or the entry dragged, by the check its add refuses by, the choice
+/// to join is disabled with the reason under it. While an entry is dragged over the view, what it would add is drawn where it
+/// would stand (<see cref="DropPreview"/>). What an add writes is <see cref="HercPlacer"/>'s, <see cref="FlyerPlacer"/>'s,
+/// <see cref="VehiclePlacer"/>'s and <see cref="StructurePlacer"/>'s.
 /// </summary>
 internal sealed class EditorToolbox {
 	/// <summary>Why the selected group cannot be joined once the <c>.MSN</c> has no such group.</summary>
@@ -53,12 +65,6 @@ internal sealed class EditorToolbox {
 		_ => "Not found.",
 	};
 
-	// Where it first opens and how big, in pixels on a 100% display (ScaledImGui.Scaled): beside the Mission panel,
-	// at the bottom of the window.
-	private const float Width = 260f;
-	private const float Height = 400f;
-	private const float Margin = 12f;
-
 	private readonly (ToolboxKind Kind, int TypeIndex, string Name)[] _entries;
 	private MissionSide _side = MissionSide.Human;
 
@@ -67,13 +73,25 @@ internal sealed class EditorToolbox {
 	private short? _joinTicked;
 
 	// The group the selection is or belongs to, as the last frame drawn was told, and why an entry of each kind cannot
-	// join it; and the group an add joins when "Join" is ticked, null while the entry chosen cannot.
+	// join it; and the group an add joins when "Join" is ticked, null while the tab shown, or the entry dragged, cannot.
 	private short? _selectedGroup;
 	private Func<ToolboxKind, string?>? _whyNotJoin;
 	private short? _joinGroup;
 	private (ToolboxKind Kind, int TypeIndex)? _chosen;
 	private (ToolboxKind Kind, int TypeIndex)? _dragging;
 	private ToolboxRequest? _request;
+
+	private static readonly (ToolboxTab Tab, string Label)[] TabLabels = [
+		(ToolboxTab.Routes, "Routes"), (ToolboxTab.TriggerAreas, "Trigger Areas"), (ToolboxTab.Hercs, "Hercs"),
+		(ToolboxTab.Flyers, "Flyers"), (ToolboxTab.GroundVehicles, "Ground Vehicles"), (ToolboxTab.Structures, "Structures"),
+	];
+
+	// The tab shown.
+	private ToolboxTab _tab = ToolboxTab.Routes;
+
+	// Whether the route and the area placing modes were on at the last frame drawn, so the frame one starts brings its tab up.
+	private bool _routesWereActive;
+	private bool _areasWereActive;
 
 	// The flyer types not offered, which the install has no data for; null when it has data for each.
 	private readonly string? _flyersLeftOut;
@@ -119,41 +137,62 @@ internal sealed class EditorToolbox {
 	/// <param name="enabled">False while nothing can be added, such as during a move.</param>
 	/// <param name="selectedGroup">The row-16 GUID of the herc, flyer or structure group the selection is or belongs to, which an add can join; or null.</param>
 	/// <param name="selectedGroupName">What <paramref name="selectedGroup"/> is called (<see cref="MissionNames.GroupBrief"/>), or null.</param>
-	/// <param name="groupKind">The entry kind <paramref name="selectedGroup"/>'s members are, whose join is checked while no entry is chosen.</param>
 	/// <param name="whyNotJoin">
 	/// Why <paramref name="selectedGroup"/> cannot take an entry of a kind, or null when it can: the check that kind's add
-	/// refuses by. The checkbox is disabled, with the reason under it, while the entry chosen or dragged is refused.
+	/// refuses by. The checkbox is disabled, with the reason under it, while the tab shown, or the entry dragged, is refused.
 	/// </param>
-	/// <param name="whyNoHerc">Why no herc can be added (<see cref="HercPlacer.WhyNoAdd"/>), shown in the Hercs section, or null.</param>
-	/// <param name="whyNoFlyer">Why no flyer can be added (<see cref="FlyerPlacer.WhyNoAdd"/>), shown in the Flyers section, or null.</param>
-	/// <param name="whyNoVehicle">Why no ground vehicle can be added (<see cref="VehiclePlacer.WhyNoAdd"/>), shown in the Ground vehicles section, or null.</param>
-	/// <param name="whyNoStructure">Why no structure can be added (<see cref="StructurePlacer.WhyNoAdd"/>), shown in the Structures section, or null.</param>
-	/// <param name="routeEntry">
-	/// Draws the placing tools' entries (<see cref="RoutePlacing.DrawToolboxEntry"/>, <see cref="AreaPlacing.DrawToolboxEntry"/>)
-	/// above the lists, or null.
-	/// </param>
-	public void Draw(Vector2 display, bool enabled, short? selectedGroup, string? selectedGroupName, ToolboxKind groupKind,
+	/// <param name="whyNoHerc">Why no herc can be added (<see cref="HercPlacer.WhyNoAdd"/>), shown in the Hercs tab, or null.</param>
+	/// <param name="whyNoFlyer">Why no flyer can be added (<see cref="FlyerPlacer.WhyNoAdd"/>), shown in the Flyers tab, or null.</param>
+	/// <param name="whyNoVehicle">Why no ground vehicle can be added (<see cref="VehiclePlacer.WhyNoAdd"/>), shown in the Ground vehicles tab, or null.</param>
+	/// <param name="whyNoStructure">Why no structure can be added (<see cref="StructurePlacer.WhyNoAdd"/>), shown in the Structures tab, or null.</param>
+	/// <param name="routes">The route-placing mode, whose entry (<see cref="RoutePlacing.DrawToolboxEntry"/>) the Routes tab holds.</param>
+	/// <param name="areas">The area-placing mode, whose entry (<see cref="AreaPlacing.DrawToolboxEntry"/>) the Trigger Areas tab holds.</param>
+	public void Draw(Vector2 display, float menuBarHeight, bool enabled, short? selectedGroup, string? selectedGroupName,
 			Func<ToolboxKind, string?>? whyNotJoin, string? whyNoHerc, string? whyNoFlyer, string? whyNoVehicle,
-			string? whyNoStructure, Action? routeEntry = null) {
+			string? whyNoStructure, RoutePlacing routes, AreaPlacing areas) {
 		_whyNoHerc = whyNoHerc;
 		_whyNoFlyer = whyNoFlyer;
 		_whyNoVehicle = whyNoVehicle;
 		_whyNoStructure = whyNoStructure;
 		_selectedGroup = selectedGroup;
 		_whyNotJoin = whyNotJoin;
-		var joinKind = (_dragging ?? _chosen)?.Kind ?? groupKind;
-		string? whyNot = selectedGroup != null ? whyNotJoin?.Invoke(joinKind) : null;
-		_joinGroup = selectedGroup != null && whyNot == null ? selectedGroup : null;
-		ImGui.SetNextWindowPos(new Vector2(ScaledImGui.Scaled(MissionOutliner.PanelWidth + Margin),
-			display.Y - ScaledImGui.Scaled(Height + Margin)), ImGuiCond.FirstUseEver);
-		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(Width), ScaledImGui.Scaled(Height)), ImGuiCond.FirstUseEver);
-		if (ImGui.Begin("Toolbox")) {
-			if (routeEntry != null) {
-				routeEntry();
-				ImGui.Separator();
-			}
+		_joinGroup = null;
 
-			DrawContents(enabled, selectedGroupName, whyNot);
+		float top = menuBarHeight + MissionOutliner.PanelHeight(display, menuBarHeight);
+		ImGui.SetNextWindowPos(new Vector2(0f, top));
+		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(MissionOutliner.PanelWidth), display.Y - top));
+		// A placing mode started elsewhere (the Mission panel's lists, a route view) brings its tab up, which holds its Finish
+		// and Cancel.
+		if (Opened(routes.Active, ref _routesWereActive)) {
+			_tab = ToolboxTab.Routes;
+		}
+
+		if (Opened(areas.Active, ref _areasWereActive)) {
+			_tab = ToolboxTab.TriggerAreas;
+		}
+
+		if (ImGui.Begin("Toolbox", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse)) {
+			DrawTabs();
+			switch (_tab) {
+				case ToolboxTab.Routes:
+					routes.DrawToolboxEntry();
+					break;
+				case ToolboxTab.TriggerAreas:
+					areas.DrawToolboxEntry();
+					break;
+				case ToolboxTab.Hercs:
+					DrawKind(ToolboxKind.Herc, enabled, selectedGroupName);
+					break;
+				case ToolboxTab.Flyers:
+					DrawKind(ToolboxKind.Flyer, enabled, selectedGroupName);
+					break;
+				case ToolboxTab.GroundVehicles:
+					DrawKind(ToolboxKind.Vehicle, enabled, selectedGroupName);
+					break;
+				default:
+					DrawKind(ToolboxKind.Structure, enabled, selectedGroupName);
+					break;
+			}
 		}
 
 		ImGui.End();
@@ -173,7 +212,49 @@ internal sealed class EditorToolbox {
 		}
 	}
 
-	private void DrawContents(bool enabled, string? selectedGroup, string? whyNotJoin) {
+	// The tabs as a row of buttons coloured as ImGui colours its tabs, wrapping onto another line where the panel is too
+	// narrow for the next, since an ImGui tab bar only shrinks or scrolls its tabs; then a separator.
+	private void DrawTabs() {
+		var style = ImGui.GetStyle();
+		float right = ImGui.GetWindowPos().X + ImGui.GetWindowContentRegionMax().X;
+		for (int i = 0; i < TabLabels.Length; i++) {
+			var (tab, label) = TabLabels[i];
+			bool shown = tab == _tab;
+			ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetColorU32(shown ? ImGuiCol.TabActive : ImGuiCol.Tab));
+			ImGui.PushStyleColor(ImGuiCol.ButtonHovered, ImGui.GetColorU32(ImGuiCol.TabHovered));
+			ImGui.PushStyleColor(ImGuiCol.ButtonActive, ImGui.GetColorU32(ImGuiCol.TabActive));
+			if (ImGui.Button(label)) {
+				_tab = tab;
+			}
+
+			ImGui.PopStyleColor(3);
+			if (i + 1 < TabLabels.Length) {
+				float next = ImGui.CalcTextSize(TabLabels[i + 1].Label).X + style.FramePadding.X * 2f;
+				if (ImGui.GetItemRectMax().X + style.ItemSpacing.X + next <= right) {
+					ImGui.SameLine();
+				}
+			}
+		}
+
+		ImGui.Separator();
+	}
+
+	// Whether a placing mode has just become <active>, by what the last frame drawn saw in <was>.
+	private static bool Opened(bool active, ref bool was) {
+		bool opened = active && !was;
+		was = active;
+		return opened;
+	}
+
+	// A tab of entries of <kind>: the shared add controls, then what a new one of the kind gets, why none can be added, and
+	// the entries, which scroll under the controls.
+	private void DrawKind(ToolboxKind kind, bool enabled, string? selectedGroupName) {
+		string? whyNot = _selectedGroup != null ? _whyNotJoin?.Invoke(_dragging?.Kind ?? kind) : null;
+		_joinGroup = _selectedGroup != null && whyNot == null ? _selectedGroup : null;
+		DrawContents(kind, enabled, selectedGroupName, whyNot);
+	}
+
+	private void DrawContents(ToolboxKind kind, bool enabled, string? selectedGroup, string? whyNotJoin) {
 		ImGui.TextWrapped("Drag an entry onto the ground, or double-click it to add it in the middle of the view.");
 		// Unticked while it cannot join, since an add then gets a group of its own, and for any group but the one it was ticked for.
 		bool canJoin = _joinGroup != null;
@@ -206,8 +287,10 @@ internal sealed class EditorToolbox {
 			EditorText.Note("It takes the group's team.");
 		}
 
-		ImGui.BeginDisabled(_chosen is not var (chosenKind, _) || !Allowed(chosenKind, enabled));
-		if (ImGui.Button("Add in the middle of the view") && _chosen is var (kind, type)) {
+		// Only an entry of this tab's kind: one chosen in another tab is out of sight.
+		bool allowed = Allowed(kind, enabled);
+		ImGui.BeginDisabled(_chosen is not var (chosenKind, _) || chosenKind != kind || !allowed);
+		if (ImGui.Button("Add in the middle of the view") && _chosen is var (_, type)) {
 			Request(kind, type, atPointer: false);
 		}
 
@@ -218,38 +301,33 @@ internal sealed class EditorToolbox {
 		}
 
 		ImGui.Separator();
+		switch (kind) {
+			case ToolboxKind.Herc:
+				EditorText.Note(_side == MissionSide.Cybrid
+					? "A new herc gets a group of its own, which hunts the player's squad from where it stands."
+					: "A new herc gets a group of its own, which patrols where it stands, its leader fighting any enemy it finds.");
+				break;
+			case ToolboxKind.Flyer:
+				EditorText.Note(_side == MissionSide.Cybrid
+					? "A new flyer gets a group of its own, which hunts the player's squad from its route."
+					: "A new flyer gets a group of its own, which patrols its route and attacks any HERC or structure it finds.");
+				break;
+			case ToolboxKind.Vehicle:
+				EditorText.Note("A new ground vehicle gets a convoy of its own, which drives its route. Add waypoints to its route to set it moving.");
+				break;
+		}
+
+		EditorText.Reason(WhyNo(kind));
 		ImGui.BeginChild("entries");
-		if (ImGui.CollapsingHeader("Hercs", ImGuiTreeNodeFlags.DefaultOpen)) {
-			EditorText.Note(_side == MissionSide.Cybrid
-				? "A new herc gets a group of its own, which hunts the player's squad from where it stands."
-				: "A new herc gets a group of its own, which patrols where it stands, its leader fighting any enemy it finds.");
-			EditorText.Reason(_whyNoHerc);
-			DrawEntries(ToolboxKind.Herc, Allowed(ToolboxKind.Herc, enabled));
-		}
+		DrawEntries(kind, allowed);
+		string? leftOut = kind switch {
+			ToolboxKind.Flyer => _flyersLeftOut,
+			ToolboxKind.Vehicle => _vehiclesLeftOut,
+			_ => null
+		};
 
-		if (ImGui.CollapsingHeader("Flyers", ImGuiTreeNodeFlags.DefaultOpen)) {
-			EditorText.Note(_side == MissionSide.Cybrid
-				? "A new flyer gets a group of its own, which hunts the player's squad from its route."
-				: "A new flyer gets a group of its own, which patrols its route and attacks any HERC or structure it finds.");
-			EditorText.Reason(_whyNoFlyer);
-			DrawEntries(ToolboxKind.Flyer, Allowed(ToolboxKind.Flyer, enabled));
-			if (_flyersLeftOut != null) {
-				EditorText.Note(_flyersLeftOut);
-			}
-		}
-
-		if (ImGui.CollapsingHeader("Ground vehicles", ImGuiTreeNodeFlags.DefaultOpen)) {
-			EditorText.Note("A new ground vehicle gets a convoy of its own, which drives its route. Add waypoints to its route to set it moving.");
-			EditorText.Reason(_whyNoVehicle);
-			DrawEntries(ToolboxKind.Vehicle, Allowed(ToolboxKind.Vehicle, enabled));
-			if (_vehiclesLeftOut != null) {
-				EditorText.Note(_vehiclesLeftOut);
-			}
-		}
-
-		if (ImGui.CollapsingHeader("Structures", ImGuiTreeNodeFlags.DefaultOpen)) {
-			EditorText.Reason(_whyNoStructure);
-			DrawEntries(ToolboxKind.Structure, Allowed(ToolboxKind.Structure, enabled));
+		if (leftOut != null) {
+			EditorText.Note(leftOut);
 		}
 
 		ImGui.EndChild();
@@ -277,13 +355,15 @@ internal sealed class EditorToolbox {
 	}
 
 	// Whether an entry of <kind> can be added now: the toolbox is <enabled> and that kind's placer refuses nothing.
-	private bool Allowed(ToolboxKind kind, bool enabled) =>
-		enabled && kind switch {
-			ToolboxKind.Herc => _whyNoHerc,
-			ToolboxKind.Flyer => _whyNoFlyer,
-			ToolboxKind.Vehicle => _whyNoVehicle,
-			_ => _whyNoStructure
-		} == null;
+	private bool Allowed(ToolboxKind kind, bool enabled) => enabled && WhyNo(kind) == null;
+
+	// Why no entry of <kind> can be added, as the last frame drawn was told, or null.
+	private string? WhyNo(ToolboxKind kind) => kind switch {
+		ToolboxKind.Herc => _whyNoHerc,
+		ToolboxKind.Flyer => _whyNoFlyer,
+		ToolboxKind.Vehicle => _whyNoVehicle,
+		_ => _whyNoStructure
+	};
 
 	// Asks for an entry of <kind> to be added, joining the selected group when the checkbox is ticked and enabled as drawn.
 	// A double-click can choose an entry of another kind in the frame it asks for it, so the join is checked again for

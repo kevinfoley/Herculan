@@ -143,7 +143,6 @@ internal sealed class AreaPlacing {
 
 	/// <summary>The Toolbox's trigger-area entry: New box and New circle, or while placing Cancel.</summary>
 	public void DrawToolboxEntry() {
-		ImGui.Text("Trigger areas");
 		if (Active) {
 			ImGui.Text(Circle ? "New circle" : "New box");
 			ImGui.SameLine();

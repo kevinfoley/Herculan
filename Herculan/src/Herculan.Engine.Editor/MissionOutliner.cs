@@ -7,7 +7,7 @@ using ImGuiNET;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The Mission panel down the left of the window: the mission check's findings, then every group (with its members), trigger area,
+/// The Mission panel in the top half of the left of the window: the mission check's findings, then every group (with its members), trigger area,
 /// trigger (row-10 action), countdown (row-11 timer), route, win and lose condition (row-17 objective) and random choice as a
 /// list, the objective lines the player reads apart from the win and lose conditions, the trigger areas and routes with the
 /// buttons that start placing a new one, and the triggers, countdowns and win and lose conditions with the buttons that create
@@ -79,9 +79,15 @@ internal sealed class MissionOutliner {
 	/// <summary>What the Random choices list reads; set once the mission's tools are built.</summary>
 	public RandomChoices? Choices { get; set; }
 
+	/// <summary>
+	/// The panel's height: the top half of the left side below the menu bar, the Toolbox (<see cref="EditorToolbox"/>) docked
+	/// in the bottom half.
+	/// </summary>
+	public static float PanelHeight(Vector2 display, float menuBarHeight) => MathF.Floor((display.Y - menuBarHeight) / 2f);
+
 	public void Draw(Vector2 display, float menuBarHeight) {
 		ImGui.SetNextWindowPos(new Vector2(0f, menuBarHeight));
-		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(PanelWidth), display.Y - menuBarHeight));
+		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(PanelWidth), PanelHeight(display, menuBarHeight)));
 		ImGui.Begin("Mission", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse);
 
 		DrawProblems();

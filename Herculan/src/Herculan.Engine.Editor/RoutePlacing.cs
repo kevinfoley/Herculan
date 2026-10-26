@@ -189,7 +189,6 @@ internal sealed class RoutePlacing {
 
 	/// <summary>The Toolbox's route entry: New route, or while placing what has been placed and Finish.</summary>
 	public void DrawToolboxEntry() {
-		ImGui.Text("Routes");
 		if (Active) {
 			ImGui.Text(Appending ? $"Adding waypoints: {_placed.Count} placed" : $"New route: {_placed.Count} waypoint(s) placed");
 			if (ImGui.Button("Finish")) {

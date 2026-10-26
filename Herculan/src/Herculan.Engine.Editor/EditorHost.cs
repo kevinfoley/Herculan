@@ -604,18 +604,14 @@ public sealed class EditorHost {
 			_mission.AreaPlacing.DrawLabels(_camera, display, menuBarHeight);
 			_mission.Outliner.Draw(display, menuBarHeight);
 			_mission.Properties.Draw(display, menuBarHeight);
-			var (joinable, joinKind) = JoinableGroup(_mission);
+			var joinable = JoinableGroup(_mission);
 			var mission = _mission;
 			string? joinName = joinable is { } joining ? mission.Names.GroupBrief(joining).Full : null;
-			_toolbox.Draw(display,
-				enabled: !mission.Gizmo.Dragging && !mission.PlacingAny, joinable, joinName, joinKind,
+			_toolbox.Draw(display, menuBarHeight,
+				enabled: !mission.Gizmo.Dragging && !mission.PlacingAny, joinable, joinName,
 				joinable is { } group ? kind => WhyNotJoin(mission, group, kind) : null,
 				mission.Hercs.WhyNoAdd, mission.Flyers.WhyNoAdd, mission.Vehicles.WhyNoAdd, mission.Placer.WhyNoAdd,
-				() => {
-					mission.Placing.DrawToolboxEntry();
-					ImGui.Separator();
-					mission.AreaPlacing.DrawToolboxEntry();
-				});
+				mission.Placing, mission.AreaPlacing);
 			mission.Settings.Draw();
 		}
 
@@ -708,9 +704,8 @@ public sealed class EditorHost {
 	}
 
 	// The herc, flyer or structure group the selection is, or a member of, which a Toolbox add can join, by its row-16 GUID
-	// in the layout, and the Toolbox entry kind its members are, whose join the Toolbox checks while no entry is chosen. The
-	// player's squad is offered so the Toolbox can say why it takes no herc.
-	private static (short? Group, ToolboxKind Kind) JoinableGroup(EditorMission mission) {
+	// in the layout. The player's squad is offered so the Toolbox can say why it takes no herc.
+	private static short? JoinableGroup(EditorMission mission) {
 		var index = mission.Index;
 		var group = mission.Selection.Current switch {
 			GroupSelection selected => index.Group(selected.Guid),
@@ -720,10 +715,8 @@ public sealed class EditorHost {
 			_ => null
 		};
 		return group switch {
-			{ Kind: MissionUnitKind.Base, IsSquad: false } => (group.Guid, ToolboxKind.Structure),
-			{ Kind: MissionUnitKind.Mech } => (group.Guid, ToolboxKind.Herc),
-			{ Kind: MissionUnitKind.Flyer } => (group.Guid, ToolboxKind.Flyer),
-			_ => (null, ToolboxKind.Structure)
+			{ Kind: MissionUnitKind.Base, IsSquad: false } or { Kind: MissionUnitKind.Mech or MissionUnitKind.Flyer } => group.Guid,
+			_ => null
 		};
 	}
 
