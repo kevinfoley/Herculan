@@ -3,6 +3,7 @@ using HercWorks.Core.Data.File.Dyn;
 using HercWorks.Core.Data.File.Gau;
 using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Content;
+using Herculan.Es1.Messages;
 using Herculan.Es1.Panels;
 using Herculan.Es1.Sim;
 using Herculan.Es1.View;
@@ -95,8 +96,9 @@ public sealed class Es1HddDisplay {
 	/// shape when their first frame is <see cref="DiamondArrowFrame"/>, and registered on the cockpit's root; the
 	/// captions of <c>XMIT</c> and <c>CANCEL</c> and the title over button 9's rect, each in <c>cpred</c>, centered, on
 	/// <see cref="LabelFill"/>; the title indicator and each box's marker rect moved by (<i>x</i>, <i>y</i>) and its name
-	/// none; no pilot selected and page 0 set; the display stored as <see cref="Es1SimGlobals.HddDisplayInstance"/>, no
-	/// press waiting, the highlight mode the block's, the dark byte kept and the damage page's refresh the clock + 30;
+	/// none; no pilot selected and page 0 set; <see cref="OnMessageBegin"/> and <see cref="OnMessageEnd"/> added to the
+	/// pilot channel (<c>MessagePort_AddBeginCallback</c>, <c>MessagePort_AddEndCallback</c>); the display stored as
+	/// <see cref="Es1SimGlobals.HddDisplayInstance"/>, no press waiting, the highlight mode the block's, the dark byte kept and the damage page's refresh the clock + 30;
 	/// and the five subjects, the player's machine named <c>YOU</c>, three empty and named with an empty string, and the
 	/// target named <c>TARGET</c>, the selector 0 on the player, the indicator's flag set and the no-subject text
 	/// <c>NO TARGET SELECTED</c>. The comm boxes' clip context, <c>GLViewport_Ctor</c>(0) at <c>CommBox_ClipContext</c>
@@ -167,8 +169,8 @@ public sealed class Es1HddDisplay {
 		PreviousSlot = -1;
 		SelectedSlot = -1;
 		SetPage(CommandPage);
-		// PLACEHOLDER: CommBox_OnMessageBegin and CommBox_OnMessageEnd added to the pilot channel
-		// (MessagePort_AddBeginCallback, MessagePort_AddEndCallback), plan step 6c6's part C2.
+		cockpit.PilotChannel.AddBeginCallback(OnMessageBegin);
+		cockpit.PilotChannel.AddEndCallback(OnMessageEnd);
 		cockpit.Globals.HddDisplayInstance = this;
 		PressedButton = NoPress;
 		HighlightMode = (short)block.HighlightMode;
@@ -295,7 +297,13 @@ public sealed class Es1HddDisplay {
 	/// </summary>
 	public short CommBox0PilotOverride { get; } = -1;
 
-	/// <summary>The volumes' reader the comm boxes read <c>ofs\</c> and <c>dba\</c> through; none when null.</summary>
+	/// <summary>
+	/// <c>CommBox_IdleRepaintPending</c> (<c>000946bb</c>), a global: set when an idle box's copy to the page on the screen
+	/// copied nothing, so the next pass paints the idle boxes again; kept with the display, as <see cref="LastTarget"/>.
+	/// </summary>
+	public bool IdleRepaintPending { get; internal set; }
+
+	/// <summary>The volumes' reader the comm boxes read <c>ofs\</c>, <c>dba\</c> and <c>snc\</c> through; none when null.</summary>
 	internal Func<string, string, byte[]?>? Resources { get; }
 
 	/// <summary>The current page, or none before the first <see cref="SetPage"/>.</summary>
@@ -316,6 +324,21 @@ public sealed class Es1HddDisplay {
 		box.Load(slot == 0 && CommBox0PilotOverride >= 0 ? CommBox0PilotOverride : pilot);
 		_subjects[PlayerSubject + 1 + slot] = Cockpit.SquadmateMachines[slot];
 		_subjectNames[PlayerSubject + 1 + slot] = box.Name;
+	}
+
+	/// <summary>
+	/// <c>HddDisplay_ServiceCommBoxes</c> (<c>0003e574</c>)(display), from <see cref="Update"/> each frame and from
+	/// <see cref="OnMessageBegin"/> (docs/es1/simulation/heads-down-display.md#the-state-machine--hdddisplay_servicecommboxes-0003e574):
+	/// each comm box with a name stepped (<see cref="Es1HddCommBox.Service"/>) on the clock <c>000981c4</c> as it reads
+	/// at the start.
+	/// </summary>
+	public void ServiceCommBoxes() {
+		uint now = Cockpit.Globals.Clock.Clock;
+		foreach (var box in _commBoxes) {
+			if (box.Name != null) {
+				box.Service(now);
+			}
+		}
 	}
 
 	/// <summary>
@@ -440,12 +463,11 @@ public sealed class Es1HddDisplay {
 			}
 
 			if (machine.Destroyed && box.CommsOutLatch) {
-				box.State = 1;
+				box.State = Es1HddCommBox.StaticBefore;
 			}
 		}
 
-		// PLACEHOLDER: HddDisplay_ServiceCommBoxes (0003e574)(display), the comm boxes' state machine, plan step 6c6's
-		// part C2; until then a box stays as the last repaint left it.
+		ServiceCommBoxes();
 		if (Cockpit.CurrentView == Es1CockpitViews.ExternalView) {
 			return;
 		}
@@ -823,6 +845,48 @@ public sealed class Es1HddDisplay {
 			} else {
 				_updateFlags[Page] = false;
 			}
+		}
+	}
+
+	/// <summary>
+	/// <c>CommBox_OnMessageBegin</c> (<c>0003e488</c>)(<paramref name="record"/>), the pilot channel's begin callback
+	/// (docs/es1/simulation/heads-down-display.md#starting-a-line): for a subject in a squadmate slot, the box of that
+	/// slot of <see cref="Es1SimGlobals.HddDisplayInstance"/> begins the line (<see cref="Es1HddCommBox.BeginMessage"/>);
+	/// when that fails, the channel's ready and cancelled latches, so the line goes by unshown; when it succeeds, the
+	/// box's deadline the clock + <see cref="Es1HddCommBox.StaticCounts"/>, its state
+	/// <see cref="Es1HddCommBox.StaticBefore"/>, and <see cref="ServiceCommBoxes"/> while the screen rect is visible.
+	/// </summary>
+	private void OnMessageBegin(Es1QueuedMessage record) {
+		int slot = Cockpit.SquadIndexOf(record.Subject);
+		if (slot == -1 || Cockpit.Globals.HddDisplayInstance is not { } display) {
+			return;
+		}
+
+		var box = display._commBoxes[slot];
+		if (!box.BeginMessage(record)) {
+			Cockpit.PilotChannel.Ready = true;
+			Cockpit.PilotChannel.Cancelled = true;
+			return;
+		}
+
+		box.Deadline = Cockpit.Globals.Clock.Clock + Es1HddCommBox.StaticCounts;
+		box.State = Es1HddCommBox.StaticBefore;
+		// PLACEHOLDER: Sound_Play(0x1c) unless Sound_IsPlaying(0x1c), the static's sound; no plan step ports ES1's sound
+		// yet.
+		if (Cockpit.RectCornerVisible(display.ScreenRect)) {
+			display.ServiceCommBoxes();
+		}
+	}
+
+	/// <summary>
+	/// <c>CommBox_OnMessageEnd</c> (<c>0003e53c</c>)(<paramref name="record"/>), the pilot channel's end callback, which
+	/// runs before the line leaves the screen: for a subject in a squadmate slot, that slot's box's
+	/// <see cref="Es1HddCommBox.Byte1C"/> cleared.
+	/// </summary>
+	private void OnMessageEnd(Es1QueuedMessage record) {
+		int slot = Cockpit.SquadIndexOf(record.Subject);
+		if (slot != -1 && Cockpit.Globals.HddDisplayInstance is { } display) {
+			display._commBoxes[slot].Byte1C = 0;
 		}
 	}
 

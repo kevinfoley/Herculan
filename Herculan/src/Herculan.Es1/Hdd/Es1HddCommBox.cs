@@ -1,9 +1,12 @@
+using System.Globalization;
 using HercWorks.Core.Data.File.Dyn;
 using HercWorks.Core.Io.Transform.Common;
 using HercWorks.Core.Io.Transform.Dbsim;
 using Herculan.Engine.Content;
+using Herculan.Es1.Messages;
 using Herculan.Es1.Panels;
 using Herculan.Es1.Sim;
+using Herculan.Es1.Sound;
 using Herculan.Es1.View;
 
 namespace Herculan.Es1.Hdd;
@@ -11,10 +14,10 @@ namespace Herculan.Es1.Hdd;
 /// <summary>
 /// One of the Heads-Down Display's three comm-box gauges, its <c>0x14a</c> bytes from the display's <c>+0xf6</c>
 /// (docs/es1/simulation/heads-down-display.md#the-comm-boxes): the squadmate's pilot, its six labels, bank and frame
-/// offsets, which <see cref="Load"/> sets, and the idle paint (<see cref="PaintIdle"/>) and the static
-/// (<see cref="PaintStatic"/>). PLACEHOLDER: the message id <c>+0x12d</c>, the speech slot <c>+0x12f</c>, the
-/// deadline <c>+0x143</c>, the face's and the scream's paints, the begin and end callbacks and the state machine that
-/// use them are plan step 6c6's part C2 (docs/herculan/plan-es1-first-mission.md).
+/// offsets, which <see cref="Load"/> sets; the line it speaks (<see cref="BeginMessage"/>) and its step of the state
+/// machine (<see cref="Service"/>); and its four paints, idle (<see cref="PaintIdle"/>), static
+/// (<see cref="PaintStatic"/>), the face (<see cref="PaintPilotFrame"/>) and the death scream
+/// (<see cref="PaintScream"/>).
 ///
 /// <para>The display and the slot are kept here, as the paints that take (display, slot) in retail reach them.</para>
 /// </summary>
@@ -28,8 +31,33 @@ public sealed class Es1HddCommBox {
 	/// <summary>The frames of <c>dba\static</c> <see cref="PaintStatic"/> steps through.</summary>
 	public const int StaticFrames = 5;
 
-	/// <summary>The fill of the video rect behind the idle labels, and of the sixth label.</summary>
+	/// <summary>The fill of the video rect behind the idle labels and the face, and of the sixth label.</summary>
 	public const byte IdleFill = 0x3f, CornerFill = 0x3b;
+
+	/// <summary>The states of <see cref="State"/>: idle, static before the face, the face talking, static after it.</summary>
+	public const int Idle = 0, StaticBefore = 1, Talking = 2, StaticAfter = 3;
+
+	/// <summary>The clock counts of static before the face talks and after it, a third of a second.</summary>
+	public const uint StaticCounts = 0x14;
+
+	/// <summary>The message id of the death scream, <c>%</c>, which talks through <see cref="PaintScream"/>.</summary>
+	public const byte ScreamMessage = 0x25;
+
+	/// <summary>The scream's face, its clock counts before the first flip, and its least counts and random bound after each.</summary>
+	public const int ScreamFrame = 0x1b, ScreamFirstCounts = 5, ScreamLeastCounts = 5, ScreamCountsBound = 0x14;
+
+	/// <summary>The full bank's first head frame, of three, which <see cref="PaintPilotFrame"/> draws under the mouth.</summary>
+	public const int FirstHeadFrame = 24, HeadFrames = 3;
+
+	/// <summary>The low-memory bank's head frame, and the offset pair it is drawn at.</summary>
+	public const int LowMemoryHeadFrame = 6, LowMemoryHeadPair = 24;
+
+	/// <summary>
+	/// <c>HddLowMemFrameMap</c> (<c>00094494</c>): the low-memory bank's frame for each of the 28 portrait frames, the
+	/// image's values.
+	/// </summary>
+	private static readonly short[] LowMemoryFrameMap =
+		[1, 0, 1, 4, 2, 4, 5, 4, 2, 4, 4, 3, 3, 3, 4, 5, 5, 2, 4, 4, 4, 1, 2, 4, 6, 6, 6, 7];
 
 	/// <summary>
 	/// <c>STRINGS0.STR</c>'s groups the idle paint reads (docs/es1/formats/str-strings.md#the-groups): 24 the five
@@ -67,6 +95,9 @@ public sealed class Es1HddCommBox {
 	/// <summary><c>+0x00</c>–<c>+0x14</c>, the six labels by <see cref="NameLabel"/> and the rest; none until <see cref="Load"/>.</summary>
 	public IReadOnlyList<Es1Label?> Labels => _labels;
 
+	/// <summary><c>+0x1c</c>, a byte <see cref="Es1HddDisplay"/>'s end callback clears; what reads it is Open (docs/es1/simulation/heads-down-display.md#open).</summary>
+	public byte Byte1C { get; internal set; }
+
 	/// <summary><c>+0x18</c>, the pilot's bank, <c>dba\pilot&lt;p&gt;</c> or the low-memory <c>pilot&lt;p&gt;s</c>; none when it is missing.</summary>
 	public IReadOnlyList<DynamixBitmap>? Bank { get; private set; }
 
@@ -79,8 +110,14 @@ public sealed class Es1HddCommBox {
 	/// <summary><c>+0x3d</c>, the 30 offset pairs, pair <i>k</i> where entry <i>k</i> of <c>ofs\pilot&lt;p&gt;</c> puts it.</summary>
 	public IReadOnlyList<(int X, int Y)> Offsets => _offsets;
 
+	/// <summary><c>+0x12d</c>, the id of the line the box last began, its low byte.</summary>
+	public byte MessageId { get; private set; }
+
 	/// <summary><c>+0x12e</c>, the static's frame, 0 to 4.</summary>
 	public byte StaticFrame { get; private set; }
+
+	/// <summary><c>+0x12f</c>, the speech slot of the line the box last began, none when its load failed.</summary>
+	public Es1SpeechSlot? SpeechSlot { get; private set; }
 
 	/// <summary><c>+0x133</c>, set for the full bank and clear for the low-memory one.</summary>
 	public bool FullBank { get; private set; }
@@ -91,11 +128,14 @@ public sealed class Es1HddCommBox {
 	/// <summary><c>+0x137</c>, the pilot's name, none until <see cref="Load"/> sets it, and none for a portrait past the names.</summary>
 	public string? Name { get; set; }
 
-	/// <summary><c>+0x13b</c>, the state, 0 idle to 3.</summary>
+	/// <summary><c>+0x13b</c>, the state, <see cref="Idle"/> to <see cref="StaticAfter"/>.</summary>
 	public int State { get; set; }
 
 	/// <summary><c>+0x13f</c>, the state as the state machine last left it.</summary>
 	public int PreviousState { get; private set; }
+
+	/// <summary><c>+0x143</c>, the clock count at which the static ends, or the scream next flips.</summary>
+	public uint Deadline { get; internal set; }
 
 	/// <summary><c>+0x147</c>, the comms-out latch, set for a destroyed squadmate.</summary>
 	public bool CommsOutLatch { get; set; }
@@ -221,6 +261,205 @@ public sealed class Es1HddCommBox {
 		}
 
 		_labels[NameLabel]?.SetText(cockpit.PushCanvasContext(), Name);
+	}
+
+	/// <summary>
+	/// <c>CommBox_BeginMessage</c> (<c>0003e060</c>)(display, gauge, <paramref name="record"/>)
+	/// (docs/es1/simulation/heads-down-display.md#starting-a-line): the id's low byte into <see cref="MessageId"/>; the
+	/// suffix <c>_</c>, the id in decimal with a 0 before it below 10, and the attribute byte 1 in decimal, unsigned,
+	/// with a 0 before it below 100 and another below 10; and <see cref="Es1VoiceLines.LoadLine"/> with the script
+	/// <c>P</c> + (<c>'A'</c> + the portrait) + suffix and the voice <c>P</c> + <see cref="Es1Cockpit.PilotVoiceBankOf"/>
+	/// of the portrait + suffix, so <c>PA_01000</c> and <c>P1_01000</c> for line 1, byte 0, of portrait 0. The slot goes
+	/// to <see cref="SpeechSlot"/>; answers whether there is one.
+	/// </summary>
+	internal bool BeginMessage(Es1QueuedMessage record) {
+		ushort id = (ushort)record.Id;
+		MessageId = (byte)id;
+		byte attribute = record.Attribute1;
+		string suffix = "_" + (id < 10 ? "0" : "") + id.ToString(CultureInfo.InvariantCulture)
+			+ (attribute < 100 ? "0" : "") + (attribute < 10 ? "0" : "")
+			+ attribute.ToString(CultureInfo.InvariantCulture);
+		string voice = "P" + Es1Cockpit.PilotVoiceBankOf(Portrait).ToString(CultureInfo.InvariantCulture) + suffix;
+		string script = "P" + (char)(byte)('A' + Portrait) + suffix;
+		var cockpit = Display.Cockpit;
+		SpeechSlot = cockpit.Globals.VoiceLines.LoadLine(script, voice, cockpit.Globals.Clock.Clock, Display.Resources);
+		return SpeechSlot != null;
+	}
+
+	/// <summary>
+	/// The box's step of <c>HddDisplay_ServiceCommBoxes</c> (<c>0003e574</c>) on the clock count <paramref name="now"/>
+	/// (docs/es1/simulation/heads-down-display.md#the-state-machine--hdddisplay_servicecommboxes-0003e574), then
+	/// <see cref="PreviousState"/> = the state:
+	///
+	/// <list type="bullet">
+	/// <item><see cref="Idle"/>: while the previous state is not idle or <see cref="Es1HddDisplay.IdleRepaintPending"/>
+	/// is set, <see cref="PaintIdle"/> and the video rect copied to the page on the screen
+	/// (<see cref="Es1Cockpit.DrawToCockpit"/> with 1), the flag set when that copied nothing.</item>
+	/// <item><see cref="StaticBefore"/>: <see cref="PaintStatic"/> until <paramref name="now"/> reaches
+	/// <see cref="Deadline"/> with the comms-out latch clear, then <see cref="Talking"/> at once.</item>
+	/// <item><see cref="Talking"/>: on entry the pilot channel's ready latch and <see cref="Es1VoiceLines.Start"/> of the
+	/// slot, the frame −1 when that answers false and otherwise the slot's, and for <see cref="ScreamMessage"/> the
+	/// deadline <paramref name="now"/> + <see cref="ScreamFirstCounts"/>; after entry the slot's frame. At −1 the
+	/// channel's cancelled latch; then for the scream the latch and <see cref="StaticBefore"/>, and otherwise
+	/// <see cref="StaticAfter"/> with the deadline <paramref name="now"/> + <see cref="StaticCounts"/> and the latch
+	/// when the squadmate is destroyed; and <see cref="PaintStatic"/>. Otherwise <see cref="PaintScream"/> for the
+	/// scream and <see cref="PaintPilotFrame"/> of the frame for any other line.</item>
+	/// <item><see cref="StaticAfter"/>: <see cref="PaintStatic"/> until <paramref name="now"/> reaches the deadline,
+	/// then idle at once.</item>
+	/// </list>
+	///
+	/// <para>The pilot channel is the display's cockpit's, <c>CockpitView_GetSquadMessagePort</c>'s. With no slot, which
+	/// a box only talks with once its load succeeded, or no squadmate in the slot, which retail reads unchecked, the
+	/// frame is −1 and the latch is left, engine guards.</para>
+	/// </summary>
+	internal void Service(uint now) {
+		switch (State) {
+			case Idle:
+				ServiceIdle();
+				break;
+			case StaticBefore:
+				if (Deadline <= now && !CommsOutLatch) {
+					State = Talking;
+					ServiceTalking(now);
+				} else {
+					PaintStatic();
+				}
+
+				break;
+			case Talking:
+				ServiceTalking(now);
+				break;
+			case StaticAfter:
+				if (Deadline <= now) {
+					State = Idle;
+					ServiceIdle();
+				} else {
+					PaintStatic();
+				}
+
+				break;
+		}
+
+		PreviousState = State;
+	}
+
+	/// <summary>
+	/// <c>HddGauge_PaintPilotFrame</c> (<c>0003e1cc</c>)(display, <paramref name="frame"/>, gauge)
+	/// (docs/es1/simulation/heads-down-display.md#the-three-paints): while the display's screen rect is visible, the
+	/// video rect filled <see cref="IdleFill"/>; in the box's clip (<see cref="PushVideoClip"/>), with
+	/// <see cref="FullBank"/> the bank's frame <see cref="FirstHeadFrame"/> + the presentation generator's draw
+	/// (<c>Math_RandomNext</c> on <c>000b5c48</c>), sign-extended and taken modulo <see cref="HeadFrames"/> unsigned, at
+	/// its own offset pair, then the frame at its own pair; without it, the bank's <see cref="LowMemoryHeadFrame"/> at
+	/// pair <see cref="LowMemoryHeadPair"/>, then <see cref="LowMemoryFrameMap"/>[frame] at the frame's pair; and the
+	/// name written again. A frame or pair past the bank, the pairs or the map, which retail reads unchecked, blits
+	/// nothing, an engine guard.
+	/// </summary>
+	public void PaintPilotFrame(short frame) {
+		var cockpit = Display.Cockpit;
+		if (!cockpit.RectCornerVisible(Display.ScreenRect)) {
+			return;
+		}
+
+		cockpit.PushCanvasContext().FillRect(VideoRect.X0, VideoRect.Y0, VideoRect.X1, VideoRect.Y1, IdleFill);
+		var clip = PushVideoClip();
+		if (FullBank) {
+			int head = FirstHeadFrame + (int)((uint)(int)cockpit.Globals.PresentationRandom.Next() % HeadFrames);
+			Blit(clip, head, head);
+			Blit(clip, frame, frame);
+		} else {
+			Blit(clip, LowMemoryHeadFrame, LowMemoryHeadPair);
+			Blit(clip, frame >= 0 && frame < LowMemoryFrameMap.Length ? LowMemoryFrameMap[frame] : -1, frame);
+		}
+
+		_labels[NameLabel]?.SetText(cockpit.PushCanvasContext(), Name);
+	}
+
+	/// <summary>
+	/// <c>HddGauge_PaintScream</c> (<c>0003e348</c>)(display, gauge), on the clock count <paramref name="now"/>
+	/// (docs/es1/simulation/heads-down-display.md#the-three-paints): while the display's screen rect is visible, at phase
+	/// 0 <see cref="PaintPilotFrame"/> of <see cref="ScreamFrame"/>, the phase 1 once <paramref name="now"/> is past
+	/// <see cref="Deadline"/>; at phase 1 <see cref="PaintStatic"/>, the phase back to 0 once past it; on a phase change
+	/// the deadline <paramref name="now"/> + the greater of <see cref="ScreamLeastCounts"/> and the presentation
+	/// generator's draw below <see cref="ScreamCountsBound"/> (<c>Math_RandomBelow</c> on <c>000b5c48</c>); and the phase
+	/// kept as the previous one.
+	/// </summary>
+	public void PaintScream(uint now) {
+		if (!Display.Cockpit.RectCornerVisible(Display.ScreenRect)) {
+			return;
+		}
+
+		var (phase, previous) = Scream;
+		if (phase == 0) {
+			PaintPilotFrame(ScreamFrame);
+			if (Deadline < now) {
+				phase++;
+			}
+		} else if (phase == 1) {
+			PaintStatic();
+			if (Deadline < now) {
+				phase--;
+			}
+		}
+
+		if (phase != previous) {
+			uint counts = (uint)Display.Cockpit.Globals.PresentationRandom.NextBelow(ScreamCountsBound);
+			Deadline = now + Math.Max(counts, (uint)ScreamLeastCounts);
+		}
+
+		Scream = (phase, phase);
+	}
+
+	/// <summary>The idle state's step: the idle paint and its copy while the box has just come idle or a copy is pending.</summary>
+	private void ServiceIdle() {
+		if (PreviousState != Idle || Display.IdleRepaintPending) {
+			PaintIdle();
+			Display.IdleRepaintPending = !Display.Cockpit.DrawToCockpit(VideoRect, 1);
+		}
+	}
+
+	/// <summary>The talking state's step (see <see cref="Service"/>).</summary>
+	private void ServiceTalking(uint now) {
+		var cockpit = Display.Cockpit;
+		var channel = cockpit.PilotChannel;
+		short frame;
+		if (PreviousState == State) {
+			frame = SpeechSlot?.Frame ?? -1;
+		} else {
+			channel.Ready = true;
+			frame = SpeechSlot is { } slot && cockpit.Globals.VoiceLines.Start(slot) ? slot.Frame : (short)-1;
+			if (MessageId == ScreamMessage) {
+				Deadline = now + ScreamFirstCounts;
+			}
+		}
+
+		if (frame == -1) {
+			channel.Cancelled = true;
+			if (MessageId == ScreamMessage) {
+				CommsOutLatch = true;
+				State = StaticBefore;
+			} else {
+				State = StaticAfter;
+				Deadline = now + StaticCounts;
+				// PLACEHOLDER: Sound_Play(0x1c) unless Sound_IsPlaying(0x1c), the static's sound; no plan step ports ES1's
+				// sound yet.
+				if (cockpit.SquadmateMachines[Slot] is { Destroyed: true }) {
+					CommsOutLatch = true;
+				}
+			}
+
+			PaintStatic();
+		} else if (MessageId == ScreamMessage) {
+			PaintScream(now);
+		} else {
+			PaintPilotFrame(frame);
+		}
+	}
+
+	/// <summary>Frame <paramref name="index"/> of the bank at offset pair <paramref name="pair"/> in <paramref name="clip"/>, or nothing past either.</summary>
+	private void Blit(Es1PanelCanvas clip, int index, int pair) {
+		if (Bank is { } bank && index >= 0 && index < bank.Count && pair >= 0 && pair < OffsetPairs) {
+			clip.Blit(bank[index], _offsets[pair].X, _offsets[pair].Y);
+		}
 	}
 
 	/// <summary>

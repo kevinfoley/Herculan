@@ -301,8 +301,8 @@ public sealed class Es1Mech : IEs1SimObject {
 		return line;
 	}
 
-	/// <summary>The readings <see cref="ReadDamageReadouts"/> fills.</summary>
-	public const int DamageReadingCount = 32;
+	/// <summary>The readings <see cref="ReadDamageReadouts"/> fills, the 84-byte buffer the comm boxes' condition and the MFD's status screen pass.</summary>
+	public const int DamageReadingCount = 42;
 
 	/// <summary>
 	/// <c>Mech_ReadDamageReadouts</c> (<c>0001583c</c>)(machine, buffer): the type record's <c>int16</c> <c>+0x6c</c> in

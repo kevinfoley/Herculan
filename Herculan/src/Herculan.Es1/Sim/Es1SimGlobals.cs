@@ -39,6 +39,9 @@ public sealed class Es1SimGlobals {
 	/// </summary>
 	public Hdd.Es1HddDisplay? HddDisplayInstance { get; set; }
 
+	/// <summary>The speech slots and the lip-sync player (<see cref="Sound.Es1VoiceLines"/>), with no slots until the mission start's <see cref="Sound.Es1VoiceLines.InitSlots"/>.</summary>
+	public Sound.Es1VoiceLines VoiceLines { get; } = new();
+
 	/// <summary><c>Behaviour_DwellJitter</c> (<c>000bc426</c>).</summary>
 	public Es1DwellJitter DwellJitter { get; } = new();
 

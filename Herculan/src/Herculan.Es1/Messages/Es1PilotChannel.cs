@@ -11,9 +11,10 @@ namespace Herculan.Es1.Messages;
 /// <c>+0x46c</c>, a <c>0x474</c>-byte object (docs/es1/simulation/cockpit-messages.md#the-pilot-channel). A squadmate's
 /// line goes up in a box of the squadmate's color, sized to the line and centered on the 320-wide screen, with the
 /// speaker's name before it. The show plays nothing: the speaker's comm box on the Heads-Down Display speaks the line,
-/// and its begin and end callbacks (<see cref="Es1MessagePort.AddBeginCallback"/>,
-/// <see cref="Es1MessagePort.AddEndCallback"/>) and its writes of the ready and cancelled latches are what put a line
-/// up, plan step 6c6's part C2. Until then a due line is never made ready and goes by unshown.
+/// and its begin and end callbacks (<see cref="Hdd.Es1HddDisplay"/>'s, added with
+/// <see cref="Es1MessagePort.AddBeginCallback"/> and <see cref="Es1MessagePort.AddEndCallback"/>) and its writes of the
+/// ready and cancelled latches (<see cref="Hdd.Es1HddCommBox.Service"/>) put a line up as the face begins to talk and
+/// take it down once the script has ended.
 ///
 /// <para>The box is lifted off the screen and put back around everything that draws under it: the cockpit's frame puts
 /// the screen back (<see cref="RestoreBackground"/>) before the 3D pass and <c>Sim_RenderFrame</c>'s
