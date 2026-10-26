@@ -155,6 +155,8 @@ if (mount+0x5f == 0 || mount+0x5b == 0) {
 }
 ```
 
+The product is `Transform_ConcatRotation` (`0047f3e8`), (*a*, *b*, out) with the aim rotation as *a* and the bone's frame as *b*: out's translation is *b*'s, and its rotation *a*'s times *b*'s, each entry rounded (`+0x2000 >> 14`), with the rank byte `+0x12` deciding the shortcut. A rank below 1 on either operand passes the other's rotation and rank through; two rank-1 operands give rank 1 (entries 4 to 7 zeroed, entry 8 `0x4000`); any other pair gives rank 2.
+
 `mount+0x5b` and `+0x5f` are shape-thread lookups from the hardpoint's `.GL` `+0x02` and `+0x04` ([`../formats/gun-layout-gl.md`](../formats/gun-layout-gl.md)), and `WeaponMount_CtorBase` writes **zero** for a negative record value. Both fields read −1 on every retail chassis, so both gates are clear and **the convergence is live on all of them** — a machine's guns really do toe in and out as its turret walks a target through depth. A centring command passes range 0 and squares them up again; every AI caller of `Mech_CenterTorsoTick` does.
 
 ## Power level — `WeaponMount_AdjustPowerLevel` (`0040f48c`)

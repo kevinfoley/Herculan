@@ -3707,9 +3707,15 @@
       "type": "function",
       "confidence": "high",
       "name": "ElfMount_TriggerHeld",
-      "description": "ElfMountVtable +0x30, a spin-up rather than the plain trigger read WeaponMount_TriggerHeld does. While the latch +0x48 is clear it returns 0 -- no shot -- and a fresh press instead sets +0x47 and resets the cell timer at +0x84; ElfMount_SpinUpAndChargeTick then walks the muzzle-flash flipbook and latches +0x48 at the last cell. Once latched it returns the input device's fire byte, and release clears +0x48 and rewinds the flipbook. ELF2 SKIPS THE SPIN-UP: the function opens by forcing both flags to 1 when template+0x56 (the record's self-index) is 22.",
+      "description": "ElfMountVtable +0x30, a spin-up rather than the plain trigger read WeaponMount_TriggerHeld does. While the latch +0x48 is clear it returns 0 -- no shot -- and a fresh press instead sets +0x47 and resets the cell timer at +0x84, while a release with +0x47 set clears it and, with a model at +0x10, rewinds the flipbook; ElfMount_SpinUpAndChargeTick then walks the muzzle-flash flipbook and latches +0x48 at the last cell. Once latched it returns the input device's fire byte, and release clears +0x48 and rewinds the flipbook. ELF2 SKIPS THE SPIN-UP: the function opens by forcing both flags to 1 when template+0x56 (the record's self-index) is 22.",
       "source": "docs/retail/simulation/weapon-mounts.md",
-      "signature": "char __cdecl ElfMount_TriggerHeld(void *mount, void *inputDevice)"
+      "signature": "char __cdecl ElfMount_TriggerHeld(void *mount, void *inputDevice)",
+      "verified": {
+        "bytes": "0040e680+155",
+        "sha1": "fb22f6e5c0dd",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040e71c",
@@ -3732,8 +3738,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMount_PrepareShot",
-      "description": "The fire prologue both dispatchers open with. Resolves the firing hardpoint's bone (.GL +0) to its posed node transform, composes the gun convergence (mount+0x24/+0x28, gated on mount+0x5b/+0x5f) under it and the mech's own transform (mech+0x12) over it into the global shot transform at 004a98b8, transforms the muzzle offset into world space at 004a98d8, extracts the firing euler triple to 004a98e4, and arms the refire timer as Math_Q10Multiply(mount+0x63, template+0x4c). Both convergence gates read zero fleet-wide, so the rotation is live.",
-      "source": "docs/retail/simulation/weapon-firing.md; docs/retail/simulation/ai-weapons.md"
+      "description": "(mount, machine): the fire prologue every fire dispatch opens with. Looks up the node of the hardpoint's bone (int16 +0 of the .GL record at +0x18) through vtable +0x20 of the object at +4 of the machine's +0x34, taking the 0x20-byte frame the answer's int16 +4 indexes in the +0x16 array of the machine's +0x34, or the fixed transform 006c572c with no answer or a negative index. While DAT_0049ef5c is set and the machine is LocalPlayerMech (004d256a) it works on a copy of the frame with its z translation lowered by 1500, and composes with ViewChain_Viewed (004d2708) in place of the machine. When +0x5f or +0x5b is 0, BuildEulerRotationMatrixQ14 (0047eaac) of (+0x24 when +0x5b is 0, 0, +0x28 when +0x5f is 0) goes under the frame through Transform_ConcatRotation (0047f3e8). The machine's rotation +0x12 is rebuilt from its angles +0xc while the word +0x32 is 0, which it then sets to 1; Transform_Concat (0047f914)(frame, machine + 0x12) goes to 004a98b8; the template's +0x40 triple plus WeaponMount_MuzzleOffset (0040f540)(mount), added as int16, goes through Transform_ApplyToShortPoint (004800c8) to 004a98d8, and Transform_RotationToEuler (0047f894) of the transform to 004a98e4. Sets the refire countdown +0x31 to Math_Q10Multiply(+0x63, the template's +0x4c) and byte 0 of +0x33 and +0x3b to 1.",
+      "source": "DBSIM decompile at 0040e788",
+      "verified": {
+        "bytes": "0040e788+467",
+        "sha1": "fdcdf8cf4d54",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040e95c",
@@ -3750,8 +3762,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMount_FireDispatch_Missile",
-      "description": "Missile-capable-hardpoint fire dispatcher: checks the mount's cached PROJ.DAT Type field, Type==Missile(0) -> Rocket_Fire, else falls through to the shared Bullet fallback.",
-      "source": "docs/retail/simulation/rockets.md"
+      "description": "(mount, machine, free-shot flag): the ammunition mount's fire dispatch, vtable +0x28. WeaponMount_PrepareShot (0040e788)(mount, machine); when the flag (a short) is 0, subtracts the template's int16 +0x38 from the rounds +0x7b and at 0 or below sets them to 0 and clears the selectable byte +0x4c. For a projectile record (+0x20) of int16 type 0 it calls Rocket_Fire (0040a9c4)(the record's +2, the muzzle point 004a98d8, the angles 004a98e4, machine, the machine's vtable +0x38 answer); otherwise Bullet_Fire (0040b43c)(the record's +2, the muzzle point, the angles, machine), then sets the muzzle flash +0x44 when the hardpoint's (+0x18) byte +6 is below 4.",
+      "source": "DBSIM decompile at 0040e964",
+      "verified": {
+        "bytes": "0040e964+158",
+        "sha1": "0eeaa2babec7",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040ea04",
@@ -3760,7 +3778,13 @@
       "confidence": "high",
       "name": "GrenadeMount_FireDispatch",
       "description": "GRENADE_WPN vtable +0x28 (00499248), (mount, a, b): WeaponMount_PrepareShot(mount, a); takes one round off +0x7b when the third argument (a short) is zero; clears the charging latch +0x46; then Grenade_FireNoOp.",
-      "source": "DBSIM decompile at 0040ea04"
+      "source": "DBSIM decompile at 0040ea04",
+      "verified": {
+        "bytes": "0040ea04+81",
+        "sha1": "b5caab39c59e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040ea58",
@@ -3915,8 +3939,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMount_RefireTick",
-      "description": "Ammunition mount vtable +0x34, and the first thing WeaponMount_ChargeCapacitor does for an energy mount: counts the refire timer (+0x31) down by SimTickDelta via Math_CountdownTimerTick, and shuffles the two 8-byte muzzle-flash flag blocks at +0x33/+0x3b plus the burst frame counter at +0x44. Gated on the mount not being destroyed, so a dead mount's cooldown does not run. Consumes no energy -- an ammunition mount's whole turn at the pool is this.",
-      "source": "docs/retail/simulation/weapon-firing.md"
+      "description": "(mount, budget): the pool turn, vtable +0x34, and the first thing WeaponMount_ChargeCapacitor (0040f00c) does. Unless the mount is destroyed (+0x49): WeaponMount_AndFlagBlocks (0040f881)(mount + 0x33, mount + 0x3b), the 8 bytes at +0x3b cleared, Math_CountdownTimerTick (00467944)(mount + 0x30) on the refire countdown +0x31, and with the muzzle flash +0x44 set the cell index at *(+0x14) stepped modulo the model's (+0x10) *(+0x20), +0x44 cleared when it wraps to 0. Returns the budget.",
+      "source": "DBSIM decompile at 0040ef94",
+      "verified": {
+        "bytes": "0040ef94+117",
+        "sha1": "aceecdf498c6",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040f00c",
@@ -3924,8 +3954,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMount_ChargeCapacitor",
-      "description": "One energy mount's draw on the pool. Target is the mount's capacity (+0x7b), or zero when told another mount is already charging, minus its stored charge (+0x7d); takes min(chargeRate +0x7f, budget, deficit) and returns the remainder. A non-positive deficit clears the charging flag (+0x43) and bleeds charge back at up to 5/tick. PLAS (catalog id 25) is half-efficiency: its deficit counts double and only half the drawn energy is stored. Ammunition mounts override this with a no-op that consumes nothing.",
-      "source": "docs/retail/simulation/reactor-energy-pool.md"
+      "description": "(mount, budget, mid-charge seen): the energy mount's pool turn, vtable +0x34. Unless the mount is destroyed (+0x49): WeaponMount_RefireTick (0040ef94)(mount, budget); the deficit is the charge target +0x7b, or 0 when the third argument is non-zero, less the capacitor +0x7d, doubled when the template's +0x56 is 25 (PLAS). A deficit of 0 or less clears +0x43 and adds max(deficit, -5) to the capacitor; otherwise it adds min(the charge rate +0x7f, budget, deficit), and for PLAS then takes half that amount (>> 1) back off. Returns the budget less the amount added; a destroyed mount returns the budget.",
+      "source": "DBSIM decompile at 0040f00c",
+      "verified": {
+        "bytes": "0040f00c+141",
+        "sha1": "327297f4dd72",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040f09c",
@@ -4044,8 +4080,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ElfMount_SpinUpAndChargeTick",
-      "description": "ElfMountVtable +0x34. While the spin-up flag +0x47 is set, counts the cell timer at +0x83 down and on expiry either advances the muzzle-flash flipbook one cell or, at the last cell, latches +0x48 and clears +0x47 -- which is what lets ElfMount_TriggerHeld start returning the trigger. Then falls through to WeaponMount_ChargeCapacitor, so an ELF's capacitor charges exactly as an energy mount's does.",
-      "source": "docs/retail/simulation/weapon-mounts.md"
+      "description": "(mount, budget, mid-charge seen): ElfMountVtable +0x34, the ELF's pool turn. Unless the mount is destroyed (+0x49): with the spin-up byte +0x47 set, Math_CountdownTimerTick (00467944)(mount + 0x83) on the cell timer +0x84; when it answers 0, it sets +0x48 and clears +0x47 when the mount has no model (+0x10), the model's int16 +0x24 is 0, or the cell index at *(+0x14) is the model's *(+0x20) - 1, and otherwise steps the cell index modulo *(+0x20) and zeroes +0x84. Then returns WeaponMount_ChargeCapacitor (0040f00c) with its arguments; a destroyed mount returns the budget.",
+      "source": "DBSIM decompile at 0040f3d8",
+      "verified": {
+        "bytes": "0040f3d8+178",
+        "sha1": "2bd75db9dbc0",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040f48c",
@@ -4525,7 +4567,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMounts_AdvanceToReady",
-      "description": "(manager): with the signed byte +0x1d not negative and WeaponMounts_ChainReady (00410a04) refusing the armed mount, steps with WeaponMounts_StepSelection (0041074c)(manager, 1) and asks again, clearing +0x18 and returning at the first mount that passes; when the selection comes back round, or after more steps than the int16 count +8, stores the original at +0x1d and passes it to WeaponMounts_SetSelection (00410708).",
+      "description": "(manager): with the signed byte +0x1d not negative and WeaponMounts_ChainReady (00410a04) refusing the armed mount, steps with WeaponMounts_StepSelection (0041074c)(manager, 1) and asks again, clearing +0x18 and returning at the first mount that passes; when the selection comes back round, or after count + 2 steps (the int16 count +8 read on entry), stores the original at +0x1d and passes it to WeaponMounts_SetSelection (00410708).",
       "source": "docs/retail/simulation/weapon-mounts.md",
       "signature": "void __cdecl WeaponMounts_AdvanceToReady(void *manager)",
       "verified": {

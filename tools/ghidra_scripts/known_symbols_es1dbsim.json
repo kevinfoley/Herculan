@@ -4417,7 +4417,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMount_PrepareShot",
-      "description": "(mount, free-shot flag, machine) in stack order, callee-cleaned: the base fire slot +0x2c and the prologue of every fire dispatch; it never reads its second argument. Looks up the node of the hardpoint's bone (int16 +0 of the record at +0x18) through slot +0x24 of the object at +4 of the machine's +0x2e, taking the 0x20-byte frame the answer's int16 +4 indexes in the +0x16 array of the machine's +0x2e, or a null pointer with no answer; when +0x5f or +0x5b is 0 it builds BuildEulerRotationMatrixQ14 of (+0x24 when +0x5b is 0, 0, +0x28 when +0x5f is 0) and composes it with the frame through 000647f4. Transform_Concat of the frame and Context_GetTransform(machine + 6) goes to WeaponMount_ShotTransform (000af144); the template's +0x40 triple plus WeaponMount_MuzzleOffset (0000b918)(mount) goes through Transform_ApplyToShortPoint to WeaponMount_ShotMuzzlePoint (000af164), and Transform_RotationToEuler of the transform to WeaponMount_ShotEuler (000af170). Sets the refire countdown +0x31 to the template's +0x4c and byte 0 of +0x33 and +0x3b to 1. ES2's WeaponMount_PrepareShot (DBSIM 0040e788), which scales the refire by +0x63, substitutes a fixed transform for a missing node, builds the machine's transform from its angles and swaps in the spectator's watched object.",
+      "description": "(mount, free-shot flag, machine) in stack order, callee-cleaned: the base fire slot +0x2c and the prologue of every fire dispatch; it never reads its second argument. Looks up the node of the hardpoint's bone (int16 +0 of the record at +0x18) through slot +0x24 of the object at +4 of the machine's +0x2e, taking the 0x20-byte frame the answer's int16 +4 indexes in the +0x16 array of the machine's +0x2e, or a null pointer with no answer; when +0x5f or +0x5b is 0 it builds BuildEulerRotationMatrixQ14 of (+0x24 when +0x5b is 0, 0, +0x28 when +0x5f is 0) and composes it with the frame through Transform_ConcatRotation (000647f4). Transform_Concat of the frame and Context_GetTransform(machine + 6) goes to WeaponMount_ShotTransform (000af144); the template's +0x40 triple plus WeaponMount_MuzzleOffset (0000b918)(mount) goes through Transform_ApplyToShortPoint to WeaponMount_ShotMuzzlePoint (000af164), and Transform_RotationToEuler of the transform to WeaponMount_ShotEuler (000af170). Sets the refire countdown +0x31 to the template's +0x4c and byte 0 of +0x33 and +0x3b to 1. ES2's WeaponMount_PrepareShot (DBSIM 0040e788), which scales the refire by +0x63, substitutes a fixed transform for a missing node, builds the machine's transform from its angles and swaps in the spectator's watched object.",
       "source": "Herculan/docs/es1/simulation/weapon-mount-classes.md#firing; ES1DBSIM disassembly at 0000add4",
       "verified": {
         "bytes": "0000add4+360",
@@ -5587,7 +5587,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMounts_ArbitrateEnergy",
-      "description": "(manager, selection, budget) in stack order, callee-cleaned: the weapon half of the energy pool turn. Clears ten int16 served flags (memset (00060b40) of 0x14 bytes), then serves up to the int16 count +4 mounts in turn: the selection while it is not negative and not yet served, otherwise the unserved non-null mount whose slot +0x4c answers highest, a later mount replacing the best only when strictly higher; it marks the mount served and calls its slot +0x38(mount, a dword whose low word is 1 once a mount served so far had its byte +0x43 set and whose high word is the budget it was given, budget), whose AX answer becomes the budget, and stops when no mount is left. Returns the budget in AX, or the budget it was given when the word MissionModeFlag (000bc4a0) is 0 and UnlimitedAmmoFlag (000bc4a6) is 1. ES2's WeaponMounts_ArbitrateEnergy (DBSIM 004107e4) also takes the machine, refunds only when the machine's +0xa3 is set, and calls a served mount's fire slot when WeaponMount_AutoFireDue (DBSIM 0040ede8) answers non-zero. es2_xref finds two calls, through its padding entry 0000cc2a, from WeaponMounts_ArbitrateEnergyNoSelection (0000c5bc) and WeaponMounts_ArbitrateEnergyWithSelection (0000c994).",
+      "description": "(manager, selection, budget) in stack order, callee-cleaned: the weapon half of the energy pool turn. Clears ten int16 served flags (memset (00060b40) of 0x14 bytes), then serves up to the int16 count +4 mounts in turn: the selection while it is not negative and not yet served, otherwise the unserved non-null mount whose slot +0x4c answers highest, a later mount replacing the best only when strictly higher; it marks the mount served and calls its slot +0x38(mount, a dword whose low word is 1 once a mount served so far had its byte +0x43 set and whose high word is the budget it was given, budget), whose AX answer becomes the budget, and stops when the selection names a null slot or no unserved non-null mount is left. Returns the budget in AX, or the budget it was given when the word MissionModeFlag (000bc4a0) is 0 and UnlimitedAmmoFlag (000bc4a6) is 1. ES2's WeaponMounts_ArbitrateEnergy (DBSIM 004107e4) also takes the machine, refunds only when the machine's +0xa3 is set, and calls a served mount's fire slot when WeaponMount_AutoFireDue (DBSIM 0040ede8) answers non-zero. es2_xref finds two calls, through its padding entry 0000cc2a, from WeaponMounts_ArbitrateEnergyNoSelection (0000c5bc) and WeaponMounts_ArbitrateEnergyWithSelection (0000c994).",
       "source": "Herculan/docs/es1/simulation/weapon-mounts.md#energy--weaponmounts_arbitrateenergy-0000cc2c; ES1DBSIM disassembly at 0000cc2c",
       "verified": {
         "bytes": "0000cc2c+387",
@@ -5632,13 +5632,13 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMounts_AdvanceToReady",
-      "description": "(manager), callee-cleaned: with the signed byte +0x1d not negative and WeaponMounts_ChainReady (0000ce1c) refusing the armed mount, steps with WeaponMounts_StepSelection (0000cb54)(manager, 1) and asks WeaponMounts_ChainReady (0000ce1c) again, clearing the byte +0x18 and returning at the first mount that passes; when the selection comes back round, or after more steps than the int16 count +4, stores the original at +0x1d and passes it to WeaponMounts_SetSelection (0000cb00). ES2's WeaponMounts_AdvanceToReady (DBSIM 00410a3c).",
+      "description": "(manager), callee-cleaned: with the signed byte +0x1d not negative and WeaponMounts_ChainReady (0000ce1c) refusing the armed mount, steps with WeaponMounts_StepSelection (0000cb54)(manager, 1) and asks WeaponMounts_ChainReady (0000ce1c) again, clearing the byte +0x18 and returning at the first mount that passes; when the selection comes back round, or after count + 2 steps (the int16 count +4 read on entry), stores the original at +0x1d and passes it to WeaponMounts_SetSelection (0000cb00). ES2's WeaponMounts_AdvanceToReady (DBSIM 00410a3c).",
       "source": "Herculan/docs/es1/simulation/weapon-mounts.md#readiness; ES1DBSIM disassembly at 0000ce54",
       "verified": {
         "bytes": "0000ce54+186",
         "sha1": "4cb21584adeb",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -33440,6 +33440,21 @@
         "sha1": "683044567a93",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "000647f4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Transform_ConcatRotation",
+      "description": "(a, b, out), C convention: copies b's three int32 translations (+0x14/+0x18/+0x1c) into out, then composes a's and b's rotations (nine Q14 int16 entries, rank byte +0x12) into out as a times b. A rank below 1 on a copies b's rotation and rank, on b copies a's; two rank-1 operands give rank 1 (entries 4 to 7 zeroed, entry 8 0x4000); any other mix gives rank 2, each entry rounded with +0x2000 >> 14. Returns out. es2_naming.py diff finds it identical after normalisation to ES2's Transform_ConcatRotation (DBSIM 0047f3e8). es2_xref finds one call, from WeaponMount_PrepareShot (0000add4), which passes the convergence rotation as a and the bone's frame as b.",
+      "source": "ES1DBSIM decompile and disassembly at 000647f4; es2_naming diff against DBSIM 0047f3e8",
+      "verified": {
+        "bytes": "000647f4+1195",
+        "sha1": "e0398bcef57f",
+        "scope": "body",
+        "via": "both"
       }
     },
     {

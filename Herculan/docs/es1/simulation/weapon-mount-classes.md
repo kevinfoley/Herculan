@@ -108,29 +108,44 @@ The small slot functions and the ones ES1 has as ES2's, operands and the 4-byte 
 
 - It resolves the hardpoint's bone (`.GL +0`) through slot `+0x24` of the shape instance under the machine's `+0x2e` (ES2's slot `+0x20` under `+0x34`), and with no node it uses a null frame, where ES2's substitutes the transform at `006c572c`.
 - The machine's transform is `Context_GetTransform`(machine + 6), where ES2's builds it from the machine's angles when its `+0x32` flag is clear. It has no spectator swap.
-- The convergence rotation goes through `000647f4`, where ES2's calls `Transform_ConcatRotation`.
 - The refire countdown `+0x31` is the template's `+0x4c` itself, where ES2's scales it by the mount's `+0x63`.
 
-Its results go where ES2's go: the shot transform at `WeaponMount_ShotTransform` (`000af144`, its translation at `000af158`), the muzzle's world point at `WeaponMount_ShotMuzzlePoint` (`000af164`) and the firing angles at `WeaponMount_ShotEuler` (`000af170`); it sets byte 0 of `+0x33` and `+0x3b`.
+The convergence is ES2's ([gun convergence](../../retail/simulation/weapon-firing.md#gun-convergence--mech_convergegunsonrange-0041a74c)): when `+0x5f` or `+0x5b` is 0, `BuildEulerRotationMatrixQ14` (`0005f0ac`) of (`+0x24` when `+0x5b` is 0, 0, `+0x28` when `+0x5f` is 0) goes under the bone's frame through **`Transform_ConcatRotation` (`000647f4`)**, ES2's ([the assembly library](fixed-point-math.md#the-assembly-library)).
+
+Its results go where ES2's go:
+
+- the shot transform, `Transform_Concat` (`0005ea08`) of the frame and `Context_GetTransform` (`000016e8`)(machine + 6), at `WeaponMount_ShotTransform` (`000af144`, its translation at `000af158`);
+- the muzzle's world point at `WeaponMount_ShotMuzzlePoint` (`000af164`): the template's `+0x40` triple (*tx*, *ty*, *tz*) plus `WeaponMount_MuzzleOffset` (`0000b918`), added as `int16`s, put through the shot transform by `Transform_ApplyToShortPoint` (`0005e858`);
+- the firing angles at `WeaponMount_ShotEuler` (`000af170`), `Transform_RotationToEuler` (`0005e988`) of the shot transform's rotation.
+
+It then sets the refire countdown and byte 0 of `+0x33` and `+0x3b`.
 
 The dispatches call ES1's shot functions where ES2's call theirs, with ES2's arguments in stack order; the last is the projectile record's subtype `+2` ([gun rounds](projectiles.md#gun-rounds--bulletcpp), [beams](projectiles.md#beams), [missiles](rockets.md#launching--rocket_fire-00007748), [the grenade](projectiles.md#the-grenade)):
 
 | ES1 | ES2 |
 |---|---|
-| `000088cc`(power, machine, range, shot transform, subtype) | `Bullet_FireBurst` |
-| `000081d4`(charge, machine, angles, muzzle point, subtype) | `Bullet_FirePowered` |
-| `00008134`(machine, angles, muzzle point, subtype) | `Bullet_Fire` |
-| `00007748`(0, machine, angles, muzzle point, subtype) | `Rocket_Fire`, given the machine's slot `+0x38` answer where ES1's passes 0 |
-| `00007b44`(throw distance `+0x81`, machine, angles, muzzle point, subtype) | `Grenade_FireNoOp` (`0040acac`), a bare `RET` |
+| `Bullet_FireBurst` (`000088cc`)(power, machine, range `+0x30`, shot transform, subtype) | `Bullet_FireBurst` |
+| `Bullet_FirePowered` (`000081d4`)(charge, machine, angles, muzzle point, subtype) | `Bullet_FirePowered` |
+| `Bullet_Fire` (`00008134`)(machine, angles, muzzle point, subtype) | `Bullet_Fire` |
+| `Rocket_Fire` (`00007748`)(0, machine, angles, muzzle point, subtype) | `Rocket_Fire`, given the machine's slot `+0x38` answer where ES1's passes 0 |
+| `Grenade_FireNoOp` (`00007b44`)(throw distance `+0x81`, machine, angles, muzzle point, subtype) | `Grenade_FireNoOp` (`0040acac`), a bare `RET` |
 
-- **`WeaponMount_FireDispatch_GunBeam` (`0000b024`)** is ES2's (`0040ea58`, [the beam branch](../../retail/simulation/weapon-firing.md#the-beam-branch), [the gun branches](../../retail/simulation/weapon-firing.md#the-gun-branches)) without `EMP2`'s second volley: after the charge-up shots, three when the template's barrels `+0x3c` are 3, it always empties the capacitor, and it never touches `+0x4d`.
+- **`WeaponMount_FireDispatch_GunBeam` (`0000b024`)** is ES2's (`0040ea58`, [the beam branch](../../retail/simulation/weapon-firing.md#the-beam-branch), [the gun branches](../../retail/simulation/weapon-firing.md#the-gun-branches)) without `EMP2`'s second volley, and never touches `+0x4d`. It raises the muzzle flash `+0x44` on a visible hardpoint (`.GL +6` below 4) before it branches on the projectile record's type:
+  - **A beam** (type 4): the muzzle point copied into the shot transform's translation, the power min(the template's `+0x38`, the capacitor `+0x7d`) as `int16`s, `Bullet_FireBurst` at that power, and the power taken off the capacitor.
+  - **A charge-up gun**, the capacitor below the cost `+0x38` (`int16`s): `Bullet_FirePowered` at the capacitor from the prologue's muzzle point. When the template's barrels `+0x3c` are 3, two more shots follow at the unchanged capacitor and the same angles, from the barrel points (0, *ty*, *tz*) and (−*tx*, *ty*, *tz*), each added to `WeaponMount_MuzzleOffset` as `int16`s and put through the shot transform into `WeaponMount_ShotMuzzlePoint`, so the three leave from *x* = *tx*, 0 and −*tx*. Then the capacitor is set to 0.
+  - **A fixed-cost gun**, the capacitor at or above the cost: the cost taken off and one `Bullet_Fire`.
 - **`ElfMount_FireDispatch` (`0000b218`)** is ES2's (`0040ec64`): the cost `+0x38` taken off the capacitor unconditionally and the burst fired at 1200.
-- **`WeaponMount_FireDispatch_Missile` (`0000af40`)** is ES2's (`0040e964`, [the ammunition dispatch](../../retail/simulation/weapon-firing.md#the-ammunition-dispatch)): it spends `+0x38` rounds unless the shot is free, clearing the rounds and the selectable byte at 0 or below, then fires a rocket for a record of type 0 and otherwise a bullet, raising the muzzle flash `+0x44` on a visible hardpoint.
-- **`GrenadeMount_FireDispatch` (`0000afd4`)** spends one round unless the shot is free, clears the charging byte `+0x46` and passes the throw distance `+0x81` to `Grenade_FireNoOp` (`00007b44`), which launches nothing ([the grenade](projectiles.md#the-grenade)). ES2's (`0040ea04`) does the same with its own empty function.
+- **`WeaponMount_FireDispatch_Missile` (`0000af40`)** is ES2's (`0040e964`, [the ammunition dispatch](../../retail/simulation/weapon-firing.md#the-ammunition-dispatch)): unless the shot is free (its second argument read as an `int16`), it takes the template's `+0x38` off the rounds `+0x7b` and at 0 or below sets them to 0 and clears the selectable byte `+0x4c`; then it fires a rocket for a record of type 0, and otherwise a bullet, raising the muzzle flash `+0x44` on a visible hardpoint on the bullet branch alone.
+- **`GrenadeMount_FireDispatch` (`0000afd4`)** takes one round off `+0x7b` unless the shot is free, clears the charging byte `+0x46` and passes the throw distance `+0x81` to `Grenade_FireNoOp` (`00007b44`), which launches nothing ([the grenade](projectiles.md#the-grenade)). It writes no floor under the rounds and leaves the selectable byte as it is when they run out, where `WeaponMount_FireDispatch_Missile` clears both; `WeaponMount_AmmoCanFire` then refuses it at 0 rounds. ES2's (`0040ea04`) does the same with its own empty function.
 
 ### Triggers
 
-**`ElfMount_TriggerHeld` (`0000acb4`)**, (mount, input), is ES2's spin-up (`0040e680`, [ELF and ELF2](../../retail/simulation/weapon-mounts.md#elf-and-elf2)) on the input's byte `+0x15` (ES2's `+0x0d`), with the cell timer at `+0x80`. It has no ELF2 branch, and it rewinds the flipbook on release without ES2's test for a model.
+**`ElfMount_TriggerHeld` (`0000acb4`)**, (mount, input), is ES2's spin-up (`0040e680`, [ELF and ELF2](../../retail/simulation/weapon-mounts.md#elf-and-elf2)) on the input's byte `+0x15` (ES2's `+0x0d`), with the cell timer at `+0x80`:
+
+- While the latch `+0x48` is clear it returns 0. A press while the spin-up byte `+0x47` is clear sets `+0x47` and zeroes the cell timer `+0x80`; a release while `+0x47` is set, before the latch, rewinds the flipbook to cell 0 (the cell index at `*(+0x14)`) and clears `+0x47`.
+- While `+0x48` is set it returns the input byte, and a release rewinds cell 0 and clears `+0x48`.
+
+It has no ELF2 branch, and it rewinds the flipbook without ES2's test for a model.
 
 **`GrenadeMount_TriggerHeld` (`0000ad54`)**, (mount, input), is ES2's hold-to-throw (`0040e71c`) on the input's byte `+0x15`: a press sets `+0x46` and the throw distance `+0x81` to 20000 and returns 0; held, the distance grows 1000 a call and the slot returns 0 until it passes 100000; a release, or passing 100000, returns 1, and while still held it also calls `Input_LatchButton` (`0004d8c8`)(1, 1), as ES2's does. `GREN` carries a magazine of 8 ([retail values](../formats/weapons-dat-sim.md#retail-values)), so `WeaponMount_AmmoCanFire` passes and the hold-to-throw runs.
 
@@ -138,9 +153,20 @@ The dispatches call ES1's shot functions where ES2's call theirs, with ES2's arg
 
 **`WeaponMount_RefireTick` (`0000b408`)**, (mount, mid-charge seen, budget), the base and ammunition pool turn, is ES2's (`0040ef94`): unless destroyed, `WeaponMount_AndFlagBlocks` (`0000b4a8`, entered at its padding `0000b4a5`; ES2's `0040f881`) ANDs `+0x33` with `+0x3b`, `+0x3b` is cleared, `Math_CountdownTimerTick` counts `+0x31` down, and a playing muzzle flash steps one cell; it returns the budget.
 
-**`WeaponMount_ChargeCapacitor` (`0000b4d4`)**, (mount, mid-charge seen, budget), the energy pool turn, is ES2's (`0040f00c`, [weapon energy arbitration](../../retail/simulation/reactor-energy-pool.md#weapon-energy-arbitration--weaponmounts_arbitrateenergy-004107e4)) with a fixed rate: it draws min(rate, budget, deficit), the rate 20, or 60 while the mount's mid-charge byte `+0x43` is set, where ES2's draws its charge rate `+0x7f`. It has no `PLAS` rule, ES1 having no `PLAS`. A deficit at or below 0 clears `+0x43` and gives back up to 5, as ES2's.
+**`WeaponMount_ChargeCapacitor` (`0000b4d4`)**, (mount, mid-charge seen, budget), the energy pool turn, is ES2's (`0040f00c`, [weapon energy arbitration](../../retail/simulation/reactor-energy-pool.md#weapon-energy-arbitration--weaponmounts_arbitrateenergy-004107e4)) with a fixed rate. Unless the mount is destroyed (`+0x49`), it runs `WeaponMount_RefireTick` and works in `int16`s:
 
-**`ElfMount_SpinUpAndChargeTick` (`0000b748`)** is ES2's (`0040f3d8`) with the cell timer at `+0x80`, and without ES2's test for a model or an empty sequence list before it reads the flipbook.
+```
+target  = midChargeSeen ? 0 : +0x7b      // 0 once a mid-charge mount has been served this pass
+deficit = target - capacitor +0x7d
+if (deficit <= 0) { +0x43 = 0; amount = max(deficit, -5) }    // up to 5 goes back to the budget
+else amount = min(+0x43 ? 60 : 20, budget, deficit)
+capacitor += amount
+return budget - amount
+```
+
+A destroyed mount returns the budget. ES2's draws its charge rate `+0x7f` where ES1's draws 20, or 60 while the mount's mid-charge byte `+0x43` is set; ES1's has no `PLAS` rule, ES1 having no `PLAS`. The arbitration says when the second argument is set ([energy](weapon-mounts.md#energy--weaponmounts_arbitrateenergy-0000cc2c)).
+
+**`ElfMount_SpinUpAndChargeTick` (`0000b748`)**, the ELF's pool turn, is ES2's (`0040f3d8`) with the cell timer at `+0x80`. Unless the mount is destroyed, while the spin-up byte `+0x47` is set it counts the timer down (`Math_CountdownTimerTick` on `+0x7f`); when it reads 0, at the last cell of sequence 0, the cell index at `*(+0x14)` equal to the model's `*(+0x20)` − 1, it latches `+0x48` and clears `+0x47`, and otherwise steps the cell modulo `*(+0x20)` and zeroes the timer. Since the trigger zeroes the timer too, the flipbook steps one cell a pool turn. Then it runs `WeaponMount_ChargeCapacitor` with its arguments and returns its answer. It has no counterpart to ES2's test for a model or an empty sequence list before it reads the flipbook.
 
 ## Gauges
 
@@ -201,7 +227,7 @@ ES1's ECM is a mount of its own class, found by weapon id where ES2 files its EC
 | `WeaponMount_AdjustPowerLevel`, `WeaponMount_WakeCapacitor`, `WeaponMount_DemandFullCharge`, `WeaponMount_GetEnergyPriority`, `WeaponMount_AmmoCountsInCombatRating` | `0000b820`, `0000b884`, `0000b8a4`, `0000b8c4`, `0000b8ec` | `0040f48c`, `0040f4d8`, `0040f4f0`, `0040f504`, `0040f520` |
 | `WeaponMount_MuzzleOffset`, `WeaponMount_Destroy`, `WeaponMount_StaticInitNoOp` | `0000b918`, `0000b968`, `0000baec` | `0040f540`, `0040f57c`, `0040f780` |
 | Module copies: `TSPartBase_DtorMountsCopy`, `ConfigPart_GetClassTagMountsCopy`, `ConfigPart_DtorMountsCopy`, and the `*MountsCopy` copies of `gunlist.cpp`'s destructors and slot functions | `0000a764`, `0000a78e`, `0000a798`; `0000a7d8`–`0000a843`, `0000a8c4`–`0000a94c`, `0000aa3c`, `0000aa88` | — |
-| Callees: `ConfigPart_Render`, `Mech_IsEcmSwitchedOn`, `Mech_GetEcmPodSwitch`, `TSDetailPart_SetBias` | `00002718`, `00014e68`, `00014eb4`, `000530a4` | `0040316c`, `0041aa10`, `0041aa44`, `004768ac` |
+| Callees: `ConfigPart_Render`, `Mech_IsEcmSwitchedOn`, `Mech_GetEcmPodSwitch`, `TSDetailPart_SetBias`, `Transform_ConcatRotation` | `00002718`, `00014e68`, `00014eb4`, `000530a4`, `000647f4` | `0040316c`, `0041aa10`, `0041aa44`, `004768ac`, `0047f3e8` |
 
 `ConfigPart_Render` (`00002718`) is ES2's (`0040316c`) on ES1's globals: with a model at `+0x10`, it makes the model's `+0x26` the current bank (`000bdb5e`) and the part's frames `+0x14` the current cell frames (`000bd912`) around `00052e18`(model), between `00052890` and `0005298c`(part, frame), and restores both. ES2's calls `TSPartList_Render` there and ends with `Render_NoOp`.
 
@@ -219,7 +245,7 @@ ES1's ECM is a mount of its own class, found by weapon id where ES2 files its EC
 
 - **Open:** what the dwords at `0009fb40` and on are, where `es2_xref.py` finds the values `0000a304` (inside `HeapPtr_DtorMountsCopy`) and `0000a514` stored: a run of code addresses from `0000a064` to `0000a524`, mostly 16 bytes apart and not in address order, that point inside functions rather than at their entries.
 - **Open:** what name `WeaponMount_GetDisplayName` makes from the record `GREN`'s projectile index 22 points past the table's end at ([the projectile index](../formats/weapons-dat-sim.md#the-projectile-index)); the throw itself reads nothing of it ([the grenade](projectiles.md#the-grenade)).
-- **Open:** the callees `000647f4` (the convergence product), `00006168` and `00006378` (the thrown gun).
+- **Open:** the callees `00006168` and `00006378` (the thrown gun).
 - **Open:** what sets the mid-charge byte `+0x43`, under which a capacitor charges at 60 a tick, besides `WeaponMount_DemandFullCharge`, the full-charge slot `WeaponMounts_DemandFullChargeOnArmed` calls, to which `es2_xref.py` finds no reference ([arming, chaining and linking](weapon-mounts.md#arming-chaining-and-linking)).
 - **Open:** whether code outside the mount classes and the HERC's file weakens a damaged weapon: the HERC's damage write destroys a mount only when its component's flag clears, and its systems tick reads no mount's condition ([the HERC](mech.md)); and whether anything besides the ECM mount posts a jamming message when its button is switched.
 - **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: a missile launcher's cockpit row reads the missile type and the rack size run together (`ARH10` for a rack of ten `ARH`); `BP <CS>:0000b968` fires when a hardpoint is lost, with the second argument 1 when a gun is thrown off and 0 when the hardpoint vanishes. Two retail checks settle the Open item above: an energy weapon on a hardpoint damaged into the red charges as fast as on an undamaged one, and switching the ECM on brings up no `JAMMING` message.
