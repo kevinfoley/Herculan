@@ -214,11 +214,13 @@ public sealed class Es1WorldDraw {
 			int root = Es1ShapeDetail.SelectRoot(type.Roots.Count, type.ShapeRadius,
 				Es1ShapeDetail.EyeDistance(_frame, camera.Position), detail, Es1MechType.DetailThresholds, focalShift);
 
-			// Every component intact stands each cell-animation part on cell 0; a HERC body's detail parts draw with bias 0.
+			// Each cell-animation part shows the cell the damage set for its sequence (Es1Mech.CellFrame); a HERC body's
+			// detail parts draw with bias 0.
 			foreach (var (item, piece, pieceRoot) in _pieces) {
 				item.Transform = FrameToWorld(piece.TransformId);
 				item.RampBlock = block;
-				item.Visible = drawn && pieceRoot == root && OnScreen(piece.Gate, camera, focalShift, 0);
+				item.Visible = drawn && pieceRoot == root
+					&& OnScreen(piece.Gate, camera, focalShift, 0, null, _mech.CellFrame(piece.Gate.Sequence));
 			}
 
 			// A mount's model shows its own private cell frames, which the muzzle flash and the ELF's spin-up step.

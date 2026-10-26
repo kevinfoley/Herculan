@@ -40,6 +40,9 @@ public sealed class Es1Locomotion {
 	/// <summary>The rate the death sequence plays at.</summary>
 	private const short DeathRate = 0x78;
 
+	/// <summary>The odds and the damage of the landing's <see cref="Es1MechDamage.SpreadImpactDamage"/> as the fall ends.</summary>
+	private const short LandingOdds = 0x78, LandingDamage = 0x96;
+
 	/// <summary>The steer, either way, past which a standing machine turns in place.</summary>
 	private const int TurnInPlaceDeflection = 0x32;
 
@@ -60,7 +63,7 @@ public sealed class Es1Locomotion {
 	/// on the speed it asks for (docs/es1/simulation/mech-locomotion.md#the-throttle--mech_applythrottleinput-00011afc).
 	/// </summary>
 	/// <param name="throttleLeverMode"><c>ThrottleLeverMode</c> (<c>000919ce</c>), which the caller owns.</param>
-	public void ApplyThrottleInput(Es1SimClock clock, short throttleAxis, short steer, short throttleLeverMode) {
+	public void ApplyThrottleInput(Es1SimGlobals globals, short throttleAxis, short steer, short throttleLeverMode) {
 		var mech = _mech;
 		short axis = throttleLeverMode < 0 ? (short)-throttleAxis : throttleAxis;
 
@@ -81,7 +84,7 @@ public sealed class Es1Locomotion {
 
 		var chassis = mech.Type.Chassis;
 		short top = mech.Throttle < 0 ? (short)-chassis.SpeedReverse : chassis.SpeedForward;
-		LocomotionTick(clock, 0, (short)SimMath.Q10MultiplyRounded(mech.Throttle, top), steer);
+		LocomotionTick(globals, 0, (short)SimMath.Q10MultiplyRounded(mech.Throttle, top), steer);
 	}
 
 	/// <summary>
@@ -105,7 +108,7 @@ public sealed class Es1Locomotion {
 	/// (docs/es1/simulation/mech-locomotion.md#the-control-law--mech_locomotiontick-00012038).
 	/// </summary>
 	/// <param name="avoidanceArgument">The flags <c>Mech_AiObstacleAvoidance</c> takes; <see cref="ApplyThrottleInput"/> passes 0.</param>
-	public void LocomotionTick(Es1SimClock clock, short avoidanceArgument, short desired, short steer) {
+	public void LocomotionTick(Es1SimGlobals globals, short avoidanceArgument, short desired, short steer) {
 		var mech = _mech;
 		var chassis = mech.Type.Chassis;
 
@@ -115,7 +118,7 @@ public sealed class Es1Locomotion {
 			steer = 0;
 		} else {
 			int countdown = mech.UnstickCountdown;
-			int remaining = clock.TimerCountDown(ref countdown);
+			int remaining = globals.Clock.TimerCountDown(ref countdown);
 			mech.UnstickCountdown = countdown;
 			if (remaining == 0) {
 				desired = desired >= chassis.SpeedForward ? chassis.SpeedForward
@@ -143,7 +146,7 @@ public sealed class Es1Locomotion {
 		SimMath.RateLimitedMoveToward(ref speed, desired, chassis.SpeedAccelDecel);
 		mech.Speed = speed;
 
-		bool heldTurn = mech.LocomotionThread is { } thread && RunGaitMachine(thread, previous, ref steer);
+		bool heldTurn = mech.LocomotionThread is { } thread && RunGaitMachine(thread, previous, ref steer, globals);
 
 		// Turning (docs/es1/simulation/mech-locomotion.md#turning).
 		short tent = TurnTent(mech.Speed, chassis.SpeedForward, chassis.SpeedTurn, heldTurn);
@@ -182,7 +185,7 @@ public sealed class Es1Locomotion {
 	/// (docs/es1/simulation/mech-locomotion.md#the-gait-machine, docs/retail/simulation/mech-locomotion.md#the-gait-state-machine).
 	/// Returns whether a row held the turn this tick.
 	/// </summary>
-	private bool RunGaitMachine(AnimationThread thread, short previous, ref short steer) {
+	private bool RunGaitMachine(AnimationThread thread, short previous, ref short steer, Es1SimGlobals globals) {
 		var mech = _mech;
 		var chassis = mech.Type.Chassis;
 		short walk = chassis.AnimId_Walk, run = chassis.AnimId_Run;
@@ -212,7 +215,7 @@ public sealed class Es1Locomotion {
 		}
 
 		if (!turning && mech.Immobilized) {
-			Fall(thread, death, stopForward, stopReverse);
+			Fall(thread, death, stopForward, stopReverse, globals);
 			return false;
 		}
 
@@ -310,16 +313,16 @@ public sealed class Es1Locomotion {
 	/// The fall of an immobilized machine that is not turning in place
 	/// (docs/retail/simulation/mech-locomotion.md#going-down): aimed at the death sequence at rate 100, a machine in the
 	/// reverse stop sequence first cut to the forward one; then rate <c>0x78</c>; and once it has played out,
-	/// <see cref="Es1Mech.Collapsed"/> latched.
+	/// <see cref="Es1Mech.Collapsed"/> latched and the landing's damage spread.
 	/// </summary>
-	private void Fall(AnimationThread thread, short death, short stopForward, short stopReverse) {
+	private void Fall(AnimationThread thread, short death, short stopForward, short stopReverse, Es1SimGlobals globals) {
 		var mech = _mech;
 		if (thread.Sequence == death) {
 			mech.PlaybackRate = DeathRate;
 			if (!mech.Collapsed && thread.Frame == thread.NextFrame) {
 				mech.Collapsed = true;
-				// PLACEHOLDER: Mech_SpreadImpactDamage (00013078)(machine, 0x78, 0x96), plan step 7b (damage); and sound
-				// 0x29 at the machine's position, which no plan step ports yet.
+				Es1MechDamage.SpreadImpactDamage(mech, LandingOdds, LandingDamage, globals);
+				// PLACEHOLDER: sound 0x29 at the machine's position, which no plan step ports yet.
 			}
 
 			return;

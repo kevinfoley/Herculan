@@ -63,9 +63,9 @@ public sealed class Es1Mech : IEs1SimObject {
 
 		// Step 1: SimObjectBase_ConstructWithDetailTable on the record's roots, an animated instance on root 0.
 		Shape = type.Animation != null ? new ShapeInstance(type.Animation) : null;
+		CellFrames = new short[(type.Roots.Count > 0 ? type.Roots[0] as TSShape : null)?.SequenceList?.Length ?? 0];
 
-		// Step 3. PLACEHOLDER: Component_AllocDamageArrays (00009b8c) with 21 internals and 28 components; step 7b ports
-		// the damage header.
+		// Step 3, Component_AllocDamageArrays, is the header's construction at step 10, where its table and model load.
 		// Step 4: the five lock countdowns at +0x1ee (Countdowns.Lock), 0 as the slot's zero fill leaves them.
 		// Step 5: the throttle, speed, turn and turret rates and angles start at 0.
 		Energy = InitialEnergy;
@@ -96,8 +96,12 @@ public sealed class Es1Mech : IEs1SimObject {
 		// Step 9: deciding, or player when +0x9d is set. The second pass sets +0x9d after the constructor, so every machine
 		// is built deciding, whose reassess installs player for the player's machine (Es1MechBehaviour).
 		Behaviour.SetState(Es1MechBehaviour.States[IsPlayer ? Es1MechBehaviour.Player : Es1MechBehaviour.Deciding], jitter);
-		// Step 10. PLACEHOLDER: dmg\<name> and col\<name> loaded and bound (Damage_LoadMechDmgFile, Collision_RegisterObject,
-		// Component_LinkMaxRefData); step 4 (collision) and step 7b (damage) port them.
+		// Step 10: dmg\<name> and col\<name> bound to the damage header (Damage_LoadMechDmgFile, Collision_RegisterObject,
+		// Component_LinkMaxRefData). Retail asserts on a missing file; a type without its table has no header here.
+		if (type.DamageTable is { } table) {
+			Damage = new Es1DamageHeader(this, table, type.CollisionModel);
+		}
+
 		// Step 11: the latches +0x24a to +0x24d clear and the death sequence's +0x24e set.
 		FootfallLatches[FootfallLatchCount - 1] = true;
 
@@ -251,8 +255,34 @@ public sealed class Es1Mech : IEs1SimObject {
 	/// <inheritdoc/>
 	public bool RadarVisible { get; set; }
 
-	/// <summary><c>+0x93</c>, destroyed. PLACEHOLDER: nothing sets it until plan step 7b's damage write.</summary>
+	/// <summary>
+	/// <c>+0x93</c>, destroyed. PLACEHOLDER: its setter, the damage write's death step, is part B of plan step 7b; clear
+	/// until then.
+	/// </summary>
 	public bool Destroyed { get; set; }
+
+	/// <summary><c>+0x19c</c>, the damage header; null for a type without its <c>.DMG</c>, which retail asserts on.</summary>
+	public Es1DamageHeader? Damage { get; }
+
+	/// <summary>
+	/// The array at <c>+8</c> of the shape instance <c>+0x2e</c>, the cell each <c>TSCellAnimPart</c> sequence shows, one per
+	/// sequence of root 0's shape, each at 0; the damage writes it
+	/// (docs/es1/simulation/component-damage.md#write-and-cascade--component_applydamageandcascade-00009f7c).
+	/// </summary>
+	public short[] CellFrames { get; }
+
+	/// <summary>The cell <paramref name="sequence"/> shows; 0 past the array.</summary>
+	public short CellFrame(int sequence) => sequence >= 0 && sequence < CellFrames.Length ? CellFrames[sequence] : (short)0;
+
+	/// <summary>Sequence <paramref name="sequence"/> put on <paramref name="cell"/>; retail writes past the array unchecked, here nothing, an engine guard.</summary>
+	public void SetCellFrame(int sequence, short cell) {
+		if (sequence >= 0 && sequence < CellFrames.Length) {
+			CellFrames[sequence] = cell;
+		}
+	}
+
+	/// <summary><c>+0x8e</c>, skip the combat-rating update; a hit that reaches the shields clears it.</summary>
+	public bool SkipCombatRating { get; set; }
 
 	/// <summary><c>+0x15e</c>, its own target, or null.</summary>
 	public IEs1SimObject? Target { get; set; }
@@ -270,8 +300,8 @@ public sealed class Es1Mech : IEs1SimObject {
 	public Es1MechCountdowns Countdowns { get; } = new();
 
 	/// <summary>
-	/// <c>+0xa4</c> and <c>+0xa5</c>, the two reactor grades, which cut the reactor's rate (<see cref="Es1MechSystems"/>).
-	/// PLACEHOLDER: their writer, <c>Mech_ComponentDamageWrite</c> (<c>00013250</c>), is plan step 7b's; clear until then.
+	/// <c>+0xa4</c> and <c>+0xa5</c>, the two reactor grades, which cut the reactor's rate (<see cref="Es1MechSystems"/>);
+	/// the damage write sets them (<see cref="Es1MechDamage.ComponentDamageWrite"/>).
 	/// </summary>
 	public bool ReactorDamaged { get; set; }
 
@@ -280,15 +310,14 @@ public sealed class Es1Mech : IEs1SimObject {
 
 	/// <summary>
 	/// <c>+0xaa</c>, the shields message has been posted; the MFD's status screen reads it as shields down. The systems
-	/// tick clears it on the player's machine. PLACEHOLDER: its setter, <c>Mech_DirectFireHitTest</c> (<c>00013b44</c>), is
-	/// plan step 7b's; clear until then.
+	/// tick clears it on the player's machine, and the hit test sets it (<see cref="Es1MechDamage.HitTest"/>).
 	/// </summary>
 	public bool ShieldsMessagePosted { get; set; }
 
 	/// <summary><c>+0x217</c>, the damage from the player's side, zeroed when the under-fire window runs out. PLACEHOLDER: its other writers, the AI's, are plan step 8's.</summary>
 	public int DamageFromPlayerSide { get; set; }
 
-	/// <summary><c>+0x21e</c>, the damage taken, zeroed when the damage window runs out. PLACEHOLDER: its writer, the hit test, is plan step 7b's.</summary>
+	/// <summary><c>+0x21e</c>, the damage taken, which the hit test raises; zeroed when the damage window runs out.</summary>
 	public int DamageTaken { get; set; }
 
 	/// <summary><c>+0x9f</c>, disarmed. PLACEHOLDER: its writer, <c>Ai_ChooseWeapon</c> running dry, is plan step 8's; clear until then.</summary>
@@ -298,15 +327,14 @@ public sealed class Es1Mech : IEs1SimObject {
 	/// <remarks>PLACEHOLDER: its reader, <c>Ai_FireAtPoint</c> (<c>000190ec</c>), is plan step 8's.</remarks>
 	public bool SkipWeaponChoice { get; set; }
 
+	/// <summary>Slot <c>+0x24</c>, <see cref="Es1MechDamage.HitTest"/>.</summary>
+	public int HitTest(Es1Shot shot, Es1SimGlobals globals) => Es1MechDamage.HitTest(this, shot, globals);
+
 	/// <summary>
-	/// Slot <c>+0x24</c>, <c>Mech_DirectFireHitTest</c> (<c>00013b44</c>, docs/es1/simulation/mech.md#the-hit-test--mech_directfirehittest-00013b44).
-	/// PLACEHOLDER: answers 0, a miss, and applies nothing: the hit test, its damage and its difficulty scale are plan step
-	/// 7b's.
+	/// Slot <c>+0x44</c>, <c>Mech_GetOverallDamage</c> (<c>00010eb0</c>): <see cref="Es1DamageHeader.ReadOverallDamage"/>;
+	/// 0 with no header.
 	/// </summary>
-	public int HitTest(Es1Shot shot) {
-		_ = shot;
-		return 0;
-	}
+	public short OverallDamage => Damage?.ReadOverallDamage() ?? 0;
 
 	/// <summary>
 	/// Slot <c>+0x28</c>, <c>Mech_GetAimNodeTransform</c> (<c>00013204</c>): the posed node of the type record's camera part
@@ -325,23 +353,59 @@ public sealed class Es1Mech : IEs1SimObject {
 	}
 
 	/// <summary>
-	/// Slot <c>+0x58</c>, <c>Mech_ComponentNearestAim</c> (<c>00015884</c>): of the components whose occupancy flag is set,
-	/// the one whose bearing from <paramref name="from"/> lies nearest <paramref name="angles"/>, or −1. PLACEHOLDER:
-	/// answers −1, no component occupied: the components' damage data is plan step 7b's.
+	/// Slot <c>+0x58</c>, <c>Mech_ComponentNearestAim</c> (<c>00015884</c>, docs/es1/simulation/mech.md#small-functions):
+	/// of the components whose occupancy flag is set, each placed by <see cref="ComponentPosition"/>, the first whose
+	/// <c>Math_EulerToward</c> from <paramref name="from"/> differs least from <paramref name="angles"/>, or −1. The
+	/// difference is the sum of two absolutes, −32768 counted as 32767: element 0's against the pitch and element 1's,
+	/// which <c>Math_EulerToward</c> always answers 0, against the roll, so the bearing's heading is not weighed. No header
+	/// answers −1.
 	/// </summary>
 	public short ComponentNearestAim(Vec3i from, (short Pitch, short Roll, short Heading) angles) {
-		_ = (from, angles);
-		return -1;
+		static int Abs(short angle) => angle == short.MinValue ? short.MaxValue : Math.Abs(angle);
+
+		if (Damage is not { } header) {
+			return -1;
+		}
+
+		int best = NoAimDifference;
+		short chosen = -1;
+		for (short component = 0; component < Es1DamageHeader.ComponentCount; component++) {
+			if (!header.Occupied[component]) {
+				continue;
+			}
+
+			var (pitch, roll, _) = SimTrig.EulerToward(ComponentPosition(component), from);
+			int difference = Abs((short)(pitch - angles.Pitch)) + Abs((short)(roll - angles.Roll));
+			if (difference < best) {
+				best = difference;
+				chosen = component;
+			}
+		}
+
+		return chosen;
 	}
 
+	/// <summary>The difference <see cref="ComponentNearestAim"/> starts from, above any it measures.</summary>
+	public const int NoAimDifference = 0x1000000;
+
 	/// <summary>
-	/// Slot <c>+0x5c</c>, <c>Mech_ComponentPosition</c> (<c>00015990</c>): the component's point through its part's node and
-	/// the machine's frame. PLACEHOLDER: answers the position: the components' pieces are plan step 7b's, and with
-	/// <see cref="ComponentNearestAim"/> answering −1 nothing asks.
+	/// Slot <c>+0x5c</c>, <c>Mech_ComponentPosition</c> (<c>00015990</c>, docs/es1/simulation/mech.md#small-functions): the
+	/// piece's anchor point through its part's node when the part id is above 0 and the shape has the part, then through
+	/// the machine's frame; otherwise through the frame alone. Retail reads an unbound point through a null pointer; (0, 0,
+	/// 0) here, an engine guard, and with no header the position.
 	/// </summary>
 	public Vec3i ComponentPosition(short component) {
-		_ = component;
-		return Position;
+		if (Damage?.Piece(component) is not { } piece) {
+			return Position;
+		}
+
+		var (x, y, z) = piece.AnchorPoint ?? default;
+		var point = new Vec3i(x, y, z);
+		if (piece.AnchorPart > 0 && PartNodeTransform(piece.AnchorPart) is { } node) {
+			point = node.TransformPoint(x, y, z);
+		}
+
+		return Frame.TransformPoint(point.X, point.Y, point.Z);
 	}
 
 	/// <summary>Slot <c>+0x70</c>, <c>SimObject_MissileLockState_AlwaysMechCopy</c>: every missile a HERC fires has lock (docs/es1/simulation/rockets.md#launching--rocket_fire-00007748).</summary>
@@ -396,11 +460,22 @@ public sealed class Es1Mech : IEs1SimObject {
 	public const int DamageReadingCount = 42;
 
 	/// <summary>
-	/// <c>Mech_ReadDamageReadouts</c> (<c>0001583c</c>)(machine, buffer): the type record's <c>int16</c> <c>+0x6c</c> in
-	/// entry 0 and <c>Component_FillDamageReadouts</c>' readings after it (docs/es1/simulation/damage-readouts.md).
-	/// PLACEHOLDER: the damage readings are plan step 7b's; until then every reading is 0, intact.
+	/// <c>Mech_ReadDamageReadouts</c> (<c>0001583c</c>)(machine, buffer): the type record's <c>int16</c> <c>+0x6c</c>, the
+	/// type number, in entry 0 and <see cref="Es1DamageHeader.FillDamageReadouts"/>' readings after it
+	/// (docs/es1/simulation/damage-readouts.md). With no header every reading is 0.
 	/// </summary>
-	public short[] ReadDamageReadouts() => new short[DamageReadingCount];
+	public short[] ReadDamageReadouts() {
+		var buffer = new short[DamageReadingCount];
+		buffer[0] = Type.Type;
+		Damage?.FillDamageReadouts(buffer);
+		return buffer;
+	}
+
+	/// <summary>
+	/// <c>Mech_ReadEntryDamage</c> (<c>00015868</c>)(machine, <paramref name="index"/>, <paramref name="kind"/>):
+	/// <see cref="Es1DamageHeader.ReadEntryDamage"/>; 0 with no header.
+	/// </summary>
+	public short ReadEntryDamage(int index, int kind) => Damage?.ReadEntryDamage(index, kind) ?? 0;
 
 	/// <summary><c>+0x1d4</c>, the squad order's point. PLACEHOLDER: written with <see cref="SquadVerb"/>, plan step 8.</summary>
 	public Vec3i SquadPoint { get; set; }
@@ -499,8 +574,8 @@ public sealed class Es1Mech : IEs1SimObject {
 	/// <summary><c>+0x232</c>, a squad machine's <c>data\player.mec</c> pilot word 1.</summary>
 	public short PilotWord { get; set; }
 
-	/// <summary><c>+0xad</c>, worth no salvage: the record's salvage scale is 0.</summary>
-	public bool WorthNoSalvage { get; }
+	/// <summary><c>+0xad</c>, worth no salvage: the record's salvage scale is 0, or the starting condition says so.</summary>
+	public bool WorthNoSalvage { get; set; }
 
 	/// <summary><c>+0x228</c>, the energy pool.</summary>
 	public short Energy { get; set; }
@@ -523,7 +598,10 @@ public sealed class Es1Mech : IEs1SimObject {
 
 	/// <summary>
 	/// <c>Mech_ConfigureLoadout</c> (<c>00012c00</c>): the manager, the local one for the player's machine; root motion
-	/// with time 0; and each fitted mount's model stamped with its hardpoint's node.
+	/// with time 0; each fitted mount's model stamped with its hardpoint's node and its template joined to the damage
+	/// header (<see cref="Es1DamageHeader.FitWeapon"/>, moved by <see cref="Es1WeaponMount.MountPointOffset"/>,
+	/// <c>WeaponMount_MuzzleOffset</c>); then the anchors bound and the unoccupied components' flags cleared
+	/// (<see cref="Es1DamageHeader.BindAnchorsAndClearUnoccupied"/>).
 	/// </summary>
 	public void ConfigureLoadout(Func<int, short> fit, Func<int, short> ammunition, Es1Weapons weapons,
 			Func<Weapons.WeaponMountTemplate, int, TSObject?> modelFor) {
@@ -541,10 +619,10 @@ public sealed class Es1Mech : IEs1SimObject {
 				mount.ModelTransformId = part.Transform;
 			}
 
-			// PLACEHOLDER: the template's spheres, piece and internal maximum put into the machine's model and table
-			// (Collision_ReplaceClusters, HercPiece_ReplacePieces, HercPiece_SetInternalMaxima), the anchors bound and the
-			// occupancy flags cleared; step 7b ports them with the damage tables.
+			Damage?.FitWeapon((sbyte)mount.Hardpoint.LoadoutSlot, mount.Template, mount.MountPointOffset);
 		}
+
+		Damage?.BindAnchorsAndClearUnoccupied();
 	}
 
 	/// <summary>

@@ -33,14 +33,14 @@ public class Es1LocomotionTests {
 	[Fact]
 	public void ThrottleWaitsATickAtZeroBeforeChangingSign() {
 		var mech = NewMech();
-		var clock = new Es1SimClock();
+		var globals = new Es1SimGlobals();
 		mech.Throttle = 0x20;
 
-		mech.Locomotion.ApplyThrottleInput(clock, 0x100, 0, 0);
+		mech.Locomotion.ApplyThrottleInput(globals, 0x100, 0, 0);
 		Assert.Equal(0, mech.Throttle);
 		Assert.True(mech.ThrottleChanged);
 
-		mech.Locomotion.ApplyThrottleInput(clock, 0x100, 0, 0);
+		mech.Locomotion.ApplyThrottleInput(globals, 0x100, 0, 0);
 		Assert.Equal(-0x91, mech.Throttle);
 	}
 
@@ -56,7 +56,7 @@ public class Es1LocomotionTests {
 		Assert.Equal(Es1Locomotion.ThrottleFull, Es1Locomotion.MoveThrottle(0x3c0, 0x91, 1));
 
 		var mech = NewMech();
-		mech.Locomotion.ApplyThrottleInput(new Es1SimClock(), -0x100, 0, -1);
+		mech.Locomotion.ApplyThrottleInput(new Es1SimGlobals(), -0x100, 0, -1);
 		Assert.Equal(-0x91, mech.Throttle);
 	}
 
@@ -90,7 +90,7 @@ public class Es1LocomotionTests {
 		mech.Speed = speed;
 		mech.PlaybackRate = 123;
 
-		mech.Locomotion.LocomotionTick(new Es1SimClock(), 0, desired, 0);
+		mech.Locomotion.LocomotionTick(new Es1SimGlobals(), 0, desired, 0);
 
 		Assert.NotEqual(speed, mech.Speed);
 		Assert.Equal(123, mech.PlaybackRate);
@@ -103,7 +103,7 @@ public class Es1LocomotionTests {
 		mech.LocomotionThread!.SetSequence(Walk, 0, 0);
 		mech.Speed = 20;
 
-		mech.Locomotion.LocomotionTick(new Es1SimClock(), 0, 20, 0);
+		mech.Locomotion.LocomotionTick(new Es1SimGlobals(), 0, 20, 0);
 
 		Assert.Equal(20, mech.PlaybackRate);
 	}
@@ -119,7 +119,7 @@ public class Es1LocomotionTests {
 		mech.Speed = 145;
 		mech.RotationWord = 1;
 
-		mech.Locomotion.LocomotionTick(new Es1SimClock(), 0, 145, 0x100);
+		mech.Locomotion.LocomotionTick(new Es1SimGlobals(), 0, 145, 0x100);
 
 		Assert.Equal(TopTurn, mech.TurnRate);
 		Assert.Equal(TopTurn, mech.Rotation.Z);

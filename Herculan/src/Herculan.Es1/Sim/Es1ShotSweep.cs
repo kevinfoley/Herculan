@@ -113,7 +113,7 @@ public static class Es1ShotSweep {
 				continue;
 			}
 
-			int distance = simObject.HitTest(shot);
+			int distance = simObject.HitTest(shot, globals);
 			if (distance == 0) {
 				continue;
 			}

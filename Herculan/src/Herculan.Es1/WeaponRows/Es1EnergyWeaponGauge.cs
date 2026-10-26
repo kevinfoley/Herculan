@@ -91,7 +91,7 @@ public sealed class Es1EnergyWeaponGauge : Es1WeaponRowGauge {
 		}
 
 		if (block.Destroyed != State.Destroyed || DestroyedHeld) {
-			// CockpitView_GetShakeOffset (000249d4)'s +4 is 0 while no hit shake is armed, and the hit shake is plan step 7b,
+			// CockpitView_GetShakeOffset (000249d4)'s +4 is 0 while no hit shake is armed, and the hit shake is part B of plan step 7b,
 			// so the change always lands.
 			State = State with { Destroyed = block.Destroyed };
 			short shown = block.Destroyed ? Es1Widget.Hidden : Es1Widget.Up;

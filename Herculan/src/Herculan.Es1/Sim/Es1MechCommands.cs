@@ -37,9 +37,10 @@ public static class Es1MechCommands {
 	/// <c>Mech_HandleCommand</c>(<paramref name="machine"/>, <paramref name="code"/>): 1 when
 	/// <c>WeaponMounts_HandleCommand</c> takes the code or it is one of the 19 at <c>000919d0</c>, after its case; 0 for
 	/// any other. The all-stop acts on <paramref name="playerMech"/> (<c>PlayerMech</c>, <c>000bc42a</c>), the moves and
-	/// turns on <paramref name="machine"/>.
+	/// turns on <paramref name="machine"/>; the outnumbered damage writes through <paramref name="globals"/>.
 	/// </summary>
-	public static short HandleCommand(Es1Mech machine, Es1Mech playerMech, ushort code, Es1DevKeySteps steps) {
+	public static short HandleCommand(Es1Mech machine, Es1Mech playerMech, ushort code, Es1DevKeySteps steps,
+			Es1SimGlobals globals) {
 		// PLACEHOLDER: WeaponMounts_HandleCommand (0000d4b4)(PlayerMech's manager +0x198, code), the weapon keys, takes
 		// nothing until plan steps 6 and 7 port the mounts' keys.
 
@@ -49,7 +50,7 @@ public static class Es1MechCommands {
 				playerMech.ThrottleChanged = true;
 				return 1;
 			case OutnumberedDamage:
-				// PLACEHOLDER: Mech_ApplyOutnumberedDamage (00015a5c)(PlayerMech) writes damage, plan step 7b.
+				Es1MechDamage.ApplyOutnumberedDamage(playerMech, globals);
 				return 1;
 			case >= FirstStepCode and <= LastStepCode:
 				steps.MoveStep = MoveSteps[code - FirstStepCode];

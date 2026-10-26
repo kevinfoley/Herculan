@@ -109,6 +109,18 @@ public sealed class Es1MechType {
 		}
 	}
 
+	/// <summary>
+	/// <c>dmg\&lt;name&gt;</c> (docs/es1/formats/dmg-damage-file.md), which <c>Mech_Constructor</c> loads into each machine's
+	/// <c>+0x190</c>; null when the install lacks it.
+	/// </summary>
+	public HercSimDamage? DamageTable { get; private init; }
+
+	/// <summary>
+	/// <c>col\&lt;name&gt;</c>'s sphere model with its clusters' bounds (<see cref="Es1HitSpheres.ReadModel"/>), which <c>Mech_Constructor</c> loads into each machine's <c>+0x18c</c>; empty when the
+	/// install lacks it. A machine's loadout replaces clusters in a copy, so the type's is shared unchanged.
+	/// </summary>
+	public ColliderNode[] CollisionModel { get; private init; } = [];
+
 	/// <summary>Root 0's bounding radius, <c>shape+8</c>, which the LOD choice reads whichever root was drawn last.</summary>
 	public int ShapeRadius => Roots.Count > 0 && Roots[0] is TSBasePart root ? root.Radius : 0;
 
@@ -137,6 +149,8 @@ public sealed class Es1MechType {
 			TextureBank = bank,
 			PaperDollArt = content.Read("dba", name + ".DBA") is { } artBytes ? new DynamixBitmapArrayTransformer().Parse(artBytes)?.Images : null,
 			PaperDoll = content.Read("pdg", name + ".PDG") is { } dollBytes ? new PaperDiagramGraphTransformer().Parse(dollBytes) : null,
+			DamageTable = content.Read("dmg", name + ".DMG") is { } dmgBytes ? new HercDamageFileTransformer().Parse(dmgBytes) : null,
+			CollisionModel = Es1HitSpheres.ReadModel(content.Read("col", name + ".COL")),
 		};
 	}
 

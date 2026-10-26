@@ -33,6 +33,7 @@ public sealed class Es1World {
 	private Es1World(Es1MissionScript script, Dictionary<short, Es1MechType?> types) {
 		Script = script;
 		_types = types;
+		Globals.MechPool = MechPool;
 	}
 
 	/// <summary>The first pass this world was built from.</summary>
@@ -92,6 +93,8 @@ public sealed class Es1World {
 		world.Globals.HeaderWord3 = script.Header[3];
 		world.Globals.MissionModeFlag = script.Header[2];
 		world.Globals.UnlimitedAmmoFlag = script.Header[5];
+		world.Globals.HeaderWord6 = script.Header[6];
+		world.Globals.HeaderWord7 = script.Header[7];
 		world.Globals.HeaderWord8 = script.Header[8];
 		world.SpawnObjects(content, weapons, weaponModels, formations);
 		return world;
@@ -207,8 +210,7 @@ public sealed class Es1World {
 		mech.Word174 = (record.Word4A, record.Word4C);
 		mech.Actions = (ActionAt(record.ActionRef64), ActionAt(record.ActionRef66));
 
-		// PLACEHOLDER: Mech_ApplyStartingCondition (00012f20) with the record's 0x68 writes component damage, which step 7b
-		// ports; every machine starts undamaged until then.
+		Es1MechDamage.ApplyStartingCondition(mech, record.Word68, Globals);
 	}
 
 	/// <summary>
@@ -245,8 +247,9 @@ public sealed class Es1World {
 
 		mech.ConfigureLoadout(slot => WordAt(record, 4 + slot), slot => WordAt(record, 16 + slot), weapons, modelFor);
 
-		// PLACEHOLDER: Mech_ApplySquadCondition (000107f0) with the entry's three condition spans writes component damage,
-		// which step 7b ports.
+		// Mech_ApplySquadCondition (000107f0) with the entry's +0x6a, +0x56 and +0x3c, the hardpoints', internals' and
+		// externals' conditions.
+		mech.Damage?.ApplySquadCondition(record[(0x6a / 2)..(0x7e / 2)], record[(0x56 / 2)..(0x6a / 2)], record[(0x3c / 2)..(0x56 / 2)]);
 		mech.PilotWord = source.Word1;
 	}
 

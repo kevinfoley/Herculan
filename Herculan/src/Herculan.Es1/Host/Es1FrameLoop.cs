@@ -349,7 +349,7 @@ public sealed class Es1FrameLoop : IEs1Frame {
 		// PLACEHOLDER: phase 5's other eight functions, the effect pools' delete flushes, plan step 7e.
 		Views.Cockpit.Globals.Projectiles.FlushDeletes();
 		_detail?.Refresh();
-		// The shake offset Sim_RenderFrame adds to the projection pair is (0, 0) while no shake is armed (plan step 7b).
+		// The shake offset Sim_RenderFrame adds to the projection pair is (0, 0) while no shake is armed (part B of plan step 7b).
 		Views.Cockpit.DrawFrame();
 		if (Views.CurrentView != 1 || Views.Staged) {
 			if (_viewCamera?.Invoke() is { } camera) {

@@ -296,14 +296,11 @@ public sealed class Es1Cockpit {
 	/// <summary>
 	/// <c>Player_DependentCondition</c> (<c>0002e334</c>)(<paramref name="entry"/>)
 	/// (docs/es1/simulation/cockpit-panel.md#squadmate-and-pilot-helpers): <see cref="Es1PaperDoll.ToConditionState"/> of
-	/// the damage <c>Mech_ReadEntryDamage</c> (<c>00015868</c>)(the machine, entry, 0) reads, the condition an
-	/// instrument's feed is in. PLACEHOLDER: the damage is plan step 7b's; until then the entry reads 0, intact, so the
-	/// condition is 0 and no display drops out.
+	/// the damage <c>Mech_ReadEntryDamage</c> (<c>00015868</c>)(the machine, entry, 0) reads (<see cref="Es1Mech.ReadEntryDamage"/>),
+	/// the condition an instrument's feed is in. With no machine, where retail reads through a null pointer, intact, an
+	/// engine guard.
 	/// </summary>
-	internal short DependentCondition(int entry) {
-		_ = entry;
-		return Es1PaperDoll.ToConditionState(0);
-	}
+	internal short DependentCondition(int entry) => Es1PaperDoll.ToConditionState(Machine?.ReadEntryDamage(entry, 0) ?? 0);
 
 	/// <summary>
 	/// <c>CockpitView_FindArmedMountGauge</c> (<c>0002e360</c>)(cockpit): the armed mount of the machine's weapon
@@ -411,7 +408,7 @@ public sealed class Es1Cockpit {
 			StripsBuilt = true;
 		}
 
-		// 2. PLACEHOLDER: Cockpit_HitShakeTick after the clock's tick, plan step 7b.
+		// 2. PLACEHOLDER: Cockpit_HitShakeTick after the clock's tick, part B of plan step 7b.
 		Clock.Tick(Globals.Clock.Clock);
 		// 3.
 		if (WidgetsOff) {

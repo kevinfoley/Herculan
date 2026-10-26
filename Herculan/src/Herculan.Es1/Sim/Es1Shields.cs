@@ -75,6 +75,43 @@ public sealed class Es1Shields {
 	}
 
 	/// <summary>
+	/// <c>Mech_ShieldAbsorb_DirectFire</c> (<c>0000fca8</c>)(block, <paramref name="damage"/>, <paramref name="length"/>,
+	/// <paramref name="toMuzzle"/>, machine) (docs/es1/simulation/shields-and-behaviour-states.md#the-shields): the point
+	/// (0, 0, <paramref name="centerHeight"/>) through <paramref name="toMuzzle"/>, the machine's frame in the ray's, where
+	/// the ray runs along +Y. Its Y below <paramref name="length"/>, unsigned, and its off-axis
+	/// <c>Math_FastMagnitude2D</c> <i>m</i> plus <paramref name="radius"/> below twice the radius in their low 16 bits,
+	/// unsigned, make a hit: the facing is the front, or the rear when the muzzle in the machine's frame has a Y below 1,
+	/// and min(<paramref name="damage"/>, its charge) comes off both. Answers Y − (radius − <i>m</i>) + 1, or 1 when that
+	/// is not past 1, the entry distance; 0 for a miss.
+	/// </summary>
+	public int AbsorbDirectFire(ref short damage, int length, in Transform3 toMuzzle, short centerHeight, short radius) {
+		var center = toMuzzle.TransformPoint(0, 0, centerHeight);
+		if ((uint)center.Y >= (uint)length) {
+			return 0;
+		}
+
+		short m = (short)SimMath.FastMagnitude2D(center.X, center.Z);
+		if (unchecked((ushort)(m + radius)) >= unchecked((ushort)(radius * 2))) {
+			return 0;
+		}
+
+		bool rear = toMuzzle.Inverted().Y < 1;
+		short charge = rear ? Rear : Front;
+		short taken = damage < charge ? damage : charge;
+		if (taken != 0) {
+			damage -= taken;
+			if (rear) {
+				Rear -= taken;
+			} else {
+				Front -= taken;
+			}
+		}
+
+		int inside = (short)(radius - m);
+		return inside < center.Y ? center.Y - inside + 1 : 1;
+	}
+
+	/// <summary>
 	/// <c>Shield_BalanceInputRead</c> (<c>0000fbb4</c>)(block), from <c>Player_PerFrameCockpitUpdate</c>, on
 	/// <paramref name="display"/>, the shield display at <c>CockpitViewInstance</c>'s <c>+0x1e5</c>: a copy of its state
 	/// block; a front press moves the balance toward the front (<see cref="BalanceAdjust"/>) and is cleared, or else a rear

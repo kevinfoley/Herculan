@@ -217,14 +217,8 @@ public sealed class Es1MfdStatusScreen : Es1MfdScreen {
 	/// <summary>The object's <c>+0xaa</c>, shields down (<see cref="Es1Mech.ShieldsMessagePosted"/>).</summary>
 	private static bool ShieldsDown(Es1Mech herc) => herc.ShieldsMessagePosted;
 
-	/// <summary>
-	/// The <c>int16</c> slot <c>+0x44</c> of the object's vtable returns, its damage. PLACEHOLDER: the damage is plan step
-	/// 7b's; until then it is 0, intact.
-	/// </summary>
-	private static int Damage(IEs1SimObject subject) {
-		_ = subject;
-		return 0;
-	}
+	/// <summary>The <c>int16</c> slot <c>+0x44</c> of the object's vtable returns, its damage (<see cref="IEs1SimObject.OverallDamage"/>).</summary>
+	private static int Damage(IEs1SimObject subject) => subject.OverallDamage;
 
 	/// <summary>
 	/// Friend or foe: the side byte <c>+0x14</c> of the object's group <c>+0x3f</c> is 0 for a friend. Retail reads the

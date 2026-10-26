@@ -81,9 +81,8 @@ public static class Es1MechMovement {
 			var q = mech.Position;
 			if (SimMath.FastMagnitude3D(q.X - p.X, q.Y - p.Y, q.Z - p.Z) < radius + otherRadius) {
 				other.RunInto();
-				if (other.TargetClass == 0) {
-					// PLACEHOLDER: the collision damage between two HERCs, Q10(300, impulse) above 200 through
-					// Mech_ApplyExplosiveDamage (00013a7c) on both at radius 1200; plan step 7b (damage) ports it.
+				if (other.TargetClass == 0 && other is Es1Mech struck) {
+					Es1MechDamage.CollisionDamage(mech, struck, globals);
 				}
 
 				return 1;

@@ -311,6 +311,18 @@ public static class Es1SensorModel {
 	/// </summary>
 	public static int ContactScanRange(Es1SimGlobals globals) => globals.HeaderWord8 == 1 ? ShortScanRange : LongScanRange;
 
+	/// <summary>The range within which a radar-visible object is known.</summary>
+	public const int KnownRange = 1000000;
+
+	/// <summary>
+	/// <c>Ai_KnowsObject</c> (<c>0000d808</c>)(<paramref name="machine"/>, <paramref name="simObject"/>)
+	/// (docs/es1/simulation/sim-object-base.md#what-an-ai-machine-knows-and-may-target): the object radar-visible within
+	/// <see cref="KnownRange"/> of the machine, or the machine's contact byte for the object's slot set.
+	/// </summary>
+	public static bool KnowsObject(IEs1SimObject machine, IEs1SimObject simObject) =>
+		simObject.RadarVisible && simObject.Position.ApproxDistanceTo(machine.Position) < KnownRange
+		|| Es1SensorTables.Get(machine.Sensors.Contacts, simObject.ListSlot);
+
 	/// <summary>Whether the object's group holds no action (<c>+0x16</c>); an object with no group never, an engine guard.</summary>
 	private static bool ActionClear(IEs1SimObject simObject) => simObject.Group is { Action: null };
 

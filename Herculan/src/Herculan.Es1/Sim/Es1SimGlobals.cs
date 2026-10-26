@@ -75,6 +75,24 @@ public sealed class Es1SimGlobals {
 	public short UnlimitedAmmoFlag { get; set; }
 
 	/// <summary>
+	/// Script.dat header word 6 (<c>000bc4a8</c>), which with <see cref="MissionModeFlag"/> 0 refuses the player's damage at
+	/// 1 (docs/es1/simulation/mech.md#the-damage-write--mech_componentdamagewrite-00013250).
+	/// </summary>
+	public short HeaderWord6 { get; set; }
+
+	/// <summary>
+	/// Script.dat header word 7 (<c>000bc4aa</c>), the difficulty <c>Damage_ScaleByDifficulty</c> reads
+	/// (docs/es1/simulation/world.md#the-difficulty-scale--damage_scalebydifficulty-0001f82c).
+	/// </summary>
+	public short HeaderWord7 { get; set; }
+
+	/// <summary><c>LocalPlayerMech</c> (<c>000b5b86</c>), which the simulation stores; none before it is built.</summary>
+	public Es1Mech? LocalPlayerMech { get; set; }
+
+	/// <summary><c>g_MechPool</c>'s machines in build order, which the blasts and the outnumbered damage walk from the end.</summary>
+	public IReadOnlyList<Es1Mech> MechPool { get; set; } = [];
+
+	/// <summary>
 	/// <see cref="MissionModeFlag"/> 0 with <see cref="UnlimitedAmmoFlag"/> 1: the trigger's free-shot flag, which spares
 	/// the rounds, and the energy turn's refund of the budget (docs/es1/simulation/weapon-mounts.md#energy--weaponmounts_arbitrateenergy-0000cc2c).
 	/// </summary>
@@ -245,7 +263,10 @@ public interface IEs1SimObject {
 	Transform3 Frame { get; }
 
 	/// <summary>Slot <c>+0x24</c>, the hit test: the distance along <paramref name="shot"/>'s ray at which it is struck, 0 for a miss.</summary>
-	int HitTest(Es1Shot shot);
+	int HitTest(Es1Shot shot, Es1SimGlobals globals);
+
+	/// <summary>Slot <c>+0x44</c>, the damage, Q8 from 0, intact, to <c>0x100</c>.</summary>
+	short OverallDamage { get; }
 
 	/// <summary>
 	/// Slot <c>+0x28</c>, the aim node: the node transform, in the object's own frame, whose translation a missile with no

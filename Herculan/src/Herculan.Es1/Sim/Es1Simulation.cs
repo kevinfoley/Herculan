@@ -66,6 +66,8 @@ public sealed class Es1Simulation {
 		Globals = globals;
 		_groups = groups;
 		_mechPool = mechPool ?? [];
+		globals.MechPool = _mechPool;
+		globals.LocalPlayerMech = localPlayer;
 		LocalPlayer = localPlayer;
 		_playerMech = playerMech ?? localPlayer;
 		ViewChain = viewChain ?? new Es1ViewChain(localPlayer, null);
@@ -334,7 +336,7 @@ public sealed class Es1Simulation {
 				Controls.ToggleStickMode();
 				break;
 			default:
-				answer.Value = Es1MechCommands.HandleCommand(Viewed, _playerMech, code, DevKeys);
+				answer.Value = Es1MechCommands.HandleCommand(Viewed, _playerMech, code, DevKeys, Globals);
 				yield break;
 		}
 
@@ -438,7 +440,7 @@ public sealed class Es1Simulation {
 	private void TickPlayersMachine(short steer, short throttle, short twist, short pitch) {
 		var player = LocalPlayer;
 		var clock = Globals.Clock;
-		player.Locomotion.ApplyThrottleInput(clock, throttle, steer, Controls.ThrottleLeverMode);
+		player.Locomotion.ApplyThrottleInput(Globals, throttle, steer, Controls.ThrottleLeverMode);
 
 		var target = player.Target;
 		int range = target?.Position.ApproxDistanceTo(player.Position) ?? 0;
