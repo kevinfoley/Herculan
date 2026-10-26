@@ -60,7 +60,6 @@ public sealed class Es1CockpitViews {
 	/// <param name="gunsightBanks">The gunsight's banks; none when null.</param>
 	/// <param name="pushButtons">The frames of <c>dba\pbuttons</c>; none when null.</param>
 	/// <param name="throttleLights">The frames of the throttle's light file; none when null.</param>
-	/// <param name="systemStrings"><c>str\system.str</c>; none when null.</param>
 	/// <param name="resources">The reader <see cref="Resources"/> holds; none when null.</param>
 	/// <param name="simulatorStrings"><c>str\strings0.str</c>; none when null.</param>
 	/// <param name="statusFlyers">The frames of <c>dba\flyers</c>; none when null.</param>
@@ -68,8 +67,7 @@ public sealed class Es1CockpitViews {
 	internal Es1CockpitViews(string name, Vue.Entry[] records, Es1ClipBlock[] clips, DynamixBitmap?[] canopies,
 			DynamixPalette? palette, Es1GauFile? layout = null, Es1CursorImage?[]? cursors = null, HudFont?[]? fonts = null,
 			Es1GunsightBanks? gunsightBanks = null, IReadOnlyList<DynamixBitmap>? pushButtons = null,
-			IReadOnlyList<DynamixBitmap>? throttleLights = null, StringFile? systemStrings = null,
-			Func<string, string, byte[]?>? resources = null, StringFile? simulatorStrings = null,
+			IReadOnlyList<DynamixBitmap>? throttleLights = null, Func<string, string, byte[]?>? resources = null, StringFile? simulatorStrings = null,
 			IReadOnlyList<DynamixBitmap>? statusFlyers = null, IReadOnlyList<DynamixBitmap>? scannerRadar = null) {
 		Name = name;
 		_records = records;
@@ -82,7 +80,6 @@ public sealed class Es1CockpitViews {
 		GunsightBanks = gunsightBanks ?? new Es1GunsightBanks();
 		PushButtons = pushButtons;
 		ThrottleLights = throttleLights;
-		SystemStrings = systemStrings;
 		Resources = resources;
 		SimulatorStrings = simulatorStrings;
 		StatusFlyers = statusFlyers;
@@ -118,11 +115,13 @@ public sealed class Es1CockpitViews {
 	public const int CpBlue = 0, CpGreen = 1, CpRed = 2, CpYellow = 3, CpOn = 4, CpPress = 5, CpOff = 6, CpBlack = 8;
 
 	/// <summary>
-	/// <c>str\system.str</c>, the computer's lines, which the first message port built loads into
-	/// <c>SystemStringTable</c> (docs/es1/simulation/cockpit-messages.md#the-string-files); null when it is missing or
-	/// does not parse.
+	/// <c>str\&lt;name&gt;.str</c> from the untranslated folder through <see cref="Resources"/>, as
+	/// <c>SystemMessages_Index</c> loads the message boxes' files (docs/es1/simulation/cockpit-messages.md#the-string-files):
+	/// <c>system</c>, the computer's lines, <c>commandr</c> and <c>pilot&lt;v&gt;</c>; null when it is missing or does not
+	/// parse, or with no reader.
 	/// </summary>
-	public StringFile? SystemStrings { get; }
+	public StringFile? MessageStrings(string name) =>
+		Resources?.Invoke(SimStrings.ResourceFolder, name.ToUpperInvariant() + ".STR") is { } bytes ? SimStrings.Parse(bytes) : null;
 
 	/// <summary>
 	/// <c>str\strings0.str</c>, the cockpit's captions and labels, which <c>ColorSchemePanels_LoadAll</c> hands
@@ -189,7 +188,7 @@ public sealed class Es1CockpitViews {
 	/// for each view and <c>db&lt;n&gt;\&lt;name&gt;</c> for each canopy, view 3 sharing view 2's
 	/// (<c>CockpitCanopy_LoadViewBitmap</c>, <c>00022184</c>); <c>dpl\cockpit</c>; the seven cursors; and
 	/// <c>gau\&lt;name&gt;</c> (<c>Gau_Load</c>, <c>0002b5c4</c>); the ten fonts; <c>dba\pbuttons</c>; the gunsight's banks;
-	/// the throttle's light file; <c>dba\flyers</c>; <c>dba\radar</c>; and <c>str\system.str</c> and <c>str\strings0.str</c> from the untranslated folder, as
+	/// the throttle's light file; <c>dba\flyers</c>; <c>dba\radar</c>; and <c>str\strings0.str</c> from the untranslated folder, as
 	/// <c>ResourcePath_BuildFolderName</c> names it. Null when the
 	/// <c>.VUE</c> is missing, or the <c>.GAU</c>,
 	/// whose absence <c>Gau_Load</c> asserts on.
@@ -227,8 +226,7 @@ public sealed class Es1CockpitViews {
 			? Es1WidgetResources.LoadFrames(content, light)
 			: null;
 		return new Es1CockpitViews(name, records, clips, canopies, palette, loaded, cursors, fonts,
-			Es1GunsightBanks.Load(content), Es1WidgetResources.LoadFrames(content, "PBUTTONS"), lights,
-			SimStrings.LoadUntranslated(content, "SYSTEM.STR"), content.Read,
+			Es1GunsightBanks.Load(content), Es1WidgetResources.LoadFrames(content, "PBUTTONS"), lights, content.Read,
 			SimStrings.LoadUntranslated(content, SimStrings.SimulatorStrings), Es1WidgetResources.LoadFrames(content, "FLYERS"),
 			Es1WidgetResources.LoadFrames(content, "RADAR"));
 	}

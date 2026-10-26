@@ -34,10 +34,12 @@ public static class Es1SquadOrders {
 	/// message <see cref="RadarOnMessage"/>, or <see cref="RadarAlreadyOnMessage"/> when it was on, and
 	/// <see cref="Es1Mech.RadarKeptOn"/> set; for <see cref="Es1SquadOrder.RadarOffVerb"/> (or <c>0x11</c>) the radar
 	/// switched off, message <see cref="RadarOffMessage"/>, and <see cref="Es1Mech.RadarKeptOn"/> cleared; either accepts.
-	/// The message is posted for a reply of 0, or of 1 with the order accepted, so only the first to answer or the first
-	/// to accept speaks. Answers 1 for an acceptance, else 0.
+	/// The message is posted on the pilot channel (<see cref="Messages.Es1PilotChannel.PostSquadMessage"/>, not forced)
+	/// for a reply of 0, or of 1 with the order accepted, so only the first to answer or the first to accept speaks.
+	/// Answers 1 for an acceptance, else 0.
 	/// </summary>
-	public static short Receive(Es1Mech mech, short reply, Es1SquadOrder order) {
+	/// <param name="globals">The simulation's globals, whose cockpit's pilot channel the reply is posted to.</param>
+	public static short Receive(Es1Mech mech, short reply, Es1SquadOrder order, Es1SimGlobals globals) {
 		byte message;
 		switch (order.Verb) {
 			case Es1SquadOrder.RadarOnVerb or Es1SquadOrder.RadarOnVerbAlias:
@@ -62,9 +64,7 @@ public static class Es1SquadOrders {
 		}
 
 		if (reply == 0 || reply == 1) {
-			// PLACEHOLDER: Ai_PostSquadMessage (0001a188)(mech, 0, message), the reply on the pilot channel; a post about
-			// a machine is Es1MessagePort.Post's own placeholder until the pilot tables are ported.
-			_ = message;
+			Messages.Es1PilotChannel.PostSquadMessage(globals, mech, false, message);
 		}
 
 		return 1;

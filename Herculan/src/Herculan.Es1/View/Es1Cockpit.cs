@@ -28,9 +28,11 @@ namespace Herculan.Es1.View;
 /// throttle gauge <c>+0x1ed</c> and the roving gunsight
 /// <c>+0x1f1</c> with the canvas context they draw through and <c>Widget_DrawToCockpit</c>
 /// (docs/es1/simulation/cockpit-panel.md#drawing-it); the clock <c>+0x1f9</c> and the <c>.TTM</c> manager
-/// <c>CockpitTtmManager</c> (docs/es1/formats/ttm-scripts.md#the-simulator); the computer's ticker <c>+0x207</c>
-/// (<see cref="Es1MessageTicker"/>); and the target selection <c>+0x20c</c> (<see cref="Es1TargetSelection"/>). The
-/// instrument <c>+0x1f5</c> and the pilot channel join it with plan step 6c (docs/herculan/plan-es1-first-mission.md).
+/// <c>CockpitTtmManager</c> (docs/es1/formats/ttm-scripts.md#the-simulator); the pilot channel <c>+0x203</c>
+/// (<see cref="Es1PilotChannel"/>) and the computer's ticker <c>+0x207</c> (<see cref="Es1MessageTicker"/>) with the
+/// squadmates the channel reads (docs/es1/simulation/cockpit-panel.md#squadmate-and-pilot-helpers); and the target
+/// selection <c>+0x20c</c> (<see cref="Es1TargetSelection"/>). The instrument <c>+0x1f5</c> joins it with plan step 6c6
+/// (docs/herculan/plan-es1-first-mission.md).
 ///
 /// <para><see cref="Es1ViewManager"/> builds it, as <c>CockpitViewManager_LoadViews</c> does, and it is
 /// <c>CockpitViewInstance</c> (<c>00092d1c</c>), the first cockpit built.</para>
@@ -68,6 +70,7 @@ public sealed class Es1Cockpit {
 		Preferences = preferences;
 		Targets = new Es1TargetSelection(this);
 		Cursors = new Es1CockpitCursors(views.Files.Cursors, mouse.Cursor);
+		MessageTables = new Es1MessageTables(views.Files.MessageStrings);
 		globals.CockpitViewInstance ??= this;
 		LoadPanel(views.Files);
 	}
@@ -75,11 +78,46 @@ public sealed class Es1Cockpit {
 	/// <summary>The simulator's options, of which the message boxes read <see cref="Es1Preferences.MessagePortShowEnabled"/>.</summary>
 	public Es1Preferences Preferences { get; }
 
+	/// <summary><c>+0x203</c>, the pilot channel, which <c>Cockpit_LoadPanel</c> builds on the <c>.GAU</c> record + 1668.</summary>
+	public Es1PilotChannel PilotChannel { get; private set; }
+
 	/// <summary><c>+0x207</c>, the computer's ticker, which <c>Cockpit_LoadPanel</c> builds on the <c>.GAU</c> record + 1684.</summary>
 	public Es1MessageTicker Ticker { get; private set; }
 
-	/// <summary>The message boxes' string tables, globals in retail, which the first port built fills.</summary>
-	public Es1MessageTables MessageTables { get; } = new();
+	/// <summary>The message boxes' string tables, globals in retail, loaded from the cockpit's files' <c>str\</c>.</summary>
+	public Es1MessageTables MessageTables { get; }
+
+	/// <summary>
+	/// <c>g_SquadmateMachines</c> (<c>000bcc16</c>), a global: the three squadmates by comm-box slot, which
+	/// <c>ColorSchemePanels_LoadAll</c> zeroes and <c>Cockpit_LoadSquadmatePilots</c> (<c>0002b308</c>) fills at the
+	/// mission's start (docs/es1/simulation/cockpit-panel.md#the-squadmates). PLACEHOLDER: that fill comes with the
+	/// Heads-Down Display's comm boxes, plan step 6c6's part C; until then every slot is empty, so no machine is a
+	/// squadmate and a post about one goes to the first slot's empty pilot table.
+	/// </summary>
+	public Es1Mech?[] SquadmateMachines { get; } = new Es1Mech?[Es1MessageTables.PilotSlots];
+
+	/// <summary><c>SquadSlotColors</c> (<c>00092d14</c>), the four <c>int16</c> <c>HudColorTable_Get</c> reads.</summary>
+	private static readonly short[] SquadSlotColors = [56, 59, 49, 0];
+
+	/// <summary>
+	/// <c>Squad_IndexOf</c> (<c>0002d5dc</c>)(<paramref name="subject"/>): the slot 0 to 2 of the subject in
+	/// <see cref="SquadmateMachines"/>, or −1 for none or a null subject.
+	/// </summary>
+	public int SquadIndexOf(IEs1SimObject? subject) =>
+		subject == null ? -1 : Array.FindIndex(SquadmateMachines, machine => ReferenceEquals(machine, subject));
+
+	/// <summary>
+	/// <c>Squad_PilotName</c> (<c>0002e2f4</c>)(<paramref name="slot"/>): <c>HddGauge_Name</c> (<c>0003e830</c>), the name
+	/// <c>+0x137</c> of the Heads-Down Display's comm box <paramref name="slot"/>. PLACEHOLDER: the display <c>+0x1f5</c>
+	/// and the names <c>HddGauge_LoadPilotFrames</c> sets are plan step 6c6's parts B and C; until then none.
+	/// </summary>
+	public string? SquadPilotName(int slot) {
+		_ = slot;
+		return null;
+	}
+
+	/// <summary><c>HudColorTable_Get</c> (<c>0002e2e4</c>)(<paramref name="slot"/>): entry <paramref name="slot"/> of <c>SquadSlotColors</c>, a squadmate slot's color.</summary>
+	public static int SquadSlotColor(int slot) => SquadSlotColors[slot];
 
 	/// <summary>
 	/// The in-mission panels' shared state, whose <c>AlertPanel_OpenCount</c> the message boxes' page copy reads; none,
@@ -251,7 +289,7 @@ public sealed class Es1Cockpit {
 	/// </summary>
 	internal bool BroadcastOrder(Es1SquadOrder order) {
 		order.Issuer = Machine;
-		return Machine?.Group is { } group && group.BroadcastOrder(order);
+		return Machine?.Group is { } group && group.BroadcastOrder(order, Globals);
 	}
 
 	/// <summary><c>+0x216</c>, <c>+0x21a</c>, <c>+0x21e</c>, the bottom, left and right screen-edge strips, once built.</summary>
@@ -291,7 +329,9 @@ public sealed class Es1Cockpit {
 	/// <summary>
 	/// <c>Cockpit_DrawFrame</c> (<c>0002cf28</c>)(cockpit), once a frame from <c>Sim_RenderFrame</c> before the 3D pass:
 	/// nothing while <see cref="SkipFrameDraw"/> is set; the strips built the first time; at step 2 the clock's tick
-	/// (<see cref="Es1CockpitClock.Tick"/>); with the widgets off nothing more this engine draws; otherwise, at step 5,
+	/// (<see cref="Es1CockpitClock.Tick"/>); with the widgets off nothing more this engine draws; otherwise, at step 4 the
+	/// pilot channel's screen put back (<see cref="Es1PilotChannel.RestoreBackground"/>) while no view change is staged,
+	/// at step 5,
 	/// the per-frame slots of the weapon rows, the pod row, the console buttons, the energy meter, the shield display, the
 	/// throttle gauge and the MFD inside the canvas push, at step 6 <see cref="RunTtmScripts"/>, the ticker's
 	/// slot (<see cref="Es1MessageTicker.Update"/>) and the edge cursor, and at step 7 the selection dropped when
@@ -315,7 +355,11 @@ public sealed class Es1Cockpit {
 			return;
 		}
 
-		// 4. PLACEHOLDER: PilotMessagePort_RestoreBackground while no view change is staged, plan step 6c.
+		// 4.
+		if (!ViewChangeStaged) {
+			PilotChannel.RestoreBackground();
+		}
+
 		// 5. Between the canvas push and pop, slot +0xc of each set weapon row, the pod row, +0x1dd, +0x1e1, +0x1e5,
 		// +0x1ed, +0x1e9 and +0x1f5. PLACEHOLDER: +0x1f5, plan step 6c's instrument.
 		foreach (var row in _weaponRows) {
@@ -606,7 +650,8 @@ public sealed class Es1Cockpit {
 	/// root widget (<c>CTLWindow_Ctor</c>), made the root the mouse's events go to (<c>Widget_ClearPressed</c>); the
 	/// <c>.TTM</c> manager, <c>Ttm_ManagerCtor</c>(0, 0, the installed render context, 10), its prefix <c>ttm\</c> and
 	/// <c>Ttm_AllocHandles</c> with a timer count of 2, every second interrupt of the PC timer
-	/// (docs/es1/simulation/timer.md#the-rate); the ticker <c>+0x207</c> on the record + 1684; then, of the instruments
+	/// (docs/es1/simulation/timer.md#the-rate); the pilot channel <c>+0x203</c> on the record + 1668, whose build loads
+	/// <c>str\system.str</c>, and the ticker <c>+0x207</c> on the record + 1684; then, of the instruments
 	/// in retail's order, the console buttons <c>+0x1dd</c> on the block at 452, the energy meter <c>+0x1e1</c> on the
 	/// block at 548, the shield display <c>+0x1e5</c> on the block at 616, the MFD <c>+0x1e9</c> on the block at 728,
 	/// put on its STATUS screen (<see cref="Es1MfdDisplay.SetMode"/> with 0), the throttle gauge <c>+0x1ed</c> on the
@@ -617,7 +662,7 @@ public sealed class Es1Cockpit {
 	/// weapon rows <c>Sim_StartMission</c> builds and the strips the first frame builds, so each wins where a later one
 	/// overlaps it.
 	/// </summary>
-	[MemberNotNull(nameof(Root), nameof(Ticker), nameof(ConsoleButtons), nameof(EnergyMeter), nameof(Shields), nameof(Mfd),
+	[MemberNotNull(nameof(Root), nameof(PilotChannel), nameof(Ticker), nameof(ConsoleButtons), nameof(EnergyMeter), nameof(Shields), nameof(Mfd),
 		nameof(Throttle), nameof(Gunsight), nameof(Clock), nameof(Scripts))]
 	private void LoadPanel(Es1CockpitViews files) {
 		var layout = files.Layout;
@@ -630,10 +675,9 @@ public sealed class Es1Cockpit {
 			PathPrefix = "ttm\\",
 		};
 		Scripts.AllocHandles(ScriptTimerCount, Globals.Clock);
-		// PLACEHOLDER: the pilot channel, DialogPort_Ctor(0, record + 1668) at +0x203: plan step 6c. Retail builds it
-		// first, and its MessagePort_CtorBase loads str\system.str; with no pilot channel, the ticker's loads it.
-		Ticker = new Es1MessageTicker(this, Es1Rect.From(layout.TickerBox), MessageTables, files.SystemStrings,
+		PilotChannel = new Es1PilotChannel(this, Es1Rect.From(layout.PilotChannelBox), MessageTables,
 			files.Fonts[Es1CockpitViews.CpRed]);
+		Ticker = new Es1MessageTicker(this, Es1Rect.From(layout.TickerBox), MessageTables, files.Fonts[Es1CockpitViews.CpRed]);
 		// Gau_WeaponButtonsWidget: the console and ConsoleButtons_SetChainNumber(it, 2). It also sets +0x1dc to 1 and
 		// +0x1d0 to 0, which only CockpitView_SetConsoleButtonsLatch and CockpitView_UnlightConsoleButtons read, to which
 		// es2_xref.py finds no reference, and +0x1d4 to +0x168 (FirstWeaponRow).

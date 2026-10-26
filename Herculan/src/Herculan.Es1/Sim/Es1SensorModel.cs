@@ -93,6 +93,9 @@ public static class Es1SensorModel {
 	/// <summary>The class <c>+0x162</c> the callout never calls in.</summary>
 	private const short UncalledClass = 1;
 
+	/// <summary>The callout's message id on the pilot channel.</summary>
+	public const short EnemySightedMessage = 1;
+
 	/// <summary>
 	/// <c>Sim_DetectionTick</c>, in its three passes over <c>LiveObjectList</c>
 	/// (docs/es1/simulation/sensor-model.md#the-tick--sim_detectiontick-0000e240): the countdowns of each object whose
@@ -268,7 +271,8 @@ public static class Es1SensorModel {
 	/// <c>000af264</c> set; for the player's machine the sighted object's latch set; for another machine the rate limit
 	/// ticked, then, when the sighted object's class is not 1, the machine is in <c>PlayerMech</c>'s group, the latch is
 	/// clear, the object is not radar-visible and neither the machine nor <c>PlayerMech</c> knows of it, the latch set and,
-	/// with the rate limit run out, message 1 posted and the limit reloaded with 10000.
+	/// with the rate limit run out, message <see cref="EnemySightedMessage"/> posted on the pilot channel
+	/// (<see cref="Messages.Es1PilotChannel.PostSquadMessage"/>, not forced) and the limit reloaded with 10000.
 	/// </summary>
 	public static void MechAiEnemySighted(Es1Mech machine, IEs1SimObject sighted, Es1SimGlobals globals, Es1Mech playerMech) {
 		var callout = globals.Sensors;
@@ -288,8 +292,7 @@ public static class Es1SensorModel {
 
 		SetLatch(callout, slot);
 		if (callout.CalloutRateLimit == 0) {
-			// PLACEHOLDER: Ai_PostSquadMessage (0001a188)(machine, 0, 1), the enemy-sighted message on the pilot channel,
-			// plan step 6c.
+			Messages.Es1PilotChannel.PostSquadMessage(globals, machine, false, EnemySightedMessage);
 			callout.CalloutRateLimit = CalloutReload;
 		}
 	}

@@ -238,7 +238,8 @@ public sealed class Es1Mech : IEs1SimObject {
 	public bool RadarKeptOn { get; set; }
 
 	/// <summary>Slot <c>+0x2c</c>, the squad order's receiver, <see cref="Es1SquadOrders.Receive"/>.</summary>
-	public short ReceiveSquadOrder(short reply, Es1SquadOrder order) => Es1SquadOrders.Receive(this, reply, order);
+	public short ReceiveSquadOrder(short reply, Es1SquadOrder order, Es1SimGlobals globals) =>
+		Es1SquadOrders.Receive(this, reply, order, globals);
 
 	/// <summary><c>+0xa</c>, the heading, the last of <see cref="Rotation"/>.</summary>
 	public short Heading => Rotation.Z;

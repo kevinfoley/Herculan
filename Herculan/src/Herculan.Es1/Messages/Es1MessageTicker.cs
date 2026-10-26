@@ -1,4 +1,3 @@
-using HercWorks.Core.Data.File;
 using Herculan.Engine.Content;
 using Herculan.Es1.Sim;
 using Herculan.Es1.View;
@@ -27,9 +26,8 @@ public sealed class Es1MessageTicker : Es1MessagePort {
 	/// on <paramref name="rect"/>, the <c>.GAU</c> record + 1684, the table <c>00092f0a</c>, and the blink latch clear.
 	/// </summary>
 	/// <param name="font"><c>ColorSchemePanels</c>[2], <c>cpred</c> (<c>00092d48</c>), the line's font; none draws no text.</param>
-	internal Es1MessageTicker(Es1Cockpit cockpit, Es1Rect rect, Es1MessageTables tables, StringFile? systemStrings,
-			HudFont? font)
-		: base(cockpit, rect, tables, systemStrings) {
+	internal Es1MessageTicker(Es1Cockpit cockpit, Es1Rect rect, Es1MessageTables tables, HudFont? font)
+		: base(cockpit, rect, tables) {
 		_font = font;
 	}
 

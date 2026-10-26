@@ -134,7 +134,8 @@ public sealed class Es1MissionGroup {
 	/// reply is 2, someone accepted. Retail reads every member as a machine; a member that is not a HERC, and an order
 	/// with no issuer, are passed over here, engine guards.
 	/// </summary>
-	public bool BroadcastOrder(Es1SquadOrder order) {
+	/// <param name="globals">The simulation's globals, which each receiver posts its reply through.</param>
+	public bool BroadcastOrder(Es1SquadOrder order, Es1SimGlobals globals) {
 		if (order.Issuer is not { } issuer) {
 			return false;
 		}
@@ -164,7 +165,7 @@ public sealed class Es1MissionGroup {
 				break;
 			}
 
-			if (chosen.ReceiveSquadOrder(reply, order) != 0) {
+			if (chosen.ReceiveSquadOrder(reply, order, globals) != 0) {
 				reply = 2;
 			} else if (reply == 0) {
 				reply = 1;

@@ -177,8 +177,10 @@ public sealed class Es1ViewManager {
 	/// <c>CockpitView_ApplyViewState</c> (<c>000222c0</c>): nothing for the current view or one above 4. An armed shake is
 	/// cleared and reseeded after the slide. View 4 saves the current view, installs the external view's clip block and
 	/// rect, becomes current, zeroes the canvas origin and paints the border. Any other view moves the draw page's origin
-	/// to its page's plus the view's canvas origin when leaving view 0 or 1 for a view other than 2 and 3, and installs
-	/// the view's clip block and record, the canvas origin added to the projection pair.
+	/// to its page's plus the view's canvas origin when leaving view 0 or 1 for a view other than 2 and 3, moves the
+	/// cockpit (<see cref="Es1Cockpit.TranslateForView"/>) and the pilot channel's box
+	/// (<see cref="Messages.Es1MessagePort.ShiftRect"/>) by the same delta when leaving a glance or view 0 or 1, and
+	/// installs the view's clip block and record, the canvas origin added to the projection pair.
 	/// </summary>
 	public void ApplyViewState(int view) {
 		// Retail indexes the records with any view below 5; no caller passes one below 0.
@@ -211,7 +213,7 @@ public sealed class Es1ViewManager {
 			leavingForward = false;
 			var glance = Files.Record(CurrentView);
 			Cockpit.TranslateForView(glance.CanvasOriginX, glance.CanvasOriginY);
-			// PLACEHOLDER: MessagePort_ShiftRect (0002eea0) on the squad message port by the same, plan step 6c's ports.
+			Cockpit.PilotChannel.ShiftRect(glance.CanvasOriginX, glance.CanvasOriginY);
 		}
 
 		var record = Files.Record(view);
@@ -225,7 +227,7 @@ public sealed class Es1ViewManager {
 			// The old view's canvas origin less the new one's; the current view is never -1 here, the manager being zero-filled.
 			var old = Files.Record(CurrentView);
 			Cockpit.TranslateForView(old.CanvasOriginX - record.CanvasOriginX, old.CanvasOriginY - record.CanvasOriginY);
-			// PLACEHOLDER: MessagePort_ShiftRect (0002eea0) on the squad message port by the same, plan step 6c's ports.
+			Cockpit.PilotChannel.ShiftRect(old.CanvasOriginX - record.CanvasOriginX, old.CanvasOriginY - record.CanvasOriginY);
 		}
 
 		Clip = Files.Clip(view);
@@ -288,7 +290,8 @@ public sealed class Es1ViewManager {
 	/// border when asked for; the cooldown; the page gate, which holds a glance until the page on the monitor,
 	/// <c>+0x88</c>, is the half it slides from; then the wait for a vertical retrace, yielded as
 	/// <see cref="Es1Retrace.VerticalRetrace"/>, <c>Display_FlipWithoutPan</c> cleared and, while nothing is staged, the
-	/// pending command staged (docs/es1/simulation/cockpit-views.md#cockpitview_processviewcommand-000226f0).
+	/// pending command staged (docs/es1/simulation/cockpit-views.md#cockpitview_processviewcommand-000226f0), a pan first
+	/// lifting the pilot channel's line off the draw page (<see cref="Messages.Es1PilotChannel.RestoreBackground"/>).
 	/// </summary>
 	internal IEnumerable<Es1Retrace> ProcessViewCommand() {
 		if (BorderPending) {
@@ -322,7 +325,10 @@ public sealed class Es1ViewManager {
 		switch (PendingCommand) {
 			case 0:
 			case 1:
-				// PLACEHOLDER: with the squad message port's line up (its byte +0x436), the port's slot +0x14, plan step 6.
+				if (Cockpit.PilotChannel.LineUp) {
+					Cockpit.PilotChannel.RestoreBackground();
+				}
+
 				ApplyViewState(PendingCommand == 0 ? current + 1 : current - 1);
 				Staged = true;
 				break;
@@ -354,9 +360,12 @@ public sealed class Es1ViewManager {
 	/// <c>CockpitView_StepViewTransition</c> (<c>00022904</c>), once a frame from <c>Sim_EndFrame</c> before anything
 	/// else: runs the staged command, yielding a retrace for each step of its slide
 	/// (docs/es1/simulation/cockpit-views.md#cockpitview_stepviewtransition-00022904). The first half copies the outgoing
-	/// picture across the pages for commands 0, 1 and 3; the slide moves the monitor's page, <c>+0x88</c>, by the
-	/// <c>.VUE</c> records' canvas origins, 5 rows or 10 columns a step and the rest of the way in a last one; the after
-	/// column sets the current view, and a glance ends with the pair swapped and the far half copied back.
+	/// picture across the pages for commands 0, 1 and 3, every command but 2 first painting the ticker
+	/// (<see cref="Messages.Es1MessageTicker.Paint"/>); the slide moves the monitor's page, <c>+0x88</c>, by the
+	/// <c>.VUE</c> records' canvas origins, 5 rows or 10 columns a step and the rest of the way in a last one, and while
+	/// the pilot channel has a line up it draws on that page and lifts the line around each step
+	/// (<see cref="SlideStep"/>, <see cref="EndLift"/>); the after column sets the current view, command 3 painting the
+	/// pilot channel's box again, and a glance ends with the pair swapped and the far half copied back.
 	/// </summary>
 	internal IEnumerable<Es1Retrace> StepViewTransition() {
 		if (PendingCommand == -1 || !Staged) {
@@ -397,13 +406,16 @@ public sealed class Es1ViewManager {
 				break;
 		}
 
-		// PLACEHOLDER: every command but 2 calls slot +0x18 of the cockpit's +0x207 object, the ticker, plan step 6c.
 		var cursor = Display.Cursor;
 		if (command == 2) {
 			cursor.Hide();
 			Mouse.FollowsMouse = false;
-		} else if (command == 3) {
-			Mouse.FollowsMouse = true;
+		} else {
+			if (command == 3) {
+				Mouse.FollowsMouse = true;
+			}
+
+			Cockpit.Ticker.Paint();
 		}
 
 		if (copy is { } rect) {
@@ -417,12 +429,16 @@ public sealed class Es1ViewManager {
 		}
 
 		Staged = false;
-		// PLACEHOLDER: while the squad message port has a line up (its byte +0x436), a slide sets the source and draw
-		// pages to +0x88, calls the port's slots +0x14 and +0x18 around each step and once more round the last, then
-		// MessagePort_CopyBoxBetweenPages (0002fcd4)(port, 0): the port, plan step 6c.
 		// VGA8_ShowPageIdle (00098d96) is 0 during a slide, holding the pointer's moves, and 1 after.
 		cursor.BeginPageChange();
 		var page = display.PageBase(shown);
+		var channel = Cockpit.PilotChannel;
+		bool lifted = command is not (2 or 3) && channel.LineUp;
+		if (lifted) {
+			display.SourcePage = shown;
+			display.DrawPage = shown;
+		}
+
 		switch (command) {
 			case 0: {
 				int y = 0, moved = 0;
@@ -430,7 +446,7 @@ public sealed class Es1ViewManager {
 				if (travel > 0) {
 					do {
 						y += PanStep;
-						if (display.SetPageOrigin(shown, page.X, page.Y + y)) {
+						if (SlideStep(lifted, shown, page.X, page.Y + y)) {
 							yield return default;
 						}
 
@@ -439,10 +455,11 @@ public sealed class Es1ViewManager {
 				}
 
 				y += travel - moved;
-				if (display.SetPageOrigin(shown, page.X, page.Y + y)) {
+				if (SlideStep(lifted, shown, page.X, page.Y + y)) {
 					yield return default;
 				}
 
+				EndLift(lifted, drawn);
 				cursor.EndPageChange();
 				Cockpit.Cursors.UseOffForwardCursor();
 				CurrentView++;
@@ -454,7 +471,7 @@ public sealed class Es1ViewManager {
 				int y = travel, left = travel;
 				while (PanStep <= left) {
 					y -= PanStep;
-					if (display.SetPageOrigin(shown, page.X, page.Y + y)) {
+					if (SlideStep(lifted, shown, page.X, page.Y + y)) {
 						yield return default;
 					}
 
@@ -462,10 +479,11 @@ public sealed class Es1ViewManager {
 				}
 
 				y -= left;
-				if (display.SetPageOrigin(shown, page.X, page.Y + y)) {
+				if (SlideStep(lifted, shown, page.X, page.Y + y)) {
 					yield return default;
 				}
 
+				EndLift(lifted, drawn);
 				cursor.EndPageChange();
 				Cockpit.Cursors.UseForwardCursor();
 				CurrentView--;
@@ -485,14 +503,14 @@ public sealed class Es1ViewManager {
 				}
 
 				cursor.Show();
-				// PLACEHOLDER: the squad message port's slot +0x18, plan step 6c's ports.
+				channel.Paint();
 				CurrentView = SavedView;
 				break;
 			}
 			case 4:
 			case 5:
 			case 6: {
-				foreach (var wait in Glance(command, page)) {
+				foreach (var wait in Glance(command, page, lifted)) {
 					yield return wait;
 				}
 
@@ -549,7 +567,7 @@ public sealed class Es1ViewManager {
 	/// plus the current view's, toward the side it came from. Then the far half's page is shown, the near one drawn on,
 	/// the pair swapped, the slid page put back on its own origin and the far half copied onto it.
 	/// </summary>
-	private IEnumerable<Es1Retrace> Glance(int command, (int X, int Y) page) {
+	private IEnumerable<Es1Retrace> Glance(int command, (int X, int Y) page, bool lifted) {
 		var display = Display;
 		int shown = display.PairVisible;
 		int drawn = display.PairDrawn;
@@ -562,7 +580,7 @@ public sealed class Es1ViewManager {
 				if (0 < travel) {
 					do {
 						x += GlanceStep;
-						if (display.SetPageOrigin(shown, page.X + x, page.Y)) {
+						if (SlideStep(lifted, shown, page.X + x, page.Y)) {
 							yield return default;
 						}
 
@@ -579,7 +597,7 @@ public sealed class Es1ViewManager {
 				if (0 < travel) {
 					do {
 						x -= GlanceStep;
-						if (display.SetPageOrigin(shown, page.X + x, page.Y)) {
+						if (SlideStep(lifted, shown, page.X + x, page.Y)) {
 							yield return default;
 						}
 
@@ -606,7 +624,7 @@ public sealed class Es1ViewManager {
 
 				while (limit < left) {
 					x -= step;
-					if (display.SetPageOrigin(shown, page.X + x, page.Y)) {
+					if (SlideStep(lifted, shown, page.X + x, page.Y)) {
 						yield return default;
 					}
 
@@ -618,10 +636,11 @@ public sealed class Es1ViewManager {
 			}
 		}
 
-		if (display.SetPageOrigin(shown, page.X + x, page.Y)) {
+		if (SlideStep(lifted, shown, page.X + x, page.Y)) {
 			yield return default;
 		}
 
+		EndLift(lifted, drawn);
 		var cursor = Display.Cursor;
 		cursor.EndPageChange();
 		Cockpit.Cursors.UseOffForwardCursor();
@@ -642,6 +661,37 @@ public sealed class Es1ViewManager {
 		display.CopyRect(0, 0, 319, 199, 0, 0);
 		cursor.Show();
 		CurrentView = command switch { 4 => 2, 5 => 3, _ => 0 };
+	}
+
+	/// <summary>
+	/// One set of the sliding page's origin, <c>VGA8_SetPageOrigin</c> through the driver's slot 15; answers whether it
+	/// waited for a retrace. While the pilot channel's line is <paramref name="lifted"/>, its screen is put back
+	/// (<see cref="Messages.Es1PilotChannel.RestoreBackground"/>) before the set and the box painted again
+	/// (<see cref="Messages.Es1PilotChannel.Paint"/>) after, so the line rides along on the sliding page.
+	/// </summary>
+	private bool SlideStep(bool lifted, int page, int x, int y) {
+		var channel = Cockpit.PilotChannel;
+		if (lifted) {
+			channel.RestoreBackground();
+		}
+
+		bool waited = Display.SetPageOrigin(page, x, y);
+		if (lifted) {
+			channel.Paint();
+		}
+
+		return waited;
+	}
+
+	/// <summary>
+	/// A lifted slide's end: the draw page put back to <paramref name="drawn"/>, <c>+0x8c</c>, and the pilot channel's box
+	/// copied back from the page on the screen (<c>MessagePort_CopyBoxBetweenPages</c>, 0).
+	/// </summary>
+	private void EndLift(bool lifted, int drawn) {
+		if (lifted) {
+			Display.DrawPage = drawn;
+			Cockpit.PilotChannel.CopyBoxBetweenPages(0);
+		}
 	}
 
 	/// <summary>Record <paramref name="to"/>'s canvas origin less record <paramref name="from"/>'s.</summary>

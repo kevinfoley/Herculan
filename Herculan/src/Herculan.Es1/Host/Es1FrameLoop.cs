@@ -340,7 +340,8 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	/// into the draw page in the installed window and clip block when the current view is not 1 or a view change is
 	/// staged, answering a pending pixel pick from what it drew (<see cref="Es1ObjectPick.Resolve"/>),
 	/// <c>Player_PerFrameCockpitUpdate</c>, and the gunsight's per-frame update over it
-	/// (<see cref="Gunsight.Es1Gunsight.UpdateAndPaint"/>), which reads the pick's answer in the same frame, as retail's does.
+	/// (<see cref="Gunsight.Es1Gunsight.UpdateAndPaint"/>), which reads the pick's answer in the same frame, as retail's does;
+	/// and last the pilot channel's slot <c>+0x10</c> (<see cref="Messages.Es1PilotChannel.Update"/>).
 	/// </summary>
 	private void RenderFrame() {
 		_detail?.Refresh();
@@ -359,7 +360,7 @@ public sealed class Es1FrameLoop : IEs1Frame {
 
 		PlayerCockpitUpdate();
 		Views.Cockpit.Gunsight.UpdateAndPaint();
-		// PLACEHOLDER: the squad message port's slot +0x10, plan step 6c.
+		Views.Cockpit.PilotChannel.Update();
 	}
 
 	/// <summary>

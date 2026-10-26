@@ -17,11 +17,14 @@ public readonly record struct Es1MessageSlot(Es1StringRef? Text, byte Count, byt
 /// <summary>
 /// One of the message boxes' string tables and the index <c>SystemMessages_Index</c> (<c>ES1DBSIM 0002f1ec</c>) fills
 /// from it (docs/es1/simulation/cockpit-messages.md#the-string-files): <c>SystemStringTable</c> (<c>000b0e54</c>) with
-/// the index <c>000bd0ec</c>, and in plan step 6c the command and pilot tables.
+/// the index <c>000bd0ec</c>, <c>CommandStringTable</c> (<c>000b0e44</c>) with <c>000bd0ac</c>, or one of the three
+/// <c>PilotStringTables</c> (<c>000b0e14</c>) with its index at <c>000bcc22</c> + slot × <c>0x183</c>.
 ///
-/// <para>The index has a slot for every byte id here. Retail's system index holds 34, ids 0 to <c>0x21</c>, the
-/// slot <c>MessagePort_StepToVariant</c> builds at <c>000bd21e</c> right after it; an id past them reads the
-/// globals beyond. The retail <c>system.str</c>'s ids are 0 to <c>0x21</c>.</para>
+/// <para>The index has a slot for every byte id here. Retail's are packed one after another: the system index holds
+/// 34, ids 0 to <c>0x21</c>, with the slot <c>MessagePort_StepToVariant</c> builds at <c>000bd21e</c> right after it;
+/// each pilot index 43, ids 0 to <c>0x2a</c>, the next slot's index after it; and the command index the 7 from
+/// <c>000bd0ac</c> to the system index. An id past a retail index reads or writes the one beyond. The retail
+/// <c>system.str</c>'s ids are 0 to <c>0x21</c>.</para>
 /// </summary>
 public sealed class Es1MessageTable {
 	private readonly Es1MessageSlot[] _index = new Es1MessageSlot[256];
@@ -89,15 +92,31 @@ public sealed class Es1MessageTable {
 }
 
 /// <summary>
-/// The message boxes' string tables, which <c>MessagePort_StaticInit</c> (<c>0002fe00</c>) builds empty and the first
-/// port built fills (docs/es1/simulation/cockpit-messages.md#building-the-two-ports). In retail they are globals; here
-/// the cockpit owns one set.
+/// The message boxes' string tables, which <c>MessagePort_StaticInit</c> (<c>0002fe00</c>) builds empty and
+/// <c>SystemMessages_Index</c> fills (docs/es1/simulation/cockpit-messages.md#the-string-files): the system table when
+/// the first port is built, the pilot and command tables as the squadmates' pilots are set. In retail they are
+/// globals; here the cockpit owns one set.
 /// </summary>
-public sealed class Es1MessageTables {
+/// <param name="strings">
+/// <c>str\&lt;name&gt;.str</c> by its name, the file <c>SystemMessages_Index</c> loads, read through Core; null when it is
+/// missing or does not parse. None loads nothing.
+/// </param>
+public sealed class Es1MessageTables(Func<string, StringFile?>? strings = null) {
+	/// <summary>The pilot tables, one for each squadmate slot.</summary>
+	public const int PilotSlots = 3;
+
 	/// <summary><c>SystemStringTable</c> (<c>000b0e54</c>), <c>str\system.str</c>, and its index <c>000bd0ec</c>.</summary>
 	public Es1MessageTable System { get; } = new();
 
-	// PLACEHOLDER: CommandStringTable (000b0e44) with its index 000bd0ac and the three PilotStringTables (000b0e14) with
-	// theirs (000bcc22), which the pilot channel's posts read and the squadmates' pilot setter 0003dab4 fills: plan
-	// step 6c.
+	/// <summary><c>CommandStringTable</c> (<c>000b0e44</c>), <c>str\commandr.str</c>, and its index <c>000bd0ac</c>.</summary>
+	public Es1MessageTable Command { get; } = new();
+
+	/// <summary>
+	/// <c>PilotStringTables</c> (<c>000b0e14</c>), <c>0x10</c> bytes apart, each squadmate slot's <c>str\pilot&lt;v&gt;.str</c>,
+	/// and their indexes from <c>PilotMessageIndex</c> (<c>000bcc22</c>), <c>0x183</c> bytes apart.
+	/// </summary>
+	public IReadOnlyList<Es1MessageTable> Pilots { get; } = [new(), new(), new()];
+
+	/// <summary><c>ResourcePath_BuildFolderName</c>(<c>str</c>, <paramref name="name"/>) and <c>StringTable_LoadFromFile</c>: the file, or null.</summary>
+	public StringFile? Load(string name) => strings?.Invoke(name);
 }
