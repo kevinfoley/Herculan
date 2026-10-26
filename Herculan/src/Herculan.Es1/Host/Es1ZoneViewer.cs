@@ -214,7 +214,9 @@ public static class Es1ZoneViewer {
 
 			models = Es1MechModels.Upload(gl, content, world.Types.Values.OfType<Es1MechType>(), scene);
 			disposables.Add(models);
-			draw = new Es1WorldDraw(gl, scene, world, models, detail, disposables);
+			var projectileDraw = new Es1ProjectileDraw(gl, content, scene, world.Globals.Projectiles);
+			disposables.Add(projectileDraw);
+			draw = new Es1WorldDraw(gl, scene, world, models, detail, disposables, projectileDraw);
 			if (manager != null && chain != null) {
 				monitor = new Es1Monitor(gl, manager.Display);
 				disposables.Add(monitor);
@@ -369,7 +371,7 @@ public static class Es1ZoneViewer {
 	}
 
 	/// <summary>
-	/// One view of the world: the backdrop and the shadows, then over them the zone's shapes and the HERCs, the two passes
+	/// One view of the world: the backdrop and the shadows, then over them the zone's shapes, the HERCs and the projectiles, the two passes
 	/// <see cref="Es1WorldDraw"/> describes. The depth between the passes is cleared so no object is hidden by a shadow.
 	/// </summary>
 	private static void DrawWorld(Silk.NET.OpenGL.GL gl, SceneRenderer renderer, Es1Backdrop? backdrop, Es1WorldDraw draw, Camera camera,

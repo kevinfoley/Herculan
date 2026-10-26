@@ -87,6 +87,8 @@ public sealed class Es1World {
 			: new WeaponModelChunks([]);
 
 		var world = new Es1World(script, types);
+		// The rounds' phase-2 loads (docs/es1/simulation/projectiles.md#the-projectile-pool).
+		world.Globals.Projectiles = Projectiles.Es1ProjectilePool.Load(content, weapons);
 		world.Globals.HeaderWord3 = script.Header[3];
 		world.Globals.HeaderWord8 = script.Header[8];
 		world.SpawnObjects(content, weapons, weaponModels, formations);

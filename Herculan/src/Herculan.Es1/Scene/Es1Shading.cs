@@ -29,8 +29,8 @@ public sealed class Es1Shading {
 	/// <summary>The type tag every zone shape object carries (docs/es1/formats/zone-terrain.md#the-zone-shape-object).</summary>
 	public const byte ZoneShapeTag = 0;
 
-	/// <summary>The tags whose bands the table holds, in block order: the zone shapes' and the HERCs'.</summary>
-	public static IReadOnlyList<byte> Tags { get; } = [ZoneShapeTag, 7];
+	/// <summary>The tags whose bands the table holds, in block order: the zone shapes', the HERCs' and the projectiles'.</summary>
+	public static IReadOnlyList<byte> Tags { get; } = [ZoneShapeTag, 7, Projectiles.Es1Projectile.TypeTag];
 
 	/// <summary>
 	/// The ramps <c>WorldShades_ResetRamps</c> (<c>00025e88</c>) points at <see cref="FlatRange"/>: 0, 2, 4, 6, 8, 10,

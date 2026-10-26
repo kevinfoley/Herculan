@@ -18,7 +18,7 @@ public sealed class Es1InputBuild {
 	// 000958bc: source button 1 has toggled the stick mode and not been let go.
 	private bool _toggleHeld;
 
-	// 000958bf: the missile arm, 1 while a round is flown, 2 once button 0's latch holds with it at 1, 0 when the
+	// 000958bf: the missile arm, 1 while a missile is flown, 2 once button 0's latch holds with it at 1, 0 when the
 	// latch is clear.
 	private byte _missileArm;
 
@@ -109,8 +109,8 @@ public sealed class Es1InputBuild {
 
 		// 3. The keyboard's axes; the source buttons are the live block's +0x1d.
 		bool camera = Controls.InputDrivesCamera;
-		bool roundFlown = Controls.RoundInFlight;
-		var keys = _keyboard.BuildKeyboardAxes((modeAtEntry == 1 && !camera) || roundFlown);
+		bool missileFlown = Controls.MissileFlown;
+		var keys = _keyboard.BuildKeyboardAxes((modeAtEntry == 1 && !camera) || missileFlown);
 		int[] kb = [keys.FirstX, keys.FirstY, keys.SecondX, keys.SecondY];
 		int[] stick = live.StickAxes;
 
@@ -126,7 +126,7 @@ public sealed class Es1InputBuild {
 
 		// 5. The missile arm.
 		var latches = Controls.Latches;
-		if (roundFlown) {
+		if (missileFlown) {
 			_missileArm = 1;
 		}
 
@@ -141,8 +141,8 @@ public sealed class Es1InputBuild {
 			kb[1] = 0;
 		}
 
-		// 6. The keyboard's pairs against the stick mode, the camera and a flown round.
-		if (!camera && !roundFlown) {
+		// 6. The keyboard's pairs against the stick mode, the camera and a flown missile.
+		if (!camera && !missileFlown) {
 			if (mode == 1) {
 				if (kb[0] != 0) {
 					kb[2] = kb[0];
@@ -155,7 +155,7 @@ public sealed class Es1InputBuild {
 				}
 			}
 		} else {
-			if (roundFlown && !_keyjoy.MissileReversed) {
+			if (missileFlown && !_keyjoy.MissileReversed) {
 				kb[1] = -kb[1];
 			}
 
@@ -176,7 +176,7 @@ public sealed class Es1InputBuild {
 			kb[3] = -kb[3];
 		}
 
-		bool throttleKeys = _preferences.ThrottleKeys && !roundFlown;
+		bool throttleKeys = _preferences.ThrottleKeys && !missileFlown;
 
 		// 7. The configuration's sources, the latches, then the pointer, mouse, buttons 4-7 and command word.
 		byte[] stickButtons = live.StickButtons[..4];
@@ -195,7 +195,7 @@ public sealed class Es1InputBuild {
 		// plan step retires it.
 
 		// 9. The camera's axes, and option 10's throttle step.
-		if (!camera && !roundFlown) {
+		if (!camera && !missileFlown) {
 			int first = mode == 2 ? Es1PlayerInputBlock.Twist : Es1PlayerInputBlock.Steering;
 			if (latches.FirstHeld) {
 				block.Axes[first] = 0;

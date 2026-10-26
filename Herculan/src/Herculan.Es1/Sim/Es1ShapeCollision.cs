@@ -153,8 +153,9 @@ public static class Es1ShapeTests {
 	/// anything was struck. An object with no volume, whose grid is empty, is not marched, as the march answers 0 for it.
 	/// </summary>
 	/// <remarks>
-	/// PLACEHOLDER: <c>RaycastShapeMinDistance</c> (<c>000afa40</c>), which the walk lowers to each distance and zeroes at
-	/// each object within reach, is not kept: its only reader is the shot sweep <c>Sim_RaycastObjectList</c>, plan step 7.
+	/// <c>RaycastShapeMinDistance</c> (<c>000afa40</c>), which the walk lowers to each distance and zeroes at each object
+	/// within reach, is not kept: its one reader, the shot sweep, stores it where nothing is known to read it
+	/// (<see cref="Es1ShotSweep.Raycast"/>).
 	/// </remarks>
 	public static bool RaycastShapeVolume(IReadOnlyList<Es1ShapeObject> objects, Es1Ray ray, out Es1RayHit hit) {
 		hit = default;

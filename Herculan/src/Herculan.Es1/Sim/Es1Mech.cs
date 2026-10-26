@@ -256,6 +256,61 @@ public sealed class Es1Mech : IEs1SimObject {
 	/// <summary><c>+0x15e</c>, its own target, or null.</summary>
 	public IEs1SimObject? Target { get; set; }
 
+	/// <summary><c>+0x96</c>, the ECM spoof. PLACEHOLDER: its writer, the ECM of <c>Mech_PerTickSystemsUpdate</c>, is plan step 7c's; clear until then.</summary>
+	public bool EcmSpoofed => false;
+
+	/// <summary><c>+0x9b</c>, jamming. PLACEHOLDER: its writer, <c>Mech_IsEcmSwitchedOn</c>, is plan step 7c's; clear until then.</summary>
+	public bool Jamming => false;
+
+	/// <summary><c>+0x9f</c>, disarmed. PLACEHOLDER: its writer, <c>Ai_ChooseWeapon</c> running dry, is plan step 8's; clear until then.</summary>
+	public bool Disarmed => false;
+
+	/// <inheritdoc/>
+	/// <remarks>PLACEHOLDER: its reader, <c>Ai_FireAtPoint</c> (<c>000190ec</c>), is plan step 8's.</remarks>
+	public bool SkipWeaponChoice { get; set; }
+
+	/// <summary>
+	/// Slot <c>+0x24</c>, <c>Mech_DirectFireHitTest</c> (<c>00013b44</c>, docs/es1/simulation/mech.md#the-hit-test--mech_directfirehittest-00013b44).
+	/// PLACEHOLDER: answers 0, a miss, and applies nothing: the hit test, its damage and its difficulty scale are plan step
+	/// 7b's.
+	/// </summary>
+	public int HitTest(Es1Shot shot) {
+		_ = shot;
+		return 0;
+	}
+
+	/// <summary>
+	/// Slot <c>+0x28</c>, <c>Mech_GetAimNodeTransform</c> (<c>00013204</c>): the posed node of the type record's camera part
+	/// (<c>+0xc</c>), or null when the shape has no such part.
+	/// </summary>
+	public Transform3? AimNodeTransform() {
+		int transformId = Type.Animation?.TransformIdOfPart(Type.Chassis.CameraPartId) ?? -1;
+		return transformId >= 0 && Shape != null ? Shape.NodeTransform(transformId) : null;
+	}
+
+	/// <summary>
+	/// Slot <c>+0x58</c>, <c>Mech_ComponentNearestAim</c> (<c>00015884</c>): of the components whose occupancy flag is set,
+	/// the one whose bearing from <paramref name="from"/> lies nearest <paramref name="angles"/>, or −1. PLACEHOLDER:
+	/// answers −1, no component occupied: the components' damage data is plan step 7b's.
+	/// </summary>
+	public short ComponentNearestAim(Vec3i from, (short Pitch, short Roll, short Heading) angles) {
+		_ = (from, angles);
+		return -1;
+	}
+
+	/// <summary>
+	/// Slot <c>+0x5c</c>, <c>Mech_ComponentPosition</c> (<c>00015990</c>): the component's point through its part's node and
+	/// the machine's frame. PLACEHOLDER: answers the position: the components' pieces are plan step 7b's, and with
+	/// <see cref="ComponentNearestAim"/> answering −1 nothing asks.
+	/// </summary>
+	public Vec3i ComponentPosition(short component) {
+		_ = component;
+		return Position;
+	}
+
+	/// <summary>Slot <c>+0x70</c>, <c>SimObject_MissileLockState_AlwaysMechCopy</c>: every missile a HERC fires has lock (docs/es1/simulation/rockets.md#launching--rocket_fire-00007748).</summary>
+	public bool MissileLockState(short subtype) => true;
+
 	/// <inheritdoc/>
 	public short TargetHolders { get; set; }
 

@@ -46,9 +46,11 @@ public sealed class Es1ControlsState {
 	/// </summary>
 	public bool InputDrivesCamera { get; set; }
 
-	/// <summary><c>maybe_WeaponChain_EoHold</c>: a round is being flown.</summary>
-	// PLACEHOLDER: false until the rounds of plan step 7.
-	public bool RoundInFlight { get; set; }
+	/// <summary>
+	/// <c>maybe_WeaponChain_EoHold</c> (<c>000b5bc6</c>): a missile is being flown. The tick clears it before it walks the
+	/// projectiles, and the player's flown missile's tick sets it (docs/es1/simulation/rockets.md#flight--rocket_tickupdate-00007198).
+	/// </summary>
+	public bool MissileFlown { get; set; }
 
 	/// <summary>The four press-once latches, <c>Input_ButtonLatch</c> and <c>Input_ButtonLatchState</c>.</summary>
 	public Es1ButtonLatches Latches { get; } = new();

@@ -30,10 +30,12 @@ public sealed class Es1WorldDraw {
 	private readonly List<(SceneItem Item, Es1Shadow Shadow)> _shadowItems = new();
 
 	/// <param name="detail">The detail setting the HERCs are drawn at, read on every <see cref="Update"/>.</param>
+	/// <param name="projectiles">The projectile pool's draw; with none no projectile is drawn.</param>
 	public Es1WorldDraw(GL gl, Es1ZoneScene scene, Es1World world, Es1MechModels models, Es1AppliedDetail detail,
-			ICollection<IDisposable> owned) {
+			ICollection<IDisposable> owned, Es1ProjectileDraw? projectiles = null) {
 		_scene = scene;
 		_detail = detail;
+		Projectiles = projectiles;
 
 		var meshes = new Dictionary<int, GpuMesh>();
 		for (int index = 0; index < scene.Shapes.Count; index++) {
@@ -74,8 +76,12 @@ public sealed class Es1WorldDraw {
 	/// </summary>
 	public IReadOnlyList<SceneItem> FlatZoneShapes => _flatZoneItems;
 
-	/// <summary>The zone shapes' and the HERCs' items.</summary>
-	public IEnumerable<SceneItem> Objects => _zoneItems.Select(entry => entry.Item).Concat(_mechs.SelectMany(m => m.Items));
+	/// <summary>The projectile pool's draw, whose items <see cref="Objects"/> ends with; null for none.</summary>
+	public Es1ProjectileDraw? Projectiles { get; }
+
+	/// <summary>The zone shapes', the HERCs' and the projectiles' items.</summary>
+	public IEnumerable<SceneItem> Objects => _zoneItems.Select(entry => entry.Item).Concat(_mechs.SelectMany(m => m.Items))
+		.Concat(Projectiles?.Items ?? []);
 
 	/// <summary>
 	/// The objects <c>ObjList_DrawFrameObjects</c> draws, each with its items, in the order <see cref="Objects"/> lists
@@ -98,6 +104,8 @@ public sealed class Es1WorldDraw {
 		foreach (var mech in _mechs) {
 			mech.Update(camera, shading, ridden, _detail.Setting);
 		}
+
+		Projectiles?.Update(camera);
 
 		foreach (var (item, shadow) in _shadowItems) {
 			var frame = shadow.DrawFrame;

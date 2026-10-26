@@ -336,7 +336,8 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	}
 
 	/// <summary>
-	/// <c>Sim_RenderFrame</c> (<c>00059c08</c>): the detail setting applied again when option 6 has changed, the cockpit's
+	/// <c>Sim_RenderFrame</c> (<c>00059c08</c>): subsystem phase 5, whose one ported function is <c>Projectile_FlushDeletes</c>
+	/// (<see cref="Projectiles.Es1ProjectilePool.FlushDeletes"/>); the detail setting applied again when option 6 has changed, the cockpit's
 	/// frame (<c>Cockpit_DrawFrame</c>), then the 3D pass, which installs the current camera's view and draws the world
 	/// into the draw page in the installed window and clip block when the current view is not 1 or a view change is
 	/// staged, answering a pending pixel pick from what it drew (<see cref="Es1ObjectPick.Resolve"/>),
@@ -345,6 +346,8 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	/// and last the pilot channel's slot <c>+0x10</c> (<see cref="Messages.Es1PilotChannel.Update"/>).
 	/// </summary>
 	private void RenderFrame() {
+		// PLACEHOLDER: phase 5's other eight functions, the effect pools' delete flushes, plan step 7e.
+		Views.Cockpit.Globals.Projectiles.FlushDeletes();
 		_detail?.Refresh();
 		// The shake offset Sim_RenderFrame adds to the projection pair is (0, 0) while no shake is armed (plan step 7).
 		Views.Cockpit.DrawFrame();

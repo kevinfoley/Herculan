@@ -51,4 +51,11 @@ public sealed class Es1PlayerInputBlock {
 	/// <summary>The camera's two axes, through <see cref="CameraAxes"/>.</summary>
 	public (short X, short Y) CameraAxisValues =>
 		CameraAxes == Es1CameraAxes.Turret ? (Axes[Twist], Axes[Pitch]) : (Axes[Steering], Axes[Throttle]);
+
+	/// <summary>The two axes the camera's pointers address zeroed through them, as a flown missile's steer zeroes them.</summary>
+	public void ClearCameraAxes() {
+		int first = CameraAxes == Es1CameraAxes.Turret ? Twist : Steering;
+		Axes[first] = 0;
+		Axes[first + 1] = 0;
+	}
 }

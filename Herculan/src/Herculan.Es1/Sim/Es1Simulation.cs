@@ -6,9 +6,9 @@ using Herculan.Es1.View;
 namespace Herculan.Es1.Sim;
 
 /// <summary>
-/// An element of a pool the tick walks and destroys at once when its tick answers non-zero: an effect's tick, or a
-/// round's slot <c>+0x18</c> (docs/es1/simulation/main-loop.md#the-tick--sim_maintick-00059700). Destroying it, slot
-/// <c>+0xc</c> with 3, takes it off its pool.
+/// An element of an effect pool the tick walks and destroys at once when its tick answers non-zero
+/// (docs/es1/simulation/main-loop.md#the-tick--sim_maintick-00059700). Destroying it, slot <c>+0xc</c> with 3, takes it
+/// off its pool.
 /// </summary>
 public interface IEs1PoolTicked {
 	/// <summary>One tick; non-zero to be destroyed.</summary>
@@ -117,9 +117,8 @@ public sealed class Es1Simulation {
 
 	/// <summary>
 	/// The explosions (<c>g_ExplosionPool</c>, their tick <c>00005d74</c>), the pools <c>000aef68</c> (<c>0000693c</c>)
-	/// and <c>000aefd4</c> (<c>00006b28</c>), the debris (<c>000aeef8</c>, <c>000064b8</c>) and the projectiles
-	/// (<c>000af0b4</c>, slot <c>+0x18</c>), each in build order. PLACEHOLDER: empty: plan step 7 (weapons and their
-	/// effects) spawns them.
+	/// and <c>000aefd4</c> (<c>00006b28</c>) and the debris (<c>000aeef8</c>, <c>000064b8</c>), each in build order.
+	/// PLACEHOLDER: empty: plan step 7e (effects) spawns them. The projectiles are <see cref="Es1SimGlobals.Projectiles"/>.
 	/// </summary>
 	public List<IEs1PoolTicked> Explosions { get; } = new();
 
@@ -131,9 +130,6 @@ public sealed class Es1Simulation {
 
 	/// <inheritdoc cref="Explosions"/>
 	public List<IEs1PoolTicked> Debris { get; } = new();
-
-	/// <inheritdoc cref="Explosions"/>
-	public List<IEs1PoolTicked> Projectiles { get; } = new();
 
 	/// <summary>
 	/// The in-mission panels' shared state, which <c>Sim_StartMission</c>'s display and mouse give; none raises no panel,
@@ -172,8 +168,8 @@ public sealed class Es1Simulation {
 			TickPool(PoolAef68);
 			TickPool(PoolAefd4);
 			TickPool(Debris);
-			Controls.RoundInFlight = false;
-			TickPool(Projectiles);
+			Controls.MissileFlown = false;
+			Globals.Projectiles.Tick(new Projectiles.Es1ProjectileTick(Globals, block, Controls));
 
 			foreach (var group in _groups) {
 				if (group.Action == null) {

@@ -746,7 +746,7 @@ public sealed class Es1WeaponMounts {
 
 		if (index == RocketByAmmunition) {
 			short subtype = ammunition == 5 ? (short)0 : ammunition;
-			return weapons.Projectiles.FirstOrDefault(p => p.Type?.Val == 0 && p.SubtypeId == subtype);
+			return Projectiles.Es1ProjectilePool.LookupRecord(weapons.Projectiles, subtype, Projectiles.Es1Rocket.RecordType);
 		}
 
 		return index >= 0 && index < weapons.Projectiles.Length ? weapons.Projectiles[index] : null;

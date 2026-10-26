@@ -1,4 +1,5 @@
 using Herculan.Engine.Numerics;
+using Herculan.Es1.Projectiles;
 
 namespace Herculan.Es1.Sim;
 
@@ -103,6 +104,12 @@ public sealed class Es1SimGlobals {
 
 	/// <summary>The pixel pick, which the gunsight's click arms and the 3D pass answers (<see cref="Es1ObjectPick"/>).</summary>
 	public Es1ObjectPick ObjectPick { get; } = new();
+
+	/// <summary>
+	/// <c>g_ProjectilePool</c> and the rounds' type tables (<see cref="Es1ProjectilePool"/>); a pool with no tables until
+	/// the world's load gives it its own.
+	/// </summary>
+	public Es1ProjectilePool Projectiles { get; set; } = new();
 }
 
 /// <summary>
@@ -200,4 +207,40 @@ public interface IEs1SimObject {
 
 	/// <summary>Slot <c>+0x6c</c>: something ran into it.</summary>
 	void RunInto();
+
+	/// <summary><c>+0x96</c>, the ECM spoof, which turns the missiles it fires off their aim (docs/es1/simulation/rockets.md#homing--rocket_homingsteer-00006eb4).</summary>
+	bool EcmSpoofed { get; }
+
+	/// <summary><c>+0x9b</c>, jamming, which an anti-radiation missile steers at.</summary>
+	bool Jamming { get; }
+
+	/// <summary><c>+0x9f</c>, disarmed, which keeps a shot that strikes it from the side that is not the shooter's off its slot <c>+0x54</c>.</summary>
+	bool Disarmed { get; }
+
+	/// <summary><c>+0xaf</c>, skip one weapon choice, which a flying electro-optical missile sets on the machine that fired it.</summary>
+	bool SkipWeaponChoice { get; set; }
+
+	/// <summary><c>+0x15e</c>, its own target, or null.</summary>
+	IEs1SimObject? Target { get; }
+
+	/// <summary><c>Context_GetTransform</c> of <c>+6</c>: the rotation from its angles, at its position.</summary>
+	Transform3 Frame { get; }
+
+	/// <summary>Slot <c>+0x24</c>, the hit test: the distance along <paramref name="shot"/>'s ray at which it is struck, 0 for a miss.</summary>
+	int HitTest(Es1Shot shot);
+
+	/// <summary>
+	/// Slot <c>+0x28</c>, the aim node: the node transform, in the object's own frame, whose translation a missile with no
+	/// component steers at; null for none, which steers it at the position.
+	/// </summary>
+	Transform3? AimNodeTransform();
+
+	/// <summary>Slot <c>+0x58</c>: the component a missile fired with <paramref name="angles"/> from <paramref name="from"/> steers at, or −1.</summary>
+	short ComponentNearestAim(Vec3i from, (short Pitch, short Roll, short Heading) angles);
+
+	/// <summary>Slot <c>+0x5c</c>: where <paramref name="component"/> stands in the world.</summary>
+	Vec3i ComponentPosition(short component);
+
+	/// <summary>Slot <c>+0x70</c>: whether a missile of <paramref name="subtype"/> it fires has lock, so takes its target.</summary>
+	bool MissileLockState(short subtype);
 }

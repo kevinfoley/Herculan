@@ -59,12 +59,13 @@ public sealed class Es1GridShape(GridShapeCollision grid) {
 	}
 
 	/// <summary>
-	/// <c>FUN_00063b5c</c>(<paramref name="length"/>, vector), read from the decompile: a vector of
-	/// <c>Math_FastMagnitude3D</c> 0 becomes 0; otherwise the scale <c>(length &lt;&lt; 16) / magnitude</c>, truncated by
-	/// <c>IDIV</c> and cut to 16 bits, takes each component through the rounding <c>Math_Q16Multiply2</c> (<c>0007358c</c>),
-	/// and each product is cut to 16 bits and sign-extended.
+	/// <c>Math_NormalizeVec3ToLength</c> (<c>00063b5c</c>)(<paramref name="length"/>, vector)
+	/// (docs/es1/simulation/fixed-point-math.md#rescaling-a-vector): a vector of <c>Math_FastMagnitude3D</c> 0 becomes 0;
+	/// otherwise the scale <c>(length &lt;&lt; 16) / magnitude</c>, truncated by <c>IDIV</c> and cut to 16 bits, takes each
+	/// component through the rounding <c>Math_Q16Multiply2</c> (<c>0007358c</c>), and each product is cut to 16 bits and
+	/// sign-extended.
 	/// </summary>
-	private static (int X, int Y, int Z) RescaleToLength(short length, int x, int y, int z) {
+	internal static (int X, int Y, int Z) RescaleToLength(short length, int x, int y, int z) {
 		int magnitude = SimMath.FastMagnitude3D(x, y, z);
 		if (magnitude == 0) {
 			return (0, 0, 0);

@@ -2,6 +2,7 @@ using HercWorks.Core.Data.File;
 using Herculan.Engine.Content;
 using Herculan.Engine.Numerics;
 using Herculan.Es1.Panels;
+using Herculan.Es1.Projectiles;
 using Herculan.Es1.Sim;
 using Herculan.Es1.View;
 
@@ -77,12 +78,11 @@ public sealed class Es1MfdMissileCamScreen : Es1MfdScreen {
 		_labels[2].FillColor = Label2Fill;
 	}
 
-	/// <summary>
-	/// <c>MfdMissileView_TrackedRound</c> (<c>00093914</c>), a global kept with the screen here: the missile the view
-	/// rides, a member of the projectile pool <c>000af0b4</c>, or null. PLACEHOLDER: nothing sets it; its one writer,
-	/// <c>00007748</c>, fires a rocket, plan step 7, and what it stores is docs/es1/simulation/mfd-missile-camera.md#open.
-	/// </summary>
-	public IEs1PoolTicked? TrackedRound { get; private set; }
+	/// <summary>The missile the view rides, <see cref="Es1ProjectilePool.TrackedMissile"/>, which the paint clears once it is gone.</summary>
+	public Es1Projectile? TrackedMissile {
+		get => Cockpit.Globals.Projectiles.TrackedMissile;
+		private set => Cockpit.Globals.Projectiles.TrackedMissile = value;
+	}
 
 	/// <summary><c>+0x0c</c>'s origin <c>+0x220</c>/<c>+0x224</c>, the viewport the view draws into.</summary>
 	public (int X, int Y) ViewportOrigin { get; }
@@ -121,7 +121,7 @@ public sealed class Es1MfdMissileCamScreen : Es1MfdScreen {
 	/// <item>with <see cref="FlashExplosion"/> set and still in the pool, <see cref="FlashToggle"/> flipped and the rect
 	/// filled in <see cref="FlashColor"/> when it is then set, else <see cref="Fill"/>; an explosion gone clears it and
 	/// goes on;</item>
-	/// <item>with <see cref="TrackedRound"/> set, the pose: the missile's position and angles with
+	/// <item>with <see cref="TrackedMissile"/> set, the pose: the missile's position and angles with
 	/// <see cref="CameraOffset"/> pushed along its <i>x</i> axis (<see cref="PoseBeside"/>), saved in
 	/// <see cref="SavedPosition"/> and <see cref="SavedAngles"/>, or, the missile gone from the pool, the saved pose and
 	/// the missile cleared; then the first explosion within <see cref="FlashReach"/> of the pose starts the flash, kept
@@ -146,15 +146,15 @@ public sealed class Es1MfdMissileCamScreen : Es1MfdScreen {
 			FlashExplosion = null;
 		}
 
-		if (TrackedRound != null) {
+		if (TrackedMissile != null) {
 			Vec3i position;
 			(short Pitch, short Roll, short Heading) angles;
-			if (RoundPose(TrackedRound) is { } round) {
-				(position, angles) = PoseBeside(round.Position, round.Angles);
+			if (MissilePose(TrackedMissile) is { } missile) {
+				(position, angles) = PoseBeside(missile.Position, missile.Angles);
 				SavedPosition = position;
 				SavedAngles = angles;
 			} else {
-				TrackedRound = null;
+				TrackedMissile = null;
 				position = SavedPosition;
 				angles = SavedAngles;
 			}
@@ -166,10 +166,10 @@ public sealed class Es1MfdMissileCamScreen : Es1MfdScreen {
 				return;
 			}
 
-			if (TrackedRound != null) {
+			if (TrackedMissile != null) {
 				CameraPosition = position;
 				CameraAngles = angles;
-				// PLACEHOLDER: the view itself, which a tracked missile alone reaches (plan step 7): the shake offset
+				// PLACEHOLDER: the view itself, which a tracked missile alone reaches (plan step 7a): the shake offset
 				// (CockpitView_GetShakeOffset) taken out of the viewport's rect, the viewport installed, the camera's
 				// projection installed (Raster_InstallViewProjection), the horizon drawn with Hzline_Draw(horizon, 0,
 				// camera) -- an hzline of bands 1 x 3 and ground bands 1 x 3, Hzline_SetColors(0, 0x16, 0x10), the skyline
@@ -179,7 +179,7 @@ public sealed class Es1MfdMissileCamScreen : Es1MfdScreen {
 			}
 		}
 
-		if (TrackedRound == null) {
+		if (TrackedMissile == null) {
 			PaintLabels(canvas);
 		}
 	}
@@ -191,7 +191,7 @@ public sealed class Es1MfdMissileCamScreen : Es1MfdScreen {
 	/// (<see cref="Es1Cockpit.DrawToCockpit"/> with 0), each lowering it by 1.
 	/// </summary>
 	public override void Update() {
-		if (TrackedRound != null || FlashExplosion != null || Cockpit.Gunsight.State.LockLamp) {
+		if (TrackedMissile != null || FlashExplosion != null || Cockpit.Gunsight.State.LockLamp) {
 			RepaintCounter = 2;
 		}
 
@@ -287,14 +287,11 @@ public sealed class Es1MfdMissileCamScreen : Es1MfdScreen {
 	}
 
 	/// <summary>
-	/// <c>Pool_Prev</c>'s walk of the projectile pool <c>000af0b4</c> for <paramref name="round"/>, and, found, its
-	/// position <c>+0x20</c>–<c>+0x28</c> and its pitch, roll and heading <c>+6</c>–<c>+0xa</c>. PLACEHOLDER: answers
-	/// none, as for a missile gone: the projectiles and their fields are plan step 7.
+	/// <c>Pool_Prev</c>'s walk of the projectile pool <c>000af0b4</c> for <paramref name="missile"/>, and, found, its
+	/// position <c>+0x20</c>–<c>+0x28</c> and its pitch, roll and heading <c>+6</c>–<c>+0xa</c>.
 	/// </summary>
-	private static (Vec3i Position, (short Pitch, short Roll, short Heading) Angles)? RoundPose(IEs1PoolTicked round) {
-		_ = round;
-		return null;
-	}
+	private (Vec3i Position, (short Pitch, short Roll, short Heading) Angles)? MissilePose(Es1Projectile missile) =>
+		Cockpit.Globals.Projectiles.Contains(missile) ? (missile.Position, missile.Angles) : null;
 
 	/// <summary>
 	/// <c>Pool_Prev</c>'s walk of <c>g_ExplosionPool</c> for the first explosion whose position <c>+0x20</c> lies within
