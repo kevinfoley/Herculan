@@ -10,8 +10,9 @@ namespace HercWorks.Core.Data.File.Msn;
 /// the squad that name a member, 288 have a slot-0 order that is search/destroy on a group with a route, 182 of them on the
 /// player's squad, and 402 name no point of their own, so the group stands on its route's first waypoint
 /// (docs/retail/formats/script-dat.md#placement--the-actual-rule, rule 3). So the add appends, each unconditioned, drawing no variant and under a new GUID: a route of one waypoint at the
-/// drop point (<see cref="RouteEditing"/>), a search/destroy order on it whose subject is group 0, the player's squad
-/// (docs/retail/simulation/ai-goals.md), the herc's row-12 record, and a row-16 group with the herc in member slot 0 and
+/// drop point (<see cref="RouteEditing"/>), an order on it (docs/retail/simulation/ai-goals.md), search/destroy on group 0,
+/// the player's squad, for a Cybrid group and patrol for a Human one (<see cref="NewGroups.FirstOrder"/>), the herc's row-12
+/// record, and a row-16 group with the herc in member slot 0 and
 /// the order in order slot 0, naming no point and no heading. With one waypoint the route has no first leg, so the group
 /// faces heading 0 (rule 4). The other fields take the value most retail records of their kind carry, counted with
 /// <c>HercWorks.Query records</c> over the raw <c>.MSN</c> files with no condition applied: the non-squad herc records (662
@@ -130,9 +131,10 @@ public static class HercGroups {
 
 	/// <summary>
 	/// Adds <paramref name="herc"/> in a new group on <paramref name="side"/> (0 human, 1 Cybrid), standing on a route of
-	/// one waypoint at (<paramref name="x"/>, <paramref name="y"/>) and hunting the player's squad, as one
-	/// <see cref="MissionDocument.Change"/>; answers the herc's row-12 GUID and the group's row-16 GUID. Throws
-	/// <see cref="InvalidOperationException"/> when <see cref="WhyNoAdd"/> refuses it, or the mission has no group 0.
+	/// one waypoint at (<paramref name="x"/>, <paramref name="y"/>) and given its first order there
+	/// (<see cref="NewGroups.FirstOrder"/>), as one <see cref="MissionDocument.Change"/>; answers the herc's row-12 GUID and the
+	/// group's row-16 GUID. Throws <see cref="InvalidOperationException"/> when <see cref="WhyNoAdd"/> refuses it, or a Cybrid
+	/// group's mission has no group 0.
 	/// </summary>
 	public static MsnEdit Create(MissionDocument document, MechRosterEntry144 herc, short side, int x, int y,
 			out short mech, out short group) {

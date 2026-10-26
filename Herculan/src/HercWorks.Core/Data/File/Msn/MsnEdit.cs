@@ -127,6 +127,10 @@ public sealed class MsnField {
 	public static MsnField GroupPosition { get; } = new(16, MissionGroup164.PositionRefWord,
 		record => ((MissionGroup164)record).PositionRef, (record, value) => ((MissionGroup164)record).PositionRef = value);
 
+	/// <summary>A group's own route, row 16's <see cref="MissionGroup164.RouteRef"/>.</summary>
+	public static MsnField GroupRoute { get; } = new(16, MissionGroup164.RouteRefWord,
+		record => ((MissionGroup164)record).RouteRef, (record, value) => ((MissionGroup164)record).RouteRef = value);
+
 	/// <summary>A group's side, row 16's <see cref="MissionGroup164.Side"/>.</summary>
 	public static MsnField GroupSide { get; } = new(16, MissionGroup164.SideWord,
 		record => ((MissionGroup164)record).Side, (record, value) => ((MissionGroup164)record).Side = value);

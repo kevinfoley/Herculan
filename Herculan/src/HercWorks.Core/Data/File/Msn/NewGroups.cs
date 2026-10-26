@@ -32,20 +32,45 @@ internal static class NewGroups {
 	/// <summary>
 	/// Adds <paramref name="member"/> to roster row <paramref name="row"/> (12 or 13) in a new group of
 	/// <paramref name="memberKind"/> (0 hercs, 1 flyers) on <paramref name="side"/>, standing on a route of one waypoint at
-	/// (<paramref name="x"/>, <paramref name="y"/>, Z 0) and given a search/destroy order on it whose subject is group 0, the
-	/// player's squad, as one <see cref="MissionDocument.Change"/>; answers the member's and the group's GUIDs. Throws
-	/// <see cref="InvalidOperationException"/> when the mission has no group 0.
+	/// (<paramref name="x"/>, <paramref name="y"/>, Z 0) and given <see cref="FirstOrder"/> on it, as one
+	/// <see cref="MissionDocument.Change"/>; answers the member's and the group's GUIDs. Throws
+	/// <see cref="InvalidOperationException"/> when the group would hunt the squad and the mission has no group 0.
 	/// </summary>
 	internal static MsnEdit Create(MissionDocument document, int row, MapObject member, short memberKind, short side, int x,
 			int y, out short memberGuid, out short groupGuid) {
+		var (verb, subjectKind, subject) = FirstOrder(document, side);
+		return Create(document, row, member, memberKind, side, x, y, verb, subjectKind, subject, PaintsGround, out memberGuid,
+			out groupGuid);
+	}
+
+	/// <summary>
+	/// The verb and subject a new herc or flyer group's first order gets on <paramref name="side"/>, this editor's choice of a
+	/// retail shape. A Cybrid group hunts group 0, the player's squad: search/destroy on the squad is the slot-0 order of 299
+	/// of the 410 records of Cybrid herc groups outside the squad and of 62 of the 75 of Cybrid flyer groups
+	/// (<c>HercWorks.Query orders</c>, the squad's GUID left out). A Human group patrols, naming no subject: search/destroy
+	/// fights only its subject (docs/retail/simulation/ai-navigation.md#searchdestroy-12--mech_behavioursearchdestroythink-0041d60c,
+	/// docs/retail/simulation/ai-flyers.md#the-thinks) and the AI never targets its own side
+	/// (docs/retail/simulation/ai-targeting.md#is-it-a-target-at-all--ai_istargetable-00411e80), so on the squad it would
+	/// never fight, while a patrolling leader takes any enemy it finds
+	/// (docs/retail/simulation/ai-targeting.md#acquisition--ai_selecttarget-00411fa0). The 21 records of retail Human herc
+	/// groups outside the squad have no majority shape (7 guard a group, 6 sleep, 3 patrol naming no subject).
+	/// Throws <see cref="InvalidOperationException"/> for a Cybrid group when the mission has no group 0.
+	/// </summary>
+	internal static (short Verb, short SubjectKind, short Subject) FirstOrder(MissionDocument document, short side) {
+		if (side != CybridSide) {
+			return (GroupOrders.Patrol, -1, -1);
+		}
+
 		short squad = SquadRoster.Squad(document);
 		if (squad == -1) {
 			throw new InvalidOperationException("The mission has no group 0, the player's squad, for the new group to hunt.");
 		}
 
-		return Create(document, row, member, memberKind, side, x, y, HercGroups.SearchDestroy, HercGroups.GroupSubject, squad,
-			PaintsGround, out memberGuid, out groupGuid);
+		return (HercGroups.SearchDestroy, HercGroups.GroupSubject, squad);
 	}
+
+	/// <summary>A group's side for the Cybrids, row 16's <see cref="MissionGroup164.Side"/>.</summary>
+	internal const short CybridSide = 1;
 
 	/// <summary>
 	/// Adds <paramref name="member"/> to roster row <paramref name="row"/> (12 to 14) in a new group of

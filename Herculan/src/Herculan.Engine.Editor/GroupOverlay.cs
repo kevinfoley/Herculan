@@ -131,7 +131,30 @@ internal sealed class GroupOverlay {
 				StackedLabel(at, $"{MissionText.Ordinal(slot + 1)} order: {MissionText.OrderVerb(verb)}", SubjectColor);
 			}
 		}
+
+		DrawPresenceLabels(drawList, project);
 	}
+
+	/// <summary>
+	/// "Not always present" beside each object drawn in the scene that some loads leave out, its own Present when's or its
+	/// group's, as the Groups list marks its row, since the scene shows every object whatever its condition.
+	/// </summary>
+	private void DrawPresenceLabels(ImGuiNET.ImDrawListPtr drawList, ScreenProjection project) {
+		// PLACEHOLDER: a text label until the user's icon for it is drawn.
+		foreach (var pickable in _picker.Pickables) {
+			if (_index.KeyOf(pickable.SceneObject) is not { } key || _index.Layout.Entry(key.Row, key.Guid)?.Presence.Always != false) {
+				continue;
+			}
+
+			var top = pickable.CenterRender + new Vector3(0f, pickable.RadiusRender, 0f);
+			if (project.ToScreen(top) is { } at) {
+				MissionOverlay.Label(drawList, at + new Vector2(ScaledImGui.Scaled(6f), 0f), NotAlwaysPresent, NotAlwaysColor);
+			}
+		}
+	}
+
+	private const string NotAlwaysPresent = "Not always present";
+	private static readonly Vector3 NotAlwaysColor = new(1f, 0.75f, 0.35f);
 
 	/// <summary>
 	/// Each order slot of <paramref name="group"/> whose order the layout has and names a subject the layout places in the

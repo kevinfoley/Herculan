@@ -36,9 +36,13 @@ Add an order fills the slot after the last, Remove moves every later order up, a
 
 - the squad: patrol, no subject (36 of the 63 slot-0 orders of the retail squad's records);
 - a convoy: travel, no subject (11 of the 12 retail convoys' slot-0 orders; `C2_08`'s two supply transports, the one retail convoy with later orders, guard and then travel);
-- any other group: Search and destroy on the squad.
+- any other group: a new herc group's first order on its team ([Hercs](handoff-editor-roster.md#hercs)), Search and destroy on the squad for a Cybrid group, Patrol with no target for a Human one.
 
 7 of the 609 order GUIDs the retail groups name are named by two or three groups, each in the same slot, none within one group. Editing a slot whose order another slot names first gives it its own copy, which the view does not mention, since the edit changes only this group either way. A removed order's records go only when no slot names it any more.
+
+A Search and destroy order whose target is on the group's own team, a group outside the squad's, gets a red note under its Target: it never attacks that target and goes after no other enemy. The mission check finds the same ([Mission check](handoff-editor-viewing.md#mission-check)).
+
+An edit that changes which route slot 0 runs, a route chosen for it, an Up or Down that moves another order into it, or a remove of the first order, also writes the new route into the group's own route field (row 16 `0x36`) when that field named the old one, as 377 of the 433 retail herc group records keep the two the same (`GroupOrders.FollowFirstRoute`, the editor's choice); so the one-waypoint route a new group stood on, once its first order walks another, is referenced by nothing and can be deleted.
 
 Shapes no retail order has are not made:
 

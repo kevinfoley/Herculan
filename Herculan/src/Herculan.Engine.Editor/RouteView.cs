@@ -6,8 +6,8 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// The Properties panel's view of a route, read from the layout and <see cref="MissionIndex"/> by its row-8 GUID, every route
 /// of the <c>.MSN</c> included (docs/herculan/handoff-editor-placement.md#routes): whether it is a loop, which groups walk it,
-/// its waypoints, "Start" and then "Waypoint 1" on, each with its distance from the one before (<see cref="MissionText.Waypoint"/>),
-/// and the edits that make a route (<see cref="RouteEditor"/>, <see cref="RoutePlacing"/>): add waypoints after the last,
+/// with a choice that makes it a group's first order's route (<see cref="OrderEditor"/>), its waypoints, "Start" and then
+/// "Waypoint 1" on, each with its distance from the one before (<see cref="MissionText.Waypoint"/>), and the edits that make a route (<see cref="RouteEditor"/>, <see cref="RoutePlacing"/>): add waypoints after the last,
 /// insert one after the selected one, remove the selected one, close or open the loop, delete the route; the selected
 /// waypoint's X and Y as typed fields (<see cref="PointFields"/>); and, when its waypoints are an option of a random choice,
 /// which one, since an edit changes that option (docs/herculan/handoff-editor-conditions.md#variants).
@@ -23,6 +23,7 @@ internal sealed class RouteView {
 	private readonly PointMover _mover;
 	private readonly RouteEditor _editor;
 	private readonly RoutePlacing _placing;
+	private readonly OrderEditor _orders;
 	private readonly PanelLinks _links;
 	private readonly PointSharers _sharers;
 	private readonly Action<short> _choice;
@@ -30,18 +31,20 @@ internal sealed class RouteView {
 	// The selected waypoint's point being typed.
 	private readonly PointFields _point = new();
 
+	/// <param name="orders">Gives the route to a group, as its first order's route.</param>
 	/// <param name="links">Draws the links to the groups walking it and to what references it.</param>
 	/// <param name="sharers">Lists what else stands on the selected waypoint's point.</param>
 	/// <param name="choice">Draws, for a route GUID whose waypoints are an option of a random choice, which one (<see cref="VariantView.DrawRouteChoice"/>).</param>
 	/// <param name="names">What the title names the route by.</param>
 	public RouteView(MissionIndex index, MissionNames names, SelectionState selection, PointMover mover, RouteEditor editor,
-			RoutePlacing placing, PanelLinks links, PointSharers sharers, Action<short> choice) {
+			RoutePlacing placing, OrderEditor orders, PanelLinks links, PointSharers sharers, Action<short> choice) {
 		_index = index;
 		_names = names;
 		_selection = selection;
 		_mover = mover;
 		_editor = editor;
 		_placing = placing;
+		_orders = orders;
 		_links = links;
 		_sharers = sharers;
 		_choice = choice;
@@ -83,6 +86,7 @@ internal sealed class RouteView {
 			ImGui.TextWrapped("No order references it, so no group walks it.");
 		}
 
+		DrawWalkWith(placed);
 		if (placed.NamedBy.Count > 0) {
 			ImGui.Text("Referenced in a later order by:");
 			foreach (short group in placed.NamedBy) {
@@ -97,6 +101,35 @@ internal sealed class RouteView {
 		DrawEdits(placed, selected.Guid, selected.Waypoint);
 		DrawMove(placed, selected);
 		DrawDelete(selected.Guid);
+	}
+
+	// A choice of the groups with a first order that walk another route, which makes this one that order's route: a group walks
+	// only its first order's (docs/retail/simulation/ai-goals.md#the-route-cursor-is-loaded-once).
+	private void DrawWalkWith(PlannedRoute placed) {
+		ImGui.SetNextItemWidth(-1f);
+		if (ImGui.BeginCombo("##walkWith", "Have a group walk it...")) {
+			bool any = false;
+			foreach (var group in _index.Groups) {
+				if (placed.WalkedBy.Contains(group.Guid) || group.Orders.Count == 0 || group.Orders[0] == -1
+						|| _orders.Slots(group.Guid) is not [{ Slot: 0 }, ..]) {
+					continue;
+				}
+
+				any = true;
+				if (NameText.Selectable(_links.Names.Group(group.Guid), $"walk{group.Guid}", false)) {
+					_orders.RequestRoute(group.Guid, 0, placed.Guid);
+				}
+			}
+
+			if (!any) {
+				ImGui.TextDisabled("No other group has an order.");
+			}
+
+			ImGui.EndCombo();
+		}
+
+		EditorText.Note("It becomes that group's 1st order's route; a group with no position of its own then starts at its start.");
+		EditorText.Reason(_orders.Failure);
 	}
 
 	// The waypoints, one selectable row each: "Start", then "Waypoint 2: 420 m from waypoint 1"; and, on the player's route,

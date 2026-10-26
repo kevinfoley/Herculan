@@ -17,7 +17,7 @@ namespace Herculan.Engine.Editor;
 /// </summary>
 internal sealed class EditorMission {
 	private EditorMission(GameContent content, string name, MissionDocument source, MissionScene scene,
-			PlacementTables tables, MissionIndex sceneIndex, MissionLint lint, TerrainMaterialTable materials,
+			PlacementTables tables, MissionIndex sceneIndex, TerrainMaterialTable materials,
 			MissionSquad squad, Func<GameContent> shellContent, CybridWeapons cybrid, ZoneCatalog zones) {
 		Name = name;
 		Source = source;
@@ -30,13 +30,14 @@ internal sealed class EditorMission {
 		Overlay = new MissionOverlay(sceneIndex, drape);
 		Picker = new ScenePicker(scene, sceneIndex, Overlay);
 		GroupOverlay = new GroupOverlay(sceneIndex, drape, Picker);
-		Outliner = new MissionOutliner(source, sceneIndex, Names, lint, Selection);
+		Outliner = new MissionOutliner(source, sceneIndex, Names, Selection);
 		Sync = new SceneSync(source, scene, tables, sceneIndex, Overlay, Picker, Outliner, Selection);
 		Mover = new PointMover(source, scene, sceneIndex, Sync, Overlay, materials);
 		Gizmo = new MoveGizmo(Selection, Mover);
 		Placer = new StructurePlacer(source, scene, sceneIndex, Mover, Sync, Selection);
 		Sides = new SideChanger(source, sceneIndex, Mover, Sync);
 		Deleter = new ObjectDeleter(source, sceneIndex, Mover, Sync);
+		Members = new MemberMover(source, sceneIndex, Mover, Sync);
 		Fitter = new MachineFitter(source, Mover, Sync, shellContent, cybrid);
 		Squad = new SquadEditor(source, Mover, Sync, Fitter, Deleter);
 		Theater = new TheaterChanger(source, scene, sceneIndex, Mover, Sync);
@@ -56,7 +57,8 @@ internal sealed class EditorMission {
 		Actions = new ActionEditor(source, Mover, Sync, Selection);
 		Timers = new TimerEditor(source, Mover, Sync, Selection);
 		Conditions = new ConditionEditor(source, sceneIndex, Names, Mover, Sync, Selection, Deleter);
-		Presence = new PresenceEditor(source, sceneIndex, Mover, Sync, Deleter);
+		Presence = new PresenceEditor(source, sceneIndex, Mover, Sync, Deleter,
+			() => squad.PlayerMachine == PlayerMachineSource.CareerSquad);
 		Variants = new VariantEditor(source, sceneIndex, Mover, Sync, Selection);
 		Types = new RosterTypeEditor(source, Mover, Sync);
 		Outliner.Placing = Placing;
@@ -67,7 +69,7 @@ internal sealed class EditorMission {
 		Outliner.Conditions = Conditions;
 		var choices = new RandomChoices(source, sceneIndex, Names, squad);
 		Outliner.Choices = choices;
-		Properties = new PropertiesPanel(sceneIndex, Selection, source, Mover, Sides, Deleter,
+		Properties = new PropertiesPanel(sceneIndex, Selection, source, Mover, Sides, Deleter, Members,
 			new SquadMachinePanel(Fitter, Squad, squad), new RosterFitView(Fitter, Types, Variants, choices, new UnitTypeCatalog(content)),
 			new MissionView(() => Name, () => zones.Describe(Zone), Theater, TheaterNames.Labels(content),
 				new MissionTextView(Texts), new DebriefView(Debrief)),
@@ -167,6 +169,9 @@ internal sealed class EditorMission {
 	/// <summary>Deletes objects from <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public ObjectDeleter Deleter { get; }
 
+	/// <summary>Moves objects into other groups of <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	public MemberMover Members { get; }
+
 	/// <summary>Changes hercs' chassis and weapon fits in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public MachineFitter Fitter { get; }
 
@@ -228,7 +233,7 @@ internal sealed class EditorMission {
 		}
 
 		// The scene's own copy is not kept; a base pad's tile is sized by its material when the ground is levelled again.
-		return new EditorMission(content, name, source, scene, tables, sceneIndex, new MissionLint(source, sceneIndex),
+		return new EditorMission(content, name, source, scene, tables, sceneIndex,
 			TerrainMaterialTable.Load(content), squad, shellContent, cybrid, zones);
 	}
 }

@@ -39,7 +39,7 @@ internal sealed class PropertiesPanel {
 	private readonly ConditionView _condition;
 
 	public PropertiesPanel(MissionIndex index, SelectionState selection, MissionDocument source, PointMover mover,
-			SideChanger sides, ObjectDeleter deleter, SquadMachinePanel machine, RosterFitView fit, MissionView mission, RouteEditor routes,
+			SideChanger sides, ObjectDeleter deleter, MemberMover members, SquadMachinePanel machine, RosterFitView fit, MissionView mission, RouteEditor routes,
 			RoutePlacing placing, AreaEditor areas, AreaPlacing areaPlacing, OrderEditor orders, ObjectiveEditor objectives,
 			ActionEditor actions, TimerEditor timers, ConditionEditor conditions, PresenceEditor presence, VariantEditor variants,
 			RandomChoices choices, TriggerMessages messages, MissionNames names) {
@@ -53,7 +53,7 @@ internal sealed class PropertiesPanel {
 		var variantView = new VariantView(variants, choices, links);
 		_condition = new ConditionView(conditions, links, variantView);
 		var presentWhen = new PresentWhenView(presence, links);
-		_route = new RouteView(index, names, selection, mover, routes, placing, links, sharers, variantView.DrawRouteChoice);
+		_route = new RouteView(index, names, selection, mover, routes, placing, orders, links, sharers, variantView.DrawRouteChoice);
 		_area = new TriggerAreaView(index, names, mover, areas, areaPlacing, actions, _trigger.DrawSummary,
 			namers => links.References(namers), sharers);
 		var orderSlots = new OrderSlotsView(index, orders, links, presentWhen, presence);
@@ -61,8 +61,8 @@ internal sealed class PropertiesPanel {
 		_objective = new ObjectiveView(index, objectives, links, presentWhen, presence);
 		var team = new TeamField(index, sides);
 		var related = new RelatedObjectives(objectives, links);
-		_object = new ObjectView(index, links, mover, team, deleter, machine, fit, presentWhen, presence, variantView, actions,
-			related);
+		_object = new ObjectView(index, links, mover, team, deleter, members, machine, fit, presentWhen, presence, variantView,
+			actions, related);
 		_group = new GroupView(index, links, mover, team, machine, presentWhen, presence, actions, related, orderSlots, sharers);
 		machine.References = namers => links.References(namers);
 	}

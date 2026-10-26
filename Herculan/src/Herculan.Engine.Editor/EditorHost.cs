@@ -750,6 +750,7 @@ public sealed class EditorHost {
 			Console.Error.WriteLine($"Cannot delete {(mission.Index.KeyOf(deleting) is { } key ? mission.Names.Object(key).Full : "the object")}: {reason}");
 		}
 
+		mission.Members.RunRequest();
 		mission.Fitter.RunRequest();
 		mission.Types.RunRequest();
 		mission.Squad.RunRequest();

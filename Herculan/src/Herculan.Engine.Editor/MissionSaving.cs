@@ -379,7 +379,7 @@ internal sealed class MissionSaving {
 	// The mission check's findings as the Problems list words them.
 	private List<string> Check() {
 		var mission = _mission!;
-		return new MissionLint(mission.Source, mission.Index).Findings
+		return new MissionLint(mission.Source, mission.Index, mission.Names.Types).Findings
 			.Select(finding => ProblemText.Of(finding, mission.Names, mission.Index.Layout))
 			.ToList();
 	}

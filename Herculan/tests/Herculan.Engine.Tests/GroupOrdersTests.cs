@@ -118,8 +118,8 @@ public class GroupOrdersTests {
 	}
 
 	/// <summary>
-	/// Catches a convoy's new order made search/destroy on the squad, as any other group's, or travel given a subject, and
-	/// a structure group led by a building given travel: the convoy test read from the group's member kind alone.
+	/// Catches a convoy's new order made a Human group's patrol, as any other group's, or travel given a subject, and a
+	/// structure group led by a building given travel: the convoy test read from the group's member kind alone.
 	/// </summary>
 	[Fact]
 	public void AConvoysNewOrderTravelsItsRoute() {
@@ -142,7 +142,7 @@ public class GroupOrdersTests {
 		Assert.Equal(5, convoy.RouteRef);
 
 		var bases = GroupOrders.NewOrder(document, 11, BaseObject.IsGroundVehicle);
-		Assert.Equal((HercGroups.SearchDestroy, HercGroups.GroupSubject), (bases.Verb, bases.SubjectKind));
+		Assert.Equal((GroupOrders.Patrol, (short)-1), (bases.Verb, bases.SubjectKind));
 	}
 
 	// Group 0, the squad: the player's machine, facing a heading of its own.

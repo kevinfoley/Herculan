@@ -66,6 +66,12 @@ internal sealed class RosterTypeNames {
 
 	/// <summary>Whether <paramref name="structure"/>'s type is a ground vehicle, which drives.</summary>
 	public bool IsVehicle(BaseRosterEntry62 structure) => _bases?[structure.TypeIndex]?.IsVehicle == true;
+
+	/// <summary>
+	/// Whether <c>BASES.DAT</c> type <paramref name="type"/> is invulnerable (<see cref="BaseType.Invulnerable"/>), so a
+	/// structure of it takes no damage and is never destroyed (docs/retail/formats/bases-dat.md).
+	/// </summary>
+	public bool IsInvulnerable(int type) => _bases?[type]?.Invulnerable == true;
 }
 
 /// <summary>

@@ -194,6 +194,42 @@ public static class RecordConditions {
 	}
 
 	/// <summary>
+	/// Why the condition every record of roster object <paramref name="member"/> carries cannot be moved onto row-16 group
+	/// <paramref name="group"/>'s records, or null when it can: both can be set (<see cref="WhyFixed"/>), the object is present
+	/// only under a condition, and the group always.
+	/// </summary>
+	public static string? WhyNoMoveToGroup(MissionDocument document, PresenceTarget member, short group) {
+		var target = PresenceTarget.Of(GroupRow, group);
+		if ((WhyFixed(document, member) ?? WhyFixed(document, target)) is { } reason) {
+			return reason;
+		}
+
+		if (Shared(document, member) is not { } condition || condition == Always) {
+			return "It is present always.";
+		}
+
+		return Shared(document, target) != Always ? "Its group is not always present." : null;
+	}
+
+	/// <summary>
+	/// Makes row-16 group <paramref name="group"/> present when roster object <paramref name="member"/> is, and the object
+	/// always, as one <see cref="MissionDocument.Change"/>: the condition the object's records carry is written into the
+	/// group's and the object's are cleared, so the group is never there without it. Throws
+	/// <see cref="InvalidOperationException"/> when <see cref="WhyNoMoveToGroup"/> refuses it.
+	/// </summary>
+	public static MsnEdit MoveToGroup(MissionDocument document, PresenceTarget member, short group) {
+		if (WhyNoMoveToGroup(document, member, group) is { } reason) {
+			throw new InvalidOperationException(reason);
+		}
+
+		short condition = Shared(document, member)!.Value;
+		return document.Change(() => {
+			Write(document, PresenceTarget.Of(GroupRow, group), condition);
+			Write(document, member, Always);
+		});
+	}
+
+	/// <summary>
 	/// The conditions of <paramref name="target"/>'s variations that set some field (<see cref="LayoutEntry.Variations"/>):
 	/// an edit writes the base, so where such a condition holds, a field the variation sets keeps the variation's value.
 	/// Distinct, in file order, <see cref="Always"/> included; empty for an objective, which no other record overlays, and for

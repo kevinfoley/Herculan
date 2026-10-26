@@ -1,3 +1,4 @@
+using System.Numerics;
 using HercWorks.Core.Data.File;
 using HercWorks.Core.Data.File.Msn;
 using Herculan.Engine.Cockpit;
@@ -12,7 +13,9 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// The Properties panel's view of a herc, flyer, structure or ground vehicle (docs/herculan/handoff-editor-roster.md), read from
 /// the <c>.MSN</c>'s layout and <see cref="MissionIndex"/> by the roster record the object stands for, every record included,
-/// one the mission as opened leaves out too: its name, its group, its Present when and the random choice it picks from; its
+/// one the mission as opened leaves out too: its name, its group with a choice that moves it into another
+/// (<see cref="MemberMover"/>) and its group's orders, its Present when, with what it does to a group it would leave empty
+/// (<see cref="PresentWhenView.DrawGroupLeftEmpty"/>), and the random choice it picks from; its
 /// team, type and fit (<see cref="RosterFitView"/>); its position as fields that move it, and its heading; its starting
 /// condition, or for a machine of the player's squad which Herc it is (<see cref="SquadMachinePanel"/>); the two triggers it
 /// fires; the campaign variables it sets when put out of action; the win and lose conditions about it; Delete, or what
@@ -24,6 +27,7 @@ internal sealed class ObjectView {
 	private readonly PointMover _mover;
 	private readonly TeamField _team;
 	private readonly ObjectDeleter _deleter;
+	private readonly MemberMover _members;
 	private readonly SquadMachinePanel _machine;
 	private readonly RosterFitView _fit;
 	private readonly PresentWhenView _presentWhen;
@@ -36,13 +40,14 @@ internal sealed class ObjectView {
 	private readonly PointFields _point = new();
 
 	public ObjectView(MissionIndex index, PanelLinks links, PointMover mover, TeamField team, ObjectDeleter deleter,
-			SquadMachinePanel machine, RosterFitView fit, PresentWhenView presentWhen, PresenceEditor presence, VariantView variants,
+			MemberMover members, SquadMachinePanel machine, RosterFitView fit, PresentWhenView presentWhen, PresenceEditor presence, VariantView variants,
 			ActionEditor actions, RelatedObjectives objectives) {
 		_index = index;
 		_links = links;
 		_mover = mover;
 		_team = team;
 		_deleter = deleter;
+		_members = members;
 		_machine = machine;
 		_fit = fit;
 		_presentWhen = presentWhen;
@@ -63,7 +68,14 @@ internal sealed class ObjectView {
 		ImGui.Text("Group:");
 		ImGui.SameLine();
 		_links.ShortLayoutGroup(group.Guid);
-		_presentWhen.Draw(_presence.ObjectTarget(sel));
+		if (!planned.Squad) {
+			DrawMoveTo(sel, planned, group);
+			DrawOrders(group);
+		}
+
+		var presence = _presence.ObjectTarget(sel);
+		_presentWhen.Draw(presence);
+		_presentWhen.DrawGroupLeftEmpty(presence, group.Guid);
 		_variants.DrawObjectChoice(sel);
 		ImGui.Separator();
 		_team.Draw(group.Guid, ofMember: true);
@@ -75,6 +87,9 @@ internal sealed class ObjectView {
 
 		if (!planned.Squad) {
 			ImGui.TextUnformatted($"Starting condition: {planned.StartingCondition}%");
+			if (planned.Kind == MissionUnitKind.Base && _links.Names.Types.IsInvulnerable(planned.TypeIndex)) {
+				EditorText.Note("Can't be destroyed: a structure of its type takes no damage.");
+			}
 		} else if (planned.MemberIndex == 0) {
 			_machine.DrawPlayer();
 		} else {
@@ -96,6 +111,72 @@ internal sealed class ObjectView {
 		_objectives.Draw(_index.ObjectivesAbout(planned.Key), new ObjectSelection(planned.Key.Row, planned.Key.Guid));
 		DeleteControls(sel);
 		DrawAdvanced(sel, planned);
+	}
+
+	// A choice of the groups it can move into, of its own roster, the reason each other one is refused on hover.
+	private void DrawMoveTo(SceneObject sel, PlannedObject planned, PlannedGroup group) {
+		ImGui.SetNextItemWidth(-1f);
+		if (ImGui.BeginCombo("##moveTo", "Move to another group...")) {
+			bool any = false;
+			foreach (var other in _index.Groups) {
+				if (other.Guid == group.Guid || other.IsSquad || other.Kind != planned.Kind) {
+					continue;
+				}
+
+				any = true;
+				string? why = _members.WhyNoMove(sel, other.Guid);
+				var flags = why != null ? ImGuiSelectableFlags.Disabled : ImGuiSelectableFlags.None;
+				var start = ImGui.GetCursorScreenPos();
+				float room = ImGui.GetContentRegionAvail().X;
+				if (NameText.Selectable(_links.Names.Group(other.Guid), $"to{other.Guid}", false, flags: flags)) {
+					_members.Request(sel, other.Guid);
+				}
+
+				if (why != null && ImGui.IsMouseHoveringRect(start, new Vector2(start.X + room, ImGui.GetCursorScreenPos().Y))) {
+					ImGui.SetTooltip(why);
+				}
+			}
+
+			if (!any) {
+				ImGui.TextDisabled("No other group of its kind.");
+			}
+
+			ImGui.EndCombo();
+		}
+
+		EditorText.Reason(_members.Failure);
+	}
+
+	// What it does: its group's orders, one line each, set in the group's view.
+	private void DrawOrders(PlannedGroup group) {
+		var names = _links.Names;
+		var lines = new List<string>();
+		for (int slot = 0; slot < group.Orders.Count; slot++) {
+			if (group.Orders[slot] == -1 || _index.Layout.Entry<MissionOrder22>(group.Orders[slot])?.Fields is not { } order) {
+				continue;
+			}
+
+			string line = $"{MissionText.Ordinal(slot + 1)} order: {MissionText.OrderVerb(order.Verb)}";
+			if (slot == 0 && order.RouteRef != -1) {
+				line += $", on {names.RouteInSentence(order.RouteRef)}";
+			}
+
+			if (order.SubjectKind != -1) {
+				line += $", target: {(order.SubjectKind == 0 ? names.GroupInSentence(order.SubjectRef) : names.Subject(order.SubjectKind, order.SubjectRef).Full)}";
+			}
+
+			lines.Add(line);
+		}
+
+		if (lines.Count == 0) {
+			return;
+		}
+
+		foreach (string line in lines) {
+			EditorText.Wrapped(line);
+		}
+
+		EditorText.Note("What it does is its group's orders, set in the group's view.");
 	}
 
 	// The object's name: a herc's or flyer's type name, or a structure's or ground vehicle's title (RosterTypeNames.StructureTitle).

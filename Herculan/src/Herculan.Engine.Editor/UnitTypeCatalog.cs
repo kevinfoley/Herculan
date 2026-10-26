@@ -15,9 +15,13 @@ namespace Herculan.Engine.Editor;
 /// true for (<see cref="MfdStatusSubject.BaseName"/>), the other vehicle types (<see cref="BaseType.IsVehicle"/>), for which
 /// DBSIM builds no object (docs/retail/simulation/structure-behaviour.md#five-classes-one-switch), named in a note; and the
 /// other types of <c>dat\BASES.DAT</c> as structures, under the names the MFD status screen prints
-/// (<see cref="BaseType.SilhouetteIndex"/>).
+/// (<see cref="BaseType.SilhouetteIndex"/>), an invulnerable one (<see cref="BaseType.Invulnerable"/>) marked
+/// <see cref="Invulnerable"/>, since a structure of it is never destroyed (docs/retail/formats/bases-dat.md).
 /// </summary>
 internal sealed class UnitTypeCatalog {
+	/// <summary>What an invulnerable structure type's entry carries after its name.</summary>
+	public const string Invulnerable = ", can't be destroyed";
+
 	public UnitTypeCatalog(GameContent content) {
 		var entries = new List<(ToolboxKind, int, string)>();
 		var mechs = UnitTypeNames.LoadMechs(content);
@@ -66,7 +70,8 @@ internal sealed class UnitTypeCatalog {
 		for (int i = 0; i < types.Count; i++) {
 			if (types[i] is { IsVehicle: false } type) {
 				string? name = strings?.Text(MfdLayout.StructureNameGroup, type.SilhouetteIndex);
-				entries.Add((ToolboxKind.Structure, i, string.IsNullOrWhiteSpace(name) ? $"Type {i}" : $"{name} ({i})"));
+				string label = string.IsNullOrWhiteSpace(name) ? $"Type {i}" : $"{name} ({i})";
+				entries.Add((ToolboxKind.Structure, i, type.Invulnerable ? label + Invulnerable : label));
 			}
 		}
 

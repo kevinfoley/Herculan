@@ -28,6 +28,21 @@ What a designer must be able to do in the editor without reading any doc. Every 
 3. Add a win condition: destroy the base.
 4. Make a herc appear on only some loads of the mission.
 
+### Where the tasks get stuck
+
+A trace of the four tasks through the editor's code: every task can be finished with the controls there are, but these stop a designer. Worst first.
+
+**Hard to find or to undo:**
+
+- **T3: "Add a win condition" in a structure's view is about that structure**, and a click in the scene selects a structure, not its base. Fix: offer "this structure / its group (N structures)".
+- **T1, T3: "Team:" defaults to Human**, and the Hercs list mixes Human and Cybrid chassis with type numbers. Fix: split the list by side, team from the chassis.
+- **T4: a member's random presence is not on its group's row**: the scene labels the herc "Not always present" (text until the user's icon is drawn), and the Groups list marks the member's row, but not its group's while the group itself is always present.
+- **T2: "Bring in a group" cannot make one**, and "Arrives:" defaults to "In place". Fix: a hint to add the hercs first; link "Arrives" from the group's waiting note.
+- **T3: a new win condition's "Status alert text" starts empty**, and the F11 lines are under Mission > Text. Fix: prefill from the subject's name; link the F11 list.
+- **T3: New mission's own "reach the nav point" win condition** is not named in the dialog.
+
+**Wording:** "version(s) of the mission" survives in `PresenceSentences`, `PresentWhenView`, `PresenceRules.Differs`, `ProblemText` and `ConditionEditor`'s blocker names, against [Writing the editor's UI](handoff-editor.md#writing-the-editors-ui); refusals in Present when send the designer to an Advanced section that offers no fix.
+
 ## Phases
 
 Each view of phases 2 to 6 reads the `.MSN`'s layout ([Selection and panels](handoff-editor-viewing.md#selection-and-panels)) and is laid out as its phase describes; one view or one phase's views go in per commit, each tested by the user in the app before it is committed.

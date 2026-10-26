@@ -52,6 +52,34 @@ public enum MissionCheckKind {
 	/// (<see cref="ScriptLintKind.TextTooLong"/>); the value is the ids.
 	/// </summary>
 	TextTooLong,
+
+	/// <summary>
+	/// A group outside the squad with a search/destroy order whose subject is on the group's own side, the squad counted
+	/// human: the AI never targets its own side (docs/retail/simulation/ai-targeting.md#is-it-a-target-at-all--ai_istargetable-00411e80),
+	/// and search/destroy installs only a target its order names
+	/// (docs/retail/simulation/ai-navigation.md#searchdestroy-12--mech_behavioursearchdestroythink-0041d60c), so the group
+	/// never fights it and takes no other target, a herc group until one shoots at it
+	/// (docs/retail/simulation/ai-targeting.md#taking-fire--mech_aiontakingfire-0041f7b8-mech-vtable-0x50), a flyer group never
+	/// (docs/retail/simulation/ai-flyers.md#the-thinks). The value is the order slot.
+	/// </summary>
+	OrderTargetsOwnSide,
+
+	/// <summary>
+	/// A group outside the squad whose every member the layout has is present only under one condition the group's own
+	/// presence does not imply, so where it fails the group stands with no member, which DBSIM does not guard: a win or lose
+	/// condition or an order asking about the group divides by its member count, and a trigger on a class of groups can fire
+	/// on it (docs/retail/formats/script-dat.md#placement--the-actual-rule). The value is that condition's GUID.
+	/// </summary>
+	EmptyInSomeStates,
+
+	/// <summary>
+	/// An objective asking that a structure, or a Cybrid group holding a structure, be destroyed or immobilised (condition 1),
+	/// where that structure's type is invulnerable (docs/retail/formats/bases-dat.md): the structure is never destroyed, and a
+	/// Cybrid group is written off only once every member is (docs/retail/simulation/mission-objectives.md#what-each-condition-asks),
+	/// so it never comes true. Checked only when the caller says which types are invulnerable. The value is the subject kind,
+	/// 0 a group or 3 a structure.
+	/// </summary>
+	NeverWrittenOff,
 }
 
 /// <summary>One problem <see cref="MissionCheck"/> found, and the <c>.MSN</c> record it is about.</summary>
@@ -109,15 +137,20 @@ public static class MissionCheck {
 	private const int GroupRow = 16;
 	private const int ObjectiveRow = 17;
 
-	/// <summary>Runs every check over <paramref name="layout"/>, the layout of <paramref name="file"/>, whose records the options of its random choices are read from.</summary>
-	public static List<MissionCheckFinding> Run(MissionLayout layout, MissionFile file) {
-		var check = new Checker(layout, file);
+	/// <summary>
+	/// Runs every check over <paramref name="layout"/>, the layout of <paramref name="file"/>, whose records the options of its
+	/// random choices are read from. <paramref name="isInvulnerable"/> answers which <c>BASES.DAT</c> types are invulnerable,
+	/// for <see cref="MissionCheckKind.NeverWrittenOff"/>, which is not checked without it.
+	/// </summary>
+	public static List<MissionCheckFinding> Run(MissionLayout layout, MissionFile file, Func<int, bool>? isInvulnerable = null) {
+		var check = new Checker(layout, file, isInvulnerable);
 		for (int row = PointRow; row <= GroupRow; row++) {
 			foreach (var entry in layout.Entries(row)) {
 				check.Entry(entry);
 			}
 		}
 
+		check.Groups();
 		check.Objectives();
 		check.Conditions();
 		check.Header();
@@ -125,6 +158,62 @@ public static class MissionCheck {
 		check.Rosters();
 		return check.Findings;
 	}
+
+	/// <summary>
+	/// Whether <paramref name="objective"/> of <paramref name="layout"/> can never come true for an invulnerable structure
+	/// (<see cref="MissionCheckKind.NeverWrittenOff"/>): it asks that its subject be destroyed or immobilised (condition 1), and
+	/// the subject is a structure of a type <paramref name="isInvulnerable"/> answers true for, or a Cybrid structure group
+	/// other than the squad holding one.
+	/// </summary>
+	public static bool NeverWrittenOff(MissionLayout layout, MissionObjective58 objective, Func<int, bool> isInvulnerable) {
+		bool Invulnerable(short structure) =>
+			layout.Entry<BaseRosterEntry62>(structure)?.Fields is { } record && isInvulnerable(record.TypeIndex);
+
+		short subject = objective.SubjectRef;
+		return objective.ConditionCode == WrittenOff && objective.SubjectKind switch {
+			3 => Invulnerable(subject),
+			0 => subject != SquadRoster.Squad(layout)
+				&& layout.Entry<MissionGroup164>(subject)?.Fields is { MemberKind: 2, Side: CybridSide } group
+				&& group.MemberRefs.Any(member => member != -1 && Invulnerable(member)),
+			_ => false,
+		};
+	}
+
+	/// <summary>
+	/// The condition row-16 group <paramref name="group"/> of <paramref name="layout"/> stands with no member without
+	/// (<see cref="MissionCheckKind.EmptyInSomeStates"/>): the one condition every member the layout has carries, when the
+	/// group's own conditions, and what they require through row 1's requirement refs, do not include it; null when there is
+	/// none, for the squad, and for a group with no member.
+	/// </summary>
+	public static short? EmptyUnless(MissionLayout layout, short group) {
+		if (group == SquadRoster.Squad(layout) || layout.Entry(GroupRow, group) is not { Fields: MissionGroup164 fields } entry) {
+			return null;
+		}
+
+		int? memberRow = fields.MemberKind switch { 0 => MechRow, 1 => FlyerRow, 2 => BaseRow, _ => null };
+		if (memberRow is not { } row) {
+			return null;
+		}
+
+		var codec = new MissionFileTransformer();
+		var conditions = fields.MemberRefs.Where(member => member != -1).Select(member => layout.Entry(row, member))
+			.OfType<LayoutEntry>().Select(member => codec.Words(member.Fields)[MergeRules.ConditionWord]).Distinct().ToList();
+		if (conditions is not [var condition] || condition == -1) {
+			return null;
+		}
+
+		var implied = new HashSet<short>();
+		foreach (short start in entry.Presence.Conditions) {
+			for (short at = start; at != -1 && implied.Add(at);) {
+				at = layout.Condition(at)?.Fields.ConditionRef ?? -1;
+			}
+		}
+
+		return implied.Contains(condition) ? null : condition;
+	}
+
+	// Condition 1: the subject destroyed or immobilised, a group written off.
+	private const short WrittenOff = 1;
 
 	/// <summary>The subject an order's or objective's subject kind names: 0 a group, 1 a herc, 2 a flyer, 3 a structure; null for any other.</summary>
 	private static int? SubjectRow(short kind) => kind switch {
@@ -135,7 +224,15 @@ public static class MissionCheck {
 		_ => null,
 	};
 
-	private sealed class Checker(MissionLayout layout, MissionFile file) {
+	// Group_IsWrittenOff (00413920)'s side whose groups are written off only at tier 4, every member out
+	// (docs/retail/simulation/mission-objectives.md#what-each-condition-asks); the side the squad fights on.
+	private const short CybridSide = 1;
+	private const short HumanSide = 0;
+
+	// Search/destroy, the verb that fights only its subject (docs/retail/simulation/ai-goals.md).
+	private const short SearchDestroy = 0;
+
+	private sealed class Checker(MissionLayout layout, MissionFile file, Func<int, bool>? isInvulnerable) {
 		private readonly MissionFileTransformer _codec = new();
 		private readonly HashSet<(MissionCheckKind, int, int, string)> _seen = new();
 		private readonly short _squad = SquadRoster.Squad(layout);
@@ -313,6 +410,51 @@ public static class MissionCheck {
 			}
 		}
 
+		// ---- Groups, as their bases have them ----------------------------------------------------------
+
+		public void Groups() {
+			foreach (var entry in layout.Entries(GroupRow)) {
+				if (entry.Guid != _squad && entry.Fields is MissionGroup164 group) {
+					OwnSideOrders(entry.Guid, group);
+					Emptied(entry);
+				}
+			}
+		}
+
+		// Each search/destroy order of <group> whose subject is on its side.
+		private void OwnSideOrders(short guid, MissionGroup164 group) {
+			for (int slot = 0; slot < group.OrderRefs.Length; slot++) {
+				if (layout.Entry(OrderRow, group.OrderRefs[slot])?.Fields is MissionOrder22 { Verb: SearchDestroy } order
+						&& SideOf(order.SubjectKind, order.SubjectRef) == Normal(group.Side)) {
+					Add(MissionCheckKind.OrderTargetsOwnSide, GroupRow, guid,
+						$"OrderRefs[{slot}] is search/destroy on SubjectRef {order.SubjectRef}, of its own Side {group.Side}.", slot);
+				}
+			}
+		}
+
+		// The side of an order's subject of <kind>: a group's, or the group's placing a herc, flyer or structure, the squad
+		// human; null for none.
+		private short? SideOf(short kind, short subject) {
+			short group = kind == 0 ? subject
+				: SubjectRow(kind) is { } row && layout.Entry(row, subject) is { } entry ? entry.Presence.Group
+				: (short)-1;
+			return group == -1 ? null
+				: group == _squad ? HumanSide
+				: layout.Entry<MissionGroup164>(group)?.Fields is { } fields ? Normal(fields.Side)
+				: null;
+		}
+
+		// A side field as a group's team is shown: Cybrid for 1, human for any other.
+		private static short Normal(short side) => side == CybridSide ? CybridSide : HumanSide;
+
+		// <entry> when every member the layout has carries one condition its own presence does not imply.
+		private void Emptied(LayoutEntry entry) {
+			if (EmptyUnless(layout, entry.Guid) is { } condition) {
+				Add(MissionCheckKind.EmptyInSomeStates, GroupRow, entry.Guid,
+					$"every member's ConditionRef is {condition}, which its own presence does not require.", condition);
+			}
+		}
+
 		private void Subject(int row, int key, short kind, short subject, bool some) {
 			if (SubjectRow(kind) is { } subjects) {
 				Ref(row, key, "SubjectRef", subjects, subject, some);
@@ -340,6 +482,12 @@ public static class MissionCheck {
 						fields.SubjectKind);
 				} else {
 					Subject(ObjectiveRow, index, fields.SubjectKind, fields.SubjectRef, false);
+				}
+
+				if (isInvulnerable != null && NeverWrittenOff(layout, fields, isInvulnerable)) {
+					Add(MissionCheckKind.NeverWrittenOff, ObjectiveRow, index,
+						$"ConditionCode 1 asks of SubjectRef {fields.SubjectRef}, which is or holds an invulnerable structure.",
+						fields.SubjectKind);
 				}
 			}
 		}

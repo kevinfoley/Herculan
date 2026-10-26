@@ -78,6 +78,11 @@ The view of a herc, flyer, structure or ground vehicle, a group and an objective
 
 A change keeps the record selected. Where the mission as opened then leaves the record out, its view keeps showing its name and its Present when ([What the editor shows](#what-the-editor-shows)).
 
+Two warnings follow the clauses, in red:
+
+- In a mission not played in the campaign (one whose squad is not the career's, [The player's squad](handoff-editor-roster.md#the-players-squad)), a rule with a clause on any variable but the three random numbers that does not hold at 0 is never present: the launch clears every variable but those three ([What the editor shows](#what-the-editor-shows)), and the view says so.
+- A herc, flyer, structure or ground vehicle whose group the mission check finds left with no members where they are absent ([Mission check](handoff-editor-viewing.md#mission-check)) says what that does, with **Move "Present when" to its group**, which writes the object's condition into the group's records and clears its own, one step (`RecordConditions.MoveToGroup`); it is refused, with the reason, unless the group is always present.
+
 ### The campaign variable picker
 
 A dropdown (`CampaignVariablePicker`), which a flag test's view uses for its flag too, and an action's or objective's writes for theirs ([Campaign variable writes](handoff-editor-mission-logic.md#campaign-variable-writes)), with a box at its top that filters it as the user types:

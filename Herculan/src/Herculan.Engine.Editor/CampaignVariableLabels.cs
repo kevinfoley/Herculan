@@ -33,6 +33,12 @@ internal static class CampaignVariableLabels {
 	/// <summary>The variables the game sets, in number order: those <see cref="Label"/> names.</summary>
 	public static IReadOnlyList<short> Set { get; } = [0, 1, 2, 4, 5, 6, 8, 9, 10];
 
+	/// <summary>
+	/// Whether variable <paramref name="flag"/> is one of the three random numbers every load picks, the only variables a
+	/// mission loaded outside the campaign starts with other than 0 (ShellTrainingLaunch's SeedDrawnFlags).
+	/// </summary>
+	public static bool IsRandomNumber(int flag) => flag is >= FirstDrawnFlag and < FirstDrawnFlag + 3;
+
 	/// <summary>What variable <paramref name="flag"/> holds, as a list entry names it, where the retail docs say; null otherwise.</summary>
 	public static string? Label(int flag) => flag switch {
 		// docs/retail/shell/campaign-loop.md#the-campaign-flag-array-is-the-msn-condition-store: the debrief writes 0, 8 and
@@ -183,8 +189,8 @@ internal static class CampaignVariableLabels {
 		return held.Count == 1 ? held[0] : null;
 	}
 
-	// Whether <clause> holds with its variable at <value>, flag on the left (ConditionEditing.OperatorText).
-	private static bool Holds(VariableClause clause, short value) => clause.Operator switch {
+	/// <summary>Whether <paramref name="clause"/> holds with its variable at <paramref name="value"/>, flag on the left (<see cref="ConditionEditing.OperatorText"/>).</summary>
+	public static bool Holds(VariableClause clause, short value) => clause.Operator switch {
 		MissionGenerator.OpEqual => value == clause.Value,
 		MissionGenerator.OpNotEqual => value != clause.Value,
 		MissionGenerator.OpLess => value < clause.Value,

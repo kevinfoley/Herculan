@@ -208,7 +208,19 @@ internal sealed class OrderSlotsView {
 		} else if (MissionIndex.SubjectKey(kind, subject) is { } key) {
 			_links.Object(key);
 		}
+
+		// The mission check's OrderTargetsOwnSide, said where it is changed.
+		if (verb == HercGroups.SearchDestroy && _index.Group(group) is { IsSquad: false } own && SideOf(kind, subject) == own.Side) {
+			EditorText.Problem("Its target is on its own team, which it never attacks, and it goes after no other enemy: choose an enemy, "
+				+ "or \"Patrol\" under \"Does\".");
+		}
 	}
+
+	// The team of an order's subject of <kind>: a group's, or the group's placing a herc or structure; null for none.
+	private MissionSide? SideOf(short kind, short subject) =>
+		kind == GroupSubject ? _index.Group(subject)?.Side
+			: MissionIndex.SubjectKey(kind, subject) is { } key ? _index.Plan.Object(key)?.Side
+			: null;
 
 	private static void Heading(string text) {
 		ImGui.Separator();

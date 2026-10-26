@@ -65,7 +65,7 @@ Beyond the gaps each doc lists:
 
 | Slice | Size |
 |---|---|
-| **Next:** the rest of the campaign layer: the debrief's movie, outcomes and loss line ([phase 7](handoff-editor-ux-plan.md#7-debrief)) | — |
+| The rest of the debrief, low priority: its movie, outcomes and loss line ([phase 7](handoff-editor-ux-plan.md#7-debrief)) | small–medium |
 | Mission text: action lines, the briefing movie | small–medium |
 | Edit roster and group fields | medium |
 | The objective type and the training mission number | small |

@@ -47,16 +47,22 @@ internal sealed class PresenceEditor {
 	private Func<string?>? _requested;
 	private PresenceTarget? _asked;
 
-	public PresenceEditor(MissionDocument source, MissionIndex scene, PointMover mover, SceneSync sync, ObjectDeleter deleter) {
+	/// <param name="campaign">Whether the mission is played as a campaign mission, the one kind whose campaign variables vary.</param>
+	public PresenceEditor(MissionDocument source, MissionIndex scene, PointMover mover, SceneSync sync, ObjectDeleter deleter,
+			Func<bool> campaign) {
 		_source = source;
 		_scene = scene;
 		_mover = mover;
 		_sync = sync;
 		_deleter = deleter;
+		Campaign = campaign;
 	}
 
 	/// <summary>The mission as its <c>.MSN</c>.</summary>
 	public MissionDocument Source => _source;
+
+	/// <summary>Whether the mission is played as a campaign mission.</summary>
+	public Func<bool> Campaign { get; }
 
 	/// <summary>Why the last set run could not be made, or null.</summary>
 	public string? Failure { get; private set; }
@@ -88,6 +94,13 @@ internal sealed class PresenceEditor {
 	/// <summary>Asks for <paramref name="target"/> to be present only while row-1 GUID <paramref name="condition"/> holds, or always for -1.</summary>
 	public void Request(PresenceTarget target, short condition) =>
 		Ask(target, () => RecordConditions.SetPresence(_source, target, condition, out _));
+
+	/// <summary>Why roster object <paramref name="member"/>'s presence cannot be moved onto row-16 group <paramref name="group"/> (<see cref="RecordConditions.WhyNoMoveToGroup"/>).</summary>
+	public string? WhyNoMoveToGroup(PresenceTarget member, short group) => RecordConditions.WhyNoMoveToGroup(_source, member, group);
+
+	/// <summary>Asks for row-16 group <paramref name="group"/> to be present when roster object <paramref name="member"/> is, and the object always (<see cref="RecordConditions.MoveToGroup"/>).</summary>
+	public void RequestMoveToGroup(PresenceTarget member, short group) =>
+		Ask(member, () => RecordConditions.MoveToGroup(_source, member, group));
 
 	/// <summary>Makes the set asked for since the last call, if any; <see cref="Failure"/> says why one could not be made.</summary>
 	public void RunRequest() {

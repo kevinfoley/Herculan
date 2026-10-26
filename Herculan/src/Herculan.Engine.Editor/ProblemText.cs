@@ -58,6 +58,18 @@ internal static class ProblemText {
 			MissionCheckKind.TextTooLong =>
 				$"The mission's text runs to {found.Value} lines, and only the first {MissionTextEditing.LineCap} are read: remove "
 				+ "lines under \"Text\" when you click \"Mission\" at the top of the Mission panel.",
+			MissionCheckKind.OrderTargetsOwnSide =>
+				$"{who}'s {MissionText.Ordinal(found.Value + 1)} order is \"Search and destroy\" on its own team, which it never "
+				+ "attacks, and it goes after no other enemy: choose an enemy under \"Target\", or \"Patrol\" under \"Does\".",
+			MissionCheckKind.EmptyInSomeStates =>
+				$"{who} has no members in the loads where they are absent, which the mission does not handle: a win or lose "
+				+ "condition, an order or a trigger that asks about the group can crash it or fire by mistake. Set \"Present "
+				+ "when\" on the group instead of its members.",
+			MissionCheckKind.NeverWrittenOff when found.Value == ObjectiveEditing.StructureSubject =>
+				$"{who} can never come true: the structure it asks about can't be destroyed.",
+			MissionCheckKind.NeverWrittenOff =>
+				$"{who} can never come true: the group it asks about holds a structure that can't be destroyed, and a Cybrid group "
+				+ "is written off only once every member is destroyed or immobilized.",
 			_ => found.Message,
 		};
 	}

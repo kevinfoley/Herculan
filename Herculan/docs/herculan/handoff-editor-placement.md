@@ -42,6 +42,7 @@ After every move, a drag's preview included, `TerrainLeveller` puts the heightma
 
 The route view (`RouteView`, through `RouteEditor`) reads the layout and `MissionIndex` by the route's GUID, so it shows and edits any route of the `.MSN`, one the version of the mission the editor shows leaves out included. It lists the waypoints as the cockpit numbers them: the first, where a group stands, is "Start", and the rest "Waypoint 1" on, each row with its distance along the ground from the one before ("Waypoint 2: 420 m from waypoint 1"); the selected one's X and Y are its fields. In play the HUD's waypoint indicator reads `WAYPOINT n` for waypoint *n* counted from the start, and the heads-down map's first route marker is on waypoint 1 ([`../retail/simulation/cockpit-gunsight-hud.md`](../retail/simulation/cockpit-gunsight-hud.md#waypoint-indicators), [`../retail/simulation/heads-down-display.md`](../retail/simulation/heads-down-display.md#markers)); the player's route says so. Every route is numbered that way, the player's or not (the editor's choice), and so are the selected route's labels in the scene ("Start", "1", "2") and a route being placed.
 
+- **Have a group walk it...** lists every group with a first order that walks another route, by name; choosing one makes this route that order's (`OrderEditor`), so the group walks it, and a group with no position of its own then starts on its start, as the note under the choice says.
 - **Add waypoints** places more as New route does, after the last and before a closed route's closing entry, the whole session one step.
 - **Insert after** ("Insert after waypoint 2", "Insert after the start") puts a waypoint halfway along the leg after the selected one.
 - **Remove** ("Remove waypoint 2", or the Delete key on a waypoint) takes the selected waypoint's entry out; a closed route's start takes its closing entry with it and the loop closes on the next; a loop left with one waypoint is left open; the last waypoint is refused.
@@ -54,7 +55,7 @@ The outliner lists every route of row 8, those no order names included, and one 
 
 Gaps:
 
-- Nothing sets a group's own route field; a new route is walked once a group's first order names it ([Orders](handoff-editor-mission-logic.md#orders)).
+- No view sets a group's own route field; it follows the first order's route when it named the old one ([Orders](handoff-editor-mission-logic.md#orders)), and a field naming any other route stays.
 - A waypoint has no Z field or handle and is always written Z 0, as 1487 of the 1488 retail waypoints have it. DBSIM reads a waypoint's Z as the starting altitude of a flight standing on its route's first waypoint, and the heads-down map projects the player's route icons with it ([`../retail/simulation/ai-goals.md`](../retail/simulation/ai-goals.md#the-route-cursor-is-loaded-once)); only a flyer group's Z handle sets it. This engine's heads-down map places route icons by X and Y alone.
 - A list entry naming a point the layout has none for is not listed, as the load drops it; the view edits the entries around it, and Insert after refuses a leg ending on one.
 - A list a variant supplies cannot be given to the route alone; a route's table is shown read-only.

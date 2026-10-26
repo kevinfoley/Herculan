@@ -172,6 +172,12 @@ internal sealed class ObjectiveView {
 
 		ImGui.EndDisabled();
 		EditorText.Note(ObjectiveNote(code, group));
+		if (MissionCheck.NeverWrittenOff(Layout, fields, Names.Types.IsInvulnerable)) {
+			EditorText.Problem(group
+				? "This can never come true: the group holds a structure that can't be destroyed, and a Cybrid group is written "
+					+ "off only once every member is destroyed or immobilized."
+				: "This can never come true: the structure can't be destroyed.");
+		}
 	}
 
 	// What a condition means in play (docs/retail/simulation/mission-objectives.md#what-each-condition-asks).

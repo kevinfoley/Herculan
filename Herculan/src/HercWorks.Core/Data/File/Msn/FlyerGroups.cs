@@ -7,8 +7,8 @@ namespace HercWorks.Core.Data.File.Msn;
 /// an existing flyer group.
 ///
 /// <para>A new group is built as <see cref="HercGroups"/> builds a herc's (<see cref="NewGroups"/>): a route of one
-/// waypoint at the drop point, a search/destroy order on it whose subject is group 0, the player's squad, the flyer's row-13
-/// record, and a row-16 group of flyers with the flyer in member slot 0 and the order in order slot 0, naming no point
+/// waypoint at the drop point, an order on it (<see cref="NewGroups.FirstOrder"/>: for a Cybrid group search/destroy on group
+/// 0, the player's squad, for a Human one patrol), the flyer's row-13 record, and a row-16 group of flyers with the flyer in member slot 0 and the order in order slot 0, naming no point
 /// and no heading, so the group stands on its route's only waypoint (docs/retail/formats/script-dat.md#placement--the-actual-rule,
 /// rule 3). That waypoint's point has Z 0, so DBSIM starts the flyer at 5,000 units (rule 5), as every retail flyer group
 /// starts. Of the 76 records of retail flyer groups naming a member, 73 name no point and 75 no heading, and the slot-0
@@ -61,9 +61,10 @@ public static class FlyerGroups {
 
 	/// <summary>
 	/// Adds <paramref name="flyer"/> in a new group on <paramref name="side"/> (0 human, 1 Cybrid), standing on a route of
-	/// one waypoint at (<paramref name="x"/>, <paramref name="y"/>) and hunting the player's squad, as one
-	/// <see cref="MissionDocument.Change"/>; answers the flyer's row-13 GUID and the group's row-16 GUID. Throws
-	/// <see cref="InvalidOperationException"/> when <see cref="WhyNoAdd"/> refuses it, or the mission has no group 0.
+	/// one waypoint at (<paramref name="x"/>, <paramref name="y"/>) and given its first order there
+	/// (<see cref="NewGroups.FirstOrder"/>), as one <see cref="MissionDocument.Change"/>; answers the flyer's row-13 GUID and the
+	/// group's row-16 GUID. Throws <see cref="InvalidOperationException"/> when <see cref="WhyNoAdd"/> refuses it, or a Cybrid
+	/// group's mission has no group 0.
 	/// </summary>
 	public static MsnEdit Create(MissionDocument document, FlyerRosterEntry102 flyer, short side, int x, int y,
 			out short guid, out short group) {

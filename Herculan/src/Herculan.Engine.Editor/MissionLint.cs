@@ -24,10 +24,11 @@ internal sealed class MissionLint {
 	private const int ObjectiveRow = 17;
 
 	/// <param name="index">The layout's groups and objects, which an order's and an object's finding is shown through.</param>
-	public MissionLint(MissionDocument source, MissionIndex index) {
+	/// <param name="types">Which structure types are invulnerable, for the check's <see cref="MissionCheckKind.NeverWrittenOff"/>.</param>
+	public MissionLint(MissionDocument source, MissionIndex index, RosterTypeNames types) {
 		// Two missing refs of one record to the same row, in other fields or to other GUIDs, read as one sentence
 		// (ProblemText), so the second is left out.
-		Findings = MissionCheck.Run(source.Layout, source.Mission)
+		Findings = MissionCheck.Run(source.Layout, source.Mission, types.IsInvulnerable)
 			.DistinctBy(finding => (finding.Kind, finding.Row, finding.Key, finding.RefersTo, finding.InSomeVersions,
 				finding.Kind == MissionCheckKind.MissingRecord ? 0 : finding.Value))
 			.Select(finding => new EditorFinding(finding, TargetOf(finding, index)))

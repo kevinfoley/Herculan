@@ -32,9 +32,11 @@ internal readonly record struct ToolboxDrag(ToolboxKind Kind, int TypeIndex, Mis
 /// The Toolbox window: what the editor can add to the open mission, the herc, flyer, ground vehicle and structure types of
 /// <see cref="UnitTypeCatalog"/>, with the types it leaves out named in a note. An entry dragged out and let go over the view asks for it on the ground under
 /// the pointer, a flyer above it; a double-click, or Add with an entry chosen, asks for it at the middle of the view, which
-/// a gamepad's pointer reaches as easily. The side it fights on is chosen above the lists, or it joins the selected group
-/// instead, a herc a herc group, a flyer a flyer group, and a ground vehicle or a structure a structure group, taking that
-/// group's side; while the group cannot take the entry chosen or dragged, by the check its add refuses by, the choice to
+/// a gamepad's pointer reaches as easily. The side it fights on is chosen above the lists, and a new herc's or flyer's group
+/// gets the first order a new group on that side gets (<see cref="HercWorks.Core.Data.File.Msn.HercGroups"/>), which the
+/// lists' notes say; or it joins the selected group instead, a herc a herc group, a flyer a flyer group, and a ground vehicle
+/// or a structure a structure group, taking that group's side, while the join is ticked for that group, as it reads unticked
+/// for any other; while the group cannot take the entry chosen or dragged, by the check its add refuses by, the choice to
 /// join is disabled with the reason under it. While an entry is dragged over the view, what it would add is drawn where it would stand
 /// (<see cref="DropPreview"/>). What an add writes is <see cref="HercPlacer"/>'s, <see cref="FlyerPlacer"/>'s,
 /// <see cref="VehiclePlacer"/>'s and <see cref="StructurePlacer"/>'s. Above the lists the window holds the route tool's
@@ -59,7 +61,10 @@ internal sealed class EditorToolbox {
 
 	private readonly (ToolboxKind Kind, int TypeIndex, string Name)[] _entries;
 	private MissionSide _side = MissionSide.Human;
-	private bool _join;
+
+	// The group "Join" was ticked for; it reads unticked once the selection's group is another, so an add never joins a group
+	// the user did not tick it for.
+	private short? _joinTicked;
 
 	// The group the selection is or belongs to, as the last frame drawn was told, and why an entry of each kind cannot
 	// join it; and the group an add joins when "Join" is ticked, null while the entry chosen cannot.
@@ -170,12 +175,12 @@ internal sealed class EditorToolbox {
 
 	private void DrawContents(bool enabled, string? selectedGroup, string? whyNotJoin) {
 		ImGui.TextWrapped("Drag an entry onto the ground, or double-click it to add it in the middle of the view.");
-		// Unticked while it cannot join, since an add then gets a group of its own; ticked again once it can.
+		// Unticked while it cannot join, since an add then gets a group of its own, and for any group but the one it was ticked for.
 		bool canJoin = _joinGroup != null;
-		bool join = _join && canJoin;
+		bool join = Joining;
 		ImGui.BeginDisabled(!canJoin);
 		if (ImGui.Checkbox(selectedGroup is { } group ? $"Join {group}###join" : "Join the selected group###join", ref join)) {
-			_join = join;
+			_joinTicked = join ? _joinGroup : null;
 		}
 
 		ImGui.EndDisabled();
@@ -185,7 +190,7 @@ internal sealed class EditorToolbox {
 			EditorText.Note("Select a group, or one of its members, to join it.");
 		}
 
-		bool joining = _join && _joinGroup != null;
+		bool joining = Joining;
 		ImGui.BeginDisabled(joining);
 		ImGui.AlignTextToFramePadding();
 		ImGui.Text("Team:");
@@ -215,13 +220,17 @@ internal sealed class EditorToolbox {
 		ImGui.Separator();
 		ImGui.BeginChild("entries");
 		if (ImGui.CollapsingHeader("Hercs", ImGuiTreeNodeFlags.DefaultOpen)) {
-			EditorText.Note("A new herc gets a group of its own, which hunts the player's squad from where it stands.");
+			EditorText.Note(_side == MissionSide.Cybrid
+				? "A new herc gets a group of its own, which hunts the player's squad from where it stands."
+				: "A new herc gets a group of its own, which patrols where it stands, its leader fighting any enemy it finds.");
 			EditorText.Reason(_whyNoHerc);
 			DrawEntries(ToolboxKind.Herc, Allowed(ToolboxKind.Herc, enabled));
 		}
 
 		if (ImGui.CollapsingHeader("Flyers", ImGuiTreeNodeFlags.DefaultOpen)) {
-			EditorText.Note("A new flyer gets a group of its own, which hunts the player's squad from its route.");
+			EditorText.Note(_side == MissionSide.Cybrid
+				? "A new flyer gets a group of its own, which hunts the player's squad from its route."
+				: "A new flyer gets a group of its own, which patrols its route and attacks any HERC or structure it finds.");
 			EditorText.Reason(_whyNoFlyer);
 			DrawEntries(ToolboxKind.Flyer, Allowed(ToolboxKind.Flyer, enabled));
 			if (_flyersLeftOut != null) {
@@ -281,7 +290,7 @@ internal sealed class EditorToolbox {
 	// <kind>, and a refusal is shown rather than adding it in a group of its own.
 	private void Request(ToolboxKind kind, int typeIndex, bool atPointer) {
 		short? group = null;
-		if (_join && _joinGroup is { } joining) {
+		if (Joining && _joinGroup is { } joining) {
 			if (_selectedGroup != null && _whyNotJoin?.Invoke(kind) is { } refused) {
 				Status = refused;
 				return;
@@ -293,6 +302,9 @@ internal sealed class EditorToolbox {
 		_request = new ToolboxRequest(kind, typeIndex, _side, atPointer, group);
 		Status = null;
 	}
+
+	// Whether an add joins the selected group: "Join" was ticked for it, and it can take the entry.
+	private bool Joining => _joinGroup != null && _joinTicked == _joinGroup;
 
 	private string NameOf(ToolboxKind kind, int typeIndex) =>
 		Array.Find(_entries, entry => entry.Kind == kind && entry.TypeIndex == typeIndex).Name ?? $"Type {typeIndex}";

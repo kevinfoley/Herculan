@@ -46,18 +46,18 @@ internal sealed class MissionOutliner {
 	private MissionLint _lint;
 	private readonly SelectionState _selection;
 
-	public MissionOutliner(MissionDocument source, MissionIndex index, MissionNames names, MissionLint lint, SelectionState selection) {
+	public MissionOutliner(MissionDocument source, MissionIndex index, MissionNames names, SelectionState selection) {
 		_source = source;
 		_index = index;
 		_names = names;
-		_lint = lint;
+		_lint = new MissionLint(source, index, names.Types);
 		_selection = selection;
 	}
 
 	private MissionLayout Layout => _index.Layout;
 
-	/// <summary>Lists <paramref name="lint"/>'s findings in place of the last ones, for a mission built again.</summary>
-	public void Recheck(MissionLint lint) => _lint = lint;
+	/// <summary>Runs the mission check again and lists its findings in place of the last ones, for a mission built again.</summary>
+	public void Recheck() => _lint = new MissionLint(_source, _index, _names.Types);
 
 	/// <summary>The route-placing mode the Routes list's New route starts; set once the mission's tools are built.</summary>
 	public RoutePlacing? Placing { get; set; }

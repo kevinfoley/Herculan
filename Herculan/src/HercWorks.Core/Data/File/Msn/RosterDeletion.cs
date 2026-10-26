@@ -128,7 +128,7 @@ public static class RosterDeletion {
 	// Removes every row-16 record of <group>, and the records of each order it names that no slot of any group names
 	// after it, as GroupOrders.Remove takes an order no slot names: an order no group names is never run, and the route it
 	// names could not be deleted while it stays.
-	private static void RemoveGroup(MissionDocument document, short group) {
+	internal static void RemoveGroup(MissionDocument document, short group) {
 		var orders = (document.Mission.Groups ?? []).Where(record => record.GUID == group)
 			.SelectMany(record => record.OrderRefs).Where(order => order != -1).Distinct().ToList();
 		document.Remove(GroupRow, group);

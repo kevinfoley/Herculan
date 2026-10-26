@@ -57,6 +57,8 @@ internal sealed class PresentWhenView {
 			EditorText.Reason(why);
 		}
 
+		DrawOutsideCampaign(reading.Rule);
+
 		DrawVariations(source, target);
 		if (records.Any(record => record.Condition != RecordConditions.Always)) {
 			// Group_OrderTick moves on only to a next slot that holds an order (handoff "Orders").
@@ -246,6 +248,43 @@ internal sealed class PresentWhenView {
 		}
 
 		ImGui.PopID();
+	}
+
+	/// <summary>
+	/// For a herc, flyer, structure or ground vehicle whose group the mission check finds standing with no member where its
+	/// members are absent (<see cref="MissionCheck.EmptyUnless"/>), what that does, and a button that sets the member's Present
+	/// when on <paramref name="group"/> instead (<see cref="RecordConditions.MoveToGroup"/>); nothing otherwise.
+	/// </summary>
+	public void DrawGroupLeftEmpty(PresenceTarget? target, short group) {
+		var source = _editor.Source;
+		if (target == null || MissionCheck.EmptyUnless(source.Layout, group) is null) {
+			return;
+		}
+
+		ImGui.PushID("leftEmpty");
+		EditorText.Problem("Where it is absent, its group has no members, which the mission does not handle: a win or lose "
+			+ "condition, an order or a trigger that asks about the group can crash it or fire by mistake.");
+		string? why = _editor.WhyNoMoveToGroup(target, group);
+		ImGui.BeginDisabled(why != null);
+		if (ImGui.Button("Move \"Present when\" to its group")) {
+			_editor.RequestMoveToGroup(target, group);
+		}
+
+		ImGui.EndDisabled();
+		EditorText.Reason(why);
+		ImGui.PopID();
+	}
+
+	// Outside the campaign every campaign variable but the three random numbers is 0, so a rule with a clause on any other that
+	// fails at 0 never holds there (ShellTrainingLaunch's SeedDrawnFlags): said for a mission not played in the campaign.
+	private void DrawOutsideCampaign(PresenceRule? rule) {
+		if (rule == null || _editor.Campaign()
+				|| !rule.Variables.Any(clause => !CampaignVariableLabels.IsRandomNumber(clause.Variable) && !CampaignVariableLabels.Holds(clause, 0))) {
+			return;
+		}
+
+		EditorText.Problem("Never present in this mission: outside the campaign (a new mission, or a practice mission) every "
+			+ "campaign variable but the three random numbers is 0.");
 	}
 
 	// One sentence per condition of the records of the target that change some of its fields: which fields, and when.

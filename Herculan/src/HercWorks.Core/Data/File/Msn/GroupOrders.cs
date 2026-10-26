@@ -25,6 +25,10 @@ namespace HercWorks.Core.Data.File.Msn;
 /// <item>Two shapes no retail order has, where a fault is plausible, are not made: a first order naming no route in a group
 /// with no point of its own (<see cref="WhyNoFirstRoute"/>), and search/destroy, ramming or following naming no subject
 /// (<see cref="NeedsSubject"/>).</item>
+/// <item>A group's own route field (<see cref="MissionGroup164.RouteRef"/>) that names its first order's route follows it
+/// when an edit changes which route slot 0 runs (<see cref="FollowFirstRoute"/>), as 377 of the 433 retail herc group
+/// records keep the two the same (<see cref="NewGroups"/>); no view edits the field, so otherwise the route slot 0 ran
+/// before could not be deleted while the field still names it.</item>
 /// </list>
 /// </summary>
 public static class GroupOrders {
@@ -89,16 +93,23 @@ public static class GroupOrders {
 	/// The order a new slot of <paramref name="group"/> gets, this editor's choice of a retail shape: for the player's squad,
 	/// patrol (<see cref="Patrol"/>) naming no subject; for a convoy (<see cref="VehicleGroups.IsConvoy"/>, by
 	/// <paramref name="isGroundVehicle"/>), travel (<see cref="VehicleGroups.Travel"/>) naming no subject, the shape of 11 of
-	/// the 12 retail convoys' slot-0 orders and of a new convoy's first (<see cref="VehicleGroups"/>); for any other group,
-	/// search/destroy on the player's squad, as a new herc group's first order (<see cref="HercGroups"/>). Each on slot 0's
-	/// route, or none when the group has no order yet.
+	/// the 12 retail convoys' slot-0 orders and of a new convoy's first (<see cref="VehicleGroups"/>); for any other group, a new
+	/// herc group's first order on its side (<see cref="NewGroups.FirstOrder"/>): search/destroy on the player's squad for a
+	/// Cybrid group, patrol for a Human one. Each on slot 0's route, or none when the group has no order yet.
 	/// </summary>
 	public static MissionOrder22 NewOrder(MissionDocument document, short group, Func<int, bool> isGroundVehicle) {
 		short squad = SquadRoster.Squad(document);
 		short route = RouteOf(document, Orders(document, group)[0]);
-		return group == squad || squad == -1 ? HercGroups.Order(Patrol, route, -1, -1)
-			: VehicleGroups.IsConvoy(document, group, isGroundVehicle) ? HercGroups.Order(VehicleGroups.Travel, route, -1, -1)
-			: HercGroups.Order(HercGroups.SearchDestroy, route, HercGroups.GroupSubject, squad);
+		if (group == squad || squad == -1) {
+			return HercGroups.Order(Patrol, route, -1, -1);
+		}
+
+		if (VehicleGroups.IsConvoy(document, group, isGroundVehicle)) {
+			return HercGroups.Order(VehicleGroups.Travel, route, -1, -1);
+		}
+
+		var (verb, subjectKind, subject) = NewGroups.FirstOrder(document, document.Layout.Entry<MissionGroup164>(group)?.Fields.Side ?? -1);
+		return HercGroups.Order(verb, route, subjectKind, subject);
 	}
 
 	/// <summary>
@@ -209,12 +220,17 @@ public static class GroupOrders {
 		var orders = Orders(document, group);
 		int last = Filled(orders) - 1;
 		short removed = orders[slot];
+		short own = OwnRoute(document, group);
 		return document.Change(() => {
 			for (int at = slot; at < last; at++) {
 				document.SetField(MsnField.GroupOrder(at), group, orders[at + 1]);
 			}
 
 			document.SetField(MsnField.GroupOrder(last), group, -1);
+			if (slot == 0) {
+				FollowFirstRoute(document, group, own, RouteRefOf(document, removed), RouteRefOf(document, orders[1]));
+			}
+
 			if (SlotsNaming(document, removed) == 0) {
 				document.Remove(OrderRow, removed);
 			}
@@ -252,9 +268,13 @@ public static class GroupOrders {
 		}
 
 		var orders = Orders(document, group);
+		short own = OwnRoute(document, group);
 		return document.Change(() => {
 			document.SetField(MsnField.GroupOrder(slot), group, orders[to]);
 			document.SetField(MsnField.GroupOrder(to), group, orders[slot]);
+			if (slot == 0 || to == 0) {
+				FollowFirstRoute(document, group, own, RouteRefOf(document, orders[0]), RouteRefOf(document, orders[slot == 0 ? to : slot]));
+			}
 		});
 	}
 
@@ -293,8 +313,33 @@ public static class GroupOrders {
 			throw new InvalidOperationException(reason);
 		}
 
-		return document.Change(() => document.SetField(MsnField.OrderRoute, Own(document, group, slot), route));
+		short own = OwnRoute(document, group);
+		short before = slot is >= 0 and < Slots ? RouteRefOf(document, Orders(document, group)[slot]) : (short)-1;
+		return document.Change(() => {
+			document.SetField(MsnField.OrderRoute, Own(document, group, slot), route);
+			if (slot == 0) {
+				FollowFirstRoute(document, group, own, before, route);
+			}
+		});
 	}
+
+	/// <summary>
+	/// Writes route <paramref name="after"/>, a row-8 GUID or <c>-1</c>, into <paramref name="group"/>'s own route field when
+	/// that field, <paramref name="own"/> before the edit, named <paramref name="before"/>, the route slot 0 ran before it; made
+	/// inside the caller's <see cref="MissionDocument.Change"/>. A field naming another route, or none, is left as it is.
+	/// </summary>
+	private static void FollowFirstRoute(MissionDocument document, short group, short own, short before, short after) {
+		if (before != -1 && own == before && after != before) {
+			document.SetField(MsnField.GroupRoute, group, after);
+		}
+	}
+
+	// Row-16 GUID <group>'s own route field as its base names it, or -1 when no record carries the group.
+	private static short OwnRoute(MissionDocument document, short group) =>
+		document.Layout.Entry<MissionGroup164>(group)?.Fields.RouteRef ?? -1;
+
+	// The route row-15 GUID <order>'s base names, whether or not a record carries it; -1 for no order.
+	private static short RouteRefOf(MissionDocument document, short order) => Order(document, order)?.RouteRef ?? -1;
 
 	/// <summary>
 	/// Sets the subject of the order in <paramref name="group"/>'s slot <paramref name="slot"/>: <paramref name="kind"/>
