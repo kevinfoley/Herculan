@@ -112,16 +112,17 @@ public sealed class Es1ExplosionPool {
 	/// (docs/es1/simulation/impact-effects.md#construction--explosion_construct-00005af0): an effect from the pool, or
 	/// null with the pool full, the effects queued for delete still holding their places. The type byte is the id's low
 	/// byte, read signed; a type past the table, where retail reads past it, builds none, an engine guard, as does a
-	/// root past the shapes build an effect with no shape.
+	/// root past the shapes build an effect with no shape. <paramref name="random"/> is the simulation generator
+	/// <c>000b5bd4</c>, which the effect draws its turn from.
 	/// </summary>
-	public Es1Explosion? Construct(Vec3i point, short typeId) {
+	public Es1Explosion? Construct(Vec3i point, short typeId, SimRandom random) {
 		sbyte type = unchecked((sbyte)typeId);
 		if (_live.Count + _deleteQueue.Count >= Capacity || type < 0 || type >= Types.Count) {
 			return null;
 		}
 
 		short root = Types[type].ShapeIndex;
-		var effect = new Es1Explosion(this, type, root >= 0 && root < Shapes.Count ? Shapes[root] : null, point);
+		var effect = new Es1Explosion(this, type, root >= 0 && root < Shapes.Count ? Shapes[root] : null, point, random);
 		_live.Add(effect);
 		return effect;
 	}

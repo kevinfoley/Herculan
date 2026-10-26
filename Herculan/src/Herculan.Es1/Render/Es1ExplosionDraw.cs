@@ -128,7 +128,7 @@ public sealed class Es1ExplosionDraw : IDisposable {
 				continue;
 			}
 
-			var frame = Transform3.Identity;
+			var frame = Transform3.FromEuler(0, effect.Roll, 0);
 			frame.X = effect.Position.X;
 			frame.Y = effect.Position.Y;
 			frame.Z = effect.Position.Z;

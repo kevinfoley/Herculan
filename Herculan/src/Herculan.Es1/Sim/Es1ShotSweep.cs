@@ -157,7 +157,7 @@ public static class Es1ShotSweep {
 			// Explosion_Construct (00005af0)(null, point, entry 4 + k of the shot's effect table); a shot with no
 			// effects (Effects) makes none.
 			if (shot.Effects?.ImpactFXGround[k] is { } effect) {
-				globals.Explosions.Construct(point, effect);
+				globals.Explosions.Construct(point, effect, globals.Random);
 			}
 		}
 

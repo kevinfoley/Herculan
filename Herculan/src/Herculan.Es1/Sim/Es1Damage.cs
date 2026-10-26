@@ -284,7 +284,7 @@ public sealed class Es1DamageHeader {
 			}
 
 			// Explosion_Construct (00005af0)(null, anchor, type).
-			globals.Explosions.Construct(anchor, type);
+			globals.Explosions.Construct(anchor, type, globals.Random);
 		}
 
 		globals.Debris.ThrowGroup(LostDebrisGroup, anchor, random);

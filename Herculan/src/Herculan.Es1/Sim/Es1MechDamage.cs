@@ -156,7 +156,7 @@ public static class Es1MechDamage {
 			};
 			// Explosion_Construct (00005af0)(null, point, effect); a shot with no effects makes none.
 			if (effect is { } type) {
-				globals.Explosions.Construct(point, type);
+				globals.Explosions.Construct(point, type, globals.Random);
 			}
 
 			// Debris_ThrowGroup (00005fb8)(group `group` of 000bc1c0, point, 000bc1c6) for a struck component.

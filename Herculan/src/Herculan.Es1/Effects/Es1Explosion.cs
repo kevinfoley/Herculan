@@ -23,12 +23,13 @@ public sealed class Es1Explosion {
 	/// <summary>
 	/// <c>Explosion_Construct</c> (<c>00005af0</c>)'s fields (docs/es1/simulation/impact-effects.md#construction--explosion_construct-00005af0):
 	/// the root <paramref name="shape"/>, the type byte, the type tag, the frame countdown from the row's <c>+0x06</c>,
-	/// the point, the ground shape when the row's <c>+0x08</c> is not 0 and the light when its <c>+0x0a</c> is not 0.
+	/// the turn about the second axis (<see cref="Roll"/>), a draw of <paramref name="random"/>, the point, the ground
+	/// shape when the row's <c>+0x08</c> is not 0 and the light when its <c>+0x0a</c> is not 0.
 	/// A new instance's cell frames are 0, so the row's sequence starts on 0. The ground shape takes a place of
 	/// <see cref="Es1FlatObjPool"/>; with the pool full retail writes the shape's position through the null it gets, and
 	/// here no ground shape is built, an engine guard.
 	/// </summary>
-	internal Es1Explosion(Es1ExplosionPool pool, sbyte typeId, TSObject? shape, Vec3i point) {
+	internal Es1Explosion(Es1ExplosionPool pool, sbyte typeId, TSObject? shape, Vec3i point, SimRandom random) {
 		_pool = pool;
 		TypeId = typeId;
 		Shape = shape;
@@ -36,6 +37,7 @@ public sealed class Es1Explosion {
 		var row = Row;
 		Tag = row.ObjectClass == 0 ? TypeTag : ClassTypeTag;
 		_countdown = row.FrameInterval;
+		Roll = unchecked((short)random.Next());
 		Position = point;
 		if (row.GroundShape != 0 && pool.FlatObjects.Alloc()) {
 			GroundShape = new Es1GroundShape(point, pool.FlatObjects);
@@ -53,6 +55,9 @@ public sealed class Es1Explosion {
 
 	/// <summary><c>+0x20</c>, the position.</summary>
 	public Vec3i Position { get; }
+
+	/// <summary><c>+8</c>, the angle about the second axis, drawn at construction; the other two angles are 0.</summary>
+	public short Roll { get; }
 
 	/// <summary>The shape instance <c>+0x2e</c>'s shape, the row's root; null for none.</summary>
 	public TSObject? Shape { get; }

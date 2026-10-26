@@ -129,9 +129,9 @@ public sealed class Es1SmokeBall {
 	public Vec3i Position { get; private set; }
 
 	/// <summary>
-	/// <c>+0x3b</c>, the drift, three <c>int16</c> added to the position each tick. PLACEHOLDER: (0, 0, 0), what a zeroed
-	/// pool would hold: <c>SmokeBall_Construct</c> writes none and <c>Pool_Init</c> leaves the block as allocated, so what
-	/// retail's ball holds is the doc's Open item (docs/es1/simulation/destruction-effects.md#open).
+	/// <c>+0x3b</c>, the drift, three <c>int16</c> added to the position each tick: (0, 0, 0), as <c>SmokeBall_Construct</c>
+	/// writes none and the pool's block comes zeroed from the allocator; whether other code writes it is the doc's Open item
+	/// (docs/es1/simulation/destruction-effects.md#open).
 	/// </summary>
 	public (short X, short Y, short Z) Drift { get; } = (0, 0, 0);
 
