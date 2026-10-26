@@ -297,7 +297,7 @@ public sealed class Es1Cockpit {
 	/// <c>Player_DependentCondition</c> (<c>0002e334</c>)(<paramref name="entry"/>)
 	/// (docs/es1/simulation/cockpit-panel.md#squadmate-and-pilot-helpers): <see cref="Es1PaperDoll.ToConditionState"/> of
 	/// the damage <c>Mech_ReadEntryDamage</c> (<c>00015868</c>)(the machine, entry, 0) reads, the condition an
-	/// instrument's feed is in. PLACEHOLDER: the damage is plan step 7's; until then the entry reads 0, intact, so the
+	/// instrument's feed is in. PLACEHOLDER: the damage is plan step 7b's; until then the entry reads 0, intact, so the
 	/// condition is 0 and no display drops out.
 	/// </summary>
 	internal short DependentCondition(int entry) {
@@ -411,7 +411,7 @@ public sealed class Es1Cockpit {
 			StripsBuilt = true;
 		}
 
-		// 2. PLACEHOLDER: Cockpit_HitShakeTick after the clock's tick, plan step 7.
+		// 2. PLACEHOLDER: Cockpit_HitShakeTick after the clock's tick, plan step 7b.
 		Clock.Tick(Globals.Clock.Clock);
 		// 3.
 		if (WidgetsOff) {

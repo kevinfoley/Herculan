@@ -67,12 +67,14 @@ public sealed class Es1WeaponMounts {
 	/// <summary><c>+0x31</c>, the range to the selected target the per-frame pass stores.</summary>
 	public int Range { get; private set; }
 
+	/// <summary>The rocket subtypes, which the lock flags and the rounds' counts are kept by.</summary>
+	public const int MissileSubtypes = 5;
+
 	/// <summary>
-	/// <c>+0x06</c>, the five <c>int16</c> missile-lock flags, one per rocket subtype, which <see cref="MountIsReady"/> reads.
-	/// PLACEHOLDER: their writer, the lock of <c>Mech_PerTickSystemsUpdate</c>, is plan step 7c's; until then they stay
-	/// clear, so a launcher of subtype 0, 1, 2 or 4 never answers ready.
+	/// <c>+0x06</c>, the five <c>int16</c> missile-lock flags, one per rocket subtype, which <see cref="MountIsReady"/> reads
+	/// and the systems tick's lock (<see cref="Es1MechSystems"/>) clears and sets each tick.
 	/// </summary>
-	public short[] MissileLocks { get; } = new short[5];
+	public short[] MissileLocks { get; } = new short[MissileSubtypes];
 
 	/// <summary>
 	/// The electro-optical launch's hold on the chain, <c>maybe_WeaponChain_EoHold</c> (<c>000b5bc6</c>) and
@@ -82,7 +84,33 @@ public sealed class Es1WeaponMounts {
 	public Es1ControlsState? ChainHold { get; set; }
 
 	/// <summary><see cref="Armed"/> as the signed byte retail reads, −1 for none.</summary>
-	private int ArmedIndex => (sbyte)Armed;
+	public int ArmedIndex => (sbyte)Armed;
+
+	/// <summary>
+	/// <c>WeaponMounts_RoundsByMissileType</c> (<c>0000be6c</c>)(manager, <paramref name="rounds"/>): the five counts
+	/// zeroed, then each mount's rounds (<see cref="Es1WeaponMount.AmmunitionSubtype"/>) added to its subtype's count
+	/// unless the subtype is <see cref="Es1WeaponMount.NotALauncher"/>. A subtype past the counts, which no retail record
+	/// has, adds nothing, an engine guard.
+	/// </summary>
+	public void RoundsByMissileType(short[] rounds) {
+		Array.Clear(rounds);
+		foreach (var mount in Mounts) {
+			if (mount == null) {
+				continue;
+			}
+
+			short subtype = mount.AmmunitionSubtype(out short count);
+			if (subtype != Es1WeaponMount.NotALauncher && subtype >= 0 && subtype < rounds.Length) {
+				rounds[subtype] += count;
+			}
+		}
+	}
+
+	/// <summary>
+	/// <c>WeaponMounts_FindEcmMount</c> (<c>0000be04</c>)(manager): the first mount whose weapon is the ECM
+	/// (<see cref="EcmWeapon"/>), or null.
+	/// </summary>
+	public Es1WeaponMount? FindEcmMount() => Mounts.FirstOrDefault(mount => mount?.WeaponId == EcmWeapon);
 
 	/// <summary>
 	/// <c>WeaponMounts_BuildGauges</c> (<c>0000c9b0</c>)(manager), from <c>Sim_StartMission</c>'s step 13: each mount's

@@ -217,8 +217,7 @@ public sealed class Es1WeaponMount {
 	/// <c>+0x34</c>, byte 1 of the <c>+0x33</c> block, the power-level hand-off: set, the energy gauge push sends the charge
 	/// target out to the charge bar; clear, it reads the bar back. The energy constructor sets it with its twin <c>+0x3c</c>,
 	/// and the pool turn ANDs it with the twin and clears the twin, so it survives one pool turn
-	/// (docs/es1/simulation/weapon-mount-classes.md#gauges). PLACEHOLDER: the pool turn runs only from the systems tick,
-	/// plan step 7c, so until then it stays set.
+	/// (docs/es1/simulation/weapon-mount-classes.md#gauges).
 	/// </summary>
 	public bool PowerHandOff { get; private set; }
 

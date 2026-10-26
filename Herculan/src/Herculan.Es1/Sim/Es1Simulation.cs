@@ -37,6 +37,7 @@ public sealed class Es1Simulation {
 	private const short FlyerClass = 2;
 
 	private readonly IReadOnlyList<Es1MissionGroup> _groups;
+	private readonly IReadOnlyList<Es1Mech> _mechPool;
 	private readonly Es1Mech _playerMech;
 
 	// 000971f8: the gunsight drag armed; 000b5df0 and 000b5df4, the pointer where it armed; 000b5de4 and 000b5de8,
@@ -54,14 +55,17 @@ public sealed class Es1Simulation {
 	public Es1Simulation(Es1World world, Es1InputBuild input, Es1ViewChain? viewChain = null)
 		: this(world.Globals, world.Groups,
 			world.LocalPlayer ?? throw new ArgumentException("The world has no player's machine.", nameof(world)),
-			world.PlayerMech, input, viewChain) {
+			world.PlayerMech, input, viewChain, world.MechPool) {
 	}
 
 	/// <param name="playerMech"><c>PlayerMech</c>, the all-stop's machine; <paramref name="localPlayer"/> when null.</param>
+	/// <param name="mechPool"><c>g_MechPool</c>'s machines in build order, which the systems tick walks; none runs no systems tick.</param>
 	internal Es1Simulation(Es1SimGlobals globals, IReadOnlyList<Es1MissionGroup> groups,
-			Es1Mech localPlayer, Es1Mech? playerMech, Es1InputBuild input, Es1ViewChain? viewChain = null) {
+			Es1Mech localPlayer, Es1Mech? playerMech, Es1InputBuild input, Es1ViewChain? viewChain = null,
+			IReadOnlyList<Es1Mech>? mechPool = null) {
 		Globals = globals;
 		_groups = groups;
+		_mechPool = mechPool ?? [];
 		LocalPlayer = localPlayer;
 		_playerMech = playerMech ?? localPlayer;
 		ViewChain = viewChain ?? new Es1ViewChain(localPlayer, null);
@@ -208,9 +212,14 @@ public sealed class Es1Simulation {
 		if (!Frozen) {
 			Es1SensorModel.Tick(Globals, _playerMech);
 
-			// PLACEHOLDER: Mech_PerTickSystemsUpdate (00014ee0) for each machine of g_MechPool, last to first, whose group
-			// holds no action and that is not destroyed, plan step 7c. Its energy turn (Es1WeaponMounts.EnergyTurn) is
-			// what counts the mounts' refire down and charges their capacitors, so until it runs each weapon fires once.
+			// The systems tick for each machine of g_MechPool, last to first, whose group holds no action and that is not
+			// destroyed. A machine with no group, which retail reads through, is skipped, an engine guard.
+			for (int i = _mechPool.Count - 1; i >= 0; i--) {
+				var mech = _mechPool[i];
+				if (mech.Group is { Action: null } && !mech.Destroyed) {
+					Es1MechSystems.PerTickSystemsUpdate(mech, Globals);
+				}
+			}
 		}
 
 		// 7. PLACEHOLDER: Mission_PollStatus (0000f454)(LocalPlayerMech) and the status panel 00046efc it puts up, which

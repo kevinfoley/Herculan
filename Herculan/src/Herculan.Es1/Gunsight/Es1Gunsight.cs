@@ -104,7 +104,7 @@ public sealed class Es1Gunsight {
 	/// <summary><c>+0x68</c>, the condition, 0 intact to 4 destroyed.</summary>
 	public short Condition { get; private set; }
 
-	/// <summary><c>+0x74</c>, set while the display is dark. PLACEHOLDER: the sensor dropout, plan step 7, never sets it.</summary>
+	/// <summary><c>+0x74</c>, set while the display is dark. PLACEHOLDER: the sensor dropout, plan step 7b, never sets it.</summary>
 	public bool Dark { get; private set; }
 
 	/// <summary><c>+0x7a</c>, the state block.</summary>
@@ -203,7 +203,7 @@ public sealed class Es1Gunsight {
 		}
 
 		// PLACEHOLDER: Player_DependentCondition(4) stored at +0x68 and, when it is not 0, PanelGauge_TickDropout, damage
-		// and the sensor dropout of plan step 7; until then the condition is 0 and the display never goes dark.
+		// and the sensor dropout of plan step 7b; until then the condition is 0 and the display never goes dark.
 		Condition = 0;
 		if (Dark || !_cockpit.RectCornerVisible(ClickSurface.Rect)) {
 			return;

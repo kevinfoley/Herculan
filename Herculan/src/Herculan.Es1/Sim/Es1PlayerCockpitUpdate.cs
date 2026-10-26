@@ -15,7 +15,8 @@ public static class Es1PlayerCockpitUpdate {
 
 	/// <summary>
 	/// The update on <paramref name="machine"/> through <paramref name="cockpit"/>, <c>CockpitViewInstance</c>: step 1's
-	/// energy meter value (<see cref="Es1EnergyMeter.SetValue"/>) and the weapon manager's per-frame pass (<see cref="Es1WeaponMounts.PerFrameUpdate"/>); step 2's
+	/// energy meter value (<see cref="Es1EnergyMeter.SetValue"/>), the shields' exchange with the shield display
+	/// (<see cref="Es1Shields.BalanceInputRead"/>) and the weapon manager's per-frame pass (<see cref="Es1WeaponMounts.PerFrameUpdate"/>); step 2's
 	/// exchange with the throttle gauge; then a copy of the gunsight's block takes the pitch, and unless the machine is immobilized
 	/// (<c>+0x9e</c>) the heading and the twist; when its selection at offset 6 is not the machine's target, the lamp is
 	/// cleared, the holders' counts moved, the selection made the target with <see cref="Es1Mech.TargetChanged"/> set, and
@@ -25,11 +26,12 @@ public static class Es1PlayerCockpitUpdate {
 	public static void Run(Es1Mech machine, Es1Cockpit cockpit) {
 		var globals = cockpit.Globals;
 
-		// 1. The energy meter's value, handed to the meter at the cockpit's +0x1e1 (EnergyMeter_SetValue). PLACEHOLDER:
-		// Shield_BalanceInputRead (0000fbb4)(+0x1b8), the shields of plan step 7. Then WeaponMounts_PerFrameUpdate on
-		// +0x198 with the distance to the target +0x15e (Math_DistanceBetweenPoints), or 0 with none.
+		// 1. The energy meter's value, handed to the meter at the cockpit's +0x1e1 (EnergyMeter_SetValue); the shields'
+		// exchange with the shield display +0x1e5 (Shield_BalanceInputRead); then WeaponMounts_PerFrameUpdate on +0x198
+		// with the distance to the target +0x15e (Math_DistanceBetweenPoints), or 0 with none.
 		globals.EnergyMeterValue = (machine.Energy << 10) / FullEnergy;
 		cockpit.EnergyMeter.SetValue(globals.EnergyMeterValue);
+		machine.Shields.BalanceInputRead(cockpit.Shields);
 		int range = machine.Target?.Position.ApproxDistanceTo(machine.Position) ?? 0;
 		// Retail's machine always holds a manager; this one has none until Mech_ConfigureLoadout has run.
 		machine.Mounts?.PerFrameUpdate(range, cockpit.ConsoleButtons, globals.Clock);

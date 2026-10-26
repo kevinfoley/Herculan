@@ -98,6 +98,9 @@ public sealed class Es1SimGlobals {
 	/// </summary>
 	public int EnergyMeterValue { get; set; }
 
+	/// <summary><c>Mech_LockTonePlay</c>'s latches (<see cref="Es1LockTone"/>).</summary>
+	public Es1LockTone LockTone { get; } = new();
+
 	/// <summary>
 	/// <c>ObjectList_Add</c> (<c>0000db10</c>) on <c>LiveObjectList</c>: the object stored at the count's place and given
 	/// that slot at <c>+0x45</c> (docs/es1/simulation/sim-object-base.md#the-live-object-list).

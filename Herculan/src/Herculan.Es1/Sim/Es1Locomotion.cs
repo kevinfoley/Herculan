@@ -318,7 +318,7 @@ public sealed class Es1Locomotion {
 			mech.PlaybackRate = DeathRate;
 			if (!mech.Collapsed && thread.Frame == thread.NextFrame) {
 				mech.Collapsed = true;
-				// PLACEHOLDER: Mech_SpreadImpactDamage (00013078)(machine, 0x78, 0x96), plan step 7 (damage); and sound
+				// PLACEHOLDER: Mech_SpreadImpactDamage (00013078)(machine, 0x78, 0x96), plan step 7b (damage); and sound
 				// 0x29 at the machine's position, which no plan step ports yet.
 			}
 

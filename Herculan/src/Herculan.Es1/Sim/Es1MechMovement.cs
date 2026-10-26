@@ -83,7 +83,7 @@ public static class Es1MechMovement {
 				other.RunInto();
 				if (other.TargetClass == 0) {
 					// PLACEHOLDER: the collision damage between two HERCs, Q10(300, impulse) above 200 through
-					// Mech_ApplyExplosiveDamage (00013a7c) on both at radius 1200; plan step 7 (damage) ports it.
+					// Mech_ApplyExplosiveDamage (00013a7c) on both at radius 1200; plan step 7b (damage) ports it.
 				}
 
 				return 1;

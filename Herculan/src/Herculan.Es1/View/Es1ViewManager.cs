@@ -161,7 +161,7 @@ public sealed class Es1ViewManager {
 	/// <summary><c>CockpitViewCanvasOrigin</c> (<c>000afa9c</c>), the current view's canvas origin.</summary>
 	public (int X, int Y) CanvasOrigin { get; private set; }
 
-	/// <summary><c>CockpitViewShakeArmed</c> (<c>000925ec</c>). PLACEHOLDER: never set until plan step 7's hit shake arms it.</summary>
+	/// <summary><c>CockpitViewShakeArmed</c> (<c>000925ec</c>). PLACEHOLDER: never set until plan step 7b's hit shake arms it.</summary>
 	public bool ShakeArmed { get; private set; }
 
 	/// <summary><c>CockpitShakeReseedAfterSlide</c> (<c>000925ed</c>), set when a view change cleared an armed shake.</summary>
@@ -169,7 +169,7 @@ public sealed class Es1ViewManager {
 
 	/// <summary>
 	/// <c>CockpitShakeTotal</c> (<c>000afb6c</c>), the sum of the shake's steps. PLACEHOLDER: stays 0 until plan step
-	/// 7's hit shake steps it (<c>CockpitView_StepShake</c>).
+	/// 7b's hit shake steps it (<c>CockpitView_StepShake</c>).
 	/// </summary>
 	public short ShakeTotal { get; private set; }
 
@@ -712,7 +712,7 @@ public sealed class Es1ViewManager {
 
 	/// <summary>
 	/// <c>CockpitView_ClearShake</c> (<c>00024750</c>): while armed and not in view 4. PLACEHOLDER: the body, the pages'
-	/// origins put back, the clip regions and widgets moved back and the strip restored, plan step 7's hit shake.
+	/// origins put back, the clip regions and widgets moved back and the strip restored, plan step 7b's hit shake.
 	/// </summary>
 	private void ClearShake() {
 		if (!ShakeArmed || CurrentView == Es1CockpitViews.ExternalView) {
@@ -722,7 +722,7 @@ public sealed class Es1ViewManager {
 
 	/// <summary>
 	/// <c>CockpitView_SetShakeBand</c> (<c>000243d4</c>): nothing in view 4 or while a change is staged. PLACEHOLDER: the
-	/// body, the band set on the canvas origin and the shake armed, plan step 7's hit shake.
+	/// body, the band set on the canvas origin and the shake armed, plan step 7b's hit shake.
 	/// </summary>
 	private void SetShakeBand(int amplitude) {
 		if (CurrentView == Es1CockpitViews.ExternalView || Staged) {

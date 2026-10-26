@@ -312,7 +312,7 @@ public sealed class Es1MfdMissileCamScreen : Es1MfdScreen {
 
 	/// <summary>
 	/// <c>Pool_Prev</c>'s walk of <c>g_ExplosionPool</c> for <paramref name="explosion"/>. PLACEHOLDER: answers false:
-	/// explosions are plan step 7, and the screen does not yet reach the simulation's pool; with
+	/// explosions are plan step 7e, and the screen does not yet reach the simulation's pool; with
 	/// <see cref="ExplosionNear"/> finding none, nothing sets <see cref="FlashExplosion"/> to ask about.
 	/// </summary>
 	private static bool InExplosionPool(IEs1PoolTicked explosion) {
@@ -330,7 +330,7 @@ public sealed class Es1MfdMissileCamScreen : Es1MfdScreen {
 	/// <summary>
 	/// <c>Pool_Prev</c>'s walk of <c>g_ExplosionPool</c> for the first explosion whose position <c>+0x20</c> lies within
 	/// <see cref="FlashReach"/> of <paramref name="position"/> (<c>Point3I_DistanceBetween</c>). PLACEHOLDER: answers
-	/// none: explosions are plan step 7.
+	/// none: explosions are plan step 7e.
 	/// </summary>
 	private static IEs1PoolTicked? ExplosionNear(Vec3i position) {
 		_ = position;

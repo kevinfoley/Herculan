@@ -207,7 +207,7 @@ public sealed class Es1World {
 		mech.Word174 = (record.Word4A, record.Word4C);
 		mech.Actions = (ActionAt(record.ActionRef64), ActionAt(record.ActionRef66));
 
-		// PLACEHOLDER: Mech_ApplyStartingCondition (00012f20) with the record's 0x68 writes component damage, which step 7
+		// PLACEHOLDER: Mech_ApplyStartingCondition (00012f20) with the record's 0x68 writes component damage, which step 7b
 		// ports; every machine starts undamaged until then.
 	}
 
@@ -246,7 +246,7 @@ public sealed class Es1World {
 		mech.ConfigureLoadout(slot => WordAt(record, 4 + slot), slot => WordAt(record, 16 + slot), weapons, modelFor);
 
 		// PLACEHOLDER: Mech_ApplySquadCondition (000107f0) with the entry's three condition spans writes component damage,
-		// which step 7 ports.
+		// which step 7b ports.
 		mech.PilotWord = source.Word1;
 	}
 

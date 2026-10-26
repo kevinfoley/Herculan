@@ -132,12 +132,11 @@ public sealed class Es1ShieldDisplay {
 	/// <summary>
 	/// Slot <c>+4</c>, <c>ShieldsGauge_OnClick</c> (<c>00039254</c>)(gauge, <paramref name="value"/>,
 	/// <paramref name="child"/>), which a button's click calls: for the front button the front press flag set and the rear
-	/// cleared, for the rear the reverse, the value not tested; for another child nothing.
+	/// cleared, for the rear the reverse, the value not tested; for another child nothing. The next
+	/// <see cref="Sim.Es1Shields.BalanceInputRead"/> takes the flag and moves the balance.
 	/// </summary>
 	public void OnChildClick(short value, Es1Widget child) {
 		_ = value;
-		// PLACEHOLDER: Shield_BalanceInputRead (0000fbb4), plan step 7's shields, is what takes the flags and moves the
-		// balance; until it is ported a click is stored and nothing reads it.
 		if (ReferenceEquals(child, _facings[0])) {
 			State = State with { FrontPressed = true, RearPressed = false };
 		} else if (ReferenceEquals(child, _facings[1])) {

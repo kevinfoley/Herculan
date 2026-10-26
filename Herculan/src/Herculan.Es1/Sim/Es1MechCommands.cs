@@ -21,7 +21,7 @@ public static class Es1MechCommands {
 	/// <summary><c>Ctrl</c> and keypad 4 and 6: the heading turned by plus and minus the turn step.</summary>
 	public const ushort CtrlKeypad4 = 0x44b, CtrlKeypad6 = 0x44d;
 
-	/// <summary>The two codes of <c>Shield_BalanceAdjust</c> (<c>0000fae4</c>).</summary>
+	/// <summary>The two codes of <c>Shield_BalanceAdjust</c> (<see cref="Es1Shields.BalanceAdjust"/>) on <c>PlayerMech</c>: <see cref="ShieldCodeB"/> toward the front, <see cref="ShieldCodeA"/> toward the rear.</summary>
 	public const ushort ShieldCodeA = 0x1a, ShieldCodeB = 0x1b;
 
 	/// <summary>
@@ -49,7 +49,7 @@ public static class Es1MechCommands {
 				playerMech.ThrottleChanged = true;
 				return 1;
 			case OutnumberedDamage:
-				// PLACEHOLDER: Mech_ApplyOutnumberedDamage (00015a5c)(PlayerMech) writes damage, plan step 7.
+				// PLACEHOLDER: Mech_ApplyOutnumberedDamage (00015a5c)(PlayerMech) writes damage, plan step 7b.
 				return 1;
 			case >= FirstStepCode and <= LastStepCode:
 				steps.MoveStep = MoveSteps[code - FirstStepCode];
@@ -74,8 +74,7 @@ public static class Es1MechCommands {
 				Turn(machine, (short)-steps.TurnStep);
 				return 1;
 			case ShieldCodeA or ShieldCodeB:
-				// PLACEHOLDER: Shield_BalanceAdjust (0000fae4)(PlayerMech's +0x1b8, the code is 0x1b), the shields of plan
-				// step 7.
+				playerMech.Shields.BalanceAdjust(code == ShieldCodeB);
 				return 1;
 			default:
 				return 0;

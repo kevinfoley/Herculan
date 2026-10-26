@@ -64,13 +64,14 @@ public sealed class Es1Mech : IEs1SimObject {
 		// Step 1: SimObjectBase_ConstructWithDetailTable on the record's roots, an animated instance on root 0.
 		Shape = type.Animation != null ? new ShapeInstance(type.Animation) : null;
 
-		// Step 3. PLACEHOLDER: Component_AllocDamageArrays (00009b8c) with 21 internals and 28 components; step 7 ports
+		// Step 3. PLACEHOLDER: Component_AllocDamageArrays (00009b8c) with 21 internals and 28 components; step 7b ports
 		// the damage header.
-		// Step 4. PLACEHOLDER: the five lock countdowns at +0x1ee; plan step 7c ports missile lock.
+		// Step 4: the five lock countdowns at +0x1ee (Countdowns.Lock), 0 as the slot's zero fill leaves them.
 		// Step 5: the throttle, speed, turn and turret rates and angles start at 0.
 		Energy = InitialEnergy;
 
-		// Step 6. PLACEHOLDER: Shield_Init (0000fabc) on the record's shield capacity; step 7 ports the shields.
+		// Step 6: Shield_Init on the record's +0xc0 (file offset 190), the shields' capacity.
+		Shields = new Es1Shields(type.Chassis.ShieldMaxTotal);
 
 		// Step 7: the locomotion thread on the record's +0x12 (file offset 16, the forward stop sequence) with no test of
 		// the sequence; the priority (word +6) of the two stop sequences, +0x12 and +0x14, zeroed in the shape's own
@@ -96,7 +97,7 @@ public sealed class Es1Mech : IEs1SimObject {
 		// is built deciding, whose reassess installs player for the player's machine (Es1MechBehaviour).
 		Behaviour.SetState(Es1MechBehaviour.States[IsPlayer ? Es1MechBehaviour.Player : Es1MechBehaviour.Deciding], jitter);
 		// Step 10. PLACEHOLDER: dmg\<name> and col\<name> loaded and bound (Damage_LoadMechDmgFile, Collision_RegisterObject,
-		// Component_LinkMaxRefData); step 4 (collision) and step 7 (damage) port them.
+		// Component_LinkMaxRefData); step 4 (collision) and step 7b (damage) port them.
 		// Step 11: the latches +0x24a to +0x24d clear and the death sequence's +0x24e set.
 		FootfallLatches[FootfallLatchCount - 1] = true;
 
@@ -250,17 +251,45 @@ public sealed class Es1Mech : IEs1SimObject {
 	/// <inheritdoc/>
 	public bool RadarVisible { get; set; }
 
-	/// <summary><c>+0x93</c>, destroyed. PLACEHOLDER: nothing sets it until plan step 7's damage write.</summary>
+	/// <summary><c>+0x93</c>, destroyed. PLACEHOLDER: nothing sets it until plan step 7b's damage write.</summary>
 	public bool Destroyed { get; set; }
 
 	/// <summary><c>+0x15e</c>, its own target, or null.</summary>
 	public IEs1SimObject? Target { get; set; }
 
-	/// <summary><c>+0x96</c>, the ECM spoof. PLACEHOLDER: its writer, the ECM of <c>Mech_PerTickSystemsUpdate</c>, is plan step 7c's; clear until then.</summary>
-	public bool EcmSpoofed => false;
+	/// <summary><c>+0x96</c>, the ECM spoof, which the systems tick's roll against a jamming target sets (<see cref="Es1MechSystems"/>).</summary>
+	public bool EcmSpoofed { get; set; }
 
-	/// <summary><c>+0x9b</c>, jamming. PLACEHOLDER: its writer, <c>Mech_IsEcmSwitchedOn</c>, is plan step 7c's; clear until then.</summary>
-	public bool Jamming => false;
+	/// <summary><c>+0x9b</c>, jamming, which the systems tick derives each tick from the machine's ECM (<see cref="Es1MechSystems"/>).</summary>
+	public bool Jamming { get; set; }
+
+	/// <summary><c>+0x1b8</c>, the shields.</summary>
+	public Es1Shields Shields { get; }
+
+	/// <summary>The countdowns the systems tick runs.</summary>
+	public Es1MechCountdowns Countdowns { get; } = new();
+
+	/// <summary>
+	/// <c>+0xa4</c> and <c>+0xa5</c>, the two reactor grades, which cut the reactor's rate (<see cref="Es1MechSystems"/>).
+	/// PLACEHOLDER: their writer, <c>Mech_ComponentDamageWrite</c> (<c>00013250</c>), is plan step 7b's; clear until then.
+	/// </summary>
+	public bool ReactorDamaged { get; set; }
+
+	/// <inheritdoc cref="ReactorDamaged"/>
+	public bool ReactorCritical { get; set; }
+
+	/// <summary>
+	/// <c>+0xaa</c>, the shields message has been posted; the MFD's status screen reads it as shields down. The systems
+	/// tick clears it on the player's machine. PLACEHOLDER: its setter, <c>Mech_DirectFireHitTest</c> (<c>00013b44</c>), is
+	/// plan step 7b's; clear until then.
+	/// </summary>
+	public bool ShieldsMessagePosted { get; set; }
+
+	/// <summary><c>+0x217</c>, the damage from the player's side, zeroed when the under-fire window runs out. PLACEHOLDER: its other writers, the AI's, are plan step 8's.</summary>
+	public int DamageFromPlayerSide { get; set; }
+
+	/// <summary><c>+0x21e</c>, the damage taken, zeroed when the damage window runs out. PLACEHOLDER: its writer, the hit test, is plan step 7b's.</summary>
+	public int DamageTaken { get; set; }
 
 	/// <summary><c>+0x9f</c>, disarmed. PLACEHOLDER: its writer, <c>Ai_ChooseWeapon</c> running dry, is plan step 8's; clear until then.</summary>
 	public bool Disarmed => false;
@@ -369,7 +398,7 @@ public sealed class Es1Mech : IEs1SimObject {
 	/// <summary>
 	/// <c>Mech_ReadDamageReadouts</c> (<c>0001583c</c>)(machine, buffer): the type record's <c>int16</c> <c>+0x6c</c> in
 	/// entry 0 and <c>Component_FillDamageReadouts</c>' readings after it (docs/es1/simulation/damage-readouts.md).
-	/// PLACEHOLDER: the damage readings are plan step 7's; until then every reading is 0, intact.
+	/// PLACEHOLDER: the damage readings are plan step 7b's; until then every reading is 0, intact.
 	/// </summary>
 	public short[] ReadDamageReadouts() => new short[DamageReadingCount];
 
@@ -514,7 +543,7 @@ public sealed class Es1Mech : IEs1SimObject {
 
 			// PLACEHOLDER: the template's spheres, piece and internal maximum put into the machine's model and table
 			// (Collision_ReplaceClusters, HercPiece_ReplacePieces, HercPiece_SetInternalMaxima), the anchors bound and the
-			// occupancy flags cleared; step 7 ports them with the damage tables.
+			// occupancy flags cleared; step 7b ports them with the damage tables.
 		}
 	}
 

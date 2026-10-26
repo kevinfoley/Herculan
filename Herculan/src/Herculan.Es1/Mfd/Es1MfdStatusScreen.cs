@@ -214,15 +214,12 @@ public sealed class Es1MfdStatusScreen : Es1MfdScreen {
 		return picked.Length == 0 ? 0 : picked.Sum(i => readings[i]) / picked.Length;
 	}
 
-	/// <summary>The object's <c>+0xaa</c>, shields down. PLACEHOLDER: the shields are plan step 7's; until then it is clear.</summary>
-	private static bool ShieldsDown(Es1Mech herc) {
-		_ = herc;
-		return false;
-	}
+	/// <summary>The object's <c>+0xaa</c>, shields down (<see cref="Es1Mech.ShieldsMessagePosted"/>).</summary>
+	private static bool ShieldsDown(Es1Mech herc) => herc.ShieldsMessagePosted;
 
 	/// <summary>
 	/// The <c>int16</c> slot <c>+0x44</c> of the object's vtable returns, its damage. PLACEHOLDER: the damage is plan step
-	/// 7's; until then it is 0, intact.
+	/// 7b's; until then it is 0, intact.
 	/// </summary>
 	private static int Damage(IEs1SimObject subject) {
 		_ = subject;
