@@ -32,6 +32,13 @@ public sealed class Es1SimGlobals {
 	/// </summary>
 	public View.Es1Cockpit? CockpitViewInstance { get; set; }
 
+	/// <summary>
+	/// <c>HddDisplayInstance</c> (<c>000944cc</c>), the Heads-Down Display last built, which <c>HddDisplay_Ctor</c> stores
+	/// and <c>HddGauge_Name</c> reads (docs/es1/simulation/heads-down-display.md#the-display-object--hdddisplay_ctor-0003c258);
+	/// none before one is built.
+	/// </summary>
+	public Hdd.Es1HddDisplay? HddDisplayInstance { get; set; }
+
 	/// <summary><c>Behaviour_DwellJitter</c> (<c>000bc426</c>).</summary>
 	public Es1DwellJitter DwellJitter { get; } = new();
 

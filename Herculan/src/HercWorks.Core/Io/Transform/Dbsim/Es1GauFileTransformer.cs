@@ -92,12 +92,18 @@ public class Es1GauFileTransformer : ByteTransformer<Es1GauFile> {
 				ClickSurface = ReadRect(),
 				Bytes1180 = IndexSegment(32),
 			},
-			PilotRosterBlock = new Es1GauPilotRosterBlock {
-				Header = ReadRect(),
-				Bytes1228 = IndexSegment(64),
-				Rects1292 = ReadRects(15),
-				Rects1532 = ReadRects(3),
-				Bytes1580 = IndexSegment(24),
+			HddBlock = new Es1GauHddBlock {
+				Rect = ReadRect(),
+				Screen = ReadRect(),
+				OrderColumn = ReadRect(),
+				DamageColumn = ReadRect(),
+				TitleIndicator = ReadRect(),
+				Buttons = ReadRects(Es1GauHddBlock.ButtonCount),
+				MarkerRects = ReadRects(Es1GauHddBlock.CommBoxCount),
+				ArrowFrame = IndexIntLE(),
+				Int5D = IndexIntLE(),
+				HighlightMode = IndexIntLE(),
+				Bytes1592 = IndexSegment(12),
 			},
 			ClockBlock = new Es1GauClockBlock {
 				Bytes1604 = IndexSegment(16),
@@ -210,12 +216,18 @@ public class Es1GauFileTransformer : ByteTransformer<Es1GauFile> {
 		Rect(gunsight.ClickSurface);
 		w.Write(gunsight.Bytes1180);
 
-		var roster = source.PilotRosterBlock;
-		Rect(roster.Header);
-		w.Write(roster.Bytes1228);
-		Rects(roster.Rects1292);
-		Rects(roster.Rects1532);
-		w.Write(roster.Bytes1580);
+		var hdd = source.HddBlock;
+		Rect(hdd.Rect);
+		Rect(hdd.Screen);
+		Rect(hdd.OrderColumn);
+		Rect(hdd.DamageColumn);
+		Rect(hdd.TitleIndicator);
+		Rects(hdd.Buttons);
+		Rects(hdd.MarkerRects);
+		w.Write(hdd.ArrowFrame);
+		w.Write(hdd.Int5D);
+		w.Write(hdd.HighlightMode);
+		w.Write(hdd.Bytes1592);
 
 		var clock = source.ClockBlock;
 		w.Write(clock.Bytes1604);

@@ -86,8 +86,11 @@ public class Es1GauFile {
 	/// <summary>Offset 1104, 108 bytes.</summary>
 	public Es1GauGunsightBlock Gunsight { get; set; } = new();
 
-	/// <summary>Offset 1212, 392 bytes.</summary>
-	public Es1GauPilotRosterBlock PilotRosterBlock { get; set; } = new();
+	/// <summary>
+	/// Offset 1212, 392 bytes: the block <c>Gau_PilotRosterWidget</c> (<c>0002ce60</c>) hands the instrument at the cockpit's
+	/// <c>+0x1f5</c>, the Heads-Down Display.
+	/// </summary>
+	public Es1GauHddBlock HddBlock { get; set; } = new();
 
 	/// <summary>Offset 1604, 64 bytes: the cockpit clock's block.</summary>
 	public Es1GauClockBlock ClockBlock { get; set; } = new();

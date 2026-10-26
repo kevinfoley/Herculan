@@ -155,25 +155,49 @@ public class Es1GauMfdPanelBlock {
 }
 
 /// <summary>
-/// The block at 1212 of <see cref="Es1GauFile"/>, which <c>Gau_PilotRosterWidget</c> (<c>0002ce60</c>) hands the instrument at
-/// the cockpit's <c>+0x1f5</c> (docs/es1/formats/gau-cockpit-layout.md#differences-from-es2), with the rect arrays
-/// <c>Gau_Load</c> constructs at 1292 and 1532.
+/// The Heads-Down Display's block at 1212 of <see cref="Es1GauFile"/>, the <c>int32</c> from 1212 to 1591 that
+/// <c>HddDisplay_Ctor</c> (<c>0003c258</c>) reads (docs/es1/formats/gau-cockpit-layout.md#the-heads-down-display-block-at-1212),
+/// with the rect arrays <c>Gau_Load</c> constructs at 1292 and 1532, then 12 bytes it does not.
 /// </summary>
-public class Es1GauPilotRosterBlock {
-	/// <summary>Offset 1212: the block's first 16 bytes, which <see cref="Es1GauFile.Loaded"/> offsets as a rect.</summary>
-	public Es1GauRect Header { get; set; }
+public class Es1GauHddBlock {
+	/// <summary>The buttons' rects in <see cref="Buttons"/> and the comm boxes' in <see cref="MarkerRects"/>.</summary>
+	public const int ButtonCount = 15, CommBoxCount = 3;
 
-	/// <summary>Offsets 1228-1291, which the doc does not name.</summary>
-	public byte[] Bytes1228 { get; set; } = new byte[64];
+	/// <summary>
+	/// <c>int32</c> 0 to 3, offset 1212: the gauge's rect, which <see cref="Es1GauFile.Loaded"/> offsets; its first pair is
+	/// the origin added to every rect below, and the second pair is unread.
+	/// </summary>
+	public Es1GauRect Rect { get; set; }
 
-	/// <summary>Offset 1292: fifteen rects.</summary>
-	public Es1GauRect[] Rects1292 { get; set; } = new Es1GauRect[15];
+	/// <summary><c>int32</c> 4 to 7, offset 1228: the screen rect, which the two pages draw in.</summary>
+	public Es1GauRect Screen { get; set; }
 
-	/// <summary>Offset 1532: three rects.</summary>
-	public Es1GauRect[] Rects1532 { get; set; } = new Es1GauRect[3];
+	/// <summary><c>int32</c> 8 to 0xb, offset 1244: the order column, which the command screen takes.</summary>
+	public Es1GauRect OrderColumn { get; set; }
 
-	/// <summary>Offsets 1580-1603, which the doc does not name.</summary>
-	public byte[] Bytes1580 { get; set; } = new byte[24];
+	/// <summary><c>int32</c> 0xc to 0xf, offset 1260: the damage column, which the damage screen takes.</summary>
+	public Es1GauRect DamageColumn { get; set; }
+
+	/// <summary><c>int32</c> 0x10 to 0x13, offset 1276: the title indicator's rect.</summary>
+	public Es1GauRect TitleIndicator { get; set; }
+
+	/// <summary><c>int32</c> 0x14 to 0x4f, offset 1292: the fifteen buttons' rects, button <i>i</i> at 1292 + 16<i>i</i>.</summary>
+	public Es1GauRect[] Buttons { get; set; } = new Es1GauRect[ButtonCount];
+
+	/// <summary><c>int32</c> 0x50 to 0x5b, offset 1532: the three comm boxes' marker rects.</summary>
+	public Es1GauRect[] MarkerRects { get; set; } = new Es1GauRect[CommBoxCount];
+
+	/// <summary><c>int32</c> 0x5c, offset 1580: the arrows' first frame in <c>dba\pbuttons</c>, 35 or 43.</summary>
+	public int ArrowFrame { get; set; }
+
+	/// <summary><c>int32</c> 0x5d, offset 1584: unread; 0 in all eight files.</summary>
+	public int Int5D { get; set; }
+
+	/// <summary><c>int32</c> 0x5e, offset 1588: the comm boxes' highlight mode, 1 in all eight files.</summary>
+	public int HighlightMode { get; set; }
+
+	/// <summary>Offsets 1592-1603, which the constructor does not read.</summary>
+	public byte[] Bytes1592 { get; set; } = new byte[12];
 }
 
 /// <summary>

@@ -28,16 +28,33 @@ public abstract class Es1Widget {
 	public Es1Rect Rect { get; set; }
 
 	/// <summary><c>+0x10</c> non-zero: the widget is the diamond about (<see cref="CenterX"/>, <see cref="CenterY"/>) of radius <see cref="Radius"/>, not its rect.</summary>
-	public bool IsDiamond { get; init; }
+	public bool IsDiamond { get => _isDiamond; init => _isDiamond = value; }
 
 	/// <summary><c>+0x11</c>, <c>+0x13</c>, <c>+0x15</c>.</summary>
-	public short CenterX { get; init; }
+	public short CenterX { get => _centerX; init => _centerX = value; }
 
 	/// <inheritdoc cref="CenterX"/>
-	public short CenterY { get; init; }
+	public short CenterY { get => _centerY; init => _centerY = value; }
 
 	/// <inheritdoc cref="CenterX"/>
-	public short Radius { get; init; }
+	public short Radius { get => _radius; init => _radius = value; }
+
+	private bool _isDiamond;
+	private short _centerX, _centerY, _radius;
+
+	/// <summary>
+	/// <c>Widget_SetHitShape</c> (<c>00043784</c>)(widget, <paramref name="shape"/>)
+	/// (docs/es1/simulation/cockpit-mouse.md#hit-testing): the hit-shape byte set; for 1 the radius (<i>x1</i> −
+	/// <i>x0</i>) ≫ 1 and the center (<i>x0</i> + radius, <i>y0</i> + radius), from the rect as it stands.
+	/// </summary>
+	public void SetHitShape(byte shape) {
+		_isDiamond = shape != 0;
+		if (shape == 1) {
+			_radius = (short)((Rect.X1 - Rect.X0) >> 1);
+			_centerX = (short)(Rect.X0 + _radius);
+			_centerY = (short)(Rect.Y0 + _radius);
+		}
+	}
 
 	/// <summary><c>+0x17</c>.</summary>
 	public short State { get; set; }

@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using HercWorks.Core.Data.File.Gau;
 using Herculan.Es1.EnergyShields;
 using Herculan.Es1.Gunsight;
+using Herculan.Es1.Hdd;
 using Herculan.Es1.Input;
 using Herculan.Es1.Messages;
 using Herculan.Es1.Mfd;
@@ -31,8 +32,8 @@ namespace Herculan.Es1.View;
 /// <c>CockpitTtmManager</c> (docs/es1/formats/ttm-scripts.md#the-simulator); the pilot channel <c>+0x203</c>
 /// (<see cref="Es1PilotChannel"/>) and the computer's ticker <c>+0x207</c> (<see cref="Es1MessageTicker"/>) with the
 /// squadmates the channel reads (docs/es1/simulation/cockpit-panel.md#squadmate-and-pilot-helpers); and the target
-/// selection <c>+0x20c</c> (<see cref="Es1TargetSelection"/>). The instrument <c>+0x1f5</c> joins it with plan step 6c6
-/// (docs/herculan/plan-es1-first-mission.md).
+/// selection <c>+0x20c</c> (<see cref="Es1TargetSelection"/>); and the Heads-Down Display <c>+0x1f5</c>
+/// (docs/es1/simulation/heads-down-display.md), with <c>Squad_SendOrderToSlot</c>, its <c>XMIT</c>'s.
 ///
 /// <para><see cref="Es1ViewManager"/> builds it, as <c>CockpitViewManager_LoadViews</c> does, and it is
 /// <c>CockpitViewInstance</c> (<c>00092d1c</c>), the first cockpit built.</para>
@@ -92,7 +93,8 @@ public sealed class Es1Cockpit {
 	/// <c>ColorSchemePanels_LoadAll</c> zeroes and <c>Cockpit_LoadSquadmatePilots</c> (<c>0002b308</c>) fills at the
 	/// mission's start (docs/es1/simulation/cockpit-panel.md#the-squadmates). PLACEHOLDER: that fill comes with the
 	/// Heads-Down Display's comm boxes, plan step 6c6's part C; until then every slot is empty, so no machine is a
-	/// squadmate and a post about one goes to the first slot's empty pilot table.
+	/// squadmate, a post about one goes to the first slot's empty pilot table, and the display's comm-box presses do
+	/// nothing.
 	/// </summary>
 	public Es1Mech?[] SquadmateMachines { get; } = new Es1Mech?[Es1MessageTables.PilotSlots];
 
@@ -108,13 +110,11 @@ public sealed class Es1Cockpit {
 
 	/// <summary>
 	/// <c>Squad_PilotName</c> (<c>0002e2f4</c>)(<paramref name="slot"/>): <c>HddGauge_Name</c> (<c>0003e830</c>), the name
-	/// <c>+0x137</c> of the Heads-Down Display's comm box <paramref name="slot"/>. PLACEHOLDER: the display <c>+0x1f5</c>
-	/// and the names <c>HddGauge_LoadPilotFrames</c> sets are plan step 6c6's parts B and C; until then none.
+	/// <see cref="Es1HddCommBox.Name"/> of comm box <paramref name="slot"/> of <see cref="Es1SimGlobals.HddDisplayInstance"/>;
+	/// none before a display is built. PLACEHOLDER: the names are set by <c>HddGauge_LoadPilotFrames</c>, plan step 6c6's
+	/// part C; until then none.
 	/// </summary>
-	public string? SquadPilotName(int slot) {
-		_ = slot;
-		return null;
-	}
+	public string? SquadPilotName(int slot) => Globals.HddDisplayInstance?.CommBoxes[slot].Name;
 
 	/// <summary><c>HudColorTable_Get</c> (<c>0002e2e4</c>)(<paramref name="slot"/>): entry <paramref name="slot"/> of <c>SquadSlotColors</c>, a squadmate slot's color.</summary>
 	public static int SquadSlotColor(int slot) => SquadSlotColors[slot];
@@ -159,6 +159,9 @@ public sealed class Es1Cockpit {
 
 	/// <summary><c>+0x1f1</c>, the roving gunsight, which <c>Gau_RovingGunsightWrapper</c> (<c>0002ce28</c>) builds on the <c>.GAU</c> block at 1104.</summary>
 	public Es1Gunsight Gunsight { get; private set; }
+
+	/// <summary><c>+0x1f5</c>, the Heads-Down Display, which <c>Gau_PilotRosterWidget</c> (<c>0002ce60</c>) builds on the <c>.GAU</c> block at 1212.</summary>
+	public Es1HddDisplay Hdd { get; private set; }
 
 	/// <summary><c>+0x1f9</c>, the clock, which <c>CockpitClock_Create</c> (<c>0002ce98</c>) builds on the <c>.GAU</c> block at 1604.</summary>
 	public Es1CockpitClock Clock { get; private set; }
@@ -292,6 +295,23 @@ public sealed class Es1Cockpit {
 		return Machine?.Group is { } group && group.BroadcastOrder(order, Globals);
 	}
 
+	/// <summary>
+	/// <c>Squad_SendOrderToSlot</c> (<c>0002b3e8</c>)(cockpit, <paramref name="slot"/>, <paramref name="order"/>)
+	/// (docs/es1/simulation/cockpit-panel.md#the-squadmates): for a squadmate in the slot that is not the machine and is
+	/// not destroyed, the machine stored as the order's issuer and the squadmate's slot <c>+0x2c</c>
+	/// (<see cref="Es1Mech.ReceiveSquadOrder"/>) with the reply 0; either way message
+	/// <see cref="Es1HddDisplay.PilotSelectedMessage"/> about the squadmate withdrawn from the pilot channel.
+	/// </summary>
+	internal void SendOrderToSlot(int slot, Es1SquadOrder order) {
+		var squadmate = SquadmateMachines[slot];
+		if (squadmate != null && !ReferenceEquals(squadmate, Machine) && !squadmate.Destroyed) {
+			order.Issuer = Machine;
+			squadmate.ReceiveSquadOrder(0, order, Globals);
+		}
+
+		PilotChannel.Withdraw(Es1HddDisplay.PilotSelectedMessage, squadmate);
+	}
+
 	/// <summary><c>+0x216</c>, <c>+0x21a</c>, <c>+0x21e</c>, the bottom, left and right screen-edge strips, once built.</summary>
 	public Es1ScrollTrigger? BottomStrip { get; private set; }
 
@@ -329,11 +349,11 @@ public sealed class Es1Cockpit {
 	/// <summary>
 	/// <c>Cockpit_DrawFrame</c> (<c>0002cf28</c>)(cockpit), once a frame from <c>Sim_RenderFrame</c> before the 3D pass:
 	/// nothing while <see cref="SkipFrameDraw"/> is set; the strips built the first time; at step 2 the clock's tick
-	/// (<see cref="Es1CockpitClock.Tick"/>); with the widgets off nothing more this engine draws; otherwise, at step 4 the
-	/// pilot channel's screen put back (<see cref="Es1PilotChannel.RestoreBackground"/>) while no view change is staged,
-	/// at step 5,
-	/// the per-frame slots of the weapon rows, the pod row, the console buttons, the energy meter, the shield display, the
-	/// throttle gauge and the MFD inside the canvas push, at step 6 <see cref="RunTtmScripts"/>, the ticker's
+	/// (<see cref="Es1CockpitClock.Tick"/>); with the widgets off the Heads-Down Display's (<see cref="Es1HddDisplay.Update"/>)
+	/// and nothing more; otherwise, at step 4 the pilot channel's screen put back
+	/// (<see cref="Es1PilotChannel.RestoreBackground"/>) while no view change is staged, at step 5 the per-frame slots of
+	/// the weapon rows, the pod row, the console buttons, the energy meter, the shield display, the throttle gauge, the
+	/// MFD and the Heads-Down Display inside the canvas push, at step 6 <see cref="RunTtmScripts"/>, the ticker's
 	/// slot (<see cref="Es1MessageTicker.Update"/>) and the edge cursor, and at step 7 the selection dropped when
 	/// <see cref="Es1TargetSelection.CanTarget"/> refuses it.
 	/// </summary>
@@ -350,8 +370,9 @@ public sealed class Es1Cockpit {
 
 		// 2. PLACEHOLDER: Cockpit_HitShakeTick after the clock's tick, plan step 7.
 		Clock.Tick(Globals.Clock.Clock);
-		// 3. With the widgets off, slot +0xc of the instrument +0x1f5, plan step 6c, and nothing more.
+		// 3.
 		if (WidgetsOff) {
+			Hdd.Update();
 			return;
 		}
 
@@ -360,8 +381,7 @@ public sealed class Es1Cockpit {
 			PilotChannel.RestoreBackground();
 		}
 
-		// 5. Between the canvas push and pop, slot +0xc of each set weapon row, the pod row, +0x1dd, +0x1e1, +0x1e5,
-		// +0x1ed, +0x1e9 and +0x1f5. PLACEHOLDER: +0x1f5, plan step 6c's instrument.
+		// 5. Between the canvas push and pop.
 		foreach (var row in _weaponRows) {
 			row?.Update();
 		}
@@ -372,6 +392,7 @@ public sealed class Es1Cockpit {
 		Shields.Update();
 		Throttle.Update();
 		Mfd.Update();
+		Hdd.Update();
 		// 6.
 		RunTtmScripts();
 		Ticker.Update();
@@ -439,7 +460,7 @@ public sealed class Es1Cockpit {
 	/// to 3: unless the widgets are off, the widgets' slot <c>+8</c>, of which the weapon rows', the pod row's, the
 	/// console buttons', the energy meter's, <see cref="Es1EnergyMeter.Paint"/>, the shield display's,
 	/// <see cref="Es1ShieldDisplay.Paint"/>, the throttle gauge's, <see cref="Es1ThrottleGauge.Paint"/>, the MFD's,
-	/// <see cref="Es1MfdDisplay.Repaint"/>, the gunsight's,
+	/// <see cref="Es1MfdDisplay.Repaint"/>, the Heads-Down Display's, <see cref="Es1HddDisplay.Repaint"/>, the gunsight's,
 	/// <see cref="Es1Gunsight.Paint"/>, and the clock's, <see cref="Es1CockpitClock.Update"/>, are ported; then
 	/// <see cref="RunTtmScripts"/>.
 	/// </summary>
@@ -448,8 +469,7 @@ public sealed class Es1Cockpit {
 			return;
 		}
 
-		// Between the canvas push and pop, slot +8 of the nine weapon rows, the pod row +0x1d8, +0x1dd, +0x1e1, +0x1e5,
-		// +0x1ed, +0x1e9 and +0x1f5. PLACEHOLDER: +0x1f5, plan step 6c's instrument.
+		// Between the canvas push and pop, then the gunsight and the clock.
 		foreach (var row in _weaponRows) {
 			row?.Paint();
 		}
@@ -460,6 +480,7 @@ public sealed class Es1Cockpit {
 		Shields.Paint();
 		Throttle.Paint();
 		Mfd.Repaint();
+		Hdd.Repaint();
 		Gunsight.Paint();
 		Clock.Update();
 		RunTtmScripts();
@@ -560,7 +581,7 @@ public sealed class Es1Cockpit {
 				answer.Value = 1;
 				break;
 			case F7 or F8:
-				// PLACEHOLDER: the press of +0x1f5's button code - F7; the instrument is plan step 6c's.
+				Hdd.PressButton(code - F7);
 				Queue(0);
 				answer.Value = 1;
 				break;
@@ -603,7 +624,8 @@ public sealed class Es1Cockpit {
 	/// <summary>
 	/// <c>CockpitView_PollViewDevice</c>(cockpit, <paramref name="block"/>), once a tick from <c>Sim_PollPlayerInput</c>:
 	/// the input block's buttons 4 to 7 (<c>+0x19</c>–<c>+0x1c</c>) queue view commands 1, 0, 4 and 5; the press of the
-	/// mouse's byte <c>+0xb</c>, latched, in view 1 sends <c>Tab</c> to the key slot of <c>+0x1f5</c>. It returns 1,
+	/// mouse's byte <c>+0xb</c>, latched, in view 1 sends <c>Tab</c> to the Heads-Down Display's key slot
+	/// (<see cref="Es1HddDisplay.KeyDispatch"/>). It returns 1,
 	/// which its caller discards.
 	///
 	/// <para>Retail's two stick models that make buttons 4–7 make them from a hat: option 3's from port axis 3 and
@@ -637,7 +659,7 @@ public sealed class Es1Cockpit {
 			DeviceButtonLatch = false;
 		} else {
 			if (!DeviceButtonLatch && _views.CurrentView == 1) {
-				// PLACEHOLDER: Tab (0x0f) to the key slot (+0x10 of the table at +0x76) of +0x1f5, plan step 6c.
+				Hdd.KeyDispatch(Tab);
 			}
 
 			DeviceButtonLatch = true;
@@ -655,15 +677,16 @@ public sealed class Es1Cockpit {
 	/// in retail's order, the console buttons <c>+0x1dd</c> on the block at 452, the energy meter <c>+0x1e1</c> on the
 	/// block at 548, the shield display <c>+0x1e5</c> on the block at 616, the MFD <c>+0x1e9</c> on the block at 728,
 	/// put on its STATUS screen (<see cref="Es1MfdDisplay.SetMode"/> with 0), the throttle gauge <c>+0x1ed</c> on the
-	/// block at 1000, the gunsight <c>+0x1f1</c> on the block at 1104 and the clock <c>+0x1f9</c> on the block at 1604,
-	/// which opens the HERC's script; and last <c>Ttm_RunAll</c>. The console's buttons, the shield display's two
-	/// buttons, the MFD's 13 buttons and its click surface, the throttle's slider and the gunsight register their
-	/// gadgets on the root in that order, all before the
+	/// block at 1000, the gunsight <c>+0x1f1</c> on the block at 1104, the Heads-Down Display <c>+0x1f5</c> on the block
+	/// at 1212 and the clock <c>+0x1f9</c> on the block at 1604, which opens the HERC's script; and last
+	/// <c>Ttm_RunAll</c>. The console's buttons, the shield display's two buttons, the MFD's 13 buttons and its click
+	/// surface, the throttle's slider, the gunsight and the Heads-Down Display's 15 buttons register their gadgets on the
+	/// root in that order, all before the
 	/// weapon rows <c>Sim_StartMission</c> builds and the strips the first frame builds, so each wins where a later one
 	/// overlaps it.
 	/// </summary>
 	[MemberNotNull(nameof(Root), nameof(PilotChannel), nameof(Ticker), nameof(ConsoleButtons), nameof(EnergyMeter), nameof(Shields), nameof(Mfd),
-		nameof(Throttle), nameof(Gunsight), nameof(Clock), nameof(Scripts))]
+		nameof(Throttle), nameof(Gunsight), nameof(Hdd), nameof(Clock), nameof(Scripts))]
 	private void LoadPanel(Es1CockpitViews files) {
 		var layout = files.Layout;
 		var head = new Es1Rect(layout.Origin.X, layout.Origin.Y, BitConverter.ToInt32(layout.Bytes8, 0), BitConverter.ToInt32(layout.Bytes8, 4));
@@ -691,7 +714,7 @@ public sealed class Es1Cockpit {
 		Throttle = new Es1ThrottleGauge(this, layout.ThrottleBlock, files.ThrottleLights, files.PushButtons);
 		Gunsight = new Es1Gunsight(this, layout.Gunsight, files.GunsightBanks, files.Fonts, _mouse,
 			files.SimulatorStrings?.Text(Es1Gunsight.AttGroup, 0));
-		// PLACEHOLDER: the instrument +0x1f5 before the clock: plan step 6c.
+		Hdd = new Es1HddDisplay(this, layout.HddBlock, files.Fonts, files.PushButtons, files.SimulatorStrings);
 		Clock = new Es1CockpitClock(this, layout.ClockBlock, Scripts, files.Fonts[0], Globals.Clock.Clock);
 		Scripts.RunAll();
 	}
@@ -776,7 +799,8 @@ public sealed class Es1Cockpit {
 
 	/// <summary>
 	/// An unlisted code: <c>MfdFlashComm_HandleAltKey</c> (<c>0003a890</c>)(the MFD <c>+0x1e9</c>, code,
-	/// <see cref="Es1MfdDisplay.HandleAltKey"/>); when that answers 0, in view 1 the key slot of <c>+0x1f5</c> alone, and
+	/// <see cref="Es1MfdDisplay.HandleAltKey"/>); when that answers 0, in view 1 the Heads-Down Display's key slot
+	/// (<see cref="Es1HddDisplay.KeyDispatch"/>) alone, and
 	/// in any other view the key slots of <c>+0x1d4</c> when set, <c>+0x1dd</c>, <c>+0x1e1</c>, <c>+0x1e5</c>,
 	/// <c>+0x1ed</c>, <c>+0x1f1</c> and <c>+0x1e9</c>, to the first that accepts; 1 when one does, else 0. A weapon
 	/// row's, the energy meter's, the shield display's, the throttle gauge's and the gunsight's slots take no key; the
@@ -788,9 +812,8 @@ public sealed class Es1Cockpit {
 			return 1;
 		}
 
-		// PLACEHOLDER: in view 1 the key slot of +0x1f5, plan step 6c's instrument; until then it accepts none.
 		if (view == 1) {
-			return 0;
+			return Hdd.KeyDispatch(code);
 		}
 
 		if (FirstWeaponRow != null && Es1WeaponGauge.KeyDispatch(code) != 0) {
