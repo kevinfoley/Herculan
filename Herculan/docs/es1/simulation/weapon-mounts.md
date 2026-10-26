@@ -126,7 +126,7 @@ ES2's (`00410f78`) handles the same codes with ten row codes, `0x202`–`0x20b`.
 
 (manager, machine, trigger): ES2's ([the trigger](../../retail/simulation/weapon-firing.md#weaponmounts_firetrigger-in-order)) on ES1's slots: with a mount armed, the armed mount and, when linked, its partner must both pass ready `+0x30` and then the trigger slot `+0x34`(mount, trigger); then the armed mount's fire slot `+0x2c`(mount, free-shot flag, machine), single fire cleared when it is no longer ready, `000b5bc6` and `000b5bc8` set when its subtype (`+0x64`) is 3, and the partner fired the same way. The free-shot flag is 1 when `000bc4a0` is 0 and `000bc4a6` is 1. It returns nothing, where ES2's returns 1 when it fired. `es2_xref.py` finds one call, from `Sim_PollPlayerInput` (`0005a0c0`, [the player's controls](main-loop.md#the-players-controls--sim_pollplayerinput-0005a0c0)), which passes the player machine `000b5b86` and the input block while the camera is not driven, and two dwords holding its padding entry `0000d2bb`, at `0003d7fc` and `0003d8f0` ([Open](#open)).
 
-`000b5bc6` and `000b5bc8` are ES2's `004d25aa` and `004d25ac`, the electro-optical launch's hold on the chain ([the chain hold](../../retail/simulation/weapon-mounts.md#arming--weaponmounts_selectbygauge-004106ac-and-weaponmounts_setselection-00410708)).
+`000b5bc6` and `000b5bc8` are ES2's `004d25aa` and `004d25ac`, the electro-optical launch's hold on the chain ([the chain hold](../../retail/simulation/weapon-mounts.md#arming--weaponmounts_selectbygauge-004106ac-and-weaponmounts_setselection-00410708)). As in ES2, `Sim_MainTick` clears `000b5bc6` each tick before it walks the projectiles ([the tick](main-loop.md#the-tick--sim_maintick-00059700)), and the missile's tick raises it again each tick the player flies one ([flight](rockets.md#flight--rocket_tickupdate-00007198)).
 
 ## Functions
 
@@ -167,6 +167,5 @@ ES2's (`00410f78`) handles the same codes with ten row codes, `0x202`–`0x20b`.
 
 ## Open
 
-- **Open:** what clears `000b5bc6`; ES2's `Sim_MainTick` clears `004d25aa` each tick ([the missile camera](../../retail/simulation/rockets.md#the-missile-camera)).
 - **Open:** what reaches `WeaponMounts_DemandFullChargeOnArmed`, to which `es2_xref.py` finds no branch or stored pointer, and what the two dwords at `0003d7fc` and `0003d8f0` holding `WeaponMounts_FireTrigger`'s padding entry are.
 - **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: in the cockpit, `BP <CS>:0000cf78` fires every frame; `W` moves the armed row to the next weapon in the chain, and Alt with a row's number takes that row out of the chain or puts it back (`BP <CS>:0000d5e4`). At mission load, `BP <CS>:0000bd70` fires once per visible hardpoint between one hit each on `0000bc60` and `0000bd40`.

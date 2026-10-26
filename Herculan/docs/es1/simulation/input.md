@@ -240,7 +240,7 @@ Opens `Config_BuildPath`(`keyjoy.cfg`) in mode `rt`, so `tapes\keyjoy.cfg` durin
 
 - **`Input_ReadMaskedKeyboardCommand` (`0004d7f8`)**, (out): ES2's, through `Input_ReadKeyboardCommand`(1, out) and the mask `00095918` (`0x47ff`). No reference to it found by `es2_xref.py`.
 - **`SimInput_SetEnabled` (`0004d82c`)**, (enabled), ES2's with one subscriber: turning the keys on, unless `00095894` is set, registers `Input_KeyjoyAxisKey` against its 28 codes through `Keyboard_AddSubscriber` ([the simulator's two subscribers](#the-simulators-two-subscribers)) and returns its answer; turning them off clears the three key-state blocks. `SimInput_PushDisable` and `SimInput_PopEnable` ([small functions](main-loop.md#small-functions)) wrap it.
-- **`Input_LatchButton` (`0004d8c8`)**, (state, button 1–4): `Input_ButtonLatch`[button − 1] = 1 and `Input_ButtonLatchState`[button − 1] = state, ES2's for four buttons. `es2_xref.py` finds calls from `00007198`, `AlertPanel_Enter` (`00045f00`) and `AlertPanel_HandleEvent` (`00046670`) ([the in-mission panels](alert-panels.md#putting-a-panel-up-and-taking-it-down)), `00049bbc` and `GrenadeMount_TriggerHeld`.
+- **`Input_LatchButton` (`0004d8c8`)**, (state, button 1–4): `Input_ButtonLatch`[button − 1] = 1 and `Input_ButtonLatchState`[button − 1] = state, ES2's for four buttons. `es2_xref.py` finds calls from `Rocket_TickUpdate` (`00007198`), `AlertPanel_Enter` (`00045f00`) and `AlertPanel_HandleEvent` (`00046670`) ([the in-mission panels](alert-panels.md#putting-a-panel-up-and-taking-it-down)), `00049bbc` and `GrenadeMount_TriggerHeld`.
 - **`Input_GetCursorPos` (`0004d910`)** returns `Input_CursorPos`.
 
 ## Functions

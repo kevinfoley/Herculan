@@ -9,15 +9,15 @@ int16 count
 byte[10][count]
 ```
 
-The retail file is 82 bytes: 8 records. Each is the first ten bytes of [ES2's 14-byte record](../../retail/simulation/projectiles.md#datbulletsdat), without the firing scatter at `+0x0a` and the flag at `+0x0c`. A record is reached as `table + id × 10` (`Bullet_GetTypeRecord`, `00007b94`, from the round's type byte at `+0x3b`), the id being the firing projectile record's subtype id. Offsets in bold are ones the functions this page names read.
+The retail file is 82 bytes: 8 records. Each is the first ten bytes of [ES2's 14-byte record](../../retail/simulation/projectiles.md#datbulletsdat), without the firing scatter at `+0x0a` and the flag at `+0x0c`. A record is reached as `table + id × 10` (`Bullet_GetTypeRecord`, `00007b94`, from the round's type byte at `+0x3b`), the id being the firing projectile record's subtype id. `Bullet_Construct` reads `+0x00` and `+0x06`, and [the round's fire and tick](../simulation/projectiles.md#gun-rounds--bulletcpp) the rest.
 
-| Offset | ES2's field |
+| Offset | Field |
 |---|---|
-| **`+0x00`** | the root of `dts\bullets` the round is drawn as |
-| `+0x02` | lifetime |
-| `+0x04` | clip radius |
-| **`+0x06`** | the frame interval |
-| `+0x08` | fire sound id |
+| `+0x00` | the root of `dts\bullets` the round is drawn as |
+| `+0x02` | the lifetime, in ticks, where ES2's counts 125 ms units |
+| `+0x04` | the ray's slack in the round's sweep, ES2's clip radius |
+| `+0x06` | the frame interval |
+| `+0x08` | the fire sound, played as id + 10 |
 
 | Id | Projectile records | Shape | Life | Radius | Interval | Sound |
 |---|---|---|---|---|---|---|
@@ -36,7 +36,7 @@ The projectile records are those of type 2 whose subtype id is the bullet's ([th
 
 `Bullet_LoadResources` (`00007bb0`) is a phase-2 subsystem loader, registered by the static initialiser at `000081f8` with `RegisterSubsystemLoader` (`00000ac4`). It follows ES2's: it opens `dat\bullets`, asserting at severity 5 (`bullet.cpp` line `0x29`) when the stream status is set, reads the count into `000bc1fa` and count × 10 bytes into `g_BulletTypeTable` (`000bc1f6`), and keeps the greatest `+0x00` plus one at `000bc200`. It loads `dts\bullets` with `Shape_LoadAllRoots` (tag `0x140008`) into `000bc1fc` and `dba\bullets` with `ClassItem_LoadFromFile`, and stores that bank in every root's `+0x26`, where ES2's packs the bank into an atlas and stores the address of its slot.
 
-`Bullet_Construct` (`00007d08`), given the round and the id, allocates the round from the pool `000af0b4` when it is null (returning 0 when the pool is full), builds it on root `+0x00`, sets the type tag to 3 and the type byte, stores `Proj_LookupRecord(id, 2)` at `+0x48` and loads the frame countdown at `+0x53` from `+0x06`. ES2's stores the record at `+0x4e` and the countdown at `+0x59`.
+`Bullet_Construct` (`00007d08`), given the round and the id, allocates the round from the pool `g_ProjectilePool` (`000af0b4`) when it is null (returning 0 when the pool is full), builds it on root `+0x00`, sets the type tag to 3 and the type byte, stores `Proj_LookupRecord(id, 2)` at `+0x48` and loads the frame countdown at `+0x53` from `+0x06`. ES2's stores the record at `+0x4e` and the countdown at `+0x59`.
 
 ## `dat\SKIMMER.DAT`
 
@@ -67,5 +67,5 @@ ES2's reads 46 bytes into a `0x70`-byte record, keeps the damage file, collision
 
 ## Open
 
-- **Open:** what ES1's bullet fire and tick read of `+0x02`, `+0x04` and `+0x08`, and what the flyer code reads of `SKIMMER.DAT`'s offsets 0–17 and the zeroes at 18–33. The values sit at ES2's offsets with ES2's kind of value.
+- **Open:** what the flyer code reads of `SKIMMER.DAT`'s offsets 0–17 and the zeroes at 18–33. The values sit at ES2's offsets with ES2's kind of value.
 - **Open:** whether any mission places a `HOVTANK`. Once type 1 has a record, step 1 finds no `dat\HOVTANK` and its severity-5 assert ends the program ([`HOVTANK.DMG`](dmg-damage-file.md#hovtankdmg)).

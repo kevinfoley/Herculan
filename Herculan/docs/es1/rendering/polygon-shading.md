@@ -296,7 +296,7 @@ In `000364f8`'s second view, which draws through `ObjList_DrawFrameObjects` with
 - **Open:** what `Sim_CreateDisplay`'s display field `+0x68` selects.
 - **Open:** which entries carry kind 1.
 - **Open:** what the blend byte `000b5b65` is set to.
-- **Open:** which classes carry type tags 1 to 9 in ES1: what the array at `000bc416` and the pools `000af0b4`, `000aeef8` and `000aef68` hold, and what each one's constructor stores at `+0`.
+- **Open:** which classes carry type tags 1 to 9 in ES1: what the array at `000bc416` and the pools `g_ProjectilePool` (`000af0b4`), `000aeef8` and `000aef68` hold, and what each one's constructor stores at `+0`.
 - **Open:** what `00040d4c` is in the cockpit, and what the word at a shape instance's `+8` selects.
 - **Open:** no reference to `Light_RemovePersistent` or `Light_UnregisterPersistent` found by `es2_xref.py`, and none to `LightManager_SetSlotFalloff` but the dword at `0002116c`.
 - **Open:** what `00005d74`, which sets an effect light's intensity, is, and which ramp entry it reads.

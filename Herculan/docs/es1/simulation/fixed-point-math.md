@@ -72,7 +72,7 @@ s = (int16)((length << 16) / m)          // IDIV, truncated toward zero
 v[i] = (int16)Math_Q16Multiply2(s, v[i]) // i = 0, 1, 2
 ```
 
-The scale wraps once *m* is no more than twice the length, as ES2's does. Each product goes through the rounding `Math_Q16Multiply2` ([the primitives](#the-primitives)) and is truncated to 16 bits and sign-extended, where ES2's divides through `Math_DivInt` and keeps each product of the truncating `Math_Q16Multiply` whole. `es2_xref.py` finds two calls, from `GridShape_Raycast` ([the collision volume](world.md#the-collision-volume--gridshape)) and from `00008268` ([Open](#open)). The function opens an object file: `Math_RandomBelow`'s `RET 8` at `00063b57` is followed by two zero bytes ([where object files meet](../formats/compiler.md#where-object-files-meet-in-the-code)).
+The scale wraps once *m* is no more than twice the length, as ES2's does. Each product goes through the rounding `Math_Q16Multiply2` ([the primitives](#the-primitives)) and is truncated to 16 bits and sign-extended, where ES2's divides through `Math_DivInt` and keeps each product of the truncating `Math_Q16Multiply` whole. `es2_xref.py` finds two calls, from `GridShape_Raycast` ([the collision volume](world.md#the-collision-volume--gridshape)) and from `BeamTracer_Ctor` (`00008268`), which rescales an `ELF` beam's step to `0x400` ([the tracer](projectiles.md#the-tracer--beamtracer_ctor-00008268)). The function opens an object file: `Math_RandomBelow`'s `RET 8` at `00063b57` is followed by two zero bytes ([where object files meet](../formats/compiler.md#where-object-files-meet-in-the-code)).
 
 ## The slew
 
@@ -100,7 +100,7 @@ then adds the velocity to the position and returns it. An error and a velocity t
 
 ## Open
 
-- **Open:** what `00008268`, the other caller of `Math_NormalizeVec3ToLength`, rescales, and where the object file `Math_NormalizeVec3ToLength` opens ends: `es1_boilerplate.py bounds` finds no zero fill or module copy from it to `00063cf7`.
+- **Open:** where the object file `Math_NormalizeVec3ToLength` opens ends: `es1_boilerplate.py bounds` finds no zero fill or module copy from it to `00063cf7`.
 - **Open:** no caller of `Slew_Ctor`, `Slew_Step` or `Math_RateLimitedMoveTowardInt` found by `es2_xref.py`.
 
 - **Open:** a retail check of the two-interrupt frame: under DOSBox-X with enough cycles for 60 frames a second, a 10000-count countdown (the mission status poll, [`mission-status.md`](mission-status.md#open)) runs out in 2.6 seconds of wall time rather than 3.9, and a HERC covers a measured distance in two thirds of the time it takes at 40 frames a second or fewer.

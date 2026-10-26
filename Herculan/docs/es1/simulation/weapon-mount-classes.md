@@ -5,7 +5,7 @@
 - **Damage short of destroying a hardpoint lowers nothing in its mount.** ES1's mounts have no condition notification: a gun keeps the template's refire delay and an energy weapon its fixed charge rate, both of which damage changes in ES2 ([losing a mount](#losing-a-mount)).
 - **A hardpoint whose component is shot away disappears without a thrown gun;** of the two callers `es2_xref.py` finds, the chance roll on a direct hit is the one that throws it ([`WeaponMount_Destroy`](#losing-a-mount)).
 - **A missile launcher's row reads the missile type followed by the rack's own name**, `ARH` and `10` making `ARH10`, where ES2's reads the type alone.
-- **The grenade launcher, `GREN`, has a magazine of 8 and launches its throw through `00007b44`**, where ES2's grenade class serves `LAEW`, which has no rounds, and calls an empty function.
+- **The grenade launcher, `GREN`, has a magazine of 8 and spends a round on each throw, which launches nothing** ([the thrown round](projectiles.md#the-thrown-round)), where ES2's grenade class serves `LAEW`, which has no rounds.
 - **The ECM mount posts no message when its button is switched**, where ES2's ECM pod posts `JAMMING ENGAGED` or `JAMMING DISABLED`.
 
 Addresses are `ES1DBSIM` image addresses ([the X-32 executable](../formats/x32-executable.md#the-image)); ES2's are DBSIM's. Every function here removes its own arguments, so argument lists are in stack order ([calling conventions](../formats/compiler.md#calling-conventions)). The mount manager, the factory and the classes' destructors are in [`gunlist.cpp`](weapon-mounts.md), the next object file.
@@ -113,7 +113,7 @@ The small slot functions and the ones ES1 has as ES2's, operands and the 4-byte 
 
 Its results go where ES2's go: the shot transform at `WeaponMount_ShotTransform` (`000af144`, its translation at `000af158`), the muzzle's world point at `WeaponMount_ShotMuzzlePoint` (`000af164`) and the firing angles at `WeaponMount_ShotEuler` (`000af170`); it sets byte 0 of `+0x33` and `+0x3b`.
 
-The dispatches call ES1's shot functions where ES2's call theirs, with ES2's arguments in stack order; the last is the projectile record's subtype `+2` ([Open](#open)):
+The dispatches call ES1's shot functions where ES2's call theirs, with ES2's arguments in stack order; the last is the projectile record's subtype `+2` ([gun rounds](projectiles.md#gun-rounds--bulletcpp), [beams](projectiles.md#beams), [missiles](rockets.md#launching--rocket_fire-00007748), [the thrown round](projectiles.md#the-thrown-round)):
 
 | ES1 | ES2 |
 |---|---|
@@ -126,13 +126,13 @@ The dispatches call ES1's shot functions where ES2's call theirs, with ES2's arg
 - **`WeaponMount_FireDispatch_GunBeam` (`0000b024`)** is ES2's (`0040ea58`, [the beam branch](../../retail/simulation/weapon-firing.md#the-beam-branch), [the gun branches](../../retail/simulation/weapon-firing.md#the-gun-branches)) without `EMP2`'s second volley: after the charge-up shots, three when the template's barrels `+0x3c` are 3, it always empties the capacitor, and it never touches `+0x4d`.
 - **`ElfMount_FireDispatch` (`0000b218`)** is ES2's (`0040ec64`): the cost `+0x38` taken off the capacitor unconditionally and the burst fired at 1200.
 - **`WeaponMount_FireDispatch_Missile` (`0000af40`)** is ES2's (`0040e964`, [the ammunition dispatch](../../retail/simulation/weapon-firing.md#the-ammunition-dispatch)): it spends `+0x38` rounds unless the shot is free, clearing the rounds and the selectable byte at 0 or below, then fires a rocket for a record of type 0 and otherwise a bullet, raising the muzzle flash `+0x44` on a visible hardpoint.
-- **`GrenadeMount_FireDispatch` (`0000afd4`)** spends one round unless the shot is free, clears the charging byte `+0x46` and passes the throw distance `+0x81` to `00007b44`. ES2's (`0040ea04`) does the same and then calls `Grenade_FireNoOp`.
+- **`GrenadeMount_FireDispatch` (`0000afd4`)** spends one round unless the shot is free, clears the charging byte `+0x46` and passes the throw distance `+0x81` to `Grenade_FireNoOp` (`00007b44`), which launches nothing ([the thrown round](projectiles.md#the-thrown-round)). ES2's (`0040ea04`) does the same with its own empty function.
 
 ### Triggers
 
 **`ElfMount_TriggerHeld` (`0000acb4`)**, (mount, input), is ES2's spin-up (`0040e680`, [ELF and ELF2](../../retail/simulation/weapon-mounts.md#elf-and-elf2)) on the input's byte `+0x15` (ES2's `+0x0d`), with the cell timer at `+0x80`. It has no ELF2 branch, and it rewinds the flipbook on release without ES2's test for a model.
 
-**`GrenadeMount_TriggerHeld` (`0000ad54`)**, (mount, input), is ES2's hold-to-throw (`0040e71c`) on the input's byte `+0x15`: a press sets `+0x46` and the throw distance `+0x81` to 20000 and returns 0; held, the distance grows 1000 a call and the slot returns 0 until it passes 100000; a release, or passing 100000, returns 1, and while still held it also calls `0004d8c8`(1, 1), where ES2's calls `Input_LatchButton`(1, 1). `GREN` carries a magazine of 8 ([retail values](../formats/weapons-dat-sim.md#retail-values)), so `WeaponMount_AmmoCanFire` passes and the hold-to-throw runs.
+**`GrenadeMount_TriggerHeld` (`0000ad54`)**, (mount, input), is ES2's hold-to-throw (`0040e71c`) on the input's byte `+0x15`: a press sets `+0x46` and the throw distance `+0x81` to 20000 and returns 0; held, the distance grows 1000 a call and the slot returns 0 until it passes 100000; a release, or passing 100000, returns 1, and while still held it also calls `Input_LatchButton` (`0004d8c8`)(1, 1), as ES2's does. `GREN` carries a magazine of 8 ([retail values](../formats/weapons-dat-sim.md#retail-values)), so `WeaponMount_AmmoCanFire` passes and the hold-to-throw runs.
 
 ## Charging
 
@@ -218,8 +218,8 @@ ES1's ECM is a mount of its own class, found by weapon id where ES2 files its EC
 ## Open
 
 - **Open:** what the dwords at `0009fb40` and on are, where `es2_xref.py` finds the values `0000a304` (inside `HeapPtr_DtorMountsCopy`) and `0000a514` stored: a run of code addresses from `0000a064` to `0000a524`, mostly 16 bytes apart and not in address order, that point inside functions rather than at their entries.
-- **Open:** ES1's shot functions `00007748`, `00007b44`, `00008134`, `000081d4` and `000088cc`, called where ES2's call `Rocket_Fire`, `Grenade_FireNoOp`, `Bullet_Fire`, `Bullet_FirePowered` and `Bullet_FireBurst`; with them, what `GREN`'s throw does with the record its projectile index 22 points past the table's end at ([the projectile index](../formats/weapons-dat-sim.md#the-projectile-index)), and what name `WeaponMount_GetDisplayName` makes from it.
-- **Open:** the callees `000647f4` (the convergence product), `00006168` and `00006378` (the thrown gun), and `0004d8c8` (the grenade's button latch).
+- **Open:** what name `WeaponMount_GetDisplayName` makes from the record `GREN`'s projectile index 22 points past the table's end at ([the projectile index](../formats/weapons-dat-sim.md#the-projectile-index)); the throw itself reads nothing of it ([the thrown round](projectiles.md#the-thrown-round)).
+- **Open:** the callees `000647f4` (the convergence product), `00006168` and `00006378` (the thrown gun).
 - **Open:** what sets the mid-charge byte `+0x43`, under which a capacitor charges at 60 a tick, besides `WeaponMount_DemandFullCharge`, the full-charge slot `WeaponMounts_DemandFullChargeOnArmed` calls, to which `es2_xref.py` finds no reference ([arming, chaining and linking](weapon-mounts.md#arming-chaining-and-linking)).
 - **Open:** whether code outside the mount classes and the HERC's file weakens a damaged weapon: the HERC's damage write destroys a mount only when its component's flag clears, and its systems tick reads no mount's condition ([the HERC](mech.md)); and whether anything besides the ECM mount posts a jamming message when its button is switched.
 - **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: a missile launcher's cockpit row reads the missile type and the rack size run together (`ARH10` for a rack of ten `ARH`); `BP <CS>:0000b968` fires when a hardpoint is lost, with the second argument 1 when a gun is thrown off and 0 when the hardpoint vanishes. Two retail checks settle the Open item above: an energy weapon on a hardpoint damaged into the red charges as fast as on an undamaged one, and switching the ECM on brings up no `JAMMING` message.

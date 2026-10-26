@@ -150,7 +150,7 @@ No arguments. In order:
    - every structure of `g_BasePool`, through slot `+0x1c`, whatever its group;
    - the explosions (`g_ExplosionPool`, `00005d74`), the pool `000aef68` (`0000693c`), the pool `000aefd4` (`00006b28`) and the debris (`000aeef8`, `000064b8`), an element whose tick answers non-zero destroyed at once through slot `+0xc` with 3;
    - `maybe_WeaponChain_EoHold` (`000b5bc6`) = 0;
-   - the projectiles (`000af0b4`) through slot `+0x18`, destroyed the same way;
+   - the projectiles (`g_ProjectilePool`, `000af0b4`) through slot `+0x18`, destroyed the same way;
    - the groups, in order: one with no action (`+0x16`) runs `Group_TickMembers` ([the tick](mission-groups.md#the-tick)); one whose action has fired (its `+0xa` set) has the action cleared, so its members tick from the next tick on.
 3. `Sim_StepOnce` (`000b5b9c`), when set, is cleared and the freeze set.
 4. `Sim_PollPlayerInput` ([below](#the-players-controls--sim_pollplayerinput-0005a0c0)); a non-zero answer ends the tick with 1.

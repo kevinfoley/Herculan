@@ -157,7 +157,7 @@
       "type": "function",
       "confidence": "high",
       "name": "RegisterSubsystemLoader",
-      "description": "(phase, function) in stack order, callee-cleaned: stores function and the int16 phase in the next 6-byte record at 000bbcb0, the record index being the int16 count at 0009011c, which it increments; Subsystem_RunPhase (00000af4) walks the records. Static initialisers call it, among them Weapons_RegisterSubsystem (0000d67c), 000081f8, 00004b80 and 00005e78 for Weapons_LoadResourceTables (0000bf48), Bullet_LoadResources (00007bb0), Base_LoadResources (000046ac) and Explosion_LoadResources (00005764) at phase 2. ES2's RegisterSubsystemLoader (DBSIM 00401d64).",
+      "description": "(phase, function) in stack order, callee-cleaned: stores function and the int16 phase in the next 6-byte record at 000bbcb0, the record index being the int16 count at 0009011c, which it increments; Subsystem_RunPhase (00000af4) walks the records. Static initialisers call it, among them Weapons_RegisterSubsystem (0000d67c), Bullet_RegisterSubsystem (000081f8), 00004b80 and 00005e78 for Weapons_LoadResourceTables (0000bf48), Bullet_LoadResources (00007bb0), Base_LoadResources (000046ac) and Explosion_LoadResources (00005764) at phase 2. ES2's RegisterSubsystemLoader (DBSIM 00401d64).",
       "source": "Herculan/docs/es1/formats/weapons-dat-sim.md#the-load",
       "verified": {
         "bytes": "00000ac4+47",
@@ -2057,6 +2057,726 @@
       }
     },
     {
+      "address": "00006d9c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Projectile_LoadResources",
+      "description": "No arguments, no Ghidra function: the projectile pool's phase-2 subsystem loader, which Projectile_RegisterSubsystem (00006dc4) registers: Pool_Init (00063878)(0, 0x60, 0xa0) in stack order, a pool of 160 elements of 0x60 bytes, into g_ProjectilePool (000af0b4). It opens the pool's object file, after the three zero bytes that follow the RET at 00006d98. ES2's Projectile_LoadResources (DBSIM 0040a060), whose elements are 0x66 bytes and which also builds the delete queue.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-projectile-pool; ES1DBSIM disassembly at 00006d9c",
+      "verified": {
+        "bytes": "00006d9c+20",
+        "sha1": "f454fcbbe0df",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00006db0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Projectile_FlushDeletes",
+      "description": "No arguments, no Ghidra function: the projectile pool's phase-5 stub, which Projectile_RegisterSubsystem (00006dc4) registers: ObjectPool_FlushDeleteQueue (00063784)(g_ProjectileDeleteQueue (000af0b8), g_ProjectilePool (000af0b4)) in stack order. ES2's Projectile_FlushDeletes (DBSIM 0040a108).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-projectile-pool; ES1DBSIM disassembly at 00006db0",
+      "verified": {
+        "bytes": "00006db0+17",
+        "sha1": "3e4ad18adf69",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00006dc4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Projectile_RegisterSubsystem",
+      "description": "No arguments, no Ghidra function: the projectile pool's static initializer, entry 000adbd8 of the static constructor table: RegisterSubsystemLoader (00000ac4)(2, Projectile_LoadResources (00006d9c)) and (5, Projectile_FlushDeletes (00006db0)) in stack order, then zeroes the word 000af11c and g_ProjectilePool (000af0b4). ES2's Projectile_RegisterSubsystem (DBSIM 0040a14c).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-projectile-pool; ES1DBSIM disassembly at 00006dc4",
+      "verified": {
+        "bytes": "00006dc4+44",
+        "sha1": "28860f78db4c",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00006df0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Projectile_StaticDtor",
+      "description": "No arguments, no Ghidra function: the exit table's entry 000adca0, the projectile pool's exit routine and its object file's last code: operator_delete (000015f8)(g_ProjectilePool (000af0b4)). Its RET at 00006dfb ends on a 4-byte boundary, before HeapPtr_DtorRocketCopy (00006dfc). ES2's Projectile_StaticDtor (DBSIM 0040a1a0).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-projectile-pool; ES1DBSIM disassembly at 00006df0",
+      "verified": {
+        "bytes": "00006df0+12",
+        "sha1": "80e77cf3a42c",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00006dfc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorRocketCopy",
+      "description": "(p, flags), callee-cleaned: byte for byte the code of HeapPtr_DtorGunlistCopy (0000baf0), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/rockets.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00006dfc",
+      "verified": {
+        "bytes": "00006dfc+40",
+        "sha1": "3dddb34f4b1f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00006e24",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorRocketCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 00090a26: byte for byte the code of ConfigPart_DtorDetAnimObjCopy (000028e0), relocated operands aside, storing 00090a26 and 00090a5a where that stores 000903ae and 0009037a. ES2's ConfigPart_Dtor (DBSIM 00420730).",
+      "source": "Herculan/docs/es1/simulation/rockets.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00006e24",
+      "verified": {
+        "bytes": "00006e24+63",
+        "sha1": "ed29099ce6bd",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00006e63",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagRocketCopy",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +4 of the vtable 00090a26; the code of ConfigPart_GetClassTagDetAnimObjCopy (000028d6).",
+      "source": "Herculan/docs/es1/simulation/rockets.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00006e63",
+      "verified": {
+        "bytes": "00006e63+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00006e6c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorRocketCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 00090a5a (entered at its padding 00006e69): byte for byte the code of TSPartBase_Dtor (0005d614), relocated operands aside, storing 00090a5a where that stores 000974aa. ES2's TSPartBase_Dtor (DBSIM 0049224b).",
+      "source": "Herculan/docs/es1/simulation/rockets.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00006e6c",
+      "verified": {
+        "bytes": "00006e6c+42",
+        "sha1": "970d33e07ac9",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00006e98",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Rocket_GetTypeRecord",
+      "description": "(missile), callee-cleaned: g_RocketTypeTable (000bc1de) + the subtype byte +0x3b * 14, the missile's dat\\rockets record. ES2's Rocket_GetTypeRecord (DBSIM 0040a234), its subtype at +0x41.",
+      "source": "Herculan/docs/es1/simulation/rockets.md#the-type-table--rocket_loadresources-000073d0",
+      "verified": {
+        "bytes": "00006e98+25",
+        "sha1": "ec9a5439e431",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00006eb4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Rocket_HomingSteer",
+      "description": "(missile), callee-cleaned: ES2's Rocket_HomingSteer (DBSIM 0040a254) on ES1's fields, 6 lower. Returns with no target +0x50, or with the owner +0x44's locally piloted byte +0x9d set and the target not its selected target +0x15e; subtype 2 (+0x3b) steers only while the target's radar +0x90 or jamming byte +0x9b is set. The aim point: the component +0x54 placed by the target's slot +0x5c(target, &point, component), or with none the point +0x14 of the transform the target's slot +0x28 returns carried by Context_GetTransform (000016e8)(target + 6) with Transform_ApplyToPoint (0005f58c), or the target's position +0x20 when that slot returns 0. Math_EulerToward (00063d2c)(the missile's position +0x20, point, &bearing); the errors against the pitch +6 and heading +0xa; subtype 3 sets the owner's +0xaf; other subtypes but 2, with the owner's ECM spoof +0x96 set, move each error in [-0xc00, 0xbff] by 0xc00 toward the opposite sign. Each error is clamped to +-0x500 by Math_RateLimitedMoveToward (0005e598) and added to its angle through Math_IntegrateRateOverTick (00063fa4); the frame word +0x2c is zeroed. es2_xref finds one call, from Rocket_TickUpdate (00007198).",
+      "source": "Herculan/docs/es1/simulation/rockets.md#homing--rocket_homingsteer-00006eb4",
+      "verified": {
+        "bytes": "00006eb4+552",
+        "sha1": "6aa026bfa5e2",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000070dc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Rocket_PlayerSteer",
+      "description": "(missile, input) in stack order, callee-cleaned: ES2's Rocket_PlayerSteer (DBSIM 0040a488) on ES1's fields and input block. With the input's trigger byte +0x15 clear, zeroes the target +0x50 and the subtype +0x3b; set, subtracts Math_IntegrateRateOverTick (00063fa4)(Math_Q8Multiply (0005e7f8)(0x500, the int16 the pointer +0x1d addresses)) from the heading +0xa and adds the same of the int16 +0x21 addresses to the pitch +6, zeroes the frame word +0x2c, the trigger byte and both axes. es2_xref finds one call, from Rocket_TickUpdate (00007198), which passes PlayerInputBlock (000b17ac).",
+      "source": "Herculan/docs/es1/simulation/rockets.md#the-flown-missile--rocket_playersteer-000070dc",
+      "verified": {
+        "bytes": "000070dc+185",
+        "sha1": "2042aea9cbcf",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00007198",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Rocket_TickUpdate",
+      "description": "(missile), callee-cleaned: slot +0x18 of RocketVtable (00090ad6), the tick; returns 1 when the missile ends. ES2's Rocket_TickUpdate (DBSIM 0040a538) on ES1's fields: with the type record's Rocket_GetTypeRecord (00006e98) interval +8 non-zero, Math_CountdownTimerTick (0006410c)(+0x56) and at 0 the reload and the cell-frame step of sequence +0xa modulo its frame count; the age +0x4e + 1, ending past the record's +2; the speed +0x4c + Math_IntegrateRateOverTick (00063fa4)(record +4), averaged with the speed it opened at and capped at the projectile record (+0x48)'s +0xa; with the owner +0x44's +0x9d set and subtype 3, Rocket_PlayerSteer (000070dc)(missile, PlayerInputBlock (000b17ac)) and maybe_WeaponChain_EoHold (000b5bc6) = 1, otherwise Rocket_HomingSteer (00006eb4); then Sim_RaycastObjectList (0001f1d0) over the step Math_IntegrateRateOverTick(speed) along the frame's Y Transform_ApplyToShortPoint (0005e858), slack record +6, the projectile record's +6, +4, +8 and +0xc, the owner and the record's subtype +2; a strike ends the missile, otherwise the position +0x20 takes the step's end. Ended with subtype 3, it calls Input_LatchButton (0004d8c8)(1, 1) and zeroes the trigger byte 000b17c1, whoever the owner. It raises no strike flag and plays no proximity sound, where ES2's does both.",
+      "source": "Herculan/docs/es1/simulation/rockets.md#flight--rocket_tickupdate-00007198",
+      "verified": {
+        "bytes": "00007198+565",
+        "sha1": "e2808842ea16",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000073d0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Rocket_LoadResources",
+      "description": "No arguments: rocket.cpp's phase-2 subsystem loader, which Rocket_RegisterSubsystem (0000786c) registers. ES2's Rocket_LoadTypeTable_Unguided (DBSIM 0040a818): opens dat\\rockets with VolRStream_CtorFromPath (000567cc), asserting at severity 5 (rocket.cpp line 0xd1, the source path 00090a92 pushed at 00007406) when the stream status is set; reads the int16 count into g_RocketTypeCount (000bc1e2) and count * 14 bytes into g_RocketTypeTable (000bc1de) from operator_new (000015a4); keeps the greatest +0 plus one at 000bc1e8; and loads dts\\rockets with Shape_LoadAllRoots (000635a8)(0, 0x140008, path, g_RocketShapes (000bc1e4)) in stack order.",
+      "source": "Herculan/docs/es1/simulation/rockets.md#the-type-table--rocket_loadresources-000073d0",
+      "verified": {
+        "bytes": "000073d0+273",
+        "sha1": "f2f2a9510ed1",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000074e4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Rocket_Construct",
+      "description": "(missile, subtype) in stack order, callee-cleaned: when missile is null takes it from g_ProjectilePool (000af0b4) with Pool_Alloc (000638c8), returning 0 when that gives none; TSObj_Ctor (00001b04) on g_RocketShapes (000bc1e4)[the record's +0], ProjectileBaseVtableRocketCopy (00090ab2) at +2, the type tag 3 at +0, the subtype byte +0x3b, +0x48 = 0; then RocketVtable (00090ad6), the target +0x50 = 0 and +0x48 = Proj_LookupRecord (0000c2d0)(subtype, 0). Returns the missile. es2_xref finds one call, from Rocket_Fire (00007748). ES2's Rocket_Construct (DBSIM 0040a948), which builds the object it is given.",
+      "source": "Herculan/docs/es1/simulation/rockets.md#launching--rocket_fire-00007748",
+      "verified": {
+        "bytes": "000074e4+153",
+        "sha1": "f64ab6758955",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00007580",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_RenderRocketCopy",
+      "description": "(object): slot +4 of the vtable ProjectileBaseVtableRocketCopy (00090ab2) (entered at its padding 0000757d), and slot +4 of the vtable RocketVtable (00090ad6) (entered at its padding 0000757d), and slot +4 of the vtable 00090afa: byte for byte the code of TSObj_Render (00001cdc), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/rockets.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00007580",
+      "verified": {
+        "bytes": "00007580+31",
+        "sha1": "a5482694bee1",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000075a0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_GetPositionRocketCopy",
+      "description": "(object): slot +8 of the vtable ProjectileBaseVtableRocketCopy (00090ab2) (entered at its padding 0000759f), and slot +8 of the vtable RocketVtable (00090ad6) (entered at its padding 0000759f), and slot +8 of the vtable 00090afa: byte for byte the code of TSObj_GetPosition (00001cfc), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/rockets.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 000075a0",
+      "verified": {
+        "bytes": "000075a0+20",
+        "sha1": "a1b95c43ba5f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000075b4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ProjectileBase_DtorRocketCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of ProjectileBaseVtableRocketCopy (00090ab2), rocket.cpp's copy of the projectile base's destructor: stores ProjectileBaseVtableRocketCopy (00090ab2) and 00090afa at +2, destroys the shape instance +0x2e through its slot +0x1c with 3 when there is one, and stores 00090b1a and 00090b3a. It tests neither the object nor the flags and frees nothing. ES2's ProjectileBase_Dtor (DBSIM 0040c324), which tests for null and frees on flags bit 0.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-projectile-classes",
+      "verified": {
+        "bytes": "000075b4+63",
+        "sha1": "5389086660bd",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000075f3",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_ReturnZeroRocketCopy",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +0x10 of the vtable ProjectileBaseVtableRocketCopy (00090ab2), and slot +0x10 of the vtable RocketVtable (00090ad6), and slot +0x10 of the vtable 00090afa, and slot +0x10 of the vtable 00090b1a, and slot +0x10 of the vtable 00090b3a; the code of TSObj_ReturnZero (000018e8).",
+      "source": "Herculan/docs/es1/simulation/rockets.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 000075f3",
+      "verified": {
+        "bytes": "000075f3+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "000075fc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_GetRadiusRocketCopy",
+      "description": "(object): slot +0x14 of the vtable ProjectileBaseVtableRocketCopy (00090ab2) (entered at its padding 000075f9), and slot +0x14 of the vtable RocketVtable (00090ad6) (entered at its padding 000075f9), and slot +0x14 of the vtable 00090afa (entered at its padding 000075f9): byte for byte the code of TSObj_GetRadius (00001d58), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/rockets.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 000075fc",
+      "verified": {
+        "bytes": "000075fc+71",
+        "sha1": "81f34db4094a",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00007644",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Rocket_Dtor",
+      "description": "(missile, flags), callee-cleaned: slot +0xc of RocketVtable (00090ad6) by its padding 00007643: with the missile non-null stores RocketVtable, ProjectileBaseVtableRocketCopy (00090ab2) and 00090afa at +2, destroys the shape instance +0x2e through its slot +0x1c with 3 when there is one, stores 00090b1a and 00090b3a, and on flags bit 0 queues the missile on g_ProjectileDeleteQueue (000af0b8) with ObjectPool_QueueForDelete (00063760). ES2's Rocket_Dtor (DBSIM 0040ab8d), which frees it with Mem_Delete.",
+      "source": "Herculan/docs/es1/simulation/rockets.md#the-destructors",
+      "verified": {
+        "bytes": "00007644+96",
+        "sha1": "8a415b30f39c",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000076a4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_DtorRocketCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of the vtable 00090afa: byte for byte the code of TSObj_Dtor (00001d10), relocated operands aside, storing 00090afa and 00090b1a and 00090b3a where that stores 000902ea and 000902ca and 0009020a. ES2's TSObj_Dtor (DBSIM 0046b890).",
+      "source": "Herculan/docs/es1/simulation/rockets.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 000076a4",
+      "verified": {
+        "bytes": "000076a4+72",
+        "sha1": "067925856e39",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000076ec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MatObj_GetPositionRocketCopy",
+      "description": "(object): slot +8 of the vtable 00090b1a: byte for byte the code of MatObj_GetPosition (00001c9c), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/rockets.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 000076ec",
+      "verified": {
+        "bytes": "000076ec+20",
+        "sha1": "a1b95c43ba5f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00007700",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MatObj_DtorRocketCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of the vtable 00090b1a: byte for byte the code of MatObj_Dtor (00001cb0), relocated operands aside, storing 00090b1a and 00090b3a where that stores 000902ca and 0009020a. ES2's MatObj_Dtor (DBSIM 0046b97d).",
+      "source": "Herculan/docs/es1/simulation/rockets.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00007700",
+      "verified": {
+        "bytes": "00007700+42",
+        "sha1": "2b412e388c9f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000772a",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Drawable_GetRadiusRocketCopy",
+      "description": "Frameless: two NOPs, then XOR EAX,EAX and RET 4: returns 0. Slot +0x14 of the vtable 00090b1a, and slot +0x14 of the vtable 00090b3a; the code of Drawable_GetRadius (000018ed). ES2's Drawable_GetRadiusZero (DBSIM 004785c6).",
+      "source": "Herculan/docs/es1/simulation/rockets.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0000772a",
+      "verified": {
+        "bytes": "0000772a+7",
+        "sha1": "caf3d3407fd2",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00007734",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Drawable_DtorRocketCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of the vtable 00090b3a (entered at its padding 00007731): byte for byte the code of Drawable_Dtor (000018d4), relocated operands aside, storing 00090b3a where that stores 0009020a. ES2's Drawable_Dtor (DBSIM 00478615).",
+      "source": "Herculan/docs/es1/simulation/rockets.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00007734",
+      "verified": {
+        "bytes": "00007734+19",
+        "sha1": "a66fa9f105ac",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00007748",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Rocket_Fire",
+      "description": "(speed, machine, angles, muzzle point, subtype) in stack order, callee-cleaned: ES2's Rocket_Fire (DBSIM 0040a9c4) on ES1's fields. Rocket_Construct (000074e4)(0, subtype), then through what it returns: the muzzle point to +0x20, the six bytes of angles to +6, the frame word +0x2c = 0, the owner +0x44, the speed +0x4c = speed + 500, the 8 bytes at +0x3c and the age +0x4e zeroed. The lock is 1 when the machine's +0x9d is clear and the subtype 3, otherwise the machine's slot +0x70(machine, subtype); with it the target +0x50 = the machine's +0x15e and, with a target, the component +0x54 = the target's slot +0x58(target, the missile + 6); without it +0x50 = 0. With the machine's +0x9d set, MfdMissileView_TrackedRound (00093914) = the missile. Then Sound_PlayAt (0004deb8)(muzzle point, the type record's +0xc + 10), the record from Rocket_GetTypeRecord (00006e98). es2_xref finds two calls: from WeaponMount_FireDispatch_Missile (0000af40), which passes speed 0, and from 0001bba4.",
+      "source": "Herculan/docs/es1/simulation/rockets.md#launching--rocket_fire-00007748",
+      "verified": {
+        "bytes": "00007748+292",
+        "sha1": "ea9b2e160a3f",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000786c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Rocket_RegisterSubsystem",
+      "description": "No arguments, no Ghidra function: rocket.cpp's static initializer, entry 000adbdc of the static constructor table and the file's last code: RegisterSubsystemLoader (00000ac4)(2, Rocket_LoadResources (000073d0)) in stack order. Its RET at 00007878 is followed by three zero bytes. ES2's Rocket_RegisterSubsystem (DBSIM 0040ab18).",
+      "source": "Herculan/docs/es1/simulation/rockets.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0000786c",
+      "verified": {
+        "bytes": "0000786c+13",
+        "sha1": "7e4316c98b9d",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000787c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorGrenadeCopy",
+      "description": "(p, flags), callee-cleaned: byte for byte the code of HeapPtr_DtorGunlistCopy (0000baf0), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0000787c",
+      "verified": {
+        "bytes": "0000787c+40",
+        "sha1": "ffc365e7448b",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000078a4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Grenade_GetTypeRecord",
+      "description": "(round), callee-cleaned: g_GrenadeTypeTable (000bc1ea) + the subtype byte +0x3b * 8. No reference found by es2_xref. ES2's Grenade_GetTypeRecord (DBSIM 0040ac20).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-thrown-round",
+      "verified": {
+        "bytes": "000078a4+25",
+        "sha1": "5ffb198aa431",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000078c0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Grenade_LoadResourcesNoOp",
+      "description": "Frameless: a lone RET, after three NOPs of padding. The thrown round's phase-2 subsystem loader, which Grenade_RegisterSubsystem (00007b5c) registers. ES2's Grenade_LoadResourcesNoOp (DBSIM 0040ac38).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-thrown-round; ES1DBSIM disassembly at 000078c0",
+      "verified": {
+        "bytes": "000078c0+1",
+        "sha1": "8bf7b464aaa2",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "000078c4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Grenade_Construct",
+      "description": "(round, subtype) in stack order, callee-cleaned: when round is null takes it from g_ProjectilePool (000af0b4) with Pool_Alloc (000638c8), returning 0 when that gives none; TSObj_Ctor (00001b04) on g_GrenadeShapes (000bc1f0)[the +0 of g_GrenadeTypeTable (000bc1ea)[subtype], 8 bytes a record], ProjectileBaseVtableGrenadeCopy (00090b5a) at +2, the type tag 3 at +0, the subtype byte +0x3b, +0x48 = 0; then GrenadeVtable (00090b7e) and +0x48 = Proj_LookupRecord (0000c2d0)(subtype, 3). No reference found by es2_xref. ES2's Grenade_Construct (DBSIM 0040ac3c).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-thrown-round",
+      "verified": {
+        "bytes": "000078c4+184",
+        "sha1": "49d418d78c9b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000797c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_RenderGrenadeCopy",
+      "description": "(object): slot +4 of the vtable ProjectileBaseVtableGrenadeCopy (00090b5a), and slot +4 of the vtable GrenadeVtable (00090b7e), and slot +4 of the vtable 00090ba2: byte for byte the code of TSObj_Render (00001cdc), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0000797c",
+      "verified": {
+        "bytes": "0000797c+31",
+        "sha1": "e7de82ce38a5",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000799c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_GetPositionGrenadeCopy",
+      "description": "(object): slot +8 of the vtable ProjectileBaseVtableGrenadeCopy (00090b5a) (entered at its padding 0000799b), and slot +8 of the vtable GrenadeVtable (00090b7e) (entered at its padding 0000799b), and slot +8 of the vtable 00090ba2: byte for byte the code of TSObj_GetPosition (00001cfc), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0000799c",
+      "verified": {
+        "bytes": "0000799c+20",
+        "sha1": "a1b95c43ba5f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000079b0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ProjectileBase_DtorGrenadeCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of ProjectileBaseVtableGrenadeCopy (00090b5a): the code of ProjectileBase_DtorRocketCopy (000075b4), identical after normalisation by es2_naming diff, storing ProjectileBaseVtableGrenadeCopy (00090b5a), 00090ba2, 00090bc2 and 00090be2.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-projectile-classes",
+      "verified": {
+        "bytes": "000079b0+63",
+        "sha1": "0158f80c8b63",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000079ef",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_ReturnZeroGrenadeCopy",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +0x10 of the vtable ProjectileBaseVtableGrenadeCopy (00090b5a), and slot +0x10 of the vtable GrenadeVtable (00090b7e), and slot +0x10 of the vtable 00090ba2, and slot +0x10 of the vtable 00090bc2, and slot +0x10 of the vtable 00090be2; the code of TSObj_ReturnZero (000018e8).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 000079ef",
+      "verified": {
+        "bytes": "000079ef+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "000079f8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_GetRadiusGrenadeCopy",
+      "description": "(object): slot +0x14 of the vtable ProjectileBaseVtableGrenadeCopy (00090b5a) (entered at its padding 000079f5), and slot +0x14 of the vtable GrenadeVtable (00090b7e) (entered at its padding 000079f5), and slot +0x14 of the vtable 00090ba2 (entered at its padding 000079f5): byte for byte the code of TSObj_GetRadius (00001d58), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 000079f8",
+      "verified": {
+        "bytes": "000079f8+71",
+        "sha1": "81f34db4094a",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00007a40",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Grenade_Dtor",
+      "description": "(round, flags), callee-cleaned: slot +0xc of GrenadeVtable (00090b7e) by its padding 00007a3f: with the round non-null stores GrenadeVtable, ProjectileBaseVtableGrenadeCopy (00090b5a) and 00090ba2 at +2, destroys the shape instance +0x2e through its slot +0x1c with 3 when there is one, stores 00090bc2 and 00090be2, and on flags bit 0 queues the round on g_ProjectileDeleteQueue (000af0b8) with ObjectPool_QueueForDelete (00063760). ES2's Grenade_Dtor (DBSIM 0040ad2c), which frees it with Mem_Delete.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-thrown-round",
+      "verified": {
+        "bytes": "00007a40+96",
+        "sha1": "1d68b75a3c15",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00007aa0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_DtorGrenadeCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of the vtable 00090ba2: byte for byte the code of TSObj_Dtor (00001d10), relocated operands aside, storing 00090ba2 and 00090bc2 and 00090be2 where that stores 000902ea and 000902ca and 0009020a. ES2's TSObj_Dtor (DBSIM 0046b890).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00007aa0",
+      "verified": {
+        "bytes": "00007aa0+72",
+        "sha1": "f2ba35428cb8",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00007ae8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MatObj_GetPositionGrenadeCopy",
+      "description": "(object): slot +8 of the vtable 00090bc2: byte for byte the code of MatObj_GetPosition (00001c9c), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00007ae8",
+      "verified": {
+        "bytes": "00007ae8+20",
+        "sha1": "a1b95c43ba5f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00007afc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MatObj_DtorGrenadeCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of the vtable 00090bc2: byte for byte the code of MatObj_Dtor (00001cb0), relocated operands aside, storing 00090bc2 and 00090be2 where that stores 000902ca and 0009020a. ES2's MatObj_Dtor (DBSIM 0046b97d).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00007afc",
+      "verified": {
+        "bytes": "00007afc+42",
+        "sha1": "ce3222952bf4",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00007b26",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Drawable_GetRadiusGrenadeCopy",
+      "description": "Frameless: two NOPs, then XOR EAX,EAX and RET 4: returns 0. Slot +0x14 of the vtable 00090bc2, and slot +0x14 of the vtable 00090be2; the code of Drawable_GetRadius (000018ed). ES2's Drawable_GetRadiusZero (DBSIM 004785c6).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00007b26",
+      "verified": {
+        "bytes": "00007b26+7",
+        "sha1": "caf3d3407fd2",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00007b30",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Drawable_DtorGrenadeCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of the vtable 00090be2 (entered at its padding 00007b2d): byte for byte the code of Drawable_Dtor (000018d4), relocated operands aside, storing 00090be2 where that stores 0009020a. ES2's Drawable_Dtor (DBSIM 00478615).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00007b30",
+      "verified": {
+        "bytes": "00007b30+19",
+        "sha1": "3c25c991e749",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00007b44",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Grenade_FireNoOp",
+      "description": "Frameless: RET 0x14, removing five arguments it does not read. es2_xref finds one call, from GrenadeMount_FireDispatch (0000afd4), with (the throw distance +0x81, machine, angles, muzzle point, subtype), where the other dispatches fire a shot: the grenade launcher launches nothing. ES2's Grenade_FireNoOp (DBSIM 0040acac), a bare RET.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-thrown-round; ES1DBSIM disassembly at 00007b44",
+      "verified": {
+        "bytes": "00007b44+3",
+        "sha1": "9e0c71f839a2",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00007b47",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Grenade_TickNoOp",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +0x18 of GrenadeVtable (00090b7e), the tick, so a thrown round would never end. ES2's Grenade_TickNoOp (DBSIM 0040acb4).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-thrown-round; ES1DBSIM disassembly at 00007b47",
+      "verified": {
+        "bytes": "00007b47+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00007b50",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Grenade_NoOp",
+      "description": "Frameless: RET 4, after three NOPs of padding. No reference to it or its padding found by es2_xref. ES2's Grenade_NoOp (DBSIM 0040acbc).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-thrown-round; ES1DBSIM disassembly at 00007b50",
+      "verified": {
+        "bytes": "00007b50+3",
+        "sha1": "6d2a7422bc83",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00007b54",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Grenade_ReturnZero",
+      "description": "Frameless: XOR EAX,EAX and RET 4, after a NOP of padding: returns 0. No reference to it or its padding found by es2_xref. ES2's Grenade_ReturnZero (DBSIM 0040acc4).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-thrown-round; ES1DBSIM disassembly at 00007b54",
+      "verified": {
+        "bytes": "00007b54+5",
+        "sha1": "0f864a8a1b9e",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00007b5c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Grenade_RegisterSubsystem",
+      "description": "No arguments, no Ghidra function: the thrown round's static initializer, entry 000adbe0 of the static constructor table and its object file's last code: RegisterSubsystemLoader (00000ac4)(2, Grenade_LoadResourcesNoOp (000078c0)) in stack order. Its RET at 00007b68 is followed by three zero bytes. ES2's Grenade_RegisterSubsystem (DBSIM 0040accc).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00007b5c",
+      "verified": {
+        "bytes": "00007b5c+13",
+        "sha1": "068647e53ed6",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00007b6c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorBulletCopy",
+      "description": "(p, flags), callee-cleaned: byte for byte the code of HeapPtr_DtorGunlistCopy (0000baf0), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00007b6c",
+      "verified": {
+        "bytes": "00007b6c+40",
+        "sha1": "774d518a7936",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "00007b94",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -2092,13 +2812,523 @@
       "type": "function",
       "confidence": "high",
       "name": "Bullet_Construct",
-      "description": "(round, id) in stack order, callee-cleaned: when round is null allocates it from the pool 000af0b4, returning 0 when that fails; TSObj_Ctor on the root 000bc1fc [record +0x00], type tag 3, type byte +0x3b = id, vptr 00090c32 then 00090c56; +0x48 = Proj_LookupRecord(id, 2); the frame countdown at +0x53 = record +0x06. ES2's Bullet_Construct (DBSIM 0040af6c), which keeps the record at +0x4e and the countdown at +0x59.",
+      "description": "(round, id) in stack order, callee-cleaned: when round is null allocates it from the pool g_ProjectilePool (000af0b4), returning 0 when that fails; TSObj_Ctor on the root 000bc1fc [record +0x00], type tag 3, type byte +0x3b = id, vptr ProjectileBaseVtableBulletCopy (00090c32) then BulletVtable (00090c56); +0x48 = Proj_LookupRecord(id, 2); the frame countdown at +0x53 = record +0x06. ES2's Bullet_Construct (DBSIM 0040af6c), which keeps the record at +0x4e and the countdown at +0x59.",
       "source": "Herculan/docs/es1/formats/bullets-skimmer-dat.md#the-load",
       "verified": {
         "bytes": "00007d08+180",
         "sha1": "99111384680f",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "00007dbc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_RenderBulletCopy",
+      "description": "(object): slot +4 of the vtable ProjectileBaseVtableBulletCopy (00090c32), and slot +4 of the vtable BulletVtable (00090c56), and slot +4 of the vtable 00090c7a: byte for byte the code of TSObj_Render (00001cdc), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00007dbc",
+      "verified": {
+        "bytes": "00007dbc+31",
+        "sha1": "6638d97cc413",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00007ddc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_GetPositionBulletCopy",
+      "description": "(object): slot +8 of the vtable ProjectileBaseVtableBulletCopy (00090c32) (entered at its padding 00007ddb), and slot +8 of the vtable BulletVtable (00090c56) (entered at its padding 00007ddb), and slot +8 of the vtable 00090c7a: byte for byte the code of TSObj_GetPosition (00001cfc), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00007ddc",
+      "verified": {
+        "bytes": "00007ddc+20",
+        "sha1": "a1b95c43ba5f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00007df0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ProjectileBase_DtorBulletCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of ProjectileBaseVtableBulletCopy (00090c32): the code of ProjectileBase_DtorRocketCopy (000075b4), identical after normalisation by es2_naming diff, storing ProjectileBaseVtableBulletCopy (00090c32), 00090c7a, 00090c9a and 00090cba.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-projectile-classes",
+      "verified": {
+        "bytes": "00007df0+63",
+        "sha1": "a6a5a746c4c8",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00007e2f",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_ReturnZeroBulletCopy",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +0x10 of the vtable ProjectileBaseVtableBulletCopy (00090c32), and slot +0x10 of the vtable BulletVtable (00090c56), and slot +0x10 of the vtable 00090c7a, and slot +0x10 of the vtable 00090c9a, and slot +0x10 of the vtable 00090cba; the code of TSObj_ReturnZero (000018e8).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00007e2f",
+      "verified": {
+        "bytes": "00007e2f+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00007e38",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_GetRadiusBulletCopy",
+      "description": "(object): slot +0x14 of the vtable ProjectileBaseVtableBulletCopy (00090c32) (entered at its padding 00007e35), and slot +0x14 of the vtable BulletVtable (00090c56) (entered at its padding 00007e35), and slot +0x14 of the vtable 00090c7a (entered at its padding 00007e35): byte for byte the code of TSObj_GetRadius (00001d58), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00007e38",
+      "verified": {
+        "bytes": "00007e38+71",
+        "sha1": "81f34db4094a",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00007e80",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Bullet_Dtor",
+      "description": "(round, flags), callee-cleaned: slot +0xc of BulletVtable (00090c56) by its padding 00007e7f: with the round non-null stores BulletVtable, ProjectileBaseVtableBulletCopy (00090c32) and 00090c7a at +2, destroys the shape instance +0x2e through its slot +0x1c with 3 when there is one, stores 00090c9a and 00090cba, and on flags bit 0 queues the round on g_ProjectileDeleteQueue (000af0b8) with ObjectPool_QueueForDelete (00063760). ES2's Bullet_Dtor (DBSIM 0040b64d), which frees it with Mem_Delete.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#flight--bullet_tickupdate-00007f84",
+      "verified": {
+        "bytes": "00007e80+96",
+        "sha1": "2143a36ba5a9",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00007ee0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_DtorBulletCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of the vtable 00090c7a: byte for byte the code of TSObj_Dtor (00001d10), relocated operands aside, storing 00090c7a and 00090c9a and 00090cba where that stores 000902ea and 000902ca and 0009020a. ES2's TSObj_Dtor (DBSIM 0046b890).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00007ee0",
+      "verified": {
+        "bytes": "00007ee0+72",
+        "sha1": "1048713528fc",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00007f28",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MatObj_GetPositionBulletCopy",
+      "description": "(object): slot +8 of the vtable 00090c9a: byte for byte the code of MatObj_GetPosition (00001c9c), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00007f28",
+      "verified": {
+        "bytes": "00007f28+20",
+        "sha1": "a1b95c43ba5f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00007f3c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MatObj_DtorBulletCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of the vtable 00090c9a: byte for byte the code of MatObj_Dtor (00001cb0), relocated operands aside, storing 00090c9a and 00090cba where that stores 000902ca and 0009020a. ES2's MatObj_Dtor (DBSIM 0046b97d).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00007f3c",
+      "verified": {
+        "bytes": "00007f3c+42",
+        "sha1": "c81c2899d715",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00007f66",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Drawable_GetRadiusBulletCopy",
+      "description": "Frameless: two NOPs, then XOR EAX,EAX and RET 4: returns 0. Slot +0x14 of the vtable 00090c9a, and slot +0x14 of the vtable 00090cba; the code of Drawable_GetRadius (000018ed). ES2's Drawable_GetRadiusZero (DBSIM 004785c6).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00007f66",
+      "verified": {
+        "bytes": "00007f66+7",
+        "sha1": "caf3d3407fd2",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00007f70",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Drawable_DtorBulletCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of the vtable 00090cba (entered at its padding 00007f6d): byte for byte the code of Drawable_Dtor (000018d4), relocated operands aside, storing 00090cba where that stores 0009020a. ES2's Drawable_Dtor (DBSIM 00478615).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00007f70",
+      "verified": {
+        "bytes": "00007f70+19",
+        "sha1": "88bea2b4d984",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00007f84",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Bullet_TickUpdate",
+      "description": "(round), callee-cleaned: slot +0x18 of BulletVtable (00090c56) by its padding 00007f83, the tick; returns 1 when the round ends. ES2's Bullet_TickUpdate (DBSIM 0040b124) without the homing and the plasma branch, on ES1's fields: with the type record's Bullet_GetTypeRecord (00007b94) interval +6 non-zero, Math_CountdownTimerTick (0006410c)(+0x52) and at 0 the reload and the step of the shape instance's first cell frame modulo the first sequence's frame count; the age +0x4e + 1, ending past the record's +2, where ES2's ages by Math_IntegrateRateOverTick(0x200) against +2 * 0x200; then Sim_RaycastObjectList (0001f1d0) over the step Math_IntegrateRateOverTick (00063fa4)(+0x4c) along the frame's Y Transform_ApplyToShortPoint (0005e858), slack record +4, the projectile record (+0x48)'s +6 and +4 each Math_Q10Multiply (0005e818)'d by the power +0x50 when it is non-zero, its +8 and +0xc, the owner +0x44 and 5; a strike ends the round, otherwise the position +0x20 takes the step's end.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#flight--bullet_tickupdate-00007f84",
+      "verified": {
+        "bytes": "00007f84+430",
+        "sha1": "19268c665fc8",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00008134",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Bullet_Fire",
+      "description": "(machine, angles, muzzle point, subtype) in stack order, callee-cleaned: Bullet_Construct (00007d08)(0, subtype), then through what it returns: the muzzle point to +0x20, the six bytes of angles to +6, the frame word +0x2c = 0, the owner +0x44, the 8 bytes at +0x3c, the power +0x50 and the age +0x4e zeroed, and the speed +0x4c = the projectile record (+0x48)'s +0xa; Sound_PlayAt (0004deb8)(muzzle point, the type record's +8 + 10), the record from Bullet_GetTypeRecord (00007b94). Returns the round. ES2's Bullet_Fire (DBSIM 0040b43c), which also scatters the angles and adds the machine's travel speed. es2_xref finds seven calls: from Bullet_FirePowered (000081d4), WeaponMount_FireDispatch_GunBeam (0000b024) and WeaponMount_FireDispatch_Missile (0000af40), and two each from 00003364 and 0001bba4, which pass subtype 2.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#firing--bullet_fire-00008134",
+      "verified": {
+        "bytes": "00008134+159",
+        "sha1": "f05f2148d77b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000081d4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Bullet_FirePowered",
+      "description": "(power, machine, angles, muzzle point, subtype) in stack order, callee-cleaned: Bullet_Fire (00008134)(machine, angles, muzzle point, subtype), then the power +0x50 = power. es2_xref finds three calls, from WeaponMount_FireDispatch_GunBeam (0000b024). ES2's Bullet_FirePowered (DBSIM 0040b5a0), which also gives subtype 9 the machine's target.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#firing--bullet_fire-00008134",
+      "verified": {
+        "bytes": "000081d4+36",
+        "sha1": "9e44f508235a",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000081f8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Bullet_RegisterSubsystem",
+      "description": "No arguments, no Ghidra function: bullet.cpp's static initializer, entry 000adbe4 of the static constructor table and the file's last code: RegisterSubsystemLoader (00000ac4)(2, Bullet_LoadResources (00007bb0)) in stack order. Its RET at 00008204 is followed by three zero bytes. ES2's Bullet_RegisterSubsystem (DBSIM 0040b5d8).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 000081f8",
+      "verified": {
+        "bytes": "000081f8+13",
+        "sha1": "ae8634c3c223",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00008208",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorBeamCopy",
+      "description": "(p, flags), callee-cleaned: byte for byte the code of HeapPtr_DtorGunlistCopy (0000baf0), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00008208",
+      "verified": {
+        "bytes": "00008208+40",
+        "sha1": "ca16ef8db60e",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00008230",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Beam_BuildIndexTable",
+      "description": "No arguments: the beams' phase-2 subsystem loader, which Beam_RegisterSubsystem (000089c4) registers: fills the 80 int16 of Beam_QuadIndexTable (000bc202) with (i >> 1) + Beam_QuadIndexOffsets (00090cf0)[i & 3]. ES2's Beam_LoadResourceTables (DBSIM 0040b6e0), which builds 120 entries the same way and also loads dat\\beam and dba\\beamtex.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#drawing--beamtracer_draw-000087e0",
+      "verified": {
+        "bytes": "00008230+56",
+        "sha1": "8c5646d6ace8",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00008268",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "BeamTracer_Ctor",
+      "description": "(tracer, owner, far end, muzzle point, subtype) in stack order, callee-cleaned: when tracer is null takes it from g_ProjectilePool (000af0b4) with Pool_Alloc (000638c8), returning 0 when that gives none; reads the element's int16 +0x4c, TSObj_Ctor (00001b04)(tracer, 0), ProjectileBaseVtableBeamCopy (00090cfa) at +2, the type tag 3 at +0, that word's low byte at +0x3b, +0x48 = 0; then BeamTracerVtable (00090d1e), the subtype +0x4c and the owner +0x44. Subtype 1: the node count (Math_DistanceBetweenPoints (00063c20)(far end, muzzle) >> 10) + 1 at +0x4e, twice that + 2 points at +0x50 from __vec_new (00061038)(00008693, count, 0xc, 0) at +0x52, the flag +0x4f = 1, and from the muzzle a step of the far end less the muzzle rescaled by Math_NormalizeVec3ToLength (00063b5c)(0x400, step): node k the running point, the last the far end, each after the first raised by Math_RandomNext (00063af4)(000b5bd4) & 0x7f on each axis, written to points 2k and 2k+1 with Beam_HalfWidths (00090cd8)[subtype] added to point 2k's Z. Otherwise two quads at +0x4e, 8 points, the flag 0: points 0, 1, 4 and 5 the muzzle and 2, 3, 6 and 7 the far end, with the half-width added to and taken from the Z of 0/1 and 2/3 and the X of 4/5 and 6/7. Then the life countdown's int16 +0x57 = 0 and the position +0x20 = the muzzle point. es2_xref finds one call, from Bullet_FireBurst (000088cc). ES2's BeamTracer_Ctor (DBSIM 0040b804), whose jagged branch takes subtypes 1 and 7, whose straight beam is two points, and which arms the countdown at 0x38.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-tracer--beamtracer_ctor-00008268",
+      "verified": {
+        "bytes": "00008268+871",
+        "sha1": "5e9a151ffaa4",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000085d0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_RenderBeamCopy",
+      "description": "(object): slot +4 of the vtable ProjectileBaseVtableBeamCopy (00090cfa) (entered at its padding 000085cf), and slot +4 of the vtable 00090d42: byte for byte the code of TSObj_Render (00001cdc), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 000085d0",
+      "verified": {
+        "bytes": "000085d0+31",
+        "sha1": "af0182aaab22",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000085f0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_GetPositionBeamCopy",
+      "description": "(object): slot +8 of the vtable ProjectileBaseVtableBeamCopy (00090cfa) (entered at its padding 000085ef), and slot +8 of the vtable BeamTracerVtable (00090d1e) (entered at its padding 000085ef), and slot +8 of the vtable 00090d42: byte for byte the code of TSObj_GetPosition (00001cfc), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 000085f0",
+      "verified": {
+        "bytes": "000085f0+20",
+        "sha1": "a1b95c43ba5f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00008604",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ProjectileBase_DtorBeamCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of ProjectileBaseVtableBeamCopy (00090cfa): the code of ProjectileBase_DtorRocketCopy (000075b4), identical after normalisation by es2_naming diff, storing ProjectileBaseVtableBeamCopy (00090cfa), 00090d42, 00090d62 and 00090d82.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-projectile-classes",
+      "verified": {
+        "bytes": "00008604+63",
+        "sha1": "0564dd1d47d4",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00008643",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_ReturnZeroBeamCopy",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +0x10 of the vtable ProjectileBaseVtableBeamCopy (00090cfa), and slot +0x10 of the vtable BeamTracerVtable (00090d1e), and slot +0x10 of the vtable 00090d42, and slot +0x10 of the vtable 00090d62, and slot +0x10 of the vtable 00090d82; the code of TSObj_ReturnZero (000018e8).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00008643",
+      "verified": {
+        "bytes": "00008643+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0000864c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_GetRadiusBeamCopy",
+      "description": "(object): slot +0x14 of the vtable ProjectileBaseVtableBeamCopy (00090cfa) (entered at its padding 00008649), and slot +0x14 of the vtable BeamTracerVtable (00090d1e) (entered at its padding 00008649), and slot +0x14 of the vtable 00090d42 (entered at its padding 00008649): byte for byte the code of TSObj_GetRadius (00001d58), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0000864c",
+      "verified": {
+        "bytes": "0000864c+71",
+        "sha1": "81f34db4094a",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00008694",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "medium",
+      "name": "maybe_Point3I_CtorBeamCopy",
+      "description": "(p), callee-cleaned: allocates 0xc bytes when p is null, returning 0 when that fails, inlines an 8-byte base's constructor and returns p. The beams' file's copy of maybe_Point3I_Ctor (000633fc), the code es1_boilerplate.py scan finds it shares with maybe_Point3I_CtorWorldCopy (0001e604) and four others. BeamTracer_Ctor (00008268) passes its padding entry 00008693 to __vec_new (00061038) for the tracer's points.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-tracer--beamtracer_ctor-00008268",
+      "verified": {
+        "bytes": "00008694+48",
+        "sha1": "67f246777cad",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000086c4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_DtorBeamCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of the vtable 00090d42: byte for byte the code of TSObj_Dtor (00001d10), relocated operands aside, storing 00090d42 and 00090d62 and 00090d82 where that stores 000902ea and 000902ca and 0009020a. ES2's TSObj_Dtor (DBSIM 0046b890).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 000086c4",
+      "verified": {
+        "bytes": "000086c4+72",
+        "sha1": "299ac99c85d6",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000870c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MatObj_GetPositionBeamCopy",
+      "description": "(object): slot +8 of the vtable 00090d62: byte for byte the code of MatObj_GetPosition (00001c9c), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0000870c",
+      "verified": {
+        "bytes": "0000870c+20",
+        "sha1": "a1b95c43ba5f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00008720",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MatObj_DtorBeamCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of the vtable 00090d62: byte for byte the code of MatObj_Dtor (00001cb0), relocated operands aside, storing 00090d62 and 00090d82 where that stores 000902ca and 0009020a. ES2's MatObj_Dtor (DBSIM 0046b97d).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00008720",
+      "verified": {
+        "bytes": "00008720+42",
+        "sha1": "c72ab0403d90",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000874a",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Drawable_GetRadiusBeamCopy",
+      "description": "Frameless: two NOPs, then XOR EAX,EAX and RET 4: returns 0. Slot +0x14 of the vtable 00090d62, and slot +0x14 of the vtable 00090d82; the code of Drawable_GetRadius (000018ed). ES2's Drawable_GetRadiusZero (DBSIM 004785c6).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0000874a",
+      "verified": {
+        "bytes": "0000874a+7",
+        "sha1": "caf3d3407fd2",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00008754",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Drawable_DtorBeamCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of the vtable 00090d82 (entered at its padding 00008751): byte for byte the code of Drawable_Dtor (000018d4), relocated operands aside, storing 00090d82 where that stores 0009020a. ES2's Drawable_Dtor (DBSIM 00478615).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00008754",
+      "verified": {
+        "bytes": "00008754+19",
+        "sha1": "624d138b5241",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00008768",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "BeamTracer_Dtor",
+      "description": "(tracer, flags), callee-cleaned: slot +0xc of BeamTracerVtable (00090d1e) by its padding 00008767: with the tracer non-null stores BeamTracerVtable at +2, frees the point array +0x52 with __vec_delete (00061088)(0, 0xc, 7, points) in stack order, stores ProjectileBaseVtableBeamCopy (00090cfa) and 00090d42, destroys the shape instance +0x2e through its slot +0x1c with 3 when there is one, stores 00090d62 and 00090d82, and on flags bit 0 queues the tracer on g_ProjectileDeleteQueue (000af0b8) with ObjectPool_QueueForDelete (00063760). ES2's BeamTracer_Dtor (DBSIM 0040ba94), which frees it with Mem_Delete.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#drawing--beamtracer_draw-000087e0",
+      "verified": {
+        "bytes": "00008768+117",
+        "sha1": "715cd9ca01e1",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000087e0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "BeamTracer_Draw",
+      "description": "(tracer), callee-cleaned: slot +4 of BeamTracerVtable (00090d1e) by its padding 000087dd. Installs the brush {0, Beam_Colors (00090ce4)[the subtype +0x4c]} at the render context 000bdbda's +0x22c, Raster_SetModelTransform (0005c140)(0), the point count +0x50 at 000b672c, the points +0x52 at Poly_IntPoints (000b6728), Poly_PointState (000b6736) cleared over the count with memset (00060b40), and Beam_QuadIndexTable (000bc202) at Poly_IndexList (000b672e); then for each of the +0x4e quads k, Poly_VertexCount (000b6720) = 4, Poly_IndexOffset (000b6722) = k << (3 - the flag +0x4f), Poly_ProjectIndexedVertices (0005c724), Poly_ClipRingToNearPlane (0005cc4c) when that returns non-zero, and PolyFill_Fill (0005d298); last it puts back the context's +0x22c. ES2's BeamTracer_Draw (DBSIM 0040bc14) draws this way only its two ELF subtypes, and draws every tracer's first two points as a textured ribbon facing the camera.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#drawing--beamtracer_draw-000087e0",
+      "verified": {
+        "bytes": "000087e0+234",
+        "sha1": "7725846f7610",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000088cc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Bullet_FireBurst",
+      "description": "(power, machine, range, shot transform, subtype) in stack order, callee-cleaned: the beam's shot. The ray record {shot transform, range, 200}; the shot record from Proj_LookupRecord (0000c2d0)(subtype, 4): Math_Q10Multiply (0005e818)(record +6, power) and (record +4, power), record +8 and +0xc, the machine as owner and 5; Sim_RaycastObjectList (0001f1d0), the distance travelled being its answer or the range when that is 0; the far end Transform_ApplyToPoint (0005f58c)((0, travelled, 0), shot transform); one tracer, BeamTracer_Ctor (00008268)(0, machine, far end, the transform's translation +0x14, subtype); then Sound_PlayAt (0004deb8)(that translation, 0xb). es2_xref finds two calls, from WeaponMount_FireDispatch_GunBeam (0000b024) and ElfMount_FireDispatch (0000b218). ES2's Bullet_FireBurst (DBSIM 0040bf74), which plays the sound first and spawns one tracer per 5000 units for every subtype but 1 and 7.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#firing--bullet_fireburst-000088cc",
+      "verified": {
+        "bytes": "000088cc+219",
+        "sha1": "9907c2b06f53",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000089a8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "BeamTracer_LifeTick",
+      "description": "(tracer), callee-cleaned: slot +0x18 of BeamTracerVtable (00090d1e) by its padding 000089a7, the tick: returns 1 when Math_CountdownTimerTick (0006410c)(+0x56) reads 0, which BeamTracer_Ctor's countdown of 0 makes the first tick. ES2's BeamTracer_LifeTick (DBSIM 0040c2a0).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-tracer--beamtracer_ctor-00008268",
+      "verified": {
+        "bytes": "000089a8+27",
+        "sha1": "eab100373f1e",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000089c4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Beam_RegisterSubsystem",
+      "description": "No arguments, no Ghidra function: the beams' static initializer, entry 000adbe8 of the static constructor table and its object file's last code: RegisterSubsystemLoader (00000ac4)(2, Beam_BuildIndexTable (00008230)) in stack order. Its RET at 000089d0 is followed by three zero bytes and collide.cpp's run at 000089d4. ES2's Beam_RegisterSubsystem (DBSIM 0040c2c0).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 000089c4",
+      "verified": {
+        "bytes": "000089c4+13",
+        "sha1": "38f745680984",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -3217,7 +4447,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMount_FireDispatch_Missile",
-      "description": "(mount, free-shot flag, machine) in stack order, callee-cleaned: the ammunition fire slot +0x2c. WeaponMount_PrepareShot (0000add4) with its arguments; when the flag is 0, subtracts the template's int16 +0x38 from the rounds +0x7b and at 0 or below clears them and the selectable byte +0x4c. For a projectile record (+0x20) of int16 type 0 it calls 00007748(0, machine, WeaponMount_ShotEuler (000af170), WeaponMount_ShotMuzzlePoint (000af164), the record's +2); otherwise 00008134(machine, the angles, the muzzle point, the record's +2), then sets +0x44 when the hardpoint's byte +6 is below 4. ES2's WeaponMount_FireDispatch_Missile (DBSIM 0040e964), which calls Rocket_Fire and Bullet_Fire there.",
+      "description": "(mount, free-shot flag, machine) in stack order, callee-cleaned: the ammunition fire slot +0x2c. WeaponMount_PrepareShot (0000add4) with its arguments; when the flag is 0, subtracts the template's int16 +0x38 from the rounds +0x7b and at 0 or below clears them and the selectable byte +0x4c. For a projectile record (+0x20) of int16 type 0 it calls Rocket_Fire (00007748)(0, machine, WeaponMount_ShotEuler (000af170), WeaponMount_ShotMuzzlePoint (000af164), the record's +2); otherwise Bullet_Fire (00008134)(machine, the angles, the muzzle point, the record's +2), then sets +0x44 when the hardpoint's byte +6 is below 4. ES2's WeaponMount_FireDispatch_Missile (DBSIM 0040e964), which calls Rocket_Fire and Bullet_Fire there.",
       "source": "Herculan/docs/es1/simulation/weapon-mount-classes.md#firing; ES1DBSIM disassembly at 0000af40",
       "verified": {
         "bytes": "0000af40+145",
@@ -3232,7 +4462,7 @@
       "type": "function",
       "confidence": "high",
       "name": "GrenadeMount_FireDispatch",
-      "description": "(mount, free-shot flag, machine) in stack order, callee-cleaned: the grenade's fire slot +0x2c. WeaponMount_PrepareShot (0000add4) with its arguments; when the flag is 0, takes one off the rounds +0x7b; clears +0x46; calls 00007b44(the dword +0x81, machine, WeaponMount_ShotEuler (000af170), WeaponMount_ShotMuzzlePoint (000af164), the projectile record's +2). ES2's GrenadeMount_FireDispatch (DBSIM 0040ea04), which passes the same to the empty Grenade_FireNoOp.",
+      "description": "(mount, free-shot flag, machine) in stack order, callee-cleaned: the grenade's fire slot +0x2c. WeaponMount_PrepareShot (0000add4) with its arguments; when the flag is 0, takes one off the rounds +0x7b; clears +0x46; calls Grenade_FireNoOp (00007b44)(the dword +0x81, machine, WeaponMount_ShotEuler (000af170), WeaponMount_ShotMuzzlePoint (000af164), the projectile record's +2). ES2's GrenadeMount_FireDispatch (DBSIM 0040ea04), which passes the same to the empty Grenade_FireNoOp.",
       "source": "Herculan/docs/es1/simulation/weapon-mount-classes.md#firing; ES1DBSIM disassembly at 0000afd4",
       "verified": {
         "bytes": "0000afd4+78",
@@ -3247,7 +4477,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMount_FireDispatch_GunBeam",
-      "description": "(mount, free-shot flag, machine) in stack order, callee-cleaned: the energy fire slot +0x2c. WeaponMount_PrepareShot (0000add4) with its arguments, +0x44 set when the hardpoint's byte +6 is below 4. For a record of type 4 it copies WeaponMount_ShotMuzzlePoint (000af164) into the shot transform's translation (000af158), takes min(the template's +0x38, the capacitor +0x7d) as the power, calls 000088cc(power, machine, the template's int32 +0x30, WeaponMount_ShotTransform (000af144), the record's +2) and takes the power off +0x7d. Otherwise, with +0x7d below the cost +0x38, 000081d4(the charge, machine, the angles, the muzzle point, the record's +2), and when the template's +0x3c is 3 two more at the muzzle offset with x = 0 and x = -(the template's +0x40); then +0x7d = 0. With +0x7d at or above the cost, subtracts the cost and calls 00008134(machine, the angles, the muzzle point, the record's +2). ES2's WeaponMount_FireDispatch_GunBeam (DBSIM 0040ea58), less its EMP2 second volley (+0x4d).",
+      "description": "(mount, free-shot flag, machine) in stack order, callee-cleaned: the energy fire slot +0x2c. WeaponMount_PrepareShot (0000add4) with its arguments, +0x44 set when the hardpoint's byte +6 is below 4. For a record of type 4 it copies WeaponMount_ShotMuzzlePoint (000af164) into the shot transform's translation (000af158), takes min(the template's +0x38, the capacitor +0x7d) as the power, calls Bullet_FireBurst (000088cc)(power, machine, the template's int32 +0x30, WeaponMount_ShotTransform (000af144), the record's +2) and takes the power off +0x7d. Otherwise, with +0x7d below the cost +0x38, Bullet_FirePowered (000081d4)(the charge, machine, the angles, the muzzle point, the record's +2), and when the template's +0x3c is 3 two more at the muzzle offset with x = 0 and x = -(the template's +0x40); then +0x7d = 0. With +0x7d at or above the cost, subtracts the cost and calls Bullet_Fire (00008134)(machine, the angles, the muzzle point, the record's +2). ES2's WeaponMount_FireDispatch_GunBeam (DBSIM 0040ea58), less its EMP2 second volley (+0x4d).",
       "source": "Herculan/docs/es1/simulation/weapon-mount-classes.md#firing; ES1DBSIM disassembly at 0000b024",
       "verified": {
         "bytes": "0000b024+497",
@@ -3262,7 +4492,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ElfMount_FireDispatch",
-      "description": "(mount, free-shot flag, machine) in stack order, callee-cleaned: the ELF's fire slot +0x2c. WeaponMount_PrepareShot (0000add4) with its arguments, the template's +0x38 taken off the capacitor +0x7d unconditionally, WeaponMount_ShotMuzzlePoint (000af164) copied into the shot transform's translation, and 000088cc(0x4b0, machine, the template's int32 +0x30, WeaponMount_ShotTransform (000af144), the record's +2). ES2's ElfMount_FireDispatch (DBSIM 0040ec64).",
+      "description": "(mount, free-shot flag, machine) in stack order, callee-cleaned: the ELF's fire slot +0x2c. WeaponMount_PrepareShot (0000add4) with its arguments, the template's +0x38 taken off the capacitor +0x7d unconditionally, WeaponMount_ShotMuzzlePoint (000af164) copied into the shot transform's translation, and Bullet_FireBurst (000088cc)(0x4b0, machine, the template's int32 +0x30, WeaponMount_ShotTransform (000af144), the record's +2). ES2's ElfMount_FireDispatch (DBSIM 0040ec64).",
       "source": "Herculan/docs/es1/simulation/weapon-mount-classes.md#firing; ES1DBSIM disassembly at 0000b218",
       "verified": {
         "bytes": "0000b218+88",
@@ -8962,7 +10192,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_RaycastObjectList",
-      "description": "(shot), callee-cleaned: ES2's Sim_RaycastObjectList (DBSIM 00426528) on ES1's fields, with a flat ground and the zone's shapes in place of ES2's terrain query. The shot record holds the ray record at +0 (frame pointer +0, length +4, the world-to-ray transform cached at +0xa), the damage figures at +4 and +6, an impact-effect table pointer at +0xa and the owner at +0xe. It caches the transform; when the ray's end has a negative Z it cuts the length where the ray crosses Z 0, to 0 when the start's Z is negative and otherwise to (Z << 14) / Math_CosBam(d - 0x4000), d the negated Math_ElevationAngle (00063cf0) from start to end, a strike that is no object; then RaycastShapeMinDistance_Clear (00020880), Zone_RaycastShapeObjects (00020b50)(ray, result), whose hit cuts the length and names the blocker, RaycastShapeMinDistance_Get (0002088c) into 000afa1c and the clear again. It walks LiveObjectList (000bc416, count LiveObjectList_Count (000bc41c)), skipping the owner and any object whose group's +0x16 is set; slot +0x24(object, shot) answers the hit distance. On a hit, an object whose group's side byte +0x14 differs from the owner's sets the owner's +0x98 to 1, has its +0x16c action passed to Action_Activate (0001cc5c) unless its +0x9c is set, and clears the blocker; one on the owner's side becomes the blocker. Unless the object is destroyed (+0x93), or of the other side with +0x9e or +0x9f set, it calls slot +0x54(object, the shot's dword +4, owner), after passing Group_NearestLiveMember (0001cea4)(owner's group, owner), when within 30000 of the owner, to Mech_AiFriendlyFireComplaint if the owner's +0x9d is set and the object is of its side in another group. The length becomes the hit distance and the walk goes on while that is 500 or more; RaycastShapeMinDistance_Get then goes to 000afa18. A strike with no object struck spawns Explosion_Construct (00005af0)(null, the ray's end with its Z raised to 0, the int16 at the effect table's +8 + 2 * (Math_RandomNext(000b5bd4) & 3)). With a blocker and the owner's +0x15e set, a Math_DistanceBetweenPoints2D from the ray's end to the owner below the Math_DistanceBetweenPoints from +0x15e to the owner and a bearing difference, each bearing less the owner's heading +0xa, below 0x2000 as a signed int16 call the owner's slot +0x68(owner, blocker +6). Returns the length + 1 after a strike, else 0. The owner is read with no null test. es2_xref finds three calls, from 00007198, 00007f84 and 000088cc.",
+      "description": "(shot), callee-cleaned: ES2's Sim_RaycastObjectList (DBSIM 00426528) on ES1's fields, with a flat ground and the zone's shapes in place of ES2's terrain query. The shot record holds the ray record at +0 (frame pointer +0, length +4, the world-to-ray transform cached at +0xa), the damage figures at +4 and +6, an impact-effect table pointer at +0xa and the owner at +0xe. It caches the transform; when the ray's end has a negative Z it cuts the length where the ray crosses Z 0, to 0 when the start's Z is negative and otherwise to (Z << 14) / Math_CosBam(d - 0x4000), d the negated Math_ElevationAngle (00063cf0) from start to end, a strike that is no object; then RaycastShapeMinDistance_Clear (00020880), Zone_RaycastShapeObjects (00020b50)(ray, result), whose hit cuts the length and names the blocker, RaycastShapeMinDistance_Get (0002088c) into 000afa1c and the clear again. It walks LiveObjectList (000bc416, count LiveObjectList_Count (000bc41c)), skipping the owner and any object whose group's +0x16 is set; slot +0x24(object, shot) answers the hit distance. On a hit, an object whose group's side byte +0x14 differs from the owner's sets the owner's +0x98 to 1, has its +0x16c action passed to Action_Activate (0001cc5c) unless its +0x9c is set, and clears the blocker; one on the owner's side becomes the blocker. Unless the object is destroyed (+0x93), or of the other side with +0x9e or +0x9f set, it calls slot +0x54(object, the shot's dword +4, owner), after passing Group_NearestLiveMember (0001cea4)(owner's group, owner), when within 30000 of the owner, to Mech_AiFriendlyFireComplaint if the owner's +0x9d is set and the object is of its side in another group. The length becomes the hit distance and the walk goes on while that is 500 or more; RaycastShapeMinDistance_Get then goes to 000afa18. A strike with no object struck spawns Explosion_Construct (00005af0)(null, the ray's end with its Z raised to 0, the int16 at the effect table's +8 + 2 * (Math_RandomNext(000b5bd4) & 3)). With a blocker and the owner's +0x15e set, a Math_DistanceBetweenPoints2D from the ray's end to the owner below the Math_DistanceBetweenPoints from +0x15e to the owner and a bearing difference, each bearing less the owner's heading +0xa, below 0x2000 as a signed int16 call the owner's slot +0x68(owner, blocker +6). Returns the length + 1 after a strike, else 0. The owner is read with no null test. es2_xref finds three calls, from Rocket_TickUpdate (00007198), Bullet_TickUpdate (00007f84) and Bullet_FireBurst (000088cc).",
       "source": "Herculan/docs/es1/simulation/world.md#shots-against-objects--sim_raycastobjectlist-0001f1d0",
       "verified": {
         "bytes": "0001f1d0+1418",
@@ -9682,7 +10912,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ObjList_RebuildFrame",
-      "description": "(): Sim_RenderFrame's per-frame rebuild of the object list: sets ObjList_Count (00092558) back to ObjList_ZoneShapeCount (000bc596), the zone shapes Sim_StartMission added, then ObjList_Add (00020d5c)s each object of the array LiveObjectList (000bc416) (count LiveObjectList_Count (000bc41c), stopping at a null) whose type record (+0x3f) has a zero int32 at +0x16, then every element of the pools 000af0b4, g_ExplosionPool, 000aeef8 and 000aef68, each walked with Pool_Prev from the end.",
+      "description": "(): Sim_RenderFrame's per-frame rebuild of the object list: sets ObjList_Count (00092558) back to ObjList_ZoneShapeCount (000bc596), the zone shapes Sim_StartMission added, then ObjList_Add (00020d5c)s each object of the array LiveObjectList (000bc416) (count LiveObjectList_Count (000bc41c), stopping at a null) whose type record (+0x3f) has a zero int32 at +0x16, then every element of the pools g_ProjectilePool (000af0b4), g_ExplosionPool, 000aeef8 and 000aef68, each walked with Pool_Prev from the end.",
       "source": "ES1DBSIM decompile at 00020de0",
       "verified": {
         "bytes": "00020de0+351",
@@ -16552,7 +17782,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdMissileViewScreen_Paint",
-      "description": "(screen) in stack order, callee-cleaned: slot +4 of MFDMissileViewVtable (0009391a). With +0x18 set it walks g_ExplosionPool (000aee88) with Pool_Prev (00063a20) for it: found, it flips the byte +0x1c, fills the rect with Raster_FillRect (00053d9c) under the brush {0, 0x3c} when the byte is 1 and {0, 0x3f} when 0, at the render context 000bdbda's +0x22c, and returns; gone, it clears +0x18. With MfdMissileView_TrackedRound (00093914) set it walks the pool 000af0b4 for it: gone, it clears it and takes the pose from +0x1d (position) and +0x29 (angles); found, the pose is the round's +0x20-+0x28 and +6-+0xb with Math_Q14Multiply (0005e838)(500, Math_CosBam (0006477c)(h)) added to x and Math_Q14Multiply(500, Math_CosBam(h - 0x4000)) to y, h the round's +0xa, and is saved at +0x1d and +0x29. Then for the first explosion of g_ExplosionPool whose +0x20 lies within 10000 of the pose by Point3I_DistanceBetween (00064698) it stores the explosion at +0x18, sets +0x1c to 1, fills the rect with {0, 0x3c} and returns. Otherwise, with the round still set, it subtracts CockpitView_GetShakeOffset (000249d4)'s pair from the viewport's (+0xc) rect +0x210-+0x21c, installs the viewport with Raster_InstallRenderContext (00069be0), writes the pose into the camera (+0x10) at +0, +4, +8, +0xc and +0x10, installs it with Raster_InstallViewProjection (0005bf68), calls Hzline_Draw (00026264)(+0x14, 0, camera) when +0x14 is set, sets the byte 000928ea, calls ObjList_DrawFrameObjects (00021008)(0, camera), clears 000928ea, reinstalls the render context it found and adds the pair back. With no round it fills the rect with {0, 0x3f}; when CockpitView_SumLauncherCounts (00036930) returns 0 label +0x33 reads NONE (000bd4bc), else +0x2f reads READY TO (000bd4b4) and +0x33 LAUNCH (000bd4b8); label +0x3b takes ColorSchemePanels[0] and the fill 0x30 while the byte +0x9f of CockpitViewInstance's +0x1f1 is 0, else ColorSchemePanels[3] and the fill 0x3f or 0x35 by bit 0x20 of 000981c4, and reads LOCK (000bd4c0); the labels through Label_SetText (0003114c). ES2's MfdMissileViewScreen_Paint (DBSIM 0043fe1c), whose flash follows a flag for 0x1e coarse ticks and whose view draws the terrain, a crosshair and a ring.",
+      "description": "(screen) in stack order, callee-cleaned: slot +4 of MFDMissileViewVtable (0009391a). With +0x18 set it walks g_ExplosionPool (000aee88) with Pool_Prev (00063a20) for it: found, it flips the byte +0x1c, fills the rect with Raster_FillRect (00053d9c) under the brush {0, 0x3c} when the byte is 1 and {0, 0x3f} when 0, at the render context 000bdbda's +0x22c, and returns; gone, it clears +0x18. With MfdMissileView_TrackedRound (00093914) set it walks the pool g_ProjectilePool (000af0b4) for it: gone, it clears it and takes the pose from +0x1d (position) and +0x29 (angles); found, the pose is the round's +0x20-+0x28 and +6-+0xb with Math_Q14Multiply (0005e838)(500, Math_CosBam (0006477c)(h)) added to x and Math_Q14Multiply(500, Math_CosBam(h - 0x4000)) to y, h the round's +0xa, and is saved at +0x1d and +0x29. Then for the first explosion of g_ExplosionPool whose +0x20 lies within 10000 of the pose by Point3I_DistanceBetween (00064698) it stores the explosion at +0x18, sets +0x1c to 1, fills the rect with {0, 0x3c} and returns. Otherwise, with the round still set, it subtracts CockpitView_GetShakeOffset (000249d4)'s pair from the viewport's (+0xc) rect +0x210-+0x21c, installs the viewport with Raster_InstallRenderContext (00069be0), writes the pose into the camera (+0x10) at +0, +4, +8, +0xc and +0x10, installs it with Raster_InstallViewProjection (0005bf68), calls Hzline_Draw (00026264)(+0x14, 0, camera) when +0x14 is set, sets the byte 000928ea, calls ObjList_DrawFrameObjects (00021008)(0, camera), clears 000928ea, reinstalls the render context it found and adds the pair back. With no round it fills the rect with {0, 0x3f}; when CockpitView_SumLauncherCounts (00036930) returns 0 label +0x33 reads NONE (000bd4bc), else +0x2f reads READY TO (000bd4b4) and +0x33 LAUNCH (000bd4b8); label +0x3b takes ColorSchemePanels[0] and the fill 0x30 while the byte +0x9f of CockpitViewInstance's +0x1f1 is 0, else ColorSchemePanels[3] and the fill 0x3f or 0x35 by bit 0x20 of 000981c4, and reads LOCK (000bd4c0); the labels through Label_SetText (0003114c). ES2's MfdMissileViewScreen_Paint (DBSIM 0043fe1c), whose flash follows a flag for 0x1e coarse ticks and whose view draws the terrain, a crosshair and a ring.",
       "source": "Herculan/docs/es1/simulation/mfd-missile-camera.md#painting; ES1DBSIM decompile at 000364f8",
       "verified": {
         "bytes": "000364f8+978",
@@ -27817,7 +29047,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_MainTick",
-      "description": "No arguments: the simulation tick. The input block from Input_BuildPlayerDevice (0004cb14); during playback SimTickDelta = its int16 +0x29. Unless Sim_Frozen (000b5b92): each g_BasePool element through slot +0x1c; g_ExplosionPool (00005d74), the pools 000aef68 (0000693c), 000aefd4 (00006b28) and 000aeef8 (000064b8), an element whose tick answers non-zero destroyed through slot +0xc with 3; maybe_WeaponChain_EoHold = 0; the pool 000af0b4 through slot +0x18 the same way; then each group of MissionGroups: Group_TickMembers (0001cf60) when its action +0x16 is null, and the action cleared when that action's +0xa is non-zero. Sim_StepOnce (000b5b9c), when set, is cleared and Sim_Frozen set. A non-zero Sim_PollPlayerInput (0005a0c0) returns 1. Then Actions_EvaluateTriggers(LocalPlayerMech) and ViewChain_Apply (0005894c); unless frozen, Sim_DetectionTick and Mech_PerTickSystemsUpdate for each g_MechPool machine whose group +0x3f has no action +0x16 and whose +0x93 is clear. Mission_PollStatus(LocalPlayerMech): status 2 calls 00058414 and returns 1; another status of 0 or more (0x12 in place of 3 when Group_ApplyOutnumberedDamage on the player's group leaves the player destroyed) goes into the panel StatusAlertPanel_Ctor (00046efc)(0, 0, 1, status), run through slot +0xc of its +0x314, and returns 1 when the answer equals the word at 00097158[status], the panel then destroyed by Alert_Dtor (00045d0c)(panel, 3). Returns 0 otherwise. ES2's Sim_MainTick (DBSIM 0045f464).",
+      "description": "No arguments: the simulation tick. The input block from Input_BuildPlayerDevice (0004cb14); during playback SimTickDelta = its int16 +0x29. Unless Sim_Frozen (000b5b92): each g_BasePool element through slot +0x1c; g_ExplosionPool (00005d74), the pools 000aef68 (0000693c), 000aefd4 (00006b28) and 000aeef8 (000064b8), an element whose tick answers non-zero destroyed through slot +0xc with 3; maybe_WeaponChain_EoHold = 0; the pool g_ProjectilePool (000af0b4) through slot +0x18 the same way; then each group of MissionGroups: Group_TickMembers (0001cf60) when its action +0x16 is null, and the action cleared when that action's +0xa is non-zero. Sim_StepOnce (000b5b9c), when set, is cleared and Sim_Frozen set. A non-zero Sim_PollPlayerInput (0005a0c0) returns 1. Then Actions_EvaluateTriggers(LocalPlayerMech) and ViewChain_Apply (0005894c); unless frozen, Sim_DetectionTick and Mech_PerTickSystemsUpdate for each g_MechPool machine whose group +0x3f has no action +0x16 and whose +0x93 is clear. Mission_PollStatus(LocalPlayerMech): status 2 calls 00058414 and returns 1; another status of 0 or more (0x12 in place of 3 when Group_ApplyOutnumberedDamage on the player's group leaves the player destroyed) goes into the panel StatusAlertPanel_Ctor (00046efc)(0, 0, 1, status), run through slot +0xc of its +0x314, and returns 1 when the answer equals the word at 00097158[status], the panel then destroyed by Alert_Dtor (00045d0c)(panel, 3). Returns 0 otherwise. ES2's Sim_MainTick (DBSIM 0045f464).",
       "source": "Herculan/docs/es1/simulation/main-loop.md#the-tick--sim_maintick-00059700; ES1DBSIM decompile and disassembly at 00059700",
       "verified": {
         "bytes": "00059700+931",
@@ -31864,7 +33094,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Math_NormalizeVec3ToLength",
-      "description": "(length, vector) in stack order, its arguments removed by this function (RET 8): rescales the int32 vector in place to the int16 length and returns it. With m = Math_FastMagnitude3D (0006325a) of the vector, an m of 0 zeroes its 12 bytes with memset (00060b40); otherwise s = (length << 16) / m by IDIV, narrowed to int16, and each component becomes Math_Q16Multiply2 (0007358c)(s, component), the rounding multiply, truncated to 16 bits and sign-extended (CWDE). ES2's Math_NormalizeVec3ToLength (DBSIM 004926e4), (vector, length), which divides through Math_DivInt and keeps each product of the truncating Math_Q16Multiply whole. es2_xref finds two calls, from GridShape_Raycast (0001fccc) and from 00008268. It opens an object file: the RET 8 at 00063b57 before it is followed by two zero bytes.",
+      "description": "(length, vector) in stack order, its arguments removed by this function (RET 8): rescales the int32 vector in place to the int16 length and returns it. With m = Math_FastMagnitude3D (0006325a) of the vector, an m of 0 zeroes its 12 bytes with memset (00060b40); otherwise s = (length << 16) / m by IDIV, narrowed to int16, and each component becomes Math_Q16Multiply2 (0007358c)(s, component), the rounding multiply, truncated to 16 bits and sign-extended (CWDE). ES2's Math_NormalizeVec3ToLength (DBSIM 004926e4), (vector, length), which divides through Math_DivInt and keeps each product of the truncating Math_Q16Multiply whole. es2_xref finds two calls, from GridShape_Raycast (0001fccc) and from BeamTracer_Ctor (00008268). It opens an object file: the RET 8 at 00063b57 before it is followed by two zero bytes.",
       "source": "Herculan/docs/es1/simulation/fixed-point-math.md#rescaling-a-vector; ES1DBSIM disassembly at 00063b5c; es2_naming.py diff against DBSIM 004926e4",
       "verified": {
         "bytes": "00063b5c+156",
@@ -38501,6 +39731,105 @@
       "source": "Herculan/docs/es1/simulation/object-classes.md#the-classes; ES1DBSIM image at 00090406"
     },
     {
+      "address": "00090ab2",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ProjectileBaseVtableRocketCopy",
+      "description": "rocket.cpp's copy of the projectile base's table, which Rocket_Construct (000074e4) stores before RocketVtable (00090ad6): TSObj_RenderRocketCopy (00007580), TSObj_GetPositionRocketCopy (000075a0), ProjectileBase_DtorRocketCopy (000075b4), TSObj_ReturnZeroRocketCopy (000075f3) and TSObj_GetRadiusRocketCopy (000075fc) at +4 to +0x14, 0 at +0x18. ES2's ProjectileBaseVtable (DBSIM 004987a0).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-projectile-classes"
+    },
+    {
+      "address": "00090ad6",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "RocketVtable",
+      "description": "The missile's table: ProjectileBaseVtableRocketCopy (00090ab2)'s slots with Rocket_Dtor (00007644) at +0xc and Rocket_TickUpdate (00007198) at +0x18. ES2's RocketVtable (DBSIM 00498448), its slots 4 lower.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-projectile-classes"
+    },
+    {
+      "address": "00090b5a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ProjectileBaseVtableGrenadeCopy",
+      "description": "The thrown round's file's copy of the projectile base's table, which Grenade_Construct (000078c4) stores before GrenadeVtable (00090b7e), with ProjectileBase_DtorGrenadeCopy (000079b0) at +0xc.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-projectile-classes"
+    },
+    {
+      "address": "00090b7e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "GrenadeVtable",
+      "description": "The thrown round's table: ProjectileBaseVtableGrenadeCopy (00090b5a)'s slots with Grenade_Dtor (00007a40) at +0xc and Grenade_TickNoOp (00007b47) at +0x18. ES2's GrenadeVtable (DBSIM 004984fc).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-projectile-classes"
+    },
+    {
+      "address": "00090c32",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ProjectileBaseVtableBulletCopy",
+      "description": "bullet.cpp's copy of the projectile base's table, which Bullet_Construct (00007d08) stores before BulletVtable (00090c56), with ProjectileBase_DtorBulletCopy (00007df0) at +0xc.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-projectile-classes"
+    },
+    {
+      "address": "00090c56",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "BulletVtable",
+      "description": "The gun round's table: ProjectileBaseVtableBulletCopy (00090c32)'s slots with Bullet_Dtor (00007e80) at +0xc and Bullet_TickUpdate (00007f84) at +0x18. ES2's BulletVtable (DBSIM 00498628).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-projectile-classes"
+    },
+    {
+      "address": "00090cd8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Beam_HalfWidths",
+      "description": "Six int16 half-widths by beam subtype, 60, 30, 120, 20, 25, 30, which BeamTracer_Ctor (00008268) adds to and takes from the tracer's points. ES2 reads them from dat\\beam.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-tracer--beamtracer_ctor-00008268"
+    },
+    {
+      "address": "00090ce4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Beam_Colors",
+      "description": "Six int16 palette indices by beam subtype, 10, 102, 10, 88, 88, 88, which BeamTracer_Draw (000087e0) fills with. ES2 reads them from dat\\beam.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-tracer--beamtracer_ctor-00008268"
+    },
+    {
+      "address": "00090cf0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Beam_QuadIndexOffsets",
+      "description": "Four int16, 1, 0, 1, 2, from which Beam_BuildIndexTable (00008230) builds Beam_QuadIndexTable (000bc202). ES2's BeamQuadIndexOffsets (DBSIM 00498640).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#drawing--beamtracer_draw-000087e0"
+    },
+    {
+      "address": "00090cfa",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ProjectileBaseVtableBeamCopy",
+      "description": "The beams' file's copy of the projectile base's table, which BeamTracer_Ctor (00008268) stores before BeamTracerVtable (00090d1e), with ProjectileBase_DtorBeamCopy (00008604) at +0xc.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-projectile-classes"
+    },
+    {
+      "address": "00090d1e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "BeamTracerVtable",
+      "description": "The beam tracer's table: BeamTracer_Draw (000087e0) at +4, TSObj_GetPositionBeamCopy (000085f0) at +8, BeamTracer_Dtor (00008768) at +0xc, TSObj_ReturnZeroBeamCopy (00008643) at +0x10, TSObj_GetRadiusBeamCopy (0000864c) at +0x14 and BeamTracer_LifeTick (000089a8) at +0x18. ES2's BeamTracerVtable (DBSIM 004987c4).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-projectile-classes"
+    },
+    {
       "address": "00090da0",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -39604,7 +40933,7 @@
       "type": "data",
       "confidence": "high",
       "name": "MfdMissileView_TrackedRound",
-      "description": "The round the MISSILE CAM screen follows, or 0: MfdMissileViewScreen_Paint (000364f8) walks the pool 000af0b4 for it and clears it when it is gone, and MfdMissileViewScreen_Update (000368cc) repaints the screen while it is set. es2_xref finds one store besides the paint's, at 00007843 in 00007748. ES2's 0049c394.",
+      "description": "The round the MISSILE CAM screen follows, or 0: MfdMissileViewScreen_Paint (000364f8) walks the pool g_ProjectilePool (000af0b4) for it and clears it when it is gone, and MfdMissileViewScreen_Update (000368cc) repaints the screen while it is set. es2_xref finds one store besides the paint's, at 00007843 in Rocket_Fire (00007748). ES2's 0049c394.",
       "source": "es2_xref.py --binary ES1DBSIM 00093914; grep of ES1DBSIM_disasm_full.txt for 0x93914"
     },
     {
@@ -41309,12 +42638,30 @@
       "source": "Herculan/docs/es1/formats/explos-dat.md#the-load"
     },
     {
+      "address": "000af0b4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_ProjectilePool",
+      "description": "Pointer to the projectile pool, 160 elements of 0x60 bytes, which Projectile_LoadResources (00006d9c) builds and every missile, gun round, beam tracer and thrown round is taken from. ES2's g_ProjectilePool (DBSIM 004a9746).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-projectile-pool"
+    },
+    {
+      "address": "000af0b8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_ProjectileDeleteQueue",
+      "description": "The projectile classes' delete queue: their destructors queue a projectile here with ObjectPool_QueueForDelete (00063760), and Projectile_FlushDeletes (00006db0) returns them to g_ProjectilePool (000af0b4). ES2's g_ProjectileDeleteQueue (DBSIM 004a974a), which ES2's loader builds.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-projectile-pool"
+    },
+    {
       "address": "000af144",
       "binary": "ES1DBSIM",
       "type": "data",
       "confidence": "high",
       "name": "WeaponMount_ShotTransform",
-      "description": "The shot transform WeaponMount_PrepareShot (0000add4) builds, its translation at 000af158, which the beam dispatches overwrite with WeaponMount_ShotMuzzlePoint (000af164) before passing it to 000088cc. ES2's 004a98b8.",
+      "description": "The shot transform WeaponMount_PrepareShot (0000add4) builds, its translation at 000af158, which the beam dispatches overwrite with WeaponMount_ShotMuzzlePoint (000af164) before passing it to Bullet_FireBurst (000088cc). ES2's 004a98b8.",
       "source": "Herculan/docs/es1/simulation/weapon-mount-classes.md#firing"
     },
     {
@@ -42439,7 +43786,7 @@
       "type": "data",
       "confidence": "medium",
       "name": "maybe_WeaponChain_EoHold",
-      "description": "int16: WeaponMounts_FireTrigger (0000d2bc) sets it to 1 when it fires a mount whose subtype slot +0x64 answers 3, the electro-optical missile; while it is set WeaponMounts_ChainReady (0000ce1c) answers ready without asking and WeaponMounts_PerFrameUpdate (0000cf78) does not step the selection. ES2's 004d25aa.",
+      "description": "int16: WeaponMounts_FireTrigger (0000d2bc) sets it to 1 when it fires a mount whose subtype slot +0x64 answers 3, the electro-optical missile; while it is set WeaponMounts_ChainReady (0000ce1c) answers ready without asking and WeaponMounts_PerFrameUpdate (0000cf78) does not step the selection. Rocket_TickUpdate (00007198) sets it to 1 each tick it sends a missile to Rocket_PlayerSteer (000070dc), and Sim_MainTick (00059700) zeroes it each tick before it walks g_ProjectilePool (000af0b4). ES2's 004d25aa.",
       "source": "Herculan/docs/es1/simulation/weapon-mounts.md#firing--weaponmounts_firetrigger-0000d2bc; ES1DBSIM disassembly at 0000d2bc"
     },
     {
@@ -42776,6 +44123,51 @@
       "source": "Herculan/docs/es1/formats/explos-dat.md#the-load"
     },
     {
+      "address": "000bc1de",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_RocketTypeTable",
+      "description": "Pointer to dat\\rockets's 14-byte records, read by Rocket_LoadResources (000073d0); the count is g_RocketTypeCount (000bc1e2).",
+      "source": "Herculan/docs/es1/simulation/rockets.md#the-type-table--rocket_loadresources-000073d0"
+    },
+    {
+      "address": "000bc1e2",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_RocketTypeCount",
+      "description": "The int16 count of dat\\rockets's records, read by Rocket_LoadResources (000073d0).",
+      "source": "Herculan/docs/es1/simulation/rockets.md#the-type-table--rocket_loadresources-000073d0"
+    },
+    {
+      "address": "000bc1e4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_RocketShapes",
+      "description": "Pointer to the roots of dts\\rockets, which Rocket_LoadResources (000073d0) loads with Shape_LoadAllRoots (000635a8) and Rocket_Construct (000074e4) indexes by the record's +0.",
+      "source": "Herculan/docs/es1/simulation/rockets.md#the-type-table--rocket_loadresources-000073d0"
+    },
+    {
+      "address": "000bc1ea",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_GrenadeTypeTable",
+      "description": "Pointer to the thrown round's 8-byte records, which Grenade_GetTypeRecord (000078a4) and Grenade_Construct (000078c4) read; its loader Grenade_LoadResourcesNoOp (000078c0) is a lone RET.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-thrown-round"
+    },
+    {
+      "address": "000bc1f0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_GrenadeShapes",
+      "description": "Pointer to the thrown round's shape roots, which Grenade_Construct (000078c4) indexes by the record's +0.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#the-thrown-round"
+    },
+    {
       "address": "000bc1f6",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -42783,6 +44175,15 @@
       "name": "g_BulletTypeTable",
       "description": "Pointer to dat\\bullets's 10-byte records, read by Bullet_LoadResources (00007bb0); the count is the int16 at 000bc1fa.",
       "source": "Herculan/docs/es1/formats/bullets-skimmer-dat.md#the-load"
+    },
+    {
+      "address": "000bc202",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Beam_QuadIndexTable",
+      "description": "80 int16 point numbers, (i >> 1) + Beam_QuadIndexOffsets (00090cf0)[i & 3], built by Beam_BuildIndexTable (00008230); BeamTracer_Draw (000087e0) installs it as Poly_IndexList. ES2's BeamQuadIndexTable (DBSIM 004a9796), 120 entries.",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#drawing--beamtracer_draw-000087e0"
     },
     {
       "address": "000bc2ac",
