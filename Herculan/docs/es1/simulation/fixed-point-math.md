@@ -8,7 +8,7 @@ ES1's simulator against ES2's [fixed-point math toolkit](../../retail/simulation
 
 | | |
 |---|---|
-| byte for byte | `Math_FastMagnitude2D`, `Math_FastMagnitude3D`, `Math_ChebyshevMagnitude2D`, `Math_ChebyshevMagnitude3D`, `Math_ISqrt`, `Math_MapRange`, `DotProductVec3Short`, `DotProductVec3Int`, `Vec3I_DotSign`, `Vec3I_Cross`, `Math_TransposeRotation2D`, `Transform_TransposeRotation`, `Math_Rotate2DPoint`, `Transform2D_ApplyToPoint`, `Rotation_Concat`, `Transform_ConcatRotation` (`000647f4`), `Transform_Concat`, `RotateVectorByMatrixQ14`, `Transform_ApplyToShortPoint` |
+| byte for byte | `Math_FastMagnitude2D`, `Math_FastMagnitude3D`, `Math_ChebyshevMagnitude2D`, `Math_ChebyshevMagnitude3D`, `Math_ISqrt`, `Math_MapRange`, `DotProductVec3Short`, `DotProductVec3Int`, `Vec3I_DotSign`, `Vec3I_Cross`, `Math_TransposeRotation2D`, `Transform_TransposeRotation`, `Math_Rotate2DPoint`, `Transform2D_ApplyToPoint`, `Rotation_Concat` (`00064fe4`), `Transform_ConcatRotation` (`000647f4`), `Transform_Concat`, `RotateVectorByMatrixQ14`, `Transform_ApplyToShortPoint` |
 | but for image addresses | `Math_CosBam` (`0006477c`), `Math_AsinBam` (`0005f54c`), `Math_BuildRotation2D`, `BuildEulerRotationMatrixQ14`, `Transform_RotationToEuler` (`0005e988`) |
 
 `GO.EXE`'s `BuildEulerRotationMatrixQ14` (`ES1GO 000589c4`) and `Math_AsinBam` (`ES1GO 0006a378`) are not: they truncate each trigonometry-table index (`SAR 4` in the 15 of the first, `SAR 2` then `SAR 3` in the second) where `ES1DBSIM`'s (`0005f0ac`, `0005f54c`) and ES2's round them (each shift followed by `ADC 0`). `GO.EXE`'s `Transform_RotationToEuler` (`ES1GO 00056710`) is `ES1DBSIM`'s, calling the truncating `Math_AsinBam`.

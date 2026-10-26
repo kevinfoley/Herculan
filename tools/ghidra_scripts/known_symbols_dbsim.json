@@ -2806,7 +2806,13 @@
       "confidence": "high",
       "name": "Collision_RaySphereTest",
       "description": "One sphere against the ray in muzzle space. Rejects on an unsigned Y compare against the working ray length, then tests the off-axis distance against clearance + radius in 16-bit arithmetic ((ushort)(offAxis + reach) < (ushort)(reach * 2)) because the doubled reach can overflow a short. On a hit it clips DAT_004a9894 to the entry point, alongAxis - (reach - offAxis), floored at 0.",
-      "source": "docs/retail/simulation/hit-detection.md"
+      "source": "docs/retail/simulation/hit-detection.md",
+      "verified": {
+        "bytes": "0040c428+123",
+        "sha1": "c8afc1d98b92",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040c4a4",
@@ -2830,7 +2836,13 @@
       "confidence": "high",
       "name": "Collision_ClusterBoundTest",
       "description": "Tests one cluster's load-time bounding sphere against the ray: centre into muzzle space, unsigned compare of Y against radius plus the working ray length (DAT_004a9894), and Math_FastMagnitude2D of X/Z under radius plus the ray clearance (DAT_004a9898). The cheap gate before Collision_ClusterSphereTest.",
-      "source": "docs/retail/simulation/hit-detection.md"
+      "source": "docs/retail/simulation/hit-detection.md",
+      "verified": {
+        "bytes": "0040c4c4+95",
+        "sha1": "9e16613c1d66",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040c524",
@@ -2839,7 +2851,13 @@
       "confidence": "high",
       "name": "Collision_ClusterSphereTest",
       "description": "Walks a cluster's child spheres, transforming each centre into muzzle space and calling Collision_RaySphereTest with update enabled. Returns the (now shortened) working ray length + 1 if any sphere was struck, 0 otherwise.",
-      "source": "docs/retail/simulation/hit-detection.md"
+      "source": "docs/retail/simulation/hit-detection.md",
+      "verified": {
+        "bytes": "0040c524+170",
+        "sha1": "2dad8c0d3ec4",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040c5d0",
@@ -2911,7 +2929,13 @@
       "confidence": "high",
       "name": "Collision_ClusterTest",
       "description": "One collision cluster against the ray: Collision_ClusterBoundTest on the load-time bounding sphere first, and Collision_ClusterSphereTest over the children only if it passes.",
-      "source": "docs/retail/simulation/hit-detection.md"
+      "source": "docs/retail/simulation/hit-detection.md",
+      "verified": {
+        "bytes": "0040c8c8+51",
+        "sha1": "fac01f92b39b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040c8fc",

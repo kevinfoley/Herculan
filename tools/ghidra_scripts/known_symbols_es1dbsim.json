@@ -1972,7 +1972,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Debris_ThrowGroup",
-      "description": "(group, a, shapes) in stack order, callee-cleaned: draws n = Math_RandomBelow(000b5bd4, the group's throw count +0), 0 to count - 1, and n times draws r = Math_RandomBelow(000b5bd4, the weight total +8), walks the pieces (+4) taking each weight off r while r is greater than it, and passes 00006168(0, a, shapes[the piece's shape]) to 00006480. A throw count of 0 divides by zero. ES2's Debris_ThrowGroup (DBSIM 004086bc), which throws exactly the count, or every piece for 0. Callers found by es2_xref: Base_ApplyDamage (00003978), 00003a58, 00009cd4, Mech_DirectFireHitTest (00013b44), 0001b370.",
+      "description": "(group, a, shapes) in stack order, callee-cleaned: draws n = Math_RandomBelow(000b5bd4, the group's throw count +0), 0 to count - 1, and n times draws r = Math_RandomBelow(000b5bd4, the weight total +8), walks the pieces (+4) taking each weight off r while r is greater than it, and passes 00006168(0, a, shapes[the piece's shape]) to 00006480. A throw count of 0 divides by zero. ES2's Debris_ThrowGroup (DBSIM 004086bc), which throws exactly the count, or every piece for 0. Callers found by es2_xref: Base_ApplyDamage (00003978), 00003a58, Component_DestroyAndCascade (00009cd4), Mech_DirectFireHitTest (00013b44), 0001b370.",
       "source": "Herculan/docs/es1/formats/debris-dat.md#throwing-a-group",
       "verified": {
         "bytes": "00005fb8+195",
@@ -2039,6 +2039,21 @@
         "sha1": "064c8db69cca",
         "scope": "body",
         "via": "disasm"
+      }
+    },
+    {
+      "address": "000069ec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "medium",
+      "name": "maybe_FireEffect_Construct",
+      "description": "(effect, kind, point, part id, owner) in stack order, callee-cleaned: with a null effect takes one from the pool 000aefd4 with Pool_Alloc, returning 0 when that gives none; stores the table 000909fa at +2, the kind at +0x22, the int16 the kind indexes at 00090964 at +0x1e, zeroes +6 to +0xd and +0x1c, stores the owner at +0xf, the part id at +0x13, 4 * kind + Math_RandomNext (000b5c48) & 3 at +0x20, and the point's dword and two bytes at +0x15, or with a null point sets +6. es2_xref finds two calls, from 00002df8 and Component_DestroyAndCascade (00009cd4), the second with kind 0 where ES2's lights a fire with FireEffect_Ctor (DBSIM 0046b388), whose body differs.",
+      "source": "Herculan/docs/es1/simulation/component-damage.md#functions; ES1DBSIM decompile at 000069ec",
+      "verified": {
+        "bytes": "000069ec+253",
+        "sha1": "c29a5ecb4eae",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -3322,13 +3337,97 @@
       "type": "function",
       "confidence": "high",
       "name": "Beam_RegisterSubsystem",
-      "description": "No arguments, no Ghidra function: the beams' static initializer, entry 000adbe8 of the static constructor table and its object file's last code: RegisterSubsystemLoader (00000ac4)(2, Beam_BuildIndexTable (00008230)) in stack order. Its RET at 000089d0 is followed by three zero bytes and collide.cpp's run at 000089d4. ES2's Beam_RegisterSubsystem (DBSIM 0040c2c0).",
-      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 000089c4",
+      "description": "No arguments, no Ghidra function: the beams' static initializer, entry 000adbe8 of the static constructor table and its object file's last code: RegisterSubsystemLoader (00000ac4)(2, Beam_BuildIndexTable (00008230)) in stack order. Its RET at 000089d0 is followed by three zero bytes and the sphere tests' object file at Collision_RaySphereTest (000089d4). ES2's Beam_RegisterSubsystem (DBSIM 0040c2c0).",
+      "source": "Herculan/docs/es1/simulation/projectiles.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 000089c4"
+    },
+    {
+      "address": "000089d4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Collision_RaySphereTest",
+      "description": "(clip, radius, point) in stack order, callee-cleaned, the point three int32 in muzzle space: with reach = Collision_RayClearance (000bc2aa) + radius as an int16 and m = Math_FastMagnitude2D (00063234)(x, z), passes when y, compared unsigned, is below Collision_RayRemaining (000bc2a6), m is below 0x7fff and the low 16 bits of m + reach are below those of 2 * reach, unsigned; with clip set it then cuts Collision_RayRemaining to y - (reach - m), or 0 when that is not positive. Answers 1 in AX for a pass, else 0. ES2's Collision_RaySphereTest (DBSIM 0040c428). The first function of the sphere tests' object file, after the three zero bytes that follow Beam_RegisterSubsystem.",
+      "source": "Herculan/docs/es1/simulation/component-damage.md#the-struck-component--mech_selectstruckcomponent-00009064; ES1DBSIM disassembly at 000089d4",
       "verified": {
-        "bytes": "000089c4+13",
-        "sha1": "38f745680984",
+        "bytes": "000089d4+152",
+        "sha1": "93d9aeffd8a6",
         "scope": "body",
-        "via": "disasm"
+        "via": "both"
+      }
+    },
+    {
+      "address": "00008a6c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Collision_RayNodeOriginTest",
+      "description": "(radius), callee-cleaned: Collision_RaySphereTest (000089d4)(0, radius, the translation at +0x14 of Collision_NodeToMuzzleTransform (000bc2a2)), whose answer stays in AX. ES2's Collision_RayNodeOriginTest (DBSIM 0040c4a4). es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/simulation/component-damage.md#the-bounding-spheres; ES1DBSIM disassembly at 00008a6c",
+      "verified": {
+        "bytes": "00008a6c+26",
+        "sha1": "3bd8780a5b9a",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00008a88",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Collision_ClusterBoundTest",
+      "description": "(radius, center) in stack order, callee-cleaned: the int16 center through Collision_NodeToMuzzleTransform (000bc2a2) with Transform_ApplyToShortPoint (0005e858), then Collision_RaySphereTest (000089d4)(0, radius, that point), whose answer stays in AX. So the bound passes only with its center nearer than Collision_RayRemaining, where ES2's Collision_ClusterBoundTest (DBSIM 0040c4c4) compares against the remaining length plus the radius and tests the off-axis magnitude against radius + clearance directly.",
+      "source": "Herculan/docs/es1/simulation/component-damage.md#the-struck-component--mech_selectstruckcomponent-00009064; ES1DBSIM disassembly at 00008a88",
+      "verified": {
+        "bytes": "00008a88+47",
+        "sha1": "5101486c2635",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00008ab8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Collision_ClusterSphereTest",
+      "description": "(cluster, offset) in stack order, callee-cleaned: for each of the cluster's sphere count (+0) 8-byte spheres at +2, the center plus the offset's three int16 when the offset is not null, through Collision_NodeToMuzzleTransform (000bc2a2) with Transform_ApplyToShortPoint (0005e858), goes to Collision_RaySphereTest (000089d4)(1, the sphere's radius +6, that point). Returns Collision_RayRemaining (000bc2a6) + 1 when any sphere passed, else 0. ES2's Collision_ClusterSphereTest (DBSIM 0040c524).",
+      "source": "Herculan/docs/es1/simulation/component-damage.md#the-struck-component--mech_selectstruckcomponent-00009064; ES1DBSIM decompile and disassembly at 00008ab8",
+      "verified": {
+        "bytes": "00008ab8+212",
+        "sha1": "1c6e685b714e",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00008b8c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Collision_ComputeBoundingSphere",
+      "description": "(cluster, out center) in stack order, callee-cleaned: a box seeded at 10000 and -10000 widened by each 8-byte sphere's center plus and minus its radius (+6), the out center its middle (each int16 sum shifted right 1, arithmetic), and returns Math_FastMagnitude3D (0006325a) of the box's top corner less the center. ES2's Collision_ComputeBoundingSphere (DBSIM 0040c5d0).",
+      "source": "Herculan/docs/es1/simulation/component-damage.md#the-bounding-spheres; ES1DBSIM decompile and disassembly at 00008b8c",
+      "verified": {
+        "bytes": "00008b8c+411",
+        "sha1": "a893ed0f0299",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00008d28",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Collision_ClusterReach",
+      "description": "(cluster, offset) in stack order, callee-cleaned: the greatest, over the cluster's 8-byte spheres, of Math_FastMagnitude3D (0006325a) of the sphere's center plus the offset's three int16 when the offset is not null, plus the sphere's radius (+6), returned as an int16 in AX. ES2's Collision_ClusterReach (DBSIM 0040c71c). es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/simulation/component-damage.md#the-bounding-spheres; ES1DBSIM decompile and disassembly at 00008d28",
+      "verified": {
+        "bytes": "00008d28+213",
+        "sha1": "421f9f34e0f7",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -3347,16 +3446,106 @@
       }
     },
     {
+      "address": "00008e68",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CollisionSphere_ElementCtor",
+      "description": "(sphere), callee-cleaned: returns its argument, allocating 8 bytes with operator_new (000015a4) when it is null and returning 0 when that fails; the base constructors' own allocations of 6 and 4 bytes that follow run only for a null pointer, which the first test has already replaced. ES2's CollisionSphere_ElementCtor (DBSIM 0040c8be). es2_xref finds two stored pointers to it, one the element constructor Collision_CopyClusterSpheres (00008eb0) passes to __vec_new.",
+      "source": "Herculan/docs/es1/simulation/component-damage.md#the-bounding-spheres; ES1DBSIM disassembly at 00008e68",
+      "verified": {
+        "bytes": "00008e68+69",
+        "sha1": "eb4e4b8c551f",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00008eb0",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Collision_CopyClusterSpheres",
-      "description": "(cluster, offset, source cluster) in stack order, callee-cleaned: the cluster's sphere count (+0) becomes the source's and, when it is not 0, +2 a new array of that many 8-byte spheres (__vec_new with 00008e68) holding the source's spheres with the int16 offset triple added to each centre. ES2's Collision_CopyClusterSpheres (DBSIM 0040c834).",
+      "description": "(cluster, offset, source cluster) in stack order, callee-cleaned: the cluster's sphere count (+0) becomes the source's and, when it is not 0, +2 a new array of that many 8-byte spheres (__vec_new with CollisionSphere_ElementCtor (00008e68)) holding the source's spheres with the int16 offset triple added to each centre. ES2's Collision_CopyClusterSpheres (DBSIM 0040c834).",
       "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-loadouts-join; ES1DBSIM decompile at 00008eb0",
       "verified": {
         "bytes": "00008eb0+162",
         "sha1": "22da6bc5ffae",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00008f54",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Collision_ClusterTest",
+      "description": "(cluster), callee-cleaned: Collision_ClusterBoundTest (00008a88)(the bound's radius +0xe, its center +8) and, when that passes, returns Collision_ClusterSphereTest (00008ab8)(cluster, null); otherwise 0. ES2's Collision_ClusterTest (DBSIM 0040c8c8). The first function of the object file the zero fill after Collision_CopyClusterSpheres opens.",
+      "source": "Herculan/docs/es1/simulation/component-damage.md#the-struck-component--mech_selectstruckcomponent-00009064; ES1DBSIM decompile at 00008f54",
+      "verified": {
+        "bytes": "00008f54+46",
+        "sha1": "091e73d1c9e5",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00008f84",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mech_ComponentGeometryTest_Candidate",
+      "description": "(node, occupancy flags, object-to-muzzle frame, object) in stack order, callee-cleaned: for a node whose part id (+0) is negative copies the 32-byte frame; otherwise asks the shape at +4 of the object's shape instance (+0x2e) for the part through its slot +0x24 and composes the instance's node-array (+0x16) entry at the part's node index (+4) with the frame through Transform_Concat (0005ea08), passing a null node transform when the shape has no such part. The result becomes Collision_NodeToMuzzleTransform (000bc2a2). Then for each 16-byte cluster (count +4, array +6) whose component's (+6) flag is set, a non-zero Collision_ClusterTest (00008f54) stores its answer to Collision_HitDistance (000af130) and the component to Collision_HitComponent (000af134). Returns 0. ES2's Mech_ComponentGeometryTest_Candidate (DBSIM 0040c8fc), which uses the identity for a missing part or a negative node index.",
+      "source": "Herculan/docs/es1/simulation/component-damage.md#the-struck-component--mech_selectstruckcomponent-00009064; ES1DBSIM disassembly at 00008f84",
+      "verified": {
+        "bytes": "00008f84+224",
+        "sha1": "65b539787677",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00009064",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mech_SelectStruckComponent",
+      "description": "(model, occupancy flags, object-to-muzzle frame, ray record, object) in stack order, callee-cleaned: sets Collision_HitComponent (000af134) to 0xffff and Collision_HitDistance (000af130) to 0, Collision_RayRemaining (000bc2a6) from the ray record's +4 and Collision_RayClearance (000bc2aa) from its +8, runs Mech_ComponentGeometryTest_Candidate (00008f84)(node, flags, frame, object) on each of the model's 10-byte nodes (count +0, array +2), copies the distance and component to Collision_HitResult (000af138) and returns its address, or null when the distance is 0. ES2's Mech_SelectStruckComponent (DBSIM 0040c9d4). es2_xref finds three calls: Mech_DirectFireHitTest (00013b44), 00003a58 and 0001b370.",
+      "source": "Herculan/docs/es1/simulation/component-damage.md#the-struck-component--mech_selectstruckcomponent-00009064; ES1DBSIM disassembly at 00009064",
+      "verified": {
+        "bytes": "00009064+151",
+        "sha1": "99ae4538d341",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000090fc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Collision_FindClusterInNode",
+      "description": "(node, out part id, component) in stack order, callee-cleaned: the first of the node's 16-byte clusters (count +4, array +6) whose component (+6) is the one asked for; it writes the node's part id (+0) through the out pointer and returns the cluster, or returns 0 when none matches. ES2's Collision_FindClusterInNode (DBSIM 0040ca58).",
+      "source": "Herculan/docs/es1/simulation/component-damage.md#finding-a-components-cluster; ES1DBSIM disassembly at 000090fc",
+      "verified": {
+        "bytes": "000090fc+112",
+        "sha1": "a717087e5c45",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000916c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Collision_FindClusterForComponent",
+      "description": "(model, out part id, component) in stack order, callee-cleaned: Collision_FindClusterInNode (000090fc)(node, out, component) over the model's 10-byte nodes (count +0, array +2), returning the first cluster found, or 0. ES2's Collision_FindClusterForComponent (DBSIM 0040ca8c). es2_xref finds one call, from Component_DestroyAndCascade (00009cd4).",
+      "source": "Herculan/docs/es1/simulation/component-damage.md#finding-a-components-cluster; ES1DBSIM decompile at 0000916c",
+      "verified": {
+        "bytes": "0000916c+77",
+        "sha1": "7f946b91c149",
         "scope": "body",
         "via": "both"
       }
@@ -3502,7 +3691,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Collision_ComputeAllBoundingSpheres",
-      "description": "(node), callee-cleaned: for each of the node's int16 cluster count (+4) 16-byte clusters at +6, stores 00008b8c(cluster, cluster + 8) at the cluster's +0xe. ES2's Collision_ComputeAllBoundingSpheres (DBSIM 0040ccc8).",
+      "description": "(node), callee-cleaned: for each of the node's int16 cluster count (+4) 16-byte clusters at +6, stores Collision_ComputeBoundingSphere (00008b8c)(cluster, cluster + 8) at the cluster's +0xe. ES2's Collision_ComputeAllBoundingSpheres (DBSIM 0040ccc8).",
       "source": "Herculan/docs/es1/formats/bases-dat.md#the-collision-models",
       "verified": {
         "bytes": "000094a0+78",
@@ -3797,6 +3986,66 @@
       }
     },
     {
+      "address": "00009cd4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Component_DestroyAndCascade",
+      "description": "(header, component) in stack order, callee-cleaned: Collision_FindClusterForComponent (0000916c) on the model (+0x10) for the cluster, used unchecked, and its part id. Returns 0 when the component's occupancy flag (+8 array) is clear; otherwise its entry (+4 array) becomes -1 and its flag 0, and Component_SpillIntoDependents (0000979c) gives its dependents 32000. For a piece sequence byte +3 not -1: with ComponentCascade_EffectLatch (000af140) clear and flags (+5) bit 1 set, maybe_FireEffect_Construct (000069ec)(0, 0, the cluster's bound center +8, the part id, the machine +0x14); then the int16 at that sequence in the array at +8 of the machine's shape instance (+0x2e) becomes 2. The anchor: the bound center widened, or through the part's node transform (null for a part the shape lacks) with Transform_ApplyToShortPoint (0005e858); then Context_GetTransform (000016e8)(machine + 6) with Transform_ApplyToPoint (0005f58c). With the latch clear, Explosion_Construct (00005af0)(0, anchor, 10), or 0x11 setting the latch when flags bit 2 is set. Then Debris_ThrowGroup (00005fb8)(000bc1c0's group 3, anchor, 000bc1c6). Last, each of the header's components (+0x18 count) with its flag set whose piece's parent byte +4 is this component is appended to maybe_ComponentDependencyList (00090e04) at its count byte +5, with no capacity test. Returns 1. ES2's Component_DestroyAndCascade (DBSIM 0040d434), which also puts out the machine's fires for bit 1, lights fire 2 for bit 3 and throws the piece's +2 group.",
+      "source": "Herculan/docs/es1/simulation/component-damage.md#losing-a-component--component_destroyandcascade-00009cd4; ES1DBSIM disassembly at 00009cd4",
+      "verified": {
+        "bytes": "00009cd4+601",
+        "sha1": "52a86196f23b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00009f30",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Component_IsFullyDestroyed",
+      "description": "(header, component) in stack order, callee-cleaned: when the component's entry (+4 array) is negative, Component_AllDependentsDestroyed (00009734)(the piece, the internals' damage +0); otherwise 0. ES2's Component_IsFullyDestroyed (DBSIM 0040d9f8). es2_xref finds two calls, from Mech_ComponentDamageWrite (00013250).",
+      "source": "Herculan/docs/es1/simulation/component-damage.md#fully-destroyed--component_isfullydestroyed-00009f30; ES1DBSIM disassembly at 00009f30",
+      "verified": {
+        "bytes": "00009f30+73",
+        "sha1": "1beb5891bc76",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00009f7c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Component_ApplyDamageAndCascade",
+      "description": "(header, damage, component) in stack order, callee-cleaned: Component_AddDamage (00009c88)(the damage, the piece's armor +0, the component's entry); when that answers destroyed, Component_SpillIntoDependents (0000979c)(piece, the internals' maxima, the excess, the internals' damage). When the spill leaves a dependent standing and the piece's sequence byte +3 is not -1, the int16 at that sequence in the array at +8 of the machine's (+0x14) shape instance (+0x2e) becomes 1; ES2's has no such step. When it leaves none and the piece's flags (+5) have bit 0, it clears ComponentCascade_EffectLatch (000af140), runs Component_DestroyAndCascade (00009cd4) on the component and then on the last entry of maybe_ComponentDependencyList (00090e04) while its count byte +5 is not 0, taking 1 from the count first, and returns 1; otherwise 0. ES2's Component_ApplyDamageAndCascade (DBSIM 0040da38). es2_xref finds three calls: Mech_ComponentDamageWrite (00013250), Mech_DirectFireHitTest (00013b44) and 0001b290.",
+      "source": "Herculan/docs/es1/simulation/component-damage.md#write-and-cascade--component_applydamageandcascade-00009f7c; ES1DBSIM disassembly at 00009f7c",
+      "verified": {
+        "bytes": "00009f7c+253",
+        "sha1": "425e724264cf",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000a07c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Component_ReadOverallDamage",
+      "description": "(header), callee-cleaned: over the header's components (+0x18 count), whatever their flags, sums each entry (+4 array), or the piece's armor for a negative entry, and each piece's armor (+0); over the internals (+0x1a count) each entry (+0 array), or the maximum for a negative one, and each maximum (the table's +4 array); returns the damage sum shifted left 8 divided by the maximum sum, signed (IDIV). ES2's Component_ReadOverallDamage (DBSIM 0040db2c). es2_xref finds two calls, from Mech_GetOverallDamage (00010eb0) and 0001b50c.",
+      "source": "Herculan/docs/es1/simulation/component-damage.md#the-readings; ES1DBSIM disassembly at 0000a07c",
+      "verified": {
+        "bytes": "0000a07c+237",
+        "sha1": "504eceb54dea",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0000a16c",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -3809,6 +4058,21 @@
         "sha1": "e13ec389bf63",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0000a24c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Component_TotalArmor",
+      "description": "(header, component) in stack order, callee-cleaned: the piece's armor (+0) plus the maximum (the table's +4 array) of each dependent, the int16 at +2 of each 4-byte entry of the list at +8 (count +6), returned as an int16 in AX. ES2's Component_TotalArmor (DBSIM 0040dc58), which returns an int. es2_xref finds one call, from Mech_SpreadImpactDamage (00013078). The last function of its object file: its RET 8 at 0000a2da is followed by three zero bytes and the mount classes' file at 0000a2e0.",
+      "source": "Herculan/docs/es1/simulation/component-damage.md#the-readings; ES1DBSIM disassembly at 0000a24c",
+      "verified": {
+        "bytes": "0000a24c+145",
+        "sha1": "13e7ecf34c42",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -7312,14 +7576,8 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_GetOverallDamage",
-      "description": "(machine), callee-cleaned: 0000a07c(machine + 0x19c), at the place ES2's calls Component_ReadOverallDamage. Slot +0x44 of MechVtable (00091ae6). ES2's Mech_GetOverallDamage (DBSIM 00415504).",
-      "source": "Herculan/docs/es1/simulation/mech.md#small-functions; ES1DBSIM decompile at 00010eb0",
-      "verified": {
-        "bytes": "00010eb0+21",
-        "sha1": "7d3b0971fab6",
-        "scope": "body",
-        "via": "decompile"
-      }
+      "description": "(machine), callee-cleaned: Component_ReadOverallDamage (0000a07c)(machine + 0x19c). Slot +0x44 of MechVtable (00091ae6). ES2's Mech_GetOverallDamage (DBSIM 00415504).",
+      "source": "Herculan/docs/es1/simulation/mech.md#small-functions; ES1DBSIM decompile at 00010eb0"
     },
     {
       "address": "00010ec8",
@@ -7837,7 +8095,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_SpreadImpactDamage",
-      "description": "(machine, odds, damage) in stack order, callee-cleaned: with damage non-zero, each of 28 components whose occupancy flag (+0x1a4) is set and whose Math_RandomNext (00063af4)(000b5bd4) & 0xff is under the odds takes Math_Q8Multiply (0005e7f8)(0000a24c(+0x19c, component), Math_RandomBelow (00063b3c)(damage) + damage / 2) through Mech_ComponentDamageWrite (00013250)(machine, 0, that, component). es2_xref finds three calls: Mech_LocomotionTick (00012038), Mech_ApplyStartingCondition (00012f20) and Mech_ApplyOutnumberedDamage (00015a5c). ES2's Mech_SpreadImpactDamage (DBSIM 00417a04), over 29 components through the vtable.",
+      "description": "(machine, odds, damage) in stack order, callee-cleaned: with damage non-zero, each of 28 components whose occupancy flag (+0x1a4) is set and whose Math_RandomNext (00063af4)(000b5bd4) & 0xff is under the odds takes Math_Q8Multiply (0005e7f8)(Component_TotalArmor (0000a24c)(+0x19c, component), Math_RandomBelow (00063b3c)(damage) + damage / 2) through Mech_ComponentDamageWrite (00013250)(machine, 0, that, component). es2_xref finds three calls: Mech_LocomotionTick (00012038), Mech_ApplyStartingCondition (00012f20) and Mech_ApplyOutnumberedDamage (00015a5c). ES2's Mech_SpreadImpactDamage (DBSIM 00417a04), over 29 components through the vtable.",
       "source": "Herculan/docs/es1/simulation/mech.md#construction; ES1DBSIM decompile at 00013078",
       "verified": {
         "bytes": "00013078+169",
@@ -7882,7 +8140,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_ComponentDamageWrite",
-      "description": "(machine, attacker, damage, component) in stack order, callee-cleaned: the damage endpoint. Returns at once for the player's machine (+0x9d) while MissionModeFlag (000bc4a0) is 0 and the header word at 000bc4a8 is 1, or for a component whose occupancy flag (+0x1a4) is clear. Then 00009f7c(+0x19c, damage, component); WeaponMount_Destroy (0000b968)(mount, 0, machine) for each mount not yet destroyed (+0x49) whose component flag reads 0. Legs, for internals 0 and 1, and 10 and 11 when the type record's +0x4a is above 2: a side at 0x100 destroys its shadow (+0x1cc) through its slot +0xc with 3; unless immobilised (+0x9e), half the legs gone runs, while +0x93 is clear, the attacker's slot +0x64(attacker, 0, machine), Mech_ReportOutOfAction (0000d77c), Action_Activate (0001cc5c) of +0x170 and Behaviour_SetState (0000fdfc)(+0x47, disabled 000af564), then sets +0x9e, posts Computer_PostMessage (0001a154)(7) when the attacker is LocalPlayerMech (000b5b86) and its +0x15e is the machine, and for LocalPlayerMech itself sets the heading from the camera node's yaw (Transform_RotationToEuler (0005e988)), clears +0x2c and the twist +0x22e, seeks the twist thread +0x1c4 to 0 with AnimThread_SeekToPosition (000620c4) and runs SimObject_ApplyRootMotionIfEnabled (0000215c)(machine, 1); otherwise the averaged sides latch +0xa3 at 0xc1 or more and +0xa2 past 0x80. Death, while +0x93 is clear, when 00009f30 reports component 0 or 1 or internal 9 reads 0x100: +0x93 set, the attacker's slot +0x64 with +0x9e, the report and action when +0x9e was clear, +0x90 cleared, message 3 on the same test as 7, then dead (000af53c), or for a type with +0x4c set +0x32 set, Z -100000, in limbo (000af514) and every shadow destroyed with the count +0x1d0 zeroed. Last, while +0xa4 and +0xa5 are clear, internal 5 latches +0xa5 past 0xc0 or +0xa4 past 0x80. es2_xref finds six calls: Mech_ApplyStartingCondition (00012f20) twice, Mech_SpreadImpactDamage (00013078), Mech_ApplyExplosiveDamage (00013a7c), Mech_DirectFireHitTest (00013b44) and Mech_BehaviourRamTick (00018278). ES2's Mech_ComponentDamageWrite (DBSIM 00417de4), which also posts the damage warnings, recomputes the shields, grades the legs at 0x8d and 0x50, kills on life support and finishes component 0.",
+      "description": "(machine, attacker, damage, component) in stack order, callee-cleaned: the damage endpoint. Returns at once for the player's machine (+0x9d) while MissionModeFlag (000bc4a0) is 0 and the header word at 000bc4a8 is 1, or for a component whose occupancy flag (+0x1a4) is clear. Then Component_ApplyDamageAndCascade (00009f7c)(+0x19c, damage, component); WeaponMount_Destroy (0000b968)(mount, 0, machine) for each mount not yet destroyed (+0x49) whose component flag reads 0. Legs, for internals 0 and 1, and 10 and 11 when the type record's +0x4a is above 2: a side at 0x100 destroys its shadow (+0x1cc) through its slot +0xc with 3; unless immobilised (+0x9e), half the legs gone runs, while +0x93 is clear, the attacker's slot +0x64(attacker, 0, machine), Mech_ReportOutOfAction (0000d77c), Action_Activate (0001cc5c) of +0x170 and Behaviour_SetState (0000fdfc)(+0x47, disabled 000af564), then sets +0x9e, posts Computer_PostMessage (0001a154)(7) when the attacker is LocalPlayerMech (000b5b86) and its +0x15e is the machine, and for LocalPlayerMech itself sets the heading from the camera node's yaw (Transform_RotationToEuler (0005e988)), clears +0x2c and the twist +0x22e, seeks the twist thread +0x1c4 to 0 with AnimThread_SeekToPosition (000620c4) and runs SimObject_ApplyRootMotionIfEnabled (0000215c)(machine, 1); otherwise the averaged sides latch +0xa3 at 0xc1 or more and +0xa2 past 0x80. Death, while +0x93 is clear, when Component_IsFullyDestroyed (00009f30) reports component 0 or 1 or internal 9 reads 0x100: +0x93 set, the attacker's slot +0x64 with +0x9e, the report and action when +0x9e was clear, +0x90 cleared, message 3 on the same test as 7, then dead (000af53c), or for a type with +0x4c set +0x32 set, Z -100000, in limbo (000af514) and every shadow destroyed with the count +0x1d0 zeroed. Last, while +0xa4 and +0xa5 are clear, internal 5 latches +0xa5 past 0xc0 or +0xa4 past 0x80. es2_xref finds six calls: Mech_ApplyStartingCondition (00012f20) twice, Mech_SpreadImpactDamage (00013078), Mech_ApplyExplosiveDamage (00013a7c), Mech_DirectFireHitTest (00013b44) and Mech_BehaviourRamTick (00018278). ES2's Mech_ComponentDamageWrite (DBSIM 00417de4), which also posts the damage warnings, recomputes the shields, grades the legs at 0x8d and 0x50, kills on life support and finishes component 0.",
       "source": "Herculan/docs/es1/simulation/mech.md#the-damage-write--mech_componentdamagewrite-00013250; ES1DBSIM decompile at 00013250",
       "verified": {
         "bytes": "00013250+2090",
@@ -7912,7 +8170,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_DirectFireHitTest",
-      "description": "(machine, shot), callee-cleaned, slot +0x24 of MechVtable (00091ae6): 0 when the shot's origin is farther than its length + its int16 +8 + the type record's +0x1a. Copies the shot's +6 and +4, both through Damage_ScaleByDifficulty (0001f82c) when the owner's (+0xe) group side byte is 0; an AI machine's radar +0x90 goes on for shot type +0x12 0 or 1 unless the counter +0x201 runs, off with +0x201 = 6000 for type 2. Mech_ShieldAbsorb_DirectFire (0000fca8)(+0x1b8, the +6 copy, the length, the shot in the machine's frame by Transform_Concat (0005ea08), machine); with an entry: +0x8e cleared, +0x21e raised by what the shields took; a stopped shot makes its impact at the entry; otherwise the player's machine posts Computer_PostMessage (0001a154)(8) once, latched on +0xaa; 00009064(+0x18c, +0x1a4, frame, shot, machine) picks the component, and on a strike +0x21e takes the +4 copy, the splash Math_Q10Multiply (0005e818)(+4 copy, shot +8), Component_ReadDamagePercent (0000a16c) before, Mech_ComponentDamageWrite (00013250)(machine, owner, rest, component), Mech_ApplyExplosiveDamage (00013a7c)(machine, owner, 500, point, splash) for a splash; on a band change (>> 5), Cockpit_StartHitShake (0002e17c) for the player's component 0 or 1, and ES2's mount roll with WeaponMounts_MountForHardpointSlot (0000ca04), WeaponMount_Destroy (0000b968), Salvage_QueueWeapon (0001f7e8) and 00009f7c. Unless the component reads 0x100, Explosion_Construct (00005af0)(0, point, effect 4n + random & 3 of the shot's +0xa table) and, for a strike, Debris_ThrowGroup (00005fb8)(group n of 000bc1c0, point, 000bc1c6), n 0 stopped, 1 same band, 2 changed. Returns the entry distance. ES2's Mech_DirectFireHitTest (DBSIM 00418ba8) with Mech_ApplyDirectFireDamage (DBSIM 004188c8).",
+      "description": "(machine, shot), callee-cleaned, slot +0x24 of MechVtable (00091ae6): 0 when the shot's origin is farther than its length + its int16 +8 + the type record's +0x1a. Copies the shot's +6 and +4, both through Damage_ScaleByDifficulty (0001f82c) when the owner's (+0xe) group side byte is 0; an AI machine's radar +0x90 goes on for shot type +0x12 0 or 1 unless the counter +0x201 runs, off with +0x201 = 6000 for type 2. Mech_ShieldAbsorb_DirectFire (0000fca8)(+0x1b8, the +6 copy, the length, the shot in the machine's frame by Transform_Concat (0005ea08), machine); with an entry: +0x8e cleared, +0x21e raised by what the shields took; a stopped shot makes its impact at the entry; otherwise the player's machine posts Computer_PostMessage (0001a154)(8) once, latched on +0xaa; Mech_SelectStruckComponent (00009064)(+0x18c, +0x1a4, frame, shot, machine) picks the component, and on a strike +0x21e takes the +4 copy, the splash Math_Q10Multiply (0005e818)(+4 copy, shot +8), Component_ReadDamagePercent (0000a16c) before, Mech_ComponentDamageWrite (00013250)(machine, owner, rest, component), Mech_ApplyExplosiveDamage (00013a7c)(machine, owner, 500, point, splash) for a splash; on a band change (>> 5), Cockpit_StartHitShake (0002e17c) for the player's component 0 or 1, and ES2's mount roll with WeaponMounts_MountForHardpointSlot (0000ca04), WeaponMount_Destroy (0000b968), Salvage_QueueWeapon (0001f7e8) and Component_ApplyDamageAndCascade (00009f7c). Unless the component reads 0x100, Explosion_Construct (00005af0)(0, point, effect 4n + random & 3 of the shot's +0xa table) and, for a strike, Debris_ThrowGroup (00005fb8)(group n of 000bc1c0, point, 000bc1c6), n 0 stopped, 1 same band, 2 changed. Returns the entry distance. ES2's Mech_DirectFireHitTest (DBSIM 00418ba8) with Mech_ApplyDirectFireDamage (DBSIM 004188c8).",
       "source": "Herculan/docs/es1/simulation/mech.md#the-hit-test--mech_directfirehittest-00013b44; ES1DBSIM decompile at 00013b44",
       "verified": {
         "bytes": "00013b44+1262",
@@ -33632,6 +33890,21 @@
       }
     },
     {
+      "address": "00064fe4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Rotation_Concat",
+      "description": "(a, b, out), C convention: composes two rotations (nine Q14 int16 entries, rank byte +0x12) into out as a times b, each entry rounded (+0x2000 >> 14), with no translation. A rank below 1 on a copies b's 20 bytes, on b copies a's; two rank-1 operands give rank 1 (entries 4 to 7 zeroed, entry 8 0x4000); a rank-1 a with a rank-2 b takes entries 6 to 8 from b, a rank-2 a with a rank-1 b takes entries 4, 5 and 8 from a; every mix but two rank-1 operands gives rank 2. Returns out. es2_naming.py diff finds it identical after normalisation to ES2's Rotation_Concat (DBSIM 0047ef4c). es2_xref finds one call, from Mech_ComponentDamageWrite (00013250).",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-assembly-library; ES1DBSIM disassembly at 00064fe4",
+      "verified": {
+        "bytes": "00064fe4+1177",
+        "sha1": "bb2aed7c478c",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00065480",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -39886,7 +40159,7 @@
       "type": "data",
       "confidence": "medium",
       "name": "maybe_ComponentDependencyList",
-      "description": "Pointer to the 6-byte list Component_LinkMaxRefData (00009c28) makes on its first call: an array of 0x14 bytes at +0, the capacity byte 10 at +4 and the count byte at +5. ES2's maybe_ComponentDependencyList, whose capacity is 20; its ES1 readers are unread.",
+      "description": "Pointer to the 6-byte list Component_LinkMaxRefData (00009c28) makes on its first call: an array of 0x14 bytes at +0, the capacity byte 10 at +4 and the count byte at +5. Component_DestroyAndCascade (00009cd4) appends to it with no test of the capacity, and Component_ApplyDamageAndCascade (00009f7c) drains it from its last entry. ES2's maybe_ComponentDependencyList, whose capacity is 20.",
       "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-damage-header; ES1DBSIM image at 00090e04"
     },
     {
@@ -42671,6 +42944,42 @@
       "source": "Herculan/docs/es1/simulation/projectiles.md#the-projectile-pool"
     },
     {
+      "address": "000af130",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Collision_HitDistance",
+      "description": "int32: the distance + 1 of the last cluster hit in the sphere test, which Mech_SelectStruckComponent (00009064) zeroes and copies out and Mech_ComponentGeometryTest_Candidate (00008f84) writes. ES2's DAT_004a989c.",
+      "source": "Herculan/docs/es1/simulation/component-damage.md#globals; es2_xref --decode at 000af130"
+    },
+    {
+      "address": "000af134",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Collision_HitComponent",
+      "description": "int16: the component of the last cluster hit in the sphere test, which Mech_SelectStruckComponent (00009064) sets to 0xffff and copies out and Mech_ComponentGeometryTest_Candidate (00008f84) writes. ES2's DAT_004a98a0.",
+      "source": "Herculan/docs/es1/simulation/component-damage.md#globals; es2_xref --decode at 000af134"
+    },
+    {
+      "address": "000af138",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Collision_HitResult",
+      "description": "Six bytes, the int32 hit distance + 1 and at 000af13c the int16 component, whose address Mech_SelectStruckComponent (00009064) returns after a hit. ES2's 004a98a2.",
+      "source": "Herculan/docs/es1/simulation/component-damage.md#globals; es2_xref --decode at 000af138"
+    },
+    {
+      "address": "000af140",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ComponentCascade_EffectLatch",
+      "description": "int16: one fire and explosion a cascade. Component_ApplyDamageAndCascade (00009f7c) clears it before destroying a component; Component_DestroyAndCascade (00009cd4) lights a fire or an explosion only while it is clear, and sets it with an explosion of type 0x11. ES2's DAT_004a98b0.",
+      "source": "Herculan/docs/es1/simulation/component-damage.md#globals; es2_xref --decode at 000af140"
+    },
+    {
       "address": "000af144",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -44199,6 +44508,33 @@
       "name": "Beam_QuadIndexTable",
       "description": "80 int16 point numbers, (i >> 1) + Beam_QuadIndexOffsets (00090cf0)[i & 3], built by Beam_BuildIndexTable (00008230); BeamTracer_Draw (000087e0) installs it as Poly_IndexList. ES2's BeamQuadIndexTable (DBSIM 004a9796), 120 entries.",
       "source": "Herculan/docs/es1/simulation/projectiles.md#drawing--beamtracer_draw-000087e0"
+    },
+    {
+      "address": "000bc2a2",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Collision_NodeToMuzzleTransform",
+      "description": "Pointer to the 32-byte frame the sphere tests apply: Mech_ComponentGeometryTest_Candidate (00008f84) points it at its own stack frame for each node, and Collision_RayNodeOriginTest (00008a6c), Collision_ClusterBoundTest (00008a88) and Collision_ClusterSphereTest (00008ab8) read it. ES2's Collision_NodeToMuzzleTransform (DBSIM 004a9890).",
+      "source": "Herculan/docs/es1/simulation/component-damage.md#globals; es2_xref --decode at 000bc2a2"
+    },
+    {
+      "address": "000bc2a6",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Collision_RayRemaining",
+      "description": "int32: the ray's remaining length in the sphere test. Mech_SelectStruckComponent (00009064) sets it from the ray record's +4, Collision_RaySphereTest (000089d4) compares against it and clips it, and Collision_ClusterSphereTest (00008ab8) returns it + 1. ES2's DAT_004a9894.",
+      "source": "Herculan/docs/es1/simulation/component-damage.md#globals; es2_xref --decode at 000bc2a6"
+    },
+    {
+      "address": "000bc2aa",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Collision_RayClearance",
+      "description": "int16: the shot's clearance in the sphere test, which Mech_SelectStruckComponent (00009064) sets from the ray record's +8 and Collision_RaySphereTest (000089d4) adds to each radius. ES2's DAT_004a9898.",
+      "source": "Herculan/docs/es1/simulation/component-damage.md#globals; es2_xref --decode at 000bc2aa"
     },
     {
       "address": "000bc2ac",

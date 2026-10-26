@@ -23,8 +23,8 @@ The machine's `+0x19c` (ES2's `+0x206`) is ES2's header of pointers ([the compon
 Three of the functions a damage write runs ([write and cascade](../../retail/simulation/component-damage.md#the-component-damage-system)) are in this code:
 
 - **`Component_AddDamage` (`00009c88`)**, (damage, maximum, entry): for an entry not already negative, adds the damage to it as an `int16`, and when the sum reaches the maximum writes the excess back through the damage pointer and stores −1; it answers whether the entry is negative. ES2's (`0040d3ec`) sums in 32 bits and stores only a sum below the maximum, so in ES1 an entry and a damage whose sum passes 32767 wrap to a negative entry that answers destroyed with neither −1 nor the excess written ([Open](#open)).
-- **`Component_SpillIntoDependents` (`0000979c`)**, (piece, internal maxima, damage, internal damage): ES2's (`0040cf44`): the weights of the piece's live dependents summed, `Math_RandomBelow` (`00063b3c`) of the generator `000b5bd4` under the sum, the one it falls on given the damage through `Component_AddDamage`, and the draw repeated while that destroys it; it answers 1 once no dependent is live. `es2_xref.py` finds its calls in `00009cd4` and `00009f7c`.
-- **`Component_AllDependentsDestroyed` (`00009734`)**, (piece, internal damage): 1 when every dependent's entry is negative, ES2's (`0040cf10`), called from `00009f30`.
+- **`Component_SpillIntoDependents` (`0000979c`)**, (piece, internal maxima, damage, internal damage): ES2's (`0040cf44`): the weights of the piece's live dependents summed, `Math_RandomBelow` (`00063b3c`) of the generator `000b5bd4` under the sum, the one it falls on given the damage through `Component_AddDamage`, and the draw repeated while that destroys it; it answers 1 once no dependent is live. `es2_xref.py` finds its calls in `Component_DestroyAndCascade` (`00009cd4`) and `Component_ApplyDamageAndCascade` (`00009f7c`).
+- **`Component_AllDependentsDestroyed` (`00009734`)**, (piece, internal damage): 1 when every dependent's entry is negative, ES2's (`0040cf10`), called from `Component_IsFullyDestroyed` (`00009f30`).
 
 ## The loadout's join
 
@@ -34,7 +34,7 @@ Three of the functions a damage write runs ([write and cascade](../../retail/sim
 |---|---|---|---|
 | `Collision_ReplaceClusters` (`000096e8`) | model, count, offsets, template clusters | for each 10-byte node of the model (`+2`, count `+0`), `Collision_ReplaceNodeCluster` (`00009680`); for the first node that replaced a cluster, `Collision_ComputeAllBoundingSpheres` (`000094a0`), and it stops | `0040cec0` |
 | `Collision_ReplaceNodeCluster` (`00009680`) | node, count, offsets, template clusters | for each 16-byte cluster of the node (`+6`, count `+4`), `Collision_ReplaceClusterIfMatch` (`000095f4`); 1 at the first that matched | `0040ce78` |
-| `Collision_ReplaceClusterIfMatch` (`000095f4`) | cluster, count, offsets, template clusters | at the first template whose component (`+6`) is the cluster's, `Collision_CopyClusterSpheres` (`00008eb0`)(cluster, that offset, template): the template's 8-byte spheres copied into a new array (`__vec_new` with `00008e68`) with the offset added to each centre; 1 when one matched | `0040ce28`, `0040c834` |
+| `Collision_ReplaceClusterIfMatch` (`000095f4`) | cluster, count, offsets, template clusters | at the first template whose component (`+6`) is the cluster's, `Collision_CopyClusterSpheres` (`00008eb0`)(cluster, that offset, template): the template's 8-byte spheres copied into a new array (`__vec_new` with `CollisionSphere_ElementCtor` (`00008e68`)) with the offset added to each centre; 1 when one matched | `0040ce28`, `0040c834` |
 | `HercPiece_ReplacePieces` (`00009ad4`) | table, count, template pieces, component indices | each component's 18-byte piece overwritten by `HercPiece_CopyRecord` (`000098e8`)(piece, template), which gives the copy a dependent list of its own (4 bytes a dependent, `operator_new`) | `0040d240`, `0040d050` |
 | `HercPiece_SetInternalMaxima` (`000099e4`) | table, count, maxima, internal indices | the table's maxima array (`+4`) at each index takes its maximum | `0040d128` |
 | `Collision_CollectComponentAnchors` (`000092e4`) | model, points, node ids, components | for each node, `Collision_CollectNodeAnchors` (`00009218`): per cluster its component (`+6`), the node's id (`+0`) and the address of its bound centre (`+8`); the total | `0040cb84`, `0040cafc` |
@@ -44,7 +44,7 @@ Three of the functions a damage write runs ([write and cascade](../../retail/sim
 
 ## Where the code sits
 
-The loaders and the join lie in the code from `00008f54` to `00009b8b`, between the zero fill after a `RET 0xc` at `00008f4f` and the zero fill after `HercPiece_BindComponentAnchors`' `RET 0x14` at `00009b87` ([object files](compiler.md#where-object-files-meet-in-the-code)). Its asserts name two source files, `collide.cpp` in `Collision_LoadRecordArray` and `Collision_RegisterObject` and `damage.cpp` in `Damage_LoadMechDmgFile`, so two object files meet inside it at a place no zero fill marks ([Open](#open)). The functions are ES2's from `Collision_CollectComponentIds` (`0040cb48`) to `HercPiece_BindComponentAnchors` (`0040d284`), in ES2's order. `0000a2e0`'s file is the mount classes' ([where it starts](../simulation/weapon-mount-classes.md#where-the-object-file-starts-and-ends)); the one between, `00009b8c`–`0000a2df`, opens with `Component_AllocDamageArrays`, and `es1_boilerplate.py bounds` finds no source path pushed in it.
+The loaders and the join are in the object files of `collide.cpp` and `damage.cpp`, and the damage header's functions in the file after them ([where the object files start and end](../simulation/component-damage.md#where-the-object-files-start-and-end)).
 
 ## The files
 
@@ -68,7 +68,6 @@ Read as words, the bytes are an `int16` 3, six Q16 values (−300, 150, 0, 150, 
 
 ## Open
 
-- **Open:** how the readers of the damage arrays (`00009f30`, `00009f7c`, `0000a07c` and the others in `00009b8c`–`0000a2df`, unread) treat a negative entry other than −1, which `Component_AddDamage`'s 16-bit sum can leave, and how the cascade's list behaves past its 10 entries.
-- **Open:** where `collide.cpp` ends and `damage.cpp` begins within `00008f54`–`00009b8b`; a function that ends on a 4-byte boundary leaves no zero fill, as `Collision_ReplaceClusters` (to `00009733`) and `HercPiece_SetInternalMaxima` (to `00009a2b`) do.
+- **Open:** how the squad condition's and the readouts' functions ([the damage readouts](../simulation/damage-readouts.md)) treat a negative entry other than −1, which `Component_AddDamage`'s 16-bit sum can leave; how the damage arrays' own readers treat one is in [the readings](../simulation/component-damage.md#the-readings).
 - **Open:** what reaches `Collision_CollectComponentIds`, to which `es2_xref.py` finds no branch or stored pointer.
 - **Open:** what `HOVTANK.DMG`'s bytes are. `es2_xref` finds two calls of `Damage_LoadMechDmgFile` and one of `HercPiece_LoadTable`, both on the paths above, and no reference to `dmg` other than those two pushes; a reader of the file in another layout was not found.
