@@ -117,7 +117,7 @@ In a steady walk or run the rate is the speed `S`, so the HERC covers
 
 ## Shadows and footfalls — `Mech_PlaceLegsOnGround` (`000144dc`)
 
-(machine): ES2's (`004195c8`) on the shadows at `+0x1cc` (count `+0x1d0`, [the shadows](mech.md#the-shadows)), with no test for a missing locomotion thread or part: a part the node lookup answers 0 for is read at address `0x14`. Each shadow takes the position of its part's node through the machine's frame, the machine's heading and a cleared rotation word, as ES2's ([a HERC's shadows](../../retail/simulation/ground-shapes.md#a-hercs-shadows)).
+(machine): ES2's (`004195c8`) on the shadows at `+0x1cc` (count `+0x1d0`, [the shadows](mech.md#the-shadows)), with no test for a missing locomotion thread or part: a part the node lookup answers 0 for is read at address `0x14`. Each shadow takes the position of its part's node through the machine's frame, the machine's heading and a cleared rotation word, as ES2's ([a HERC's shadows](../../retail/simulation/ground-shapes.md#a-hercs-shadows)). Entry *i* of the record's lists at `+0x77` (the part) and `+0x72` (the kind) goes with shadow slot *i*. A null slot, a leg's shadow [the damage write](mech.md#the-damage-write--mech_componentdamagewrite-00013250) destroyed, is passed over, and the footfall latch moves on only for a slot that is present: after a null slot each later shadow tests the latch of the slot before it, `+0x24a` + *i* − 1 where it would have tested `+0x24a` + *i*, while its part and kind entries are still its own slot's.
 
 The footfalls are ES2's ([footfalls](../../retail/simulation/mech-locomotion.md#footfalls)) on the latches `+0x24a` + *i* and `+0x24e`, with these differences:
 

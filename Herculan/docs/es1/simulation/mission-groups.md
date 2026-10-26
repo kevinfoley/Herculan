@@ -73,7 +73,7 @@ ES2's four accessors read the current one of the group's ten orders; ES1's read 
 
 `Group_OrderSubjectPtr` (`0001ce94`) returns `+0x1c`; `es2_xref.py` finds no branch or stored pointer to it. What the target's condition is and whether it is clear of threats are [the mission status's](mission-status.md#the-groups-target-and-its-condition) tests.
 
-`Group_NearestLiveMember` (`0001cea4`), (group, object): ES2's ([radio callouts](../../retail/simulation/ai-targeting.md#radio-callouts)), the member other than the object, neither destroyed nor immobilised, nearest it by `Math_DistanceBetweenPoints` if nearer than 100000, otherwise 0.
+`Group_NearestLiveMember` (`0001cea4`), (group, object): ES2's ([radio callouts](../../retail/simulation/ai-targeting.md#radio-callouts)), the member other than the object, neither destroyed (`+0x93`) nor immobilised (`+0x9e`), nearest it by `Math_DistanceBetweenPoints`, otherwise 0. The search starts from 100000 and takes a member only when its distance is below the best so far, a signed strict comparison, so a member at 100000 or more is never taken and of two at the same distance the first in the array (`+0xe`, count `+0x12`) is kept.
 
 The route functions `Route_AdvanceCursor` (`0001c8c0`), `Route_NextWaypointClosesRoute` (`0001c908`) and `Route_WaypointAt` (`0001cfb8`) are ES2's ([the route cursor](../../retail/simulation/ai-goals.md#the-route-cursor-is-loaded-once)) on the cursor at `+6`: the index at `+6`, the route at `+8`, where ES2's are at `+4` and `+6`.
 
