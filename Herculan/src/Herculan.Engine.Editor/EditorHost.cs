@@ -678,6 +678,7 @@ public sealed class EditorHost {
 			CompassGizmo.Draw(_camera,
 				new Vector2(ScaledImGui.Scaled(MissionOutliner.PanelWidth) + compassMargin, menuBarHeight + compassMargin),
 				ScaledImGui.Scaled(CompassSize));
+			RosterCountsOverlay.Draw(_mission.Source.Layout, display, ScaledImGui.Scaled(MissionOutliner.PanelWidth));
 			_mission.Overlay.DrawLabels(_camera, _settings, _mission.Selection);
 			_mission.GroupOverlay.DrawLabels(_camera, _settings, _mission.Selection);
 			_mission.Placing.DrawLabels(_camera, display, menuBarHeight);
