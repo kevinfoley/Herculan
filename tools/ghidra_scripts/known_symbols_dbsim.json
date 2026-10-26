@@ -6617,8 +6617,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_ComputeReactorRate",
-      "description": "Computes the mech reactor output rate into mech+0x256. Base is a literal 0x14 (20) shared by the whole fleet -- the type record is never read. Replaced outright by Q10(200,20)=3 when mech+0xab (reactor critical) or Q10(600,20)=11 when mech+0xaa (reactor degraded). An Energy Pod in slot mech+0x313 then adds Q10(1024 - 204*(podDamage/51), 20), up to a second full 20 (it doubles output), gated off entirely at 225/256 damage. ONE reference in the whole binary, the tail of Mech_ConfigureLoadout, so the rate is sampled at spawn and never recomputed.",
-      "source": "docs/retail/simulation/reactor-energy-pool.md"
+      "description": "Computes the mech reactor output rate into mech+0x256. Base is a literal 0x14 (20), the same for every chassis. Replaced outright by Q10(200,20)=3 when mech+0xab (reactor critical) or Q10(600,20)=11 when mech+0xaa (reactor degraded). An Energy Pod in slot mech+0x313 then adds Q10(1024 - 204*(podDamage/51), 20), up to a second full 20 (it doubles output), gated off entirely at 225/256 damage. es2_xref finds one reference, a call from the tail of Mech_ConfigureLoadout (004175dc), so the rate is worked out when the loadout is configured.",
+      "source": "docs/retail/simulation/reactor-energy-pool.md",
+      "verified": {
+        "bytes": "00417d08+217",
+        "sha1": "6623473a7cc0",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00417de4",

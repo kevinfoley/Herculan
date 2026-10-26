@@ -15,7 +15,7 @@ The genuine ammunition count is a separate local array built by `WeaponMounts_Ro
 Each subtype the machine carries rounds for has its own countdown. Every tick the block either **reloads** it — holding it at full so no lock can form — or lets it run; reaching zero latches the flag.
 
 - **Reload value** is `min(range >> 2, 0x7fff)`, so lock time is linear in range. The countdown is in the simulation's own timer unit ([`structure-behaviour.md`](structure-behaviour.md)): 256 to 125 ms, 81 a tick on hardware that keeps up. A target 20000 units away (120 m) takes 5000 units, about 2.4 s; one at 57205 (343 m) takes about 7 s. A turretless chassis (type record `+0x50`, file offset 78, the flyer flag — the RAZOR) uses 0 and locks instantly, and measures its bearing without a twist it does not have.
-- **The whole block is held** when `mech+0x9d` is set (target just changed), the bearing error is outside ±`0x3000` of the turret centreline (±67.5°), or line of sight is broken. That branch resets the timers for subtypes 0, 1 and 2 — **not 4**, which keeps a partial lock across a broken moment — and raises the function's `local_1a`, which is what makes a target switch cost exactly one tick. `mech+0x9d` is cleared from that flag at the very **end** of the function, past the lock audio, so the audio still sees the switch on the tick it happened.
+- **The whole block is held** when `mech+0x9d` is set (target just changed), the bearing error, a signed word, lies outside [−`0x3000`, `0x3000`) of the turret centreline (±67.5°), or line of sight is broken. That branch resets the timers for subtypes 0, 1 and 2 — **not 4**, which keeps a partial lock across a broken moment — and raises the function's `local_1a`, which is what makes a target switch cost exactly one tick. `mech+0x9d` is cleared from that flag at the very **end** of the function, past the lock audio, so the audio still sees the switch on the tick it happened.
 - Line of sight is asked from whichever end owns the cache row: human side asks about the target, Cybrid asks the target about itself ([`target-selection.md`](target-selection.md#line-of-sight--detection_lineofsight-00412608)).
 
 | Subtype | Timer record | Manager slot | Hold condition |
@@ -26,13 +26,13 @@ Each subtype the machine carries rounds for has its own countdown. Every tick th
 | 3 (EO) | — | `+0x10` | never set. The player's round therefore leaves with no target: the pilot steers it while the trigger is held. `Rocket_Fire` skips the gate only for a machine that is not locally piloted ([`rockets.md`](rockets.md#spawning--rocket_fire-0040a9c4)) |
 | 4 | `+0x264` | `+0x12` | as subtype 0 |
 
-Each timer offset is the countdown record's base; the counter is the `short` one byte above it. The run leaves room for a subtype 3 timer at `+0x261`, which this block never touches.
+Each timer offset is the countdown record's base; the counter is the `short` one byte above it. The run leaves room for a subtype 3 timer at `+0x261`, which this block never touches. The block takes the subtypes it holds rounds for in the order 0, 4, 1, 2.
 
 Subtype 2's inverted condition is the anti-radiation missile: it locks *because* the target is emitting, on the same pair of flags its guidance homes on.
 
 ## ECM
 
-A target that is a HERC with its jammer (`+0xa1`) on re-rolls `mech+0x9c` whenever the countdown record at `mech+0x267` expires: `(rand & 0xfff) < 0x14 * 0x29` — about 20% — holding for 5000 (about 2.4 s) on a spoof and re-rolling after `0x5dc` (about 0.7 s) otherwise. A target that is not a HERC, or whose jammer is off, clears the flag outright.
+A target that is a HERC with its jammer (`+0xa1`) on re-rolls `mech+0x9c` whenever the countdown record at `mech+0x267` expires: `(rand & 0xfff) < 0x14 * 0x29` — about 20% — holding for 5000 (about 2.4 s) on a spoof and re-rolling after `0x5dc` (about 0.7 s) otherwise. A target that is not a HERC, or whose jammer is off, clears the flag outright and leaves the countdown as it stands: it runs only while the target is a jamming HERC.
 
 **The jammer flag is derived every tick.** `Mech_IsEcmSwitchedOn` (`0041aa10`) stores it into `mech+0xa1` ahead of the lock block, and an ECM pod at `mech+0x307` is its outer gate: without one the flag is clear. With one, who is flying decides which switch is read:
 
@@ -47,7 +47,7 @@ The roll's weight, `0x14`, drops to 5 — a quarter — when the machine holding
 
 ## The lock lamp
 
-`mech+0x9b` is set from the armed mount's own class: a launcher lights its own subtype's flag, a mount that is not a launcher (class 5) lights if *any* subtype has lock. The HUD target indicator draws its locked frames from it ([`hud-target-indicator.md`](hud-target-indicator.md)). `Mech_LockTonePlay` (`0041b0bc`) turns it into the cockpit's lock audio: `Sound_Play(0x15)` (`trgloc.wav`) once per phase of a `0x40`-coarse-tick blink while set, `0x14` (`bptslct.wav`) when clear but the target changed this tick, `0x16` (`trgunloc.wav`) once on loss ([`audio.md`](audio.md)). Two latches carry it — `0049a1d1` remembers that a lock was held so its loss is announced once, `0049a1d0` that this phase's beep has sounded.
+`mech+0x9b` is set from the armed mount's own class, which its vtable `+0x60` answers when called with a null out-pointer, or 5 when the armed index (manager `+0x1d`, a signed byte) is negative: a launcher lights its own subtype's flag, a mount that is not a launcher (class 5) lights if *any* subtype has lock. The HUD target indicator draws its locked frames from it ([`hud-target-indicator.md`](hud-target-indicator.md)). `Mech_LockTonePlay` (`0041b0bc`) turns it into the cockpit's lock audio: `Sound_Play(0x15)` (`trgloc.wav`) once per phase of a `0x40`-coarse-tick blink while set, `0x14` (`bptslct.wav`) when clear but the target changed this tick, `0x16` (`trgunloc.wav`) once on loss ([`audio.md`](audio.md)). Two latches carry it — `0049a1d1` remembers that a lock was held so its loss is announced once, `0049a1d0` that this phase's beep has sounded.
 
 The loss branch **returns before** the target-changed test, so switching target while locked plays the loss tone and not the acquisition blip.
 
