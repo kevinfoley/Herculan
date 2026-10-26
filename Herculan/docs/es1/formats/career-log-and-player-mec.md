@@ -112,7 +112,7 @@ So the entries run from the player's on in entry order. It then writes the recor
 | `+0x08` | *m* weapons |
 | `+0x20` | *m* mount words |
 | `+0x3a` | the HERC's word `+0x2c` |
-| `+0x3c`, `+0x56`, `+0x6a` | the 66-byte block, read as 26, 20 and 20 bytes |
+| `+0x3c`, `+0x56`, `+0x6a` | the 66-byte block, read as 26, 20 and 20 bytes: 13 external, ten internal and ten hardpoint conditions, the squad machine's starting damage ([the squad's condition](../simulation/damage-readouts.md#the-functions)) |
 
 It reads every entry with a HERC record and does not test *m*, which has room for twelve mounts at `+0x08`.
 

@@ -17,7 +17,7 @@ Two functions call it, the two that push the `dmg` folder name (`000980e0`, at `
 
 The machine's `+0x19c` (ES2's `+0x206`) is ES2's header of pointers ([the component damage system](../../retail/simulation/component-damage.md#the-component-damage-system)), at the same offsets from its start: the internals' damage at `+0`, the components' damage at `+4`, their occupancy flags at `+8`, the `.DMG` table at `+0xc`, the `.COL` model at `+0x10`, the machine at `+0x14`, the component count at `+0x18` and the internal count at `+0x1a`. `es2_xref.py` finds the two functions that fill it called from `Mech_Constructor` and from `0001ac58`.
 
-- **`Component_AllocDamageArrays` (`00009b8c`)**, (header, internals, components): ES2's (`0040d2cc`), allocating `0x1c` bytes itself when the header is null: the two damage arrays zeroed, every byte of the flag array 1, and the two counts. `Mech_Constructor` passes 21 and 28.
+- **`Component_AllocDamageArrays` (`00009b8c`)**, (header, internals, components): ES2's (`0040d2cc`), allocating `0x1c` bytes itself when the header is null: the two damage arrays zeroed, the flag array of one `int16` a component with every byte 1, and the two counts, each array from `operator_new`. `Mech_Constructor` passes 21 and 28. The squad condition and the readouts walk ES2's 22 internals and 29 components, one entry past each ([the tenth mount pair](../simulation/damage-readouts.md#the-tenth-mount-pair)).
 - **`Component_LinkMaxRefData` (`00009c28`)**, (header, model, table, machine): ES2's (`0040d354`): the table at `+0xc`, the model at `+0x10`, the machine at `+0x14`; and on its first call it makes the six-byte list `maybe_ComponentDependencyList` (`00090e04`), a pointer to `0x14` bytes, the capacity byte 10 at `+4` and a zero count byte at `+5`, where ES2's has room for 20.
 
 Three of the functions a damage write runs ([write and cascade](../../retail/simulation/component-damage.md#the-component-damage-system)) are in this code:
@@ -28,7 +28,13 @@ Three of the functions a damage write runs ([write and cascade](../../retail/sim
 
 ## The loadout's join
 
-`Mech_ConfigureLoadout` ([construction](../simulation/mech.md#construction)) puts each fitted weapon's template into the machine's own model and table with ES2's five calls ([a fitted weapon replaces its mount's piece](../../retail/formats/dmg-damage-file.md#a-fitted-weapon-replaces-its-mounts-piece), [a fitted weapon brings its own spheres](../../retail/formats/collision-spheres.md#a-fitted-weapon-brings-its-own-spheres)), each ES2's:
+`Mech_ConfigureLoadout` ([construction](../simulation/mech.md#construction)) puts each fitted weapon's template into the machine's own model and table with ES2's five calls ([a fitted weapon replaces its mount's piece](../../retail/formats/dmg-damage-file.md#a-fitted-weapon-replaces-its-mounts-piece), [a fitted weapon brings its own spheres](../../retail/formats/collision-spheres.md#a-fitted-weapon-brings-its-own-spheres)), as ES2's does. For each mount of the manager that is not null, with its template `+0x1c` and the fit slot, the signed byte `+0x17` of its `.GL` record `+0x18`, it first writes three fields of the shared template, so each fitting leaves them in it:
+
+1. the component, the slot + `0x13`, into the template's cluster (`+0x12`) at its `+6`;
+2. the internal, the slot + `0xc`, into the `int16` `+2` of the first entry of the template piece's (`+0`) dependent list `+8`;
+3. the parent byte `+4` of the machine's own piece for that component into the template piece's `+4`.
+
+Then, each with a count of 1: `Collision_ReplaceClusters`(the model `+0x18c`, 1, `WeaponMount_MuzzleOffset` (`0000b918`) of the mount, the template's cluster), `HercPiece_ReplacePieces`(the table `+0x190`, 1, the template piece, the component) and `HercPiece_SetInternalMaxima`(the table, 1, the template's `int16` `+0x2a`, the internal). A mount with a model (`+0x10`) has its hardpoint's node stamped first ([construction](../simulation/mech.md#construction)). After the mounts, `Collision_CollectComponentAnchors` fills three local arrays from the model and `HercPiece_BindComponentAnchors` binds the count it returns. The calls, each ES2's:
 
 | ES1 | Arguments, in stack order | Does | ES2 |
 |---|---|---|---|
@@ -68,6 +74,5 @@ Read as words, the bytes are an `int16` 3, six Q16 values (−300, 150, 0, 150, 
 
 ## Open
 
-- **Open:** how the squad condition's and the readouts' functions ([the damage readouts](../simulation/damage-readouts.md)) treat a negative entry other than −1, which `Component_AddDamage`'s 16-bit sum can leave; how the damage arrays' own readers treat one is in [the readings](../simulation/component-damage.md#the-readings).
 - **Open:** what reaches `Collision_CollectComponentIds`, to which `es2_xref.py` finds no branch or stored pointer.
 - **Open:** what `HOVTANK.DMG`'s bytes are. `es2_xref` finds two calls of `Damage_LoadMechDmgFile` and one of `HercPiece_LoadTable`, both on the paths above, and no reference to `dmg` other than those two pushes; a reader of the file in another layout was not found.

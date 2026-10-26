@@ -78,7 +78,7 @@ An object takes its position and rotation from its record's refs. A point ref th
 | `0x40` (`0x48`) | the heading ref |
 | `0x42`, `0x44` (`0x4a`, `0x4c`) | stored at `+0x174` and `+0x176` |
 | `0x5c`, `0x5e` (`0x64`, `0x66`) | action refs: a pointer to the 16-byte action at `+0x16c` and `+0x170`, or 0 for a negative ref |
-| `0x60` (`0x68`) | the starting condition, passed with the mech to `Mech_ApplyStartingCondition` (`00012f20`, [construction](../simulation/mech.md#construction)) |
+| `0x60` (`0x68`) | the starting condition, an `int16`, passed with the mech to `Mech_ApplyStartingCondition` (`00012f20`, [construction](../simulation/mech.md#construction)) |
 
 The second pass does not read record offsets `0x04`–`0x27` and `0x5a` (`.MSN` `0x0c`–`0x2f` and `0x62`).
 

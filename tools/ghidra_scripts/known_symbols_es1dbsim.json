@@ -7577,7 +7577,13 @@
       "confidence": "high",
       "name": "Mech_GetOverallDamage",
       "description": "(machine), callee-cleaned: Component_ReadOverallDamage (0000a07c)(machine + 0x19c). Slot +0x44 of MechVtable (00091ae6). ES2's Mech_GetOverallDamage (DBSIM 00415504).",
-      "source": "Herculan/docs/es1/simulation/mech.md#small-functions; ES1DBSIM decompile at 00010eb0"
+      "source": "Herculan/docs/es1/simulation/mech.md#small-functions; ES1DBSIM decompile at 00010eb0",
+      "verified": {
+        "bytes": "00010eb0+21",
+        "sha1": "7d3b0971fab6",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00010ec8",
@@ -8215,7 +8221,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_CollisionTest",
-      "description": "(machine), callee-cleaned: 1 when a move is refused. For each live object but itself whose group holds no action (+0x16) and whose slot +0x60 is non-zero, nearer than that radius and the machine's together: the object's slot +0x6c, and for a HERC (class +0x162 0) the collision damage: Math_Q10Multiply (0005e818)(300, Q10(own mass +0x4e, own speed +0x224) - Q10(other mass, the other's speed resolved onto this machine's forward axis)) above 200 goes to Mech_ApplyExplosiveDamage (00013a7c) on both, radius 1200, at the midpoint in X and Y and the lower Z of the two camera nodes (type record +0xc); returns 1. Then 1 when Structure_GatherWalkCandidates (0000375c)(radius, position) answers non-zero, and otherwise Zone_WalkCollisionTest (00020860)(radius, position)'s answer. es2_xref finds three calls: Mech_MovementTick (00014844) twice and Mech_BehaviourRamTick (00018278). ES2's Mech_CollisionTest (DBSIM 00418f74), which also records the structure a machine stands in and refuses or slides on steep ground.",
+      "description": "(machine), callee-cleaned: 1 when a move is refused. For each live object but itself whose group holds no action (+0x16) and whose slot +0x60 is non-zero, nearer than that radius and the machine's together: the object's slot +0x6c, and for a HERC (class +0x162 0) the collision damage: Math_Q10Multiply (0005e818)(Q10(own speed +0x224, own mass +0x4e) cut to an int16 - Q10(the other's speed resolved onto this machine's forward axis, other mass), 300), an int32, above 200 goes to Mech_ApplyExplosiveDamage (00013a7c) on both, which reads it as an int16, radius 1200, at the midpoint in X and Y and the lower Z of the two camera nodes (type record +0xc); returns 1. Then 1 when Structure_GatherWalkCandidates (0000375c)(radius, position) answers non-zero, and otherwise Zone_WalkCollisionTest (00020860)(radius, position)'s answer. es2_xref finds three calls: Mech_MovementTick (00014844) twice and Mech_BehaviourRamTick (00018278). ES2's Mech_CollisionTest (DBSIM 00418f74), which also records the structure a machine stands in and refuses or slides on steep ground.",
       "source": "Herculan/docs/es1/simulation/mech.md#movement; ES1DBSIM decompile and disassembly at 00014174",
       "verified": {
         "bytes": "00014174+871",
@@ -8455,13 +8461,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_ComponentNearestAim",
-      "description": "(machine, pose), callee-cleaned, slot +0x58 of MechVtable (00091ae6) by its padding 00015883: of the 28 components whose occupancy flag (+0x1a4) is set, each placed through slot +0x5c, the index whose Math_EulerToward (00063d2c) from the pose's +0x1a differs least from the pose's euler triple in elements 0 and 2 (sum of saturated absolutes), or -1. es2_xref also finds the address as a dword at 000035f4, 0003fa4d and 0005a308. ES2's Mech_ComponentNearestAim (DBSIM 0041b534), over 29.",
+      "description": "(machine, pose), callee-cleaned, slot +0x58 of MechVtable (00091ae6) by its padding 00015883: for each of the 28 components whose occupancy flag (an int16 of the array at +0x1a4) is set, placed through slot +0x5c, Math_EulerToward (00063d2c) from the pose's +0x1a to it less the pose's euler triple as int16; returns in AX the index with the least sum of the absolutes of elements 0 and 1 (-0x8000 counted as 0x7fff), the first of equals kept, or -1, element 2 less the heading being computed and left unused. Math_EulerToward's element 1 is always 0, so the sum is the pitch difference plus a term the same for every component, and the pick weighs the pitch alone. es2_xref also finds the address as a dword at 000035f4, 0003fa4d and 0005a308. ES2's Mech_ComponentNearestAim (DBSIM 0041b534), which sums elements 0 and 2, the pitch and the heading, over 29.",
       "source": "Herculan/docs/es1/simulation/mech.md#small-functions; ES1DBSIM decompile at 00015884",
       "verified": {
         "bytes": "00015884+268",
         "sha1": "f73f5bd56144",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
