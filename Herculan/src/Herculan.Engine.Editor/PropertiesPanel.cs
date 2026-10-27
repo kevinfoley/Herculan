@@ -2,6 +2,7 @@ using System.Numerics;
 using HercWorks.Core.Data.File;
 using HercWorks.Core.Data.File.Msn;
 using Herculan.Engine.Platform;
+using Herculan.Engine.World;
 using ImGuiNET;
 
 namespace Herculan.Engine.Editor;
@@ -41,7 +42,9 @@ internal sealed class PropertiesPanel {
 			SideChanger sides, ObjectDeleter deleter, MemberMover members, SquadMachinePanel machine, RosterFitView fit, RouteEditor routes,
 			RoutePlacing placing, AreaEditor areas, AreaPlacing areaPlacing, OrderEditor orders, ObjectiveEditor objectives,
 			ActionEditor actions, TimerEditor timers, ConditionEditor conditions, PresenceEditor presence, VariantEditor variants,
-			StartingConditionEditor startingConditions, HeadingEditor headings, RandomChoices choices, TriggerMessages messages, MissionNames names) {
+			StartingConditionEditor startingConditions, HeadingEditor headings, RandomChoices choices, TriggerMessages messages, MissionNames names,
+			UnitTypeCatalog catalog, BaseFormationTable formations, RosterTypeEditor types, StructurePlacer placer, BasePadEditor pads,
+			GroupDeleter groupDeleter) {
 		_index = index;
 		_selection = selection;
 		var links = new PanelLinks(index, names, selection);
@@ -63,7 +66,7 @@ internal sealed class PropertiesPanel {
 		_object = new ObjectView(index, links, mover, team, deleter, members, machine, fit, presentWhen, presence, variantView,
 			actions, related, new StartingConditionField(startingConditions), heading);
 		_group = new GroupView(index, links, mover, team, machine, presentWhen, presence, actions, related, orderSlots, sharers,
-			heading);
+			heading, new GroupSlotsView(source, index, links, catalog, formations, types, deleter, placer), pads, groupDeleter);
 		machine.References = namers => links.References(namers);
 	}
 

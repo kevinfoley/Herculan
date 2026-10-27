@@ -139,6 +139,10 @@ public sealed class MsnField {
 	public static MsnField GroupSide { get; } = new(16, MissionGroup164.SideWord,
 		record => ((MissionGroup164)record).Side, (record, value) => ((MissionGroup164)record).Side = value);
 
+	/// <summary>Whether a structure group lays its base pad, row 16's <see cref="MissionGroup164.PaintsGround"/>.</summary>
+	public static MsnField GroupPaintsGround { get; } = new(16, MissionGroup164.PaintsGroundWord,
+		record => ((MissionGroup164)record).PaintsGround, (record, value) => ((MissionGroup164)record).PaintsGround = value);
+
 	/// <summary>Member slot <paramref name="slot"/> of a group, row 16's <see cref="MissionGroup164.MemberRefs"/>.</summary>
 	public static MsnField GroupMember(int slot) => new(16, MissionGroup164.MemberRefsWord + slot,
 		record => ((MissionGroup164)record).MemberRefs[slot], (record, value) => ((MissionGroup164)record).MemberRefs[slot] = value);

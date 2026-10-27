@@ -38,6 +38,22 @@ public sealed record RosterDeleteCheck(bool InSquad, MsnNamers Namers, IReadOnly
 	public bool Allowed => !InSquad && !Needed;
 }
 
+/// <summary>What deleting a whole group would take with it, and what refuses it (<see cref="RosterDeletion.CheckGroup"/>).</summary>
+/// <param name="IsSquad">It is group 0, the player's squad, whose machines a practice load builds from its records.</param>
+/// <param name="Namers">The objectives, actions and orders naming the group.</param>
+/// <param name="Row">The roster row its members are records of, 12 to 14; 0 for a roster no row holds.</param>
+/// <param name="Members">Its members no other group names, which go with it, and what deleting each on its own would meet.</param>
+/// <param name="Kept">Its members another group names too, which stay, placed by that group.</param>
+public sealed record GroupDeleteCheck(bool IsSquad, MsnNamers Namers, int Row,
+		IReadOnlyList<(short Guid, RosterDeleteCheck Check)> Members, IReadOnlyList<short> Kept) {
+	/// <summary>
+	/// Whether nothing refuses the delete: it is not the squad, nothing names the group, and nothing names or needs a member
+	/// that goes with it.
+	/// </summary>
+	public bool Allowed => !IsSquad && !Namers.Any
+		&& Members.All(member => !member.Check.Namers.Any && member.Check.FiredActions.Count == 0);
+}
+
 /// <summary>
 /// Deletes a roster object — a row-12 mech, row-13 flyer or row-14 structure — from a <see cref="MissionDocument"/> as
 /// record edits: every record of its GUID is removed from its row, whatever its condition, and the GUID is cleared from
@@ -55,6 +71,10 @@ public sealed record RosterDeleteCheck(bool InSquad, MsnNamers Namers, IReadOnly
 /// in another. The player's squad is refused too: a practice load builds the player's machine and squadmates from its
 /// row-12 records (docs/retail/shell/main-menu.md#starting-a-practice-mission); <see cref="SquadRoster.Remove"/> removes a
 /// squadmate.</para>
+///
+/// <para>A group can be deleted whole (<see cref="DeleteGroup"/>), its members with it but for those another group places
+/// too, refused while anything names the group or names or needs a member that goes. A base's pad goes with its group, as
+/// the group's own flag is what lays it.</para>
 /// </summary>
 public static class RosterDeletion {
 	private const int ActionRow = 10;
@@ -108,6 +128,58 @@ public static class RosterDeletion {
 		}
 
 		return document.Change(() => Take(document, row, guid, check));
+	}
+
+	/// <summary>
+	/// What deleting row-16 group GUID <paramref name="group"/> whole would take with it, and what refuses it: each member no
+	/// other group names goes with it, refused as its own delete is, but for the group it empties, which is this one; a member
+	/// another group names stays. Every record counts whatever its condition.
+	/// </summary>
+	public static GroupDeleteCheck CheckGroup(MissionDocument document, short group) {
+		var records = (document.Mission.Groups ?? []).Where(record => record.GUID == group).ToList();
+		if (group == -1 || records.Count == 0) {
+			throw new InvalidOperationException($"Row 16 has no record with GUID {group}.");
+		}
+
+		int row = KindOf(records) is >= 0 and <= 2 and var kind ? MechRow + kind : 0;
+		var members = new List<(short, RosterDeleteCheck)>();
+		var kept = new List<short>();
+		if (row != 0) {
+			foreach (short member in records.SelectMany(record => record.MemberRefs).Where(member => member != -1).Distinct()) {
+				if (RosterRecords(document.Mission, row, member).Count == 0) {
+					continue;
+				}
+
+				var check = Check(document, row, member);
+				if (check.MemberOf.Any(other => other != group)) {
+					kept.Add(member);
+				} else {
+					members.Add((member, check));
+				}
+			}
+		}
+
+		return new GroupDeleteCheck(SquadRoster.Squad(document) == group, GroupNamers(document, group), row, members, kept);
+	}
+
+	/// <summary>
+	/// Deletes row-16 group GUID <paramref name="group"/> as one <see cref="MissionDocument.Change"/>: every record of each
+	/// member that goes with it (<see cref="CheckGroup"/>), then the group as a delete of its last member removes it. Throws
+	/// <see cref="InvalidOperationException"/> when <see cref="CheckGroup"/> refuses it.
+	/// </summary>
+	public static MsnEdit DeleteGroup(MissionDocument document, short group) {
+		var check = CheckGroup(document, group);
+		if (!check.Allowed) {
+			throw new InvalidOperationException($"Group {group} is referenced or needed by the mission, or is the player's squad.");
+		}
+
+		return document.Change(() => {
+			foreach (var (member, _) in check.Members) {
+				document.Remove(check.Row, member);
+			}
+
+			RemoveGroup(document, group);
+		});
 	}
 
 	/// <summary>

@@ -243,15 +243,21 @@ public sealed class MissionDocument {
 	/// condition, so writing it fills it in every state; or <c>-1</c> when every slot is filled somewhere.
 	/// </summary>
 	public int FreeMemberSlot(short group) {
-		var records = (Mission.Groups ?? []).Where(record => record.GUID == group).ToList();
 		for (int slot = 0; slot < 20; slot++) {
-			if (records.All(record => record.MemberRefs[slot] == -1)) {
+			if (MemberSlotFree(group, slot)) {
 				return slot;
 			}
 		}
 
 		return -1;
 	}
+
+	/// <summary>
+	/// Whether no record of group GUID <paramref name="group"/> fills member slot <paramref name="slot"/> (0 to 19), whatever
+	/// its condition, so writing it fills it in every state.
+	/// </summary>
+	public bool MemberSlotFree(short group, int slot) =>
+		(Mission.Groups ?? []).Where(record => record.GUID == group).All(record => record.MemberRefs[slot] == -1);
 
 	/// <summary>
 	/// The GUID of a row-7 heading that reads <paramref name="degrees"/> and can be shared: the GUID's one record,

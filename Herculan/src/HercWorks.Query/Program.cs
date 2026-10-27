@@ -24,6 +24,10 @@ internal static class Program {
 		  orders [<mission>...]            every row #16 group's row #15 orders, of every mission or of
 		                                   those named: verb, formation, point, route, subject and the
 		                                   action that ends each
+		  formations [<mission>...]        every row #16 structure group record, of every mission or of
+		                                   those named, by its BFORMS.DAT formation: whether it lays a
+		                                   pad, and the type in each member slot; raw, as records reads
+		                                   them
 		  routes [<mission>...]            every row #8 route, of every mission or of those named: its
 		                                   waypoints' coordinates and leg lengths, whether it closes on
 		                                   itself, and the group orders and objectives naming it
@@ -233,7 +237,7 @@ internal static class Program {
 			return 0;
 		}
 
-		if (command is "actions" or "orders" or "routes" or "objectives" or "conditions" or "text" or "lint" or "repeats" or "records" or "header" or "values"
+		if (command is "actions" or "orders" or "formations" or "routes" or "objectives" or "conditions" or "text" or "lint" or "repeats" or "records" or "header" or "values"
 				&& positional.Skip(1).FirstOrDefault(n => !data.Missions.Any(m => string.Equals(m.Name, n, StringComparison.OrdinalIgnoreCase))) is { } unknown) {
 			return Fail($"No mission is named {unknown}; `missions` lists them.");
 		}
@@ -365,6 +369,17 @@ internal static class Program {
 				WriteJson(output, orders);
 			} else {
 				TextReport.Orders(output, orders);
+			}
+
+			return 0;
+		}
+
+		if (command == "formations") {
+			var formations = FormationQuery.Run(data, positional.Skip(1).ToList());
+			if (json) {
+				WriteJson(output, formations);
+			} else {
+				FormationQuery.Write(output, formations);
 			}
 
 			return 0;

@@ -10,7 +10,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// One opened mission and everything the editor builds over it on the CPU: the scene, its objects placed from the
-/// <c>.MSN</c>'s layout (<see cref="Index"/>), the overlays, the picker, the two side panels, the Mission Settings window and the move, add, delete, fit, type, starting condition, heading, route, trigger area, trigger, countdown, condition, presence, variant, order, objective, text and theater tools, all sharing one
+/// <c>.MSN</c>'s layout (<see cref="Index"/>), the overlays, the picker, the two side panels, the Mission Settings window and the move, add, delete, fit, type, starting condition, heading, base pad, route, trigger area, trigger, countdown, condition, presence, variant, order, objective, text and theater tools, all sharing one
 /// selection. Every edit, undo and redo syncs the scene and the indices with the document in place (<see cref="Sync"/>), and a
 /// change of theater or time of day dresses the scene in its world again in place (<see cref="Theater"/>). Opening another
 /// mission builds a new one of these rather than resetting this one; <see cref="MissionDrawables"/> is its GPU half.
@@ -34,9 +34,10 @@ internal sealed class EditorMission {
 		Sync = new SceneSync(source, scene, tables, sceneIndex, Overlay, Picker, Outliner, Selection);
 		Mover = new PointMover(source, scene, sceneIndex, Sync, Overlay, materials);
 		Gizmo = new MoveGizmo(Selection, Mover);
-		Placer = new StructurePlacer(source, scene, sceneIndex, Mover, Sync, Selection);
+		Placer = new StructurePlacer(source, scene, sceneIndex, Mover, Sync, Selection, tables.Bases);
 		Sides = new SideChanger(source, sceneIndex, Mover, Sync);
 		Deleter = new ObjectDeleter(source, sceneIndex, Mover, Sync);
+		GroupDeleter = new GroupDeleter(source, sceneIndex, Mover, Sync, Deleter);
 		Members = new MemberMover(source, sceneIndex, Mover, Sync);
 		Fitter = new MachineFitter(source, Mover, Sync, shellContent, cybrid);
 		Squad = new SquadEditor(source, Mover, Sync, Fitter, Deleter);
@@ -63,6 +64,7 @@ internal sealed class EditorMission {
 		Types = new RosterTypeEditor(source, Mover, Sync);
 		StartingConditions = new StartingConditionEditor(source, Mover, Sync);
 		Headings = new HeadingEditor(source, Mover, Sync);
+		Pads = new BasePadEditor(source, sceneIndex, tables.Bases, Mover, Sync);
 		Outliner.Placing = Placing;
 		Outliner.AreaPlacing = AreaPlacing;
 		Outliner.Objectives = Objectives;
@@ -73,10 +75,11 @@ internal sealed class EditorMission {
 		Outliner.Choices = choices;
 		Settings = new MissionSettingsWindow(() => Name, () => zones.Describe(Zone), Theater, TheaterNames.Labels(content),
 			new MissionTextView(Texts), new DebriefView(Debrief));
+		var catalog = new UnitTypeCatalog(content);
 		Properties = new PropertiesPanel(sceneIndex, Selection, source, Mover, Sides, Deleter, Members,
-			new SquadMachinePanel(Fitter, Squad, squad), new RosterFitView(Fitter, Types, Variants, choices, new UnitTypeCatalog(content)),
+			new SquadMachinePanel(Fitter, Squad, squad), new RosterFitView(Fitter, Types, Variants, choices, catalog),
 			Routes, Placing, Areas, AreaPlacing, Orders, Objectives, Actions, Timers, Conditions, Presence, Variants,
-			StartingConditions, Headings, choices, new TriggerMessages(content), Names);
+			StartingConditions, Headings, choices, new TriggerMessages(content), Names, catalog, tables.Bases, Types, Placer, Pads, GroupDeleter);
 	}
 
 	/// <summary>
@@ -127,7 +130,7 @@ internal sealed class EditorMission {
 	/// <summary>Syncs the scene and the indices with <see cref="Source"/> after every edit, undo and redo.</summary>
 	public SceneSync Sync { get; }
 
-	/// <summary>Adds structures to <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Adds structures to <see cref="Source"/>, a structure group's chosen place included, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public StructurePlacer Placer { get; }
 
 	/// <summary>Adds hercs outside the player's squad to <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
@@ -174,6 +177,9 @@ internal sealed class EditorMission {
 	/// <summary>Deletes objects from <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public ObjectDeleter Deleter { get; }
 
+	/// <summary>Deletes a group whole, its members with it.</summary>
+	public GroupDeleter GroupDeleter { get; }
+
 	/// <summary>Moves objects into other groups of <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public MemberMover Members { get; }
 
@@ -188,6 +194,9 @@ internal sealed class EditorMission {
 
 	/// <summary>Sets the own headings of structures, ground vehicles and groups in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public HeadingEditor Headings { get; }
+
+	/// <summary>Turns structure groups' base pads on and off in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	public BasePadEditor Pads { get; }
 
 	/// <summary>Adds and removes the player's squadmates in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public SquadEditor Squad { get; }

@@ -8,9 +8,12 @@ namespace Herculan.Engine.Editor;
 /// The Properties panel's view of a group (docs/herculan/handoff-editor-viewing.md#groups), read from the <c>.MSN</c>'s layout
 /// and <see cref="MissionIndex"/> by its row-16 GUID, every group included, one the mission as opened leaves out too: its
 /// name, Present when and team, the squad's machines for the player's squad (<see cref="SquadMachinePanel"/>); the trigger it
-/// waits on; where it starts, as fields that move it, and what else stands there; its heading, set (<see cref="HeadingField"/>), and base pad; its members; the
+/// waits on; where it starts, as fields that move it, and what else stands there; its heading, set (<see cref="HeadingField"/>), and base pad, set
+/// for a structure group (<see cref="BasePadEditor"/>); its members, a structure group's one row per place in its formation
+/// (<see cref="GroupSlotsView"/>); the
 /// campaign variables it sets when every member is down; the win and lose conditions about it; its orders
-/// (<see cref="OrderSlotsView"/>); and, collapsed under Advanced, its formation and its own route field.
+/// (<see cref="OrderSlotsView"/>); a Delete group button (<see cref="GroupDeleter"/>); and, collapsed under Advanced, its
+/// formation and its own route field.
 /// </summary>
 internal sealed class GroupView {
 	private readonly MissionIndex _index;
@@ -25,13 +28,17 @@ internal sealed class GroupView {
 	private readonly OrderSlotsView _orders;
 	private readonly PointSharers _sharers;
 	private readonly HeadingField _heading;
+	private readonly GroupSlotsView _slots;
+	private readonly BasePadEditor _pads;
+	private readonly GroupDeleter _deleter;
 
 	// The group's point being typed.
 	private readonly PointFields _point = new();
 
 	public GroupView(MissionIndex index, PanelLinks links, PointMover mover, TeamField team, SquadMachinePanel machine,
 			PresentWhenView presentWhen, PresenceEditor presence, ActionEditor actions, RelatedObjectives objectives,
-			OrderSlotsView orders, PointSharers sharers, HeadingField heading) {
+			OrderSlotsView orders, PointSharers sharers, HeadingField heading, GroupSlotsView slots, BasePadEditor pads,
+			GroupDeleter deleter) {
 		_index = index;
 		_links = links;
 		_mover = mover;
@@ -44,6 +51,9 @@ internal sealed class GroupView {
 		_orders = orders;
 		_sharers = sharers;
 		_heading = heading;
+		_slots = slots;
+		_pads = pads;
+		_deleter = deleter;
 	}
 
 	/// <summary>Draws row-16 GUID <paramref name="guid"/>'s view; nothing for a group the layout does not have.</summary>
@@ -71,11 +81,15 @@ internal sealed class GroupView {
 		DrawSetup(group);
 
 		ImGui.Separator();
-		ImGui.Text($"Members: {group.Members.Count}");
-		foreach (var member in group.Members) {
-			ImGui.PushID($"member{member.Row}.{member.Guid}");
-			_links.Object(member);
-			ImGui.PopID();
+		if (GroupSlotsView.Covers(group)) {
+			_slots.Draw(group);
+		} else {
+			ImGui.Text($"Members: {group.Members.Count}");
+			foreach (var member in group.Members) {
+				ImGui.PushID($"member{member.Row}.{member.Guid}");
+				_links.Object(member);
+				ImGui.PopID();
+			}
 		}
 
 		// Group_ReportIfAllOutOfAction: the last member to go finds every other destroyed or immobilized; a disarmed one
@@ -87,7 +101,60 @@ internal sealed class GroupView {
 
 		_objectives.Draw(_index.ObjectivesAbout(guid), new GroupSelection(guid));
 		_orders.Draw(guid);
+		DeleteControls(group);
 		DrawAdvanced(group);
+	}
+
+	/// <summary>
+	/// A Delete group button (<see cref="GroupDeleter"/>) and how many members go with it, or why the group cannot be deleted,
+	/// with what references or needs it or a member as links. The delete itself waits for the frame's ImGui to be rendered.
+	/// </summary>
+	private void DeleteControls(PlannedGroup group) {
+		ImGui.Separator();
+		var blockers = _deleter.BlockersOf(group.Guid);
+		if (blockers.Fixed is { } reason) {
+			EditorText.Reason(reason, "Cannot be deleted: ");
+			return;
+		}
+
+		ImGui.PushID("delete");
+		if (blockers.None) {
+			if (ImGui.Button("Delete group")) {
+				_deleter.Request(group.Guid);
+			}
+
+			EditorText.Tooltip(blockers.Going.Count switch {
+				0 => "Deletes the group, which has no members.",
+				1 => "Deletes the group and its one member.",
+				int n => $"Deletes the group and its {n} members.",
+			} + (group.Setup.PaintsGround && group.Kind == MissionUnitKind.Base ? " Its base pad goes with it." : ""));
+			if (blockers.Kept.Count > 0) {
+				EditorText.Wrapped("Stays, as another group also places it:");
+				foreach (var kept in blockers.Kept) {
+					ImGui.PushID($"kept{kept.Guid}");
+					_links.Object(kept);
+					ImGui.PopID();
+				}
+			}
+
+			EditorText.Reason(_deleter.Failure, "Not deleted: ");
+			ImGui.PopID();
+			return;
+		}
+
+		EditorText.Wrapped("Cannot be deleted while these reference or need it:");
+		_links.References(blockers.Group);
+		foreach (var (member, names, fired) in blockers.Members) {
+			ImGui.PushID($"member{member.Guid}");
+			ImGui.Spacing();
+			_links.Object(member);
+			ImGui.SameLine(0f, 0f);
+			ImGui.TextUnformatted(", a member going with it, is referenced by:");
+			_links.References(names, fired: fired);
+			ImGui.PopID();
+		}
+
+		ImGui.PopID();
 	}
 
 	/// <summary>
@@ -172,6 +239,10 @@ internal sealed class GroupView {
 
 		bool alongRoute = FirstRoute(group) is { } leg && _index.Layout.Entry<WaypointGroup>(leg)?.Fields.Waypoints.Length >= 2;
 		_heading.DrawGroup(group.Guid, setup.Heading, alongRoute);
+		if (group.Pad != null) {
+			// The pad lies with the map's axes whatever the heading (docs/retail/rendering/terrain-texturing.md#base-formation-pads).
+			EditorText.Note("The base pad does not turn with the group: any heading but 0 moves its structures off the pad.");
+		}
 
 		DrawBasePad(group);
 	}
@@ -205,28 +276,38 @@ internal sealed class GroupView {
 
 	/// <summary>
 	/// Whether the group lays a base pad (docs/retail/formats/script-dat.md#base-formation-terrain,
-	/// docs/retail/rendering/terrain-texturing.md#base-formation-pads): a structure group whose record sets it paints the ground
-	/// tile its position falls in with its formation's concrete pad, levels the ground under the pad, and stands its structures
-	/// at its formation's fixed spot in that tile. A formation with no pad paints nothing, and a herc or flyer group's flag
-	/// does nothing.
+	/// docs/retail/rendering/terrain-texturing.md#base-formation-pads), a checkbox that sets it (<see cref="BasePadEditor"/>): a
+	/// structure group whose record sets it paints the ground tile its position falls in with its formation's concrete pad,
+	/// levels the ground under the pad, and stands its structures at its formation's fixed spot in that tile. A formation with
+	/// no pad paints nothing, so the checkbox is offered only for one with a pad; a herc or flyer group's flag does nothing.
 	/// </summary>
 	private void DrawBasePad(PlannedGroup group) {
 		bool asked = group.Setup.PaintsGround;
-		if (group.Kind != MissionUnitKind.Base) {
+		if (group.Kind != MissionUnitKind.Base || group.IsSquad) {
 			return;
 		}
 
-		if (!asked) {
-			ImGui.TextUnformatted("Base pad: none");
-		} else if (group.Pad is { } pad) {
-			EditorText.Wrapped($"Base pad: lays its concrete pad on the ground tile under it, {MissionText.Metres(pad.Layout.TileSize)} square.");
+		string? why = _pads.WhyFixed(group.Guid);
+		bool lays = asked;
+		ImGui.BeginDisabled(why != null);
+		if (ImGui.Checkbox("Lays a base pad", ref lays)) {
+			_pads.Request(group.Guid, lays);
+		}
+
+		ImGui.EndDisabled();
+		EditorText.Tooltip("A concrete pad painted over the ground tile under the group, with the ground under it levelled; "
+			+ "its structures stand at a fixed spot in that tile.");
+		if (why != null) {
+			EditorText.Reason(why);
+		} else if (asked && group.Pad is { } pad) {
+			EditorText.Wrapped($"It lays its concrete pad on the ground tile under it, {MissionText.Metres(pad.Layout.TileSize)} square.");
 			EditorText.Note("Its structures stand at a fixed spot in that tile, so a move within the tile changes nothing and a "
 				+ "move into the next one jumps a whole tile. The ground under the pad is levelled.");
-		} else if (group.Members.Count == 0) {
-			ImGui.TextUnformatted("Base pad: none, as the group has no structure");
-		} else {
-			ImGui.TextUnformatted("Base pad: none, as its formation has no pad");
+		} else if (asked) {
+			EditorText.Note("It lays none while the group has no structure.");
 		}
+
+		EditorText.Reason(_pads.Failure, "Not changed: ");
 	}
 
 	// Under a collapsed Advanced header: the formation, which table it is from, and the group record's own route field.

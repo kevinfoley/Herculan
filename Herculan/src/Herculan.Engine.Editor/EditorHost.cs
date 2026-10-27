@@ -557,6 +557,8 @@ public sealed class EditorHost {
 				} else {
 					_mission.Routes.RequestRemove(route, waypoint);
 				}
+			} else if (_mission?.Selection.Current is GroupSelection { Guid: var group }) {
+				_mission.GroupDeleter.Request(group);
 			} else if (_mission?.Selection.Current is ObjectiveSelection { Record: var objective }) {
 				_mission.Objectives.RequestDelete(objective);
 			} else if (_mission?.Selection.Current is AreaSelection { Guid: var area }) {
@@ -693,7 +695,7 @@ public sealed class EditorHost {
 				enabled: !mission.Gizmo.Dragging && !mission.PlacingAny, joinable, joinName,
 				joinable is { } group ? kind => WhyNotJoin(mission, group, kind) : null,
 				mission.Hercs.WhyNoAdd, mission.Flyers.WhyNoAdd, mission.Vehicles.WhyNoAdd, mission.Placer.WhyNoAdd,
-				mission.Placing, mission.AreaPlacing);
+				mission.Placer.WhyNoBase, mission.Placing, mission.AreaPlacing);
 			mission.Settings.Draw();
 		}
 
@@ -896,12 +898,14 @@ public sealed class EditorHost {
 		ToolboxKind.Herc => mission.Hercs.WhyNotJoin(group),
 		ToolboxKind.Flyer => mission.Flyers.WhyNotJoin(group),
 		ToolboxKind.Vehicle => mission.Vehicles.WhyNotJoin(group),
+		ToolboxKind.Base => "A base starts a group of its own.",
 		_ => mission.Placer.WhyNotJoin(group)
 	};
 
-	// The delete, the machine fit, the squadmate add or remove, the theater or time of day, the route edit, the trigger-area
-	// edit, the order edit, the action or timer edit, the objective or text edit, the finished route or area and the Undo or Redo the frame's panels,
-	// menus and keys asked for; none while a drag is under way.
+	// The delete, the group delete, the machine fit, the base pad, the add in a structure group's place, the squadmate add or remove, the
+	// theater or time of day, the route edit, the trigger-area edit, the order edit, the action or timer edit, the objective
+	// or text edit, the finished route or area and the Undo or Redo the frame's panels, menus and keys asked for; none while
+	// a drag is under way.
 	private void RunEditRequests(EditorMission mission) {
 		var deleting = mission.Deleter.TakeRequest();
 		var step = _pendingStep;
@@ -914,11 +918,14 @@ public sealed class EditorHost {
 			Console.Error.WriteLine($"Cannot delete {(mission.Index.KeyOf(deleting) is { } key ? mission.Names.Object(key).Full : "the object")}: {reason}");
 		}
 
+		mission.GroupDeleter.RunRequest();
 		mission.Members.RunRequest();
 		mission.Fitter.RunRequest();
 		mission.Types.RunRequest();
 		mission.StartingConditions.RunRequest();
 		mission.Headings.RunRequest();
+		mission.Pads.RunRequest();
+		mission.Placer.RunRequest();
 		mission.Squad.RunRequest();
 		mission.Theater.RunRequest();
 		mission.Routes.RunRequest();
@@ -969,6 +976,7 @@ public sealed class EditorHost {
 				ToolboxKind.Herc => _mission.Hercs.Add(request.TypeIndex, request.Side, at.X, at.Y, request.Group),
 				ToolboxKind.Flyer => _mission.Flyers.Add(request.TypeIndex, request.Side, at.X, at.Y, request.Group),
 				ToolboxKind.Vehicle => _mission.Vehicles.Add(request.TypeIndex, request.Side, at.X, at.Y, request.Group),
+				ToolboxKind.Base => _mission.Placer.AddBase(BaseTemplates.All[request.TypeIndex], request.Side, at.X, at.Y),
 				_ => _mission.Placer.Add(request.TypeIndex, request.Side, at.X, at.Y, request.Group)
 			};
 	}

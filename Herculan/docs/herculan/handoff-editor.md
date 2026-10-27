@@ -56,7 +56,7 @@ Beyond the gaps each doc lists:
 | 13 (8), flyers | the campaign variables it sets when destroyed (shown) |
 | 14 (9), structures and ground vehicles | the campaign variables it sets when destroyed (shown; 698 retail records set one) |
 | 15 (10), orders | the formation and the point |
-| 16 (11), groups | the formation id (shown under Advanced), paints-ground flag (shown as its base pad), heading, own route (shown under Advanced), the campaign variables it sets when every member is down (shown) and map-shown flag; deleting one other than with its last member |
+| 16 (11), groups | the formation id (shown under Advanced), own route (shown under Advanced), the campaign variables it sets when every member is down (shown) and map-shown flag |
 | 17 (12), objectives | the condition ref, which the campaign layer authors; their order |
 
 **Campaign variables.** Triggers, objectives and out-of-action reports set campaign variables, which persist into the campaign flags a later mission's row 1 tests ([`../retail/shell/campaign-loop.md`](../retail/shell/campaign-loop.md#the-campaign-flag-array-is-the-msn-condition-store)); each view lists its writes as sentences ([Campaign variable writes](handoff-editor-mission-logic.md#campaign-variable-writes)). The campaign variable picker lists every variable the mission touches, with what touches it, and those the debrief reads, by what it does with them ([The campaign variable picker](handoff-editor-conditions.md#the-campaign-variable-picker)); what other missions set or test is not looked up.
@@ -70,7 +70,7 @@ Beyond the gaps each doc lists:
 | Edit roster and group fields | medium |
 | The objective type and the training mission number | small |
 | A line-length check against the mission screen's wrap, and a line's trailing newline | small |
-| Ordering objectives; deleting a group directly; clearing a reference that refuses a delete | small each |
+| Ordering objectives; clearing a reference that refuses a delete | small each |
 | Heading entry and a turn handle | small |
 | The mission list showing each mission's zone and theater | small |
 | Empty formation slots, briefing-only order point | small each |
