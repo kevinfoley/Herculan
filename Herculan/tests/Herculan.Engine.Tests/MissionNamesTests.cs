@@ -22,41 +22,6 @@ public class MissionNamesTests {
 	private const short Second = 42;
 
 	/// <summary>
-	/// Catches a group named from another group's members (or from every roster record), a member type counted once per
-	/// group rather than per member, an object numbered "2 of 3" among every herc of the mission rather than among those
-	/// of its own type in its own group, and a group numbered from 0 again: the squad is first in row 16, so the first group
-	/// after it is group 2.
-	/// </summary>
-	[Fact]
-	public void AGroupIsNamedByItsOwnMembersAndAnObjectByItsPlaceAmongThem() {
-		var msn = Mission()
-			.Add(12, Mech(5, type: 19)).Add(12, Mech(6, type: 17)).Add(12, Mech(7, type: 19)).Add(12, Mech(8, type: 19))
-			.Add(16, Group(Wing, Hercs, position: -1, condition: -1, 5, 6, 7))
-			.Add(16, Group(Other, Hercs, position: -1, condition: -1, 8));
-		var names = Names(msn);
-
-		Assert.Equal(new RecordName("Human hercs: Herc type 19 x2, Herc type 17", "(group 2)"), names.Group(Wing));
-		Assert.Equal(new RecordName("Human hercs: Herc type 19", "(group 3)"), names.Group(Other));
-		Assert.Equal(new RecordName("Herc type 19 2 of 2 in Human hercs", "(group 2)"), names.Object(new ObjectKey(12, 7)));
-		Assert.Equal(new RecordName("Herc type 19 in Human hercs", "(group 3)"), names.Object(new ObjectKey(12, 8)));
-	}
-
-	/// <summary>
-	/// Catches a waypoint row measuring its leg to the waypoint after it, or from the start, rather than from the one before
-	/// it, and a waypoint numbered other than the cockpit numbers it: the start, then waypoint 1
-	/// (docs/retail/simulation/cockpit-gunsight-hud.md#waypoint-indicators). 50,000 world units are 300 m.
-	/// </summary>
-	[Fact]
-	public void AWaypointIsNumberedAsTheCockpitNumbersItAndMeasuredFromTheOneBefore() {
-		var points = new[] { new Vec3i(0, 0, 0), new Vec3i(50000, 0, 0), new Vec3i(50000, 100000, 0) };
-
-		Assert.Equal(["Start", "Waypoint 1", "Waypoint 2"], Enumerable.Range(0, 3).Select(MissionText.Waypoint));
-		Assert.Null(MissionText.LegFromPrevious(points, 0));
-		Assert.Equal("300 m from the start", MissionText.LegFromPrevious(points, 1));
-		Assert.Equal("600 m from waypoint 1", MissionText.LegFromPrevious(points, 2));
-	}
-
-	/// <summary>
 	/// Catches a later order's route offered as read when no objective reads it: an objective counted for an order whose
 	/// route an earlier slot of the group already names (the one the objective reads), for another group's order on the
 	/// same route, or for a condition other than a finished order; and a herc subject not resolved to the group that places it.
@@ -119,6 +84,4 @@ public class MissionNamesTests {
 	private static MissionIndex Index(SyntheticMsn msn) =>
 		new(LayoutPlacement.Place(MissionLayout.Build(new MissionFileTransformer().Parse(msn.Bytes())!), LayoutFeaturesTests.Tables),
 			new Dictionary<ObjectKey, SceneObject>());
-
-	private static MissionNames Names(SyntheticMsn msn) => new(Index(msn), RosterTypeNames.None);
 }

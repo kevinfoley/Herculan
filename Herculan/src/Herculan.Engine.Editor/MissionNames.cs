@@ -106,8 +106,9 @@ internal sealed class MissionNames {
 	// ---- Groups ------------------------------------------------------------------------------------
 
 	/// <summary>
-	/// Row-16 GUID <paramref name="guid"/> by its team, roster and members: "Cybrid hercs: SCARAB x2, DIABLO", numbered
-	/// "(group 5)"; the player's squad "Player's squad", with no number.
+	/// Row-16 GUID <paramref name="guid"/> by its number, then its team, roster and members: "Group 5: Cybrid hercs (SCARAB x2,
+	/// DIABLO)"; the player's squad "Player's squad". The number leads, so it is the text, with no dimmed
+	/// <see cref="RecordName.Number"/>.
 	/// </summary>
 	public RecordName Group(short guid) {
 		if (_index.Group(guid) is not { } group) {
@@ -118,7 +119,7 @@ internal sealed class MissionNames {
 			return new RecordName("Player's squad");
 		}
 
-		return new RecordName($"{Team(group)} {Roster(group)}: {Members(group)}", GroupNumber(group));
+		return new RecordName($"Group {group.Number}: {Team(group)} {Roster(group)} ({Members(group)})");
 	}
 
 	/// <summary>Row-16 GUID <paramref name="guid"/> by its team and roster alone: "Cybrid hercs", numbered "(group 5)".</summary>
