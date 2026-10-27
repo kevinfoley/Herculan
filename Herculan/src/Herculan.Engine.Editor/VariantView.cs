@@ -106,12 +106,18 @@ internal sealed class VariantView {
 				ImGui.PushStyleColor(ImGuiCol.Text, HighlightColor);
 			}
 
+			// The text wraps short of Remove, so the button stays inside the panel.
+			bool removable = why == null && table.Alternatives.Count > 1;
+			var style = ImGui.GetStyle();
+			float remove = removable ? ImGui.CalcTextSize("Remove").X + style.FramePadding.X * 2f + style.ItemSpacing.X : 0f;
+			ImGui.PushTextWrapPos(ImGui.GetCursorPosX() + ImGui.GetContentRegionAvail().X - remove);
 			EditorText.Wrapped(_choices.Option(table, i) + (inScene.Contains(i) ? " (in the scene)" : ""));
+			ImGui.PopTextWrapPos();
 			if (lit) {
 				ImGui.PopStyleColor();
 			}
 
-			if (why == null && table.Alternatives.Count > 1) {
+			if (removable) {
 				ImGui.SameLine();
 				if (ImGui.SmallButton("Remove")) {
 					_editor.RequestRemove(table.Guid, alternative.Range);
