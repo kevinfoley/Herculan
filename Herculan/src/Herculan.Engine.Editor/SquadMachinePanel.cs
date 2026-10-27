@@ -129,7 +129,7 @@ internal sealed class SquadMachinePanel {
 	private void DrawSquadmate(int number, short guid) {
 		ImGui.PushID($"squadmate{number}");
 		ImGui.Text($"Squadmate {number}");
-		Pickers("herc", () => DrawHerc(guid));
+		Pickers("HERC", () => DrawHerc(guid));
 		var (reason, names, ownActions) = _editor.WhyNoRemove(number);
 		if (reason == null && !names.Any && !ownActions) {
 			if (ImGui.Button("Remove")) {

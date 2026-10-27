@@ -199,7 +199,7 @@ public static class ActionEditing {
 		document.Layout.Entries(block + 5) is { Count: > 0 } entries ? entries[0].Guid : (short)-1;
 
 	/// <summary>What a target of type <paramref name="type"/> is, in a word.</summary>
-	public static string TargetKind(short type) => type switch { 7 => "herc", 8 => "flyer", 9 => "structure", _ => "group" };
+	public static string TargetKind(short type) => type switch { 7 => "HERC", 8 => "flyer", 9 => "structure", _ => "group" };
 
 	/// <summary>
 	/// Sets <paramref name="action"/>'s type, 0 to <see cref="LastType"/>. A change to 7 to 10 gives it the first layout entry of

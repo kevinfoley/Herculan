@@ -140,7 +140,7 @@ internal sealed class RandomChoices {
 
 	/// <summary>What <paramref name="table"/>'s options are, in the singular: herc, flyer, structure, ground vehicle or route.</summary>
 	public string Noun(VariantTable table) => table.Row switch {
-		MechRow => "herc",
+		MechRow => "HERC",
 		FlyerRow => "flyer",
 		BaseRow => table.Alternatives.Count > 0 && Record(table.Alternatives[0]) is BaseRosterEntry62 first && IsVehicle(first)
 			? "ground vehicle"

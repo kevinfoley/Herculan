@@ -635,7 +635,7 @@ public static class VariantEditing {
 	}
 
 	private static string KindOf(int row) => row switch {
-		12 => "herc",
+		12 => "HERC",
 		13 => "flyer",
 		14 => "structure",
 		8 => "route",

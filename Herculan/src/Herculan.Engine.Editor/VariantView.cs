@@ -372,7 +372,7 @@ internal sealed class VariantView {
 
 	/// <summary>What the view of <paramref name="placed"/> calls it: herc, flyer, ground vehicle or structure.</summary>
 	internal static string Noun(SceneObject placed) => placed.Placement.Kind switch {
-		MissionUnitKind.Mech => "herc",
+		MissionUnitKind.Mech => "HERC",
 		MissionUnitKind.Flyer => "flyer",
 		_ when placed.Object is Sim.BaseObject { Type.IsVehicle: true } => "ground vehicle",
 		_ => "structure",
