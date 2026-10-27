@@ -304,16 +304,16 @@ internal sealed class EditorToolbox {
 		switch (kind) {
 			case ToolboxKind.Herc:
 				EditorText.Note(_side == MissionSide.Cybrid
-					? "A new herc gets a group of its own, which hunts the player's squad from where it stands."
-					: "A new herc gets a group of its own, which patrols where it stands, its leader fighting any enemy it finds.");
+					? "A new HERC starts in its own group with default orders."
+					: "A new HERC starts in its own group with default orders.");
 				break;
 			case ToolboxKind.Flyer:
 				EditorText.Note(_side == MissionSide.Cybrid
-					? "A new flyer gets a group of its own, which hunts the player's squad from its route."
-					: "A new flyer gets a group of its own, which patrols its route and attacks any HERC or structure it finds.");
+					? "A new flyer starts in its own group with default orders."
+					: "A new flyer starts in its own group with default orders.");
 				break;
 			case ToolboxKind.Vehicle:
-				EditorText.Note("A new ground vehicle gets a convoy of its own, which drives its route. Add waypoints to its route to set it moving.");
+				EditorText.Note("A new ground vehicle starts in its own group with default orders.");
 				break;
 		}
 

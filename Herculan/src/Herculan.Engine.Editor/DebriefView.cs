@@ -24,8 +24,8 @@ internal sealed class DebriefView {
 		ImGui.Text("Debrief");
 		// A training debrief never reloads the mission's text (docs/retail/formats/msn-mission-file.md#the-debriefs-loss-line).
 		EditorText.Note(_editor.Campaign()
-			? "Shown on the mission screen only after a campaign mission."
-			: "Shown on the mission screen only after a campaign mission.");
+			? "Shown after a campaign mission."
+			: "Shown after a campaign mission.");
 		var source = _editor.Source;
 		if (DebriefText.Record(source) == null) {
 			EditorText.Note("This mission has no debrief.");

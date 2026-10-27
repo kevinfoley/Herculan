@@ -201,9 +201,9 @@ public static class GroupOrders {
 		bool members = memberRow != 0 && record.MemberRefs.Any(member => document.Layout.Entry(memberRow, member) != null);
 		bool squad = group == SquadRoster.Squad(document);
 		return document.Layout.Entry(HeadingRow, record.HeadingRef) == null
-			? "With no heading of its own, the group needs a first order: DBSIM faults loading it."
-			: record.MemberKind == MechRoster && members && !squad ? "A herc group needs a first order: its hercs' AI faults with none."
-			: record.MemberKind == FlyerRoster && members ? "A flyer group keeps its first order: what its AI does with none is not known."
+			? "A group with no heading must have at least one order."
+			: record.MemberKind == MechRoster && members && !squad ? "A HERC group must have at least one order."
+			: record.MemberKind == FlyerRoster && members ? "A flyer group must have at least one order."
 			: null;
 	}
 
