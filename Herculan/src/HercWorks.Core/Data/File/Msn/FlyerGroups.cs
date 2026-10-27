@@ -96,4 +96,25 @@ public static class FlyerGroups {
 
 		return NewGroups.Join(document, FlyerRow, group, flyer, out guid);
 	}
+
+	/// <summary>
+	/// Why a flyer cannot be put in member slot <paramref name="slot"/> of row-16 group <paramref name="group"/>, or null when
+	/// it can: a flyer group, and a slot up to <see cref="LastJoinSlot"/> that no record of it fills.
+	/// </summary>
+	public static string? WhyNoJoinSlot(MissionDocument document, short group, int slot) =>
+		NewGroups.WhyNoJoinSlot(document, group, slot, FlyerRoster, LastJoinSlot, "It is not a flyer group.",
+			$"Its formation has places for {LastJoinSlot + 1} flyers.");
+
+	/// <summary>
+	/// Adds <paramref name="flyer"/> to flyer group <paramref name="group"/> in member slot <paramref name="slot"/>, as one
+	/// <see cref="MissionDocument.Change"/>; answers the flyer's row-13 GUID. Throws <see cref="InvalidOperationException"/>
+	/// when <see cref="WhyNoAdd"/> or <see cref="WhyNoJoinSlot"/> refuses it.
+	/// </summary>
+	public static MsnEdit JoinSlot(MissionDocument document, short group, int slot, FlyerRosterEntry102 flyer, out short guid) {
+		if ((WhyNoAdd(document) ?? WhyNoJoinSlot(document, group, slot)) is { } reason) {
+			throw new InvalidOperationException(reason);
+		}
+
+		return NewGroups.Join(document, FlyerRow, group, slot, flyer, out guid);
+	}
 }

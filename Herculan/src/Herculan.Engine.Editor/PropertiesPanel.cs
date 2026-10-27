@@ -43,8 +43,8 @@ internal sealed class PropertiesPanel {
 			RoutePlacing placing, AreaEditor areas, AreaPlacing areaPlacing, OrderEditor orders, ObjectiveEditor objectives,
 			ActionEditor actions, TimerEditor timers, ConditionEditor conditions, PresenceEditor presence, VariantEditor variants,
 			StartingConditionEditor startingConditions, HeadingEditor headings, RandomChoices choices, TriggerMessages messages, MissionNames names,
-			UnitTypeCatalog catalog, BaseFormationTable formations, RosterTypeEditor types, StructurePlacer placer, BasePadEditor pads,
-			GroupDeleter groupDeleter) {
+			UnitTypeCatalog catalog, BaseFormationTable formations, RosterTypeEditor types, MachineFitter fitter, StructurePlacer placer,
+			HercPlacer hercs, FlyerPlacer flyers, BasePadEditor pads, GroupDeleter groupDeleter) {
 		_index = index;
 		_selection = selection;
 		var links = new PanelLinks(index, names, selection);
@@ -66,7 +66,8 @@ internal sealed class PropertiesPanel {
 		_object = new ObjectView(index, links, mover, team, deleter, members, machine, fit, presentWhen, presence, variantView,
 			actions, related, new StartingConditionField(startingConditions), heading);
 		_group = new GroupView(index, links, mover, team, machine, presentWhen, presence, actions, related, orderSlots, sharers,
-			heading, new GroupSlotsView(source, index, links, catalog, formations, types, deleter, placer), pads, groupDeleter);
+			heading, new GroupSlotsView(source, index, links, catalog, formations, types, fitter, deleter, placer, hercs, flyers), pads,
+			groupDeleter);
 		machine.References = namers => links.References(namers);
 	}
 

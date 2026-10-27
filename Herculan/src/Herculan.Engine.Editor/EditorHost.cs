@@ -926,6 +926,8 @@ public sealed class EditorHost {
 		mission.Headings.RunRequest();
 		mission.Pads.RunRequest();
 		mission.Placer.RunRequest();
+		mission.Hercs.RunRequest();
+		mission.Flyers.RunRequest();
 		mission.Squad.RunRequest();
 		mission.Theater.RunRequest();
 		mission.Routes.RunRequest();

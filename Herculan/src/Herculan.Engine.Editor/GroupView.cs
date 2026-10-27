@@ -9,8 +9,8 @@ namespace Herculan.Engine.Editor;
 /// and <see cref="MissionIndex"/> by its row-16 GUID, every group included, one the mission as opened leaves out too: its
 /// name, Present when and team, the squad's machines for the player's squad (<see cref="SquadMachinePanel"/>); the trigger it
 /// waits on; where it starts, as fields that move it, and what else stands there; its heading, set (<see cref="HeadingField"/>), and base pad, set
-/// for a structure group (<see cref="BasePadEditor"/>); its members, a structure group's one row per place in its formation
-/// (<see cref="GroupSlotsView"/>); the
+/// for a structure group (<see cref="BasePadEditor"/>); its members, one row per place in its formation for any group but the
+/// player's squad (<see cref="GroupSlotsView"/>); the
 /// campaign variables it sets when every member is down; the win and lose conditions about it; its orders
 /// (<see cref="OrderSlotsView"/>); a Delete group button (<see cref="GroupDeleter"/>); and, collapsed under Advanced, its
 /// formation and its own route field.

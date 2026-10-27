@@ -300,9 +300,9 @@ internal sealed class EditorToolbox {
 			EditorText.Note("It takes the group's team.");
 		}
 
-		// Only an entry of this tab's kind: one chosen in another tab is out of sight.
+		// Only an entry of this tab's kind the list shows: one chosen in another tab, or hidden by the team, is out of sight.
 		bool allowed = Allowed(kind, enabled);
-		ImGui.BeginDisabled(_chosen is not var (chosenKind, _) || chosenKind != kind || !allowed);
+		ImGui.BeginDisabled(_chosen is not var (chosenKind, chosenType) || chosenKind != kind || !Listed(kind, chosenType) || !allowed);
 		if (ImGui.Button("Add in the middle of the view") && _chosen is var (_, type)) {
 			Request(kind, type, atPointer: false);
 		}
@@ -424,7 +424,7 @@ internal sealed class EditorToolbox {
 
 	private void DrawEntries(ToolboxKind kind, bool enabled) {
 		foreach (var (entryKind, typeIndex, name) in _entries) {
-			if (entryKind != kind) {
+			if (entryKind != kind || !Listed(kind, typeIndex)) {
 				continue;
 			}
 
@@ -442,6 +442,9 @@ internal sealed class EditorToolbox {
 			}
 		}
 	}
+
+	// Whether entry <typeIndex> of <kind> is listed: one offered for the team chosen.
+	private bool Listed(ToolboxKind kind, int typeIndex) => UnitTypeCatalog.OffersFor(kind, typeIndex, _side);
 
 	// Whether an entry of <kind> can be added now: the toolbox is <enabled> and that kind's placer refuses nothing.
 	private bool Allowed(ToolboxKind kind, bool enabled) => enabled && WhyNo(kind) == null;

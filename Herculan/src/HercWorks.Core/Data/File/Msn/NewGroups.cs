@@ -111,12 +111,32 @@ internal static class NewGroups {
 	}
 
 	/// <summary>
+	/// Why row-16 group <paramref name="group"/> cannot take a member of <paramref name="memberKind"/> in member slot
+	/// <paramref name="slot"/>, or null when it can: it is <paramref name="notKind"/> unless its base is a group of that kind,
+	/// <paramref name="past"/> for a slot after <paramref name="lastSlot"/>, and a slot some record of it fills is taken
+	/// (<see cref="MissionDocument.MemberSlotFree"/>).
+	/// </summary>
+	internal static string? WhyNoJoinSlot(MissionDocument document, short group, int slot, short memberKind, int lastSlot,
+			string notKind, string past) =>
+		document.Layout.Entry<MissionGroup164>(group)?.Fields.MemberKind != memberKind ? notKind
+			: slot < 0 || slot > lastSlot ? past
+			: !document.MemberSlotFree(group, slot) ? "Another version of the mission has a member in this place."
+			: null;
+
+	/// <summary>
 	/// Appends <paramref name="member"/> to roster row <paramref name="row"/> and names it in <paramref name="group"/>'s
 	/// first free member slot, in the record supplying that slot, as one <see cref="MissionDocument.Change"/>; answers the
 	/// member's GUID. The caller has checked the join.
 	/// </summary>
-	internal static MsnEdit Join(MissionDocument document, int row, short group, MapObject member, out short memberGuid) {
-		int slot = document.FreeMemberSlot(group);
+	internal static MsnEdit Join(MissionDocument document, int row, short group, MapObject member, out short memberGuid) =>
+		Join(document, row, group, document.FreeMemberSlot(group), member, out memberGuid);
+
+	/// <summary>
+	/// Appends <paramref name="member"/> to roster row <paramref name="row"/> and names it in member slot
+	/// <paramref name="slot"/> of <paramref name="group"/>, in the record supplying that slot, as one
+	/// <see cref="MissionDocument.Change"/>; answers the member's GUID. The caller has checked the join.
+	/// </summary>
+	internal static MsnEdit Join(MissionDocument document, int row, short group, int slot, MapObject member, out short memberGuid) {
 		short added = -1;
 		var change = document.Change(() => {
 			document.Append(row, member, out added);

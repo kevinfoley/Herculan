@@ -79,7 +79,8 @@ internal sealed class EditorMission {
 		Properties = new PropertiesPanel(sceneIndex, Selection, source, Mover, Sides, Deleter, Members,
 			new SquadMachinePanel(Fitter, Squad, squad), new RosterFitView(Fitter, Types, Variants, choices, catalog),
 			Routes, Placing, Areas, AreaPlacing, Orders, Objectives, Actions, Timers, Conditions, Presence, Variants,
-			StartingConditions, Headings, choices, new TriggerMessages(content), Names, catalog, tables.Bases, Types, Placer, Pads, GroupDeleter);
+			StartingConditions, Headings, choices, new TriggerMessages(content), Names, catalog, tables.Bases, Types, Fitter, Placer, Hercs, Flyers,
+			Pads, GroupDeleter);
 	}
 
 	/// <summary>

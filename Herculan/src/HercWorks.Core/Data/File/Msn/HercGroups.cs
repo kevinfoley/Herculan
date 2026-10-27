@@ -173,6 +173,32 @@ public static class HercGroups {
 	}
 
 	/// <summary>
+	/// Why a herc cannot be put in member slot <paramref name="slot"/> of row-16 group <paramref name="group"/>, or null when it
+	/// can: a herc group, not the player's squad, and a slot up to <see cref="LastJoinSlot"/> that no record of it fills.
+	/// </summary>
+	public static string? WhyNoJoinSlot(MissionDocument document, short group, int slot) {
+		if (group != -1 && group == SquadRoster.Squad(document)) {
+			return "Squadmates are added with Add a squadmate in the Player's squad view: click Player's squad under Groups in the Mission panel.";
+		}
+
+		return NewGroups.WhyNoJoinSlot(document, group, slot, MechRoster, LastJoinSlot, "It is not a herc group.",
+			$"Its formation has places for {LastJoinSlot + 1} hercs.");
+	}
+
+	/// <summary>
+	/// Adds <paramref name="herc"/> to herc group <paramref name="group"/> in member slot <paramref name="slot"/>, as one
+	/// <see cref="MissionDocument.Change"/>; answers the herc's row-12 GUID. Throws <see cref="InvalidOperationException"/>
+	/// when <see cref="WhyNoAdd"/> or <see cref="WhyNoJoinSlot"/> refuses it.
+	/// </summary>
+	public static MsnEdit JoinSlot(MissionDocument document, short group, int slot, MechRosterEntry144 herc, out short mech) {
+		if ((WhyNoAdd(document) ?? WhyNoJoinSlot(document, group, slot)) is { } reason) {
+			throw new InvalidOperationException(reason);
+		}
+
+		return NewGroups.Join(document, MechRow, group, slot, herc, out mech);
+	}
+
+	/// <summary>
 	/// An order, unconditioned and drawing no variant: <paramref name="verb"/> on <paramref name="route"/>, with subject
 	/// <paramref name="subject"/> of <paramref name="subjectKind"/>, in formation 0, naming no point (422 of the herc groups'
 	/// 453 orders, 80 of the flyer groups' 81) and no action that ends it (445 of 453, 80 of 81).

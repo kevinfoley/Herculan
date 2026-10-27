@@ -1,3 +1,4 @@
+using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Io.Transform.Dbsim;
 using Herculan.Engine.Cockpit;
 using Herculan.Engine.Content;
@@ -92,6 +93,17 @@ internal sealed class UnitTypeCatalog {
 
 	/// <summary>The types of <paramref name="kind"/> offered, in type order.</summary>
 	public IEnumerable<int> Of(ToolboxKind kind) => Entries.Where(entry => entry.Kind == kind).Select(entry => entry.TypeIndex);
+
+	/// <summary>The types of <paramref name="kind"/> offered for <paramref name="side"/>, in type order (<see cref="OffersFor"/>).</summary>
+	public IEnumerable<int> Of(ToolboxKind kind, MissionSide side) => Of(kind).Where(type => OffersFor(kind, type, side));
+
+	/// <summary>
+	/// Whether type <paramref name="typeIndex"/> of <paramref name="kind"/> is offered for <paramref name="side"/>: every type
+	/// is, but for the Cybrids the hercs leave out the nine chassis the player pilots (<see cref="HercGroups.FirstCybridType"/>)
+	/// and offer the Cybrids' own (the editor's choice).
+	/// </summary>
+	public static bool OffersFor(ToolboxKind kind, int typeIndex, MissionSide side) =>
+		kind != ToolboxKind.Herc || side != MissionSide.Cybrid || HercGroups.IsCybrid(typeIndex);
 
 	/// <summary>The name a type of <paramref name="kind"/> is offered under, or <c>Type n</c> for one not offered.</summary>
 	public string NameOf(ToolboxKind kind, int typeIndex) =>

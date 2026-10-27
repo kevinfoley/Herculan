@@ -9,7 +9,8 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// Adds a herc outside the player's squad to the open mission, as one step of <see cref="PointMover"/>'s undo history,
 /// through <see cref="HercGroups"/>'s record edits: in a new group of its own, standing on a route of one waypoint where it
-/// was put and hunting the player's squad, or joining the selected herc group. The scene is then synced with the document
+/// was put and hunting the player's squad, or joining the selected herc group, or in a chosen member slot of a herc group
+/// from the group's view (<see cref="RequestJoin"/>). The scene is then synced with the document
 /// (<see cref="SceneSync"/>), which builds the herc's object for the record, and the herc is
 /// selected (docs/herculan/handoff-editor-roster.md#hercs).
 ///
@@ -27,6 +28,7 @@ internal sealed class HercPlacer {
 	private readonly SelectionState _selection;
 	private readonly MachineFitter _fitter;
 	private readonly UnitTypeNames _names;
+	private Func<string?>? _requested;
 
 	/// <param name="source">The mission as its <c>.MSN</c>.</param>
 	/// <param name="index">The layout's groups and objects.</param>
@@ -81,6 +83,47 @@ internal sealed class HercPlacer {
 	public string? WhyNotJoin(short group) =>
 		_index.Group(group) == null ? EditorToolbox.GroupGone : HercGroups.WhyNoJoin(_source, group);
 
+	/// <summary>Why the last slot join run could not be made, or null.</summary>
+	public string? Failure { get; private set; }
+
+	/// <summary>
+	/// Why no herc can be put in member slot <paramref name="slot"/> of <paramref name="group"/>, by its row-16 GUID, or null
+	/// when one can: block 7 is full (<see cref="WhyNoAdd"/>), or the slot cannot be filled (<see cref="HercGroups.WhyNoJoinSlot"/>).
+	/// </summary>
+	public string? WhyNotFillSlot(short group, int slot) =>
+		WhyNoAdd ?? (_index.Group(group) == null ? EditorToolbox.GroupGone : HercGroups.WhyNoJoinSlot(_source, group, slot));
+
+	/// <summary>
+	/// Asks for a herc of type <paramref name="typeIndex"/>, with the fit a new herc of it gets, to be added in member slot
+	/// <paramref name="slot"/> of herc group <paramref name="group"/>. Its record names no point of its own, so it stands on
+	/// the slot's formation spot (docs/retail/formats/script-dat.md#placement--the-actual-rule); it is not selected, so the
+	/// group's view stays. The edit runs when <see cref="RunRequest"/> is called, once the frame's ImGui is rendered.
+	/// </summary>
+	public void RequestJoin(short group, int slot, int typeIndex) => _requested = () => JoinSlot(typeIndex, group, slot);
+
+	/// <summary>Makes the slot join asked for since the last call, if any; <see cref="Failure"/> says why one could not be made.</summary>
+	public void RunRequest() {
+		if (_requested is { } edit) {
+			_requested = null;
+			Failure = edit();
+		}
+	}
+
+	private string? JoinSlot(int typeIndex, short group, int slot) {
+		if (WhyNotFillSlot(group, slot) is { } reason) {
+			return reason;
+		}
+
+		if (_fitter.NewHercFit(typeIndex) is not var (weapons, ammo)) {
+			return HercGroups.IsCybrid(typeIndex) ? $"There is no herc type {typeIndex}." : $"The install has no stock fit for chassis {typeIndex}.";
+		}
+
+		var source = _source;
+		var herc = HercGroups.Machine((short)typeIndex, weapons, ammo);
+		short mech = -1;
+		return Commit(typeIndex, () => HercGroups.JoinSlot(source, group, slot, herc, out mech), () => mech, select: false);
+	}
+
 	/// <summary>
 	/// The herc <see cref="Add"/> would add of <paramref name="typeIndex"/> on <paramref name="side"/>, built the same way
 	/// but in no roster slot or group and recorded nowhere, for <see cref="DropPreview"/> to draw; null for a type the
@@ -92,9 +135,9 @@ internal sealed class HercPlacer {
 				weapons, ammo, Side: side, OutOfActionReport: OutOfActionReport.None))
 			: null;
 
-	// Makes an add's change and syncs the scene with it, then records it as one step and selects the object built for
-	// the herc's row-12 GUID; or, when none was built, puts the records back and says why.
-	private string? Commit(int typeIndex, Func<MsnEdit> add, Func<short> mech) {
+	// Makes an add's change and syncs the scene with it, then records it as one step and, when <select>, selects the object
+	// built for the herc's row-12 GUID; or, when none was built, puts the records back and says why.
+	private string? Commit(int typeIndex, Func<MsnEdit> add, Func<short> mech, bool select = true) {
 		MsnEdit change;
 		try {
 			change = _sync.Run(add);
@@ -109,7 +152,10 @@ internal sealed class HercPlacer {
 		}
 
 		_mover.Record(new RecordsEdit(_sync, change));
-		_selection.Current = new ObjectSelection(MechRow, added);
+		if (select) {
+			_selection.Current = new ObjectSelection(MechRow, added);
+		}
+
 		return null;
 	}
 }
