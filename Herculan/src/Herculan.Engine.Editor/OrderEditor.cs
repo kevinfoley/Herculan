@@ -58,6 +58,9 @@ internal sealed class OrderEditor {
 		return slots;
 	}
 
+	/// <summary>Whether row-16 GUID <paramref name="group"/> is a convoy, whose orders' verbs move none of its vehicles (<see cref="VehicleGroups.IsConvoy"/>).</summary>
+	public bool IsConvoy(short group) => VehicleGroups.IsConvoy(_source, group, BaseObject.IsGroundVehicle);
+
 	/// <summary>Why no order can be added to <paramref name="group"/>, or null when one can.</summary>
 	public string? WhyNoAdd(short group) => WhyFixed(group) ?? GroupOrders.WhyNoAdd(_source, group);
 

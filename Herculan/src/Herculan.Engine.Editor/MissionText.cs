@@ -124,7 +124,7 @@ internal static class MissionText {
 	};
 
 	/// <summary>
-	/// What an order verb does and when the order is done, in one or two sentences: the state it installs
+	/// What an order verb does and when the order is done, in one or two sentences, for the Does choice's tooltip: the state it installs
 	/// (docs/retail/simulation/ai-navigation.md, docs/retail/simulation/ai-combat-states.md) and its completion test
 	/// (docs/retail/simulation/ai-goals.md#when-an-order-is-finished--group_isordercomplete-004239fc). "The group's route" is
 	/// the one it walks, its first order's.
@@ -145,6 +145,28 @@ internal static class MissionText {
 		MissionOrder.VerbFollow => "Keeps close to its target, firing at what it passes. Done only if the group's route has "
 			+ "already run out.",
 		_ => "An order the AI has no case for."
+	};
+
+	/// <summary>
+	/// The note under a convoy's Does choice, in place of <see cref="OrderVerbNote"/>. A ground vehicle drives its group's route,
+	/// the first order's, whatever the verb (docs/retail/simulation/ground-vehicles.md#the-ground-vehicle-tick--0046a5d0); the
+	/// verb still picks the completion test, which <see cref="ConvoyOrderVerbNote"/> gives per verb.
+	/// </summary>
+	public const string ConvoyOrderNote =
+		"Ground vehicles always drive a route; the selected order only affects when the order counts as done.";
+
+	/// <summary>
+	/// When a convoy's order of <paramref name="verb"/> counts as done, for the Does choice's tooltip: its completion test
+	/// (docs/retail/simulation/ai-goals.md#when-an-order-is-finished--group_isordercomplete-004239fc), whose route-end test reads
+	/// the cursor the convoy's leader steps.
+	/// </summary>
+	public static string ConvoyOrderVerbNote(short verb) => verb switch {
+		MissionOrder.VerbSearchDestroy => "Done when the target is destroyed (a group: every member destroyed or immobilized).",
+		MissionOrder.VerbGuard => "Done when the target is destroyed, or when no enemy group's order is against it any more.",
+		MissionOrder.VerbPatrol or MissionOrder.VerbTravel or MissionOrder.VerbFollow =>
+			"Done when the convoy reaches its route's last waypoint, at once on a route of one waypoint; a loop never ends.",
+		MissionOrder.VerbRam or MissionOrder.VerbSleep => "Never done by itself; only the trigger in \"Ends when\" moves the group on.",
+		_ => "Never done, as no completion test has a case for it."
 	};
 
 	/// <summary>

@@ -95,7 +95,6 @@ internal sealed class OrderSlotsView {
 
 		ImGui.EndDisabled();
 		ImGui.Indent();
-		EditorText.Reason(whyKept);
 		DrawVerb(guid, slot.Slot, order.Verb, order.SubjectKind == NoSubject, locked);
 		DrawRoute(guid, slot.Slot, order.RouteRef, locked);
 		DrawTarget(guid, slot.Slot, order.Verb, order.SubjectKind, order.SubjectRef, locked);
@@ -104,18 +103,26 @@ internal sealed class OrderSlotsView {
 		ImGui.Unindent();
 	}
 
-	// What the order does, a choice of the seven verbs, each with what it does and when it is done.
+	// What the order does, a choice of the seven verbs, each with what it does and when it is done on hover, the closed choice
+	// and each entry alike; for a convoy only when it is done, under a note saying that is all the verb decides.
 	private void DrawVerb(short group, int slot, short verb, bool noSubject, bool locked) {
+		bool convoy = _editor.IsConvoy(group);
+		Func<short, string> note = convoy ? MissionText.ConvoyOrderVerbNote : MissionText.OrderVerbNote;
 		Label("Does");
 		ImGui.BeginDisabled(locked);
-		if (ImGui.BeginCombo("##verb", MissionText.OrderVerb(verb))) {
+		bool open = ImGui.BeginCombo("##verb", MissionText.OrderVerb(verb));
+		if (!open && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
+			ImGui.SetTooltip(note(verb));
+		}
+
+		if (open) {
 			for (short choice = 0; choice <= GroupOrders.LastVerb; choice++) {
 				if (ImGui.Selectable(MissionText.OrderVerb(choice), choice == verb) && choice != verb) {
 					_editor.RequestVerb(group, slot, choice);
 				}
 
 				if (ImGui.IsItemHovered()) {
-					ImGui.SetTooltip(MissionText.OrderVerbNote(choice));
+					ImGui.SetTooltip(note(choice));
 				}
 			}
 
@@ -123,7 +130,10 @@ internal sealed class OrderSlotsView {
 		}
 
 		ImGui.EndDisabled();
-		EditorText.Note(MissionText.OrderVerbNote(verb));
+		if (convoy) {
+			EditorText.Note(MissionText.ConvoyOrderNote);
+		}
+
 		if (noSubject) {
 			EditorText.Note("Search and destroy, Ram and Follow need a target: choosing one gives the order the player's squad.");
 		}
