@@ -205,7 +205,18 @@ internal sealed class GroupView {
 		var setup = group.Setup;
 		switch (setup.PointSource) {
 			case MissionGroupPointSource.OwnPoint:
+				ImGui.AlignTextToFramePadding();
 				ImGui.TextUnformatted("Starts at: its own position");
+				if (_mover.CanReturnToRoute(group.Guid)) {
+					ImGui.SameLine();
+					if (ImGui.Button("Start at its route")) {
+						_mover.ReturnToRoute(group.Guid);
+					}
+
+					EditorText.Tooltip("Drops its own position, so it starts at the start of its route again.");
+					EditorText.Reason(_mover.Failure);
+				}
+
 				break;
 			case MissionGroupPointSource.RouteStart:
 				ImGui.TextUnformatted("Starts at: the start of its route");

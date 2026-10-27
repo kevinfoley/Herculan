@@ -219,6 +219,18 @@ internal sealed class ObjectView {
 		}
 
 		PointFields.BoxWarning(_mover.LoadedBox, sel.Object.Position);
+		if (_mover.StandsOnOwnPoint(planned.Key)) {
+			ImGui.AlignTextToFramePadding();
+			ImGui.TextUnformatted("Stands at a position of its own.");
+			ImGui.SameLine();
+			if (ImGui.Button("Return to formation")) {
+				_mover.Reattach(planned.Key);
+			}
+
+			EditorText.Tooltip("Drops its own position, so it stands on its place in its group's formation again.");
+			EditorText.Reason(_mover.Failure);
+		}
+
 		if (planned.Kind is MissionUnitKind.Mech or MissionUnitKind.Flyer && group.Members.Count > 1 && group.Members[0] != planned.Key) {
 			ImGui.TextWrapped("Once the mission runs it holds formation on its group's leader, so it can move off a "
 				+ "point given here.");

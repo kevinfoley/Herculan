@@ -59,12 +59,16 @@ internal sealed record GroupTarget(short Guid, bool Detach = false, bool Carry =
 /// paints-ground structure group's snap then puts in its tile. Only a flyer group's height is read from the point (rule 5),
 /// so only a flyer group's is the mission's to set; any other keeps the point's Z.</para>
 ///
+/// <para>A point of its own, an object's or a group's, can be dropped again (<see cref="Reattach"/>,
+/// <see cref="ReturnToRoute"/>; docs/herculan/handoff-editor-placement.md#dropping-a-point-of-its-own).</para>
+///
 /// <para>A carrying move of a structure group (<see cref="GroupTarget.Carry"/>) also moves the points its members stand on
 /// of their own by the group's offset, each keeping its Z, and so whatever else names them. This is the editor's own
 /// convenience: a member's own point wins over its group's wherever the group stands (rule 2), so without it a group
 /// move leaves those members behind.</para>
 /// </summary>
 internal sealed class PointMover {
+	private const int PointRow = 6;
 	private const int BaseRow = 14;
 	private const int GroupRow = 16;
 
@@ -287,6 +291,59 @@ internal sealed class PointMover {
 
 	/// <summary>Whether group <paramref name="guid"/> has no point of its own and stands on its slot-0 route's first waypoint.</summary>
 	public bool OnRouteStart(short guid) => _index.Group(guid) is { OwnPoint: -1, StartPoints.Count: > 0 };
+
+	/// <summary>Why the last <see cref="Reattach"/> or <see cref="ReturnToRoute"/> could not be made, or null.</summary>
+	public string? Failure { get; private set; }
+
+	/// <summary>
+	/// Whether the object of <paramref name="key"/> can be given a point of its own and stands on one the layout has, which
+	/// <see cref="Reattach"/> drops.
+	/// </summary>
+	public bool StandsOnOwnPoint(ObjectKey key) =>
+		WhyFixed(key) == null && _source.Layout.Entry(key.Row, key.Guid)?.Fields is { } fields
+			&& Point(MsnField.RosterPosition(key.Row).Get(fields)) != null;
+
+	/// <summary>
+	/// Whether group <paramref name="guid"/> stands on a point of its own while its slot-0 route has a start to stand on
+	/// instead, which <see cref="ReturnToRoute"/> puts it back on.
+	/// </summary>
+	public bool CanReturnToRoute(short guid) => _index.Group(guid) is { OwnPoint: not -1, StartPoints.Count: > 0 };
+
+	/// <summary>
+	/// Drops the point of its own the object of <paramref name="key"/> stands on, as one step of the undo history, so it stands
+	/// on its place in its group's formation again (docs/retail/formats/script-dat.md#placement--the-actual-rule, rule 2).
+	/// </summary>
+	public void Reattach(ObjectKey key) => DropOwnPoint(MsnField.RosterPosition(key.Row), key.Guid);
+
+	/// <summary>
+	/// Drops group <paramref name="guid"/>'s point of its own, as one step of the undo history, so it stands on its slot-0
+	/// route's first waypoint again (docs/retail/formats/script-dat.md#placement--the-actual-rule, rule 3).
+	/// </summary>
+	public void ReturnToRoute(short guid) => DropOwnPoint(MsnField.GroupPosition, guid);
+
+	// Unsets <field>, a point of the record's own, in its base records, leaving records under other conditions setting it, and
+	// removes the point it named once nothing names it and no record of it draws a variant, whose removal would move every later
+	// draw. A field a variant supplies cannot be unset, and the edit fails.
+	private void DropOwnPoint(MsnField field, short guid) {
+		Failure = null;
+		if (_source.Layout.Entry(field.Row, guid)?.Fields is not { } fields) {
+			return;
+		}
+
+		short point = field.Get(fields);
+		try {
+			var change = _sync.Run(() => _source.Change(() => {
+				_source.UnsetBaseField(field, guid);
+				if (Point(point) != null && _source.CountPointRefs(point) == 0
+						&& (_source.Mission.Points ?? []).Where(record => record.GUID == point).All(record => record.VariantKey == -1)) {
+					_source.Remove(PointRow, point);
+				}
+			}));
+			Record(new RecordsEdit(_sync, change));
+		} catch (InvalidOperationException ex) {
+			Failure = ex.Message;
+		}
+	}
 
 	/// <summary>
 	/// Stands <paramref name="target"/> at <paramref name="position"/> as a drag does before it lets go, writing nothing
