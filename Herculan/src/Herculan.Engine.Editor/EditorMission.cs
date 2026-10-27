@@ -62,7 +62,7 @@ internal sealed class EditorMission {
 		Variants = new VariantEditor(source, sceneIndex, Mover, Sync, Selection);
 		Types = new RosterTypeEditor(source, Mover, Sync);
 		StartingConditions = new StartingConditionEditor(source, Mover, Sync);
-		Headings = new StructureHeadingEditor(source, Mover, Sync);
+		Headings = new HeadingEditor(source, Mover, Sync);
 		Outliner.Placing = Placing;
 		Outliner.AreaPlacing = AreaPlacing;
 		Outliner.Objectives = Objectives;
@@ -186,8 +186,8 @@ internal sealed class EditorMission {
 	/// <summary>Sets the starting condition of hercs, structures and ground vehicles in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public StartingConditionEditor StartingConditions { get; }
 
-	/// <summary>Sets the own headings of structures and ground vehicles in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
-	public StructureHeadingEditor Headings { get; }
+	/// <summary>Sets the own headings of structures, ground vehicles and groups in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	public HeadingEditor Headings { get; }
 
 	/// <summary>Adds and removes the player's squadmates in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public SquadEditor Squad { get; }

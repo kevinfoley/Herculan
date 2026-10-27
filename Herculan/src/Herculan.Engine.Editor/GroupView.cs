@@ -8,7 +8,7 @@ namespace Herculan.Engine.Editor;
 /// The Properties panel's view of a group (docs/herculan/handoff-editor-viewing.md#groups), read from the <c>.MSN</c>'s layout
 /// and <see cref="MissionIndex"/> by its row-16 GUID, every group included, one the mission as opened leaves out too: its
 /// name, Present when and team, the squad's machines for the player's squad (<see cref="SquadMachinePanel"/>); the trigger it
-/// waits on; where it starts, as fields that move it, and what else stands there; its heading and base pad; its members; the
+/// waits on; where it starts, as fields that move it, and what else stands there; its heading, set (<see cref="HeadingField"/>), and base pad; its members; the
 /// campaign variables it sets when every member is down; the win and lose conditions about it; its orders
 /// (<see cref="OrderSlotsView"/>); and, collapsed under Advanced, its formation and its own route field.
 /// </summary>
@@ -24,13 +24,14 @@ internal sealed class GroupView {
 	private readonly RelatedObjectives _objectives;
 	private readonly OrderSlotsView _orders;
 	private readonly PointSharers _sharers;
+	private readonly HeadingField _heading;
 
 	// The group's point being typed.
 	private readonly PointFields _point = new();
 
 	public GroupView(MissionIndex index, PanelLinks links, PointMover mover, TeamField team, SquadMachinePanel machine,
 			PresentWhenView presentWhen, PresenceEditor presence, ActionEditor actions, RelatedObjectives objectives,
-			OrderSlotsView orders, PointSharers sharers) {
+			OrderSlotsView orders, PointSharers sharers, HeadingField heading) {
 		_index = index;
 		_links = links;
 		_mover = mover;
@@ -42,6 +43,7 @@ internal sealed class GroupView {
 		_objectives = objectives;
 		_orders = orders;
 		_sharers = sharers;
+		_heading = heading;
 	}
 
 	/// <summary>Draws row-16 GUID <paramref name="guid"/>'s view; nothing for a group the layout does not have.</summary>
@@ -130,7 +132,7 @@ internal sealed class GroupView {
 	/// <summary>
 	/// Where the group starts (docs/retail/formats/script-dat.md#placement--the-actual-rule, rules 2 and 3): its own position,
 	/// else the first waypoint of its first order's route, as fields that move it (<see cref="PointMover"/>), and what else
-	/// stands on that point; then its heading and its base pad.
+	/// stands on that point; then its heading (<see cref="HeadingField"/>) and its base pad.
 	/// </summary>
 	private void DrawSetup(PlannedGroup group) {
 		var setup = group.Setup;
@@ -168,10 +170,8 @@ internal sealed class GroupView {
 
 		DrawMove(group, target);
 
-		ImGui.Text($"Heading: {MissionText.Heading(setup.Heading)}");
-		if (setup.HeadingFromRoute) {
-			EditorText.Note("No heading of its own: it faces along its route's first leg.");
-		}
+		bool alongRoute = FirstRoute(group) is { } leg && _index.Layout.Entry<WaypointGroup>(leg)?.Fields.Waypoints.Length >= 2;
+		_heading.DrawGroup(group.Guid, setup.Heading, alongRoute);
 
 		DrawBasePad(group);
 	}

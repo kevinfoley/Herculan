@@ -41,7 +41,7 @@ internal sealed class PropertiesPanel {
 			SideChanger sides, ObjectDeleter deleter, MemberMover members, SquadMachinePanel machine, RosterFitView fit, RouteEditor routes,
 			RoutePlacing placing, AreaEditor areas, AreaPlacing areaPlacing, OrderEditor orders, ObjectiveEditor objectives,
 			ActionEditor actions, TimerEditor timers, ConditionEditor conditions, PresenceEditor presence, VariantEditor variants,
-			StartingConditionEditor startingConditions, StructureHeadingEditor headings, RandomChoices choices, TriggerMessages messages, MissionNames names) {
+			StartingConditionEditor startingConditions, HeadingEditor headings, RandomChoices choices, TriggerMessages messages, MissionNames names) {
 		_index = index;
 		_selection = selection;
 		var links = new PanelLinks(index, names, selection);
@@ -59,9 +59,11 @@ internal sealed class PropertiesPanel {
 		_objective = new ObjectiveView(index, objectives, links, presentWhen, presence);
 		var team = new TeamField(index, sides);
 		var related = new RelatedObjectives(objectives, links);
+		var heading = new HeadingField(headings);
 		_object = new ObjectView(index, links, mover, team, deleter, members, machine, fit, presentWhen, presence, variantView,
-			actions, related, new StartingConditionField(startingConditions), new StructureHeadingField(headings));
-		_group = new GroupView(index, links, mover, team, machine, presentWhen, presence, actions, related, orderSlots, sharers);
+			actions, related, new StartingConditionField(startingConditions), heading);
+		_group = new GroupView(index, links, mover, team, machine, presentWhen, presence, actions, related, orderSlots, sharers,
+			heading);
 		machine.References = namers => links.References(namers);
 	}
 
