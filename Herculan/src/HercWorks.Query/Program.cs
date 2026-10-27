@@ -71,6 +71,9 @@ internal static class Program {
 		  --install <dir>   the install to read (default: the nearest ES2\ folder above the working
 		                    directory). ZONES.VOL and SIMVOL0.VOL are read from <dir>\VOL, or from the
 		                    VOL folder of the directory <dir>\DATA\drive.cfg names.
+		  --msn <file>      also read this loose .MSN, and the .ENG beside it, as a mission named by its
+		                    file name: a custom mission (--msn ES2\MSN\SHOWDOWN.MSN); repeatable. Every
+		                    query that reads all missions then counts it too
 		  --against <dir>   census: count the entries whose folder, name and bytes match an entry of
 		                    this install's archives
 		  --variants        decode the condition on each conditioned record ("flag 625 > 0")
@@ -115,10 +118,14 @@ internal static class Program {
 		bool json = false, variants = false, routeSwitch = false, withPoint = false, nonSquad = false, generated = false;
 		var positional = new List<string>();
 		var where = new List<string>();
+		var missionFiles = new List<string>();
 		for (int i = 0; i < args.Length; i++) {
 			switch (args[i].ToLowerInvariant()) {
 				case "--install" when i + 1 < args.Length:
 					install = args[++i];
+					break;
+				case "--msn" when i + 1 < args.Length:
+					missionFiles.Add(args[++i]);
 					break;
 				case "--type" when i + 1 < args.Length:
 					type = args[++i];
@@ -193,7 +200,7 @@ internal static class Program {
 			return 0;
 		}
 
-		var data = RetailData.Load(install);
+		var data = RetailData.Load(install, missionFiles);
 		if (command == "flag") {
 			if (positional.Count < 2 || !short.TryParse(positional[1], out short flag) || flag < 0) {
 				return Fail("flag takes a flag index, 0-999.");
