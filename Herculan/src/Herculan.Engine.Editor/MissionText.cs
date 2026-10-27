@@ -133,12 +133,12 @@ internal static class MissionText {
 		MissionOrder.VerbSearchDestroy => "Walks the group's route and fights only its target. Done when the target is destroyed "
 			+ "(a group: every member destroyed or immobilized).",
 		MissionOrder.VerbRam => "Charges at enemies to crash into them, never firing. Never done by itself: only the trigger in "
-			+ "Ends when moves the group on.",
+			+ "\"Ends when\" moves the group on.",
 		MissionOrder.VerbGuard => "Holds a ring around its target. Done when the target is destroyed, or when no enemy group's "
-			+ "order is against it any more.",
+			+ "order points at the target.",
 		MissionOrder.VerbPatrol => "Walks the group's route, its leader fighting what it finds. Done at the route's end; a loop "
 			+ "never ends.",
-		MissionOrder.VerbSleep => "Stands still and does not fight back. Never done by itself: only the trigger in Ends when moves "
+		MissionOrder.VerbSleep => "Stands still and does not fight back. Never done by itself: only the trigger in \"Ends when\" moves "
 			+ "the group on.",
 		MissionOrder.VerbTravel => "Every member walks the group's route, firing at what it passes. Done at the route's end; a "
 			+ "loop never ends.",

@@ -8,7 +8,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// A record's name as the editor shows it: what it is and does (<paramref name="Text"/>), and its number in its row
-/// (<paramref name="Number"/>, "(group 5)"), which a view draws dimmed after the text so a link still reads; null for a record
+/// (<paramref name="Number"/>), which a view draws dimmed after the text so a link still reads; null for a record
 /// with no number, such as the player's squad.
 /// </summary>
 internal readonly record struct RecordName(string Text, string? Number = null) {
@@ -43,7 +43,7 @@ internal sealed class RosterTypeNames {
 	public static RosterTypeNames Load(GameContent content) => new(UnitTypeNames.LoadMechs(content),
 		UnitTypeNames.LoadFlyers(content), BaseTypeTable.Load(content), SimStrings.Load(content));
 
-	/// <summary><paramref name="record"/>'s type by name: "SCARAB", "SKIMMER", "SUPPLY DEPOT"; "Herc type 30" for one no table names.</summary>
+	/// <summary><paramref name="record"/>'s type by name, or by its kind and type number for one no table names.</summary>
 	public string Name(MapObject? record) => record switch {
 		MechRosterEntry144 herc => _mechs?[herc.TypeIndex] ?? $"Herc type {herc.TypeIndex}",
 		FlyerRosterEntry102 flyer => _flyers?[flyer.TypeIndex] ?? $"Flyer type {flyer.TypeIndex}",
@@ -55,8 +55,8 @@ internal sealed class RosterTypeNames {
 
 	/// <summary>
 	/// What a structure or ground vehicle is titled by: its kind and the name the MFD's status screen prints for it
-	/// (<see cref="MfdStatusSubject.BaseName"/>), "Structure: SUPPLY DEPOT", or its kind "with no name on the MFD"; its type
-	/// number is under Advanced.
+	/// (<see cref="MfdStatusSubject.BaseName"/>), or its kind alone when the MFD has no name for it; its type number is under
+	/// Advanced.
 	/// </summary>
 	public string StructureTitle(BaseRosterEntry62 structure) {
 		string kind = IsVehicle(structure) ? "Ground vehicle" : "Structure";
@@ -77,7 +77,7 @@ internal sealed class RosterTypeNames {
 /// <summary>
 /// How the editor names a mission's groups, objects, trigger areas, routes, triggers, countdowns and objectives: by what each
 /// is and does, built from the <c>.MSN</c>'s layout (<see cref="MissionIndex"/>), with its number in its row as
-/// <see cref="RecordName.Number"/> (docs/herculan/handoff-editor-ux-plan.md#5-names-instead-of-numbers). The one source of
+/// <see cref="RecordName.Number"/>, or leading the text for a group, route or trigger (docs/herculan/handoff-editor-ux-plan.md#5-names-instead-of-numbers). The one source of
 /// names for titles, links, pickers, outliner rows, delete blockers and the Toolbox. A name refers to another record by its
 /// number alone where naming it in full would loop (an area by the triggers testing it, a trigger by its areas), and a
 /// sentence names a group by <see cref="GroupInSentence"/>, its team and roster.
@@ -106,9 +106,7 @@ internal sealed class MissionNames {
 	// ---- Groups ------------------------------------------------------------------------------------
 
 	/// <summary>
-	/// Row-16 GUID <paramref name="guid"/> by its number, then its team, roster and members: "Group 5: Cybrid hercs (SCARAB x2,
-	/// DIABLO)"; the player's squad "Player's squad". The number leads, so it is the text, with no dimmed
-	/// <see cref="RecordName.Number"/>.
+	/// Row-16 GUID <paramref name="guid"/> by its number, then its team, roster and members.
 	/// </summary>
 	public RecordName Group(short guid) {
 		if (_index.Group(guid) is not { } group) {
@@ -122,17 +120,17 @@ internal sealed class MissionNames {
 		return new RecordName($"Group {group.Number}: {Team(group)} {Roster(group)} ({Members(group)})");
 	}
 
-	/// <summary>Row-16 GUID <paramref name="guid"/> by its team and roster alone: "Cybrid hercs", numbered "(group 5)".</summary>
+	/// <summary>Row-16 GUID <paramref name="guid"/> by its team and roster alone.</summary>
 	public RecordName GroupBrief(short guid) {
 		if (_index.Group(guid) is not { } group) {
 			return new RecordName("A group not in the mission");
 		}
 
-		return IsSquad(group) ? new RecordName("Player's squad") : new RecordName($"{Team(group)} {Roster(group)}", GroupNumber(group));
+		return IsSquad(group) ? new RecordName("Player's squad") : new RecordName($"Group {group.Number}: {Team(group)} {Roster(group)}");
 	}
 
 	/// <summary>
-	/// Row-16 GUID <paramref name="guid"/> inside a sentence: "Cybrid hercs (group 5)", "the player's squad".
+	/// Row-16 GUID <paramref name="guid"/> inside a sentence.
 	/// </summary>
 	public string GroupInSentence(short guid) =>
 		_index.Group(guid) is { } group && IsSquad(group) ? "the player's squad" : GroupBrief(guid).Full;
@@ -142,13 +140,11 @@ internal sealed class MissionNames {
 
 	private static bool IsSquad(PlannedGroup group) => group.IsSquad;
 
-	private static string GroupNumber(PlannedGroup group) => $"(group {group.Number})";
-
 	private static string Team(PlannedGroup group) => group.Side == MissionSide.Cybrid ? "Cybrid" : "Human";
 
 	// The members' kind, plural: hercs, flyers, structures, or ground vehicles when every member drives.
 	private string Roster(PlannedGroup group) => group.Kind switch {
-		MissionUnitKind.Mech => "hercs",
+		MissionUnitKind.Mech => "HERCs",
 		MissionUnitKind.Flyer => "flyers",
 		MissionUnitKind.Base => group.Members.Count > 0 && group.Members.All(key => Layout.Entry(key.Row, key.Guid)?.Fields
 				is BaseRosterEntry62 structure && Types.IsVehicle(structure))
@@ -157,7 +153,7 @@ internal sealed class MissionNames {
 		_ => "group",
 	};
 
-	// Each member type once, in member order, counted when there are several: "SCARAB x2, DIABLO".
+	// Each member type once, in member order, counted when there are several.
 	private string Members(PlannedGroup group) {
 		if (group.Members.Count == 0) {
 			return "no members";
@@ -183,8 +179,8 @@ internal sealed class MissionNames {
 	public string TypeName(ObjectKey key) => Types.Name(Layout.Entry(key.Row, key.Guid)?.Fields);
 
 	/// <summary>
-	/// The roster record <paramref name="key"/> as its group's outliner row names it: its type, numbered "2 of 3" in member
-	/// order when its group has more than one of that type; a squad HERC as the player's or a squadmate's, by its slot.
+	/// The roster record <paramref name="key"/> as its group's outliner row names it: its type, numbered in member order when
+	/// its group has more than one of that type; a squad HERC as the player's or a squadmate's, by its slot.
 	/// </summary>
 	public string MemberName(ObjectKey key) {
 		string type = TypeName(key);
@@ -207,9 +203,8 @@ internal sealed class MissionNames {
 	}
 
 	/// <summary>
-	/// The roster record <paramref name="key"/> by its <see cref="MemberName"/> and its group: "SCARAB 2 of 3 in Cybrid hercs",
-	/// numbered "(group 5)"; a squad HERC by its <see cref="MemberName"/> alone; a record no group places "SCARAB, in no
-	/// group: never in the mission".
+	/// The roster record <paramref name="key"/> by its <see cref="MemberName"/> and its group (<see cref="GroupBrief"/>); a squad
+	/// HERC by its <see cref="MemberName"/> alone; a record no group places by its type, saying it is never in the mission.
 	/// </summary>
 	public RecordName Object(ObjectKey key) {
 		if (_index.Plan.Object(key) is not { } planned) {
@@ -229,7 +224,7 @@ internal sealed class MissionNames {
 
 	/// <summary>
 	/// An order's or objective's subject: kind 0 a group (<see cref="Group"/>), 1 a herc, 2 a flyer and 3 a structure or ground
-	/// vehicle (<see cref="Object"/>), by GUID; "None" for kind -1.
+	/// vehicle (<see cref="Object"/>), by GUID; none for kind -1.
 	/// </summary>
 	public RecordName Subject(short kind, short guid) => kind switch {
 		-1 => new RecordName("None"),
@@ -243,8 +238,7 @@ internal sealed class MissionNames {
 	// ---- Areas and routes --------------------------------------------------------------------------
 
 	/// <summary>
-	/// Row-9 GUID <paramref name="guid"/> by its shape and who its first testing trigger tests: "Box entered by the player",
-	/// numbered "(area 3)".
+	/// Row-9 GUID <paramref name="guid"/> by its shape and who its first testing trigger tests, numbered by its place in row 9.
 	/// </summary>
 	public RecordName Area(short guid) {
 		if (MissionText.NumberIn(Layout, AreaRow, guid) is not { } number) {
@@ -268,8 +262,8 @@ internal sealed class MissionNames {
 	}
 
 	/// <summary>
-	/// Row-8 GUID <paramref name="guid"/> by its number, then who walks it and whether it loops: "Route 2 (Cybrid hercs, loop)",
-	/// "Route 1 (player's squad)". The number leads, so it is the text, with no dimmed <see cref="RecordName.Number"/>.
+	/// Row-8 GUID <paramref name="guid"/> by its number, then who walks it and whether it loops.
+	/// The number leads, so it is the text, with no dimmed <see cref="RecordName.Number"/>.
 	/// </summary>
 	public RecordName Route(short guid) {
 		if (MissionText.NumberIn(Layout, RouteRow, guid) is not { } number) {
@@ -288,15 +282,15 @@ internal sealed class MissionNames {
 		return new RecordName($"Route {number} ({walkedBy}{(route.Closed ? ", loop" : "")})");
 	}
 
-	/// <summary>Row-8 GUID <paramref name="guid"/> inside a sentence, by its number: "route 2"; "no route" for <c>-1</c>.</summary>
+	/// <summary>Row-8 GUID <paramref name="guid"/> inside a sentence, by its number.</summary>
 	public string RouteInSentence(short guid) =>
 		MissionText.NumberIn(Layout, RouteRow, guid) is { } number ? $"route {number}" : "no route";
 
 	// ---- Triggers and countdowns -------------------------------------------------------------------
 
 	/// <summary>
-	/// Row-10 GUID <paramref name="guid"/> by what fires it and what it does, as its outliner row is built: "The player enters
-	/// area 3: brings in Cybrid hercs (group 5)", "Countdown 2 runs out: moves Cybrid hercs (group 4) on", numbered "(trigger 4)".
+	/// Row-10 GUID <paramref name="guid"/> by its number, then what fires it (<see cref="Cause"/>) and what it does. The number
+	/// leads, so it is the text, with no dimmed <see cref="RecordName.Number"/>.
 	/// </summary>
 	public RecordName Trigger(short guid) {
 		if (MissionText.NumberIn(Layout, ActionRow, guid) is not { } number) {
@@ -304,13 +298,13 @@ internal sealed class MissionNames {
 		}
 
 		string cause = Cause(guid);
-		return new RecordName($"{char.ToUpperInvariant(cause[0])}{cause[1..]}: {Effect(guid)}", $"(trigger {number})");
+		return new RecordName($"Trigger {number}: {char.ToUpperInvariant(cause[0])}{cause[1..]} ({Effect(guid)})");
 	}
 
 	/// <summary>
-	/// What fires row-10 GUID <paramref name="guid"/>, as a clause: who enters its areas ("the player enters area 3"), else the
-	/// first countdown or object firing it ("countdown 2 runs out", "SKIMMER is defeated"), else "nothing fires it". Areas and
-	/// countdowns by their numbers.
+	/// What fires row-10 GUID <paramref name="guid"/>, as a clause: who enters its areas, else the countdowns firing it, else the
+	/// objects firing it when engaged, else when defeated (<see cref="AnyOf"/>), else that nothing does. Areas and countdowns by
+	/// their numbers.
 	/// </summary>
 	public string Cause(short guid) {
 		if (Layout.Entry<MissionAction82>(guid)?.Fields is not { } fields) {
@@ -319,26 +313,53 @@ internal sealed class MissionNames {
 
 		if (_index.Action(guid) is { Areas.Count: > 0 } action) {
 			var numbers = action.Areas.Select(area => MissionText.NumberIn(Layout, AreaRow, area)).OfType<int>().ToList();
-			string areas = numbers.Count == 1
-				? $"area {numbers[0]}"
-				: $"area {string.Join(", ", numbers.Take(numbers.Count - 1))} or {numbers[^1]}";
-			return $"{Who(fields)} enters {areas}";
+			return $"{Who(fields)} enters area {Alternatives(numbers)}";
 		}
 
 		var links = _index.Links(guid);
-		if (links.FiringCountdowns.Count > 0 && MissionText.NumberIn(Layout, TimerRow, links.FiringCountdowns[0]) is { } countdown) {
-			return $"countdown {countdown} runs out";
+		var countdowns = links.FiringCountdowns.Select(countdown => MissionText.NumberIn(Layout, TimerRow, countdown)).OfType<int>().ToList();
+		if (countdowns.Count > 0) {
+			return $"countdown {Alternatives(countdowns)} runs out";
 		}
 
 		if (links.Engaged.Count > 0) {
-			return $"{TypeName(links.Engaged[0])} is engaged";
+			return $"{AnyOf(links.Engaged)} is engaged";
 		}
 
 		if (links.Defeated.Count > 0) {
-			return $"{TypeName(links.Defeated[0])} is defeated";
+			return $"{AnyOf(links.Defeated)} is defeated";
 		}
 
 		return "nothing fires it";
+	}
+
+	// Numbers as alternatives, the last joined by "or".
+	private static string Alternatives(IReadOnlyList<int> numbers) =>
+		numbers.Count == 1 ? $"{numbers[0]}" : $"{string.Join(", ", numbers.Take(numbers.Count - 1))} or {numbers[^1]}";
+
+	// Whichever of the objects <keys> fires a trigger, as the subject of "is engaged": one by its type; several of one group as
+	// any member of it when they are all of its members, else by their count among its members; else by count and kind, or by
+	// count alone for mixed kinds.
+	private string AnyOf(IReadOnlyList<ObjectKey> keys) {
+		if (keys.Count == 1) {
+			return TypeName(keys[0]);
+		}
+
+		var groups = keys.Select(key => _index.Plan.Object(key)?.Group).Distinct().ToList();
+		if (groups is [short only] && _index.Group(only) is { } group) {
+			return group.Members.All(keys.Contains)
+				? $"a member of {GroupInSentence(only)}"
+				: $"one of {keys.Count} members of {GroupInSentence(only)}";
+		}
+
+		var kinds = keys.Select(key => key.Row switch {
+			MechRow => "HERCs",
+			FlyerRow => "flyers",
+			_ => Layout.Entry(key.Row, key.Guid)?.Fields is BaseRosterEntry62 structure && Types.IsVehicle(structure)
+				? "ground vehicles"
+				: "structures",
+		}).Distinct().ToList();
+		return $"one of {keys.Count} {(kinds.Count == 1 ? kinds[0] : "units")}";
 	}
 
 	// Whose position a trigger's areas test, as the subject of "enters": the player, a unit of a kind, or the particular herc,
@@ -363,8 +384,7 @@ internal sealed class MissionNames {
 		};
 	}
 
-	// What a trigger does, its first kind of effect and whether there are others: "brings in Cybrid hercs (group 5)", "starts
-	// countdown 2, and more"; "does nothing".
+	// What a trigger does: its first kind of effect and whether there are others, or that it does nothing.
 	private string Effect(short guid) {
 		var follows = _index.Links(guid).Follows;
 		var effects = new List<string>();
@@ -405,9 +425,8 @@ internal sealed class MissionNames {
 	}
 
 	/// <summary>
-	/// Row-11 GUID <paramref name="guid"/> by its delay and what starts it: "Countdown: 30 s after the player enters area 3",
-	/// "Countdown: 30 s from mission start", numbered "(countdown 2)". A start the layout has no trigger for is the mission's
-	/// start, as the generation resolves it to none.
+	/// Row-11 GUID <paramref name="guid"/> by its delay and what starts it (<see cref="Cause"/>), numbered by its place in row 11.
+	/// A start the layout has no trigger for is the mission's start, as the generation resolves it to none.
 	/// </summary>
 	public RecordName Countdown(short guid) {
 		if (MissionText.NumberIn(Layout, TimerRow, guid) is not { } number || Layout.Entry<ActionTimer30>(guid)?.Fields is not { } fields) {
@@ -422,8 +441,7 @@ internal sealed class MissionNames {
 	// ---- Objectives --------------------------------------------------------------------------------
 
 	/// <summary>
-	/// <paramref name="objective"/> as one sentence (<see cref="ObjectiveSentence"/>), numbered "(objective 1)" by its place
-	/// in row 17.
+	/// <paramref name="objective"/> as one sentence (<see cref="ObjectiveSentence"/>), numbered by its place in row 17.
 	/// </summary>
 	public RecordName Objective(LayoutObjective objective) {
 		int position = 0;
@@ -442,15 +460,14 @@ internal sealed class MissionNames {
 
 	/// <summary>
 	/// What <paramref name="fields"/> asks, as one sentence: whether it must or must not happen, then its subject and its
-	/// condition, "Must happen: Cybrid hercs (group 4) are written off" (docs/retail/simulation/mission-objectives.md#what-each-condition-asks).
+	/// condition (docs/retail/simulation/mission-objectives.md#what-each-condition-asks).
 	/// </summary>
 	public string ObjectiveSentence(MissionObjective58 fields) {
 		string role = fields.Required == ObjectiveEditing.Mandatory ? "Must happen" : "Must not happen";
 		return $"{role}: {ObjectiveClause(fields)}";
 	}
 
-	// The subject and the condition as a clause: "Cybrid hercs (group 4) are written off", "SCARAB in Cybrid hercs (group 5) is
-	// destroyed or immobilized", "the player completes a data link".
+	// The subject and the condition as a clause; a data-link condition names the player, whatever the subject.
 	private string ObjectiveClause(MissionObjective58 fields) {
 		short code = fields.ConditionCode;
 		if (!ObjectiveEditing.TestsSubject(code)) {
