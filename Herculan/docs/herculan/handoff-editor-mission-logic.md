@@ -17,7 +17,7 @@ Every record a view, link, picker, outliner row, delete blocker or the Toolbox m
 | trigger | what fires it (who enters which areas, else the first countdown or object firing it) and its first kind of effect, ", and more" when it has others | "The player enters area 0, 1 or 2: brings in 3 groups (trigger 0)", "Countdown 2 runs out: moves Cybrid hercs (group 4) on (trigger 6)" |
 | countdown | its delay and what starts it | "Countdown: 30 s after the player enters area 3 (countdown 2)", "Countdown: 30 s from mission start" |
 | trigger area | its shape and whose entry its first testing trigger tests | "Circle entered by the player's squad (area 3)", "Box that no trigger tests" |
-| route | its shape and who walks it | "Loop walked by Cybrid hercs (group 4) (route 2)", "Route walked by the player's squad" |
+| route | its number, then who walks it (team and roster alone) and whether it loops | "Route 2 (Cybrid hercs, loop)", "Route 1 (player's squad)", "Route 3 (not walked)" |
 | objective | its sentence ([Objectives](#objectives)) | "Must happen: Cybrid hercs (group 4) are written off (objective 1)" |
 
 A name refers to an area, a countdown or a route inside another name by its number alone ("area 3"), since naming it in full would loop (an area by its trigger, the trigger by its area).

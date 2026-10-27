@@ -267,25 +267,24 @@ internal sealed class MissionNames {
 	}
 
 	/// <summary>
-	/// Row-8 GUID <paramref name="guid"/> by its shape and who walks it: "Loop walked by Cybrid hercs (group 4)", numbered
-	/// "(route 2)".
+	/// Row-8 GUID <paramref name="guid"/> by its number, then who walks it and whether it loops: "Route 2 (Cybrid hercs, loop)",
+	/// "Route 1 (player's squad)". The number leads, so it is the text, with no dimmed <see cref="RecordName.Number"/>.
 	/// </summary>
 	public RecordName Route(short guid) {
 		if (MissionText.NumberIn(Layout, RouteRow, guid) is not { } number) {
 			return new RecordName("A route not in the mission");
 		}
 
-		string at = $"(route {number})";
 		if (_index.Route(guid) is not { } route) {
-			return new RecordName("Route with no waypoints", at);
+			return new RecordName($"Route {number} (no waypoints)");
 		}
 
-		string shape = route.Closed ? "Loop" : "Route";
-		return new RecordName(route.WalkedBy.Count switch {
-			0 => $"{shape} that no group walks",
-			1 => $"{shape} walked by {GroupInSentence(route.WalkedBy[0])}",
-			_ => $"{shape} walked by {route.WalkedBy.Count} groups",
-		}, at);
+		string walkedBy = route.WalkedBy.Count switch {
+			0 => "not walked",
+			1 => _index.Group(route.WalkedBy[0]) is { IsSquad: true } ? "player's squad" : GroupBrief(route.WalkedBy[0]).Text,
+			_ => $"{route.WalkedBy.Count} groups",
+		};
+		return new RecordName($"Route {number} ({walkedBy}{(route.Closed ? ", loop" : "")})");
 	}
 
 	/// <summary>Row-8 GUID <paramref name="guid"/> inside a sentence, by its number: "route 2"; "no route" for <c>-1</c>.</summary>
