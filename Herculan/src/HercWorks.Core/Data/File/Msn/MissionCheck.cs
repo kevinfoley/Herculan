@@ -80,6 +80,14 @@ public enum MissionCheckKind {
 	/// 0 a group or 3 a structure.
 	/// </summary>
 	NeverWrittenOff,
+
+	/// <summary>
+	/// A group waiting on a drop-pod trigger (verb 2 or 3) with more than one member the layout has: the pod puts down only the
+	/// group's leader and then lets the whole group in, so every other member goes live where the mission placed it, a
+	/// position nothing else uses for a group arriving by pod (docs/retail/simulation/mission-deployment.md#the-drop-pod--meteor).
+	/// The value is the member count.
+	/// </summary>
+	PodCarriesLeaderOnly,
 }
 
 /// <summary>One problem <see cref="MissionCheck"/> found, and the <c>.MSN</c> record it is about.</summary>
@@ -231,6 +239,10 @@ public static class MissionCheck {
 
 	// Search/destroy, the verb that fights only its subject (docs/retail/simulation/ai-goals.md).
 	private const short SearchDestroy = 0;
+
+	// The two drop-pod arrivals of an action's verb (docs/retail/simulation/mission-deployment.md#arrival--group_deploymentcheck-004236c4).
+	private const short PodWide = 2;
+	private const short PodNarrow = 3;
 
 	private sealed class Checker(MissionLayout layout, MissionFile file, Func<int, bool>? isInvulnerable) {
 		private readonly MissionFileTransformer _codec = new();
@@ -417,7 +429,23 @@ public static class MissionCheck {
 				if (entry.Guid != _squad && entry.Fields is MissionGroup164 group) {
 					OwnSideOrders(entry.Guid, group);
 					Emptied(entry);
+					PodGroup(entry.Guid, group);
 				}
+			}
+		}
+
+		// <group> when it waits on a drop-pod trigger and places more than one member.
+		private void PodGroup(short guid, MissionGroup164 group) {
+			if (layout.Entry<MissionAction82>(group.DeploymentActionRef)?.Fields is not { Verb: PodWide or PodNarrow } action
+					|| group.MemberKind switch { 0 => MechRow, 1 => FlyerRow, 2 => BaseRow, _ => (int?)null } is not { } row) {
+				return;
+			}
+
+			int members = group.MemberRefs.Count(member => Has(row, member));
+			if (members > 1) {
+				Add(MissionCheckKind.PodCarriesLeaderOnly, GroupRow, guid,
+					$"DeploymentActionRef {group.DeploymentActionRef} arrives by drop pod (Verb {action.Verb}), which puts down the "
+					+ $"leader alone, and MemberRefs names {members} members.", members);
 			}
 		}
 

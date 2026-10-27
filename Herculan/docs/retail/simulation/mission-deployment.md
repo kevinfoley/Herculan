@@ -191,7 +191,7 @@ vz     = -height / n
 
 `Meteor_Render` (`00409cd0`) draws the plain shape (root 0) while falling and the opening animation's own shape instance at `+0x41` (root 1) once landed.
 
-Only the leader is repositioned; the rest of the group follows under its orders. Every retail drop-pod group has exactly one member.
+Only the leader is repositioned; every other member goes live where the mission placed it. Every retail drop-pod group that can arrive has one member. `DEMO2`'s group 84 has three HERCs and waits on action 41, which has no trigger area and which no countdown and no object's engaged or defeated ref names, so it never arrives.
 
 ### A pod aimed off the heightmap
 

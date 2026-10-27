@@ -70,6 +70,10 @@ internal static class ProblemText {
 			MissionCheckKind.NeverWrittenOff =>
 				$"{who} can never come true: the group it asks about holds a structure that can't be destroyed, and a Cybrid group "
 				+ "is written off only once every member is destroyed or immobilized.",
+			MissionCheckKind.PodCarriesLeaderOnly =>
+				$"{who} arrives by drop pod with {found.Value} members, and the pod brings in only the first: the others come in "
+				+ "where the mission placed them instead. Keep one member and place each other in a new group with "
+				+ "\"Waits on\" set to the same trigger, or choose another arrival under \"Arrives\" in the trigger.",
 			_ => found.Message,
 		};
 	}
