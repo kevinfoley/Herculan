@@ -170,6 +170,53 @@ internal static class MissionText {
 	};
 
 	/// <summary>
+	/// What an order's target does under <paramref name="verb"/>, for the Target choice's tooltip, then what it does under any
+	/// verb: an enemy guard on the same target holds while it is named
+	/// (docs/retail/simulation/ai-goals.md#no-rival-group-is-still-working-to-it--group_norivalorderonsubject-00412e74), and, on
+	/// the player's squad's orders (<paramref name="squad"/>), it is the mission target
+	/// (docs/retail/simulation/mission-objectives.md#the-player-thinks-objective-arms). For a herc group the verb's part is
+	/// docs/retail/simulation/ai-navigation.md#the-navigation-states, the guard's reach
+	/// docs/retail/simulation/ai-targeting.md#taking-fire--mech_aiontakingfire-0041f7b8-mech-vtable-0x50 and the hold on a
+	/// fight docs/retail/simulation/ai-targeting.md#abandoning-a-target--ai_shouldabandontarget-0041c4a8; for a flyer group
+	/// (<paramref name="flyer"/>) docs/retail/simulation/ai-flyers.md#the-thinks; a convoy (<paramref name="convoy"/>) moves
+	/// none of its vehicles by it, so only the completion test reads it.
+	/// </summary>
+	public static string OrderTargetNote(short verb, bool flyer, bool convoy, bool squad) {
+		const string Holds = "A Cybrid keeps at it until it is destroyed, a human until it is destroyed or immobilized.";
+		string own = convoy
+			? verb is MissionOrder.VerbSearchDestroy or MissionOrder.VerbGuard
+				? "Only decides when the order counts as done."
+				: "Has no effect on a convoy."
+			: flyer
+			? verb == MissionOrder.VerbSearchDestroy ? "What it hunts: the flight attacks only the target." : "Has no effect on a flyer group."
+			: verb switch {
+				MissionOrder.VerbSearchDestroy => "What it hunts: it fights only the target and walks past everything else, unless shot "
+					+ $"at. In a fight it goes for the target first. {Holds}",
+				MissionOrder.VerbRam => "Has no effect on whom it rams: the group charges whatever enemy it picks, with no preference "
+					+ "for the target.",
+				MissionOrder.VerbGuard => "Sets where it stands and how far it reaches. With no target, it guards its route's first "
+					+ $"waypoint and attacks any hostile HERC it knows of within {Metres(Sim.Ai.AiTargeting.OpenDefenceRange)}, holding "
+					+ "until \"Ends when\" fires. With a target, it guards the target's position (a group's first member) and attacks "
+					+ $"within {Metres(Sim.Ai.AiTargeting.DefenceRange)}; the order also ends once the target is destroyed, or once no "
+					+ "enemy group's order names the target.",
+				MissionOrder.VerbPatrol or MissionOrder.VerbTravel => "Doesn't change where it goes or whom it fights. A member "
+					+ $"already fighting the target keeps at it longer. {Holds}",
+				MissionOrder.VerbSleep => "Has no effect: a sleeping group stands still and doesn't fight back.",
+				MissionOrder.VerbFollow => "What it follows (a group's first member). It walks to it and stops "
+					+ $"{Metres(Sim.MechObject.FollowStandoffRange)} short, keeping up as the target moves. Reaching the target doesn't "
+					+ "end the order.",
+				_ => "An order the AI has no case for.",
+			};
+
+		string any = "An enemy group guarding this same target keeps guarding while this order names it.";
+		return squad
+			? $"{own}{Environment.NewLine}{Environment.NewLine}{any} This is the mission target: in most missions the computer "
+				+ "announces it when the player first selects it. In a data-link mission it's what the player links with, and "
+				+ "squadmates usually won't shoot it."
+			: $"{own}{Environment.NewLine}{Environment.NewLine}{any}";
+	}
+
+	/// <summary>
 	/// What an objective asks of its subject, as the What happens choice names it, for a group or for an object — the
 	/// condition table in docs/retail/simulation/mission-objectives.md#what-each-condition-asks. Conditions 3 and 4, and 9 and
 	/// 10, ask the same.

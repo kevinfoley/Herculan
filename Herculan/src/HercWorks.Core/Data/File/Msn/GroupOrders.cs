@@ -24,7 +24,8 @@ namespace HercWorks.Core.Data.File.Msn;
 /// established; this editor's rule.</item>
 /// <item>Two shapes no retail order has, where a fault is plausible, are not made: a first order naming no route in a group
 /// with no point of its own (<see cref="WhyNoFirstRoute"/>), and search/destroy, ramming or following naming no subject
-/// (<see cref="NeedsSubject"/>).</item>
+/// (<see cref="NeedsSubject"/>). A third, where the fault is certain, is not made either: guarding, ramming or following in a
+/// flyer group (<see cref="WhyNoVerb"/>).</item>
 /// <item>A group's own route field (<see cref="MissionGroup164.RouteRef"/>) that names its first order's route follows it
 /// when an edit changes which route slot 0 runs (<see cref="FollowFirstRoute"/>), as 377 of the 433 retail herc group
 /// records keep the two the same (<see cref="NewGroups"/>); no view edits the field, so otherwise the route slot 0 ran
@@ -39,6 +40,7 @@ public static class GroupOrders {
 	public const short Patrol = 3;
 
 	private const short Ram = 1;
+	private const short Guard = 2;
 	private const short Follow = 6;
 
 	/// <summary>The highest verb, of seven (docs/retail/simulation/ai-goals.md#when-an-order-is-finished--group_isordercomplete-004239fc).</summary>
@@ -119,6 +121,17 @@ public static class GroupOrders {
 	/// (docs/retail/simulation/ai-goals.md#when-an-order-is-finished--group_isordercomplete-004239fc).
 	/// </summary>
 	public static bool NeedsSubject(short verb) => verb is HercGroups.SearchDestroy or Ram or Follow;
+
+	/// <summary>
+	/// Why <paramref name="group"/> cannot take an order of <paramref name="verb"/>, or null when it can. A flyer group's AI has
+	/// no state for guarding, ramming or following: <c>Flyer_AiSelectBehaviour</c> (<c>00422d00</c>) installs a descriptor read
+	/// from its own code, and the same tick's move dispatch calls a wild address
+	/// (docs/retail/simulation/ai-flyers.md#orders--flyer_aiselectbehaviour-00422d00). No retail flyer group carries one.
+	/// </summary>
+	public static string? WhyNoVerb(MissionDocument document, short group, short verb) =>
+		verb is Guard or Ram or Follow && document.Layout.Entry<MissionGroup164>(group)?.Fields.MemberKind == FlyerRoster
+			? "Not for a flyer group: the game has no flyer behavior for it, and crashes."
+			: null;
 
 	/// <summary>
 	/// Why route <paramref name="route"/>, a row-8 GUID or <c>-1</c>, cannot be <paramref name="group"/>'s first order's
@@ -281,11 +294,16 @@ public static class GroupOrders {
 	/// <summary>
 	/// Sets the verb, 0 to <see cref="LastVerb"/>, of the order in <paramref name="group"/>'s slot <paramref name="slot"/>. A
 	/// verb that <see cref="NeedsSubject"/> on an order naming none takes the player's squad, group 0, as its subject in the
-	/// same change, as a new herc group's first order has it (<see cref="HercGroups"/>).
+	/// same change, as a new herc group's first order has it (<see cref="HercGroups"/>). Throws
+	/// <see cref="InvalidOperationException"/> when <see cref="WhyNoVerb"/> refuses it.
 	/// </summary>
 	public static MsnEdit SetVerb(MissionDocument document, short group, int slot, short verb) {
 		if (verb is < 0 or > LastVerb) {
 			throw new ArgumentOutOfRangeException(nameof(verb), verb, $"A verb is 0 to {LastVerb}.");
+		}
+
+		if (WhyNoVerb(document, group, verb) is { } reason) {
+			throw new InvalidOperationException(reason);
 		}
 
 		bool noSubject = slot is >= 0 and < Slots && Order(document, Orders(document, group)[slot]) is { SubjectKind: -1 };

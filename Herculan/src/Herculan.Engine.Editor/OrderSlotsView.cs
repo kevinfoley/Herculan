@@ -105,7 +105,8 @@ internal sealed class OrderSlotsView {
 
 	// What the order does, a choice of the seven verbs, each with what it does and when it is done on hover, the closed choice
 	// and each entry alike, the closed one adding that a verb with no target gets one when chosen; for a convoy only when it is
-	// done, under a note saying that is all the verb decides.
+	// done, under a note saying that is all the verb decides. A verb the group cannot take (OrderEditor.WhyNoVerb) is disabled,
+	// saying why on hover.
 	private void DrawVerb(short group, int slot, short verb, bool noSubject, bool locked) {
 		bool convoy = _editor.IsConvoy(group);
 		Func<short, string> note = convoy ? MissionText.ConvoyOrderVerbNote : MissionText.OrderVerbNote;
@@ -120,12 +121,14 @@ internal sealed class OrderSlotsView {
 
 		if (open) {
 			for (short choice = 0; choice <= GroupOrders.LastVerb; choice++) {
-				if (ImGui.Selectable(MissionText.OrderVerb(choice), choice == verb) && choice != verb) {
+				string? why = choice == verb ? null : _editor.WhyNoVerb(group, choice);
+				var flags = why != null ? ImGuiSelectableFlags.Disabled : ImGuiSelectableFlags.None;
+				if (ImGui.Selectable(MissionText.OrderVerb(choice), choice == verb, flags) && choice != verb) {
 					_editor.RequestVerb(group, slot, choice);
 				}
 
-				if (ImGui.IsItemHovered()) {
-					ImGui.SetTooltip(note(choice));
+				if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
+					ImGui.SetTooltip(why ?? note(choice));
 				}
 			}
 
@@ -183,11 +186,17 @@ internal sealed class OrderSlotsView {
 		}
 	}
 
-	// The order's target, none for a verb that does not need one, else a group, a herc or a structure, picked by name.
+	// The order's target, none for a verb that does not need one, else a group, a herc or a structure, picked by name; what it
+	// does under the order's verb on hover (MissionText.OrderTargetNote).
 	private void DrawTarget(short group, int slot, short verb, short kind, short subject, bool locked) {
 		Label("Target");
 		ImGui.BeginDisabled(locked);
-		if (NameText.BeginCombo("##target", Names.Subject(kind, subject))) {
+		bool open = NameText.BeginCombo("##target", Names.Subject(kind, subject));
+		if (!open && _index.Group(group) is { } ordered) {
+			EditorText.Tooltip(MissionText.OrderTargetNote(verb, ordered.Kind == MissionUnitKind.Flyer, _editor.IsConvoy(group), ordered.IsSquad));
+		}
+
+		if (open) {
 			// No None for a verb that needs a subject (GroupOrders.NeedsSubject).
 			if (!GroupOrders.NeedsSubject(verb) && ImGui.Selectable("None", kind == NoSubject) && kind != NoSubject) {
 				_editor.RequestSubject(group, slot, NoSubject, -1);

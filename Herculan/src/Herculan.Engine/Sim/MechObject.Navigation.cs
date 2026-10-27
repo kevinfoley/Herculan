@@ -704,7 +704,7 @@ public partial class MechObject {
 	/// Range at which <c>following</c> stops short of what it is following. Three-dimensional, unlike
 	/// every range a steer is computed from — see docs/retail/simulation/ai-navigation.md.
 	/// </summary>
-	private const int FollowStandoffRange = 25000;
+	public const int FollowStandoffRange = 25000;
 
 	/// <summary>Ground range past which a guard walks back to its post.</summary>
 	private const int GuardApproachRange = 30000;

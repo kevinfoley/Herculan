@@ -70,6 +70,9 @@ internal sealed class OrderEditor {
 	/// <summary>Why the orders in <paramref name="group"/>'s slots <paramref name="slot"/> and <paramref name="to"/> cannot trade places, or null.</summary>
 	public string? WhyNoMove(short group, int slot, int to) => WhyFixed(group) ?? GroupOrders.WhyNoMove(_source, group, slot, to);
 
+	/// <summary>Why <paramref name="group"/> cannot take an order of <paramref name="verb"/>, or null when it can.</summary>
+	public string? WhyNoVerb(short group, short verb) => WhyFixed(group) ?? GroupOrders.WhyNoVerb(_source, group, verb);
+
 	/// <summary>Why <paramref name="group"/>'s slot <paramref name="slot"/> cannot run no route, or null when it can.</summary>
 	public string? WhyNoRouteNone(short group, int slot) => WhyFixed(group) ?? GroupOrders.WhyNoRoute(_source, group, slot, -1);
 
