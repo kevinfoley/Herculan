@@ -815,10 +815,11 @@ public sealed class EditorHost {
 		: _mission.Gizmo.Dragging || _mission.PlacingAny || _pendingLoad != null || _pendingNew != null ? "Finish what is under way first."
 		: null;
 
-	// Play, once the mission's saved files hold what is to be played. In the game's editor: writes their handoff into Play's
-	// scratch directory, as the game's own load of a mission named by its .MSN does (MissionFileLaunch), and ends the
-	// editor's turn for the game to play it. On its own: starts the game beside the editor on them (PlayInGame) and
-	// minimizes the editor until the game exits. A play that does not start says why and leaves the editor as it was.
+	// Play, once the mission's saved files hold what is to be played, on the mission's own theater and time of day as the
+	// editor shows them. In the game's editor: writes their handoff into Play's scratch directory, as the game's own load of a
+	// mission named by its .MSN does (MissionFileLaunch), and ends the editor's turn for the game to play it. On its own:
+	// starts the game beside the editor on them (PlayInGame) and minimizes the editor until the game exits. A play that does
+	// not start says why and leaves the editor as it was.
 	private void StartPlay() {
 		if (_mission == null) {
 			return;
@@ -843,7 +844,7 @@ public sealed class EditorHost {
 		try {
 			Directory.CreateDirectory(_playCache);
 			ClearMissionCache(_playCache);
-			script = MissionFileLaunch.Write(_launch.ShellContent(), _launch.InstallRoot, name, _playCache, out failure);
+			script = MissionFileLaunch.Write(_launch.ShellContent(), _launch.InstallRoot, name, _playCache, ownWorld: true, out failure);
 		} catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException) {
 			script = null;
 			failure = ex.Message;

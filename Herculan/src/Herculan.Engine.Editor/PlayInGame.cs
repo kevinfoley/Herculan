@@ -35,8 +35,8 @@ internal sealed class PlayInGame {
 	public bool Running => _game != null;
 
 	/// <summary>
-	/// Starts the game on <paramref name="mission"/> in <paramref name="installRoot"/>; whether it started, and why not
-	/// in <paramref name="failure"/>.
+	/// Starts the game on <paramref name="mission"/> in <paramref name="installRoot"/>, on the mission's own theater and time of
+	/// day as the editor shows it (<c>--own-world</c>); whether it started, and why not in <paramref name="failure"/>.
 	/// </summary>
 	public bool Start(string installRoot, string mission, out string? failure) {
 		failure = null;
@@ -48,6 +48,7 @@ internal sealed class PlayInGame {
 		var start = new ProcessStartInfo(path) { UseShellExecute = false, WorkingDirectory = AppContext.BaseDirectory };
 		start.ArgumentList.Add(installRoot);
 		start.ArgumentList.Add(mission);
+		start.ArgumentList.Add("--own-world");
 		try {
 			_game = Process.Start(start);
 		} catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or IOException or InvalidOperationException) {

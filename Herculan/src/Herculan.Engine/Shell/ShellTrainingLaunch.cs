@@ -84,11 +84,11 @@ public static class ShellTrainingLaunch {
 	/// </summary>
 	public static ShellTrainingHandoff? Write(string directory, GameContent content, SimulatorPreferences options,
 			int row, bool instantAction, SimRandom random, short[] clearList, PlayerSave? held, out string? failure,
-			MissionGenerating? generating = null) {
+			MissionGenerating? generating = null, bool ownWorld = false) {
 		int Roll(short bound) => random.NextBelow(bound);
 		return NewCareer(content, options, row, Roll, held, out failure) is var (game, hangar)
 			? Load(directory, content, options, row, MissionPath(content, 0, row), instantAction, Roll, clearList, game, hangar,
-				out failure, generating)
+				out failure, generating, ownWorld)
 			: null;
 	}
 
@@ -120,11 +120,12 @@ public static class ShellTrainingLaunch {
 	/// (<c>00479bb8</c>), which picks the player's machine. <paramref name="clearList"/> is the row-2 clear list the shell
 	/// keeps across loads (<see cref="MissionGenerator.Load"/>), and <paramref name="instantAction"/> is
 	/// <c>InstantAction_Active</c> (<c>0047363c</c>), which <c>INSTANT ACTION</c> sets. <paramref name="generating"/> is
-	/// told what the mission load is handed. Null, with the reason, when the install lacks a file the original would open.
+	/// told what the mission load is handed, and <paramref name="ownWorld"/> keeps the mission's own theater and time of day
+	/// (<see cref="PracticeHeader"/>). Null, with the reason, when the install lacks a file the original would open.
 	/// </summary>
 	public static ShellTrainingHandoff? Load(string directory, GameContent content, SimulatorPreferences options, int row,
 			string? missionPath, bool instantAction, Func<short, int> roll, short[] clearList, PlayerSave game,
-			ShellHangar hangar, out string? failure, MissionGenerating? generating = null) {
+			ShellHangar hangar, out string? failure, MissionGenerating? generating = null, bool ownWorld = false) {
 		if (missionPath == null) {
 			failure = $"gam\\career.dat or missions.bin has no stage-0 mission {row}.";
 			return null;
@@ -136,7 +137,7 @@ public static class ShellTrainingLaunch {
 		}
 
 		return Load(directory, content, options, row, missionPath, msn, text, instantAction, roll, clearList, game, hangar,
-			out failure, generating);
+			out failure, generating, ownWorld);
 	}
 
 	/// <summary>
@@ -144,15 +145,16 @@ public static class ShellTrainingLaunch {
 	/// ShellHangar, out string?, MissionGenerating?)"/> for a mission already read: the <c>.MSN</c> <paramref name="msn"/>
 	/// and its text <paramref name="text"/>, or null, named <paramref name="missionPath"/>. The original reads every mission
 	/// from its archives; this engine's mission editor hands one it holds in memory (<see cref="MissionFileLaunch.OpenNew"/>).
+	/// <paramref name="ownWorld"/> keeps the mission's own theater and time of day (<see cref="PracticeHeader"/>).
 	/// </summary>
 	public static ShellTrainingHandoff? Load(string directory, GameContent content, SimulatorPreferences options, int row,
 			string missionPath, byte[] msn, byte[]? text, bool instantAction, Func<short, int> roll, short[] clearList,
-			PlayerSave game, ShellHangar hangar, out string? failure, MissionGenerating? generating = null) {
+			PlayerSave game, ShellHangar hangar, out string? failure, MissionGenerating? generating = null, bool ownWorld = false) {
 		// MsnGen_SeedCampaignFlags: a training load clears the flag array first.
 		var flags = new short[MissionGenerator.CampaignFlagCount];
 		SeedDrawnFlags(flags, roll);
 
-		var header = PracticeHeader(options);
+		var header = PracticeHeader(options, ownWorld);
 		generating?.Invoke(msn, text, flags, header);
 		var mission = MissionGenerator.Load(msn, text, flags, clearList, roll);
 		MissionGeneration.WriteHeader(mission.Header, header);
@@ -231,11 +233,13 @@ public static class ShellTrainingLaunch {
 
 	/// <summary>
 	/// The header words a training load writes over the loaded header: word 0 set to <see cref="PracticeTheater"/>, then the ammunition, damage,
-	/// difficulty and time-of-day options into words 5 to 7 and 9, and word 8 cleared.
+	/// difficulty and time-of-day options into words 5 to 7 and 9, and word 8 cleared. <paramref name="ownWorld"/> leaves words
+	/// 0 and 9 as the mission sets them, so it plays on its own theater and time of day: this engine's departure for a mission
+	/// played from the mission editor (docs/herculan/handoff-editor-viewing.md#theater-and-time-of-day), which retail has no path for.
 	/// </summary>
-	private static short?[] PracticeHeader(SimulatorPreferences options) => [
-		PracticeTheater, null, null, null, null,
-		options[AmmoOption], options[DamageOption], options[DifficultyOption], 0, options[TimeOfDayOption],
+	private static short?[] PracticeHeader(SimulatorPreferences options, bool ownWorld) => [
+		ownWorld ? null : PracticeTheater, null, null, null, null,
+		options[AmmoOption], options[DamageOption], options[DifficultyOption], 0, ownWorld ? null : options[TimeOfDayOption],
 	];
 
 	/// <summary>
