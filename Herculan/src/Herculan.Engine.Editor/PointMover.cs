@@ -30,9 +30,10 @@ internal sealed record ObjectTarget(ObjectKey Key) : MoveTarget;
 /// <summary>
 /// Group <paramref name="Guid"/>, by its row-16 GUID, moved through the point it stands on: its own, else its slot-0
 /// route's first waypoint. <paramref name="Detach"/> when the move gives it a point of its own rather than moving the
-/// point it stands on.
+/// point it stands on. <paramref name="Carry"/> when a structure group's members standing on points of their own move by
+/// the same offset (<see cref="PointMover.CarriedMembers"/>).
 /// </summary>
-internal sealed record GroupTarget(short Guid, bool Detach = false) : MoveTarget;
+internal sealed record GroupTarget(short Guid, bool Detach = false, bool Carry = false) : MoveTarget;
 
 /// <summary>
 /// Moves what stands on a point — a placed object, a route's waypoint, a group or a trigger area's corner — and keeps an
@@ -57,8 +58,14 @@ internal sealed record GroupTarget(short Guid, bool Detach = false) : MoveTarget
 /// paints-ground group's pad and, for group 0, the player's squad follow. The move is of the authored point, which a
 /// paints-ground structure group's snap then puts in its tile. Only a flyer group's height is read from the point (rule 5),
 /// so only a flyer group's is the mission's to set; any other keeps the point's Z.</para>
+///
+/// <para>A carrying move of a structure group (<see cref="GroupTarget.Carry"/>) also moves the points its members stand on
+/// of their own by the group's offset, each keeping its Z, and so whatever else names them. This is the editor's own
+/// convenience: a member's own point wins over its group's wherever the group stands (rule 2), so without it a group
+/// move leaves those members behind.</para>
 /// </summary>
 internal sealed class PointMover {
+	private const int BaseRow = 14;
 	private const int GroupRow = 16;
 
 	private readonly MissionDocument _source;
@@ -193,6 +200,36 @@ internal sealed class PointMover {
 		IEnumerable<short> points = group.OwnPoint != -1 ? [group.OwnPoint] : group.StartPoints.Distinct();
 		return points.SelectMany(_source.PointRefs)
 			.Where(reference => reference.Record.Row != GroupRow || _source.RecordAt(reference.Record)?.GUID != target.Guid)
+			.ToList();
+	}
+
+	/// <summary>
+	/// The members a carrying move of structure group <paramref name="guid"/> takes along (<see cref="GroupTarget.Carry"/>):
+	/// those standing on a point of their own the layout has, but on none the group stands on, which a plain move moves
+	/// already; none for a group of any other kind.
+	/// </summary>
+	public IReadOnlyList<ObjectKey> CarriedMembers(short guid) {
+		if (_index.Group(guid) is not { Kind: MissionUnitKind.Base } group) {
+			return [];
+		}
+
+		IReadOnlyList<short> standsOn = group.OwnPoint != -1 ? [group.OwnPoint] : group.StartPoints;
+		return group.Members.Where(member => MemberPoint(member) is { } point && !standsOn.Contains(point)).ToList();
+	}
+
+	/// <summary>
+	/// The fields naming the points <see cref="CarriedMembers"/> stand on, which a carrying move of group
+	/// <paramref name="guid"/> moves with them: every field naming them but those members' own and the group's.
+	/// </summary>
+	public IReadOnlyList<PointRef> CarriedSharersOf(short guid) {
+		var members = CarriedMembers(guid);
+		var carried = members.Select(member => member.Guid).ToHashSet();
+		return members.Select(MemberPoint).OfType<short>().Distinct().SelectMany(_source.PointRefs)
+			.Where(reference => _source.RecordAt(reference.Record)?.GUID is not { } owner || reference.Record.Row switch {
+				BaseRow => !carried.Contains(owner),
+				GroupRow => owner != guid,
+				_ => true
+			})
 			.ToList();
 	}
 
@@ -386,21 +423,59 @@ internal sealed class PointMover {
 	}
 
 	// Where a group's drag stands it before the commit: the point it stands on at the drag's place, or, for a move that
-	// gives it a point of its own, the group alone there.
+	// gives it a point of its own, the group alone there; and a carrying move's member points.
 	private PlacementOverrides GroupOverrides(GroupTarget target, Vec3i position) {
 		var (move, own, start, z) = PlanGroup(target, position);
 		var at = new Vec3i(position.X, position.Y, z);
-		return move switch {
-			GroupMove.OwnPoint => new PlacementOverrides { Points = new Dictionary<short, Vec3i> { [own] = at } },
-			GroupMove.RouteStart => new PlacementOverrides { Points = start.Distinct().ToDictionary(guid => guid, _ => at) },
-			_ => new PlacementOverrides { GroupPoint = (target.Guid, at) }
-		};
+		var points = Carried(target, move, own, start, position);
+		switch (move) {
+			case GroupMove.OwnPoint:
+				points[own] = at;
+				break;
+			case GroupMove.RouteStart:
+				foreach (short point in start) {
+					points[point] = at;
+				}
+
+				break;
+			default:
+				return new PlacementOverrides { GroupPoint = (target.Guid, at), Points = points };
+		}
+
+		return new PlacementOverrides { Points = points };
 	}
 
-	// A group's move written into the .MSN.
+	// The points a carrying move of a structure group moves besides its own, at where they go: each of its members' own,
+	// by the offset from where the group stood, keeping its Z; none the group's own move writes. None for any other move.
+	private Dictionary<short, Vec3i> Carried(GroupTarget target, GroupMove move, short own, IReadOnlyList<short> start, Vec3i position) {
+		var carried = new Dictionary<short, Vec3i>();
+		if (!target.Carry || _index.Group(target.Guid) is not { Kind: MissionUnitKind.Base } group) {
+			return carried;
+		}
+
+		IReadOnlyList<short> written = move switch {
+			GroupMove.OwnPoint => [own],
+			GroupMove.RouteStart => start,
+			_ => []
+		};
+		var from = Point(own) ?? (start.Count > 0 ? Point(start[0]) : null) ?? Vec3i.Zero;
+		foreach (var member in group.Members) {
+			if (MemberPoint(member) is { } point && !written.Contains(point) && Point(point) is { } at) {
+				carried[point] = new Vec3i(at.X + position.X - from.X, at.Y + position.Y - from.Y, at.Z);
+			}
+		}
+
+		return carried;
+	}
+
+	// A group's move written into the .MSN, a carrying move's member points included.
 	private void WriteGroup(GroupTarget target, Vec3i position) {
 		var source = _source;
 		var (move, own, start, z) = PlanGroup(target, position);
+		foreach (var (point, at) in Carried(target, move, own, start, position)) {
+			source.SetPoint(point, at.X, at.Y, at.Z);
+		}
+
 		switch (move) {
 			case GroupMove.OwnPoint:
 				source.SetPoint(own, position.X, position.Y, z);
@@ -424,6 +499,11 @@ internal sealed class PointMover {
 	// Row-6 GUID <guid>'s coordinates as the layout has them, or null.
 	private Vec3i? Point(short guid) =>
 		guid != -1 && _source.Layout.Entry<MapPoint22>(guid)?.Fields is { } point ? new Vec3i(point.X, point.Y, point.Z) : null;
+
+	// The row-6 GUID of the point structure <key> stands on of its own, when the layout has it; else null.
+	private short? MemberPoint(ObjectKey key) =>
+		key.Row == BaseRow && _source.Layout.Entry<BaseRosterEntry62>(key.Guid)?.Fields.PositionRef is { } point
+			&& Point(point) != null ? point : null;
 
 	// Where a flyer group's first member flies for a point at height z (rule 5).
 	private static int FlyerHeight(int z) => z == 0 ? FlyerObject.DefaultHoverHeight : z;

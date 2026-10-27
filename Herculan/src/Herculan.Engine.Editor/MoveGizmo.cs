@@ -105,22 +105,21 @@ internal sealed class MoveGizmo {
 	/// <summary>
 	/// Starts a drag when <paramref name="pointer"/> is on a handle of the selection, and says whether it did.
 	/// <paramref name="detach"/> gives a dragged waypoint, group or area corner a point of its own rather than moving the one
-	/// it stands on.
+	/// it stands on. <paramref name="carry"/> takes a structure group's members standing on points of their own along
+	/// (<see cref="GroupTarget.Carry"/>).
 	/// </summary>
-	public bool TryBegin(Camera camera, Vector2 pointer, Vector2 viewport, bool detach) {
+	public bool TryBegin(Camera camera, Vector2 pointer, Vector2 viewport, bool detach, bool carry) {
 		var (target, handle) = HandleUnder(camera, Movables, pointer, viewport);
 		if (target == null || handle == Handle.None) {
 			return false;
 		}
 
-		if (detach) {
-			target = target switch {
-				WaypointTarget waypoint => waypoint with { Detach = true },
-				GroupTarget group => group with { Detach = true },
-				AreaCornerTarget corner => corner with { Detach = true },
-				_ => target
-			};
-		}
+		target = target switch {
+			WaypointTarget waypoint when detach => waypoint with { Detach = true },
+			GroupTarget group => group with { Detach = detach, Carry = carry },
+			AreaCornerTarget corner when detach => corner with { Detach = true },
+			_ => target
+		};
 
 		_origin = _mover.HandleOrigin(target);
 		var ray = Ray(camera, pointer, viewport);

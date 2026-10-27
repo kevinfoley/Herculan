@@ -358,7 +358,8 @@ public sealed class EditorHost {
 				_mission.AreaPlacing.Press(_mission.Picker.GroundAt(_camera, _leftDownPos, Viewport));
 			} else if (_leftDownOverViewport && _mission != null && !_mission.Placing.Active) {
 				bool alt = _keyboard != null && (_keyboard.IsKeyPressed(Key.AltLeft) || _keyboard.IsKeyPressed(Key.AltRight));
-				_mission.Gizmo.TryBegin(_camera, _leftDownPos, Viewport, detach: alt);
+				_mission.Gizmo.TryBegin(_camera, _leftDownPos, Viewport, detach: alt,
+					carry: _keyboard != null && Control(_keyboard));
 			}
 		}
 	}

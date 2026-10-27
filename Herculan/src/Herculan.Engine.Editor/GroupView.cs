@@ -189,6 +189,14 @@ internal sealed class GroupView {
 			_sharers.Draw(_mover.SharersOf(target));
 		}
 
+		var carried = _mover.CarriedMembers(group.Guid);
+		if (carried.Count > 0) {
+			EditorText.Note(carried.Count == 1
+				? "Ctrl+drag also moves its structure that has a position of its own."
+				: $"Ctrl+drag also moves its {carried.Count} structures that have positions of their own.");
+			_sharers.Draw(_mover.CarriedSharersOf(group.Guid), "Also on their spots, moving with them on Ctrl+drag:", aloneNote: false);
+		}
+
 		if (group.OffScene) {
 			EditorText.Wrapped($"It arrives {MissionText.ArrivalKind(group.ArrivalVerb)}, placed about the player when the "
 				+ "trigger fires: its position is a placeholder, and moving it does not move where it arrives.");

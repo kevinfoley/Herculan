@@ -30,16 +30,16 @@ internal sealed class PointSharers {
 	private MissionNames Names => _links.Names;
 
 	/// <summary>
-	/// Draws <paramref name="sharers"/>, each once by its identity, then that Alt+drag moves the dragged thing alone; nothing
-	/// when there are none.
+	/// Draws <paramref name="sharers"/> under <paramref name="heading"/>, each once by its identity, then, given
+	/// <paramref name="aloneNote"/>, that Alt+drag moves the dragged thing alone; nothing when there are none.
 	/// </summary>
-	public void Draw(IReadOnlyList<PointRef> sharers) {
+	public void Draw(IReadOnlyList<PointRef> sharers, string heading = "Also on this spot, moving with it:", bool aloneNote = true) {
 		if (sharers.Count == 0) {
 			return;
 		}
 
-		ImGui.PushID("sharers");
-		ImGui.TextWrapped("Also on this spot, moving with it:");
+		ImGui.PushID(heading);
+		ImGui.TextWrapped(heading);
 		var drawn = new HashSet<(int Row, short Guid, int Part)>();
 		int options = 0, unrun = 0;
 		foreach (var sharer in sharers) {
@@ -106,7 +106,10 @@ internal sealed class PointSharers {
 			ImGui.TextWrapped(unrun == 1 ? "1 order no group runs" : $"{unrun} orders no group runs");
 		}
 
-		EditorText.Note("Alt+drag to move it alone.");
+		if (aloneNote) {
+			EditorText.Note("Alt+drag to move it alone.");
+		}
+
 		ImGui.PopID();
 
 		void Line(Action draw) {
