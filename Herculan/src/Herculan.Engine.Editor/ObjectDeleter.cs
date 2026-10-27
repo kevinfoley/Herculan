@@ -70,7 +70,7 @@ internal sealed class ObjectDeleter {
 		}
 
 		if (planned.Squad) {
-			return DeleteBlockers.Because("it is in the player's squad, whose squadmates are added and removed in the Player's squad view.");
+			return DeleteBlockers.Because("Squadmates are added and removed in the Player's squad view.");
 		}
 
 		var source = _source;

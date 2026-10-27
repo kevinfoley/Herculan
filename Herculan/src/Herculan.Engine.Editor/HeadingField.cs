@@ -51,12 +51,13 @@ internal sealed class HeadingField {
 
 		Draw(GroupRow, guid, facing, GroupSources, alongRoute
 			? $"Facing {MissionText.Heading(facing)}: along its route's first leg."
-			: $"Facing {MissionText.Heading(facing)}: its first order has no route of two or more waypoints to face along.");
-		EditorText.Note("It turns the group's formation, and every member with no heading of its own.");
+			: $"Facing {MissionText.Heading(facing)}: its first order has no route of two or more waypoints to face along.",
+			"It turns the group's formation, and every member with no heading of its own.");
 	}
 
-	// The choice, the degrees for an own heading or <without> for none, then the other versions.
-	private void Draw(int row, short guid, int facing, string[] sources, string without) {
+	// The choice, with what the heading turns (<turns>) on hover, the degrees for an own heading or <without> for none, then
+	// the other versions.
+	private void Draw(int row, short guid, int facing, string[] sources, string without, string? turns = null) {
 		var source = _editor.Source;
 		short? own = OwnHeadings.Degrees(source, row, guid);
 		string? why = _editor.WhyFixed(row, guid);
@@ -64,11 +65,17 @@ internal sealed class HeadingField {
 		ImGui.PushID($"heading{row}");
 		ImGui.AlignTextToFramePadding();
 		ImGui.Text("Heading:");
+		EditorText.Tooltip(turns);
 		ImGui.SameLine();
 		ImGui.BeginDisabled(why != null);
 		ImGui.SetNextItemWidth(ChoiceWidth(sources));
 		int chosen = own != null ? 0 : 1;
-		if (ImGui.BeginCombo("##source", sources[chosen])) {
+		bool open = ImGui.BeginCombo("##source", sources[chosen]);
+		if (!open) {
+			EditorText.Tooltip(turns);
+		}
+
+		if (open) {
 			if (ImGui.Selectable(sources[0], chosen == 0) && chosen != 0) {
 				_editor.Request(row, guid, DegreesOf(facing));
 			}

@@ -37,14 +37,12 @@ internal sealed class SquadMachinePanel {
 
 	/// <summary>The view of the player's own HERC: which HERC the player pilots, then the mission's own.</summary>
 	public void DrawPlayer() {
-		CampaignNote();
 		DrawPlayerHerc();
 		Failures();
 	}
 
 	/// <summary>The squad's group view: the player's HERC, then each squadmate, with Add and Remove.</summary>
 	public void DrawSquad() {
-		CampaignNote();
 		DrawPlayerHerc();
 		ImGui.Separator();
 		var squadmates = _editor.Squadmates;
@@ -70,11 +68,8 @@ internal sealed class SquadMachinePanel {
 		}
 
 		ImGui.EndDisabled();
-		if (noAdd == null) {
-			EditorText.Note("A new squadmate takes the player's HERC's chassis, with its stock fit, after the last.");
-		} else {
-			EditorText.Reason(noAdd);
-		}
+		EditorText.Tooltip(noAdd == null ? "A new squadmate takes the player's HERC's chassis, with its stock fit, after the last." : null);
+		EditorText.Reason(noAdd);
 
 		Failures();
 	}
@@ -89,7 +84,6 @@ internal sealed class SquadMachinePanel {
 			return;
 		}
 
-		CampaignNote();
 		DrawSquadmate(number, guid);
 		Failures();
 	}
@@ -115,15 +109,6 @@ internal sealed class SquadMachinePanel {
 			+ "the Herc Type chosen on the practice screen, not the HERC below.",
 		_ => null,
 	};
-
-	// In a campaign mission the squad pilots the career's HERCs, and the squad's list sets only how many squad positions
-	// are in play (docs/retail/shell/campaign-loop.md#loading-the-careers-mission).
-	private void CampaignNote() {
-		if (Campaign) {
-			EditorText.Emphasis("In this campaign mission the squad pilots the career's HERCs, so the HERCs and weapons set "
-				+ "here are not used. The number of squadmates listed sets how many of the career's squadmates can go.");
-		}
-	}
 
 	// The squad build's retail bug, where the squadmates are the mission's: the last squadmate listed never goes on strength
 	// (docs/retail/shell/main-menu.md#starting-a-practice-mission).

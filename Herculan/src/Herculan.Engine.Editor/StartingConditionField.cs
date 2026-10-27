@@ -84,7 +84,7 @@ internal sealed class StartingConditionField {
 		EditorText.Note(current == band.Written ? band.Effect : $"{band.Effect} Its record states {current}%.");
 	}
 
-	// The percentage, typed, applied when the field lets go, and what it does.
+	// The percentage, typed, applied when the field lets go, and what it does: on the field's hover when undamaged, else as a note.
 	private void DrawStructure(ObjectKey key, short current) {
 		if (_draftFor != null && _draftFor != key.Guid && !ImGui.IsAnyItemActive()) {
 			_draftFor = null;
@@ -97,6 +97,8 @@ internal sealed class StartingConditionField {
 			_draft = shown;
 		}
 
+		bool undamaged = current is < 0 or >= 100;
+		EditorText.Tooltip(undamaged ? "It starts undamaged. 0% places it already collapsed." : null);
 		if (ImGui.IsItemDeactivatedAfterEdit() && _draftFor == key.Guid) {
 			_draftFor = null;
 			short value = (short)Math.Clamp(_draft, 0, 100);
@@ -107,8 +109,11 @@ internal sealed class StartingConditionField {
 
 		ImGui.SameLine();
 		ImGui.Text("%");
+		if (undamaged) {
+			return;
+		}
+
 		EditorText.Note(current switch {
-			< 0 or >= 100 => "It starts undamaged. 0% places it already collapsed.",
 			0 => "It starts already collapsed, showing its wreck where its type has one. Starting that way fires none of its "
 				+ "triggers and sets no campaign variables.",
 			_ => $"Each of its parts starts {100 - current}% damaged.",

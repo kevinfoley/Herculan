@@ -205,10 +205,6 @@ internal sealed class GroupView {
 	private void DrawBasePad(PlannedGroup group) {
 		bool asked = group.Setup.PaintsGround;
 		if (group.Kind != MissionUnitKind.Base) {
-			if (asked) {
-				EditorText.Note("Its record asks for a base pad, which has no effect in play: only a structure group lays one.");
-			}
-
 			return;
 		}
 

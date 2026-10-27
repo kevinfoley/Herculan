@@ -146,6 +146,9 @@ public static class RecordConditions {
 	/// </summary>
 	public static string Gone(PresenceTarget target) => "Not found.";
 
+	/// <summary>Why a record of the player's squad has no presence of its own, as <see cref="WhyFixed"/> gives it.</summary>
+	public const string SquadPresence = "The squad is built from group 0's members, so its presence is not set here.";
+
 	/// <summary>Why <paramref name="target"/>'s presence cannot be set at all, or null when it can.</summary>
 	public static string? WhyFixed(MissionDocument document, PresenceTarget target) {
 		var records = Records(document, target);
@@ -154,7 +157,7 @@ public static class RecordConditions {
 		}
 
 		if (InSquad(document, target)) {
-			return "The squad is built from group 0's members, so its presence is not set here.";
+			return SquadPresence;
 		}
 
 		// Where a first order is absent, slot 0 holds none, and the later orders do not move up.

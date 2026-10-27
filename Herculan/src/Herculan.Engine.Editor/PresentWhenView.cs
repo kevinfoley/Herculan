@@ -53,11 +53,10 @@ internal sealed class PresentWhenView {
 		EditorText.Emphasis(PresenceSentences.Presence(reading.Rule));
 		if (why == null) {
 			DrawClauses(target, reading.Rule!);
-		} else if (target == PresenceTarget.OrderSlot(target.Group, 0) && why == GroupOrders.WhyNeedsFirstOrder(source, target.Group)) {
-			// The first order every such group keeps: said on hover, not under every one of them.
-			if (ImGui.IsItemHovered()) {
-				ImGui.SetTooltip(why);
-			}
+		} else if (why == RecordConditions.SquadPresence
+				|| (target == PresenceTarget.OrderSlot(target.Group, 0) && why == GroupOrders.WhyNeedsFirstOrder(source, target.Group))) {
+			// The squad's records, and the first order every such group keeps: said on hover, not under every one of them.
+			EditorText.Tooltip(why);
 		} else {
 			EditorText.Reason(why);
 		}

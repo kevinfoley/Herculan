@@ -20,7 +20,7 @@ namespace Herculan.Engine.Editor;
 /// </summary>
 internal sealed class PropertiesPanel {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
-	public const float PanelWidth = 340f;
+	public const float PanelWidth = 408f;
 
 	private const int RouteRow = 8;
 	private const int AreaRow = 9;

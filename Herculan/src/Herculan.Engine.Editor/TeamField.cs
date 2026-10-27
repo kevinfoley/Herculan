@@ -6,7 +6,7 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// A group's Team in the group and object views (docs/herculan/handoff-editor-roster.md#sides): Human or Cybrid, a choice that
 /// changes it (<see cref="SideChanger"/>) as one undo step, from the layout by the group's row-16 GUID. The team is the
-/// group's, so a member's view shows it fixed, and the group's view says when other members change with it. The player's
+/// group's, so a member's view shows it fixed, saying why on hover, and the group's view says when other members change with it. The player's
 /// squad's is shown fixed, with no note.
 /// </summary>
 internal sealed class TeamField {
@@ -25,6 +25,8 @@ internal sealed class TeamField {
 		}
 
 		string? reason = _sides.WhyFixed(guid);
+		// One item for the label and both buttons, so the member view's tooltip shows over any of them.
+		ImGui.BeginGroup();
 		ImGui.AlignTextToFramePadding();
 		ImGui.Text("Team:");
 		ImGui.BeginDisabled(ofMember || reason != null);
@@ -36,8 +38,9 @@ internal sealed class TeamField {
 		}
 
 		ImGui.EndDisabled();
+		ImGui.EndGroup();
 		if (ofMember) {
-			EditorText.Note("Team controlled by group");
+			EditorText.Tooltip("Team controlled by group.");
 		} else if (reason != null && !group.IsSquad) {
 			EditorText.Reason(reason);
 		} else if (reason == null && group.Members.Count > 1) {

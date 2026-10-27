@@ -187,7 +187,7 @@ internal static class MissionText {
 	};
 
 	/// <summary>
-	/// What an objective's condition means in play, in a sentence or two for the note under the What happens choice;
+	/// What an objective's condition means in play, in a sentence or two for the What happens choice's tooltips;
 	/// <paramref name="clear"/> and <paramref name="clearTarget"/> are the clear-of-threats distances, in words.
 	/// </summary>
 	public static string ObjectiveNote(short code, bool group, string clear, string clearTarget) => code switch {

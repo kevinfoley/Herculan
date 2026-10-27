@@ -80,25 +80,31 @@ internal sealed class ObjectiveView {
 		EditorText.Reason(_editor.Failure);
 	}
 
-	// Must happen (a win condition) or must not happen (a lose condition), and what each does to the mission.
+	// Must happen (a win condition) or must not happen (a lose condition), and what each does to the mission on hover, the
+	// closed choice and each entry alike.
 	private void DrawRole(int record, bool mandatory, bool locked) {
 		Label("Role");
 		ImGui.BeginDisabled(locked);
-		if (ImGui.BeginCombo("##role", Role(mandatory))) {
+		if (!ImGui.BeginCombo("##role", Role(mandatory))) {
+			EditorText.Tooltip(RoleNote(mandatory));
+		} else {
 			foreach (bool choice in new[] { true, false }) {
 				if (ImGui.Selectable(Role(choice), choice == mandatory) && choice != mandatory) {
 					_editor.RequestRequired(record, choice);
 				}
+
+				EditorText.Tooltip(RoleNote(choice));
 			}
 
 			ImGui.EndCombo();
 		}
 
 		ImGui.EndDisabled();
-		EditorText.Note(mandatory
-			? "The mission is won once every win condition holds, no lose condition does, and no enemy nearby is aware of the player."
-			: "The mission is lost once this holds and no enemy nearby is aware of the player.");
 	}
+
+	private static string RoleNote(bool mandatory) => mandatory
+		? "The mission is won once every win condition holds, no lose condition does, and no enemy nearby is aware of the player."
+		: "The mission is lost once this holds and no enemy nearby is aware of the player.";
 
 	private static string Role(bool mandatory) => mandatory ? "Must happen (win condition)" : "Must not happen (lose condition)";
 
@@ -149,29 +155,29 @@ internal sealed class ObjectiveView {
 		}
 	}
 
-	// What happens to them, a choice of the conditions the mission tests, each with what it means.
+	// What happens to them, a choice of the conditions the mission tests, each with what it means on hover, the closed choice
+	// and each entry alike.
 	private void DrawWhat(int record, MissionObjective58 fields, bool locked) {
 		bool group = fields.SubjectKind == ObjectiveEditing.GroupSubject;
 		short code = fields.ConditionCode;
 		Label("What happens");
 		ImGui.BeginDisabled(locked);
-		if (ImGui.BeginCombo("##what", MissionText.ObjectiveChoice(code, group))) {
+		if (!ImGui.BeginCombo("##what", MissionText.ObjectiveChoice(code, group))) {
+			EditorText.Tooltip(ObjectiveNote(code, group));
+		} else {
 			foreach (short choice in Offered) {
 				bool current = MissionText.ObjectiveChoice(choice, group) == MissionText.ObjectiveChoice(code, group);
 				if (ImGui.Selectable(MissionText.ObjectiveChoice(choice, group), current) && !current) {
 					_editor.RequestCondition(record, choice);
 				}
 
-				if (ImGui.IsItemHovered()) {
-					ImGui.SetTooltip(ObjectiveNote(choice, group));
-				}
+				EditorText.Tooltip(ObjectiveNote(choice, group));
 			}
 
 			ImGui.EndCombo();
 		}
 
 		ImGui.EndDisabled();
-		EditorText.Note(ObjectiveNote(code, group));
 		if (MissionCheck.NeverWrittenOff(Layout, fields, Names.Types.IsInvulnerable)) {
 			EditorText.Problem(group
 				? "This can never come true: the group holds a structure that can't be destroyed, and a Cybrid group is written "

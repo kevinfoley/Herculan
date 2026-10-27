@@ -104,10 +104,13 @@ internal sealed class RouteView {
 	}
 
 	// A choice of the groups with a first order that walk another route, which makes this one that order's route: a group walks
-	// only its first order's (docs/retail/simulation/ai-goals.md#the-route-cursor-is-loaded-once).
+	// only its first order's (docs/retail/simulation/ai-goals.md#the-route-cursor-is-loaded-once). What that does is on the closed
+	// choice's hover.
 	private void DrawWalkWith(PlannedRoute placed) {
 		ImGui.SetNextItemWidth(-1f);
-		if (ImGui.BeginCombo("##walkWith", "Have a group walk it...")) {
+		if (!ImGui.BeginCombo("##walkWith", "Have a group walk it...")) {
+			EditorText.Tooltip("It becomes that group's 1st order's route; a group with no position of its own then starts at its start.");
+		} else {
 			bool any = false;
 			foreach (var group in _index.Groups) {
 				if (placed.WalkedBy.Contains(group.Guid) || group.Orders.Count == 0 || group.Orders[0] == -1
@@ -128,7 +131,6 @@ internal sealed class RouteView {
 			ImGui.EndCombo();
 		}
 
-		EditorText.Note("It becomes that group's 1st order's route; a group with no position of its own then starts at its start.");
 		EditorText.Reason(_orders.Failure);
 	}
 

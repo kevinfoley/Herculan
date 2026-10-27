@@ -170,6 +170,10 @@ internal sealed class TriggerAreaView {
 			_radiusDraft = shown;
 		}
 
+		EditorText.Tooltip(fixedNow
+			? null
+			: $"Kept to the nearest {TriggerAreaEditing.RadiusScale} units, at most {TriggerAreaEditing.Radius(short.MaxValue)}.");
+
 		if (done && _radiusDraftFor == guid) {
 			int draft = _radiusDraft;
 			_radiusDraftFor = null;
@@ -178,10 +182,7 @@ internal sealed class TriggerAreaView {
 			}
 		}
 
-		EditorText.Note(fixedNow
-			? MissionText.Distance(radius)
-			: $"{MissionText.Distance(radius)}. Kept to the nearest {TriggerAreaEditing.RadiusScale} units, at most "
-				+ $"{TriggerAreaEditing.Radius(short.MaxValue)}.");
+		EditorText.Note(MissionText.Distance(radius));
 		ImGui.PopID();
 	}
 

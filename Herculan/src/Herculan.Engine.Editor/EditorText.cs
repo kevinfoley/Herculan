@@ -44,6 +44,22 @@ internal static class EditorText {
 		ImGui.PopStyleColor();
 	}
 
+	/// <summary>
+	/// An explanation of the last item, shown while the mouse is over it, enabled or not, wrapped at a readable width;
+	/// nothing for null.
+	/// </summary>
+	public static void Tooltip(string? text) {
+		if (text == null || !ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
+			return;
+		}
+
+		ImGui.BeginTooltip();
+		ImGui.PushTextWrapPos(ImGui.GetFontSize() * 30f);
+		ImGui.TextUnformatted(text);
+		ImGui.PopTextWrapPos();
+		ImGui.EndTooltip();
+	}
+
 	/// <summary>Why an input is refused, wrapped, in a strong red, under the field <see cref="PushProblemField"/> tinted.</summary>
 	public static void Problem(string text) {
 		ImGui.PushStyleColor(ImGuiCol.Text, ProblemColor);

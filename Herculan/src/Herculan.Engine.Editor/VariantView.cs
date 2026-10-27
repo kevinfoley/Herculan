@@ -148,7 +148,8 @@ internal sealed class VariantView {
 			}
 
 			ImGui.EndDisabled();
-			EditorText.Note(noAdd ?? "Adds a copy of the option the scene shows, with half the largest chance.");
+			EditorText.Tooltip(noAdd == null ? "Adds a copy of the option the scene shows, with half the largest chance." : null);
+			EditorText.Reason(noAdd);
 		}
 	}
 

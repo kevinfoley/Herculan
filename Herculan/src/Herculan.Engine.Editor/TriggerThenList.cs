@@ -330,7 +330,7 @@ internal sealed class TriggerThenList {
 					_editor.RequestFollow(guid, follower);
 				}
 
-				Tooltip(why);
+				EditorText.Tooltip(why);
 			}
 
 			ImGui.EndMenu();
@@ -383,7 +383,7 @@ internal sealed class TriggerThenList {
 			_editor.RequestAddPair(guid);
 		}
 
-		Tooltip(noWrite);
+		EditorText.Tooltip(noWrite);
 		int training = TriggerMessages.TrainingNumber(Layout);
 		var messages = _messages.For(training);
 		bool sends = ActionEditing.Message(Source, guid) >= 0;
@@ -398,7 +398,7 @@ internal sealed class TriggerThenList {
 			ImGui.EndMenu();
 		}
 
-		Tooltip(sends ? "It sends one already: change it under \"Sends a message\"." : null);
+		EditorText.Tooltip(sends ? "It sends one already: change it under \"Sends a message\"." : null);
 		ImGui.EndPopup();
 	}
 
@@ -410,7 +410,7 @@ internal sealed class TriggerThenList {
 		}
 
 		ImGui.EndDisabled();
-		Tooltip(consequence);
+		EditorText.Tooltip(consequence);
 	}
 
 	// A group's order slot as the Then list names it: "1st order (Search and destroy)".
@@ -432,12 +432,6 @@ internal sealed class TriggerThenList {
 	private static string NotInFile(int training) => $"(a line not in str\\{TriggerMessages.FileName(training)})";
 
 	private static string Times(int count) => count switch { 1 => "once", 2 => "twice", _ => $"{count} times" };
-
-	private static void Tooltip(string? text) {
-		if (text != null && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
-			ImGui.SetTooltip(text);
-		}
-	}
 
 	// Row-10 GUID <guid> by its number alone, for a note that a link already names in full: "trigger 2".
 	private string TriggerNumber(short guid) => MissionText.NumberIn(Layout, 10, guid) is { } number ? $"trigger {number}" : "a trigger";

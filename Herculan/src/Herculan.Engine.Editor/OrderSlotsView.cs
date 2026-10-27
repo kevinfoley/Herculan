@@ -104,15 +104,18 @@ internal sealed class OrderSlotsView {
 	}
 
 	// What the order does, a choice of the seven verbs, each with what it does and when it is done on hover, the closed choice
-	// and each entry alike; for a convoy only when it is done, under a note saying that is all the verb decides.
+	// and each entry alike, the closed one adding that a verb with no target gets one when chosen; for a convoy only when it is
+	// done, under a note saying that is all the verb decides.
 	private void DrawVerb(short group, int slot, short verb, bool noSubject, bool locked) {
 		bool convoy = _editor.IsConvoy(group);
 		Func<short, string> note = convoy ? MissionText.ConvoyOrderVerbNote : MissionText.OrderVerbNote;
 		Label("Does");
 		ImGui.BeginDisabled(locked);
 		bool open = ImGui.BeginCombo("##verb", MissionText.OrderVerb(verb));
-		if (!open && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
-			ImGui.SetTooltip(note(verb));
+		if (!open) {
+			EditorText.Tooltip(noSubject
+				? note(verb) + Environment.NewLine + Environment.NewLine + "Search and destroy, Ram and Follow need a target: choosing one gives the order the player's squad."
+				: note(verb));
 		}
 
 		if (open) {
@@ -132,10 +135,6 @@ internal sealed class OrderSlotsView {
 		ImGui.EndDisabled();
 		if (convoy) {
 			EditorText.Note(MissionText.ConvoyOrderNote);
-		}
-
-		if (noSubject) {
-			EditorText.Note("Search and destroy, Ram and Follow need a target: choosing one gives the order the player's squad.");
 		}
 	}
 
@@ -276,7 +275,7 @@ internal sealed class OrderSlotsView {
 		ImGui.BeginDisabled(reason != null);
 		bool clicked = ImGui.Button(label);
 		ImGui.EndDisabled();
-		Tooltip(reason);
+		EditorText.Tooltip(reason);
 		return clicked;
 	}
 
@@ -284,13 +283,7 @@ internal sealed class OrderSlotsView {
 		ImGui.BeginDisabled(reason != null);
 		bool clicked = ImGui.SmallButton(label);
 		ImGui.EndDisabled();
-		Tooltip(reason);
+		EditorText.Tooltip(reason);
 		return clicked;
-	}
-
-	private static void Tooltip(string? reason) {
-		if (reason != null && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
-			ImGui.SetTooltip(reason);
-		}
 	}
 }

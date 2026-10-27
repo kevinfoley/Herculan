@@ -176,11 +176,13 @@ internal sealed class ObjectView {
 			return;
 		}
 
+		ImGui.BeginGroup();
 		foreach (string line in lines) {
 			EditorText.Wrapped(line);
 		}
 
-		EditorText.Note("What it does is its group's orders, set in the group's view.");
+		ImGui.EndGroup();
+		EditorText.Tooltip("Orders are controlled by the group.");
 	}
 
 	// The object's name: a herc's or flyer's type name, or a structure's or ground vehicle's title (RosterTypeNames.StructureTitle).
@@ -244,18 +246,18 @@ internal sealed class ObjectView {
 
 		ImGui.Separator();
 		string? why = _actions.WhyNoObjectAction(key);
-		OwnAction("When engaged, fires", key, defeated: false, engaged, why);
-		OwnAction("When defeated, fires", key, defeated: true, defeated, why);
-		EditorText.Note($"A trigger set here fires when it is engaged: an enemy within {MissionText.Metres(Sim.Detection.EngagementRange)} "
-			+ "spots it, or an enemy shoots it. Or when it is defeated: destroyed; a herc also when immobilized or left with no "
-			+ "working weapon.");
+		OwnAction("When engaged, fires", key, defeated: false, engaged, why,
+			$"A trigger set here fires when it is engaged: an enemy within {MissionText.Metres(Sim.Detection.EngagementRange)} "
+				+ "spots it, or an enemy shoots it.");
+		OwnAction("When defeated, fires", key, defeated: true, defeated, why,
+			"A trigger set here fires when it is defeated: destroyed; a herc also when immobilized or left with no working weapon.");
 		EditorText.Reason(why);
 		EditorText.Reason(_actions.Failure);
 	}
 
-	// One of the two, row-10 GUID <current> or -1: a choice of the triggers, with a link. A ref the layout has no trigger for
-	// fires nothing, as the generation resolves it to none.
-	private void OwnAction(string label, ObjectKey key, bool defeated, short current, string? why) {
+	// One of the two, row-10 GUID <current> or -1: a choice of the triggers, with a link, and when it fires on the label's hover.
+	// A ref the layout has no trigger for fires nothing, as the generation resolves it to none.
+	private void OwnAction(string label, ObjectKey key, bool defeated, short current, string? why, string when) {
 		if (_index.Action(current) == null) {
 			current = -1;
 		}
@@ -263,6 +265,7 @@ internal sealed class ObjectView {
 		ImGui.PushID(label);
 		ImGui.AlignTextToFramePadding();
 		ImGui.TextUnformatted($"{label}:");
+		EditorText.Tooltip(when);
 		string? noNone = _actions.WhyNoNone(key, defeated);
 		ImGui.SameLine();
 		ImGui.SetNextItemWidth(-1f);
