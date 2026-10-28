@@ -10006,13 +10006,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_AimAndFireAtMech",
-      "description": "(machine, target, aspect), callee-cleaned: when the bearing error to the target lies within the type record's twist limit +0x22, the point is the target's component +0x238 through its slot +0x5c when that is not negative and the 3D range is 5000 to 19999, otherwise the translation of its slot +0x28 transform applied with its frame (Context_GetTransform); then Ai_FireAtPoint (000190ec)(machine, target, aspect, point). Beyond the limit, Mech_CenterTorsoTick (000186f8)(machine, 0). ES2's Ai_AimAndFireAtMech (DBSIM 0041e984).",
+      "description": "(machine, target, aspect), callee-cleaned: when the bearing error to the target plus the type record's twist limit +0x22 is below twice the limit, both compared as unsigned int16 values, the point is the target's component +0x238 through its slot +0x5c when that is not negative and the 3D range is 5000 to 19999, otherwise the translation of its slot +0x28 transform applied with its frame (Context_GetTransform); then Ai_FireAtPoint (000190ec)(machine, target, aspect, point). Beyond the limit, Mech_CenterTorsoTick (000186f8)(machine, 0). ES2's Ai_AimAndFireAtMech (DBSIM 0041e984).",
       "source": "Herculan/docs/es1/simulation/mech-ai.md#weapons; ES1DBSIM decompile at 0001879c",
       "verified": {
         "bytes": "0001879c+246",
         "sha1": "a16aecc1bc98",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -10081,13 +10081,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_ChooseWeapon",
-      "description": "(machine, target, range, aspect), callee-cleaned: the floor Math_MapRange (00065480)(fear +0x240, 0, 0x400, 150, -100); the shield from the target's slot +0x38 with the boolean -0x4000 <= aspect < 0x4000; jitter 35 for a class-0 target, 30 otherwise. Each mount of +0x198 whose slot +0x60 says it is unspent: a subtype (slot +0x64) 0 in range (WeaponMount_RangeAllows) puts the radar +0x90 on unless the silence +0x201 runs; one in range, of subtype 5 or 3 or with its lock flag at the manager's +6 up, and ready (slot +0x30), scores Q10(armor or shield damage of the projectile record +0x20, + 10000 when the shot breaks the shield, 100) - Q10(1000, template +0x34) + Math_RandomBelow(jitter) squared, the best above the floor returned. With every mount absent or spent and +0x9f clear: +0x9f set, Action_Activate (0001cc5c) of +0x170, MissionPollTimer_Count (000af79d) raised to 1000. ES2's Ai_ChooseWeapon (DBSIM 0041f358).",
+      "description": "(machine, target, range, aspect), callee-cleaned: the floor Math_MapRange (00065480)(fear +0x240, 0, 0x400, 150, -100); the shield from the target's slot +0x38 with the boolean -0x4000 <= aspect < 0x4000; jitter 35 for a class-0 target, 30 otherwise. Each mount of +0x198 whose slot +0x60 says it is unspent: a subtype (slot +0x64) 0 in range (WeaponMount_RangeAllows) puts the radar +0x90 on unless the silence +0x201 runs; one in range, of subtype 5 or 3 or with its lock flag at the manager's +6 up, and ready (slot +0x30), scores Q10(armor or shield damage of the projectile record +0x20, + 10000 when the shot breaks the shield, 100) - Q10(1000, template +0x34) + the product of two Math_RandomBelow (00063b3c)(jitter) draws, each Q10 the rounding Math_Q10Multiply (0005e818); a 32-bit score above the sign-extended best becomes the best, cut to an int16, and the best mount above the floor is returned. With every mount absent or spent and +0x9f clear: +0x9f set, Action_Activate (0001cc5c) of +0x170, MissionPollTimer_Count (000af79d) raised to 1000 when below it, a signed int16 compare. ES2's Ai_ChooseWeapon (DBSIM 0041f358).",
       "source": "Herculan/docs/es1/simulation/mech-ai.md#weapons; ES1DBSIM decompile at 00018e50",
       "verified": {
         "bytes": "00018e50+666",
         "sha1": "b8c3aaba13c5",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -10096,13 +10096,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_FireAtPoint",
-      "description": "(machine, target, aspect, point), callee-cleaned: range = Math_DistanceBetweenPoints2D to the point; the latched mount +0x242 while ready (slot +0x30) and in range, else with +0xaf set none (clearing it), else Ai_ChooseWeapon (00018e50) and the latch cleared. None: Cockpit_TargetAnglesFromCameraBone (00018b78) at the point. One: the point led along the target's heading by (range >> 2) x speed (slot +0x3c) x 4 / the projectile speed (record +0x20, +0xa); for a group side byte +0x14 not 0, scattered by Math_RandomBelow of AiAimScatterByDifficulty (00091ce0) at header word 7 (000bc4aa), or 3 while MissionModeFlag (000bc4a0) is set; aimed; fired through slot +0x2c (mount, 0, machine) unless a launcher (subtype not 5) misses by 1000 or more in either residual axis; latched when template +0x56 is 3. ES2's Ai_FireAtPoint (DBSIM 0041f5a0), which latches weapons 6 and 22.",
+      "description": "(machine, target, aspect, point), callee-cleaned: range = Math_DistanceBetweenPoints2D to the point; the latched mount +0x242 while ready (slot +0x30) and in range, else with +0xaf set none (clearing it), else Ai_ChooseWeapon (00018e50) and the latch cleared. None: Cockpit_TargetAnglesFromCameraBone (00018b78) at the point. One: with the projectile speed (record +0x20, +0xa) above 0 and the target's speed (slot +0x3c) not 0, the point led along the target's heading (Math_OffsetPointByBearing (00063d8c)) by (int16)((int16)(range >> 2) x (speed x 4) / the projectile speed), the multiply and the signed divide in 32 bits; for a group side byte +0x14 not 0, scattered by three Math_RandomBelow (00063b3c) draws, added to x, y and z in that order, of AiAimScatterByDifficulty (00091ce0) at header word 7 (000bc4aa), or 3 while MissionModeFlag (000bc4a0) is set; aimed; fired through slot +0x2c (mount, 0, machine) when its subtype (slot +0x64) is not 5, that is a missile launcher, or when both residual angles lie in [-1000, 1000); latched when template +0x56 is 3. ES2's Ai_FireAtPoint (DBSIM 0041f5a0), which latches weapons 6 and 22.",
       "source": "Herculan/docs/es1/simulation/mech-ai.md#weapons; ES1DBSIM decompile at 000190ec",
       "verified": {
         "bytes": "000190ec+529",
         "sha1": "2ff48ad567a6",
         "scope": "body",
-        "via": "decompile"
+        "via": "disasm"
       }
     },
     {
