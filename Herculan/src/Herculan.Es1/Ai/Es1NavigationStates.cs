@@ -99,7 +99,7 @@ public static class Es1NavigationStates {
 		if (block.LookAt is { } watched) {
 			short aspect = (short)(watched.TorsoTwistAngle
 				+ (short)(Es1MissionGroup.HeadingToward(watched.Position, mech.Position) - watched.Heading));
-			Es1AiStandIns.AimAndFire(mech, watched, aspect, globals);
+			Es1AiWeapons.AimAndFire(mech, watched, aspect, globals);
 		}
 
 		return 0;

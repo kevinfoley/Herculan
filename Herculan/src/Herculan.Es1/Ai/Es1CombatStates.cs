@@ -397,7 +397,7 @@ public static class Es1CombatStates {
 		geometry.NearStandoff = 0;
 		geometry.FarStandoff = FleeFar;
 		MoveStep(mech, geometry, globals);
-		Es1AiStandIns.AimAndFire(mech, from, geometry.Aspect, globals);
+		Es1AiWeapons.AimAndFire(mech, from, geometry.Aspect, globals);
 		return mech.OutOfAction || from.Disarmed || from.Immobilized || from.Destroyed ? (short)1 : (short)0;
 	}
 
@@ -457,7 +457,7 @@ public static class Es1CombatStates {
 		mech.Fear = DriveOffFear;
 		short aspect = (short)(target.TorsoTwistAngle
 			+ (short)(Es1MissionGroup.HeadingToward(target.Position, mech.Position) - target.Heading));
-		Es1AiStandIns.AimAndFire(mech, null, aspect, globals);
+		Es1AiWeapons.AimAndFire(mech, null, aspect, globals);
 		if (Es1Targets.ShouldAbandonTarget(mech) || mech.OutOfAction) {
 			mech.SquadTarget = null;
 			return 1;
@@ -472,7 +472,7 @@ public static class Es1CombatStates {
 	/// <see cref="Es1Targets.ClearSquadEngageOrder"/> and 1, otherwise 0.
 	/// </summary>
 	private static short Tail(Es1Mech mech, Es1CombatGeometry geometry, Es1SimGlobals globals) {
-		Es1AiStandIns.AimAndFire(mech, null, geometry.Aspect, globals);
+		Es1AiWeapons.AimAndFire(mech, null, geometry.Aspect, globals);
 		if (Es1Targets.ShouldAbandonTarget(mech) || mech.OutOfAction) {
 			Es1Targets.ClearSquadEngageOrder(mech);
 			return 1;
@@ -488,7 +488,7 @@ public static class Es1CombatStates {
 	/// </summary>
 	private static short TargetOrMachineDone(Es1Mech mech, IEs1SimObject target, Es1CombatGeometry geometry,
 			Es1SimGlobals globals) {
-		Es1AiStandIns.AimAndFire(mech, null, geometry.Aspect, globals);
+		Es1AiWeapons.AimAndFire(mech, null, geometry.Aspect, globals);
 		if (target.Disarmed || target.Immobilized || target.Destroyed || mech.OutOfAction) {
 			Es1Targets.ClearSquadEngageOrder(mech);
 			return 1;

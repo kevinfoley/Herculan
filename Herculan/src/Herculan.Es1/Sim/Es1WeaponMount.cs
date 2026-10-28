@@ -316,6 +316,18 @@ public sealed class Es1WeaponMount {
 	}
 
 	/// <summary>
+	/// Slot <c>+0x60</c>, spent (docs/es1/simulation/weapon-mount-classes.md#the-slots): an energy or ELF mount's
+	/// <c>WeaponMount_EnergyIsSpent</c> (<c>0000b300</c>), destroyed; an ammunition or grenade mount's
+	/// <c>WeaponMount_AmmoIsSpent</c> (<c>0000b314</c>), destroyed or no rounds <see cref="ChargeTarget"/> left; the ECM's
+	/// <c>WeaponMount_IsSpent_Always</c> (<c>0000c7b3</c>).
+	/// </summary>
+	public bool IsSpent => Kind switch {
+		Es1MountKind.Energy or Es1MountKind.Elf => Destroyed,
+		Es1MountKind.Ammunition or Es1MountKind.Grenade => ChargeTarget == 0 || Destroyed,
+		_ => true,
+	};
+
+	/// <summary>
 	/// Slot <c>+0x58</c>, counts in the combat rating (docs/es1/simulation/weapon-mount-classes.md#the-slots): an ammunition
 	/// or grenade mount's <c>WeaponMount_AmmoCountsInCombatRating</c> (<c>0000b8ec</c>), while its rounds
 	/// <see cref="ChargeTarget"/> are at least the template's magazine ≫ 3; every other class's

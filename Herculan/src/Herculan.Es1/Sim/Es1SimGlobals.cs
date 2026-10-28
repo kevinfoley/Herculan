@@ -86,6 +86,27 @@ public sealed class Es1SimGlobals {
 	/// </summary>
 	public short HeaderWord7 { get; set; }
 
+	/// <summary>The difficulty <see cref="DifficultyIndex"/> takes while <see cref="MissionModeFlag"/> is not 0.</summary>
+	public const int ModeDifficulty = 3;
+
+	/// <summary>
+	/// The difficulty the tables of <c>Damage_ScaleByDifficulty</c> and <c>Ai_FireAtPoint</c> are indexed by:
+	/// <see cref="HeaderWord7"/>, or <see cref="ModeDifficulty"/> while <see cref="MissionModeFlag"/> is not 0
+	/// (docs/es1/simulation/world.md#the-difficulty-scale--damage_scalebydifficulty-0001f82c,
+	/// docs/es1/simulation/mech-ai.md#weapons).
+	/// </summary>
+	public int DifficultyIndex => MissionModeFlag != 0 ? ModeDifficulty : HeaderWord7;
+
+	/// <summary>
+	/// The counter of <c>MissionPollTimer</c> (<c>000af79d</c>), the objective poll's interval
+	/// (docs/es1/simulation/mission-status.md#the-poll--mission_pollstatus-0000f454), which a machine running out of weapons
+	/// raises (<see cref="Ai.Es1AiWeapons.ChooseWeapon"/>). It lies past the image's file bytes, so it starts at 0.
+	/// PLACEHOLDER: its reader, <c>Mission_PollStatus</c> (<c>0000f454</c>), is not ported
+	/// (docs/herculan/plan-es1-first-mission.md#what-the-slice-leaves-out, the mission's end), so nothing counts it down or
+	/// reads it.
+	/// </summary>
+	public short MissionPollCountdown { get; set; }
+
 	/// <summary><c>LocalPlayerMech</c> (<c>000b5b86</c>), which the simulation stores; none before it is built.</summary>
 	public Es1Mech? LocalPlayerMech { get; set; }
 
@@ -283,6 +304,15 @@ public interface IEs1SimObject {
 
 	/// <summary>Slot <c>+0x40</c>, the turret twist: the base's <c>SimObject_GetTorsoTwistAngleZero</c> (<c>0000d6d0</c>) answers 0.</summary>
 	short TorsoTwistAngle => 0;
+
+	/// <summary>
+	/// Slot <c>+0x38</c>, the shield facing <paramref name="bearing"/>, which the AI's weapon choice weighs: the base's
+	/// <c>SimObject_GetShieldByHeadingZero</c> (<c>0000d6c0</c>) answers 0.
+	/// </summary>
+	short GetShieldByHeading(short bearing) => 0;
+
+	/// <summary>Slot <c>+0x3c</c>, the speed the AI's shot leads by: the base's <c>SimObject_GetSpeedZero</c> (<c>0000d6c8</c>) answers 0.</summary>
+	short GetSpeed() => 0;
 
 	/// <summary>Slot <c>+0x48</c>, the sensor arc: the base's <see cref="Es1SensorModel.BearingInSensorArc"/>.</summary>
 	bool BearingInSensorArc(short bearing) => Es1SensorModel.BearingInSensorArc(Heading, bearing);

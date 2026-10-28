@@ -397,12 +397,26 @@ public sealed class Es1Mech : IEs1SimObject {
 	/// <summary><c>+0x21e</c>, the damage taken, which the hit test raises; zeroed when the damage window runs out.</summary>
 	public int DamageTaken { get; set; }
 
-	/// <summary><c>+0x9f</c>, disarmed. PLACEHOLDER: its writer, <c>Ai_ChooseWeapon</c> running dry, is plan step 8's; clear until then.</summary>
-	public bool Disarmed => false;
+	/// <summary><c>+0x9f</c>, disarmed, which the AI's weapon choice sets when every mount is absent or spent (<see cref="Ai.Es1AiWeapons.ChooseWeapon"/>).</summary>
+	public bool Disarmed { get; set; }
 
 	/// <inheritdoc/>
-	/// <remarks>PLACEHOLDER: its reader, <c>Ai_FireAtPoint</c> (<c>000190ec</c>), is plan step 8's.</remarks>
 	public bool SkipWeaponChoice { get; set; }
+
+	/// <summary>
+	/// <c>+0x242</c>, the latched mount (docs/es1/simulation/mech-ai.md#the-fields): the <c>ELF</c> the AI fired last,
+	/// which it fires again while ready and in range without choosing (<see cref="Ai.Es1AiWeapons.FireAtPoint"/>); null for none.
+	/// </summary>
+	public Es1WeaponMount? LatchedMount { get; set; }
+
+	/// <summary>
+	/// Slot <c>+0x38</c>, <c>Mech_GetShieldByHeading</c> (<c>00010e6c</c>, docs/es1/simulation/mech.md#small-functions): the
+	/// front charge for a <paramref name="bearing"/> within ±<c>0x4000</c>, the rear otherwise.
+	/// </summary>
+	public short GetShieldByHeading(short bearing) => (uint)(bearing + 0x4000) < 0x8000 ? Shields.Front : Shields.Rear;
+
+	/// <summary>Slot <c>+0x3c</c>, <c>Mech_GetSpeed</c> (<c>00010e48</c>, docs/es1/simulation/mech.md#small-functions): Q10(2000, <see cref="Speed"/>).</summary>
+	public short GetSpeed() => (short)SimMath.Q10MultiplyRounded(2000, Speed);
 
 	/// <summary>Slot <c>+0x24</c>, <see cref="Es1MechDamage.HitTest"/>.</summary>
 	public int HitTest(Es1Shot shot, Es1SimGlobals globals) => Es1MechDamage.HitTest(this, shot, globals);

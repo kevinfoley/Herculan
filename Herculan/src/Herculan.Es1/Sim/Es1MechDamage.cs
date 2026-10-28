@@ -35,17 +35,14 @@ public static class Es1MechDamage {
 	/// <summary><c>DamageScaleByDifficulty</c> (<c>000922c4</c>), Q10, by difficulty.</summary>
 	public static readonly short[] DifficultyScale = [2800, 2000, 1400, 1000];
 
-	/// <summary>The difficulty <see cref="ScaleByDifficulty"/> reads while <see cref="Es1SimGlobals.MissionModeFlag"/> is not 0.</summary>
-	public const int ModeDifficulty = 3;
-
 	/// <summary>
 	/// <c>Damage_ScaleByDifficulty</c> (<c>0001f82c</c>)(<paramref name="figure"/>)
 	/// (docs/es1/simulation/world.md#the-difficulty-scale--damage_scalebydifficulty-0001f82c): Q10 by
-	/// <see cref="DifficultyScale"/> at header word 7, or at <see cref="ModeDifficulty"/> while the mode is not 0. Retail
-	/// reads past the table for a word outside 0 to 3; the figure stands then, an engine guard.
+	/// <see cref="DifficultyScale"/> at <see cref="Es1SimGlobals.DifficultyIndex"/>. Retail reads past the table for a word
+	/// outside 0 to 3; the figure stands then, an engine guard.
 	/// </summary>
 	public static short ScaleByDifficulty(short figure, Es1SimGlobals globals) {
-		int i = globals.MissionModeFlag != 0 ? ModeDifficulty : globals.HeaderWord7;
+		int i = globals.DifficultyIndex;
 		return i >= 0 && i < DifficultyScale.Length ? (short)SimMath.Q10MultiplyRounded(figure, DifficultyScale[i]) : figure;
 	}
 
