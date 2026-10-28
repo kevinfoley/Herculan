@@ -42364,7 +42364,7 @@
       "type": "data",
       "confidence": "high",
       "name": "BaseHit_Occupancy",
-      "description": "One byte, 1: the occupancy flags Base_DirectFireHitTest (00003a58) passes Mech_SelectStruckComponent for a structure's collision model.",
+      "description": "The int16 1, followed by two zero words before the table copy at 000904a6: the occupancy flags Base_DirectFireHitTest (00003a58) passes Mech_SelectStruckComponent (00009064) for a structure's collision model. Mech_ComponentGeometryTest_Candidate (00008f84) reads them one int16 per component (CMP word ptr at 0000901e), so a cluster naming component 0 is tested and one naming 1 or 2 is not.",
       "source": "Herculan/docs/es1/simulation/structures.md#hits--base_directfirehittest-00003a58"
     },
     {
