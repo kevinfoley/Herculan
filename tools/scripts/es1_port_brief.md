@@ -27,4 +27,3 @@ Read each file you change whole before changing it; the rest only where the part
 1. Files changed or added, one line each.
 2. The path of the details file, how many details it holds, and each doc/decompile disagreement.
 3. Every PLACEHOLDER added or retired, and what is left tagged for a later part.
-4. A short in-app checklist on a mission whose data makes each item cheap to see, each item checked against that mission's data first (`HercWorks.Query`).

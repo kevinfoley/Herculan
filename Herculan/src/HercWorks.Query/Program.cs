@@ -30,8 +30,7 @@ internal static class Program {
 		                                   of those named: verb, formation, point, route, subject and the
 		                                   action that ends each. ES1: every row 11 group's order (0x32),
 		                                   formation (0x30), member kind (0x2e), side word, target and
-		                                   action, after a census of the order values; with --loaded,
-		                                   the groups the mission load writes to data\script.dat instead
+		                                   action, after a census of the order values
 		  conditions [<mission>...]        every row #1 condition, of every mission or of those named:
 		                                   the test, draw or variant table, its chain, and what it gates
 		  repeats [<mission>...]           every GUID two or more unconditioned records carry in ES2's
@@ -90,13 +89,6 @@ internal static class Program {
 		  --route-switch    orders, ES2: list only groups with a later order naming a route other than
 		                    slot 0's
 		  --with-point      orders, ES2: list only groups with an order that names a row #6 point
-		  --loaded          orders, ES1: run each mission through the shell's single-mission load
-		                    (data\prefs.cfg, and car\SM_INIT.DAT and bst\TECH_SNG.DAT from the
-		                    archives the shell mounts) and
-		                    list block 9 of the data\script.dat it writes: the groups after the
-		                    conditions and the repeated GUIDs' overlay, with header words 3 and 7.
-		                    Every draw is taken as 0; each mission says how many draws had more
-		                    than one outcome
 		  --name <p>        vol: only entries whose name or folder\name matches: a * and ? wildcard
 		                    against the whole, else a substring, ignoring case (--name death,
 		                    --name dpl\*.dpl)
@@ -128,7 +120,7 @@ internal static class Program {
 
 	internal static int Run(string[] args, TextWriter output) {
 		string? install = null, type = null, against = null, ids = null, field = null, block = null, ints = null, group = null, name = null;
-		bool json = false, variants = false, routeSwitch = false, withPoint = false, asRead = false, loaded = false;
+		bool json = false, variants = false, routeSwitch = false, withPoint = false, asRead = false;
 		var positional = new List<string>();
 		for (int i = 0; i < args.Length; i++) {
 			switch (args[i].ToLowerInvariant()) {
@@ -161,9 +153,6 @@ internal static class Program {
 					break;
 				case "--as-read":
 					asRead = true;
-					break;
-				case "--loaded":
-					loaded = true;
 					break;
 				case "--json":
 					json = true;
@@ -380,17 +369,6 @@ internal static class Program {
 				return Fail("--route-switch and --with-point filter ES2's row #15 order records; ES1 missions have no such row.");
 			}
 
-			if (loaded) {
-				var loadedOrders = Es1OrderQuery.RunLoaded(data, positional.Skip(1).ToList());
-				if (json) {
-					WriteJson(output, loadedOrders);
-				} else {
-					Es1OrderQuery.WriteLoaded(output, loadedOrders);
-				}
-
-				return 0;
-			}
-
 			var es1Orders = Es1OrderQuery.Run(data, positional.Skip(1).ToList());
 			if (json) {
 				WriteJson(output, es1Orders);
@@ -402,10 +380,6 @@ internal static class Program {
 		}
 
 		if (command == "orders") {
-			if (loaded) {
-				return Fail("--loaded runs ES1's mission load; for ES2's, `lint` checks the script.dat its load writes.");
-			}
-
 			var orders = OrderQuery.Run(data, positional.Skip(1).ToList(), routeSwitch, withPoint);
 			if (json) {
 				WriteJson(output, orders);
