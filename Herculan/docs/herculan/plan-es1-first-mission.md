@@ -32,7 +32,7 @@ Until its step lands, each of these does nothing, tagged `// PLACEHOLDER:` in co
 - **Tapes**, no step yet: `-p`, `-r` and `-D` are not taken, so the input build's recording and playback and `DemoMode` do nothing.
 - **The joystick's calibration**, no step yet: the calibration panel (`00049a7c` and its neighbours, [`joystick.md#open`](../es1/simulation/joystick.md#open)) and `data\joy1.cal`/`joy2.cal` are not read; a modern controller gives calibrated values in their place (decision 9). The controls panel's CALIBRATE rebuilds the devices and raises no panel.
 - **A modern controller's hat**, until a retail check settles which hat byte is which direction ([`joystick.md#open`](../es1/simulation/joystick.md#open)): the hat is not read, so the Thrustmaster FCS's hat line (port axis 3) carries whatever the throttle role holds, and the FlightstickPro's hat comes only from its buttons held together, as retail decodes them.
-- **Flyers and bases as simulation objects.** Blocks 7 and 8 are not spawned (the flyer's constructor `0001ac58` is read, [the flyers](../es1/simulation/flyers.md); the base's, `00003cbc`, is unread); the zone's placed shapes still draw.
+- **Bases as simulation objects.** Block 8 is not spawned (the base's constructor, `00003cbc`, is unread); the zone's placed shapes still draw.
 - **The mission's end.** `Mission_PollStatus` does not run, and `Q` takes its key and raises no status panel (decision 12); the mission runs until the window closes or the quit prompt's QUIT ends it, which closes the viewer.
 - **An unread edge case of step 3b**, no step yet: a cockpit scheme above 7, whose `0x40` word retail reads past its table ([the color scheme](../es1/simulation/cockpit-views.md#the-color-scheme)), keeps the second range's colour at `0x40`.
 - **The shell's after-mission files and a career's load**: a single mission's load writes no `car\sm_play.mec` or `car\sm_play.gam`, which only the shell reads back, the salvage queue a knocked-out weapon would join (`Salvage_QueueWeapon`) is not kept, and a career's mode 1 waits for the shell.
@@ -119,7 +119,7 @@ Each step is one subagent brief, one review (diff, both builds, the tests), one 
 
 After step 8, by the module rows of [step 0.7](plan-es1-support.md#phase-0--tooling-and-measurement), each module taken to [done](plan-es1-support.md#when-a-module-is-done) before the next:
 
-1. Flyers: `mechsys.cpp` to `flyersys.cpp` and `flyersys.cpp`.
+1. Flyers: `mechsys.cpp` to `flyersys.cpp` and `flyersys.cpp`. Done: read into [the flyers](../es1/simulation/flyers.md) and ported in three parts, F1 (the types, the spawn, the groups and the draw), F2 (the move and look-ahead, the flight commands, the route and formation, the orders, the patrol, search and scout thinks) and F3 (the attack run, engaging, the hit test, the damage write and the HERC's `attacking flyer`); the module's positive control is the retail check in [the flyers' Open](../es1/simulation/flyers.md#open).
 2. Effects and structures: `explo.cpp`, `debris.cpp`, `base.cpp`.
 3. The mission's end: `Mission_PollStatus`, the statuses it puts on the status panel, and what the panel's answer closes.
 4. The rest of the cockpit: what step 6c's batches leave unread of its files, the display's run at `00039bb4`, the Heads-Down Display's two pages (the command screen's file `0003edbc`–`000420c7` and the damage screen's from `000420c8`), `alert.cpp`, `cal_alrt.cpp`.

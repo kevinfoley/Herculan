@@ -27,7 +27,7 @@ These stand at the file's start and fill the slots the structure, HERC and aircr
 | `+0x58` | `SimObject_ComponentNearestAim_None` (`0000d6b8`) | `MOV AX,0xffff`, `RET 8` | `00411a44` |
 | `+0x5c` | `SimObject_ComponentPositionNoOp` (`0000d6b4`) | `RET 0xc` | `00411a3c` |
 | `+0x60` | `SimObject_GetBodyRadiusZero` (`0000d720`) | returns 0, `RET 4` | `00411aa4` |
-| `+0x64` | `SimObject_CreditNeutralisedTargetNoOp` (`0000d774`) | `RET 0xc` | `00411b2c` |
+| `+0x64` | `SimObject_CreditNeutralisedTargetNoOp` (`0000d774`) | `RET 0xc`; in the aircraft's table too, so an aircraft is credited with nothing for what it destroys | `00411b2c` |
 | `+0x68` | `SimObject_AiOnLineOfFireBlockedNoOp` (`0000d778`) | `RET 8` | `00411b34` |
 
 ES1's tables end at slot `+0x70`, where ES2's base table runs to `+0x84`; the base slots this file does not fill are [Open](#open).
@@ -97,7 +97,7 @@ if (!(mask & 4) && h != 0) score = score / (h + 1)
 if (score > bestScore || tier > bar) { best = candidate; bestScore = score; bar = tier }
 ```
 
-`bestScore` starts at 0, so a candidate scoring 0 is taken only on a higher tier. Every Q10 is the rounding `Math_Q10Multiply` ([the primitives](fixed-point-math.md#the-primitives)), its result cut to an `int16`; the two divisions are signed and truncate. The slot `+0x50` call runs for every candidate that reaches step 5, before any weight it indexes is tested: a HERC's is `Mech_CompareCombatRating` (`00016968`, [the combat reassess](mech-ai.md#the-combat-reassess--mech_aicombatreassess-00016e04)), which draws two numbers from the generator for a candidate of class 0, so a HERC's walk advances the generator by two for each HERC it scores.
+`bestScore` starts at 0, so a candidate scoring 0 is taken only on a higher tier. Every Q10 is the rounding `Math_Q10Multiply` ([the primitives](fixed-point-math.md#the-primitives)), its result cut to an `int16`; the two divisions are signed and truncate. The slot `+0x50` call runs for every candidate that reaches step 5, before any weight it indexes is tested: a HERC's is `Mech_CompareCombatRating` (`00016968`, [the combat reassess](mech-ai.md#the-combat-reassess--mech_aicombatreassess-00016e04)), which draws two numbers from the generator for a candidate of class 0, so a HERC's walk advances the generator by two for each HERC it scores. An aircraft's is the base's `SimObject_CompareCombatRatingStub` ([the base's slots](#the-base-classs-own-functions)), so a flyer's sweep ([the flyers' thinks](flyers.md#the-thinks)) takes every weight at *k* = 1 and draws nothing.
 
 | Table | Values (Q10) | Indexed by |
 |---|---|---|
