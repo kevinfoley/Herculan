@@ -78,6 +78,9 @@ public sealed class EditorHost {
 	private readonly EngineWindow _window;
 	private readonly EditorSettings _settings = EditorSettings.Load();
 	private readonly EditorSettingsPanel _settingsPanel;
+
+	// The manual's headings are drawn in the radial menu's face, the one larger than the window's own.
+	private readonly HelpWindow _help;
 	private readonly MissionBrowser _volBrowser;
 	private readonly MissionBrowser _customBrowser;
 	private readonly MissionSaving _saving;
@@ -202,6 +205,7 @@ public sealed class EditorHost {
 		_flyFarPlane = _camera.FarPlane;
 		_padPointer = new GamepadPointer { Settings = JoystickMapFile.LoadIn(_installData).Mouse };
 		_settingsPanel = new EditorSettingsPanel(_settings);
+		_help = new HelpWindow(() => _imgui?.RadialFont);
 		IReadOnlyList<BrowsedMission> All() =>
 			MissionBrowser.Merge(MissionFileLaunch.List(launch.ShellContent()), SavedMissions.List(launch.InstallRoot));
 		_volBrowser = new MissionBrowser("Load from VOL", "The install's archives hold no missions.",
@@ -705,6 +709,7 @@ public sealed class EditorHost {
 		}
 
 		_settingsPanel.Draw();
+		_help.Draw();
 		if (StartShown) {
 			switch (StartDialog.Draw()) {
 				case StartChoice.Vanilla:
@@ -1250,6 +1255,10 @@ public sealed class EditorHost {
 
 		if (whyNoPlay != null && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
 			ImGui.SetTooltip(whyNoPlay);
+		}
+
+		if (ImGui.MenuItem("Help")) {
+			_help.Open();
 		}
 
 		float height = ImGui.GetWindowSize().Y;
