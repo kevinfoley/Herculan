@@ -124,6 +124,232 @@ public sealed class Es1MissionGroup {
 		_ => false,
 	};
 
+	/// <summary>The condition of a target wholly lost, the top of the 0–4 scale.</summary>
+	public const short ConditionLost = 4;
+
+	/// <summary><see cref="ConditionTier"/>'s shares of the members lost, out of 1024, for tiers 3 and 2.</summary>
+	public const short TierThreeLost = 500, TierTwoLost = 0xfa;
+
+	/// <summary><see cref="ConditionTier"/>'s mean overall damages for tiers 3, 2 and 1.</summary>
+	public const short TierThreeDamage = 0xc1, TierTwoDamage = 0x81, TierOneDamage = 0x33;
+
+	/// <summary><see cref="TargetCondition"/>'s bands of a target object's overall damage, for conditions 1, 2 and 3.</summary>
+	public const short ObjectBandOne = 0x32, ObjectBandTwo = 0x80, ObjectBandThree = 0xc0;
+
+	/// <summary>
+	/// <c>Group_ConditionTier</c> (<c>0000ecc0</c>)(group) (docs/es1/simulation/mission-status.md#the-groups-target-and-its-condition):
+	/// with <i>lost</i> the members immobilized or destroyed and <i>mean</i> the <c>int16</c> sum of every member's overall
+	/// damage (slot <c>+0x44</c>) over the count, <see cref="ConditionLost"/> when every member is lost; 3 when
+	/// (<i>lost</i> &lt;&lt; 10) / count reaches <see cref="TierThreeLost"/> or <i>mean</i> <see cref="TierThreeDamage"/>; 2
+	/// at <see cref="TierTwoLost"/> or <see cref="TierTwoDamage"/>; 1 when <i>mean</i> reaches <see cref="TierOneDamage"/>;
+	/// otherwise 0. Retail reads every member unchecked and divides by the count; a missing member counts as neither lost
+	/// nor damaged here, and a group with no members, where retail divides by 0, answers <see cref="ConditionLost"/>, as
+	/// the all-lost test reads it, engine guards.
+	/// </summary>
+	public short ConditionTier() {
+		short lost = 0, damage = 0;
+		foreach (var entry in Members) {
+			if (entry is not IEs1SimObject member) {
+				continue;
+			}
+
+			if (member.Immobilized || member.Destroyed) {
+				lost++;
+			}
+
+			damage += member.OverallDamage;
+		}
+
+		short count = (short)Members.Count;
+		if (count == 0 || lost == count) {
+			return ConditionLost;
+		}
+
+		short mean = (short)(damage / count);
+		short share = (short)((lost << 10) / count);
+		if (share >= TierThreeLost || mean >= TierThreeDamage) {
+			return 3;
+		}
+
+		if (share >= TierTwoLost || mean >= TierTwoDamage) {
+			return 2;
+		}
+
+		return mean >= TierOneDamage ? (short)1 : (short)0;
+	}
+
+	/// <summary>
+	/// <c>Group_OrderSubjectCondition</c> (<c>0000ee84</c>)(group): for target kind 0 the target group's
+	/// <see cref="ConditionTier"/>; otherwise <see cref="ConditionLost"/> for a target object destroyed or collapsed, and
+	/// its overall damage banded at <see cref="ObjectBandOne"/>, <see cref="ObjectBandTwo"/> and
+	/// <see cref="ObjectBandThree"/> as 0 to 3 (docs/es1/simulation/mission-status.md#the-groups-target-and-its-condition).
+	/// Retail reads the target <c>+0x1c</c> unchecked; with none, or one of the wrong kind, 0 here, an engine guard.
+	/// </summary>
+	public short TargetCondition() {
+		if (TargetKind == 0) {
+			return Target is Es1MissionGroup group ? group.ConditionTier() : (short)0;
+		}
+
+		if (Target is not IEs1SimObject target) {
+			return 0;
+		}
+
+		if (target.Destroyed || target.Collapsed) {
+			return ConditionLost;
+		}
+
+		short damage = target.OverallDamage;
+		return damage < ObjectBandOne ? (short)0 : damage < ObjectBandTwo ? (short)1 : damage < ObjectBandThree ? (short)2 : (short)3;
+	}
+
+	/// <summary>
+	/// <c>Group_AllMembersClearOfThreats</c> (<c>0000f8b4</c>)(group): false at the first member not destroyed that is not
+	/// clear of threats (<see cref="Es1MechDamage.IsClearOfThreats"/>), otherwise true
+	/// (docs/es1/simulation/mission-status.md#clear-of-threats). A missing member is passed over here.
+	/// </summary>
+	public bool AllMembersClearOfThreats(Es1SimGlobals globals) {
+		foreach (var entry in Members) {
+			if (entry is IEs1SimObject { Destroyed: false } member && !Es1MechDamage.IsClearOfThreats(member, globals)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/// <summary>
+	/// <c>Group_OrderSubjectRouteExhausted</c> (<c>0000f930</c>)(group): whether the route of the target group, for target
+	/// kind 0, or of the target object's group, has no waypoint after its cursor (<see cref="WaypointAt"/>)
+	/// (docs/es1/simulation/mission-status.md#clear-of-threats). Retail reads the target and its group unchecked; with
+	/// either missing, false here, an engine guard.
+	/// </summary>
+	public bool TargetRouteExhausted() {
+		var group = TargetKind == 0 ? Target as Es1MissionGroup : (Target as IEs1SimObject)?.Group;
+		return group != null && group.WaypointAt(group.RouteCursor + 1) == null;
+	}
+
+	/// <summary>
+	/// <c>Group_OrderSubjectArrivedAndClear</c> (<c>0000f99c</c>)(group): for target kind 0, the target group holding no
+	/// action (<c>+0x16</c>) and <see cref="AllMembersClearOfThreats"/>; otherwise the target object's group holding no
+	/// action and the object clear of threats (docs/es1/simulation/mission-status.md#clear-of-threats). Retail reads the
+	/// target and its group unchecked; with either missing, false here, an engine guard.
+	/// </summary>
+	public bool TargetArrivedAndClear(Es1SimGlobals globals) {
+		if (TargetKind == 0) {
+			return Target is Es1MissionGroup { Action: null } group && group.AllMembersClearOfThreats(globals);
+		}
+
+		return Target is IEs1SimObject { Group.Action: null } target && Es1MechDamage.IsClearOfThreats(target, globals);
+	}
+
+	/// <summary><c>Group_AnyMemberEngaged</c> (<c>0000ee18</c>): any member's <c>+0x98</c>, engaged.</summary>
+	public bool AnyMemberEngaged() => Members.Any(entry => entry is IEs1SimObject { Engaged: true });
+
+	/// <summary><c>Group_AnyMemberObjectiveSighted</c> (<c>0000efac</c>): any member's <c>+0x99</c> (<see cref="Es1Mech.ObjectiveReached"/>).</summary>
+	public bool AnyMemberObjectiveSighted() => Members.Any(entry => entry is Es1Mech { ObjectiveReached: true });
+
+	/// <summary><c>Group_AnyMemberDataLinked</c> (<c>0000f018</c>): any member's <c>+0x9a</c> (<see cref="Es1Mech.DataLinkComplete"/>).</summary>
+	public bool AnyMemberDataLinked() => Members.Any(entry => entry is Es1Mech { DataLinkComplete: true });
+
+	/// <summary><c>Group_AnyMemberScoredAKill</c> (<c>0000f084</c>): any member's <c>+0xa0</c> (<see cref="IEs1SimObject.ScoredAKill"/>).</summary>
+	public bool AnyMemberScoredAKill() => Members.Any(entry => entry is IEs1SimObject { ScoredAKill: true });
+
+	/// <summary>
+	/// <c>Group_StatusLineIndex</c> (<c>0000f0f0</c>)(group, <paramref name="verb"/>), the group report, which
+	/// <c>Mission_WriteResults</c> writes as the mission's outcome
+	/// (docs/es1/simulation/mission-status.md#the-group-report--group_statuslineindex-0000f0f0): with <i>tier</i>
+	/// <see cref="ConditionTier"/> held to at most 3, <i>c</i> <see cref="TargetCondition"/> and <i>a</i>
+	/// <see cref="TargetArrivedAndClear"/>, a line by the verb, less 1; a verb outside 0–9 answers −2. Verb 3 reads the
+	/// first member unchecked; with none it takes the arm for a destroyed one here, an engine guard.
+	/// </summary>
+	public short StatusLineIndex(short verb, Es1SimGlobals globals) {
+		short tierRaw = ConditionTier();
+		short tier = tierRaw == ConditionLost ? (short)3 : tierRaw;
+		int line;
+		switch (verb) {
+			case 0:
+				line = tierRaw == ConditionLost || !AnyMemberObjectiveSighted() ? tier + 6
+					: !AnyMemberEngaged() ? 1
+					: tier + 2;
+				break;
+			case 1:
+				line = WaypointAt(RouteCursor + 1) != null ? tier + 6
+					: tier == 0 && AnyMemberScoredAKill() ? 1
+					: tier + 2;
+				break;
+			case 2:
+				line = WaypointAt(RouteCursor + 1) != null ? tier + 6
+					: tier == 0 && TargetCondition() == ConditionLost ? 1
+					: tier + 2;
+				break;
+			case 3:
+				line = Members is [IEs1SimObject { Destroyed: false }, ..] && AnyMemberDataLinked() ? tier + 1 : tier + 5;
+				break;
+			case 4: {
+				short c = TargetCondition();
+				bool a = TargetArrivedAndClear(globals);
+				line = !a || c > 2 ? tier + 5
+					: c == 0 && tier < 2 ? 1
+					: Math.Max((int)tier, 1) + 1;
+				break;
+			}
+			case 5:
+				line = !TargetArrivedAndClear(globals) || !AnyMemberObjectiveSighted() || TargetCondition() == ConditionLost
+					? tier + 5
+					: tier + 1;
+				break;
+			case 6:
+				line = TargetCondition() != ConditionLost ? tier + 6
+					: !AnyMemberEngaged() && tier == 0 ? 1
+					: tier + 2;
+				break;
+			case 7: {
+				short c = TargetCondition();
+				bool a = TargetArrivedAndClear(globals);
+				line = !a || c == ConditionLost ? tier + 5
+					: c == 0 && tier < 2 ? 1
+					: c < 2 && tier <= 2 ? 2
+					: c < 3 && tier <= 2 ? 3
+					: 4;
+				break;
+			}
+			case 8: {
+				short c = TargetCondition();
+				line = c == ConditionLost ? tier + 1
+					: c >= 1 && tier == 0 ? 5
+					: tier + 5;
+				break;
+			}
+			case 9: {
+				short c = TargetCondition();
+				line = c == ConditionLost && tier == 0 ? 1
+					: c >= 2 ? Math.Max((int)tier, 1) + 1
+					: c == 1 && tier < 2 ? tier + 5
+					: Math.Max((int)tier, 2) + 5;
+				break;
+			}
+			default:
+				line = -1;
+				break;
+		}
+
+		return (short)(line - 1);
+	}
+
+	/// <summary>
+	/// <c>Group_ApplyOutnumberedDamage</c> (<c>0001d4d0</c>)(group): <c>Mech_ApplyOutnumberedDamage</c>
+	/// (<see cref="Es1MechDamage.ApplyOutnumberedDamage"/>) on each member in order
+	/// (docs/es1/simulation/mission-groups.md#going-out-of-the-fight). Retail takes every member as a machine; one that is
+	/// not a HERC is passed over here.
+	/// </summary>
+	public void ApplyOutnumberedDamage(Es1SimGlobals globals) {
+		foreach (var entry in Members) {
+			if (entry is Es1Mech member) {
+				Es1MechDamage.ApplyOutnumberedDamage(member, globals);
+			}
+		}
+	}
+
 	/// <summary>The reach within which <see cref="NearestLiveMember"/> takes a member.</summary>
 	public const int NearestMemberRange = 100000;
 

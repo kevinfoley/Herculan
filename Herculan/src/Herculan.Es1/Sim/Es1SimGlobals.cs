@@ -98,14 +98,37 @@ public sealed class Es1SimGlobals {
 	public int DifficultyIndex => MissionModeFlag != 0 ? ModeDifficulty : HeaderWord7;
 
 	/// <summary>
-	/// The counter of <c>MissionPollTimer</c> (<c>000af79d</c>), the objective poll's interval
-	/// (docs/es1/simulation/mission-status.md#the-poll--mission_pollstatus-0000f454), which a machine running out of weapons
+	/// The counter of <c>MissionPollTimer</c> (<c>000af79d</c>), the status poll's interval, which
+	/// <see cref="Es1MissionStatus.Poll"/> counts down and reloads
+	/// (docs/es1/simulation/mission-status.md#the-poll--mission_pollstatus-0000f454) and a machine running out of weapons
 	/// raises (<see cref="Ai.Es1AiWeapons.ChooseWeapon"/>). It lies past the image's file bytes, so it starts at 0.
-	/// PLACEHOLDER: its reader, <c>Mission_PollStatus</c> (<c>0000f454</c>), is not ported
-	/// (docs/herculan/plan-es1-first-mission.md#what-the-slice-leaves-out, the mission's end), so nothing counts it down or
-	/// reads it.
 	/// </summary>
-	public short MissionPollCountdown { get; set; }
+	public short MissionPollCountdown;
+
+	/// <summary>
+	/// The counter of <c>MissionAlertTimer</c> (<c>000af7a1</c>), the alert delay, which <see cref="Es1MissionStatus.Poll"/>
+	/// counts down and loads when it arms the delay; 0 at load.
+	/// </summary>
+	public short MissionAlertCountdown;
+
+	/// <summary>
+	/// <c>MissionAlertArmed</c> (<c>000bc4b0</c>, an <c>int16</c> retail stores 1 and 0 in): set when the poll arms the
+	/// alert delay, cleared by <c>Q</c>'s case (docs/es1/simulation/main-loop.md#commands--sim_dispatchcommand-00059df8);
+	/// clear at load.
+	/// </summary>
+	public bool MissionAlertArmed { get; set; }
+
+	/// <summary>
+	/// <c>Mission_StatusRaised</c> (<c>000bc49a</c>), the status the poll last passed on, which <c>DBSim_SpawnMissionObjects</c>
+	/// sets to −1 (<see cref="Es1World.StatusRaisedAtStart"/>).
+	/// </summary>
+	public short MissionStatusRaised;
+
+	/// <summary><c>Mission_Box</c> (<c>000af7a4</c>), which the load fills from block 1's points (<see cref="Es1MissionScript.Box"/>).</summary>
+	public Es1MissionBox MissionBox { get; set; }
+
+	/// <summary>The palette module's cross fade (<see cref="View.Es1PaletteFade"/>).</summary>
+	public View.Es1PaletteFade PaletteFade { get; } = new();
 
 	/// <summary><c>LocalPlayerMech</c> (<c>000b5b86</c>), which the simulation stores; none before it is built.</summary>
 	public Es1Mech? LocalPlayerMech { get; set; }
@@ -292,6 +315,13 @@ public interface IEs1SimObject : IEs1Placed {
 
 	/// <summary><c>+0xae</c>, collapsed: the death sequence has played out.</summary>
 	bool Collapsed { get; }
+
+	/// <summary>
+	/// <c>+0xa0</c>, ES2's "scored a kill", which <see cref="Es1MissionGroup.AnyMemberScoredAKill"/> reads
+	/// (docs/es1/simulation/mission-status.md#the-fields). PLACEHOLDER: clear on every object: no ES1 doc names a writer,
+	/// and ES1's kill credit (<see cref="Es1MechOutOfAction.CreditNeutralisedTarget"/>), where ES2 sets it, does not.
+	/// </summary>
+	bool ScoredAKill => false;
 
 	/// <summary>The descriptor of the behaviour block at <c>+0x47</c>, or null with none.</summary>
 	Es1BehaviourDescriptor? BehaviourDescriptor { get; }

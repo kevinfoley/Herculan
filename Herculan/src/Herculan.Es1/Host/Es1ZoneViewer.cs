@@ -53,7 +53,9 @@ public sealed record Es1HeaderOverrides(int? Theater, int? WorldVariant, int? Wo
 /// running it overrides preferences option 5's choice until pressed again, without writing the option, and with none it
 /// switches the viewer's own option 5. Closing the window quits; so does Esc with no player's machine, since
 /// with one Esc is the simulator's key (docs/es1/simulation/main-loop.md#commands--sim_dispatchcommand-00059df8); and
-/// so does retail's way out, <c>Ctrl+Q</c>'s or <c>Ctrl+Esc</c>'s QUIT, which ends the mission (plan decision 12).</para>
+/// so does whatever ends the mission: retail's way out, <c>Ctrl+Q</c>'s or <c>Ctrl+Esc</c>'s QUIT (plan decision 12), a
+/// status panel's answer that ends it (docs/es1/simulation/main-loop.md#which-answer-ends-the-mission), and the death
+/// flash (docs/es1/simulation/main-loop.md#the-death-flash--sim_deathflash-00058414).</para>
 /// </summary>
 public static class Es1ZoneViewer {
 	/// <summary>The clear colour when the theater's sky cannot be built: a mid grey, plainly not a retail sky.</summary>
@@ -280,6 +282,8 @@ public static class Es1ZoneViewer {
 					viewCamera.ApplyTo(cockpitCamera, manager.Window);
 					worldDraw.Update(cockpitCamera, viewCamera.MountedObject);
 				}, detail, () => chain.Camera);
+				// The death flash's palettes and fades are installed into the same live palette.
+				frameLoop.InstallPaletteRange = monitor.InstallRange;
 				frameLoop.StartMission(Es1CursorImage.Load(content, "CURSOR"));
 			}
 

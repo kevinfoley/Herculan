@@ -133,8 +133,10 @@ public sealed class Es1Simulation {
 
 	/// <summary>
 	/// <c>Sim_MainTick</c>: one tick, in retail's order, yielding a wait at each pass of a panel's loop the commands
-	/// raise, from which the caller goes on (plan decision 11). <paramref name="ended"/> is set when the tick ends the
-	/// mission, which in the slice only the quit prompt's QUIT does.
+	/// raise, the status panel and the death flash among them, from which the caller goes on (plan decision 11).
+	/// <paramref name="ended"/> is set when the tick ends the mission: a command's panel answered 2 (the quit prompt's
+	/// QUIT, or <c>Q</c>'s panel's ending answer), the death flash ran, or the panel of the status the poll raised gave
+	/// its ending answer (docs/es1/simulation/main-loop.md#which-answer-ends-the-mission).
 	/// </summary>
 	public IEnumerable<Es1Wait> MainTick(StrongBox<bool> ended) {
 		ended.Value = false;
@@ -204,9 +206,56 @@ public sealed class Es1Simulation {
 			}
 		}
 
-		// 7. PLACEHOLDER: Mission_PollStatus (0000f454)(LocalPlayerMech) and the status panel 00046efc it puts up, which
-		// end the mission; the mission's end, after plan step 8.
+		// 7. The poll with LocalPlayerMech, frozen or not and destroyed or not.
+		short status = Es1MissionStatus.Poll(LocalPlayer, Globals);
+		if (status < 0) {
+			yield break;
+		}
+
+		if (status == Es1MissionStatus.Destroyed) {
+			foreach (var wait in Es1DeathFlash.Run(this)) {
+				yield return wait;
+			}
+
+			ended.Value = true;
+			yield break;
+		}
+
+		// Status 3 first takes the player's group out of the fight, and shows 0x12 when that destroys the player. Retail
+		// reads the group unchecked; with none nothing is applied here.
+		int shown = status;
+		if (status == Es1MissionStatus.Immobilized) {
+			LocalPlayer.Group?.ApplyOutnumberedDamage(Globals);
+			if (LocalPlayer.Destroyed) {
+				shown = Es1MissionStatus.Captured;
+			}
+		}
+
+		// With no panels, which retail always has, no panel is raised and the tick goes on, an engine guard.
+		if (Panels == null) {
+			yield break;
+		}
+
+		var answer = new StrongBox<int>();
+		foreach (var wait in RunStatusPanel(shown, answer)) {
+			yield return wait;
+		}
+
+		ended.Value = EndsMission(status, answer.Value);
 	}
+
+	/// <summary>
+	/// <c>Mission_EndingAnswer</c> (<c>00097158</c>), an <c>int16</c> for each status from 0 to <c>0x12</c>: the status
+	/// panel's answer that ends the mission (docs/es1/simulation/main-loop.md#which-answer-ends-the-mission).
+	/// </summary>
+	public static readonly short[] EndingAnswers = [1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0];
+
+	/// <summary>
+	/// Whether the status panel's <paramref name="answer"/> for <paramref name="status"/> is
+	/// <see cref="EndingAnswers"/>[status]; retail indexes the table unchecked, and a status outside it ends nothing here.
+	/// </summary>
+	public static bool EndsMission(int status, int answer) =>
+		(uint)status < (uint)EndingAnswers.Length && answer == EndingAnswers[status];
 
 	/// <summary>
 	/// <c>Sim_DispatchCommand</c>(<paramref name="block"/>): the command word to the cockpit, then the window keys, then
@@ -276,11 +325,24 @@ public sealed class Es1Simulation {
 			case Backspace:
 				CenterTurretMode = true;
 				break;
-			case Q:
-				// PLACEHOLDER: the status panel with Mission_StatusForAlert(1, LocalPlayerMech)'s status, whose answer is
-				// the second term when it ends the mission, and MissionAlertArmed cleared: Mission_Status needs plan step
-				// 8's sensor model and routes, and the mission's end, after plan step 8, ports it.
+			case Q: {
+				// Mission_StatusForAlert(1, LocalPlayerMech)'s status in the status panel, as in the tick, with neither the
+				// outnumbered damage nor the death flash; the second term 1 when the answer ends the mission; then
+				// MissionAlertArmed cleared. A status outside the panel's rows, which no retail mission gives, raises no
+				// panel here, an engine guard.
+				short status = Es1MissionStatus.StatusForAlert(true, LocalPlayer, Globals);
+				if (Panels != null && (uint)status < (uint)EndingAnswers.Length) {
+					var term = new StrongBox<int>();
+					foreach (var wait in RunStatusPanel(status, term)) {
+						yield return wait;
+					}
+
+					second = EndsMission(status, term.Value) ? (short)1 : (short)0;
+				}
+
+				Globals.MissionAlertArmed = false;
 				break;
+			}
 			case CtrlEsc or CtrlQ: {
 				var term = new StrongBox<int>();
 				foreach (var wait in RunStatusPanel(Es1StatusAlertPanel.QuitStatus, term)) {

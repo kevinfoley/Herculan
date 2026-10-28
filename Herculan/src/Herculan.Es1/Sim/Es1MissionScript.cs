@@ -95,8 +95,8 @@ public sealed class Es1MissionScript {
 	/// <summary>Block 1, at <c>000bc480</c>.</summary>
 	public Vec3i[] Points { get; private set; } = [];
 
-	/// <summary>The least and greatest X and Y of the points, <c>000af7a4</c>–<c>000af7b0</c>; zeros with no point.</summary>
-	public (int MinX, int MinY, int MaxX, int MaxY) Bounds { get; private set; }
+	/// <summary><c>Mission_Box</c> (<c>000af7a4</c>–<c>000af7b0</c>) as the load leaves it from <see cref="Points"/> (<see cref="Es1MissionBox.Of"/>).</summary>
+	public Es1MissionBox Box { get; private set; }
 
 	/// <summary>Block 2 as kept at <c>000bc484</c>: each stored heading shifted left 14 into 16 bits, a binary angle.</summary>
 	public short[] Headings { get; private set; } = [];
@@ -144,10 +144,7 @@ public sealed class Es1MissionScript {
 		var dat = files.Script;
 
 		script.Points = dat.Points.Select(p => new Vec3i(p.X, p.Y, p.Z)).ToArray();
-		if (script.Points.Length > 0) {
-			script.Bounds = (script.Points.Min(p => p.X), script.Points.Min(p => p.Y), script.Points.Max(p => p.X),
-				script.Points.Max(p => p.Y));
-		}
+		script.Box = Es1MissionBox.Of(script.Points);
 
 		script.Headings = dat.Headings.Select(DecodeHeading).ToArray();
 		script.Routes = dat.WaypointGroups.Select(group => group.Select(point => (int)point).ToArray()).ToArray();

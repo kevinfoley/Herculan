@@ -18,4 +18,11 @@ public interface IEs1Frame {
 	/// flip and the view command, yielding each wait for the monitor its routines make.
 	/// </summary>
 	IEnumerable<Es1Retrace> EndFrame(bool frozen);
+
+	/// <summary>
+	/// <c>Palette_InstallRange</c> (<c>00027e98</c>) on the live palette the frame's end sends to the monitor:
+	/// <paramref name="colors"/>, retail's palette dwords, from entry <paramref name="first"/>
+	/// (docs/es1/rendering/palette.md#installing-colors).
+	/// </summary>
+	void InstallPalette(int first, IReadOnlyList<uint> colors);
 }

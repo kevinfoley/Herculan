@@ -54,9 +54,6 @@ public sealed class Es1World {
 	/// <summary><c>PlayerMech</c> (<c>000bc42a</c>), the machine of <c>data\player.mec</c>'s player entry.</summary>
 	public Es1Mech? PlayerMech { get; private set; }
 
-	/// <summary><c>Mission_StatusRaised</c> (<c>000bc49a</c>).</summary>
-	public short StatusRaised { get; private set; }
-
 	/// <summary>The types loaded for the live slots, by type number; null for a type whose files are missing.</summary>
 	public IReadOnlyDictionary<short, Es1MechType?> Types => _types;
 
@@ -102,6 +99,7 @@ public sealed class Es1World {
 		world.Globals.Debris = Effects.Es1DebrisPool.Load(content);
 		world.Globals.Smoke = Effects.Es1SmokePool.Load(content);
 		world.Globals.HeaderWord3 = script.Header[3];
+		world.Globals.MissionBox = script.Box;
 		world.Globals.MissionModeFlag = script.Header[2];
 		world.Globals.UnlimitedAmmoFlag = script.Header[5];
 		world.Globals.HeaderWord6 = script.Header[6];
@@ -165,7 +163,7 @@ public sealed class Es1World {
 
 	private void SpawnObjects(GameContent content, Es1Weapons weapons, WeaponModelChunks weaponModels,
 			Es1MechFormations formations) {
-		StatusRaised = StatusRaisedAtStart;
+		Globals.MissionStatusRaised = StatusRaisedAtStart;
 		var dat = Script.Files.Script;
 		var entries = Script.Player.Entries;
 

@@ -92,6 +92,12 @@ public sealed class Es1FrameLoop : IEs1Frame {
 
 	public Es1ViewManager Views { get; }
 
+	/// <summary>
+	/// <c>Palette_InstallRange</c> on the monitor's live palette (<see cref="Es1Monitor.InstallRange"/>), which the host
+	/// sets; none installs nothing, as with no monitor.
+	/// </summary>
+	public Action<int, IReadOnlyList<uint>>? InstallPaletteRange { get; set; }
+
 	/// <summary>The host time the loop has been advanced by, in <see cref="TimeSpan"/> ticks, on which the retraces lie.</summary>
 	internal long HostTime { get; private set; }
 
@@ -307,6 +313,9 @@ public sealed class Es1FrameLoop : IEs1Frame {
 
 	/// <inheritdoc/>
 	IEnumerable<Es1Retrace> IEs1Frame.EndFrame(bool frozen) => EndFrame(Views, frozen);
+
+	/// <inheritdoc/>
+	void IEs1Frame.InstallPalette(int first, IReadOnlyList<uint> colors) => InstallPaletteRange?.Invoke(first, colors);
 
 	/// <summary>
 	/// <c>Sim_EndFrame</c> (<c>00059b40</c>): <c>Display_FlipWithoutPan</c> set unless frozen; the staged view change;
