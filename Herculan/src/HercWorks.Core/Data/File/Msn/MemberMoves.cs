@@ -98,7 +98,7 @@ public static class MemberMoves {
 			document.SetField(MsnField.GroupMember(slot), to, member);
 			if (needsPoint) {
 				document.Append(PointRow, new MapPoint22 {
-					ConditionRef = -1, VariantKey = -1, Unk06 = -1, X = standAt.X, Y = standAt.Y, Z = standAt.Z,
+					ConditionRef = -1, RandomTableKey = -1, Unk06 = -1, X = standAt.X, Y = standAt.Y, Z = standAt.Z,
 				}, out short point);
 				document.SetField(MsnField.BasePosition, member, point);
 			}

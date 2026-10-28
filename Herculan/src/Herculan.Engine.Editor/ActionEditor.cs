@@ -6,14 +6,14 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// What keeps a trigger from being deleted (<see cref="ActionEditor.BlockersOf"/>), by GUID, every record whatever its
 /// condition: the countdowns that start on it or fire it, the groups waiting on it, the objects firing it when engaged or
-/// defeated, and the order slots it ends. <see cref="Options"/> counts the options of random choices (variant alternatives,
-/// GUID <c>-1</c>) that reference it, and <see cref="UnrunOrders"/> the orders referencing it that no group's slot runs.
+/// defeated, and the order slots it ends. <see cref="Templates"/> counts the templates of random tables
+/// (GUID <c>-1</c>) that reference it, and <see cref="UnrunOrders"/> the orders referencing it that no group's slot runs.
 /// </summary>
 internal sealed record TriggerDeleteBlockers(string? Fixed, IReadOnlyList<short> Countdowns, IReadOnlyList<short> Groups,
-		IReadOnlyList<ObjectKey> Objects, IReadOnlyList<EndsOrder> Orders, int Options, int UnrunOrders) {
+		IReadOnlyList<ObjectKey> Objects, IReadOnlyList<EndsOrder> Orders, int Templates, int UnrunOrders) {
 	/// <summary>Whether nothing does, and the trigger can be deleted.</summary>
 	public bool None => Fixed == null && Countdowns.Count == 0 && Groups.Count == 0 && Objects.Count == 0 && Orders.Count == 0
-		&& Options == 0 && UnrunOrders == 0;
+		&& Templates == 0 && UnrunOrders == 0;
 
 	public static TriggerDeleteBlockers Because(string reason) => new(reason, [], [], [], [], 0, 0);
 }

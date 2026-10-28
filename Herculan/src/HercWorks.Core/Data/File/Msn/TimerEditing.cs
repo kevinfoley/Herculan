@@ -9,7 +9,7 @@ namespace HercWorks.Core.Data.File.Msn;
 /// <item>A repeated row-11 GUID overlays field by field (<c>Msn_MergeRow11</c> (<c>00416768</c>)), the delay's unset value
 /// being 0, so a field is written through the record that supplies it (<see cref="MissionDocument.SetField"/>), and an
 /// unset value into every record of the GUID. The fields an edit starts from are the base's
-/// (<see cref="MissionDocument.Layout"/>), whose records it writes. Row 11 draws no variant.</item>
+/// (<see cref="MissionDocument.Layout"/>), whose records it writes. Row 11 picks from no random table.</item>
 /// <item>The delay is in seconds, 0 to <see cref="MaxDelay"/>: <c>ActionTimer_SetDelay</c> (<c>004679c0</c>) sign-extends the
 /// stored word and shifts it left 11 into a 32-bit countdown, so a larger stored word reads as negative, and
 /// <c>Timer_CountDown</c> clamps a countdown below 0 to 0, which fires on the first tick it counts. A delay of 0 does that

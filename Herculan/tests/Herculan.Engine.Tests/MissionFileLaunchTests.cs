@@ -16,7 +16,7 @@ public class MissionFileLaunchTests {
 	/// <summary>
 	/// Catches a document whose generation differs from the handoff written beside it — VSHELL's generator copied before
 	/// the flag seeding's draws, or the practice header left out — so the scene the editor builds from the document would
-	/// not be the mission the handoff's squad was built for. TRAIN5 draws two variant tables.
+	/// not be the mission the handoff's squad was built for. TRAIN5 rolls two random tables.
 	///
 	/// <para>Also catches a squad the editor builds again (<see cref="MissionSquad.PlayerMec"/>) that is not the one the
 	/// handoff's <c>player.mec</c> holds — its new career drawing from VSHELL's generator copied after the open's draws

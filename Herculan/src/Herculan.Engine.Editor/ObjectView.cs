@@ -15,7 +15,7 @@ namespace Herculan.Engine.Editor;
 /// the <c>.MSN</c>'s layout and <see cref="MissionIndex"/> by the roster record the object stands for, every record included,
 /// one the mission as opened leaves out too: its name, its group with a choice that moves it into another
 /// (<see cref="MemberMover"/>) and its group's orders, its Present when, with what it does to a group it would leave empty
-/// (<see cref="PresentWhenView.DrawGroupLeftEmpty"/>), and the random choice it picks from; its
+/// (<see cref="PresentWhenView.DrawGroupLeftEmpty"/>), and the random table it picks from; its
 /// team, type and fit (<see cref="RosterFitView"/>); its position as fields that move it, and its heading, set for a structure or ground vehicle (<see cref="HeadingField"/>); a herc's,
 /// structure's or ground vehicle's starting condition (<see cref="StartingConditionField"/>), or for a machine of the player's squad which Herc it is (<see cref="SquadMachinePanel"/>); the two triggers it
 /// fires; the campaign variables it sets when put out of action; the win and lose conditions about it; Delete, or what
@@ -32,7 +32,7 @@ internal sealed class ObjectView {
 	private readonly RosterFitView _fit;
 	private readonly PresentWhenView _presentWhen;
 	private readonly PresenceEditor _presence;
-	private readonly VariantView _variants;
+	private readonly RandomTableView _tables;
 	private readonly ActionEditor _actions;
 	private readonly RelatedObjectives _objectives;
 	private readonly StartingConditionField _condition;
@@ -42,7 +42,7 @@ internal sealed class ObjectView {
 	private readonly PointFields _point = new();
 
 	public ObjectView(MissionIndex index, PanelLinks links, PointMover mover, TeamField team, ObjectDeleter deleter,
-			MemberMover members, SquadMachinePanel machine, RosterFitView fit, PresentWhenView presentWhen, PresenceEditor presence, VariantView variants,
+			MemberMover members, SquadMachinePanel machine, RosterFitView fit, PresentWhenView presentWhen, PresenceEditor presence, RandomTableView tables,
 			ActionEditor actions, RelatedObjectives objectives, StartingConditionField condition, HeadingField heading) {
 		_index = index;
 		_links = links;
@@ -54,7 +54,7 @@ internal sealed class ObjectView {
 		_fit = fit;
 		_presentWhen = presentWhen;
 		_presence = presence;
-		_variants = variants;
+		_tables = tables;
 		_actions = actions;
 		_objectives = objectives;
 		_condition = condition;
@@ -80,7 +80,7 @@ internal sealed class ObjectView {
 		var presence = _presence.ObjectTarget(sel);
 		_presentWhen.Draw(presence);
 		_presentWhen.DrawGroupLeftEmpty(presence, group.Guid);
-		_variants.DrawObjectChoice(sel);
+		_tables.DrawObjectTable(sel);
 		ImGui.Separator();
 		_team.Draw(group.Guid, ofMember: true);
 		_fit.Draw(sel);

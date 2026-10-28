@@ -7,7 +7,7 @@ namespace HercWorks.Core.Data.File.Msn;
 ///
 /// <para>This is the editing model: it round-trips a file byte for byte and keeps every record as
 /// authored, refs as GUIDs, resolved on demand by the lookups below. It does not apply the
-/// conditions, variants, merges and renumbering the game's own load does — that is
+/// conditions, random tables, merges and renumbering the game's own load does — that is
 /// <see cref="Io.Transform.Common.MissionGenerator"/>, which produces <c>script.dat</c>.</para>
 /// </summary>
 public class MissionFile {
@@ -20,8 +20,8 @@ public class MissionFile {
 	/// <summary>Row #2 — the mission's settings: its zone, theater and the rest of the <c>script.dat</c> header, and campaign flags to reset. See <see cref="MissionSettingsPatch"/>.</summary>
 	public MissionSettingsPatch[]? SettingsPatches { get; set; }
 
-	/// <summary>Row #3 — condition-gated values: the briefing and debrief movie ids.</summary>
-	public VariantValue8[]? Variants { get; set; }
+	/// <summary>Row #3 — the movie choices: the briefing and debrief movie ids.</summary>
+	public MovieChoice8[]? MovieChoices { get; set; }
 
 	/// <summary>Row #4 — the mission's objective, briefing and intelligence text. Retail missions have at most one.</summary>
 	public MissionText144[]? Texts { get; set; }
@@ -77,7 +77,7 @@ public class MissionFile {
 	/// </summary>
 	public byte[]? TruncatedRow17Tail { get; set; }
 
-	public VariantValue8? GetVariant(short guid) => FindReplaced(Variants, guid, r => r.ConditionRef);
+	public MovieChoice8? GetMovieChoice(short guid) => FindReplaced(MovieChoices, guid, r => r.ConditionRef);
 	public MapPoint22? GetPoint(short guid) => FindReplaced(Points, guid, r => r.ConditionRef);
 	public Heading10? GetHeading(short guid) => FindReplaced(Headings, guid, r => r.ConditionRef);
 	public WaypointGroup? GetWaypointGroup(short guid) => FindReplaced(WaypointGroups, guid, r => r.ConditionRef);

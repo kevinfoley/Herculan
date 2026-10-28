@@ -66,7 +66,7 @@ public static class OwnHeadings {
 	/// <summary>
 	/// Sets row <paramref name="row"/>'s GUID <paramref name="guid"/>'s own heading to <paramref name="degrees"/>, taken to 0
 	/// to 359, or with null takes it away, by the rules in the class summary. Throws <see cref="InvalidOperationException"/>
-	/// for a GUID no record carries, where <see cref="WhyNoNone"/> answers, and for null where a variant the base draws
+	/// for a GUID no record carries, where <see cref="WhyNoNone"/> answers, and for null where a template the base picks
 	/// supplies a heading, which an overlay cannot unset.
 	/// </summary>
 	public static MsnEdit Set(MissionDocument document, int row, short guid, short? degrees) {
@@ -95,7 +95,7 @@ public static class OwnHeadings {
 
 			short shared = document.ShareableHeading(turned);
 			if (shared == -1) {
-				document.Append(HeadingRow, new Heading10 { ConditionRef = -1, VariantKey = -1, Unk06 = -1, Degrees = turned }, out shared);
+				document.Append(HeadingRow, new Heading10 { ConditionRef = -1, RandomTableKey = -1, Unk06 = -1, Degrees = turned }, out shared);
 			}
 
 			document.SetField(field, guid, shared);
@@ -103,13 +103,13 @@ public static class OwnHeadings {
 	}
 
 	/// <summary>
-	/// Whether row-7 GUID <paramref name="heading"/> is one record, unconditioned and drawing no variant, that one field alone
-	/// names: the heading fields of rows 12, 13, 14 and 16, every record counted whatever its condition, variant alternatives
+	/// Whether row-7 GUID <paramref name="heading"/> is one record, unconditioned and picking from no random table, that one field alone
+	/// names: the heading fields of rows 12, 13, 14 and 16, every record counted whatever its condition, templates
 	/// included. Such a record can be rewritten without turning anything else.
 	/// </summary>
 	public static bool Private(MissionDocument document, short heading) {
 		var records = (document.Mission.Headings ?? []).Where(record => record.GUID == heading).ToList();
-		if (records is not [{ ConditionRef: -1, VariantKey: -1 }]) {
+		if (records is not [{ ConditionRef: -1, RandomTableKey: -1 }]) {
 			return false;
 		}
 

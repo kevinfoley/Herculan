@@ -17,7 +17,7 @@ internal enum RosterKind : short {
 /// <param name="StartingCondition">Null for row #13, which has none.</param>
 /// <param name="PositionRef">The record's own row-#6 point, which wins over its group's; <c>-1</c> when it names none.</param>
 internal sealed record RosterRecord(
-	RosterKind Kind, int Index, short Guid, short ConditionRef, short VariantKey, short TypeIndex,
+	RosterKind Kind, int Index, short Guid, short ConditionRef, short RandomTableKey, short TypeIndex,
 	short? StartingCondition, short[] OutOfActionReport, short PositionRef);
 
 internal static class Roster {
@@ -36,10 +36,10 @@ internal static class Roster {
 
 	public static IReadOnlyList<RosterRecord> Records(MissionFile file, RosterKind kind) => kind switch {
 		RosterKind.Mech => (file.Mechs ?? []).Select((r, i) => new RosterRecord(
-			kind, i, r.GUID, r.ConditionRef, r.VariantKey, r.TypeIndex, r.StartingCondition, r.OutOfActionReport, r.PositionRef)).ToList(),
+			kind, i, r.GUID, r.ConditionRef, r.RandomTableKey, r.TypeIndex, r.StartingCondition, r.OutOfActionReport, r.PositionRef)).ToList(),
 		RosterKind.Flyer => (file.Flyers ?? []).Select((r, i) => new RosterRecord(
-			kind, i, r.GUID, r.ConditionRef, r.VariantKey, r.TypeIndex, null, r.OutOfActionReport, r.PositionRef)).ToList(),
+			kind, i, r.GUID, r.ConditionRef, r.RandomTableKey, r.TypeIndex, null, r.OutOfActionReport, r.PositionRef)).ToList(),
 		_ => (file.Bases ?? []).Select((r, i) => new RosterRecord(
-			kind, i, r.GUID, r.ConditionRef, r.VariantKey, r.TypeIndex, r.StartingCondition, r.OutOfActionReport, r.PositionRef)).ToList(),
+			kind, i, r.GUID, r.ConditionRef, r.RandomTableKey, r.TypeIndex, r.StartingCondition, r.OutOfActionReport, r.PositionRef)).ToList(),
 	};
 }

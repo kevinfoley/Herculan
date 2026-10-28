@@ -3,7 +3,7 @@ using HercWorks.Core.Io.Transform.Common;
 namespace HercWorks.Core.Data.File.Msn;
 
 /// <summary>The <c>.MSN</c> records that name a row-8 route, by kind, whatever their condition.</summary>
-/// <param name="Orders">Row-15 orders whose route it is (<see cref="MissionOrder22.RouteRef"/>), variant alternatives included.</param>
+/// <param name="Orders">Row-15 orders whose route it is (<see cref="MissionOrder22.RouteRef"/>), templates included.</param>
 /// <param name="Objectives">Row-17 objectives whose route it is (<see cref="MissionObjective58.RouteRef"/>).</param>
 /// <param name="Groups">Row-16 groups whose own route it is (<see cref="MissionGroup164.RouteRef"/>).</param>
 public sealed record RouteNamers(IReadOnlyList<MsnRecordId> Orders, IReadOnlyList<MsnRecordId> Objectives,
@@ -20,10 +20,10 @@ public sealed record RouteNamers(IReadOnlyList<MsnRecordId> Orders, IReadOnlyLis
 /// name it, so a closed list of <c>n</c> entries has <c>n - 1</c> waypoints.
 ///
 /// <para>A new route is one row-6 point per waypoint at Z 0, as all but one retail waypoint has it, and one row-8 record
-/// listing them, each unconditioned, drawing no variant and under a new GUID (<see cref="MissionDocument.Append"/>), with the
+/// listing them, each unconditioned, picking from no random table and under a new GUID (<see cref="MissionDocument.Append"/>), with the
 /// dead word <c>0x06</c> at <c>-1</c> as in every retail record. A list edit replaces the whole list in the record whose list
-/// the route holds (<see cref="MissionDocument.SetWaypoints"/>): for a list a variant supplies, the alternative, which every
-/// route drawing it shares.</para>
+/// the route holds (<see cref="MissionDocument.SetWaypoints"/>): for a list a template supplies, that template, which every
+/// route picking it shares.</para>
 ///
 /// <para>Removing a waypoint removes its list entry, and deleting a route removes every row-8 record of its GUID. Either can
 /// leave a row-6 point the route named that no field names any more (<see cref="MissionDocument.CountPointRefs"/>, every
@@ -93,7 +93,7 @@ public static class RouteEditing {
 		}
 
 		document.Append(RouteRow, new WaypointGroup {
-			ConditionRef = -1, VariantKey = -1, Unk06 = -1, Waypoints = list.ToArray(),
+			ConditionRef = -1, RandomTableKey = -1, Unk06 = -1, Waypoints = list.ToArray(),
 		}, out short route);
 		return route;
 	}
@@ -271,9 +271,9 @@ public static class RouteEditing {
 
 	/// <summary>
 	/// Deletes route GUID <paramref name="route"/>: every row-8 record of the GUID, whatever its condition, and the records of
-	/// each point its lists named that is left named by nothing, as one <see cref="MissionDocument.Change"/>. The variant
-	/// alternatives a deleted record drew its list from are GUID <c>-1</c> records shared by every record drawing them, and
-	/// stay; deleting a record that draws a variant moves every later draw. Throws <see cref="InvalidOperationException"/>
+	/// each point its lists named that is left named by nothing, as one <see cref="MissionDocument.Change"/>. The
+	/// templates a deleted record picked its list from are GUID <c>-1</c> records shared by every record picking them, and
+	/// stay; deleting a record that picks from a random table moves every later draw. Throws <see cref="InvalidOperationException"/>
 	/// while <see cref="Namers"/> finds anything.
 	/// </summary>
 	public static MsnEdit Delete(MissionDocument document, short route) {
@@ -303,9 +303,9 @@ public static class RouteEditing {
 		}
 	}
 
-	// Appends a row-6 point at (at.X, at.Y, 0), unconditioned, drawing no variant and under a new GUID, and answers its GUID.
+	// Appends a row-6 point at (at.X, at.Y, 0), unconditioned, picking from no random table and under a new GUID, and answers its GUID.
 	internal static short AppendPoint(MissionDocument document, (int X, int Y) at) {
-		document.Append(PointRow, new MapPoint22 { ConditionRef = -1, VariantKey = -1, Unk06 = -1, X = at.X, Y = at.Y, Z = 0 },
+		document.Append(PointRow, new MapPoint22 { ConditionRef = -1, RandomTableKey = -1, Unk06 = -1, X = at.X, Y = at.Y, Z = 0 },
 			out short point);
 		return point;
 	}

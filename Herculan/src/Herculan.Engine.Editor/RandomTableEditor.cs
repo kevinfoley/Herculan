@@ -5,15 +5,15 @@ using Herculan.Engine.World;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// Creates, edits and deletes the open mission's variant tables, and sets which table a herc, flyer, structure or ground
-/// vehicle outside the squad draws from, each edit one step of <see cref="PointMover"/>'s undo history, through
-/// <see cref="VariantEditing"/>'s record edits on the mission's <c>.MSN</c>. Every edit builds the editor's state again
-/// (<see cref="SceneSync"/>), as it changes what the records drawing from the table generate; the selection keeps a
+/// Creates, edits and deletes the open mission's random tables, and sets which table a herc, flyer, structure or ground
+/// vehicle outside the squad picks from, each edit one step of <see cref="PointMover"/>'s undo history, through
+/// <see cref="RandomTableEditing"/>'s record edits on the mission's <c>.MSN</c>. Every edit builds the editor's state again
+/// (<see cref="SceneSync"/>), as it changes what the records picking from the table generate; the selection keeps a
 /// table by its row-1 GUID and an object as the rebuild keeps one.
 ///
 /// <para>The edits wait for the frame's ImGui to be rendered (<see cref="RunRequest"/>).</para>
 /// </summary>
-internal sealed class VariantEditor {
+internal sealed class RandomTableEditor {
 	private readonly MissionDocument _source;
 	private readonly MissionIndex _index;
 	private readonly PointMover _mover;
@@ -21,7 +21,7 @@ internal sealed class VariantEditor {
 	private readonly SelectionState _selection;
 	private Func<string?>? _requested;
 
-	public VariantEditor(MissionDocument source, MissionIndex index, PointMover mover, SceneSync sync, SelectionState selection) {
+	public RandomTableEditor(MissionDocument source, MissionIndex index, PointMover mover, SceneSync sync, SelectionState selection) {
 		_source = source;
 		_index = index;
 		_mover = mover;
@@ -43,36 +43,36 @@ internal sealed class VariantEditor {
 		_index.Planned(placed) is { Squad: false } planned ? (planned.Key.Row, planned.Key.Guid) : null;
 
 	/// <summary>Why the object of roster row <paramref name="row"/>'s GUID <paramref name="guid"/> cannot change table at all, or null when it can.</summary>
-	public string? WhyNoTables(int row, short guid) => VariantEditing.WhyNoTables(_source, row, guid);
+	public string? WhyNoTables(int row, short guid) => RandomTableEditing.WhyNoTables(_source, row, guid);
 
 	/// <summary>Asks for a new table of the object's own, which then stays selected.</summary>
 	public void RequestCreate(int row, short guid) =>
-		Ask(() => WhyNoTables(row, guid), source => VariantEditing.CreateTable(source, row, guid, out _), null);
+		Ask(() => WhyNoTables(row, guid), source => RandomTableEditing.CreateTable(source, row, guid, out _), null);
 
-	/// <summary>Asks for the object to draw from <paramref name="table"/>, or from none for <c>-1</c>.</summary>
+	/// <summary>Asks for the object to pick from <paramref name="table"/>, or from none for <c>-1</c>.</summary>
 	public void RequestTable(int row, short guid, short table) =>
-		Ask(() => VariantEditing.WhyNoTable(_source, row, guid, table),
-			source => VariantEditing.SetTable(source, row, guid, table), null);
+		Ask(() => RandomTableEditing.WhyNoTable(_source, row, guid, table),
+			source => RandomTableEditing.SetTable(source, row, guid, table), null);
 
-	/// <summary>Asks for an alternative copying range <paramref name="copyOf"/>'s to be added to <paramref name="table"/>.</summary>
+	/// <summary>Asks for an option copying range <paramref name="copyOf"/>'s template to be added to <paramref name="table"/>.</summary>
 	public void RequestAdd(short table, short copyOf) =>
-		Ask(() => VariantEditing.WhyNoAdd(_source, table),
-			source => VariantEditing.AddAlternative(source, table, copyOf, out _), table);
+		Ask(() => RandomTableEditing.WhyNoAdd(_source, table),
+			source => RandomTableEditing.AddOption(source, table, copyOf, out _), table);
 
-	/// <summary>Asks for range <paramref name="range"/>'s alternative to be removed from <paramref name="table"/>.</summary>
+	/// <summary>Asks for range <paramref name="range"/>'s option to be removed from <paramref name="table"/>.</summary>
 	public void RequestRemove(short table, short range) =>
-		Ask(() => VariantEditing.WhyNoRemove(_source, table, range),
-			source => VariantEditing.RemoveAlternative(source, table, range), table);
+		Ask(() => RandomTableEditing.WhyNoRemove(_source, table, range),
+			source => RandomTableEditing.RemoveOption(source, table, range), table);
 
-	/// <summary>Asks for <paramref name="table"/>'s chances to be <paramref name="percents"/>, one percent to one decimal per alternative.</summary>
+	/// <summary>Asks for <paramref name="table"/>'s chances to be <paramref name="percents"/>, one percent to one decimal per option.</summary>
 	public void RequestChances(short table, IReadOnlyList<decimal> percents) =>
-		Ask(() => VariantEditing.WhyNoChances(_source, table, percents),
-			source => VariantEditing.SetChances(source, table, percents), table);
+		Ask(() => RandomTableEditing.WhyNoChances(_source, table, percents),
+			source => RandomTableEditing.SetChances(source, table, percents), table);
 
-	/// <summary>Asks for <paramref name="table"/> to be deleted, with its ranges and alternatives.</summary>
+	/// <summary>Asks for <paramref name="table"/> to be deleted, with its ranges and templates.</summary>
 	public void RequestDelete(short table) =>
-		Ask(() => VariantEditing.WhyNoDelete(_source, table),
-			source => VariantEditing.DeleteTable(source, table), -1);
+		Ask(() => RandomTableEditing.WhyNoDelete(_source, table),
+			source => RandomTableEditing.DeleteTable(source, table), -1);
 
 	/// <summary>Makes the edit asked for since the last call, if any; <see cref="Failure"/> says why one could not be made.</summary>
 	public void RunRequest() {
@@ -99,7 +99,7 @@ internal sealed class VariantEditor {
 
 			_mover.Record(new RecordsEdit(_sync, change));
 			if (select is { } table) {
-				_selection.Current = table != -1 && VariantEditing.IsTable(_source, table) ? new ConditionSelection(table) : null;
+				_selection.Current = table != -1 && RandomTableEditing.IsTable(_source, table) ? new ConditionSelection(table) : null;
 			}
 
 			return null;

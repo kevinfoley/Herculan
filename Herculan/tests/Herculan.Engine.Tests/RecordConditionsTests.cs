@@ -7,7 +7,7 @@ namespace Herculan.Engine.Tests;
 
 /// <summary>
 /// <see cref="RecordConditions"/> over small synthetic missions: a record's Present when is written into every record of its
-/// GUID or refused, an order another slot runs is copied first, and a variant-keyed record's own condition is the one written.
+/// GUID or refused, an order another slot runs is copied first, and a keyed record's own condition is the one written.
 /// </summary>
 public class RecordConditionsTests {
 	private const short Hercs = 0;
@@ -82,17 +82,17 @@ public class RecordConditionsTests {
 	}
 
 	/// <summary>
-	/// Catches the set written into the variant alternative a herc draws (a GUID <c>-1</c> record, shared by every record
-	/// drawing it) rather than the herc's own record: the herc's condition is its own word, outside the copied span.
+	/// Catches the set written into the template a herc picks (a GUID <c>-1</c> record, shared by every record
+	/// picking it) rather than the herc's own record: the herc's condition is its own word, outside the copied span.
 	/// </summary>
 	[Fact]
-	public void AVariantKeyedHercsOwnConditionIsWritten() {
+	public void AKeyedHercsOwnConditionIsWritten() {
 		const short key = 7;
 		var document = Open(Mission()
 			.Add(1, Condition(guid: 1, condition: -1, type: 3, lower: key, upper: 0, operand: 1))
 			.Add(1, Condition(guid: 2, condition: 1, type: 2, lower: 0, upper: 0, operand: 0))
 			.Add(12, Mech(-1, type: 3, condition: 2))
-			.Add(12, Mech(5, type: -1, variant: key))
+			.Add(12, Mech(5, type: -1, tableKey: key))
 			.Add(16, Group(10, Hercs, position: -1, condition: -1, 5)));
 		Assert.Equal(3, document.Script.Mechs[Exported(document, 12, 5)!.Value].TypeIndex);
 

@@ -76,11 +76,11 @@ public class MissionWordOffsetTests {
 		Assert.Equal(words[MissionCondition14.ComparisonOperandWord], condition.ComparisonOperand);
 		Assert.Equal(words[MissionCondition14.LatestDrawWord], condition.LatestDraw);
 
-		var variant = file.Variants![0];
+		var choice = file.MovieChoices![0];
 		words = rows[3];
-		Assert.Equal(words[MapObject.GUIDWord], variant.GUID);
-		Assert.Equal(words[VariantValue8.ConditionRefWord], variant.ConditionRef);
-		Assert.Equal(words[VariantValue8.ValueWord], variant.Value);
+		Assert.Equal(words[MapObject.GUIDWord], choice.GUID);
+		Assert.Equal(words[MovieChoice8.ConditionRefWord], choice.ConditionRef);
+		Assert.Equal(words[MovieChoice8.ValueWord], choice.Value);
 
 		var text = file.Texts![0];
 		words = rows[4];
@@ -92,7 +92,7 @@ public class MissionWordOffsetTests {
 		words = rows[6];
 		Assert.Equal(words[MapObject.GUIDWord], point.GUID);
 		Assert.Equal(words[MapPoint22.ConditionRefWord], point.ConditionRef);
-		Assert.Equal(words[MapPoint22.VariantKeyWord], point.VariantKey);
+		Assert.Equal(words[MapPoint22.RandomTableKeyWord], point.RandomTableKey);
 		Assert.Equal(words[MapPoint22.SumFlagWord], point.SumFlag);
 		AssertInt(words, MapPoint22.XWord, point.X);
 		AssertInt(words, MapPoint22.YWord, point.Y);
@@ -102,14 +102,14 @@ public class MissionWordOffsetTests {
 		words = rows[7];
 		Assert.Equal(words[MapObject.GUIDWord], heading.GUID);
 		Assert.Equal(words[Heading10.ConditionRefWord], heading.ConditionRef);
-		Assert.Equal(words[Heading10.VariantKeyWord], heading.VariantKey);
+		Assert.Equal(words[Heading10.RandomTableKeyWord], heading.RandomTableKey);
 		Assert.Equal(words[Heading10.DegreesWord], heading.Degrees);
 
 		var group = file.WaypointGroups![0];
 		words = rows[8];
 		Assert.Equal(words[MapObject.GUIDWord], group.GUID);
 		Assert.Equal(words[WaypointGroup.ConditionRefWord], group.ConditionRef);
-		Assert.Equal(words[WaypointGroup.VariantKeyWord], group.VariantKey);
+		Assert.Equal(words[WaypointGroup.RandomTableKeyWord], group.RandomTableKey);
 		Assert.Equal(new short[] { 801, 802 }, group.Waypoints);
 
 		var area = file.TriggerAreas![0];
@@ -143,7 +143,7 @@ public class MissionWordOffsetTests {
 		words = rows[12];
 		Assert.Equal(words[MapObject.GUIDWord], mech.GUID);
 		Assert.Equal(words[MechRosterEntry144.ConditionRefWord], mech.ConditionRef);
-		Assert.Equal(words[MechRosterEntry144.VariantKeyWord], mech.VariantKey);
+		Assert.Equal(words[MechRosterEntry144.RandomTableKeyWord], mech.RandomTableKey);
 		Assert.Equal(words[MechRosterEntry144.AiRadarActiveWord], mech.AiRadarActive);
 		Assert.Equal(words[MechRosterEntry144.TypeIndexWord], mech.TypeIndex);
 		AssertSpan(words, MechRosterEntry144.WeaponRefsWord, mech.WeaponRefs);
@@ -160,7 +160,7 @@ public class MissionWordOffsetTests {
 		words = rows[13];
 		Assert.Equal(words[MapObject.GUIDWord], flyer.GUID);
 		Assert.Equal(words[FlyerRosterEntry102.ConditionRefWord], flyer.ConditionRef);
-		Assert.Equal(words[FlyerRosterEntry102.VariantKeyWord], flyer.VariantKey);
+		Assert.Equal(words[FlyerRosterEntry102.RandomTableKeyWord], flyer.RandomTableKey);
 		AssertSpan(words, FlyerRosterEntry102.FlagSpanWord, flyer.FlagSpan);
 		Assert.Equal(words[FlyerRosterEntry102.PositionRefWord], flyer.PositionRef);
 		Assert.Equal(words[FlyerRosterEntry102.HeadingRefWord], flyer.HeadingRef);
@@ -173,7 +173,7 @@ public class MissionWordOffsetTests {
 		words = rows[14];
 		Assert.Equal(words[MapObject.GUIDWord], structure.GUID);
 		Assert.Equal(words[BaseRosterEntry62.ConditionRefWord], structure.ConditionRef);
-		Assert.Equal(words[BaseRosterEntry62.VariantKeyWord], structure.VariantKey);
+		Assert.Equal(words[BaseRosterEntry62.RandomTableKeyWord], structure.RandomTableKey);
 		Assert.Equal(words[BaseRosterEntry62.TypeIndexWord], structure.TypeIndex);
 		Assert.Equal(words[BaseRosterEntry62.PositionRefWord], structure.PositionRef);
 		Assert.Equal(words[BaseRosterEntry62.HeadingRefWord], structure.HeadingRef);
@@ -186,7 +186,7 @@ public class MissionWordOffsetTests {
 		words = rows[15];
 		Assert.Equal(words[MapObject.GUIDWord], order.GUID);
 		Assert.Equal(words[MissionOrder22.ConditionRefWord], order.ConditionRef);
-		Assert.Equal(words[MissionOrder22.VariantKeyWord], order.VariantKey);
+		Assert.Equal(words[MissionOrder22.RandomTableKeyWord], order.RandomTableKey);
 		Assert.Equal(words[MissionOrder22.VerbWord], order.Verb);
 		Assert.Equal(words[MissionOrder22.PointRefWord], order.PointRef);
 		Assert.Equal(words[MissionOrder22.RouteRefWord], order.RouteRef);

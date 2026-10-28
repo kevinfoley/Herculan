@@ -11,10 +11,10 @@ namespace HercWorks.Core.Data.File.Msn;
 /// to resolve through <see cref="Entry(int, short)"/>.
 ///
 /// <para>It is built in one pass and holds copies, never the file's records. Unlike
-/// <see cref="MissionGenerator"/>, the game's load, it tests no condition, draws nothing and renumbers nothing: a GUID's
+/// <see cref="MissionGenerator"/>, the game's load, it tests no condition, picks nothing and renumbers nothing: a GUID's
 /// records merge by condition (<see cref="LayoutEntry"/>), and a keyed record shows the first option of its table
-/// (<see cref="LayoutDraw"/>), where it stands when the mission opens with every draw at its lowest. What it shares with the
-/// load is the per-row merge and variant copy, <see cref="MergeRules"/>. A row-6 point whose sum flag is set keeps the
+/// (<see cref="LayoutPick"/>), where it stands when the mission opens with every draw at its lowest. What it shares with the
+/// load is the per-row merge and template copy, <see cref="MergeRules"/>. A row-6 point whose sum flag is set keeps the
 /// words it holds; no retail point sets it (docs/retail/formats/msn-mission-file.md#row-6-field-decode--the-point-record-dat_0047064e-22-bytesrecord).
 /// The rules it follows are docs/herculan/handoff-editor-document.md#the-layout.</para>
 /// </summary>
@@ -27,7 +27,7 @@ public sealed class MissionLayout {
 	private const int ConditionRow = 1;
 	private const int SettingsRow = 2;
 
-	/// <summary>Row 1's types: a range over a draw or a table, and a variant table (docs/retail/formats/msn-mission-file.md#the-conditions--row-1).</summary>
+	/// <summary>Row 1's types: a range over a draw or a table, and a random table (docs/retail/formats/msn-mission-file.md#the-conditions--row-1).</summary>
 	private const short RangeType = 2;
 	private const short TableType = 3;
 
@@ -136,27 +136,27 @@ public sealed class MissionLayout {
 
 	/// <summary>
 	/// Row <paramref name="row"/>'s GUIDs, each merged: every record read as words, a keyed record with its shown option's
-	/// spans copied in (its earlier records first, so an option that draws itself is copied as it then stands), then each
+	/// spans copied in (its earlier records first, so a template that picks itself is copied as it then stands), then each
 	/// GUID's base merged in file order.
 	/// </summary>
 	private static List<Merged> Merge(MissionFile file, int row, MissionCondition14[] conditions, MissionFileTransformer codec) {
 		var records = MsnRows.Find(file, row) is { } found ? found.Cast<MapObject>().ToArray() : [];
 		var words = new short[records.Length][];
 		var origins = new WordSource[records.Length][];
-		var draws = new LayoutDraw?[records.Length];
-		bool keyed = MergeRules.VariantCopy(row).Count > 0;
+		var picks = new LayoutPick?[records.Length];
+		bool keyed = MergeRules.TemplateCopy(row).Count > 0;
 		for (int i = 0; i < records.Length; i++) {
 			var id = new MsnRecordId(row, i);
 			words[i] = codec.Words(records[i]);
 			origins[i] = new WordSource[row == RouteRow ? MergeRules.RouteListWord + 1 : words[i].Length];
 			Array.Fill(origins[i], new WordSource(id, null));
-			short key = keyed ? words[i][MergeRules.VariantKeyWord] : (short)-1;
+			short key = keyed ? words[i][MergeRules.RandomTableKeyWord] : (short)-1;
 			if (key == -1) {
 				continue;
 			}
 
-			draws[i] = Draw(id, key, conditions, words);
-			if (draws[i]!.Shown?.Record is { } option) {
+			picks[i] = Pick(id, key, conditions, words);
+			if (picks[i]!.Shown?.Record is { } option) {
 				CopyOption(row, words, origins, option.Index, i);
 			}
 		}
@@ -174,16 +174,16 @@ public sealed class MissionLayout {
 				merged.Add(entry);
 			}
 
-			entry.Add(i, words[i], origins[i], draws[i]);
+			entry.Add(i, words[i], origins[i], picks[i]);
 		}
 
 		return merged;
 	}
 
-	/// <summary>Copies the <see cref="MergeRules.VariantCopy"/> spans of record <paramref name="source"/> into record <paramref name="target"/>, as the load copies a drawn option.</summary>
+	/// <summary>Copies the <see cref="MergeRules.TemplateCopy"/> spans of record <paramref name="source"/> into record <paramref name="target"/>, as the load copies a picked option's template.</summary>
 	private static void CopyOption(int row, short[][] words, WordSource[][] origins, int source, int target) {
 		var id = new MsnRecordId(row, target);
-		foreach (var span in MergeRules.VariantCopy(row)) {
+		foreach (var span in MergeRules.TemplateCopy(row)) {
 			if (row == RouteRow) {
 				words[target] = [.. words[target][..span.First], .. words[source][span.First..]];
 			} else {
@@ -198,21 +198,21 @@ public sealed class MissionLayout {
 	}
 
 	/// <summary>
-	/// What record <paramref name="drawer"/> draws by <paramref name="key"/>: the first type-3 row-1 record of the key, and
-	/// each range over it in row-1 order with the first record of the drawer's row read before it that the range conditions.
+	/// What record <paramref name="user"/> picks by <paramref name="key"/>: the first type-3 row-1 record of the key, and
+	/// each range over it in row-1 order with the first record of the user's row read before it that the range conditions.
 	/// </summary>
-	private static LayoutDraw Draw(MsnRecordId drawer, short key, MissionCondition14[] conditions, short[][] row) {
+	private static LayoutPick Pick(MsnRecordId user, short key, MissionCondition14[] conditions, short[][] row) {
 		var table = conditions.FirstOrDefault(record => record.Type == TableType && record.FlagIndexOrRangeLower == key);
 		if (table == null) {
-			return new LayoutDraw(drawer, key, -1, []);
+			return new LayoutPick(user, key, -1, []);
 		}
 
 		var options = new List<LayoutOption>();
 		foreach (var range in conditions.Where(record => record.Type == RangeType && record.ConditionRef == table.GUID)) {
 			MsnRecordId? record = null;
-			for (int i = 0; i < drawer.Index; i++) {
+			for (int i = 0; i < user.Index; i++) {
 				if (row[i][MergeRules.ConditionWord] == range.GUID) {
-					record = new MsnRecordId(drawer.Row, i);
+					record = new MsnRecordId(user.Row, i);
 					break;
 				}
 			}
@@ -220,7 +220,7 @@ public sealed class MissionLayout {
 			options.Add(new LayoutOption(range.GUID, record));
 		}
 
-		return new LayoutDraw(drawer, key, table.GUID, options);
+		return new LayoutPick(user, key, table.GUID, options);
 	}
 
 	/// <summary>
@@ -358,7 +358,7 @@ public sealed class MissionLayout {
 	}
 
 	/// <summary>A presence of <paramref name="condition"/> and, when one places it, <paramref name="group"/>'s; <c>-1</c> conditions are left out.</summary>
-	private static LayoutPresence Presence(short condition, (short Group, short Condition)? group, IReadOnlyList<LayoutDraw> draws) {
+	private static LayoutPresence Presence(short condition, (short Group, short Condition)? group, IReadOnlyList<LayoutPick> picks) {
 		var conditions = new List<short>();
 		if (condition != -1) {
 			conditions.Add(condition);
@@ -368,15 +368,15 @@ public sealed class MissionLayout {
 			conditions.Add(placing.Condition);
 		}
 
-		return new LayoutPresence(conditions, group?.Group ?? -1, draws);
+		return new LayoutPresence(conditions, group?.Group ?? -1, picks);
 	}
 
-	/// <summary>One GUID of a row as it is merged: its base so far, its variations, and the draws its base records make.</summary>
+	/// <summary>One GUID of a row as it is merged: its base so far, its variations, and the picks its base records make.</summary>
 	private sealed class Merged {
 		private readonly List<MsnRecordId> _records = new();
 		private readonly List<MsnRecordId> _base = new();
-		private readonly List<(int Index, short[] Words, LayoutDraw? Draw)> _variations = new();
-		private readonly List<LayoutDraw> _draws = new();
+		private readonly List<(int Index, short[] Words, LayoutPick? Pick)> _variations = new();
+		private readonly List<LayoutPick> _picks = new();
 		private WordSource[] _suppliers;
 
 		public Merged(int row, short guid, short condition, short[] words, WordSource[] origins) {
@@ -398,16 +398,16 @@ public sealed class MissionLayout {
 		public short[] Words { get; private set; }
 
 		/// <summary>Adds the GUID's record <paramref name="index"/>: merged into the base when it carries the base's condition, else a variation.</summary>
-		public void Add(int index, short[] words, WordSource[] origins, LayoutDraw? draw) {
+		public void Add(int index, short[] words, WordSource[] origins, LayoutPick? pick) {
 			var id = new MsnRecordId(Row, index);
 			_records.Add(id);
 			if (words[MergeRules.ConditionWord] != Condition) {
-				_variations.Add((index, words, draw));
+				_variations.Add((index, words, pick));
 				return;
 			}
 
-			if (draw != null) {
-				_draws.Add(draw);
+			if (pick != null) {
+				_picks.Add(pick);
 			}
 
 			if (_base.Count > 0) {
@@ -432,8 +432,8 @@ public sealed class MissionLayout {
 		public LayoutEntry ToEntry(MissionFileTransformer codec, (short Group, short Condition)? group) {
 			var variations = _variations.Select(variation => new LayoutVariation(new MsnRecordId(Row, variation.Index),
 				variation.Words[MergeRules.ConditionWord], codec.Record(Row, variation.Words), SetWords(variation.Words),
-				variation.Draw)).ToList();
-			var presence = Presence(Condition, group, _draws);
+				variation.Pick)).ToList();
+			var presence = Presence(Condition, group, _picks);
 			var fields = codec.Record(Row, Words);
 			return fields switch {
 				MapPoint22 point => new LayoutEntry<MapPoint22>(Row, Guid, _records, _base, point, _suppliers, presence, variations),

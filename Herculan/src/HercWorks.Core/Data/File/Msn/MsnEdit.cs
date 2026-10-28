@@ -304,7 +304,7 @@ internal static class MsnRows {
 		row switch {
 			1 => file.Conditions,
 			2 => file.SettingsPatches,
-			3 => file.Variants,
+			3 => file.MovieChoices,
 			4 => file.Texts,
 			5 => file.DebriefBytes,
 			6 => file.Points,
@@ -326,7 +326,7 @@ internal static class MsnRows {
 		switch (row) {
 			case 1: file.Conditions = (MissionCondition14[])records; break;
 			case 2: file.SettingsPatches = (MissionSettingsPatch[])records; break;
-			case 3: file.Variants = (VariantValue8[])records; break;
+			case 3: file.MovieChoices = (MovieChoice8[])records; break;
 			case 4: file.Texts = (MissionText144[])records; break;
 			case 5: file.DebriefBytes = (byte[])records; break;
 			case 6: file.Points = (MapPoint22[])records; break;

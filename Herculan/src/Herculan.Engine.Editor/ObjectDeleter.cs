@@ -7,14 +7,14 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// What references a roster object, a group, a route or a trigger area, by identity in the <c>.MSN</c>'s layout, every record
 /// whatever its condition: the objectives (row-17 indices), the triggers (row-10 GUIDs) and the group order slots whose order
-/// references it. <see cref="Options"/> counts the options of random choices (variant alternatives, GUID <c>-1</c>) that
+/// references it. <see cref="Templates"/> counts the templates of random tables (GUID <c>-1</c>) that
 /// reference it, and <see cref="UnrunOrders"/> the orders referencing it that no group's slot runs.
 /// </summary>
 internal sealed record DeleteNamers(IReadOnlyList<int> Objectives, IReadOnlyList<short> Triggers,
-		IReadOnlyList<EndsOrder> Orders, int Options, int UnrunOrders) {
+		IReadOnlyList<EndsOrder> Orders, int Templates, int UnrunOrders) {
 	public static DeleteNamers None { get; } = new([], [], [], 0, 0);
 
-	public bool Any => Objectives.Count > 0 || Triggers.Count > 0 || Orders.Count > 0 || Options > 0 || UnrunOrders > 0;
+	public bool Any => Objectives.Count > 0 || Triggers.Count > 0 || Orders.Count > 0 || Templates > 0 || UnrunOrders > 0;
 }
 
 /// <summary>
@@ -120,7 +120,7 @@ internal sealed class ObjectDeleter {
 	/// <summary>
 	/// The records <paramref name="namers"/> lists, by identity in the layout: an objective by its row-17 index, a trigger by
 	/// its GUID, and an order through each group slot running it, as the group's base names it. A record of GUID <c>-1</c> is
-	/// an option of a random choice, and an order no slot runs is counted apart.
+	/// a template of a random table's option, and an order no slot runs is counted apart.
 	/// </summary>
 	public DeleteNamers Resolve(MissionDocument source, MsnNamers namers) {
 		int options = 0;

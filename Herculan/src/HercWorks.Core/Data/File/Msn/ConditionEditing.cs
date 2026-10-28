@@ -16,7 +16,7 @@ public sealed record ConditionNamers(IReadOnlyList<MsnRecordId> Records, IReadOn
 /// Creates, edits and deletes a <see cref="MissionDocument"/>'s conditions, row 1, as record edits: flag tests (type 0),
 /// draws (type 1) and ranges over a draw (type 2). How the load reads row 1 is
 /// docs/retail/formats/msn-mission-file.md#the-conditions--row-1, and what changing a draw does to every later one
-/// docs/herculan/handoff-editor-document.md#conditions-and-variants.
+/// docs/herculan/handoff-editor-document.md#conditions-and-random-tables.
 ///
 /// <list type="bullet">
 /// <item>Row 1 is read in order, each record tested against the survivors before it, so a condition can require, and a
@@ -29,11 +29,11 @@ public sealed record ConditionNamers(IReadOnlyList<MsnRecordId> Records, IReadOn
 /// edits none whose GUID is carried twice (<see cref="WhyFixed"/>). A new record takes the row's largest GUID plus one
 /// (<see cref="MissionDocument.Append"/>).</item>
 /// <item>A field is written in the record itself (<see cref="MissionDocument.Rewrite{T}"/>).</item>
-/// <item>A variant table (type 3) and a range over one, which the other rows' variant keys draw by key rather than
-/// reference by GUID, are edited through <see cref="VariantEditing"/>, and not here (<see cref="WhyFixed"/>).</item>
+/// <item>A random table (type 3) and a range over one, which the other rows' random table keys pick from by key rather than
+/// reference by GUID, are edited through <see cref="RandomTableEditing"/>, and not here (<see cref="WhyFixed"/>).</item>
 /// <item>A condition is deleted only while nothing references it (<see cref="Namers"/>): a record whose condition names a
 /// GUID with no surviving record is dropped in every state. Deleting a draw, or one a draw requires, changes the draws
-/// every later draw and variant pick gets.</item>
+/// every later draw and random table roll gets.</item>
 /// </list>
 /// </summary>
 public static class ConditionEditing {
@@ -46,7 +46,7 @@ public static class ConditionEditing {
 	public const short FlagTest = 0;
 	public const short Draw = 1;
 	public const short Range = 2;
-	public const short VariantTable = 3;
+	public const short RandomTable = 3;
 
 	/// <summary>The type-0 operators, <c>0x119</c>-<c>0x11e</c>, in code order.</summary>
 	public static IReadOnlyList<short> Operators { get; } = [
@@ -147,7 +147,7 @@ public static class ConditionEditing {
 
 	/// <summary>
 	/// What row-1 GUID <paramref name="guid"/> tests, in the editor's words: <c>flag 100 &gt; 0</c>, <c>draw below 11</c>,
-	/// <c>draw 0 to 9 of condition 7</c>, <c>variant table 3 below 4</c>, with <c>if condition 5</c> after one that requires
+	/// <c>draw 0 to 9 of condition 7</c>, <c>random table 3 below 4</c>, with <c>if condition 5</c> after one that requires
 	/// another; null for a GUID no record carries.
 	/// </summary>
 	public static string? Describe(MissionFile mission, short guid) =>
@@ -161,14 +161,14 @@ public static class ConditionEditing {
 				: $"flag {record.FlagIndexOrRangeLower}, operator {record.OperatorOrRangeUpperOrResult} (never holds)",
 			Draw => $"draw below {record.FlagIndexOrRangeLower}",
 			Range => DescribeRange(mission, record),
-			VariantTable => $"variant table {record.FlagIndexOrRangeLower} below {record.ComparisonOperand}",
+			RandomTable => $"random table {record.FlagIndexOrRangeLower} below {record.ComparisonOperand}",
 			_ => $"type {record.Type} (never holds)",
 		};
 
 		return record.Type == Range || record.ConditionRef == -1 ? own : $"{own} if condition {record.ConditionRef}";
 	}
 
-	// A range is over the first earlier record of its 0x02 GUID, when that is a draw or a variant table; it never holds otherwise.
+	// A range is over the first earlier record of its 0x02 GUID, when that is a draw or a random table; it never holds otherwise.
 	private static string DescribeRange(MissionFile mission, MissionCondition14 record) {
 		var records = mission.Conditions ?? [];
 		int index = Array.IndexOf(records, record);
@@ -176,7 +176,7 @@ public static class ConditionEditing {
 		string ends = $"{(ushort)record.FlagIndexOrRangeLower} to {(ushort)record.OperatorOrRangeUpperOrResult}";
 		return parent?.Type switch {
 			Draw => $"draw {ends} of condition {record.ConditionRef}",
-			VariantTable => $"variant {ends} of condition {record.ConditionRef}",
+			RandomTable => $"option {ends} of condition {record.ConditionRef}",
 			_ => $"{ends} of condition {record.ConditionRef} (never holds)",
 		};
 	}
@@ -191,15 +191,15 @@ public static class ConditionEditing {
 
 		var record = Record(document, guid);
 		return Records(document).Count(other => other.GUID == guid) > 1 ? $"More than one record carries condition {guid}."
-			: InVariantTable(document, guid) ? "A random choice is edited in its own view: click it under Random choices in the Mission panel."
-			: record.Type is < FlagTest or > VariantTable ? $"Its type, {record.Type}, is none the load reads."
+			: InRandomTable(document, guid) ? "A random table is edited in its own view: click it under Random tables in the Mission panel."
+			: record.Type is < FlagTest or > RandomTable ? $"Its type, {record.Type}, is none the load reads."
 			: null;
 	}
 
-	/// <summary>Whether <paramref name="guid"/> is a variant table (type 3) or a range over one, which <see cref="VariantEditing"/> edits.</summary>
-	public static bool InVariantTable(MissionDocument document, short guid) =>
+	/// <summary>Whether <paramref name="guid"/> is a random table (type 3) or a range over one, which <see cref="RandomTableEditing"/> edits.</summary>
+	public static bool InRandomTable(MissionDocument document, short guid) =>
 		IndexOf(document, guid) != null && Record(document, guid) is var record
-			&& (record.Type == VariantTable || (record.Type == Range && ParentOf(document, guid)?.Type == VariantTable));
+			&& (record.Type == RandomTable || (record.Type == Range && ParentOf(document, guid)?.Type == RandomTable));
 
 	/// <summary>
 	/// Why <paramref name="guid"/> cannot require <paramref name="required"/>, a row-1 GUID or <c>-1</c> for nothing, or null
@@ -395,7 +395,7 @@ public static class ConditionEditing {
 
 		Add(1, mission.Conditions, record => record.ConditionRef);
 		Add(2, mission.SettingsPatches, record => record.Data[0]);
-		Add(3, mission.Variants, record => record.ConditionRef);
+		Add(3, mission.MovieChoices, record => record.ConditionRef);
 		Add(4, mission.Texts, record => record.ConditionRef);
 		if (mission.DebriefBytes is { } debrief) {
 			for (int i = 0; (i + 1) * DebriefRecordLength <= debrief.Length; i++) {

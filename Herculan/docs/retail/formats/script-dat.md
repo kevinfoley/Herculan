@@ -31,7 +31,7 @@
 
 **Filtering:** All rows except #4 and #17 apply a two-pass GUID-filter (rows with offset `0x00 == -1` are dropped). Row #17 (no GUID field) is written unconditionally. Row #4 is exported differently (see block 13 below).
 
-**Omitted rows:** #1 (trigger/flag store), #2 (campaign-patch scratch), #3 (variant-value table), #5 (skip-only). Not needed at runtime — VSHELL filters conditions during `.msn` load, `script.dat` carries only survivors.
+**Omitted rows:** #1 (trigger/flag store), #2 (campaign-patch scratch), #3 (movie choices), #5 (skip-only). Not needed at runtime — VSHELL filters conditions during `.msn` load, `script.dat` carries only survivors.
 
 ## Fixed-size file structure
 

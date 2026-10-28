@@ -67,11 +67,11 @@ internal sealed class SyntheticMsn {
 	public static short[] Text() => Enumerable.Repeat((short)-1, 72).ToArray();
 
 	/// <summary>A row-6 point at (<paramref name="x"/>, <paramref name="y"/>, 0).</summary>
-	public static short[] Point(short guid, int x, int y = 0, short condition = -1, short variant = -1) {
+	public static short[] Point(short guid, int x, int y = 0, short condition = -1, short tableKey = -1) {
 		var words = new short[11];
 		words[MapObject.GUIDWord] = guid;
 		words[MapPoint22.ConditionRefWord] = condition;
-		words[MapPoint22.VariantKeyWord] = variant;
+		words[MapPoint22.RandomTableKeyWord] = tableKey;
 		words[MapPoint22.XWord] = (short)x;
 		words[MapPoint22.XWord + 1] = (short)(x >> 16);
 		words[MapPoint22.YWord] = (short)y;
@@ -84,7 +84,7 @@ internal sealed class SyntheticMsn {
 		var words = new short[5];
 		words[MapObject.GUIDWord] = guid;
 		words[Heading10.ConditionRefWord] = -1;
-		words[Heading10.VariantKeyWord] = -1;
+		words[Heading10.RandomTableKeyWord] = -1;
 		words[Heading10.DegreesWord] = degrees;
 		return words;
 	}
@@ -112,12 +112,12 @@ internal sealed class SyntheticMsn {
 	/// A row-12 herc of <paramref name="type"/>, its fit <paramref name="weapons"/> and <paramref name="ammo"/> from the first
 	/// slot and the rest <c>-1</c> and the filler 5, every action and counter pair unset, pristine.
 	/// </summary>
-	public static short[] Mech(short guid, short type, short condition = -1, short variant = -1, short[]? weapons = null,
+	public static short[] Mech(short guid, short type, short condition = -1, short tableKey = -1, short[]? weapons = null,
 			short[]? ammo = null) {
 		var words = Enumerable.Repeat((short)-1, 72).ToArray();
 		words[MapObject.GUIDWord] = guid;
 		words[MechRosterEntry144.ConditionRefWord] = condition;
-		words[MechRosterEntry144.VariantKeyWord] = variant;
+		words[MechRosterEntry144.RandomTableKeyWord] = tableKey;
 		words[MechRosterEntry144.AiRadarActiveWord] = 0;
 		words[MechRosterEntry144.AiRadarActiveWord + 1] = 0;
 		for (int word = MechRosterEntry144.AiRadarActiveWord + 2; word < MechRosterEntry144.TypeIndexWord; word++) {
@@ -150,11 +150,11 @@ internal sealed class SyntheticMsn {
 	}
 
 	/// <summary>A row-14 structure of type 0, every action and counter pair unset, pristine.</summary>
-	public static short[] Base(short guid, short position = -1, short condition = -1, short variant = -1) {
+	public static short[] Base(short guid, short position = -1, short condition = -1, short tableKey = -1) {
 		var words = Enumerable.Repeat((short)-1, 31).ToArray();
 		words[MapObject.GUIDWord] = guid;
 		words[BaseRosterEntry62.ConditionRefWord] = condition;
-		words[BaseRosterEntry62.VariantKeyWord] = variant;
+		words[BaseRosterEntry62.RandomTableKeyWord] = tableKey;
 		words[BaseRosterEntry62.TypeIndexWord] = 0;
 		words[BaseRosterEntry62.PositionRefWord] = position;
 		words[0x0e / 2] = 0; // the pair count

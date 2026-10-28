@@ -20,8 +20,8 @@ namespace HercWorks.Core.Data.File.Msn;
 ///
 /// <para>Which record an edit writes is docs/herculan/handoff-editor-document.md#which-record-an-edit-writes: a field of a
 /// GUID's base is written in its supplier (<see cref="LayoutEntry.Supplier"/>), the last base record that sets it, else the
-/// first record, whether or not the generation keeps it. A roster field the supplier copies from a variant is written in a
-/// record of the same GUID that overlays it under the supplier's condition, so it overlays whatever is drawn wherever the
+/// first record, whether or not the generation keeps it. A roster field the supplier copies from a template is written in a
+/// record of the same GUID that overlays it under the supplier's condition, so it overlays whatever is picked wherever the
 /// base is present: the GUID's last record when that already is one (<see cref="LaterOverlay"/>), else one appended to the
 /// row carrying that field alone. A field set to its unset value is unset in every record of the GUID,
 /// since an overlay cannot carry an unset value.</para>
@@ -173,11 +173,11 @@ public sealed class MissionDocument {
 	// ---- Lookups ----------------------------------------------------------------------------------
 
 	/// <summary>
-	/// Whether a variant supplies <paramref name="field"/> of GUID <paramref name="guid"/>, so that <see cref="SetField"/> writes
+	/// Whether a template supplies <paramref name="field"/> of GUID <paramref name="guid"/>, so that <see cref="SetField"/> writes
 	/// it in an overlay record, which cannot carry the field's unset value. Throws as <see cref="SetField"/> does for a GUID no
 	/// record carries.
 	/// </summary>
-	public bool SuppliedByVariant(MsnField field, short guid) => EntryOf(field.Row, guid).Supplier(field.Word).CopiedFrom != null;
+	public bool SuppliedByTemplate(MsnField field, short guid) => EntryOf(field.Row, guid).Supplier(field.Word).CopiedFrom != null;
 
 	/// <summary>The GUID-keyed record <paramref name="id"/> names, or null for one of rows 4 and 17, which have no GUID.</summary>
 	public MapObject? RecordAt(MsnRecordId id) => MsnRows.Get(Mission, id.Row).GetValue(id.Index) as MapObject;
@@ -261,12 +261,12 @@ public sealed class MissionDocument {
 
 	/// <summary>
 	/// The GUID of a row-7 heading that reads <paramref name="degrees"/> and can be shared: the GUID's one record,
-	/// unconditioned and drawing no variant. <c>-1</c> when there is none.
+	/// unconditioned and picking from no random table. <c>-1</c> when there is none.
 	/// </summary>
 	public short ShareableHeading(short degrees) {
 		var headings = Mission.Headings ?? [];
 		foreach (var heading in headings) {
-			if (heading.GUID != -1 && heading.Degrees == degrees && heading.ConditionRef == -1 && heading.VariantKey == -1
+			if (heading.GUID != -1 && heading.Degrees == degrees && heading.ConditionRef == -1 && heading.RandomTableKey == -1
 					&& headings.Count(other => other.GUID == heading.GUID) == 1) {
 				return heading.GUID;
 			}
@@ -318,15 +318,15 @@ public sealed class MissionDocument {
 	/// <summary>
 	/// Stands row-6 point <paramref name="point"/> at (<paramref name="x"/>, <paramref name="y"/>, <paramref name="z"/>),
 	/// writing the record that supplies its coordinates, the GUID's last base record, so everything naming the point moves
-	/// with it. Throws <see cref="InvalidOperationException"/> for a point no record carries, or whose coordinates are drawn
-	/// from a variant or summed from two other points, which no retail point is
+	/// with it. Throws <see cref="InvalidOperationException"/> for a point no record carries, or whose coordinates are copied
+	/// from a template or summed from two other points, which no retail point is
 	/// (docs/retail/formats/msn-mission-file.md#row-6-field-decode--the-point-record-dat_0047064e-22-bytesrecord).
 	/// </summary>
 	public MsnEdit SetPoint(short point, int x, int y, int z) {
 		var source = EntryOf(PointRow, point).Supplier(MapPoint22.XWord);
 		var record = (MapPoint22)RecordAt(source.Record)!;
 		if (source.CopiedFrom != null) {
-			throw new InvalidOperationException($"Point {point}'s coordinates are drawn from a variant.");
+			throw new InvalidOperationException($"Point {point}'s coordinates come from a random table.");
 		}
 
 		if (record.SumFlag != 0) {
@@ -349,7 +349,7 @@ public sealed class MissionDocument {
 	public MsnEdit PlacePoint(short point, int moving, int x, int y, int z, out short placed) {
 		var points = Mission.Points ?? [];
 		if (point != -1 && points.Count(record => record.GUID == point) == 1 && CountPointRefs(point) == moving
-				&& Array.Find(points, record => record.GUID == point) is { VariantKey: -1, SumFlag: 0 } own) {
+				&& Array.Find(points, record => record.GUID == point) is { RandomTableKey: -1, SumFlag: 0 } own) {
 			var before = Begin(PointRow);
 			own.X = x;
 			own.Y = y;
@@ -358,19 +358,19 @@ public sealed class MissionDocument {
 			return End(before);
 		}
 
-		return Append(PointRow, new MapPoint22 { ConditionRef = -1, VariantKey = -1, Unk06 = -1, X = x, Y = y, Z = z }, out placed);
+		return Append(PointRow, new MapPoint22 { ConditionRef = -1, RandomTableKey = -1, Unk06 = -1, X = x, Y = y, Z = z }, out placed);
 	}
 
 	/// <summary>
 	/// Sets <paramref name="field"/> of the record of GUID <paramref name="guid"/> that supplies it to
 	/// <paramref name="value"/>, by the rules in the class summary. Throws <see cref="InvalidOperationException"/> for a
-	/// GUID no record carries, and for a field a variant supplies being unset or outside rows 12 to 14.
+	/// GUID no record carries, and for a field a template supplies being unset or outside rows 12 to 14.
 	/// </summary>
 	public MsnEdit SetField(MsnField field, short guid, short value) {
 		var source = EntryOf(field.Row, guid).Supplier(field.Word);
 		if (value == field.Unset) {
 			if (source.CopiedFrom != null) {
-				throw new InvalidOperationException($"A variant supplies that field of row {field.Row}'s GUID {guid}, and an overlay cannot unset it.");
+				throw new InvalidOperationException($"A template supplies that field of row {field.Row}'s GUID {guid}, and an overlay cannot unset it.");
 			}
 
 			var unsetting = Begin(field.Row);
@@ -401,7 +401,7 @@ public sealed class MissionDocument {
 	/// Unsets <paramref name="field"/> in every base record of GUID <paramref name="guid"/>, those carrying its first record's
 	/// condition, leaving the records under other conditions setting it over the base where they hold, where
 	/// <see cref="SetField"/> unsets it in every record. Throws <see cref="InvalidOperationException"/> for a GUID no record
-	/// carries, and where a variant the base draws then supplies another value, which no overlay can unset.
+	/// carries, and where a template the base picks then supplies another value, which no overlay can unset.
 	/// </summary>
 	public MsnEdit UnsetBaseField(MsnField field, short guid) {
 		var before = Begin(field.Row);
@@ -413,7 +413,7 @@ public sealed class MissionDocument {
 		if (field.Get(EntryOf(field.Row, guid).Fields) != field.Unset) {
 			WriteBack(edit, after: false);
 			Rebuild();
-			throw new InvalidOperationException($"A variant supplies that field of row {field.Row}'s GUID {guid}, and an overlay cannot unset it.");
+			throw new InvalidOperationException($"A template supplies that field of row {field.Row}'s GUID {guid}, and an overlay cannot unset it.");
 		}
 
 		return edit;
@@ -464,8 +464,8 @@ public sealed class MissionDocument {
 
 	/// <summary>
 	/// Points entry <paramref name="entry"/> of route GUID <paramref name="route"/>'s waypoint list at row-6 GUID
-	/// <paramref name="point"/>, in the record whose list the route shows: its last base record, or, for a list a variant
-	/// supplies, that alternative, which every route drawing it shares.
+	/// <paramref name="point"/>, in the record whose list the route shows: its last base record, or, for a list a template
+	/// supplies, that template, which every route picking it shares.
 	/// </summary>
 	public MsnEdit SetWaypoint(short route, int entry, short point) {
 		var record = ListRecord(route);
@@ -496,14 +496,14 @@ public sealed class MissionDocument {
 	public short[] Waypoints(short route) => (short[])ListRecord(route).Waypoints.Clone();
 
 	/// <summary>
-	/// Whether a variant supplies route GUID <paramref name="route"/>'s list, so that the list is a GUID <c>-1</c>
-	/// alternative every route drawing it shares, and an edit of it changes them all.
+	/// Whether a template supplies route GUID <paramref name="route"/>'s list, so that the list is a GUID <c>-1</c>
+	/// template every route picking it shares, and an edit of it changes them all.
 	/// </summary>
 	public bool WaypointsShared(short route) => EntryOf(RouteRow, route).Supplier(MergeRules.RouteListWord).CopiedFrom != null;
 
 	/// <summary>
 	/// The row-9 record that supplies trigger area GUID <paramref name="area"/>: its last base record, which row 9's replace
-	/// of a repeated GUID leaves the area holding whole. Row 9 draws no variant (it has no variant key). Throws
+	/// of a repeated GUID leaves the area holding whole. Row 9 has no random table key. Throws
 	/// <see cref="InvalidOperationException"/> for a GUID no record carries.
 	/// </summary>
 	public TriggerArea12 AreaRecord(short area) =>
@@ -538,9 +538,9 @@ public sealed class MissionDocument {
 	/// <summary>
 	/// Appends a copy of every record of row <paramref name="row"/>'s GUID <paramref name="guid"/>, in file order and each
 	/// under its own condition, under one new GUID, <paramref name="copy"/>: the row's largest plus one. The copy survives
-	/// and merges as the GUID does in every state. A copied record that draws a variant draws again, which moves every later
-	/// draw (docs/herculan/handoff-editor-document.md#conditions-and-variants);
-	/// row 15's records draw none in retail.
+	/// and merges as the GUID does in every state. A copied record that picks from a random table picks again, which moves every later
+	/// draw (docs/herculan/handoff-editor-document.md#conditions-and-random-tables);
+	/// row 15's records pick from none in retail.
 	/// </summary>
 	public MsnEdit AppendCopy(int row, short guid, out short copy) {
 		var records = Records(row).Where(record => record.GUID == guid).ToList();
@@ -567,8 +567,8 @@ public sealed class MissionDocument {
 	/// <summary>
 	/// Removes every record of row <paramref name="row"/>'s GUID <paramref name="guid"/>, whatever its condition. Nothing
 	/// is renumbered: <c>.MSN</c> refs name GUIDs, the generation resolves every index again, and a ref to the removed GUID
-	/// resolves to <c>-1</c> (<c>Msn_ResolveRow6Ref</c> (<c>00415b44</c>) and its siblings). Removing a record that draws a
-	/// variant moves every later draw.
+	/// resolves to <c>-1</c> (<c>Msn_ResolveRow6Ref</c> (<c>00415b44</c>) and its siblings). Removing a record that picks from a
+	/// random table moves every later draw.
 	/// </summary>
 	public MsnEdit Remove(int row, short guid) {
 		var records = MsnRows.Get(Mission, row);
@@ -602,30 +602,30 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
-	/// The variant alternative that supplies <paramref name="field"/> of GUID <paramref name="guid"/>'s base: the GUID
+	/// The template that supplies <paramref name="field"/> of GUID <paramref name="guid"/>'s base: the GUID
 	/// <c>-1</c> record the supplier copied it from (<see cref="WordSource.CopiedFrom"/>), or null when the field is the
 	/// record's own or an overlay's. Throws as <see cref="SetField"/> does for a GUID no record carries.
 	/// </summary>
-	public MsnRecordId? AlternativeOf(MsnField field, short guid) => EntryOf(field.Row, guid).Supplier(field.Word).CopiedFrom;
+	public MsnRecordId? TemplateOf(MsnField field, short guid) => EntryOf(field.Row, guid).Supplier(field.Word).CopiedFrom;
 
 	/// <summary>
-	/// Sets <paramref name="field"/> to <paramref name="value"/> in the variant alternative <see cref="AlternativeOf"/> answers,
-	/// so every record that draws it, now and in every other state, gets the value; <see cref="SetField"/> writes an overlay
-	/// for the one GUID instead. The alternative is copied whole, so an unset value is written as any other. Throws
-	/// <see cref="InvalidOperationException"/> when no alternative supplies the field.
+	/// Sets <paramref name="field"/> to <paramref name="value"/> in the template <see cref="TemplateOf"/> answers,
+	/// so every record that picks it, now and in every other state, gets the value; <see cref="SetField"/> writes an overlay
+	/// for the one GUID instead. The template is copied whole, so an unset value is written as any other. Throws
+	/// <see cref="InvalidOperationException"/> when no template supplies the field.
 	/// </summary>
-	public MsnEdit SetAlternativeField(MsnField field, short guid, short value) {
-		var alternative = AlternativeOf(field, guid)
-			?? throw new InvalidOperationException($"No variant alternative supplies that field of row {field.Row}'s GUID {guid}.");
+	public MsnEdit SetTemplateField(MsnField field, short guid, short value) {
+		var template = TemplateOf(field, guid)
+			?? throw new InvalidOperationException($"No template supplies that field of row {field.Row}'s GUID {guid}.");
 		var before = Begin(field.Row);
-		field.Set(RecordAt(alternative)!, value);
+		field.Set(RecordAt(template)!, value);
 		return End(before);
 	}
 
 	/// <summary>
 	/// Puts <paramref name="record"/> at <paramref name="index"/> of row <paramref name="row"/>, the records from there on
-	/// moving up one: for a variant alternative, a GUID <c>-1</c> record, which a record draws only when it is read before it
-	/// (docs/retail/formats/msn-mission-file.md#variants), or a row-1 condition that a later one must be able to require
+	/// moving up one: for a template, a GUID <c>-1</c> record, which a record picks only when it is read before it
+	/// (docs/retail/formats/msn-mission-file.md#random-tables), or a row-1 condition that a later one must be able to require
 	/// (<see cref="PresenceRules"/>). A GUID <c>-1</c> record is never exported or merged, so no <c>script.dat</c> index
 	/// moves; a condition's GUID is the caller's.
 	/// </summary>
@@ -645,7 +645,7 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
-	/// Removes record <paramref name="index"/> of GUID-keyed row <paramref name="row"/> alone, for a variant alternative, which
+	/// Removes record <paramref name="index"/> of GUID-keyed row <paramref name="row"/> alone, for a template, which
 	/// has no GUID of its own to remove it by (<see cref="Remove"/>).
 	/// </summary>
 	public MsnEdit RemoveAt(int row, int index) {
@@ -664,7 +664,7 @@ public sealed class MissionDocument {
 
 	/// <summary>
 	/// Rewrites, through <paramref name="write"/>, record <paramref name="index"/> of GUID-keyed row <paramref name="row"/>
-	/// alone: a variant alternative, or the one record of a GUID that carries its variant key.
+	/// alone: a template, or the one record of a GUID that carries its random table key.
 	/// </summary>
 	public MsnEdit RewriteAt<T>(int row, int index, Action<T> write) where T : MapObject {
 		var records = MsnRows.Get(Mission, row);
@@ -824,7 +824,7 @@ public sealed class MissionDocument {
 	private LayoutEntry EntryOf(int row, short guid) =>
 		Layout.Entry(row, guid) ?? throw new InvalidOperationException($"Row {row} has no record with GUID {guid}.");
 
-	// The row-8 record whose waypoint list route GUID <route> shows: its last base record, or the variant alternative it
+	// The row-8 record whose waypoint list route GUID <route> shows: its last base record, or the template it
 	// copies the list from.
 	private WaypointGroup ListRecord(short route) {
 		var source = EntryOf(RouteRow, route).Supplier(MergeRules.RouteListWord);
@@ -873,42 +873,42 @@ public sealed class MissionDocument {
 	/// <summary>
 	/// A roster record of <paramref name="asking"/>'s GUID and condition that sets no field: each field the generator's
 	/// merge overlays at its unset value (<c>Msn_MergeRow12</c> (<c>00416864</c>), <c>Msn_MergeRow13</c> (<c>00416c17</c>),
-	/// <c>Msn_MergeRow14</c> (<c>00416e7a</c>)), and no variant key, so its refs are resolved as it is read. The words no
+	/// <c>Msn_MergeRow14</c> (<c>00416e7a</c>)), and no random table key, so its refs are resolved as it is read. The words no
 	/// merge reads are <paramref name="asking"/>'s.
 	/// </summary>
 	private static MapObject OverlayRecord(MapObject asking) => asking switch {
 		MechRosterEntry144 mech => new MechRosterEntry144 {
-			GUID = mech.GUID, ConditionRef = mech.ConditionRef, VariantKey = -1,
+			GUID = mech.GUID, ConditionRef = mech.ConditionRef, RandomTableKey = -1,
 			CompoundConditionPartner = mech.CompoundConditionPartner, AiRadarActive = 0, AiCruiseSpeed = 0,
 			DeadZone = new short[18], TypeIndex = -1, WeaponRefs = Unset(10), PositionRef = -1, HeadingRef = -1,
 			PairCount = mech.PairCount, OutOfActionReport = Unset(20), WeaponSecondary = Enumerable.Repeat((short)5, 10).ToArray(),
 			Constant2 = 2, EngagementActionRef = -1, DefeatActionRef = -1, StartingCondition = 100,
 		},
 		FlyerRosterEntry102 flyer => new FlyerRosterEntry102 {
-			GUID = flyer.GUID, ConditionRef = flyer.ConditionRef, VariantKey = -1, Unk06 = flyer.Unk06,
+			GUID = flyer.GUID, ConditionRef = flyer.ConditionRef, RandomTableKey = -1, Unk06 = flyer.Unk06,
 			FlagSpan = new short[20], PositionRef = -1, HeadingRef = -1, TypeIndex = -1, PairCount = flyer.PairCount,
 			OutOfActionReport = Unset(20), EngagementActionRef = -1, DefeatActionRef = -1, UnkVal_100 = 100,
 		},
 		BaseRosterEntry62 structure => new BaseRosterEntry62 {
-			GUID = structure.GUID, ConditionRef = structure.ConditionRef, VariantKey = -1, Unk06 = structure.Unk06,
+			GUID = structure.GUID, ConditionRef = structure.ConditionRef, RandomTableKey = -1, Unk06 = structure.Unk06,
 			TypeIndex = -1, PositionRef = -1, HeadingRef = -1, PairCount = structure.PairCount, OutOfActionReport = Unset(20),
 			EngagementActionRef = -1, DefeatActionRef = -1, StartingCondition = 100,
 		},
-		_ => throw new InvalidOperationException($"A variant supplies a field of a {asking.GetType().Name}, which only rows 12 to 14 carry in an overlay record."),
+		_ => throw new InvalidOperationException($"A template supplies a field of a {asking.GetType().Name}, which only rows 12 to 14 carry in an overlay record."),
 	};
 
 	/// <summary>
 	/// The record of row <paramref name="row"/>'s GUID <paramref name="guid"/> that already overlays what
-	/// <paramref name="supplier"/> copies from a variant, or null: the GUID's last record, when it comes after the supplier,
-	/// carries the base's condition and draws no variant, such as the one an earlier field's edit appended. Writing a field
+	/// <paramref name="supplier"/> copies from a template, or null: the GUID's last record, when it comes after the supplier,
+	/// carries the base's condition and picks from no random table, such as the one an earlier field's edit appended. Writing a field
 	/// there merges as a record appended after it would, so the fields of one edit, a chassis and its mounts, share one record.
 	/// </summary>
 	private MapObject? LaterOverlay(int row, short guid, MsnRecordId supplier) {
 		var entry = EntryOf(row, guid);
 		var last = entry.Records[^1];
 		var record = RecordAt(last);
-		bool unkeyed = record is MechRosterEntry144 { VariantKey: -1 } or FlyerRosterEntry102 { VariantKey: -1 }
-			or BaseRosterEntry62 { VariantKey: -1 };
+		bool unkeyed = record is MechRosterEntry144 { RandomTableKey: -1 } or FlyerRosterEntry102 { RandomTableKey: -1 }
+			or BaseRosterEntry62 { RandomTableKey: -1 };
 		return last.Index > supplier.Index && entry.Base.Contains(last) && unkeyed ? record : null;
 	}
 

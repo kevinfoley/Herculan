@@ -9,7 +9,7 @@ The editor, `Herculan.Engine.Editor`, run on its own by `Herculan.Engine.Host.Ed
 | [handoff-editor-placement.md](handoff-editor-placement.md) | moving objects, waypoints, groups and area corners; routes; trigger areas |
 | [handoff-editor-roster.md](handoff-editor-roster.md) | adding hercs, flyers, ground vehicles and structures; type and fit; sides; deleting; the player's squad |
 | [handoff-editor-mission-logic.md](handoff-editor-mission-logic.md) | orders, wiring, campaign variable writes, triggers, countdowns, objectives, the mission's text and its debrief |
-| [handoff-editor-conditions.md](handoff-editor-conditions.md) | what the editor shows, conditions, variant tables, Present when |
+| [handoff-editor-conditions.md](handoff-editor-conditions.md) | what the editor shows, conditions, random tables, Present when |
 | [handoff-editor-ux-plan.md](handoff-editor-ux-plan.md) | the planned UI redesign, by phase; its evidence is [handoff-editor-ux-review.md](handoff-editor-ux-review.md) |
 
 ## What every edit does
@@ -45,7 +45,7 @@ Beyond the gaps each doc lists:
 
 | Row (block) | Not edited |
 |---|---|
-| 1, conditions | a variant table's requirement; route tables, squad tables and tables under a shared key; a condition's place in the row |
+| 1, conditions | a random table's requirement; route tables, squad tables and tables under a shared key; a condition's place in the row |
 | 2, header | the objective type (offset 6, which picks the player's objective arm) and the training mission number; the zone after New mission. The difficulty and the two training cheats are overwritten at every shell load |
 | 3, movies; 5, debrief | the movies (the debrief's shown by number); the debrief's outcomes and their clauses; the loss line |
 | 4 (13), text package | the briefing movie (`0x8E`); the records after the first; a line's trailing newline |

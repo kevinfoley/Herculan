@@ -26,15 +26,15 @@ internal sealed record SettingsPatchRecord(short Condition, IReadOnlyList<Header
 
 /// <summary>A row-5 record, 32 words as <see cref="MissionGenerator.LoadDebriefText"/> reads it.</summary>
 /// <param name="TextRefs">Thirty <c>.ENG</c> ids.</param>
-/// <param name="VariantRef">A row-3 GUID, the debrief movie.</param>
-internal sealed record DebriefRecord(short Condition, short[] TextRefs, short VariantRef);
+/// <param name="MovieChoiceRef">A row-3 GUID, the debrief movie.</param>
+internal sealed record DebriefRecord(short Condition, short[] TextRefs, short MovieChoiceRef);
 
 /// <summary>Row 2 as authored, beside the header the mission's load writes.</summary>
 internal sealed record HeaderQueryMission(string Mission, IReadOnlyList<SettingsPatchRecord> Patches, IReadOnlyList<HeaderWord> Generated);
 
 /// <summary>
 /// <c>records</c> and <c>header</c>: a mission's <c>.MSN</c> rows as <see cref="MissionFile"/> parsed them, no condition
-/// applied and no variant drawn, and row 2 beside the header the load generates from it.
+/// applied and no option picked, and row 2 beside the header the load generates from it.
 /// </summary>
 internal static class RecordQuery {
 	public const int RowCount = 17;
@@ -63,7 +63,7 @@ internal static class RecordQuery {
 		byte[] debrief = file.DebriefBytes ?? [];
 		Add(1, nameof(file.Conditions), file.Conditions);
 		Add(2, nameof(file.SettingsPatches), file.SettingsPatches?.Select(Patch));
-		Add(3, nameof(file.Variants), file.Variants);
+		Add(3, nameof(file.MovieChoices), file.MovieChoices);
 		Add(4, nameof(file.Texts), file.Texts);
 		Add(5, "Debrief", Debrief(debrief), debrief.Length % (DebriefWords * 2));
 		Add(6, nameof(file.Points), file.Points);
@@ -119,7 +119,7 @@ internal static class RecordQuery {
 
 				WriteWrapped(o, $"  #{i}", record switch {
 					SettingsPatchRecord patch => PatchFields(patch),
-					DebriefRecord d => [$"Condition={d.Condition}", $"TextRefs={Compact(d.TextRefs)}", $"VariantRef={d.VariantRef}"],
+					DebriefRecord d => [$"Condition={d.Condition}", $"TextRefs={Compact(d.TextRefs)}", $"MovieChoiceRef={d.MovieChoiceRef}"],
 					_ => Fields(record),
 				});
 			}

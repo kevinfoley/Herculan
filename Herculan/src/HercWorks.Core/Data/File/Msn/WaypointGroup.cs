@@ -7,16 +7,16 @@ namespace HercWorks.Core.Data.File.Msn;
 /// decode".
 /// </summary>
 public class WaypointGroup : MapObject {
-	/// <summary>0x02 — condition ref. Retail sets it only on records whose GUID is -1, i.e. variant sources.</summary>
+	/// <summary>0x02 — condition ref. Retail sets it only on records whose GUID is -1, i.e. templates.</summary>
 	public short ConditionRef { get; set; }
 	public const int ConditionRefWord = 0x02 / 2;
 
 	/// <summary>
-	/// 0x04 — variant key: unless <c>-1</c>, the waypoint list is copied from a randomly picked variant
-	/// (docs/retail/formats/msn-mission-file.md#variants); such records store no waypoints of their own.
+	/// 0x04 — random table key: unless <c>-1</c>, the waypoint list is copied from the template of a randomly
+	/// picked option (docs/retail/formats/msn-mission-file.md#random-tables); such records store no waypoints of their own.
 	/// </summary>
-	public short VariantKey { get; set; }
-	public const int VariantKeyWord = 0x04 / 2;
+	public short RandomTableKey { get; set; }
+	public const int RandomTableKeyWord = 0x04 / 2;
 
 	/// <summary>0x06 — always -1 in retail; the load does not read it.</summary>
 	public short Unk06 { get; set; }

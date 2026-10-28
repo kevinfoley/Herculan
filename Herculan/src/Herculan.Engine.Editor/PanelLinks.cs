@@ -119,7 +119,7 @@ internal sealed class PanelLinks {
 	/// each objective and trigger by its link; each trigger of <paramref name="fired"/>, those an object fires when engaged or
 	/// defeated, by its link and ": fired by it"; and each group by its link and what of it references, its orders and, for a
 	/// group of <paramref name="ownRoute"/>, its own route field, which no view edits, on its one line. Then the options of
-	/// random choices and the orders no group runs, counted.
+	/// random tables and the orders no group runs, counted.
 	/// </summary>
 	public void References(DeleteNamers names, IReadOnlyList<short>? ownRoute = null, IReadOnlyList<short>? fired = null) {
 		foreach (int objective in names.Objectives) {
@@ -156,11 +156,11 @@ internal sealed class PanelLinks {
 			ImGui.PopID();
 		}
 
-		Counted(names.Options, "option of a random choice", "options of random choices");
+		Counted(names.Templates, "template of a random table", "templates of random tables");
 		Counted(names.UnrunOrders, "order no group runs", "orders no group runs");
 	}
 
-	// "1 option of a random choice", "3 options of random choices"; nothing for none.
+	// "1 template of a random table", "3 templates of random tables"; nothing for none.
 	private static void Counted(int count, string one, string several) {
 		if (count > 0) {
 			ImGui.TextWrapped(count == 1 ? $"1 {one}" : $"{count} {several}");

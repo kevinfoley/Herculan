@@ -37,7 +37,7 @@ internal static class RepeatQuery {
 
 	private static List<RepeatedGuid> Search(MissionFile file) {
 		var found = new List<RepeatedGuid>();
-		found.AddRange(Repeats(3, file.Variants, r => r.ConditionRef, r => $"value {r.Value}", unconditionedOnly: true));
+		found.AddRange(Repeats(3, file.MovieChoices, r => r.ConditionRef, r => $"value {r.Value}", unconditionedOnly: true));
 		found.AddRange(Repeats(6, file.Points, r => r.ConditionRef, r => $"({r.X}, {r.Y}, {r.Z})", unconditionedOnly: true));
 		found.AddRange(Repeats(7, file.Headings, r => r.ConditionRef, r => $"heading {r.Degrees}", unconditionedOnly: true));
 		found.AddRange(Repeats(8, file.WaypointGroups, r => r.ConditionRef, r => $"waypoints {string.Join(", ", r.Waypoints)}",

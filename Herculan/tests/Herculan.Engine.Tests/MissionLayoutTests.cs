@@ -46,15 +46,15 @@ public class MissionLayoutTests {
 		msn.Add(1, Condition(guid: 12, condition: 10, type: RangeType, lower: 3, upper: 5, operand: 0));
 		msn.Add(12, Positioned(Mech(-1, type: 2, condition: 12), 60));
 		msn.Add(12, Positioned(Mech(-1, type: 3, condition: 11), 50));
-		msn.Add(12, Positioned(Mech(1, type: 4, variant: 7), 70));
+		msn.Add(12, Positioned(Mech(1, type: 4, tableKey: 7), 70));
 		var layout = Layout(msn);
 
 		var herc = layout.Entry<MechRosterEntry144>(1)!;
 		Assert.Equal(50, herc.Fields.PositionRef);
 		Assert.Equal(new WordSource(new MsnRecordId(12, 2), new MsnRecordId(12, 1)), herc.Supplier(MechRosterEntry144.PositionRefWord));
-		var draw = Assert.Single(herc.Presence.Draws);
-		Assert.Equal((short)10, draw.Table);
-		Assert.Equal(new LayoutOption(11, new MsnRecordId(12, 1)), draw.Shown);
+		var pick = Assert.Single(herc.Presence.Picks);
+		Assert.Equal((short)10, pick.Table);
+		Assert.Equal(new LayoutOption(11, new MsnRecordId(12, 1)), pick.Shown);
 	}
 
 	private static short[] Positioned(short[] mech, short point) {

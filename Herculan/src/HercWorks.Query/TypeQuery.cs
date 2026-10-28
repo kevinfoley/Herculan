@@ -25,17 +25,17 @@ internal sealed record GroupPlacement(
 internal sealed record SameGuidRecord(int Index, short ConditionRef, string? Condition, short TypeIndex, short? StartingCondition);
 
 /// <summary>A roster GUID of the queried type, read from its first record, and everything that decides whether and how it reaches the mission.</summary>
-/// <param name="VariantKey">The record's own variant key: unless <c>-1</c>, its type and payload are replaced by a draw.</param>
-/// <param name="VariantSourceKey">
-/// For a GUID <c>-1</c> record conditioned on a type-2 range, the key of the records that draw it;
+/// <param name="RandomTableKey">The record's own random table key: unless <c>-1</c>, its type and payload are replaced by a picked option's template.</param>
+/// <param name="TemplateKey">
+/// For a GUID <c>-1</c> record conditioned on a type-2 range, the key of the records that pick it;
 /// null otherwise.
 /// </param>
-/// <param name="DrawnBy">The GUIDs of the records whose variant key is <see cref="VariantSourceKey"/>.</param>
-/// <param name="PlacedBy">The groups naming the record, or for a variant source, the records that draw it.</param>
+/// <param name="PickedBy">The GUIDs of the records whose random table key is <see cref="TemplateKey"/>.</param>
+/// <param name="PlacedBy">The groups naming the record, or for a template, the records that pick it.</param>
 /// <param name="PositionRef"><see cref="RosterRecord.PositionRef"/>.</param>
 internal sealed record TypeHit(
 	int Index, short Guid, short TypeIndex, string? TypeName, short ConditionRef, string? Condition,
-	short VariantKey, short? StartingCondition, short PositionRef, short? VariantSourceKey, IReadOnlyList<short> DrawnBy,
+	short RandomTableKey, short? StartingCondition, short PositionRef, short? TemplateKey, IReadOnlyList<short> PickedBy,
 	IReadOnlyList<GroupPlacement> PlacedBy, IReadOnlyList<SameGuidRecord> SameGuid) {
 	public bool Placed => PlacedBy.Count > 0;
 
@@ -111,20 +111,20 @@ internal static class TypeQuery {
 				.Select(r => new SameGuidRecord(r.Index, r.ConditionRef, Conditions.Describe(file, r.ConditionRef), r.TypeIndex, r.StartingCondition))
 				.ToList();
 
-			short? sourceKey = record.Guid == -1 && record.ConditionRef != -1 ? Conditions.VariantKeyOf(file, record.ConditionRef) : null;
-			var drawnBy = sourceKey is { } key
-				? records.Where(r => r.VariantKey == key && r.Guid != -1).Select(r => r.Guid).Distinct().ToList()
+			short? templateKey = record.Guid == -1 && record.ConditionRef != -1 ? Conditions.RandomTableKeyOf(file, record.ConditionRef) : null;
+			var pickedBy = templateKey is { } key
+				? records.Where(r => r.RandomTableKey == key && r.Guid != -1).Select(r => r.Guid).Distinct().ToList()
 				: [];
 
-			var placedBy = (sourceKey == null ? [record.Guid] : drawnBy)
+			var placedBy = (templateKey == null ? [record.Guid] : pickedBy)
 				.Where(g => g != -1)
 				.SelectMany(g => Placements(file, kind, g))
 				.ToList();
 
 			hits.Add(new TypeHit(
 				record.Index, record.Guid, record.TypeIndex, data.TypeName(kind, record.TypeIndex),
-				record.ConditionRef, Conditions.Describe(file, record.ConditionRef), record.VariantKey,
-				record.StartingCondition, record.PositionRef, sourceKey, drawnBy, placedBy, sameGuid));
+				record.ConditionRef, Conditions.Describe(file, record.ConditionRef), record.RandomTableKey,
+				record.StartingCondition, record.PositionRef, templateKey, pickedBy, placedBy, sameGuid));
 		}
 
 		return hits;

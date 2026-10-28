@@ -21,7 +21,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 
 		data.Conditions = ReadArray(ParseRow1);
 		data.SettingsPatches = ReadArray(ParseRow2);
-		data.Variants = ReadArray(ParseRow3);
+		data.MovieChoices = ReadArray(ParseRow3);
 		data.Texts = ReadArray(ParseRow4);
 
 		int debriefCount = IndexShortLE();
@@ -62,9 +62,9 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 
 	private MissionSettingsPatch ParseRow2() => new() { Data = IndexShortLEArray(41) };
 
-	// ---- Row #3: VariantValue8 (8 bytes) ----------------------------------------------------
+	// ---- Row #3: MovieChoice8 (8 bytes) ----------------------------------------------------
 
-	private VariantValue8 ParseRow3() => new() {
+	private MovieChoice8 ParseRow3() => new() {
 		GUID = IndexShortLE(),
 		ConditionRef = IndexShortLE(),
 		CompoundConditionPartner = IndexShortLE(),
@@ -86,7 +86,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 	private MapPoint22 ParseRow6() => new() {
 		GUID = IndexShortLE(),
 		ConditionRef = IndexShortLE(),
-		VariantKey = IndexShortLE(),
+		RandomTableKey = IndexShortLE(),
 		Unk06 = IndexShortLE(),
 		SumFlag = IndexShortLE(),
 		X = IndexIntLE(),
@@ -99,7 +99,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 	private Heading10 ParseRow7() => new() {
 		GUID = IndexShortLE(),
 		ConditionRef = IndexShortLE(),
-		VariantKey = IndexShortLE(),
+		RandomTableKey = IndexShortLE(),
 		Unk06 = IndexShortLE(),
 		Degrees = IndexShortLE()
 	};
@@ -110,7 +110,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 		var g = new WaypointGroup {
 			GUID = IndexShortLE(),
 			ConditionRef = IndexShortLE(),
-			VariantKey = IndexShortLE(),
+			RandomTableKey = IndexShortLE(),
 			Unk06 = IndexShortLE()
 		};
 
@@ -163,7 +163,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 	private MechRosterEntry144 ParseRow12() => new() {
 		GUID = IndexShortLE(),
 		ConditionRef = IndexShortLE(),
-		VariantKey = IndexShortLE(),
+		RandomTableKey = IndexShortLE(),
 		CompoundConditionPartner = IndexShortLE(),
 		AiRadarActive = IndexShortLE(),
 		AiCruiseSpeed = IndexShortLE(),
@@ -186,7 +186,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 	private FlyerRosterEntry102 ParseRow13() => new() {
 		GUID = IndexShortLE(),
 		ConditionRef = IndexShortLE(),
-		VariantKey = IndexShortLE(),
+		RandomTableKey = IndexShortLE(),
 		Unk06 = IndexShortLE(),
 		FlagSpan = IndexShortLEArray(20),
 		PositionRef = IndexShortLE(),
@@ -204,7 +204,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 	private BaseRosterEntry62 ParseRow14() => new() {
 		GUID = IndexShortLE(),
 		ConditionRef = IndexShortLE(),
-		VariantKey = IndexShortLE(),
+		RandomTableKey = IndexShortLE(),
 		Unk06 = IndexShortLE(),
 		TypeIndex = IndexShortLE(),
 		PositionRef = IndexShortLE(),
@@ -221,7 +221,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 	private MissionOrder22 ParseRow15() => new() {
 		GUID = IndexShortLE(),
 		ConditionRef = IndexShortLE(),
-		VariantKey = IndexShortLE(),
+		RandomTableKey = IndexShortLE(),
 		CompoundConditionPartner = IndexShortLE(),
 		Verb = IndexShortLE(),
 		FormationId = IndexShortLE(),
@@ -316,7 +316,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 
 		WriteArray(outStream, data.Conditions!, WriteRow1);
 		WriteArray(outStream, data.SettingsPatches!, WriteRow2);
-		WriteArray(outStream, data.Variants!, WriteRow3);
+		WriteArray(outStream, data.MovieChoices!, WriteRow3);
 		WriteArray(outStream, data.Texts!, WriteRow4);
 
 		Emit(outStream, WriteShortLE((short)(data.DebriefBytes!.Length / 64)));
@@ -360,7 +360,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 		Emit(o, WriteShortLESegment(e.Data));
 	}
 
-	private void WriteRow3(MemoryStream o, VariantValue8 e) {
+	private void WriteRow3(MemoryStream o, MovieChoice8 e) {
 		Emit(o, WriteShortLE(e.GUID));
 		Emit(o, WriteShortLE(e.ConditionRef));
 		Emit(o, WriteShortLE(e.CompoundConditionPartner));
@@ -378,7 +378,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 	private void WriteRow6(MemoryStream o, MapPoint22 e) {
 		Emit(o, WriteShortLE(e.GUID));
 		Emit(o, WriteShortLE(e.ConditionRef));
-		Emit(o, WriteShortLE(e.VariantKey));
+		Emit(o, WriteShortLE(e.RandomTableKey));
 		Emit(o, WriteShortLE(e.Unk06));
 		Emit(o, WriteShortLE(e.SumFlag));
 		Emit(o, WriteIntLE(e.X));
@@ -389,7 +389,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 	private void WriteRow7(MemoryStream o, Heading10 e) {
 		Emit(o, WriteShortLE(e.GUID));
 		Emit(o, WriteShortLE(e.ConditionRef));
-		Emit(o, WriteShortLE(e.VariantKey));
+		Emit(o, WriteShortLE(e.RandomTableKey));
 		Emit(o, WriteShortLE(e.Unk06));
 		Emit(o, WriteShortLE(e.Degrees));
 	}
@@ -397,7 +397,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 	private void WriteRow8(MemoryStream o, WaypointGroup e) {
 		Emit(o, WriteShortLE(e.GUID));
 		Emit(o, WriteShortLE(e.ConditionRef));
-		Emit(o, WriteShortLE(e.VariantKey));
+		Emit(o, WriteShortLE(e.RandomTableKey));
 		Emit(o, WriteShortLE(e.Unk06));
 		Emit(o, WriteShortLE((short)e.Waypoints.Length));
 		Emit(o, WriteShortLESegment(e.Waypoints));
@@ -438,7 +438,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 	private void WriteRow12(MemoryStream o, MechRosterEntry144 e) {
 		Emit(o, WriteShortLE(e.GUID));
 		Emit(o, WriteShortLE(e.ConditionRef));
-		Emit(o, WriteShortLE(e.VariantKey));
+		Emit(o, WriteShortLE(e.RandomTableKey));
 		Emit(o, WriteShortLE(e.CompoundConditionPartner));
 		Emit(o, WriteShortLE(e.AiRadarActive));
 		Emit(o, WriteShortLE(e.AiCruiseSpeed));
@@ -459,7 +459,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 	private void WriteRow13(MemoryStream o, FlyerRosterEntry102 e) {
 		Emit(o, WriteShortLE(e.GUID));
 		Emit(o, WriteShortLE(e.ConditionRef));
-		Emit(o, WriteShortLE(e.VariantKey));
+		Emit(o, WriteShortLE(e.RandomTableKey));
 		Emit(o, WriteShortLE(e.Unk06));
 		Emit(o, WriteShortLESegment(e.FlagSpan));
 		Emit(o, WriteShortLE(e.PositionRef));
@@ -475,7 +475,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 	private void WriteRow14(MemoryStream o, BaseRosterEntry62 e) {
 		Emit(o, WriteShortLE(e.GUID));
 		Emit(o, WriteShortLE(e.ConditionRef));
-		Emit(o, WriteShortLE(e.VariantKey));
+		Emit(o, WriteShortLE(e.RandomTableKey));
 		Emit(o, WriteShortLE(e.Unk06));
 		Emit(o, WriteShortLE(e.TypeIndex));
 		Emit(o, WriteShortLE(e.PositionRef));
@@ -490,7 +490,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 	private void WriteRow15(MemoryStream o, MissionOrder22 e) {
 		Emit(o, WriteShortLE(e.GUID));
 		Emit(o, WriteShortLE(e.ConditionRef));
-		Emit(o, WriteShortLE(e.VariantKey));
+		Emit(o, WriteShortLE(e.RandomTableKey));
 		Emit(o, WriteShortLE(e.CompoundConditionPartner));
 		Emit(o, WriteShortLE(e.Verb));
 		Emit(o, WriteShortLE(e.FormationId));

@@ -315,8 +315,8 @@ internal sealed class TriggerView {
 			ImGui.PopID();
 		}
 
-		if (blockers.Options > 0) {
-			ImGui.TextWrapped(blockers.Options == 1 ? "1 option of a random choice" : $"{blockers.Options} options of random choices");
+		if (blockers.Templates > 0) {
+			ImGui.TextWrapped(blockers.Templates == 1 ? "1 template of a random table" : $"{blockers.Templates} templates of random tables");
 		}
 
 		if (blockers.UnrunOrders > 0) {

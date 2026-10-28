@@ -3,12 +3,12 @@ namespace HercWorks.Core.Data.File.Msn;
 /// <summary>A run of <paramref name="Count"/> words from <paramref name="First"/> that an overlay copies, skipping each word that reads <paramref name="Unset"/>.</summary>
 public readonly record struct OverlaySpan(int First, int Count, short Unset);
 
-/// <summary>A run of <paramref name="Count"/> words from <paramref name="First"/> that a variant copies from the record it draws.</summary>
+/// <summary>A run of <paramref name="Count"/> words from <paramref name="First"/> that a user copies from the template it picks.</summary>
 public readonly record struct CopySpan(int First, int Count);
 
 /// <summary>
-/// How VSHELL's mission load combines the records of one GUID and copies a drawn variant, per <c>.MSN</c> row: the rules of
-/// docs/retail/formats/msn-mission-file.md#repeated-guids and docs/retail/formats/msn-mission-file.md#variants as tables of
+/// How VSHELL's mission load combines the records of one GUID and copies a picked template, per <c>.MSN</c> row: the rules of
+/// docs/retail/formats/msn-mission-file.md#repeated-guids and docs/retail/formats/msn-mission-file.md#random-tables as tables of
 /// words (the model classes' <c>…Word</c> constants). <see cref="Io.Transform.Common.MissionGenerator"/> merges and copies by
 /// them, and so does <see cref="MissionLayout"/>; <see cref="MsnField.Unset"/> reads its unset value here.
 /// </summary>
@@ -16,8 +16,8 @@ public static class MergeRules {
 	/// <summary>Word 1, <c>0x02</c>: the condition ref of every GUID-keyed row.</summary>
 	public const int ConditionWord = 0x02 / 2;
 
-	/// <summary>Word 2, <c>0x04</c>: the variant key of rows 6, 7, 8 and 12 to 15.</summary>
-	public const int VariantKeyWord = 0x04 / 2;
+	/// <summary>Word 2, <c>0x04</c>: the random table key of rows 6, 7, 8 and 12 to 15.</summary>
+	public const int RandomTableKeyWord = 0x04 / 2;
 
 	/// <summary>Row 8's word 4, its waypoint count, which stands for the count and the list after it in a copy and a supplier.</summary>
 	public const int RouteListWord = 0x08 / 2;
@@ -115,10 +115,10 @@ public static class MergeRules {
 	};
 
 	/// <summary>
-	/// The spans a record of row <paramref name="row"/> with a variant key copies from the record it draws, in the order the
-	/// load copies them; empty for a row with no variant key. Row 8's is <see cref="RouteListWord"/>, its waypoint list.
+	/// The spans a record of row <paramref name="row"/> with a random table key copies from the template it picks, in the order the
+	/// load copies them; empty for a row with no random table key. Row 8's is <see cref="RouteListWord"/>, its waypoint list.
 	/// </summary>
-	public static IReadOnlyList<CopySpan> VariantCopy(int row) => row switch {
+	public static IReadOnlyList<CopySpan> TemplateCopy(int row) => row switch {
 		6 => [new(MapPoint22.XWord, 6)],
 		7 => [new(Heading10.DegreesWord, 1)],
 		8 => [new(RouteListWord, 1)],

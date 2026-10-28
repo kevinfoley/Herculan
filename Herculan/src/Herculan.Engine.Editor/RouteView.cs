@@ -9,8 +9,8 @@ namespace Herculan.Engine.Editor;
 /// with a choice that makes it a group's first order's route (<see cref="OrderEditor"/>), its waypoints, "Start" and then
 /// "Waypoint 1" on, each with its distance from the one before (<see cref="MissionText.Waypoint"/>), and the edits that make a route (<see cref="RouteEditor"/>, <see cref="RoutePlacing"/>): add waypoints after the last,
 /// insert one after the selected one, remove the selected one, close or open the loop, delete the route; the selected
-/// waypoint's X and Y as typed fields (<see cref="PointFields"/>); and, when its waypoints are an option of a random choice,
-/// which one, since an edit changes that option (docs/herculan/handoff-editor-conditions.md#variants).
+/// waypoint's X and Y as typed fields (<see cref="PointFields"/>); and, when its waypoints are an option of a random table,
+/// which one, since an edit changes that option (docs/herculan/handoff-editor-conditions.md#random-tables).
 /// </summary>
 internal sealed class RouteView {
 	// The heads-down map marks the player's route from its second waypoint and at most nine of them
@@ -26,7 +26,7 @@ internal sealed class RouteView {
 	private readonly OrderEditor _orders;
 	private readonly PanelLinks _links;
 	private readonly PointSharers _sharers;
-	private readonly Action<short> _choice;
+	private readonly Action<short> _tableLine;
 
 	// The selected waypoint's point being typed.
 	private readonly PointFields _point = new();
@@ -34,10 +34,10 @@ internal sealed class RouteView {
 	/// <param name="orders">Gives the route to a group, as its first order's route.</param>
 	/// <param name="links">Draws the links to the groups walking it and to what references it.</param>
 	/// <param name="sharers">Lists what else stands on the selected waypoint's point.</param>
-	/// <param name="choice">Draws, for a route GUID whose waypoints are an option of a random choice, which one (<see cref="VariantView.DrawRouteChoice"/>).</param>
+	/// <param name="tableLine">Draws, for a route GUID whose waypoints are an option of a random table, which one (<see cref="RandomTableView.DrawRouteTable"/>).</param>
 	/// <param name="names">What the title names the route by.</param>
 	public RouteView(MissionIndex index, MissionNames names, SelectionState selection, PointMover mover, RouteEditor editor,
-			RoutePlacing placing, OrderEditor orders, PanelLinks links, PointSharers sharers, Action<short> choice) {
+			RoutePlacing placing, OrderEditor orders, PanelLinks links, PointSharers sharers, Action<short> tableLine) {
 		_index = index;
 		_names = names;
 		_selection = selection;
@@ -47,7 +47,7 @@ internal sealed class RouteView {
 		_orders = orders;
 		_links = links;
 		_sharers = sharers;
-		_choice = choice;
+		_tableLine = tableLine;
 	}
 
 	/// <summary>
@@ -168,7 +168,7 @@ internal sealed class RouteView {
 		}
 
 		if (_editor.Shared(guid)) {
-			_choice(guid);
+			_tableLine(guid);
 		}
 
 		if (_placing.IsAppendingTo(guid)) {

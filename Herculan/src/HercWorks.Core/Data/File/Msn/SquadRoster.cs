@@ -162,12 +162,12 @@ public static class SquadRoster {
 	/// <summary>
 	/// A squad HERC of chassis <paramref name="chassis"/> with the weapons <paramref name="weapons"/> and ammunition
 	/// types <paramref name="guidance"/> of its ten slots, as a GUID-only record (<see cref="MissionDocument.Append"/> gives
-	/// it one), unconditioned and drawing no variant. Every other field is <c>TRAIN1.MSN</c>'s player record's, mech 46
-	/// with the alternative it draws resolved: radar active, cruise speed 0, no point or heading of its own, no
+	/// it one), unconditioned and picking from no random table. Every other field is <c>TRAIN1.MSN</c>'s player record's, mech 46
+	/// with the option it picks resolved: radar active, cruise speed 0, no point or heading of its own, no
 	/// out-of-action writes, firing no action, pristine.
 	/// </summary>
 	public static MechRosterEntry144 Machine(short chassis, short[] weapons, short[] guidance) => new() {
-		GUID = -1, ConditionRef = -1, VariantKey = -1, CompoundConditionPartner = -1, AiRadarActive = 1, AiCruiseSpeed = 0,
+		GUID = -1, ConditionRef = -1, RandomTableKey = -1, CompoundConditionPartner = -1, AiRadarActive = 1, AiCruiseSpeed = 0,
 		DeadZone = new short[18], TypeIndex = chassis, WeaponRefs = weapons, PositionRef = -1, HeadingRef = -1, PairCount = 0,
 		OutOfActionReport = Enumerable.Repeat((short)-1, 20).ToArray(), WeaponSecondary = guidance, Constant2 = 2,
 		EngagementActionRef = -1, DefeatActionRef = -1, StartingCondition = 100,

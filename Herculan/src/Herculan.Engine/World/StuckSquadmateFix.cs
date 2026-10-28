@@ -18,7 +18,7 @@ namespace Herculan.Engine.World;
 ///
 /// <para><b>The mission is recognised by its data, not its name</b>, because <c>script.dat</c> names no mission: a
 /// squad machine at the blocked point and a type <c>0x37</c> structure at the vehicle's. Neither the squad's route nor
-/// the outpost carries a variant key, so every load places both the same, and v1.0 and v1.10 place them alike.</para>
+/// the outpost carries a random table key, so every load places both the same, and v1.0 and v1.10 place them alike.</para>
 /// </summary>
 internal static class StuckSquadmateFix {
 	/// <summary>Formation slot 1 of the squad, spread from route 48's first waypoint.</summary>

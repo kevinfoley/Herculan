@@ -7,7 +7,7 @@ namespace HercWorks.Core.Data.File.Msn;
 /// docs/retail/simulation/mission-objectives.md's.
 ///
 /// <para>Every record copies one in a retail practice mission, cited where it is built, with the chosen theater,
-/// zone and time of day put in. Each is unconditioned, draws no variant, and takes the GUID
+/// zone and time of day put in. Each is unconditioned, picks from no random table, and takes the GUID
 /// <see cref="MissionDocument.Append"/> would give it: its row's largest plus one, so 0 for the first record of each
 /// row.</para>
 /// </summary>
@@ -60,14 +60,14 @@ public static class NewMission {
 			Revision = 5,
 			Conditions = [],
 			SettingsPatches = [Settings(theater, zone, night)],
-			Variants = [],
+			MovieChoices = [],
 			Texts = [Text()],
 			DebriefBytes = [],
 			Points = Points(zoneWidth, zoneHeight),
 			// TRAIN1.MSN's row-7 record 45, a heading of 0 degrees, which faces the nav point: the first leg runs along +y.
-			Headings = [new Heading10 { GUID = heading, ConditionRef = -1, VariantKey = -1, Unk06 = -1, Degrees = 0 }],
+			Headings = [new Heading10 { GUID = heading, ConditionRef = -1, RandomTableKey = -1, Unk06 = -1, Degrees = 0 }],
 			// TRAIN1.MSN's route 10, cut to its first leg.
-			WaypointGroups = [new WaypointGroup { GUID = route, ConditionRef = -1, VariantKey = -1, Unk06 = -1, Waypoints = [StartPoint, NavPoint] }],
+			WaypointGroups = [new WaypointGroup { GUID = route, ConditionRef = -1, RandomTableKey = -1, Unk06 = -1, Waypoints = [StartPoint, NavPoint] }],
 			TriggerAreas = [],
 			Actions = [],
 			ActionTimers = [],
@@ -78,7 +78,7 @@ public static class NewMission {
 			// patrol is finished once its route has no waypoint after the cursor (Group_IsOrderComplete (004239fc)),
 			// which the player's own arrival steps (docs/retail/simulation/player-waypoints.md).
 			Orders = [new MissionOrder22 {
-				GUID = order, ConditionRef = -1, VariantKey = -1, CompoundConditionPartner = -1, Verb = 3, FormationId = 0,
+				GUID = order, ConditionRef = -1, RandomTableKey = -1, CompoundConditionPartner = -1, Verb = 3, FormationId = 0,
 				PointRef = -1, RouteRef = route, SubjectKind = -1, SubjectRef = -1, ActionRef = -1,
 			}],
 			Groups = [PlayerSquad(group, mech, heading, route, order)],
@@ -134,13 +134,13 @@ public static class NewMission {
 		int dx = zoneWidth / 2 - (corners.Min(p => p.X) + corners.Max(p => p.X)) / 2;
 		int dy = zoneHeight / 2 - (corners.Min(p => p.Y) + corners.Max(p => p.Y)) / 2;
 		return Train1Points.Select((p, i) => new MapPoint22 {
-			GUID = (short)i, ConditionRef = -1, VariantKey = -1, Unk06 = -1, SumFlag = 0, X = p.X + dx, Y = p.Y + dy, Z = 0,
+			GUID = (short)i, ConditionRef = -1, RandomTableKey = -1, Unk06 = -1, SumFlag = 0, X = p.X + dx, Y = p.Y + dy, Z = 0,
 		}).ToArray();
 	}
 
 	/// <summary>
-	/// <c>TRAIN1.MSN</c>'s player record, mech 46, with the variant it draws resolved: its key 43 names one table whose
-	/// bound is 1, so every load copies the one alternative, an OUTLAW (type 0) with weapon 8 in slots 0 to 2 and
+	/// <c>TRAIN1.MSN</c>'s player record, mech 46, with the option it picks resolved: its key 43 names one table whose
+	/// bound is 1, so every load copies the one template, an OUTLAW (type 0) with weapon 8 in slots 0 to 2 and
 	/// ammunition type 5 throughout (<see cref="SquadRoster.Machine"/>). Written whole, as a GUID-only record.
 	/// </summary>
 	private static MechRosterEntry144 PlayerMachine(short guid) {

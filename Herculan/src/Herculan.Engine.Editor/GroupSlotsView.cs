@@ -22,7 +22,7 @@ namespace Herculan.Engine.Editor;
 /// <see cref="RosterTypeEditor"/>; or "Empty", which deletes it as its own Delete does (<see cref="ObjectDeleter"/>), refused as
 /// that is. An empty slot's choice of the kind's types adds one there: a herc (<see cref="HercPlacer.RequestJoin"/>), a flyer
 /// (<see cref="FlyerPlacer.RequestJoin"/>), or a structure or ground vehicle (<see cref="StructurePlacer.RequestJoin"/>). A
-/// member whose type is picked by a random choice keeps that type here: its own view (<see cref="RosterFitView"/>) says where a
+/// member whose type is picked by a random table keeps that type here: its own view (<see cref="RosterFitView"/>) says where a
 /// change goes. Every edit waits for the frame's ImGui to be rendered.</para>
 /// </summary>
 internal sealed class GroupSlotsView {
@@ -146,8 +146,8 @@ internal sealed class GroupSlotsView {
 		var kind = UnitTypeCatalog.KindOf(group.Kind, isVehicle);
 		bool herc = key.Row == MechRow;
 		string? fixedType = herc ? _fitter.WhyFixed(key.Guid) : _types.WhyFixed(key.Row, key.Guid);
-		string? drawn = (herc ? _fitter.DrawnAlternative(key.Guid) : _types.DrawnAlternative(key.Row, key.Guid)) != null
-			? "Its type is picked by a random choice: change it in its own view."
+		string? drawn = (herc ? _fitter.PickedTemplate(key.Guid) : _types.PickedTemplate(key.Row, key.Guid)) != null
+			? "Its type is picked by a random table: change it in its own view."
 			: null;
 		var blockers = sceneObject != null ? _deleter.BlockersOf(sceneObject) : null;
 		string? noEmpty = blockers == null ? "It is not in the scene."
@@ -170,7 +170,7 @@ internal sealed class GroupSlotsView {
 					if (herc) {
 						_fitter.RequestChassis(key.Guid, type);
 					} else {
-						_types.RequestType(key.Row, key.Guid, type, alternative: false);
+						_types.RequestType(key.Row, key.Guid, type, toTemplate: false);
 					}
 				}
 			}

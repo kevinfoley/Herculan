@@ -70,7 +70,7 @@ internal sealed class RouteEditor {
 			: null;
 	}
 
-	/// <summary>Whether <paramref name="route"/>'s list is a variant's, shared by every route that can draw it.</summary>
+	/// <summary>Whether <paramref name="route"/>'s list is a template's, shared by every route that can pick it.</summary>
 	public bool Shared(short route) => WhyFixed(route) == null && _source.WaypointsShared(route);
 
 	/// <summary>Why no waypoint can be inserted after waypoint <paramref name="waypoint"/> of <paramref name="route"/>, or null.</summary>

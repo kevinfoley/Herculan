@@ -43,14 +43,14 @@ public static class FlyerGroups {
 
 	/// <summary>
 	/// A flyer of <c>nam\FLYERS.NAM</c> type <paramref name="type"/>, as a GUID-only record (<see cref="MissionDocument.Append"/>
-	/// gives it one), unconditioned and drawing no variant: no point or heading of its own (84 of 84 name none), firing no
+	/// gives it one), unconditioned and picking from no random table: no point or heading of its own (84 of 84 name none), firing no
 	/// action (no engaged action in 84, no defeated action in 60) and writing no counter (84 of 84).
 	/// </summary>
 	public static FlyerRosterEntry102 Machine(short type) {
 		var flags = new short[20];
 		flags[0] = FlagSpanFirst;
 		return new FlyerRosterEntry102 {
-			GUID = -1, ConditionRef = -1, VariantKey = -1, Unk06 = -1, FlagSpan = flags, PositionRef = -1, HeadingRef = -1,
+			GUID = -1, ConditionRef = -1, RandomTableKey = -1, Unk06 = -1, FlagSpan = flags, PositionRef = -1, HeadingRef = -1,
 			TypeIndex = type, PairCount = 0, OutOfActionReport = NewGroups.Unset(20), EngagementActionRef = -1,
 			DefeatActionRef = -1, UnkVal_100 = Constant100,
 		};

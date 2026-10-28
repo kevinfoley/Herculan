@@ -3,7 +3,7 @@ namespace HercWorks.Core.Data.File.Msn;
 /// <summary>
 /// The record edits <see cref="HercGroups"/>, <see cref="FlyerGroups"/> and <see cref="VehicleGroups"/> share: a new group
 /// of one member standing on a route of one waypoint and given one order on it, and a member joining a group. Each new
-/// record is unconditioned, draws no variant and takes a new GUID; the group's fields take the value most retail groups of
+/// record is unconditioned, picks from no random table and takes a new GUID; the group's fields take the value most retail groups of
 /// each kind carry, counted with <c>HercWorks.Query</c> over the raw <c>.MSN</c> files with no condition applied: the 433
 /// row-16 records of herc groups outside the squad naming a member, the 76 of flyer groups naming a member
 /// (<c>values --row 16 --kind flyer</c>), and the 12 of structure groups whose every member is a ground vehicle

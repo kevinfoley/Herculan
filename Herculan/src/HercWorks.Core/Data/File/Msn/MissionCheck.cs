@@ -105,7 +105,7 @@ public enum MissionCheckKind {
 /// <param name="RefersTo">For a <see cref="MissionCheckKind.MissingRecord"/>, the row the ref names; null for a subject of a kind with no row.</param>
 /// <param name="InSomeVersions">
 /// Whether only some versions of the mission have it: a record of the GUID under another condition than its base's, or an
-/// option of a random choice other than the one the layout shows.
+/// option of a random table other than the one the layout shows.
 /// </param>
 public sealed record MissionCheckFinding(MissionCheckKind Kind, int Row, int Key, string Message, int Value = 0,
 		int? RefersTo = null, bool InSomeVersions = false) {
@@ -124,8 +124,8 @@ public sealed record MissionCheckFinding(MissionCheckKind Kind, int Row, int Key
 ///
 /// <para>Each thing of rows 6 to 16 is checked as its base (<see cref="LayoutEntry.Fields"/>), then as each record of its
 /// GUID under another condition sets it over the base (<see cref="LayoutVariation"/>; the record whole for a row that
-/// replaces), then with each option of a random choice its records draw other than the one the layout shows copied in
-/// (<see cref="LayoutDraw"/>); a problem only those versions have is marked <see cref="MissionCheckFinding.InSomeVersions"/>.
+/// replaces), then with each option of a random table its records pick other than the one the layout shows copied in
+/// (<see cref="LayoutPick"/>); a problem only those versions have is marked <see cref="MissionCheckFinding.InSomeVersions"/>.
 /// A ref counts as missing when no record of the row it names carries the GUID at all; one whose records are present only
 /// under other conditions is not checked.</para>
 /// </summary>
@@ -147,7 +147,7 @@ public static class MissionCheck {
 
 	/// <summary>
 	/// Runs every check over <paramref name="layout"/>, the layout of <paramref name="file"/>, whose records the options of its
-	/// random choices are read from. <paramref name="isInvulnerable"/> answers which <c>BASES.DAT</c> types are invulnerable,
+	/// random tables are read from. <paramref name="isInvulnerable"/> answers which <c>BASES.DAT</c> types are invulnerable,
 	/// for <see cref="MissionCheckKind.NeverWrittenOff"/>, which is not checked without it.
 	/// </summary>
 	public static List<MissionCheckFinding> Run(MissionLayout layout, MissionFile file, Func<int, bool>? isInvulnerable = null) {
@@ -258,23 +258,23 @@ public static class MissionCheck {
 			short guid = entry.Guid;
 			Condition(row, guid, _codec.Words(entry.Fields)[MergeRules.ConditionWord], "ConditionRef", false);
 			Record(row, guid, entry.Fields, false);
-			foreach (var draw in entry.Presence.Draws) {
-				Options(row, guid, entry.Fields, draw);
+			foreach (var pick in entry.Presence.Picks) {
+				Options(row, guid, entry.Fields, pick);
 			}
 
 			foreach (var variation in entry.Variations) {
 				Condition(row, guid, variation.Condition, $"record {variation.Record.Index}'s ConditionRef", true);
 				var version = MergeRules.Replaces(row) ? variation.Fields : Overlaid(row, entry.Fields, variation.Fields, variation.Words);
 				Record(row, guid, version, true);
-				if (variation.Draw != null) {
-					Options(row, guid, version, variation.Draw);
+				if (variation.Pick != null) {
+					Options(row, guid, version, variation.Pick);
 				}
 			}
 		}
 
-		// Each option of <draw> other than the one shown, copied into <under> as the load copies a drawn option.
-		private void Options(int row, short guid, MapObject under, LayoutDraw draw) {
-			foreach (var option in draw.Options.Skip(1)) {
+		// Each option of <pick> other than the one shown, copied into <under> as the load copies a picked option's template.
+		private void Options(int row, short guid, MapObject under, LayoutPick pick) {
+			foreach (var option in pick.Options.Skip(1)) {
 				if (option.Record is { } id && MsnRows.Get(file, id.Row).GetValue(id.Index) is MapObject record) {
 					Record(row, guid, WithOption(row, under, record), true);
 				}
@@ -294,7 +294,7 @@ public static class MissionCheck {
 		private MapObject WithOption(int row, MapObject under, MapObject option) {
 			var words = _codec.Words(under);
 			var from = _codec.Words(option);
-			foreach (var span in MergeRules.VariantCopy(row)) {
+			foreach (var span in MergeRules.TemplateCopy(row)) {
 				if (row == RouteRow) {
 					words = [.. words[..span.First], .. from[span.First..]];
 				} else {

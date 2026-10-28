@@ -206,7 +206,7 @@ internal sealed class SceneSync {
 	}
 
 	// The object built for <key>, of the placement's type, weapon fit and starting condition, and not yet placed by this sync.
-	// A type that differs is a chassis changed, or a variant table set, a fit that differs a fit changed (MachineFitter), and
+	// A type that differs is a chassis changed, or a random table set, a fit that differs a fit changed (MachineFitter), and
 	// a condition that differs one set (StartingConditionEditor); each needs an object of its own, since a mech's loadout and
 	// a structure's damage are built with it.
 	private SceneObject? Reuse(ObjectKey key, MissionPlacement placement, HashSet<object> placedNow) {
@@ -263,8 +263,8 @@ internal sealed class SceneSync {
 /// (<see cref="StartingConditionEditor"/>, <see cref="HeadingEditor"/>), a squad edit (<see cref="SquadEditor"/>), a
 /// route edit (<see cref="RouteEditor"/>), a trigger-area edit (<see cref="AreaEditor"/>), an order edit (<see cref="OrderEditor"/>),
 /// an action or wiring edit (<see cref="ActionEditor"/>), a timer edit (<see cref="TimerEditor"/>), a condition edit
-/// (<see cref="ConditionEditor"/>), a Present when set (<see cref="PresenceEditor"/>), a variant table edit
-/// (<see cref="VariantEditor"/>), an objective edit (<see cref="ObjectiveEditor"/>) or a text edit (<see cref="MissionTextEditor"/>):
+/// (<see cref="ConditionEditor"/>), a Present when set (<see cref="PresenceEditor"/>), a random table edit
+/// (<see cref="RandomTableEditor"/>), an objective edit (<see cref="ObjectiveEditor"/>) or a text edit (<see cref="MissionTextEditor"/>):
 /// the rows and text it changed, put back on undo and redo through <see cref="SceneSync"/>.
 /// </summary>
 internal sealed record RecordsEdit(SceneSync Sync, MsnEdit Change) : IEditorEdit {

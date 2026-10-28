@@ -62,15 +62,15 @@ public class MissionProvenanceTests {
 		Assert.Equal(script.Orders[0].FormationId, file.Orders![formation.Index].FormationId);
 	}
 
-	/// <summary>Catches a variant copy that is not reported, or is resolved against the wrong source slot.</summary>
+	/// <summary>Catches a template copy that is not reported, or is resolved against the wrong source slot.</summary>
 	[Fact]
-	public void VariantCopyNamesTheSourceRecord() {
+	public void TemplateCopyNamesTheSourceRecord() {
 		var msn = new SyntheticMsn();
 		msn.Add(1, Condition(guid: 10, condition: -1, type: 3, lower: 7, upper: 0, operand: 6));
 		msn.Add(1, Condition(guid: 11, condition: 10, type: 2, lower: 0, upper: 5, operand: 0));
 		msn.Add(6, Point(-1, 100));
 		msn.Add(6, Point(-1, 500, condition: 11));
-		msn.Add(6, Point(1, 0, variant: 7));
+		msn.Add(6, Point(1, 0, tableKey: 7));
 		var (generator, file, script) = Generate(msn);
 
 		var slot = generator.Provenance.Slot(1, 0)!;
@@ -78,7 +78,7 @@ public class MissionProvenanceTests {
 		Assert.Equal(new MsnRecordId(6, 2), x.Record);
 		Assert.Equal(script.Coordinates[0].X, file.Points![x.CopiedFrom!.Value.Index].X);
 		Assert.Null(slot.Word(MapObject.GUIDWord).CopiedFrom);
-		var copy = Assert.Single(slot.VariantCopies);
+		var copy = Assert.Single(slot.TemplateCopies);
 		Assert.Equal(x.CopiedFrom, copy.Source);
 		Assert.Contains(MapPoint22.ZWord + 1, copy.Words);
 	}

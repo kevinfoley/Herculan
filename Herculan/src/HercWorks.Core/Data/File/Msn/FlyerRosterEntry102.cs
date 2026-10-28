@@ -12,11 +12,11 @@ public class FlyerRosterEntry102 : MapObject {
 	public const int ConditionRefWord = 0x02 / 2;
 
 	/// <summary>
-	/// 0x04 — variant key: unless <c>-1</c>, everything from 0x08 to 0x65 except <see cref="PairCount"/>
-	/// is copied from a randomly picked variant (docs/retail/formats/msn-mission-file.md#variants).
+	/// 0x04 — random table key: unless <c>-1</c>, everything from 0x08 to 0x65 except <see cref="PairCount"/>
+	/// is copied from the template of a randomly picked option (docs/retail/formats/msn-mission-file.md#random-tables).
 	/// </summary>
-	public short VariantKey { get; set; }
-	public const int VariantKeyWord = 0x04 / 2;
+	public short RandomTableKey { get; set; }
+	public const int RandomTableKeyWord = 0x04 / 2;
 
 	/// <summary>0x06 — always -1 in retail; the load does not read it.</summary>
 	public short Unk06 { get; set; }
@@ -37,7 +37,7 @@ public class FlyerRosterEntry102 : MapObject {
 	public short TypeIndex { get; set; }
 	public const int TypeIndexWord = 0x34 / 2;
 
-	/// <summary>0x36 — how many of the pairs in <see cref="OutOfActionReport"/> are filled, from the front. Not exported to <c>script.dat</c>; a variant does not copy it.</summary>
+	/// <summary>0x36 — how many of the pairs in <see cref="OutOfActionReport"/> are filled, from the front. Not exported to <c>script.dat</c>; a template copy leaves it out.</summary>
 	public short PairCount { get; set; }
 
 	/// <summary>

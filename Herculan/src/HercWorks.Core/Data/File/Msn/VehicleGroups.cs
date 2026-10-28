@@ -55,12 +55,12 @@ public static class VehicleGroups {
 
 	/// <summary>
 	/// A ground vehicle of <c>BASES.DAT</c> type <paramref name="type"/>, as a GUID-only record
-	/// (<see cref="MissionDocument.Append"/> gives it one), unconditioned and drawing no variant (108 of 108): no point or
+	/// (<see cref="MissionDocument.Append"/> gives it one), unconditioned and picking from no random table (108 of 108): no point or
 	/// heading of its own (105 of 108 name neither), firing no action (no engaged or defeated action in 108) and writing no
 	/// counter (53 of 108; each of the other 55 writes a counter of its own mission's), its word at <c>0x06</c> <c>-1</c> (108).
 	/// </summary>
 	public static BaseRosterEntry62 Machine(short type) => new() {
-		GUID = -1, ConditionRef = -1, VariantKey = -1, Unk06 = -1, TypeIndex = type, PositionRef = -1, HeadingRef = -1,
+		GUID = -1, ConditionRef = -1, RandomTableKey = -1, Unk06 = -1, TypeIndex = type, PositionRef = -1, HeadingRef = -1,
 		PairCount = 0, OutOfActionReport = NewGroups.Unset(20), EngagementActionRef = -1, DefeatActionRef = -1,
 		StartingCondition = StartingCondition,
 	};

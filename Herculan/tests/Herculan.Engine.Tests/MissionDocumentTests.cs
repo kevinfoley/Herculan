@@ -95,17 +95,17 @@ public class MissionDocumentTests {
 	}
 
 	/// <summary>
-	/// Catches a variant-copied field written into the record that drew the variant, where the copy overwrites it at the
-	/// next generation, or into the alternative, which every record drawing it shares.
+	/// Catches a template-copied field written into the record that picked the template, where the copy overwrites it at
+	/// the next generation, or into the template, which every record picking it shares.
 	/// </summary>
 	[Fact]
-	public void VariantCopiedFieldIsWrittenInAnOverlayRecord() {
+	public void TemplateCopiedFieldIsWrittenInAnOverlayRecord() {
 		var document = Open(new SyntheticMsn()
 			.Add(1, Condition(guid: 10, condition: -1, type: 3, lower: 7, upper: 0, operand: 1))
 			.Add(1, Condition(guid: 11, condition: 10, type: 2, lower: 0, upper: 5, operand: 0))
 			.Add(6, Point(1, 100))
 			.Add(14, Base(-1, position: 1, condition: 11))
-			.Add(14, Base(2, variant: 7)));
+			.Add(14, Base(2, tableKey: 7)));
 
 		document.Change(() => {
 			document.PlacePoint(-1, 1, 900, 0, 0, out short point);
@@ -122,16 +122,16 @@ public class MissionDocumentTests {
 
 	/// <summary>
 	/// Catches row 12's overlay record built with its weapon fit or ammunition types at anything but the merge's unset values
-	/// (<c>-1</c> and 5), so changing a variant-keyed herc's chassis — as the training missions' player machines are — would
-	/// also overwrite the fit and a launcher's guidance it drew.
+	/// (<c>-1</c> and 5), so changing a keyed herc's chassis — as the training missions' player machines are — would
+	/// also overwrite the fit and a launcher's guidance it picked.
 	/// </summary>
 	[Fact]
-	public void VariantKeyedHercKeepsTheFitItDrewWhenItsChassisIsOverlaid() {
+	public void KeyedHercKeepsTheFitItPickedWhenItsChassisIsOverlaid() {
 		var document = Open(new SyntheticMsn()
 			.Add(1, Condition(guid: 10, condition: -1, type: 3, lower: 7, upper: 0, operand: 1))
 			.Add(1, Condition(guid: 11, condition: 10, type: 2, lower: 0, upper: 5, operand: 0))
 			.Add(12, Mech(-1, type: 0, condition: 11, weapons: [15, 8, 8], ammo: [1]))
-			.Add(12, Mech(2, type: -1, variant: 7)));
+			.Add(12, Mech(2, type: -1, tableKey: 7)));
 
 		document.SetField(MsnField.MechType, 2, 4);
 
@@ -144,7 +144,7 @@ public class MissionDocumentTests {
 	}
 
 	/// <summary>
-	/// Catches each overlaid field appended as a record of its own, so one chassis change on a variant-keyed herc grows its
+	/// Catches each overlaid field appended as a record of its own, so one chassis change on a keyed herc grows its
 	/// row by a record per mount.
 	/// </summary>
 	[Fact]
@@ -153,7 +153,7 @@ public class MissionDocumentTests {
 			.Add(1, Condition(guid: 10, condition: -1, type: 3, lower: 7, upper: 0, operand: 1))
 			.Add(1, Condition(guid: 11, condition: 10, type: 2, lower: 0, upper: 5, operand: 0))
 			.Add(12, Mech(-1, type: 0, condition: 11, weapons: [15, 8, 8], ammo: [1]))
-			.Add(12, Mech(2, type: -1, variant: 7)));
+			.Add(12, Mech(2, type: -1, tableKey: 7)));
 
 		document.Change(() => {
 			document.SetField(MsnField.MechType, 2, 4);
@@ -174,7 +174,7 @@ public class MissionDocumentTests {
 			.Add(14, Base(2))
 			.Add(14, Base(0)));
 
-		document.Append(14, new BaseRosterEntry62 { ConditionRef = -1, VariantKey = -1, PositionRef = -1, HeadingRef = -1 },
+		document.Append(14, new BaseRosterEntry62 { ConditionRef = -1, RandomTableKey = -1, PositionRef = -1, HeadingRef = -1 },
 			out short guid);
 
 		Assert.DoesNotContain(document.Mission.Bases!.SkipLast(1), record => record.GUID == guid);
@@ -251,26 +251,26 @@ public class MissionDocumentTests {
 		Assert.Single(document.Script.Coordinates);
 	}
 
-	/// <summary>Catches one roll carried from generation to generation, which draws other variants after an edit and reshuffles the mission.</summary>
+	/// <summary>Catches one roll carried from generation to generation, which picks other options after an edit and reshuffles the mission.</summary>
 	[Fact]
-	public void EveryGenerationDrawsTheSameVariants() {
+	public void EveryGenerationPicksTheSameOptions() {
 		var document = Open(new SyntheticMsn()
 				.Add(1, Condition(guid: 10, condition: -1, type: 3, lower: 7, upper: 0, operand: 2))
 				.Add(1, Condition(guid: 11, condition: 10, type: 2, lower: 0, upper: 0, operand: 0))
 				.Add(1, Condition(guid: 12, condition: 10, type: 2, lower: 1, upper: 1, operand: 0))
 				.Add(6, Point(-1, 100, condition: 11))
 				.Add(6, Point(-1, 500, condition: 12))
-				.Add(6, Point(1, 0, variant: 7))
+				.Add(6, Point(1, 0, tableKey: 7))
 				.Add(6, Point(2, 0)),
 			() => {
 				int draws = 0;
 				return bound => draws++ % bound;
 			});
-		int drawn = document.Script.Coordinates[0].X;
+		int picked = document.Script.Coordinates[0].X;
 
 		document.SetPoint(2, 50, 0, 0);
 
-		Assert.Equal(drawn, document.Script.Coordinates[0].X);
+		Assert.Equal(picked, document.Script.Coordinates[0].X);
 	}
 
 	/// <summary>

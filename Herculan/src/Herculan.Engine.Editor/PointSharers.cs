@@ -7,7 +7,7 @@ namespace Herculan.Engine.Editor;
 /// What else stands on a point a drag moves (docs/herculan/handoff-editor-placement.md#how-positions-are-held), listed for
 /// the group, route and trigger area views: "Also on this spot, moving with it:", then each sharer by its identity in the
 /// layout as a link, one per line, and how to move the dragged thing alone. The fields come from <see cref="PointMover"/>'s
-/// <c>SharersOf</c>, every record whatever its condition; a field of an option of a random choice (GUID <c>-1</c>) and an
+/// <c>SharersOf</c>, every record whatever its condition; a field of a random table's template (GUID <c>-1</c>) and an
 /// order no group runs are counted, as nothing selects them.
 /// </summary>
 internal sealed class PointSharers {
@@ -41,7 +41,7 @@ internal sealed class PointSharers {
 		ImGui.PushID(heading);
 		ImGui.TextWrapped(heading);
 		var drawn = new HashSet<(int Row, short Guid, int Part)>();
-		int options = 0, unrun = 0;
+		int templates = 0, unrun = 0;
 		foreach (var sharer in sharers) {
 			// Row 17 has no GUID: an objective is its index.
 			if (sharer.Record.Row == ObjectiveRow) {
@@ -54,7 +54,7 @@ internal sealed class PointSharers {
 
 			short guid = _source.RecordAt(sharer.Record)?.GUID ?? -1;
 			if (guid == -1) {
-				options++;
+				templates++;
 				continue;
 			}
 
@@ -98,8 +98,8 @@ internal sealed class PointSharers {
 			}
 		}
 
-		if (options > 0) {
-			ImGui.TextWrapped(options == 1 ? "1 option of a random choice" : $"{options} options of random choices");
+		if (templates > 0) {
+			ImGui.TextWrapped(templates == 1 ? "1 template of a random table" : $"{templates} templates of random tables");
 		}
 
 		if (unrun > 0) {

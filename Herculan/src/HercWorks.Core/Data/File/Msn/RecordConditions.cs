@@ -60,10 +60,10 @@ public readonly record struct PresenceRecord(MsnRecordId Record, short Condition
 /// (docs/retail/formats/msn-mission-file.md#repeated-guids). When every record carries the same condition, the set writes
 /// all of them (<see cref="MissionDocument.RewriteEvery{T}"/>). When they differ the set is refused
 /// (<see cref="WhyFixed"/>): writing one alone could leave another creating the slot, every field the first supplied unset,
-/// in a state where the first is absent. GUID <c>-1</c> records, the variant alternatives, are other records and are never
-/// written. A variant-keyed record's condition is its own word: rows 12 to 15 copy from <c>0x08</c> on
-/// (docs/retail/formats/msn-mission-file.md#variants), so the record drawing the variant is the one written. Whether it
-/// survives decides whether it draws, so a set on one moves every later draw in the states it changes.</item>
+/// in a state where the first is absent. GUID <c>-1</c> records, the templates, are other records and are never
+/// written. A keyed record's condition is its own word: rows 12 to 15 copy from <c>0x08</c> on
+/// (docs/retail/formats/msn-mission-file.md#random-tables), so the record picking from the table is the one written. Whether
+/// it survives decides whether it picks, so a set on one moves every later draw in the states it changes.</item>
 /// <item>An order another group slot runs too is first given to the slot as its own copy (<see cref="GroupOrders"/>), as
 /// every order edit is.</item>
 /// <item>A row-17 record has no GUID and is written itself (<see cref="MissionDocument.Rewrite{T}"/>).</item>
@@ -73,8 +73,8 @@ public readonly record struct PresenceRecord(MsnRecordId Record, short Condition
 /// members (docs/retail/shell/main-menu.md#starting-a-practice-mission), and the editor leaves their presence alone, as it
 /// leaves their wiring (the editor's choice).</item>
 /// <item>The conditions offered are flag tests and ranges over a draw (<see cref="Offered"/>). A draw holds whenever it is
-/// made, and a variant table and the ranges over it are what variant keys draw by, which the editor does not author
-/// (<see cref="ConditionEditing.InVariantTable"/>).</item>
+/// made, and a random table and the ranges over it are what random table keys pick by, which the editor does not author
+/// (<see cref="ConditionEditing.InRandomTable"/>).</item>
 /// <item>A Present when stated as clauses, which builds and cleans up the conditions behind it, is <see cref="PresenceRules"/>.</item>
 /// </list>
 /// </summary>
@@ -247,13 +247,13 @@ public static class RecordConditions {
 			.ToList();
 	}
 
-	/// <summary>Whether a record of <paramref name="target"/> draws a variant: its records' variant keys are set.</summary>
-	public static bool DrawsVariant(MissionDocument document, PresenceTarget target) =>
+	/// <summary>Whether a record of <paramref name="target"/> picks from a random table: its records' random table keys are set.</summary>
+	public static bool PicksFromRandomTable(MissionDocument document, PresenceTarget target) =>
 		Records(document, target).Any(record => document.RecordAt(record.Record) switch {
-			MechRosterEntry144 mech => mech.VariantKey != -1,
-			FlyerRosterEntry102 flyer => flyer.VariantKey != -1,
-			BaseRosterEntry62 structure => structure.VariantKey != -1,
-			MissionOrder22 order => order.VariantKey != -1,
+			MechRosterEntry144 mech => mech.RandomTableKey != -1,
+			FlyerRosterEntry102 flyer => flyer.RandomTableKey != -1,
+			BaseRosterEntry62 structure => structure.RandomTableKey != -1,
+			MissionOrder22 order => order.RandomTableKey != -1,
 			_ => false,
 		});
 

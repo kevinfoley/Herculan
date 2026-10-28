@@ -95,7 +95,7 @@ public sealed record PresenceReading(PresenceRule? Rule, string? WhyFixed, IRead
 /// <list type="bullet">
 /// <item><b>Reading.</b> The chain from the target's condition: a range over a draw (the chance), then the draw's requirement,
 /// then each flag test's requirement in turn, every one of them a flag test. Anything else is not clauses, and the reading
-/// says why: a variant table or a range over one (a random choice's option), a range over a draw another record or range
+/// says why: a random table or a range over one (a random table's option), a range over a draw another record or range
 /// also uses (a shared roll, which makes records appear together), a GUID row 1 carries twice, a type the load does not
 /// read, a test that never holds, or a draw or range inside the chain.</item>
 /// <item><b>Writing</b>, as one <see cref="MissionDocument.Change"/>: the chain is built innermost first, each record requiring
@@ -107,7 +107,7 @@ public sealed record PresenceReading(PresenceRule? Rule, string? WhyFixed, IRead
 /// the target then names the outermost (<see cref="RecordConditions"/>' write).</item>
 /// <item><b>Cleanup.</b> Each condition of the old chain, outermost first, is removed once nothing references it
 /// (<see cref="ConditionEditing.Namers"/>), a draw the change orphaned included. Adding or removing a draw changes every
-/// later draw and variant pick (docs/herculan/handoff-editor-document.md#conditions-and-variants).</item>
+/// later draw and random table roll (docs/herculan/handoff-editor-document.md#conditions-and-random-tables).</item>
 /// </list>
 /// </summary>
 public static class PresenceRules {
@@ -116,7 +116,7 @@ public static class PresenceRules {
 	/// <summary>Why a reading is not clauses, in the editor's words.</summary>
 	private const string Missing = "It depends on a condition the mission does not have, so it is never present.";
 	private const string Twice = "A rule it depends on is carried twice in the file, so it is set under Advanced.";
-	private const string Option = "It is one option of a random choice, so it is set under Advanced.";
+	private const string Template = "It is a template of a random table, so it is set under Advanced.";
 	private const string Shared = "It shares its roll with other records, so its chance is set under Advanced.";
 	private const string Unknown = "Its rule is of a kind these clauses cannot show, so it is set under Advanced.";
 	private const string Never = "One of its tests never holds, so it is set under Advanced.";
@@ -263,7 +263,7 @@ public static class PresenceRules {
 		return change;
 	}
 
-	// Why <guid> cannot be a link of a chain: deleted, carried twice, a random choice's, or of no type the load reads.
+	// Why <guid> cannot be a link of a chain: deleted, carried twice, a random table's, or of no type the load reads.
 	private static string? Why(MissionDocument document, short guid) {
 		if (ConditionEditing.IndexOf(document, guid) == null) {
 			return Missing;
@@ -273,7 +273,7 @@ public static class PresenceRules {
 			return Twice;
 		}
 
-		return ConditionEditing.InVariantTable(document, guid) ? Option
+		return ConditionEditing.InRandomTable(document, guid) ? Template
 			: ConditionEditing.WhyFixed(document, guid) != null ? Unknown
 			: null;
 	}

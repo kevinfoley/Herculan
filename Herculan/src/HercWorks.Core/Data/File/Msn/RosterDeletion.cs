@@ -5,7 +5,7 @@ namespace HercWorks.Core.Data.File.Msn;
 /// <summary>The <c>.MSN</c> records that name a roster object or a group as their subject or target, by kind.</summary>
 /// <param name="Objectives">Row-17 objectives whose subject it is.</param>
 /// <param name="Actions">Row-10 actions whose target it is (types 7 to 10).</param>
-/// <param name="Orders">Row-15 orders whose subject it is, variant alternatives included.</param>
+/// <param name="Orders">Row-15 orders whose subject it is, templates included.</param>
 public sealed record MsnNamers(IReadOnlyList<MsnRecordId> Objectives, IReadOnlyList<MsnRecordId> Actions,
 		IReadOnlyList<MsnRecordId> Orders) {
 	/// <summary>Whether any record names it.</summary>
@@ -19,7 +19,7 @@ public sealed record MsnNamers(IReadOnlyList<MsnRecordId> Objectives, IReadOnlyL
 /// <param name="Namers">The objectives, actions and orders naming it.</param>
 /// <param name="FiredActions">
 /// The row-10 records of the actions it fires when engaged or defeated: those its own records name, and those of every
-/// variant alternative it can draw.
+/// template it can pick.
 /// </param>
 /// <param name="MemberOf">The row-16 group GUIDs whose member slots name it under the group's roster.</param>
 /// <param name="EmptiedGroups">
@@ -60,9 +60,9 @@ public sealed record GroupDeleteCheck(bool IsSquad, MsnNamers Namers, int Row,
 /// every row-16 member slot naming it under the group's roster, in every record of the group's GUID. A group left with
 /// no member in any record loses all its row-16 records, and each order it names that no slot of any group names after it
 /// loses its row-15 records. Nothing is renumbered: <c>.MSN</c> refs name GUIDs and the
-/// generation resolves every index again. The variant alternatives a deleted record drew from are GUID <c>-1</c>
-/// records shared by every record drawing them, and stay. Removing a record that draws a variant moves every later
-/// draw (docs/herculan/handoff-editor-document.md#conditions-and-variants).
+/// generation resolves every index again. The templates a deleted record picked from are GUID <c>-1</c>
+/// records shared by every record picking them, and stay. Removing a record that picks from a random table moves every later
+/// draw (docs/herculan/handoff-editor-document.md#conditions-and-random-tables).
 ///
 /// <para>A GUID with no record resolves to <c>-1</c> (<c>Msn_ResolveRow6Ref</c> (<c>00415b44</c>) and its siblings),
 /// so the delete is refused while an objective, an action or an order names the object, or names a group the delete
@@ -247,13 +247,13 @@ public static class RosterDeletion {
 	private static short KindOf(List<MissionGroup164> records) =>
 		records.LastOrDefault(record => record.MemberKind != -1)?.MemberKind ?? records[0].MemberKind;
 
-	// The row-10 records of the actions the object's records, and every alternative they can draw, fire when engaged or
+	// The row-10 records of the actions the object's records, and every template they can pick, fire when engaged or
 	// defeated: the first record of each such GUID. A GUID no record carries resolves to -1 and fires nothing.
 	private static List<MsnRecordId> FiredActions(MissionFile mission, int row, List<RosterRecord> records) {
-		var alternatives = records.Where(record => record.Variant != -1)
-			.SelectMany(record => Alternatives(mission, row, record.Variant));
+		var templates = records.Where(record => record.Key != -1)
+			.SelectMany(record => Templates(mission, row, record.Key));
 		var actionRow = mission.Actions ?? [];
-		return records.Concat(alternatives)
+		return records.Concat(templates)
 			.SelectMany(record => new[] { record.Engaged, record.Defeated })
 			.Where(action => action != -1)
 			.Distinct()
@@ -263,11 +263,11 @@ public static class RosterDeletion {
 			.ToList();
 	}
 
-	// The roster records a record of variant key <variant> can copy from: those whose condition is a type-2 child of a
-	// type-3 condition keyed <variant> (Msn_VariantSourceRow6 (00416120) and its siblings).
-	private static IEnumerable<RosterRecord> Alternatives(MissionFile mission, int row, short variant) {
+	// The roster records a record of random table key <key> can copy from: those whose condition is a type-2 child of a
+	// type-3 condition keyed <key> (Msn_TemplateRow6 (00416120) and its siblings).
+	private static IEnumerable<RosterRecord> Templates(MissionFile mission, int row, short key) {
 		var conditions = mission.Conditions ?? [];
-		var parents = conditions.Where(condition => condition.Type == 3 && condition.FlagIndexOrRangeLower == variant)
+		var parents = conditions.Where(condition => condition.Type == 3 && condition.FlagIndexOrRangeLower == key)
 			.Select(condition => condition.GUID).ToHashSet();
 		var children = conditions.Where(condition => condition.Type == 2 && parents.Contains(condition.ConditionRef))
 			.Select(condition => condition.GUID).ToHashSet();
@@ -278,15 +278,15 @@ public static class RosterDeletion {
 		guid == -1 ? [] : RosterRow(mission, row).Where(record => record.Guid == guid).ToList();
 
 	private static IEnumerable<RosterRecord> RosterRow(MissionFile mission, int row) => row switch {
-		MechRow => (mission.Mechs ?? []).Select(record => new RosterRecord(record.GUID, record.ConditionRef, record.VariantKey,
+		MechRow => (mission.Mechs ?? []).Select(record => new RosterRecord(record.GUID, record.ConditionRef, record.RandomTableKey,
 			record.EngagementActionRef, record.DefeatActionRef)),
-		13 => (mission.Flyers ?? []).Select(record => new RosterRecord(record.GUID, record.ConditionRef, record.VariantKey,
+		13 => (mission.Flyers ?? []).Select(record => new RosterRecord(record.GUID, record.ConditionRef, record.RandomTableKey,
 			record.EngagementActionRef, record.DefeatActionRef)),
-		StructureRow => (mission.Bases ?? []).Select(record => new RosterRecord(record.GUID, record.ConditionRef, record.VariantKey,
+		StructureRow => (mission.Bases ?? []).Select(record => new RosterRecord(record.GUID, record.ConditionRef, record.RandomTableKey,
 			record.EngagementActionRef, record.DefeatActionRef)),
 		_ => throw new ArgumentOutOfRangeException(nameof(row), row, "Rows 12 to 14 are the rosters."),
 	};
 
 	// The words of a roster record the delete reads.
-	private readonly record struct RosterRecord(short Guid, short Condition, short Variant, short Engaged, short Defeated);
+	private readonly record struct RosterRecord(short Guid, short Condition, short Key, short Engaged, short Defeated);
 }

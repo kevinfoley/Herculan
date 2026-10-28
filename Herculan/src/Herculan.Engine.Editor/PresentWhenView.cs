@@ -340,8 +340,8 @@ internal sealed class PresentWhenView {
 			DrawChosen(source, current);
 		}
 
-		if (RecordConditions.DrawsVariant(source, target)) {
-			EditorText.Note("It draws a variant, so where it is absent every later variant pick comes out differently.");
+		if (RecordConditions.PicksFromRandomTable(source, target)) {
+			EditorText.Note("It picks from a random table, so where it is absent every later random table roll comes out differently.");
 		}
 
 		ImGui.Unindent();

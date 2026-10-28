@@ -46,9 +46,9 @@ public class RetailQueryTests {
 
 		// C4_09's GUID 75 starts destroyed when flag 625 is set: a later record with its GUID says so.
 		var guid75 = result.Missions.Single(m => m.Mission == "C4_09").Hits.Single(h => h.Guid == 75);
-		var variant = Assert.Single(guid75.SameGuid);
-		Assert.Equal("flag 625 > 0", variant.Condition);
-		Assert.Equal((short)0, variant.StartingCondition);
+		var overlay = Assert.Single(guid75.SameGuid);
+		Assert.Equal("flag 625 > 0", overlay.Condition);
+		Assert.Equal((short)0, overlay.StartingCondition);
 
 		Assert.Empty(TypeQuery.Run(data, RosterKind.Base, [0x0a]).Missions);
 	}

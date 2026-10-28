@@ -38,15 +38,15 @@ public class ActionEditingTests {
 	}
 
 	/// <summary>
-	/// Catches a missed action-ref field: a group's deployment action, a variant alternative's defeated action (a GUID
+	/// Catches a missed action-ref field: a group's deployment action, a template's defeated action (a GUID
 	/// <c>-1</c> record), a flyer's and a structure's engaged action, and an order's ending action each refuse the delete.
 	/// </summary>
 	[Fact]
 	public void NamersFindEveryFieldThatReferencesAnAction() {
 		var waiting = Group(11, Hercs, position: -1, condition: -1);
 		waiting[MissionGroup164.DeploymentActionRefWord] = 3;
-		var alternative = Mech(-1, type: 0, condition: 41);
-		alternative[MechRosterEntry144.DefeatActionRefWord] = 3;
+		var template = Mech(-1, type: 0, condition: 41);
+		template[MechRosterEntry144.DefeatActionRefWord] = 3;
 		var flyer = Flyer(5);
 		flyer[FlyerRosterEntry102.EngagementActionRefWord] = 3;
 		var structure = Base(6);
@@ -55,7 +55,7 @@ public class ActionEditingTests {
 		order[MissionOrder22.ActionRefWord] = 3;
 		var document = Open(Mission()
 			.Add(10, Action(3, type: 0))
-			.Add(12, alternative)
+			.Add(12, template)
 			.Add(13, flyer)
 			.Add(14, structure)
 			.Add(15, order)
@@ -187,19 +187,19 @@ public class ActionEditingTests {
 	}
 
 	/// <summary>
-	/// Catches a defeated action written into the variant alternative a herc draws, which every herc drawing it shares, rather
-	/// than into an overlay record of the herc's own GUID; and None accepted for a field the variant supplies, which an overlay
+	/// Catches a defeated action written into the template a herc picks, which every herc picking it shares, rather
+	/// than into an overlay record of the herc's own GUID; and None accepted for a field the template supplies, which an overlay
 	/// cannot unset.
 	/// </summary>
 	[Fact]
-	public void AVariantHercsActionGoesIntoAnOverlayRecord() {
-		var alternative = Mech(-1, type: 0, condition: 41);
-		alternative[MechRosterEntry144.DefeatActionRefWord] = 3;
+	public void AKeyedHercsActionGoesIntoAnOverlayRecord() {
+		var template = Mech(-1, type: 0, condition: 41);
+		template[MechRosterEntry144.DefeatActionRefWord] = 3;
 		var document = Open(Mission()
 			.Add(10, Action(3, type: 0))
 			.Add(10, Action(4, type: 0))
-			.Add(12, alternative)
-			.Add(12, Mech(2, type: 0, variant: 7))
+			.Add(12, template)
+			.Add(12, Mech(2, type: 0, tableKey: 7))
 			.Add(16, Orders(Group(11, Hercs, position: -1, condition: -1, 2), 21))
 			.Add(15, GroupOrder(21, Squad)));
 		var field = MsnField.RosterAction(12, defeated: true);
@@ -270,8 +270,8 @@ public class ActionEditingTests {
 			findings.Select(finding => (finding.Index, finding.Kind)));
 	}
 
-	// Group 0, the squad: the player's machine, facing a heading of its own; and the two row-1 conditions a type-7 variant key
-	// draws its alternative by, the child holding a roll of 0.
+	// Group 0, the squad: the player's machine, facing a heading of its own; and the two row-1 conditions a type-7 random table key
+	// picks its template by, the child holding a roll of 0.
 	private static SyntheticMsn Mission() {
 		var squad = Group(Squad, Hercs, position: -1, condition: -1, 0);
 		squad[MissionGroup164.HeadingRefWord] = 0;

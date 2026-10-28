@@ -9,10 +9,10 @@ internal sealed record ConditionUse(string Label, EditorSelection? Target);
 
 /// <summary>
 /// What references a condition (<see cref="ConditionEditor.UsesOf"/>): each record by its identity, one per line, and how many
-/// variant alternatives, which no state places, records copying from them.
+/// templates, which no state places, records copying from them.
 /// </summary>
-internal sealed record ConditionUses(IReadOnlyList<ConditionUse> Shown, int Alternatives) {
-	public bool Any => Shown.Count > 0 || Alternatives > 0;
+internal sealed record ConditionUses(IReadOnlyList<ConditionUse> Shown, int Templates) {
+	public bool Any => Shown.Count > 0 || Templates > 0;
 }
 
 /// <summary>
@@ -102,7 +102,7 @@ internal sealed class ConditionEditor {
 		var namers = ConditionEditing.Namers(source, guid);
 		var shown = new List<ConditionUse>();
 		var orders = new List<MsnRecordId>();
-		int alternatives = 0;
+		int templates = 0;
 
 		// The records with no view, counted by row.
 		var unseen = new Dictionary<int, int>();
@@ -110,7 +110,7 @@ internal sealed class ConditionEditor {
 
 		foreach (var record in namers.Records) {
 			if (record.Row is >= 6 and <= 16 && source.RecordAt(record) is { GUID: -1 }) {
-				alternatives++;
+				templates++;
 				continue;
 			}
 
@@ -149,9 +149,9 @@ internal sealed class ConditionEditor {
 			shown.Add(new ConditionUse($"{MissionText.Ordinal(order.Slot + 1)} order of {group.Full}", new GroupSelection(order.Group)));
 		}
 
-		if (resolved.Options > 0) {
-			shown.Add(new ConditionUse(resolved.Options == 1 ? "1 option of a random choice"
-				: $"{resolved.Options} options of random choices", null));
+		if (resolved.Templates > 0) {
+			shown.Add(new ConditionUse(resolved.Templates == 1 ? "1 template of a random table"
+				: $"{resolved.Templates} templates of random tables", null));
 		}
 
 		if (resolved.UnrunOrders > 0) {
@@ -164,7 +164,7 @@ internal sealed class ConditionEditor {
 			shown.Add(new ConditionUse($"Text line {id}", null));
 		}
 
-		return new ConditionUses(shown.DistinctBy(use => (use.Label, use.Target)).ToList(), alternatives);
+		return new ConditionUses(shown.DistinctBy(use => (use.Label, use.Target)).ToList(), templates);
 	}
 
 	/// <summary>

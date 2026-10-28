@@ -5552,8 +5552,8 @@
       "binary": "VSHELL",
       "type": "function",
       "confidence": "high",
-      "name": "Msn_PickVariant",
-      "description": "(key) -> the row-1 index of a variant: the first surviving type-3 record whose +0x06 is key draws below its +0x0a into +0x0c, and the first type-2 child naming it whose range holds the draw is returned. When no child holds the draw it moves on to the next type-3 record with that key, which draws again; with none left it returns -1. Draws again on every call.",
+      "name": "Msn_PickOption",
+      "description": "(key) -> the row-1 index of the option picked from a random table: the first surviving type-3 record (a random table) whose +0x06 is key rolls below its +0x0a into +0x0c, and the first type-2 child naming it (an option) whose range holds the roll is returned. When no option holds the roll it moves on to the next type-3 record with that key, which rolls again; with none left it returns -1. Rolls again on every call.",
       "source": "docs/retail/formats/msn-mission-file.md",
       "verified": {
         "bytes": "00415fc3+349",
@@ -5567,63 +5567,105 @@
       "binary": "VSHELL",
       "type": "function",
       "confidence": "high",
-      "name": "Msn_VariantSourceRow6",
-      "description": "(key, count) -> the first of the first count row-6 records whose condition is Msn_PickVariant(key)'s GUID: the record a row-6 record with that variant key copies from.",
-      "source": "docs/retail/formats/msn-mission-file.md"
+      "name": "Msn_TemplateRow6",
+      "description": "(key, count) -> the first of the first count row-6 records whose condition is Msn_PickOption(key)'s GUID: the template a row-6 record with that random table key copies from.",
+      "source": "docs/retail/formats/msn-mission-file.md",
+      "verified": {
+        "bytes": "00416120+85",
+        "sha1": "1cc392fc0234",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00416175",
       "binary": "VSHELL",
       "type": "function",
       "confidence": "high",
-      "name": "Msn_VariantSourceRow7",
-      "description": "(key, count) -> the first of the first count row-7 records whose condition is Msn_PickVariant(key)'s GUID: the record a row-7 record with that variant key copies from.",
-      "source": "docs/retail/formats/msn-mission-file.md"
+      "name": "Msn_TemplateRow7",
+      "description": "(key, count) -> the first of the first count row-7 records whose condition is Msn_PickOption(key)'s GUID: the template a row-7 record with that random table key copies from.",
+      "source": "docs/retail/formats/msn-mission-file.md",
+      "verified": {
+        "bytes": "00416175+85",
+        "sha1": "e394f37e8ea4",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004161ca",
       "binary": "VSHELL",
       "type": "function",
       "confidence": "high",
-      "name": "Msn_VariantSourceRow8",
-      "description": "(key, count) -> the first of the first count row-8 records whose condition is Msn_PickVariant(key)'s GUID: the record a row-8 record with that variant key copies from.",
-      "source": "docs/retail/formats/msn-mission-file.md"
+      "name": "Msn_TemplateRow8",
+      "description": "(key, count) -> the first of the first count row-8 records whose condition is Msn_PickOption(key)'s GUID: the template a row-8 record with that random table key copies from.",
+      "source": "docs/retail/formats/msn-mission-file.md",
+      "verified": {
+        "bytes": "004161ca+85",
+        "sha1": "de84c0b6306e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0041621f",
       "binary": "VSHELL",
       "type": "function",
       "confidence": "high",
-      "name": "Msn_VariantSourceRow12",
-      "description": "(key, count) -> the first of the first count row-12 records whose condition is Msn_PickVariant(key)'s GUID: the record a row-12 record with that variant key copies from.",
-      "source": "docs/retail/formats/msn-mission-file.md"
+      "name": "Msn_TemplateRow12",
+      "description": "(key, count) -> the first of the first count row-12 records whose condition is Msn_PickOption(key)'s GUID: the template a row-12 record with that random table key copies from.",
+      "source": "docs/retail/formats/msn-mission-file.md",
+      "verified": {
+        "bytes": "0041621f+87",
+        "sha1": "a2ff14ece18d",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00416276",
       "binary": "VSHELL",
       "type": "function",
       "confidence": "high",
-      "name": "Msn_VariantSourceRow13",
-      "description": "(key, count) -> the first of the first count row-13 records whose condition is Msn_PickVariant(key)'s GUID: the record a row-13 record with that variant key copies from.",
-      "source": "docs/retail/formats/msn-mission-file.md"
+      "name": "Msn_TemplateRow13",
+      "description": "(key, count) -> the first of the first count row-13 records whose condition is Msn_PickOption(key)'s GUID: the template a row-13 record with that random table key copies from.",
+      "source": "docs/retail/formats/msn-mission-file.md",
+      "verified": {
+        "bytes": "00416276+85",
+        "sha1": "070975de407b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004162cb",
       "binary": "VSHELL",
       "type": "function",
       "confidence": "high",
-      "name": "Msn_VariantSourceRow14",
-      "description": "(key, count) -> the first of the first count row-14 records whose condition is Msn_PickVariant(key)'s GUID: the record a row-14 record with that variant key copies from.",
-      "source": "docs/retail/formats/msn-mission-file.md"
+      "name": "Msn_TemplateRow14",
+      "description": "(key, count) -> the first of the first count row-14 records whose condition is Msn_PickOption(key)'s GUID: the template a row-14 record with that random table key copies from.",
+      "source": "docs/retail/formats/msn-mission-file.md",
+      "verified": {
+        "bytes": "004162cb+89",
+        "sha1": "c5ca058e219e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00416324",
       "binary": "VSHELL",
       "type": "function",
       "confidence": "high",
-      "name": "Msn_VariantSourceRow15",
-      "description": "(key, count) -> the first of the first count row-15 records whose condition is Msn_PickVariant(key)'s GUID: the record a row-15 record with that variant key copies from.",
-      "source": "docs/retail/formats/msn-mission-file.md"
+      "name": "Msn_TemplateRow15",
+      "description": "(key, count) -> the first of the first count row-15 records whose condition is Msn_PickOption(key)'s GUID: the template a row-15 record with that random table key copies from.",
+      "source": "docs/retail/formats/msn-mission-file.md",
+      "verified": {
+        "bytes": "00416324+85",
+        "sha1": "8ee0e76e57fd",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00416379",

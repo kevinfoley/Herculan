@@ -5,8 +5,8 @@ namespace HercWorks.Core.Data.File.Msn;
 /// <summary>The <c>.MSN</c> records that reference a row-10 action, by kind, whatever their condition.</summary>
 /// <param name="Timers">Row-11 timers it starts or that fire it (<see cref="ActionTimer30.PrimaryActionRef"/>, <see cref="ActionTimer30.SequenceRefs"/>).</param>
 /// <param name="Groups">Row-16 groups waiting on it (<see cref="MissionGroup164.DeploymentActionRef"/>).</param>
-/// <param name="Objects">Row-12, 13 and 14 records that fire it when engaged or defeated, variant alternatives included.</param>
-/// <param name="Orders">Row-15 orders it ends (<see cref="MissionOrder22.ActionRef"/>), variant alternatives included.</param>
+/// <param name="Objects">Row-12, 13 and 14 records that fire it when engaged or defeated, templates included.</param>
+/// <param name="Orders">Row-15 orders it ends (<see cref="MissionOrder22.ActionRef"/>), templates included.</param>
 public sealed record ActionNamers(IReadOnlyList<MsnRecordId> Timers, IReadOnlyList<MsnRecordId> Groups,
 		IReadOnlyList<MsnRecordId> Objects, IReadOnlyList<MsnRecordId> Orders) {
 	/// <summary>Whether any record references it.</summary>
@@ -22,7 +22,7 @@ public sealed record ActionNamers(IReadOnlyList<MsnRecordId> Timers, IReadOnlyLi
 /// <item>A repeated row-10 GUID overlays field by field (<c>Msn_MergeRow10</c> (<c>00416521</c>)), so a field is written
 /// through the record that supplies it (<see cref="MissionDocument.SetField"/>), and an unset value into every record of
 /// the GUID. The fields an edit starts from are the base's (<see cref="MissionDocument.Layout"/>), whose records it writes.
-/// Row 10 draws no variant.</item>
+/// Row 10 picks from no random table.</item>
 /// <item>The area slots are the first four, the only ones retail fills; slots 4 to 7 stay <c>-1</c>. They are kept filled
 /// from slot 0: the load counts an action's areas up to the first <c>-1</c>, so an area after a gap is never tested
 /// (docs/retail/formats/script-dat.md#block-5-in-memory--58-bytes-0x3a). A remove moves every later area up a slot.</item>

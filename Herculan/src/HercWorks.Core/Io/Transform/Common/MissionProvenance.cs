@@ -3,14 +3,14 @@ namespace HercWorks.Core.Io.Transform.Common;
 /// <summary>
 /// Which <c>.MSN</c> and <c>.ENG</c> records supplied what a <see cref="MissionGenerator"/> writes: for
 /// every exported <c>script.dat</c> record, the record that created its slot, the records merged into it
-/// and the variant sources copied into them, down to the word; for every <c>mission.str</c> line, the
+/// and the templates copied into them, down to the word; for every <c>mission.str</c> line, the
 /// <c>.ENG</c> record whose text it holds. The generator reports to it as it adds, replaces, overlays and
 /// copies, and it changes nothing the generator writes.
 ///
 /// <para>A record is named by its row and its index in that row of <see cref="Data.File.Msn.MissionFile"/>,
 /// which is the generator's read-loop counter, so a record that fails its condition still takes an
-/// index. The merge rules are docs/retail/formats/msn-mission-file.md#repeated-guids, the variant rules
-/// docs/retail/formats/msn-mission-file.md#variants, and the blocks
+/// index. The merge rules are docs/retail/formats/msn-mission-file.md#repeated-guids, the random table rules
+/// docs/retail/formats/msn-mission-file.md#random-tables, and the blocks
 /// docs/retail/formats/script-dat.md#the-13-block-structure: blocks 1 to 12 from rows 6 to 17, block 13
 /// from row 4.</para>
 /// </summary>
@@ -25,7 +25,7 @@ public sealed class MissionProvenance {
 	private readonly List<TextLineProvenance> _lines = new();
 	private readonly Dictionary<int, int> _lineOf = new();
 
-	/// <summary>The variant copies made into the record being read, waiting for its add or merge.</summary>
+	/// <summary>The template copies made into the record being read, waiting for its add or merge.</summary>
 	private readonly List<(int Source, int First, int Count)> _pendingCopies = new();
 
 	/// <summary>The slot a merge is writing into, and what each word of the incoming record carries.</summary>
@@ -73,7 +73,7 @@ public sealed class MissionProvenance {
 	/// <summary>
 	/// The exported record <paramref name="record"/> created or was merged into, or null when it reaches no
 	/// <c>script.dat</c> record: its condition failed, its GUID is <c>-1</c>, its row is not exported, or
-	/// it is a row-4 record other than the one block 13 is written from. A variant source reaches the
+	/// it is a row-4 record other than the one block 13 is written from. A template reaches the
 	/// records that copy from it only through <see cref="SlotProvenance.Word"/>.
 	/// </summary>
 	public ScriptDatSlot? ExportedSlot(MsnRecordId record) {
@@ -93,10 +93,10 @@ public sealed class MissionProvenance {
 	// ---- What the generator reports ------------------------------------------------------------
 
 	/// <summary>
-	/// A variant's copy of <paramref name="count"/> words from <paramref name="source"/>, a slot of the row
+	/// A template copy of <paramref name="count"/> words from <paramref name="source"/>, a slot of the row
 	/// being read, into the record about to be added or merged.
 	/// </summary>
-	internal void CopiedFromVariant(int source, int first, int count) => _pendingCopies.Add((source, first, count));
+	internal void CopiedFromTemplate(int source, int first, int count) => _pendingCopies.Add((source, first, count));
 
 	/// <summary>Record <paramref name="index"/> of <paramref name="row"/> added as a new slot.</summary>
 	internal void Added(int row, int index, short[] words) {
@@ -163,12 +163,12 @@ public sealed class MissionProvenance {
 	}
 
 	/// <summary>
-	/// What each word of an incoming record carries: the record itself, except where a pending variant
+	/// What each word of an incoming record carries: the record itself, except where a pending template
 	/// copy wrote it, which carries the record and the source's own origin for the word.
 	/// </summary>
-	private WordSource[] Incoming(int row, MsnRecordId record, int wordCount, out List<VariantCopy> copies) {
+	private WordSource[] Incoming(int row, MsnRecordId record, int wordCount, out List<TemplateCopy> copies) {
 		var words = Own(record, wordCount);
-		copies = new List<VariantCopy>();
+		copies = new List<TemplateCopy>();
 		var slots = SlotsOfRow(row);
 		foreach (var (source, first, count) in _pendingCopies) {
 			var from = slots[source];
@@ -179,7 +179,7 @@ public sealed class MissionProvenance {
 				covered[i] = first + i;
 			}
 
-			copies.Add(new VariantCopy(record, from.Created, covered));
+			copies.Add(new TemplateCopy(record, from.Created, covered));
 		}
 
 		_pendingCopies.Clear();
@@ -213,16 +213,16 @@ public readonly record struct ScriptDatSlot(int Block, int Index);
 /// <summary>
 /// Where one word of an exported record came from. <paramref name="Record"/> is the record whose write the
 /// slot holds: the slot's creator, or the merged record that last wrote the word. <paramref name="CopiedFrom"/>
-/// is set when that record took the word from a variant, and names the source record the value was
+/// is set when that record took the word from a template, and names the source record the value was
 /// authored in.
 /// </summary>
 public readonly record struct WordSource(MsnRecordId Record, MsnRecordId? CopiedFrom);
 
 /// <summary>
-/// A variant copy made into <paramref name="Record"/> before it was added or merged: <paramref name="Source"/>,
+/// A template copy made into <paramref name="Record"/> before it was added or merged: <paramref name="Source"/>,
 /// the record of the same row it copied from, and the <c>.MSN</c> words it covered.
 /// </summary>
-public sealed record VariantCopy(MsnRecordId Record, MsnRecordId Source, IReadOnlyList<int> Words);
+public sealed record TemplateCopy(MsnRecordId Record, MsnRecordId Source, IReadOnlyList<int> Words);
 
 /// <summary>
 /// A <c>mission.str</c> line: <paramref name="Created"/>, the <c>.ENG</c> record (its index in the file)
@@ -243,7 +243,7 @@ public sealed class SlotProvenance {
 
 	private readonly WordSource[] _words;
 	private readonly List<MsnRecordId> _merged = new();
-	private readonly List<VariantCopy> _copies = new();
+	private readonly List<TemplateCopy> _copies = new();
 
 	internal SlotProvenance(int block, int index, MsnRecordId created, WordSource[] words) {
 		Block = block;
@@ -267,8 +267,8 @@ public sealed class SlotProvenance {
 	/// </summary>
 	public IReadOnlyList<MsnRecordId> Merged => _merged;
 
-	/// <summary>Every variant copy made into the creator or a merged record, in read order; <see cref="Word"/> says which still hold.</summary>
-	public IReadOnlyList<VariantCopy> VariantCopies => _copies;
+	/// <summary>Every template copy made into the creator or a merged record, in read order; <see cref="Word"/> says which still hold.</summary>
+	public IReadOnlyList<TemplateCopy> TemplateCopies => _copies;
 
 	/// <summary>
 	/// Where <c>.MSN</c> word <paramref name="word"/> of the record came from. For row 8, word 4 and every
@@ -295,9 +295,9 @@ public sealed class SlotProvenance {
 
 	internal void SetWord(int word, WordSource source) => _words[word] = source;
 
-	internal void AddCopies(IEnumerable<VariantCopy> copies) => _copies.AddRange(copies);
+	internal void AddCopies(IEnumerable<TemplateCopy> copies) => _copies.AddRange(copies);
 
-	internal void AddMerge(MsnRecordId record, IEnumerable<VariantCopy> copies) {
+	internal void AddMerge(MsnRecordId record, IEnumerable<TemplateCopy> copies) {
 		_merged.Add(record);
 		_copies.AddRange(copies);
 	}

@@ -49,7 +49,7 @@ internal static class Conditions {
 				: $"flag {c.FlagIndexOrRangeLower} op 0x{(ushort)c.OperatorOrRangeUpperOrResult:x} (fails)",
 			1 => $"draw {c.GUID} below {c.FlagIndexOrRangeLower}",
 			2 => DescribeRange(file, c),
-			3 => $"variant key {c.FlagIndexOrRangeLower}, drawn below {c.ComparisonOperand}",
+			3 => $"random table key {c.FlagIndexOrRangeLower}, rolled below {c.ComparisonOperand}",
 			_ => $"type {c.Type} (never survives)",
 		};
 
@@ -66,17 +66,17 @@ internal static class Conditions {
 		var parent = (file.Conditions ?? []).FirstOrDefault(p => p.GUID == c.ConditionRef && p.Type is 1 or 3);
 		return parent?.Type switch {
 			1 => $"draw {parent.GUID} in {range}",
-			3 => $"variant {range} of key {parent.FlagIndexOrRangeLower}",
+			3 => $"option {range} of key {parent.FlagIndexOrRangeLower}",
 			_ => $"draw of cond {c.ConditionRef} in {range}",
 		};
 	}
 
 	/// <summary>
-	/// The variant key a record conditioned on <paramref name="guid"/> answers to: the key of the type-3
+	/// The random table key a record conditioned on <paramref name="guid"/> answers to: the key of the type-3
 	/// parent of the type-2 record <paramref name="guid"/> names, or null when it is not such a record
-	/// (docs/retail/formats/msn-mission-file.md#variants).
+	/// (docs/retail/formats/msn-mission-file.md#random-tables).
 	/// </summary>
-	public static short? VariantKeyOf(MissionFile file, short guid) {
+	public static short? RandomTableKeyOf(MissionFile file, short guid) {
 		var child = (file.Conditions ?? []).FirstOrDefault(c => c.GUID == guid && c.Type == 2);
 		var parent = child == null ? null : (file.Conditions ?? []).FirstOrDefault(p => p.GUID == child.ConditionRef && p.Type == 3);
 		return parent?.FlagIndexOrRangeLower;

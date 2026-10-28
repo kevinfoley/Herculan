@@ -8,15 +8,15 @@ namespace Herculan.Engine.Editor;
 /// The Properties panel's view of a condition, a row-1 record: its kind; a flag test's flag (a campaign variable, picked by
 /// what it holds, <see cref="CampaignVariablePicker"/>), operator and value, a draw's
 /// bound, or a range's draw and ends; what it requires; what references it, as links; and Delete, refused while anything
-/// does. Each a field or choice that changes it
-/// (<see cref="ConditionEditor"/>). A variant table, and a range over one choosing an option, are its Random choice view
-/// (<see cref="VariantView.DrawChoice"/>), the range's option highlighted. What each kind tests is
+/// does. Every field edits the record through <see cref="ConditionEditor"/>. A random table and the ranges under it are
+/// not drawn here: the editor shows them as the table and its options, in the Random table view
+/// (<see cref="RandomTableView.DrawTableOf"/>), with a selected range's option highlighted. What each kind tests is
 /// docs/retail/formats/msn-mission-file.md#the-conditions--row-1.
 /// </summary>
 internal sealed class ConditionView {
 	private readonly ConditionEditor _editor;
 	private readonly PanelLinks _links;
-	private readonly VariantView _variants;
+	private readonly RandomTableView _tables;
 	private readonly CampaignVariablePicker _picker = new();
 
 	// A number being typed, and the field it is for, until the field lets go.
@@ -26,15 +26,15 @@ internal sealed class ConditionView {
 	// The condition drawn, whose GUID keeps one condition's draft out of another's field.
 	private short _shown = -1;
 
-	public ConditionView(ConditionEditor editor, PanelLinks links, VariantView variants) {
+	public ConditionView(ConditionEditor editor, PanelLinks links, RandomTableView tables) {
 		_editor = editor;
 		_links = links;
-		_variants = variants;
+		_tables = tables;
 	}
 
 	public void Draw(short guid) {
 		var source = _editor.Source;
-		if (ConditionEditing.IndexOf(source, guid) == null || _variants.DrawChoice(guid)) {
+		if (ConditionEditing.IndexOf(source, guid) == null || _tables.DrawTableOf(guid)) {
 			return;
 		}
 
@@ -45,9 +45,9 @@ internal sealed class ConditionView {
 		ImGui.Text($"Condition {guid}");
 		ImGui.Text(KindName(source, record));
 		ImGui.Separator();
-		if (ConditionEditing.InVariantTable(source, guid)) {
+		if (ConditionEditing.InRandomTable(source, guid)) {
 			ImGui.TextWrapped(ConditionEditing.Describe(source.Mission, record));
-			EditorText.Note("Its chance is set in its random choice's view.");
+			EditorText.Note("Its chance is set in its random table's view.");
 		} else {
 			EditorText.Reason(why);
 		}
@@ -76,10 +76,10 @@ internal sealed class ConditionView {
 	private static string KindName(MissionDocument source, MissionCondition14 record) => record.Type switch {
 		ConditionEditing.FlagTest => "Flag test",
 		ConditionEditing.Draw => "Draw",
-		ConditionEditing.Range when ConditionEditing.ParentOf(source, record.GUID)?.Type == ConditionEditing.VariantTable =>
-			"Option of a random choice",
+		ConditionEditing.Range when ConditionEditing.ParentOf(source, record.GUID)?.Type == ConditionEditing.RandomTable =>
+			"Option of a random table",
 		ConditionEditing.Range => "Range over a draw",
-		ConditionEditing.VariantTable => "Random choice",
+		ConditionEditing.RandomTable => "Random table",
 		_ => $"Type {record.Type}",
 	};
 
@@ -124,7 +124,7 @@ internal sealed class ConditionView {
 
 		EditorText.Note($"It draws a number from 0 to {record.FlagIndexOrRangeLower - 1}.");
 		EditorText.Note("Adding or deleting a draw, or changing whether it is made, changes what every later draw and "
-			+ "variant pick comes out as.");
+			+ "random table roll comes out as.");
 		ImGui.BeginDisabled(locked);
 		if (ImGui.Button("New range over this draw")) {
 			_editor.RequestCreateRange(guid);
@@ -136,8 +136,8 @@ internal sealed class ConditionView {
 	// The draw it is over, a choice of the draws before it with a link, and its two ends.
 	private void DrawRange(MissionDocument source, short guid, MissionCondition14 record, bool locked) {
 		var parent = ConditionEditing.ParentOf(source, guid);
-		if (parent?.Type == ConditionEditing.VariantTable) {
-			ImGui.Text("Random choice:");
+		if (parent?.Type == ConditionEditing.RandomTable) {
+			ImGui.Text("Random table:");
 			ImGui.SameLine();
 			_links.Link($"Condition {parent.GUID}", new ConditionSelection(parent.GUID));
 			ImGui.Text($"From {(ushort)record.FlagIndexOrRangeLower} to {(ushort)record.OperatorOrRangeUpperOrResult}");
@@ -242,7 +242,7 @@ internal sealed class ConditionView {
 		}
 
 		if (record.Type == ConditionEditing.Draw) {
-			EditorText.Note("Deleting a draw changes what every later draw and variant pick comes out as.");
+			EditorText.Note("Deleting a draw changes what every later draw and random table roll comes out as.");
 		}
 	}
 
@@ -259,8 +259,8 @@ internal sealed class ConditionView {
 			ImGui.PopID();
 		}
 
-		if (uses.Alternatives > 0) {
-			ImGui.TextWrapped(uses.Alternatives == 1 ? "1 option of a random choice" : $"{uses.Alternatives} options of a random choice");
+		if (uses.Templates > 0) {
+			ImGui.TextWrapped(uses.Templates == 1 ? "1 template of a random table" : $"{uses.Templates} templates of random tables");
 		}
 	}
 

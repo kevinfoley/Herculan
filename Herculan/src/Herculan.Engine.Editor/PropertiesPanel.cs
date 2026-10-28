@@ -41,8 +41,8 @@ internal sealed class PropertiesPanel {
 	public PropertiesPanel(MissionIndex index, SelectionState selection, MissionDocument source, PointMover mover,
 			SideChanger sides, ObjectDeleter deleter, MemberMover members, SquadMachinePanel machine, RosterFitView fit, RouteEditor routes,
 			RoutePlacing placing, AreaEditor areas, AreaPlacing areaPlacing, OrderEditor orders, ObjectiveEditor objectives,
-			ActionEditor actions, TimerEditor timers, ConditionEditor conditions, PresenceEditor presence, VariantEditor variants,
-			StartingConditionEditor startingConditions, HeadingEditor headings, RandomChoices choices, TriggerMessages messages, MissionNames names,
+			ActionEditor actions, TimerEditor timers, ConditionEditor conditions, PresenceEditor presence, RandomTableEditor tableEditor,
+			StartingConditionEditor startingConditions, HeadingEditor headings, RandomTables tables, TriggerMessages messages, MissionNames names,
 			UnitTypeCatalog catalog, BaseFormationTable formations, RosterTypeEditor types, MachineFitter fitter, StructurePlacer placer,
 			HercPlacer hercs, FlyerPlacer flyers, BasePadEditor pads, GroupDeleter groupDeleter) {
 		_index = index;
@@ -51,10 +51,10 @@ internal sealed class PropertiesPanel {
 		var sharers = new PointSharers(source, index, links);
 		_trigger = new TriggerView(index, actions, selection, links, messages);
 		_countdown = new CountdownView(index, timers, links);
-		var variantView = new VariantView(variants, choices, links);
-		_condition = new ConditionView(conditions, links, variantView);
+		var tableView = new RandomTableView(tableEditor, tables, links);
+		_condition = new ConditionView(conditions, links, tableView);
 		var presentWhen = new PresentWhenView(presence, links);
-		_route = new RouteView(index, names, selection, mover, routes, placing, orders, links, sharers, variantView.DrawRouteChoice);
+		_route = new RouteView(index, names, selection, mover, routes, placing, orders, links, sharers, tableView.DrawRouteTable);
 		_area = new TriggerAreaView(index, names, mover, areas, areaPlacing, actions, _trigger.DrawSummary,
 			namers => links.References(namers), sharers);
 		var orderSlots = new OrderSlotsView(index, orders, links, presentWhen, presence);
@@ -63,7 +63,7 @@ internal sealed class PropertiesPanel {
 		var team = new TeamField(index, sides);
 		var related = new RelatedObjectives(objectives, links);
 		var heading = new HeadingField(headings);
-		_object = new ObjectView(index, links, mover, team, deleter, members, machine, fit, presentWhen, presence, variantView,
+		_object = new ObjectView(index, links, mover, team, deleter, members, machine, fit, presentWhen, presence, tableView,
 			actions, related, new StartingConditionField(startingConditions), heading);
 		_group = new GroupView(index, links, mover, team, machine, presentWhen, presence, actions, related, orderSlots, sharers,
 			heading, new GroupSlotsView(source, index, links, catalog, formations, types, fitter, deleter, placer, hercs, flyers), pads,

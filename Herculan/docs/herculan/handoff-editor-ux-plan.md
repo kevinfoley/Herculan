@@ -4,14 +4,14 @@ The plan for reworking the editor's panels so a mission designer who has never s
 
 ## The rule
 
-One view per thing a designer authors, the way one friendly dialog in Dynamix's own editor would have written several records at once. Storage details (variant keys, roll sizes, GUIDs, condition numbers, field codes, roster slots) are hidden, or kept under a collapsed **Advanced** header for matching against the file. Lists show what tells their entries apart. A note names a control by its label. When something has no effect in play, the view says so.
+One view per thing a designer authors, the way one friendly dialog in Dynamix's own editor would have written several records at once. Storage details (random table keys, roll sizes, GUIDs, condition numbers, field codes, roster slots) are hidden, or kept under a collapsed **Advanced** header for matching against the file. Lists show what tells their entries apart. A note names a control by its label. When something has no effect in play, the view says so.
 
 ## Vocabulary
 
 | Term | Means | Replaces |
 |---|---|---|
 | **campaign variable** | one of the 1000 numbers carried from mission to mission; the game writes a few after every mission, missions write the rest | "flag" in conditions and the campaign list, "counter" in the writes (R1) |
-| **random choice**, **option** | a variant table and its alternatives, and a random roll and its outcome ranges: one roll, several options, each with a chance | "variant table", "alternative", "draw", "range", "draws below" (R19) |
+| **random table**, **option** | a type-3 condition and the templates its ranges pick, and a random roll and its outcome ranges: one roll, several options, each with a chance | "type-3 condition", "template", "draw", "range", "draws below" (R19) |
 | **trigger** | an action: who enters which areas, then what happens | "action", "type", "verb" (R6) |
 | **countdown** | an action timer: a delay, from the mission's start or a trigger, after which it fires triggers | "timer" (R11) |
 | **win condition**, **lose condition** | a mandatory objective, a failure objective | "mandatory", "failure condition" (R12, R14) |
@@ -49,20 +49,20 @@ Each view of phases 2 to 6 reads the `.MSN`'s layout ([Selection and panels](han
 
 ### 1. No rolling (done)
 
-- The editor never rolls: an open draws every random value at its lowest, so every random choice shows its first option, the same on every open ([What the editor shows](handoff-editor-conditions.md#what-the-editor-shows)).
+- The editor never rolls: an open draws every random value at its lowest, so every random table shows its first option, the same on every open ([What the editor shows](handoff-editor-conditions.md#what-the-editor-shows)).
 - A record that version leaves out is shown in full from the layout, in its view as in the scene ([Selection and panels](handoff-editor-viewing.md#selection-and-panels)).
 - Covers R3, R5.
 
-### 2. Random choice view
+### 2. Random table view
 
-- Variant tables (done, [Variants](handoff-editor-conditions.md#variants)): one view for a table and its options (R19), reached from the Mission panel's Random choices list and from any of its conditions, which open it with that option highlighted.
+- Random tables (done, [Random tables](handoff-editor-conditions.md#random-tables)): one view for a table and its options (R19), reached from the Mission panel's Random tables list and from any of its conditions, which open it with that option highlighted.
 - Options with their chances as percents, one decimal allowed (12.5%), over whichever roll size keeps them exact; what each option is, with what tells it apart (a herc option's weapons when the chassis is the same); "Nothing" with what is left over (done).
 - **Used by**: who picks from it, in game terms (the player's HERC, Squadmate 2's HERC, SCARAB (group 5)), and the option each shows in the editor; a record with no object says why (done).
-- A warning when the choice has no effect in play, such as a squad loadout on a practice mission the practice screen's HERC replaces (done).
+- A warning when the table has no effect in play, such as a squad loadout on a practice mission the practice screen's HERC replaces (done).
 - **Advanced**: key, roll size, condition numbers and ranges (done).
-- A herc's view that picks from a choice offers "Random choice:" and "Changes apply to: that option, wherever it is picked (N hercs) / only this herc"; a route's says its waypoints are an option of the choice (R24, R33, done).
+- A herc's view that picks from a table offers "Random table:" and "Changes apply to: that option, wherever it is picked (N hercs) / only this herc"; a route's says its waypoints are an option of the table (R24, R33, done).
 - The Conditions list is under Advanced, without its create buttons (R20, done).
-- A random roll (a draw) and its ranges keep their own views: every retail roll picks only a debrief loss line, which the Debrief view lists read-only, and they join the Random choice view with the loss line's switch (phase 7's step 4).
+- A random roll (a draw) and its ranges keep their own views: every retail roll picks only a debrief loss line, which the Debrief view lists read-only, and they join the Random table view with the loss line's switch (phase 7's step 4).
 
 ### 3. Campaign variables and Present when as sentences (done)
 
@@ -92,11 +92,11 @@ Each view of phases 2 to 6 reads the `.MSN`'s layout ([Selection and panels](han
 
 ### 7. Debrief
 
-Retail varies a debrief only through its `.ENG` text and its row-3 movie: 54 missions carry one unconditioned row-5 record and 8 none, and a line's replacements and the movie's records are keyed on the same conditions (`C1_01`: lines 238 and 239 and movie GUID 240 on conditions 44 to 52, over campaign variables 0 and 250). So the view is by outcome, the user's choice:
+Retail varies a debrief only through its `.ENG` text and its movie choice: 54 missions carry one unconditioned row-5 record and 8 none, and a line's replacements and the movie's records are keyed on the same conditions (`C1_01`: lines 238 and 239 and movie GUID 240 on conditions 44 to 52, over campaign variables 0 and 250). So the view is by outcome, the user's choice:
 
-- **Outcomes**: one entry per condition the debrief's replacements and movie records use, headed by its "When" clauses as Present when words them, with the debrief text it shows (each line the outcome replaces, the rest from Otherwise) and its movie; then **Otherwise**, the unconditioned text and movie. Add and remove an outcome; edit its clauses, text and movie. The editor writes the `.ENG` replacements and row-3 records behind it.
-- **Losses line**: one switch, "Report Hercs and squadmates lost", which adds or removes the standard eleven-record line chapters 1 to 3 carry ([The debrief's loss line](../retail/formats/msn-mission-file.md#the-debriefs-loss-line)); its cases listed read-only, their texts editable, its roll shown in the Random choice view (phase 2's last bullet).
-- Steps, each tested in the app before its commit: (1) the view, outcomes and losses line shown, an outcome's lines editable (done, [The debrief](handoff-editor-mission-logic.md#the-debrief)); (2) the movie; (3) adding and removing outcomes and editing their clauses; (4) the losses switch and its roll in the Random choice view.
+- **Outcomes**: one entry per condition the debrief's replacements and movie records use, headed by its "When" clauses as Present when words them, with the debrief text it shows (each line the outcome replaces, the rest from Otherwise) and its movie; then **Otherwise**, the unconditioned text and movie. Add and remove an outcome; edit its clauses, text and movie. The editor writes the `.ENG` replacements and movie choices behind it.
+- **Losses line**: one switch, "Report Hercs and squadmates lost", which adds or removes the standard eleven-record line chapters 1 to 3 carry ([The debrief's loss line](../retail/formats/msn-mission-file.md#the-debriefs-loss-line)); its cases listed read-only, their texts editable, its roll shown in the Random table view (phase 2's last bullet).
+- Steps, each tested in the app before its commit: (1) the view, outcomes and losses line shown, an outcome's lines editable (done, [The debrief](handoff-editor-mission-logic.md#the-debrief)); (2) the movie; (3) adding and removing outcomes and editing their clauses; (4) the losses switch and its roll in the Random table view.
 
 ## Decided
 

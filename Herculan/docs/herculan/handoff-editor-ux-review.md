@@ -1,6 +1,6 @@
 # Handoff — editor UI review: concepts, not records
 
-A read-only review of the mission editor's Properties views, the Mission panel, the Toolbox, File > New mission and the Problems list. It lists where the UI shows how the `.MSN` stores something instead of what a mission designer authors. The variant table and range-over-a-table views (`VariantView`, `ConditionView`'s range branch for a table) are left out: they are being redesigned as one "Random choice" view. A finding that touches them says how it should line up with that design.
+A read-only review of the mission editor's Properties views, the Mission panel, the Toolbox, File > New mission and the Problems list. It lists where the UI shows how the `.MSN` stores something instead of what a mission designer authors. The random table and range-over-a-table views (`RandomTableView`, `ConditionView`'s range branch for a table) are left out: they are being redesigned as one "Random table" view. A finding that touches them says how it should line up with that design.
 
 Paths are under `Herculan/src/Herculan.Engine.Editor/` unless they say otherwise. Findings run from most to least impact. Each one gives the current text, why a designer would not understand it, and a proposed rewrite. Wording in a proposal is a suggestion and still needs the user's approval. **Invention** marks a proposal that adds something retail does not have.
 
@@ -36,13 +36,13 @@ Paths are under `Herculan/src/Herculan.Engine.Editor/` unless they say otherwise
 
 - **Where:** `CampaignStateView.cs:26` "Campaign state"; `:28` "Loaded as practice or INSTANT ACTION: every flag starts at 0 but flags 3 to 6."; `:29` "Shown as at a career with no history..."; `:46` "Draw again"; `:52` "Draw again loads the mission again with new random draws, flags 4 to 6 among them..."; `:54` "N variant table(s) show a chosen alternative in place of their draw, until Draw again." The "Holds/Fails in the campaign state shown" lines are at `ConditionView.cs:78-80` and `PresentWhenView.cs:112-114`.
 - **Why:** The designer needs to know that the editor shows one possible load of the mission, that they can choose which load, and that in play each load picks again. The text talks instead about draws, flags 3 to 6 and tables.
-- **Proposal:** Retitle the section "Preview". Lead with: "The editor shows one possible version of this mission. In play, the campaign flags below come from earlier missions, and the random choices are picked again at every load." Rename "Draw again" to "Pick random choices again". List each flag by its label first ("Last mission's outcome (flag 0)"), with "Tested by: ..." links. Hide flags 4 to 6: they are only the random picks, which the button already rerolls. Put the "chosen alternative" count next to the button: "2 random choices are fixed to the option you picked; Pick again releases them." Replace "Holds in the campaign state shown" with "Present in this preview" / "Absent in this preview" (emphasised), each followed by a link to the Mission view's Preview.
+- **Proposal:** Retitle the section "Preview". Lead with: "The editor shows one possible version of this mission. In play, the campaign flags below come from earlier missions, and the random tables are rolled again at every load." Rename "Draw again" to "Roll random tables again". List each flag by its label first ("Last mission's outcome (flag 0)"), with "Tested by: ..." links. Hide flags 4 to 6: they are only the random picks, which the button already rerolls. Put the count of tables fixed to an option next to the button: "2 random tables are fixed to the option you picked; Roll again releases them." Replace "Holds in the campaign state shown" with "Present in this preview" / "Absent in this preview" (emphasised), each followed by a link to the Mission view's Preview.
 
 ### 6. The action view mirrors the record instead of reading as "when this happens, do that"
 
 - **Where:** `ActionView.cs:39-65`. The "Fires when:" part is split into "Type" (`:123`), "Target" (`:164`) and "Trigger areas" (`:201`). "Then:" (`:57`) lists the waiting groups, the orders it ends and the timers it starts as read-only links (`:313-356`), because those are set on the group, order and timer views. Below that come "Verb" (`:293`), "Counter writes" (`:361`) and "Message" (`:435`).
 - **Why:** A designer authors a trigger as one sentence: "when the player enters this area, bring in group 5 by drop pod, start a 30 s timer, and send a message". Here the "who" is split into a type number and a target. Half of the "then" can only be changed from other records' views, and the field that sets how groups arrive is called "Verb".
-- **Proposal:** Make one Trigger view. **Who:** a single picker: "The player / Anyone in the player's squad / Any Cybrid unit / ... / A particular herc..." and, for the last four, the object or group picked in the same control. That merges Type and Target and drops the "7:" codes. **Enters:** the areas. Show the other sources, a timer running out or an object engaged or defeated, as "Also fired by" links. **Then:** an editable list with an add menu: "Bring in a group" (writes that group's deployment action), "Move a group on from its order" (writes the order's action ref), "Start a timer", "Set a campaign flag", "Send a message". Put "Arrive by: drop pod (wide) / drop pod (narrow) / on foot from behind / on foot ahead / in place" inside the "Bring in" entry, with the note "All groups this trigger brings in arrive the same way." That sentence is true because the verb belongs to the action. The reverse fields on the group and order views stay as they are. This is the action equivalent of the Random choice merge.
+- **Proposal:** Make one Trigger view. **Who:** a single picker: "The player / Anyone in the player's squad / Any Cybrid unit / ... / A particular herc..." and, for the last four, the object or group picked in the same control. That merges Type and Target and drops the "7:" codes. **Enters:** the areas. Show the other sources, a timer running out or an object engaged or defeated, as "Also fired by" links. **Then:** an editable list with an add menu: "Bring in a group" (writes that group's deployment action), "Move a group on from its order" (writes the order's action ref), "Start a timer", "Set a campaign flag", "Send a message". Put "Arrive by: drop pod (wide) / drop pod (narrow) / on foot from behind / on foot ahead / in place" inside the "Bring in" entry, with the note "All groups this trigger brings in arrive the same way." That sentence is true because the verb belongs to the action. The reverse fields on the group and order views stay as they are. This is the action equivalent of the Random table merge.
 
 ### 7. Codes shown in front of choice labels
 
@@ -116,13 +116,13 @@ Paths are under `Herculan/src/Herculan.Engine.Editor/` unless they say otherwise
 
 - **Where:** `PresentWhenView.cs:42-71`. The picker lists "Condition 5: flag 30 > 0" (`:169`). The buttons "New flag test" and "New draw range" (`:59,64`) carry the tooltip "Adds a draw, which changes what every variant pick comes out as." (`:69`). The link "Condition 5" is at `:110`. The descriptions come from `ConditionEditing.Describe` (`HercWorks.Core/Data/File/Msn/ConditionEditing.cs:188-207`): "draw below 100", "draw 0 to 49 of condition 87", "flag 30 > 0 if condition 12".
 - **Why:** A designer wants to say "only after mission 3 was won" or "in about half the loads". Instead they get a list of numbered records, and two buttons that each create a record they then have to open somewhere else. The tooltip uses generator terms, and its consequence has no effect in play: every load picks at random either way. Only the preview changes.
-- **Proposal:** Build Present when as a sentence: "Present: [Always / Only when / Only in some loads]". "Only when" shows "[campaign flag (with label)] [is / is not / is at least / is less than ...] [value]" and an optional "and also when ...". "Only in some loads" shows "[N]% of loads" and, when other records should appear or disappear together, "together with ..." (a shared random choice, which is the draw-and-ranges model and lines up with the Random choice view). The editor creates and reuses the condition records behind it. The numbered conditions move to an Advanced "Conditions" list (finding 20). Replace the tooltip with "The preview picks again" or drop it.
+- **Proposal:** Build Present when as a sentence: "Present: [Always / Only when / Only in some loads]". "Only when" shows "[campaign flag (with label)] [is / is not / is at least / is less than ...] [value]" and an optional "and also when ...". "Only in some loads" shows "[N]% of loads" and, when other records should appear or disappear together, "together with ..." (a shared random roll, which is the draw-and-ranges model and lines up with the Random table view). The editor creates and reuses the condition records behind it. The numbered conditions move to an Advanced "Conditions" list (finding 20). Replace the tooltip with "The preview picks again" or drop it.
 
 ### 19. Draw and range-over-a-draw views
 
 - **Where:** `ConditionView.cs:134` "Below"; `:138` "It draws a number from 0 to N."; `:140` "Drawn in the campaign state shown: N"; `:145` "Adding or deleting a draw, or changing whether it is made, changes what every later draw and variant pick comes out as."; `:148` "New range over this draw"; `:166-205` "Draw", "From", "To", "It never holds: condition N draws 0 to M.", "A range requires nothing else..."; `:264` the delete note.
-- **Why:** This is the same generator vocabulary the user rejected in the variant views. A draw and its ranges are one concept: a random roll whose outcomes switch different records on.
-- **Proposal:** Fold them into the Random choice view: "Random choice: Option A 25% (shows Group 5), Option B 75% (shows Area 3 and Action 4), nothing 0%". It differs from a variant table only in that its options switch records on and off rather than swapping a herc's type. Drop the "every later draw" notes: they describe the preview, not play.
+- **Why:** This is the same generator vocabulary the user rejected in the random table views. A draw and its ranges are one concept: a random roll whose outcomes switch different records on.
+- **Proposal:** Fold them into the Random table view: "Random table: Option A 25% (shows Group 5), Option B 75% (shows Area 3 and Action 4), nothing 0%". It differs from a random table only in that its options switch records on and off rather than swapping a herc's type. Drop the "every later draw" notes: they describe the preview, not play.
 
 ### 20. The Conditions list as a top-level section
 
@@ -153,8 +153,8 @@ Paths are under `Herculan/src/Herculan.Engine.Editor/` unless they say otherwise
 ### 24. "Only this herc" / "Changes the alternative"
 
 - **Where:** `RosterFitView.cs:106` "Only this herc" (or flyer and so on); `:112-113` "Changes this herc alone." / "Changes the alternative: N records draw it."; `:66` "A field set for this herc alone stays its own."
-- **Why:** This puts the variant model into the object view: "the alternative", "records draw it". A designer clicked one herc and needs to know whether the edit reaches other hercs.
-- **Proposal:** Say: "This herc is one option of a random choice (link, named as in the Random choice view). Apply changes to: (•) that option, wherever it can appear (3 hercs) ( ) only this herc." Replace "A field set for this herc alone stays its own." with "Weapons you set for this herc alone are kept." Wording should match the Random choice view once that lands.
+- **Why:** This puts the storage model into the object view: "the alternative", "records draw it". A designer clicked one herc and needs to know whether the edit reaches other hercs.
+- **Proposal:** Say: "This herc is one option of a random table (link, named as in the Random table view). Apply changes to: (•) that option, wherever it can appear (3 hercs) ( ) only this herc." Replace "A field set for this herc alone stays its own." with "Weapons you set for this herc alone are kept." Wording should match the Random table view once that lands.
 
 ### 25. Debugging data in the object view
 
@@ -207,11 +207,11 @@ Paths are under `Herculan/src/Herculan.Engine.Editor/` unless they say otherwise
 - **Proposal:** Number from 1, and call waypoint 1 "Start" on any route. On the player's route, label the later waypoints as the nav points the map marks, after checking against `docs/retail/simulation/heads-down-display.md#markers`. Show the distance from the previous waypoint ("Nav 2: 420 m from Nav 1") in place of raw X and Y.
 - **Retail:** the cockpit numbers a route's waypoints from its start: the HUD's waypoint indicator reads `WAYPOINT n` while the player heads for waypoint *n*, the start being waypoint 0, and the heads-down map's first route marker is on waypoint 1 ([`../retail/simulation/cockpit-gunsight-hud.md`](../retail/simulation/cockpit-gunsight-hud.md#waypoint-indicators), [`../retail/simulation/heads-down-display.md`](../retail/simulation/heads-down-display.md#markers)). So "Start", then "Waypoint 1", matches play.
 
-### 33. A route's waypoint list shared with a random choice
+### 33. A route's waypoint list shared with a random table
 
 - **Where:** `RouteView.cs:98`, "Its waypoint list is a variant's, shared by every route that can draw it: an edit here changes them all."
-- **Why:** This is variant jargon in the route view.
-- **Proposal:** "This route is one option of a random choice (link). Editing it changes it wherever that option is picked." Wording should follow the Random choice view.
+- **Why:** This is storage jargon in the route view.
+- **Proposal:** "This route is a template of a random table (link). Editing it changes it wherever that template is picked." Wording should follow the Random table view.
 
 ### 34. "Mission box" warning
 
@@ -271,5 +271,5 @@ Paths are under `Herculan/src/Herculan.Engine.Editor/` unless they say otherwise
 
 ## Open
 
-- **Open:** findings 6, 18 and 19 regroup records into one view and should be designed alongside the Random choice view, so that the three share a vocabulary ("option", "random choice", "version of the mission").
+- **Open:** findings 6, 18 and 19 regroup records into one view and should be designed alongside the Random table view, so that the three share a vocabulary ("option", "random table", "version of the mission").
 - **Open:** finding 2's editor-only names would be this engine's invention. Whether to add them, and where to store them, is the user's call.

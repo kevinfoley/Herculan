@@ -10,7 +10,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// One opened mission and everything the editor builds over it on the CPU: the scene, its objects placed from the
-/// <c>.MSN</c>'s layout (<see cref="Index"/>), the overlays, the picker, the two side panels, the Mission Settings window and the move, add, delete, fit, type, starting condition, heading, base pad, route, trigger area, trigger, countdown, condition, presence, variant, order, objective, text and theater tools, all sharing one
+/// <c>.MSN</c>'s layout (<see cref="Index"/>), the overlays, the picker, the two side panels, the Mission Settings window and the move, add, delete, fit, type, starting condition, heading, base pad, route, trigger area, trigger, countdown, condition, presence, random table, order, objective, text and theater tools, all sharing one
 /// selection. Every edit, undo and redo syncs the scene and the indices with the document in place (<see cref="Sync"/>), and a
 /// change of theater or time of day dresses the scene in its world again in place (<see cref="Theater"/>). Opening another
 /// mission builds a new one of these rather than resetting this one; <see cref="MissionDrawables"/> is its GPU half.
@@ -60,7 +60,7 @@ internal sealed class EditorMission {
 		Conditions = new ConditionEditor(source, sceneIndex, Names, Mover, Sync, Selection, Deleter);
 		Presence = new PresenceEditor(source, sceneIndex, Mover, Sync, Deleter,
 			() => squad.PlayerMachine == PlayerMachineSource.CareerSquad);
-		Variants = new VariantEditor(source, sceneIndex, Mover, Sync, Selection);
+		TableEditor = new RandomTableEditor(source, sceneIndex, Mover, Sync, Selection);
 		Types = new RosterTypeEditor(source, Mover, Sync);
 		StartingConditions = new StartingConditionEditor(source, Mover, Sync);
 		Headings = new HeadingEditor(source, Mover, Sync);
@@ -71,15 +71,15 @@ internal sealed class EditorMission {
 		Outliner.Actions = Actions;
 		Outliner.Timers = Timers;
 		Outliner.Conditions = Conditions;
-		var choices = new RandomChoices(source, sceneIndex, Names, squad);
-		Outliner.Choices = choices;
+		var randomTables = new RandomTables(source, sceneIndex, Names, squad);
+		Outliner.Tables = randomTables;
 		Settings = new MissionSettingsWindow(() => Name, () => zones.Describe(Zone), Theater, TheaterNames.Labels(content),
 			new MissionTextView(Texts), new DebriefView(Debrief));
 		var catalog = new UnitTypeCatalog(content);
 		Properties = new PropertiesPanel(sceneIndex, Selection, source, Mover, Sides, Deleter, Members,
-			new SquadMachinePanel(Fitter, Squad, squad), new RosterFitView(Fitter, Types, Variants, choices, catalog),
-			Routes, Placing, Areas, AreaPlacing, Orders, Objectives, Actions, Timers, Conditions, Presence, Variants,
-			StartingConditions, Headings, choices, new TriggerMessages(content), Names, catalog, tables.Bases, Types, Fitter, Placer, Hercs, Flyers,
+			new SquadMachinePanel(Fitter, Squad, squad), new RosterFitView(Fitter, Types, TableEditor, randomTables, catalog),
+			Routes, Placing, Areas, AreaPlacing, Orders, Objectives, Actions, Timers, Conditions, Presence, TableEditor,
+			StartingConditions, Headings, randomTables, new TriggerMessages(content), Names, catalog, tables.Bases, Types, Fitter, Placer, Hercs, Flyers,
 			Pads, GroupDeleter);
 	}
 
@@ -170,8 +170,8 @@ internal sealed class EditorMission {
 	/// <summary>Sets which campaign states a record of <see cref="Source"/> is present in, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public PresenceEditor Presence { get; }
 
-	/// <summary>Creates, edits and deletes variant tables in <see cref="Source"/>, and sets which one an object draws from, as steps of <see cref="Mover"/>'s undo history.</summary>
-	public VariantEditor Variants { get; }
+	/// <summary>Creates, edits and deletes random tables in <see cref="Source"/>, and sets which one an object picks from, as steps of <see cref="Mover"/>'s undo history.</summary>
+	public RandomTableEditor TableEditor { get; }
 
 	public SideChanger Sides { get; }
 

@@ -83,7 +83,7 @@ public static class DebriefText {
 	/// </summary>
 	public static short? MovieUnder(MissionDocument document, short condition) {
 		short guid = MovieRef(document);
-		var values = document.Mission.Variants ?? [];
+		var values = document.Mission.MovieChoices ?? [];
 		for (int i = values.Length - 1; guid != -1 && i >= 0; i--) {
 			if (values[i].GUID == guid && values[i].ConditionRef == condition) {
 				return values[i].Value;
@@ -135,7 +135,7 @@ public static class DebriefText {
 		}
 
 		short movie = MovieRef(document);
-		foreach (var value in document.Mission.Variants ?? []) {
+		foreach (var value in document.Mission.MovieChoices ?? []) {
 			if (movie != -1 && value.GUID == movie && value.ConditionRef != -1 && !outcomes.Contains(value.ConditionRef)) {
 				outcomes.Add(value.ConditionRef);
 			}

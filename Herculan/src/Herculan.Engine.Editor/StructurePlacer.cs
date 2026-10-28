@@ -11,7 +11,7 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// Adds a structure to the open mission, as one step of <see cref="PointMover"/>'s undo history: a row-14 roster record,
 /// and a row-16 group of its own that places it, standing on a row-6 point appended for it and facing a row-7 heading of
-/// 0 degrees. Each record is appended to the <c>.MSN</c> unconditioned, with no variant key and a new GUID
+/// 0 degrees. Each record is appended to the <c>.MSN</c> unconditioned, with no random table key and a new GUID
 /// (<see cref="MissionDocument.Append"/>), so every version of the mission has it; the scene is then synced
 /// with the document (<see cref="SceneSync"/>), which builds the structure's object for the record
 /// (docs/herculan/handoff-editor-document.md#the-tools).
@@ -23,7 +23,7 @@ namespace Herculan.Engine.Editor;
 /// heading (docs/retail/formats/script-dat.md#placement--the-actual-rule, rules 2 and 7); it starts pristine, fires no
 /// action and writes no counter, every unused pair <c>-1</c> as in the retail files. A group naming a heading needs no
 /// first order (<see cref="MissionCheckKind.NoHeadingNoOrder"/>). The group does not paint its ground. Which side it is on is the
-/// caller's. A row-7 heading of 0 degrees that is its GUID's one record, unconditioned and drawing no variant, is shared
+/// caller's. A row-7 heading of 0 degrees that is its GUID's one record, unconditioned and picking from no random table, is shared
 /// rather than appended (<see cref="MissionDocument.ShareableHeading"/>).</para>
 ///
 /// <para>A structure can instead join an existing structure group (<see cref="WhyNotJoin"/>): its record then names a
@@ -293,12 +293,12 @@ internal sealed class StructurePlacer {
 
 	// The point a new structure stands on, at the ground's height.
 	private static MapPoint22 Point(Vec3i position) =>
-		new() { ConditionRef = -1, VariantKey = -1, Unk06 = -1, X = position.X, Y = position.Y, Z = position.Z };
+		new() { ConditionRef = -1, RandomTableKey = -1, Unk06 = -1, X = position.X, Y = position.Y, Z = position.Z };
 
 	// The record a new structure gets: no point or heading of its own, pristine, no actions, every counter pair unused.
 	private static BaseRosterEntry62 Structure(int typeIndex) => new() {
 		ConditionRef = -1,
-		VariantKey = -1,
+		RandomTableKey = -1,
 		Unk06 = -1,
 		TypeIndex = (short)typeIndex,
 		PositionRef = -1,
@@ -313,7 +313,7 @@ internal sealed class StructurePlacer {
 	private static short ZeroHeading(MissionDocument source) {
 		short heading = source.ShareableHeading(0);
 		if (heading == -1) {
-			source.Append(HeadingRow, new Heading10 { ConditionRef = -1, VariantKey = -1, Unk06 = -1, Degrees = 0 }, out heading);
+			source.Append(HeadingRow, new Heading10 { ConditionRef = -1, RandomTableKey = -1, Unk06 = -1, Degrees = 0 }, out heading);
 		}
 
 		return heading;

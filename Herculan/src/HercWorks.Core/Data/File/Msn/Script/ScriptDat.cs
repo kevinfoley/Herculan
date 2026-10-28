@@ -4,7 +4,7 @@
 /// <c>data\script.dat</c> — the mission as VSHELL hands it to DBSIM, and as VSHELL's briefing map
 /// (<c>ShellMap</c>) reads it. Written by the mission load
 /// (<see cref="Io.Transform.Common.MissionGenerator.WriteScriptDat"/>) after it applies the
-/// <c>.MSN</c>'s conditions and variants: each block is one <see cref="MissionFile"/> row's surviving
+/// <c>.MSN</c>'s conditions and random tables: each block is one <see cref="MissionFile"/> row's surviving
 /// records, refs renumbered to block indices, some fields dropped. See docs/retail/formats/script-dat.md.
 ///
 /// <b>DBSIM reads this file twice.</b> <c>DBSim_LoadScriptDat</c> counts live objects and sizes its
@@ -251,7 +251,7 @@ public class ScriptActionTimer {
 
 /// <summary>
 /// Block 7 entry — 134 bytes, row #12 (<see cref="MechRosterEntry144"/>) less its GUID, condition,
-/// variant key, compound-condition partner and pair count. <see cref="HeadBytes"/> is source
+/// random table key, compound-condition partner and pair count. <see cref="HeadBytes"/> is source
 /// 0x08-0x2F and <see cref="TailBytes"/> source 0x4C-0x8F with the counter pairs split; both are kept
 /// raw for a byte-exact round trip, and the named properties are views over them. Refs are block
 /// indices.
@@ -371,7 +371,7 @@ public class ScriptMechRecord {
 
 /// <summary>
 /// Block 8 entry — 92 bytes, row #13 (<see cref="FlyerRosterEntry102"/>) less its GUID, condition,
-/// variant key, 0x06 and pair count. <see cref="HeadBytes"/> is source 0x08-0x2F (the flag span) and
+/// random table key, 0x06 and pair count. <see cref="HeadBytes"/> is source 0x08-0x2F (the flag span) and
 /// <see cref="TailBytes"/> source 0x38-0x65 with the counter pairs split. Refs are block indices.
 ///
 /// <para>DBSIM's world-spawn pass (<c>DBSim_SpawnMissionObjects</c> (<c>004253d8</c>)) builds one flyer/vehicle per live slot from
@@ -474,7 +474,7 @@ internal static class ScriptActionRefs {
 
 /// <summary>
 /// Block 9 entry — 52 bytes, row #14 (<see cref="BaseRosterEntry62"/>) less its GUID, condition,
-/// variant key, 0x06 and pair count. <see cref="TailBytes"/> is source 0x10-0x3D with the counter
+/// random table key, 0x06 and pair count. <see cref="TailBytes"/> is source 0x10-0x3D with the counter
 /// pairs split. Refs are block indices.
 ///
 /// <para>DBSIM's world-spawn pass (<c>DBSim_SpawnMissionObjects</c> (<c>004253d8</c>)) builds one base/structure per live slot

@@ -60,7 +60,7 @@ public static class StartingConditions {
 	/// <summary>
 	/// Sets roster row <paramref name="row"/>'s GUID <paramref name="guid"/>'s starting condition in its base to
 	/// <paramref name="value"/>, by the rules in the class summary. Throws <see cref="InvalidOperationException"/> where
-	/// <see cref="WhyFixed"/> answers, and for 100 where a variant the base draws supplies another value, which an overlay
+	/// <see cref="WhyFixed"/> answers, and for 100 where a template the base picks supplies another value, which an overlay
 	/// cannot unset.
 	/// </summary>
 	public static MsnEdit Set(MissionDocument document, int row, short guid, short value) {
@@ -76,7 +76,7 @@ public static class StartingConditions {
 		try {
 			return document.Change(() => document.UnsetBaseField(field, guid));
 		} catch (InvalidOperationException) when (Current(document, row, guid) != value) {
-			throw new InvalidOperationException($"The random choice it draws from gives it another starting condition, so it "
+			throw new InvalidOperationException($"The random table it picks from gives it another starting condition, so it "
 				+ $"can't be set to {value}% here.");
 		}
 	}

@@ -6,8 +6,8 @@ using Herculan.Engine.Shell;
 
 namespace Herculan.Engine.Editor;
 
-/// <summary>Why a squad HERC that picks from a random choice has no effect in play (docs/herculan/handoff-editor-roster.md#the-players-squad).</summary>
-internal enum ChoiceUnused {
+/// <summary>Why a squad HERC that picks from a random table has no effect in play (docs/herculan/handoff-editor-roster.md#the-players-squad).</summary>
+internal enum RandomTableUnused {
 	/// <summary>A campaign mission's squad pilots the career's HERCs.</summary>
 	CareerSquad,
 
@@ -22,27 +22,27 @@ internal enum ChoiceUnused {
 }
 
 /// <summary>
-/// One record a random choice's Used by lists: its identity, a link when it has a view (<see cref="Target"/>); the option the
+/// One record a random table's Used by lists: its identity, a link when it has a view (<see cref="Target"/>); the option the
 /// scene shows it with, an index into the table's options, null when it shows none of them; whether it shows an option of
 /// another table under the same key instead; and why it has no effect in play, when it has none.
 /// </summary>
-internal sealed record ChoiceUser(string Label, EditorSelection? Target, int? Shown, bool OtherChoice, ChoiceUnused? Unused);
+internal sealed record RandomTableUser(string Label, EditorSelection? Target, int? Shown, bool OtherTable, RandomTableUnused? Unused);
 
 /// <summary>
-/// The open mission's random choices, its variant tables, as the Random choice view, the Mission panel's Random choices list and
-/// the object and route views show them (docs/herculan/handoff-editor-conditions.md#variants), all from the <c>.MSN</c> and its
-/// layout: each table read once per layout (<see cref="VariantEditing.Table"/>), titled by what it picks (<see cref="Title"/>),
+/// The open mission's random tables, as the Random table view, the Mission panel's Random tables list and the object and
+/// route views show them (docs/herculan/handoff-editor-conditions.md#random-tables), all from the <c>.MSN</c> and its
+/// layout: each table read once per layout (<see cref="RandomTableEditing.Table"/>), titled by what it picks (<see cref="Title"/>),
 /// each option with what tells it apart (<see cref="Option"/>), and the records picking from it (<see cref="Users"/>), named in
-/// game terms, with the option the layout shows each with (<see cref="LayoutDraw.Shown"/>).
+/// game terms, with the option the layout shows each with (<see cref="LayoutPick.Shown"/>).
 /// </summary>
-internal sealed class RandomChoices {
+internal sealed class RandomTables {
 	private const int RouteRow = 8;
 	private const int MechRow = 12;
 	private const int FlyerRow = 13;
 	private const int BaseRow = 14;
 
-	/// <summary>The rows whose records carry a variant key, of which the layout holds each GUID's draws.</summary>
-	private static readonly int[] DrawingRows = [6, 7, 8, 12, 13, 14, 15];
+	/// <summary>The rows whose records carry a random table key, of which the layout holds each GUID's picks.</summary>
+	private static readonly int[] KeyedRows = [6, 7, 8, 12, 13, 14, 15];
 
 	private readonly MissionDocument _source;
 	private readonly MissionIndex _index;
@@ -52,12 +52,12 @@ internal sealed class RandomChoices {
 	// What has been read of the layout _readFor, cleared once an edit builds another.
 	private MissionLayout? _readFor;
 	private IReadOnlyList<short> _all = [];
-	private readonly Dictionary<short, VariantTable?> _tables = new();
-	private readonly Dictionary<short, (IReadOnlyList<ChoiceUser> Users, int Others)> _users = new();
+	private readonly Dictionary<short, RandomTable?> _tables = new();
+	private readonly Dictionary<short, (IReadOnlyList<RandomTableUser> Users, int Others)> _users = new();
 
-	/// <param name="names">What the records picking from a choice are named by.</param>
+	/// <param name="names">What the records picking from a table are named by.</param>
 	/// <param name="squad">Which Hercs the mission's squad pilots, which says when a squad HERC's pick has no effect.</param>
-	public RandomChoices(MissionDocument source, MissionIndex index, MissionNames names, MissionSquad squad) {
+	public RandomTables(MissionDocument source, MissionIndex index, MissionNames names, MissionSquad squad) {
 		_source = source;
 		_index = index;
 		_names = names;
@@ -70,7 +70,7 @@ internal sealed class RandomChoices {
 	/// <summary>The scene's objects and groups as the layout places them.</summary>
 	public MissionIndex Index => _index;
 
-	/// <summary>Every variant table of the mission, by GUID in row-1 order.</summary>
+	/// <summary>Every random table of the mission, by GUID in row-1 order.</summary>
 	public IReadOnlyList<short> All {
 		get {
 			Refresh();
@@ -79,10 +79,10 @@ internal sealed class RandomChoices {
 	}
 
 	/// <summary>Table <paramref name="guid"/>, or null when it is not one.</summary>
-	public VariantTable? Read(short guid) {
+	public RandomTable? Read(short guid) {
 		Refresh();
 		if (!_tables.TryGetValue(guid, out var table)) {
-			_tables[guid] = table = VariantEditing.Table(_source, guid);
+			_tables[guid] = table = RandomTableEditing.Table(_source, guid);
 		}
 
 		return table;
@@ -90,18 +90,18 @@ internal sealed class RandomChoices {
 
 	/// <summary>
 	/// What <paramref name="table"/> picks, built from its options: "Random herc: SCARAB or DIABLO", each type named once, three
-	/// at most and then how many more; a route choice by its number of options.
+	/// at most and then how many more; a table of routes by its number of options.
 	/// </summary>
-	public string Title(VariantTable table) {
-		if (table.Alternatives.Count == 0) {
-			return "Random choice with no options";
+	public string Title(RandomTable table) {
+		if (table.Options.Count == 0) {
+			return "Random table with no options";
 		}
 
 		if (table.Row == RouteRow) {
-			return $"Random route: {table.Alternatives.Count} options";
+			return $"Random route: {table.Options.Count} options";
 		}
 
-		var names = table.Alternatives.Select(alternative => ShortName(Record(alternative))).Distinct().ToList();
+		var names = table.Options.Select(option => ShortName(Record(option))).Distinct().ToList();
 		string list = names.Count switch {
 			1 => names[0],
 			<= 3 => $"{string.Join(", ", names.Take(names.Count - 1))} or {names[^1]}",
@@ -116,9 +116,9 @@ internal sealed class RandomChoices {
 	/// and its weapons when another option has that chassis; a flyer's type; a structure's or ground vehicle's kind and the
 	/// name the MFD prints, as its view titles it (<see cref="RosterTypeNames.StructureTitle"/>); a route's waypoint count and length, and its start when another option matches both.
 	/// </summary>
-	public string Option(VariantTable table, int at) {
-		var record = Record(table.Alternatives[at]);
-		var others = table.Alternatives.Where((_, i) => i != at).Select(Record).ToList();
+	public string Option(RandomTable table, int at) {
+		var record = Record(table.Options[at]);
+		var others = table.Options.Where((_, i) => i != at).Select(Record).ToList();
 		switch (record) {
 			case MechRosterEntry144 herc:
 				return others.OfType<MechRosterEntry144>().Any(other => other.TypeIndex == herc.TypeIndex)
@@ -139,10 +139,10 @@ internal sealed class RandomChoices {
 	}
 
 	/// <summary>What <paramref name="table"/>'s options are, in the singular: herc, flyer, structure, ground vehicle or route.</summary>
-	public string Noun(VariantTable table) => table.Row switch {
+	public string Noun(RandomTable table) => table.Row switch {
 		MechRow => "HERC",
 		FlyerRow => "flyer",
-		BaseRow => table.Alternatives.Count > 0 && Record(table.Alternatives[0]) is BaseRosterEntry62 first && IsVehicle(first)
+		BaseRow => table.Options.Count > 0 && Record(table.Options[0]) is BaseRosterEntry62 first && IsVehicle(first)
 			? "ground vehicle"
 			: "structure",
 		RouteRow => "route",
@@ -151,24 +151,24 @@ internal sealed class RandomChoices {
 
 	/// <summary>
 	/// Every record that picks from <paramref name="table"/>, whatever its condition: each layout entry of a row carrying a
-	/// variant key, one of whose draws is by the table's key, in row and layout order.
+	/// random table key, one of whose picks is by the table's key, in row and layout order.
 	/// </summary>
-	public IReadOnlyList<ChoiceUser> Users(VariantTable table) => UsersOf(table).Users;
+	public IReadOnlyList<RandomTableUser> Users(RandomTable table) => UsersOf(table).Users;
 
-	/// <summary>How many variant alternatives, records of no entry, pick from <paramref name="table"/>'s key themselves.</summary>
-	public int Others(VariantTable table) => UsersOf(table).Others;
+	/// <summary>How many templates, records of no entry, pick by <paramref name="table"/>'s key themselves.</summary>
+	public int Others(RandomTable table) => UsersOf(table).Others;
 
 	/// <summary>
-	/// How many entries pick from a table one of whose options is variant alternative <paramref name="option"/>: the records an
-	/// edit of that option changes wherever it is picked.
+	/// How many entries pick from a table one of whose options copies template <paramref name="template"/>: the records an edit
+	/// of that template changes wherever it is picked.
 	/// </summary>
-	public int Picking(MsnRecordId option) =>
-		DrawingRows.Sum(row => _source.Layout.Entries(row).Count(entry => DrawsOf(entry)
-			.Any(draw => draw.Options.Any(seen => seen.Record == option))));
+	public int Picking(MsnRecordId template) =>
+		KeyedRows.Sum(row => _source.Layout.Entries(row).Count(entry => PicksOf(entry)
+			.Any(pick => pick.Options.Any(seen => seen.Record == template))));
 
-	/// <summary>What references <paramref name="table"/> other than its own options, one short identity per line (<see cref="VariantEditing.Referencers"/>).</summary>
-	public IReadOnlyList<(string Label, EditorSelection? Target)> Referencing(VariantTable table) {
-		var namers = VariantEditing.Referencers(_source, table);
+	/// <summary>What references <paramref name="table"/> other than its own options, one short identity per line (<see cref="RandomTableEditing.Referencers"/>).</summary>
+	public IReadOnlyList<(string Label, EditorSelection? Target)> Referencing(RandomTable table) {
+		var namers = RandomTableEditing.Referencers(_source, table);
 		var found = new List<(string Label, EditorSelection? Target)>();
 		foreach (var id in namers.Records) {
 			found.Add(id.Row switch {
@@ -179,7 +179,7 @@ internal sealed class RandomChoices {
 				4 => ("The mission text", null),
 				5 => ("The debrief", null),
 				17 => ObjectiveName(id.Index),
-				_ when _source.RecordAt(id) is { GUID: -1 } => ("An option of another random choice", null),
+				_ when _source.RecordAt(id) is { GUID: -1 } => ("A template of another random table", null),
 				_ when _source.RecordAt(id) is { } record => Named(id.Row, record.GUID),
 				_ => ("Another record", null),
 			});
@@ -193,26 +193,26 @@ internal sealed class RandomChoices {
 	}
 
 	/// <summary>What a Used by line says for <paramref name="unused"/>: why the record has no effect in play.</summary>
-	public static string UnusedNote(ChoiceUnused unused) => unused switch {
-		ChoiceUnused.CareerSquad => "Not used: campaign missions use the career's HERCs.",
-		ChoiceUnused.HercType => "Not used: the player pilots the Herc Type chosen on the practice screen.",
-		ChoiceUnused.LeftBehind => "Not used: the last squadmate listed stays behind (a retail bug).",
+	public static string UnusedNote(RandomTableUnused unused) => unused switch {
+		RandomTableUnused.CareerSquad => "Not used: campaign missions use the career's HERCs.",
+		RandomTableUnused.HercType => "Not used: the player pilots the Herc Type chosen on the practice screen.",
+		RandomTableUnused.LeftBehind => "Not used: the last squadmate listed stays behind (a retail bug).",
 		_ => "Not used: it comes after a gap in the squad's list.",
 	};
 
 	/// <summary>
-	/// The warning a random choice gets when it has no effect in play: every record picking from it is a squad HERC that is not
-	/// used (<see cref="ChoiceUnused"/>); null when one has an effect, or nothing picks from it.
+	/// The warning a random table gets when it has no effect in play: every record picking from it is a squad HERC that is not
+	/// used (<see cref="RandomTableUnused"/>); null when one has an effect, or nothing picks from it.
 	/// </summary>
-	public string? NoEffect(VariantTable table) {
+	public string? NoEffect(RandomTable table) {
 		var users = Users(table);
 		if (users.Count == 0 || Others(table) > 0 || users.Any(user => user.Unused == null)) {
 			return null;
 		}
 
-		return users.All(user => user.Unused == ChoiceUnused.CareerSquad)
+		return users.All(user => user.Unused == RandomTableUnused.CareerSquad)
 				? "No effect in play: campaign missions use the career's HERCs."
-			: users.All(user => user.Unused == ChoiceUnused.HercType)
+			: users.All(user => user.Unused == RandomTableUnused.HercType)
 				? "No effect in play: the player pilots the Herc Type chosen on the practice screen."
 			: "No effect in play: none of the HERCs that pick from it is used.";
 	}
@@ -227,48 +227,48 @@ internal sealed class RandomChoices {
 		_readFor = _source.Layout;
 		_tables.Clear();
 		_users.Clear();
-		_all = VariantEditing.Tables(_source);
+		_all = RandomTableEditing.Tables(_source);
 	}
 
-	private (IReadOnlyList<ChoiceUser> Users, int Others) UsersOf(VariantTable table) {
+	private (IReadOnlyList<RandomTableUser> Users, int Others) UsersOf(RandomTable table) {
 		Refresh();
 		if (_users.TryGetValue(table.Guid, out var cached)) {
 			return cached;
 		}
 
-		var users = new List<ChoiceUser>();
-		foreach (int row in DrawingRows) {
+		var users = new List<RandomTableUser>();
+		foreach (int row in KeyedRows) {
 			foreach (var entry in _source.Layout.Entries(row)) {
-				if (DrawsOf(entry).FirstOrDefault(draw => draw.Key == table.Key) is { } draw) {
-					users.Add(User(table, entry, draw));
+				if (PicksOf(entry).FirstOrDefault(pick => pick.Key == table.Key) is { } pick) {
+					users.Add(User(table, entry, pick));
 				}
 			}
 		}
 
-		int others = VariantEditing.Drawers(_source, table.Key).Count(id => _source.RecordAt(id) is { GUID: -1 });
+		int others = RandomTableEditing.Users(_source, table.Key).Count(id => _source.RecordAt(id) is { GUID: -1 });
 		_users[table.Guid] = (users, others);
 		return (users, others);
 	}
 
-	// An entry's draws: its base's, then its variations'.
-	private static IEnumerable<LayoutDraw> DrawsOf(LayoutEntry entry) =>
-		entry.Presence.Draws.Concat(entry.Variations.Select(variation => variation.Draw).OfType<LayoutDraw>());
+	// An entry's picks: its base's, then its variations'.
+	private static IEnumerable<LayoutPick> PicksOf(LayoutEntry entry) =>
+		entry.Presence.Picks.Concat(entry.Variations.Select(variation => variation.Pick).OfType<LayoutPick>());
 
-	private ChoiceUser User(VariantTable table, LayoutEntry entry, LayoutDraw draw) {
-		bool other = draw.Table != table.Guid;
+	private RandomTableUser User(RandomTable table, LayoutEntry entry, LayoutPick pick) {
+		bool other = pick.Table != table.Guid;
 		int? shown = null;
-		if (!other && draw.Shown is { Record: not null } option) {
-			int at = table.Alternatives.ToList().FindIndex(alternative => alternative.Range == option.Range);
+		if (!other && pick.Shown is { Record: not null } option) {
+			int at = table.Options.ToList().FindIndex(own => own.Range == option.Range);
 			shown = at >= 0 ? at : null;
 		}
 
 		var (label, target, unused) = Identity(entry);
-		return new ChoiceUser(label, target, shown, other, unused);
+		return new RandomTableUser(label, target, shown, other, unused);
 	}
 
 	// A record that picks, by what the designer sees (MissionNames): an object by its name and its group, a squad herc as the
 	// player's or a squadmate's HERC, a route by its shape and who walks it.
-	private (string Label, EditorSelection? Target, ChoiceUnused? Unused) Identity(LayoutEntry entry) {
+	private (string Label, EditorSelection? Target, RandomTableUnused? Unused) Identity(LayoutEntry entry) {
 		var (label, target) = Named(entry.Row, entry.Guid);
 		var key = new ObjectKey(entry.Row, entry.Guid);
 		return entry.Row is >= MechRow and <= BaseRow && _index.Plan.Object(key) is { Squad: true } planned
@@ -312,13 +312,13 @@ internal sealed class RandomChoices {
 
 	// Why a squad herc's pick has no effect, by the launch's rule (MissionSquad) and the squad build's list: group 0's members
 	// in the unbroken run from its second slot, the last of which a training load leaves behind.
-	private ChoiceUnused? SquadUnused(PlannedObject planned) {
+	private RandomTableUnused? SquadUnused(PlannedObject planned) {
 		if (_squad.PlayerMachine == PlayerMachineSource.CareerSquad) {
-			return ChoiceUnused.CareerSquad;
+			return RandomTableUnused.CareerSquad;
 		}
 
 		if (planned.MemberIndex == 0) {
-			return _squad.PlayerMachine == PlayerMachineSource.HercType ? ChoiceUnused.HercType : null;
+			return _squad.PlayerMachine == PlayerMachineSource.HercType ? RandomTableUnused.HercType : null;
 		}
 
 		var members = _index.Plan.Objects.Where(placed => placed.Squad).Select(placed => placed.MemberIndex).ToHashSet();
@@ -327,13 +327,13 @@ internal sealed class RandomChoices {
 			run++;
 		}
 
-		return planned.MemberIndex > run ? ChoiceUnused.AfterGap : planned.MemberIndex == run ? ChoiceUnused.LeftBehind : null;
+		return planned.MemberIndex > run ? RandomTableUnused.AfterGap : planned.MemberIndex == run ? RandomTableUnused.LeftBehind : null;
 	}
 
 	private (string Label, EditorSelection? Target) ObjectiveName(int record) =>
 		(_names.Objective(record).Full, new ObjectiveSelection(record));
 
-	private MapObject? Record(VariantAlternative alternative) => _source.RecordAt(alternative.Record);
+	private MapObject? Record(RandomTableOption option) => _source.RecordAt(option.Template);
 
 	// A record's type by name (RosterTypeNames); a route option is a route.
 	private string ShortName(MapObject? record) => record is WaypointGroup ? "Route" : _names.Types.Name(record);

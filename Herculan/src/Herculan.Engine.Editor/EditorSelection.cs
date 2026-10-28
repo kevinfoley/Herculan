@@ -30,7 +30,7 @@ internal abstract record EditorSelection {
 		_ => false
 	};
 
-	// GUID -1 is a variant alternative's, which no selection names.
+	// GUID -1 is a template's, which no selection names.
 	private static bool Carries(IEnumerable<MapObject>? row, short guid) =>
 		guid != -1 && row?.Any(record => record.GUID == guid) == true;
 }

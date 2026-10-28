@@ -15,7 +15,7 @@ namespace Herculan.Engine.Editor;
 /// shown as the launch loads it, on its stage's theater by its own time of day.
 ///
 /// <para>Every draw of an open is its lowest outcome (<see cref="SimRandom.Lowest"/>), so a mission opens the same way every
-/// time, each variant table on its first option (docs/herculan/handoff-editor-conditions.md#what-the-editor-shows): the
+/// time, each random table on its first option (docs/herculan/handoff-editor-conditions.md#what-the-editor-shows): the
 /// editor's choice, where the game's load draws from <see cref="ShellTrainingLaunch.StartupRandom"/>.</para>
 ///
 /// <para>The launch is unchanged and its handoff on disk keeps the launch's header until

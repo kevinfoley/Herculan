@@ -1,9 +1,9 @@
 namespace HercWorks.Core.Data.File.Msn;
 
 /// <summary>
-/// What a set of missions fits on each mount of each herc type: every row-12 record whose own type is set, a variant option
-/// (GUID <c>-1</c>) and a record of any condition included, read as stored, no condition tested and no variant drawn; a
-/// record of type <c>-1</c>, which draws its fit or takes its base's, is passed over (why that counts each retail fit once:
+/// What a set of missions fits on each mount of each herc type: every row-12 record whose own type is set, a template
+/// (GUID <c>-1</c>) and a record of any condition included, read as stored, no condition tested and no option picked; a
+/// record of type <c>-1</c>, which picks its fit from a template or takes its base's, is passed over (why that counts each retail fit once:
 /// docs/herculan/handoff-editor-roster.md#a-cybrids-weapons). A mount is a fit slot, the index into the
 /// record's weapon and ammunition-type arrays (docs/retail/simulation/weapon-mounts.md#the-join--mechloadout_constructweaponmounts-0040fff8):
 /// a slot holding a weapon id, <c>0</c> (no weapon) included, is fitted; <c>-1</c> is not.

@@ -279,7 +279,7 @@ A worked example, because it is the only place the four mechanisms are visible t
 
 Action 0's circle is centred at (1005988, 1058404) with radius 150,000 and its subject is type 3 — deployed **Cybrid** groups, not the player. The player spawns inside it at 64,132; group 2's machine spawns north at 252,252 and walks south, crossing in at tick 1222 (~49 s at 25 Hz). So the first wave arrives on its own if the player does nothing, and sooner if the player kills the machine. Actions 1 and 2 carry no area, so their only route is the kill.
 
-The Cybrid HERCs' chassis are not fixed. Each of the eight roster records names a type-3 variant key, so every HERC draws its own chassis (DIABLO, ACHILLES, HYPERION or HEADHUNTER) when the mission loads ([`msn-mission-file.md`](../formats/msn-mission-file.md#variants)). The counts, groups, actions and routes above are the same on every load.
+The Cybrid HERCs' chassis are not fixed. Each of the eight roster records names a random table key, so every HERC picks its own chassis (DIABLO, ACHILLES, HYPERION or HEADHUNTER) when the mission loads ([`msn-mission-file.md`](../formats/msn-mission-file.md#random-tables)). The counts, groups, actions and routes above are the same on every load.
 
 ## Rejected readings
 

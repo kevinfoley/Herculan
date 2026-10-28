@@ -8,7 +8,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// The Mission panel in the top half of the left of the window: the mission check's findings, then every group (with its members), trigger area,
-/// trigger (row-10 action), countdown (row-11 timer), route, win and lose condition (row-17 objective) and random choice as a
+/// trigger (row-10 action), countdown (row-11 timer), route, win and lose condition (row-17 objective) and random table as a
 /// list, the objective lines the player reads apart from the win and lose conditions, the trigger areas and routes with the
 /// buttons that start placing a new one, and the triggers, countdowns and win and lose conditions with the buttons that create
 /// one; last, under Advanced, every condition. It is the only way to reach the parts of a mission that are not
@@ -76,8 +76,8 @@ internal sealed class MissionOutliner {
 	/// <summary>What the Conditions list under Advanced reads; set once the mission's tools are built.</summary>
 	public ConditionEditor? Conditions { get; set; }
 
-	/// <summary>What the Random choices list reads; set once the mission's tools are built.</summary>
-	public RandomChoices? Choices { get; set; }
+	/// <summary>What the Random tables list reads; set once the mission's tools are built.</summary>
+	public RandomTables? Tables { get; set; }
 
 	/// <summary>
 	/// The panel's height: the top half of the left side below the menu bar, the Toolbox (<see cref="EditorToolbox"/>) docked
@@ -97,7 +97,7 @@ internal sealed class MissionOutliner {
 		DrawCountdowns();
 		DrawRoutes();
 		DrawObjectives();
-		DrawChoices();
+		DrawTables();
 		DrawAdvanced();
 
 		ImGui.End();
@@ -188,29 +188,29 @@ internal sealed class MissionOutliner {
 	}
 
 	/// <summary>
-	/// Every variant table, in row-1 order, as its Random choice view titles it, with how many records pick from it; selected
-	/// while it or a range over it is (docs/herculan/handoff-editor-conditions.md#variants).
+	/// Every random table, in row-1 order, as its Random table view titles it, with how many records pick from it; selected
+	/// while it or a range over it is (docs/herculan/handoff-editor-conditions.md#random-tables).
 	/// </summary>
-	private void DrawChoices() {
-		if (Choices is not { } choices) {
+	private void DrawTables() {
+		if (Tables is not { } randomTables) {
 			return;
 		}
 
-		var tables = choices.All;
-		if (!ImGui.CollapsingHeader($"Random choices ({tables.Count})###choices")) {
+		var tables = randomTables.All;
+		if (!ImGui.CollapsingHeader($"Random tables ({tables.Count})###tables")) {
 			return;
 		}
 
 		short? current = _selection.Current is ConditionSelection { Guid: var guid }
-			? VariantEditing.IsTable(_source, guid) ? guid : VariantEditing.TableOfRange(_source, guid)
+			? RandomTableEditing.IsTable(_source, guid) ? guid : RandomTableEditing.TableOfRange(_source, guid)
 			: null;
 		foreach (short table in tables) {
-			if (choices.Read(table) is not { } read) {
+			if (randomTables.Read(table) is not { } read) {
 				continue;
 			}
 
-			int users = choices.Users(read).Count + choices.Others(read);
-			Choose(new ConditionSelection(table), EditorText.WrappedSelectable($"{choices.Title(read)} (used by {users})", $"choice{table}",
+			int users = randomTables.Users(read).Count + randomTables.Others(read);
+			Choose(new ConditionSelection(table), EditorText.WrappedSelectable($"{randomTables.Title(read)} (used by {users})", $"table{table}",
 				current == table));
 		}
 	}

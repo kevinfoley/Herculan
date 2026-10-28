@@ -102,7 +102,7 @@ internal sealed class FeatureMoves {
 	/// <summary>
 	/// The other fields naming the points <paramref name="target"/>'s waypoint names (trigger areas, groups, other waypoints),
 	/// which move with it unless it is detached: every field naming them but the waypoint's own entries, in the route's
-	/// record or in the option of a random choice that supplies its list.
+	/// record or in the template of a random table option that supplies its list.
 	/// </summary>
 	public IReadOnlyList<PointRef> SharersOf(WaypointTarget target) {
 		if (WhyFixed(target) != null) {
@@ -202,7 +202,7 @@ internal sealed class FeatureMoves {
 
 	// Gives a detached waypoint or corner a point of its own at position, and points its field at it: the route's list
 	// entries, or the area's corner. A closed route's first and last waypoints name one point between them more often than
-	// not, and move as one. A list a variant supplies names points every route drawing that variant shares, so none of its
+	// not, and move as one. A list a template supplies names points every route picking that template shares, so none of its
 	// namers counts as moving and a point is appended.
 	private void GiveOwnPoint(MoveTarget target, Vec3i position) {
 		short[] points = PointsOf(target);

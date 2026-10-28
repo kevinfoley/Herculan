@@ -9,7 +9,7 @@ namespace HercWorks.Core.Data.File.Msn;
 /// <para>Its <see cref="Fields"/> are its <b>base</b>: the records carrying the same condition as its first record, the one
 /// that creates it, merged in file order by the row's <see cref="MergeRules"/> (a replace takes the later record whole, an
 /// overlay each word that is not its unset value), each keyed record first copying the option it shows
-/// (<see cref="LayoutDraw"/>). Every record under any other condition is a <see cref="LayoutVariation"/>. Refs in the
+/// (<see cref="LayoutPick"/>). Every record under any other condition is a <see cref="LayoutVariation"/>. Refs in the
 /// fields are GUIDs, as the file holds them.</para>
 /// </summary>
 public class LayoutEntry {
@@ -83,34 +83,34 @@ public sealed class LayoutEntry<T> : LayoutEntry where T : MapObject {
 /// the option it shows copied in when it is keyed) and the words it sets over the base when its condition holds — every word
 /// for a row that replaces, each overlay word not at its unset value for one that overlays.
 /// </summary>
-public sealed record LayoutVariation(MsnRecordId Record, short Condition, MapObject Fields, IReadOnlyList<int> Words, LayoutDraw? Draw);
+public sealed record LayoutVariation(MsnRecordId Record, short Condition, MapObject Fields, IReadOnlyList<int> Words, LayoutPick? Pick);
 
 /// <summary>
 /// When a thing is present: <see cref="Conditions"/>, the row-1 GUIDs that must all hold, none for always: its base's
-/// condition, then for a herc, flyer or structure its <see cref="Group"/>'s. <see cref="Draws"/> are the draws its keyed base
+/// condition, then for a herc, flyer or structure its <see cref="Group"/>'s. <see cref="Picks"/> are the picks its keyed base
 /// records make, each naming its table and the option shown.
 /// </summary>
 /// <param name="Group">The row-16 GUID of the first group, in file order, whose base names the thing as a member, which places it; <c>-1</c> for none or another row.</param>
-public sealed record LayoutPresence(IReadOnlyList<short> Conditions, short Group, IReadOnlyList<LayoutDraw> Draws) {
+public sealed record LayoutPresence(IReadOnlyList<short> Conditions, short Group, IReadOnlyList<LayoutPick> Picks) {
 	/// <summary>Whether the thing is present whatever the campaign state.</summary>
 	public bool Always => Conditions.Count == 0;
 }
 
 /// <summary>
-/// A keyed record's draw: the type-3 row-1 record whose key it names (the first in row 1), and that table's options in
+/// A keyed record's pick: the type-3 row-1 record whose key it names (the first in row 1), and that table's options in
 /// row-1 order. The layout shows <see cref="Shown"/>, the first, as a mission opens with every draw at its lowest.
 /// </summary>
-/// <param name="Drawer">The record that draws.</param>
-/// <param name="Key">Its variant key.</param>
+/// <param name="User">The record that picks.</param>
+/// <param name="Key">Its random table key.</param>
 /// <param name="Table">The table's GUID, <c>-1</c> when no type-3 record carries the key.</param>
-public sealed record LayoutDraw(MsnRecordId Drawer, short Key, short Table, IReadOnlyList<LayoutOption> Options) {
+public sealed record LayoutPick(MsnRecordId User, short Key, short Table, IReadOnlyList<LayoutOption> Options) {
 	/// <summary>The option the layout shows, the first; null when the table has none.</summary>
 	public LayoutOption? Shown => Options.Count > 0 ? Options[0] : null;
 }
 
 /// <summary>
-/// One option of a table, as a record drawing it sees: the type-2 range over the table, and the first record of the drawer's
-/// row read before it that the range conditions, which a draw of it copies; null when there is none.
+/// One option of a table, as a record picking from it sees: the type-2 range over the table, and the first record of the
+/// user's row read before it that the range conditions, the template a pick of it copies; null when there is none.
 /// </summary>
 public sealed record LayoutOption(short Range, MsnRecordId? Record);
 

@@ -8,44 +8,45 @@ using ImGuiNET;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The Random choice view, in the Properties panel's view of a variant table's condition and of a range over one, that option
-/// then highlighted (docs/herculan/handoff-editor-conditions.md#variants): its title, each option with its chance, what it is
-/// and Remove, Nothing with what is left over, Add option, Used by, a warning when it has no effect in play, Delete random
-/// choice, and the records' numbers under Advanced; and the Random choice line of the view of a herc, flyer, structure or
-/// ground vehicle and of a route. Each choice is an edit (<see cref="VariantEditor"/>). Everything it shows is the
-/// <c>.MSN</c>'s and its layout's (<see cref="RandomChoices"/>), so the scene's option is each record's first
-/// (<see cref="LayoutDraw.Shown"/>). How a record picks is docs/retail/formats/msn-mission-file.md#variants.
+/// The Random table view. A random table is a row-1 condition; each of its options is one range under the table, with the
+/// template that range conditions (docs/herculan/handoff-editor-conditions.md#random-tables). The Properties panel shows the
+/// view when the table or one of its ranges is selected, that range's option then highlighted: its title, each option with
+/// its chance, what it is and Remove, Nothing with what is left over, Add option, Used by, a warning when it has no effect in
+/// play, Delete random table, and the records' numbers under Advanced. Also the Random table line of the view of a herc,
+/// flyer, structure or ground vehicle and of a route. Every edit goes through <see cref="RandomTableEditor"/>. Everything it
+/// shows is the <c>.MSN</c>'s and its layout's (<see cref="RandomTables"/>), so the scene's option is each record's first
+/// (<see cref="LayoutPick.Shown"/>). How a record picks is docs/retail/formats/msn-mission-file.md#random-tables.
 /// </summary>
-internal sealed class VariantView {
+internal sealed class RandomTableView {
 	private static readonly Vector4 HighlightColor = new(1f, 0.85f, 0.1f, 1f);
 
-	private readonly VariantEditor _editor;
-	private readonly RandomChoices _choices;
+	private readonly RandomTableEditor _editor;
+	private readonly RandomTables _tables;
 	private readonly PanelLinks _links;
 
 	// A chance being typed, and the field it is for, until the field lets go.
 	private string? _draftFor;
 	private float _draft;
 
-	public VariantView(VariantEditor editor, RandomChoices choices, PanelLinks links) {
+	public RandomTableView(RandomTableEditor editor, RandomTables tables, PanelLinks links) {
 		_editor = editor;
-		_choices = choices;
+		_tables = tables;
 		_links = links;
 	}
 
 	/// <summary>
-	/// Draws the Random choice view of row-1 GUID <paramref name="guid"/> when it is a variant table, or a range over one choosing
-	/// an option the table reads, that option highlighted; answers false, drawing nothing, for any other condition.
+	/// Draws the Random table view of row-1 GUID <paramref name="guid"/> when it is a random table, or one of a table's ranges,
+	/// that range's option highlighted; answers false, drawing nothing, for any other condition.
 	/// </summary>
-	public bool DrawChoice(short guid) {
+	public bool DrawTableOf(short guid) {
 		var source = _editor.Source;
-		short? table = VariantEditing.IsTable(source, guid) ? guid : VariantEditing.TableOfRange(source, guid);
-		if (table is not { } shown || _choices.Read(shown) is not { } read) {
+		short? table = RandomTableEditing.IsTable(source, guid) ? guid : RandomTableEditing.TableOfRange(source, guid);
+		if (table is not { } shown || _tables.Read(shown) is not { } read) {
 			return false;
 		}
 
 		short? highlight = shown == guid ? null : guid;
-		if (highlight != null && read.Alternatives.All(alternative => alternative.Range != highlight)) {
+		if (highlight != null && read.Options.All(option => option.Range != highlight)) {
 			return false;
 		}
 
@@ -53,12 +54,12 @@ internal sealed class VariantView {
 		return true;
 	}
 
-	private void DrawTable(VariantTable table, short? highlight) {
-		var users = _choices.Users(table);
+	private void DrawTable(RandomTable table, short? highlight) {
+		var users = _tables.Users(table);
 		string? why = table.WhyFixed;
 		ImGui.PushID($"table{table.Guid}");
-		EditorText.Wrapped(_choices.Title(table));
-		if (_choices.NoEffect(table) is { } warning) {
+		EditorText.Wrapped(_tables.Title(table));
+		if (_tables.NoEffect(table) is { } warning) {
 			EditorText.Emphasis(warning);
 		}
 
@@ -75,13 +76,13 @@ internal sealed class VariantView {
 	}
 
 	// Each option with its chance, what it is and Remove; Nothing; Add option.
-	private void DrawOptions(VariantTable table, IReadOnlyList<ChoiceUser> users, string? why, short? highlight) {
+	private void DrawOptions(RandomTable table, IReadOnlyList<RandomTableUser> users, string? why, short? highlight) {
 		var source = _editor.Source;
-		var percents = VariantEditing.Percents(table);
+		var percents = RandomTableEditing.Percents(table);
 		var inScene = users.Select(user => user.Shown).OfType<int>().ToHashSet();
 		ImGui.Text("Options:");
-		for (int i = 0; i < table.Alternatives.Count; i++) {
-			var alternative = table.Alternatives[i];
+		for (int i = 0; i < table.Options.Count; i++) {
+			var option = table.Options[i];
 			ImGui.PushID(i);
 			ImGui.AlignTextToFramePadding();
 			ImGui.Text($"{i + 1}.");
@@ -101,17 +102,17 @@ internal sealed class VariantView {
 			}
 
 			ImGui.SameLine();
-			bool lit = alternative.Range == highlight;
+			bool lit = option.Range == highlight;
 			if (lit) {
 				ImGui.PushStyleColor(ImGuiCol.Text, HighlightColor);
 			}
 
 			// The text wraps short of Remove, so the button stays inside the panel.
-			bool removable = why == null && table.Alternatives.Count > 1;
+			bool removable = why == null && table.Options.Count > 1;
 			var style = ImGui.GetStyle();
 			float remove = removable ? ImGui.CalcTextSize("Remove").X + style.FramePadding.X * 2f + style.ItemSpacing.X : 0f;
 			ImGui.PushTextWrapPos(ImGui.GetCursorPosX() + ImGui.GetContentRegionAvail().X - remove);
-			EditorText.Wrapped(_choices.Option(table, i) + (inScene.Contains(i) ? " (in the scene)" : ""));
+			EditorText.Wrapped(_tables.Option(table, i) + (inScene.Contains(i) ? " (in the scene)" : ""));
 			ImGui.PopTextWrapPos();
 			if (lit) {
 				ImGui.PopStyleColor();
@@ -120,15 +121,15 @@ internal sealed class VariantView {
 			if (removable) {
 				ImGui.SameLine();
 				if (ImGui.SmallButton("Remove")) {
-					_editor.RequestRemove(table.Guid, alternative.Range);
+					_editor.RequestRemove(table.Guid, option.Range);
 				}
 			}
 
 			ImGui.PopID();
 		}
 
-		if (!VariantEditing.Exact(table)) {
-			string exact = string.Join(", ", table.Alternatives.Select(alternative => $"{table.Percent(alternative.Draws):0.###}%"));
+		if (!RandomTableEditing.Exact(table)) {
+			string exact = string.Join(", ", table.Options.Select(option => $"{table.Percent(option.Draws):0.###}%"));
 			EditorText.Note(why == null ? $"Rounded from {exact}: a change writes every chance as shown." : $"Rounded from {exact}.");
 		}
 
@@ -136,8 +137,8 @@ internal sealed class VariantView {
 			EditorText.Wrapped($"Nothing: {Math.Max(100m - percents.Sum(), 0m):0.#}%");
 			if (table.Row is >= 12 and <= 14) {
 				// Its references stay the .MSN's own numbers, which the load reads as list positions (MissionGenerator.ReadHercs and
-				// its siblings, docs/herculan/handoff-editor-conditions.md#variants).
-				EditorText.Note($"A load that lands here picks no option: the {_choices.Noun(table)} keeps its own details, but its "
+				// its siblings, docs/herculan/handoff-editor-conditions.md#random-tables).
+				EditorText.Note($"A load that lands here picks no option: the {_tables.Noun(table)} keeps its own details, but its "
 					+ "position, heading and triggers can come out wrong in play.");
 			}
 		}
@@ -147,10 +148,10 @@ internal sealed class VariantView {
 		}
 
 		if (why == null) {
-			string? noAdd = VariantEditing.WhyNoAdd(source, table.Guid);
+			string? noAdd = RandomTableEditing.WhyNoAdd(source, table.Guid);
 			ImGui.BeginDisabled(noAdd != null);
 			if (ImGui.Button("Add option")) {
-				_editor.RequestAdd(table.Guid, table.Alternatives[inScene.Count > 0 ? inScene.Min() : 0].Range);
+				_editor.RequestAdd(table.Guid, table.Options[inScene.Count > 0 ? inScene.Min() : 0].Range);
 			}
 
 			ImGui.EndDisabled();
@@ -161,7 +162,7 @@ internal sealed class VariantView {
 
 	// Every record that picks from it, one identity link per line with the option the scene shows it with, and why it has no
 	// effect in play when it has none.
-	private void DrawUsers(VariantTable table, IReadOnlyList<ChoiceUser> users) {
+	private void DrawUsers(RandomTable table, IReadOnlyList<RandomTableUser> users) {
 		ImGui.Text("Used by:");
 		ImGui.PushID("users");
 		for (int i = 0; i < users.Count; i++) {
@@ -175,19 +176,19 @@ internal sealed class VariantView {
 
 			ImGui.SameLine(0f, 0f);
 			ImGui.TextUnformatted(user.Shown is { } shown ? $": shows option {shown + 1}"
-				: user.OtherChoice ? ": shows another random choice's option"
+				: user.OtherTable ? ": shows another random table's option"
 				: ": keeps its own details");
 			if (user.Unused is { } unused) {
-				EditorText.Note(RandomChoices.UnusedNote(unused));
+				EditorText.Note(RandomTables.UnusedNote(unused));
 			}
 
 			ImGui.PopID();
 		}
 
 		ImGui.PopID();
-		int others = _choices.Others(table);
+		int others = _tables.Others(table);
 		if (others > 0) {
-			ImGui.TextWrapped(others == 1 ? "1 option of another random choice" : $"{others} options of other random choices");
+			ImGui.TextWrapped(others == 1 ? "1 template of another random table" : $"{others} templates of other random tables");
 		}
 
 		if (users.Count == 0 && others == 0) {
@@ -195,20 +196,20 @@ internal sealed class VariantView {
 		}
 	}
 
-	// Delete random choice, or why it cannot be deleted, with what references it as links.
-	private void DrawDelete(VariantTable table, string? why) {
+	// Delete random table, or why it cannot be deleted, with what references it as links.
+	private void DrawDelete(RandomTable table, string? why) {
 		if (why != null) {
 			return;
 		}
 
-		switch (VariantEditing.WhyNoDelete(_editor.Source, table.Guid)) {
-			case VariantEditing.PickedFrom:
+		switch (RandomTableEditing.WhyNoDelete(_editor.Source, table.Guid)) {
+			case RandomTableEditing.PickedFrom:
 				ImGui.TextWrapped("Cannot be deleted while those under \"Used by\" pick from it.");
 				return;
-			case VariantEditing.Referenced:
+			case RandomTableEditing.Referenced:
 				ImGui.TextWrapped("Cannot be deleted while these reference it:");
 				ImGui.PushID("referencing");
-				foreach (var (label, target) in _choices.Referencing(table)) {
+				foreach (var (label, target) in _tables.Referencing(table)) {
 					ImGui.PushID(label);
 					if (target != null) {
 						_links.Link(label, target);
@@ -226,14 +227,14 @@ internal sealed class VariantView {
 				return;
 		}
 
-		if (ImGui.Button("Delete random choice")) {
+		if (ImGui.Button("Delete random table")) {
 			_editor.RequestDelete(table.Guid);
 		}
 	}
 
 	// The records behind it, for matching against the file: its condition number and key, its requirement, its roll, each
 	// option's condition number and range, and the other tables under its key.
-	private void DrawAdvanced(VariantTable table) {
+	private void DrawAdvanced(RandomTable table) {
 		if (!ImGui.CollapsingHeader("Advanced")) {
 			return;
 		}
@@ -246,17 +247,17 @@ internal sealed class VariantView {
 			ImGui.Text("Requires:");
 			ImGui.SameLine();
 			_links.Link($"Condition {table.Requires}", new ConditionSelection(table.Requires));
-			EditorText.Note("Where that condition fails, nothing picks from this random choice.");
+			EditorText.Note("Where that condition fails, nothing picks from this random table.");
 		}
 
 		ImGui.PushID("ranges");
-		for (int i = 0; i < table.Alternatives.Count; i++) {
-			var alternative = table.Alternatives[i];
-			var range = ConditionEditing.Record(source, alternative.Range);
+		for (int i = 0; i < table.Options.Count; i++) {
+			var option = table.Options[i];
+			var range = ConditionEditing.Record(source, option.Range);
 			ImGui.PushID(i);
 			ImGui.Text($"Option {i + 1}:");
 			ImGui.SameLine();
-			_links.Link($"Condition {alternative.Range}", new ConditionSelection(alternative.Range));
+			_links.Link($"Condition {option.Range}", new ConditionSelection(option.Range));
 			ImGui.SameLine(0f, 0f);
 			ImGui.TextUnformatted($", {(ushort)range.FlagIndexOrRangeLower} to {(ushort)range.OperatorOrRangeUpperOrResult}");
 			ImGui.PopID();
@@ -276,45 +277,45 @@ internal sealed class VariantView {
 	}
 
 	/// <summary>
-	/// The Random choice line of a herc's, flyer's, structure's or ground vehicle's view: outside the squad a choice of None,
-	/// each random choice of its kind by its title, or New random choice from this herc (flyer, structure, ground vehicle); for
-	/// a squad herc the choice it picks from, shown only. Then a link to the choice and which option the scene shows.
+	/// The Random table line of a herc's, flyer's, structure's or ground vehicle's view: outside the squad a list of None,
+	/// each random table of its kind by its title, or New random table from this herc (flyer, structure, ground vehicle); for
+	/// a squad herc the table it picks from, shown only. Then a link to the table and which option the scene shows.
 	/// </summary>
-	public void DrawObjectChoice(SceneObject placed) {
+	public void DrawObjectTable(SceneObject placed) {
 		var source = _editor.Source;
-		var index = _choices.Index;
+		var index = _tables.Index;
 		if (index.KeyOf(placed) is not { } key || index.Plan.Object(key) is not { } planned) {
 			return;
 		}
 
 		int row = key.Row;
 		short guid = key.Guid;
-		short? current = VariantEditing.TableOf(source, row, guid);
+		short? current = RandomTableEditing.TableOf(source, row, guid);
 		if (planned.Squad && current == null) {
 			return;
 		}
 
-		ImGui.PushID("choice");
+		ImGui.PushID("table");
 		ImGui.AlignTextToFramePadding();
-		ImGui.Text("Random choice:");
+		ImGui.Text("Random table:");
 		if (!planned.Squad) {
-			string? why = VariantEditing.WhyNoTables(source, row, guid);
+			string? why = RandomTableEditing.WhyNoTables(source, row, guid);
 			ImGui.SameLine();
 			ImGui.SetNextItemWidth(-1f);
 			ImGui.BeginDisabled(why != null);
-			if (ImGui.BeginCombo("##choice", current is { } named ? TitleOf(named) : "None")) {
+			if (ImGui.BeginCombo("##table", current is { } named ? TitleOf(named) : "None")) {
 				if (ImGui.Selectable("None", current == null) && current != null) {
 					_editor.RequestTable(row, guid, -1);
 				}
 
-				foreach (short table in _choices.All) {
-					if (VariantEditing.WhyNoTable(source, row, guid, table) == null
+				foreach (short table in _tables.All) {
+					if (RandomTableEditing.WhyNoTable(source, row, guid, table) == null
 							&& ImGui.Selectable($"{TitleOf(table)}##{table}", table == current) && table != current) {
 						_editor.RequestTable(row, guid, table);
 					}
 				}
 
-				if (ImGui.Selectable($"New random choice from this {Noun(placed)}")) {
+				if (ImGui.Selectable($"New random table from this {Noun(placed)}")) {
 					_editor.RequestCreate(row, guid);
 				}
 
@@ -325,9 +326,9 @@ internal sealed class VariantView {
 			EditorText.Reason(why);
 		}
 
-		if (current is { } chosen) {
-			_links.Link(TitleOf(chosen), new ConditionSelection(chosen));
-			DrawShown(row, guid, chosen);
+		if (current is { } picked) {
+			_links.Link(TitleOf(picked), new ConditionSelection(picked));
+			DrawShown(row, guid, picked);
 		}
 
 		EditorText.Reason(_editor.Failure);
@@ -335,46 +336,46 @@ internal sealed class VariantView {
 	}
 
 	/// <summary>
-	/// The Random choice line of route <paramref name="guid"/>'s view when its waypoints are an option of a random choice: which
-	/// option, with a link to the choice, and that an edit changes that option wherever it is picked.
+	/// The Random table line of route <paramref name="guid"/>'s view when its waypoints are an option of a random table: which
+	/// option, with a link to the table, and that an edit changes that option wherever it is picked.
 	/// </summary>
-	public void DrawRouteChoice(short guid) {
+	public void DrawRouteTable(short guid) {
 		const int routeRow = 8;
-		if (VariantEditing.TableOf(_editor.Source, routeRow, guid) is not { } table || _choices.Read(table) is not { } read) {
+		if (RandomTableEditing.TableOf(_editor.Source, routeRow, guid) is not { } table || _tables.Read(table) is not { } read) {
 			return;
 		}
 
-		ImGui.PushID("routeChoice");
+		ImGui.PushID("routeTable");
 		ImGui.AlignTextToFramePadding();
 		ImGui.Text(ShownAt(routeRow, guid, read) is { } at ? $"Its waypoints are option {at + 1} of" : "It picks its waypoints from");
 		ImGui.SameLine();
-		_links.Link(_choices.Title(read), new ConditionSelection(table));
+		_links.Link(_tables.Title(read), new ConditionSelection(table));
 		EditorText.Note("Editing them changes that option wherever it is picked.");
 		ImGui.PopID();
 	}
 
 	// Which option of <table> the scene shows record <row>, <guid> with.
 	private void DrawShown(int row, short guid, short table) {
-		if (_choices.Read(table) is { } read && ShownAt(row, guid, read) is { } at) {
-			EditorText.Wrapped($"The scene shows option {at + 1}: {_choices.Option(read, at)}.");
+		if (_tables.Read(table) is { } read && ShownAt(row, guid, read) is { } at) {
+			EditorText.Wrapped($"The scene shows option {at + 1}: {_tables.Option(read, at)}.");
 		} else {
 			EditorText.Note("The scene shows none of its options, so it keeps its own details.");
 		}
 	}
 
 	// The option of <table> the layout shows the key record of <row>, <guid> with, or null for none of its options.
-	private int? ShownAt(int row, short guid, VariantTable table) {
+	private int? ShownAt(int row, short guid, RandomTable table) {
 		var source = _editor.Source;
-		if (VariantEditing.KeyRecord(source, row, guid) is not { } key
-				|| VariantEditing.DrawOf(source, key) is not { Table: var drawn, Shown: { Record: not null } option } || drawn != table.Guid) {
+		if (RandomTableEditing.KeyRecord(source, row, guid) is not { } key
+				|| RandomTableEditing.PickOf(source, key) is not { Table: var picked, Shown: { Record: not null } option } || picked != table.Guid) {
 			return null;
 		}
 
-		int at = table.Alternatives.ToList().FindIndex(alternative => alternative.Range == option.Range);
+		int at = table.Options.ToList().FindIndex(own => own.Range == option.Range);
 		return at >= 0 ? at : null;
 	}
 
-	private string TitleOf(short table) => _choices.Read(table) is { } read ? _choices.Title(read) : $"Condition {table}";
+	private string TitleOf(short table) => _tables.Read(table) is { } read ? _tables.Title(read) : $"Condition {table}";
 
 	/// <summary>What the view of <paramref name="placed"/> calls it: herc, flyer, ground vehicle or structure.</summary>
 	internal static string Noun(SceneObject placed) => placed.Placement.Kind switch {

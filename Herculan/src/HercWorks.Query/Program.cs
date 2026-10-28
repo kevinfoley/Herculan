@@ -35,7 +35,7 @@ internal static class Program {
 		                                   mandatory or failure, condition, subject, route, failure
 		                                   text and counter writes
 		  conditions [<mission>...]        every row #1 condition, of every mission or of those named:
-		                                   the test, draw or variant table, its chain, and what it gates
+		                                   the test, draw or random table, its chain, and what it gates
 		  repeats [<mission>...]           every GUID two or more unconditioned records carry in rows
 		                                   #3, #6, #7, #8 or #9, where the last replaces the rest; and
 		                                   every GUID two or more records carry in rows #10 to #16,
@@ -52,7 +52,7 @@ internal static class Program {
 		                                   line when its condition holds
 		  records <mission> [--row N]      the mission's .MSN records as read, row by row in file order, each
 		                                   with its index in the row and its named fields; raw: no condition
-		                                   applied, no variant drawn, no repeated GUID merged
+		                                   applied, no option picked, no repeated GUID merged
 		  header <mission>                 the mission's row #2 records as read, beside the script.dat
 		                                   header its load writes with every campaign flag zero and every
 		                                   roll 0
@@ -96,8 +96,8 @@ internal static class Program {
 		                    and names the field it falls in. Record offset N is the exe's type-record
 		                    offset N+2.
 		  --non-squad       values: leave out the player's squad: row #16's group 0 and every later
-		                    record with its GUID, the row #12 records those name and the alternatives
-		                    their variant keys draw; row #15 keeps the orders a group outside it names
+		                    record with its GUID, the row #12 records those name and the templates
+		                    their random table keys pick; row #15 keeps the orders a group outside it names
 		  --kind K          values: mech, flyer or structure — row #16 groups naming a member of that
 		                    member kind, row #15 orders such a group names
 		  --where F=V       values: count only the records whose field F (as --field names it) prints

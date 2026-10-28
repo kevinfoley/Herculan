@@ -50,7 +50,7 @@ internal sealed record GroupTarget(short Guid, bool Detach = false, bool Carry =
 /// (docs/retail/formats/script-dat.md#placement--the-actual-rule, rule 2). The height is the spawn pass's (rule 5
 /// there): only a flyer's Z is read from the point, so only a flyer's is the mission's to set, and the point written
 /// for anything else carries the height the simulator gives it (<see cref="Standing"/>). A point the roster record
-/// draws from a variant is shared by every record drawing it, so the move appends one rather than rewrite it.</para>
+/// picks from a template is shared by every record picking it, so the move appends one rather than rewrite it.</para>
 ///
 /// <para>A group moves as a waypoint does: the point it stands on — its own, else its slot-0 route's first waypoint, as the
 /// layout has them (docs/retail/formats/script-dat.md#placement--the-actual-rule, rules 2 and 3) — moves, and whatever
@@ -322,8 +322,8 @@ internal sealed class PointMover {
 	public void ReturnToRoute(short guid) => DropOwnPoint(MsnField.GroupPosition, guid);
 
 	// Unsets <field>, a point of the record's own, in its base records, leaving records under other conditions setting it, and
-	// removes the point it named once nothing names it and no record of it draws a variant, whose removal would move every later
-	// draw. A field a variant supplies cannot be unset, and the edit fails.
+	// removes the point it named once nothing names it and no record of it picks from a random table, whose removal would move
+	// every later draw. A field a template supplies cannot be unset, and the edit fails.
 	private void DropOwnPoint(MsnField field, short guid) {
 		Failure = null;
 		if (_source.Layout.Entry(field.Row, guid)?.Fields is not { } fields) {
@@ -335,7 +335,7 @@ internal sealed class PointMover {
 			var change = _sync.Run(() => _source.Change(() => {
 				_source.UnsetBaseField(field, guid);
 				if (Point(point) != null && _source.CountPointRefs(point) == 0
-						&& (_source.Mission.Points ?? []).Where(record => record.GUID == point).All(record => record.VariantKey == -1)) {
+						&& (_source.Mission.Points ?? []).Where(record => record.GUID == point).All(record => record.RandomTableKey == -1)) {
 					_source.Remove(PointRow, point);
 				}
 			}));
@@ -443,8 +443,8 @@ internal sealed class PointMover {
 	}
 
 	// Gives an object a point of its own at position, which its roster record's PositionRef then names: the point it names
-	// rewritten when that field is all that names it, else a point appended. A PositionRef a variant supplies names a point
-	// every record drawing that variant shares, so it does not count as moving and a point is appended.
+	// rewritten when that field is all that names it, else a point appended. A PositionRef a template supplies names a point
+	// every record picking that template shares, so it does not count as moving and a point is appended.
 	private void GiveObjectPoint(ObjectTarget target, Vec3i position) {
 		var (row, guid) = target.Key;
 		var entry = _source.Layout.Entry(row, guid) ?? throw new InvalidOperationException(EditorToolbox.ObjectGone(row));

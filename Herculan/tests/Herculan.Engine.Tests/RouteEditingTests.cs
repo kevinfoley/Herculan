@@ -55,11 +55,11 @@ public class RouteEditingTests {
 	}
 
 	/// <summary>
-	/// Catches a list edit written into the route's own record, which a variant-keyed record replaces with the alternative's
+	/// Catches a list edit written into the route's own record, which a keyed record replaces with the template's
 	/// list as it is read, so the edit changes nothing generated.
 	/// </summary>
 	[Fact]
-	public void EditOfADrawnListWritesTheSharedAlternative() {
+	public void EditOfAPickedListWritesTheSharedTemplate() {
 		var document = Open(new SyntheticMsn()
 			.Add(1, Condition(guid: 10, condition: -1, type: 3, lower: 7, upper: 0, operand: 1))
 			.Add(1, Condition(guid: 11, condition: 10, type: 2, lower: 0, upper: 5, operand: 0))

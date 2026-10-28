@@ -24,11 +24,11 @@ internal sealed record ValueQueryResult(
 
 /// <summary>
 /// <c>values</c>: how many raw records of one typed <c>.MSN</c> row carry each value of one field, read as <c>records</c>
-/// reads them: no condition applied, no variant drawn, no repeated GUID merged. A field is a public property of the row's
+/// reads them: no condition applied, no option picked, no repeated GUID merged. A field is a public property of the row's
 /// record type; an array property takes an element index, or without one counts each whole array as a value.
 ///
 /// <para><c>--non-squad</c> leaves out the player's squad: group 0's records in row #16 (record 0 and every later record
-/// with its GUID), the row #12 records those name as members and the GUID <c>-1</c> alternatives their variant keys draw,
+/// with its GUID), the row #12 records those name as members and the GUID <c>-1</c> templates their random table keys pick,
 /// and keeps in row #15 only the orders a group outside the squad names. <c>--kind</c> keeps row #16 records naming a member whose member kind
 /// <see cref="OrderQuery.MemberKind"/> calls that word, and the row #15 orders such a group names. Each <c>--where</c> then
 /// keeps the records whose field prints, as <see cref="RecordQuery.Value"/> prints it, as the value given (or not).</para>
@@ -130,7 +130,7 @@ internal static class ValueQuery {
 	public static void Write(TextWriter o, ValueQueryResult result) {
 		string population = result.Population.Length == 0 ? "records" : "records " + result.Population;
 		o.WriteLine($"Row #{result.Row} {result.RowName}.{result.Field}: {result.Records} {population}, from {result.Missions} of " +
-			$"{result.MissionsSearched} missions; raw: no condition applied, no variant drawn, no repeated GUID merged.");
+			$"{result.MissionsSearched} missions; raw: no condition applied, no option picked, no repeated GUID merged.");
 		if (result.Values.Count == 0) {
 			return;
 		}
@@ -145,7 +145,7 @@ internal static class ValueQuery {
 	/// <summary>The <see cref="MissionFile"/> property holding a row, as <c>records</c> names it.</summary>
 	private static string RowName(int row) => row switch {
 		1 => nameof(MissionFile.Conditions),
-		3 => nameof(MissionFile.Variants),
+		3 => nameof(MissionFile.MovieChoices),
 		4 => nameof(MissionFile.Texts),
 		6 => nameof(MissionFile.Points),
 		7 => nameof(MissionFile.Headings),
@@ -238,12 +238,12 @@ internal static class ValueQuery {
 		return (typeof(MissionFile).GetProperty(RowName(row))!.GetValue(file) as Array)?.OfType<object>() ?? [];
 	}
 
-	/// <summary>The player's squad in one file: group 0's row #16 records, the GUIDs they name, and those members' variant keys.</summary>
-	private sealed record Squad(HashSet<int> GroupRecords, HashSet<short> Members, HashSet<short> VariantKeys) {
-		/// <summary>A squad member's record, or a GUID <c>-1</c> alternative one of their variant keys draws.</summary>
+	/// <summary>The player's squad in one file: group 0's row #16 records, the GUIDs they name, and those members' random table keys.</summary>
+	private sealed record Squad(HashSet<int> GroupRecords, HashSet<short> Members, HashSet<short> RandomTableKeys) {
+		/// <summary>A squad member's record, or a GUID <c>-1</c> template one of their random table keys picks.</summary>
 		public bool Holds(MissionFile file, MechRosterEntry144 mech) => mech.GUID != -1
 			? Members.Contains(mech.GUID)
-			: mech.ConditionRef != -1 && Conditions.VariantKeyOf(file, mech.ConditionRef) is { } key && VariantKeys.Contains(key);
+			: mech.ConditionRef != -1 && Conditions.RandomTableKeyOf(file, mech.ConditionRef) is { } key && RandomTableKeys.Contains(key);
 	}
 
 	private static Squad SquadOf(MissionFile file) {
@@ -255,8 +255,8 @@ internal static class ValueQuery {
 		}
 
 		var members = records.SelectMany(i => groups[i].MemberRefs).Where(r => r != -1).ToHashSet();
-		var keys = (file.Mechs ?? []).Where(m => m.GUID != -1 && members.Contains(m.GUID) && m.VariantKey != -1)
-			.Select(m => m.VariantKey)
+		var keys = (file.Mechs ?? []).Where(m => m.GUID != -1 && members.Contains(m.GUID) && m.RandomTableKey != -1)
+			.Select(m => m.RandomTableKey)
 			.ToHashSet();
 		return new Squad(records, members, keys);
 	}

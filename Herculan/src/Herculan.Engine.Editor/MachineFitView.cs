@@ -27,9 +27,9 @@ internal sealed class MachineFitView {
 	/// <summary>
 	/// Draws the chassis choice and the hardpoints of the herc of row-12 GUID <paramref name="guid"/>:
 	/// <paramref name="chassis"/> offered under <paramref name="name"/>, <paramref name="note"/> under the choice, and each
-	/// edit written to the alternative the herc draws the field from when <paramref name="alternative"/>.
+	/// edit written to the template the herc picks the field from when <paramref name="toTemplate"/>.
 	/// </summary>
-	public void Draw(short guid, IEnumerable<int> chassis, Func<int, string> name, string note, bool alternative = false) {
+	public void Draw(short guid, IEnumerable<int> chassis, Func<int, string> name, string note, bool toTemplate = false) {
 		if (_fitter.Record(guid) is not { } record) {
 			return;
 		}
@@ -42,7 +42,7 @@ internal sealed class MachineFitView {
 		if (ImGui.BeginCombo("Chassis", name(type))) {
 			foreach (int option in chassis) {
 				if (ImGui.Selectable(name(option), option == type) && option != type) {
-					_fitter.RequestChassis(guid, option, alternative);
+					_fitter.RequestChassis(guid, option, toTemplate);
 				}
 			}
 
@@ -67,7 +67,7 @@ internal sealed class MachineFitView {
 				fixedMounts.Add((mount, noWeapons));
 			}
 
-			DrawMount(guid, type, mount, weapon, guidance, noWeapons != null, cybrid, alternative);
+			DrawMount(guid, type, mount, weapon, guidance, noWeapons != null, cybrid, toTemplate);
 		}
 
 		ImGui.EndDisabled();
@@ -89,7 +89,7 @@ internal sealed class MachineFitView {
 	// One hardpoint: the weapons it offers, and for a launcher the guidance kinds. A Cybrid's weapon no retail mission fits
 	// there is listed first, marked, as the current choice.
 	private void DrawMount(short guid, int chassis, int mount, short weapon, short guidance, bool fixedWeapon, bool cybrid,
-			bool alternative) {
+			bool toTemplate) {
 		ImGui.PushID(mount);
 		ImGui.AlignTextToFramePadding();
 		ImGui.Text($"{Hardpoint(mount)}:");
@@ -108,7 +108,7 @@ internal sealed class MachineFitView {
 
 			foreach (int option in options) {
 				if (ImGui.Selectable(WeaponName(option), option == weapon) && option != weapon) {
-					_fitter.RequestWeapon(guid, mount, option, alternative);
+					_fitter.RequestWeapon(guid, mount, option, toTemplate);
 				}
 			}
 
@@ -122,7 +122,7 @@ internal sealed class MachineFitView {
 			if (ImGui.BeginCombo("##guidance", GuidanceName(guidance))) {
 				foreach (int kind in ShellWeaponsScreen.GuidanceKinds) {
 					if (ImGui.Selectable(GuidanceName(kind), kind == guidance) && kind != guidance) {
-						_fitter.RequestGuidance(guid, mount, kind, alternative);
+						_fitter.RequestGuidance(guid, mount, kind, toTemplate);
 					}
 				}
 

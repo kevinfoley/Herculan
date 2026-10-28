@@ -568,8 +568,8 @@ public sealed class EditorHost {
 			} else if (_mission?.Selection.Current is TimerSelection { Guid: var timer }) {
 				_mission.Timers.RequestDelete(timer);
 			} else if (_mission?.Selection.Current is ConditionSelection { Guid: var condition }) {
-				if (VariantEditing.IsTable(_mission.Source, condition)) {
-					_mission.Variants.RequestDelete(condition);
+				if (RandomTableEditing.IsTable(_mission.Source, condition)) {
+					_mission.TableEditor.RequestDelete(condition);
 				} else {
 					_mission.Conditions.RequestDelete(condition);
 				}
@@ -937,7 +937,7 @@ public sealed class EditorHost {
 		mission.Actions.RunRequest();
 		mission.Timers.RunRequest();
 		mission.Conditions.RunRequest();
-		mission.Variants.RunRequest();
+		mission.TableEditor.RunRequest();
 		mission.Presence.RunRequest();
 		mission.Objectives.RunRequest();
 		mission.Texts.RunRequest();

@@ -9,8 +9,8 @@ namespace HercWorks.Core.Data.File.Msn;
 ///
 /// <list type="bullet">
 /// <item>Each is an overlay field whose unset value is <c>-1</c>, written through <see cref="MissionDocument.SetField"/>: in the
-/// record supplying it, in an overlay record for a variant-keyed roster record whose variant supplies it, and unset in every
-/// record of the GUID. An overlay cannot carry the unset value, so an action a variant supplies cannot be taken away
+/// record supplying it, in an overlay record for a keyed roster record whose template supplies it, and unset in every
+/// record of the GUID. An overlay cannot carry the unset value, so an action a template supplies cannot be taken away
 /// (<see cref="WhyNoNone"/>).</item>
 /// <item>The player's squad is left out: none of the 138 row-16 records of retail squads has a deployment action, and none of
 /// the 278 row-12 records they name an engaged or defeated action (<c>HercWorks.Query values --row 16 --field
@@ -57,12 +57,12 @@ public static class ActionWiring {
 	}
 
 	/// <summary>
-	/// Why <paramref name="field"/> of <paramref name="guid"/> cannot be set to none, or null when it can: a variant supplies it,
+	/// Why <paramref name="field"/> of <paramref name="guid"/> cannot be set to none, or null when it can: a template supplies it,
 	/// and an overlay record cannot carry an unset value.
 	/// </summary>
 	public static string? WhyNoNone(MissionDocument document, MsnField field, short guid) =>
-		document.Layout.Entry(field.Row, guid) != null && document.SuppliedByVariant(field, guid)
-			? "A variant supplies it, so it cannot be taken away."
+		document.Layout.Entry(field.Row, guid) != null && document.SuppliedByTemplate(field, guid)
+			? "A random table supplies it, so it cannot be taken away."
 			: null;
 
 	/// <summary>

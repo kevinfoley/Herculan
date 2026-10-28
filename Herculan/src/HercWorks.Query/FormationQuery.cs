@@ -9,8 +9,8 @@ namespace HercWorks.Query;
 /// Whether the record names a row #6 point the mission has, which wins over its formation slot
 /// (docs/retail/formats/script-dat.md#placement--the-actual-rule, rule 2).
 /// </param>
-/// <param name="Drawn">Whether the record's variant key is set, so a draw replaces the type stored.</param>
-internal sealed record FormationMember(int Slot, short Guid, short? TypeIndex, string? TypeName, bool OwnPoint, bool Drawn);
+/// <param name="Picks">Whether the record's random table key is set, so a picked template replaces the type stored.</param>
+internal sealed record FormationMember(int Slot, short Guid, short? TypeIndex, string? TypeName, bool OwnPoint, bool Picks);
 
 /// <summary>One row #16 structure group record, raw: no condition applied and no repeated GUID merged.</summary>
 /// <param name="Index">The record's position in row #16.</param>
@@ -49,7 +49,7 @@ internal static class FormationQuery {
 					var record = bases.FirstOrDefault(r => r.Guid == guid);
 					members.Add(new FormationMember(slot, guid, record?.TypeIndex,
 						record != null ? data.TypeName(RosterKind.Base, record.TypeIndex) : null,
-						record != null && file.GetPoint(record.PositionRef) != null, record is { VariantKey: not -1 }));
+						record != null && file.GetPoint(record.PositionRef) != null, record is { RandomTableKey: not -1 }));
 				}
 
 				groups.Add((group.FormationId, new FormationGroup(mission.Name, i, group.GUID,
@@ -63,7 +63,7 @@ internal static class FormationQuery {
 	}
 
 	public static void Write(TextWriter output, IReadOnlyList<FormationUse> uses) {
-		output.WriteLine("Member slots as \"slot TYPE\": * names a position of its own, ? has its type drawn, (none) names no row #14 record.");
+		output.WriteLine("Member slots as \"slot TYPE\": * names a position of its own, ? has its type picked from a random table, (none) names no row #14 record.");
 		foreach (var use in uses) {
 			output.WriteLine();
 			output.WriteLine($"formation {use.FormationId}: {use.Groups.Count} group records, {use.Groups.Count(g => g.PaintsGround)} lay a pad");
@@ -74,7 +74,7 @@ internal static class FormationQuery {
 				output.WriteLine($"  {group.Mission} group {group.Index} (GUID {group.Guid}){condition}, {pad}{waits}:");
 				foreach (var member in group.Members) {
 					string type = member.TypeIndex is { } t ? $"{member.TypeName ?? "type " + t}" : "(none)";
-					string marks = (member.OwnPoint ? "*" : "") + (member.Drawn ? "?" : "");
+					string marks = (member.OwnPoint ? "*" : "") + (member.Picks ? "?" : "");
 					output.WriteLine($"    {member.Slot,2} {type}{marks}");
 				}
 			}

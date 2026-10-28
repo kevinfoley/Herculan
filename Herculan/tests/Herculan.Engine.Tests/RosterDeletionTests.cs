@@ -106,19 +106,19 @@ public class RosterDeletionTests {
 	}
 
 	/// <summary>
-	/// Catches the own-action check reading the object's records alone, where a variant-keyed record fires what the
-	/// alternative it draws names.
+	/// Catches the own-action check reading the object's records alone, where a keyed record fires what the
+	/// template it picks names.
 	/// </summary>
 	[Fact]
-	public void ActionTheDrawnAlternativeFiresRefuses() {
-		var alternative = Base(-1, condition: 11);
-		alternative[BaseRosterEntry62.DefeatActionRefWord] = 3;
+	public void ActionThePickedTemplateFiresRefuses() {
+		var template = Base(-1, condition: 11);
+		template[BaseRosterEntry62.DefeatActionRefWord] = 3;
 		var document = Open(new SyntheticMsn()
 			.Add(1, Condition(guid: 10, condition: -1, type: 3, lower: 7, upper: 0, operand: 1))
 			.Add(1, Condition(guid: 11, condition: 10, type: 2, lower: 0, upper: 5, operand: 0))
 			.Add(10, Action(3, type: 0))
-			.Add(14, alternative)
-			.Add(14, Base(2, variant: 7))
+			.Add(14, template)
+			.Add(14, Base(2, tableKey: 7))
 			.Add(16, Group(1, Structures, position: -1, condition: -1, 2)));
 
 		var check = RosterDeletion.Check(document, 14, 2);
@@ -158,18 +158,18 @@ public class RosterDeletionTests {
 	}
 
 	/// <summary>
-	/// Catches the delete taking the variant alternative the record drew from, which every other record drawing the same
-	/// variant shares.
+	/// Catches the delete taking the template the record picked, which every other record picking the same
+	/// template shares.
 	/// </summary>
 	[Fact]
-	public void DeletingAVariantDrawingRecordLeavesTheSharedAlternative() {
+	public void DeletingAKeyedRecordLeavesTheSharedTemplate() {
 		var document = Open(new SyntheticMsn()
 			.Add(1, Condition(guid: 10, condition: -1, type: 3, lower: 7, upper: 0, operand: 1))
 			.Add(1, Condition(guid: 11, condition: 10, type: 2, lower: 0, upper: 5, operand: 0))
 			.Add(6, Point(1, 100))
 			.Add(14, Base(-1, position: 1, condition: 11))
-			.Add(14, Base(2, variant: 7))
-			.Add(14, Base(3, variant: 7))
+			.Add(14, Base(2, tableKey: 7))
+			.Add(14, Base(3, tableKey: 7))
 			.Add(16, Group(1, Structures, position: -1, condition: -1, 2, 3)));
 
 		RosterDeletion.Delete(document, 14, 2);

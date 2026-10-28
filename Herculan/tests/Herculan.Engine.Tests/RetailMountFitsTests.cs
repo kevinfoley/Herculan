@@ -5,7 +5,7 @@ namespace Herculan.Engine.Tests;
 
 /// <summary>
 /// <see cref="RetailMountFits"/> over two constructed missions: what a Cybrid's hardpoint offers in the editor is what the
-/// records of that chassis fit in that slot, a variant option's included, and a weapon chosen takes the ammunition type
+/// records of that chassis fit in that slot, a template's included, and a weapon chosen takes the ammunition type
 /// those records carry with it there.
 /// </summary>
 public class RetailMountFitsTests {
@@ -19,7 +19,7 @@ public class RetailMountFitsTests {
 
 	/// <summary>
 	/// Catches a scan keyed by slot alone or by chassis alone (a hardpoint offered another slot's or another chassis's
-	/// weapons), a variant option (GUID -1) left out, and a record that draws a variant, type -1, counted as a fit.
+	/// weapons), a template (GUID -1) left out, and a record that picks from a random table, type -1, counted as a fit.
 	/// </summary>
 	[Fact]
 	public void AHardpointOffersWhatThatChassisFitsInThatSlot() {
@@ -65,6 +65,6 @@ public class RetailMountFitsTests {
 		var types = Enumerable.Repeat(RosterFit.Filler, RosterFit.Slots).ToArray();
 		weapons.CopyTo(refs, 0);
 		ammo.CopyTo(types, 0);
-		return new MechRosterEntry144 { GUID = guid, TypeIndex = type, VariantKey = (short)(type == -1 ? 4 : -1), WeaponRefs = refs, WeaponSecondary = types };
+		return new MechRosterEntry144 { GUID = guid, TypeIndex = type, RandomTableKey = (short)(type == -1 ? 4 : -1), WeaponRefs = refs, WeaponSecondary = types };
 	}
 }
