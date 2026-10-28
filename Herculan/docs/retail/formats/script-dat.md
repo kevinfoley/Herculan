@@ -86,7 +86,7 @@ Per record type, what pass 2 reads (offsets into the exported record, not the `.
 | | | `0x2e` | ref → block 2 (the group's heading) |
 | | | `0x32`-`0x59` | 20 member refs into the block the discriminator names |
 | | | `0x5a`-`0x6d` | 10 refs → block 10, **the group's orders**; slot 0's also supplies the group's spawn route |
-| | | `0x6e` | side: 0 = human, 1 = Cybrid (group record `+0x12`) |
+| | | `0x6e` | side: 0 = human, 1 = Cybrid. `DBSim_BuildGroupRecord` keeps the word's low byte, unchecked, as the group record's `+0x12` ([`../simulation/sim-object-layout.md`](../simulation/sim-object-layout.md#side)) |
 | | | `0x70` | ref → block 5 (action). **Set = the group has not entered the mission yet** — see rule 8 |
 | | | `0x72` / `0x86` | the group's ten mission-counter refs and operations → `group+0x1c`/`+0x30`, written once every member is out of the fight. Read for record 0 as well |
 

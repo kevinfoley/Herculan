@@ -66,7 +66,39 @@ Below that line all three constructors write an *identical* block — `+0x1a8 = 
 
 `obj+0x1a8` is the object's target class, written by each constructor after the `0xffff` above: `Mech_Constructor` 0, `Flyer_Constructor` 2, `Base_Construct` 1 for every structure except the GroundVehicle types (`0x2d`-`0x34`, `0x37`-`0x3d`; [`structure-behaviour.md`](structure-behaviour.md#five-classes-one-switch)), which get 3.
 
-An object's side is its group record's `+0x12`, 0 human and 1 Cybrid, filled from [`script.dat`](../formats/script-dat.md) block 11.
+### Side
+
+An object's side is the byte at `+0x12` of its group record (`obj+0x45`), 0 human and 1 Cybrid, filled from [`script.dat`](../formats/script-dat.md) block 11. Every retail group loads as 0 or 1, but nothing on the way from the `.MSN` limits the value ([`msn-mission-file.md`](../formats/msn-mission-file.md#row-16-field-decode--the-group-record-dat_0047065a-164-bytesrecord)), and the readers do not agree on what a third value is. Each tests the byte one of three ways:
+
+| Test | Reader | What it decides |
+|---|---|---|
+| `== 0` | `Sim_DetectionTick` (`004123ac`) | which objects sweep ([`sensors.md`](sensors.md#passes)) |
+| | `Damage_ScaleByDifficulty` (`00426b04`) | the firing side's difficulty table: side 0's, or the Cybrid one for anything else |
+| | `Mech_ApplyDirectFireDamage` (`004188c8`) | the odds a hit destroys a weapon mount: 123 in 4096 for side 0, 410 otherwise |
+| | `Ai_FireAtPoint` | the difficulty aim scatter, applied to anything but side 0 |
+| | `Ai_SelectTarget` (`00411fa0`) | skipping a crippled designated target, which only side 0 does ([`ai-targeting.md`](ai-targeting.md#acquisition--ai_selecttarget-00411fa0)) |
+| | `Ai_ShouldAbandonTarget` (`0041c4a8`) | its side-0 branch for a designated target |
+| | `Group_IsWrittenOff` (`00413920`) | the write-off tier: 3 for side 0, 4 otherwise |
+| | `Mech_PerTickSystemsUpdate` (`0041aa5c`) | the lock's line of sight: from the machine for side 0, from its target otherwise |
+| | `MfdStatusScreen_Paint` (`0043a5a0`) | the subject's name colour: friendly for side 0, hostile otherwise |
+| | `HddCommandScreen_AddObjectMarker` | a friendly icon for side 0, a hostile one otherwise |
+| | `HddCommandScreen_DrawMarker` (`0044e92c`) | hiding an unpainted object of any side but 0 ([`heads-down-display.md`](heads-down-display.md#which-markers-are-drawn)) |
+| | `Actions_EvaluateTriggers` (`00426b70`) | the trigger subject "every human group" |
+| | `HddCommandScreen_PickTarget` | the friendly pick an order needs |
+| | `Sim_InitMissionSession` (`004614fc`) | its search for a side-0 structure within 39999 of the player |
+| `== 1` | `Detection_Sweep` (`004128f8`) | which objects get swept |
+| | `MfdRadarScreen_Update` | hiding an unpainted object, which only side 1 is ([`mfd-scanner.md`](mfd-scanner.md#plot)) |
+| | `Mech_ApplyDirectFireDamage` | queuing a destroyed weapon as salvage |
+| | `Actions_EvaluateTriggers` | the trigger subject "every Cybrid group" |
+| | `HddCommandScreen_PickTarget` | the hostile pick an order needs |
+| | `HddCommandScreen_DrawMarker` | the painted test on a pilot's pick line |
+| | `MfdStatusScreen_Paint` | the distance readout and the targeted-component outline |
+| | `Sim_DispatchCommand` (`0045fdac`) | the developer key that damages the nearest side-1 object |
+| same or different | `Ai_IsTargetable` (`00411e80`), `TargetSelect_CanTarget` (`00433174`), `Detection_ShareContact` (`00412704`), `Detection_DecayContacts` (`0041251c`), `Mech_PlayerFireTick`, `Mech_AiOnTakingFire`, `Mech_ApplyOutnumberedDamage`, `Sim_RaycastObjectList` (`00426528`), `Mission_IsClearOfThreats` (`004137b4`), `Group_NoRivalOrderOnSubject` (`00412e74`), `HddCommandScreen_CycleUnit`, `HddCommandScreen_IsEligibleUnit` | friend or foe against another object's side, or against the side asked for |
+| | `Mission_TotalSalvage` (`00423e88`) | salvage from every wreck not on the player's side |
+| | `Sim_RaycastShapeList` (`00404bc0`) | a side filter that every caller turns off with `-1` |
+
+So an object of side 2 neither sweeps nor is swept: it is never painted and never a contact, so no object knows it and nothing can select or lock it, while it knows every painted object of both sides, and both are its enemies. It never appears on the heads-down map, and always appears on the F4 scanner, in the hostile colour. Its shots take the Cybrid damage scale, its group answers neither side's group triggers, and its wrecks count as salvage. VSHELL's briefing map does not read side; it tells friend from foe by structure type ([`../shell/mission-map.md`](../shell/mission-map.md#bases)).
 
 ## The object's frame is a transform, and its position is that transform's translation
 
@@ -116,6 +148,8 @@ Nothing in the field itself says which flavour it is — only which of the two f
 | A mech's length can be inferred from the highest documented offset | The highest offset anyone has written down is a lower bound that moves every time someone reads another function. `0x36a` is a fact about the binary. |
 
 ## Open
+
+- **Open:** whether the side byte has readers beyond the [table above](#side). The table is every byte read at `+0x12` of a group pointer or group variable that a search of the DBSIM decompile finds, cross-checked against the functions the C# port's side tests cite; a read in a form neither catches would escape it.
 
 - **Deferred:** whether anything queues a machine onto `g_MechDeleteQueue` (`004a9c02`). An absolute-address search of the disassembly finds only the setup write in `DBSim_LoadScriptDat` and the read in `Mech_FlushDeletes` (`0041544c`); a caller passing a copy of the pointer to `ObjectPool_QueueForDelete` is outside that search.
 - **Deferred:** why the structure pool's element is `0x26d`, seven bytes past `LC_BASE`'s `0x266`, the longest structure class.

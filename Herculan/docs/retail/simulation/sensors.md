@@ -14,7 +14,7 @@ Runs once per tick from `Sim_MainTick`, **after** every object update and the in
 ### Passes
 
 1. **Timers.** `obj+0x1e2` (LOS cache) and `obj+0x1e5` (contact decay) tick; an expired decay runs `Detection_DecayContacts` (`0041251c`) on the spot, reloading at `10000 + rand(1000)`.
-2. **Sweeps.** `Detection_Sweep` (`004128f8`) for each live human-side object, over Cybrid objects only — but it writes *both* objects' tables, so a Cybrid learns without sweeping. The locally-piloted machine (`obj+0xa3`) is held back and swept **last**, so squadmates' contacts have already been shared to it.
+2. **Sweeps.** `Detection_Sweep` (`004128f8`) for each live object of side 0, over objects of side 1 only ([side](sim-object-layout.md#side)) — but it writes *both* objects' tables, so a Cybrid learns without sweeping. The locally-piloted machine (`obj+0xa3`) is held back and swept **last**, so squadmates' contacts have already been shared to it.
 3. Clears `obj+0xa2`, the ECM gate on engagement actions ([`mission-deployment.md`](mission-deployment.md#an-objects-own-two-actions--0x1b2-and-0x1b6)).
 
 ### `Detection_Sweep` (`004128f8`) ranges

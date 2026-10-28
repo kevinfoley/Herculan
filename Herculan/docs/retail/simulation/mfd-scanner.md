@@ -64,7 +64,7 @@ A contact at the display range therefore lands 25 GAU units from the centre, ins
 | `obj+0x99` or `obj+0xa4` | skipped — out of the fight |
 | `group+0x14` | skipped — the group is still waiting on a deployment action |
 | Target class 1 and `BASES.DAT +0x1e` | skipped — an **invulnerable** structure type, i.e. the three scenery types |
-| `obj+0x95` clear and the object is Cybrid | skipped — see below |
+| `obj+0x95` clear and the object's side is 1, Cybrid | skipped — see below |
 | `range <= Math_FastMagnitude2D(dx, dy)` | skipped — ground-plane distance, against the *current* setting |
 
 The survivor is rotated into the machine's own frame by `Math_BuildRotation2D(-heading)` and stored as `(x, -y)`, so the plot is **hull-relative with the nose up** while the wedge shows the turret. The selected target's entry is remembered at `+0x51c` and its range, in metres, at `+0x520`.

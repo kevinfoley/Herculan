@@ -7589,8 +7589,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ShellMap_PaintBases",
-      "description": "Bases shown by +0x1a (friendly non-zero, hostile == 1), mis_icon frame by type.",
-      "source": "docs/retail/shell/mission-map.md"
+      "description": "(map): paints every base of the map's block-9 copy (+0x62, count +0x78, 0x34 bytes each). Friendly or hostile is decided by the base type alone (friendly below 0x18 or 0x2d-0x36), never by the side the loader writes at +0x1c; a friendly base is painted when its +0x1a is non-zero, a hostile one only when it is 1. The mis_icon frame, colour and sizes come by type from the shorts at DAT_00471c5e-DAT_00471c82, through ShellMap_PaintIcon at the base's block-1 point (+0x02); a base with no point asserts \"Base %d has no loc\".",
+      "source": "docs/retail/shell/mission-map.md",
+      "verified": {
+        "bytes": "0042698d+767",
+        "sha1": "2e0c92a687cd",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00426c8c",

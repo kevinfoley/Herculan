@@ -5884,8 +5884,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Group_IsWrittenOff",
-      "description": "A group's condition tier against its side's threshold -- 3 for a human group, 4 for a Cybrid one.",
-      "source": "docs/retail/simulation/mission-objectives.md"
+      "description": "(group): 1 when Group_ConditionTier reaches the side's threshold -- 3 when the group's side byte +0x12 is 0 (human), 4 for any other side.",
+      "source": "docs/retail/simulation/mission-objectives.md",
+      "verified": {
+        "bytes": "00413920+46",
+        "sha1": "73aa831d1015",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00413950",

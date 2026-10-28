@@ -27,7 +27,7 @@ The angular-size correction the function computes from the target's range and sh
 
 ### Can this be targeted — `TargetSelect_CanTarget` (`00433174`)
 
-Alive (`obj+0x99`/`+0xa4` both clear), on the other [side](sim-object-layout.md#object-classification), and **known** by either sensor route ([`sensors.md`](sensors.md#the-sensor-model--sim_detectiontick-004123ac)):
+Alive (`obj+0x99`/`+0xa4` both clear), on the other [side](sim-object-layout.md#side), and **known** by either sensor route ([`sensors.md`](sensors.md#the-sensor-model--sim_detectiontick-004123ac)):
 
 - radar-visible (`obj+0x95`) within `DAT_004d1cfc` = **200000**, the last of the scanner's three ranges (`MfdDisplay_Ctor` writes 50000/100000/200000) — read directly, not the current setting;
 - or a held contact within `Detection_ContactScanRange` (`00426aec`) = **30000** on the short scan setting, **60000** otherwise.
