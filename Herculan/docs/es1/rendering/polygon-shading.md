@@ -146,7 +146,7 @@ A zone shape is drawn through the object list ([below](#which-objects-are-drawn)
 
 ## Which objects are drawn
 
-**Each frame the simulator draws the zone's shapes and every live machine, effect and projectile from one list, farthest first, recolouring each by its distance and leaving out what lies past the theater's last distance band.** An object's type tag is its `int16` at `+0`, its vptr at `+2`; its vtable's `+4` slot draws it, `+8` returns its position (three `int32`), and `+0x14` returns the radius the bands read.
+**Each frame the simulator draws the zone's shapes and every live HERC, flyer, structure, effect and projectile from one list, farthest first, recolouring each by its distance and leaving out what lies past the theater's last distance band.** An object's type tag is its `int16` at `+0`, its vptr at `+2`; its vtable's `+4` slot draws it, `+8` returns its position (three `int32`), and `+0x14` returns the radius the bands read.
 
 ### The object list
 
@@ -154,7 +154,7 @@ A zone shape is drawn through the object list ([below](#which-objects-are-drawn)
 
 - **`ObjList_Add` (`00020d5c`)** stores an object at entry `00092558` of `000bc58e` and counts it, with no bound.
 - **The mission start (`Sim_StartMission`, `0005a9dc`)**, after `DBSim_LoadScriptDat`, adds every zone shape object in `Zone_ShapeObjects`' order, stopping at the first null pointer ([the simulator's load](../formats/zone-terrain.md#the-simulators-load)), and once its other set-up is done stores the count at `000bc596`. The objects below that count, the zone's shapes, stay in the list for the mission.
-- **`ObjList_RebuildFrame` (`00020de0`)**, which `Sim_RenderFrame` calls each frame, sets the count back to `000bc596` and adds, in turn, each object of the array at `000bc416` (count `000bc41c`) whose group (`+0x3f`, [`Mech_AttachToGroup`](../simulation/mech.md#construction)) has 0 at `+0x16`, no action holding it out ([the group record](../simulation/mission-groups.md#the-group-record)), then every element of the pools at `000af0b4`, `g_ExplosionPool`, `g_DebrisPool` (`000aeef8`) (150 of `0x4e` bytes, which [`Debris_LoadResources`](../formats/debris-dat.md#the-load) builds) and `g_SmokeBallPool` (`000aef68`) (200 of `0x46` bytes), each walked oldest first with `Pool_Prev` ([object pools](../simulation/memory.md#object-pools)).
+- **`ObjList_RebuildFrame` (`00020de0`)**, which `Sim_RenderFrame` calls each frame, sets the count back to `000bc596` and adds, in turn, each object of the array at `000bc416` (count `000bc41c`, [the live object list](../simulation/sim-object-base.md#the-live-object-list)) whose group (`+0x3f`, read with no null test, [`Mech_AttachToGroup`](../simulation/mech.md#construction), [`Flyer_AttachToGroup`](../simulation/flyers.md#joining-its-group--flyer_attachtogroup-0001b574)) has 0 at `+0x16`, no action holding it out ([the group record](../simulation/mission-groups.md#the-group-record)), then every element of the pools at `000af0b4`, `g_ExplosionPool`, `g_DebrisPool` (`000aeef8`) (150 of `0x4e` bytes, which [`Debris_LoadResources`](../formats/debris-dat.md#the-load) builds) and `g_SmokeBallPool` (`000aef68`) (200 of `0x46` bytes), each walked oldest first with `Pool_Prev` ([object pools](../simulation/memory.md#object-pools)).
 
 `ObjList_Remove` (`00020d84`) swaps an object out for the list's last; `es2_xref.py` finds no reference to it.
 

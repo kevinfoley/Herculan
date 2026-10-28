@@ -74,11 +74,13 @@ ES2's flyer code reads `+0x1f4`, `+0x1f8`, `+0xae` and `+0x23c` with no writer f
 
 1. A null flyer is taken from `g_FlyerPool` (`000af72c`) with `Pool_Alloc`; it returns 0 when the pool is empty.
 2. `SimObjectBase_ConstructStatic`(flyer, the type record's shape `+0x2a`) ([the constructors](object-classes.md#the-constructors)); the record is `000bc46c` + `FlyerType_RecordIndex`(type) × `0x2e`.
-3. The base's fields: the vtable `00091f6e`, the class `+0x162` = −1, `+0x92` = 1, `+0xa1` = 1, `ObjectList_Add`(`LiveObjectList`, flyer) ([the live object list](sim-object-base.md#the-live-object-list)), the action pointers `+0x16c` and `+0x170` = 0 and the flag number `+0x174` = −1.
+3. The base's fields: the vtable `00091f6e`, the class `+0x162` = −1, `+0x92` = 1 ([the command screen's mark](sim-object-base.md#the-live-object-list)), `+0xa1` = 1 ([the scanner's](mfd-scanner.md#the-contacts)), `ObjectList_Add`(`LiveObjectList`, flyer) ([the live object list](sim-object-base.md#the-live-object-list)), the action pointers `+0x16c` and `+0x170` = 0 and the flag number `+0x174` = −1.
 4. `Component_AllocDamageArrays`(`+0x196`, 1, 1).
 5. The vtable `00091fea`, the type tag 6, the record at `+0x190`, the class 2, the velocity (0, the record's `+4`, 0), `Component_LinkMaxRefData`(`+0x196`, the record's collision model `+0x26`, its damage table `+0x22`, flyer), and `Behaviour_SetState`(`+0x47`, `deciding`, `000af58c`).
 
-It returns the flyer. ES2's also builds the flight model's block and starts it at 1000 with the throttle at `0x200`; ES1's has none.
+It returns the flyer. ES2's also builds the flight model's block and starts it at 1000 with the throttle at `0x200`; ES1's has none. The type is not checked: a type with no record reads the record at index `0xff` ([the load](../formats/bullets-skimmer-dat.md#the-load-1)).
+
+**Drawing.** `Flyer_Draw`, the table's `+4`, draws with `g_TSDetailBiasForFlyers` around `Shape_DrawAtDetailLevel` ([the detail setting](object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08)); the static instance has no LOD table, so every flyer of a type is drawn from the shape `Shape_LoadDts` gave its type, whole ([the LOD root](object-classes.md#the-lod-root--shape_drawatdetaillevel-00002b30)), with its textured faces on `dba\enemy` ([the load](../formats/bullets-skimmer-dat.md#the-load-1), step 2). The frame lists a flyer from the live object list while its group's action is clear, and leaves it out with a negative Z or past the last distance band of its tag, 6 ([the object list](../rendering/polygon-shading.md#the-object-list), [the frame's draw](../rendering/polygon-shading.md#the-frames-draw)).
 
 `Flyer_Dtor` (`0001af3c`), (flyer, flags), stores the three vtables in turn, runs `AnimObj_Dtor`(flyer, 0) and, with flag bit 0, queues the flyer on `g_FlyerDeleteQueue` (`000af730`) with `ObjectPool_QueueForDelete` ([object pools](memory.md#object-pools)); ES2's takes it out of the live object list instead. `Flyer_FlushDeletes` (`0001ac14`), which `Flyer_RegisterSubsystem` registers at phase 5, empties the queue into the pool with `ObjectPool_FlushDeleteQueue`. The static initializer also zeroes the pool pointer and the word `000af794` ([Open](#open)); `Flyer_StaticDtor` frees the pool.
 
@@ -162,7 +164,7 @@ ES2's holds the target's height plus 10000 while extending, turns at 90000, runs
 
 1. computer message 3, when the attacker is `LocalPlayerMech` and that machine's target `+0x15e` is the flyer (ES2's `0x2e`);
 2. the attacker's slot `+0x64`(attacker, 0, flyer), the kill credit, with no test for a null attacker;
-3. `+0x93` = 1, the radar `+0x90` = 0, `+0x32` = 1 and the position's Z `+0x28` = −100000;
+3. `+0x93` = 1, the radar `+0x90` = 0, `+0x32` = 1 and the position's Z `+0x28` = −100000, so the frame's draw leaves it out ([drawing](#construction--flyer_constructor-0001ac58));
 4. `Mech_ReportOutOfAction`(flyer) ([the out-of-action report](sim-object-base.md#the-out-of-action-report--mech_reportoutofaction-0000d77c)), and `Action_Activate` of the action `+0x170` when there is one;
 5. `Behaviour_SetState`(`+0x47`, `dead`, `000af664`);
 

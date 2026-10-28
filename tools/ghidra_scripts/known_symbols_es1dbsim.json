@@ -1312,13 +1312,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Shape_DrawAtDetailLevel",
-      "description": "(object), callee-cleaned: slot +4 of DET_ANIM_OBJ's table DetAnimObjVtable (00090406) and of the HERC file's 00091a6a and 00091b86. SimObject_InstallModelTransform (00001854); with a LOD table at +0x3b whose root count (+0xc) is not 0: size = (shape radius (+8) << Raster_FocalShift) / max(Math_FastMagnitude3D(g_EyeInModelSpace) - radius, 1), at least 1, scaled by Math_Q10Multiply with the int16 g_ShapeDetailSizeScaleQ10 (000903e0); the root index starts at the lesser of the int16 g_ShapeDetailBias (000903e2) and the count less 1 and steps, with the threshold cursor from the table's +4, while it is under the count less 1 and the size is under the threshold; that root goes into the instance's +4. Then the transform again, the instance's slot +0x20, and root 0 put back. ES2's Shape_DrawAtDetailLevel (DBSIM 004033e4).",
+      "description": "(object), callee-cleaned: slot +4 of DET_ANIM_OBJ's table DetAnimObjVtable (00090406) and of the HERC file's 00091a6a and 00091b86. SimObject_InstallModelTransform (00001854); with a LOD table at +0x3b whose root count (+0xc) is not 0: size = (shape radius (+8) << Raster_FocalShift) / max(Math_FastMagnitude3D(g_EyeInModelSpace) - radius, 1), at least 1, scaled by Math_Q10Multiply with the int16 g_ShapeDetailSizeScaleQ10 (000903e0); the root index starts at the lesser of the int16 g_ShapeDetailBias (000903e2) and the count less 1 and steps, with the threshold cursor from the table's +4, while it is under the count less 1 and the size is under the threshold; that root goes into the instance's +4. Then the transform again and the instance's slot +0x20; with a LOD table at +0x3b, root 0 is put back in the instance's +4, and with none the instance is drawn on the shape it holds, nothing chosen or put back. ES2's Shape_DrawAtDetailLevel (DBSIM 004033e4).",
       "source": "Herculan/docs/es1/simulation/object-classes.md#the-lod-root--shape_drawatdetaillevel-00002b30; ES1DBSIM disassembly at 00002b30",
       "verified": {
         "bytes": "00002b30+329",
         "sha1": "79bba531d5db",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -7171,7 +7171,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_KnowsObject",
-      "description": "(machine, object) in stack order, callee-cleaned: 1 when the object's byte +0x8f is set and Math_DistanceBetweenPoints (00063c20)(object +0x20, machine +0x20) is below 1000000, or when the machine's byte +0xbc + the object's int16 +0x45 is set; otherwise 0. ES2's Ai_KnowsObject (DBSIM 00411c58). es2_xref finds three calls, from Ai_IsTargetable (0000dce8), Mission_IsClearOfThreats (0000f744) and 00041b1c.",
+      "description": "(machine, object) in stack order, callee-cleaned: 1 when the object's byte +0x8f is set and Math_DistanceBetweenPoints (00063c20)(object +0x20, machine +0x20) is below 1000000, or when the machine's byte +0xbc + the object's int16 +0x45 is set; otherwise 0. ES2's Ai_KnowsObject (DBSIM 00411c58). es2_xref finds three calls, from Ai_IsTargetable (0000dce8), Mission_IsClearOfThreats (0000f744) and HddCommandScreen_IsEligibleUnit (00041b1c).",
       "source": "Herculan/docs/es1/simulation/sim-object-base.md#what-an-ai-machine-knows-and-may-target; ES1DBSIM disassembly at 0000d808",
       "verified": {
         "bytes": "0000d808+120",
@@ -7216,13 +7216,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Formation_RotateAndAddOffset",
-      "description": "(object, position, offset) in stack order, callee-cleaned: takes the first member of the object's group (the first pointer of the array at +0xe of the group the object's +0x3f points at), rotates the offset's int32 x and y by that member's transform (Context_GetTransform of its +6, Math_Rotate2DPoint) and adds the rotated x and y and the unrotated z to position's three int32. ES2's Formation_RotateAndAddOffset (DBSIM 00411d64). Callers found by es2_xref: Base_ApplyFormationOffset (00004474), Mech_ApplyFormationOffset (00012ed0), Flyer_ApplyFormationOffset (0001b524).",
+      "description": "(object, position, offset) in stack order, callee-cleaned: takes the first member of the object's group (the first pointer of the array at +0xe of the group the object's +0x3f points at), with no null test, rotates the offset's int32 x and y by that member's transform (Context_GetTransform of its +6, Math_Rotate2DPoint) and adds the rotated x and y and the unrotated z to position's three int32. ES2's Formation_RotateAndAddOffset (DBSIM 00411d64). Callers found by es2_xref: Base_ApplyFormationOffset (00004474), Mech_ApplyFormationOffset (00012ed0), Flyer_ApplyFormationOffset (0001b524).",
       "source": "Herculan/docs/es1/formats/formations-dat.md#where-a-member-stands",
       "verified": {
         "bytes": "0000d9a0+89",
         "sha1": "53be0f172fd2",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -9646,7 +9646,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_AiSelectAimComponent",
-      "description": "(machine), callee-cleaned: writes the aim slot +0x238: slot 0 alone when the target is collapsed (+0xae); otherwise Math_RandomNext & 0x7f under 0x28 takes slots 7-18, under 0x50 slots 19 to 18 + this machine's mount count (+0x198's +4), and the rest slots 0-6. Of the slots the target's occupancy array (+0x1a4) still has, it keeps the highest Component_ReadDamagePercent (0000a16c) of this machine's own +0x19c plus Math_RandomNext & 0x3f above 0, or -1. ES2's Mech_AiSelectAimComponent (DBSIM 0041ce08), which adds the Targeting Pod term.",
+      "description": "(machine), callee-cleaned: writes the aim slot +0x238: the target +0x15e read with no null or class test; slot 0 alone when the target is collapsed (+0xae); otherwise Math_RandomNext & 0x7f under 0x28 takes slots 7-18, under 0x50 slots 19 to 18 + this machine's mount count (+0x198's +4), and the rest slots 0-6. Of the slots the target's occupancy array (+0x1a4) still has, it keeps the highest Component_ReadDamagePercent (0000a16c) of this machine's own +0x19c plus Math_RandomNext & 0x3f above 0, or -1. ES2's Mech_AiSelectAimComponent (DBSIM 0041ce08), which adds the Targeting Pod term.",
       "source": "Herculan/docs/es1/simulation/mech-ai.md#the-combat-reassess--mech_aicombatreassess-00016e04; ES1DBSIM decompile at 00016cf4",
       "verified": {
         "bytes": "00016cf4+272",
@@ -11401,7 +11401,7 @@
       "type": "function",
       "confidence": "high",
       "name": "FlyerType_RecordIndex",
-      "description": "(type), callee-cleaned: returns the byte at 000bc466 + type, the type's record index, 0xff when it has none. ES2's FlyerType_RecordIndex (DBSIM 00422e80).",
+      "description": "(type), callee-cleaned: returns the byte at 000bc466 + type, the type's record index, 0xff when it has none. The type is not checked against the two-byte table: types 2 to 5 read the name list pointer at 000bc468. ES2's FlyerType_RecordIndex (DBSIM 00422e80).",
       "source": "Herculan/docs/es1/formats/bullets-skimmer-dat.md#the-load-1",
       "verified": {
         "bytes": "0001c678+15",
@@ -11416,7 +11416,7 @@
       "type": "function",
       "confidence": "high",
       "name": "FlyerType_Register",
-      "description": "(type), callee-cleaned: when FlyerType_RecordIndex (0001c678) gives 0xff, stores the flyer type count 000bc464 as the type's record index and increments it, then DmgTable_Reserve(1) and CollisionTable_Reserve(1). ES2's FlyerType_Register (DBSIM 00422e90).",
+      "description": "(type), callee-cleaned: when FlyerType_RecordIndex (0001c678) gives 0xff, stores the flyer type count 000bc464 as the type's record index, at 000bc466 + type with no check against the two-byte table, and increments it, then DmgTable_Reserve(1) and CollisionTable_Reserve(1). ES2's FlyerType_Register (DBSIM 00422e90).",
       "source": "Herculan/docs/es1/formats/bullets-skimmer-dat.md#the-load-1",
       "verified": {
         "bytes": "0001c688+64",
@@ -12760,7 +12760,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ObjList_RebuildFrame",
-      "description": "(): Sim_RenderFrame's per-frame rebuild of the object list: sets ObjList_Count (00092558) back to ObjList_ZoneShapeCount (000bc596), the zone shapes Sim_StartMission added, then ObjList_Add (00020d5c)s each object of the array LiveObjectList (000bc416) (count LiveObjectList_Count (000bc41c), stopping at a null) whose type record (+0x3f) has a zero int32 at +0x16, then every element of the pools g_ProjectilePool (000af0b4), g_ExplosionPool, g_DebrisPool (000aeef8) and g_SmokeBallPool (000aef68), each walked with Pool_Prev from the end.",
+      "description": "(): Sim_RenderFrame's per-frame rebuild of the object list: sets ObjList_Count (00092558) back to ObjList_ZoneShapeCount (000bc596), the zone shapes Sim_StartMission added, then ObjList_Add (00020d5c)s each object of the array LiveObjectList (000bc416) (count LiveObjectList_Count (000bc41c), stopping at a null) whose group (+0x3f), read with no null test, has a zero int32 at +0x16, then every element of the pools g_ProjectilePool (000af0b4), g_ExplosionPool, g_DebrisPool (000aeef8) and g_SmokeBallPool (000aef68), each walked with Pool_Prev from the end.",
       "source": "ES1DBSIM decompile at 00020de0",
       "verified": {
         "bytes": "00020de0+351",
@@ -23357,6 +23357,21 @@
         "sha1": "2863916c37ae",
         "scope": "body",
         "via": "raw"
+      }
+    },
+    {
+      "address": "00041b1c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddCommandScreen_IsEligibleUnit",
+      "description": "(screen, side, object) in stack order, its arguments removed by this function: 1 when the object's group's (+0x3f) side byte +0x14, sign-extended, equals the int16 side, its destroyed byte +0x93 is clear, 00041bb8 (called through its padding entry 00041bb5)(screen, the object's position +0x20) answers a non-zero AL, its byte +0x92 is set, and, for a side other than 0, Ai_KnowsObject (0000d808)(the cockpit's machine CockpitViewInstance +0x1ff, object) answers non-zero; otherwise 0. It reads the flag bytes through the object + 0x8c (+0x93 at +7, +0x92 at +6). ES2's HddCommandScreen_IsEligibleUnit (DBSIM 0044f014), which calls HddCommandScreen_IsOnMap (DBSIM 0044f09c) where this calls 00041bb8.",
+      "source": "Herculan/docs/es1/simulation/sim-object-base.md#the-live-object-list; ES1DBSIM decompile and disassembly of 00041b1c; es2_naming.py diff against DBSIM 0044f014 (0.93)",
+      "verified": {
+        "bytes": "00041b1c+153",
+        "sha1": "4ff8da6838a4",
+        "scope": "body",
+        "via": "both"
       }
     },
     {

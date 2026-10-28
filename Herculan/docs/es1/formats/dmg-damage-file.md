@@ -64,7 +64,7 @@ These are the sixteen chassis `MECHS.NAM` names and the two flyer types `FLYERS.
 
 ## `HOVTANK.DMG`
 
-28 bytes that do not fit the layout: read by it, they hold three internals (0, −300, 0) and a piece count of 150, where 16 bytes remain. The flyer load for type 1 reaches `dmg\HOVTANK` only after reading `dat\HOVTANK` with `Ovl_ReadFile`, whose failed open is a severity-5 assert, fatal unless the debugger flag `000b5bcc` is set ([severities](../simulation/asserts.md#severities)); no ES1 volume holds `dat\HOVTANK`, so a mission placing a `HOVTANK` ends the program there.
+28 bytes that do not fit the layout: read by it, they hold three internals (0, −300, 0) and a piece count of 150, where 16 bytes remain. The flyer load for type 1 reaches `dmg\HOVTANK` only after reading `dat\HOVTANK` with `Ovl_ReadFile`, whose failed open is a severity-5 assert, fatal unless the debugger flag `000b5bcc` is set ([severities](../simulation/asserts.md#severities)); no ES1 volume holds `dat\HOVTANK`, so a mission placing a `HOVTANK` would end the program there, and no retail mission places one ([the flyer load](bullets-skimmer-dat.md#the-load-1)).
 
 Read as words, the bytes are an `int16` 3, six Q16 values (−300, 150, 0, 150, 300, 150) and an `int16` 1500:
 

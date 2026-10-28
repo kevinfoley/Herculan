@@ -110,7 +110,7 @@ The fields the object base and the mission groups share are in [the object field
 **`Mech_Constructor` (`00011330`)**, (machine, type), ES2's (`00415bb0`, [where the base ends](../../retail/simulation/sim-object-layout.md#where-the-base-ends--0x1f2)):
 
 1. takes the machine from `g_MechPool` when it is null, returning 0 when that gives none, and runs `SimObjectBase_ConstructWithDetailTable` (`00002ac8`, [the constructors](object-classes.md#the-constructors))(machine, the type record's `+0xc6`, its LOD table);
-2. stores `00091a6a`, the target class `0xffff`, `+0x92` and `+0xa1` set, `ObjectList_Add` (`0000db10`), both actions 0 and `+0x174` `0xffff`;
+2. stores `00091a6a`, the target class `0xffff`, `+0x92` and `+0xa1` set ([the command screen's mark](sim-object-base.md#the-live-object-list), [the scanner's](mfd-scanner.md#the-contacts)), `ObjectList_Add` (`0000db10`), both actions 0 and `+0x174`, the out-of-action report's flag number, `0xffff` (`0001142a`), leaving the operation `+0x176`, which the report reads only for a flag number that is not negative ([the out-of-action report](sim-object-base.md#the-out-of-action-report--mech_reportoutofaction-0000d77c));
 3. `Component_AllocDamageArrays` (`00009b8c`)(`+0x19c`, `0x15`, `0x1c`), the damage header with 21 internals and 28 components where ES2's has 22 and 29 ([the damage header](../formats/dmg-damage-file.md#the-damage-header));
 4. the five lock countdowns at `+0x1ee` through `__vec_ctor` with `MechLockTimer_ElementCtor` (`00011904`), which allocates 3 bytes when given none;
 5. stores `MechVtable`, the word 7 at `+0`, the type record (`0x1c4` bytes) at `+0x188`; zeroes the turn rate, speed, throttle, twist and pitch rates and angles; sets the energy pool to 10000; the target class 0;

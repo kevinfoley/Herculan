@@ -59,7 +59,9 @@ The third attack phase is never entered ([the third phase](../simulation/flyers.
 
 ### The load
 
-`FlyerTypes_LoadAll` ([name lists](nam-name-list.md#mod-lists)) calls `FlyerType_LoadResources` (`0001c6c8`) for each of types 0 and 1 that `FlyerType_RecordIndex` (`0001c678`) gives a record, its byte in the 2-entry table at `000bc466` not being `0xff`. `FlyerType_Register` (`0001c688`) gives a type the next record the first time it is asked, and reserves one `.DMG` slot and one collision slot with `DmgTable_Reserve` and `CollisionTable_Reserve`, as ES2's does.
+`FlyerTypes_LoadAll` ([name lists](nam-name-list.md#mod-lists)) calls `FlyerType_LoadResources` (`0001c6c8`) for each of types 0 and 1 that `FlyerType_RecordIndex` (`0001c678`) gives a record, its byte in the 2-entry table at `000bc466` not being `0xff`. `FlyerType_Register` (`0001c688`), which the first pass calls with the type of each live flyer slot ([reading](script-dat.md#reading), step 6), gives a type the next record the first time it is asked, and reserves one `.DMG` slot and one collision slot with `DmgTable_Reserve` and `CollisionTable_Reserve`, as ES2's does.
+
+Neither function checks the type against the table: `FlyerType_RecordIndex` reads the byte at `000bc466` + type and `FlyerType_Register` writes there, so a type outside 0 and 1 reads or overwrites a byte outside it: types 2 to 5 the name list pointer `000bc468` that follows the table. `HercWorks.Query flyers` finds the retail missions' flyer records naming type 0, `SKIMMER`, 376 of them in 66 of the 77 missions, and none naming type 1 or 2. So no retail mission registers `HOVTANK`, and step 1 below, which would find no `dat\HOVTANK` and stop the program at its severity-5 assert ([`HOVTANK.DMG`](dmg-damage-file.md#hovtankdmg)), runs for `SKIMMER` alone.
 
 `FlyerType_LoadResources`, given the type number, takes its name from `000bc468` and its `0x2e`-byte record from `000bc46c`, and:
 
@@ -72,4 +74,3 @@ ES2's reads 46 bytes into a `0x70`-byte record, keeps the damage file, collision
 ## Open
 
 - **Open:** what reads offsets 6 and 12 and the zeroes at 18–33: none of [the flyers'](../simulation/flyers.md) functions does.
-- **Open:** whether any mission places a `HOVTANK`. Once type 1 has a record, step 1 finds no `dat\HOVTANK` and its severity-5 assert ends the program ([`HOVTANK.DMG`](dmg-damage-file.md#hovtankdmg)).
