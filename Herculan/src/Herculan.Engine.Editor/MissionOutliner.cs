@@ -36,6 +36,9 @@ internal sealed class MissionOutliner {
 	/// </summary>
 	private const string NotAlways = " (not always present)";
 
+	/// <summary>What every selectable row is drawn with, so the second click of a double-click presses it (<see cref="Choose"/>).</summary>
+	private const ImGuiSelectableFlags DoubleClick = ImGuiSelectableFlags.AllowDoubleClick;
+
 	private static readonly Vector4 FindingLinkColor = new(0.55f, 0.78f, 1f, 1f);
 	private static readonly Vector4 SelectedFindingColor = new(1f, 0.85f, 0.1f, 1f);
 
@@ -183,7 +186,7 @@ internal sealed class MissionOutliner {
 			var name = _names.Objective(objective);
 			string marker = objective.Presence.Always ? string.Empty : NotAlways;
 			Choose(selection, NameText.Selectable(name with { Text = name.Text + marker }, $"objective{objective.Index}",
-				_selection.Is(selection)));
+				_selection.Is(selection), flags: DoubleClick));
 		}
 	}
 
@@ -211,7 +214,7 @@ internal sealed class MissionOutliner {
 
 			int users = randomTables.Users(read).Count + randomTables.Others(read);
 			Choose(new ConditionSelection(table), EditorText.WrappedSelectable($"{randomTables.Title(read)} (used by {users})", $"table{table}",
-				current == table));
+				current == table, DoubleClick));
 		}
 	}
 
@@ -234,7 +237,7 @@ internal sealed class MissionOutliner {
 			var record = records[i];
 			var selection = new ConditionSelection(record.GUID);
 			Choose(selection, EditorText.WrappedSelectable($"Condition {record.GUID}: {ConditionEditing.Describe(source.Mission, record)}",
-				$"condition{i}", _selection.Is(selection)));
+				$"condition{i}", _selection.Is(selection), DoubleClick));
 		}
 
 		ImGui.TreePop();
@@ -242,10 +245,12 @@ internal sealed class MissionOutliner {
 
 	/// <summary>
 	/// Selects <paramref name="selection"/> when the item just drawn was <paramref name="clicked"/>, and frames it in the
-	/// view when it was double-clicked.
+	/// view when that click was the second of a double-click. The click is the row's own, not a hover test after it: a
+	/// selectable row's last item is the text drawn over it, never hovered while the selectable is, so a row's selectable
+	/// carries <see cref="DoubleClick"/> to press on the second click.
 	/// </summary>
 	private void Choose(EditorSelection selection, bool clicked) {
-		if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left)) {
+		if (clicked && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left)) {
 			_selection.Focus(selection);
 		} else if (clicked) {
 			_selection.Current = selection;
@@ -257,7 +262,7 @@ internal sealed class MissionOutliner {
 	/// <see cref="NotAlways"/> when it is not always present; whether it was clicked.
 	/// </summary>
 	private bool Row(RecordName name, int row, short guid, string id, EditorSelection selection) =>
-		NameText.Selectable(name with { Text = name.Text + Marker(row, guid) }, id, _selection.Is(selection));
+		NameText.Selectable(name with { Text = name.Text + Marker(row, guid) }, id, _selection.Is(selection), flags: DoubleClick);
 
 	/// <summary><see cref="NotAlways"/> when row <paramref name="row"/>'s entry for <paramref name="guid"/> is present only under a condition, else nothing.</summary>
 	private string Marker(int row, short guid) => Layout.Entry(row, guid)?.Presence.Always == false ? NotAlways : string.Empty;

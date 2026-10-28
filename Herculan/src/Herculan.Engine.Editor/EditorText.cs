@@ -121,11 +121,11 @@ internal static class EditorText {
 	/// A <see cref="ImGui.Selectable(string, bool)"/> whose label wraps at the edge of the window or list it is in: a
 	/// label-less selectable as tall as the wrapped text, with the text drawn over it.
 	/// </summary>
-	public static bool WrappedSelectable(string text, string id, bool selected) {
+	public static bool WrappedSelectable(string text, string id, bool selected, ImGuiSelectableFlags flags = ImGuiSelectableFlags.None) {
 		float width = ImGui.GetContentRegionAvail().X;
 		var start = ImGui.GetCursorScreenPos();
 		float height = ImGui.CalcTextSize(text, false, width).Y;
-		bool clicked = ImGui.Selectable($"##{id}", selected, ImGuiSelectableFlags.None, new Vector2(0f, height));
+		bool clicked = ImGui.Selectable($"##{id}", selected, flags, new Vector2(0f, height));
 		var next = ImGui.GetCursorScreenPos();
 		ImGui.SetCursorScreenPos(start);
 		ImGui.PushTextWrapPos(ImGui.GetCursorPosX() + width);
