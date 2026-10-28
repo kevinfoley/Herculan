@@ -3,9 +3,10 @@
 A batch subagent cannot touch the known_symbols files, so it lists the writes in a command file
 (handoff-es1-data-formats.md, "How the batches were run"). This runs that file:
 
-1. Each `es2_naming.py insert|relink|edit` line, as a dry run and then with --write. A line may be
-   given in either form or both; consecutive duplicates collapse. The doubling of a renamed name
-   (`Name (Name (addr))`) is undone by es2_naming.py itself.
+1. Each `es2_naming.py insert|relink|edit|fixrefs` line, as a dry run and then with --write. A line
+   may be given in either form or both; consecutive duplicates collapse. The doubling of a renamed
+   name (`Name (Name (addr))`) is undone by es2_naming.py itself. fixrefs edits docs and C#, not
+   known_symbols: run doc_lint.py over the docs it lists, since the edit hook does not see them.
 2. Each `es1_naming.py twin` and `es2_stamp.py stamp` line as given. A stamp refusal stops the run:
    read the refused sentences, then rerun the line with the flag it needs (or reword) and resume.
 3. Each `es2_naming.py apply BIN` line read-only, then with --write when the read-only run reported
@@ -61,11 +62,11 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 SCRIPTS = REPO / "tools" / "scripts"
 ALLOWED = {
-    "es2_naming.py": {"insert", "relink", "edit", "apply"},
+    "es2_naming.py": {"insert", "relink", "edit", "fixrefs", "apply"},
     "es2_stamp.py": {"stamp"},
     "es1_naming.py": {"twin"},
 }
-WRITES = {"insert", "relink", "edit"}
+WRITES = {"insert", "relink", "edit", "fixrefs"}
 PYTHONS = {"py", "python", "python3", "py.exe", "python.exe"}
 
 
@@ -346,7 +347,7 @@ def cmd_run(args):
                 show(out, 60)
                 return stop(i, "the dry run failed")
             code, out = run(s.argv, write=True)
-            show(out, 8)
+            show(out, 60 if s.argv[1] == "fixrefs" else 8)      # fixrefs lists the mentions left for a hand edit
             if code or "written" not in out:
                 return stop(i, "the write failed")
         elif s.kind == "apply":

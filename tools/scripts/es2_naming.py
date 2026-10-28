@@ -101,8 +101,13 @@ address operands by different rules (insn_streams).
   mentions batch.json
       FUN_/DAT_/bare-address mentions of the batch's named addresses in docs/src/tests.
   fixrefs batch.json [--write]
-      Rewrite `FUN_a` to `Name` (`a`) in docs and <c>FUN_a</c> / bare FUN_a in C#, and list the
-      mentions it cannot rewrite safely (bare addresses, other shapes) for a manual edit.
+      Rewrite `FUN_a` to `Name` (`a`) in docs and <c>FUN_a</c> / bare FUN_a in C#, and a bare
+      backticked `a` to `Name` (`a`) in the docs of its binary's family (docs/es1/ for ES1DBSIM and
+      ES1GO, docs/retail/ for DBSIM and VSHELL): the first mention in each paragraph, list item or
+      table row, never one after a name or a binary's name, in a link, in an address column or in
+      a code fence. Lists each rewrite per file, and the mentions it cannot rewrite safely (after
+      another name, after a binary's name, an address another binary of the family also has, other
+      shapes) for a manual edit.
   repl spec.json [--write]
       [[relpath, old, new, count]]: exact replacements asserting the count; BOM and newlines kept.
   apply BIN [--write] [--define [addr+addr...]]
@@ -1117,26 +1122,140 @@ def batch_names(path):
     return named
 
 
+DOC_FAMILY = {"ES1DBSIM": "es1", "ES1GO": "es1", "DBSIM": "retail", "VSHELL": "retail"}
+ADDR_COLUMN = re.compile(r"(?i)^(?:address|es1|es2|dbsim|vshell|es1dbsim|es1go)$")
+LIST_ITEM = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s")
+TABLE_SEP = re.compile(r"^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)*\|?\s*$")
+
+
+def table_cells(line):
+    """The start offset of each cell of a markdown table row, split at unescaped pipes."""
+    starts = [0]
+    for m in re.finditer(r"(?<!\\)\|", line):
+        starts.append(m.end())
+    return starts[1:] if line.lstrip().startswith("|") else starts
+
+
+def fix_bare_doc(text, named, binaries, ambiguous):
+    """Rewrite a bare `a` of one of `named` ({address: name}) in a markdown doc to `Name` (`a`): the
+    first in each paragraph, list item or table row, unless the name already came before it there.
+    Left alone: an address the doc names somewhere already (`Name` (`a`), `Name`(`a`) or `Name`,
+    `a`), since the doc then introduces it and the bare mentions are deliberate, an address after
+    another backticked name or another binary's name ('ES1GO `a`'), a location ('the run at `a`':
+    'at `Name` (`a`)' misreads), either end of a range (`a`–`b`), and one inside a link, in a table column headed Address, ES1, ES2 or a binary, or in a
+    code fence. `binaries` gives each address's binary; `ambiguous` holds the
+    addresses another binary of the doc's family also has a function or entry at. Returns the text,
+    the rewrites and the mentions to edit by hand, each as (line number, address, context)."""
+    rx = re.compile(r"`(" + "|".join(named) + r")`")
+    introduced = {a for a, n in named.items()
+                  if re.search(r"`" + re.escape(n) + r"`(?: ?\(|, )`" + a + "`", text)}
+    lines = text.splitlines(keepends=True)
+    out, done, manual = [], [], []
+    fence, cols, unit = None, None, ""
+    for i, line in enumerate(lines):
+        s = line.strip()
+        if fence:
+            if s.startswith(fence):
+                fence, unit = None, ""
+            out.append(line)
+            continue
+        if s.startswith(("```", "~~~")):
+            fence, unit = s[:3], ""
+            out.append(line)
+            continue
+        row = s.startswith("|")
+        if not row:
+            cols = None
+        if not s or row or s.startswith("#") or LIST_ITEM.match(line):
+            unit = ""
+        if row and TABLE_SEP.match(s):
+            out.append(line)
+            continue
+        if row and i + 1 < len(lines) and TABLE_SEP.match(lines[i + 1].strip()):
+            starts = table_cells(line)
+            cols = {k for k, c in enumerate(starts)
+                    if ADDR_COLUMN.match(line[c:starts[k + 1] - 1 if k + 1 < len(starts) else len(line)]
+                                         .strip().strip("*`").strip())}
+        links = [(m.start(), m.end()) for m in re.finditer(r"\[[^\]]*\]\([^)]*\)", line)]
+        starts = table_cells(line) if row else []
+        new, last = [], 0
+        for m in rx.finditer(line):
+            a, before = m.group(1), line[:m.start()]
+            name = named[a]
+            if any(lo <= m.start() < hi for lo, hi in links):
+                continue
+            if row and cols and bisect.bisect_right(starts, m.start()) - 1 in cols:
+                continue
+            ctx = f"...{line[max(0, m.start() - 50):m.start()]}[{m.group(0)}]{line[m.end():m.end() + 30].rstrip()}..."
+            prev = re.search(r"`([^`]+)` ?\($", before)
+            if prev or re.search(r"`" + re.escape(name) + r"`, $", before):
+                if prev and prev.group(1) != name:
+                    manual.append((i + 1, a, f"after `{prev.group(1)}`, not `{name}`: {ctx}"))
+                unit += f"`{name}`"
+                continue
+            if (a in introduced or re.search(r"(?:\bat |`[–-])$", before)
+                    or re.match(r"[–-]`", line[m.end():])):
+                continue
+            tag = BINARY_TAG.search(before)
+            if tag:
+                manual.append((i + 1, a, f"after a binary's name: {ctx}"))
+                continue
+            if f"`{name}`" in unit + before:
+                continue
+            if a in ambiguous:
+                manual.append((i + 1, a, f"another {DOC_FAMILY[binaries[a]]} binary has {a} too: {ctx}"))
+                continue
+            new.append(line[last:m.start()] + f"`{name}` (`{a}`)")
+            last = m.end()
+            unit += f"`{name}`"
+            done.append((i + 1, a, ctx))
+        out.append("".join(new) + line[last:])
+        unit += line
+    return "".join(out), done, manual
+
+
 def cmd_fixrefs(args):
     """Rewrite the usual reference shapes to a batch's new names in docs (.md) and C# (.cs):
     `FUN_a` -> `Name` (`a`) in markdown, <c>FUN_a</c> -> <c>Name</c> (<c>a</c>) and a bare FUN_a
-    -> Name (a) in C#. Anything else naming the address is listed for a manual edit."""
+    -> Name (a) in C#, and a bare `a` -> `Name` (`a`) in the docs of the address's binary family
+    (docs/es1/ for ES1DBSIM and ES1GO, docs/retail/ for DBSIM and VSHELL; fix_bare_doc says which).
+    Anything else naming the address is listed for a manual edit."""
     named = batch_names(args[0])
     if not named:
         return
+    with open(args[0], encoding="utf-8") as f:
+        binaries = {e["address"]: e["binary"].upper() for e in json.load(f) if e["address"] in named}
     alt = "|".join(named)
     md = re.compile(r"`(?:FUN|DAT|PTR)_(" + alt + r")`( \(`\1`\))?")
     cs_c = re.compile(r"<c>(?:FUN|DAT|PTR)_(" + alt + r")</c>( \(<c>\1</c>\))?")
     cs_bare = re.compile(r"(?<![0-9A-Za-z_])(?:FUN|DAT|PTR)_(" + alt + r")(?![0-9A-Za-z])( \(\1\))?")
     left = re.compile(r"(?<![0-9A-Za-z])(?:FUN_|DAT_|PTR_)?(" + alt + r")(?![0-9A-Za-z])")
-    changed = 0
+    family_named, ambiguous = {}, set()
+    for b in sorted(set(binaries.values())):
+        fam = DOC_FAMILY.get(b)
+        if not fam:
+            continue
+        family_named.setdefault(fam, {}).update({a: named[a] for a in named if binaries[a] == b})
+        for other in (o for o, f in DOC_FAMILY.items() if f == fam and o != b):
+            taken = set(functions(other)) | {e["address"].lower() for e in entries(other)}
+            ambiguous |= {a for a in named if binaries[a] == b and a in taken}
+    changed = rewrites = 0
     for p, _ in repo_texts().items():
         with open(p, "rb") as fh:
             raw = fh.read()
         bom = raw[:3] == b"\xef\xbb\xbf"
         t = (raw[3:] if bom else raw).decode("utf-8")
+        rel = os.path.relpath(p, REPO)
+        fam = next((f for f in family_named
+                    if rel.replace("\\", "/").startswith(f"Herculan/docs/{f}/")), None) if p.endswith(".md") else None
+        notes = []
         if p.endswith(".md"):
             t2 = md.sub(lambda m: f"`{named[m.group(1)]}` (`{m.group(1)}`)", t)
+            if fam:
+                t2, done, manual = fix_bare_doc(t2, family_named[fam], binaries, ambiguous)
+                rewrites += len(done)
+                notes = [f"  bare {rel}:{n}: [{a} -> {named[a]}] {ctx}" for n, a, ctx in done]
+                notes += [f"  manual {rel}:{n}: [{a} -> {named[a]}] {why}" for n, a, why in manual]
             # Inside parentheses already: "(`Name` (`a`))" reads better as "(`Name`, `a`)".
             t2 = re.sub(r"\(`(\w+)` \(`(" + alt + r")`\)\)",
                         lambda m: f"(`{m.group(1)}`, `{m.group(2)}`)" if named[m.group(2)] == m.group(1) else m.group(0), t2)
@@ -1145,16 +1264,22 @@ def cmd_fixrefs(args):
             t2 = cs_bare.sub(lambda m: f"{named[m.group(1)]} ({m.group(1)})", t2)
         if t2 != t:
             changed += 1
-            print("fix", os.path.relpath(p, REPO))
-            if "--write" in args:
-                with open(p, "wb") as fh:
-                    fh.write((b"\xef\xbb\xbf" if bom else b"") + t2.encode("utf-8"))
+            print("fix", rel)
+        for n in notes:
+            print(n)
+        if t2 != t and "--write" in args:
+            with open(p, "wb") as fh:
+                fh.write((b"\xef\xbb\xbf" if bom else b"") + t2.encode("utf-8"))
         for i, l in enumerate(t2.splitlines()):
             for m in left.finditer(l):
+                if fam and m.group(1) in family_named[fam] and l[m.start() - 1:m.start()] == l[m.end():m.end() + 1] == "`":
+                    continue      # fix_bare_doc's to rewrite, leave or list
+                if p.endswith(".md") and re.search(r"\]\([^)\s]*$", l[:m.start()]):
+                    continue      # a link target: the heading anchor of a named section
                 if not re.search(re.escape(named[m.group(1)]), l):
                     print(f"  manual {os.path.relpath(p, REPO)}:{i + 1}: [{m.group(0)} -> {named[m.group(1)]}] "
                           f"...{l[max(0, m.start() - 60):m.end() + 40]}...")
-    print(changed, "files", "written" if "--write" in args else "(dry run)")
+    print(f"{rewrites} bare doc address(es) named;", changed, "files", "written" if "--write" in args else "(dry run)")
 
 
 def cmd_repl(args):
