@@ -4,7 +4,8 @@ namespace HercWorks.Core.Data.File.Msn;
 
 /// <summary>
 /// One edit of a <see cref="MissionDocument"/>'s <see cref="MissionFile"/> and <c>.ENG</c>: each row it changed, as the
-/// row stood before and after, every record copied, and the <c>.ENG</c>'s records the same way when it changed them.
+/// row stood before and after, every record copied, and the <c>.ENG</c>'s records and HERCULAN's settings
+/// (<see cref="MissionFile.Extensions"/>) the same way when it changed them.
 /// <see cref="MissionDocument.Undo"/> and <see cref="MissionDocument.Redo"/> put a row back as one side left it. A history
 /// of these is undone last first, so the rows an undo restores are the ones its edit left.
 /// </summary>
@@ -14,9 +15,13 @@ public sealed class MsnEdit {
 	/// <summary>The <c>.ENG</c>'s records before and after, null on a side where the mission had no <c>.ENG</c>; null when the edit left the text alone.</summary>
 	private readonly TextSides? _text;
 
-	internal MsnEdit(SortedDictionary<int, (Array Before, Array After)> rows, TextSides? text = null) {
+	/// <summary><see cref="MissionFile.Extensions"/> before and after; null when the edit left it alone.</summary>
+	private readonly ExtensionSides? _extensions;
+
+	internal MsnEdit(SortedDictionary<int, (Array Before, Array After)> rows, TextSides? text = null, ExtensionSides? extensions = null) {
 		_rows = rows;
 		_text = text;
+		_extensions = extensions;
 	}
 
 	/// <summary>The rows the edit changed.</summary>
@@ -32,6 +37,7 @@ public sealed class MsnEdit {
 	public static MsnEdit Combine(IEnumerable<MsnEdit> edits) {
 		var rows = new SortedDictionary<int, (Array Before, Array After)>();
 		TextSides? text = null;
+		ExtensionSides? extensions = null;
 		foreach (var edit in edits) {
 			foreach (var (row, sides) in edit._rows) {
 				rows[row] = rows.TryGetValue(row, out var first) ? (first.Before, sides.After) : sides;
@@ -40,15 +46,26 @@ public sealed class MsnEdit {
 			if (edit._text is { } changed) {
 				text = text == null ? changed : new TextSides(text.Before, changed.After);
 			}
+
+			if (edit._extensions is { } set) {
+				extensions = extensions == null ? set : new ExtensionSides(extensions.Before, set.After);
+			}
 		}
 
-		return new MsnEdit(rows, text);
+		return new MsnEdit(rows, text, extensions);
 	}
 
-	/// <summary>Writes each changed row of <paramref name="file"/> as the edit found it, or as it left it.</summary>
+	/// <summary>
+	/// Writes each changed row of <paramref name="file"/>, and its <see cref="MissionFile.Extensions"/> when the edit changed
+	/// them, as the edit found them, or as it left them.
+	/// </summary>
 	internal void WriteTo(MissionFile file, bool after) {
 		foreach (var (row, sides) in _rows) {
 			MsnRows.Set(file, row, MsnRows.Copy(after ? sides.After : sides.Before));
+		}
+
+		if (_extensions != null) {
+			file.Extensions = after ? _extensions.After : _extensions.Before;
 		}
 	}
 
@@ -64,6 +81,9 @@ public sealed class MsnEdit {
 
 /// <summary>A <c>.ENG</c>'s records before and after an edit, null on a side where the mission had no <c>.ENG</c>.</summary>
 internal sealed record TextSides(MissionStringFile.StringEntry[]? Before, MissionStringFile.StringEntry[]? After);
+
+/// <summary>A mission's <see cref="MissionFile.Extensions"/> before and after an edit; each side is never changed in place.</summary>
+internal sealed record ExtensionSides(MissionExtensions? Before, MissionExtensions? After);
 
 /// <summary>
 /// A field of a GUID-keyed <c>.MSN</c> record that an edit writes through <see cref="MissionDocument.SetField"/>: its

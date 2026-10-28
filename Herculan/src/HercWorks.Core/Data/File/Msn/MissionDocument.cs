@@ -463,6 +463,26 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
+	/// Why the mission cannot be marked for HERCULAN alone, or back, or null when it can. A file that ends inside its
+	/// objectives (retail's <c>DEMO2</c>) cannot carry the block: retail would read it as the rest of the last objective.
+	/// </summary>
+	public string? WhyNoHerculanOnly => Mission.TruncatedRow17Tail != null ? "The mission file ends inside its objectives." : null;
+
+	/// <summary>
+	/// Marks the mission as meant for HERCULAN alone, or not (<see cref="MissionExtensions.HerculanOnly"/>), keeping whatever
+	/// else its block holds. Throws <see cref="InvalidOperationException"/> when <see cref="WhyNoHerculanOnly"/> says why not.
+	/// </summary>
+	public MsnEdit SetHerculanOnly(bool on) {
+		if (WhyNoHerculanOnly is { } why) {
+			throw new InvalidOperationException(why);
+		}
+
+		var before = BeginExtensions();
+		Mission.Extensions = (Mission.Extensions ?? new MissionExtensions()) with { HerculanOnly = on };
+		return End(before);
+	}
+
+	/// <summary>
 	/// Points entry <paramref name="entry"/> of route GUID <paramref name="route"/>'s waypoint list at row-6 GUID
 	/// <paramref name="point"/>, in the record whose list the route shows: its last base record, or, for a list a template
 	/// supplies, that template, which every route picking it shares.
@@ -827,13 +847,17 @@ public sealed class MissionDocument {
 		MsnRows.Set(Mission, row, grown);
 	}
 
-	// What an edit is about to change, copied: the rows, and the text when it is about to change that.
-	private sealed record Snapshot(Dictionary<int, Array> Rows, bool Text, MissionStringFile.StringEntry[]? TextBefore);
+	// What an edit is about to change, copied: the rows, the text when it is about to change that, and HERCULAN's settings when
+	// it is about to change those, which are replaced rather than changed in place, so need no copy.
+	private sealed record Snapshot(Dictionary<int, Array> Rows, bool Text, MissionStringFile.StringEntry[]? TextBefore,
+		bool Extensions = false, MissionExtensions? ExtensionsBefore = null);
 
 	private Snapshot Begin(params int[] rows) =>
 		new(rows.Distinct().ToDictionary(row => row, row => MsnRows.Copy(MsnRows.Get(Mission, row))), false, null);
 
 	private Snapshot BeginText() => new([], true, MsnRows.CopyText(Text?.Strings));
+
+	private Snapshot BeginExtensions() => new([], false, null, true, Mission.Extensions);
 
 	// The edit that changed what Begin copied, once it has; builds the layout again and writes the .MSN, and puts the edit
 	// back if that fails.
@@ -843,7 +867,8 @@ public sealed class MissionDocument {
 			rows[row] = (records, MsnRows.Copy(MsnRows.Get(Mission, row)));
 		}
 
-		var edit = new MsnEdit(rows, before.Text ? new TextSides(before.TextBefore, MsnRows.CopyText(Text?.Strings)) : null);
+		var edit = new MsnEdit(rows, before.Text ? new TextSides(before.TextBefore, MsnRows.CopyText(Text?.Strings)) : null,
+			before.Extensions ? new ExtensionSides(before.ExtensionsBefore, Mission.Extensions) : null);
 		try {
 			Rebuild();
 		} catch {

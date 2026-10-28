@@ -7,7 +7,7 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// The floating "Mission Settings" window, opened from Edit &gt; Mission Settings: the mission's name and zone, the zone with
 /// its size and the retail missions played in it (<see cref="ZoneCatalog"/>), then the theater it is played on and the time
-/// of day, changed through <see cref="TheaterChanger"/>, then its text (<see cref="MissionTextView"/>), with the briefing,
+/// of day, changed through <see cref="TheaterChanger"/>, then whether it is meant for HERCULAN alone (<see cref="PlayableInEditor"/>), then its text (<see cref="MissionTextView"/>), with the briefing,
 /// intelligence report and debrief (<see cref="DebriefView"/>) under "Campaign Only".
 /// </summary>
 internal sealed class MissionSettingsWindow {
@@ -17,8 +17,12 @@ internal sealed class MissionSettingsWindow {
 
 	private readonly Func<string> _name;
 	private readonly Func<string> _zone;
+	private const string RetailLabel = "Retail and HERCULAN";
+	private const string HerculanOnlyLabel = "HERCULAN only";
+
 	private readonly TheaterChanger _theaters;
 	private readonly IReadOnlyList<string> _labels;
+	private readonly PlayableInEditor _playableIn;
 	private readonly MissionTextView _text;
 	private readonly DebriefView _debrief;
 	private bool _open;
@@ -27,11 +31,12 @@ internal sealed class MissionSettingsWindow {
 	/// <param name="zone">The zone the mission is played in, as the launch plays it (<see cref="EditorMission.Zone"/>), described by <see cref="ZoneCatalog.Describe"/>.</param>
 	/// <param name="labels">Each theater's label, in theater order (<see cref="TheaterNames.Labels"/>).</param>
 	public MissionSettingsWindow(Func<string> name, Func<string> zone, TheaterChanger theaters, IReadOnlyList<string> labels,
-			MissionTextView text, DebriefView debrief) {
+			PlayableInEditor playableIn, MissionTextView text, DebriefView debrief) {
 		_name = name;
 		_zone = zone;
 		_theaters = theaters;
 		_labels = labels;
+		_playableIn = playableIn;
 		_text = text;
 		_debrief = debrief;
 	}
@@ -99,10 +104,40 @@ internal sealed class MissionSettingsWindow {
 			EditorText.Note(failure);
 		}
 
+		DrawPlayableIn();
 		_text.Draw();
 		ImGui.SeparatorText("Campaign Only");
 		_text.DrawCampaignOnly();
 		_debrief.Draw();
+	}
+
+	// Whether the mission is meant for retail too or for HERCULAN alone (PlayableInEditor).
+	private void DrawPlayableIn() {
+		bool herculanOnly = _playableIn.HerculanOnly;
+		string? why = _playableIn.WhyFixed;
+		ImGui.AlignTextToFramePadding();
+		ImGui.Text("Playable in:");
+		EditorText.Tooltip("HERCULAN only frees the mission of the limits retail alone has: the HERC, flyer and building and "
+			+ "vehicle slots, the positions, the map markers and the objects the counts in the viewport's corner show. Retail "
+			+ "still loads the mission, and can crash once it passes one.");
+		ImGui.SameLine();
+		ImGui.BeginDisabled(why != null);
+		ImGui.SetNextItemWidth(-1f);
+		if (EditorText.BeginCombo("##playableIn", herculanOnly ? HerculanOnlyLabel : RetailLabel)) {
+			if (ImGui.Selectable(RetailLabel, !herculanOnly) && herculanOnly) {
+				_playableIn.Request(false);
+			}
+
+			if (ImGui.Selectable(HerculanOnlyLabel, herculanOnly) && !herculanOnly) {
+				_playableIn.Request(true);
+			}
+
+			ImGui.EndCombo();
+		}
+
+		ImGui.EndDisabled();
+		EditorText.Reason(why);
+		EditorText.Reason(_playableIn.Failure, "Not changed: ");
 	}
 
 	// The combo's label for <theater>: its own, or its number for one past the list.

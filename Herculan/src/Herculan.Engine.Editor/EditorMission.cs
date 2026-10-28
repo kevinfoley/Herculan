@@ -76,8 +76,9 @@ internal sealed class EditorMission {
 		Outliner.Conditions = Conditions;
 		var randomTables = new RandomTables(source, sceneIndex, Names, squad);
 		Outliner.Tables = randomTables;
+		PlayableIn = new PlayableInEditor(source, Mover, Sync);
 		Settings = new MissionSettingsWindow(() => Name, () => zones.Describe(Zone), Theater, TheaterNames.Labels(content),
-			new MissionTextView(Texts), new DebriefView(Debrief));
+			PlayableIn, new MissionTextView(Texts), new DebriefView(Debrief));
 		var catalog = new UnitTypeCatalog(content);
 		Properties = new PropertiesPanel(sceneIndex, Selection, source, Mover, Sides, Deleter, Members,
 			new SquadMachinePanel(Fitter, Squad, squad, Presets), new RosterFitView(Fitter, Types, TableEditor, catalog, Presets),
@@ -204,6 +205,9 @@ internal sealed class EditorMission {
 
 	/// <summary>Turns the radar of hercs on and off in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public RadarSettingEditor RadarSettings { get; }
+
+	/// <summary>Marks <see cref="Source"/> as meant for HERCULAN alone or for retail too, as steps of <see cref="Mover"/>'s undo history.</summary>
+	public PlayableInEditor PlayableIn { get; }
 
 	/// <summary>Sets the own headings of structures, ground vehicles and groups in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public HeadingEditor Headings { get; }

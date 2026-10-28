@@ -33,10 +33,11 @@ public static class RosterLimits {
 
 	/// <summary>
 	/// Why <paramref name="taking"/> more of roster row <paramref name="row"/>'s slots cannot be taken in
-	/// <paramref name="layout"/>, or null when they can.
+	/// <paramref name="layout"/>, or null when they can: always null for a mission meant for HERCULAN alone
+	/// (<see cref="MissionLayout.HerculanOnly"/>), whose simulation has no slot arrays.
 	/// </summary>
 	public static string? WhyNoRoom(MissionLayout layout, int row, int taking) =>
-		Slots(layout, row) + taking > Cap(row) ? $"At maximum {Noun(row)} limit ({Cap(row)})." : null;
+		!layout.HerculanOnly && Slots(layout, row) + taking > Cap(row) ? $"At maximum {Noun(row)} limit ({Cap(row)})." : null;
 
 	/// <summary>What a slot of roster row <paramref name="row"/> holds, as the refusals name it: HERC, flyer or structure.</summary>
 	public static string Noun(int row) => row switch {

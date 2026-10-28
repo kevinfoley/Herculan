@@ -77,6 +77,12 @@ public class MissionFile {
 	/// </summary>
 	public byte[]? TruncatedRow17Tail { get; set; }
 
+	/// <summary>HERCULAN's own settings, from the block after row 17, or null when the file has none.</summary>
+	public MissionExtensions? Extensions { get; set; }
+
+	/// <summary>Any bytes after row 17 and the <see cref="Extensions"/> block, kept so a write reproduces the file; null for none.</summary>
+	public byte[]? TrailingBytes { get; set; }
+
 	public MovieChoice8? GetMovieChoice(short guid) => FindReplaced(MovieChoices, guid, r => r.ConditionRef);
 	public MapPoint22? GetPoint(short guid) => FindReplaced(Points, guid, r => r.ConditionRef);
 	public Heading10? GetHeading(short guid) => FindReplaced(Headings, guid, r => r.ConditionRef);

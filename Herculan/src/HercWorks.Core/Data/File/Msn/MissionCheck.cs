@@ -182,10 +182,15 @@ public static class MissionCheck {
 		check.Conditions();
 		check.Header();
 		check.Lines();
-		check.Rosters();
-		check.SkippedBlocks();
-		check.MapMarkers();
-		check.Objects();
+
+		// The four limits retail alone has; a mission meant for HERCULAN alone is held to none of them.
+		if (!layout.HerculanOnly) {
+			check.Rosters();
+			check.SkippedBlocks();
+			check.MapMarkers();
+			check.Objects();
+		}
+
 		return check.Findings;
 	}
 

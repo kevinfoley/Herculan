@@ -40,8 +40,26 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 		data.Groups = ReadArray(ParseRow16);
 
 		ParseRow17(data);
+		ParseTail(data);
 
 		return data;
+	}
+
+	/// <summary>
+	/// What follows row 17: HERCULAN's block (<see cref="MissionExtensions"/>), when the bytes open with one, and whatever
+	/// is left kept raw. Retail files end at row 17 (docs/retail/formats/msn-mission-file.md#verification-note).
+	/// </summary>
+	private void ParseTail(MissionFile data) {
+		int remaining = GetBytes().Length - Index;
+		if (remaining <= 0) {
+			return;
+		}
+
+		data.Extensions = MissionExtensions.Read(GetBytes().AsSpan(Index), out int length);
+		Index += length;
+		if (remaining > length) {
+			data.TrailingBytes = IndexSegment(remaining - length);
+		}
 	}
 
 	private T[] ReadArray<T>(Func<T> parseOne) {
@@ -335,6 +353,14 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 		WriteArray(outStream, data.Groups!, WriteRow16);
 
 		WriteRow17(outStream, data);
+
+		if (data.Extensions is { Any: true } extensions) {
+			Emit(outStream, extensions.Write());
+		}
+
+		if (data.TrailingBytes != null) {
+			Emit(outStream, data.TrailingBytes);
+		}
 
 		return outStream.ToArray();
 	}

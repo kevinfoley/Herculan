@@ -106,6 +106,12 @@ Two shapes need care:
 
 61 of 62 real `.MSN` files land on EOF with zero bytes of slack. **One outlier: `DEMO2.MSN`** undershoots by 42 bytes at row #17's tail, likely a stale/leftover developer test file with a genuinely truncated tail rather than evidence of a table error.
 
+### What the loads read
+
+`MsnGen_ParseMsnFile` closes the stream (`VolRStream_Close`, then `VolRStream_Dtor`) as soon as row 17's records are read, with no test of whether the file goes on. The debrief's loader, `Msn_LoadDebriefRows` (`0041ca4e`), stops after row 5 ([Row #5](#row-5--the-debrief)). So bytes after row 17 reach neither load, and a mission carrying them loads as it would without them.
+
+These are the two VSHELL functions found opening a `.MSN`. `es2_xref.py --binary VSHELL` finds 21 callers of `VolRStream_CtorFromPath` (`00402ad9`); the other 19 open the startup movie, fonts, bitmaps and `.DBA` banks, panels, the palette, string tables, the weapon and HERC catalogs, the zone and height grid, `script.dat` and sounds. A search of both executables' strings finds `msn\%s.msn` and `src\msn_gen.cpp` in VSHELL and nothing containing `msn` in DBSIM, which reads the mission as `data\script.dat` alone ([`script-dat.md`](script-dat.md)).
+
 ### Relationship to `data\script.dat`
 
 `data\script.dat` is a GUID-filtered, field-subset re-export of these same `.msn` row arrays, written by `WriteScriptDatFile` (`0041ac54`) right after `.msn` parsing finishes. It is read independently by both DBSIM (the real gameplay simulator) and VSHELL's briefing map, `ShellMap`. For full verified block-by-block mapping and field-level detail on what each reader keeps vs. discards from each row, see [`script-dat.md`](script-dat.md) — treat that doc as authoritative.
