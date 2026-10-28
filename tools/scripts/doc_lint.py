@@ -196,6 +196,26 @@ OUTSIDE_OPEN_RULES: list[tuple[str, re.Pattern[str], str]] = [
     ),
 ]
 
+# ES1's countdown count is 100/256 ms (about 0.39 ms; 10000 counts about 3.9 s); ES2's is 0.49 ms (10000 about 4.9 s).
+# A conversion with ES2's unit in an ES1 doc is the mistake these catch, so a line naming ES2 (a comparison) passes.
+ES1_DOC_DIR = os.path.join("Herculan", "docs", "es1")
+ES1_RULES: list[tuple[str, re.Pattern[str], str]] = [
+    (
+        "es2-timer-unit",
+        re.compile(r"\b0\.49\s*ms\b|\b0\.488\s*ms\b|\b4\.9\s*(?:s|seconds?)\b", re.IGNORECASE),
+        "ES2's timer unit (one count 0.49 ms, 10000 counts 4.9 s) in an ES1 doc. ES1's count is 100/256 ms, "
+        "about 0.39 ms (10000 counts about 3.9 s): convert with that. A comparison with ES2 names ES2 on the "
+        "line; a genuine ES1 figure that happens to match takes <!-- doc-lint: ok -->.",
+    ),
+]
+ES2_NAMED = re.compile(r"\bES2(?:'s)?\b")
+
+
+def is_es1_doc(path: str) -> bool:
+    rel = os.path.relpath(path, REPO_ROOT)
+    return rel.startswith(ES1_DOC_DIR + os.sep)
+
+
 # Retail docs describe retail. What HERCULAN does — its types, its tweaks, where it departs from the
 # original — lives in the C# that implements it, which cites the doc section, so an engine change
 # never has to go looking for prose to update. Only these docs are about the engine itself.
@@ -430,6 +450,7 @@ def lint_file(path: str, include_code: bool) -> list[tuple[int, str, str, str, s
 
     check_status = not is_cs and os.path.basename(path) not in STATUS_EXEMPT_BASENAMES
     check_engine = not is_cs and not is_engine_doc(path)
+    check_es1 = not is_cs and is_es1_doc(path)
     hits = []
     if check_status:
         size = os.path.getsize(path)
@@ -483,6 +504,11 @@ def lint_file(path: str, include_code: bool) -> list[tuple[int, str, str, str, s
             named = next(filter(None, (csharp_mention(m.group(1)) for m in CODE_SPAN.finditer(text))), None)
             if named:
                 hits.append((n, "csharp-name", "warn", named, CSHARP_WHY))
+        if check_es1 and not ES2_NAMED.search(text):
+            for rule_id, pattern, why in ES1_RULES:
+                m = pattern.search(text)
+                if m:
+                    hits.append((n, rule_id, "error", m.group(0).strip(), why))
         if check_status:
             # A heading is judged by status-heading alone, so '## Open questions' is flagged once.
             outside = [] if in_open or HEADING.match(line) else OUTSIDE_OPEN_RULES
