@@ -325,8 +325,8 @@ public static class Es1CombatStates {
 	/// <c>Mech_BehaviourAttackFlyerThink</c> (<c>0001684c</c>), <c>attacking flyer</c>, with no skirt gate: the geometry,
 	/// approach −1, or 0 when the error's magnitude is under <see cref="FlyerGate"/> and the aspect's is over it or the range
 	/// over <see cref="FlyerRange"/>; the standoffs 0 and <see cref="FlyerFar"/>; the move step, the fire; done when the
-	/// target or the machine is disarmed, immobilized or destroyed. Reached only with an aircraft target, which the slice
-	/// does not spawn.
+	/// target or the machine is disarmed, immobilized or destroyed. A flyer's turret twist (slot <c>+0x40</c>) is the
+	/// base's 0, so its aspect is the bearing back to the machine less its heading.
 	/// </summary>
 	public static short AttackFlyerThink(Es1Mech mech, Es1SimGlobals globals) {
 		if (mech.Target is not { } target) {

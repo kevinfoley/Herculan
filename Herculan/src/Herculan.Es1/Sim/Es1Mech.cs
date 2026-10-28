@@ -345,7 +345,7 @@ public sealed class Es1Mech : IEs1SimObject {
 	public short[] KillTallies { get; } = new short[8];
 
 	/// <summary>Slot <c>+0x64</c>, <see cref="Es1MechOutOfAction.CreditNeutralisedTarget"/>.</summary>
-	public void CreditNeutralisedTarget(bool alreadyImmobilized, Es1Mech victim, Es1SimGlobals globals) =>
+	public void CreditNeutralisedTarget(bool alreadyImmobilized, IEs1SimObject victim, Es1SimGlobals globals) =>
 		Es1MechOutOfAction.CreditNeutralisedTarget(this, alreadyImmobilized, victim, globals);
 
 	/// <summary>

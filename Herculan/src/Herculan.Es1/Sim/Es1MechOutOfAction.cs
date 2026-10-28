@@ -204,7 +204,8 @@ public static class Es1MechOutOfAction {
 	/// Retail reads <c>PlayerMech</c> and the two groups unchecked; with no <c>PlayerMech</c> nothing is posted here, and
 	/// a machine with no group is on no side.
 	/// </summary>
-	public static void CreditNeutralisedTarget(Es1Mech attacker, bool alreadyImmobilized, Es1Mech victim, Es1SimGlobals globals) {
+	public static void CreditNeutralisedTarget(Es1Mech attacker, bool alreadyImmobilized, IEs1SimObject victim,
+			Es1SimGlobals globals) {
 		var player = globals.PlayerMech;
 		if (!alreadyImmobilized) {
 			bool opposed = victim.Group is { } victimGroup && attacker.Group is { } attackerGroup
@@ -224,8 +225,10 @@ public static class Es1MechOutOfAction {
 			}
 		}
 
-		if (player != null && ReferenceEquals(victim.Group, player.Group) && !ReferenceEquals(victim, player)) {
-			Es1PilotChannel.PostSquadMessage(globals, victim, true, victim.Destroyed ? DestroyedCry : DisabledCry);
+		// A group's members are of one kind, so a victim in PlayerMech's group is a HERC.
+		if (player != null && ReferenceEquals(victim.Group, player.Group) && !ReferenceEquals(victim, player)
+				&& victim is Es1Mech member) {
+			Es1PilotChannel.PostSquadMessage(globals, member, true, member.Destroyed ? DestroyedCry : DisabledCry);
 		}
 	}
 }

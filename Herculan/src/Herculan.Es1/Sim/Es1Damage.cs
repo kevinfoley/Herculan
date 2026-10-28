@@ -130,9 +130,12 @@ public sealed class Es1DamageHeader {
 	public IEs1SimObject Owner { get; }
 
 	/// <summary>
-	/// <see cref="Owner"/> as a HERC, which the cascade's cell frames, smoke and part nodes are read on. PLACEHOLDER: a
-	/// flyer's header (part F3 ports its damage write) reaches none of them here; what retail's cascade does on a
-	/// flyer's static instance is unread.
+	/// <see cref="Owner"/> as a HERC, which the cascade's cell frames, smoke and part nodes are read on. On a flyer's
+	/// header retail reaches them only through a piece whose sequence byte is not negative or a cluster on a part id that
+	/// is not negative; <c>SKIMMER.DMG</c>'s one piece has sequence −1 and <c>SKIMMER.COL</c>'s one node part −1, so the
+	/// cascade on a skimmer writes no cell, lights no smoke and reads no node, and its explosion and debris come from the
+	/// cluster's center through the flyer's frame. A flyer type with either, which no retail file has, reaches none of
+	/// them here, an engine guard.
 	/// </summary>
 	private Es1Mech? Machine => Owner as Es1Mech;
 

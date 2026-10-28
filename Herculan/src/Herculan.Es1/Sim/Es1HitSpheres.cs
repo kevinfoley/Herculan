@@ -16,13 +16,15 @@ public static class Es1HitSpheres {
 
 	/// <summary>
 	/// <c>Mech_SelectStruckComponent</c> (<c>00009064</c>)(<paramref name="model"/>, <paramref name="occupied"/>,
-	/// <paramref name="toMuzzle"/>, <paramref name="ray"/>, <paramref name="machine"/>): the ray's remaining length and
+	/// <paramref name="toMuzzle"/>, <paramref name="ray"/>, the object): the ray's remaining length and
 	/// clearance taken from <paramref name="ray"/>, each node's clusters whose component is occupied tested in turn
 	/// (<c>Mech_ComponentGeometryTest_Candidate</c>, <c>00008f84</c>), each hit kept, so the last, which the cuts make the
 	/// nearest, stands. Answers its distance, the remaining length + 1, and its component; null for a miss.
+	/// <paramref name="partNode"/> gives the object's node transform for a part id, which a node whose part id is not
+	/// negative is composed with.
 	/// </summary>
 	public static (int Distance, short Component)? SelectStruckComponent(ColliderNode[] model, bool[] occupied,
-			in Transform3 toMuzzle, Es1Ray ray, Es1Mech machine) {
+			in Transform3 toMuzzle, Es1Ray ray, Func<int, Transform3?> partNode) {
 		var test = new RayTest((uint)ray.Length, ray.Clearance);
 		int distance = 0;
 		short component = -1;
@@ -32,7 +34,7 @@ public static class Es1HitSpheres {
 			// Transform_Concat reads from address 0; the frame alone here, an engine guard.
 			var frame = node.NodeIndex < 0
 				? toMuzzle
-				: Transform3.Concat(machine.PartNodeTransform(node.NodeIndex) ?? Transform3.Identity, toMuzzle);
+				: Transform3.Concat(partNode(node.NodeIndex) ?? Transform3.Identity, toMuzzle);
 			foreach (var cluster in node.Clusters ?? []) {
 				// Retail reads a component past the flags array past it; such a cluster is skipped here.
 				short index = cluster.ComponentIndex;

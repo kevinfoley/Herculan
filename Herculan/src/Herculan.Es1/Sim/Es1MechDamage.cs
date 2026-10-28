@@ -115,7 +115,7 @@ public static class Es1MechDamage {
 
 			distance = 0;
 			if (machine.Damage is { } header
-					&& Es1HitSpheres.SelectStruckComponent(header.Model, header.Occupied, toMuzzle, ray, machine) is { } hit) {
+					&& Es1HitSpheres.SelectStruckComponent(header.Model, header.Occupied, toMuzzle, ray, machine.PartNodeTransform) is { } hit) {
 				(distance, short component) = hit;
 				struck = true;
 				machine.DamageTaken += armorFigure;

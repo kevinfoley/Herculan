@@ -388,7 +388,7 @@ public interface IEs1SimObject : IEs1Placed {
 	/// Slot <c>+0x64</c>, what the damage write tells the attacker that put <paramref name="victim"/> out of the fight:
 	/// the base's <c>SimObject_CreditNeutralisedTargetNoOp</c> (<c>0000d774</c>) does nothing.
 	/// </summary>
-	void CreditNeutralisedTarget(bool alreadyImmobilized, Es1Mech victim, Es1SimGlobals globals) {
+	void CreditNeutralisedTarget(bool alreadyImmobilized, IEs1SimObject victim, Es1SimGlobals globals) {
 	}
 
 	/// <summary><c>+0x96</c>, the ECM spoof, which turns the missiles it fires off their aim (docs/es1/simulation/rockets.md#homing--rocket_homingsteer-00006eb4).</summary>

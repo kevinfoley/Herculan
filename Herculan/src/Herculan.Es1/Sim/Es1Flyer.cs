@@ -97,6 +97,9 @@ public sealed class Es1Flyer : IEs1SimObject {
 	/// <summary><c>+0x93</c>, destroyed, which the damage write sets.</summary>
 	public bool Destroyed { get; set; }
 
+	/// <summary><c>+0x32</c>, which the damage write sets on the flyer's death; nothing this engine ports reads it.</summary>
+	public bool Byte32Set { get; set; }
+
 	/// <summary><c>+0x97</c>, the target just changed, which the patrol's sweep sets.</summary>
 	public bool TargetChanged { get; set; }
 
@@ -240,11 +243,8 @@ public sealed class Es1Flyer : IEs1SimObject {
 	/// </summary>
 	public short OverallDamage => Damage?.ReadOverallDamage() ?? 0;
 
-	/// <summary>
-	/// Slot <c>+0x24</c>, <c>Flyer_DirectFireHitTest</c> (<c>0001b370</c>). Unported: part F3 ports it with the damage
-	/// write; until then every shot misses a flyer (0).
-	/// </summary>
-	public int HitTest(Es1Shot shot, Es1SimGlobals globals) => 0;
+	/// <summary>Slot <c>+0x24</c>, <see cref="Es1FlyerDamage.HitTest"/>.</summary>
+	public int HitTest(Es1Shot shot, Es1SimGlobals globals) => Es1FlyerDamage.HitTest(this, shot, globals);
 
 	/// <summary>Slot <c>+0x28</c>, the base's <c>SimObject_GetAimNodeTransform_None</c>: none, so a missile steers at the position.</summary>
 	public Transform3? AimNodeTransform() => null;

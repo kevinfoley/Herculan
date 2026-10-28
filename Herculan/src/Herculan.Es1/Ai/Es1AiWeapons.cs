@@ -46,8 +46,8 @@ public static class Es1AiWeapons {
 	/// <c>Ai_AimAndFire</c> (<c>ES1DBSIM 00018894</c>)(<paramref name="mech"/>, <paramref name="target"/>,
 	/// <paramref name="aspect"/>), a null target meaning the machine's own (<c>+0x15e</c>): a target of class 0
 	/// (<c>+0x162</c>) to <see cref="AimAndFireAtMech"/>; any other to <see cref="FireAtPoint"/> at its position plus its
-	/// slot <c>+0x34</c>'s first triple (<see cref="IEs1SimObject.AimOffset"/>). Every object the slice builds is a HERC,
-	/// class 0. Retail reads the target with no null test; with none, nothing here, an engine guard.
+	/// slot <c>+0x34</c>'s first triple (<see cref="IEs1SimObject.AimOffset"/>), which a flyer, class 2, answers zero, so
+	/// its position. Retail reads the target with no null test; with none, nothing here, an engine guard.
 	/// </summary>
 	public static void AimAndFire(Es1Mech mech, IEs1SimObject? target, short aspect, Es1SimGlobals globals) {
 		target ??= mech.Target;
