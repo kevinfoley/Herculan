@@ -104,6 +104,7 @@ public sealed class Es1World {
 		world.Globals.HeaderWord8 = script.Header[8];
 		world.Globals.MissionVars = script.Flags;
 		world.Globals.MissionActions = script.Actions;
+		world.Globals.MechFormations = formations;
 		world.SpawnObjects(content, weapons, weaponModels, formations);
 		// Sim_StartMission's step 7, after the second pass: every effect and every debris piece the spawn made deleted.
 		world.Globals.Explosions.DeleteAll();
@@ -208,9 +209,9 @@ public sealed class Es1World {
 			? ((short)0, (short)0, Script.Headings[record.HeadingRef])
 			: RotationSentinel;
 
-		mech.Word08Set = record.Words08[0] != 0;
+		mech.RadarSetting = record.Words08[0] != 0;
 		if (record.Words08[1] >= 0) {
-			mech.Word1E6 = record.Words08[1];
+			mech.CruiseSpeed = record.Words08[1];
 		}
 
 		// The record's 49 words, which the loadout's slot index reads unchecked: the fit at 0x2a, the ammunition at 0x46.

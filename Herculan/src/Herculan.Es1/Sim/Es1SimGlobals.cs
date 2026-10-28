@@ -104,6 +104,13 @@ public sealed class Es1SimGlobals {
 	/// </summary>
 	public IReadOnlyList<Es1Action> MissionActions { get; set; } = [];
 
+	/// <summary>
+	/// <c>dat\MFORMS</c>'s formations, the table at <c>000bc44a</c> that <c>Mech_ApplyFormationOffset</c> reads
+	/// (docs/es1/formats/formations-dat.md#where-a-member-stands), for <see cref="Ai.Es1Navigation.KeepFormation"/>; none
+	/// until a world is spawned.
+	/// </summary>
+	public HercWorks.Core.Data.File.Dat.Sim.Es1MechFormations MechFormations { get; set; } = new();
+
 	/// <summary><c>g_MechPool</c>'s machines in build order, which the blasts and the outnumbered damage walk from the end.</summary>
 	public IReadOnlyList<Es1Mech> MechPool { get; set; } = [];
 

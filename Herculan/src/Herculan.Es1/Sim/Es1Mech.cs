@@ -258,10 +258,18 @@ public sealed class Es1Mech : IEs1SimObject {
 
 	/// <summary>
 	/// <c>+0xac</c>, a squadmate's radar is kept on (docs/es1/simulation/mech-ai.md#the-fields), which the squad order's
-	/// radar verbs write (<see cref="ReceiveSquadOrder"/>). PLACEHOLDER: its reader, <c>Ai_UpdateWeaponsFree</c>
-	/// (<c>000161dc</c>), is plan step 8's, so nothing reads it yet.
+	/// radar verbs write (<see cref="ReceiveSquadOrder"/>) and <see cref="Ai.Es1Navigation.UpdateWeaponsFree"/> reads.
 	/// </summary>
 	public bool RadarKeptOn { get; set; }
+
+	/// <summary><c>+0xa6</c>, a target was just handed over (docs/es1/simulation/mech-ai.md#the-fields).</summary>
+	public bool TargetHandedOver { get; set; }
+
+	/// <summary>
+	/// <c>+0x238</c>, the aim slot: the component the AI's shot is aimed at, −1 for none
+	/// (docs/es1/simulation/mech-ai.md#the-fields).
+	/// </summary>
+	public short AimSlot { get; set; }
 
 	/// <summary>Slot <c>+0x2c</c>, the squad order's receiver, <see cref="Es1SquadOrders.Receive"/>.</summary>
 	public short ReceiveSquadOrder(short reply, Es1SquadOrder order, Es1SimGlobals globals) =>
@@ -566,6 +574,30 @@ public sealed class Es1Mech : IEs1SimObject {
 		TargetChanged = true;
 	}
 
+	/// <summary>
+	/// <paramref name="target"/> installed as the AI's thinks install one: when it is not <see cref="Target"/>, the old
+	/// target's holders' count down by 1 and the new one's up by 1, and <see cref="TargetChanged"/> set; null installs none.
+	/// </summary>
+	public void InstallTarget(IEs1SimObject? target) {
+		if (ReferenceEquals(target, Target)) {
+			return;
+		}
+
+		if (Target != null) {
+			Target.TargetHolders--;
+		}
+
+		Target = target;
+		if (target != null) {
+			target.TargetHolders++;
+		}
+
+		TargetChanged = true;
+	}
+
+	/// <summary>Out of action: <see cref="Disarmed"/> (<c>+0x9f</c>), <see cref="Immobilized"/> (<c>+0x9e</c>) or <see cref="Destroyed"/> (<c>+0x93</c>).</summary>
+	public bool OutOfAction => Disarmed || Immobilized || Destroyed;
+
 	/// <inheritdoc/>
 	/// <remarks>Root 0's, <see cref="Es1MechType.ShapeRadius"/>, the radius the LOD choice reads.</remarks>
 	public short ShapeRadius => (short)Type.ShapeRadius;
@@ -606,11 +638,18 @@ public sealed class Es1Mech : IEs1SimObject {
 		}
 	}
 
-	/// <summary><c>+0x91</c>, set when the record's <c>.MSN</c> <c>0x08</c> is not 0 (docs/es1/formats/script-dat.md#open).</summary>
-	public bool Word08Set { get; set; }
+	/// <summary>
+	/// <c>+0x91</c>, the mission file's radar setting (docs/es1/simulation/mech-ai.md#the-fields), set when the record's
+	/// <c>.MSN</c> <c>0x08</c> is not 0 (docs/es1/formats/script-dat.md#the-second-pass).
+	/// </summary>
+	public bool RadarSetting { get; set; }
 
-	/// <summary><c>+0x1e6</c>, the record's <c>.MSN</c> <c>0x0a</c> when it is not negative (docs/es1/formats/script-dat.md#open).</summary>
-	public short Word1E6 { get; set; }
+	/// <summary>
+	/// <c>+0x1e6</c>, the cruise speed, 0 for <see cref="Ai.Es1Navigation.DefaultCruiseSpeed"/>
+	/// (docs/es1/simulation/mech-ai.md#the-fields): the record's <c>.MSN</c> <c>0x0a</c> when it is not negative
+	/// (docs/es1/formats/script-dat.md#the-second-pass).
+	/// </summary>
+	public short CruiseSpeed { get; set; }
 
 	/// <summary><c>+0x174</c> and <c>+0x176</c>, the record's <c>.MSN</c> <c>0x4a</c> and <c>0x4c</c>; <c>0xffff</c> for the second until set.</summary>
 	public (short First, short Second) Word174 { get; set; } = (0, -1);

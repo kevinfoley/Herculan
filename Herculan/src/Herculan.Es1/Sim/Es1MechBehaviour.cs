@@ -10,6 +10,13 @@ public static class Es1MechBehaviour {
 	/// <summary>The descriptor indices construction and the reassess install.</summary>
 	public const int Deciding = 0, Player = 1;
 
+	/// <summary>
+	/// The descriptor indices a group's order installs (<see cref="Ai.Es1StateChoice"/>), and those the AI's thinks install,
+	/// <c>BehaviourStateTable</c> + <c>0x28</c> × the index.
+	/// </summary>
+	public const int Patrolling = 7, Travelling = 8, BulldogTravel = 9, SearchDestroy = 10, Sleeping = 11, Skirting = 12,
+		Guarding = 13, DrivingOff = 14, Ramming = 15, Fleeing = 16;
+
 	/// <summary>The descriptor indices the damage write installs (docs/es1/simulation/mech.md#the-damage-write--mech_componentdamagewrite-00013250).</summary>
 	public const int InLimbo = 17, Dead = 18, Disabled = 19;
 
@@ -62,29 +69,6 @@ public static class Es1MechBehaviour {
 		mech.Behaviour.Descriptor?.Reassess is { } reassess ? reassess(mech, globals) : (short)0;
 
 	/// <summary>
-	/// <c>Mech_AiSelectBehaviour</c> (<c>0001892c</c>), the reassess of <c>deciding</c> and of the states that reassess by
-	/// it: <c>player</c> for the player's machine (<c>+0x9d</c>), installed through <c>Behaviour_SetState</c>; then the
-	/// target released (<see cref="Es1Mech.ReleaseTarget"/>); it returns 1.
-	/// The second pass sets <c>+0x9d</c> after the constructor has installed <c>deciding</c>
-	/// (docs/es1/formats/script-dat.md#the-second-pass), so this is how the player's machine reaches <c>player</c>.
-	/// </summary>
-	private static short AiSelectBehaviour(Es1Mech mech, Es1SimGlobals globals) {
-		if (mech.IsPlayer) {
-			mech.Behaviour.SetState(States[Player], globals.DwellJitter);
-		} else {
-			// PLACEHOLDER: the state the group's order (+4) names (docs/es1/simulation/mech-ai.md#choosing-a-state--mech_aiselectbehaviour-0001892c)
-			// is not installed, so a machine other than the player's stays in deciding, which has no move, and stands;
-			// plan step 8 (the AI) ports it. Every state it would install moves with walk, whose Mech_PlaceLegsOnGround
-			// places the shadows on this same tick; deciding has no move, so in its place the shadows are placed here, or
-			// they would draw at the world's origin from their build depth.
-			Es1Footfalls.PlaceLegsOnGround(mech);
-		}
-
-		mech.ReleaseTarget();
-		return 1;
-	}
-
-	/// <summary>
 	/// <c>Mech_BehaviourInertThink</c> (<c>00018308</c>), the think of <c>dead</c> and <c>disabled</c>
 	/// (docs/es1/simulation/mech-ai.md#the-combat-states): the control law with no speed asked for and no steer
 	/// (<see cref="Es1Locomotion.LocomotionTick"/>), so the machine walks its speed off, or falls when immobilized; it
@@ -101,29 +85,29 @@ public static class Es1MechBehaviour {
 	/// </summary>
 	private static Es1BehaviourDescriptor[] BuildStateTable() {
 		Es1StateFunction walk = Es1MechMovement.MovementTick;
-		Es1StateFunction select = AiSelectBehaviour;
-		var combat = Unported("Mech_AiCombatReassess", 0x00016e04, 8);
-		var travel = Unported("Mech_BehaviourTravelThink", 0x000178a4, 8);
+		Es1StateFunction select = Ai.Es1StateChoice.SelectBehaviour;
+		var combat = Unported("Mech_AiCombatReassess", 0x00016e04, "8c");
+		Es1StateFunction travel = Ai.Es1NavigationStates.TravelThink;
 		Es1StateFunction inert = InertThink;
 		return [
 			new("deciding", 0, 0, null, null, select, 3),
 			new("player", 10, 1, Es1PlayerThink.Think, walk, null, 3),
-			new("attacking", 50000, 2, Unported("Mech_BehaviourAttackThink", 0x000163a0, 8), walk, combat, 0),
-			new("flanking", 50000, 2, Unported("Mech_BehaviourFlankThink", 0x000173c8, 8), walk, combat, 0),
-			new("facing off", 50000, 2, Unported("Mech_BehaviourFaceOffThink", 0x000172f0, 8), walk, combat, 0),
-			new("attacking base", 50000, 2, Unported("Mech_BehaviourAttackBaseThink", 0x00016718, 8), walk, combat, 0),
-			new("attacking flyer", 50000, 2, Unported("Mech_BehaviourAttackFlyerThink", 0x0001684c, 8), walk, combat, 0),
-			new("patrolling", 10, 1, Unported("Mech_BehaviourPatrolThink", 0x000176bc, 8), walk, select, 3),
+			new("attacking", 50000, 2, Unported("Mech_BehaviourAttackThink", 0x000163a0, "8c"), walk, combat, 0),
+			new("flanking", 50000, 2, Unported("Mech_BehaviourFlankThink", 0x000173c8, "8c"), walk, combat, 0),
+			new("facing off", 50000, 2, Unported("Mech_BehaviourFaceOffThink", 0x000172f0, "8c"), walk, combat, 0),
+			new("attacking base", 50000, 2, Unported("Mech_BehaviourAttackBaseThink", 0x00016718, "8c"), walk, combat, 0),
+			new("attacking flyer", 50000, 2, Unported("Mech_BehaviourAttackFlyerThink", 0x0001684c, "8c"), walk, combat, 0),
+			new("patrolling", 10, 1, Ai.Es1NavigationStates.PatrolThink, walk, select, 3),
 			new("travelling", 10, 1, travel, walk, select, 3),
 			new("bulldog travel", 10, 9, travel, walk, select, 3),
-			new("search destroy", 10, 1, Unported("Mech_BehaviourSearchDestroyThink", 0x000174ec, 8), walk, select, 3),
-			new("sleeping", 10, 9, Unported("Mech_BehaviourSleepThink", 0x00016248, 8), walk, select, 3),
-			new("skirting", 10, 1, Unported("Mech_BehaviourSkirtThink", 0x00017aa4, 8), walk, select, 0),
-			new("guarding", 10, 5, Unported("Mech_BehaviourGuardThink", 0x00017ed4, 8), walk, select, 3),
-			new("driving off en", 50000, 6, Unported("Mech_BehaviourDriveOffThink", 0x00017c84, 8), walk, select, 0),
-			new("ramming", 10, 9, Unported("Mech_BehaviourRamThink", 0x00018320, 8),
-				Unported("Mech_BehaviourRamTick", 0x00018278, 8), select, 0),
-			new("fleeing", 30000, 0x12, Unported("Mech_BehaviourFleeThink", 0x0001713c, 8), walk, combat, 5),
+			new("search destroy", 10, 1, Ai.Es1NavigationStates.SearchDestroyThink, walk, select, 3),
+			new("sleeping", 10, 9, Ai.Es1NavigationStates.SleepThink, walk, select, 3),
+			new("skirting", 10, 1, Unported("Mech_BehaviourSkirtThink", 0x00017aa4, "8e"), walk, select, 0),
+			new("guarding", 10, 5, Ai.Es1NavigationStates.GuardThink, walk, select, 3),
+			new("driving off en", 50000, 6, Unported("Mech_BehaviourDriveOffThink", 0x00017c84, "8c"), walk, select, 0),
+			new("ramming", 10, 9, Unported("Mech_BehaviourRamThink", 0x00018320, "8e"),
+				Unported("Mech_BehaviourRamTick", 0x00018278, "8e"), select, 0),
+			new("fleeing", 30000, 0x12, Unported("Mech_BehaviourFleeThink", 0x0001713c, "8c"), walk, combat, 5),
 			new("in limbo", 10, 0x21, null, null, null, 6),
 			new("dead", 0, 0x21, inert, walk, null, 6),
 			new("disabled", 0, 0x21, inert, walk, null, 7),
@@ -132,12 +116,12 @@ public static class Es1MechBehaviour {
 
 	/// <summary>
 	/// PLACEHOLDER: a state function the slice does not port, which answers 0 and does nothing; <paramref name="step"/> is
-	/// the plan step that ports it (docs/herculan/plan-es1-first-mission.md#steps).
+	/// the part of plan step 8 that ports it (docs/herculan/plan-es1-first-mission.md#steps).
 	/// </summary>
-	private static Es1StateFunction Unported(string name, uint address, int step) => new UnportedState(name, address, step).Run;
+	private static Es1StateFunction Unported(string name, uint address, string step) => new UnportedState(name, address, step).Run;
 
 	/// <summary>An unported state function, named for the debugger.</summary>
-	private sealed record UnportedState(string Name, uint Address, int Step) {
+	private sealed record UnportedState(string Name, uint Address, string Step) {
 		public short Run(Es1Mech mech, Es1SimGlobals globals) => 0;
 	}
 }

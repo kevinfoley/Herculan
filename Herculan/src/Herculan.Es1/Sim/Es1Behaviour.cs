@@ -1,3 +1,5 @@
+using System.Buffers.Binary;
+
 namespace Herculan.Es1.Sim;
 
 /// <summary>A behaviour state's think, move or reassess: one function pointer called with the machine, its answer an <c>int16</c>.</summary>
@@ -62,6 +64,30 @@ public sealed class Es1BehaviourBlock {
 	/// <summary><c>+0x0d</c>, the <c>0x28</c> bytes each state lays its own fields over.</summary>
 	public byte[] Scratch { get; } = new byte[0x28];
 
+	/// <summary>The machine offset of <see cref="Scratch"/>'s first byte: the block's <c>+0x0d</c> on the block at <c>+0x47</c>.</summary>
+	public const int ScratchOffset = 0x54;
+
+	/// <summary>The <c>int16</c> of <see cref="Scratch"/> at machine offset <paramref name="offset"/>.</summary>
+	public short ScratchInt16(int offset) => BinaryPrimitives.ReadInt16LittleEndian(Scratch.AsSpan(offset - ScratchOffset));
+
+	/// <summary>The <c>int16</c> of <see cref="Scratch"/> at machine offset <paramref name="offset"/> written.</summary>
+	public void SetScratchInt16(int offset, short value) =>
+		BinaryPrimitives.WriteInt16LittleEndian(Scratch.AsSpan(offset - ScratchOffset), value);
+
+	/// <summary>The <c>int32</c> of <see cref="Scratch"/> at machine offset <paramref name="offset"/>.</summary>
+	public int ScratchInt32(int offset) => BinaryPrimitives.ReadInt32LittleEndian(Scratch.AsSpan(offset - ScratchOffset));
+
+	/// <summary>The <c>int32</c> of <see cref="Scratch"/> at machine offset <paramref name="offset"/> written.</summary>
+	public void SetScratchInt32(int offset, int value) =>
+		BinaryPrimitives.WriteInt32LittleEndian(Scratch.AsSpan(offset - ScratchOffset), value);
+
+	/// <summary>
+	/// The scratch's dword at machine offset <c>+0x59</c> when a state keeps an object there: <c>travelling</c>'s look-at
+	/// (docs/es1/simulation/mech-ai.md#navigation). A reference does not fit <see cref="Scratch"/>'s bytes, so it is kept
+	/// here, and <see cref="SetState"/> clears it with the scratch.
+	/// </summary>
+	public IEs1SimObject? LookAt { get; set; }
+
 	/// <summary><c>+0x35</c>, the 16 bytes from which <c>+0x35</c> is "counted once" and <c>+0x36</c> "just installed".</summary>
 	public byte[] Latches { get; } = new byte[0x10];
 
@@ -76,6 +102,7 @@ public sealed class Es1BehaviourBlock {
 		Array.Clear(Latches);
 		Latches[1] = 1;
 		Array.Clear(Scratch);
+		LookAt = null;
 	}
 
 	/// <summary><c>Behaviour_CountTick</c> (<c>0000fe84</c>): with <c>+0x36</c> set it clears it; otherwise <c>+0x35</c> set and the count up by 1.</summary>

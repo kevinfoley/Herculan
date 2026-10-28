@@ -128,9 +128,10 @@ public sealed class Es1Locomotion {
 				desired = mech.UnstickReverse ? chassis.SpeedReverse : chassis.SpeedForward;
 			}
 
-			// PLACEHOLDER: a machine other than the player's (PlayerMech, 000bc42a) runs Mech_AiObstacleAvoidance
-			// (00011c80)(machine, avoidanceArgument, &desired, &steer); plan step 8, the AI, ports it.
-			_ = avoidanceArgument;
+			// A machine other than PlayerMech (000bc42a), not immobilized.
+			if (!ReferenceEquals(mech, globals.PlayerMech)) {
+				Ai.Es1ObstacleAvoidance.Avoid(mech, avoidanceArgument, ref desired, ref steer, globals);
+			}
 		}
 
 		if (mech.LegsCrippled) {
