@@ -9826,13 +9826,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_LineOfSightBlocked",
-      "description": "(machine), callee-cleaned: 1 when Structure_RaycastShapes (000038b8)(the side byte +0x14 of the machine's group, 0, the target's position, the machine's, result) or Sim_RaycastShapes (00020b70)(0, the target's position, the machine's, result) answers non-zero, otherwise 0. es2_xref finds one call, from Mech_BehaviourSkirtThink (00017aa4). ES2's Ai_LineOfSightBlocked (DBSIM 0041dc24), which lifts the ends to the aim nodes, ignores a hit on the target and walks the terrain.",
+      "description": "(machine), callee-cleaned: 1 when Structure_RaycastShapes (000038b8)(the side byte +0x14 of the machine's group, sign-extended with CBW, 0, the target's position, the machine's, result) or Sim_RaycastShapes (00020b70)(0, the target's position, the machine's, result) answers non-zero (00017a67), otherwise 0 (00017a74). es2_xref finds one call, from Mech_BehaviourSkirtThink (00017aa4). ES2's Ai_LineOfSightBlocked (DBSIM 0041dc24), which lifts the ends to the aim nodes, ignores a hit on the target and walks the terrain.",
       "source": "Herculan/docs/es1/simulation/mech-ai.md#skirting; ES1DBSIM decompile at 00017a00",
       "verified": {
         "bytes": "00017a00+127",
         "sha1": "994f5b175279",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -9856,13 +9856,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_BehaviourSkirtThink",
-      "description": "(machine), callee-cleaned, the think of skirting, the blocker's position at +0x246 + 0x1a: on the first tick (+0x58 clear) +0x5a = the bearing to the blocker less the heading is negative, +0x58 set, the countdown +0x5d = 5000; when Timer_CountDown (00064178) of +0x5c reaches 0 it is set to 5000 again and, when Ai_LineOfSightBlocked (00017a00) answers 0, the descriptor stashed at +0x54 is installed and +0xa7 cleared. Every tick it walks at 0x100 toward the point +0x61 from the blocker at the bearing from the blocker to the machine +/-0x4000 (Math_OffsetPointByBearing (00063d8c)) and runs Mech_CenterTorsoTick (000186f8)(machine, 0). Returns 0. ES2's Mech_BehaviourSkirtThink (DBSIM 0041dd64).",
+      "description": "(machine), callee-cleaned, the think of skirting, the blocker's position at +0x246 + 0x1a, the blocker an object or a zone shape: on the first tick (+0x58 clear) +0x5a = the bearing to the blocker less the heading is negative, +0x58 set, the countdown +0x5d = 5000, stepped on that same tick; when Timer_CountDown (00064178) of +0x5c reaches 0 it is set to 5000 again and, when Ai_LineOfSightBlocked (00017a00) answers 0, the descriptor stashed at +0x54 is installed and +0xa7 cleared. Every tick it walks at 0x100 toward the point +0x61 from the blocker at the bearing from the blocker to the machine +/-0x4000 (Math_OffsetPointByBearing (00063d8c)), Mech_LocomotionTick (00012038)(machine, 0, 0x100, the bearing error >> 4), and runs Mech_CenterTorsoTick (000186f8)(machine, 0); on the tick the stashed descriptor is installed it does this over the zeroed scratch, range 0 and side +, steering at the blocker itself. Returns 0. ES2's Mech_BehaviourSkirtThink (DBSIM 0041dd64).",
       "source": "Herculan/docs/es1/simulation/mech-ai.md#skirting; ES1DBSIM decompile at 00017aa4",
       "verified": {
         "bytes": "00017aa4+338",
         "sha1": "5e11f5cfb54e",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -9946,13 +9946,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_BehaviourRamThink",
-      "description": "(machine), callee-cleaned, the think of ramming: on Timer_CountDown (00064178) of +0x54 at 0, Ai_SelectTarget (0000ddf4)(machine, 6) installed and +0x55 = 10000; with no target Mech_LocomotionTick (00012038)(machine, 1, 0, 0); with one it steers at it at 0x100 with avoidance 1 and the bearing error >> 4; approaching (+0x59 clear), Math_CountdownTimerTick of +0x5b at 0 sets +0x59 and +0x5c = 3000 + Math_RandomBelow(1500); charging, Mech_BehaviourRamTick (00018278) and the steer twice more, then at the countdown's end +0x59 cleared and +0x5c = 8000 + Math_RandomBelow(4000). Returns 0. ES2's Mech_BehaviourRamThink (DBSIM 0041e570), which steers at >> 8 and tests the target between the charge's steps.",
+      "description": "(machine), callee-cleaned, the think of ramming: on Timer_CountDown (00064178) of +0x54 at 0, Ai_SelectTarget (0000ddf4)(machine, 6), installed with the holder counts +0x15c and +0x97 set when it is not the target held, and +0x55 = 10000 as a dword; with no target Mech_LocomotionTick (00012038)(machine, 1, 0, 0); with one it steers at it at 0x100 with avoidance 1 and the bearing error >> 4; approaching (+0x59 clear), Math_CountdownTimerTick of +0x5b at 0 sets +0x59 and +0x5c = 3000 + Math_RandomBelow(1500); charging, Mech_BehaviourRamTick (00018278) and the steer twice more, then at the countdown's end +0x59 cleared and +0x5c = 8000 + Math_RandomBelow(4000). A detonation in the first Mech_BehaviourRamTick does not end the charge: the second can detonate again, and the countdown writes land in the scratch of the state the damage write installed. Returns 0. ES2's Mech_BehaviourRamThink (DBSIM 0041e570), which steers at >> 8 and tests the target between the charge's steps.",
       "source": "Herculan/docs/es1/simulation/mech-ai.md#ramming; ES1DBSIM decompile at 00018320",
       "verified": {
         "bytes": "00018320+507",
         "sha1": "9524d296accd",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -10112,7 +10112,7 @@
       "confidence": "high",
       "name": "Mech_AiFriendlyFireComplaint",
       "description": "(machine), callee-cleaned: when the countdown +0x20e is 0, sets it to 40000 and posts Ai_PostSquadMessage (0001a188)(machine, 0, 8). es2_xref finds two calls, from Mech_AiOnTakingFire (00019338) and Sim_RaycastObjectList (0001f1d0). ES2's Mech_AiFriendlyFireComplaint (DBSIM 0041f790).",
-      "source": "Herculan/docs/es1/simulation/mech-ai.md#taking-fire--mech_aiontakingfire-00019338; ES1DBSIM decompile at 00019300",
+      "source": "Herculan/docs/es1/simulation/ai-squadmates.md#taking-fire--mech_aiontakingfire-00019338; ES1DBSIM decompile at 00019300",
       "verified": {
         "bytes": "00019300+54",
         "sha1": "ac14a2b3449f",
@@ -10126,13 +10126,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_AiOnTakingFire",
-      "description": "(machine, damage, attacker), callee-cleaned, slot +0x54 of MechVtable (00091ae6): Mech_AiFriendlyFireComplaint (00019300) when the attacker is PlayerMech (000bc42a) in the machine's group; returns for an attacker of its own side (group +0x14); Mech_ShareContact (0000d760), +0x213 = 30000; in the player's group +0x217 accumulates the damage and it returns under 8000; returns for the player's machine (+0x9d), while +0x209 runs, or for the committed machine's own target; +0x209 = 10000. Not committed under a player-led group: squad message 3 for a class-0 attacker and +0x94 cleared when the leader's target is the attacker. Descriptor flag 2: in a player-led group squad verb +0x1d2 = 4 with +0x1dc = 0, and the dwell +0x4c = 0. Flag 3: nothing. Otherwise Ai_SelectTarget (0000ddf4)(machine, 0) installed; none, after one, runs Mech_AiSelectBehaviour (0001892c); one sets +0xa6 and runs Mech_AiEnterCombat (000174cc). ES2's Mech_AiOnTakingFire (DBSIM 0041f7b8).",
-      "source": "Herculan/docs/es1/simulation/mech-ai.md#taking-fire--mech_aiontakingfire-00019338; ES1DBSIM decompile at 00019338",
+      "description": "(machine, damage, attacker), callee-cleaned, slot +0x54 of MechVtable (00091ae6): Mech_AiFriendlyFireComplaint (00019300) when the attacker is PlayerMech (000bc42a) in the machine's group; returns for an attacker of its own side (group +0x14); Mech_ShareContact (0000d760), +0x213 = 30000; in the player's group +0x217 accumulates the damage, read as an int16 (000193b7), and it returns under 8000; returns for the player's machine (+0x9d), while +0x209 runs, or for the committed machine's own target; +0x209 = 10000 (0001943a), before the tests on the descriptor's (+0x47) bytes +9, +0xa and +0xb. Not committed (byte +9 clear) under a player-led group: squad message 3 for a class-0 attacker and +0x94 cleared when the leader's target is the attacker. Byte +0xa: in a player-led group squad verb +0x1d2 = 4 with +0x1dc = 0, and the dwell +0x4c = 0. Byte +0xb: nothing. Otherwise Ai_SelectTarget (0000ddf4)(machine, 0), installed with the holder counts +0x15c and +0x97 set when it is not the target held; none, after one, runs Mech_AiSelectBehaviour (0001892c); one sets +0xa6 and runs Mech_AiEnterCombat (000174cc). ES2's Mech_AiOnTakingFire (DBSIM 0041f7b8).",
+      "source": "Herculan/docs/es1/simulation/ai-squadmates.md#taking-fire--mech_aiontakingfire-00019338; ES1DBSIM disassembly at 00019338",
       "verified": {
         "bytes": "00019338+582",
         "sha1": "543a24c82a9f",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -10541,6 +10541,21 @@
       }
     },
     {
+      "address": "0001a12c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorSquadOrdersCopy",
+      "description": "(p, flags), callee-cleaned: byte for byte the code of HeapPtr_DtorRocketCopy (00006dfc), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/ai-squadmates.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0001a12c",
+      "verified": {
+        "bytes": "0001a12c+40",
+        "sha1": "e5868c8105d9",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "0001a154",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -10577,7 +10592,7 @@
       "confidence": "high",
       "name": "Mech_ReceiveSquadOrder",
       "description": "(machine, reply so far, order) in stack order, callee-cleaned (RET 0xc): slot +0x2c of MechVtable (00091ae6). Keeps a reply id from 0xffff and a taken flag from 0 and switches on the order's int16 verb through the jump table 00091ebc over 0-0x11, out of action meaning +0x9f, +0x9e or +0x93 set and committed the behaviour descriptor's (+0x47) byte +9. 0: clears +0x94; refuses 0x1b out of action, 0xd for the descriptor's byte +0xc, 0x12 for no selection (CockpitViewInstance (00092d1c) +0x20c) or one immobilised or destroyed, 0x10 for one farther than 130000 by Math_DistanceBetweenPoints (00063c20), 0xf when +0x1d2 is 4 with +0x1dc the selection; else +0x1d2 = 4, +0x1dc = it, +0x1e4 = Ai_TargetStateTier (0000d880), Mech_AiEngageOrderedTarget (00015edc), +0x217 = 0, taken 0x11. 1: 0x1e out of action, 0x12 no selection, 0xf with +0x94 set; else +0x94 = 1, taken 0x16, and a committed machine whose +0x15e is the selection zeroes the dword +0x4c with the descriptor's +0xa set, else Ai_SelectTarget (0000ddf4)(machine, 1) and Mech_AiEngageOrderedTarget on a find or Mech_AiSelectBehaviour (0001892c) on none. 2: 0x1b out of action; the nearest machine of g_MechPool (000af68c, Pool_Prev (00063a20)) not out of action whose +0x15e is PlayerMech (000bc42a), within 60000 of it, else 0x1d; 0x1a when it is already +0x15e and the machine committed; else as verb 0 on it, taken 0xb. 3, 0xa, 0xf: 0x1b immobilised; else Behaviour_SetState (0000fdfc)(+0x47, 000af384), +0x1d2 = 0, +0x217 = 0, taken 0x1e within 25000 of the group's first member, else 0x14. 4, 0x10: +0x90 = 1 with 0x26, or 0xf when set; +0xac = 1; taken. 5: clears +0x94; 0x1b out of action; committed: taken 0x20; else Ai_SelectTarget(machine, 1): none refuses 0xe; a find, in a group whose word +4 is 6, sets +0x1d2 = 4, +0x1dc = 0 and runs Mech_AiSelectBehaviour, else +0x1d2 = 0 and Mech_AiEngageOrderedTarget; taken 0x1c. 7, 0x11: +0x90 = 0, +0xac = 0, taken 0x28. 8: committed: Mech_AiSelectBehaviour, +0x1d2 = 0, taken; else taken only when Ai_SelectTarget(machine, 0) finds one, which it does not use; reply 0xc; +0x217 = 0. 0xb: clears +0x94; 0x1b out of action; 0xf when +0x1d2 is 4 with +0x1dc the order's +0x12; 0x1d for that subject immobilised or destroyed; else as verb 0 on it, taken 0x11. 0xc: 0x1b out of action; 0x20 when +0x1d2 is 6 and Math_DistanceBetweenPoints2D (00063c64)(order + 6, +0x1d4) is under 1000; else Behaviour_SetState(+0x47, 000af474), +0x1d2 = 6, taken 0x17. 0xd and 0xe: 0x1b immobilised; 0x20 when +0x1d2 is already 2 (or 1) and Math_DistanceBetweenPoints(+0x20, order + 6) is under 2000; else Behaviour_SetState(+0x47, 000af384), +0x1d2 = 2 (or 1), taken 0x2a. 0xc to 0xe copy the order's dwords +6 and +0xa to +0x1d4 and +0x1d8 either way. 6, 9 and above 0x11 keep 0xffff, not taken. Then Ai_PostSquadMessage (0001a188)(machine, 0, the reply id) when the reply so far is 0, or 1 with the order taken; returns the taken flag in AX. es2_xref finds its address once, the dword 00091b12. ES2's Mech_ReceiveSquadOrder (DBSIM 00420ad4), which has no range test in verb 0, clears a standing engage on the selection in verb 1, writes +0xb6 in verbs 5 and 8, always takes 5 and 8, and stores verb 0xc's subject.",
-      "source": "Herculan/docs/es1/simulation/mech-ai.md#receiving-a-squad-order--mech_receivesquadorder-0001a1cc",
+      "source": "Herculan/docs/es1/simulation/ai-squadmates.md#receiving-a-squad-order--mech_receivesquadorder-0001a1cc",
       "verified": {
         "bytes": "0001a1cc+2440",
         "sha1": "b15d1cc52544",
