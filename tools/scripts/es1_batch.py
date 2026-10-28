@@ -26,8 +26,9 @@ file's insert and edit JSONs will write (known_symbols for the rest), with that 
 and writing no file but those: REFUSE for a sentence the stamp would stop on, RAW for a --via raw
 target that is not a straight-line stub (it goes after the regeneration, --via disasm), UNUSED for a
 --read-callers or --own-negatives no target of its line needs, and es2_naming.py's SHAPE warnings,
-which --fix first rewrites in the batch JSONs. A subagent runs it on its own command file before
-handing it in.
+which --fix first rewrites in the batch JSONs. It also warns (STAMP, not a problem: the run goes on)
+for an edit that changes a stamped entry's description, which drops the stamp, when no stamp line
+after it names the entry. A subagent runs it on its own command file before handing it in.
 
 Only those tools and subcommands run; any other line (grep, git, shell) is skipped with a note,
 since the file is a subagent's output. Comment and blank lines are ignored.
@@ -278,7 +279,46 @@ def precheck(steps, start=1):
         for key, flag, label in (("callers", a.read_callers, "--read-callers"), ("negs", a.own_negatives, "--own-negatives")):
             if flag and not used[key]:
                 print("  UNUSED step %d (line %d): no target needs %s; drop it" % (i, s.line, label))
-    return problems
+    return problems, dropped_stamps(steps, start)
+
+
+def dropped_stamps(steps, start=1):
+    """Prints a STAMP warning for each edit from step `start` on that changes a stamped entry's description, which
+    makes `es2_naming.py edit` drop the stamp, when no stamp line after the edit names the entry (by address, or by
+    its name before or after the edit). Returns how many: a warning, since an edit made without reading the body
+    rightly leaves the entry unstamped."""
+    import es2_naming
+    import es2_stamp
+    import es2_symbols
+    parser = es2_stamp.build_parser()
+    stamps = []
+    for i, s in enumerate(steps, 1):
+        if s.argv[:2] == ["es2_stamp.py", "stamp"]:
+            a = parser.parse_args(s.argv[1:])
+            stamps.append((i, a.binary, {t.lower() if re.fullmatch(r"[0-9a-fA-F]{8}", t) else t
+                                         for arg in a.target for t in arg.split("+") if t}))
+    known, n = {}, 0
+    for i, s in enumerate(steps, 1):
+        if i < start or s.kind != "write" or s.argv[:2] != ["es2_naming.py", "edit"]:
+            continue
+        for ed in json.loads(json_path(s.argv[2]).read_text(encoding="utf-8")):
+            b, addr = ed["binary"], ed["address"].lower()
+            if b not in known:
+                known[b] = {e["address"].lower(): e for e in es2_symbols.entries(b)}
+            entry = known[b].get(addr)
+            if not entry or "verified" not in entry:
+                continue
+            fields = es2_naming.edit_fields(ed, entry)
+            if fields.get("description", entry.get("description")) == entry.get("description"):
+                continue
+            keys = {addr, entry.get("name"), fields.get("name")} - {None, ""}
+            if any(j > i and sb == b and keys & targets for j, sb, targets in stamps):
+                continue
+            print("  STAMP step %d (line %d): %s %s %s is stamped and the edit changes its description, which drops the "
+                  "stamp; no later stamp line names it. Stamp it after the edit once its body is read, or leave it "
+                  "unstamped on purpose." % (i, s.line, b, addr, entry.get("name", "")))
+            n += 1
+    return n
 
 
 def stamp_retry_line(argv, refused):
@@ -339,8 +379,8 @@ def cmd_precheck(args):
     steps, _ = parse(args.file)
     if args.fix:
         print("%d SHAPE form(s) rewritten" % fix_shapes(steps))
-    bad = precheck(steps)
-    print("%d problem(s)" % bad)
+    bad, warned = precheck(steps)
+    print("%d problem(s), %d warning(s)" % (bad, warned))
     return 1 if bad else 0
 
 
@@ -350,12 +390,12 @@ def cmd_run(args):
         print("skip line %d (not a write, stamp or apply): %s" % (n, line))
     if not args.no_precheck:
         print("precheck (es2_stamp's wording checks on the stamp lines, before any write):")
-        bad = precheck(steps, args.start)
+        bad, warned = precheck(steps, args.start)
         if bad:
             print("\nSTOPPED before step %d: %d precheck problem(s). Fix those lines (or reword the JSON) and "
                   "run again; nothing was written." % (args.start, bad))
             return 1
-        print("   clean")
+        print("   clean" + (", %d STAMP warning(s) above: those entries end the run unstamped" % warned if warned else ""))
     for i, s in enumerate(steps, 1):
         if i < args.start:
             continue
