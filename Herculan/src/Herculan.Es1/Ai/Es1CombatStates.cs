@@ -291,7 +291,7 @@ public static class Es1CombatStates {
 	/// and its magnitude <see cref="HarmlessAspect"/> when the target's type record <c>+0x34</c> is 0,
 	/// <see cref="CircleStep"/> with its move step, then the standoffs <see cref="BaseNear"/> and <see cref="BaseFar"/> and a
 	/// second <see cref="MoveStep"/>, so the control law runs twice; the fire; done when the target or the machine is
-	/// disarmed, immobilized or destroyed. Reached only with a structure target, which the slice does not spawn.
+	/// disarmed, immobilized or destroyed. Reached only with a structure target.
 	/// </summary>
 	public static short AttackBaseThink(Es1Mech mech, Es1SimGlobals globals) {
 		if (Es1Skirting.BeginSkirtIfBlocked(mech, globals)) {

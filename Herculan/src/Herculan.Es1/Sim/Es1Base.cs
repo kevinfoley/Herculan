@@ -62,6 +62,7 @@ public sealed class Es1Base : IEs1SimObject {
 		Class = baseClass;
 		StandingShape = shape;
 		Shape = shape;
+		Hulk = hulk;
 		CellFrames = new short[shape.Sequences?.Length ?? 0];
 		if (baseClass != Es1BaseClass.Plain && shape.Animation != null) {
 			Instance = new ShapeInstance(shape.Animation);
@@ -118,6 +119,9 @@ public sealed class Es1Base : IEs1SimObject {
 	/// condition or the collapse has put it in; null for a wreck <c>dgs\bhulks</c> lacks, which draws nothing.
 	/// </summary>
 	public Es1BaseShape? Shape { get; internal set; }
+
+	/// <summary>The type's wreck, <c>BaseHulkShapes</c>[the type's <c>+0x04</c>], which the collapse puts in; null for one <c>dgs\bhulks</c> lacks.</summary>
+	public Es1BaseShape? Hulk { get; }
 
 	/// <summary>The animated instance's threads and node poses, which the radar masts and the gun tower have; null for a static one.</summary>
 	public ShapeInstance? Instance { get; }
@@ -244,8 +248,29 @@ public sealed class Es1Base : IEs1SimObject {
 	/// <summary><c>+0x1a0</c>, the collapse count, which the constructor zeroes and the damage sets.</summary>
 	public short CollapseCount { get; set; }
 
+	/// <summary><c>+0x1a2</c> and <c>+0x1a4</c>, the turret's elevation and traverse rates, which only the gun tower's turret moves.</summary>
+	public short[] TurretRate { get; } = new short[2];
+
 	/// <summary><c>+0x1a6</c> and <c>+0x1a8</c>, the turret's elevation and traverse, which only the gun tower's turret moves.</summary>
-	public (short Elevation, short Traverse) TurretAngles { get; set; }
+	public short[] TurretAngle { get; } = new short[2];
+
+	/// <summary>The turret's elevation and traverse, <see cref="TurretAngle"/>.</summary>
+	public (short Elevation, short Traverse) TurretAngles => (TurretAngle[0], TurretAngle[1]);
+
+	/// <summary><c>+0x1ab</c>, the counter of the gun tower's refire countdown record <c>+0x1aa</c>.</summary>
+	public short RefireCountdown;
+
+	/// <summary><c>+0x1ad</c>, the gun tower's target, which it keeps apart from <see cref="Target"/>.</summary>
+	public IEs1SimObject? TowerTarget { get; set; }
+
+	/// <summary><c>+0x1b2</c>, the counter of the gun tower's firing window's countdown record <c>+0x1b1</c>.</summary>
+	public short FiringWindowCountdown;
+
+	/// <summary><c>+0x1b4</c>, the gun tower's firing window's flag: set while it may fire.</summary>
+	public bool FiringWindowOpen { get; set; }
+
+	/// <summary><c>+0x1b7</c>, the counter of the gun tower's retarget countdown record <c>+0x1b6</c>.</summary>
+	public short RetargetCountdown;
 
 	/// <inheritdoc/>
 	/// <remarks><c>TSObj_GetRadiusBaseCopy</c>'s read, the radius of the shape the instance holds.</remarks>
@@ -278,11 +303,34 @@ public sealed class Es1Base : IEs1SimObject {
 	/// <summary>Slot <c>+0x48</c>, <c>Base_BearingInSensorArc_Always</c> (<c>00003cb4</c>): every bearing.</summary>
 	public bool BearingInSensorArc(short bearing) => true;
 
+	/// <summary>Slot <c>+0x24</c>, <c>Base_DirectFireHitTest</c> (<c>00003a58</c>): <see cref="Es1BaseDamage.HitTest"/>.</summary>
+	public int HitTest(Es1Shot shot, Es1SimGlobals globals) => Es1BaseDamage.HitTest(this, shot, globals);
+
 	/// <summary>
-	/// Slot <c>+0x24</c>, <c>Base_DirectFireHitTest</c> (<c>00003a58</c>). PLACEHOLDER: a miss, 0; part B2 of the
-	/// structures' port brings the hit test (docs/es1/simulation/structures.md#hits--base_directfirehittest-00003a58).
+	/// The posed node of part <paramref name="partId"/>, found through slot <c>+0x24</c> of the shape the instance
+	/// <c>+0x2e</c> holds and the instance's node array <c>+0x16</c>; null for a static instance or a shape with no such
+	/// part. Its callers ask it only of a standing structure; once the wreck is in it answers null.
 	/// </summary>
-	public int HitTest(Es1Shot shot, Es1SimGlobals globals) => 0;
+	public Transform3? PartNodeTransform(int partId) {
+		if (Instance == null || !ReferenceEquals(Shape, StandingShape)) {
+			return null;
+		}
+
+		int transformId = Instance.Animation.TransformIdOfPart(partId);
+		return transformId >= 0 ? Instance.NodeTransform(transformId) : null;
+	}
+
+	/// <summary>
+	/// <c>Mech_ReportOutOfAction</c> (<c>0000d77c</c>)(structure)
+	/// (docs/es1/simulation/sim-object-base.md#the-out-of-action-report--mech_reportoutofaction-0000d77c): with a group,
+	/// its report; then, with the flag number of <see cref="Word174"/> not negative, that flag written by its operation.
+	/// </summary>
+	public void ReportOutOfAction(Es1SimGlobals globals) {
+		Group?.ReportIfAllOutOfAction(this, globals);
+		if (Word174.First >= 0) {
+			Es1MissionGroup.ApplyOutOfAction(Word174.First, Word174.Second, globals.MissionVars);
+		}
+	}
 
 	/// <summary>
 	/// Slot <c>+0x28</c>, <c>Base_GetAimNodeTransform</c> (<c>00002d68</c>): a zero transform with its diagonal <c>0x4000</c>
@@ -316,24 +364,26 @@ public sealed class Es1Base : IEs1SimObject {
 	/// </summary>
 	public Es1ShapeObject ShapeObject => new(Frame, ShapeRadius, Shape?.Volume);
 
-	/// <summary>A wreck to the structures' ray gather: destroyed, with the collapse count at 0.</summary>
+	/// <summary>A wreck to the structures' ray gather and the hit test: destroyed, with the collapse count at 0.</summary>
 	public bool IsWreck => Destroyed && CollapseCount == 0;
 
 	/// <summary>
 	/// Slot <c>+0x1c</c>: <c>Base_ThinkTick</c> for the plain and radar tables, and the gun tower's
-	/// <c>Base_ArmedThinkTick</c> (<c>00003364</c>), which hands a destroyed tower's whole tick to <c>Base_ThinkTick</c>.
-	/// PLACEHOLDER: a standing gun tower does nothing; part B2 of the structures' port brings its retarget, turret and fire
-	/// (docs/es1/simulation/structures.md#the-gun-tower--base_armedthinktick-00003364).
+	/// <c>Base_ArmedThinkTick</c> (<c>00003364</c>, <see cref="Es1BaseTower.ArmedThinkTick"/>), which hands a destroyed
+	/// tower's whole tick to <c>Base_ThinkTick</c>.
 	/// </summary>
 	public void Tick(Es1SimGlobals globals) {
-		if (Class != Es1BaseClass.Armed || Destroyed) {
+		if (Class == Es1BaseClass.Armed && !Destroyed) {
+			Es1BaseTower.ArmedThinkTick(this, globals);
+		} else {
 			ThinkTick(globals);
 		}
 	}
 
 	/// <summary>
 	/// <c>Base_ThinkTick</c> (<c>00002df8</c>) (docs/es1/simulation/structures.md#the-plain-tick--base_thinktick-00002df8):
-	/// the collapse while <see cref="CollapseCount"/> is not 0; then, while standing, the cell sequence <c>+0x2a</c> when it
+	/// the collapse (<see cref="Es1BaseDamage.CollapseStep"/>) while <see cref="CollapseCount"/> is not 0; then, while
+	/// standing, the cell sequence <c>+0x2a</c> when it
 	/// is not negative, on each expiry of the countdown reloaded from <c>+0x2c</c> and its cell stepped to (cell + 1)
 	/// modulo the sequence's frame count; and the threads when <c>+0x06</c> is not 0
 	/// (<see cref="ApplyRootMotionIfEnabled"/> with <see cref="RootMotionTime"/>). A sequence the shape gives no frames,
@@ -341,8 +391,7 @@ public sealed class Es1Base : IEs1SimObject {
 	/// </summary>
 	private void ThinkTick(Es1SimGlobals globals) {
 		if (CollapseCount != 0) {
-			// PLACEHOLDER: the collapse's eight steps, the explosions, the wreck and the smoke; nothing sets the count until
-			// part B2 of the structures' port brings the damage (docs/es1/simulation/structures.md#the-collapse).
+			Es1BaseDamage.CollapseStep(this, globals);
 		}
 
 		if (Destroyed) {
@@ -369,7 +418,7 @@ public sealed class Es1Base : IEs1SimObject {
 	/// to the position and its angles to the object's, the rotation word cleared
 	/// (docs/es1/simulation/object-classes.md#animation-threads-and-root-motion). The root is the first thread's.
 	/// </summary>
-	private void ApplyRootMotionIfEnabled(short time) {
+	internal void ApplyRootMotionIfEnabled(short time) {
 		if (Instance == null) {
 			return;
 		}
@@ -444,7 +493,7 @@ public sealed class Es1BasePool {
 	/// <summary>
 	/// Slot <c>+0xc</c> with flag bit 0, <c>Base_Dtor</c>, <c>Base_RadarDtor</c> or <c>Base_ArmedDtor</c>: the structure
 	/// queued on <c>g_BaseDeleteQueue</c> (<c>ObjectPool_QueueForDelete</c>). It stays in <c>LiveObjectList</c>: ES1's
-	/// destructors do not take it out, where ES2's do. No ported code destroys a structure.
+	/// destructors do not take it out, where ES2's do. No ported code runs a structure's destructor.
 	/// </summary>
 	public void Destroy(Es1Base structure) {
 		if (_live.Remove(structure)) {

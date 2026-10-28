@@ -46,6 +46,21 @@ public sealed class Es1BaseType {
 	/// <summary><c>+0x08</c>, the hit points.</summary>
 	public short HitPoints => Word(0x08);
 
+	/// <summary><c>+0x0c</c>–<c>+0x10</c>, the point, in the structure's frame, of the collapse's large explosion and its smoke.</summary>
+	public (short X, short Y, short Z) CollapsePoint => Triple(0x0c);
+
+	/// <summary><c>+0x12</c>–<c>+0x16</c>, the center of the box the collapse's small explosions are scattered in.</summary>
+	public (short X, short Y, short Z) ScatterCenter => Triple(0x12);
+
+	/// <summary><c>+0x18</c>–<c>+0x1c</c>, the half-extents of that box.</summary>
+	public (short X, short Y, short Z) ScatterHalfExtents => Triple(0x18);
+
+	/// <summary><c>+0x1e</c>–<c>+0x22</c>, the weak spot's center, in the structure's frame.</summary>
+	public (short X, short Y, short Z) WeakSpot => Triple(0x1e);
+
+	/// <summary><c>+0x24</c>, the weak spot's radius.</summary>
+	public short WeakSpotRadius => Word(0x24);
+
 	/// <summary><c>+0x26</c> and <c>+0x28</c>, the two threads' playback rates.</summary>
 	public short ThreadRate(int thread) => Word(0x26 + 2 * thread);
 
@@ -75,6 +90,9 @@ public sealed class Es1BaseType {
 
 	/// <summary>The <c>int16</c> at <paramref name="offset"/>, one of <c>+0x08</c> to <c>+0x34</c>.</summary>
 	public short Word(int offset) => Record.Fields08[(offset - 0x08) / 2];
+
+	/// <summary>The three <c>int16</c> from <paramref name="offset"/>.</summary>
+	private (short X, short Y, short Z) Triple(int offset) => (Word(offset), Word(offset + 2), Word(offset + 4));
 }
 
 /// <summary>

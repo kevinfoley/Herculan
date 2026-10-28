@@ -29,7 +29,7 @@ public sealed class Es1Smoke {
 	/// the part id, the first shape kind × <see cref="ShapesPerKind"/> + the generator's draw &amp; 3, and the point, or
 	/// with none <see cref="NoPoint"/> set. A kind past the table, where retail reads past it, puffs none, an engine guard.
 	/// </summary>
-	internal Es1Smoke(Es1SmokePool pool, short kind, (short X, short Y, short Z)? point, short partId, Es1Mech owner,
+	internal Es1Smoke(Es1SmokePool pool, short kind, (short X, short Y, short Z)? point, short partId, IEs1SimObject owner,
 			short draw) {
 		_pool = pool;
 		Kind = kind;
@@ -48,7 +48,7 @@ public sealed class Es1Smoke {
 	public short Puffs { get; private set; }
 
 	/// <summary><c>+0x0f</c>, the owner whose frame the point rides.</summary>
-	public Es1Mech Owner { get; }
+	public IEs1SimObject Owner { get; }
 
 	/// <summary><c>+0x13</c>, the part the point is on, negative for the owner's own frame.</summary>
 	public short PartId { get; }

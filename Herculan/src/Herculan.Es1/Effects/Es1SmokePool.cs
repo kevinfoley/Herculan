@@ -53,7 +53,7 @@ public sealed class Es1SmokePool {
 	/// emitters queued for delete still holding their places. Its first shape draws <c>Math_RandomNext</c> on
 	/// <paramref name="random"/>, the generator <c>000b5c48</c>.
 	/// </summary>
-	public Es1Smoke? Construct(short kind, (short X, short Y, short Z)? point, short partId, Es1Mech owner, SimRandom random) {
+	public Es1Smoke? Construct(short kind, (short X, short Y, short Z)? point, short partId, IEs1SimObject owner, SimRandom random) {
 		if (_emitters.Count + _emitterQueue.Count >= EmitterCapacity) {
 			return null;
 		}

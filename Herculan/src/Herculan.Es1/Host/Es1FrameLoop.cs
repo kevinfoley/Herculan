@@ -142,7 +142,8 @@ public sealed class Es1FrameLoop : IEs1Frame {
 		Views.SetView(1);
 		Views.SetView(0);
 
-		// Step 14 without the lift, which needs a friendly structure within 40000 and no structure is spawned: the
+		// Step 14 without the lift, which a friendly structure within 40000 starts. PLACEHOLDER: the lift's two calls,
+		// 00057cf4 and 00057ffc, are unread (docs/es1/simulation/main-loop.md#open), so no mission opens with it. The
 		// pitch gradient (Palette_BlendRangeByPitch) is not run (Es1Backdrop), and Palette_FlushDirtyRange has nothing
 		// to send; then Sim_RenderFrame.
 		RenderFrame();

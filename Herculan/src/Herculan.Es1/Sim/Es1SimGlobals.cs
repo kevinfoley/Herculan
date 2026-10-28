@@ -417,6 +417,12 @@ public interface IEs1SimObject : IEs1Placed {
 	/// </summary>
 	Transform3? AimNodeTransform();
 
+	/// <summary>
+	/// The posed node, in the object's own frame, of part <paramref name="partId"/>, found through slot <c>+0x24</c> of the
+	/// shape its instance holds; null for none, and for an object whose parts nothing reads by id.
+	/// </summary>
+	Transform3? PartNodeTransform(int partId) => null;
+
 	/// <summary>Slot <c>+0x58</c>: the component a missile fired with <paramref name="angles"/> from <paramref name="from"/> steers at, or −1.</summary>
 	short ComponentNearestAim(Vec3i from, (short Pitch, short Roll, short Heading) angles);
 
