@@ -30,7 +30,8 @@ internal static class Program {
 		                                   of those named: verb, formation, point, route, subject and the
 		                                   action that ends each. ES1: every row 11 group's order (0x32),
 		                                   formation (0x30), member kind (0x2e), side word, target and
-		                                   action, after a census of the order values
+		                                   action, after a census of the order values; with --loaded,
+		                                   the groups the mission load writes to data\script.dat instead
 		  conditions [<mission>...]        every row #1 condition, of every mission or of those named:
 		                                   the test, draw or variant table, its chain, and what it gates
 		  repeats [<mission>...]           every GUID two or more unconditioned records carry in ES2's
@@ -40,6 +41,8 @@ internal static class Program {
 		                                   through the HercWorks reader bound to it, written back and
 		                                   compared: per archive and type, how many round-trip, parse,
 		                                   fail or have no reader, then each failure's cursor offset
+		  vol [<archive>...] [--name <p>]  every entry of the install's VOL folder archives, or of those
+		                                   named: its archive, folder, name and size
 		  chassis [--field <name|offset>]  every chassis' dat\<name>.DAT type record, in MECHS.NAM order:
 		                                   with --field, each chassis' value of that field in decimal
 		                                   and hex; without, the record's fields with their offsets and
@@ -87,6 +90,16 @@ internal static class Program {
 		  --route-switch    orders, ES2: list only groups with a later order naming a route other than
 		                    slot 0's
 		  --with-point      orders, ES2: list only groups with an order that names a row #6 point
+		  --loaded          orders, ES1: run each mission through the shell's single-mission load
+		                    (data\prefs.cfg, and car\SM_INIT.DAT and bst\TECH_SNG.DAT from the
+		                    archives the shell mounts) and
+		                    list block 9 of the data\script.dat it writes: the groups after the
+		                    conditions and the repeated GUIDs' overlay, with header words 3 and 7.
+		                    Every draw is taken as 0; each mission says how many draws had more
+		                    than one outcome
+		  --name <p>        vol: only entries whose name or folder\name matches: a * and ? wildcard
+		                    against the whole, else a substring, ignoring case (--name death,
+		                    --name dpl\*.dpl)
 		  --ids LO-HI       text: list only the records whose id is in this range (--ids 200-204);
 		                    routes: only the routes whose GUID is in it
 		  --field <f>       chassis: a record field, by name (whole, then prefix) or by record offset
@@ -114,8 +127,8 @@ internal static class Program {
 	}
 
 	internal static int Run(string[] args, TextWriter output) {
-		string? install = null, type = null, against = null, ids = null, field = null, block = null, ints = null, group = null;
-		bool json = false, variants = false, routeSwitch = false, withPoint = false, asRead = false;
+		string? install = null, type = null, against = null, ids = null, field = null, block = null, ints = null, group = null, name = null;
+		bool json = false, variants = false, routeSwitch = false, withPoint = false, asRead = false, loaded = false;
 		var positional = new List<string>();
 		for (int i = 0; i < args.Length; i++) {
 			switch (args[i].ToLowerInvariant()) {
@@ -143,8 +156,14 @@ internal static class Program {
 				case "--group" when i + 1 < args.Length:
 					group = args[++i];
 					break;
+				case "--name" when i + 1 < args.Length:
+					name = args[++i];
+					break;
 				case "--as-read":
 					asRead = true;
+					break;
+				case "--loaded":
+					loaded = true;
 					break;
 				case "--json":
 					json = true;
@@ -187,6 +206,26 @@ internal static class Program {
 				WriteJson(output, entries);
 			} else {
 				TextReport.Census(output, install, entries);
+			}
+
+			return 0;
+		}
+
+		if (command == "vol") {
+			var archives = Census.Archives(install);
+			var named = positional.Skip(1).Select(a => a.EndsWith(".VOL", StringComparison.OrdinalIgnoreCase) ? a : a + ".VOL").ToList();
+			if (named.FirstOrDefault(a => !archives.Any(p => string.Equals(Path.GetFileName(p), a, StringComparison.OrdinalIgnoreCase))) is { } missing) {
+				return Fail($"No {missing} in {install}\\{RetailData.ArchiveFolder}.");
+			}
+
+			var searched = named.Count == 0
+				? archives
+				: archives.Where(p => named.Contains(Path.GetFileName(p), StringComparer.OrdinalIgnoreCase)).ToList();
+			var rows = VolQuery.Run(searched, name);
+			if (json) {
+				WriteJson(output, rows);
+			} else {
+				VolQuery.Write(output, rows, searched.Count, name);
 			}
 
 			return 0;
@@ -341,6 +380,17 @@ internal static class Program {
 				return Fail("--route-switch and --with-point filter ES2's row #15 order records; ES1 missions have no such row.");
 			}
 
+			if (loaded) {
+				var loadedOrders = Es1OrderQuery.RunLoaded(data, positional.Skip(1).ToList());
+				if (json) {
+					WriteJson(output, loadedOrders);
+				} else {
+					Es1OrderQuery.WriteLoaded(output, loadedOrders);
+				}
+
+				return 0;
+			}
+
 			var es1Orders = Es1OrderQuery.Run(data, positional.Skip(1).ToList());
 			if (json) {
 				WriteJson(output, es1Orders);
@@ -352,6 +402,10 @@ internal static class Program {
 		}
 
 		if (command == "orders") {
+			if (loaded) {
+				return Fail("--loaded runs ES1's mission load; for ES2's, `lint` checks the script.dat its load writes.");
+			}
+
 			var orders = OrderQuery.Run(data, positional.Skip(1).ToList(), routeSwitch, withPoint);
 			if (json) {
 				WriteJson(output, orders);

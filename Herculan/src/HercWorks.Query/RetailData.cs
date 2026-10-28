@@ -71,6 +71,8 @@ internal sealed class RetailData {
 	public const string SimulatorArchive = "SIMVOL0.VOL";
 	public const string ArchiveFolder = "VOL";
 
+	private List<Voln>? _shellArchives;
+
 	/// <summary>The <c>STRINGS0.STR</c> groups holding the structure and vehicle type names.</summary>
 	public const int StructureNameGroup = 23;
 	public const int VehicleNameGroup = 24;
@@ -233,6 +235,19 @@ internal sealed class RetailData {
 
 		var type = bases.Types[typeIndex];
 		return strings.Text(type.TextureSelector == 0 ? StructureNameGroup : VehicleNameGroup, type.SilhouetteIndex);
+	}
+
+	/// <summary>
+	/// An entry as the shell finds it: in the first archive of the install's <c>VOL</c> folder, in name order, whose program
+	/// mask has <see cref="Voln.VshellProgram"/> and which holds it (an ES1 single mission's <c>car\SM_INIT.DAT</c> is in
+	/// <c>SHELL0.VOL</c>, its <c>bst\TECH_SNG.DAT</c> in <c>ZONES.VOL</c>). The archives are read on first use; null when
+	/// none holds the entry. The order among archives holding the same entry is this query's, not the programs' mount
+	/// (docs/retail/formats/vol-archive.md, "Which archives are mounted").
+	/// </summary>
+	public byte[]? ShellFile(string folder, string name) {
+		_shellArchives ??= Census.Archives(InstallRoot).Select(VolFileReader.ParseVolFile)
+			.Where(v => (v.ProgramMask & Voln.VshellProgram) != 0).ToList();
+		return _shellArchives.Select(v => Find(v, folder, name)?.RawBytes).FirstOrDefault(b => b != null);
 	}
 
 	/// <summary>How many types a roster's type table holds, or 0 when it was not read.</summary>
