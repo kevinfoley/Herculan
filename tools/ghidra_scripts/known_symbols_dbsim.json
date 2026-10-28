@@ -728,8 +728,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Base_ThinkTick",
-      "description": "StructureVtable's and StructureRadarVtable's +0x18 tick slot -- the plain building's whole per-tick behaviour. Base_DeathSequenceTick, then while standing: if typeRec+0x24 >= 0, step cell sequence typeRec+0x24 by one modulo that sequence's own frame count, on a countdown at +0x1f6 reloaded from typeRec+0x26 (simulation timer units); and if typeRec+0x06 is non-zero, SimObject_ApplyRootMotionIfEnabled(this, 100), which steps the structure's animation threads. Eight retail types state a cell sequence but only types 9 and 0x1a reach this function; of the rest, the Armed types step the same array as a muzzle flash instead, the transport (0x22) never steps it, and 0x0a is never built. The flipbook is NOT what turns a radar dish -- all four radar types state -1 for it and spin a free-running thread instead.",
-      "source": "docs/retail/simulation/structure-behaviour.md"
+      "description": "StructureVtable's and StructureRadarVtable's +0x18 tick slot -- the plain building's whole per-tick behaviour. Base_DeathSequenceTick, then while standing: if typeRec+0x24 >= 0, step cell sequence typeRec+0x24 by one modulo that sequence's own frame count, on a countdown at +0x1f6 reloaded from typeRec+0x26 (simulation timer units); and if typeRec+0x06 is non-zero, SimObject_ApplyRootMotionIfEnabled(this, 100), the 100 a constant (PUSH 0x64 at 00403d48) rather than a time integrated over the tick, which steps the structure's animation threads. Which retail types state a cell sequence, and which of them reach this function, is in structure-behaviour.md's plain tick. The flipbook is NOT what turns a radar dish -- all four radar types state -1 for it and spin a free-running thread instead.",
+      "source": "docs/retail/simulation/structure-behaviour.md",
+      "verified": {
+        "bytes": "00403ca8+178",
+        "sha1": "d4eb8285eb4a",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00403d5c",
