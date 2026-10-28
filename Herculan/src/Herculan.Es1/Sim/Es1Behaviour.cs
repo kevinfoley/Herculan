@@ -88,6 +88,12 @@ public sealed class Es1BehaviourBlock {
 	/// </summary>
 	public IEs1SimObject? LookAt { get; set; }
 
+	/// <summary>
+	/// The scratch's dword at machine offset <c>+0x5b</c> when <c>fleeing</c> keeps there the object it runs from
+	/// (docs/es1/simulation/mech-ai.md#the-combat-states); kept here as <see cref="LookAt"/> is, and cleared with it.
+	/// </summary>
+	public IEs1SimObject? FleeingFrom { get; set; }
+
 	/// <summary><c>+0x35</c>, the 16 bytes from which <c>+0x35</c> is "counted once" and <c>+0x36</c> "just installed".</summary>
 	public byte[] Latches { get; } = new byte[0x10];
 
@@ -103,6 +109,7 @@ public sealed class Es1BehaviourBlock {
 		Latches[1] = 1;
 		Array.Clear(Scratch);
 		LookAt = null;
+		FleeingFrom = null;
 	}
 
 	/// <summary><c>Behaviour_CountTick</c> (<c>0000fe84</c>): with <c>+0x36</c> set it clears it; otherwise <c>+0x35</c> set and the count up by 1.</summary>

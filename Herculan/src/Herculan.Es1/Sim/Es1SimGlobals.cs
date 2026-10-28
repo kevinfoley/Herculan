@@ -257,6 +257,12 @@ public interface IEs1SimObject {
 	/// <summary><c>+0x9e</c>, immobilized.</summary>
 	bool Immobilized { get; }
 
+	/// <summary><c>+0xae</c>, collapsed: the death sequence has played out.</summary>
+	bool Collapsed { get; }
+
+	/// <summary>The descriptor of the behaviour block at <c>+0x47</c>, or null with none.</summary>
+	Es1BehaviourDescriptor? BehaviourDescriptor { get; }
+
 	/// <summary><c>+0x15c</c>, how many objects hold it as their target.</summary>
 	short TargetHolders { get; set; }
 

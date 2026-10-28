@@ -1,3 +1,4 @@
+using Herculan.Engine.Numerics;
 using Herculan.Es1.Sim;
 
 namespace Herculan.Es1.Ai;
@@ -90,7 +91,7 @@ public static class Es1NavigationStates {
 		globals.Clock.TimerCountDown(ref countdown);
 		block.SetScratchInt32(CountdownOffset, countdown);
 		if (countdown == 0) {
-			block.LookAt = Es1AiStandIns.SelectTarget(mech, 0, globals);
+			block.LookAt = Es1Targets.SelectTarget(mech, 0, globals);
 			block.SetScratchInt32(CountdownOffset, LookInterval);
 			mech.RadarOn = block.LookAt != null || mech.RadarSetting;
 		}
@@ -119,7 +120,8 @@ public static class Es1NavigationStates {
 	/// read first; the target released. While the 16-bit countdown runs, or for a machine with no squad verb whose group's
 	/// first member is <c>PlayerMech</c>, <see cref="Es1Navigation.NavigationStep"/> and done; the countdown is stepped
 	/// either way. Otherwise the squad order's target for the verb <see cref="EngageSquadVerb"/> with one, or, with the
-	/// countdown reloaded with <see cref="LookInterval"/>, the scoring of the machines against the post. With nothing found:
+	/// countdown reloaded with <see cref="LookInterval"/>, <see cref="SelectGuardTarget"/>; with a target,
+	/// <see cref="EngageGuardTarget"/>. With nothing found:
 	/// the turret centred, <see cref="Es1Navigation.UpdateWeaponsFree"/>, and beyond <see cref="GuardOuterRange"/> of the
 	/// post <see cref="Es1Navigation.DriveToPoint"/> to it; nearer, the steer of the bearing error less a half turn, so the
 	/// machine faces away from the post, walking at full speed within <see cref="GuardInnerRange"/> and standing beyond.
@@ -142,11 +144,11 @@ public static class Es1NavigationStates {
 			found = mech.SquadTarget;
 		} else {
 			block.SetScratchInt16(CountdownOffset, LookInterval);
-			found = Es1AiStandIns.SelectGuardTarget(mech, post, globals);
+			found = SelectGuardTarget(mech, post, globals);
 		}
 
 		if (found != null) {
-			Es1AiStandIns.EngageGuardTarget(mech, found, globals);
+			EngageGuardTarget(mech, found, globals);
 			return 0;
 		}
 
@@ -171,6 +173,76 @@ public static class Es1NavigationStates {
 		short steer = (short)((short)(bearing - mech.Heading - 0x8000) >> Es1Navigation.SteerShift);
 		mech.Locomotion.LocomotionTick(globals, 0, speed, steer);
 		return 0;
+	}
+
+	/// <summary><c>guarding</c>'s scoring limits: the ground range from the post a machine scores from, and the one when the group has a target (<c>+0x1c</c>).</summary>
+	public const int GuardScoreLimit = 980000, GuardScoreLimitWithTarget = 945000;
+
+	/// <summary>
+	/// <c>guarding</c>'s look: over <c>g_MechPool</c>, oldest first as <c>Pool_Prev</c> walks it, each machine
+	/// <see cref="Es1Targets.IsTargetable"/>(machine, 0) passes that is not immobilized scores the limit
+	/// (<see cref="GuardScoreLimit"/>, or <see cref="GuardScoreLimitWithTarget"/> when the group has a target) less its
+	/// ground range to the post (<c>Math_DistanceBetweenPoints2D</c>), divided by one more than its holders when it has any,
+	/// and only a positive score counts. A machine neither disarmed nor destroyed displaces one that is, whatever the scores,
+	/// and one that is is passed over once one that is not is held; otherwise the higher score wins.
+	/// </summary>
+	private static IEs1SimObject? SelectGuardTarget(Es1Mech mech, Vec3i? post, Es1SimGlobals globals) {
+		// Retail reads the post and the group unchecked; with either missing nothing is found here, an engine guard.
+		if (post is not { } point || mech.Group is not { } group) {
+			return null;
+		}
+
+		int limit = group.Target == null ? GuardScoreLimit : GuardScoreLimitWithTarget;
+		Es1Mech? best = null;
+		int bestScore = 0;
+		bool bestLive = false;
+		foreach (var candidate in globals.MechPool) {
+			if (!Es1Targets.IsTargetable(mech, 0, candidate, globals) || candidate.Immobilized) {
+				continue;
+			}
+
+			bool live = !(candidate.Disarmed || candidate.Immobilized || candidate.Destroyed);
+			if (bestLive && !live) {
+				continue;
+			}
+
+			int score = limit - Es1PlayerThink.DistanceBetweenPoints2D(point, candidate.Position);
+			if (score <= 0) {
+				continue;
+			}
+
+			if (candidate.TargetHolders != 0) {
+				score /= candidate.TargetHolders + 1;
+			}
+
+			if (bestScore < score || (!bestLive && live)) {
+				best = candidate;
+				bestScore = score;
+				bestLive = live;
+			}
+		}
+
+		return best;
+	}
+
+	/// <summary>
+	/// <c>guarding</c>'s arm for a target found: the target installed; a machine disarmed, immobilized or destroyed takes
+	/// <c>fleeing</c> with the aim slot −1; any other <c>driving off en</c>, <see cref="Es1CombatReassess.SelectAimComponent"/>
+	/// and the radar on unless it is in a group the player's machine leads without <see cref="Es1Mech.RadarKeptOn"/>.
+	/// </summary>
+	private static void EngageGuardTarget(Es1Mech mech, IEs1SimObject target, Es1SimGlobals globals) {
+		mech.InstallTarget(target);
+		if (mech.OutOfAction) {
+			mech.Behaviour.SetState(Es1MechBehaviour.States[Es1MechBehaviour.Fleeing], globals.DwellJitter);
+			mech.AimSlot = -1;
+			return;
+		}
+
+		mech.Behaviour.SetState(Es1MechBehaviour.States[Es1MechBehaviour.DrivingOff], globals.DwellJitter);
+		Es1CombatReassess.SelectAimComponent(mech, globals);
+		if (Es1Navigation.Leader(mech) is not { IsPlayer: true } || mech.RadarKeptOn) {
+			mech.RadarOn = true;
+		}
 	}
 
 	/// <summary>
@@ -200,7 +272,7 @@ public static class Es1NavigationStates {
 	/// </summary>
 	private static void Acquire(Es1Mech mech, bool acquires, bool installAny, Es1SimGlobals globals) {
 		if (mech.OutOfAction) {
-			mech.InstallTarget(Es1AiStandIns.SelectTarget(mech, 0, globals));
+			mech.InstallTarget(Es1Targets.SelectTarget(mech, 0, globals));
 			if (mech.Target != null) {
 				mech.AimSlot = -1;
 				mech.Behaviour.SetState(Es1MechBehaviour.States[Es1MechBehaviour.Fleeing], globals.DwellJitter);
@@ -213,7 +285,7 @@ public static class Es1NavigationStates {
 			return;
 		}
 
-		var found = Es1AiStandIns.SelectTarget(mech, 1, globals);
+		var found = Es1Targets.SelectTarget(mech, 1, globals);
 		// Retail reads the group through +0x3f unchecked; a machine with no group has no order target here.
 		if (installAny) {
 			mech.InstallTarget(found);
@@ -225,7 +297,7 @@ public static class Es1NavigationStates {
 
 		if (mech.Target != null) {
 			mech.TargetHandedOver = true;
-			Es1AiStandIns.EnterCombat(mech, globals);
+			Es1CombatReassess.EnterCombat(mech, globals);
 		}
 	}
 }

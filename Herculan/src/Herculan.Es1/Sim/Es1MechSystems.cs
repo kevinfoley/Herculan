@@ -154,7 +154,10 @@ public static class Es1MechSystems {
 			machine.DamageTaken = 0;
 		}
 
-		// PLACEHOLDER: with +0x8e clear, Mech_ComputeCombatRating (000189f0)(machine), the AI's, plan step 8.
+		// The combat rating, recomputed while +0x8e is clear.
+		if (!machine.SkipCombatRating) {
+			Ai.Es1CombatRating.Compute(machine);
+		}
 
 		// ECM: a switched-on ECM holds the target's engagement action back; the machine jams while its own is on.
 		var target = machine.Target;

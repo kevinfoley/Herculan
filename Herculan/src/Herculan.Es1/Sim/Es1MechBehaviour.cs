@@ -10,6 +10,9 @@ public static class Es1MechBehaviour {
 	/// <summary>The descriptor indices construction and the reassess install.</summary>
 	public const int Deciding = 0, Player = 1;
 
+	/// <summary>The descriptor indices the combat reassess installs (<see cref="Ai.Es1CombatReassess"/>).</summary>
+	public const int Attacking = 2, Flanking = 3, FacingOff = 4, AttackingBase = 5, AttackingFlyer = 6;
+
 	/// <summary>
 	/// The descriptor indices a group's order installs (<see cref="Ai.Es1StateChoice"/>), and those the AI's thinks install,
 	/// <c>BehaviourStateTable</c> + <c>0x28</c> × the index.
@@ -86,17 +89,17 @@ public static class Es1MechBehaviour {
 	private static Es1BehaviourDescriptor[] BuildStateTable() {
 		Es1StateFunction walk = Es1MechMovement.MovementTick;
 		Es1StateFunction select = Ai.Es1StateChoice.SelectBehaviour;
-		var combat = Unported("Mech_AiCombatReassess", 0x00016e04, "8c");
+		Es1StateFunction combat = Ai.Es1CombatReassess.Reassess;
 		Es1StateFunction travel = Ai.Es1NavigationStates.TravelThink;
 		Es1StateFunction inert = InertThink;
 		return [
 			new("deciding", 0, 0, null, null, select, 3),
 			new("player", 10, 1, Es1PlayerThink.Think, walk, null, 3),
-			new("attacking", 50000, 2, Unported("Mech_BehaviourAttackThink", 0x000163a0, "8c"), walk, combat, 0),
-			new("flanking", 50000, 2, Unported("Mech_BehaviourFlankThink", 0x000173c8, "8c"), walk, combat, 0),
-			new("facing off", 50000, 2, Unported("Mech_BehaviourFaceOffThink", 0x000172f0, "8c"), walk, combat, 0),
-			new("attacking base", 50000, 2, Unported("Mech_BehaviourAttackBaseThink", 0x00016718, "8c"), walk, combat, 0),
-			new("attacking flyer", 50000, 2, Unported("Mech_BehaviourAttackFlyerThink", 0x0001684c, "8c"), walk, combat, 0),
+			new("attacking", 50000, 2, Ai.Es1CombatStates.AttackThink, walk, combat, 0),
+			new("flanking", 50000, 2, Ai.Es1CombatStates.FlankThink, walk, combat, 0),
+			new("facing off", 50000, 2, Ai.Es1CombatStates.FaceOffThink, walk, combat, 0),
+			new("attacking base", 50000, 2, Ai.Es1CombatStates.AttackBaseThink, walk, combat, 0),
+			new("attacking flyer", 50000, 2, Ai.Es1CombatStates.AttackFlyerThink, walk, combat, 0),
 			new("patrolling", 10, 1, Ai.Es1NavigationStates.PatrolThink, walk, select, 3),
 			new("travelling", 10, 1, travel, walk, select, 3),
 			new("bulldog travel", 10, 9, travel, walk, select, 3),
@@ -104,10 +107,10 @@ public static class Es1MechBehaviour {
 			new("sleeping", 10, 9, Ai.Es1NavigationStates.SleepThink, walk, select, 3),
 			new("skirting", 10, 1, Unported("Mech_BehaviourSkirtThink", 0x00017aa4, "8e"), walk, select, 0),
 			new("guarding", 10, 5, Ai.Es1NavigationStates.GuardThink, walk, select, 3),
-			new("driving off en", 50000, 6, Unported("Mech_BehaviourDriveOffThink", 0x00017c84, "8c"), walk, select, 0),
+			new("driving off en", 50000, 6, Ai.Es1CombatStates.DriveOffThink, walk, select, 0),
 			new("ramming", 10, 9, Unported("Mech_BehaviourRamThink", 0x00018320, "8e"),
 				Unported("Mech_BehaviourRamTick", 0x00018278, "8e"), select, 0),
-			new("fleeing", 30000, 0x12, Unported("Mech_BehaviourFleeThink", 0x0001713c, "8c"), walk, combat, 5),
+			new("fleeing", 30000, 0x12, Ai.Es1CombatStates.FleeThink, walk, combat, 5),
 			new("in limbo", 10, 0x21, null, null, null, 6),
 			new("dead", 0, 0x21, inert, walk, null, 6),
 			new("disabled", 0, 0x21, inert, walk, null, 7),

@@ -316,6 +316,18 @@ public sealed class Es1WeaponMount {
 	}
 
 	/// <summary>
+	/// Slot <c>+0x58</c>, counts in the combat rating (docs/es1/simulation/weapon-mount-classes.md#the-slots): an ammunition
+	/// or grenade mount's <c>WeaponMount_AmmoCountsInCombatRating</c> (<c>0000b8ec</c>), while its rounds
+	/// <see cref="ChargeTarget"/> are at least the template's magazine ≫ 3; every other class's
+	/// <c>WeaponMount_CountsInCombatRating_Always</c> (<c>0000c692</c>).
+	/// </summary>
+	public bool CountsInCombatRating =>
+		Kind is not (Es1MountKind.Ammunition or Es1MountKind.Grenade) || Template.MagazineSize >> 3 <= ChargeTarget;
+
+	/// <summary>The template's <c>+0x4e</c>, the tail's <c>0x2c</c>: what the weapon adds to the combat rating, scaled by the mount's condition (<see cref="Ai.Es1CombatRating.Compute"/>).</summary>
+	public short AiRatingValue => BitConverter.ToInt16(Template.Tail, 0x2c);
+
+	/// <summary>
 	/// Slot <c>+0x4c</c>, the energy priority: an energy or ELF mount's <c>WeaponMount_GetEnergyPriority</c>
 	/// (<c>0000b8c4</c>), 10000 while mid-charge and the charge target otherwise; every other class's
 	/// <c>WeaponMount_GetEnergyPriorityZero</c> (<c>0000c6ff</c>), 0.

@@ -184,6 +184,28 @@ public sealed class Es1Mech : IEs1SimObject {
 	/// <summary><c>+0x47</c>, the behaviour block.</summary>
 	public Es1BehaviourBlock Behaviour { get; } = new();
 
+	/// <inheritdoc/>
+	public Es1BehaviourDescriptor? BehaviourDescriptor => Behaviour.Descriptor;
+
+	/// <summary>
+	/// <c>+0x234</c>, the combat rating, which the systems tick recomputes while <see cref="SkipCombatRating"/> is clear
+	/// (<see cref="Ai.Es1CombatRating.Compute"/>).
+	/// </summary>
+	public short CombatRating { get; set; }
+
+	/// <summary><c>+0x240</c>, the fear, which the flee check writes (<see cref="Ai.Es1CombatReassess.FleeCheck"/>) and the weapon choice reads as its floor.</summary>
+	public short Fear { get; set; }
+
+	/// <summary>
+	/// <c>+0x94</c>, do not take the player's selection (docs/es1/simulation/mech-ai.md#the-fields), which
+	/// <see cref="Ai.Es1Targets.IsTargetable"/> reads. PLACEHOLDER: its writers, <c>Mech_ReceiveSquadOrder</c>'s verbs and
+	/// <c>Mech_AiOnTakingFire</c>, are plan step 8e's; clear until then.
+	/// </summary>
+	public bool IgnorePlayerSelection { get; set; }
+
+	/// <summary><c>+0x1e4</c>, the squad order's abandon threshold. PLACEHOLDER: written with <see cref="SquadVerb"/>, plan step 8e.</summary>
+	public short SquadThreshold { get; set; }
+
 	/// <summary><c>+0xa9</c>: <c>Mech_AiTick</c> skips the think once, clearing it.</summary>
 	public bool ThinkSuppressed { get; set; }
 

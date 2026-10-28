@@ -55,11 +55,8 @@ public static class Es1SquadOrders {
 			default:
 				// PLACEHOLDER: the other verbs, each of which retail acts on through the AI (the squad order's fields
 				// +0x1d2 to +0x1e4, Behaviour_SetState, Ai_SelectTarget, Mech_AiEngageOrderedTarget, Mech_AiSelectBehaviour)
-				// and answers by the machine's state, posting its reply as below; plan step 8, the AI. Until then it does
-				// nothing and answers 0, a refusal. For FLASH COMM's verbs 5 and 8, the second order row 5 switches
-				// between, that is retail's answer from a squadmate whose state's flag 1 is clear when Ai_SelectTarget
-				// finds no target: this port's squadmates stay in deciding, whose flag 1 is clear, and nothing selects
-				// their targets yet.
+				// and answers by the machine's state, posting its reply as below; plan step 8e. Until then it does nothing
+				// and answers 0, a refusal.
 				return 0;
 		}
 
