@@ -27,9 +27,9 @@ public static class Es1Targets {
 	public const int NearShift = 11;
 
 	/// <summary>
-	/// <c>Ai_SelectTarget</c>'s weight tables (<c>00091620</c>, <c>00091628</c>, <c>00091630</c>), Q10, indexed by
-	/// <see cref="Es1CombatRating.Compare"/>: the candidate holds this machine as its target; its state is not committed;
-	/// it holds another target.
+	/// <c>Ai_SelectTarget</c>'s weight tables (<c>00091620</c>, <c>00091628</c>, <c>00091630</c>), Q10, indexed by the
+	/// machine's slot <c>+0x50</c> (<see cref="IEs1SimObject.CompareCombatRating"/>): the candidate holds this machine as
+	/// its target; its state is not committed; it holds another target.
 	/// </summary>
 	private static readonly short[] ShootingWeights = [1500, 2000, 2500], IdleWeights = [600, 400, 200],
 		TakenWeights = [700, 850, 1000];
@@ -44,9 +44,10 @@ public static class Es1Targets {
 	/// <see cref="OtherClassOnly"/> its class differs from the machine's; then it is refused when the machine's group's first
 	/// member is the player's machine, header word 3 is <see cref="DataLinkSelector"/>, the candidate is the group's order
 	/// object and that member's <c>+0x9a</c> is clear; or when the machine's <c>+0x94</c> is set and the candidate is the
-	/// cockpit's selection (<c>CockpitViewInstance</c> <c>+0x20c</c>).
+	/// cockpit's selection (<c>CockpitViewInstance</c> <c>+0x20c</c>). The machine is a HERC or a flyer
+	/// (docs/es1/simulation/flyers.md#the-thinks).
 	/// </summary>
-	public static bool IsTargetable(Es1Mech machine, short mask, IEs1SimObject candidate, Es1SimGlobals globals) {
+	public static bool IsTargetable(IEs1SimObject machine, short mask, IEs1SimObject candidate, Es1SimGlobals globals) {
 		// Retail reads both groups unchecked; an object with no group is not targetable here, an engine guard.
 		if (candidate.Group is not { } candidateGroup || machine.Group is not { } group) {
 			return false;
@@ -58,8 +59,8 @@ public static class Es1Targets {
 			return false;
 		}
 
-		// Retail reads the first member unchecked; a group with none skips this test here.
-		if (Es1Navigation.Leader(machine) is { IsPlayer: true } leader && globals.HeaderWord3 == DataLinkSelector
+		// Retail reads the first member unchecked; a group with none skips this test here. The player's machine is a HERC.
+		if (group.Members is [Es1Mech { IsPlayer: true } leader, ..] && globals.HeaderWord3 == DataLinkSelector
 				&& ReferenceEquals(group.OrderTargetObject(), candidate) && !leader.DataLinkComplete) {
 			return false;
 		}
@@ -89,9 +90,9 @@ public static class Es1Targets {
 	/// <i>b</i> / max(range ≫ <see cref="NearShift"/>, 1); multiplied, Q10, by the three weights its relation to the
 	/// machine takes and the class weight; and divided by one more than its holders other than this machine, unless
 	/// <see cref="NoCrowding"/>. A higher score or a higher tier makes it the best. Every product is ES1's rounding Q10, cut to
-	/// 16 bits.
+	/// 16 bits. The machine is a HERC or a flyer, whose slot <c>+0x50</c> is the base's and draws nothing from the generator.
 	/// </summary>
-	public static IEs1SimObject? SelectTarget(Es1Mech machine, short mask, Es1SimGlobals globals) {
+	public static IEs1SimObject? SelectTarget(IEs1SimObject machine, short mask, Es1SimGlobals globals) {
 		// Retail reads the group unchecked; a machine with none finds nothing here, an engine guard.
 		if (machine.Group is not { } group) {
 			return null;
@@ -126,7 +127,7 @@ public static class Es1Targets {
 			}
 
 			short weighted = score;
-			int rating = Es1CombatRating.Compare(machine, candidate, globals);
+			short rating = machine.CompareCombatRating(candidate, globals);
 			if ((mask & NoShootingWeight) == 0 && ReferenceEquals(candidate.Target, machine)) {
 				weighted = (short)SimMath.Q10MultiplyRounded(score, ShootingWeights[rating]);
 			}

@@ -1,11 +1,14 @@
+using Herculan.Es1.Ai;
+
 namespace Herculan.Es1.Sim;
 
 /// <summary>
 /// The aircraft's behaviour states: <c>Flyer_BuildStateTable</c> (<c>ES1DBSIM 000105b0</c>)'s seven descriptors, the
 /// flyer's three dispatch slots and <c>Mech_AiTick</c> (<c>0000d8e8</c>) on a flyer
 /// (docs/es1/simulation/shields-and-behaviour-states.md#the-aircrafts-state-table,
-/// docs/es1/simulation/mission-groups.md#the-tick). Each state function the flying parts port is a stub answering 0,
-/// tagged with its part: F2 flies the flyers, F3 fights them (docs/herculan/plan-es1-first-mission.md#after-step-8).
+/// docs/es1/simulation/mission-groups.md#the-tick). The move is <see cref="Es1FlyerFlight.MovementTick"/>, the thinks and
+/// the reassess <see cref="Es1FlyerAi"/>'s; <c>attacking</c>'s think is a stub answering 0 until part F3
+/// (docs/herculan/plan-es1-first-mission.md#after-step-8).
 /// </summary>
 public static class Es1FlyerBehaviour {
 	/// <summary>The descriptor indices, <c>FlyerBehaviourStateTable</c> + <c>0x24</c> × the index.</summary>
@@ -69,35 +72,24 @@ public static class Es1FlyerBehaviour {
 	public static short DispatchReassess(Es1Flyer flyer, Es1SimGlobals globals) =>
 		flyer.Behaviour.Descriptor?.FlyerReassess is { } reassess ? reassess(flyer, globals) : (short)0;
 
-	/// <summary><c>Flyer_AiSelectBehaviour</c> (<c>0001c46c</c>), the reassess. Unported: part F2; the flyer stays in its state.</summary>
-	private static short SelectBehaviour(Es1Flyer flyer, Es1SimGlobals globals) => 0;
-
-	/// <summary><c>Flyer_MovementTick</c> (<c>0001b084</c>), the move. Unported: part F2; the flyer does not move.</summary>
-	private static short MovementTick(Es1Flyer flyer, Es1SimGlobals globals) => 0;
-
-	/// <summary><c>Flyer_BehaviourPatrolThink</c> (<c>0001c21c</c>). Unported: part F2.</summary>
-	private static short PatrolThink(Es1Flyer flyer, Es1SimGlobals globals) => 0;
-
-	/// <summary><c>Flyer_BehaviourSearchDestroyThink</c> (<c>0001c14c</c>). Unported: part F2.</summary>
-	private static short SearchDestroyThink(Es1Flyer flyer, Es1SimGlobals globals) => 0;
-
-	/// <summary><c>Flyer_BehaviourScoutThink</c> (<c>0001c2d8</c>). Unported: part F2.</summary>
-	private static short ScoutThink(Es1Flyer flyer, Es1SimGlobals globals) => 0;
-
-	/// <summary><c>Flyer_BehaviourAttackThink</c> (<c>0001c3f8</c>). Unported: part F3.</summary>
+	/// <summary>
+	/// <c>Flyer_BehaviourAttackThink</c> (<c>0001c3f8</c>). Unported: part F3 ports it with the attack run. Until then it
+	/// answers 0, and as <c>attacking</c>'s flag 0 stops its countdown, a flyer that engages stays in it, its move stepping
+	/// it along its nose with the rates it last had.
+	/// </summary>
 	private static short AttackThink(Es1Flyer flyer, Es1SimGlobals globals) => 0;
 
 	/// <summary><c>Flyer_BuildStateTable</c>: name, dwell, flag mask, think, move and reassess of each of the seven states.</summary>
 	private static Es1BehaviourDescriptor[] BuildStateTable() {
-		Es1FlyerStateFunction fly = MovementTick;
-		Es1FlyerStateFunction select = SelectBehaviour;
+		Es1FlyerStateFunction fly = Es1FlyerFlight.MovementTick;
+		Es1FlyerStateFunction select = Es1FlyerAi.SelectBehaviour;
 		return [
 			new("deciding", 0, 0, null, null, select),
 			new("attacking", 50000, 1, AttackThink, fly, select),
-			new("patrolling", 5000, 0, PatrolThink, fly, select),
-			new("search and destroy", 5000, 0, SearchDestroyThink, fly, select),
+			new("patrolling", 5000, 0, Es1FlyerAi.PatrolThink, fly, select),
+			new("search and destroy", 5000, 0, Es1FlyerAi.SearchDestroyThink, fly, select),
 			new("sleeping", 500, 1, null, null, null),
-			new("scouting", 5000, 0, ScoutThink, fly, select),
+			new("scouting", 5000, 0, Es1FlyerAi.ScoutThink, fly, select),
 			new("dead", 500, 1, null, null, null),
 		];
 	}

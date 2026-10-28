@@ -445,6 +445,10 @@ public sealed class Es1Mech : IEs1SimObject {
 	/// <summary>Slot <c>+0x3c</c>, <c>Mech_GetSpeed</c> (<c>00010e48</c>, docs/es1/simulation/mech.md#small-functions): Q10(2000, <see cref="Speed"/>).</summary>
 	public short GetSpeed() => (short)SimMath.Q10MultiplyRounded(2000, Speed);
 
+	/// <summary>Slot <c>+0x50</c>, <c>Mech_CompareCombatRating</c> (<c>00016968</c>): <see cref="Ai.Es1CombatRating.Compare"/>.</summary>
+	public short CompareCombatRating(IEs1SimObject candidate, Es1SimGlobals globals) =>
+		(short)Ai.Es1CombatRating.Compare(this, candidate, globals);
+
 	/// <summary>Slot <c>+0x24</c>, <see cref="Es1MechDamage.HitTest"/>.</summary>
 	public int HitTest(Es1Shot shot, Es1SimGlobals globals) => Es1MechDamage.HitTest(this, shot, globals);
 

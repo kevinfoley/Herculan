@@ -375,8 +375,11 @@ public sealed class Es1Simulation {
 		ViewChain.Camera.Steer(trigger, cameraY, cameraX);
 
 		if (Viewed.TargetClass == FlyerClass && !cameraDriven) {
-			// PLACEHOLDER: Flyer_ApplyFlightCommand (0001b794)(viewed, throttle, steering) and the viewed object's +0xa9
-			// set, the flyer's controls; part F2 ports them. The view's object is a HERC here, so this is not reached.
+			// Retail's flyer controls, Es1FlyerFlight.ApplyFlightCommand(viewed, throttle, steering) and the viewed object's
+			// +0xa9 set (docs/es1/simulation/flyers.md#the-player-at-a-flyers-controls), are not ported: only N's walk
+			// (NextSquadObject) changes the view's object, over the player's group, and every retail player's group holds
+			// HERCs (HercWorks.Query orders: the 77 player's squads, and every record sharing their group, hold mechs or none), so no
+			// retail mission reaches this branch.
 		} else if (LocalPlayer.IsAnimated) {
 			TickPlayersMachine(steer, throttle, twist, pitch);
 		}
@@ -491,10 +494,10 @@ public sealed class Es1Simulation {
 	/// <c>N</c>'s walk: from <see cref="Viewed"/> on through <c>LiveObjectList</c> with <c>ObjectList_Next</c>
 	/// (<c>0000dba4</c>), which wraps, to the first object whose height (<c>+0x28</c>) is not negative and whose group is
 	/// the player's, the player included. Retail's walk has no end and spins forever when no object passes; this one gives
-	/// up after a full turn of the list and answers null, an engine guard. An object that is not a HERC is passed over:
-	/// PLACEHOLDER: a flyer of the player's group, which retail's walk would make the view's object
-	/// (docs/es1/simulation/flyers.md#open), is not taken, as the view's object is a HERC here; part F2 ports the player at
-	/// a flyer's controls.
+	/// up after a full turn of the list and answers null, an engine guard. Only HERCs are taken: a group's members are of
+	/// one kind, and every retail player's group holds mechs (HercWorks.Query orders: the 77 player's squads, and every
+	/// record sharing their group, hold mechs or none), so retail's walk never reaches a flyer
+	/// (docs/es1/simulation/flyers.md#the-player-at-a-flyers-controls).
 	/// </summary>
 	private Es1Mech? NextSquadObject() {
 		var live = Globals.LiveObjects;

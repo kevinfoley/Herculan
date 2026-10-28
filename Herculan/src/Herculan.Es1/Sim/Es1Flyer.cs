@@ -143,7 +143,29 @@ public sealed class Es1Flyer : IEs1SimObject {
 	public short TargetHolders { get; set; }
 
 	/// <summary><c>+0x15e</c>, its target, counted in the target's <c>+0x15c</c>.</summary>
-	public IEs1SimObject? Target { get; set; }
+	public IEs1SimObject? Target { get; private set; }
+
+	/// <summary>
+	/// <paramref name="target"/> installed as the sweeps and <c>Flyer_EngageWithFlight</c> install one
+	/// (docs/es1/simulation/flyers.md#the-thinks): when it is not <see cref="Target"/>, the old target's holders' count
+	/// down by 1 and the new one's up by 1, and <see cref="TargetChanged"/> set; null installs none.
+	/// </summary>
+	public void InstallTarget(IEs1SimObject? target) {
+		if (ReferenceEquals(target, Target)) {
+			return;
+		}
+
+		if (Target != null) {
+			Target.TargetHolders--;
+		}
+
+		Target = target;
+		if (target != null) {
+			target.TargetHolders++;
+		}
+
+		TargetChanged = true;
+	}
 
 	/// <summary><c>+0x162</c>, the target class, <see cref="FlyerClass"/>.</summary>
 	public short TargetClass => FlyerClass;

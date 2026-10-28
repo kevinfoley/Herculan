@@ -330,6 +330,19 @@ public interface IEs1SimObject : IEs1Placed {
 	/// <summary>Slot <c>+0x3c</c>, the speed the AI's shot leads by: the base's <c>SimObject_GetSpeedZero</c> (<c>0000d6c8</c>) answers 0.</summary>
 	short GetSpeed() => 0;
 
+	/// <summary>
+	/// Slot <c>+0x50</c>, how <paramref name="candidate"/>'s combat rating compares with the object's, 0 to 2, which
+	/// <see cref="Ai.Es1Targets.SelectTarget"/> indexes its weights by: the base's <c>SimObject_CompareCombatRatingStub</c>
+	/// (<c>0000d730</c>) answers 1 (docs/es1/simulation/sim-object-base.md#the-base-classs-own-functions).
+	/// </summary>
+	short CompareCombatRating(IEs1SimObject candidate, Es1SimGlobals globals) => 1;
+
+	/// <summary>
+	/// <c>+0x94</c>, do not take the player's selection, which <see cref="Ai.Es1Targets.IsTargetable"/> reads; only a
+	/// HERC's squad orders write it, so it is clear on any other object.
+	/// </summary>
+	bool IgnorePlayerSelection => false;
+
 	/// <summary>Slot <c>+0x48</c>, the sensor arc: the base's <see cref="Es1SensorModel.BearingInSensorArc"/>.</summary>
 	bool BearingInSensorArc(short bearing) => Es1SensorModel.BearingInSensorArc(Heading, bearing);
 
