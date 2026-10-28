@@ -53,33 +53,6 @@ public sealed class Es1Roster {
 	}
 }
 
-/// <summary>A block-4 trigger area as <c>TriggerArea_Resolve</c> (<c>ES1DBSIM 0001cb48</c>) resolves it (docs/es1/simulation/mission-groups.md#trigger-areas).</summary>
-/// <param name="Shape">The type: 0 a box between two points, any other a circle about one.</param>
-/// <param name="FirstPoint">The block-1 point the second word indexes.</param>
-/// <param name="SecondPointOrRadius">For type 0 the block-1 point the third word indexes; otherwise the third word × 10.</param>
-public sealed record Es1TriggerArea(short Shape, int FirstPoint, int SecondPointOrRadius);
-
-/// <summary>A block-5 action as the first pass builds its 16-byte record (docs/es1/formats/script-dat.md#reading).</summary>
-public sealed class Es1Action {
-	/// <inheritdoc cref="Es1ScriptAction.Type"/>
-	public short Type { get; init; }
-
-	/// <inheritdoc cref="Es1ScriptAction.Verb"/>
-	public short Verb { get; init; }
-
-	/// <summary>The area refs before the first negative one, block-4 indices.</summary>
-	public int[] Areas { get; init; } = [];
-
-	/// <summary><c>+0xa</c>, set once the action has fired (docs/es1/simulation/mission-groups.md#actions).</summary>
-	public bool Activated { get; set; }
-
-	/// <summary><c>+0xc</c>, the flag the action writes, from <c>.MSN</c> <c>0x1a</c>.</summary>
-	public short Flag { get; init; }
-
-	/// <summary><c>+0xe</c>, the operation, from <c>.MSN</c> <c>0x1c</c>.</summary>
-	public short Operation { get; init; }
-}
-
 /// <summary>
 /// <c>DBSim_LoadScriptDat</c> (<c>ES1DBSIM 0001d850</c>), the world load's first pass, over the three files
 /// (docs/es1/formats/script-dat.md#reading): the flags, the squad, the header and blocks 1 to 5 kept, and the rosters'
@@ -173,11 +146,12 @@ public sealed class Es1MissionScript {
 		script.Headings = dat.Headings.Select(DecodeHeading).ToArray();
 		script.Routes = dat.WaypointGroups.Select(group => group.Select(point => (int)point).ToArray()).ToArray();
 		script.TriggerAreas = dat.TriggerAreas
-			.Select(a => new Es1TriggerArea(a.Shape, a.PointRef, a.Shape == 0 ? a.Word0A : a.Word0A * 10)).ToArray();
+			.Select(a => Es1TriggerArea.Resolve(a.Shape, a.PointRef, a.Word0A, script.Points)).ToArray();
 		script.Actions = dat.Actions.Select(a => new Es1Action {
 			Type = a.Type,
 			Verb = a.Verb,
-			Areas = a.AreaRefs.TakeWhile(area => area >= 0).Select(area => (int)area).ToArray(),
+			Areas = a.AreaRefs.TakeWhile(area => area >= 0).Where(area => area < script.TriggerAreas.Length)
+				.Select(area => script.TriggerAreas[area]).ToArray(),
 			Flag = a.Word1A,
 			Operation = a.Word1C,
 		}).ToArray();

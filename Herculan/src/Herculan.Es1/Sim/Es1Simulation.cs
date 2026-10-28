@@ -184,7 +184,8 @@ public sealed class Es1Simulation {
 			yield break;
 		}
 
-		// 5. PLACEHOLDER: Actions_EvaluateTriggers (0001f87c)(LocalPlayerMech), plan step 8. Then the views.
+		// 5. The triggers with LocalPlayerMech, frozen or not, then the views.
+		Es1Actions.EvaluateTriggers(Globals.MissionActions, _groups, LocalPlayer, Globals.MissionVars);
 		ViewChain.Apply(Controls);
 
 		// 6. Unless frozen, the sensor model, then the systems tick.

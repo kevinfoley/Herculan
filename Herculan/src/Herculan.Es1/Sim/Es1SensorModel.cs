@@ -188,9 +188,9 @@ public static class Es1SensorModel {
 				}
 			} else if (distance < EngagementRange) {
 				other.Engaged = true;
-				ActivateEngagementAction(machine);
+				ActivateEngagementAction(machine, globals);
 				machine.Engaged = true;
-				ActivateEngagementAction(other);
+				ActivateEngagementAction(other, globals);
 			}
 		}
 	}
@@ -234,7 +234,7 @@ public static class Es1SensorModel {
 				Es1SensorTables.Set(simObject.Sensors.Contacts, contact.ListSlot, true);
 				if (distance < EngagementRange) {
 					contact.Engaged = true;
-					ActivateEngagementAction(simObject);
+					ActivateEngagementAction(simObject, globals);
 				}
 			}
 		}
@@ -326,10 +326,13 @@ public static class Es1SensorModel {
 	/// <summary>Whether the object's group holds no action (<c>+0x16</c>); an object with no group never, an engine guard.</summary>
 	private static bool ActionClear(IEs1SimObject simObject) => simObject.Group is { Action: null };
 
-	/// <summary>The object's engagement action run unless it is null or the object's gate is set.</summary>
-	private static void ActivateEngagementAction(IEs1SimObject simObject) {
-		if (simObject.EngagementAction != null && !simObject.EngagementGate) {
-			// PLACEHOLDER: Action_Activate (0001cc5c)(action), the actions, plan step 8.
+	/// <summary>
+	/// The object's engagement action (<c>+0x16c</c>) activated (<see cref="Es1Action.Activate"/>) unless it is null or the
+	/// object's gate <c>+0x9c</c> is set, as the sensor model and the shot sweep fire it.
+	/// </summary>
+	internal static void ActivateEngagementAction(IEs1SimObject simObject, Es1SimGlobals globals) {
+		if (simObject.EngagementAction is { } action && !simObject.EngagementGate) {
+			action.Activate(globals.MissionVars);
 		}
 	}
 

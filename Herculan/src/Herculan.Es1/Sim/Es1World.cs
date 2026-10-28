@@ -103,6 +103,7 @@ public sealed class Es1World {
 		world.Globals.HeaderWord7 = script.Header[7];
 		world.Globals.HeaderWord8 = script.Header[8];
 		world.Globals.MissionVars = script.Flags;
+		world.Globals.MissionActions = script.Actions;
 		world.SpawnObjects(content, weapons, weaponModels, formations);
 		// Sim_StartMission's step 7, after the second pass: every effect and every debris piece the spawn made deleted.
 		world.Globals.Explosions.DeleteAll();

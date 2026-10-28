@@ -98,6 +98,12 @@ public sealed class Es1SimGlobals {
 	/// </summary>
 	public short[] MissionVars { get; set; } = [];
 
+	/// <summary>
+	/// <c>MissionActions</c> (<c>000bc496</c>), block 5's actions (<see cref="Es1MissionScript.Actions"/>), which
+	/// <see cref="Es1Actions.EvaluateTriggers"/> walks; empty until a world is spawned.
+	/// </summary>
+	public IReadOnlyList<Es1Action> MissionActions { get; set; } = [];
+
 	/// <summary><c>g_MechPool</c>'s machines in build order, which the blasts and the outnumbered damage walk from the end.</summary>
 	public IReadOnlyList<Es1Mech> MechPool { get; set; } = [];
 

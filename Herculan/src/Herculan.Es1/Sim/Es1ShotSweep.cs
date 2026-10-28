@@ -59,8 +59,9 @@ public static class Es1ShotSweep {
 	/// <item>the zone's shapes (<see cref="Es1ZoneShapes.RaycastShapeObjects"/>), a hit a strike whose shape becomes the
 	/// blocker;</item>
 	/// <item>the live objects in list order but the owner and one whose group holds an action, each through its hit test
-	/// (<see cref="IEs1SimObject.HitTest"/>): a hit on the other side sets the owner's <see cref="IEs1SimObject.Engaged"/>
-	/// and clears the blocker, one on the owner's side becomes it; the length becomes the hit's and the walk goes on while
+	/// (<see cref="IEs1SimObject.HitTest"/>): a hit on the other side sets the owner's <see cref="IEs1SimObject.Engaged"/>,
+	/// activates the object's engagement action (<see cref="Es1SensorModel.ActivateEngagementAction"/>) and clears the
+	/// blocker, one on the owner's side becomes it; the length becomes the hit's and the walk goes on while
 	/// it is <see cref="NearHit"/> or more;</item>
 	/// <item>after a strike that struck no object, the impact effect at the ray's end, its Z raised to 0, entry
 	/// (<c>Math_RandomNext</c> &amp; 3) of the ground array;</item>
@@ -121,8 +122,7 @@ public static class Es1ShotSweep {
 			bool sameSide = simObject.Group?.Side == ownerSide;
 			if (!sameSide) {
 				owner.Engaged = true;
-				// PLACEHOLDER: Action_Activate (0001cc5c) of the object's +0x16c action unless its +0x9c is set, which sets
-				// off an enemy's engaged action; mission actions are plan step 8's.
+				Es1SensorModel.ActivateEngagementAction(simObject, globals);
 				blocker = null;
 			} else {
 				blocker = simObject;

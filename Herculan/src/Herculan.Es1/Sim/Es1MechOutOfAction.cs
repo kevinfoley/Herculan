@@ -93,7 +93,8 @@ public static class Es1MechOutOfAction {
 	/// <summary>
 	/// Step 5's immobilizing branch and steps 6 and 7: while not destroyed, the attacker told
 	/// (<see cref="IEs1SimObject.CreditNeutralisedTarget"/>, not already immobilized), the report
-	/// (<see cref="Es1Mech.ReportOutOfAction"/>) and <c>disabled</c> installed; then <see cref="Es1Mech.Immobilized"/> set;
+	/// (<see cref="Es1Mech.ReportOutOfAction"/>), the machine's <c>+0x170</c> action activated when it has one
+	/// (<see cref="Es1Action.Activate"/>) and <c>disabled</c> installed; then <see cref="Es1Mech.Immobilized"/> set;
 	/// <see cref="DisabledMessage"/> posted when the attacker is <c>LocalPlayerMech</c> and the machine its target; and
 	/// for <c>LocalPlayerMech</c> itself, <see cref="TurnToCamera"/>.
 	/// </summary>
@@ -101,7 +102,7 @@ public static class Es1MechOutOfAction {
 		if (!machine.Destroyed) {
 			attacker?.CreditNeutralisedTarget(false, machine, globals);
 			machine.ReportOutOfAction(globals);
-			// PLACEHOLDER: Action_Activate (0001cc5c) of the machine's +0x170 action when it has one, plan step 8.
+			machine.Actions.Second?.Activate(globals.MissionVars);
 			machine.Behaviour.SetState(Es1MechBehaviour.States[Es1MechBehaviour.Disabled], globals.DwellJitter);
 		}
 
@@ -137,7 +138,7 @@ public static class Es1MechOutOfAction {
 	/// Step 8, death, while not destroyed: when component <see cref="CockpitComponent0"/> or
 	/// <see cref="CockpitComponent1"/> is fully destroyed (<see cref="Es1DamageHeader.IsFullyDestroyed"/>) or
 	/// <see cref="PilotInternal"/> reads full. <see cref="Es1Mech.Destroyed"/> set; the attacker told with whether the
-	/// machine was already immobilized; the report when it was not; the radar off; <see cref="DestroyedMessage"/> on step
+	/// machine was already immobilized; the report and the <c>+0x170</c> action when it was not; the radar off; <see cref="DestroyedMessage"/> on step
 	/// 6's test; then <c>dead</c> installed, or for a record whose <c>+0x4c</c> is set <see cref="Es1Mech.Byte32Set"/>
 	/// set, the machine sunk to <see cref="LimboDepth"/>, <c>in limbo</c> installed and every shadow destroyed with the
 	/// count zeroed.
@@ -157,7 +158,7 @@ public static class Es1MechOutOfAction {
 		attacker?.CreditNeutralisedTarget(immobilized, machine, globals);
 		if (!immobilized) {
 			machine.ReportOutOfAction(globals);
-			// PLACEHOLDER: Action_Activate (0001cc5c) of the machine's +0x170 action when it has one, plan step 8.
+			machine.Actions.Second?.Activate(globals.MissionVars);
 		}
 
 		machine.RadarOn = false;

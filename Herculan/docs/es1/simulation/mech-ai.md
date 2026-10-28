@@ -238,7 +238,7 @@ Callees of other files read for them: `Component_ReadDamagePercent` (`0000a16c`)
 
 ## Open
 
-- **Open:** what `EDI` holds when `Mech_AiSelectBehaviour` is reached with a group word it has no case for (0, 2, 4, 5, 9, or above 11), through `Behaviour_DispatchReassess` and its six direct callers; and which group words the retail missions' `.MSN` group `0x32` carries.
+- **Open:** what `EDI` holds when `Mech_AiSelectBehaviour` is reached with a group word it has no case for (0, 2, 4, 5, 9, or above 11), through `Behaviour_DispatchReassess` and its six direct callers. The retail missions' `.MSN` group `0x32` carries −1, 1, 3, 6, 8, 10 and 11 (`HercWorks.Query orders` over the 77 files); −1, the one with no case, is the order of 88 groups of HERCs, 32 of them the player's squad.
 - **Open:** what reaches `HeapPtr_DtorMechAiCopy`, `Mech_GetGroupSide` and `Ai_NavigationStepThunk`, to which `es2_xref.py` finds no branch or stored pointer; and the four dword occurrences of `Ai_AimAndFire`'s padding entry, which may be instruction bytes.
 - **Open:** whether the out-of-action machine's loop through `fleeing` and the combat reassess every tick shows in play. A retail check: disarm an enemy HERC (shoot off its weapons) and watch whether it runs off steadily or jitters from side to side.
 - **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: put a guard group's enemy in sight and watch it walk out toward the enemy rather than standing where it was (`driving off en`); or `BP <CS>:00017c84` fires once a tick for such a machine.
