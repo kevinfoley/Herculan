@@ -101,6 +101,12 @@ public enum MissionCheckKind {
 	/// (<see cref="ScriptLintKind.MapMarkersFull"/>). About the mission as a whole; the value is the count.
 	/// </summary>
 	MapMarkersFull,
+
+	/// <summary>
+	/// More objects, counted as <see cref="ObjectLimits.Count"/> counts them, than DBSIM's per-object tables hold
+	/// (<see cref="ScriptLintKind.ObjectsFull"/>). About the mission as a whole; the value is the count.
+	/// </summary>
+	ObjectsFull,
 }
 
 /// <summary>One problem <see cref="MissionCheck"/> found, and the <c>.MSN</c> record it is about.</summary>
@@ -179,6 +185,7 @@ public static class MissionCheck {
 		check.Rosters();
 		check.SkippedBlocks();
 		check.MapMarkers();
+		check.Objects();
 		return check.Findings;
 	}
 
@@ -606,6 +613,14 @@ public static class MissionCheck {
 			if (count > MapMarkerLimits.Cap) {
 				Add(MissionCheckKind.MapMarkersFull, MissionCheckFinding.MissionRow, -1,
 					$"it needs {count} heads-down map markers; DBSIM builds {MapMarkerLimits.Cap}.", count);
+			}
+		}
+
+		public void Objects() {
+			int count = ObjectLimits.Count(layout);
+			if (count > ObjectLimits.Cap) {
+				Add(MissionCheckKind.ObjectsFull, MissionCheckFinding.MissionRow, -1,
+					$"it puts {count} objects in the simulation; DBSIM's per-object tables hold {ObjectLimits.Cap}.", count);
 			}
 		}
 

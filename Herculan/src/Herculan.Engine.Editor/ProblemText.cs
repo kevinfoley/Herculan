@@ -84,6 +84,9 @@ internal static class ProblemText {
 				$"Over maximum map marker limit ({MapMarkerLimits.Cap}) by {found.Value - MapMarkerLimits.Cap}, so in retail the "
 				+ "mission crashes as it starts: remove HERCs, flyers, structures or vehicles, or waypoints from the route of the "
 				+ "squad's first order.",
+			MissionCheckKind.ObjectsFull =>
+				$"Over maximum object limit ({ObjectLimits.Cap}) by {found.Value - ObjectLimits.Cap}, so in retail the mission can "
+				+ "crash soon after it starts: remove HERCs, flyers, structures or vehicles.",
 			_ => found.Message,
 		};
 	}

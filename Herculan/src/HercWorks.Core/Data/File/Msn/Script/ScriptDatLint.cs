@@ -63,6 +63,12 @@ public enum ScriptLintKind {
 	/// <see cref="ScriptDatLint.MapMarkers"/> counts them; the value is that count.
 	/// </summary>
 	MapMarkersFull,
+
+	/// <summary>
+	/// More objects than DBSIM's per-object tables hold (<see cref="ScriptDatLint.ObjectCap"/>), counted as
+	/// <see cref="ScriptDatLint.Objects"/> counts them; the value is that count.
+	/// </summary>
+	ObjectsFull,
 }
 
 /// <summary>One problem <see cref="ScriptDatLint"/> found, and the record it is in.</summary>
@@ -120,12 +126,35 @@ public static class ScriptDatLint {
 	public const int RouteMarkerCap = 9;
 
 	/// <summary>
+	/// Objects the simulation's per-object contact and line-of-sight tables hold, which nothing checks as objects are added:
+	/// docs/retail/simulation/sim-object-layout.md#the-two-per-object-tables-are-112-rows-each.
+	/// </summary>
+	public const int ObjectCap = 112;
+
+	/// <summary>
 	/// The markers <paramref name="script"/> puts on the heads-down map: one per waypoint of the squad's route after its first
-	/// (slot 0's order of group 0, at most <see cref="RouteMarkerCap"/>), one per live roster slot — each slot a group past the
-	/// first names — and per squad machine, and the nav marker's.
+	/// (slot 0's order of group 0, at most <see cref="RouteMarkerCap"/>), one per object (<see cref="Objects"/>), and the nav
+	/// marker's.
 	/// </summary>
 	/// <param name="squadSize">The machines <c>player.mec</c> brings; 0 when unknown, which counts group 0's member refs instead.</param>
 	public static int MapMarkers(ScriptDat script, int squadSize = 0) {
+		var squad = script.Groups.FirstOrDefault();
+		int route = 0;
+		short order = squad?.OrderRefs[0] ?? -1;
+		short routeRef = order >= 0 && order < script.Orders.Length ? script.Orders[order].RouteRef : (short)-1;
+		if (routeRef >= 0 && routeRef < script.WaypointGroups.Length) {
+			route = Math.Clamp(script.WaypointGroups[routeRef].Waypoints.Length - 1, 0, RouteMarkerCap);
+		}
+
+		return route + Objects(script, squadSize) + 1;
+	}
+
+	/// <summary>
+	/// The objects <paramref name="script"/> puts in the simulation: one per live roster slot — each slot a group past the first
+	/// names — and per squad machine.
+	/// </summary>
+	/// <param name="squadSize"><inheritdoc cref="MapMarkers" path="/param[@name='squadSize']"/></param>
+	public static int Objects(ScriptDat script, int squadSize = 0) {
 		var live = new HashSet<(short Kind, short Slot)>();
 		for (int i = 1; i < script.Groups.Length; i++) {
 			var group = script.Groups[i];
@@ -137,14 +166,7 @@ public static class ScriptDatLint {
 
 		var squad = script.Groups.FirstOrDefault();
 		int machines = squadSize > 0 ? squadSize : squad?.MemberRefs.Count(member => member >= 0) ?? 0;
-		int route = 0;
-		short order = squad?.OrderRefs[0] ?? -1;
-		short routeRef = order >= 0 && order < script.Orders.Length ? script.Orders[order].RouteRef : (short)-1;
-		if (routeRef >= 0 && routeRef < script.WaypointGroups.Length) {
-			route = Math.Clamp(script.WaypointGroups[routeRef].Waypoints.Length - 1, 0, RouteMarkerCap);
-		}
-
-		return route + live.Count + machines + 1;
+		return live.Count + machines;
 	}
 
 	/// <summary>Runs every check over <paramref name="script"/>, in block order, then over <c>mission.str</c>'s length.</summary>
@@ -253,6 +275,14 @@ public static class ScriptDatLint {
 			findings.Add(new(ScriptBlock.Groups, -1,
 				$"The mission needs {markers} heads-down map markers; DBSIM builds {MapMarkerCap} and writes the next through a pointer "
 				+ "read from past their array.", ScriptLintKind.MapMarkersFull, markers));
+		}
+
+		// Each object's contact and line-of-sight tables are indexed by the other object's list slot with no range test.
+		int objects = Objects(script, squadSize);
+		if (objects > ObjectCap) {
+			findings.Add(new(ScriptBlock.Groups, -1,
+				$"The mission puts {objects} objects in the simulation; DBSIM's per-object tables hold {ObjectCap}, and each object "
+				+ "past them writes its sightings over other objects' fields.", ScriptLintKind.ObjectsFull, objects));
 		}
 
 		for (int i = 0; i < script.Orders.Length; i++) {

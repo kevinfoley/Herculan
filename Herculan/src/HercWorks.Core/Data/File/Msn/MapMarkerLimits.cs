@@ -6,20 +6,12 @@ namespace HercWorks.Core.Data.File.Msn;
 /// How many markers a mission's layout puts on the heads-down map, in every version of the mission at once, against the
 /// markers DBSIM builds (<see cref="ScriptDatLint.MapMarkerCap"/>): what the editor's readout shows and what the mission check
 /// reports (<see cref="MissionCheckKind.MapMarkersFull"/>). <see cref="ScriptDatLint.MapMarkers"/> counts the same markers in
-/// one generated <c>script.dat</c>. Every herc, flyer and structure a group outside the squad places counts, whatever its
-/// condition, as <see cref="RosterLimits"/> counts a roster, and the squad as its positions (<see cref="SquadRoster.Positions"/>).
+/// one generated <c>script.dat</c>. Each object counts as <see cref="ObjectLimits.Count"/> counts it.
 /// </summary>
 public static class MapMarkerLimits {
-	private const int MechRow = 12;
-	private const int BaseRow = 14;
-
 	/// <summary>The markers <paramref name="layout"/> puts on the map: the squad's route markers, one per object, and the nav marker's.</summary>
-	public static int Count(MissionLayout layout) {
-		short squad = SquadRoster.Squad(layout);
-		int objects = Enumerable.Range(MechRow, BaseRow - MechRow + 1)
-			.Sum(row => layout.Entries(row).Count(entry => entry.Presence.Group != -1 && entry.Presence.Group != squad));
-		return RouteMarkers(layout, squad) + objects + SquadRoster.Positions(layout) + 1;
-	}
+	public static int Count(MissionLayout layout) =>
+		RouteMarkers(layout, SquadRoster.Squad(layout)) + ObjectLimits.Count(layout) + 1;
 
 	/// <summary>The markers DBSIM builds.</summary>
 	public static int Cap => ScriptDatLint.MapMarkerCap;

@@ -9,7 +9,8 @@ namespace Herculan.Engine.Editor;
 /// The viewport's bottom-left readout of how many of DBSIM's roster slots the mission takes against each cap, counted as the
 /// adds refuse by (<see cref="RosterLimits"/>): hercs with the squad positions group 0 gives, flyers, and structures with
 /// ground vehicles, which share block 9's slots; then the positions against what DBSIM's spawn pass reads
-/// (<see cref="SkipArrayLimits"/>), and the heads-down map's markers against what it builds (<see cref="MapMarkerLimits"/>).
+/// (<see cref="SkipArrayLimits"/>), the heads-down map's markers against what it builds (<see cref="MapMarkerLimits"/>), and
+/// the objects against what the per-object tables hold (<see cref="ObjectLimits"/>).
 /// </summary>
 internal static class RosterCountsOverlay {
 	private const int PointRow = 6;
@@ -47,6 +48,11 @@ internal static class RosterCountsOverlay {
 			+ "plus one per waypoint of the squad's first order's route after its start (up to nine) and one for the nav "
 			+ "marker. In retail, past the limit the mission crashes as it starts; HERCULAN runs it, but its map shows only "
 			+ $"the first {MapMarkerLimits.Cap} markers.");
+		ImGui.TextUnformatted($"Objects: {ObjectLimits.Count(layout)}/{ObjectLimits.Cap}");
+		Tooltip("Every HERC, flyer, structure and vehicle the mission places, under any condition, the squad's machines "
+			+ "included. Each keeps track of which others it has spotted and can see, with room for this many. In retail, past "
+			+ "the limit those records spill into other objects' data, which can crash the mission soon after it starts; "
+			+ "HERCULAN runs it.");
 		ImGui.End();
 		ImGui.PopStyleVar();
 		ImGui.PopStyleColor();

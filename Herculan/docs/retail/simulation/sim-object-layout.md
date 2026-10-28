@@ -108,6 +108,16 @@ So an object of side 2 neither sweeps nor is swept: it is never painted and neve
 
 `obj+0xc2` is the contact table and `obj+0x132` the line-of-sight cache, both flat byte arrays indexed by the *other* object's `listIndex` (`obj+0x4b`, assigned by `ObjectList_Add`). Neither has a length written down anywhere; both are `0x70` = 112 bytes, from the gap between them, corroborated by the identical `0x70` gap from `+0x132` to the next member at `+0x1a2`. **112 is therefore the simulation's object cap.**
 
+Nothing enforces it. `ObjectList_Add` hands out the next slot with no bound, and the live-object list itself is sized by a count `DBSim_LoadScriptDat` computes as it reads the mission (`004252c6`), so a mission can place more. Every object past slot 111 is written into every other object's tables at an offset past their end:
+
+| Slot | Contact row lands in | Line-of-sight row lands on |
+|---|---|---|
+| 112-127 | the line-of-sight cache, slots 0-15 | `+0x1a2`-`+0x1b1`, the target class at `+0x1a8` among them ([Object classification](#object-classification)) |
+| 128-131 | the same, slots 16-19 | the engagement action pointer at `+0x1b2` |
+| 132 and up | the same, slots 20 on | the defeat action pointer at `+0x1b6`, and the fields after it |
+
+`Detection_LineOfSight` (`00412608`) stores the line-of-sight row as 1 or 0 (`004126d5`, `004126e6`). With 129 objects or more, the first object that looks at slot 128 sets the low byte of its own engagement action pointer, null for an object with no action ([An object's own two actions](mission-deployment.md#an-objects-own-two-actions--0x1b2-and-0x1b6)), so the pointer reads 1. The next time `Detection_Sweep` (`004128f8`) finds that object in a pair with mutual contact within 50000, it passes 1 to `Action_Activate` (`00423430`), which faults reading `+0x0a` (`0042343c`), seconds into the mission.
+
 ## Countdowns keep their counter one byte past the record
 
 There are two countdown records, and both are addressed by a pointer to a leading byte the tick never touches:
