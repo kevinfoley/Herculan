@@ -5,6 +5,7 @@ using Herculan.Engine.Numerics;
 using Herculan.Engine.Render;
 using Herculan.Engine.Settings;
 using Herculan.Engine.Sim;
+using Herculan.Engine.Sim.Ai;
 using Herculan.Engine.Terrain;
 using Herculan.Engine.World;
 using System.Numerics;
@@ -162,7 +163,7 @@ public sealed class MissionScene {
 		bool squadmateClear = world.Tweaks.GetSettingValue(TweakSettingDefinitions.SquadmateClearOfTransport);
 		foreach (var listed in mission.Placements) {
 			var placement = squadmateClear ? StuckSquadmateFix.Adjust(listed, mission.Placements) : listed;
-			var spawned = Spawn(placement, models, tables, world.Random, world.Tweaks);
+			var spawned = Spawn(placement, models, tables, world.Random, world.Tweaks, world.DwellJitter);
 			if (spawned == null) {
 				continue;
 			}
@@ -456,7 +457,7 @@ public sealed class MissionScene {
 	/// bound. Its component damage draws from the session's generator. Null for a type the install has nothing for, as in
 	/// <see cref="Load"/>.
 	/// </summary>
-	public SceneObject? CreateObject(MissionPlacement placement) => Spawn(placement, _library, _tables, World.Random, World.Tweaks);
+	public SceneObject? CreateObject(MissionPlacement placement) => Spawn(placement, _library, _tables, World.Random, World.Tweaks, World.DwellJitter);
 
 	/// <summary>
 	/// The wreck <see cref="BaseType.HulkTypeIndex"/> <paramref name="index"/> names, from the model library: the one
@@ -762,9 +763,9 @@ public sealed class MissionScene {
 	/// <i>model</i> cannot be built still spawns: it is really there, and the scene reports it.
 	/// </summary>
 	private static SceneObject? Spawn(MissionPlacement placement, SceneModelLibrary models, SpawnTables tables,
-			SimRandom random, TweakSettings tweaks) {
+			SimRandom random, TweakSettings tweaks, DwellJitter dwellJitter) {
 		var (simObject, model, detail) = Create(placement, models, tables.BaseTypes, tables.BaseCollision, tables.Weapons,
-			tables.TransportArmament, random, tweaks);
+			tables.TransportArmament, random, tweaks, dwellJitter);
 		if (simObject == null) {
 			return null;
 		}
@@ -820,7 +821,7 @@ public sealed class MissionScene {
 			MissionPlacement placement,
 			SceneModelLibrary models, BaseTypeTable baseTypes, BaseCollisionTable baseCollision,
 			WeaponCatalog? weapons, TransportArmament? transportArmament, SimRandom random,
-			TweakSettings tweaks) {
+			TweakSettings tweaks, DwellJitter dwellJitter) {
 		switch (placement.Kind) {
 			case MissionUnitKind.Mech: {
 				if (placement.TypeName == null || models.MechData(placement.TypeName) is not { } simData) {
@@ -840,7 +841,8 @@ public sealed class MissionScene {
 						ComponentDamageFor(models, placement.TypeName,
 							ComponentDamage.MechComponentCount, ComponentDamage.MechDependentCount, random),
 						models.MechWeaponCellCount,
-						models.FlightModelFor(placement.TypeName)),
+						models.FlightModelFor(placement.TypeName),
+						dwellJitter),
 					model,
 					detail);
 			}
@@ -859,7 +861,8 @@ public sealed class MissionScene {
 							ComponentDamage.FlyerComponentCount, ComponentDamage.FlyerDependentCount, random),
 						models.FlightModelFor(placement.TypeName) is { } fm
 							? new FlightModelRecord(fm)
-							: null) {
+							: null,
+						dwellJitter) {
 						// The two PROJ.DAT rows the flyer AI names by literal — see FlyerObject.AttackRun.
 						GunProjectile = weapons?.ProjectileAt(FlyerObject.GunProjectileIndex),
 						MissileProjectile = weapons?.Lookup(

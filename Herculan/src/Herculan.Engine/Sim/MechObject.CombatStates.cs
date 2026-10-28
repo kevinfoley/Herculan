@@ -529,7 +529,7 @@ public sealed partial class MechObject {
 		_ramCharging = false;
 		_ramPhaseTimer = 0;
 
-		Behaviour.SetState(state);
+		Behaviour.SetState(state, DwellJitter);
 	}
 
 	/// <summary>
