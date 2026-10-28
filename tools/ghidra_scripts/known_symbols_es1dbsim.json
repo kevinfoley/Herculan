@@ -8431,7 +8431,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mission_StatusForAlert",
-      "description": "(quiet, machine) in stack order, callee-cleaned: Mission_Status (0000f4e8)(machine, quiet, the int16 header word 3 at 000bc4a2), returned as it is. ES2's Mission_StatusForAlert (DBSIM 00413180) also records a published answer as the status raised. es2_xref finds two calls, from Mission_PollStatus (0000f454) and 00059f8f, in bytes of Sim_DispatchCommand (00059df8) Ghidra has not disassembled, which pushes LocalPlayerMech (000b5b86) and 1.",
+      "description": "(quiet, machine) in stack order, callee-cleaned: Mission_Status (0000f4e8)(machine, quiet, the int16 header word 3 at 000bc4a2), returned as it is. ES2's Mission_StatusForAlert (DBSIM 00413180) also records a published answer as the status raised. es2_xref finds two calls, from Mission_PollStatus (0000f454) and Sim_DispatchCommand (00059df8) at 00059f8f, its Q case, which pushes LocalPlayerMech (000b5b86) and 1.",
       "source": "Herculan/docs/es1/simulation/mission-status.md#the-status--mission_status-0000f4e8; ES1DBSIM decompile at 0000f43c, disassembly at 00059f87",
       "verified": {
         "bytes": "0000f43c+24",
@@ -14065,7 +14065,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_SetShakeBand",
-      "description": "(amplitude), callee-cleaned: returns at once when CockpitViewManager_Published (00021f98)'s manager is in view 4 (+0x10) or has +0x18 set. CockpitShakeRestOffset (000afb54) and CockpitShakeOffset (000afb5c) take CockpitViewCanvasOrigin (000afa9c); CockpitShakeBand (000afb64) becomes {y - amplitude, y} in view 1 and {y, y + amplitude} in views 0, 2 and 3. In views 2 and 3 it zeroes both offsets' x and, with the installed render context's (000bdbda) +0x208/+0x20c at 0, saves CockpitShakeStripRegion (000afb78) into CockpitShakeStripPixels (000afb90) with Region_Save (000665d6) and fills the region's rect with Raster_FillRect (00053d9c) in colour 0x3f on the draw page as it is and then on the display's +0x88, leaving +0x8c the draw page. Zeroes CockpitShakeTotal (000afb6c) and sets CockpitViewShakeArmed (000925ec). ES2's CockpitView_SetShakeBand (DBSIM 0042d2f8), which fills once with COLORS.DAT id 19. es2_xref finds calls from CockpitView_StepViewTransition (00022904) by the padding entry 000243d2, Cockpit_StartHitShake (0002e17c), 00057ffc and 00058414.",
+      "description": "(amplitude), callee-cleaned: returns at once when CockpitViewManager_Published (00021f98)'s manager is in view 4 (+0x10) or has +0x18 set. CockpitShakeRestOffset (000afb54) and CockpitShakeOffset (000afb5c) take CockpitViewCanvasOrigin (000afa9c); CockpitShakeBand (000afb64) becomes {y - amplitude, y} in view 1 and {y, y + amplitude} in views 0, 2 and 3. In views 2 and 3 it zeroes both offsets' x and, with the installed render context's (000bdbda) +0x208/+0x20c at 0, saves CockpitShakeStripRegion (000afb78) into CockpitShakeStripPixels (000afb90) with Region_Save (000665d6) and fills the region's rect with Raster_FillRect (00053d9c) in colour 0x3f on the draw page as it is and then on the display's +0x88, leaving +0x8c the draw page. Zeroes CockpitShakeTotal (000afb6c) and sets CockpitViewShakeArmed (000925ec). ES2's CockpitView_SetShakeBand (DBSIM 0042d2f8), which fills once with COLORS.DAT id 19. es2_xref finds calls from CockpitView_StepViewTransition (00022904) by the padding entry 000243d2, Cockpit_StartHitShake (0002e17c), 00057ffc and Sim_DeathFlash (00058414).",
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-shake",
       "verified": {
         "bytes": "000243d4+400",
@@ -14080,7 +14080,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_StepShake",
-      "description": "(step), callee-cleaned: while CockpitViewShakeArmed (000925ec) is set and the manager is not in view 4, moves CockpitShakeOffset (000afb5c)'s y by up to step toward the farther limit of CockpitShakeBand (000afb64), the room to each taken as int16 and the low limit when the two are equal; sets the origin of the display's page +0x8c and then of +0x88 to that page's origin plus CockpitShakeOffset through the driver's routine 0009df10; subtracts the move from the rows of every region of the current view's clip block (a rect region's rows +0xc and +0x14, a span region's first row through its +8 when not null); adds the move to CockpitShakeTotal (000afb6c) and moves the cockpit's widgets by (0, -move) with CockpitWidgets_TranslateForView (0002ced0). ES2's CockpitView_StepShake (DBSIM 0042d4a8), which moves one page, a rect's last row, the span table and the context's rect. es2_xref finds calls from Cockpit_HitShakeTick (0002e1d8), 00057ffc and 00058414.",
+      "description": "(step), callee-cleaned: while CockpitViewShakeArmed (000925ec) is set and the manager is not in view 4, moves CockpitShakeOffset (000afb5c)'s y by up to step toward the farther limit of CockpitShakeBand (000afb64), the room to each taken as int16 and the low limit when the two are equal; sets the origin of the display's page +0x8c and then of +0x88 to that page's origin plus CockpitShakeOffset through the driver's routine 0009df10; subtracts the move from the rows of every region of the current view's clip block (a rect region's rows +0xc and +0x14, a span region's first row through its +8 when not null); adds the move to CockpitShakeTotal (000afb6c) and moves the cockpit's widgets by (0, -move) with CockpitWidgets_TranslateForView (0002ced0). ES2's CockpitView_StepShake (DBSIM 0042d4a8), which moves one page, a rect's last row, the span table and the context's rect. es2_xref finds calls from Cockpit_HitShakeTick (0002e1d8), 00057ffc and Sim_DeathFlash (00058414).",
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-shake",
       "verified": {
         "bytes": "00024564+491",
@@ -15430,7 +15430,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_BeginCrossFade",
-      "description": "(duration, to, from) in stack order, callee-cleaned: ES2's Palette_BeginCrossFade (DBSIM 004308fc): stores from at PaletteFade_From (000bc608) and duration at PaletteFade_Duration (000bc610), clears PaletteFade_Armed (00092c3c), and over the palette's int16 entry count (+4) fills PaletteFade_DeltaRed (000bc614), PaletteFade_DeltaGreen (000bc814) and PaletteFade_DeltaBlue (000bca14): with a null from, to's channel * 256 / duration, PaletteFade_Mode (000bcc14) 0; with a null to, from's channel * 256 / -duration, mode 1; with both, (to - from) * 256 / duration, mode 2. Stores the count at PaletteFade_EntryCount (000bc60e). es2_xref finds calls from 00057cf4 and two from 00058414.",
+      "description": "(duration, to, from) in stack order, callee-cleaned: ES2's Palette_BeginCrossFade (DBSIM 004308fc): stores from at PaletteFade_From (000bc608) and duration at PaletteFade_Duration (000bc610), clears PaletteFade_Armed (00092c3c), and over the palette's int16 entry count (+4) fills PaletteFade_DeltaRed (000bc614), PaletteFade_DeltaGreen (000bc814) and PaletteFade_DeltaBlue (000bca14): with a null from, to's channel * 256 / duration, PaletteFade_Mode (000bcc14) 0; with a null to, from's channel * 256 / -duration, mode 1; with both, (to - from) * 256 / duration, mode 2. Stores the count at PaletteFade_EntryCount (000bc60e). es2_xref finds calls from 00057cf4 and two from Sim_DeathFlash (00058414).",
       "source": "Herculan/docs/es1/rendering/palette.md#differences-from-es2",
       "verified": {
         "bytes": "00028528+640",
@@ -15445,7 +15445,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_StepCrossFade",
-      "description": "No arguments: ES2's Palette_StepCrossFade (DBSIM 00430b34) with the dword 000981c4 as now: the first call after Palette_BeginCrossFade sets PaletteFade_EndTime (00092c38) to now + duration and sets PaletteFade_Armed; once now passes the end it clears the flag and returns 0 without writing. Otherwise, with e = duration - (end - now), writes the entry count of colors into the live palette from PaletteFade_FirstEntry (000bc60c): mode 0 delta * e >> 8 per channel, modes 1 and 2 from's entry plus delta * e >> 8 per channel byte; widens the dirty range over them and returns end - now. es2_xref finds calls from 00057ffc and four from 00058414.",
+      "description": "No arguments: ES2's Palette_StepCrossFade (DBSIM 00430b34) with the dword 000981c4 as now: the first call after Palette_BeginCrossFade sets PaletteFade_EndTime (00092c38) to now + duration and sets PaletteFade_Armed; once now passes the end it clears the flag and returns 0 without writing. Otherwise, with e = duration - (end - now), writes the entry count of colors into the live palette from PaletteFade_FirstEntry (000bc60c): mode 0 delta * e >> 8 per channel, modes 1 and 2 from's entry plus delta * e >> 8 per channel byte; widens the dirty range over them and returns end - now. es2_xref finds calls from 00057ffc and four from Sim_DeathFlash (00058414).",
       "source": "Herculan/docs/es1/rendering/palette.md#differences-from-es2",
       "verified": {
         "bytes": "000287a8+566",
@@ -25795,7 +25795,7 @@
       "type": "function",
       "confidence": "high",
       "name": "StatusAlertPanel_Ctor",
-      "description": "(panel, rect, keepsScreen, status) in stack order, its arguments removed by this function: the status panel. Allocates 0x548 bytes with operator_new when panel is null (returning 0 when that fails); a 222 x 109 rect, centred by AlertPanel_CenterRect (0004679c) or placed at the rect's point by AlertPanel_SetRect (0004675c); AlertPanel_CtorBase (00045988)(panel, that rect, keepsScreen); GeneralAlertVtable (0009507e) at +0x314; str\\gnl_alrt into the string table +0x30 with StringTable_LoadFromFile (00044f78), then three groups with StringTable_LoadGroup (000450b0), each passing 0 as the attribute destination and the capacities 19, 38 and 76, which that function leaves unread: 19 titles at +0x334, 38 button captions at +0x380 and 76 body lines at +0x418, the counts str\\GNL_ALRT.STR's groups hold; two button rects through __vec_ctor (000610cb) with GauRect_ElementCtorStatusAlertPanelCopy (0004726c), by its padding 00047269; one button at x 71 for statuses 0, 2, 3, 7, 8, 0x11 and 0x12, two at x 22 and 120 for 1, 4 to 6, 9, 10 and 0xb to 0x10, none for any other (the jump table 000950c0 behind an unsigned bound against 0x12), each (x, 70)-(x + 80, 90); the plate, frame 0 of dba\\gnl2alrt for statuses 0 and 1 and of dba\\gnl_alrt otherwise, loaded with ClassItem_LoadFromFile (0005760c), at +0x2c; per button PanelButton_Ctor (000467c8)(0, index, panel, rect), a caption label in WidgetFont_Cpylw at the button's +0x2c placed by Label_SetRect (00031080) with flags 2 and margin (0, -3), Widget_RegisterClickable (000443d4) with the panel's root +0x281, and the widget list +0x28d; the status's title at +0x318 and pointers to its caption pair at +0x31c and its four body lines at +0x320; the title label at +0x40 in WidgetFont_Title, on the title bar +0x2ba = ((222 - w - 20) >> 1, 4)-(that + w + 20, 21), w the title's width by HudFont_MeasureString (00069d0c), margin (0, -11); four body labels at +0x324 in WidgetFont_Green6x8, centred on (50, 30 + 10i)-(172, 40 + 10i); the cancel widget +0x2e3 = 0, and +0x313 = 0 for status 2. Returns the panel. es2_xref finds six calls, each passing (0, 0, 1, status). ES2's StatusAlertPanel_Ctor (DBSIM 00455934) with ES2's pause panel folded in as statuses 0 and 1, and without its status-5 body.",
+      "description": "(panel, rect, keepsScreen, status) in stack order, its arguments removed by this function: the status panel. Allocates 0x548 bytes with operator_new when panel is null (returning 0 when that fails); a 222 x 109 rect, centred by AlertPanel_CenterRect (0004679c) or placed at the rect's point by AlertPanel_SetRect (0004675c); AlertPanel_CtorBase (00045988)(panel, that rect, keepsScreen); GeneralAlertVtable (0009507e) at +0x314; str\\gnl_alrt into the string table +0x30 with StringTable_LoadFromFile (00044f78), then three groups with StringTable_LoadGroup (000450b0), each passing 0 as the attribute destination and the capacities 19, 38 and 76, which that function leaves unread: 19 titles at +0x334, 38 button captions at +0x380 and 76 body lines at +0x418, the counts str\\GNL_ALRT.STR's groups hold; two button rects through __vec_ctor (000610cb) with GauRect_ElementCtorStatusAlertPanelCopy (0004726c), by its padding 00047269; one button at x 71 for statuses 0, 2, 3, 7, 8, 0x11 and 0x12, two at x 22 and 120 for 1, 4 to 6, 9, 10 and 0xb to 0x10, none for any other (the jump table 000950c0 behind an unsigned bound against 0x12), each (x, 70)-(x + 80, 90); the plate, frame 0 of dba\\gnl2alrt for statuses 0 and 1 and of dba\\gnl_alrt otherwise, loaded with ClassItem_LoadFromFile (0005760c), at +0x2c; per button PanelButton_Ctor (000467c8)(0, index, panel, rect), a caption label in WidgetFont_Cpylw at the button's +0x2c placed by Label_SetRect (00031080) with flags 2 and margin (0, -3), Widget_RegisterClickable (000443d4) with the panel's root +0x281, and the widget list +0x28d; the status's title at +0x318 and pointers to its caption pair at +0x31c and its four body lines at +0x320; the title label at +0x40 in WidgetFont_Title, on the title bar +0x2ba = ((222 - w - 20) >> 1, 4)-(that + w + 20, 21), w the title's width by HudFont_MeasureString (00069d0c), margin (0, -11); four body labels at +0x324 in WidgetFont_Green6x8, centred on (50, 30 + 10i)-(172, 40 + 10i); the cancel widget +0x2e3 = 0, and +0x313 = 0 for status 2. Returns the panel. es2_xref finds six calls, five passing (0, 0, 1, status) and Sim_DeathFlash (00058414) (0, 0, 0, 2), so its panel keeps no buffer of the screen under it. ES2's StatusAlertPanel_Ctor (DBSIM 00455934) with ES2's pause panel folded in as statuses 0 and 1, and without its status-5 body.",
       "source": "Herculan/docs/es1/simulation/alert-panels.md#the-status-panel--statusalertpanel_ctor-00046efc",
       "verified": {
         "bytes": "00046efc+877",
@@ -25825,7 +25825,7 @@
       "type": "function",
       "confidence": "high",
       "name": "GeneralAlert_Dtor",
-      "description": "(panel, flags) in stack order, its arguments removed by this function: the status panel's destructor. Returns at once for a null panel; stores GeneralAlertVtable (0009507e) at +0x314, frees the four body labels at +0x324 with operator_delete (000015f8), runs Alert_Dtor (00045d0c)(panel, 0) and frees the panel when bit 0 of flags is set. GeneralAlertVtable's +0x1c is 0. es2_xref finds two calls, from 00058414 and Prefs_LimitDetailInLowMemory (0004adb0), each passing 3. ES2's GeneralAlert_Dtor (DBSIM 00455f90).",
+      "description": "(panel, flags) in stack order, its arguments removed by this function: the status panel's destructor. Returns at once for a null panel; stores GeneralAlertVtable (0009507e) at +0x314, frees the four body labels at +0x324 with operator_delete (000015f8), runs Alert_Dtor (00045d0c)(panel, 0) and frees the panel when bit 0 of flags is set. GeneralAlertVtable's +0x1c is 0. es2_xref finds two calls, from Sim_DeathFlash (00058414) and Prefs_LimitDetailInLowMemory (0004adb0), each passing 3. ES2's GeneralAlert_Dtor (DBSIM 00455f90).",
       "source": "Herculan/docs/es1/simulation/alert-panels.md#the-status-panel--statusalertpanel_ctor-00046efc",
       "verified": {
         "bytes": "000472b0+89",
@@ -28050,6 +28050,21 @@
       "verified": {
         "bytes": "0004e208+138",
         "sha1": "a3cbcf0a7bc8",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0004e34c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sound_StopDigitalSounds",
+      "description": "No arguments: with the sound manager 000959ac set and the catalog's row count 000bd72c not 0, for each object slot from 0 below that count, SoundManager_GetObject (0004f660)(manager, slot); an object whose kind byte +0x17 is 0, a digital sound, and whose vtable's (+0x3b) slot +0x30 answers non-zero, playing, is stopped through its slot +0x14, DigiSound_Stop (00050c88) for a digital sound. A song (kind 1) plays on. es2_xref finds one call, from Sim_DeathFlash (00058414). ES2's Sim_DeathFlash (DBSIM 0045dc34) calls Sound_MuteEffects (DBSIM 00462cd8) at the same point.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#the-death-flash--sim_deathflash-00058414",
+      "verified": {
+        "bytes": "0004e34c+78",
+        "sha1": "a2f1dad616aa",
         "scope": "body",
         "via": "both"
       }
@@ -31220,6 +31235,21 @@
       }
     },
     {
+      "address": "00058414",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sim_DeathFlash",
+      "description": "No arguments: the death flash, ES2's Sim_DeathFlash (DBSIM 0045dc34). Loads dpl\\death1, dpl\\death2 and dpl\\world0 with Palette_LoadDpl (00063584), each path from ResourcePath_BuildFolderName (00060698) with the folder name the dword 000980d0 points at, dpl; Sound_StopDigitalSounds (0004e34c); the shake's end = the clock 000981c4 + 30; CockpitView_SetShakeBand (000243d4)(10); Sound_Play (0004de84)(0x26); Palette_InstallRange (00027e98)(the colors death1's dword +8 points at, 0xff, 0); Palette_BeginCrossFade (00028528)(0x78, death2, death1), then while Palette_StepCrossFade (000287a8) answers more than 0x14, compared unsigned: Sim_EndFrame (00059b40), CockpitView_StepShake (00024564)(Math_RandomBelow (00063b3c)(000b5c48, 10)) while the clock is below the shake's end, compared unsigned, and Sim_RenderFrame (00059c08). Then Palette_BeginCrossFade(0x78, 0, death2) and, while Palette_StepCrossFade answers non-zero, Sim_EndFrame and Sim_RenderFrame. Then the raster slot 35 (0009df60), C convention, with (+0x88, 0) and then (+0x8c, 0) of the display 000bdd28; Palette_InstallRange(world0's colors, 0xff, 0); Sim_EndFrame; StatusAlertPanel_Ctor (00046efc)(0, 0, 0, 2), run through slot +0xc of its +0x314, its answer unused, and GeneralAlert_Dtor (000472b0)(panel, 3). es2_xref finds one call, from Sim_MainTick (00059700), for status 2. ES2's also calls CockpitView_ClearShake first and sets its freeze, and mutes the effects where this calls Sound_StopDigitalSounds.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#the-death-flash--sim_deathflash-00058414",
+      "verified": {
+        "bytes": "00058414+350",
+        "sha1": "1461631b2f31",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00058574",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -31555,7 +31585,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_MainTick",
-      "description": "No arguments: the simulation tick. The input block from Input_BuildPlayerDevice (0004cb14); during playback SimTickDelta = its int16 +0x29. Unless Sim_Frozen (000b5b92), each pool walked oldest first with Pool_Prev (00063a20) from 0: each g_BasePool element through slot +0x1c; g_ExplosionPool (00005d74), the pools g_SmokeBallPool (000aef68) (Effect_DriftAndAnimate (0000693c)), g_SmokePool (000aefd4) (Smoke_Tick (00006b28)) and g_DebrisPool (000aeef8) (Debris_TickUpdate (000064b8)), an element whose tick answers non-zero destroyed through slot +0xc with 3; maybe_WeaponChain_EoHold = 0; the pool g_ProjectilePool (000af0b4) through slot +0x18 the same way; then each group of MissionGroups: Group_TickMembers (0001cf60) when its action +0x16 is null, and the action cleared when that action's +0xa is non-zero. Sim_StepOnce (000b5b9c), when set, is cleared and Sim_Frozen set. A non-zero Sim_PollPlayerInput (0005a0c0) returns 1. Then Actions_EvaluateTriggers(LocalPlayerMech) and ViewChain_Apply (0005894c); unless frozen, Sim_DetectionTick and Mech_PerTickSystemsUpdate for each g_MechPool machine whose group +0x3f has no action +0x16 and whose +0x93 is clear. Mission_PollStatus(LocalPlayerMech): status 2 calls 00058414 and returns 1; another status of 0 or more (0x12 in place of 3 when Group_ApplyOutnumberedDamage on the player's group leaves the player destroyed) goes into the panel StatusAlertPanel_Ctor (00046efc)(0, 0, 1, status), run through slot +0xc of its +0x314, and returns 1 when the answer equals the word at 00097158[status], the panel then destroyed by Alert_Dtor (00045d0c)(panel, 3). Returns 0 otherwise. ES2's Sim_MainTick (DBSIM 0045f464).",
+      "description": "No arguments: the simulation tick. The input block from Input_BuildPlayerDevice (0004cb14); during playback SimTickDelta = its int16 +0x29. Unless Sim_Frozen (000b5b92), each pool walked oldest first with Pool_Prev (00063a20) from 0: each g_BasePool element through slot +0x1c; g_ExplosionPool (00005d74), the pools g_SmokeBallPool (000aef68) (Effect_DriftAndAnimate (0000693c)), g_SmokePool (000aefd4) (Smoke_Tick (00006b28)) and g_DebrisPool (000aeef8) (Debris_TickUpdate (000064b8)), an element whose tick answers non-zero destroyed through slot +0xc with 3; maybe_WeaponChain_EoHold = 0; the pool g_ProjectilePool (000af0b4) through slot +0x18 the same way; then each group of MissionGroups: Group_TickMembers (0001cf60) when its action +0x16 is null, and the action cleared when that action's +0xa is non-zero. Sim_StepOnce (000b5b9c), when set, is cleared and Sim_Frozen set. A non-zero Sim_PollPlayerInput (0005a0c0) returns 1. Then Actions_EvaluateTriggers(LocalPlayerMech) and ViewChain_Apply (0005894c); unless frozen, Sim_DetectionTick once and then Mech_PerTickSystemsUpdate for each g_MechPool machine whose group +0x3f has no action +0x16 and whose +0x93 is clear. Mission_PollStatus(LocalPlayerMech): status 2 calls Sim_DeathFlash (00058414) and returns 1; another status of 0 or more (0x12 in place of 3 when Group_ApplyOutnumberedDamage on the player's group leaves the player destroyed) goes into the panel StatusAlertPanel_Ctor (00046efc)(0, 0, 1, status), run through slot +0xc of its +0x314, and returns 1 when the answer equals Mission_EndingAnswer (00097158)[the poll's status, 3 for a panel showing 0x12], the panel then destroyed by Alert_Dtor (00045d0c)(panel, 3). Returns 0 otherwise. ES2's Sim_MainTick (DBSIM 0045f464).",
       "source": "Herculan/docs/es1/simulation/main-loop.md#the-tick--sim_maintick-00059700; ES1DBSIM decompile and disassembly at 00059700",
       "verified": {
         "bytes": "00059700+931",
@@ -31630,7 +31660,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_EndFrame",
-      "description": "No arguments: sets Display_FlipWithoutPan (000bda96) to 1 when Sim_Frozen (000b5b92) is 0 and to 0 otherwise; CockpitView_StepViewTransition (00022904)(CockpitViewManagerInstance (000b5b60)); Palette_CycleAnimatedRanges (00028260); Palette_FlushDirtyRange (00027f74); on SimDisplay (000b5b5c) makes +0x8c the visible page (+0x34, through 0009df1c) and +0x88 the draw page (+0x3c, through 0009df18), each copied to 00098dd2 or 00098dda while it is the current display 000bdd28, and swaps +0x88 and +0x8c; CockpitView_ProcessViewCommand (000226f0)(the manager); Mem_TrackPeakUse (00059288). Matched to ES2's Sim_EndFrame (DBSIM 0045fa98), which es2_xref finds calling CockpitView_StepViewTransition. es2_xref finds calls from Sim_Main (00059350), one, PreferencesPanel_Raise (00057820), four, 00057ffc, one, and 00058414, three.",
+      "description": "No arguments: sets Display_FlipWithoutPan (000bda96) to 1 when Sim_Frozen (000b5b92) is 0 and to 0 otherwise; CockpitView_StepViewTransition (00022904)(CockpitViewManagerInstance (000b5b60)); Palette_CycleAnimatedRanges (00028260); Palette_FlushDirtyRange (00027f74); on SimDisplay (000b5b5c) makes +0x8c the visible page (+0x34, through 0009df1c) and +0x88 the draw page (+0x3c, through 0009df18), each copied to 00098dd2 or 00098dda while it is the current display 000bdd28, and swaps +0x88 and +0x8c; CockpitView_ProcessViewCommand (000226f0)(the manager); Mem_TrackPeakUse (00059288). Matched to ES2's Sim_EndFrame (DBSIM 0045fa98), which es2_xref finds calling CockpitView_StepViewTransition. es2_xref finds calls from Sim_Main (00059350), one, PreferencesPanel_Raise (00057820), four, 00057ffc, one, and Sim_DeathFlash (00058414), three.",
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#cockpitview_stepviewtransition-00022904",
       "verified": {
         "bytes": "00059b40+200",
@@ -31750,7 +31780,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_DispatchCommand",
-      "description": "(block), callee-cleaned: the block's command word goes to CockpitWidgets_HandleCommand (0002d24c), then to Sim_HandleWindowKey (00059dec), then to the 15 codes at 00097180 (REPNE SCASD, targets 15 dwords after): 0x21f toggles Sim_Frozen while TapePlayback or TapeRecording is set; 0x2f queues view command 3 (ViewChain_PendingView 2) in ViewChain_View 1 or 3 and 2 (pending 3) in view 2; 0x31, in view 3 with the view manager's +0x10 at 4, steps ViewChain_Viewed through LiveObjectList with ObjectList_Next to an object with +0x28 not negative in the player's group and, when it differs, calls ViewChain_ViewObject (00058a44), sets the camera's +0x36 to 1, ViewChain_Chosen and ViewChain_CaptionFrames 2; 0x0f and 0x1c call ViewChain_ToggleCameraControl (00059dbc) with the manager's +0x10 at 4; 0x0e sets g_CenterTurretMode; 0x10 shows Mission_StatusForAlert(1, LocalPlayerMech) in the panel StatusAlertPanel_Ctor (00046efc) and clears MissionAlertArmed; 0x01 queues view command 3, Sound_Play(0x2d) and pending view 2; 0x401 and 0x410 raise the panel with 1 and set Sim_QuitFlag (000b5b9e) on a non-zero answer; 0x19 raises it with 0; 0x219 and 0x58 call PreferencesPanel_Raise (00057820); 0x402 sets ThrottleLeverMode (000919ce) to -1 when it is above 0 and to 1 otherwise; 0x52 calls Input_ToggleStickMode (0004d8e1). Any other code goes to slot +0x30 of ViewChain_Viewed, whose answer is returned. Returns 1 for a handled code plus the panel's answer (Ctrl+Esc, Ctrl+Q, P) or 1 when Q's answer ends the mission. ES2's Sim_DispatchCommand (DBSIM 0045fdac).",
+      "description": "(block), callee-cleaned: the block's command word goes to CockpitWidgets_HandleCommand (0002d24c), then to Sim_HandleWindowKey (00059dec), then to the 15 codes at 00097180 (REPNE SCASD, targets 15 dwords after): 0x21f toggles Sim_Frozen while TapePlayback or TapeRecording is set; 0x2f queues view command 3 (ViewChain_PendingView 2) in ViewChain_View 1 or 3 and 2 (pending 3) in view 2; 0x31, in view 3 with the view manager's +0x10 at 4, steps ViewChain_Viewed through LiveObjectList with ObjectList_Next to an object with +0x28 not negative in the player's group and, when it differs, calls ViewChain_ViewObject (00058a44), sets the camera's +0x36 to 1, ViewChain_Chosen and ViewChain_CaptionFrames 2; 0x0f and 0x1c call ViewChain_ToggleCameraControl (00059dbc) with the manager's +0x10 at 4; 0x0e sets g_CenterTurretMode; 0x10 shows Mission_StatusForAlert(1, LocalPlayerMech) in the panel StatusAlertPanel_Ctor (00046efc) and clears MissionAlertArmed; 0x01 queues view command 3, Sound_Play(0x2d) and pending view 2; 0x401 and 0x410 raise the panel with 1 and set Sim_QuitFlag (000b5b9e) on a non-zero answer; 0x19 raises it with 0; 0x219 and 0x58 call PreferencesPanel_Raise (00057820); 0x402 sets ThrottleLeverMode (000919ce) to -1 when it is above 0 and to 1 otherwise; 0x52 calls Input_ToggleStickMode (0004d8e1). Any other code goes to slot +0x30 of ViewChain_Viewed, whose answer is returned. Returns 1 for a handled code plus the panel's answer (Ctrl+Esc, Ctrl+Q, P) or 1 when Q's answer equals Mission_EndingAnswer (00097158)[its status]. ES2's Sim_DispatchCommand (DBSIM 0045fdac).",
       "source": "Herculan/docs/es1/simulation/main-loop.md#commands--sim_dispatchcommand-00059df8; ES1DBSIM decompile and disassembly at 00059df8",
       "verified": {
         "bytes": "00059df8+712",
@@ -35347,7 +35377,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_LoadDpl",
-      "description": "(name), callee-cleaned: Palette_LoadFromFile on Path_WithExtension('dpl' at 0009811c, name), into the current arena, returning the object in EAX. Six calls found by es2_xref, from CockpitViewManager_Ctor (00021dd4), World_LoadTheater (000251c4), Palette_LoadAndActivate (00027e5c) and three from 00058414. ES2's Palette_LoadDpl (DBSIM 00474ba4).",
+      "description": "(name), callee-cleaned: Palette_LoadFromFile on Path_WithExtension('dpl' at 0009811c, name), into the current arena, returning the object in EAX. Six calls found by es2_xref, from CockpitViewManager_Ctor (00021dd4), World_LoadTheater (000251c4), Palette_LoadAndActivate (00027e5c) and three from Sim_DeathFlash (00058414). ES2's Palette_LoadDpl (DBSIM 00474ba4).",
       "source": "Herculan/docs/es1/formats/dts-shape.md",
       "verified": {
         "bytes": "00063584+35",
@@ -42137,6 +42167,21 @@
       }
     },
     {
+      "address": "0008cd3c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_ClearPage",
+      "description": "(page, color), C convention: VGA_8's slot 35, the dword at 000a7bfc in its table 000a7b70, which the simulator calls through 0009df60. Fills the page with the color. When the dword 00098da6 equals 00098dc6, it writes (00098da6 * 00098daa) >> 4 dwords of the color byte repeated four times with REP STOSD from VGA8_PageOffsets (0009e5ce)[page], through the selector 0009df84, with the sequencer's map mask (port 3C4 index 2) set to 0xf and put back after. Otherwise it keeps Raster_GetDrawPage (0008fcde), makes the page the draw page through slot 17 (0009df18), passes the rect {0, 0, 00098da6 - 1, 00098daa - 1} and the color to slot 2 (0009dedc), and passes the kept page to slot 17 again. es2_xref finds one stored pointer to it, in VGA_8's table, and es2_xref --decode two calls through 0009df60, both from Sim_DeathFlash (00058414). ES2's Sim_DeathFlash calls g_RasterRoutines_ClearSurface at the same point.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#lines-and-clipped-bitmaps",
+      "verified": {
+        "bytes": "0008cd3c+170",
+        "sha1": "a6cb0541cddb",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0008d700",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -42168,6 +42213,21 @@
       "name": "ldexp",
       "description": "Symantec C++ runtime `ldexp`, from `ldexp.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 195 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0008fcde",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_GetDrawPage",
+      "description": "No arguments, frameless: returns the dword 00098dda, the draw page a store to the current display's draw page copies there and VGA8_SetDrawPage (0005266a) stores. es2_xref finds calls from VGA8_ClearPage (0008cd3c) and 0008aeb0.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#lines-and-clipped-bitmaps",
+      "verified": {
+        "bytes": "0008fcde+6",
+        "sha1": "1e19bdf79bee",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0009020a",
@@ -44897,6 +44957,15 @@
       "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
     },
     {
+      "address": "00097158",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mission_EndingAnswer",
+      "description": "19 int16, one for each status from 0 to 0x12: the status panel's answer, 0 for its left button and 1 for its right, that ends the mission: 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0. Sim_MainTick (00059700) compares the panel's answer with the word of the poll's status, and Sim_DispatchCommand (00059df8)'s Q case with the word of Mission_StatusForAlert's; es2_xref --decode finds those two reads. Two zero bytes follow it before Sim_DispatchCommand's code table 00097180.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#which-answer-ends-the-mission"
+    },
+    {
       "address": "000973d3",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -47476,7 +47545,7 @@
       "type": "data",
       "confidence": "high",
       "name": "MissionAlertArmed",
-      "description": "Byte: set by Mission_PollStatus (0000f454) the first time a status worth raising appears, when it loads MissionAlertTimer_Count (000af7a1) with 10000. ES2's MissionAlertArmed (DBSIM 004a9eec).",
+      "description": "int16, past the image's file bytes, so 0 at load: set to 1 by Mission_PollStatus (0000f454) the first time a status worth raising appears, when it loads MissionAlertTimer_Count (000af7a1) with 10000, and cleared by Sim_DispatchCommand (00059df8)'s Q case after its panel (00059fdb). es2_xref --decode finds those two word stores and the poll's word compare, and no other instruction holding its address. ES2's MissionAlertArmed (DBSIM 004a9eec).",
       "source": "Herculan/docs/es1/simulation/mission-status.md#the-poll--mission_pollstatus-0000f454; ES1DBSIM decompile at 0000f454"
     },
     {

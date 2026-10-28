@@ -16598,6 +16598,21 @@
       }
     },
     {
+      "address": "00075afc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_ClearPage",
+      "description": "(page, color), C convention: VGA_8's slot 35, the dword at 0008b37c in its table 0008b2f0 (the shell's slot 0008663c). Fills the page with the color. When the dword 0008445e equals 0008447a, it writes (0008445e * 00084462) >> 4 dwords of the color byte repeated four times with REP STOSD from the page offsets 00088e92[page], through the selector 00088848, with the sequencer's map mask (port 3C4 index 2) set to 0xf and put back after. Otherwise it keeps Raster_GetDrawPage (0007b9ba), makes the page the draw page through slot 17 (000865f4), passes the rect {0, 0, 0008445e - 1, 00084462 - 1} and the color to slot 2 (000865b8), and passes the kept page to slot 17 again. es2_xref finds one stored pointer to it, in VGA_8's table. The code of ES1DBSIM's VGA8_ClearPage (0008cd3c), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#lines-and-clipped-bitmaps",
+      "verified": {
+        "bytes": "00075afc+170",
+        "sha1": "1f98cbe6eaa9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000764bc",
       "binary": "ES1GO",
       "type": "function",
@@ -16668,6 +16683,21 @@
       "verified": {
         "bytes": "00078091+136",
         "sha1": "9eaa86eb6381",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0007b9ba",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_GetDrawPage",
+      "description": "No arguments, frameless: returns the dword 0008448e. es2_xref finds calls from VGA8_ClearPage (00075afc) and 00072b08. The code of ES1DBSIM's Raster_GetDrawPage (0008fcde), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#lines-and-clipped-bitmaps",
+      "verified": {
+        "bytes": "0007b9ba+6",
+        "sha1": "b102ae0f6ca8",
         "scope": "body",
         "via": "decompile"
       }

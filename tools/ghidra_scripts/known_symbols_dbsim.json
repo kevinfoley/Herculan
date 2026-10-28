@@ -22999,8 +22999,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_DeathFlash",
-      "description": "Loads the death1/death2/world0 palettes, mutes effects, plays 0x26, fades death1 -> death2 -> black over 0x78 ticks each while shaking the view (band 10, Math_RandomBelow(0x4d268f, 10)) for the first 0x1e ticks, then installs world0 and runs a StatusAlertPanel of kind 2. es2_xref finds nothing reaching it, and the death1 and death2 palettes it loads are in no shipped VOL or install file. The player's death plays ViewChain_PlayerDeathCamera instead.",
-      "source": "docs/retail/rendering/cockpit-canopy-palette.md"
+      "description": "No arguments: the death flash. Loads the death1, death2 and world0 palettes with Palette_LoadDpl, each path from ResourcePath_BuildFolderName with CockpitDpl_ResourceFolderNames; Sound_MuteEffects; CockpitView_ClearShake; keeps Time_GetCoarseTicks as the start; CockpitView_SetShakeBand(10); Sound_Play(0x26); the freeze 004d2576 = 1; Palette_InstallRange of death1's first 0xff colors from entry 0; Palette_BeginCrossFade from death1 to death2 over 0x78, and while Palette_StepCrossFade answers more than 0x14: Sim_EndFrame, CockpitView_StepShake(Math_RandomBelow(0x4d268f, 10)) while Time_GetCoarseTicks is below the start + 0x1e, Sim_RenderFrame. Then Palette_BeginCrossFade from death2 to black over 0x78, and Sim_EndFrame and Sim_RenderFrame while Palette_StepCrossFade answers non-zero; g_RasterRoutines_ClearSurface with color 0 on the display 006c5f54's +0x88 and then +0x8c; world0's first 0xff colors installed; Sim_EndFrame; a 0x57e-byte panel from Mem_New, StatusAlertPanel_Ctor(panel, 2, 0, 0), run through its slot +8 and destroyed with GeneralAlert_Dtor(panel, 3). es2_xref finds no branch, stored pointer or vtable slot holding its address; the player's death plays ViewChain_PlayerDeathCamera instead.",
+      "source": "docs/retail/rendering/cockpit-canopy-palette.md",
+      "verified": {
+        "bytes": "0045dc34+469",
+        "sha1": "4735f81aac02",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0045de0c",
