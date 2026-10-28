@@ -345,8 +345,9 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	/// (<see cref="Effects.Es1EffectLights.FlushDeletes"/>), <c>ExplosionPool_FlushDeletes</c>
 	/// (<see cref="Effects.Es1ExplosionPool.FlushDeletes"/>), <c>DebrisPool_FlushDeletes</c>
 	/// (<see cref="Effects.Es1DebrisPool.FlushDeletes"/>), <c>Smoke_FlushDeletes</c> (<see cref="Effects.Es1SmokePool.FlushDeletes"/>),
-	/// <c>FlatObjPool_FlushDeletes</c> (<see cref="Effects.Es1FlatObjPool.FlushDeletes"/>) and <c>Projectile_FlushDeletes</c>
-	/// (<see cref="Projectiles.Es1ProjectilePool.FlushDeletes"/>), in the static constructor table's order; the detail setting applied again when option 6 has changed, the view
+	/// <c>FlatObjPool_FlushDeletes</c> (<see cref="Effects.Es1FlatObjPool.FlushDeletes"/>), <c>Projectile_FlushDeletes</c>
+	/// (<see cref="Projectiles.Es1ProjectilePool.FlushDeletes"/>) and <c>Flyer_FlushDeletes</c>
+	/// (<see cref="Sim.Es1FlyerPool.FlushDeletes"/>), in the static constructor table's order; the detail setting applied again when option 6 has changed, the view
 	/// shake's offset added to the projection pair (<see cref="Es1ViewManager.MoveProjectionPair"/>), the cockpit's
 	/// frame (<c>Cockpit_DrawFrame</c>), then the 3D pass, which installs the current camera's view and draws the world
 	/// into the draw page in the installed window and clip block when the current view is not 1 or a view change is
@@ -364,6 +365,7 @@ public sealed class Es1FrameLoop : IEs1Frame {
 		globals.Smoke.FlushDeletes();
 		globals.FlatObjects.FlushDeletes();
 		globals.Projectiles.FlushDeletes();
+		globals.Flyers.FlushDeletes();
 		_detail?.Refresh();
 		// The shake's offset, as it stands now, added to the projection pair across the frame's draws and taken out after.
 		var (shakeX, shakeY) = Views.ShakeOffset;

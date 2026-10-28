@@ -8,14 +8,18 @@ namespace Herculan.Es1.Render;
 /// <summary>
 /// What preferences option 6 sets, as <c>ShapeDetail_ApplyDetailSetting</c> (<c>ES1DBSIM 00057c08</c>) copies it from the
 /// normal tables (docs/es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08): the
-/// LOD scale, the first LOD root and the fitted weapons' detail-part bias. The low-memory tables are not taken: the
-/// engine runs as a machine with the memory <c>g_LowMemory</c> asks for (see <see cref="Es1MechType"/>). The structures'
-/// and flyers' bias is not carried: neither class is built yet.
+/// LOD scale, the first LOD root, the fitted weapons' detail-part bias and the flyers' and structures'. The low-memory
+/// tables are not taken: the engine runs as a machine with the memory <c>g_LowMemory</c> asks for (see
+/// <see cref="Es1MechType"/>).
 /// </summary>
 /// <param name="SizeScaleQ10"><c>g_ShapeDetailSizeScaleQ10</c> (<c>000903e0</c>).</param>
 /// <param name="RootBias"><c>g_ShapeDetailBias</c> (<c>000903e2</c>).</param>
 /// <param name="MountBias"><c>g_TSDetailBiasForMounts</c> (<c>000bc2b8</c>).</param>
-public readonly record struct Es1DetailSetting(int SizeScaleQ10, int RootBias, int MountBias) {
+/// <param name="ObjectBias">
+/// <c>g_TSDetailBiasForFlyers</c> (<c>000bc460</c>), which <c>Flyer_Draw</c> sets around a flyer's draw, and
+/// <c>g_TSDetailBiasForStructures</c> (<c>000bc198</c>), the same value.
+/// </param>
+public readonly record struct Es1DetailSetting(int SizeScaleQ10, int RootBias, int MountBias, int ObjectBias) {
 	/// <summary><c>ShapeDetail_ScaleKeys</c> (<c>00096bc4</c>) and <c>ShapeDetail_BiasKeys</c> (<c>00096bdc</c>), which hold the same five.</summary>
 	private static readonly int[] Keys = [50, 100, 150, 200, 300];
 
@@ -28,13 +32,16 @@ public readonly record struct Es1DetailSetting(int SizeScaleQ10, int RootBias, i
 	/// <summary><c>ShapeDetail_MountBiasValues</c> (<c>00096bf4</c>).</summary>
 	private static readonly int[] MountBiasValues = [2, 2, 1, 1, 0];
 
+	/// <summary><c>ShapeDetail_ObjectBiasValues</c> (<c>00096c00</c>).</summary>
+	private static readonly int[] ObjectBiasValues = [2, 2, 1, 1, 0];
+
 	/// <summary>
 	/// The outputs for option value <paramref name="value"/>: the first key it is at most picks the slot. A byte is never
 	/// above the last key, 300, so every value picks one.
 	/// </summary>
 	public static Es1DetailSetting FromOption(byte value) {
 		int slot = Array.FindIndex(Keys, key => value <= key);
-		return new Es1DetailSetting(ScaleValues[slot], RootBiasValues[slot], MountBiasValues[slot]);
+		return new Es1DetailSetting(ScaleValues[slot], RootBiasValues[slot], MountBiasValues[slot], ObjectBiasValues[slot]);
 	}
 }
 

@@ -328,7 +328,17 @@ public static class Es1Formation {
 		}
 
 		var offset = formations.Formations[group.Formation].Slots[mech.MemberSlot - 1];
-		var leader = group.Members.Count > 0 && group.Members[0] is Es1Mech first ? first : mech;
+		return RotateAndAddOffset(mech, group, position, new Vec3i(offset.X, offset.Y, offset.Z));
+	}
+
+	/// <summary>
+	/// <c>Formation_RotateAndAddOffset</c> (<c>0000d9a0</c>)(<paramref name="member"/>, <paramref name="position"/>,
+	/// <paramref name="offset"/>): the offset's X and Y turned by the frame of the group's first member, and its Z unturned,
+	/// added to the position (docs/es1/formats/formations-dat.md#where-a-member-stands). Retail reads the first member
+	/// unchecked; with none the member's own frame turns it here, an engine guard.
+	/// </summary>
+	public static Vec3i RotateAndAddOffset(IEs1SimObject member, Es1MissionGroup group, Vec3i position, Vec3i offset) {
+		var leader = group.Members.Count > 0 && group.Members[0] is IEs1SimObject first ? first : member;
 		var (x, y) = Rotate2D(leader.Frame, offset.X, offset.Y);
 		return new Vec3i(position.X + x, position.Y + y, position.Z + offset.Z);
 	}
@@ -340,4 +350,60 @@ public static class Es1Formation {
 	public static (int X, int Y) Rotate2D(in Transform3 frame, int x, int y) => (
 		(int)(((long)x * frame.M[0] + (long)y * frame.M[2] + 0x2000) >> 14),
 		(int)(((long)x * frame.M[1] + (long)y * frame.M[3] + 0x2000) >> 14));
+}
+
+/// <summary>
+/// <c>Flyer_AttachToGroup</c> (<c>ES1DBSIM 0001b574</c>) and <c>Flyer_ApplyFormationOffset</c> (<c>0001b524</c>): a
+/// flyer put on its group's heading and point and spread by its <c>FFORMS.DAT</c> slot
+/// (docs/es1/simulation/flyers.md#joining-its-group--flyer_attachtogroup-0001b574,
+/// docs/es1/formats/formations-dat.md#where-a-member-stands).
+/// </summary>
+public static class Es1FlyerGroups {
+	/// <summary>
+	/// <c>Flyer_AttachToGroup</c>(<paramref name="flyer"/>, <paramref name="slot"/>, <paramref name="group"/>): the group and
+	/// slot stored; a rotation whose first angle holds the sentinel becomes (0, 0, the group's heading) with <c>+0x2c</c>
+	/// cleared; a position whose Z is negative becomes the group's point, or the route's waypoint at the cursor, spread by
+	/// the formation; then a Z of 0 becomes <see cref="Es1Flyer.DefaultAltitude"/>. A group with neither point nor
+	/// waypoint leaves the position, where the original reads the waypoint of no route, an engine guard.
+	/// </summary>
+	public static void Attach(Es1Flyer flyer, int slot, Es1MissionGroup group, Es1FlyerFormations formations) {
+		flyer.Group = group;
+		flyer.MemberSlot = slot;
+		if (flyer.Rotation.X == Es1Mech.RotationSentinel) {
+			flyer.Rotation = (0, 0, group.Heading);
+			flyer.RotationWord = 0;
+		}
+
+		if (flyer.Position.Z < 0 && (group.Point ?? group.WaypointAtCursor) is { } point) {
+			flyer.Position = ApplyOffset(flyer, point, formations);
+		}
+
+		if (flyer.Position.Z == 0) {
+			flyer.Position = new Vec3i(flyer.Position.X, flyer.Position.Y, Es1Flyer.DefaultAltitude);
+		}
+	}
+
+	/// <summary>
+	/// <c>Flyer_ApplyFormationOffset</c>(<paramref name="flyer"/>, <paramref name="position"/>): nothing for member slot 0;
+	/// otherwise <c>FlyerFormation_GetSlotOffset</c> (<c>0001c7f0</c>)(slot, the group's formation), its three
+	/// <c>int16</c> widened, through <see cref="Es1Formation.RotateAndAddOffset"/>. Neither number is checked: the slot
+	/// is the formation's (slot − 1)th of three counted on through the table, so a member past the third takes the next
+	/// formation's first slot, as <c>B0_C7_3A</c>'s group 148 does. An index outside the table, which retail reads past
+	/// the array, takes no offset here, an engine guard.
+	/// </summary>
+	public static Vec3i ApplyOffset(Es1Flyer flyer, Vec3i position, Es1FlyerFormations formations) {
+		if (flyer.MemberSlot == 0 || flyer.Group is not { } group) {
+			return position;
+		}
+
+		int index = group.Formation * Es1FlyerFormation.SlotCount + flyer.MemberSlot - 1;
+		int formation = index / Es1FlyerFormation.SlotCount;
+		if (index < 0 || formation >= formations.Formations.Length
+				|| index % Es1FlyerFormation.SlotCount >= formations.Formations[formation].Slots.Length) {
+			return position;
+		}
+
+		var offset = formations.Formations[formation].Slots[index % Es1FlyerFormation.SlotCount];
+		return Es1Formation.RotateAndAddOffset(flyer, group, position, new Vec3i(offset.X, offset.Y, offset.Z));
+	}
 }

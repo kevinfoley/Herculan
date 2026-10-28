@@ -104,7 +104,10 @@ public static class Es1ZoneViewer {
 			var script = Es1MissionScript.Read(files);
 			var formations = new Es1MechFormationsTransformer().Parse(content.ReadRequired("dat", "MFORMS.DAT"))
 				?? new Es1MechFormations();
-			world = Es1World.Spawn(script, content, formations);
+			// Flyer_LoadResources (0001c558) asserts when datforms does not open.
+			var flyerFormations = new Es1FlyerFormationsTransformer().Parse(content.ReadRequired("dat", "FFORMS.DAT"))
+				?? new Es1FlyerFormations();
+			world = Es1World.Spawn(script, content, formations, flyerFormations);
 			views = world.LocalPlayer is { } machine ? Es1CockpitViews.Load(content, machine.Type.CockpitName) : null;
 			var scheme = views?.CockpitPalette is { } cockpit
 				? new Es1CockpitScheme(cockpit, world.LocalPlayer!.Type.Type)
@@ -121,7 +124,7 @@ public static class Es1ZoneViewer {
 		var player = world.LocalPlayer;
 		Console.WriteLine(
 			$"Zone {header[1]}, theater {theater.Name}, world {theater.WorldName}: {scene.Shapes.Count} shapes, " +
-			$"{world.MechPool.Count} HERCs in {world.Groups.Count} groups" +
+			$"{world.MechPool.Count} HERCs and {world.Globals.Flyers.Live.Count} flyers in {world.Groups.Count} groups" +
 			(player != null ? $", the player in a {player.Type.Name}." : ", no player's machine."));
 		if (views == null) {
 			Console.Error.WriteLine("No cockpit view for the player's machine: the free camera only.");
@@ -232,8 +235,10 @@ public static class Es1ZoneViewer {
 			disposables.Add(debrisDraw);
 			var smokeDraw = new Es1SmokeDraw(gl, content, scene, world.Globals.Smoke);
 			disposables.Add(smokeDraw);
+			var flyerDraw = new Es1FlyerDraw(gl, scene, world.Globals.Flyers.Live, detail);
+			disposables.Add(flyerDraw);
 			draw = new Es1WorldDraw(gl, scene, world, models, detail, disposables, projectileDraw, explosionDraw, debrisDraw,
-				smokeDraw);
+				smokeDraw, flyerDraw);
 			if (manager != null && chain != null) {
 				monitor = new Es1Monitor(gl, manager.Display);
 				disposables.Add(monitor);

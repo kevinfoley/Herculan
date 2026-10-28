@@ -101,7 +101,7 @@ public sealed class Es1MfdStatusScreen : Es1MfdScreen {
 			case StructureClass:
 				// PLACEHOLDER: frame n of dba\bases (MfdStatus_BasesBank, 000935f4) at the bottom left, n the type record's
 				// int16 +0, TARGET:, group 20 entry n and the condition from the damage; no structure object is built
-				// until the plan's flyers-and-bases step, which brings its type record.
+				// until the plan's module 2 (effects and structures), which brings its type record.
 				break;
 			case FlyerClass:
 				var silhouette = _flyers is { Count: > 0 } flyers ? flyers[0] : null;

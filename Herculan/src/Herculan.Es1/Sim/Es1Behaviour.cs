@@ -5,9 +5,17 @@ namespace Herculan.Es1.Sim;
 /// <summary>A behaviour state's think, move or reassess: one function pointer called with the machine, its answer an <c>int16</c>.</summary>
 public delegate short Es1StateFunction(Es1Mech mech, Es1SimGlobals globals);
 
+/// <summary>An aircraft state's think, move or reassess: the same function pointer, called with the flyer.</summary>
+public delegate short Es1FlyerStateFunction(Es1Flyer flyer, Es1SimGlobals globals);
+
 /// <summary>
 /// One <c>0x28</c>-byte descriptor of <c>BehaviourStateTable</c> (<c>ES1DBSIM 000af26c</c>)
-/// (docs/es1/simulation/shields-and-behaviour-states.md#the-hercs-state-table, docs/retail/simulation/ai-dispatch.md#descriptor-layout--0x3e-bytes).
+/// (docs/es1/simulation/shields-and-behaviour-states.md#the-hercs-state-table, docs/retail/simulation/ai-dispatch.md#descriptor-layout--0x3e-bytes),
+/// or one <c>0x24</c>-byte descriptor of <c>FlyerBehaviourStateTable</c> (<c>000af58c</c>), the same layout with no
+/// <c>+0x24</c> word (docs/es1/simulation/shields-and-behaviour-states.md#the-aircrafts-state-table). Retail's slots are
+/// untyped code pointers; here a HERC's descriptor holds <see cref="Think"/>, <see cref="Move"/> and
+/// <see cref="Reassess"/>, and an aircraft's <see cref="FlyerThink"/>, <see cref="FlyerMove"/> and
+/// <see cref="FlyerReassess"/>.
 /// </summary>
 public sealed class Es1BehaviourDescriptor {
 	public Es1BehaviourDescriptor(string name, int dwell, ushort mask, Es1StateFunction? think, Es1StateFunction? move,
@@ -20,6 +28,26 @@ public sealed class Es1BehaviourDescriptor {
 		Reassess = reassess;
 		LineIndex = lineIndex;
 	}
+
+	/// <summary>An aircraft state's descriptor, <c>Flyer_BuildStateTable</c>'s (<c>000105b0</c>).</summary>
+	public Es1BehaviourDescriptor(string name, int dwell, ushort mask, Es1FlyerStateFunction? think,
+			Es1FlyerStateFunction? move, Es1FlyerStateFunction? reassess) {
+		Name = name;
+		Dwell = dwell;
+		Flags = ExpandFlagBits(mask);
+		FlyerThink = think;
+		FlyerMove = move;
+		FlyerReassess = reassess;
+	}
+
+	/// <summary><c>+0x18</c> of an aircraft's descriptor, the think, or null.</summary>
+	public Es1FlyerStateFunction? FlyerThink { get; }
+
+	/// <summary><c>+0x1c</c> of an aircraft's descriptor, the move, or null.</summary>
+	public Es1FlyerStateFunction? FlyerMove { get; }
+
+	/// <summary><c>+0x20</c> of an aircraft's descriptor, the reassess, or null.</summary>
+	public Es1FlyerStateFunction? FlyerReassess { get; }
 
 	/// <summary><c>+0x00</c>, the state's name.</summary>
 	public string Name { get; }
@@ -39,7 +67,7 @@ public sealed class Es1BehaviourDescriptor {
 	/// <summary><c>+0x20</c>, the reassess, or null.</summary>
 	public Es1StateFunction? Reassess { get; }
 
-	/// <summary><c>+0x24</c>, the squad line's string index.</summary>
+	/// <summary><c>+0x24</c>, the squad line's string index; 0 for an aircraft's descriptor, which ends before it.</summary>
 	public short LineIndex { get; }
 
 	/// <summary><c>Behaviour_ExpandFlagBits</c> (<c>00010578</c>): one byte per bit of the 16-bit mask, bit 0 first.</summary>

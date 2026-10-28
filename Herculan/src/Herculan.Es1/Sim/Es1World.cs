@@ -69,7 +69,9 @@ public sealed class Es1World {
 	/// The first pass's type registration for the mechs (<c>MechTypeSlot_Allocate</c>, then <c>Mechs_InitAllTypes</c>) and
 	/// the second pass. A type whose files are missing builds no machine; the original asserts.
 	/// </summary>
-	public static Es1World Spawn(Es1MissionScript script, GameContent content, Es1MechFormations formations) {
+	/// <param name="flyerFormations"><c>dat\FFORMS</c>, which <c>Flyer_LoadResources</c> (<c>0001c558</c>) loads at phase 2.</param>
+	public static Es1World Spawn(Es1MissionScript script, GameContent content, Es1MechFormations formations,
+			Es1FlyerFormations flyerFormations) {
 		var names = new NameListTransformer().Parse(content.ReadRequired("nam", "MECHS.NAM"))
 			?? throw new InvalidDataException("nam\\MECHS.NAM does not read.");
 		var types = new Dictionary<short, Es1MechType?>();
@@ -77,6 +79,9 @@ public sealed class Es1World {
 			short type = script.MechTypeSlots[slot];
 			types[type] = Es1MechType.Load(content, names, type, slot);
 		}
+
+		// FlyerTypes_LoadAll (0001c770), after Mechs_InitAllTypes, for the types the first pass registered.
+		script.FlyerTypes.LoadAll(content);
 
 		var weapons = new Es1WeaponsSimTransformer().Parse(content.ReadRequired("dat", "WEAPONS.DAT"))
 			?? throw new InvalidDataException("dat\\WEAPONS.DAT does not read.");
@@ -105,6 +110,9 @@ public sealed class Es1World {
 		world.Globals.MissionVars = script.Flags;
 		world.Globals.MissionActions = script.Actions;
 		world.Globals.MechFormations = formations;
+		world.Globals.FlyerFormations = flyerFormations;
+		// g_FlyerPool, made to the live flyer count by the first pass.
+		world.Globals.Flyers.Capacity = script.Flyers.LiveCount;
 		world.SpawnObjects(content, weapons, weaponModels, formations);
 		// Sim_StartMission's step 7, after the second pass: every effect and every debris piece the spawn made deleted.
 		world.Globals.Explosions.DeleteAll();
@@ -171,9 +179,30 @@ public sealed class Es1World {
 			}
 		}
 
-		// PLACEHOLDER: blocks 7 and 8 build no object: their constructors, 0001ac58 (a flyer from its type) and 00003cbc (a
-		// base from its record), are unread (docs/es1/formats/script-dat.md#open). The plan's flyers-and-bases step ports
-		// them; the zone's placed shapes still draw.
+		// Block 7: each live slot's flyer, from the pool, its point with no height added and its heading, its two actions and
+		// its out-of-action pair. Retail reads a full pool's null unchecked; the pool is made to the live count, so it never
+		// is. A type whose files are missing builds no flyer; the original asserts.
+		for (int slot = 0; slot < dat.Flyers.Length && slot < Script.Flyers.Live.Length; slot++) {
+			if (!Script.Flyers.Live[slot] || Script.FlyerTypes[Script.Flyers.Types[slot]] is not { } flyerType
+					|| Globals.Flyers.Construct(flyerType, Globals) is not { } flyer) {
+				continue;
+			}
+
+			var record = dat.Flyers[slot];
+			flyer.Position = record.PointRef >= 0 && record.PointRef < Script.Points.Length
+				? Script.Points[record.PointRef]
+				: PositionSentinel;
+			flyer.Rotation = record.HeadingRef >= 0 && record.HeadingRef < Script.Headings.Length
+				? ((short)0, (short)0, Script.Headings[record.HeadingRef])
+				: RotationSentinel;
+			flyer.RotationWord = 0;
+			flyer.Actions = (ActionAt(record.ActionRef3A), ActionAt(record.ActionRef3C));
+			flyer.Word174 = (record.Word36, record.Word38);
+		}
+
+		// PLACEHOLDER: block 8 builds no object: its constructor 00003cbc (a base from its record) is unread
+		// (docs/es1/formats/script-dat.md#open). The plan's module 2 (effects and structures) ports it; the zone's placed
+		// shapes still draw.
 
 		// Block 9. A group's target is a pointer into the array the first pass allocated, so a target group later in the
 		// array is the record that group's turn fills.
@@ -186,6 +215,7 @@ public sealed class Es1World {
 			Groups[i].Target = record.Ref4ERow switch {
 				0 => record.Ref4E >= 0 && record.Ref4E < Groups.Count ? Groups[record.Ref4E] : null,
 				1 when record.Ref4E >= 0 => PoolNth(MapEntry(Script.Mechs, record.Ref4E)),
+				2 when record.Ref4E >= 0 => Globals.Flyers.Nth(MapEntry(Script.Flyers, record.Ref4E)),
 				_ => null,
 			};
 		}
@@ -308,14 +338,20 @@ public sealed class Es1World {
 				continue;
 			}
 
-			var member = record.MemberKind == 0 ? PoolNth(refs[k]) : null;
+			object? member = record.MemberKind switch {
+				0 => PoolNth(refs[k]),
+				1 => Globals.Flyers.Nth(refs[k]),
+				_ => null,
+			};
 			group.Members.Add(member);
-			if (member != null) {
-				Es1Formation.Attach(member, k, group, formations);
+			if (member is Es1Mech mech) {
+				Es1Formation.Attach(mech, k, group, formations);
+			} else if (member is Es1Flyer flyer) {
+				Es1FlyerGroups.Attach(flyer, k, group, Globals.FlyerFormations);
 			}
 
-			// PLACEHOLDER: a flyer or base member is attached by 0001b574 or 000044a4, unread
-			// (docs/es1/simulation/mission-groups.md#open); with blocks 7 and 8 unbuilt there is none to attach.
+			// PLACEHOLDER: a base member is attached by 000044a4, unread (docs/es1/simulation/mission-groups.md#open); with
+			// block 8 unbuilt there is none to attach. The plan's module 2 ports it.
 		}
 
 		return group;

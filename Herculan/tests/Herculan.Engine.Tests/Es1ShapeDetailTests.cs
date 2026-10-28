@@ -20,7 +20,7 @@ public class Es1ShapeDetailTests {
 
 	[Fact]
 	public void TheRootStartsAtTheBiasAndTheThresholdCursorAtZero() {
-		var setting = new Es1DetailSetting(1024, 1, 0);
+		var setting = new Es1DetailSetting(1024, 1, 0, 0);
 
 		// Radius 70 at 326: size (70 << 8) / 256 = 70, under 75 and not under 60, so one step from the bias of 1.
 		Assert.Equal(2, Es1ShapeDetail.SelectRoot(7, 70, 326, setting, Thresholds));
@@ -33,9 +33,9 @@ public class Es1ShapeDetailTests {
 
 	[Fact]
 	public void TheOptionPicksTheFirstKeyItIsAtMost() {
-		Assert.Equal(new Es1DetailSetting(2000, 4, 2), Es1DetailSetting.FromOption(50));
-		Assert.Equal(new Es1DetailSetting(2000, 3, 2), Es1DetailSetting.FromOption(51));
-		Assert.Equal(new Es1DetailSetting(2000, 0, 0), Es1DetailSetting.FromOption(255));
+		Assert.Equal(new Es1DetailSetting(2000, 4, 2, 2), Es1DetailSetting.FromOption(50));
+		Assert.Equal(new Es1DetailSetting(2000, 3, 2, 2), Es1DetailSetting.FromOption(51));
+		Assert.Equal(new Es1DetailSetting(2000, 0, 0, 0), Es1DetailSetting.FromOption(255));
 	}
 
 	[Fact]

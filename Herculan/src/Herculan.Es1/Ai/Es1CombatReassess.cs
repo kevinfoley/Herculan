@@ -274,7 +274,7 @@ public static class Es1CombatReassess {
 	/// <summary>
 	/// PLACEHOLDER: whether a class-1 target's type record <c>+0x34</c> is 0, which the flee check and <c>attacking base</c>
 	/// read. No structure is a simulation object in the slice (docs/herculan/plan-es1-first-mission.md#what-the-slice-leaves-out),
-	/// so no target has class 1 and this is never asked; it answers no until the plan's flyers-and-bases step.
+	/// so no target has class 1 and this is never asked; it answers no until the plan's module 2 (effects and structures).
 	/// </summary>
 	internal static bool StructureTypeWord34IsZero(IEs1SimObject target) => false;
 }

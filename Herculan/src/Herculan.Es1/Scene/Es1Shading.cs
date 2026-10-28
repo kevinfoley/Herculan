@@ -17,8 +17,8 @@ namespace Herculan.Es1.Scene;
 /// palette's own range for it. That is the original's state for every face this step draws: a zone shape's shaded faces
 /// are all on ramp 14, which only tag 0's list names (docs/es1/rendering/polygon-shading.md#the-theater-shapes-faces),
 /// and a HERC's root 0 shades only on ramps 0, 2, 4, 6, 8 and 12, which tag 7's list names, and ramp 200, which no list
-/// names. The flyers' and bases' tags, whose lists also name ramps 0 to 12, have no object in this step, and the
-/// impact effects' retail shapes hold bitmap parts and solid faces alone, which no ramp colours.</para>
+/// names. A flyer's shape (tag 6) shades on the ramps its tag's list names; the bases' tag, whose list also names ramps 0
+/// to 12, has no object in this step, and the impact effects' retail shapes hold bitmap parts and solid faces alone, which no ramp colours.</para>
 /// </summary>
 public sealed class Es1Shading {
 	/// <summary>
@@ -32,11 +32,12 @@ public sealed class Es1Shading {
 	public const byte ZoneShapeTag = 0;
 
 	/// <summary>
-	/// The tags whose bands the table holds, in block order: the zone shapes', the HERCs', the projectiles' and the impact
-	/// effects' two. <c>SHADES.DAT</c> has no list for the effects' tags, so their blocks hold the palette's own ramps.
+	/// The tags whose bands the table holds, in block order: the zone shapes', the HERCs', the projectiles', the impact
+	/// effects' two and the flyers'. <c>SHADES.DAT</c> has no list for the effects' tags, so their blocks hold the
+	/// palette's own ramps.
 	/// </summary>
 	public static IReadOnlyList<byte> Tags { get; } = [ZoneShapeTag, 7, Projectiles.Es1Projectile.TypeTag,
-		Effects.Es1Explosion.TypeTag, Effects.Es1Explosion.ClassTypeTag];
+		Effects.Es1Explosion.TypeTag, Effects.Es1Explosion.ClassTypeTag, (byte)Sim.Es1Flyer.TypeTag];
 
 	/// <summary>The tag whose cull <c>WorldShades_IsBeyondLastBand</c> moves by the world file's first distance offset.</summary>
 	private const byte OffsetCullTag = Effects.Es1Explosion.ClassTypeTag;

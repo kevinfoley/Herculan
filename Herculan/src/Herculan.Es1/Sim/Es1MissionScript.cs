@@ -128,6 +128,12 @@ public sealed class Es1MissionScript {
 	/// <summary>The mech types in the order <c>MechTypeSlot_Allocate</c> first gives each a slot: the live slots' in slot order.</summary>
 	public IReadOnlyList<short> MechTypeSlots { get; private set; } = [];
 
+	/// <summary>
+	/// The flyer types' tables, which the first pass registers each live flyer slot's type in, below block 7's count and in
+	/// slot order, and <c>FlyerTypes_LoadAll</c> loads (<see cref="Es1FlyerTypes.LoadAll"/>).
+	/// </summary>
+	public Es1FlyerTypes FlyerTypes { get; } = new();
+
 	/// <summary>The binary angle a stored heading <paramref name="value"/> reads as: (<i>h</i> mod 4) quarter turns.</summary>
 	public static short DecodeHeading(short value) => unchecked((short)(value << HeadingShift));
 
@@ -210,6 +216,14 @@ public sealed class Es1MissionScript {
 		}
 
 		script.MechTypeSlots = types;
+
+		// FlyerType_Register for each live slot below block 7's count, in slot order.
+		for (int slot = 0; slot < dat.Flyers.Length && slot < FlyerSlots; slot++) {
+			if (script.Flyers.Live[slot]) {
+				script.FlyerTypes.Register(script.Flyers.Types[slot]);
+			}
+		}
+
 		return script;
 	}
 }

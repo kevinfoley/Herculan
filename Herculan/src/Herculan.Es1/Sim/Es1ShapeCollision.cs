@@ -87,8 +87,8 @@ public readonly record struct Es1RayHit(int Distance, Es1ShapeObject Shape);
 /// <summary>
 /// A structure of <c>g_BasePool</c>, as far as the walk test reads it: whether its type (<c>+0x188</c>) has a collision
 /// model (the record's <c>+0x3a</c> not 0, <c>BASES.DAT</c> types 5, 6 and 8) and its shape
-/// (docs/es1/simulation/terrain.md#the-structures-tests). PLACEHOLDER: none is built until the plan's flyers-and-bases
-/// step ports the base constructor (<c>00003cbc</c>), which replaces this with the structure object.
+/// (docs/es1/simulation/terrain.md#the-structures-tests). PLACEHOLDER: none is built until the plan's module 2 (effects and structures)
+/// ports the base constructor (<c>00003cbc</c>), which replaces this with the structure object.
 /// </summary>
 public sealed class Es1Structure(bool hasCollisionModel, Es1ShapeObject shape) {
 	public bool HasCollisionModel { get; } = hasCollisionModel;

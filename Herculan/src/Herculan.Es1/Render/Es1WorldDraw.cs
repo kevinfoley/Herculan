@@ -11,8 +11,8 @@ namespace Herculan.Es1.Render;
 /// <summary>
 /// What one frame draws (docs/es1/rendering/polygon-shading.md#which-objects-are-drawn): the shadows, which
 /// <c>ObjList_DrawFrameObjects</c> (<c>ES1DBSIM 00021008</c>) paints first, within 30000 of the camera, with the impact
-/// effects' ground shapes; then the zone's shapes, the HERCs, the projectiles, the impact effects, the debris and the
-/// smoke balls, each but the one
+/// effects' ground shapes; then the zone's shapes, the HERCs, the flyers, the projectiles, the impact effects, the debris
+/// and the smoke balls, each but the one
 /// the camera rides in, one whose Z is negative, one past the last distance band and one whose group an action still
 /// holds out of the mission (<c>ObjList_RebuildFrame</c>, <c>00020de0</c>), each lit by the sun and the effect lights
 /// <c>LightManager_SelectLightsForObject</c> picks for it (<see cref="SceneItem.LightAnchor"/>).
@@ -40,11 +40,13 @@ public sealed class Es1WorldDraw {
 	/// <param name="explosions">The impact effects' draw; with none no effect is drawn.</param>
 	/// <param name="debris">The debris' draw; with none no piece is drawn.</param>
 	/// <param name="smoke">The smoke balls' draw; with none no ball is drawn.</param>
+	/// <param name="flyers">The flyers' draw; with none no flyer is drawn.</param>
 	public Es1WorldDraw(GL gl, Es1ZoneScene scene, Es1World world, Es1MechModels models, Es1AppliedDetail detail,
 			ICollection<IDisposable> owned, Es1ProjectileDraw? projectiles = null, Es1ExplosionDraw? explosions = null,
-			Es1DebrisDraw? debris = null, Es1SmokeDraw? smoke = null) {
+			Es1DebrisDraw? debris = null, Es1SmokeDraw? smoke = null, Es1FlyerDraw? flyers = null) {
 		_scene = scene;
 		_detail = detail;
+		Flyers = flyers;
 		Projectiles = projectiles;
 		Explosions = explosions;
 		Debris = debris;
@@ -94,7 +96,10 @@ public sealed class Es1WorldDraw {
 	/// </summary>
 	public IReadOnlyList<SceneItem> FlatZoneShapes => _flatZoneItems;
 
-	/// <summary>The projectile pool's draw, whose items <see cref="Objects"/> lists after the HERCs'; null for none.</summary>
+	/// <summary>The flyers' draw, whose items <see cref="Objects"/> lists after the HERCs', as the live object list holds them; null for none.</summary>
+	public Es1FlyerDraw? Flyers { get; }
+
+	/// <summary>The projectile pool's draw, whose items <see cref="Objects"/> lists after the flyers'; null for none.</summary>
 	public Es1ProjectileDraw? Projectiles { get; }
 
 	/// <summary>The impact effects' draw, whose items <see cref="Objects"/> lists after the projectiles'; null for none.</summary>
@@ -106,9 +111,9 @@ public sealed class Es1WorldDraw {
 	/// <summary>The smoke balls' draw, whose items <see cref="Objects"/> ends with; null for none.</summary>
 	public Es1SmokeDraw? Smoke { get; }
 
-	/// <summary>The zone shapes', the HERCs', the projectiles', the impact effects', the debris' and the smoke balls' items, in <c>ObjList_RebuildFrame</c>'s order.</summary>
+	/// <summary>The zone shapes', the HERCs', the flyers', the projectiles', the impact effects', the debris' and the smoke balls' items, in <c>ObjList_RebuildFrame</c>'s order.</summary>
 	public IEnumerable<SceneItem> Objects => _zoneItems.Select(entry => entry.Item).Concat(_mechs.SelectMany(m => m.Items))
-		.Concat(Projectiles?.Items ?? []).Concat(Explosions?.Items ?? []).Concat(Debris?.Items ?? [])
+		.Concat(Flyers?.Items ?? []).Concat(Projectiles?.Items ?? []).Concat(Explosions?.Items ?? []).Concat(Debris?.Items ?? [])
 		.Concat(Smoke?.Items ?? []);
 
 	/// <summary>The impact effects' and the smoke balls' billboards, drawn after <see cref="Objects"/>.</summary>
@@ -116,11 +121,12 @@ public sealed class Es1WorldDraw {
 
 	/// <summary>
 	/// The objects <c>ObjList_DrawFrameObjects</c> draws, each with its items, in the order <see cref="Objects"/> lists
-	/// their items: each zone shape, as its <see cref="Es1ShapeObject"/>, then each HERC.
+	/// their items: each zone shape, as its <see cref="Es1ShapeObject"/>, then each HERC, then each flyer.
 	/// </summary>
 	public IEnumerable<(object Object, IEnumerable<SceneItem> Items)> FrameObjects =>
 		_zoneItems.Select(entry => (entry.Object, (IEnumerable<SceneItem>)[entry.Item]))
-			.Concat(_mechs.Select(mech => ((object)mech.Mech, mech.Items)));
+			.Concat(_mechs.Select(mech => ((object)mech.Mech, mech.Items)))
+			.Concat(Flyers?.FrameObjects ?? []);
 
 	/// <summary>Places and culls every item for <paramref name="camera"/>; <paramref name="ridden"/> is the machine the camera rides in, or null.</summary>
 	public void Update(Camera camera, Es1Mech? ridden) {
@@ -158,6 +164,7 @@ public sealed class Es1WorldDraw {
 			mech.Update(camera, shading, ridden, _detail.Setting, focalShift, flat);
 		}
 
+		Flyers?.Update(camera, focalShift, flat);
 		Projectiles?.Update(camera, flat);
 		Explosions?.Update(camera, focalShift, flat);
 		Debris?.Update(camera, focalShift, flat);

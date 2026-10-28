@@ -125,7 +125,7 @@ public static class Es1ObstacleAvoidance {
 	/// <paramref name="from"/>, result), the structures of that side, or every side's for −1
 	/// (docs/es1/simulation/terrain.md#the-structures-tests). PLACEHOLDER: the slice spawns no structure
 	/// (<see cref="Es1SimGlobals.Structures"/>), so the probe answers 0, as retail's does over an empty <c>g_BasePool</c>;
-	/// the plan's flyers-and-bases step ports it.
+	/// the plan's module 2 (effects and structures) ports it.
 	/// </summary>
 	internal static bool StructureRaycastShapes(short side, Vec3i to, Vec3i from, out int distance) {
 		distance = 0;

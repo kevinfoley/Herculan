@@ -196,8 +196,9 @@ public sealed class Es1MfdScannerScreen : Es1MfdScreen {
 	/// The blinking last-known position of a side-1 object the radar has not shown up: none while the clock
 	/// (<c>000981c4</c>) has bit <c>0x20</c> set; otherwise the point <c>+0x164</c> when the byte <c>+0xa1</c> is clear,
 	/// and none when it is set. PLACEHOLDER: the port holds neither field, and answers none.
-	/// <c>Mech_Constructor</c> sets <c>+0xa1</c> (docs/es1/simulation/mech.md#construction) and no ported code clears
-	/// it, so a HERC, the only object the port builds, takes none either way; what clears it and what <c>+0x164</c>
+	/// <c>Mech_Constructor</c> and <c>Flyer_Constructor</c> set <c>+0xa1</c> (docs/es1/simulation/mech.md#construction,
+	/// docs/es1/simulation/flyers.md#construction--flyer_constructor-0001ac58) and no ported code clears it, so a HERC or
+	/// a flyer, the objects the port builds, takes none either way; what clears it and what <c>+0x164</c>
 	/// holds is docs/es1/simulation/mfd-scanner.md#open.
 	/// </summary>
 	private static Vec3i? LastKnownPosition(IEs1SimObject other) {

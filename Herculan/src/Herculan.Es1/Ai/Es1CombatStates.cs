@@ -433,7 +433,8 @@ public static class Es1CombatStates {
 
 		if (post is not { } goal) {
 			// PLACEHOLDER: retail reads the post through the group's target with no test, as guarding does; with none (a
-			// structure or flyer target, which the slice does not build) the machine stands here, asking nothing.
+			// structure target, which the slice does not build until the plan's module 2) the machine stands here, asking
+			// nothing.
 			mech.Locomotion.LocomotionTick(globals, 0, 0, 0);
 			return 0;
 		}

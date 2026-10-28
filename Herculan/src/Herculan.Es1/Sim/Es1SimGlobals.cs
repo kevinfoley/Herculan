@@ -135,6 +135,15 @@ public sealed class Es1SimGlobals {
 	/// <summary><c>g_MechPool</c>'s machines in build order, which the blasts and the outnumbered damage walk from the end.</summary>
 	public IReadOnlyList<Es1Mech> MechPool { get; set; } = [];
 
+	/// <summary><c>g_FlyerPool</c> and its delete queue, empty until a world is spawned.</summary>
+	public Es1FlyerPool Flyers { get; } = new();
+
+	/// <summary>
+	/// <c>dat\FFORMS</c>'s formations, the array at <c>000bc472</c> that <c>Flyer_ApplyFormationOffset</c> reads
+	/// (docs/es1/formats/formations-dat.md#where-a-member-stands); none until a world is spawned.
+	/// </summary>
+	public HercWorks.Core.Data.File.Dat.Sim.Es1FlyerFormations FlyerFormations { get; set; } = new();
+
 	/// <summary>
 	/// <see cref="MissionModeFlag"/> 0 with <see cref="UnlimitedAmmoFlag"/> 1: the trigger's free-shot flag, which spares
 	/// the rounds, and the energy turn's refund of the budget (docs/es1/simulation/weapon-mounts.md#energy--weaponmounts_arbitrateenergy-0000cc2c).
@@ -172,9 +181,9 @@ public sealed class Es1SimGlobals {
 	}
 
 	/// <summary>
-	/// <c>g_BasePool</c> (<c>000aed70</c>)'s structures in build order. PLACEHOLDER: empty: blocks 7 and 8 are not spawned
-	/// (the base constructor <c>00003cbc</c> is unread, docs/es1/formats/script-dat.md#open); the plan's flyers-and-bases
-	/// step fills it.
+	/// <c>g_BasePool</c> (<c>000aed70</c>)'s structures in build order. PLACEHOLDER: empty: block 8 is not spawned
+	/// (the base constructor <c>00003cbc</c> is unread, docs/es1/formats/script-dat.md#open); the plan's module 2 (effects and structures)
+	/// fills it.
 	/// </summary>
 	public List<Es1Structure> Structures { get; } = new();
 

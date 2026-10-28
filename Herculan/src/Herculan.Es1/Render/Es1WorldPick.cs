@@ -4,7 +4,7 @@ using Silk.NET.OpenGL;
 namespace Herculan.Es1.Render;
 
 /// <summary>
-/// The pixel pick's readback: which of the frame's objects, the zone's shapes and the HERCs (<see cref="Es1WorldDraw.FrameObjects"/>),
+/// The pixel pick's readback: which of the frame's objects, the zone's shapes, the HERCs and the flyers (<see cref="Es1WorldDraw.FrameObjects"/>),
 /// the world pass drew at one pixel of the world layer. This is this engine's departure from retail's pick, the user's
 /// choice (docs/herculan/plan-es1-first-mission.md, decision 16): retail keeps the last object its farthest-first painter
 /// paints over the point (docs/es1/simulation/terrain.md#the-pixel-pick-and-the-occlusion-probe), and this engine, which

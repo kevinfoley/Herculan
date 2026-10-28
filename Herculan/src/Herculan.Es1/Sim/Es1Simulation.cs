@@ -375,8 +375,8 @@ public sealed class Es1Simulation {
 		ViewChain.Camera.Steer(trigger, cameraY, cameraX);
 
 		if (Viewed.TargetClass == FlyerClass && !cameraDriven) {
-			// PLACEHOLDER: 0001b794(viewed, throttle, steering) and the viewed object's +0xa9 set, the flyer's controls;
-			// no flyer is spawned until the plan's flyers step.
+			// PLACEHOLDER: Flyer_ApplyFlightCommand (0001b794)(viewed, throttle, steering) and the viewed object's +0xa9
+			// set, the flyer's controls; part F2 ports them. The view's object is a HERC here, so this is not reached.
 		} else if (LocalPlayer.IsAnimated) {
 			TickPlayersMachine(steer, throttle, twist, pitch);
 		}
@@ -491,8 +491,10 @@ public sealed class Es1Simulation {
 	/// <c>N</c>'s walk: from <see cref="Viewed"/> on through <c>LiveObjectList</c> with <c>ObjectList_Next</c>
 	/// (<c>0000dba4</c>), which wraps, to the first object whose height (<c>+0x28</c>) is not negative and whose group is
 	/// the player's, the player included. Retail's walk has no end and spins forever when no object passes; this one gives
-	/// up after a full turn of the list and answers null, an engine guard. An object that is not a HERC, which the slice
-	/// never lists (blocks 7 and 8 are not spawned), is passed over.
+	/// up after a full turn of the list and answers null, an engine guard. An object that is not a HERC is passed over:
+	/// PLACEHOLDER: a flyer of the player's group, which retail's walk would make the view's object
+	/// (docs/es1/simulation/flyers.md#open), is not taken, as the view's object is a HERC here; part F2 ports the player at
+	/// a flyer's controls.
 	/// </summary>
 	private Es1Mech? NextSquadObject() {
 		var live = Globals.LiveObjects;
@@ -516,13 +518,16 @@ public sealed class Es1Simulation {
 
 	/// <summary>
 	/// <c>Group_TickMembers</c> (<c>0001cf60</c>): <c>Mech_AiTick</c> on each member
-	/// (docs/es1/simulation/mission-groups.md#the-tick). A member the pool had no object for, or a flyer or base, which
-	/// no group holds until the plan's flyers-and-bases step, is skipped.
+	/// (docs/es1/simulation/mission-groups.md#the-tick), a HERC's through its slots and a flyer's through the aircraft's
+	/// (<see cref="Es1FlyerBehaviour.AiTick"/>). A member the pool had no object for, or a base, which no group holds until
+	/// the plan's module 2 builds them, is skipped.
 	/// </summary>
 	private void TickMembers(Es1MissionGroup group) {
 		foreach (var member in group.Members) {
 			if (member is Es1Mech mech) {
 				Es1MechBehaviour.AiTick(mech, Globals);
+			} else if (member is Es1Flyer flyer) {
+				Es1FlyerBehaviour.AiTick(flyer, Globals);
 			}
 		}
 	}

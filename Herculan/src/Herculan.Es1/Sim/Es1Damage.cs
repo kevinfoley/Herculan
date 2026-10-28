@@ -81,39 +81,60 @@ public sealed class Es1DamageHeader {
 	private readonly List<short> _queue = new();
 
 	/// <summary>
-	/// <c>Component_AllocDamageArrays</c> (<c>00009b8c</c>) with <see cref="InternalCount"/> and <see cref="ComponentCount"/>:
-	/// the damage zeroed and every occupancy flag set; then <c>Damage_LoadMechDmgFile</c>'s table, <c>Collision_RegisterObject</c>'s
-	/// model and <c>Component_LinkMaxRefData</c> (<c>00009c28</c>) binding them to <paramref name="machine"/>.
+	/// <c>Component_AllocDamageArrays</c> (<c>00009b8c</c>) with <paramref name="internals"/> and
+	/// <paramref name="components"/>, a HERC's <see cref="InternalCount"/> and <see cref="ComponentCount"/> unless given:
+	/// the damage zeroed and every occupancy flag set; then <c>Damage_LoadMechDmgFile</c>'s table,
+	/// <c>Collision_RegisterObject</c>'s model and <c>Component_LinkMaxRefData</c> (<c>00009c28</c>) binding them to
+	/// <paramref name="owner"/>.
 	/// </summary>
 	/// <remarks>
-	/// The maxima array holds at least <see cref="InternalCount"/> entries, the file's own beyond, zeros past them: retail's
-	/// holds the file's count and every reader walks <see cref="InternalCount"/>, so on a file with fewer (<c>SPIDER</c>,
-	/// 12) it reads, and the loadout's join writes, past the array; here those land in the zeros, an engine guard.
+	/// The maxima array holds at least <see cref="Internals"/> entries, the file's own beyond, zeros past them: retail's
+	/// holds the file's count and every reader walks the header's count, so on a file with fewer (<c>SPIDER</c>, 12) it
+	/// reads, and the loadout's join writes, past the array; here those land in the zeros, an engine guard.
 	/// </remarks>
-	public Es1DamageHeader(Es1Mech machine, HercSimDamage table, ColliderNode[] model) {
-		Machine = machine;
+	public Es1DamageHeader(IEs1SimObject owner, HercSimDamage table, ColliderNode[] model, int internals = InternalCount,
+			int components = ComponentCount) {
+		Owner = owner;
 		Model = model;
+		Internals = internals;
+		Components = components;
+		InternalDamage = new short[internals];
+		ComponentDamage = new short[components];
+		Occupied = new bool[components];
 		_pieces = (table.ComponentData ?? []).Select(piece => Es1DamagePiece.From(piece)).ToArray();
 		var maxima = (table.Internals ?? []).Select(i => i.Armor).ToArray();
-		_maxima = new short[Math.Max(maxima.Length, InternalCount)];
+		_maxima = new short[Math.Max(maxima.Length, internals)];
 		maxima.CopyTo(_maxima, 0);
 		Array.Fill(Occupied, true);
 	}
 
+	/// <summary><c>+0x1a</c>, the internals' count.</summary>
+	public int Internals { get; }
+
+	/// <summary><c>+0x18</c>, the components' count.</summary>
+	public int Components { get; }
+
 	/// <summary><c>+0</c>, the internals' damage.</summary>
-	public short[] InternalDamage { get; } = new short[InternalCount];
+	public short[] InternalDamage { get; }
 
 	/// <summary><c>+4</c>, the components' damage.</summary>
-	public short[] ComponentDamage { get; } = new short[ComponentCount];
+	public short[] ComponentDamage { get; }
 
 	/// <summary><c>+8</c>, the occupancy flags: a component whose flag is clear is not struck, placed or written.</summary>
-	public bool[] Occupied { get; } = new bool[ComponentCount];
+	public bool[] Occupied { get; }
 
 	/// <summary><c>+0x10</c>, the <c>.COL</c> model, the machine's own; the loadout's join replaces the mounts' clusters.</summary>
 	public ColliderNode[] Model { get; private set; }
 
-	/// <summary><c>+0x14</c>, the machine.</summary>
-	public Es1Mech Machine { get; }
+	/// <summary><c>+0x14</c>, the object the header belongs to.</summary>
+	public IEs1SimObject Owner { get; }
+
+	/// <summary>
+	/// <see cref="Owner"/> as a HERC, which the cascade's cell frames, smoke and part nodes are read on. PLACEHOLDER: a
+	/// flyer's header (part F3 ports its damage write) reaches none of them here; what retail's cascade does on a
+	/// flyer's static instance is unread.
+	/// </summary>
+	private Es1Mech? Machine => Owner as Es1Mech;
 
 	/// <summary>
 	/// <c>ComponentCascade_EffectLatch</c> (<c>000af140</c>): one fire and one explosion a cascade. Retail's is one global;
@@ -129,11 +150,11 @@ public sealed class Es1DamageHeader {
 	/// <summary>Internal <paramref name="index"/>'s maximum, the table's <c>+4</c> array; 0 outside it, an engine guard.</summary>
 	public short Maximum(int index) => index >= 0 && index < _maxima.Length ? _maxima[index] : (short)0;
 
-	private bool IsOccupied(int component) => component >= 0 && component < ComponentCount && Occupied[component];
+	private bool IsOccupied(int component) => component >= 0 && component < Components && Occupied[component];
 
-	private short Internal(int index) => index >= 0 && index < InternalCount ? InternalDamage[index] : (short)0;
+	private short Internal(int index) => index >= 0 && index < Internals ? InternalDamage[index] : (short)0;
 
-	private short Component(int index) => index >= 0 && index < ComponentCount ? ComponentDamage[index] : (short)0;
+	private short Component(int index) => index >= 0 && index < Components ? ComponentDamage[index] : (short)0;
 
 	/// <summary>
 	/// <c>Component_AddDamage</c> (<c>00009c88</c>)(<paramref name="damage"/>, <paramref name="maximum"/>,
@@ -187,7 +208,7 @@ public sealed class Es1DamageHeader {
 			}
 
 			// Retail's walk always ends on an entry, the draw being under the sum; an index outside the array stops here.
-			if (chosen < 0 || chosen >= InternalCount
+			if (chosen < 0 || chosen >= Internals
 					|| !AddDamage(ref damage, Maximum(chosen), ref InternalDamage[chosen])) {
 				return false;
 			}
@@ -205,7 +226,7 @@ public sealed class Es1DamageHeader {
 	/// </summary>
 	public bool ApplyDamageAndCascade(short damage, short component, Es1SimGlobals globals) {
 		var random = globals.Random;
-		if (Piece(component) is not { } piece || component >= ComponentCount) {
+		if (Piece(component) is not { } piece || component >= Components) {
 			return false;
 		}
 
@@ -215,7 +236,7 @@ public sealed class Es1DamageHeader {
 
 		if (!SpillIntoDependents(piece, damage, random)) {
 			if (piece.Sequence >= 0) {
-				Machine.SetCellFrame(piece.Sequence, ArmorGoneCell);
+				Machine?.SetCellFrame(piece.Sequence, ArmorGoneCell);
 			}
 
 			return false;
@@ -259,23 +280,23 @@ public sealed class Es1DamageHeader {
 		// Retail reads the bound of a component with no cluster through a null pointer; (0, 0, 0) here, an engine guard.
 		var center = cluster?.Bound ?? default;
 		if (piece.Sequence >= 0) {
-			if (!EffectLatch && (piece.Flags & 2) != 0) {
+			if (!EffectLatch && (piece.Flags & 2) != 0 && Machine is { } machine) {
 				// Smoke_Construct (000069ec)(null, kind 0, the bound center, the part id, the machine), its first shape drawn
 				// on the generator 000b5c48.
-				globals.Smoke.Construct(LostSmokeKind, (center.X, center.Y, center.Z), part, Machine, globals.PresentationRandom);
+				globals.Smoke.Construct(LostSmokeKind, (center.X, center.Y, center.Z), part, machine, globals.PresentationRandom);
 			}
 
-			Machine.SetCellFrame(piece.Sequence, LostCell);
+			Machine?.SetCellFrame(piece.Sequence, LostCell);
 		}
 
 		// The anchor: the bound center, through the part's node unless the part id is negative, then the machine's frame.
 		var anchor = new Vec3i(center.X, center.Y, center.Z);
 		if (part >= 0) {
 			// Retail passes a null node for a part the shape lacks; the frame alone here, an engine guard.
-			anchor = (Machine.PartNodeTransform(part) ?? Transform3.Identity).TransformPoint(center.X, center.Y, center.Z);
+			anchor = (Machine?.PartNodeTransform(part) ?? Transform3.Identity).TransformPoint(center.X, center.Y, center.Z);
 		}
 
-		anchor = Machine.Frame.TransformPoint(anchor.X, anchor.Y, anchor.Z);
+		anchor = Owner.Frame.TransformPoint(anchor.X, anchor.Y, anchor.Z);
 		if (!EffectLatch) {
 			short type = ComponentExplosion;
 			if ((piece.Flags & 4) != 0) {
@@ -289,7 +310,7 @@ public sealed class Es1DamageHeader {
 
 		globals.Debris.ThrowGroup(LostDebrisGroup, anchor, random);
 
-		for (short i = 0; i < ComponentCount; i++) {
+		for (short i = 0; i < Components; i++) {
 			if (Occupied[i] && Piece(i)?.Parent == component) {
 				_queue.Add(i);
 			}
@@ -310,13 +331,13 @@ public sealed class Es1DamageHeader {
 	/// </summary>
 	public short ReadOverallDamage() {
 		int damage = 0, maximum = 0;
-		for (int i = 0; i < ComponentCount; i++) {
+		for (int i = 0; i < Components; i++) {
 			short armor = Piece(i)?.Armor ?? 0;
 			damage += ComponentDamage[i] < 0 ? armor : ComponentDamage[i];
 			maximum += armor;
 		}
 
-		for (int i = 0; i < InternalCount; i++) {
+		for (int i = 0; i < Internals; i++) {
 			damage += InternalDamage[i] < 0 ? Maximum(i) : InternalDamage[i];
 			maximum += Maximum(i);
 		}
@@ -443,7 +464,7 @@ public sealed class Es1DamageHeader {
 			short armor = Piece(component)?.Armor ?? 0;
 			short maximum = Maximum(index);
 			short taken = Share(At(hardpoints, n), unchecked((short)(maximum + armor)));
-			if (component >= ComponentCount || index >= InternalCount) {
+			if (component >= Components || index >= Internals) {
 				continue;
 			}
 
@@ -500,7 +521,7 @@ public sealed class Es1DamageHeader {
 			}
 		}
 
-		for (int i = 0; i < ComponentCount; i++) {
+		for (int i = 0; i < Components; i++) {
 			if ((Piece(i)?.Dependents.Length ?? 0) == 0) {
 				Occupied[i] = false;
 			}

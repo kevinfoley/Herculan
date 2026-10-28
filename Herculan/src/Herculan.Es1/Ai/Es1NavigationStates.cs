@@ -156,8 +156,8 @@ public static class Es1NavigationStates {
 		Es1Navigation.UpdateWeaponsFree(mech);
 		if (post is not { } point) {
 			// PLACEHOLDER: retail reads the post through the group's target with no test. Here there is none where that
-			// target is a structure or flyer, which the slice does not build until the plan's flyers-and-bases step, or a
-			// kind with no route; the machine stands, asking nothing of the control law.
+			// target is a structure, which the slice does not build until the plan's module 2, or a kind with no route; the
+			// machine stands, asking nothing of the control law.
 			mech.Locomotion.LocomotionTick(globals, 0, 0, 0);
 			return 0;
 		}

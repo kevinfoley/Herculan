@@ -22,8 +22,8 @@ public sealed class Es1ObjectPick {
 	public (int X, int Y) Point { get; private set; }
 
 	/// <summary>
-	/// <c>ObjPick_Object</c>: the object the last answering pass found at the point, a HERC (<see cref="Es1Mech"/>) or a
-	/// zone shape (its <see cref="Es1ShapeObject"/>), or null for none; 0 in the image.
+	/// <c>ObjPick_Object</c>: the object the last answering pass found at the point, a HERC (<see cref="Es1Mech"/>), a
+	/// flyer (<see cref="Es1Flyer"/>) or a zone shape (its <see cref="Es1ShapeObject"/>), or null for none; 0 in the image.
 	/// </summary>
 	public object? Object { get; private set; }
 

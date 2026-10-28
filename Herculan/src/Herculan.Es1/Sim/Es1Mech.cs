@@ -722,8 +722,11 @@ public sealed class Es1Mech : IEs1SimObject {
 	/// </summary>
 	public short CruiseSpeed { get; set; }
 
-	/// <summary><c>+0x174</c> and <c>+0x176</c>, the record's <c>.MSN</c> <c>0x4a</c> and <c>0x4c</c>; <c>0xffff</c> for the second until set.</summary>
-	public (short First, short Second) Word174 { get; set; } = (0, -1);
+	/// <summary>
+	/// <c>+0x174</c> and <c>+0x176</c>, the record's <c>.MSN</c> <c>0x4a</c> and <c>0x4c</c>; <c>Mech_Constructor</c> stores
+	/// <c>0xffff</c> in the first (<c>0001142a</c>) and leaves the second, which is read only with the first not negative.
+	/// </summary>
+	public (short First, short Second) Word174 { get; set; } = (-1, 0);
 
 	/// <summary><c>+0x16c</c> and <c>+0x170</c>, the two actions; the second fires when the machine goes out of the fight.</summary>
 	public (Es1Action? First, Es1Action? Second) Actions { get; set; }
