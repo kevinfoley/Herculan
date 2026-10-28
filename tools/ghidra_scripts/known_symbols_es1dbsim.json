@@ -8506,13 +8506,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Behaviour_DispatchReassess",
-      "description": "(machine), callee-cleaned, slot +0x20 of MechVtable (00091ae6): calls the reassess pointer +0x20 of the behaviour descriptor at +0x47 with the machine and returns its int16 answer, or 0 when the pointer is null. ES2's Behaviour_DispatchReassess (DBSIM 00415b74), which calls a member-function triple.",
+      "description": "(machine), callee-cleaned, slot +0x20 of MechVtable (00091ae6): calls the reassess pointer +0x20 of the behaviour descriptor at +0x47 with the machine, EDI holding the machine + 0x47, and returns its int16 answer, or 0 when the pointer is null. ES2's Behaviour_DispatchReassess (DBSIM 00415b74), which calls a member-function triple.",
       "source": "Herculan/docs/es1/simulation/mech.md#small-functions; ES1DBSIM decompile at 00011308",
       "verified": {
         "bytes": "00011308+38",
         "sha1": "e183986ab47e",
         "scope": "body",
-        "via": "decompile"
+        "via": "disasm"
       }
     },
     {
@@ -10036,13 +10036,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_AiSelectBehaviour",
-      "description": "(machine), callee-cleaned: installs player for the player's machine (+0x9d); otherwise the state its group's word +4 names through Mech_AiSelectBehaviourVerbTable (00091d14): 1 search destroy, 3 ramming, 6 guarding, 7 and 8 patrolling, 10 sleeping, 11 travelling, or bulldog travel when the type record's +0x22 is over 0x7d00; any other word installs the descriptor in EDI at entry. Then, when the target +0x15e is set, it takes 1 from that target's holders' count +0x15c, clears +0x15e and sets +0x97. It returns 1. ES2's Mech_AiSelectBehaviour (DBSIM 0041eb34), which also reads the standing squad order.",
+      "description": "(machine), callee-cleaned: installs player for the player's machine (+0x9d); otherwise the state its group's word +4 names through Mech_AiSelectBehaviourVerbTable (00091d14): 1 search destroy, 3 ramming, 6 guarding, 7 and 8 patrolling, 10 sleeping, 11 travelling, or bulldog travel when the type record's +0x22 is over 0x7d00; any other word, 0, 2, 4, 5, 9 or one outside 0-11 by the unsigned test of the sign-extended word, installs the descriptor in EDI at entry. Then, when the target +0x15e is set, it takes 1 from that target's holders' count +0x15c, clears +0x15e and sets +0x97. It returns 1. ES2's Mech_AiSelectBehaviour (DBSIM 0041eb34), which also reads the standing squad order.",
       "source": "Herculan/docs/es1/simulation/mech-ai.md#choosing-a-state--mech_aiselectbehaviour-0001892c; ES1DBSIM disassembly at 0001892c",
       "verified": {
         "bytes": "0001892c+195",
         "sha1": "02a90e6cb31b",
         "scope": "body",
-        "via": "decompile"
+        "via": "disasm"
       }
     },
     {

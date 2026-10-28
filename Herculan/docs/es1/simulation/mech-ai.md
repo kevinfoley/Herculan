@@ -42,9 +42,26 @@ The HERC's twenty states and the think, move and reassess each holds are in [the
 | 10 | `sleeping` |
 | 11 | `travelling`, or `bulldog travel` when the type record's twist limit `+0x22` is above `0x7d00` |
 
-Any other word, 0–11 or outside it, installs whatever descriptor `EDI` held when the function was called ([Open](#open)). It reads no standing squad order, where ES2's second path takes the squad order's verb. On every path it then releases a target it holds (`+0x15e` not 0): the target's `+0x15c` down by 1, `+0x15e` cleared and `+0x97` set; with no target it changes neither `+0x15e` nor `+0x97`. ES2's releases it on four paths. It returns 1.
+Any other word installs whatever `EDI` held when the function was called: 0, 2, 4, 5 and 9 through the table, and any word outside 0–11, −1 among them, through the `JA` that tests the sign-extended word unsigned. It reads no standing squad order, where ES2's second path takes the squad order's verb. On every path it then releases a target it holds (`+0x15e` not 0): the target's `+0x15c` down by 1, `+0x15e` cleared and `+0x97` set; with no target it changes neither `+0x15e` nor `+0x97`. ES2's releases it on four paths. It returns 1.
 
-`es2_xref.py` finds the ten descriptors that hold it in `Behaviour_BuildStateTable` and six calls: `Mech_AiFleeCheck`, `Mech_AiCombatReassess`, `Mech_AiOnTakingFire` and three in `Mech_ReceiveSquadOrder` ([below](#receiving-a-squad-order--mech_receivesquadorder-0001a1cc)).
+**No retail HERC group reaches the simulator with a word the table has no case for.** The `.MSN` order's unset value is −1, and every HERC group whose record holds it takes an order from a later record of its GUID ([groups](../formats/msn-mission-file.md#groups)); the shell writes the word as the load leaves it and `DBSim_BuildGroupRecord` copies it to `+4` unchanged.
+
+**What `EDI` holds.** Symantec's code keeps `EDI` across a call, so it is what the caller last loaded. `es2_xref.py` finds the ten descriptors that hold this function in `Behaviour_BuildStateTable`, all at the reassess `+0x20`, and six calls:
+
+| Reached from | `EDI` |
+|---|---|
+| `Behaviour_DispatchReassess` (`00011308`), from `Mech_AiTick`, for `deciding` and the walking states | the machine's behaviour block, machine + `0x47` |
+| `Mech_AiFleeCheck`, a machine out of action whose class-1 target's type record `+0x34` is 0 | that target |
+| `Mech_AiCombatReassess` finding no target, squad verb 0, 1 or 2 | the target it has just released, or the group record when it held none or a committed machine skipped acquisition |
+| `Mech_AiCombatReassess`, squad verb 3 and up, its target destroyed and none found | 0 |
+| `Mech_AiOnTakingFire` finding nothing while it held a target | 0 |
+| `Mech_ReceiveSquadOrder` verb 1 finding nothing ([below](#receiving-a-squad-order--mech_receivesquadorder-0001a1cc)) | 0 |
+| `Mech_ReceiveSquadOrder` verb 8, committed | the machine's current descriptor, which it installs again |
+| `Mech_ReceiveSquadOrder` verb 5 | a group word of 6, which has a case |
+
+**Through the dispatch the machine stands still.** `Behaviour_SetState`(block, block) makes the block its own descriptor. Its dwell is the dword at `+0x4b`, the countdown object's byte and the countdown's three low bytes, 0 when the dispatch runs, plus the jitter. Its flag bytes are the countdown's top byte `+0x4f`, 0, so the clock runs, then the four bytes of the tick count `+0x50` that `Behaviour_CountTick` keeps, then the scratch from `+0x54`; its think, move and reassess are `+0x5f`, `+0x63` and `+0x67`, which `Behaviour_SetState` has just zeroed with the rest of the scratch. Each tick `Mech_AiTick` then runs the countdown out and calls nothing, so the machine does not walk, turn or fire. The count's bytes are the flags its other readers test: in `Mech_AiOnTakingFire` ([below](#taking-fire--mech_aiontakingfire-00019338)) bits 8–15 are "holding a place" and bits 16–23 "ignore fire", so until the count reaches 256 a machine taking fire past that function's gates takes `Ai_SelectTarget`(machine, 0) and enters combat on what it finds, and from then on it only zeroes the countdown, and in a group the player leads sets squad verb 4, which this state's empty reassess does not act on. A squad order that installs a state or engages a target leaves it ([below](#receiving-a-squad-order--mech_receivesquadorder-0001a1cc)); a walking state's reassess brings the machine back here.
+
+**From the other callers.** With `EDI` 0, `Behaviour_SetState` reads its dwell from address 4, and `Mech_AiTick`, which tests the descriptor first, does nothing for the machine from then on. With a target or the group record, the tick takes that object's dwords `+0x18`, `+0x1c` and `+0x20` as the think, move and reassess ([Open](#open)). ES2's `EDX` is null through its reassess dispatcher ([ES2's](../../retail/simulation/ai-dispatch.md#choosing-a-state--mech_aiselectbehaviour-0041eb34)).
 
 ## The combat reassess — `Mech_AiCombatReassess` (`00016e04`)
 
@@ -238,7 +255,7 @@ Callees of other files read for them: `Component_ReadDamagePercent` (`0000a16c`)
 
 ## Open
 
-- **Open:** what `EDI` holds when `Mech_AiSelectBehaviour` is reached with a group word it has no case for (0, 2, 4, 5, 9, or above 11), through `Behaviour_DispatchReassess` and its six direct callers. The retail missions' `.MSN` group `0x32` carries −1, 1, 3, 6, 8, 10 and 11 (`HercWorks.Query orders` over the 77 files); −1, the one with no case, is the order of 88 groups of HERCs, 32 of them the player's squad.
+- **Open:** what the tick does for a machine whose descriptor `Mech_AiSelectBehaviour` set to a target or a group record ([what `EDI` holds](#choosing-a-state--mech_aiselectbehaviour-0001892c)), which turns on that object's dwords `+4`, `+8` and `+0x18`–`+0x20`. A group word with no case does not occur in the retail missions, so a check needs a `.MSN` with a HERC group's overlay record removed: `BP <CS>:0001892c` there, and read `EDI` and the six dwords from `[EDI]`.
 - **Open:** what reaches `HeapPtr_DtorMechAiCopy`, `Mech_GetGroupSide` and `Ai_NavigationStepThunk`, to which `es2_xref.py` finds no branch or stored pointer; and the four dword occurrences of `Ai_AimAndFire`'s padding entry, which may be instruction bytes.
 - **Open:** whether the out-of-action machine's loop through `fleeing` and the combat reassess every tick shows in play. A retail check: disarm an enemy HERC (shoot off its weapons) and watch whether it runs off steadily or jitters from side to side.
 - **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: put a guard group's enemy in sight and watch it walk out toward the enemy rather than standing where it was (`driving off en`); or `BP <CS>:00017c84` fires once a tick for such a machine.
