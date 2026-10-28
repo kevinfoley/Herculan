@@ -8296,13 +8296,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Group_ConditionTier",
-      "description": "(group), callee-cleaned: the group's 0-4 condition tier. With lost the members immobilised (+0x9e) or destroyed (+0x93) and mean the average over every member of its slot +0x44 overall damage: 4 when all are lost; else 3 when (lost << 10) / count reaches 500 or mean reaches 0xc1; else 2 at 0xfa or 0x81; else 1 when mean reaches 0x33; else 0. ES2's Group_ConditionTier (DBSIM 00412c8c), whose tier 3 is at 650/1024 lost.",
+      "description": "(group), callee-cleaned: the group's 0-4 condition tier. With lost the members immobilised (+0x9e) or destroyed (+0x93) and mean the average over every member of its slot +0x44 overall damage: 4 when all are lost; else 3 when (lost << 10) / count reaches 500 or mean reaches 0xc1; else 2 at 0xfa or 0x81; else 1 when mean reaches 0x33; else 0. Both divisions are by the count +0x12, untested (IDIV at 0000ed6c and 0000ed81), so a group with no members faults. ES2's Group_ConditionTier (DBSIM 00412c8c), whose tier 3 is at 650/1024 lost.",
       "source": "Herculan/docs/es1/simulation/mission-status.md#the-groups-target-and-its-condition; ES1DBSIM decompile at 0000ecc0",
       "verified": {
         "bytes": "0000ecc0+279",
         "sha1": "6a84331fa0f1",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -8452,7 +8452,7 @@
         "bytes": "0000f454+147",
         "sha1": "c3355a76713c",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -44962,7 +44962,7 @@
       "type": "data",
       "confidence": "high",
       "name": "Mission_EndingAnswer",
-      "description": "19 int16, one for each status from 0 to 0x12: the status panel's answer, 0 for its left button and 1 for its right, that ends the mission: 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0. Sim_MainTick (00059700) compares the panel's answer with the word of the poll's status, and Sim_DispatchCommand (00059df8)'s Q case with the word of Mission_StatusForAlert's; es2_xref --decode finds those two reads. Two zero bytes follow it before Sim_DispatchCommand's code table 00097180.",
+      "description": "19 int16, one for each status from 0 to 0x12: the status panel's answer, 0 for its left button and 1 for its right, that ends the mission: 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0. Sim_MainTick (00059700) compares the panel's answer with the word of the poll's status, and Sim_DispatchCommand (00059df8)'s Q case with the word of Mission_StatusForAlert's; es2_xref --decode finds those two reads. Two zero bytes follow it before Sim_DispatchCommand's code table 00097180.",
       "source": "Herculan/docs/es1/simulation/main-loop.md#which-answer-ends-the-mission"
     },
     {
@@ -45844,7 +45844,7 @@
       "type": "data",
       "confidence": "high",
       "name": "Mission_Box",
-      "description": "Four int32: the least X, least Y, greatest X and greatest Y of block 1's points, which DBSim_LoadScriptDat (0001d850) fills and Mission_IsOutsideBox (0000f6b8) tests against. ES2's Mission_Box (DBSIM 004aa6c4).",
+      "description": "Four int32: the least X, least Y, greatest X and greatest Y of block 1's points and the origin: 0 at load, lying past the image's file bytes, and widened by DBSim_LoadScriptDat (0001d850) to take in each point with no first store (0001dc99-0001dcda). Mission_IsOutsideBox (0000f6b8) tests against it; the Heads-Down Display's command screen constructor 0003ee58 copies it (0003f0cc). ES2's Mission_Box (DBSIM 004aa6c4), which ES2's load starts at 0x7fffffff and 0x80000000.",
       "source": "Herculan/docs/es1/simulation/mission-status.md#the-mission-box; Herculan/docs/es1/formats/script-dat.md#reading"
     },
     {

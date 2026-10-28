@@ -37,7 +37,7 @@ A block record is the listed fields in `.MSN` order, so an offset into it is the
 
 | Block | Kept |
 |---|---|
-| 1 | every point, at `000bc480`, and the least and greatest X and Y at `000af7a4`–`000af7b0` |
+| 1 | every point, at `000bc480`, widening `Mission_Box` (`000af7a4`–`000af7b0`) to take each in ([the mission box](../simulation/mission-status.md#the-mission-box)) |
 | 2 | every heading, at `000bc484`, as the file's value shifted left 14 into 16 bits |
 | 3 | every waypoint group, at `000bc48a`, as its count and a pointer to an array of pointers to its points |
 | 4 | every trigger area, resolved by `TriggerArea_Resolve` (`0001cb48`) into a 10-byte record at `000bc490` ([trigger areas](../simulation/mission-groups.md#trigger-areas)) |
