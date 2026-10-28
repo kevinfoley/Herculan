@@ -105,26 +105,14 @@ public static class Es1MechBehaviour {
 			new("bulldog travel", 10, 9, travel, walk, select, 3),
 			new("search destroy", 10, 1, Ai.Es1NavigationStates.SearchDestroyThink, walk, select, 3),
 			new("sleeping", 10, 9, Ai.Es1NavigationStates.SleepThink, walk, select, 3),
-			new("skirting", 10, 1, Unported("Mech_BehaviourSkirtThink", 0x00017aa4, "8e"), walk, select, 0),
+			new("skirting", 10, 1, Ai.Es1Skirting.SkirtThink, walk, select, 0),
 			new("guarding", 10, 5, Ai.Es1NavigationStates.GuardThink, walk, select, 3),
 			new("driving off en", 50000, 6, Ai.Es1CombatStates.DriveOffThink, walk, select, 0),
-			new("ramming", 10, 9, Unported("Mech_BehaviourRamThink", 0x00018320, "8e"),
-				Unported("Mech_BehaviourRamTick", 0x00018278, "8e"), select, 0),
+			new("ramming", 10, 9, Ai.Es1Ramming.RamThink, Ai.Es1Ramming.RamTick, select, 0),
 			new("fleeing", 30000, 0x12, Ai.Es1CombatStates.FleeThink, walk, combat, 5),
 			new("in limbo", 10, 0x21, null, null, null, 6),
 			new("dead", 0, 0x21, inert, walk, null, 6),
 			new("disabled", 0, 0x21, inert, walk, null, 7),
 		];
-	}
-
-	/// <summary>
-	/// PLACEHOLDER: a state function the slice does not port, which answers 0 and does nothing; <paramref name="step"/> is
-	/// the part of plan step 8 that ports it (docs/herculan/plan-es1-first-mission.md#steps).
-	/// </summary>
-	private static Es1StateFunction Unported(string name, uint address, string step) => new UnportedState(name, address, step).Run;
-
-	/// <summary>An unported state function, named for the debugger.</summary>
-	private sealed record UnportedState(string Name, uint Address, string Step) {
-		public short Run(Es1Mech mech, Es1SimGlobals globals) => 0;
 	}
 }

@@ -8,7 +8,10 @@ namespace Herculan.Es1.Sim;
 /// shape's collision volume (docs/es1/simulation/terrain.md#the-tests-against-the-shapes).
 /// </summary>
 /// <param name="Volume">The shape's collision volume, or null for one whose grid is empty, which answers 0.</param>
-public readonly record struct Es1ShapeObject(Transform3 Frame, short Radius, Es1GridShape? Volume);
+public readonly record struct Es1ShapeObject(Transform3 Frame, short Radius, Es1GridShape? Volume) : IEs1Placed {
+	/// <summary><c>+0x20</c>, the position, the frame's translation.</summary>
+	public Vec3i Position => new(Frame.X, Frame.Y, Frame.Z);
+}
 
 /// <summary>
 /// <c>Zone_ShapeCount</c> and <c>Zone_ShapeObjects</c>: the zone's placed shapes, which <c>Terrain_LoadZoneShapes</c>

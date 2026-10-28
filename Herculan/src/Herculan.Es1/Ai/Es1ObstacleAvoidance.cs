@@ -113,7 +113,7 @@ public static class Es1ObstacleAvoidance {
 			figure = hit.Distance;
 		}
 
-		if (StructureRaycastShapes(to, from, out int distance) && distance < figure) {
+		if (StructureRaycastShapes(-1, to, from, out int distance) && distance < figure) {
 			figure = distance;
 		}
 
@@ -121,12 +121,13 @@ public static class Es1ObstacleAvoidance {
 	}
 
 	/// <summary>
-	/// <c>Structure_RaycastShapes</c> (<c>000038b8</c>)(−1, 0, <paramref name="to"/>, <paramref name="from"/>, result), every
-	/// side's structures (docs/es1/simulation/terrain.md#the-structures-tests). PLACEHOLDER: the slice spawns no structure
+	/// <c>Structure_RaycastShapes</c> (<c>000038b8</c>)(<paramref name="side"/>, 0, <paramref name="to"/>,
+	/// <paramref name="from"/>, result), the structures of that side, or every side's for −1
+	/// (docs/es1/simulation/terrain.md#the-structures-tests). PLACEHOLDER: the slice spawns no structure
 	/// (<see cref="Es1SimGlobals.Structures"/>), so the probe answers 0, as retail's does over an empty <c>g_BasePool</c>;
 	/// the plan's flyers-and-bases step ports it.
 	/// </summary>
-	private static bool StructureRaycastShapes(Vec3i to, Vec3i from, out int distance) {
+	internal static bool StructureRaycastShapes(short side, Vec3i to, Vec3i from, out int distance) {
 		distance = 0;
 		return false;
 	}

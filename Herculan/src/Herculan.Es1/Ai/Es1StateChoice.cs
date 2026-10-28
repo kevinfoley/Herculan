@@ -28,12 +28,11 @@ public static class Es1StateChoice {
 				mech.Behaviour.SetState(Es1MechBehaviour.States[index], globals.DwellJitter);
 			}
 
-			if (state is null or Es1MechBehaviour.Ramming) {
+			if (state is null) {
 				// PLACEHOLDER: an order with no case installs whatever EDI held at the call, which no retail mission's load
 				// leaves on a HERC group (docs/es1/simulation/mech-ai.md#choosing-a-state--mech_aiselectbehaviour-0001892c);
-				// here the machine stays in deciding, which has no move. And ramming's move, Mech_BehaviourRamTick, is plan
-				// step 8e's. Neither runs Mech_PlaceLegsOnGround, so the shadows are placed here in its place, or they would
-				// draw at the world's origin from their build depth.
+				// here the machine stays in deciding, which has no move to run Mech_PlaceLegsOnGround, so the shadows are
+				// placed here in its place, or they would draw at the world's origin from their build depth.
 				Es1Footfalls.PlaceLegsOnGround(mech);
 			}
 		}

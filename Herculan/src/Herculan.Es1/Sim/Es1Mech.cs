@@ -198,19 +198,35 @@ public sealed class Es1Mech : IEs1SimObject {
 
 	/// <summary>
 	/// <c>+0x94</c>, do not take the player's selection (docs/es1/simulation/mech-ai.md#the-fields), which
-	/// <see cref="Ai.Es1Targets.IsTargetable"/> reads. PLACEHOLDER: its writers, <c>Mech_ReceiveSquadOrder</c>'s verbs and
-	/// <c>Mech_AiOnTakingFire</c>, are plan step 8e's; clear until then.
+	/// <see cref="Ai.Es1Targets.IsTargetable"/> reads: set by the squad order's verb 1, cleared by its verbs 0, 5 and
+	/// <c>0xb</c> (<see cref="Ai.Es1SquadOrders"/>) and by taking fire (<see cref="Ai.Es1TakingFire.OnTakingFire"/>).
 	/// </summary>
 	public bool IgnorePlayerSelection { get; set; }
 
-	/// <summary><c>+0x1e4</c>, the squad order's abandon threshold. PLACEHOLDER: written with <see cref="SquadVerb"/>, plan step 8e.</summary>
+	/// <summary><c>+0x1e4</c>, the squad order's abandon threshold, written with <see cref="SquadTarget"/> (<see cref="Ai.Es1SquadOrders"/>).</summary>
 	public short SquadThreshold { get; set; }
 
 	/// <summary><c>+0xa9</c>: <c>Mech_AiTick</c> skips the think once, clearing it.</summary>
 	public bool ThinkSuppressed { get; set; }
 
-	/// <summary><c>+0xab</c>, something ran into it.</summary>
+	/// <summary>
+	/// <c>+0xab</c>, something ran into it: set by <see cref="RunInto"/>, read by <c>ramming</c>'s move
+	/// (<see cref="Ai.Es1Ramming.RamTick"/>), never cleared.
+	/// </summary>
 	public bool RanInto { get; set; }
+
+	/// <summary>
+	/// <c>+0xa7</c>, the line of fire is blocked (docs/es1/simulation/mech-ai.md#skirting): set by
+	/// <see cref="AiOnLineOfFireBlocked"/>, cleared by <c>skirting</c> once the line is clear
+	/// (<see cref="Ai.Es1Skirting.SkirtThink"/>).
+	/// </summary>
+	public bool LineOfFireBlocked { get; set; }
+
+	/// <summary>
+	/// <c>+0x246</c>, the object that blocked the line of fire, which <c>skirting</c> walks round; retail stores the
+	/// object's <c>+6</c>, so the think reads its position at <c>+0x1a</c> from it.
+	/// </summary>
+	public IEs1Placed? LineOfFireBlocker { get; set; }
 
 	/// <summary><c>+0x24a</c>–<c>+0x24e</c>, the footfall latches, the last the death sequence's (<see cref="Es1Footfalls"/>).</summary>
 	public bool[] FootfallLatches { get; } = new bool[FootfallLatchCount];
@@ -293,9 +309,16 @@ public sealed class Es1Mech : IEs1SimObject {
 	/// </summary>
 	public short AimSlot { get; set; }
 
-	/// <summary>Slot <c>+0x2c</c>, the squad order's receiver, <see cref="Es1SquadOrders.Receive"/>.</summary>
+	/// <summary>Slot <c>+0x2c</c>, the squad order's receiver, <see cref="Ai.Es1SquadOrders.Receive"/>.</summary>
 	public short ReceiveSquadOrder(short reply, Es1SquadOrder order, Es1SimGlobals globals) =>
-		Es1SquadOrders.Receive(this, reply, order, globals);
+		Ai.Es1SquadOrders.Receive(this, reply, order, globals);
+
+	/// <summary>Slot <c>+0x54</c>, taking fire, <see cref="Ai.Es1TakingFire.OnTakingFire"/>.</summary>
+	public void AiOnTakingFire(short damage, IEs1SimObject attacker, Es1SimGlobals globals) =>
+		Ai.Es1TakingFire.OnTakingFire(this, damage, attacker, globals);
+
+	/// <summary>Slot <c>+0x68</c>, the line of fire blocked, <see cref="Ai.Es1Skirting.OnLineOfFireBlocked"/>.</summary>
+	public void AiOnLineOfFireBlocked(IEs1Placed blocker) => Ai.Es1Skirting.OnLineOfFireBlocked(this, blocker);
 
 	/// <summary><c>+0xa</c>, the heading, the last of <see cref="Rotation"/>.</summary>
 	public short Heading => Rotation.Z;
@@ -391,8 +414,12 @@ public sealed class Es1Mech : IEs1SimObject {
 	/// </summary>
 	public bool ShieldsMessagePosted { get; set; }
 
-	/// <summary><c>+0x217</c>, the damage from the player's side, zeroed when the under-fire window runs out. PLACEHOLDER: its other writers, the AI's, are plan step 8's.</summary>
-	public int DamageFromPlayerSide { get; set; }
+	/// <summary>
+	/// <c>+0x217</c>, the damage a machine of <c>PlayerMech</c>'s group has taken from the other side, which taking fire
+	/// adds up (<see cref="Ai.Es1TakingFire.OnTakingFire"/>); zeroed when the under-fire window runs out and by the squad
+	/// order's verbs 0, 2, 3, 8 and <c>0xb</c> (<see cref="Ai.Es1SquadOrders"/>).
+	/// </summary>
+	public int DamageInPlayerSquad { get; set; }
 
 	/// <summary><c>+0x21e</c>, the damage taken, which the hit test raises; zeroed when the damage window runs out.</summary>
 	public int DamageTaken { get; set; }
@@ -518,9 +545,9 @@ public sealed class Es1Mech : IEs1SimObject {
 	public bool DataLinkComplete { get; set; }
 
 	/// <summary>
-	/// <c>+0x1d2</c>, the standing squad order's verb (docs/es1/simulation/mech-ai.md#the-fields). PLACEHOLDER: its writer,
-	/// the squad order's receiver <c>Mech_ReceiveSquadOrder</c> (<c>0001a1cc</c>), is plan step 8's in the verbs that
-	/// write it, so it holds 0 in the slice.
+	/// <c>+0x1d2</c>, the standing squad order's verb (docs/es1/simulation/mech-ai.md#the-fields): 1 move, 2 patrol, 4
+	/// engage, 6 guard, 0 none. The squad order's receiver writes it (<see cref="Ai.Es1SquadOrders"/>), taking fire sets 4
+	/// (<see cref="Ai.Es1TakingFire.OnTakingFire"/>), and <see cref="Ai.Es1Targets.ClearSquadEngageOrder"/> clears 4.
 	/// </summary>
 	public short SquadVerb { get; set; }
 
@@ -568,13 +595,21 @@ public sealed class Es1Mech : IEs1SimObject {
 	/// </summary>
 	public short ReadEntryDamage(int index, int kind) => Damage?.ReadEntryDamage(index, kind) ?? 0;
 
-	/// <summary><c>+0x1d4</c>, the squad order's point. PLACEHOLDER: written with <see cref="SquadVerb"/>, plan step 8.</summary>
+	/// <summary>
+	/// <c>+0x1d4</c> and <c>+0x1d8</c>, the squad order's point, which the receiver's verbs <c>0xc</c> to <c>0xe</c> write
+	/// (<see cref="Ai.Es1SquadOrders"/>). Retail's point is its X and Y; the dword after them is <see cref="SquadTarget"/>,
+	/// so the Z here, which every reader ignores, is not retail's and stays 0.
+	/// </summary>
 	public Vec3i SquadPoint { get; set; }
 
-	/// <summary><c>+0x1dc</c>, the squad order's target, or null. PLACEHOLDER: written with <see cref="SquadVerb"/>, plan step 8.</summary>
+	/// <summary><c>+0x1dc</c>, the squad order's target, or null, written by the receiver's verbs 0, 2, 5 and <c>0xb</c> (<see cref="Ai.Es1SquadOrders"/>) and by taking fire.</summary>
 	public IEs1SimObject? SquadTarget { get; set; }
 
-	/// <summary><c>+0x1e0</c>, the squad order's second object, or null. PLACEHOLDER: written with <see cref="SquadVerb"/>, plan step 8.</summary>
+	/// <summary>
+	/// <c>+0x1e0</c>, the squad order's second object, or null. PLACEHOLDER: no writer is known; <c>Mech_ReceiveSquadOrder</c>
+	/// does not write it (ES2's verb <c>0xc</c> stores its subject there) and a text search of the decompile finds none, so
+	/// it holds null (docs/es1/simulation/mech-ai.md#the-fields).
+	/// </summary>
 	public IEs1SimObject? SquadSecondObject { get; set; }
 
 	/// <summary>

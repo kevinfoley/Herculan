@@ -23,7 +23,7 @@ public sealed class Es1MechCountdowns {
 	/// <summary><c>+0x20e</c>, the friendly-fire complaint's, of the record <c>+0x20d</c>.</summary>
 	public int Complaint;
 
-	/// <summary><c>+0x213</c>, the under-fire window, of the record <c>+0x212</c>; its expiry zeroes <see cref="Es1Mech.DamageFromPlayerSide"/>.</summary>
+	/// <summary><c>+0x213</c>, the under-fire window, of the record <c>+0x212</c>; its expiry zeroes <see cref="Es1Mech.DamageInPlayerSquad"/>.</summary>
 	public int UnderFire;
 
 	/// <summary><c>+0x21c</c>, the damage window, of the record <c>+0x21b</c>; its expiry zeroes <see cref="Es1Mech.DamageTaken"/>.</summary>
@@ -146,7 +146,7 @@ public static class Es1MechSystems {
 		clock.TimerCountDown(ref countdowns.Complaint);
 		clock.CountdownTimerTick(ref countdowns.RadarSilence);
 		if (clock.TimerCountDown(ref countdowns.UnderFire) == 0) {
-			machine.DamageFromPlayerSide = 0;
+			machine.DamageInPlayerSquad = 0;
 		}
 
 		if (clock.CountdownTimerTick(ref countdowns.DamageWindow) == 0) {

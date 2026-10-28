@@ -209,7 +209,7 @@ public static class Es1CombatStates {
 	/// <c>0x2000</c> of the nose and −1 beyond. Then the move step, the fire and the tail.
 	/// </summary>
 	public static short AttackThink(Es1Mech mech, Es1SimGlobals globals) {
-		if (Es1AiStandIns.BeginSkirtIfBlocked(mech, globals)) {
+		if (Es1Skirting.BeginSkirtIfBlocked(mech, globals)) {
 			return 0;
 		}
 
@@ -242,7 +242,7 @@ public static class Es1CombatStates {
 	/// <see cref="CircleStep"/>, which makes the move step, then the fire and the tail.
 	/// </summary>
 	public static short FlankThink(Es1Mech mech, Es1SimGlobals globals) {
-		if (Es1AiStandIns.BeginSkirtIfBlocked(mech, globals)) {
+		if (Es1Skirting.BeginSkirtIfBlocked(mech, globals)) {
 			return 0;
 		}
 
@@ -264,7 +264,7 @@ public static class Es1CombatStates {
 	/// the move step, the fire and the tail.
 	/// </summary>
 	public static short FaceOffThink(Es1Mech mech, Es1SimGlobals globals) {
-		if (Es1AiStandIns.BeginSkirtIfBlocked(mech, globals)) {
+		if (Es1Skirting.BeginSkirtIfBlocked(mech, globals)) {
 			return 0;
 		}
 
@@ -294,7 +294,7 @@ public static class Es1CombatStates {
 	/// disarmed, immobilized or destroyed. Reached only with a structure target, which the slice does not spawn.
 	/// </summary>
 	public static short AttackBaseThink(Es1Mech mech, Es1SimGlobals globals) {
-		if (Es1AiStandIns.BeginSkirtIfBlocked(mech, globals)) {
+		if (Es1Skirting.BeginSkirtIfBlocked(mech, globals)) {
 			return 0;
 		}
 
@@ -427,7 +427,7 @@ public static class Es1CombatStates {
 
 		int toTarget = post is { } at ? Es1PlayerThink.DistanceBetweenPoints2D(at, target.Position) : 0;
 		int toMachine = post is { } from ? Es1PlayerThink.DistanceBetweenPoints2D(from, mech.Position) : 0;
-		if (Es1AiStandIns.BeginSkirtIfBlocked(mech, globals)) {
+		if (Es1Skirting.BeginSkirtIfBlocked(mech, globals)) {
 			return 0;
 		}
 

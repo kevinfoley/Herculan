@@ -61,8 +61,11 @@ public static class Es1ShotSweep {
 	/// <item>the live objects in list order but the owner and one whose group holds an action, each through its hit test
 	/// (<see cref="IEs1SimObject.HitTest"/>): a hit on the other side sets the owner's <see cref="IEs1SimObject.Engaged"/>,
 	/// activates the object's engagement action (<see cref="Es1SensorModel.ActivateEngagementAction"/>) and clears the
-	/// blocker, one on the owner's side becomes it; the length becomes the hit's and the walk goes on while
-	/// it is <see cref="NearHit"/> or more;</item>
+	/// blocker, one on the owner's side becomes it; unless the object is destroyed, or on the other side and disarmed or
+	/// immobilized, the friendly-fire complaint (<see cref="Ai.Es1TakingFire.FriendlyFireComplaint"/>) for the player's
+	/// shot on its own side in another group, from the owner's group's nearest live member within
+	/// <see cref="ComplaintRange"/> of it, then the object's slot <c>+0x54</c> (<see cref="IEs1SimObject.AiOnTakingFire"/>);
+	/// the length becomes the hit's and the walk goes on while it is <see cref="NearHit"/> or more;</item>
 	/// <item>after a strike that struck no object, the impact effect at the ray's end, its Z raised to 0, entry
 	/// (<c>Math_RandomNext</c> &amp; 3) of the ground array;</item>
 	/// <item>with a blocker and the owner's target, the blocked line of fire.</item>
@@ -79,7 +82,7 @@ public static class Es1ShotSweep {
 		var start = ray.Start;
 		bool struck = false;
 		bool objectStruck = false;
-		object? blocker = null;
+		IEs1Placed? blocker = null;
 
 		// 1. The ground, against the ray's end before any cut.
 		var end = ray.Frame.TransformPoint(0, ray.Length, 0);
@@ -129,9 +132,17 @@ public static class Es1ShotSweep {
 			}
 
 			if (!simObject.Destroyed && (sameSide || (!simObject.Disarmed && !simObject.Immobilized))) {
-				// PLACEHOLDER: for a player's shot on its own side in another group, Group_NearestLiveMember (0001cea4) of the
-				// owner's group within ComplaintRange to Mech_AiFriendlyFireComplaint (00019300); then the object's slot
-				// +0x54 (object, Armor and Shield, owner), Mech_AiOnTakingFire on a HERC. Both are plan step 8's AI.
+				// A player's shot on its own side in another group: the owner's group's nearest live member within
+				// ComplaintRange of the owner complains. Retail reads the owner's group unchecked, and calls the complaint on
+				// whatever member it finds; with no group, or a member that is not a HERC, nothing here.
+				if (owner.IsPlayer && sameSide && !ReferenceEquals(simObject.Group, owner.Group)
+						&& owner.Group?.NearestLiveMember(owner) is Es1Mech nearest
+						&& owner.Position.ApproxDistanceTo(nearest.Position) < ComplaintRange) {
+					Ai.Es1TakingFire.FriendlyFireComplaint(nearest, globals);
+				}
+
+				// The shot's dword +4, which the slot reads as its int16, the armor figure before the difficulty scale.
+				simObject.AiOnTakingFire(shot.Armor, owner, globals);
 			}
 
 			ray.Length = distance;
@@ -169,8 +180,7 @@ public static class Es1ShotSweep {
 				short toEnd = (short)(Es1MissionGroup.HeadingToward(position, rayEnd) - owner.Heading);
 				short toTarget = (short)(Es1MissionGroup.HeadingToward(position, target.Position) - owner.Heading);
 				if ((short)(toEnd - toTarget) < BlockedBearing) {
-					// PLACEHOLDER: the owner's slot +0x68 (owner, the blocker's +6), Mech_AiOnLineOfFireBlocked on a HERC,
-					// plan step 8's AI.
+					owner.AiOnLineOfFireBlocked(blocker);
 				}
 			}
 		}

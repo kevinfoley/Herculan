@@ -241,16 +241,23 @@ public sealed class Es1DwellJitter {
 }
 
 /// <summary>
+/// An object with its orientation block at <c>+6</c> and its position at <c>+0x20</c>: a simulated object or a zone shape,
+/// either of which the shot sweep can hand a shot's owner as the blocker of its line of fire
+/// (docs/es1/simulation/world.md#shots-against-objects--sim_raycastobjectlist-0001f1d0).
+/// </summary>
+public interface IEs1Placed {
+	/// <summary><c>+0x20</c>, the position.</summary>
+	Vec3i Position { get; }
+}
+
+/// <summary>
 /// An object of <c>LiveObjectList</c>, as far as <c>Mech_CollisionTest</c> (<c>00014174</c>,
 /// docs/es1/simulation/mech-locomotion.md#collision--mech_collisiontest-00014174) and the sensor model
 /// (docs/es1/simulation/sensor-model.md#the-fields) read and write it: the fields every simulated object shares and the
 /// vtable slots they call, with the object base's answer (docs/es1/simulation/sim-object-base.md#the-base-classs-own-functions)
 /// for a slot a class leaves to it.
 /// </summary>
-public interface IEs1SimObject {
-	/// <summary><c>+0x20</c>, the position.</summary>
-	Vec3i Position { get; }
-
+public interface IEs1SimObject : IEs1Placed {
 	/// <summary><c>+0xa</c>, the heading.</summary>
 	short Heading { get; }
 
@@ -322,6 +329,25 @@ public interface IEs1SimObject {
 	/// (<paramref name="playerMech"/>): the base's <c>SimObject_AiEnemySightedNoOp</c> (<c>0000e75c</c>) does nothing.
 	/// </summary>
 	void AiEnemySighted(IEs1SimObject sighted, Es1SimGlobals globals, Es1Mech playerMech) {
+	}
+
+	/// <summary>
+	/// Slot <c>+0x54</c>, taking fire, (object, <paramref name="damage"/>, <paramref name="attacker"/>), which the shot sweep
+	/// calls on an object a shot strikes: the base's <c>Mech_ShareContact</c> (<c>0000d760</c>), which leaves the damage
+	/// unread and shares the attacker as a contact (<see cref="Es1SensorModel.ShareContact"/>,
+	/// docs/es1/simulation/sim-object-base.md#the-base-classs-own-functions).
+	/// </summary>
+	void AiOnTakingFire(short damage, IEs1SimObject attacker, Es1SimGlobals globals) =>
+		Es1SensorModel.ShareContact(this, attacker, globals);
+
+	/// <summary>
+	/// Slot <c>+0x68</c>, (object, <paramref name="blocker"/>), which the shot sweep calls on a shot's owner when a zone
+	/// shape or an object on its own side stops the shot short of its target
+	/// (docs/es1/simulation/world.md#shots-against-objects--sim_raycastobjectlist-0001f1d0):
+	/// the base's <c>SimObject_AiOnLineOfFireBlockedNoOp</c> (<c>0000d778</c>) does nothing
+	/// (docs/es1/simulation/sim-object-base.md#the-base-classs-own-functions).
+	/// </summary>
+	void AiOnLineOfFireBlocked(IEs1Placed blocker) {
 	}
 
 	/// <summary><c>+0x3f</c>, the group.</summary>
