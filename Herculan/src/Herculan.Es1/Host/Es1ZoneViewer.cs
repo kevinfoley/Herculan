@@ -55,7 +55,9 @@ public sealed record Es1HeaderOverrides(int? Theater, int? WorldVariant, int? Wo
 /// with one Esc is the simulator's key (docs/es1/simulation/main-loop.md#commands--sim_dispatchcommand-00059df8); and
 /// so does whatever ends the mission: retail's way out, <c>Ctrl+Q</c>'s or <c>Ctrl+Esc</c>'s QUIT (plan decision 12), a
 /// status panel's answer that ends it (docs/es1/simulation/main-loop.md#which-answer-ends-the-mission), and the death
-/// flash (docs/es1/simulation/main-loop.md#the-death-flash--sim_deathflash-00058414).</para>
+/// flash (docs/es1/simulation/main-loop.md#the-death-flash--sim_deathflash-00058414). A mission's end runs
+/// <see cref="Es1Shutdown.Run"/> before the window closes; closing the window, which retail has no counterpart of, runs
+/// nothing and writes no file.</para>
 /// </summary>
 public static class Es1ZoneViewer {
 	/// <summary>The clear colour when the theater's sky cannot be built: a mid grey, plainly not a retail sky.</summary>
@@ -64,7 +66,9 @@ public static class Es1ZoneViewer {
 	/// <summary>
 	/// Starts <paramref name="missionName"/> (with or without <c>.MSN</c>) as a single mission and runs the simulator on
 	/// the files that writes, or with no mission named runs it on the files the install's <c>data\</c> holds, as
-	/// <c>DBSIM.EXE</c> does. Returns the process exit code.
+	/// <c>DBSIM.EXE</c> does. Returns the process exit code: 1 when the mission does not load, and otherwise
+	/// <see cref="Show"/>'s. Returning the code <c>data\exit.cfg</c> holds as the process's is this engine's own: retail's
+	/// <c>Sim_Main</c> returns nothing, and the shell reads the file.
 	/// </summary>
 	public static int Run(string installRoot, string? missionName, Es1HeaderOverrides overrides) {
 		if (missionName != null) {
@@ -134,13 +138,17 @@ public static class Es1ZoneViewer {
 
 		Console.WriteLine("Keypad drives the HERC; F free camera (RMB + mouse to look, WASD/arrows, Q/E, Shift), " +
 			"G textured/banded ground; close the window to quit" + (player == null ? " (or Esc)." : "."));
-		Show(installRoot, files.Preferences, content, scene, world, views, $"HERCULAN — Metaltech: Earthsiege — {missionName ?? "data\\script.dat"}, zone {header[1]}");
-		return 0;
+		return Show(installRoot, files.Preferences, content, scene, world, views, $"HERCULAN — Metaltech: Earthsiege — {missionName ?? "data\\script.dat"}, zone {header[1]}");
 	}
 
-	private static void Show(string installRoot, Es1Preferences preferences, GameContent content, Es1ZoneScene scene,
+	/// <summary>
+	/// The window, until it closes. Returns the exit code <see cref="Es1Shutdown.Run"/> wrote when the mission ended, and
+	/// 0 when the window closed without an ending, which runs no shutdown and writes no file.
+	/// </summary>
+	private static int Show(string installRoot, Es1Preferences preferences, GameContent content, Es1ZoneScene scene,
 			Es1World world, Es1CockpitViews? views, string title) {
 		using var window = new EngineWindow(title);
+		int exitCode = 0;
 
 		Silk.NET.OpenGL.GL? glContext = null;
 		SceneRenderer? renderer = null;
@@ -332,7 +340,10 @@ public static class Es1ZoneViewer {
 			bool ended = frameLoop != null
 				? frameLoop.AdvanceHostFrame(deltaSeconds, runner)
 				: runner?.AdvanceHostFrame(TimeSpan.FromSeconds(deltaSeconds)) == Es1SimulationRunner.Frame.MissionEnded;
-			if (ended) {
+			// Sim_Main leaves its loop for Sim_Shutdown; only a tick ends the mission, so the runner is there.
+			if (ended && runner != null) {
+				exitCode = Es1Shutdown.Run(runner.Simulation, installRoot, runner.AxisKeys.DemoMode);
+				Console.WriteLine($"Mission over: exit code {exitCode}.");
 				window.Close();
 				return;
 			}
@@ -407,6 +418,7 @@ public static class Es1ZoneViewer {
 		};
 
 		window.Run();
+		return exitCode;
 	}
 
 	/// <summary>

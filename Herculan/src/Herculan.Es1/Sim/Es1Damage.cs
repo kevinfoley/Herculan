@@ -440,6 +440,45 @@ public sealed class Es1DamageHeader {
 		return entry < 0 || maximum == 0 ? Full : (short)((entry << 8) / maximum);
 	}
 
+	/// <summary><c>SalvageComponentWeights</c> (<c>000918e8</c>), components 0 to 18's weights in <see cref="WeightedArmorRemaining"/>.</summary>
+	private static readonly short[] SalvageComponentWeights =
+		[3000, 3000, 1000, 1000, 2000, 2000, 1000, 2000, 2000, 1000, 1000, 500, 500, 2000, 2000, 1000, 1000, 500, 500];
+
+	/// <summary><c>SalvageInternalWeights</c> (<c>00091910</c>), internals 0 to 11's weights in <see cref="WeightedArmorRemaining"/>.</summary>
+	private static readonly short[] SalvageInternalWeights = [1500, 1500, 0, 0, 1000, 3000, 1000, 1000, 1000, 0, 1500, 1500];
+
+	/// <summary>The damage at which an entry stops counting in <see cref="WeightedArmorRemaining"/>, <c>0x96</c>.</summary>
+	public const short SalvageDamageLimit = 0x96;
+
+	/// <summary>
+	/// <c>Mech_WeightedArmorRemaining</c> (<c>00010c38</c>)(header) (docs/es1/simulation/damage-readouts.md#the-functions):
+	/// the sum of (maximum − damage) × weight / maximum, a 32-bit truncating division, over components 0 to 18 whose
+	/// occupancy flag is set, against their armor and <see cref="SalvageComponentWeights"/>, and over internals 0 to 11
+	/// whose maximum is not 0, against <see cref="SalvageInternalWeights"/>; an entry below 0 or at
+	/// <see cref="SalvageDamageLimit"/> or more adds nothing. Retail divides by a component's armor unchecked; an armor
+	/// of 0 adds nothing here, an engine guard.
+	/// </summary>
+	public int WeightedArmorRemaining() {
+		int total = 0;
+		for (int i = 0; i < SalvageComponentWeights.Length; i++) {
+			short damage = Component(i);
+			int armor = Piece(i)?.Armor ?? 0;
+			if (IsOccupied(i) && damage >= 0 && damage < SalvageDamageLimit && armor != 0) {
+				total += (armor - damage) * SalvageComponentWeights[i] / armor;
+			}
+		}
+
+		for (int i = 0; i < SalvageInternalWeights.Length; i++) {
+			short damage = Internal(i);
+			int maximum = Maximum(i);
+			if (maximum != 0 && damage >= 0 && damage < SalvageDamageLimit) {
+				total += (maximum - damage) * SalvageInternalWeights[i] / maximum;
+			}
+		}
+
+		return total;
+	}
+
 	/// <summary>
 	/// <c>Mech_ApplySquadCondition</c> (<c>000107f0</c>)(header, <paramref name="hardpoints"/>, <paramref name="internals"/>,
 	/// <paramref name="external"/>) (docs/es1/simulation/damage-readouts.md#the-functions), ES2's: each entry written as

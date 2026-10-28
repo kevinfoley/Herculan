@@ -171,8 +171,10 @@ public static class Es1MechDamage {
 	/// low 12 bits under <see cref="MountRollOddsSide0"/> or, for a machine whose group's side is not 0,
 	/// <see cref="MountRollOddsOther"/>, times <see cref="MountRollScale"/>, take the mount of hardpoint slot component −
 	/// 19 (<c>WeaponMounts_MountForHardpointSlot</c>, <c>0000ca04</c>), destroy it with its gun thrown
-	/// (<see cref="Es1WeaponMount.Destroy"/>), clear the component's occupancy flag and write it
-	/// off with <see cref="MountFinishOff"/> through <see cref="Es1DamageHeader.ApplyDamageAndCascade"/>.
+	/// (<see cref="Es1WeaponMount.Destroy"/>), clear the component's occupancy flag, on a machine of side 1 queue the
+	/// weapon for salvage (<see cref="Es1SimGlobals.QueueSalvage"/>) at ((<c>0x100</c> − <c>Math_Q10Multiply</c>(500,
+	/// the component's reading after the hit)) × 100) &gt;&gt; 8, and write it off with <see cref="MountFinishOff"/> through
+	/// <see cref="Es1DamageHeader.ApplyDamageAndCascade"/>.
 	/// </summary>
 	private static void MountKnockOutRoll(Es1Mech machine, short component, short after, bool full, Es1SimGlobals globals) {
 		if (full || machine.Type.Chassis.WeaponMountsDestructible == 0 || component <= 18 || machine.Damage is not { } header) {
@@ -190,11 +192,11 @@ public static class Es1MechDamage {
 		// Retail destroys the mount it finds unchecked; with none, nothing is destroyed here.
 		mount?.Destroy(true, machine, globals);
 		header.Occupied[component] = false;
-		if ((machine.Group?.Side ?? 0) == 1) {
+		// Salvage_QueueWeapon (0001f7e8)(the mount template's +0x56, condition), read from the mount just destroyed.
+		// Retail reads the mount unchecked; with none, nothing is queued here.
+		if ((machine.Group?.Side ?? 0) == 1 && mount != null) {
 			short condition = (short)((short)(0x100 - SimMath.Q10MultiplyRounded(500, after)) * 100 >> 8);
-			// PLACEHOLDER: Salvage_QueueWeapon (0001f7e8)(the mount template's +0x56, condition), the mission's salvage
-			// list, which the results write reads; no plan step ports the results yet.
-			_ = condition;
+			globals.QueueSalvage(mount.WeaponId, condition);
 		}
 
 		header.ApplyDamageAndCascade(MountFinishOff, component, globals);

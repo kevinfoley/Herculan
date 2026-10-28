@@ -340,7 +340,8 @@ public sealed class Es1Mech : IEs1SimObject {
 
 	/// <summary>
 	/// <c>+0x23a</c>, the kill tallies, an <c>int16</c> per target class (<c>+0x162</c>) up to the footfall latches, which
-	/// <see cref="CreditNeutralisedTarget"/> counts; nothing this engine ports reads them.
+	/// <see cref="CreditNeutralisedTarget"/> counts; the results write the first three
+	/// (<see cref="Es1MissionResults.WriteStatusBlocks"/>).
 	/// </summary>
 	public short[] KillTallies { get; } = new short[8];
 

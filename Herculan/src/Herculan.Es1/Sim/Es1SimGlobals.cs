@@ -143,6 +143,21 @@ public sealed class Es1SimGlobals {
 	public short[] MissionVars { get; set; } = [];
 
 	/// <summary>
+	/// <c>Salvage_Pairs</c> (<c>000bc4b4</c>) up to <c>Salvage_PairCount</c> (<c>000bc4b2</c>): the {weapon id, condition}
+	/// pairs <see cref="QueueSalvage"/> has queued, which the results write (<see cref="Es1MissionResults.Write"/>);
+	/// empty at load, as <c>DBSim_LoadScriptDat</c> zeroes the count.
+	/// </summary>
+	public List<(short Weapon, short Condition)> SalvagePairs { get; } = new();
+
+	/// <summary>
+	/// <c>Salvage_QueueWeapon</c> (<c>0001f7e8</c>)(pair) (docs/es1/simulation/world.md#small-functions): the pair stored at
+	/// the count's place and the count up by 1, with no bound. Retail's array holds 50 pairs and a 51st is stored past it;
+	/// the list here grows, so the results read back every pair queued, as retail's write reads them back from past the
+	/// array.
+	/// </summary>
+	public void QueueSalvage(short weapon, short condition) => SalvagePairs.Add((weapon, condition));
+
+	/// <summary>
 	/// <c>MissionActions</c> (<c>000bc496</c>), block 5's actions (<see cref="Es1MissionScript.Actions"/>), which
 	/// <see cref="Es1Actions.EvaluateTriggers"/> walks; empty until a world is spawned.
 	/// </summary>
@@ -319,7 +334,11 @@ public interface IEs1SimObject : IEs1Placed {
 	/// <summary>
 	/// <c>+0xa0</c>, ES2's "scored a kill", which <see cref="Es1MissionGroup.AnyMemberScoredAKill"/> reads
 	/// (docs/es1/simulation/mission-status.md#the-fields). PLACEHOLDER: clear on every object: no ES1 doc names a writer,
-	/// and ES1's kill credit (<see cref="Es1MechOutOfAction.CreditNeutralisedTarget"/>), where ES2 sets it, does not.
+	/// ES1's kill credit (<see cref="Es1MechOutOfAction.CreditNeutralisedTarget"/>), where ES2 sets it, does not, and
+	/// <c>es2_fieldscan.py --binary ES1DBSIM a0</c> finds no write to <c>+0xa0</c> of a simulated object: its three writes
+	/// are the gunsight's child list and the two weapon gauges', while its read in <c>Group_AnyMemberScoredAKill</c>
+	/// (<c>0000f0c0</c>) is found. A write through a base the scan cannot resolve, or a constructor's block fill, stays
+	/// possible.
 	/// </summary>
 	bool ScoredAKill => false;
 
