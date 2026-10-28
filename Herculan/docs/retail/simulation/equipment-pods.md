@@ -7,7 +7,7 @@ Pods are ordinary weapon mounts on ordinary hardpoints. At the end of `Mech_Conf
 | Slot | Offset | Id | Pod | What it does | Detail |
 |---|---|---|---|---|---|
 | 0 | `+0x307` | 18 | ECM | Jams: a machine targeting this one keeps losing its missile lock, and its guided missiles weave instead of closing. A jamming machine is also a target for anti-radiation missiles | [`missile-lock.md`](missile-lock.md#ecm) |
-| 1 | `+0x30b` | 29 | TARG | Lets the player aim at one component of the selected HERC, and blunts enemy ECM against this machine's locks | [`target-selection.md`](target-selection.md#component-targeting--the-targeting-pod) |
+| 1 | `+0x30b` | 29 | TARG | Lets the player aim at one component of the selected HERC, and blunts enemy ECM against this machine's locks | [`targeting-pod.md`](targeting-pod.md) |
 | 2 | `+0x30f` | 30 | SHLD | Doubles shield capacity | [`damage-system.md`](damage-system.md#the-shield-system) |
 | 3 | `+0x313` | 32 | ENRG | Doubles the energy pool's recharge rate (not its capacity, as the manual says) | [`reactor-energy-pool.md`](reactor-energy-pool.md#reactor-output-rate--mech_computereactorrate-00417d08) |
 | 4 | `+0x317` | 31 | TURB | A speed boost, switched on from its cockpit row, that nearly doubles top speed while its charge lasts | [`mech-locomotion.md`](mech-locomotion.md#damage-effects-on-movement), [below](#what-the-two-ticks-do-with-the-button) |
@@ -51,7 +51,7 @@ Every pod row is clickable and sounds on a click: `PodGauge_Ctor` registers the 
 - `TogglePodGauge_OnClick` (`004419fc`) XORs the button byte at `gauge+0xc2` — structurally the same child-table search as `ShieldsGauge_OnClick`. `EcmPod_Tick` and `TurboPod_Tick` read that byte back out of the state block on the next tick. This is the whole of a pod's on/off toggle; the paint that shows it is in [`cockpit-hud-widgets.md`](cockpit-hud-widgets.md#weapon-hardpoint-rows).
 - `PodGauge_OnClick` (`00441988`) sets the repaint byte and returns.
 
-So a Shield, Targeting or Energy pod row clicks and sounds but has no on/off state to change, and `Pod_TickBase` would ignore it if it did. Clicking is not how a Targeting Pod is used either — that is `[Tab]`, through `CockpitWidgets_HandleCommand` ([`target-selection.md`](target-selection.md#component-targeting--the-targeting-pod)).
+So a Shield, Targeting or Energy pod row clicks and sounds but has no on/off state to change, and `Pod_TickBase` would ignore it if it did. Clicking is not how a Targeting Pod is used either — that is `[Tab]`, through `CockpitWidgets_HandleCommand` ([`targeting-pod.md`](targeting-pod.md)).
 
 **A pod row does not care which mouse button pressed it.** Every other weapon row's handler branches on the button bit its `GetValue` slot returned — left arms, right chains — but `TogglePodGauge_OnClick` takes only the gauge and the child, so a right click toggles a pod exactly as a left one does and neither arms nor chains anything. The number keys reach it too: `CockpitWidgets_HandleCommand` answers codes `0x02`-`0x0b` by calling `WeaponMounts_SelectByGauge` on the row's gauge *and* pressing its select gadget, so the bare key runs the arm (which a pod refuses) and then the toggle. `[Alt]` and a number is the other command bank, `0x202`-`0x20b`, which the weapon manager answers itself and which therefore never reaches a pod.
 
@@ -70,7 +70,7 @@ The charge itself is the Turbo Pod's `+0x34` pool turn, `TurboPod_ChargeTick` (`
 
 ## Where a pod reads its damage
 
-**The Shield and Energy pods read their damage live** — `Component_ReadDamagePercent` against the mount's own component, `.GL +0x17` + 19, each time their bonus is recomputed. **The Targeting Pod is the only pod that caches its damage**: its vtable `+0x68` override, `TargetingPod_ConditionChanged` (`0040ef6c`), fills `+0x7f` from the reading `Mech_ComponentDamageWrite` hands every mount after a write. Same quantity, two mechanisms reached by different code, so a search for one offset does not find the other. What the cached reading gates is in [`target-selection.md`](target-selection.md#a-damaged-pod-degrades-in-four-steps).
+**The Shield and Energy pods read their damage live** — `Component_ReadDamagePercent` against the mount's own component, `.GL +0x17` + 19, each time their bonus is recomputed. **The Targeting Pod is the only pod that caches its damage**: its vtable `+0x68` override, `TargetingPod_ConditionChanged` (`0040ef6c`), fills `+0x7f` from the reading `Mech_ComponentDamageWrite` hands every mount after a write. Same quantity, two mechanisms reached by different code, so a search for one offset does not find the other. What the cached reading gates is in [`targeting-pod.md`](targeting-pod.md#a-damaged-pod-degrades-in-four-steps).
 
 **A pristine pod's cache reads zero**, so the two mechanisms agree at spawn. Neither `TargetingPod_Ctor` nor `Mech_ConfigureLoadout` writes `+0x7f` — the constructor writes the gauge handle and the catalog id and stops, and the loadout pass ends at `MechLoadout_FileEquipmentPods`, `Mech_ComputeShieldCapacity`, `Shield_RefillToBalance` and `Mech_ComputeReactorRate` without touching any mount's condition slot. What settles it is that every mount block starts zeroed ([`weapon-mounts.md`](weapon-mounts.md#the-join--mechloadout_constructweaponmounts-0040fff8)), so a pod block is zero on every path.
 
@@ -86,7 +86,7 @@ The Shield, Energy and Turbo pods use it, each against its own base:
 - **Energy Pod** — the base is the reactor's output. That output is computed once, at spawn, when every pod is pristine, so the curve never bites and the pod always gives its full bonus ([`reactor-energy-pool.md`](reactor-energy-pool.md#reactor-output-rate--mech_computereactorrate-00417d08)).
 - **Turbo Pod** — the base is the literal 1000, not 1024, so even a pristine pod yields slightly less than a whole top speed — about 98% of it ([`mech-locomotion.md`](mech-locomotion.md#damage-effects-on-movement)).
 
-The Targeting Pod does not use the curve: its abilities switch off one at a time at fixed damage thresholds ([`target-selection.md`](target-selection.md#a-damaged-pod-degrades-in-four-steps)).
+The Targeting Pod does not use the curve: its abilities switch off one at a time at fixed damage thresholds ([`targeting-pod.md`](targeting-pod.md#a-damaged-pod-degrades-in-four-steps)).
 
 ## Rejected readings
 

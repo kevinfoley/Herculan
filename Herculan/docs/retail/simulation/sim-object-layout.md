@@ -62,6 +62,12 @@ The short-lived classes are recycled every frame — explosions, debris, fires, 
 
 Below that line all three constructors write an *identical* block — `+0x1a8 = 0xffff`, `+0x98 = 1`, `+0xa7 = 1`, `ObjectList_Add`, then `+0x1b6`, `+0x1b2`, `+0x1be`, `+0x1bc`, `+0x1ba` — which is what identifies the layout as shared rather than three classes coincidentally agreeing.
 
+## Object classification
+
+`obj+0x1a8` is the object's target class, written by each constructor after the `0xffff` above: `Mech_Constructor` 0, `Flyer_Constructor` 2, `Base_Construct` 1 for every structure except the GroundVehicle types (`0x2d`-`0x34`, `0x37`-`0x3d`; [`structure-behaviour.md`](structure-behaviour.md#five-classes-one-switch)), which get 3.
+
+An object's side is its group record's `+0x12`, 0 human and 1 Cybrid, filled from [`script.dat`](../formats/script-dat.md) block 11.
+
 ## The object's frame is a transform, and its position is that transform's translation
 
 `obj+0x12` is a complete 32-byte transform record of the kind `Transform_Concat` (`0047f914`) composes: nine Q14 `int16` matrix entries, a rank byte at `+0x12`, and an `int32` translation at `+0x14`/`+0x18`/`+0x1c`. Laid at `obj+0x12`, that translation falls at `obj+0x26`/`+0x2a`/`+0x2e` — **which is the object's world position**. The two are the same storage, not a copy: `SimObject_InstallModelTransform` (`00401fe4`) builds the matrix half from the euler angles at `obj+0x0c` whenever the frame-valid word at `obj+0x32` is 0, and sets it to 1, and every caller that wants a position passes `obj+0x26` as an `int[3]`.
@@ -89,7 +95,7 @@ Nothing in the field itself says which flavour it is — only which of the two f
 | `+0x261` | short | subtype 3's slot, placed on the run's stride; the lock block never touches it | the same; [Open](#open) |
 | `+0x264` | short | subtype 4's | the same |
 | `+0x267` | short | the gap between ECM spoof rolls against a jamming target | [`missile-lock.md`](missile-lock.md#ecm) |
-| `+0x26a` | short | how long the radar is held off after an anti-radiation hit | [`target-selection.md`](target-selection.md#how-an-ai-machines-radar-is-set) |
+| `+0x26a` | short | how long the radar is held off after an anti-radiation hit | [`sensors.md`](sensors.md#how-an-ai-machines-radar-is-set) |
 | `+0x26d` | long | the post-collision unstick manoeuvre | [`ai-navigation.md`](ai-navigation.md#the-unstick-manoeuvre) |
 | `+0x272` | long | the retarget cooldown after taking fire | [`ai-targeting.md`](ai-targeting.md#mech-fields-this-slice-owns) |
 | `+0x277` | long | the friendly-fire complaint cooldown | the same |

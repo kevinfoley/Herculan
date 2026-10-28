@@ -8,7 +8,7 @@ namespace Herculan.Engine.Sim;
 /// What an object counts as when something is deciding whether to shoot it — the shared
 /// <c>obj+0x1a8</c> that every constructor writes and every target filter reads. Every constructor
 /// writes <see cref="None"/> first and overwrites it, so an object that never finishes construction
-/// stays unclassified. Which type gets which class is in docs/retail/simulation/target-selection.md,
+/// stays unclassified. Which type gets which class is in docs/retail/simulation/sim-object-layout.md,
 /// "Object classification".
 /// </summary>
 public enum TargetClass : short {
@@ -162,7 +162,7 @@ public abstract class SimObject {
 	///
 	/// <para>The base returns the origin, which is what a flyer keeps. <see cref="MechObject"/> and
 	/// <see cref="BaseObject"/> override it — see the mech's for which node it names and why aiming at
-	/// a HERC's position puts a missile between its feet, and docs/retail/simulation/target-selection.md,
+	/// a HERC's position puts a missile between its feet, and docs/retail/simulation/aim-point.md,
 	/// "Aim point", for the fallback every caller shares.</para>
 	/// </summary>
 	public virtual Vec3i AimPoint => Position;
@@ -533,7 +533,7 @@ public abstract class SimObject {
 	/// <see cref="TargetClass"/> fence means only <see cref="MechObject"/>'s override is ever reached.
 	/// A structure's (<c>Base_NextTargetableComponent</c>, <c>00403624</c>, over its type's whole
 	/// component list) is installed in the original and unreachable, and is left unported for that
-	/// reason. See docs/retail/simulation/target-selection.md.</para>
+	/// reason. See docs/retail/simulation/targeting-pod.md.</para>
 	/// </summary>
 	public virtual int NextTargetableComponent(int cursor, out int componentId) {
 		componentId = TargetingPodLock.NoComponent;

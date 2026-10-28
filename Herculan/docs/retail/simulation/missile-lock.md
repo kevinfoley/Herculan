@@ -16,7 +16,7 @@ Each subtype the machine carries rounds for has its own countdown. Every tick th
 
 - **Reload value** is `min(range >> 2, 0x7fff)`, so lock time is linear in range. The countdown is in the simulation's own timer unit ([`structure-behaviour.md`](structure-behaviour.md)): 256 to 125 ms, 81 a tick on hardware that keeps up. A target 20000 units away (120 m) takes 5000 units, about 2.4 s; one at 57205 (343 m) takes about 7 s. A turretless chassis (type record `+0x50`, file offset 78, the flyer flag — the RAZOR) uses 0 and locks instantly, and measures its bearing without a twist it does not have.
 - **The whole block is held** when `mech+0x9d` is set (target just changed), the bearing error is outside ±`0x3000` of the turret centreline (±67.5°), or line of sight is broken. That branch resets the timers for subtypes 0, 1 and 2 — **not 4**, which keeps a partial lock across a broken moment — and raises the function's `local_1a`, which is what makes a target switch cost exactly one tick. `mech+0x9d` is cleared from that flag at the very **end** of the function, past the lock audio, so the audio still sees the switch on the tick it happened.
-- Line of sight is asked from whichever end owns the cache row: human side asks about the target, Cybrid asks the target about itself ([`target-selection.md`](target-selection.md#line-of-sight--detection_lineofsight-00412608)).
+- Line of sight is asked from whichever end owns the cache row: human side asks about the target, Cybrid asks the target about itself ([`sensors.md`](sensors.md#line-of-sight--detection_lineofsight-00412608)).
 
 | Subtype | Timer record | Manager slot | Hold condition |
 |---|---|---|---|
@@ -37,13 +37,13 @@ A target that is a HERC with its jammer (`+0xa1`) on re-rolls `mech+0x9c` whenev
 **The jammer flag is derived every tick.** `Mech_IsEcmSwitchedOn` (`0041aa10`) stores it into `mech+0xa1` ahead of the lock block, and an ECM pod at `mech+0x307` is its outer gate: without one the flag is clear. With one, who is flying decides which switch is read:
 
 - **The player's follows the pod row's button**, through the copy `EcmPod_Tick` keeps at `pod+0x7d` ([`equipment-pods.md`](equipment-pods.md#what-the-two-ticks-do-with-the-button)). Their own radar mode does not enter into it.
-- **Any other machine jams exactly while its radar mode (`mech+0x96`) is ACTIVE.** Its pod is never ticked, so it has no button to read. A squadmate's radar is set back to PASSIVE on entering a fight, so in practice this branch means Cybrids; `SCAN FOR HOSTILES` lights a squadmate up and its jammer with it, and `EMCON` clears both. Nothing orders a squadmate's pod on its own ([`target-selection.md`](target-selection.md#how-an-ai-machines-radar-is-set), [`ai-squadmates.md`](ai-squadmates.md)).
+- **Any other machine jams exactly while its radar mode (`mech+0x96`) is ACTIVE.** Its pod is never ticked, so it has no button to read. A squadmate's radar is set back to PASSIVE on entering a fight, so in practice this branch means Cybrids; `SCAN FOR HOSTILES` lights a squadmate up and its jammer with it, and `EMCON` clears both. Nothing orders a squadmate's pod on its own ([`sensors.md`](sensors.md#how-an-ai-machines-radar-is-set), [`ai-squadmates.md`](ai-squadmates.md)).
 
-An anti-radiation hit therefore silences the jamming it homed on: it clears the machine's scanner and holds it dark for 6000, so the machine stops spoofing the player's locks for the same window ([`target-selection.md`](target-selection.md#how-an-ai-machines-radar-is-set)).
+An anti-radiation hit therefore silences the jamming it homed on: it clears the machine's scanner and holds it dark for 6000, so the machine stops spoofing the player's locks for the same window ([`sensors.md`](sensors.md#how-an-ai-machines-radar-is-set)).
 
 The flag has two effects on the lock. A roll that comes up spoofed reloads the timers of subtypes 0, 1 and 4 on that tick; and while the flag stands, no subtype but 2 can latch a completed countdown. It is the same flag that makes a missile already in the air weave ([`rockets.md`](rockets.md#guidance--rocket_homingsteer-0040a254)).
 
-The roll's weight, `0x14`, drops to 5 — a quarter — when the machine holding the lock carries a Targeting Pod (`mech+0x30b`, catalog id 29) whose cached damage at `+0x7f` is under `0x33`, a fifth of the way to destroyed. **It is the observer's pod, not the jammer's.** What that cache is and the pod's other three thresholds are in [`target-selection.md`](target-selection.md#a-damaged-pod-degrades-in-four-steps) and [`equipment-pods.md`](equipment-pods.md#where-a-pod-reads-its-damage).
+The roll's weight, `0x14`, drops to 5 — a quarter — when the machine holding the lock carries a Targeting Pod (`mech+0x30b`, catalog id 29) whose cached damage at `+0x7f` is under `0x33`, a fifth of the way to destroyed. **It is the observer's pod, not the jammer's.** What that cache is and the pod's other three thresholds are in [`targeting-pod.md`](targeting-pod.md#a-damaged-pod-degrades-in-four-steps) and [`equipment-pods.md`](equipment-pods.md#where-a-pod-reads-its-damage).
 
 ## The lock lamp
 

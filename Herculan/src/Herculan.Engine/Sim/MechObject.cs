@@ -236,7 +236,7 @@ public sealed partial class MechObject : SimObject {
 	/// <summary>
 	/// <c>Mech_ToggleRadarMode</c> (<c>0041b468</c>) — the manual's [R]. The F4 scanner screen's
 	/// PASS/ACTIVE button pair is a different path, <see cref="SetScanner"/>; see
-	/// docs/retail/simulation/target-selection.md#radar-mode. <b>Only the machine the player is
+	/// docs/retail/simulation/sensors.md#radar-mode. <b>Only the machine the player is
 	/// piloting toggles</b>: the original gates the flip on <c>mech+0xa3</c>.
 	///
 	/// <para>The flip plays the cockpit's own confirmation tone, one sound for each mode —

@@ -90,7 +90,7 @@ The gauge's rolling round counter, `+0x7d`, is in [the ammunition mount](weapon-
 | `+0x08` | the splash factor, the Q10 secondary-explosion fraction |
 | `+0x0a` | pointer to the record's three impact-effect arrays, indexed as one 12-entry array — see [`impact-effects.md`](impact-effects.md#which-effect-a-shot-spawns) |
 | `+0x0e` | the owner machine, which the sweep skips |
-| `+0x12` | the firing rocket's subtype id, a literal 5 from a beam or a bullet. `Mech_DirectFireHitTest` reads it to set the target's scanner ([`target-selection.md`](target-selection.md#how-an-ai-machines-radar-is-set)). It is not `PROJ.DAT`'s `Type`, which is decided at the mount's fire dispatch and never reaches the shot record |
+| `+0x12` | the firing rocket's subtype id, a literal 5 from a beam or a bullet. `Mech_DirectFireHitTest` reads it to set the target's scanner ([`sensors.md`](sensors.md#how-an-ai-machines-radar-is-set)). It is not `PROJ.DAT`'s `Type`, which is decided at the mount's fire dispatch and never reaches the shot record |
 
 The ray record:
 

@@ -69,7 +69,7 @@ A contact at the display range therefore lands 25 GAU units from the centre, ins
 
 The survivor is rotated into the machine's own frame by `Math_BuildRotation2D(-heading)` and stored as `(x, -y)`, so the plot is **hull-relative with the nose up** while the wedge shows the turret. The selected target's entry is remembered at `+0x51c` and its range, in metres, at `+0x520`.
 
-**Friendlies always plot; a Cybrid plots only once something has painted it** (`obj+0x95`, [`target-selection.md`](target-selection.md)). That is what makes the PASS/ACTIVE choice visible on this screen.
+**Friendlies always plot; a Cybrid plots only once something has painted it** (`obj+0x95`, [`sensors.md`](sensors.md#the-sensor-model--sim_detectiontick-004123ac)). That is what makes the PASS/ACTIVE choice visible on this screen.
 
 ### The blinking ghost contact
 

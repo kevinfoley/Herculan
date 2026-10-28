@@ -401,7 +401,7 @@ public partial class MechObject {
 	/// mission-file field that feeds it. A machine in the player's squad takes its mode from
 	/// <see cref="RadarForcedActive"/>, which is what SCAN FOR HOSTILES and EMCON write; everything
 	/// else from <see cref="RadarOrder"/>, the mission file's own standing setting. See
-	/// docs/retail/simulation/target-selection.md ("How an AI machine's radar is set").
+	/// docs/retail/simulation/sensors.md ("How an AI machine's radar is set").
 	/// </summary>
 	private void UpdateRadarMode() =>
 		Scanner = Group is { LedByPlayer: true } ? RadarForcedActive : RadarOrder;

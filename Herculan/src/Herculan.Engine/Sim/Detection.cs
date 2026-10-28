@@ -27,7 +27,7 @@ namespace Herculan.Engine.Sim;
 /// <see cref="Sweep"/> for human-side objects only, and each sweep looks only at Cybrid ones, but
 /// the pass writes both objects' tables, so a Cybrid machine knows about the human that spotted it
 /// without running a sweep of its own. See
-/// docs/retail/simulation/target-selection.md#the-sensor-model--sim_detectiontick-004123ac.</para>
+/// docs/retail/simulation/sensors.md#the-sensor-model--sim_detectiontick-004123ac.</para>
 /// </summary>
 public static class Detection {
 	/// <summary>
