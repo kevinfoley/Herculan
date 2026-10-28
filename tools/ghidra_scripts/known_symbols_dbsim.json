@@ -554,8 +554,14 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObjectBase_ConstructWithDetailTable",
-      "description": "The shape-drawing base constructor that takes a LOD detail table: same body as SimObjectBase_ConstructAnimated, but builds the shape holder from roots[0] and stores the table itself at obj+0x41, where the other two base constructors null that field. Its only caller is Mech_Constructor, which is why a machine is the only class that selects a root.",
-      "source": "docs/retail/rendering/mech-shape-drawing.md"
+      "description": "(obj, detailTable): the shape-drawing base constructor that takes a LOD detail table. Runs SimObjectBase_ConstructShaped on the table's roots[0] (the root array is the table's first dword, read without a null test, so a table never filled faults here at 004033b1), installs vtable 004973ac then DET_ANIM_OBJ 004973cc, counting each in the live-destructor count [006cbf74], stores the table itself at obj+0x41 and returns obj. SimObjectBase_ConstructAnimated and SimObjectBase_ConstructStatic null obj+0x41 (mech-shape-drawing.md). es2_xref finds one call, in Mech_Constructor, which is why a machine is the only class that selects a root.",
+      "source": "docs/retail/rendering/mech-shape-drawing.md",
+      "verified": {
+        "bytes": "004033a4+62",
+        "sha1": "1a1df4558d07",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "004033e4",
@@ -7961,8 +7967,14 @@
       "type": "function",
       "confidence": "medium",
       "name": "maybe_MechTypeSlot_GetIndex",
-      "description": "Trivial accessor, returns (&DAT_004a9d8c)[param_1] -- a per-slot byte, 0xff sentinel meaning 'unused', otherwise the allocated dense index used by MechType_InitOne. Not independently cross-checked beyond its two callers (Mechs_InitAllTypes, MechTypeSlot_Allocate).",
-      "source": "memory project_es2_dts_texture_binding (DBSIM-side RE)"
+      "description": "(short mechType): returns the byte at 004a9d8c[mechType], zero-extended -- the type's dense slot in the mech type table (004a9de8, stride 0x21e), or 0xff for a type maybe_MechTypeSlot_Allocate never gave one, since Allocate tests for 0xff before assigning a slot. No range test on mechType. Mech_Constructor sign-extends the low word and indexes the type table with it unchecked, so an unallocated type becomes slot 255 (script-dat.md, the two-pass read). Callers found by es2_xref: Mech_Constructor (twice), maybe_MechTypeSlot_Allocate, MechType_InitOne and Mechs_InitAllTypes.",
+      "source": "memory project_es2_dts_texture_binding (DBSIM-side RE)",
+      "verified": {
+        "bytes": "0041ff00+16",
+        "sha1": "1491c65d83bc",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0041ff10",
@@ -30473,7 +30485,13 @@
       "confidence": "high",
       "name": "FileRStream_SetIoError",
       "description": "Sets the stream status at +4 to 1 when the dword at 004966ea is nonzero, else 3, and returns 0. That dword is the _errno import thunk's code bytes, as in VolRStream_SetIoError, so it always stores 1.",
-      "source": "DBSIM decompile and disassembly at 0047ae54"
+      "source": "DBSIM decompile and disassembly at 0047ae54",
+      "verified": {
+        "bytes": "0047ae54+35",
+        "sha1": "c32acbc15924",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0047ae78",
@@ -30490,8 +30508,14 @@
       "type": "function",
       "confidence": "high",
       "name": "FileRStream_Read",
-      "description": "FileRStream read (vtable slot +0x18): does nothing and returns 0 when the status is already nonzero; _reads from the handle at +8, sets status 2 on a short read and goes to FileRStream_SetIoError on an error. The DBSIM copy of VSHELL's FileRStream_Read.",
-      "source": "DBSIM decompile and disassembly at 0047ae8c"
+      "description": "FileRStream read (vtable slot +0x18), (stream, count, buffer): returns 0 without reading when the status at +4 is already nonzero, and 1 at once for a count of 0. Otherwise _reads count bytes from the handle at +8 into buffer: -1 goes to FileRStream_SetIoError (status 1, returns 0), a short read sets status 2 and returns 0, a full one returns 1. FileRStream_Seek resets only status 2, and status 1 lasts until the stream is reopened, so after an I/O error every later read is a no-op. The DBSIM copy of VSHELL's FileRStream_Read.",
+      "source": "DBSIM decompile and disassembly at 0047ae8c",
+      "verified": {
+        "bytes": "0047ae8c+80",
+        "sha1": "3561de9cb265",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0047aedc",
@@ -41261,8 +41285,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Eh_InitExceptBlock",
-      "description": "Borland C++ exception-frame prologue, the DBSIM copy of VSHELL's Eh_InitExceptBlock (0046b234): builds the frame's registration record (handler 0049672c, the frame descriptor passed in EAX, the live-destructor count from [006cbf74]) and links it into the FS:[0] SEH chain. Functions that construct objects with destructors call it first, which is why it has 258 call sites.",
-      "source": "DBSIM decompile and disassembly at 00496248"
+      "description": "Borland C++ exception-frame prologue, the DBSIM copy of VSHELL's Eh_InitExceptBlock (0046b234): builds the frame's registration record at the caller's EBP plus the frame descriptor's +4 offset (handler 0049672c at +4, the descriptor passed in EAX at +8, the caller's ESP at +0xc, +0x10..+0x15 zeroed, the live-destructor count from [006cbf74] at +0x1c) and links it into the FS:[0] SEH chain, the previous head at +0. DBSim_SpawnMissionObjects, read this session, calls it first in its prologue with descriptor 0049a8b5, whose +4 offset is -0x34.",
+      "source": "DBSIM decompile and disassembly at 00496248",
+      "verified": {
+        "bytes": "00496248+62",
+        "sha1": "d8a00b7b239c",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00496288",

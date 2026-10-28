@@ -42,7 +42,7 @@ internal sealed class PropertiesPanel {
 			SideChanger sides, ObjectDeleter deleter, MemberMover members, SquadMachinePanel machine, RosterFitView fit, RouteEditor routes,
 			RoutePlacing placing, AreaEditor areas, AreaPlacing areaPlacing, OrderEditor orders, ObjectiveEditor objectives,
 			ActionEditor actions, TimerEditor timers, ConditionEditor conditions, PresenceEditor presence, RandomTableEditor tableEditor,
-			StartingConditionEditor startingConditions, HeadingEditor headings, RandomTables tables, TriggerMessages messages, MissionNames names,
+			StartingConditionEditor startingConditions, RadarSettingEditor radarSettings, HeadingEditor headings, RandomTables tables, TriggerMessages messages, MissionNames names,
 			UnitTypeCatalog catalog, BaseFormationTable formations, RosterTypeEditor types, MachineFitter fitter, StructurePlacer placer,
 			HercPlacer hercs, FlyerPlacer flyers, BasePadEditor pads, GroupDeleter groupDeleter) {
 		_index = index;
@@ -65,7 +65,7 @@ internal sealed class PropertiesPanel {
 		var heading = new HeadingField(headings);
 		_object = new ObjectView(index, links, mover, team, deleter, members, machine,
 			new LoadoutView(tableEditor, tables, links, fit, tableView), presentWhen, presence, tableView,
-			actions, related, new StartingConditionField(startingConditions), heading);
+			actions, related, new StartingConditionField(startingConditions), new RadarSettingField(radarSettings), heading);
 		_group = new GroupView(index, links, mover, team, machine, presentWhen, presence, actions, related, orderSlots, sharers,
 			heading, new GroupSlotsView(source, index, links, catalog, formations, types, fitter, deleter, placer, hercs, flyers), pads,
 			groupDeleter);

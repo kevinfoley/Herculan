@@ -58,13 +58,13 @@ public static class Detection {
 	/// Outer limit of the radar-painting pass — beyond this, an active scanner does nothing for
 	/// either object in the pair.
 	/// </summary>
-	private const int ScannerRange = 200000;
+	public const int ScannerRange = 200000;
 
 	/// <summary>
 	/// Range inside which a scanner paints the <i>other</i> object even though that object is not
 	/// itself emitting. Past it, only an object with its own scanner running lights up.
 	/// </summary>
-	private const int PassiveRadarRange = 140000;
+	public const int PassiveRadarRange = 140000;
 
 	/// <summary>Range inside which the looking half of <see cref="Sweep"/> runs at all.</summary>
 	private const int VisualRange = 80000;

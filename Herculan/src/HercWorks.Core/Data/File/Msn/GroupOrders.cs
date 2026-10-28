@@ -245,7 +245,9 @@ public static class GroupOrders {
 			}
 
 			if (SlotsNaming(document, removed) == 0) {
+				var points = RosterDeletion.PointsOf(document, OrderRow, removed);
 				document.Remove(OrderRow, removed);
+				RouteEditing.RemoveLeftBehind(document, points);
 			}
 		});
 	}

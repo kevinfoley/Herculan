@@ -8,9 +8,11 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// The viewport's bottom-left readout of how many of DBSIM's roster slots the mission takes against each cap, counted as the
 /// adds refuse by (<see cref="RosterLimits"/>): hercs with the squad positions group 0 gives, flyers, and structures with
-/// ground vehicles, which share block 9's slots.
+/// ground vehicles, which share block 9's slots; then the positions against what DBSIM's spawn pass reads
+/// (<see cref="SkipArrayLimits"/>), and the heads-down map's markers against what it builds (<see cref="MapMarkerLimits"/>).
 /// </summary>
 internal static class RosterCountsOverlay {
+	private const int PointRow = 6;
 	private const int MechRow = 12;
 	private const int FlyerRow = 13;
 	private const int BaseRow = 14;
@@ -37,6 +39,19 @@ internal static class RosterCountsOverlay {
 
 		Line(layout, "Flyers", FlyerRow);
 		Line(layout, "Buildings & vehicles", BaseRow);
+		ImGui.TextUnformatted($"Positions: {SkipArrayLimits.Count(layout, PointRow)}/{SkipArrayLimits.Cap(PointRow)}");
+		if (ImGui.IsMouseHoveringRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), false)) {
+			ImGui.SetTooltip("Every position a group, object, waypoint or trigger area stands on, under any condition, a "
+				+ "shared one counted once. Past the limit the mission crashes as it loads.");
+		}
+
+		ImGui.TextUnformatted($"Map markers: {MapMarkerLimits.Count(layout)}/{MapMarkerLimits.Cap}");
+		if (ImGui.IsMouseHoveringRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), false)) {
+			ImGui.SetTooltip("The heads-down map gives every HERC, flyer, structure and vehicle a marker, the squad's machines "
+				+ "included, plus one per waypoint of the squad's first order's route after its start (up to nine) and one for "
+				+ "the nav marker. Past the limit the mission crashes as it starts.");
+		}
+
 		ImGui.End();
 		ImGui.PopStyleVar();
 		ImGui.PopStyleColor();

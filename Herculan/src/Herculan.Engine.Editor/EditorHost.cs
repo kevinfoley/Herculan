@@ -909,7 +909,7 @@ public sealed class EditorHost {
 
 	// The delete, the group delete, the machine fit, the base pad, the add in a structure group's place, the squadmate add or remove, the
 	// theater or time of day, the route edit, the trigger-area edit, the order edit, the action or timer edit, the objective
-	// or text edit, the finished route or area and the Undo or Redo the frame's panels, menus and keys asked for; none while
+	// or text edit, the finished route or area, the unused-position removal and the Undo or Redo the frame's panels, menus and keys asked for; none while
 	// a drag is under way.
 	private void RunEditRequests(EditorMission mission) {
 		var deleting = mission.Deleter.TakeRequest();
@@ -928,6 +928,7 @@ public sealed class EditorHost {
 		mission.Fitter.RunRequest();
 		mission.Types.RunRequest();
 		mission.StartingConditions.RunRequest();
+		mission.RadarSettings.RunRequest();
 		mission.Headings.RunRequest();
 		mission.Pads.RunRequest();
 		mission.Placer.RunRequest();
@@ -948,6 +949,7 @@ public sealed class EditorHost {
 		mission.Debrief.RunRequest();
 		mission.Placing.RunRequest();
 		mission.AreaPlacing.RunRequest();
+		mission.UnusedPoints.RunRequest();
 
 		if (step == true) {
 			mission.Mover.Undo();
@@ -1165,6 +1167,16 @@ public sealed class EditorHost {
 			ImGui.Separator();
 			if (ImGui.MenuItem("Mission Settings")) {
 				_mission.Settings.Open();
+			}
+
+			int unused = _mission.UnusedPoints.Count;
+			if (ImGui.MenuItem($"Remove unused positions ({unused})", null, false, unused > 0 && idle)) {
+				_mission.UnusedPoints.Request();
+			}
+
+			if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
+				ImGui.SetTooltip("Removes every position no group, object, waypoint, trigger area, order or win/lose condition "
+					+ "stands on. Positions on the play area's edge, and those a random table picks, stay.");
 			}
 
 			ImGui.EndMenu();

@@ -17,7 +17,7 @@ namespace Herculan.Engine.Editor;
 /// (<see cref="MemberMover"/>) and its group's orders, its Present when, with what it does to a group it would leave empty
 /// (<see cref="PresentWhenView.DrawGroupLeftEmpty"/>), and for a machine of the squad the random table it picks from; its
 /// team; outside the squad its loadout or type, fixed or random (<see cref="LoadoutView"/>); its position as fields that move it, and its heading, set for a structure or ground vehicle (<see cref="HeadingField"/>); a herc's,
-/// structure's or ground vehicle's starting condition (<see cref="StartingConditionField"/>), or for a machine of the player's squad which Herc it is (<see cref="SquadMachinePanel"/>); the two triggers it
+/// structure's or ground vehicle's starting condition (<see cref="StartingConditionField"/>) and a herc's radar setting (<see cref="RadarSettingField"/>), or for a machine of the player's squad which Herc it is (<see cref="SquadMachinePanel"/>); the two triggers it
 /// fires; the campaign variables it sets when put out of action; the win and lose conditions about it; Delete, or what
 /// refuses it; and, collapsed under Advanced, its type number, model, triangle and texture counts and hit radius.
 /// </summary>
@@ -36,6 +36,7 @@ internal sealed class ObjectView {
 	private readonly ActionEditor _actions;
 	private readonly RelatedObjectives _objectives;
 	private readonly StartingConditionField _condition;
+	private readonly RadarSettingField _radar;
 	private readonly HeadingField _heading;
 
 	// The object's point being typed.
@@ -43,7 +44,8 @@ internal sealed class ObjectView {
 
 	public ObjectView(MissionIndex index, PanelLinks links, PointMover mover, TeamField team, ObjectDeleter deleter,
 			MemberMover members, SquadMachinePanel machine, LoadoutView loadout, PresentWhenView presentWhen, PresenceEditor presence, RandomTableView tables,
-			ActionEditor actions, RelatedObjectives objectives, StartingConditionField condition, HeadingField heading) {
+			ActionEditor actions, RelatedObjectives objectives, StartingConditionField condition, RadarSettingField radar,
+			HeadingField heading) {
 		_index = index;
 		_links = links;
 		_mover = mover;
@@ -58,6 +60,7 @@ internal sealed class ObjectView {
 		_actions = actions;
 		_objectives = objectives;
 		_condition = condition;
+		_radar = radar;
 		_heading = heading;
 	}
 
@@ -94,6 +97,7 @@ internal sealed class ObjectView {
 
 		if (!planned.Squad) {
 			_condition.Draw(planned.Key);
+			_radar.Draw(planned.Key);
 			if (planned.Kind == MissionUnitKind.Base && _links.Names.Types.IsInvulnerable(planned.TypeIndex)) {
 				EditorText.Note("Can't be destroyed: a structure of its type takes no damage.");
 			}

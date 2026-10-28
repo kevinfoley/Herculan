@@ -51,6 +51,18 @@ public enum ScriptLintKind {
 
 	/// <summary><c>mission.str</c> longer than DBSIM reads; the value is its line count.</summary>
 	TextTooLong,
+
+	/// <summary>
+	/// Block 1, 2 or 4, or one route's waypoint list, longer than the stack array DBSIM's spawn pass skips it through
+	/// (<see cref="ScriptDatLint.SkipArrayBytes"/>); the value is its record count.
+	/// </summary>
+	SkipArrayFull,
+
+	/// <summary>
+	/// More markers than the heads-down map holds (<see cref="ScriptDatLint.MapMarkerCap"/>), counted as
+	/// <see cref="ScriptDatLint.MapMarkers"/> counts them; the value is that count.
+	/// </summary>
+	MapMarkersFull,
 }
 
 /// <summary>One problem <see cref="ScriptDatLint"/> found, and the record it is in.</summary>
@@ -81,6 +93,60 @@ public static class ScriptDatLint {
 	/// <inheritdoc cref="MechSlotCap"/>
 	public const int BaseSlotCap = 140;
 
+	/// <summary>
+	/// Bytes of the stack array DBSIM's spawn pass reads blocks 1, 2 and 4 into whole, and each route's waypoint list, with no
+	/// length check. See docs/retail/formats/script-dat.md#the-two-pass-read--and-what-it-means-for-dbsim-keeps.
+	/// </summary>
+	public const int SkipArrayBytes = 2000;
+
+	/// <summary>
+	/// The most records of <paramref name="block"/> the skip array holds (<see cref="SkipArrayBytes"/>): points, headings, one
+	/// route's waypoints or trigger areas; null for a block the spawn pass reads some other way.
+	/// </summary>
+	public static int? SkipArrayCap(ScriptBlock block) => block switch {
+		ScriptBlock.Points => SkipArrayBytes / 12,
+		ScriptBlock.Headings or ScriptBlock.Routes => SkipArrayBytes / 2,
+		ScriptBlock.TriggerAreas => SkipArrayBytes / 6,
+		_ => null,
+	};
+
+	/// <summary>
+	/// Markers the heads-down map's command screen holds, which DBSIM builds on its first repaint with no count check:
+	/// docs/retail/simulation/heads-down-display.md#markers.
+	/// </summary>
+	public const int MapMarkerCap = 140;
+
+	/// <summary>The most route markers the map builds, for the player's route.</summary>
+	public const int RouteMarkerCap = 9;
+
+	/// <summary>
+	/// The markers <paramref name="script"/> puts on the heads-down map: one per waypoint of the squad's route after its first
+	/// (slot 0's order of group 0, at most <see cref="RouteMarkerCap"/>), one per live roster slot — each slot a group past the
+	/// first names — and per squad machine, and the nav marker's.
+	/// </summary>
+	/// <param name="squadSize">The machines <c>player.mec</c> brings; 0 when unknown, which counts group 0's member refs instead.</param>
+	public static int MapMarkers(ScriptDat script, int squadSize = 0) {
+		var live = new HashSet<(short Kind, short Slot)>();
+		for (int i = 1; i < script.Groups.Length; i++) {
+			var group = script.Groups[i];
+			int count = group.MemberKind switch { 0 => script.Mechs.Length, 1 => script.Flyers.Length, 2 => script.Bases.Length, _ => 0 };
+			foreach (short member in group.MemberRefs.Where(member => member >= 0 && member < count)) {
+				live.Add((group.MemberKind, member));
+			}
+		}
+
+		var squad = script.Groups.FirstOrDefault();
+		int machines = squadSize > 0 ? squadSize : squad?.MemberRefs.Count(member => member >= 0) ?? 0;
+		int route = 0;
+		short order = squad?.OrderRefs[0] ?? -1;
+		short routeRef = order >= 0 && order < script.Orders.Length ? script.Orders[order].RouteRef : (short)-1;
+		if (routeRef >= 0 && routeRef < script.WaypointGroups.Length) {
+			route = Math.Clamp(script.WaypointGroups[routeRef].Waypoints.Length - 1, 0, RouteMarkerCap);
+		}
+
+		return route + live.Count + machines + 1;
+	}
+
 	/// <summary>Runs every check over <paramref name="script"/>, in block order, then over <c>mission.str</c>'s length.</summary>
 	/// <param name="squadSize">
 	/// How many machines <c>player.mec</c> brings, which share the block-7 slot cap; 0 when the
@@ -95,8 +161,14 @@ public static class ScriptDatLint {
 		int routes = script.WaypointGroups.Length;
 		int actions = script.Actions.Length;
 
+		Skip(findings, ScriptBlock.Points, -1, points, $"{points} points");
+		Skip(findings, ScriptBlock.Headings, -1, headings, $"{headings} headings");
+		Skip(findings, ScriptBlock.TriggerAreas, -1, script.TriggerAreas.Length, $"{script.TriggerAreas.Length} trigger areas");
+
 		for (int i = 0; i < routes; i++) {
-			Refs(findings, ScriptBlock.Routes, i, $"Route {i} waypoints", script.WaypointGroups[i].Waypoints, points, ScriptBlock.Points);
+			short[] waypoints = script.WaypointGroups[i].Waypoints;
+			Refs(findings, ScriptBlock.Routes, i, $"Route {i} waypoints", waypoints, points, ScriptBlock.Points);
+			Skip(findings, ScriptBlock.Routes, i, waypoints.Length, $"Route {i}'s {waypoints.Length} waypoints");
 		}
 
 		for (int i = 0; i < script.TriggerAreas.Length; i++) {
@@ -174,6 +246,14 @@ public static class ScriptDatLint {
 			squadSize > 0 ? $"{script.Mechs.Length} HERCs plus a squad of {squadSize}" : $"{script.Mechs.Length} HERCs");
 		Cap(findings, ScriptBlock.Flyers, script.Flyers.Length, FlyerSlotCap, $"{script.Flyers.Length} flyers");
 		Cap(findings, ScriptBlock.Bases, script.Bases.Length, BaseSlotCap, $"{script.Bases.Length} bases");
+
+		// HddCommandScreen_BuildMapMarkers (0044ded8) takes a gadget per marker from 140 with no count check.
+		int markers = MapMarkers(script, squadSize);
+		if (markers > MapMarkerCap) {
+			findings.Add(new(ScriptBlock.Groups, -1,
+				$"The mission needs {markers} heads-down map markers; DBSIM builds {MapMarkerCap} and writes the next through a pointer "
+				+ "read from past their array.", ScriptLintKind.MapMarkersFull, markers));
+		}
 
 		for (int i = 0; i < script.Orders.Length; i++) {
 			var order = script.Orders[i];
@@ -293,6 +373,16 @@ public static class ScriptDatLint {
 			findings.Add(new(block, -1,
 				$"{what} need {slots} slots; DBSIM holds {cap} and writes the rest over the globals that follow.",
 				ScriptLintKind.RosterFull, slots));
+		}
+	}
+
+	// <what>, <count> records of <block>: past what the spawn pass's skip array holds.
+	private static void Skip(List<ScriptLintFinding> findings, ScriptBlock block, int index, int count, string what) {
+		int cap = SkipArrayCap(block)!.Value;
+		if (count > cap) {
+			findings.Add(new(block, index,
+				$"{what} are more than the {cap} DBSIM's spawn pass reads into its {SkipArrayBytes}-byte stack array; the rest "
+				+ "run over its frame.", ScriptLintKind.SkipArrayFull, count));
 		}
 	}
 

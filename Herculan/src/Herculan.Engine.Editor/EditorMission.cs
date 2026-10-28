@@ -64,8 +64,10 @@ internal sealed class EditorMission {
 		TableEditor = new RandomTableEditor(source, sceneIndex, Mover, Sync, Selection);
 		Types = new RosterTypeEditor(source, Mover, Sync);
 		StartingConditions = new StartingConditionEditor(source, Mover, Sync);
+		RadarSettings = new RadarSettingEditor(source, Mover, Sync);
 		Headings = new HeadingEditor(source, Mover, Sync);
 		Pads = new BasePadEditor(source, sceneIndex, tables.Bases, Mover, Sync);
+		UnusedPoints = new UnusedPointRemover(source, Mover, Sync);
 		Outliner.Placing = Placing;
 		Outliner.AreaPlacing = AreaPlacing;
 		Outliner.Objectives = Objectives;
@@ -80,7 +82,7 @@ internal sealed class EditorMission {
 		Properties = new PropertiesPanel(sceneIndex, Selection, source, Mover, Sides, Deleter, Members,
 			new SquadMachinePanel(Fitter, Squad, squad, Presets), new RosterFitView(Fitter, Types, TableEditor, catalog, Presets),
 			Routes, Placing, Areas, AreaPlacing, Orders, Objectives, Actions, Timers, Conditions, Presence, TableEditor,
-			StartingConditions, Headings, randomTables, new TriggerMessages(content), Names, catalog, tables.Bases, Types, Fitter, Placer, Hercs, Flyers,
+			StartingConditions, RadarSettings, Headings, randomTables, new TriggerMessages(content), Names, catalog, tables.Bases, Types, Fitter, Placer, Hercs, Flyers,
 			Pads, GroupDeleter);
 	}
 
@@ -147,6 +149,9 @@ internal sealed class EditorMission {
 	/// <summary>Edits groups' order slots in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public OrderEditor Orders { get; }
 
+	/// <summary>Removes the positions nothing in <see cref="Source"/> uses, as a step of <see cref="Mover"/>'s undo history.</summary>
+	public UnusedPointRemover UnusedPoints { get; }
+
 	/// <summary>Creates, edits and deletes objectives in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public ObjectiveEditor Objectives { get; }
 
@@ -196,6 +201,9 @@ internal sealed class EditorMission {
 
 	/// <summary>Sets the starting condition of hercs, structures and ground vehicles in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public StartingConditionEditor StartingConditions { get; }
+
+	/// <summary>Turns the radar of hercs on and off in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	public RadarSettingEditor RadarSettings { get; }
 
 	/// <summary>Sets the own headings of structures, ground vehicles and groups in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public HeadingEditor Headings { get; }

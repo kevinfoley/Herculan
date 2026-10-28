@@ -112,6 +112,10 @@ public sealed class MsnField {
 	public static MsnField BaseType { get; } = new(14, BaseRosterEntry62.TypeIndexWord,
 		record => ((BaseRosterEntry62)record).TypeIndex, (record, value) => ((BaseRosterEntry62)record).TypeIndex = value);
 
+	/// <summary>A mech's standing radar setting, row 12's <see cref="MechRosterEntry144.AiRadarActive"/>.</summary>
+	public static MsnField MechRadar { get; } = new(12, MechRosterEntry144.AiRadarActiveWord,
+		record => ((MechRosterEntry144)record).AiRadarActive, (record, value) => ((MechRosterEntry144)record).AiRadarActive = value);
+
 	/// <summary>Weapon slot <paramref name="slot"/> of a mech's fit, row 12's <see cref="MechRosterEntry144.WeaponRefs"/>.</summary>
 	public static MsnField MechWeapon(int slot) => new(12, MechRosterEntry144.WeaponRefsWord + slot,
 		record => ((MechRosterEntry144)record).WeaponRefs[slot], (record, value) => ((MechRosterEntry144)record).WeaponRefs[slot] = value);

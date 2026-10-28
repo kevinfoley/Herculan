@@ -123,18 +123,21 @@ public static class ObjectiveEditing {
 		document.Mission.TruncatedRow17Tail != null ? "The mission file ends inside its objectives." : null;
 
 	/// <summary>
-	/// Removes row-17 record <paramref name="record"/>, and the <c>.ENG</c> records of each id of its failure text that no
-	/// field of rows 4, 5, 10 and 17 references any more, whatever its record's condition.
+	/// Removes row-17 record <paramref name="record"/>, the <c>.ENG</c> records of each id of its failure text that no
+	/// field of rows 4, 5, 10 and 17 references any more, whatever its record's condition, and its point when nothing names
+	/// it any more (<see cref="RouteEditing.RemoveLeftBehind"/>).
 	/// </summary>
 	public static MsnEdit Delete(MissionDocument document, int record) {
 		if (WhyNoDelete(document, record) is { } reason) {
 			throw new InvalidOperationException(reason);
 		}
 
-		var ids = MissionTextEditing.FailureIds(document.Text, Record(document, record).TextRef);
+		var objective = Record(document, record);
+		var ids = MissionTextEditing.FailureIds(document.Text, objective.TextRef);
 		return document.Change(() => {
 			document.RemoveUnkeyed(Row, record);
 			MissionTextEditing.RemoveUnreferenced(document, [.. ids]);
+			RouteEditing.RemoveLeftBehind(document, [objective.PointRef]);
 		});
 	}
 

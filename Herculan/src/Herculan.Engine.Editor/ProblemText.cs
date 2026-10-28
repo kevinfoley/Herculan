@@ -74,9 +74,26 @@ internal static class ProblemText {
 				$"{who} arrives by drop pod with {found.Value} members, and the pod brings in only the first: the others come in "
 				+ "where the mission placed them instead. Keep one member and place each other in a new group with "
 				+ "\"Waits on\" set to the same trigger, or choose another arrival under \"Arrives\" in the trigger.",
+			MissionCheckKind.SkipArrayFull when found.Row == RouteRow =>
+				$"{who} is over maximum waypoint limit ({SkipArrayLimits.Cap(RouteRow)}) by "
+				+ $"{found.Value - SkipArrayLimits.Cap(RouteRow)}, so the mission crashes as it loads: remove waypoints.",
+			MissionCheckKind.SkipArrayFull =>
+				$"Over maximum {Thing(found.Row)} limit ({SkipArrayLimits.Cap(found.Row)}) by "
+				+ $"{found.Value - SkipArrayLimits.Cap(found.Row)}, so the mission crashes as it loads: {Fewer(found.Row)}.",
+			MissionCheckKind.MapMarkersFull =>
+				$"Over maximum map marker limit ({MapMarkerLimits.Cap}) by {found.Value - MapMarkerLimits.Cap}, so the mission "
+				+ "crashes as it starts: remove HERCs, flyers, structures or vehicles, or waypoints from the route of the squad's "
+				+ "first order.",
 			_ => found.Message,
 		};
 	}
+
+	// How to bring a skipped row's count down, by what adds its records.
+	private static string Fewer(int row) => row switch {
+		PointRow => "remove waypoints, trigger areas, or positions of their own from groups and objects",
+		HeadingRow => "remove headings of their own from groups and objects",
+		_ => "remove trigger areas",
+	};
 
 	// A condition ref no row-1 record carries, which drops the record that carries it as a condition that never holds would: a
 	// condition's own, a record of another version's, or the record's own, which a view opening with Present when can change.

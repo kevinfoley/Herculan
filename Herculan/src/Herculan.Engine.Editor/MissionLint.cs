@@ -42,7 +42,8 @@ internal sealed class MissionLint {
 		return finding.Row switch {
 			ConditionRow => new ConditionSelection(guid),
 			RouteRow => new RouteSelection(guid),
-			AreaRow => new AreaSelection(guid),
+			// A row-9 finding about the row as a whole (MissionCheckKind.SkipArrayFull) is no record.
+			AreaRow when finding.Key != -1 => new AreaSelection(guid),
 			ActionRow => new ActionSelection(guid),
 			TimerRow => new TimerSelection(guid),
 			// A roster record no group places has no object in the scene, and a roster as a whole is no record.

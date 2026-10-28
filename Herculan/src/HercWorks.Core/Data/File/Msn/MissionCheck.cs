@@ -88,6 +88,19 @@ public enum MissionCheckKind {
 	/// The value is the member count.
 	/// </summary>
 	PodCarriesLeaderOnly,
+
+	/// <summary>
+	/// More positions, headings or trigger areas, counted as <see cref="SkipArrayLimits.Count"/> counts them, or more waypoints
+	/// in one version of a route, than DBSIM's spawn pass holds (<see cref="ScriptLintKind.SkipArrayFull"/>). A row-6, 7 or 9
+	/// finding is about the row as a whole; the value is the count.
+	/// </summary>
+	SkipArrayFull,
+
+	/// <summary>
+	/// More heads-down map markers, counted as <see cref="MapMarkerLimits.Count"/> counts them, than DBSIM builds
+	/// (<see cref="ScriptLintKind.MapMarkersFull"/>). About the mission as a whole; the value is the count.
+	/// </summary>
+	MapMarkersFull,
 }
 
 /// <summary>One problem <see cref="MissionCheck"/> found, and the <c>.MSN</c> record it is about.</summary>
@@ -164,6 +177,8 @@ public static class MissionCheck {
 		check.Header();
 		check.Lines();
 		check.Rosters();
+		check.SkippedBlocks();
+		check.MapMarkers();
 		return check.Findings;
 	}
 
@@ -311,6 +326,13 @@ public static class MissionCheck {
 				case WaypointGroup route:
 					for (int i = 0; i < route.Waypoints.Length; i++) {
 						Ref(row, guid, $"Waypoints[{i}]", PointRow, route.Waypoints[i], some);
+					}
+
+					int waypointCap = SkipArrayLimits.Cap(RouteRow);
+					if (route.Waypoints.Length > waypointCap) {
+						Add(MissionCheckKind.SkipArrayFull, RouteRow, guid,
+							$"Waypoints holds {route.Waypoints.Length}; DBSIM's spawn pass reads {waypointCap}.", route.Waypoints.Length,
+							some: some);
 					}
 
 					break;
@@ -566,6 +588,24 @@ public static class MissionCheck {
 					string squad = row == MechRow ? ", one per squad position included" : "";
 					Add(MissionCheckKind.RosterFull, row, -1, $"its GUIDs need {slots} slots{squad}; DBSIM holds {cap}.", slots);
 				}
+			}
+		}
+
+		public void SkippedBlocks() {
+			foreach (int row in new[] { PointRow, HeadingRow, AreaRow }) {
+				int count = SkipArrayLimits.Count(layout, row);
+				int cap = SkipArrayLimits.Cap(row);
+				if (count > cap) {
+					Add(MissionCheckKind.SkipArrayFull, row, -1, $"its GUIDs number {count}; DBSIM's spawn pass reads {cap}.", count);
+				}
+			}
+		}
+
+		public void MapMarkers() {
+			int count = MapMarkerLimits.Count(layout);
+			if (count > MapMarkerLimits.Cap) {
+				Add(MissionCheckKind.MapMarkersFull, MissionCheckFinding.MissionRow, -1,
+					$"it needs {count} heads-down map markers; DBSIM builds {MapMarkerLimits.Cap}.", count);
 			}
 		}
 

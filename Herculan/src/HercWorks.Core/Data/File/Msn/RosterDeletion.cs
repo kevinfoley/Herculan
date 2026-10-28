@@ -59,7 +59,8 @@ public sealed record GroupDeleteCheck(bool IsSquad, MsnNamers Namers, int Row,
 /// record edits: every record of its GUID is removed from its row, whatever its condition, and the GUID is cleared from
 /// every row-16 member slot naming it under the group's roster, in every record of the group's GUID. A group left with
 /// no member in any record loses all its row-16 records, and each order it names that no slot of any group names after it
-/// loses its row-15 records. Nothing is renumbered: <c>.MSN</c> refs name GUIDs and the
+/// loses its row-15 records. Each point a removed record named that no field names any more loses its row-6 records, as a
+/// route's delete takes its points (<see cref="RouteEditing.RemoveLeftBehind"/>). Nothing is renumbered: <c>.MSN</c> refs name GUIDs and the
 /// generation resolves every index again. The templates a deleted record picked from are GUID <c>-1</c>
 /// records shared by every record picking them, and stay. Removing a record that picks from a random table moves every later
 /// draw (docs/herculan/handoff-editor-document.md#conditions-and-random-tables).
@@ -79,6 +80,7 @@ public sealed record GroupDeleteCheck(bool IsSquad, MsnNamers Namers, int Row,
 public static class RosterDeletion {
 	private const int ActionRow = 10;
 	private const int MechRow = 12;
+	private const int FlyerRow = 13;
 	private const int StructureRow = 14;
 	private const int OrderRow = 15;
 	private const int GroupRow = 16;
@@ -174,19 +176,25 @@ public static class RosterDeletion {
 		}
 
 		return document.Change(() => {
+			var points = new List<short>();
 			foreach (var (member, _) in check.Members) {
+				points.AddRange(PointsOf(document, check.Row, member));
 				document.Remove(check.Row, member);
 			}
 
 			RemoveGroup(document, group);
+			RouteEditing.RemoveLeftBehind(document, points);
 		});
 	}
 
 	/// <summary>
 	/// The record edits of a delete <paramref name="check"/> allowed: every record of the GUID out of its row, and the GUID
-	/// out of every group naming it, a group it leaves empty removed. Made inside the caller's <see cref="MissionDocument.Change"/>.
+	/// out of every group naming it, a group it leaves empty removed, then each point its records named that nothing names
+	/// any more, as a route's delete removes its points (<see cref="RouteEditing.RemoveLeftBehind"/>). Made inside the
+	/// caller's <see cref="MissionDocument.Change"/>.
 	/// </summary>
 	internal static void Take(MissionDocument document, int row, short guid, RosterDeleteCheck check) {
+		var points = PointsOf(document, row, guid);
 		document.Remove(row, guid);
 		foreach (short group in check.MemberOf) {
 			if (check.EmptiedGroups.Any(emptied => emptied.Group == group)) {
@@ -195,20 +203,44 @@ public static class RosterDeletion {
 				document.ClearMember(group, guid);
 			}
 		}
+
+		RouteEditing.RemoveLeftBehind(document, points);
 	}
 
 	// Removes every row-16 record of <group>, and the records of each order it names that no slot of any group names
 	// after it, as GroupOrders.Remove takes an order no slot names: an order no group names is never run, and the route it
-	// names could not be deleted while it stays.
+	// names could not be deleted while it stays. Then each point those records named that nothing names any more.
 	internal static void RemoveGroup(MissionDocument document, short group) {
 		var orders = (document.Mission.Groups ?? []).Where(record => record.GUID == group)
 			.SelectMany(record => record.OrderRefs).Where(order => order != -1).Distinct().ToList();
+		var points = PointsOf(document, GroupRow, group);
 		document.Remove(GroupRow, group);
 		foreach (short order in orders) {
 			if (GroupOrders.SlotsNaming(document, order) == 0 && (document.Mission.Orders ?? []).Any(record => record.GUID == order)) {
+				points.AddRange(PointsOf(document, OrderRow, order));
 				document.Remove(OrderRow, order);
 			}
 		}
+
+		RouteEditing.RemoveLeftBehind(document, points);
+	}
+
+	/// <summary>
+	/// The row-6 GUIDs the records of row <paramref name="row"/>'s GUID <paramref name="guid"/> name as their point, whatever
+	/// their condition: a roster record's or a group's <c>PositionRef</c>, an order's <c>PointRef</c> — the fields of those
+	/// rows <see cref="MissionDocument.PointRefs"/> counts.
+	/// </summary>
+	internal static List<short> PointsOf(MissionDocument document, int row, short guid) {
+		var mission = document.Mission;
+		IEnumerable<short> points = row switch {
+			MechRow => (mission.Mechs ?? []).Where(record => record.GUID == guid).Select(record => record.PositionRef),
+			FlyerRow => (mission.Flyers ?? []).Where(record => record.GUID == guid).Select(record => record.PositionRef),
+			StructureRow => (mission.Bases ?? []).Where(record => record.GUID == guid).Select(record => record.PositionRef),
+			OrderRow => (mission.Orders ?? []).Where(record => record.GUID == guid).Select(record => record.PointRef),
+			GroupRow => (mission.Groups ?? []).Where(record => record.GUID == guid).Select(record => record.PositionRef),
+			_ => throw new ArgumentOutOfRangeException(nameof(row), row, "Rows 12 to 16 name a point by GUID."),
+		};
+		return guid == -1 ? [] : points.Where(point => point != -1).Distinct().ToList();
 	}
 
 	/// <summary>The objectives, actions (type 10) and orders naming row-16 group GUID <paramref name="group"/> as their subject or target.</summary>
