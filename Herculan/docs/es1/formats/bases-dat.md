@@ -20,7 +20,7 @@ The loader reads each record into the first 54 bytes of a 62-byte runtime record
 | `+0x00` | the type's index: [the status screen](../simulation/mfd-status-screen.md#the-paint) draws a structure as that frame of `bases` and names it by that entry of `STRINGS0.STR` group 20, through the record a structure's `+0x188` holds (stored at `00004245`) | the record's own index, 0 to 8 |
 | **`+0x02`** | the shape's index in its set | 0 to 5 |
 | **`+0x04`** | the wreck type in `dgs\bhulks` | 0 to 8; type 5 has 6, type 6 has 7, type 7 has 5 |
-| **`+0x06`** | 0: the first shape set; non-zero: the second, and the type's `BASECOL.DAT` model is installed | 1 on type 5, 2 on types 6 and 8; ES2's field here is the [animation thread count](../../retail/formats/bases-dat.md#the-type-record), non-zero on its animated types |
+| **`+0x06`** | the animation thread count, as ES2's ([the type record](../../retail/formats/bases-dat.md#the-type-record)); non-zero also picks the second shape set and installs the type's `BASECOL.DAT` model | 1 on type 5, 2 on types 6 and 8 |
 | `+0x08`–`+0x35` | 23 `int16` | below |
 
 | Type | `+0x02` | `+0x04` | `+0x06` | `+0x08`, `+0x0a` | `+0x1c` | `+0x1e`–`+0x24` | `+0x26`, `+0x28` | `+0x2a`, `+0x2c` | `+0x30` | `+0x34` |
@@ -37,6 +37,20 @@ The loader reads each record into the first 54 bytes of a 62-byte runtime record
 
 In every record `+0x0c`, `+0x0e`, `+0x12`, `+0x14` and `+0x2e` are 0, `+0x10` is 1000, `+0x32` is 1500, and `+0x16`–`+0x1a` are 1000, 1000, 1000 except type 2's 2800, 2700, 6000.
 
+What the structure code ([the structures](../simulation/structures.md)) reads them as:
+
+| Offset | Read by | Meaning |
+|---|---|---|
+| `+0x08` | `Base_Construct`, `Base_ApplyDamage`, `Base_DamageFraction` | the hit points |
+| `+0x0c`–`+0x10` | `Base_ThinkTick` | the point, in the structure's frame, of the collapse's large explosion and its smoke |
+| `+0x12`–`+0x16`, `+0x18`–`+0x1c` | `Base_ThinkTick` | the center and half-extents of the box the collapse's small explosions are scattered in |
+| `+0x1e`–`+0x22`, `+0x24` | `Base_DirectFireHitTest` | the weak spot's center and radius: a hit inside it does three times its damage |
+| `+0x26`, `+0x28` | `Base_Construct` | the two threads' playback rates |
+| `+0x2a`, `+0x2c` | `Base_ThinkTick`, `Base_ArmedThinkTick`, `Base_Construct` | the cell sequence a standing structure steps, −1 for none, and its frame interval: an idle flipbook on the MINING FACILITY, the muzzle flash on the GUN TOWER |
+| `+0x30` | `Base_GetBodyRadius` | the body radius of a type with a collision model |
+| `+0x32` | `Base_GetAimPoint`, `Base_GetAimNodeTransform` | how far up the structure anything aiming at it aims |
+| `+0x34` | the HERCs' AI | 1 on the GUN TOWER, the armed type ([the AI](../simulation/structures.md#what-the-hercs-ai-does-with-a-structure)) |
+
 ## The load
 
 `Base_LoadResources` (`000046ac`) is a phase-2 subsystem loader, registered by the static initialiser at `00004b80` with `RegisterSubsystemLoader` (`00000ac4`). In order:
@@ -45,8 +59,8 @@ In every record `+0x0c`, `+0x0e`, `+0x12`, `+0x14` and `+0x2e` are 0, `+0x10` is
 2. It opens `dat\bases` (line `0x27b`), reads the count into `000bc188`, builds that many `0x3e`-byte records at `g_BaseTypeTable` (`000bc18a`) with `__vec_new`, and allocates count × 6 bytes at `000bc194`. For each type it reads `0x36` bytes into its record and sets the record's `+0x3a` to the type's 6-byte slot at `000bc194` when `+0x06` is non-zero, and to 0 when not.
 3. It opens `dat\basecol` (line `0x296`) and reads one [collision model](#the-collision-models) into each type's slot with `Collision_LoadRecordArray` (`000094f0`), in type order, for every type.
 4. Over the types it keeps the greatest `+0x02` plus one of the first set at `000bc174` and of the second set at `000bc16a`, and the greatest `+0x04` plus one at `000bc17e`: 6, 3 and 9 in retail.
-5. It loads `dgs\bhulks` with `Shape_LoadAllRoots` (tag `0x2bc0001`) into `000bc180`, and allocates two zeroed arrays of `000bc174` pointers (`000bc176`, `000bc17a`) and two of `000bc16a` pointers (`000bc16c`, `000bc170`).
-6. When `g_LowMemory` ([low memory](chassis-dat.md#low-memory)) is 0 it loads `dba\basetex` into `000bc184`.
+5. It loads `dgs\bhulks` with `Shape_LoadAllRoots` (tag `0x2bc0001`) into `BaseHulkShapes` (`000bc180`), and allocates two zeroed arrays of `000bc174` pointers (`BaseShapes_Static` (`000bc176`), `BaseShapes_StaticEnemy` (`000bc17a`)) and two of `000bc16a` pointers (`BaseShapes_Animated` (`000bc16c`), `BaseShapes_AnimatedEnemy` (`000bc170`)), the shape tables of `dgs\bases`, `dgs\bases_e`, `dts\bases_an` and `dts\bases_ae`, which a mission's structures fill by type and side ([loading the shapes](../simulation/structures.md#loading-the-shapes--basetype_loadshape-000045a4)).
+6. When `g_LowMemory` ([low memory](chassis-dat.md#low-memory)) is 0 it loads `dba\basetex` into `BaseTexture` (`000bc184`).
 
 ES2's `Base_LoadResources` (`00405fac`) also reads `dat\lc_wpns` between the formations and the types, and reads each type field by field with its component array. ES1's type takes its collision model when `+0x06` is non-zero, where ES2's takes it when [`+0x30`](../../retail/formats/bases-dat.md#the-type-record) is.
 
@@ -56,10 +70,8 @@ ES2's `Base_LoadResources` (`00405fac`) also reads `dat\lc_wpns` between the for
 
 `Collision_LoadRecordArray` (`000094f0`, `collide.cpp`), given the type's 6-byte slot and the stream, asserts at severity 5 (line `0xee`, `collision data load`) when the stream status is set, reads the node count into the slot's `+0`, and for a count not 0 allocates count × 10 bytes at `+2` and reads each node with `Collision_ReadNode` (`000093c8`) and then `Collision_ComputeAllBoundingSpheres` (`000094a0`). `Collision_ReadNode` reads the node's index into `+0` and its cluster count into `+4`, and for a count not 0 builds that many 16-byte clusters with `__vec_new` and `CollisionCluster_ElementCtor` (`00009458`) at `+6` and reads each with `Collision_ReadCluster` (`0000938c`): the component index to `+6`, then the spheres with `Collision_ReadSphereArray` (`00008e00`), which reads a cluster's spheres when its count × 8, as an `int16`, is not 0, the same test as ES2's count & `0x1fff`. `Collision_ComputeAllBoundingSpheres` stores `Collision_ComputeBoundingSphere` (`00008b8c`)'s radius for each cluster at its `+0xe`. These are ES2's functions under the same names ([readers](../../retail/formats/collision-spheres.md#layout)); ES2's `Collision_ReadNode` builds its clusters with `Rtl_VectorNew`.
 
-A type whose `+0x06` is 0 has its model read all the same and not installed. `SIMVOL0.VOL`'s `BASECOL.DAT` is 618 bytes, nine models with nothing left over: types 5, 6 and 8, the three with `+0x06` set, have 2, 4 and 2 nodes, and the other six none.
+A type whose `+0x06` is 0 has its model read all the same and not installed. An installed model is what a standing structure's hit test tests a shot against, sphere by sphere ([hits](../simulation/structures.md#hits--base_directfirehittest-00003a58)); a type without one is tested against its shape's collision volume ([the structures' tests](../simulation/terrain.md#the-structures-tests)). `SIMVOL0.VOL`'s `BASECOL.DAT` is 618 bytes, nine models with nothing left over: types 5, 6 and 8, the three with `+0x06` set, have 2, 4 and 2 nodes, and the other six none.
 
 ## Open
 
-- **Open:** what ES1's structure code reads at `+0x08`–`+0x35`. The values are of ES2's kinds (damage, positions, an idle flipbook of −1 or 0 with a 256 interval at `+0x2a`, `+0x2c`, a 1500 at `+0x32`) but not at ES2's offsets, ES1's record having no component array.
-- **Open:** which of `dgs\bases`, `dgs\bases_e`, `dts\bases_an` and `dts\bases_ae`, the names beside the loader's strings at `000906d6`–`000906f2`, each shape set draws from, and what fills the four pointer arrays.
-- **Open:** what the structure code does with a type's collision model, and with the models of types whose `+0x06` is 0.
+- **Open:** what reads `+0x0a` and `+0x2e`: none of the structure code's functions does ([its Open](../simulation/structures.md#open)).

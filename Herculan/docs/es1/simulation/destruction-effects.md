@@ -70,8 +70,8 @@ A tick that answers 1 ends the piece: `Sim_MainTick` destroys it through slot `+
 
 | Call | In | Group | From |
 |---|---|---|---|
-| `00003a28` | `Base_ApplyDamage` ([the structures' tests](terrain.md#the-structures-tests)), the structure destroyed | 3 | its position |
-| `00003c71` | the structure's hit test, `00003a58`, after a hit on a component | 1 | the hit point |
+| `00003a28` | `Base_ApplyDamage` ([damage](structures.md#damage--base_applydamage-00003978)), the structure destroyed | 3 | its position |
+| `00003c71` | the structure's hit test, `Base_DirectFireHitTest` (`00003a58`) ([hits](structures.md#hits--base_directfirehittest-00003a58)), after every hit, destroyed or not | 1 | the hit point |
 | `00009e7d` | `Component_DestroyAndCascade` ([losing a component](component-damage.md#losing-a-component--component_destroyandcascade-00009cd4)) | 3 | the anchor |
 | `00014021` | `Mech_DirectFireHitTest` ([the hit test](mech.md#the-hit-test--mech_directfirehittest-00013b44)) | 1 or 2 | the hit point |
 | `0001b4fb` | the flyer's hit test, `Flyer_DirectFireHitTest` (`0001b370`), after a hit on a component | 1, or 3 when the hit destroys the flyer (`Flyer_ComponentDamageWrite` (`0001b290`) answers 1, [hits and death](flyers.md#hits-and-death)) | the hit point |
@@ -121,7 +121,7 @@ Its tick, **`Effect_DriftAndAnimate` (`0000693c`)**, from `Sim_MainTick`, is ES2
 `es2_xref.py` finds two calls of `Smoke_Construct`:
 
 - `Component_DestroyAndCascade`, for a piece whose sequence byte `+3` is not negative, with the cascade's latch clear and the flags' bit 1 set, before the cascade's cell write, explosion and debris: kind 0, the cluster's bound center, the node's part id and the machine ([losing a component](component-damage.md#losing-a-component--component_destroyandcascade-00009cd4)). The emitter puffs 200 balls from that point on the part as the machine moves.
-- the structure's collapse, `00002df8`, when its count `+0x1a0` reaches 0, after it puts the type's hulk in the shape instance: kind 1, the type record's point `+0x0c`, part id −1 and the structure. The emitter puffs 500 balls from that point through the structure's frame.
+- the structure's collapse, `Base_ThinkTick` (`00002df8`) ([the collapse](structures.md#the-collapse)), when its count `+0x1a0` reaches 0, after it puts the type's hulk in the shape instance: kind 1, the type record's point `+0x0c`, part id −1 and the structure. The emitter puffs 500 balls from that point through the structure's frame.
 
 ## Functions
 
@@ -152,6 +152,5 @@ Its tick, **`Effect_DriftAndAnimate` (`0000693c`)**, from `Sim_MainTick`, is ES2
 ## Open
 
 - **Open:** whether a smoke ball moves. `SmokeBall_Construct` writes no velocity and the pool starts zeroed, so `Effect_DriftAndAnimate` adds 0 unless other code stores to `+0x3b`–`+0x40`. `es2_fieldscan.py` over `00005734`–`00006d9b` finds no store to `+0x3b`, `+0x3d` or `+0x3f` but `Explosion_Construct`'s byte, an effect's field, and `es2_xref.py --decode` finds the ball pool read by `SmokeBall_Construct`, `Sim_MainTick` and `ObjList_RebuildFrame` alone. A retail check: destroy an enemy HERC's arm and watch whether its smoke rises, drifts or stands in place.
-- **Open:** the rest of the structure's collapse `00002df8` after its effect calls (from `00002f98`).
 - **Open:** what the words `000aefd0` and `000af03c` the smoke file's static initializer zeroes are; they lie `0x64` past each delete queue's start, beyond the count `+0x50` `ObjectPool_QueueForDelete` keeps.
 - **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: shoot an enemy HERC until a component goes; the pieces bounce and vanish on the flat ground, none bursts; `BP <CS>:00006b28` fires once a tick while smoke is lit, `BP <CS>:00006704` once per ball.

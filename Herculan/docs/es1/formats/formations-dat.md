@@ -32,7 +32,7 @@ None of the loaders checks the file's length.
 
 ## Where a member stands
 
-`Mech_ApplyFormationOffset` (`00012ed0`), `Flyer_ApplyFormationOffset` (`0001b524`) and `Base_ApplyFormationOffset` (`00004474`), each given the object and a position in stack order, do nothing when the object's member slot, its `int16` at `+0x43`, is 0. Otherwise each takes the slot's offset for the formation whose number is at `+2` of the object's group (`+0x3f`) and adds it to the position with `Formation_RotateAndAddOffset` (`0000d9a0`). `es2_xref.py` finds them called directly, the mech's from `Mech_AttachToGroup` (`00013124`, [the HERC's construction](../simulation/mech.md#construction)), which writes the group and the slot before it places the machine, and `Ai_KeepFormation` (`00019660`, [navigation](../simulation/mech-ai.md#navigation)), the flyer's from `Flyer_AttachToGroup` (`0001b574`) and `Flyer_FormationStep` (`0001ba88`), the structure's from `000044a4`.
+`Mech_ApplyFormationOffset` (`00012ed0`), `Flyer_ApplyFormationOffset` (`0001b524`) and `Base_ApplyFormationOffset` (`00004474`), each given the object and a position in stack order, do nothing when the object's member slot, its `int16` at `+0x43`, is 0. Otherwise each takes the slot's offset for the formation whose number is at `+2` of the object's group (`+0x3f`) and adds it to the position with `Formation_RotateAndAddOffset` (`0000d9a0`). `es2_xref.py` finds them called directly, the mech's from `Mech_AttachToGroup` (`00013124`, [the HERC's construction](../simulation/mech.md#construction)), which writes the group and the slot before it places the machine, and `Ai_KeepFormation` (`00019660`, [navigation](../simulation/mech-ai.md#navigation)), the flyer's from `Flyer_AttachToGroup` (`0001b574`) and `Flyer_FormationStep` (`0001ba88`), the structure's from `Base_AttachToGroup` (`000044a4`) ([joining its group](../simulation/structures.md#joining-its-group--base_attachtogroup-000044a4)).
 
 | Function | Arguments, stack order | Returns |
 |---|---|---|
@@ -58,5 +58,4 @@ A formation past the file's count reads past its records.
 
 ## Open
 
-- **Open:** the structure's other caller, `000044a4`, and so what fills a structure's `+0x43` and `+0x3f`; a HERC's are `Mech_AttachToGroup`'s, a flyer's `Flyer_AttachToGroup` (`0001b574`)'s ([joining its group](../simulation/flyers.md#joining-its-group--flyer_attachtogroup-0001b574)), and `Flyer_FormationStep` (`0001ba88`) is a flyer's station keeping ([the thinks](../simulation/flyers.md#the-thinks)).
 - **Open:** `ES1GO 000553bc` and `000552e0`, the shell's heading from a path leg and its rotation, and how they round; and what fills the map's `+0x58`, `+0x9e`, `+0xa2` and `+0xa4`.

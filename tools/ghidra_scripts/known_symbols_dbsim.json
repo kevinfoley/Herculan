@@ -678,7 +678,13 @@
       "name": "Base_CollapseExplosion",
       "description": "One collapse explosion and the stage hold that follows it, both out of the four-entry death sequence tables: the EXPLOS.DAT type from 004973fc, placed at the structure's own origin when 0049740c says so and at the offset put through its frame otherwise, then the component's stage timer reloaded from 00497404.",
       "source": "docs/retail/simulation/destruction-effects.md",
-      "signature": "void __cdecl Base_CollapseExplosion(int *structure, int *state, int sequence, short *point)"
+      "signature": "void __cdecl Base_CollapseExplosion(int *structure, int *state, int sequence, short *point)",
+      "verified": {
+        "bytes": "004036c0+220",
+        "sha1": "e19bde7f6419",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040379c",
@@ -706,9 +712,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Base_DeathSequenceTick",
-      "description": "Steps every structure part that is coming down through the next stage of its death sequence, counting the stage number DOWN from the count Base_ApplyDamage seeded. Stage above 1 scatters one smoke explosion at a random point inside the part's own spread box and reloads the timer to 300, and stage exactly 4 also runs Base_FinishDependents. Stage 1 is the collapse: Base_CollapseExplosion, Base_ThrowDebris, then either the part's sequence (component +2) steps to its rubble cell and Base_FinishDependents runs, or -- once Base_EveryPartGone passes, for a type that leaves a wreck (typeRec+0x04 >= 0), whatever the fires -- the object's model instance shape pointer is switched to g_HulkShapes[typeRec+0x04]. Stage 0 lights a fire (the type's once every part is gone when the type and the part both state one, else the part's own), or drops a one-part type with no wreck and no part sequence to -100000 on its Z.",
+      "description": "Steps every structure part that is coming down through the next stage of its death sequence, counting the stage number DOWN from the count Base_ApplyDamage seeded. Stage above 1, when Sound_DetailSetting (EFFECTS DETAIL) is 2, or 1 on an odd stage, scatters one smoke explosion of the type 00497414 gives the part's sequence (component record +4) at a random point inside the part's own spread box and reloads the timer to 300, so a stage that scatters nothing leaves its timer at 0; and stage exactly 4 also runs Base_FinishDependents. Stage 1 is the collapse: Base_CollapseExplosion, Base_ThrowDebris, then either the part's sequence (component +2) steps to its rubble cell and Base_FinishDependents runs, or -- once Base_EveryPartGone passes, for a type that leaves a wreck (typeRec+0x04 >= 0), whatever the fires -- the object's model instance shape pointer is switched to g_HulkShapes[typeRec+0x04]. Stage 0 lights a fire (the type's once every part is gone when the type and the part both state one, else the part's own), or drops a one-part type with no wreck and no part sequence to -100000 on its Z.",
       "source": "docs/retail/simulation/destruction-effects.md",
-      "signature": "void __cdecl Base_DeathSequenceTick(int *structure)"
+      "signature": "void __cdecl Base_DeathSequenceTick(int *structure)",
+      "verified": {
+        "bytes": "00403914+915",
+        "sha1": "5170985331cb",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00403ca8",
@@ -716,7 +728,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Base_ThinkTick",
-      "description": "StructureVtable's and StructureRadarVtable's +0x18 tick slot -- the plain building's whole per-tick behaviour. Base_DeathSequenceTick, then while standing: if typeRec+0x24 >= 0, step cell sequence typeRec+0x24 by one modulo that sequence's own frame count, on a countdown at +0x1f6 reloaded from typeRec+0x26 (milliseconds); and if typeRec+0x06 is non-zero, SimObject_ApplyRootMotionIfEnabled(this, 100), which steps the structure's animation threads. Eight retail types state a cell sequence but only types 9 and 0x1a reach this function; of the rest, the Armed types step the same array as a muzzle flash instead, the transport (0x22) never steps it, and 0x0a is never built. The flipbook is NOT what turns a radar dish -- all four radar types state -1 for it and spin a free-running thread instead.",
+      "description": "StructureVtable's and StructureRadarVtable's +0x18 tick slot -- the plain building's whole per-tick behaviour. Base_DeathSequenceTick, then while standing: if typeRec+0x24 >= 0, step cell sequence typeRec+0x24 by one modulo that sequence's own frame count, on a countdown at +0x1f6 reloaded from typeRec+0x26 (simulation timer units); and if typeRec+0x06 is non-zero, SimObject_ApplyRootMotionIfEnabled(this, 100), which steps the structure's animation threads. Eight retail types state a cell sequence but only types 9 and 0x1a reach this function; of the rest, the Armed types step the same array as a muzzle flash instead, the transport (0x22) never steps it, and 0x0a is never built. The flipbook is NOT what turns a radar dish -- all four radar types state -1 for it and spin a free-running thread instead.",
       "source": "docs/retail/simulation/structure-behaviour.md"
     },
     {
@@ -726,7 +738,13 @@
       "confidence": "high",
       "name": "Base_TurretSeek",
       "description": "The structure turret seek, two axes. Axis 0 is the ELEVATION and takes Math_EulerToward's X straight; axis 1 is the TRAVERSE and takes its Z NEGATED. Per axis: clamp(angle >> 3) to +/-0x100, a square-law gain Q8(Q8(|in|, in), gain), Math_RateLimitedMoveToward into the per-axis rate at +0x209, accumulate that into the angle at +0x20d clamped between the per-axis stops, then AnimThread_SeekToPosition(thread[axis], axis, (unsigned)angle >> 2). Tails into SimObject_ApplyRootMotionIfEnabled(this, 100), which re-poses the nodes. Gain 004973e4 = {2000, 2500}; rate limit 004973e8 = {200, 800}; lower stop 004973ec = {-4000, -32768}; upper stop 004973f0 = {4000, 32767} -- so the traverse is unlimited and only the elevation is held, to +/-4000. Same mechanism as the HERC turret: the angle seeks a position in a full-sweep animation rather than rotating a node.",
-      "source": "docs/retail/simulation/structure-behaviour.md"
+      "source": "docs/retail/simulation/structure-behaviour.md",
+      "verified": {
+        "bytes": "00403d5c+400",
+        "sha1": "7bca8d8c10f4",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00403eec",

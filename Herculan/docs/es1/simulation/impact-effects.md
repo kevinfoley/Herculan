@@ -65,15 +65,15 @@ The missile camera's strike flash is the first effect it finds within reach of w
 
 | Call | In | Type | Where |
 |---|---|---|---|
-| `00002eb1` | the structure's collapse, `00002df8`, its count `+0x1a0` reaching 1 | `0x10` | the type record's point `+0x0c` through the structure's frame |
+| `00002eb1` | the structure's collapse, `Base_ThinkTick` (`00002df8`) ([the collapse](structures.md#the-collapse)), its count `+0x1a0` reaching 1 | `0x10` | the type record's point `+0x0c` through the structure's frame |
 | `00002f80` | the same, the count reaching 2 to 7 | `0xf` | a random point: on each axis `Math_RandomBelow`(2*e*) − *e* + *c*, *e* the type record's `+0x18`, `+0x1a`, `+0x1c` and *c* its `+0x12`, `+0x14`, `+0x16`, through the structure's frame |
-| `00003c59` | the structure's hit test, `00003a58`, after a hit on a component, whether the structure is destroyed or not | entry 8 + (`Math_RandomNext` & 3) | the hit point |
+| `00003c59` | the structure's hit test, `Base_DirectFireHitTest` (`00003a58`) ([hits](structures.md#hits--base_directfirehittest-00003a58)), after every hit, whether the structure is destroyed or not | entry 8 + (`Math_RandomNext` & 3) | the hit point |
 | `00009e65` | `Component_DestroyAndCascade` ([losing a component](component-damage.md#losing-a-component--component_destroyandcascade-00009cd4)) | 10, or `0x11` | the anchor |
 | `00013ffb` | `Mech_DirectFireHitTest` ([the hit test](mech.md#the-hit-test--mech_directfirehittest-00013b44)) | entry 4*n* + (random & 3) | the hit point |
 | `0001b4dc` | the flyer's hit test, `Flyer_DirectFireHitTest` (`0001b370`) | entry 8 + (`Math_RandomNext` & 3), or 10 when the hit destroys the flyer (`Flyer_ComponentDamageWrite` (`0001b290`) answers 1, [hits and death](flyers.md#hits-and-death)) | the hit point |
 | `0001f62d` | `Sim_RaycastObjectList` ([shots against objects](world.md#shots-against-objects--sim_raycastobjectlist-0001f1d0)) | entry 4 + (`Math_RandomNext` & 3) | the ray's end, its Z raised to 0 |
 
-The structure's collapse reloads its timer `+0x19d` with 2000 after type `0x10` and 300 after type `0xf`; with the count at 0 it lights [smoke](destruction-effects.md#smoke) instead.
+The collapse's timing and smoke are in [the collapse](structures.md#the-collapse).
 
 ## Functions
 

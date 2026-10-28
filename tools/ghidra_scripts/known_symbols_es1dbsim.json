@@ -157,7 +157,7 @@
       "type": "function",
       "confidence": "high",
       "name": "RegisterSubsystemLoader",
-      "description": "(phase, function) in stack order, callee-cleaned: stores function and the int16 phase in the next 6-byte record at 000bbcb0, the record index being the int16 count at 0009011c, which it increments; Subsystem_RunPhase (00000af4) walks the records. Static initialisers call it, among them Weapons_RegisterSubsystem (0000d67c), Bullet_RegisterSubsystem (000081f8), 00004b80 and Explosion_RegisterSubsystem (00005e78) for Weapons_LoadResourceTables (0000bf48), Bullet_LoadResources (00007bb0), Base_LoadResources (000046ac) and Explosion_LoadResources (00005764) at phase 2. ES2's RegisterSubsystemLoader (DBSIM 00401d64).",
+      "description": "(phase, function) in stack order, callee-cleaned: stores function and the int16 phase in the next 6-byte record at 000bbcb0, the record index being the int16 count at 0009011c, which it increments; Subsystem_RunPhase (00000af4) walks the records. Static initialisers call it, among them Weapons_RegisterSubsystem (0000d67c), Bullet_RegisterSubsystem (000081f8), Base_StaticInit (00004b80) and Explosion_RegisterSubsystem (00005e78) for Weapons_LoadResourceTables (0000bf48), Bullet_LoadResources (00007bb0), Base_LoadResources (000046ac) and Explosion_LoadResources (00005764) at phase 2. ES2's RegisterSubsystemLoader (DBSIM 00401d64).",
       "source": "Herculan/docs/es1/formats/weapons-dat-sim.md#the-load",
       "verified": {
         "bytes": "00000ac4+47",
@@ -892,7 +892,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ShapeInst_AddThread",
-      "description": "(object, sequence) in stack order, callee-cleaned: AnimThread_Ctor (000619f0)(0, the animation list +0x2a of the shape +4 of the instance +0x2e), AnimThread_SetSequence (0006200c)(thread, 0, 0, sequence), AnimThread_SetPlaybackRate (000626c8)(thread, 0) and ShapeInst_RegisterThread (00061560)(instance, thread); returns the thread. It tests neither the sequence nor the allocation. ES2's ShapeInst_AddThread (DBSIM 00402374), which allocates with Mem_New. es2_xref finds six calls, from 00003cbc, Mech_Constructor (00011330) and WeaponMount_CtorBase.",
+      "description": "(object, sequence) in stack order, callee-cleaned: AnimThread_Ctor (000619f0)(0, the animation list +0x2a of the shape +4 of the instance +0x2e), AnimThread_SetSequence (0006200c)(thread, 0, 0, sequence), AnimThread_SetPlaybackRate (000626c8)(thread, 0) and ShapeInst_RegisterThread (00061560)(instance, thread); returns the thread. It tests neither the sequence nor the allocation. ES2's ShapeInst_AddThread (DBSIM 00402374), which allocates with Mem_New. es2_xref finds six calls, from Base_Construct (00003cbc), Mech_Constructor (00011330) and WeaponMount_CtorBase.",
       "source": "Herculan/docs/es1/simulation/object-classes.md#animation-threads-and-root-motion; ES1DBSIM disassembly at 00001f48",
       "verified": {
         "bytes": "00001f48+77",
@@ -937,7 +937,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObject_ApplyRootMotionIfEnabled",
-      "description": "(object, time) in stack order, callee-cleaned: SimObject_ApplyRootMotion (0000205c)(object, time, the instance +0x2e) when the byte +0x33 is set, nothing otherwise. ES2's SimObject_ApplyRootMotionIfEnabled (DBSIM 00402604). es2_xref finds five calls: Mech_IntegrateMotion, Mech_ConfigureLoadout, Mech_ComponentDamageWrite, 00002df8 and 00003058.",
+      "description": "(object, time) in stack order, callee-cleaned: SimObject_ApplyRootMotion (0000205c)(object, time, the instance +0x2e) when the byte +0x33 is set, nothing otherwise. ES2's SimObject_ApplyRootMotionIfEnabled (DBSIM 00402604). es2_xref finds five calls: Mech_IntegrateMotion, Mech_ConfigureLoadout, Mech_ComponentDamageWrite, Base_ThinkTick (00002df8) and Base_AimTurret (00003058).",
       "source": "Herculan/docs/es1/simulation/object-classes.md#animation-threads-and-root-motion; ES1DBSIM decompile at 0000215c",
       "verified": {
         "bytes": "0000215c+37",
@@ -1192,7 +1192,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObjectBase_ConstructAnimated",
-      "description": "(object, shape) in stack order, callee-cleaned: DET_ANIM_OBJ's constructor for an animated shape, allocating 0x3f bytes when object is null (0 when that fails): SimObjectBase_ConstructShaped (00001da0)(object, shape), ANIM_OBJ's table copy AnimObjVtableDetAnimObjCopy (000903e6), DET_ANIM_OBJ's DetAnimObjVtable (00090406), and the LOD table +0x3b set to 0. ES2's SimObjectBase_ConstructAnimated (DBSIM 0040332c). es2_xref finds two calls, both from 00003cbc.",
+      "description": "(object, shape) in stack order, callee-cleaned: DET_ANIM_OBJ's constructor for an animated shape, allocating 0x3f bytes when object is null (0 when that fails): SimObjectBase_ConstructShaped (00001da0)(object, shape), ANIM_OBJ's table copy AnimObjVtableDetAnimObjCopy (000903e6), DET_ANIM_OBJ's DetAnimObjVtable (00090406), and the LOD table +0x3b set to 0. ES2's SimObjectBase_ConstructAnimated (DBSIM 0040332c). es2_xref finds two calls, both from Base_Construct (00003cbc).",
       "source": "Herculan/docs/es1/simulation/object-classes.md#the-constructors; ES1DBSIM decompile at 00002970",
       "verified": {
         "bytes": "00002970+82",
@@ -1282,7 +1282,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObjectBase_ConstructStatic",
-      "description": "(object, shape) in stack order, callee-cleaned: DET_ANIM_OBJ's constructor for a static shape, allocating 0x3f bytes when object is null (0 when that fails): TSObj_Ctor (00001b04)(object, shape), ANIM_OBJ's table copy AnimObjVtableDetAnimObjCopy (000903e6), DET_ANIM_OBJ's DetAnimObjVtable (00090406), and the LOD table +0x3b set to 0; +0x33 stays clear. ES2's SimObjectBase_ConstructStatic (DBSIM 00403368). es2_xref finds calls from 00003cbc and Flyer_Constructor (0001ac58).",
+      "description": "(object, shape) in stack order, callee-cleaned: DET_ANIM_OBJ's constructor for a static shape, allocating 0x3f bytes when object is null (0 when that fails): TSObj_Ctor (00001b04)(object, shape), ANIM_OBJ's table copy AnimObjVtableDetAnimObjCopy (000903e6), DET_ANIM_OBJ's DetAnimObjVtable (00090406), and the LOD table +0x3b set to 0; +0x33 stays clear. ES2's SimObjectBase_ConstructStatic (DBSIM 00403368). es2_xref finds calls from Base_Construct (00003cbc) and Flyer_Constructor (0001ac58).",
       "source": "Herculan/docs/es1/simulation/object-classes.md#the-constructors; ES1DBSIM decompile at 00002a74",
       "verified": {
         "bytes": "00002a74+82",
@@ -1322,16 +1322,181 @@
       }
     },
     {
+      "address": "00002c7c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorBaseCopy",
+      "description": "(p, flags), callee-cleaned: byte for byte the code of HeapPtr_DtorRocketCopy (00006dfc), relocated operands aside: returns at once for a null p; otherwise operator_delete of the block at *p when it is non-null, then of p when flags bit 0 is set. The first of the four functions that open base.cpp's object file, the copy of ConfigPart's destructors each object file carrying the class begins with. es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/simulation/structures.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00002c7c",
+      "verified": {
+        "bytes": "00002c7c+40",
+        "sha1": "857c9a048923",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00002ca4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorBaseCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 00090426: byte for byte the code of ConfigPart_DtorDetAnimObjCopy (000028e0), relocated operands aside, storing 00090426 and 0009045a where that stores 000903ae and 0009037a. ES2's ConfigPart_Dtor (DBSIM 00420730).",
+      "source": "Herculan/docs/es1/simulation/structures.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00002ca4",
+      "verified": {
+        "bytes": "00002ca4+63",
+        "sha1": "c94c0ce4ac7c",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00002ce3",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagBaseCopy",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +4 of the vtable 00090426; the code of ConfigPart_GetClassTagDetAnimObjCopy (000028d6).",
+      "source": "Herculan/docs/es1/simulation/structures.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00002ce3",
+      "verified": {
+        "bytes": "00002ce3+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00002cec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorBaseCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 0009045a (entered at its padding 00002ce9): byte for byte the code of TSPartBase_Dtor (0005d614), relocated operands aside, storing 0009045a where that stores 000974aa. ES2's TSPartBase_Dtor (DBSIM 0049224b).",
+      "source": "Herculan/docs/es1/simulation/structures.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00002cec",
+      "verified": {
+        "bytes": "00002cec+42",
+        "sha1": "25b420cd4dd7",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "00002d18",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Structure_DrawWithDetailBias",
-      "description": "(object), its argument removed by this function: TSDetailPart_SetBias (000530a4)(g_TSDetailBiasForStructures (000bc198)), Shape_DrawAtDetailLevel (00002b30)(object), TSDetailPart_SetBias(0). Slot +4 of the three structure tables 00090522, 0009059e and 0009061a, which 00003cbc stores. ES2's Structure_DrawWithDetailBias (DBSIM 004034f4).",
+      "description": "(object), its argument removed by this function: TSDetailPart_SetBias (000530a4)(g_TSDetailBiasForStructures (000bc198)), Shape_DrawAtDetailLevel (00002b30)(object), TSDetailPart_SetBias(0). Slot +4 of the three structure tables StructureVtable (00090522), StructureRadarVtable (0009059e) and StructureArmedVtable (0009061a), which Base_Construct (00003cbc) stores. ES2's Structure_DrawWithDetailBias (DBSIM 004034f4).",
       "source": "Herculan/docs/es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08",
       "verified": {
         "bytes": "00002d18+33",
         "sha1": "b0a41e918157",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00002d3c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Base_GetAimPoint",
+      "description": "(structure, offset, eye) in stack order, its arguments removed by this function: slot +0x34 of the three structure tables. SimObject_GetAimPointZero (0000d6e8)(structure, offset, eye), then the offset's int16 +4 (its Z) = the type record's (+0x188) +0x32, the aim height, 1500 in every retail type. ES2's Base_GetAimPoint (DBSIM 0040351c), which reads its +0x2c.",
+      "source": "Herculan/docs/es1/simulation/structures.md#what-a-structure-is-aimed-at; ES1DBSIM decompile of 00002d3c",
+      "verified": {
+        "bytes": "00002d3c+43",
+        "sha1": "c83a11bb2f9d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00002d68",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Base_GetAimNodeTransform",
+      "description": "(structure), its argument removed by this function: slot +0x28 of the three structure tables. Sets its first-use byte 000aedda, clears the 32-byte transform BaseAimNodeTransform (000aeddc) with memset, sets its three diagonal int16 to 0x4000 and its translation's Z (000aedf8) to the type record's (+0x188) int16 +0x32, and returns it. ES2's Base_GetAimNodeTransform (DBSIM 00403548), which reads its +0x2c.",
+      "source": "Herculan/docs/es1/simulation/structures.md#what-a-structure-is-aimed-at; ES1DBSIM decompile of 00002d68",
+      "verified": {
+        "bytes": "00002d68+88",
+        "sha1": "1b7304aa8907",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00002dc0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Base_GetTurretAngle",
+      "description": "(structure), its argument removed by this function: slot +0x40 of StructureArmedVtable (0009061a) alone: returns the int16 +0x1a8, the turret's traverse angle. ES2's Base_GetTurretAngle (DBSIM 00403594), which returns its +0x20f.",
+      "source": "Herculan/docs/es1/simulation/structures.md#what-a-structure-is-aimed-at; ES1DBSIM decompile of 00002dc0",
+      "verified": {
+        "bytes": "00002dc0+19",
+        "sha1": "ebf3c6e57e54",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00002dd4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Base_GetBodyRadius",
+      "description": "(structure), its argument removed by this function: slot +0x60 of the three structure tables. With the type record's (+0x188) collision model slot +0x3a non-zero it returns the record's int16 +0x30 (4000 on type 5, 2000 on types 6 and 8), otherwise 0. ES2's Base_GetBodyRadius (DBSIM 004035a4), which returns its +0x2a for every type.",
+      "source": "Herculan/docs/es1/simulation/structures.md#what-a-structure-is-aimed-at; ES1DBSIM decompile of 00002dd4",
+      "verified": {
+        "bytes": "00002dd4+35",
+        "sha1": "98992838e1b9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00002df8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Base_ThinkTick",
+      "description": "(structure), its argument removed by this function: slot +0x1c of StructureVtable (00090522) and StructureRadarVtable (0009059e). Returns 0. First the collapse: while the count +0x1a0 is non-zero, on each expiry of Math_CountdownTimerTick (0006410c) of the record +0x19d it takes 1 off the count; at 0 the shape instance's (+0x2e) +4 becomes BaseHulkShapes (000bc180)[the type record's (+0x188) +0x04] and Smoke_Construct (000069ec)(0, 1, the type record + 0xc, -1, structure) runs; at 1 Explosion_Construct (00005af0)(0, the record's point +0xc through the frame by Context_GetTransform (000016e8) and Transform_ApplyToShortPoint, 0x10) and the counter +0x19e = 2000; otherwise Explosion_Construct(0, a random point, 0xf), the point on each axis Math_RandomBelow (00063b3c)(000b5bd4, 2e) - e + c with e the record's +0x18, +0x1a, +0x1c and c its +0x12, +0x14, +0x16, through the frame by Transform_ApplyToPoint, and the counter = 300. Then, while +0x93 is clear: with the record's +0x2a not negative, on each expiry of the record +0x192 its counter +0x193 = the record's +0x2c and the cell of sequence +0x2a in the instance's +8 steps to (cell + 1) modulo the shape's (+4) +0x20 entry; and with the record's +0x06 non-zero, SimObject_ApplyRootMotionIfEnabled (0000215c)(structure, 100). ES2's Base_ThinkTick (DBSIM 00403ca8) with ES2's Base_DeathSequenceTick (DBSIM 00403914) inlined for one damage total. es2_xref finds a call from Base_ArmedThinkTick (00003364).",
+      "source": "Herculan/docs/es1/simulation/structures.md#the-plain-tick--base_thinktick-00002df8; ES1DBSIM decompile of 00002df8",
+      "verified": {
+        "bytes": "00002df8+606",
+        "sha1": "82fba3a1d079",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00003058",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Base_AimTurret",
+      "description": "(structure, aim point) in stack order, its arguments removed by this function: sets its first-use byte 000aedfc; takes the structure's transform (Context_GetTransform (000016e8) of +6) and the node transform of shape part 2 (the shape's slot +0x24 with 2, entry +4 of the instance's +0x16 array, a null pointer when the part is missing, copied from all the same), inverts each with Transform_TransposeRotation and the negated translation through Transform_RotatePoint, takes the point through both with Transform_ApplyToPoint, and stores Math_EulerToward (00063d2c)((0, 0, 0), that point, BaseTurret_AimError (000aee00)). Axis 0 takes the error's X and axis 1 its Z negated, each shifted right 3 and held to +/-0x100; per axis Math_Q8Multiply(in, |in|) (|-0x8000| as 0x7fff), Math_Q8Multiply by BaseTurret_Gain (00090490)[axis], Math_RateLimitedMoveToward (0005e598)(BaseTurret_RateLimit (00090494)[axis], that, the rate +0x1a2[axis]), the angle +0x1a6[axis] += the rate, held between BaseTurret_MinAngle (00090498)[axis] and BaseTurret_MaxAngle (0009049c)[axis], and AnimThread_SeekToPosition(the thread +0x195[axis], the angle as unsigned >> 2, axis). Then SimObject_ApplyRootMotionIfEnabled (0000215c)(structure, 100); returns BaseTurret_AimError. ES2's Base_AimTurret (DBSIM 00403eec) and Base_TurretSeek (DBSIM 00403d5c) in one. es2_xref finds one call, from Base_ArmedThinkTick (00003364).",
+      "source": "Herculan/docs/es1/simulation/structures.md#the-turret--base_aimturret-00003058; ES1DBSIM decompile of 00003058",
+      "verified": {
+        "bytes": "00003058+780",
+        "sha1": "e3d32705560d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00003364",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Base_ArmedThinkTick",
+      "description": "(structure), its argument removed by this function: slot +0x1c of StructureArmedVtable (0009061a), the GUN TOWER's tick. Returns 0. With +0x93 set it runs Base_ThinkTick (00002df8) alone. Otherwise: on each expiry of Math_CountdownTimerTick (0006410c) of +0x1b6, the target +0x1ad = Ai_SelectTarget (0000ddf4)(structure, 0x30) and the counter +0x1b7 = 10000; the range r = Math_DistanceBetweenPoints (00063c20) from the target's +0x20 to the structure's, 0 with no target. While the counter +0x193 is non-zero, on each expiry of +0x192 the cell of the type record's (+0x188) sequence +0x2a steps as in Base_ThinkTick, and the counter reloads from the record's +0x2c only when the cell is not 0. With a target: the aim point is its +0x20 plus the offset triple its slot +0x34 fills; inside r 40000, with Proj_LookupRecordByIndex (0000c2bc)(2)'s int16 +0xa (v) positive and the target's slot +0x3c (s) non-zero, Math_OffsetPointByBearing (00063d8c) moves it along the target's +0xa by (int16)(((int16)(r >> 3)) * 8s / v); the error = Base_AimTurret (00003058)(structure, aim point); on each expiry of +0x1b1 the flag +0x1b4 flips and the counter +0x1b2 reloads from BaseFiringWindow (0009048c)[flag], 10000 both ways; and when +0x1aa expires, the flag is set, the error's X and Z (+0, +4) each plus 1000 are below 2000 unsigned and r is below 40000, it concatenates shape part 2's node transform (the shape's slot +0x24, null for a missing part) with the structure's frame (Transform_Concat), and calls Bullet_Fire (00008134)(structure, Transform_RotationToEuler of it, (300, 400, 0) through it, 2) and again from (-300, 400, 0), then the counter +0x1ab = 1500 and +0x193 = 1. ES2's Base_ArmedThinkTick (DBSIM 00404100), which runs the death sequence while standing, drops a target past 60000, keeps its target at the shared +0x1a4 with the holder count, and has a launcher form.",
+      "source": "Herculan/docs/es1/simulation/structures.md#the-gun-tower--base_armedthinktick-00003364; ES1DBSIM decompile and disassembly of 00003364",
+      "verified": {
+        "bytes": "00003364+1016",
+        "sha1": "2af81bbca8dd",
         "scope": "body",
         "via": "both"
       }
@@ -1387,11 +1552,236 @@
       "type": "function",
       "confidence": "high",
       "name": "Base_ApplyDamage",
-      "description": "(structure, attacker, damage) in stack order, its arguments removed by this function: ES2's Base_ApplyDamage (DBSIM 00404d70) on one damage total. It adds the damage to the int16 +0x18c; when that passes the type record's (+0x188) +0x08 it posts Computer_PostMessage (0001a154)(3) when the attacker is LocalPlayerMech (000b5b86) and its target +0x15e is the structure, sets +0x18c to +0x08, calls the attacker's slot +0x64(attacker, 0, structure), sets the destroyed byte +0x93 and clears +0x90, throws the debris group at the dword g_DebrisGroups (000bc1c0) + 0x1e at the position +0x20 with the shapes at the dword g_DebrisShapes (000bc1c6) (Debris_ThrowGroup (00005fb8)), runs Mech_ReportOutOfAction (0000d77c)(structure) and, when +0x170 is set, Action_Activate (0001cc5c)(+0x170), and sets the collapse count +0x1a0 to 8. es2_xref finds one call, from 00003a58.",
+      "description": "(structure, attacker, damage) in stack order, its arguments removed by this function: ES2's Base_ApplyDamage (DBSIM 00404d70) on one damage total. It adds the damage to the int16 +0x18c; when that passes the type record's (+0x188) +0x08 it posts Computer_PostMessage (0001a154)(3) when the attacker is LocalPlayerMech (000b5b86) and its target +0x15e is the structure, sets +0x18c to +0x08, calls the attacker's slot +0x64(attacker, 0, structure), sets the destroyed byte +0x93 and clears +0x90, throws the debris group at the dword g_DebrisGroups (000bc1c0) + 0x1e at the position +0x20 with the shapes at the dword g_DebrisShapes (000bc1c6) (Debris_ThrowGroup (00005fb8)), runs Mech_ReportOutOfAction (0000d77c)(structure) and, when +0x170 is set, Action_Activate (0001cc5c)(+0x170), and sets the collapse count +0x1a0 to 8. es2_xref finds one call, from Base_DirectFireHitTest (00003a58).",
       "source": "Herculan/docs/es1/simulation/terrain.md#the-structures-tests",
       "verified": {
         "bytes": "00003978+221",
         "sha1": "4d3f99592d5c",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00003a58",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Base_DirectFireHitTest",
+      "description": "(structure, shot) in stack order, its arguments removed by this function: slot +0x24 of the three structure tables. Copies the shot's int16 +6 and +4 and, when the side byte +0x14 of the group (+0x3f) of the shot's owner (+0xe) is 0, scales both copies with Damage_ScaleByDifficulty (0001f82c), the owner and the group read with no null test. A wreck (+0x1a0 0 and +0x93 set) or a type record (+0x188) with no collision model (+0x3a 0) goes to Sim_RaycastShapeVolume (00020894)(1, a one-entry array of the structure, the shot's ray, result), a hit giving the result's distance + 1. Otherwise it answers 0 when Math_DistanceBetweenPoints (00063c20) from +0x20 to the ray frame's +0x14 exceeds the ray's +4 + its int16 +8 + the structure's slot +0x14; then Mech_SelectStruckComponent (00009064)(the model, BaseHit_Occupancy (000904a0), Transform_Concat of the structure's transform and the ray's +0xa, ray, structure), a hit giving its distance + 1. On a hit, the point (0, distance + 1, 0) through the ray's frame; while +0x93 is clear, the +4 copy triples when that point is within the record's +0x24 of its point +0x1e through the structure's frame, and Base_ApplyDamage (00003978)(structure, owner, that copy); then Explosion_Construct (00005af0)(0, the point, the shot's +0xa table entry 8 + (Math_RandomNext (00063af4)(000b5bd4) & 3)) and Debris_ThrowGroup (00005fb8)(g_DebrisGroups (000bc1c0) + 10, the point, g_DebrisShapes (000bc1c6)). Returns the distance + 1, or 0. ES2's Base_DirectFireHitTest (DBSIM 00405038), which scales nothing, has no weak spot and throws its debris on one hit in four.",
+      "source": "Herculan/docs/es1/simulation/structures.md#hits--base_directfirehittest-00003a58; ES1DBSIM decompile and disassembly of 00003a58",
+      "verified": {
+        "bytes": "00003a58+554",
+        "sha1": "91d03f0209b1",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00003c84",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Base_DamageFraction",
+      "description": "(structure), its argument removed by this function: slot +0x44 of the three structure tables. Returns (the int16 damage +0x18c << 8) / the type record's (+0x188) int16 +0x08, a signed divide: the damage in 256ths of the hit points. ES2's Base_DamageFraction (DBSIM 004052b4), which sums its components.",
+      "source": "Herculan/docs/es1/simulation/structures.md#what-a-structure-is-aimed-at; ES1DBSIM disassembly of 00003c84",
+      "verified": {
+        "bytes": "00003c84+47",
+        "sha1": "bf2f613f8bcd",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00003cb4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Base_BearingInSensorArc_Always",
+      "description": "Frameless: MOV AX,1 and RET 8. Slot +0x48 of the vtable StructureVtable (00090522), and slot +0x48 of the vtable StructureRadarVtable (0009059e), and slot +0x48 of the vtable StructureArmedVtable (0009061a): every bearing is in a structure's arc. ES2's Base_BearingInSensorArc_Always (DBSIM 00405308).",
+      "source": "Herculan/docs/es1/simulation/structures.md#the-classes; ES1DBSIM disassembly at 00003cb4",
+      "verified": {
+        "bytes": "00003cb4+7",
+        "sha1": "3848c6ff2ec7",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00003cbc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Base_Construct",
+      "description": "(side, record) in stack order, its arguments removed by this function: builds a structure from a 16-byte block-8 record of data\\script.dat and returns it. The type record is g_BaseTypeTable (000bc18a) + the record's type * 0x3e; side 0 takes the shape tables BaseShapes_Animated (000bc16c) and BaseShapes_Static (000bc176), any other side BaseShapes_AnimatedEnemy (000bc170) and BaseShapes_StaticEnemy (000bc17a). The switch (00090694): types 0-4 and 7 take a g_BasePool (000aed70) slot (Pool_Alloc) built by SimObjectBase_ConstructStatic (00002a74) on the static table's entry +0x02; 5 and 6 by SimObjectBase_ConstructAnimated (00002970) on the animated table's, then StructureRadarVtable (0009059e) and the radar byte +0x90 = 1, written past the pool test; 8 the same, then StructureArmedVtable (0009061a). Each arm inlines the base fields: the table 000904a6, +0x162 = -1, +0x92 = 1, +0xa1 = 1, ObjectList_Add (0000db10)(LiveObjectList, structure), +0x16c and +0x170 = 0, +0x174 = -1, StructureVtable (00090522), tag 5, +0x162 = 1, +0x1a0 = 0. A type above 8 reaches the tail with the structure pointer, a stack word, never set. The tail: for i of 0 and 1 below the type's +0x06, ShapeInst_AddThread (00001f48)(structure, i) to +0x195 + 4i, AnimThread_SetPlaybackRate(thread, the type's +0x26 + 2i), and for i = 1 AnimThread_SeekToPosition(thread, 6000, 1); the record's starting condition +0x0e: negative, +0x18c = 0; 0, +0x18c = the type's +0x08, the instance's (+0x2e) shape +4 = BaseHulkShapes (000bc180)[the type's +0x04] and +0x93 = 1; otherwise (100 - condition) * +0x08 / 100; then +0x193 = the type's +0x2c, +0x188 = the type record, +0x18e and +0x190 = the record's +0x06 and +0x08. es2_xref finds one call, from DBSim_SpawnMissionObjects (0001e638). ES2's Base_Construct (DBSIM 00405314), which reads no side, sets the disarmed byte on its plain and radar classes, and builds component arrays.",
+      "source": "Herculan/docs/es1/simulation/structures.md#construction--base_construct-00003cbc; ES1DBSIM decompile and disassembly of 00003cbc",
+      "verified": {
+        "bytes": "00003cbc+1459",
+        "sha1": "26963a6bab7b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00004270",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_GetPositionBaseCopy",
+      "description": "(object): slot +8 of the vtable 000904a6 (entered at its padding 0000426f), and slot +8 of the vtable StructureVtable (00090522) (entered at its padding 0000426f), and slot +8 of the vtable StructureRadarVtable (0009059e) (entered at its padding 0000426f), and slot +8 of the vtable StructureArmedVtable (0009061a) (entered at its padding 0000426f), and slot +8 of the vtable 000906ba: byte for byte the code of TSObj_GetPosition (00001cfc), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/structures.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00004270",
+      "verified": {
+        "bytes": "00004270+20",
+        "sha1": "a1b95c43ba5f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00004284",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SimObject_DtorBaseCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of the vtable 000904a6: byte for byte the code of SimObject_DtorMechCopy (00011870), relocated operands aside, storing 000904a6 and 000906ba where that stores 00091a6a and 00091b86.",
+      "source": "Herculan/docs/es1/simulation/structures.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00004284",
+      "verified": {
+        "bytes": "00004284+34",
+        "sha1": "a322af7dadcf",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000042a6",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_ReturnZeroBaseCopy",
+      "description": "Frameless: two NOPs, then XOR EAX,EAX and RET 4: returns 0. Slot +0x10 of the vtable 000904a6, and slot +0x10 of the vtable StructureVtable (00090522), and slot +0x10 of the vtable StructureRadarVtable (0009059e), and slot +0x10 of the vtable StructureArmedVtable (0009061a), and slot +0x10 of the vtable 000906ba; the code of TSObj_ReturnZero (000018e8).",
+      "source": "Herculan/docs/es1/simulation/structures.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 000042a6",
+      "verified": {
+        "bytes": "000042a6+7",
+        "sha1": "caf3d3407fd2",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "000042b0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_GetRadiusBaseCopy",
+      "description": "(object): slot +0x14 of the vtable 000904a6 (entered at its padding 000042ad), and slot +0x14 of the vtable StructureVtable (00090522) (entered at its padding 000042ad), and slot +0x14 of the vtable StructureRadarVtable (0009059e) (entered at its padding 000042ad), and slot +0x14 of the vtable StructureArmedVtable (0009061a) (entered at its padding 000042ad), and slot +0x14 of the vtable 000906ba (entered at its padding 000042ad): byte for byte the code of TSObj_GetRadius (00001d58), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/structures.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 000042b0",
+      "verified": {
+        "bytes": "000042b0+71",
+        "sha1": "81f34db4094a",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000042f8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SimObject_SetRunIntoBaseCopy",
+      "description": "(object), callee-cleaned: slot +0x6c of the vtable 000904a6 (entered at its padding 000042f7), and slot +0x6c of the vtable StructureVtable (00090522) (entered at its padding 000042f7), and slot +0x6c of the vtable StructureRadarVtable (0009059e) (entered at its padding 000042f7), and slot +0x6c of the vtable StructureArmedVtable (0009061a) (entered at its padding 000042f7): byte for byte the code of SimObject_SetRunIntoMechCopy (000118e4), relocated operands aside. ES2's SimObject_SetRunInto (DBSIM 0042200c).",
+      "source": "Herculan/docs/es1/simulation/structures.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 000042f8",
+      "verified": {
+        "bytes": "000042f8+22",
+        "sha1": "3f482e9d3cd0",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000430e",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SimObject_MissileLockState_AlwaysBaseCopy",
+      "description": "Frameless: two NOPs, then MOV AX,1 and RET 8. Slot +0x70 of the vtable 000904a6, and slot +0x70 of the vtable StructureVtable (00090522), and slot +0x70 of the vtable StructureRadarVtable (0009059e), and slot +0x70 of the vtable StructureArmedVtable (0009061a); the code of SimObject_MissileLockState_AlwaysMechCopy (000118fa). ES2's SimObject_MissileLockState_Always (DBSIM 00411b04).",
+      "source": "Herculan/docs/es1/simulation/structures.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0000430e",
+      "verified": {
+        "bytes": "0000430e+9",
+        "sha1": "4da62d48f18b",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00004318",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Base_Dtor",
+      "description": "(structure, flags), callee-cleaned: slot +0xc of StructureVtable (00090522). With a non-null structure it stores StructureVtable (00090522), 000904a6 and 000906ba at +2, runs AnimObj_Dtor (00001f98)(structure, 0) and, on flags bit 0, ObjectPool_QueueForDelete(g_BaseDeleteQueue (000aed74), structure). ES2's Base_Dtor (DBSIM 00406dab), which counts destructors and takes the structure off the live object list.",
+      "source": "Herculan/docs/es1/simulation/structures.md#the-classes; ES1DBSIM decompile of 00004318",
+      "verified": {
+        "bytes": "00004318+62",
+        "sha1": "5685c9578cde",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00004356",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Base_ReassessTickNoOp",
+      "description": "Frameless: two NOPs, then XOR EAX,EAX and RET 4: returns 0. Slot +0x20 of the vtable StructureVtable (00090522), and slot +0x20 of the vtable StructureRadarVtable (0009059e), and slot +0x20 of the vtable StructureArmedVtable (0009061a). ES2's Base_ReassessTickNoOp (DBSIM 00406cfe).",
+      "source": "Herculan/docs/es1/simulation/structures.md#the-classes; ES1DBSIM disassembly at 00004356",
+      "verified": {
+        "bytes": "00004356+7",
+        "sha1": "caf3d3407fd2",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00004360",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Base_RadarDtor",
+      "description": "(structure, flags), callee-cleaned: slot +0xc of StructureRadarVtable (0009059e). With a non-null structure it stores StructureRadarVtable (0009059e), StructureVtable (00090522), 000904a6 and 000906ba at +2, runs AnimObj_Dtor (00001f98)(structure, 0) and, on flags bit 0, ObjectPool_QueueForDelete(g_BaseDeleteQueue (000aed74), structure). ES2's Base_RadarDtor (DBSIM 00406df3).",
+      "source": "Herculan/docs/es1/simulation/structures.md#the-classes; ES1DBSIM decompile of 00004360",
+      "verified": {
+        "bytes": "00004360+69",
+        "sha1": "252236455896",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000043a8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Base_ArmedDtor",
+      "description": "(structure, flags), callee-cleaned: slot +0xc of StructureArmedVtable (0009061a). With a non-null structure it stores StructureArmedVtable (0009061a), StructureVtable (00090522), 000904a6 and 000906ba at +2, runs AnimObj_Dtor (00001f98)(structure, 0) and, on flags bit 0, ObjectPool_QueueForDelete(g_BaseDeleteQueue (000aed74), structure). ES2's Base_ArmedDtor (DBSIM 00406d5c).",
+      "source": "Herculan/docs/es1/simulation/structures.md#the-classes; ES1DBSIM decompile of 000043a8",
+      "verified": {
+        "bytes": "000043a8+69",
+        "sha1": "60510b09f174",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000043f0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DetAnimObj_DtorBaseCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of the vtable 000906ba (entered at its padding 000043ed): byte for byte the code of DetAnimObj_Dtor (00002a48), relocated operands aside, storing 000906ba where that stores 00090406. ES2's DetAnimObj_Dtor (DBSIM 00426f98).",
+      "source": "Herculan/docs/es1/simulation/structures.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 000043f0",
+      "verified": {
+        "bytes": "000043f0+43",
+        "sha1": "7819dca31b94",
         "scope": "body",
         "via": "disasm"
       }
@@ -1417,7 +1807,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Base_ApplyFormationOffset",
-      "description": "(object, position) in stack order, callee-cleaned: nothing when the object's int16 member slot +0x43 is 0; otherwise Formation_RotateAndAddOffset (0000d9a0)(object, position, BaseFormation_GetSlotOffset (0000441c)(object, slot, the formation number at +2 of the group the object's +0x3f points at)). ES2's Base_ApplyFormationOffset (DBSIM 00405c04). Caller found by es2_xref: 000044a4.",
+      "description": "(object, position) in stack order, callee-cleaned: nothing when the object's int16 member slot +0x43 is 0; otherwise Formation_RotateAndAddOffset (0000d9a0)(object, position, BaseFormation_GetSlotOffset (0000441c)(object, slot, the formation number at +2 of the group the object's +0x3f points at)). ES2's Base_ApplyFormationOffset (DBSIM 00405c04). Caller found by es2_xref: Base_AttachToGroup (000044a4).",
       "source": "Herculan/docs/es1/formats/formations-dat.md#where-a-member-stands",
       "verified": {
         "bytes": "00004474+46",
@@ -1427,18 +1817,153 @@
       }
     },
     {
+      "address": "000044a4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Base_AttachToGroup",
+      "description": "(structure, member slot, group) in stack order, its arguments removed by this function: the group to +0x3f and the slot to +0x43; when +6 is -32768, the rotation (0, 0, the group's heading +0xc) and +0x2c = 0; when the Z +0x28 is negative, the position is the group's point +0x20 or Route_WaypointAt (0001cfb8)(group + 6, the cursor's index), moved by Base_ApplyFormationOffset (00004474). es2_xref finds one call, from DBSim_BuildGroupRecord (0001cff4). Mech_AttachToGroup (00013124) without the height; ES2's Base_AttachToGroup (DBSIM 00405c3c), which adds a heading nudge, the ground patch and the ground height.",
+      "source": "Herculan/docs/es1/simulation/structures.md#joining-its-group--base_attachtogroup-000044a4; ES1DBSIM decompile of 000044a4",
+      "verified": {
+        "bytes": "000044a4+206",
+        "sha1": "941723a58558",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00004574",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Structure_InitPool",
+      "description": "(count), its argument removed by this function: g_BasePool (000aed70) = Pool_Init (00063878)(0, 0x1ba, count). es2_xref finds one call, from DBSim_LoadScriptDat (0001d850). ES2's Structure_InitPool (DBSIM 00405df4), which also builds its delete queue.",
+      "source": "Herculan/docs/es1/simulation/structures.md#loading-the-shapes--basetype_loadshape-000045a4; ES1DBSIM disassembly of 00004574",
+      "verified": {
+        "bytes": "00004574+27",
+        "sha1": "55435b675430",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00004590",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Structure_FlushDeletes",
+      "description": "No arguments, frameless: ObjectPool_FlushDeleteQueue (00063784)(g_BaseDeleteQueue (000aed74), g_BasePool (000aed70)) in stack order, then RET. Base_StaticInit (00004b80) registers it at subsystem phase 5. ES2's Structure_FlushDeletes (DBSIM 00405ea4).",
+      "source": "Herculan/docs/es1/simulation/structures.md#loading-the-shapes--basetype_loadshape-000045a4; ES1DBSIM disassembly at 00004590",
+      "verified": {
+        "bytes": "00004590+17",
+        "sha1": "3abe8408b171",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000045a4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "BaseType_LoadShape",
+      "description": "(side, type) in stack order, its arguments removed by this function: loads the type's shape into its shape table. The type record is g_BaseTypeTable (000bc18a) + type * 0x3e. With its +0x06 0 the table is BaseShapes_Static (000bc176) for side 0 or BaseShapes_StaticEnemy (000bc17a) otherwise, the set bases or bases_e in dgs, the tag 0x2bc0001; with it non-zero BaseShapes_Animated (000bc16c) or BaseShapes_AnimatedEnemy (000bc170), the set bases_an or bases_ae in dts, the tag 0x1e0003. When the table's entry +0x02 is 0 it stores BaseType_ResolveShape (000636a4)(tag, +0x02, ResourcePath_BuildFolderName (00060698)(folder, set)) there and BaseTexture (000bc184) at the shape's +0x26. es2_xref finds one call, from DBSim_LoadScriptDat (0001d850). ES2's BaseType_LoadShape (DBSIM 00405ebc), which reads no side.",
+      "source": "Herculan/docs/es1/simulation/structures.md#loading-the-shapes--basetype_loadshape-000045a4; ES1DBSIM decompile of 000045a4",
+      "verified": {
+        "bytes": "000045a4+262",
+        "sha1": "4608cbcee32c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000046ac",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Base_LoadResources",
-      "description": "No arguments: reads dat\\bforms (severity-5 assert, base.cpp line 0x270, when the stream status is set), an int16 count to 000bc18e and that many 0x38-byte records into a __vec_new array at 000bc190; opens dat\\bases (line 0x27b), reads its int16 count to 000bc188, builds that many 0x3e-byte records at g_BaseTypeTable (000bc18a) and count * 6 bytes at 000bc194, and reads 0x36 bytes into each record, setting its +0x3a to the type's 6-byte slot at 000bc194 when +0x06 is non-zero and to 0 when not; opens dat\\basecol (line 0x296) and calls Collision_LoadRecordArray (000094f0)(slot, stream) for every type; keeps the greatest +0x02 plus one of the types with +0x06 zero at 000bc174 and of the others at 000bc16a, and the greatest +0x04 plus one at 000bc17e; loads dgs\\bhulks with Shape_LoadAllRoots (tag 0x2bc0001) into 000bc180; allocates zeroed pointer arrays of 000bc174 entries at 000bc176 and 000bc17a and of 000bc16a entries at 000bc16c and 000bc170; and when g_LowMemory (000bda98) is 0 loads dba\\basetex into 000bc184. A phase-2 loader. ES2's Base_LoadResources (DBSIM 00405fac), which also reads dat\\lc_wpns and reads BASES.DAT field by field with its component arrays.",
+      "description": "No arguments: reads dat\\bforms (severity-5 assert, base.cpp line 0x270, when the stream status is set), an int16 count to 000bc18e and that many 0x38-byte records into a __vec_new array at 000bc190; opens dat\\bases (line 0x27b), reads its int16 count to 000bc188, builds that many 0x3e-byte records at g_BaseTypeTable (000bc18a) and count * 6 bytes at 000bc194, and reads 0x36 bytes into each record, setting its +0x3a to the type's 6-byte slot at 000bc194 when +0x06 is non-zero and to 0 when not; opens dat\\basecol (line 0x296) and calls Collision_LoadRecordArray (000094f0)(slot, stream) for every type; keeps the greatest +0x02 plus one of the types with +0x06 zero at 000bc174 and of the others at 000bc16a, and the greatest +0x04 plus one at 000bc17e; loads dgs\\bhulks with Shape_LoadAllRoots (tag 0x2bc0001) into BaseHulkShapes (000bc180); allocates zeroed pointer arrays of 000bc174 entries at BaseShapes_Static (000bc176) and BaseShapes_StaticEnemy (000bc17a) and of 000bc16a entries at BaseShapes_Animated (000bc16c) and BaseShapes_AnimatedEnemy (000bc170); and when g_LowMemory (000bda98) is 0 loads dba\\basetex into BaseTexture (000bc184). A phase-2 loader. ES2's Base_LoadResources (DBSIM 00405fac), which also reads dat\\lc_wpns and reads BASES.DAT field by field with its component arrays.",
       "source": "Herculan/docs/es1/formats/bases-dat.md#the-load",
       "verified": {
         "bytes": "000046ac+995",
         "sha1": "674cf7ea492b",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00004a90",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "BaseFormation_ElementCtor",
+      "description": "(formation), its argument removed by this function: allocates 0x38 bytes with operator_new when given none, returning 0 when that fails, then __vec_ctor (000610cb) over seven 8-byte slots with BaseFormationSlot_ElementCtor (00004b64), and returns the formation. The element constructor Base_LoadResources (000046ac) hands __vec_new for the BFORMS.DAT formations.",
+      "source": "Herculan/docs/es1/simulation/structures.md#loading-the-shapes--basetype_loadshape-000045a4; ES1DBSIM decompile of 00004a90",
+      "verified": {
+        "bytes": "00004a90+46",
+        "sha1": "56e49afa7051",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00004ac0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "BaseType_ElementCtor",
+      "description": "(record), its argument removed by this function: allocates 0x3e bytes with operator_new when given none, returning 0 when that fails; inlines the empty constructors of its 6-byte members at +0xc, +0x12 and +0x1e, which store nothing; returns the record. The element constructor Base_LoadResources (000046ac) hands __vec_new for the BASES.DAT type records. ES2's BaseType_ElementCtor (DBSIM 00406a77).",
+      "source": "Herculan/docs/es1/simulation/structures.md#loading-the-shapes--basetype_loadshape-000045a4; ES1DBSIM decompile of 00004ac0",
+      "verified": {
+        "bytes": "00004ac0+164",
+        "sha1": "724b40f38a06",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00004b64",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "BaseFormationSlot_ElementCtor",
+      "description": "(slot), its argument removed by this function: allocates 8 bytes with operator_new when given none, stores nothing and returns the slot. BaseFormation_ElementCtor (00004a90) passes it to __vec_ctor for a formation's seven slots. The same code as ObjProbe_CornerElementCtor (00021538).",
+      "source": "Herculan/docs/es1/simulation/structures.md#loading-the-shapes--basetype_loadshape-000045a4; ES1DBSIM decompile of 00004b64",
+      "verified": {
+        "bytes": "00004b64+27",
+        "sha1": "fd7f12d55a1a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00004b80",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Base_StaticInit",
+      "description": "No arguments, frameless, base.cpp's static initializer (static constructor table entry 000adbc0): RegisterSubsystemLoader (00000ac4)(2, Base_LoadResources (000046ac)) and RegisterSubsystemLoader(5, Structure_FlushDeletes (00004590)) in stack order, then the word 000aedd8 = 0 and g_BasePool (000aed70) = 0. ES2's Base_StaticInit (DBSIM 0040695c).",
+      "source": "Herculan/docs/es1/simulation/structures.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00004b80",
+      "verified": {
+        "bytes": "00004b80+44",
+        "sha1": "054b06646125",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00004bac",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Base_StaticDtor",
+      "description": "No arguments, frameless: operator_delete (000015f8)(g_BasePool (000aed70)); base.cpp's exit routine (exit table entry 000adc88), its last code. ES2's Base_StaticDtor (DBSIM 004069b0).",
+      "source": "Herculan/docs/es1/simulation/structures.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly of 00004bac",
+      "verified": {
+        "bytes": "00004bac+12",
+        "sha1": "4b0023e35c1b",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -1452,6 +1977,21 @@
       "verified": {
         "bytes": "00004bb8+301",
         "sha1": "e320eced0acd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00004ce8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LightSlot_ElementCtor",
+      "description": "(slot), its argument removed by this function: allocates 0x23 bytes with operator_new when given none, returning 0 when that fails; inlines the empty constructor of its position at +1, which stores nothing; returns the slot. LightManager_Construct (00004bb8) passes its padding entry 00004ce5 to __vec_ctor for the manager's twenty 0x23-byte slots at +0x6c. ES2's LightSlot_ElementCtor (DBSIM 00407548).",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#effect-lights; ES1DBSIM decompile of 00004ce8",
+      "verified": {
+        "bytes": "00004ce8+70",
+        "sha1": "8040d29452db",
         "scope": "body",
         "via": "decompile"
       }
@@ -1607,6 +2147,21 @@
       }
     },
     {
+      "address": "00005194",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LightManager_SelectLightsUnconditional",
+      "description": "(manager, radius, point) in stack order, its arguments removed by this function: Light_Unregister of the embedded light +0x328; then for each slot of the pointer list +0x1c (int32 count +0x18) whose +0x1b is set and whose position +1 lies within the radius of the point by Point3I_DistanceBetween (00064698), LightManager_RecycleLight (0000544c)(manager, the slot's light +0x1f), a new light from Light_GetOrCreatePoint (0000537c)(manager) at +0x1f, its slot +8 called with +0x1b, its +0x34 = the slot's +0xf << 5, +0x38 = the slot's +0x13 * 0x20, +0x3c = that times its +0x1a, and the slot's position copied to its +0. es2_xref finds no branch or stored pointer to it. ES2's LightManager_SelectLightsUnconditional (DBSIM 00407284), whose light takes the position at +4.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#effect-lights; ES1DBSIM decompile of 00005194",
+      "verified": {
+        "bytes": "00005194+222",
+        "sha1": "93b6e0609587",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00005274",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -1709,6 +2264,81 @@
         "sha1": "edeb404801b6",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00005504",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Drawable_DtorEffectLightCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of the vtable 000907b6 (entered at its padding 00005502): byte for byte the code of Drawable_Dtor (000018d4), relocated operands aside, storing 000907b6 where that stores 0009020a. ES2's Drawable_Dtor (DBSIM 00478615).",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#effect-lights; ES1DBSIM disassembly at 00005504",
+      "verified": {
+        "bytes": "00005504+19",
+        "sha1": "9239ce704a3c",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00005517",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_ReturnZeroEffectLightCopy",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +0x10 of the vtable 000907b6, and slot +0x10 of the vtable 000907d6; the code of TSObj_ReturnZero (000018e8).",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#effect-lights; ES1DBSIM disassembly at 00005517",
+      "verified": {
+        "bytes": "00005517+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0000551d",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Drawable_GetRadiusEffectLightCopy",
+      "description": "Frameless: three NOPs, then XOR EAX,EAX and RET 4: returns 0. Slot +0x14 of the vtable 000907b6, and slot +0x14 of the vtable 000907d6; the code of Drawable_GetRadius (000018ed).",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#effect-lights; ES1DBSIM disassembly at 0000551d",
+      "verified": {
+        "bytes": "0000551d+8",
+        "sha1": "798c51aa7ee3",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00005525",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Smoke_DrawNoOpEffectLightCopy",
+      "description": "Frameless: three NOPs and RET 4. Slot +4 of the vtable 000907d6; the code of Smoke_DrawNoOp (00006ae9). ES2's Smoke_DrawNoOp (DBSIM 004096d7).",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#effect-lights; ES1DBSIM disassembly at 00005525",
+      "verified": {
+        "bytes": "00005525+6",
+        "sha1": "0011b5e9ac52",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0000552b",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Smoke_GetPositionNullEffectLightCopy",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +8 of the vtable 000907d6; the code of Smoke_GetPositionNull (00006aef). ES2's Smoke_GetPositionNull (DBSIM 004096dc).",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#effect-lights; ES1DBSIM disassembly at 0000552b",
+      "verified": {
+        "bytes": "0000552b+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
       }
     },
     {
@@ -2212,7 +2842,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Debris_ThrowGroup",
-      "description": "(group, a, shapes) in stack order, callee-cleaned: draws n = Math_RandomBelow(000b5bd4, the group's throw count +0), 0 to count - 1, and n times draws r = Math_RandomBelow(000b5bd4, the weight total +8), walks the pieces (+4) taking each weight off r while r is greater than it, and passes Debris_Construct (00006168)(0, a, shapes[the piece's shape]) to Debris_ThrowRandomBearing (00006480). A throw count of 0 divides by zero. ES2's Debris_ThrowGroup (DBSIM 004086bc), which throws exactly the count, or every piece for 0. Callers found by es2_xref: Base_ApplyDamage (00003978), 00003a58, Component_DestroyAndCascade (00009cd4), Mech_DirectFireHitTest (00013b44), Flyer_DirectFireHitTest (0001b370).",
+      "description": "(group, a, shapes) in stack order, callee-cleaned: draws n = Math_RandomBelow(000b5bd4, the group's throw count +0), 0 to count - 1, and n times draws r = Math_RandomBelow(000b5bd4, the weight total +8), walks the pieces (+4) taking each weight off r while r is greater than it, and passes Debris_Construct (00006168)(0, a, shapes[the piece's shape]) to Debris_ThrowRandomBearing (00006480). A throw count of 0 divides by zero. ES2's Debris_ThrowGroup (DBSIM 004086bc), which throws exactly the count, or every piece for 0. Callers found by es2_xref: Base_ApplyDamage (00003978), Base_DirectFireHitTest (00003a58), Component_DestroyAndCascade (00009cd4), Mech_DirectFireHitTest (00013b44), Flyer_DirectFireHitTest (0001b370).",
       "source": "Herculan/docs/es1/formats/debris-dat.md#throwing-a-group",
       "verified": {
         "bytes": "00005fb8+195",
@@ -2737,7 +3367,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Smoke_Construct",
-      "description": "(smoke, kind, point, part id, owner) in stack order, callee-cleaned: the smoke emitter's constructor. With a null emitter takes one from g_SmokePool (000aefd4) with Pool_Alloc (000638c8), returning 0 when that gives none; stores SmokeVtable (000909fa) at +2, the kind at +0x22, Smoke_PuffCountByKind (00090964)[kind] at the count +0x1e, zeroes +6 to +0xd and the countdown's int16 +0x1c, stores the owner at +0xf, the part id at +0x13, 4 * kind + Math_RandomNext (00063af4)(000b5c48) & 3 at the next ball's shape +0x20, and the point's three int16 at +0x15, or with a null point sets the byte +6. Returns the emitter. es2_xref finds two calls, from 00002df8 and Component_DestroyAndCascade (00009cd4). ES2's Smoke_Construct (DBSIM 0040923c), its offsets 6 higher, which es2_xref finds nothing reaching.",
+      "description": "(smoke, kind, point, part id, owner) in stack order, callee-cleaned: the smoke emitter's constructor. With a null emitter takes one from g_SmokePool (000aefd4) with Pool_Alloc (000638c8), returning 0 when that gives none; stores SmokeVtable (000909fa) at +2, the kind at +0x22, Smoke_PuffCountByKind (00090964)[kind] at the count +0x1e, zeroes +6 to +0xd and the countdown's int16 +0x1c, stores the owner at +0xf, the part id at +0x13, 4 * kind + Math_RandomNext (00063af4)(000b5c48) & 3 at the next ball's shape +0x20, and the point's three int16 at +0x15, or with a null point sets the byte +6. Returns the emitter. es2_xref finds two calls, from Base_ThinkTick (00002df8) and Component_DestroyAndCascade (00009cd4). ES2's Smoke_Construct (DBSIM 0040923c), its offsets 6 higher, which es2_xref finds nothing reaching.",
       "source": "Herculan/docs/es1/simulation/destruction-effects.md#the-emitter--smoke_construct-000069ec",
       "verified": {
         "bytes": "000069ec+253",
@@ -3847,7 +4477,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Bullet_Fire",
-      "description": "(machine, angles, muzzle point, subtype) in stack order, callee-cleaned: Bullet_Construct (00007d08)(0, subtype), then through what it returns: the muzzle point to +0x20, the six bytes of angles to +6, the frame word +0x2c = 0, the owner +0x44, the 8 bytes at +0x3c, the power +0x50 and the age +0x4e zeroed, and the speed +0x4c = the projectile record (+0x48)'s +0xa; Sound_PlayAt (0004deb8)(muzzle point, the type record's +8 + 10), the record from Bullet_GetTypeRecord (00007b94). Returns the round. ES2's Bullet_Fire (DBSIM 0040b43c), which also scatters the angles and adds the machine's travel speed. es2_xref finds seven calls: from Bullet_FirePowered (000081d4), WeaponMount_FireDispatch_GunBeam (0000b024) and WeaponMount_FireDispatch_Missile (0000af40), and two each from 00003364 and Flyer_AttackRun (0001bba4), which pass subtype 2.",
+      "description": "(machine, angles, muzzle point, subtype) in stack order, callee-cleaned: Bullet_Construct (00007d08)(0, subtype), then through what it returns: the muzzle point to +0x20, the six bytes of angles to +6, the frame word +0x2c = 0, the owner +0x44, the 8 bytes at +0x3c, the power +0x50 and the age +0x4e zeroed, and the speed +0x4c = the projectile record (+0x48)'s +0xa; Sound_PlayAt (0004deb8)(muzzle point, the type record's +8 + 10), the record from Bullet_GetTypeRecord (00007b94). Returns the round. ES2's Bullet_Fire (DBSIM 0040b43c), which also scatters the angles and adds the machine's travel speed. es2_xref finds seven calls: from Bullet_FirePowered (000081d4), WeaponMount_FireDispatch_GunBeam (0000b024) and WeaponMount_FireDispatch_Missile (0000af40), and two each from Base_ArmedThinkTick (00003364) and Flyer_AttackRun (0001bba4), which pass subtype 2.",
       "source": "Herculan/docs/es1/simulation/projectiles.md#firing--bullet_fire-00008134",
       "verified": {
         "bytes": "00008134+159",
@@ -4336,7 +4966,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_SelectStruckComponent",
-      "description": "(model, occupancy flags, object-to-muzzle frame, ray record, object) in stack order, callee-cleaned: sets Collision_HitComponent (000af134) to 0xffff and Collision_HitDistance (000af130) to 0, Collision_RayRemaining (000bc2a6) from the ray record's +4 and Collision_RayClearance (000bc2aa) from its +8, runs Mech_ComponentGeometryTest_Candidate (00008f84)(node, flags, frame, object) on each of the model's 10-byte nodes (count +0, array +2), copies the distance and component to Collision_HitResult (000af138) and returns its address, or null when the distance is 0. ES2's Mech_SelectStruckComponent (DBSIM 0040c9d4). es2_xref finds three calls: Mech_DirectFireHitTest (00013b44), 00003a58 and Flyer_DirectFireHitTest (0001b370).",
+      "description": "(model, occupancy flags, object-to-muzzle frame, ray record, object) in stack order, callee-cleaned: sets Collision_HitComponent (000af134) to 0xffff and Collision_HitDistance (000af130) to 0, Collision_RayRemaining (000bc2a6) from the ray record's +4 and Collision_RayClearance (000bc2aa) from its +8, runs Mech_ComponentGeometryTest_Candidate (00008f84)(node, flags, frame, object) on each of the model's 10-byte nodes (count +0, array +2), copies the distance and component to Collision_HitResult (000af138) and returns its address, or null when the distance is 0. ES2's Mech_SelectStruckComponent (DBSIM 0040c9d4). es2_xref finds three calls: Mech_DirectFireHitTest (00013b44), Base_DirectFireHitTest (00003a58) and Flyer_DirectFireHitTest (0001b370).",
       "source": "Herculan/docs/es1/simulation/component-damage.md#the-struck-component--mech_selectstruckcomponent-00009064; ES1DBSIM disassembly at 00009064",
       "verified": {
         "bytes": "00009064+151",
@@ -6916,7 +7546,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObject_ComponentPositionNoOp",
-      "description": "Frameless: RET 0xc. Slot +0x5c of the vtables 000904a6, 00090522, 0009059e, 0009061a, 00091a6a, 00091f6e and 00091fea. ES2's SimObject_ComponentPositionNoOp (DBSIM 00411a3c), at ES2's slot +0x58.",
+      "description": "Frameless: RET 0xc. Slot +0x5c of the vtables 000904a6, StructureVtable (00090522), StructureRadarVtable (0009059e), StructureArmedVtable (0009061a), 00091a6a, 00091f6e and 00091fea. ES2's SimObject_ComponentPositionNoOp (DBSIM 00411a3c), at ES2's slot +0x58.",
       "source": "Herculan/docs/es1/simulation/sim-object-base.md#the-base-classs-own-functions; the image at 0000d6b4",
       "verified": {
         "bytes": "0000d6b4+3",
@@ -6931,7 +7561,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObject_ComponentNearestAim_None",
-      "description": "Frameless: MOV AX,0xffff and RET 8: answers -1 in AX. Slot +0x58 of the vtables 000904a6, 00090522, 0009059e, 0009061a, 00091a6a, 00091f6e and 00091fea. ES2's SimObject_ComponentNearestAim_None (DBSIM 00411a44), at ES2's slot +0x54.",
+      "description": "Frameless: MOV AX,0xffff and RET 8: answers -1 in AX. Slot +0x58 of the vtables 000904a6, StructureVtable (00090522), StructureRadarVtable (0009059e), StructureArmedVtable (0009061a), 00091a6a, 00091f6e and 00091fea. ES2's SimObject_ComponentNearestAim_None (DBSIM 00411a44), at ES2's slot +0x54.",
       "source": "Herculan/docs/es1/simulation/sim-object-base.md#the-base-classs-own-functions; the image at 0000d6b8",
       "verified": {
         "bytes": "0000d6b8+7",
@@ -6946,7 +7576,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObject_GetShieldByHeadingZero",
-      "description": "Frameless: XOR EAX,EAX and RET 8: returns 0. Slot +0x38 of the vtables 000904a6, 00090522, 0009059e, 0009061a, 00091a6a, 00091f6e and 00091fea. ES2's SimObject_GetShieldByHeadingZero (DBSIM 00411a4c), at ES2's slot +0x34.",
+      "description": "Frameless: XOR EAX,EAX and RET 8: returns 0. Slot +0x38 of the vtables 000904a6, StructureVtable (00090522), StructureRadarVtable (0009059e), StructureArmedVtable (0009061a), 00091a6a, 00091f6e and 00091fea. ES2's SimObject_GetShieldByHeadingZero (DBSIM 00411a4c), at ES2's slot +0x34.",
       "source": "Herculan/docs/es1/simulation/sim-object-base.md#the-base-classs-own-functions; the image at 0000d6c0",
       "verified": {
         "bytes": "0000d6c0+5",
@@ -6961,7 +7591,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObject_GetSpeedZero",
-      "description": "Frameless: XOR EAX,EAX and RET 4: returns 0. Slot +0x3c of the vtables 000904a6, 00090522, 0009059e, 0009061a, 00091a6a and 00091f6e. ES2's SimObject_GetSpeedZero (DBSIM 00411a54), at ES2's slot +0x38.",
+      "description": "Frameless: XOR EAX,EAX and RET 4: returns 0. Slot +0x3c of the vtables 000904a6, StructureVtable (00090522), StructureRadarVtable (0009059e), StructureArmedVtable (0009061a), 00091a6a and 00091f6e. ES2's SimObject_GetSpeedZero (DBSIM 00411a54), at ES2's slot +0x38.",
       "source": "Herculan/docs/es1/simulation/sim-object-base.md#the-base-classs-own-functions; the image at 0000d6c8",
       "verified": {
         "bytes": "0000d6c8+5",
@@ -6976,7 +7606,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObject_GetTorsoTwistAngleZero",
-      "description": "Frameless: XOR EAX,EAX and RET 4: returns 0. Slot +0x40 of the vtables 000904a6, 00090522, 0009059e, 00091a6a, 00091f6e and 00091fea. ES2's SimObject_GetTorsoTwistAngleZero (DBSIM 00411a5c), at ES2's slot +0x3c.",
+      "description": "Frameless: XOR EAX,EAX and RET 4: returns 0. Slot +0x40 of the vtables 000904a6, StructureVtable (00090522), StructureRadarVtable (0009059e), 00091a6a, 00091f6e and 00091fea. ES2's SimObject_GetTorsoTwistAngleZero (DBSIM 00411a5c), at ES2's slot +0x3c.",
       "source": "Herculan/docs/es1/simulation/sim-object-base.md#the-base-classs-own-functions; the image at 0000d6d0",
       "verified": {
         "bytes": "0000d6d0+5",
@@ -6991,7 +7621,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObject_ReceiveSquadOrder_Refuse",
-      "description": "Frameless: XOR EAX,EAX and RET 0xc: returns 0. Slot +0x2c of the vtables 000904a6, 00090522, 0009059e, 0009061a, 00091a6a, 00091f6e and 00091fea. ES2's SimObject_ReceiveSquadOrder_Refuse (DBSIM 00411a64), at ES2's slot +0x28.",
+      "description": "Frameless: XOR EAX,EAX and RET 0xc: returns 0. Slot +0x2c of the vtables 000904a6, StructureVtable (00090522), StructureRadarVtable (0009059e), StructureArmedVtable (0009061a), 00091a6a, 00091f6e and 00091fea. ES2's SimObject_ReceiveSquadOrder_Refuse (DBSIM 00411a64), at ES2's slot +0x28.",
       "source": "Herculan/docs/es1/simulation/sim-object-base.md#the-base-classs-own-functions; the image at 0000d6d8",
       "verified": {
         "bytes": "0000d6d8+5",
@@ -7006,7 +7636,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObject_HandleCommandNoOp",
-      "description": "Frameless: XOR EAX,EAX and RET 8: returns 0. Slot +0x30 of the vtables 000904a6, 00090522, 0009059e, 0009061a, 00091a6a and 00091f6e. ES2's SimObject_HandleCommandNoOp (DBSIM 00411a6c), at ES2's slot +0x2c.",
+      "description": "Frameless: XOR EAX,EAX and RET 8: returns 0. Slot +0x30 of the vtables 000904a6, StructureVtable (00090522), StructureRadarVtable (0009059e), StructureArmedVtable (0009061a), 00091a6a and 00091f6e. ES2's SimObject_HandleCommandNoOp (DBSIM 00411a6c), at ES2's slot +0x2c.",
       "source": "Herculan/docs/es1/simulation/sim-object-base.md#the-base-classs-own-functions; the image at 0000d6e0",
       "verified": {
         "bytes": "0000d6e0+5",
@@ -7066,7 +7696,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObject_TickNoOp",
-      "description": "Frameless: MOV AX,1 and RET 4: answers 1 in AX. Slot +0x18 of the vtables 000904a6, 00090522, 0009059e, 0009061a, 00091a6a and 00091f6e. ES2's SimObject_TickNoOp (DBSIM 00411ab4), at ES2's slot +0x14.",
+      "description": "Frameless: MOV AX,1 and RET 4: answers 1 in AX. Slot +0x18 of the vtables 000904a6, StructureVtable (00090522), StructureRadarVtable (0009059e), StructureArmedVtable (0009061a), 00091a6a and 00091f6e. ES2's SimObject_TickNoOp (DBSIM 00411ab4), at ES2's slot +0x14.",
       "source": "Herculan/docs/es1/simulation/sim-object-base.md#the-base-classs-own-functions; the image at 0000d728",
       "verified": {
         "bytes": "0000d728+7",
@@ -7081,7 +7711,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObject_CompareCombatRatingStub",
-      "description": "Frameless: MOV AX,1 and RET 8: answers 1 in AX. Slot +0x50 of the vtables 000904a6, 00090522, 0009059e, 0009061a, 00091a6a, 00091f6e and 00091fea. ES2's SimObject_CompareCombatRatingStub (DBSIM 00411ac0), at ES2's slot +0x4c.",
+      "description": "Frameless: MOV AX,1 and RET 8: answers 1 in AX. Slot +0x50 of the vtables 000904a6, StructureVtable (00090522), StructureRadarVtable (0009059e), StructureArmedVtable (0009061a), 00091a6a, 00091f6e and 00091fea. ES2's SimObject_CompareCombatRatingStub (DBSIM 00411ac0), at ES2's slot +0x4c.",
       "source": "Herculan/docs/es1/simulation/sim-object-base.md#the-base-classs-own-functions; the image at 0000d730",
       "verified": {
         "bytes": "0000d730+7",
@@ -7111,7 +7741,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_ShareContact",
-      "description": "(object, unread, contact) in stack order, callee-cleaned: Detection_ShareContact (0000e618)(object, contact); its second argument is never read. Slot +0x54 of the vtables 000904a6, 00090522, 0009059e, 0009061a, 00091a6a, 00091f6e and 00091fea. ES2's Mech_ShareContact (DBSIM 00411aec), at ES2's slot +0x50.",
+      "description": "(object, unread, contact) in stack order, callee-cleaned: Detection_ShareContact (0000e618)(object, contact); its second argument is never read. Slot +0x54 of the vtables 000904a6, StructureVtable (00090522), StructureRadarVtable (0009059e), StructureArmedVtable (0009061a), 00091a6a, 00091f6e and 00091fea. ES2's Mech_ShareContact (DBSIM 00411aec), at ES2's slot +0x50.",
       "source": "Herculan/docs/es1/simulation/sim-object-base.md#the-base-classs-own-functions; ES1DBSIM disassembly at 0000d760",
       "verified": {
         "bytes": "0000d760+18",
@@ -7126,7 +7756,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObject_CreditNeutralisedTargetNoOp",
-      "description": "Frameless: RET 0xc. Slot +0x64 of the vtables 000904a6, 00090522, 0009059e, 0009061a, 00091a6a, 00091f6e and 00091fea. ES2's SimObject_CreditNeutralisedTargetNoOp (DBSIM 00411b2c), at ES2's slot +0x60.",
+      "description": "Frameless: RET 0xc. Slot +0x64 of the vtables 000904a6, StructureVtable (00090522), StructureRadarVtable (0009059e), StructureArmedVtable (0009061a), 00091a6a, 00091f6e and 00091fea. ES2's SimObject_CreditNeutralisedTargetNoOp (DBSIM 00411b2c), at ES2's slot +0x60.",
       "source": "Herculan/docs/es1/simulation/sim-object-base.md#the-base-classs-own-functions; the image at 0000d774",
       "verified": {
         "bytes": "0000d774+3",
@@ -7141,7 +7771,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObject_AiOnLineOfFireBlockedNoOp",
-      "description": "Frameless: RET 8. Slot +0x68 of the vtables 000904a6, 00090522, 0009059e, 0009061a, 00091a6a, 00091f6e and 00091fea. ES2's SimObject_AiOnLineOfFireBlockedNoOp (DBSIM 00411b34), at ES2's slot +0x64.",
+      "description": "Frameless: RET 8. Slot +0x68 of the vtables 000904a6, StructureVtable (00090522), StructureRadarVtable (0009059e), StructureArmedVtable (0009061a), 00091a6a, 00091f6e and 00091fea. ES2's SimObject_AiOnLineOfFireBlockedNoOp (DBSIM 00411b34), at ES2's slot +0x64.",
       "source": "Herculan/docs/es1/simulation/sim-object-base.md#the-base-classs-own-functions; the image at 0000d778",
       "verified": {
         "bytes": "0000d778+3",
@@ -7291,7 +7921,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ObjectList_Add",
-      "description": "(list, object) in stack order, callee-cleaned: stores the object at entry int16 +6 of the array at +0, stores that index at the object's int16 +0x45 and adds 1 to +6. ES2's ObjectList_Add (DBSIM 00411dd4). es2_xref finds five calls: three from 00003cbc, one from Mech_Constructor (00011330) and one from Flyer_Constructor (0001ac58).",
+      "description": "(list, object) in stack order, callee-cleaned: stores the object at entry int16 +6 of the array at +0, stores that index at the object's int16 +0x45 and adds 1 to +6. ES2's ObjectList_Add (DBSIM 00411dd4). es2_xref finds five calls: three from Base_Construct (00003cbc), one from Mech_Constructor (00011330) and one from Flyer_Constructor (0001ac58).",
       "source": "Herculan/docs/es1/simulation/sim-object-base.md#the-live-object-list; ES1DBSIM disassembly at 0000db10",
       "verified": {
         "bytes": "0000db10+45",
@@ -7516,7 +8146,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObject_AiEnemySightedNoOp",
-      "description": "Frameless: RET 8. Slot +0x4c of the vtables 000904a6, 00090522, 0009059e, 0009061a, 00091a6a, 00091f6e and 00091fea. ES2's SimObject_AiEnemySightedNoOp (DBSIM 004127f8), at ES2's slot +0x48.",
+      "description": "Frameless: RET 8. Slot +0x4c of the vtables 000904a6, StructureVtable (00090522), StructureRadarVtable (0009059e), StructureArmedVtable (0009061a), 00091a6a, 00091f6e and 00091fea. ES2's SimObject_AiEnemySightedNoOp (DBSIM 004127f8), at ES2's slot +0x48.",
       "source": "Herculan/docs/es1/simulation/sensor-model.md#the-enemy-sighted-callout--mech_aienemysighted-0000e760; the image at 0000e75c",
       "verified": {
         "bytes": "0000e75c+3",
@@ -11785,7 +12415,7 @@
       "type": "function",
       "confidence": "high",
       "name": "DBSim_BuildGroupRecord",
-      "description": "(group, p, groups, h, a, route, record) in stack order, callee-cleaned (RET 0x1c): fills the 0x28-byte group record from a script.dat block-9 record: the members' kind record +0x28 to +0, +0x2a to +2, +0x2c to +4, the byte +0x44 to +0x14, the target kind +0x46 to +0x1a, the pair +0x4e and +0x50 to +0x24 and +0x26; and route to +8, h to +0xc, a to +0x16, p to +0x20. The target +0x1c is, from the index +0x48, the groups array's base + index * 0x28 for kind 0 and Pool_Nth (00063a78) of g_MechPool, g_FlyerPool or g_BasePool for kinds 1 to 3. Counts the non-negative of the eight member refs at +0x34 into +0x12, allocates that many pointers at +0xe, and fills them in order by the members' kind: Pool_Nth of g_MechPool, g_FlyerPool or g_BasePool, each passed with its ref's position (0-7) and the group to Mech_AttachToGroup, Flyer_AttachToGroup or FUN_000044a4. ES2's DBSim_BuildGroupRecord (DBSIM 00423b34) builds a 0x7a-byte record with twenty member refs, ten counter pairs and ten orders. es2_xref finds one call, from DBSim_SpawnMissionObjects (0001e638).",
+      "description": "(group, p, groups, h, a, route, record) in stack order, callee-cleaned (RET 0x1c): fills the 0x28-byte group record from a script.dat block-9 record: the members' kind record +0x28 to +0, +0x2a to +2, +0x2c to +4, the byte +0x44 to +0x14, the target kind +0x46 to +0x1a, the pair +0x4e and +0x50 to +0x24 and +0x26; and route to +8, h to +0xc, a to +0x16, p to +0x20. The target +0x1c is, from the index +0x48, the groups array's base + index * 0x28 for kind 0 and Pool_Nth (00063a78) of g_MechPool, g_FlyerPool or g_BasePool for kinds 1 to 3. Counts the non-negative of the eight member refs at +0x34 into +0x12, allocates that many pointers at +0xe, and fills them in order by the members' kind: Pool_Nth of g_MechPool, g_FlyerPool or g_BasePool, each passed with its ref's position (0-7) and the group to Mech_AttachToGroup, Flyer_AttachToGroup or Base_AttachToGroup. ES2's DBSim_BuildGroupRecord (DBSIM 00423b34) builds a 0x7a-byte record with twenty member refs, ten counter pairs and ten orders. es2_xref finds one call, from DBSim_SpawnMissionObjects (0001e638).",
       "source": "Herculan/docs/es1/simulation/mission-groups.md#the-group-record",
       "verified": {
         "bytes": "0001cff4+618",
@@ -12010,7 +12640,7 @@
       "type": "function",
       "confidence": "high",
       "name": "DBSim_SpawnMissionObjects",
-      "description": "(): the world load's second pass over the shell's handoff, building the mission's objects, ES2's DBSim_SpawnMissionObjects (DBSIM 004253d8) in role. Sets the word at Mission_StatusRaised (000bc49a) to 0xffff, reopens data\\script (Path_WithExtension) and reads past the 20-byte header and blocks 1-5 into a 2000-byte stack buffer. Block 6 (98-byte mechs) and then the player.mec entries, between WeaponModels_LoadShapeChunks and WeaponModels_FreeShapeChunks: each live slot (000af7b4) gets Mech_Constructor (00011330)(null, type); a record gives the position from its point ref +0x3e, the point's Z plus the type record's (+0x188) int16 +0x16 with no ground query, or the sentinel at 000afa00 (0, 0, -1), and the rotation (0, 0, heading) from its heading ref +0x40 or the sentinel at 000afa10 (-0x8000, -0x8000, 0), into +0x20 and +6, zeroing the int16 +0x2c; then Mech_ConfigureLoadout(mech, +0x46, +0x2a) in stack order, +0x91 set when +0 is not 0, the action refs +0x5c and +0x5e as 16-byte action pointers into +0x16c and +0x170, +0x42 and +0x44 into +0x174 and +0x176, Mech_ApplyStartingCondition(mech, +0x60), and +2 into +0x1e6 when not negative. A player.mec entry (0x7e bytes from 000af9e4) takes both sentinels, Mech_ConfigureLoadout(mech, +0x20, +8), Mech_ApplySquadCondition(mech +0x19c, +0x6a, +0x56, +0x3c) and its +0 into +0x232; the one whose index is the word at 000af9fa is stored at PlayerMech (000bc42a) with +0x9d set to 1. Block 7 (56-byte flyers), each live slot (000af8e0): Flyer_Constructor(null, +0x2c), point ref +0x28 with no height added, heading ref +0x2a, actions +0x32 and +0x34, pair +0x2e and +0x30. Block 8 (16-byte bases), each live slot (000af948): FUN_00003cbc(the slot's byte at 000af9b0, record), point ref +2, heading ref +4, actions +0xa and +0xc, pair +6 and +8. Block 9: one 82-byte record per element of MissionGroups (000bc476): member refs +0x34 remapped through the slot-to-pool map their kind +0x28 names (000af818, 000af914, 000af97c), the first record's replaced by the mech map's entries at block-6 count + k for each player.mec entry k and -1 after, and its +0x2c made 8 when 11; the target ref +0x48 remapped for target kinds 1-3; the heading from ref +0x30, or Math_HeadingToward (00063cc8) from the route's first waypoint to its second when it has two or more, else 0; then DBSim_BuildGroupRecord (0001cff4)(group, the point ref +0x2e's point, MissionGroups, heading, the action ref +0x4a's action, the route ref +0x32's waypoint group, record) in stack order. Closes the file. es2_xref finds one call, from Sim_StartMission (0005a9dc).",
+      "description": "(): the world load's second pass over the shell's handoff, building the mission's objects, ES2's DBSim_SpawnMissionObjects (DBSIM 004253d8) in role. Sets the word at Mission_StatusRaised (000bc49a) to 0xffff, reopens data\\script (Path_WithExtension) and reads past the 20-byte header and blocks 1-5 into a 2000-byte stack buffer. Block 6 (98-byte mechs) and then the player.mec entries, between WeaponModels_LoadShapeChunks and WeaponModels_FreeShapeChunks: each live slot (000af7b4) gets Mech_Constructor (00011330)(null, type); a record gives the position from its point ref +0x3e, the point's Z plus the type record's (+0x188) int16 +0x16 with no ground query, or the sentinel at 000afa00 (0, 0, -1), and the rotation (0, 0, heading) from its heading ref +0x40 or the sentinel at 000afa10 (-0x8000, -0x8000, 0), into +0x20 and +6, zeroing the int16 +0x2c; then Mech_ConfigureLoadout(mech, +0x46, +0x2a) in stack order, +0x91 set when +0 is not 0, the action refs +0x5c and +0x5e as 16-byte action pointers into +0x16c and +0x170, +0x42 and +0x44 into +0x174 and +0x176, Mech_ApplyStartingCondition(mech, +0x60), and +2 into +0x1e6 when not negative. A player.mec entry (0x7e bytes from 000af9e4) takes both sentinels, Mech_ConfigureLoadout(mech, +0x20, +8), Mech_ApplySquadCondition(mech +0x19c, +0x6a, +0x56, +0x3c) and its +0 into +0x232; the one whose index is the word at 000af9fa is stored at PlayerMech (000bc42a) with +0x9d set to 1. Block 7 (56-byte flyers), each live slot (000af8e0): Flyer_Constructor(null, +0x2c), point ref +0x28 with no height added, heading ref +0x2a, actions +0x32 and +0x34, pair +0x2e and +0x30. Block 8 (16-byte bases), each live slot (000af948): Base_Construct(the slot's byte at 000af9b0, record), point ref +2, heading ref +4, actions +0xa and +0xc, pair +6 and +8. Block 9: one 82-byte record per element of MissionGroups (000bc476): member refs +0x34 remapped through the slot-to-pool map their kind +0x28 names (000af818, 000af914, 000af97c), the first record's replaced by the mech map's entries at block-6 count + k for each player.mec entry k and -1 after, and its +0x2c made 8 when 11; the target ref +0x48 remapped for target kinds 1-3; the heading from ref +0x30, or Math_HeadingToward (00063cc8) from the route's first waypoint to its second when it has two or more, else 0; then DBSim_BuildGroupRecord (0001cff4)(group, the point ref +0x2e's point, MissionGroups, heading, the action ref +0x4a's action, the route ref +0x32's waypoint group, record) in stack order. Closes the file. es2_xref finds one call, from Sim_StartMission (0005a9dc).",
       "source": "Herculan/docs/es1/formats/script-dat.md#the-second-pass",
       "verified": {
         "bytes": "0001e638+2948",
@@ -12100,7 +12730,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Damage_ScaleByDifficulty",
-      "description": "(figure), callee-cleaned: the int16 the argument points at becomes Math_Q10Multiply(it, DamageScaleByDifficulty (000922c4)[i]), i script.dat header word 7 (000bc4aa), or 3 when the header word at offset 4 (MissionModeFlag (000bc4a0)), where the shell writes the load's mode, is not 0. One table and no side, where ES2's Damage_ScaleByDifficulty (DBSIM 00426b04) picks one of two tables by the firing side. es2_xref finds six calls, two in each of 00003a58, Mech_DirectFireHitTest (00013b44) and Flyer_DirectFireHitTest (0001b370), slot +0x24 of the base, mech and flyer vtables; the mech's scales copies of the shot's +6 and +4 when the owner's group's side byte +0x14 is 0.",
+      "description": "(figure), callee-cleaned: the int16 the argument points at becomes Math_Q10Multiply(it, DamageScaleByDifficulty (000922c4)[i]), i script.dat header word 7 (000bc4aa), or 3 when the header word at offset 4 (MissionModeFlag (000bc4a0)), where the shell writes the load's mode, is not 0. One table and no side, where ES2's Damage_ScaleByDifficulty (DBSIM 00426b04) picks one of two tables by the firing side. es2_xref finds six calls, two in each of Base_DirectFireHitTest (00003a58), Mech_DirectFireHitTest (00013b44) and Flyer_DirectFireHitTest (0001b370), slot +0x24 of the base, mech and flyer vtables; the mech's scales copies of the shot's +6 and +4 when the owner's group's side byte +0x14 is 0.",
       "source": "Herculan/docs/es1/simulation/world.md#the-difficulty-scale--damage_scalebydifficulty-0001f82c",
       "verified": {
         "bytes": "0001f82c+78",
@@ -12610,7 +13240,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_RaycastShapeVolume",
-      "description": "(count, objects, ray, result) in stack order, callee-cleaned: ES2's Sim_RaycastShapeVolume (DBSIM 00427da8) over a pointer array of count objects, with ES2's ray record (+0 frame pointer, +4 length, +8 int16 clearance, +0xa world-to-ray transform). Per object, its shape being its shape instance (+0x2e) +4 (shape 0 without one) and reach = shape +8 + clearance: d = Math_DistanceBetweenPoints (00063c20)(object +0x20, frame +0x14) replaces RaycastShapeMinDistance (000afa40) when it is less; when d is at most reach + length, RaycastShapeMinDistance becomes 0, Transform_ApplyToPoint (0005f58c) takes the position through the ray's +0xa, and with |x| < reach and -reach < y < reach + length (Z is not tested) the object's Context_GetTransform (000016e8)(object +6), inverted with Transform_TransposeRotation (00063e05) and Transform_RotatePoint (0005ef74) of the negated translation, takes the ray's start and its end (0, length, 0) into shape space for GridShape_Raycast (0001fccc)(shape, clearance, the two points, out). On a hit the ray's +4 becomes the distance from the start to the hit point at out +4, result +0 that distance and result +4 the object, and the walk ends when the distance is below 500. Returns 1 in AX when anything was hit, otherwise 0. ES2's result takes the object's +0xc. es2_xref finds calls from Sim_RaycastShapeList (000037e0) (a stack array and its count), from 00003a58 (count 1) and from Zone_RaycastShapeObjects (00020b50); the five dwords it lists equal to the padding entry 00020893 are bytes of MOV [EBX+0x208] instructions.",
+      "description": "(count, objects, ray, result) in stack order, callee-cleaned: ES2's Sim_RaycastShapeVolume (DBSIM 00427da8) over a pointer array of count objects, with ES2's ray record (+0 frame pointer, +4 length, +8 int16 clearance, +0xa world-to-ray transform). Per object, its shape being its shape instance (+0x2e) +4 (shape 0 without one) and reach = shape +8 + clearance: d = Math_DistanceBetweenPoints (00063c20)(object +0x20, frame +0x14) replaces RaycastShapeMinDistance (000afa40) when it is less; when d is at most reach + length, RaycastShapeMinDistance becomes 0, Transform_ApplyToPoint (0005f58c) takes the position through the ray's +0xa, and with |x| < reach and -reach < y < reach + length (Z is not tested) the object's Context_GetTransform (000016e8)(object +6), inverted with Transform_TransposeRotation (00063e05) and Transform_RotatePoint (0005ef74) of the negated translation, takes the ray's start and its end (0, length, 0) into shape space for GridShape_Raycast (0001fccc)(shape, clearance, the two points, out). On a hit the ray's +4 becomes the distance from the start to the hit point at out +4, result +0 that distance and result +4 the object, and the walk ends when the distance is below 500. Returns 1 in AX when anything was hit, otherwise 0. ES2's result takes the object's +0xc. es2_xref finds calls from Sim_RaycastShapeList (000037e0) (a stack array and its count), from Base_DirectFireHitTest (00003a58) (count 1) and from Zone_RaycastShapeObjects (00020b50); the five dwords it lists equal to the padding entry 00020893 are bytes of MOV [EBX+0x208] instructions.",
       "source": "Herculan/docs/es1/simulation/terrain.md#a-ray--zone_raycastshapeobjects-00020b50",
       "verified": {
         "bytes": "00020894+699",
@@ -34747,7 +35377,7 @@
       "type": "function",
       "confidence": "high",
       "name": "BaseType_ResolveShape",
-      "description": "(tag, index, path) in stack order, callee-cleaned: opens path and skips index chunks (ClassItem_PeekTypeTag, ClassItem_Skip), each with a tag other than tag a severity-5 assert (libio.cpp line 0x97, fatal); then Arena_Push, ClassItem_LoadResource in mode 0, Arena_Pop, closes the stream and returns the object. es2_xref finds two calls, from 000045a4. ES2's BaseType_ResolveShape (DBSIM 00474cd8), whose arena is 200000 bytes.",
+      "description": "(tag, index, path) in stack order, callee-cleaned: opens path and skips index chunks (ClassItem_PeekTypeTag, ClassItem_Skip), each with a tag other than tag a severity-5 assert (libio.cpp line 0x97, fatal); then Arena_Push, ClassItem_LoadResource in mode 0, Arena_Pop, closes the stream and returns the object. es2_xref finds two calls, from BaseType_LoadShape (000045a4). ES2's BaseType_ResolveShape (DBSIM 00474cd8), whose arena is 200000 bytes.",
       "source": "Herculan/docs/es1/formats/dts-shape.md",
       "verified": {
         "bytes": "000636a4+188",
@@ -41684,6 +42314,87 @@
       "source": "Herculan/docs/es1/simulation/object-classes.md#the-classes; ES1DBSIM image at 00090406"
     },
     {
+      "address": "0009048c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "BaseFiringWindow",
+      "description": "Two int16, 10000 and 10000: the counter Base_ArmedThinkTick (00003364) reloads the firing window +0x1b1 with, indexed by the flag +0x1b4 it has just flipped.",
+      "source": "Herculan/docs/es1/simulation/structures.md#the-gun-tower--base_armedthinktick-00003364"
+    },
+    {
+      "address": "00090490",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "BaseTurret_Gain",
+      "description": "Two int16, 2000 and 2500: the per-axis gain of Base_AimTurret (00003058), elevation then traverse.",
+      "source": "Herculan/docs/es1/simulation/structures.md#the-turret--base_aimturret-00003058"
+    },
+    {
+      "address": "00090494",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "BaseTurret_RateLimit",
+      "description": "Two int16, 200 and 800: the per-axis rate limit of Base_AimTurret (00003058).",
+      "source": "Herculan/docs/es1/simulation/structures.md#the-turret--base_aimturret-00003058"
+    },
+    {
+      "address": "00090498",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "BaseTurret_MinAngle",
+      "description": "Two int16, -4000 and -32768: the lower stops of Base_AimTurret (00003058).",
+      "source": "Herculan/docs/es1/simulation/structures.md#the-turret--base_aimturret-00003058"
+    },
+    {
+      "address": "0009049c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "BaseTurret_MaxAngle",
+      "description": "Two int16, 4000 and 32767: the upper stops of Base_AimTurret (00003058).",
+      "source": "Herculan/docs/es1/simulation/structures.md#the-turret--base_aimturret-00003058"
+    },
+    {
+      "address": "000904a0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "BaseHit_Occupancy",
+      "description": "One byte, 1: the occupancy flags Base_DirectFireHitTest (00003a58) passes Mech_SelectStruckComponent for a structure's collision model.",
+      "source": "Herculan/docs/es1/simulation/structures.md#hits--base_directfirehittest-00003a58"
+    },
+    {
+      "address": "00090522",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "StructureVtable",
+      "description": "The plain structure's table, BASES.DAT types 0-4 and 7, which Base_Construct (00003cbc) stores in every arm before a class's own: Structure_DrawWithDetailBias (00002d18) at +4, Base_Dtor (00004318) at +0xc, Base_ThinkTick (00002df8) at +0x1c, Base_DirectFireHitTest (00003a58) at +0x24.",
+      "source": "Herculan/docs/es1/simulation/structures.md#the-classes"
+    },
+    {
+      "address": "0009059e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "StructureRadarVtable",
+      "description": "The radar mast's table, BASES.DAT types 5 and 6, which Base_Construct (00003cbc) stores: the slots of StructureVtable (00090522) with Base_RadarDtor (00004360) at +0xc.",
+      "source": "Herculan/docs/es1/simulation/structures.md#the-classes"
+    },
+    {
+      "address": "0009061a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "StructureArmedVtable",
+      "description": "The GUN TOWER's table, BASES.DAT type 8, which Base_Construct (00003cbc) stores: the slots of StructureVtable (00090522) with Base_ArmedDtor (000043a8) at +0xc, Base_ArmedThinkTick (00003364) at +0x1c and Base_GetTurretAngle (00002dc0) at +0x40.",
+      "source": "Herculan/docs/es1/simulation/structures.md#the-classes"
+    },
+    {
       "address": "00090822",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -44632,8 +45343,35 @@
       "type": "data",
       "confidence": "high",
       "name": "g_BasePool",
-      "description": "Pointer to the pool DBSim_BuildGroupRecord (0001cff4) takes a base group's members and a kind-3 target from with Pool_Nth (00063a78); each such member goes to FUN_000044a4 with the group.",
+      "description": "Pointer to the structures' pool of 0x1ba-byte elements, which Structure_InitPool (00004574) makes and Base_Construct (00003cbc) draws from; DBSim_BuildGroupRecord (0001cff4) takes a base group's members and a kind-3 target from with Pool_Nth (00063a78); each such member goes to Base_AttachToGroup with the group.",
       "source": "Herculan/docs/es1/simulation/mission-groups.md#the-group-record"
+    },
+    {
+      "address": "000aed74",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_BaseDeleteQueue",
+      "description": "The structures' static delete queue: the three structure destructors queue a structure on it with ObjectPool_QueueForDelete and Structure_FlushDeletes (00004590) empties it into g_BasePool (000aed70) at subsystem phase 5.",
+      "source": "Herculan/docs/es1/simulation/structures.md#globals"
+    },
+    {
+      "address": "000aeddc",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "BaseAimNodeTransform",
+      "description": "The 32-byte transform Base_GetAimNodeTransform (00002d68) fills and returns: the identity rotation and the translation (0, 0, the type's aim height +0x32). Its first-use byte is 000aedda.",
+      "source": "Herculan/docs/es1/simulation/structures.md#what-a-structure-is-aimed-at"
+    },
+    {
+      "address": "000aee00",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "BaseTurret_AimError",
+      "description": "Three int16, the Euler angles Base_AimTurret (00003058) stores from Math_EulerToward toward the aim point in the turret's frame and returns; its first-use byte is 000aedfc.",
+      "source": "Herculan/docs/es1/simulation/structures.md#the-turret--base_aimturret-00003058"
     },
     {
       "address": "000aee88",
@@ -46218,6 +46956,60 @@
       "name": "SimClock_Countdown",
       "description": "int16: counted down by Time_SimClockTimerTick and reloaded by Time_BeginSimTick each frame.",
       "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000bc16c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "BaseShapes_Animated",
+      "description": "Pointer to the shape table of dts\\bases_an, side 0's animated structures, which Base_LoadResources (000046ac) allocates zeroed and BaseType_LoadShape (000045a4) fills.",
+      "source": "Herculan/docs/es1/simulation/structures.md#loading-the-shapes--basetype_loadshape-000045a4"
+    },
+    {
+      "address": "000bc170",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "BaseShapes_AnimatedEnemy",
+      "description": "Pointer to the shape table of dts\\bases_ae, the animated structures of a side other than 0, which Base_LoadResources (000046ac) allocates zeroed and BaseType_LoadShape (000045a4) fills.",
+      "source": "Herculan/docs/es1/simulation/structures.md#loading-the-shapes--basetype_loadshape-000045a4"
+    },
+    {
+      "address": "000bc176",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "BaseShapes_Static",
+      "description": "Pointer to the shape table of dgs\\bases, side 0's static structures, which Base_LoadResources (000046ac) allocates zeroed and BaseType_LoadShape (000045a4) fills.",
+      "source": "Herculan/docs/es1/simulation/structures.md#loading-the-shapes--basetype_loadshape-000045a4"
+    },
+    {
+      "address": "000bc17a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "BaseShapes_StaticEnemy",
+      "description": "Pointer to the shape table of dgs\\bases_e, the static structures of a side other than 0, which Base_LoadResources (000046ac) allocates zeroed and BaseType_LoadShape (000045a4) fills.",
+      "source": "Herculan/docs/es1/simulation/structures.md#loading-the-shapes--basetype_loadshape-000045a4"
+    },
+    {
+      "address": "000bc180",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "BaseHulkShapes",
+      "description": "Pointer to the wrecks' roots, dgs\\bhulks, which Base_LoadResources (000046ac) loads with Shape_LoadAllRoots; Base_Construct (00003cbc) and Base_ThinkTick (00002df8) put entry +0x04 of a structure's type in its shape instance.",
+      "source": "Herculan/docs/es1/simulation/structures.md#the-collapse"
+    },
+    {
+      "address": "000bc184",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "BaseTexture",
+      "description": "The dba\\basetex texture bank, which Base_LoadResources (000046ac) loads when g_LowMemory is 0 and BaseType_LoadShape (000045a4) puts in each structure shape's +0x26.",
+      "source": "Herculan/docs/es1/simulation/structures.md#loading-the-shapes--basetype_loadshape-000045a4"
     },
     {
       "address": "000bc18a",

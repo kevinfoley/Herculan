@@ -226,9 +226,9 @@ ES2's pair count and nine of its ten (counter, operation) pairs have no place: `
 | `0x0c` | heading ref (row 4), resolved |
 | `0x0e`, `0x10` | two words, exported, unset `-1`: the out-of-action pair, [above](#flyers) |
 | `0x12`, `0x14` | action refs (row 7), resolved |
-| `0x16` | a word, exported, unset 100 |
+| `0x16` | the starting condition, exported, unset 100: the simulator places the structure undamaged at 100 or a negative value, destroyed and wrecked at 0, and damaged by the rest of 100 per cent otherwise ([construction](../simulation/structures.md#construction--base_construct-00003cbc)) |
 
-In `B0_C2_60.MSN` four bases hold 41 at `0x0e` and 2 at `0x10`, and `0x16` holds 0, 5, 20, 50 or 100 across the two files walked ([Open](#open)).
+In `B0_C2_60.MSN` four bases hold 41 at `0x0e` and 2 at `0x10`, and `0x16` holds 0, 5, 20, 50 or 100 across the two files walked.
 
 ### Groups
 
@@ -295,7 +295,7 @@ An 88-byte mech is the record above to `0x4d`, then one word at `0x4e` where tha
 ## Open
 
 - **Open:** what reads [the other layout](#a-file-in-another-layout), and so what its header words and its mechs' word at `0x4e` mean. The byte search and the path builders that turned up no reader are in [`bst-battle-sets.md`](bst-battle-sets.md#open).
-- **Open:** whether mech `0x62`, flyer `0x3e` and base `0x16` are ES2's constant and starting condition. The simulator's second pass does not read mech `0x62` or flyer `0x3e`, and passes base `0x16` to `00003cbc` with the rest of the record; it hands mech `0x4e`–`0x61` to `Mech_ConfigureLoadout` as the ammunition types and `0x68` to `Mech_ApplyStartingCondition` as the starting condition ([the second pass](script-dat.md#the-second-pass)).
+- **Open:** whether mech `0x62` and flyer `0x3e` are ES2's constant and starting condition. The simulator's second pass does not read them; it hands mech `0x4e`–`0x61` to `Mech_ConfigureLoadout` as the ammunition types and `0x68` to `Mech_ApplyStartingCondition` as the starting condition ([the second pass](script-dat.md#the-second-pass)).
 - **Open:** what the exported fields mean that no code read so far uses: the 20 words at mech and flyer `0x08` and group `0x06`, of which the simulator's second pass reads only mech `0x08` and `0x0a` ([the second pass](script-dat.md#the-second-pass)), an action's type and verb, the group word `0x52`, and header words 4 to 6. The simulator's mission status reads group `0x32` and header word 3 ([the status](../simulation/mission-status.md#the-status--mission_status-0000f4e8)).
 - **Open:** whether a group's `0x50` action holds the group out of the mission until it fires, as ES2's group action `0x70` does: the simulator keeps it at the group's `+0x16`, and the functions that sweep objects for shots, blasts and trigger areas skip the group's members while it is set ([the group record](../simulation/mission-groups.md#the-group-record)). And whether `0x30` and `0x32`, which the simulator copies to the group record's `+2` and `+4`, hold an order's verb and formation. In `B0_C2_60.MSN` the first group, the squad, holds 0 at `0x4a` and the groups that name it or one of its mechs at `0x4e` hold 1.
 - **Open:** what reads header word 4 at `000aad5c`.
