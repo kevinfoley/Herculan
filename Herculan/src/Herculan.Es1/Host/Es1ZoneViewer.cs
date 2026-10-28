@@ -82,6 +82,9 @@ public static class Es1ZoneViewer {
 			Console.WriteLine($"Loaded {missionName} as a single mission into data\\script.dat, mission.var and player.mec.");
 		}
 
+		// PLACEHOLDER: Sim_Main's step 4, the heap's size to data\mem.got and an int16 0 to data\exit.cfg
+		// (docs/es1/simulation/main-loop.md#starting--sim_main-00059350), is not made, so a run the window's close ends
+		// leaves exit.cfg as the last mission's end wrote it.
 		if (Es1MissionFiles.Read(installRoot, out string? error) is not { } files) {
 			Console.Error.WriteLine(error);
 			return 1;

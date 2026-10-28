@@ -35,7 +35,7 @@ The asserts that name `main.cpp` are `Sim_Main`'s (`0005937c`, `0005942f`, `0005
 1. `Mem_InitHeap`(6,000,000) ([who makes the heap](memory.md#who-makes-the-heap)).
 2. `Sim_PreParseCommandLine` (`00058e30`)(argv, argc): `-c` anywhere on the line sets `Sim_AltDriveAllowed` (`000b5bce`).
 3. **The drive prefix.** `ALT_DRIVE`'s value, taken as null unless `-c` was given, when the variable `PREFER_ALT` is set, and the empty string otherwise, is copied to `000b5d9c` and passed to `00056ecc`. `Path_ApplyAltDrive` (`000592a4`) puts that prefix before every path it builds, less the path's own drive letter. With `PREFER_ALT` set and no `-c` the copy reads from a null pointer.
-4. It writes the heap's size, 4 bytes, to `data\mem.got` and an `int16` 0 to `data\exit.cfg`, both through `Path_ApplyAltDrive`, asserting at severity 5 (lines `0xf1`, `0xf9`) when either does not open.
+4. It writes the heap's size, 4 bytes, to `data\mem.got` and an `int16` 0 to `data\exit.cfg`, both through `Path_ApplyAltDrive`, asserting at severity 5 (lines `0xf1`, `0xf9`) when either does not open. So `exit.cfg` holds 0 after a run that ends before [the end](#the-end--sim_shutdown-0005b568) writes its code, as step 6's refusal and a fatal assert ([a fatal assert in a mission](asserts.md#a-fatal-assert-in-a-mission)) do.
 5. `Sim_ParseCommandLine` (`00058e74`)(argv, argc), [below](#the-command-line).
 6. Without `-eggplant` (`Sim_EggplantGiven`, `000b5bc4`) it closes the tape and `.dmp` files, turns the heap off, prints `To play EarthSiege, type ES.` and exits with status 1.
 7. Subsystem phase 0; `VolumeGroup_SetBufferSize`(`0x200`); `VolRStream_SetGroup` with mask 1, extension `.vol`, the directory `ALT_DRIVE` (when `-c` was given) and `dirFirst` set when `PREFER_ALT` is ([the volume group](../formats/streams.md#the-volume-group)); subsystem phase 1.
@@ -43,7 +43,9 @@ The asserts that name `main.cpp` are `Sim_Main`'s (`0005937c`, `0005942f`, `0005
 9. `Sim_StartMission` (`0005a9dc`), subsystem phase 3, and the frame loop ([the frame](#the-frame)).
 10. After the loop, `Sim_Shutdown` (`0005b568`), `Mem_HeapOff`, and with `-eggplant` given and the quit flag clear, bit 0 of the byte `SimDisplay` (`000b5b5c`) points at cleared.
 
-Where ES2's `Sim_Run` differs: it reads `data\drive.cfg` instead of the environment, refuses without `-eggplant` in a message box, checks physical memory, and after the loop saves the full-screen option and deletes the tape's two configuration files ([ES2's start](../../retail/simulation/main-loop.md#starting)).
+**`Sim_Main` returns no value, so the program's exit status is not the exit code.** Nothing after the loop sets `EAX` (`00059627`–`00059654`; `Mem_HeapOff` (`00001598`) only clears `000901d4`), and the startup passes whatever `EAX` holds to `exit` (`00000173`, [startup](../formats/compiler.md#startup)): what `Sim_Shutdown`'s calls left there. The exit code reaches the shell through `data\exit.cfg` alone ([the end](#the-end--sim_shutdown-0005b568)).
+
+Where ES2's `Sim_Run` differs: it reads `data\drive.cfg` instead of the environment, refuses without `-eggplant` in a message box, checks physical memory, after the loop saves the full-screen option and deletes the tape's two configuration files ([ES2's start](../../retail/simulation/main-loop.md#starting)), and its `WinMain` returns the exit code ([exit codes](../../retail/command-line.md#exit-codes)).
 
 ### The command line
 
@@ -75,7 +77,7 @@ Where ES2's parsers differ ([ES2's switches](../../retail/command-line.md#dbsim)
 
 `Sim_Main` calls it once. ES2's counterpart puts up a loading picture first ([ES2's](../../retail/simulation/mission-loading.md#showing-it)); ES1's shows nothing until the first frame. In order:
 
-1. Hands `Sim_AssertCleanupHook` (`0005a7b8`) to `0005730c`, where ES2's registers its hook with `Assert_AddHook`. The hook runs `Sound_Shutdown`, `0006a5fc` on the current display, closes the tape and `.dmp` files, `GndTex_Free`, and writes an `int16` 0 to `data\exit.cfg` (`init.cpp` line 100).
+1. Adds `Sim_AssertCleanupHook` (`0005a7b8`) to the assert hooks with `Assert_AddHook` (`0005730c`), as ES2's does ([asserts](asserts.md#severities)). The hook runs `Sound_Shutdown`, `0006a5fc` on the current display (`000bdd28`) when there is one, closes the tape when `TapeFile` is set and then, inside that test, the `.dmp` file when `DmpFile` is set, runs `GndTex_Free`, and writes an `int16` 0 to `data\exit.cfg` through `Path_ApplyAltDrive` (`init.cpp` line 100, severity 5 when it does not open) ([a fatal assert in a mission](asserts.md#a-fatal-assert-in-a-mission)).
 2. `Input_BuildSourceTable` ([setting up](input.md#setting-up--input_buildsourcetable-0004c95c)); `Sim_Timer` (`000b5baa`) = `DVTimer_Ctor` (`0006c6f8`)(0, `0x26d3`), the PC timer at 120 interrupts a second ([the rate](timer.md#the-rate)).
 3. **Sound.** With `000b5b68` set it reads `resource.cfg` (through `Path_ApplyAltDrive`) with `Profile_GetString` (`000511a4`) and `Profile_GetInt` (`00050ffc`) ([profile files](../formats/profile-files.md)): `[SoundFX]`'s `Driver#`, `IRQ`, `DMA` and `PortAddress` and `[Music]`'s `Driver#` and `PortAddress`, the hexadecimal ones through `sscanf` (`0006c871`) with `%X`, and passes them to `Sound_Init`; with it clear, digital device 0 ([the driver](../formats/sound-samples.md#the-driver)). Then `Snc_MissionInit` (`0004e498`), which starts the lip-sync player's clock ([playing a line](../formats/snc-lip-sync.md#playing-a-line)), and with no sound manager (`000959ac`) `Prefs_SetOption`(1, 0, *i*) for options 0, 1 and 2.
 4. `Light_ResetSystem`, `00075858`, `00066e00`, `Widget_LoadStylesAndFonts`; the two hooks `AlertPanel_EnterHook` (`00094d80`) and `AlertPanel_LeaveHook` (`00094d84`) = `SimInput_PushDisable` (`0005a5b4`) and `SimInput_PopEnable` (`0005a5d8`) ([small functions](#small-functions)); `Mono_Clear` with `-m`.
@@ -260,7 +262,7 @@ Where ES2's differs ([ES2's](../../retail/simulation/joystick-input.md#while-the
 
 ## The end — `Sim_Shutdown` (`0005b568`)
 
-`Sim_Main` calls it after the loop: `CockpitMouseLive` = 0; the `.dmp` file and the tape closed; `GndTex_Free`; `Mission_WriteResults`(`LocalPlayerMech`) ([the results](world.md#writing-the-results--mission_writeresults-0001d698)); the exit code, 6 under `DemoMode`, 0 with `Sim_QuitFlag`, else 4 when the player is destroyed (`+0x93`) and `MissionModeFlag` (`000bc4a0`) is not 0, else 3, written as an `int16` to `data\exit.cfg` (assert `init.cpp` line `0x1a4`); `Sound_Shutdown`; `Sim_ShutdownNoOp1` and `Sim_ShutdownNoOp2` ([small functions](world.md#small-functions)). ES2's codes are the same, returned from `WinMain` ([exit codes](../../retail/command-line.md#exit-codes)); ES2's load zeroes its `MissionModeFlag`, ES1's keeps the header's mode word ([the header](../formats/script-dat.md#the-header)).
+`Sim_Main` calls it after the loop: `CockpitMouseLive` = 0; when `TapeFile` is set, the `.dmp` file closed when `DmpFile` is set and then the tape, the `.dmp` file's close inside the tape's test; `GndTex_Free`; `Mission_WriteResults`(`LocalPlayerMech`) ([the results](world.md#writing-the-results--mission_writeresults-0001d698)), a file of which that does not open ending the program with 0 left in `data\exit.cfg` ([a fatal assert in a mission](asserts.md#a-fatal-assert-in-a-mission)); the exit code, 6 under `DemoMode`, 0 with `Sim_QuitFlag`, else 4 when the player is destroyed (`+0x93`) and `MissionModeFlag` (`000bc4a0`) is not 0, else 3, written as an `int16` to `data\exit.cfg` (assert `init.cpp` line `0x1a4`); `Sound_Shutdown`; `Sim_ShutdownNoOp1` and `Sim_ShutdownNoOp2` ([small functions](world.md#small-functions)). ES2's codes are the same, returned from `WinMain` ([exit codes](../../retail/command-line.md#exit-codes)); ES2's load zeroes its `MissionModeFlag`, ES1's keeps the header's mode word ([the header](../formats/script-dat.md#the-header)).
 
 ## Small functions
 
@@ -329,7 +331,7 @@ The flags lie in the block `Main_StaticInit` zeroes, `000b5b5c`–`000b5bd3`.
 
 ## Open
 
-- **Open:** the callees read for none of this file's functions: `0005771c` (the demo tape's name), `0005756c` and `000574a0` (the bundle) and `00057cf4` and `00057ffc` (the lift), all in the file before; `00056ecc` (the drive prefix), `0005730c`, `0004e294`, `00075858`, `00066e00` and `0006a5fc`.
+- **Open:** the callees read for none of this file's functions: `0005771c` (the demo tape's name), `0005756c` and `000574a0` (the bundle) and `00057cf4` and `00057ffc` (the lift), all in the file before; `00056ecc` (the drive prefix), `0004e294`, `00075858`, `00066e00` and `0006a5fc`.
 - **Open:** what `000b5b69` (`-P`) and `-V`, `-W` and `-T`'s words feed, and what sets `Sim_StepOnce`; `es2_xref.py` finds only the stores above and the tick's test, and a store through the block's base `000b5b5c` is not covered by that search.
 - **Open:** what the bit `Sim_Main` clears in the display's first byte does.
 - **Open:** the callees of [the frame's sounds](#the-frames-sounds--sim_framesoundtick-00058574) and [the views](#the-views--viewchain_apply-0005894c) read for none of this file's functions: `0004fb60` (the listener's frame), `0004dee4` (it sets `000b1a84` and `SoundCatalog_Positions` (`000b1b74`)), `0006edb3`, `0006f225` and `0006df9d` (the HMI calls); and `0004ad0c`'s callers and what `000b1734` is.

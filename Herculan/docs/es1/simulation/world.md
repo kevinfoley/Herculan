@@ -16,10 +16,10 @@ The module's functions run in ES2's order, from `Mission_WriteResults` to the `G
 
 ## Writing the results — `Mission_WriteResults` (`0001d698`)
 
-ES2's writer ([what the mission leaves the shell](../../retail/simulation/mission-objectives.md#what-the-mission-leaves-the-shell--mission_writeresults-0042412c)), given the player's machine. `es2_xref.py` finds one call, from `Sim_Shutdown` (`0005b568`, [the end](main-loop.md#the-end--sim_shutdown-0005b568)), which also calls `GndTex_Free` ([the ground texture](../rendering/ground-and-sky.md#loading-the-ground-texture)). With *g* the player's group (`+0x3f`) and *w* header word 3 of `data\script.dat` (the dword at `000bc4a2`):
+ES2's writer ([what the mission leaves the shell](../../retail/simulation/mission-objectives.md#what-the-mission-leaves-the-shell--mission_writeresults-0042412c)), given the player's machine. `es2_xref.py` finds one call, from `Sim_Shutdown` (`0005b568`, [the end](main-loop.md#the-end--sim_shutdown-0005b568)), which also calls `GndTex_Free` ([the ground texture](../rendering/ground-and-sky.md#loading-the-ground-texture)). With *g* the player's group (`+0x3f`) and *w* the dword at `000bc4a2`, header words 3 and 4 of `data\script.dat`, which it pushes whole (`0001d6aa`, `0001d711`):
 
-1. It asks `Group_StatusLineIndex` (`0000f0f0`)(*g*, *w*) for the outcome, the squad's report line for verb *w* ([the group report](mission-status.md#the-group-report--group_statuslineindex-0000f0f0)).
-2. It opens `data\results.dat` through `Path_ApplyAltDrive` and `FileWStream_Ctor`, asserting at severity 5 (`world.cpp` line `0x58`) when it cannot, and writes:
+1. It asks `Group_StatusLineIndex` (`0000f0f0`)(*g*, *w*) for the outcome, the squad's report line for verb *w* ([the group report](mission-status.md#the-group-report--group_statuslineindex-0000f0f0)); its one read of *w* takes the low word, header word 3 (`MOVSX` at `0000f125`).
+2. It opens `data\results.dat` through `Path_ApplyAltDrive` and `FileWStream_Ctor`, asserting at severity 5 (`world.cpp` line `0x58`) when it cannot, which ends the program before the exit code is written ([a fatal assert in a mission](asserts.md#a-fatal-assert-in-a-mission)), and writes:
 
 | Bytes | Field |
 |---|---|
