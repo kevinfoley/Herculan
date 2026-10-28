@@ -237,8 +237,10 @@ public static class Es1ZoneViewer {
 			disposables.Add(smokeDraw);
 			var flyerDraw = new Es1FlyerDraw(gl, scene, world.Globals.Flyers.Live, detail);
 			disposables.Add(flyerDraw);
+			var structureDraw = new Es1BaseDraw(gl, scene, world.Globals.Structures.Live, world.Globals.Structures.Types, detail);
+			disposables.Add(structureDraw);
 			draw = new Es1WorldDraw(gl, scene, world, models, detail, disposables, projectileDraw, explosionDraw, debrisDraw,
-				smokeDraw, flyerDraw);
+				smokeDraw, flyerDraw, structureDraw);
 			if (manager != null && chain != null) {
 				monitor = new Es1Monitor(gl, manager.Display);
 				disposables.Add(monitor);

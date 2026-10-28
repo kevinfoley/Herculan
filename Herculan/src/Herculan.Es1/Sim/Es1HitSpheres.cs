@@ -84,7 +84,11 @@ public static class Es1HitSpheres {
 		}
 
 		int offset = 0;
-		var nodes = new HercColliderTransformer().ReadNodes(bytes, ref offset);
+		return WithBounds(new HercColliderTransformer().ReadNodes(bytes, ref offset));
+	}
+
+	/// <summary><paramref name="nodes"/> as <c>Collision_LoadRecordArray</c> leaves a model: each node's clusters bounded.</summary>
+	public static ColliderNode[] WithBounds(ColliderNode[] nodes) {
 		for (int n = 0; n < nodes.Length; n++) {
 			nodes[n] = WithBounds(nodes[n]);
 		}

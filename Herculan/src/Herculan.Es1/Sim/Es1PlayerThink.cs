@@ -125,8 +125,8 @@ public static class Es1PlayerThink {
 			return;
 		}
 
-		// Retail reads the subject and its group with no test. PLACEHOLDER: a base subject (kind 3) is null until the
-		// plan's module 2 builds them; with none, and for a subject with no group, the link is not held, an engine guard.
+		// Retail reads the subject and its group with no test; with none, and for a subject with no group, the link is not
+		// held, an engine guard.
 		if (group.OrderTargetObject() is { Destroyed: false, Group.Action: null } subject
 				&& DistanceBetweenPoints(subject.Position, mech.Position) < ArrivalRange
 				&& InDataLinkArc(mech, subject)) {

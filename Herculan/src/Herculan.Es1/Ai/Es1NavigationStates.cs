@@ -155,9 +155,9 @@ public static class Es1NavigationStates {
 		mech.Turret.CenterTorsoTick(globals.Clock, globals.TurretServos, 0);
 		Es1Navigation.UpdateWeaponsFree(mech);
 		if (post is not { } point) {
-			// PLACEHOLDER: retail reads the post through the group's target with no test. Here there is none where that
-			// target is a structure, which the slice does not build until the plan's module 2, or a kind with no route; the
-			// machine stands, asking nothing of the control law.
+			// Retail reads the post through the group's target with no test. Here there is none where the pool had no object
+			// for that target, or for a kind with no route; the machine stands, asking nothing of the control law, an engine
+			// guard.
 			mech.Locomotion.LocomotionTick(globals, 0, 0, 0);
 			return 0;
 		}

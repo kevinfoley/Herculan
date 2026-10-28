@@ -144,9 +144,10 @@ public sealed class Es1Simulation {
 
 		// 2. The pools, each walked with Pool_Prev from the end, oldest first, and the groups.
 		if (!Frozen) {
-			for (int i = 0; i < Globals.Structures.Count; i++) {
-				// PLACEHOLDER: slot +0x1c, the structure's tick, unread with its constructor 00003cbc; the plan's
-				// structures step (after step 8) spawns and ticks them.
+			// The structures, each through slot +0x1c whatever its group.
+			var structures = Globals.Structures.Live;
+			for (int i = 0; i < structures.Count; i++) {
+				structures[i].Tick(Globals);
 			}
 
 			// The explosions, the smoke balls, the smoke emitters and the debris, each element whose tick answers non-zero
@@ -522,8 +523,9 @@ public sealed class Es1Simulation {
 	/// <summary>
 	/// <c>Group_TickMembers</c> (<c>0001cf60</c>): <c>Mech_AiTick</c> on each member
 	/// (docs/es1/simulation/mission-groups.md#the-tick), a HERC's through its slots and a flyer's through the aircraft's
-	/// (<see cref="Es1FlyerBehaviour.AiTick"/>). A member the pool had no object for, or a base, which no group holds until
-	/// the plan's module 2 builds them, is skipped.
+	/// (<see cref="Es1FlyerBehaviour.AiTick"/>). A member the pool had no object for is skipped, and so is a structure:
+	/// <c>Mech_AiTick</c> acts only with a behaviour descriptor, which no structure has
+	/// (docs/es1/simulation/structures.md#construction--base_construct-00003cbc).
 	/// </summary>
 	private void TickMembers(Es1MissionGroup group) {
 		foreach (var member in group.Members) {

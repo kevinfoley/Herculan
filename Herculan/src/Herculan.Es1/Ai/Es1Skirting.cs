@@ -108,7 +108,7 @@ public static class Es1Skirting {
 		}
 
 		short side = (sbyte)(mech.Group?.Side ?? 0);
-		return Es1ObstacleAvoidance.StructureRaycastShapes(side, target.Position, mech.Position, out _)
+		return Es1ObstacleAvoidance.StructureRaycastShapes(side, target.Position, mech.Position, globals, out _)
 			|| globals.ZoneShapes.RaycastShapes(0, target.Position, mech.Position, out _);
 	}
 }

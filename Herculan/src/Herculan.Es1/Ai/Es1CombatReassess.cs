@@ -272,9 +272,9 @@ public static class Es1CombatReassess {
 	}
 
 	/// <summary>
-	/// PLACEHOLDER: whether a class-1 target's type record <c>+0x34</c> is 0, which the flee check and <c>attacking base</c>
-	/// read. No structure is a simulation object in the slice (docs/herculan/plan-es1-first-mission.md#what-the-slice-leaves-out),
-	/// so no target has class 1 and this is never asked; it answers no until the plan's module 2 (effects and structures).
+	/// Whether a class-1 target's type record (<c>+0x188</c>) <c>+0x34</c> is 0, which the flee check and <c>attacking base</c>
+	/// read (docs/es1/simulation/structures.md#what-the-hercs-ai-does-with-a-structure): every structure type's but the GUN
+	/// TOWER's. Retail reads the record of any class-1 object; the structure is the only one, so any other answers no here.
 	/// </summary>
-	internal static bool StructureTypeWord34IsZero(IEs1SimObject target) => false;
+	internal static bool StructureTypeWord34IsZero(IEs1SimObject target) => target is Es1Base { Type.Word34: 0 };
 }

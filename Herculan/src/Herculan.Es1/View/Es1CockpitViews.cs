@@ -64,11 +64,13 @@ public sealed class Es1CockpitViews {
 	/// <param name="simulatorStrings"><c>str\strings0.str</c>; none when null.</param>
 	/// <param name="statusFlyers">The frames of <c>dba\flyers</c>; none when null.</param>
 	/// <param name="scannerRadar">The frames of <c>dba\radar</c>; none when null.</param>
+	/// <param name="statusBases">The frames of <c>dba\bases</c>; none when null.</param>
 	internal Es1CockpitViews(string name, Vue.Entry[] records, Es1ClipBlock[] clips, DynamixBitmap?[] canopies,
 			DynamixPalette? palette, Es1GauFile? layout = null, Es1CursorImage?[]? cursors = null, HudFont?[]? fonts = null,
 			Es1GunsightBanks? gunsightBanks = null, IReadOnlyList<DynamixBitmap>? pushButtons = null,
 			IReadOnlyList<DynamixBitmap>? throttleLights = null, Func<string, string, byte[]?>? resources = null, StringFile? simulatorStrings = null,
-			IReadOnlyList<DynamixBitmap>? statusFlyers = null, IReadOnlyList<DynamixBitmap>? scannerRadar = null) {
+			IReadOnlyList<DynamixBitmap>? statusFlyers = null, IReadOnlyList<DynamixBitmap>? scannerRadar = null,
+			IReadOnlyList<DynamixBitmap>? statusBases = null) {
 		Name = name;
 		_records = records;
 		_clips = clips;
@@ -83,6 +85,7 @@ public sealed class Es1CockpitViews {
 		Resources = resources;
 		SimulatorStrings = simulatorStrings;
 		StatusFlyers = statusFlyers;
+		StatusBases = statusBases;
 		ScannerRadar = scannerRadar;
 	}
 
@@ -148,10 +151,15 @@ public sealed class Es1CockpitViews {
 
 	/// <summary>
 	/// <c>MfdStatus_FlyersBank</c> (<c>000935f8</c>), the frames of <c>dba\flyers</c>, which the MFD's status screen loads
-	/// (docs/es1/simulation/mfd-status-screen.md#the-screen-object); null when the file is missing. Its <c>dba\bases</c>
-	/// waits for the structures it draws.
+	/// (docs/es1/simulation/mfd-status-screen.md#the-screen-object); null when the file is missing.
 	/// </summary>
 	public IReadOnlyList<DynamixBitmap>? StatusFlyers { get; }
+
+	/// <summary>
+	/// <c>MfdStatus_BasesBank</c> (<c>000935f4</c>), the frames of <c>dba\bases</c>, which the MFD's status screen loads with
+	/// <see cref="StatusFlyers"/> (docs/es1/simulation/mfd-status-screen.md#the-screen-object); null when the file is missing.
+	/// </summary>
+	public IReadOnlyList<DynamixBitmap>? StatusBases { get; }
 
 	/// <summary>
 	/// <c>MfdRadar_RadarBank</c> (<c>0009385c</c>), the frames of <c>dba\radar</c>, which the MFD's scanner screen loads
@@ -228,6 +236,6 @@ public sealed class Es1CockpitViews {
 		return new Es1CockpitViews(name, records, clips, canopies, palette, loaded, cursors, fonts,
 			Es1GunsightBanks.Load(content), Es1WidgetResources.LoadFrames(content, "PBUTTONS"), lights, content.Read,
 			SimStrings.LoadUntranslated(content, SimStrings.SimulatorStrings), Es1WidgetResources.LoadFrames(content, "FLYERS"),
-			Es1WidgetResources.LoadFrames(content, "RADAR"));
+			Es1WidgetResources.LoadFrames(content, "RADAR"), Es1WidgetResources.LoadFrames(content, "BASES"));
 	}
 }

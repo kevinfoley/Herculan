@@ -33,11 +33,11 @@ public sealed class Es1Shading {
 
 	/// <summary>
 	/// The tags whose bands the table holds, in block order: the zone shapes', the HERCs', the projectiles', the impact
-	/// effects' two and the flyers'. <c>SHADES.DAT</c> has no list for the effects' tags, so their blocks hold the
-	/// palette's own ramps.
+	/// effects' two, the flyers' and the structures'. <c>SHADES.DAT</c> has no list for the effects' tags, so their blocks
+	/// hold the palette's own ramps.
 	/// </summary>
 	public static IReadOnlyList<byte> Tags { get; } = [ZoneShapeTag, 7, Projectiles.Es1Projectile.TypeTag,
-		Effects.Es1Explosion.TypeTag, Effects.Es1Explosion.ClassTypeTag, (byte)Sim.Es1Flyer.TypeTag];
+		Effects.Es1Explosion.TypeTag, Effects.Es1Explosion.ClassTypeTag, (byte)Sim.Es1Flyer.TypeTag, (byte)Sim.Es1Base.TypeTag];
 
 	/// <summary>The tag whose cull <c>WorldShades_IsBeyondLastBand</c> moves by the world file's first distance offset.</summary>
 	private const byte OffsetCullTag = Effects.Es1Explosion.ClassTypeTag;
@@ -55,15 +55,17 @@ public sealed class Es1Shading {
 	private readonly int[] _taggedThresholds;
 	private readonly int _bands;
 	private readonly int _cullOffset;
+	private readonly int _largeOffset;
 
 	private Es1Shading(SurfaceShading surfaces, SurfaceRampTable? table, int[] tag0Thresholds, int[] taggedThresholds,
-			int bands, int cullOffset) {
+			int bands, int cullOffset, int largeOffset) {
 		Surfaces = surfaces;
 		Table = table;
 		_tag0Thresholds = tag0Thresholds;
 		_taggedThresholds = taggedThresholds;
 		_bands = bands;
 		_cullOffset = cullOffset;
+		_largeOffset = largeOffset;
 	}
 
 	/// <summary>
@@ -92,7 +94,7 @@ public sealed class Es1Shading {
 		int[] tag0 = world?.DistanceBandsB ?? [];
 		int[] tagged = world?.DistanceBandsA ?? [];
 		if (palette is not { ShadeRamps.Count: > 0 } || world == null || shades == null || world.RampRows < 1) {
-			return new Es1Shading(surfaces, null, tag0, tagged, 0, world?.DistanceOffsetSmall ?? 0);
+			return new Es1Shading(surfaces, null, tag0, tagged, 0, world?.DistanceOffsetSmall ?? 0, world?.DistanceOffsetLarge ?? 0);
 		}
 
 		var ranges = LevelRanges(world);
@@ -133,7 +135,7 @@ public sealed class Es1Shading {
 				? (byte)entries[shade * entries.Length >> 8]
 				: null,
 			palette);
-		return new Es1Shading(surfaces, table, tag0, tagged, bands, world.DistanceOffsetSmall);
+		return new Es1Shading(surfaces, table, tag0, tagged, bands, world.DistanceOffsetSmall, world.DistanceOffsetLarge);
 	}
 
 	/// <summary>
@@ -143,18 +145,36 @@ public sealed class Es1Shading {
 	/// </summary>
 	public int? FlatBlock => Table != null ? Tags.Count * _bands : null;
 
-	/// <summary>The block an object of <paramref name="tag"/> at <paramref name="distance"/> reads, or null without a table.</summary>
-	public int? Block(byte tag, int distance) {
+	/// <summary>
+	/// The block an object of <paramref name="tag"/> at <paramref name="distance"/> reads, a tag-5 object's by its slot
+	/// <c>+0x14</c> <paramref name="radius"/> as well, or null without a table.
+	/// </summary>
+	public int? Block(byte tag, int distance, int radius = 0) {
 		int t = Tags.ToList().IndexOf(tag);
-		return Table != null && t >= 0 ? t * _bands + Math.Min(Band(tag, distance), _bands - 1) : null;
+		return Table != null && t >= 0 ? t * _bands + Math.Min(Band(tag, distance, radius), _bands - 1) : null;
 	}
+
+	/// <summary>
+	/// The distance a tag-5 object, a structure, is banded and culled at: <paramref name="distance"/> plus
+	/// <c>WorldShades_DistanceOffsets</c> (<c>000bc5c6</c>) entry 0, or entry 1 when its slot <c>+0x14</c> radius
+	/// <paramref name="radius"/> is 5000 or more, clamped at 0; any other tag's distance unchanged.
+	/// </summary>
+	private int StructureDistance(byte tag, int distance, int radius) =>
+		tag == StructureTag ? Math.Max(distance + (radius >= LargeStructureRadius ? _largeOffset : _cullOffset), 0) : distance;
+
+	/// <summary>The type tag whose band and cull take <see cref="StructureDistance"/>.</summary>
+	private const byte StructureTag = (byte)Sim.Es1Base.TypeTag;
+
+	/// <summary>The slot <c>+0x14</c> radius from which a tag-5 object takes the second distance offset.</summary>
+	private const int LargeStructureRadius = 5000;
 
 	/// <summary>
 	/// <c>WorldShades_DistanceBand</c> (<c>00025cb4</c>): how many of the tag's thresholds the distance has reached,
 	/// unsigned, at most one fewer than there are; tag 0 reads <c>WorldShades_BandsTag0</c> and any other tag
-	/// <c>WorldShades_BandsTagged</c>. Neither tag here adds a distance offset.
+	/// <c>WorldShades_BandsTagged</c>, a tag-5 object at <see cref="StructureDistance"/> with its <paramref name="radius"/>.
 	/// </summary>
-	public int Band(byte tag, int distance) {
+	public int Band(byte tag, int distance, int radius = 0) {
+		distance = StructureDistance(tag, distance, radius);
 		var thresholds = tag == ZoneShapeTag ? _tag0Thresholds : _taggedThresholds;
 		int band = 0;
 		while (band < thresholds.Length - 1 && (uint)distance >= (uint)thresholds[band]) {
@@ -167,12 +187,15 @@ public sealed class Es1Shading {
 	/// <summary>
 	/// <c>WorldShades_IsBeyondLastBand</c> (<c>00025f38</c>): whether the distance exceeds the tag's table's last threshold,
 	/// unsigned, which leaves the object undrawn; for tag 8, an impact effect's, the distance first takes the world file's
-	/// first distance offset (<c>WorldShades_DistanceOffsets</c> entry 0), clamped at 0.
+	/// first distance offset (<c>WorldShades_DistanceOffsets</c> entry 0), clamped at 0, and a tag-5 object's is
+	/// <see cref="StructureDistance"/> with its <paramref name="radius"/>.
 	/// </summary>
-	public bool IsBeyondLastBand(byte tag, int distance) {
+	public bool IsBeyondLastBand(byte tag, int distance, int radius = 0) {
 		if (tag == OffsetCullTag) {
 			distance = Math.Max(distance + _cullOffset, 0);
 		}
+
+		distance = StructureDistance(tag, distance, radius);
 
 		var thresholds = tag == ZoneShapeTag ? _tag0Thresholds : _taggedThresholds;
 		return thresholds.Length > 0 && (uint)thresholds[^1] < (uint)distance;

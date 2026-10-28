@@ -171,7 +171,7 @@ public static class Es1FlyerFlight {
 			distance = hit.Distance;
 		}
 
-		if (Es1ObstacleAvoidance.StructureRaycastShapes(-1, end, start, out int structureDistance) && structureDistance < distance) {
+		if (Es1ObstacleAvoidance.StructureRaycastShapes(-1, end, start, globals, out int structureDistance) && structureDistance < distance) {
 			distance = structureDistance;
 		}
 

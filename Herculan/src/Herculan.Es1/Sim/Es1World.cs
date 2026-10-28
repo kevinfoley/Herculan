@@ -113,6 +113,18 @@ public sealed class Es1World {
 		world.Globals.FlyerFormations = flyerFormations;
 		// g_FlyerPool, made to the live flyer count by the first pass.
 		world.Globals.Flyers.Capacity = script.Flyers.LiveCount;
+		// Base_LoadResources' phase-2 load (docs/es1/formats/bases-dat.md#the-load); then the first pass's step 6 for the
+		// bases: BaseType_LoadShape with each live slot's kept side byte, sign-extended, in slot order, and g_BasePool made
+		// to the live count through Structure_InitPool (docs/es1/formats/script-dat.md#reading).
+		var baseTypes = Es1BaseTypes.Load(content);
+		world.Globals.Structures.Types = baseTypes;
+		for (int slot = 0; slot < script.Files.Script.Bases.Length && slot < Es1MissionScript.BaseSlots; slot++) {
+			if (script.Bases.Live[slot]) {
+				baseTypes.LoadShape((sbyte)script.BaseGroupBytes[slot], script.Bases.Types[slot]);
+			}
+		}
+
+		world.Globals.Structures.Capacity = script.Bases.LiveCount;
 		world.SpawnObjects(content, weapons, weaponModels, formations);
 		// Sim_StartMission's step 7, after the second pass: every effect and every debris piece the spawn made deleted.
 		world.Globals.Explosions.DeleteAll();
@@ -200,9 +212,27 @@ public sealed class Es1World {
 			flyer.Word174 = (record.Word36, record.Word38);
 		}
 
-		// PLACEHOLDER: block 8 builds no object: its constructor 00003cbc (a base from its record) is unread
-		// (docs/es1/formats/script-dat.md#open). The plan's module 2 (effects and structures) ports it; the zone's placed
-		// shapes still draw.
+		// Block 8: each live slot's structure, Base_Construct with the slot's kept side byte and its record, then its point
+		// with no height added and its heading, its two actions and its out-of-action pair. Retail writes through the answer
+		// with no null test; one the pool or the type's files gave none is passed over here.
+		for (int slot = 0; slot < dat.Bases.Length && slot < Script.Bases.Live.Length; slot++) {
+			var record = dat.Bases[slot];
+			if (!Script.Bases.Live[slot]
+					|| Globals.Structures.Construct((sbyte)Script.BaseGroupBytes[slot], record, Globals) is not { } structure) {
+				continue;
+			}
+
+			structure.Position = record.PointRef >= 0 && record.PointRef < Script.Points.Length
+				? Script.Points[record.PointRef]
+				: PositionSentinel;
+			structure.Rotation = record.HeadingRef >= 0 && record.HeadingRef < Script.Headings.Length
+				? ((short)0, (short)0, Script.Headings[record.HeadingRef])
+				: RotationSentinel;
+			structure.RotationWord = 0;
+			structure.Actions = (ActionAt(record.ActionRef12), ActionAt(record.ActionRef14));
+			structure.Word174 = (record.Word0E, record.Word10);
+		}
+
 
 		// Block 9. A group's target is a pointer into the array the first pass allocated, so a target group later in the
 		// array is the record that group's turn fills.
@@ -216,6 +246,7 @@ public sealed class Es1World {
 				0 => record.Ref4E >= 0 && record.Ref4E < Groups.Count ? Groups[record.Ref4E] : null,
 				1 when record.Ref4E >= 0 => PoolNth(MapEntry(Script.Mechs, record.Ref4E)),
 				2 when record.Ref4E >= 0 => Globals.Flyers.Nth(MapEntry(Script.Flyers, record.Ref4E)),
+				3 when record.Ref4E >= 0 => Globals.Structures.Nth(MapEntry(Script.Bases, record.Ref4E)),
 				_ => null,
 			};
 		}
@@ -341,6 +372,7 @@ public sealed class Es1World {
 			object? member = record.MemberKind switch {
 				0 => PoolNth(refs[k]),
 				1 => Globals.Flyers.Nth(refs[k]),
+				2 => Globals.Structures.Nth(refs[k]),
 				_ => null,
 			};
 			group.Members.Add(member);
@@ -348,10 +380,9 @@ public sealed class Es1World {
 				Es1Formation.Attach(mech, k, group, formations);
 			} else if (member is Es1Flyer flyer) {
 				Es1FlyerGroups.Attach(flyer, k, group, Globals.FlyerFormations);
+			} else if (member is Es1Base structure && Globals.Structures.Types is { } baseTypes) {
+				Es1BaseGroups.Attach(structure, k, group, baseTypes.Formations);
 			}
-
-			// PLACEHOLDER: a base member is attached by 000044a4, unread (docs/es1/simulation/mission-groups.md#open); with
-			// block 8 unbuilt there is none to attach. The plan's module 2 ports it.
 		}
 
 		return group;

@@ -89,7 +89,7 @@ public static class Es1MechMovement {
 			}
 		}
 
-		int structure = Es1ShapeTests.GatherWalkCandidates(globals.Structures, mech.Position);
+		int structure = Es1ShapeTests.GatherWalkCandidates(globals.Structures.Live, mech.Position);
 		if ((short)structure != 0) {
 			return 1;
 		}

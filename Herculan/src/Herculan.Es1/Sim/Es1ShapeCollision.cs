@@ -84,18 +84,6 @@ public sealed class Es1Ray(Transform3 frame, int length, short clearance) {
 /// <summary>A ray's result: <c>+0</c>, the distance to the hit, and <c>+4</c>, the shape struck.</summary>
 public readonly record struct Es1RayHit(int Distance, Es1ShapeObject Shape);
 
-/// <summary>
-/// A structure of <c>g_BasePool</c>, as far as the walk test reads it: whether its type (<c>+0x188</c>) has a collision
-/// model (the record's <c>+0x3a</c> not 0, <c>BASES.DAT</c> types 5, 6 and 8) and its shape
-/// (docs/es1/simulation/terrain.md#the-structures-tests). PLACEHOLDER: none is built until the plan's module 2 (effects and structures)
-/// ports the base constructor (<c>00003cbc</c>), which replaces this with the structure object.
-/// </summary>
-public sealed class Es1Structure(bool hasCollisionModel, Es1ShapeObject shape) {
-	public bool HasCollisionModel { get; } = hasCollisionModel;
-
-	public Es1ShapeObject Shape { get; } = shape;
-}
-
 /// <summary>The point tests against shapes' collision volumes (docs/es1/simulation/terrain.md#the-tests-against-the-shapes).</summary>
 public static class Es1ShapeTests {
 	/// <summary>
@@ -127,19 +115,40 @@ public static class Es1ShapeTests {
 
 	/// <summary>
 	/// <c>Structure_GatherWalkCandidates</c> (<c>0000375c</c>): the structures whose type has no collision model, oldest
-	/// first as <c>Pool_Prev</c> walks the pool, and <see cref="WalkCollisionTest"/>'s answer over them; 0 with none
+	/// first as <c>Pool_Prev</c> walks the pool, destroyed or not, each with the shape its instance holds, and
+	/// <see cref="WalkCollisionTest"/>'s answer over them; 0 with none
 	/// (docs/es1/simulation/terrain.md#the-structures-tests). Retail gathers into a 40-entry stack array it does not bound;
 	/// here the gather has no limit.
 	/// </summary>
-	public static int GatherWalkCandidates(IReadOnlyList<Es1Structure> structures, Vec3i point) {
+	public static int GatherWalkCandidates(IReadOnlyList<Es1Base> structures, Vec3i point) {
 		var candidates = new List<Es1ShapeObject>();
 		for (int i = 0; i < structures.Count; i++) {
-			if (!structures[i].HasCollisionModel) {
-				candidates.Add(structures[i].Shape);
+			if (!structures[i].Type.HasCollisionModel) {
+				candidates.Add(structures[i].ShapeObject);
 			}
 		}
 
 		return WalkCollisionTest(candidates, point);
+	}
+
+	/// <summary>
+	/// <c>Sim_RaycastShapeList</c> (<c>000037e0</c>)(<paramref name="side"/>, <paramref name="ray"/>, result): the
+	/// structures, oldest first, that are a wreck (<see cref="Es1Base.IsWreck"/>) or whose type has no collision model,
+	/// with a side of 0 or more only those whose group's side byte, sign-extended, equals it; and
+	/// <see cref="RaycastShapeVolume"/>'s answer over them (docs/es1/simulation/terrain.md#the-structures-tests). Retail
+	/// reads the group unchecked; a structure with none matches no side here. The 40-entry array is not bounded, as in
+	/// <see cref="GatherWalkCandidates"/>.
+	/// </summary>
+	public static bool RaycastShapeList(IReadOnlyList<Es1Base> structures, short side, Es1Ray ray, out Es1RayHit hit) {
+		var candidates = new List<Es1ShapeObject>();
+		foreach (var structure in structures) {
+			if ((structure.IsWreck || !structure.Type.HasCollisionModel)
+					&& (side < 0 || structure.Group is { } group && (sbyte)group.Side == side)) {
+				candidates.Add(structure.ShapeObject);
+			}
+		}
+
+		return RaycastShapeVolume(candidates, ray, out hit);
 	}
 
 	/// <summary>A hit nearer the ray's start than this ends <see cref="RaycastShapeVolume"/>'s walk.</summary>

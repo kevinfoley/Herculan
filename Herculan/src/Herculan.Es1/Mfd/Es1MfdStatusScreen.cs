@@ -10,7 +10,7 @@ namespace Herculan.Es1.Mfd;
 
 /// <summary>
 /// The MFD's status screen, modes 0 and 4 (docs/es1/simulation/mfd-status-screen.md): the subject's picture, a HERC's
-/// paper doll tinted region by region or a flyer's silhouette, with its name and condition in five labels down a
+/// paper doll tinted region by region or a structure's or a flyer's picture, with its name and condition in five labels down a
 /// column. Its slots are <c>MFDStatusVtable</c> (<c>000935fe</c>)'s.
 /// </summary>
 public sealed class Es1MfdStatusScreen : Es1MfdScreen {
@@ -49,6 +49,7 @@ public sealed class Es1MfdStatusScreen : Es1MfdScreen {
 	private readonly IReadOnlyList<HudFont?> _fonts;
 	private readonly StringFile? _strings;
 	private readonly IReadOnlyList<DynamixBitmap>? _flyers;
+	private readonly IReadOnlyList<DynamixBitmap>? _bases;
 
 	/// <summary>
 	/// <c>MfdStatusScreen_Ctor</c> (<c>ES1DBSIM 00032f74</c>)(0, <paramref name="rect"/>): the base, then the five labels
@@ -56,12 +57,14 @@ public sealed class Es1MfdStatusScreen : Es1MfdScreen {
 	/// + 10}, the tops 0, 8, 21, 28 and 35.
 	/// </summary>
 	/// <param name="flyers"><c>MfdStatus_FlyersBank</c> (<c>000935f8</c>), the frames of <c>dba\flyers</c>, which the constructor loads once with <c>dba\bases</c>; none when null.</param>
+	/// <param name="bases"><c>MfdStatus_BasesBank</c> (<c>000935f4</c>), the frames of <c>dba\bases</c>; none when null.</param>
 	internal Es1MfdStatusScreen(Es1Cockpit cockpit, Es1Rect rect, Es1MfdSharedBlock shared, IReadOnlyList<HudFont?> fonts,
-			StringFile? strings, IReadOnlyList<DynamixBitmap>? flyers)
+			StringFile? strings, IReadOnlyList<DynamixBitmap>? flyers, IReadOnlyList<DynamixBitmap>? bases = null)
 		: base(cockpit, rect, shared) {
 		_fonts = fonts;
 		_strings = strings;
 		_flyers = flyers;
+		_bases = bases;
 		for (int i = 0; i < LabelCount; i++) {
 			_labels[i] = new Es1Label(Font(Es1CockpitViews.CpRed));
 			int top = rect.Y0 + LabelTops[i];
@@ -75,7 +78,9 @@ public sealed class Es1MfdStatusScreen : Es1MfdScreen {
 	/// <summary>
 	/// Slot <c>+4</c>, <c>MfdStatusScreen_Paint</c> (<c>000330b4</c>) (docs/es1/simulation/mfd-status-screen.md#the-paint):
 	/// the rect filled in <see cref="Fill"/>; then, by the shared block's subject: none, <c>TARGET:</c> and <c>NONE</c> in
-	/// <c>cpblue</c>; a HERC (<see cref="PaintHerc"/>); a flyer, frame 0 of <c>dba\flyers</c> at the bottom left,
+	/// <c>cpblue</c>; a HERC (<see cref="PaintHerc"/>); a structure, frame <i>n</i> of <c>dba\bases</c> at the bottom left,
+	/// <i>n</i> its type record's <c>+0x00</c>, <c>TARGET:</c>, group 20's entry <i>n</i> and the condition from its damage;
+	/// a flyer, frame 0 of <c>dba\flyers</c> at the bottom left,
 	/// <c>TARGET:</c>, <c>LANDSKIMMER</c> and the condition from its damage; any class past 2, <c>TARGET:</c> and
 	/// <c>UNKNOWN</c> in <c>cpblue</c>.
 	/// </summary>
@@ -99,9 +104,16 @@ public sealed class Es1MfdStatusScreen : Es1MfdScreen {
 
 				break;
 			case StructureClass:
-				// PLACEHOLDER: frame n of dba\bases (MfdStatus_BasesBank, 000935f4) at the bottom left, n the type record's
-				// int16 +0, TARGET:, group 20 entry n and the condition from the damage; no structure object is built
-				// until the plan's module 2 (effects and structures), which brings its type record.
+				// Retail reads every class-1 object's type record; this engine's only class-1 object is a structure.
+				if (subject is Es1Base structure) {
+					int index = structure.Type.Index;
+					var picture = _bases != null && index >= 0 && index < _bases.Count ? _bases[index] : null;
+					canvas.Blit(picture, Rect.X0 + SilhouetteLeft, Rect.Y1 - (picture?.Rows ?? 0) - SilhouetteBottom);
+					_labels[0].SetText(canvas, Text(TargetGroup, 0));
+					_labels[1].SetText(canvas, Text(BaseGroup, index));
+					SetCondition(canvas, -1, IsFriendly(subject), Damage(subject));
+				}
+
 				break;
 			case FlyerClass:
 				var silhouette = _flyers is { Count: > 0 } flyers ? flyers[0] : null;

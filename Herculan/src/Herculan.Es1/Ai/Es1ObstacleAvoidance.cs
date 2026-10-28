@@ -113,7 +113,7 @@ public static class Es1ObstacleAvoidance {
 			figure = hit.Distance;
 		}
 
-		if (StructureRaycastShapes(-1, to, from, out int distance) && distance < figure) {
+		if (StructureRaycastShapes(-1, to, from, globals, out int distance) && distance < figure) {
 			figure = distance;
 		}
 
@@ -122,13 +122,14 @@ public static class Es1ObstacleAvoidance {
 
 	/// <summary>
 	/// <c>Structure_RaycastShapes</c> (<c>000038b8</c>)(<paramref name="side"/>, 0, <paramref name="to"/>,
-	/// <paramref name="from"/>, result), the structures of that side, or every side's for −1
-	/// (docs/es1/simulation/terrain.md#the-structures-tests). PLACEHOLDER: the slice spawns no structure
-	/// (<see cref="Es1SimGlobals.Structures"/>), so the probe answers 0, as retail's does over an empty <c>g_BasePool</c>;
-	/// the plan's module 2 (effects and structures) ports it.
+	/// <paramref name="from"/>, result): the ray from <paramref name="from"/> to <paramref name="to"/>
+	/// (<see cref="Es1Ray.Between"/>) against the structures of that side, or every side's for −1
+	/// (<see cref="Es1ShapeTests.RaycastShapeList"/>, docs/es1/simulation/terrain.md#the-structures-tests), and whether it
+	/// struck one, with the result's distance.
 	/// </summary>
-	internal static bool StructureRaycastShapes(short side, Vec3i to, Vec3i from, out int distance) {
-		distance = 0;
-		return false;
+	internal static bool StructureRaycastShapes(short side, Vec3i to, Vec3i from, Es1SimGlobals globals, out int distance) {
+		bool struck = Es1ShapeTests.RaycastShapeList(globals.Structures.Live, side, Es1Ray.Between(0, to, from), out var hit);
+		distance = hit.Distance;
+		return struck;
 	}
 }

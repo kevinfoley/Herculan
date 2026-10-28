@@ -98,9 +98,10 @@ public sealed class Es1MfdDisplay {
 	/// <param name="strings"><c>STRINGS0.STR</c>; nothing is written when null.</param>
 	/// <param name="flyers">The frames of <c>dba\flyers</c>, the status screens' flyer silhouette.</param>
 	/// <param name="radar">The frames of <c>dba\radar</c>, the scanner's picture.</param>
+	/// <param name="bases">The frames of <c>dba\bases</c>, the status screens' structure pictures.</param>
 	internal Es1MfdDisplay(Es1Cockpit cockpit, Es1GauMfdPanelBlock block, IReadOnlyList<HudFont?> fonts,
 			IReadOnlyList<DynamixBitmap>? pushButtons, StringFile? strings, IReadOnlyList<DynamixBitmap>? flyers,
-			IReadOnlyList<DynamixBitmap>? radar) {
+			IReadOnlyList<DynamixBitmap>? radar, IReadOnlyList<DynamixBitmap>? bases = null) {
 		Cockpit = cockpit;
 		_strings = strings;
 		Rect = Es1Rect.From(block.Rect);
@@ -134,11 +135,11 @@ public sealed class Es1MfdDisplay {
 		RangeIndex = FirstScannerRange;
 		Shared.ScannerRange = ScannerRanges[RangeIndex];
 
-		_screens[Status] = new Es1MfdStatusScreen(cockpit, ScreenRect, Shared, fonts, strings, flyers);
+		_screens[Status] = new Es1MfdStatusScreen(cockpit, ScreenRect, Shared, fonts, strings, flyers, bases);
 		_screens[FlashComm] = FlashCommScreen = new Es1MfdFlashCommScreen(cockpit, this, ScreenRect, Shared, fonts, strings);
 		_screens[NavMap] = new Es1MfdNavMapScreen(cockpit, ScreenRect, Shared);
 		_screens[Scanner] = new Es1MfdScannerScreen(cockpit, ScreenRect, Shared, fonts, strings, radar);
-		_screens[TargetStatus] = new Es1MfdStatusScreen(cockpit, ScreenRect, Shared, fonts, strings, flyers);
+		_screens[TargetStatus] = new Es1MfdStatusScreen(cockpit, ScreenRect, Shared, fonts, strings, flyers, bases);
 		_screens[MissileCam] = new Es1MfdMissileCamScreen(cockpit, ScreenRect, Shared, fonts, strings);
 
 		RefreshDeadline = cockpit.Globals.Clock.Clock + RefreshCounts;

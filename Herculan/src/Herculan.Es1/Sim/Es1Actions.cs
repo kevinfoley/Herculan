@@ -115,8 +115,8 @@ public sealed class Es1Action {
 
 	/// <summary>
 	/// <c>Action_TestTriggerForGroup</c> (<c>0001cd30</c>)(<paramref name="group"/>, action): <see cref="TestTrigger"/> with
-	/// each member's position in turn, true at the first that answers. A member the slice does not build, a base, is
-	/// passed over until the plan's module 2. PLACEHOLDER: with no member retail answers the word its frame leaves at <c>[EBP−0x14]</c>,
+	/// each member's position in turn, true at the first that answers; a member the pool had no object for is passed over.
+	/// PLACEHOLDER: with no member retail answers the word its frame leaves at <c>[EBP−0x14]</c>,
 	/// which nothing in the function writes, and it is not known; false here.
 	/// </summary>
 	public bool TestTriggerForGroup(Es1MissionGroup group, short[] vars) {

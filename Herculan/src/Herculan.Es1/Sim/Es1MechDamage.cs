@@ -388,7 +388,8 @@ public static class Es1MechDamage {
 	/// destroyed, whose group holds no action and that stand within <see cref="OutnumberedHercRange"/>, each counting its
 	/// record's <c>+0x54</c> to the friendly sum when its group's side is the machine's and to the hostile one otherwise,
 	/// then the flyer pool's the same way within <see cref="OutnumberedFlyerRange"/>, each counting
-	/// <see cref="OutnumberedUnitStrength"/>; the friendly sum less <see cref="OutnumberedAllowance"/>, floored at 0; then one <see cref="SpreadImpactDamage"/> of
+	/// <see cref="OutnumberedUnitStrength"/>, then the base pool's the same way within <see cref="OutnumberedStructureRange"/>
+	/// for a structure whose type's <c>+0x34</c> is not 0, the GUN TOWER; the friendly sum less <see cref="OutnumberedAllowance"/>, floored at 0; then one <see cref="SpreadImpactDamage"/> of
 	/// <see cref="OutnumberedImpact"/> for each <see cref="OutnumberedStrengthPerImpact"/> the hostile sum is above it.
 	/// </summary>
 	public static void ApplyOutnumberedDamage(Es1Mech machine, Es1SimGlobals globals) {
@@ -426,8 +427,21 @@ public static class Es1MechDamage {
 			}
 		}
 
-		// PLACEHOLDER: the base pool's armed structures (record +0x34 not 0) within OutnumberedStructureRange, each
-		// OutnumberedUnitStrength; the pool is not built until the plan's module 2.
+		foreach (var structure in globals.Structures.Live) {
+			// Retail reads both groups unchecked; a structure with none is not counted here.
+			if (structure.Disarmed || structure.Immobilized || structure.Destroyed || structure.Group is not { Action: null } group
+					|| structure.Type.Word34 == 0 || machine.Group is not { } own
+					|| structure.Position.ApproxDistanceTo(machine.Position) >= OutnumberedStructureRange) {
+				continue;
+			}
+
+			if (group.Side == own.Side) {
+				friendly += OutnumberedUnitStrength;
+			} else {
+				hostile += OutnumberedUnitStrength;
+			}
+		}
+
 		friendly = Math.Max(friendly - OutnumberedAllowance, 0);
 		for (; friendly < hostile; hostile -= OutnumberedStrengthPerImpact) {
 			SpreadImpactDamage(machine, OutnumberedImpact, OutnumberedImpact, globals);

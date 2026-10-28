@@ -341,7 +341,8 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	}
 
 	/// <summary>
-	/// <c>Sim_RenderFrame</c> (<c>00059c08</c>): subsystem phase 5, whose ported functions are <c>EffectLightPool_FlushDeletes</c>
+	/// <c>Sim_RenderFrame</c> (<c>00059c08</c>): subsystem phase 5, whose ported functions are <c>Structure_FlushDeletes</c>
+	/// (<see cref="Sim.Es1BasePool.FlushDeletes"/>), <c>EffectLightPool_FlushDeletes</c>
 	/// (<see cref="Effects.Es1EffectLights.FlushDeletes"/>), <c>ExplosionPool_FlushDeletes</c>
 	/// (<see cref="Effects.Es1ExplosionPool.FlushDeletes"/>), <c>DebrisPool_FlushDeletes</c>
 	/// (<see cref="Effects.Es1DebrisPool.FlushDeletes"/>), <c>Smoke_FlushDeletes</c> (<see cref="Effects.Es1SmokePool.FlushDeletes"/>),
@@ -359,6 +360,7 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	/// </summary>
 	private void RenderFrame() {
 		var globals = Views.Cockpit.Globals;
+		globals.Structures.FlushDeletes();
 		globals.EffectLights.FlushDeletes();
 		globals.Explosions.FlushDeletes();
 		globals.Debris.FlushDeletes();

@@ -180,12 +180,8 @@ public sealed class Es1SimGlobals {
 		LiveObjects.Add(simObject);
 	}
 
-	/// <summary>
-	/// <c>g_BasePool</c> (<c>000aed70</c>)'s structures in build order. PLACEHOLDER: empty: block 8 is not spawned
-	/// (the base constructor <c>00003cbc</c> is unread, docs/es1/formats/script-dat.md#open); the plan's module 2 (effects and structures)
-	/// fills it.
-	/// </summary>
-	public List<Es1Structure> Structures { get; } = new();
+	/// <summary><c>g_BasePool</c>, its delete queue and the structures' tables, empty until a world is spawned.</summary>
+	public Es1BasePool Structures { get; } = new();
 
 	/// <summary><c>Zone_ShapeCount</c> and <c>Zone_ShapeObjects</c>, the zone's placed shapes; empty until the zone is loaded.</summary>
 	public Es1ZoneShapes ZoneShapes { get; set; } = Es1ZoneShapes.Empty;
