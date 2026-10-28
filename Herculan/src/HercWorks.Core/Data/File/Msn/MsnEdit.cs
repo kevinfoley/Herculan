@@ -385,4 +385,17 @@ internal static class MsnRows {
 
 		return copy;
 	}
+
+	/// <summary>
+	/// Whether two records of one type hold the same values, each <see cref="short"/> array and row 17's
+	/// <see cref="CounterPair"/> array compared element by element, as <see cref="CopyRecord"/> copies them.
+	/// </summary>
+	public static bool SameRecord(object a, object b) =>
+		a.GetType() == b.GetType() && a.GetType().GetProperties().Where(property => property.CanWrite).All(property =>
+			(property.GetValue(a), property.GetValue(b)) switch {
+				(short[] x, short[] y) => x.AsSpan().SequenceEqual(y),
+				(CounterPair[] x, CounterPair[] y) => x.Length == y.Length
+					&& x.Zip(y).All(pair => pair.First.CounterRef == pair.Second.CounterRef && pair.First.Op == pair.Second.Op),
+				var (x, y) => Equals(x, y),
+			});
 }

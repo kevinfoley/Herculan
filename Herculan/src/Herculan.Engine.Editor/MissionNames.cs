@@ -45,7 +45,7 @@ internal sealed class RosterTypeNames {
 
 	/// <summary><paramref name="record"/>'s type by name, or by its kind and type number for one no table names.</summary>
 	public string Name(MapObject? record) => record switch {
-		MechRosterEntry144 herc => _mechs?[herc.TypeIndex] ?? $"Herc type {herc.TypeIndex}",
+		MechRosterEntry144 herc => _mechs?[herc.TypeIndex] ?? $"HERC type {herc.TypeIndex}",
 		FlyerRosterEntry102 flyer => _flyers?[flyer.TypeIndex] ?? $"Flyer type {flyer.TypeIndex}",
 		BaseRosterEntry62 structure when _bases?[structure.TypeIndex] is { } type
 				&& MfdStatusSubject.BaseName(type, _strings) is { } name && !string.IsNullOrWhiteSpace(name) => name,
@@ -373,10 +373,10 @@ internal sealed class MissionNames {
 			MissionAction.SubjectPlayerGroup => "the player's squad",
 			MissionAction.SubjectHumanGroups => "a human unit",
 			MissionAction.SubjectCybridGroups => "a Cybrid unit",
-			MissionAction.SubjectMechGroups => "a herc",
+			MissionAction.SubjectMechGroups => "a HERC",
 			MissionAction.SubjectFlyerGroups => "a flyer",
 			MissionAction.SubjectBaseGroups => "a structure",
-			MissionAction.SubjectTargetMech => target == -1 ? "a herc not chosen" : TypeName(new ObjectKey(MechRow, target)),
+			MissionAction.SubjectTargetMech => target == -1 ? "a HERC not chosen" : TypeName(new ObjectKey(MechRow, target)),
 			MissionAction.SubjectTargetFlyer => target == -1 ? "a flyer not chosen" : TypeName(new ObjectKey(FlyerRow, target)),
 			MissionAction.SubjectTargetBase => target == -1 ? "a structure not chosen" : TypeName(new ObjectKey(BaseRow, target)),
 			MissionAction.SubjectTargetGroup => target == -1 ? "a group not chosen" : $"a member of {GroupInSentence(target)}",

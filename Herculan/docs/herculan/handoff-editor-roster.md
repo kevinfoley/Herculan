@@ -93,7 +93,7 @@ The squad has no wiring (none of the 138 retail squad records sets a waited-on a
 Gaps:
 
 - An overlay cannot carry a field's unset value, so a field a template supplies keeps the template's value where an edit would unset it: after a chassis change on `TRAIN1` to `TRAIN4`, a slot past the new capacity keeps the template's weapon, and a mount that takes no guidance its ammunition type, neither of which the squad build or DBSIM reads.
-- A launcher mount whose stock fit carries the filler 5 is written SARH (0), which DBSIM reads a 5 as ([`../retail/simulation/weapon-mounts.md`](../retail/simulation/weapon-mounts.md#the-join--mechloadout_constructweaponmounts-0040fff8)): the editor's choice, which leaves 0 in the generated record and `player.mec` where an unedited stock fit's launch holds 5. A herc outside the squad edited with "Changes apply to:" "only this herc" follows the same two rules.
+- A launcher mount whose stock fit carries the filler 5 is written SARH (0), which DBSIM reads a 5 as ([`../retail/simulation/weapon-mounts.md`](../retail/simulation/weapon-mounts.md#the-join--mechloadout_constructweaponmounts-0040fff8)): the editor's choice, which leaves 0 in the generated record and `player.mec` where an unedited stock fit's launch holds 5. A herc outside the squad whose random table the editor shows only follows the same two rules.
 - Removing a squadmate whose record picks from a random table, as `TRAIN5`'s do, moves every later roll.
 
 ## Gaps

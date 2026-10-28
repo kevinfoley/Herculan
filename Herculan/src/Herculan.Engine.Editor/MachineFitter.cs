@@ -30,10 +30,10 @@ namespace Herculan.Engine.Editor;
 /// </list>
 ///
 /// <para>Each edit writes its fields through <see cref="RosterFit.Write"/>, all of an edit's in one
-/// <see cref="MissionDocument.Change"/>: asked to write the template, a field the herc picks from an edited table's
-/// template goes there, and every other field goes in the record that supplies it, a field a template supplies that the
-/// edit would unset keeping the template's value, except a launcher's guidance, which is written SARH (0). The squad's
-/// edits never write the template. Each builds the editor's state again (<see cref="SceneSync"/>), which builds the squad's
+/// <see cref="MissionDocument.Change"/>: given the option being edited (<see cref="LoadoutView"/>), a field the herc picks
+/// from an edited table's template goes in that option's template, and every other field goes in the record that supplies
+/// it, a field a template supplies that the edit would unset keeping the template's value, except a launcher's guidance,
+/// which is written SARH (0). The squad's edits are given no option. Each builds the editor's state again (<see cref="SceneSync"/>), which builds the squad's
 /// <c>player.mec</c> again first.</para>
 ///
 /// <para>The edits run when <see cref="RunRequest"/> is called, once the frame's ImGui is rendered, since the rebuild
@@ -78,6 +78,21 @@ internal sealed class MachineFitter {
 	/// <summary>Row-12 GUID <paramref name="guid"/>'s base, as the layout shows it, or null when no record carries it.</summary>
 	public MechRosterEntry144? Record(short guid) => _source.Layout.Entry<MechRosterEntry144>(guid)?.Fields;
 
+	/// <summary>
+	/// Row-12 GUID <paramref name="guid"/>'s type and its ten slots' weapons and ammunition types, as a load picking
+	/// <paramref name="option"/>, a template of its table, makes them, or as the layout shows them for no option
+	/// (<see cref="RosterFit.Current"/>). Null when no record carries it.
+	/// </summary>
+	public (int Type, short[] Weapons, short[] Ammo)? Fit(short guid, MsnRecordId? option) {
+		if (Record(guid) == null) {
+			return null;
+		}
+
+		short Get(MsnField field) => RosterFit.Current(_source, field, guid, option);
+		return (Get(MsnField.MechType), Enumerable.Range(0, Slots).Select(slot => Get(MsnField.MechWeapon(slot))).ToArray(),
+			Enumerable.Range(0, Slots).Select(slot => Get(MsnField.MechAmmo(slot))).ToArray());
+	}
+
 	/// <summary>Why the herc of row-12 GUID <paramref name="guid"/> cannot be edited, or null when it can.</summary>
 	public string? WhyFixed(short guid) => Record(guid) == null ? "Its record is not in the mission." : null;
 
@@ -120,9 +135,9 @@ internal sealed class MachineFitter {
 	public bool FromRetail(int chassis, int mount, int weapon) => _cybrid.WeaponsFor(chassis, mount).Contains((short)weapon);
 
 	/// <summary>
-	/// The template an edit of the herc of row-12 GUID <paramref name="guid"/> asked to write the template changes: the one
-	/// its type, or a weapon or an ammunition type of a mount the view edits, is picked from
-	/// (<see cref="RosterFit.PickedTemplate"/>); null when none is, or the herc cannot be edited.
+	/// The template of the option the layout shows the herc of row-12 GUID <paramref name="guid"/> with that its type, or a
+	/// weapon or an ammunition type of a mount the view edits, is copied from (<see cref="RosterFit.PickedTemplate"/>); null
+	/// when none is, or the herc cannot be edited.
 	/// </summary>
 	public MsnRecordId? PickedTemplate(short guid) =>
 		WhyFixed(guid) == null ? RosterFit.PickedTemplate(_source, guid, FitFields(guid)) : null;
@@ -139,18 +154,24 @@ internal sealed class MachineFitter {
 
 	/// <summary>
 	/// Asks for the herc of row-12 GUID <paramref name="guid"/> to become <paramref name="chassis"/> with the fit a new herc of
-	/// it gets, written to the template it picks them from when <paramref name="toTemplate"/>.
+	/// it gets, in <paramref name="option"/>, the template of the option being edited, where a template supplies them.
 	/// </summary>
-	public void RequestChassis(short guid, int chassis, bool toTemplate = false) =>
-		_requested = () => SetChassis(guid, chassis, toTemplate);
+	public void RequestChassis(short guid, int chassis, MsnRecordId? option = null) =>
+		_requested = () => SetChassis(guid, chassis, option);
 
-	/// <summary>Asks for <paramref name="weapon"/> in fit slot <paramref name="mount"/> of the herc of row-12 GUID <paramref name="guid"/>.</summary>
-	public void RequestWeapon(short guid, int mount, int weapon, bool toTemplate = false) => _requested = () => Write(guid,
-		[(MsnField.MechWeapon(mount), (short)weapon), (MsnField.MechAmmo(mount), AmmoFor(guid, mount, weapon))], toTemplate);
+	/// <summary>
+	/// Asks for <paramref name="weapon"/> in fit slot <paramref name="mount"/> of the herc of row-12 GUID <paramref name="guid"/>,
+	/// in <paramref name="option"/>'s template where a template supplies it.
+	/// </summary>
+	public void RequestWeapon(short guid, int mount, int weapon, MsnRecordId? option = null) => _requested = () => Write(guid,
+		[(MsnField.MechWeapon(mount), (short)weapon), (MsnField.MechAmmo(mount), AmmoFor(guid, mount, weapon, option))], option);
 
-	/// <summary>Asks for guidance kind <paramref name="kind"/> in fit slot <paramref name="mount"/> of the herc of row-12 GUID <paramref name="guid"/>.</summary>
-	public void RequestGuidance(short guid, int mount, int kind, bool toTemplate = false) => _requested = () => Write(guid,
-		[(MsnField.MechAmmo(mount), (short)kind)], toTemplate);
+	/// <summary>
+	/// Asks for guidance kind <paramref name="kind"/> in fit slot <paramref name="mount"/> of the herc of row-12 GUID
+	/// <paramref name="guid"/>, in <paramref name="option"/>'s template where a template supplies it.
+	/// </summary>
+	public void RequestGuidance(short guid, int mount, int kind, MsnRecordId? option = null) => _requested = () => Write(guid,
+		[(MsnField.MechAmmo(mount), (short)kind)], option);
 
 	/// <summary>Makes the edit asked for since the last call, if any; <see cref="Failure"/> says why one could not be made.</summary>
 	public void RunRequest() {
@@ -192,33 +213,33 @@ internal sealed class MachineFitter {
 
 	// The ammunition type <weapon> is fitted with in slot <mount>: what the weapons screen gives it on a Human chassis, what
 	// retail missions carry with it there on a Cybrid's.
-	private short AmmoFor(short guid, int mount, int weapon) =>
-		Record(guid) is { } herc && HercGroups.IsCybrid(herc.TypeIndex)
-			? _cybrid.AmmoFor(herc.TypeIndex, mount, (short)weapon)
+	private short AmmoFor(short guid, int mount, int weapon, MsnRecordId? option) =>
+		Fit(guid, option) is { } herc && HercGroups.IsCybrid(herc.Type)
+			? _cybrid.AmmoFor(herc.Type, mount, (short)weapon)
 			: (short)ShellHangar.FitGuidance(weapon);
 
-	private string? SetChassis(short guid, int chassis, bool toTemplate) {
+	private string? SetChassis(short guid, int chassis, MsnRecordId? option) {
 		if (NewHercFit(chassis) is not var (weapons, guidance)) {
-			return HercGroups.IsCybrid(chassis) ? $"There is no herc type {chassis}." : $"The install has no stock fit for chassis {chassis}.";
+			return HercGroups.IsCybrid(chassis) ? $"There is no HERC type {chassis}." : $"The install has no stock fit for chassis {chassis}.";
 		}
 
-		return Write(guid, RosterFit.Chassis((short)chassis, weapons, guidance), toTemplate);
+		return Write(guid, RosterFit.Chassis((short)chassis, weapons, guidance), option);
 	}
 
 	// Writes each of <fields> whose value differs, as one change and one step of the history.
-	private string? Write(short guid, IReadOnlyList<(MsnField Field, short Value)> fields, bool toTemplate) {
+	private string? Write(short guid, IReadOnlyList<(MsnField Field, short Value)> fields, MsnRecordId? option) {
 		if (WhyFixed(guid) is { } reason) {
 			return reason;
 		}
 
 		var source = _source;
-		if (!RosterFit.Differs(source, guid, fields)) {
+		if (!RosterFit.Differs(source, guid, fields, option)) {
 			return null;
 		}
 
 		MsnEdit change;
 		try {
-			change = _sync.Run(() => RosterFit.Write(source, guid, fields, toTemplate, weapon => ShellWeaponsScreen.TakesGuidance(weapon)));
+			change = _sync.Run(() => RosterFit.Write(source, guid, fields, option, weapon => ShellWeaponsScreen.TakesGuidance(weapon)));
 		} catch (InvalidOperationException ex) {
 			return ex.Message;
 		}

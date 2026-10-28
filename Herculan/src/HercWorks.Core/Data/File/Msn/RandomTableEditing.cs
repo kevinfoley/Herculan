@@ -44,7 +44,7 @@ public sealed record RandomTable(short Guid, short Key, short Bound, short Requi
 /// <item>A template is read before every user that picks it, so a new one goes just before the record it is made from, or
 /// just after the template it copies, and setting a record's table moves the table's templates read after it to just before
 /// it. A GUID <c>-1</c> record is never exported or merged, so no <c>script.dat</c> index moves.</item>
-/// <item>Making a table, setting a record's table and taking it away each change whether the record picks, which changes
+/// <item>Making a table, setting a record's table and making it fixed again each change whether the record picks, which changes
 /// what every later draw comes out as (docs/herculan/handoff-editor-document.md#conditions-and-random-tables).</item>
 /// </list>
 /// </summary>
@@ -95,8 +95,8 @@ public static class RandomTableEditing {
 			&& other.FlagIndexOrRangeLower == table.FlagIndexOrRangeLower).GUID == guid;
 		string? why = records.Count(other => other.GUID == guid) > 1 ? "Its condition number is repeated in the file."
 			: table.ComparisonOperand < 1 ? "Its roll is below 1, so no load picks an option."
-			: sameKey.Count > 0 && first ? "A load that picks Nothing here picks from a second random table, so the pair is shown only."
-			: sameKey.Count > 0 ? "A load picks from it only when the first random table of its pair picks Nothing, so the pair is shown only."
+			: sameKey.Count > 0 && first ? "A load that picks no option here picks from a second random table, so the pair is shown only."
+			: sameKey.Count > 0 ? "A load picks from it only when the first random table of its pair picks no option, so the pair is shown only."
 			: ranges.Count == 0 ? "It has no options."
 			: null;
 
@@ -133,7 +133,7 @@ public static class RandomTableEditing {
 	private static string? WhyNoOption(MissionDocument document, MsnRecordId record, int row) =>
 		record.Row == 8 ? "Its options are routes, so it is shown only; a route's view edits the waypoints of the option it shows."
 		: record.Row is not (>= 12 and <= 14) || document.RecordAt(record) is not { GUID: -1 } template
-			? "An option of it is not a herc, flyer, structure or ground vehicle."
+			? "An option of it is not a HERC, flyer, structure or ground vehicle."
 		: KeyOf(template) != -1 ? "An option of it picks from a random table of its own."
 		: row != 0 && row != record.Row ? "Its options are of more than one kind."
 		: null;
@@ -226,7 +226,7 @@ public static class RandomTableEditing {
 	/// <summary>Why roster row <paramref name="row"/>'s GUID <paramref name="guid"/> cannot be given a table or have it taken away, or null when it can.</summary>
 	public static string? WhyNoTables(MissionDocument document, int row, short guid) {
 		if (row is not (>= 12 and <= 14)) {
-			return "Only hercs, flyers, structures and ground vehicles pick from a random table here.";
+			return "Only HERCs, flyers, structures and ground vehicles pick from a random table here.";
 		}
 
 		if (document.Layout.Entry(row, guid) == null) {
@@ -240,10 +240,9 @@ public static class RandomTableEditing {
 		return KeyRecord(document, row, guid) == null ? "More than one of its records picks at random." : null;
 	}
 
-	/// <summary>Why roster row <paramref name="row"/>'s GUID <paramref name="guid"/> cannot pick from <paramref name="table"/>, or none for <c>-1</c>; null when it can.</summary>
+	/// <summary>Why roster row <paramref name="row"/>'s GUID <paramref name="guid"/> cannot pick from <paramref name="table"/>; null when it can.</summary>
 	public static string? WhyNoTable(MissionDocument document, int row, short guid, short table) {
-		string? reason = WhyNoTables(document, row, guid);
-		if (reason != null || table == -1) {
+		if (WhyNoTables(document, row, guid) is { } reason) {
 			return reason;
 		}
 
@@ -253,6 +252,33 @@ public static class RandomTableEditing {
 
 		return read.WhyFixed ?? (read.Row != row ? $"Its options are {KindOf(read.Row)}s." : null);
 	}
+
+	/// <summary>
+	/// Why roster row <paramref name="row"/>'s GUID <paramref name="guid"/> cannot stop picking from its table keeping option
+	/// <paramref name="range"/> (<see cref="SetFixed"/>), or null when it can.
+	/// </summary>
+	public static string? WhyNoFixed(MissionDocument document, int row, short guid, short range) {
+		if (WhyNoTables(document, row, guid) is { } reason) {
+			return reason;
+		}
+
+		if (TableOf(document, row, guid) is not { } table || Table(document, table) is not { } read) {
+			return "It picks from no random table.";
+		}
+
+		return read.WhyFixed ?? (read.Options.All(option => option.Range != range) ? $"Condition {range} is not one of its options." : null);
+	}
+
+	/// <summary>
+	/// Why template <paramref name="template"/> cannot take the edits of roster row <paramref name="row"/>'s GUID
+	/// <paramref name="guid"/> as the option being edited (<see cref="RosterFit.Write"/>): it must be the template of an
+	/// option of the table the GUID picks from, one the editor edits. Null when it can.
+	/// </summary>
+	public static string? WhyNoOptionEdit(MissionDocument document, int row, short guid, MsnRecordId template) =>
+		TableOf(document, row, guid) is not { } table || Table(document, table) is not { } read ? "It picks from no random table."
+		: read.WhyFixed is { } reason ? reason
+		: read.Options.All(option => option.Template != template) ? "That record is not an option of its random table."
+		: null;
 
 	/// <summary>
 	/// Why <paramref name="table"/>'s chances cannot be set to <paramref name="percents"/>, one per option, each a percent
@@ -269,8 +295,7 @@ public static class RandomTableEditing {
 
 	/// <summary>Why an option cannot be added to <paramref name="table"/>, or null when it can.</summary>
 	public static string? WhyNoAdd(MissionDocument document, short table) =>
-		Table(document, table) is not { } read ? $"Condition {table} is not a random table."
-		: read.WhyFixed ?? (Percents(read).Max() < 0.2m ? "No option has a chance of 0.2% or more to share." : null);
+		Table(document, table) is not { } read ? $"Condition {table} is not a random table." : read.WhyFixed;
 
 	/// <summary>Why <paramref name="range"/>'s option cannot be removed from <paramref name="table"/>, or null when it can.</summary>
 	public static string? WhyNoRemove(MissionDocument document, short table, short range) =>
@@ -354,8 +379,9 @@ public static class RandomTableEditing {
 	/// <summary>
 	/// Sets the table roster row <paramref name="row"/>'s GUID <paramref name="guid"/> picks from, its key record's random
 	/// table key, as one <see cref="MissionDocument.Change"/>: <paramref name="table"/>'s key, the table's templates read after
-	/// the key record moved to just before it; or, for <c>-1</c>, none, the record then carrying as its own the option the
-	/// layout shows it with (<see cref="PickOf"/>; the editor's choice, so it stays as shown).
+	/// the key record moved to just before it. The table it picked from before is deleted only when it is as
+	/// <see cref="CreateTable"/> made it for this record and nothing else uses it (<see cref="DeleteIfUnedited"/>; the
+	/// editor's choice, as <see cref="SetFixed"/> does).
 	/// </summary>
 	public static MsnEdit SetTable(MissionDocument document, int row, short guid, short table) {
 		if (WhyNoTable(document, row, guid, table) is { } reason) {
@@ -363,17 +389,8 @@ public static class RandomTableEditing {
 		}
 
 		var keyRecord = KeyRecord(document, row, guid)!.Value;
-		if (table == -1) {
-			var shown = PickOf(document, keyRecord)?.Shown?.Record is { } source ? document.RecordAt(source) : null;
-			return document.Change(() => document.RewriteAt<MapObject>(row, keyRecord.Index, record => {
-				if (shown != null) {
-					CopyPayload(shown, record);
-				}
-
-				SetKey(record, -1);
-			}));
-		}
-
+		short? before = TableOf(document, row, guid);
+		bool unedited = before is { } left && Table(document, left) is { } leaving && Unedited(document, leaving, document.RecordAt(keyRecord)!);
 		var read = Table(document, table)!;
 		return document.Change(() => {
 			document.RewriteAt<MapObject>(row, keyRecord.Index, record => SetKey(record, read.Key));
@@ -387,15 +404,48 @@ public static class RandomTableEditing {
 			for (int i = 0; i < moving.Count; i++) {
 				document.Insert(row, keyRecord.Index + i, moving[i]);
 			}
+
+			if (before is { } old && old != table && unedited) {
+				DeleteIfUnedited(document, old);
+			}
+		});
+	}
+
+	/// <summary>
+	/// Makes roster row <paramref name="row"/>'s GUID <paramref name="guid"/> pick from no table, keeping option
+	/// <paramref name="range"/> of the one it picks from, as one <see cref="MissionDocument.Change"/>: its key record takes as its
+	/// own the span a pick of that option copies (<see cref="CopyPayload"/>), so it stands as a load picking that option makes
+	/// it, and carries no key. The table is then deleted only when it is as <see cref="CreateTable"/> made it for this record
+	/// and nothing else uses it (<see cref="DeleteIfUnedited"/>; the editor's choice), and kept otherwise, unused or not.
+	/// </summary>
+	public static MsnEdit SetFixed(MissionDocument document, int row, short guid, short range) {
+		if (WhyNoFixed(document, row, guid, range) is { } reason) {
+			throw new InvalidOperationException(reason);
+		}
+
+		var keyRecord = KeyRecord(document, row, guid)!.Value;
+		short table = TableOf(document, row, guid)!.Value;
+		var read = Table(document, table)!;
+		var kept = document.RecordAt(read.Options.First(option => option.Range == range).Template)!;
+		bool unedited = Unedited(document, read, document.RecordAt(keyRecord)!);
+		return document.Change(() => {
+			document.RewriteAt<MapObject>(row, keyRecord.Index, record => {
+				CopyPayload(kept, record);
+				SetKey(record, -1);
+			});
+			if (unedited) {
+				DeleteIfUnedited(document, table);
+			}
 		});
 	}
 
 	/// <summary>
 	/// Adds an option to <paramref name="table"/>, its template a copy of the one range <paramref name="copyOf"/> chooses,
-	/// inserted just after it, under a new range appended last in row 1, as one <see cref="MissionDocument.Change"/>. The new
-	/// one takes half the chance of the option with the largest, the first of those that tie, rounded down to one decimal (the editor's
-	/// choice), and the ranges are written as <see cref="SetChances"/> writes them. <paramref name="range"/> is the new range's
-	/// GUID.
+	/// inserted just after it, under a new range appended last in row 1, as one <see cref="MissionDocument.Change"/>. With
+	/// <c>n</c> options, the new one takes the chances' total over <c>n + 1</c> and each other option keeps <c>n / (n + 1)</c>
+	/// of its chance, so the share left over stays as it was, each rounded to one decimal keeping the total
+	/// (<see cref="Share"/>; the editor's choice), and the ranges are written as <see cref="SetChances"/> writes them.
+	/// <paramref name="range"/> is the new range's GUID.
 	/// </summary>
 	public static MsnEdit AddOption(MissionDocument document, short table, short copyOf, out short range) {
 		if (WhyNoAdd(document, table) is { } reason) {
@@ -405,11 +455,9 @@ public static class RandomTableEditing {
 		var read = Table(document, table)!;
 		var copied = read.Options.FirstOrDefault(option => option.Range == copyOf)
 			?? throw new InvalidOperationException($"Condition {copyOf} is not one of its options.");
-		var percents = Percents(read).ToList();
-		int largest = percents.IndexOf(percents.Max());
-		decimal share = Math.Floor(percents[largest] * 5) / 10;
-		percents[largest] -= share;
-		percents.Add(share);
+		var tenths = Percents(read).Select(percent => (int)(percent * 10)).ToList();
+		int count = tenths.Count, total = tenths.Sum();
+		var percents = Share([.. tenths.Select(tenth => (decimal)tenth * count / (count + 1)), (decimal)total / (count + 1)], total);
 		var template = (MapObject)MsnRows.CopyRecord(document.RecordAt(copied.Template)!);
 		short created = -1;
 		var change = document.Change(() => {
@@ -424,8 +472,9 @@ public static class RandomTableEditing {
 
 	/// <summary>
 	/// Removes <paramref name="range"/>'s option from <paramref name="table"/>, the range and the template it chooses, as
-	/// one <see cref="MissionDocument.Change"/>; its chance goes to the option before it, or after it for the first (the
-	/// editor's choice), and the ranges are written as <see cref="SetChances"/> writes them.
+	/// one <see cref="MissionDocument.Change"/>; its chance is shared over the other options in proportion to theirs, evenly
+	/// when theirs are all 0, so the share left over stays as it was, each rounded to one decimal keeping the total
+	/// (<see cref="Share"/>; the editor's choice), and the ranges are written as <see cref="SetChances"/> writes them.
 	/// </summary>
 	public static MsnEdit RemoveOption(MissionDocument document, short table, short range) {
 		if (WhyNoRemove(document, table, range) is { } reason) {
@@ -433,10 +482,13 @@ public static class RandomTableEditing {
 		}
 
 		var read = Table(document, table)!;
-		var percents = Percents(read).ToList();
+		var tenths = Percents(read).Select(percent => (int)(percent * 10)).ToList();
 		int at = read.Options.ToList().FindIndex(option => option.Range == range);
-		percents[at == 0 ? 1 : at - 1] += percents[at];
-		percents.RemoveAt(at);
+		int removed = tenths[at], total = tenths.Sum();
+		tenths.RemoveAt(at);
+		int rest = tenths.Sum();
+		var percents = Share(tenths.Select(tenth => rest > 0 ? tenth + (decimal)removed * tenth / rest : tenth + (decimal)removed / tenths.Count)
+			.ToList(), total);
 		var kept = read.Options.Where(option => option.Range != range).Select(option => option.Range).ToList();
 		return document.Change(() => {
 			document.RemoveAt(read.Row, read.Options[at].Template.Index);
@@ -470,37 +522,16 @@ public static class RandomTableEditing {
 		}
 
 		var read = Table(document, table)!;
-		return document.Change(() => {
-			foreach (var option in read.Options.OrderByDescending(option => option.Template.Index)) {
-				document.RemoveAt(option.Template.Row, option.Template.Index);
-			}
-
-			foreach (var option in read.Options) {
-				document.Remove(ConditionRow, option.Range);
-			}
-
-			document.Remove(ConditionRow, table);
-		});
+		return document.Change(() => Delete(document, read));
 	}
 
 	/// <summary>
-	/// Sets <paramref name="field"/> of the template GUID <paramref name="guid"/>'s base copies it from to
-	/// <paramref name="value"/>, as one <see cref="MissionDocument.Change"/>, so every user picking that template changes
-	/// (<see cref="MissionDocument.SetTemplateField"/>); <see cref="MissionDocument.SetField"/> writes the one GUID's overlay
-	/// instead. Refused for a field no template supplies, and a template of a table the editor shows only.
+	/// Why <paramref name="field"/> of GUID <paramref name="guid"/> is not a template's for the editor to write, or null when it
+	/// is: a template of a table the editor edits supplies it (<see cref="RosterFit.Write"/>).
 	/// </summary>
-	public static MsnEdit SetTemplateField(MissionDocument document, MsnField field, short guid, short value) {
-		if (WhyNoTemplateField(document, field, guid) is { } reason) {
-			throw new InvalidOperationException(reason);
-		}
-
-		return document.Change(() => document.SetTemplateField(field, guid, value));
-	}
-
-	/// <summary>Why <see cref="SetTemplateField"/> refuses <paramref name="field"/> of GUID <paramref name="guid"/>, or null when it writes it.</summary>
 	public static string? WhyNoTemplateField(MissionDocument document, MsnField field, short guid) {
 		if (field.Row is not (>= 12 and <= 14) || document.Layout.Entry(field.Row, guid) == null) {
-			return "It is not a herc, flyer or structure in the mission.";
+			return "It is not a HERC, flyer or structure in the mission.";
 		}
 
 		if (document.TemplateOf(field, guid) is not { } template) {
@@ -532,6 +563,53 @@ public static class RandomTableEditing {
 	}
 
 	// ---- Internals ---------------------------------------------------------------------------------
+
+	// Percents to one decimal from <exact>, chances in tenths of a percent adding up to <total>: each rounded down, then a tenth
+	// more for each of the largest remainders, the first of a tie first, until they add up to <total> again.
+	private static List<decimal> Share(IReadOnlyList<decimal> exact, int total) {
+		var tenths = exact.Select(value => (int)Math.Floor(value)).ToList();
+		foreach (int at in Enumerable.Range(0, exact.Count).OrderByDescending(at => exact[at] - tenths[at]).ThenBy(at => at)
+				.Take(Math.Max(total - tenths.Sum(), 0)).ToList()) {
+			tenths[at]++;
+		}
+
+		return tenths.Select(tenth => tenth / 10m).ToList();
+	}
+
+	// Deletes <table>, its ranges and their templates, inside the caller's change.
+	private static void Delete(MissionDocument document, RandomTable table) {
+		foreach (var option in table.Options.OrderByDescending(option => option.Template.Index)) {
+			document.RemoveAt(option.Template.Row, option.Template.Index);
+		}
+
+		foreach (var option in table.Options) {
+			document.Remove(ConditionRow, option.Range);
+		}
+
+		document.Remove(ConditionRow, table.Guid);
+	}
+
+	// Deletes <table>, found unedited before the caller's change, inside it when WhyNoDelete then allows it: nothing picks from
+	// it any more and nothing else references it.
+	private static void DeleteIfUnedited(MissionDocument document, short table) {
+		if (WhyNoDelete(document, table) == null) {
+			Delete(document, Table(document, table)!);
+		}
+	}
+
+	// Whether <table> is as CreateTable made it for <record>, the key record of a GUID picking from it: requiring nothing, one
+	// option taking every roll, and that option's template the same as <record> where a pick copies it. Deleting it then loses
+	// nothing the record does not hold itself.
+	private static bool Unedited(MissionDocument document, RandomTable table, MapObject record) {
+		if (table.Requires != -1 || table.Options.Count != 1 || table.Leftover != 0
+				|| document.RecordAt(table.Options[0].Template) is not { } template) {
+			return false;
+		}
+
+		var picked = (MapObject)MsnRows.CopyRecord(record);
+		CopyPayload(template, picked);
+		return MsnRows.SameRecord(picked, record);
+	}
 
 	// Writes <table>'s bound for <percents> (ChanceBound) and <ranges>' ends from them, inside the caller's change.
 	private static void WriteChances(MissionDocument document, short table, IReadOnlyList<short> ranges, IReadOnlyList<decimal> percents) {

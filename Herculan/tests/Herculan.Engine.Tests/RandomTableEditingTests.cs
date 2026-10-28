@@ -76,8 +76,9 @@ public class RandomTableEditingTests {
 	}
 
 	/// <summary>
-	/// Catches Delete allowed while a herc picks from the table, and taking the table away leaving the herc with its own
-	/// stale fields rather than what it picked; then the delete takes the ranges and the templates with the table.
+	/// Catches Delete allowed while a HERC picks from the table, making the HERC fixed leaving it with its own stale fields
+	/// rather than the option it keeps, and a table whose option differs from the HERC deleted with it; then, nothing picking
+	/// from it, the table goes with its ranges and templates.
 	/// </summary>
 	[Fact]
 	public void ATableIsDeletedOnlyOnceNothingPicksFromIt() {
@@ -91,10 +92,11 @@ public class RandomTableEditingTests {
 		Assert.NotNull(RandomTableEditing.WhyNoDelete(document, 0));
 		Assert.Throws<InvalidOperationException>(() => RandomTableEditing.DeleteTable(document, 0));
 
-		RandomTableEditing.SetTable(document, 12, 10, -1);
-		Assert.Equal(generated, document.ScriptBytes);
+		RandomTableEditing.SetFixed(document, 12, 10, 1);
+		Assert.True(RandomTableEditing.IsTable(document, 0));
 		RandomTableEditing.DeleteTable(document, 0);
 
+		Assert.False(RandomTableEditing.IsTable(document, 0));
 		Assert.Equal(conditions - 2, ConditionEditing.Records(document).Length);
 		Assert.DoesNotContain(document.Mission.Mechs!, record => record.GUID == -1);
 		Assert.Equal(generated, document.ScriptBytes);

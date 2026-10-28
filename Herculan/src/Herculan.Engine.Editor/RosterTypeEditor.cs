@@ -6,8 +6,8 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// Changes the type of a flyer, a structure or a ground vehicle outside the player's squad, a row-13 or row-14 record of the
 /// <c>.MSN</c>, as one step of <see cref="PointMover"/>'s undo history each, through <see cref="RosterFit.Write"/>: in the
-/// template the record picks its type from when asked and the table is one the editor edits, so every record picking it
-/// changes, else in the record that supplies it (docs/herculan/handoff-editor-roster.md#type-and-fit). A herc's chassis is <see cref="MachineFitter"/>'s. Each edit builds the editor's state again
+/// template of the option being edited when the record picks its type from a table the editor edits
+/// (<see cref="LoadoutView"/>), so every record picking that option changes, else in the record that supplies it (docs/herculan/handoff-editor-roster.md#type-and-fit). A herc's chassis is <see cref="MachineFitter"/>'s. Each edit builds the editor's state again
 /// (<see cref="SceneSync"/>), which builds a new object for the record, as its type differs.
 ///
 /// <para>The edits run when <see cref="RunRequest"/> is called, once the frame's ImGui is rendered.</para>
@@ -35,30 +35,36 @@ internal sealed class RosterTypeEditor {
 		_source.Layout.Entry(row, guid) == null ? EditorToolbox.ObjectGone(row) : null;
 
 	/// <summary>
-	/// The template a type change of roster row <paramref name="row"/>'s GUID <paramref name="guid"/> asked to write the
-	/// template changes (<see cref="RosterFit.PickedTemplate"/>); null when its type is its own, or it cannot change.
+	/// The template of the option the layout shows roster row <paramref name="row"/>'s GUID <paramref name="guid"/> with that
+	/// its type is copied from (<see cref="RosterFit.PickedTemplate"/>); null when its type is its own, or it cannot change.
 	/// </summary>
 	public MsnRecordId? PickedTemplate(int row, short guid) =>
 		WhyFixed(row, guid) == null ? RosterFit.PickedTemplate(_source, guid, [MsnField.RosterType(row)]) : null;
 
 	/// <summary>
-	/// Asks for roster row <paramref name="row"/>'s GUID <paramref name="guid"/> to become type <paramref name="type"/>, written
-	/// to the template it picks its type from when <paramref name="toTemplate"/>.
+	/// Roster row <paramref name="row"/>'s GUID <paramref name="guid"/>'s type, as a load picking <paramref name="option"/>, a
+	/// template of its table, makes it, or as the layout shows it for no option (<see cref="RosterFit.Current"/>).
 	/// </summary>
-	public void RequestType(int row, short guid, int type, bool toTemplate) => _requested = () => {
+	public int Type(int row, short guid, MsnRecordId? option) => RosterFit.Current(_source, MsnField.RosterType(row), guid, option);
+
+	/// <summary>
+	/// Asks for roster row <paramref name="row"/>'s GUID <paramref name="guid"/> to become type <paramref name="type"/>, written
+	/// to <paramref name="option"/>, the template of the option being edited, when a template supplies its type.
+	/// </summary>
+	public void RequestType(int row, short guid, int type, MsnRecordId? option = null) => _requested = () => {
 		if (WhyFixed(row, guid) is { } reason) {
 			return reason;
 		}
 
 		var source = _source;
 		var fields = new[] { (MsnField.RosterType(row), (short)type) };
-		if (!RosterFit.Differs(source, guid, fields)) {
+		if (!RosterFit.Differs(source, guid, fields, option)) {
 			return null;
 		}
 
 		MsnEdit change;
 		try {
-			change = _sync.Run(() => RosterFit.Write(source, guid, fields, toTemplate, _ => false));
+			change = _sync.Run(() => RosterFit.Write(source, guid, fields, option, _ => false));
 		} catch (InvalidOperationException ex) {
 			return ex.Message;
 		}

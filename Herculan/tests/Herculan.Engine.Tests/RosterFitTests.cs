@@ -8,9 +8,9 @@ using static Herculan.Engine.Tests.SyntheticMsn;
 namespace Herculan.Engine.Tests;
 
 /// <summary>
-/// <see cref="RosterFit"/> over a small synthetic mission whose two hercs pick the one option of a table: an edit asked
-/// to write the template changes both, one asked to write the herc alone leaves the template and the other herc, and a
-/// chassis change writes the new type's whole fit; and <see cref="UnitTypeCatalog"/> offers a structure no vehicle type.
+/// <see cref="RosterFit"/> over a small synthetic mission whose two hercs pick the one option of a table: an edit of that
+/// option changes both, one given no option leaves the template and the other herc, and a chassis change writes the new
+/// type's whole fit; and <see cref="UnitTypeCatalog"/> offers a structure no vehicle type.
 /// </summary>
 public class RosterFitTests {
 	private const short Hercs = 0;
@@ -18,26 +18,29 @@ public class RosterFitTests {
 	private const short First = 10;
 	private const short Second = 11;
 
-	/// <summary>Catches an edit of a picked field written as an overlay of the one herc, where the view asks for the template.</summary>
+	/// <summary>Catches an edit of a picked field written as an overlay of the one herc, where the view edits an option.</summary>
 	[Fact]
 	public void AnEditOfAPickedFieldChangesEveryHercPickingTheTemplate() {
 		var document = Open();
 		int records = document.Mission.Mechs!.Length;
 
-		RosterFit.Write(document, First, [(MsnField.MechWeapon(0), 8)], toTemplate: true, _ => false);
+		RosterFit.Write(document, First, [(MsnField.MechWeapon(0), 8)], Option(document), _ => false);
 
 		Assert.Equal(8, Weapons(document, First)[0]);
 		Assert.Equal(8, Weapons(document, Second)[0]);
 		Assert.Equal(records, document.Mission.Mechs!.Length);
 	}
 
-	/// <summary>Catches "Only this herc" ignored: the edit must leave the template, and so the other herc picking it, as they were.</summary>
+	/// <summary>
+	/// Catches an edit given no option, as for a herc whose table the editor shows only, written in the template: it must
+	/// leave the template, and so the other herc picking it, as they were.
+	/// </summary>
 	[Fact]
 	public void AnEditOfOneHercAloneLeavesTheTemplateAndTheOtherHerc() {
 		var document = Open();
 		var template = document.TemplateOf(MsnField.MechWeapon(0), First)!.Value;
 
-		RosterFit.Write(document, First, [(MsnField.MechWeapon(0), 8)], toTemplate: false, _ => false);
+		RosterFit.Write(document, First, [(MsnField.MechWeapon(0), 8)], option: null, _ => false);
 
 		Assert.Equal(8, Weapons(document, First)[0]);
 		Assert.Equal(6, Weapons(document, Second)[0]);
@@ -53,7 +56,7 @@ public class RosterFitTests {
 		var document = Open();
 		var (weapons, ammo) = HercGroups.CybridFit(15)!.Value;
 
-		RosterFit.Write(document, First, RosterFit.Chassis(15, weapons, ammo), toTemplate: true, _ => false);
+		RosterFit.Write(document, First, RosterFit.Chassis(15, weapons, ammo), Option(document), _ => false);
 
 		foreach (short herc in new[] { First, Second }) {
 			Assert.Equal(15, document.Script.Mechs[Exported(document, 12, herc)!.Value].TypeIndex);
@@ -89,6 +92,9 @@ public class RosterFitTests {
 		return MissionDocument.Read(msn.Bytes(), null, new MissionGeneration(new short[MissionGenerator.CampaignFlagCount],
 			new short?[MissionGeneration.HeaderWords], () => _ => 0));
 	}
+
+	// The template of the table's one option.
+	private static MsnRecordId Option(MissionDocument document) => document.TemplateOf(MsnField.MechWeapon(0), First)!.Value;
 
 	private static short[] Weapons(MissionDocument document, short guid) =>
 		document.Script.Mechs[Exported(document, 12, guid)!.Value].WeaponRefs;

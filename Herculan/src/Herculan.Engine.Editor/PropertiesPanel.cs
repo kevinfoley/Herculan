@@ -63,7 +63,8 @@ internal sealed class PropertiesPanel {
 		var team = new TeamField(index, sides);
 		var related = new RelatedObjectives(objectives, links);
 		var heading = new HeadingField(headings);
-		_object = new ObjectView(index, links, mover, team, deleter, members, machine, fit, presentWhen, presence, tableView,
+		_object = new ObjectView(index, links, mover, team, deleter, members, machine,
+			new LoadoutView(tableEditor, tables, links, fit, tableView), presentWhen, presence, tableView,
 			actions, related, new StartingConditionField(startingConditions), heading);
 		_group = new GroupView(index, links, mover, team, machine, presentWhen, presence, actions, related, orderSlots, sharers,
 			heading, new GroupSlotsView(source, index, links, catalog, formations, types, fitter, deleter, placer, hercs, flyers), pads,
@@ -137,7 +138,7 @@ internal sealed class PropertiesPanel {
 				_condition.Draw(condition.Guid);
 				break;
 			default:
-				ImGui.TextWrapped("Nothing selected. Click a herc, flyer, structure, trigger area or waypoint in the scene, "
+				ImGui.TextWrapped("Nothing selected. Click a HERC, flyer, structure, trigger area or waypoint in the scene, "
 					+ "or pick one in the Mission panel on the left.");
 				break;
 		}

@@ -418,7 +418,7 @@ public static class MissionCheck {
 				Add(MissionCheckKind.UnknownRoster, GroupRow, guid, $"MemberKind {group.MemberKind} is none of 0, 1 and 2.",
 					group.MemberKind, some: some);
 			} else if (group.MemberKind == 0 && !firstOrder && group.MemberRefs.Any(member => Has(MechRow, member))) {
-				Add(MissionCheckKind.HercGroupNoOrder, GroupRow, guid, "it places hercs, and OrderRefs[0] names no record.", some: some);
+				Add(MissionCheckKind.HercGroupNoOrder, GroupRow, guid, "it places HERCs, and OrderRefs[0] names no record.", some: some);
 			}
 		}
 

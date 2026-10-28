@@ -368,7 +368,7 @@ public static class GroupOrders {
 	/// </summary>
 	public static MsnEdit SetSubject(MissionDocument document, short group, int slot, short kind, short subject) {
 		if (kind is not (-1 or 0 or 1 or 3)) {
-			throw new ArgumentOutOfRangeException(nameof(kind), kind, "A subject is none (-1), a group (0), a herc (1) or a structure (3).");
+			throw new ArgumentOutOfRangeException(nameof(kind), kind, "A subject is none (-1), a group (0), a HERC (1) or a structure (3).");
 		}
 
 		if (kind == -1 && slot is >= 0 and < Slots && Order(document, Orders(document, group)[slot]) is { } current

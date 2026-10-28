@@ -58,7 +58,7 @@ internal sealed class ObjectiveEditor {
 				whyNot = "A flyer is not offered as a subject: no retail objective asks about one.";
 				return null;
 			default:
-				whyNot = "Select a group, a herc or a structure to be its subject.";
+				whyNot = "Select a group, a HERC or a structure to be its subject.";
 				return null;
 		}
 	}

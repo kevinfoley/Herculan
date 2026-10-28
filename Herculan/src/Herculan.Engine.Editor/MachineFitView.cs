@@ -1,6 +1,7 @@
 using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Data.Struct;
 using HercWorks.Core.Data.Struct.Herc;
+using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Shell;
 using ImGuiNET;
@@ -26,23 +27,24 @@ internal sealed class MachineFitView {
 
 	/// <summary>
 	/// Draws the chassis choice and the hardpoints of the herc of row-12 GUID <paramref name="guid"/>:
-	/// <paramref name="chassis"/> offered under <paramref name="name"/>, <paramref name="note"/> under the choice, and each
-	/// edit written to the template the herc picks the field from when <paramref name="toTemplate"/>.
+	/// <paramref name="chassis"/> offered under <paramref name="name"/>, <paramref name="note"/> under the choice; given
+	/// <paramref name="option"/>, the template of the option being edited, each field as a load picking it makes it, and each
+	/// edit of a field a template supplies written there (<see cref="MachineFitter.Fit"/>).
 	/// </summary>
-	public void Draw(short guid, IEnumerable<int> chassis, Func<int, string> name, string note, bool toTemplate = false) {
-		if (_fitter.Record(guid) is not { } record) {
+	public void Draw(short guid, IEnumerable<int> chassis, Func<int, string> name, string note, MsnRecordId? option = null) {
+		if (_fitter.Fit(guid, option) is not { } record) {
 			return;
 		}
 
 		string? reason = _fitter.WhyFixed(guid);
-		int type = record.TypeIndex;
+		int type = record.Type;
 		ImGui.PushID(guid);
 		ImGui.BeginDisabled(reason != null);
 		ImGui.SetNextItemWidth(ScaledImGui.Scaled(WeaponWidth));
-		if (ImGui.BeginCombo("Chassis", name(type))) {
-			foreach (int option in chassis) {
-				if (ImGui.Selectable(name(option), option == type) && option != type) {
-					_fitter.RequestChassis(guid, option, toTemplate);
+		if (EditorText.BeginCombo("Chassis", name(type))) {
+			foreach (int choice in chassis) {
+				if (ImGui.Selectable(name(choice), choice == type) && choice != type) {
+					_fitter.RequestChassis(guid, choice, option);
 				}
 			}
 
@@ -60,14 +62,14 @@ internal sealed class MachineFitView {
 
 		var fixedMounts = new List<(int Mount, string Reason)>();
 		foreach (int mount in mounts) {
-			short weapon = mount < record.WeaponRefs.Length ? record.WeaponRefs[mount] : (short)-1;
-			short guidance = mount < record.WeaponSecondary.Length ? record.WeaponSecondary[mount] : RosterFit.Filler;
+			short weapon = mount < record.Weapons.Length ? record.Weapons[mount] : (short)-1;
+			short guidance = mount < record.Ammo.Length ? record.Ammo[mount] : RosterFit.Filler;
 			string? noWeapons = _fitter.WhyNoWeapons(type, mount);
 			if (noWeapons != null) {
 				fixedMounts.Add((mount, noWeapons));
 			}
 
-			DrawMount(guid, type, mount, weapon, guidance, noWeapons != null, cybrid, toTemplate);
+			DrawMount(guid, type, mount, weapon, guidance, noWeapons != null, cybrid, option);
 		}
 
 		ImGui.EndDisabled();
@@ -89,7 +91,7 @@ internal sealed class MachineFitView {
 	// One hardpoint: the weapons it offers, and for a launcher the guidance kinds. A Cybrid's weapon no retail mission fits
 	// there is listed first, marked, as the current choice.
 	private void DrawMount(short guid, int chassis, int mount, short weapon, short guidance, bool fixedWeapon, bool cybrid,
-			bool toTemplate) {
+			MsnRecordId? option) {
 		ImGui.PushID(mount);
 		ImGui.AlignTextToFramePadding();
 		ImGui.Text($"{Hardpoint(mount)}:");
@@ -99,16 +101,16 @@ internal sealed class MachineFitView {
 		string current = foreign ? $"{WeaponName(weapon)} (not from a retail mission)" : WeaponName(weapon);
 		var options = _fitter.WeaponsFor(chassis, mount).ToList();
 		// A hardpoint whose only offer is what it holds, such as one retail missions always leave empty, has no choice to make.
-		bool onlyChoice = !foreign && options.All(option => option == weapon);
+		bool onlyChoice = !foreign && options.All(choice => choice == weapon);
 		ImGui.BeginDisabled(fixedWeapon || onlyChoice);
-		if (ImGui.BeginCombo("##weapon", current)) {
+		if (EditorText.BeginCombo("##weapon", current)) {
 			if (foreign) {
 				ImGui.Selectable(current, true);
 			}
 
-			foreach (int option in options) {
-				if (ImGui.Selectable(WeaponName(option), option == weapon) && option != weapon) {
-					_fitter.RequestWeapon(guid, mount, option, toTemplate);
+			foreach (int choice in options) {
+				if (ImGui.Selectable(WeaponName(choice), choice == weapon) && choice != weapon) {
+					_fitter.RequestWeapon(guid, mount, choice, option);
 				}
 			}
 
@@ -119,10 +121,10 @@ internal sealed class MachineFitView {
 		if (ShellWeaponsScreen.TakesGuidance(weapon)) {
 			ImGui.SameLine();
 			ImGui.SetNextItemWidth(ScaledImGui.Scaled(GuidanceWidth));
-			if (ImGui.BeginCombo("##guidance", GuidanceName(guidance))) {
+			if (EditorText.BeginCombo("##guidance", GuidanceName(guidance))) {
 				foreach (int kind in ShellWeaponsScreen.GuidanceKinds) {
 					if (ImGui.Selectable(GuidanceName(kind), kind == guidance) && kind != guidance) {
-						_fitter.RequestGuidance(guid, mount, kind, toTemplate);
+						_fitter.RequestGuidance(guid, mount, kind, option);
 					}
 				}
 

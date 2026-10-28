@@ -171,7 +171,7 @@ public static class ScriptDatLint {
 		}
 
 		Cap(findings, ScriptBlock.Mechs, script.Mechs.Length + squadSize, MechSlotCap,
-			squadSize > 0 ? $"{script.Mechs.Length} hercs plus a squad of {squadSize}" : $"{script.Mechs.Length} hercs");
+			squadSize > 0 ? $"{script.Mechs.Length} HERCs plus a squad of {squadSize}" : $"{script.Mechs.Length} HERCs");
 		Cap(findings, ScriptBlock.Flyers, script.Flyers.Length, FlyerSlotCap, $"{script.Flyers.Length} flyers");
 		Cap(findings, ScriptBlock.Bases, script.Bases.Length, BaseSlotCap, $"{script.Bases.Length} bases");
 
@@ -252,7 +252,7 @@ public static class ScriptDatLint {
 
 		if (rosterCount < 0) {
 			findings.Add(new(ScriptBlock.Groups, i,
-				$"Group {i} roster is {group.MemberKind}; only 0 (hercs), 1 (flyers) and 2 (bases) exist.", ScriptLintKind.UnknownRoster,
+				$"Group {i} roster is {group.MemberKind}; only 0 (HERCs), 1 (flyers) and 2 (bases) exist.", ScriptLintKind.UnknownRoster,
 				group.MemberKind));
 			return;
 		}
@@ -263,7 +263,7 @@ public static class ScriptDatLint {
 		// a null behaviour descriptor — docs/retail/simulation/ai-goals.md#a-group-with-no-order-at-all.
 		if (group.MemberKind == 0 && !slotZeroOrder && group.MemberRefs.Any(member => member >= 0)) {
 			findings.Add(new(ScriptBlock.Groups, i,
-				$"Group {i} places hercs but has no slot-0 order; their AI installs a null behaviour and DBSIM faults.",
+				$"Group {i} places HERCs but has no slot-0 order; their AI installs a null behaviour and DBSIM faults.",
 				ScriptLintKind.HercGroupNoOrder));
 		}
 	}
@@ -304,7 +304,7 @@ public static class ScriptDatLint {
 		ScriptBlock.TriggerAreas => "trigger areas",
 		ScriptBlock.Actions => "actions",
 		ScriptBlock.ActionTimers => "action timers",
-		ScriptBlock.Mechs => "hercs",
+		ScriptBlock.Mechs => "HERCs",
 		ScriptBlock.Flyers => "flyers",
 		ScriptBlock.Bases => "bases",
 		ScriptBlock.Orders => "orders",

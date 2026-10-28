@@ -609,20 +609,6 @@ public sealed class MissionDocument {
 	public MsnRecordId? TemplateOf(MsnField field, short guid) => EntryOf(field.Row, guid).Supplier(field.Word).CopiedFrom;
 
 	/// <summary>
-	/// Sets <paramref name="field"/> to <paramref name="value"/> in the template <see cref="TemplateOf"/> answers,
-	/// so every record that picks it, now and in every other state, gets the value; <see cref="SetField"/> writes an overlay
-	/// for the one GUID instead. The template is copied whole, so an unset value is written as any other. Throws
-	/// <see cref="InvalidOperationException"/> when no template supplies the field.
-	/// </summary>
-	public MsnEdit SetTemplateField(MsnField field, short guid, short value) {
-		var template = TemplateOf(field, guid)
-			?? throw new InvalidOperationException($"No template supplies that field of row {field.Row}'s GUID {guid}.");
-		var before = Begin(field.Row);
-		field.Set(RecordAt(template)!, value);
-		return End(before);
-	}
-
-	/// <summary>
 	/// Puts <paramref name="record"/> at <paramref name="index"/> of row <paramref name="row"/>, the records from there on
 	/// moving up one: for a template, a GUID <c>-1</c> record, which a record picks only when it is read before it
 	/// (docs/retail/formats/msn-mission-file.md#random-tables), or a row-1 condition that a later one must be able to require

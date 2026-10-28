@@ -171,7 +171,7 @@ public static class ObjectiveEditing {
 	public static string? WhyNoSubject(MissionDocument document, short kind, short subject) {
 		int? row = kind switch { GroupSubject => 16, HercSubject => 12, StructureSubject => 14, _ => null };
 		if (row == null) {
-			return "Only a group, a herc or a structure can be an objective's subject.";
+			return "Only a group, a HERC or a structure can be an objective's subject.";
 		}
 
 		return document.Layout.Entry(row.Value, subject) == null ? "It is not in the mission." : null;

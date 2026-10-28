@@ -6,7 +6,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// Creates, edits and deletes the open mission's random tables, and sets which table a herc, flyer, structure or ground
-/// vehicle outside the squad picks from, each edit one step of <see cref="PointMover"/>'s undo history, through
+/// vehicle outside the squad picks from, or that it picks from none, each edit one step of <see cref="PointMover"/>'s undo history, through
 /// <see cref="RandomTableEditing"/>'s record edits on the mission's <c>.MSN</c>. Every edit builds the editor's state again
 /// (<see cref="SceneSync"/>), as it changes what the records picking from the table generate; the selection keeps a
 /// table by its row-1 GUID and an object as the rebuild keeps one.
@@ -49,25 +49,45 @@ internal sealed class RandomTableEditor {
 	public void RequestCreate(int row, short guid) =>
 		Ask(() => WhyNoTables(row, guid), source => RandomTableEditing.CreateTable(source, row, guid, out _), null);
 
-	/// <summary>Asks for the object to pick from <paramref name="table"/>, or from none for <c>-1</c>.</summary>
+	/// <summary>Asks for the object to pick from <paramref name="table"/> (<see cref="RandomTableEditing.SetTable"/>).</summary>
 	public void RequestTable(int row, short guid, short table) =>
 		Ask(() => RandomTableEditing.WhyNoTable(_source, row, guid, table),
 			source => RandomTableEditing.SetTable(source, row, guid, table), null);
 
-	/// <summary>Asks for an option copying range <paramref name="copyOf"/>'s template to be added to <paramref name="table"/>.</summary>
-	public void RequestAdd(short table, short copyOf) =>
-		Ask(() => RandomTableEditing.WhyNoAdd(_source, table),
-			source => RandomTableEditing.AddOption(source, table, copyOf, out _), table);
+	/// <summary>
+	/// Asks for the object to pick from no table, keeping range <paramref name="range"/>'s option as its own
+	/// (<see cref="RandomTableEditing.SetFixed"/>).
+	/// </summary>
+	public void RequestFixed(int row, short guid, short range) =>
+		Ask(() => RandomTableEditing.WhyNoFixed(_source, row, guid, range),
+			source => RandomTableEditing.SetFixed(source, row, guid, range), null);
 
-	/// <summary>Asks for range <paramref name="range"/>'s option to be removed from <paramref name="table"/>.</summary>
-	public void RequestRemove(short table, short range) =>
+	/// <summary>
+	/// Asks for an option copying range <paramref name="copyOf"/>'s template to be added to <paramref name="table"/>, which is
+	/// then selected when <paramref name="selectTable"/>; <paramref name="added"/> is told the new option's range.
+	/// </summary>
+	public void RequestAdd(short table, short copyOf, bool selectTable = true, Action<short>? added = null) =>
+		Ask(() => RandomTableEditing.WhyNoAdd(_source, table), source => {
+			var edit = RandomTableEditing.AddOption(source, table, copyOf, out short range);
+			added?.Invoke(range);
+			return edit;
+		}, selectTable ? table : null);
+
+	/// <summary>
+	/// Asks for range <paramref name="range"/>'s option to be removed from <paramref name="table"/>, which is then selected
+	/// when <paramref name="selectTable"/>.
+	/// </summary>
+	public void RequestRemove(short table, short range, bool selectTable = true) =>
 		Ask(() => RandomTableEditing.WhyNoRemove(_source, table, range),
-			source => RandomTableEditing.RemoveOption(source, table, range), table);
+			source => RandomTableEditing.RemoveOption(source, table, range), selectTable ? table : null);
 
-	/// <summary>Asks for <paramref name="table"/>'s chances to be <paramref name="percents"/>, one percent to one decimal per option.</summary>
-	public void RequestChances(short table, IReadOnlyList<decimal> percents) =>
+	/// <summary>
+	/// Asks for <paramref name="table"/>'s chances to be <paramref name="percents"/>, one percent to one decimal per option;
+	/// the table is then selected when <paramref name="selectTable"/>.
+	/// </summary>
+	public void RequestChances(short table, IReadOnlyList<decimal> percents, bool selectTable = true) =>
 		Ask(() => RandomTableEditing.WhyNoChances(_source, table, percents),
-			source => RandomTableEditing.SetChances(source, table, percents), table);
+			source => RandomTableEditing.SetChances(source, table, percents), selectTable ? table : null);
 
 	/// <summary>Asks for <paramref name="table"/> to be deleted, with its ranges and templates.</summary>
 	public void RequestDelete(short table) =>

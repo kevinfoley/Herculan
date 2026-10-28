@@ -14,8 +14,7 @@ namespace Herculan.Engine.Editor;
 /// (<see cref="SceneSync"/>), which builds the herc's object for the record, and the herc is
 /// selected (docs/herculan/handoff-editor-roster.md#hercs).
 ///
-/// <para>It comes with the fit a new herc of its type gets (<see cref="MachineFitter.NewHercFit"/>), as a chassis change gives
-/// it.</para>
+/// <para>It gets its chassis's standard weapons (<see cref="MachineFitter.NewHercFit"/>), as a chassis change gives them.</para>
 /// </summary>
 internal sealed class HercPlacer {
 	private const int MechRow = 12;
@@ -62,7 +61,7 @@ internal sealed class HercPlacer {
 		}
 
 		if (_fitter.NewHercFit(typeIndex) is not var (weapons, ammo)) {
-			return HercGroups.IsCybrid(typeIndex) ? $"There is no herc type {typeIndex}." : $"The install has no stock fit for chassis {typeIndex}.";
+			return HercGroups.IsCybrid(typeIndex) ? $"There is no HERC type {typeIndex}." : $"The install has no stock fit for chassis {typeIndex}.";
 		}
 
 		var source = _source;
@@ -115,7 +114,7 @@ internal sealed class HercPlacer {
 		}
 
 		if (_fitter.NewHercFit(typeIndex) is not var (weapons, ammo)) {
-			return HercGroups.IsCybrid(typeIndex) ? $"There is no herc type {typeIndex}." : $"The install has no stock fit for chassis {typeIndex}.";
+			return HercGroups.IsCybrid(typeIndex) ? $"There is no HERC type {typeIndex}." : $"The install has no stock fit for chassis {typeIndex}.";
 		}
 
 		var source = _source;
@@ -148,7 +147,7 @@ internal sealed class HercPlacer {
 		short added = mech();
 		if (_index.ObjectOf(new ObjectKey(MechRow, added)) == null) {
 			_sync.Undo(change);
-			return $"The install has no herc type {typeIndex}.";
+			return $"The install has no HERC type {typeIndex}.";
 		}
 
 		_mover.Record(new RecordsEdit(_sync, change));

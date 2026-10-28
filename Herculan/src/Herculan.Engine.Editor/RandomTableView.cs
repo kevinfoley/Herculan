@@ -11,9 +11,10 @@ namespace Herculan.Engine.Editor;
 /// The Random table view. A random table is a row-1 condition; each of its options is one range under the table, with the
 /// template that range conditions (docs/herculan/handoff-editor-conditions.md#random-tables). The Properties panel shows the
 /// view when the table or one of its ranges is selected, that range's option then highlighted: its title, each option with
-/// its chance, what it is and Remove, Nothing with what is left over, Add option, Used by, a warning when it has no effect in
-/// play, Delete random table, and the records' numbers under Advanced. Also the Random table line of the view of a herc,
-/// flyer, structure or ground vehicle and of a route. Every edit goes through <see cref="RandomTableEditor"/>. Everything it
+/// its chance, what it is and Remove, the share no option takes, Add option, Used by, a warning when it has no effect in
+/// play, Delete random table, and the records' numbers under Advanced (the chances as <see cref="RandomTableChances"/> shows
+/// them). Also the Random table line of the view of a squad herc, of a herc, flyer, structure or ground vehicle whose table the
+/// editor shows only, and of a route. Every edit goes through <see cref="RandomTableEditor"/>. Everything it
 /// shows is the <c>.MSN</c>'s and its layout's (<see cref="RandomTables"/>), so the scene's option is each record's first
 /// (<see cref="LayoutPick.Shown"/>). How a record picks is docs/retail/formats/msn-mission-file.md#random-tables.
 /// </summary>
@@ -23,10 +24,7 @@ internal sealed class RandomTableView {
 	private readonly RandomTableEditor _editor;
 	private readonly RandomTables _tables;
 	private readonly PanelLinks _links;
-
-	// A chance being typed, and the field it is for, until the field lets go.
-	private string? _draftFor;
-	private float _draft;
+	private readonly RandomTableChances _chances = new();
 
 	public RandomTableView(RandomTableEditor editor, RandomTables tables, PanelLinks links) {
 		_editor = editor;
@@ -75,7 +73,7 @@ internal sealed class RandomTableView {
 		ImGui.PopID();
 	}
 
-	// Each option with its chance, what it is and Remove; Nothing; Add option.
+	// Each option with its chance, what it is and Remove; the share no option takes; Add option.
 	private void DrawOptions(RandomTable table, IReadOnlyList<RandomTableUser> users, string? why, short? highlight) {
 		var source = _editor.Source;
 		var percents = RandomTableEditing.Percents(table);
@@ -90,8 +88,8 @@ internal sealed class RandomTableView {
 			if (why != null) {
 				ImGui.TextUnformatted($"{percents[i]:0.#}%");
 			} else {
-				ImGui.SetNextItemWidth(ScaledImGui.Scaled(56f));
-				if (ChanceField($"chance{table.Guid}.{i}", percents[i]) is { } typed) {
+				ImGui.SetNextItemWidth(ScaledImGui.Scaled(RandomTableChances.FieldWidth));
+				if (_chances.Field($"chance{table.Guid}.{i}", percents[i]) is { } typed) {
 					var asked = percents.ToArray();
 					asked[i] = typed;
 					_editor.RequestChances(table.Guid, asked);
@@ -109,8 +107,7 @@ internal sealed class RandomTableView {
 
 			// The text wraps short of Remove, so the button stays inside the panel.
 			bool removable = why == null && table.Options.Count > 1;
-			var style = ImGui.GetStyle();
-			float remove = removable ? ImGui.CalcTextSize("Remove").X + style.FramePadding.X * 2f + style.ItemSpacing.X : 0f;
+			float remove = removable ? EditorText.ButtonRoom("Remove") : 0f;
 			ImGui.PushTextWrapPos(ImGui.GetCursorPosX() + ImGui.GetContentRegionAvail().X - remove);
 			EditorText.Wrapped(_tables.Option(table, i) + (inScene.Contains(i) ? " (in the scene)" : ""));
 			ImGui.PopTextWrapPos();
@@ -128,20 +125,8 @@ internal sealed class RandomTableView {
 			ImGui.PopID();
 		}
 
-		if (!RandomTableEditing.Exact(table)) {
-			string exact = string.Join(", ", table.Options.Select(option => $"{table.Percent(option.Draws):0.###}%"));
-			EditorText.Note(why == null ? $"Rounded from {exact}: a change writes every chance as shown." : $"Rounded from {exact}.");
-		}
-
-		if (table.Leftover > 0) {
-			EditorText.Wrapped($"Nothing: {Math.Max(100m - percents.Sum(), 0m):0.#}%");
-			if (table.Row is >= 12 and <= 14) {
-				// Its references stay the .MSN's own numbers, which the load reads as list positions (MissionGenerator.ReadHercs and
-				// its siblings, docs/herculan/handoff-editor-conditions.md#random-tables).
-				EditorText.Note($"A load that lands here picks no option: the {_tables.Noun(table)} keeps its own details, but its "
-					+ "position, heading and triggers can come out wrong in play.");
-			}
-		}
+		RandomTableChances.DrawRounding(table, why == null);
+		RandomTableChances.DrawNoOption(table, percents, _tables.Noun(table));
 
 		if (inScene.Count > 0) {
 			EditorText.Note("Each load picks one option at random; the scene shows the first.");
@@ -155,7 +140,9 @@ internal sealed class RandomTableView {
 			}
 
 			ImGui.EndDisabled();
-			EditorText.Tooltip(noAdd == null ? "Adds a copy of the option the scene shows, with half the largest chance." : null);
+			EditorText.Tooltip(noAdd == null
+				? "Adds a copy of the option the scene shows. The chances are shared out again with it, the share no option takes kept as it is."
+				: null);
 			EditorText.Reason(noAdd);
 		}
 	}
@@ -168,16 +155,16 @@ internal sealed class RandomTableView {
 		for (int i = 0; i < users.Count; i++) {
 			var user = users[i];
 			ImGui.PushID(i);
+			string shows = user.Shown is { } shown ? $": shows option {shown + 1}"
+				: user.OtherTable ? ": shows another random table's option"
+				: ": keeps its own details";
 			if (user.Target is { } target) {
-				_links.Link(user.Label, target);
+				_links.Link(user.Label, target, EditorText.AfterRoom(shows));
 			} else {
-				ImGui.TextUnformatted(user.Label);
+				ImGui.TextUnformatted(NameText.Fit(user.Label, ImGui.GetContentRegionAvail().X - EditorText.AfterRoom(shows)));
 			}
 
-			ImGui.SameLine(0f, 0f);
-			ImGui.TextUnformatted(user.Shown is { } shown ? $": shows option {shown + 1}"
-				: user.OtherTable ? ": shows another random table's option"
-				: ": keeps its own details");
+			EditorText.After(shows);
 			if (user.Unused is { } unused) {
 				EditorText.Note(RandomTables.UnusedNote(unused));
 			}
@@ -277,61 +264,20 @@ internal sealed class RandomTableView {
 	}
 
 	/// <summary>
-	/// The Random table line of a herc's, flyer's, structure's or ground vehicle's view: outside the squad a list of None,
-	/// each random table of its kind by its title, or New random table from this herc (flyer, structure, ground vehicle); for
-	/// a squad herc the table it picks from, shown only. Then a link to the table and which option the scene shows.
+	/// The Random table line of the view of roster row <paramref name="row"/>'s GUID <paramref name="guid"/> when it picks from a
+	/// table and no choice of it is offered there, a squad herc's or one whose table the editor shows only: a link to the table
+	/// and which option the scene shows it with.
 	/// </summary>
-	public void DrawObjectTable(SceneObject placed) {
-		var source = _editor.Source;
-		var index = _tables.Index;
-		if (index.KeyOf(placed) is not { } key || index.Plan.Object(key) is not { } planned) {
-			return;
-		}
-
-		int row = key.Row;
-		short guid = key.Guid;
-		short? current = RandomTableEditing.TableOf(source, row, guid);
-		if (planned.Squad && current == null) {
+	public void DrawPickedTable(int row, short guid) {
+		if (RandomTableEditing.TableOf(_editor.Source, row, guid) is not { } picked) {
 			return;
 		}
 
 		ImGui.PushID("table");
 		ImGui.AlignTextToFramePadding();
 		ImGui.Text("Random table:");
-		if (!planned.Squad) {
-			string? why = RandomTableEditing.WhyNoTables(source, row, guid);
-			ImGui.SameLine();
-			ImGui.SetNextItemWidth(-1f);
-			ImGui.BeginDisabled(why != null);
-			if (ImGui.BeginCombo("##table", current is { } named ? TitleOf(named) : "None")) {
-				if (ImGui.Selectable("None", current == null) && current != null) {
-					_editor.RequestTable(row, guid, -1);
-				}
-
-				foreach (short table in _tables.All) {
-					if (RandomTableEditing.WhyNoTable(source, row, guid, table) == null
-							&& ImGui.Selectable($"{TitleOf(table)}##{table}", table == current) && table != current) {
-						_editor.RequestTable(row, guid, table);
-					}
-				}
-
-				if (ImGui.Selectable($"New random table from this {Noun(placed)}")) {
-					_editor.RequestCreate(row, guid);
-				}
-
-				ImGui.EndCombo();
-			}
-
-			ImGui.EndDisabled();
-			EditorText.Reason(why);
-		}
-
-		if (current is { } picked) {
-			_links.Link(TitleOf(picked), new ConditionSelection(picked));
-			DrawShown(row, guid, picked);
-		}
-
-		EditorText.Reason(_editor.Failure);
+		_links.Link(TitleOf(picked), new ConditionSelection(picked));
+		DrawShown(row, guid, picked);
 		ImGui.PopID();
 	}
 
@@ -363,8 +309,11 @@ internal sealed class RandomTableView {
 		}
 	}
 
-	// The option of <table> the layout shows the key record of <row>, <guid> with, or null for none of its options.
-	private int? ShownAt(int row, short guid, RandomTable table) {
+	/// <summary>
+	/// The option of <paramref name="table"/> the layout shows the key record of roster row <paramref name="row"/>'s GUID
+	/// <paramref name="guid"/> with, an index into its options, or null for none of them.
+	/// </summary>
+	internal int? ShownAt(int row, short guid, RandomTable table) {
 		var source = _editor.Source;
 		if (RandomTableEditing.KeyRecord(source, row, guid) is not { } key
 				|| RandomTableEditing.PickOf(source, key) is not { Table: var picked, Shown: { Record: not null } option } || picked != table.Guid) {
@@ -384,28 +333,4 @@ internal sealed class RandomTableView {
 		_ when placed.Object is Sim.BaseObject { Type.IsVehicle: true } => "ground vehicle",
 		_ => "structure",
 	};
-
-	// A typed percent to one decimal, 0 to 100; answers the value when the field lets go after a change.
-	private decimal? ChanceField(string id, decimal current) {
-		if (_draftFor != null && _draftFor != id && !ImGui.IsAnyItemActive()) {
-			_draftFor = null;
-		}
-
-		float shown = _draftFor == id ? _draft : (float)current;
-		if (ImGui.InputFloat($"##{id}", ref shown, 0f, 0f, "%.1f")) {
-			_draftFor = id;
-			_draft = shown;
-		}
-
-		decimal? typed = null;
-		if (ImGui.IsItemDeactivatedAfterEdit() && _draftFor == id) {
-			_draftFor = null;
-			decimal value = float.IsFinite(_draft) ? decimal.Round((decimal)Math.Clamp(_draft, 0f, 100f), 1) : current;
-			if (value != current) {
-				typed = value;
-			}
-		}
-
-		return typed;
-	}
 }

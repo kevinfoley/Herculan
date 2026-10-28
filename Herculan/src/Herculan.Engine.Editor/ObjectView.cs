@@ -15,8 +15,8 @@ namespace Herculan.Engine.Editor;
 /// the <c>.MSN</c>'s layout and <see cref="MissionIndex"/> by the roster record the object stands for, every record included,
 /// one the mission as opened leaves out too: its name, its group with a choice that moves it into another
 /// (<see cref="MemberMover"/>) and its group's orders, its Present when, with what it does to a group it would leave empty
-/// (<see cref="PresentWhenView.DrawGroupLeftEmpty"/>), and the random table it picks from; its
-/// team, type and fit (<see cref="RosterFitView"/>); its position as fields that move it, and its heading, set for a structure or ground vehicle (<see cref="HeadingField"/>); a herc's,
+/// (<see cref="PresentWhenView.DrawGroupLeftEmpty"/>), and for a machine of the squad the random table it picks from; its
+/// team; outside the squad its loadout or type, fixed or random (<see cref="LoadoutView"/>); its position as fields that move it, and its heading, set for a structure or ground vehicle (<see cref="HeadingField"/>); a herc's,
 /// structure's or ground vehicle's starting condition (<see cref="StartingConditionField"/>), or for a machine of the player's squad which Herc it is (<see cref="SquadMachinePanel"/>); the two triggers it
 /// fires; the campaign variables it sets when put out of action; the win and lose conditions about it; Delete, or what
 /// refuses it; and, collapsed under Advanced, its type number, model, triangle and texture counts and hit radius.
@@ -29,7 +29,7 @@ internal sealed class ObjectView {
 	private readonly ObjectDeleter _deleter;
 	private readonly MemberMover _members;
 	private readonly SquadMachinePanel _machine;
-	private readonly RosterFitView _fit;
+	private readonly LoadoutView _loadout;
 	private readonly PresentWhenView _presentWhen;
 	private readonly PresenceEditor _presence;
 	private readonly RandomTableView _tables;
@@ -42,7 +42,7 @@ internal sealed class ObjectView {
 	private readonly PointFields _point = new();
 
 	public ObjectView(MissionIndex index, PanelLinks links, PointMover mover, TeamField team, ObjectDeleter deleter,
-			MemberMover members, SquadMachinePanel machine, RosterFitView fit, PresentWhenView presentWhen, PresenceEditor presence, RandomTableView tables,
+			MemberMover members, SquadMachinePanel machine, LoadoutView loadout, PresentWhenView presentWhen, PresenceEditor presence, RandomTableView tables,
 			ActionEditor actions, RelatedObjectives objectives, StartingConditionField condition, HeadingField heading) {
 		_index = index;
 		_links = links;
@@ -51,7 +51,7 @@ internal sealed class ObjectView {
 		_deleter = deleter;
 		_members = members;
 		_machine = machine;
-		_fit = fit;
+		_loadout = loadout;
 		_presentWhen = presentWhen;
 		_presence = presence;
 		_tables = tables;
@@ -80,10 +80,13 @@ internal sealed class ObjectView {
 		var presence = _presence.ObjectTarget(sel);
 		_presentWhen.Draw(presence);
 		_presentWhen.DrawGroupLeftEmpty(presence, group.Guid);
-		_tables.DrawObjectTable(sel);
+		if (planned.Squad) {
+			_tables.DrawPickedTable(planned.Key.Row, planned.Key.Guid);
+		}
+
 		ImGui.Separator();
 		_team.Draw(group.Guid, ofMember: true);
-		_fit.Draw(sel);
+		_loadout.Draw(sel);
 
 		ImGui.Separator();
 		DrawPosition(sel, planned, group);
@@ -120,7 +123,7 @@ internal sealed class ObjectView {
 	// A choice of the groups it can move into, of its own roster, the reason each other one is refused on hover.
 	private void DrawMoveTo(SceneObject sel, PlannedObject planned, PlannedGroup group) {
 		ImGui.SetNextItemWidth(-1f);
-		if (ImGui.BeginCombo("##moveTo", "Move to another group...")) {
+		if (EditorText.BeginCombo("##moveTo", "Move to another group...")) {
 			bool any = false;
 			foreach (var other in _index.Groups) {
 				if (other.Guid == group.Guid || other.IsSquad || other.Kind != planned.Kind) {
@@ -262,7 +265,7 @@ internal sealed class ObjectView {
 			$"A trigger set here fires when it is engaged: an enemy within {MissionText.Metres(Sim.Detection.EngagementRange)} "
 				+ "spots it, or an enemy shoots it.");
 		OwnAction("When defeated, fires", key, defeated: true, defeated, why,
-			"A trigger set here fires when it is defeated: destroyed; a herc also when immobilized or left with no working weapon.");
+			"A trigger set here fires when it is defeated: destroyed; a HERC also when immobilized or left with no working weapon.");
 		EditorText.Reason(why);
 		EditorText.Reason(_actions.Failure);
 	}

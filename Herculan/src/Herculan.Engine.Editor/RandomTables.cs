@@ -89,16 +89,20 @@ internal sealed class RandomTables {
 	}
 
 	/// <summary>
-	/// What <paramref name="table"/> picks, built from its options: "Random herc: SCARAB or DIABLO", each type named once, three
-	/// at most and then how many more; a table of routes by its number of options.
+	/// What <paramref name="table"/> picks, by its kind numbered from 1 among the tables of that kind in row-1 order, so two
+	/// tables of one chassis read apart (the editor's choice), then its options: each type named once, three at most and then
+	/// how many more; a table of routes by its number of options.
 	/// </summary>
 	public string Title(RandomTable table) {
+		string noun = KindOf(table);
+		int number = All.Select(Read).TakeWhile(other => other?.Guid != table.Guid).Count(other => other != null && KindOf(other) == noun) + 1;
+		string kind = $"{number}: Random {noun}";
 		if (table.Options.Count == 0) {
-			return "Random table with no options";
+			return $"{kind}: no options";
 		}
 
 		if (table.Row == RouteRow) {
-			return $"Random route: {table.Options.Count} options";
+			return $"{kind}: {table.Options.Count} options";
 		}
 
 		var names = table.Options.Select(option => ShortName(Record(option))).Distinct().ToList();
@@ -108,8 +112,11 @@ internal sealed class RandomTables {
 			_ => $"{string.Join(", ", names.Take(3))} or {names.Count - 3} more",
 		};
 
-		return $"Random {Noun(table)}: {list}";
+		return $"{kind}: {list}";
 	}
+
+	// What a title calls <table>'s kind: its options' noun, or "table" for one with no options.
+	private string KindOf(RandomTable table) => table.Options.Count == 0 ? "table" : Noun(table);
 
 	/// <summary>
 	/// What option <paramref name="at"/> of <paramref name="table"/> is, with what tells it from the others: a herc's chassis,
@@ -157,14 +164,6 @@ internal sealed class RandomTables {
 
 	/// <summary>How many templates, records of no entry, pick by <paramref name="table"/>'s key themselves.</summary>
 	public int Others(RandomTable table) => UsersOf(table).Others;
-
-	/// <summary>
-	/// How many entries pick from a table one of whose options copies template <paramref name="template"/>: the records an edit
-	/// of that template changes wherever it is picked.
-	/// </summary>
-	public int Picking(MsnRecordId template) =>
-		KeyedRows.Sum(row => _source.Layout.Entries(row).Count(entry => PicksOf(entry)
-			.Any(pick => pick.Options.Any(seen => seen.Record == template))));
 
 	/// <summary>What references <paramref name="table"/> other than its own options, one short identity per line (<see cref="RandomTableEditing.Referencers"/>).</summary>
 	public IReadOnlyList<(string Label, EditorSelection? Target)> Referencing(RandomTable table) {

@@ -22,8 +22,7 @@ namespace Herculan.Engine.Editor;
 /// <see cref="RosterTypeEditor"/>; or "Empty", which deletes it as its own Delete does (<see cref="ObjectDeleter"/>), refused as
 /// that is. An empty slot's choice of the kind's types adds one there: a herc (<see cref="HercPlacer.RequestJoin"/>), a flyer
 /// (<see cref="FlyerPlacer.RequestJoin"/>), or a structure or ground vehicle (<see cref="StructurePlacer.RequestJoin"/>). A
-/// member whose type is picked by a random table keeps that type here: its own view (<see cref="RosterFitView"/>) says where a
-/// change goes. Every edit waits for the frame's ImGui to be rendered.</para>
+/// member whose type is picked by a random table keeps that type here: its own view sets it (<see cref="LoadoutView"/>). Every edit waits for the frame's ImGui to be rendered.</para>
 /// </summary>
 internal sealed class GroupSlotsView {
 	private const int MechRow = 12;
@@ -159,7 +158,7 @@ internal sealed class GroupSlotsView {
 
 		ImGui.SetNextItemWidth(ScaledImGui.Scaled(TypeWidth));
 		ImGui.BeginDisabled(fixedType != null);
-		if (ImGui.BeginCombo("##type", _catalog.NameOf(kind, member.TypeIndex))) {
+		if (EditorText.BeginCombo("##type", _catalog.NameOf(kind, member.TypeIndex))) {
 			if (Entry("Empty: delete it", false, noEmpty, goes) && sceneObject != null) {
 				_deleter.Request(sceneObject);
 			}
@@ -170,7 +169,7 @@ internal sealed class GroupSlotsView {
 					if (herc) {
 						_fitter.RequestChassis(key.Guid, type);
 					} else {
-						_types.RequestType(key.Row, key.Guid, type, toTemplate: false);
+						_types.RequestType(key.Row, key.Guid, type);
 					}
 				}
 			}
@@ -198,7 +197,7 @@ internal sealed class GroupSlotsView {
 		var planned = _index.Plan.Object(key);
 		ImGui.SetNextItemWidth(ScaledImGui.Scaled(TypeWidth));
 		ImGui.BeginDisabled();
-		if (ImGui.BeginCombo("##type", planned != null ? _links.Names.TypeName(key) : "Missing")) {
+		if (EditorText.BeginCombo("##type", planned != null ? _links.Names.TypeName(key) : "Missing")) {
 			ImGui.EndCombo();
 		}
 
@@ -211,7 +210,7 @@ internal sealed class GroupSlotsView {
 				: "It is not in the scene.");
 		} else {
 			EditorText.Note(group.Kind switch {
-				MissionUnitKind.Mech => "References a herc the mission does not have.",
+				MissionUnitKind.Mech => "References a HERC the mission does not have.",
 				MissionUnitKind.Flyer => "References a flyer the mission does not have.",
 				_ => "References a structure the mission does not have.",
 			});
@@ -229,7 +228,7 @@ internal sealed class GroupSlotsView {
 
 		ImGui.SetNextItemWidth(ScaledImGui.Scaled(TypeWidth));
 		ImGui.BeginDisabled(why != null);
-		if (ImGui.BeginCombo("##type", "Empty")) {
+		if (EditorText.BeginCombo("##type", "Empty")) {
 			switch (group.Kind) {
 				case MissionUnitKind.Mech:
 					foreach (int type in _catalog.Of(ToolboxKind.Herc, group.Side)) {

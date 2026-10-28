@@ -77,7 +77,7 @@ internal sealed class EditorMission {
 			new MissionTextView(Texts), new DebriefView(Debrief));
 		var catalog = new UnitTypeCatalog(content);
 		Properties = new PropertiesPanel(sceneIndex, Selection, source, Mover, Sides, Deleter, Members,
-			new SquadMachinePanel(Fitter, Squad, squad), new RosterFitView(Fitter, Types, TableEditor, randomTables, catalog),
+			new SquadMachinePanel(Fitter, Squad, squad), new RosterFitView(Fitter, Types, TableEditor, catalog),
 			Routes, Placing, Areas, AreaPlacing, Orders, Objectives, Actions, Timers, Conditions, Presence, TableEditor,
 			StartingConditions, Headings, randomTables, new TriggerMessages(content), Names, catalog, tables.Bases, Types, Fitter, Placer, Hercs, Flyers,
 			Pads, GroupDeleter);

@@ -239,7 +239,7 @@ public static class ActionEditing {
 	/// </summary>
 	public static MsnEdit SetTarget(MissionDocument document, short action, short target) {
 		if (TargetBlock(Fields(document, action).Type) is not { } block) {
-			throw new InvalidOperationException("Only a trigger tested on a particular herc, flyer, structure or group has a target.");
+			throw new InvalidOperationException("Only a trigger tested on a particular HERC, flyer, structure or group has a target.");
 		}
 
 		if (document.Layout.Entry(block + 5, target) == null) {

@@ -155,8 +155,8 @@ public static class HercGroups {
 			return "Squadmates are added with Add a squadmate in the Player's squad view: click Player's squad under Groups in the Mission panel.";
 		}
 
-		return NewGroups.WhyNoJoin(document, group, MechRoster, LastJoinSlot, "It is not a herc group.",
-			$"Its formation has places for {LastJoinSlot + 1} hercs, and each is taken.");
+		return NewGroups.WhyNoJoin(document, group, MechRoster, LastJoinSlot, "It is not a HERC group.",
+			$"Its formation has places for {LastJoinSlot + 1} HERCs, and each is taken.");
 	}
 
 	/// <summary>
@@ -181,8 +181,8 @@ public static class HercGroups {
 			return "Squadmates are added with Add a squadmate in the Player's squad view: click Player's squad under Groups in the Mission panel.";
 		}
 
-		return NewGroups.WhyNoJoinSlot(document, group, slot, MechRoster, LastJoinSlot, "It is not a herc group.",
-			$"Its formation has places for {LastJoinSlot + 1} hercs.");
+		return NewGroups.WhyNoJoinSlot(document, group, slot, MechRoster, LastJoinSlot, "It is not a HERC group.",
+			$"Its formation has places for {LastJoinSlot + 1} HERCs.");
 	}
 
 	/// <summary>
