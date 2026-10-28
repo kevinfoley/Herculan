@@ -56,7 +56,7 @@ Four things it fixes.
 - **The two range tests read the magnitude the geometry left**, before the recompute on the next line — so they judge by where the *target* is, not by where the state has pointed the machine.
 - **Speed is `±0x100` and nothing else.** A combat state never cruises; it is at the stop or stopped.
 
-`mech+0x5a` is the behaviour block's scratch, and the approach flag written there is read nowhere. It is a `short` laid over the same bytes as the `int` timer `fleeing` steps at `mech+0x5b`, so a fleeing machine's side-switch clock has its low byte rewritten every tick by whichever sign the flag took: `1` writes `01 00` and lands `00` on the clock's low byte, `-1` writes `ff ff` and lands `ff`. The clock is 4000 (`0x0fa0`); the aliasing pins it to 3840 or 4095 immediately after every move step. `fleeing` never leaves the flag at zero, so this happens on every one of its ticks.
+`mech+0x5a` is the behaviour block's scratch, and the approach flag written there is read nowhere. It is a `short` laid over the same bytes as the `int` timer `fleeing` steps at `mech+0x5b`, so a fleeing machine's side-switch clock has its low byte rewritten every tick by whichever sign the flag took: `1` writes `01 00` and lands `00` on the clock's low byte, `-1` writes `ff ff` and lands `ff`. `fleeing` never leaves the flag at zero, so this happens on every one of its ticks. On its running leg (flag 1) the clock is stepped and then has its low byte cleared, so after every tick it is a multiple of 256 and has lost at least 256 counts: the reload of 4000 (`0x0fa0`) becomes 3840, and the clock runs out on the 16th tick after the reload while a tick is under 256 counts, the 15th at 256 and the 8th above (a tick is at most `0x1c2`). On its reversing leg (flag −1) the clock is not stepped and its low byte becomes `ff`.
 
 ## `attacking` (3) — `Mech_BehaviourAttackThink` (`0041c594`)
 
@@ -153,7 +153,7 @@ standoffs = 0 / 10000000
 TurboPod_Engage(mech+0x317)
 ```
 
-Two legs. While the threat is still within 67.5° of the nose the machine reverses with its steering pointed a half turn away, which turns it; once it has turned, the other leg runs it off at 135° to the threat, flipping sides every 4000 counts — about two seconds, see [`dbsim-physics-notes.md`](dbsim-physics-notes.md#timer-units) — so it does not run in a straight line. The Turbo Pod is engaged on every tick — this is the one place in the AI that uses one on mission orders, since [`ai-navigation.md`](ai-navigation.md)'s sprint needs a standing squad order.
+Two legs. While the threat is still within 67.5° of the nose the machine reverses with its steering pointed a half turn away, which turns it; once it has turned, the other leg runs it off at 135° to the threat, flipping sides on a 4000-count clock that the move step's approach flag cuts to 16 ticks or fewer ([the move step](#the-move-step--ai_combatmovestep-0041e828)) — half a second at 31 ms a tick, two seconds at 125 ms ([timer units](dbsim-physics-notes.md#timer-units)) — so it does not run in a straight line. The Turbo Pod is engaged on every tick — this is the one place in the AI that uses one on mission orders, since [`ai-navigation.md`](ai-navigation.md)'s sprint needs a standing squad order.
 
 **It still shoots at what it is running from.** `Ai_AimAndFire` is called against the stash, and `Mech_AiFleeCheck` has already set `mech+0x2aa` to 300, 600 or 1000, which drops `Ai_ChooseWeapon`'s score floor to near or below zero — so a fleeing machine fires almost anything it still has.
 

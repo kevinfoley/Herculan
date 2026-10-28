@@ -332,9 +332,10 @@ public sealed partial class MechObject {
 
 		CombatMoveStep(world, ref geometry);
 
-		// The approach flag lands on the low byte of the countdown above, which is why the reload is
-		// rounded rather than exact. It is the original's own scratch aliasing, and it moves a
-		// 4000-count clock between 3840 and 4095.
+		// The approach flag lands on the low byte of the countdown above, the original's own scratch
+		// aliasing: on the running leg the stepped clock loses its low byte, so it runs out within 16
+		// ticks of a reload; on the turning leg it is not stepped and its low byte becomes 0xff
+		// (docs/retail/simulation/ai-combat-states.md#the-move-step--ai_combatmovestep-0041e828).
 		_fleeSideTimer = (_fleeSideTimer & ~0xff) | (geometry.Approach > 0 ? 0x00 : 0xff);
 
 		AimAndFire(world, threat, geometry.Aspect);

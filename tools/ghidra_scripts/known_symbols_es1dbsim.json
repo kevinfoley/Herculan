@@ -7426,13 +7426,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_SelectTarget",
-      "description": "(this, mask) in stack order, callee-cleaned: the AI's target acquisition. Walks the object pointer array at *LiveObjectList (000bc416) (count int16 LiveObjectList_Count (000bc41c), a null entry ending it) and returns the best-scoring candidate, or 0. A candidate must pass Ai_IsTargetable (0000dce8)(this, mask, candidate). The group (+0x3f) designates it when Group_IsOrderTarget (0001ce3c)(group, candidate) holds and the group's word +4 is 1. A candidate with its byte +0x9e set is skipped unless the group designates it and the group's byte +0x14 is set. Its tier is 2 * d + 1, less 1 when any of its bytes +0x9f, +0x9e and +0x93 is set, d being 1 when the group designates it or mask bit 0 is clear; one below the tier bar (0 at the start) is skipped. Score: b = 0x1000 - (|bearing error| >> 3), the error being the heading from this +0x20 to the candidate's +0x20 (Math_HeadingToward) less this's heading +0xa, 0 with mask 0x20; Q10(100, b), raised inside a Math_DistanceBetweenPoints range of 25000 to b / max(range >> 11, 1) when that is larger; then Q10-multiplied by the weight tables 00091620 (candidate's +0x15e is this, unless mask bit 1), 00091628 (candidate's behaviour descriptor byte +9 clear), 00091630 (candidate's +0x15e is another object) and 00091638 (by the candidate's int16 +0x162), the first three indexed by this's vtable +0x50 (this, candidate); and divided by one more than the candidate's holders +0x15c, less one when this's +0x15e is the candidate, unless mask bit 2. A higher score or a higher tier replaces the best and sets the bar to its tier. ES2's Ai_SelectTarget (DBSIM 00411fa0) adds the cone limit and the range caps, scores Q10(70, b) and b / (range >> 12) inside 60000, and adds the locally-piloted test and the own-class mask bit.",
+      "description": "(this, mask) in stack order, callee-cleaned: the AI's target acquisition. Walks the object pointer array at *LiveObjectList (000bc416) (count int16 LiveObjectList_Count (000bc41c), a null entry ending it) and returns the best-scoring candidate, or 0. A candidate must pass Ai_IsTargetable (0000dce8)(this, mask, candidate). The group (+0x3f) designates it when Group_IsOrderTarget (0001ce3c)(group, candidate) holds and the group's word +4 is 1. A candidate with its byte +0x9e set is skipped unless the group designates it and the group's byte +0x14 is set. Its tier is 2 * d + 1, less 1 when any of its bytes +0x9f, +0x9e and +0x93 is set, d being 1 when the group designates it or mask bit 0 is clear; one below the tier bar (0 at the start) is skipped. Score: b = 0x1000 - (|bearing error| >> 3), the error being the heading from this +0x20 to the candidate's +0x20 (Math_HeadingToward) less this's heading +0xa, 0 with mask 0x20; Q10(100, b), raised inside a Math_DistanceBetweenPoints range of 25000 to b / max(range >> 11, 1) when that is larger; then Q10-multiplied by the weight tables 00091620 (candidate's +0x15e is this, unless mask bit 1), 00091628 (candidate's behaviour descriptor byte +9 clear), 00091630 (candidate's +0x15e is another object) and 00091638 (by the candidate's int16 +0x162), the first three indexed by this's vtable +0x50 (this, candidate), called for every candidate past the tier gate, each product the rounding Math_Q10Multiply (0005e818) cut to an int16; and divided by one more than the candidate's holders +0x15c, less one when this's +0x15e is the candidate, unless mask bit 2. A higher score or a higher tier replaces the best and sets the bar to its tier. ES2's Ai_SelectTarget (DBSIM 00411fa0) adds the cone limit and the range caps, starts the bar at 1 (0 under group order verb 3), designates under group order verb 0, scores Q10(70, b) and b / (range >> 12) inside 60000, adds the locally-piloted test and the class-1 re-index, and truncates its products.",
       "source": "ES1DBSIM decompile and disassembly at 0000ddf4, against ES2's Ai_SelectTarget",
       "verified": {
         "bytes": "0000ddf4+1057",
         "sha1": "a8199c3e66da",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -9661,13 +9661,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_AiCombatReassess",
-      "description": "(machine), callee-cleaned, the reassess of the combat states and fleeing: the radar +0x90 on unless the radar silence +0x201 runs, or off for a squadmate of the player without +0xac; with +0xa6 clear, squad verbs 0-2 take Ai_SelectTarget (0000ddf4)(machine, 1) unless the machine is committed (descriptor +9) under verb 1 or verb 0 with its group's word +4 at 11, and higher verbs replace a destroyed target with Ai_SelectTarget(machine, 0); no target runs Mech_AiSelectBehaviour (0001892c) and returns. With +0xa6 set it clears it. The group's first member runs Mech_AiEnterCombat (000174cc) on each other member neither immobilized, destroyed nor committed. Then +0x238 = -1 and Mech_AiFleeCheck (00016a74); unless it decided, class 1 installs attacking base, class 2 attacking flyer, and any other runs the flee check again and Mech_CompareCombatRating (slot +0x50): 0 facing off, 1 attacking, 2 flanking, then Mech_AiSelectAimComponent (00016cf4). Returns 0. ES2's Mech_AiCombatReassess (DBSIM 0041cf18), which gates flanking on speed and legs and installs a squad order's target.",
+      "description": "(machine), callee-cleaned, the reassess of the combat states and fleeing: the radar +0x90 on unless the radar silence +0x201 runs, or off for a squadmate of the player without +0xac; with +0xa6 clear, squad verbs 0-2 take Ai_SelectTarget (0000ddf4)(machine, 1) unless the machine is committed (descriptor +9) under verb 1 or verb 0 with its group's word +4 at 11, and higher verbs replace a destroyed target with Ai_SelectTarget(machine, 0); no target runs Mech_AiSelectBehaviour (0001892c) and returns. With +0xa6 set it clears it. The group's first member runs Mech_AiEnterCombat (000174cc) on each other member neither immobilized, destroyed nor committed. Then +0x238 = -1 and Mech_AiFleeCheck (00016a74); unless it decided, class 1 installs attacking base, class 2 attacking flyer, and any other runs the flee check again, which answers as the first did (were it to answer non-zero, Behaviour_SetState (0000fdfc) would take the stack dword [EBP-0x44], unwritten on that path), and Mech_CompareCombatRating (slot +0x50): 0 facing off, 1 attacking, 2 flanking, then Mech_AiSelectAimComponent (00016cf4). Returns 0. ES2's Mech_AiCombatReassess (DBSIM 0041cf18), which gates flanking on speed and legs and installs a squad order's target.",
       "source": "Herculan/docs/es1/simulation/mech-ai.md#the-combat-reassess--mech_aicombatreassess-00016e04; ES1DBSIM decompile at 00016e04",
       "verified": {
         "bytes": "00016e04+822",
         "sha1": "fe04c5290783",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -10051,7 +10051,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_ComputeCombatRating",
-      "description": "(machine), callee-cleaned: Mech_ReadDamageReadouts (0001583c) into a buffer, then the type record's +0x44, plus Q8(template +0x4e, 256 - reading) for each mount of +0x198 its slot +0x58 counts, plus Q8(component maximum, 256 - reading) for 19 components, less the type record's +0x7e[i] for each of 10 systems reading over 0xb4; shifted right 4 into +0x234, +0x8e set, the rating returned. es2_xref finds one call, from Mech_PerTickSystemsUpdate (00014ee0). ES2's Mech_ComputeCombatRating (DBSIM 0041edd8).",
+      "description": "(machine), callee-cleaned: Mech_ReadDamageReadouts (0001583c) into a buffer, then the type record's +0x44, plus Q8(256 - reading, template +0x4e) for each mount i of +0x198 that is not null, whose reading (entry 32 + i) is not negative and whose slot +0x58 answers non-zero, the template being the mount's +0x1c, plus Q8(256 - reading, piece i's armor) for each of the 19 components whose reading (entry 1 + i) is not negative, the armor the first int16 of the 0x12-byte piece i in the array at +0 of the .DMG table the dword +0x1a8 points to, less the type record's +0x7e[i] for each of 10 systems reading over 0xb4; each Q8 the rounding Math_Q8Multiply (0005e7f8); shifted right 4 into +0x234, +0x8e set, the rating returned. es2_xref finds one call, from Mech_PerTickSystemsUpdate (00014ee0). ES2's Mech_ComputeCombatRating (DBSIM 0041edd8).",
       "source": "Herculan/docs/es1/simulation/mech-ai.md#the-combat-reassess--mech_aicombatreassess-00016e04; ES1DBSIM decompile at 000189f0",
       "verified": {
         "bytes": "000189f0+391",
@@ -34288,13 +34288,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Math_OffsetPointByBearing",
-      "description": "(distance, bearing, point), callee-cleaned: adds Math_Q14Multiply(distance, Math_CosBam(bearing + 0x4000)) to the point's x and Math_Q14Multiply(distance, Math_CosBam(bearing)) to its y. ES2's Math_OffsetPointByBearing (DBSIM 004928f0), its arguments reversed.",
+      "description": "(distance, bearing, point), callee-cleaned: adds Math_Q14Multiply(distance, Math_CosBam(bearing + 0x4000)) to the point's x and Math_Q14Multiply(distance, Math_CosBam(bearing)) to its y. The distance is a dword and each product is added at its full 32 bits. ES2's Math_OffsetPointByBearing (DBSIM 004928f0), its arguments reversed, which takes the distance's low word and adds sign-extended int16 products, so its offset wraps past 32767.",
       "source": "Herculan/docs/es1/simulation/mech-ai.md#functions; ES1DBSIM decompile at 00063d8c",
       "verified": {
         "bytes": "00063d8c+100",
         "sha1": "fe1c63ebe092",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {

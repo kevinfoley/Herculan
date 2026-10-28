@@ -91,13 +91,13 @@ Both ratings are jittered before the comparison, and the jitter is `rand & 1000`
 
 ```
 rating = (typeRec+0x44                                                    // a per-type base
-        + sum over live mounts   Q8(template+0x4e, 256 - mountDamage)     // weapon value x condition
-        + sum over 19 components Q8(componentMax,  256 - damage)          // structure value x condition
+        + sum over mounts        Q8(template+0x4e, 256 - mountDamage)     // weapon value x condition
+        + sum over 19 components Q8(componentMax,  256 - damage)          // structure value x condition, each damage not negative
         - sum of typeRec+0x7e[i] for each of 10 systems over 70% damaged
         ) >> 4
 ```
 
-The weapon term reads the mount's own `+0x1c`, which `WeaponMount_CtorBase` (`0040df30`) sets to the `WEAPONS.DAT` template, so `+0x4e` is a template field. A mount counts when its vtable `+0x54` says so. That slot is `return 1` (`WeaponMount_CountsInCombatRating_Always`, `004111e9`) on every class but the two that carry rounds, the ammunition and grenade classes; those count only while they hold at least an eighth of their magazine, `template+0x3a >> 3` (`WeaponMount_AmmoCountsInCombatRating`, `0040f520`). So a machine's rating drops as its launchers and guns run low, not only as they are shot up.
+The weapon term reads the mount's own `+0x1c`, which `WeaponMount_CtorBase` (`0040df30`) sets to the `WEAPONS.DAT` template, so `+0x4e` is a template field. A mount counts when it is not null, its reading (readout 32 + *i*) is not negative, and its vtable `+0x54` says so; a component counts when its reading (readout 1 + *i*) is not negative, against its `.DMG` piece's armor. That slot is `return 1` (`WeaponMount_CountsInCombatRating_Always`, `004111e9`) on every class but the two that carry rounds, the ammunition and grenade classes; those count only while they hold at least an eighth of their magazine, `template+0x3a >> 3` (`WeaponMount_AmmoCountsInCombatRating`, `0040f520`). So a machine's rating drops as its launchers and guns run low, not only as they are shot up.
 
 **Retail states the same two numbers for all 21 chassis** — a base of 1000 at `typeRec+0x44` and a penalty of 500 at each `typeRec+0x7e[i]` — so what separates two machines is entirely their guns, their armour and their damage.
 

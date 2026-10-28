@@ -1,6 +1,6 @@
 # DBSIM.EXE — the object base, the live object list and AI targets
 
-**What every simulated object shares in ES1 is ES2's: the default answers a HERC, an aircraft or a structure gives when its class has nothing of its own, the one list of live objects the sensors and the AI walk, and the tests that decide what an AI machine knows of and may shoot at.** What a player would see differs in what an AI machine shoots at: the test of what it may target leaves out ES2's exclusions of an invulnerable structure and of an aircraft that is out of the fight, and the score that picks among targets weighs bearing and nearness with ES1's own numbers, with no cone or range limit. Addresses are `ES1DBSIM` image addresses ([the X-32 executable](../formats/x32-executable.md#the-image)); ES2's are DBSIM's. Every function here removes its own arguments, so argument lists are in stack order ([calling conventions](../formats/compiler.md#calling-conventions)). The objects' fields stand 6 bytes below ES2's up to `+0xad` and a slot 4 bytes above ES2's ([the object fields](mission-groups.md#the-object-fields)).
+**What every simulated object shares in ES1 is ES2's: the default answers a HERC, an aircraft or a structure gives when its class has nothing of its own, the one list of live objects the sensors and the AI walk, and the tests that decide what an AI machine knows of and may shoot at.** What a player would see differs in what an AI machine shoots at: the test of what it may target leaves out ES2's exclusions of an invulnerable structure and of an aircraft that is out of the fight, and the score that picks among targets weighs bearing and nearness with ES1's own numbers, with no cone or range limit, and while it favors the target its group's order names it can still settle on a disarmed machine the order does not name. Addresses are `ES1DBSIM` image addresses ([the X-32 executable](../formats/x32-executable.md#the-image)); ES2's are DBSIM's. Every function here removes its own arguments, so argument lists are in stack order ([calling conventions](../formats/compiler.md#calling-conventions)). The objects' fields stand 6 bytes below ES2's up to `+0xad` and a slot 4 bytes above ES2's ([the object fields](mission-groups.md#the-object-fields)).
 
 ## Where the object file starts and ends
 
@@ -65,10 +65,54 @@ ES1's list carries a table of one `0x18`-byte record per unordered pair of slots
 
 - **`Ai_KnowsObject` (`0000d808`)**, (machine, object): ES2's ([is it a target at all](../../retail/simulation/ai-targeting.md#is-it-a-target-at-all--ai_istargetable-00411e80)): 1 when the object's byte `+0x8f`, radar-visible, is set and `Math_DistanceBetweenPoints`(object `+0x20`, machine `+0x20`) is below 1000000, or when the machine's contact byte at `+0xbc` + the object's `int16` slot `+0x45` is set ([the fields](sensor-model.md#the-fields)); otherwise 0. `es2_xref.py` finds three calls, from `Ai_IsTargetable`, `Mission_IsClearOfThreats` (`0000f744`, [clear of threats](mission-status.md#clear-of-threats)) and `00041b1c`.
 - **`Ai_TargetStateTier` (`0000d880`)**, (object): ES2's (`00411cb4`) on the behaviour descriptor at `+0x47`: 2 when its byte `+0xd` is set, 1 when `+0xc` is, otherwise 0, and 0 with no descriptor. `es2_xref.py` finds four calls, from `Ai_ShouldAbandonTarget` (`000162b4`, [targets and orders](mech-ai.md#targets-and-orders)) and three times from `Mech_ReceiveSquadOrder` (`0001a1cc`, [receiving a squad order](mech-ai.md#receiving-a-squad-order--mech_receivesquadorder-0001a1cc)).
-- **`Ai_IsTargetable` (`0000dce8`)**, (machine, mask, candidate): 1 when the candidate's group's side byte `+0x14` differs from the machine's group's, the candidate is neither destroyed (`+0x93`) nor collapsed (`+0xae`), `Ai_KnowsObject` answers 1, and, with mask bit `0x10`, its class `int16` `+0x162` differs from the machine's; and then 0 in two cases: the leader of the machine's group (the first of the member array `+0xe`) is the player's (`+0x9d`), script.dat header word 3 (`000bc4a2`) is 3, `Group_OrderTargetObject` of the group is the candidate and the leader's byte `+0x9a` is clear; or the machine's `+0x94` is set and the candidate is the player's selection, `CockpitViewInstance` `+0x20c`. ES2's (`00411e80`) also rejects an invulnerable candidate and an aircraft that is out of the fight, and its order-target case has no `+0x9a` term. `es2_xref.py` finds two calls, from `Ai_SelectTarget` and `Mech_BehaviourGuardThink` (`00017ed4`, [navigation](mech-ai.md#navigation)).
-- **`Ai_SelectTarget` (`0000ddf4`)**, (machine, mask): ES2's acquisition ([acquisition](../../retail/simulation/ai-targeting.md#acquisition--ai_selecttarget-00411fa0)) with no cone limit and no range cap. The bearing score is Q10(100, *b*), raised inside 25000 to *b* / max(range >> 11, 1), where ES2's is Q10(70, *b*) and *b* / max(range >> 12, 1) inside 60000. Of the four weight tables, `00091620`, `00091628` and `00091630` hold ES2's values (1500, 2000, 2500; 600, 400, 200; 700, 850, 1000); the class table `00091638` holds 2000, 500, 200 and 0 where ES2's holds 1500, 700, 500 and 500.
+- **`Ai_IsTargetable` (`0000dce8`)**, (machine, mask, candidate): 1 when the candidate's group's side byte `+0x14` differs from the machine's group's, the candidate is neither destroyed (`+0x93`) nor collapsed (`+0xae`), `Ai_KnowsObject` answers 1, and, with mask bit `0x10`, its class `int16` `+0x162` differs from the machine's; and then 0 in two cases: the leader of the machine's group (the first of the member array `+0xe`) is the player's (`+0x9d`), script.dat header word 3 (`000bc4a2`) is 3, `Group_OrderTargetObject` of the group is the candidate and the leader's byte `+0x9a` is clear; or the machine's `+0x94` is set and the candidate is the player's selection, `CockpitViewInstance` `+0x20c`. `+0x9a` is the latch the player's think sets when the data link's last line is posted, and `+0x94` the latch squad verb 1 sets so that a squadmate leaves the player's selection alone ([the fields](mech-ai.md#the-fields)): a squad the player leads under header word 3 does not take the order's object until the data link is done. ES2's (`00411e80`) also rejects an invulnerable candidate and an aircraft that is out of the fight, and its order-target case has no `+0x9a` term. `es2_xref.py` finds two calls, from `Ai_SelectTarget` and `Mech_BehaviourGuardThink` (`00017ed4`, [navigation](mech-ai.md#navigation)).
 
 `Mech_AiTick` (`0000d8e8`) and `Formation_RotateAndAddOffset` (`0000d9a0`) stand between the AI's tests and the object list, as in ES2 ([the tick](mission-groups.md#the-tick), [formation offsets](../formats/formations-dat.md)).
+
+### Acquisition — `Ai_SelectTarget` (`0000ddf4`)
+
+(machine, mask): ES2's acquisition ([acquisition](../../retail/simulation/ai-targeting.md#acquisition--ai_selecttarget-00411fa0)), the mask bits `1`, `2`, `4`, `0x10` and `0x20` meaning what ES2's do, with no cone limit argument. It walks `LiveObjectList`'s array to its count or to a null entry and returns the best candidate, or 0. The tier bar starts at 0, and for each candidate:
+
+1. `Ai_IsTargetable`(machine, mask, candidate) must answer non-zero.
+2. It is *designated* when `Group_IsOrderTarget` (`0001ce3c`)(group, candidate) answers non-zero and the group's word `+4` is 1, `search destroy` ([choosing a state](mech-ai.md#choosing-a-state--mech_aiselectbehaviour-0001892c)). *d* is 1 when it is designated or mask bit 0 is clear, otherwise 0.
+3. Its tier is 2*d* + 1, less 1 when it is disarmed (`+0x9f`), immobilized (`+0x9e`) or destroyed (`+0x93`).
+4. It is passed over when it is immobilized, unless it is designated and the machine's group's side byte `+0x14` is not 0, the Cybrid side, as ES2's; and when its tier is below the bar.
+5. It is scored and compared:
+
+```
+e     = |Math_HeadingToward(machine+0x20, candidate+0x20) - machine+0xa|   // int16, |-0x8000| taken as 0x7fff; 0 with mask 0x20
+b     = 0x1000 - (e >> 3)
+score = Q10(100, b)
+r     = Math_DistanceBetweenPoints(candidate+0x20, machine+0x20)
+if (r < 25000) score = max(score, b / max(r >> 11, 1))
+k     = machine's slot +0x50 (machine, candidate)
+if (!(mask & 2) && candidate+0x15e == machine)                score = Q10(score, W_shooting[k])
+if (candidate+0x47 != 0 && candidate's descriptor +9 == 0)    score = Q10(score, W_idle[k])
+if (candidate+0x15e != 0 && candidate+0x15e != machine)       score = Q10(score, W_taken[k])
+score = Q10(score, W_class[candidate+0x162])
+h     = candidate+0x15c - (machine+0x15e == candidate)
+if (!(mask & 4) && h != 0) score = score / (h + 1)
+if (score > bestScore || tier > bar) { best = candidate; bestScore = score; bar = tier }
+```
+
+`bestScore` starts at 0, so a candidate scoring 0 is taken only on a higher tier. Every Q10 is the rounding `Math_Q10Multiply` ([the primitives](fixed-point-math.md#the-primitives)), its result cut to an `int16`; the two divisions are signed and truncate. The slot `+0x50` call runs for every candidate that reaches step 5, before any weight it indexes is tested: a HERC's is `Mech_CompareCombatRating` (`00016968`, [the combat reassess](mech-ai.md#the-combat-reassess--mech_aicombatreassess-00016e04)), which draws two numbers from the generator for a candidate of class 0, so a HERC's walk advances the generator by two for each HERC it scores.
+
+| Table | Values (Q10) | Indexed by |
+|---|---|---|
+| `W_shooting` `00091620` | 1500, 2000, 2500 | *k* |
+| `W_idle` `00091628` | 600, 400, 200 | *k* |
+| `W_taken` `00091630` | 700, 850, 1000 | *k* |
+| `W_class` `00091638` | 2000, 500, 200, 0 | the class `+0x162` |
+
+ES2's (`00411fa0`) differs in seven places:
+
+- its tier bar starts at 1, or 0 under a group order verb of 3, so with mask bit 0 a disarmed candidate the group does not designate, tier 0, is passed over, where ES1's can take it while it holds nothing better;
+- it rejects a candidate past a cone limit, and one farther than 1000000 when designated or 100000 otherwise;
+- its designated test is a group order verb of 0;
+- its bearing score is Q10(70, *b*), raised inside 60000 to *b* / max(*r* >> 12, 1);
+- it applies `W_idle` only to a candidate that is not locally piloted;
+- a class-1 candidate shooting at the machine takes `W_class`'s class-0 weight, and `W_class` holds 1500, 700, 500 and 500;
+- its Q10 multiplies truncate.
 
 ## Functions
 
@@ -96,6 +140,5 @@ ES1's list carries a table of one `0x18`-byte record per unordered pair of slots
 - **Open:** what calls `HeapPtr_DtorSimObjectCopy`, to which `es2_xref.py` finds no branch or stored pointer.
 - **Open:** the base class's slots this file does not fill, `+4`–`+0x14`, `+0x1c`–`+0x24`, `+0x44` and `+0x6c`–`+0x70`. In `00091a6a`, the HERC's table and the aircraft's (`00091fea`, whose `0001af1c` and `0001af32` are the same code), `+0x6c` is ES2's `+0x68`, run into, and `+0x70` ES2's `+0x6c`, the missile lock, filled by each file's own copies ([the HERC's table](mech.md#the-hercs-table)).
 - **Open:** what reaches `ObjList_SwapRemove`, `ObjectList_Prev`, `ObjectPairCache_Lookup`, `ObjectPairCache_Invalidate` and the three getters, to which `es2_xref.py` finds no branch or stored pointer; and whether anything writes `000bc420` before `ObjectList_Init` runs: a search of the disassembly for that address as an operand finds no such write, and a write through the list's or the cache's base was not searched for.
-- **Open:** what the leader's byte `+0x9a` and the machine's byte `+0x94` that `Ai_IsTargetable` tests are. `Mission_Status` tests the player's `+0x9a` for header word 3 = 3, where ES2's selector 3 reads the data link at `+0xa0` ([the status](mission-status.md#the-status--mission_status-0000f4e8)).
 - **Open:** the callers `es2_xref.py` finds and this batch did not read: `0001b290` (the out-of-action report), `00041b1c` (the knowledge test), `00003cbc` and `0001ac58` (the list's adds).
 - **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: `BP <CS>:0000db10` fires once for each HERC, aircraft and structure while a mission loads, before the first frame is drawn.

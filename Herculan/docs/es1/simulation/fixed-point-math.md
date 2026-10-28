@@ -63,6 +63,17 @@ These C helpers do the same as ES2's of the same name, read side by side:
 - `Math_RateLimitedMoveToward` (`0005e598`) and its `int32` form `Math_RateLimitedMoveTowardInt` (`0005e608`), which take their arguments in the reverse of ES2's order ([calling conventions](../formats/compiler.md#calling-conventions));
 - the generator ([ES2's](../../retail/simulation/random-generator.md)): `Math_RandomNext` (`00063af4`) and `Math_RandomBelow` (`00063b3c`) over the same 56-short state with its cursors at `+0x70` and `+0x71`, and `Math_RandomSeed` (`00063aa4`), whose 112-byte seed table (`00098150`) is ES2's at `004a6958`. ES1's seeding calls nothing after the copy, where ES2's calls an empty function.
 
+## Offsetting a point by a bearing
+
+**ES1 moves a point any distance along a bearing, where ES2's offset wraps past 32767 units.** `Math_OffsetPointByBearing` (`00063d8c`), (distance, bearing, point) in stack order, the reverse of ES2's (point, bearing, distance), adds to the `int32` point in place and returns it:
+
+```
+x += Math_Q14Multiply(distance, Math_CosBam(bearing + 0x4000))
+y += Math_Q14Multiply(distance, Math_CosBam(bearing))       // bearing + 0x4000 + 0xc000, as an int16
+```
+
+Z is left alone. The distance goes to the rounding `Math_Q14Multiply` ([the primitives](#the-primitives)) as a dword and each product is added at its full 32 bits. ES2's (`004928f0`) passes the distance's low word through `Math_ScaleByCos` and `Math_ScaleBySin` and adds each product as a sign-extended `int16`, so a distance past ±32767 wraps ([the ground vehicle's drive](../../retail/simulation/ground-vehicles.md#the-control-law--0046a798-and-0046a854)); its Y is the sine of bearing + `0x4000`, the same value as ES1's cosine of the bearing.
+
 ## Rescaling a vector
 
 **`Math_NormalizeVec3ToLength` (`00063b5c`)**, (length, vector) in stack order, is ES2's (DBSIM `004926e4`, (vector, length)) on ES1's primitives: it rescales an `int32` vector in place to the `int16` length and returns the vector. With *m* = `Math_FastMagnitude3D` of the vector, a vector of magnitude 0 is zeroed (`memset` of 12 bytes); otherwise:
