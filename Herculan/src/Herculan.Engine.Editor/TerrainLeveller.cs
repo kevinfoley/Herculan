@@ -61,7 +61,7 @@ internal sealed class TerrainLeveller {
 	/// </summary>
 	public event Action<int, int>? Changed;
 
-	/// <summary>Levels and paints the ground again if a structure or a pad has moved since it was last levelled.</summary>
+	/// <summary>Levels and paints the ground again if a structure or a pad has moved, or a structure changed type, since it was last levelled.</summary>
 	public void Relevel() {
 		int[] footprints = Footprints();
 		if (footprints.AsSpan().SequenceEqual(_levelledFor)) {
@@ -142,13 +142,15 @@ internal sealed class TerrainLeveller {
 		}
 	}
 
-	// Where every input to the flattening pass stands: each structure, and each pad's anchor.
+	// Where every input to the flattening pass stands, and how much ground it levels: each structure with its shape radius,
+	// which a change of type changes in place, and each pad's anchor.
 	private int[] Footprints() {
 		var footprints = new List<int>();
 		foreach (var sceneObject in _index.Objects) {
 			if (sceneObject.Object is BaseObject structure) {
 				footprints.Add(structure.Position.X);
 				footprints.Add(structure.Position.Y);
+				footprints.Add(structure.ShapeRadius);
 			}
 		}
 
