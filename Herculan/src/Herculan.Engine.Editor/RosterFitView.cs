@@ -24,9 +24,10 @@ internal sealed class RosterFitView {
 	private readonly RandomTableEditor _tableEditor;
 	private readonly UnitTypeCatalog _catalog;
 
-	public RosterFitView(MachineFitter fitter, RosterTypeEditor types, RandomTableEditor tableEditor, UnitTypeCatalog catalog) {
+	public RosterFitView(MachineFitter fitter, RosterTypeEditor types, RandomTableEditor tableEditor, UnitTypeCatalog catalog,
+			LoadoutPresetView presets) {
 		_fitter = fitter;
-		_fit = new MachineFitView(fitter);
+		_fit = new MachineFitView(fitter, presets);
 		_types = types;
 		_tableEditor = tableEditor;
 		_catalog = catalog;

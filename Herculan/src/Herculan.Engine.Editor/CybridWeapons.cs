@@ -17,13 +17,26 @@ namespace Herculan.Engine.Editor;
 /// <para>Built once per editor run, the first time a Cybrid's hardpoints are drawn: every mission the shell's archives hold
 /// (<see cref="ArchivedMissions"/>), and each chassis's hardpoint list from the simulator's. With no mission there, nothing is
 /// offered and the hardpoints are read-only.</para>
+///
+/// <para>The Cybrid Loadouts setting's Unrestricted (<see cref="EditorSettings.CybridLoadouts"/>, the user's choice) offers
+/// any HERC weapon instead (<see cref="Offered"/>).</para>
 /// </summary>
 internal sealed class CybridWeapons {
 	private const string HardpointFolder = "gl";
 	private const string HardpointExtension = ".GL";
 
+	/// <summary>The <c>MECHS.NAM</c> name of the one chassis that carries <see cref="PitbullWeapons"/>.</summary>
+	private const string Pitbull = "PITBULL";
+
+	/// <summary>
+	/// BEMP, BPBW and BMSL. Retail fits BEMP and BMSL on PITBULL alone, and BPBW on nothing; by the user's choice
+	/// they stay on PITBULL, and it takes no other weapon.
+	/// </summary>
+	private static readonly short[] PitbullWeapons = [19, 20, 21];
+
 	private readonly GameContent _simulator;
 	private readonly ArchivedMissions _missions;
+	private readonly EditorSettings? _settings;
 	private readonly Dictionary<int, IReadOnlyList<int>> _hardPoints = new();
 	private UnitTypeNames? _names;
 	private RetailMountFits? _fits;
@@ -31,10 +44,15 @@ internal sealed class CybridWeapons {
 
 	/// <param name="simulator">DBSIM's mount of the install, which holds the chassis names and hardpoint lists.</param>
 	/// <param name="missions">The missions the install's archives hold.</param>
-	public CybridWeapons(GameContent simulator, ArchivedMissions missions) {
+	/// <param name="settings">Whose Cybrid Loadouts choice <see cref="Offered"/> follows; Vanilla without.</param>
+	public CybridWeapons(GameContent simulator, ArchivedMissions missions, EditorSettings? settings = null) {
 		_simulator = simulator;
 		_missions = missions;
+		_settings = settings;
 	}
+
+	/// <summary>Whether the Cybrid Loadouts setting is Unrestricted, so <see cref="Offered"/> is not retail's fits.</summary>
+	public bool Unrestricted => _settings?.CybridLoadouts == CybridLoadouts.Unrestricted;
 
 	/// <summary>Whether the install's archives hold any mission to read the fits from.</summary>
 	public bool HasMissions => Fits() != null;
@@ -60,6 +78,24 @@ internal sealed class CybridWeapons {
 	/// </summary>
 	public IReadOnlyList<short> WeaponsFor(int type, int slot) =>
 		Fits()?.Weapons(type, slot).OrderBy(WeaponsScreenOrder).ToList() ?? [];
+
+	/// <summary>
+	/// The weapon ids fit slot <paramref name="slot"/> of type <paramref name="type"/> offers: under Vanilla those retail
+	/// missions fit there (<see cref="WeaponsFor"/>), under Unrestricted <see cref="UnrestrictedOffer"/>.
+	/// </summary>
+	public IReadOnlyList<short> Offered(int type, int slot) => Unrestricted ? UnrestrictedOffer(type) : WeaponsFor(type, slot);
+
+	/// <summary>
+	/// The weapon ids each hardpoint of type <paramref name="type"/> offers under Unrestricted, whichever choice the setting
+	/// holds: <see cref="PitbullWeapons"/> on PITBULL, and on every other chassis every weapon of the weapons screen's list but
+	/// those, a list that holds every other weapon a retail Cybrid carries; <c>0</c> last on both.
+	/// </summary>
+	public IReadOnlyList<short> UnrestrictedOffer(int type) {
+		_names ??= UnitTypeNames.LoadMechs(_simulator);
+		return _names[type] == Pitbull
+			? [.. PitbullWeapons, 0]
+			: ShellWeaponsScreen.RowWeapons.Select(weapon => (short)weapon).Where(weapon => !PitbullWeapons.Contains(weapon)).ToList();
+	}
 
 	/// <summary>
 	/// The ammunition type retail records carry most often with <paramref name="weapon"/> in fit slot <paramref name="slot"/>

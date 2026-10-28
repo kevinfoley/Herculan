@@ -116,6 +116,9 @@ public sealed class EditorHost {
 	private readonly CybridWeapons _cybridWeapons;
 	private readonly ZoneCatalog _zones;
 
+	// The loadout presets, read once per run and written on every change, which each opened mission's HERC views offer.
+	private readonly LoadoutPresets _presets = LoadoutPresets.Load();
+
 	private EditorMission? _mission;
 	private EditorExit _exit = EditorExit.Closed;
 
@@ -193,7 +196,7 @@ public sealed class EditorHost {
 		_launch = launch;
 		_installData = ShellWorkingFiles.DataDirectory(launch.InstallRoot);
 		var archived = new ArchivedMissions(launch.ShellContent);
-		_cybridWeapons = new CybridWeapons(launch.SimulatorContent, archived);
+		_cybridWeapons = new CybridWeapons(launch.SimulatorContent, archived, _settings);
 		_zones = new ZoneCatalog(launch.SimulatorContent, archived);
 		_flyNearPlane = _camera.NearPlane;
 		_flyFarPlane = _camera.FarPlane;
@@ -442,7 +445,8 @@ public sealed class EditorHost {
 		bool escape = _keyboard?.IsKeyPressed(Key.Escape) == true;
 		bool escapePressed = escape && !_escapeHeld && !control;
 		_escapeHeld = escape;
-		bool escapeFree = escapePressed && !_saving.IsOpen && !_newMission.IsOpen && !_playInGame.Running;
+		bool escapeFree = escapePressed && !_saving.IsOpen && !_newMission.IsOpen && _mission?.Presets.IsOpen != true
+			&& !_playInGame.Running;
 		if (escapeFree && _mission?.Placing.Active == true) {
 			// Esc cancels the route being placed, and goes no further.
 			_mission.Placing.Cancel();
@@ -529,7 +533,7 @@ public sealed class EditorHost {
 	// None of them while a drag is under way. While a route is placed, Enter finishes it; while a route or an area is placed,
 	// Delete, Undo and Redo do nothing. V, Delete and Enter do nothing while Ctrl is held.
 	private void OnKeyDown(IKeyboard keyboard, Key key, int scancode) {
-		if (_mission?.Gizmo.Dragging == true || _saving.IsOpen || _newMission.IsOpen
+		if (_mission?.Gizmo.Dragging == true || _saving.IsOpen || _newMission.IsOpen || _mission?.Presets.IsOpen == true
 				|| (_imgui != null && ImGui.GetIO().WantCaptureKeyboard)) {
 			return;
 		}
@@ -1016,7 +1020,7 @@ public sealed class EditorHost {
 			}
 
 			opened = EditorMission.Open(_launch.SimulatorContent, generated, Path.GetFileNameWithoutExtension(name), _installData,
-				source!, squad!, _launch.ShellContent, _cybridWeapons, _zones);
+				source!, squad!, _launch.ShellContent, _cybridWeapons, _zones, _presets);
 		} catch (Exception ex) when (ex is MissingHandoffFileException or InvalidDataException or IOException
 				or UnauthorizedAccessException) {
 			request.From.Failure = ex.Message;
@@ -1052,7 +1056,7 @@ public sealed class EditorHost {
 			}
 
 			opened = EditorMission.Open(_launch.SimulatorContent, generated, request.Name, _installData, source!, squad!,
-				_launch.ShellContent, _cybridWeapons, _zones);
+				_launch.ShellContent, _cybridWeapons, _zones, _presets);
 		} catch (Exception ex) when (ex is MissingHandoffFileException or InvalidDataException or IOException
 				or UnauthorizedAccessException) {
 			Fail(ex.Message);

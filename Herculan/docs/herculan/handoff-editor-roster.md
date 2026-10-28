@@ -52,7 +52,7 @@ A field a random table supplies is its template's to edit ([Random tables](hando
 
 ### A Cybrid's weapons
 
-By the user's choice, a Cybrid's weapons are chosen from what retail missions fit, since no shell file says which weapons a Cybrid's mounts take (`CybridWeapons`, over Core's `RetailMountFits`):
+No shell file says which weapons a Cybrid's mounts take, so by the user's choice the Editor Settings' "Cybrid Loadouts" picks what they offer (`CybridWeapons.Offered`). Vanilla, the default, offers what retail missions fit (`CybridWeapons`, over Core's `RetailMountFits`):
 
 - Its hardpoints are the fit slots its `gl\<NAME>.GL` hardpoints address ([`../retail/formats/gun-layout-gl.md`](../retail/formats/gun-layout-gl.md#record)), each numbered from 1 by its slot, as the squad's are (the editor's choice: no retail screen shows a Cybrid's).
 - Each offers, in a dropdown, the weapons the install's retail missions fit in that slot of that chassis: every row-12 record of the type in the missions as the archives hold them, not a mission saved over one, templates (GUID `-1`) included and no condition tested; "(empty)" only where such a record leaves the slot empty. A record that picks from a random table carries type `-1` and no fit of its own in every retail mission, and so does every later record of a GUID, so each fit counts once. The list is read once per editor run, the first time a Cybrid's hardpoints are drawn; the weapons screen's order, a weapon it does not list after by id, and "(empty)" last (the editor's choice).
@@ -61,7 +61,17 @@ By the user's choice, a Cybrid's weapons are chosen from what retail missions fi
 - A record holding a weapon no retail record fits there shows it as the current choice, marked "(not from a retail mission)".
 - With no mission in the install's archives, every hardpoint's weapon is read-only, with a note; the guidance stays editable.
 
+Unrestricted offers on every hardpoint of every chassis but PITBULL the weapons screen's whole list, which holds every weapon a retail Cybrid carries but BEMP and BMSL; on PITBULL's, BEMP, BPBW and BMSL alone, which no other chassis is offered (the user's choice). Retail fits BEMP and BMSL on PITBULL alone, and BPBW on no record. "(empty)" is last on both. A hardpoint no retail record fits then offers them too, and the note naming retail's fits is not shown. A weapon chosen takes its ammunition type as under Vanilla, the filler 5 where no retail record fits it there. A record holding a weapon its hardpoint does not offer marks it "(not offered here)".
+
 A new Cybrid's fit, which `HercPlacer` and a chassis change give, is still [the most common retail fit of its type](#hercs).
+
+### Loadout presets
+
+A preset is a named weapon fit for one chassis, the editor's own data and invention, not a mission's (`LoadoutPresets`, drawn by `LoadoutPresetView`). The presets are kept in `loadout-presets.json` in the user's settings folder beside the editor's settings, read once per editor run and written whole on every save, overwrite or delete; a missing or unreadable file means none. Each belongs to a `nam\MECHS.NAM` type, which the squad's chassis 0 to 8 share, Human or Cybrid alike, so a MONGOOSE's "EMP" and an OUTLAW's "EMP" are two presets. A name is trimmed, and two names are the same when they match ignoring case, within one chassis. A preset holds the weapon and ammunition type of each fit slot whose weapon the view edited when it was saved.
+
+- "Loadout preset", under Chassis, lists the chassis's presets by name and shows the one whose every slot holds its weapon and ammunition type in the HERC's fit as it stands, else "(none)"; with none saved for the chassis it is disabled and reads "(none saved)". Choosing one writes its slots as one edit and one undo step, through the same writes as a weapon choice, so while an option of a random loadout is edited it lands in that option's template where a template supplies the field. A slot whose weapon the view does not edit is left as it is.
+- A preset holding a weapon its hardpoint does not offer as the hardpoints offer them now ([A Cybrid's weapons](#a-cybrids-weapons), and on a Human chassis its arming layout), or a slot that is not one of the chassis's hardpoints, is listed disabled, not hidden: a Cybrid preset saved under Unrestricted while Vanilla is chosen says it needs Unrestricted, any other that its weapons are not offered on the chassis's hardpoints (the user's choice).
+- "Save preset", under the hardpoints, asks for a name and saves the HERC's fit under it, asking before it overwrites a name the chassis already has; it is disabled on a chassis whose weapons the view edits on no hardpoint. "Delete preset" deletes the preset the dropdown shows, after asking, and is disabled while it shows none. Esc in any of these prompts is its Cancel.
 
 ## Sides
 

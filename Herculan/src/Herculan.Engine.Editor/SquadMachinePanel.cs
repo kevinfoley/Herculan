@@ -19,9 +19,10 @@ internal sealed class SquadMachinePanel {
 	private readonly MissionSquad _squad;
 
 	/// <param name="squad">Which HERCs the mission's squad pilots.</param>
-	public SquadMachinePanel(MachineFitter fitter, SquadEditor editor, MissionSquad squad) {
+	/// <param name="presets">The loadout preset choice each HERC's fit offers.</param>
+	public SquadMachinePanel(MachineFitter fitter, SquadEditor editor, MissionSquad squad, LoadoutPresetView presets) {
 		_fitter = fitter;
-		_fit = new MachineFitView(fitter);
+		_fit = new MachineFitView(fitter, presets);
 		_editor = editor;
 		_squad = squad;
 	}

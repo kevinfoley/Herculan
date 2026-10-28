@@ -13,8 +13,9 @@ namespace Herculan.Engine.Editor;
 /// through <see cref="MachineFitter"/>: the squad's HERCs in <see cref="SquadMachinePanel"/>, and a herc outside the squad
 /// in <see cref="RosterFitView"/>. A hardpoint is a fit slot, numbered from 1 as the shell's repair screen numbers its
 /// mounts (docs/retail/shell/weapons-and-repair.md#a-row-is-four-text-columns); a Human chassis's offer what its arming
-/// layout lets them take, a Cybrid's what retail missions fit on them (<see cref="MachineFitter.WeaponsFor"/>). A hardpoint
-/// that offers nothing is drawn disabled with the reason.
+/// layout lets them take, a Cybrid's what retail missions fit on them or, under Unrestricted, any HERC weapon
+/// (<see cref="MachineFitter.WeaponsFor"/>). A hardpoint that offers nothing is drawn disabled with the reason. The chassis's
+/// loadout presets are chosen under the chassis and saved and deleted under the hardpoints (<see cref="LoadoutPresetView"/>).
 /// </summary>
 internal sealed class MachineFitView {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
@@ -22,8 +23,14 @@ internal sealed class MachineFitView {
 	private const float GuidanceWidth = 70f;
 
 	private readonly MachineFitter _fitter;
+	private readonly LoadoutPresetView _presets;
 
-	public MachineFitView(MachineFitter fitter) => _fitter = fitter;
+	public MachineFitView(MachineFitter fitter, LoadoutPresetView presets) {
+		_fitter = fitter;
+		_presets = presets;
+	}
+
+	private bool Unrestricted => _fitter.CybridUnrestricted;
 
 	/// <summary>
 	/// Draws the chassis choice and the hardpoints of the herc of row-12 GUID <paramref name="guid"/>:
@@ -51,13 +58,14 @@ internal sealed class MachineFitView {
 			ImGui.EndCombo();
 		}
 
+		_presets.DrawChoice(guid, type, record.Weapons, record.Ammo, ScaledImGui.Scaled(WeaponWidth), option);
 		EditorText.Note(note);
 		var mounts = _fitter.Mounts(type);
 		bool cybrid = HercGroups.IsCybrid(type);
-		if (cybrid) {
+		if (cybrid && (mounts.Count == 0 || !Unrestricted)) {
 			EditorText.Note(mounts.Count == 0
 				? "It has no hardpoints, so it carries no weapon."
-				: "Each hardpoint offers the weapons retail missions fit on it on this chassis.");
+				: "Each hardpoint offers only weapons used on that hardpoint in vanilla.");
 		}
 
 		var fixedMounts = new List<(int Mount, string Reason)>();
@@ -82,14 +90,15 @@ internal sealed class MachineFitView {
 			}
 		}
 
+		_presets.DrawButtons(guid, type, name(type), record.Weapons, record.Ammo, option, reason != null);
 		EditorText.Reason(reason);
 	}
 
 	/// <summary>A chassis name as the shell's chassis table gives it, for the squad's HERCs.</summary>
 	public static string ChassisName(int chassis) => HercLUT.GetById((short)chassis)?.Name ?? $"type {chassis}";
 
-	// One hardpoint: the weapons it offers, and for a launcher the guidance kinds. A Cybrid's weapon no retail mission fits
-	// there is listed first, marked, as the current choice.
+	// One hardpoint: the weapons it offers, and for a launcher the guidance kinds. A Cybrid's weapon the hardpoint does not
+	// offer, under Vanilla one no retail mission fits there, is listed first, marked, as the current choice.
 	private void DrawMount(short guid, int chassis, int mount, short weapon, short guidance, bool fixedWeapon, bool cybrid,
 			MsnRecordId? option) {
 		ImGui.PushID(mount);
@@ -97,9 +106,10 @@ internal sealed class MachineFitView {
 		ImGui.Text($"{Hardpoint(mount)}:");
 		ImGui.SameLine();
 		ImGui.SetNextItemWidth(ScaledImGui.Scaled(WeaponWidth));
-		bool foreign = cybrid && !fixedWeapon && !_fitter.FromRetail(chassis, mount, weapon);
-		string current = foreign ? $"{WeaponName(weapon)} (not from a retail mission)" : WeaponName(weapon);
 		var options = _fitter.WeaponsFor(chassis, mount).ToList();
+		bool foreign = cybrid && !fixedWeapon && !options.Contains(weapon);
+		string marker = Unrestricted ? " (not offered here)" : " (not from a retail mission)";
+		string current = foreign ? WeaponName(weapon) + marker : WeaponName(weapon);
 		// A hardpoint whose only offer is what it holds, such as one retail missions always leave empty, has no choice to make.
 		bool onlyChoice = !foreign && options.All(choice => choice == weapon);
 		ImGui.BeginDisabled(fixedWeapon || onlyChoice);

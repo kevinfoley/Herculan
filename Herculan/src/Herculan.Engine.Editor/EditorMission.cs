@@ -18,7 +18,7 @@ namespace Herculan.Engine.Editor;
 internal sealed class EditorMission {
 	private EditorMission(GameContent content, string name, MissionDocument source, MissionScene scene,
 			PlacementTables tables, MissionIndex sceneIndex, TerrainMaterialTable materials,
-			MissionSquad squad, Func<GameContent> shellContent, CybridWeapons cybrid, ZoneCatalog zones) {
+			MissionSquad squad, Func<GameContent> shellContent, CybridWeapons cybrid, ZoneCatalog zones, LoadoutPresets presets) {
 		Name = name;
 		Source = source;
 		Scene = scene;
@@ -40,6 +40,7 @@ internal sealed class EditorMission {
 		GroupDeleter = new GroupDeleter(source, sceneIndex, Mover, Sync, Deleter);
 		Members = new MemberMover(source, sceneIndex, Mover, Sync);
 		Fitter = new MachineFitter(source, Mover, Sync, shellContent, cybrid);
+		Presets = new LoadoutPresetView(Fitter, presets);
 		Squad = new SquadEditor(source, Mover, Sync, Fitter, Deleter);
 		Theater = new TheaterChanger(source, scene, sceneIndex, Mover, Sync);
 		Routes = new RouteEditor(source, sceneIndex, Mover, Sync, Selection, Deleter);
@@ -77,7 +78,7 @@ internal sealed class EditorMission {
 			new MissionTextView(Texts), new DebriefView(Debrief));
 		var catalog = new UnitTypeCatalog(content);
 		Properties = new PropertiesPanel(sceneIndex, Selection, source, Mover, Sides, Deleter, Members,
-			new SquadMachinePanel(Fitter, Squad, squad), new RosterFitView(Fitter, Types, TableEditor, catalog),
+			new SquadMachinePanel(Fitter, Squad, squad, Presets), new RosterFitView(Fitter, Types, TableEditor, catalog, Presets),
 			Routes, Placing, Areas, AreaPlacing, Orders, Objectives, Actions, Timers, Conditions, Presence, TableEditor,
 			StartingConditions, Headings, randomTables, new TriggerMessages(content), Names, catalog, tables.Bases, Types, Fitter, Placer, Hercs, Flyers,
 			Pads, GroupDeleter);
@@ -187,6 +188,9 @@ internal sealed class EditorMission {
 	/// <summary>Changes hercs' chassis and weapon fits in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public MachineFitter Fitter { get; }
 
+	/// <summary>The loadout preset choice of a HERC's view, and its prompts, which take the keyboard while one is up.</summary>
+	public LoadoutPresetView Presets { get; }
+
 	/// <summary>Changes the types of flyers, structures and ground vehicles in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public RosterTypeEditor Types { get; }
 
@@ -234,11 +238,13 @@ internal sealed class EditorMission {
 	/// <paramref name="squad"/> is which Hercs the mission's squad pilots, which builds the <c>player.mec</c> File &gt; Export
 	/// writes, <paramref name="shellContent"/> VSHELL's mount, which holds the shell's chassis and weapon tables,
 	/// <paramref name="cybrid"/> what a Cybrid's hardpoints offer and <paramref name="zones"/> the install's zones with the
-	/// retail missions that use each, both built once per editor run. Throws
+	/// retail missions that use each, both built once per editor run, and <paramref name="presets"/> the loadout presets, read once
+	/// per editor run, or with none an empty set kept in memory only. Throws
 	/// <see cref="MissingHandoffFileException"/> as <see cref="MissionLoader.Load"/> does.
 	/// </summary>
 	public static EditorMission Open(GameContent content, string scriptPath, string name, string dataDirectory,
-			MissionDocument source, MissionSquad squad, Func<GameContent> shellContent, CybridWeapons cybrid, ZoneCatalog zones) {
+			MissionDocument source, MissionSquad squad, Func<GameContent> shellContent, CybridWeapons cybrid, ZoneCatalog zones,
+			LoadoutPresets? presets = null) {
 		File.WriteAllBytes(scriptPath, source.ScriptBytes);
 		File.WriteAllBytes(CaseInsensitivePath.Combine(Path.GetDirectoryName(scriptPath) ?? ".", MissionLoader.TextFileName),
 			source.MissionText);
@@ -255,6 +261,6 @@ internal sealed class EditorMission {
 
 		// The scene's own copy is not kept; a base pad's tile is sized by its material when the ground is levelled again.
 		return new EditorMission(content, name, source, scene, tables, sceneIndex,
-			TerrainMaterialTable.Load(content), squad, shellContent, cybrid, zones);
+			TerrainMaterialTable.Load(content), squad, shellContent, cybrid, zones, presets ?? new LoadoutPresets());
 	}
 }

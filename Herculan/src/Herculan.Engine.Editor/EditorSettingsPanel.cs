@@ -40,8 +40,9 @@ public sealed class EditorSettingsPanel {
 		}
 
 		// A zero component means "fit the content", so the panel keeps a fixed width and grows to
-		// whatever height its settings need.
-		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(PanelWidth), 0f));
+		// whatever height its settings need, at least as wide as the Cybrid Loadouts line.
+		float width = MathF.Max(ScaledImGui.Scaled(PanelWidth), CybridLoadoutsWidth() + ImGui.GetStyle().WindowPadding.X * 2f);
+		ImGui.SetNextWindowSize(new Vector2(width, 0f));
 		ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), ImGuiCond.Appearing, new Vector2(0.5f, 0.5f));
 
 		bool stayOpen = true;
@@ -56,6 +57,20 @@ public sealed class EditorSettingsPanel {
 				_settings.ShowGrid = showGrid;
 			}
 
+			ImGui.AlignTextToFramePadding();
+			ImGui.Text(CybridLoadoutsLabel);
+			ImGui.SameLine();
+			if (ImGui.RadioButton("Vanilla", _settings.CybridLoadouts == CybridLoadouts.Vanilla)) {
+				_settings.CybridLoadouts = CybridLoadouts.Vanilla;
+			}
+
+			EditorText.Tooltip("Each Cybrid hardpoint offers the weapons retail missions fit on it.");
+			ImGui.SameLine();
+			if (ImGui.RadioButton("Unrestricted", _settings.CybridLoadouts == CybridLoadouts.Unrestricted)) {
+				_settings.CybridLoadouts = CybridLoadouts.Unrestricted;
+			}
+
+			EditorText.Tooltip("Each Cybrid hardpoint offers any HERC weapon. PITBULL's own weapons stay on the PITBULL, and it takes no other.");
 			ImGui.Separator();
 
 			Span<float> widths = [ButtonRow.LabelWidth("Save"), ButtonRow.LabelWidth("Cancel")];
@@ -75,6 +90,16 @@ public sealed class EditorSettingsPanel {
 		if (!stayOpen && _snapshot != null) {
 			Cancel();
 		}
+	}
+
+	private const string CybridLoadoutsLabel = "Cybrid Loadouts:";
+
+	// The Cybrid Loadouts line's width: its label and both radio buttons, each a frame-high circle and its text, side by side.
+	private static float CybridLoadoutsWidth() {
+		var style = ImGui.GetStyle();
+		float Radio(string label) => ImGui.GetFrameHeight() + style.ItemInnerSpacing.X + ImGui.CalcTextSize(label).X;
+		return ImGui.CalcTextSize(CybridLoadoutsLabel).X + style.ItemSpacing.X + Radio("Vanilla") + style.ItemSpacing.X
+			+ Radio("Unrestricted");
 	}
 
 	private void Cancel() {

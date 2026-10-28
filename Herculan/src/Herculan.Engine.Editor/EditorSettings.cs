@@ -49,6 +49,10 @@ public sealed class EditorSettings {
 	[JsonConverter(typeof(JsonStringEnumConverter<WaitingGroupDisplay>))]
 	public WaitingGroupDisplay WaitingGroups { get; set; } = WaitingGroupDisplay.Outlined;
 
+	/// <summary>What a Cybrid's hardpoints offer (<see cref="CybridWeapons.Offered"/>); retail's fits by default.</summary>
+	[JsonConverter(typeof(JsonStringEnumConverter<CybridLoadouts>))]
+	public CybridLoadouts CybridLoadouts { get; set; } = CybridLoadouts.Vanilla;
+
 	/// <summary>
 	/// Where the editor's window was when the editor last closed on its own (not from the game, which hands it the
 	/// game window's place), for it to open at again. Null until then, when it opens maximized.
@@ -103,6 +107,7 @@ public sealed class EditorSettings {
 		ShowMissionBox = other.ShowMissionBox;
 		ShowBasePads = other.ShowBasePads;
 		WaitingGroups = other.WaitingGroups;
+		CybridLoadouts = other.CybridLoadouts;
 	}
 }
 
@@ -136,6 +141,15 @@ public sealed class SavedWindow {
 		? new WindowPlacement(X is { } x && Y is { } y ? new Vector2D<int>(x, y) : null, new Vector2D<int>(Width, Height),
 			Maximized)
 		: null;
+}
+
+/// <summary>The two choices of <see cref="EditorSettings.CybridLoadouts"/>.</summary>
+public enum CybridLoadouts {
+	/// <summary>Each hardpoint offers the weapons retail missions fit there on that chassis.</summary>
+	Vanilla,
+
+	/// <summary>Each hardpoint offers every HERC weapon, PITBULL's apart (<see cref="CybridWeapons.Offered"/>).</summary>
+	Unrestricted
 }
 
 /// <summary>The three ways <see cref="EditorSettings.WaitingGroups"/> shows a waiting group's members.</summary>

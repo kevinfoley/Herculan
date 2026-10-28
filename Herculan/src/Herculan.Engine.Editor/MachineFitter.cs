@@ -22,8 +22,8 @@ namespace Herculan.Engine.Editor;
 /// (<see cref="ShellArmingLayouts.HasSocket"/>). The career's unlock flags and the armory's stock, which also gate that list,
 /// are not applied: a mission's machine is fitted from no stock (<c>Herc_FitNewUnit</c>). A weapon fitted takes the guidance
 /// <see cref="ShellHangar.FitGuidance"/> gives it.</item>
-/// <item>A Cybrid's mounts are its hardpoints, and each offers the weapons retail missions fit there
-/// (<see cref="CybridWeapons"/>, the user's choice); a weapon fitted takes the ammunition type those records carry with
+/// <item>A Cybrid's mounts are its hardpoints, and each offers the weapons retail missions fit there, or any HERC weapon
+/// under the Cybrid Loadouts setting's Unrestricted (<see cref="CybridWeapons.Offered"/>, the user's choice); a weapon fitted takes the ammunition type those records carry with
 /// it.</item>
 /// <item>A weapon that takes a guidance kind (<see cref="ShellWeaponsScreen.TakesGuidance"/>) offers the four the guidance
 /// buttons write, on either kind of chassis.</item>
@@ -106,11 +106,11 @@ internal sealed class MachineFitter {
 
 	/// <summary>
 	/// The weapons fit slot <paramref name="mount"/> of <paramref name="chassis"/> offers: a Human chassis's in the weapons
-	/// screen's order, none without an arming layout; a Cybrid's those retail missions fit there.
+	/// screen's order, none without an arming layout; a Cybrid's <see cref="CybridWeapons.Offered"/>.
 	/// </summary>
 	public IEnumerable<int> WeaponsFor(int chassis, int mount) {
 		if (HercGroups.IsCybrid(chassis)) {
-			return _cybrid.WeaponsFor(chassis, mount).Select(weapon => (int)weapon);
+			return _cybrid.Offered(chassis, mount).Select(weapon => (int)weapon);
 		}
 
 		var layouts = Layouts();
@@ -131,8 +131,11 @@ internal sealed class MachineFitter {
 			: "No retail mission fits a weapon on this hardpoint, so it is not changed here.";
 	}
 
-	/// <summary>Whether a retail mission fits <paramref name="weapon"/> in fit slot <paramref name="mount"/> of Cybrid <paramref name="chassis"/>.</summary>
-	public bool FromRetail(int chassis, int mount, int weapon) => _cybrid.WeaponsFor(chassis, mount).Contains((short)weapon);
+	/// <inheritdoc cref="CybridWeapons.Unrestricted"/>
+	public bool CybridUnrestricted => _cybrid.Unrestricted;
+
+	/// <inheritdoc cref="CybridWeapons.UnrestrictedOffer"/>
+	public IEnumerable<int> UnrestrictedWeaponsFor(int chassis) => _cybrid.UnrestrictedOffer(chassis).Select(weapon => (int)weapon);
 
 	/// <summary>
 	/// The template of the option the layout shows the herc of row-12 GUID <paramref name="guid"/> with that its type, or a
@@ -172,6 +175,19 @@ internal sealed class MachineFitter {
 	/// </summary>
 	public void RequestGuidance(short guid, int mount, int kind, MsnRecordId? option = null) => _requested = () => Write(guid,
 		[(MsnField.MechAmmo(mount), (short)kind)], option);
+
+	/// <summary>
+	/// Asks for each of <paramref name="slots"/>' weapon and ammunition type in its fit slot of the herc of row-12 GUID
+	/// <paramref name="guid"/>, as one change and one step of the history, in <paramref name="option"/>'s template where a template
+	/// supplies them: a loadout preset applied (docs/herculan/handoff-editor-roster.md#loadout-presets). A slot the view does not
+	/// edit (<see cref="WhyNoWeapons"/>) is left as it is.
+	/// </summary>
+	public void RequestLoadout(short guid, IReadOnlyList<(int Mount, short Weapon, short Ammo)> slots, MsnRecordId? option = null) =>
+		_requested = () => Fit(guid, option) is { } herc
+			? Write(guid, slots.Where(slot => WhyNoWeapons(herc.Type, slot.Mount) == null)
+				.SelectMany(slot => new[] { (MsnField.MechWeapon(slot.Mount), slot.Weapon), (MsnField.MechAmmo(slot.Mount), slot.Ammo) })
+				.ToList(), option)
+			: WhyFixed(guid);
 
 	/// <summary>Makes the edit asked for since the last call, if any; <see cref="Failure"/> says why one could not be made.</summary>
 	public void RunRequest() {
