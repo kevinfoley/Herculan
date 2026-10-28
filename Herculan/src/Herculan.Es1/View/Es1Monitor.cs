@@ -53,6 +53,15 @@ public sealed class Es1Monitor : IEs1WorldLayer, IDisposable {
 	// The GL viewport of the last world pass.
 	private (int X, int Y, int Width, int Height)? _worldViewport;
 
+	/// <summary>The live palette the cells' indices show through, as <see cref="SetPalette"/> last sent it.</summary>
+	public DynamixPalette? Palette => _palette;
+
+	/// <summary>
+	/// How many times the live palette has been sent (<see cref="SetPalette"/>, <see cref="InstallRange"/>): what changes
+	/// when it does, so a reader that resolves indices to colors itself, as the 3D pass does, can tell when to again.
+	/// </summary>
+	public int PaletteVersion { get; private set; }
+
 	/// <summary>The live palette the cells' indices show through; a palette other than the last is sent again.</summary>
 	public void SetPalette(DynamixPalette? palette) {
 		if (_paletteSet && ReferenceEquals(palette, _palette)) {
@@ -74,6 +83,7 @@ public sealed class Es1Monitor : IEs1WorldLayer, IDisposable {
 		_surface.SetPalette(rgba);
 		_palette = palette;
 		_paletteSet = true;
+		PaletteVersion++;
 	}
 
 	/// <summary>
@@ -81,7 +91,8 @@ public sealed class Es1Monitor : IEs1WorldLayer, IDisposable {
 	/// on the live palette: a copy of it with the entries from <paramref name="first"/> replaced and sent as
 	/// <see cref="SetPalette"/> sends one. Each entry is retail's palette dword, six-bit red, green and blue from the low
 	/// byte up, scaled by the live palette's <see cref="DynamixPalette.Scalar"/> as the palette reader scales a
-	/// <c>.DPL</c>'s. With no live palette nothing is installed.
+	/// <c>.DPL</c>'s. With no live palette nothing is installed; when every entry already holds its color nothing is
+	/// sent, which leaves the screen as it is.
 	/// </summary>
 	public void InstallRange(int first, IReadOnlyList<uint> entries) {
 		if (_palette is not { } live) {
@@ -90,12 +101,23 @@ public sealed class Es1Monitor : IEs1WorldLayer, IDisposable {
 
 		var colors = new Dictionary<int, ColorBytes>(live.Colors);
 		int scale = live.Scalar;
+		bool changed = false;
 		for (int i = 0; i < entries.Count; i++) {
 			int r = Math.Min((int)(entries[i] & 0xff) * scale, 255), g = Math.Min((int)(entries[i] >> 8 & 0xff) * scale, 255);
 			int b = Math.Min((int)(entries[i] >> 16 & 0xff) * scale, 255);
+			if (colors.TryGetValue(first + i, out var held) && held.GetColor() is var shown
+					&& shown.R == r && shown.G == g && shown.B == b) {
+				continue;
+			}
+
 			var color = new ColorBytes((byte)r, (byte)g, (byte)b, 255);
 			color.SetColor(RgbaColor.FromArgb(255, r, g, b));
 			colors[first + i] = color;
+			changed = true;
+		}
+
+		if (!changed) {
+			return;
 		}
 
 		SetPalette(new DynamixPalette {

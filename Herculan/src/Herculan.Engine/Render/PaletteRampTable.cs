@@ -1,3 +1,4 @@
+using HercWorks.Core.Data.File.Dyn;
 using Herculan.Engine.Content;
 
 namespace Herculan.Engine.Render;
@@ -139,5 +140,30 @@ public sealed class PaletteRampTable {
 			UnlitRow = ramp.RowFor(ShadeRamp.UnlitShade),
 			GroundRow = ramp.RowFor(TerrainMeshBuilder.UntexturedRowShade),
 		};
+	}
+
+	/// <summary>
+	/// Shows the table in <paramref name="palette"/>, in place: every cell takes the colour of the palette byte its alpha
+	/// holds, black where <paramref name="palette"/> lacks it, as <see cref="Build"/> resolves them. The ramp's lookups
+	/// are unchanged. For a game whose screen shows the palette indices it draws through a palette that changes while
+	/// they are on it.
+	/// </summary>
+	public void Recolor(DynamixPalette palette) {
+		var rgb = new byte[Width * 3];
+		for (int index = 0; index < Width; index++) {
+			if (palette.Colors.TryGetValue(index, out var entry)) {
+				var color = entry.GetColor();
+				rgb[index * 3] = color.R;
+				rgb[index * 3 + 1] = color.G;
+				rgb[index * 3 + 2] = color.B;
+			}
+		}
+
+		for (int at = 0; at < Pixels.Length; at += 4) {
+			int index = Pixels[at + 3] * 3;
+			Pixels[at] = rgb[index];
+			Pixels[at + 1] = rgb[index + 1];
+			Pixels[at + 2] = rgb[index + 2];
+		}
 	}
 }

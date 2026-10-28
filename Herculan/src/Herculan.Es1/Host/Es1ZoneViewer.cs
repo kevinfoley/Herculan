@@ -230,10 +230,12 @@ public static class Es1ZoneViewer {
 			var spriteRenderer = new SpriteRenderer(gl);
 			sprites = spriteRenderer;
 			disposables.Add(spriteRenderer);
-			renderer.SetShadeRamps(scene.Shading.Table ?? SurfaceRampTable.Build(scene.Shading.Surfaces));
-			renderer.SetPaletteRamp(scene.TheaterPalette != null && scene.Palette != null
+			var shadeRamps = scene.Shading.Table ?? SurfaceRampTable.Build(scene.Shading.Surfaces);
+			var paletteRamp = scene.TheaterPalette != null && scene.Palette != null
 				? Es1TextureShades.RampTable(scene.TheaterPalette, scene.Palette)
-				: PaletteRampTable.Build(scene.Shading.Surfaces));
+				: PaletteRampTable.Build(scene.Shading.Surfaces);
+			renderer.SetShadeRamps(shadeRamps);
+			renderer.SetPaletteRamp(paletteRamp);
 
 			models = Es1MechModels.Upload(gl, content, world.Types.Values.OfType<Es1MechType>(), scene);
 			disposables.Add(models);
@@ -262,8 +264,6 @@ public static class Es1ZoneViewer {
 				monitor.Fit(window.FramebufferSize);
 				var worldDraw = draw;
 				var sceneRenderer = renderer;
-				monitor.WorldPass = (x, y, width, height) =>
-					DrawWorld(gl, sceneRenderer, spriteRenderer, backdrop, worldDraw, cockpitCamera, x, y, width, height);
 				// A cockpit rect's view, the NAV MAP's or the MISSILE CAM's, from a camera of its own (plan decision 17); the
 				// MISSILE CAM's horizon is its own hzline, with no clouds or scattered points.
 				var rectCamera = new Camera();
@@ -277,8 +277,18 @@ public static class Es1ZoneViewer {
 					disposables.Add(missileHorizon);
 				}
 
-				monitor.ViewPass = (view, size, viewport) =>
+				// The world's colours follow the live palette as the cockpit's do, rebuilt before a pass when it changed.
+				var liveMonitor = monitor;
+				var worldPalette = new Es1WorldPalette(sceneRenderer, shadeRamps, paletteRamp,
+					new[] { backdrop, missileHorizon }.OfType<Es1Backdrop>().ToArray(), liveMonitor);
+				monitor.WorldPass = (x, y, width, height) => {
+					worldPalette.Follow(liveMonitor);
+					DrawWorld(gl, sceneRenderer, spriteRenderer, backdrop, worldDraw, cockpitCamera, x, y, width, height);
+				};
+				monitor.ViewPass = (view, size, viewport) => {
+					worldPalette.Follow(liveMonitor);
 					DrawRectView(gl, sceneRenderer, spriteRenderer, worldDraw, missileHorizon, rectCamera, view, size, viewport);
+				};
 				// The gunsight's pick, answered from what that pass drew (plan decision 16).
 				var pick = new Es1WorldPick(gl, sceneRenderer, worldDraw);
 				disposables.Add(pick);

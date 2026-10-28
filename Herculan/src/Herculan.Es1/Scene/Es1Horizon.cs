@@ -24,9 +24,13 @@ public sealed class Es1Horizon {
 	/// <summary><c>+0x6c</c> as <c>Hzline_Ctor</c> (<c>00026180</c>) leaves it, 1, so that <i>t</i> is 0.</summary>
 	public const int CtorGapField = 1;
 
-	private Es1Horizon(Vector3[] sky, Vector3[] ground, int skyBandHeight, int gapField, int groundBandHeight, int lineOffset) {
+	private readonly int _groundTop;
+
+	private Es1Horizon(Vector3[] sky, Vector3[] ground, int groundTop, int skyBandHeight, int gapField, int groundBandHeight,
+			int lineOffset) {
 		SkyColors = sky;
 		GroundColors = ground;
+		_groundTop = groundTop;
 		SkyBandHeight = skyBandHeight;
 		HorizonGap = gapField >> 1;
 		GroundBandHeight = groundBandHeight;
@@ -106,7 +110,24 @@ public sealed class Es1Horizon {
 			ground[k] = color;
 		}
 
-		return new Es1Horizon(sky, ground, skyBandHeight, gapField, groundBandHeight, lineOffset);
+		return new Es1Horizon(sky, ground, groundTop, skyBandHeight, gapField, groundBandHeight, lineOffset);
+	}
+
+	/// <summary>
+	/// <see cref="GroundColors"/>' entries shown in <paramref name="palette"/>, or null when it lacks one of them, which
+	/// <see cref="From(Es1WorldData, DynamixPalette?)"/> would not have built the horizon on.
+	/// </summary>
+	public Vector3[]? GroundColorsIn(DynamixPalette palette) {
+		var ground = new Vector3[GroundColors.Length];
+		for (int k = 0; k < ground.Length; k++) {
+			if (ColorOf(palette, _groundTop - k) is not { } color) {
+				return null;
+			}
+
+			ground[k] = color;
+		}
+
+		return ground;
 	}
 
 	/// <summary>

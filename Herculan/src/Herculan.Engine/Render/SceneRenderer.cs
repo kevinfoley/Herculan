@@ -333,6 +333,45 @@ public sealed class SceneRenderer : IDisposable {
 	}
 
 	/// <summary>
+	/// Sends <paramref name="table"/>'s pixels again after they changed in place (<see cref="SurfaceRampTable.Recolor"/>):
+	/// into the installed texture when the table is the size of the one installed, and otherwise as
+	/// <see cref="SetShadeRamps"/> installs one.
+	/// </summary>
+	public void ReuploadShadeRamps(SurfaceRampTable table) {
+		if (_shadeRampTexture != null && table.Height == _shadeRampRows) {
+			_shadeRampTexture.Update(table.Pixels, SurfaceRampTable.Width, table.Height);
+		} else {
+			SetShadeRamps(table);
+		}
+	}
+
+	/// <summary>
+	/// Sends <paramref name="table"/>'s <see cref="SurfaceRampTable.PaletteRow"/> again after it changed in place
+	/// (<see cref="SurfaceRampTable.RecolorPaletteRow"/>), or the whole table as <see cref="ReuploadShadeRamps"/> does
+	/// when it is not the size of the one installed.
+	/// </summary>
+	public void ReuploadShadeRampPaletteRow(SurfaceRampTable table) {
+		if (_shadeRampTexture != null && table.Height == _shadeRampRows) {
+			_shadeRampTexture.UpdateRows(table.Pixels, SurfaceRampTable.Width, table.PaletteRow, 1);
+		} else {
+			SetShadeRamps(table);
+		}
+	}
+
+	/// <summary>
+	/// Sends <paramref name="table"/>'s pixels again after they changed in place (<see cref="PaletteRampTable.Recolor"/>):
+	/// into the installed texture when the table is the size of the one installed, and otherwise as
+	/// <see cref="SetPaletteRamp"/> installs one.
+	/// </summary>
+	public void ReuploadPaletteRamp(PaletteRampTable table) {
+		if (_paletteRampTexture != null && table.Height == _paletteRampRows) {
+			_paletteRampTexture.Update(table.Pixels, PaletteRampTable.Width, table.Height);
+		} else {
+			SetPaletteRamp(table);
+		}
+	}
+
+	/// <summary>
 	/// Installs the counterparts of the two tables above built against the theater's damage-flash
 	/// palette, which <see cref="ImpactPaletteActive"/> then swaps to and from. Both stay resident:
 	/// the flash toggles several times a second and rebuilding a table at that rate would stutter.

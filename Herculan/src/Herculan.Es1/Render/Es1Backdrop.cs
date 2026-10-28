@@ -52,6 +52,7 @@ public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 	private readonly GpuTexture? _blank;
 	private readonly Vector3?[] _speckColours = new Vector3?[3];
 	private readonly Random _random = new();
+	private Vector3[] _groundColours;
 
 	/// <summary>
 	/// Uploads the scene's backdrop tables, their indices shown in <paramref name="palette"/>, the live one;
@@ -62,7 +63,8 @@ public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 			Es1Clouds? clouds, Es1GroundSpecks? specks, DynamixPalette palette) {
 		_gl = gl;
 		_horizon = horizon;
-		_shader = ShaderProgram.Load(gl, typeof(Es1Backdrop).Assembly, ShaderFolder, "Backdrop.glsl");
+		_groundColours = horizon.GroundColors;
+		_shader =ShaderProgram.Load(gl, typeof(Es1Backdrop).Assembly, ShaderFolder, "Backdrop.glsl");
 		_vertexArray = gl.GenVertexArray();
 
 		if (ground != null) {
@@ -91,9 +93,33 @@ public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 			_specks = specks;
 			_overlay = new Overlay2DRenderer(gl);
 			_blank = new GpuTexture(gl, [255, 255, 255, 255], 1, 1);
-			for (int k = 0; k < _speckColours.Length; k++) {
-				_speckColours[k] = Es1Horizon.ColorOf(palette, specks.Colour - 2 * k);
-			}
+			ResolveSpecks(palette);
+		}
+	}
+
+	/// <summary>
+	/// The ground's colours shown in <paramref name="palette"/>, the live palette after it changed: the banded ground's
+	/// bands, the textured ground's colour tables and the scattered points, whose palette indices retail's screen shows
+	/// through the live palette as it shows every other (docs/es1/rendering/palette.md#installing-colors). A band whose
+	/// entry <paramref name="palette"/> lacks leaves the bands as they were.
+	/// <para>PLACEHOLDER: the sky's bands, the skyline and the clouds keep the colours of the palette the backdrop was
+	/// built in, where retail's screen shows them through the live palette too; the plan's hit flash
+	/// (docs/herculan/plan-es1-first-mission.md#what-the-slice-leaves-out) covers them.</para>
+	/// </summary>
+	public void ShowIn(DynamixPalette palette) {
+		_groundColours = _horizon.GroundColorsIn(palette) ?? _groundColours;
+		if (_ground != null && _fadeColours != null) {
+			_fadeColours.Update(_ground.TableColors(palette), Es1TexturedGround.TableLength, Es1TexturedGround.TableCount);
+		}
+
+		if (_specks != null) {
+			ResolveSpecks(palette);
+		}
+	}
+
+	private void ResolveSpecks(DynamixPalette palette) {
+		for (int k = 0; k < _speckColours.Length; k++) {
+			_speckColours[k] = Es1Horizon.ColorOf(palette, _specks!.Colour - 2 * k);
 		}
 	}
 
@@ -149,11 +175,11 @@ public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 		_shader.SetFloat("uLineDown", lineDown);
 		_shader.SetFloat("uFirstSkyEdge", _horizon.SkyBandHeight * sinRoll * sinRoll + t * cosRoll);
 
-		for (int k = 0; k < _horizon.GroundColors.Length; k++) {
-			_shader.SetVector3(GroundBandNames[k], _horizon.GroundColors[k]);
+		for (int k = 0; k < _groundColours.Length; k++) {
+			_shader.SetVector3(GroundBandNames[k], _groundColours[k]);
 		}
 
-		_shader.SetInt("uGroundBandCount", _horizon.GroundColors.Length);
+		_shader.SetInt("uGroundBandCount", _groundColours.Length);
 		_shader.SetFloat("uGroundBandHeight", Math.Max(_horizon.GroundBandHeight, 1));
 		_shader.SetFloat("uFirstGroundEdge", _horizon.GroundBandHeight * sinRoll * sinRoll + t * cosRoll);
 

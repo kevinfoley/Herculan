@@ -49,6 +49,9 @@ public sealed class Es1ExplosionDraw : IDisposable {
 					&& TextureAtlas.Build(bank, scene.Palette, transparentIndex0: true) is { } atlas) {
 				// PLACEHOLDER: palette index 0 left unpainted, as ES2's billboard leaves it; what VGA_8's scaled blit,
 				// slot 29 (0008c744), does with it is unread (docs/es1/rendering/screen-pages.md#open).
+				// PLACEHOLDER: the billboards keep the colours of the palette they were built in, where retail's blit
+				// writes indices the live palette shows; the plan's hit flash covers them
+				// (docs/herculan/plan-es1-first-mission.md#what-the-slice-leaves-out).
 				var sprites = atlas.Upload(gl);
 				var faces = atlas.Upload(gl, indexed: true);
 				_owned.Add(sprites);

@@ -64,6 +64,24 @@ public sealed class GpuTexture : IDisposable {
 		_gl.BindTexture(TextureTarget.Texture2D, 0);
 	}
 
+	/// <summary>
+	/// Replaces rows <paramref name="firstRow"/> to <paramref name="firstRow"/> + <paramref name="rows"/> − 1 of an image
+	/// <paramref name="width"/> across, in place, from the same rows of <paramref name="rgbaPixels"/>, the whole image.
+	/// </summary>
+	public void UpdateRows(ReadOnlySpan<byte> rgbaPixels, int width, int firstRow, int rows) {
+		var slice = rgbaPixels.Slice(firstRow * width * 4, rows * width * 4);
+		_gl.BindTexture(TextureTarget.Texture2D, Handle);
+
+		unsafe {
+			fixed (byte* pixels = slice) {
+				_gl.TexSubImage2D(TextureTarget.Texture2D, 0, 0, firstRow, (uint)width, (uint)rows,
+					PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
+			}
+		}
+
+		_gl.BindTexture(TextureTarget.Texture2D, 0);
+	}
+
 	public void Dispose() => _gl.DeleteTexture(Handle);
 
 	/// <summary>

@@ -52,8 +52,10 @@ internal static class Es1DeathFlash {
 	/// With no frame loop, view manager or panels, which retail always has, nothing is drawn or raised, an engine guard;
 	/// the tick still ends the mission. A palette whose file is missing, which retail's load asserts on, is none here: it
 	/// is not installed, and a fade from or to it fades from or to black.
-	/// <para>PLACEHOLDER: the world the 3D pass draws is in colors fixed at load and does not read the live palette, so
-	/// only the cockpit's art and what else is drawn in palette indices flash and fade; retail's whole screen does.</para>
+	/// <para>The cockpit and the 3D pass's faces and ground flash and fade with the live palette
+	/// (<see cref="Render.Es1WorldPalette"/>). PLACEHOLDER: the effects' billboards and the sky's bands, skyline and
+	/// clouds keep the colors they were built in, where retail's whole screen flashes; the plan's hit flash covers them
+	/// (docs/herculan/plan-es1-first-mission.md#what-the-slice-leaves-out).</para>
 	/// </summary>
 	public static IEnumerable<Es1Wait> Run(Es1Simulation simulation) {
 		if (simulation.Frame is not { } frame || simulation.ViewChain.Manager is not { } views || simulation.Panels is not { } panels) {
