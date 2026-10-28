@@ -59,6 +59,13 @@ public abstract class SimObject {
 	public int Heading { get; set; }
 
 	/// <summary>
+	/// Turns the object to face <paramref name="heading"/> from outside the simulation, as the mission editor re-places it: a
+	/// class that caches a frame built from its attitude marks it stale, as its own turns do. The simulation's own turns write
+	/// <see cref="Heading"/> and stale the frame where the original does.
+	/// </summary>
+	public virtual void Face(int heading) => Heading = heading;
+
+	/// <summary>
 	/// <c>obj+0x4b</c> — this object's slot in the world's single live-object list, written by
 	/// <c>ObjectList_Add</c> (<c>00411dd4</c>) as the object joins it and never changed after.
 	///

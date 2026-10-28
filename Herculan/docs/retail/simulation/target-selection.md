@@ -29,7 +29,7 @@ The angular-size correction the function computes from the target's range and sh
 
 Alive (`obj+0x99`/`+0xa4` both clear), on the other [side](sim-object-layout.md#object-classification), and **known** by either sensor route ([`sensors.md`](sensors.md#the-sensor-model--sim_detectiontick-004123ac)):
 
-- eradar-visible (`obj+0x95`) within `DAT_004d1cfc` = **200000**, the last of the scanner's three ranges (`MfdDisplay_Ctor` writes 50000/100000/200000) — read directly, not the current setting;
+- radar-visible (`obj+0x95`) within `DAT_004d1cfc` = **200000**, the last of the scanner's three ranges (`MfdDisplay_Ctor` writes 50000/100000/200000) — read directly, not the current setting;
 - or a held contact within `Detection_ContactScanRange` (`00426aec`) = **30000** on the short scan setting, **60000** otherwise.
 
 Ranges here and in the cone test are measured from the machine (`view+0x203`), or from the watched object `DAT_004d2708` while the spectator flag `DAT_0049ef5c` is set — see [The spectator flag](external-views.md#the-spectator-flag--dat_0049ef5c).

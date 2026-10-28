@@ -10,15 +10,15 @@ The file half of the subject — how block 10 and block 11 are written and read 
 
 The 22-byte record, its offsets and the block-10 fields each is built from are [`script-dat.md`](../formats/script-dat.md#block-10-in-memory--22-bytes-0x16)'s. What the simulation makes of each field:
 
-| Offset | Meaning to the simulation |
-|---|---|
-| `+0x00` | **The verb.** 0-6; the state and completion tables below |
-| `+0x02` | A formation index. No DBSIM reader found — [Open](#open) |
-| `+0x04` | A block-1 point. No DBSIM reader found — [Open](#open) |
+| Offset  | Meaning to the simulation                                                                                                                                                                                                                                                                                                |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `+0x00` | **The verb.** 0-6; the state and completion tables below                                                                                                                                                                                                                                                                 |
+| `+0x02` | A formation index. No DBSIM reader found — [Open](#open)                                                                                                                                                                                                                                                                 |
+| `+0x04` | A block-1 point. No DBSIM reader found — [Open](#open)                                                                                                                                                                                                                                                                   |
 | `+0x08` | **The route** — a waypoint group. Read by `DBSim_BuildGroupRecord` and `DBSim_SpawnMissionObjects`, from slot 0 only, and by `Mission_GroupOrderCompleteOnRoute` (`0041324c`), which matches it across all ten slots against an objective's waypoint group ([`mission-objectives.md`](mission-objectives.md#the-record)) |
-| `+0x0c` | **What kind of thing the order names** |
-| `+0x0e` | **The subject** — a group record for kind 0, an object for 1-3 |
-| `+0x12` | **A mission action.** When it fires, the group moves on |
+| `+0x0c` | **What kind of thing the order names**                                                                                                                                                                                                                                                                                   |
+| `+0x0e` | **The subject** — a group record for kind 0, an object for 1-3                                                                                                                                                                                                                                                           |
+| `+0x12` | **A mission action.** When it fires, the group moves on                                                                                                                                                                                                                                                                  |
 
 `+0x02` and `+0x04` are authored: `+0x04` is a real block-1 point in 47 of the 637 retail order records, and `+0x02` holds 0, 1 or 3. The briefing map reads both off the player's squad's first order, `+0x02` as the formation it spreads the squad in and `+0x04` as a fallback anchor ([`../shell/mission-map.md`](../shell/mission-map.md#the-squads-positions)). A group in the simulation spreads by the formation id in its own block-11 record instead ([`script-dat.md`](../formats/script-dat.md#row-mapping)). The orders live in one pool (`004a9eb4`), which `DBSim_SpawnMissionObjects` fills and indexes into each group's order array; [What else reads an order](#what-else-reads-an-order) lists what the loads of a slot go on to read.
 

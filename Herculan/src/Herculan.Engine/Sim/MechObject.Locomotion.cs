@@ -650,6 +650,12 @@ public sealed partial class MechObject {
 		_rotationValid = false;
 	}
 
+	/// <inheritdoc />
+	public override void Face(int heading) {
+		Heading = heading;
+		_rotationValid = false;
+	}
+
 
 	private readonly record struct Snapshot(
 		Vec3i Position, Transform3 Rotation, bool RotationValid, AnimationThread.State Thread);

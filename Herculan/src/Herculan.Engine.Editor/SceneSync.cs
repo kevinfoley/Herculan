@@ -190,7 +190,7 @@ internal sealed class SceneSync {
 	/// <summary>Stands <paramref name="sceneObject"/> at a position and heading, for whatever draws and picks it.</summary>
 	public void Place(SceneObject sceneObject, Vec3i position, int heading) {
 		sceneObject.Object.Position = position;
-		sceneObject.Object.Heading = heading;
+		sceneObject.Object.Face(heading);
 		_picker.Move(sceneObject);
 		Moved?.Invoke(sceneObject);
 	}
