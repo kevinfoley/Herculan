@@ -58,8 +58,11 @@ internal sealed class ActionEditor {
 	/// <summary>Why <paramref name="action"/> cannot be made type <paramref name="type"/>, or null when it can.</summary>
 	public string? WhyNoType(short action, short type) => WhyFixed(action) ?? ActionEditing.WhyNoType(_source, action, type);
 
-	/// <summary>Why no area can be added to <paramref name="action"/>, or null when one can.</summary>
-	public string? WhyNoAddArea(short action) => WhyFixed(action) ?? ActionEditing.WhyNoAddArea(_source, action, -1);
+	/// <summary>
+	/// Why row-9 GUID <paramref name="area"/>, or with <c>-1</c> any area, cannot be added to <paramref name="action"/>, or null
+	/// when it can.
+	/// </summary>
+	public string? WhyNoAddArea(short action, short area = -1) => WhyFixed(action) ?? ActionEditing.WhyNoAddArea(_source, action, area);
 
 	/// <summary>Why no campaign variable write can be added to <paramref name="action"/>, or null when one can.</summary>
 	public string? WhyNoAddPair(short action) => WhyFixed(action) ?? ActionEditing.WhyNoAddPair(_source, action);

@@ -11,8 +11,8 @@ namespace Herculan.Engine.Editor;
 /// area of the <c>.MSN</c> included: its shape, a box's corners or a circle's centre and radius as typed fields
 /// (<see cref="PointFields"/>), what shares their points, whether one stands outside the mission's play area as opened, the
 /// triggers testing it, and the edits that make one (<see cref="AreaEditor"/>,
-/// <see cref="PointMover"/>): switch box and circle, move a corner, the centre or the radius, delete the area; and a new trigger
-/// testing it (<see cref="ActionEditor"/>). A field
+/// <see cref="PointMover"/>): switch box and circle, move a corner, the centre or the radius, delete the area; and a trigger
+/// testing it, a new one or one of the mission's (<see cref="ActionEditor"/>). A field
 /// applies when it loses the focus, as one step of the undo history, through the same <see cref="PointMover.Commit"/> a
 /// drag of the move handles makes, so a point shared with anything else moves with it.
 /// </summary>
@@ -32,7 +32,7 @@ internal sealed class TriggerAreaView {
 	private short? _radiusDraftFor;
 	private int _radiusDraft;
 
-	/// <param name="actions">Creates a trigger testing the area.</param>
+	/// <param name="actions">Creates a trigger testing the area, or adds the area to one.</param>
 	/// <param name="drawTrigger">Draws a trigger's wiring by its row-10 GUID, read-only, as the trigger view summarizes it.</param>
 	/// <param name="references">Draws what references something, one line per record.</param>
 	/// <param name="names">What the title names the area by.</param>
@@ -103,15 +103,32 @@ internal sealed class TriggerAreaView {
 		}
 
 		ImGui.Spacing();
-		ImGui.BeginDisabled(_placing.Active);
-		if (ImGui.Button("New trigger testing this area")) {
-			_actions.RequestCreate(guid);
-		}
-
-		ImGui.EndDisabled();
+		DrawAddTrigger(guid);
 		EditorText.Reason(_actions.Failure);
 
 		DrawDelete(guid);
+	}
+
+	// "Add a trigger testing this area": a new trigger, which is then selected, or one of the mission's that has room for another
+	// area and does not test this one already, which then tests it too.
+	private void DrawAddTrigger(short guid) {
+		ImGui.BeginDisabled(_placing.Active);
+		ImGui.SetNextItemWidth(-1f);
+		if (NameText.BeginCombo("##addtrigger", new RecordName("Add a trigger testing this area"))) {
+			if (ImGui.Selectable("New trigger")) {
+				_actions.RequestCreate(guid);
+			}
+
+			foreach (var trigger in _index.Actions.Where(trigger => _actions.WhyNoAddArea(trigger.Guid, guid) == null)) {
+				if (NameText.Selectable(_names.Trigger(trigger.Guid), $"add{trigger.Guid}", false)) {
+					_actions.RequestAddArea(trigger.Guid, guid);
+				}
+			}
+
+			ImGui.EndCombo();
+		}
+
+		ImGui.EndDisabled();
 	}
 
 	// Box or Circle, a change switching the area to the other shape.
@@ -131,9 +148,6 @@ internal sealed class TriggerAreaView {
 		}
 
 		ImGui.EndDisabled();
-		EditorText.Note(circle
-			? "As a box it becomes the square around the circle."
-			: "As a circle it becomes the circle about its middle, as wide as its longer side.");
 	}
 
 	// A corner's or the centre's X and Y as fields, which move its point when one lets go, what shares the point, and
