@@ -19,6 +19,9 @@ internal static class RosterCountsOverlay {
 
 	private const float Margin = 12f;
 
+	// Where a tooltip's text wraps, in pixels at 100% scale.
+	private const float TooltipWidth = 400f;
+
 	/// <summary>
 	/// Draws the readout over the viewport, its bottom-left corner a margin in from <paramref name="viewportLeft"/> and the
 	/// display's bottom, in an input-transparent window so a click there still picks the scene, as the compass's is.
@@ -32,29 +35,35 @@ internal static class RosterCountsOverlay {
 			| ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoSavedSettings
 			| ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoNav);
 		Line(layout, "HERCs", MechRow);
-		// Tested by the pointer's position rather than IsItemHovered, which the input-transparent window never reports.
-		if (ImGui.IsMouseHoveringRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), false)) {
-			ImGui.SetTooltip("The player and the player's squadmates take two HERC slots each.");
-		}
-
+		Tooltip("The player and the player's squadmates take two HERC slots each.");
 		Line(layout, "Flyers", FlyerRow);
 		Line(layout, "Buildings & vehicles", BaseRow);
 		ImGui.TextUnformatted($"Positions: {SkipArrayLimits.Count(layout, PointRow)}/{SkipArrayLimits.Cap(PointRow)}");
-		if (ImGui.IsMouseHoveringRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), false)) {
-			ImGui.SetTooltip("Every position a group, object, waypoint or trigger area stands on, under any condition, a "
-				+ "shared one counted once. Past the limit the mission crashes as it loads.");
-		}
-
+		Tooltip("Every position a group, object, waypoint or trigger area stands on, under any condition, a shared one "
+			+ "counted once, and every position left unused, which Edit > \"Remove unused positions\" removes. In retail, past "
+			+ "the limit the mission crashes as it loads; HERCULAN loads it.");
 		ImGui.TextUnformatted($"Map markers: {MapMarkerLimits.Count(layout)}/{MapMarkerLimits.Cap}");
-		if (ImGui.IsMouseHoveringRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), false)) {
-			ImGui.SetTooltip("The heads-down map gives every HERC, flyer, structure and vehicle a marker, the squad's machines "
-				+ "included, plus one per waypoint of the squad's first order's route after its start (up to nine) and one for "
-				+ "the nav marker. Past the limit the mission crashes as it starts.");
-		}
-
+		Tooltip("The heads-down map gives every HERC, flyer, structure and vehicle a marker, the squad's machines included, "
+			+ "plus one per waypoint of the squad's first order's route after its start (up to nine) and one for the nav "
+			+ "marker. In retail, past the limit the mission crashes as it starts; HERCULAN runs it, but its map shows only "
+			+ $"the first {MapMarkerLimits.Cap} markers.");
 		ImGui.End();
 		ImGui.PopStyleVar();
 		ImGui.PopStyleColor();
+	}
+
+	// The last line's explanation while the pointer is over it, wrapped at TooltipWidth. Tested by the pointer's position rather
+	// than IsItemHovered, which the input-transparent window never reports.
+	private static void Tooltip(string text) {
+		if (!ImGui.IsMouseHoveringRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), false)) {
+			return;
+		}
+
+		ImGui.BeginTooltip();
+		ImGui.PushTextWrapPos(ScaledImGui.Scaled(TooltipWidth));
+		ImGui.TextUnformatted(text);
+		ImGui.PopTextWrapPos();
+		ImGui.EndTooltip();
 	}
 
 	private static void Line(MissionLayout layout, string label, int row) =>

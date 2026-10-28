@@ -10,14 +10,18 @@ namespace HercWorks.Core.Data.File.Msn;
 /// (docs/herculan/handoff-editor-document.md#conditions-and-random-tables);</item>
 /// <item>one a sum-flag point names by the low words of its X and Y, as <see cref="RouteEditing.RemoveLeftBehind"/> keeps it;</item>
 /// <item>one on the play area's edge, the box of block 1's points as the layout has them, since the box frames the
-/// heads-down map and sets the mission's boundary (docs/retail/simulation/mission-objectives.md#the-status--mission_status-004135e8).</item>
+/// heads-down map and sets the mission's boundary (docs/retail/simulation/mission-objectives.md#the-status--mission_status-004135e8),
+/// unless the caller asks for those too, which shrinks the box to the points that stay.</item>
 /// </list>
 /// </summary>
 public static class UnusedPoints {
 	private const int PointRow = 6;
 
-	/// <summary>The GUIDs of <paramref name="document"/>'s row-6 points nothing uses, in layout order.</summary>
-	public static IReadOnlyList<short> Find(MissionDocument document) {
+	/// <summary>
+	/// The GUIDs of <paramref name="document"/>'s row-6 points nothing uses, in layout order; with <paramref name="edges"/>, the
+	/// ones on the play area's edge too.
+	/// </summary>
+	public static IReadOnlyList<short> Find(MissionDocument document, bool edges = false) {
 		var entries = document.Layout.Entries<MapPoint22>();
 		if (entries.Count == 0) {
 			return [];
@@ -29,7 +33,8 @@ public static class UnusedPoints {
 		int maxY = entries.Max(entry => entry.Fields.Y);
 		var records = document.Mission.Points ?? [];
 		return entries
-			.Where(entry => entry.Fields.X != minX && entry.Fields.X != maxX && entry.Fields.Y != minY && entry.Fields.Y != maxY)
+			.Where(entry => edges
+				|| (entry.Fields.X != minX && entry.Fields.X != maxX && entry.Fields.Y != minY && entry.Fields.Y != maxY))
 			.Select(entry => entry.Guid)
 			.Where(point => document.CountPointRefs(point) == 0
 				&& records.Where(record => record.GUID == point).All(record => record.RandomTableKey == -1)
@@ -38,11 +43,11 @@ public static class UnusedPoints {
 	}
 
 	/// <summary>
-	/// Removes every record of each point <see cref="Find"/> answers, as one <see cref="MissionDocument.Change"/>. Throws
-	/// <see cref="InvalidOperationException"/> when it answers none.
+	/// Removes every record of each point <see cref="Find"/> answers, with <paramref name="edges"/> as it takes it, as one
+	/// <see cref="MissionDocument.Change"/>. Throws <see cref="InvalidOperationException"/> when it answers none.
 	/// </summary>
-	public static MsnEdit Remove(MissionDocument document) {
-		var unused = Find(document);
+	public static MsnEdit Remove(MissionDocument document, bool edges = false) {
+		var unused = Find(document, edges);
 		if (unused.Count == 0) {
 			throw new InvalidOperationException("No position is unused.");
 		}

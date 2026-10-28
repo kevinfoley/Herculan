@@ -76,14 +76,14 @@ internal static class ProblemText {
 				+ "\"Waits on\" set to the same trigger, or choose another arrival under \"Arrives\" in the trigger.",
 			MissionCheckKind.SkipArrayFull when found.Row == RouteRow =>
 				$"{who} is over maximum waypoint limit ({SkipArrayLimits.Cap(RouteRow)}) by "
-				+ $"{found.Value - SkipArrayLimits.Cap(RouteRow)}, so the mission crashes as it loads: remove waypoints.",
+				+ $"{found.Value - SkipArrayLimits.Cap(RouteRow)}, so in retail the mission crashes as it loads: remove waypoints.",
 			MissionCheckKind.SkipArrayFull =>
 				$"Over maximum {Thing(found.Row)} limit ({SkipArrayLimits.Cap(found.Row)}) by "
-				+ $"{found.Value - SkipArrayLimits.Cap(found.Row)}, so the mission crashes as it loads: {Fewer(found.Row)}.",
+				+ $"{found.Value - SkipArrayLimits.Cap(found.Row)}, so in retail the mission crashes as it loads: {Fewer(found.Row)}.",
 			MissionCheckKind.MapMarkersFull =>
-				$"Over maximum map marker limit ({MapMarkerLimits.Cap}) by {found.Value - MapMarkerLimits.Cap}, so the mission "
-				+ "crashes as it starts: remove HERCs, flyers, structures or vehicles, or waypoints from the route of the squad's "
-				+ "first order.",
+				$"Over maximum map marker limit ({MapMarkerLimits.Cap}) by {found.Value - MapMarkerLimits.Cap}, so in retail the "
+				+ "mission crashes as it starts: remove HERCs, flyers, structures or vehicles, or waypoints from the route of the "
+				+ "squad's first order.",
 			_ => found.Message,
 		};
 	}

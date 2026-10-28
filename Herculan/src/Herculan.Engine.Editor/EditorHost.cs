@@ -701,6 +701,7 @@ public sealed class EditorHost {
 				mission.Hercs.WhyNoAdd, mission.Flyers.WhyNoAdd, mission.Vehicles.WhyNoAdd, mission.Placer.WhyNoAdd,
 				mission.Placer.WhyNoBase, mission.Placing, mission.AreaPlacing);
 			mission.Settings.Draw();
+			mission.UnusedPoints.Draw();
 		}
 
 		_settingsPanel.Draw();
@@ -1176,7 +1177,7 @@ public sealed class EditorHost {
 
 			if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
 				ImGui.SetTooltip("Removes every position no group, object, waypoint, trigger area, order or win/lose condition "
-					+ "stands on. Positions on the play area's edge, and those a random table picks, stay.");
+					+ "stands on. Positions picked by a random table are not removed.");
 			}
 
 			ImGui.EndMenu();

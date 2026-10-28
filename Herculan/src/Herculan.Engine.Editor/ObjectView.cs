@@ -265,9 +265,12 @@ internal sealed class ObjectView {
 
 		ImGui.Separator();
 		string? why = _actions.WhyNoObjectAction(key);
+		string near = MissionText.Metres(Sim.Detection.EngagementRange);
 		OwnAction("When engaged, fires", key, defeated: false, engaged, why,
-			$"A trigger set here fires when it is engaged: an enemy within {MissionText.Metres(Sim.Detection.EngagementRange)} "
-				+ "spots it, or an enemy shoots it.");
+			$"A trigger set here fires when it is engaged: its own side spots an enemy within {near} of it (the player's own "
+				+ $"sightings don't count), it and an enemy within {near} each know the other is there, an enemy within {near} hits "
+				+ "it or anything on its side, or an enemy hits it while it is that enemy's selected target. It cannot fire while "
+				+ "the player's ECM jams it.");
 		OwnAction("When defeated, fires", key, defeated: true, defeated, why,
 			"A trigger set here fires when it is defeated: destroyed; a HERC also when immobilized or left with no working weapon.");
 		EditorText.Reason(why);
