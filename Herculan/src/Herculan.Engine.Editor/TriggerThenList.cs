@@ -9,25 +9,25 @@ namespace Herculan.Engine.Editor;
 /// brings in, with how every such group arrives; a group it moves on from an order; a countdown it starts, with its delay; the
 /// campaign variables it sets (<see cref="CampaignVariableWrites"/>); and the message it sends, by its text. Each entry is
 /// written in the record that holds the link (<see cref="TriggerFollowers"/>): the group's, the order slot's or the
-/// countdown's, so removing one clears that link alone; the arrival, the writes and the message are the trigger's own. What
-/// each does in play is docs/retail/simulation/mission-deployment.md#the-four-ways-an-action-activates.
+/// countdown's, so removing a group or an order clears that link alone; the arrival, the writes and the message are the
+/// trigger's own. A countdown is drawn, and removed, by <see cref="TriggerThenCountdowns"/>, which draws the Then list of a
+/// countdown's own trigger through this one. What each does in play is
+/// docs/retail/simulation/mission-deployment.md#the-four-ways-an-action-activates.
 /// </summary>
 internal sealed class TriggerThenList {
-	// In pixels on a 100% display (ScaledImGui.Scaled): a countdown's delay field.
-	private const float DelayWidth = 70f;
-
 	private readonly MissionIndex _index;
 	private readonly ActionEditor _editor;
 	private readonly PanelLinks _links;
 	private readonly TriggerMessages _messages;
 	private readonly CampaignVariableWrites _writes = new();
-	private readonly CountdownDelayField _delay = new();
+	private readonly TriggerThenCountdowns _countdowns;
 
 	public TriggerThenList(MissionIndex index, ActionEditor editor, PanelLinks links, TriggerMessages messages) {
 		_index = index;
 		_editor = editor;
 		_links = links;
 		_messages = messages;
+		_countdowns = new TriggerThenCountdowns(index, editor, links, DrawRunsOut, SummaryRunsOut);
 	}
 
 	private MissionDocument Source => _editor.Source;
@@ -40,30 +40,59 @@ internal sealed class TriggerThenList {
 	private static float MenuWidth => ScaledImGui.Scaled(PropertiesPanel.PanelWidth);
 
 	/// <summary>Row-10 GUID <paramref name="guid"/>'s Then list, of base <paramref name="fields"/>; every control disabled when <paramref name="locked"/>.</summary>
-	public void Draw(short guid, MissionAction82 fields, bool locked) {
-		var follows = _index.Links(guid).Follows;
-		ImGui.AlignTextToFramePadding();
+	public void Draw(short guid, MissionAction82 fields, bool locked) =>
+		DrawList(guid, fields, locked, "Then:", "Nothing happens when it fires yet: Add... lists what can.", [guid]);
+
+	/// <summary>Row-10 GUID <paramref name="guid"/>'s Then list, read-only, each record a link, as a trigger area's view lists it.</summary>
+	public void DrawSummary(short guid, MissionAction82 fields) {
 		ImGui.Text("Then:");
-		ImGui.SameLine();
-		DrawAddMenu(guid, follows, locked);
 		ImGui.Indent();
-		bool any = DrawGroups(guid, fields, follows.OfType<BringsInGroup>().ToList(), locked);
-		any |= DrawOrders(guid, follows.OfType<EndsOrder>().ToList(), locked);
-		any |= DrawCountdowns(guid, follows.OfType<StartsCountdown>().ToList(), locked);
-		any |= DrawWrites(guid, locked);
-		any |= DrawMessage(guid, locked);
-		if (!any) {
-			EditorText.Note("Nothing happens when it fires yet: Add... lists what can.");
+		if (!DrawSummaryEntries(guid, fields, [guid])) {
+			EditorText.Note("nothing happens when it fires");
 		}
 
 		ImGui.Unindent();
 	}
 
-	/// <summary>Row-10 GUID <paramref name="guid"/>'s Then list, read-only, each record a link, as a trigger area's view lists it.</summary>
-	public void DrawSummary(short guid, MissionAction82 fields) {
+	// The list under <heading>, with Add... beside it and <none> when it is empty; <chain> holds the triggers whose lists are
+	// open around it, this one included.
+	private void DrawList(short guid, MissionAction82 fields, bool locked, string heading, string none, HashSet<short> chain) {
 		var follows = _index.Links(guid).Follows;
-		ImGui.Text("Then:");
+		ImGui.AlignTextToFramePadding();
+		ImGui.Text(heading);
+		ImGui.SameLine();
+		DrawAddMenu(guid, follows, locked);
 		ImGui.Indent();
+		bool any = DrawGroups(guid, fields, follows.OfType<BringsInGroup>().ToList(), locked);
+		any |= DrawOrders(guid, follows.OfType<EndsOrder>().ToList(), locked);
+		any |= _countdowns.Draw(guid, follows.OfType<StartsCountdown>().ToList(), locked, chain);
+		any |= DrawWrites(guid, locked);
+		any |= DrawMessage(guid, locked);
+		if (!any) {
+			EditorText.Note(none);
+		}
+
+		ImGui.Unindent();
+	}
+
+	// The list of a countdown's own trigger <trigger>, under its countdown (TriggerThenCountdowns).
+	private void DrawRunsOut(short trigger, bool locked, HashSet<short> chain) {
+		if (Layout.Entry<MissionAction82>(trigger)?.Fields is { } fields) {
+			DrawList(trigger, fields, locked || _editor.WhyFixed(trigger) != null, "when it runs out:",
+				"Nothing happens when it runs out yet: Add... lists what can.", chain);
+		}
+	}
+
+	// The same read-only.
+	private void SummaryRunsOut(short trigger, HashSet<short> chain) {
+		if (Layout.Entry<MissionAction82>(trigger)?.Fields is { } fields && !DrawSummaryEntries(trigger, fields, chain)) {
+			EditorText.Note("nothing happens when it runs out");
+		}
+	}
+
+	// The read-only list's entries, one line each, a countdown's own trigger's list nested under it; whether there was any.
+	private bool DrawSummaryEntries(short guid, MissionAction82 fields, HashSet<short> chain) {
+		var follows = _index.Links(guid).Follows;
 		bool any = false;
 		foreach (var follower in follows) {
 			ImGui.PushID(follower.GetHashCode());
@@ -81,8 +110,7 @@ internal sealed class TriggerThenList {
 					break;
 				}
 				case StartsCountdown starts:
-					_links.Countdown(starts.Countdown, EditorText.AfterRoom(" starts"));
-					EditorText.After(" starts");
+					_countdowns.DrawSummary(starts.Countdown, chain);
 					break;
 			}
 
@@ -102,11 +130,7 @@ internal sealed class TriggerThenList {
 			any = true;
 		}
 
-		if (!any) {
-			EditorText.Note("nothing happens when it fires");
-		}
-
-		ImGui.Unindent();
+		return any;
 	}
 
 	// The groups it brings in, each a link with Remove, then how every one of them arrives; whether there was any.
@@ -131,7 +155,13 @@ internal sealed class TriggerThenList {
 		ImGui.SetNextItemWidth(-1f);
 		ImGui.BeginDisabled(locked);
 		string current = MissionText.ArrivalChoice(fields.Verb);
-		if (EditorText.BeginCombo("##arrives", current)) {
+
+		// What the arrival does on hover of the closed choice, not under it: open, the last item is the list's.
+		if (!EditorText.BeginCombo("##arrives", current)) {
+			EditorText.Tooltip(MissionText.ArrivalNote(fields.Verb) + "\n\n" + (groups.Count > 1
+				? "These groups arrive the same way: the arrival is set on the trigger, for every group it brings in."
+				: "The arrival is set on the trigger: every group it brings in arrives the same way."));
+		} else {
 			foreach (short verb in MissionText.Arrivals) {
 				string choice = MissionText.ArrivalChoice(verb);
 				if (ImGui.Selectable(choice, choice == current) && choice != current) {
@@ -143,14 +173,10 @@ internal sealed class TriggerThenList {
 		}
 
 		ImGui.EndDisabled();
-		EditorText.Note(MissionText.ArrivalNote(fields.Verb));
 		if (fields.Verb is < 0 or > ActionEditing.LastVerb) {
 			EditorText.Note($"Stored as {fields.Verb}: the group arrives in place.");
 		}
 
-		EditorText.Note(groups.Count > 1
-			? "These groups arrive the same way: the arrival is set on the trigger, for every group it brings in."
-			: "The arrival is set on the trigger: every group it brings in arrives the same way.");
 		ImGui.Unindent();
 		return true;
 	}
@@ -176,58 +202,6 @@ internal sealed class TriggerThenList {
 			ImGui.PopTextWrapPos();
 			ImGui.SameLine();
 			RemoveButton(guid, ends, locked, null);
-			ImGui.PopID();
-		}
-
-		ImGui.Unindent();
-		return true;
-	}
-
-	// The countdowns it starts, each a link with Remove, its delay as a field and the triggers it fires; whether there was any.
-	private bool DrawCountdowns(short guid, IReadOnlyList<StartsCountdown> countdowns, bool locked) {
-		if (countdowns.Count == 0) {
-			return false;
-		}
-
-		ImGui.Text("Starts these countdowns:");
-		ImGui.Indent();
-		foreach (var starts in countdowns) {
-			if (Layout.Entry<ActionTimer30>(starts.Countdown)?.Fields is not { } countdown) {
-				continue;
-			}
-
-			ImGui.PushID($"starts{starts.Countdown}");
-			_links.Countdown(starts.Countdown, EditorText.ButtonRoom("Remove"));
-			ImGui.SameLine();
-			RemoveButton(guid, starts, locked, "Removing it makes the countdown start with the mission.");
-			ImGui.AlignTextToFramePadding();
-			ImGui.Text("Delay (s):");
-			ImGui.SameLine();
-			ImGui.SetNextItemWidth(ScaledImGui.Scaled(DelayWidth));
-			ImGui.BeginDisabled(locked);
-			if (_delay.Draw("##delay", starts.Countdown, countdown.Delay) is { } typed) {
-				_editor.RequestCountdownDelay(guid, starts.Countdown, typed);
-			}
-
-			ImGui.EndDisabled();
-			ImGui.SameLine();
-			ImGui.TextUnformatted(MissionText.Duration(countdown.Delay));
-			var fired = TimerEditing.Fired(Source, starts.Countdown).Where(trigger => trigger != -1).ToList();
-			ImGui.AlignTextToFramePadding();
-			ImGui.Text(fired.Count > 0 ? "then fires:" : "then fires nothing yet.");
-
-			// The first beside "then fires:", the rest one per line: a second on the same line would have no room left.
-			for (int i = 0; i < fired.Count; i++) {
-				short trigger = fired[i];
-				if (i == 0) {
-					ImGui.SameLine();
-				}
-
-				ImGui.PushID(trigger);
-				_links.Trigger(trigger);
-				ImGui.PopID();
-			}
-
 			ImGui.PopID();
 		}
 

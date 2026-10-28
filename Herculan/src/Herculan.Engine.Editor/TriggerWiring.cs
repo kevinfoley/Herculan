@@ -115,9 +115,9 @@ internal static class TriggerWiring {
 /// The record edits behind a trigger's Then list: each entry is written in the record that holds the link, never in the
 /// trigger's own (<see cref="TriggerFollower"/>), through Core's wiring edits: a group's deployment action
 /// (<see cref="ActionWiring.SetDeployment"/>), an order slot's ending action (<see cref="GroupOrders.SetAction"/>, which copies
-/// an order another slot shares first) and a countdown's starting action (<see cref="TimerEditing.SetStart"/>). Removing an
-/// entry unsets that one field: the group is then in the mission from the start, the order no longer ends on a trigger, and
-/// the countdown counts down from mission start.
+/// an order another slot shares first) and a countdown's starting action (<see cref="TimerEditing.SetStart"/>). Removing a
+/// group's or an order's entry unsets that one field: the group is then in the mission from the start, and the order no
+/// longer ends on a trigger. The Then list removes a countdown by deleting it (<see cref="DelayedActions.Remove"/>).
 /// </summary>
 internal static class TriggerFollowers {
 	/// <summary>Makes <paramref name="follower"/> wait on row-10 GUID <paramref name="trigger"/>.</summary>

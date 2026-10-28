@@ -71,7 +71,7 @@ internal static class MissionText {
 	};
 
 	/// <summary>
-	/// What an arrival does, in one sentence for the note under the Arrives choice: how far from the player a group lands or
+	/// What an arrival does, in one sentence for the Arrives choice's tooltip: how far from the player a group lands or
 	/// walks in (<see cref="ArrivalDistance"/>) and on what bearing, or that it goes live where it stands.
 	/// </summary>
 	public static string ArrivalNote(short verb) => verb is MissionAction.VerbPodWide or MissionAction.VerbPodNarrow

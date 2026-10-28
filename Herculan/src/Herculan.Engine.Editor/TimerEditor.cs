@@ -59,6 +59,9 @@ internal sealed class TimerEditor {
 	/// <summary>Asks for row-10 GUID <paramref name="action"/> to be added after <paramref name="timer"/>'s last fired one.</summary>
 	public void RequestAddFired(short timer, short action) => Ask(timer, () => TimerEditing.AddFired(_source, timer, action));
 
+	/// <summary>Asks for a new trigger after <paramref name="timer"/>'s last fired one (<see cref="DelayedActions.AddNew"/>), staying on the countdown.</summary>
+	public void RequestNewFired(short timer) => Ask(timer, () => DelayedActions.AddNew(_source, timer, out _));
+
 	/// <summary>Asks for row-10 GUID <paramref name="action"/> in <paramref name="timer"/>'s fired slot <paramref name="slot"/>.</summary>
 	public void RequestFired(short timer, int slot, short action) =>
 		Ask(timer, () => TimerEditing.SetFired(_source, timer, slot, action));

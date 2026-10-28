@@ -42,13 +42,16 @@ public static class TimerEditing {
 	public static MsnEdit Create(MissionDocument document, out short guid, short start = -1) {
 		CheckAction(document, start, none: true);
 		short created = -1;
-		var change = document.Change(() => document.Append(TimerRow, new ActionTimer30 {
-			ConditionRef = -1, Unk04 = -1, PrimaryActionRef = start, Delay = NewDelay,
-			SequenceRefs = Enumerable.Repeat((short)-1, Slots).ToArray(),
-		}, out created));
+		var change = document.Change(() => document.Append(TimerRow, NewRecord(start), out created));
 		guid = created;
 		return change;
 	}
+
+	// The record Create appends, started by row-10 action <start> or none for -1; DelayedActions appends it too.
+	internal static ActionTimer30 NewRecord(short start) => new() {
+		ConditionRef = -1, Unk04 = -1, PrimaryActionRef = start, Delay = NewDelay,
+		SequenceRefs = Enumerable.Repeat((short)-1, Slots).ToArray(),
+	};
 
 	/// <summary>Row-11 GUID <paramref name="timer"/>'s base fields (a copy), throwing for one no record carries.</summary>
 	public static ActionTimer30 Fields(MissionDocument document, short timer) =>
@@ -96,12 +99,18 @@ public static class TimerEditing {
 	/// <summary>Adds row-10 action <paramref name="action"/> after <paramref name="timer"/>'s last fired one.</summary>
 	public static MsnEdit AddFired(MissionDocument document, short timer, short action) {
 		CheckAction(document, action, none: false);
+		int slot = NextFiredSlot(document, timer, action);
+		return document.Change(() => document.SetField(MsnField.TimerFired(slot), timer, action));
+	}
+
+	// The slot after <timer>'s last fired action, where AddFired writes <action> (-1 for one not appended yet); throws when
+	// WhyNoAddFired refuses it.
+	internal static int NextFiredSlot(MissionDocument document, short timer, short action) {
 		if (WhyNoAddFired(document, timer, action) is { } reason) {
 			throw new InvalidOperationException(reason);
 		}
 
-		int slot = Filled(Fired(document, timer));
-		return document.Change(() => document.SetField(MsnField.TimerFired(slot), timer, action));
+		return Filled(Fired(document, timer));
 	}
 
 	/// <summary>Puts row-10 action <paramref name="action"/> in <paramref name="timer"/>'s filled slot <paramref name="slot"/>.</summary>

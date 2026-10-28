@@ -80,8 +80,8 @@ internal sealed class CountdownView {
 		EditorText.Note(CountdownDelayField.Note(seconds));
 	}
 
-	// The triggers it fires when it runs out, each a choice with Remove and a link, and Add after the last. A slot left empty
-	// between two filled ones is not shown: the countdown fires every filled slot.
+	// The triggers it fires when it runs out, each a choice with Remove and a link, and Add after the last, a new trigger or one
+	// of the mission's. A slot left empty between two filled ones is not shown: the countdown fires every filled slot.
 	private void DrawFired(short guid, bool locked) {
 		ImGui.Spacing();
 		ImGui.Text("When it runs out, fires:");
@@ -120,6 +120,10 @@ internal sealed class CountdownView {
 		ImGui.BeginDisabled(locked || why != null);
 		ImGui.SetNextItemWidth(ScaledImGui.Scaled(150f));
 		if (NameText.BeginCombo("##addfired", new RecordName("Add a trigger"))) {
+			if (ImGui.Selectable("New trigger")) {
+				_editor.RequestNewFired(guid);
+			}
+
 			foreach (var trigger in _index.Actions) {
 				if (NameText.Selectable(_links.Names.Trigger(trigger.Guid), $"add{trigger.Guid}", false)) {
 					_editor.RequestAddFired(guid, trigger.Guid);

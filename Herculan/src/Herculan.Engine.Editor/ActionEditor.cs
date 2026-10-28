@@ -179,8 +179,17 @@ internal sealed class ActionEditor {
 	public void RequestUnfollow(short action, TriggerFollower follower) =>
 		Ask(action, () => TriggerFollowers.Remove(_source, follower));
 
-	/// <summary>Asks for a new countdown that <paramref name="action"/> starts (<see cref="TimerEditing.Create"/>), staying on the trigger.</summary>
-	public void RequestNewCountdown(short action) => Ask(action, () => TimerEditing.Create(_source, out _, action));
+	/// <summary>
+	/// Asks for a new countdown that <paramref name="action"/> starts, firing a new trigger (<see cref="DelayedActions.Create"/>),
+	/// staying on the trigger.
+	/// </summary>
+	public void RequestNewCountdown(short action) => Ask(action, () => DelayedActions.Create(_source, action, out _, out _));
+
+	/// <summary>
+	/// Asks for row-11 GUID <paramref name="countdown"/>, which <paramref name="action"/> starts, to be deleted with the trigger
+	/// that is its own and what that trigger wires (<see cref="DelayedActions.Remove"/>).
+	/// </summary>
+	public void RequestRemoveCountdown(short action, short countdown) => Ask(action, () => DelayedActions.Remove(_source, countdown));
 
 	/// <summary>Asks for row-11 GUID <paramref name="countdown"/>'s delay to be <paramref name="seconds"/>, from the view of <paramref name="action"/>.</summary>
 	public void RequestCountdownDelay(short action, short countdown, int seconds) =>

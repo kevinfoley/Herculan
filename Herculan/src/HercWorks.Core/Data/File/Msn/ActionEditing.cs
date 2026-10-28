@@ -96,15 +96,20 @@ public static class ActionEditing {
 			throw new InvalidOperationException(NoArea);
 		}
 
-		var areas = Unset(8);
-		areas[0] = area;
 		short created = -1;
-		var change = document.Change(() => document.Append(ActionRow, new MissionAction82 {
-			ConditionRef = -1, Unk04 = -1, Type = NewType, Verb = NewVerb, AreaRefs = areas, Unk1A = 0, CounterPairs = Unset(20),
-			TextRefs = Unset(5), MessageId = 0, TargetRef = -1,
-		}, out created));
+		var change = document.Change(() => document.Append(ActionRow, NewRecord(area), out created));
 		guid = created;
 		return change;
+	}
+
+	// The record Create appends, testing row-9 GUID <area> in slot 0, or none for -1; DelayedActions appends it too.
+	internal static MissionAction82 NewRecord(short area) {
+		var areas = Unset(8);
+		areas[0] = area;
+		return new MissionAction82 {
+			ConditionRef = -1, Unk04 = -1, Type = NewType, Verb = NewVerb, AreaRefs = areas, Unk1A = 0, CounterPairs = Unset(20),
+			TextRefs = Unset(5), MessageId = 0, TargetRef = -1,
+		};
 	}
 
 	/// <summary>Row-10 GUID <paramref name="action"/>'s base fields (a copy), throwing for one no record carries.</summary>
@@ -386,16 +391,23 @@ public static class ActionEditing {
 	/// anything.
 	/// </summary>
 	public static MsnEdit Delete(MissionDocument document, short action) {
+		CheckUnreferenced(document, action);
+		return document.Change(() => RemoveRecords(document, action));
+	}
+
+	// Delete's records and text, made inside the caller's change; DelayedActions makes it once it has unhooked the action.
+	internal static void RemoveRecords(MissionDocument document, short action) {
+		CheckUnreferenced(document, action);
+		var texts = (document.Mission.Actions ?? []).Where(record => record.GUID == action)
+			.SelectMany(record => record.TextRefs).Where(id => id != -1).Distinct().ToList();
+		document.Remove(ActionRow, action);
+		MissionTextEditing.RemoveUnreferenced(document, texts);
+	}
+
+	private static void CheckUnreferenced(MissionDocument document, short action) {
 		if (Namers(document, action).Any) {
 			throw new InvalidOperationException("That trigger is referenced by a countdown, a group, an object or an order.");
 		}
-
-		var texts = (document.Mission.Actions ?? []).Where(record => record.GUID == action)
-			.SelectMany(record => record.TextRefs).Where(id => id != -1).Distinct().ToList();
-		return document.Change(() => {
-			document.Remove(ActionRow, action);
-			MissionTextEditing.RemoveUnreferenced(document, texts);
-		});
 	}
 
 	// Sets each record of <action>'s pair count to how many of its own pairs are filled, from the first.

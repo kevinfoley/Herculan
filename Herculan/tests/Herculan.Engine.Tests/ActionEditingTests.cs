@@ -7,10 +7,10 @@ using static Herculan.Engine.Tests.SyntheticMsn;
 namespace Herculan.Engine.Tests;
 
 /// <summary>
-/// <see cref="ActionEditing"/>, <see cref="TimerEditing"/>, <see cref="ActionWiring"/> and <see cref="GroupOrders.SetAction"/>
-/// over small synthetic missions: an action's areas and counter writes stay filled from the first slot with the pair count
-/// in step, its message is stored plus one, a delete is refused while any record references it, and a wiring edit writes
-/// the record that supplies the field.
+/// <see cref="ActionEditing"/>, <see cref="TimerEditing"/>, <see cref="DelayedActions"/>, <see cref="ActionWiring"/> and
+/// <see cref="GroupOrders.SetAction"/> over small synthetic missions: an action's areas and counter writes stay filled from the
+/// first slot with the pair count in step, its message is stored plus one, a delete is refused while any record references it,
+/// a wiring edit writes the record that supplies the field, and a timer made or removed with its own action is one edit.
 /// </summary>
 public class ActionEditingTests {
 	private const short Hercs = 0;
@@ -251,6 +251,47 @@ public class ActionEditingTests {
 
 		Assert.Equal(TimerEditing.MaxDelay, document.Mission.ActionTimers![0].Delay);
 		Assert.Equal(new short[] { 4, -1 }, TimerEditing.Fired(document, 30)[..2]);
+	}
+
+	/// <summary>
+	/// Catches a new timer appended before its new action has a GUID, or without its fired slot 0, which leaves it firing
+	/// nothing, and the pair made as separate edits that an undo cannot put back whole.
+	/// </summary>
+	[Fact]
+	public void ANewTimerFiresItsOwnNewAction() {
+		var document = Open(Mission().Add(10, Action(3, type: 0)));
+		byte[] opened = Write(document);
+
+		var change = DelayedActions.Create(document, 3, out short timer, out short action);
+
+		Assert.Equal(3, TimerEditing.Start(document, timer));
+		Assert.Equal(action, TimerEditing.Fired(document, timer)[0]);
+		Assert.Equal(action, DelayedActions.Of(document, timer));
+		document.Undo(change);
+		Assert.Equal(opened, Write(document));
+	}
+
+	/// <summary>
+	/// Catches a removal that stops at the first timer, so deleting its own action is refused by the timer that action starts,
+	/// and one that deletes the action before unsetting the group waiting on it.
+	/// </summary>
+	[Fact]
+	public void RemovingATimerTakesTheTimersItsOwnActionStarts() {
+		var waiting = Group(11, Hercs, position: -1, condition: -1);
+		waiting[MissionGroup164.DeploymentActionRefWord] = 4;
+		var document = Open(Mission()
+			.Add(10, Action(3, type: 0))
+			.Add(10, Action(4, type: 0))
+			.Add(10, Action(5, type: 0))
+			.Add(11, Timer(30, start: 3, 4))
+			.Add(11, Timer(31, start: 4, 5))
+			.Add(16, waiting));
+
+		DelayedActions.Remove(document, 30);
+
+		Assert.Empty(document.Mission.ActionTimers ?? []);
+		Assert.Equal([(short)3], document.Mission.Actions!.Select(record => record.GUID));
+		Assert.Equal(-1, Array.Find(document.Mission.Groups!, group => group.GUID == 11)!.DeploymentActionRef);
 	}
 
 	/// <summary>

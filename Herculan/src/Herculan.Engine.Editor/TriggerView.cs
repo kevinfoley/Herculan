@@ -9,7 +9,8 @@ namespace Herculan.Engine.Editor;
 /// The Properties panel's view of a trigger (a row-10 mission action), from the <c>.MSN</c>'s layout and
 /// <see cref="MissionIndex"/> by GUID, read as "when this happens, do that": whose position its areas test, picked as one
 /// choice with the herc, flyer, structure or group under it for the four kinds that test a particular one; the areas; what
-/// else fires it (countdowns, objects engaged or defeated), as links; the Then list (<see cref="TriggerThenList"/>); Delete,
+/// else fires it (countdowns, objects engaged or defeated), as links; with no area, what fires it in place of the three, and
+/// an area to add; the Then list (<see cref="TriggerThenList"/>); Delete,
 /// with what references it as identity links; and under Advanced the leftover text and the message's file and id. Every choice
 /// is an edit (<see cref="ActionEditor"/>). <see cref="DrawSummary"/> is the same read-only, as a trigger area's view lists
 /// each trigger testing it. What each part does in play is docs/retail/simulation/mission-deployment.md#the-four-ways-an-action-activates.
@@ -51,9 +52,14 @@ internal sealed class TriggerView {
 		}
 
 		ImGui.Separator();
-		DrawWho(guid, fields, locked);
-		DrawAreas(guid, locked);
-		DrawFiredBy(guid);
+		if (FilledAreas(guid).Count > 0) {
+			DrawWho(guid, fields, locked);
+			DrawAreas(guid, locked);
+			DrawFiredBy(guid);
+		} else {
+			DrawFiredWithoutArea(guid, locked);
+		}
+
 		ImGui.Separator();
 		_then.Draw(guid, fields, locked);
 		DrawDelete(guid);
@@ -198,10 +204,12 @@ internal sealed class TriggerView {
 			ImGui.PopID();
 		}
 
-		if (areas.Count == 0) {
-			EditorText.Note("None: only a countdown or an object can fire it.");
-		}
+		DrawAddArea(guid, locked);
+		ImGui.Unindent();
+	}
 
+	// "Add an area", a choice of any area of the mission, with why it is disabled.
+	private void DrawAddArea(short guid, bool locked) {
 		string? why = _editor.WhyNoAddArea(guid);
 		ImGui.BeginDisabled(locked || why != null);
 		ImGui.SetNextItemWidth(ScaledImGui.Scaled(170f));
@@ -211,6 +219,58 @@ internal sealed class TriggerView {
 
 		ImGui.EndDisabled();
 		EditorText.Reason(why);
+	}
+
+	// With no area, "Fires when" is what fires it, in place of whose position its areas test, which DBSIM tests on its areas
+	// alone (docs/retail/simulation/mission-deployment.md#trigger-areas--actions_evaluatetriggers-00426b70): each countdown
+	// firing it, as its delay after the trigger that starts it, or the mission's start, and each object firing it when engaged
+	// or defeated, as links; with nothing, an emphasized note that nothing does. Then "Add an area", whose first area brings in
+	// the choice of whose position (DrawWho). The stored kind and target are left as they are.
+	private void DrawFiredWithoutArea(short guid, bool locked) {
+		ImGui.Text("Fires when:");
+		ImGui.Indent();
+		var links = _index.Links(guid);
+		foreach (short countdown in links.FiringCountdowns) {
+			if (Layout.Entry<ActionTimer30>(countdown)?.Fields is not { } fields) {
+				continue;
+			}
+
+			ImGui.PushID($"firing{countdown}");
+			string delay = MissionText.Duration(fields.Delay);
+			short start = TimerEditing.Start(Source, countdown);
+			if (start != -1) {
+				ImGui.TextUnformatted($"{delay} after");
+				ImGui.SameLine();
+				_links.Trigger(start, EditorText.AfterRoom(" fires,"));
+				EditorText.After(" fires,");
+			} else {
+				EditorText.Wrapped($"{delay} after the mission starts,");
+			}
+
+			ImGui.Indent();
+			ImGui.TextUnformatted("when");
+			ImGui.SameLine();
+			_links.Countdown(countdown, EditorText.AfterRoom(" runs out"));
+			EditorText.After(" runs out");
+			ImGui.Unindent();
+			ImGui.PopID();
+		}
+
+		foreach (var (key, when) in links.Engaged.Select(key => (key, "engaged")).Concat(links.Defeated.Select(key => (key, "defeated")))) {
+			ImGui.PushID($"{when}{key.Row}.{key.Guid}");
+			_links.Object(key, EditorText.AfterRoom($" is {when}"));
+			EditorText.After($" is {when}");
+			ImGui.PopID();
+		}
+
+		if (!links.FiredOtherwise) {
+			EditorText.Emphasis("Nothing fires it. Add an area below, add it to a countdown's \"When it runs out, fires\", or pick it "
+				+ "as an object's \"When engaged, fires\" or \"When defeated, fires\".");
+		}
+
+		ImGui.Spacing();
+		DrawAddArea(guid, locked);
+		EditorText.Note("With an area, it also fires when someone enters it, and \"Fires when\" then chooses who.");
 		ImGui.Unindent();
 	}
 
@@ -236,16 +296,11 @@ internal sealed class TriggerView {
 		return chosen;
 	}
 
-	// What else fires it, as links: the countdowns that fire it when they run out and the objects that fire it when engaged or
-	// defeated; with no area either, an emphasized note that nothing does.
+	// What else fires it besides its areas, as links: the countdowns that fire it when they run out and the objects that fire
+	// it when engaged or defeated.
 	private void DrawFiredBy(short guid) {
 		var links = _index.Links(guid);
 		if (!links.FiredOtherwise) {
-			if (FilledAreas(guid).Count == 0) {
-				EditorText.Emphasis("Nothing fires it. Add an area above, add it to a countdown's \"When it runs out, fires\", or pick "
-					+ "it as an object's \"When engaged, fires\" or \"When defeated, fires\".");
-			}
-
 			return;
 		}
 
