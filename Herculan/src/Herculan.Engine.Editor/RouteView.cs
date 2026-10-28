@@ -108,7 +108,7 @@ internal sealed class RouteView {
 	// choice's hover.
 	private void DrawWalkWith(PlannedRoute placed) {
 		ImGui.SetNextItemWidth(-1f);
-		if (!ImGui.BeginCombo("##walkWith", "Have a group walk it...")) {
+		if (!EditorText.BeginCombo("##walkWith", "Have a group walk it...")) {
 			EditorText.Tooltip("It becomes that group's 1st order's route; a group with no position of its own then starts at its start.");
 		} else {
 			bool any = false;

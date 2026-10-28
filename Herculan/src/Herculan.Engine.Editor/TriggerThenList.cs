@@ -68,20 +68,21 @@ internal sealed class TriggerThenList {
 		foreach (var follower in follows) {
 			ImGui.PushID(follower.GetHashCode());
 			switch (follower) {
-				case BringsInGroup bring:
-					_links.ShortLayoutGroup(bring.Group);
-					ImGui.SameLine(0f, 0f);
-					ImGui.TextUnformatted($" arrives {MissionText.ArrivalKind(fields.Verb)}");
+				case BringsInGroup bring: {
+					string arrives = $" arrives {MissionText.ArrivalKind(fields.Verb)}";
+					_links.ShortLayoutGroup(bring.Group, EditorText.AfterRoom(arrives));
+					EditorText.After(arrives);
 					break;
-				case EndsOrder ends:
-					_links.ShortLayoutGroup(ends.Group);
-					ImGui.SameLine(0f, 0f);
-					ImGui.TextUnformatted($" moves on from its {MissionText.Ordinal(ends.Slot + 1)} order");
+				}
+				case EndsOrder ends: {
+					string movesOn = $" moves on from its {MissionText.Ordinal(ends.Slot + 1)} order";
+					_links.ShortLayoutGroup(ends.Group, EditorText.AfterRoom(movesOn));
+					EditorText.After(movesOn);
 					break;
+				}
 				case StartsCountdown starts:
-					_links.Countdown(starts.Countdown);
-					ImGui.SameLine(0f, 0f);
-					ImGui.TextUnformatted(" starts");
+					_links.Countdown(starts.Countdown, EditorText.AfterRoom(" starts"));
+					EditorText.After(" starts");
 					break;
 			}
 
@@ -118,7 +119,7 @@ internal sealed class TriggerThenList {
 		ImGui.Indent();
 		foreach (var bring in groups) {
 			ImGui.PushID($"bring{bring.Group}");
-			_links.LayoutGroup(bring.Group);
+			_links.LayoutGroup(bring.Group, EditorText.ButtonRoom("Remove"));
 			ImGui.SameLine();
 			RemoveButton(guid, bring, locked, "Removing it puts the group in the mission from the start.");
 			ImGui.PopID();
@@ -130,7 +131,7 @@ internal sealed class TriggerThenList {
 		ImGui.SetNextItemWidth(-1f);
 		ImGui.BeginDisabled(locked);
 		string current = MissionText.ArrivalChoice(fields.Verb);
-		if (ImGui.BeginCombo("##arrives", current)) {
+		if (EditorText.BeginCombo("##arrives", current)) {
 			foreach (short verb in MissionText.Arrivals) {
 				string choice = MissionText.ArrivalChoice(verb);
 				if (ImGui.Selectable(choice, choice == current) && choice != current) {
@@ -160,13 +161,19 @@ internal sealed class TriggerThenList {
 			return false;
 		}
 
-		ImGui.Text("Moves these groups on to their next order:");
+		EditorText.Wrapped("Moves these groups on to their next order:");
 		ImGui.Indent();
 		foreach (var ends in orders) {
 			ImGui.PushID($"ends{ends.Group}.{ends.Slot}");
-			_links.ShortLayoutGroup(ends.Group);
+			// The order wraps short of Remove, so the button stays inside the panel, and takes at most half what the link leaves.
+			string from = $", from its {OrderName(ends.Group, ends.Slot)}";
+			float remove = EditorText.ButtonRoom("Remove");
+			_links.ShortLayoutGroup(ends.Group,
+				remove + MathF.Min(EditorText.TextRoom(from), (ImGui.GetContentRegionAvail().X - remove) / 2f));
 			ImGui.SameLine(0f, 0f);
-			ImGui.TextUnformatted($", from its {OrderName(ends.Group, ends.Slot)}");
+			ImGui.PushTextWrapPos(ImGui.GetCursorPosX() + ImGui.GetContentRegionAvail().X - remove);
+			EditorText.Wrapped(from);
+			ImGui.PopTextWrapPos();
 			ImGui.SameLine();
 			RemoveButton(guid, ends, locked, null);
 			ImGui.PopID();
@@ -190,7 +197,7 @@ internal sealed class TriggerThenList {
 			}
 
 			ImGui.PushID($"starts{starts.Countdown}");
-			_links.Countdown(starts.Countdown);
+			_links.Countdown(starts.Countdown, EditorText.ButtonRoom("Remove"));
 			ImGui.SameLine();
 			RemoveButton(guid, starts, locked, "Removing it makes the countdown start with the mission.");
 			ImGui.AlignTextToFramePadding();
@@ -208,8 +215,14 @@ internal sealed class TriggerThenList {
 			var fired = TimerEditing.Fired(Source, starts.Countdown).Where(trigger => trigger != -1).ToList();
 			ImGui.AlignTextToFramePadding();
 			ImGui.Text(fired.Count > 0 ? "then fires:" : "then fires nothing yet.");
-			foreach (short trigger in fired) {
-				ImGui.SameLine();
+
+			// The first beside "then fires:", the rest one per line: a second on the same line would have no room left.
+			for (int i = 0; i < fired.Count; i++) {
+				short trigger = fired[i];
+				if (i == 0) {
+					ImGui.SameLine();
+				}
+
 				ImGui.PushID(trigger);
 				_links.Trigger(trigger);
 				ImGui.PopID();
@@ -259,12 +272,10 @@ internal sealed class TriggerThenList {
 		ImGui.Spacing();
 		ImGui.Text("Sends a message:");
 		ImGui.Indent();
-		var style = ImGui.GetStyle();
-		float remove = ImGui.CalcTextSize("Remove").X + style.FramePadding.X * 2f + style.ItemSpacing.X;
-		float width = ImGui.GetContentRegionAvail().X - remove;
+		float width = ImGui.GetContentRegionAvail().X - EditorText.ButtonRoom("Remove");
 		ImGui.SetNextItemWidth(width);
 		ImGui.BeginDisabled(locked || messages == null);
-		if (ImGui.BeginCombo("##message", Fit(text, width - ImGui.GetFrameHeight() - style.FramePadding.X * 2f))) {
+		if (EditorText.BeginCombo("##message", text)) {
 			foreach (int line in messages?.Ids ?? []) {
 				if (ImGui.Selectable($"{Fit(_messages.Text(training, line) ?? "", width)}##{line}", line == id) && line != id) {
 					_editor.RequestMessage(guid, (short)line);

@@ -97,7 +97,7 @@ internal sealed class ConditionView {
 		Label("Test");
 		ImGui.BeginDisabled(locked);
 		string current = ConditionEditing.OperatorText(record.OperatorOrRangeUpperOrResult) ?? $"code {record.OperatorOrRangeUpperOrResult}";
-		if (ImGui.BeginCombo("##operator", $"flag {current} value")) {
+		if (EditorText.BeginCombo("##operator", $"flag {current} value")) {
 			foreach (short op in ConditionEditing.Operators) {
 				if (ImGui.Selectable($"flag {ConditionEditing.OperatorText(op)} value", op == record.OperatorOrRangeUpperOrResult)
 						&& op != record.OperatorOrRangeUpperOrResult) {
@@ -148,7 +148,7 @@ internal sealed class ConditionView {
 		ImGui.BeginDisabled(locked);
 		var draws = ConditionEditing.Earlier(source, guid)
 			.Where(other => ConditionEditing.Record(source, other).Type == ConditionEditing.Draw).ToList();
-		if (ImGui.BeginCombo("##draw", parent?.Type == ConditionEditing.Draw ? $"Condition {parent.GUID}" : "(none)")) {
+		if (EditorText.BeginCombo("##draw", parent?.Type == ConditionEditing.Draw ? $"Condition {parent.GUID}" : "(none)")) {
 			foreach (short draw in draws) {
 				if (ImGui.Selectable($"Condition {draw}: {ConditionEditing.Describe(source.Mission, draw)}", draw == record.ConditionRef)
 						&& draw != record.ConditionRef) {
@@ -191,7 +191,7 @@ internal sealed class ConditionView {
 		Label("Requires");
 		ImGui.BeginDisabled(locked);
 		string current = record.ConditionRef == -1 ? "None" : $"Condition {record.ConditionRef}";
-		if (ImGui.BeginCombo("##requires", current)) {
+		if (EditorText.BeginCombo("##requires", current)) {
 			if (ImGui.Selectable("None", record.ConditionRef == -1) && record.ConditionRef != -1) {
 				_editor.RequestRequirement(guid, -1);
 			}

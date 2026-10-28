@@ -87,7 +87,7 @@ internal sealed class PresentWhenView {
 		bool adding = _adding == target;
 		int mode = rule.Variables.Count > 0 || adding ? 1 : rule.Chance != null ? 2 : 0;
 		ImGui.SetNextItemWidth(-1f);
-		if (ImGui.BeginCombo("##present", Modes[mode])) {
+		if (EditorText.BeginCombo("##present", Modes[mode])) {
 			if (ImGui.Selectable(Modes[0], mode == 0) && mode != 0) {
 				_adding = null;
 				Ask(target, rule, PresenceRule.Always);
@@ -174,7 +174,7 @@ internal sealed class PresentWhenView {
 	// A clause testing for a value the retail docs give a meaning: a choice of those meanings, each writing its own test.
 	private void DrawMeaning(PresenceTarget target, PresenceRule rule, int index, VariableMeaning current) {
 		var clause = rule.Variables[index];
-		if (!ImGui.BeginCombo("##meaning", current.Name)) {
+		if (!EditorText.BeginCombo("##meaning", current.Name)) {
 			return;
 		}
 
@@ -191,7 +191,7 @@ internal sealed class PresentWhenView {
 	private void DrawTest(PresenceTarget target, PresenceRule rule, int index, float width) {
 		var clause = rule.Variables[index];
 		ImGui.SetNextItemWidth(width * 0.55f);
-		if (ImGui.BeginCombo("##operator", PresenceSentences.Operator(clause.Operator))) {
+		if (EditorText.BeginCombo("##operator", PresenceSentences.Operator(clause.Operator))) {
 			foreach (short op in ConditionEditing.Operators) {
 				if (ImGui.Selectable(PresenceSentences.Operator(op), op == clause.Operator) && op != clause.Operator) {
 					Ask(target, rule, rule.WithVariable(index, clause with { Operator = op }));
@@ -319,7 +319,7 @@ internal sealed class PresentWhenView {
 		short current = shared ?? records[0].Condition;
 		ImGui.SetNextItemWidth(-1f);
 		ImGui.BeginDisabled(_editor.WhyFixed(target) != null);
-		if (ImGui.BeginCombo("##condition", shared == null ? "(differs by record)" : Name(source, current))) {
+		if (EditorText.BeginCombo("##condition", shared == null ? "(differs by record)" : Name(source, current))) {
 			if (ImGui.Selectable("Always", current == RecordConditions.Always) && current != RecordConditions.Always) {
 				_editor.Request(target, RecordConditions.Always);
 			}
@@ -379,9 +379,8 @@ internal sealed class PresentWhenView {
 		_links.References(losers.Names);
 		foreach (short group in losers.MemberOf) {
 			ImGui.PushID($"member{group}");
-			_links.ShortLayoutGroup(group);
-			ImGui.SameLine(0f, 0f);
-			ImGui.Text(": member");
+			_links.ShortLayoutGroup(group, EditorText.AfterRoom(": member"));
+			EditorText.After(": member");
 			ImGui.PopID();
 		}
 

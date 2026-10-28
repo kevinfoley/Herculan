@@ -97,7 +97,7 @@ internal sealed class TriggerView {
 		ImGui.Text("Fires when:");
 		ImGui.SetNextItemWidth(-1f);
 		ImGui.BeginDisabled(locked);
-		if (ImGui.BeginCombo("##who", MissionText.TriggerWho(fields.Type))) {
+		if (EditorText.BeginCombo("##who", MissionText.TriggerWho(fields.Type))) {
 			for (short type = 0; type <= ActionEditing.LastType; type++) {
 				string? why = type == fields.Type ? null : _editor.WhyNoType(guid, type);
 				var flags = why != null ? ImGuiSelectableFlags.Disabled : ImGuiSelectableFlags.None;
@@ -254,17 +254,15 @@ internal sealed class TriggerView {
 		ImGui.Indent();
 		foreach (short countdown in links.FiringCountdowns) {
 			ImGui.PushID($"firing{countdown}");
-			_links.Countdown(countdown);
-			ImGui.SameLine(0f, 0f);
-			ImGui.TextUnformatted(", when it runs out");
+			_links.Countdown(countdown, EditorText.AfterRoom(", when it runs out"));
+			EditorText.After(", when it runs out");
 			ImGui.PopID();
 		}
 
 		foreach (var (key, when) in links.Engaged.Select(key => (key, "engaged")).Concat(links.Defeated.Select(key => (key, "defeated")))) {
 			ImGui.PushID($"{when}{key.Row}.{key.Guid}");
-			_links.Object(key);
-			ImGui.SameLine(0f, 0f);
-			ImGui.TextUnformatted($", when {when}");
+			_links.Object(key, EditorText.AfterRoom($", when {when}"));
+			EditorText.After($", when {when}");
 			ImGui.PopID();
 		}
 

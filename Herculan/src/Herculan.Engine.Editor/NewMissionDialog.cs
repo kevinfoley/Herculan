@@ -153,7 +153,7 @@ internal sealed class NewMissionDialog {
 		ImGui.TextUnformatted("Theater:");
 		ImGui.SameLine();
 		ImGui.SetNextItemWidth(ScaledImGui.Scaled(TheaterWidth));
-		if (ImGui.BeginCombo("##theater", _theater < theaters.Count ? theaters[_theater] : $"{_theater}")) {
+		if (EditorText.BeginCombo("##theater", _theater < theaters.Count ? theaters[_theater] : $"{_theater}")) {
 			for (int i = 0; i < theaters.Count; i++) {
 				if (ImGui.Selectable(theaters[i], i == _theater)) {
 					_theater = i;

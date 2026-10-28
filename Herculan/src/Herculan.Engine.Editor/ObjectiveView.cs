@@ -85,7 +85,7 @@ internal sealed class ObjectiveView {
 	private void DrawRole(int record, bool mandatory, bool locked) {
 		Label("Role");
 		ImGui.BeginDisabled(locked);
-		if (!ImGui.BeginCombo("##role", Role(mandatory))) {
+		if (!EditorText.BeginCombo("##role", Role(mandatory))) {
 			EditorText.Tooltip(RoleNote(mandatory));
 		} else {
 			foreach (bool choice in new[] { true, false }) {
@@ -162,7 +162,7 @@ internal sealed class ObjectiveView {
 		short code = fields.ConditionCode;
 		Label("What happens");
 		ImGui.BeginDisabled(locked);
-		if (!ImGui.BeginCombo("##what", MissionText.ObjectiveChoice(code, group))) {
+		if (!EditorText.BeginCombo("##what", MissionText.ObjectiveChoice(code, group))) {
 			EditorText.Tooltip(ObjectiveNote(code, group));
 		} else {
 			foreach (short choice in Offered) {

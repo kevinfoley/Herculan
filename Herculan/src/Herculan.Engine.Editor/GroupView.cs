@@ -147,9 +147,9 @@ internal sealed class GroupView {
 		foreach (var (member, names, fired) in blockers.Members) {
 			ImGui.PushID($"member{member.Guid}");
 			ImGui.Spacing();
-			_links.Object(member);
-			ImGui.SameLine(0f, 0f);
-			ImGui.TextUnformatted(", a member going with it, is referenced by:");
+			const string goes = ", a member going with it, is referenced by:";
+			_links.Object(member, EditorText.AfterRoom(goes));
+			EditorText.After(goes);
 			_links.References(names, fired: fired);
 			ImGui.PopID();
 		}

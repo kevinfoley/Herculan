@@ -65,7 +65,7 @@ internal sealed class MissionSettingsWindow {
 		ImGui.SameLine();
 		ImGui.BeginDisabled(theaterFixed != null);
 		ImGui.SetNextItemWidth(-1f);
-		if (ImGui.BeginCombo("##theater", Label(theater))) {
+		if (EditorText.BeginCombo("##theater", Label(theater))) {
 			for (int choice = 0; choice < _labels.Count; choice++) {
 				if (ImGui.Selectable(_labels[choice], choice == theater) && choice != theater) {
 					_theaters.RequestTheater(choice);

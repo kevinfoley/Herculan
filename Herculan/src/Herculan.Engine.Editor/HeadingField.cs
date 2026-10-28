@@ -70,7 +70,7 @@ internal sealed class HeadingField {
 		ImGui.BeginDisabled(why != null);
 		ImGui.SetNextItemWidth(ChoiceWidth(sources));
 		int chosen = own != null ? 0 : 1;
-		bool open = ImGui.BeginCombo("##source", sources[chosen]);
+		bool open = EditorText.BeginCombo("##source", sources[chosen]);
 		if (!open) {
 			EditorText.Tooltip(turns);
 		}

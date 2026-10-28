@@ -34,7 +34,7 @@ internal sealed class CampaignVariablePicker {
 		string shown = current is not { } now ? "Choose a campaign variable"
 			: forWrite ? CampaignVariableLabels.WriteName(now)
 			: CampaignVariableLabels.Name(now);
-		if (!ImGui.BeginCombo(id, shown)) {
+		if (!EditorText.BeginCombo(id, shown)) {
 			return null;
 		}
 

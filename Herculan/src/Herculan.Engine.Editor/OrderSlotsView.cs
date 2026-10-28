@@ -112,7 +112,7 @@ internal sealed class OrderSlotsView {
 		Func<short, string> note = convoy ? MissionText.ConvoyOrderVerbNote : MissionText.OrderVerbNote;
 		Label("Does");
 		ImGui.BeginDisabled(locked);
-		bool open = ImGui.BeginCombo("##verb", MissionText.OrderVerb(verb));
+		bool open = EditorText.BeginCombo("##verb", MissionText.OrderVerb(verb));
 		if (!open) {
 			EditorText.Tooltip(noSubject
 				? note(verb) + Environment.NewLine + Environment.NewLine + "Search and destroy, Ram and Follow need a target: choosing one gives the order the player's squad."

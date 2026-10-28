@@ -71,7 +71,7 @@ internal sealed class StartingConditionField {
 	private void DrawHerc(ObjectKey key, short current) {
 		var band = BandOf(current);
 		ImGui.SetNextItemWidth(-1f);
-		if (ImGui.BeginCombo("##band", band.Label)) {
+		if (EditorText.BeginCombo("##band", band.Label)) {
 			foreach (var option in HercBands) {
 				if (ImGui.Selectable(option.Label, option == band) && option != band) {
 					_editor.Request(key, option.Written);

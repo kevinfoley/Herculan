@@ -141,7 +141,7 @@ internal sealed class CampaignVariableWrites {
 			ImGui.TextWrapped(Sentence(layer, variable, code));
 			ImGui.BeginDisabled(locked);
 			ImGui.SetNextItemWidth(ScaledImGui.Scaled(OperationWidth));
-			if (ImGui.BeginCombo("##operation", Operation(layer, code).Choice)) {
+			if (EditorText.BeginCombo("##operation", Operation(layer, code).Choice)) {
 				foreach (var (offered, operation) in Offered(layer)) {
 					if (ImGui.Selectable(operation.Choice, offered == code) && offered != code) {
 						request = new SetWriteRequest(slot, Math.Max(variable, (short)0), offered);
@@ -152,8 +152,7 @@ internal sealed class CampaignVariableWrites {
 			}
 
 			ImGui.SameLine();
-			var style = ImGui.GetStyle();
-			float remove = ImGui.CalcTextSize("Remove").X + style.FramePadding.X * 2f + style.ItemSpacing.X;
+			float remove = EditorText.ButtonRoom("Remove");
 			if (_picker.Draw("##variable", variable >= 0 ? variable : null, source, forWrite: true, width: -remove) is { } chosen
 					&& chosen != variable) {
 				request = new SetWriteRequest(slot, chosen, Kept(layer, code));

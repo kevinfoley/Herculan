@@ -30,6 +30,47 @@ internal static class EditorText {
 	/// </summary>
 	public static void Wrapped(string text) => ImGui.TextWrapped(text.Replace("%", "%%"));
 
+	/// <summary>
+	/// The width a small button labelled <paramref name="label"/> takes after <see cref="ImGui.SameLine()"/>, its spacing
+	/// included: what to keep free before it so it stays inside the panel.
+	/// </summary>
+	public static float ButtonRoom(string label) {
+		var style = ImGui.GetStyle();
+		return ImGui.CalcTextSize(label).X + style.FramePadding.X * 2f + style.ItemSpacing.X;
+	}
+
+	/// <summary>The width <paramref name="text"/> takes drawn after <see cref="ImGui.SameLine(float, float)"/> with no spacing.</summary>
+	public static float TextRoom(string text) => ImGui.CalcTextSize(text).X;
+
+	/// <summary>
+	/// The room a link keeps free for <paramref name="text"/> drawn after it by <see cref="After"/>: all of it, up to half the
+	/// space left on the line, so a long text wraps rather than cutting the link's name to nothing.
+	/// </summary>
+	public static float AfterRoom(string text) => MathF.Min(TextRoom(text), ImGui.GetContentRegionAvail().X / 2f);
+
+	/// <summary><paramref name="text"/> right after the item just drawn, on its line, wrapped at the window's edge.</summary>
+	public static void After(string text) {
+		ImGui.SameLine(0f, 0f);
+		Wrapped(text);
+	}
+
+	/// <summary>
+	/// Opens a dropdown whose closed box shows <paramref name="preview"/> cut with "..." to fit, the whole of it on hover when cut;
+	/// true while its list is open, then end it with <see cref="ImGui.EndCombo"/>. Every dropdown in the panels opens through here
+	/// or <see cref="NameText.BeginCombo"/>: ImGui's own trims a long preview mid-letter at the box's edge.
+	/// </summary>
+	public static bool BeginCombo(string id, string preview, ImGuiComboFlags flags = ImGuiComboFlags.None) {
+		var style = ImGui.GetStyle();
+		float arrow = (flags & ImGuiComboFlags.NoArrowButton) != 0 ? 0f : ImGui.GetFrameHeight();
+		string shown = NameText.Fit(preview, ImGui.CalcItemWidth() - arrow - style.FramePadding.X * 2f);
+		bool open = ImGui.BeginCombo(id, shown, flags);
+		if (!open && shown != preview && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
+			ImGui.SetTooltip(preview.Replace("%", "%%"));
+		}
+
+		return open;
+	}
+
 	/// <summary>Why a control is disabled, as a note led by <paramref name="lead"/>; nothing for null.</summary>
 	public static void Reason(string? reason, string lead = "") {
 		if (reason != null) {

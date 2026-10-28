@@ -26,22 +26,17 @@ internal sealed class PanelLinks {
 	/// <summary>What the links name records by.</summary>
 	public MissionNames Names { get; }
 
-	/// <summary>A clickable label that selects <paramref name="target"/>.</summary>
-	public void Link(string label, EditorSelection target) {
-		ImGui.PushStyleColor(ImGuiCol.Text, LinkColor);
-		if (ImGui.Selectable(label, false, ImGuiSelectableFlags.None, ImGui.CalcTextSize(label))) {
-			_selection.Current = target;
-		}
-
-		ImGui.PopStyleColor();
-	}
+	/// <summary>A clickable <paramref name="label"/> that selects <paramref name="target"/>, cut to fit as a name is.</summary>
+	public void Link(string label, EditorSelection target, float reserve = 0f) => Link(new RecordName(label), target, reserve);
 
 	/// <summary>
 	/// A clickable <paramref name="name"/> that selects <paramref name="target"/>: its text cut to the space left on the line
-	/// and its number dimmed after it, the whole name on hover when cut.
+	/// and its number dimmed after it, the whole name on hover when cut. <paramref name="reserve"/> is the width kept free
+	/// after it for what the caller draws on the same line (<see cref="EditorText.ButtonRoom"/>, <see cref="EditorText.AfterRoom"/>):
+	/// without it, that runs past the panel's edge.
 	/// </summary>
-	public void Link(RecordName name, EditorSelection target) {
-		string text = NameText.FitText(name, ImGui.GetContentRegionAvail().X);
+	public void Link(RecordName name, EditorSelection target, float reserve = 0f) {
+		string text = NameText.FitText(name, ImGui.GetContentRegionAvail().X - reserve);
 		ImGui.PushStyleColor(ImGuiCol.Text, LinkColor);
 		if (ImGui.Selectable($"{text}##{name.Full}", false, ImGuiSelectableFlags.None, ImGui.CalcTextSize(text))) {
 			_selection.Current = target;
@@ -55,33 +50,35 @@ internal sealed class PanelLinks {
 		}
 	}
 
+	// Each record's link below keeps <reserve> pixels free after it, as Link does.
+
 	/// <summary>Row-10 GUID <paramref name="guid"/>, a trigger; a note when the layout has none.</summary>
-	public void Trigger(short guid) {
+	public void Trigger(short guid, float reserve = 0f) {
 		if (_scene.Action(guid) != null) {
-			Link(Names.Trigger(guid), new ActionSelection(guid));
+			Link(Names.Trigger(guid), new ActionSelection(guid), reserve);
 		} else {
 			EditorText.Note("A trigger not in the mission");
 		}
 	}
 
 	/// <summary>Row-11 GUID <paramref name="guid"/>, a countdown, by its delay and what starts it.</summary>
-	public void Countdown(short guid) {
+	public void Countdown(short guid, float reserve = 0f) {
 		if (_scene.Layout.Entry<ActionTimer30>(guid) != null) {
-			Link(Names.Countdown(guid), new TimerSelection(guid));
+			Link(Names.Countdown(guid), new TimerSelection(guid), reserve);
 		}
 	}
 
 	/// <summary>Row-16 GUID <paramref name="guid"/>, a group, by its team, roster and members.</summary>
-	public void LayoutGroup(short guid) {
+	public void LayoutGroup(short guid, float reserve = 0f) {
 		if (_scene.Group(guid) != null) {
-			Link(Names.Group(guid), new GroupSelection(guid));
+			Link(Names.Group(guid), new GroupSelection(guid), reserve);
 		}
 	}
 
 	/// <summary>A group by its team and roster alone, as a reference list or a sentence shows it: "Cybrid hercs (group 5)".</summary>
-	public void ShortLayoutGroup(short guid) {
+	public void ShortLayoutGroup(short guid, float reserve = 0f) {
 		if (_scene.Group(guid) != null) {
-			Link(Names.GroupBrief(guid), new GroupSelection(guid));
+			Link(Names.GroupBrief(guid), new GroupSelection(guid), reserve);
 		}
 	}
 
@@ -89,19 +86,19 @@ internal sealed class PanelLinks {
 	/// The roster record <paramref name="key"/> by <see cref="MissionNames.Object"/>, a link when the scene has its object;
 	/// plain text otherwise, a record no group places included.
 	/// </summary>
-	public void Object(ObjectKey key) {
+	public void Object(ObjectKey key, float reserve = 0f) {
 		var name = Names.Object(key);
 		if (_scene.ObjectOf(key) != null) {
-			Link(name, new ObjectSelection(key.Row, key.Guid));
+			Link(name, new ObjectSelection(key.Row, key.Guid), reserve);
 		} else {
-			NameText.Draw(name);
+			NameText.Draw(name, reserve);
 		}
 	}
 
 	/// <summary>The scene object <paramref name="placed"/>, by the record it stands for.</summary>
-	public void Object(SceneObject placed) {
+	public void Object(SceneObject placed, float reserve = 0f) {
 		if (_scene.KeyOf(placed) is { } key) {
-			Object(key);
+			Object(key, reserve);
 		}
 	}
 
@@ -135,10 +132,10 @@ internal sealed class PanelLinks {
 		}
 
 		foreach (short trigger in fired ?? []) {
+			const string firedBy = ": fired by it";
 			ImGui.PushID($"fired{trigger}");
-			Trigger(trigger);
-			ImGui.SameLine(0f, 0f);
-			ImGui.TextUnformatted(": fired by it");
+			Trigger(trigger, EditorText.AfterRoom(firedBy));
+			EditorText.After(firedBy);
 			ImGui.PopID();
 		}
 
@@ -149,10 +146,10 @@ internal sealed class PanelLinks {
 				parts.Add("its own route (not editable yet)");
 			}
 
+			string what = $": {string.Join(", ", parts)}";
 			ImGui.PushID($"group{group}");
-			ShortLayoutGroup(group);
-			ImGui.SameLine(0f, 0f);
-			ImGui.TextUnformatted($": {string.Join(", ", parts)}");
+			ShortLayoutGroup(group, EditorText.AfterRoom(what));
+			EditorText.After(what);
 			ImGui.PopID();
 		}
 

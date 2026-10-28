@@ -39,9 +39,12 @@ internal static class NameText {
 		return name.Number is { } number ? $"{text} {number}" : text;
 	}
 
-	/// <summary><paramref name="name"/> in the panel's text color with its number dimmed, cut to the space left on the line.</summary>
-	public static void Draw(RecordName name) {
-		string text = FitText(name, ImGui.GetContentRegionAvail().X);
+	/// <summary>
+	/// <paramref name="name"/> in the panel's text color with its number dimmed, cut to the space left on the line less
+	/// <paramref name="reserve"/> pixels for what follows it there.
+	/// </summary>
+	public static void Draw(RecordName name, float reserve = 0f) {
+		string text = FitText(name, ImGui.GetContentRegionAvail().X - reserve);
 		ImGui.TextUnformatted(text);
 		Hover(name, text);
 		Number(name);
