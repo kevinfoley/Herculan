@@ -9231,14 +9231,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mission_TotalSalvage",
-      "description": "Sums Mech_SalvageValue over every object on the other side from the player's that is destroyed (+0x99) or immobilised (+0xa4). The second argument, the objective selector Mission_WriteResults passes, is not read. Called once as the mission writes its results; the total is scaled by Q10(2500) into the campaign salvage pool.",
+      "description": "Sums Mech_SalvageValue over every machine in GlobalMechList, walked from its end by Pool_Prev, whose group side byte (+0x45, +0x12) differs from the player group's and that is destroyed (+0x99) or immobilised (+0xa4). The second argument, the objective selector Mission_WriteResults passes, is not read. Called once as the mission writes its results; the total is scaled by Q10(2500) into the campaign salvage pool.",
       "source": "docs/retail/simulation/component-damage.md",
       "signature": "int __cdecl Mission_TotalSalvage(void *playerGroup, short unused)",
       "verified": {
         "bytes": "00423e88+126",
         "sha1": "bc1916e031d5",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {

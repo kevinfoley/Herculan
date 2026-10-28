@@ -95,10 +95,10 @@ An object's side is the byte at `+0x12` of its group record (`obj+0x45`), 0 huma
 | | `MfdStatusScreen_Paint` | the distance readout and the targeted-component outline |
 | | `Sim_DispatchCommand` (`0045fdac`) | the developer key that damages the nearest side-1 object |
 | same or different | `Ai_IsTargetable` (`00411e80`), `TargetSelect_CanTarget` (`00433174`), `Detection_ShareContact` (`00412704`), `Detection_DecayContacts` (`0041251c`), `Mech_PlayerFireTick`, `Mech_AiOnTakingFire`, `Mech_ApplyOutnumberedDamage`, `Sim_RaycastObjectList` (`00426528`), `Mission_IsClearOfThreats` (`004137b4`), `Group_NoRivalOrderOnSubject` (`00412e74`), `HddCommandScreen_CycleUnit`, `HddCommandScreen_IsEligibleUnit` | friend or foe against another object's side, or against the side asked for |
-| | `Mission_TotalSalvage` (`00423e88`) | salvage from every wreck not on the player's side |
+| | `Mission_TotalSalvage` (`00423e88`) | salvage from every HERC wreck not on the player's side; it walks the `MECH` pool alone, so a structure, GroundVehicle or flyer never counts |
 | | `Sim_RaycastShapeList` (`00404bc0`) | a side filter that every caller turns off with `-1` |
 
-So an object of side 2 neither sweeps nor is swept: it is never painted and never a contact, so no object knows it and nothing can select or lock it, while it knows every painted object of both sides, and both are its enemies. It never appears on the heads-down map, and always appears on the F4 scanner, in the hostile colour. Its shots take the Cybrid damage scale, its group answers neither side's group triggers, and its wrecks count as salvage. VSHELL's briefing map does not read side; it tells friend from foe by structure type ([`../shell/mission-map.md`](../shell/mission-map.md#bases)).
+So an object of side 2 neither sweeps nor is swept: it is never painted and never a contact, so no object knows it and nothing can select or lock it, while it knows every painted object of both sides, and both are its enemies. It never appears on the heads-down map, and always appears on the F4 scanner, in the hostile colour. Its shots take the Cybrid damage scale, its group answers neither side's group triggers, and a side-2 HERC's wreck counts as salvage. VSHELL's briefing map does not read side; it tells friend from foe by structure type ([`../shell/mission-map.md`](../shell/mission-map.md#bases)).
 
 ## The object's frame is a transform, and its position is that transform's translation
 
