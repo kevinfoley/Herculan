@@ -62,11 +62,16 @@ public sealed partial class MechObject : SimObject {
 	/// <see cref="MechTypeRecord.IsFlyer"/>. Non-null is what puts the machine on the flight path —
 	/// see <see cref="Flight"/>.
 	/// </param>
+	/// <param name="dwellJitter">
+	/// The <see cref="SimWorld.DwellJitter"/> of the world the machine will join, which the constructor's own
+	/// state install steps. Omitted, the machine starts a counter of its own until <see cref="SimWorld.Add"/>.
+	/// </param>
 	public MechObject(string name, HercSimDat simData, int shapeRadius, MechLoadout loadout,
 			ShapeAnimation? animation = null, GunLayout? hardpoints = null,
 			WeaponCatalog? weapons = null, ColliderNode[]? collision = null,
 			ComponentDamage? damage = null, Func<int, int>? weaponModelCellCount = null,
-			FlightModel? flightModel = null) {
+			FlightModel? flightModel = null, DwellJitter? dwellJitter = null) {
+		DwellJitter = dwellJitter ?? new DwellJitter();
 		Name = name;
 		SimData = simData;
 		TypeName = simData.NameBytes is { } nameBytes
@@ -381,6 +386,9 @@ public sealed partial class MechObject : SimObject {
 	/// which reads every setting as retail.
 	/// </summary>
 	internal Settings.TweakSettings? WorldTweaks { get; set; }
+
+	/// <summary>The counter every <see cref="SetBehaviourState"/> steps: its world's, from <see cref="SimWorld.Add"/> on.</summary>
+	internal DwellJitter DwellJitter { get; set; }
 
 	/// <summary>
 	/// Where one part of this machine's model has ended up in the world, orientation included: the
