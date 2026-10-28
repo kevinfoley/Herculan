@@ -34,9 +34,23 @@ since the file is a subagent's output. Comment and blank lines are ignored.
 
 `brief` writes the batch subagent's brief: tools/scripts/es1_batch_brief.md, the rules every batch
 shares, with the batch number, range and scratch folder filled in and the batch's own section (what
-the range holds, its leads, the docs to read) taken from a notes file. --auto appends the leads the
+the range holds, its leads, its Open items) taken from a notes file. --auto appends the leads the
 tools give: `es1_boilerplate.py bounds` over the range with a 0x100 margin, the function counts,
 `es2_naming.py match`'s candidates, and the docs that name one of the range's function addresses.
+`port` writes a port part's brief the same way from tools/scripts/es1_port_brief.md. Both templates
+send the subagent to tools/scripts/es1_subagent_rules.md for the rules every ES1 subagent shares.
+
+A notes section whose `## Heading` the template also has (Read first, Code, Limits, Report) is
+added to the end of the template's section; the rest of the notes goes where @@NOTES@@ stands.
+A template's `<!-- tag -->` ... `<!-- /tag -->` blocks are kept for the brief they belong to
+(`range` for a batch) and dropped otherwise.
+
+Both gate the brief's fixed reading at READ_BUDGET (40 KB): each file its "Read first" bullets
+name, a backticked path whole or by the quoted headings after it
+(`plan.md` "Rules" "Decisions") or its `#anchor`. A doc the subagent edits is marked `(edit)` on its
+bullet and a file in the scratch folder is the part's input; both are listed but not counted. Past
+the budget, or on a file or heading not found, nothing is written; --over-budget "REASON" writes it
+anyway and prints the reason, for the orchestrator's report.
 
 `next` proposes the range: from START, whole object files as `es1_boilerplate.py bounds` places
 them, until about --target functions, a file never split; it prints each file's counts and evidence
@@ -44,7 +58,8 @@ and the held rows (--held) inside.
 
 Usage:
     python tools/scripts/es1_batch.py next START [--target 60] [--window HEX] [--held a+b]
-    python tools/scripts/es1_batch.py brief N LO HI --scratch DIR [--notes NOTES.md] [--auto] [--out FILE]
+    python tools/scripts/es1_batch.py brief N LO HI --scratch DIR [--notes NOTES.md] [--auto] [--out FILE] [--over-budget REASON]
+    python tools/scripts/es1_batch.py port PART --title TITLE --scratch DIR [--notes NOTES.md] [--budget 150] [--out FILE] [--over-budget REASON]
     python tools/scripts/es1_batch.py run COMMANDS.txt [--from N] [--no-precheck]
     python tools/scripts/es1_batch.py precheck COMMANDS.txt [--fix]
     python tools/scripts/es1_batch.py list COMMANDS.txt
@@ -479,24 +494,167 @@ def auto_leads(binary, lo, hi):
     return "\n".join(out)
 
 
-def cmd_brief(args):
-    """Fills es1_batch_brief.md with the batch number, range, scratch folder and the batch's own notes."""
-    text = (SCRIPTS / "es1_batch_brief.md").read_text(encoding="utf-8")
-    notes = Path(args.notes).read_text(encoding="utf-8").strip() if args.notes else ""
-    if args.auto:
-        notes = (notes + "\n\n" if notes else "") + auto_leads(args.binary, args.lo.lower().zfill(8), args.hi.lower().zfill(8))
-    scratch = args.scratch.replace("/", "\\")
-    for k, v in (("BATCH", str(args.batch)), ("LO", args.lo.lower().zfill(8)), ("HI", args.hi.lower().zfill(8)),
-                 ("SCRATCH", scratch), ("NOTES", notes)):
+READ_BUDGET = 40 * 1024
+READ_EXTENSIONS = {"md", "cs", "py", "txt", "json", "c", "java", "ps1"}
+READ_TOKEN = re.compile(r'`([^`]+)`|"([^"]+)"')
+
+
+def keep_blocks(text, keep):
+    """The template with each `<!-- tag -->` ... `<!-- /tag -->` block kept, without its marker lines, when its tag is
+    in `keep`, and dropped otherwise."""
+    return re.sub(r"^<!-- (\w+) -->\n(.*?)^<!-- /\1 -->\n", lambda m: m.group(2) if m.group(1) in keep else "",
+                  text, flags=re.S | re.M)
+
+
+def merge_notes(text, notes):
+    """Moves each `## Heading` section of the notes whose heading the template also has (whole, or before a space or a
+    parenthesis: "Report" joins "Report (at most 400 words)") to the end of the template's section, so a part's own
+    read list, limits or report items join the shared ones. Returns the template and what is left of the notes for
+    @@NOTES@@."""
+    parts = re.split(r"^## (.+?)[ \t]*\n", notes, flags=re.M)
+    rest = [parts[0].strip()]
+    for heading, body in zip(parts[1::2], parts[2::2]):
+        m = re.search(r"^## %s(?:[ \t(].*)?\n" % re.escape(heading), text, flags=re.M)
+        if not m:
+            rest.append("## %s\n\n%s" % (heading, body.strip()))
+            continue
+        nxt = re.compile(r"^## ", re.M).search(text, m.end())
+        end = nxt.start() if nxt else len(text)
+        text = text[:end].rstrip("\n") + "\n" + body.strip() + "\n\n" + text[end:].lstrip("\n")
+    return text, "\n\n".join(p for p in rest if p)
+
+
+def md_section(text, heading):
+    """The text of the markdown section whose heading is `heading` (any level), from the heading to the next one of
+    its level or higher; a heading matches by its text with backticks and link targets removed, whole or followed by
+    more words, or by its anchor. None when no heading matches."""
+    def norm(s):
+        s = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", s).replace("`", "")
+        return re.sub(r"\s+", " ", s).strip().lower()
+
+    def slug(s):
+        return re.sub(r"[^\w\- ]", "", norm(s)).replace(" ", "-")
+
+    lines = text.splitlines(keepends=True)
+    heads, fence = [], False
+    for i, line in enumerate(lines):
+        if line.startswith("```"):
+            fence = not fence
+        elif not fence and (m := re.match(r"(#{1,6})\s+(.*?)\s*$", line)):
+            heads.append((i, len(m.group(1)), m.group(2)))
+    want = norm(heading)
+    for k, (i, level, h) in enumerate(heads):
+        if norm(h) == want or norm(h).startswith(want + " ") or slug(h) == heading.lower():
+            end = next((j for j, lv, _ in heads[k + 1:] if lv <= level), len(lines))
+            return "".join(lines[i:end])
+    return None
+
+
+def read_list(brief):
+    """The files the brief's "Read first" bullets name, as (path, sections, edit, base): each backticked path with the
+    quoted section headings after it (or a `#fragment`), `(edit)` on its bullet for a doc read whole because it is
+    edited, and the backticked folder (ending in a slash) an earlier token of the bullet named, for bare file names."""
+    section = md_section(brief, "Read first") or ""
+    items = []
+    for line in section.splitlines():
+        if not line.lstrip().startswith("- "):
+            continue
+        edit, base, current = "(edit)" in line, None, None
+        for m in READ_TOKEN.finditer(line):
+            tok, quoted = m.groups()
+            if tok is None:
+                if current is not None:
+                    current[1].append(quoted)
+            elif re.search(r"[\\/]$", tok):
+                base = tok
+            elif re.fullmatch(r"[^\s#]+\.([A-Za-z]\w*)(#[\w-]+)?", tok) and tok.split("#")[0].rsplit(".", 1)[1].lower() in READ_EXTENSIONS:
+                path, _, frag = tok.partition("#")
+                current = [path, [frag] if frag else [], edit, base]
+                items.append(current)
+    return items
+
+
+def gate_reading(brief, scratch, over_budget):
+    """Totals the brief's fixed reading: each file its read list names, whole or by its named sections. The brief's
+    own size is printed beside it, not counted; a doc marked (edit) and a file in the scratch folder (the part's own
+    input) are listed but not counted. Stops with nothing written when a file or section is not found, or when the
+    total passes READ_BUDGET and no --over-budget reason is given."""
+    total = 0
+    rows, errors = [("%5.1f KB" % (len(brief.encode("utf-8")) / 1024), "the brief itself (not counted)")], []
+    scratch_dir = Path(scratch).resolve()
+    for path, sections, edit, base in read_list(brief):
+        p = Path(path)
+        cands = [p] if p.is_absolute() else ([Path(base) / p] if base else []) + [REPO / p]
+        f = next((c for c in cands if c.is_file()), None)
+        if f is None:
+            errors.append("no file %s" % path)
+            continue
+        if edit or scratch_dir in f.resolve().parents:
+            rows.append(("     --", "%s (%s, not counted)" % (path, "edited" if edit else "the part's input")))
+            continue
+        text = f.read_text(encoding="utf-8", errors="replace")
+        if not sections:
+            size = len(text.encode("utf-8"))
+            rows.append(("%5.1f KB" % (size / 1024), path + ", whole"))
+        else:
+            size = 0
+            for s in sections:
+                body = md_section(text, s)
+                if body is None:
+                    errors.append('no section "%s" in %s' % (s, path))
+                    continue
+                size += len(body.encode("utf-8"))
+            rows.append(("%5.1f KB" % (size / 1024), "%s: %s" % (path, ", ".join('"%s"' % s for s in sections))))
+        total += size
+    for size, label in rows:
+        print("  %s  %s" % (size, label))
+    print("  %5.1f KB  fixed reading, budget %d KB" % (total / 1024, READ_BUDGET // 1024))
+    if errors:
+        raise SystemExit("not written: " + "; ".join(errors))
+    if total > READ_BUDGET:
+        if not over_budget:
+            raise SystemExit("not written: the fixed reading is over the budget. Cut the read list (sections, not whole "
+                             "docs; mark docs the part edits (edit)), or pass --over-budget \"<reason>\".")
+        print("  over budget: " + over_budget)
+
+
+def write_brief(template, values, notes, keep, args):
+    """Fills `template` (a file in tools/scripts) with its blocks for `keep`, the notes merged into it and `values`,
+    gates its reading and writes it to --out or <scratch>/brief.md."""
+    text = keep_blocks((SCRIPTS / template).read_text(encoding="utf-8"), keep)
+    text, rest = merge_notes(text, notes)
+    for k, v in list(values.items()) + [("NOTES", rest)]:
         text = text.replace("@@%s@@" % k, v)
+    text = re.sub(r"\n{3,}", "\n\n", text)
     left = re.findall(r"@@\w+@@", text)
     if left:
         raise SystemExit("unfilled placeholders: " + " ".join(sorted(set(left))))
+    gate_reading(text, args.scratch, args.over_budget)
     out = Path(args.out) if args.out else Path(args.scratch) / "brief.md"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(text, encoding="utf-8")
     print("%s: %d words" % (out, len(text.split())))
     return 0
+
+
+def notes_text(args):
+    return Path(args.notes).read_text(encoding="utf-8").strip() if args.notes else ""
+
+
+def cmd_brief(args):
+    """Fills es1_batch_brief.md with the batch number, range, scratch folder and the batch's own notes."""
+    notes = notes_text(args)
+    if args.auto:
+        notes = (notes + "\n\n" if notes else "") + auto_leads(args.binary, args.lo.lower().zfill(8), args.hi.lower().zfill(8))
+    return write_brief("es1_batch_brief.md", {"BATCH": str(args.batch), "LO": args.lo.lower().zfill(8),
+                                              "HI": args.hi.lower().zfill(8), "SCRATCH": args.scratch.replace("/", "\\")},
+                       notes, {"range"}, args)
+
+
+def cmd_port(args):
+    """Fills es1_port_brief.md with the part's name, title, scratch folder, budget and its own notes."""
+    return write_brief("es1_port_brief.md", {"PART": args.part, "TITLE": args.title, "BUDGET": str(args.budget),
+                                             "SCRATCH": args.scratch.replace("/", "\\")}, notes_text(args), set(), args)
 
 
 def main():
@@ -512,6 +670,17 @@ def main():
     b.add_argument("--auto", action="store_true",
                    help="append the tools' leads: bounds, function counts, match candidates, docs naming the range")
     b.add_argument("--binary", default="ES1DBSIM", help="the binary --auto reads (default ES1DBSIM)")
+    pt = sub.add_parser("port", help="write a port subagent's brief from es1_port_brief.md")
+    pt.add_argument("part", help="the part's name, M1")
+    pt.add_argument("--title", required=True, help="what the part ports, for the brief's heading")
+    pt.add_argument("--scratch", required=True, help="the part's scratch folder, named in the brief")
+    pt.add_argument("--notes", help="a file with the part's own section: context, the user's choices, ## Scope, and "
+                                    "## Read first / ## Code / ## Limits / ## Report items to add to the template's")
+    pt.add_argument("--budget", type=int, default=150, help="the tool-call budget (default 150)")
+    pt.add_argument("--out", help="where to write the brief (default <scratch>/brief.md)")
+    for sp in (b, pt):
+        sp.add_argument("--over-budget", metavar="REASON",
+                        help="write the brief though its fixed reading passes the budget, for this reason")
     r = sub.add_parser("run", help="run the file's commands, then apply, regenerate and check")
     r.add_argument("file")
     r.add_argument("--from", dest="start", type=int, default=1, help="resume at this step number")
@@ -528,7 +697,7 @@ def main():
     ls = sub.add_parser("list", help="print the steps the run would take, numbered")
     ls.add_argument("file")
     args = p.parse_args()
-    return {"run": cmd_run, "list": cmd_list, "brief": cmd_brief, "precheck": cmd_precheck,
+    return {"run": cmd_run, "list": cmd_list, "brief": cmd_brief, "port": cmd_port, "precheck": cmd_precheck,
             "next": cmd_next}[args.cmd](args)
 
 
