@@ -49,7 +49,7 @@ The missile's own fields, ES2's 6 lower:
 | `+0x54` | `+0x5a` | the target's component to steer at |
 | `+0x56` | `+0x5c` | the flame countdown, its `int16` at `+0x57` |
 
-`es2_xref.py` finds one other call, from `0001bba4`, which passes its `+0x1c9` as the speed and subtype 0 ([Open](#open)).
+`es2_xref.py` finds one other call, from `Flyer_AttackRun` (`0001bba4`), the flyer's attack run, which passes its `+0x1c9` as the speed and subtype 0 ([the attack run](flyers.md#the-attack-run--flyer_attackrun-0001bba4)).
 
 ## Flight — `Rocket_TickUpdate` (`00007198`)
 
@@ -102,7 +102,6 @@ Slot `+0x18` of `RocketVtable`, (missile), returning 1 when the missile ends; ES
 
 ## Open
 
-- **Open:** `0001bba4`, the other caller of `Rocket_Fire` (`es2_xref.py`), and of `Bullet_Fire` with subtype 2, read only at its calls.
 - **Open:** what reads the owner's `+0xaf`, which homing sets for subtype 3: ES2's AI reads its `+0xb5` ([the fire decision](../../retail/simulation/ai-weapons.md#the-fire-decision--ai_fireatpoint-0041f5a0)), and ES1's AI's selection skip is `+0xaf` ([the AI](mech-ai.md)).
 - **Open:** whether any machine but the player's fires an electro-optical missile in retail, and so whether the trigger latch on its end is ever seen. A retail check: hold the trigger on an autocannon while an enemy's electro-optical missile ends nearby; the gun stops until the trigger is released if the latch is hit.
 - **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: fire a missile at a selected HERC the moment it is selected, before any lock lamp; the missile homes. `BP <CS>:00007748` fires once per missile with the second dword on the stack the firing HERC.

@@ -68,12 +68,12 @@ Descriptor *n* is `000af26c` + `0x28` × *n*.
 
 | # | Name | Think | Move | Reassess | Dwell | Mask |
 |---|---|---|---|---|---|---|
-| 0 | `deciding` | — | — | `0001c46c` | 0 | 0 |
-| 1 | `attacking` | `0001c3f8` | `0001b084` | `0001c46c` | 50000 | 1 |
-| 2 | `patrolling` | `0001c21c` | `0001b084` | `0001c46c` | 5000 | 0 |
-| 3 | `search and destroy` | `0001c14c` | `0001b084` | `0001c46c` | 5000 | 0 |
+| 0 | `deciding` | — | — | `Flyer_AiSelectBehaviour` (`0001c46c`) | 0 | 0 |
+| 1 | `attacking` | `Flyer_BehaviourAttackThink` (`0001c3f8`) | `Flyer_MovementTick` (`0001b084`) | `Flyer_AiSelectBehaviour` (`0001c46c`) | 50000 | 1 |
+| 2 | `patrolling` | `Flyer_BehaviourPatrolThink` (`0001c21c`) | `Flyer_MovementTick` (`0001b084`) | `Flyer_AiSelectBehaviour` (`0001c46c`) | 5000 | 0 |
+| 3 | `search and destroy` | `Flyer_BehaviourSearchDestroyThink` (`0001c14c`) | `Flyer_MovementTick` (`0001b084`) | `Flyer_AiSelectBehaviour` (`0001c46c`) | 5000 | 0 |
 | 4 | `sleeping` | — | — | — | 500 | 1 |
-| 5 | `scouting` | `0001c2d8` | `0001b084` | `0001c46c` | 5000 | 0 |
+| 5 | `scouting` | `Flyer_BehaviourScoutThink` (`0001c2d8`) | `Flyer_MovementTick` (`0001b084`) | `Flyer_AiSelectBehaviour` (`0001c46c`) | 5000 | 0 |
 | 6 | `dead` | — | — | — | 500 | 1 |
 
 The names are the strings at `000918a0`.

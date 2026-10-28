@@ -81,7 +81,7 @@ The classes' own fields follow in their sections.
 
 **`Bullet_FirePowered` (`000081d4`)**, (power, machine, angles, muzzle point, subtype), is `Bullet_Fire` with the power `+0x50` stored after it. ES2's also gives subtype 9 the machine's selected target to home on; ES1 has no subtype 9 and no homing.
 
-`es2_xref.py` finds seven calls of `Bullet_Fire`: from `Bullet_FirePowered`, from `WeaponMount_FireDispatch_GunBeam` and `WeaponMount_FireDispatch_Missile` ([firing](weapon-mount-classes.md#firing)), and two each from `00003364` and `0001bba4`, which pass subtype 2 ([Open](#open)); and three of `Bullet_FirePowered`, all from `WeaponMount_FireDispatch_GunBeam`.
+`es2_xref.py` finds seven calls of `Bullet_Fire`: from `Bullet_FirePowered`, from `WeaponMount_FireDispatch_GunBeam` and `WeaponMount_FireDispatch_Missile` ([firing](weapon-mount-classes.md#firing)), and two each from `00003364` ([Open](#open)) and from `Flyer_AttackRun` (`0001bba4`), the flyer's attack run ([the attack run](flyers.md#the-attack-run--flyer_attackrun-0001bba4)), which pass subtype 2; and three of `Bullet_FirePowered`, all from `WeaponMount_FireDispatch_GunBeam`.
 
 ### Flight — `Bullet_TickUpdate` (`00007f84`)
 
@@ -181,7 +181,7 @@ Slot `+4` of `BeamTracerVtable`, by its padding `000087dd`. Every tracer draws a
 
 ## Open
 
-- **Open:** `00003364` and `0001bba4`, which fire gun rounds of subtype 2 (and `0001bba4` a missile), found by `es2_xref.py` and read only at their calls: the structures' and the flyers' guns, if their files say so.
+- **Open:** `00003364`, which fires gun rounds of subtype 2, found by `es2_xref.py` and read only at its calls: the structures' guns, if their file says so.
 - **Open:** what the word `000af11c`, which the pool's static initializer zeroes, is: `es2_xref.py` finds that one reference.
 - **Open:** what reads a tracer's `+0x3b`, which holds a stale word.
 - **Open:** the retail look of a beam against these readings. A retail check from the outside view: a laser fired across the view should show a cross at the muzzle, an upright and a level span, narrowing to one upright span where the beam stops; one fired along the world's X axis shows the level span edge-on, so its second strip is a wedge from a line at the muzzle to the upright span; and a far beam is thinner on screen than a near one, with no four-pixel floor.

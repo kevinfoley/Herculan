@@ -1282,7 +1282,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObjectBase_ConstructStatic",
-      "description": "(object, shape) in stack order, callee-cleaned: DET_ANIM_OBJ's constructor for a static shape, allocating 0x3f bytes when object is null (0 when that fails): TSObj_Ctor (00001b04)(object, shape), ANIM_OBJ's table copy AnimObjVtableDetAnimObjCopy (000903e6), DET_ANIM_OBJ's DetAnimObjVtable (00090406), and the LOD table +0x3b set to 0; +0x33 stays clear. ES2's SimObjectBase_ConstructStatic (DBSIM 00403368). es2_xref finds calls from 00003cbc and 0001ac58.",
+      "description": "(object, shape) in stack order, callee-cleaned: DET_ANIM_OBJ's constructor for a static shape, allocating 0x3f bytes when object is null (0 when that fails): TSObj_Ctor (00001b04)(object, shape), ANIM_OBJ's table copy AnimObjVtableDetAnimObjCopy (000903e6), DET_ANIM_OBJ's DetAnimObjVtable (00090406), and the LOD table +0x3b set to 0; +0x33 stays clear. ES2's SimObjectBase_ConstructStatic (DBSIM 00403368). es2_xref finds calls from 00003cbc and Flyer_Constructor (0001ac58).",
       "source": "Herculan/docs/es1/simulation/object-classes.md#the-constructors; ES1DBSIM decompile at 00002a74",
       "verified": {
         "bytes": "00002a74+82",
@@ -1372,7 +1372,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Structure_RaycastShapes",
-      "description": "(side, clearance, to, from, result) in stack order, its arguments removed by this function: ES2's Sim_RaycastShapes (DBSIM 00404ca0) over the structures, ES1's Sim_RaycastShapes (00020b70) being the same probe over the zone's shapes. It builds the same ray record on its stack: the frame from Math_EulerToward (00063d2c)(from, to) and BuildEulerRotationMatrixQ14 (0005f0ac) with from as its translation, the length Math_DistanceBetweenPoints (00063c20)(from, to), the int16 clearance, and at +0xa the frame's rotation transposed by Transform_TransposeRotation (00063e05) with the negated translation rotated through Transform_RotatePoint (0005ef74). It returns Sim_RaycastShapeList (000037e0)(side, the record, result)'s answer in AX. es2_xref finds four calls: two from Mech_AiObstacleAvoidance (00011c80), one from Ai_LineOfSightBlocked (00017a00) and one from 0001b084.",
+      "description": "(side, clearance, to, from, result) in stack order, its arguments removed by this function: ES2's Sim_RaycastShapes (DBSIM 00404ca0) over the structures, ES1's Sim_RaycastShapes (00020b70) being the same probe over the zone's shapes. It builds the same ray record on its stack: the frame from Math_EulerToward (00063d2c)(from, to) and BuildEulerRotationMatrixQ14 (0005f0ac) with from as its translation, the length Math_DistanceBetweenPoints (00063c20)(from, to), the int16 clearance, and at +0xa the frame's rotation transposed by Transform_TransposeRotation (00063e05) with the negated translation rotated through Transform_RotatePoint (0005ef74). It returns Sim_RaycastShapeList (000037e0)(side, the record, result)'s answer in AX. es2_xref finds four calls: two from Mech_AiObstacleAvoidance (00011c80), one from Ai_LineOfSightBlocked (00017a00) and one from Flyer_MovementTick (0001b084).",
       "source": "Herculan/docs/es1/simulation/terrain.md#the-structures-tests",
       "verified": {
         "bytes": "000038b8+189",
@@ -2212,7 +2212,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Debris_ThrowGroup",
-      "description": "(group, a, shapes) in stack order, callee-cleaned: draws n = Math_RandomBelow(000b5bd4, the group's throw count +0), 0 to count - 1, and n times draws r = Math_RandomBelow(000b5bd4, the weight total +8), walks the pieces (+4) taking each weight off r while r is greater than it, and passes Debris_Construct (00006168)(0, a, shapes[the piece's shape]) to Debris_ThrowRandomBearing (00006480). A throw count of 0 divides by zero. ES2's Debris_ThrowGroup (DBSIM 004086bc), which throws exactly the count, or every piece for 0. Callers found by es2_xref: Base_ApplyDamage (00003978), 00003a58, Component_DestroyAndCascade (00009cd4), Mech_DirectFireHitTest (00013b44), 0001b370.",
+      "description": "(group, a, shapes) in stack order, callee-cleaned: draws n = Math_RandomBelow(000b5bd4, the group's throw count +0), 0 to count - 1, and n times draws r = Math_RandomBelow(000b5bd4, the weight total +8), walks the pieces (+4) taking each weight off r while r is greater than it, and passes Debris_Construct (00006168)(0, a, shapes[the piece's shape]) to Debris_ThrowRandomBearing (00006480). A throw count of 0 divides by zero. ES2's Debris_ThrowGroup (DBSIM 004086bc), which throws exactly the count, or every piece for 0. Callers found by es2_xref: Base_ApplyDamage (00003978), 00003a58, Component_DestroyAndCascade (00009cd4), Mech_DirectFireHitTest (00013b44), Flyer_DirectFireHitTest (0001b370).",
       "source": "Herculan/docs/es1/formats/debris-dat.md#throwing-a-group",
       "verified": {
         "bytes": "00005fb8+195",
@@ -3277,7 +3277,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Rocket_Fire",
-      "description": "(speed, machine, angles, muzzle point, subtype) in stack order, callee-cleaned: ES2's Rocket_Fire (DBSIM 0040a9c4) on ES1's fields. Rocket_Construct (000074e4)(0, subtype), then through what it returns: the muzzle point to +0x20, the six bytes of angles to +6, the frame word +0x2c = 0, the owner +0x44, the speed +0x4c = speed + 500, the 8 bytes at +0x3c and the age +0x4e zeroed. The lock is 1 when the machine's +0x9d is clear and the subtype 3, otherwise the machine's slot +0x70(machine, subtype); with it the target +0x50 = the machine's +0x15e and, with a target, the component +0x54 = the target's slot +0x58(target, the missile + 6); without it +0x50 = 0. With the machine's +0x9d set, MfdMissileView_TrackedRound (00093914) = the missile. Then Sound_PlayAt (0004deb8)(muzzle point, the type record's +0xc + 10), the record from Rocket_GetTypeRecord (00006e98). es2_xref finds two calls: from WeaponMount_FireDispatch_Missile (0000af40), which passes speed 0, and from 0001bba4.",
+      "description": "(speed, machine, angles, muzzle point, subtype) in stack order, callee-cleaned: ES2's Rocket_Fire (DBSIM 0040a9c4) on ES1's fields. Rocket_Construct (000074e4)(0, subtype), then through what it returns: the muzzle point to +0x20, the six bytes of angles to +6, the frame word +0x2c = 0, the owner +0x44, the speed +0x4c = speed + 500, the 8 bytes at +0x3c and the age +0x4e zeroed. The lock is 1 when the machine's +0x9d is clear and the subtype 3, otherwise the machine's slot +0x70(machine, subtype); with it the target +0x50 = the machine's +0x15e and, with a target, the component +0x54 = the target's slot +0x58(target, the missile + 6); without it +0x50 = 0. With the machine's +0x9d set, MfdMissileView_TrackedRound (00093914) = the missile. Then Sound_PlayAt (0004deb8)(muzzle point, the type record's +0xc + 10), the record from Rocket_GetTypeRecord (00006e98). es2_xref finds two calls: from WeaponMount_FireDispatch_Missile (0000af40), which passes speed 0, and from Flyer_AttackRun (0001bba4).",
       "source": "Herculan/docs/es1/simulation/rockets.md#launching--rocket_fire-00007748",
       "verified": {
         "bytes": "00007748+292",
@@ -3847,7 +3847,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Bullet_Fire",
-      "description": "(machine, angles, muzzle point, subtype) in stack order, callee-cleaned: Bullet_Construct (00007d08)(0, subtype), then through what it returns: the muzzle point to +0x20, the six bytes of angles to +6, the frame word +0x2c = 0, the owner +0x44, the 8 bytes at +0x3c, the power +0x50 and the age +0x4e zeroed, and the speed +0x4c = the projectile record (+0x48)'s +0xa; Sound_PlayAt (0004deb8)(muzzle point, the type record's +8 + 10), the record from Bullet_GetTypeRecord (00007b94). Returns the round. ES2's Bullet_Fire (DBSIM 0040b43c), which also scatters the angles and adds the machine's travel speed. es2_xref finds seven calls: from Bullet_FirePowered (000081d4), WeaponMount_FireDispatch_GunBeam (0000b024) and WeaponMount_FireDispatch_Missile (0000af40), and two each from 00003364 and 0001bba4, which pass subtype 2.",
+      "description": "(machine, angles, muzzle point, subtype) in stack order, callee-cleaned: Bullet_Construct (00007d08)(0, subtype), then through what it returns: the muzzle point to +0x20, the six bytes of angles to +6, the frame word +0x2c = 0, the owner +0x44, the 8 bytes at +0x3c, the power +0x50 and the age +0x4e zeroed, and the speed +0x4c = the projectile record (+0x48)'s +0xa; Sound_PlayAt (0004deb8)(muzzle point, the type record's +8 + 10), the record from Bullet_GetTypeRecord (00007b94). Returns the round. ES2's Bullet_Fire (DBSIM 0040b43c), which also scatters the angles and adds the machine's travel speed. es2_xref finds seven calls: from Bullet_FirePowered (000081d4), WeaponMount_FireDispatch_GunBeam (0000b024) and WeaponMount_FireDispatch_Missile (0000af40), and two each from 00003364 and Flyer_AttackRun (0001bba4), which pass subtype 2.",
       "source": "Herculan/docs/es1/simulation/projectiles.md#firing--bullet_fire-00008134",
       "verified": {
         "bytes": "00008134+159",
@@ -4336,7 +4336,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_SelectStruckComponent",
-      "description": "(model, occupancy flags, object-to-muzzle frame, ray record, object) in stack order, callee-cleaned: sets Collision_HitComponent (000af134) to 0xffff and Collision_HitDistance (000af130) to 0, Collision_RayRemaining (000bc2a6) from the ray record's +4 and Collision_RayClearance (000bc2aa) from its +8, runs Mech_ComponentGeometryTest_Candidate (00008f84)(node, flags, frame, object) on each of the model's 10-byte nodes (count +0, array +2), copies the distance and component to Collision_HitResult (000af138) and returns its address, or null when the distance is 0. ES2's Mech_SelectStruckComponent (DBSIM 0040c9d4). es2_xref finds three calls: Mech_DirectFireHitTest (00013b44), 00003a58 and 0001b370.",
+      "description": "(model, occupancy flags, object-to-muzzle frame, ray record, object) in stack order, callee-cleaned: sets Collision_HitComponent (000af134) to 0xffff and Collision_HitDistance (000af130) to 0, Collision_RayRemaining (000bc2a6) from the ray record's +4 and Collision_RayClearance (000bc2aa) from its +8, runs Mech_ComponentGeometryTest_Candidate (00008f84)(node, flags, frame, object) on each of the model's 10-byte nodes (count +0, array +2), copies the distance and component to Collision_HitResult (000af138) and returns its address, or null when the distance is 0. ES2's Mech_SelectStruckComponent (DBSIM 0040c9d4). es2_xref finds three calls: Mech_DirectFireHitTest (00013b44), 00003a58 and Flyer_DirectFireHitTest (0001b370).",
       "source": "Herculan/docs/es1/simulation/component-damage.md#the-struck-component--mech_selectstruckcomponent-00009064; ES1DBSIM disassembly at 00009064",
       "verified": {
         "bytes": "00009064+151",
@@ -4771,7 +4771,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Component_AllocDamageArrays",
-      "description": "(header, internals, components) in stack order, callee-cleaned: allocates 0x1c bytes when header is null (0 when that fails); +0 a zeroed array of internals int16, +4 a zeroed array of components int16, +8 an array of components int16 with every byte 1, the component count at +0x18 and the internal count at +0x1a; returns header. ES2's Component_AllocDamageArrays (DBSIM 0040d2cc). es2_xref finds two calls: Mech_Constructor (00011330) and 0001ac58.",
+      "description": "(header, internals, components) in stack order, callee-cleaned: allocates 0x1c bytes when header is null (0 when that fails); +0 a zeroed array of internals int16, +4 a zeroed array of components int16, +8 an array of components int16 with every byte 1, the component count at +0x18 and the internal count at +0x1a; returns header. ES2's Component_AllocDamageArrays (DBSIM 0040d2cc). es2_xref finds two calls: Mech_Constructor (00011330) and Flyer_Constructor (0001ac58).",
       "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-damage-header; ES1DBSIM disassembly at 00009b8c",
       "verified": {
         "bytes": "00009b8c+155",
@@ -4786,7 +4786,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Component_LinkMaxRefData",
-      "description": "(header, model, table, machine) in stack order, callee-cleaned: the table at +0xc, the model at +0x10, the machine at +0x14; when maybe_ComponentDependencyList (00090e04) is null, makes it: a 6-byte record holding operator_new(0x14) at +0, the capacity byte 10 at +4 and a zero count byte at +5. ES2's Component_LinkMaxRefData (DBSIM 0040d354), whose list has room for 20. es2_xref finds two calls: Mech_Constructor (00011330) and 0001ac58.",
+      "description": "(header, model, table, machine) in stack order, callee-cleaned: the table at +0xc, the model at +0x10, the machine at +0x14; when maybe_ComponentDependencyList (00090e04) is null, makes it: a 6-byte record holding operator_new(0x14) at +0, the capacity byte 10 at +4 and a zero count byte at +5. ES2's Component_LinkMaxRefData (DBSIM 0040d354), whose list has room for 20. es2_xref finds two calls: Mech_Constructor (00011330) and Flyer_Constructor (0001ac58).",
       "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-damage-header; ES1DBSIM decompile at 00009c28",
       "verified": {
         "bytes": "00009c28+93",
@@ -4846,7 +4846,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Component_ApplyDamageAndCascade",
-      "description": "(header, damage, component) in stack order, callee-cleaned: Component_AddDamage (00009c88)(the damage, the piece's armor +0, the component's entry); when that answers destroyed, Component_SpillIntoDependents (0000979c)(piece, the internals' maxima, the excess, the internals' damage). When the spill leaves a dependent standing and the piece's sequence byte +3 is not -1, the int16 at that sequence in the array at +8 of the machine's (+0x14) shape instance (+0x2e) becomes 1; ES2's has no such step. When it leaves none and the piece's flags (+5) have bit 0, it clears ComponentCascade_EffectLatch (000af140), runs Component_DestroyAndCascade (00009cd4) on the component and then on the last entry of maybe_ComponentDependencyList (00090e04) while its count byte +5 is not 0, taking 1 from the count first, and returns 1; otherwise 0. ES2's Component_ApplyDamageAndCascade (DBSIM 0040da38). es2_xref finds three calls: Mech_ComponentDamageWrite (00013250), Mech_DirectFireHitTest (00013b44) and 0001b290.",
+      "description": "(header, damage, component) in stack order, callee-cleaned: Component_AddDamage (00009c88)(the damage, the piece's armor +0, the component's entry); when that answers destroyed, Component_SpillIntoDependents (0000979c)(piece, the internals' maxima, the excess, the internals' damage). When the spill leaves a dependent standing and the piece's sequence byte +3 is not -1, the int16 at that sequence in the array at +8 of the machine's (+0x14) shape instance (+0x2e) becomes 1; ES2's has no such step. When it leaves none and the piece's flags (+5) have bit 0, it clears ComponentCascade_EffectLatch (000af140), runs Component_DestroyAndCascade (00009cd4) on the component and then on the last entry of maybe_ComponentDependencyList (00090e04) while its count byte +5 is not 0, taking 1 from the count first, and returns 1; otherwise 0. ES2's Component_ApplyDamageAndCascade (DBSIM 0040da38). es2_xref finds three calls: Mech_ComponentDamageWrite (00013250), Mech_DirectFireHitTest (00013b44) and Flyer_ComponentDamageWrite (0001b290).",
       "source": "Herculan/docs/es1/simulation/component-damage.md#write-and-cascade--component_applydamageandcascade-00009f7c; ES1DBSIM disassembly at 00009f7c",
       "verified": {
         "bytes": "00009f7c+253",
@@ -4861,7 +4861,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Component_ReadOverallDamage",
-      "description": "(header), callee-cleaned: over the header's components (+0x18 count), whatever their flags, sums each entry (+4 array), or the piece's armor for a negative entry, and each piece's armor (+0); over the internals (+0x1a count) each entry (+0 array), or the maximum for a negative one, and each maximum (the table's +4 array); returns the damage sum shifted left 8 divided by the maximum sum, signed (IDIV). ES2's Component_ReadOverallDamage (DBSIM 0040db2c). es2_xref finds two calls, from Mech_GetOverallDamage (00010eb0) and 0001b50c.",
+      "description": "(header), callee-cleaned: over the header's components (+0x18 count), whatever their flags, sums each entry (+4 array), or the piece's armor for a negative entry, and each piece's armor (+0); over the internals (+0x1a count) each entry (+0 array), or the maximum for a negative one, and each maximum (the table's +4 array); returns the damage sum shifted left 8 divided by the maximum sum, signed (IDIV). ES2's Component_ReadOverallDamage (DBSIM 0040db2c). es2_xref finds two calls, from Mech_GetOverallDamage (00010eb0) and Flyer_GetOverallDamage (0001b50c).",
       "source": "Herculan/docs/es1/simulation/component-damage.md#the-readings; ES1DBSIM disassembly at 0000a07c",
       "verified": {
         "bytes": "0000a07c+237",
@@ -7156,7 +7156,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_ReportOutOfAction",
-      "description": "(object), callee-cleaned: with a group at +0x3f, Group_ReportIfAllOutOfAction (0001d524)(group, object); then, when the int16 flag number +0x174 is not negative, finds the int16 operation +0x176 by REPNE SCASD among the six dwords at 00091640 (2, 1, 0xd, 0xe, 0xf, 0x10) and jumps through the targets after them: 2 adds 1 to that word of MissionVars (000bc4b8), 1 stores 0 there and 0xd-0x10 store the operation less 0xc; any other operation writes nothing. ES2's Mech_ReportOutOfAction (DBSIM 00411bc8), which walks ten (flag, operation) pairs. es2_xref finds four calls, from Base_ApplyDamage (00003978), Mech_ComponentDamageWrite (00013250) (two) and 0001b290.",
+      "description": "(object), callee-cleaned: with a group at +0x3f, Group_ReportIfAllOutOfAction (0001d524)(group, object); then, when the int16 flag number +0x174 is not negative, finds the int16 operation +0x176 by REPNE SCASD among the six dwords at 00091640 (2, 1, 0xd, 0xe, 0xf, 0x10) and jumps through the targets after them: 2 adds 1 to that word of MissionVars (000bc4b8), 1 stores 0 there and 0xd-0x10 store the operation less 0xc; any other operation writes nothing. ES2's Mech_ReportOutOfAction (DBSIM 00411bc8), which walks ten (flag, operation) pairs. es2_xref finds four calls, from Base_ApplyDamage (00003978), Mech_ComponentDamageWrite (00013250) (two) and Flyer_ComponentDamageWrite (0001b290).",
       "source": "Herculan/docs/es1/simulation/sim-object-base.md#the-out-of-action-report--mech_reportoutofaction-0000d77c; ES1DBSIM disassembly at 0000d77c",
       "verified": {
         "bytes": "0000d77c+137",
@@ -7291,7 +7291,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ObjectList_Add",
-      "description": "(list, object) in stack order, callee-cleaned: stores the object at entry int16 +6 of the array at +0, stores that index at the object's int16 +0x45 and adds 1 to +6. ES2's ObjectList_Add (DBSIM 00411dd4). es2_xref finds five calls: three from 00003cbc, one from Mech_Constructor (00011330) and one from 0001ac58.",
+      "description": "(list, object) in stack order, callee-cleaned: stores the object at entry int16 +6 of the array at +0, stores that index at the object's int16 +0x45 and adds 1 to +6. ES2's ObjectList_Add (DBSIM 00411dd4). es2_xref finds five calls: three from 00003cbc, one from Mech_Constructor (00011330) and one from Flyer_Constructor (0001ac58).",
       "source": "Herculan/docs/es1/simulation/sim-object-base.md#the-live-object-list; ES1DBSIM disassembly at 0000db10",
       "verified": {
         "bytes": "0000db10+45",
@@ -8176,7 +8176,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Flyer_BuildStateTable",
-      "description": "Static constructor (its pointer is at 000adbf8): fills the seven 0x24-byte descriptors of FlyerBehaviourStateTable (000af58c): name from the strings at 000918a0, dwell, the 16 flag bytes Behaviour_ExpandFlagBitsFlyerStatesCopy (000107b8) unpacks from a mask, and the think, move and reassess function pointers at +0x18, +0x1c and +0x20. deciding (0, mask 0, reassess 0001c46c), attacking (50000, 1, 0001c3f8, 0001b084, 0001c46c), patrolling (5000, 0, 0001c21c, 0001b084, 0001c46c), search and destroy (5000, 0, 0001c14c, 0001b084, 0001c46c), sleeping (500, 1, none), scouting (5000, 0, 0001c2d8, 0001b084, 0001c46c), dead (500, 1, none). ES2's Flyer_BuildStateTable (DBSIM 00414c68), whose 0x3c-byte descriptors take member-function triples.",
+      "description": "Static constructor (its pointer is at 000adbf8): fills the seven 0x24-byte descriptors of FlyerBehaviourStateTable (000af58c): name from the strings at 000918a0, dwell, the 16 flag bytes Behaviour_ExpandFlagBitsFlyerStatesCopy (000107b8) unpacks from a mask, and the think, move and reassess function pointers at +0x18, +0x1c and +0x20. deciding (0, mask 0, reassess Flyer_AiSelectBehaviour (0001c46c)), attacking (50000, 1, Flyer_BehaviourAttackThink (0001c3f8), Flyer_MovementTick (0001b084), Flyer_AiSelectBehaviour (0001c46c)), patrolling (5000, 0, Flyer_BehaviourPatrolThink (0001c21c), Flyer_MovementTick (0001b084), Flyer_AiSelectBehaviour (0001c46c)), search and destroy (5000, 0, Flyer_BehaviourSearchDestroyThink (0001c14c), Flyer_MovementTick (0001b084), Flyer_AiSelectBehaviour (0001c46c)), sleeping (500, 1, none), scouting (5000, 0, Flyer_BehaviourScoutThink (0001c2d8), Flyer_MovementTick (0001b084), Flyer_AiSelectBehaviour (0001c46c)), dead (500, 1, none). ES2's Flyer_BuildStateTable (DBSIM 00414c68), whose 0x3c-byte descriptors take member-function triples.",
       "source": "Herculan/docs/es1/simulation/shields-and-behaviour-states.md#the-aircrafts-state-table; ES1DBSIM decompile at 000105b0",
       "verified": {
         "bytes": "000105b0+520",
@@ -8596,7 +8596,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObject_SetRunIntoMechCopy",
-      "description": "(object), callee-cleaned: sets the byte +0xab to 1, through the rebased +0x8c and displacement 0x1f. Slot +0x6c of the object base's table 00091a6a and of MechVtable (00091ae6), by its padding 000118e3; the aircraft's file has the same code at 0001af1c. ES2's SimObject_SetRunInto (DBSIM 0042200c), which sets +0xb1.",
+      "description": "(object), callee-cleaned: sets the byte +0xab to 1, through the rebased +0x8c and displacement 0x1f. Slot +0x6c of the object base's table 00091a6a and of MechVtable (00091ae6), by its padding 000118e3; the aircraft's file has the same code at SimObject_SetRunIntoFlyerCopy (0001af1c). ES2's SimObject_SetRunInto (DBSIM 0042200c), which sets +0xb1.",
       "source": "Herculan/docs/es1/simulation/mech.md#the-hercs-table; ES1DBSIM disassembly at 000118e4",
       "verified": {
         "bytes": "000118e4+22",
@@ -8611,7 +8611,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObject_MissileLockState_AlwaysMechCopy",
-      "description": "(object, subtype), callee-cleaned (RET 8), frameless: two NOPs, then MOV AX,1: returns 1. Slot +0x70 of the object base's table 00091a6a and of MechVtable (00091ae6); the bytes of SimObject_CompareCombatRatingStub (0000d730), and the aircraft's file has the same code at 0001af32. ES2's SimObject_MissileLockState_Always (DBSIM 00411b04), at the slot ES2's HERC fills with Mech_MissileLockState.",
+      "description": "(object, subtype), callee-cleaned (RET 8), frameless: two NOPs, then MOV AX,1: returns 1. Slot +0x70 of the object base's table 00091a6a and of MechVtable (00091ae6); the bytes of SimObject_CompareCombatRatingStub (0000d730), and the aircraft's file has the same code at SimObject_MissileLockState_AlwaysFlyerCopy (0001af32). ES2's SimObject_MissileLockState_Always (DBSIM 00411b04), at the slot ES2's HERC fills with Mech_MissileLockState.",
       "source": "Herculan/docs/es1/simulation/mech.md#the-hercs-table; ES1DBSIM disassembly at 000118fa",
       "verified": {
         "bytes": "000118fa+9",
@@ -10601,12 +10601,117 @@
       }
     },
     {
+      "address": "0001ab54",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorFlyerCopy",
+      "description": "(p, flags), callee-cleaned: byte for byte the code of HeapPtr_DtorRocketCopy (00006dfc), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/flyers.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0001ab54",
+      "verified": {
+        "bytes": "0001ab54+40",
+        "sha1": "73af9650ce00",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0001ab7c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorFlyerCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 00091f06: byte for byte the code of ConfigPart_DtorDetAnimObjCopy (000028e0), relocated operands aside, storing 00091f06 and 00091f3a where that stores 000903ae and 0009037a. ES2's ConfigPart_Dtor (DBSIM 00420730).",
+      "source": "Herculan/docs/es1/simulation/flyers.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0001ab7c",
+      "verified": {
+        "bytes": "0001ab7c+63",
+        "sha1": "e0c76c415736",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0001abbb",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagFlyerCopy",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +4 of the vtable 00091f06; the code of ConfigPart_GetClassTagDetAnimObjCopy (000028d6).",
+      "source": "Herculan/docs/es1/simulation/flyers.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0001abbb",
+      "verified": {
+        "bytes": "0001abbb+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0001abc4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorFlyerCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 00091f3a (entered at its padding 0001abc1): byte for byte the code of TSPartBase_Dtor (0005d614), relocated operands aside, storing 00091f3a where that stores 000974aa. ES2's TSPartBase_Dtor (DBSIM 0049224b).",
+      "source": "Herculan/docs/es1/simulation/flyers.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0001abc4",
+      "verified": {
+        "bytes": "0001abc4+42",
+        "sha1": "0fbd9ea11cff",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0001abf0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_GetSpeed",
+      "description": "(flyer), its argument removed by this function: Math_Q10Multiply (0005e818)(1000, the forward speed +0x1c9), its answer returned. Slot +0x3c of the flyer table 00091fea. ES2's Flyer_GetSpeed (DBSIM 00421584).",
+      "source": "Herculan/docs/es1/simulation/flyers.md#the-flyers-table; ES1DBSIM decompile of 0001abf0",
+      "verified": {
+        "bytes": "0001abf0+35",
+        "sha1": "5fad71709562",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001ac14",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_FlushDeletes",
+      "description": "No arguments, frameless: ObjectPool_FlushDeleteQueue (00063784)(g_FlyerDeleteQueue (000af730), g_FlyerPool (000af72c)) in stack order. es2_xref finds one stored pointer, the PUSH by which Flyer_RegisterSubsystem (0001b660) registers it at subsystem phase 5. ES2's Flyer_FlushDeletes (DBSIM 004215a8).",
+      "source": "Herculan/docs/es1/simulation/flyers.md#construction--flyer_constructor-0001ac58; ES1DBSIM disassembly at 0001ac14",
+      "verified": {
+        "bytes": "0001ac14+17",
+        "sha1": "6c25b5aae7ea",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0001ac28",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_HandleCommandNoOp",
+      "description": "(flyer, command), frameless: MOVZX EAX,WORD PTR [ESP + 8], XOR EAX,EAX and RET 8: returns 0. Slot +0x30 of the flyer table 00091fea. ES2's Flyer_HandleCommandNoOp (DBSIM 004215c0).",
+      "source": "Herculan/docs/es1/simulation/flyers.md#the-flyers-table; ES1DBSIM disassembly at 0001ac28",
+      "verified": {
+        "bytes": "0001ac28+10",
+        "sha1": "d8a12c36b349",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
       "address": "0001ac34",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Flyer_Draw",
-      "description": "(flyer), its argument removed by this function: TSDetailPart_SetBias (000530a4)(g_TSDetailBiasForFlyers (000bc460)), Shape_DrawAtDetailLevel (00002b30)(flyer), TSDetailPart_SetBias(0). Slot +4 of the flyer table 00091fea, which 0001ac58 and 0001af3c store. ES2's Flyer_Draw (DBSIM 004215cc).",
+      "description": "(flyer), its argument removed by this function: TSDetailPart_SetBias (000530a4)(g_TSDetailBiasForFlyers (000bc460)), Shape_DrawAtDetailLevel (00002b30)(flyer), TSDetailPart_SetBias(0). Slot +4 of the flyer table 00091fea, which Flyer_Constructor (0001ac58) and Flyer_Dtor (0001af3c) store. ES2's Flyer_Draw (DBSIM 004215cc).",
       "source": "Herculan/docs/es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08",
       "verified": {
         "bytes": "0001ac34+33",
@@ -10616,12 +10721,252 @@
       }
     },
     {
+      "address": "0001ac58",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_Constructor",
+      "description": "(flyer, type) in stack order, its arguments removed by this function: a null flyer is taken from g_FlyerPool (000af72c) with Pool_Alloc (000638c8), and 0 returned when that fails. SimObjectBase_ConstructStatic (00002a74)(flyer, the type record's shape +0x2a), the record at 000bc46c + FlyerType_RecordIndex (0001c678)(type) * 0x2e; the base's vtable 00091f6e at +2, the class +0x162 = -1, +0x92 and +0xa1 = 1, ObjectList_Add (0000db10)(LiveObjectList (000bc416), flyer), +0x16c and +0x170 = 0 and +0x174 = -1; Component_AllocDamageArrays (00009b8c)(+0x196, 1, 1). Then the vtable 00091fea, the type tag +0 = 6, the record at +0x190, the class 2, the velocity +0x1c7, +0x1c9, +0x1cb = (0, the record's +4, 0), Component_LinkMaxRefData (00009c28)(+0x196, the record's +0x26, its +0x22, flyer) and Behaviour_SetState (0000fdfc)(+0x47, FlyerBehaviourStateTable (000af58c), the deciding state). Returns the flyer. ES2's Flyer_Constructor (DBSIM 004215f4), which also sets up the flight model's block.",
+      "source": "Herculan/docs/es1/simulation/flyers.md#construction--flyer_constructor-0001ac58; ES1DBSIM disassembly of 0001ac58",
+      "verified": {
+        "bytes": "0001ac58+571",
+        "sha1": "e5b20f6dc884",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001ae94",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_GetPositionFlyerCopy",
+      "description": "(object): slot +8 of the vtable 00091f6e (entered at its padding 0001ae93), and slot +8 of the vtable 00091fea (entered at its padding 0001ae93), and slot +8 of the vtable 00092066: byte for byte the code of TSObj_GetPosition (00001cfc), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/flyers.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0001ae94",
+      "verified": {
+        "bytes": "0001ae94+20",
+        "sha1": "a1b95c43ba5f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0001aea8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SimObject_DtorFlyerCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of the vtable 00091f6e: byte for byte the code of SimObject_DtorMechCopy (00011870), relocated operands aside, storing 00091f6e and 00092066 where that stores 00091a6a and 00091b86.",
+      "source": "Herculan/docs/es1/simulation/flyers.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0001aea8",
+      "verified": {
+        "bytes": "0001aea8+34",
+        "sha1": "e9e2213b0ef6",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0001aeca",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_ReturnZeroFlyerCopy",
+      "description": "Frameless: two NOPs, then XOR EAX,EAX and RET 4: returns 0. Slot +0x10 of the vtable 00091f6e, and slot +0x10 of the vtable 00091fea, and slot +0x10 of the vtable 00092066; the code of TSObj_ReturnZero (000018e8).",
+      "source": "Herculan/docs/es1/simulation/flyers.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0001aeca",
+      "verified": {
+        "bytes": "0001aeca+7",
+        "sha1": "caf3d3407fd2",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0001aed4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_GetRadiusFlyerCopy",
+      "description": "(object): slot +0x14 of the vtable 00091f6e (entered at its padding 0001aed1), and slot +0x14 of the vtable 00091fea (entered at its padding 0001aed1), and slot +0x14 of the vtable 00092066 (entered at its padding 0001aed1): byte for byte the code of TSObj_GetRadius (00001d58), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/flyers.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0001aed4",
+      "verified": {
+        "bytes": "0001aed4+71",
+        "sha1": "81f34db4094a",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0001af1c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SimObject_SetRunIntoFlyerCopy",
+      "description": "(object), callee-cleaned: slot +0x6c of the vtable 00091f6e (entered at its padding 0001af1b), and slot +0x6c of the vtable 00091fea (entered at its padding 0001af1b): byte for byte the code of SimObject_SetRunIntoMechCopy (000118e4), relocated operands aside. ES2's SimObject_SetRunInto (DBSIM 0042200c).",
+      "source": "Herculan/docs/es1/simulation/flyers.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0001af1c",
+      "verified": {
+        "bytes": "0001af1c+22",
+        "sha1": "3f482e9d3cd0",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0001af32",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SimObject_MissileLockState_AlwaysFlyerCopy",
+      "description": "Frameless: two NOPs, then MOV AX,1 and RET 8. Slot +0x70 of the vtable 00091f6e, and slot +0x70 of the vtable 00091fea; the code of SimObject_MissileLockState_AlwaysMechCopy (000118fa). ES2's SimObject_MissileLockState_Always (DBSIM 00411b04).",
+      "source": "Herculan/docs/es1/simulation/flyers.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0001af32",
+      "verified": {
+        "bytes": "0001af32+9",
+        "sha1": "4da62d48f18b",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0001af3c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_Dtor",
+      "description": "(flyer, flags) in stack order, its arguments removed by this function: for a flyer, stores the vtables 00091fea, 00091f6e and 00092066 at +2 in turn, AnimObj_Dtor (00001f98)(flyer, 0) and, with flags bit 0, ObjectPool_QueueForDelete (00063760)(g_FlyerDeleteQueue (000af730), flyer). Slot +0xc of the flyer table 00091fea. ES2's Flyer_Dtor (DBSIM 004271bf), which takes the flyer out of the live object list instead of queuing it.",
+      "source": "Herculan/docs/es1/simulation/flyers.md#construction--flyer_constructor-0001ac58; ES1DBSIM decompile of 0001af3c",
+      "verified": {
+        "bytes": "0001af3c+62",
+        "sha1": "d70ff19f8e31",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001af7c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DetAnimObj_DtorFlyerCopy",
+      "description": "(object, flags), callee-cleaned: slot +0xc of the vtable 00092066 (entered at its padding 0001af7a): byte for byte the code of DetAnimObj_Dtor (00002a48), relocated operands aside, storing 00092066 where that stores 00090406. ES2's DetAnimObj_Dtor (DBSIM 00426f98).",
+      "source": "Herculan/docs/es1/simulation/flyers.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0001af7c",
+      "verified": {
+        "bytes": "0001af7c+43",
+        "sha1": "9d8b24fb27ee",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0001afa8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_DispatchMove",
+      "description": "(flyer), its argument removed by this function: with +0x93 clear, Sound_PlayAt (0004deb8)(the position +0x20, 0x10) when Sound_IsPlaying (0004e05c)(0x10) answers 0, else Sound_OfferPosition (0004dee4)(position, 0x10); with +0x93 set, Sound_Stop (0004df70)(0x10). Then the move slot +0x1c of the descriptor at +0x47 with the flyer, its answer sign-extended, or 0 for a null slot. Slot +0x18 of the flyer table 00091fea. ES2's Flyer_DispatchMove (DBSIM 004217fc) is the dispatch alone.",
+      "source": "Herculan/docs/es1/simulation/flyers.md#the-move--flyer_movementtick-0001b084; ES1DBSIM disassembly of 0001afa8",
+      "verified": {
+        "bytes": "0001afa8+137",
+        "sha1": "22cee71033de",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001b034",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Behaviour_DispatchThinkFlyerCopy",
+      "description": "(machine), callee-cleaned: slot +0x1c of the vtable 00091fea (entered at its padding 0001b031): byte for byte the code of Behaviour_DispatchThink (000112e0), relocated operands aside. ES2's Behaviour_DispatchThink (DBSIM 00415b38).",
+      "source": "Herculan/docs/es1/simulation/flyers.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0001b034",
+      "verified": {
+        "bytes": "0001b034+38",
+        "sha1": "ea1071c0f730",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0001b05c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Behaviour_DispatchReassessFlyerCopy",
+      "description": "(machine), callee-cleaned: slot +0x20 of the vtable 00091fea (entered at its padding 0001b05a): byte for byte the code of Behaviour_DispatchReassess (00011308), relocated operands aside. ES2's Behaviour_DispatchReassess (DBSIM 00415b74).",
+      "source": "Herculan/docs/es1/simulation/flyers.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0001b05c",
+      "verified": {
+        "bytes": "0001b05c+38",
+        "sha1": "e183986ab47e",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0001b084",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_MovementTick",
+      "description": "(flyer), its argument removed by this function: the forward speed +0x1c9 = the type record's (+0x190) +4; the position +0x20 = Transform_ApplyToShortPoint (0005e858)(the velocity +0x1c7, Context_GetTransform (000016e8)(+6)); the pitch, roll and heading +6, +8 and +0xa plus the rates +0x18a, +0x18c and +0x18e, and +0x2c = 0. Then a look-ahead ray from the position to (0, 15000, 0) through the rebuilt frame (Transform_ApplyToPoint (0005f58c)), its distance 0 to start: with the end's Z below 500, 1 when the position's Z is below 500 too, else (Z - 500) << 14 / Math_CosBam (0006477c)(-e - 0x4000) for e = Math_ElevationAngle (00063cf0)(position, end) when -e is not 0. Sim_RaycastShapes (00020b70)(0, end, position, hit) and Structure_RaycastShapes (000038b8)(0xffff, 0, end, position, hit) each replace the distance with a hit nearer than it. Math_CountdownTimerTick (0006410c)(+0x1d4): +0xa8 = 0 when it answers 0 and the distance is 0; otherwise +0xa8 = 1 and, with a distance d, +0x1d2 = (15000 - d) * 256 / 15000 and the counter +0x1d5 = 1500. Returns 1. The move of the flyer states 1, 2, 3 and 5. ES2's Flyer_MovementTick (DBSIM 004218c4), which adds the flight model's velocity, probes the terrain at four points, clamps to the ground and plays the flyby sound.",
+      "source": "Herculan/docs/es1/simulation/flyers.md#the-move--flyer_movementtick-0001b084; ES1DBSIM disassembly of 0001b084",
+      "verified": {
+        "bytes": "0001b084+523",
+        "sha1": "59ff7b4e14dc",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001b290",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_ComponentDamageWrite",
+      "description": "(flyer, attacker, damage, component) in stack order, its arguments removed by this function: Component_ApplyDamageAndCascade (00009f7c)(+0x196, damage, component); when that answers non-zero for component 0: Computer_PostMessage (0001a154)(3) when the attacker is LocalPlayerMech (000b5b86) and its target +0x15e is the flyer; the attacker's slot +0x64(attacker, 0, flyer); +0x93 = 1, +0x90 = 0, +0x32 = 1 and the Z +0x28 = -100000; Mech_ReportOutOfAction (0000d77c)(flyer); Action_Activate (0001cc5c)(+0x170) when it is set; Behaviour_SetState (0000fdfc)(+0x47, the dead descriptor 000af664); and 1. Returns 0 otherwise. ES2's Flyer_ComponentDamageWrite (DBSIM 00421bb4), which tests the attacker for null, posts message 0x2e, sets the debris carrier around the call and stops the flyby sound.",
+      "source": "Herculan/docs/es1/simulation/flyers.md#hits-and-death; ES1DBSIM disassembly of 0001b290",
+      "verified": {
+        "bytes": "0001b290+221",
+        "sha1": "b442e5aeeb42",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001b370",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_DirectFireHitTest",
+      "description": "(flyer, shot) in stack order, its arguments removed by this function: returns 0 when Math_DistanceBetweenPoints (00063c20) from the flyer's +0x20 to the ray's start (+0x14 of what the ray record, the shot's +0, points at) is above the flyer's radius (slot +0x14) plus the ray's length +4 and its int16 clearance +8. Copies the shot's int16 +6 and +4 and scales both with Damage_ScaleByDifficulty (0001f82c) when the side byte +0x14 of the shooter's (+0xe) group (+0x3f) is 0. Mech_SelectStruckComponent (00009064)(the record's collision model +0x26, the occupancy flags +0x19e, Transform_Concat (0005ea08) of the flyer's transform and the ray's +0xa, the ray, flyer); on a hit, the effect type is entry 8 + (Math_RandomNext (00063af4)(000b5bd4) & 3) of the int16 array the shot's +0xa points at and the debris group 1, both 10 and 3 when Flyer_ComponentDamageWrite (0001b290)(flyer, shooter, the scaled +4, the struck component) answers non-zero; then Explosion_Construct (00005af0)(0, point, type) and Debris_ThrowGroup (00005fb8)(g_DebrisGroups (000bc1c0) + group * 10, point, g_DebrisShapes (000bc1c6)), the point the ray's frame applied to (0, distance + 1, 0). Returns the hit distance + 1, or 0. Slot +0x24 of the flyer table 00091fea. ES2's Flyer_DirectFireHitTest (DBSIM 00421c8c), which first passes over the view's object while a global is set.",
+      "source": "Herculan/docs/es1/simulation/flyers.md#hits-and-death; ES1DBSIM disassembly of 0001b370",
+      "verified": {
+        "bytes": "0001b370+412",
+        "sha1": "6d172be67c07",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001b50c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_GetOverallDamage",
+      "description": "(flyer), its argument removed by this function: Component_ReadOverallDamage (0000a07c)(+0x196). Slot +0x44 of the flyer table 00091fea. ES2's Flyer_GetOverallDamage (DBSIM 00421e84).",
+      "source": "Herculan/docs/es1/simulation/flyers.md#the-flyers-table; ES1DBSIM decompile of 0001b50c",
+      "verified": {
+        "bytes": "0001b50c+21",
+        "sha1": "b8c338678acc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0001b524",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Flyer_ApplyFormationOffset",
-      "description": "(object, position) in stack order, callee-cleaned: Mech_ApplyFormationOffset (00012ed0) with FlyerFormation_GetSlotOffset (0001c7f0) for the slot's three int16. ES2's Flyer_ApplyFormationOffset (DBSIM 00421e98). Callers found by es2_xref: 0001b574, 0001ba88.",
+      "description": "(object, position) in stack order, callee-cleaned: Mech_ApplyFormationOffset (00012ed0) with FlyerFormation_GetSlotOffset (0001c7f0) for the slot's three int16. ES2's Flyer_ApplyFormationOffset (DBSIM 00421e98). Callers found by es2_xref: Flyer_AttachToGroup (0001b574), Flyer_FormationStep (0001ba88).",
       "source": "Herculan/docs/es1/formats/formations-dat.md#where-a-member-stands",
       "verified": {
         "bytes": "0001b524+80",
@@ -10631,12 +10976,387 @@
       }
     },
     {
+      "address": "0001b574",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_AttachToGroup",
+      "description": "(flyer, member slot, group) in stack order, its arguments removed by this function: Mech_AttachToGroup (00013124) for a flyer: the group to +0x3f and the slot to +0x43; when +6 is -32768, the rotation (0, 0, the group's heading +0xc) and +0x2c = 0; when the Z +0x28 is negative, the position is the group's point +0x20 or Route_WaypointAt (0001cfb8)(group + 6, the cursor's index), moved by Flyer_ApplyFormationOffset (0001b524); then a Z of 0 becomes 5000. es2_xref finds one call, from DBSim_BuildGroupRecord (0001cff4). ES2's Flyer_AttachToGroup (DBSIM 00421ee8), which tests the Z for -32768 and reaches the formation offset through the vtable.",
+      "source": "Herculan/docs/es1/simulation/flyers.md#joining-its-group--flyer_attachtogroup-0001b574; ES1DBSIM decompile of 0001b574",
+      "verified": {
+        "bytes": "0001b574+236",
+        "sha1": "7a15ec618c0d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001b660",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_RegisterSubsystem",
+      "description": "No arguments, frameless, the flyer class's static initializer (static constructor table entry 000adc08): RegisterSubsystemLoader (00000ac4)(5, Flyer_FlushDeletes (0001ac14)) in stack order, then the word 000af794 = 0 and g_FlyerPool (000af72c) = 0. ES2's Flyer_RegisterSubsystem (DBSIM 00421fb0).",
+      "source": "Herculan/docs/es1/simulation/flyers.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0001b660",
+      "verified": {
+        "bytes": "0001b660+32",
+        "sha1": "7d3221cfafe5",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0001b680",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_StaticDtor",
+      "description": "No arguments, frameless, the exit routine of Flyer_RegisterSubsystem (0001b660) (exit table entry 000adca8): operator_delete (000015f8)(g_FlyerPool (000af72c)) when it is set. ES2's Flyer_StaticDtor (DBSIM 00421ff4).",
+      "source": "Herculan/docs/es1/simulation/flyers.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0001b680",
+      "verified": {
+        "bytes": "0001b680+21",
+        "sha1": "66030e421dc7",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0001b698",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorFlyerAiCopy",
+      "description": "(p, flags), callee-cleaned: byte for byte the code of HeapPtr_DtorRocketCopy (00006dfc), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/flyers.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0001b698",
+      "verified": {
+        "bytes": "0001b698+40",
+        "sha1": "fc1a0e349c61",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0001b6c0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_PitchCommand",
+      "description": "(flyer, pitch) in stack order, its arguments removed by this function: Math_RateLimitedMoveToward (0005e598)(the type record's (+0x190) +0, pitch, a copy of the pitch +6), the copy written back to +6, and +0x2c = 0. The counterpart of ES2's Flyer_PitchCommand (DBSIM 00422098), which returns a pitch command for the flight model.",
+      "source": "Herculan/docs/es1/simulation/flyers.md#flying; ES1DBSIM decompile of 0001b6c0",
+      "verified": {
+        "bytes": "0001b6c0+72",
+        "sha1": "bb0a1c75af4d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001b708",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_PitchToAltitude",
+      "description": "(flyer, altitude) in stack order, its arguments removed by this function: with +0xa8 set the altitude becomes Math_Q8Multiply (0005e7f8)(15000, +0x1d2); then Flyer_PitchCommand (0001b6c0)(flyer, Math_Atan2Guarded (00063ca0) of x 6000 and y the altitude less the Z +0x28). ES2's Flyer_PitchToAltitude (DBSIM 00422108), which runs the height error against 10000 and, with +0xae set, asks for the pitch plus Q8(+0x23c, 4000).",
+      "source": "Herculan/docs/es1/simulation/flyers.md#flying; ES1DBSIM disassembly of 0001b708",
+      "verified": {
+        "bytes": "0001b708+98",
+        "sha1": "e068267a9505",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001b76c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_CommandRoll",
+      "description": "(flyer, roll) in stack order, its arguments removed by this function: Flyer_ApplyFlightCommand (0001b794)(flyer, 0, (roll - the roll +8) >> 4), entered at its padding 0001b791. ES2's Flyer_CommandRoll (DBSIM 0042215c), which adds a roll-rate term.",
+      "source": "Herculan/docs/es1/simulation/flyers.md#flying; ES1DBSIM decompile of 0001b76c",
+      "verified": {
+        "bytes": "0001b76c+37",
+        "sha1": "3e064b218819",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001b794",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_ApplyFlightCommand",
+      "description": "(flyer, pitch command, roll command) in stack order, its arguments removed by this function: the roll command clamped to [-0x100, 0x100]; Math_RateLimitedMoveToward (0005e598)(the type record's +8, Math_Q8Multiply (0005e7f8)(command, the record's +2), the roll rate +0x18c); the heading rate +0x18e = -roll (+8) >> the record's +0xa; Flyer_PitchCommand (0001b6c0)(flyer, the pitch +6 + (pitch command << 4)). es2_xref finds five calls: Flyer_CommandRoll (0001b76c), Flyer_SteerAndFly (0001b8c4), Flyer_AttackRun (0001bba4) twice and Sim_PollPlayerInput (0005a0c0), which passes a viewed flyer the throttle and steering axes. ES2's Flyer_ApplyFlightCommand (DBSIM 004221a8), which squares the axes and runs the flight model.",
+      "source": "Herculan/docs/es1/simulation/flyers.md#flying; ES1DBSIM disassembly of 0001b794",
+      "verified": {
+        "bytes": "0001b794+144",
+        "sha1": "d2776550cfac",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001b824",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_FormationThrottle",
+      "description": "(flyer, base, steering, distance, leader) in stack order, its arguments removed by this function: +0x1b2 plus (the leader's speed +0x1c9 less the flyer's) * 8 plus (Math_Q14Multiply (0005e838)(distance, Math_CosBam (0006477c)(steering + heading +0xa - the leader's heading)) - base) >> 1, clamped to [0x8c, 0x100], into +0x1b2. es2_xref finds one call, from Flyer_FormationStep (0001ba88), which passes 0x2000 as base. ES2's Flyer_FormationThrottle (DBSIM 00422260), its arguments in the reverse order.",
+      "source": "Herculan/docs/es1/simulation/flyers.md#the-thinks; ES1DBSIM decompile of 0001b824",
+      "verified": {
+        "bytes": "0001b824+160",
+        "sha1": "ed0e0ae07563",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001b8c4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_SteerAndFly",
+      "description": "(flyer, leader, steering) in stack order, its arguments removed by this function: the command is -steering >> 4 plus Math_Q10Multiply (0005e818)(1100, the heading rate +0x18e, less Math_Q10Multiply(200, Math_Q14Multiply (0005e838)(the leader's +0x18e, Math_CosBam (0006477c)(heading - the leader's heading))) when there is a leader). With the roll +8 at least the type record's bank limit +0xe less 500 and the command positive, Flyer_CommandRoll (0001b76c)(flyer, limit); with the roll at most -(limit - 500) and the command negative, Flyer_CommandRoll(flyer, -limit); otherwise Flyer_ApplyFlightCommand (0001b794)(flyer, 0, command). ES2's Flyer_SteerAndFly (DBSIM 004222fc), which has a roll-rate term, a 1500 band and a rudder arm.",
+      "source": "Herculan/docs/es1/simulation/flyers.md#flying; ES1DBSIM disassembly of 0001b8c4",
+      "verified": {
+        "bytes": "0001b8c4+256",
+        "sha1": "a27e7a047010",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001b9c4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_LeadRouteStep",
+      "description": "(flyer), its argument removed by this function: the waypoint Route_WaypointAt (0001cfb8) gives for the group's (+0x3f) route cursor +6 at its index + 1; with none, the cursor's own; with one, Route_AdvanceCursor (0001c8c0)(cursor) when Math_DistanceBetweenPoints2D (00063c64)(+0x20, waypoint) is below 15000. Then Flyer_SteerAndFly (0001b8c4)(flyer, 0, Math_Q10Multiply (0005e818)(800, Math_HeadingToward (00063cc8) from +0x20 to the waypoint less the heading +0xa)), +0x1b2 = 0xb4 and Flyer_PitchToAltitude (0001b708)(flyer, 10000). ES2's Flyer_LeadRouteStep (DBSIM 004224c4), which steers by Q16(error, 28000) and holds 30000.",
+      "source": "Herculan/docs/es1/simulation/flyers.md#the-thinks; ES1DBSIM decompile of 0001b9c4",
+      "verified": {
+        "bytes": "0001b9c4+196",
+        "sha1": "3b288ad2686d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001ba88",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_FormationStep",
+      "description": "(flyer), its argument removed by this function: the leader is the first of the group's (+0x3f) member array +0xe; the station is its +0x20 moved 0x2000 along its heading by Math_OffsetPointByBearing (00063d8c) and by Flyer_ApplyFormationOffset (0001b524); the distance is Math_DistanceBetweenPoints (00063c20) and the steering Math_HeadingToward (00063cc8) from +0x20 to the station less the heading +0xa, which becomes -0x8000 - steering when the heading less the leader's is within +-0x4000, the steering outside it and the distance below 10000. Flyer_SteerAndFly (0001b8c4)(flyer, leader, steering), Flyer_PitchToAltitude (0001b708)(flyer, 10000), then Flyer_FormationThrottle (0001b824)(flyer, 0x2000, steering, distance, leader) at a distance of 15000 or less and +0x1b2 = 0x100 beyond. ES2's Flyer_FormationStep (DBSIM 00422598).",
+      "source": "Herculan/docs/es1/simulation/flyers.md#the-thinks; ES1DBSIM decompile of 0001ba88",
+      "verified": {
+        "bytes": "0001ba88+284",
+        "sha1": "c5ba95d7b508",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001bba4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_AttackRun",
+      "description": "(flyer), its argument removed by this function: the attack pass on the target +0x15e, its phase in +0x194. The error is Math_HeadingToward (00063cc8) from +0x20 to the target's +0x20 less the heading, the range Math_DistanceBetweenPoints2D (00063c64), the speeds each one's slot +0x3c, the range capped at 200000. In phase 1 within 45000 the shot speed is Proj_LookupRecordByIndex (0000c2bc)(2)'s +0xa; with a positive shot speed and a non-zero target speed, Math_OffsetPointByBearing (00063d8c) moves the target point (int16)((capped range >> 3) * target speed * 8 / shot speed) along the target's heading and the error is taken again. Phase 0: the error + 0x8000, the word +0x54 = 0, phase 1 beyond 80000, Flyer_PitchToAltitude (0001b708)(flyer, 10000). Phase 1 within 45000: Flyer_PitchToAltitude(flyer, 0) with +0xa8 set, else Flyer_PitchCommand (0001b6c0)(flyer, Math_ElevationAngle (00063cf0)(+0x20, target point)); with the byte +0x1b7 clear it is set and (Math_RandomNext (00063af4)(000b5bd4) & 0xfff) >> 31, always 0, is tested for phase 2; then phase 0 and +0x1b7 cleared when the error is outside +-0x2000 or the Z +0x28 below 0x157c. Phase 2 sets +0x1b2 by range, levels the wings through Flyer_ApplyFlightCommand (0001b794), pitches toward 0xec78, sets the heading rate to Math_Q8Multiply (0005e7f8)(error >> 4, the record's +0x10), moves the velocity's X +0x1c7 toward 500 and, when Timer_CountDown (00064178)(+0x1cd) answers 0, sets phase 3 and +0x8c = 0; phase 3 levels wings and pitch, brings the heading rate and X to 0 with Math_RateLimitedMoveToward (0005e598) and returns to phase 0 once X is 0. The shot, outside phase 0 within 45000, with the error and the pitch error (the elevation less +6) within [-1000, 999], the pitch rate +0x18a within [-10, 9] and Math_CountdownTimerTick (0006410c)(+0x1b4) at 0: the muzzle (500, 200, -100) through Transform_ApplyToShortPoint (0005e858); with +0x54 clear within 30000, Rocket_Fire (00007748)(+0x1c9, flyer, angles +6, muzzle, 0) and +0x54 = 1, otherwise Bullet_Fire (00008134)(flyer, angles, muzzle, 2) twice, the second from the muzzle with X negated; the counter +0x1b5 = 1500. Below phase 2, +0x1b2 = 0xb4 and Flyer_SteerAndFly (0001b8c4)(flyer, 0, error). ES2's Flyer_AttackRun (DBSIM 004226a0), with phases 0 and 1, 90000, 65000, and its heights over the target's.",
+      "source": "Herculan/docs/es1/simulation/flyers.md#the-attack-run--flyer_attackrun-0001bba4; ES1DBSIM disassembly of 0001bba4",
+      "verified": {
+        "bytes": "0001bba4+1365",
+        "sha1": "7570e54e8f3d",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001c0fc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_ClearFormationThrottle",
+      "description": "(flyer), its argument removed by this function: +0x1b2 = 0. es2_xref finds no branch, stored pointer or vtable slot holding its address. ES2's Flyer_ClearFormationThrottle (DBSIM 00422a3c).",
+      "source": "Herculan/docs/es1/simulation/flyers.md#the-thinks; ES1DBSIM decompile of 0001c0fc",
+      "verified": {
+        "bytes": "0001c0fc+21",
+        "sha1": "f960df659e1a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001c114",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_FollowStep",
+      "description": "(flyer), its argument removed by this function: Flyer_LeadRouteStep (0001b9c4) when the flyer is the first of its group's (+0x3f) member array +0xe, else Flyer_FormationStep (0001ba88); then the radar byte +0x90 = 0. ES2's Flyer_FollowStep (DBSIM 00422a50).",
+      "source": "Herculan/docs/es1/simulation/flyers.md#the-thinks; ES1DBSIM decompile of 0001c114",
+      "verified": {
+        "bytes": "0001c114+56",
+        "sha1": "a023fb05404d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001c14c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_BehaviourSearchDestroyThink",
+      "description": "(flyer), its argument removed by this function: Flyer_FollowStep (0001c114); then for the group's first member, when Math_CountdownTimerTick (0006410c)(+0x54) answers 0, the counter +0x55 = 10000 and Ai_SelectTarget (0000ddf4)(flyer, 0x11); a result that Group_IsOrderTarget (0001ce3c)(group, it) accepts becomes the target +0x15e when it differs (the old target's +0x15c down by 1, the new one's up, +0x97 = 1), and Flyer_EngageWithFlight (0001c2ec) runs, entered at its padding 0001c2e9. Returns 0. The think of search and destroy, state 3. ES2's Flyer_BehaviourSearchDestroyThink (DBSIM 00422a80).",
+      "source": "Herculan/docs/es1/simulation/flyers.md#the-thinks; ES1DBSIM decompile of 0001c14c",
+      "verified": {
+        "bytes": "0001c14c+205",
+        "sha1": "8045597d7e52",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001c21c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_BehaviourPatrolThink",
+      "description": "(flyer), its argument removed by this function: Flyer_FollowStep (0001c114); then for the group's first member, when Math_CountdownTimerTick (0006410c)(+0x54) answers 0, the counter +0x55 = 10000 and Ai_SelectTarget (0000ddf4)(flyer, 0x10), whose result, 0 included, becomes the target +0x15e when it differs (the old target's +0x15c down by 1, the new one's up, +0x97 = 1); with a target, Flyer_EngageWithFlight (0001c2ec), entered at its padding 0001c2e9. Returns 0. The think of patrolling, state 2. ES2's Flyer_BehaviourPatrolThink (DBSIM 00422b34).",
+      "source": "Herculan/docs/es1/simulation/flyers.md#the-thinks; ES1DBSIM decompile of 0001c21c",
+      "verified": {
+        "bytes": "0001c21c+185",
+        "sha1": "2d2916ddcfc5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001c2d8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_BehaviourScoutThink",
+      "description": "(flyer), its argument removed by this function: Flyer_FollowStep (0001c114), then 0. The think of scouting, state 5. ES2's Flyer_BehaviourScoutThink (DBSIM 00422bdc).",
+      "source": "Herculan/docs/es1/simulation/flyers.md#the-thinks; ES1DBSIM decompile of 0001c2d8",
+      "verified": {
+        "bytes": "0001c2d8+17",
+        "sha1": "6451ad86417c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001c2ec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_EngageWithFlight",
+      "description": "(flyer), its argument removed by this function: Behaviour_SetState (0000fdfc)(+0x47, the attacking descriptor 000af5b0); then, for the group's first member, each other member of the array +0xe, up to the count +0x12 or the first null, whose +0x93 is clear takes the flyer's target +0x15e when it differs (the old target's +0x15c down by 1, the new one's up, +0x97 = 1) and goes through this function. ES2's Flyer_EngageWithFlight (DBSIM 00422bf0).",
+      "source": "Herculan/docs/es1/simulation/flyers.md#the-thinks; ES1DBSIM decompile of 0001c2ec",
+      "verified": {
+        "bytes": "0001c2ec+267",
+        "sha1": "6fab59eba9b4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001c3f8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_BehaviourAttackThink",
+      "description": "(flyer), its argument removed by this function: 1 when the target +0x15e has +0x9e or +0x93 set; otherwise Flyer_AttackRun (0001bba4) for the group's first member and Flyer_FormationStep (0001ba88) for the others, and 0. The think of attacking, state 1. ES2's Flyer_BehaviourAttackThink (DBSIM 00422ca8).",
+      "source": "Herculan/docs/es1/simulation/flyers.md#the-thinks; ES1DBSIM decompile of 0001c3f8",
+      "verified": {
+        "bytes": "0001c3f8+114",
+        "sha1": "1c0ceac70c99",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001c46c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_AiSelectBehaviour",
+      "description": "(flyer), its argument removed by this function: by the group's (+0x3f) order word +4 through the jump table 00092084 over 0 to 11, 1 search and destroy (000af5f8), 6 and 10 sleeping (000af61c), 7 and 11 scouting (000af640), 8 patrolling (000af5d4); Behaviour_SetState (0000fdfc)(+0x47, it) and 1. Any other word passes what ESI holds on entry. The reassess of states 0, 1, 2, 3 and 5. ES2's Flyer_AiSelectBehaviour (DBSIM 00422d00), which latches +0xa5 for sleep and travel.",
+      "source": "Herculan/docs/es1/simulation/flyers.md#orders--flyer_aiselectbehaviour-0001c46c; ES1DBSIM disassembly of 0001c46c",
+      "verified": {
+        "bytes": "0001c46c+79",
+        "sha1": "189b5ae6dcf3",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001c4bc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorFlyerSysCopy",
+      "description": "(p, flags), callee-cleaned: byte for byte the code of HeapPtr_DtorRocketCopy (00006dfc), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/flyers.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0001c4bc",
+      "verified": {
+        "bytes": "0001c4bc+40",
+        "sha1": "8b8e337832f2",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0001c4e4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorFlyerSysCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 000920b6: byte for byte the code of ConfigPart_DtorDetAnimObjCopy (000028e0), relocated operands aside, storing 000920b6 and 000920ea where that stores 000903ae and 0009037a. ES2's ConfigPart_Dtor (DBSIM 00420730).",
+      "source": "Herculan/docs/es1/simulation/flyers.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0001c4e4",
+      "verified": {
+        "bytes": "0001c4e4+63",
+        "sha1": "a48f3d49c128",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0001c523",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagFlyerSysCopy",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +4 of the vtable 000920b6; the code of ConfigPart_GetClassTagDetAnimObjCopy (000028d6).",
+      "source": "Herculan/docs/es1/simulation/flyers.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0001c523",
+      "verified": {
+        "bytes": "0001c523+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0001c52c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorFlyerSysCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 000920ea (entered at its padding 0001c529): byte for byte the code of TSPartBase_Dtor (0005d614), relocated operands aside, storing 000920ea where that stores 000974aa. ES2's TSPartBase_Dtor (DBSIM 0049224b).",
+      "source": "Herculan/docs/es1/simulation/flyers.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0001c52c",
+      "verified": {
+        "bytes": "0001c52c+42",
+        "sha1": "d1348b854577",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "0001c558",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Flyer_LoadResources",
-      "description": "No arguments, flyersys.cpp, the phase-2 subsystem loader Flyer_RegisterSubsystem (0001c814) registers: sets the 2-byte flyer type-slot table 000bc466 to 0xff and the count 000bc464 to 0; opens dat\\fforms (severity-5 assert, line 0x26, when the stream status is set), reads the int16 count to 000bc470 and count * 0x12 bytes into an array of FlyerFormation_ElementCtor (0001c618) elements __vec_new builds at 000bc472. ES2's Flyer_LoadResources (DBSIM 00422d90), whose slot table is 0x22 bytes.",
+      "description": "No arguments, flyersys.cpp, the phase-2 subsystem loader FlyerSys_RegisterSubsystem (0001c814) registers: sets the 2-byte flyer type-slot table 000bc466 to 0xff and the count 000bc464 to 0; opens dat\\fforms (severity-5 assert, line 0x26, when the stream status is set), reads the int16 count to 000bc470 and count * 0x12 bytes into an array of FlyerFormation_ElementCtor (0001c618) elements __vec_new builds at 000bc472. ES2's Flyer_LoadResources (DBSIM 00422d90), whose slot table is 0x22 bytes.",
       "source": "Herculan/docs/es1/formats/formations-dat.md#the-loads",
       "verified": {
         "bytes": "0001c558+192",
@@ -10658,6 +11378,21 @@
         "sha1": "e140a1c020b3",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "0001c648",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TexPoly_AngleElementCtorFlyerSysCopy",
+      "description": "(p), callee-cleaned: byte for byte the code of TexPoly_AngleElementCtor (00027510), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/flyers.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0001c648",
+      "verified": {
+        "bytes": "0001c648+48",
+        "sha1": "5751475e1d0f",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -10721,6 +11456,21 @@
       }
     },
     {
+      "address": "0001c7c4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FlyerTypes_Free",
+      "description": "No arguments, frameless: memset (00060b40)(000bc466, 0xff, 2) over the flyer type-slot table, the type count 000bc464 = 0 and operator_delete (000015f8)(the records 000bc46c). es2_xref finds no branch or stored pointer holding its address. ES2's code at DBSIM 00423018, which clears a 0x22-byte table.",
+      "source": "Herculan/docs/es1/simulation/flyers.md#flyersyscpp; ES1DBSIM disassembly at 0001c7c4",
+      "verified": {
+        "bytes": "0001c7c4+41",
+        "sha1": "825ec8cbd0f1",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "0001c7f0",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -10740,15 +11490,9 @@
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
-      "name": "Flyer_RegisterSubsystem",
-      "description": "No arguments, flyersys.cpp's static initialiser: RegisterSubsystemLoader(2, Flyer_LoadResources (0001c558)).",
-      "source": "Herculan/docs/es1/formats/formations-dat.md#the-loads",
-      "verified": {
-        "bytes": "0001c814+13",
-        "sha1": "ca0ced40470a",
-        "scope": "body",
-        "via": "disasm"
-      }
+      "name": "FlyerSys_RegisterSubsystem",
+      "description": "No arguments, flyersys.cpp's static initialiser: RegisterSubsystemLoader(2, Flyer_LoadResources (0001c558)). ES2's FlyerSys_RegisterSubsystem (DBSIM 00423068).",
+      "source": "Herculan/docs/es1/formats/formations-dat.md#the-loads"
     },
     {
       "address": "0001c824",
@@ -11041,7 +11785,7 @@
       "type": "function",
       "confidence": "high",
       "name": "DBSim_BuildGroupRecord",
-      "description": "(group, p, groups, h, a, route, record) in stack order, callee-cleaned (RET 0x1c): fills the 0x28-byte group record from a script.dat block-9 record: the members' kind record +0x28 to +0, +0x2a to +2, +0x2c to +4, the byte +0x44 to +0x14, the target kind +0x46 to +0x1a, the pair +0x4e and +0x50 to +0x24 and +0x26; and route to +8, h to +0xc, a to +0x16, p to +0x20. The target +0x1c is, from the index +0x48, the groups array's base + index * 0x28 for kind 0 and Pool_Nth (00063a78) of g_MechPool, g_FlyerPool or g_BasePool for kinds 1 to 3. Counts the non-negative of the eight member refs at +0x34 into +0x12, allocates that many pointers at +0xe, and fills them in order by the members' kind: Pool_Nth of g_MechPool, g_FlyerPool or g_BasePool, each passed with its ref's position (0-7) and the group to Mech_AttachToGroup, FUN_0001b574 or FUN_000044a4. ES2's DBSim_BuildGroupRecord (DBSIM 00423b34) builds a 0x7a-byte record with twenty member refs, ten counter pairs and ten orders. es2_xref finds one call, from DBSim_SpawnMissionObjects (0001e638).",
+      "description": "(group, p, groups, h, a, route, record) in stack order, callee-cleaned (RET 0x1c): fills the 0x28-byte group record from a script.dat block-9 record: the members' kind record +0x28 to +0, +0x2a to +2, +0x2c to +4, the byte +0x44 to +0x14, the target kind +0x46 to +0x1a, the pair +0x4e and +0x50 to +0x24 and +0x26; and route to +8, h to +0xc, a to +0x16, p to +0x20. The target +0x1c is, from the index +0x48, the groups array's base + index * 0x28 for kind 0 and Pool_Nth (00063a78) of g_MechPool, g_FlyerPool or g_BasePool for kinds 1 to 3. Counts the non-negative of the eight member refs at +0x34 into +0x12, allocates that many pointers at +0xe, and fills them in order by the members' kind: Pool_Nth of g_MechPool, g_FlyerPool or g_BasePool, each passed with its ref's position (0-7) and the group to Mech_AttachToGroup, Flyer_AttachToGroup or FUN_000044a4. ES2's DBSim_BuildGroupRecord (DBSIM 00423b34) builds a 0x7a-byte record with twenty member refs, ten counter pairs and ten orders. es2_xref finds one call, from DBSim_SpawnMissionObjects (0001e638).",
       "source": "Herculan/docs/es1/simulation/mission-groups.md#the-group-record",
       "verified": {
         "bytes": "0001cff4+618",
@@ -11266,7 +12010,7 @@
       "type": "function",
       "confidence": "high",
       "name": "DBSim_SpawnMissionObjects",
-      "description": "(): the world load's second pass over the shell's handoff, building the mission's objects, ES2's DBSim_SpawnMissionObjects (DBSIM 004253d8) in role. Sets the word at Mission_StatusRaised (000bc49a) to 0xffff, reopens data\\script (Path_WithExtension) and reads past the 20-byte header and blocks 1-5 into a 2000-byte stack buffer. Block 6 (98-byte mechs) and then the player.mec entries, between WeaponModels_LoadShapeChunks and WeaponModels_FreeShapeChunks: each live slot (000af7b4) gets Mech_Constructor (00011330)(null, type); a record gives the position from its point ref +0x3e, the point's Z plus the type record's (+0x188) int16 +0x16 with no ground query, or the sentinel at 000afa00 (0, 0, -1), and the rotation (0, 0, heading) from its heading ref +0x40 or the sentinel at 000afa10 (-0x8000, -0x8000, 0), into +0x20 and +6, zeroing the int16 +0x2c; then Mech_ConfigureLoadout(mech, +0x46, +0x2a) in stack order, +0x91 set when +0 is not 0, the action refs +0x5c and +0x5e as 16-byte action pointers into +0x16c and +0x170, +0x42 and +0x44 into +0x174 and +0x176, Mech_ApplyStartingCondition(mech, +0x60), and +2 into +0x1e6 when not negative. A player.mec entry (0x7e bytes from 000af9e4) takes both sentinels, Mech_ConfigureLoadout(mech, +0x20, +8), Mech_ApplySquadCondition(mech +0x19c, +0x6a, +0x56, +0x3c) and its +0 into +0x232; the one whose index is the word at 000af9fa is stored at PlayerMech (000bc42a) with +0x9d set to 1. Block 7 (56-byte flyers), each live slot (000af8e0): FUN_0001ac58(null, +0x2c), point ref +0x28 with no height added, heading ref +0x2a, actions +0x32 and +0x34, pair +0x2e and +0x30. Block 8 (16-byte bases), each live slot (000af948): FUN_00003cbc(the slot's byte at 000af9b0, record), point ref +2, heading ref +4, actions +0xa and +0xc, pair +6 and +8. Block 9: one 82-byte record per element of MissionGroups (000bc476): member refs +0x34 remapped through the slot-to-pool map their kind +0x28 names (000af818, 000af914, 000af97c), the first record's replaced by the mech map's entries at block-6 count + k for each player.mec entry k and -1 after, and its +0x2c made 8 when 11; the target ref +0x48 remapped for target kinds 1-3; the heading from ref +0x30, or Math_HeadingToward (00063cc8) from the route's first waypoint to its second when it has two or more, else 0; then DBSim_BuildGroupRecord (0001cff4)(group, the point ref +0x2e's point, MissionGroups, heading, the action ref +0x4a's action, the route ref +0x32's waypoint group, record) in stack order. Closes the file. es2_xref finds one call, from Sim_StartMission (0005a9dc).",
+      "description": "(): the world load's second pass over the shell's handoff, building the mission's objects, ES2's DBSim_SpawnMissionObjects (DBSIM 004253d8) in role. Sets the word at Mission_StatusRaised (000bc49a) to 0xffff, reopens data\\script (Path_WithExtension) and reads past the 20-byte header and blocks 1-5 into a 2000-byte stack buffer. Block 6 (98-byte mechs) and then the player.mec entries, between WeaponModels_LoadShapeChunks and WeaponModels_FreeShapeChunks: each live slot (000af7b4) gets Mech_Constructor (00011330)(null, type); a record gives the position from its point ref +0x3e, the point's Z plus the type record's (+0x188) int16 +0x16 with no ground query, or the sentinel at 000afa00 (0, 0, -1), and the rotation (0, 0, heading) from its heading ref +0x40 or the sentinel at 000afa10 (-0x8000, -0x8000, 0), into +0x20 and +6, zeroing the int16 +0x2c; then Mech_ConfigureLoadout(mech, +0x46, +0x2a) in stack order, +0x91 set when +0 is not 0, the action refs +0x5c and +0x5e as 16-byte action pointers into +0x16c and +0x170, +0x42 and +0x44 into +0x174 and +0x176, Mech_ApplyStartingCondition(mech, +0x60), and +2 into +0x1e6 when not negative. A player.mec entry (0x7e bytes from 000af9e4) takes both sentinels, Mech_ConfigureLoadout(mech, +0x20, +8), Mech_ApplySquadCondition(mech +0x19c, +0x6a, +0x56, +0x3c) and its +0 into +0x232; the one whose index is the word at 000af9fa is stored at PlayerMech (000bc42a) with +0x9d set to 1. Block 7 (56-byte flyers), each live slot (000af8e0): Flyer_Constructor(null, +0x2c), point ref +0x28 with no height added, heading ref +0x2a, actions +0x32 and +0x34, pair +0x2e and +0x30. Block 8 (16-byte bases), each live slot (000af948): FUN_00003cbc(the slot's byte at 000af9b0, record), point ref +2, heading ref +4, actions +0xa and +0xc, pair +6 and +8. Block 9: one 82-byte record per element of MissionGroups (000bc476): member refs +0x34 remapped through the slot-to-pool map their kind +0x28 names (000af818, 000af914, 000af97c), the first record's replaced by the mech map's entries at block-6 count + k for each player.mec entry k and -1 after, and its +0x2c made 8 when 11; the target ref +0x48 remapped for target kinds 1-3; the heading from ref +0x30, or Math_HeadingToward (00063cc8) from the route's first waypoint to its second when it has two or more, else 0; then DBSim_BuildGroupRecord (0001cff4)(group, the point ref +0x2e's point, MissionGroups, heading, the action ref +0x4a's action, the route ref +0x32's waypoint group, record) in stack order. Closes the file. es2_xref finds one call, from Sim_StartMission (0005a9dc).",
       "source": "Herculan/docs/es1/formats/script-dat.md#the-second-pass",
       "verified": {
         "bytes": "0001e638+2948",
@@ -11356,7 +12100,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Damage_ScaleByDifficulty",
-      "description": "(figure), callee-cleaned: the int16 the argument points at becomes Math_Q10Multiply(it, DamageScaleByDifficulty (000922c4)[i]), i script.dat header word 7 (000bc4aa), or 3 when the header word at offset 4 (MissionModeFlag (000bc4a0)), where the shell writes the load's mode, is not 0. One table and no side, where ES2's Damage_ScaleByDifficulty (DBSIM 00426b04) picks one of two tables by the firing side. es2_xref finds six calls, two in each of 00003a58, Mech_DirectFireHitTest (00013b44) and 0001b370, slot +0x24 of the base, mech and flyer vtables; the mech's scales copies of the shot's +6 and +4 when the owner's group's side byte +0x14 is 0.",
+      "description": "(figure), callee-cleaned: the int16 the argument points at becomes Math_Q10Multiply(it, DamageScaleByDifficulty (000922c4)[i]), i script.dat header word 7 (000bc4aa), or 3 when the header word at offset 4 (MissionModeFlag (000bc4a0)), where the shell writes the load's mode, is not 0. One table and no side, where ES2's Damage_ScaleByDifficulty (DBSIM 00426b04) picks one of two tables by the firing side. es2_xref finds six calls, two in each of 00003a58, Mech_DirectFireHitTest (00013b44) and Flyer_DirectFireHitTest (0001b370), slot +0x24 of the base, mech and flyer vtables; the mech's scales copies of the shot's +6 and +4 when the owner's group's side byte +0x14 is 0.",
       "source": "Herculan/docs/es1/simulation/world.md#the-difficulty-scale--damage_scalebydifficulty-0001f82c",
       "verified": {
         "bytes": "0001f82c+78",
@@ -11896,7 +12640,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_RaycastShapes",
-      "description": "(clearance, to, from, result) in stack order, callee-cleaned: ES2's Sim_RaycastShapes (DBSIM 00404ca0) without the side, over the zone's shapes. Builds a ray record on its stack: the frame's rotation from Math_EulerToward (00063d2c)(from, to) and BuildEulerRotationMatrixQ14 (0005f0ac) with from as its translation, the length Math_DistanceBetweenPoints (00063c20)(from, to), the clearance, and at +0xa the frame's rotation transposed (Transform_TransposeRotation (00063e05)) with the negated translation rotated by it (Transform_RotatePoint (0005ef74)); passes it and result to Zone_RaycastShapeObjects (00020b50) and returns its hit flag in AX. es2_xref finds five calls: from Detection_LineOfSight (0000e55c), twice from Mech_AiObstacleAvoidance (00011c80), from Ai_LineOfSightBlocked (00017a00) and from 0001b084.",
+      "description": "(clearance, to, from, result) in stack order, callee-cleaned: ES2's Sim_RaycastShapes (DBSIM 00404ca0) without the side, over the zone's shapes. Builds a ray record on its stack: the frame's rotation from Math_EulerToward (00063d2c)(from, to) and BuildEulerRotationMatrixQ14 (0005f0ac) with from as its translation, the length Math_DistanceBetweenPoints (00063c20)(from, to), the clearance, and at +0xa the frame's rotation transposed (Transform_TransposeRotation (00063e05)) with the negated translation rotated by it (Transform_RotatePoint (0005ef74)); passes it and result to Zone_RaycastShapeObjects (00020b50) and returns its hit flag in AX. es2_xref finds five calls: from Detection_LineOfSight (0000e55c), twice from Mech_AiObstacleAvoidance (00011c80), from Ai_LineOfSightBlocked (00017a00) and from Flyer_MovementTick (0001b084).",
       "source": "Herculan/docs/es1/simulation/terrain.md#a-line-between-two-points--sim_raycastshapes-00020b70",
       "verified": {
         "bytes": "00020b70+186",
@@ -26561,6 +27305,21 @@
       }
     },
     {
+      "address": "0004dee4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sound_OfferPosition",
+      "description": "(point, row) in stack order, its arguments removed by this function: with the sound manager 000959ac set, d = Math_FastMagnitude3D (0006325a) of Sound_Listener (000bd730) less the point; when the dword 000b1a84[row] is 0, that dword = d and SoundCatalog_Positions (000b1b74)[row] = the point. Its test of a set dword compares two loads of the dword with each other (0004df4d), so a set one stays. es2_xref finds one call, from Flyer_DispatchMove (0001afa8).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#the-frames-sounds--sim_framesoundtick-00058574; ES1DBSIM disassembly of 0004dee4",
+      "verified": {
+        "bytes": "0004dee4+139",
+        "sha1": "f88c69f4da29",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0004df70",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -30361,7 +31120,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_PollPlayerInput",
-      "description": "(block), callee-cleaned: the player's controls. Sim_DispatchCommand (00059df8)(block), its answer being 2 the return value; CockpitView_PollViewDevice (0002d1a0). With InputDrivesCamera (000b5b90) clear the machine takes the axes +0xd, +0xf, +0x11 and +0x13; with it set the camera takes the int16s +0x1d and +0x21 point at and the byte +0x15. The gunsight drag: while +0xb is set it arms with the pointer (+2, +6) inside the rect of CockpitViewInstance's +0x1f1, then adds dx*dx>>6 to the twist and dy*dy>>5 to the pitch (000b5de4, 000b5de8, signed by direction); +0xa set with +0xb zeroes the player's +0x22e and +0x230. Cam_Steer (00000a04) on ViewObjectPtr. When ViewChain_Viewed's +0x162 is 2 and the camera is not driven, 0001b794(viewed, throttle, steer) and viewed +0xa9 = 1; otherwise, with the player's +0x33 set, Mech_ApplyThrottleInput, then g_CenterTurretMode = 1 when the player's +0x9e is set, else with no twist or pitch, the mounts' +0x14 set and a live target +0x15e, Cockpit_TargetAnglesFromCameraBone on the target's +0x20 plus its slot +0x34 offset; then Mech_CenterTorsoTick when centering, else Mech_TorsoTwistTick and Mech_TorsoPitchTick unless tracking. With the camera not driven, WeaponMounts_FireTrigger(mounts, player, block). Button +0x17 calls TargetSelect_Cycle once a press (latch 000971fc); button +0x18 in Input_StickMode 1 zeroes the throttle +0x226 and sets +0x8d, in mode 2 sets g_CenterTurretMode. ES2's Sim_PollPlayerInput (DBSIM 00460764).",
+      "description": "(block), callee-cleaned: the player's controls. Sim_DispatchCommand (00059df8)(block), its answer being 2 the return value; CockpitView_PollViewDevice (0002d1a0). With InputDrivesCamera (000b5b90) clear the machine takes the axes +0xd, +0xf, +0x11 and +0x13; with it set the camera takes the int16s +0x1d and +0x21 point at and the byte +0x15. The gunsight drag: while +0xb is set it arms with the pointer (+2, +6) inside the rect of CockpitViewInstance's +0x1f1, then adds dx*dx>>6 to the twist and dy*dy>>5 to the pitch (000b5de4, 000b5de8, signed by direction); +0xa set with +0xb zeroes the player's +0x22e and +0x230. Cam_Steer (00000a04) on ViewObjectPtr. When ViewChain_Viewed's +0x162 is 2 and the camera is not driven, Flyer_ApplyFlightCommand (0001b794)(viewed, throttle, steer) and viewed +0xa9 = 1; otherwise, with the player's +0x33 set, Mech_ApplyThrottleInput, then g_CenterTurretMode = 1 when the player's +0x9e is set, else with no twist or pitch, the mounts' +0x14 set and a live target +0x15e, Cockpit_TargetAnglesFromCameraBone on the target's +0x20 plus its slot +0x34 offset; then Mech_CenterTorsoTick when centering, else Mech_TorsoTwistTick and Mech_TorsoPitchTick unless tracking. With the camera not driven, WeaponMounts_FireTrigger(mounts, player, block). Button +0x17 calls TargetSelect_Cycle once a press (latch 000971fc); button +0x18 in Input_StickMode 1 zeroes the throttle +0x226 and sets +0x8d, in mode 2 sets g_CenterTurretMode. ES2's Sim_PollPlayerInput (DBSIM 00460764).",
       "source": "Herculan/docs/es1/simulation/main-loop.md#the-players-controls--sim_pollplayerinput-0005a0c0; ES1DBSIM decompile and disassembly at 0005a0c0",
       "verified": {
         "bytes": "0005a0c0+1109",
@@ -34273,7 +35032,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Math_ElevationAngle",
-      "description": "(a, b) in stack order, callee-cleaned: Math_Atan2Guarded (00063ca0) with x Math_FastMagnitude2D (00063234)(b.x - a.x, b.y - a.y) and y b.z - a.z, on int32 triples: the elevation of b seen from a. ES2's Math_ElevationAngle (DBSIM 00492850), which answers that of a seen from b. es2_xref finds four calls, from 0001b084, 0001bba4 (two) and Sim_RaycastObjectList.",
+      "description": "(a, b) in stack order, callee-cleaned: Math_Atan2Guarded (00063ca0) with x Math_FastMagnitude2D (00063234)(b.x - a.x, b.y - a.y) and y b.z - a.z, on int32 triples: the elevation of b seen from a. ES2's Math_ElevationAngle (DBSIM 00492850), which answers that of a seen from b. es2_xref finds four calls, from Flyer_MovementTick (0001b084), Flyer_AttackRun (0001bba4) (two) and Sim_RaycastObjectList.",
       "source": "Herculan/docs/es1/simulation/world.md#functions",
       "verified": {
         "bytes": "00063cf0+60",
@@ -44209,8 +44968,17 @@
       "type": "data",
       "confidence": "high",
       "name": "g_FlyerPool",
-      "description": "Pointer to the pool DBSim_BuildGroupRecord (0001cff4) takes a flyer group's members and a kind-2 target from with Pool_Nth (00063a78); each such member goes to FUN_0001b574 with the group.",
+      "description": "Pointer to the pool DBSim_BuildGroupRecord (0001cff4) takes a flyer group's members and a kind-2 target from with Pool_Nth (00063a78); each such member goes to Flyer_AttachToGroup with the group.",
       "source": "Herculan/docs/es1/simulation/mission-groups.md#the-group-record"
+    },
+    {
+      "address": "000af730",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_FlyerDeleteQueue",
+      "description": "The flyer pool's delete queue: an inline pointer array with its int16 count at +0x50, which ObjectPool_QueueForDelete (00063760) fills when Flyer_Dtor (0001af3c) runs with flags bit 0 and Flyer_FlushDeletes (0001ac14) empties into g_FlyerPool (000af72c). ES2's g_FlyerDeleteQueue (DBSIM 004a9e41).",
+      "source": "Herculan/docs/es1/simulation/flyers.md#construction--flyer_constructor-0001ac58; ES1DBSIM disassembly of 0001af3c and 0001ac14"
     },
     {
       "address": "000af79c",

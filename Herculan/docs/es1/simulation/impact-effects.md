@@ -70,7 +70,7 @@ The missile camera's strike flash is the first effect it finds within reach of w
 | `00003c59` | the structure's hit test, `00003a58`, after a hit on a component, whether the structure is destroyed or not | entry 8 + (`Math_RandomNext` & 3) | the hit point |
 | `00009e65` | `Component_DestroyAndCascade` ([losing a component](component-damage.md#losing-a-component--component_destroyandcascade-00009cd4)) | 10, or `0x11` | the anchor |
 | `00013ffb` | `Mech_DirectFireHitTest` ([the hit test](mech.md#the-hit-test--mech_directfirehittest-00013b44)) | entry 4*n* + (random & 3) | the hit point |
-| `0001b4dc` | the flyer's hit test, `0001b370` | entry 8 + (`Math_RandomNext` & 3), or 10 when `0001b290` answers non-zero | the hit point |
+| `0001b4dc` | the flyer's hit test, `Flyer_DirectFireHitTest` (`0001b370`) | entry 8 + (`Math_RandomNext` & 3), or 10 when the hit destroys the flyer (`Flyer_ComponentDamageWrite` (`0001b290`) answers 1, [hits and death](flyers.md#hits-and-death)) | the hit point |
 | `0001f62d` | `Sim_RaycastObjectList` ([shots against objects](world.md#shots-against-objects--sim_raycastobjectlist-0001f1d0)) | entry 4 + (`Math_RandomNext` & 3) | the ray's end, its Z raised to 0 |
 
 The structure's collapse reloads its timer `+0x19d` with 2000 after type `0x10` and 300 after type `0xf`; with the count at 0 it lights [smoke](destruction-effects.md#smoke) instead.
@@ -96,5 +96,5 @@ The structure's collapse reloads its timer `+0x19d` with 2000 after type `0x10` 
 ## Open
 
 - **Open:** whether anything calls `Explosion_ProximityTest`: `es2_xref.py` finds no branch, stored pointer or vtable slot reaching it or its padding.
-- **Open:** what `0001b290` answers for the flyer's hit test, under which a hit spawns type 10 and debris group 3, and what the word `000aeef0` the static initializer zeroes is.
+- **Open:** what the word `000aeef0` the static initializer zeroes is.
 - **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: shoot the ground beside a HERC and listen for the impact's sound, which ES2 leaves silent; `BP <CS>:00005d74` fires once per tick per live effect.

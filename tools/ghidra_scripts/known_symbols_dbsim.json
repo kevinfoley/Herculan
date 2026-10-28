@@ -8474,7 +8474,13 @@
       "confidence": "high",
       "name": "Flyer_GetOverallDamage",
       "description": "Flyer vtable +0x40: Component_ReadOverallDamage on the health header at flyer+0x200.",
-      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice"
+      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice",
+      "verified": {
+        "bytes": "00421e84+20",
+        "sha1": "ca2dcc53011e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00421e98",
@@ -8603,7 +8609,13 @@
       "confidence": "high",
       "name": "Flyer_CommandRoll",
       "description": "Fills the command array's aileron element with Q16(desiredRoll - flyer.roll, 2500) + Q16(rollRate, -5000) and runs Flyer_ApplyFlightCommand. The arm Flyer_SteerAndFly takes whenever it is holding or limiting a bank rather than commanding one.",
-      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice"
+      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice",
+      "verified": {
+        "bytes": "0042215c+74",
+        "sha1": "c63db4d1fdd4",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004221a8",
@@ -9616,7 +9628,13 @@
       "confidence": "high",
       "name": "Flyer_Dtor",
       "description": "FLYER vtable +0x08 (0049a5e0): the deleting destructor, (this, flags). Three RTL destructor-count decrements (FLYER, ACTOR, DET_ANIM_OBJ), AnimObj_Dtor(this, 0), then on flags bit 0 ObjList_SwapRemove(&maybe_GlobalLiveObjectList, this).",
-      "source": "DBSIM disassembly at 004271bf"
+      "source": "DBSIM disassembly at 004271bf",
+      "verified": {
+        "bytes": "004271bf+72",
+        "sha1": "878d52d234a2",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00427207",

@@ -42,16 +42,20 @@ The projectile records are those of type 2 whose subtype id is the bullet's ([th
 
 `nam\FLYERS.NAM` names two flyer types, `SKIMMER` (0) and `HOVTANK` (1); `SIMVOL0.VOL`'s `dat\` holds `SKIMMER.DAT` and no `HOVTANK.DAT`. ES2's flyer file is 46 bytes, nine `int16` and a 28-byte name ([ES2's flyers](../../retail/simulation/ai-flyers.md)); ES1's is 34.
 
-| Offset | ES2's field | `SKIMMER` | ES2's `SKIMMER` |
-|---|---|---|---|
-| 0 | max turn rate | 500 | 800 |
-| 2, 4 | max reverse speed, max forward speed | 1200, 1000 | 1000, 1000 |
-| 6, 8 | speed and turn-rate steps | 300, 150 | 300, 150 |
-| 10 | the part the cockpit eye rides | 4 | 4 |
-| 12 | walk sequence | −1 | −1 |
-| 14 | the bank limit | 14000 | 14000 |
-| 16 | — | 1500 | 1500 |
-| 18–33 | the first 16 bytes of the name | 0 | `Landskimmer` |
+| Offset | ES2's field | ES1's flyer code ([flying](../simulation/flyers.md#flying)) | `SKIMMER` | ES2's `SKIMMER` |
+|---|---|---|---|---|
+| 0 | max turn rate | the most the pitch steps in a tick | 500 | 800 |
+| 2 | max reverse speed | the roll rate at full roll command, Q8 | 1200 | 1000 |
+| 4 | max forward speed | the speed, a step along the nose each tick | 1000 | 1000 |
+| 6 | speed step | — | 300 | 300 |
+| 8 | turn-rate step | the most the roll rate steps in a tick; the third attack phase's heading-rate step | 150 | 150 |
+| 10 | the part the cockpit eye rides | the shift from roll to heading rate | 4 | 4 |
+| 12 | walk sequence | — | −1 | −1 |
+| 14 | the bank limit | the bank limit | 14000 | 14000 |
+| 16 | — | the third attack phase's heading-rate scale | 1500 | 1500 |
+| 18–33 | the first 16 bytes of the name | — | 0 | `Landskimmer` |
+
+The third attack phase is never entered ([the third phase](../simulation/flyers.md#the-third-phase)).
 
 ### The load
 
@@ -67,5 +71,5 @@ ES2's reads 46 bytes into a `0x70`-byte record, keeps the damage file, collision
 
 ## Open
 
-- **Open:** what the flyer code reads of `SKIMMER.DAT`'s offsets 0–17 and the zeroes at 18–33. The values sit at ES2's offsets with ES2's kind of value.
+- **Open:** what reads offsets 6 and 12 and the zeroes at 18–33: none of [the flyers'](../simulation/flyers.md) functions does.
 - **Open:** whether any mission places a `HOVTANK`. Once type 1 has a record, step 1 finds no `dat\HOVTANK` and its severity-5 assert ends the program ([`HOVTANK.DMG`](dmg-damage-file.md#hovtankdmg)).
