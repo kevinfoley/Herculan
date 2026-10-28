@@ -12,6 +12,9 @@ You are running batch @@BATCH@@ of the ES1 (Metaltech: Earthsiege) reverse-engin
 <!-- range -->
 **ES1DBSIM `@@LO@@`–`@@HI@@`.**
 <!-- /range -->
+<!-- doc -->
+**A doc batch: no new range is read.** The port parts named below took details from the decompile that the docs do not state. Verify each against the decompile or disassembly and write it into the ES1 doc that owns it (`CLAUDE.md` rule 5: the doc owns the RE fact; ES1 docs never describe the C#). Where a doc says otherwise, correct that text. Read the C# named for what the port relied on, but write nothing in it.
+<!-- /doc -->
 
 @@NOTES@@
 
@@ -23,6 +26,9 @@ You are running batch @@BATCH@@ of the ES1 (Metaltech: Earthsiege) reverse-engin
 4. `py tools/scripts/es2_xref.py --binary ES1DBSIM --range <lo>-<hi> --table > <scratch>/xref.txt`: one row per function with its branch, stored-pointer and slot counts and the functions that call it, in one pass (rather than a loop of single calls). Run it again for any other address list you need: `es2_xref.py --binary BIN --table a b c`. For a global's readers and writers, `--decode` names each stored pointer's instruction and whether it reads, writes or takes the address (`--decode --table` gives the counts); an ADDRESS site can write through a register, so read it before calling a global unwritten.
 5. `py tools/scripts/es2_peek.py BIN ADDR [COUNT]` reads a vtable, label table or `REPNE SCASD` case table with each dword resolved to a name, a function (or an offset into one, or the function its padding falls through to) or the string it points at; `--strings`, `--words`, `--bytes` for the rest. Use it rather than a scratch script.
 <!-- /range -->
+<!-- doc -->
+**For each detail:** read the body at its address in the dumps (`E:\ES2Stuff\tools\analysis_out\ES1DBSIM_decomp_full.c` and `ES1DBSIM_disasm_full.txt`; Grep for the address, then Read with an offset), find the doc section that owns it (grep `Herculan/docs` for its addresses and names first), and write it there, or correct what the section says. `es2_xref.py --binary ES1DBSIM --table a b c` and `es2_peek.py BIN ADDR [COUNT]` settle callers and tables in one run each. A detail the body does not bear out is reported, not written.
+<!-- /doc -->
 
 ## Docs
 Docs before symbols. Where no ES2 doc describes the shared behaviour at port level, write it in `docs/retail/` (re-read the whole target doc first, move rather than duplicate, fix inbound anchors); the ES1 page holds ES1's addresses and differences only, enough to port from without re-reading the code. One fact, one home: move a section rather than repeat it; keep every page under 70 KB. Read each doc you edit whole before editing it. Every doc line about a function comes from a body you read this session or a stamp. Read or stamp every ES2 function your own doc lines describe, and no others; an unstamped function is not an Open item.
@@ -39,8 +45,14 @@ A search that found nothing is written as what was searched (`no caller found by
 <!-- range -->
 - Scope cap: about 60 functions read in this range, plus their ES2 counterparts. Beyond it goes to `## Open`.
 <!-- /range -->
+<!-- doc -->
+- Scope cap: the details named here and the callees you read to settle them. Anything else goes to the owning doc's `## Open`.
+<!-- /doc -->
 
 ## Report (at most 400 words)
 <!-- range -->
 Where the object file(s) start and end, what the range holds (classes, ES2 counterparts, differences a player would see), Open items closed in other docs, entries and stamps per binary, docs touched with lint/links results, the `--define` addresses, `git status --porcelain`, the path of `write_commands.txt` and its `es1_batch.py list` step count, any step of your procedure that was the same shape as last batch and could be scripted, and a commit subject of at most 16 words ending `(Claude)`.
 <!-- /range -->
+<!-- doc -->
+Each detail: written where (doc and section), corrected, or not borne out by the body (with why); entries and stamps per binary; docs touched with lint/links results; `git status --porcelain`; the path of `write_commands.txt` and its `es1_batch.py list` step count; any step of your procedure that could be scripted; and a commit subject of at most 16 words ending `(Claude)`.
+<!-- /doc -->

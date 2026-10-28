@@ -37,6 +37,9 @@ shares, with the batch number, range and scratch folder filled in and the batch'
 the range holds, its leads, its Open items) taken from a notes file. --auto appends the leads the
 tools give: `es1_boilerplate.py bounds` over the range with a 0x100 margin, the function counts,
 `es2_naming.py match`'s candidates, and the docs that name one of the range's function addresses.
+`brief N --doc` writes a doc batch's brief from the same template, with no range and none of the
+range's tools: the notes name the port parts, their `<part>_details.md` files and the docs, and the
+subagent verifies each detail in the dumps and writes it into the doc that owns it.
 `port` writes a port part's brief the same way from tools/scripts/es1_port_brief.md. Both templates
 send the subagent to tools/scripts/es1_subagent_rules.md for the rules every ES1 subagent shares.
 
@@ -59,6 +62,7 @@ and the held rows (--held) inside.
 Usage:
     python tools/scripts/es1_batch.py next START [--target 60] [--window HEX] [--held a+b]
     python tools/scripts/es1_batch.py brief N LO HI --scratch DIR [--notes NOTES.md] [--auto] [--out FILE] [--over-budget REASON]
+    python tools/scripts/es1_batch.py brief N --doc --scratch DIR --notes NOTES.md [--out FILE] [--over-budget REASON]
     python tools/scripts/es1_batch.py port PART --title TITLE --scratch DIR [--notes NOTES.md] [--budget 150] [--out FILE] [--over-budget REASON]
     python tools/scripts/es1_batch.py run COMMANDS.txt [--from N] [--no-precheck]
     python tools/scripts/es1_batch.py precheck COMMANDS.txt [--fix]
@@ -642,13 +646,22 @@ def notes_text(args):
 
 
 def cmd_brief(args):
-    """Fills es1_batch_brief.md with the batch number, range, scratch folder and the batch's own notes."""
+    """Fills es1_batch_brief.md with the batch number, range, scratch folder and the batch's own notes; with --doc,
+    its doc-batch blocks in place of the range's."""
+    values = {"BATCH": str(args.batch), "SCRATCH": args.scratch.replace("/", "\\")}
     notes = notes_text(args)
+    if args.doc:
+        if args.lo or args.auto:
+            raise SystemExit("a --doc brief reads no range: drop LO HI and --auto")
+        if not notes:
+            raise SystemExit("a --doc brief needs --notes: the port parts, their details files and the docs")
+        return write_brief("es1_batch_brief.md", values, notes, {"doc"}, args)
+    if not args.hi:
+        raise SystemExit("brief needs LO HI, or --doc for a doc batch")
+    lo, hi = args.lo.lower().zfill(8), args.hi.lower().zfill(8)
     if args.auto:
-        notes = (notes + "\n\n" if notes else "") + auto_leads(args.binary, args.lo.lower().zfill(8), args.hi.lower().zfill(8))
-    return write_brief("es1_batch_brief.md", {"BATCH": str(args.batch), "LO": args.lo.lower().zfill(8),
-                                              "HI": args.hi.lower().zfill(8), "SCRATCH": args.scratch.replace("/", "\\")},
-                       notes, {"range"}, args)
+        notes = (notes + "\n\n" if notes else "") + auto_leads(args.binary, lo, hi)
+    return write_brief("es1_batch_brief.md", dict(values, LO=lo, HI=hi), notes, {"range"}, args)
 
 
 def cmd_port(args):
@@ -662,8 +675,10 @@ def main():
     sub = p.add_subparsers(dest="cmd", required=True)
     b = sub.add_parser("brief", help="write a batch subagent's brief from es1_batch_brief.md")
     b.add_argument("batch", type=int)
-    b.add_argument("lo")
-    b.add_argument("hi")
+    b.add_argument("lo", nargs="?", help="the range's first address (not with --doc)")
+    b.add_argument("hi", nargs="?", help="the range's last address (not with --doc)")
+    b.add_argument("--doc", action="store_true",
+                   help="a doc batch's brief: no range, bounds, scan or match; the notes name the port parts' details files")
     b.add_argument("--scratch", required=True, help="the batch's scratch folder, named in the brief")
     b.add_argument("--notes", help="a file with the batch's own section: its range's contents, leads, docs to read")
     b.add_argument("--out", help="where to write the brief (default <scratch>/brief.md)")
