@@ -22,7 +22,7 @@ namespace Herculan.Engine.Editor;
 /// </summary>
 internal sealed class MissionOutliner {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
-	public const float PanelWidth = 300f;
+	public const float PanelWidth = 360f;
 
 	private const int RouteRow = 8;
 	private const int AreaRow = 9;
@@ -47,6 +47,11 @@ internal sealed class MissionOutliner {
 	private readonly MissionNames _names;
 	private MissionLint _lint;
 	private readonly SelectionState _selection;
+
+	// Which kinds of group the Groups list shows, by its filter checkboxes.
+	private bool _showHercGroups = true;
+	private bool _showFlyerGroups = true;
+	private bool _showStructureGroups = true;
 
 	public MissionOutliner(MissionDocument source, MissionIndex index, MissionNames names, SelectionState selection) {
 		_source = source;
@@ -267,13 +272,33 @@ internal sealed class MissionOutliner {
 	/// <summary><see cref="NotAlways"/> when row <paramref name="row"/>'s entry for <paramref name="guid"/> is present only under a condition, else nothing.</summary>
 	private string Marker(int row, short guid) => Layout.Entry(row, guid)?.Presence.Always == false ? NotAlways : string.Empty;
 
+	/// <summary>
+	/// Every row-16 group with its members, filtered by kind: HERCs, flyers, and structures and ground vehicles, which share a
+	/// group kind.
+	/// </summary>
 	private void DrawGroups() {
 		var groups = _index.Groups;
 		if (!ImGui.CollapsingHeader($"Groups ({groups.Count})###groups")) {
 			return;
 		}
 
+		ImGui.PushID("groupFilter");
+		FilterCheckbox("HERCs", ref _showHercGroups, first: true);
+		FilterCheckbox("Flyers", ref _showFlyerGroups, first: false);
+		FilterCheckbox("Structures and ground vehicles", ref _showStructureGroups, first: false);
+		ImGui.PopID();
+
 		foreach (var group in groups) {
+			bool listed = group.Kind switch {
+				MissionUnitKind.Mech => _showHercGroups,
+				MissionUnitKind.Flyer => _showFlyerGroups,
+				_ => _showStructureGroups,
+			};
+
+			if (!listed) {
+				continue;
+			}
+
 			var members = _index.MembersOf(group.Guid);
 			string waiting = group.Waiting && _index.Action(group.DeploymentAction) is { } action
 				? $", arrives when trigger {action.Number} fires"
@@ -315,6 +340,19 @@ internal sealed class MissionOutliner {
 
 			ImGui.TreePop();
 		}
+	}
+
+	// A filter checkbox, on the same line as the one before it when it fits there.
+	private static void FilterCheckbox(string label, ref bool shown, bool first) {
+		if (!first) {
+			float width = ImGui.GetFrameHeight() + ImGui.GetStyle().ItemInnerSpacing.X + ImGui.CalcTextSize(label).X;
+			ImGui.SameLine();
+			if (ImGui.GetContentRegionAvail().X < width) {
+				ImGui.NewLine();
+			}
+		}
+
+		ImGui.Checkbox(label, ref shown);
 	}
 
 	/// <summary>

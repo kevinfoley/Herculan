@@ -8,7 +8,8 @@ namespace Herculan.Engine.Editor;
 /// The Properties panel's view of a group (docs/herculan/handoff-editor-viewing.md#groups), read from the <c>.MSN</c>'s layout
 /// and <see cref="MissionIndex"/> by its row-16 GUID, every group included, one the mission as opened leaves out too: its
 /// name, Present when and team, the squad's machines for the player's squad (<see cref="SquadMachinePanel"/>); the trigger it
-/// waits on; where it starts, as fields that move it, and what else stands there; its heading, set (<see cref="HeadingField"/>), and base pad, set
+/// waits on; where it starts, as fields that move it, and what else stands there, unless it arrives by drop pod or on foot
+/// (<see cref="PlannedGroup.OffScene"/>); its heading, set (<see cref="HeadingField"/>), and base pad, set
 /// for a structure group (<see cref="BasePadEditor"/>); its members, one row per place in its formation for any group but the
 /// player's squad (<see cref="GroupSlotsView"/>); the
 /// campaign variables it sets when every member is down; the win and lose conditions about it; its orders
@@ -197,11 +198,32 @@ internal sealed class GroupView {
 	}
 
 	/// <summary>
-	/// Where the group starts (docs/retail/formats/script-dat.md#placement--the-actual-rule, rules 2 and 3): its own position,
-	/// else the first waypoint of its first order's route, as fields that move it (<see cref="PointMover"/>), and what else
-	/// stands on that point; then its heading (<see cref="HeadingField"/>) and its base pad.
+	/// Where the group starts (<see cref="DrawStart"/>), left out for a group kept out of the scene
+	/// (<see cref="PlannedGroup.OffScene"/>), which arrives about the player wherever it is placed; then its heading
+	/// (<see cref="HeadingField"/>) and its base pad.
 	/// </summary>
 	private void DrawSetup(PlannedGroup group) {
+		var setup = group.Setup;
+		if (!group.OffScene) {
+			DrawStart(group);
+		}
+
+		bool alongRoute = FirstRoute(group) is { } leg && _index.Layout.Entry<WaypointGroup>(leg)?.Fields.Waypoints.Length >= 2;
+		_heading.DrawGroup(group.Guid, setup.Heading, alongRoute);
+		if (group.Pad != null) {
+			// The pad lies with the map's axes whatever the heading (docs/retail/rendering/terrain-texturing.md#base-formation-pads).
+			EditorText.Note("The base pad does not turn with the group: any heading but 0 moves its structures off the pad.");
+		}
+
+		DrawBasePad(group);
+	}
+
+	/// <summary>
+	/// Where the group starts (docs/retail/formats/script-dat.md#placement--the-actual-rule, rules 2 and 3): its own position,
+	/// else the first waypoint of its first order's route, as fields that move it (<see cref="PointMover"/>), and what else
+	/// stands on that point.
+	/// </summary>
+	private void DrawStart(PlannedGroup group) {
 		var setup = group.Setup;
 		switch (setup.PointSource) {
 			case MissionGroupPointSource.OwnPoint:
@@ -247,15 +269,6 @@ internal sealed class GroupView {
 		}
 
 		DrawMove(group, target);
-
-		bool alongRoute = FirstRoute(group) is { } leg && _index.Layout.Entry<WaypointGroup>(leg)?.Fields.Waypoints.Length >= 2;
-		_heading.DrawGroup(group.Guid, setup.Heading, alongRoute);
-		if (group.Pad != null) {
-			// The pad lies with the map's axes whatever the heading (docs/retail/rendering/terrain-texturing.md#base-formation-pads).
-			EditorText.Note("The base pad does not turn with the group: any heading but 0 moves its structures off the pad.");
-		}
-
-		DrawBasePad(group);
 	}
 
 	// What a drag of the group's move handles moves with it (PointMover), or why it cannot be moved.
@@ -277,11 +290,6 @@ internal sealed class GroupView {
 				? "Ctrl+drag also moves its structure that has a position of its own."
 				: $"Ctrl+drag also moves its {carried.Count} structures that have positions of their own.");
 			_sharers.Draw(_mover.CarriedSharersOf(group.Guid), "Also on their spots, moving with them on Ctrl+drag:", aloneNote: false);
-		}
-
-		if (group.OffScene) {
-			EditorText.Wrapped($"It arrives {MissionText.ArrivalKind(group.ArrivalVerb)}, placed about the player when the "
-				+ "trigger fires: its position is a placeholder, and moving it does not move where it arrives.");
 		}
 	}
 

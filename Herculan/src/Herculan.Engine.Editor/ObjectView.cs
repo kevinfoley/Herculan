@@ -16,7 +16,8 @@ namespace Herculan.Engine.Editor;
 /// one the mission as opened leaves out too: its name, its group with a choice that moves it into another
 /// (<see cref="MemberMover"/>) and its group's orders, its Present when, with what it does to a group it would leave empty
 /// (<see cref="PresentWhenView.DrawGroupLeftEmpty"/>), and for a machine of the squad the random table it picks from; its
-/// team; outside the squad its loadout or type, fixed or random (<see cref="LoadoutView"/>); its position as fields that move it, and its heading, set for a structure or ground vehicle (<see cref="HeadingField"/>); a herc's,
+/// team; outside the squad its loadout or type, fixed or random (<see cref="LoadoutView"/>); its position as fields that move it,
+/// except in a group that arrives by drop pod or on foot (<see cref="PlannedGroup.OffScene"/>), and its heading, set for a structure or ground vehicle (<see cref="HeadingField"/>); a herc's,
 /// structure's or ground vehicle's starting condition (<see cref="StartingConditionField"/>) and a herc's radar setting (<see cref="RadarSettingField"/>), or for a machine of the player's squad which Herc it is (<see cref="SquadMachinePanel"/>); the two triggers it
 /// fires; the campaign variables it sets when put out of action; the win and lose conditions about it; Delete, or what
 /// refuses it; and, collapsed under Advanced, its type number, model, triangle and texture counts and hit radius.
@@ -92,7 +93,10 @@ internal sealed class ObjectView {
 		_loadout.Draw(sel);
 
 		ImGui.Separator();
-		DrawPosition(sel, planned, group);
+		if (!group.OffScene) {
+			DrawPosition(sel, planned, group);
+		}
+
 		_heading.DrawObject(planned.Key, sel.Object.Heading);
 
 		if (!planned.Squad) {
