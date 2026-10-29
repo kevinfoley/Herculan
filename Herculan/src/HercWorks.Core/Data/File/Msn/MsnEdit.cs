@@ -167,6 +167,10 @@ public sealed class MsnField {
 	public static MsnField GroupPaintsGround { get; } = new(16, MissionGroup164.PaintsGroundWord,
 		record => ((MissionGroup164)record).PaintsGround, (record, value) => ((MissionGroup164)record).PaintsGround = value);
 
+	/// <summary>A group's formation, row 16's <see cref="MissionGroup164.FormationId"/>.</summary>
+	public static MsnField GroupFormation { get; } = new(16, MissionGroup164.FormationIdWord,
+		record => ((MissionGroup164)record).FormationId, (record, value) => ((MissionGroup164)record).FormationId = value);
+
 	/// <summary>Member slot <paramref name="slot"/> of a group, row 16's <see cref="MissionGroup164.MemberRefs"/>.</summary>
 	public static MsnField GroupMember(int slot) => new(16, MissionGroup164.MemberRefsWord + slot,
 		record => ((MissionGroup164)record).MemberRefs[slot], (record, value) => ((MissionGroup164)record).MemberRefs[slot] = value);

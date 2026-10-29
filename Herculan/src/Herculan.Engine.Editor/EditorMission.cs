@@ -67,6 +67,7 @@ internal sealed class EditorMission {
 		RadarSettings = new RadarSettingEditor(source, Mover, Sync);
 		Headings = new HeadingEditor(source, Mover, Sync);
 		Pads = new BasePadEditor(source, sceneIndex, tables.Bases, Mover, Sync);
+		Formations = new FormationEditor(source, sceneIndex, tables, Mover, Sync);
 		UnusedPoints = new UnusedPointRemover(source, Mover, Sync);
 		Outliner.Placing = Placing;
 		Outliner.AreaPlacing = AreaPlacing;
@@ -84,7 +85,7 @@ internal sealed class EditorMission {
 			new SquadMachinePanel(Fitter, Squad, squad, Presets), new RosterFitView(Fitter, Types, TableEditor, catalog, Presets),
 			Routes, Placing, Areas, AreaPlacing, Orders, Objectives, Actions, Timers, Conditions, Presence, TableEditor,
 			StartingConditions, RadarSettings, Headings, randomTables, new TriggerMessages(content), Names, catalog, tables.Bases, Types, Fitter, Placer, Hercs, Flyers,
-			Pads, GroupDeleter);
+			Pads, Formations, GroupDeleter);
 	}
 
 	/// <summary>
@@ -214,6 +215,9 @@ internal sealed class EditorMission {
 
 	/// <summary>Turns structure groups' base pads on and off in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public BasePadEditor Pads { get; }
+
+	/// <summary>Sets groups' formations in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	public FormationEditor Formations { get; }
 
 	/// <summary>Adds and removes the player's squadmates in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public SquadEditor Squad { get; }

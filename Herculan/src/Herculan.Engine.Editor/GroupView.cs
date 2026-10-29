@@ -9,12 +9,12 @@ namespace Herculan.Engine.Editor;
 /// and <see cref="MissionIndex"/> by its row-16 GUID, every group included, one the mission as opened leaves out too: its
 /// name, Present when and team, the squad's machines for the player's squad (<see cref="SquadMachinePanel"/>); the trigger it
 /// waits on; where it starts, as fields that move it, and what else stands there, unless it arrives by drop pod or on foot
-/// (<see cref="PlannedGroup.OffScene"/>); its heading, set (<see cref="HeadingField"/>), and base pad, set
-/// for a structure group (<see cref="BasePadEditor"/>); its members, one row per place in its formation for any group but the
+/// (<see cref="PlannedGroup.OffScene"/>); its heading, set (<see cref="HeadingField"/>); its formation, set
+/// (<see cref="FormationField"/>); and base pad, set for a structure group (<see cref="BasePadEditor"/>); its members, one row per place in its formation for any group but the
 /// player's squad (<see cref="GroupSlotsView"/>); the
 /// campaign variables it sets when every member is down; the win and lose conditions about it; its orders
 /// (<see cref="OrderSlotsView"/>); a Delete group button (<see cref="GroupDeleter"/>); and, collapsed under Advanced, its
-/// formation and its own route field.
+/// own route field.
 /// </summary>
 internal sealed class GroupView {
 	private readonly MissionIndex _index;
@@ -29,6 +29,7 @@ internal sealed class GroupView {
 	private readonly OrderSlotsView _orders;
 	private readonly PointSharers _sharers;
 	private readonly HeadingField _heading;
+	private readonly FormationField _formation;
 	private readonly GroupSlotsView _slots;
 	private readonly BasePadEditor _pads;
 	private readonly GroupDeleter _deleter;
@@ -38,8 +39,8 @@ internal sealed class GroupView {
 
 	public GroupView(MissionIndex index, PanelLinks links, PointMover mover, TeamField team, SquadMachinePanel machine,
 			PresentWhenView presentWhen, PresenceEditor presence, ActionEditor actions, RelatedObjectives objectives,
-			OrderSlotsView orders, PointSharers sharers, HeadingField heading, GroupSlotsView slots, BasePadEditor pads,
-			GroupDeleter deleter) {
+			OrderSlotsView orders, PointSharers sharers, HeadingField heading, FormationField formation, GroupSlotsView slots,
+			BasePadEditor pads, GroupDeleter deleter) {
 		_index = index;
 		_links = links;
 		_mover = mover;
@@ -52,6 +53,7 @@ internal sealed class GroupView {
 		_orders = orders;
 		_sharers = sharers;
 		_heading = heading;
+		_formation = formation;
 		_slots = slots;
 		_pads = pads;
 		_deleter = deleter;
@@ -200,7 +202,7 @@ internal sealed class GroupView {
 	/// <summary>
 	/// Where the group starts (<see cref="DrawStart"/>), left out for a group kept out of the scene
 	/// (<see cref="PlannedGroup.OffScene"/>), which arrives about the player wherever it is placed; then its heading
-	/// (<see cref="HeadingField"/>) and its base pad.
+	/// (<see cref="HeadingField"/>), its formation (<see cref="FormationField"/>) and its base pad.
 	/// </summary>
 	private void DrawSetup(PlannedGroup group) {
 		var setup = group.Setup;
@@ -215,6 +217,7 @@ internal sealed class GroupView {
 			EditorText.Note("The base pad does not turn with the group: any heading but 0 moves its structures off the pad.");
 		}
 
+		_formation.Draw(group);
 		DrawBasePad(group);
 	}
 
@@ -329,22 +332,13 @@ internal sealed class GroupView {
 		EditorText.Reason(_pads.Failure, "Not changed: ");
 	}
 
-	// Under a collapsed Advanced header: the formation, which table it is from, and the group record's own route field.
+	// Under a collapsed Advanced header: the group record's own route field.
 	private void DrawAdvanced(PlannedGroup group) {
 		if (!ImGui.CollapsingHeader("Advanced")) {
 			return;
 		}
 
 		ImGui.PushID("advanced");
-		string table = group.Kind switch {
-			MissionUnitKind.Mech => "MFORMS.DAT",
-			MissionUnitKind.Flyer => "FFORMS.DAT",
-			_ => "BFORMS.DAT",
-		};
-
-		ImGui.TextUnformatted($"Formation: {group.Setup.FormationId} of dat\\{table}");
-		EditorText.Note("Where each member stands around the group's position, by its place in the group. Formations have no names.");
-
 		short own = _index.Layout.Entry<MissionGroup164>(group.Guid)?.Fields.RouteRef ?? -1;
 		ImGui.AlignTextToFramePadding();
 		ImGui.TextUnformatted("Own route:");

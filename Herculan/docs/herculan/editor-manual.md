@@ -24,9 +24,11 @@ Each member has a **place** in the group, numbered from 1, and each place has it
 - Each later place stands on its own spot around the group's position, turned with the group's heading.
 - A structure group's formation has a fixed number of places. Members past that number stand on the group's position.
 
-A member can instead stand at a **position of its own**, set by moving it. "Return to formation" puts it back in its default place. A structure stays at its own position for the whole mission. For a HERC or flyer other than the leader, its own position only sets where it starts. Some orders make the members follow the leader in formation: "Patrol" and "Search and destroy" for HERCs, and "Patrol", "Search and destroy" and "Travel" for flyers. Under those orders, a member with its own position leaves it as soon as the mission starts and moves to its place in the formation around the leader.
+"Formation" in the group's view chooses the formation. HERC, flyer and structure groups each have their own set, and none of them has a name: unfolding "Formation" shows a diagram of where each place stands around the leader, with the group's front at the top, and hovering over an entry in the list shows its diagram before you pick it. Some structure formations also turn the structure standing on a place, which the diagram shows as the direction of that place's line. The player's squad's formation cannot be changed.
 
-A structure group can also lay a **base pad**: a concrete pad painted over the ground tile under the group, with the ground under it levelled. Its structures then stand at a fixed spot in that tile.
+A member can instead stand at a **position of its own**, set by moving it. "Return to formation" puts it back in its default place. A structure stays at its own position for the whole mission, but a ground vehicle does not: the first vehicle that is not destroyed or immobilized drives the group's route, and the others drive to their places in the formation around it. For a HERC or flyer other than the leader, its own position only sets where it starts. Some orders make the members follow the leader in formation: "Patrol" and "Search and destroy" for HERCs, and "Patrol", "Search and destroy" and "Travel" for flyers. Under those orders, a member with its own position leaves it as soon as the mission starts and moves to its place in the formation around the leader.
+
+A structure group can also lay a **base pad**: a concrete pad painted over the ground tile under the group, with the ground under it levelled. Its structures then stand at a fixed spot in that tile. Only some structure formations have a base pad, and picking one without a pad stops the group laying one.
 
 ## Budgets
 
