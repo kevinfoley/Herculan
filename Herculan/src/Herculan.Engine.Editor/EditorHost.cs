@@ -789,6 +789,7 @@ public sealed class EditorHost {
 		}
 
 		mission.Overlay.Highlight(renderer.Highlight, mission.Selection);
+		TeamDiscs.Fill(renderer.Discs, _settings.ShowTeamCircles ? drawables.Shown : []);
 
 		// Full-window viewport: the editor draws one 3D view, unlike the simulator host's three cockpit
 		// panels, which is what SceneRenderer.Render's x/y origin exists for.
@@ -1225,6 +1226,12 @@ public sealed class EditorHost {
 			bool pads = _settings.ShowBasePads;
 			if (ImGui.MenuItem("Base Pads", null, ref pads)) {
 				_settings.ShowBasePads = pads;
+				changed = true;
+			}
+
+			bool circles = _settings.ShowTeamCircles;
+			if (ImGui.MenuItem("Team Circles", null, ref circles)) {
+				_settings.ShowTeamCircles = circles;
 				changed = true;
 			}
 

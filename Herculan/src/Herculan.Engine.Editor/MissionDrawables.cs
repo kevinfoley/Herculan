@@ -210,6 +210,10 @@ internal sealed class MissionDrawables : IDisposable {
 		}
 	}
 
+	/// <summary>The objects drawn now: in the scene, and not hidden as waiting by the settings.</summary>
+	public IEnumerable<SceneObject> Shown =>
+		_objects.Where(entry => entry.Value.Items.Count > 0 && entry.Value.Items[0].Visible).Select(entry => entry.Key);
+
 	/// <summary>Re-places <paramref name="sceneObject"/>'s items where its simulation object now stands.</summary>
 	public void Move(SceneObject sceneObject) {
 		if (!_objects.TryGetValue(sceneObject, out var draw)) {

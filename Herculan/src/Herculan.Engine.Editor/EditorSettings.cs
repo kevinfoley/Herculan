@@ -41,6 +41,9 @@ public sealed class EditorSettings {
 	/// <summary>Whether the terrain tile each paints-ground structure group repaints is outlined.</summary>
 	public bool ShowBasePads { get; set; } = true;
 
+	/// <summary>Whether each unit has a disc in its team's colour painted on the ground under it (<see cref="TeamDiscs"/>).</summary>
+	public bool ShowTeamCircles { get; set; } = true;
+
 	/// <summary>
 	/// How the members of a group waiting on an action are shown, one that arrives in place or a structure group: a group
 	/// arriving by drop pod or on foot is never in the scene (<see cref="PlannedGroup.OffScene"/>). The simulation draws

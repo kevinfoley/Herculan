@@ -256,6 +256,11 @@ uniform vec2 uHighlightB;
 uniform float uHighlightRadius;
 uniform vec3 uHighlightColor;
 uniform float uHighlightStrength;
+
+// The ground discs, SceneRenderer.Discs, painted wherever the tint may be: row 0 of uDiscs holds each disc's centre and
+// radius, row 1 its colour, whose alpha is the blend. See GroundDiscs.
+uniform sampler2D uDiscs;
+uniform int uDiscCount;
 #endif
 
 uniform vec3 uFogColor;
@@ -357,6 +362,22 @@ bool inHighlight() {
 	}
 
 	return false;
+}
+
+// The ground discs blended over <lit> in order, each edge smoothed over about one pixel. The pixel's size on the ground is
+// taken once, before the loop, since derivatives are undefined in control flow that differs between neighbouring fragments.
+vec3 paintDiscs(vec3 lit) {
+	float pixel = max(length(fwidth(vWorldXZ)), 1e-6);
+	for (int i = 0; i < uDiscCount; i++) {
+		vec4 shape = texelFetch(uDiscs, ivec2(i, 0), 0);
+		float coverage = 1.0 - smoothstep(shape.z - pixel, shape.z, distance(vWorldXZ, shape.xy));
+		if (coverage > 0.0) {
+			vec4 color = texelFetch(uDiscs, ivec2(i, 1), 0);
+			lit = mix(lit, color.rgb, color.a * coverage);
+		}
+	}
+
+	return lit;
 }
 
 #endif
@@ -535,6 +556,10 @@ void main() {
 	if (uGridEnabled) {
 		float reach = 1.0 - smoothstep(uGridFadeStart, uGridFadeEnd, vViewDistance);
 		lit = mix(lit, uGridColor, reach * gridCoverage());
+	}
+
+	if (uHighlightEnabled) {
+		lit = paintDiscs(lit);
 	}
 
 	if (uHighlightEnabled && inHighlight()) {

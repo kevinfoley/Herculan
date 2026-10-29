@@ -247,8 +247,9 @@ public sealed class SceneRenderer : IDisposable {
 		.Select(i => $"uEffectLightIntensity[{i}]").ToArray();
 
 	/// <param name="editorGrid">
-	/// Compiles the measuring grid and the ground tint into the scene program, so <see cref="SceneItem.ShowGrid"/>,
-	/// <see cref="Grid"/>, <see cref="SceneItem.ShowHighlight"/> and <see cref="Highlight"/> do something. Off by
+	/// Compiles the measuring grid, the ground tint and the ground discs into the scene program, so
+	/// <see cref="SceneItem.ShowGrid"/>, <see cref="Grid"/>, <see cref="SceneItem.ShowHighlight"/>, <see cref="Highlight"/>
+	/// and <see cref="Discs"/> do something. Off by
 	/// default, and the simulator leaves it off: the grid is
 	/// a tool, and this way none of it — not a uniform, not a varying, not a branch — reaches the
 	/// program the game is drawn with.
@@ -472,6 +473,12 @@ public sealed class SceneRenderer : IDisposable {
 	public GroundHighlight Highlight { get; } = new();
 
 	/// <summary>
+	/// The discs painted on any item whose <see cref="SceneItem.ShowHighlight"/> is set. Ignored unless this renderer was
+	/// built with the grid compiled in.
+	/// </summary>
+	public GroundDiscs Discs { get; } = new();
+
+	/// <summary>
 	/// Clears the whole framebuffer once per frame. Split out from <see cref="Render"/> so a host can
 	/// draw several passes into one frame (the cockpit's three panels, each under its own scissor)
 	/// without each call wiping the ones already drawn — call this once, then <see cref="Render"/>
@@ -573,6 +580,7 @@ public sealed class SceneRenderer : IDisposable {
 			_shader.SetFloat("uHighlightRadius", Highlight.Radius);
 			_shader.SetVector3("uHighlightColor", Highlight.Color);
 			_shader.SetFloat("uHighlightStrength", System.Math.Clamp(Highlight.Strength, 0f, 1f));
+			Discs.Bind(_gl, _shader, DiscUnit);
 		}
 
 		// Which of each pair the flash is showing. Both are the same shape, so only the handle moves.
@@ -896,6 +904,9 @@ public sealed class SceneRenderer : IDisposable {
 	/// <summary>The texture unit the terrain's paint ranks are sampled from.</summary>
 	private const int PaintRankUnit = 3;
 
+	// The ground discs' texture unit (GroundDiscs), on its own for the reason PaintRankUnit is.
+	private const uint DiscUnit = 4;
+
 	/// <summary>
 	/// This pass's side of the original's submit: rebuilds the zone's visible region for the pass's
 	/// view, as <c>Terrain_SetupVisibleRegion</c> does before the submit, and files the layer's objects
@@ -1035,6 +1046,7 @@ public sealed class SceneRenderer : IDisposable {
 		_impactShadeRampTexture?.Dispose();
 		_impactPaletteRampTexture?.Dispose();
 		_paintRanks?.Dispose();
+		Discs.Free(_gl);
 		_gl.DeleteVertexArray(_skyVertexArray);
 	}
 }
