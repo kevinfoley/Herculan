@@ -28,7 +28,7 @@ for each w in 0..17:
   word[000ab332 + 2w] = Q10(weaponValue[w], weapon scale)
 ```
 
-The rows are 0x42 bytes, 33 words, with the internals from the row's fourteenth word, as in ES2's table. The prices are eight words in the image at `000808b8`, 50, 60, 80, 100, 120, 140, 170 and 200, where ES2's come from `herc_inf.dat`. `es2_xref.py` finds one call, at `000208d8` in `00020630`.
+The rows are 0x42 bytes, 33 words, with the internals from the row's fourteenth word, as in ES2's table. The prices are eight words in the image at `000808b8`, 50, 60, 80, 100, 120, 140, 170 and 200, where ES2's come from `herc_inf.dat`. `es2_xref.py` finds one call, at `000208d8` in `Shell_LoadData` (`00020630`).
 
 ## Open
 

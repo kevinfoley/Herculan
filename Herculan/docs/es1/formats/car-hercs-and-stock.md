@@ -24,13 +24,13 @@ HERC count x {
 3. reads the other four header fields and the HERC count;
 4. for each HERC reads its slot, makes a HERC with `Herc_Ctor` (`00022f5e`) for chassis −1, stores it in that slot with no bounds test, and reads it with `Herc_Read` (`00023501`), passing the marked slot's word when the slot is the marked slot and that word is not 0, and 0 otherwise.
 
-`Herc_Read` reads the record with `Herc_ReadFromStream` (`0002352f`) and, unless the byte `0007fd09` is set, builds the HERC's diagram with `Herc_BuildDiagram` (`00023883`, [the mount pictures](herc-diagrams.md#the-mount-pictures)), handing it the word.
+`Herc_Read` reads the record with `Herc_ReadFromStream` (`0002352f`) and, unless the byte `Shell_LowMemory` (`0007fd09`) is set, builds the HERC's diagram with `Herc_BuildDiagram` (`00023883`, [the mount pictures](herc-diagrams.md#the-mount-pictures)), handing it the word.
 
 `es2_xref.py` finds three calls to `Hangar_LoadFile`: from `Career_New` with `car\car_init.dat` ([starting a career](bst-battle-sets.md#starting-a-career)), from `MsnGen_LoadMission` in mode 0 with `car\sm_init.dat` ([loading a mission](msn-mission-file.md#loading-a-mission)), and from `00014fd6`, which `Shell_ProcessMissionResults` calls outside mode 1. `Hangar_ReadFromSave` (`00028bd6`), given *n* and a path, opens the file as a `FileRStream`, calls `00028db6` *n* times and then `Hangar_Read`.
 
 `Hangar_Write` (`00029107`) writes the five header fields as read. When the mode word `000aad56` is not 0 it then writes the HERC count and, for each slot below the slot count that holds a HERC, the slot and the HERC (`Herc_Write`). In mode 0 it writes a count of 8 and then, for each of slots 0 to 7 that holds a HERC, the slot and the HERC, so the count it writes is 8 whatever the slots hold. `Hangar_SaveFile` (`0002909c`), given a path, writes the hangar there through a `FileRWStream`, asserting at severity 5 (`mechman.cpp` line `0x132`) when it cannot open it; a single mission's load saves it as `car\sm_play.mec` ([the squad](msn-mission-file.md#the-squad)).
 
-`Hangar_AddHerc` (`00029d0f`) puts a HERC in the first empty slot below the slot count (`Hangar_FindFreeSlot`, `0002983a`), builds its diagram unless the byte `0007fd09` is set, adds 1 to the HERC count and returns the slot, or returns −1 and stores nothing when no slot is empty. The second header word, `Hangar_SelectedSlot` (`00080894`), is the slot of the career record's current pilot ([pilot entries](bst-battle-sets.md#pilot-entries)), the HERC `data\player.mec`'s writer writes next.
+`Hangar_AddHerc` (`00029d0f`) puts a HERC in the first empty slot below the slot count (`Hangar_FindFreeSlot`, `0002983a`), builds its diagram unless the byte `Shell_LowMemory` (`0007fd09`) is set, adds 1 to the HERC count and returns the slot, or returns −1 and stores nothing when no slot is empty. The second header word, `Hangar_SelectedSlot` (`00080894`), is the slot of the career record's current pilot ([pilot entries](bst-battle-sets.md#pilot-entries)), the HERC `data\player.mec`'s writer writes next.
 
 ### The HERC record
 

@@ -1,6 +1,6 @@
 # GO.EXE — the HERC diagram tables
 
-**The shell shows each HERC as a diagram built from sprites: a picture of each mounted weapon in its place, marks over the parts that are damaged, and an area per mount that can be clicked.** Three families of `SHELL0.VOL` `cfg\` tables position them, per chassis: `cfg\<chassis>.dat`, `cfg\<chassis>dmg1.dat` and `cfg\hotspot.dat`, all loaded once by `00020630`, which also loads the shell's fonts and the battle set ([which battle set](bst-battle-sets.md#which-battle-set)). ES2 keeps the same kinds of geometry in `gam\arm_*.dat` and `gam\arm_hots.dat` ([ES2's screen-layout families](../../retail/formats/herc-catalogs.md#the-screen-layout-families)). Addresses are `ES1GO` image addresses ([the X-32 executable](x32-executable.md#the-image)).
+**The shell shows each HERC as a diagram built from sprites: a picture of each mounted weapon in its place, marks over the parts that are damaged, and an area per mount that can be clicked.** Three families of `SHELL0.VOL` `cfg\` tables position them, per chassis: `cfg\<chassis>.dat`, `cfg\<chassis>dmg1.dat` and `cfg\hotspot.dat`, all loaded once by `Shell_LoadData` (`00020630`), which also loads the shell's fonts and the battle set ([which battle set](bst-battle-sets.md#which-battle-set)). ES2 keeps the same kinds of geometry in `gam\arm_*.dat` and `gam\arm_hots.dat` ([ES2's screen-layout families](../../retail/formats/herc-catalogs.md#the-screen-layout-families)). Addresses are `ES1GO` image addresses ([the X-32 executable](x32-executable.md#the-image)).
 
 The chassis are numbered as a HERC record's chassis field ([the HERC record](car-hercs-and-stock.md#the-herc-record)), and both per-chassis path tables list them in one order:
 
@@ -15,7 +15,7 @@ The chassis are numbered as a HERC record's chassis field ([the HERC record](car
 | 6 | `CFG\HERC.DAT` | `CFG\HERCDMG1.DAT` | 8 |
 | 7 | `CFG\COLO.DAT` | `CFG\COLODMG1.DAT` | 9 |
 
-`00020630` calls `HercLayout_Load`, `HercDamageMarks_Load`, `LoadDamageDat_Shell` ([the value tables](herc-catalogs.md#the-load)), `HercHotspots_Load` and `HercArt_LoadAllBanks` in that order, from `000208ce` to `000208eb`. `00020ae3` frees the three tables with `HercLayout_Free` (`00021fbc`), `HercDamageMarks_Free` (`000223a1`) and `HercHotspots_Free` (`000227e4`).
+`Shell_LoadData` (`00020630`) calls `HercLayout_Load`, `HercDamageMarks_Load`, `LoadDamageDat_Shell` ([the value tables](herc-catalogs.md#the-load)), `HercHotspots_Load` and `HercArt_LoadAllBanks` in that order, from `000208ce` to `000208eb`. `Shell_FreeData` (`00020ae3`) frees the three tables with `HercLayout_Free` (`00021fbc`), `HercDamageMarks_Free` (`000223a1`) and `HercHotspots_Free` (`000227e4`).
 
 ## The mount pictures
 

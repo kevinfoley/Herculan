@@ -6,7 +6,7 @@ ES2's simulator has the same three pages, on paged display targets only ([ES2's 
 
 ## The pages
 
-The shell's display, the object at `000ab616`, is made by `Shell_CreateDisplay` (`00045b25`), which `00045d24` calls: `0x8c` bytes, constructed by `0005a388` for the driver named `VGA_8`. Its fields from `+0x24` on sit four bytes lower than the simulator's and ES2's, whose `GLDisplay_GetAttribute` has an attribute at `+0x24` the shell's lacks:
+The shell's display, the object at `000ab616`, is made by `Shell_CreateDisplay` (`00045b25`), which `Shell_InitDevices` (`00045d24`) calls: `0x8c` bytes, constructed by `0005a388` for the driver named `VGA_8`. Its fields from `+0x24` on sit four bytes lower than the simulator's and ES2's, whose `GLDisplay_GetAttribute` has an attribute at `+0x24` the shell's lacks:
 
 | Offset | Holds |
 |---|---|
@@ -80,11 +80,11 @@ The `.TTM` commands add every box with delay 1, `0xa601`'s rect through `DirtyBo
 
 **The shell shows a new frame each time its frame timer ticks: it shows the page it drew, switches drawing to the other, and restores that page's dirty boxes from the background.** `Shell_PresentFrame` (`00012980`), which `es2_xref.py` finds called twice from `Shell_Main` and nine times from `00037dce`, `000382f6`, `0003837f`, `0003b8df` and `0003c7d8`:
 
-1. waits until the byte `0007fd06` is set, and clears it. `Shell_FrameTick` (`00012974`) sets it: `00045d24` registers it with `Timer_AddCallback` at a count of 2, the scripts' count ([the timer](../formats/ttm-scripts.md#the-timer));
+1. waits until the byte `Shell_FrameDue` (`0007fd06`) is set, and clears it. `Shell_FrameTick` (`00012974`) sets it: `Shell_InitDevices` (`00045d24`) registers it with `Timer_AddCallback` at a count of 2, the scripts' count ([the timer](../formats/ttm-scripts.md#the-timer));
 2. when there is a palette at `0007fcd0` and the byte `0007fcd4` is set, uploads it with `Palette_UploadWhole` and clears the byte. The scripts' palette commands leave their palette there;
 3. when the byte `0007fcd5` is set, calls `00020a70` with the dword at `00081938` and clears it;
 4. makes `+0x88` the visible page and `+0x84` the draw page, and swaps `+0x84` and `+0x88`;
-5. when the byte `0007fcd7` is 0, `0007fcd6` is set and the word `000817c4` is 1000, calls `0004bbe9`(6) and clears `0007fcd6`;
+5. when the byte `0007fcd7` is 0, `0007fcd6` is set and the word `000817c4` is 1000, calls `Shell_WaitTicks` (`0004bbe9`)(6), which zeroes `Shell_WaitCount` (`000a0a90`) and loops until the timer callback `Shell_WaitTick` (`0004bbdd`), run every second interrupt, has raised it to 6, 12 interrupts or 0.1 s ([the shell's devices](../shell/startup.md#the-devices)), and clears `0007fcd6`;
 6. flushes the dirty list with `DirtyList_Flush`(the new `+0x88`, the word `0007fccc`): the draw page it has just set, and page 2, the word's value in the image, which `0003ba47` also passes as `Ttm_Configure`'s *a*;
 7. when the byte `0007fd07` is 1, calls `00050ed4` with the address `0009aff0`, `00027bc9`, and `00051037` with the dwords at `0009aff0` and `0009aff4`.
 
@@ -289,7 +289,7 @@ The two routines are one object file, `00088728`–`0008886f`, between zero fill
 - **Open:** what sets the cursor's clip rect, the rect `+0x20c` of the clip block `00098b28` (`ES1DBSIM`; the shell's `000843ec`): `es2_xref.py` finds only the cursor routines' pushes of its address, and a store through the block's base is not found by that search.
 - **Open:** whether a mission calls the simulator's slots 20 to 23. A retail check: a breakpoint on `ES1DBSIM 00051c3c` during a glance.
 - **Open:** what `0008b408`, which `VGA8_OpenMode` (`ES1DBSIM 0008b4f8`) calls with the mode, does to the VGA, and what `VGA_8`'s slots 9 and 10 (`000885dc`, `0008862c`) do in the open.
-- **Open:** `Shell_PresentFrame`'s steps 3, 5 and 7: `00020a70`, `0004bbe9`, `00050ed4`, `00027bc9` and `00051037`, and the bytes `0007fcd5`, `0007fcd6`, `0007fcd7` and `0007fd07`.
-- **Open:** `Shell_CreateDisplay`'s `0005a388`, `0005a5d0` and `000512a0`, the `0x20` bytes at `+0x64`, and what `00045d24`, which calls it and registers the frame tick, is.
+- **Open:** `Shell_PresentFrame`'s steps 3, 5 and 7: `00020a70`, `00050ed4`, `00027bc9` and `00051037`, and the bytes `0007fcd5`, `0007fcd6`, `0007fcd7` and `0007fd07`.
+- **Open:** `Shell_CreateDisplay`'s `0005a388`, `0005a5d0` and `000512a0`, and the `0x20` bytes at `+0x64`.
 - **Open:** which screens `0002141c`, `000217a9`, `00021a6e`, `0003b138`, `0003c1b7`, `0001907e`, `00019b54`, `0001c067`, `0001c270` and `0003c7d8` are, which add dirty boxes or fix rects.
 - **Open:** the callees `0006659c` and `0004fd65` the region copy clips with, matched by position to ES2's `Rect_Intersect` and `SpanList_ClipToRect`.

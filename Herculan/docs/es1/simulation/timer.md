@@ -31,7 +31,7 @@ The code that reads the rate takes the divisor *w* from the timer in GL slot 0 (
 
 The first timer built claims GL slot 0 and is the one installed; a later one finds the slot taken and touches nothing. `es2_xref.py` finds three calls of `DVTimer_Ctor`: `Sim_StartMission`'s; `Ttm_AllocHandles` (`00069780`), which builds one with `0x4da6` only when slot 0 is empty, and for which `es2_xref.py` finds one chain of calls, `Cockpit_LoadPanel` from `CockpitViewManager_LoadViews` from `CockpitViewManager_Ctor`, one call each, which `Sim_StartMission` runs at its step 13 ([the simulator's interpreter](../formats/ttm-scripts.md#the-simulator)), by which point the slot is taken; and `maybe_Kind0InputDevice_Ctor` (`0004b440`), to which it finds no reference ([Open](#open)). A scan of `ES1DBSIM`'s image bytes for `OUT` to ports `0x40` and `0x43` and for loads of those port numbers into `DX` finds `Pit_SetDivisor`'s three writes ([Open](#open)).
 
-In `GO.EXE`, `Ttm_AllocHandles` (`ES1GO 0004670e`) builds a timer with `0x4da6`, 19,878, 60.02 interrupts a second, when slot 0 is empty, and the two calls of `DVTimer_SetRate` `es2_xref.py` finds, from `ES1GO 00045a68` and `00046094`, set that rate; its third call of `DVTimer_Ctor`, from `ES1GO 00025a31`, passes on its own argument ([Open](#open)).
+In `GO.EXE`, `Shell_InitDevices` (`ES1GO 00045d24`) builds the first timer, `Kind0InputDevice_Ctor` (`ES1GO 00025a31`, the code of `maybe_Kind0InputDevice_Ctor`) with `0x26d3`, so the shell runs at the simulator's 120.05 interrupts a second ([the shell's devices](../shell/startup.md#the-devices)). `Ttm_AllocHandles` (`ES1GO 0004670e`) builds one with `0x4da6`, 19,878, 60.02 interrupts a second, only when slot 0 is empty. The two calls of `DVTimer_SetRate` `es2_xref.py` finds, from the shell's assert hook (`ES1GO 00045a68`) and its shutdown (`ES1GO 00046094`), set `0x4da6` just before the timer is removed ([the shutdown](../shell/startup.md#the-shutdown)).
 
 ## The timer object — `DVTimer`
 
@@ -80,7 +80,7 @@ Two sets of 16 slots, each a bit of a mask and an entry in each of the set's tab
 | `Pit_SetDivisor`, `Pit_InstallHandler`, `Pit_RemoveHandler` | `0006d18c`, `0006d1c2`, `0006d247` | `0005640c`, `00056442`, `000564c7` | — |
 | `Timer_AddCallback`, `Timer_AddDelayedCallback`, `Timer_RemoveCallback`, `Timer_RemoveDelayedCallback` | `0006d289`, `0006d2d7`, `0006d337`, `0006d364` | `00056509`, `00056557`, `000565b7`, `000565e4` | — |
 | `Pit_TimerInterrupt` | `0006d391` | `00056611` | — |
-| `maybe_Kind0InputDevice_Ctor` | `0004b440` | | `Kind0InputDevice_Ctor` (`0045bfcc`) |
+| `maybe_Kind0InputDevice_Ctor` | `0004b440` | `Kind0InputDevice_Ctor` (`00025a31`) | `Kind0InputDevice_Ctor` (`0045bfcc`) |
 
 `maybe_Kind0InputDevice_Ctor`, (this, divisor), allocates 11 bytes for a null *this*, builds a `DVTimer` at `+0` with the divisor, and passes `+6` to `0004b0b4`, where ES2's registers its `+6` as input device kind 0. `DVTimer_AssertRemoveHook` and `Pit_TimerInterrupt` have no Ghidra function.
 
@@ -103,4 +103,4 @@ Two sets of 16 slots, each a bit of a mask and an entry in each of the set's tab
 - **Open:** what reaches `maybe_Kind0InputDevice_Ctor` (`0004b440`), to which `es2_xref.py` finds no branch or stored pointer, and what `0004b0b4` does with its `+6`. Built before `Sim_StartMission`'s step 2 with another divisor, it would take GL slot 0 and set the rate.
 - **Open:** a retail check of the rate under DOSBox-X ([the plan's retail checks](../../herculan/plan-es1-first-mission.md#retail-checks)): a breakpoint on `Pit_SetDivisor` (`0006d18c`) after `Sim_StartMission` begins stops once with `9939` (`0x26d3`) on the stack, and on `Time_InitSimClock` (`00063e64`), stepping past its division, `SimClock_TicksPerSecond` (`000bba44`) holds 120. The HMI drivers loaded at run time lie outside the image's bytes the port scan covered.
 - **Open:** no reader of `Pit_Countdown` or `Pit_InterruptCount` found by a scan of the image's bytes for their addresses, which finds the handler's own uses; no reference to the two `RET`s at `0006d4af` and `0006d4b0`, and no caller of `DVTimer_SetRate`, `Timer_AddDelayedCallback` or `Timer_RemoveDelayedCallback` in `ES1DBSIM`, found by `es2_xref.py`; no write to the timer's ports besides `Pit_SetDivisor`'s found by the port scan.
-- **Open:** what `GO.EXE`'s two `DVTimer_SetRate` calls (`ES1GO 00045a68`, `00046094`) and its other `DVTimer_Ctor` call (`ES1GO 00025a31`) are for, and the divisor the last passes.
+- **Open:** why `GO.EXE`'s two `DVTimer_SetRate` calls (`ES1GO 00045a68`, `Shell_ShutdownDevices` (`00046094`)) set `0x4da6` just before `Pit_RemoveHandler` puts the BIOS rate back.

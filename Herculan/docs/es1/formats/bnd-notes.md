@@ -31,7 +31,7 @@ Eight functions each read one whole file into a global with `Ovl_ReadFile` (`ES1
 |---|---|---|
 | 0 | the [first dword](#the-first-dword) | |
 | 4 | `00 00 01 00` | |
-| 8 | 3,700,000 | `Shell_Main`: when the heap is smaller, it sets the byte `0007fd09` |
+| 8 | 3,700,000 | `Shell_Main`: when the heap is smaller, it sets the byte `Shell_LowMemory` (`0007fd09`) |
 | 12 | 2,400,000 | `Shell_Main`: when the heap is smaller, a severity-5 assert (`src\main.cpp` line `0x219`) reports the shortfall and ends the program |
 | 16 | 500,000 | |
 
@@ -61,5 +61,5 @@ The heap is what `Mem_InitHeap` gives for the dword `0007e738`, also 3,700,000 (
 ## Open
 
 - **Open:** whether `ES1DBSIM` reads any `bnd\` file. `es2_xref` finds no reference to its `bnd` pointer `000980c0`, where the same sweep finds both pushes of `dmg`'s pointer `000980e0`; a case-insensitive search of the image's bytes finds no `cam` or `.bnd` string, where it finds `dmg` and `damage.cpp`.
-- **Open:** what the shell reads of seven of its eight files, and of `MAIN.BND`'s offsets 0, 4 and 16; what the byte `0007fd09` changes.
+- **Open:** what the shell reads of seven of its eight files, and of `MAIN.BND`'s offsets 0, 4 and 16; what the byte `Shell_LowMemory` (`0007fd09`) changes.
 - **Open:** whether anything reads the first dword, and what wrote it.

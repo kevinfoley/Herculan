@@ -42,7 +42,7 @@ The class tables register `GLCursor` under tag `0x0B002800`. Its load function, 
 | `SHELL0` | `RES32\ARROW.DCI` | the same bytes as `ALERT.DCI` |
 | `SHELL0` | `RES32\ICONS.DCI` | 16 wide, 11 high, (1, 1) |
 
-The shell's start-up, `00045d24`, loads `res32\arrow.dci` with `Resource_LoadPath` (`0004b823`), which opens the path with `VolRStream_CtorFromPath`, loads one class item with `ClassItem_LoadResource`, closes and destroys the stream, and returns the item. It then passes the cursor's bitmap `+4` and its hotspot `+8` to `Cursor_SetImage`.
+The shell's start-up, `Shell_InitDevices` (`00045d24`), loads `res32\arrow.dci` with `Resource_LoadPath` (`0004b823`), which opens the path with `VolRStream_CtorFromPath`, loads one class item with `ClassItem_LoadResource`, closes and destroys the stream, and returns the item. It then passes the cursor's bitmap `+4` and its hotspot `+8` to `Cursor_SetImage`.
 
 ## `RES32\ICONS.DBA`
 

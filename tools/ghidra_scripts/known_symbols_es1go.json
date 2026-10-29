@@ -32,6 +32,36 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "0000035e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Assert_SetLogDir",
+      "description": "(dir): copies dir into Assert_LogDir (0009a2b0), four bytes before the buffer 0009a2b4 that Assert_LogPath (00000386) fills, the directory Assert_LogPath puts in front of 'assert.log'. ES2's Assert_SetLogDir (VSHELL 0044e060) without the return value, and the statements of ES1DBSIM 00056ecc, whose buffer is ES1DBSIM 000b5b3c. es2_xref finds one call, from Shell_Main (00012ec7) with the drive prefix 000aae06.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-start-up; ES1GO decompile at 0000035e",
+      "verified": {
+        "bytes": "0000035e+40",
+        "sha1": "282c3c2d2cfa",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00000386",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Assert_LogPath",
+      "description": "(): copies Assert_LogDir (0009a2b0) into 0009a2b4, appends 'assert.log' with strcat and returns 0009a2b4. ES2's Assert_LogPath (VSHELL 0044e090). es2_xref finds one call, from 000003c4.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-start-up; ES1GO decompile at 00000386",
+      "verified": {
+        "bytes": "00000386+62",
+        "sha1": "c03257b5c67c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00000604",
       "binary": "ES1GO",
       "type": "function",
@@ -1402,7 +1432,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ShellMap_LoadResource",
-      "description": "(path), callee-cleaned: opens path with VolRStream_CtorFromPath, loads one class item from it with ClassItem_LoadResource in mode 0, closes the stream and returns the item. es2_xref finds three calls, two from 000093b3 (dba\\icons, dba\\mapshp) and one from ShellMap_LoadZoneShapes (0000c7e3, dba\\tex1).",
+      "description": "(path), callee-cleaned: opens path with VolRStream_CtorFromPath, loads one class item from it with ClassItem_LoadResource in mode 0, closes the stream and returns the item. es2_xref finds three calls, two from ShellMap_LoadResources (000093b3) (dba\\icons, dba\\mapshp) and one from ShellMap_LoadZoneShapes (0000c7e3, dba\\tex1).",
       "source": "ES1GO disassembly at 0000923c",
       "verified": {
         "bytes": "0000923c+57",
@@ -1424,6 +1454,36 @@
         "sha1": "de2ade8a77da",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "000093b3",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellMap_LoadResources",
+      "description": "(): registers 000092ae with Timer_AddCallback (00056509) at a count of 2, keeping the slot in the word 0007e20a; loads the folder names icons and mapshp under the dword 00086840 with ShellMap_LoadResource into 000aa2b8 and 000aa2bc, and the name 0007e256 under 00086850 with 00009275 into 000aa2c0; and Mem_New's a block of the word 0009a4d6's size into 0007e20c. es2_xref finds one call, from Shell_Main (00012ec7); ShellMap_ReleaseResources (00009453) undoes it.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-start-up; ES1GO decompile at 000093b3",
+      "verified": {
+        "bytes": "000093b3+160",
+        "sha1": "ab9a29ba91a6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00009453",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellMap_ReleaseResources",
+      "description": "(): removes the timer callback slot 0007e20a with Timer_RemoveCallback, destroys the bitmap arrays 000aa2b8 and 000aa2bc with GLBitmapArray_Dtor(array, 3) and the object 000aa2c0 through its slot +0x1c with 3 when set, and Mem_Delete's 0007e20c when set. es2_xref finds one call, from Shell_Main (00012ec7), at the shutdown.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-shutdown; ES1GO decompile at 00009453",
+      "verified": {
+        "bytes": "00009453+134",
+        "sha1": "aa8b69bdc5c0",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -1757,6 +1817,66 @@
       }
     },
     {
+      "address": "000119e0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellTime_Tick",
+      "description": "(): a timer callback: takes 1 off the word 0009ae16 while it is not 0 and adds 1 to the dword 0007e6fc, which Anm_Play reads. ShellTime_Init (000119fc) registers it at a count of 2; es2_xref finds its address stored there only.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-frame-time-scale; ES1GO decompile at 000119e0",
+      "verified": {
+        "bytes": "000119e0+28",
+        "sha1": "7b30d78a24d3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000119fc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellTime_Init",
+      "description": "(): sets the words 000aa7a2 and 000aa7a4 to 0x100; when the dword 0007e6f8 is 0, stores in it the timer GL slot 0 holds (000ab784), registers ShellTime_Tick (000119e0) with Timer_AddCallback (00056509) at a count of 2, and from the timer's divisor +4 sets the word 0009ae10 to the interrupts a second, 1000000 / Math_Q14Multiply(divisor, 0x35a1), 120 at the shell's divisor, the word 0009ae12 to a tenth of that, 0009ae14 and 0009ae16 to it, and the words 000aa7a6, 000aa7a8 and 000aa7aa to 0009ae12. es2_xref finds one call, from Shell_Main (00012ec7).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-frame-time-scale; ES1GO decompile at 000119fc",
+      "verified": {
+        "bytes": "000119fc+203",
+        "sha1": "c2562c57932b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00011ac7",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellTime_ScaleQ8",
+      "description": "(a, b) in stack order, int16 each, its arguments removed by this function: (a << 8) / b, a signed division, held to 0x40 to 0x1c2. es2_xref finds two calls, both from ShellTime_UpdateFrameScale (00011b16).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-frame-time-scale; ES1GO decompile and disassembly at 00011ac7",
+      "verified": {
+        "bytes": "00011ac7+79",
+        "sha1": "9ffac8c1228d",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00011b16",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellTime_UpdateFrameScale",
+      "description": "(): the frame loop's last step. Stores 0009ae14 less 0009ae16, the ShellTime_Tick (000119e0) calls since the last pass, in the word 000aa7aa; sets 000aa7a2 to ShellTime_ScaleQ8 (00011ac7)(that, the word 000aa7a6) and 000aa7a4 to ShellTime_ScaleQ8(that, the word 000aa7a8); and puts 0009ae16 back to 0009ae14. es2_xref finds one call, from Shell_Main (00012ec7).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-frame-time-scale; ES1GO decompile and disassembly at 00011b16",
+      "verified": {
+        "bytes": "00011b16+77",
+        "sha1": "651f87fd10b0",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00011dfc",
       "binary": "ES1GO",
       "type": "function",
@@ -1777,11 +1897,71 @@
       "type": "function",
       "confidence": "high",
       "name": "Main_LoadBnd",
-      "description": "No arguments: Ovl_ReadFile(bnd\\main, 1, 0x14, 0009ae18) in stack order, the whole of BND\\MAIN.BND; Shell_Main (00012ec7) reads its dwords +8 and +0xc. The static initialiser 000131cb registers it at phase 1 with RegisterSubsystemLoader (0000fca0).",
+      "description": "No arguments: Ovl_ReadFile(bnd\\main, 1, 0x14, 0009ae18) in stack order, the whole of BND\\MAIN.BND; Shell_Main (00012ec7) reads its dwords +8 and +0xc. The static initialiser Main_RegisterSubsystem (000131cb) registers it at phase 1 with RegisterSubsystemLoader (0000fca0).",
       "source": "Herculan/docs/es1/formats/bnd-notes.md#the-shells-files",
       "verified": {
         "bytes": "00012704+41",
         "sha1": "d5390009b6a7",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001272d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_ParseCommandLine",
+      "description": "(argv, argc) in stack order, its arguments removed by this function: walks the arguments from the last down to argv[1]. One that starts with '/' or '-' counts as -eggplant when it equals '-eggplant' exactly (REPE CMPSB through the NUL); its second character, upper-cased with toupper, is looked up in the five dwords at 0007e76c with REPNE SCASD and jumps to the target 0x14 bytes on (bodies 000127aa to 000127e3): A clears Shell_PlayIntro (0007fd0a), C sets Shell_AltDriveAllowed (0007fd0b), M sets Shell_MSwitchGiven (0007fd04), S sets the bytes 0007fcb8 and 0007fcb9, X sets Shell_DebugMode (0007fd08). Without -eggplant it prints 'To play EarthSiege, type ES.' with printf and returns 1; otherwise 0. es2_xref finds one call, from Shell_Main (00012ec7).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-command-line; ES1GO decompile and disassembly at 0001272d",
+      "verified": {
+        "bytes": "0001272d+221",
+        "sha1": "694e1007e89e",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001280a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ExitCfg_Write",
+      "description": "(): opens Path_ApplyAltDrive (00020989)('data\\exit.cfg') as a FileRWStream, asserting at severity 5 (src\\main.cpp line 0x88) when it does not open, writes the int16 Shell_ExitCode (0007fcac) through the stream's slot +0x18, then closes and destroys the stream. es2_xref finds three calls, two from Shell_Main (00012ec7) and one from Shell_AssertCleanupHook (00045a68).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-start-up; ES1GO decompile at 0001280a",
+      "verified": {
+        "bytes": "0001280a+146",
+        "sha1": "4ccbf7e0e327",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001289c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ExitCfg_Read",
+      "description": "(): opens Path_ApplyAltDrive (00020989)('data\\exit.cfg') as a FileRStream, asserting at severity 5 (src\\main.cpp line 0x90) when it does not open, reads an int16 into Shell_ExitCode (0007fcac) through the stream's slot +0x1c, closes and destroys the stream, and returns the value in AX. es2_xref finds one call, from Shell_Main (00012ec7).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-start-up; ES1GO decompile at 0001289c",
+      "verified": {
+        "bytes": "0001289c+151",
+        "sha1": "11f9c575269a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00012933",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_BlinkTick",
+      "description": "(): a timer callback. While the counter 0007e7e8 is below 20 it adds 1 to it; below 40 it sets Shell_BlinkOn (0007fce0) and adds 1; otherwise it clears Shell_BlinkOn and the counter. So Shell_BlinkOn is set for 20 of every 41 calls. Shell_InitDevices (00045d24) registers it at a count of 2 unless Shell_DebugMode (0007fd08) is set; es2_xref finds its address stored there only.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-devices; ES1GO decompile at 00012933",
+      "verified": {
+        "bytes": "00012933+65",
+        "sha1": "7032ac385686",
         "scope": "body",
         "via": "decompile"
       }
@@ -1792,7 +1972,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_FrameTick",
-      "description": "(): sets the byte 0007fd06 to 1, the flag Shell_PresentFrame (00012980) waits on. es2_xref finds its address stored at 00045d59, in 00045d24's call of Timer_AddCallback at a count of 2.",
+      "description": "(): sets the byte Shell_FrameDue (0007fd06) to 1, the flag Shell_PresentFrame (00012980) waits on. es2_xref finds its address stored at 00045d59, in Shell_InitDevices (00045d24)'s call of Timer_AddCallback at a count of 2.",
       "source": "Herculan/docs/es1/rendering/screen-pages.md#presenting-a-frame",
       "verified": {
         "bytes": "00012974+12",
@@ -1807,11 +1987,71 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_PresentFrame",
-      "description": "(): waits until the byte 0007fd06 is set and clears it; uploads the palette 0007fcd0 with Palette_UploadWhole when it is set and the byte 0007fcd4 is set, clearing the byte; with the byte 0007fcd5 set calls 00020a70 with the dword 00081938 and clears it; makes the display 000ab616's +0x88 the visible page (+0x30, raster slot 000865f8) and +0x84 the draw page (+0x38, slot 000865f4) and swaps +0x84 and +0x88; when 0007fcd7 is 0, 0007fcd6 set and the word 000817c4 is 1000 calls 0004bbe9(6) and clears 0007fcd6; calls DirtyList_Flush (000413db)(the new +0x88, the word 0007fccc); and with the byte 0007fd07 at 1 calls Cursor_SyncPosition (00050ed4)(0009aff0), 00027bc9 and Mouse_SetPosition (00051037) with the dwords 0009aff0 and 0009aff4.",
+      "description": "(): waits until the byte Shell_FrameDue (0007fd06) is set and clears it; uploads the palette 0007fcd0 with Palette_UploadWhole when it is set and the byte 0007fcd4 is set, clearing the byte; with the byte 0007fcd5 set calls 00020a70 with the dword 00081938 and clears it; makes the display 000ab616's +0x88 the visible page (+0x30, raster slot 000865f8) and +0x84 the draw page (+0x38, slot 000865f4) and swaps +0x84 and +0x88; when 0007fcd7 is 0, 0007fcd6 set and the word 000817c4 is 1000 calls Shell_WaitTicks (0004bbe9)(6) and clears 0007fcd6; calls DirtyList_Flush (000413db)(the new +0x88, the word 0007fccc); and with the byte 0007fd07 at 1 calls Cursor_SyncPosition (00050ed4)(0009aff0), 00027bc9 and Mouse_SetPosition (00051037) with the dwords 0009aff0 and 0009aff4.",
       "source": "Herculan/docs/es1/rendering/screen-pages.md#presenting-a-frame",
       "verified": {
         "bytes": "00012980+385",
         "sha1": "6a3bf8dd3f4d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00012b01",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_QuitKeyCallback",
+      "description": "(code), its argument removed by this function: writes 'entering quitKeyCallback' to the monochrome monitor with Mono_WriteText (0004f894); when the code with bit 0x1000 cleared is one of the six dwords at 0007e824, Ctrl+Esc, Alt+Esc, Ctrl+Q, Alt+Q, Ctrl+X and Alt+X (0x401, 0x201, 0x410, 0x210, 0x42d, 0x22d), sets Shell_QuitRequested (0007e808) and answers 1; otherwise answers 2. The name is its own message's. es2_xref finds no branch to it and no stored pointer.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-keyboard-subscribers; ES1GO decompile and disassembly at 00012b01",
+      "verified": {
+        "bytes": "00012b01+77",
+        "sha1": "9dc71b836e35",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00012b4e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_NavKeySubscriber",
+      "description": "(code), its argument removed by this function: a keyboard subscriber that passes the code with bit 0x1000 cleared to 0001cc86, the open dialog's key handler, and answers 1. Shell_InitDevices (00045d24) registers it with Keyboard_AddSubscriber for the 13 codes at 0007e7f0 unless Shell_DebugMode (0007fd08) is set. es2_xref finds its address loaded there, in Shell_AssertCleanupHook (00045a68) and Shell_ShutdownDevices (00046094), which remove it, and stored at 0003eaed and 0003ebd4.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-keyboard-subscribers; ES1GO decompile at 00012b4e",
+      "verified": {
+        "bytes": "00012b4e+27",
+        "sha1": "6a8cf3dd0d2a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00012b69",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_ScanKeySubscriber",
+      "description": "(code), its argument removed by this function: a keyboard subscriber. A code whose low byte is 0x47, 0x48, 0x4b, 0x4d, 0x4f or 0x50 (Home, Up, Left, Right, End, Down) with bit 0x1000 set answers 2; any other code but 0x653 goes to Shell_ForwardKeyToDialog (00012bb7), and it answers 1. es2_xref finds its address loaded in 0001f442 and 0001f66f and stored at 0003eb0d and 0003ec00.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-keyboard-subscribers; ES1GO decompile at 00012b69",
+      "verified": {
+        "bytes": "00012b69+78",
+        "sha1": "f5ae35833605",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00012bb7",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_ForwardKeyToDialog",
+      "description": "(code), its argument removed by this function: when the dialog pointer 0007f0d0 is set, 0001bbd2(0007f0d0, code). es2_xref finds one call, from Shell_ScanKeySubscriber (00012b69).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-keyboard-subscribers; ES1GO decompile at 00012bb7",
+      "verified": {
+        "bytes": "00012bb7+39",
+        "sha1": "0eaf663ab028",
         "scope": "body",
         "via": "decompile"
       }
@@ -1832,16 +2072,61 @@
       }
     },
     {
+      "address": "00012be3",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_StartupNoOp",
+      "description": "(): returns at once: PUSH EBP, MOV EBP,ESP, POP EBP and RET, the bytes of NoOp_Void (00012bde). es2_xref finds one call, from Shell_Main (00012ec7), after the exit.cfg round trip.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-start-up; ES1GO disassembly at 00012be3",
+      "verified": {
+        "bytes": "00012be3+5",
+        "sha1": "74c0a4a36986",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00012be8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_HandleInput",
+      "description": "(block), its argument removed by this function: the frame loop's input step, given the block Shell_PollInput (0004de3a) returned; a null block returns. When the keyboard word +0 lacks bit 0x4000 it clears bit 0x1000 of the word Shell_InputBlock (0007e73c) points at and looks the word up in the 15 dwords at 0007e880 (REPNE SCASD, targets 0x3c bytes on): Space and Shift+Space call 0000a9c8, ',' and Shift+',' 0000d657, '.' and Shift+'.' 0000d599, '-' and Shift+'-' slot +0xc and '=' and Shift+'=' slot +8 of the table at +0x4a of the object 000809a4, each only while 000809a4 is set and the byte 000809a8 is not 0, then setting 000809a8 to 3; Insert (0x52) calls 0001cc86(0xf) when option 10 of Prefs_Options (000aa24e) is set; Ctrl+Esc and Alt+Esc set Shell_QuitRequested (0007e808); 0 and Ctrl+C do nothing. Any other word with the low byte 0x10, 0x2d or 0x2e (Q, X, C) sets Shell_QuitRequested with Ctrl or Alt (0x600) held unless it is C, and otherwise passes 'q', 'x' or 'c', less 0x20 with bit 0x800, or'd with 0x4000, to 0001bb85 with +6 of the menu 000817c8 when that is set. Then the block's +0x1d set calls 0001cc86(0x1c) and Input_LatchButton (0004de18)(1, 1) and sets the byte 0007e87c, and +0x1d clear with 0007e87c set calls 0001cc86(0x9c) and clears it; +0x1e set calls 0001cc86(0xf) and Input_LatchButton(1, 2). Last, unless Shell_DebugMode (0007fd08) is set, a word with bit 0x4000 goes to 0001bb85 with +6 of 000817c8 when that is set. es2_xref finds one call, from Shell_Main (00012ec7), and its address stored at 0005d36e.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-input; ES1GO decompile and disassembly at 00012be8",
+      "verified": {
+        "bytes": "00012be8+735",
+        "sha1": "3aa983642a07",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00012ec7",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "Shell_Main",
-      "description": "(a, b), src\\main.cpp: the shell's main; es2_xref finds one call, from 0000000d. Mem_InitHeap(the dword 0007e738, 3700000), asserting at severity 5 (line 0x1f8) when it gives 100000 bytes or fewer; 0001272d(b, a), and when that returns non-zero Mem_HeapOff and __exit(1); copies to 000aae06, for 0000035e, the ALT_DRIVE variable (taken as null unless 0007fd0b is set) when PREFER_ALT is set and the string at 0007e942 otherwise; 0001289c, 0001280a, 00012be3; VolumeGroup_SetBufferSize(0x200), VolRStream_SetGroup(PREFER_ALT set, ALT_DRIVE, 0007e943, 0x100), Subsystem_RunPhase (0000fcda)(1), which reads the eight bnd\\ files; an assert at severity 5 (line 0x219, the shortfall printed with sprintf) when the heap is under the dword 0009ae24, BND\\MAIN.BND's +0xc, and the byte 0007fd09 set when it is under 0009ae20, the file's +8. Then unnamed set-up calls, among them WidgetStyles_Load (00044aa4)('CFG\\styles.dat') and Resource_LoadBitmapArray (0004b7df)('res32\\corners.dba') into 000ab4ee, and Palette_UploadWhole(0007fcd0); a loop until the byte 0007fd05 is set, which 000817c0 = 9999 also sets; after it, shut-down calls, VolRStream_DeleteGroup and Mem_HeapOff, and INT 3 when 0007fd08 is set. ES1DBSIM's Sim_Main (00059350) opens with Mem_InitHeap(6000000) and the same assert.",
-      "source": "ES1GO decompile at 00012ec7",
+      "description": "(a, b), src\\main.cpp: the shell's main; es2_xref finds one call, from 0000000d. Mem_InitHeap(the dword 0007e738, 3700000), asserting at severity 5 (line 0x1f8) when it gives 100000 bytes or fewer; Shell_ParseCommandLine (0001272d)(b, a), and when that returns non-zero Mem_HeapOff and __exit(1); copies to 000aae06, for Assert_SetLogDir (0000035e), the ALT_DRIVE variable (taken as null unless Shell_AltDriveAllowed (0007fd0b) is set) when PREFER_ALT is set and the string at 0007e942 otherwise; ExitCfg_Read (0001289c), ExitCfg_Write (0001280a), Shell_StartupNoOp (00012be3); VolumeGroup_SetBufferSize(0x200), VolRStream_SetGroup(PREFER_ALT set, ALT_DRIVE, 0007e943, 0x100), Subsystem_RunPhase (0000fcda)(1), which reads the eight bnd\\ files; an assert at severity 5 (line 0x219, the shortfall printed with sprintf) when the heap is under the dword 0009ae24, BND\\MAIN.BND's +0xc, and the byte Shell_LowMemory (0007fd09) set when it is under 0009ae20, the file's +8. Then the set-up calls, among them WidgetStyles_Load (00044aa4)('CFG\\styles.dat') and Resource_LoadBitmapArray (0004b7df)('res32\\corners.dba') into 000ab4ee, and Palette_UploadWhole(0007fcd0); a loop until the byte Shell_QuitFlag (0007fd05) is set, which 000817c0 = 9999 also sets; after it, shut-down calls, VolRStream_DeleteGroup and Mem_HeapOff, and INT 3 when Shell_DebugMode (0007fd08) is set; returns the word Shell_ExitCode (0007fcac) in AX. ES1DBSIM's Sim_Main (00059350) opens with Mem_InitHeap(6000000) and the same assert.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-start-up; ES1GO decompile and disassembly at 00012ec7",
       "verified": {
         "bytes": "00012ec7+772",
         "sha1": "ecfab1445f26",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000131cb",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Main_RegisterSubsystem",
+      "description": "(): main.cpp's static initializer, the static constructor table's entry 0009a240: RegisterSubsystemLoader (0000fca0)(1, Main_LoadBnd (00012704)). Its RET at 000131f5 and two zero bytes end the object file.",
+      "source": "Herculan/docs/es1/shell/startup.md#where-the-object-file-starts-and-ends; ES1GO decompile at 000131cb",
+      "verified": {
+        "bytes": "000131cb+43",
+        "sha1": "9f26de368ed6",
         "scope": "body",
         "via": "decompile"
       }
@@ -2902,7 +3187,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CareerLog_FreeEntries",
-      "description": "(log), callee-cleaned: deletes the careers log's entry array at +0 when it is not null and zeroes the pointer. es2_xref finds three calls: from CareerLog_Load (00017e7f), 00020ae3 and 00020fff.",
+      "description": "(log), callee-cleaned: deletes the careers log's entry array at +0 when it is not null and zeroes the pointer. es2_xref finds three calls: from CareerLog_Load (00017e7f), Shell_FreeData (00020ae3) and 00020fff.",
       "source": "Herculan/docs/es1/formats/career-log-and-player-mec.md#loading",
       "verified": {
         "bytes": "00017e59+38",
@@ -2917,7 +3202,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CareerLog_Load",
-      "description": "(log), callee-cleaned: loads the careers log. Frees its entries (CareerLog_FreeEntries) and opens entry 13 of the file-name table 0009afb8, car\\names.log, through Text_GetString and Path_ApplyAltDrive as a FileRStream; when it opens reads the int16 count into +4 through the stream's slot +0x1c, and otherwise sets the count to 0. Allocates (count + 1) x 100 bytes at +0; with a count of 0 sets the current entry +6 to -1, otherwise reads it and count x 100 bytes of entries (FileRStream_Read). Closes the stream when the count is not 0, clears the byte +8 and destroys the stream. es2_xref finds two calls: from 00020630 and CareerLog_Delete (0001828e).",
+      "description": "(log), callee-cleaned: loads the careers log. Frees its entries (CareerLog_FreeEntries) and opens entry 13 of the file-name table 0009afb8, car\\names.log, through Text_GetString and Path_ApplyAltDrive as a FileRStream; when it opens reads the int16 count into +4 through the stream's slot +0x1c, and otherwise sets the count to 0. Allocates (count + 1) x 100 bytes at +0; with a count of 0 sets the current entry +6 to -1, otherwise reads it and count x 100 bytes of entries (FileRStream_Read). Closes the stream when the count is not 0, clears the byte +8 and destroys the stream. es2_xref finds two calls: from Shell_LoadData (00020630) and CareerLog_Delete (0001828e).",
       "source": "Herculan/docs/es1/formats/career-log-and-player-mec.md#loading",
       "verified": {
         "bytes": "00017e7f+224",
@@ -3452,6 +3737,36 @@
       }
     },
     {
+      "address": "0001c460",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellMouse_AddCallbacks",
+      "description": "(): calls 00027bc9, then registers 0001c605, 0001c7d8 and 0001caaa with Mouse_AddCallback for the masks 1, 2 and 4, keeping the slots in the words 0007f0c8, 0007f0ca and 0007f0cc. es2_xref finds one call, from Shell_Main (00012ec7); ShellMouse_RemoveCallbacks (0001c4de) undoes it.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-start-up; ES1GO decompile at 0001c460",
+      "verified": {
+        "bytes": "0001c460+126",
+        "sha1": "1d8d18e6e5bd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001c4de",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellMouse_RemoveCallbacks",
+      "description": "(): calls 00027bc9, then removes the three slots 0007f0c8, 0007f0ca and 0007f0cc with Mouse_RemoveCallback. es2_xref finds one call, from Shell_Main (00012ec7), at the shutdown.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-shutdown; ES1GO decompile at 0001c4de",
+      "verified": {
+        "bytes": "0001c4de+88",
+        "sha1": "38adaad8279f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0001cde8",
       "binary": "ES1GO",
       "type": "function",
@@ -3767,6 +4082,21 @@
       }
     },
     {
+      "address": "00020630",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_LoadData",
+      "description": "(): copies options 12 to 16 of Prefs_Options into the mission parameters' words, options 0 and 1 into the bytes 0007fcb8 and 0007fcb9, option 2 into the word 0007fcbc, and into the word 0007fcba the word 0007fd10, or 0007fd18 with option 3 set, plus options 4, 5 and 6, over 256; loads 13 fonts through 0004b757 into the 14 dwords 000aacc6 to 000aacfa, the nm_green handle stored twice; seeds Shell_RandomState with Math_RandomSeedAndSkip (000386f4)(state, time modulo 128); loads eng\\watext.bin into 0009afa8 with Text_LoadDataFile; sets 0009b000 and 0009b004 to 0 and 0009b008 and 0009b00c to the display 000ab616's attributes 2 and 3 less 1; HercLayout_Load, HercDamageMarks_Load, LoadDamageDat_Shell, HercHotspots_Load and, unless Shell_LowMemory (0007fd09) is set, HercArt_LoadAllBanks; CareerLog_Load (00017e7f)(0009b20c) and its current entry into the word 0007fcea, 0 when negative; BattleSet_Load; and 00027c4c. es2_xref finds one call, from Shell_Main (00012ec7).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-shared-data; ES1GO decompile at 00020630",
+      "verified": {
+        "bytes": "00020630+797",
+        "sha1": "f24bcef3af36",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0002094d",
       "binary": "ES1GO",
       "type": "function",
@@ -3797,12 +4127,27 @@
       }
     },
     {
+      "address": "00020ae3",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_FreeData",
+      "description": "(): destroys each set font of the 14 dwords at 000aacc6 and the render context 0007fcd8 when set through slot +0x1c with 3; HercLayout_Free, HercDamageMarks_Free, HercHotspots_Free and, unless Shell_LowMemory (0007fd09) is set, 00022981; CareerLog_FreeEntries (00017e59)(0009b20c), BattleSet_FreeCampaigns, 00027c8e and 00020a18. es2_xref finds one call, from Shell_Main (00012ec7), at the shutdown.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-shutdown; ES1GO decompile at 00020ae3",
+      "verified": {
+        "bytes": "00020ae3+133",
+        "sha1": "1cbe81d51073",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00021d0c",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "HercLayout_Load",
-      "description": "(), C convention: for chassis 0-7 opens the path in the table at 000804d0 (CFG\\ROAD.DAT ... CFG\\COLO.DAT) with VolRStream_CtorFromPath (0004d064), reads an int16 mount count into the word 000aae0e + 6 * chassis and makes an array of that many 6-byte mounts in the dword 000aae0a + 6 * chassis; per mount reads an int16 record count into the mount's +4 and makes an array of that many 0x14-byte records (__vec_new (0005542c) with HercLayout_RecordCtor (00021f71)) at its +0; per record reads int16s into +2 (frame) and +0 (weapon), then two int16 pairs sign-extended into the int32 pairs at +4 and +0xc; destroys each stream through its vtable's +4 with 3. es2_xref finds one call, from 00020630.",
+      "description": "(), C convention: for chassis 0-7 opens the path in the table at 000804d0 (CFG\\ROAD.DAT ... CFG\\COLO.DAT) with VolRStream_CtorFromPath (0004d064), reads an int16 mount count into the word 000aae0e + 6 * chassis and makes an array of that many 6-byte mounts in the dword 000aae0a + 6 * chassis; per mount reads an int16 record count into the mount's +4 and makes an array of that many 0x14-byte records (__vec_new (0005542c) with HercLayout_RecordCtor (00021f71)) at its +0; per record reads int16s into +2 (frame) and +0 (weapon), then two int16 pairs sign-extended into the int32 pairs at +4 and +0xc; destroys each stream through its vtable's +4 with 3. es2_xref finds one call, from Shell_LoadData (00020630).",
       "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-pictures",
       "verified": {
         "bytes": "00021d0c+613",
@@ -3832,7 +4177,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HercLayout_Free",
-      "description": "(), C convention: for chassis 0-7 deletes each mount's record array (__vec_delete (0005547c), 0x14-byte records, no destructor) for the word count at 000aae0e + 6 * chassis, then frees the mount array in the dword 000aae0a + 6 * chassis with Mem_Delete (00001a44). es2_xref finds one call, from 00020ae3.",
+      "description": "(), C convention: for chassis 0-7 deletes each mount's record array (__vec_delete (0005547c), 0x14-byte records, no destructor) for the word count at 000aae0e + 6 * chassis, then frees the mount array in the dword 000aae0a + 6 * chassis with Mem_Delete (00001a44). es2_xref finds one call, from Shell_FreeData (00020ae3).",
       "source": "Herculan/docs/es1/formats/herc-diagrams.md",
       "verified": {
         "bytes": "00021fbc+104",
@@ -3907,7 +4252,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HercDamageMarks_Load",
-      "description": "(), C convention: constructs one VolRStream (VolRStream_Ctor, 0004cf84) and for chassis 0-7 opens the path in the table at 0008057c (CFG\\ROADDMG1.DAT ... CFG\\COLODMG1.DAT) with VolRStream_Open (0004d218); for 6 groups by 3 levels reads an int16 count into the word 000aae3a + 0x6c * chassis + 0x12 * group + 6 * level, makes an array of that many 10-byte marks (__vec_new (0005542c) with HercDamageMarks_MarkCtor (0002236c)) in the dword after it, and reads each mark whole with VolRStream_Read (0004d6d6); closes each file and destroys the stream. es2_xref finds one call, from 00020630.",
+      "description": "(), C convention: constructs one VolRStream (VolRStream_Ctor, 0004cf84) and for chassis 0-7 opens the path in the table at 0008057c (CFG\\ROADDMG1.DAT ... CFG\\COLODMG1.DAT) with VolRStream_Open (0004d218); for 6 groups by 3 levels reads an int16 count into the word 000aae3a + 0x6c * chassis + 0x12 * group + 6 * level, makes an array of that many 10-byte marks (__vec_new (0005542c) with HercDamageMarks_MarkCtor (0002236c)) in the dword after it, and reads each mark whole with VolRStream_Read (0004d6d6); closes each file and destroys the stream. es2_xref finds one call, from Shell_LoadData (00020630).",
       "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-damage-marks",
       "verified": {
         "bytes": "00022252+282",
@@ -3937,7 +4282,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HercDamageMarks_Free",
-      "description": "(), C convention: deletes the 8 x 6 x 3 mark arrays in the dwords 000aae3c + 0x6c * chassis + 0x12 * group + 6 * level with __vec_delete (0005547c) (10-byte marks, no destructor). es2_xref finds one call, from 00020ae3.",
+      "description": "(), C convention: deletes the 8 x 6 x 3 mark arrays in the dwords 000aae3c + 0x6c * chassis + 0x12 * group + 6 * level with __vec_delete (0005547c) (10-byte marks, no destructor). es2_xref finds one call, from Shell_FreeData (00020ae3).",
       "source": "Herculan/docs/es1/formats/herc-diagrams.md",
       "verified": {
         "bytes": "000223a1+99",
@@ -3952,7 +4297,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HercHotspots_Load",
-      "description": "(), C convention: opens CFG\\hotspot.dat with VolRStream_CtorFromPath (0004d064), reads a uint16 chassis count and per chassis a uint16 area count, makes an array of that many 0x14-byte areas (__vec_new (0005542c) with HercHotspots_AreaCtor (000226b4)) in the dword 0008003c + 4 * chassis, with no bound against the table's eight entries, and per area reads four uint16 a, b, c, d and stores the rect (min(a, c), min(b, d), max(a, c), max(b, d)) at +0; destroys the stream with VolRStream_Dtor (0004d0cb). es2_xref finds one call, from 00020630.",
+      "description": "(), C convention: opens CFG\\hotspot.dat with VolRStream_CtorFromPath (0004d064), reads a uint16 chassis count and per chassis a uint16 area count, makes an array of that many 0x14-byte areas (__vec_new (0005542c) with HercHotspots_AreaCtor (000226b4)) in the dword 0008003c + 4 * chassis, with no bound against the table's eight entries, and per area reads four uint16 a, b, c, d and stores the rect (min(a, c), min(b, d), max(a, c), max(b, d)) at +0; destroys the stream with VolRStream_Dtor (0004d0cb). es2_xref finds one call, from Shell_LoadData (00020630).",
       "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-clickable-areas",
       "verified": {
         "bytes": "00022404+688",
@@ -3997,7 +4342,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HercHotspots_Free",
-      "description": "(), C convention: for chassis 0-7 deletes the area array in the dword 0008003c + 4 * chassis with __vec_delete (0005547c) and HercHotspots_AreaDtor (000227a5). es2_xref finds one call, from 00020ae3.",
+      "description": "(), C convention: for chassis 0-7 deletes the area array in the dword 0008003c + 4 * chassis with __vec_delete (0005547c) and HercHotspots_AreaDtor (000227a5). es2_xref finds one call, from Shell_FreeData (00020ae3).",
       "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-clickable-areas",
       "verified": {
         "bytes": "000227e4+43",
@@ -4012,7 +4357,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HercArt_LoadAllBanks",
-      "description": "(), C convention: for chassis 0-7 loads with Resource_LoadBitmapArray (0004b7df) the RES32 banks the path tables name into the dword tables: <chassis>WEP1.DBA (000800f4) into 0007ff9c, <chassis>OUTL.DBA (00080264) into 0007ffbc, <chassis>DMG1.DBA (0008031c) into 0007ffdc and <chassis>WEPD.DBA (000801ac) into 0007fffc; for chassis 2-7 also the BILD bank (000803b0, from RAPTBILD.DBA) into 0008001c. es2_xref finds one call, from 00020630.",
+      "description": "(), C convention: for chassis 0-7 loads with Resource_LoadBitmapArray (0004b7df) the RES32 banks the path tables name into the dword tables: <chassis>WEP1.DBA (000800f4) into 0007ff9c, <chassis>OUTL.DBA (00080264) into 0007ffbc, <chassis>DMG1.DBA (0008031c) into 0007ffdc and <chassis>WEPD.DBA (000801ac) into 0007fffc; for chassis 2-7 also the BILD bank (000803b0, from RAPTBILD.DBA) into 0008001c. es2_xref finds one call, from Shell_LoadData (00020630).",
       "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-pictures",
       "verified": {
         "bytes": "0002280f+155",
@@ -4102,7 +4447,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Herc_Read",
-      "description": "(herc, word, stream) in stack order, callee-cleaned: Herc_ReadFromStream (0002352f)(herc, stream), then, unless the byte 0007fd09 is set, Herc_BuildDiagram (00023883)(herc, word). es2_xref finds two calls, both from Hangar_Read (00028c50).",
+      "description": "(herc, word, stream) in stack order, callee-cleaned: Herc_ReadFromStream (0002352f)(herc, stream), then, unless the byte Shell_LowMemory (0007fd09) is set, Herc_BuildDiagram (00023883)(herc, word). es2_xref finds two calls, both from Hangar_Read (00028c50).",
       "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists",
       "verified": {
         "bytes": "00023501+46",
@@ -4212,6 +4557,51 @@
       "verified": {
         "bytes": "0002562c+41",
         "sha1": "223a72d7cb58",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00025781",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "InputDevice_Enable",
+      "description": "(device): ES1DBSIM's InputDevice_Enable (0004b1c0) with GO's tables: for kinds 2 to 6 disables the device recorded for its kind and records this one at 000ab1d0, 000ab1d4 or 000ab1d8, then sets its byte +0 and its kind's byte at 000ab1be. es2_xref finds nine calls, among them Shell_InitDevices (00045d24)'s three.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-devices; ES1GO decompile at 00025781",
+      "verified": {
+        "bytes": "00025781+237",
+        "sha1": "2a1876291d44",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00025a31",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Kind0InputDevice_Ctor",
+      "description": "(this, divisor): ES1DBSIM's maybe_Kind0InputDevice_Ctor (0004b440): allocates 11 bytes for a null this, returning 0 when that fails, builds a DVTimer at +0 with DVTimer_Ctor (0005d6b4)(this, divisor) and passes +6 to 00025655 with kind 0. es2_xref finds one call, from Shell_InitDevices (00045d24) with 0x26d3.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-devices; ES1GO decompile at 00025a31",
+      "verified": {
+        "bytes": "00025a31+81",
+        "sha1": "4e4ad4ddf075",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00025a82",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "KeyboardInputDevice_Ctor",
+      "description": "(this, mode): ES1DBSIM's KeyboardInputDevice_Ctor (0004b484): allocates 14 bytes for a null this, builds the keyboard at +0 with 0005d5bc(this, mode), passes +4 to 00025655 with kind 1, and keeps the mode at +9 and 0 at +0xd. es2_xref finds two calls, both from Shell_InitDevices (00045d24), with 0x20000 and, under Shell_DebugMode, 0x10000.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-devices; ES1GO decompile at 00025a82",
+      "verified": {
+        "bytes": "00025a82+92",
+        "sha1": "62e432bfcd10",
         "scope": "body",
         "via": "decompile"
       }
@@ -4432,7 +4822,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Input_PollJoysticks",
-      "description": "No arguments: ES1DBSIM's Input_PollJoysticks (0004bd90) in different code, the two-stick case setting the first device's +0x6f and +0x73 from JoystickClaimedAxes (0008070d) and JoystickClaimedAxisCount (0008070e). es2_xref finds one call, from 000277d8.",
+      "description": "No arguments: ES1DBSIM's Input_PollJoysticks (0004bd90) in different code, the two-stick case setting the first device's +0x6f and +0x73 from JoystickClaimedAxes (0008070d) and JoystickClaimedAxisCount (0008070e). es2_xref finds one call, from Input_PollDeviceBlock (000277d8).",
       "source": "Herculan/docs/es1/simulation/joystick.md#the-device-object",
       "verified": {
         "bytes": "000263c0+167",
@@ -4617,6 +5007,36 @@
       "verified": {
         "bytes": "0002682e+136",
         "sha1": "118bc8bf77a4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000268b6",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MouseInputDevice_Ctor",
+      "description": "(this): ES1DBSIM's MouseInputDevice_Ctor (0004c1e0): allocates 0x3f bytes for a null this, builds the mouse driver's object at +0 with DVMouse_Ctor and passes +0x3a to 00025655 with kind 2. es2_xref finds one call, from Shell_InitDevices (00045d24).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-devices; ES1GO decompile at 000268b6",
+      "verified": {
+        "bytes": "000268b6+73",
+        "sha1": "8b7379d03862",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000277d8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Input_PollDeviceBlock",
+      "description": "(): ES1DBSIM's Input_PollDeviceBlock (0004c2d0) with GO's block at 000a04a0 and devices at 000ab1cc to 000ab1d8; it leaves the keyboard word's bits 0x30 of +1, which ES1DBSIM's clears, to Shell_PollInput (0004de3a). Returns 000a04a0. es2_xref finds four calls: from 00037dce, 000382f6, 0003b8df and Shell_PollInput.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-input; ES1GO decompile at 000277d8",
+      "verified": {
+        "bytes": "000277d8+316",
+        "sha1": "b602029c8ae9",
         "scope": "body",
         "via": "decompile"
       }
@@ -4882,7 +5302,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Hangar_AddHerc",
-      "description": "(herc), its argument removed by this function: stores herc in the slot Hangar_FindFreeSlot (0002983a) gives, builds its diagram with Herc_BuildDiagram (00023883)(herc, 0) unless the byte 0007fd09 is set, adds 1 to the HERC count 00080892, and returns the slot; with no free slot it stores nothing and returns -1.",
+      "description": "(herc), its argument removed by this function: stores herc in the slot Hangar_FindFreeSlot (0002983a) gives, builds its diagram with Herc_BuildDiagram (00023883)(herc, 0) unless the byte Shell_LowMemory (0007fd09) is set, adds 1 to the HERC count 00080892, and returns the slot; with no free slot it stores nothing and returns -1.",
       "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists",
       "verified": {
         "bytes": "00029d0f+89",
@@ -4897,7 +5317,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MainMenu_OnMessage",
-      "description": "(menu, message) in stack order, its arguments removed by this function: the handler of the main menu, dlg\\menu1000.dlg, which the menu table names MainMenu (00081be8). By the message's code +6, through the REPNE SCASD table at 000809b8: 1499, INSTANT ACTION, sets the mode word Shell_Mode (000aad56) to 0, 0007fce8 to 1000 and 000aad5a to -1, calls SingleMission_Start (00036807) and 0002a523, formats anm\\esiege3.anm into 000aacfe and sets the byte 0007fcd7 to 1; 1700, RESUME, sets the mode to 1, 0007fce8 to 1000 and 000aad5a to -1 and goes on from 0002a78e to a career's resume; 1100, SINGLE MISSION, sets the mode to 0 and 0007fce8 to 1100; 1200, CAREER, the mode to 1 and 0007fce8 to 1200; 1300, OPTIONS, 0007fce8 to 1000; 1003, EXIT TO DOS, sets the word 0007fcac to 0 and the byte 0007fd05 to 1.",
+      "description": "(menu, message) in stack order, its arguments removed by this function: the handler of the main menu, dlg\\menu1000.dlg, which the menu table names MainMenu (00081be8). By the message's code +6, through the REPNE SCASD table at 000809b8: 1499, INSTANT ACTION, sets the mode word Shell_Mode (000aad56) to 0, 0007fce8 to 1000 and 000aad5a to -1, calls SingleMission_Start (00036807) and 0002a523, formats anm\\esiege3.anm into 000aacfe and sets the byte 0007fcd7 to 1; 1700, RESUME, sets the mode to 1, 0007fce8 to 1000 and 000aad5a to -1 and goes on from 0002a78e to a career's resume; 1100, SINGLE MISSION, sets the mode to 0 and 0007fce8 to 1100; 1200, CAREER, the mode to 1 and 0007fce8 to 1200; 1300, OPTIONS, 0007fce8 to 1000; 1003, EXIT TO DOS, sets the word Shell_ExitCode (0007fcac) to 0 and the byte Shell_QuitFlag (0007fd05) to 1.",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters"
     },
     {
@@ -4951,7 +5371,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WarMapMenu_Ctor",
-      "description": "(this): the war map screen (vtable 00080bc6, class name WarMapMenu before it), built over the Menu base (vtable 00080ba8) with 0x26 bytes allocated when this is 0. Loads the briefing, block 0 of BRF: from the .eng path 000aad2a, into the dialog 0009afc8 with Dialog_LoadConditional (00018cdb) and calls Dialog_NextPage (00018e18) as many times as the word 000809b2; sets 000809a8 to 3; when the byte 0007fd08 is 0 calls 00027bbf and, with its result, KeyboardInputDevice_GetMode (00025d19), KeyboardInputDevice_SetMode (00025ce6)(r, 0x20000) and 0001ffdc(0005d6a0, 000809ac); sets 000aa778 to 1.",
+      "description": "(this): the war map screen (vtable 00080bc6, class name WarMapMenu before it), built over the Menu base (vtable 00080ba8) with 0x26 bytes allocated when this is 0. Loads the briefing, block 0 of BRF: from the .eng path 000aad2a, into the dialog 0009afc8 with Dialog_LoadConditional (00018cdb) and calls Dialog_NextPage (00018e18) as many times as the word 000809b2; sets 000809a8 to 3; when the byte Shell_DebugMode (0007fd08) is 0 calls 00027bbf and, with its result, KeyboardInputDevice_GetMode (00025d19), KeyboardInputDevice_SetMode (00025ce6)(r, 0x20000) and 0001ffdc(0005d6a0, 000809ac); sets 000aa778 to 1.",
       "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-briefing",
       "verified": {
         "bytes": "0002bbbd+472",
@@ -5581,7 +6001,7 @@
       "type": "function",
       "confidence": "high",
       "name": "DigitalDialog_ShowMessage",
-      "description": "(message), callee-cleaned: returns at once when the byte +2 is 0; calls 0004c716 into 0007fcd8 and Ttm_SetDefaultContext (000467ef) with it; then by the kind word +0 builds the path with sprintf, sets the line number word 000aad5c and picks the lip-sync list words a and b: 0 eng\\C0_text.bin, line 000ab222, (0, 1); 1 eng\\C<k>_text.bin, line 000ab222, (2k, 1), k the first word of the 8-byte record of the table at 000a02ce that the word at 0009b241 + 0009b21f * 0x1f7 indexes, or -1 when out of range; 2 eng\\G0_text.bin, line a word of the table at 000814ec, (0, 3), and it updates 00081938 and sets 0007fcd5 when 000814d8's entry + 0xf differs from it; 3 eng\\D0_text.bin, line 2 * Mission_OutcomeGrade (00036837)(000aad58, 000aad5e) plus Math_RandomBelow(2) unless that call gave 1, (1, 1); 4 eng\\D<k>_text.bin, the same line, (2k + 1, 1); 5-11 eng\\T1_text.bin, line 0008159c[000814e8] when 000814e8 is nonzero, else (5, 6, 8-11) 00037bf0(kind), (000815a8[line], 2), and two 00046948 calls; any other kind returns. Then Dialog_LoadFromFile (00018c36)(0009afc8, a, b, path).",
+      "description": "(message), callee-cleaned: returns at once when the byte +2 is 0; calls RenderContext_GetFullScreen (0004c716) into 0007fcd8 and Ttm_SetDefaultContext (000467ef) with it; then by the kind word +0 builds the path with sprintf, sets the line number word 000aad5c and picks the lip-sync list words a and b: 0 eng\\C0_text.bin, line 000ab222, (0, 1); 1 eng\\C<k>_text.bin, line 000ab222, (2k, 1), k the first word of the 8-byte record of the table at 000a02ce that the word at 0009b241 + 0009b21f * 0x1f7 indexes, or -1 when out of range; 2 eng\\G0_text.bin, line a word of the table at 000814ec, (0, 3), and it updates 00081938 and sets 0007fcd5 when 000814d8's entry + 0xf differs from it; 3 eng\\D0_text.bin, line 2 * Mission_OutcomeGrade (00036837)(000aad58, 000aad5e) plus Math_RandomBelow(2) unless that call gave 1, (1, 1); 4 eng\\D<k>_text.bin, the same line, (2k + 1, 1); 5-11 eng\\T1_text.bin, line 0008159c[000814e8] when 000814e8 is nonzero, else (5, 6, 8-11) 00037bf0(kind), (000815a8[line], 2), and two 00046948 calls; any other kind returns. Then Dialog_LoadFromFile (00018c36)(0009afc8, a, b, path).",
       "source": "Herculan/docs/es1/formats/bin-string-tables.md#which-file-and-line",
       "verified": {
         "bytes": "00037edd+1016",
@@ -5611,7 +6031,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Math_RandomSeedAndSkip",
-      "description": "(state, n) in stack order, its arguments removed by this function: Math_RandomSeed (000386c8)(state), then n steps of Math_RandomNext (00038723), their results dropped. DBSIM's Math_RandomSeedAndSkip (00492da8) without its empty call. es2_xref finds one call, from 00020630.",
+      "description": "(state, n) in stack order, its arguments removed by this function: Math_RandomSeed (000386c8)(state), then n steps of Math_RandomNext (00038723), their results dropped. DBSIM's Math_RandomSeedAndSkip (00492da8) without its empty call. es2_xref finds one call, from Shell_LoadData (00020630).",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-shells-generator",
       "verified": {
         "bytes": "000386f4+47",
@@ -6386,6 +6806,21 @@
       }
     },
     {
+      "address": "00045a68",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_AssertCleanupHook",
+      "description": "(): the assert hook Shell_InitDevices (00045d24) adds with Assert_AddHook. Under Shell_DebugMode (0007fd08) it executes INT 3 and returns. Otherwise: 0005a588 on the display 00082750 when set; with the sound manager 00082768 set, 000420fd(manager, 3), clears it and, with Shell_Timer (00082758) set, DVTimer_SetRate(timer, 0x4da6); with Shell_KeyboardDevice (0008275c) set, Keyboard_RemoveSubscriber(Shell_NavKeySubscriber (00012b4e)) unless Shell_DebugMode is set, 00025ade(device, 3) and clears it; then Shell_ExitCode (0007fcac) = 0 and ExitCfg_Write (0001280a). es2_xref finds its address stored at 00045aea, in Shell_InitDevices's call.",
+      "source": "Herculan/docs/es1/shell/startup.md#a-fatal-assert; ES1GO decompile at 00045a68",
+      "verified": {
+        "bytes": "00045a68+189",
+        "sha1": "6f118120107b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00045b25",
       "binary": "ES1GO",
       "type": "function",
@@ -6416,12 +6851,42 @@
       }
     },
     {
+      "address": "00045d24",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_InitDevices",
+      "description": "(): in order 0005152c and Light_ResetSystem; Assert_AddHook(Shell_AssertCleanupHook (00045a68)); Shell_Timer (00082758) = Kind0InputDevice_Ctor (00025a31)(0, 0x26d3); Timer_AddCallback at a count of 2 for Shell_FrameTick (00012974) into 000a09d2, Shell_WaitTick (0004bbdd) into 000a09d4 and, unless Shell_DebugMode (0007fd08) is set, Shell_BlinkTick (00012933) into 000a09d0; InputDevice_Enable (00025781)(timer + 6); ShellSound_Init and Shell_CreateDisplay (00045b25); res32\\arrow.dci with Resource_LoadPath into 00082764 and Cursor_SetImage; the raster slot 0008662c; Cursor_SyncPosition(1, 1); Shell_MouseDevice (00082760) = MouseInputDevice_Ctor (000268b6)(0), MouseDriver_SetBoundsRect(mouse, {0, 0, GLDisplay_GetAttribute(00082750, 0), GLDisplay_GetAttribute(00082750, 1)}), Mouse_SetPosition(1, 1) and InputDevice_Enable(mouse + 0x3a); Shell_KeyboardDevice (0008275c) = KeyboardInputDevice_Ctor (00025a82)(0, 0x20000), or 0x10000 under Shell_DebugMode, Keyboard_AddSubscriberCodes(KeyQueue_Subscriber, 00082914) and InputDevice_Enable(keyboard + 4); unless Shell_DebugMode is set, Keyboard_AddSubscriber(Shell_NavKeySubscriber (00012b4e), 0007e7f0); 000081a4; and with no sound manager (00082768 is 0) Prefs_SetOption(1, 0, n) for options 0, 1 and 2. es2_xref finds one call, from Shell_Main (00012ec7).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-devices; ES1GO decompile at 00045d24",
+      "verified": {
+        "bytes": "00045d24+880",
+        "sha1": "4899dfbd06ee",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00046094",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_ShutdownDevices",
+      "description": "(): destroys the object 0007fd00 through slot +8 of its table at +0x3b with 3 when set and clears it; 000420fd(sound manager 00082768, 3) when set and clears it; Keyboard_RemoveSubscriber(Shell_NavKeySubscriber (00012b4e)) unless Shell_DebugMode (0007fd08) is set; 00025ade(Shell_KeyboardDevice (0008275c), 3) and 000268ff(Shell_MouseDevice (00082760), 3); DVTimer_SetRate(Shell_Timer (00082758), 0x4da6); removes the timer callbacks 000a09d4, 000a09d2 and 000a09d0; Pit_RemoveHandler; DVTimer_Dtor(timer, 0) and Mem_Delete when the timer is set; destroys 00082754 through its slot +0x1c with 3 when set; when Shell_ExitCode (0007fcac) is not 0 clears bit 0 of the display 00082750's first byte; and 0005a3e4(display, 0) and Mem_Delete when the display is set. es2_xref finds one call, from Shell_Main (00012ec7), at the shutdown.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-shutdown; ES1GO decompile at 00046094",
+      "verified": {
+        "bytes": "00046094+417",
+        "sha1": "62c786cc361d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00046235",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "ShellSound_Init",
-      "description": "Returns at once while 0007fd08 is set. Opens resource.cfg (Path_ApplyAltDrive, FileRStream_Ctor), asserting 'ERROR: Run soundset first.' (src\\system.cpp line 0x151, severity 5) when it fails, and reads [SoundFX] Driver#, IRQ, DMA and PortAddress and [Music] Driver# and PortAddress with 00026d71 and 00026bac, the driver numbers and ports through sscanf (000638d1) with '%X'. Closes it and returns when the [SoundFX] driver is 0. Otherwise makes the sound manager 00082768 with 00041f64(0), stores the six values in the driver defaults block (00082328, 00082320, 0008231c, 00082324, 00082330, 0008232c), calls 0004240a(manager), 000430cd(manager, 0x5f), 00043b0f(manager, 200000) and SoundManager_SetSampleNames (00042e16) with the 20 names at 000828c0, and makes the button sound 0007fd00 with SoundManager_CreateObject (000429db)(manager, 2, 0, 9), loading it with SoundObject_LoadSample (00043d8a). es2_xref finds one call, from 00045df5 in 00045d24.",
+      "description": "Returns at once while Shell_DebugMode (0007fd08) is set. Opens resource.cfg (Path_ApplyAltDrive, FileRStream_Ctor), asserting 'ERROR: Run soundset first.' (src\\system.cpp line 0x151, severity 5) when it fails, and reads [SoundFX] Driver#, IRQ, DMA and PortAddress and [Music] Driver# and PortAddress with 00026d71 and 00026bac, the driver numbers and ports through sscanf (000638d1) with '%X'. Closes it and returns when the [SoundFX] driver is 0. Otherwise makes the sound manager 00082768 with 00041f64(0), stores the six values in the driver defaults block (00082328, 00082320, 0008231c, 00082324, 00082330, 0008232c), calls 0004240a(manager), 000430cd(manager, 0x5f), 00043b0f(manager, 200000) and SoundManager_SetSampleNames (00042e16) with the 20 names at 000828c0, and makes the button sound 0007fd00 with SoundManager_CreateObject (000429db)(manager, 2, 0, 9), loading it with SoundObject_LoadSample (00043d8a). es2_xref finds one call, from 00045df5 in Shell_InitDevices (00045d24).",
       "source": "Herculan/docs/es1/formats/sound-samples.md#the-shells-names",
       "verified": {
         "bytes": "00046235+634",
@@ -7216,13 +7681,43 @@
       "type": "function",
       "confidence": "high",
       "name": "Resource_LoadPath",
-      "description": "(path), callee-cleaned: opens path with VolRStream_CtorFromPath, loads one class item with ClassItem_LoadResource(0, stream), closes and destroys the stream (VolRStream_Close, VolRStream_Dtor(stream, 2)) and returns the item. The shell's start-up, 00045d24, loads res32\\arrow.dci with it.",
+      "description": "(path), callee-cleaned: opens path with VolRStream_CtorFromPath, loads one class item with ClassItem_LoadResource(0, stream), closes and destroys the stream (VolRStream_Close, VolRStream_Dtor(stream, 2)) and returns the item. The shell's start-up, Shell_InitDevices (00045d24), loads res32\\arrow.dci with it.",
       "source": "ES1GO decompile at 0004b823 and 00045d24",
       "verified": {
         "bytes": "0004b823+68",
         "sha1": "02ff2c07d694",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0004bbdd",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_WaitTick",
+      "description": "(): a timer callback that adds 1 to the word Shell_WaitCount (000a0a90). Shell_InitDevices (00045d24) registers it at a count of 2; es2_xref finds its address stored there only.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-devices; ES1GO decompile at 0004bbdd",
+      "verified": {
+        "bytes": "0004bbdd+12",
+        "sha1": "adb8f11c1442",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004bbe9",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_WaitTicks",
+      "description": "(count), int16, its argument removed by this function: zeroes Shell_WaitCount (000a0a90) and loops until it is at least count, Shell_WaitTick (0004bbdd) raising it once every 2 interrupts. es2_xref finds three calls: from Shell_PresentFrame (00012980) with 6, 000209e0 and 0004bc0d.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-devices; ES1GO decompile and disassembly at 0004bbe9",
+      "verified": {
+        "bytes": "0004bbe9+36",
+        "sha1": "58557f5293c7",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -7236,6 +7731,21 @@
       "verified": {
         "bytes": "0004c17c+736",
         "sha1": "33fd3eca819a",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0004c716",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "RenderContext_GetFullScreen",
+      "description": "(): makes the render context 00083bc4 with 000512a0(0) when it is 0, sets its pairs +0x210 to (0, 0), +0x218 to (319, 199) and +0x220 to (0, 0), +4 to 0, +0x208 to 1 and +0x20c to 0, and returns it. es2_xref finds four calls: from Shell_Main (00012ec7), which keeps it in 0007fcd8, DigitalDialog_ShowMessage, 0003b138 and 0003b8df.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-start-up; ES1GO decompile and disassembly at 0004c716",
+      "verified": {
+        "bytes": "0004c716+292",
+        "sha1": "a4b9bcc23df1",
         "scope": "body",
         "via": "both"
       }
@@ -7721,6 +8231,36 @@
       }
     },
     {
+      "address": "0004de18",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Input_LatchButton",
+      "description": "(value, button) in stack order: sets the byte 00083c83 + button to 1 and 000a0bcf + button to value, button 1 to 4 being the input block's buttons +0x1d to +0x20, which Shell_PollInput (0004de3a) then reads through the latch. es2_xref finds five calls, from 000031fe, 00007ad7 and Shell_HandleInput (00012be8).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-input; ES1GO decompile at 0004de18",
+      "verified": {
+        "bytes": "0004de18+34",
+        "sha1": "52d98bc16f3d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004de3a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_PollInput",
+      "description": "(): calls 0001098e, then Input_PollDeviceBlock (000277d8); for each of the block's four buttons +0x1d to +0x20 whose latch byte at 00083c84 is set, inverts the button when it equals the latched value at 000a0bd0 and clears the latch otherwise; clears bits 0x30 of the block's +1; returns the block. es2_xref finds four calls: from Shell_Main (00012ec7), 00002fa2, 000064c4 and 00007631.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-input; ES1GO decompile at 0004de3a",
+      "verified": {
+        "bytes": "0004de3a+118",
+        "sha1": "edddd61e07b6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0004defc",
       "binary": "ES1GO",
       "type": "function",
@@ -7750,7 +8290,7 @@
       "type": "function",
       "confidence": "high",
       "name": "__dodtors",
-      "description": "No arguments: the runtime's static-destructor walk, calling each non-zero pointer from 0009a28c up to 0009a2b0. exit (0004df64) is its caller found by es2_xref. The code of ES1DBSIM's __dodtors (0005b6ad), relocated operands aside.",
+      "description": "No arguments: the runtime's static-destructor walk, calling each non-zero pointer from 0009a28c up to Assert_LogDir (0009a2b0). exit (0004df64) is its caller found by es2_xref. The code of ES1DBSIM's __dodtors (0005b6ad), relocated operands aside.",
       "source": "Herculan/docs/es1/formats/compiler.md#static-construction-and-exit",
       "verified": {
         "bytes": "0004df1d+27",
@@ -8261,6 +8801,21 @@
         "sha1": "4e0269b4692d",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0004f77a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "X32_TotalFreeBytes",
+      "description": "No arguments: the extender's figure (INT 21h AX=350Bh) less the rest of the current page above the high-water mark 0007d554, plus the size +4 of each node on the list the pointer 0007d558 heads, returned in EAX; X32_LargestFreeBlock (0004f738) takes the larger instead of the sum. es2_xref finds two calls, both from Shell_Main (00012ec7), which keeps the results in locals it does not read.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-start-up; ES1GO decompile and disassembly at 0004f77a",
+      "verified": {
+        "bytes": "0004f77a+54",
+        "sha1": "66e39ece5fdf",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -10888,7 +11443,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Timer_AddCallback",
-      "description": "(count, callback), C convention: while the dword Pit_Timer (0008728c) is non-zero, takes the lowest clear bit of the 16-bit slot mask Timer_CallbackMask (000882ac), sets it, stores count in that slot of the two dword tables 000883b4 and 00088334 and callback in the table 000882b4, and returns the slot + 1; returns 0 when Pit_Timer (0008728c) is 0 or every slot is taken. es2_xref finds calls from 000093b3, 000119fc, 000203fc, 0004240a, maybe_SncList_Init (00045337), Ttm_AllocHandles (0004670e) and three from 00045d24. The code of ES1DBSIM's Timer_AddCallback (0006d289), relocated operands aside.",
+      "description": "(count, callback), C convention: while the dword Pit_Timer (0008728c) is non-zero, takes the lowest clear bit of the 16-bit slot mask Timer_CallbackMask (000882ac), sets it, stores count in that slot of the two dword tables 000883b4 and 00088334 and callback in the table 000882b4, and returns the slot + 1; returns 0 when Pit_Timer (0008728c) is 0 or every slot is taken. es2_xref finds calls from ShellMap_LoadResources (000093b3), ShellTime_Init (000119fc), 000203fc, 0004240a, maybe_SncList_Init (00045337), Ttm_AllocHandles (0004670e) and three from Shell_InitDevices (00045d24). The code of ES1DBSIM's Timer_AddCallback (0006d289), relocated operands aside.",
       "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-frame-rate-meter",
       "verified": {
         "bytes": "00056509+78",
@@ -12946,7 +13501,7 @@
       "type": "function",
       "confidence": "high",
       "name": "DVMouse_Ctor",
-      "description": "(mouse) in stack order, its arguments removed by this function: allocates 0x3a bytes when mouse is null, returning 0 when that fails; GL_ClaimGlobal (00066bf0)(mouse, mouse, 2); the inlined constructors of +4, +0xe and +0x24; when the GL slot 2 (000ab78c) holds the mouse and DVMouse_Init (0005d140) answers non-zero, atexit (0006b620)(Mouse_ResetThunk (000511c6)) and Assert_AddHook (0004f594)(DVMouse_AssertHook (0005d0fc)); returns the mouse. es2_xref finds one call, from 000268b6. The code of ES1DBSIM's DVMouse_Ctor (0006bbc8), relocated operands aside.",
+      "description": "(mouse) in stack order, its arguments removed by this function: allocates 0x3a bytes when mouse is null, returning 0 when that fails; GL_ClaimGlobal (00066bf0)(mouse, mouse, 2); the inlined constructors of +4, +0xe and +0x24; when the GL slot 2 (000ab78c) holds the mouse and DVMouse_Init (0005d140) answers non-zero, atexit (0006b620)(Mouse_ResetThunk (000511c6)) and Assert_AddHook (0004f594)(DVMouse_AssertHook (0005d0fc)); returns the mouse. es2_xref finds one call, from MouseInputDevice_Ctor (000268b6). The code of ES1DBSIM's DVMouse_Ctor (0006bbc8), relocated operands aside.",
       "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver",
       "verified": {
         "bytes": "0005cff8+260",
@@ -13066,7 +13621,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MouseDriver_SetBoundsRect",
-      "description": "(mouse, rect) in stack order, its arguments removed by this function: copies the rect's four dwords to +0xe..+0x1a and calls Mouse_SetLimits (000510d2)(rect). es2_xref finds one call, from 00045d24. The code of ES1DBSIM's MouseDriver_SetBoundsRect (0006be40), relocated operands aside.",
+      "description": "(mouse, rect) in stack order, its arguments removed by this function: copies the rect's four dwords to +0xe..+0x1a and calls Mouse_SetLimits (000510d2)(rect). es2_xref finds one call, from Shell_InitDevices (00045d24). The code of ES1DBSIM's MouseDriver_SetBoundsRect (0006be40), relocated operands aside.",
       "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver",
       "verified": {
         "bytes": "0005d270+52",
@@ -13327,7 +13882,7 @@
       "type": "function",
       "confidence": "high",
       "name": "DVTimer_Ctor",
-      "description": "(this, divisor) in stack order, its arguments removed by this function: allocates 6 bytes for a null this, returning 0 when that fails; GL_ClaimGlobal (00066bf0)(this, this, 0), so the first timer built takes GL slot 0 (000ab784); when the slot holds this, DVTimer_Init (0005d74c)(this, divisor), and when that answers non-zero, atexit (0006b620)(Pit_RemoveHandler (000564c7)) and Assert_AddHook (0004f594)(DVTimer_AssertRemoveHook (0005d70c), pushed as its padding entry 0005d709). Returns this. es2_xref finds calls from 00025a31 and Ttm_AllocHandles (0004670e). The code of ES1DBSIM's DVTimer_Ctor (0006c6f8), relocated operands aside.",
+      "description": "(this, divisor) in stack order, its arguments removed by this function: allocates 6 bytes for a null this, returning 0 when that fails; GL_ClaimGlobal (00066bf0)(this, this, 0), so the first timer built takes GL slot 0 (000ab784); when the slot holds this, DVTimer_Init (0005d74c)(this, divisor), and when that answers non-zero, atexit (0006b620)(Pit_RemoveHandler (000564c7)) and Assert_AddHook (0004f594)(DVTimer_AssertRemoveHook (0005d70c), pushed as its padding entry 0005d709). Returns this. es2_xref finds calls from Kind0InputDevice_Ctor (00025a31) and Ttm_AllocHandles (0004670e). The code of ES1DBSIM's DVTimer_Ctor (0006c6f8), relocated operands aside.",
       "source": "Herculan/docs/es1/simulation/timer.md#the-timer-object--dvtimer; ES1GO disassembly at 0005d6b4",
       "verified": {
         "bytes": "0005d6b4+85",
@@ -13387,7 +13942,7 @@
       "type": "function",
       "confidence": "high",
       "name": "DVTimer_SetRate",
-      "description": "(this, divisor) in stack order, its arguments removed by this function: Pit_SetDivisor (0005640c)(divisor); when that answers non-zero, the divisor to the word +4 and returns 1, else 0. es2_xref finds calls from 00045a68 and 00046094. The code of ES1DBSIM's DVTimer_SetRate (0006c7bc), relocated operands aside.",
+      "description": "(this, divisor) in stack order, its arguments removed by this function: Pit_SetDivisor (0005640c)(divisor); when that answers non-zero, the divisor to the word +4 and returns 1, else 0. es2_xref finds calls from Shell_AssertCleanupHook (00045a68) and Shell_ShutdownDevices (00046094). The code of ES1DBSIM's DVTimer_SetRate (0006c7bc), relocated operands aside.",
       "source": "Herculan/docs/es1/simulation/timer.md#the-timer-object--dvtimer; ES1DBSIM disassembly at 0006c7bc",
       "verified": {
         "bytes": "0005d778+47",
@@ -17024,6 +17579,24 @@
       "source": "ES1GO image at 0007e228"
     },
     {
+      "address": "0007e73c",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_InputBlock",
+      "description": "dword: the input block Shell_PollInput (0004de3a) returned this pass; Shell_Main (00012ec7) stores it and passes it to Shell_HandleInput (00012be8) and 000382f6.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-frame-loop"
+    },
+    {
+      "address": "0007e808",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_QuitRequested",
+      "description": "byte: set by Shell_HandleInput (00012be8) for Ctrl+Esc, Alt+Esc, Ctrl+Q, Alt+Q, Ctrl+X and Alt+X, and by Shell_QuitKeyCallback (00012b01); Shell_Main (00012ec7) then calls 000408cc and clears it.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-frame-loop"
+    },
+    {
       "address": "0007ead0",
       "binary": "ES1GO",
       "type": "data",
@@ -17150,6 +17723,87 @@
       "source": "Herculan/docs/es1/simulation/input.md#a-key--keyboard_int9handler-0007dde4-and-keyboard_dispatch-0007de20"
     },
     {
+      "address": "0007fcac",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_ExitCode",
+      "description": "int16: the code ExitCfg_Read (0001289c) reads from data\\exit.cfg at the start, ExitCfg_Write (0001280a) writes back, and Shell_Main (00012ec7) returns. es2_xref --decode finds it set to 0 by MainMenu_OnMessage's EXIT TO DOS case, 0002a554 and Shell_AssertCleanupHook (00045a68), and to 5 or 2 by 0003c7d8's case for 9999.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-ways-out"
+    },
+    {
+      "address": "0007fce0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_BlinkOn",
+      "description": "byte: set for 20 of every 41 calls of Shell_BlinkTick (00012933), which alone writes it by es2_xref --decode; the one other reference it finds, at 0001f77f, is in no disassembled instruction.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-devices"
+    },
+    {
+      "address": "0007fd04",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_MSwitchGiven",
+      "description": "byte: 1 after -M or /M (Shell_ParseCommandLine (0001272d)). es2_xref finds no reference besides that store.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-command-line"
+    },
+    {
+      "address": "0007fd05",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_QuitFlag",
+      "description": "byte: ends Shell_Main (00012ec7)'s frame loop. Set by Shell_Main when the menu word 000817c0 is 9999, by MainMenu_OnMessage's EXIT TO DOS case and by 0002a554 for message 100.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-ways-out"
+    },
+    {
+      "address": "0007fd06",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_FrameDue",
+      "description": "byte: set by Shell_FrameTick (00012974) every 2 interrupts; Shell_PresentFrame (00012980) waits for it and clears it.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#presenting-a-frame"
+    },
+    {
+      "address": "0007fd08",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_DebugMode",
+      "description": "byte: 1 after -X or /X (Shell_ParseCommandLine (0001272d)). Keeps Shell_BlinkTick and Shell_NavKeySubscriber from being registered, builds the keyboard in mode 0x10000 instead of 0x20000, makes Shell_AssertCleanupHook (00045a68) and the end of Shell_Main (00012ec7) execute INT 3, and keeps Shell_HandleInput (00012be8) from passing typed characters on; es2_xref --decode finds readers in 0001b0ff, 0001f442, WarMapMenu_Ctor, 0002bf15 and ShellSound_Init too.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-command-line"
+    },
+    {
+      "address": "0007fd09",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_LowMemory",
+      "description": "byte: set by Shell_Main (00012ec7) when the heap is smaller than BND\\MAIN.BND's +8 (0009ae20). Shell_LoadData (00020630) then skips HercArt_LoadAllBanks and Shell_FreeData (00020ae3) its free; es2_xref --decode finds 21 more references in the shell.",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#bndmainbnd"
+    },
+    {
+      "address": "0007fd0a",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_PlayIntro",
+      "description": "byte, 1 in the image: cleared by -A or /A (Shell_ParseCommandLine (0001272d)). 0003ba47 reads it before the intro scripts and before endfa.ttm.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-command-line"
+    },
+    {
+      "address": "0007fd0b",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_AltDriveAllowed",
+      "description": "byte: 1 after -C or /C (Shell_ParseCommandLine (0001272d)); without it Shell_Main (00012ec7) takes the ALT_DRIVE variable as null. ES1DBSIM's Sim_AltDriveAllowed (000b5bce).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-command-line"
+    },
+    {
       "address": "0008070d",
       "binary": "ES1GO",
       "type": "data",
@@ -17229,6 +17883,42 @@
       "name": "Math_RandomSeedTable",
       "description": "The 112-byte table Math_RandomSeed (000386c8) copies into a generator state: ES1DBSIM's 00098150, DBSIM's 004a6958 and VSHELL's 0047f7b4 byte for byte.",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-shells-generator"
+    },
+    {
+      "address": "000817ce",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_DemoRequested",
+      "description": "byte: set by 0002b79d when it turns message 0x515 into 9999; 0003c7d8's case for 9999 then sets Shell_ExitCode (0007fcac) to 5 rather than 2.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-ways-out"
+    },
+    {
+      "address": "00082758",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_Timer",
+      "description": "dword: the shell's timer device, Kind0InputDevice_Ctor (00025a31)(0, 0x26d3), made by Shell_InitDevices (00045d24) and destroyed by Shell_ShutdownDevices (00046094).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-devices"
+    },
+    {
+      "address": "0008275c",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_KeyboardDevice",
+      "description": "dword: the shell's keyboard device, KeyboardInputDevice_Ctor (00025a82), made by Shell_InitDevices (00045d24) and destroyed by Shell_ShutdownDevices (00046094) or Shell_AssertCleanupHook (00045a68).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-devices"
+    },
+    {
+      "address": "00082760",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_MouseDevice",
+      "description": "dword: the shell's mouse device, MouseInputDevice_Ctor (000268b6), made by Shell_InitDevices (00045d24) and destroyed by Shell_ShutdownDevices (00046094).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-devices"
     },
     {
       "address": "00083c04",
@@ -17483,6 +18173,15 @@
       "source": "Herculan/docs/es1/formats/dts-shape.md"
     },
     {
+      "address": "0009a2b0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Assert_LogDir",
+      "description": "char[]: the directory Assert_SetLogDir (0000035e) copies in and Assert_LogPath (00000386) puts in front of 'assert.log' at 0009a2b4, four bytes on.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-start-up"
+    },
+    {
       "address": "0009a308",
       "binary": "ES1GO",
       "type": "data",
@@ -17497,7 +18196,7 @@
       "type": "data",
       "confidence": "high",
       "name": "Shell_RandomState",
-      "description": "The state of the shell's generator, 0x72 bytes: 56 int16 and the cursors +0x70 and +0x71 that Math_RandomNext (00038723) steps. The static initializer 00020b68 seeds it with Math_RandomSeed (000386c8), and 00020630 at start-up with Math_RandomSeedAndSkip (000386f4) and time (0005cf78)'s result modulo 128. es2_xref finds its address at 47 operand sites.",
+      "description": "The state of the shell's generator, 0x72 bytes: 56 int16 and the cursors +0x70 and +0x71 that Math_RandomNext (00038723) steps. The static initializer 00020b68 seeds it with Math_RandomSeed (000386c8), and Shell_LoadData (00020630) at start-up with Math_RandomSeedAndSkip (000386f4) and time (0005cf78)'s result modulo 128. es2_xref finds its address at 47 operand sites.",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-shells-generator"
     },
     {
@@ -17562,6 +18261,15 @@
       "name": "JoystickAxisBuffer",
       "description": "17 bytes: ES1DBSIM's JoystickAxisBuffer (000b1754), the buffer Joystick_ReadWithResponse (00025ee5) reads the axes into.",
       "source": "Herculan/docs/es1/simulation/joystick.md#the-record"
+    },
+    {
+      "address": "000a0a90",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_WaitCount",
+      "description": "int16: raised by Shell_WaitTick (0004bbdd) every 2 interrupts; Shell_WaitTicks (0004bbe9) zeroes it and waits on it.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-devices"
     },
     {
       "address": "000a0bdc",
@@ -17803,7 +18511,7 @@
       "type": "data",
       "confidence": "high",
       "name": "MissionParams_Ammo",
-      "description": "int16, the MISSION PARAMS menu's AMMO setting, 0 or 1: data\\prefs.cfg option 12, which 00020630 at start-up and 0003c7d8 copy in and MissionParams_OnMessage (0002b4fe) steps. MsnGen_LoadMission (00035873) writes it as header word 5 outside mode 1.",
+      "description": "int16, the MISSION PARAMS menu's AMMO setting, 0 or 1: data\\prefs.cfg option 12, which Shell_LoadData (00020630) at start-up and 0003c7d8 copy in and MissionParams_OnMessage (0002b4fe) steps. MsnGen_LoadMission (00035873) writes it as header word 5 outside mode 1.",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters"
     },
     {
@@ -17812,7 +18520,7 @@
       "type": "data",
       "confidence": "high",
       "name": "MissionParams_Damage",
-      "description": "int16, the MISSION PARAMS menu's DAMAGE setting, 0 or 1: data\\prefs.cfg option 13, which 00020630 at start-up and 0003c7d8 copy in and MissionParams_OnMessage (0002b4fe) steps. MsnGen_LoadMission (00035873) writes it as header word 6 outside mode 1.",
+      "description": "int16, the MISSION PARAMS menu's DAMAGE setting, 0 or 1: data\\prefs.cfg option 13, which Shell_LoadData (00020630) at start-up and 0003c7d8 copy in and MissionParams_OnMessage (0002b4fe) steps. MsnGen_LoadMission (00035873) writes it as header word 6 outside mode 1.",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters"
     },
     {
@@ -17821,7 +18529,7 @@
       "type": "data",
       "confidence": "high",
       "name": "MissionParams_Difficulty",
-      "description": "int16, the MISSION PARAMS menu's DIFFICULTY setting, 0 to 3: data\\prefs.cfg option 14, which 00020630 at start-up and 0003c7d8 copy in and MissionParams_OnMessage (0002b4fe) steps. MsnGen_LoadMission (00035873) writes it as header word 7 outside mode 1.",
+      "description": "int16, the MISSION PARAMS menu's DIFFICULTY setting, 0 to 3: data\\prefs.cfg option 14, which Shell_LoadData (00020630) at start-up and 0003c7d8 copy in and MissionParams_OnMessage (0002b4fe) steps. MsnGen_LoadMission (00035873) writes it as header word 7 outside mode 1.",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters"
     },
     {
@@ -17830,7 +18538,7 @@
       "type": "data",
       "confidence": "high",
       "name": "MissionParams_Visibility",
-      "description": "int16, the MISSION PARAMS menu's VISIBILITY setting, 0 or 1: data\\prefs.cfg option 15, which 00020630 at start-up and 0003c7d8 copy in and MissionParams_OnMessage (0002b4fe) steps. MsnGen_LoadMission (00035873) writes it as header word 8 outside mode 1.",
+      "description": "int16, the MISSION PARAMS menu's VISIBILITY setting, 0 or 1: data\\prefs.cfg option 15, which Shell_LoadData (00020630) at start-up and 0003c7d8 copy in and MissionParams_OnMessage (0002b4fe) steps. MsnGen_LoadMission (00035873) writes it as header word 8 outside mode 1.",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters"
     },
     {
@@ -17839,7 +18547,7 @@
       "type": "data",
       "confidence": "high",
       "name": "MissionParams_TimeOfDay",
-      "description": "int16, the MISSION PARAMS menu's TIME OF DAY setting, 0 to 2: data\\prefs.cfg option 16, which 00020630 at start-up and 0003c7d8 copy in and MissionParams_OnMessage (0002b4fe) steps. MsnGen_LoadMission (00035873) seeds flag 3 with it in every mode and writes it as header word 9 outside mode 1.",
+      "description": "int16, the MISSION PARAMS menu's TIME OF DAY setting, 0 to 2: data\\prefs.cfg option 16, which Shell_LoadData (00020630) at start-up and 0003c7d8 copy in and MissionParams_OnMessage (0002b4fe) steps. MsnGen_LoadMission (00035873) seeds flag 3 with it in every mode and writes it as header word 9 outside mode 1.",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters"
     },
     {

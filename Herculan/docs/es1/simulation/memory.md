@@ -61,8 +61,8 @@ Each program's `main` makes the heap first and turns it off last:
 |---|---|---|
 | asks for | 6,000,000 | the dword `0007e738`, 3,700,000 |
 | fatal assert when it gets 100,000 or fewer | `main.cpp` line `0xe3` | `src\main.cpp` line `0x1f8` |
-| after mounting the volumes | an assert when under `0x26e8f0` (2,550,000); `g_LowMemory` set when under `0x3c45b0` (3,950,000) ([low memory](../formats/chassis-dat.md#low-memory)) | an assert when under `BND\MAIN.BND`'s +12, 2,400,000; the byte `0007fd09` set when under its +8, 3,700,000 ([`MAIN.BND`](../formats/bnd-notes.md#bndmainbnd)) |
-| `Mem_HeapOff` | after the frame loop, and before the early exit when `000b5bc4` is clear | after the shell's loop, and before the early exit when `0001272d` returns non-zero |
+| after mounting the volumes | an assert when under `0x26e8f0` (2,550,000); `g_LowMemory` set when under `0x3c45b0` (3,950,000) ([low memory](../formats/chassis-dat.md#low-memory)) | an assert when under `BND\MAIN.BND`'s +12, 2,400,000; the byte `Shell_LowMemory` (`0007fd09`) set when under its +8, 3,700,000 ([`MAIN.BND`](../formats/bnd-notes.md#bndmainbnd)) |
+| `Mem_HeapOff` | after the frame loop, and before the early exit when `000b5bc4` is clear | after the shell's loop, and before the early exit when `Shell_ParseCommandLine` (`0001272d`) returns non-zero |
 
 ## The two programs
 
