@@ -76,9 +76,15 @@ public static class Es1ZoneViewer {
 	/// <c>Sim_ParseCommandLine</c> does before the mission loads (<see cref="Es1TapePlayback.FromCommandLine"/>); the
 	/// tape carries the mission, so a named mission is not loaded. Returns 1 when a named tape is not found or does not
 	/// read.</para>
+	///
+	/// <para>With <paramref name="recordTape"/> (<c>--record</c>, retail's <c>-r</c>) the tape is created where the flag
+	/// names it and the bundle packed from the install's files (<see cref="Es1TapeRecording.Start"/>), and every input
+	/// build appends its frame. Retail packs as it parses the command line, after the shell has written the mission's
+	/// <c>data\</c> files; here a named mission's load writes them, so the bundle is packed after that load, from the files
+	/// the mission then runs on. Returns 1 when the tape does not open for writing.</para>
 	/// </summary>
 	public static int Run(string installRoot, string? missionName, Es1HeaderOverrides overrides, string? playTape = null,
-			bool demo = false) {
+			bool demo = false, string? recordTape = null) {
 		Es1TapePlayback? tape = null;
 		if (playTape != null || demo) {
 			if (!Es1TapePlayback.FromCommandLine(installRoot, playTape, demo, out tape, out string? tapeError)) {
@@ -106,6 +112,17 @@ public static class Es1ZoneViewer {
 			}
 
 			Console.WriteLine($"Loaded {missionName} as a single mission into data\\script.dat, mission.var and player.mec.");
+		}
+
+		Es1TapeRecording? recording = null;
+		if (recordTape != null) {
+			recording = Es1TapeRecording.Start(installRoot, recordTape, out string? recordError);
+			if (recording == null) {
+				Console.Error.WriteLine(recordError);
+				return 1;
+			}
+
+			Console.WriteLine($"Recording input to {Path.GetFullPath(recording.FilePath)}, its bundle packed from the install's data\\ files and keyjoy.cfg.");
 		}
 
 		// PLACEHOLDER: Sim_Main's step 4, the heap's size to data\mem.got and an int16 0 to data\exit.cfg
@@ -169,16 +186,19 @@ public static class Es1ZoneViewer {
 			"G textured/banded ground; close the window to quit" + (player == null ? " (or Esc)." : "."));
 		string source = tape != null ? Path.GetFileName(tape.FilePath) : missionName ?? "data\\script.dat";
 		return Show(installRoot, files.Preferences, content, scene, world, views, $"HERCULAN — Metaltech: Earthsiege — {source}, zone {header[1]}",
-			tape);
+			tape, recording);
 	}
 
 	/// <summary>
-	/// The window, until it closes. Returns the exit code <see cref="Es1Shutdown.Run"/> wrote when the mission ended, and
-	/// 0 when the window closed without an ending, which runs no shutdown and writes no file.
+	/// The window, until it closes. Returns the exit code <see cref="Es1Shutdown.Run"/> wrote when the mission ended,
+	/// <see cref="Es1Shutdown.AssertCleanup"/>'s status when the tick raised a fatal assert
+	/// (<see cref="Es1FatalAssertException"/>), and 0 when the window closed without an ending, which runs no shutdown and
+	/// writes no file.
 	/// </summary>
 	/// <param name="tape">The tape playing, which the cockpit's mouse and the simulation read; none with no tape.</param>
+	/// <param name="recording">The tape recording, which the simulation's input build appends to; none with no recording.</param>
 	private static int Show(string installRoot, Es1Preferences preferences, GameContent content, Es1ZoneScene scene,
-			Es1World world, Es1CockpitViews? views, string title, Es1TapePlayback? tape) {
+			Es1World world, Es1CockpitViews? views, string title, Es1TapePlayback? tape, Es1TapeRecording? recording) {
 		using var window = new EngineWindow(title);
 		int exitCode = 0;
 
@@ -346,7 +366,7 @@ public static class Es1ZoneViewer {
 
 			if (world.LocalPlayer != null) {
 				simulation = new Es1SimulationStart(world, installRoot, preferences, input, keyboard, hostMouse,
-					chain, widgets, content, tape);
+					chain, widgets, content, tape, recording);
 				disposables.Add(simulation);
 			}
 
@@ -379,9 +399,20 @@ public static class Es1ZoneViewer {
 			}
 
 			var runner = simulation?.Advance();
-			bool ended = frameLoop != null
-				? frameLoop.AdvanceHostFrame(deltaSeconds, runner)
-				: runner?.AdvanceHostFrame(TimeSpan.FromSeconds(deltaSeconds)) == Es1SimulationRunner.Frame.MissionEnded;
+			bool ended;
+			try {
+				ended = frameLoop != null
+					? frameLoop.AdvanceHostFrame(deltaSeconds, runner)
+					: runner?.AdvanceHostFrame(TimeSpan.FromSeconds(deltaSeconds)) == Es1SimulationRunner.Frame.MissionEnded;
+			} catch (Es1FatalAssertException assert) {
+				// Assert_Report's fatal path: the hooks, Sim_AssertCleanupHook's int16 0 to data\exit.cfg among them, then
+				// __exit(1); no shutdown runs.
+				Console.Error.WriteLine(assert.Message);
+				exitCode = Es1Shutdown.AssertCleanup(installRoot);
+				window.Close();
+				return;
+			}
+
 			// Sim_Main leaves its loop for Sim_Shutdown; only a tick ends the mission, so the runner is there.
 			if (ended && runner != null) {
 				exitCode = Es1Shutdown.Run(runner.Simulation, installRoot, runner.AxisKeys.DemoMode);

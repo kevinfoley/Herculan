@@ -108,11 +108,9 @@ public sealed class Es1Simulation {
 	/// <remarks><c>Alt+S</c>'s freeze tests it, and the tick takes the frame's recorded delta while it is set.</remarks>
 	public bool TapePlayback => Input.TapePlayback;
 
-	/// <summary>
-	/// <c>TapeRecording</c> (<c>000b5b78</c>), which <c>Alt+S</c>'s freeze tests. PLACEHOLDER: always clear: <c>-r</c> is
-	/// not taken until part T3 ports the recording.
-	/// </summary>
-	public bool TapeRecording { get; init; }
+	/// <inheritdoc cref="Es1InputBuild.TapeRecording"/>
+	/// <remarks><c>Alt+S</c>'s freeze tests it.</remarks>
+	public bool TapeRecording => Input.TapeRecording;
 
 	/// <summary>The developer keys' steps <see cref="Es1MechCommands"/> reads and sets.</summary>
 	public Es1DevKeySteps DevKeys { get; } = new();

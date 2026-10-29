@@ -49,9 +49,12 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 	/// The tape <c>-p</c> or <c>-D</c> opened, which the input build plays and whose <c>DemoMode</c> the axis keys take;
 	/// <c>Keyjoy_LoadConfig</c> then reads the tape's <c>tapes\keyjoy.cfg</c>.
 	/// </param>
+	/// <param name="recording">
+	/// The tape <c>-r</c> started, to which the input build appends each frame with the tick's <c>SimTickDelta</c>.
+	/// </param>
 	public Es1SimulationRunner(Es1World world, string installRoot, Es1Preferences preferences, IKeyboard? keyboard,
 			Es1HostMouse? mouse, IEs1GamePort port, View.Es1ViewChain? viewChain = null, Es1WidgetResources? widgets = null,
-			GameContent? content = null, Es1TapePlayback? tape = null) {
+			GameContent? content = null, Es1TapePlayback? tape = null, Es1TapeRecording? recording = null) {
 		var keyboardInput = new Es1KeyboardInput(Es1HostKeyboard.ReadBiosShiftFlags(keyboard));
 		_hostKeyboard = new Es1HostKeyboard(keyboardInput.Keyboard);
 		if (keyboard != null) {
@@ -63,7 +66,13 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 			Es1KeyjoyConfig.Load(installRoot, tape?.Playing == true), new Es1ControlsState(preferences), port) {
 			CockpitMouse = viewChain?.Manager?.Mouse,
 			Tape = tape,
+			Recording = recording,
 		};
+		if (recording != null) {
+			var clock = world.Globals.Clock;
+			recording.TickDelta = () => clock.TickDelta;
+		}
+
 		AxisKeys = keyboardInput.AxisKeys;
 		Simulation = new Es1Simulation(world, input, viewChain);
 

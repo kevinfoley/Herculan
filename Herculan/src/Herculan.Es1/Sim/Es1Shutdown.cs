@@ -74,9 +74,10 @@ public static class Es1Shutdown {
 	/// <summary>
 	/// What follows a fatal assert in <see cref="Run"/>: <c>Sim_AssertCleanupHook</c>'s write of an <c>int16</c> 0 to
 	/// <c>data\exit.cfg</c>, its other steps being the sound, the display, the tape and the ground texture this engine
-	/// releases with the window; then <see cref="AssertExitStatus"/>.
+	/// releases with the window; then <see cref="AssertExitStatus"/>. The host also runs it for an
+	/// <see cref="Es1FatalAssertException"/> the tick throws.
 	/// </summary>
-	private static int AssertCleanup(string installRoot) {
+	public static int AssertCleanup(string installRoot) {
 		if (!WriteExitCode(installRoot, 0)) {
 			Console.Error.WriteLine($"data\\{ExitName} does not open for writing in {installRoot} (init.cpp line 100 asserts here).");
 		}

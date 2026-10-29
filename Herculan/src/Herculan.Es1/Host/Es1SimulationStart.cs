@@ -34,6 +34,7 @@ public sealed class Es1SimulationStart : IDisposable {
 	private readonly Panels.Es1WidgetResources? _widgets;
 	private readonly GameContent? _content;
 	private readonly Es1TapePlayback? _tape;
+	private readonly Es1TapeRecording? _recording;
 	private int _frames;
 
 	/// <param name="preferences">The install's <c>data\prefs.cfg</c>.</param>
@@ -41,9 +42,12 @@ public sealed class Es1SimulationStart : IDisposable {
 	/// <param name="widgets">What <c>Widget_LoadStylesAndFonts</c> loaded at the mission start, handed to the panels.</param>
 	/// <param name="content">The volumes the panels' own files are read from.</param>
 	/// <param name="tape">The tape <c>-p</c> or <c>-D</c> opened, handed to the simulation.</param>
+	/// <param name="recording">The tape <c>-r</c> started, handed to the simulation.</param>
 	public Es1SimulationStart(Es1World world, string installRoot, Es1Preferences preferences, IInputContext input, IKeyboard? keyboard, Es1HostMouse? mouse, View.Es1ViewChain? viewChain = null,
-			Panels.Es1WidgetResources? widgets = null, GameContent? content = null, Es1TapePlayback? tape = null) {
+			Panels.Es1WidgetResources? widgets = null, GameContent? content = null, Es1TapePlayback? tape = null,
+			Es1TapeRecording? recording = null) {
 		_tape = tape;
+		_recording = recording;
 		_viewChain = viewChain;
 		_widgets = widgets;
 		_content = content;
@@ -72,7 +76,7 @@ public sealed class Es1SimulationStart : IDisposable {
 
 		var port = Es1ControllerPort.Over(_controller);
 		Runner = new Es1SimulationRunner(_world, _installRoot, _preferences, _keyboard, _mouse, port, _viewChain, _widgets,
-			_content, _tape);
+			_content, _tape, _recording);
 		Console.WriteLine(Describe(port));
 		return Runner;
 	}

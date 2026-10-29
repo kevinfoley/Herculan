@@ -92,6 +92,12 @@ public sealed class Es1InputBuild {
 	/// <summary><c>TapePlayback</c> (<c>000b5b76</c>): a tape is playing, until step 2 ends it.</summary>
 	public bool TapePlayback => Tape?.Playing == true;
 
+	/// <summary>The tape <c>-r</c> started, to which step 8 appends every frame; none with no recording.</summary>
+	public Es1TapeRecording? Recording { get; init; }
+
+	/// <summary><c>TapeRecording</c> (<c>000b5b78</c>): <c>-r</c>'s tape was started; never cleared.</summary>
+	public bool TapeRecording => Recording != null;
+
 	/// <summary>
 	/// <c>Input_BuildPlayerDevice</c>: one tick's input block, in retail's order. The stick mode read at entry decides
 	/// the keyboard's slow keys and whether source button 1 may toggle it; the mode after that toggle decides the rest.
@@ -124,9 +130,8 @@ public sealed class Es1InputBuild {
 		int[] stick = live.StickAxes;
 		byte[] sourceButtons = playing ? tapeSources! : live.StickButtons;
 
-		// 4. The frame's mouse events on the cockpit's widgets; what CockpitMouse_ProcessQueue returns only the tape's
-		// recording reads, which part T3 ports.
-		CockpitMouse?.ProcessQueue();
+		// 4. The frame's mouse events on the cockpit's widgets, which step 8 records; none with no cockpit.
+		var mouseEvents = CockpitMouse?.ProcessQueue() ?? [];
 		if (sourceButtons[1] == 0) {
 			_toggleHeld = false;
 		} else if (modeAtEntry != 0 && !_toggleHeld) {
@@ -204,8 +209,9 @@ public sealed class Es1InputBuild {
 			block.CommandWord = live.CommandWord;
 		}
 
-		// 8. PLACEHOLDER: the tape's recording, which appends the frame to <TapeStem>.tap under -r, is not ported; no
-		// plan step retires it.
+		// 8. Recording: the block as it stands, before the camera's axes and Backturn, with the source buttons step 4 read
+		// and the mouse events it handled, in playback as live.
+		Recording?.Append(block, sourceButtons, mouseEvents);
 
 		// 9. The camera's axes, and option 10's throttle step.
 		if (!camera && !missileFlown) {
