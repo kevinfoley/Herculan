@@ -72,27 +72,27 @@ Records come from a free list at `000a09bc`. `DirtyBox_Alloc` (`00040e58`) takes
 
 `DirtyList_Flush` (`000413db`), given a draw page and a source page in stack order, callee-cleaned, installs the render context `00082248`, sets the display's source and draw pages to those, and for each record whose delay is 0 copies its box from the source page to the draw page with `Region_CopyBetweenPages`, offset (0, 0), as the type-0 region {*x*, *y*, *x* + width, *y* + height}: the rect is inclusive, so the copy covers one column and one row past the box. It lowers every record's delay by 1, puts the source and draw pages back, installs the render context it found, and with `DirtyList_Prune` (`0004109c`) frees every record whose delay is now below 0. A box added with delay 0 is therefore copied at the next flush, and one added with delay 1 at the flush after that.
 
-`DirtyList_CreateContext` (`00040d54`) makes the flush's render context with `000512a0`(0) and stores it at `00082248`, setting its clip block's clip mode to 1, its translation flag to 1, its rect to (0, 0) to (319, 199) and its origin to (0, 0). `0003ba47`, which sets up the scripts ([the shell](../formats/ttm-scripts.md#the-shell)), calls it first.
+`DirtyList_CreateContext` (`00040d54`) makes the flush's render context with `000512a0`(0) and stores it at `00082248`, setting its clip block's clip mode to 1, its translation flag to 1, its rect to (0, 0) to (319, 199) and its origin to (0, 0). `Shell_OpenFirstScreen` (`0003ba47`), which sets up the scripts ([the shell](../formats/ttm-scripts.md#the-shell)), calls it first.
 
-The `.TTM` commands add every box with delay 1, `0xa601`'s rect through `DirtyBox_AddRect`; `es2_xref.py` finds further calls of `DirtyBox_Add` from `0002141c`, `000217a9` and `00021a6e`, with delay 0, and from `0003b138` and `0003c1b7`, and of `DirtyBox_AddRect` from `0001907e`, `00019b54`, `0001c067` and `0001c270`.
+The `.TTM` commands add every box with delay 1, `0xa601`'s rect through `DirtyBox_AddRect`; `es2_xref.py` finds further calls of `DirtyBox_Add` from `ShellBackdrop_Draw` (`0002141c`), `000217a9` and `00021a6e`, with delay 0, and from `Menu_Close` (`0003b138`) and `Shell_DrawScreen` (`0003c1b7`), and of `DirtyBox_AddRect` from `0001907e`, `00019b54`, `DUIWindow_Update` (`0001c067`) and `DUIWindow_UpdateHotspots` (`0001c270`).
 
 ## Presenting a frame
 
-**The shell shows a new frame each time its frame timer ticks: it shows the page it drew, switches drawing to the other, and restores that page's dirty boxes from the background.** `Shell_PresentFrame` (`00012980`), which `es2_xref.py` finds called twice from `Shell_Main` and nine times from `00037dce`, `000382f6`, `0003837f`, `0003b8df` and `0003c7d8`:
+**The shell shows a new frame each time its frame timer ticks: it shows the page it drew, switches drawing to the other, and restores that page's dirty boxes from the background.** `Shell_PresentFrame` (`00012980`), which `es2_xref.py` finds called twice from `Shell_Main` and nine times from `00037dce`, `000382f6`, `0003837f`, `Shell_PlayTtm` (`0003b8df`) and `Shell_HandleMessage` (`0003c7d8`):
 
 1. waits until the byte `Shell_FrameDue` (`0007fd06`) is set, and clears it. `Shell_FrameTick` (`00012974`) sets it: `Shell_InitDevices` (`00045d24`) registers it with `Timer_AddCallback` at a count of 2, the scripts' count ([the timer](../formats/ttm-scripts.md#the-timer));
 2. when there is a palette at `0007fcd0` and the byte `0007fcd4` is set, uploads it with `Palette_UploadWhole` and clears the byte. The scripts' palette commands leave their palette there;
-3. when the byte `0007fcd5` is set, calls `00020a70` with the dword at `00081938` and clears it;
+3. when the byte `0007fcd5` is set, calls `ShellMusic_Play` (`00020a70`) with the dword at `00081938` and clears it;
 4. makes `+0x88` the visible page and `+0x84` the draw page, and swaps `+0x84` and `+0x88`;
-5. when the byte `0007fcd7` is 0, `0007fcd6` is set and the word `000817c4` is 1000, calls `Shell_WaitTicks` (`0004bbe9`)(6), which zeroes `Shell_WaitCount` (`000a0a90`) and loops until the timer callback `Shell_WaitTick` (`0004bbdd`), run every second interrupt, has raised it to 6, 12 interrupts or 0.1 s ([the shell's devices](../shell/startup.md#the-devices)), and clears `0007fcd6`;
-6. flushes the dirty list with `DirtyList_Flush`(the new `+0x88`, the word `0007fccc`): the draw page it has just set, and page 2, the word's value in the image, which `0003ba47` also passes as `Ttm_Configure`'s *a*;
-7. when the byte `0007fd07` is 1, calls `00050ed4` with the address `0009aff0`, `00027bc9`, and `00051037` with the dwords at `0009aff0` and `0009aff4`.
+5. when the byte `0007fcd7` is 0, `0007fcd6` is set and the word `Shell_BackdropId` (`000817c4`) is 1000, calls `Shell_WaitTicks` (`0004bbe9`)(6), which zeroes `Shell_WaitCount` (`000a0a90`) and loops until the timer callback `Shell_WaitTick` (`0004bbdd`), run every second interrupt, has raised it to 6, 12 interrupts or 0.1 s ([the shell's devices](../shell/startup.md#the-devices)), and clears `0007fcd6`;
+6. flushes the dirty list with `DirtyList_Flush`(the new `+0x88`, the word `0007fccc`): the draw page it has just set, and page 2, the word's value in the image, which `Shell_OpenFirstScreen` (`0003ba47`) also passes as `Ttm_Configure`'s *a*;
+7. when the byte `Shell_SyncPointer` (`0007fd07`) is 1, calls `00050ed4` with the address `Shell_PointerX` (`0009aff0`), `00027bc9`, and `00051037` with the dwords at `0009aff0` and `Shell_PointerY` (`0009aff4`).
 
 So pages 0 and 1 take turns, one drawn while the other shows, and page 2 holds the background. A page is drawn every other frame, and a box drawn on it with delay 1 is restored at the second flush after, when that page is next the one drawn.
 
 ### Fixing a rect
 
-`Display_CopyRectToPage` (`0004c17c`), given a page, a source page and a rect in stack order, callee-cleaned, sets the display's source page to the source and its draw page to the page, copies the rect from one to the other with `Region_CopyBetweenPages`, offset (0, 0), adds the rect with `DirtyBox_AddRect` at delay 0, and puts the two pages back. `TtmScript_FixRect` passes `Ttm_Configure`'s *a*, page 2, and the draw page, so a fixed rect is copied into the background now and onto the other page at the next frame. `es2_xref.py` finds one other call, from `0003c7d8`.
+`Display_CopyRectToPage` (`0004c17c`), given a page, a source page and a rect in stack order, callee-cleaned, sets the display's source page to the source and its draw page to the page, copies the rect from one to the other with `Region_CopyBetweenPages`, offset (0, 0), adds the rect with `DirtyBox_AddRect` at delay 0, and puts the two pages back. `TtmScript_FixRect` passes `Ttm_Configure`'s *a*, page 2, and the draw page, so a fixed rect is copied into the background now and onto the other page at the next frame. `es2_xref.py` finds one other call, from `Shell_HandleMessage` (`0003c7d8`).
 
 ## Ellipses, outlines and scaled bitmaps
 
@@ -289,7 +289,7 @@ The two routines are one object file, `00088728`–`0008886f`, between zero fill
 - **Open:** what sets the cursor's clip rect, the rect `+0x20c` of the clip block `00098b28` (`ES1DBSIM`; the shell's `000843ec`): `es2_xref.py` finds only the cursor routines' pushes of its address, and a store through the block's base is not found by that search.
 - **Open:** whether a mission calls the simulator's slots 20 to 23. A retail check: a breakpoint on `ES1DBSIM 00051c3c` during a glance.
 - **Open:** what `0008b408`, which `VGA8_OpenMode` (`ES1DBSIM 0008b4f8`) calls with the mode, does to the VGA, and what `VGA_8`'s slots 9 and 10 (`000885dc`, `0008862c`) do in the open.
-- **Open:** `Shell_PresentFrame`'s steps 3, 5 and 7: `00020a70`, `00050ed4`, `00027bc9` and `00051037`, and the bytes `0007fcd5`, `0007fcd6`, `0007fcd7` and `0007fd07`.
+- **Open:** `Shell_PresentFrame`'s steps 3, 5 and 7: `ShellMusic_Play` (`00020a70`), `00050ed4`, `00027bc9` and `00051037`, and the bytes `0007fcd5`, `0007fcd6`, `0007fcd7` and `Shell_SyncPointer` (`0007fd07`).
 - **Open:** `Shell_CreateDisplay`'s `0005a388`, `0005a5d0` and `000512a0`, and the `0x20` bytes at `+0x64`.
-- **Open:** which screens `0002141c`, `000217a9`, `00021a6e`, `0003b138`, `0003c1b7`, `0001907e`, `00019b54`, `0001c067`, `0001c270` and `0003c7d8` are, which add dirty boxes or fix rects.
+- **Open:** which screens `ShellBackdrop_Draw` (`0002141c`), `000217a9`, `00021a6e`, `Menu_Close` (`0003b138`), `Shell_DrawScreen` (`0003c1b7`), `0001907e`, `00019b54`, `DUIWindow_Update` (`0001c067`), `DUIWindow_UpdateHotspots` (`0001c270`) and `Shell_HandleMessage` (`0003c7d8`) are, which add dirty boxes or fix rects.
 - **Open:** the callees `0006659c` and `0004fd65` the region copy clips with, matched by position to ES2's `Rect_Intersect` and `SpanList_ClipToRect`.

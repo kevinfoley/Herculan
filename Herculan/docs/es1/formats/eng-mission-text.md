@@ -6,7 +6,7 @@ Each ES1 mission's briefing, objective list and debriefings are in a `.ENG` file
 
 `Mission_SetTextPath` (`000364be`) copies the mission's path from `000aad14`, `msn\<name>.msn`, to `000aad2a` and replaces everything from its first `.` with `.eng`. The three functions that build the mission path call it after their `sprintf` (`00015a13`, `00036649`, `000366c1`). So `B0_C0_0A.MSN`'s text is `B0_C0_0A.ENG`.
 
-`Mission_WriteRestore` (`0003634b`) saves both paths to `data\restore.dat` (file-name entry 8 of `cfg\filename.bin`, assert at `mission.cpp` line `0x55`): the mode word `000aad56`, the word `000aad5a`, then each path as an `int16` length counting its NUL and the path with its NUL, the `.msn` path first. `Mission_ReadRestore` (`00036512`, assert at line `0x75`) reads them back in that order into `000aad56`, `000aad5e`, `000aad14` and `000aad2a`: the second word lands in `000aad5e`, not in the `000aad5a` it was written from. `MsnGen_LoadMission`'s two callers (`Career_StartMission`, `00016e93`; `SingleMission_Start`, `00036807`) call the writer; `0003ba47` calls the reader.
+`Mission_WriteRestore` (`0003634b`) saves both paths to `data\restore.dat` (file-name entry 8 of `cfg\filename.bin`, assert at `mission.cpp` line `0x55`): the mode word `000aad56`, the word `000aad5a`, then each path as an `int16` length counting its NUL and the path with its NUL, the `.msn` path first. `Mission_ReadRestore` (`00036512`, assert at line `0x75`) reads them back in that order into `000aad56`, `000aad5e`, `000aad14` and `000aad2a`: the second word lands in `000aad5e`, not in the `000aad5a` it was written from. `MsnGen_LoadMission`'s two callers (`Career_StartMission`, `00016e93`; `SingleMission_Start`, `00036807`) call the writer; `Shell_OpenFirstScreen` (`0003ba47`) calls the reader.
 
 Of the 79 files, 77 belong to the 77 `.MSN`. `B4_C1_20.ENG` and `B4_C1_30.ENG` have no `.MSN` and are byte for byte `B0_C1_20.ENG` and `B0_C1_30.ENG`, the texts of the two missions [in another layout](msn-mission-file.md#a-file-in-another-layout). `SM_RCN03.ENG` is byte for byte `SM_RCN02.ENG`.
 
@@ -102,7 +102,7 @@ A `DialogBox` is `0x2d` bytes; its subclasses differ in their constructors and v
 | `+0x27` | `int16`, the page shown |
 | `+0x29` | the vtable |
 
-`ConditionalDialogBox_SetRect` (`00018e5f`) picks the box by the word `000817c4` rounded down to a thousand: 6000 copies the box at `0009ae84` and sets `+0` to 0, 5000 the box at `0009ae94` and `+0` to 0, and any other value the box at `0009ae64` and `+0` to 1.
+`ConditionalDialogBox_SetRect` (`00018e5f`) picks the box by the word `Shell_BackdropId` (`000817c4`) rounded down to a thousand: 6000 copies the box at `0009ae84` and sets `+0` to 0, 5000 the box at `0009ae94` and `+0` to 0, and any other value the box at `0009ae64` and `+0` to 1.
 
 `DialogBox_Layout` (`000198a6`) takes a line's height as `00051ff0`(font, text) less 2. It sets the slot count to the text's width by `HudFont_MeasureString` divided by the box's width, plus 2; the lines a page holds to the box's height divided by the line height; the page count to the slot count divided by the lines a page holds, plus 1 when the two differ; and the page shown to 0. Line *i* of a page stands at the box's left and its top plus (*i* + 1) line heights. It then passes the box's width and the text to `00019a1d` ([Open](#open)). `DialogBox_NextPage` (`0001911f`) and `DialogBox_PrevPage` (`000190fd`) step `+0x27` within 0 and the page count less 1 and clear `+0`.
 
@@ -119,6 +119,6 @@ A `DialogBox` is `0x2d` bytes; its subclasses differ in their constructors and v
 - **Open:** what the debriefing ordinal, the first word of `data\results.dat`, counts: which outcome the simulator writes as each value, and why some missions have eight debriefings and some nine.
 - **Open:** whether the simulator rewrites `data\mission.var` before the debriefing reads flags through it, so whether a debriefing's choices see the flags as the mission load seeded them.
 - **Open:** how the box is drawn and its text broken into lines: `00019a1d`, `00018dcb` and `00018edd`, which the page steps call, `0001907e`, and `00051ff0`'s line height.
-- **Open:** what the byte at a box's `+0` means, what the word `000817c4` that picks the box's position holds, and the boxes at `0009ae64`, `0009ae84` and `0009ae94`.
+- **Open:** what the byte at a box's `+0` means, what the word `Shell_BackdropId` (`000817c4`) that picks the box's position holds, and the boxes at `0009ae64`, `0009ae84` and `0009ae94`.
 - **Open:** when the briefing page `000809b2` carries over from one visit to the war map to the next, since `0002bf15` sets it to 0; the rest of `0002bf15` and the war map's handler `0002c057` are not read.
 - **Open:** why `Mission_ReadRestore` reads the word written from `000aad5a` into `000aad5e`, and what the two words hold.

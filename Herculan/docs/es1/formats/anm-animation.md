@@ -97,7 +97,7 @@ So the player draws frames 0 to the frame count − 2: `ESIEGE2.ANM`'s records 0
 
 The path is formatted into the buffer `000aacfe` at ten sites, found by a search of the disassembly for the two strings' addresses, each also setting the byte `0007fcd7`: `anm\esiege3.anm` with 1 at `0002a755`, `0002a934`, `0002ac9e`, `0002af68` and `0002b3f2`, and `anm\esiege2.anm` with 2 at `0002b7e5`, `0002d36d`, `0003b3e2`, `0003be3f` and `0003cc82`. The first follows `SingleMission_Start`.
 
-`es2_xref.py` finds both calls to `Anm_Play` in `0003c1b7`, each passing mode 1 and clearing `0007fcd7` after it:
+`es2_xref.py` finds both calls to `Anm_Play` in `Shell_DrawScreen` (`0003c1b7`), each passing mode 1 and clearing `0007fcd7` after it:
 
 - when `0007fcd7` is 2, with sound 10, `res32\menuclsa.raw`;
 - later, when it is 1, after uploading the palette `0007fcd0` (`Palette_UploadWhole`) and clearing the byte `0007fcd4`, with sound 11, `res32\menuopn2.raw`.
@@ -106,7 +106,7 @@ The sound names are entries 10 and 11 of the shell's table at `000828c0` ([the s
 
 ## Open
 
-- **Open:** what `0003c1b7` is, which screen change each of the ten sites comes before, and what the tests of `0007fcd7` at `00012a67`, `0003c22d` and `0003ca1c` decide; which store of the palette `0007fcd0` comes before the play: a search of the disassembly finds `0003950a` storing one it loads with `Resource_LoadPalette`, and the `.TTM` commands `0x1061` and `0xf05f` store the selected one ([the commands](ttm-scripts.md#the-commands)).
+- **Open:** what `Shell_DrawScreen` (`0003c1b7`) is, which screen change each of the ten sites comes before, and what the tests of `0007fcd7` at `00012a67`, `0003c22d` and `0003ca1c` decide; which store of the palette `0007fcd0` comes before the play: a search of the disassembly finds `ShellBackdrop_LoadPalette` (`0003950a`) storing one it loads with `Resource_LoadPalette`, and the `.TTM` commands `0x1061` and `0xf05f` store the selected one ([the commands](ttm-scripts.md#the-commands)).
 - **Open:** what `0005afa8` puts in the background, and what `00051c40` draws with the full-screen rectangle after the last frame; what the display object's `+0x30`, `+0x34` and `+0x38` are and what `000865f0` and `000865f4` do with them; what `000209e0` does with `0007fcfc`.
 - **Open:** what the clock `0007e6fc` counts, for mode 0's ticks a frame; `es2_xref.py` finds both calls to `Anm_Play` passing mode 1.
 - **Open:** the header's fields the player does not read, the 128 bytes at `0x80` and the 1,024 at `0x100`, the page table's and page header's byte counts, a record's first byte and its extra bytes; and what reads the player's `+0x10`, which the functions on this page set and do not read.

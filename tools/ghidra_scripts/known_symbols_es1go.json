@@ -1882,7 +1882,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TtmLists_Load",
-      "description": "(), C convention: opens cfg\\tm_files.dat with VolRStream_CtorFromPath (0004d064) and reads a count byte into 0007e714 with VolRStream_Read (0004d6d6); when it is not 0, deletes the array at 0007e710 when there is one (__vec_delete (0005547c) with StrList_Dtor (000202b4)) and makes one of that many 6-byte lists (__vec_new (0005542c) with 00011eae) and reads each with StrList_Read (000201b7); closes the stream with VolRStream_Close (0004d18e) and destroys it with VolRStream_Dtor (0004d0cb). es2_xref finds one call, from 0003ba47.",
+      "description": "(), C convention: opens cfg\\tm_files.dat with VolRStream_CtorFromPath (0004d064) and reads a count byte into 0007e714 with VolRStream_Read (0004d6d6); when it is not 0, deletes the array at 0007e710 when there is one (__vec_delete (0005547c) with StrList_Dtor (000202b4)) and makes one of that many 6-byte lists (__vec_new (0005542c) with 00011eae) and reads each with StrList_Read (000201b7); closes the stream with VolRStream_Close (0004d18e) and destroys it with VolRStream_Dtor (0004d0cb). es2_xref finds one call, from Shell_OpenFirstScreen (0003ba47).",
       "source": "Herculan/docs/es1/formats/shell-file-lists.md#the-animation-lists",
       "verified": {
         "bytes": "00011dfc+178",
@@ -1987,7 +1987,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_PresentFrame",
-      "description": "(): waits until the byte Shell_FrameDue (0007fd06) is set and clears it; uploads the palette 0007fcd0 with Palette_UploadWhole when it is set and the byte 0007fcd4 is set, clearing the byte; with the byte 0007fcd5 set calls 00020a70 with the dword 00081938 and clears it; makes the display 000ab616's +0x88 the visible page (+0x30, raster slot 000865f8) and +0x84 the draw page (+0x38, slot 000865f4) and swaps +0x84 and +0x88; when 0007fcd7 is 0, 0007fcd6 set and the word 000817c4 is 1000 calls Shell_WaitTicks (0004bbe9)(6) and clears 0007fcd6; calls DirtyList_Flush (000413db)(the new +0x88, the word 0007fccc); and with the byte 0007fd07 at 1 calls Cursor_SyncPosition (00050ed4)(0009aff0), 00027bc9 and Mouse_SetPosition (00051037) with the dwords 0009aff0 and 0009aff4.",
+      "description": "(): waits until the byte Shell_FrameDue (0007fd06) is set and clears it; uploads the palette 0007fcd0 with Palette_UploadWhole when it is set and the byte 0007fcd4 is set, clearing the byte; with the byte 0007fcd5 set calls ShellMusic_Play (00020a70) with the dword Shell_MusicTrack (00081938) and clears it; makes the display 000ab616's +0x88 the visible page (+0x30, raster slot 000865f8) and +0x84 the draw page (+0x38, slot 000865f4) and swaps +0x84 and +0x88; when 0007fcd7 is 0, 0007fcd6 set and the word Shell_BackdropId (000817c4) is 1000 calls Shell_WaitTicks (0004bbe9)(6) and clears 0007fcd6; calls DirtyList_Flush (000413db)(the new +0x88, the word 0007fccc); and with the byte Shell_SyncPointer (0007fd07) at 1 calls Cursor_SyncPosition (00050ed4)(Shell_PointerX (0009aff0)), 00027bc9 and Mouse_SetPosition (00051037) with the dwords Shell_PointerX (0009aff0) and Shell_PointerY (0009aff4).",
       "source": "Herculan/docs/es1/rendering/screen-pages.md#presenting-a-frame",
       "verified": {
         "bytes": "00012980+385",
@@ -2017,7 +2017,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_NavKeySubscriber",
-      "description": "(code), its argument removed by this function: a keyboard subscriber that passes the code with bit 0x1000 cleared to 0001cc86, the open dialog's key handler, and answers 1. Shell_InitDevices (00045d24) registers it with Keyboard_AddSubscriber for the 13 codes at 0007e7f0 unless Shell_DebugMode (0007fd08) is set. es2_xref finds its address loaded there, in Shell_AssertCleanupHook (00045a68) and Shell_ShutdownDevices (00046094), which remove it, and stored at 0003eaed and 0003ebd4.",
+      "description": "(code), its argument removed by this function: a keyboard subscriber that passes the code with bit 0x1000 cleared to DUIWindow_HandleNavKey (0001cc86), the open dialog's key handler, and answers 1. Shell_InitDevices (00045d24) registers it with Keyboard_AddSubscriber for the 13 codes at 0007e7f0 unless Shell_DebugMode (0007fd08) is set. es2_xref finds its address loaded there, in Shell_AssertCleanupHook (00045a68) and Shell_ShutdownDevices (00046094), which remove it, and stored at 0003eaed and 0003ebd4.",
       "source": "Herculan/docs/es1/shell/startup.md#the-keyboard-subscribers; ES1GO decompile at 00012b4e",
       "verified": {
         "bytes": "00012b4e+27",
@@ -2047,7 +2047,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_ForwardKeyToDialog",
-      "description": "(code), its argument removed by this function: when the dialog pointer 0007f0d0 is set, 0001bbd2(0007f0d0, code). es2_xref finds one call, from Shell_ScanKeySubscriber (00012b69).",
+      "description": "(code), its argument removed by this function: when the dialog pointer DUIWindow_Active (0007f0d0) is set, DUIWindow_SendKey (0001bbd2)(DUIWindow_Active (0007f0d0), code). es2_xref finds one call, from Shell_ScanKeySubscriber (00012b69).",
       "source": "Herculan/docs/es1/shell/startup.md#the-keyboard-subscribers; ES1GO decompile at 00012bb7",
       "verified": {
         "bytes": "00012bb7+39",
@@ -2092,7 +2092,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_HandleInput",
-      "description": "(block), its argument removed by this function: the frame loop's input step, given the block Shell_PollInput (0004de3a) returned; a null block returns. When the keyboard word +0 lacks bit 0x4000 it clears bit 0x1000 of the word Shell_InputBlock (0007e73c) points at and looks the word up in the 15 dwords at 0007e880 (REPNE SCASD, targets 0x3c bytes on): Space and Shift+Space call 0000a9c8, ',' and Shift+',' 0000d657, '.' and Shift+'.' 0000d599, '-' and Shift+'-' slot +0xc and '=' and Shift+'=' slot +8 of the table at +0x4a of the object 000809a4, each only while 000809a4 is set and the byte 000809a8 is not 0, then setting 000809a8 to 3; Insert (0x52) calls 0001cc86(0xf) when option 10 of Prefs_Options (000aa24e) is set; Ctrl+Esc and Alt+Esc set Shell_QuitRequested (0007e808); 0 and Ctrl+C do nothing. Any other word with the low byte 0x10, 0x2d or 0x2e (Q, X, C) sets Shell_QuitRequested with Ctrl or Alt (0x600) held unless it is C, and otherwise passes 'q', 'x' or 'c', less 0x20 with bit 0x800, or'd with 0x4000, to 0001bb85 with +6 of the menu 000817c8 when that is set. Then the block's +0x1d set calls 0001cc86(0x1c) and Input_LatchButton (0004de18)(1, 1) and sets the byte 0007e87c, and +0x1d clear with 0007e87c set calls 0001cc86(0x9c) and clears it; +0x1e set calls 0001cc86(0xf) and Input_LatchButton(1, 2). Last, unless Shell_DebugMode (0007fd08) is set, a word with bit 0x4000 goes to 0001bb85 with +6 of 000817c8 when that is set. es2_xref finds one call, from Shell_Main (00012ec7), and its address stored at 0005d36e.",
+      "description": "(block), its argument removed by this function: the frame loop's input step, given the block Shell_PollInput (0004de3a) returned; a null block returns. When the keyboard word +0 lacks bit 0x4000 it clears bit 0x1000 of the word Shell_InputBlock (0007e73c) points at and looks the word up in the 15 dwords at 0007e880 (REPNE SCASD, targets 0x3c bytes on): Space and Shift+Space call 0000a9c8, ',' and Shift+',' 0000d657, '.' and Shift+'.' 0000d599, '-' and Shift+'-' slot +0xc and '=' and Shift+'=' slot +8 of the table at +0x4a of the object 000809a4, each only while 000809a4 is set and the byte 000809a8 is not 0, then setting 000809a8 to 3; Insert (0x52) calls DUIWindow_HandleNavKey (0001cc86)(0xf) when option 10 of Prefs_Options (000aa24e) is set; Ctrl+Esc and Alt+Esc set Shell_QuitRequested (0007e808); 0 and Ctrl+C do nothing. Any other word with the low byte 0x10, 0x2d or 0x2e (Q, X, C) sets Shell_QuitRequested with Ctrl or Alt (0x600) held unless it is C, and otherwise passes 'q', 'x' or 'c', less 0x20 with bit 0x800, or'd with 0x4000, to DUIWindow_SendChar (0001bb85) with +6 of the menu Shell_CurrentMenu (000817c8) when that is set. Then the block's +0x1d set calls DUIWindow_HandleNavKey (0001cc86)(0x1c) and Input_LatchButton (0004de18)(1, 1) and sets the byte 0007e87c, and +0x1d clear with 0007e87c set calls DUIWindow_HandleNavKey (0001cc86)(0x9c) and clears it; +0x1e set calls DUIWindow_HandleNavKey (0001cc86)(0xf) and Input_LatchButton(1, 2). Last, unless Shell_DebugMode (0007fd08) is set, a word with bit 0x4000 goes to DUIWindow_SendChar (0001bb85) with +6 of Shell_CurrentMenu (000817c8) when that is set. es2_xref finds one call, from Shell_Main (00012ec7), and its address stored at 0005d36e.",
       "source": "Herculan/docs/es1/shell/startup.md#the-input; ES1GO decompile and disassembly at 00012be8",
       "verified": {
         "bytes": "00012be8+735",
@@ -2107,7 +2107,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_Main",
-      "description": "(a, b), src\\main.cpp: the shell's main; es2_xref finds one call, from 0000000d. Mem_InitHeap(the dword 0007e738, 3700000), asserting at severity 5 (line 0x1f8) when it gives 100000 bytes or fewer; Shell_ParseCommandLine (0001272d)(b, a), and when that returns non-zero Mem_HeapOff and __exit(1); copies to 000aae06, for Assert_SetLogDir (0000035e), the ALT_DRIVE variable (taken as null unless Shell_AltDriveAllowed (0007fd0b) is set) when PREFER_ALT is set and the string at 0007e942 otherwise; ExitCfg_Read (0001289c), ExitCfg_Write (0001280a), Shell_StartupNoOp (00012be3); VolumeGroup_SetBufferSize(0x200), VolRStream_SetGroup(PREFER_ALT set, ALT_DRIVE, 0007e943, 0x100), Subsystem_RunPhase (0000fcda)(1), which reads the eight bnd\\ files; an assert at severity 5 (line 0x219, the shortfall printed with sprintf) when the heap is under the dword 0009ae24, BND\\MAIN.BND's +0xc, and the byte Shell_LowMemory (0007fd09) set when it is under 0009ae20, the file's +8. Then the set-up calls, among them WidgetStyles_Load (00044aa4)('CFG\\styles.dat') and Resource_LoadBitmapArray (0004b7df)('res32\\corners.dba') into 000ab4ee, and Palette_UploadWhole(0007fcd0); a loop until the byte Shell_QuitFlag (0007fd05) is set, which 000817c0 = 9999 also sets; after it, shut-down calls, VolRStream_DeleteGroup and Mem_HeapOff, and INT 3 when Shell_DebugMode (0007fd08) is set; returns the word Shell_ExitCode (0007fcac) in AX. ES1DBSIM's Sim_Main (00059350) opens with Mem_InitHeap(6000000) and the same assert.",
+      "description": "(a, b), src\\main.cpp: the shell's main; es2_xref finds one call, from 0000000d. Mem_InitHeap(the dword 0007e738, 3700000), asserting at severity 5 (line 0x1f8) when it gives 100000 bytes or fewer; Shell_ParseCommandLine (0001272d)(b, a), and when that returns non-zero Mem_HeapOff and __exit(1); copies to 000aae06, for Assert_SetLogDir (0000035e), the ALT_DRIVE variable (taken as null unless Shell_AltDriveAllowed (0007fd0b) is set) when PREFER_ALT is set and the string at 0007e942 otherwise; ExitCfg_Read (0001289c), ExitCfg_Write (0001280a), Shell_StartupNoOp (00012be3); VolumeGroup_SetBufferSize(0x200), VolRStream_SetGroup(PREFER_ALT set, ALT_DRIVE, 0007e943, 0x100), Subsystem_RunPhase (0000fcda)(1), which reads the eight bnd\\ files; an assert at severity 5 (line 0x219, the shortfall printed with sprintf) when the heap is under the dword 0009ae24, BND\\MAIN.BND's +0xc, and the byte Shell_LowMemory (0007fd09) set when it is under 0009ae20, the file's +8. Then the set-up calls, among them WidgetStyles_Load (00044aa4)('CFG\\styles.dat') and Resource_LoadBitmapArray (0004b7df)('res32\\corners.dba') into 000ab4ee, and Palette_UploadWhole(0007fcd0); a loop until the byte Shell_QuitFlag (0007fd05) is set, which Shell_CurrentScreen (000817c0) = 9999 also sets; after it, shut-down calls, VolRStream_DeleteGroup and Mem_HeapOff, and INT 3 when Shell_DebugMode (0007fd08) is set; returns the word Shell_ExitCode (0007fcac) in AX. ES1DBSIM's Sim_Main (00059350) opens with Mem_InitHeap(6000000) and the same assert.",
       "source": "Herculan/docs/es1/shell/startup.md#the-start-up; ES1GO decompile and disassembly at 00012ec7",
       "verified": {
         "bytes": "00012ec7+772",
@@ -2182,7 +2182,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Anm_Play",
-      "description": "(mode, sound, path) in stack order, callee-cleaned: plays a .ANM. Saves +0x34 and +0x38 of the display object the dword 000ab616 points to and stores +0x38 at +0x34 and +0x30 at +0x38, each through 000865f0 or 000865f4 while the object is still 000ab616's; in a mode other than 0 makes a 320 x 200 bitmap over a new 64,000-byte buffer and calls Bitmap_GrabClipDispatch (0005afa8)(the bitmap + 4, a zeroed 8-byte object, 0); sets up a player with Anm_Ctor (00013a3c); when sound is not -1 and the manager 00082768 exists, destroys the sound 0007e9a4 (slot +8 with 3), makes SoundManager_CreateObject(manager, 2, 0, sound) into it and, when the byte 0007fcb9 is set and it was made, calls 000209e0(0007fcfc) when that is not 0 and plays it (slot +0x10); calls NoOp_Void (00012bde); loads path with Anm_Load (00013aa8) and, for a good file, sets the buffer as the background (Anm_SetBackground (00013c30)) in a mode other than 0, then repeats: in mode 0 a deadline 60 / the header's word +0x44 ticks past the clock 0007e6fc; Anm_DrawFrame (00013c46); Anm_SetFrame (00013bf7) with Anm_GetFrame (00013be6) + 1, stopping when it returns 0; in mode 0 a wait for the deadline; NoOp_Void. Then deletes the buffer, calls NoOp_Void, builds the rectangle (0, 0)-(319, 199), stores +0x30 at +0x34 and the saved +0x38 back, calls Region_CopyBetweenPages (00051c40) with an object holding the rectangle, stores the saved +0x34 back, and destroys the player (Anm_Dtor (00013a7a) with 2) and the bitmap (00050198). es2_xref finds two calls, both in 0003c1b7, passing mode 1 with sound 10 and with sound 11.",
+      "description": "(mode, sound, path) in stack order, callee-cleaned: plays a .ANM. Saves +0x34 and +0x38 of the display object the dword 000ab616 points to and stores +0x38 at +0x34 and +0x30 at +0x38, each through 000865f0 or 000865f4 while the object is still 000ab616's; in a mode other than 0 makes a 320 x 200 bitmap over a new 64,000-byte buffer and calls Bitmap_GrabClipDispatch (0005afa8)(the bitmap + 4, a zeroed 8-byte object, 0); sets up a player with Anm_Ctor (00013a3c); when sound is not -1 and the manager 00082768 exists, destroys the sound 0007e9a4 (slot +8 with 3), makes SoundManager_CreateObject(manager, 2, 0, sound) into it and, when the byte 0007fcb9 is set and it was made, calls 000209e0(0007fcfc) when that is not 0 and plays it (slot +0x10); calls NoOp_Void (00012bde); loads path with Anm_Load (00013aa8) and, for a good file, sets the buffer as the background (Anm_SetBackground (00013c30)) in a mode other than 0, then repeats: in mode 0 a deadline 60 / the header's word +0x44 ticks past the clock 0007e6fc; Anm_DrawFrame (00013c46); Anm_SetFrame (00013bf7) with Anm_GetFrame (00013be6) + 1, stopping when it returns 0; in mode 0 a wait for the deadline; NoOp_Void. Then deletes the buffer, calls NoOp_Void, builds the rectangle (0, 0)-(319, 199), stores +0x30 at +0x34 and the saved +0x38 back, calls Region_CopyBetweenPages (00051c40) with an object holding the rectangle, stores the saved +0x34 back, and destroys the player (Anm_Dtor (00013a7a) with 2) and the bitmap (00050198). es2_xref finds two calls, both in Shell_DrawScreen (0003c1b7), passing mode 1 with sound 10 and with sound 11.",
       "source": "Herculan/docs/es1/formats/anm-animation.md#playing",
       "verified": {
         "bytes": "000132d8+1667",
@@ -3442,7 +3442,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ConditionalDialogBox_SetRect",
-      "description": "(box), callee-cleaned: rounds the word 000817c4 down to a thousand and looks it up in the four ints at 0007ee44 (6000, 5000, 3000, 4000) with a jump table beside them: 6000 copies the 16 bytes at 0009ae84 to +5 and sets +0 to 0; 5000 the bytes at 0009ae94 and +0 to 0 (code at 00018ea6 Ghidra left undefined); 3000, 4000 and any other value the bytes at 0009ae64 and +0 to 1.",
+      "description": "(box), callee-cleaned: rounds the word Shell_BackdropId (000817c4) down to a thousand and looks it up in the four ints at 0007ee44 (6000, 5000, 3000, 4000) with a jump table beside them: 6000 copies the 16 bytes at 0009ae84 to +5 and sets +0 to 0; 5000 the bytes at 0009ae94 and +0 to 0 (code at 00018ea6 Ghidra left undefined); 3000, 4000 and any other value the bytes at 0009ae64 and +0 to 1.",
       "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-dialog-box",
       "verified": {
         "bytes": "00018e5f+126",
@@ -3547,7 +3547,7 @@
       "type": "function",
       "confidence": "high",
       "name": "DigitalDialogBox_SetRect",
-      "description": "(box), callee-cleaned: rounds the word 000817c4 down to a thousand and looks it up in the four ints at 0007ef10 (3000, 5000, 4000, 7000) with the jump table beside them: 3000, 5000 and 4000 copy the 16 bytes at 0009ae64 to +5 and set +0 to 1; 7000 copies those at 0009aea4 and sets +0 to 0 (code at 00019435 Ghidra left undefined); any other value changes nothing. ConditionalDialogBox_SetRect (00018e5f) is the same shape over other boxes.",
+      "description": "(box), callee-cleaned: rounds the word Shell_BackdropId (000817c4) down to a thousand and looks it up in the four ints at 0007ef10 (3000, 5000, 4000, 7000) with the jump table beside them: 3000, 5000 and 4000 copy the 16 bytes at 0009ae64 to +5 and set +0 to 1; 7000 copies those at 0009aea4 and sets +0 to 0 (code at 00019435 Ghidra left undefined); any other value changes nothing. ConditionalDialogBox_SetRect (00018e5f) is the same shape over other boxes.",
       "source": "Herculan/docs/es1/formats/bin-string-tables.md#the-load",
       "verified": {
         "bytes": "000193ee+101",
@@ -3647,12 +3647,117 @@
       }
     },
     {
+      "address": "0001a61a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIControl_Dtor",
+      "description": "(control, flags), its arguments removed by this function: slot +4 of DUIControl's vtable 0007ef92: stores 0007ef92 at +0x20 and frees control when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-controls; ES1GO decompile at 0001a61a",
+      "verified": {
+        "bytes": "0001a61a+45",
+        "sha1": "b119bf2e79bc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001a647",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIControl_Draw",
+      "description": "(control), its argument removed by this function: slot +8 of DUIControl's vtable 0007ef92; returns.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-controls; ES1GO decompile at 0001a647",
+      "verified": {
+        "bytes": "0001a647+10",
+        "sha1": "02b04160c7b8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001a651",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIControl_Invalidate",
+      "description": "(control), its argument removed by this function: slot +0xc of DUIControl's vtable 0007ef92; returns.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-controls; ES1GO decompile at 0001a651",
+      "verified": {
+        "bytes": "0001a651+10",
+        "sha1": "02b04160c7b8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001a665",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BarGraph_NoOpWindowCopy",
+      "description": "(a, b) in stack order, its arguments removed by this function: slot +0x14 of the vtable 0007ef92: byte for byte the code of BarGraph_NoOp (00003de0), relocated operands aside.",
+      "source": "Herculan/docs/es1/shell/menus.md#where-the-object-files-start-and-end; ES1GO disassembly at 0001a665",
+      "verified": {
+        "bytes": "0001a665+14",
+        "sha1": "1550088044a9",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0001a6ac",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIControl_GetValue",
+      "description": "(control), its argument removed by this function (RET 4): slot +0x2c of DUIControl's vtable 0007ef92; answers 1 in AX.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-controls; ES1GO decompile and disassembly at 0001a6ac",
+      "verified": {
+        "bytes": "0001a6ac+14",
+        "sha1": "f23792c338d8",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001a6ba",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GridShape_GetMemorySizeWindowCopy",
+      "description": "(shape), its argument removed by this function: slot +0x30 of the vtable 0007ef92: byte for byte the code of GridShape_GetMemorySize (0000fa07), relocated operands aside.",
+      "source": "Herculan/docs/es1/shell/menus.md#where-the-object-files-start-and-end; ES1GO disassembly at 0001a6ba",
+      "verified": {
+        "bytes": "0001a6ba+12",
+        "sha1": "cdfff44e1c27",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0001a70a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BarGraph_GetRectWindowCopy",
+      "description": "(bar), its argument removed by this function: slot +0x48 of the vtable 0007ef92: byte for byte the code of BarGraph_GetRect (00003dee), relocated operands aside.",
+      "source": "Herculan/docs/es1/shell/menus.md#where-the-object-files-start-and-end; ES1GO disassembly at 0001a70a",
+      "verified": {
+        "bytes": "0001a70a+12",
+        "sha1": "484a97b0e892",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "0001a716",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "Control_Ctor",
-      "description": "(this, byte, id, rect) in stack order, callee-cleaned: as Control_CtorWithKey (0001a7e5), with the key +0x1d 0 and the id at +0x17. The menu dialog's kind-2 control (0001f442) is built on it.",
+      "name": "DUIControl_Ctor",
+      "description": "(this, byte, id, rect) in stack order, callee-cleaned: as DUIControl_CtorWithKey (0001a7e5), with the key +0x1d 0 and the id at +0x17. The menu dialog's kind-2 control (0001f442) is built on it.",
       "source": "ES1GO decompile at 0001a716",
       "verified": {
         "bytes": "0001a716+207",
@@ -3666,8 +3771,8 @@
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "Control_CtorWithKey",
-      "description": "(this, byte, key, rect) in stack order, callee-cleaned: allocates 0x24 bytes when this is 0; stores the base vtable 0007ef92 at +0x20, passes the rect to 0001a8b3, and sets the key byte +0x1d, the word +0x17 to 0 and the byte +0x1e. TextButton_Ctor (0001cde8) builds on it with byte 1.",
+      "name": "DUIControl_CtorWithKey",
+      "description": "(this, byte, key, rect) in stack order, callee-cleaned: allocates 0x24 bytes when this is 0; stores the base vtable 0007ef92 at +0x20, passes the rect to DUIControl_SetRect (0001a8b3), and sets the key byte +0x1d, the word +0x17 to 0 and the byte +0x1e. MTButton_Ctor (0001cde8) builds on it with byte 1.",
       "source": "ES1GO decompile at 0001a7e5",
       "verified": {
         "bytes": "0001a7e5+206",
@@ -3677,12 +3782,27 @@
       }
     },
     {
+      "address": "0001a8b3",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIControl_SetRect",
+      "description": "(control, rect), its arguments removed by this function: copies the four dwords of rect to +0 and clears the byte +0x1f and the word +0x19.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-controls; ES1GO decompile at 0001a8b3",
+      "verified": {
+        "bytes": "0001a8b3+41",
+        "sha1": "102be7dc4613",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0001abcf",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "Window_Ctor",
-      "description": "(this, rect) in stack order, callee-cleaned: the shell's window, 0x4ed bytes allocated when this is 0. Fifteen 0x38-byte hotspot entries at +0x19f (__vec_ctor of 0001ad4e), the vtable 0007eff0 at +0x4e9, 000512a0(0) at +0x17 with the rect copied to its +0x210, a zero point to its +0x220 and 1 to its +0x208, the rect at +0, the control count word +0x1b 0, the word +0x1d 0xffff, and the 64-byte key list at +0x11f zeroed. The menu dialog's style-1 window.",
+      "name": "DUIWindow_Ctor",
+      "description": "(this, rect) in stack order, callee-cleaned: the shell's window, 0x4ed bytes allocated when this is 0. Fifteen 0x38-byte hotspot entries at +0x19f (__vec_ctor of WindowHotspot_Ctor (0001ad4e)), the vtable 0007eff0 at +0x4e9, 000512a0(0) at +0x17 with the rect copied to its +0x210, a zero point to its +0x220 and 1 to its +0x208, the rect at +0, the control count word +0x1b 0, the word +0x1d 0xffff, and the 64-byte key list at +0x11f zeroed. The menu dialog's style-1 window.",
       "source": "ES1GO decompile at 0001abcf",
       "verified": {
         "bytes": "0001abcf+383",
@@ -3692,12 +3812,147 @@
       }
     },
     {
+      "address": "0001ad4e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "WindowHotspot_Ctor",
+      "description": "(hotspot): a window's 0x38-byte hotspot, allocated when hotspot is 0, with a GLRectangleRegion at +0x1c (vtables 0007f036, 0007f068, 0007f0a0) and +0x20 0. DUIWindow_Ctor (0001abcf) builds 15 with __vec_ctor.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-window; ES1GO decompile at 0001ad4e",
+      "verified": {
+        "bytes": "0001ad4e+333",
+        "sha1": "13cbe1a98c10",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001ae9b",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_AddLabel",
+      "description": "(window, mode, width, x, y, size, text), its arguments removed by this function (RET 0x1c): slot +4 of DUIWindow's vtable 0007eff0; returns, so a plain window keeps no labels.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-window; ES1GO decompile and disassembly at 0001ae9b",
+      "verified": {
+        "bytes": "0001ae9b+28",
+        "sha1": "e7d6325f6710",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001aeb7",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_DrawBackground",
+      "description": "(window), its argument removed by this function (RET 4): slot +8 of DUIWindow's vtable 0007eff0, which DUIWindow_Draw (0001bfa3) calls; returns.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-window; ES1GO decompile and disassembly at 0001aeb7",
+      "verified": {
+        "bytes": "0001aeb7+10",
+        "sha1": "02b04160c7b8",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001aec1",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLBase_DtorWindowCopy",
+      "description": "(object, flags), its arguments removed by this function: slot +0x1c of the vtable 0007f036: byte for byte the code of GLBase_Dtor (00046d4f), relocated operands aside, storing 0007f036 where that stores 00082ada.",
+      "source": "Herculan/docs/es1/shell/menus.md#where-the-object-files-start-and-end; ES1GO disassembly at 0001aec1",
+      "verified": {
+        "bytes": "0001aec1+44",
+        "sha1": "44aa4ce59c95",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0001aeed",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRegion_DtorWindowCopy",
+      "description": "(region, flags), its arguments removed by this function: slot +0x1c of the vtable 0007f068: byte for byte the code of GLRegion_Dtor (00046d7b), relocated operands aside, storing 0007f068 and 0007f036 where that stores 00082b0c and 00082ada.",
+      "source": "Herculan/docs/es1/shell/menus.md#where-the-object-files-start-and-end; ES1GO disassembly at 0001aeed",
+      "verified": {
+        "bytes": "0001aeed+73",
+        "sha1": "bc0b4340176b",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0001af36",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRectangleRegion_DtorWindowCopy",
+      "description": "(region, flags), its arguments removed by this function: slot +0x1c of the vtable 0007f0a0: byte for byte the code of GLRectangleRegion_Dtor (00046dc4), relocated operands aside, storing 0007f0a0 and 0007f068 and 0007f036 where that stores 00082b44 and 00082b0c and 00082ada.",
+      "source": "Herculan/docs/es1/shell/menus.md#where-the-object-files-start-and-end; ES1GO disassembly at 0001af36",
+      "verified": {
+        "bytes": "0001af36+107",
+        "sha1": "0115911ed771",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0001afa1",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_Dtor",
+      "description": "(window, flags), its arguments removed by this function: stores 0007eff0 at +0x4e9; destroys each of the +0x1b controls at +0x1f through its slot +4 with 3; frees each of the +0x4e7 hotspots' +0x34; destroys the render context +0x17 through its slot +0x1c with 3; __vec_dtor of WindowHotspot_Dtor (0001b06f) over the 15 hotspots at +0x19f; frees window when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/shell/menus.md#closing-a-menu--menu_close-0003b138; ES1GO decompile at 0001afa1",
+      "verified": {
+        "bytes": "0001afa1+206",
+        "sha1": "a3bdc0480890",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001b06f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "WindowHotspot_Dtor",
+      "description": "(hotspot, flags), its arguments removed by this function: stores the region's three vtables back at +0x1c and frees hotspot when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/shell/menus.md#closing-a-menu--menu_close-0003b138; ES1GO decompile at 0001b06f",
+      "verified": {
+        "bytes": "0001b06f+144",
+        "sha1": "5efaa6ce0c9a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001b0ff",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_Activate",
+      "description": "(window), its argument removed by this function: when DUIWindow_FindEnabledControlById (0001bda4)(window, 103) finds one, it becomes DUIWindow_PressedIndex (0007f0d4) and DUIWindow_HeldIndex (0007f0d6), pushed (+0x19 1) and changed (+0x1f 1), DUIWindow_Holding (0007f0db) is set and its slot +0xc called; unless Shell_DebugMode (0007fd08) is set, 00027bbf and Keyboard_AddSubscriber(DUIWindow_KeySubscriber (0001ba73), window + 0x11f); DUIWindow_FocusIndex (0007f0d8) = DUIWindow_HitControl (0001bc11)(window, Shell_PointerX - left, Shell_PointerY - top).",
+      "source": "Herculan/docs/es1/shell/menus.md#the-active-window; ES1GO decompile at 0001b0ff",
+      "verified": {
+        "bytes": "0001b0ff+264",
+        "sha1": "9adb2480ed97",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0001b207",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "Window_AddControl",
-      "description": "(window, control) in stack order, callee-cleaned: stores control at +0x1f + 4 * the word +0x1b and increments the word; when the control's byte +0x1d, its key, is non-zero, passes the key and the key with bit 7 set to Window_AddKey (0001b296).",
+      "name": "DUIWindow_AddControl",
+      "description": "(window, control) in stack order, callee-cleaned: stores control at +0x1f + 4 * the word +0x1b and increments the word; when the control's byte +0x1d, its key, is non-zero, passes the key and the key with bit 7 set to DUIWindow_AddKey (0001b296).",
       "source": "ES1GO decompile at 0001b207",
       "verified": {
         "bytes": "0001b207+84",
@@ -3707,11 +3962,26 @@
       }
     },
     {
+      "address": "0001b25b",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_Deactivate",
+      "description": "(window), its argument removed by this function: DUIWindow_HeldIndex (0007f0d6) -1, DUIWindow_Holding (0007f0db) cleared, 00027bbf and Keyboard_RemoveSubscriber(DUIWindow_KeySubscriber (0001ba73)). window is not read.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-active-window; ES1GO decompile at 0001b25b",
+      "verified": {
+        "bytes": "0001b25b+59",
+        "sha1": "d4e4f22bf33c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0001b296",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "Window_AddKey",
+      "name": "DUIWindow_AddKey",
       "description": "(window, key) in stack order, callee-cleaned: walks the zero-ended byte list at +0x11f and stores key at the first zero byte, returning without a store when an earlier byte equals key. The walk has no bound.",
       "source": "ES1GO decompile at 0001b296",
       "verified": {
@@ -3726,7 +3996,7 @@
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "Window_AddHotspot",
+      "name": "DUIWindow_AddHotspot",
       "description": "(window, a, id, handler, rect) in stack order, callee-cleaned: when the word +0x4e7 is under 15, fills the 0x38-byte entry at +0x19f + 0x38 * that count: 1 at +1, the rect at +2 and again at +0x24, a at +0x12, the int16 id at +0x16, handler at +0x18 and 0 at +0x34; then increments the count.",
       "source": "ES1GO decompile at 0001b2de",
       "verified": {
@@ -3737,12 +4007,312 @@
       }
     },
     {
+      "address": "0001b395",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_Offset",
+      "description": "(window, offset), its arguments removed by this function: adds the point offset to the window's rect +0 and to its render context +0x17's rects +0x210 and +0x218; also reads the display's attributes 0 and 1 into locals it does not use.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-active-window; ES1GO decompile at 0001b395",
+      "verified": {
+        "bytes": "0001b395+161",
+        "sha1": "5ef4c00bdddd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001b436",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_OnPress",
+      "description": "(window, x, y), its arguments removed by this function: the point made relative to the window; lets go of the holding control (state 0, changed, DUIWindow_Holding cleared, DUIWindow_HeldIndex -1); DUIWindow_PressedIndex (0007f0d4) = DUIWindow_HitControl (0001bc11); a hit control is made pushed and changed, its slot +0x38 called with the point for +0x1b 1 (DUIWindow_Tracking (0007f0da) set) and 2 (it becomes the holding control), and its slot +0xc called; sets the byte +0 of the hotspot DUIWindow_HitHotspot (0001beca) finds.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-mouse; ES1GO decompile at 0001b436",
+      "verified": {
+        "bytes": "0001b436+389",
+        "sha1": "b217b150b41e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001b5bb",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_PressControl",
+      "description": "(window, index), its arguments removed by this function: for index >= 0 whose control is not inactive (+0x19 2), lets go of the holding control, makes index DUIWindow_PressedIndex (0007f0d4), the control pushed and changed, and calls its slot +0xc.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-keys; ES1GO decompile at 0001b5bb",
+      "verified": {
+        "bytes": "0001b5bb+200",
+        "sha1": "114dece8209f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001b683",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_OnRelease",
+      "description": "(window, x, y), its arguments removed by this function: when DUIWindow_HitControl (0001bc11) finds the pressed control DUIWindow_PressedIndex (0007f0d4), posts Shell_PendingMessage (0007fcb0) = (0, index, its slot +0x2c, its id +0x17); a hit control whose +0x1b is not 2 is put up and changed and its slot +0xc called; DUIWindow_PressedIndex -1; sets the byte +0 of the hotspot DUIWindow_HitHotspot (0001beca) finds.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-mouse; ES1GO decompile at 0001b683",
+      "verified": {
+        "bytes": "0001b683+338",
+        "sha1": "58e244c98368",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001b7d5",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_ReleaseControl",
+      "description": "(window, index), its arguments removed by this function: for index >= 0 whose control is not inactive, posts Shell_PendingMessage (0007fcb0) = (0, index, slot +0x2c, id +0x17) when index is DUIWindow_PressedIndex (0007f0d4); a control whose +0x1b is not 2 is put up and changed and its slot +0xc called; DUIWindow_PressedIndex 0xffff.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-keys; ES1GO decompile at 0001b7d5",
+      "verified": {
+        "bytes": "0001b7d5+295",
+        "sha1": "306c759eaea0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001b8fc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_OnDrag",
+      "description": "(window, x, y), its arguments removed by this function: DUIWindow_FocusIndex (0007f0d8) = DUIWindow_HitControl (0001bc11) of the point relative to the window; returns with no pressed control; the pressed control is made pushed (from up) when it is the one hit or holds the input (+0x1b 2), and up (from pushed) otherwise, each with its slot +0xc; sets the byte +0 of the hotspot DUIWindow_HitHotspot (0001beca) finds.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-mouse; ES1GO decompile at 0001b8fc",
+      "verified": {
+        "bytes": "0001b8fc+375",
+        "sha1": "7560e56127ca",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001ba73",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_KeySubscriber",
+      "description": "(code), the keyboard subscriber DUIWindow_Activate (0001b0ff) registers for the window's key list: answers 1 while DUIWindow_KeysEnabled (0007f0dd) is clear; 2 for a repeat of DUIWindow_LastKey (0007f0c4); a code whose low seven bits match a last press becomes its release (| 0x80); stores the code in DUIWindow_LastKey; 2 for a code with a bit of 0xe00; DUIWindow_FindControlByKey (0001bd41)(DUIWindow_Active, code & 0xff7f): found, DUIWindow_PointAtControl (0001c3ec), DUIWindow_FocusIndex, and DUIWindow_PressControl (0001b5bb) for a press or DUIWindow_ReleaseControl (0001b7d5) for a release, answering 1; otherwise 2.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-keys; ES1GO decompile at 0001ba73",
+      "verified": {
+        "bytes": "0001ba73+274",
+        "sha1": "81b4709b9d16",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001bb85",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_SendChar",
+      "description": "(window, word), its arguments removed by this function: while DUIWindow_Holding (0007f0db) is set and word has 0x4000 and not 0x8000, calls the holding control DUIWindow_HeldIndex (0007f0d6)'s slot +0x3c with the word's low byte. Shell_HandleInput (00012be8) calls it for typed characters.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-keys; ES1GO decompile at 0001bb85",
+      "verified": {
+        "bytes": "0001bb85+77",
+        "sha1": "888b296f78bf",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001bbd2",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_SendKey",
+      "description": "(window, word), its arguments removed by this function: while DUIWindow_Holding (0007f0db) is set, calls the holding control's slot +0x40 with word & 0xff7f. Shell_ForwardKeyToDialog (00012bb7) calls it.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-keys; ES1GO decompile at 0001bbd2",
+      "verified": {
+        "bytes": "0001bbd2+63",
+        "sha1": "34de0da9a7ab",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001bc11",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_HitControl",
+      "description": "(window, x, y), its arguments removed by this function: the index of the first of the +0x1b controls that is not inactive (+0x19 2) and holds the point: its rect +0-+0xc inclusive when its byte +0x10 is 0, otherwise |x - +0x11| + |y - +0x13| <= +0x15 (int16s); -1 for none.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-active-window; ES1GO decompile at 0001bc11",
+      "verified": {
+        "bytes": "0001bc11+304",
+        "sha1": "209258cdab8d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001bd41",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_FindControlByKey",
+      "description": "(window, key), its arguments removed by this function: the index of the first control that is not inactive and whose key byte +0x1d equals key; -1 for none.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-keys; ES1GO decompile at 0001bd41",
+      "verified": {
+        "bytes": "0001bd41+99",
+        "sha1": "a183b80bdb23",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001bda4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_FindEnabledControlById",
+      "description": "(window, id), its arguments removed by this function: the index of the first control that is not inactive and whose id +0x17 equals id; -1 for none.",
+      "source": "Herculan/docs/es1/shell/menus.md#opening-a-menu--menu_open-0003969e; ES1GO decompile at 0001bda4",
+      "verified": {
+        "bytes": "0001bda4+114",
+        "sha1": "f2dbbcfb224e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001be16",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_FindControlById",
+      "description": "(window, id), its arguments removed by this function: the index of the first control whose id +0x17 equals id, whatever its state; -1 for none.",
+      "source": "Herculan/docs/es1/shell/menus.md#opening-a-menu--menu_open-0003969e; ES1GO decompile at 0001be16",
+      "verified": {
+        "bytes": "0001be16+89",
+        "sha1": "6b778917e7f7",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001be6f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_FindHotspotById",
+      "description": "(window, id), its arguments removed by this function: the index of the first of the +0x4e7 hotspots whose id +0x16 equals id; -1 for none.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-window; ES1GO decompile at 0001be6f",
+      "verified": {
+        "bytes": "0001be6f+91",
+        "sha1": "84ae2cdfbb74",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001beca",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_HitHotspot",
+      "description": "(window, x, y), its arguments removed by this function: the index of the first hotspot whose rect +2-+0xe holds the point, unless the rect its +0x12 points to also holds it; -1 for none.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-mouse; ES1GO decompile at 0001beca",
+      "verified": {
+        "bytes": "0001beca+217",
+        "sha1": "022996f17fd6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001bfa3",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_Draw",
+      "description": "(window), its argument removed by this function: installs the window's render context +0x17 with Raster_InstallRenderContext, clears its +0x20c, calls the window's slot +8 (vtable +0x4e9), sets +0x20c, calls each control's slot +8, calls each hotspot's handler +0x18 with (hotspot + 2, its id +0x16), and installs the render context 000ab612 it found.",
+      "source": "Herculan/docs/es1/shell/menus.md#drawing-a-window--duiwindow_draw-0001bfa3; ES1GO decompile at 0001bfa3",
+      "verified": {
+        "bytes": "0001bfa3+196",
+        "sha1": "ba3e7fdd925f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001c067",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_Update",
+      "description": "(window), its argument removed by this function: installs the window's render context with +0x20c set and clears DUIWindow_InputReady (0007f0dc); each control whose byte +0x1f is 1 or whose +0x1b is 2 is drawn through its slot +8 on page 2 (0007fccc) and again on the draw page, and its rect (slot +0x48) moved by the window's corner is added with DirtyBox_AddRect, delay 0; then DUIWindow_UpdateHotspots (0001c270); sets DUIWindow_InputReady and installs the render context it found.",
+      "source": "Herculan/docs/es1/shell/menus.md#updating-a-window--duiwindow_update-0001c067; ES1GO decompile at 0001c067",
+      "verified": {
+        "bytes": "0001c067+475",
+        "sha1": "ce2e05bdb813",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001c242",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Rect_CopyCtorWindowCopy",
+      "description": "(rect, source), its arguments removed by this function: byte for byte the code of Rect_CopyCtor (0004b398), relocated operands aside.",
+      "source": "Herculan/docs/es1/shell/menus.md#where-the-object-files-start-and-end; ES1GO disassembly at 0001c242",
+      "verified": {
+        "bytes": "0001c242+46",
+        "sha1": "b8bac0df75d7",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0001c270",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_UpdateHotspots",
+      "description": "(window), its argument removed by this function: for each hotspot whose byte +0 is set, calls its handler with (hotspot + 2, id) on page 2 and on the draw page, adds its rect moved by the window's corner with DirtyBox_AddRect, delay 0, and clears the byte.",
+      "source": "Herculan/docs/es1/shell/menus.md#updating-a-window--duiwindow_update-0001c067; ES1GO decompile at 0001c270",
+      "verified": {
+        "bytes": "0001c270+380",
+        "sha1": "63b5b07e759b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001c3ec",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_PointAtControl",
+      "description": "(window, index), its arguments removed by this function: sets Shell_PointerX (0009aff0) and Shell_PointerY (0009aff4) to the control's center, (right - left) / 2 + left and (bottom - top) / 2 + top in int16, plus the window's corner.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-keys; ES1GO decompile at 0001c3ec",
+      "verified": {
+        "bytes": "0001c3ec+115",
+        "sha1": "a38520099f17",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0001c460",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "ShellMouse_AddCallbacks",
-      "description": "(): calls 00027bc9, then registers 0001c605, 0001c7d8 and 0001caaa with Mouse_AddCallback for the masks 1, 2 and 4, keeping the slots in the words 0007f0c8, 0007f0ca and 0007f0cc. es2_xref finds one call, from Shell_Main (00012ec7); ShellMouse_RemoveCallbacks (0001c4de) undoes it.",
+      "description": "(): calls 00027bc9, then registers ShellMouse_OnMove (0001c605), ShellMouse_OnLeftPress (0001c7d8) and ShellMouse_OnLeftRelease (0001caaa) with Mouse_AddCallback for the masks 1, 2 and 4, keeping the slots in the words 0007f0c8, 0007f0ca and 0007f0cc. es2_xref finds one call, from Shell_Main (00012ec7); ShellMouse_RemoveCallbacks (0001c4de) undoes it.",
       "source": "Herculan/docs/es1/shell/startup.md#the-start-up; ES1GO decompile at 0001c460",
       "verified": {
         "bytes": "0001c460+126",
@@ -3767,12 +4337,162 @@
       }
     },
     {
+      "address": "0001c536",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_SetActive",
+      "description": "(window), its argument removed by this function: DUIWindow_Active (0007f0d0) = window, DUIWindow_Activate (0001b0ff)(window), DUIWindow_KeysEnabled (0007f0dd) set.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-active-window; ES1GO decompile at 0001c536",
+      "verified": {
+        "bytes": "0001c536+32",
+        "sha1": "f3b85977cc67",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001c556",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_DrawActive",
+      "description": "(): DUIWindow_Draw (0001bfa3)(DUIWindow_Active (0007f0d0)).",
+      "source": "Herculan/docs/es1/shell/menus.md#the-active-window; ES1GO decompile at 0001c556",
+      "verified": {
+        "bytes": "0001c556+16",
+        "sha1": "3102f9796309",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001c566",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_OffsetActive",
+      "description": "(offset point, by value): DUIWindow_Offset (0001b395)(DUIWindow_Active (0007f0d0), the address of its argument).",
+      "source": "Herculan/docs/es1/shell/menus.md#the-active-window; ES1GO decompile at 0001c566",
+      "verified": {
+        "bytes": "0001c566+22",
+        "sha1": "9ea8f59078aa",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001c57c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_ClearActive",
+      "description": "(): DUIWindow_Deactivate (0001b25b)(DUIWindow_Active (0007f0d0)), then DUIWindow_Active and DUIWindow_KeysEnabled (0007f0dd) cleared.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-active-window; ES1GO decompile at 0001c57c",
+      "verified": {
+        "bytes": "0001c57c+33",
+        "sha1": "8c2c9f13b14e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001c59d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_EnableControl",
+      "description": "(index), its argument removed by this function: the active window's control index gets state 0 (+0x19) and changed (+0x1f 1).",
+      "source": "Herculan/docs/es1/shell/menus.md#the-active-window; ES1GO decompile at 0001c59d",
+      "verified": {
+        "bytes": "0001c59d+51",
+        "sha1": "727b3bd95dcd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001c5d0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_DisableControl",
+      "description": "(index), its argument removed by this function: the active window's control index gets state 2, inactive, and changed.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-active-window; ES1GO decompile at 0001c5d0",
+      "verified": {
+        "bytes": "0001c5d0+53",
+        "sha1": "45b2eaecce62",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001c605",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellMouse_OnMove",
+      "description": "(point), the mouse callback ShellMouse_AddCallbacks (0001c460) registers for mask 1, the pointer moved: returns unless DUIWindow_InputReady (0007f0dc) and DUIWindow_Active (0007f0d0) are set; clears DUIWindow_InputReady for its run; stores the point in Shell_PointerX and Shell_PointerY (0009aff0, Shell_PointerY (0009aff4)); while DUIWindow_Tracking (0007f0da) is set calls the pressed control's slots +0x38 (the point relative to the window) and +0xc; otherwise, with the point inside the window (rect, or the distance test when its byte +0x10 is set), DUIWindow_OnDrag (0001b8fc).",
+      "source": "Herculan/docs/es1/shell/menus.md#the-mouse; ES1GO decompile at 0001c605",
+      "verified": {
+        "bytes": "0001c605+467",
+        "sha1": "8585bebac461",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001c7d8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellMouse_OnLeftPress",
+      "description": "(point), the mouse callback for mask 2, the left button pressed: returns while the byte 0009b013 is set; clears DUIWindow_InputReady; with the point inside DUIWindow_Active, DUIWindow_OnPress (0001b436); otherwise DUIWindow_PressedIndex 0xffff and, while the dword 0007fce4 is set, the point is tested against the 0x14-byte rects of 0007fce4's list for Hangar_SelectedSlot's type and Shell_PendingMessage set to (0, -1, the rect's index or -1, 1702); sets DUIWindow_InputReady. Ghidra's function ends at 0001c7fd, the rest is undisassembled to ShellMouse_OnLeftRelease (0001caaa).",
+      "source": "Herculan/docs/es1/shell/menus.md#the-mouse; ES1GO decompile and disassembly at 0001c7d8",
+      "verified": {
+        "bytes": "0001c7d8+722",
+        "sha1": "222ea6134db7",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001caaa",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellMouse_OnLeftRelease",
+      "description": "(point), the mouse callback for mask 4, the left button released: returns while 0009b013 is set; with no active window DUIWindow_PressedIndex 0xffff; while DUIWindow_Tracking (0007f0da) is set the pressed control is put up and changed, DUIWindow_Tracking cleared and Shell_PendingMessage (0007fcb0) = (0, index, slot +0x2c, id); otherwise, with the point inside the window, DUIWindow_OnRelease (0001b683), else DUIWindow_PressedIndex 0xffff; sets DUIWindow_InputReady (0007f0dc).",
+      "source": "Herculan/docs/es1/shell/menus.md#the-mouse; ES1GO decompile at 0001caaa",
+      "verified": {
+        "bytes": "0001caaa+476",
+        "sha1": "4fca26503328",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001cc86",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIWindow_HandleNavKey",
+      "description": "(code), its argument removed by this function: with DUIWindow_Active (0007f0d0) set, by the REPNE SCASD table of seven codes at 0007f0e0 and targets at 0007f0fc: Tab (0x0f) puts the pressed control up and changed, DUIWindow_PressedIndex -1, and moves DUIWindow_FocusIndex (0007f0d8) to the next control whose byte +0x1e is set, modulo the count; 0x80f and 0x20f to the previous, wrapping; both then DUIWindow_PointAtControl (0001c3ec); Enter (0x1c, 0x81c) DUIWindow_PressControl (0001b5bb)(window, focus); its release (0x9c, 0x89c) DUIWindow_ReleaseControl (0001b7d5). The cases lie past Ghidra's function end (0001ccc2) to 0001cde4.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-keys; ES1GO decompile and disassembly at 0001cc86",
+      "verified": {
+        "bytes": "0001cc86+353",
+        "sha1": "f6b31b17a1da",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0001cde8",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "TextButton_Ctor",
-      "description": "(this, id, key, text, rect) in stack order, callee-cleaned: a 0x95-byte button, allocated when this is 0. Control_CtorWithKey (0001a7e5)(this, 1, key, rect), the vtable 0007f130 at +0x20, the word +0x1b 0 and the id at +0x17; three 8-byte points at +0x7c (__vec_ctor of 0001d0f2); its vtable 0007f18c at +0x20 and the word +0x19 0; STYLES.DAT records 0, 1 and 2 (the pointer 00082654, +0, +0x40, +0x80) at +0x30, +0x34 and +0x38; the fonts 000aacce, 000aacd2 and 000aacd6 at +0x24, +0x28 and +0x2c. With text, copies it to +0x3c and sets the points to (rect left, bottom - (height - HudFont_CellHeight2 (00051ff0)(font, text)) / 2 - 2) with the fonts +0x24 and +0x2c, the middle one a row below the first; with none, +0x3c and the points 0. Zeroes the bytes +0x94 and +0x1f.",
+      "name": "MTButton_Ctor",
+      "description": "(this, id, key, text, rect) in stack order, callee-cleaned: a 0x95-byte button, allocated when this is 0. DUIControl_CtorWithKey (0001a7e5)(this, 1, key, rect), the vtable 0007f130 at +0x20, the word +0x1b 0 and the id at +0x17; three 8-byte points at +0x7c (__vec_ctor of 0001d0f2); its vtable 0007f18c at +0x20 and the word +0x19 0; STYLES.DAT records 0, 1 and 2 (the pointer 00082654, +0, +0x40, +0x80) at +0x30, +0x34 and +0x38; the fonts 000aacce, 000aacd2 and 000aacd6 at +0x24, +0x28 and +0x2c. With text, copies it to +0x3c and sets the points to (rect left, bottom - (height - HudFont_CellHeight2 (00051ff0)(font, text)) / 2 - 2) with the fonts +0x24 and +0x2c, the middle one a row below the first; with none, +0x3c and the points 0. Zeroes the bytes +0x94 and +0x1f.",
       "source": "ES1GO decompile at 0001cde8",
       "verified": {
         "bytes": "0001cde8+496",
@@ -3782,16 +4502,226 @@
       }
     },
     {
+      "address": "0001cfd8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIButtonControl_Dtor",
+      "description": "(button, flags), its arguments removed by this function: stores DUIButtonControl's vtable 0007f130 and then DUIControl's copy 0007f1ea at +0x20 and frees button when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-controls; ES1GO decompile at 0001cfd8",
+      "verified": {
+        "bytes": "0001cfd8+75",
+        "sha1": "4f9b2b5bfecf",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001d041",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BarGraph_NoOpButtonCopy",
+      "description": "(a, b) in stack order, its arguments removed by this function: slot +0x14 of the vtable 0007f130, and slot +0x14 of the vtable 0007f18c, and slot +0x14 of the vtable 0007f1ea, and slot +0x14 of the vtable 0007f24a, and slot +0x14 of the vtable 0007f2f8, and slot +0x14 of the vtable 0007f356, and slot +0x14 of the vtable 0007f3b4, and slot +0x14 of the vtable 0007f412, and slot +0x14 of the vtable 0007f474, and slot +0x14 of the vtable 0007f534, and slot +0x14 of the vtable 0007f590: byte for byte the code of BarGraph_NoOp (00003de0), relocated operands aside.",
+      "source": "Herculan/docs/es1/shell/menus.md#where-the-object-files-start-and-end; ES1GO disassembly at 0001d041",
+      "verified": {
+        "bytes": "0001d041+14",
+        "sha1": "1550088044a9",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0001d088",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIButtonControl_GetValue",
+      "description": "(button), its argument removed by this function (RET 4): slot +0x2c of MTButton's vtable 0007f18c, the message's value; answers 1 in AX.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-controls; ES1GO decompile and disassembly at 0001d088",
+      "verified": {
+        "bytes": "0001d088+14",
+        "sha1": "f23792c338d8",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001d096",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GridShape_GetMemorySizeButtonCopy",
+      "description": "(shape), its argument removed by this function: slot +0x30 of the vtable 0007f130, and slot +0x30 of the vtable 0007f18c, and slot +0x30 of the vtable 0007f1ea, and slot +0x30 of the vtable 0007f24a, and slot +0x30 of the vtable 0007f2f8, and slot +0x30 of the vtable 0007f356, and slot +0x30 of the vtable 0007f3b4, and slot +0x30 of the vtable 0007f412, and slot +0x30 of the vtable 0007f4d4, and slot +0x30 of the vtable 0007f534: byte for byte the code of GridShape_GetMemorySize (0000fa07), relocated operands aside.",
+      "source": "Herculan/docs/es1/shell/menus.md#where-the-object-files-start-and-end; ES1GO disassembly at 0001d096",
+      "verified": {
+        "bytes": "0001d096+12",
+        "sha1": "cdfff44e1c27",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0001d0e6",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BarGraph_GetRectButtonCopy",
+      "description": "(bar), its argument removed by this function: slot +0x48 of the vtable 0007f130, and slot +0x48 of the vtable 0007f18c, and slot +0x48 of the vtable 0007f1ea, and slot +0x48 of the vtable 0007f2f8, and slot +0x48 of the vtable 0007f356, and slot +0x48 of the vtable 0007f3b4, and slot +0x48 of the vtable 0007f412, and slot +0x48 of the vtable 0007f474, and slot +0x48 of the vtable 0007f4d4, and slot +0x48 of the vtable 0007f534, and slot +0x48 of the vtable 0007f590: byte for byte the code of BarGraph_GetRect (00003dee), relocated operands aside.",
+      "source": "Herculan/docs/es1/shell/menus.md#where-the-object-files-start-and-end; ES1GO disassembly at 0001d0e6",
+      "verified": {
+        "bytes": "0001d0e6+12",
+        "sha1": "484a97b0e892",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0001d10d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTButton_Dtor",
+      "description": "(button, flags), its arguments removed by this function: slot +4 of MTButton's vtable 0007f18c: stores 0007f18c, 0007f130 and 0007f1ea at +0x20 and frees button when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-controls; ES1GO decompile at 0001d10d",
+      "verified": {
+        "bytes": "0001d10d+110",
+        "sha1": "74e4bfe79712",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001d17b",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTButton_Invalidate",
+      "description": "(button), its argument removed by this function: slot +0xc of MTButton's vtable 0007f18c: sets the byte +0x1f, changed.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-controls; ES1GO decompile at 0001d17b",
+      "verified": {
+        "bytes": "0001d17b+18",
+        "sha1": "d16c350b5ecb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001d18d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIControl_DtorButtonCopy",
+      "description": "(control, flags), its arguments removed by this function: the button file's DUIControl destructor, slot +4 of the vtable 0007f1ea: stores 0007f1ea at +0x20 and frees control when bit 0 of flags is set; DUIControl_Dtor (0001a61a)'s code with 0007f1ea for 0007ef92.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-controls; ES1GO decompile at 0001d18d",
+      "verified": {
+        "bytes": "0001d18d+45",
+        "sha1": "bd61f6081aa2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001d1ce",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTButton_Highlight",
+      "description": "(button), its argument removed by this function: slot +0x10 of MTButton's vtable 0007f18c: sets the bytes +0x94 and +0x1f.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-controls; ES1GO decompile at 0001d1ce",
+      "verified": {
+        "bytes": "0001d1ce+25",
+        "sha1": "1e2e4dd2ec15",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001d1e7",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTButton_Unhighlight",
+      "description": "(button), its argument removed by this function: slot +0x18 of MTButton's vtable 0007f18c: clears the byte +0x94 and sets +0x1f.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-controls; ES1GO decompile at 0001d1e7",
+      "verified": {
+        "bytes": "0001d1e7+25",
+        "sha1": "30c964dd6ecc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001d200",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTButton_Draw",
+      "description": "(button), its argument removed by this function: slot +8 of MTButton's vtable 0007f18c. In state 1 (+0x19), while the byte 0007fcb9 and the sound object 0007fd00 are set, stops it (slot +0x14 of its vtable +0x3b) when its slot +0x30 answers non-zero and plays it (slot +0x10). States 0 and 1: 00044b86 with the state's STYLES.DAT record (+0x30 + 4 * state) over the rect, and 0004b867(10, rect) while the byte +0x94 is set; state 2: 00044b86 with record +0x38. Then, with text, the render context 000ab612's +0x231 = 2 and +0x235 = the width, HudFont_DrawString(the state's font +0x24 + 4 * state, the text +0x3c, the state's point +0x7c + 8 * state); clears +0x1f.",
+      "source": "Herculan/docs/es1/shell/menus.md#drawing-a-control; ES1GO decompile at 0001d200",
+      "verified": {
+        "bytes": "0001d200+357",
+        "sha1": "e888e28efdf9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001d365",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Rect_CopyCtorButtonCopy",
+      "description": "(rect, source), its arguments removed by this function: byte for byte the code of Rect_CopyCtor (0004b398), relocated operands aside.",
+      "source": "Herculan/docs/es1/shell/menus.md#where-the-object-files-start-and-end; ES1GO disassembly at 0001d365",
+      "verified": {
+        "bytes": "0001d365+46",
+        "sha1": "c1fda0d9153c",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0001d393",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTButton_SetTextFromTable",
+      "description": "(button, line), its arguments removed by this function: slot +0x3c of MTButton's vtable 0007f18c: copies Text_GetString(0009afa8, line), eng\\watext.bin's line, to +0x3c; sets the points +0x7c-+0x93 from the rect's left and its bottom less half of (height - HudFont_CellHeight2 of the fonts +0x24 and +0x2c) less 2, the pushed one a row lower; sets +0x1f.",
+      "source": "Herculan/docs/es1/shell/menus.md#buttons; ES1GO decompile at 0001d393",
+      "verified": {
+        "bytes": "0001d393+234",
+        "sha1": "a79c41faa076",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0001d47d",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "IconButton_Ctor",
-      "description": "(this, text, id, key, rect) in stack order, callee-cleaned: a 0xb1-byte button, allocated when this is 0, over TextButton_Ctor (0001cde8)(this, id, key, text, rect); the vtable 0007f24a at +0x20 and the rect's first point at +0x95. By the key, a scan code, copies frame pointers of res32\\corners.dba's array (000ab4ee, its +8) to +0xa5 and +0xad (a) and +0xa9 (b): 0x48 and 0x49 frames 20, 22; 0x4a 29, 31; 0x4b 25, 27; 0x4d 24, 26; 0x4e 28, 30; 0x50 and 0x51 21, 23. Ids 1503, 1504, 1505 and 1506 take 36/37, 38/39, 40/41 and 42/43 and call 0001a4f4(this, 1); 109 takes 34/35, 108 32/33, 2003 44/46 and 2004 45/47. Any other key looks the id up among the four at 0007f2c4 and jumps through the table beside them. Zeroes the word +0x19 and the byte +0x1f.",
+      "name": "MTBmpButton_Ctor",
+      "description": "(this, text, id, key, rect) in stack order, callee-cleaned: a 0xb1-byte button, allocated when this is 0, over MTButton_Ctor (0001cde8)(this, id, key, text, rect); the vtable 0007f24a at +0x20 and the rect's first point at +0x95. By the key, a scan code, copies frame pointers of res32\\corners.dba's array (000ab4ee, its +8) to +0xa5 and +0xad (a) and +0xa9 (b): 0x48 and 0x49 frames 20, 22; 0x4a 29, 31; 0x4b 25, 27; 0x4d 24, 26; 0x4e 28, 30; 0x50 and 0x51 21, 23. Ids 1503, 1504, 1505 and 1506 take 36/37, 38/39, 40/41 and 42/43 and call 0001a4f4(this, 1); 109 takes 34/35, 108 32/33, 2003 44/46 and 2004 45/47. Any other key looks the id up among the four at 0007f2c4 and jumps through the table beside them. Zeroes the word +0x19 and the byte +0x1f.",
       "source": "ES1GO decompile at 0001d47d",
       "verified": {
         "bytes": "0001d47d+1552",
         "sha1": "786c90492188",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001e11a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTStrListBox_Ctor",
+      "description": "(list, max, min, a, selected, style, id, lines, rect), its arguments removed by this function: kind 15's control, class MTStrListBox, 0x5a bytes allocated when list is 0: DUIControl_Ctor (0001a716)(list, 0, id, rect); DUISliderControl's vtable 0007f2f8 with min at +0x24, max at +0x26, selected at +0x28 and +0x2a, +0x2c 1 and +0x1b 1; DUIVSlider's 0007f412; its own 0007f474; lines at +0x4c, style at +0x3e, +0x26 = 0001eac5(list, lines), STYLES.DAT record 4 (00082654 + 0xc0) at +0x50, the fonts 000aacda and 000aacde at +0x40 and +0x44, a at +0x48; the line height +0x2c (HudFont_CellHeight2 - 1, at most the rect's height - 1), the lines shown +0x58 (height / line height, 1 to +0x26), +0x54 selected and +0x56 the first line shown (0, or selected - shown + 1); clears +0x1f.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-list-box; ES1GO decompile at 0001e11a",
+      "verified": {
+        "bytes": "0001e11a+587",
+        "sha1": "fc76c808174e",
         "scope": "body",
         "via": "decompile"
       }
@@ -4127,6 +5057,21 @@
       }
     },
     {
+      "address": "00020a70",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellMusic_Play",
+      "description": "(track), its argument removed by this function: with a sound manager (00082768), calls 00020a18, makes the sound object 0007fcfc with SoundManager_CreateObject(manager, 2, 0, track), loads it with SoundObject_LoadSample, calls its slot +0x28 (vtable at +0x3b) with (-1, -1, 0xffff), and its slot +0x10 when the byte 0007fcb8 is set. Shell_PresentFrame (00012980) calls it with Shell_MusicTrack (00081938).",
+      "source": "Herculan/docs/es1/shell/menus.md#the-backdrop; ES1GO decompile at 00020a70",
+      "verified": {
+        "bytes": "00020a70+115",
+        "sha1": "d8a706661603",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00020ae3",
       "binary": "ES1GO",
       "type": "function",
@@ -4140,6 +5085,30 @@
         "scope": "body",
         "via": "decompile"
       }
+    },
+    {
+      "address": "00021334",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellBackdrop_SetPicture",
+      "description": "(region, x, y, bitmap), its arguments removed by this function: stores x and y at +8 and +0xc; with no bitmap zeroes +0x10; otherwise sets the display 000ab616's draw page to page 2 (the word 0007fccc), draws bitmap at (x, y) with Bitmap_Blit, puts the draw page back, and sets +0x10 and +0x14 to x + the bitmap's +6 - 1 and y + its +4 - 1.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-backdrop; ES1GO decompile at 00021334",
+      "verified": {
+        "bytes": "00021334+232",
+        "sha1": "a7b8b51b980f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002141c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellBackdrop_Draw",
+      "description": "(backdrop), its argument removed by this function: sets the display 000ab616's source page to page 2 (0007fccc), copies the region at backdrop + 4 to the draw page with Region_CopyBetweenPages, offset (0, 0), and puts the source page back; the rest of the body is not described here.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-backdrop; ES1GO decompile at 0002141c"
     },
     {
       "address": "00021d0c",
@@ -4627,7 +5596,7 @@
       "type": "function",
       "confidence": "high",
       "name": "KeyboardInputDevice_GetMode",
-      "description": "(device): returns the dword at device+9, the mode KeyboardInputDevice_SetMode (00025ce6) stores. es2_xref finds calls from 0003c7d8 and WarMapMenu_Ctor. The same statements as ES1DBSIM's KeyboardInputDevice_GetMode (0004b66c) in different code.",
+      "description": "(device): returns the dword at device+9, the mode KeyboardInputDevice_SetMode (00025ce6) stores. es2_xref finds calls from Shell_HandleMessage (0003c7d8) and WarMapMenu_Ctor. The same statements as ES1DBSIM's KeyboardInputDevice_GetMode (0004b66c) in different code.",
       "source": "Herculan/docs/es1/simulation/joystick.md#functions",
       "verified": {
         "bytes": "00025d19+17",
@@ -5032,7 +6001,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Input_PollDeviceBlock",
-      "description": "(): ES1DBSIM's Input_PollDeviceBlock (0004c2d0) with GO's block at 000a04a0 and devices at 000ab1cc to 000ab1d8; it leaves the keyboard word's bits 0x30 of +1, which ES1DBSIM's clears, to Shell_PollInput (0004de3a). Returns 000a04a0. es2_xref finds four calls: from 00037dce, 000382f6, 0003b8df and Shell_PollInput.",
+      "description": "(): ES1DBSIM's Input_PollDeviceBlock (0004c2d0) with GO's block at 000a04a0 and devices at 000ab1cc to 000ab1d8; it leaves the keyboard word's bits 0x30 of +1, which ES1DBSIM's clears, to Shell_PollInput (0004de3a). Returns 000a04a0. es2_xref finds four calls: from 00037dce, 000382f6, Shell_PlayTtm (0003b8df) and Shell_PollInput.",
       "source": "Herculan/docs/es1/shell/startup.md#the-input; ES1GO decompile at 000277d8",
       "verified": {
         "bytes": "000277d8+316",
@@ -5317,7 +6286,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MainMenu_OnMessage",
-      "description": "(menu, message) in stack order, its arguments removed by this function: the handler of the main menu, dlg\\menu1000.dlg, which the menu table names MainMenu (00081be8). By the message's code +6, through the REPNE SCASD table at 000809b8: 1499, INSTANT ACTION, sets the mode word Shell_Mode (000aad56) to 0, 0007fce8 to 1000 and 000aad5a to -1, calls SingleMission_Start (00036807) and 0002a523, formats anm\\esiege3.anm into 000aacfe and sets the byte 0007fcd7 to 1; 1700, RESUME, sets the mode to 1, 0007fce8 to 1000 and 000aad5a to -1 and goes on from 0002a78e to a career's resume; 1100, SINGLE MISSION, sets the mode to 0 and 0007fce8 to 1100; 1200, CAREER, the mode to 1 and 0007fce8 to 1200; 1300, OPTIONS, 0007fce8 to 1000; 1003, EXIT TO DOS, sets the word Shell_ExitCode (0007fcac) to 0 and the byte Shell_QuitFlag (0007fd05) to 1.",
+      "description": "(menu, message) in stack order, its arguments removed by this function: the handler of the main menu, dlg\\menu1000.dlg, slot +8 of MainMenu's vtable (00081bf4). By the message's code +6, through the REPNE SCASD table at 000809b8: 1499, INSTANT ACTION, sets the mode word Shell_Mode (000aad56) to 0, 0007fce8 to 1000 and 000aad5a to -1, calls SingleMission_Start (00036807) and 0002a523, formats anm\\esiege3.anm into 000aacfe and sets the byte 0007fcd7 to 1; 1700, RESUME, sets the mode to 1, 0007fce8 to 1000 and 000aad5a to -1 and goes on from 0002a78e to a career's resume; 1100, SINGLE MISSION, sets the mode to 0 and 0007fce8 to 1100; 1200, CAREER, the mode to 1 and 0007fce8 to 1200; 1300, OPTIONS, 0007fce8 to 1000; 1003, EXIT TO DOS, sets the word Shell_ExitCode (0007fcac) to 0 and the byte Shell_QuitFlag (0007fd05) to 1.",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters"
     },
     {
@@ -5341,7 +6310,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MissionParams_OnMessage",
-      "description": "(menu, message) in stack order, its arguments removed by this function: the handler of the MISSION PARAMS menu, dlg\\menu1110.dlg, which the menu table names MissionOptionsAlert (00081f2c). By the message's code +6, through the REPNE SCASD table at 00080a74: 1111 to 1115, its buttons AMMO, DAMAGE, DIFFICULTY, VISIBILITY and TIME OF DAY, add 1 to the word MissionParams_Ammo (000aacbc), MissionParams_Damage (000aacbe), MissionParams_Difficulty (000aacc0), MissionParams_Visibility (000aacc2) or MissionParams_TimeOfDay (000aacc4) modulo 2, 2, 4, 2 or 3, show it in the control 1116 to 1120 of the menu's window +6 (0001bda4 finds it; the control's slot +0x24) and pass it to Prefs_SetOption (00008378)(1, word, 12 to 16); 99, CANCEL, copies the menu's words +0x26 to +0x2e back into the five words and calls Prefs_RevertAll (00008316)(1), then runs on into 100; 100, ACCEPT, calls Prefs_CommitAll (000082b0)(1) and Prefs_Save (00008267) and sets the code to 1100. Ghidra holds the case bodies from 0002b603 as undefined bytes.",
+      "description": "(menu, message) in stack order, its arguments removed by this function: the handler of the MISSION PARAMS menu, dlg\\menu1110.dlg, which the menu table names MissionOptionsAlert (00081f2c). By the message's code +6, through the REPNE SCASD table at 00080a74: 1111 to 1115, its buttons AMMO, DAMAGE, DIFFICULTY, VISIBILITY and TIME OF DAY, add 1 to the word MissionParams_Ammo (000aacbc), MissionParams_Damage (000aacbe), MissionParams_Difficulty (000aacc0), MissionParams_Visibility (000aacc2) or MissionParams_TimeOfDay (000aacc4) modulo 2, 2, 4, 2 or 3, show it in the control 1116 to 1120 of the menu's window +6 (DUIWindow_FindEnabledControlById (0001bda4) finds it; the control's slot +0x24) and pass it to Prefs_SetOption (00008378)(1, word, 12 to 16); 99, CANCEL, copies the menu's words +0x26 to +0x2e back into the five words and calls Prefs_RevertAll (00008316)(1), then runs on into 100; 100, ACCEPT, calls Prefs_CommitAll (000082b0)(1) and Prefs_Save (00008267) and sets the code to 1100. Ghidra holds the case bodies from 0002b603 as undefined bytes.",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters",
       "verified": {
         "bytes": "0002b4fe+671",
@@ -5356,7 +6325,7 @@
       "type": "function",
       "confidence": "high",
       "name": "BattleSetDialog_OnMessage",
-      "description": "(dialog, message) in stack order, callee-cleaned: when the message's word +6 is 100, takes the index 0001bda4 gives for the id 0x533 among the controls of the dialog's object at +6 (pointers from its +0x1f), stores the value that control's vtable (at its +0x20) slot +0x2c returns in the roster's word +5 (0009b21d) and in the low word of 0007fcec, loads that battle set into g_BattleSet (000a02cc) with BattleSet_Load (00013f01), and sets the message word to 0x514. es2_xref finds it only as a stored pointer, at 00081faa.",
+      "description": "(dialog, message) in stack order, callee-cleaned: when the message's word +6 is 100, takes the index DUIWindow_FindEnabledControlById (0001bda4) gives for the id 0x533 among the controls of the dialog's object at +6 (pointers from its +0x1f), stores the value that control's vtable (at its +0x20) slot +0x2c returns in the roster's word +5 (0009b21d) and in the low word of 0007fcec, loads that battle set into g_BattleSet (000a02cc) with BattleSet_Load (00013f01), and sets the message word to 0x514. es2_xref finds it only as a stored pointer, at 00081faa.",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#which-battle-set",
       "verified": {
         "bytes": "0002bb29+134",
@@ -5970,8 +6939,8 @@
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "MenuWindow_Ctor",
-      "description": "(this, id, title, rect) in stack order, callee-cleaned: a shell menu's window, 0x5a7 bytes allocated when this is 0, over Window_Ctor (0001abcf)(this, rect); six 0x12-byte label entries at +0x537 (__vec_ctor of 000369d4) and the vtable 00081140 at +0x4e9. Loads res32\\menu<id>.dba with Resource_LoadBitmapArray (0004b7df) into +0x5a3 (id 9999: res32\\menu<9999 - Math_RandomBelow(5)>.dba) and sets the font +0x4ed to 000aacc6; the six ids at 00081174 (999, 1240, 4444, 1610, 1800, 1920) then jump through the table beside them. Otherwise it sets +0x4f1 to the font 000aacca, copies title to +0x4f5 (a 0 byte for none), and zeroes the label count +0x535 and the hotspot count +0x4e7.",
+      "name": "MTWindow_Ctor",
+      "description": "(this, id, title, rect) in stack order, callee-cleaned: a shell menu's window, 0x5a7 bytes allocated when this is 0, over DUIWindow_Ctor (0001abcf)(this, rect); six 0x12-byte label entries at +0x537 (__vec_ctor of 000369d4) and the vtable 00081140 at +0x4e9. Loads res32\\menu<id>.dba with Resource_LoadBitmapArray (0004b7df) into +0x5a3 (id 9999: res32\\menu<9999 - Math_RandomBelow(5)>.dba) and sets the font +0x4ed to 000aacc6; the six ids at 00081174 (999, 1240, 4444, 1610, 1800, 1920) then jump through the table beside them. Otherwise it sets +0x4f1 to the font 000aacca, copies title to +0x4f5 (a 0 byte for none), and zeroes the label count +0x535 and the hotspot count +0x4e7.",
       "source": "ES1GO decompile at 00036874",
       "verified": {
         "bytes": "00036874+352",
@@ -5981,11 +6950,26 @@
       }
     },
     {
+      "address": "00036a09",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTWindow_Dtor",
+      "description": "(window, flags), its arguments removed by this function: stores MTWindow's vtable 00081140 at +0x4e9, frees each of the +0x535 labels' text (+0x537 + 0x12 * i), GLBitmapArray_Dtor(+0x5a3, 3), DUIWindow_Dtor (0001afa1)(window, 0), and frees window when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/shell/menus.md#closing-a-menu--menu_close-0003b138; ES1GO decompile at 00036a09",
+      "verified": {
+        "bytes": "00036a09+138",
+        "sha1": "cba2f4c6fdc2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00036a93",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "MenuWindow_AddLabel",
+      "name": "MTWindow_AddLabel",
       "description": "(window, mode, width, x, y, size, text) in stack order, callee-cleaned: slot +4 of the menu window vtable 00081140. When the label count +0x535 is under 6, allocates size bytes, copies text into them, and fills the 0x12-byte entry at +0x537 + 0x12 * count: the copy at +0, x and y at +4 and +8, the int16 width at +0xc and mode at +0xe; then increments the count.",
       "source": "ES1GO decompile at 00036a93",
       "verified": {
@@ -5996,12 +6980,27 @@
       }
     },
     {
+      "address": "00036b4c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTWindow_Draw",
+      "description": "(window), its argument removed by this function: slot +8 of MTWindow's vtable 00081140: Bitmap_Blit of +0x5a3's first bitmap at (0, 0); sets the render context's +0x20c; with a title (window + 0x4f5) a plate: y0 4 for Shell_BackdropId (000817c4) 4000 and 2000, else 5, y1 = y0 + 0x11, margin 0x14 for 4000 else 0x28, x0 = (width - HudFont_MeasureString(title font +0x4ed) - margin) / 2, x1 = x0 + that width + margin; four 0004ba84 calls with the colors 0x10, 0x10, 0x1b and 0x1c, Bitmap_Blit of res32\\corners.dba (000ab4ee) frames 0-3 at the corners less 4, and the title with HudFont_DrawString, +0x231 2 and +0x235 x1 - x0; then each of the +0x535 labels with HudFont_DrawString in the font +0x4f1, +0x231 the label's mode +0xe, +0x235 its width +0xc, at (x, y + HudFont_CellHeight2 - 3).",
+      "source": "Herculan/docs/es1/shell/menus.md#the-menu-windows-drawing--mtwindow_draw-00036b4c; ES1GO decompile and disassembly at 00036b4c",
+      "verified": {
+        "bytes": "00036b4c+1437",
+        "sha1": "c060ea7ac85b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00037edd",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "DigitalDialog_ShowMessage",
-      "description": "(message), callee-cleaned: returns at once when the byte +2 is 0; calls RenderContext_GetFullScreen (0004c716) into 0007fcd8 and Ttm_SetDefaultContext (000467ef) with it; then by the kind word +0 builds the path with sprintf, sets the line number word 000aad5c and picks the lip-sync list words a and b: 0 eng\\C0_text.bin, line 000ab222, (0, 1); 1 eng\\C<k>_text.bin, line 000ab222, (2k, 1), k the first word of the 8-byte record of the table at 000a02ce that the word at 0009b241 + 0009b21f * 0x1f7 indexes, or -1 when out of range; 2 eng\\G0_text.bin, line a word of the table at 000814ec, (0, 3), and it updates 00081938 and sets 0007fcd5 when 000814d8's entry + 0xf differs from it; 3 eng\\D0_text.bin, line 2 * Mission_OutcomeGrade (00036837)(000aad58, 000aad5e) plus Math_RandomBelow(2) unless that call gave 1, (1, 1); 4 eng\\D<k>_text.bin, the same line, (2k + 1, 1); 5-11 eng\\T1_text.bin, line 0008159c[000814e8] when 000814e8 is nonzero, else (5, 6, 8-11) 00037bf0(kind), (000815a8[line], 2), and two 00046948 calls; any other kind returns. Then Dialog_LoadFromFile (00018c36)(0009afc8, a, b, path).",
+      "description": "(message), callee-cleaned: returns at once when the byte +2 is 0; calls RenderContext_GetFullScreen (0004c716) into 0007fcd8 and Ttm_SetDefaultContext (000467ef) with it; then by the kind word +0 builds the path with sprintf, sets the line number word 000aad5c and picks the lip-sync list words a and b: 0 eng\\C0_text.bin, line 000ab222, (0, 1); 1 eng\\C<k>_text.bin, line 000ab222, (2k, 1), k the first word of the 8-byte record of the table at 000a02ce that the word at 0009b241 + 0009b21f * 0x1f7 indexes, or -1 when out of range; 2 eng\\G0_text.bin, line a word of the table at 000814ec, (0, 3), and it updates Shell_MusicTrack (00081938) and sets 0007fcd5 when 000814d8's entry + 0xf differs from it; 3 eng\\D0_text.bin, line 2 * Mission_OutcomeGrade (00036837)(000aad58, 000aad5e) plus Math_RandomBelow(2) unless that call gave 1, (1, 1); 4 eng\\D<k>_text.bin, the same line, (2k + 1, 1); 5-11 eng\\T1_text.bin, line 0008159c[000814e8] when 000814e8 is nonzero, else (5, 6, 8-11) 00037bf0(kind), (000815a8[line], 2), and two 00046948 calls; any other kind returns. Then Dialog_LoadFromFile (00018c36)(0009afc8, a, b, path).",
       "source": "Herculan/docs/es1/formats/bin-string-tables.md#which-file-and-line",
       "verified": {
         "bytes": "00037edd+1016",
@@ -6086,16 +7085,151 @@
       }
     },
     {
+      "address": "00038e48",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_StockItemsFromFlags",
+      "description": "(), C convention: for each of the seven item kinds k, adds the item whose number is the word at 00081834 + 2k to the stock 000aad62 with Inventory_Add (00028311)(000aad62, &w, item), w a local word 100, once per count in the mission flag 8 + k (000ab244), and sets the flag to 0. es2_xref finds one call, from Shell_ProcessMissionResults (00038eb5).",
+      "source": "Herculan/docs/es1/shell/menus.md#where-the-object-files-start-and-end; ES1GO decompile at 00038e48",
+      "verified": {
+        "bytes": "00038e48+109",
+        "sha1": "a310696f3ec1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00038eb5",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "Shell_ProcessMissionResults",
-      "description": "(), C convention: in mode 1 (Shell_Mode (000aad56)) calls 00016c1e(0009b218), otherwise SingleMission_RestoreRecord (00014fd6)(). Opens data\\results.dat (filename table entry 7, Path_ApplyAltDrive, FileRStream; severity-5 assert at shell.cpp line 199) and reads a word to 000aad58, a dword to 0007fcf4, a word count to 000817cc and that many pairs of words (a, b), each passed in mode 1 to Inventory_Add (00028311)(000aad62, &b, a); calls CareerRecord_ReadPilotResults (0001568d)(stream). Reads data\\mission.var (entry 5, FileRWStream; assert at line 0xd7) whole into the 100 flags at 000ab244 and sets flag 0 to 000aad58. In mode 1 it then calls 00038e48(), adds 0007fcf4 to 0007fcf0, calls 00028375(000aad62), CareerRecord_FinishMission (000160cb) and Tech_Unlock (00001f78)(record + 0xa8, record word +0xa) on the record 0009b23b + 0x1f7 * [0009b21f], calls 00029e01() and sets the record's word +4 to 0x6ae; otherwise it calls CareerRecord_CountLostPilots (00015db7)(CareerRecord_Current (00014ef4)()). es2_xref finds one call, from 0003ba47.",
+      "description": "(), C convention: in mode 1 (Shell_Mode (000aad56)) calls 00016c1e(0009b218), otherwise SingleMission_RestoreRecord (00014fd6)(). Opens data\\results.dat (filename table entry 7, Path_ApplyAltDrive, FileRStream; severity-5 assert at shell.cpp line 199) and reads a word to 000aad58, a dword to 0007fcf4, a word count to 000817cc and that many pairs of words (a, b), each passed in mode 1 to Inventory_Add (00028311)(000aad62, &b, a); calls CareerRecord_ReadPilotResults (0001568d)(stream). Reads data\\mission.var (entry 5, FileRWStream; assert at line 0xd7) whole into the 100 flags at 000ab244 and sets flag 0 to 000aad58. In mode 1 it then calls Shell_StockItemsFromFlags (00038e48)(), adds 0007fcf4 to 0007fcf0, calls 00028375(000aad62), CareerRecord_FinishMission (000160cb) and Tech_Unlock (00001f78)(record + 0xa8, record word +0xa) on the record 0009b23b + 0x1f7 * [0009b21f], calls 00029e01() and sets the record's word +4 to 0x6ae; otherwise it calls CareerRecord_CountLostPilots (00015db7)(CareerRecord_Current (00014ef4)()). es2_xref finds one call, from Shell_OpenFirstScreen (0003ba47).",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#after-a-mission",
       "verified": {
         "bytes": "00038eb5+729",
         "sha1": "0e9dbcbd6606",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003918e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellBackdrop_Ctor",
+      "description": "(backdrop), its argument removed by this function: allocates 0x1c bytes when backdrop is 0; builds a GLRectangleRegion at +4 (vtables 00081896, 000818c8, 00081900), +8 0 and the rect +0xc-+0x18 zero; clears the dword 0007fcfc, the music's sound object. es2_xref finds one call, from Shell_StaticInit (00040b74) with Shell_Backdrop (000a09a0).",
+      "source": "Herculan/docs/es1/shell/menus.md#the-backdrop; ES1GO decompile at 0003918e",
+      "verified": {
+        "bytes": "0003918e+436",
+        "sha1": "e97c7801dcd1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00039342",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLBase_DtorShellCopy",
+      "description": "(object, flags), its arguments removed by this function: slot +0x1c of the vtable 00081896: byte for byte the code of GLBase_Dtor (00046d4f), relocated operands aside, storing 00081896 where that stores 00082ada.",
+      "source": "Herculan/docs/es1/shell/menus.md#where-the-object-files-start-and-end; ES1GO disassembly at 00039342",
+      "verified": {
+        "bytes": "00039342+44",
+        "sha1": "f709734841b8",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003936e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRegion_DtorShellCopy",
+      "description": "(region, flags), its arguments removed by this function: slot +0x1c of the vtable 000818c8: byte for byte the code of GLRegion_Dtor (00046d7b), relocated operands aside, storing 000818c8 and 00081896 where that stores 00082b0c and 00082ada.",
+      "source": "Herculan/docs/es1/shell/menus.md#where-the-object-files-start-and-end; ES1GO disassembly at 0003936e",
+      "verified": {
+        "bytes": "0003936e+73",
+        "sha1": "3902c0e87739",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000393b7",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRectangleRegion_DtorShellCopy",
+      "description": "(region, flags), its arguments removed by this function: slot +0x1c of the vtable 00081900: byte for byte the code of GLRectangleRegion_Dtor (00046dc4), relocated operands aside, storing 00081900 and 000818c8 and 00081896 where that stores 00082b44 and 00082b0c and 00082ada.",
+      "source": "Herculan/docs/es1/shell/menus.md#where-the-object-files-start-and-end; ES1GO disassembly at 000393b7",
+      "verified": {
+        "bytes": "000393b7+107",
+        "sha1": "2fa0f6eb8780",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00039422",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellBackdrop_Dtor",
+      "description": "(backdrop, flags), its arguments removed by this function: with backdrop set, destroys the palette 0007fcd0 through its slot +0x1c with 3 when it is set and clears it, stores the region's three vtables back at +4 (00081900, 000818c8, 00081896), and frees backdrop when bit 0 of flags is set. es2_xref finds one call, from Shell_StaticDtor (00040b83).",
+      "source": "Herculan/docs/es1/shell/menus.md#the-backdrop; ES1GO decompile at 00039422",
+      "verified": {
+        "bytes": "00039422+232",
+        "sha1": "0ed0065c1235",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003950a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellBackdrop_LoadPalette",
+      "description": "(backdrop, group), its arguments removed by this function: destroys the palette 0007fcd0 (slot +0x1c, 3) when set and clears it; group 3000 becomes 3000 + the word at 0007ea94 + 2 * CareerRecord_Current (00014ef4)'s +6; formats res32\\regn%d.dpl, loads it with Resource_LoadPalette into 0007fcd0 and sets the byte 0007fcd4. backdrop is not read.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-backdrop; ES1GO decompile at 0003950a",
+      "verified": {
+        "bytes": "0003950a+150",
+        "sha1": "f61fa6217e0e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000395a0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellBackdrop_Show",
+      "description": "(backdrop, group), its arguments removed by this function: sets Shell_MusicTrack (00081938) to the word at 000817d0 + 2 * (group / 1000 - 1) and, when it differs from 00081936, sets the byte 0007fcd5 and copies it there; destroys ShellBackdrop_Picture (000aa7ac) through its slot +0x1c with 3 when set; ShellBackdrop_LoadPalette (0003950a)(backdrop, group); loads res32\\regn%d.dbm with Resource_LoadBitmap into ShellBackdrop_Picture and calls ShellBackdrop_SetPicture (00021334)(backdrop + 4, 0, 0, picture); calls 00011f19(group) and, for group 4000, 000122e0.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-backdrop; ES1GO decompile and disassembly at 000395a0",
+      "verified": {
+        "bytes": "000395a0+254",
+        "sha1": "7b335991fce9",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003969e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Menu_Open",
+      "description": "(menu, number), its arguments removed by this function: stores number at +0, sets Shell_SyncPointer (0007fd07), Menu_BuildFromDlg (0003a1f7)(menu, number), DUIWindow_SetActive (0001c536)(window +6). By number it sets controls' states (found with DUIWindow_FindControlById (0001be16) or DUIWindow_FindEnabledControlById (0001bda4); +0x19 = 2 and +0x1f = 1 makes one inactive) or texts (slot +0x3c, +0x24, +0x14): 1310 with no sound manager, 1920, 1100, 1000 (1700 inactive while the careers log's count 0009b210 is 0), 1200, 2000, 1610, 1800, 1820, 1700 in Shell_Mode 1, 1900. Unless number is 9999, focuses the first control keyed 0x39 (DUIWindow_FindControlByKey (0001bd41)), else control 0, with DUIWindow_PointAtControl (0001c3ec) and DUIWindow_FocusIndex (0007f0d8). Allocates Region_PixelCount(menu + 0xe) bytes, zeroed, at +2, and sets DUIWindow_InputReady (0007f0dc).",
+      "source": "Herculan/docs/es1/shell/menus.md#opening-a-menu--menu_open-0003969e; ES1GO decompile at 0003969e",
+      "verified": {
+        "bytes": "0003969e+2905",
+        "sha1": "4d9612ab5bbe",
         "scope": "body",
         "via": "decompile"
       }
@@ -6106,13 +7240,598 @@
       "type": "function",
       "confidence": "high",
       "name": "Menu_BuildFromDlg",
-      "description": "(menu, number) in stack order, callee-cleaned: builds shell menu number's window and controls from dlg\\menu<number>.dlg, their text from eng\\menu<number>.bin (TextTable_Ctor; VolRStream_CtorFromPath, and Text_LoadDataFile when it opens). Reads the int16 count through the stream's slot +0x1c, then per record four int16 rect words (VolRStream_Read) into the low halves of zeroed dwords, the bytes kind, style and key, and the int16 id. Record i's text is line i (Text_GetString), taken before the switch for kinds 0, 1, 4 and 5 unless the id is one of the five at 0008196c, which jump through the table beside them (1211 to the next record). By kind: 0 the window at menu +6, MenuWindow_Ctor (00036874)(0, id, text, rect) for style 0 and Window_Ctor (0001abcf)(0, rect) for style 1, the rect copied to menu +0x12 for any style; 1, 4 and 5 the window's vtable +0x4e9 slot +4 with mode 0, 1 or 2, width right - left, the point (left, top), the text's length + 1 and the text, menu 4444's kind-1 text holding '#' first passed to 0002a1aa; 2 0001f442(0, id, rect); 3 IconButton_Ctor (0001d47d) for style 1 (no text when the key is non-zero) and TextButton_Ctor (0001cde8) otherwise, menu 1300's id 100 taking its text from the four values at 000819e0 on the word 0007fce8; 14 the 17 ids at 00081b08, ids 1612 to 1614 Window_AddHotspot (0001b2de)(window, 0, id, 00017a19, rect); 15 0001e11a(0, 0x100, 0, 0, a word, style, id, 0003750d(id), rect), the word set for the 23 ids at 00081a00; 16 0001eaef(0, 0x100, 0, a word, id, 00037827(id), rect), the word -1 or set for the ten ids at 00081ab8; 17 0001eff6(0, 0x13, 0, 0xffff, id, 00037996(id), rect); 18 0004c83a(rect) for style 1; other kinds nothing. Kinds 2, 3, 15, 16 and 17 add the control with Window_AddControl (0001b207). Closes and destroys both streams (VolRStream_Close, VolRStream_Dtor) and the table (TextTable_Dtor). es2_xref finds one call, from 0003969e.",
+      "description": "(menu, number) in stack order, callee-cleaned: builds shell menu number's window and controls from dlg\\menu<number>.dlg, their text from eng\\menu<number>.bin (TextTable_Ctor; VolRStream_CtorFromPath, and Text_LoadDataFile when it opens). Reads the int16 count through the stream's slot +0x1c, then per record four int16 rect words (VolRStream_Read) into the low halves of zeroed dwords, the bytes kind, style and key, and the int16 id. Record i's text is line i (Text_GetString), taken before the switch for kinds 0, 1, 4 and 5 unless the id is one of the five at 0008196c, which jump through the table beside them (1211 to the next record). By kind: 0 the window at menu +6, MTWindow_Ctor (00036874)(0, id, text, rect) for style 0 and DUIWindow_Ctor (0001abcf)(0, rect) for style 1, the rect copied to menu +0x12 for any style; 1, 4 and 5 the window's vtable +0x4e9 slot +4 with mode 0, 1 or 2, width right - left, the point (left, top), the text's length + 1 and the text, menu 4444's kind-1 text holding '#' first passed to 0002a1aa; 2 0001f442(0, id, rect); 3 MTBmpButton_Ctor (0001d47d) for style 1 (no text when the key is non-zero) and MTButton_Ctor (0001cde8) otherwise, menu 1300's id 100 taking its text from the four values at 000819e0 on the word 0007fce8; 14 the 17 ids at 00081b08, ids 1612 to 1614 DUIWindow_AddHotspot (0001b2de)(window, 0, id, 00017a19, rect); 15 MTStrListBox_Ctor (0001e11a)(0, 0x100, 0, 0, a word, style, id, 0003750d(id), rect), the word set for the 23 ids at 00081a00; 16 0001eaef(0, 0x100, 0, a word, id, 00037827(id), rect), the word -1 or set for the ten ids at 00081ab8; 17 0001eff6(0, 0x13, 0, 0xffff, id, 00037996(id), rect); 18 0004c83a(rect) for style 1; other kinds nothing. Kinds 2, 3, 15, 16 and 17 add the control with DUIWindow_AddControl (0001b207). Closes and destroys both streams (VolRStream_Close, VolRStream_Dtor) and the table (TextTable_Dtor). es2_xref finds one call, from Menu_Open (0003969e).",
       "source": "ES1GO decompile and disassembly at 0003a1f7",
       "verified": {
         "bytes": "0003a1f7+3905",
         "sha1": "dfa3f0cfed78",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "0003b138",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Menu_Close",
+      "description": "(menu), its argument removed by this function: clears DUIWindow_InputReady (0007f0dc); while the dword 0008444e is set, restores the saved background +2 over the region +0xe with Region_Restore on page 2 (0007fccc) and on the draw page and adds the window's rect with DirtyBox_Add, delay 1. Frees +2, DUIWindow_ClearActive (0001c57c); destroys the window +6 with DUIWindow_Dtor (0001afa1)(window, 3) for the six numbers at 00081b90 (1501, 1500, 1700, 1710, 1510, 1520) and MTWindow_Dtor (00036a09)(window, 3) otherwise; clears +6 and sets 0007fcd8 to RenderContext_GetFullScreen.",
+      "source": "Herculan/docs/es1/shell/menus.md#closing-a-menu--menu_close-0003b138; ES1GO decompile and disassembly at 0003b138",
+      "verified": {
+        "bytes": "0003b138+675",
+        "sha1": "2c0bb0fd956e",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003b3db",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_OpenHomeMenu",
+      "description": "(), C convention: formats anm\\esiege2.anm into 000aacfe, sets the byte 0007fcd7 to 2, ShellBackdrop_Show (000395a0)(Shell_Backdrop, 1000) and Shell_BackdropId (000817c4) 1000; in Shell_Mode 0 makes a MainMenu (vtable 00081bf4) Shell_CurrentMenu (000817c8) and opens it with Menu_Open (0003969e) as 1000, in mode 1 a CareerMenu (00081c12) as 1200; Shell_CurrentScreen (000817c0) and the word 0007fce8 take the number.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-first-screen--shell_openfirstscreen-0003ba47; ES1GO decompile at 0003b3db",
+      "verified": {
+        "bytes": "0003b3db+758",
+        "sha1": "e367fa8a18a2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003b6d1",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Menu_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: slot +4 of Menu's vtable 00081bd8: stores 00081bd8 at +0x22 and the region's three vtables at +0xa, and frees menu when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens; ES1GO decompile at 0003b6d1",
+      "verified": {
+        "bytes": "0003b6d1+147",
+        "sha1": "fd62092f0077",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003b764",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Menu_OnMessage",
+      "description": "(menu, message), its arguments removed by this function (RET 8): slot +8 of Menu's vtable 00081bd8; loads its arguments into EAX and ECX and returns.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens; ES1GO disassembly at 0003b764",
+      "verified": {
+        "bytes": "0003b764+13",
+        "sha1": "029e49697cf2",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003b771",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MainMenu_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: slot +4 of MainMenu's vtable 00081bf4: stores 00081bf4 and then Menu's 00081bd8 at +0x22 and the region's three vtables at +0xa, and frees menu when bit 0 of flags is set. 22 other screen classes' destructors have its code with their own vtable.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens; ES1GO decompile at 0003b771",
+      "verified": {
+        "bytes": "0003b771+183",
+        "sha1": "14e49ccd222b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003b828",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerMenu_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: slot +4 of CareerMenu's vtable 00081c12; the code of MainMenu_Dtor (0003b771) with 00081c12 for 00081bf4.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens; ES1GO disassembly at 0003b828",
+      "verified": {
+        "bytes": "0003b828+183",
+        "sha1": "016be1ade8c7",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003b8df",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_PlayTtm",
+      "description": "(name), its argument removed by this function: calls the raster slot 0008663c with (draw page, 0) and (page 2 0007fccc, 0), Shell_PresentFrame, the slot again for the draw page; sets 0007fcd8 to RenderContext_GetFullScreen and makes it the default (Ttm_SetDefaultContext); opens name with Ttm_Open(0, 0, 0, name) and runs Ttm_RunScript, Input_PollDeviceBlock and Shell_PresentFrame until Ttm_GetMode is not 0, the block's word +0 is not 0 or its byte +0xa is set; when the script ran out, clears the pages again with a frame between; sets the byte 000817bc when a key or button stopped it; Ttm_Close and 0007fcd0 cleared.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-first-screen--shell_openfirstscreen-0003ba47; ES1GO decompile at 0003b8df",
+      "verified": {
+        "bytes": "0003b8df+360",
+        "sha1": "76715fc7d57c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003ba47",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_OpenFirstScreen",
+      "description": "(code), its argument removed by this function: DirtyList_CreateContext, Ttm_Configure(page 2, 0007fcd8, 0x32), Ttm_AllocHandles(2), Ttm_SetPathPrefix(res32\\), TtmLists_Load; then by code: 3 and 4 Mission_ReadRestore, Shell_ProcessMissionResults, Shell_PreviousScreen (000817c2) 999, and by Shell_Mode and the current pilot's PilotEntry_Condition the MissionMenu 1100, 00037eac(0009b010, 3), the end scripts with ShellMusic_Play (00020a70) and Shell_PlayTtm (0003b8df), Shell_OpenHomeMenu (0003b3db), or 00037eac(0009b010, 7) with 000aad5c = 00037bf0(7); mode 1 then 0001601b, 00016fdd and 000168b0. Any other code plays the intro scripts while Shell_PlayIntro is set, clears 000817bc and goes on as 6: anm\\esiege2.anm, ShellBackdrop_Show (000395a0)(Shell_Backdrop, 1000), a MainMenu opened as 1000, Shell_CurrentScreen 1000, Shell_PreviousScreen 999, Shell_BackdropId 1000.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-first-screen--shell_openfirstscreen-0003ba47; ES1GO decompile at 0003ba47",
+      "verified": {
+        "bytes": "0003ba47+1411",
+        "sha1": "f11fe68091d5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003bfca",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MissionMenu_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: slot +4 of MissionMenu's vtable 00081c3a; the code of MainMenu_Dtor (0003b771) with 00081c3a for 00081bf4.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens; ES1GO disassembly at 0003bfca",
+      "verified": {
+        "bytes": "0003bfca+183",
+        "sha1": "d2370df17707",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003c081",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_CloseScreens",
+      "description": "(), C convention: 0004199c, Ttm_Shutdown, Shell_CurrentMenu (000817c8)'s slot +4 with 3 when set, and the render contexts 0007fcd8 and 0007fcdc destroyed through their slot +0x1c with 3 and cleared. es2_xref finds one call, from Shell_Main (00012ec7).",
+      "source": "Herculan/docs/es1/shell/menus.md#changing-screens--shell_handlemessage-0003c7d8; ES1GO decompile at 0003c081",
+      "verified": {
+        "bytes": "0003c081+148",
+        "sha1": "c42f1464e835",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003c115",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_TickScreen",
+      "description": "(), C convention: unless the byte 0009b013 is set, DUIWindow_Update (0001c067)(Shell_CurrentMenu +6); while 000809a4 is set, the byte 000809a8 is above 1 and 0007fcd4 is clear, 00009cfb(000809a4) and 000809a8 lowered; 000809a8 1 becomes 2 when 000809a4's byte +0x4c0 is clear and 3 when its +0x4c2 is set. es2_xref finds one call, from Shell_Main (00012ec7).",
+      "source": "Herculan/docs/es1/shell/menus.md#drawing-a-screen; ES1GO decompile at 0003c115",
+      "verified": {
+        "bytes": "0003c115+162",
+        "sha1": "91ca59dafe3d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003c1b7",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_DrawScreen",
+      "description": "(), C convention: while 0008444e is set: clears DUIWindow_InputReady (0007f0dc), calls 0008662c; by the byte 000817c6 the HERC diagram path for screens 1700 and 1710, or the page fills through 0008663c, the .ANM at 000aacfe (Anm_Play(1, 0xa, name)) when 0007fcd7 is 2, ShellBackdrop_Draw (0002141c)(000a09a4) and 0001240b or 00012467; DigitalDialog_ShowMessage(0009b010), Ttm_RunAll; with a current menu, the render contexts 0007fcdc (0004c88a) and 0007fcd8 (0004c53c), source and draw pages 2, Region_Save of the window's region into +2, DUIWindow_Draw (0001bfa3) on page 2 (with 000809a4's slot +4 and 00018dcb per page while 000817bd counts down), then on backdrop 1000 except screen 9999 a whole-screen DirtyBox_Add with delay 1, otherwise DUIWindow_Draw on the draw page and 00009c64; sets 0007fcd6. With 0007fcd7 1 uploads 0007fcd0 and plays Anm_Play(1, 0xb, name). Puts the source page back, DirtyBox_Add(0, 200, 320, 0, 0), 00086628 unless the screen is 9999, and sets DUIWindow_InputReady.",
+      "source": "Herculan/docs/es1/shell/menus.md#drawing-a-screen; ES1GO decompile at 0003c1b7",
+      "verified": {
+        "bytes": "0003c1b7+1523",
+        "sha1": "52432ab62379",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003c7aa",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Rect_CopyCtorShellCopy",
+      "description": "(rect, source), its arguments removed by this function: byte for byte the code of Rect_CopyCtor (0004b398), relocated operands aside.",
+      "source": "Herculan/docs/es1/shell/menus.md#where-the-object-files-start-and-end; ES1GO disassembly at 0003c7aa",
+      "verified": {
+        "bytes": "0003c7aa+46",
+        "sha1": "2f5275147b91",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003c7d8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_HandleMessage",
+      "description": "(message words 0-1, words 2-3), its arguments removed by this function (RET 8): sets Shell_PendingMessage (0007fcb0) to (-1, -1, 0, 0); answers 0 for code -1; calls Shell_CurrentMenu's slot +8 with the message's address; target 99 becomes Shell_PreviousScreen (000817c2) unless the screen is 1000 or (the previous is 1500 or 1501 and 000809a4 is 0), and 000817be, when not -1, becomes Shell_CurrentScreen; answers 0 when the target is not in Shell_ScreenIds (000817e0); sets 000817bd for 3000 and 3333 from 1500 and 1501; Menu_Close (0003b138) and slot +4 (3) of the current menu, which it clears; intro or credit scripts by the byte 000809a9; a new backdrop by Shell_BackdropForScreen (00040afa) and ShellBackdrop_Show (000395a0); then the REPNE SCASD table of 41 screens at 00082060, targets at 00082104 in 0003cab5-0003f84f, each making the screen's object; then Menu_Open (0003969e)(menu, target) when one was made, Shell_PreviousScreen, Shell_CurrentScreen = target, Shell_DrawScreen (0003c1b7), and answers 1 (AL).",
+      "source": "Herculan/docs/es1/shell/menus.md#changing-screens--shell_handlemessage-0003c7d8; ES1GO decompile and disassembly at 0003c7d8",
+      "verified": {
+        "bytes": "0003c7d8+12510",
+        "sha1": "b1722fd83b08",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003f8b6",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "SimLoadMenu_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: slot +4 of SimLoadMenu's vtable 00081d7e; the code of MainMenu_Dtor (0003b771) with 00081d7e for 00081bf4.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens; ES1GO disassembly at 0003f8b6",
+      "verified": {
+        "bytes": "0003f8b6+183",
+        "sha1": "c66efeabdf53",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003f96d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "SimLoadMenu_OnMessage",
+      "description": "(menu, message), its arguments removed by this function (RET 8): slot +8 of SimLoadMenu's vtable 00081d7e; the code of Menu_OnMessage (0003b764).",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens; ES1GO disassembly at 0003f96d",
+      "verified": {
+        "bytes": "0003f96d+13",
+        "sha1": "029e49697cf2",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003f97a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "UnArmedAlert_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: slot +4 of UnArmedAlert's vtable 00081da0; the code of MainMenu_Dtor (0003b771) with 00081da0 for 00081bf4.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens; ES1GO disassembly at 0003f97a",
+      "verified": {
+        "bytes": "0003f97a+183",
+        "sha1": "b49d3269dd00",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003fa31",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "UnAssignedAlert_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: slot +4 of UnAssignedAlert's vtable 00081dc2; the code of MainMenu_Dtor (0003b771) with 00081dc2 for 00081bf4.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens; ES1GO disassembly at 0003fa31",
+      "verified": {
+        "bytes": "0003fa31+183",
+        "sha1": "19581c62ea48",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003fae8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "UnAssignedAlert_OnMessage",
+      "description": "(menu, message), its arguments removed by this function (RET 8): slot +8 of UnAssignedAlert's vtable 00081dc2; the code of Menu_OnMessage (0003b764).",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens; ES1GO disassembly at 0003fae8",
+      "verified": {
+        "bytes": "0003fae8+13",
+        "sha1": "029e49697cf2",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003faf5",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnyDisabledAlert_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: slot +4 of AnyDisabledAlert's vtable 00081de8; the code of MainMenu_Dtor (0003b771) with 00081de8 for 00081bf4.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens; ES1GO disassembly at 0003faf5",
+      "verified": {
+        "bytes": "0003faf5+183",
+        "sha1": "00c2c979c7f4",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003fbac",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ScrapAlert_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: slot +4 of ScrapAlert's vtable 00081e06; the code of MainMenu_Dtor (0003b771) with 00081e06 for 00081bf4.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens; ES1GO disassembly at 0003fbac",
+      "verified": {
+        "bytes": "0003fbac+183",
+        "sha1": "6fe1bd8551c8",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003fc63",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TechReleaseAlert_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: slot +4 of TechReleaseAlert's vtable 00081e2c; the code of MainMenu_Dtor (0003b771) with 00081e2c for 00081bf4.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens; ES1GO disassembly at 0003fc63",
+      "verified": {
+        "bytes": "0003fc63+183",
+        "sha1": "c67cda625a2c",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003fd1a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "QuitAlert_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: slot +4 of QuitAlert's vtable 00081e48; the code of MainMenu_Dtor (0003b771) with 00081e48 for 00081bf4.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens; ES1GO disassembly at 0003fd1a",
+      "verified": {
+        "bytes": "0003fd1a+183",
+        "sha1": "fdfdd316274e",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003fdd1",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "NewCareerAlert_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: slot +4 of NewCareerAlert's vtable 00081e6a; the code of MainMenu_Dtor (0003b771) with 00081e6a for 00081bf4.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens; ES1GO disassembly at 0003fdd1",
+      "verified": {
+        "bytes": "0003fdd1+183",
+        "sha1": "ce2d5e66557d",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003fe88",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerRecordsMenu_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: slot +4 of CareerRecordsMenu's vtable 00081e90; the code of MainMenu_Dtor (0003b771) with 00081e90 for 00081bf4.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens; ES1GO disassembly at 0003fe88",
+      "verified": {
+        "bytes": "0003fe88+183",
+        "sha1": "673c5e589a26",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003ff3f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerStatsAlert_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: slot +4 of CareerStatsAlert's vtable 00081eb4; the code of MainMenu_Dtor (0003b771) with 00081eb4 for 00081bf4.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens; ES1GO disassembly at 0003ff3f",
+      "verified": {
+        "bytes": "0003ff3f+183",
+        "sha1": "7babfef3ecbc",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000400ad",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "KIAWarningAlert_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: slot +4 of KIAWarningAlert's vtable 00081efa; the code of MainMenu_Dtor (0003b771) with 00081efa for 00081bf4.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens; ES1GO disassembly at 000400ad",
+      "verified": {
+        "bytes": "000400ad+183",
+        "sha1": "5195f4387d4c",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00040164",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DeleteAlert_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: slot +4 of DeleteAlert's vtable 00081f1a; the code of MainMenu_Dtor (0003b771) with 00081f1a for 00081bf4.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens; ES1GO disassembly at 00040164",
+      "verified": {
+        "bytes": "00040164+183",
+        "sha1": "878959c3311c",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0004021b",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MissionOptionsAlert_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: slot +4 of MissionOptionsAlert's vtable 00081f42; the code of MainMenu_Dtor (0003b771) with 00081f42 for 00081bf4.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens; ES1GO disassembly at 0004021b",
+      "verified": {
+        "bytes": "0004021b+183",
+        "sha1": "5c2eda91a211",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000402d2",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "PrefsMenu_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: slot +4 of PrefsMenu's vtable 00081f60; the code of MainMenu_Dtor (0003b771) with 00081f60 for 00081bf4.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens; ES1GO disassembly at 000402d2",
+      "verified": {
+        "bytes": "000402d2+183",
+        "sha1": "c02b975b6d8b",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00040389",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "OptionsMenu_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: slot +4 of OptionsMenu's vtable 00081f7e; the code of MainMenu_Dtor (0003b771) with 00081f7e for 00081bf4.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens; ES1GO disassembly at 00040389",
+      "verified": {
+        "bytes": "00040389+183",
+        "sha1": "f73a2e1680db",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00040440",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BattlesetAlert_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: slot +4 of BattlesetAlert's vtable 00081fa2; the code of MainMenu_Dtor (0003b771) with 00081fa2 for 00081bf4.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens; ES1GO disassembly at 00040440",
+      "verified": {
+        "bytes": "00040440+183",
+        "sha1": "3969a5067664",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000404f7",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ServiceBayMenu_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: slot +4 of ServiceBayMenu's vtable 00081fc6; the code of MainMenu_Dtor (0003b771) with 00081fc6 for 00081bf4.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens; ES1GO disassembly at 000404f7",
+      "verified": {
+        "bytes": "000404f7+183",
+        "sha1": "420bd6b7b193",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000406a7",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "RepairMenu_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: slot +4 of RepairMenu's vtable 00082006; the code of MainMenu_Dtor (0003b771) with 00082006 for 00081bf4.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens; ES1GO disassembly at 000406a7",
+      "verified": {
+        "bytes": "000406a7+183",
+        "sha1": "8a5c87b8683d",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0004075e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "RepairPrefsAlert_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: slot +4 of RepairPrefsAlert's vtable 0008202c; the code of MainMenu_Dtor (0003b771) with 0008202c for 00081bf4.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens; ES1GO disassembly at 0004075e",
+      "verified": {
+        "bytes": "0004075e+183",
+        "sha1": "feaebaabce2b",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00040815",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "SalvageAllocAlert_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: slot +4 of SalvageAllocAlert's vtable 00082050; the code of MainMenu_Dtor (0003b771) with 00082050 for 00081bf4.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens; ES1GO disassembly at 00040815",
+      "verified": {
+        "bytes": "00040815+183",
+        "sha1": "cc47c6da1cf5",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00040afa",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_BackdropForScreen",
+      "description": "(current, screen), its arguments removed by this function: the backdrop group of screen, by the REPNE SCASD table of 20 ids at 000821a8 and its targets at 000821f8: 1000 for 1000, 1200, 1100, 1310, 1320 and 9999; 7000 for 1490; 3000 for 1499; 6000 for 1500 and 1501; 5000 + the word at 0007ea94 + 2 * CareerRecord_Current (00014ef4)'s +6 for 1510 and 1520; 4000 for 1700, 1710, 1900, 1800, 1820, 2000, 1610 and 5555; current for any other.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-backdrop; ES1GO decompile and disassembly at 00040afa",
+      "verified": {
+        "bytes": "00040afa+122",
+        "sha1": "c35c700563d6",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00040b74",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_StaticInit",
+      "description": "(): shell.cpp's static initializer, the static constructor table's entry 0009a268: ShellBackdrop_Ctor (0003918e)(Shell_Backdrop (000a09a0)).",
+      "source": "Herculan/docs/es1/shell/menus.md#where-the-object-files-start-and-end; ES1GO disassembly at 00040b74",
+      "verified": {
+        "bytes": "00040b74+15",
+        "sha1": "a8853a6222a5",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00040b83",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_StaticDtor",
+      "description": "(): the exit table's entry 0009a2a0: ShellBackdrop_Dtor (00039422)(Shell_Backdrop (000a09a0), 2).",
+      "source": "Herculan/docs/es1/shell/menus.md#where-the-object-files-start-and-end; ES1GO disassembly at 00040b83",
+      "verified": {
+        "bytes": "00040b83+17",
+        "sha1": "20201127506e",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -6901,7 +8620,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Ttm_Configure",
-      "description": "(a, b, count) in stack order: stores the handle count in the byte 000829dc, b at 00082a98, a at 00082a9c and the display object 000ab616 at 00082a94, and clears the .TTM path prefix with Ttm_SetPathPrefix (0004692d)(0). es2_xref finds one call, from 0003ba47, with a count of 50.",
+      "description": "(a, b, count) in stack order: stores the handle count in the byte 000829dc, b at 00082a98, a at 00082a9c and the display object 000ab616 at 00082a94, and clears the .TTM path prefix with Ttm_SetPathPrefix (0004692d)(0). es2_xref finds one call, from Shell_OpenFirstScreen (0003ba47), with a count of 50.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-shell",
       "verified": {
         "bytes": "000464b0+56",
@@ -6916,7 +8635,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Ttm_Shutdown",
-      "description": "(): when the timer slot word 000829e4 compares unequal to -1 (zero-extended, it always does) passes it to Timer_RemoveCallback (000565b7); calls Ttm_CloseAll (00046a3f); deletes the handle table 000829e0 when there is one. es2_xref finds one call, from 0003c081.",
+      "description": "(): when the timer slot word 000829e4 compares unequal to -1 (zero-extended, it always does) passes it to Timer_RemoveCallback (000565b7); calls Ttm_CloseAll (00046a3f); deletes the handle table 000829e0 when there is one. es2_xref finds one call, from Shell_CloseScreens (0003c081).",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-shell",
       "verified": {
         "bytes": "000464e8+70",
@@ -6931,7 +8650,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Ttm_RunAll",
-      "description": "(): notes the word 000829d6, waits in a loop until the byte 000829d5 is non-zero, clears it, and calls TtmScript_Run (00046f2c)(script, 000829d6 as it is then) for each handle of the table 000829e0 below the count 000829dc that holds a script. Then stores the render context 000ab612's +4 (0 with none) at +0x40 of the display object 00082a94, passing it to Raster_SetClipBlock when the display slot 000ab7a0 holds that object, installs 000ab612 with Raster_InstallRenderContext, subtracts the noted value from 000829d6 and returns 1. es2_xref finds calls from Shell_Main, 000382f6 and 0003c1b7.",
+      "description": "(): notes the word 000829d6, waits in a loop until the byte 000829d5 is non-zero, clears it, and calls TtmScript_Run (00046f2c)(script, 000829d6 as it is then) for each handle of the table 000829e0 below the count 000829dc that holds a script. Then stores the render context 000ab612's +4 (0 with none) at +0x40 of the display object 00082a94, passing it to Raster_SetClipBlock when the display slot 000ab7a0 holds that object, installs 000ab612 with Raster_InstallRenderContext, subtracts the noted value from 000829d6 and returns 1. es2_xref finds calls from Shell_Main, 000382f6 and Shell_DrawScreen (0003c1b7).",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#running-a-script",
       "verified": {
         "bytes": "0004652e+172",
@@ -6991,7 +8710,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Ttm_GetMode",
-      "description": "(handle): the dword +0x3c, the mode, of the handle's script, reading the handle's slot as it is, empty or not. es2_xref finds two calls from 00037dce and two from 0003b8df.",
+      "description": "(handle): the dword +0x3c, the mode, of the handle's script, reading the handle's slot as it is, empty or not. es2_xref finds two calls from 00037dce and two from Shell_PlayTtm (0003b8df).",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#running-a-script",
       "verified": {
         "bytes": "000466cc+33",
@@ -7021,7 +8740,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Ttm_AllocHandles",
-      "description": "(timer count): allocates the handle table 000829e0, a dword per handle of the count 000829dc, and zeroes it; stores 000ab784 at 000829d8, or DVTimer_Ctor (0005d6b4)(0, 0x4da6) when that is 0, and frees the table and returns 0 when 000829d8 is still 0; compares the word 000829e4, zero-extended, with -1, which it never equals, and so always stores Timer_AddCallback(count, Ttm_TimerTick (00046681)) there; returns 1. es2_xref finds one call, from 0003ba47, with a count of 2.",
+      "description": "(timer count): allocates the handle table 000829e0, a dword per handle of the count 000829dc, and zeroes it; stores 000ab784 at 000829d8, or DVTimer_Ctor (0005d6b4)(0, 0x4da6) when that is 0, and frees the table and returns 0 when 000829d8 is still 0; compares the word 000829e4, zero-extended, with -1, which it never equals, and so always stores Timer_AddCallback(count, Ttm_TimerTick (00046681)) there; returns 1. es2_xref finds one call, from Shell_OpenFirstScreen (0003ba47), with a count of 2.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-shell",
       "verified": {
         "bytes": "0004670e+225",
@@ -7036,7 +8755,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Ttm_SetDefaultContext",
-      "description": "(context), callee-cleaned: stores context at 00082a98, the render context TtmScript_Run (00046f2c) installs for a script whose +0x2c is 0, and returns the one it replaces. es2_xref finds calls from DigitalDialog_ShowMessage, 0003b8df and 0003c1b7.",
+      "description": "(context), callee-cleaned: stores context at 00082a98, the render context TtmScript_Run (00046f2c) installs for a script whose +0x2c is 0, and returns the one it replaces. es2_xref finds calls from DigitalDialog_ShowMessage, Shell_PlayTtm (0003b8df) and Shell_DrawScreen (0003c1b7).",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#running-a-script",
       "verified": {
         "bytes": "000467ef+27",
@@ -7636,7 +9355,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Resource_LoadPalette",
-      "description": "(path), callee-cleaned: Resource_LoadPath's code: opens path with VolRStream_CtorFromPath, loads one class item with ClassItem_LoadResource(0, stream), closes and destroys the stream and returns the item. es2_xref finds calls from 0003950a and from TtmScript_RunPage's case for the .TTM command 0xf05f, which loads a palette with it.",
+      "description": "(path), callee-cleaned: Resource_LoadPath's code: opens path with VolRStream_CtorFromPath, loads one class item with ClassItem_LoadResource(0, stream), closes and destroys the stream and returns the item. es2_xref finds calls from ShellBackdrop_LoadPalette (0003950a) and from TtmScript_RunPage's case for the .TTM command 0xf05f, which loads a palette with it.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-commands",
       "verified": {
         "bytes": "0004b713+68",
@@ -7651,7 +9370,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Resource_LoadBitmap",
-      "description": "(path), callee-cleaned: Resource_LoadPath's code: opens path with VolRStream_CtorFromPath, loads one class item with ClassItem_LoadResource(0, stream), closes and destroys the stream and returns the item. es2_xref finds calls from 000395a0 and from TtmScript_RunPage's case for the .TTM command 0xf01f, which loads a screen bitmap with it.",
+      "description": "(path), callee-cleaned: Resource_LoadPath's code: opens path with VolRStream_CtorFromPath, loads one class item with ClassItem_LoadResource(0, stream), closes and destroys the stream and returns the item. es2_xref finds calls from ShellBackdrop_Show (000395a0) and from TtmScript_RunPage's case for the .TTM command 0xf01f, which loads a screen bitmap with it.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-commands",
       "verified": {
         "bytes": "0004b79b+68",
@@ -7726,7 +9445,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Display_CopyRectToPage",
-      "description": "(page, sourcePage, rect) in stack order, callee-cleaned: sets the display 000ab616's source page +0x34 to sourcePage and draw page +0x38 to page (through raster slots 000865f0 and 000865f4 while it is the current display), copies the rect between them at offset (0, 0) with Region_CopyBetweenPages (00051c40), passing the type field +4 of a region object on the stack, adds the rect with DirtyBox_AddRect (00041062) at delay 0, and puts back the low bytes of the two pages. es2_xref finds calls from TtmScript_FixRect and 0003c7d8.",
+      "description": "(page, sourcePage, rect) in stack order, callee-cleaned: sets the display 000ab616's source page +0x34 to sourcePage and draw page +0x38 to page (through raster slots 000865f0 and 000865f4 while it is the current display), copies the rect between them at offset (0, 0) with Region_CopyBetweenPages (00051c40), passing the type field +4 of a region object on the stack, adds the rect with DirtyBox_AddRect (00041062) at delay 0, and puts back the low bytes of the two pages. es2_xref finds calls from TtmScript_FixRect and Shell_HandleMessage (0003c7d8).",
       "source": "Herculan/docs/es1/rendering/screen-pages.md#fixing-a-rect",
       "verified": {
         "bytes": "0004c17c+736",
@@ -7741,7 +9460,7 @@
       "type": "function",
       "confidence": "high",
       "name": "RenderContext_GetFullScreen",
-      "description": "(): makes the render context 00083bc4 with 000512a0(0) when it is 0, sets its pairs +0x210 to (0, 0), +0x218 to (319, 199) and +0x220 to (0, 0), +4 to 0, +0x208 to 1 and +0x20c to 0, and returns it. es2_xref finds four calls: from Shell_Main (00012ec7), which keeps it in 0007fcd8, DigitalDialog_ShowMessage, 0003b138 and 0003b8df.",
+      "description": "(): makes the render context 00083bc4 with 000512a0(0) when it is 0, sets its pairs +0x210 to (0, 0), +0x218 to (319, 199) and +0x220 to (0, 0), +4 to 0, +0x208 to 1 and +0x20c to 0, and returns it. es2_xref finds four calls: from Shell_Main (00012ec7), which keeps it in 0007fcd8, DigitalDialog_ShowMessage, Menu_Close (0003b138) and Shell_PlayTtm (0003b8df).",
       "source": "Herculan/docs/es1/shell/startup.md#the-start-up; ES1GO decompile and disassembly at 0004c716",
       "verified": {
         "bytes": "0004c716+292",
@@ -17633,6 +19352,87 @@
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#a-careers-missions"
     },
     {
+      "address": "0007f0c4",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "DUIWindow_LastKey",
+      "description": "int16: the last code DUIWindow_KeySubscriber (0001ba73) took.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-keys"
+    },
+    {
+      "address": "0007f0d0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "DUIWindow_Active",
+      "description": "dword: the window that takes the input, set by DUIWindow_SetActive (0001c536) and cleared by DUIWindow_ClearActive (0001c57c).",
+      "source": "Herculan/docs/es1/shell/menus.md#the-active-window"
+    },
+    {
+      "address": "0007f0d4",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "DUIWindow_PressedIndex",
+      "description": "int16: the index of the active window's pressed control, -1 for none.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-mouse"
+    },
+    {
+      "address": "0007f0d6",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "DUIWindow_HeldIndex",
+      "description": "int16: the index of the control holding the input (+0x1b 2), which typed characters and keys go to; -1 for none.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-keys"
+    },
+    {
+      "address": "0007f0d8",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "DUIWindow_FocusIndex",
+      "description": "int16: the index of the focused control, which Tab moves and Enter presses; the pointer's hover sets it too.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-keys"
+    },
+    {
+      "address": "0007f0da",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "DUIWindow_Tracking",
+      "description": "byte: set while a pressed control with +0x1b 1 follows the pointer.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-mouse"
+    },
+    {
+      "address": "0007f0db",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "DUIWindow_Holding",
+      "description": "byte: set while DUIWindow_HeldIndex (0007f0d6) names a control.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-keys"
+    },
+    {
+      "address": "0007f0dc",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "DUIWindow_InputReady",
+      "description": "byte: the mouse callbacks act only while it is set; cleared during a menu's draws and updates.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-mouse"
+    },
+    {
+      "address": "0007f0dd",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "DUIWindow_KeysEnabled",
+      "description": "byte: DUIWindow_KeySubscriber (0001ba73) acts only while it is set; DUIWindow_SetActive (0001c536) sets it.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-keys"
+    },
+    {
       "address": "0007f63e",
       "binary": "ES1GO",
       "type": "data",
@@ -17728,8 +19528,17 @@
       "type": "data",
       "confidence": "high",
       "name": "Shell_ExitCode",
-      "description": "int16: the code ExitCfg_Read (0001289c) reads from data\\exit.cfg at the start, ExitCfg_Write (0001280a) writes back, and Shell_Main (00012ec7) returns. es2_xref --decode finds it set to 0 by MainMenu_OnMessage's EXIT TO DOS case, 0002a554 and Shell_AssertCleanupHook (00045a68), and to 5 or 2 by 0003c7d8's case for 9999.",
+      "description": "int16: the code ExitCfg_Read (0001289c) reads from data\\exit.cfg at the start, ExitCfg_Write (0001280a) writes back, and Shell_Main (00012ec7) returns. es2_xref --decode finds it set to 0 by MainMenu_OnMessage's EXIT TO DOS case, 0002a554 and Shell_AssertCleanupHook (00045a68), and to 5 or 2 by Shell_HandleMessage (0003c7d8)'s case for 9999.",
       "source": "Herculan/docs/es1/shell/startup.md#the-ways-out"
+    },
+    {
+      "address": "0007fcb0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_PendingMessage",
+      "description": "four int16: the menu message the frame loop passes to Shell_HandleMessage (0003c7d8): the code (0 from a control, -1 for none), the control's index, its value (slot +0x2c) and the target screen, the control's id.",
+      "source": "Herculan/docs/es1/shell/menus.md#a-messages-path"
     },
     {
       "address": "0007fce0",
@@ -17755,7 +19564,7 @@
       "type": "data",
       "confidence": "high",
       "name": "Shell_QuitFlag",
-      "description": "byte: ends Shell_Main (00012ec7)'s frame loop. Set by Shell_Main when the menu word 000817c0 is 9999, by MainMenu_OnMessage's EXIT TO DOS case and by 0002a554 for message 100.",
+      "description": "byte: ends Shell_Main (00012ec7)'s frame loop. Set by Shell_Main when the menu word Shell_CurrentScreen (000817c0) is 9999, by MainMenu_OnMessage's EXIT TO DOS case and by 0002a554 for message 100.",
       "source": "Herculan/docs/es1/shell/startup.md#the-ways-out"
     },
     {
@@ -17768,12 +19577,21 @@
       "source": "Herculan/docs/es1/rendering/screen-pages.md#presenting-a-frame"
     },
     {
+      "address": "0007fd07",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_SyncPointer",
+      "description": "byte: set by Menu_Open (0003969e), the only writer es2_xref --decode finds; while it is 1, Shell_PresentFrame (00012980) gives Shell_PointerX and Shell_PointerY to Cursor_SyncPosition and Mouse_SetPosition each frame.",
+      "source": "Herculan/docs/es1/shell/menus.md#opening-a-menu--menu_open-0003969e"
+    },
+    {
       "address": "0007fd08",
       "binary": "ES1GO",
       "type": "data",
       "confidence": "high",
       "name": "Shell_DebugMode",
-      "description": "byte: 1 after -X or /X (Shell_ParseCommandLine (0001272d)). Keeps Shell_BlinkTick and Shell_NavKeySubscriber from being registered, builds the keyboard in mode 0x10000 instead of 0x20000, makes Shell_AssertCleanupHook (00045a68) and the end of Shell_Main (00012ec7) execute INT 3, and keeps Shell_HandleInput (00012be8) from passing typed characters on; es2_xref --decode finds readers in 0001b0ff, 0001f442, WarMapMenu_Ctor, 0002bf15 and ShellSound_Init too.",
+      "description": "byte: 1 after -X or /X (Shell_ParseCommandLine (0001272d)). Keeps Shell_BlinkTick and Shell_NavKeySubscriber from being registered, builds the keyboard in mode 0x10000 instead of 0x20000, makes Shell_AssertCleanupHook (00045a68) and the end of Shell_Main (00012ec7) execute INT 3, and keeps Shell_HandleInput (00012be8) from passing typed characters on; es2_xref --decode finds readers in DUIWindow_Activate (0001b0ff), 0001f442, WarMapMenu_Ctor, 0002bf15 and ShellSound_Init too.",
       "source": "Herculan/docs/es1/shell/startup.md#the-command-line"
     },
     {
@@ -17791,7 +19609,7 @@
       "type": "data",
       "confidence": "high",
       "name": "Shell_PlayIntro",
-      "description": "byte, 1 in the image: cleared by -A or /A (Shell_ParseCommandLine (0001272d)). 0003ba47 reads it before the intro scripts and before endfa.ttm.",
+      "description": "byte, 1 in the image: cleared by -A or /A (Shell_ParseCommandLine (0001272d)). Shell_OpenFirstScreen (0003ba47) reads it before the intro scripts and before endfa.ttm.",
       "source": "Herculan/docs/es1/shell/startup.md#the-command-line"
     },
     {
@@ -17885,13 +19703,67 @@
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-shells-generator"
     },
     {
+      "address": "000817c0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_CurrentScreen",
+      "description": "int16: the number of the screen now open; Shell_HandleMessage (0003c7d8) sets it to a message's target, and Shell_Main (00012ec7) ends the loop when it is 9999.",
+      "source": "Herculan/docs/es1/shell/menus.md#changing-screens--shell_handlemessage-0003c7d8"
+    },
+    {
+      "address": "000817c2",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_PreviousScreen",
+      "description": "int16: the screen before the current one, which a message's target 99 returns to; Shell_HandleMessage (0003c7d8) sets it to 1000 when opening 1000 and to the old Shell_CurrentScreen otherwise.",
+      "source": "Herculan/docs/es1/shell/menus.md#changing-screens--shell_handlemessage-0003c7d8"
+    },
+    {
+      "address": "000817c4",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_BackdropId",
+      "description": "int16: the current backdrop group (1000 to 8000) that Shell_BackdropForScreen (00040afa) answers; ShellBackdrop_Show (000395a0) loads res32\\regn<group>.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-backdrop"
+    },
+    {
+      "address": "000817c8",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_CurrentMenu",
+      "description": "dword: the open screen object, 0x26 bytes: +0 its number, +2 the saved background, +6 the window, +0xa a GLRectangleRegion, +0x22 the vtable (slot +4 the destructor, +8 the message handler).",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens"
+    },
+    {
       "address": "000817ce",
       "binary": "ES1GO",
       "type": "data",
       "confidence": "high",
       "name": "Shell_DemoRequested",
-      "description": "byte: set by 0002b79d when it turns message 0x515 into 9999; 0003c7d8's case for 9999 then sets Shell_ExitCode (0007fcac) to 5 rather than 2.",
+      "description": "byte: set by 0002b79d when it turns message 0x515 into 9999; Shell_HandleMessage (0003c7d8)'s case for 9999 then sets Shell_ExitCode (0007fcac) to 5 rather than 2.",
       "source": "Herculan/docs/es1/shell/startup.md#the-ways-out"
+    },
+    {
+      "address": "000817e0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_ScreenIds",
+      "description": "zero-ended int16 list of the 41 screen numbers a message may target; Shell_HandleMessage (0003c7d8) answers 0 for any other.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-screens"
+    },
+    {
+      "address": "00081938",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_MusicTrack",
+      "description": "int16: the music track of the current backdrop group, from the eight words at 000817d0; Shell_PresentFrame (00012980) passes it to ShellMusic_Play (00020a70) when the byte 0007fcd5 is set.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-backdrop"
     },
     {
       "address": "00082758",
@@ -18209,6 +20081,24 @@
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-shells-generator"
     },
     {
+      "address": "0009aff0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_PointerX",
+      "description": "int32: the pointer's x as the menus keep it, set by ShellMouse_OnMove (0001c605) and DUIWindow_PointAtControl (0001c3ec); Shell_PointerY (0009aff4) follows it.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-mouse"
+    },
+    {
+      "address": "0009aff4",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_PointerY",
+      "description": "int32: the pointer's y, the pair of Shell_PointerX (0009aff0).",
+      "source": "Herculan/docs/es1/shell/menus.md#the-mouse"
+    },
+    {
       "address": "0009b014",
       "binary": "ES1GO",
       "type": "data",
@@ -18261,6 +20151,15 @@
       "name": "JoystickAxisBuffer",
       "description": "17 bytes: ES1DBSIM's JoystickAxisBuffer (000b1754), the buffer Joystick_ReadWithResponse (00025ee5) reads the axes into.",
       "source": "Herculan/docs/es1/simulation/joystick.md#the-record"
+    },
+    {
+      "address": "000a09a0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_Backdrop",
+      "description": "the 0x1c-byte backdrop object, a GLRectangleRegion at +4 that ShellBackdrop_SetPicture (00021334) sets to the picture's rect; built by Shell_StaticInit (00040b74).",
+      "source": "Herculan/docs/es1/shell/menus.md#the-backdrop"
     },
     {
       "address": "000a0a90",
@@ -18506,12 +20405,21 @@
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters"
     },
     {
+      "address": "000aa7ac",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShellBackdrop_Picture",
+      "description": "dword: the backdrop's bitmap, res32\\regn<group>.dbm, loaded by ShellBackdrop_Show (000395a0), which destroys the previous one.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-backdrop"
+    },
+    {
       "address": "000aacbc",
       "binary": "ES1GO",
       "type": "data",
       "confidence": "high",
       "name": "MissionParams_Ammo",
-      "description": "int16, the MISSION PARAMS menu's AMMO setting, 0 or 1: data\\prefs.cfg option 12, which Shell_LoadData (00020630) at start-up and 0003c7d8 copy in and MissionParams_OnMessage (0002b4fe) steps. MsnGen_LoadMission (00035873) writes it as header word 5 outside mode 1.",
+      "description": "int16, the MISSION PARAMS menu's AMMO setting, 0 or 1: data\\prefs.cfg option 12, which Shell_LoadData (00020630) at start-up and Shell_HandleMessage (0003c7d8) copy in and MissionParams_OnMessage (0002b4fe) steps. MsnGen_LoadMission (00035873) writes it as header word 5 outside mode 1.",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters"
     },
     {
@@ -18520,7 +20428,7 @@
       "type": "data",
       "confidence": "high",
       "name": "MissionParams_Damage",
-      "description": "int16, the MISSION PARAMS menu's DAMAGE setting, 0 or 1: data\\prefs.cfg option 13, which Shell_LoadData (00020630) at start-up and 0003c7d8 copy in and MissionParams_OnMessage (0002b4fe) steps. MsnGen_LoadMission (00035873) writes it as header word 6 outside mode 1.",
+      "description": "int16, the MISSION PARAMS menu's DAMAGE setting, 0 or 1: data\\prefs.cfg option 13, which Shell_LoadData (00020630) at start-up and Shell_HandleMessage (0003c7d8) copy in and MissionParams_OnMessage (0002b4fe) steps. MsnGen_LoadMission (00035873) writes it as header word 6 outside mode 1.",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters"
     },
     {
@@ -18529,7 +20437,7 @@
       "type": "data",
       "confidence": "high",
       "name": "MissionParams_Difficulty",
-      "description": "int16, the MISSION PARAMS menu's DIFFICULTY setting, 0 to 3: data\\prefs.cfg option 14, which Shell_LoadData (00020630) at start-up and 0003c7d8 copy in and MissionParams_OnMessage (0002b4fe) steps. MsnGen_LoadMission (00035873) writes it as header word 7 outside mode 1.",
+      "description": "int16, the MISSION PARAMS menu's DIFFICULTY setting, 0 to 3: data\\prefs.cfg option 14, which Shell_LoadData (00020630) at start-up and Shell_HandleMessage (0003c7d8) copy in and MissionParams_OnMessage (0002b4fe) steps. MsnGen_LoadMission (00035873) writes it as header word 7 outside mode 1.",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters"
     },
     {
@@ -18538,7 +20446,7 @@
       "type": "data",
       "confidence": "high",
       "name": "MissionParams_Visibility",
-      "description": "int16, the MISSION PARAMS menu's VISIBILITY setting, 0 or 1: data\\prefs.cfg option 15, which Shell_LoadData (00020630) at start-up and 0003c7d8 copy in and MissionParams_OnMessage (0002b4fe) steps. MsnGen_LoadMission (00035873) writes it as header word 8 outside mode 1.",
+      "description": "int16, the MISSION PARAMS menu's VISIBILITY setting, 0 or 1: data\\prefs.cfg option 15, which Shell_LoadData (00020630) at start-up and Shell_HandleMessage (0003c7d8) copy in and MissionParams_OnMessage (0002b4fe) steps. MsnGen_LoadMission (00035873) writes it as header word 8 outside mode 1.",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters"
     },
     {
@@ -18547,7 +20455,7 @@
       "type": "data",
       "confidence": "high",
       "name": "MissionParams_TimeOfDay",
-      "description": "int16, the MISSION PARAMS menu's TIME OF DAY setting, 0 to 2: data\\prefs.cfg option 16, which Shell_LoadData (00020630) at start-up and 0003c7d8 copy in and MissionParams_OnMessage (0002b4fe) steps. MsnGen_LoadMission (00035873) seeds flag 3 with it in every mode and writes it as header word 9 outside mode 1.",
+      "description": "int16, the MISSION PARAMS menu's TIME OF DAY setting, 0 to 2: data\\prefs.cfg option 16, which Shell_LoadData (00020630) at start-up and Shell_HandleMessage (0003c7d8) copy in and MissionParams_OnMessage (0002b4fe) steps. MsnGen_LoadMission (00035873) seeds flag 3 with it in every mode and writes it as header word 9 outside mode 1.",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters"
     },
     {

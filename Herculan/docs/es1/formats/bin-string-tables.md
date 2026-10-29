@@ -29,7 +29,7 @@ ES1's shell keeps its menu text, file names and spoken-message text in `.BIN` st
 
 `DigitalDialogBox_Ctor` (`00019279`), given the record and two words *a* and *b*, builds the `DialogBox` base (`DialogBox_Init`, `00019b25`), stores the vtable `0007ef04`, and reads the table from the record's stream, which stands after the version word. It sets the font to `000aacda` and the box with `DigitalDialogBox_SetRect` (`000193ee`), copies line number word `000aad5c` into a new buffer at `+0x15`, lays the text out with `DialogBox_Layout` ([the dialog box](eng-mission-text.md#the-dialog-box)), starts the line's lip-sync with `maybe_SncList_PlayEntry` (`000453be`) on the record at `0009afd4` with *a* and *b*, and frees the table. One line of the file is shown per load.
 
-`DigitalDialogBox_SetRect` rounds the word `000817c4` down to a thousand and looks it up in the four ints at `0007ef10`: 3000, 5000 and 4000 copy the 16 bytes at `0009ae64` to the box (`+0x05`) and set `+0x00` to 1; 7000 copies those at `0009aea4` and sets `+0x00` to 0 (code at `00019435` Ghidra left undefined); any other value leaves the box as `DialogBox_Init` left it. `ConditionalDialogBox_SetRect` uses other boxes for the same word ([the dialog box](eng-mission-text.md#the-dialog-box)).
+`DigitalDialogBox_SetRect` rounds the word `Shell_BackdropId` (`000817c4`) down to a thousand and looks it up in the four ints at `0007ef10`: 3000, 5000 and 4000 copy the 16 bytes at `0009ae64` to the box (`+0x05`) and set `+0x00` to 1; 7000 copies those at `0009aea4` and sets `+0x00` to 0 (code at `00019435` Ghidra left undefined); any other value leaves the box as `DialogBox_Init` left it. `ConditionalDialogBox_SetRect` uses other boxes for the same word ([the dialog box](eng-mission-text.md#the-dialog-box)).
 
 ### Which file and line
 
@@ -50,6 +50,6 @@ ES1's shell keeps its menu text, file names and spoken-message text in `.BIN` st
 
 ## Open
 
-- **Open:** what the words `000ab222`, `000814e8` and `000815a8` hold, what `00037bf0` computes, and which screens send each message kind (`DigitalDialog_ShowMessage`'s callers `0003837f` and `0003c1b7`).
+- **Open:** what the words `000ab222`, `000814e8` and `000815a8` hold, what `00037bf0` computes, and which screens send each message kind (`DigitalDialog_ShowMessage`'s callers `0003837f` and `Shell_DrawScreen` (`0003c1b7`)).
 - **Open:** what `0004589c` does with a line's record, and so how a line's lip-sync plays ([the lip-sync lists' Open](shell-file-lists.md#open)).
 - **Open:** whether every line of a file is reachable: the line numbers above against each file's count.

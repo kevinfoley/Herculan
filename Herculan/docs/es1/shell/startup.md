@@ -7,7 +7,7 @@
 - `Ctrl+Esc`, `Alt+Esc`, `Ctrl+Q`, `Alt+Q`, `Ctrl+X` and `Alt+X` open the quit question, screen 999 ([the input](#the-input));
 - a click of the first mouse button is `Enter` and of the second `Tab` to the open dialog ([the input](#the-input)).
 
-Addresses are `ES1GO` image addresses ([the X-32 executable](../formats/x32-executable.md#the-image)); ES2's are VSHELL's. The functions here remove their own arguments, so argument lists are in stack order ([calling conventions](../formats/compiler.md#calling-conventions)). What a screen does inside the loop is [the `.DLG` menus](../formats/dlg-menu-dialogs.md)'.
+Addresses are `ES1GO` image addresses ([the X-32 executable](../formats/x32-executable.md#the-image)); ES2's are VSHELL's. The functions here remove their own arguments, so argument lists are in stack order ([calling conventions](../formats/compiler.md#calling-conventions)). What a screen does inside the loop is [the menus](menus.md)'.
 
 ## Where the object file starts and ends
 
@@ -22,7 +22,7 @@ It holds the command line, `data\exit.cfg`'s reader and writer, the blink timer,
 | Switch | Store | Effect |
 |---|---|---|
 | `-eggplant` | a local | without it the shell prints `To play EarthSiege, type ES.` and returns 1, and `Shell_Main` turns the heap off and calls `__exit`(1) |
-| `-A` | `Shell_PlayIntro` (`0007fd0a`, 1 in the image) = 0 | `0003ba47` skips the intro scripts and `endfa.ttm` ([the start-up](#the-start-up)) |
+| `-A` | `Shell_PlayIntro` (`0007fd0a`, 1 in the image) = 0 | `Shell_OpenFirstScreen` (`0003ba47`) skips the intro scripts and `endfa.ttm` ([the start-up](#the-start-up)) |
 | `-C` | `Shell_AltDriveAllowed` (`0007fd0b`) = 1 | `ALT_DRIVE` is honored |
 | `-M` | `Shell_MSwitchGiven` (`0007fd04`) = 1 | no reader found by `es2_xref.py` ([Open](#open)) |
 | `-S` | the bytes `0007fcb8` and `0007fcb9` = 1 | `Shell_LoadData` then copies `prefs.cfg` options 0 and 1 over both ([the shared data](#the-shared-data)) |
@@ -46,13 +46,13 @@ It holds the command line, `data\exit.cfg`'s reader and writer, the blink timer,
 10. `Shell_PresentFrame` ([presenting a frame](../rendering/screen-pages.md#presenting-a-frame)), once.
 11. **The shared data**, `Shell_LoadData` (`00020630`, [below](#the-shared-data)).
 12. `RenderContext_GetFullScreen` (`0004c716`) into `0007fcd8`: the render context `00083bc4`, made once with `000512a0`(0), its rect set to (0, 0)–(319, 199).
-13. `maybe_SncList_Init` (`00045337`)(`0009afd4`) ([the `.SNC` list](../formats/snc-lip-sync.md)); `ShellMap_LoadResources` (`000093b3`), the briefing map's `icons` and `mapshp` bitmaps and a timer callback at a count of 2 ([Open](#open)); `ShellMouse_AddCallbacks` (`0001c460`), which registers `0001c605`, `0001c7d8` and `0001caaa` with `Mouse_AddCallback` for the three buttons' masks 1, 2 and 4.
+13. `maybe_SncList_Init` (`00045337`)(`0009afd4`) ([the `.SNC` list](../formats/snc-lip-sync.md)); `ShellMap_LoadResources` (`000093b3`), the briefing map's `icons` and `mapshp` bitmaps and a timer callback at a count of 2 ([Open](#open)); `ShellMouse_AddCallbacks` (`0001c460`), which registers `ShellMouse_OnMove` (`0001c605`), `ShellMouse_OnLeftPress` (`0001c7d8`) and `ShellMouse_OnLeftRelease` (`0001caaa`) with `Mouse_AddCallback` for the masks 1, 2 and 4: the pointer moved, the left button pressed and the left button released ([the mouse](menus.md#the-mouse)).
 14. **The fonts and styles**: `Widget_LoadStylesAndFonts`, `WidgetStyles_Load`(`CFG\styles.dat`) and `res32\corners.dba` into `000ab4ee` ([the loads](../formats/styles-dat.md#the-loads)).
-15. **The first screen**, `0003ba47`(`Shell_ExitCode`): it sets up the scripts (`DirtyList_CreateContext`, `Ttm_Configure`(page 2, the context of step 12, `0x32`), `Ttm_AllocHandles`(2), `Ttm_SetPathPrefix`(`res32\`), `TtmLists_Load`; [the shell's interpreter](../formats/ttm-scripts.md#the-timer)) and opens a screen by the code:
+15. **The first screen**, `Shell_OpenFirstScreen` (`0003ba47`)(`Shell_ExitCode`): it sets up the scripts (`DirtyList_CreateContext`, `Ttm_Configure`(page 2, the context of step 12, `0x32`), `Ttm_AllocHandles`(2), `Ttm_SetPathPrefix`(`res32\`), `TtmLists_Load`; [the shell's interpreter](../formats/ttm-scripts.md#the-timer)) and opens a screen by the code:
     - 3 or 4, back from a mission: `Mission_ReadRestore`, `Shell_ProcessMissionResults` and the results screens of a single mission (`Shell_Mode` 0) or a career (1);
-    - 6, back from a demo: `anm\esiege2.anm` and the main menu, `dlg\menu1000.dlg` ([the main menu](../formats/dlg-menu-dialogs.md));
-    - any other, among them the 0 a fresh start or a quit leaves: with `Shell_PlayIntro` set, `00020a70`(`0xc`), `intro\dynamix.ttm`, `intro\lead_in.ttm` unless the byte `000817bc` is set, `00020a70`(`0xd`), `intro\iintro.ttm` and `intro\earth_w.ttm`; then `000817bc` cleared and the main menu as for 6.
-16. `Palette_UploadWhole` of the palette at `0007fcd0`, the one the scripts left ([the scripts' palette](../rendering/screen-pages.md#presenting-a-frame)), and the byte `0007fcd4` cleared; `0003c1b7`, which draws the screen; and `X32_TotalFreeBytes` (`0004f77a`), the free memory, into locals `Shell_Main` reads no further.
+    - 6, back from a demo: `anm\esiege2.anm` and the main menu, `dlg\menu1000.dlg` ([the first screen](menus.md#the-first-screen--shell_openfirstscreen-0003ba47));
+    - any other, among them the 0 a fresh start or a quit leaves: with `Shell_PlayIntro` set, `ShellMusic_Play` (`00020a70`)(`0xc`), `intro\dynamix.ttm`, `intro\lead_in.ttm` unless the byte `000817bc` is set, `00020a70`(`0xd`), `intro\iintro.ttm` and `intro\earth_w.ttm`; then `000817bc` cleared and the main menu as for 6.
+16. `Palette_UploadWhole` of the palette at `0007fcd0`, the one the scripts left ([the scripts' palette](../rendering/screen-pages.md#presenting-a-frame)), and the byte `0007fcd4` cleared; `Shell_DrawScreen` (`0003c1b7`), which draws the screen; and `X32_TotalFreeBytes` (`0004f77a`), the free memory, into locals `Shell_Main` reads no further.
 
 Where ES2's `Shell_Main` differs ([ES2's start-up](../../retail/shell/startup.md#the-startup--shell_main-00401525)): it reads `drive.cfg`, checks the colour depth, refuses without `-eggplant` or the disc or the sound manager in a message box, reads `Sierra.ini`, and builds its screens and Windows input objects where ES1 polls its devices.
 
@@ -90,10 +90,10 @@ Where ES2's `Shell_Main` differs ([ES2's start-up](../../retail/shell/startup.md
 
 1. `Shell_PresentFrame`, which waits for the next `Shell_FrameDue`, so a pass takes at least two timer interrupts, at most 60 a second ([presenting a frame](../rendering/screen-pages.md#presenting-a-frame)).
 2. `Shell_PollInput` (`0004de3a`) into `Shell_InputBlock` (`0007e73c`), and `Shell_HandleInput` (`00012be8`) on it ([the input](#the-input)).
-3. `NoOp_Void`; `Shell_QuitFlag` set when the screen word `000817c0` is 9999 ([the ways out](#the-ways-out)).
-4. `0003c7d8`(the dwords `0007fcb0`, `0007fcb4`), the menu message pending there: it first sets them to (`0xffff`, `0xffff`) and (0, 0), answers 0 when the message's first word is −1 or its target, the word at `0007fcb6`, is not in the list at `000817e0`, and otherwise changes screens, sets `000817c0` to the target, redraws with `0003c1b7` and answers 1. On an answer of 0, `Ttm_RunAll` runs the scripts ([running the scripts](../formats/ttm-scripts.md)).
-5. `0003c115`, the current screen's tick; `0001098e`, the mouse's event queue, which `Shell_PollInput` also calls; `000382f6`(`0009b010`, the input block), the message box; `00018dcb`(`0009afc8`), the text box.
-6. When `Shell_QuitRequested` (`0007e808`) is set, `000408cc`, which opens screen 999, the quit question, unless the screen word `000817c0` is 999 already, and the flag cleared.
+3. `NoOp_Void`; `Shell_QuitFlag` set when the screen word `Shell_CurrentScreen` (`000817c0`) is 9999 ([the ways out](#the-ways-out)).
+4. `Shell_HandleMessage` (`0003c7d8`)(the dwords `Shell_PendingMessage` (`0007fcb0`), `0007fcb4`), the menu message pending there, which answers 1 when it has changed screens ([changing screens](menus.md#changing-screens--shell_handlemessage-0003c7d8)). On an answer of 0, `Ttm_RunAll` runs the scripts ([running the scripts](../formats/ttm-scripts.md)).
+5. `Shell_TickScreen` (`0003c115`), the current screen's tick ([drawing a screen](menus.md#drawing-a-screen)); `0001098e`, the mouse's event queue, which `Shell_PollInput` also calls; `000382f6`(`0009b010`, the input block), the message box; `00018dcb`(`0009afc8`), the text box.
+6. When `Shell_QuitRequested` (`0007e808`) is set, `000408cc`, which opens screen 999, the quit question, unless the screen word `Shell_CurrentScreen` (`000817c0`) is 999 already, and the flag cleared.
 7. `X32_TotalFreeBytes` into locals, and `ShellTime_UpdateFrameScale` ([the frame-time scale](#the-frame-time-scale)).
 
 ### The input
@@ -105,19 +105,19 @@ Where ES2's `Shell_Main` differs ([ES2's start-up](../../retail/shell/startup.md
 | Word | Does |
 |---|---|
 | `Space`, `,`, `.`, `-`, `=`, each with or without `Shift` | calls a function of the object `000809a4`, while it is set and the byte `000809a8` is not 0, and sets `000809a8` to 3 ([Open](#open)) |
-| `Insert` (`0x52`) | `Tab` to the dialog (`0001cc86`(`0xf`)) when `prefs.cfg` option 10 is set |
+| `Insert` (`0x52`) | `Tab` to the dialog (`DUIWindow_HandleNavKey` (`0001cc86`)(`0xf`)) when `prefs.cfg` option 10 is set |
 | `Ctrl+Esc`, `Alt+Esc` | `Shell_QuitRequested` |
 | `Ctrl+Q`, `Alt+Q`, `Ctrl+X`, `Alt+X` | `Shell_QuitRequested` |
-| `Q`, `X`, `C` otherwise (`Ctrl+C` or `Alt+C` included) | the character `q`, `x` or `c`, upper case with `Shift` or `Caps Lock` (`0x800`), or'd with `0x4000`, to `0001bb85` with the current screen `000817c8`'s `+6` |
+| `Q`, `X`, `C` otherwise (`Ctrl+C` or `Alt+C` included) | the character `q`, `x` or `c`, upper case with `Shift` or `Caps Lock` (`0x800`), or'd with `0x4000`, to `DUIWindow_SendChar` (`0001bb85`) with the current screen `Shell_CurrentMenu` (`000817c8`)'s `+6` |
 
-Then the first button (`+0x1d`) pressed sends `Enter` (`0x1c`) to the dialog through `0001cc86` and latches the button, and on the next pass, the button reading released, `Enter`'s release (`0x9c`); the second (`+0x1e`) sends `Tab` and latches. Last, unless `-X` was given, a word with bit `0x4000`, a typed character, goes to `0001bb85` with the current screen's `+6`.
+Then the first button (`+0x1d`) pressed sends `Enter` (`0x1c`) to the dialog through `DUIWindow_HandleNavKey` (`0001cc86`) and latches the button, and on the next pass, the button reading released, `Enter`'s release (`0x9c`); the second (`+0x1e`) sends `Tab` and latches. Last, unless `-X` was given, a word with bit `0x4000`, a typed character, goes to `DUIWindow_SendChar` (`0001bb85`) with the current screen's `+6`.
 
 ### The keyboard subscribers
 
 `main.cpp` holds three of the keyboard library's subscribers ([a key](../simulation/input.md#a-key--keyboard_int9handler-0007dde4-and-keyboard_dispatch-0007de20)):
 
-- `Shell_NavKeySubscriber` (`00012b4e`), registered by `Shell_InitDevices` for `Tab`, `Enter`, `Enter`'s release, `Space`, the four arrows, `Backspace`, `Home`, `End`, `Esc` and `Del` (the 13 bytes at `0007e7f0`), passes each, Num Lock's bit cleared, to the dialog's key handler `0001cc86` and claims it.
-- `Shell_ScanKeySubscriber` (`00012b69`), which `0001f442` and `0001f66f` register, passes on `Home`, `Up`, `Left`, `Right`, `End` and `Down` while Num Lock is on, claims `Ctrl+Alt+Del` (`0x653`) and does nothing with it, and hands every other code to `Shell_ForwardKeyToDialog` (`00012bb7`), which gives it to `0001bbd2` with the dialog `0007f0d0` while that pointer is set.
+- `Shell_NavKeySubscriber` (`00012b4e`), registered by `Shell_InitDevices` for `Tab`, `Enter`, `Enter`'s release, `Space`, the four arrows, `Backspace`, `Home`, `End`, `Esc` and `Del` (the 13 bytes at `0007e7f0`), passes each, Num Lock's bit cleared, to the dialog's key handler `DUIWindow_HandleNavKey` (`0001cc86`) and claims it.
+- `Shell_ScanKeySubscriber` (`00012b69`), which `0001f442` and `0001f66f` register, passes on `Home`, `Up`, `Left`, `Right`, `End` and `Down` while Num Lock is on, claims `Ctrl+Alt+Del` (`0x653`) and does nothing with it, and hands every other code to `Shell_ForwardKeyToDialog` (`00012bb7`), which gives it to `DUIWindow_SendKey` (`0001bbd2`) with the dialog `DUIWindow_Active` (`0007f0d0`) while that pointer is set.
 - `Shell_QuitKeyCallback` (`00012b01`) sets `Shell_QuitRequested` for the six quit keys and writes `entering quitKeyCallback` to the monochrome monitor; `es2_xref.py` finds no reference to it ([Open](#open)).
 
 ## The ways out
@@ -128,7 +128,7 @@ Then the first button (`+0x1d`) pressed sends `Enter` (`0x1c`) to the dialog thr
 |---|---|
 | `EXIT TO DOS` on the main menu (`MainMenu_OnMessage`, `0002a70a`), which sets `Shell_QuitFlag` | 0 |
 | message 100 to `0002a554`, which sets `Shell_QuitFlag` | 0 |
-| `0003c7d8`'s case for message 9999, which opens screen 9999, the loading picture ([the window](../formats/dlg-menu-dialogs.md)), and so ends the loop on the next pass | 5 when `Shell_DemoRequested` (`000817ce`) is set, which `0002b79d` sets when it turns message `0x515` into 9999; 2 otherwise |
+| `Shell_HandleMessage` (`0003c7d8`)'s case for message 9999, which opens screen 9999, the loading picture ([changing screens](menus.md#changing-screens--shell_handlemessage-0003c7d8)), and so ends the loop on the next pass | 5 when `Shell_DemoRequested` (`000817ce`) is set, which `0002b79d` sets when it turns message `0x515` into 9999; 2 otherwise |
 
 Two more end the program without the shutdown: no `-eggplant`, through `__exit`(1) before `exit.cfg` is read; and a fatal assert, below. The [simulator](../simulation/main-loop.md#the-end--sim_shutdown-0005b568) leaves 3, 4, 6 or 0, which the next start's step 15 reads. What `ES.BAT` and `ESCD.EXE` do with the shell's status and the file is not in `GO.EXE` ([Open](#open)).
 
@@ -142,7 +142,7 @@ After the loop, in order:
 
 1. `CareerLog_Write`(`0009b20c`, −1), the careers log ([the careers log](../formats/career-log-and-player-mec.md)).
 2. `ExitCfg_Write`, `Shell_ExitCode` into `data\exit.cfg`.
-3. `0003c081`: `0004199c`, `Ttm_Shutdown`, the current screen destroyed, and the render contexts `0007fcd8` and `0007fcdc` destroyed.
+3. `Shell_CloseScreens` (`0003c081`): `0004199c`, `Ttm_Shutdown`, the current screen destroyed, and the render contexts `0007fcd8` and `0007fcdc` destroyed.
 4. `ShellMap_ReleaseResources` (`00009453`), `Shell_FreeData` (`00020ae3`), which frees the fonts, the HERC diagrams' tables, the careers log's entries and the battle set's campaigns, and `ShellMouse_RemoveCallbacks` (`0001c4de`).
 5. **`Shell_ShutdownDevices` (`00046094`)**: the object `0007fd00` and the sound manager destroyed; `Shell_NavKeySubscriber` removed unless `-X` was given; the keyboard and mouse devices destroyed; the timer's divisor set to `0x4da6`, the three timer callbacks removed, `Pit_RemoveHandler` ([the interrupt](../simulation/timer.md#the-interrupt--pit_timerinterrupt-0006d391)) and the timer destroyed; `00082754` destroyed; with `Shell_ExitCode` not 0, bit 0 of the display `00082750`'s first byte cleared, as the simulator clears its display's ([starting](../simulation/main-loop.md#starting--sim_main-00059350), step 10); and the display destroyed with `0005a3e4`(display, 0).
 6. `VolRStream_DeleteGroup` and `Mem_HeapOff`; under `-X`, `INT 3`.
@@ -187,11 +187,11 @@ After the loop, in order:
 ## Open
 
 - **Open:** what the launcher does with the shell's exit status and with `data\exit.cfg`: `GO.EXE` holds no code of `ES.BAT` or `ESCD.EXE`. A retail check: after `EXIT TO DOS` under DOSBox-X, `data\exit.cfg` holds the `int16` 0, and after a mission's launch 2 until the simulator overwrites it.
-- **Open:** what the object `000809a4` is, whose functions `0000a9c8`, `0000d657`, `0000d599` and slots `+8` and `+0xc` of its `+0x4a` table `Space`, `,`, `.`, `=` and `-` call, and which `0003c115` ticks while `000809a8` is above 1. A retail check: press `Space` on a screen that plays something and watch what stops.
+- **Open:** what the object `000809a4` is, whose functions `0000a9c8`, `0000d657`, `0000d599` and slots `+8` and `+0xc` of its `+0x4a` table `Space`, `,`, `.`, `=` and `-` call, and which `Shell_TickScreen` (`0003c115`) ticks while `000809a8` is above 1. A retail check: press `Space` on a screen that plays something and watch what stops.
 - **Open:** what reads `Shell_BlinkOn`: `es2_xref.py` finds its two writes and a reference at `0001f77f`, in code Ghidra has not disassembled, inside `0001f442`'s region.
 - **Open:** what reads `Shell_MSwitchGiven`: `es2_xref.py` finds the parser's store only.
 - **Open:** what reaches `Shell_QuitKeyCallback`: `es2_xref.py` finds no branch to it and no stored pointer.
-- **Open:** what `0007fcb8` and `0007fcb9` hold: `-S` sets both to 1 and `Shell_LoadData` then copies options 0 and 1 over them; `es2_xref.py --decode` finds readers in `00020a70`, `0002b82b`, `Menu_BuildFromDlg`, `Anm_Play`, `0001d200`, `0001db87` and `TtmScript_RunSoundCommand`.
+- **Open:** what `0007fcb8` and `0007fcb9` hold beyond the music and the click: `-S` sets both to 1 and `Shell_LoadData` then copies options 0 and 1 over them; `ShellMusic_Play` (`00020a70`) plays a backdrop's music only with `0007fcb8` set, and `MTButton_Draw` (`0001d200`) a text button's click only with `0007fcb9` set ([the menus](menus.md#the-backdrop)); `es2_xref.py --decode` finds further readers in `0002b82b`, `Menu_BuildFromDlg`, `Anm_Play`, `0001db87` and `TtmScript_RunSoundCommand`. A retail check: with option 0 off, the main menu plays no music.
 - **Open:** what reads `000aa7a2` and `000aa7a4`, the frame-time scale: the nine small functions from `00011b63` to `00011d9f` `es2_xref.py --decode` finds.
 - **Open:** what `ShellMap_LoadResources`' timer callback `000092ae`, `00009275` and the block `0007e20c` of the word `0009a4d6`'s size are.
 - **Open:** what `Shell_InitDevices`' `000081a4` and `0005152c` and the raster slot `0008662c` do, and what the displays `00082750` and `00082754` and the object `0007fd00` are beside `Shell_CreateDisplay`'s `000ab616`.

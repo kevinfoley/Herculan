@@ -9,7 +9,7 @@ byte     list count
 list count x name list
 ```
 
-`TtmLists_Load` (`00011dfc`) opens `cfg\tm_files.dat` through `VolRStream_CtorFromPath` and reads the count into the byte `0007e714`. When it is not 0 it deletes the array at `0007e710`, when there is one, through `StrList_Dtor`, makes an array of that many 6-byte lists (`00011eae`), and reads each with `StrList_Read`. It closes and destroys the stream. `es2_xref.py` finds one call, from `0003ba47`.
+`TtmLists_Load` (`00011dfc`) opens `cfg\tm_files.dat` through `VolRStream_CtorFromPath` and reads the count into the byte `0007e714`. When it is not 0 it deletes the array at `0007e710`, when there is one, through `StrList_Dtor`, makes an array of that many 6-byte lists (`00011eae`), and reads each with `StrList_Read`. It closes and destroys the stream. `es2_xref.py` finds one call, from `Shell_OpenFirstScreen` (`0003ba47`).
 
 The retail file holds seven lists:
 
@@ -48,6 +48,6 @@ Every line's list holds two names, a `.SNC` and then a `.RAW` (`C0_01000.SNC`, `
 
 ## Open
 
-- **Open:** which animations play the lists of `cfg\tm_files.dat`: what `0003ba47` does and what reads `0007e710`.
+- **Open:** which animations play the lists of `cfg\tm_files.dat`: what `Shell_OpenFirstScreen` (`0003ba47`) does and what reads `0007e710`.
 - **Open:** what `CO_FILES.DAT` is, which nothing found names.
 - **Open:** what a talking head's script draws on each page, and so what a lip-sync frame shows ([the scripts' Open items](ttm-scripts.md#open)).
