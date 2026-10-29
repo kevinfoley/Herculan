@@ -46,6 +46,19 @@ public sealed class ScaledImGui : IDisposable {
 	private readonly string? _italicFontPath;
 	private readonly string? _boldFontPath;
 	private ImGuiController _controller;
+
+	// ImGui's clipboard, as the system's through the window's keyboard: ImGui's own reaches the system's on Windows
+	// alone, and elsewhere keeps what is copied inside the process. Each context keeps the delegates' pointers, so they
+	// are held here, and the text last read stays allocated for ImGui until the next read.
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	private delegate nint ClipboardReader(nint userData);
+
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	private delegate void ClipboardWriter(nint userData, nint text);
+
+	private readonly ClipboardReader _readClipboard;
+	private readonly ClipboardWriter _writeClipboard;
+	private nint _clipboardText;
 	private float _builtContentScale;
 	private float _builtClientScale;
 	private float _builtFontSize;
@@ -61,6 +74,8 @@ public sealed class ScaledImGui : IDisposable {
 		_fontPath = fontPath;
 		_italicFontPath = italicFontPath;
 		_boldFontPath = boldFontPath;
+		_readClipboard = _ => ReadClipboard();
+		_writeClipboard = (_, text) => WriteClipboard(text);
 		_controller = Build();
 	}
 
@@ -152,6 +167,7 @@ public sealed class ScaledImGui : IDisposable {
 			feed(io);
 		}
 
+		FeedModifiers();
 		FeedPointer(PointerOverride?.Invoke());
 		if (HeldAsMouseButtons is { } held) {
 			var (left, right) = held();
@@ -174,7 +190,11 @@ public sealed class ScaledImGui : IDisposable {
 		_controller.Render();
 	}
 
-	public void Dispose() => _controller.Dispose();
+	public void Dispose() {
+		_controller.Dispose();
+		Marshal.FreeCoTaskMem(_clipboardText);
+		_clipboardText = 0;
+	}
 
 	private static float ChosenFontSize =>
 		A11ySettings.Current.GetSettingValue(A11ySettingDefinitions.LargerFont) ? LargerFontSize : FontSize;
@@ -188,6 +208,24 @@ public sealed class ScaledImGui : IDisposable {
 		var io = ImGui.GetIO();
 		io.MouseDown[(int)button] = !down;
 		io.AddMouseButtonEvent((int)button, down);
+	}
+
+	// Silk's controller queues each key's own event but sets io.KeyCtrl, io.KeyShift, io.KeyAlt and io.KeySuper straight,
+	// and ImGui's NewFrame overwrites those from the modifiers' own events, which the controller never queues: no text
+	// field would see Ctrl+A, Ctrl+X, Ctrl+C or Ctrl+V, or Shift with an arrow key. So the modifiers go in as those events,
+	// read from the keyboard once a frame; ImGui drops one that repeats the modifier's last state. A key and a modifier
+	// pressed in the same frame are taken together, whichever was queued first.
+	private void FeedModifiers() {
+		if (_input.Keyboards.Count == 0) {
+			return;
+		}
+
+		var keyboard = _input.Keyboards[0];
+		var io = ImGui.GetIO();
+		io.AddKeyEvent(ImGuiKey.ModCtrl, keyboard.IsKeyPressed(Key.ControlLeft) || keyboard.IsKeyPressed(Key.ControlRight));
+		io.AddKeyEvent(ImGuiKey.ModShift, keyboard.IsKeyPressed(Key.ShiftLeft) || keyboard.IsKeyPressed(Key.ShiftRight));
+		io.AddKeyEvent(ImGuiKey.ModAlt, keyboard.IsKeyPressed(Key.AltLeft) || keyboard.IsKeyPressed(Key.AltRight));
+		io.AddKeyEvent(ImGuiKey.ModSuper, keyboard.IsKeyPressed(Key.SuperLeft) || keyboard.IsKeyPressed(Key.SuperRight));
 	}
 
 	// The controller writes io.MousePos from the mouse just before NewFrame, so a pointer elsewhere goes in as an event, as
@@ -218,7 +256,36 @@ public sealed class ScaledImGui : IDisposable {
 				_builtContentScale, _boldFontPath);
 		});
 		ApplyScale(_builtContentScale, _builtClientScale, _builtFontSize);
+		var io = ImGui.GetIO();
+		io.GetClipboardTextFn = Marshal.GetFunctionPointerForDelegate(_readClipboard);
+		io.SetClipboardTextFn = Marshal.GetFunctionPointerForDelegate(_writeClipboard);
 		return controller;
+	}
+
+	// The clipboard's text, empty when it holds none. Called from inside ImGui, which an exception must not cross, so a
+	// clipboard that cannot be read reads as empty.
+	private nint ReadClipboard() {
+		string text;
+		try {
+			text = _input.Keyboards.Count > 0 ? _input.Keyboards[0].ClipboardText ?? "" : "";
+		} catch (Exception) {
+			text = "";
+		}
+
+		Marshal.FreeCoTaskMem(_clipboardText);
+		_clipboardText = Marshal.StringToCoTaskMemUTF8(text);
+		return _clipboardText;
+	}
+
+	// Puts ImGui's UTF-8 <text> on the clipboard; as ReadClipboard, a clipboard that cannot be written is left as it is.
+	private void WriteClipboard(nint text) {
+		try {
+			if (_input.Keyboards.Count > 0) {
+				_input.Keyboards[0].ClipboardText = Marshal.PtrToStringUTF8(text) ?? "";
+			}
+		} catch (Exception) {
+			// Left as it is.
+		}
 	}
 
 	/// <summary>
