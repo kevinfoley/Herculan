@@ -29,7 +29,11 @@ included, must be equal.
       ES2's through no existing tool (es1_naming.py pairs X-32 tables only), so no ES2 slot name is
       consulted.
 A unit of either kind that its slot pairs with a named one takes that base before its bytes'. A
-non-stub unit whose matches carry two bases, and a unit whose best pairings do, are reported as ties.
+non-stub unit whose matches carry two bases, and a unit whose best pairings do, are reported as ties,
+except where one base opens every other at a word boundary: a copy split short of its tag
+('HeapPtr_DtorFlyerCopy' read as untagged, its base 'HeapPtr_DtorFlyer') takes the shorter base. A
+non-stub copy's signature is the original's, with "its argument(s) removed by this function" when
+its RET removes any.
 
 --module TAG names the range's object file, or TAG@ADDR one starting at ADDR, for a range spanning
 several; TAG@ADDR=DOC#ANCHOR also gives that file's entries their source doc section, and --source
@@ -248,6 +252,21 @@ def split_scores(names):
     return out
 
 
+def shortest_base(bases):
+    """The one base of several that opens every other at a word boundary ('HeapPtr_Dtor' against
+    'HeapPtr_DtorFlyer'), else None."""
+    b0 = min(bases, key=len)
+    return b0 if all(b == b0 or (b.startswith(b0) and b[len(b0)].isupper()) for b in bases) else None
+
+
+def removed_clause(ins):
+    """', its argument(s) removed by this function' for a unit whose RET removes any, else ''."""
+    rets = [i for i in ins if i.mnemonic == "ret"]
+    # Capstone writes an immediate under 10 in decimal.
+    n = int(rets[-1].op_str, 0) // 4 if rets and re.fullmatch(r"0x[0-9a-f]+|\d+", rets[-1].op_str) else 0
+    return "" if not n else ", its argument removed by this function" if n == 1 else ", its arguments removed by this function"
+
+
 def instr_text(i):
     op = re.sub(r"0X([0-9A-F]+)", lambda m: "0x" + m.group(1).lower(), i.op_str.upper().replace(", ", ","))
     return (i.mnemonic.upper() + " " + op).strip()
@@ -414,8 +433,8 @@ def scan(args):
             else:
                 d += f" The code of {names[ref]} ({ref:08x})."
         else:
-            sig = re.match(r"(?:Frameless: )?(\([^)]*\)(?: in stack order)?(?:, callee-cleaned)?)", rdesc)
-            d = (sig.group(1) + ": " if sig else "") + (slots + ": " if slots else "")
+            sig = re.match(r"(?:Frameless: )?(\([^)]*\)(?: in stack order)?)", rdesc)
+            d = (sig.group(1) + removed_clause(ins) + ": " if sig else "") + (slots + ": " if slots else "")
             d += f"byte for byte the code of {names[ref]} ({ref:08x}), relocated operands aside"
             mine, theirs = vt_operands(ins), vt_operands(x.key(ref)[1])
             diff = [(p_, q_) for p_, q_ in zip(mine, theirs) if p_ != q_]
@@ -448,6 +467,10 @@ def scan(args):
         pick, why = None, None
         pairs = pairings(a, k)
         pbases = sorted({base(names[f]) for _, f in pairs})
+        if len(pbases) > 1 and shortest_base(pbases):
+            pbases = [shortest_base(pbases)]
+        if len(bases) > 1 and shortest_base(bases):
+            bases = [shortest_base(bases)]
         if len(pbases) == 1:
             pick, why = pbases[0], "slot of " + ", ".join(f"{wt:08x}" for wt, _ in pairs[:3])
         elif len(pbases) > 1:

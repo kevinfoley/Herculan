@@ -29,6 +29,7 @@ The rules every ES1 subagent shares: RE batches, doc batches and port parts. The
 - Siblings differ: read the function the type registry or vtable actually points at. An object's class is its last vtable write, not its constructor's.
 - A field the main path ignores has another reader before it is padding; a field can mean different things to different readers; check the base an offset is relative to. Publishing a value is not consuming it.
 - For a function whose result a caller tests, read each exit's last write to `EAX`/`AX` in the disassembly: the decompile can drop a return value.
+- **Code Ghidra left undefined** (a call or branch target inside no function, a gap past a function's end): `py tools/scripts/es2_naming.py body <binary> <address> -d` disassembles the image there with Capstone, up to the next Ghidra function entry. Read that, never a guess from the neighbours.
 - **Timer counts are not milliseconds.** ES1's countdown count is 100/256 ms (≈ 0.39 ms; 10000 counts ≈ 3.9 s). ES2's is 0.49 ms (10000 ≈ 4.9 s); never convert an ES1 count with ES2's unit.
 - If the reading says the player would see a bug, look for the missing caller among the unported modules before calling it a retail bug.
 
