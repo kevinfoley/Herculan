@@ -89,11 +89,7 @@ internal sealed class NewMissionDialog {
 		}
 
 		const string title = "New mission###new-mission";
-		if (!_raised) {
-			ImGui.OpenPopup(title);
-			_raised = true;
-		}
-
+		EditorModal.Raise(title, ref _raised);
 		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(PanelWidth + HeightmapSize), 0f));
 		ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), ImGuiCond.Appearing, new Vector2(0.5f, 0.5f));
 		if (!ImGui.BeginPopupModal(title, ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove)) {

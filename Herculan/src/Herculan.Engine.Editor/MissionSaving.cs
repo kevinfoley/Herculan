@@ -199,6 +199,7 @@ internal sealed class MissionSaving {
 		}
 
 		string title = Title(_prompt) + "###mission-saving";
+		// Raised over any other modal, which waits for it (EditorModal).
 		if (!_raised) {
 			ImGui.OpenPopup(title);
 			_raised = true;

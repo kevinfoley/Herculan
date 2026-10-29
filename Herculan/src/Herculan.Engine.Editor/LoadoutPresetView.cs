@@ -139,11 +139,7 @@ internal sealed class LoadoutPresetView {
 
 	private void DrawPrompt(int type, string chassisName, IReadOnlyList<LoadoutPresetSlot> fitted) {
 		string title = (_prompt == Prompt.Delete ? "Delete preset" : "Save preset") + "###loadout-preset";
-		if (!_raised) {
-			ImGui.OpenPopup(title);
-			_raised = true;
-		}
-
+		EditorModal.Raise(title, ref _raised);
 		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(PromptWidth), 0f));
 		ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), ImGuiCond.Appearing, new Vector2(0.5f, 0.5f));
 		if (!ImGui.BeginPopupModal(title, ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove)) {

@@ -98,11 +98,7 @@ internal sealed class PlayInGame {
 			return;
 		}
 
-		if (!_raised) {
-			ImGui.OpenPopup(Title);
-			_raised = true;
-		}
-
+		EditorModal.Raise(Title, ref _raised);
 		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(PanelWidth), 0f));
 		ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), ImGuiCond.Appearing, new Vector2(0.5f, 0.5f));
 		if (!ImGui.BeginPopupModal(Title, ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove)) {
