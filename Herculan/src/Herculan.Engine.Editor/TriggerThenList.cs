@@ -5,7 +5,7 @@ using ImGuiNET;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The trigger view's Then list: what happens when the trigger fires, every entry editable and an Add menu over them. A group it
+/// The trigger view's Then list: what happens when the trigger activates, every entry editable and an Add menu over them. A group it
 /// brings in, with how every such group arrives; a group it moves on from an order; a countdown it starts, with its delay; the
 /// campaign variables it sets (<see cref="CampaignVariableWrites"/>); and the message it sends, by its text. Each entry is
 /// written in the record that holds the link (<see cref="TriggerFollowers"/>): the group's, the order slot's or the

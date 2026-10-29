@@ -1,6 +1,4 @@
-# Mission editor manual
-
-A reference for mission designers. It describes how the game behaves, using the names the editor shows. Distances are in meters, as the editor shows them.
+# Mission Editor manual
 
 ## Groups
 
@@ -32,7 +30,7 @@ A structure group can also lay a **base pad**: a concrete pad painted over the g
 
 ## Budgets
 
-The bottom-left corner of the viewport shows how much of each of the game's limits the mission uses, as the amount used over the limit. Every version of the mission counts at once: a unit or position that is only present under some condition counts as if it were always there.
+The bottom-left corner of the viewport shows vanilla limits and the current mission's usage of those limits. Note that objects which are only included in the mission conditionally (e.g. a group that only is included when a campaign variable has a certain value) are always counted towards the budget displayed in the Editor, but in retail they would only count against the budget when actually loaded in the mission. See [How missions are loaded](#how-missions-are-loaded).
 
 - **HERCs, Flyers and Buildings & vehicles** count the units the mission places. The player and each squadmate take two HERC slots each. Structures and ground vehicles share one budget. The editor does not add a unit past its limit unless the mission is [playable in HERCULAN only](#playable-in-herculan-only).
 - **Objects** counts every HERC, flyer, structure and ground vehicle the mission places, the squad's included. In retail, past the limit the mission can crash soon after it starts. HERCULAN runs it.
@@ -42,15 +40,15 @@ Every one of these limits is retail's alone: HERCULAN has none of them.
 
 ### Positions
 
-A **position** is a point on the map that something in the mission stands on. Positions are used by:
+A **position** is a point on the map. Positions are used by:
 
-- a group's position, and a member's position of its own;
+- groups, and any unit within a group that does not use the default formation;
 - each waypoint of a route;
-- each trigger area: a circle uses its center, and a box uses two opposite corners.
+- each trigger area: a circle uses a single position as its center, and a box uses two positions as opposite corners.
 
 Two things at the same point can share one position, and a shared position counts once. A position that nothing uses any more, for example after deleting the group that stood on it, still counts until it is removed. Edit > "Remove unused positions" removes them, except those a random table picks. Every position, used or unused, also sets the [mission zone](#the-mission-zone), so when removing unused positions would shrink the mission zone, the editor first asks whether to remove those too.
 
-In retail, a mission with more positions than the limit crashes as it loads. HERCULAN loads it.
+In retail, a mission with more positions than the limit crashes on load. HERCULAN does not have a limit.
 
 ### Map markers
 
@@ -64,7 +62,7 @@ In retail, a mission that needs more markers than the limit crashes as it starts
 
 ### Playable in HERCULAN only
 
-Edit > Mission Settings > "Playable in" chooses between "Retail and HERCULAN", the default, and "HERCULAN only". A mission playable in HERCULAN only is held to none of the limits above: the editor adds units past them, Problems does not report them, and the budgets show each count beside retail's limit. Retail ignores the setting and still loads the mission, so a mission past a limit can crash it.
+Edit > Mission Settings > "Playable in" chooses between "Vanilla and HERCULAN", the default, and "HERCULAN only". A mission playable only in HERCULAN is held to none of the limits above. Retail ignores the setting and still loads the mission, but if any vanilla limits are exceeded, the game will crash.
 
 Switching back to "Retail and HERCULAN" deletes nothing. Problems lists each limit the mission is over, and the editor adds no more units of a kind that is over its limit.
 
@@ -101,19 +99,19 @@ A unit is **on radar** when an enemy's radar has picked it up. Being on radar is
 
 For a human unit and a Cybrid unit that have a clear line of sight to each other:
 
-| Distance between them | Result |
-|---|---|
-| Up to 840 m | If either has its radar on, both are on radar |
-| 840 m to 1,200 m | Whichever has its radar on is on radar |
-| Over 1,200 m | Neither puts the other on radar |
+| Distance between them | Result                                                          |
+| --------------------- | --------------------------------------------------------------- |
+| Up to 840 m           | If either has its radar active, each can see the other on radar |
+| 840 m to 1,200 m      | Whichever has its radar active is on radar                      |
+| Over 1,200 m          | Neither can see the other on radar                              |
 
-If neither has its radar on, neither is on radar. A unit stays on radar until about 5 seconds after this rule last applied to it.
+If neither has its radar active, neither is on radar. A unit stays on radar until about 5 seconds after this rule last applied to it.
 
-So as soon as a Cybrid with its radar on comes within 840 m of the player and has a clear line of sight, every Cybrid on the map is aware of the player. Most orders still attack only enemies close by ([What each order attacks](#what-each-order-attacks)), but a "Guard" with no "Target" and a "Search and destroy" targeting the player's squad act on this from anywhere on the map.
+As soon as a Cybrid with its radar on comes within 840 m of the player and has a clear line of sight, every Cybrid on the map is aware of the player. Most orders still attack only enemies close by ([What each order attacks](#what-each-order-attacks)), but a "Guard" with no "Target" and a "Search and destroy" targeting the player's squad act on this from anywhere on the map.
 
 ### When a unit's radar is on
 
-- **The player's HERC** starts each mission with its radar off; the player switches it.
+- **The player's HERC** starts each mission with its radar off.
 - **The player's squadmates** follow the player's radar commands.
 - **Other HERCs** follow their "Radar" setting while they carry out their order. "On" keeps the radar on. "Off outside a fight" keeps it off. Whatever the setting, a HERC's radar is on while it fights, and a HERC under "Travel" or "Follow" also switches it on while it is watching an enemy.
 - **Listening posts and radar towers** always have their radar on.
@@ -186,13 +184,29 @@ Being shot does not make an aircraft fight back.
 
 A tower picks an enemy HERC, vehicle or aircraft it is aware of within 360 m, and picks again about every 5 seconds. It fires only at targets within 240 m, in bursts of about 5 seconds separated by pauses of about 5 seconds. Being shot does not make a tower change its target.
 
-## "When engaged, fires" triggers
+## "When engaged, activates" triggers
 
-A unit's "When engaged, fires" trigger fires when any of these happens:
+A unit's "When engaged, activates" trigger activates when any of these happens:
 
 - A unit on its side sights an enemy within 300 m of it. The sighting unit can be any unit on that side except the player.
 - It is within 300 m of an enemy, and each of the two is aware of the other through a sighting.
 - An enemy within 300 m of it hits any unit on its side.
 - An enemy hits it while it is that enemy's selected target, from any distance.
 
-While the player's ECM jams a unit, that unit's trigger cannot fire.
+While the player's ECM jams a unit, that unit's trigger cannot activate.
+
+## How missions are loaded
+
+The simulator gameplay does not read MSN files directly; instead, the game's shell (the menus and management portion of the game) reads MSN files, parses it, and then writes the mission in a different format as SCRIPT.DAT, which is the file that the simulator reads.
+
+Some elements of a mission, including objectives and objects within the mission, can be made *conditional* based on campaign variables (which carry over from mission to mission) or on random rolls (which are decided when the shell loads the mission). The shell only includes the content that is actually needed in the SCRIPT.DAT file.
+
+For example, a mission might have a particular group of Cybrids which is only included when a particular campaign variable has a value of `2`. When the shell parses the MSN file, it will check the value of this campaign variable. If the value matches, the group is written into the SCRIPT.DAT; otherwise, it's left out. 
+
+Note that *conditional* content is different than content that arrives on a trigger; for example, if a trigger causes some Cybrids to enter the mission zone via drop pod, those units are part of the mission and (in retail) count towards the simulator's limits.
+
+The simulator's limits, such as the maximum of 112 objects in the scene, do not apply when the MSN file is being parsed. This means that a MSN file which exceeds some of retail's simulator limits can technically still be valid with properly configured conditionals. For example, a MSN could have 130 objects, but 20 of them only load when a particular campaign variable is `1` and 25 of them only load when the same variable is `2`. This way, the total number of objects that reaches the simulator is never more than 112.
+
+The Mission Editor does *not* take conditionals into account when calculating whether limits have been exceeded. It is technically possible to build a mission which the Editor says exceeds the limits, but that will actually play correctly in retail. This requires great care and is not recommended. Most retail missions do not come anywhere close to the limits.
+
+Limits do not apply in HERCULAN Engine.

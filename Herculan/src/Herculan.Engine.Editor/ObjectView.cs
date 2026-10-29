@@ -17,10 +17,12 @@ namespace Herculan.Engine.Editor;
 /// (<see cref="MemberMover"/>) and its group's orders, its Present when, with what it does to a group it would leave empty
 /// (<see cref="PresentWhenView.DrawGroupLeftEmpty"/>), and for a machine of the squad the random table it picks from; its
 /// team; outside the squad its loadout or type, fixed or random (<see cref="LoadoutView"/>); its position as fields that move it,
-/// except in a group that arrives by drop pod or on foot (<see cref="PlannedGroup.OffScene"/>), and its heading, set for a structure or ground vehicle (<see cref="HeadingField"/>); a herc's,
-/// structure's or ground vehicle's starting condition (<see cref="StartingConditionField"/>) and a herc's radar setting (<see cref="RadarSettingField"/>), or for a machine of the player's squad which Herc it is (<see cref="SquadMachinePanel"/>); the two triggers it
-/// fires; the campaign variables it sets when put out of action; the win and lose conditions about it; Delete, or what
-/// refuses it; and, collapsed under Advanced, its type number, model, triangle and texture counts and hit radius.
+/// except in a group that arrives by drop pod or on foot (<see cref="PlannedGroup.OffScene"/>), and its heading, set for a
+/// structure or ground vehicle (<see cref="HeadingField"/>); a herc's, structure's or ground vehicle's starting condition
+/// (<see cref="StartingConditionField"/>) and a herc's radar setting (<see cref="RadarSettingField"/>), or for a machine of the
+/// player's squad which Herc it is (<see cref="SquadMachinePanel"/>); the two triggers it activates; the campaign variables it
+/// sets when put out of action; the win and lose conditions about it; Delete, or what refuses it; and, collapsed under Advanced,
+/// its type number, model, triangle and texture counts and hit radius.
 /// </summary>
 internal sealed class ObjectView {
 	private readonly MissionIndex _index;
@@ -115,7 +117,7 @@ internal sealed class ObjectView {
 			EditorText.Note(MissionText.OffScene(group.ArrivalVerb, member: true));
 		} else if (group.Waiting) {
 			ImGui.TextWrapped("Its group is waiting on a trigger: nothing of it is drawn or ticked until "
-				+ "that fires, and this position is a placeholder unless the group arrives in place.");
+				+ "that activates, and this position is a placeholder unless the group arrives in place.");
 		}
 
 		if (!planned.Squad) {
@@ -253,7 +255,7 @@ internal sealed class ObjectView {
 			+ $"{pos.Z / WorldScale.WorldUnitsPerMeter:F1} m";
 
 	/// <summary>
-	/// The triggers the roster record <paramref name="key"/> fires when engaged and when defeated, from the layout, each a choice
+	/// The triggers the roster record <paramref name="key"/> activates when engaged and when defeated, from the layout, each a choice
 	/// of none or any trigger (<see cref="ActionEditor.RequestObjectAction"/>), with a link, and what engaged and defeated mean
 	/// (docs/retail/simulation/mission-deployment.md#an-objects-own-two-actions--0x1b2-and-0x1b6), the engagement distance in
 	/// metres. Not for a machine of the player's squad, which is built from <c>player.mec</c>: no retail squad record carries
@@ -270,19 +272,19 @@ internal sealed class ObjectView {
 		ImGui.Separator();
 		string? why = _actions.WhyNoObjectAction(key);
 		string near = MissionText.Metres(Sim.Detection.EngagementRange);
-		OwnAction("When engaged, fires", key, defeated: false, engaged, why,
-			$"A trigger set here fires when it is engaged: its own side spots an enemy within {near} of it (the player's own "
+		OwnAction("When engaged, activates", key, defeated: false, engaged, why,
+			$"A trigger set here activates when it is engaged: its own side spots an enemy within {near} of it (the player's own "
 				+ $"sightings don't count), it and an enemy within {near} each know the other is there, an enemy within {near} hits "
-				+ "it or anything on its side, or an enemy hits it while it is that enemy's selected target. It cannot fire while "
+				+ "it or anything on its side, or an enemy hits it while it is that enemy's selected target. It cannot activate while "
 				+ "the player's ECM jams it.");
-		OwnAction("When defeated, fires", key, defeated: true, defeated, why,
-			"A trigger set here fires when it is defeated: destroyed; a HERC also when immobilized or left with no working weapon.");
+		OwnAction("When defeated, activates", key, defeated: true, defeated, why,
+			"A trigger set here activates when it the unit defeated (destroyed, immobilized, or left with no working weapon).");
 		EditorText.Reason(why);
 		EditorText.Reason(_actions.Failure);
 	}
 
-	// One of the two, row-10 GUID <current> or -1: a choice of the triggers, with a link, and when it fires on the label's hover.
-	// A ref the layout has no trigger for fires nothing, as the generation resolves it to none.
+	// One of the two, row-10 GUID <current> or -1: a choice of the triggers, with a link, and when it activates on the label's hover.
+	// A ref the layout has no trigger for activates nothing, as the generation resolves it to none.
 	private void OwnAction(string label, ObjectKey key, bool defeated, short current, string? why, string when) {
 		if (_index.Action(current) == null) {
 			current = -1;

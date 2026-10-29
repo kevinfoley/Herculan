@@ -265,7 +265,7 @@ internal sealed class OrderSlotsView {
 		bool set = action != -1 && _index.Action(action) != null;
 		if (set) {
 			_links.Trigger(action);
-			EditorText.Note("When that trigger fires, the group moves on to its next order.");
+			EditorText.Note("When that trigger activates, the group moves on to its next order.");
 		} else if (hasNext && verb is MissionOrder.VerbRam or MissionOrder.VerbSleep) {
 			EditorText.Note("Ram and Sleep never end by themselves: with no trigger here, the group never reaches its next order.");
 		}

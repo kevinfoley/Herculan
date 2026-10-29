@@ -67,7 +67,7 @@ namespace Herculan.Engine.Sim;
 /// The manual's [Space] "Fire Active Weapon" — the device struct's own byte at <c>+0x0d</c>, which
 /// is the joystick trigger and whatever key is bound alongside it.
 ///
-/// <para><b>Held, not pressed.</b> The trigger path re-reads it every frame, so a held trigger fires
+/// <para><b>Held, not pressed.</b> The trigger path re-reads it every frame, so a held trigger activates
 /// again as soon as the weapon is ready — see
 /// docs/retail/simulation/weapon-firing.md#the-trigger-is-polled-not-dispatched.</para>
 /// </param>

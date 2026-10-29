@@ -62,7 +62,7 @@ internal sealed class CountdownView {
 		ImGui.EndDisabled();
 		if (start != -1) {
 			_links.Trigger(start);
-			EditorText.Note("It counts down once that trigger fires.");
+			EditorText.Note("It counts down once that trigger activates.");
 		} else {
 			EditorText.Note("It counts down from the start of the mission.");
 		}

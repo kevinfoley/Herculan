@@ -76,8 +76,8 @@ internal static class MissionText {
 	/// </summary>
 	public static string ArrivalNote(short verb) => verb is MissionAction.VerbPodWide or MissionAction.VerbPodNarrow
 			or MissionAction.VerbWalkBehind or MissionAction.VerbWalkAhead
-		? $"It arrives {Arrival(verb)}, {ArrivalDistance(verb)} from the player, wherever they are when the trigger fires."
-		: "It goes live where it stands when the trigger fires.";
+		? $"It arrives {Arrival(verb)}, {ArrivalDistance(verb)} from the player, wherever they are when the trigger activates."
+		: "It goes live where it stands when the trigger activates.";
 
 	/// <summary>
 	/// How far from the player a group arrives (<see cref="Sim.MissionGroup.PodDistance"/> and the two walk-on distances), in
@@ -105,7 +105,7 @@ internal static class MissionText {
 		string away = $"{ArrivalDistance(verb)} from the player, wherever they are";
 		return member
 			? $"Not shown in the scene: its group arrives {away}, when the trigger it waits on fires ({Arrival(verb)})."
-			: $"Not shown in the scene: it arrives {away}, when that trigger fires ({Arrival(verb)}).";
+			: $"Not shown in the scene: it arrives {away}, when that trigger activates ({Arrival(verb)}).";
 	}
 
 	/// <summary>

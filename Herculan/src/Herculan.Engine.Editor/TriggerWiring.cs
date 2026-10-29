@@ -9,13 +9,13 @@ namespace Herculan.Engine.Editor;
 /// </summary>
 internal abstract record TriggerFollower;
 
-/// <summary>Row-16 GUID <paramref name="Group"/> is not in the mission until the trigger fires (its deployment action).</summary>
+/// <summary>Row-16 GUID <paramref name="Group"/> is not in the mission until the trigger activates (its deployment action).</summary>
 internal sealed record BringsInGroup(short Group) : TriggerFollower;
 
-/// <summary>Row-16 GUID <paramref name="Group"/> moves on from the order in its slot <paramref name="Slot"/> when the trigger fires.</summary>
+/// <summary>Row-16 GUID <paramref name="Group"/> moves on from the order in its slot <paramref name="Slot"/> when the trigger activates.</summary>
 internal sealed record EndsOrder(short Group, int Slot) : TriggerFollower;
 
-/// <summary>Row-11 GUID <paramref name="Countdown"/> starts counting down when the trigger fires.</summary>
+/// <summary>Row-11 GUID <paramref name="Countdown"/> starts counting down when the trigger activates.</summary>
 internal sealed record StartsCountdown(short Countdown) : TriggerFollower;
 
 /// <summary>

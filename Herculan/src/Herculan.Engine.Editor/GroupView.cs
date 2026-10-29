@@ -188,7 +188,7 @@ internal sealed class GroupView {
 		if (group.OffScene) {
 			EditorText.Note(MissionText.OffScene(group.ArrivalVerb, member: false));
 		} else if (waitsOn != -1) {
-			EditorText.Wrapped($"Not in the mission until that trigger fires; then it arrives {MissionText.Arrival(group.ArrivalVerb)}.");
+			EditorText.Wrapped($"Not in the mission until that trigger activates; then it arrives {MissionText.Arrival(group.ArrivalVerb)}.");
 		} else {
 			ImGui.TextUnformatted("In the mission from the start.");
 		}
