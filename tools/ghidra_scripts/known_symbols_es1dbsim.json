@@ -17950,7 +17950,7 @@
       "type": "function",
       "confidence": "high",
       "name": "PaperDoll_RecolorRect",
-      "description": "(mode, tint, key, rect) in stack order, callee-cleaned: makes the display 000bdd28's draw page +0x3c its source page +0x38 (storing it at 00098dd6 and passing it to g_RasterRoutines slot 16, 0009df14, when that display is current), offsets rect by the canvas context 000bdbda's +0x210, +0x214 less its +0x220, +0x224, and walks it a row at a time, left to right, one pixel at a time, reading through slot 4 (0009dee4) and writing through slot 5 (0009dee8). Mode 0 shifts a pixel in key..key+2 by tint - key and mode 1 sets a pixel equal to key to tint, both skipping the walk when tint = key; mode 2 adds tint to every pixel but 63; mode 3 sets a pixel in key..key+2 to tint. Jump table 0009335c. ES2's PaperDoll_RecolorRect (DBSIM 00437e94), which tests the key alone in modes 0 and 3, spares COLORS.DAT id 19's index in mode 2, writes a block per pixel for a doubled bank and returns when the top row is above the screen. es2_xref finds six calls: one from MfdStatusScreen_Paint (000330b4), five from 000424f8.",
+      "description": "(mode, tint, key, rect) in stack order, callee-cleaned: makes the display 000bdd28's draw page +0x3c its source page +0x38 (storing it at 00098dd6 and passing it to g_RasterRoutines slot 16, 0009df14, when that display is current), offsets rect by the canvas context 000bdbda's +0x210, +0x214 less its +0x220, +0x224, and walks it a row at a time, left to right, one pixel at a time, reading through slot 4 (0009dee4) and writing through slot 5 (0009dee8). Mode 0 shifts a pixel in key..key+2 by tint - key and mode 1 sets a pixel equal to key to tint, both skipping the walk when tint = key; mode 2 adds tint to every pixel but 63; mode 3 sets a pixel in key..key+2 to tint. Jump table 0009335c. ES2's PaperDoll_RecolorRect (DBSIM 00437e94), which tests the key alone in modes 0 and 3, spares COLORS.DAT id 19's index in mode 2, writes a block per pixel for a doubled bank and returns when the top row is above the screen. es2_xref finds six calls: one from MfdStatusScreen_Paint (000330b4), five from HddDamageScreen_Update (000424f8).",
       "source": "Herculan/docs/es1/simulation/paper-doll.md#tinting",
       "verified": {
         "bytes": "00030818+667",
@@ -17965,7 +17965,7 @@
       "type": "function",
       "confidence": "high",
       "name": "PaperDoll_RecolorRectFromArt",
-      "description": "(mode, tint, key, artOrigin, art, rect) in stack order, callee-cleaned: PaperDoll_RecolorRect (00030818)'s set-up and walk, with mode 0 testing the byte of art (pixels from +0xe, rows of its int16 width +6) at the pixel's offset from artOrigin, offset like rect, for key..key+2 and writing it shifted by tint - key, whatever tint and key are; modes 1 to 3 as PaperDoll_RecolorRect's. Jump table 0009336c. ES2's PaperDoll_RecolorRectFromArt (DBSIM 00438230). es2_xref finds one call, from 000424f8.",
+      "description": "(mode, tint, key, artOrigin, art, rect) in stack order, callee-cleaned: PaperDoll_RecolorRect (00030818)'s set-up and walk, with mode 0 testing the byte of art (pixels from +0xe, rows of its int16 width +6) at the pixel's offset from artOrigin, offset like rect, for key..key+2 and writing it shifted by tint - key, whatever tint and key are; modes 1 to 3 as PaperDoll_RecolorRect's. Jump table 0009336c. ES2's PaperDoll_RecolorRectFromArt (DBSIM 00438230). es2_xref finds one call, from HddDamageScreen_Update (000424f8).",
       "source": "Herculan/docs/es1/simulation/paper-doll.md#tinting",
       "verified": {
         "bytes": "00030ab4+782",
@@ -17980,7 +17980,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Damage_PickRegionTint",
-      "description": "(out, region, damage) in stack order, callee-cleaned: with intact = (0x100 - damage) * 100 >> 8 banded at 90, 74, 51 and 1 into states 0 to 4, writes the state to out +0 and a palette index to out +4. For the region's mode +0x18 of 0, 2 or 3 the indices are 0x36, 0x39, 0x5c, 0x33 and 0x3e; for mode 1, the region's color +0x14 for state 0, that color minus the state for states 1 and 2 (0x3c plus the state when the color is 0x3c), and 0x30 and 0x3e for states 3 and 4. A mode above 3 writes EDX and EDI as they stand. Jump table 0009337c. ES2's Damage_PickRegionTint (DBSIM 00438624), whose colors are HudColorTable ids. es2_xref finds five calls: one from MfdStatusScreen_Paint (000330b4), four from 000424f8.",
+      "description": "(out, region, damage) in stack order, callee-cleaned: with intact = (0x100 - damage) * 100 >> 8 banded at 90, 74, 51 and 1 into states 0 to 4, writes the state to out +0 and a palette index to out +4. For the region's mode +0x18 of 0, 2 or 3 the indices are 0x36, 0x39, 0x5c, 0x33 and 0x3e; for mode 1, the region's color +0x14 for state 0, that color minus the state for states 1 and 2 (0x3c plus the state when the color is 0x3c), and 0x30 and 0x3e for states 3 and 4. A mode above 3 writes EDX and EDI as they stand. Jump table 0009337c. ES2's Damage_PickRegionTint (DBSIM 00438624), whose colors are HudColorTable ids. es2_xref finds five calls: one from MfdStatusScreen_Paint (000330b4), four from HddDamageScreen_Update (000424f8).",
       "source": "Herculan/docs/es1/simulation/paper-doll.md#tinting",
       "verified": {
         "bytes": "00030dc4+242",
@@ -23230,7 +23230,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HDDisplay_Ctor",
-      "description": "(screen, a, b) in stack order, callee-cleaned: the Heads-Down Display pages' base: stores b at +0, a at +4 and HDDisplayVtable (000944fe) at +0xc. es2_xref finds calls from HddCommandScreen_Ctor (0003ee58) and 00042164, the command screen's and the damage screen's constructors. ES2's HDDisplay_Ctor (DBSIM 00448cac), which keeps the vptr at +0 and the two arguments at +4 and +8.",
+      "description": "(screen, a, b) in stack order, callee-cleaned: the Heads-Down Display pages' base: stores b at +0, a at +4 and HDDisplayVtable (000944fe) at +0xc. es2_xref finds calls from HddCommandScreen_Ctor (0003ee58) and HddDamageScreen_Ctor (00042164), the command screen's and the damage screen's constructors. ES2's HDDisplay_Ctor (DBSIM 00448cac), which keeps the vptr at +0 and the two arguments at +4 and +8.",
       "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-display-object--hdddisplay_ctor-0003c258; ES1DBSIM decompile at 0003c228",
       "verified": {
         "bytes": "0003c228+32",
@@ -23290,7 +23290,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HddDisplay_Ctor",
-      "description": "(display, cockpit, block) in stack order, callee-cleaned: the Heads-Down Display, 0x51f bytes, from the .GAU block at 1212. PanelGauge_Ctor (00031318); the three comm-box gauges at +0xf6 (0x14a bytes, CommBox_ElementCtor (0003cab8)); HDDGaugeVtable (0009451e) at +0x76; the clip context CommBox_ClipContext (000b15f8) from GLViewport_Ctor; dba\\static into HddStaticBank (000944d0) the first time; the screen rect +0x8a, damage column +0x9a, order column +0xaa from int32 4-7, 12-15, 8-11 plus the origin int32 0-1; +0xd2 = -1; the pages HddCommandScreen_Ctor (0003ee58)(0, display, order column, screen) at +0xca and 00042164(0, display, damage column, screen) at +0xce; the fifteen buttons HddButton_Ctor (0003ea5c)(0, i, display, int32 0x14+4i.. plus origin) at +0x14 + 4i with dba\\pbuttons frames (22-25, the arrows from int32 0x5c with Widget_SetHitShape (00043784)(button, 1) when that is 0x23, 51-54), each registered with Widget_RegisterClickable on the cockpit's root; XMIT's, CANCEL's and the title's (+0x4d8, on button 9's rect) labels in cpred, centered, fill 0x3f; +0x64 = 15; the title indicator +0xba from int32 16-19; each gauge's marker rect +0x2d from int32 0x50+4i and name +0x137 = 0; +0x4e8 = +0x4d4 = -1; HddDisplay_SetPage(display, 0); CommBox_OnMessageBegin and CommBox_OnMessageEnd added to CockpitView_GetSquadMessagePort's port; HddDisplayInstance (000944cc) = display; +0x4e5 = 0xff; the highlight mode +0x4e6 from int32 0x5e; str\\pilots into HddPilotNameTable (000944d4) the first time; the five subjects and names (YOU, three empty, TARGET), +0x4dc = 1, +0x51b = NO TARGET SELECTED. ES2's HddDisplay_Ctor (DBSIM 00448cc8).",
+      "description": "(display, cockpit, block) in stack order, callee-cleaned: the Heads-Down Display, 0x51f bytes, from the .GAU block at 1212. PanelGauge_Ctor (00031318); the three comm-box gauges at +0xf6 (0x14a bytes, CommBox_ElementCtor (0003cab8)); HDDGaugeVtable (0009451e) at +0x76; the clip context CommBox_ClipContext (000b15f8) from GLViewport_Ctor; dba\\static into HddStaticBank (000944d0) the first time; the screen rect +0x8a, damage column +0x9a, order column +0xaa from int32 4-7, 12-15, 8-11 plus the origin int32 0-1; +0xd2 = -1; the pages HddCommandScreen_Ctor (0003ee58)(0, display, order column, screen) at +0xca and HddDamageScreen_Ctor (00042164)(0, display, damage column, screen) at +0xce; the fifteen buttons HddButton_Ctor (0003ea5c)(0, i, display, int32 0x14+4i.. plus origin) at +0x14 + 4i with dba\\pbuttons frames (22-25, the arrows from int32 0x5c with Widget_SetHitShape (00043784)(button, 1) when that is 0x23, 51-54), each registered with Widget_RegisterClickable on the cockpit's root; XMIT's, CANCEL's and the title's (+0x4d8, on button 9's rect) labels in cpred, centered, fill 0x3f; +0x64 = 15; the title indicator +0xba from int32 16-19; each gauge's marker rect +0x2d from int32 0x50+4i and name +0x137 = 0; +0x4e8 = +0x4d4 = -1; HddDisplay_SetPage(display, 0); CommBox_OnMessageBegin and CommBox_OnMessageEnd added to CockpitView_GetSquadMessagePort's port; HddDisplayInstance (000944cc) = display; +0x4e5 = 0xff; the highlight mode +0x4e6 from int32 0x5e; str\\pilots into HddPilotNameTable (000944d4) the first time; the five subjects and names (YOU, three empty, TARGET), +0x4dc = 1, +0x51b = NO TARGET SELECTED. ES2's HddDisplay_Ctor (DBSIM 00448cc8).",
       "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-display-object--hdddisplay_ctor-0003c258; ES1DBSIM decompile at 0003c258",
       "verified": {
         "bytes": "0003c258+2144",
@@ -23395,7 +23395,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HddDisplay_KeyDispatch",
-      "description": "(display, code) in stack order, callee-cleaned, slot +0x10 (key) of HDDGaugeVtable: REPNE SCASD over the 17 codes of HddDisplay_KeyCodes (00094574), jumping through the 17 dwords after them; any other code goes to the current page's key slot (+0x14 of its +0xc table), whose answer it returns, and a listed one returns 1. Arrows 0x48/0x50/0x4b/0x4d press buttons 2-5, 0x02-0x04 buttons 10-12, 0x0c/0x4a button 6, 0x0d/0x4e button 7 (a press skips state 2 and 3 and calls the click slot with (button, 1)); 0x1f/0x17/0x11 run HddDisplay_SetPage(display, 1) and 000423d8(damage screen, 0/1/2); 0x64b, 0x64d and 0x62b (Ctrl+Alt with keypad 4, keypad 6, backslash) step HddDebugMessageId (00094570) down to 0, up to 0x29, or leave it, after making a negative one 1, and post {that id, g_SquadmateMachines[0]} to the pilot channel with MessagePort_Post. ES2's HddDisplay_KeyDispatch (DBSIM 00449fcc), which has none of the three Ctrl+Alt codes.",
+      "description": "(display, code) in stack order, callee-cleaned, slot +0x10 (key) of HDDGaugeVtable: REPNE SCASD over the 17 codes of HddDisplay_KeyCodes (00094574), jumping through the 17 dwords after them; any other code goes to the current page's key slot (+0x14 of its +0xc table), whose answer it returns, and a listed one returns 1. Arrows 0x48/0x50/0x4b/0x4d press buttons 2-5, 0x02-0x04 buttons 10-12, 0x0c/0x4a button 6, 0x0d/0x4e button 7 (a press skips state 2 and 3 and calls the click slot with (button, 1)); 0x1f/0x17/0x11 run HddDisplay_SetPage(display, 1) and HddDamageScreen_SetView (000423d8)(damage screen, 0/1/2); 0x64b, 0x64d and 0x62b (Ctrl+Alt with keypad 4, keypad 6, backslash) step HddDebugMessageId (00094570) down to 0, up to 0x29, or leave it, after making a negative one 1, and post {that id, g_SquadmateMachines[0]} to the pilot channel with MessagePort_Post. ES2's HddDisplay_KeyDispatch (DBSIM 00449fcc), which has none of the three Ctrl+Alt codes.",
       "source": "Herculan/docs/es1/simulation/heads-down-display.md#keys; ES1DBSIM decompile at 0003d12c, after ES2RepairFunctionBody's switch preview",
       "verified": {
         "bytes": "0003d12c+772",
@@ -23425,7 +23425,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HddDisplay_HandleWidgetPress",
-      "description": "(display) callee-cleaned: switched on the pressed index +0x4e5, which it puts back to 0xff; returns at once at 0xff, and while the display is dark (+0x74) returns for a button above 1 leaving the index. 0/1 HddDisplay_SetPage; 2-7 on page 0 the command screen's HddMap_PanUp (0003fd2c), HddMap_PanDown (0003fd58), HddMap_PanLeft (0003fcd4), HddMap_PanRight (0003fd00), HddMap_ZoomOut (0003fc70), HddMap_ZoomIn (0003fca4) with page 0's update flag +0xd8 and the stage +0x75 = 2; 2/3 and 9 on page 1 the damage screen's 0004246c or 00042494 with +0xd7; 4/5 on page 1 HddDisplay_PrevSubject/NextSubject into +0x4e1 and the title indicator from the subject's +0x9d, a null subject as clear (0x3b set, 0x39 clear, copied with Widget_DrawToCockpit); 10-12 (page 1 switching to 0 first, nothing on another page) HddDisplay_SelectPilot for a slot not selected whose machine is set and not destroyed (+0x93), then Cockpit_SetOffForwardCursor(2) while the command screen's +0x103 is set; 13 XMIT on page 0: HddCommandScreen_SetMessageRow (00040834)(screen, 1, 0) with +0x104 clear, else HddCommandScreen_CommitPick (0004075c), and with a pilot selected the word +0x5d into HddOrderRecord (000b0ddc), HddCommandScreen_FillOrderRecord (0004070c), Squad_SendOrderToSlot(cockpit +0x10, slot, record), Cockpit_SetOffForwardCursor(0), HddCommandScreen_CancelTransmission (000407d4), HddDisplay_SelectPilot(-1); 14 CANCEL: HddCommandScreen_CancelTransmission (000407d4), Cockpit_SetOffForwardCursor(0), HddDisplay_SelectPilot(-1). ES2's HddDisplay_HandleWidgetPress (DBSIM 0044a178).",
+      "description": "(display) callee-cleaned: switched on the pressed index +0x4e5, which it puts back to 0xff; returns at once at 0xff, and while the display is dark (+0x74) returns for a button above 1 leaving the index. 0/1 HddDisplay_SetPage; 2-7 on page 0 the command screen's HddMap_PanUp (0003fd2c), HddMap_PanDown (0003fd58), HddMap_PanLeft (0003fcd4), HddMap_PanRight (0003fd00), HddMap_ZoomOut (0003fc70), HddMap_ZoomIn (0003fca4) with page 0's update flag +0xd8 and the stage +0x75 = 2; 2/3 and 9 on page 1 the damage screen's HddDamageScreen_NextView (0004246c) or HddDamageScreen_PrevView (00042494) with +0xd7; 4/5 on page 1 HddDisplay_PrevSubject/NextSubject into +0x4e1 and the title indicator from the subject's +0x9d, a null subject as clear (0x3b set, 0x39 clear, copied with Widget_DrawToCockpit); 10-12 (page 1 switching to 0 first, nothing on another page) HddDisplay_SelectPilot for a slot not selected whose machine is set and not destroyed (+0x93), then Cockpit_SetOffForwardCursor(2) while the command screen's +0x103 is set; 13 XMIT on page 0: HddCommandScreen_SetMessageRow (00040834)(screen, 1, 0) with +0x104 clear, else HddCommandScreen_CommitPick (0004075c), and with a pilot selected the word +0x5d into HddOrderRecord (000b0ddc), HddCommandScreen_FillOrderRecord (0004070c), Squad_SendOrderToSlot(cockpit +0x10, slot, record), Cockpit_SetOffForwardCursor(0), HddCommandScreen_CancelTransmission (000407d4), HddDisplay_SelectPilot(-1); 14 CANCEL: HddCommandScreen_CancelTransmission (000407d4), Cockpit_SetOffForwardCursor(0), HddDisplay_SelectPilot(-1). ES2's HddDisplay_HandleWidgetPress (DBSIM 0044a178).",
       "source": "Herculan/docs/es1/simulation/heads-down-display.md#presses; ES1DBSIM decompile at 0003d48c",
       "verified": {
         "bytes": "0003d48c+1062",
@@ -23725,7 +23725,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HddDamageScreen_SetSubjectCaption",
-      "description": "(display, label) in stack order, callee-cleaned: by the selector +0x519, the label's font +0 and fill +0x1c: cpylw (ColorSchemePanels[3]) on 0x32 for 0, cpred on 0x3b for 4, cpred on HudColorTable_Get(selector - 1) otherwise; then Label_SetText with the name +0x505 + 4 * selector. es2_xref finds one call, from 000424f8. ES2's HddDamageScreen_SetSubjectCaption (DBSIM 0044ba2c).",
+      "description": "(display, label) in stack order, callee-cleaned: by the selector +0x519, the label's font +0 and fill +0x1c: cpylw (ColorSchemePanels[3]) on 0x32 for 0, cpred on 0x3b for 4, cpred on HudColorTable_Get(selector - 1) otherwise; then Label_SetText with the name +0x505 + 4 * selector. es2_xref finds one call, from HddDamageScreen_Update (000424f8). ES2's HddDamageScreen_SetSubjectCaption (DBSIM 0044ba2c).",
       "source": "Herculan/docs/es1/simulation/heads-down-display.md#subject-stepping; ES1DBSIM decompile at 0003e9b8",
       "verified": {
         "bytes": "0003e9b8+151",
@@ -25037,6 +25037,261 @@
         "sha1": "6daa14739c14",
         "scope": "body",
         "via": "raw"
+      }
+    },
+    {
+      "address": "000420c8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorHddDamageCopy",
+      "description": "(p, flags), its arguments removed by this function: byte for byte the code of HeapPtr_DtorGunlistCopy (0000baf0), relocated operands aside. Opens the run of ConfigPart's copies that starts the Heads-Down Display's damage screen's object file.",
+      "source": "Herculan/docs/es1/simulation/hdd-damage-screen.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 000420c8",
+      "verified": {
+        "bytes": "000420c8+40",
+        "sha1": "da7203b36633",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000420f0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorHddDamageCopy",
+      "description": "(part, flags), its arguments removed by this function: slot +0x1c of the vtable 00094a32: byte for byte the code of ConfigPart_DtorDetAnimObjCopy (000028e0), relocated operands aside, storing 00094a32 and 00094a66 where that stores 000903ae and 0009037a. ES2's ConfigPart_Dtor (DBSIM 00420730).",
+      "source": "Herculan/docs/es1/simulation/hdd-damage-screen.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 000420f0",
+      "verified": {
+        "bytes": "000420f0+63",
+        "sha1": "8953314bd979",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0004212f",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagHddDamageCopy",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +4 of the vtable 00094a32; the code of ConfigPart_GetClassTagDetAnimObjCopy (000028d6).",
+      "source": "Herculan/docs/es1/simulation/hdd-damage-screen.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0004212f",
+      "verified": {
+        "bytes": "0004212f+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00042138",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorHddDamageCopy",
+      "description": "(part, flags), its arguments removed by this function: slot +0x1c of the vtable 00094a66 (entered at its padding 00042135): byte for byte the code of TSPartBase_Dtor (0005d614), relocated operands aside, storing 00094a66 where that stores 000974aa. ES2's TSPartBase_Dtor (DBSIM 0049224b).",
+      "source": "Herculan/docs/es1/simulation/hdd-damage-screen.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00042138",
+      "verified": {
+        "bytes": "00042138+42",
+        "sha1": "db47d94e3b21",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00042164",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDamageScreen_Ctor",
+      "description": "(screen, display, damage column, screen rect): allocates 0xec bytes with operator_new (000015a4) when given none, returning 0 when that fails; HDDisplay_Ctor (0003c228)(screen, display, screen rect); HDDDamageVtable (00094aaa) at +0xc. Twelve rows down the damage column, each a name label at +0x10 + 4i and a value label at +0x40 + 4i, Label_Ctor (00030f44)(0, cpgreen, ColorSchemePanels[1]) placed by Label_SetRect (00031080) with flags 1 and margin (0, -1), 4 pixels tall at a pitch of cpgreen's cell height (its int16 +10), the name from the column's x0 + 12 to x1 less HudFont_MeasureString (00069d0c)(cpgreen, the string 100 at 00094ac6) and the value from there to x1, each filled 0x3f; the caption label +0x70 in cpgreen over the screen rect's x0 + 0x14 to x0 + 0x3c, its bottom 2 above the rect's, flags 2. Then HddDamageScreen_SetView (000423d8)(screen, 0); +0x78 = -1; +0xe0 and +0xe4 = the display's subject +0x4e1; the int16 +0x8e, +0xb4 and +0xcc = 1; and the no-subject label +0xe8 in cpred over 40 pixels either side of the screen rect's middle x and from its middle y to that + 10, flags 2, filled 0x3b. ES2's HddDamageScreen_Ctor (DBSIM 0045079c), which builds 13 rows on shifted coordinates, places the no-subject label right of center and resolves its color ids.",
+      "source": "Herculan/docs/es1/simulation/hdd-damage-screen.md#building-it--hdddamagescreen_ctor-00042164; ES1DBSIM decompile at 00042164",
+      "verified": {
+        "bytes": "00042164+565",
+        "sha1": "64eb43b953e8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00042399",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDamageScreen_HideNoOp",
+      "description": "Frameless: three NOPs and RET 4. Slot +0xc, the hide, of HDDDamageVtable (00094aaa). ES2's table holds the pages' base's HDDisplay_HideNoOp (DBSIM 00451e86) in that slot.",
+      "source": "Herculan/docs/es1/simulation/hdd-damage-screen.md#building-it--hdddamagescreen_ctor-00042164; ES1DBSIM disassembly at 00042399",
+      "verified": {
+        "bytes": "00042399+6",
+        "sha1": "0011b5e9ac52",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0004239f",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDamageScreen_KeyDispatch",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 8: returns 0. Slot +0x14, the key slot, of HDDDamageVtable (00094aaa); the code of HDDisplay_KeyDispatchNone (0003c24f). ES2's HddDamageScreen_KeyDispatch (DBSIM 00451e8b).",
+      "source": "Herculan/docs/es1/simulation/hdd-damage-screen.md#building-it--hdddamagescreen_ctor-00042164; ES1DBSIM disassembly at 0004239f",
+      "verified": {
+        "bytes": "0004239f+6",
+        "sha1": "ae2a5ee89632",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "000423a8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDamageScreen_Repaint",
+      "description": "(screen): the view drawn +0x78 = -1, so the update redraws the whole page, then HddDamageScreen_Update (000424f8)(screen, 0). Slot +4, the repaint, of HDDDamageVtable (00094aaa), by its padding 000423a5. ES2's HddDamageScreen_Repaint (DBSIM 00450b2c).",
+      "source": "Herculan/docs/es1/simulation/hdd-damage-screen.md#views; ES1DBSIM decompile at 000423a8",
+      "verified": {
+        "bytes": "000423a8+27",
+        "sha1": "104bea396a49",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000423c4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDamageScreen_Tick",
+      "description": "(screen): HddDamageScreen_Update (000424f8)(screen, 1). Slot +8, the update, of HDDDamageVtable (00094aaa), by its padding 000423c3. ES2's HddDamageScreen_Tick (DBSIM 00450b4c).",
+      "source": "Herculan/docs/es1/simulation/hdd-damage-screen.md#views; ES1DBSIM decompile at 000423c4",
+      "verified": {
+        "bytes": "000423c4+17",
+        "sha1": "445d967651bc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000423d8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDamageScreen_SetView",
+      "description": "(screen, view): the view +0x74 = view, the row offset +0x7c = 0 and the offset drawn +0x80 = -1; then for view 0 the name list +0x84 = STRINGS0 group 12 (000bd364) and the row count +0x88 = 0x13, for view 1 group 13 (000bd3b0) and 0xc, and for view 2 HddDamage_WeaponNames (000b160c) and the int16 count +4 of the subject's (+0xe4) weapon manager +0x198, 0 with no subject. ES2's HddDamageScreen_SetView (DBSIM 00450b60), which stores no name list.",
+      "source": "Herculan/docs/es1/simulation/hdd-damage-screen.md#views; ES1DBSIM decompile at 000423d8",
+      "verified": {
+        "bytes": "000423d8+147",
+        "sha1": "e9575e2b59d2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004246c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDamageScreen_NextView",
+      "description": "(screen): HddDamageScreen_SetView (000423d8)(screen, the view +0x74 plus 1, or 0 from 2). ES2's HddDamageScreen_NextView (DBSIM 00450bcc).",
+      "source": "Herculan/docs/es1/simulation/hdd-damage-screen.md#views; ES1DBSIM decompile at 0004246c",
+      "verified": {
+        "bytes": "0004246c+37",
+        "sha1": "fff357a8120c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00042494",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDamageScreen_PrevView",
+      "description": "(screen): HddDamageScreen_SetView (000423d8)(screen, the view +0x74 less 1, or 2 from 0). ES2's HddDamageScreen_PrevView (DBSIM 00450bf0).",
+      "source": "Herculan/docs/es1/simulation/hdd-damage-screen.md#views; ES1DBSIM decompile at 00042494",
+      "verified": {
+        "bytes": "00042494+40",
+        "sha1": "3abc71369eff",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000424bc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDamageScreen_PageDown",
+      "description": "(screen): the row offset +0x7c plus 12 when that is below the row count +0x88. ES2's HddDamageScreen_PageDown (DBSIM 00450c18), which steps 13. es2_xref finds no branch, stored pointer or vtable slot reaching it.",
+      "source": "Herculan/docs/es1/simulation/hdd-damage-screen.md#views; ES1DBSIM decompile at 000424bc",
+      "verified": {
+        "bytes": "000424bc+32",
+        "sha1": "31e182bbcbbd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000424dc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDamageScreen_PageUp",
+      "description": "(screen): the row offset +0x7c less 12 when that is not negative. ES2's HddDamageScreen_PageUp (DBSIM 00450c38), which steps 13. es2_xref finds no branch, stored pointer or vtable slot reaching it.",
+      "source": "Herculan/docs/es1/simulation/hdd-damage-screen.md#views; ES1DBSIM decompile at 000424dc",
+      "verified": {
+        "bytes": "000424dc+26",
+        "sha1": "f4f5a984206f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000424f8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDamageScreen_Update",
+      "description": "(screen, copy): draws the damage page. With the display dark (its +0x74) it fills the screen rect 0x1f and returns. Otherwise the subject +0xe4 = the display's +0x4e1, and a new subject (HddDamageScreen_SetView (000423d8) again), view or row offset makes a full redraw; with no subject it redraws only on a new subject or view. By the view it picks the names, the readouts from Mech_ReadDamageReadouts (0001583c) (entries 1-19, 20-31 or from 32) and the .PDG view (0, 1 or 0); for view 2 it first copies each non-null mount's WeaponMount_GetDisplayName (0000aa9c) into the next 8-byte slot of HddDamage_WeaponNameBuffer (000b1634) and points HddDamage_WeaponNames (000b160c) at it by mount index. Not a full redraw and the readouts unchanged: it returns. A full redraw fills the screen rect 0x1f, runs HddDamageScreen_SetSubjectCaption (0003e9b8), sets the no-subject label's text with no subject, else blits the doll and HddDamageScreen_BlitWeaponIcons (000432b0) and recolors with PaperDoll_RecolorRect (00030818) (views 0 and 1: icon rects 0x38 to 0x32; view 2: the view 0x36-0x38 and other region colors to 0x32, icons 0x38 to 0x36). Then each row, at most 12 from the offset: tints its region with PaperDoll_RecolorRectFromArt (00030ab4) or its icon with PaperDoll_RecolorRect in mode 0 by Damage_PickRegionTint (00030dc4), view 0's regions 0 and 2 on the mean with the next index and 1 and 3 not at all, and sets the name and value labels (ltoa (00064720) of the percent) in the state's ColorSchemePanels font; saves the readouts at +0x8c. Each redrawn rect goes to the other page through Widget_DrawToCockpit (0002b058) when copy is set. ES2's HddDamageScreen_Update (DBSIM 00450c54), which shows 13 rows, picks flyer names and pairs region 0 and 1 alone.",
+      "source": "Herculan/docs/es1/simulation/hdd-damage-screen.md#drawing-it--hdddamagescreen_update-000424f8; ES1DBSIM decompile at 000424f8",
+      "verified": {
+        "bytes": "000424f8+3484",
+        "sha1": "456d5c21328e",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00043294",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDamageScreen_Show",
+      "description": "(screen): HddDamageScreen_SetView (000423d8)(screen, the view +0x74), then the view drawn +0x78 = -1. Slot +0x10, the show, of HDDDamageVtable (00094aaa). ES2's HddDamageScreen_Show (DBSIM 00451d94).",
+      "source": "Herculan/docs/es1/simulation/hdd-damage-screen.md#views; ES1DBSIM decompile at 00043294",
+      "verified": {
+        "bytes": "00043294+28",
+        "sha1": "a703e8efe495",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000432b0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddDamageScreen_BlitWeaponIcons",
+      "description": "(screen, origin, list): for each of the list's int32 count +0 entries, 0x22 bytes from the pointer at +4, a non-null bitmap +0 drawn with Bitmap_Blit (00067048)(bitmap, the entry's flags +0x1c, its position +4/+8 plus the origin). Its RET 0xc at 0004332c ends the damage screen's object file. ES2's HddDamageScreen_BlitWeaponIcons (DBSIM 00451db8).",
+      "source": "Herculan/docs/es1/simulation/hdd-damage-screen.md#the-rows; ES1DBSIM decompile at 000432b0",
+      "verified": {
+        "bytes": "000432b0+128",
+        "sha1": "61ca44c3a4c6",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -45377,6 +45632,24 @@
       "source": "Herculan/docs/es1/simulation/hdd-command-screen.md#the-click-regions-class; ES1DBSIM image at 00094a0a"
     },
     {
+      "address": "00094a98",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HddDamageColorIds",
+      "description": "Four dwords, 0x3f, 0x35, 0x3b and 0x38, in the damage screen's data where ES2's HddDamageColorIds (DBSIM 0049d9ec) holds the color ids 19, 9, 15 and 12. es2_xref finds no reference to any of the four.",
+      "source": "Herculan/docs/es1/simulation/hdd-damage-screen.md#where-the-object-file-starts-and-ends"
+    },
+    {
+      "address": "00094aaa",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HDDDamageVtable",
+      "description": "The damage screen's vtable, stored at +0xc by HddDamageScreen_Ctor (00042164): a zero dword, then HddDamageScreen_Repaint (000423a8) and HddDamageScreen_Tick (000423c4) by their padding, HddDamageScreen_HideNoOp (00042399), HddDamageScreen_Show (00043294) and HddDamageScreen_KeyDispatch (0004239f). ES2's HDDDamageVtable (DBSIM 0049dab0).",
+      "source": "Herculan/docs/es1/simulation/hdd-damage-screen.md#building-it--hdddamagescreen_ctor-00042164"
+    },
+    {
       "address": "00094b84",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -47463,6 +47736,33 @@
       "name": "HddMapView_Angles",
       "description": "Three int16, the orientation HddCommandScreen_Ctor (0003ee58) passes TSCamera_Ctor for the map's camera; the static initializer HddCommandScreen_StaticInit (000420b0) stores (0xc000, 0, 0). ES2's HddMapView_Angles (DBSIM 0049d6c0).",
       "source": "Herculan/docs/es1/simulation/hdd-command-screen.md#where-the-object-file-starts-and-ends"
+    },
+    {
+      "address": "000b160c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HddDamage_WeaponNames",
+      "description": "Ten dwords: the weapons view's names by mount index, the name list HddDamageScreen_SetView (000423d8) gives view 2. HddDamageScreen_Update (000424f8) points entry i at a slot of HddDamage_WeaponNameBuffer (000b1634) for each non-null mount i and leaves an empty mount's entry as it was.",
+      "source": "Herculan/docs/es1/simulation/hdd-damage-screen.md#drawing-it--hdddamagescreen_update-000424f8"
+    },
+    {
+      "address": "000b1634",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HddDamage_WeaponNameBuffer",
+      "description": "8-byte slots up to 000b1693, into which HddDamageScreen_Update (000424f8) copies each non-null mount's display name in turn, with no bound on the length.",
+      "source": "Herculan/docs/es1/simulation/hdd-damage-screen.md#drawing-it--hdddamagescreen_update-000424f8"
+    },
+    {
+      "address": "000b1694",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HddDamage_TintGuard",
+      "description": "Byte: HddDamageScreen_Update (000424f8) sets it to 1 when it is 0 before each row's tint; on view 2 it then stores 0 at 000b16b0. es2_xref finds both in that function alone.",
+      "source": "Herculan/docs/es1/simulation/hdd-damage-screen.md#the-rows"
     },
     {
       "address": "000b16c0",

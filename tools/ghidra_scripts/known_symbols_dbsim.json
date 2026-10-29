@@ -19778,7 +19778,13 @@
       "confidence": "high",
       "name": "HddDamageScreen_Show",
       "description": "HDDDamage vtable +0x0c (0049dab0): HddDamageScreen_SetView(screen, +0x7c), the category it last showed, then +0x80 = -1.",
-      "source": "DBSIM decompile at 00451d94"
+      "source": "DBSIM decompile at 00451d94",
+      "verified": {
+        "bytes": "00451d94+33",
+        "sha1": "44c4507d0d17",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00451db8",
