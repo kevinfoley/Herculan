@@ -141,7 +141,8 @@ public static class Es1PaperDoll {
 	/// (docs/es1/simulation/paper-doll.md#the-weapon-icons): an icon for each hardpoint <i>n</i> of the chassis' paper
 	/// doll. Its <see cref="Es1WeaponIcon.MountIndex"/> is the first position in the gun layout whose slot byte is
 	/// <i>n</i>, or the layout's count when none is, and its mount the mount array's entry there. With no mount, or a
-	/// template whose damage icon (<c>+0x50</c>) is −1, the icon has no bitmap. Otherwise its frame is the icon number × 2
+	/// template whose damage icon (<c>+0x50</c>) is −1, the icon has no bitmap, and its point, rect and flags, which retail
+	/// leaves as the allocation held and the damage screen's recolor passes then walk, are 0 here, an engine guard. Otherwise its frame is the icon number × 2
 	/// plus the hardpoint's <c>frameOffset</c>, as an <c>int16</c>, its bitmap that frame of <paramref name="bank"/> and its
 	/// size that entry of <paramref name="sizes"/>; its point the hardpoint's, moved left by the width (alignment bits 0–2
 	/// = 2) or half of it (4) and up by the height (the other bits = <c>0x10</c>) or half of it (<c>0x20</c>); its rect
