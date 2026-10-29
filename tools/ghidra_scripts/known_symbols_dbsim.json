@@ -22965,8 +22965,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Tape_PackFile",
-      "description": "Writes one bundle block into an open tape: a uint32 size then the named file's bytes in 500-byte chunks. A source file it cannot open writes size 0, which is why data\\object.str is empty in every retail tape.",
-      "source": "docs/retail/formats/tap-input-tape.md"
+      "description": "Writes one bundle block into an open tape: a uint32 size then the named file's bytes in 500-byte chunks. (tape, path) in stack order: the size from fseek to the end, ftell and rewind, or 0 for a source file that does not open; fclose on the source either way.",
+      "source": "docs/retail/formats/tap-input-tape.md",
+      "verified": {
+        "bytes": "0045cc88+183",
+        "sha1": "4cf8ffcbd578",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0045cd40",
@@ -22974,8 +22980,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Tape_UnpackFile",
-      "description": "Reads one bundle block out of an open tape and writes it to the named path, in 500-byte chunks. A null destination consumes the block and discards it.",
-      "source": "docs/retail/formats/tap-input-tape.md"
+      "description": "(tape, path) in stack order: reads one bundle block, a uint32 size and that many bytes, out of an open tape and writes it to the named path, in 500-byte chunks. A null destination consumes the block and discards it.",
+      "source": "docs/retail/formats/tap-input-tape.md",
+      "verified": {
+        "bytes": "0045cd40+149",
+        "sha1": "25718e27fc8e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0045cdd8",
@@ -23007,7 +23019,7 @@
       "type": "function",
       "confidence": "high",
       "name": "DemoTape_PickRandom",
-      "description": "Loads group 0x14 of tapes\\demolist.str and returns entry time() % count, or entry 0 when the table holds one name. The retail table holds DEMO1, DEMO2 and DEMO3.",
+      "description": "Loads the first group of tapes\\demolist.str (StringTable_LoadGroup with the capacity 0x14) and returns entry time() % count, or entry 0 when the table holds one name. The retail table holds DEMO1, DEMO2 and DEMO3.",
       "source": "docs/retail/formats/tap-input-tape.md",
       "verified": {
         "bytes": "0045ce9c+270",

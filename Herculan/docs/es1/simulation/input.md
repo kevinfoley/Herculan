@@ -6,7 +6,7 @@
 - the stick has two modes, movement and turret, which keypad 0 and the stick's second button swap while preferences option 8 is on; its third button is the all-stop in movement mode and centers the turret in turret mode ([the player's controls](main-loop.md#the-players-controls--sim_pollplayerinput-0005a0c0));
 - with preferences option 10 on, `Ctrl+I` and `Ctrl+M` step the throttle and the stick's Y no longer drives it;
 - `keyjoy.cfg` has no `Rudder`, and a replay reads the tape's own copy of it;
-- a tape is recorded one frame at a time, appended to the file each frame.
+- a tape's frame carries one command word and no list of command codes ([ES1's tapes](../formats/tap-input-tape.md#the-frames)).
 
 Addresses are `ES1DBSIM` image addresses ([the X-32 executable](../formats/x32-executable.md#the-image)); ES2's are DBSIM's. The functions here remove their own arguments, so argument lists are in stack order ([calling conventions](../formats/compiler.md#calling-conventions)).
 
@@ -178,20 +178,7 @@ Preferences option 7 (`000bd569`) chooses one of six; it also picks the joystick
 
 ### Recording and playback
 
-The tape starts with the seven files `-r` packs ([the command line](main-loop.md#the-command-line)), then one record a frame:
-
-| Bytes | Field |
-|---|---|
-| 2 | the command word |
-| 8 | the four axes |
-| 2 | `SimTickDelta` |
-| 2 | bit 0 button 0 (`+0x15`), bits 1–7 buttons 1–7, bits 8–11 the four source buttons |
-| 4 | the mouse-event count *n* |
-| 14 × *n* | the mouse events |
-
-Recording opens `<TapeStem>.tap` in mode `ab` each frame, asserting at severity 5 (`appinput.cpp` line `0x2bd`) when it cannot, writes the record and closes the file. Playback reads the 14 bytes and the count from `TapeFile`; under `DemoMode` a live command word sets `DemoAbort`; `Sim_HandleWindowKey` gets the word. A short read, or the command `0x412` (`Ctrl+E`), sets `DemoAbort`, closes the tape, clears `TapePlayback`, sets `CockpitMouseLive` and zeroes the command word. Otherwise each event goes onto the cockpit's mouse queue with its recorded time (`CockpitMouseQueue_Push`, `00044830`, [the callback and the queue](cockpit-mouse.md#the-callback-and-the-queue)), for the input build's step 4 to press and release with, and its point becomes `Input_CursorPos` (`000b17d8`); and the record fills the block's command word, axes, buttons and `+0x29`; bits 8–11 become the source buttons. The first playback frame reads the cursor's position into `Input_CursorPos` (`Cursor_GetPosition`, latch `000958be`).
-
-Where ES2's differs ([ES2's tape](../../retail/formats/tap-input-tape.md#the-stream)): ES2's opens once, carries the capability block, a 24-byte header with the hat and the stick's own buttons, and a list of command codes; ES1's carries one command word a frame.
+The tape's bundle and its frame record are [`tap-input-tape.md`](../formats/tap-input-tape.md#the-frames)'s. Recording opens `<TapeStem>.tap` in mode `ab` each frame, asserting at severity 5 (`appinput.cpp` line `0x2bd`) when it cannot, writes the record and closes the file. Playback reads the 14 bytes and the count from `TapeFile`; under `DemoMode` a live command word sets `DemoAbort`; `Sim_HandleWindowKey` gets the word. A short read, or the command `0x412` (`Ctrl+E`), sets `DemoAbort`, closes the tape, clears `TapePlayback`, sets `CockpitMouseLive` and zeroes the command word. Otherwise each event goes onto the cockpit's mouse queue with its recorded time (`CockpitMouseQueue_Push`, `00044830`, [the callback and the queue](cockpit-mouse.md#the-callback-and-the-queue)), for the input build's step 4 to press and release with, and its point becomes `Input_CursorPos` (`000b17d8`); and the record fills the block's command word, axes, buttons and `+0x29`; bits 8–11 become the source buttons. The first playback frame reads the cursor's position into `Input_CursorPos` (`Cursor_GetPosition`, latch `000958be`).
 
 ## `keyjoy.cfg` — `Keyjoy_LoadConfig` (`0004d918`)
 

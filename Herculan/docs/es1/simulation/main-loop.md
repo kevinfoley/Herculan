@@ -16,17 +16,19 @@ Addresses are `ES1DBSIM` image addresses ([the X-32 executable](../formats/x32-e
 
 ## Where the object files start and end
 
-Five object files, each opened by a run of `ConfigPart`'s copies ([module copies](../formats/compiler.md#vtables)):
+Seven object files, each opened by a run of `ConfigPart`'s copies ([module copies](../formats/compiler.md#vtables)), and between the first two the tape bundle's file, which opens with none ([where the tape code sits](../formats/tap-input-tape.md#where-the-code-sits)):
 
 | Code | Opening run, tables | Holds | Ends |
 |---|---|---|---|
+| `00057378`–`0005749f` | `00057378`, tables `00096ad2`, `00096b06` | `Main_StaticInit` | its `RET` at `0005749e` and one zero byte |
+| `00057680`–`00058d93` | `HeapPtr_DtorSimSessionCopy` (`00057680`), tables `00096b4a`, `00096b7e` | `DemoTape_PickRandom`, the preferences panel's raise, the camera copies, the lift, `Sim_DeathFlash`, the frame's sounds, the views | the exit routine `00058d5c` (exit table entry `000adcd4`), its `RET` at `00058d91` and two zero bytes |
 | `00058d94`–`00059663`, `main.cpp` | `00058d94`, tables `00096d1e`, `00096d52` | the command line, `Sim_Main`, `Cam_AttachTo`, the path helpers | `Sim_DebugBreak`'s `RET` at `00059663` |
 | `00059664`–`00059aa3` | `00059664`, tables `00097022`, `00097056` | `Sim_MainTick` | its `RET` at `00059aa2` and one zero byte |
 | `00059aa4`–`00059d1f` | `00059aa4`, tables `0009708a`, `000970be` | `Sim_EndFrame`, `Sim_RenderFrame` | `Sim_RenderFrame`'s `RET` |
 | `00059d20`–`0005a517` | `00059d20`, tables `000970f2`, `00097126` | `ViewChain_ToggleCameraControl`, `Sim_DispatchCommand`, `Sim_PollPlayerInput` | `Sim_PollPlayerInput`'s `RET 4` at `0005a512` and three zero bytes |
 | `0005a518`–`0005b68b`, `init.cpp` | `0005a518`, tables `00097202`, `00097236` | the display, the sun, `Sim_StartMission`, the cameras' destructors, `Sim_Shutdown` | `Sim_Shutdown`'s `RET` at `0005b689` and two zero bytes |
 
-The asserts that name `main.cpp` are `Sim_Main`'s (`0005937c`, `0005942f`, `0005948e`, `00059590`); `init.cpp`'s are `Sim_AssertCleanupHook`'s (`0005a841`) and `Sim_Shutdown`'s (`0005b635`). None of the five has a static initializer. The file before ends with the exit routine `00058d5c` (exit table entry `000adcd4`) and two zero bytes; the one after is the library region, from `__cinit` (`0005b68c`, [libraries against game code](../formats/compiler.md#libraries-against-game-code)). ES2's counterparts are in the [functions](#functions) table.
+The asserts that name `main.cpp` are `Sim_Main`'s (`0005937c`, `0005942f`, `0005948e`, `00059590`); `init.cpp`'s are `Sim_AssertCleanupHook`'s (`0005a841`) and `Sim_Shutdown`'s (`0005b635`). None of the last five has a static initializer. The exit routine `00058d5c` destroys `ViewChain_SpareCamera` (`TSContext_Dtor`(camera, 0), after storing the vtables `00096c5a` and `00096c6a` at its `+0x12`) and, while `DemoTape_NameTableBuilt` (`000b5cbc`) is set, the demo tapes' name table (`OwnedArray_Dtor`(table, 2), [the demo tape](../formats/tap-input-tape.md#the-demo-tape)). The file before the first ends with the static initializer `0005735c` (entry `000adc70`) and the exit routine `00057368` (exit table entry `000adcd0`), whose `RET` at `00057374` is followed by three zero bytes; the one after the last is the library region, from `__cinit` (`0005b68c`, [libraries against game code](../formats/compiler.md#libraries-against-game-code)). ES2's counterparts are in the [functions](#functions) table.
 
 ## Starting — `Sim_Main` (`00059350`)
 
@@ -56,7 +58,7 @@ Where ES2's `Sim_Run` differs: it reads `data\drive.cfg` instead of the environm
 | `-eggplant` or `-EGGPLANT` | `Sim_EggplantGiven` (`000b5bc4`) = 1 | Without it the simulator refuses ([above](#starting--sim_main-00059350)) |
 | `-c` | `Sim_AltDriveAllowed` (`000b5bce`), by `Sim_PreParseCommandLine` | `ALT_DRIVE` is honored |
 | `-B` | `000b5bcc` = 1 | `Sim_DebugBreak` (`00059658`) runs `INT3` while it is set |
-| `-D` | `TapePlayback` (`000b5b76`), `DemoMode` (`000b5bd0`) = 1 | Plays `tapes\<name>.tap`, the name from `0005771c`, through `Config_BuildPath`; both flags go back to 0 when it does not open |
+| `-D` | `TapePlayback` (`000b5b76`), `DemoMode` (`000b5bd0`) = 1 | Plays `tapes\<name>.tap`, the name from `DemoTape_PickRandom` (`0005771c`) ([the demo tape](../formats/tap-input-tape.md#the-demo-tape)), through `Config_BuildPath`; both flags go back to 0 when it does not open |
 | `-S` | `000b5b67` = 1 | The page numbers [`Sim_StartMission`](#the-mission-start--sim_startmission-0005a9dc) gives the display |
 | `-m` | `000bda94` = 1 | `Sim_StartMission` clears the monochrome monitor (`Mono_Clear`) |
 | `-C<name>` | `CockpitChassis_SelectByName` (`00024394`)(name) | The cockpit's chassis ([the cockpit's scripts](../formats/ttm-scripts.md#the-simulator)) |
@@ -64,12 +66,10 @@ Where ES2's `Sim_Run` differs: it reads `data\drive.cfg` instead of the environm
 | `-P` | `000b5b69` = 1 | No reader found by `es2_xref.py` besides this store ([Open](#open)) |
 | `-t<n>` | `Sim_SetCommBox0PilotOverride` (`0003ea50`)(`atol`(n)) | The pilot in the first squad comm box ([who is in it](heads-down-display.md#who-is-in-it--hddgauge_loadpilotframes-0003dab4)) |
 | `-V<n>`, `-W<n>`, `-T<n>` | `000b5bb2`, `000b5bb4`, `000b5bb6` | Set to -1 by `Main_StaticInit` (`00057414`); no other reader found ([Open](#open)) |
-| `-p<name>` | `TapePlayback` = 1 | Plays `<name>.tap` ([recording and playback](input.md#recording-and-playback)) |
-| `-r<name>` | `TapeRecording` (`000b5b78`) = 1 | Records to `<name>.tap` |
-| `-d` | `DmpFile` (`000b5b7e`) | Opens `<name>.dmp`, mode `wb` while recording (and closes it again) and `rb` otherwise; the name is the tape's |
+| `-p<name>` | `TapePlayback` = 1 | Plays `<name>.tap` ([the bundle](../formats/tap-input-tape.md#the-bundle)) |
+| `-r<name>` | `TapeRecording` (`000b5b78`) = 1 | Records to `<name>.tap` ([the bundle](../formats/tap-input-tape.md#the-bundle)) |
+| `-d` | `DmpFile` (`000b5b7e`) | Opens `<name>.dmp`, mode `wb` while recording (and closes it again) and `rb` otherwise; the name is the tape's ([the checkpoint file](../formats/tap-input-tape.md#the-checkpoint-file)) |
 | `-l` | `g_LowMemory` (`000bda98`) = 1 | The low-memory mode ([low memory](../formats/chassis-dat.md#low-memory)) |
-
-The name of `-p`, `-r` and `-D` is `TapeStem` (`000b5b7a`), the first one given; the extension is forced to `tap`. `-p` opens the tape, `rb`, as `TapeFile` (`000b5b82`) and unpacks seven files from it with `0005756c`: `data\script.dat`, `data\player.mec`, `data\mission.var`, `tapes\prefs.cfg`, `data\restore.dat`, `data\object.str` and `tapes\keyjoy.cfg`, the two configuration files through `Config_BuildPath` (`00059300`), which gives `tapes\` once `TapePlayback` is set. `-r` opens it `wb`, packs the same seven with `000574a0` from `data\` (`keyjoy.cfg` from the prefix's root), and closes it. ES2's bundle is the same seven ([the bundle](../../retail/formats/tap-input-tape.md#the-bundle)).
 
 Where ES2's parsers differ ([ES2's switches](../../retail/command-line.md#dbsim)): ES2's `-c` stores a word, `+0x72` of its block, where ES1's honors `ALT_DRIVE`; ES2 has `-v`, `-Z`, `-X`, `-b`, `-a`, `-R`, `-E`/`-F`/`-G` and `-SPRUNKNOWN`, which ES1's lacks; ES2's `-l` sets `CockpitArt_LoadOnDemand` where ES1's sets the low-memory mode.
 
@@ -116,10 +116,8 @@ ES2's loop also counts the frames, sleeps while the window has lost the focus, a
 
 - 16 register at phase 2, the resource loads (for one, [the weapons' load](../formats/weapons-dat-sim.md));
 - 9 at phase 5, the pools' delete flushes (for one, [the explosions'](../formats/explos-dat.md));
-- one at phase 6: `Vcr_StaticInit` (`00000d3c`, the static constructor table's entry `000adbb4`) registers `Vcr_FlushCheckpoints` (`00000c84`), ES2's ([the checkpoint file](../../retail/formats/tap-input-tape.md#the-checkpoint-file)). While recording with the `.dmp` file open, it opens `<stem>.dmp` in mode `ab` (assert `vcr.cpp` line `0x30`, severity 5), writes the buffer `000adcd8` up to its total `0009018c`, closes the file, and puts the cursor `00090188` back on the buffer and the total to 0. In playback it formats `Playback error. Frame #%ld` with `FrameRate_GetFrameCount` into a stack buffer and discards it, where ES2's does nothing;
+- one at phase 6: `Vcr_StaticInit` (`00000d3c`, the static constructor table's entry `000adbb4`) registers `Vcr_FlushCheckpoints` (`00000c84`), [the checkpoint file](../formats/tap-input-tape.md#the-checkpoint-file)'s flush;
 - none at phase 0, 1, 3 or 4, so those four runs call none of the functions found ([Open](#open)).
-
-`Vcr_Checkpoint` (`00000bd4`), (label, size, data), fills the buffer: while recording it copies the data onto the buffer at the cursor, advancing the cursor and the total; in playback it reads `size` bytes from the `.dmp` file into the buffer and, when they differ from the data, formats the label into a stack buffer and sets `00090190`. It is ES2's ([the checkpoint file](../../retail/formats/tap-input-tape.md#the-checkpoint-file)); what calls it is [Open](#open).
 
 ### The frame's sounds — `Sim_FrameSoundTick` (`00058574`)
 
@@ -278,12 +276,14 @@ Where ES2's differs ([ES2's](../../retail/simulation/joystick-input.md#while-the
 
 | ES1 | Address | ES2 |
 |---|---|---|
-| `Vcr_Checkpoint`, `Vcr_FlushCheckpoints`, `Vcr_StaticInit`, in `vcr.cpp` | `00000bd4`, `00000c84`, `00000d3c` | `Vcr_Checkpoint` (`00401dc0`), `Vcr_FlushCheckpoints` (`00401e5c`), `Vcr_StaticInit` (`00401ef8`) |
 | `Sound_UpdateListener`, `Sound_IsPlaying`, `Sound_StopDigitalSounds`, `SoundObject_GetVolume`, `MidiSound_IsPlaying`, `MidiSound_SetVolume`, `DigiSound_IsPlaying` | `0004df98`, `0004e05c`, `0004e34c`, `0005049c`, `00050730`, `0005075c`, `00050c18` | |
-| `Cursor_LoadCursorResource`, `TSCamera_CopyFrom`, `TSCamera_CopyBaseFields`, `TSCamera_CopyPose`, in the file before | `00057640`, `00057af8`, `00057bb4`, `00057be0` | `0045ce30` |
-| `Sim_DeathFlash`, in the file before, between `0x90` bytes at `00058413` and `00058572` | `00058414` | `Sim_DeathFlash` (`0045dc34`) |
-| `Sim_FrameSoundTick`, `Music_Tick`, in the file before | `00058574`, `000585dc` | |
-| `ViewChain_Apply`, `ViewChain_ViewObject`, `ViewChain_DrawCaption`, in the file before | `0005894c`, `00058a44`, `00058b68` | `0045de14`, `0045df18`, `0045e1ec` |
+| `Cursor_LoadCursorResource`, in the tape bundle's file | `00057640` | `0045ce30` |
+| `HeapPtr_DtorSimGlobalsCopy`, `ConfigPart_DtorSimGlobalsCopy`, `ConfigPart_GetClassTagSimGlobalsCopy`, `TSPartBase_DtorSimGlobalsCopy` | `00057378`, `000573a0`, `000573df`, `000573e8` | |
+| `HeapPtr_DtorSimSessionCopy`, `ConfigPart_DtorSimSessionCopy`, `ConfigPart_GetClassTagSimSessionCopy`, `TSPartBase_DtorSimSessionCopy` | `00057680`, `000576a8`, `000576e7`, `000576f0` | |
+| `TSCamera_CopyFrom`, `TSCamera_CopyBaseFields`, `TSCamera_CopyPose` | `00057af8`, `00057bb4`, `00057be0` | |
+| `Sim_DeathFlash`, between `0x90` bytes at `00058413` and `00058572` | `00058414` | `Sim_DeathFlash` (`0045dc34`) |
+| `Sim_FrameSoundTick`, `Music_Tick` | `00058574`, `000585dc` | |
+| `ViewChain_Apply`, `ViewChain_ViewObject`, `ViewChain_DrawCaption` | `0005894c`, `00058a44`, `00058b68` | `0045de14`, `0045df18`, `0045e1ec` |
 | `HeapPtr_DtorMainCopy`, `ConfigPart_DtorMainCopy`, `ConfigPart_GetClassTagMainCopy`, `TSPartBase_DtorMainCopy` | `00058d94`, `00058dbc`, `00058dfb`, `00058e04` | |
 | `Sim_PreParseCommandLine`, `Sim_ParseCommandLine` | `00058e30`, `00058e74` | `WinMain_ParseSwitches` (`0045e6b0`), `Sim_ParseCommandLine` (`0045e73c`) |
 | `Cam_AttachTo`, `View_GetActiveObject`, `Mem_TrackPeakUse` | `0005923c`, `00059280`, `00059288` | `0045ed94`, `0045eddc` |
@@ -300,7 +300,7 @@ Where ES2's differs ([ES2's](../../retail/simulation/joystick-input.md#while-the
 | `Sim_StartMission`, `TSOrthoCamera_DtorInitCopy`, `TSCamera_DtorInitCopy` | `0005a9dc`, `0005b4d4`, `0005b508` | `Sim_InitMissionSession` (`004614fc`) |
 | `Sim_ReleaseSessionObjects`, `Sim_Shutdown` | `0005b534`, `0005b568` | `00461e74`, `00461eec` |
 
-The five class tags (`00058dfb`, `000596cb`, `00059b0b`, `00059d87`, `0005a57f`), `ViewChain_ToggleCameraControl`, `Sim_HandleWindowKey`, the two `SimInput` hooks, `Sim_DebugBreak` and `Sim_ReleaseSessionObjects` have no Ghidra function. `Main_StaticInit` (`00057414`), the static constructor table's entry `000adc74` in the file before, zeroes the `0x78`-byte block from `SimDisplay` (`000b5b5c`), sets the `+0x4a` dword to 1, `000b5b68` to 1, `-V`/`-W`/`-T`'s words to -1, `000b5bb8` to 1 and `ViewChain_View` and `ViewChain_PendingView` to 2, clears `DemoAbort`, `DemoMode`, `Sim_AltDriveAllowed` and `000b5bca`, and seeds the two generators at `000b5bd4` and `000b5c48` with `Math_RandomSeed`, as ES2's `Main_StaticInit` (`0045cad8`) seeds its two.
+The seven class tags (`ConfigPart_GetClassTagSimGlobalsCopy` (`000573df`), `ConfigPart_GetClassTagSimSessionCopy` (`000576e7`), `00058dfb`, `000596cb`, `00059b0b`, `00059d87`, `0005a57f`), `ViewChain_ToggleCameraControl`, `Sim_HandleWindowKey`, the two `SimInput` hooks, `Sim_DebugBreak` and `Sim_ReleaseSessionObjects` have no Ghidra function. `Main_StaticInit` (`00057414`), the static constructor table's entry `000adc74`, the last code of its file, zeroes the `0x78`-byte block from `SimDisplay` (`000b5b5c`), sets the `+0x4a` dword to 1, `000b5b68` to 1, `-V`/`-W`/`-T`'s words to -1, `000b5bb8` to 1 and `ViewChain_View` and `ViewChain_PendingView` to 2, clears `DemoAbort`, `DemoMode`, `Sim_AltDriveAllowed` and `000b5bca`, and seeds the two generators at `000b5bd4` and `000b5c48` with `Math_RandomSeed`, as ES2's `Main_StaticInit` (`0045cad8`) seeds its two.
 
 ## Globals
 
@@ -331,12 +331,12 @@ The flags lie in the block `Main_StaticInit` zeroes, `000b5b5c`–`000b5bd3`.
 
 ## Open
 
-- **Open:** the callees read for none of this file's functions: `0005771c` (the demo tape's name), `0005756c` and `000574a0` (the bundle) and `00057cf4` and `00057ffc` (the lift), all in the file before; `00056ecc` (the drive prefix), `0004e294`, `00075858`, `00066e00` and `0006a5fc`.
+- **Open:** the callees read for none of this file's functions: `00057cf4` and `00057ffc` (the lift), in the file from `HeapPtr_DtorSimSessionCopy` (`00057680`); `00056ecc` (the drive prefix), `0004e294`, `00075858`, `00066e00` and `0006a5fc`.
 - **Open:** what `000b5b69` (`-P`) and `-V`, `-W` and `-T`'s words feed, and what sets `Sim_StepOnce`; `es2_xref.py` finds only the stores above and the tick's test, and a store through the block's base `000b5b5c` is not covered by that search.
 - **Open:** what the bit `Sim_Main` clears in the display's first byte does.
 - **Open:** the callees of [the frame's sounds](#the-frames-sounds--sim_framesoundtick-00058574) and [the views](#the-views--viewchain_apply-0005894c) read for none of this file's functions: `0004fb60` (the listener's frame), `0004dee4` (it sets `000b1a84` and `SoundCatalog_Positions` (`000b1b74`)), `0006edb3`, `0006f225` and `0006df9d` (the HMI calls); and `0004ad0c`'s callers and what `000b1734` is.
 - **Open:** which songs ES1's catalog rows 0 to 5 name, which of them `Music_Tick` takes as calm and which as battle, and what ES1's rows `0x13` and `0x2d` hold. A retail check: in a mission with enemies, the music changes within about 5 seconds of the first enemy coming within 25000 or into view ahead.
-- **Open:** a registration `es2_xref.py` cannot see, such as a call of `RegisterSubsystemLoader` through a pointer, at phase 0, 1, 3 or 4; and a caller of `Vcr_Checkpoint`, for which `es2_xref.py` finds no branch, only the dwords at `0002f350` and `00073eeb` in the image, not examined.
+- **Open:** a registration `es2_xref.py` cannot see, such as a call of `RegisterSubsystemLoader` through a pointer, at phase 0, 1, 3 or 4.
 - **Open:** how far step 15's copy reaches: its inclusive rect {0, 0, 320, 400} reaches column 320, one past a page's width, and row 400, and `Widget_DrawToCockpit` copies it with the cockpit's canvas context installed, in clip mode 1, which cuts it to the canvas rect, the `.GAU` record's first 16 bytes ([building it](cockpit-panel.md#building-it)), whose values in the retail files are not read here.
 - **Open:** which retail missions place a friendly structure within 40000 of the player's start, and so open with the lift (`00057cf4` and `00057ffc` unread). A retail check: such a mission brightens through a palette shift before play starts, and one that does not starts at once.
 - **Open:** a reader of `Mission_EndingAnswer`'s words 0, 1, 5 and `0x11` (1, 1, 1 and 0); `es2_xref.py --decode` finds no instruction holding the address of word `0x11` (`0009717a`), and the two indexed reads above.

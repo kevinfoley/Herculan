@@ -17,7 +17,7 @@ The main menu's `VIEW DEMO` plays one — see [Reaching it](#reaching-it). The f
 
 The extension is forced to `tap` in the first three cases, so `<name>` is a bare stem: a tape in `tapes\` is named as `tapes\demo1`. `-d` takes no name of its own: it reads the stem and the recording flag the others left, so it only works after `-r`, `-p` or `-D` on the line.
 
-`DemoTape_PickRandom` (`0045ce9c`) loads group `0x14` of `tapes\demolist.str` and returns entry `time() % count`, or entry 0 when the table holds one name. The retail table holds `DEMO1`, `DEMO2`, `DEMO3`.
+`DemoTape_PickRandom` (`0045ce9c`) loads the first group of `tapes\demolist.str`, with room for 20 names (`StringTable_LoadGroup`'s capacity `0x14`, which it does not read), and returns entry `time() % count`, or entry 0 when the table holds one name. The retail table holds `DEMO1`, `DEMO2`, `DEMO3`.
 
 Demo mode is playback plus an abort: with `004d25b4` set, any key the player presses that makes a command code, the first axis key (`Input_KeyjoyAxisKey`'s opening test) or closing the window (`WM_CLOSE` in the window procedure) raises `004d25b6`, as does the tape running out ([below](#where-it-runs)); a `WM_QUIT` reaching the input build raises it in any mission, demo or not. The flag is what the mission loop and `StatusAlertPanel_RunModal` read to leave the mission. That is attract-mode behaviour — run until somebody touches something. The command-code test reads the live keyboard's command word, which `Input_PollDeviceBlock` (`0045ba8c`) builds at `004d247a` each frame, not the tape's — see [Rejected readings](#rejected-readings).
 

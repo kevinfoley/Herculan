@@ -28,7 +28,7 @@ The C library's source on the 6.1 CD (`SC\SRC\CLIB`) names runtime functions who
 
 The extender enters the image at `0xd` (`__x386_init`; [Hand-off](x32-executable.md#hand-off)). The startup:
 
-1. Stores the PSP selector in `__psp` (`0009739c`) and the environment's address in `__envptr` (`000973ac`), and zero-fills `_BSS`, from `000adcd8` to `000bdd40`, the image's memory size.
+1. Stores the PSP selector in `__psp` (`0009739c`) and the environment's address in `__envptr` (`000973ac`), and zero-fills `_BSS`, from `Vcr_Buffer` (`000adcd8`) to `000bdd40`, the image's memory size.
 2. Copies the command tail onto the stack and splits it at spaces and tabs into an argument vector, keeping a `"` or `'` quoted run as one argument. While `__stack` (`000973e8`) is non-zero, an argument starting `=` replaces it with the decimal number that follows and is not passed on; a non-digit in it prints `Bad stack size parameter` and exits, and a zero leaves it an ordinary argument. Both executables ship `__stack` as `0x8000`.
 3. Allocates the vector through `malloc` (`00001618`), stores `__argc` (`000973b0`) and `__argv` (`000973b4`), and points `argv[0]` at the program's path after the environment strings. A failed allocation prints `Not enough memory` and exits.
 4. Asks the extender (`INT 21h` `AX=350Dh`) for a stack of the larger of `__stack` and 16 KB, printing `Not enough memory` on failure, and stores the DOS version in `__osmajor` (`0009739e`) and `__osminor` (`0009739f`).
@@ -43,7 +43,7 @@ The `malloc` the startup calls is the game's own, from `memory.cpp`, among the g
 
 ## Static construction and exit
 
-The linker gathers each object's static constructor and destructor pointers into the segments `XI` and `XC`, which meet at `000adc88`. `__cinit`'s constructor walk (`Runtime_RunStaticCtors`, `0005b692`) runs from there down to `000adbb4`, the last entry first; `__dodtors` (`0005b6ad`) runs from there up to `000adcd8`. Both skip zero entries.
+The linker gathers each object's static constructor and destructor pointers into the segments `XI` and `XC`, which meet at `000adc88`. `__cinit`'s constructor walk (`Runtime_RunStaticCtors`, `0005b692`) runs from there down to `000adbb4`, the last entry first; `__dodtors` (`0005b6ad`) runs from there up to `Vcr_Buffer` (`000adcd8`). Both skip zero entries.
 
 `exit` (`0005b6f4`) calls the functions `atexit` (`0007d628`, `ES1GO 0006b620`) has registered, newest first, through `_atexitp` (`000bdabe`); `atexit` keeps room for 32, from `000bdac6`, and answers 1 when they are taken. Then, if `_hookexitp` (`000bdb46`) is set, it calls that with the exit status and returns; otherwise it runs `__dodtors`, calls `_fcloseallp` (`0009eb4c`, which ships pointing at `00073ec4`) if it is set, and ends the program through `__exit` (`0005b6c8`, `INT 21h` `AH=4Ch`).
 

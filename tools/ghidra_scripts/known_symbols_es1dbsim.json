@@ -142,7 +142,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Cam_Steer",
-      "description": "(camera, trigger, throttle, steer) in stack order, callee-cleaned: ES2's Cam_Steer (DBSIM 00401c74) with no lock test. Mode 0: Cam_ApproachRate(-steer, +0x30); with trigger set Cam_ApproachZoom(-throttle, +0x24) and Cam_ApproachRate(0, +0x2c), otherwise Cam_ApproachZoom(0, +0x24) and Cam_ApproachRate(throttle, +0x2c). Mode 1: the same with steer for the heading rate and throttle for the zoom rate. Other modes: nothing. Two calls found by es2_xref, from 0005771c and Sim_PollPlayerInput (0005a0c0).",
+      "description": "(camera, trigger, throttle, steer) in stack order, callee-cleaned: ES2's Cam_Steer (DBSIM 00401c74) with no lock test. Mode 0: Cam_ApproachRate(-steer, +0x30); with trigger set Cam_ApproachZoom(-throttle, +0x24) and Cam_ApproachRate(0, +0x2c), otherwise Cam_ApproachZoom(0, +0x24) and Cam_ApproachRate(throttle, +0x2c). Mode 1: the same with steer for the heading rate and throttle for the zoom rate. Other modes: nothing. Two calls found by es2_xref, from DemoTape_PickRandom (0005771c) and Sim_PollPlayerInput (0005a0c0).",
       "source": "Herculan/docs/es1/simulation/external-views.md#the-camera",
       "verified": {
         "bytes": "00000a04+189",
@@ -182,13 +182,73 @@
       }
     },
     {
+      "address": "00000b38",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorVcrCopy",
+      "description": "(p, flags), callee-cleaned: byte for byte the code of HeapPtr_DtorGunlistCopy (0000baf0), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/tap-input-tape.md#where-the-code-sits; ES1DBSIM disassembly at 00000b38",
+      "verified": {
+        "bytes": "00000b38+40",
+        "sha1": "2aec2b9b7252",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00000b60",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorVcrCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 00090122: byte for byte the code of ConfigPart_DtorDetAnimObjCopy (000028e0), relocated operands aside, storing 00090122 and 00090156 where that stores 000903ae and 0009037a. ES2's ConfigPart_Dtor (DBSIM 00420730).",
+      "source": "Herculan/docs/es1/formats/tap-input-tape.md#where-the-code-sits; ES1DBSIM disassembly at 00000b60",
+      "verified": {
+        "bytes": "00000b60+63",
+        "sha1": "0a2748772fdb",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00000b9f",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagVcrCopy",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +4 of the vtable 00090122; the code of ConfigPart_GetClassTagDetAnimObjCopy (000028d6).",
+      "source": "Herculan/docs/es1/formats/tap-input-tape.md#where-the-code-sits; ES1DBSIM disassembly at 00000b9f",
+      "verified": {
+        "bytes": "00000b9f+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00000ba8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorVcrCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 00090156 (entered at its padding 00000ba5): byte for byte the code of TSPartBase_Dtor (0005d614), relocated operands aside, storing 00090156 where that stores 000974aa. ES2's TSPartBase_Dtor (DBSIM 0049224b).",
+      "source": "Herculan/docs/es1/formats/tap-input-tape.md#where-the-code-sits; ES1DBSIM disassembly at 00000ba8",
+      "verified": {
+        "bytes": "00000ba8+42",
+        "sha1": "58cbcf59d1b2",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "00000bd4",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Vcr_Checkpoint",
-      "description": "(label, size, data) in stack order, its arguments removed by this function: ES2's Vcr_Checkpoint (DBSIM 00401dc0). With DmpFile (000b5b7e) open: while recording (TapeRecording, TapePlayback clear) it copies size bytes of data to the buffer cursor 00090188 and adds size to the cursor and to the total 0009018c; in playback it reads size bytes from DmpFile into the buffer 000adcd8, and when memcmp finds them different from the data, formats the label into a stack buffer it discards and sets 00090190 to 1. es2_xref finds no branch to it.",
-      "source": "Herculan/docs/es1/simulation/main-loop.md#the-subsystem-phases",
+      "description": "(label, size, data) in stack order, its arguments removed by this function: ES2's Vcr_Checkpoint (DBSIM 00401dc0). With DmpFile (000b5b7e) open: while recording (TapeRecording, TapePlayback clear) it copies size bytes of data to the buffer cursor Vcr_Cursor (00090188) and adds size to the cursor and to the total Vcr_Total (0009018c); in playback it reads size bytes from DmpFile into the buffer Vcr_Buffer (000adcd8), and when memcmp finds them different from the data, formats the label into a stack buffer it discards and sets Vcr_MismatchFlag (00090190) to 1. es2_xref finds no branch to it.",
+      "source": "Herculan/docs/es1/formats/tap-input-tape.md#the-checkpoint-file",
       "verified": {
         "bytes": "00000bd4+175",
         "sha1": "f029e21d288e",
@@ -202,8 +262,8 @@
       "type": "function",
       "confidence": "high",
       "name": "Vcr_FlushCheckpoints",
-      "description": "No arguments, the phase-6 subsystem function: ES2's Vcr_FlushCheckpoints (DBSIM 00401e5c). With DmpFile (000b5b7e) open: while recording it opens Path_WithExtension (00060644)(\"dmp\", TapeStem) in mode ab, asserting at severity 5 (vcr.cpp line 0x30) when that fails, writes the buffer 000adcd8 for the total 0009018c bytes, closes the file, and sets the cursor 00090188 back to 000adcd8 and the total to 0; in playback it formats \"Playback error. Frame #%ld\" with FrameRate_GetFrameCount (0006020c) into a stack buffer it discards.",
-      "source": "Herculan/docs/es1/simulation/main-loop.md#the-subsystem-phases",
+      "description": "No arguments, the phase-6 subsystem function: ES2's Vcr_FlushCheckpoints (DBSIM 00401e5c). With DmpFile (000b5b7e) open: while recording it opens Path_WithExtension (00060644)(\"dmp\", TapeStem) in mode ab, asserting at severity 5 (vcr.cpp line 0x30) when that fails, writes the buffer Vcr_Buffer (000adcd8) for the total Vcr_Total (0009018c) bytes, closes the file, and sets the cursor Vcr_Cursor (00090188) back to Vcr_Buffer (000adcd8) and the total to 0; in playback it formats \"Playback error. Frame #%ld\" with FrameRate_GetFrameCount (0006020c) into a stack buffer it discards.",
+      "source": "Herculan/docs/es1/formats/tap-input-tape.md#the-checkpoint-file",
       "verified": {
         "bytes": "00000c84+183",
         "sha1": "abb99078aff9",
@@ -218,7 +278,7 @@
       "confidence": "high",
       "name": "Vcr_StaticInit",
       "description": "Frameless static initializer, the static constructor table's entry 000adbb4: RegisterSubsystemLoader (00000ac4)(6, Vcr_FlushCheckpoints (00000c84)), then RET. ES2's Vcr_StaticInit (DBSIM 00401ef8).",
-      "source": "Herculan/docs/es1/simulation/main-loop.md#the-subsystem-phases",
+      "source": "Herculan/docs/es1/formats/tap-input-tape.md#the-checkpoint-file",
       "verified": {
         "bytes": "00000d3c+13",
         "sha1": "bb72bc2a944a",
@@ -32405,6 +32465,66 @@
       }
     },
     {
+      "address": "00057378",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorSimGlobalsCopy",
+      "description": "(p, flags), callee-cleaned: byte for byte the code of HeapPtr_DtorGunlistCopy (0000baf0), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00057378",
+      "verified": {
+        "bytes": "00057378+40",
+        "sha1": "f14c688e55da",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000573a0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorSimGlobalsCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 00096ad2: byte for byte the code of ConfigPart_DtorDetAnimObjCopy (000028e0), relocated operands aside, storing 00096ad2 and 00096b06 where that stores 000903ae and 0009037a. ES2's ConfigPart_Dtor (DBSIM 00420730).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 000573a0",
+      "verified": {
+        "bytes": "000573a0+63",
+        "sha1": "f552635b4112",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000573df",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagSimGlobalsCopy",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +4 of the vtable 00096ad2; the code of ConfigPart_GetClassTagDetAnimObjCopy (000028d6).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 000573df",
+      "verified": {
+        "bytes": "000573df+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "000573e8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorSimGlobalsCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 00096b06 (entered at its padding 000573e5): byte for byte the code of TSPartBase_Dtor (0005d614), relocated operands aside, storing 00096b06 where that stores 000974aa. ES2's TSPartBase_Dtor (DBSIM 0049224b).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 000573e8",
+      "verified": {
+        "bytes": "000573e8+42",
+        "sha1": "e1a0c658d9b8",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "00057414",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -32417,6 +32537,36 @@
         "sha1": "3700e08d9793",
         "scope": "body",
         "via": "disasm"
+      }
+    },
+    {
+      "address": "000574a0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Tape_PackFile",
+      "description": "(path, tape) in stack order, its arguments removed by this function: ES2's Tape_PackFile (DBSIM 0045cc88). Opens the path rb with fopen (000605d8); when it opens, takes its size with fseek (0007566d)(file, 0, 2) and ftell (000756ef), seeks back to 0 and clears the stream's error flag 0x20 (+0xc), where ES2's calls rewind; otherwise the size is 0. Writes the size as a uint32 to the tape, then copies the file in chunks of at most 500 bytes through a 500-byte stack buffer (fread, fwrite), and calls fclose on the source, null when it did not open. es2_xref finds seven calls, all from Sim_ParseCommandLine.",
+      "source": "Herculan/docs/es1/formats/tap-input-tape.md#the-bundle; ES1DBSIM decompile and disassembly at 000574a0",
+      "verified": {
+        "bytes": "000574a0+203",
+        "sha1": "ce8e80a13d27",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0005756c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Tape_UnpackFile",
+      "description": "(path or null, tape) in stack order, its arguments removed by this function: ES2's Tape_UnpackFile (DBSIM 0045cd40). Opens the path wb with fopen (000605d8) unless it is null, reads the uint32 size from the tape, then reads the size's bytes in chunks of at most 500 through a 500-byte stack buffer, writing each to the destination when it is open, and calls fclose on the destination, null when there is none. No read's count is checked. es2_xref finds seven calls, all from Sim_ParseCommandLine.",
+      "source": "Herculan/docs/es1/formats/tap-input-tape.md#the-bundle; ES1DBSIM decompile and disassembly at 0005756c",
+      "verified": {
+        "bytes": "0005756c+160",
+        "sha1": "1a72d61d581c",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -32445,6 +32595,81 @@
       "verified": {
         "bytes": "00057640+64",
         "sha1": "9958c116fd48",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00057680",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorSimSessionCopy",
+      "description": "(p, flags), callee-cleaned: byte for byte the code of HeapPtr_DtorGunlistCopy (0000baf0), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00057680",
+      "verified": {
+        "bytes": "00057680+40",
+        "sha1": "e2cedbf53fb5",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000576a8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorSimSessionCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 00096b4a: byte for byte the code of ConfigPart_DtorDetAnimObjCopy (000028e0), relocated operands aside, storing 00096b4a and 00096b7e where that stores 000903ae and 0009037a. ES2's ConfigPart_Dtor (DBSIM 00420730).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 000576a8",
+      "verified": {
+        "bytes": "000576a8+63",
+        "sha1": "76ba1f84570a",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000576e7",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagSimSessionCopy",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +4 of the vtable 00096b4a; the code of ConfigPart_GetClassTagDetAnimObjCopy (000028d6).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 000576e7",
+      "verified": {
+        "bytes": "000576e7+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "000576f0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorSimSessionCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 00096b7e (entered at its padding 000576ed): byte for byte the code of TSPartBase_Dtor (0005d614), relocated operands aside, storing 00096b7e where that stores 000974aa. ES2's TSPartBase_Dtor (DBSIM 0049224b).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 000576f0",
+      "verified": {
+        "bytes": "000576f0+42",
+        "sha1": "f49454f97aee",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0005771c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DemoTape_PickRandom",
+      "description": "No arguments: ES2's DemoTape_PickRandom (DBSIM 0045ce9c), with a repeat test. Builds DemoTape_NameTable (000b5cc0) with StringTable_Ctor (00044f14) on the first call (guard DemoTape_NameTableBuilt, DemoTape_NameTableBuilt (000b5cbc)). Until DemoTape_ListLoaded (00096c40) is set, opens Path_ApplyAltDrive (000592a4)(tapes\\demolist.str) as a FileRStream and, when the stream's status is 0, loads it (StringTable_Load (00044fb0)) and its first group into DemoTape_Names (000b5cd4) with StringTable_LoadGroup (000450b0)(table, 0, 0x14, names), the count into DemoTape_NameCount (000b5cd0), setting the loaded flag when the count is above 0; then FileRStream_Dtor (00065610)(stream, 2). Returns 0 while the flag is clear. Otherwise it draws time (000757a0) % count again while the draw equals DemoTape_LastPick (00096c42) and the count is above 1, stores the draw there and returns that name. ES2's draws once and takes entry 0 for a count of 1.",
+      "source": "Herculan/docs/es1/formats/tap-input-tape.md#the-demo-tape; ES1DBSIM decompile and disassembly at 0005771c",
+      "verified": {
+        "bytes": "0005771c+217",
+        "sha1": "a4bee74e5815",
         "scope": "body",
         "via": "both"
       }
@@ -32710,7 +32935,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_ParseCommandLine",
-      "description": "(argv, argc) in stack order, callee-cleaned: for each argument starting '-', looks its next character up in the 16 dwords at 00096e88 by REPNE SCASD and jumps to the target 16 dwords after (cases at 00058ec8-0005921c, outside Ghidra's extent): B sets 000b5bcc; D sets DemoMode (000b5bd0) and TapePlayback (000b5b76) and opens tapes\\<0005771c's name>.tap (Config_BuildPath (00059300), Path_ApplyAltDrive (000592a4), fopen rb) as TapeFile (000b5b82), unpacking as -p does, both flags cleared when it does not open; S sets CmdLine_SinglePage (000b5b67); m sets 000bda94; C calls CockpitChassis_SelectByName (00024394) with the rest; s toggles 000b5b68; P sets 000b5b69; t passes atol of the rest to Sim_SetCommBox0PilotOverride (0003ea50); V, W and T store atol of the rest in 000b5bb2, 000b5bb4 and 000b5bb6; p takes the rest as TapeStem (000b5b7a) unless set, opens <stem>.tap rb as TapeFile, sets TapePlayback and unpacks seven files with 0005756c (data\\script.dat, data\\player.mec, data\\mission.var, Config_BuildPath of prefs.cfg, data\\restore.dat, data\\object.str, Config_BuildPath of keyjoy.cfg); r opens <stem>.tap wb, packs the same seven with 000574a0 (from data\\, keyjoy.cfg without a folder), closes it and sets TapeRecording (000b5b78); d opens <stem>.dmp as DmpFile (000b5b7e), wb while recording (closing it at once) and rb otherwise; l sets g_LowMemory (000bda98); e compares the rest with 'eggplant' and 'EGGPLANT' and sets Sim_EggplantGiven (000b5bc4) on a match. ES2's Sim_ParseCommandLine (DBSIM 0045e73c).",
+      "description": "(argv, argc) in stack order, callee-cleaned: for each argument starting '-', looks its next character up in the 16 dwords at 00096e88 by REPNE SCASD and jumps to the target 16 dwords after (cases at 00058ec8-0005921c, outside Ghidra's extent): B sets 000b5bcc; D sets DemoMode (000b5bd0) and TapePlayback (000b5b76) and opens tapes\\<DemoTape_PickRandom (0005771c)'s name>.tap (Config_BuildPath (00059300), Path_ApplyAltDrive (000592a4), fopen rb) as TapeFile (000b5b82), unpacking as -p does, both flags cleared when it does not open; S sets CmdLine_SinglePage (000b5b67); m sets 000bda94; C calls CockpitChassis_SelectByName (00024394) with the rest; s toggles 000b5b68; P sets 000b5b69; t passes atol of the rest to Sim_SetCommBox0PilotOverride (0003ea50); V, W and T store atol of the rest in 000b5bb2, 000b5bb4 and 000b5bb6; p takes the rest as TapeStem (000b5b7a) unless set, opens <stem>.tap rb as TapeFile, sets TapePlayback and unpacks seven files with Tape_UnpackFile (0005756c) (data\\script.dat, data\\player.mec, data\\mission.var, Config_BuildPath of prefs.cfg, data\\restore.dat, data\\object.str, Config_BuildPath of keyjoy.cfg); r opens <stem>.tap wb, packs the same seven with Tape_PackFile (000574a0) (from data\\, keyjoy.cfg without a folder), closes it and sets TapeRecording (000b5b78); d opens <stem>.dmp as DmpFile (000b5b7e), wb while recording (closing it at once) and rb otherwise; l sets g_LowMemory (000bda98); e compares the rest with 'eggplant' and 'EGGPLANT' and sets Sim_EggplantGiven (000b5bc4) on a match. ES2's Sim_ParseCommandLine (DBSIM 0045e73c).",
       "source": "Herculan/docs/es1/simulation/main-loop.md#the-command-line; ES1DBSIM decompile and disassembly at 00058e74",
       "verified": {
         "bytes": "00058e74+965",
@@ -33394,7 +33619,7 @@
       "type": "function",
       "confidence": "high",
       "name": "__dodtors",
-      "description": "No arguments: the runtime's static-destructor walk, calling each non-zero pointer from 000adc88 up to 000adcd8. exit (0005b6f4) is its caller found by es2_xref.",
+      "description": "No arguments: the runtime's static-destructor walk, calling each non-zero pointer from 000adc88 up to Vcr_Buffer (000adcd8). exit (0005b6f4) is its caller found by es2_xref.",
       "source": "Herculan/docs/es1/formats/compiler.md#static-construction-and-exit",
       "verified": {
         "bytes": "0005b6ad+27",
@@ -41588,6 +41813,51 @@
       }
     },
     {
+      "address": "0007566d",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "fseek",
+      "description": "The runtime's fseek (stream, offset, whence), C convention: clears the end-of-file and error flags 0x30 (+0xc), looks the mode bits (flags & 0x83) up in the five dwords at 0009ece8 (REPNE SCASD) and returns -1 for none; a write stream (2) is flushed with fflush (000753e8); a read-write one in write mode (0x82, 0x80) is flushed, loses flag 2 and has its pointer +0 put back on its buffer +8; a read one (1, and 0x81 after clearing flag 1) has the buffered count +4 taken off the offset for whence 1 and its pointer put back. Then it zeroes the count +4 and calls lseek (00074aea)(handle +0x10, offset, whence), returning 0, or -1 when that answers -1.",
+      "source": "Herculan/docs/es1/formats/tap-input-tape.md#the-bundle; ES1DBSIM disassembly at 0007566d",
+      "verified": {
+        "bytes": "0007566d+130",
+        "sha1": "861ec73645c0",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000756ef",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ftell",
+      "description": "The runtime's ftell (stream), C convention: -1 with errno (000973d3) = 5 for a stream open in no mode (flags +0xc & 0x83 clear); otherwise lseek (00074aea)(handle +0x10, 0, 1), and unless that answers -1, less the buffered count +4 for a read stream (flag 1), or plus the bytes buffered (pointer +0 less buffer +8) for a write stream ((flags & 6) == 2) with a buffer.",
+      "source": "Herculan/docs/es1/formats/tap-input-tape.md#the-bundle; ES1DBSIM decompile and disassembly at 000756ef",
+      "verified": {
+        "bytes": "000756ef+107",
+        "sha1": "bf3230c009d8",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000757a0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "time",
+      "description": "The runtime's time (out), C convention: DOS's time (INT 21h function 0x2c) as seconds of the day and its date (function 0x2a) as days since 1980 (365 a year, the cumulative month table 0009ed10, a leap day for each year from 1980 before this one, and from March for this one when it is a leap year), times 86400, plus the seconds and 0x12cf0870, which is 1980's start in seconds from 1970 plus 25200. Stores the result at out when out is not null and returns it.",
+      "source": "Herculan/docs/es1/formats/tap-input-tape.md#the-demo-tape; ES1DBSIM disassembly at 000757a0",
+      "verified": {
+        "bytes": "000757a0+119",
+        "sha1": "a73456d7c8df",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "00075818",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -43533,6 +43803,33 @@
         "scope": "body",
         "via": "both"
       }
+    },
+    {
+      "address": "00090188",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Vcr_Cursor",
+      "description": "Pointer, Vcr_Buffer (000adcd8) in the image: where Vcr_Checkpoint copies the next checkpoint while recording; Vcr_FlushCheckpoints puts it back on the buffer.",
+      "source": "Herculan/docs/es1/formats/tap-input-tape.md#the-checkpoint-file; ES1DBSIM disassembly"
+    },
+    {
+      "address": "0009018c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Vcr_Total",
+      "description": "dword: the bytes Vcr_Checkpoint has buffered since the last flush, which Vcr_FlushCheckpoints writes and sets back to 0.",
+      "source": "Herculan/docs/es1/formats/tap-input-tape.md#the-checkpoint-file; ES1DBSIM disassembly"
+    },
+    {
+      "address": "00090190",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Vcr_MismatchFlag",
+      "description": "int16: set to 1 by Vcr_Checkpoint in playback when a checkpoint differs from the .dmp file's bytes. es2_xref --decode finds that write and no read.",
+      "source": "Herculan/docs/es1/formats/tap-input-tape.md#the-checkpoint-file; ES1DBSIM disassembly"
     },
     {
       "address": "0009020a",
@@ -46352,6 +46649,24 @@
       "source": "Herculan/docs/es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08"
     },
     {
+      "address": "00096c40",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "DemoTape_ListLoaded",
+      "description": "byte, 0 in the image: set by DemoTape_PickRandom once tapes\\demolist.str has given it at least one name; while clear each call tries the load again and returns 0.",
+      "source": "Herculan/docs/es1/formats/tap-input-tape.md#the-demo-tape; ES1DBSIM disassembly"
+    },
+    {
+      "address": "00096c42",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "DemoTape_LastPick",
+      "description": "int16, 0 in the image: the index DemoTape_PickRandom returned last, which its next draw must differ from while the list holds more than one name. es2_xref --decode finds one write and one read, both in DemoTape_PickRandom.",
+      "source": "Herculan/docs/es1/formats/tap-input-tape.md#the-demo-tape; ES1DBSIM disassembly"
+    },
+    {
       "address": "00096d0c",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -46791,6 +47106,15 @@
       "name": "VGA8_ModePageSizes",
       "description": "dwords, a page's bytes in each plane for each VGA_8 mode: 16,000, 19,200 and 32,000 for modes 0, 1 and 2. VGA8_OpenMode (0008b4f8) reads it.",
       "source": "Herculan/docs/es1/rendering/screen-pages.md#the-video-memory"
+    },
+    {
+      "address": "000adcd8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Vcr_Buffer",
+      "description": "The checkpoint buffer Vcr_Checkpoint fills and Vcr_FlushCheckpoints writes to <stem>.dmp. It starts right after the exit table's last entry (000adcd4); the startup (MOV EDI at 00000041) and __dodtors (CMP EDI at 0005b6b3) also take its address.",
+      "source": "Herculan/docs/es1/formats/tap-input-tape.md#the-checkpoint-file; ES1DBSIM disassembly"
     },
     {
       "address": "000ae4c0",
@@ -48249,6 +48573,42 @@
       "name": "DemoAbort",
       "description": "int16: ends Sim_Main's loop; set by a key under DemoMode and by the tape's end. ES2's DemoAbort.",
       "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b5cbc",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "DemoTape_NameTableBuilt",
+      "description": "byte: set once DemoTape_PickRandom has built DemoTape_NameTable; the exit routine 00058d5c destroys the table while it is set.",
+      "source": "Herculan/docs/es1/formats/tap-input-tape.md#the-demo-tape; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b5cc0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "DemoTape_NameTable",
+      "description": "The 0x10-byte string table tapes\\demolist.str loads into, built by DemoTape_PickRandom and destroyed by the exit routine 00058d5c (OwnedArray_Dtor with 2).",
+      "source": "Herculan/docs/es1/formats/tap-input-tape.md#the-demo-tape; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b5cd0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "DemoTape_NameCount",
+      "description": "int16: the number of names StringTable_LoadGroup read from tapes\\demolist.str's first group.",
+      "source": "Herculan/docs/es1/formats/tap-input-tape.md#the-demo-tape; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b5cd4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "DemoTape_Names",
+      "description": "The demo tapes' names, string pointers from tapes\\demolist.str's first group, room for 0x14 by the capacity DemoTape_PickRandom passes.",
+      "source": "Herculan/docs/es1/formats/tap-input-tape.md#the-demo-tape; ES1DBSIM disassembly"
     },
     {
       "address": "000b5d38",

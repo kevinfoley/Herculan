@@ -15983,6 +15983,36 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "0006f6e5",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "fseek",
+      "description": "The runtime's fseek (stream, offset, whence), C convention: clears the end-of-file and error flags 0x30 (+0xc), looks the mode bits (flags & 0x83) up in the five dwords at 000940e0 (REPNE SCASD) and returns -1 for none; a write stream (2) is flushed with fflush (0004dfc4); a read-write one in write mode (0x82, 0x80) is flushed, loses flag 2 and has its pointer +0 put back on its buffer +8; a read one (1, and 0x81 after clearing flag 1) has the buffered count +4 taken off the offset for whence 1 and its pointer put back. Then it zeroes the count +4 and calls lseek (0004ef16)(handle +0x10, offset, whence), returning 0, or -1 when that answers -1. The code of ES1DBSIM's fseek (0007566d), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/tap-input-tape.md#the-bundle; ES1DBSIM disassembly at 0007566d",
+      "verified": {
+        "bytes": "0006f6e5+130",
+        "sha1": "f46613cffa03",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006f767",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ftell",
+      "description": "The runtime's ftell (stream), C convention: -1 with errno (00083cbf) = 5 for a stream open in no mode (flags +0xc & 0x83 clear); otherwise lseek (0004ef16)(handle +0x10, 0, 1), and unless that answers -1, less the buffered count +4 for a read stream (flag 1), or plus the bytes buffered (pointer +0 less buffer +8) for a write stream ((flags & 6) == 2) with a buffer. The code of ES1DBSIM's ftell (000756ef), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/tap-input-tape.md#the-bundle; ES1DBSIM decompile and disassembly at 000756ef",
+      "verified": {
+        "bytes": "0006f767+107",
+        "sha1": "b0b6a56a1c78",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0006f818",
       "binary": "ES1GO",
       "type": "function",
