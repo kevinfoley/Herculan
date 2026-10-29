@@ -94,22 +94,18 @@ public sealed class EditorSettings {
 	/// <summary>Writes the settings (<see cref="UserConfig.Write"/>).</summary>
 	public void Save() => UserConfig.Write(FilePath, JsonSerializer.Serialize(this, SerializerOptions));
 
-	/// <summary>A detached copy, for holding the pre-edit values behind a Cancel button.</summary>
+	/// <summary>A detached copy of the values the settings panel edits (<see cref="CopyFrom"/>), held behind its Cancel button.</summary>
 	public EditorSettings Clone() {
 		var newSettings = new EditorSettings();
 		newSettings.CopyFrom(this);
 		return newSettings;
 	}
 
-	/// <summary>Copies every value out of <paramref name="other"/> — the other half of Cancel.</summary>
+	/// <summary>
+	/// Copies the values the settings panel edits out of <paramref name="other"/> — the other half of Cancel. View's
+	/// toggles are left alone: they are saved as they are clicked, so a Cancel does not take one back.
+	/// </summary>
 	public void CopyFrom(EditorSettings other) {
-		RenderFog = other.RenderFog;
-		ShowGrid = other.ShowGrid;
-		ShowTriggerAreas = other.ShowTriggerAreas;
-		ShowRoutes = other.ShowRoutes;
-		ShowMissionBox = other.ShowMissionBox;
-		ShowBasePads = other.ShowBasePads;
-		WaitingGroups = other.WaitingGroups;
 		CybridLoadouts = other.CybridLoadouts;
 	}
 }

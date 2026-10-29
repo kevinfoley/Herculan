@@ -30,6 +30,7 @@ The engine is currently in beta. Not all features have been thoroughly tested, a
 - Support for playing music from the original CD, and caching it to your computer.
 - A Tweaks menu to optionally fix retail bugs and add minor QoL tweaks.
 - Custom WinHelp (.HLP) parser; view the original "On-line manual" interactively in your browser.
+- A Mission Editor (currently in beta).
 
 ### Using the engine
 
@@ -116,7 +117,7 @@ Higher tickrates/smoother motion are under consideration for a future update, bu
 <div align="center">
   <figure>
     <img src="Images/Mission%20Editor.png" alt="Mission Editor" width="400">
-    <p><em>Editor mode, a basic debugging interface that may eventually turn into a mission editor (no promises!)</em></p>
+    <p><em>The Mission Editor</em></p>
   </figure>
 </div>
 

@@ -5,10 +5,10 @@ using ImGuiNET;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The floating "Editor Settings" window opened from the menu bar.
+/// The floating "Editor Settings" window opened from the menu bar. The view toggles are View's, in the menu bar itself.
 ///
-/// <para>Edits land on the live <see cref="EditorSettings"/> immediately, so a checkbox shows its
-/// effect in the viewport while the panel is still open. What makes Cancel possible is the snapshot
+/// <para>Edits land on the live <see cref="EditorSettings"/> immediately, so a setting shows its
+/// effect while the panel is still open. What makes Cancel possible is the snapshot
 /// taken when the panel opens: Save writes the current values to disk and closes, Cancel restores
 /// the snapshot and closes, and closing the window by its title-bar button is a Cancel.</para>
 /// </summary>
@@ -47,16 +47,6 @@ public sealed class EditorSettingsPanel {
 
 		bool stayOpen = true;
 		if (ImGui.Begin("Editor Settings", ref stayOpen, ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize)) {
-			bool renderFog = _settings.RenderFog;
-			if (ImGui.Checkbox("Render Fog", ref renderFog)) {
-				_settings.RenderFog = renderFog;
-			}
-
-			bool showGrid = _settings.ShowGrid;
-			if (ImGui.Checkbox("Show Ground Grid", ref showGrid)) {
-				_settings.ShowGrid = showGrid;
-			}
-
 			ImGui.AlignTextToFramePadding();
 			ImGui.Text(CybridLoadoutsLabel);
 			ImGui.SameLine();

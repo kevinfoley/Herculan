@@ -1205,6 +1205,19 @@ public sealed class EditorHost {
 			ImGui.Separator();
 
 			bool changed = false;
+			bool fog = _settings.RenderFog;
+			if (ImGui.MenuItem("Render Fog", null, ref fog)) {
+				_settings.RenderFog = fog;
+				changed = true;
+			}
+
+			bool grid = _settings.ShowGrid;
+			if (ImGui.MenuItem("Ground Grid", null, ref grid)) {
+				_settings.ShowGrid = grid;
+				changed = true;
+			}
+
+			ImGui.Separator();
 			bool areas = _settings.ShowTriggerAreas;
 			if (ImGui.MenuItem("Trigger Areas", null, ref areas)) {
 				_settings.ShowTriggerAreas = areas;
