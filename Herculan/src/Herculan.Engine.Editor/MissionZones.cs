@@ -1,3 +1,4 @@
+using HercWorks.Core.Data.File.Dyn;
 using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Content;
 using Herculan.Engine.Terrain;
@@ -31,21 +32,31 @@ internal static class MissionZones {
 	private const string HeaderExtension = ".DAT";
 	private const string HeightmapExtension = ".DBA";
 
-	/// <summary>Every zone <paramref name="simulator"/>, DBSIM's mount, holds both resources of, in number order.</summary>
+	/// <summary>Every zone <paramref name="simulator"/>, DBSIM's mount, holds both readable resources of, in number order.</summary>
 	public static IReadOnlyList<ZoneChoice> List(GameContent simulator) {
 		var zones = new List<ZoneChoice>();
 		foreach (string name in simulator.ListFolder(TerrainZoneLoader.HeaderFolder)) {
-			if (!name.StartsWith(ZonePrefix, StringComparison.OrdinalIgnoreCase)
-					|| !name.EndsWith(HeaderExtension, StringComparison.OrdinalIgnoreCase)
-					|| !short.TryParse(name[ZonePrefix.Length..^HeaderExtension.Length], out short zone)
-					|| !simulator.Contains(TerrainZoneLoader.HeightmapFolder, $"{ZonePrefix}{zone}{HeightmapExtension}")
-					|| new ZoneDatTransformer().Parse(simulator.Read(TerrainZoneLoader.HeaderFolder, name)) is not { } header) {
-				continue;
+			if (name.StartsWith(ZonePrefix, StringComparison.OrdinalIgnoreCase)
+					&& name.EndsWith(HeaderExtension, StringComparison.OrdinalIgnoreCase)
+					&& short.TryParse(name[ZonePrefix.Length..^HeaderExtension.Length], out short zone)
+					&& simulator.Contains(TerrainZoneLoader.HeightmapFolder, $"{ZonePrefix}{zone}{HeightmapExtension}")
+					&& new ZoneDatTransformer().Parse(simulator.Read(TerrainZoneLoader.HeaderFolder, name)) is { } header
+					&& Heightmap(simulator, zone) is { } heightmap) {
+				// The grid's size is the heightmap's own, as the game takes it; the header's copies are not read.
+				var (widthShift, heightShift) = TerrainZoneLoader.GridShifts(heightmap);
+				zones.Add(new ZoneChoice(zone, 1 << (widthShift + header.CellShift), 1 << (heightShift + header.CellShift)));
 			}
-
-			zones.Add(new ZoneChoice(zone, 1 << (header.WidthShift + header.CellShift), 1 << (header.HeightShift + header.CellShift)));
 		}
 
 		return zones.OrderBy(zone => zone.Zone).ToList();
+	}
+
+	private static DynamixBitmap? Heightmap(GameContent simulator, short zone) {
+		try {
+			return TerrainZoneLoader.ReadHeightmapImage(simulator, zone);
+		} catch (InvalidDataException failure) {
+			Console.Error.WriteLine($"Zone {zone}'s heightmap: {failure.Message}");
+			return null;
+		}
 	}
 }
