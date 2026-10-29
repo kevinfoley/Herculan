@@ -18,6 +18,8 @@ public sealed class GpuTexture : IDisposable {
 	public GpuTexture(GL gl, ReadOnlySpan<byte> rgbaPixels, int width, int height) {
 		CheckSize(rgbaPixels, width, height);
 		_gl = gl;
+		Width = width;
+		Height = height;
 		Handle = _gl.GenTexture();
 
 		_gl.BindTexture(TextureTarget.Texture2D, Handle);
@@ -44,6 +46,12 @@ public sealed class GpuTexture : IDisposable {
 
 	/// <summary>The GL texture name, for binding via <see cref="ShaderProgram.SetSamplerTexture"/>.</summary>
 	public uint Handle { get; }
+
+	/// <summary>The image's width in texels.</summary>
+	public int Width { get; }
+
+	/// <summary>The image's height in texels.</summary>
+	public int Height { get; }
 
 	/// <summary>
 	/// Replaces the whole image in place, keeping the same texture name and sampler state. For art

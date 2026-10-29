@@ -57,7 +57,7 @@ public static class TerrainZoneLoader {
 		int cellShift = header.CellShift;
 		int heightScale = header.HeightScale;
 
-		var bitmap = ReadHeightmapImage(content, baseName);
+		var bitmap = ReadHeightmapImage(content, zoneIndex);
 
 		return PopulateFromBitmap(bitmap, cellShift, heightScale, materials, random, heightBias,
 			detailLevel);
@@ -70,7 +70,8 @@ public static class TerrainZoneLoader {
 	/// DynamixBitmapArray reader; here that dispatch collapses to calling the already-ported
 	/// transformer directly.
 	/// </summary>
-	private static DynamixBitmap ReadHeightmapImage(GameContent content, string baseName) {
+	public static DynamixBitmap ReadHeightmapImage(GameContent content, int zoneIndex) {
+		string baseName = $"zone{zoneIndex}";
 		byte[] bytes = content.ReadRequired(HeightmapFolder, baseName + ".dba");
 
 		var array = new DynamixBitmapArrayTransformer().Parse(bytes) as DynamixBitmapArray

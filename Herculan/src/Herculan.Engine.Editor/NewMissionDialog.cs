@@ -1,4 +1,5 @@
 using System.Numerics;
+using Herculan.Engine.Gl;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Shell;
 using ImGuiNET;
@@ -20,10 +21,12 @@ internal sealed class NewMissionDialog {
 	private const float PanelWidth = 640f;
 	private const float ListHeight = 300f;
 	private const float TheaterWidth = 160f;
+	private const float HeightmapSize = 300f;
 
 	private readonly MissionSaving _saving;
 	private readonly Func<IReadOnlyList<ZoneChoice>> _listZones;
 	private readonly Func<IReadOnlyList<string>> _listTheaters;
+	private readonly Func<short, GpuTexture?> _heightmap;
 	private IReadOnlyList<ZoneChoice>? _zones;
 	private IReadOnlyList<string>? _theaters;
 	private bool _open;
@@ -39,11 +42,13 @@ internal sealed class NewMissionDialog {
 	/// <param name="saving">The save path, whose name rules a new mission takes.</param>
 	/// <param name="listZones">Lists the zones; called the first time the dialog opens.</param>
 	/// <param name="listTheaters">Labels the theaters, in theater order; called the first time the dialog opens.</param>
+	/// <param name="heightmap">A zone's heightmap picture (<see cref="ZoneHeightmaps"/>), or null for none.</param>
 	public NewMissionDialog(MissionSaving saving, Func<IReadOnlyList<ZoneChoice>> listZones,
-			Func<IReadOnlyList<string>> listTheaters) {
+			Func<IReadOnlyList<string>> listTheaters, Func<short, GpuTexture?> heightmap) {
 		_saving = saving;
 		_listZones = listZones;
 		_listTheaters = listTheaters;
+		_heightmap = heightmap;
 	}
 
 	/// <summary>The mission being built and opened, which the dialog names in place of its fields until that ends.</summary>
@@ -89,7 +94,7 @@ internal sealed class NewMissionDialog {
 			_raised = true;
 		}
 
-		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(PanelWidth), 0f));
+		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(PanelWidth + HeightmapSize), 0f));
 		ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), ImGuiCond.Appearing, new Vector2(0.5f, 0.5f));
 		if (!ImGui.BeginPopupModal(title, ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove)) {
 			// Taken down by something other than a choice: raised again while the dialog still waits on one.
@@ -115,6 +120,13 @@ internal sealed class NewMissionDialog {
 
 	private void DrawFields() {
 		var zones = _zones ?? [];
+		if (!ImGui.BeginTable("##new-mission", 2)) {
+			return;
+		}
+
+		ImGui.TableSetupColumn("fields", ImGuiTableColumnFlags.WidthStretch);
+		ImGui.TableSetupColumn("heightmap", ImGuiTableColumnFlags.WidthFixed, ScaledImGui.Scaled(HeightmapSize));
+		ImGui.TableNextColumn();
 		ImGui.TextWrapped($"Name: up to {SavedMissions.MaxNameLength} letters, digits or _. File > Save writes it into the install as "
 			+ $"{MissionFileLaunch.MissionFolder}\\<name>{MissionFileLaunch.MissionExtension}.");
 		if (ImGui.IsWindowAppearing()) {
@@ -177,6 +189,12 @@ internal sealed class NewMissionDialog {
 		ImGui.TextWrapped("The mission is the player's HERC alone, with one waypoint to reach.");
 		Problem(_problem);
 		Problem(Failure);
+		ImGui.TableNextColumn();
+		if (zones.Count > 0) {
+			DrawHeightmap(zones[Math.Clamp(_zone, 0, zones.Count - 1)].Zone);
+		}
+
+		ImGui.EndTable();
 		Spacer();
 
 		int chosen = Buttons("Create", "Cancel");
@@ -215,6 +233,21 @@ internal sealed class NewMissionDialog {
 
 				break;
 		}
+	}
+
+	// The zone's heightmap, fitted into the column's square, and what its shades mean.
+	private void DrawHeightmap(short zone) {
+		if (_heightmap(zone) is not { } texture) {
+			ImGui.TextWrapped($"Zone {zone}'s heightmap could not be read.");
+			return;
+		}
+
+		float side = ImGui.GetContentRegionAvail().X;
+		float scale = side / Math.Max(texture.Width, texture.Height);
+		var border = ImGui.GetStyle().Colors[(int)ImGuiCol.Border];
+		ImGui.Image((nint)texture.Handle, new Vector2(texture.Width * scale, texture.Height * scale), Vector2.Zero, Vector2.One,
+			Vector4.One, border);
+		ImGui.TextWrapped("Higher ground is lighter.");
 	}
 
 	private void Ask(string name) {

@@ -122,6 +122,7 @@ public sealed class EditorHost {
 	// missions the first time either is asked for, once per run.
 	private readonly CybridWeapons _cybridWeapons;
 	private readonly ZoneCatalog _zones;
+	private ZoneHeightmaps? _heightmaps;
 
 	// The loadout presets, read once per run and written on every change, which each opened mission's HERC views offer.
 	private readonly LoadoutPresets _presets = LoadoutPresets.Load();
@@ -221,7 +222,8 @@ public sealed class EditorHost {
 		_saving.Saved += _volBrowser.Refresh;
 		_saving.Saved += _customBrowser.Refresh;
 		_saving.Saved += () => Remember(_saving.Mission?.Name);
-		_newMission = new NewMissionDialog(_saving, () => _zones.Zones, () => TheaterNames.Labels(launch.SimulatorContent));
+		_newMission = new NewMissionDialog(_saving, () => _zones.Zones, () => TheaterNames.Labels(launch.SimulatorContent),
+			zone => _heightmaps?.For(zone));
 		_toolbox = new EditorToolbox(launch.SimulatorContent);
 
 		Console.WriteLine($"HERCULAN Mission Editor on {launch.InstallRoot}");
@@ -326,6 +328,7 @@ public sealed class EditorHost {
 		_gl = gl;
 		_renderer = new SceneRenderer(gl, editorGrid: true);
 		_wireframe = new WireframeRenderer(gl);
+		_heightmaps = new ZoneHeightmaps(gl, _launch.SimulatorContent);
 		if (_mission != null) {
 			_drawables = Upload(gl, _renderer, _mission);
 		}
@@ -816,6 +819,7 @@ public sealed class EditorHost {
 		_drawables?.Dispose();
 		_renderer?.Dispose();
 		_wireframe?.Dispose();
+		_heightmaps?.Dispose();
 	}
 
 	private void Close(EditorExit exit) {
