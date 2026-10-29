@@ -121,7 +121,7 @@ internal sealed class ConditionEditor {
 					continue;
 				case 4 when record.Index == MissionTextEditing.PackageRecord(source):
 					// The text package the Mission Settings window's lines edit, which is not a selection.
-					shown.Add(new ConditionUse("The mission's objective, briefing and intelligence lines (Edit > Mission Settings)", null));
+					shown.Add(new ConditionUse("The mission's objective, briefing and intelligence lines (Mission Settings > General)", null));
 					continue;
 				case 2 or 3 or 4 or 5 or 6 or 7:
 					Unseen(record.Row);

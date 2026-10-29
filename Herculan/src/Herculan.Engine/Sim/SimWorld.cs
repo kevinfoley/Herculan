@@ -80,7 +80,13 @@ public sealed class SimWorld {
 	public PlayerMissileState PlayerMissile { get; } = new();
 
 	/// <summary>The loaded zone's terrain. One zone is active at a time, as in the original.</summary>
-	public HeightGrid Terrain { get; }
+	public HeightGrid Terrain { get; private set; }
+
+	/// <summary>
+	/// Puts <paramref name="terrain"/> in place of the loaded zone's. Not retail, which loads one zone per mission: the
+	/// mission editor's, when a mission's terrain is replaced (<see cref="Scene.MissionScene.ReplaceTerrain"/>).
+	/// </summary>
+	public void ReplaceTerrain(HeightGrid terrain) => Terrain = terrain;
 
 	/// <summary>The travelling-projectile table, or null when the resource was not loaded.</summary>
 	public BulletCatalog? Bullets { get; }

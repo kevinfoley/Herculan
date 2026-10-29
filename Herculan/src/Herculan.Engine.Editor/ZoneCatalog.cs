@@ -1,3 +1,4 @@
+using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Data.File.Msn;
 using Herculan.Engine.Content;
 
@@ -30,6 +31,30 @@ internal sealed class ZoneCatalog {
 
 	/// <summary>Zone <paramref name="zone"/> as its <see cref="ZoneChoice.Label"/>, or by its number alone when the install has no such zone.</summary>
 	public string Describe(short zone) => Zones.FirstOrDefault(choice => choice.Zone == zone)?.Label ?? $"Zone {zone}";
+
+	/// <summary>A mission's own terrain <paramref name="own"/>, played as zone <paramref name="zone"/>, and its size.</summary>
+	public static string DescribeOwn(short zone, ZoneFiles own) {
+		string side = ZoneChoice.Kilometres(own.Side << own.CellSizeShift);
+		return $"Zone {zone}: the mission's own terrain ({side} by {side} km)";
+	}
+
+	/// <summary>
+	/// The zone number a mission's own terrain is played as: the highest up to <see cref="MaxOwnZone"/> that no zone of
+	/// the install has (docs/herculan/plan-zone-editing.md#decisions).
+	/// </summary>
+	public short FreeZone() {
+		var taken = Zones.Select(choice => choice.Zone).ToHashSet();
+		for (short zone = MaxOwnZone; zone >= 0; zone--) {
+			if (!taken.Contains(zone)) {
+				return zone;
+			}
+		}
+
+		throw new InvalidOperationException($"The install has a zone for every number up to {MaxOwnZone}.");
+	}
+
+	/// <summary>The highest number a mission's own terrain is played as: zone file names up to it keep to 8.3.</summary>
+	public const short MaxOwnZone = 9999;
 
 	private List<ZoneChoice> Build() {
 		var usedBy = new Dictionary<short, List<string>>();

@@ -99,15 +99,17 @@ public static class MissionFileLaunch {
 	/// <see cref="Open"/> for a mission held in memory rather than read from the archives or the install: the <c>.MSN</c>
 	/// <paramref name="msn"/> and its text <paramref name="text"/>, under the name <paramref name="name"/>
 	/// (no extension), loaded as <c>INSTANT ACTION</c> loads a mission <c>gam\career.dat</c> does not list, the way
-	/// <see cref="Open"/> loads such a mission from a file. The mission editor's File &gt; New mission opens its new
-	/// mission this way until it is saved, after which <see cref="Open"/> reads the saved file.
+	/// <see cref="Open"/> loads such a mission from a file, with its own zone <paramref name="zone"/>, or null. The mission
+	/// editor's File &gt; New mission opens its new mission this way until it is saved, after which <see cref="Open"/> reads
+	/// the saved files.
 	/// </summary>
 	public static string? OpenNew(GameContent shellContent, string installRoot, string name, byte[] msn, byte[]? text,
-			string directory, SimRandom random, out MissionDocument? document, out MissionSquad? squad, out string? failure) =>
+			ZoneFiles? zone, string directory, SimRandom random, out MissionDocument? document, out MissionSquad? squad,
+			out string? failure) =>
 		Hold(name, random, (SimRandom drawing, MissionGenerating generating, out MissionSquad? piloted, out string? why) =>
 				WithZone(LoadUnlisted(shellContent, ShellWorkingFiles.DataDirectory(installRoot),
 					$"{MissionFolder}\\{name}{MissionExtension}", msn, text, directory, drawing,
-					new short[MissionGenerator.ClearListLength], generating, ownWorld: false, out piloted, out why), zone: null, ref why),
+					new short[MissionGenerator.ClearListLength], generating, ownWorld: false, out piloted, out why), zone, ref why),
 			out document, out squad, out failure);
 
 	/// <summary>

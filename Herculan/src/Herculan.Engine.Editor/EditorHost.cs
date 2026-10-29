@@ -124,6 +124,9 @@ public sealed class EditorHost {
 	private readonly ZoneCatalog _zones;
 	private ZoneHeightmaps? _heightmaps;
 
+	// How a terrain image is pictured, once there is a GL context to upload it with.
+	private readonly TerrainPictures _pictures;
+
 	// The loadout presets, read once per run and written on every change, which each opened mission's HERC views offer.
 	private readonly LoadoutPresets _presets = LoadoutPresets.Load();
 
@@ -222,8 +225,9 @@ public sealed class EditorHost {
 		_saving.Saved += _volBrowser.Refresh;
 		_saving.Saved += _customBrowser.Refresh;
 		_saving.Saved += () => Remember(_saving.Mission?.Name);
+		_pictures = new TerrainPictures((heights, side) => _heightmaps?.Picture(heights, side), heights => _heightmaps?.Forget(heights));
 		_newMission = new NewMissionDialog(_saving, () => _zones.Zones, () => TheaterNames.Labels(launch.SimulatorContent),
-			zone => _heightmaps?.For(zone));
+			zone => _heightmaps?.For(zone), new TerrainImageForm("New mission's terrain from", _pictures));
 		_toolbox = new EditorToolbox(launch.SimulatorContent);
 
 		Console.WriteLine($"HERCULAN Mission Editor on {launch.InstallRoot}");
@@ -523,10 +527,11 @@ public sealed class EditorHost {
 	private void Follow(EditorMission mission) {
 		mission.Selection.FocusRequested += Frame;
 		mission.Theater.WorldChanged += () => ReloadWorld(mission);
+		mission.Terrain.WorldChanged += () => ReloadWorld(mission);
 	}
 
 	// Uploads <mission>'s scene again once its theater or time of day has dressed it in another world
-	// (TheaterChanger), freeing the uploads it replaces. The camera, the selection and the view settings stay.
+	// (TheaterChanger) or its terrain is replaced (TerrainChanger), freeing the uploads it replaces. The camera, the selection and the view settings stay.
 	private void ReloadWorld(EditorMission mission) {
 		if (_gl == null || _renderer == null || _drawables == null || !ReferenceEquals(mission, _mission)) {
 			return;
@@ -713,6 +718,7 @@ public sealed class EditorHost {
 				mission.Hercs.WhyNoAdd, mission.Flyers.WhyNoAdd, mission.Vehicles.WhyNoAdd, mission.Placer.WhyNoAdd,
 				mission.Placer.WhyNoBase, mission.Placing, mission.AreaPlacing);
 			mission.Settings.Draw();
+			mission.TerrainWindow.Draw(_window.View.Native?.Win32?.Hwnd ?? 0);
 			mission.UnusedPoints.Draw();
 		}
 
@@ -735,7 +741,7 @@ public sealed class EditorHost {
 		_volBrowser.Draw();
 		_customBrowser.Draw();
 		_saving.Draw(_window.View.Native?.Win32?.Hwnd ?? 0);
-		_newMission.Draw();
+		_newMission.Draw(_window.View.Native?.Win32?.Hwnd ?? 0);
 		_playInGame.Draw();
 		_imgui?.Render();
 		if (_window.Title != WindowTitle) {
@@ -953,6 +959,7 @@ public sealed class EditorHost {
 		mission.Flyers.RunRequest();
 		mission.Squad.RunRequest();
 		mission.Theater.RunRequest();
+		mission.Terrain.RunRequest();
 		mission.PlayableIn.RunRequest();
 		mission.About.RunRequest();
 		mission.Routes.RunRequest();
@@ -1050,9 +1057,9 @@ public sealed class EditorHost {
 			}
 
 			opened = EditorMission.Open(_launch.SimulatorContent, generated, Path.GetFileNameWithoutExtension(name), _installData,
-				source!, squad!, _launch.ShellContent, _cybridWeapons, _zones, _presets);
+				source!, squad!, _launch.ShellContent, _cybridWeapons, _zones, _presets, _pictures);
 			opened.About.Load(CustomMissions.About(_launch.InstallRoot, opened.Name) ?? MissionAbout.Blank);
-			opened.OwnZone = ownZone;
+			opened.Terrain.Load(ownZone);
 		} catch (Exception ex) when (ex is MissingHandoffFileException or InvalidDataException or IOException
 				or UnauthorizedAccessException) {
 			request.From.Failure = ex.Message;
@@ -1074,21 +1081,25 @@ public sealed class EditorHost {
 			return;
 		}
 
-		var zone = request.Zone;
+		var own = request.OwnZone;
+		var zone = own != null
+			? new ZoneChoice(_zones.FreeZone(), own.Side << own.CellSizeShift, own.Side << own.CellSizeShift)
+			: request.Zone!;
 		var (msn, text) = NewMission.Build(request.Theater, zone.Zone, request.Night, zone.Width, zone.Height);
 		EditorMission opened;
 		try {
 			ClearMissionCache();
 			if (MissionOpener.OpenNew(_launch.ShellContent(), _launch.InstallRoot, request.Name,
 					new MissionFileTransformer().Write(msn) ?? throw new InvalidDataException("The new mission does not write."),
-					new MissionStringFileTransformer().Write(text), _missionCache, out var source, out var squad,
+					new MissionStringFileTransformer().Write(text), own, _missionCache, out var source, out var squad,
 					out string? failure) is not { } generated) {
 				Fail(failure);
 				return;
 			}
 
 			opened = EditorMission.Open(_launch.SimulatorContent, generated, request.Name, _installData, source!, squad!,
-				_launch.ShellContent, _cybridWeapons, _zones, _presets);
+				_launch.ShellContent, _cybridWeapons, _zones, _presets, _pictures);
+			opened.Terrain.Load(own);
 		} catch (Exception ex) when (ex is MissingHandoffFileException or InvalidDataException or IOException
 				or UnauthorizedAccessException) {
 			Fail(ex.Message);
@@ -1190,10 +1201,6 @@ public sealed class EditorHost {
 			}
 
 			ImGui.Separator();
-			if (ImGui.MenuItem("Mission Settings")) {
-				_mission.Settings.Open();
-			}
-
 			int unused = _mission.UnusedPoints.Count;
 			if (ImGui.MenuItem($"Remove unused positions ({unused})", null, false, unused > 0 && idle)) {
 				_mission.UnusedPoints.Request();
@@ -1274,6 +1281,18 @@ public sealed class EditorHost {
 
 			if (changed) {
 				_settings.Save();
+			}
+
+			ImGui.EndMenu();
+		}
+
+		if (ImGui.BeginMenu("Mission Settings", _mission != null)) {
+			if (ImGui.MenuItem("General")) {
+				_mission!.Settings.Open();
+			}
+
+			if (ImGui.MenuItem("Terrain")) {
+				_mission!.TerrainWindow.Open();
 			}
 
 			ImGui.EndMenu();

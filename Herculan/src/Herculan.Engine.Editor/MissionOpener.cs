@@ -1,3 +1,4 @@
+using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Data.File.Msn;
 using Herculan.Engine.Content;
 using Herculan.Engine.Numerics;
@@ -48,8 +49,8 @@ internal static class MissionOpener {
 	/// and time of day.
 	/// </summary>
 	public static string? OpenNew(GameContent shellContent, string installRoot, string name, byte[] msn, byte[]? text,
-			string directory, out MissionDocument? document, out MissionSquad? squad, out string? failure) {
-		string? script = MissionFileLaunch.OpenNew(shellContent, installRoot, name, msn, text, directory, SimRandom.Lowest(),
+			ZoneFiles? zone, string directory, out MissionDocument? document, out MissionSquad? squad, out string? failure) {
+		string? script = MissionFileLaunch.OpenNew(shellContent, installRoot, name, msn, text, zone, directory, SimRandom.Lowest(),
 			out document, out squad, out failure);
 		document = OwnWorld(document, squad);
 		return script;

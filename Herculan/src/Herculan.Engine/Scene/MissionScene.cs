@@ -305,13 +305,32 @@ public sealed class MissionScene {
 	/// (<see cref="LoadWorld"/>): the passes only accumulate. The objects are not added to <see cref="World"/>, listed in
 	/// <see cref="Objects"/> or bound to actions, and nothing is drawn from the generator.
 	/// </summary>
-	public void Settle(IReadOnlyList<SceneObject> objects, IReadOnlyList<MissionBasePad> pads) {
+	public void Settle(IReadOnlyList<SceneObject> objects, IReadOnlyList<MissionBasePad> pads) => Settle(objects, pads, objects);
+
+	// Settle, with <modelled> the objects Models is built for.
+	private void Settle(IReadOnlyList<SceneObject> objects, IReadOnlyList<MissionBasePad> pads, IReadOnlyList<SceneObject> modelled) {
 		foreach (var placed in objects) {
 			StandOnTerrain(World.Terrain, placed);
 		}
 
 		PaintAndFlatten(World.Terrain, _materials, pads, objects);
-		Models = MissionModels.Build(_content, Theater, _materials, _library, World, objects, Models.GroundShapes);
+		Models = MissionModels.Build(_content, Theater, _materials, _library, World, modelled, Models.GroundShapes);
+	}
+
+	/// <summary>
+	/// Puts <paramref name="terrain"/> in place of the zone's (<see cref="SimWorld.ReplaceTerrain"/>), as the zone loaded it,
+	/// then stands <paramref name="objects"/> on it and paints and levels it for them and <paramref name="pads"/> as
+	/// <see cref="Settle"/> does, building <see cref="Models"/> again, the terrain mesh among them, for
+	/// <paramref name="modelled"/>, as <see cref="ChangeTheater"/> builds them. The mission editor's, when a mission's terrain
+	/// is replaced or put back; retail loads one zone per mission.
+	/// </summary>
+	public void ReplaceTerrain(HeightGrid terrain, IReadOnlyList<SceneObject> objects, IReadOnlyList<MissionBasePad> pads,
+			IReadOnlyList<SceneObject> modelled) {
+		// A grid an undo puts back was painted and levelled for the structures as they stood then.
+		terrain.RestoreUnlevelledHeights();
+		terrain.RestoreUnpaintedMaterials();
+		World.ReplaceTerrain(terrain);
+		Settle(objects, pads, modelled);
 	}
 
 	/// <summary>

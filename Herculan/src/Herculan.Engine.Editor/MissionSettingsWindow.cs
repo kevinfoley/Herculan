@@ -5,10 +5,9 @@ using ImGuiNET;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The floating "Mission Settings" window, opened from Edit &gt; Mission Settings: the mission's name and zone, the zone with
-/// its size and the retail missions played in it (<see cref="ZoneCatalog"/>), then the theater it is played on and the time
-/// of day, changed through <see cref="TheaterChanger"/>, then whether it is meant for HERCULAN alone (<see cref="PlayableInEditor"/>),
-/// then its about file (<see cref="MissionAboutEditor"/>), then its text (<see cref="MissionTextView"/>), with the briefing,
+/// The floating "Mission Settings" window, opened from Mission Settings &gt; General: the mission's name, then the theater it
+/// is played on and the time of day, changed through <see cref="TheaterChanger"/>, then whether it is meant for HERCULAN alone
+/// (<see cref="PlayableInEditor"/>), then its about file (<see cref="MissionAboutEditor"/>), then its text (<see cref="MissionTextView"/>), with the briefing,
 /// intelligence report and debrief (<see cref="DebriefView"/>) under "Campaign Only".
 /// </summary>
 internal sealed class MissionSettingsWindow {
@@ -17,7 +16,6 @@ internal sealed class MissionSettingsWindow {
 	private const float StartHeight = 640f;
 
 	private readonly Func<string> _name;
-	private readonly Func<string> _zone;
 	private const string RetailLabel = "Retail and HERCULAN";
 	private const string HerculanOnlyLabel = "HERCULAN only";
 
@@ -31,12 +29,10 @@ internal sealed class MissionSettingsWindow {
 	private bool _open;
 
 	/// <param name="name">What the window title calls the mission, which a Save As changes.</param>
-	/// <param name="zone">The zone the mission is played in, as the launch plays it (<see cref="EditorMission.Zone"/>), described by <see cref="ZoneCatalog.Describe"/>.</param>
 	/// <param name="labels">Each theater's label, in theater order (<see cref="TheaterNames.Labels"/>).</param>
-	public MissionSettingsWindow(Func<string> name, Func<string> zone, TheaterChanger theaters, IReadOnlyList<string> labels,
+	public MissionSettingsWindow(Func<string> name, TheaterChanger theaters, IReadOnlyList<string> labels,
 			PlayableInEditor playableIn, MissionAboutEditor about, MissionTextView text, DebriefView debrief) {
 		_name = name;
-		_zone = zone;
 		_theaters = theaters;
 		_labels = labels;
 		_playableIn = playableIn;
@@ -65,7 +61,6 @@ internal sealed class MissionSettingsWindow {
 	private void DrawContents() {
 		ImGui.TextWrapped($"Mission {_name()}");
 		ImGui.Separator();
-		EditorText.Wrapped(_zone());
 
 		int theater = _theaters.Theater;
 		string? theaterFixed = _theaters.WhyTheaterFixed;

@@ -57,7 +57,7 @@ internal static class ProblemText {
 				+ "does: choose one under \"Who\".",
 			MissionCheckKind.TextTooLong =>
 				$"The mission's text runs to {found.Value} lines, and only the first {MissionTextEditing.LineCap} are read: remove "
-				+ "lines under \"Text\" in Edit > Mission Settings.",
+				+ "lines under \"Text\" in Mission Settings > General.",
 			MissionCheckKind.OrderTargetsOwnSide =>
 				$"{who}'s {MissionText.Ordinal(found.Value + 1)} order is \"Search and destroy\" on its own team, which it never "
 				+ "attacks, and it goes after no other enemy: choose an enemy under \"Target\", or \"Patrol\" under \"Does\".",

@@ -1,4 +1,5 @@
 using System.Numerics;
+using HercWorks.Core.Data.File.Dat.Sim;
 using Herculan.Engine.Gl;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Shell;
@@ -6,14 +7,18 @@ using ImGuiNET;
 
 namespace Herculan.Engine.Editor;
 
-/// <summary>What File &gt; New mission was asked for: the mission's name, its zone, its theater, and whether it is played by night.</summary>
-internal sealed record NewMissionRequest(string Name, ZoneChoice Zone, short Theater, bool Night);
+/// <summary>
+/// What File &gt; New mission was asked for: the mission's name; its terrain, either a zone the install has
+/// (<paramref name="Zone"/>) or its own (<paramref name="OwnZone"/>), the other null; its theater; and whether it is played
+/// by night.
+/// </summary>
+internal sealed record NewMissionRequest(string Name, ZoneChoice? Zone, ZoneFiles? OwnZone, short Theater, bool Night);
 
 /// <summary>
 /// File &gt; New mission's modal: a name, taken as Save As takes one but never an archive mission's
 /// (<see cref="MissionSaving.WhyNotNewName"/>), and asking first when the install already has a saved mission of that
-/// name; a zone from the ones the install has (<see cref="MissionZones"/>); a theater (<see cref="TheaterNames"/>); and
-/// day or night. The dialog only asks: the host builds and opens the mission (<see cref="TakeRequest"/>)
+/// name; its terrain, a zone from the ones the install has (<see cref="MissionZones"/>) or its own from a terrain image
+/// (<see cref="TerrainImageForm"/>); a theater (<see cref="TheaterNames"/>); and day or night. The dialog only asks: the host builds and opens the mission (<see cref="TakeRequest"/>)
 /// and reports back through <see cref="Creating"/> and <see cref="Failure"/>.
 /// </summary>
 internal sealed class NewMissionDialog {
@@ -27,6 +32,7 @@ internal sealed class NewMissionDialog {
 	private readonly Func<IReadOnlyList<ZoneChoice>> _listZones;
 	private readonly Func<IReadOnlyList<string>> _listTheaters;
 	private readonly Func<short, GpuTexture?> _heightmap;
+	private readonly TerrainImageForm _terrain;
 	private IReadOnlyList<ZoneChoice>? _zones;
 	private IReadOnlyList<string>? _theaters;
 	private bool _open;
@@ -35,6 +41,7 @@ internal sealed class NewMissionDialog {
 	private string _typedName = "";
 	private string? _problem;
 	private int _zone;
+	private bool _fromImage;
 	private int _theater;
 	private bool _night;
 	private NewMissionRequest? _request;
@@ -43,12 +50,14 @@ internal sealed class NewMissionDialog {
 	/// <param name="listZones">Lists the zones; called the first time the dialog opens.</param>
 	/// <param name="listTheaters">Labels the theaters, in theater order; called the first time the dialog opens.</param>
 	/// <param name="heightmap">A zone's heightmap picture (<see cref="ZoneHeightmaps"/>), or null for none.</param>
+	/// <param name="terrain">The fields of a terrain of the mission's own.</param>
 	public NewMissionDialog(MissionSaving saving, Func<IReadOnlyList<ZoneChoice>> listZones,
-			Func<IReadOnlyList<string>> listTheaters, Func<short, GpuTexture?> heightmap) {
+			Func<IReadOnlyList<string>> listTheaters, Func<short, GpuTexture?> heightmap, TerrainImageForm terrain) {
 		_saving = saving;
 		_listZones = listZones;
 		_listTheaters = listTheaters;
 		_heightmap = heightmap;
+		_terrain = terrain;
 	}
 
 	/// <summary>The mission being built and opened, which the dialog names in place of its fields until that ends.</summary>
@@ -82,7 +91,8 @@ internal sealed class NewMissionDialog {
 	}
 
 	/// <summary>Draws the dialog, if it is up. Call once per frame, inside the ImGui frame, outside any menu.</summary>
-	public void Draw() {
+	/// <param name="owner">The native window to parent the file picker to on Windows (0 for none).</param>
+	public void Draw(nint owner) {
 		// Once closed the popup is taken down below, in the frame after a Close made outside one.
 		if (!_open && !_raised) {
 			return;
@@ -103,7 +113,7 @@ internal sealed class NewMissionDialog {
 		} else if (_open && _askingReplace) {
 			DrawReplace();
 		} else if (_open) {
-			DrawFields();
+			DrawFields(owner);
 		}
 
 		if (!_open) {
@@ -114,7 +124,7 @@ internal sealed class NewMissionDialog {
 		ImGui.EndPopup();
 	}
 
-	private void DrawFields() {
+	private void DrawFields(nint owner) {
 		var zones = _zones ?? [];
 		if (!ImGui.BeginTable("##new-mission", 2)) {
 			return;
@@ -142,8 +152,19 @@ internal sealed class NewMissionDialog {
 
 		Spacer();
 
-		ImGui.TextUnformatted("Zone:");
-		if (zones.Count == 0) {
+		ImGui.TextUnformatted("Terrain:");
+		if (ImGui.RadioButton("A zone the install has", !_fromImage)) {
+			_fromImage = false;
+		}
+
+		ImGui.SameLine();
+		if (ImGui.RadioButton("From an image", _fromImage)) {
+			_fromImage = true;
+		}
+
+		if (_fromImage) {
+			_terrain.Draw(owner);
+		} else if (zones.Count == 0) {
 			ImGui.TextWrapped("The install has no terrain zones.");
 		} else if (ImGui.BeginListBox("##zones", new Vector2(-1f, ScaledImGui.Scaled(ListHeight)))) {
 			for (int i = 0; i < zones.Count; i++) {
@@ -186,7 +207,9 @@ internal sealed class NewMissionDialog {
 		Problem(_problem);
 		Problem(Failure);
 		ImGui.TableNextColumn();
-		if (zones.Count > 0) {
+		if (_fromImage) {
+			_terrain.DrawPicture(ImGui.GetContentRegionAvail().X);
+		} else if (zones.Count > 0) {
 			DrawHeightmap(zones[Math.Clamp(_zone, 0, zones.Count - 1)].Zone);
 		}
 
@@ -194,11 +217,13 @@ internal sealed class NewMissionDialog {
 		Spacer();
 
 		int chosen = Buttons("Create", "Cancel");
-		if ((chosen == 0 || entered) && zones.Count > 0) {
+		if ((chosen == 0 || entered) && (_fromImage || zones.Count > 0)) {
 			string name = _typedName.Trim().ToUpperInvariant();
 			_problem = _saving.WhyNotNewName(name);
 			Failure = null;
-			if (_problem == null) {
+			if (_fromImage && !_terrain.HasImage) {
+				_terrain.AskForImage();
+			} else if (_problem == null) {
 				if (_saving.HasSaved(name)) {
 					_askingReplace = true;
 				} else {
@@ -248,7 +273,9 @@ internal sealed class NewMissionDialog {
 
 	private void Ask(string name) {
 		var zones = _zones!;
-		_request = new NewMissionRequest(name, zones[Math.Clamp(_zone, 0, zones.Count - 1)], (short)_theater, _night);
+		_request = _fromImage
+			? new NewMissionRequest(name, null, _terrain.Zone, (short)_theater, _night)
+			: new NewMissionRequest(name, zones[Math.Clamp(_zone, 0, zones.Count - 1)], null, (short)_theater, _night);
 	}
 
 	private static void Problem(string? problem) {

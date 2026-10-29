@@ -1,6 +1,7 @@
 using HercWorks.Core.Data.File.Msn;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Scene;
+using Herculan.Engine.Sim;
 using Herculan.Engine.Terrain;
 using Herculan.Engine.World;
 
@@ -28,13 +29,16 @@ namespace Herculan.Engine.Editor;
 internal sealed class SceneSync {
 	private readonly MissionDocument _source;
 	private readonly MissionScene _scene;
-	private readonly HeightGrid _terrain;
+	private readonly SimWorld _world;
 	private readonly PlacementTables _tables;
 	private readonly MissionIndex _index;
 	private readonly MissionOverlay _overlay;
 	private readonly ScenePicker _picker;
 	private readonly MissionOutliner _outliner;
 	private readonly SelectionState _selection;
+
+	// The terrain as it now stands, which replacing the mission's terrain swaps (TerrainChanger).
+	private HeightGrid _terrain => _world.Terrain;
 
 	// Every object built for the mission, by the record it stands for, the latest first.
 	private readonly Dictionary<ObjectKey, List<SceneObject>> _built = new();
@@ -43,7 +47,7 @@ internal sealed class SceneSync {
 			MissionOverlay overlay, ScenePicker picker, MissionOutliner outliner, SelectionState selection) {
 		_source = source;
 		_scene = scene;
-		_terrain = scene.World.Terrain;
+		_world = scene.World;
 		_tables = tables;
 		_index = index;
 		_overlay = overlay;

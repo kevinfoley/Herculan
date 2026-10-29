@@ -73,17 +73,20 @@ internal sealed class PointMover {
 	private const int GroupRow = 16;
 
 	private readonly MissionDocument _source;
-	private readonly HeightGrid _terrain;
+	private readonly SimWorld _world;
 	private readonly MissionIndex _index;
 	private readonly SceneSync _sync;
 	private readonly FeatureMoves _features;
 	private readonly TerrainLeveller _leveller;
 
+	// The terrain as it now stands, which replacing the mission's terrain swaps (TerrainChanger).
+	private HeightGrid _terrain => _world.Terrain;
+
 	/// <param name="source">The mission as its <c>.MSN</c>.</param>
 	public PointMover(MissionDocument source, MissionScene scene, MissionIndex index, SceneSync sync, MissionOverlay overlay,
 			TerrainMaterialTable materials) {
 		_source = source;
-		_terrain = scene.World.Terrain;
+		_world = scene.World;
 		_index = index;
 		_sync = sync;
 		_features = new FeatureMoves(source, index);
@@ -102,6 +105,12 @@ internal sealed class PointMover {
 		add => _leveller.Changed += value;
 		remove => _leveller.Changed -= value;
 	}
+
+	/// <summary>
+	/// Takes the terrain as it now stands as levelled (<see cref="TerrainLeveller.Reset"/>), once the mission's terrain is
+	/// replaced or put back (<see cref="TerrainChanger"/>).
+	/// </summary>
+	public void TakeTerrain() => _leveller.Reset();
 
 	/// <summary>The mission box as the mission was opened, which a point outside of grows.</summary>
 	public MissionBox LoadedBox { get; }

@@ -64,7 +64,7 @@ In retail, a mission that needs more markers than the limit crashes as it starts
 
 ### Playable in HERCULAN only
 
-Edit > Mission Settings > "Playable in" chooses between "Vanilla and HERCULAN", the default, and "HERCULAN only". A mission playable only in HERCULAN is held to none of the limits above. Retail ignores the setting and still loads the mission, but if any vanilla limits are exceeded, the game will crash.
+Mission Settings > General > "Playable in" chooses between "Vanilla and HERCULAN", the default, and "HERCULAN only". A mission playable only in HERCULAN is held to none of the limits above. Retail ignores the setting and still loads the mission, but if any vanilla limits are exceeded, the game will crash.
 
 Switching back to "Retail and HERCULAN" deletes nothing. Problems lists each limit the mission is over, and the editor adds no more units of a kind that is over its limit.
 
@@ -213,10 +213,21 @@ The Mission Editor does *not* take conditionals into account when calculating wh
 
 Limits do not apply in HERCULAN Engine.
 
+## Terrain
+
+A mission is played on a terrain: one of the install's zones, or a terrain of its own made from a heightmap image. File > "New mission" offers both under "Terrain". Mission Settings > Terrain shows the zone the mission is played in, replaces its terrain from an image ("Replace terrain"), as one edit you can undo, and under "Export heightmap" writes the mission's terrain as an image you can edit and read back in. The ground's look comes from the mission's theater, whichever terrain it has.
+
+A **heightmap image** is a grayscale picture of the ground seen from above, north at the top: a PNG, or a raw 8-bit file (one byte per pixel, no header). It is 128×128 or 256×256 pixels, and each pixel is one patch of ground. Black is the lowest ground and white the highest. An image of another size, or with any colored pixel, is refused: resize or convert it in an image editor first.
+
+- **Cell size** is how wide the patch of ground under each pixel is, from 24.6 m to 196.6 m. A 256-pixel image with 49.2 m cells makes a terrain 12.6 km across.
+- **Highest point** is how far above black ground white ground stands. How high it can be depends on the cell size.
+
+When the terrain is replaced by one of another size, everything in the mission moves with the terrain's center, so it keeps its place in the middle, or off to one side, as before. Everything stands on the new ground except flyers, which keep their height above it. A terrain of the mission's own is saved with it, in two files beside its `.MSN` with the same name and the extensions `.DAT` and `.DBA`.
+
 ## Sharing a mission
 
-Edit > Mission Settings > "About" says who made the mission and what it is: its author, version, date and description. The game's Custom Missions window (`Shift+Esc` in the front end) shows them. They are saved with the mission, in a file beside its `.MSN` with the same name and the extension `.ABT`, and an edit to them undoes like any other.
+Mission Settings > General > "About" says who made the mission and what it is: its author, version, date and description. The game's Custom Missions window (`Shift+Esc` in the front end) shows them. They are saved with the mission, in a file beside its `.MSN` with the same name and the extension `.ABT`, and an edit to them undoes like any other.
 
-File > "Export Mission Bundle..." writes the mission as one `.hcm` (**H**ERCULAN **C**ustom **M**ission) file to share: the mission, its text and its About. It shows the About fields for a last look, with today's date filled in when the mission has none, and saves the mission first when it has unsaved changes, so the bundle holds what the game plays. The bundle carries the mission's text in the language the game runs in. You can share the HCM file with other players. They can download the HCM file and then import it from the Custom Missions window.
+File > "Export Mission Bundle..." writes the mission as one `.hcm` (**H**ERCULAN **C**ustom **M**ission) file to share: the mission, its text, its About and its own [terrain](#terrain), when it has one. It shows the About fields for a last look, with today's date filled in when the mission has none, and saves the mission first when it has unsaved changes, so the bundle holds what the game plays. The bundle carries the mission's text in the language the game runs in. You can share the HCM file with other players. They can download the HCM file and then import it from the Custom Missions window.
 
 Some missions come with HERCULAN. File > "Load custom mission" lists them, marked "(included)", and so does the Custom Missions window. Open one in the editor to see how it is built. Saving it writes your own copy into the install, which the game then plays in its place; delete that copy to go back to the one that came with HERCULAN. The Custom Missions window cannot delete a mission that comes with HERCULAN.

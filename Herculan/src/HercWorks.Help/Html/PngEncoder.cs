@@ -13,7 +13,12 @@ public static class PngEncoder {
 	private static readonly uint[] CrcTable = BuildCrcTable();
 
 	/// <summary>The PNG of <paramref name="rgb"/>: rows top-down, three bytes a pixel in R, G, B order, no padding.</summary>
-	public static byte[] Encode(int width, int height, byte[] rgb) {
+	public static byte[] Encode(int width, int height, byte[] rgb) => Encode(width, height, rgb, 3, 2); // truecolour
+
+	/// <summary>The 8-bit grayscale PNG of <paramref name="gray"/>: rows top-down, one byte a pixel, no padding.</summary>
+	public static byte[] EncodeGray(int width, int height, byte[] gray) => Encode(width, height, gray, 1, 0); // greyscale
+
+	private static byte[] Encode(int width, int height, byte[] pixels, int bytesPerPixel, byte colourType) {
 		using var output = new MemoryStream();
 		output.Write(Signature);
 
@@ -21,15 +26,15 @@ public static class PngEncoder {
 		BinaryPrimitives.WriteInt32BigEndian(header, width);
 		BinaryPrimitives.WriteInt32BigEndian(header.AsSpan(4), height);
 		header[8] = 8; // bits per channel
-		header[9] = 2; // truecolour
+		header[9] = colourType;
 		WriteChunk(output, "IHDR", header);
 
 		using (var compressed = new MemoryStream()) {
 			using (var zlib = new ZLibStream(compressed, CompressionLevel.Optimal, leaveOpen: true)) {
-				int row = width * 3;
+				int row = width * bytesPerPixel;
 				for (int y = 0; y < height; y++) {
 					zlib.WriteByte(0); // filter: none
-					zlib.Write(rgb, y * row, row);
+					zlib.Write(pixels, y * row, row);
 				}
 			}
 

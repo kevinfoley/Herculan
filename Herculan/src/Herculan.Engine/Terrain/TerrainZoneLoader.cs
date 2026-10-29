@@ -58,8 +58,7 @@ public static class TerrainZoneLoader {
 			SimRandom random, byte heightBias = DefaultHeightBias,
 			int detailLevel = TerrainDetail.DefaultLevel, string? handoffDirectory = null) {
 		if (ReadHandoffZone(handoffDirectory, zoneIndex) is { } own) {
-			return PopulateFromBitmap(own.Heightmap(), own.CellSizeShift, own.HeightScale, materials, random, heightBias,
-				detailLevel);
+			return FromZone(own, materials, random, heightBias, detailLevel);
 		}
 
 		string baseName = $"zone{zoneIndex}";
@@ -80,6 +79,14 @@ public static class TerrainZoneLoader {
 		return PopulateFromBitmap(bitmap, cellSizeShift, heightScale, materials, random, heightBias,
 			detailLevel);
 	}
+
+	/// <summary>
+	/// The terrain of <paramref name="zone"/>, a zone a mission carries of its own, built as <see cref="Load"/> builds one
+	/// read from a handoff, the roll drawn on <paramref name="random"/>.
+	/// </summary>
+	public static HeightGrid FromZone(ZoneFiles zone, TerrainMaterialTable materials, SimRandom random,
+			byte heightBias = DefaultHeightBias, int detailLevel = TerrainDetail.DefaultLevel) =>
+		PopulateFromBitmap(zone.Heightmap(), zone.CellSizeShift, zone.HeightScale, materials, random, heightBias, detailLevel);
 
 	// The zone <directory> holds for <zoneIndex>, or null when it holds neither file or there is no directory.
 	private static ZoneFiles? ReadHandoffZone(string? directory, int zoneIndex) {

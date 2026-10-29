@@ -20,29 +20,39 @@ namespace Herculan.Engine.Editor;
 /// The terrain mesh is rebuilt over the cells that changed (<see cref="Changed"/>) and the overlays laid on it again.</para>
 /// </summary>
 internal sealed class TerrainLeveller {
-	private readonly HeightGrid _terrain;
+	private readonly SimWorld _world;
 	private readonly MissionScene _scene;
 	private readonly MissionIndex _index;
 	private readonly TerrainMaterialTable _materials;
 	private readonly MissionOverlay _overlay;
 	private readonly Action<SceneObject, Vec3i, int> _place;
 
+	// The terrain as it now stands, which replacing the mission's terrain swaps (TerrainChanger).
+	private HeightGrid _terrain => _world.Terrain;
+
 	// The raw heights and materials the terrain mesh was last built from, and where the footprints stood when the
 	// ground was last levelled.
-	private readonly byte[] _meshed;
-	private readonly byte[] _meshedMaterials;
-	private int[] _levelledFor;
+	private byte[] _meshed = [];
+	private byte[] _meshedMaterials = [];
+	private int[] _levelledFor = [];
 
 	/// <param name="place">Stands an object at a position and heading, for whatever draws and picks it.</param>
 	public TerrainLeveller(MissionScene scene, MissionIndex index, TerrainMaterialTable materials, MissionOverlay overlay,
 			Action<SceneObject, Vec3i, int> place) {
-		_terrain = scene.World.Terrain;
+		_world = scene.World;
 		_scene = scene;
 		_index = index;
 		_materials = materials;
 		_overlay = overlay;
 		_place = place;
+		Reset();
+	}
 
+	/// <summary>
+	/// Takes the terrain as it now stands, painted and levelled for the structures and pads as they stand, as what the terrain
+	/// mesh was last built from: when the mission is opened, and once its terrain is replaced or put back.
+	/// </summary>
+	public void Reset() {
 		_meshed = new byte[_terrain.Width * _terrain.Height];
 		_meshedMaterials = new byte[_meshed.Length];
 		for (int y = 0; y < _terrain.Height; y++) {
