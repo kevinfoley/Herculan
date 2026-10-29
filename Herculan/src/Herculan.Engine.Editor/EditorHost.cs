@@ -7,6 +7,7 @@ using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Render;
 using Herculan.Engine.Shell;
+using Herculan.Engine.Terrain;
 using Herculan.Engine.World;
 using ImGuiNET;
 using Silk.NET.Input;
@@ -522,12 +523,25 @@ public sealed class EditorHost {
 		mission.Sync.Rebuilt -= drawables.RefreshWaiting;
 	}
 
-	// Listens to <mission> for what the host does for it: framing a double-clicked selection, and uploading its scene again
-	// when its world changes.
+	// Listens to <mission> for what the host does for it: framing a double-clicked selection, uploading its scene again
+	// when its world changes, and moving the camera with it when its terrain is replaced.
 	private void Follow(EditorMission mission) {
 		mission.Selection.FocusRequested += Frame;
 		mission.Theater.WorldChanged += () => ReloadWorld(mission);
 		mission.Terrain.WorldChanged += () => ReloadWorld(mission);
+		mission.Terrain.Replaced += (east, north, before) => FollowTerrain(mission, east, north, before);
+	}
+
+	// Moves the camera as a replacement of <mission>'s terrain moved every position, <east> and <north>, and by as much as the
+	// ground under it rose from <before>, so the view keeps its place over the mission and its height above the ground.
+	private void FollowTerrain(EditorMission mission, int east, int north, HeightGrid before) {
+		if (!ReferenceEquals(mission, _mission)) {
+			return;
+		}
+
+		int x = (int)_editorCamera.WorldPosition.X, y = (int)_editorCamera.WorldPosition.Y;
+		int rise = mission.Scene.World.Terrain.HeightAtWorld(x + east, y + north) - before.HeightAtWorld(x, y);
+		_editorCamera.Shift(new Vector3(east, north, rise));
 	}
 
 	// Uploads <mission>'s scene again once its theater or time of day has dressed it in another world

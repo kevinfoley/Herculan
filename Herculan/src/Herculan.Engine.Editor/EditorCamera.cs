@@ -72,6 +72,14 @@ public sealed class EditorCamera {
 		WorldPosition = ground - Forward * (height / MathF.Sin(PitchLimit));
 	}
 
+	/// <summary>Moves the camera by <paramref name="offset"/> world units, and the pose the top-down view returns to with it.</summary>
+	public void Shift(Vector3 offset) {
+		WorldPosition += offset;
+		if (_beforeTopDown is { } before) {
+			_beforeTopDown = (before.Position + offset, before.Yaw, before.Pitch);
+		}
+	}
+
 	/// <summary>Leaves the top-down view for the pose it was entered from.</summary>
 	public void LeaveTopDown() {
 		if (_beforeTopDown is not { } before) {

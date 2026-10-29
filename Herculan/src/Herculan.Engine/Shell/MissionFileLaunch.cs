@@ -180,9 +180,7 @@ public static class MissionFileLaunch {
 
 	/// <summary>
 	/// <paramref name="script"/>, a handoff's <c>script.dat</c> or null, once its mission's own zone <paramref name="zone"/> is
-	/// written beside it as the zone its header names (<see cref="TerrainZoneLoader.HeaderFile"/>,
-	/// <see cref="TerrainZoneLoader.HeightmapFile"/>), which the simulator reads ahead of the archives'
-	/// (<see cref="TerrainZoneLoader.Load"/>); a null <paramref name="zone"/> removes such a pair, a stale one from an
+	/// written beside it (<see cref="WriteZone"/>); a null <paramref name="zone"/> removes such a pair, a stale one from an
 	/// earlier handoff. Null, with the reason in <paramref name="failure"/>, when the files cannot be written. Each launch of
 	/// a mission with a zone of its own writes the pair, so missions sharing a zone number never share a zone; a handoff
 	/// written elsewhere (a career's) leaves a pair alone, and a custom zone's number is one no archive zone has
@@ -193,21 +191,31 @@ public static class MissionFileLaunch {
 			return null;
 		}
 
-		string directory = Path.GetDirectoryName(script)!;
-		return ShellWorkingFiles.TryWrite(() => {
-				int zoneIndex = new ScriptDat { HeaderBytes = File.ReadAllBytes(script)[..ScriptDat.HeaderSize] }.ZoneIndex;
-				string headerPath = CaseInsensitivePath.Combine(directory, TerrainZoneLoader.HeaderFile(zoneIndex));
-				string heightmapPath = CaseInsensitivePath.Combine(directory, TerrainZoneLoader.HeightmapFile(zoneIndex));
-				if (zone != null) {
-					File.WriteAllBytes(headerPath, zone.WriteHeader());
-					File.WriteAllBytes(heightmapPath, zone.WriteHeightmap());
-				} else {
-					File.Delete(headerPath);
-					File.Delete(heightmapPath);
-				}
-			}, out failure)
+		return ShellWorkingFiles.TryWrite(() => WriteZone(Path.GetDirectoryName(script)!, File.ReadAllBytes(script), zone), out failure)
 			? script
 			: null;
+	}
+
+	/// <summary>
+	/// Writes <paramref name="zone"/> into the handoff folder <paramref name="directory"/> as the zone the header of
+	/// <paramref name="script"/>, its <c>script.dat</c>, names (<see cref="TerrainZoneLoader.HeaderFile"/>,
+	/// <see cref="TerrainZoneLoader.HeightmapFile"/>), which the simulator reads ahead of the archives'
+	/// (<see cref="TerrainZoneLoader.Load"/>); a null <paramref name="zone"/> removes such a pair. Returns the paths written,
+	/// none for a null <paramref name="zone"/>. Throws what writing or deleting a file throws.
+	/// </summary>
+	public static IReadOnlyList<string> WriteZone(string directory, byte[] script, ZoneFiles? zone) {
+		int zoneIndex = new ScriptDat { HeaderBytes = script[..ScriptDat.HeaderSize] }.ZoneIndex;
+		string headerPath = CaseInsensitivePath.Combine(directory, TerrainZoneLoader.HeaderFile(zoneIndex));
+		string heightmapPath = CaseInsensitivePath.Combine(directory, TerrainZoneLoader.HeightmapFile(zoneIndex));
+		if (zone == null) {
+			File.Delete(headerPath);
+			File.Delete(heightmapPath);
+			return [];
+		}
+
+		File.WriteAllBytes(headerPath, zone.WriteHeader());
+		File.WriteAllBytes(heightmapPath, zone.WriteHeightmap());
+		return [headerPath, heightmapPath];
 	}
 
 	/// <summary>

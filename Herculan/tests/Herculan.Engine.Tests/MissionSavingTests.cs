@@ -186,11 +186,11 @@ public sealed class MissionSavingTests : IDisposable {
 
 		string dataAgain = Path.Combine(_root, "data") + Path.DirectorySeparatorChar;
 		Assert.NotNull(HandoffExport.WhyNotFolder(dataAgain, _root, scratch));
-		Assert.Throws<ArgumentException>(() => HandoffExport.Write(dataAgain, _root, scratch, [1], [2], null));
+		Assert.Throws<ArgumentException>(() => HandoffExport.Write(dataAgain, _root, scratch, [1], [2], null, null));
 		Assert.Empty(Directory.GetFiles(data));
 
 		string target = Path.Combine(_root, "export");
-		HandoffExport.Write(target, _root, scratch, [1], [2], null);
+		HandoffExport.Write(target, _root, scratch, [1], [2], null, null);
 		Assert.Equal([1], File.ReadAllBytes(Path.Combine(target, "script.dat")));
 		Assert.Equal([2], File.ReadAllBytes(Path.Combine(target, "mission.str")));
 		Assert.Equal([7], File.ReadAllBytes(Path.Combine(target, "player.mec")));

@@ -73,6 +73,12 @@ internal sealed class TerrainChanger {
 	/// <summary>Raised once the scene's terrain is replaced or put back, for whatever has it uploaded.</summary>
 	public event Action? WorldChanged;
 
+	/// <summary>
+	/// Raised once a replacement, or its undo or redo, is made, with how far every position moved east and north (0 for a
+	/// terrain of the same size) and the terrain it replaced, for whatever keeps a place of its own on the ground.
+	/// </summary>
+	public event Action<int, int, HeightGrid>? Replaced;
+
 	/// <summary>The mission's own terrain, or null when it plays on the archive's zone <see cref="Zone"/>.</summary>
 	public ZoneFiles? OwnZone { get; private set; }
 
@@ -187,7 +193,8 @@ internal sealed class TerrainChanger {
 		}
 
 		_sync.Sync();
-		_mover.Record(new TerrainEdit(this, change, (before, previous), (after, zone)));
+		_mover.Record(new TerrainEdit(this, change, (before, previous), (after, zone), dx, dy));
+		Replaced?.Invoke(dx, dy, before);
 		var notes = new List<string>();
 		if (dx != 0 || dy != 0) {
 			notes.Add($"Every position moved {Meters(Math.Abs(dx))} {(dx < 0 ? "west" : "east")} and {Meters(Math.Abs(dy))} "
@@ -250,19 +257,22 @@ internal sealed class TerrainChanger {
 		WorldChanged?.Invoke();
 	}
 
-	// Puts the terrain and the .MSN back as the step found or left them, and syncs.
+	// Puts the terrain and the .MSN back as the step found or left them, and syncs; the step moved every position <East>
+	// and <North>.
 	private sealed record TerrainEdit(TerrainChanger Changer, MsnEdit Change, (HeightGrid Terrain, ZoneFiles? Zone) Before,
-			(HeightGrid Terrain, ZoneFiles? Zone) After) : IEditorEdit {
+			(HeightGrid Terrain, ZoneFiles? Zone) After, int East, int North) : IEditorEdit {
 		public void Undo() {
 			Changer._source.Undo(Change);
 			Changer.Swap(Before.Terrain, Before.Zone);
 			Changer._sync.Sync();
+			Changer.Replaced?.Invoke(-East, -North, After.Terrain);
 		}
 
 		public void Redo() {
 			Changer._source.Redo(Change);
 			Changer.Swap(After.Terrain, After.Zone);
 			Changer._sync.Sync();
+			Changer.Replaced?.Invoke(East, North, Before.Terrain);
 		}
 	}
 }

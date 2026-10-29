@@ -604,7 +604,7 @@ internal sealed class MissionSaving {
 		var document = _mission!.Source;
 		try {
 			var written = HandoffExport.Write(folder, _installRoot, _handoffDirectory, document.ScriptBytes, document.MissionText,
-				_mission.PlayerSquad.PlayerMec(document.Generator));
+				_mission.PlayerSquad.PlayerMec(document.Generator), _mission.OwnZone);
 			Console.WriteLine($"Exported {_mission.Name} as {string.Join(", ", written)}.");
 			ShowMessage($"Exported {_mission.Name} into {folder}: {string.Join(", ", written.Select(Path.GetFileName))}.");
 		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException
