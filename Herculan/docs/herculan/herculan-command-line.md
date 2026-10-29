@@ -82,7 +82,7 @@ See [`joystick-config.md`](joystick-config.md).
 
 | Flag | Effect |
 |---|---|
-| `--developer` | The developer keys. Retail's `-SPRUNKNOWN`. See [`herculan-key-bindings.md`](herculan-key-bindings.md#developer-keys). Also puts Debug on a mission's [Shift+Esc] menu bar, and gives the front end retail's `-@`: each career's mission load waits on [the DEBUG dialog](../retail/shell/main-menu.md#the-mission-name-dialog), where a mission file can be typed in place of the career's. |
+| `--developer` | The developer keys. Retail's `-SPRUNKNOWN`. See [`herculan-key-bindings.md`](herculan-key-bindings.md#developer-keys). Also puts Debug and Mission Scripting on a mission's [Shift+Esc] menu bar, and gives the front end retail's `-@`: each career's mission load waits on [the DEBUG dialog](../retail/shell/main-menu.md#the-mission-name-dialog), where a mission file can be typed in place of the career's. The mission editor's Play passes it, and its Play in the game's own editor runs the mission with it on whatever the command line says. |
 
 ## Screenshots and staged state
 

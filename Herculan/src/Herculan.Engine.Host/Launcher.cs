@@ -99,8 +99,8 @@ static class Launcher {
 	}
 
 	/// <summary>
-	/// The mission editor's turns: the editor, and after each Play the mission it asks for, run as a shell launch is, then
-	/// the editor again on that mission, however the mission ended. Returns whether the shell comes up next (Back to game);
+	/// The mission editor's turns: the editor, and after each Play the mission it asks for, run as a shell launch is but in
+	/// developer mode, then the editor again on that mission, however the mission ended. Returns whether the shell comes up next (Back to game);
 	/// false when the window was closed, in the editor or in a mission, which ends the run.
 	/// </summary>
 	private static bool RunEditorTurns(HostSession session, HostWindow window, HostOptions options, SimulatorStaging staging,
@@ -117,7 +117,7 @@ static class Launcher {
 				return true;
 			}
 
-			SimulatorHost.Run(session, window, options, staging, play.Launch, false, options.MusicTrackSelect + launches++);
+			SimulatorHost.Run(session, window, options, staging, play.Launch, false, options.MusicTrackSelect + launches++, developer: true);
 			window.Hold(null);
 			if (window.Closed || TerminationSignal.Requested) {
 				return false;

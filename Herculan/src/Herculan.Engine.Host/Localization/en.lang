@@ -122,6 +122,7 @@ error.slot_load                The saved game could not be loaded.
 error.save                     The game could not be saved.
 error.debrief                  The mission's results could not be read.
 menu.debug                     Debug
+menu.mission_scripting         Mission Scripting
 menu.tweaks                    Tweaks
 menu.accessibility             Accessibility
 menu.settings                  Settings

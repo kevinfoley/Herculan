@@ -122,6 +122,7 @@ error.slot_load                La partie sauvegardée n'a pas pu être chargée.
 error.save                     La partie n'a pas pu être sauvegardée.
 error.debrief                  Les résultats de la mission n'ont pas pu être lus.
 menu.debug                     Débogage
+menu.mission_scripting         Scripts de mission
 menu.tweaks                    Ajustements
 menu.accessibility             Accessibilité
 menu.settings                  Paramètres

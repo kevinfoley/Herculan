@@ -12,7 +12,7 @@ namespace Herculan.Engine.Host.Settings;
 /// <summary>
 /// The menu bar [Shift+Esc] raises over the shell and over a mission, and the pointer at the window's top left over the
 /// shell (<see cref="ShowOnHover"/>), HERCULAN's own and not retail's, and the
-/// panels it opens: Debug (a mission's only, and only under <c>--developer</c>), Settings, Controller, Keys, Tweaks, Accessibility and About; the
+/// panels it opens: Debug and Mission Scripting (a mission's only, and only under <c>--developer</c>), Settings, Controller, Keys, Tweaks, Accessibility and About; the
 /// Editor item, which leaves the shell for the mission editor and is greyed over a mission; and the
 /// first start's <see cref="WelcomeDialog"/>, the <see cref="UpdateDialog"/> and the <see cref="ErrorDialog"/>, which the shell raises without the bar; and a
 /// notice while the on-line manual opens (<see cref="OnlineManual.Opening"/>). Hidden until <see cref="Show"/>, and never
@@ -28,6 +28,7 @@ sealed class HostMenuBar : IEscapeMenu {
 
 	private readonly LocalizationTable _localization;
 	private readonly DebugPanel? _debug;
+	private readonly MissionScriptingWindow? _scripting;
 	private readonly Action? _openEditor;
 	private readonly PanelCentring _centring = new();
 
@@ -39,8 +40,9 @@ sealed class HostMenuBar : IEscapeMenu {
 
 	/// <param name="keys">The key map the Keys window lists.</param>
 	/// <param name="openEditor">The Editor item's switch to the mission editor, or null to grey the item.</param>
+	/// <param name="scripting">The Mission Scripting window, which the host draws as it does the Debug panel, or null for no item.</param>
 	public HostMenuBar(LocalizationTable localization, KeyMap keys, TweaksMenu tweaks, SettingsWindow settings,
-			ControllerWindow controller, DebugPanel? debug = null, Action? openEditor = null) {
+			ControllerWindow controller, DebugPanel? debug = null, Action? openEditor = null, MissionScriptingWindow? scripting = null) {
 		_localization = localization;
 		_openEditor = openEditor;
 		Tweaks = tweaks;
@@ -49,6 +51,7 @@ sealed class HostMenuBar : IEscapeMenu {
 		Keys = new KeysWindow(localization, keys);
 		Accessibility = new AccessibilityMenu(A11ySettings.Current, localization);
 		_debug = debug;
+		_scripting = scripting;
 		About = new AboutWindow(localization);
 		Welcome = new WelcomeDialog(localization, () => Tweaks.IsOpen = true);
 		Update = new UpdateDialog(localization);
@@ -78,7 +81,7 @@ sealed class HostMenuBar : IEscapeMenu {
 
 	/// <summary>Whether one of the bar's panels, or the welcome, the update notice or the error notice, is up.</summary>
 	public bool PanelOpen => Tweaks.IsOpen || Settings.IsOpen || Controller.IsOpen || Keys.IsOpen || Accessibility.IsOpen || About.IsOpen
-		|| Welcome.IsOpen || Update.IsOpen || Error.IsOpen || _debug?.IsOpen == true;
+		|| Welcome.IsOpen || Update.IsOpen || Error.IsOpen || _debug?.IsOpen == true || _scripting?.IsOpen == true;
 
 	/// <summary>Whether the bar or one of its panels is up.</summary>
 	public bool Up => Visible || PanelOpen;
@@ -125,6 +128,9 @@ sealed class HostMenuBar : IEscapeMenu {
 			if (_debug != null) {
 				_debug.IsOpen = false;
 			}
+			if (_scripting != null) {
+				_scripting.IsOpen = false;
+			}
 			if (Tweaks.IsOpen) {
 				Tweaks.Cancel();
 			}
@@ -154,8 +160,8 @@ sealed class HostMenuBar : IEscapeMenu {
 	}
 
 	/// <summary>
-	/// Draws the bar, when it is up, and its panels, when they are; a host with a Debug panel draws
-	/// that itself, since it needs the host's state. <paramref name="owner"/> is the native window a folder
+	/// Draws the bar, when it is up, and its panels, when they are; a host with a Debug panel or a Mission Scripting window
+	/// draws those itself, since they need the host's state. <paramref name="owner"/> is the native window a folder
 	/// picker belongs to, and <paramref name="fullScreen"/> whether that window is full screen, which
 	/// <see cref="PanelCentring"/> watches. Call once per frame inside the ImGui frame.
 	/// </summary>
@@ -180,6 +186,10 @@ sealed class HostMenuBar : IEscapeMenu {
 
 			if (_debug != null && ImGui.MenuItem(_localization.GetStringOrKey("menu.debug"))) {
 				_debug.IsOpen = true;
+			}
+
+			if (_scripting != null && ImGui.MenuItem(_localization.GetStringOrKey("menu.mission_scripting"))) {
+				_scripting.IsOpen = true;
 			}
 
 			if (ImGui.MenuItem(_localization.GetStringOrKey("menu.settings"))) {
