@@ -221,6 +221,13 @@ public sealed partial class MissionGroup {
 	internal MissionActionState? ClosesInOn { get; set; }
 
 	/// <summary>
+	/// Whether <see cref="Settings.TweakSettingDefinitions.GuardHoldsUntilDestroyed"/> holds this group's guard order.
+	/// Set by <see cref="SleepingGuardsFix"/> on <c>C5_10</c>'s six base guards and false on every other group. Not the
+	/// original's.
+	/// </summary>
+	internal bool HoldsGuard { get; set; }
+
+	/// <summary>
 	/// Where the leader walks this tick in place of its route: the hunted object, once <see cref="ClosesInOn"/> has
 	/// fired with the tweak on and while the order is a search/destroy against something still in the world and not
 	/// destroyed. Null otherwise, and the route is walked as retail walks it.
@@ -397,13 +404,14 @@ public sealed partial class MissionGroup {
 
 	/// <summary>
 	/// Whether <see cref="Settings.TweakSettingDefinitions.GuardHoldsUntilDestroyed"/> drops the no-rival half of the
-	/// guard order's completion test, so the order lasts until its subject is destroyed. <b>This engine's own</b>,
-	/// not the original's: it keeps <c>C5_10</c>'s guards on their post, where retail moves them on to the sleep order
-	/// behind it the moment they arrive (docs/retail/simulation/ai-goals.md#a-guard-nobody-contests--c5_10s-ring).
-	/// Read every tick, so turning it on during a mission holds a guard order still in force.
+	/// guard order's completion test, so the order lasts until its subject is destroyed: only for a group
+	/// <see cref="SleepingGuardsFix"/> marked (<see cref="HoldsGuard"/>). <b>This engine's own</b>, not the original's:
+	/// it keeps <c>C5_10</c>'s guards on their post, where retail moves them on to the sleep order behind it the moment
+	/// they arrive (docs/retail/simulation/ai-goals.md#a-guard-nobody-contests--c5_10s-ring). Read every tick, so
+	/// turning it on during a mission holds a guard order still in force.
 	/// </summary>
-	internal static bool GuardHeldUntilSubjectDestroyed(SimWorld world) =>
-		world.Tweaks.GetSettingValue(Settings.TweakSettingDefinitions.GuardHoldsUntilDestroyed);
+	private bool GuardHeldUntilSubjectDestroyed(SimWorld world) =>
+		HoldsGuard && world.Tweaks.GetSettingValue(Settings.TweakSettingDefinitions.GuardHoldsUntilDestroyed);
 
 	/// <summary>
 	/// <c>Group_OrderSubjectCondition</c> (<c>00412dc4</c>) — how far gone the thing the current
