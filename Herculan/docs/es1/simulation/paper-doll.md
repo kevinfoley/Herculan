@@ -37,7 +37,10 @@ The element constructors each allocate their record when given none and return i
 
 - The paper-doll record is the type record's (`+0x188`) `+0xc2`, and the hardpoint's mount the entry of the array at `+0` of the loadout at the machine's `+0x198`; ES2's reads `+0x1f2`, `+0xda` and `+4` of `+0x202`.
 - The frame is the weapon template's `+0x50` × 2 plus the hardpoint's `frameOffset`, where ES2's adds the two: each icon number has two frames in `dba\weapons`.
-- `blitFlags` 2 moves the icon left by the bitmap's width (its `int16` `+6`) less the `WEAPONS.PDG` width, with no shift for the doubled screen.
+- `blitFlags` 2 moves the icon left by the bitmap's width (its `int16` `+6`) less the `WEAPONS.PDG` width, with no shift for the doubled screen. The rect is built from the aligned point before that move, so it does not take it.
+- The frame index, an `int16`, picks both the bank's frame and the size, entry *frame* of `WeaponIconSizes`, neither checked against its count: the 12 sizes of `WEAPONS.PDG` cover frames 0–11 ([Open](#open)).
+- A hardpoint whose index no layout record's slot byte (read signed) equals takes the layout's count as its position, stored at the icon's `int16` `+0x20` as any position is, and its mount from that entry of the loadout's array.
+- For a null mount or a template `+0x50` of −1 the builder writes only the null bitmap `+0` and the position `+0x20`; the point `+4`, the rect `+0xc` and the flags `+0x1c` keep what `__vec_new`'s memory held, which `PaperDollWeaponIcon_ElementCtor` does not clear.
 
 It finds each hardpoint's gun through **`Mech_GetGunLayout` (`0001a0f8`)**, (machine): `GunLayout_GetBySlot`(the `int16` at `+0` of the type record `+0x188`, plus the `int16` at `000bc44e`), ES2's (`00420634`), which reads `+0x1f2`. The layout's `int16` count is at `+0` and its `0x1a`-byte records from the pointer at `+2`, the slot byte at a record's `+0x17`, as ES2's. The builder returns the 8-byte {count, icons} holder from `operator new`. `es2_xref.py` finds one call of it, in `Sim_StartMission` at `0005b27a`, which walks the pool at `000af68c` with `Pool_Prev` and stores each object's list at its `+0x194` (ES2's `+0x1fe`).
 
@@ -52,7 +55,7 @@ It finds each hardpoint's gun through **`Mech_GetGunLayout` (`0001a0f8`)**, (mac
 | 2 | anything but 63 | itself + tint | no |
 | 3 | key, key + 1 or key + 2 | tint | no |
 
-`PaperDoll_RecolorRectFromArt`'s mode 0 tests the art's pixel instead of the screen's: from `art`'s pixels (`+0xe`), *width* its `int16` `+6`, at the rect's offset from `artOrigin`, offset the same way, one byte a pixel, adding *width* − (*x1* − *x0*) − 1 at each row's end. ES2's modes 0 and 3 test the key alone, its mode 2 spares `COLORS.DAT` id 19's index, it writes a doubled block per pixel when the bank is drawn doubled, and it does nothing when the rect's top row is above the screen.
+`PaperDoll_RecolorRectFromArt`'s mode 0 tests the art's pixel instead of the screen's: from `art`'s pixels (`+0xe`), *width* its `int16` `+6`, at the rect's offset from `artOrigin`, offset the same way, one byte a pixel, adding *width* − (*x1* − *x0*) − 1 at each row's end, with no test against the art's bounds, so a column past the art's width reads the next row. ES2's modes 0 and 3 test the key alone, its mode 2 spares `COLORS.DAT` id 19's index, it writes a doubled block per pixel when the bank is drawn doubled, and it does nothing when the rect's top row is above the screen.
 
 **`Damage_PickRegionTint` (`00030dc4`)**, (out, region, damage), ES2's (`00438624`) on `Damage_ToConditionState`'s bands, writes the state and a palette index to the two dwords at *out*, by the region's mode, its dword `+0x18` (`recolorMode`), and from its `colorId`, its dword `+0x14`:
 
@@ -94,4 +97,5 @@ ES2's reads the five colors through its color table, ids 12, 15, 20, 9 and 18, a
 
 - **Open:** what reads `PaperDoll_StaticWeaponIcons`: `es2_xref.py` finds `000b0f78` in `PaperDoll_StaticInit` alone. And what calls `PaperDoll_GetView` and `HeapPtr_DtorPaperDollCopy`, to which it finds no reference.
 - **Open:** which region `colorId` values and modes ES1's `.PDG` files state, and so whether mode 1's 60 and the three-index key range meet retail art.
+- **Open:** whether any retail weapon's frame index, its template `+0x50` × 2 plus a hardpoint's `frameOffset`, reaches 12, past `WeaponIconSizes`' 12 entries, where `PaperDoll_BuildWeaponIcons` would read `PaperDoll_StaticWeaponIcons` as sizes. Proposed check: one pass over the weapons and the `.PDG` hardpoints with `HercWorks.Query`.
 - **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: in DOSBox-X's debugger, `BP <CS>:0003058c` fires once for each machine as a mission starts, and the word at the returned holder's `+0` is that machine's `.PDG` hardpoint count.
