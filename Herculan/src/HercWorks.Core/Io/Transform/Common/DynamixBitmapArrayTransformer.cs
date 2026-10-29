@@ -41,7 +41,8 @@ public class DynamixBitmapArrayTransformer : ByteTransformer<DynamixBitmapArray>
 			byte[] dbaItem = IndexSegment(fileLength + 8); // +8 for the 4-byte DBM header and INT32 file size.
 
 			dynbitmapTransform.ResetIndex();
-			var dbm = dynbitmapTransform.Parse(dbaItem)!;
+			var dbm = dynbitmapTransform.Parse(dbaItem)
+				?? throw new InvalidDataException($"Frame {imageCount} of the bitmap array is empty.");
 
 			dbm.FileName = "_" + imageCount;
 

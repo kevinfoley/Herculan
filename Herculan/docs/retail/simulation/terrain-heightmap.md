@@ -44,6 +44,29 @@ Neither zone loader ([`../formats/zone-terrain.md`](../formats/zone-terrain.md#l
 
 `Terrain_HeightQuery(HeightGrid*, {x,y})` (`0046e07c`) converts a world `(x, y)` into a grid cell via the cell shift, fetches the enclosing cell's 4 corner texels from the 16-byte-per-cell array, and — using each cell's `+0xf` diagonal-selector bits — does barycentric/bilinear interpolation across whichever triangle the query point falls in. Each grid quad can independently choose which way its diagonal split runs; `Terrain_BuildCellSurface` picks it from the corner heights ([Per-cell record](#per-cell-record-16-bytes)).
 
+## The height scale's range
+
+`Terrain_LoadZone` stores the zone header's height scale into `+0x118` (`00427a24`) with no range check, and the 39 retail zones use 90 to 256. A vertex's height is bounded by its raw byte, 0–255, and by nothing else: every reader of `+0x118` that `es2_fieldscan.py 118` lists multiplies with a plain 32-bit `IMUL`, with no compare, saturation or 16-bit store of the height. What bounds the scale is the arithmetic built on it.
+
+**The height query and the edge test overflow on steep slopes.** Both interpolate between two edge-adjacent corners as `(hA − hB) · offset >> cellShift`, `offset` within `[0, cellSize]`, keeping the low 32 bits of the product: two-operand `IMUL`s in `Terrain_HeightQuery` (`0046e2a9` and its other arms), and `IMUL EDX` then `SAR EAX,CL` in `Terrain_EdgeCrossingTest` (`00470673`). The product wraps once `heightScale · D · cellSize` reaches 2^31, `D` the largest raw difference between two adjacent corners. With `D` at its 255 maximum that is a height scale above 2056, 1028, 514 and 257 at cell shifts 12 to 15. A wrapped height is off by a multiple of `2^32 >> cellShift` (262,144 units, about 1.6 km, at cell shift 14), only in the cells steep enough to wrap: a machine there is put deep underground or high in the air, a drop pod bursts or falls through, and the edge test lets rays through the slope. The retail zone nearest the bound is `ZONE1800` (cell shift 15, height scale 256, `D` 118), at 46% of it.
+
+**The face normals need a height scale between 1 and the cell size.** The normal's vertical component is `(1 << cellShift) / heightScale`, a truncating 32-bit `IDIV` (`0046c104`) stored as a short and then doubled in 16 bits:
+
+- a height scale of 0 faults at that `IDIV` at zone load;
+- above the cell size the quotient is 0, so a flat cell's normal is the zero vector and `Math_NormalizeVec3ShortToLength` divides by its zero magnitude (`0046c19a`), a fault at zone load;
+- below that, truncation makes a face read steeper, by up to one part in the quotient, which carries into the baked shade, the slope walk's face test and the plane solve. Retail's coarsest quotient is 16, `ZONE234`'s 4096 / 256;
+- a quotient of `0x4000` or more overflows the doubling: height scale 1 or 2 at cell shift 15 and 1 at cell shift 14. The normal then points down, or is zero and faults;
+- a negative height scale negates every height and the normal's vertical part, so peaks and valleys swap, lighting inverts and every face is too steep for the slope walk.
+
+The terrain draw's back-face test, the ground clip and the plane solve hold to height scales of about 3200 and more.
+
+| Cell shift | Cell size | Height query bound (`D` = 255) | Normals as coarse as `ZONE234`'s |
+|---|---|---|---|
+| 12 | 4,096 | 2056 | 256 |
+| 13 | 8,192 | 1028 | 512 |
+| 14 | 16,384 | 514 | 1024 |
+| 15 | 32,768 | 257 | 2048 |
+
 ## Structure footprints — the flattening pass
 
 A zone heightmap marks a ground vehicle with a **single raised sample**: `ZONE555` puts one cell of 120 in a plain of 97 under each of its five turrets, and 120 is the only even value anywhere in that half of the file's histogram. Read as corner samples — which is what `Terrain_HeightQuery` and `Terrain_DrawCellQuad` both do — one raised sample is the apex of a four-quad pyramid standing at the *corner* of the marked cell, while the structure it was painted for stands near that cell's *centre* (all five of `ZONE555`'s turrets sit at a cell fraction of about 0.5, 0.5). DBSIM reconciles the two at spawn time rather than in the data.
@@ -155,4 +178,7 @@ The same segment and the same walk, with a different question at each step: is t
 ## Open
 
 - **Open:** how often the plane solve misses on the lines of fire and sight that missions produce, which is how often v1.10's ray passes through ground that v1.0's stops at ([When the solve finds no point](#when-the-solve-finds-no-point)). The far plane's offset per cell is measured above; whether an offset becomes a miss depends on the angle at which the ray meets the face, and no ray set has been run.
+- **Open:** a lower height-scale bound than [the height query's](#the-height-scales-range) in the arithmetic of `Terrain_HeightQuery`'s other callers, which take products of returned heights or store them in 16 bits, or in `Mech_CollisionTest`'s slope test. Neither has been read for it.
+- **Open:** whether VSHELL's mission map builds face normals for a zone. Its `Terrain_BuildCellSurface` (`004287ed`) divides by the height scale the same way, so a scale of 0 or above the cell size would fault there too.
+- **Open:** the ground clip's height-scale bound of about 3200 ([The height scale's range](#the-height-scales-range)) rests on `Plane_ShiftAlongZ` and `Plane_ClassifyPoint`; `Poly_SplitByPlane` (`0047e630`) and `ViewFrustum_ClipGroundPolygon` were read for their multiplies alone.
 - **Deferred:** confirm `Razor_MovementTick`'s source file — assumed `flyersys.cpp` by naming convention, but no assert string in the binary names it.

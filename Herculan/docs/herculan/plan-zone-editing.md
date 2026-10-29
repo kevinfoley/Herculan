@@ -2,11 +2,11 @@
 
 Letting a mission designer give a mission its own terrain: a heightmap imported from an image, saved with the mission, shared in its `.hcm` bundle, and played in HERCULAN. Sculpting terrain in the editor's 3D view comes later.
 
-This is a plan, not a record of something built. Nothing here is implemented.
+This is a plan, not a record of something built. Step 1 is implemented (`ZoneFiles`); the rest is not.
 
 ## What a zone is
 
-A zone is a 16-byte header and an 8-bit heightmap, the same Dynamix bitmap container the game uses for textures: [`../retail/formats/zone-terrain.md`](../retail/formats/zone-terrain.md). Ground textures come from the mission's theater and the per-cell material roll, so a new heightmap takes on any theater's look with no further data. HercWorks.Core already reads and writes both files (`ZoneDatTransformer`, `DynamixBitmapArrayTransformer`), and `TerrainZoneLoader` builds a `HeightGrid` from them.
+A zone is a 16-byte header and an 8-bit heightmap, the same Dynamix bitmap container the game uses for textures: [`../retail/formats/zone-terrain.md`](../retail/formats/zone-terrain.md). Ground textures come from the mission's theater and the per-cell material roll, so a new heightmap takes on any theater's look with no further data. HercWorks.Core reads and writes both files (`ZoneDatTransformer`, `DynamixBitmapArrayTransformer`) and holds them as one checked pair (`ZoneFiles`), and `TerrainZoneLoader` builds a `HeightGrid` from them.
 
 ## Decisions
 
@@ -20,7 +20,7 @@ A zone is a 16-byte header and an 8-bit heightmap, the same Dynamix bitmap conta
 
 Each step is one reviewed change, checked in the editor before the next begins.
 
-1. **The zone pair in HercWorks.Core.** A type holding a zone's header and heightmap, built from an 8-bit height array, a cell shift and a height scale, and checked on read: one image, square, 128 or 256 cells a side, the header 16 bytes with shifts matching the image. Tests, with the user's go-ahead, cover what a consumer relies on: a written pair reads back as the same heights and sizes, and a malformed pair is refused with a reason.
+1. **The zone pair in HercWorks.Core.** A type holding a zone's header and heightmap, built from an 8-bit height array, a cell shift and a height scale, and checked on read: one image, square, 128 or 256 cells a side, the header 16 bytes with shifts matching the image, a cell shift of 12 to 15 as in the retail zones, and a height scale within what the game's terrain arithmetic holds at that cell shift ([`../retail/simulation/terrain-heightmap.md`](../retail/simulation/terrain-heightmap.md#the-height-scales-range)). Tests, with the user's go-ahead, cover what a consumer relies on: a written pair reads back as the same heights and sizes, and a malformed pair is refused with a reason.
 2. **Saved missions keep their zone.** `SavedMissions.Write` writes the pair beside the `.MSN`, with the same `.bak` copies; reading a saved mission finds it; `CustomMissions.Files` lists it, so deleting a mission deletes its zone.
 3. **Bundles carry their zone.** `MissionBundle` reads the two entries, named for the mission like its text and about file, under per-entry caps sized for a 256×256 heightmap, and refuses a pair that fails step 1's checks. File > "Export Mission Bundle..." writes them. Import keeps writing the bundle file whole, as now.
 4. **Playing reads the zone from the handoff.** The handoff writers put the pair in the handoff folder, from the saved files or the bundle's bytes; `MissionScene`'s zone load takes a handoff zone first. This covers the game's Custom Missions window, the editor's own load into its scratch handoff, and the editor's Play.

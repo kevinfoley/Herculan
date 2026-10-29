@@ -25790,8 +25790,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Math_NormalizeVec3ShortToLength",
-      "description": "Rescales a three-short vector in place to a requested length (param_2). Halves all three components until Math_FastMagnitude3D fits under 0x7d01, then multiplies each by Math_Q16Divide(length, magnitude). Called by Terrain_BuildCellSurfaceAndShade with 0x800 for both of a cell's face normals -- which is the constant that makes Light_ComputeShadeForNormal's >> 22 come out as a saturating 512*cos.",
-      "source": "docs/retail/rendering/terrain-lighting.md (terrain lighting RE session)"
+      "description": "Rescales a three-short vector in place to a requested length (param_2). Halves all three components (16-bit SAR) until Math_FastMagnitude3D fits under 0x7d01, then multiplies each through Math_Q16Multiply by (length << 16) / magnitude, an inline IDIV (0046c19a) that faults on a zero vector. Called twice by Terrain_BuildCellSurfaceAndShade with 0x800 for a cell's two face normals, and by Terrain_RayWalk's setup for the walk direction -- which is the constant that makes Light_ComputeShadeForNormal's >> 22 come out as a saturating 512*cos.",
+      "source": "docs/retail/rendering/terrain-lighting.md (terrain lighting RE session)",
+      "verified": {
+        "bytes": "0046c138+163",
+        "sha1": "cc726161a829",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0046c1dc",

@@ -182,6 +182,11 @@ public abstract class ThreeSpaceByteTransformer {
 	public byte[] GetBytes() => Bytes!;
 
 	private static byte[] Slice(byte[] data, int offset, int length) {
+		// Checked before allocating, so a length read from a file cannot claim more memory than the file holds.
+		if (offset < 0 || length > data.Length - offset) {
+			throw new ArgumentException($"{length} bytes at {offset} run past the end of {data.Length}.");
+		}
+
 		var result = new byte[length];
 		Array.Copy(data, offset, result, 0, length);
 		return result;
