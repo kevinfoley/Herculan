@@ -104,13 +104,14 @@ public sealed class Es1Simulation {
 		set => Globals.CenterTurretMode = value;
 	}
 
-	/// <summary>
-	/// <c>TapePlayback</c> and <c>TapeRecording</c> (<c>000b5b76</c>, <c>000b5b78</c>), which <c>Alt+S</c>'s freeze
-	/// tests. PLACEHOLDER: always clear: <c>-p</c>, <c>-r</c> and <c>-D</c> are not taken, and no plan step ports tapes.
-	/// </summary>
-	public bool TapePlayback { get; init; }
+	/// <inheritdoc cref="Es1InputBuild.TapePlayback"/>
+	/// <remarks><c>Alt+S</c>'s freeze tests it, and the tick takes the frame's recorded delta while it is set.</remarks>
+	public bool TapePlayback => Input.TapePlayback;
 
-	/// <inheritdoc cref="TapePlayback"/>
+	/// <summary>
+	/// <c>TapeRecording</c> (<c>000b5b78</c>), which <c>Alt+S</c>'s freeze tests. PLACEHOLDER: always clear: <c>-r</c> is
+	/// not taken until part T3 ports the recording.
+	/// </summary>
 	public bool TapeRecording { get; init; }
 
 	/// <summary>The developer keys' steps <see cref="Es1MechCommands"/> reads and sets.</summary>
@@ -141,8 +142,12 @@ public sealed class Es1Simulation {
 	public IEnumerable<Es1Wait> MainTick(StrongBox<bool> ended) {
 		ended.Value = false;
 
-		// 1. The input block. During playback the block's +0x29 would be the tick's length; tapes are not taken.
+		// 1. The input block; during playback the tick's length is the block's +0x29, the frame's recorded delta. A build
+		// that ends the tape has cleared TapePlayback, and the delta stays the frame before's.
 		var block = Input.Build();
+		if (Input.TapePlayback) {
+			Globals.Clock.SetRecordedTickDelta(block.ReplayTickDelta);
+		}
 
 		// 2. The pools, each walked with Pool_Prev from the end, oldest first, and the groups.
 		if (!Frozen) {

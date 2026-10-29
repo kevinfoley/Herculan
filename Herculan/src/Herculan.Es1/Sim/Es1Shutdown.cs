@@ -17,8 +17,7 @@ public static class Es1Shutdown {
 
 	/// <summary>
 	/// <c>Sim_Shutdown</c> on <paramref name="simulation"/>, in its order: <c>CockpitMouseLive</c> = 0; the tape and the
-	/// <c>.dmp</c> file closed, which this engine never opens (tapes are left out of the slice,
-	/// docs/herculan/plan-es1-first-mission.md#what-the-slice-leaves-out); <c>GndTex_Free</c>, which frees the ground
+	/// <c>.dmp</c> file closed, neither of which this engine holds open; <c>GndTex_Free</c>, which frees the ground
 	/// texture's memory, held here in a GL texture the window's close disposes; <see cref="Es1MissionResults.Write"/> on
 	/// <c>LocalPlayerMech</c>; <see cref="ExitCode"/> written to <c>data\exit.cfg</c> as an <c>int16</c>;
 	/// <c>Sound_Shutdown</c>; and <c>Sim_ShutdownNoOp1</c> and <c>Sim_ShutdownNoOp2</c>, which do nothing. Returns the
@@ -31,14 +30,14 @@ public static class Es1Shutdown {
 	/// <see cref="AssertExitStatus"/> is returned. A second failure in the hook's own write, where retail asserts again
 	/// from inside the hook, is reported and goes no further, an engine guard.</para>
 	/// </summary>
-	/// <param name="demoMode"><c>DemoMode</c> (<c>000b5bd0</c>), which only a demo tape sets.</param>
+	/// <param name="demoMode"><c>DemoMode</c> (<c>000b5bd0</c>), which <c>-D</c> sets when its tape opens.</param>
 	public static int Run(Es1Simulation simulation, string installRoot, bool demoMode = false) {
 		if (simulation.ViewChain.Manager?.Mouse is { } mouse) {
 			mouse.Live = false;
 		}
 
-		// PLACEHOLDER: with TapeFile open, DmpFile and then the tape closed; tapes are left out of the slice, so neither is
-		// ever open here.
+		// With TapeFile set, DmpFile and then the tape closed: the tape is read whole when it opens (Es1TapePlayback) and
+		// holds no file open, and -d, which opens DmpFile, is not taken (plan decision 21).
 		// GndTex_Free: nothing to do here; the ground texture is a GL object disposed with the window.
 
 		if (!Es1MissionResults.Write(simulation.LocalPlayer, simulation.Globals, installRoot, out string? error)) {

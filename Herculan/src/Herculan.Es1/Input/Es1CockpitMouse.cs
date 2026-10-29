@@ -62,8 +62,11 @@ public sealed class Es1CockpitMouse {
 	/// </summary>
 	public bool FollowsMouse { get; set; } = true;
 
-	/// <summary><c>TapePlayback</c>, whose replay moves the cursor from the queue. Always clear: no plan step ports tapes.</summary>
-	public bool TapePlayback => false;
+	/// <summary>The tape <c>-p</c> or <c>-D</c> opened, whose flag <see cref="TapePlayback"/> reads; none with no tape.</summary>
+	public Es1TapePlayback? Tape { get; init; }
+
+	/// <summary><c>TapePlayback</c> (<c>000b5b76</c>), under which <see cref="ProcessQueue"/> moves the cursor to each replayed point.</summary>
+	public bool TapePlayback => Tape?.Playing == true;
 
 	/// <summary><c>CockpitMouse_DoubleClickTicks</c> (<c>000bd518</c>): the timer's interrupts a second halved, 60, a second of the clock.</summary>
 	public uint DoubleClickTicks { get; private set; }

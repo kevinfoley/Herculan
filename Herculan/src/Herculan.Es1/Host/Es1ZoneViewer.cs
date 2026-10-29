@@ -69,8 +69,34 @@ public static class Es1ZoneViewer {
 	/// <c>DBSIM.EXE</c> does. Returns the process exit code: 1 when the mission does not load, and otherwise
 	/// <see cref="Show"/>'s. Returning the code <c>data\exit.cfg</c> holds as the process's is this engine's own: retail's
 	/// <c>Sim_Main</c> returns nothing, and the shell reads the file.
+	///
+	/// <para>With <paramref name="playTape"/> (<c>--play</c>, retail's <c>-p</c>) or <paramref name="demo"/>
+	/// (<c>--demo</c>, <c>-D</c>; with <c>--play</c>, that tape in demo mode) the tape is opened and its bundle unpacked
+	/// over the install's <c>data\</c> mission files and <c>tapes\prefs.cfg</c> and <c>tapes\keyjoy.cfg</c>, as
+	/// <c>Sim_ParseCommandLine</c> does before the mission loads (<see cref="Es1TapePlayback.FromCommandLine"/>); the
+	/// tape carries the mission, so a named mission is not loaded. Returns 1 when a named tape is not found or does not
+	/// read.</para>
 	/// </summary>
-	public static int Run(string installRoot, string? missionName, Es1HeaderOverrides overrides) {
+	public static int Run(string installRoot, string? missionName, Es1HeaderOverrides overrides, string? playTape = null,
+			bool demo = false) {
+		Es1TapePlayback? tape = null;
+		if (playTape != null || demo) {
+			if (!Es1TapePlayback.FromCommandLine(installRoot, playTape, demo, out tape, out string? tapeError)) {
+				Console.Error.WriteLine(tapeError);
+				return 1;
+			}
+
+			if (tape != null) {
+				Console.WriteLine($"Tape {tape.FilePath}: {tape.Tape.Frames.Count} frames, {tape.RecordedSeconds:0.0} s as recorded, " +
+					"unpacked over the install's data\\ mission files and tapes\\prefs.cfg and keyjoy.cfg. " +
+					(tape.DemoMode ? "Any key ends the demo." : "Ctrl+E ends it."));
+				if (missionName != null) {
+					Console.WriteLine($"The tape carries its mission, so {missionName} is not loaded.");
+					missionName = null;
+				}
+			}
+		}
+
 		if (missionName != null) {
 			var random = Es1ShellRandom.AtStartup(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
 			if (Es1SingleMission.Start(installRoot, Es1SingleMission.MountShell(installRoot), missionName, random,
@@ -85,7 +111,7 @@ public static class Es1ZoneViewer {
 		// PLACEHOLDER: Sim_Main's step 4, the heap's size to data\mem.got and an int16 0 to data\exit.cfg
 		// (docs/es1/simulation/main-loop.md#starting--sim_main-00059350), is not made, so a run the window's close ends
 		// leaves exit.cfg as the last mission's end wrote it.
-		if (Es1MissionFiles.Read(installRoot, out string? error) is not { } files) {
+		if (Es1MissionFiles.Read(installRoot, out string? error, tape?.DemoMode == true) is not { } files) {
 			Console.Error.WriteLine(error);
 			return 1;
 		}
@@ -141,15 +167,18 @@ public static class Es1ZoneViewer {
 
 		Console.WriteLine("Keypad drives the HERC; F free camera (RMB + mouse to look, WASD/arrows, Q/E, Shift), " +
 			"G textured/banded ground; close the window to quit" + (player == null ? " (or Esc)." : "."));
-		return Show(installRoot, files.Preferences, content, scene, world, views, $"HERCULAN — Metaltech: Earthsiege — {missionName ?? "data\\script.dat"}, zone {header[1]}");
+		string source = tape != null ? Path.GetFileName(tape.FilePath) : missionName ?? "data\\script.dat";
+		return Show(installRoot, files.Preferences, content, scene, world, views, $"HERCULAN — Metaltech: Earthsiege — {source}, zone {header[1]}",
+			tape);
 	}
 
 	/// <summary>
 	/// The window, until it closes. Returns the exit code <see cref="Es1Shutdown.Run"/> wrote when the mission ended, and
 	/// 0 when the window closed without an ending, which runs no shutdown and writes no file.
 	/// </summary>
+	/// <param name="tape">The tape playing, which the cockpit's mouse and the simulation read; none with no tape.</param>
 	private static int Show(string installRoot, Es1Preferences preferences, GameContent content, Es1ZoneScene scene,
-			Es1World world, Es1CockpitViews? views, string title) {
+			Es1World world, Es1CockpitViews? views, string title, Es1TapePlayback? tape) {
 		using var window = new EngineWindow(title);
 		int exitCode = 0;
 
@@ -192,7 +221,7 @@ public static class Es1ZoneViewer {
 		Es1ViewManager? manager = null;
 		if (views != null && player != null) {
 			var display = new Es1VideoMemory();
-			var cockpitMouse = new Es1CockpitMouse(display.Cursor);
+			var cockpitMouse = new Es1CockpitMouse(display.Cursor) { Tape = tape };
 			cockpitMouse.Init(hostMouse);
 			manager = new Es1ViewManager(views, display, player, cockpitMouse, world.Globals, preferences);
 		}
@@ -317,7 +346,7 @@ public static class Es1ZoneViewer {
 
 			if (world.LocalPlayer != null) {
 				simulation = new Es1SimulationStart(world, installRoot, preferences, input, keyboard, hostMouse,
-					chain, widgets, content);
+					chain, widgets, content, tape);
 				disposables.Add(simulation);
 			}
 

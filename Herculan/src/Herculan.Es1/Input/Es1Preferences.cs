@@ -93,15 +93,26 @@ public sealed class Es1Preferences {
 	/// <paramref name="voiceArchivePresent"/>, and option 2 set to 0 (<c>Prefs_SetOption</c>(1, 0, 2)) when it is clear;
 	/// <c>PrefsInitInProgress</c> cleared. The handlers of options 8 and 10 run when <see cref="Es1ControlsState"/>
 	/// registers them, and the joystick devices are built by the input build (<see cref="Es1InputBuild"/>). Under
-	/// <c>DemoMode</c> retail loads twice; tapes are not taken.
+	/// <paramref name="demoMode"/> the load runs twice, <c>Prefs_Load</c>(1) and then <c>Prefs_Load</c>(0), and
+	/// <c>Prefs_RevertSelectedOptions</c> (<c>0004aaf0</c>) puts options 0–6, the list at <c>0009570c</c>, back to their
+	/// loaded values. Both loads read <c>data\prefs.cfg</c>, whatever a tape plays, so the second reads the bytes the first
+	/// did.
 	/// </summary>
 	/// <param name="path"><c>data\prefs.cfg</c> in the install, which <see cref="SaveSelectedOptions"/> writes.</param>
 	/// <param name="voiceArchivePresent">What <see cref="VoiceArchiveExists"/> answers for the install.</param>
-	public static Es1Preferences Load(byte[]? file, string path, bool voiceArchivePresent) {
+	/// <param name="demoMode"><c>DemoMode</c> (<c>000b5bd0</c>), which <c>-D</c> sets.</param>
+	public static Es1Preferences Load(byte[]? file, string path, bool voiceArchivePresent, bool demoMode = false) {
 		var preferences = FromFile(file, path);
 		preferences.InitInProgress = true;
-		for (int index = 0; index < OptionCount; index++) {
-			preferences._handlers[index]?.Invoke(preferences._options[index]);
+		preferences.RunHandlers();
+		if (demoMode) {
+			var reloaded = FromFile(file);
+			Array.Copy(reloaded._options, preferences._options, OptionCount);
+			preferences.RunHandlers();
+			Array.Copy(preferences._loaded, preferences._previous, OptionCount);
+			foreach (int index in RevertedInDemo) {
+				preferences._options[index] = preferences._loaded[index];
+			}
 		}
 
 		preferences.VoiceArchivePresent = voiceArchivePresent;
@@ -111,6 +122,16 @@ public sealed class Es1Preferences {
 
 		preferences.InitInProgress = false;
 		return preferences;
+	}
+
+	/// <summary>The seven options <c>Prefs_Init</c> reverts under <c>DemoMode</c>, the <c>int16</c> list at <c>0009570c</c>.</summary>
+	private static readonly int[] RevertedInDemo = [0, 1, 2, 3, 4, 5, 6];
+
+	/// <summary><c>Prefs_Load</c>'s pass after the read: each option's registered handler called with it.</summary>
+	private void RunHandlers() {
+		for (int index = 0; index < OptionCount; index++) {
+			_handlers[index]?.Invoke(_options[index]);
+		}
 	}
 
 	/// <summary>

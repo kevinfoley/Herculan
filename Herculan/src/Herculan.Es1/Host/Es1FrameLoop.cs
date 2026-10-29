@@ -121,8 +121,8 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	/// the squadmates and their pilots (<see cref="Es1Cockpit.LoadSquadmatePilots"/>), every machine's weapon icons
 	/// (<see cref="Panels.Es1PaperDoll.BuildWeaponIconsForPool"/>), <paramref name="cursor"/> installed on the display's cursor, <c>Player_PerFrameCockpitUpdate</c>, <c>Cam_Update</c>,
 	/// the draw page 2 again and views 1 and 0 set, so both canopies lie in page 2's half; step 14 without the lift, the
-	/// first frame's 3D pass; and step 15, the flag cleared, the whole of page 2 copied onto page 0, the cursor shown and
-	/// the cockpit's mouse made live.
+	/// first frame's 3D pass; and step 15, the flag cleared, the whole of page 2 copied onto page 0, the cursor shown and,
+	/// unless a tape plays, the cockpit's mouse made live.
 	/// </summary>
 	/// <param name="cursor">Step 5's cursor, <c>dci\cursor</c>, which <c>00057640</c> loads.</param>
 	public void StartMission(Es1CursorImage? cursor = null) {
@@ -162,7 +162,9 @@ public sealed class Es1FrameLoop : IEs1Frame {
 		Views.Cockpit.DrawToCockpit(new Es1Rect(0, 0, 320, 400));
 		// The driver's slot 30 (0009df4c) shows the cursor; and with no tape playing, CockpitMouseLive is set.
 		display.Cursor.Show();
-		Views.Mouse.Live = true;
+		if (!Views.Mouse.TapePlayback) {
+			Views.Mouse.Live = true;
+		}
 	}
 
 	/// <summary>
@@ -255,7 +257,8 @@ public sealed class Es1FrameLoop : IEs1Frame {
 			yield return Es1Wait.For(retrace);
 		}
 
-		// Subsystem phase 6, Vcr_FlushCheckpoints: tapes are not taken.
+		// Subsystem phase 6, Vcr_FlushCheckpoints, does nothing without DmpFile, which only -d opens and this engine does
+		// not take (plan decision 21).
 	}
 
 	/// <summary>
@@ -301,12 +304,16 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	}
 
 	/// <summary>
-	/// The frame after a tick, from <c>Cam_Update</c> on: the 3D pass and <see cref="EndFrame"/>, yielding a retrace for
-	/// each wait the frame's end makes. The host runs it through <see cref="AdvanceHostFrame"/>; a test drives it directly.
+	/// The frame after a tick, from <c>Cam_Update</c> on: the 3D pass, skipped while a tape plays with the simulation
+	/// frozen, and <see cref="EndFrame"/>, yielding a retrace for each wait the frame's end makes. The host runs it through
+	/// <see cref="AdvanceHostFrame"/>; a test drives it directly.
 	/// </summary>
 	internal IEnumerable<Es1Retrace> RunFrame(bool frozen) {
 		_camUpdate();
-		RenderFrame();
+		if (!(Views.Mouse.TapePlayback && frozen)) {
+			RenderFrame();
+		}
+
 		return EndFrame(Views, frozen);
 	}
 

@@ -9,7 +9,7 @@ namespace Herculan.Es1.Input;
 /// ES2's docs/retail/simulation/joystick-input.md#the-keyjoy-switches).
 /// </summary>
 public sealed class Es1KeyjoyConfig {
-	/// <summary>The file, which <c>Config_BuildPath</c> (<c>00059300</c>) puts in <c>data\</c> outside a replay.</summary>
+	/// <summary>The file, which <c>Config_BuildPath</c> (<c>00059300</c>) puts in <c>data\</c>, or <c>tapes\</c> while a tape plays.</summary>
 	public const string FileName = "keyjoy.cfg";
 
 	/// <summary>The words of the table at <c>00095948</c>, in its order; a word matching none is index 7, which does nothing.</summary>
@@ -30,11 +30,14 @@ public sealed class Es1KeyjoyConfig {
 	public bool MissileReversed { get; private set; }
 
 	/// <summary>
-	/// <c>data\keyjoy.cfg</c> of the install, opened in mode <c>rt</c>; all three switches clear when it does not open.
-	/// The replay's <c>tapes\keyjoy.cfg</c> is not read: playback is not ported.
+	/// <c>Config_BuildPath</c>(<c>keyjoy.cfg</c>) of the install, opened in mode <c>rt</c>: <c>data\keyjoy.cfg</c>, or
+	/// with <paramref name="tapePlayback"/> (<c>TapePlayback</c>) the tape's <c>tapes\keyjoy.cfg</c>; all three switches
+	/// clear when it does not open.
 	/// </summary>
-	public static Es1KeyjoyConfig Load(string installRoot) {
-		string path = Es1MissionFiles.DataPath(installRoot, FileName);
+	public static Es1KeyjoyConfig Load(string installRoot, bool tapePlayback = false) {
+		string path = tapePlayback
+			? HercWorks.Core.Io.CaseInsensitivePath.Combine(installRoot, Es1TapePlayback.TapesFolder, FileName)
+			: Es1MissionFiles.DataPath(installRoot, FileName);
 		return File.Exists(path) ? Parse(File.ReadAllText(path, Encoding.Latin1)) : new Es1KeyjoyConfig();
 	}
 

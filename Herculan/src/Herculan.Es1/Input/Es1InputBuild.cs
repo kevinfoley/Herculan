@@ -86,6 +86,12 @@ public sealed class Es1InputBuild {
 	/// <summary>The preferences the build reads, <c>data\prefs.cfg</c>'s options.</summary>
 	public Es1Preferences Preferences => _preferences;
 
+	/// <summary>The tape <c>-p</c> or <c>-D</c> opened, whose frames step 2 reads; none with no tape.</summary>
+	public Es1TapePlayback? Tape { get; init; }
+
+	/// <summary><c>TapePlayback</c> (<c>000b5b76</c>): a tape is playing, until step 2 ends it.</summary>
+	public bool TapePlayback => Tape?.Playing == true;
+
 	/// <summary>
 	/// <c>Input_BuildPlayerDevice</c>: one tick's input block, in retail's order. The stick mode read at entry decides
 	/// the keyboard's slow keys and whether source button 1 may toggle it; the mode after that toggle decides the rest.
@@ -104,20 +110,24 @@ public sealed class Es1InputBuild {
 
 		live.CommandWord = (ushort)(word & SimCommandMask);
 
-		// 2. PLACEHOLDER: the tape's playback, which fills the block from TapeFile under -p and -D, and DemoMode are not
-		// ported; no plan step retires them.
+		// 2. The tape's frame, which fills the block and the source buttons; a tape that ends clears TapePlayback, and the
+		// steps below then build this frame live.
+		byte[]? tapeSources = PlayFrame(live, block);
 
-		// 3. The keyboard's axes; the source buttons are the live block's +0x1d.
+		// 3. Live, the keyboard's axes; the source buttons are the live block's +0x1d. In playback the keyboard's pairs
+		// are not built, and what steps 5 and 6 do to them only the live step 7 reads.
+		bool playing = TapePlayback;
 		bool camera = Controls.InputDrivesCamera;
 		bool missileFlown = Controls.MissileFlown;
-		var keys = _keyboard.BuildKeyboardAxes((modeAtEntry == 1 && !camera) || missileFlown);
-		int[] kb = [keys.FirstX, keys.FirstY, keys.SecondX, keys.SecondY];
+		Es1KeyboardAxesBlock? keys = playing ? null : _keyboard.BuildKeyboardAxes((modeAtEntry == 1 && !camera) || missileFlown);
+		int[] kb = keys is { } built ? [built.FirstX, built.FirstY, built.SecondX, built.SecondY] : new int[4];
 		int[] stick = live.StickAxes;
+		byte[] sourceButtons = playing ? tapeSources! : live.StickButtons;
 
 		// 4. The frame's mouse events on the cockpit's widgets; what CockpitMouse_ProcessQueue returns only the tape's
-		// recording reads, and tapes are not taken.
+		// recording reads, which part T3 ports.
 		CockpitMouse?.ProcessQueue();
-		if (live.StickButtons[1] == 0) {
+		if (sourceButtons[1] == 0) {
 			_toggleHeld = false;
 		} else if (modeAtEntry != 0 && !_toggleHeld) {
 			mode = Controls.ToggleStickMode();
@@ -178,18 +188,21 @@ public sealed class Es1InputBuild {
 
 		bool throttleKeys = _preferences.ThrottleKeys && !missileFlown;
 
-		// 7. The configuration's sources, the latches, then the pointer, mouse, buttons 4-7 and command word.
-		byte[] stickButtons = live.StickButtons[..4];
-		var sources = new Es1InputSources(kb, stick, [keys.Button(0), keys.Button(1), keys.Button(2), keys.Button(3)], stickButtons);
-		var (axes, buttons) = Es1StickConfigurations.Choose(_preferences.StickConfiguration, mode, _preferences.ThirdAxis, throttleKeys, sources);
-		latches.Apply(buttons);
-		Array.Copy(axes, block.Axes, 4);
-		Array.Copy(buttons, block.Buttons, 4);
-		block.PointerX = live.PointerX;
-		block.PointerY = live.PointerY;
-		Array.Copy(live.MouseButtons, block.MouseButtons, 3);
-		Array.Copy(live.StickButtons, 4, block.Buttons, 4, 4);
-		block.CommandWord = live.CommandWord;
+		// 7. Live, the configuration's sources, the latches, then the pointer, mouse, buttons 4-7 and command word. In
+		// playback the pointer and the mouse bytes stay 0.
+		if (keys is { } live7) {
+			byte[] stickButtons = live.StickButtons[..4];
+			var sources = new Es1InputSources(kb, stick, [live7.Button(0), live7.Button(1), live7.Button(2), live7.Button(3)], stickButtons);
+			var (axes, buttons) = Es1StickConfigurations.Choose(_preferences.StickConfiguration, mode, _preferences.ThirdAxis, throttleKeys, sources);
+			latches.Apply(buttons);
+			Array.Copy(axes, block.Axes, 4);
+			Array.Copy(buttons, block.Buttons, 4);
+			block.PointerX = live.PointerX;
+			block.PointerY = live.PointerY;
+			Array.Copy(live.MouseButtons, block.MouseButtons, 3);
+			Array.Copy(live.StickButtons, 4, block.Buttons, 4, 4);
+			block.CommandWord = live.CommandWord;
+		}
 
 		// 8. PLACEHOLDER: the tape's recording, which appends the frame to <TapeStem>.tap under -r, is not ported; no
 		// plan step retires it.
@@ -219,6 +232,62 @@ public sealed class Es1InputBuild {
 
 		PlayerInputBlock = block;
 		return block;
+	}
+
+	/// <summary>
+	/// Step 2, playback, while <see cref="TapePlayback"/> (docs/es1/simulation/input.md#recording-and-playback): on the
+	/// first frame the cursor's position into <see cref="Es1TapePlayback.CursorPos"/> (<c>Cursor_GetPosition</c>, latch
+	/// <c>000958be</c>); the frame read; under <c>DemoMode</c> a live command word sets <c>DemoAbort</c>. A short read, or
+	/// the live command <see cref="Es1TapePlayback.StopCommand"/>, under <c>-p</c> as under <c>-D</c>, sets
+	/// <c>DemoAbort</c>, closes the tape, sets <c>CockpitMouseLive</c> and zeroes the live word, and the caller builds the
+	/// frame live. Otherwise each mouse event goes onto the cockpit's queue with its recorded time
+	/// (<c>CockpitMouseQueue_Push</c>) and its point becomes <c>Input_CursorPos</c>, and the record fills the block's
+	/// command word, axes, buttons 0–7 from bits 0–7 and <c>+0x29</c>. Returns the four source buttons, bits 8–11, while
+	/// the tape plays, and none otherwise.
+	/// </summary>
+	private byte[]? PlayFrame(Es1LiveBlock live, Es1PlayerInputBlock block) {
+		if (Tape is not { Playing: true } tape) {
+			return null;
+		}
+
+		if (tape.CursorLatch) {
+			// With no cockpit, which retail always has, the origin, an engine guard.
+			tape.CursorPos = CockpitMouse?.Cursor.GetPosition() ?? (0, 0);
+			tape.CursorLatch = false;
+		}
+
+		var frame = tape.Read();
+		var axisKeys = _keyboard.AxisKeys;
+		if (axisKeys.DemoMode && live.CommandWord != 0) {
+			axisKeys.DemoAbort = true;
+		}
+
+		// Sim_HandleWindowKey (00059dec) gets the live word and answers 0 for every code.
+		if (frame == null || live.CommandWord == Es1TapePlayback.StopCommand) {
+			axisKeys.DemoAbort = true;
+			tape.Close();
+			if (CockpitMouse != null) {
+				CockpitMouse.Live = true;
+			}
+
+			live.CommandWord = 0;
+			return null;
+		}
+
+		foreach (var mouse in frame.MouseEvents) {
+			CockpitMouse?.Push((uint)mouse.Time, new Es1MouseRecord(mouse.X, mouse.Y, mouse.Buttons));
+			tape.CursorPos = (mouse.X, mouse.Y);
+		}
+
+		block.CommandWord = (ushort)frame.CommandWord;
+		Array.Copy(frame.Axes, block.Axes, block.Axes.Length);
+		int bits = (ushort)frame.Buttons;
+		for (int i = 0; i < block.Buttons.Length; i++) {
+			block.Buttons[i] = (byte)((bits >> i) & 1);
+		}
+
+		block.ReplayTickDelta = frame.TickDelta;
+		return [(byte)((bits >> 8) & 1), (byte)((bits >> 9) & 1), (byte)((bits >> 10) & 1), (byte)((bits >> 11) & 1)];
 	}
 
 	/// <summary>

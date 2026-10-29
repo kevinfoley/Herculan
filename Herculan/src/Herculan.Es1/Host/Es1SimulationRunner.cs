@@ -27,7 +27,17 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 		MissionEnded,
 	}
 
+	/// <summary>
+	/// The most host time a playback holds towards its next frame (<see cref="AdvanceClock"/>): the longest delta
+	/// <c>Time_BeginSimTick</c>'s clamp records, <c>0x1c2</c>, so time the tick stood in a panel's loop, or a stalled host
+	/// frame, starts at most one frame at once. This engine's own, with plan decision 20's pace.
+	/// </summary>
+	private static readonly double MaxTapeHeldSeconds = Es1TapePlayback.SecondsOf(0x1c2);
+
 	private readonly Es1HostKeyboard _hostKeyboard;
+
+	// The host time held towards the tape's next frame.
+	private double _tapeHeld;
 
 	/// <param name="preferences">The install's <c>data\prefs.cfg</c> as the simulator reads it.</param>
 	/// <param name="mouse">The mouse driver, which the host attaches to its mouse; one with no host device when null.</param>
@@ -35,18 +45,24 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 	/// <param name="viewChain">The views and cameras the mission start built, which the tick moves between.</param>
 	/// <param name="widgets">What <c>Widget_LoadStylesAndFonts</c> loaded at the mission start, which the panels draw with.</param>
 	/// <param name="content">The volumes the panels' own files are read from.</param>
+	/// <param name="tape">
+	/// The tape <c>-p</c> or <c>-D</c> opened, which the input build plays and whose <c>DemoMode</c> the axis keys take;
+	/// <c>Keyjoy_LoadConfig</c> then reads the tape's <c>tapes\keyjoy.cfg</c>.
+	/// </param>
 	public Es1SimulationRunner(Es1World world, string installRoot, Es1Preferences preferences, IKeyboard? keyboard,
 			Es1HostMouse? mouse, IEs1GamePort port, View.Es1ViewChain? viewChain = null, Es1WidgetResources? widgets = null,
-			GameContent? content = null) {
+			GameContent? content = null, Es1TapePlayback? tape = null) {
 		var keyboardInput = new Es1KeyboardInput(Es1HostKeyboard.ReadBiosShiftFlags(keyboard));
 		_hostKeyboard = new Es1HostKeyboard(keyboardInput.Keyboard);
 		if (keyboard != null) {
 			_hostKeyboard.Attach(keyboard);
 		}
 
-		var input = new Es1InputBuild(keyboardInput, mouse ?? new Es1HostMouse(), preferences, Es1KeyjoyConfig.Load(installRoot),
-			new Es1ControlsState(preferences), port) {
+		keyboardInput.AxisKeys.DemoMode = tape?.DemoMode == true;
+		var input = new Es1InputBuild(keyboardInput, mouse ?? new Es1HostMouse(), preferences,
+			Es1KeyjoyConfig.Load(installRoot, tape?.Playing == true), new Es1ControlsState(preferences), port) {
 			CockpitMouse = viewChain?.Manager?.Mouse,
+			Tape = tape,
 		};
 		AxisKeys = keyboardInput.AxisKeys;
 		Simulation = new Es1Simulation(world, input, viewChain);
@@ -88,6 +104,14 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 	/// <summary>
 	/// Host time of <paramref name="elapsed"/> with nothing waiting: the keyboard's typematic, then the frame's steps
 	/// before the draw, the frame's sounds and the clock. Returns whether a tick is due.
+	///
+	/// <para>While a tape plays <c>Sim_Main</c> skips <c>Time_BeginSimTick</c>, so the PC timer runs on and the clock
+	/// measures no tick. <b>Not retail:</b> retail's playback then ticks as fast as its frames are drawn; this one holds
+	/// each frame that ticks for its recorded <c>SimTickDelta</c> (<see cref="Es1TapePlayback.SecondsOf"/>), the host
+	/// time with nothing waiting and the time the frame stood waiting both counting (<see cref="Hold"/>), so a tape plays
+	/// in the time it was recorded in. A tick is due once the time held reaches the next frame's delta, at once past the
+	/// tape's end, whose short read ends it. The user's choice, plan decision 20 (docs/herculan/plan-es1-first-mission.md#decisions);
+	/// a frame a panel's loop reads is not held, the loop running one pass a host frame (decision 11).</para>
 	/// </summary>
 	public bool AdvanceClock(TimeSpan elapsed) {
 		_hostKeyboard.Advance(elapsed.TotalSeconds);
@@ -95,20 +119,50 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 		// Subsystem phase 4 calls no function (docs/es1/simulation/main-loop.md#the-subsystem-phases).
 		// PLACEHOLDER: Sim_FrameSoundTick (00058574), the music, the engine hum and the listener; no plan step ports
 		// ES1's sound yet.
-		return Simulation.Globals.Clock.AdvanceHostFrame(elapsed);
+		if (Simulation.Input.Tape is not { Playing: true } tape) {
+			return Simulation.Globals.Clock.AdvanceHostFrame(elapsed);
+		}
+
+		Simulation.Globals.Clock.Hold(elapsed);
+		HoldTowardsTape(elapsed);
+		double due = tape.Peek() is { } next ? Es1TapePlayback.SecondsOf(next.TickDelta) : 0;
+		if (_tapeHeld < due) {
+			return false;
+		}
+
+		_tapeHeld -= due;
+		return true;
 	}
 
-	/// <inheritdoc/>
-	public IEnumerable<Es1Wait> Tick(StrongBox<bool> ended) => Simulation.MainTick(ended);
+	/// <summary>
+	/// <c>Sim_Main</c>'s loop test, then <see cref="Es1Simulation.MainTick"/>: with <c>DemoAbort</c> set, which the axis
+	/// keys under <c>DemoMode</c> and the end of a tape set, the loop is left before the tick, and the mission ends.
+	/// </summary>
+	public IEnumerable<Es1Wait> Tick(StrongBox<bool> ended) {
+		if (AxisKeys.DemoAbort) {
+			ended.Value = true;
+			return [];
+		}
+
+		return Simulation.MainTick(ended);
+	}
 
 	/// <summary>
 	/// Host time of <paramref name="elapsed"/> while the frame stands waiting, for the monitor or in a panel's loop: the
-	/// keyboard's typematic and the PC timer run on, and no tick runs (<see cref="Es1SimClock.Hold"/>).
+	/// keyboard's typematic and the PC timer run on, and no tick runs (<see cref="Es1SimClock.Hold"/>); a playing tape
+	/// holds the time towards its next frame (<see cref="AdvanceClock"/>).
 	/// </summary>
 	public void Hold(TimeSpan elapsed) {
 		_hostKeyboard.Advance(elapsed.TotalSeconds);
 		Simulation.Globals.Clock.Hold(elapsed);
+		if (Simulation.Input.TapePlayback) {
+			HoldTowardsTape(elapsed);
+		}
 	}
+
+	/// <summary>The time held towards the tape's next frame, up to <see cref="MaxTapeHeldSeconds"/>.</summary>
+	private void HoldTowardsTape(TimeSpan elapsed) =>
+		_tapeHeld = Math.Min(_tapeHeld + elapsed.TotalSeconds, MaxTapeHeldSeconds);
 
 	/// <inheritdoc/>
 	public bool Frozen => Simulation.Frozen;

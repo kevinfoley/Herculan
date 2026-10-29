@@ -576,10 +576,14 @@ public sealed class Es1Cockpit {
 	/// origin; no arrow, then for the first strip whose rect holds it, by the current view: the bottom
 	/// <see cref="Es1CockpitCursors.South"/> in view 0 and <see cref="Es1CockpitCursors.North"/> in view 1, the left
 	/// <see cref="Es1CockpitCursors.West"/> in view 0 and <see cref="Es1CockpitCursors.East"/> in view 3, the right
-	/// <see cref="Es1CockpitCursors.East"/> in view 0 and <see cref="Es1CockpitCursors.West"/> in view 2. A replay's
-	/// recorded point (<c>Input_GetCursorPos</c>) is not taken: no plan step ports tapes.
+	/// <see cref="Es1CockpitCursors.East"/> in view 0 and <see cref="Es1CockpitCursors.West"/> in view 2. While a tape
+	/// plays the point is the last replayed one, <c>Input_GetCursorPos</c>'s (<see cref="Input.Es1TapePlayback.CursorPos"/>).
 	/// </summary>
 	public void PickEdgeCursor(int x, int y) {
+		if (_views.Mouse.Tape is { Playing: true } tape) {
+			(x, y) = tape.CursorPos;
+		}
+
 		int canvasX = x - CanvasRect.X0 + CanvasOrigin.X;
 		int canvasY = y - CanvasRect.Y0 + CanvasOrigin.Y;
 		int view = _views.CurrentView;

@@ -47,7 +47,8 @@ public sealed record Es1MissionFiles(short[] Flags, Es1PlayerMec Player, Es1Scri
 	/// Reads the three files in <c>DBSim_LoadScriptDat</c>'s order. A file that is missing, which retail asserts on, or
 	/// that does not read, gives null with the file named in <paramref name="error"/>.
 	/// </summary>
-	public static Es1MissionFiles? Read(string installRoot, out string? error) {
+	/// <param name="demoMode"><c>DemoMode</c>, under which <c>Prefs_Init</c> loads the preferences twice (<see cref="Es1Preferences.Load"/>).</param>
+	public static Es1MissionFiles? Read(string installRoot, out string? error, bool demoMode = false) {
 		string varPath = DataPath(installRoot, MissionVarName);
 		if (!File.Exists(varPath)) {
 			error = $"data\\{MissionVarName} is missing from {installRoot} (world.cpp line 0x8d asserts here).";
@@ -97,7 +98,7 @@ public sealed record Es1MissionFiles(short[] Flags, Es1PlayerMec Player, Es1Scri
 
 		error = null;
 		return new Es1MissionFiles(flags, player, script) {
-			Preferences = Es1Preferences.Load(prefs, prefsPath, Es1Preferences.VoiceArchiveExists(installRoot)),
+			Preferences = Es1Preferences.Load(prefs, prefsPath, Es1Preferences.VoiceArchiveExists(installRoot), demoMode),
 		};
 	}
 }

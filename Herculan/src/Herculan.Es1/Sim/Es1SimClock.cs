@@ -103,6 +103,13 @@ public sealed class Es1SimClock {
 	}
 
 	/// <summary>
+	/// <c>Sim_MainTick</c>'s store during playback, <c>SimTickDelta</c> = the input block's <c>+0x29</c>, the frame's
+	/// recorded delta (docs/es1/simulation/main-loop.md#the-tick--sim_maintick-00059700). <see cref="TickDelta2"/> is
+	/// not written: <c>Time_BeginSimTick</c>, its one writer after <c>Time_InitSimClock</c>, does not run while a tape plays.
+	/// </summary>
+	public void SetRecordedTickDelta(short delta) => TickDelta = delta;
+
+	/// <summary>
 	/// Counts the interrupts in <paramref name="elapsed"/> as <see cref="AdvanceHostFrame"/> does, running the countdown
 	/// down and stopping it at 0, without asking whether a tick is due: the PC timer runs on while retail's frame stands
 	/// in a routine that waits for the monitor, a view's slide (docs/es1/simulation/cockpit-views.md#cockpitview_stepviewtransition-00022904)
