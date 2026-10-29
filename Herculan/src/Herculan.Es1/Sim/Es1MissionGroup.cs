@@ -242,6 +242,42 @@ public sealed class Es1MissionGroup {
 		return Target is IEs1SimObject { Group.Action: null } target && Es1MechDamage.IsClearOfThreats(target, globals);
 	}
 
+	/// <summary>
+	/// <c>Group_IsWipedOut</c> (<c>0000ec24</c>)(group): whether every member is disarmed, immobilized or destroyed
+	/// (docs/es1/simulation/mission-status.md#the-groups-target-and-its-condition). Retail reads every member unchecked; a
+	/// missing one is passed over here.
+	/// </summary>
+	public bool IsWipedOut() =>
+		Members.All(entry => entry is not IEs1SimObject member || member.Disarmed || member.Immobilized || member.Destroyed);
+
+	/// <summary>
+	/// <c>Group_NoRivalOrderOnSubject</c> (<c>0000ef2c</c>)(group): false when another of <paramref name="groups"/>
+	/// (<c>MissionGroups</c>) has a different side, the same <see cref="Target"/> and is not <see cref="IsWipedOut"/>;
+	/// otherwise true (docs/es1/simulation/mission-status.md#the-groups-target-and-its-condition). The targets are compared
+	/// as pointers whatever their kind, so two groups with none match. This port has no caller, as <c>es2_xref.py</c> finds none
+	/// in retail (docs/es1/simulation/mission-status.md#open).
+	/// </summary>
+	public bool NoRivalOnTarget(IReadOnlyList<Es1MissionGroup> groups) {
+		foreach (var other in groups) {
+			if (!ReferenceEquals(other, this) && other.Side != Side && ReferenceEquals(other.Target, Target) && !other.IsWipedOut()) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/// <summary>
+	/// <c>Group_OrderSubjectEngaged</c> (<c>0000edd8</c>)(group): for target kind 0 the target group's
+	/// <see cref="AnyMemberEngaged"/>, otherwise the target object's <c>+0x98</c>, engaged
+	/// (docs/es1/simulation/mission-status.md#the-groups-target-and-its-condition). Retail reads the target unchecked; with
+	/// none, or one of the wrong kind, false here, an engine guard. This port has no caller, as <c>es2_xref.py</c> finds none in
+	/// retail (docs/es1/simulation/mission-status.md#open).
+	/// </summary>
+	public bool TargetEngaged() => TargetKind == 0
+		? Target is Es1MissionGroup group && group.AnyMemberEngaged()
+		: Target is IEs1SimObject { Engaged: true };
+
 	/// <summary><c>Group_AnyMemberEngaged</c> (<c>0000ee18</c>): any member's <c>+0x98</c>, engaged.</summary>
 	public bool AnyMemberEngaged() => Members.Any(entry => entry is IEs1SimObject { Engaged: true });
 
