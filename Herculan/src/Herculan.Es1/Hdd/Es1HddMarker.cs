@@ -25,7 +25,7 @@ public sealed class Es1HddMarker : Es1ButtonWidget {
 	/// <c>HddMarker_Ctor</c> (<c>ES1DBSIM 00041c50</c>)(0, <paramref name="screen"/>, the rect (0, 0, 0, 0)): the
 	/// gadget base on the rect with the screen <c>+0x20</c>, and <see cref="Toggled"/> clear. Retail loads
 	/// <c>DBA\ICONS.DBA</c> into <c>HddMarker_Icons</c> (<c>00094870</c>) the first time; this engine loads it with the
-	/// screen (<see cref="Es1HddCommandScreen.Icons"/>), of which the simulator builds one.
+	/// screen's map (<see cref="Es1HddMap.Icons"/>), of which the simulator builds one.
 	/// </summary>
 	internal Es1HddMarker(Es1HddCommandScreen screen) {
 		Screen = screen;
@@ -37,6 +37,9 @@ public sealed class Es1HddMarker : Es1ButtonWidget {
 
 	/// <summary><c>+0x20</c>, the command screen.</summary>
 	public Es1HddCommandScreen Screen { get; }
+
+	/// <summary>The screen's map, whose context, viewport conversion and icons <see cref="Paint"/> draws through.</summary>
+	private Es1HddMap Map => Screen.Map;
 
 	/// <summary><c>+0x24</c>, the frame of <c>DBA\ICONS.DBA</c>, the first of an object's octant frames.</summary>
 	public short Frame { get; set; }
@@ -101,8 +104,8 @@ public sealed class Es1HddMarker : Es1ButtonWidget {
 
 	/// <summary>
 	/// Slot <c>+4</c>, <c>HddMarker_Paint</c> (<c>00041d04</c>) (docs/es1/simulation/hdd-command-screen.md#the-markers):
-	/// inside the canvas push, the screen's map context (<see cref="Es1HddCommandScreen.InstallMapContext"/>) and the
-	/// rect's top-left back through <see cref="Es1HddCommandScreen.FromViewport"/> as the point. The frame: a route
+	/// inside the canvas push, the screen's map context (<see cref="Es1HddMap.InstallMapContext"/>) and the
+	/// rect's top-left back through <see cref="Es1HddMap.FromViewport"/> as the point. The frame: a route
 	/// marker's <see cref="Frame"/>; for a HERC or a flyer the point moved on both axes by <see cref="OctantNudge"/> of
 	/// its heading's octant (<see cref="Octant"/>) and <see cref="Frame"/> + octant + 1, or <see cref="Frame"/> while it
 	/// is destroyed; for a structure <see cref="Frame"/>; for any other class nothing is drawn. Not ranged: the frame
@@ -114,18 +117,18 @@ public sealed class Es1HddMarker : Es1ButtonWidget {
 	/// retail divides by it, and a frame the file lacks, which retail reads past the array, draw nothing, engine guards.
 	/// </summary>
 	public override void Paint() {
-		var map = Screen.InstallMapContext(Screen.Display.Cockpit.PushCanvasContext());
-		var (x, y) = Screen.FromViewport((Rect.X0, Rect.Y0));
+		var map = Map.InstallMapContext(Screen.Display.Cockpit.PushCanvasContext());
+		var (x, y) = Map.FromViewport((Rect.X0, Rect.Y0));
 		DynamixBitmap? frame;
 		if (Object is not { } subject) {
-			frame = Screen.Icon(Frame);
+			frame = Map.Icon(Frame);
 		} else if (subject.TargetClass is Mfd.Es1MfdStatusScreen.HercClass or Mfd.Es1MfdStatusScreen.FlyerClass) {
 			int octant = Octant(unchecked((ushort)subject.Heading));
 			x += OctantNudge[octant];
 			y += OctantNudge[octant];
-			frame = Screen.Icon(subject.Destroyed ? Frame : Frame + octant + 1);
+			frame = Map.Icon(subject.Destroyed ? Frame : Frame + octant + 1);
 		} else if (subject.TargetClass == Mfd.Es1MfdStatusScreen.StructureClass) {
-			frame = Screen.Icon(Frame);
+			frame = Map.Icon(Frame);
 		} else {
 			return;
 		}

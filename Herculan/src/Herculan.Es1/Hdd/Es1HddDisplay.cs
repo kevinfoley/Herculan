@@ -516,11 +516,10 @@ public sealed class Es1HddDisplay {
 	/// <c>HddDisplay_HandleWidgetPress</c> (<c>0003d48c</c>)(display), from the update
 	/// (docs/es1/simulation/heads-down-display.md#presses): nothing with no press waiting, nor while the display is dark
 	/// for a button above 1, whose press then waits. Otherwise, by the button: 0 and 1 <see cref="SetPage"/>; 2 to 7 on
-	/// page 0 the command screen's pans and zooms (<see cref="Es1HddCommandScreen.PanUp"/>,
-	/// <see cref="Es1HddCommandScreen.PanDown"/>, <see cref="Es1HddCommandScreen.PanLeft"/>,
-	/// <see cref="Es1HddCommandScreen.PanRight"/>, <see cref="Es1HddCommandScreen.ZoomOut"/>,
-	/// <see cref="Es1HddCommandScreen.ZoomIn"/>), each setting page 0's update flag and the paint stage 2; 2 and 9 on
-	/// page 1 the damage screen's <see cref="Es1HddDamageScreen.NextView"/> and 3 its
+	/// page 0 the pans and zooms of the command screen's map (<see cref="Es1HddMap.PanUp"/>,
+	/// <see cref="Es1HddMap.PanDown"/>, <see cref="Es1HddMap.PanLeft"/>, <see cref="Es1HddMap.PanRight"/>,
+	/// <see cref="Es1HddMap.ZoomOut"/>, <see cref="Es1HddMap.ZoomIn"/>), each setting page 0's update flag and the
+	/// paint stage 2; 2 and 9 on page 1 the damage screen's <see cref="Es1HddDamageScreen.NextView"/> and 3 its
 	/// <see cref="Es1HddDamageScreen.PrevView"/>, each setting page 1's full-repaint flag and the stage 2; 4 and 5 on page
 	/// 1 <see cref="PreviousSubject"/> and <see cref="NextSubject"/> into the damage page's subject, then
 	/// <see cref="StepIndicator"/>; 10 to 12, page 1 first switching to 0, <see cref="SelectPilot"/> of the box's slot
@@ -542,9 +541,9 @@ public sealed class Es1HddDisplay {
 			case UpButton or DownButton:
 				if (Page == CommandPage) {
 					if (PressedButton == UpButton) {
-						CommandScreen.PanUp();
+						CommandScreen.Map.PanUp();
 					} else {
-						CommandScreen.PanDown();
+						CommandScreen.Map.PanDown();
 					}
 
 					ScheduleUpdate(CommandPage);
@@ -562,9 +561,9 @@ public sealed class Es1HddDisplay {
 			case LeftButton or RightButton:
 				if (Page == CommandPage) {
 					if (PressedButton == LeftButton) {
-						CommandScreen.PanLeft();
+						CommandScreen.Map.PanLeft();
 					} else {
-						CommandScreen.PanRight();
+						CommandScreen.Map.PanRight();
 					}
 
 					ScheduleUpdate(CommandPage);
@@ -577,9 +576,9 @@ public sealed class Es1HddDisplay {
 			case ZoomOutButton or ZoomInButton:
 				if (Page == CommandPage) {
 					if (PressedButton == ZoomOutButton) {
-						CommandScreen.ZoomOut();
+						CommandScreen.Map.ZoomOut();
 					} else {
-						CommandScreen.ZoomIn();
+						CommandScreen.Map.ZoomIn();
 					}
 
 					ScheduleUpdate(CommandPage);
