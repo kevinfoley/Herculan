@@ -45,7 +45,7 @@ public sealed record RandomTable(short Guid, short Key, short Bound, short Requi
 /// just after the template it copies, and setting a record's table moves the table's templates read after it to just before
 /// it. A GUID <c>-1</c> record is never exported or merged, so no <c>script.dat</c> index moves.</item>
 /// <item>Making a table, setting a record's table and making it fixed again each change whether the record picks, which changes
-/// what every later draw comes out as (docs/herculan/handoff-editor-document.md#conditions-and-random-tables).</item>
+/// what every later draw comes out as (docs/herculan/editor-design.md#what-moves-the-random-draws).</item>
 /// </list>
 /// </summary>
 public static class RandomTableEditing {

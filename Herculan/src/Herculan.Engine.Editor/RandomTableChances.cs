@@ -8,7 +8,7 @@ namespace Herculan.Engine.Editor;
 /// Loadout or Type section (<see cref="LoadoutView"/>): each option's chance a percent to one decimal in a typed field, held as
 /// a draft until the field lets go; the note giving the chances exactly where the percents round them
 /// (<see cref="RandomTableEditing.Exact"/>); and the share no option takes, with what a load landing there does
-/// (docs/herculan/handoff-editor-conditions.md#random-tables).
+/// (docs/herculan/editor-design.md#random-tables).
 /// </summary>
 internal sealed class RandomTableChances {
 	/// <summary>The chance field's width, in pixels on a 100% display (Platform.ScaledImGui.Scaled).</summary>
@@ -71,7 +71,7 @@ internal sealed class RandomTableChances {
 		EditorText.Wrapped($"No option: {Math.Max(100m - percents.Sum(), 0m):0.#}%");
 		if (table.Row is >= 12 and <= 14) {
 			// Its references stay the .MSN's own numbers, which the load reads as list positions (MissionGenerator.ReadHercs and
-			// its siblings, docs/herculan/handoff-editor-conditions.md#random-tables).
+			// its siblings, docs/herculan/editor-design.md#random-tables).
 			EditorText.Note($"A load that lands here picks no option: the {noun} keeps its own details, but its "
 				+ "position, heading and triggers can come out wrong in play.");
 		}

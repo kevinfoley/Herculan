@@ -7,7 +7,7 @@ internal sealed record EditorFinding(MissionCheckFinding Finding, EditorSelectio
 
 /// <summary>
 /// <see cref="MissionCheck"/> over the document's <c>.MSN</c>, every version at once, each finding tied to the selection that
-/// shows the record it names (docs/herculan/handoff-editor-viewing.md#mission-check): a route, area, trigger, countdown, group
+/// shows the record it names (docs/herculan/editor-design.md#mission-check): a route, area, trigger, countdown, group
 /// or condition by its GUID, an objective by its row-17 index, a herc, flyer or structure as its object in the scene, and an
 /// order as the first group, in layout order, whose orders reference it.
 /// </summary>

@@ -7,7 +7,7 @@ namespace HercWorks.Core.Data.File.Msn;
 /// (<see cref="SkipArrayLimits"/>). Three kinds of unnamed point stay, since removing them would change the mission:
 /// <list type="bullet">
 /// <item>one a record of its GUID picks from a random table for, since removing it would move every later draw
-/// (docs/herculan/handoff-editor-document.md#conditions-and-random-tables);</item>
+/// (docs/herculan/editor-design.md#what-moves-the-random-draws);</item>
 /// <item>one a sum-flag point names by the low words of its X and Y, as <see cref="RouteEditing.RemoveLeftBehind"/> keeps it;</item>
 /// <item>one on the play area's edge, the box of block 1's points as the layout has them, since the box frames the
 /// heads-down map and sets the mission's boundary (docs/retail/simulation/mission-objectives.md#the-status--mission_status-004135e8),

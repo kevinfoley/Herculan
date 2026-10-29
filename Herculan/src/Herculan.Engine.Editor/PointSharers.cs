@@ -4,7 +4,7 @@ using ImGuiNET;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// What else stands on a point a drag moves (docs/herculan/handoff-editor-placement.md#how-positions-are-held), listed for
+/// What else stands on a point a drag moves (docs/herculan/editor-design.md#positions), listed for
 /// the group, route and trigger area views: "Also on this spot, moving with it:", then each sharer by its identity in the
 /// layout as a link, one per line, and how to move the dragged thing alone. The fields come from <see cref="PointMover"/>'s
 /// <c>SharersOf</c>, every record whatever its condition; a field of a random table's template (GUID <c>-1</c>) and an

@@ -7,7 +7,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// What a campaign variable the game sets holds, and what the game does with one a mission sets, where the retail docs say, for
-/// the campaign variable picker's lists, the Present when sentence (docs/herculan/handoff-editor-conditions.md#present-when)
+/// the campaign variable picker's lists, the Present when sentence (docs/herculan/editor-design.md#present-when)
 /// and the sentences of the writes (<see cref="CampaignVariableWrites"/>). The UI calls a campaign flag a campaign variable.
 /// Flag 3 is not named: what writes it is open, and no retail condition tests it
 /// (docs/retail/shell/campaign-loop.md#the-campaign-flag-array-is-the-msn-condition-store).

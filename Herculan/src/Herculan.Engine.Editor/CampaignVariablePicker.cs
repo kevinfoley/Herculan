@@ -11,7 +11,7 @@ namespace Herculan.Engine.Editor;
 /// it does with them, each with what in this mission touches it; every other variable this mission's <c>.MSN</c> touches,
 /// each with what touches it (<see cref="CampaignVariableUses"/>); and any variable by its number, typed in the filter box,
 /// for one another mission sets or tests. Nothing is looked up in other missions (the user's choice,
-/// docs/herculan/handoff-editor-conditions.md#present-when). For a write (<see cref="CampaignVariableWrites"/>) the
+/// docs/herculan/editor-design.md#present-when). For a write (<see cref="CampaignVariableWrites"/>) the
 /// debrief's variables come first and those the game sets last, each named by what a write to it amounts to
 /// (<see cref="CampaignVariableLabels.WriteLabel"/>). One picker serves every field of a view, since only one dropdown is
 /// open at a time.

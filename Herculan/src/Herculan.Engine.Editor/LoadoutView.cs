@@ -7,7 +7,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// The Loadout section of the view of a herc outside the player's squad, the Type section of a flyer's, structure's or ground
-/// vehicle's (docs/herculan/handoff-editor-conditions.md#the-loadout-section): Fixed or Random. Fixed edits the record's own
+/// vehicle's (docs/herculan/editor-design.md#random-tables): Fixed or Random. Fixed edits the record's own
 /// type and fit (<see cref="RosterFitView"/>). Random lists the options of the random table it picks from, each with its
 /// chance (<see cref="RandomTableChances"/>) and what it is (<see cref="RandomTables.Option"/>), one of them selected, the share
 /// no option takes, Add option and Remove option, the other records that pick from the table as links, a choice of another

@@ -63,7 +63,7 @@ public sealed record GroupDeleteCheck(bool IsSquad, MsnNamers Namers, int Row,
 /// route's delete takes its points (<see cref="RouteEditing.RemoveLeftBehind"/>). Nothing is renumbered: <c>.MSN</c> refs name GUIDs and the
 /// generation resolves every index again. The templates a deleted record picked from are GUID <c>-1</c>
 /// records shared by every record picking them, and stay. Removing a record that picks from a random table moves every later
-/// draw (docs/herculan/handoff-editor-document.md#conditions-and-random-tables).
+/// draw (docs/herculan/editor-design.md#what-moves-the-random-draws).
 ///
 /// <para>A GUID with no record resolves to <c>-1</c> (<c>Msn_ResolveRow6Ref</c> (<c>00415b44</c>) and its siblings),
 /// so the delete is refused while an objective, an action or an order names the object, or names a group the delete

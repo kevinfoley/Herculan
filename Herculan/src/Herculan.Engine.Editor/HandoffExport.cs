@@ -11,7 +11,7 @@ namespace Herculan.Engine.Editor;
 /// (<see cref="MissionSquad.PlayerMec"/>), and copies the rest of the handoff from the editor's scratch folder as the open
 /// wrote it: <c>mission.var</c>, and <c>player.mec</c> for a campaign mission, whose squad is the career's, which builds none.
 /// It never writes the install's own <c>DATA\</c>,
-/// which holds the game's own handoff (docs/herculan/handoff-editor-document.md#what-a-saved-scriptdat-reaches).
+/// which holds the game's own handoff (docs/herculan/editor-design.md#the-msn-is-the-document).
 /// </summary>
 internal static class HandoffExport {
 	// The handoff files the document does not hold.

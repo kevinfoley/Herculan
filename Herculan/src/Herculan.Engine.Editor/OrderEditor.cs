@@ -9,7 +9,7 @@ internal sealed record EditableOrder(int Slot, short Guid, MissionOrder22 Order)
 /// <summary>
 /// Edits a group's ten order slots, each edit one step of <see cref="PointMover"/>'s undo history, through
 /// <see cref="GroupOrders"/>'s record edits on the mission's <c>.MSN</c>: a slot's verb, route, subject and ending action, and adding,
-/// removing and moving orders (docs/herculan/handoff-editor-mission-logic.md#orders). Every edit builds the
+/// removing and moving orders (docs/herculan/editor-design.md#orders). Every edit builds the
 /// editor's state again (<see cref="SceneSync"/>): an order's verb, route and subject decide which routes are walked,
 /// what the group overlay draws and what the mission check finds, all of which the rebuild builds again, and an add, a
 /// remove or an edit of an order another slot names adds or removes records.

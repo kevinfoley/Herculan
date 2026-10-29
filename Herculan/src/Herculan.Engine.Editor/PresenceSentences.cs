@@ -4,7 +4,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// A Present when, and what a record's variations change, in sentences a designer reads
-/// (docs/herculan/handoff-editor-conditions.md#present-when): "Present only when campaign variable 30 is more than 0 and in
+/// (docs/herculan/editor-design.md#present-when): "Present only when campaign variable 30 is more than 0 and in
 /// about 50% of loads.", "Its chassis and weapons change when campaign variable 250 is 1."
 /// </summary>
 internal static class PresenceSentences {

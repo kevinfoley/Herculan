@@ -9,7 +9,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// The Random table view. A random table is a row-1 condition; each of its options is one range under the table, with the
-/// template that range conditions (docs/herculan/handoff-editor-conditions.md#random-tables). The Properties panel shows the
+/// template that range conditions (docs/herculan/editor-design.md#random-tables). The Properties panel shows the
 /// view when the table or one of its ranges is selected, that range's option then highlighted: its title, each option with
 /// its chance, what it is and Remove, the share no option takes, Add option, Used by, a warning when it has no effect in
 /// play, Delete random table, and the records' numbers under Advanced (the chances as <see cref="RandomTableChances"/> shows

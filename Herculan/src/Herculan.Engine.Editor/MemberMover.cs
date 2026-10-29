@@ -6,8 +6,8 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// Moves a herc, flyer, structure or ground vehicle outside the player's squad into another group, as one step of
-/// <see cref="PointMover"/>'s undo history, through <see cref="MemberMoves"/>'s record edits on the mission's <c>.MSN</c>
-/// (docs/herculan/handoff-editor-roster.md#moving-to-another-group). A structure that needs a point of its own to stay put is
+/// <see cref="PointMover"/>'s undo history, through <see cref="MemberMoves"/>'s record edits on the mission's <c>.MSN</c>.
+/// A structure that needs a point of its own to stay put is
 /// given one where its object stands. The edit builds the editor's state again (<see cref="SceneSync"/>), as it changes
 /// which group places the object, and waits for the frame's ImGui to be rendered (<see cref="RunRequest"/>).
 /// </summary>

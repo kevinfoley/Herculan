@@ -7,7 +7,7 @@ namespace HercWorks.Core.Data.File.Msn;
 /// A mission held as its <c>.MSN</c> and <c>.ENG</c>, with its <see cref="Layout"/>, every record present, and the
 /// <c>script.dat</c> and <c>mission.str</c> generated from them with the provenance that maps each generated record back to
 /// the <c>.MSN</c> records that supplied it. An edit writes the <c>.MSN</c> record the layout names as the field's supplier
-/// and builds the layout again; the design is docs/herculan/handoff-editor-document.md#holding-the-msn-as-the-document.
+/// and builds the layout again; the design is docs/herculan/editor-design.md#the-msn-is-the-document.
 ///
 /// <para>The generation is not run by an edit: an edit, undo or redo leaves it stale, and <see cref="Script"/>,
 /// <see cref="ScriptBytes"/>, <see cref="MissionText"/>, <see cref="Provenance"/> and <see cref="Generator"/> generate again
@@ -18,7 +18,7 @@ namespace HercWorks.Core.Data.File.Msn;
 /// when one of them fails; what can fail inside an edit is the edit itself, the layout's build and the <c>.MSN</c>'s write,
 /// not the generation, which fails when it is next read.</para>
 ///
-/// <para>Which record an edit writes is docs/herculan/handoff-editor-document.md#which-record-an-edit-writes: a field of a
+/// <para>Which record an edit writes is docs/herculan/editor-design.md#which-record-an-edit-writes: a field of a
 /// GUID's base is written in its supplier (<see cref="LayoutEntry.Supplier"/>), the last base record that sets it, else the
 /// first record, whether or not the generation keeps it. A roster field the supplier copies from a template is written in a
 /// record of the same GUID that overlays it under the supplier's condition, so it overlays whatever is picked wherever the
@@ -559,7 +559,7 @@ public sealed class MissionDocument {
 	/// Appends a copy of every record of row <paramref name="row"/>'s GUID <paramref name="guid"/>, in file order and each
 	/// under its own condition, under one new GUID, <paramref name="copy"/>: the row's largest plus one. The copy survives
 	/// and merges as the GUID does in every state. A copied record that picks from a random table picks again, which moves every later
-	/// draw (docs/herculan/handoff-editor-document.md#conditions-and-random-tables);
+	/// draw (docs/herculan/editor-design.md#what-moves-the-random-draws);
 	/// row 15's records pick from none in retail.
 	/// </summary>
 	public MsnEdit AppendCopy(int row, short guid, out short copy) {

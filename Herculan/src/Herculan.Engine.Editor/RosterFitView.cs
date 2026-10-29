@@ -8,11 +8,11 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// In the view of a herc, flyer, structure or ground vehicle outside the player's squad, its type and a herc's weapon fit
-/// (docs/herculan/handoff-editor-roster.md#type-and-fit), drawn under its Loadout or Type section (<see cref="LoadoutView"/>):
+/// (docs/herculan/editor-design.md#new-units), drawn under its Loadout or Type section (<see cref="LoadoutView"/>):
 /// a herc's chassis over every type of <c>nam\MECHS.NAM</c> with its mounts (<see cref="MachineFitView"/>,
 /// <see cref="MachineFitter"/>); a flyer's type over the flyers the Toolbox offers; a structure's or ground vehicle's within its
 /// kind (<see cref="UnitTypeCatalog.ChoicesFor"/>), each under the name the Toolbox lists it by (<see cref="RosterTypeEditor"/>).
-/// Given the option being edited, it shows and edits that option (docs/herculan/handoff-editor-conditions.md#editing-a-record-that-picks).
+/// Given the option being edited, it shows and edits that option (docs/herculan/editor-design.md#random-tables).
 /// </summary>
 internal sealed class RosterFitView {
 	// In pixels on a 100% display (ScaledImGui.Scaled).

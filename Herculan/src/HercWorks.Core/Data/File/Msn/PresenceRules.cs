@@ -89,7 +89,7 @@ public sealed record PresenceReading(PresenceRule? Rule, string? WhyFixed, IRead
 
 /// <summary>
 /// A record's Present when as clauses, campaign variable tests and one chance, read from and written to the row-1 chain its
-/// condition field names (docs/herculan/handoff-editor-conditions.md#present-when). Row 1's rules are
+/// condition field names (docs/herculan/editor-design.md#present-when). Row 1's rules are
 /// <see cref="ConditionEditing"/>'s; which records a set writes, and which it refuses, are <see cref="RecordConditions"/>'.
 ///
 /// <list type="bullet">
@@ -107,7 +107,7 @@ public sealed record PresenceReading(PresenceRule? Rule, string? WhyFixed, IRead
 /// the target then names the outermost (<see cref="RecordConditions"/>' write).</item>
 /// <item><b>Cleanup.</b> Each condition of the old chain, outermost first, is removed once nothing references it
 /// (<see cref="ConditionEditing.Namers"/>), a draw the change orphaned included. Adding or removing a draw changes every
-/// later draw and random table roll (docs/herculan/handoff-editor-document.md#conditions-and-random-tables).</item>
+/// later draw and random table roll (docs/herculan/editor-design.md#what-moves-the-random-draws).</item>
 /// </list>
 /// </summary>
 public static class PresenceRules {

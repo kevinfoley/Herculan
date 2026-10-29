@@ -235,7 +235,7 @@ public static class ShellTrainingLaunch {
 	/// The header words a training load writes over the loaded header: word 0 set to <see cref="PracticeTheater"/>, then the ammunition, damage,
 	/// difficulty and time-of-day options into words 5 to 7 and 9, and word 8 cleared. <paramref name="ownWorld"/> leaves words
 	/// 0 and 9 as the mission sets them, so it plays on its own theater and time of day: this engine's departure for a mission
-	/// played from the mission editor (docs/herculan/handoff-editor-viewing.md#theater-and-time-of-day), which retail has no path for.
+	/// played from the mission editor (docs/herculan/editor-design.md#saving-and-playing), which retail has no path for.
 	/// </summary>
 	private static short?[] PracticeHeader(SimulatorPreferences options, bool ownWorld) => [
 		ownWorld ? null : PracticeTheater, null, null, null, null,

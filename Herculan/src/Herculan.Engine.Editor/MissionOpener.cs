@@ -11,11 +11,11 @@ namespace Herculan.Engine.Editor;
 /// editor shows a mission loaded in training mode, a practice mission or one played as <c>INSTANT ACTION</c>, on the theater and by the time
 /// of day its own row 2 sets (<see cref="OwnWorld"/>) where the launch writes theater 1 and the practice screen's time of
 /// day over them (docs/retail/formats/script-dat.md#the-training-fields): a departure from <c>INSTANT ACTION</c> the user chose, which
-/// Play honours (docs/herculan/handoff-editor-viewing.md#theater-and-time-of-day). A campaign mission is
+/// Play honours (docs/herculan/editor-design.md#saving-and-playing). A campaign mission is
 /// shown as the launch loads it, on its stage's theater by its own time of day.
 ///
 /// <para>Every draw of an open is its lowest outcome (<see cref="SimRandom.Lowest"/>), so a mission opens the same way every
-/// time, each random table on its first option (docs/herculan/handoff-editor-conditions.md#what-the-editor-shows): the
+/// time, each random table on its first option (docs/herculan/editor-design.md#the-layout): the
 /// editor's choice, where the game's load draws from <see cref="ShellTrainingLaunch.StartupRandom"/>.</para>
 ///
 /// <para>The launch is unchanged and its handoff on disk keeps the launch's header until

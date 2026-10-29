@@ -16,7 +16,7 @@ namespace HercWorks.Core.Data.File.Msn;
 /// (<see cref="LayoutPick"/>), where it stands when the mission opens with every draw at its lowest. What it shares with the
 /// load is the per-row merge and template copy, <see cref="MergeRules"/>. A row-6 point whose sum flag is set keeps the
 /// words it holds; no retail point sets it (docs/retail/formats/msn-mission-file.md#row-6-field-decode--the-point-record-dat_0047064e-22-bytesrecord).
-/// The rules it follows are docs/herculan/handoff-editor-document.md#the-layout.</para>
+/// The rules it follows are docs/herculan/editor-design.md#the-layout.</para>
 /// </summary>
 public sealed class MissionLayout {
 	private const int FirstGuidRow = 6;

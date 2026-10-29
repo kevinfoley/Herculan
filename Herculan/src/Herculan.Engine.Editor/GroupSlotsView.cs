@@ -7,7 +7,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// The members of a herc, flyer or structure group outside the player's squad in its view
-/// (docs/herculan/handoff-editor-viewing.md#groups), one row per member slot, which is its place in the group's formation
+/// (docs/herculan/editor-design.md#group-sizes-and-roster-limits), one row per member slot, which is its place in the group's formation
 /// (docs/retail/formats/script-dat.md#placement--the-actual-rule, rule 7): slot 0 stands on the group's position and each
 /// later slot on its formation's spot for it. A structure group has as many places as its formation
 /// (<see cref="BaseFormationTable.SlotCount"/>), a slot past them standing on the group's position again

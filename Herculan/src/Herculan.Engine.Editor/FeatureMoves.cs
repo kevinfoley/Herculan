@@ -29,7 +29,7 @@ internal sealed record AreaRadiusTarget(short Area) : MoveTarget;
 /// <see cref="PointMover"/>'s waypoint, area corner and radius moves, by GUID, over the routes and areas as the layout places
 /// them (<see cref="MissionIndex"/>): what a selection offers to move, what shares a moved point, the overrides a drag's
 /// preview is placed with (<see cref="PlacementOverrides"/>), and what a commit writes into the <c>.MSN</c>
-/// (docs/herculan/handoff-editor-document.md#the-tools).
+/// (docs/herculan/editor-design.md#which-record-an-edit-writes).
 ///
 /// <para>A waypoint moves the point it names, so everything else naming it moves too: retail missions share a point between
 /// a waypoint and the trigger area that fires on reaching it, and between a route's first waypoint and the groups standing

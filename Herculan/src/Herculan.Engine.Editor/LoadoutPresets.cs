@@ -5,7 +5,7 @@ using Herculan.Engine.Platform;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The editor's loadout presets, each a named weapon fit for one chassis (docs/herculan/handoff-editor-roster.md#loadout-presets):
+/// The editor's loadout presets, each a named weapon fit for one chassis (docs/herculan/editor-design.md#new-units):
 /// the editor's own data, not a mission's, and this engine's invention, which no retail screen has. Kept in
 /// <c>loadout-presets.json</c> in <see cref="UserConfig.Folder"/>, read once per editor run (<see cref="Load"/>) and written
 /// whole on every save, overwrite or delete. A preset belongs to a <c>MECHS.NAM</c> type, which the squad's chassis 0 to 8 share,

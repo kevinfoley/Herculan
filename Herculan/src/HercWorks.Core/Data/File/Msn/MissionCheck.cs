@@ -138,7 +138,7 @@ public sealed record MissionCheckFinding(MissionCheckKind Kind, int Row, int Key
 /// <summary>
 /// Checks a mission's <c>.MSN</c> and <c>.ENG</c>, every version at once, through its <see cref="MissionLayout"/>: refs to
 /// records the mission does not have, records DBSIM never reads, shapes it faults on, rosters past its slots and text past
-/// what it reads. Each finding names the <c>.MSN</c> record it is about (docs/herculan/handoff-editor-viewing.md#mission-check).
+/// what it reads. Each finding names the <c>.MSN</c> record it is about (docs/herculan/editor-design.md#mission-check).
 /// Advisory, as <see cref="ScriptDatLint"/> is; the DBSIM reasons for each kind are its (<see cref="ScriptLintKind"/>).
 ///
 /// <para>Each thing of rows 6 to 16 is checked as its base (<see cref="LayoutEntry.Fields"/>), then as each record of its

@@ -12,7 +12,7 @@ namespace Herculan.Engine.Editor;
 /// and hunting the player's squad, or joining the selected flyer group, or in a chosen member slot of a flyer group from the
 /// group's view (<see cref="RequestJoin"/>). The scene is then synced with the document
 /// (<see cref="SceneSync"/>), which builds the flyer's object for the record, and the flyer is
-/// selected (docs/herculan/handoff-editor-roster.md#flyers).
+/// selected (docs/herculan/editor-design.md#new-units).
 /// </summary>
 internal sealed class FlyerPlacer {
 	private const int FlyerRow = 13;

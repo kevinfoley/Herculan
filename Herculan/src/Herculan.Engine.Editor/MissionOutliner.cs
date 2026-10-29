@@ -15,7 +15,7 @@ namespace Herculan.Engine.Editor;
 /// standing somewhere (a trigger with no area, a route with no waypoints) and the other way
 /// to make a selection. A double-click also frames the record in the view (<see cref="SelectionState.Focus"/>).
 ///
-/// <para>Every list is the <c>.MSN</c>'s layout (docs/herculan/handoff-editor-viewing.md#selection-and-panels): every record
+/// <para>Every list is the <c>.MSN</c>'s layout (docs/herculan/editor-design.md#the-layout): every record
 /// of its row, a conditional one included, in layout order, each named by <see cref="MissionNames"/> with its number in its
 /// row dimmed, cut to fit the panel with the whole name on hover, and selecting its record by GUID or row-17 index. A row
 /// whose record is not in every version of the mission is marked <see cref="NotAlways"/>.</para>
@@ -197,7 +197,7 @@ internal sealed class MissionOutliner {
 
 	/// <summary>
 	/// Every random table, in row-1 order, as its Random table view titles it, with how many records pick from it; selected
-	/// while it or a range over it is (docs/herculan/handoff-editor-conditions.md#random-tables).
+	/// while it or a range over it is (docs/herculan/editor-design.md#random-tables).
 	/// </summary>
 	private void DrawTables() {
 		if (Tables is not { } randomTables) {

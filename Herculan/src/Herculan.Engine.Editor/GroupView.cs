@@ -5,7 +5,7 @@ using ImGuiNET;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The Properties panel's view of a group (docs/herculan/handoff-editor-viewing.md#groups), read from the <c>.MSN</c>'s layout
+/// The Properties panel's view of a group (docs/herculan/editor-design.md#group-sizes-and-roster-limits), read from the <c>.MSN</c>'s layout
 /// and <see cref="MissionIndex"/> by its row-16 GUID, every group included, one the mission as opened leaves out too: its
 /// name, Present when and team, the squad's machines for the player's squad (<see cref="SquadMachinePanel"/>); the trigger it
 /// waits on; where it starts, as fields that move it, and what else stands there, unless it arrives by drop pod or on foot

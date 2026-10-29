@@ -6,7 +6,7 @@ using Herculan.Engine.Shell;
 
 namespace Herculan.Engine.Editor;
 
-/// <summary>Why a squad HERC that picks from a random table has no effect in play (docs/herculan/handoff-editor-roster.md#the-players-squad).</summary>
+/// <summary>Why a squad HERC that picks from a random table has no effect in play (docs/herculan/editor-design.md#the-players-squad).</summary>
 internal enum RandomTableUnused {
 	/// <summary>A campaign mission's squad pilots the career's HERCs.</summary>
 	CareerSquad,
@@ -30,7 +30,7 @@ internal sealed record RandomTableUser(string Label, EditorSelection? Target, in
 
 /// <summary>
 /// The open mission's random tables, as the Random table view, the Mission panel's Random tables list and the object and
-/// route views show them (docs/herculan/handoff-editor-conditions.md#random-tables), all from the <c>.MSN</c> and its
+/// route views show them (docs/herculan/editor-design.md#random-tables), all from the <c>.MSN</c> and its
 /// layout: each table read once per layout (<see cref="RandomTableEditing.Table"/>), titled by what it picks (<see cref="Title"/>),
 /// each option with what tells it apart (<see cref="Option"/>), and the records picking from it (<see cref="Users"/>), named in
 /// game terms, with the option the layout shows each with (<see cref="LayoutPick.Shown"/>).

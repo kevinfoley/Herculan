@@ -9,7 +9,7 @@ namespace Herculan.Engine.Editor;
 /// Changes the chassis and the weapon fit of a herc: a row-12 record of the <c>.MSN</c>, by its GUID, any the layout has, as
 /// one step of <see cref="PointMover"/>'s undo history each. For the player's squad the choices are the shell's: the nine
 /// chassis the practice screen's Herc Type steps through, and in each mount the weapons the weapons screen lets the player
-/// fit there (docs/herculan/handoff-editor-roster.md#the-players-squad). A herc outside the squad is offered every type of
+/// fit there (docs/herculan/editor-design.md#the-players-squad). A herc outside the squad is offered every type of
 /// <c>nam\MECHS.NAM</c> (<see cref="RosterFitView"/>).
 ///
 /// <list type="bullet">
@@ -179,7 +179,7 @@ internal sealed class MachineFitter {
 	/// <summary>
 	/// Asks for each of <paramref name="slots"/>' weapon and ammunition type in its fit slot of the herc of row-12 GUID
 	/// <paramref name="guid"/>, as one change and one step of the history, in <paramref name="option"/>'s template where a template
-	/// supplies them: a loadout preset applied (docs/herculan/handoff-editor-roster.md#loadout-presets). A slot the view does not
+	/// supplies them: a loadout preset applied (docs/herculan/editor-design.md#new-units). A slot the view does not
 	/// edit (<see cref="WhyNoWeapons"/>) is left as it is.
 	/// </summary>
 	public void RequestLoadout(short guid, IReadOnlyList<(int Mount, short Weapon, short Ammo)> slots, MsnRecordId? option = null) =>

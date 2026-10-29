@@ -14,7 +14,7 @@ public sealed record TimerRemoval(IReadOnlyList<short> Timers, IReadOnlyList<sho
 /// record edit: a timer made with a new action to fire, a new action added to a timer's fired ones, and a timer removed with
 /// the action that is its own. What a timer does is
 /// docs/retail/simulation/mission-deployment.md#action-timers--actiontimer_tick-004230a4; how the editor presents the pair is
-/// docs/herculan/handoff-editor-mission-logic.md#countdowns.
+/// docs/herculan/editor-design.md#triggers-and-countdowns.
 ///
 /// <list type="bullet">
 /// <item>A timer's own action (<see cref="Of"/>) is the one action it fires when nothing else can fire that action: no area,

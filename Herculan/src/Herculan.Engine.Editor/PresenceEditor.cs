@@ -17,7 +17,7 @@ internal sealed record PresenceLosers(DeleteNamers Names, IReadOnlyList<short> M
 /// Sets a record's Present when, which campaign states it is in, each set one step of <see cref="PointMover"/>'s undo
 /// history: as clauses through <see cref="PresenceRules"/>, or, under Advanced, to one of the mission's conditions through
 /// <see cref="RecordConditions"/>, both record edits on the mission's <c>.MSN</c>
-/// (docs/herculan/handoff-editor-conditions.md#present-when). Every set builds the editor's state again
+/// (docs/herculan/editor-design.md#present-when). Every set builds the editor's state again
 /// (<see cref="SceneSync"/>), as it conditions the record in or out; the selection stays on the record, whose view still
 /// shows its Present when where the mission as opened leaves it out.
 ///

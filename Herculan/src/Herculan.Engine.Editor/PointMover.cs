@@ -38,7 +38,7 @@ internal sealed record GroupTarget(short Guid, bool Detach = false, bool Carry =
 /// <summary>
 /// Moves what stands on a point — a placed object, a route's waypoint, a group or a trigger area's corner — and keeps an
 /// undo history. A committed move writes the mission's <c>.MSN</c> (<see cref="MissionDocument"/>) and syncs the scene with it (<see cref="SceneSync"/>), as any edit does
-/// (docs/herculan/handoff-editor-document.md#the-tools). A drag's preview writes nothing: everything standing on what it
+/// (docs/herculan/editor-design.md#which-record-an-edit-writes). A drag's preview writes nothing: everything standing on what it
 /// moves, the route and area lines included, is placed from the layout with the drag's overrides
 /// (<see cref="PlacementOverrides"/>, <see cref="SceneSync.Preview"/>). After every move, previews included,
 /// <see cref="TerrainLeveller"/> levels the ground under the structures where they now stand. Its history also holds the
@@ -60,7 +60,7 @@ internal sealed record GroupTarget(short Guid, bool Detach = false, bool Carry =
 /// so only a flyer group's is the mission's to set; any other keeps the point's Z.</para>
 ///
 /// <para>A point of its own, an object's or a group's, can be dropped again (<see cref="Reattach"/>,
-/// <see cref="ReturnToRoute"/>; docs/herculan/handoff-editor-placement.md#dropping-a-point-of-its-own).</para>
+/// <see cref="ReturnToRoute"/>; docs/herculan/editor-design.md#which-record-an-edit-writes).</para>
 ///
 /// <para>A carrying move of a structure group (<see cref="GroupTarget.Carry"/>) also moves the points its members stand on
 /// of their own by the group's offset, each keeping its Z, and so whatever else names them. This is the editor's own

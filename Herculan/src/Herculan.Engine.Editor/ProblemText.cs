@@ -4,7 +4,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// The Problems list's sentence for a mission check finding (<see cref="MissionCheck"/>), in the editor's own words by the
-/// finding's kind (docs/herculan/handoff-editor-viewing.md#mission-check): the record it names, as the views name it
+/// finding's kind (docs/herculan/editor-design.md#mission-check): the record it names, as the views name it
 /// ("Trigger 3", "Cybrid hercs (group 4)"), marked "(in some versions)" when only some versions of the mission have the
 /// problem, what is wrong in play, and what to change, a control by its label. The check's own message, in <c>.MSN</c> terms,
 /// is the HercWorks tools'. Save's warning lists the same sentences.

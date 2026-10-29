@@ -12,7 +12,7 @@ namespace Herculan.Engine.Editor;
 /// open further up, it falls back to the other form. Any other countdown is its link, its delay and the triggers it fires, as
 /// links. Remove deletes the countdown, with its own trigger and what that trigger wires
 /// (<see cref="ActionEditor.RequestRemoveCountdown"/>), after a confirmation saying what changes when that trigger does
-/// anything. docs/herculan/handoff-editor-mission-logic.md#triggers.
+/// anything. docs/herculan/editor-design.md#triggers-and-countdowns.
 /// </summary>
 internal sealed class TriggerThenCountdowns {
 	// In pixels on a 100% display (ScaledImGui.Scaled): a countdown's delay field.

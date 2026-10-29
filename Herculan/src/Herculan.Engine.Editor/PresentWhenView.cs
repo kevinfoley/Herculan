@@ -6,7 +6,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// A record's Present when, drawn by the views of the records retail conditions (an object, a group, an order slot and an
-/// objective), in the view itself (docs/herculan/handoff-editor-conditions.md#present-when): a sentence stating it; Always,
+/// objective), in the view itself (docs/herculan/editor-design.md#present-when): a sentence stating it; Always,
 /// Only when a campaign variable... or In some loads..., with the clauses as rows, each campaign variable picked from a list
 /// (<see cref="CampaignVariablePicker"/>); what its variations change; and, under a collapsed Advanced header, the condition
 /// records behind it. Where the clauses cannot state it, the sentence (when it can be said), why, and Advanced. Then notes on

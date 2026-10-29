@@ -5,7 +5,7 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// Edits the open mission's debrief text (row 5's lines), each edit one step of <see cref="PointMover"/>'s undo history,
 /// through <see cref="MissionTextEditing.SetLineUnder"/>'s record edits on the mission's <c>.ENG</c>
-/// (docs/herculan/handoff-editor-mission-logic.md#the-missions-text). Every edit builds the editor's state again
+/// (docs/herculan/editor-design.md#the-missions-text). Every edit builds the editor's state again
 /// (<see cref="SceneSync"/>). The edits wait for the frame's ImGui to be rendered (<see cref="RunRequest"/>).
 /// </summary>
 internal sealed class DebriefEditor {

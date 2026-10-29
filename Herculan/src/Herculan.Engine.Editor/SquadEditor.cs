@@ -6,7 +6,7 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// The player's squad as the layout holds it, by GUID (<see cref="SquadRoster"/>), and its squadmates added and removed, as
 /// one step of <see cref="PointMover"/>'s undo history each, through <see cref="SquadRoster"/>'s record edits; the editor's
-/// state is then built again (<see cref="SceneSync"/>) (docs/herculan/handoff-editor-roster.md#the-players-squad).
+/// state is then built again (<see cref="SceneSync"/>) (docs/herculan/editor-design.md#the-players-squad).
 ///
 /// <para>A new squadmate is the player's HERC's chassis as the mission holds it now, with that chassis's stock fit
 /// (<see cref="MachineFitter.StockFit"/>), as a Herc Type choice gives it. An add is refused past

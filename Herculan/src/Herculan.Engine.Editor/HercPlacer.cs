@@ -12,7 +12,7 @@ namespace Herculan.Engine.Editor;
 /// was put and hunting the player's squad, or joining the selected herc group, or in a chosen member slot of a herc group
 /// from the group's view (<see cref="RequestJoin"/>). The scene is then synced with the document
 /// (<see cref="SceneSync"/>), which builds the herc's object for the record, and the herc is
-/// selected (docs/herculan/handoff-editor-roster.md#hercs).
+/// selected (docs/herculan/editor-design.md#new-units).
 ///
 /// <para>It gets its chassis's standard weapons (<see cref="MachineFitter.NewHercFit"/>), as a chassis change gives them.</para>
 /// </summary>

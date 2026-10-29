@@ -80,7 +80,7 @@ public static class MissionFileLaunch {
 	/// string, string, string, out string?)"/> does, and holds the mission as a <see cref="MissionDocument"/> for the
 	/// mission editor: the <c>.MSN</c> and <c>.ENG</c> the load read, generated with the flags and header words the load
 	/// used and draws from VSHELL's generator as it stood when the load began drawing, so the document's every generation
-	/// draws what this handoff's did (docs/herculan/handoff-editor-document.md#conditions-and-random-tables).
+	/// draws what this handoff's did (docs/herculan/editor-design.md#what-moves-the-random-draws).
 	/// <paramref name="random"/> is VSHELL's generator as the load begins, which every draw comes from in the launch's own
 	/// order: a new <see cref="ShellTrainingLaunch.StartupRandom"/> draws as the game's load does, and the mission editor's
 	/// open passes <see cref="SimRandom.Lowest"/>. <paramref name="squad"/> says which Hercs the squad pilots and builds its

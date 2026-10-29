@@ -11,7 +11,7 @@ using ImGuiNET;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The Properties panel's view of a herc, flyer, structure or ground vehicle (docs/herculan/handoff-editor-roster.md), read from
+/// The Properties panel's view of a herc, flyer, structure or ground vehicle, read from
 /// the <c>.MSN</c>'s layout and <see cref="MissionIndex"/> by the roster record the object stands for, every record included,
 /// one the mission as opened leaves out too: its name, its group with a choice that moves it into another
 /// (<see cref="MemberMover"/>) and its group's orders, its Present when, with what it does to a group it would leave empty

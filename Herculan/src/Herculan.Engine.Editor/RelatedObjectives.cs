@@ -4,7 +4,7 @@ using ImGuiNET;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The win and lose conditions about a group or an object, in their views (docs/herculan/handoff-editor-mission-logic.md#objectives):
+/// The win and lose conditions about a group or an object, in their views (docs/herculan/editor-design.md#objectives):
 /// a link to each, its sentence, and a button that adds a win condition about it (<see cref="ObjectiveEditor"/>).
 /// </summary>
 internal sealed class RelatedObjectives {

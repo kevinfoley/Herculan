@@ -5,12 +5,12 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// The Properties panel's view of a route, read from the layout and <see cref="MissionIndex"/> by its row-8 GUID, every route
-/// of the <c>.MSN</c> included (docs/herculan/handoff-editor-placement.md#routes): whether it is a loop, which groups walk it,
+/// of the <c>.MSN</c> included: whether it is a loop, which groups walk it,
 /// with a choice that makes it a group's first order's route (<see cref="OrderEditor"/>), its waypoints, "Start" and then
 /// "Waypoint 1" on, each with its distance from the one before (<see cref="MissionText.Waypoint"/>), and the edits that make a route (<see cref="RouteEditor"/>, <see cref="RoutePlacing"/>): add waypoints after the last,
 /// insert one after the selected one, remove the selected one, close or open the loop, delete the route; the selected
 /// waypoint's X and Y as typed fields (<see cref="PointFields"/>); and, when its waypoints are an option of a random table,
-/// which one, since an edit changes that option (docs/herculan/handoff-editor-conditions.md#random-tables).
+/// which one, since an edit changes that option (docs/herculan/editor-design.md#random-tables).
 /// </summary>
 internal sealed class RouteView {
 	// The heads-down map marks the player's route from its second waypoint and at most nine of them

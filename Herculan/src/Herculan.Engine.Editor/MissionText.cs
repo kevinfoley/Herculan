@@ -265,7 +265,7 @@ internal static class MissionText {
 
 	/// <summary>
 	/// The number the editor shows for a record at <paramref name="position"/> in its row, from 0: every record number a
-	/// designer sees counts from 1 (docs/herculan/handoff-editor-ux-plan.md#decided). It is the record's place among its row's
+	/// designer sees counts from 1 (docs/herculan/editor-design.md#writing-the-editors-ui). It is the record's place among its row's
 	/// identities, not its index in a file, so nothing is matched against a file through it.
 	/// </summary>
 	public static int Number(int position) => position + 1;

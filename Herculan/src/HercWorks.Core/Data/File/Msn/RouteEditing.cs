@@ -28,7 +28,7 @@ public sealed record RouteNamers(IReadOnlyList<MsnRecordId> Orders, IReadOnlyLis
 /// <para>Removing a waypoint removes its list entry, and deleting a route removes every row-8 record of its GUID. Either can
 /// leave a row-6 point the route named that no field names any more (<see cref="MissionDocument.CountPointRefs"/>, every
 /// record whatever its condition); its records are removed in the same change, since block 1's extent frames the
-/// heads-down map and the mission box (docs/herculan/handoff-editor-placement.md#what-appending-a-point-changes).
+/// heads-down map and the mission box (docs/herculan/editor-design.md#positions).
 /// A point anything else still names stays. A route is deleted only while no order, objective or group names it: a ref to
 /// a GUID with no record resolves to <c>-1</c>, so the order would lose its route, the objective its order, and a group
 /// whose slot-0 order walked it its starting point.</para>

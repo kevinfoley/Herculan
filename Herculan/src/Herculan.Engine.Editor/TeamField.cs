@@ -4,7 +4,7 @@ using ImGuiNET;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// A group's Team in the group and object views (docs/herculan/handoff-editor-roster.md#sides): Human or Cybrid, a choice that
+/// A group's Team in the group and object views: Human or Cybrid, a choice that
 /// changes it (<see cref="SideChanger"/>) as one undo step, from the layout by the group's row-16 GUID. The team is the
 /// group's, so a member's view shows it fixed, saying why on hover, and the group's view says when other members change with it. The player's
 /// squad's is shown fixed, with no note.

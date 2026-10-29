@@ -20,7 +20,7 @@ internal sealed record RouteDeleteBlockers(string? Fixed, DeleteNamers Names, IR
 /// through <see cref="RouteEditing"/>'s record edits on the mission's <c>.MSN</c>; the scene and the indices are then synced
 /// with the document (<see cref="SceneSync"/>), as a new route's records are exported last and a delete moves
 /// every later route, and every later point when a point goes with it, down one
-/// (docs/herculan/handoff-editor-document.md#the-tools).
+/// (docs/herculan/editor-design.md#which-record-an-edit-writes).
 ///
 /// <para>Routes are taken by their row-8 GUID, as the selections name them, from the layout (<see cref="MissionIndex"/>),
 /// every route of the <c>.MSN</c> included, whatever its condition. A waypoint here is one the route view lists, by its index

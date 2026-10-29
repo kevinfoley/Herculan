@@ -4,7 +4,7 @@ namespace HercWorks.Core.Data.File.Msn;
 
 /// <summary>
 /// Writes the type of a herc, flyer, structure or ground vehicle and a herc's weapon fit and ammunition types, as record
-/// edits on a <see cref="MissionDocument"/> (docs/herculan/handoff-editor-roster.md#the-players-squad and docs/herculan/handoff-editor-conditions.md#editing-a-record-that-picks).
+/// edits on a <see cref="MissionDocument"/> (docs/herculan/editor-design.md#the-players-squad and docs/herculan/editor-design.md#random-tables).
 ///
 /// <list type="bullet">
 /// <item>Given the option being edited, a template of the table the record picks from, one the editor edits
@@ -15,7 +15,7 @@ namespace HercWorks.Core.Data.File.Msn;
 /// <item>Any other field is written in the record that supplies it (<see cref="MissionDocument.SetField"/>): an overlay
 /// record for a field a template supplies. An overlay cannot carry a field's unset value, so such a field keeps the template's
 /// value where the edit would unset it, and a launcher's ammunition type is then written SARH (0), which DBSIM reads the
-/// filler 5 as: the editor's choice (docs/herculan/handoff-editor-roster.md#the-players-squad). Given an option, a field of the
+/// filler 5 as: the editor's choice (docs/herculan/editor-design.md#the-players-squad). Given an option, a field of the
 /// record's own that the edit unsets, which the template then supplies again, is written in the option's template too.</item>
 /// </list>
 /// </summary>

@@ -14,7 +14,7 @@ namespace Herculan.Engine.Editor;
 /// 0 degrees. Each record is appended to the <c>.MSN</c> unconditioned, with no random table key and a new GUID
 /// (<see cref="MissionDocument.Append"/>), so every version of the mission has it; the scene is then synced
 /// with the document (<see cref="SceneSync"/>), which builds the structure's object for the record
-/// (docs/herculan/handoff-editor-document.md#the-tools).
+/// (docs/herculan/editor-design.md#which-record-an-edit-writes).
 ///
 /// <para>The records take the shape the retail missions give a lone structure most often — 148 of their 537 structure
 /// groups (<c>HercWorks.Query orders</c>): one member, in formation 0, standing on the group's own point and facing its

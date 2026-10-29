@@ -8,7 +8,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// A HERC's "Loadout preset" choice under its chassis, and its "Save preset" and "Delete preset" buttons under its hardpoints,
-/// with their prompts (docs/herculan/handoff-editor-roster.md#loadout-presets), drawn by <see cref="MachineFitView"/> over the
+/// with their prompts (docs/herculan/editor-design.md#new-units), drawn by <see cref="MachineFitView"/> over the
 /// presets of <see cref="LoadoutPresets"/>. A preset applied writes through <see cref="MachineFitter.RequestLoadout"/>. One per
 /// mission, shared by the squad's views and the views of the HERCs outside it, so a prompt is drawn by the view that put it up.
 /// </summary>

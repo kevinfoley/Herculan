@@ -8,7 +8,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// Keeps the scene in step with the <c>.MSN</c> after every edit, undo and redo, a move and a side change included
-/// (docs/herculan/handoff-editor-document.md#rebuilding-after-an-edit): places every group and roster record again from
+/// (docs/herculan/editor-design.md#the-layout): places every group and roster record again from
 /// the document's layout (<see cref="LayoutPlacement"/>), stands each object already built for a record where it now
 /// stands, builds one for a record that has none of its type and fit (<see cref="MissionScene.CreateObject"/>), and takes
 /// the object of a record no group places off the scene, keeping it, so an undone delete stands the same object, model and

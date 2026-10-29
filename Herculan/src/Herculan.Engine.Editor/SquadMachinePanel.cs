@@ -5,7 +5,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// The Properties panel's view of the player's squad, under the squad's objects and group 0, read from the layout by GUID
-/// (docs/herculan/handoff-editor-roster.md#the-players-squad): which HERCs the player and the squadmates pilot in this
+/// (docs/herculan/editor-design.md#the-players-squad): which HERCs the player and the squadmates pilot in this
 /// mission, and the mission's own HERCs of the squad, each as a chassis choice and one row per hardpoint, edited through
 /// <see cref="MachineFitter"/> (drawn by <see cref="MachineFitView"/>); and the squadmates added and removed through
 /// <see cref="SquadEditor"/>. Squadmates are numbered from 1 by their place in the squad's list. In a mission that loads with

@@ -37,7 +37,7 @@ internal sealed record DeleteBlockers(string? Fixed, DeleteNamers Object, IReadO
 /// step of <see cref="PointMover"/>'s undo history. The delete is <see cref="RosterDeletion"/>'s record edits on the
 /// mission's <c>.MSN</c>, by the roster record the object stands for, which remove the object's records and the group it
 /// leaves empty; the scene is then synced with the document (<see cref="SceneSync"/>)
-/// (docs/herculan/handoff-editor-document.md#the-tools).
+/// (docs/herculan/editor-design.md#which-record-an-edit-writes).
 ///
 /// <para>What refuses a delete is <see cref="RosterDeletion"/>'s: an objective, an action or an order referencing the object
 /// or the group it would leave empty, an action of its own it fires when engaged or defeated, and the player's squad.

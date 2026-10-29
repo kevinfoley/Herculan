@@ -53,7 +53,7 @@ public readonly record struct PresenceRecord(MsnRecordId Record, short Condition
 /// Sets which campaign states a record is present in: the condition field (<c>0x02</c>, row 17's <c>0x00</c>) of a roster
 /// object, an order, a group or an objective, to a flag test, a range over a draw, or nothing. How the load gates a
 /// record on its condition is docs/retail/formats/msn-mission-file.md#the-conditions--row-1, and what the editor offers
-/// docs/herculan/handoff-editor-conditions.md#present-when.
+/// docs/herculan/editor-design.md#present-when.
 ///
 /// <list type="bullet">
 /// <item>A GUID can be carried by several records, a base and the overlays or replacements that apply in other states

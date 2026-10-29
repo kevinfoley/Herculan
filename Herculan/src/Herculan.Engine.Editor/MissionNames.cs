@@ -77,7 +77,7 @@ internal sealed class RosterTypeNames {
 /// <summary>
 /// How the editor names a mission's groups, objects, trigger areas, routes, triggers, countdowns and objectives: by what each
 /// is and does, built from the <c>.MSN</c>'s layout (<see cref="MissionIndex"/>), with its number in its row as
-/// <see cref="RecordName.Number"/>, or leading the text for a group, route or trigger (docs/herculan/handoff-editor-ux-plan.md#5-names-instead-of-numbers). The one source of
+/// <see cref="RecordName.Number"/>, or leading the text for a group, route or trigger (docs/herculan/editor-design.md#writing-the-editors-ui). The one source of
 /// names for titles, links, pickers, outliner rows, delete blockers and the Toolbox. A name refers to another record by its
 /// number alone where naming it in full would loop (an area by the triggers testing it, a trigger by its areas), and a
 /// sentence names a group by <see cref="GroupInSentence"/>, its team and roster.

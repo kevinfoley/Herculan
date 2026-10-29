@@ -9,7 +9,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// What a Cybrid herc's hardpoints offer in the editor, by the user's choice
-/// (docs/herculan/handoff-editor-roster.md#a-cybrids-weapons): its hardpoints are the fit slots its chassis's <c>gl\&lt;NAME&gt;.GL</c>
+/// (docs/herculan/editor-design.md#a-cybrids-weapons): its hardpoints are the fit slots its chassis's <c>gl\&lt;NAME&gt;.GL</c>
 /// hardpoints address (docs/retail/formats/gun-layout-gl.md#record), and each offers the weapons the install's retail
 /// missions fit there on that chassis (<see cref="RetailMountFits"/>), read from the archives as they shipped, not from a
 /// mission saved over one. A weapon chosen takes the ammunition type those records carry with it there most often.

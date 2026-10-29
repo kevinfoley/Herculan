@@ -112,7 +112,7 @@ internal sealed class PanelLinks {
 	public void Objective(int record) => Link(Names.Objective(record), new ObjectiveSelection(record));
 
 	/// <summary>
-	/// What references something, one short identity line per record (docs/herculan/handoff-editor.md#what-every-edit-does):
+	/// What references something, one short identity line per record (docs/herculan/editor-design.md#deleting):
 	/// each objective and trigger by its link; each trigger of <paramref name="fired"/>, those an object fires when engaged or
 	/// defeated, by its link and ": fired by it"; and each group by its link and what of it references, its orders and, for a
 	/// group of <paramref name="ownRoute"/>, its own route field, which no view edits, on its one line. Then the options of
