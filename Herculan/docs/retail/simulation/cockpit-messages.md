@@ -131,7 +131,7 @@ The composer signs it `HQ` — `STRINGS0.STR` group 8, the one string at `DAT_00
 
 Byte 7 is 1 on all three, and it lands at the queued record's `+0x2c`, which gates two things. The port's per-frame update (`PilotMessagePort_Update`, `004361cc`, vtable `+0x10`) sets the ready latch for a due message only when it is set; a squadmate's line, whose byte 7 is 0, is instead made ready by the comm box as its portrait starts talking (`MessagePort_MarkReady`, `00435b14`, from `HddDisplay_ServiceCommBoxes` (`0044b5f8`)), and cancelled when the portrait's script runs out (`MessagePort_Cancel`, `00435b38`). So byte 7 is what lets a line up with no comm box behind it — without it a speakerless line would wait out its `maxWait` and drop unshown. The same byte gates `PilotMessagePort_Speak`'s voice arm, which patches `id + 1` and the variant digit into `BC_00000` and hands the name to `Voice_PlayNamed`. No `BC_*` clip ships in any archive, so an action's line is text only.
 
-Across the 62 retail missions (`.MSN` row #10 `0x4E`, the message id plus one) exactly one action outside `TRAIN1`-`TRAIN4` posts a message: `C1_02.MSN`'s, with id 1, `MAYDAY!`. No retail mission posts ids 0 and 2.
+Across the 62 retail missions (`.MSN` row #10 `0x4E`, the message id plus one) exactly one action outside `TRAIN1`-`TRAIN4` carries a message: `C1_02.MSN`'s, with id 1, `MAYDAY!`. It writes no counter (its pair count is 0, `HercWorks.Query values --row 10 --field Unk1A --where MessageId!=0`), and `Action_Activate` posts the message once per counter write ([`mission-deployment.md`](mission-deployment.md#the-four-ways-an-action-activates)), so the line is never shown. No retail mission names ids 0 and 2.
 
 ### The training port
 

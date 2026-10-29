@@ -47,7 +47,7 @@ public sealed class PaintLayers {
 	/// <summary>The overlap, in DTS units, below which two faces only touch along an edge.</summary>
 	private const float OverlapEpsilonDts = 1f;
 
-	/// <summary>How closely two polys' normals must agree, as a cosine, to face the same way.</summary>
+	/// <summary>How closely two drawn sides' facings must agree, as a cosine, to face the same way.</summary>
 	private const float SameFacingCosine = 0.99f;
 
 	private static readonly float RenderUnitsPerDtsUnit = WorldScale.WorldUnitsPerDtsUnit / WorldScale.WorldUnitsPerMeter;
@@ -128,13 +128,13 @@ public sealed class PaintLayers {
 
 	/// <summary>
 	/// Whether <paramref name="later"/> lies over <paramref name="earlier"/>: drawn with it, placed by the
-	/// same node, facing the same way, every corner of one of its triangles within
-	/// <see cref="PlaneToleranceDts"/> of the plane of one of the earlier poly's, and the two triangles
-	/// sharing area in that plane.
+	/// same node, seen from a common side (<see cref="SeenFromOneSide"/>), every corner of one of its
+	/// triangles within <see cref="PlaneToleranceDts"/> of the plane of one of the earlier poly's, and the
+	/// two triangles sharing area in that plane.
 	/// </summary>
 	private static bool Overlays(Poly later, Poly earlier) {
 		if (later.Head.TransformId != earlier.Head.TransformId || NeverDrawnTogether(later.Head, earlier.Head)
-				|| Vector3.Dot(later.Normal, earlier.Normal) < SameFacingCosine) {
+				|| !SeenFromOneSide(later, earlier)) {
 			return false;
 		}
 
@@ -165,13 +165,26 @@ public sealed class PaintLayers {
 	}
 
 	/// <summary>
-	/// Two cells of one sequence, two levels of one detail part, the two sides of one facing, or two
-	/// copies gated on opposite facings of one other poly: never on screen together.
+	/// Whether a side <paramref name="a"/> draws faces the way a side <paramref name="b"/> draws does. A
+	/// drawn side faces along the stored normal for the front and against it for the back
+	/// (<see cref="Gl.MeshVertex.Side"/>), and a poly drawn from both sides faces both ways. So a
+	/// two-sided facade lies under a one-sided post face flush with it whichever way the facade's own
+	/// normal points, as on <c>BASES.DGS</c> shapes 42 and 43 (structure types 22 and 23), while two
+	/// one-sided faces back to back, or the two side copies of one poly, never meet.
+	/// </summary>
+	private static bool SeenFromOneSide(Poly a, Poly b) {
+		float cosine = Vector3.Dot(a.Normal, b.Normal);
+		int sides = a.Head.Side * b.Head.Side;
+		return (cosine >= SameFacingCosine && sides >= 0) || (cosine <= -SameFacingCosine && sides <= 0);
+	}
+
+	/// <summary>
+	/// Two cells of one sequence, two levels of one detail part, or two copies gated on opposite
+	/// facings of one other poly: never on screen together.
 	/// </summary>
 	private static bool NeverDrawnTogether(in Face a, in Face b) =>
 		(a.Gate.Sequence >= 0 && a.Gate.Sequence == b.Gate.Sequence && a.Gate.Frame != b.Gate.Frame)
 		|| (a.Gate.Detail != null && ReferenceEquals(a.Gate.Detail, b.Gate.Detail) && a.Gate.Level != b.Gate.Level)
-		|| a.Side * b.Side < 0
 		|| (a.Dependency.Side * b.Dependency.Side < 0 && a.Dependency.Normal == b.Dependency.Normal
 			&& a.Dependency.Distance == b.Dependency.Distance);
 

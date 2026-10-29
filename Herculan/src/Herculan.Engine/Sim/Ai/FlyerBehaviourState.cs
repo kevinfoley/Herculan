@@ -137,15 +137,13 @@ public struct FlyerBehaviourBlock {
 
 	/// <summary>
 	/// <c>Behaviour_SetState</c> (<c>00413e50</c>) — installs a descriptor and arms its countdown at
-	/// the descriptor's dwell plus the shared 0-15 count jitter. The jitter global is process-wide and
-	/// stepped by every state change in the mission, aircraft and machines alike, which is why it
-	/// lives on <see cref="BehaviourBlock"/> rather than being duplicated here. The scratch the
-	/// original zeroes alongside is held on the aircraft; <c>FlyerObject.SetBehaviourState</c> zeroes
-	/// it and is the only caller.
+	/// the descriptor's dwell plus a 0-15 count jitter off <paramref name="jitter"/>, the counter the
+	/// mission's machines step too. The scratch the original zeroes alongside is held on the aircraft;
+	/// <c>FlyerObject.SetBehaviourState</c> zeroes it and is the only caller.
 	/// </summary>
-	public void SetState(FlyerBehaviourState state) {
+	public void SetState(FlyerBehaviourState state, DwellJitter jitter) {
 		State = state;
-		DwellCountdown = state.Dwell + BehaviourBlock.NextJitter();
+		DwellCountdown = state.Dwell + jitter.Next();
 		TickCount = 0;
 		JustInstalled = true;
 	}

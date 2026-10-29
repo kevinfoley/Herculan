@@ -18,7 +18,7 @@ namespace Herculan.Engine.Sim;
 ///
 /// <para><b>The mission is recognised by its data, not its name</b>, because <c>script.dat</c> names no mission:
 /// the group's two orders and the exact coordinates of their routes, then the action that watches the prototype.
-/// None of those points or routes carries a variant key, so every load of the mission places them the same, and v1.0
+/// None of those points or routes carries a random table key, so every load of the mission places them the same, and v1.0
 /// and v1.10 carry the same records; v1.10's one change to the group, its row-16 <c>0x08</c>, is a field this match
 /// does not look at. A mission matches only by carrying this group as <c>C2_05</c> does.</para>
 /// </summary>

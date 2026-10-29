@@ -44,19 +44,38 @@ public sealed class ScaledImGui : IDisposable {
 	private readonly IInputContext _input;
 	private readonly string _fontPath;
 	private readonly string? _italicFontPath;
+	private readonly string? _boldFontPath;
 	private ImGuiController _controller;
+
+	// ImGui's clipboard, as the system's through the window's keyboard: ImGui's own reaches the system's on Windows
+	// alone, and elsewhere keeps what is copied inside the process. Each context keeps the delegates' pointers, so they
+	// are held here, and the text last read stays allocated for ImGui until the next read.
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	private delegate nint ClipboardReader(nint userData);
+
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	private delegate void ClipboardWriter(nint userData, nint text);
+
+	private readonly ClipboardReader _readClipboard;
+	private readonly ClipboardWriter _writeClipboard;
+	private nint _clipboardText;
 	private float _builtContentScale;
 	private float _builtClientScale;
 	private float _builtFontSize;
 
 	/// <param name="fontPath">The TrueType font every ImGui window draws in.</param>
 	/// <param name="italicFontPath">Its italic face, for <see cref="ItalicFont"/>; null for none.</param>
-	public ScaledImGui(GL gl, EngineWindow window, IInputContext input, string fontPath, string? italicFontPath = null) {
+	/// <param name="boldFontPath">Its bold face, for <see cref="BoldFont"/>; null for none.</param>
+	public ScaledImGui(GL gl, EngineWindow window, IInputContext input, string fontPath, string? italicFontPath = null,
+			string? boldFontPath = null) {
 		_gl = gl;
 		_window = window;
 		_input = input;
 		_fontPath = fontPath;
 		_italicFontPath = italicFontPath;
+		_boldFontPath = boldFontPath;
+		_readClipboard = _ => ReadClipboard();
+		_writeClipboard = (_, text) => WriteClipboard(text);
 		_controller = Build();
 	}
 
@@ -77,6 +96,9 @@ public sealed class ScaledImGui : IDisposable {
 	/// controller, so it is read each time it is drawn with rather than kept.
 	/// </summary>
 	public ImFontPtr? ItalicFont { get; private set; }
+
+	/// <summary>The font's bold face at the ordinary size, or null when the constructor was given none; rebuilt as <see cref="ItalicFont"/> is.</summary>
+	public ImFontPtr? BoldFont { get; private set; }
 
 	/// <summary>The size <see cref="RadialFont"/> is drawn at in the current ImGui frame, as <see cref="Scaled(float)"/>.</summary>
 	public static float RadialFontSize => ImGui.GetFontSize() * RadialFontScale;
@@ -145,6 +167,7 @@ public sealed class ScaledImGui : IDisposable {
 			feed(io);
 		}
 
+		FeedModifiers();
 		FeedPointer(PointerOverride?.Invoke());
 		if (HeldAsMouseButtons is { } held) {
 			var (left, right) = held();
@@ -167,7 +190,11 @@ public sealed class ScaledImGui : IDisposable {
 		_controller.Render();
 	}
 
-	public void Dispose() => _controller.Dispose();
+	public void Dispose() {
+		_controller.Dispose();
+		Marshal.FreeCoTaskMem(_clipboardText);
+		_clipboardText = 0;
+	}
 
 	private static float ChosenFontSize =>
 		A11ySettings.Current.GetSettingValue(A11ySettingDefinitions.LargerFont) ? LargerFontSize : FontSize;
@@ -181,6 +208,24 @@ public sealed class ScaledImGui : IDisposable {
 		var io = ImGui.GetIO();
 		io.MouseDown[(int)button] = !down;
 		io.AddMouseButtonEvent((int)button, down);
+	}
+
+	// Silk's controller queues each key's own event but sets io.KeyCtrl, io.KeyShift, io.KeyAlt and io.KeySuper straight,
+	// and ImGui's NewFrame overwrites those from the modifiers' own events, which the controller never queues: no text
+	// field would see Ctrl+A, Ctrl+X, Ctrl+C or Ctrl+V, or Shift with an arrow key. So the modifiers go in as those events,
+	// read from the keyboard once a frame; ImGui drops one that repeats the modifier's last state. A key and a modifier
+	// pressed in the same frame are taken together, whichever was queued first.
+	private void FeedModifiers() {
+		if (_input.Keyboards.Count == 0) {
+			return;
+		}
+
+		var keyboard = _input.Keyboards[0];
+		var io = ImGui.GetIO();
+		io.AddKeyEvent(ImGuiKey.ModCtrl, keyboard.IsKeyPressed(Key.ControlLeft) || keyboard.IsKeyPressed(Key.ControlRight));
+		io.AddKeyEvent(ImGuiKey.ModShift, keyboard.IsKeyPressed(Key.ShiftLeft) || keyboard.IsKeyPressed(Key.ShiftRight));
+		io.AddKeyEvent(ImGuiKey.ModAlt, keyboard.IsKeyPressed(Key.AltLeft) || keyboard.IsKeyPressed(Key.AltRight));
+		io.AddKeyEvent(ImGuiKey.ModSuper, keyboard.IsKeyPressed(Key.SuperLeft) || keyboard.IsKeyPressed(Key.SuperRight));
 	}
 
 	// The controller writes io.MousePos from the mouse just before NewFrame, so a pointer elsewhere goes in as an event, as
@@ -207,26 +252,57 @@ public sealed class ScaledImGui : IDisposable {
 		_builtClientScale = _window.ClientScale ?? _builtContentScale;
 		_builtFontSize = ChosenFontSize;
 		var controller = new ImGuiController(_gl, _window.View, _input, null, () => {
-			(RadialFont, ItalicFont) = AddFonts(ImGui.GetIO().Fonts, _fontPath, _italicFontPath, _builtFontSize, _builtContentScale);
+			(RadialFont, ItalicFont, BoldFont) = AddFonts(ImGui.GetIO().Fonts, _fontPath, _italicFontPath, _builtFontSize,
+				_builtContentScale, _boldFontPath);
 		});
 		ApplyScale(_builtContentScale, _builtClientScale, _builtFontSize);
+		var io = ImGui.GetIO();
+		io.GetClipboardTextFn = Marshal.GetFunctionPointerForDelegate(_readClipboard);
+		io.SetClipboardTextFn = Marshal.GetFunctionPointerForDelegate(_writeClipboard);
 		return controller;
+	}
+
+	// The clipboard's text, empty when it holds none. Called from inside ImGui, which an exception must not cross, so a
+	// clipboard that cannot be read reads as empty.
+	private nint ReadClipboard() {
+		string text;
+		try {
+			text = _input.Keyboards.Count > 0 ? _input.Keyboards[0].ClipboardText ?? "" : "";
+		} catch (Exception) {
+			text = "";
+		}
+
+		Marshal.FreeCoTaskMem(_clipboardText);
+		_clipboardText = Marshal.StringToCoTaskMemUTF8(text);
+		return _clipboardText;
+	}
+
+	// Puts ImGui's UTF-8 <text> on the clipboard; as ReadClipboard, a clipboard that cannot be written is left as it is.
+	private void WriteClipboard(nint text) {
+		try {
+			if (_input.Keyboards.Count > 0) {
+				_input.Keyboards[0].ClipboardText = Marshal.PtrToStringUTF8(text) ?? "";
+			}
+		} catch (Exception) {
+			// Left as it is.
+		}
 	}
 
 	/// <summary>
 	/// Adds the fonts every ImGui window is drawn in to <paramref name="fonts"/>, before the atlas is built:
 	/// <paramref name="fontPath"/> at <paramref name="fontSize"/> on a display of <paramref name="contentScale"/>, first
-	/// so that it is the default, then the <see cref="RadialFont"/> and <see cref="ItalicFont"/> faces, which it returns.
-	/// The hosts' windows add them through Silk's controller, and a test that lays the panels out without a window
-	/// adds them to its own context.
+	/// so that it is the default, then the <see cref="RadialFont"/>, <see cref="ItalicFont"/> and <see cref="BoldFont"/>
+	/// faces, which it returns. The hosts' windows add them through Silk's controller, and a test that lays the panels
+	/// out without a window adds them to its own context.
 	/// </summary>
-	public static (ImFontPtr Radial, ImFontPtr? Italic) AddFonts(ImFontAtlasPtr fonts, string fontPath, string? italicFontPath,
-			float fontSize, float contentScale) {
+	public static (ImFontPtr Radial, ImFontPtr? Italic, ImFontPtr? Bold) AddFonts(ImFontAtlasPtr fonts, string fontPath,
+			string? italicFontPath, float fontSize, float contentScale, string? boldFontPath = null) {
 		float pixels = MathF.Round(fontSize * contentScale);
 		fonts.AddFontFromFileTTF(fontPath, pixels, default, GlyphRangesPointer);
 		var radial = fonts.AddFontFromFileTTF(fontPath, pixels * RadialFontScale, default, GlyphRangesPointer);
 		ImFontPtr? italic = italicFontPath != null ? fonts.AddFontFromFileTTF(italicFontPath, pixels, default, GlyphRangesPointer) : null;
-		return (radial, italic);
+		ImFontPtr? bold = boldFontPath != null ? fonts.AddFontFromFileTTF(boldFontPath, pixels, default, GlyphRangesPointer) : null;
+		return (radial, italic, bold);
 	}
 
 	/// <summary>

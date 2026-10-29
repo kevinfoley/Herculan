@@ -13,7 +13,7 @@ These stand at the file's start and fill the slots the structure, HERC and aircr
 | Slot | ES1 | Code | ES2 |
 |---|---|---|---|
 | `+0x18` | `SimObject_TickNoOp` (`0000d728`) | `MOV AX,1`, `RET 4` | `00411ab4` |
-| `+0x28` | `SimObject_GetAimNodeTransform_None` (`0000d718`) | returns 0, `RET 4` | `00411a9c` ([aim point](../../retail/simulation/target-selection.md#aim-point--vtable-0x24)) |
+| `+0x28` | `SimObject_GetAimNodeTransform_None` (`0000d718`) | returns 0, `RET 4` | `00411a9c` ([aim point](../../retail/simulation/aim-point.md)) |
 | `+0x2c` | `SimObject_ReceiveSquadOrder_Refuse` (`0000d6d8`) | returns 0, `RET 0xc` | `00411a64` |
 | `+0x30` | `SimObject_HandleCommandNoOp` (`0000d6e0`) | returns 0, `RET 8` | `00411a6c` |
 | `+0x34` | `SimObject_GetAimPointZero` (`0000d6e8`) | (object, a, b): clears the two 6-byte triples b and a with `memset` | `00411a74` |

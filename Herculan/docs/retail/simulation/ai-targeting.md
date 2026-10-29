@@ -2,7 +2,7 @@
 
 How an AI machine acquires, shares, keeps and abandons a target.
 
-[`ai-dispatch.md`](ai-dispatch.md) owns the 22 behaviour states, the descriptor layout, the `mech+0x4d` behaviour block and the three vtable dispatchers; state indices, descriptor addresses and descriptor flag bits are cited from there. [`target-selection.md`](target-selection.md) owns `mech+0x1a4` itself, the sensor model that decides what is *known*, and the player's own selection, which the cockpit makes.
+[`ai-dispatch.md`](ai-dispatch.md) owns the 22 behaviour states, the descriptor layout, the `mech+0x4d` behaviour block and the three vtable dispatchers; state indices, descriptor addresses and descriptor flag bits are cited from there. [`target-selection.md`](target-selection.md) owns `mech+0x1a4` itself and the player's own selection, which the cockpit makes; [`sensors.md`](sensors.md) owns the sensor model that decides what is *known*.
 
 `Ai_SelectTarget` is not mech-only. Of its 16 call sites, two are structures' — `Base_ArmedThinkTick` (`00404100`, which a ground vehicle's tick also runs) with mask `0x30`, and the transport's tick (`Base_TransportThinkTick`, `004045c8`, [`structure-behaviour.md`](structure-behaviour.md#the-transport--004045c8)) with mask `0x10` inside a `0x3000` cone — and two are the flyer's `search/destroy` and `patrolling` thinks ([`ai-flyers.md`](ai-flyers.md)), so HERCs, aircraft and armed structures all acquire through it. The guard states' defensive pick, `Ai_SelectDefenceTarget`, is a separate routine — see [Taking fire](#taking-fire--mech_aiontakingfire-0041f7b8-mech-vtable-0x50).
 
@@ -105,7 +105,7 @@ The weapon term reads the mount's own `+0x1c`, which `WeaponMount_CtorBase` (`00
 
 ## Passing a contact on
 
-`Mech_AiOnTakingFire` routes the attacker through `Detection_ShareContact` (`00412704`, via the base class's `SimObject_AiOnTakingFire`, `00411aec`, which it calls directly), the same function the sensor sweep uses — see [`target-selection.md`](target-selection.md#the-sensor-model--sim_detectiontick-004123ac). **Being shot is a way of being spotted**: the whole side within 100000 of the attacker learns where it is, whether or not anyone had line of sight. Each of them within 50000 of the attacker also marks the attacker engaged and activates its own engagement action ([`mission-deployment.md`](mission-deployment.md#an-objects-own-two-actions--0x1b2-and-0x1b6)). A structure or an aircraft that is hit does the same, past only the raycast's own gate ([`hit-detection.md`](hit-detection.md#the-sweep--sim_raycastobjectlist-00426528)), because `SimObject_AiOnTakingFire` itself is what the structure, flyer and base object tables install at `+0x50`.
+`Mech_AiOnTakingFire` routes the attacker through `Detection_ShareContact` (`00412704`, via the base class's `SimObject_AiOnTakingFire`, `00411aec`, which it calls directly), the same function the sensor sweep uses — see [`sensors.md`](sensors.md#the-sensor-model--sim_detectiontick-004123ac). **Being shot is a way of being spotted**: the whole side within 100000 of the attacker learns where it is, whether or not anyone had line of sight. Each of them within 50000 of the attacker also marks the attacker engaged and activates its own engagement action ([`mission-deployment.md`](mission-deployment.md#an-objects-own-two-actions--0x1b2-and-0x1b6)). A structure or an aircraft that is hit does the same, past only the raycast's own gate ([`hit-detection.md`](hit-detection.md#the-sweep--sim_raycastobjectlist-00426528)), because `SimObject_AiOnTakingFire` itself is what the structure, flyer and base object tables install at `+0x50`.
 
 ## Taking fire — `Mech_AiOnTakingFire` (`0041f7b8`, mech vtable `+0x50`)
 
@@ -129,7 +129,7 @@ Then the response, chosen by the current state's descriptor flag bits:
 
 The reassess slot of states 3–7 and 18. `Mech_AiEnterCombat` (`0041d5ec`) is a thin wrapper other paths call to force it.
 
-**Radar.** `mech+0x96` goes ACTIVE here unless the machine's group is led by the local player, gated on the countdown at `mech+0x26b`; a player squadmate is put back to PASSIVE unless `mech+0xb2` is set. This is what puts a distant enemy's radar on, and so what makes it targetable by the player at long range — see [`target-selection.md`](target-selection.md#radar-mode).
+**Radar.** `mech+0x96` goes ACTIVE here unless the machine's group is led by the local player, gated on the countdown at `mech+0x26b`; a player squadmate is put back to PASSIVE unless `mech+0xb2` is set. This is what puts a distant enemy's radar on, and so what makes it targetable by the player at long range — see [`sensors.md`](sensors.md#radar-mode).
 
 **Keep or acquire.** `mech+0xac`, set by whoever just handed this machine a target, suppresses the acquisition for one pass and clears itself. Otherwise the squad order verb splits it:
 
@@ -222,7 +222,7 @@ Fields settled elsewhere link out rather than being restated.
 | `+0xb4` | byte | Collapsed — the machine has finished going down and is lying on the ground. Latched when the death animation plays out ([`mech-locomotion.md`](mech-locomotion.md#going-down)), or at spawn for a machine the mission places as a wreck ([`component-damage.md`](component-damage.md#starting-condition--mech_applystartingcondition-004178e8)) |
 | `+0xb7` | byte | Invulnerable; `Base_Construct` sets it from `BASES.DAT +0x1e` |
 | `+0x250` | short | Squad order's abandon threshold — [`ai-squadmates.md`](ai-squadmates.md) |
-| `+0x26b` | short | Countdown that holds the radar off, 6000 after an ARM hit — [`target-selection.md`](target-selection.md#how-an-ai-machines-radar-is-set) |
+| `+0x26b` | short | Countdown that holds the radar off, 6000 after an ARM hit — [`sensors.md`](sensors.md#how-an-ai-machines-radar-is-set) |
 | `+0x273` | int | Retarget cooldown, 10000 on reacting to fire |
 | `+0x278` | int | Friendly-fire complaint cooldown, 40000 |
 | `+0x27d` | int | Under-fire window, 30000; its expiry clears `+0x281` |
@@ -230,7 +230,7 @@ Fields settled elsewhere link out rather than being restated.
 | `+0x29e` | short | Combat rating |
 | `+0x2a2` | short | Component slot being aimed at, −1 for none |
 | `+0x2aa` | short | Fear: written by the flee check, 300/600/1000, and read as the AI's weapon-score floor — [`ai-weapons.md`](ai-weapons.md) |
-| `+0x30b` | ptr | Targeting Pod — [`target-selection.md`](target-selection.md#component-targeting--the-targeting-pod) |
+| `+0x30b` | ptr | Targeting Pod — [`targeting-pod.md`](targeting-pod.md) |
 
 ## Rejected readings
 

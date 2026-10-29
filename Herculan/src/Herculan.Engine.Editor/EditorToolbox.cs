@@ -1,0 +1,488 @@
+using System.Numerics;
+using Herculan.Engine.Content;
+using Herculan.Engine.Platform;
+using Herculan.Engine.Sim;
+using Herculan.Engine.World;
+using ImGuiNET;
+
+namespace Herculan.Engine.Editor;
+
+/// <summary>
+/// What a Toolbox entry adds: a herc (<see cref="HercPlacer"/>), a flyer (<see cref="FlyerPlacer"/>), a ground vehicle
+/// (<see cref="VehiclePlacer"/>), a structure (<see cref="StructurePlacer"/>) or a whole base
+/// (<see cref="StructurePlacer.AddBase"/>).
+/// </summary>
+internal enum ToolboxKind {
+	Herc,
+	Flyer,
+	Vehicle,
+	Structure,
+	Base,
+}
+
+/// <summary>One of the Toolbox's tabs, by what it adds.</summary>
+internal enum ToolboxTab {
+	Routes,
+	TriggerAreas,
+	Hercs,
+	Flyers,
+	GroundVehicles,
+	Structures,
+	Bases,
+}
+
+/// <summary>What the toolbox asks the editor to add: a herc, flyer, ground vehicle or structure type, or a base, its side, where, and to which group.</summary>
+/// <param name="TypeIndex">The type's index in its kind's file, or for a base its entry in <see cref="BaseTemplates.All"/>.</param>
+/// <param name="AtPointer">
+/// Whether it goes on the ground under the pointer, where an entry was dragged and let go over the view; otherwise on
+/// the ground at the middle of the view.
+/// </param>
+/// <param name="Group">The row-16 GUID of the group it joins, whose side it takes; null for a group of its own, as a base always is.</param>
+internal sealed record ToolboxRequest(ToolboxKind Kind, int TypeIndex, MissionSide Side, bool AtPointer, short? Group);
+
+/// <summary>A Toolbox entry being dragged toward the view: what it would add, and on which side.</summary>
+/// <param name="TypeIndex"><inheritdoc cref="ToolboxRequest" path="/param[@name='TypeIndex']"/></param>
+internal readonly record struct ToolboxDrag(ToolboxKind Kind, int TypeIndex, MissionSide Side);
+
+/// <summary>
+/// The Toolbox, docked in the bottom half of the left of the window under the Mission panel: what the editor can add to the
+/// open mission, one tab each for Routes (the route tool's New route, <see cref="RoutePlacing"/>), Trigger Areas (the
+/// trigger-area tool's New box and New circle, <see cref="AreaPlacing"/>), the herc, flyer, ground vehicle and structure
+/// types of <see cref="UnitTypeCatalog"/>, with the types it leaves out named in a note, and the ready-made bases of
+/// <see cref="BaseTemplates"/>, each listing its structures on hover. A placing mode started elsewhere
+/// brings its tab up. An entry dragged out and let go over the view asks for it on the ground under
+/// the pointer, a flyer above it; a double-click, or Add with an entry of the tab shown chosen, asks for it at the middle of
+/// the view, which a gamepad's pointer reaches as easily. The side it fights on is chosen above the list, and a new herc's or flyer's group
+/// gets the first order a new group on that side gets (<see cref="HercWorks.Core.Data.File.Msn.HercGroups"/>), which the
+/// lists' notes say; or it joins the selected group instead, a herc a herc group, a flyer a flyer group, and a ground vehicle
+/// or a structure a structure group, taking that group's side, while the join is ticked for that group, as it reads unticked
+/// for any other; while the group cannot take the tab's kind or the entry dragged, by the check its add refuses by, the choice
+/// to join is disabled with the reason under it. A base always starts a group of its own, so its tab offers no join. While an entry is dragged over the view, what it would add is drawn where it
+/// would stand (<see cref="DropPreview"/>). What an add writes is <see cref="HercPlacer"/>'s, <see cref="FlyerPlacer"/>'s,
+/// <see cref="VehiclePlacer"/>'s and <see cref="StructurePlacer"/>'s.
+/// </summary>
+internal sealed class EditorToolbox {
+	/// <summary>Why the selected group cannot be joined once the <c>.MSN</c> has no such group.</summary>
+	public const string GroupGone = "Not found.";
+
+	/// <summary>Why an object of roster row <paramref name="row"/> (12 to 14) cannot be changed once the <c>.MSN</c> has no record for it.</summary>
+	public static string ObjectGone(int row) => row switch {
+		12 => "Not found.",
+		13 => "Not found.",
+		_ => "Not found.",
+	};
+
+	private readonly UnitTypeCatalog _catalog;
+	private readonly (ToolboxKind Kind, int TypeIndex, string Name)[] _entries;
+	private MissionSide _side = MissionSide.Human;
+
+	// The group "Join" was ticked for; it reads unticked once the selection's group is another, so an add never joins a group
+	// the user did not tick it for.
+	private short? _joinTicked;
+
+	// The group the selection is or belongs to, as the last frame drawn was told, and why an entry of each kind cannot
+	// join it; and the group an add joins when "Join" is ticked, null while the tab shown, or the entry dragged, cannot.
+	private short? _selectedGroup;
+	private Func<ToolboxKind, string?>? _whyNotJoin;
+	private short? _joinGroup;
+	private (ToolboxKind Kind, int TypeIndex)? _chosen;
+	private (ToolboxKind Kind, int TypeIndex)? _dragging;
+	private ToolboxRequest? _request;
+
+	private static readonly (ToolboxTab Tab, string Label)[] TabLabels = [
+		(ToolboxTab.Routes, "Routes"), (ToolboxTab.TriggerAreas, "Trigger Areas"), (ToolboxTab.Hercs, "Hercs"),
+		(ToolboxTab.Flyers, "Flyers"), (ToolboxTab.GroundVehicles, "Ground Vehicles"), (ToolboxTab.Structures, "Structures"),
+		(ToolboxTab.Bases, "Bases"),
+	];
+
+	// The tab shown.
+	private ToolboxTab _tab = ToolboxTab.Routes;
+
+	// Whether the route and the area placing modes were on at the last frame drawn, so the frame one starts brings its tab up.
+	private bool _routesWereActive;
+	private bool _areasWereActive;
+
+	// The flyer types not offered, which the install has no data for; null when it has data for each.
+	private readonly string? _flyersLeftOut;
+
+	// The vehicle types not offered, which DBSIM builds no object for; null when there are none.
+	private readonly string? _vehiclesLeftOut;
+
+	// Why no herc, no flyer, no ground vehicle and no structure can be added, as the last frame drawn was told.
+	private string? _whyNoHerc;
+	private string? _whyNoFlyer;
+	private string? _whyNoVehicle;
+	private string? _whyNoStructure;
+
+	// Why a base cannot be added, as the last frame drawn was told.
+	private Func<BaseTemplate, string?>? _whyNoBase;
+
+	// What each base of BaseTemplates.All holds, as its entry's tooltip lists it.
+	private readonly string[] _baseContents;
+
+	public EditorToolbox(GameContent content) {
+		_catalog = new UnitTypeCatalog(content);
+		_entries = _catalog.Entries.ToArray();
+		_flyersLeftOut = _catalog.FlyersLeftOut;
+		_vehiclesLeftOut = _catalog.VehiclesLeftOut;
+		_baseContents = BaseTemplates.All.Select(Contents).ToArray();
+	}
+
+	/// <summary>
+	/// What a message from the last add said — why it was refused — or null; shown under the lists until the next
+	/// request.
+	/// </summary>
+	public string? Status { get; set; }
+
+	/// <summary>Whether an entry is being dragged toward the view.</summary>
+	public bool Dragging => _dragging != null;
+
+	/// <summary>What an entry being dragged would add, or null when none is.</summary>
+	public ToolboxDrag? Drag => _dragging is var (kind, type) ? new ToolboxDrag(kind, type, _side) : null;
+
+	/// <summary>Whether, at the last frame drawn, a drag was over a panel, where letting go adds nothing.</summary>
+	public bool DragOverPanel { get; private set; }
+
+	/// <summary>The request the toolbox made this frame, if any, which it forgets once taken.</summary>
+	public ToolboxRequest? TakeRequest() {
+		var request = _request;
+		_request = null;
+		return request;
+	}
+
+	/// <param name="enabled">False while nothing can be added, such as during a move.</param>
+	/// <param name="selectedGroup">The row-16 GUID of the herc, flyer or structure group the selection is or belongs to, which an add can join; or null.</param>
+	/// <param name="selectedGroupName">What <paramref name="selectedGroup"/> is called (<see cref="MissionNames.GroupBrief"/>), or null.</param>
+	/// <param name="whyNotJoin">
+	/// Why <paramref name="selectedGroup"/> cannot take an entry of a kind, or null when it can: the check that kind's add
+	/// refuses by. The checkbox is disabled, with the reason under it, while the tab shown, or the entry dragged, is refused.
+	/// </param>
+	/// <param name="whyNoHerc">Why no herc can be added (<see cref="HercPlacer.WhyNoAdd"/>), shown in the Hercs tab, or null.</param>
+	/// <param name="whyNoFlyer">Why no flyer can be added (<see cref="FlyerPlacer.WhyNoAdd"/>), shown in the Flyers tab, or null.</param>
+	/// <param name="whyNoVehicle">Why no ground vehicle can be added (<see cref="VehiclePlacer.WhyNoAdd"/>), shown in the Ground vehicles tab, or null.</param>
+	/// <param name="whyNoStructure">Why no structure can be added (<see cref="StructurePlacer.WhyNoAdd"/>), shown in the Structures tab, or null.</param>
+	/// <param name="whyNoBase">Why a base cannot be added (<see cref="StructurePlacer.WhyNoBase"/>), shown on its entry in the Bases tab, or null when it can.</param>
+	/// <param name="routes">The route-placing mode, whose entry (<see cref="RoutePlacing.DrawToolboxEntry"/>) the Routes tab holds.</param>
+	/// <param name="areas">The area-placing mode, whose entry (<see cref="AreaPlacing.DrawToolboxEntry"/>) the Trigger Areas tab holds.</param>
+	public void Draw(Vector2 display, float menuBarHeight, bool enabled, short? selectedGroup, string? selectedGroupName,
+			Func<ToolboxKind, string?>? whyNotJoin, string? whyNoHerc, string? whyNoFlyer, string? whyNoVehicle,
+			string? whyNoStructure, Func<BaseTemplate, string?> whyNoBase, RoutePlacing routes, AreaPlacing areas) {
+		_whyNoHerc = whyNoHerc;
+		_whyNoFlyer = whyNoFlyer;
+		_whyNoVehicle = whyNoVehicle;
+		_whyNoStructure = whyNoStructure;
+		_whyNoBase = whyNoBase;
+		_selectedGroup = selectedGroup;
+		_whyNotJoin = whyNotJoin;
+		_joinGroup = null;
+
+		float top = menuBarHeight + MissionOutliner.PanelHeight(display, menuBarHeight);
+		ImGui.SetNextWindowPos(new Vector2(0f, top));
+		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(MissionOutliner.PanelWidth), display.Y - top));
+		// A placing mode started elsewhere (the Mission panel's lists, a route view) brings its tab up, which holds its Finish
+		// and Cancel.
+		if (Opened(routes.Active, ref _routesWereActive)) {
+			_tab = ToolboxTab.Routes;
+		}
+
+		if (Opened(areas.Active, ref _areasWereActive)) {
+			_tab = ToolboxTab.TriggerAreas;
+		}
+
+		if (ImGui.Begin("Toolbox", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse)) {
+			DrawTabs();
+			switch (_tab) {
+				case ToolboxTab.Routes:
+					routes.DrawToolboxEntry();
+					break;
+				case ToolboxTab.TriggerAreas:
+					areas.DrawToolboxEntry();
+					break;
+				case ToolboxTab.Hercs:
+					DrawKind(ToolboxKind.Herc, enabled, selectedGroupName);
+					break;
+				case ToolboxTab.Flyers:
+					DrawKind(ToolboxKind.Flyer, enabled, selectedGroupName);
+					break;
+				case ToolboxTab.GroundVehicles:
+					DrawKind(ToolboxKind.Vehicle, enabled, selectedGroupName);
+					break;
+				case ToolboxTab.Bases:
+					DrawBases(enabled);
+					break;
+				default:
+					DrawKind(ToolboxKind.Structure, enabled, selectedGroupName);
+					break;
+			}
+		}
+
+		ImGui.End();
+
+		DragOverPanel = false;
+		if (_dragging is var (kind, type)) {
+			ImGui.SetTooltip($"{NameOf(kind, type)}: let go over the ground to add it");
+			DragOverPanel = ImGui.IsWindowHovered(ImGuiHoveredFlags.AnyWindow | ImGuiHoveredFlags.AllowWhenBlockedByActiveItem);
+			if (!ImGui.IsMouseDown(ImGuiMouseButton.Left)) {
+				// Let go over a panel, the drag adds nothing.
+				if (enabled && WhyNo(kind, type) == null && !DragOverPanel) {
+					Request(kind, type, atPointer: true);
+				}
+
+				_dragging = null;
+			}
+		}
+	}
+
+	// The tabs as a row of buttons coloured as ImGui colours its tabs, wrapping onto another line where the panel is too
+	// narrow for the next, since an ImGui tab bar only shrinks or scrolls its tabs; then a separator.
+	private void DrawTabs() {
+		var style = ImGui.GetStyle();
+		float right = ImGui.GetWindowPos().X + ImGui.GetWindowContentRegionMax().X;
+		for (int i = 0; i < TabLabels.Length; i++) {
+			var (tab, label) = TabLabels[i];
+			bool shown = tab == _tab;
+			ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetColorU32(shown ? ImGuiCol.TabActive : ImGuiCol.Tab));
+			ImGui.PushStyleColor(ImGuiCol.ButtonHovered, ImGui.GetColorU32(ImGuiCol.TabHovered));
+			ImGui.PushStyleColor(ImGuiCol.ButtonActive, ImGui.GetColorU32(ImGuiCol.TabActive));
+			if (ImGui.Button(label)) {
+				_tab = tab;
+			}
+
+			ImGui.PopStyleColor(3);
+			if (i + 1 < TabLabels.Length) {
+				float next = ImGui.CalcTextSize(TabLabels[i + 1].Label).X + style.FramePadding.X * 2f;
+				if (ImGui.GetItemRectMax().X + style.ItemSpacing.X + next <= right) {
+					ImGui.SameLine();
+				}
+			}
+		}
+
+		ImGui.Separator();
+	}
+
+	// Whether a placing mode has just become <active>, by what the last frame drawn saw in <was>.
+	private static bool Opened(bool active, ref bool was) {
+		bool opened = active && !was;
+		was = active;
+		return opened;
+	}
+
+	// A tab of entries of <kind>: the shared add controls, then what a new one of the kind gets, why none can be added, and
+	// the entries, which scroll under the controls.
+	private void DrawKind(ToolboxKind kind, bool enabled, string? selectedGroupName) {
+		string? whyNot = _selectedGroup != null ? _whyNotJoin?.Invoke(_dragging?.Kind ?? kind) : null;
+		_joinGroup = _selectedGroup != null && whyNot == null ? _selectedGroup : null;
+		DrawContents(kind, enabled, selectedGroupName, whyNot);
+	}
+
+	private void DrawContents(ToolboxKind kind, bool enabled, string? selectedGroup, string? whyNotJoin) {
+		ImGui.TextWrapped("Drag an entry onto the ground, or double-click it to add it in the middle of the view.");
+		// Unticked while it cannot join, since an add then gets a group of its own, and for any group but the one it was ticked for.
+		bool canJoin = _joinGroup != null;
+		bool join = Joining;
+		ImGui.BeginDisabled(!canJoin);
+		if (ImGui.Checkbox(selectedGroup is { } group ? $"Join {group}###join" : "Join the selected group###join", ref join)) {
+			_joinTicked = join ? _joinGroup : null;
+		}
+
+		ImGui.EndDisabled();
+		if (whyNotJoin != null) {
+			EditorText.Reason(whyNotJoin);
+		} else if (selectedGroup == null) {
+			EditorText.Note("Select a group, or one of its members, to join it.");
+		}
+
+		bool joining = Joining;
+		ImGui.BeginDisabled(joining);
+		DrawTeam();
+		ImGui.EndDisabled();
+		if (joining) {
+			EditorText.Note("It takes the group's team.");
+		}
+
+		// Only an entry of this tab's kind the list shows: one chosen in another tab, or hidden by the team, is out of sight.
+		bool allowed = Allowed(kind, enabled);
+		ImGui.BeginDisabled(_chosen is not var (chosenKind, chosenType) || chosenKind != kind || !Listed(kind, chosenType) || !allowed);
+		if (ImGui.Button("Add in the middle of the view") && _chosen is var (_, type)) {
+			Request(kind, type, atPointer: false);
+		}
+
+		ImGui.EndDisabled();
+
+		if (Status != null) {
+			ImGui.TextWrapped(Status);
+		}
+
+		ImGui.Separator();
+		switch (kind) {
+			case ToolboxKind.Herc:
+				EditorText.Note(_side == MissionSide.Cybrid
+					? "A new HERC starts in its own group with default orders."
+					: "A new HERC starts in its own group with default orders.");
+				break;
+			case ToolboxKind.Flyer:
+				EditorText.Note(_side == MissionSide.Cybrid
+					? "A new flyer starts in its own group with default orders."
+					: "A new flyer starts in its own group with default orders.");
+				break;
+			case ToolboxKind.Vehicle:
+				EditorText.Note("A new ground vehicle starts in its own group with default orders.");
+				break;
+		}
+
+		EditorText.Reason(WhyNo(kind));
+		ImGui.BeginChild("entries");
+		DrawEntries(kind, allowed);
+		string? leftOut = kind switch {
+			ToolboxKind.Flyer => _flyersLeftOut,
+			ToolboxKind.Vehicle => _vehiclesLeftOut,
+			_ => null
+		};
+
+		if (leftOut != null) {
+			EditorText.Note(leftOut);
+		}
+
+		ImGui.EndChild();
+	}
+
+	// The side an add fights on.
+	private void DrawTeam() {
+		ImGui.AlignTextToFramePadding();
+		ImGui.Text("Team:");
+		foreach (var side in Enum.GetValues<MissionSide>()) {
+			ImGui.SameLine();
+			if (ImGui.RadioButton(side.ToString(), _side == side)) {
+				_side = side;
+			}
+		}
+	}
+
+	// The Bases tab: the side choice and Add, with no join, since a base is a group of its own; then one entry per base of
+	// BaseTemplates.All, which lists what the base holds on hover, with why it cannot be added when it cannot.
+	private void DrawBases(bool enabled) {
+		ImGui.TextWrapped("Drag an entry onto the ground, or double-click it to add it in the middle of the view.");
+		DrawTeam();
+		string? chosenWhyNot = _chosen is (ToolboxKind.Base, var chosen) ? WhyNo(ToolboxKind.Base, chosen) : null;
+		ImGui.BeginDisabled(_chosen is not (ToolboxKind.Base, _) || !enabled || chosenWhyNot != null);
+		if (ImGui.Button("Add in the middle of the view") && _chosen is var (_, type)) {
+			Request(ToolboxKind.Base, type, atPointer: false);
+		}
+
+		ImGui.EndDisabled();
+		if (Status != null) {
+			ImGui.TextWrapped(Status);
+		}
+
+		ImGui.Separator();
+		EditorText.Note("A new base is one group of structures that lays a base pad: it stands at a fixed spot in the ground "
+			+ "tile it is put on, and the ground under the pad is levelled.");
+		EditorText.Reason(chosenWhyNot);
+		ImGui.BeginChild("entries");
+		for (int i = 0; i < BaseTemplates.All.Count; i++) {
+			var entry = (ToolboxKind.Base, i);
+			string? whyNot = WhyNo(ToolboxKind.Base, i);
+			bool allowed = enabled && whyNot == null;
+			if (ImGui.Selectable($"{BaseTemplates.All[i].Name}##base{i}", _chosen == entry, ImGuiSelectableFlags.AllowDoubleClick)) {
+				_chosen = entry;
+				if (allowed && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left)) {
+					Request(ToolboxKind.Base, i, atPointer: false);
+				}
+			}
+
+			if (allowed && _dragging == null && ImGui.IsItemActive() && ImGui.IsMouseDragging(ImGuiMouseButton.Left)) {
+				_dragging = entry;
+				_chosen = entry;
+			}
+
+			EditorText.Tooltip(whyNot != null ? $"{_baseContents[i]}\n\n{whyNot}" : _baseContents[i]);
+		}
+
+		// The names are the editor's own: no retail file names a formation (BaseTemplates).
+		EditorText.Note("The base names are the editor's own. Each base holds the structures the original missions most often "
+			+ "place in its formation, ground vehicles included.");
+		ImGui.EndChild();
+	}
+
+	// What <template> holds, one line per type with how many, in the order its slots first name them: its structures, then
+	// its ground vehicles, each under the name the Toolbox offers it by.
+	private string Contents(BaseTemplate template) {
+		var lines = new List<string>();
+		foreach (bool vehicles in new[] { false, true }) {
+			var counted = template.Types.Where(type => BaseObject.IsGroundVehicle(type) == vehicles)
+				.GroupBy(type => type)
+				.Select(same => $"{same.Count()} {_catalog.NameOf(vehicles ? ToolboxKind.Vehicle : ToolboxKind.Structure, same.Key)}")
+				.ToList();
+			if (counted.Count > 0) {
+				lines.Add(vehicles ? "Ground vehicles:" : "Structures:");
+				lines.AddRange(counted);
+			}
+		}
+
+		return string.Join("\n", lines);
+	}
+
+	private void DrawEntries(ToolboxKind kind, bool enabled) {
+		foreach (var (entryKind, typeIndex, name) in _entries) {
+			if (entryKind != kind || !Listed(kind, typeIndex)) {
+				continue;
+			}
+
+			var entry = (kind, typeIndex);
+			if (ImGui.Selectable($"{name}##{kind}{typeIndex}", _chosen == entry, ImGuiSelectableFlags.AllowDoubleClick)) {
+				_chosen = entry;
+				if (enabled && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left)) {
+					Request(kind, typeIndex, atPointer: false);
+				}
+			}
+
+			if (enabled && _dragging == null && ImGui.IsItemActive() && ImGui.IsMouseDragging(ImGuiMouseButton.Left)) {
+				_dragging = entry;
+				_chosen = entry;
+			}
+		}
+	}
+
+	// Whether entry <typeIndex> of <kind> is listed: one offered for the team chosen.
+	private bool Listed(ToolboxKind kind, int typeIndex) => UnitTypeCatalog.OffersFor(kind, typeIndex, _side);
+
+	// Whether an entry of <kind> can be added now: the toolbox is <enabled> and that kind's placer refuses nothing.
+	private bool Allowed(ToolboxKind kind, bool enabled) => enabled && WhyNo(kind) == null;
+
+	// Why no entry of <kind> can be added, as the last frame drawn was told, or null; a base is asked by its entry.
+	private string? WhyNo(ToolboxKind kind) => kind switch {
+		ToolboxKind.Herc => _whyNoHerc,
+		ToolboxKind.Flyer => _whyNoFlyer,
+		ToolboxKind.Vehicle => _whyNoVehicle,
+		ToolboxKind.Base => null,
+		_ => _whyNoStructure
+	};
+
+	// Why entry <typeIndex> of <kind> cannot be added, or null: its kind's reason, or for a base, its own.
+	private string? WhyNo(ToolboxKind kind, int typeIndex) =>
+		kind == ToolboxKind.Base ? _whyNoBase?.Invoke(BaseTemplates.All[typeIndex]) : WhyNo(kind);
+
+	// Asks for an entry of <kind> to be added, joining the selected group when the checkbox is ticked and enabled as drawn.
+	// A double-click can choose an entry of another kind in the frame it asks for it, so the join is checked again for
+	// <kind>, and a refusal is shown rather than adding it in a group of its own.
+	private void Request(ToolboxKind kind, int typeIndex, bool atPointer) {
+		short? group = null;
+		if (kind != ToolboxKind.Base && Joining && _joinGroup is { } joining) {
+			if (_selectedGroup != null && _whyNotJoin?.Invoke(kind) is { } refused) {
+				Status = refused;
+				return;
+			}
+
+			group = joining;
+		}
+
+		_request = new ToolboxRequest(kind, typeIndex, _side, atPointer, group);
+		Status = null;
+	}
+
+	// Whether an add joins the selected group: "Join" was ticked for it, and it can take the entry.
+	private bool Joining => _joinGroup != null && _joinTicked == _joinGroup;
+
+	private string NameOf(ToolboxKind kind, int typeIndex) => kind == ToolboxKind.Base ? BaseTemplates.All[typeIndex].Name :
+		Array.Find(_entries, entry => entry.Kind == kind && entry.TypeIndex == typeIndex).Name ?? $"Type {typeIndex}";
+}

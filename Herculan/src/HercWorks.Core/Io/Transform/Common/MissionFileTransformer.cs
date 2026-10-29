@@ -21,7 +21,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 
 		data.Conditions = ReadArray(ParseRow1);
 		data.SettingsPatches = ReadArray(ParseRow2);
-		data.Variants = ReadArray(ParseRow3);
+		data.MovieChoices = ReadArray(ParseRow3);
 		data.Texts = ReadArray(ParseRow4);
 
 		int debriefCount = IndexShortLE();
@@ -40,8 +40,26 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 		data.Groups = ReadArray(ParseRow16);
 
 		ParseRow17(data);
+		ParseTail(data);
 
 		return data;
+	}
+
+	/// <summary>
+	/// What follows row 17: HERCULAN's block (<see cref="MissionExtensions"/>), when the bytes open with one, and whatever
+	/// is left kept raw. Retail files end at row 17 (docs/retail/formats/msn-mission-file.md#verification-note).
+	/// </summary>
+	private void ParseTail(MissionFile data) {
+		int remaining = GetBytes().Length - Index;
+		if (remaining <= 0) {
+			return;
+		}
+
+		data.Extensions = MissionExtensions.Read(GetBytes().AsSpan(Index), out int length);
+		Index += length;
+		if (remaining > length) {
+			data.TrailingBytes = IndexSegment(remaining - length);
+		}
 	}
 
 	private T[] ReadArray<T>(Func<T> parseOne) {
@@ -62,9 +80,9 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 
 	private MissionSettingsPatch ParseRow2() => new() { Data = IndexShortLEArray(41) };
 
-	// ---- Row #3: VariantValue8 (8 bytes) ----------------------------------------------------
+	// ---- Row #3: MovieChoice8 (8 bytes) ----------------------------------------------------
 
-	private VariantValue8 ParseRow3() => new() {
+	private MovieChoice8 ParseRow3() => new() {
 		GUID = IndexShortLE(),
 		ConditionRef = IndexShortLE(),
 		CompoundConditionPartner = IndexShortLE(),
@@ -86,7 +104,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 	private MapPoint22 ParseRow6() => new() {
 		GUID = IndexShortLE(),
 		ConditionRef = IndexShortLE(),
-		VariantKey = IndexShortLE(),
+		RandomTableKey = IndexShortLE(),
 		Unk06 = IndexShortLE(),
 		SumFlag = IndexShortLE(),
 		X = IndexIntLE(),
@@ -99,7 +117,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 	private Heading10 ParseRow7() => new() {
 		GUID = IndexShortLE(),
 		ConditionRef = IndexShortLE(),
-		VariantKey = IndexShortLE(),
+		RandomTableKey = IndexShortLE(),
 		Unk06 = IndexShortLE(),
 		Degrees = IndexShortLE()
 	};
@@ -110,7 +128,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 		var g = new WaypointGroup {
 			GUID = IndexShortLE(),
 			ConditionRef = IndexShortLE(),
-			VariantKey = IndexShortLE(),
+			RandomTableKey = IndexShortLE(),
 			Unk06 = IndexShortLE()
 		};
 
@@ -163,7 +181,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 	private MechRosterEntry144 ParseRow12() => new() {
 		GUID = IndexShortLE(),
 		ConditionRef = IndexShortLE(),
-		VariantKey = IndexShortLE(),
+		RandomTableKey = IndexShortLE(),
 		CompoundConditionPartner = IndexShortLE(),
 		AiRadarActive = IndexShortLE(),
 		AiCruiseSpeed = IndexShortLE(),
@@ -186,7 +204,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 	private FlyerRosterEntry102 ParseRow13() => new() {
 		GUID = IndexShortLE(),
 		ConditionRef = IndexShortLE(),
-		VariantKey = IndexShortLE(),
+		RandomTableKey = IndexShortLE(),
 		Unk06 = IndexShortLE(),
 		FlagSpan = IndexShortLEArray(20),
 		PositionRef = IndexShortLE(),
@@ -204,7 +222,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 	private BaseRosterEntry62 ParseRow14() => new() {
 		GUID = IndexShortLE(),
 		ConditionRef = IndexShortLE(),
-		VariantKey = IndexShortLE(),
+		RandomTableKey = IndexShortLE(),
 		Unk06 = IndexShortLE(),
 		TypeIndex = IndexShortLE(),
 		PositionRef = IndexShortLE(),
@@ -221,7 +239,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 	private MissionOrder22 ParseRow15() => new() {
 		GUID = IndexShortLE(),
 		ConditionRef = IndexShortLE(),
-		VariantKey = IndexShortLE(),
+		RandomTableKey = IndexShortLE(),
 		CompoundConditionPartner = IndexShortLE(),
 		Verb = IndexShortLE(),
 		FormationId = IndexShortLE(),
@@ -316,7 +334,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 
 		WriteArray(outStream, data.Conditions!, WriteRow1);
 		WriteArray(outStream, data.SettingsPatches!, WriteRow2);
-		WriteArray(outStream, data.Variants!, WriteRow3);
+		WriteArray(outStream, data.MovieChoices!, WriteRow3);
 		WriteArray(outStream, data.Texts!, WriteRow4);
 
 		Emit(outStream, WriteShortLE((short)(data.DebriefBytes!.Length / 64)));
@@ -335,6 +353,14 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 		WriteArray(outStream, data.Groups!, WriteRow16);
 
 		WriteRow17(outStream, data);
+
+		if (data.Extensions is { Any: true } extensions) {
+			Emit(outStream, extensions.Write());
+		}
+
+		if (data.TrailingBytes != null) {
+			Emit(outStream, data.TrailingBytes);
+		}
 
 		return outStream.ToArray();
 	}
@@ -360,7 +386,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 		Emit(o, WriteShortLESegment(e.Data));
 	}
 
-	private void WriteRow3(MemoryStream o, VariantValue8 e) {
+	private void WriteRow3(MemoryStream o, MovieChoice8 e) {
 		Emit(o, WriteShortLE(e.GUID));
 		Emit(o, WriteShortLE(e.ConditionRef));
 		Emit(o, WriteShortLE(e.CompoundConditionPartner));
@@ -378,7 +404,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 	private void WriteRow6(MemoryStream o, MapPoint22 e) {
 		Emit(o, WriteShortLE(e.GUID));
 		Emit(o, WriteShortLE(e.ConditionRef));
-		Emit(o, WriteShortLE(e.VariantKey));
+		Emit(o, WriteShortLE(e.RandomTableKey));
 		Emit(o, WriteShortLE(e.Unk06));
 		Emit(o, WriteShortLE(e.SumFlag));
 		Emit(o, WriteIntLE(e.X));
@@ -389,7 +415,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 	private void WriteRow7(MemoryStream o, Heading10 e) {
 		Emit(o, WriteShortLE(e.GUID));
 		Emit(o, WriteShortLE(e.ConditionRef));
-		Emit(o, WriteShortLE(e.VariantKey));
+		Emit(o, WriteShortLE(e.RandomTableKey));
 		Emit(o, WriteShortLE(e.Unk06));
 		Emit(o, WriteShortLE(e.Degrees));
 	}
@@ -397,7 +423,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 	private void WriteRow8(MemoryStream o, WaypointGroup e) {
 		Emit(o, WriteShortLE(e.GUID));
 		Emit(o, WriteShortLE(e.ConditionRef));
-		Emit(o, WriteShortLE(e.VariantKey));
+		Emit(o, WriteShortLE(e.RandomTableKey));
 		Emit(o, WriteShortLE(e.Unk06));
 		Emit(o, WriteShortLE((short)e.Waypoints.Length));
 		Emit(o, WriteShortLESegment(e.Waypoints));
@@ -438,7 +464,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 	private void WriteRow12(MemoryStream o, MechRosterEntry144 e) {
 		Emit(o, WriteShortLE(e.GUID));
 		Emit(o, WriteShortLE(e.ConditionRef));
-		Emit(o, WriteShortLE(e.VariantKey));
+		Emit(o, WriteShortLE(e.RandomTableKey));
 		Emit(o, WriteShortLE(e.CompoundConditionPartner));
 		Emit(o, WriteShortLE(e.AiRadarActive));
 		Emit(o, WriteShortLE(e.AiCruiseSpeed));
@@ -459,7 +485,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 	private void WriteRow13(MemoryStream o, FlyerRosterEntry102 e) {
 		Emit(o, WriteShortLE(e.GUID));
 		Emit(o, WriteShortLE(e.ConditionRef));
-		Emit(o, WriteShortLE(e.VariantKey));
+		Emit(o, WriteShortLE(e.RandomTableKey));
 		Emit(o, WriteShortLE(e.Unk06));
 		Emit(o, WriteShortLESegment(e.FlagSpan));
 		Emit(o, WriteShortLE(e.PositionRef));
@@ -475,7 +501,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 	private void WriteRow14(MemoryStream o, BaseRosterEntry62 e) {
 		Emit(o, WriteShortLE(e.GUID));
 		Emit(o, WriteShortLE(e.ConditionRef));
-		Emit(o, WriteShortLE(e.VariantKey));
+		Emit(o, WriteShortLE(e.RandomTableKey));
 		Emit(o, WriteShortLE(e.Unk06));
 		Emit(o, WriteShortLE(e.TypeIndex));
 		Emit(o, WriteShortLE(e.PositionRef));
@@ -490,7 +516,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 	private void WriteRow15(MemoryStream o, MissionOrder22 e) {
 		Emit(o, WriteShortLE(e.GUID));
 		Emit(o, WriteShortLE(e.ConditionRef));
-		Emit(o, WriteShortLE(e.VariantKey));
+		Emit(o, WriteShortLE(e.RandomTableKey));
 		Emit(o, WriteShortLE(e.CompoundConditionPartner));
 		Emit(o, WriteShortLE(e.Verb));
 		Emit(o, WriteShortLE(e.FormationId));
@@ -554,5 +580,64 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 
 	private static void Emit(MemoryStream outArr, byte[] data) {
 		outArr.Write(data, 0, data.Length);
+	}
+
+	// ==========================================================================================
+	// One record as words
+	// ==========================================================================================
+
+	/// <summary>
+	/// A record of rows 6 to 16 as the file holds it, one <c>int16</c> per word, the words the model classes' <c>…Word</c>
+	/// constants number; a row-8 record's waypoint count and list follow its four fixed words.
+	/// </summary>
+	internal short[] Words(MapObject record) {
+		using var o = new MemoryStream();
+		switch (record) {
+			case MapPoint22 r: WriteRow6(o, r); break;
+			case Heading10 r: WriteRow7(o, r); break;
+			case WaypointGroup r: WriteRow8(o, r); break;
+			case TriggerArea12 r: WriteRow9(o, r); break;
+			case MissionAction82 r: WriteRow10(o, r); break;
+			case ActionTimer30 r: WriteRow11(o, r); break;
+			case MechRosterEntry144 r: WriteRow12(o, r); break;
+			case FlyerRosterEntry102 r: WriteRow13(o, r); break;
+			case BaseRosterEntry62 r: WriteRow14(o, r); break;
+			case MissionOrder22 r: WriteRow15(o, r); break;
+			case MissionGroup164 r: WriteRow16(o, r); break;
+			default: throw new ArgumentException($"A {record.GetType().Name} is not a record of rows 6 to 16.", nameof(record));
+		}
+
+		byte[] bytes = o.ToArray();
+		var words = new short[bytes.Length / 2];
+		for (int i = 0; i < words.Length; i++) {
+			words[i] = (short)(bytes[i * 2] | (bytes[i * 2 + 1] << 8));
+		}
+
+		return words;
+	}
+
+	/// <summary>A record of row <paramref name="row"/> (6 to 16) read from <paramref name="words"/>, as <see cref="Words"/> gives them.</summary>
+	internal MapObject Record(int row, short[] words) {
+		var bytes = new byte[words.Length * 2];
+		for (int i = 0; i < words.Length; i++) {
+			bytes[i * 2] = (byte)words[i];
+			bytes[i * 2 + 1] = (byte)(words[i] >> 8);
+		}
+
+		SetBytes(bytes);
+		return row switch {
+			6 => ParseRow6(),
+			7 => ParseRow7(),
+			8 => ParseRow8(),
+			9 => ParseRow9(),
+			10 => ParseRow10(),
+			11 => ParseRow11(),
+			12 => ParseRow12(),
+			13 => ParseRow13(),
+			14 => ParseRow14(),
+			15 => ParseRow15(),
+			16 => ParseRow16(),
+			_ => throw new ArgumentOutOfRangeException(nameof(row), row, "Rows 6 to 16 are the GUID-keyed rows read as words."),
+		};
 	}
 }

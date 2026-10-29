@@ -219,6 +219,31 @@ public sealed class HostWindow : IDisposable {
 		}
 	}
 
+	/// <summary>Minimizes the window to the taskbar. Does nothing on a backend other than GLFW.</summary>
+	public unsafe void Minimize() {
+		if (_window.Native?.Glfw is { } native) {
+			Glfw.GetApi().IconifyWindow((WindowHandle*)native);
+		}
+	}
+
+	/// <summary>
+	/// Brings a minimized window back as it was before, maximized again if it was, and gives it the focus. Does nothing on
+	/// a backend other than GLFW.
+	/// </summary>
+	public unsafe void Raise() {
+		if (_window.Native?.Glfw is not { } native) {
+			return;
+		}
+
+		var glfw = Glfw.GetApi();
+		var handle = (WindowHandle*)native;
+		if (glfw.GetWindowAttrib(handle, WindowAttributeGetter.Iconified)) {
+			glfw.RestoreWindow(handle);
+		}
+
+		glfw.FocusWindow(handle);
+	}
+
 	private nint _fullScreenMonitor;
 	// Both made only on Windows, so null everywhere else; the checks where they are used say so to the compiler.
 	private PrintScreenCapture? _printScreen;
@@ -511,10 +536,26 @@ public sealed class HostWindow : IDisposable {
 		}
 	}
 
-	// The player closing the window, or Silk's own close as the window is destroyed: either way no turn runs after.
+	// The player closing the window, or Silk's own close as the window is destroyed: either way no turn runs after,
+	// unless the turn refuses a close the player asked for (EngineWindow.CloseRequested).
 	private void OnNativeClosing() {
+		if (_turn is { Ended: false, CloseRequested: not null } turn && CanRefuseClose && !turn.CloseRequested()) {
+			RefuseClose();
+			return;
+		}
+
 		Closed = true;
 		_turn?.End();
+	}
+
+	private bool CanRefuseClose => _window.Native?.Glfw != null;
+
+	// Clears GLFW's close flag from inside its close callback, which is how GLFW lets a program refuse a close: Silk's
+	// callback only raises Closing, and its IsClosing, which the turn loop reads next, is that flag.
+	private unsafe void RefuseClose() {
+		if (_window.Native?.Glfw is { } native) {
+			Glfw.GetApi().SetWindowShouldClose((WindowHandle*)native, false);
+		}
 	}
 
 	// Whether the window is maximized or minimized, asked of GLFW rather than Silk's WindowState, which is updated

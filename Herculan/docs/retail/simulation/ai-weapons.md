@@ -8,7 +8,7 @@ What an AI machine does once it has something to shoot at: bring the turret onto
 
 `Ai_AimAndFire(mech, aspect, target)` is the last thing every fighting state does ([`ai-combat-states.md`](ai-combat-states.md#the-shape-they-share)), and `travelling` and `following` call it too — **a walking machine shoots at whatever it is watching**, without ever making it a selected target. A null `target` means `mech+0x1a4`.
 
-Its whole body is a switch on the target's target class (`obj+0x1a8`, [`target-selection.md`](target-selection.md)), choosing where on the target to put the shot:
+Its whole body is a switch on the target's target class (`obj+0x1a8`, [`sim-object-layout.md`](sim-object-layout.md#object-classification)), choosing where on the target to put the shot:
 
 | Class | Aim point |
 |---|---|
@@ -108,7 +108,7 @@ Before the loop it also compares the machine's group with `PlayerMech`'s (`004a9
 
 **Missile lock is a hard gate on scoring.** `manager+0x0a` is the per-subtype lock array ([`missile-lock.md`](missile-lock.md)); every launcher needs its own subtype's flag up before it can even be scored, except subtype 3 (EO) and the non-launcher class 5, which skip the test. The lock block keeps no countdown for an EO missile and raises only the other four subtypes' flags ([`missile-lock.md`](missile-lock.md#the-mechanism)) — the pilot flies it — so the exemption is what lets an AI machine score one. This is `Ai_ChooseWeapon`'s own test. `Rocket_Fire` applies a separate gate at launch, and its subtype 3 exemption is for any machine the player is not flying ([`rockets.md`](rockets.md#spawning--rocket_fire-0040a9c4)); the cockpit's readiness predicate has the same two exemptions as the scoring ([`weapon-mounts.md`](weapon-mounts.md#readiness--weaponmounts_mountisready-00410970)).
 
-**A SARH launcher in range lights the radar.** Any unspent subtype-0 mount whose window covers the range switches the machine's radar to ACTIVE, ready or not, unless the radar-silence timer is running — that class of missile needs its own illumination. The rest of the AI's radar policy is in [`target-selection.md`](target-selection.md#how-an-ai-machines-radar-is-set).
+**A SARH launcher in range lights the radar.** Any unspent subtype-0 mount whose window covers the range switches the machine's radar to ACTIVE, ready or not, unless the radar-silence timer is running — that class of missile needs its own illumination. The rest of the AI's radar policy is in [`sensors.md`](sensors.md#how-an-ai-machines-radar-is-set).
 
 **The shield lookup is fed the wrong argument.** `Ai_ChooseWeapon` works out whether it is shooting the target's front or rear itself, then hands that boolean to `Mech_GetShieldByHeading` (`004154d0`), which expects a heading. Both 0 and 1 fall inside that function's front quadrant, so **the front shield is what comes back however the target is facing**. The obvious reading — that the AI weighs a weapon against the facing it is actually shooting at — is wrong. See [`KNOWN_ISSUES.md`](../../../KNOWN_ISSUES.md). The aspect that feeds the boolean is built by the combat states' geometry block ([`ai-combat-states.md`](ai-combat-states.md#the-geometry-block--ai_buildcombatgeometry-0041e758)).
 

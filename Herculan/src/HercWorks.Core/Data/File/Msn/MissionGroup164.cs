@@ -34,6 +34,7 @@ public class MissionGroup164 : MapObject {
 
 	/// <summary>0x30 — the formation the members spread into, by <see cref="MemberKind"/>'s formation table.</summary>
 	public short FormationId { get; set; }
+	public const int FormationIdWord = 0x30 / 2;
 
 	/// <summary>0x32 — ref into row #6 (<see cref="MapPoint22"/>): the group's spawn point. Unset means the first waypoint of its first order's route.</summary>
 	public short PositionRef { get; set; }

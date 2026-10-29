@@ -65,8 +65,10 @@ public sealed class SimWorld {
 		Debris = debris;
 		Random = random ?? new SimRandom();
 		Effects = new EffectPools(this);
-		BehaviourBlock.ResetJitter();
 	}
+
+	/// <summary>The dwell jitter every machine and aircraft in this world steps as it changes state.</summary>
+	public DwellJitter DwellJitter { get; } = new();
 
 	/// <summary>The mission's actions, timers, objectives, counters and salvage.</summary>
 	public MissionRuntime Mission { get; } = new();
@@ -89,8 +91,11 @@ public sealed class SimWorld {
 	/// <summary>The launcher-round table, or null when the resource was not loaded.</summary>
 	public RocketCatalog? Rockets { get; }
 
-	/// <summary>The beam appearance table, or null when the resource was not loaded.</summary>
-	public BeamAppearance? BeamTable { get; }
+	/// <summary>
+	/// The beam appearance table, or null when the resource was not loaded. Its colours are the theater palette's, so
+	/// <see cref="Scene.MissionScene.ChangeTheater"/> replaces it.
+	/// </summary>
+	public BeamAppearance? BeamTable { get; internal set; }
 
 	/// <summary>
 	/// The simulation's pseudo-random generator — DBSIM's single global state block at
@@ -495,6 +500,9 @@ public sealed class SimWorld {
 		if (simObject is MechObject mech) {
 			mech.AllocateShadows(this);
 			mech.WorldTweaks = Tweaks;
+			mech.DwellJitter = DwellJitter;
+		} else if (simObject is FlyerObject flyer) {
+			flyer.DwellJitter = DwellJitter;
 		}
 
 		for (int i = 0; i < _objects.Count; i++) {

@@ -253,12 +253,12 @@ public struct BehaviourBlock {
 
 	/// <summary>
 	/// <c>Behaviour_SetState</c> (<c>00413e50</c>): installs a descriptor and arms its countdown at
-	/// the descriptor's dwell plus a 0-15 count jitter, zeroing the tick counter and the block's two
-	/// scratch regions — which here is everything the block holds.
+	/// the descriptor's dwell plus a 0-15 count jitter off <paramref name="jitter"/>, zeroing the tick
+	/// counter and the block's two scratch regions — which here is everything the block holds.
 	/// </summary>
-	public void SetState(BehaviourState state) {
+	public void SetState(BehaviourState state, DwellJitter jitter) {
 		State = state;
-		DwellCountdown = state.Dwell + NextJitter();
+		DwellCountdown = state.Dwell + jitter.Next();
 		TickCount = 0;
 		JustInstalled = true;
 	}
@@ -276,24 +276,23 @@ public struct BehaviourBlock {
 
 		TickCount++;
 	}
+}
 
-	/// <summary>
-	/// <c>Behaviour_DwellJitter</c> (<c>004a9bf4</c>): stepped by 13 per state change and masked to
-	/// four bits, shared with <see cref="FlyerBehaviourBlock"/>. See
-	/// docs/retail/simulation/ai-dispatch.md#the-mechs-behaviour-block--mech0x4d.
-	/// </summary>
-	internal static int NextJitter() {
-		_jitter += 0xd;
-		return _jitter & 0xf;
+/// <summary>
+/// <c>Behaviour_DwellJitter</c> (<c>004a9bf4</c>): stepped by 13 per state change and masked to four bits,
+/// one counter for every machine and aircraft in the mission. See
+/// docs/retail/simulation/ai-dispatch.md#the-mechs-behaviour-block--mech0x4d.
+///
+/// <para>Retail's is a global, which starts every mission at zero because DBSIM runs one mission per
+/// process. This host can run several missions in one process, and the tests several at once, so each
+/// <see cref="SimWorld"/> owns one, starting at zero, and every machine and aircraft holds its world's.</para>
+/// </summary>
+public sealed class DwellJitter {
+	private int _value;
+
+	/// <summary>Steps the counter for one state change and returns that change's jitter, 0-15.</summary>
+	public int Next() {
+		_value += 0xd;
+		return _value & 0xf;
 	}
-
-	/// <summary>
-	/// Puts the jitter counter back to the zero DBSIM starts each mission from. Retail gets that by
-	/// running one mission per process; this host can run several missions in one process, so every
-	/// <see cref="SimWorld"/> calls this as it is built. The counter stays a static rather than a
-	/// field of the world because the state changes that step it carry no world reference.
-	/// </summary>
-	internal static void ResetJitter() => _jitter = 0;
-
-	private static int _jitter;
 }

@@ -1,10 +1,11 @@
 using Herculan.Engine.Content;
 using Herculan.Engine.Editor;
 using Herculan.Engine.Install;
-using Herculan.Engine.World;
 
 // The mission editor on its own: find the install and run the editor (EditorHost) over it. The game runs the
-// same editor as a turn of its own loop.
+// same editor as a turn of its own loop, and is built beside this one for Play to start (PlayInGame). The second
+// argument names a mission to open, as File's mission lists name it (C1_05); without one the editor opens the mission
+// it last had open.
 
 string? installRoot = GameInstall.Locate(args.Length > 0 ? args[0] : null);
 if (installRoot == null) {
@@ -20,23 +21,13 @@ if (GameInstall.IsOnDisc(installRoot)) {
 }
 GameInstall.Remember(installRoot);
 
-// A mission named on the command line has to be there; without one the editor opens DATA\script.dat, or no mission
-// when there is none.
-string? scriptPath = args.Length > 1 ? args[1] : null;
-if (scriptPath != null && !File.Exists(scriptPath)) {
-	Console.Error.WriteLine(
-		$"No mission at {scriptPath}.\n" +
-		$"Pass one as the second argument — {MissionLoader.ScriptFileName} from the install's " +
-		$"{MissionLoader.DataFolderName} folder, with the {MissionLoader.CountersFileName} and " +
-		$"{MissionLoader.PlayerFileName} beside it.");
-	return 1;
-}
-
 GameContent? shellContent = null;
 EditorHost.Run(new EditorLaunch(installRoot, GameContent.MountSimulator(installRoot),
 	() => shellContent ??= GameContent.MountShell(installRoot),
 	Path.Combine(AppContext.BaseDirectory, "Assets", "Fonts", "Open_Sans", "static", "OpenSans-Regular.ttf")) {
-	ScriptPath = scriptPath,
+	Mission = args.Length > 1 ? args[1] : null,
+	BoldFontPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Fonts", "Open_Sans", "static", "OpenSans-Bold.ttf"),
+	ItalicFontPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Fonts", "Open_Sans", "static", "OpenSans-Italic.ttf"),
 });
 
 return 0;

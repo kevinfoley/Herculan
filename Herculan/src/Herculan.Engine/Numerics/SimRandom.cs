@@ -77,6 +77,28 @@ public sealed class SimRandom {
 	}
 
 	/// <summary>
+	/// <b>Not a ported mechanic.</b> A generator whose table is all zeros, so every step is 0 and every draw its lowest
+	/// outcome: the mission editor opens a mission with it, so it shows the same version of the mission on every open.
+	/// </summary>
+	public static SimRandom Lowest() {
+		var random = new SimRandom();
+		Array.Clear(random._table);
+		return random;
+	}
+
+	/// <summary>
+	/// <b>Not a ported mechanic.</b> A generator in this one's state, which steps on from there without touching this
+	/// one: the mission editor keeps one to draw the same sequence for every generation of a mission.
+	/// </summary>
+	public SimRandom Copy() {
+		var copy = new SimRandom();
+		_table.CopyTo(copy._table, 0);
+		copy._cursorI = _cursorI;
+		copy._cursorJ = _cursorJ;
+		return copy;
+	}
+
+	/// <summary>
 	/// One step of the generator, returning the low 16 bits the original returns. Signed
 	/// <see cref="short"/> arithmetic wraps exactly as the original's 16-bit add does.
 	/// </summary>

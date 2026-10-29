@@ -642,11 +642,26 @@ public sealed partial class MechObject {
 	}
 
 	/// <summary>
+	/// A developer's warp, this engine's own and not retail's: the machine set down at a ground position at its ride height
+	/// over the terrain, as <see cref="MovementTick"/> places it, its heading kept. Nothing is tested on the way, as
+	/// <see cref="Displace"/> tests nothing.
+	/// </summary>
+	public void WarpTo(SimWorld world, int x, int y) {
+		Position = new Vec3i(x, y, world.Terrain.HeightAtWorld(x, y) + Type.RideHeight);
+	}
+
+	/// <summary>
 	/// The developer keys' turn on the spot — codes <c>0x44b</c> and <c>0x44d</c> of the same handler,
 	/// which add to the euler triple's Z and mark the cached frame stale.
 	/// </summary>
 	public void TurnBy(int angle) {
 		Heading = (Heading + angle) & 0xffff;
+		_rotationValid = false;
+	}
+
+	/// <inheritdoc />
+	public override void Face(int heading) {
+		Heading = heading;
 		_rotationValid = false;
 	}
 

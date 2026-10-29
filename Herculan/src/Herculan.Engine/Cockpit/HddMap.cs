@@ -326,9 +326,6 @@ public static class HddMap {
 	/// <summary>Waypoints the map will draw — <c>HddCommandScreen_BuildMapMarkers</c>'s own cap.</summary>
 	public const int MaxWaypoints = 9;
 
-	/// <summary>Marker gadgets the screen allocates, and so the most icons a frame can carry.</summary>
-	public const int MaxMarkers = 140;
-
 	/// <summary>Marker square size for a HERC or a flyer — <c>5 &lt;&lt; XCoordShift</c>.</summary>
 	public const int UnitMarkerSize = 10;
 
@@ -540,7 +537,9 @@ public static class HddMap {
 
 	/// <summary>
 	/// The whole marker list for one frame, in the original's own build order: the player's route
-	/// waypoints first, then every live object <see cref="Shown"/> lets through, capped at <see cref="MaxMarkers"/>.
+	/// waypoints first, then every live object <see cref="Shown"/> lets through. The original builds 140 marker gadgets
+	/// and reads the 141st from past their array (docs/retail/simulation/heads-down-display.md#markers); this list has no cap, so a mission
+	/// with more markers than that runs and shows them all.
 	/// </summary>
 	public static IReadOnlyList<HddMapMarker> Markers(IEnumerable<SimObject> objects, SimObject? player,
 			IReadOnlyList<Vec3i>? route, IReadOnlyList<SimObject>? squad) {
@@ -549,6 +548,9 @@ public static class HddMap {
 
 		// Up to nine, and the first waypoint is skipped: the screen walks the route from index 1 and
 		// stops one short of the count, so the leg the squad has already reached carries no icon.
+		// Placed by X and Y alone, where the original projects the waypoint's Z as well
+		// (docs/retail/simulation/heads-down-display.md#markers): the same spot for every retail
+		// player route, which all have Z 0, but not for an edited one whose waypoints have a Z.
 		if (route is { Count: > 1 }) {
 			int count = Math.Min(route.Count - 1, MaxWaypoints);
 			for (int i = 0; i < count; i++) {
@@ -558,10 +560,6 @@ public static class HddMap {
 		}
 
 		foreach (var subject in objects) {
-			if (markers.Count >= MaxMarkers) {
-				break;
-			}
-
 			if (subject.Removed || subject.AwaitingDeployment || !Shown(subject)) {
 				continue;
 			}

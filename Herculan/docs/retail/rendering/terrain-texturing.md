@@ -122,6 +122,8 @@ Two things fall out of that. The tile is the same 65,536 or 131,072 world units 
 
 **The map is a levelling mask, not the pad's shape.** Every cell of the tile takes the material unconditionally; only cells whose map byte is nonzero also get `Terrain_SetCellScratch(1)`, feeding the flattening pass in [`../simulation/terrain-heightmap.md`](../simulation/terrain-heightmap.md#structure-footprints--the-flattening-pass) as its second input. The pad's outline is drawn into the frame art itself — overlay a formation's map on its frame and the marked entries land on that frame's concrete and nowhere else. **Map row 0 indexes the tile's high-y edge and counts down**, the same inversion the anchor placement uses.
 
+**A pad never turns.** A cell holds only its material and its diagonal selector ([Who writes `cell[+0xf]`](#who-writes-cell0xf)), and its texels are mapped from its grid position, so the frame always lies with the map's axes, and the levelling mask with it. The group's heading turns only its structures: the formation offsets and per-slot turns ([`../formats/script-dat.md`](../formats/script-dat.md#placement--the-actual-rule), rule 7) rotate about the snapped anchor, so any heading but 0 moves the structures off the concrete drawn for them. Most retail pad groups face 0: of the 78 group records that lay a pad in formations 5 and 7–16, eight face 1° and `DEMO`'s and `DEMO2`'s formation-15 bases face 10°.
+
 The material write, but not the levelling mark, is skipped when `CockpitArt_LoadOnDemand` is set — the low-memory mode (`-l`, or under 12 MB physical). Such a machine gets flat ground with no pad painted on it.
 
 ## Rejected readings

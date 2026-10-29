@@ -83,7 +83,7 @@ internal static class Conditions {
 				: $"flag {c.FlagIndexOrRangeLower} op 0x{(ushort)c.OperatorOrRangeUpperOrResult:x} (fails)",
 			1 => $"draw {c.Guid} below {c.FlagIndexOrRangeLower}",
 			2 => DescribeRange(table, c),
-			3 => $"variant key {c.FlagIndexOrRangeLower}, drawn below {c.ComparisonOperand}",
+			3 => $"random table key {c.FlagIndexOrRangeLower}, rolled below {c.ComparisonOperand}",
 			_ => $"type {c.Type} (never survives)",
 		};
 
@@ -100,22 +100,22 @@ internal static class Conditions {
 		var parent = table.Records.Where(p => p.Guid == c.ConditionRef && p.Type is 1 or 3).Cast<Row1?>().FirstOrDefault();
 		return parent?.Type switch {
 			1 => $"draw {parent.Value.Guid} in {range}",
-			3 => $"variant {range} of key {parent.Value.FlagIndexOrRangeLower}",
+			3 => $"option {range} of key {parent.Value.FlagIndexOrRangeLower}",
 			_ => $"draw of cond {c.ConditionRef} in {range}",
 		};
 	}
 
 	/// <summary>
-	/// The variant key a record conditioned on <paramref name="guid"/> answers to: the key of the type-3
+	/// The random table key a record conditioned on <paramref name="guid"/> answers to: the key of the type-3
 	/// parent of the type-2 record <paramref name="guid"/> names, or null when it is not such a record
-	/// (docs/retail/formats/msn-mission-file.md#variants).
+	/// (docs/retail/formats/msn-mission-file.md#random-tables).
 	/// </summary>
-	public static short? VariantKeyOf(MissionFile file, short guid) => VariantKeyOf(Of(file), guid);
+	public static short? RandomTableKeyOf(MissionFile file, short guid) => RandomTableKeyOf(Of(file), guid);
 
-	/// <inheritdoc cref="VariantKeyOf(MissionFile, short)"/>
-	public static short? VariantKeyOf(Es1MissionFile file, short guid) => VariantKeyOf(Of(file), guid);
+	/// <inheritdoc cref="RandomTableKeyOf(MissionFile, short)"/>
+	public static short? RandomTableKeyOf(Es1MissionFile file, short guid) => RandomTableKeyOf(Of(file), guid);
 
-	private static short? VariantKeyOf(Table table, short guid) {
+	private static short? RandomTableKeyOf(Table table, short guid) {
 		var child = table.Records.Where(c => c.Guid == guid && c.Type == 2).Cast<Row1?>().FirstOrDefault();
 		var parent = child == null ? null : table.Records.Where(p => p.Guid == child.Value.ConditionRef && p.Type == 3).Cast<Row1?>().FirstOrDefault();
 		return parent?.FlagIndexOrRangeLower;

@@ -80,7 +80,7 @@ public class Transform3Tests {
 	[InlineData(0x9000)]
 	public void RotatingForwardMatchesTheHeadingConvention(int heading) {
 		// Model forward is +Y. A heading of zero points along world +Y, and increasing it turns the
-		// machine anticlockwise -- toward -X -- which is what MissionLoader's formation spread and
+		// machine anticlockwise -- toward -X -- which is what MissionPlacementRules.FormationSpread and
 		// the render transform both assume.
 		var transform = Transform3.FromEuler(0, 0, (short)heading);
 		var forward = transform.RotateVector(0, 10000, 0);

@@ -57,7 +57,7 @@ uniform bool uShadeRampEnabled;
 uniform float uShadeRampGouraudRow;
 
 #ifdef EDITOR_GRID
-// Only the measuring grid needs a surface point's horizontal world position, so the varying does not
+// Only the measuring grid and the ground tint need a surface point's horizontal world position, so the varying does not
 // exist at all in the program the simulator draws with.
 VARYING vec2 vWorldXZ;
 #endif
@@ -253,6 +253,21 @@ uniform float uGridMajorWidthScale;
 uniform float uGridMinCellPixels;
 uniform float uGridFadeStart;
 uniform float uGridFadeEnd;
+
+// The ground tint, SceneRenderer.Highlight. uHighlightShape is GroundHighlightShape: 0 none, 1 a box from
+// uHighlightA to uHighlightB, 2 everything within uHighlightRadius of uHighlightA.
+uniform bool uHighlightEnabled;
+uniform int uHighlightShape;
+uniform vec2 uHighlightA;
+uniform vec2 uHighlightB;
+uniform float uHighlightRadius;
+uniform vec3 uHighlightColor;
+uniform float uHighlightStrength;
+
+// The ground discs, SceneRenderer.Discs, painted wherever the tint may be: row 0 of uDiscs holds each disc's centre and
+// radius, row 1 its colour, whose alpha is the blend. See GroundDiscs.
+uniform sampler2D uDiscs;
+uniform int uDiscCount;
 #endif
 
 uniform vec3 uFogColor;
@@ -341,6 +356,37 @@ float gridCoverage() {
 		cellsPerPixel / uGridMajorEvery, uGridLineWidthPixels * uGridMajorWidthScale);
 
 	return max(minor, major);
+}
+
+// Whether a surface point lies in the tinted region. The box is strict on every side and the range is
+// SimMath.FastMagnitude2D's max + min/2, as a trigger area tests them (MissionTriggerArea.Contains).
+bool inHighlight() {
+	if (uHighlightShape == 1) {
+		return all(greaterThan(vWorldXZ, uHighlightA)) && all(lessThan(vWorldXZ, uHighlightB));
+	}
+
+	if (uHighlightShape == 2) {
+		vec2 d = abs(vWorldXZ - uHighlightA);
+		return max(d.x, d.y) + min(d.x, d.y) * 0.5 < uHighlightRadius;
+	}
+
+	return false;
+}
+
+// The ground discs blended over <lit> in order, each edge smoothed over about one pixel. The pixel's size on the ground is
+// taken once, before the loop, since derivatives are undefined in control flow that differs between neighbouring fragments.
+vec3 paintDiscs(vec3 lit) {
+	float pixel = max(length(fwidth(vWorldXZ)), 1e-6);
+	for (int i = 0; i < uDiscCount; i++) {
+		vec4 shape = texelFetch(uDiscs, ivec2(i, 0), 0);
+		float coverage = 1.0 - smoothstep(shape.z - pixel, shape.z, distance(vWorldXZ, shape.xy));
+		if (coverage > 0.0) {
+			vec4 color = texelFetch(uDiscs, ivec2(i, 1), 0);
+			lit = mix(lit, color.rgb, color.a * coverage);
+		}
+	}
+
+	return lit;
 }
 
 #endif
@@ -714,6 +760,14 @@ void main() {
 	if (uGridEnabled) {
 		float reach = 1.0 - smoothstep(uGridFadeStart, uGridFadeEnd, vViewDistance);
 		lit = mix(lit, uGridColor, reach * gridCoverage());
+	}
+
+	if (uHighlightEnabled) {
+		lit = paintDiscs(lit);
+	}
+
+	if (uHighlightEnabled && inHighlight()) {
+		lit = mix(lit, uHighlightColor, uHighlightStrength);
 	}
 #endif
 

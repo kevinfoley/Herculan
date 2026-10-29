@@ -122,12 +122,44 @@ error.slot_load                The saved game could not be loaded.
 error.save                     The game could not be saved.
 error.debrief                  The mission's results could not be read.
 menu.debug                     Debug
+menu.mission_scripting         Mission Scripting
 menu.tweaks                    Tweaks
 menu.accessibility             Accessibility
 menu.settings                  Settings
 menu.controller                Controller
 menu.keys                      Keys
 menu.editor                    Editor
+menu.custom_missions           Custom Missions
+custom_missions.title          Custom Missions
+custom_missions.mission        Mission
+custom_missions.author         Author
+custom_missions.date           Date
+custom_missions.version        Version
+custom_missions.play           Play
+custom_missions.about          About
+custom_missions.about_title    About the Mission
+custom_missions.delete         Delete
+custom_missions.delete_title   Delete Mission
+custom_missions.delete_message Delete {0}? These files are deleted from the install's MSN folder:
+custom_missions.cannot_undo    This cannot be undone.
+custom_missions.delete_failed  {0} could not be deleted.
+custom_missions.import         Import...
+custom_missions.picker_title   Import a Mission Bundle
+custom_missions.picker_filter  Mission bundles (.hcm)
+custom_missions.no_picker      There is no file picker on this system. To import a mission bundle, copy its .hcm file into {0}.
+custom_missions.imported       {0} was imported.
+custom_missions.import_failed  {0} could not be imported.
+custom_missions.replace_title  Replace Mission Bundle
+custom_missions.replace_message The MSN folder already holds {0}. Replace it with the one chosen? This cannot be undone.
+custom_missions.replace        Replace
+custom_missions.play_failed    {0} could not be played.
+custom_missions.cannot_play    It cannot be played: {0}
+custom_missions.bundle_file    Mission bundle {0}
+custom_missions.loose_file     Mission file {0}
+custom_missions.included_file  Mission bundle that comes with HERCULAN: {0}
+custom_missions.included       (included)
+custom_missions.cannot_delete_included This mission comes with HERCULAN and cannot be deleted.
+custom_missions.empty          There are no custom missions in {0}. The list shows each mission the mission editor saves there, and each .hcm mission bundle there. Import... adds a bundle.
 menu.about                     About
 pause.title                    Paused
 pause.resume                   Resume

@@ -76,7 +76,7 @@ internal static class Es1TypeQuery {
 				.Select(r => new SameGuidRecord(r.Index, r.ConditionRef, Conditions.Describe(file, r.ConditionRef), r.TypeIndex, null))
 				.ToList();
 
-			short? sourceKey = record.Guid == -1 && record.ConditionRef != -1 ? Conditions.VariantKeyOf(file, record.ConditionRef) : null;
+			short? sourceKey = record.Guid == -1 && record.ConditionRef != -1 ? Conditions.RandomTableKeyOf(file, record.ConditionRef) : null;
 			var drawnBy = sourceKey is { } key
 				? records.Where(r => r.VariantKey == key && r.Guid != -1).Select(r => r.Guid).Distinct().ToList()
 				: [];

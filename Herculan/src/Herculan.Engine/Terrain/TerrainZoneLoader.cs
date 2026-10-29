@@ -57,7 +57,7 @@ public static class TerrainZoneLoader {
 		int cellShift = header.CellShift;
 		int heightScale = header.HeightScale;
 
-		var bitmap = ReadHeightmapImage(content, baseName);
+		var bitmap = ReadHeightmapImage(content, zoneIndex);
 
 		return PopulateFromBitmap(bitmap, cellShift, heightScale, materials, random, heightBias,
 			detailLevel);
@@ -70,7 +70,8 @@ public static class TerrainZoneLoader {
 	/// DynamixBitmapArray reader; here that dispatch collapses to calling the already-ported
 	/// transformer directly.
 	/// </summary>
-	private static DynamixBitmap ReadHeightmapImage(GameContent content, string baseName) {
+	public static DynamixBitmap ReadHeightmapImage(GameContent content, int zoneIndex) {
+		string baseName = $"zone{zoneIndex}";
 		byte[] bytes = content.ReadRequired(HeightmapFolder, baseName + ".dba");
 
 		var array = new DynamixBitmapArrayTransformer().Parse(bytes) as DynamixBitmapArray
@@ -102,11 +103,7 @@ public static class TerrainZoneLoader {
 	/// </summary>
 	private static HeightGrid PopulateFromBitmap(DynamixBitmap image, int cellShift, int heightScale,
 			TerrainMaterialTable materials, SimRandom random, byte heightBias, int detailLevel) {
-		// Cols drives the width shift and Rows the height shift, matching the original's reads at
-		// bitmap offsets +6 and +4 respectively. Every retail zone is square (128x128 or 256x256),
-		// so no real data distinguishes the two — worth knowing if a non-square zone ever turns up.
-		int widthShift = CeilLog2(image.Cols);
-		int heightShift = CeilLog2(image.Rows);
+		var (widthShift, heightShift) = GridShifts(image);
 
 		int width = 1 << widthShift;
 		int height = 1 << heightShift;
@@ -167,6 +164,15 @@ public static class TerrainZoneLoader {
 			MaxWorldHeight = heightScale * maxRaw
 		};
 	}
+
+	/// <summary>
+	/// The cell grid's width and height shifts for heightmap <paramref name="image"/>, as
+	/// <c>TerrainZone_PopulateFromBitmap</c> derives them from the image itself; the zone header's copies
+	/// are never read. Cols drives the width shift and Rows the height shift, matching the original's
+	/// reads at bitmap offsets +6 and +4 respectively. Every retail zone is square (128x128 or 256x256),
+	/// so no real data distinguishes the two — worth knowing if a non-square zone ever turns up.
+	/// </summary>
+	public static (int Width, int Height) GridShifts(DynamixBitmap image) => (CeilLog2(image.Cols), CeilLog2(image.Rows));
 
 	/// <summary>
 	/// The original's inline <c>for (i = 1; i &lt; value; i *= 2) shift++;</c> — ceil(log2), and 0

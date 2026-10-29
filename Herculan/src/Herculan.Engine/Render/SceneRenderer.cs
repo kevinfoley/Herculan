@@ -61,6 +61,13 @@ public sealed class SceneItem {
 	public bool ShowGrid { get; set; }
 
 	/// <summary>
+	/// Whether the editor's ground tint (<see cref="SceneRenderer.Highlight"/>) is painted onto this item's surface.
+	/// Set on the terrain only, as <see cref="ShowGrid"/> is, and like it has no effect unless the renderer was built
+	/// with the grid compiled in.
+	/// </summary>
+	public bool ShowHighlight { get; set; }
+
+	/// <summary>
 	/// Whether this item's <b>textured</b> surfaces skip the theater ramp entirely and draw the
 	/// palette straight through — no light term and no shade row. It is a property of the draw, not
 	/// of the shape: <c>Bullet_Draw</c> (<c>0040a120</c>) zeroes the ramp's row count for the
@@ -175,6 +182,60 @@ public sealed class TerrainGridOverlay {
 	public float FadeEndMeters { get; set; } = 1000f;
 }
 
+/// <summary>The shape of the region a <see cref="GroundHighlight"/> tints.</summary>
+public enum GroundHighlightShape {
+	/// <summary>Nothing is tinted.</summary>
+	None = 0,
+
+	/// <summary>An axis-aligned box, its edges outside.</summary>
+	Box = 1,
+
+	/// <summary>
+	/// Everything within a ground-plane range of a centre, the range measured as <see cref="Numerics.SimMath.FastMagnitude2D"/>
+	/// measures it: an octagon, which is what a circular trigger area catches.
+	/// </summary>
+	Range = 2,
+}
+
+/// <summary>
+/// A region of the ground tinted toward <see cref="Color"/>, for any item whose <see cref="SceneItem.ShowHighlight"/>
+/// is set. The region is over render X and Z, so height is not looked at. Ignored unless the renderer was built with
+/// the grid compiled in.
+/// </summary>
+public sealed class GroundHighlight {
+	public GroundHighlightShape Shape { get; private set; }
+
+	/// <summary>The box's least render X and Z, or the range's centre.</summary>
+	public Vector2 A { get; private set; }
+
+	/// <summary>The box's greatest render X and Z.</summary>
+	public Vector2 B { get; private set; }
+
+	/// <summary>The range, in render units.</summary>
+	public float Radius { get; private set; }
+
+	public Vector3 Color { get; set; } = new(1f, 0.85f, 0.1f);
+
+	/// <summary>How far toward <see cref="Color"/> the ground inside is blended, 0 to 1.</summary>
+	public float Strength { get; set; } = 0.22f;
+
+	public void Clear() => Shape = GroundHighlightShape.None;
+
+	/// <summary>Tints the box with render-space corners <paramref name="cornerA"/> and <paramref name="cornerB"/>, given as X and Z.</summary>
+	public void SetBox(Vector2 cornerA, Vector2 cornerB) {
+		Shape = GroundHighlightShape.Box;
+		A = Vector2.Min(cornerA, cornerB);
+		B = Vector2.Max(cornerA, cornerB);
+	}
+
+	/// <summary>Tints the ground within <paramref name="radius"/> render units of <paramref name="centre"/>, given as X and Z.</summary>
+	public void SetRange(Vector2 centre, float radius) {
+		Shape = GroundHighlightShape.Range;
+		A = centre;
+		Radius = radius;
+	}
+}
+
 /// <summary>
 /// Draws a list of <see cref="SceneItem"/>s from a <see cref="Camera"/> with one directional light
 /// plus ambient. Deliberately minimal — the first milestone's rendering goal is a correct,
@@ -212,8 +273,10 @@ public sealed class SceneRenderer : IDisposable {
 		.Select(i => $"uEffectLightIntensity[{i}]").ToArray();
 
 	/// <param name="editorGrid">
-	/// Compiles the measuring grid into the scene program, so <see cref="SceneItem.ShowGrid"/> and
-	/// <see cref="Grid"/> do something. Off by default, and the simulator leaves it off: the grid is
+	/// Compiles the measuring grid, the ground tint and the ground discs into the scene program, so
+	/// <see cref="SceneItem.ShowGrid"/>, <see cref="Grid"/>, <see cref="SceneItem.ShowHighlight"/>, <see cref="Highlight"/>
+	/// and <see cref="Discs"/> do something. Off by
+	/// default, and the simulator leaves it off: the grid is
 	/// a tool, and this way none of it — not a uniform, not a varying, not a branch — reaches the
 	/// program the game is drawn with.
 	/// </param>
@@ -481,6 +544,18 @@ public sealed class SceneRenderer : IDisposable {
 	public TerrainGridOverlay Grid { get; } = new();
 
 	/// <summary>
+	/// The region tinted on any item whose <see cref="SceneItem.ShowHighlight"/> is set. Ignored unless this renderer
+	/// was built with the grid compiled in.
+	/// </summary>
+	public GroundHighlight Highlight { get; } = new();
+
+	/// <summary>
+	/// The discs painted on any item whose <see cref="SceneItem.ShowHighlight"/> is set. Ignored unless this renderer was
+	/// built with the grid compiled in.
+	/// </summary>
+	public GroundDiscs Discs { get; } = new();
+
+	/// <summary>
 	/// Clears the whole framebuffer once per frame. Split out from <see cref="Render"/> so a host can
 	/// draw several passes into one frame (the cockpit's three panels, each under its own scissor)
 	/// without each call wiping the ones already drawn — call this once, then <see cref="Render"/>
@@ -589,6 +664,13 @@ public sealed class SceneRenderer : IDisposable {
 			_shader.SetFloat("uGridMinCellPixels", MathF.Max(Grid.MinCellPixels, 0.1f));
 			_shader.SetFloat("uGridFadeStart", Grid.FadeStartMeters);
 			_shader.SetFloat("uGridFadeEnd", MathF.Max(Grid.FadeEndMeters, Grid.FadeStartMeters + 0.001f));
+			_shader.SetInt("uHighlightShape", (int)Highlight.Shape);
+			_shader.SetVector2("uHighlightA", Highlight.A);
+			_shader.SetVector2("uHighlightB", Highlight.B);
+			_shader.SetFloat("uHighlightRadius", Highlight.Radius);
+			_shader.SetVector3("uHighlightColor", Highlight.Color);
+			_shader.SetFloat("uHighlightStrength", System.Math.Clamp(Highlight.Strength, 0f, 1f));
+			Discs.Bind(_gl, _shader, DiscUnit);
 		}
 
 		// Which of each pair the flash is showing. Both are the same shape, so only the handle moves.
@@ -891,6 +973,7 @@ public sealed class SceneRenderer : IDisposable {
 			}
 			if (_hasGrid) {
 				_shader.SetInt("uGridEnabled", item.ShowGrid ? 1 : 0);
+				_shader.SetInt("uHighlightEnabled", item.ShowHighlight ? 1 : 0);
 			}
 
 			_shader.SetInt("uFullbright", item.Fullbright ? 1 : 0);
@@ -926,6 +1009,9 @@ public sealed class SceneRenderer : IDisposable {
 
 	/// <summary>The texture unit an item's <see cref="SceneItem.TextureWalk"/> is sampled from.</summary>
 	private const int TextureWalkUnit = 4;
+
+	// The ground discs' texture unit (GroundDiscs), on its own for the reason PaintRankUnit is.
+	private const uint DiscUnit = 5;
 
 	/// <summary>
 	/// This pass's side of the original's submit: rebuilds the zone's visible region for the pass's
@@ -1060,6 +1146,7 @@ public sealed class SceneRenderer : IDisposable {
 		_impactShadeRampTexture?.Dispose();
 		_impactPaletteRampTexture?.Dispose();
 		_paintRanks?.Dispose();
+		Discs.Free(_gl);
 		_gl.DeleteVertexArray(_skyVertexArray);
 	}
 }

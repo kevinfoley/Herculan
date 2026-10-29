@@ -7,7 +7,7 @@ namespace Herculan.Engine.Tests;
 /// <summary>
 /// Where <see cref="PaintLayers"/> cuts a slot's paint order: at a poly lying over an earlier one, as the
 /// TDF logo lies over its structure wall (docs/retail/rendering/dts-texture-binding.md, "Poly order
-/// within a group"). Synthetic quads in render units, all facing +Z.
+/// within a group"). Synthetic quads in render units, facing +Z unless a test says otherwise.
 /// </summary>
 public class PaintLayersTests {
 	/// <summary>The logo after its wall in one group: the logo is painted in a layer over the wall's.</summary>
@@ -72,15 +72,40 @@ public class PaintLayersTests {
 		Assert.False(layers.Layered(child));
 	}
 
-	/// <summary>A square from (from, from) to (to, to) in the plane Z = z, as two triangles of one poly.</summary>
+	/// <summary>
+	/// A post face drawn from its front only, flush under a facade drawn from both sides whose normal
+	/// points the other way, as on structure types 22 and 23: the facade's back is seen from the
+	/// post's side, so it lies over the post.
+	/// </summary>
+	[Fact]
+	public void ATwoSidedPolyLiesOverAFlushFaceWhicheverWayItsNormalPoints() {
+		var layers = PaintLayers.Assign(Quad(0, 1, 2, side: 1)
+			.Concat(Quad(1, 0, 4, normal: -Vector3.UnitZ, side: 0)));
+
+		Assert.Equal(1, layers.LayerOf(null, 1));
+	}
+
+	/// <summary>Two one-sided faces back to back are never seen together, so neither cuts the other's run.</summary>
+	[Fact]
+	public void OneSidedFacesBackToBackDoNotCut() {
+		var layers = PaintLayers.Assign(Quad(0, 1, 2, side: 1)
+			.Concat(Quad(1, 0, 4, normal: -Vector3.UnitZ, side: 1)));
+
+		Assert.False(layers.Layered(null));
+	}
+
+	/// <summary>
+	/// A square from (from, from) to (to, to) in the plane Z = z, as two triangles of one poly, facing
+	/// <paramref name="normal"/> (+Z by default) and drawn from <paramref name="side"/> (both by default).
+	/// </summary>
 	private static PaintLayers.Face[] Quad(int polyId, float from, float to, float z = 0f,
-			CellGate? gate = null, BspLeaf? slot = null) {
+			CellGate? gate = null, BspLeaf? slot = null, Vector3? normal = null, int side = 0) {
 		var a = new Vector3(from, from, z);
 		var b = new Vector3(to, from, z);
 		var c = new Vector3(to, to, z);
 		var d = new Vector3(from, to, z);
 		PaintLayers.Face Face(Vector3 p, Vector3 q, Vector3 r) =>
-			new(polyId, slot, -1, gate ?? CellGate.Ungated, 0, FacingGate.None, Vector3.UnitZ, p, q, r);
+			new(polyId, slot, -1, gate ?? CellGate.Ungated, side, FacingGate.None, normal ?? Vector3.UnitZ, p, q, r);
 		return new[] { Face(a, b, c), Face(a, c, d) };
 	}
 }

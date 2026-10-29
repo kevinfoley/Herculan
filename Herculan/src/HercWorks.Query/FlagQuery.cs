@@ -116,13 +116,13 @@ internal static class FlagQuery {
 			}
 		}
 
-		// A roster overlay often changes only its type or the variant key it draws from.
-		static string RosterDetail(short type, short variantKey) =>
-			(type == -1 ? "" : $" type 0x{type:x2}") + (variantKey == -1 ? "" : $" variant key {variantKey}");
+		// A roster overlay often changes only its type or the random table key it picks by.
+		static string RosterDetail(short type, short tableKey) =>
+			(type == -1 ? "" : $" type 0x{type:x2}") + (tableKey == -1 ? "" : $" random table key {tableKey}");
 
 		Add(1, file.Conditions, r => r.ConditionRef, (r, _) => r.GUID, "cond");
 		Add(2, file.SettingsPatches, r => r.Data[0], (_, i) => (short)i, "patch", r => $" (header words {string.Join(" ", r.Data.Skip(1).Take(ClearListWord - 1))})");
-		Add(3, file.Variants, r => r.ConditionRef, (r, _) => r.GUID, "value GUID");
+		Add(3, file.MovieChoices, r => r.ConditionRef, (r, _) => r.GUID, "value GUID");
 		Add(4, file.Texts, r => r.ConditionRef, (_, i) => (short)i, "text");
 		if (file.DebriefBytes is { } debrief) {
 			for (int i = 0; i * DebriefRecordLength + 1 < debrief.Length; i++) {
@@ -138,9 +138,9 @@ internal static class FlagQuery {
 		Add(9, file.TriggerAreas, r => r.ConditionRef, (r, _) => r.GUID, "area GUID");
 		Add(10, file.Actions, r => r.ConditionRef, (r, _) => r.GUID, "action GUID");
 		Add(11, file.ActionTimers, r => r.ConditionRef, (r, _) => r.GUID, "timer GUID");
-		Add(12, file.Mechs, r => r.ConditionRef, (r, _) => r.GUID, "mech GUID", r => RosterDetail(r.TypeIndex, r.VariantKey));
-		Add(13, file.Flyers, r => r.ConditionRef, (r, _) => r.GUID, "flyer GUID", r => RosterDetail(r.TypeIndex, r.VariantKey));
-		Add(14, file.Bases, r => r.ConditionRef, (r, _) => r.GUID, "base GUID", r => RosterDetail(r.TypeIndex, r.VariantKey));
+		Add(12, file.Mechs, r => r.ConditionRef, (r, _) => r.GUID, "mech GUID", r => RosterDetail(r.TypeIndex, r.RandomTableKey));
+		Add(13, file.Flyers, r => r.ConditionRef, (r, _) => r.GUID, "flyer GUID", r => RosterDetail(r.TypeIndex, r.RandomTableKey));
+		Add(14, file.Bases, r => r.ConditionRef, (r, _) => r.GUID, "base GUID", r => RosterDetail(r.TypeIndex, r.RandomTableKey));
 		Add(15, file.Orders, r => r.ConditionRef, (r, _) => r.GUID, "order GUID");
 		Add(16, file.Groups, r => r.ConditionRef, (r, _) => r.GUID, "group GUID");
 		Add(17, file.Objectives, r => r!.ConditionRef, (_, i) => (short)i, "objective");

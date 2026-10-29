@@ -81,6 +81,12 @@ public sealed class MissionModels {
 	public TerrainTextureBank? TerrainBank { get; }
 
 	/// <summary>
+	/// The theater's ramp and palette <see cref="TerrainMesh"/> was shaded with, for rebuilding part of it
+	/// (<see cref="TerrainMeshBuilder.Rebuild"/>); null when the theater has none.
+	/// </summary>
+	public SurfaceShading? TerrainShading { get; private init; }
+
+	/// <summary>
 	/// The shape each travelling shot is drawn as, keyed by the <c>PROJ.DAT</c> subtype id that
 	/// spawned it — the same id <see cref="SimWorld.Bullets"/> is indexed by. Built up front, from
 	/// every record in that table, because a shot that appears mid-flight has nowhere to load a model
@@ -336,6 +342,8 @@ public sealed class MissionModels {
 				? new ImpactFlash(SurfaceRampTable.Build(impact), PaletteRampTable.Build(impact),
 					Atmosphere.From(terrain, impact, theater.File))
 				: null,
-			debrisModels, fireModels, hulkModels, dropPodModel, dropPodOpening, groundShapeModels);
+			debrisModels, fireModels, hulkModels, dropPodModel, dropPodOpening, groundShapeModels) {
+			TerrainShading = models.Shading
+		};
 	}
 }

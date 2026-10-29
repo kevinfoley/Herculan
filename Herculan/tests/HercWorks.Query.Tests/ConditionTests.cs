@@ -28,16 +28,16 @@ public class ConditionTests {
 	}
 
 	[Fact]
-	public void VariantRangeNamesItsKeyAndChainsAreJoined() {
+	public void OptionRangeNamesItsKeyAndChainsAreJoined() {
 		var file = WithConditions(
 			new MissionCondition14(30, -1, 3, 194, -1, 100, 0),
 			new MissionCondition14(31, 30, 2, 0, 49, 0, 0),
 			new MissionCondition14(40, -1, 0, 8, 0x119, 1, 0),
 			new MissionCondition14(41, 40, 1, 11, -1, 0, 0));
 
-		Assert.Equal("variant 0-49 of key 194", Conditions.Describe(file, 31));
-		Assert.Equal((short)194, Conditions.VariantKeyOf(file, 31));
-		Assert.Null(Conditions.VariantKeyOf(file, 40));
+		Assert.Equal("option 0-49 of key 194", Conditions.Describe(file, 31));
+		Assert.Equal((short)194, Conditions.RandomTableKeyOf(file, 31));
+		Assert.Null(Conditions.RandomTableKeyOf(file, 40));
 		Assert.Equal("flag 8 == 1 and draw 41 below 11", Conditions.Describe(file, 41));
 	}
 

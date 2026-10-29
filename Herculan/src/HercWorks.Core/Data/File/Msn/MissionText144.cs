@@ -22,7 +22,7 @@ public class MissionText144 {
 	/// <summary>0x52-0x8D — the intelligence lines, <c>.ENG</c> ids.</summary>
 	public short[] IntelligenceLines { get; set; } = new short[30];
 
-	/// <summary>0x8E — ref into row #3 (<see cref="VariantValue8"/>), replaced at load by that record's value: the briefing movie id.</summary>
+	/// <summary>0x8E — ref into row #3 (<see cref="MovieChoice8"/>), replaced at load by that record's value: the briefing movie id.</summary>
 	public short MovieRef { get; set; }
 	public const int MovieRefWord = 0x8E / 2;
 }

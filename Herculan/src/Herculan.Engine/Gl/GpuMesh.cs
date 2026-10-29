@@ -102,6 +102,20 @@ public sealed class GpuMesh : IDisposable {
 	/// <summary>How many vertices at the end of the buffer are drawn as single points.</summary>
 	public int PointVertexCount { get; }
 
+	/// <summary>
+	/// Replaces the uploaded vertices from <paramref name="firstVertex"/> on with <paramref name="vertices"/>, for a
+	/// mesh whose geometry has changed in place; the ranges and the count stay as built.
+	/// </summary>
+	public void Update(int firstVertex, ReadOnlySpan<MeshVertex> vertices) {
+		if (vertices.IsEmpty || firstVertex < 0 || firstVertex + vertices.Length > VertexCount) {
+			return;
+		}
+
+		_gl.BindBuffer(BufferTargetARB.ArrayBuffer, _vertexBuffer);
+		_gl.BufferSubData(BufferTargetARB.ArrayBuffer, (nint)(firstVertex * MeshVertex.SizeInBytes), vertices);
+		_gl.BindBuffer(BufferTargetARB.ArrayBuffer, 0);
+	}
+
 	public void Draw() {
 		if (VertexCount == 0) {
 			return;

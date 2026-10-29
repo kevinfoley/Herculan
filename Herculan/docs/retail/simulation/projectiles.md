@@ -72,7 +72,7 @@ The blast figure is the record's **armour** damage, power-scaled — the two are
 
 The one reader of the stash is a structure struck on its collision-volume path, which puts the armour figure back — see [`hit-detection.md`](hit-detection.md#base_directfirehittest--00405038).
 
-Homing is a steer of the **euler angles**, not of a velocity: the bearing to the target (`Math_EulerToward`, [`dbsim-physics-notes.md`](dbsim-physics-notes.md#fixed-point-math-toolkit)) drives euler 0 and 2 through `Math_RateLimitedMoveToward` at `0x280` per 125 ms, and the yaw error it leaves is what the proximity fuze tests. The target point is the vtable `+0x24` aim node, not the origin — see [`target-selection.md`](target-selection.md#aim-point--vtable-0x24).
+Homing is a steer of the **euler angles**, not of a velocity: the bearing to the target (`Math_EulerToward`, [`dbsim-physics-notes.md`](dbsim-physics-notes.md#fixed-point-math-toolkit)) drives euler 0 and 2 through `Math_RateLimitedMoveToward` at `0x280` per 125 ms, and the yaw error it leaves is what the proximity fuze tests. The target point is the vtable `+0x24` aim node, not the origin — see [`aim-point.md`](aim-point.md).
 
 ## How a round is drawn
 

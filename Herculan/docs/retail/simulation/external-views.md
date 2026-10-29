@@ -123,7 +123,7 @@ The eye `+0x3e` through the object's vtable `+0x24` node composed with its frame
 | Class | vtable `+0x24` | Attached view |
 |---|---|---|
 | Machine | `Mech_GetAimNodeTransform` (`00417b98`) | the camera bone's transform |
-| Structure | `Base_GetAimNodeTransform` (`00403548`) | a node that is the identity with the translation `(0, 0, BASES.DAT +0x2c)`, so the eye sits at the structure's aim-point height looking along its own heading. Only [Ctrl+F] reaches it ([target-selection.md](target-selection.md#aim-point--vtable-0x24)) |
+| Structure | `Base_GetAimNodeTransform` (`00403548`) | a node that is the identity with the translation `(0, 0, BASES.DAT +0x2c)`, so the eye sits at the structure's aim-point height looking along its own heading. Only [Ctrl+F] reaches it ([aim-point.md](aim-point.md)) |
 | Flyer, base object | `SimObject_GetAimNodeTransform_None` (`00411a9c`) | no node: ridden by the object's own frame and euler triple, without `+0x44` |
 
 ## Steering the camera — `Cam_Steer`

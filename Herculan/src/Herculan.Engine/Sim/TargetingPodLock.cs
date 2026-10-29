@@ -7,7 +7,7 @@ namespace Herculan.Engine.Sim;
 /// HERC instead of at its aim node (<see cref="MechPods.TargetingWeaponId"/>). The manual: select
 /// with <c>[Enter]</c>, then <c>[Tab]</c> cycles through that target's components, and Automatic
 /// Turret Tracking follows the part rather than center mass. The retail behavior is
-/// docs/retail/simulation/target-selection.md#component-targeting--the-targeting-pod.
+/// docs/retail/simulation/targeting-pod.md.
 ///
 /// <para>In the original this is a weapon-mount subclass, built by <c>TargetingPod_Ctor</c>
 /// (<c>0040e308</c>), whose own four fields start at <c>+0x7d</c>, where other mount classes keep
@@ -132,7 +132,7 @@ public sealed class TargetingPodLock {
 	/// cycling once if it is not — <b>without re-testing</b>, so a target that has run out of parts
 	/// is asked for the position of component <see cref="NoComponent"/>, which every class answers
 	/// with its own origin. The original's unused fourth parameter has no counterpart here — see
-	/// docs/retail/simulation/target-selection.md#a-damaged-pod-degrades-in-four-steps.</para>
+	/// docs/retail/simulation/targeting-pod.md#a-damaged-pod-degrades-in-four-steps.</para>
 	/// </summary>
 	/// <param name="target">The selected object — always a HERC by the time the lock is non-negative.</param>
 	/// <param name="point">Where to aim.</param>

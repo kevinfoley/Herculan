@@ -66,7 +66,10 @@ public static class DatFileReader {
 		return iniStats;
 	}
 
-	/// <summary>Replaces <paramref name="targetFile"/>'s content with <paramref name="newData"/>, keeping its existing header prefix.</summary>
+	/// <summary>
+	/// Replaces <paramref name="targetFile"/>'s content with <paramref name="newData"/>, keeping its existing header prefix.
+	/// The Java original ignored <c>newData</c> and spliced the header onto the file's own bytes; fixed here.
+	/// </summary>
 	public static VolEntry ReplaceDatBytes(byte[] newData, DataFile targetFile) {
 		if (targetFile is not VolEntry entry) {
 			throw new Exception($"ERROR: file({targetFile.FileName}) was not a <VolEntry> object.");

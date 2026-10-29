@@ -36,7 +36,7 @@ return 0
 | `+0x10` | `int32` | Near standoff. Starts 15000 |
 | `+0x14` | `int32` | Far standoff. Starts 30000 |
 
-The aspect is `targetTurretTwist + (bearingToTarget - 0x8000) - targetHeading`. The twist is added, the same direction the player's forward-cone test and the sensor arc fold it in ([`target-selection.md`](target-selection.md#can-this-be-targeted--targetselect_cantarget-00433174)). The states below steer on it. The copy `Ai_AimAndFire` is handed has one reader, `Ai_ChooseWeapon`'s shield-facing test ([`ai-weapons.md`](ai-weapons.md#choosing-a-weapon--ai_chooseweapon-0041f358)). The two travel thinks build the same quantity by hand rather than through this function, for that hand-off alone.
+The aspect is `targetTurretTwist + (bearingToTarget - 0x8000) - targetHeading`. The twist is added, the same direction the player's forward-cone test and the sensor arc fold it in ([`target-selection.md`](target-selection.md#cycles-shortlist--targetselect_cycle-0043349c)). The states below steer on it. The copy `Ai_AimAndFire` is handed has one reader, `Ai_ChooseWeapon`'s shield-facing test ([`ai-weapons.md`](ai-weapons.md#choosing-a-weapon--ai_chooseweapon-0041f358)). The two travel thinks build the same quantity by hand rather than through this function, for that hand-off alone.
 
 ## The move step — `Ai_CombatMoveStep` (`0041e828`)
 
@@ -220,7 +220,7 @@ return steep ? 1 : 2
 
 ## `sleeping` (13) — `Mech_BehaviourSleepThink` (`0041c418`)
 
-Release the target, `Mech_LocomotionTick(mech, 0, 0, 0)`, `Ai_UpdateWeaponsFree`. A sleeping machine stands with its throttle at zero and its radar on its standing setting ([`target-selection.md`](target-selection.md#how-an-ai-machines-radar-is-set)), and holds no target. It is still ticked and still detectable, but it does not fight back: `sleeping`'s descriptor carries flag bit 3, so `Mech_AiOnTakingFire` shares the shooter as a contact and returns before choosing a response ([`ai-targeting.md`](ai-targeting.md#taking-fire--mech_aiontakingfire-0041f7b8-mech-vtable-0x50)). Verb 4 never completes, so only the order's action moves a sleeping group on. With no action, the machine stays asleep for the rest of the mission.
+Release the target, `Mech_LocomotionTick(mech, 0, 0, 0)`, `Ai_UpdateWeaponsFree`. A sleeping machine stands with its throttle at zero and its radar on its standing setting ([`sensors.md`](sensors.md#how-an-ai-machines-radar-is-set)), and holds no target. It is still ticked and still detectable, but it does not fight back: `sleeping`'s descriptor carries flag bit 3, so `Mech_AiOnTakingFire` shares the shooter as a contact and returns before choosing a response ([`ai-targeting.md`](ai-targeting.md#taking-fire--mech_aiontakingfire-0041f7b8-mech-vtable-0x50)). Verb 4 never completes, so only the order's action moves a sleeping group on. With no action, the machine stays asleep for the rest of the mission.
 
 ## `dead` (20), `disabled` (21) and `in limbo` (19) — `Mech_BehaviourInertThink` (`0041e554`)
 

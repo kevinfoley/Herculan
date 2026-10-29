@@ -120,7 +120,7 @@ None of them is a squad order; all three are per-machine flags this handler sets
 |---|---|---|---|
 | `+0x9a` | verb 1 | verbs 0, 5 and 0xb, each before its own refusal tests; and `Mech_AiOnTakingFire` when the shooter *is* the player's selection | `Ai_IsTargetable` (`00411e80`), which refuses this machine the player's current selection while it is set |
 | `+0xb6` | verb 5 | verb 8 | The leader gate in `Mech_BehaviourPatrolThink`, `Mech_BehaviourSearchDestroyThink` and `Mech_BehaviourGuardThink` — [`ai-navigation.md`](ai-navigation.md) |
-| `+0xb2` | verbs 4, 16 | verbs 7, 17 | `Ai_UpdateWeaponsFree`, and the radar step of `Mech_AiCombatReassess` and of `Mech_BehaviourGuardThink`'s hand-off to a fight state — [`target-selection.md`](target-selection.md#how-an-ai-machines-radar-is-set). Also switches a squadmate's **ECM pod**, which follows the radar mode — [`missile-lock.md`](missile-lock.md#ecm) |
+| `+0xb2` | verbs 4, 16 | verbs 7, 17 | `Ai_UpdateWeaponsFree`, and the radar step of `Mech_AiCombatReassess` and of `Mech_BehaviourGuardThink`'s hand-off to a fight state — [`sensors.md`](sensors.md#how-an-ai-machines-radar-is-set). Also switches a squadmate's **ECM pod**, which follows the radar mode — [`missile-lock.md`](missile-lock.md#ecm) |
 
 ## Mech fields this slice owns
 

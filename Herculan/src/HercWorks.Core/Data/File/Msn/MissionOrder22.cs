@@ -12,11 +12,11 @@ public class MissionOrder22 : MapObject {
 	public const int ConditionRefWord = 0x02 / 2;
 
 	/// <summary>
-	/// 0x04 — variant key: unless <c>-1</c>, 0x08-0x15 are copied from a randomly picked variant
-	/// (docs/retail/formats/msn-mission-file.md#variants). Unused in retail.
+	/// 0x04 — random table key: unless <c>-1</c>, 0x08-0x15 are copied from the template of a randomly picked
+	/// option (docs/retail/formats/msn-mission-file.md#random-tables). Unused in retail.
 	/// </summary>
-	public short VariantKey { get; set; }
-	public const int VariantKeyWord = 0x04 / 2;
+	public short RandomTableKey { get; set; }
+	public const int RandomTableKeyWord = 0x04 / 2;
 
 	/// <summary>0x06 — compound-condition partner: 1 or -99, set only alongside <see cref="ConditionRef"/>.</summary>
 	public short CompoundConditionPartner { get; set; }

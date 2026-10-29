@@ -69,7 +69,7 @@ static class SimulatorStartup {
 		// A mission named by its .MSN is loaded as the shell would load it and flown from the handoff that writes
 		// into the install's DATA\, as a shell launch is. See MissionFileLaunch.
 		if (tapeScriptPath == null && shellLaunch == null && options.MissionPath is { } named && MissionFileLaunch.Names(named)) {
-			if (MissionFileLaunch.Write(installRoot, named, out string? failure) is not { } generated) {
+			if (MissionFileLaunch.Write(installRoot, named, options.OwnWorld, out string? failure) is not { } generated) {
 				Console.Error.WriteLine($"Cannot load {named}: {failure}");
 				return null;
 			}

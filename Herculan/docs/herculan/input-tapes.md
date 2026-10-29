@@ -23,7 +23,7 @@ After the tape, `--play` hands the controls back to the player on the engine's o
 
 `--record <tape>` writes `<tape>.tap`, the extension forced as `-r` forces it. `Input.InputTapeRecorder` writes the file as it goes, as `-r` does:
 
-- **The bundle**, at startup, before any panel writes its options back. It comes from the folder the mission was loaded from: the mission file itself, its lance file by slot (`script3.dat` takes `player3.mec`), and the other five from beside it. A file that is not there is an empty entry.
+- **The bundle**, at startup, before any panel writes its options back. It comes from the folder the mission was loaded from: the mission file itself, its squad file by slot (`script3.dat` takes `player3.mec`), and the other five from beside it. A file that is not there is an empty entry.
 - **The capability block**, ahead of the first frame, from the stick in use at that moment. The hat flag is written as `0x10`, the value the retail tapes carry.
 - **One frame per engine tick**, with `SimWorld.TickDelta` (81) as its delta, and **one per host frame a modal panel is up for**, repeating the last tick's delta.
 

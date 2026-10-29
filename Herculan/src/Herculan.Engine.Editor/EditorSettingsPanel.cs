@@ -5,10 +5,10 @@ using ImGuiNET;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The floating "Editor Settings" window opened from the menu bar.
+/// The floating "Editor Settings" window opened from the menu bar. The view toggles are View's, in the menu bar itself.
 ///
-/// <para>Edits land on the live <see cref="EditorSettings"/> immediately, so a checkbox shows its
-/// effect in the viewport while the panel is still open. What makes Cancel possible is the snapshot
+/// <para>Edits land on the live <see cref="EditorSettings"/> immediately, so a setting shows its
+/// effect while the panel is still open. What makes Cancel possible is the snapshot
 /// taken when the panel opens: Save writes the current values to disk and closes, Cancel restores
 /// the snapshot and closes, and closing the window by its title-bar button is a Cancel.</para>
 /// </summary>
@@ -40,22 +40,27 @@ public sealed class EditorSettingsPanel {
 		}
 
 		// A zero component means "fit the content", so the panel keeps a fixed width and grows to
-		// whatever height its settings need.
-		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(PanelWidth), 0f));
+		// whatever height its settings need, at least as wide as the Cybrid Loadouts line.
+		float width = MathF.Max(ScaledImGui.Scaled(PanelWidth), CybridLoadoutsWidth() + ImGui.GetStyle().WindowPadding.X * 2f);
+		ImGui.SetNextWindowSize(new Vector2(width, 0f));
 		ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), ImGuiCond.Appearing, new Vector2(0.5f, 0.5f));
 
 		bool stayOpen = true;
 		if (ImGui.Begin("Editor Settings", ref stayOpen, ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize)) {
-			bool renderFog = _settings.RenderFog;
-			if (ImGui.Checkbox("Render Fog", ref renderFog)) {
-				_settings.RenderFog = renderFog;
+			ImGui.AlignTextToFramePadding();
+			ImGui.Text(CybridLoadoutsLabel);
+			ImGui.SameLine();
+			if (ImGui.RadioButton("Vanilla", _settings.CybridLoadouts == CybridLoadouts.Vanilla)) {
+				_settings.CybridLoadouts = CybridLoadouts.Vanilla;
 			}
 
-			bool showGrid = _settings.ShowGrid;
-			if (ImGui.Checkbox("Show Ground Grid", ref showGrid)) {
-				_settings.ShowGrid = showGrid;
+			EditorText.Tooltip("Each Cybrid hardpoint offers the weapons retail missions fit on it.");
+			ImGui.SameLine();
+			if (ImGui.RadioButton("Unrestricted", _settings.CybridLoadouts == CybridLoadouts.Unrestricted)) {
+				_settings.CybridLoadouts = CybridLoadouts.Unrestricted;
 			}
 
+			EditorText.Tooltip("Each Cybrid hardpoint offers any HERC weapon. PITBULL's own weapons stay on the PITBULL, and it takes no other.");
 			ImGui.Separator();
 
 			Span<float> widths = [ButtonRow.LabelWidth("Save"), ButtonRow.LabelWidth("Cancel")];
@@ -75,6 +80,16 @@ public sealed class EditorSettingsPanel {
 		if (!stayOpen && _snapshot != null) {
 			Cancel();
 		}
+	}
+
+	private const string CybridLoadoutsLabel = "Cybrid Loadouts:";
+
+	// The Cybrid Loadouts line's width: its label and both radio buttons, each a frame-high circle and its text, side by side.
+	private static float CybridLoadoutsWidth() {
+		var style = ImGui.GetStyle();
+		float Radio(string label) => ImGui.GetFrameHeight() + style.ItemInnerSpacing.X + ImGui.CalcTextSize(label).X;
+		return ImGui.CalcTextSize(CybridLoadoutsLabel).X + style.ItemSpacing.X + Radio("Vanilla") + style.ItemSpacing.X
+			+ Radio("Unrestricted");
 	}
 
 	private void Cancel() {

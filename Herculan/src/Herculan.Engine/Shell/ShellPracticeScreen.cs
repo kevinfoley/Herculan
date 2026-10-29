@@ -100,11 +100,14 @@ public sealed class ShellPracticeScreen {
 		(0x25, 2, 0x12a),
 		(0x27, 4, 0x35),
 		(0x29, 2, 0x12c),
-		(HercTypeOption, 9, 0x6e),
+		(HercTypeOption, HercTypeCount, 0x6e),
 	};
 
 	/// <summary><c>prefs.cfg</c> option 40, the chassis the player takes on a practice row from 4 down.</summary>
 	public const int HercTypeOption = 0x28;
+
+	/// <summary>Herc Type's modulus: the nine chassis it steps through, types 0 <c>Outlaw</c> to 8 <c>Razor</c>.</summary>
+	public const int HercTypeCount = 9;
 
 	/// <summary>
 	/// The chassis each row writes into <see cref="HercTypeOption"/> when it is selected — the low byte of

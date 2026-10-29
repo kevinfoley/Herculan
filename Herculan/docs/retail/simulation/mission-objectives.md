@@ -20,7 +20,7 @@ An objective is **one condition asked of one subject**, plus what satisfying it 
 | `+0x24`/`+0x38` | ten mission-counter refs and ten operations |
 | `+0x22` | runtime: the counters have been applied |
 
-**The counter operation codes are not the action layer's.** Here 4 sets, 5 clears, 6 increments and 7 decrements; `Action_Activate` knows only 5 and 6 and reads them as clear and increment, so the two layers disagree on 6 with nothing to warn a reader. A slot is skipped unless **both** its ref and its operation are non-negative. The array is [`mission-deployment.md`](mission-deployment.md#the-mission-counters--dat_004a9ef4)'s.
+**The objective layer has four counter operations, the action layer two.** Here 4 sets, 5 clears, 6 increments and 7 decrements; `Action_Activate` knows only 5 and 6, with the same meanings, so an action given 4 or 7 leaves its counter alone. A slot is skipped unless **both** its ref and its operation are non-negative. The array is [`mission-deployment.md`](mission-deployment.md#the-mission-counters--dat_004a9ef4)'s.
 
 The counters are applied the first time the condition holds and never again; the latch is not "the objective is met", which is re-read every poll.
 
@@ -62,7 +62,7 @@ else if (!quiet && outside box)            7
 else                                       EvaluateObjectives()
 ```
 
-The box is block 1's own extent, `Mission_Box` (`004aa6c4`), which `DBSim_LoadScriptDat` (`00424308`) accumulates as it reads the coordinates; `Mission_IsOutsideBox` (`0041373c`) tests a position against it widened by a margin, 0 for answer 7 and 110000 for answer 8. The Heads-Down Display's map is framed by the same one ([`heads-down-display.md`](heads-down-display.md)).
+The box is block 1's own extent, `Mission_Box` (`004aa6c4`), which `DBSim_LoadScriptDat` (`00424308`) accumulates as it reads the coordinates; `Mission_IsOutsideBox` (`0041373c`) tests a position against it widened by a margin, 0 for answer 7 and 110000 for answer 8, and only a position strictly inside counts as in: one on the box's edge is outside. The Heads-Down Display's map is framed by the same one ([`heads-down-display.md`](heads-down-display.md)).
 
 **`quiet` is the third argument, and it means "just answer the question".** Set, the function skips the 500 ms hold, both box arms and the `SYSTEM.STR` post, and only computes. The poll clears it; the player's own [Q] clears nothing else and sets it — so **a [Q] can never answer 7 or 8**, and a player standing outside the mission box is told how the objectives stand as though they were inside it.
 

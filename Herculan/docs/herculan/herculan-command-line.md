@@ -17,7 +17,7 @@ Herculan.Engine.Host [<install>] [<mission>] [flags]
 
 A Metaltech: Earthsiege install, one whose folder holds `GO.EXE`, runs [its mission](#metaltech-earthsiege) instead, and is not remembered.
 
-A named mission is loaded as the shell loads that career position ([`../retail/shell/campaign-loop.md`](../retail/shell/campaign-loop.md#loading-the-careers-mission)) and flown from a handoff written into the install's `DATA`, as a launch from the front end is. A practice or demo mission takes the training load, with the practice options `DATA\prefs.cfg` holds, as `Begin Mission` or `INSTANT ACTION` on its row would. A campaign mission is loaded for a career with no history: every campaign flag 0 until the load seeds its own, and the player's lance and skill from `DATA\player.mec`, which it needs.
+A named mission is loaded as the shell loads that career position ([`../retail/shell/campaign-loop.md`](../retail/shell/campaign-loop.md#loading-the-careers-mission)) and flown from a handoff written into the install's `DATA`, as a launch from the front end is. A practice or demo mission takes the training load, with the practice options `DATA\prefs.cfg` holds, as `Begin Mission` or `INSTANT ACTION` on its row would. A campaign mission is loaded for a career with no history: every campaign flag 0 until the load seeds its own, and the player's squad and skill from `DATA\player.mec`, which it needs.
 
 ## What runs
 
@@ -30,6 +30,7 @@ Without one of these, the host runs the front end and the missions it launches, 
 | `--play <tape>` | Replays an input tape: a path, or a stem looked up in the install's `TAPES` folder. Hands the controls to the player when the tape runs out. Implies `--mission`. Retail's `-p<name>`. See [`input-tapes.md`](input-tapes.md). |
 | `--record <tape>` | Records the mission's input to `<tape>.tap`, which `--play` replays. Cannot be combined with `--play` or `--demo`. Retail's `-r<name>`. See [`input-tapes.md`](input-tapes.md#recording). |
 | `--demo` | Plays a tape picked from `TAPES\demolist.str`, as VIEW DEMO does, and ends the mission when the tape runs out or a key is pressed. With `--play`, plays that tape in demo mode instead. Implies `--mission`. Retail's `-D`. |
+| `--own-world` | A named practice, demo or user-made mission plays on its own theater and time of day, where the training load writes theater 1 and the practice screen's time of day over them. A campaign mission is unchanged. The mission editor's Play passes it. This engine's own flag. See [`editor-design.md`](editor-design.md#saving-and-playing). |
 
 ## Metaltech: Earthsiege
 
@@ -96,7 +97,7 @@ See [`joystick-config.md`](joystick-config.md).
 
 | Flag | Effect |
 |---|---|
-| `--developer` | The developer keys. Retail's `-SPRUNKNOWN`. See [`herculan-key-bindings.md`](herculan-key-bindings.md#developer-keys). Also puts Debug on a mission's [Shift+Esc] menu bar, and gives the front end retail's `-@`: each career's mission load waits on [the DEBUG dialog](../retail/shell/main-menu.md#the-mission-name-dialog), where a mission file can be typed in place of the career's. |
+| `--developer` | The developer keys. Retail's `-SPRUNKNOWN`. See [`herculan-key-bindings.md`](herculan-key-bindings.md#developer-keys). Also puts Debug and Mission Scripting on a mission's [Shift+Esc] menu bar, and gives the front end retail's `-@`: each career's mission load waits on [the DEBUG dialog](../retail/shell/main-menu.md#the-mission-name-dialog), where a mission file can be typed in place of the career's. The mission editor's Play passes it, and its Play in the game's own editor runs the mission with it on whatever the command line says. |
 
 ## Screenshots and staged state
 

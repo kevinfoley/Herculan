@@ -99,6 +99,9 @@ public sealed partial class FlyerObject {
 	/// </summary>
 	public FlyerBehaviourBlock Behaviour;
 
+	/// <inheritdoc cref="MechObject.DwellJitter"/>
+	internal DwellJitter DwellJitter { get; set; }
+
 	/// <summary>
 	/// <c>flyer+0x9d</c> — what this aircraft adds to a <see cref="SimObject.Target"/> change. The
 	/// field and its refcount bookkeeping are the shared base's.
@@ -145,7 +148,7 @@ public sealed partial class FlyerObject {
 		_missileFired = false;
 		_targetSweepTimer = 0;
 
-		Behaviour.SetState(state);
+		Behaviour.SetState(state, DwellJitter);
 	}
 
 	/// <summary>

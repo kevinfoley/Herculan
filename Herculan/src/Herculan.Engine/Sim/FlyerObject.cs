@@ -68,9 +68,14 @@ public sealed partial class FlyerObject : SimObject {
 	/// The type's <c>fm\&lt;NAME&gt;.FM</c>, which the flyer type loader reads into the type record at
 	/// <c>+0x3a</c>. Null leaves the aircraft unable to fly at all; only <c>SKIMMER</c> ships one.
 	/// </param>
+	/// <param name="dwellJitter">
+	/// The <see cref="SimWorld.DwellJitter"/> of the world the aircraft will join, which the constructor's own
+	/// state install steps. Omitted, the aircraft starts a counter of its own until <see cref="SimWorld.Add"/>.
+	/// </param>
 	public FlyerObject(string name, FlyerSimData? simData, int shapeRadius,
 			ColliderNode[]? collision = null, ComponentDamage? damage = null,
-			FlightModelRecord? flight = null) {
+			FlightModelRecord? flight = null, Ai.DwellJitter? dwellJitter = null) {
+		DwellJitter = dwellJitter ?? new Ai.DwellJitter();
 		Name = name;
 		SimData = simData;
 		_shapeRadius = shapeRadius;

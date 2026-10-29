@@ -1,4 +1,5 @@
 using System.Numerics;
+using HercWorks.Core.Data.File.Msn;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Render;
@@ -10,7 +11,9 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// What the editor draws over the placed objects and the groups they belong to: the selection boxes,
 /// the outlines that stand in for a waiting group's members, the selected group's own point and
-/// heading, and a line from it to whatever each of its orders names.
+/// heading, and a line from it to whatever each of its orders names. Groups, their members and their orders' subjects are
+/// the layout's (<see cref="MissionIndex"/>), by GUID. A group kept out of the scene (<see cref="PlannedGroup.OffScene"/>)
+/// has none of it, nor is it a line's subject.
 /// </summary>
 internal sealed class GroupOverlay {
 	private static readonly Vector3 WaitingColor = new(0.55f, 0.6f, 0.72f);
@@ -32,8 +35,6 @@ internal sealed class GroupOverlay {
 		_picker = picker;
 	}
 
-	private Mission Mission => _index.Mission;
-
 	/// <summary>
 	/// The boxes: a highlight around each selected object, and a dim outline around every member of a
 	/// waiting group when the settings outline rather than draw them.
@@ -53,30 +54,34 @@ internal sealed class GroupOverlay {
 
 	/// <summary>The objects the selection boxes: the selected object, a group's members, or an objective's subject.</summary>
 	private HashSet<Scene.SceneObject> HighlightedObjects(SelectionState selection) => selection.Current switch {
-		ObjectSelection selected => new HashSet<Scene.SceneObject> { selected.Object },
-		GroupSelection group when group.Group >= 0 && group.Group < _index.GroupMembers.Count =>
-			_index.GroupMembers[group.Group].ToHashSet(),
-		ObjectiveSelection objective when objective.Objective < Mission.Objectives.Count =>
-			_index.SubjectObjectsOf(Mission.Objectives[objective.Objective]).ToHashSet(),
+		ObjectSelection selected when _index.ObjectOf(selected) is { } placed => new HashSet<Scene.SceneObject> { placed },
+		GroupSelection { Guid: var guid } => _index.MembersOf(guid).ToHashSet(),
+		ObjectiveSelection selected when _index.Layout.Objectives.FirstOrDefault(objective => objective.Index == selected.Record)
+				is { } objective => _index.SubjectObjects(objective.Fields).ToHashSet(),
 		_ => new HashSet<Scene.SceneObject>()
 	};
+
+	// The selected group, or null when a group is not selected or it is out of the scene.
+	private PlannedGroup? SelectedGroup(SelectionState selection) =>
+		selection.Current is GroupSelection { Guid: var guid } && _index.Group(guid) is { OffScene: false } group ? group : null;
 
 	/// <summary>
 	/// The selected group's point as a post, its heading as an arrow on the ground, and a line from
 	/// the point to each of its orders' subjects.
 	/// </summary>
 	public void DrawSelectedGroup(WireframeRenderer wireframe, Camera camera, float aspect, SelectionState selection) {
-		if (selection.Current is not GroupSelection { Group: var group } || _index.SetupOf(group) is not { } setup) {
+		if (SelectedGroup(selection) is not { } group) {
 			return;
 		}
 
+		var setup = group.Setup;
 		var marker = new List<Vector3>();
 		_drape.AddPost(marker, setup.Point.X, setup.Point.Y, MissionOverlay.PostHeight);
 		AddArrow(marker, setup.Point, setup.Heading);
 		MissionOverlay.DrawLines(wireframe, camera, aspect, marker, MissionOverlay.SelectedColor);
 
 		var subjects = new List<Vector3>();
-		foreach (var (_, at) in Subjects(group)) {
+		foreach (var (_, _, at) in Subjects(group)) {
 			_drape.AddEdge(subjects, setup.Point, at);
 		}
 
@@ -85,7 +90,8 @@ internal sealed class GroupOverlay {
 
 	/// <summary>
 	/// The labels: each waiting group's gate and arrival at its point, unless the settings hide waiting
-	/// groups, and each of the selected group's order subjects at the far end of its line.
+	/// groups, and each of the selected group's order subjects at the far end of its line. A group and an action are
+	/// numbered by their place in the layout's row 16 and row 10.
 	/// </summary>
 	public void DrawLabels(Camera camera, EditorSettings settings, SelectionState selection) {
 		var drawList = ImGui.GetBackgroundDrawList();
@@ -108,43 +114,77 @@ internal sealed class GroupOverlay {
 		}
 
 		if (settings.WaitingGroups != WaitingGroupDisplay.Hidden) {
-			for (int group = 0; group < _index.GroupMembers.Count; group++) {
-				int action = _index.DeploymentActionOf(group);
-				if (action < 0 || _index.GroupMembers[group].Count == 0 || _index.SetupOf(group) is not { } setup) {
+			foreach (var group in _index.Groups) {
+				if (!group.Waiting || group.OffScene || _index.MembersOf(group.Guid).Count == 0
+						|| _index.Action(group.DeploymentAction) is not { } trigger) {
 					continue;
 				}
 
-				StackedLabel(setup.Point,
-					$"Group {group}: waits on action {action}, {MissionText.ArrivalKind(Mission.Actions[action].Verb)}",
+				StackedLabel(group.Setup.Point,
+					$"Group {group.Number}: waits on trigger {trigger.Number}, {MissionText.ArrivalKind(group.ArrivalVerb)}",
 					WaitingColor);
 			}
 		}
 
-		if (selection.Current is GroupSelection { Group: var selected }) {
-			foreach (var (slot, at) in Subjects(selected)) {
-				var order = Mission.GroupOrders[selected][slot]!;
-				StackedLabel(at, $"order {slot}: {MissionText.OrderVerb(order.Verb)}", SubjectColor);
+		if (SelectedGroup(selection) is { } selected) {
+			foreach (var (slot, verb, at) in Subjects(selected)) {
+				StackedLabel(at, $"{MissionText.Ordinal(slot + 1)} order: {MissionText.OrderVerb(verb)}", SubjectColor);
 			}
 		}
+
+		DrawPresenceLabels(drawList, project);
 	}
 
-	/// <summary>Each order slot of <paramref name="group"/> that names a subject, with where that subject stands.</summary>
-	private IEnumerable<(int Slot, Vec3i At)> Subjects(int group) {
-		if (group < 0 || group >= Mission.GroupOrders.Count) {
-			yield break;
-		}
-
-		var orders = Mission.GroupOrders[group];
-		for (int slot = 0; slot < orders.Count; slot++) {
-			if (orders[slot] is not { SubjectKind: not MissionOrderSubject.None, SubjectRef: >= 0 } order) {
+	/// <summary>
+	/// "Not always present" beside each object drawn in the scene that some loads leave out, its own Present when's or its
+	/// group's, as the Groups list marks its row, since the scene shows every object whatever its condition.
+	/// </summary>
+	private void DrawPresenceLabels(ImGuiNET.ImDrawListPtr drawList, ScreenProjection project) {
+		// PLACEHOLDER: a text label until the user's icon for it is drawn.
+		foreach (var pickable in _picker.Pickables) {
+			if (_index.KeyOf(pickable.SceneObject) is not { } key || _index.Layout.Entry(key.Row, key.Guid)?.Presence.Always != false) {
 				continue;
 			}
 
-			if (_index.PointOf(MissionIndex.UnitKindOf(order.SubjectKind), order.SubjectRef) is { } at) {
-				yield return (slot, at);
+			var top = pickable.CenterRender + new Vector3(0f, pickable.RadiusRender, 0f);
+			if (project.ToScreen(top) is { } at) {
+				MissionOverlay.Label(drawList, at + new Vector2(ScaledImGui.Scaled(6f), 0f), NotAlwaysPresent, NotAlwaysColor);
 			}
 		}
 	}
+
+	private const string NotAlwaysPresent = "Not always present";
+	private static readonly Vector3 NotAlwaysColor = new(1f, 0.75f, 0.35f);
+
+	/// <summary>
+	/// Each order slot of <paramref name="group"/> whose order the layout has and names a subject the layout places in the
+	/// scene, with the order's verb and where that subject stands: a group's point, or the object of a herc, flyer or
+	/// structure.
+	/// </summary>
+	private IEnumerable<(int Slot, short Verb, Vec3i At)> Subjects(PlannedGroup group) {
+		for (int slot = 0; slot < group.Orders.Count; slot++) {
+			if (group.Orders[slot] == -1 || _index.Layout.Entry<MissionOrder22>(group.Orders[slot])?.Fields is not { } order
+					|| order.SubjectRef == -1) {
+				continue;
+			}
+
+			Vec3i? at = (MissionOrderSubject)order.SubjectKind switch {
+				MissionOrderSubject.Group => _index.Group(order.SubjectRef) is { OffScene: false } subject ? subject.Setup.Point : null,
+				MissionOrderSubject.Mech => ObjectAt(new ObjectKey(12, order.SubjectRef)),
+				MissionOrderSubject.Flyer => ObjectAt(new ObjectKey(13, order.SubjectRef)),
+				MissionOrderSubject.Base => ObjectAt(new ObjectKey(14, order.SubjectRef)),
+				_ => null
+			};
+
+			if (at is { } point) {
+				yield return (slot, order.Verb, point);
+			}
+		}
+	}
+
+	// Where the object of <key> stands, or null when the scene has none for it or it is out of the scene.
+	private Vec3i? ObjectAt(ObjectKey key) =>
+		_index.ObjectOf(key) is { } placed && _index.InScene(placed) ? placed.Object.Position : null;
 
 	/// <summary>
 	/// An arrow on the ground from <paramref name="from"/> along <paramref name="heading"/>. A machine
