@@ -56,6 +56,11 @@ bullet and a file in the scratch folder is the part's input; both are listed but
 the budget, or on a file or heading not found, nothing is written; --over-budget "REASON" writes it
 anyway and prints the reason, for the orchestrator's report.
 
+`stamps` prints the stamp lines for the function entries of a batch's insert JSONs, for the command file: grouped
+by binary and by how each entry's `source` says its body was read (the decompile, the disassembly, or both), with an
+entry that has no Ghidra function as --via raw when it is a straight-line stub and --via disasm after the
+'# after regen' line otherwise. It adds no flag; precheck names a line that needs --read-callers or --own-negatives.
+
 `next` proposes the range: from START, whole object files as `es1_boilerplate.py bounds` places
 them, until about --target functions, a file never split; it prints each file's counts and evidence
 and the held rows (--held) inside.
@@ -68,6 +73,7 @@ Usage:
     python tools/scripts/es1_batch.py run COMMANDS.txt [--from N] [--no-precheck]
     python tools/scripts/es1_batch.py precheck COMMANDS.txt [--fix]
     python tools/scripts/es1_batch.py list COMMANDS.txt
+    python tools/scripts/es1_batch.py stamps BATCH.json [BATCH.json ...]
 """
 from __future__ import annotations
 
@@ -372,6 +378,55 @@ def cmd_list(args):
         print("%3d  %s" % (i, s.label()))
     for n, line in skipped:
         print("skip line %d: %s" % (n, line))
+    return 0
+
+
+def stamp_via(source):
+    """The --via a batch entry's `source` names: both for the decompile and the disassembly, else the one it names;
+    None when it names neither."""
+    s = (source or "").lower()
+    dec, dis = "decompile" in s, "disassembly" in s or "disasm" in s
+    return "both" if dec and dis else "decompile" if dec else "disasm" if dis else None
+
+
+def cmd_stamps(args):
+    """Prints the stamp lines for the function entries of the batch JSONs, grouped by binary and by how each entry's
+    `source` says it was read (stamp_via). An entry with no Ghidra function is a --via raw stamp when it is a straight-line
+    stub, otherwise a --via disasm one after the '# after regen' line, as precheck's RAW check wants. Flags
+    (--read-callers, --own-negatives) are left to the author: precheck names the lines that need one."""
+    import es2_stamp
+    from retail_binaries import Image
+    groups, unread, extents, images = {}, [], {}, {}
+    for path in args.files:
+        for e in json.loads(json_path(path).read_text(encoding="utf-8")):
+            if e.get("type") != "function":
+                continue
+            b, addr = e["binary"], e["address"].lower()
+            via = stamp_via(e.get("source"))
+            if via is None:
+                unread.append((b, addr))
+                continue
+            if b not in extents:
+                extents[b], images[b] = es2_stamp.function_extents(b), Image(b)
+            after = False
+            if int(addr, 16) not in extents[b]:
+                if es2_stamp.raw_extent(images[b], int(addr, 16)) is not None:
+                    via = "raw"
+                else:
+                    via, after = "disasm", True
+            groups.setdefault((after, b, via), []).append(addr)
+    order = {"raw": 0, "disasm": 1, "decompile": 2, "both": 3}
+    for after in (False, True):
+        keys = sorted((k for k in groups if k[0] == after), key=lambda k: (k[1], order[k[2]]))
+        if keys and after:
+            print("# after regen: defined stubs that make a call")
+        for _, b, via in keys:
+            print("# stamps: %s bodies read %s" % (b, {"raw": "as straight-line stubs", "disasm": "in the disassembly",
+                                                       "decompile": "in the decompile",
+                                                       "both": "in the decompile and the disassembly"}[via]))
+            print("py tools/scripts/es2_stamp.py stamp %s --binary %s --via %s" % ("+".join(groups[(after, b, via)]), b, via))
+    for b, addr in unread:
+        print("# not stamped: %s %s, whose source names neither the decompile nor the disassembly" % (b, addr))
     return 0
 
 
@@ -751,9 +806,11 @@ def main():
     pc.add_argument("--fix", action="store_true", help="first rewrite the SHAPE forms in the batch JSONs in place")
     ls = sub.add_parser("list", help="print the steps the run would take, numbered")
     ls.add_argument("file")
+    st = sub.add_parser("stamps", help="print the stamp lines for the batch JSONs' function entries, by how each was read")
+    st.add_argument("files", nargs="+", metavar="BATCH.json")
     args = p.parse_args()
     return {"run": cmd_run, "list": cmd_list, "brief": cmd_brief, "port": cmd_port, "precheck": cmd_precheck,
-            "next": cmd_next}[args.cmd](args)
+            "next": cmd_next, "stamps": cmd_stamps}[args.cmd](args)
 
 
 if __name__ == "__main__":
