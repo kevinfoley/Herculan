@@ -70,7 +70,7 @@ public sealed class ShapeVolume {
 		int endX = end.X + offsetX;
 		int endY = end.Y + offsetY;
 
-		short step = (short)((1 << _grid.CellShift) + clearance);
+		short step = (short)((1 << _grid.CellSizeShift) + clearance);
 		if (step <= 0) {
 			return false;
 		}
@@ -111,8 +111,8 @@ public sealed class ShapeVolume {
 
 	// The grid origin in world units, which both queries add before dividing a point down to a cell.
 	// Kept to the original's 16-bit shift.
-	private int OriginOffsetX => (short)(_grid.OriginColumn << _grid.CellShift);
-	private int OriginOffsetY => (short)(_grid.OriginRow << _grid.CellShift);
+	private int OriginOffsetX => (short)(_grid.OriginColumn << _grid.CellSizeShift);
+	private int OriginOffsetY => (short)(_grid.OriginRow << _grid.CellSizeShift);
 
 	/// <summary>
 	/// <c>GridShape_HeightAround</c> (<c>00427238</c>) — the tallest column within <paramref name="radius"/> of a point, or the column the point is in when the radius is
@@ -124,7 +124,7 @@ public sealed class ShapeVolume {
 	/// <param name="y">Point Y, in the grid's own indexing frame.</param>
 	/// <param name="radius">How wide a footprint to sample — the shot's clearance.</param>
 	private int HeightAround(int x, int y, int radius) {
-		int shift = _grid.CellShift;
+		int shift = _grid.CellSizeShift;
 
 		// The narrow case is not an optimisation the engine adds: the original tests the radius
 		// against half a cell and takes a single sample below it, which is a different answer from

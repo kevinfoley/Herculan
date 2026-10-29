@@ -31,11 +31,11 @@ public sealed partial class HeightGrid {
 	private readonly byte[] _diagonals;
 	private readonly short[] _normals;
 
-	internal HeightGrid(int widthShift, int heightShift, int cellShift, int heightScale, int detailLod,
+	internal HeightGrid(int widthShift, int heightShift, int cellSizeShift, int heightScale, int detailLod,
 			byte[] rawHeights, byte[] cellFlags) {
 		WidthShift = widthShift;
 		HeightShift = heightShift;
-		CellShift = cellShift;
+		CellSizeShift = cellSizeShift;
 		HeightScale = heightScale;
 		DetailLod = detailLod;
 		_rawHeights = rawHeights;
@@ -55,10 +55,10 @@ public sealed partial class HeightGrid {
 
 	/// <summary>
 	/// log2 of world units per cell (<c>+0x108</c>), and the shift that converts a world (x,y) to a
-	/// cell (x,y). Comes from the per-zone <c>.DAT</c> header; 14 (16384 units per cell) in every
-	/// retail zone checked.
+	/// cell (x,y): <see cref="CellSize"/> is <c>1 &lt;&lt; CellSizeShift</c>. Comes from the per-zone
+	/// <c>.DAT</c> header (<see cref="HercWorks.Core.Data.File.Dat.Sim.ZoneDat.CellSizeShift"/>).
 	/// </summary>
-	public int CellShift { get; }
+	public int CellSizeShift { get; }
 
 	/// <summary>
 	/// Additive height offset (<c>+0x110</c>). Always 0 for the real binary zone format — the
@@ -84,7 +84,7 @@ public sealed partial class HeightGrid {
 
 	/// <summary>
 	/// How far the original draws and fogs, in world units: <see cref="DetailLod"/> cells converted
-	/// to world units by <see cref="CellShift"/>, exactly as <c>Terrain_DrawCellQuad</c> computes it.
+	/// to world units by <see cref="CellSizeShift"/>, exactly as <c>Terrain_DrawCellQuad</c> computes it.
 	/// Distance fog begins at half this and is total at it — see
 	/// <see cref="Content.ShadeRamp.DepthSliceFor"/>.
 	///
@@ -94,7 +94,7 @@ public sealed partial class HeightGrid {
 	/// Nothing in the format normalises it: a zone with small cells is simply seen less far
 	/// across.</para>
 	/// </summary>
-	public long VisibilityRange => (long)DetailLod << CellShift;
+	public long VisibilityRange => (long)DetailLod << CellSizeShift;
 
 	/// <summary>Grid width in cells.</summary>
 	public int Width => 1 << WidthShift;
@@ -103,13 +103,13 @@ public sealed partial class HeightGrid {
 	public int Height => 1 << HeightShift;
 
 	/// <summary>World units spanned by one cell.</summary>
-	public int CellSize => 1 << CellShift;
+	public int CellSize => 1 << CellSizeShift;
 
 	/// <summary>World units spanned by the whole zone along X.</summary>
-	public long WorldWidth => (long)Width << CellShift;
+	public long WorldWidth => (long)Width << CellSizeShift;
 
 	/// <summary>World units spanned by the whole zone along Y.</summary>
-	public long WorldHeight => (long)Height << CellShift;
+	public long WorldHeight => (long)Height << CellSizeShift;
 
 	/// <summary>
 	/// Highest world-space height anywhere in the grid — the original's <c>+0x114</c>, which the
@@ -148,22 +148,22 @@ public sealed partial class HeightGrid {
 	/// original returns a null pointer and its callers skip their slope terms entirely.
 	/// </summary>
 	public (short X, short Y, short Z)? SurfaceNormalAt(int worldX, int worldY) {
-		int cellX = worldX >> CellShift;
-		int cellY = worldY >> CellShift;
+		int cellX = worldX >> CellSizeShift;
+		int cellY = worldY >> CellSizeShift;
 
 		if (cellX < 0 || cellX >= 1 << WidthShift || cellY < 0 || cellY >= 1 << HeightShift) {
 			return null;
 		}
 
-		int fracX = worldX - (cellX << CellShift);
-		int fracY = worldY - (cellY << CellShift);
+		int fracX = worldX - (cellX << CellSizeShift);
+		int fracY = worldY - (cellY << CellSizeShift);
 		int cell = cellX + (cellY << WidthShift);
 
 		// The far triangle is chosen by the same comparison the height query makes, which differs
 		// between the two diagonal directions.
 		bool farTriangle = _diagonals[cell] == 2
 			? fracY < fracX
-			: (1 << CellShift) - fracX < fracY;
+			: (1 << CellSizeShift) - fracX < fracY;
 
 		int at = cell * 6 + (farTriangle ? 3 : 0);
 		return (_normals[at], _normals[at + 1], _normals[at + 2]);
@@ -225,7 +225,7 @@ public sealed partial class HeightGrid {
 					farY = (short)(corner10 - corner11);
 				}
 
-				short verticalRun = (short)((1 << CellShift) / HeightScale);
+				short verticalRun = (short)((1 << CellSizeShift) / HeightScale);
 				var near = Normalize((short)(nearX << 1), (short)(nearY << 1), (short)(verticalRun << 1));
 				var far = Normalize((short)(farX << 1), (short)(farY << 1), (short)(verticalRun << 1));
 
@@ -273,7 +273,7 @@ public sealed partial class HeightGrid {
 	/// outside the grid, same as the original.
 	///
 	/// <para>Two faithfulness notes worth keeping visible. First, all the interpolation arithmetic
-	/// stays in integers with <c>>> CellShift</c> divides, so the result quantizes exactly the way
+	/// stays in integers with <c>>> CellSizeShift</c> divides, so the result quantizes exactly the way
 	/// the original's does — this feeds ballistic ground-impact and the flyer terrain-avoidance
 	/// autopilot, where a float rewrite would silently shift impact points. Second, the original
 	/// bounds-checks only the *flat* cell index of each of the four corners, not the cell x+1
@@ -282,16 +282,16 @@ public sealed partial class HeightGrid {
 	/// quirk docs/herculan/planning.md's "vanilla by default" principle says to keep by default.</para>
 	/// </summary>
 	public int HeightAtWorld(int worldX, int worldY) {
-		int cellX = worldX >> CellShift;
-		int cellY = worldY >> CellShift;
+		int cellX = worldX >> CellSizeShift;
+		int cellY = worldY >> CellSizeShift;
 
 		if (cellX < 0 || cellX >= (1 << WidthShift) || cellY < 0 || cellY >= (1 << HeightShift)) {
 			return 0;
 		}
 
-		int cellSize = 1 << CellShift;
-		int fracX = worldX - (cellX << CellShift);
-		int fracY = worldY - (cellY << CellShift);
+		int cellSize = 1 << CellSizeShift;
+		int fracX = worldX - (cellX << CellSizeShift);
+		int fracY = worldY - (cellY << CellSizeShift);
 
 		int i00 = Corner(cellX + (cellY << WidthShift));
 		int i01 = Corner(cellX + ((cellY + 1) << WidthShift));
@@ -312,28 +312,28 @@ public sealed partial class HeightGrid {
 		if (diagonal == 2) {
 			// Split along the (0,0)-(1,1) diagonal.
 			if (fracY < fracX) {
-				return ((h00 - h10) * (cellSize - fracX) >> CellShift) + h10
-					 + ((h11 - h10) * fracY >> CellShift);
+				return ((h00 - h10) * (cellSize - fracX) >> CellSizeShift) + h10
+					 + ((h11 - h10) * fracY >> CellSizeShift);
 			}
-			return ((h00 - h01) * (cellSize - fracY) >> CellShift) + h01
-				 + ((h11 - h01) * fracX >> CellShift);
+			return ((h00 - h01) * (cellSize - fracY) >> CellSizeShift) + h01
+				 + ((h11 - h01) * fracX >> CellSizeShift);
 		}
 
 		if (diagonal == 0) {
 			// Split along the (0,1)-(1,0) anti-diagonal.
 			if (cellSize - fracX < fracY) {
-				return ((h01 - h11) * (cellSize - fracX) >> CellShift) + h11
-					 + ((h10 - h11) * (cellSize - fracY) >> CellShift);
+				return ((h01 - h11) * (cellSize - fracX) >> CellSizeShift) + h11
+					 + ((h10 - h11) * (cellSize - fracY) >> CellSizeShift);
 			}
-			return ((h10 - h00) * fracX >> CellShift) + h00
-				 + ((h01 - h00) * fracY >> CellShift);
+			return ((h10 - h00) * fracX >> CellSizeShift) + h00
+				 + ((h01 - h00) * fracY >> CellSizeShift);
 		}
 
 		// Selectors 1 and 3 fall through to the plane through the (0,0)/(1,0)/(0,1) corners with no
 		// triangle test at all — which is exact for selector 1, the coplanar quad BuildSurface writes.
 		// Selector 3 has no observed producer; the original handles it, so this branch does too.
-		return ((h10 - h00) * fracX >> CellShift) + h00
-			 + ((h01 - h00) * fracY >> CellShift);
+		return ((h10 - h00) * fracX >> CellSizeShift) + h00
+			 + ((h01 - h00) * fracY >> CellSizeShift);
 	}
 
 	/// <summary>

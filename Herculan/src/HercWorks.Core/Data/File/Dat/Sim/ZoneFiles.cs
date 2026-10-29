@@ -11,22 +11,22 @@ namespace HercWorks.Core.Data.File.Dat.Sim;
 ///
 /// <para>Stricter than retail, which sizes the grid from the image and never reads the header's shifts: a zone here is
 /// square, <see cref="Sides"/> cells a side as every retail zone is, stored raw, its header's width and height shifts
-/// match the image, its cell shift is within the retail zones' range, and its height scale within what retail's terrain
-/// arithmetic holds at that cell shift. <see cref="Read"/> refuses anything else with the reason, without throwing, since a bundle's files come
+/// match the image, its cell size shift is within the retail zones' range, and its height scale within what retail's terrain
+/// arithmetic holds at that cell size shift. <see cref="Read"/> refuses anything else with the reason, without throwing, since a bundle's files come
 /// from anyone. Bytes past the image, and the image's extra dwords, are not kept; retail's zones have neither.</para>
 /// </summary>
 public sealed class ZoneFiles {
 	/// <summary>The cells a zone's side may have.</summary>
 	public static readonly IReadOnlyList<int> Sides = [128, 256];
 
-	/// <summary>The smallest <see cref="CellShift"/> a zone may have, the retail zones' smallest.</summary>
-	public const int MinCellShift = 12;
+	/// <summary>The smallest <see cref="CellSizeShift"/> a zone may have, the retail zones' smallest.</summary>
+	public const int MinCellSizeShift = 12;
 
-	/// <summary>The largest <see cref="CellShift"/> a zone may have, the retail zones' largest.</summary>
-	public const int MaxCellShift = 15;
+	/// <summary>The largest <see cref="CellSizeShift"/> a zone may have, the retail zones' largest.</summary>
+	public const int MaxCellSizeShift = 15;
 
 	/// <summary>
-	/// The smallest <see cref="HeightScale"/> a zone may have: the smallest at which every allowed cell shift's face normals
+	/// The smallest <see cref="HeightScale"/> a zone may have: the smallest at which every allowed cell size shift's face normals
 	/// build. See docs/retail/simulation/terrain-heightmap.md#the-height-scales-range.
 	/// </summary>
 	public const int MinHeightScale = 3;
@@ -43,18 +43,18 @@ public sealed class ZoneFiles {
 
 	private readonly byte[] _heights;
 
-	private ZoneFiles(byte[] heights, int side, int cellShift, int heightScale) {
+	private ZoneFiles(byte[] heights, int side, int cellSizeShift, int heightScale) {
 		_heights = heights;
 		Side = side;
-		CellShift = cellShift;
+		CellSizeShift = cellSizeShift;
 		HeightScale = heightScale;
 	}
 
 	/// <summary>Cells a side.</summary>
 	public int Side { get; }
 
-	/// <inheritdoc cref="ZoneDat.CellShift"/>
-	public int CellShift { get; }
+	/// <inheritdoc cref="ZoneDat.CellSizeShift"/>
+	public int CellSizeShift { get; }
 
 	/// <inheritdoc cref="ZoneDat.HeightScale"/>
 	public int HeightScale { get; }
@@ -67,32 +67,32 @@ public sealed class ZoneFiles {
 
 	/// <summary>
 	/// The zone of <paramref name="heights"/> (as <see cref="Heights"/> orders them, copied), whose count sets the side:
-	/// the square of one of <see cref="Sides"/>, or this throws, as it does for a <paramref name="cellShift"/> outside
-	/// <see cref="MinCellShift"/> to <see cref="MaxCellShift"/> and a <paramref name="heightScale"/> outside
+	/// the square of one of <see cref="Sides"/>, or this throws, as it does for a <paramref name="cellSizeShift"/> outside
+	/// <see cref="MinCellSizeShift"/> to <see cref="MaxCellSizeShift"/> and a <paramref name="heightScale"/> outside
 	/// <see cref="MinHeightScale"/> to <see cref="MaxHeightScale"/>.
 	/// </summary>
-	public static ZoneFiles Create(ReadOnlySpan<byte> heights, int cellShift, int heightScale) {
+	public static ZoneFiles Create(ReadOnlySpan<byte> heights, int cellSizeShift, int heightScale) {
 		int count = heights.Length;
 		int side = Sides.FirstOrDefault(side => side * side == count);
 		if (side == 0) {
 			throw new ArgumentException($"{count} heights make no zone; a zone is {SidesText} cells.", nameof(heights));
 		}
 
-		if (CellShiftFailure(cellShift) is { } failure) {
-			throw new ArgumentOutOfRangeException(nameof(cellShift), failure);
+		if (CellSizeShiftFailure(cellSizeShift) is { } failure) {
+			throw new ArgumentOutOfRangeException(nameof(cellSizeShift), failure);
 		}
 
-		if (HeightScaleFailure(heightScale, cellShift) is { } heightFailure) {
+		if (HeightScaleFailure(heightScale, cellSizeShift) is { } heightFailure) {
 			throw new ArgumentOutOfRangeException(nameof(heightScale), heightFailure);
 		}
 
-		return new ZoneFiles(heights.ToArray(), side, cellShift, heightScale);
+		return new ZoneFiles(heights.ToArray(), side, cellSizeShift, heightScale);
 	}
 
 	/// <summary>
 	/// The zone in <paramref name="header"/> and <paramref name="heightmap"/>, the two files' bytes, or null with the reason
-	/// it is not one: the header is not 16 bytes, its cell shift is outside <see cref="MinCellShift"/> to
-	/// <see cref="MaxCellShift"/> or its height scale outside <see cref="MinHeightScale"/> to <see cref="MaxHeightScale"/>,
+	/// it is not one: the header is not 16 bytes, its cell size shift is outside <see cref="MinCellSizeShift"/> to
+	/// <see cref="MaxCellSizeShift"/> or its height scale outside <see cref="MinHeightScale"/> to <see cref="MaxHeightScale"/>,
 	/// the heightmap is not a bitmap array of one raw 8-bit image, the image is
 	/// not square with one of <see cref="Sides"/> a side, or the header's width and height shifts differ from the image's.
 	/// </summary>
@@ -103,7 +103,7 @@ public sealed class ZoneFiles {
 		}
 
 		var dat = new ZoneDatTransformer().Parse(header)!;
-		if ((CellShiftFailure(dat.CellShift) ?? HeightScaleFailure(dat.HeightScale, dat.CellShift)) is { } headerFailure) {
+		if ((CellSizeShiftFailure(dat.CellSizeShift) ?? HeightScaleFailure(dat.HeightScale, dat.CellSizeShift)) is { } headerFailure) {
 			failure = headerFailure;
 			return null;
 		}
@@ -157,28 +157,28 @@ public sealed class ZoneFiles {
 		}
 
 		failure = null;
-		return new ZoneFiles(image.ImageData, side, dat.CellShift, dat.HeightScale);
+		return new ZoneFiles(image.ImageData, side, dat.CellSizeShift, dat.HeightScale);
 	}
 
-	private static string? CellShiftFailure(int cellShift) =>
-		cellShift is < MinCellShift or > MaxCellShift
-			? $"The zone's cell shift is {cellShift}; a zone's is {MinCellShift} to {MaxCellShift}."
+	private static string? CellSizeShiftFailure(int cellSizeShift) =>
+		cellSizeShift is < MinCellSizeShift or > MaxCellSizeShift
+			? $"The zone's cell size shift is {cellSizeShift}; a zone's is {MinCellSizeShift} to {MaxCellSizeShift}."
 			: null;
 
 	/// <summary>
-	/// The largest <see cref="HeightScale"/> a zone of cell shift <paramref name="cellShift"/> may have: the lower of the
+	/// The largest <see cref="HeightScale"/> a zone of cell size shift <paramref name="cellSizeShift"/> may have: the lower of the
 	/// height query's 32-bit bound for a full 255-step slope across one cell and the scale that makes face normals as
 	/// coarse as retail's coarsest. See docs/retail/simulation/terrain-heightmap.md#the-height-scales-range.
 	/// </summary>
-	public static int MaxHeightScale(int cellShift) {
-		int cellSize = 1 << cellShift;
+	public static int MaxHeightScale(int cellSizeShift) {
+		int cellSize = 1 << cellSizeShift;
 		return Math.Min(int.MaxValue / (byte.MaxValue * cellSize), cellSize / CoarsestNormalVertical);
 	}
 
-	// Asked only of a cell shift CellShiftFailure accepts.
-	private static string? HeightScaleFailure(int heightScale, int cellShift) =>
-		heightScale < MinHeightScale || heightScale > MaxHeightScale(cellShift)
-			? $"The zone's height scale is {heightScale}; at cell shift {cellShift} a zone's is {MinHeightScale} to {MaxHeightScale(cellShift)}."
+	// Asked only of a cell size shift CellSizeShiftFailure accepts.
+	private static string? HeightScaleFailure(int heightScale, int cellSizeShift) =>
+		heightScale < MinHeightScale || heightScale > MaxHeightScale(cellSizeShift)
+			? $"The zone's height scale is {heightScale}; at cell size shift {cellSizeShift} a zone's is {MinHeightScale} to {MaxHeightScale(cellSizeShift)}."
 			: null;
 
 	/// <summary>The <c>dat\zoneNNNN.dat</c> header's bytes, its width and height shifts those of <see cref="Side"/>.</summary>
@@ -187,7 +187,7 @@ public sealed class ZoneFiles {
 		return new ZoneDatTransformer().Write(new ZoneDat {
 			WidthShift = shift,
 			HeightShift = shift,
-			CellShift = CellShift,
+			CellSizeShift = CellSizeShift,
 			HeightScale = HeightScale,
 		})!;
 	}

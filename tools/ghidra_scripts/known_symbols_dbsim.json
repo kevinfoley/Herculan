@@ -9604,7 +9604,7 @@
       "type": "function",
       "confidence": "high",
       "name": "GridShape_HeightAround",
-      "description": "Column height under a point of a shape's collision height field, the point already shifted by the grid origin. When (1 << (cellShift - 1)) < radius it returns the tallest cell within radius; below that it samples the single cell. Off-grid is 0, which is what makes the volume end at its own edges. Cells hold a byte code into the 256-entry int32 height table at grid+0x34.",
+      "description": "Column height under a point of a shape's collision height field, the point already shifted by the grid origin. When (1 << (cellSizeShift - 1)) < radius it returns the tallest cell within radius; below that it samples the single cell. Off-grid is 0, which is what makes the volume end at its own edges. Cells hold a byte code into the 256-entry int32 height table at grid+0x34.",
       "source": "docs/retail/simulation/hit-detection.md",
       "verified": {
         "bytes": "00427238+295",
@@ -9619,7 +9619,7 @@
       "type": "function",
       "confidence": "high",
       "name": "GridShape_HeightAt",
-      "description": "GridShape_HeightAround with the grid-origin shift added to the point first (origin column and row << cellShift, 16-bit: world units rather than cells). Returns 0 for a shape with no collision volume (no columns).",
+      "description": "GridShape_HeightAround with the grid-origin shift added to the point first (origin column and row << cellSizeShift, 16-bit: world units rather than cells). Returns 0 for a shape with no collision volume (no columns).",
       "source": "docs/retail/simulation/hit-detection.md",
       "verified": {
         "bytes": "00427360+101",
@@ -9634,7 +9634,7 @@
       "type": "function",
       "confidence": "high",
       "name": "GridShape_Raycast",
-      "description": "Marches a ray, in shape space, through a shape's collision height field. Rejects an empty grid and a ray with BOTH ends at or above grid+0x430 (the height table's last entry, its ceiling). Shifts both ends by the origin << cellShift; the step length is (1 << cellShift) + clearance, to which Math_NormalizeVec3ToLength rescales the direction, and the step count is the segment's Math_FastMagnitude3D over the step, plus 1. Hits when GridShape_HeightAround returns nonzero above the ray's current Z; reports the hit point with the grid origin offset removed.",
+      "description": "Marches a ray, in shape space, through a shape's collision height field. Rejects an empty grid and a ray with BOTH ends at or above grid+0x430 (the height table's last entry, its ceiling). Shifts both ends by the origin << cellSizeShift; the step length is (1 << cellSizeShift) + clearance, to which Math_NormalizeVec3ToLength rescales the direction, and the step count is the segment's Math_FastMagnitude3D over the step, plus 1. Hits when GridShape_HeightAround returns nonzero above the ray's current Z; reports the hit point with the grid origin offset removed.",
       "source": "docs/retail/simulation/hit-detection.md",
       "verified": {
         "bytes": "004273c8+413",
@@ -9709,7 +9709,7 @@
       "type": "function",
       "confidence": "high",
       "name": "GridShape_ReadFromStream",
-      "description": "Field reader for a dgs\\bases/bhulks shape record (vtable+0xc for classId 0x02bc0001), on top of the generic ClassItem base-class chain (TSShape_ReadFromStream). Its tail is the shape's COLLISION VOLUME, a coarse height field: int16 columns (+0x2a), rows (+0x2c), origin column (+0x2e), origin row (+0x30), cell shift (+0x32), a 256-entry int32 height table (+0x34, 1024 bytes, last entry addressed as the ceiling at +0x430), then, when rows is not 0, rows pointers allocated with Arena_AllocDup at +0x434, each to a row of columns height codes read from the stream. The obvious reading, five undecoded scalars and an opaque block followed by sub-record count * sub-record size raw records, spans the same bytes and parses every retail record, but it is not the layout. See docs/retail/simulation/hit-detection.md.",
+      "description": "Field reader for a dgs\\bases/bhulks shape record (vtable+0xc for classId 0x02bc0001), on top of the generic ClassItem base-class chain (TSShape_ReadFromStream). Its tail is the shape's COLLISION VOLUME, a coarse height field: int16 columns (+0x2a), rows (+0x2c), origin column (+0x2e), origin row (+0x30), cell size shift (+0x32), a 256-entry int32 height table (+0x34, 1024 bytes, last entry addressed as the ceiling at +0x430), then, when rows is not 0, rows pointers allocated with Arena_AllocDup at +0x434, each to a row of columns height codes read from the stream. The obvious reading, five undecoded scalars and an opaque block followed by sub-record count * sub-record size raw records, spans the same bytes and parses every retail record, but it is not the layout. See docs/retail/simulation/hit-detection.md.",
       "source": "docs/retail/simulation/hit-detection.md",
       "verified": {
         "bytes": "0042762c+231",
@@ -9724,7 +9724,7 @@
       "type": "function",
       "confidence": "high",
       "name": "GridShape_WriteToStream",
-      "description": "GridShape vtable 0049aaa0 slot +0x10 (shape, stream): TSShape's write (00490e34), then the stream's +0x14 write of what GridShape_ReadFromStream reads, in the same order: the int16 columns +0x2a, rows +0x2c, origin column +0x2e, origin row +0x30 and cell shift +0x32, the 0x400-byte height table at +0x34, then one columns-byte row per row through the row-pointer array at +0x434.",
+      "description": "GridShape vtable 0049aaa0 slot +0x10 (shape, stream): TSShape's write (00490e34), then the stream's +0x14 write of what GridShape_ReadFromStream reads, in the same order: the int16 columns +0x2a, rows +0x2c, origin column +0x2e, origin row +0x30 and cell size shift +0x32, the 0x400-byte height table at +0x34, then one columns-byte row per row through the row-pointer array at +0x434.",
       "source": "docs/retail/formats/dgs-hd0-notes.md",
       "verified": {
         "bytes": "00427714+217",
@@ -9814,7 +9814,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Structure_WalkCollisionTest",
-      "description": "The walking-collision half of the structure volume test, called from Structure_GatherWalkCandidates's gather. Per candidate: 2D distance from the point to the structure against shape+8 (the shape read through the model instance, obj+0x34 -> +4), then the offset rotated into shape space by the transposed XY block of the object's rotation, then GridShape_HeightAt(shape, point, 0), which applies the same origin << cellShift GridShape_Raycast applies, so a walker meets the footprint a shot meets. Returns the first nonzero height; the radius argument is not read.",
+      "description": "The walking-collision half of the structure volume test, called from Structure_GatherWalkCandidates's gather. Per candidate: 2D distance from the point to the structure against shape+8 (the shape read through the model instance, obj+0x34 -> +4), then the offset rotated into shape space by the transposed XY block of the object's rotation, then GridShape_HeightAt(shape, point, 0), which applies the same origin << cellSizeShift GridShape_Raycast applies, so a walker meets the footprint a shot meets. Returns the first nonzero height; the radius argument is not read.",
       "source": "docs/retail/simulation/hit-detection.md",
       "signature": "int __cdecl Structure_WalkCollisionTest(int *point, unsigned short radius, int *candidates, short count)",
       "verified": {
@@ -10157,7 +10157,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ObjList_SetDrawDistances",
-      "description": "(radius): the five object draw distances at DAT_004cfa0c, each Math_Q10Multiply(radius, factor) over the int16 table at 0049abb0 = {800, 900, 1000, 800, 1200}. Its one caller, Terrain_SetupVisibleRegion, passes the terrain draw radius in world units (grid+0x10c << cellShift), once a frame. ObjList_IsBeyondDrawDistance reads the result.",
+      "description": "(radius): the five object draw distances at DAT_004cfa0c, each Math_Q10Multiply(radius, factor) over the int16 table at 0049abb0 = {800, 900, 1000, 800, 1200}. Its one caller, Terrain_SetupVisibleRegion, passes the terrain draw radius in world units (grid+0x10c << cellSizeShift), once a frame. ObjList_IsBeyondDrawDistance reads the result.",
       "source": "DBSIM decompile at 00428bc0; docs/retail/rendering/terrain-drawing.md#objects-in-the-walk"
     },
     {
@@ -25744,7 +25744,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Terrain_ResolveCellTexture",
-      "description": "Terrain texture selection and tiling. Takes an 8-byte dat\\mat0 record, the cell's X and Y, and a UV-rect output of four (u, v) pairs -- pair i belongs to vertex i of Terrain_DrawCellQuad's quad, in its corner order (cellX,cellY), (cellX,cellY+1), (cellX+1,cellY+1), (cellX+1,cellY), so u rises with cellX and the negated v FALLS with cellY. Indexes the active terrain bitmap descriptor table (_DAT_006b4fc4, 20-byte stride -- the SAME per-frame descriptor structure the mech texture path uses, see dts-texture-binding.md) by mat0 field 0, i.e. mat0's first field IS a DBA frame index. Then branches on mat0 field 1 (BlockShift): if 0, the frame's own F0..F3 UV corners are used verbatim (texture stretched across the quad); otherwise shift = cellShift + BlockShift - 13 and the rect becomes u0 = (cellX << shift) & 0xff, v0 = (cellY << shift) & 0xff, spanning 2^shift texels, with V negated. The & 0xff wrap is a 256-texel tiling space -- which is why the terrain banks are 256x256 and must be edge-tileable. Returns descriptor field 4 (bytes 16-19) as a short: the bitmap handle handed to the polygon draw. Retail: mat0 record 0 = {frame 0, BlockShift 6}, record 1 = {frame 1, BlockShift 6}; that is shift = cellShift - 7, so 128 texels per cell at cellShift 14 and 64 at 13 -- 128 world units per texel either way.",
+      "description": "Terrain texture selection and tiling. Takes an 8-byte dat\\mat0 record, the cell's X and Y, and a UV-rect output of four (u, v) pairs -- pair i belongs to vertex i of Terrain_DrawCellQuad's quad, in its corner order (cellX,cellY), (cellX,cellY+1), (cellX+1,cellY+1), (cellX+1,cellY), so u rises with cellX and the negated v FALLS with cellY. Indexes the active terrain bitmap descriptor table (_DAT_006b4fc4, 20-byte stride -- the SAME per-frame descriptor structure the mech texture path uses, see dts-texture-binding.md) by mat0 field 0, i.e. mat0's first field IS a DBA frame index. Then branches on mat0 field 1 (BlockShift): if 0, the frame's own F0..F3 UV corners are used verbatim (texture stretched across the quad); otherwise shift = cellSizeShift + BlockShift - 13 and the rect becomes u0 = (cellX << shift) & 0xff, v0 = (cellY << shift) & 0xff, spanning 2^shift texels, with V negated. The & 0xff wrap is a 256-texel tiling space -- which is why the terrain banks are 256x256 and must be edge-tileable. Returns descriptor field 4 (bytes 16-19) as a short: the bitmap handle handed to the polygon draw. Retail: mat0 record 0 = {frame 0, BlockShift 6}, record 1 = {frame 1, BlockShift 6}; that is shift = cellSizeShift - 7, so 128 texels per cell at cellSizeShift 14 and 64 at 13 -- 128 world units per texel either way.",
       "source": "docs/retail/rendering/terrain-texturing.md",
       "signature": "int __cdecl Terrain_ResolveCellTexture(int *materialRecord, int cellX, int cellY, int *uvOut)"
     },
@@ -25832,7 +25832,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TerrainZone_PopulateFromBitmap",
-      "description": "(grid, bitmap, bias): the retail zone heightmap loader; es2_xref finds one call, from TerrainZone_LoadHeightmap. Treats the Dynamix bitmap's 8-bit pixel grid as the heightmap: the width and height shifts (+0x100, +0x104) are the log2 of the bitmap's width (+6) and height (+4), the 16-byte cell array (+0xec) and the per-cell scratch byte array (+0xf0) are allocated, and rows are read bottom-up from the pixel pointer at bitmap+0xe. Each pixel less the bias byte becomes the cell's raw height (+0), the scratch byte is zeroed through HeightGrid_SetCellScratchByte, and +0x114 keeps the largest raw height seen. The +0xf material bits are set with the selector bit 1 kept (& 2): a cell on a block boundary rolls Math_RandomNext() & 0xfff < 0x4ce (about 30%) for material 1 against 0 -- the roll's upper bound is the literal 2 (CMP EBX,0x2 at 0046c5ca), not the mat0 count -- and every other cell copies its block's base cell, the block mask being (1 << (0x15 - mat0[0]+4 - cellShift)) - 1. Afterwards +0x110 (height base) is 0, +0x114 is multiplied by the height scale +0x118 into the zone's highest world height, and HeightOffsetTable_SetScale(grid+0xd0, base, scale) and HeightOffsetTable_Reset run. Every retail ZONE*.DBA is 128x128 (16418 bytes) or 256x256 (65570 bytes), the pixel count plus a 34-byte bitmap header.",
+      "description": "(grid, bitmap, bias): the retail zone heightmap loader; es2_xref finds one call, from TerrainZone_LoadHeightmap. Treats the Dynamix bitmap's 8-bit pixel grid as the heightmap: the width and height shifts (+0x100, +0x104) are the log2 of the bitmap's width (+6) and height (+4), the 16-byte cell array (+0xec) and the per-cell scratch byte array (+0xf0) are allocated, and rows are read bottom-up from the pixel pointer at bitmap+0xe. Each pixel less the bias byte becomes the cell's raw height (+0), the scratch byte is zeroed through HeightGrid_SetCellScratchByte, and +0x114 keeps the largest raw height seen. The +0xf material bits are set with the selector bit 1 kept (& 2): a cell on a block boundary rolls Math_RandomNext() & 0xfff < 0x4ce (about 30%) for material 1 against 0 -- the roll's upper bound is the literal 2 (CMP EBX,0x2 at 0046c5ca), not the mat0 count -- and every other cell copies its block's base cell, the block mask being (1 << (0x15 - mat0[0]+4 - cellSizeShift)) - 1. Afterwards +0x110 (height base) is 0, +0x114 is multiplied by the height scale +0x118 into the zone's highest world height, and HeightOffsetTable_SetScale(grid+0xd0, base, scale) and HeightOffsetTable_Reset run. Every retail ZONE*.DBA is 128x128 (16418 bytes) or 256x256 (65570 bytes), the pixel count plus a 34-byte bitmap header.",
       "source": "memory project_es2_exe_recon (terrain data-structure session)",
       "verified": {
         "bytes": "0046c3c0+653",
@@ -25847,7 +25847,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TerrainZone_LoadHeightmap",
-      "description": "terrain.cpp. (grid, path, heightBias): Terrain_LoadZone (0042789c) passes it the zone's 'dba\\zoneN.dba' path. Copies the path, opens 'dat\\mat0.dat' (ResourcePath_BuildFolderName) with VolRStream_CtorFromPath and reads its int32 count into HeightGrid+0x11d and that many 8-byte records into a new array at +0x121 (ZONES_MaterialTable). A path whose extension is '.dba' is opened with VolRStream_CtorFromPath, loaded with ClassItem_LoadResource and handed to TerrainZone_PopulateFromBitmap with the bias; the bitmap is then destroyed. Any other path is opened with _fopen, so only as a loose file, and read as ASCII: a '%d %d %d %d' header of width shift, height shift, maximum and minimum raw height, the two heights shifted by 15 minus the cell shift (+0x108), then one '%d' height per cell, shifted the same way, each cell's material rolled over records 1 to count-1 at 0x4ce in 0x1000; it ends with HeightOffsetTable_SetScale and HeightOffsetTable_Reset on +0xd0.",
+      "description": "terrain.cpp. (grid, path, heightBias): Terrain_LoadZone (0042789c) passes it the zone's 'dba\\zoneN.dba' path. Copies the path, opens 'dat\\mat0.dat' (ResourcePath_BuildFolderName) with VolRStream_CtorFromPath and reads its int32 count into HeightGrid+0x11d and that many 8-byte records into a new array at +0x121 (ZONES_MaterialTable). A path whose extension is '.dba' is opened with VolRStream_CtorFromPath, loaded with ClassItem_LoadResource and handed to TerrainZone_PopulateFromBitmap with the bias; the bitmap is then destroyed. Any other path is opened with _fopen, so only as a loose file, and read as ASCII: a '%d %d %d %d' header of width shift, height shift, maximum and minimum raw height, the two heights shifted by 15 minus the cell size shift (+0x108), then one '%d' height per cell, shifted the same way, each cell's material rolled over records 1 to count-1 at 0x4ce in 0x1000; it ends with HeightOffsetTable_SetScale and HeightOffsetTable_Reset on +0xd0.",
       "source": "memory project_es2_exe_recon (terrain data-structure session)",
       "verified": {
         "bytes": "0046c650+1095",
@@ -25862,7 +25862,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Terrain_SetupVisibleRegion",
-      "description": "Per-frame terrain visibility setup, called twice per frame from the frame function 0045fb9c with ActiveHeightGrid passed AS A PARAMETER (which is why a search for readers of the ActiveHeightGrid global missed the terrain render path entirely). WRITES the LOD field: grid[+0x10c] = (short)DAT_004a0bcc[DAT_004d1fc3], then >>= (cellShift - 14) when cellShift > 14. DAT_004a0bcc is three int16s -- 6, 10, 14 cells -- indexed by the terrain-detail option DAT_004d1fc3, so the draw radius is a player setting; the >> only ever fires on the two shift-15 zones and nothing compensates below shift 14. Passes grid[0x10c] << cellShift to 00428bc0 (which derives 5 distance bands), builds the visible cell-space region into grid+0x28 with count grid+0xc8 / pointer grid+0xcc / visible flag grid+0x11c, and installs the grid origin in view space at grid+0x1c and the view-space step of one cell along X at grid+4 and along Y at grid+0x10. The region: Terrain_BuildDrawRegionQuad's square clipped by ViewFrustum_ClipGroundPolygon against a ViewFrustum_Build frustum loosened by 1.5 cells, points shifted down by the cell shift; when nothing is left grid+0x11c goes 0 and the previous polygon stays. Also copies the view's position to g_TerrainViewerPos.",
+      "description": "Per-frame terrain visibility setup, called twice per frame from the frame function 0045fb9c with ActiveHeightGrid passed AS A PARAMETER (which is why a search for readers of the ActiveHeightGrid global missed the terrain render path entirely). WRITES the LOD field: grid[+0x10c] = (short)DAT_004a0bcc[DAT_004d1fc3], then >>= (cellSizeShift - 14) when cellSizeShift > 14. DAT_004a0bcc is three int16s -- 6, 10, 14 cells -- indexed by the terrain-detail option DAT_004d1fc3, so the draw radius is a player setting; the >> only ever fires on the two shift-15 zones and nothing compensates below shift 14. Passes grid[0x10c] << cellSizeShift to 00428bc0 (which derives 5 distance bands), builds the visible cell-space region into grid+0x28 with count grid+0xc8 / pointer grid+0xcc / visible flag grid+0x11c, and installs the grid origin in view space at grid+0x1c and the view-space step of one cell along X at grid+4 and along Y at grid+0x10. The region: Terrain_BuildDrawRegionQuad's square clipped by ViewFrustum_ClipGroundPolygon against a ViewFrustum_Build frustum loosened by 1.5 cells, points shifted down by the cell size shift; when nothing is left grid+0x11c goes 0 and the previous polygon stays. Also copies the view's position to g_TerrainViewerPos.",
       "source": "docs/retail/rendering/terrain-texturing.md, 'grid+0x10c -- the LOD / draw-radius field'"
     },
     {
@@ -25871,7 +25871,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Terrain_DrawVisibleCells",
-      "description": "(grid, view): the terrain draw. Nothing while grid+0x11c is clear. Installs the identity model transform, points the render context's +0x22c at a zero dword for the duration, puts the view's cell (position >> cellShift) in g_TerrainViewerCellX/fd8 and that cell's pending-object count in g_TerrainViewerCellPending, then walks the visible region (grid+0xc8) about that cell: by column (CellWalk_PolygonByColumn, Terrain_DrawCellColumnRun) when the view's heading (+0x14) has magnitude 0x2001..0x5fff (-0x8000 read as 0x7fff), by row (CellWalk_Polygon, Terrain_DrawCellRowRun) otherwise. Ends with Terrain_DrawCellObjects for the viewer's cell when g_TerrainViewerCellPending is still set.",
+      "description": "(grid, view): the terrain draw. Nothing while grid+0x11c is clear. Installs the identity model transform, points the render context's +0x22c at a zero dword for the duration, puts the view's cell (position >> cellSizeShift) in g_TerrainViewerCellX/fd8 and that cell's pending-object count in g_TerrainViewerCellPending, then walks the visible region (grid+0xc8) about that cell: by column (CellWalk_PolygonByColumn, Terrain_DrawCellColumnRun) when the view's heading (+0x14) has magnitude 0x2001..0x5fff (-0x8000 read as 0x7fff), by row (CellWalk_Polygon, Terrain_DrawCellRowRun) otherwise. Ends with Terrain_DrawCellObjects for the viewer's cell when g_TerrainViewerCellPending is still set.",
       "source": "docs/retail/rendering/terrain-drawing.md"
     },
     {
@@ -25880,7 +25880,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Terrain_BuildDrawRegionQuad",
-      "description": "Builds the terrain draw region as a square of radius (grid[+0x10c] << cellShift) world units centred on the viewer (g_TerrainViewerPos / DAT_006b4fcc), clamped to the grid's own extent ((1 << widthShift) - 2 << cellShift, plus origin at grid+0xf4/+0xf8), and emits it as a 4-corner quad at constant Z (grid+0xfc); writes count 0 instead when the clamped region is empty. Confirms the LOD field is literally a terrain draw radius in cells.",
+      "description": "Builds the terrain draw region as a square of radius (grid[+0x10c] << cellSizeShift) world units centred on the viewer (g_TerrainViewerPos / DAT_006b4fcc), clamped to the grid's own extent ((1 << widthShift) - 2 << cellSizeShift, plus origin at grid+0xf4/+0xf8), and emits it as a 4-corner quad at constant Z (grid+0xfc); writes count 0 instead when the clamped region is empty. Confirms the LOD field is literally a terrain draw radius in cells.",
       "source": "docs/retail/rendering/terrain-texturing.md (terrain texturing RE session)"
     },
     {
@@ -26010,7 +26010,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Terrain_FaceBlocksAt",
-      "description": "(grid, dir, point): Terrain_FaceBlocksMovement applied at a world point. Finds the cell by flat index ((y >> cellShift) << widthShift) + (x >> cellShift); an index outside the whole array returns 1 (blocks) at once, so a point just past the grid's west or east edge reads the cell at the far end of the neighbouring row. Otherwise it picks one of the cell's two face normals by the diagonal selector (+0x0f & 3), the split the height query uses: selector 0 the far normal (+0x07) when cellSize < fx + fy, selector 1 the near (+0x01), selector 2 the far when fy <= fx, else the near; selector 3 matches no arm and passes an uninitialised local as the normal pointer. It returns Terrain_FaceBlocksMovement(grid, dir, normal). Callers found by es2_xref: two calls in Terrain_RayWalk and one in Deployment_PickPointNearPlayer, which passes a zero direction.",
+      "description": "(grid, dir, point): Terrain_FaceBlocksMovement applied at a world point. Finds the cell by flat index ((y >> cellSizeShift) << widthShift) + (x >> cellSizeShift); an index outside the whole array returns 1 (blocks) at once, so a point just past the grid's west or east edge reads the cell at the far end of the neighbouring row. Otherwise it picks one of the cell's two face normals by the diagonal selector (+0x0f & 3), the split the height query uses: selector 0 the far normal (+0x07) when cellSize < fx + fy, selector 1 the near (+0x01), selector 2 the far when fy <= fx, else the near; selector 3 matches no arm and passes an uninitialised local as the normal pointer. It returns Terrain_FaceBlocksMovement(grid, dir, normal). Callers found by es2_xref: two calls in Terrain_RayWalk and one in Deployment_PickPointNearPlayer, which passes a zero direction.",
       "source": "docs/retail/simulation/ai-navigation.md",
       "verified": {
         "bytes": "0046fe84+239",
@@ -26058,7 +26058,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Terrain_ProjectFarEdgeAhead",
-      "description": "(grid, view, out): projects to the screen the point the terrain draw radius (grid+0x10c << cellShift) straight ahead of the viewer along its heading (+0x14), at the grid's lowest height (+0x110); the distance is a literal 1000 instead when the viewer's cell is within the radius of any grid edge. Builds the 2D transform with Math_BuildRotation2D and the viewer's x/y, applies it with Transform2D_ApplyToPoint, then Transform_ApplyToPoint by the world-to-view transform at 006c6078, Raster_PerspectiveDivide and Raster_ProjectToScreen; the screen x/y go to out[0]/out[1]. Its one caller, Scene_DrawTerrainPass, passes +0x72 of g_TheaterHzline. Only Hzline_FillGround's rolled branch reads it, into polygon vertices it overwrites before drawing, so the point never reaches the frame.",
+      "description": "(grid, view, out): projects to the screen the point the terrain draw radius (grid+0x10c << cellSizeShift) straight ahead of the viewer along its heading (+0x14), at the grid's lowest height (+0x110); the distance is a literal 1000 instead when the viewer's cell is within the radius of any grid edge. Builds the 2D transform with Math_BuildRotation2D and the viewer's x/y, applies it with Transform2D_ApplyToPoint, then Transform_ApplyToPoint by the world-to-view transform at 006c6078, Raster_PerspectiveDivide and Raster_ProjectToScreen; the screen x/y go to out[0]/out[1]. Its one caller, Scene_DrawTerrainPass, passes +0x72 of g_TheaterHzline. Only Hzline_FillGround's rolled branch reads it, into polygon vertices it overwrites before drawing, so the point never reaches the frame.",
       "source": "DBSIM decompile at 00470910; docs/retail/rendering/terrain-texturing.md#grid0x10c--the-lod--draw-radius-field; docs/retail/rendering/distance-fog-and-sky.md#below-the-line"
     },
     {
@@ -26175,7 +26175,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Terrain_MarkStructureFootprint",
-      "description": "Registers one structure's footprint in the height grid's +0xf0 scratch array, ready for Terrain_FlattenStructureFootprints to level it. Sets the scratch byte to 1 for the cell the structure stands in unconditionally, then walks the cells in the position's radius-sized bounding box and, for each whose corner (cellX << cellShift, cellY << cellShift, position.z) is within radius by Math_FastMagnitude3D -- the z terms cancel, so the test is planar -- marks that cell plus the three west, south and south-west of it, covering all four quads meeting that corner. radius is the caller's SimObject_GetShapeRadius (vtable +0x10). Callers: Base_AttachToGroup (00405c3c) and DBSim_SpawnMissionObjects' own base branch, each immediately before that structure's height query. No bounds checking beyond refusing to step to a negative index.",
+      "description": "Registers one structure's footprint in the height grid's +0xf0 scratch array, ready for Terrain_FlattenStructureFootprints to level it. Sets the scratch byte to 1 for the cell the structure stands in unconditionally, then walks the cells in the position's radius-sized bounding box and, for each whose corner (cellX << cellSizeShift, cellY << cellSizeShift, position.z) is within radius by Math_FastMagnitude3D -- the z terms cancel, so the test is planar -- marks that cell plus the three west, south and south-west of it, covering all four quads meeting that corner. radius is the caller's SimObject_GetShapeRadius (vtable +0x10). Callers: Base_AttachToGroup (00405c3c) and DBSim_SpawnMissionObjects' own base branch, each immediately before that structure's height query. No bounds checking beyond refusing to step to a negative index.",
       "source": "docs/retail/simulation/terrain-heightmap.md, 'Structure footprints -- the flattening pass'",
       "signature": "void __cdecl Terrain_MarkStructureFootprint(void *grid, int *position, int radius)",
       "verified": {
@@ -26239,7 +26239,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Terrain_PaintFormationPad",
-      "description": "Stamps one base formation's material over the terrain tile a world point falls in, and marks that formation's occupied cells for the flattening pass. The only writer of cell +0xf bits [2:7] outside the two zone loaders, and the only path by which materials 2-12 reach shipped terrain -- TerrainZone_PopulateFromBitmap's roll is capped at 2. The tile is 1 << (0x15 - mat0[material].BlockShift) world units square, independent of the zone's cell shift, and dimension x dimension map entries span it exactly; a cell takes 1 << (cellShift - 13) entries per axis. Every cell of the tile is painted; only cells whose map byte is nonzero also get Terrain_SetCellScratch(1), which is the second input to Terrain_FlattenStructureFootprints (00471190) alongside the per-object radius marks of Terrain_MarkStructureFootprint (00470dc8), and is why a base's whole pad levels as one region. Map row 0 indexes the tile's HIGH-y edge and counts down. The material write is skipped entirely when CockpitArt_LoadOnDemand is set (the low-memory mode: -l, or under 12 MB physical), leaving the ground flat but unpainted.",
+      "description": "Stamps one base formation's material over the terrain tile a world point falls in, and marks that formation's occupied cells for the flattening pass. The only writer of cell +0xf bits [2:7] outside the two zone loaders, and the only path by which materials 2-12 reach shipped terrain -- TerrainZone_PopulateFromBitmap's roll is capped at 2. The tile is 1 << (0x15 - mat0[material].BlockShift) world units square, independent of the zone's cell size shift, and dimension x dimension map entries span it exactly; a cell takes 1 << (cellSizeShift - 13) entries per axis. Every cell of the tile is painted; only cells whose map byte is nonzero also get Terrain_SetCellScratch(1), which is the second input to Terrain_FlattenStructureFootprints (00471190) alongside the per-object radius marks of Terrain_MarkStructureFootprint (00470dc8), and is why a base's whole pad levels as one region. Map row 0 indexes the tile's HIGH-y edge and counts down. The material write is skipped entirely when CockpitArt_LoadOnDemand is set (the low-memory mode: -l, or under 12 MB physical), leaving the ground flat but unpainted.",
       "source": "docs/retail/rendering/terrain-texturing.md (base formation pads)",
       "signature": "void __cdecl Terrain_PaintFormationPad(void *grid, int *worldPoint, int materialIndex, unsigned char **mapRows, int dimension)"
     },
@@ -39881,7 +39881,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ViewFrustum_Ctor",
-      "description": "(frustum, far, margin): constructs the position at +0xc and the six 0x10-byte planes from +0x18 (Plane_Ctor), stores far at +4, margin at +0 and -1 (every plane enabled) at +8. Terrain_SetupVisibleRegion builds one with far = grid+0x10c << cellShift and margin = 1.5 cells.",
+      "description": "(frustum, far, margin): constructs the position at +0xc and the six 0x10-byte planes from +0x18 (Plane_Ctor), stores far at +4, margin at +0 and -1 (every plane enabled) at +8. Terrain_SetupVisibleRegion builds one with far = grid+0x10c << cellSizeShift and margin = 1.5 cells.",
       "source": "docs/retail/rendering/terrain-drawing.md"
     },
     {

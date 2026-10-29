@@ -11,7 +11,7 @@ namespace Herculan.Engine.Terrain;
 /// <c>TerrainZone_LoadHeightmap</c> (<c>0046c650</c>) and <c>TerrainZone_PopulateFromBitmap</c>
 /// (<c>0046c3c0</c>) — turning a zone's two files into a ready <see cref="HeightGrid"/>: the
 /// 16-byte <c>dat\zoneNNNN.dat</c> header (<see cref="HercWorks.Core.Data.File.Dat.Sim.ZoneDat"/>),
-/// of which the cell shift and height scale are kept, and the <c>dba\zoneNNNN.dba</c>
+/// of which the cell size shift and height scale are kept, and the <c>dba\zoneNNNN.dba</c>
 /// <see cref="DynamixBitmapArray"/>, whose one 8-bit image is the heightmap. See
 /// docs/retail/formats/zone-terrain.md#loading-pipeline and
 /// docs/retail/simulation/terrain-heightmap.md.
@@ -55,12 +55,12 @@ public static class TerrainZoneLoader {
 		// The width/height shifts are not used. The original reads them into locals and then
 		// discards them — TerrainZone_PopulateFromBitmap re-derives both from the heightmap image's
 		// own dimensions rather than trusting these copies.
-		int cellShift = header.CellShift;
+		int cellSizeShift = header.CellSizeShift;
 		int heightScale = header.HeightScale;
 
 		var bitmap = ReadHeightmapImage(content, zoneIndex);
 
-		return PopulateFromBitmap(bitmap, cellShift, heightScale, materials, random, heightBias,
+		return PopulateFromBitmap(bitmap, cellSizeShift, heightScale, materials, random, heightBias,
 			detailLevel);
 	}
 
@@ -102,7 +102,7 @@ public static class TerrainZoneLoader {
 	/// docs/retail/formats/zone-terrain.md#loading-pipeline and
 	/// docs/retail/simulation/terrain-heightmap.md#per-cell-record-16-bytes.</para>
 	/// </summary>
-	private static HeightGrid PopulateFromBitmap(DynamixBitmap image, int cellShift, int heightScale,
+	private static HeightGrid PopulateFromBitmap(DynamixBitmap image, int cellSizeShift, int heightScale,
 			TerrainMaterialTable materials, SimRandom random, byte heightBias, int detailLevel) {
 		var (widthShift, heightShift) = GridShifts(image);
 
@@ -126,9 +126,9 @@ public static class TerrainZoneLoader {
 		// The one difference from the original is when: Terrain_SetupVisibleRegion re-reads the
 		// setting every frame, where this reads it once at load. Equivalent while nothing changes the
 		// setting mid-mission, which nothing in this engine does.
-		int detailLod = TerrainDetail.RadiusFor(detailLevel, cellShift);
+		int detailLod = TerrainDetail.RadiusFor(detailLevel, cellSizeShift);
 
-		int blockMask = (1 << (0x15 - materials[0].BlockShift - cellShift)) - 1;
+		int blockMask = (1 << (0x15 - materials[0].BlockShift - cellSizeShift)) - 1;
 		if (blockMask < 0) {
 			blockMask = 0;
 		}
@@ -161,7 +161,7 @@ public static class TerrainZoneLoader {
 			}
 		}
 
-		return new HeightGrid(widthShift, heightShift, cellShift, heightScale, detailLod, rawHeights, cellFlags) {
+		return new HeightGrid(widthShift, heightShift, cellSizeShift, heightScale, detailLod, rawHeights, cellFlags) {
 			MaxWorldHeight = heightScale * maxRaw
 		};
 	}

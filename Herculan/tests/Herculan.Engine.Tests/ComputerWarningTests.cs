@@ -344,13 +344,13 @@ public class ComputerWarningTests {
 
 	internal static SimWorld FlatWorld(ISoundSink sounds, params MechObject[] mechs) {
 		const int widthShift = 8;
-		const int cellShift = 12;
+		const int cellSizeShift = 12;
 		const int cellCount = 1 << (widthShift * 2);
 
 		var heights = new byte[cellCount];
 		Array.Fill(heights, (byte)40);
 
-		var terrain = new HeightGrid(widthShift, widthShift, cellShift, 16, 10, heights, new byte[cellCount]);
+		var terrain = new HeightGrid(widthShift, widthShift, cellSizeShift, 16, 10, heights, new byte[cellCount]);
 
 		// Pinned rather than left on SimRandom's vanilla state, because the shelling below is a long
 		// chain of ~51% per-component rolls and which bands it crosses, in what order, is a property
@@ -358,7 +358,7 @@ public class ComputerWarningTests {
 		// retail seed table, and should not move if that table is ever revisited.
 		var world = new SimWorld(terrain, random: new SimRandom(RandomSeed)) { Sounds = sounds };
 
-		int middle = (1 << (widthShift + cellShift)) / 2;
+		int middle = (1 << (widthShift + cellSizeShift)) / 2;
 		foreach (var mech in mechs) {
 			mech.Position = new Vec3i(middle, middle, terrain.HeightAtWorld(middle, middle));
 			world.Add(mech);

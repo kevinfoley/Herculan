@@ -69,7 +69,7 @@ public sealed class HddMapRaster {
 		}
 
 		var grown = bounds.Grown(HddMap.Margin);
-		int shift = grid.CellShift;
+		int shift = grid.CellSizeShift;
 		int x0 = grown.MinX >> shift;
 		int y0 = grown.MinY >> shift;
 		int x1 = grown.MaxX >> shift;

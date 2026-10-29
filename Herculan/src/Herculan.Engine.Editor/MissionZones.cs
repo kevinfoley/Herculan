@@ -44,7 +44,7 @@ internal static class MissionZones {
 					&& Heightmap(simulator, zone) is { } heightmap) {
 				// The grid's size is the heightmap's own, as the game takes it; the header's copies are not read.
 				var (widthShift, heightShift) = TerrainZoneLoader.GridShifts(heightmap);
-				zones.Add(new ZoneChoice(zone, 1 << (widthShift + header.CellShift), 1 << (heightShift + header.CellShift)));
+				zones.Add(new ZoneChoice(zone, 1 << (widthShift + header.CellSizeShift), 1 << (heightShift + header.CellSizeShift)));
 			}
 		}
 

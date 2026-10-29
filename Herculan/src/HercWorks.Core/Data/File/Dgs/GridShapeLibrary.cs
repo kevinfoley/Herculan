@@ -20,7 +20,7 @@ namespace HercWorks.Core.Data.File.Dgs;
 /// than starting at it.
 /// </param>
 /// <param name="OriginRow">The same, Y (<c>+0x30</c>).</param>
-/// <param name="CellShift">
+/// <param name="CellSizeShift">
 /// Log2 of the cell size in world units (<c>+0x32</c>) — every conversion between a shape-space
 /// coordinate and a cell index is a shift by this, never a divide.
 /// </param>
@@ -33,7 +33,7 @@ namespace HercWorks.Core.Data.File.Dgs;
 /// original allocates and reads them (<c>+0x434</c>, a row-pointer array).
 /// </param>
 public readonly record struct GridShapeCollision(
-	short Columns, short Rows, short OriginColumn, short OriginRow, short CellShift,
+	short Columns, short Rows, short OriginColumn, short OriginRow, short CellSizeShift,
 	int[] Heights, byte[][] Cells) {
 
 	/// <summary>

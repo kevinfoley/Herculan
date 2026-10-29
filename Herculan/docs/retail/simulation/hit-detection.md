@@ -137,7 +137,7 @@ Retail ships a `.COL` and a `.DMG` for `SKIMMER` only, so `HOVTANK` and `DROPSHI
 
 ## Measured: hit geometry versus the drawn mesh
 
-Across every static structure type, the `.DGS` grid's world footprint is **larger** than the mesh it is drawn with, by 200–900 units a side, because it rounds out to whole 512-unit cells — so the volume never runs small horizontally and a shot stops slightly early if anything. The march step at the retail cell shift is 712 units (`(1 << 9) + clearance`).
+Across every static structure type, the `.DGS` grid's world footprint is **larger** than the mesh it is drawn with, by 200–900 units a side, because it rounds out to whole 512-unit cells — so the volume never runs small horizontally and a shot stops slightly early if anything. The march step at the retail cell size shift is 712 units (`(1 << 9) + clearance`).
 
 Several types' collision **ceiling** sits well below their roof line — type 3 stops at 2225 against a 6756 mesh, type 22 at 9400 against 18300 — so shots at the upper part of those buildings pass clean through. That is the retail data's own authoring.
 

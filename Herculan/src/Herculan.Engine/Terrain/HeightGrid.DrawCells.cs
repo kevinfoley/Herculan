@@ -15,10 +15,10 @@ public sealed partial class HeightGrid {
 	/// </summary>
 	public (int X, int Y)? PickDrawCell(Vec3i position, int radius, Vec3i viewer,
 			TerrainVisibleRegion region) {
-		int cellX = position.X >> CellShift;
-		int cellY = position.Y >> CellShift;
-		int viewerX = viewer.X >> CellShift;
-		int viewerY = viewer.Y >> CellShift;
+		int cellX = position.X >> CellSizeShift;
+		int cellY = position.Y >> CellSizeShift;
+		int viewerX = viewer.X >> CellSizeShift;
+		int viewerY = viewer.Y >> CellSizeShift;
 
 		// The original sorts the object's cell into one of four quadrants about the viewer's and
 		// writes out both moves per quadrant, but each axis's move depends only on that axis's side,
@@ -30,18 +30,18 @@ public sealed partial class HeightGrid {
 		int y = cellY;
 
 		if (east) {
-			if (position.X < (cellX << CellShift) + radius) {
+			if (position.X < (cellX << CellSizeShift) + radius) {
 				x = cellX - 1;
 			}
-		} else if (((cellX + 1) << CellShift) - radius < position.X && cellX < viewerX) {
+		} else if (((cellX + 1) << CellSizeShift) - radius < position.X && cellX < viewerX) {
 			x = cellX + 1;
 		}
 
 		if (north) {
-			if (position.Y < (cellY << CellShift) + radius) {
+			if (position.Y < (cellY << CellSizeShift) + radius) {
 				y = cellY - 1;
 			}
-		} else if (((cellY + 1) << CellShift) - radius < position.Y && cellY < viewerY) {
+		} else if (((cellY + 1) << CellSizeShift) - radius < position.Y && cellY < viewerY) {
 			y = cellY + 1;
 		}
 

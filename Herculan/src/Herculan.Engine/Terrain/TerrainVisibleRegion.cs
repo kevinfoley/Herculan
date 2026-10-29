@@ -65,8 +65,8 @@ public sealed class TerrainVisibleRegion {
 			return;
 		}
 
-		int cellShift = grid.CellShift;
-		int margin = (1 << cellShift) + (1 << (cellShift - 1));
+		int cellSizeShift = grid.CellSizeShift;
+		int margin = (1 << cellSizeShift) + (1 << (cellSizeShift - 1));
 
 		var square = DrawRegionSquare(grid, eye, far);
 		var planes = BuildFrustum(eye, rotation, edges, far, margin);
@@ -81,8 +81,8 @@ public sealed class TerrainVisibleRegion {
 		MinCellX = MinCellY = int.MaxValue;
 		MaxCellX = MaxCellY = int.MinValue;
 		foreach (var point in region) {
-			int cellX = point.X >> cellShift;
-			int cellY = point.Y >> cellShift;
+			int cellX = point.X >> cellSizeShift;
+			int cellY = point.Y >> cellSizeShift;
 			_cells.Add((cellX, cellY));
 			MinCellX = System.Math.Min(MinCellX, cellX);
 			MaxCellX = System.Math.Max(MaxCellX, cellX);
@@ -100,8 +100,8 @@ public sealed class TerrainVisibleRegion {
 	private static List<Vec3i> DrawRegionSquare(HeightGrid grid, Vec3i eye, int far) {
 		int x0 = eye.X - far <= 0 ? 0 : eye.X - far;
 		int y0 = eye.Y - far <= 0 ? 0 : eye.Y - far;
-		int x1 = System.Math.Min(eye.X + far, (grid.Width - 2) << grid.CellShift);
-		int y1 = System.Math.Min(eye.Y + far, (grid.Height - 2) << grid.CellShift);
+		int x1 = System.Math.Min(eye.X + far, (grid.Width - 2) << grid.CellSizeShift);
+		int y1 = System.Math.Min(eye.Y + far, (grid.Height - 2) << grid.CellSizeShift);
 
 		if (x1 < x0 || y1 < y0) {
 			return new List<Vec3i>();

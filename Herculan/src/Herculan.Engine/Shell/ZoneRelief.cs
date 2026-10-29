@@ -4,15 +4,15 @@ using Herculan.Engine.Content;
 namespace Herculan.Engine.Shell;
 
 /// <summary>
-/// One zone's heights as the map reads them: <c>dat\zone%d.dat</c>'s cell shift and <c>dba\zone%d.dba</c>'s
+/// One zone's heights as the map reads them: <c>dat\zone%d.dat</c>'s cell size shift and <c>dba\zone%d.dba</c>'s
 /// first frame, a byte per cell with the bitmap's rows running north to south (<c>HeightGrid_FromBitmap</c> (<c>00428d5b</c>)).
 /// </summary>
 public sealed class ZoneRelief {
 	private readonly byte[] _pixels;
 
-	private ZoneRelief(int widthShift, int cellShift, int rows, byte[] pixels) {
+	private ZoneRelief(int widthShift, int cellSizeShift, int rows, byte[] pixels) {
 		WidthShift = widthShift;
-		CellShift = cellShift;
+		CellSizeShift = cellSizeShift;
 		Rows = rows;
 		_pixels = pixels;
 	}
@@ -21,7 +21,7 @@ public sealed class ZoneRelief {
 	public int WidthShift { get; }
 
 	/// <summary><c>+0x104</c>, log2 of a cell's world size.</summary>
-	public int CellShift { get; }
+	public int CellSizeShift { get; }
 
 	public int Rows { get; }
 
@@ -39,7 +39,7 @@ public sealed class ZoneRelief {
 			widthShift++;
 		}
 
-		return new ZoneRelief(widthShift, header.CellShift, frames[0].Rows, pixels);
+		return new ZoneRelief(widthShift, header.CellSizeShift, frames[0].Rows, pixels);
 	}
 
 	/// <summary>
@@ -60,10 +60,10 @@ public sealed class ZoneRelief {
 	/// </summary>
 	internal ShellSurface BuildRelief((int MinX, int MinY, int MaxX, int MaxY) bounds) {
 		const int margin = 100000;
-		int x0 = bounds.MinX - margin >> CellShift;
-		int y0 = bounds.MinY - margin >> CellShift;
-		int x1 = bounds.MaxX + margin >> CellShift;
-		int y1 = bounds.MaxY + margin >> CellShift;
+		int x0 = bounds.MinX - margin >> CellSizeShift;
+		int y0 = bounds.MinY - margin >> CellSizeShift;
+		int x1 = bounds.MaxX + margin >> CellSizeShift;
+		int y1 = bounds.MaxY + margin >> CellSizeShift;
 		int columns = x1 - x0 + 1;
 		int rows = y1 - y0 + 1;
 		int perCell = Math.Min(640 / columns, 400 / rows);

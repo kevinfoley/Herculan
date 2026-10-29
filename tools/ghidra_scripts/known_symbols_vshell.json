@@ -6917,7 +6917,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Raster_SetDepthFadeFromDistance",
-      "description": "(depth): clamps depth to g_RasterVisibilityRange (0047198c, 100000 in the image) and writes g_RasterDepthFadeOffset (00471990): 0 when depth is at most half the range, else FixedMulQ16(FixedDivQ16((depth - range/2) * 2, range), depthSlices Raster_DepthSlices (00485784) - 1) * shadeLevels Raster_ShadeLevels (00485780) * 256. TSTexture4Poly_RasterizeA, TSTexture4Poly_RasterizeB and TSTexture4Poly_RasterizeEdgePerspective add it to each ramp row (shade * (shadeLevels - 1) + offset, << 8). Terrain_DrawCellRowRun calls it (es2_xref: one CALL, at 0042a9cb) with the nearest corner's view depth, after Raster_SetVisibilityRange (0042026c) installs the range grid+0x108 << cellShift. The VSHELL copy of DBSIM's Raster_SetDepthFadeFromDistance (00467fec), which clamps the Q16 fraction to 0x10000 where this clamps the depth.",
+      "description": "(depth): clamps depth to g_RasterVisibilityRange (0047198c, 100000 in the image) and writes g_RasterDepthFadeOffset (00471990): 0 when depth is at most half the range, else FixedMulQ16(FixedDivQ16((depth - range/2) * 2, range), depthSlices Raster_DepthSlices (00485784) - 1) * shadeLevels Raster_ShadeLevels (00485780) * 256. TSTexture4Poly_RasterizeA, TSTexture4Poly_RasterizeB and TSTexture4Poly_RasterizeEdgePerspective add it to each ramp row (shade * (shadeLevels - 1) + offset, << 8). Terrain_DrawCellRowRun calls it (es2_xref: one CALL, at 0042a9cb) with the nearest corner's view depth, after Raster_SetVisibilityRange (0042026c) installs the range grid+0x108 << cellSizeShift. The VSHELL copy of DBSIM's Raster_SetDepthFadeFromDistance (00467fec), which clamps the Q16 fraction to 0x10000 where this clamps the depth.",
       "source": "VSHELL decompile at 00420279",
       "verified": {
         "bytes": "00420279+100",
@@ -7490,7 +7490,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ShellMap_LoadZone",
-      "description": "(map, zone), the first argument unused: asserts the zone is not negative, builds 'dat\\zone%d.dat' and opens it with VolRStream_CtorFromPath (asserting it opened), reads and discards the first two int32, allocates and constructs a 0x125-byte HeightGrid (asserting the allocation), keeps the third int32 as the cell shift (+0x104), stores the fourth times the short at 00471c2a at +0x114 and the short at 00471c28 at +0x108, zeroes +0xf0, +0xf4 and +0xf8, then loads 'dba\\zone%d.dba' into it through HeightGrid_Load and installs it as the map's HeightGrid (DAT_00472258).",
+      "description": "(map, zone), the first argument unused: asserts the zone is not negative, builds 'dat\\zone%d.dat' and opens it with VolRStream_CtorFromPath (asserting it opened), reads and discards the first two int32, allocates and constructs a 0x125-byte HeightGrid (asserting the allocation), keeps the third int32 as the cell size shift (+0x104), stores the fourth times the short at 00471c2a at +0x114 and the short at 00471c28 at +0x108, zeroes +0xf0, +0xf4 and +0xf8, then loads 'dba\\zone%d.dba' into it through HeightGrid_Load and installs it as the map's HeightGrid (DAT_00472258).",
       "source": "docs/retail/shell/mission-map.md",
       "verified": {
         "bytes": "00424b48+616",
@@ -7967,7 +7967,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Terrain_ResolveCellTexture",
-      "description": "(material, cx, cy, uvOut): one cell's texture corners for the hgrid cell drawer. material is an 8-byte record {frame, shift} (grid+0x11d + the cell's byte +0x19 * 8). With shift 0 the frame's 0x14-byte descriptor in g_TerrainTextureFrames gives u0, v0, u1, v1 (+0 to +0xc) as they are; otherwise u0 = (cx << shift) & 0xff, v0 = (cy << shift) & 0xff, u1 = u0 + (1 << shift), v1 = v0 + (1 << shift). Writes (u0, v0), (u0, v1), (u1, v1), (u1, v0) into uvOut and returns the descriptor's +0x10, the atlas page. Terrain_DrawCellRowRun calls it (es2_xref: one CALL, at 0042a9aa). The hgrid.cpp counterpart of DBSIM's Terrain_ResolveCellTexture (0046bcf4), which shifts by cellShift + shift - 13 and negates v.",
+      "description": "(material, cx, cy, uvOut): one cell's texture corners for the hgrid cell drawer. material is an 8-byte record {frame, shift} (grid+0x11d + the cell's byte +0x19 * 8). With shift 0 the frame's 0x14-byte descriptor in g_TerrainTextureFrames gives u0, v0, u1, v1 (+0 to +0xc) as they are; otherwise u0 = (cx << shift) & 0xff, v0 = (cy << shift) & 0xff, u1 = u0 + (1 << shift), v1 = v0 + (1 << shift). Writes (u0, v0), (u0, v1), (u1, v1), (u1, v0) into uvOut and returns the descriptor's +0x10, the atlas page. Terrain_DrawCellRowRun calls it (es2_xref: one CALL, at 0042a9aa). The hgrid.cpp counterpart of DBSIM's Terrain_ResolveCellTexture (0046bcf4), which shifts by cellSizeShift + shift - 13 and negates v.",
       "source": "VSHELL decompile and disassembly at 00428617",
       "verified": {
         "bytes": "00428617+146",
@@ -8102,7 +8102,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Terrain_SetupVisibleRegion",
-      "description": "(grid, view, polygon): installs the view's position (+4/+8/+0xc) as g_TerrainViewerPos and clears the model transform. With polygon 0: sets up a view volume (ViewFrustum_Ctor (00467614), ViewFrustum_Build (00467654)) for the range grid+0x108 << cellShift (+0x104), builds the square about the viewer with Terrain_BuildDrawRegionQuad, clips it with ViewFrustum_ClipGroundPolygon (00467ac4) (passing grid+0x10c and +0x110), sets grid+0x118 to whether a region is left and, when one is, stores its points in cells (>> cellShift) at grid+0x28 with count +0xc8 and pointer +0xcc. With polygon {count, points}: clamps each point to the grid's world extent, sets grid+0x118 when point 0's x is below point 2's and its y below point 1's, and on success shifts the caller's points to cells in place and uses them as the region (+0xc8 count, +0xcc pointer). On success both paths put the grid origin +0x1c through g_ModelToView, rotate the cell steps (1 << cellShift, 0, 0) into +4 and (0, 1 << cellShift, 0) into +0x10, and run HeightOffsetTable_SetScale(grid+0xd0, +0x10c, +0x114) and HeightOffsetTable_Reset. ShellMap_PaintRelief calls it (es2_xref: one CALL, at 00425883) with DAT_00472258, the map's camera and a four-point rectangle. The hgrid.cpp counterpart of DBSIM's Terrain_SetupVisibleRegion (0046ca98), which writes the draw radius grid+0x10c from the terrain-detail option itself.",
+      "description": "(grid, view, polygon): installs the view's position (+4/+8/+0xc) as g_TerrainViewerPos and clears the model transform. With polygon 0: sets up a view volume (ViewFrustum_Ctor (00467614), ViewFrustum_Build (00467654)) for the range grid+0x108 << cellSizeShift (+0x104), builds the square about the viewer with Terrain_BuildDrawRegionQuad, clips it with ViewFrustum_ClipGroundPolygon (00467ac4) (passing grid+0x10c and +0x110), sets grid+0x118 to whether a region is left and, when one is, stores its points in cells (>> cellSizeShift) at grid+0x28 with count +0xc8 and pointer +0xcc. With polygon {count, points}: clamps each point to the grid's world extent, sets grid+0x118 when point 0's x is below point 2's and its y below point 1's, and on success shifts the caller's points to cells in place and uses them as the region (+0xc8 count, +0xcc pointer). On success both paths put the grid origin +0x1c through g_ModelToView, rotate the cell steps (1 << cellSizeShift, 0, 0) into +4 and (0, 1 << cellSizeShift, 0) into +0x10, and run HeightOffsetTable_SetScale(grid+0xd0, +0x10c, +0x114) and HeightOffsetTable_Reset. ShellMap_PaintRelief calls it (es2_xref: one CALL, at 00425883) with DAT_00472258, the map's camera and a four-point rectangle. The hgrid.cpp counterpart of DBSIM's Terrain_SetupVisibleRegion (0046ca98), which writes the draw radius grid+0x10c from the terrain-detail option itself.",
       "source": "VSHELL decompile at 0042956e",
       "verified": {
         "bytes": "0042956e+1500",
@@ -8126,7 +8126,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Terrain_BuildDrawRegionQuad",
-      "description": "(grid, polygon{count, points}): the square of half-side grid+0x108 << cellShift (+0x104) about g_TerrainViewerPos's x and y, clamped to the grid's world extent (origin +0xf0/+0xf4, size 1 << (+0xfc or +0x100 plus cellShift)). When the clamp leaves it empty, count = 0. Otherwise asserts (src\\hgrid.cpp line 0x2cf) when the count on entry is below 4, sets count 4 and writes the corners (x0, y0), (x0, y1), (x1, y1), (x1, y0) as Point3I with z = grid+0xf8. Terrain_SetupVisibleRegion calls it (es2_xref: one CALL, at 004298d4). The hgrid.cpp counterpart of DBSIM's Terrain_BuildDrawRegionQuad (0046d220).",
+      "description": "(grid, polygon{count, points}): the square of half-side grid+0x108 << cellSizeShift (+0x104) about g_TerrainViewerPos's x and y, clamped to the grid's world extent (origin +0xf0/+0xf4, size 1 << (+0xfc or +0x100 plus cellSizeShift)). When the clamp leaves it empty, count = 0. Otherwise asserts (src\\hgrid.cpp line 0x2cf) when the count on entry is below 4, sets count 4 and writes the corners (x0, y0), (x0, y1), (x1, y1), (x1, y0) as Point3I with z = grid+0xf8. Terrain_SetupVisibleRegion calls it (es2_xref: one CALL, at 004298d4). The hgrid.cpp counterpart of DBSIM's Terrain_BuildDrawRegionQuad (0046d220).",
       "source": "VSHELL decompile at 00429c2e",
       "verified": {
         "bytes": "00429c2e+382",
@@ -8141,7 +8141,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Terrain_DrawCellRowRun",
-      "description": "(ctx, row, xFrom, xTo): the cell callback HGrid_RenderAround hands CellWalk_Polygon (stored pointer at 00429bdb); the grid is ctx+0x18 and the column step ctx+0xc. Builds the view-space corners of cell (xFrom, row) in HGrid_CellCorners from the grid origin +0x1c and the cell steps +4 (X) and +0x10 (Y), and draws each cell from xFrom to xTo by the step inline: adds each corner's HeightOffsetTable_Get(grid+0xd0, raw height); by the corners' third view-space components (c0 + c2 equal to, below or above c1 + c3) makes one quad in HGrid_CellPolyA or two triangles in HGrid_CellPolyA and HGrid_CellPolyB; and draws each triangle that Terrain_FaceVisibilityTest finds facing the viewer (normals +8 and +0xe). With DAT_00471874 0: Terrain_FillCellUntextured, the shade from Light_ComputeShadeForNormal below g_ShadeMode 2, or the corners' +0x16 in mode 2 (averaged with half the corner's height plus 0x1e when DAT_0047187c is set). With DAT_00471874 1: Terrain_ResolveCellTexture, Raster_SetVisibilityRange (0042026c)(grid+0x108 << cellShift), Raster_SetDepthFadeFromDistance(the nearest corner's depth), g_PerspectiveUseQuadraticFit = that depth > DAT_0047223c (25000), the baked +0x14/+0x15 in g_ShadeMode 1, and TSTexture4Poly_RasterizeB when the depth is below DAT_00471880 * 2, else TSTexture4Poly_RasterizeA. Then HGrid_InvokeCellHook. After the run, clears DAT_0048a32c when row is DAT_0048a324 and the run covered column DAT_0048a320. The hgrid.cpp counterpart of DBSIM's Terrain_DrawCellRowRun (maybe_PaletteDirtyFlag (0046dcd8)) with Terrain_DrawCellQuad inlined.",
+      "description": "(ctx, row, xFrom, xTo): the cell callback HGrid_RenderAround hands CellWalk_Polygon (stored pointer at 00429bdb); the grid is ctx+0x18 and the column step ctx+0xc. Builds the view-space corners of cell (xFrom, row) in HGrid_CellCorners from the grid origin +0x1c and the cell steps +4 (X) and +0x10 (Y), and draws each cell from xFrom to xTo by the step inline: adds each corner's HeightOffsetTable_Get(grid+0xd0, raw height); by the corners' third view-space components (c0 + c2 equal to, below or above c1 + c3) makes one quad in HGrid_CellPolyA or two triangles in HGrid_CellPolyA and HGrid_CellPolyB; and draws each triangle that Terrain_FaceVisibilityTest finds facing the viewer (normals +8 and +0xe). With DAT_00471874 0: Terrain_FillCellUntextured, the shade from Light_ComputeShadeForNormal below g_ShadeMode 2, or the corners' +0x16 in mode 2 (averaged with half the corner's height plus 0x1e when DAT_0047187c is set). With DAT_00471874 1: Terrain_ResolveCellTexture, Raster_SetVisibilityRange (0042026c)(grid+0x108 << cellSizeShift), Raster_SetDepthFadeFromDistance(the nearest corner's depth), g_PerspectiveUseQuadraticFit = that depth > DAT_0047223c (25000), the baked +0x14/+0x15 in g_ShadeMode 1, and TSTexture4Poly_RasterizeB when the depth is below DAT_00471880 * 2, else TSTexture4Poly_RasterizeA. Then HGrid_InvokeCellHook. After the run, clears DAT_0048a32c when row is DAT_0048a324 and the run covered column DAT_0048a320. The hgrid.cpp counterpart of DBSIM's Terrain_DrawCellRowRun (maybe_PaletteDirtyFlag (0046dcd8)) with Terrain_DrawCellQuad inlined.",
       "source": "VSHELL decompile at 00429dac",
       "verified": {
         "bytes": "00429dac+3733",
@@ -8255,7 +8255,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Terrain_ProjectFarEdgeAhead",
-      "description": "(grid, view): when the viewer's cell (view +4/+8 >> grid+0x104) is at least grid+0x108 cells from every grid edge, projects the point grid+0x108 << cellShift straight ahead along the view's heading (+0x14; Math_BuildRotation2D and Transform2D_ApplyToPoint about the viewer's x and y) at height grid+0x10c, through the transform at DAT_005d7fa0, Raster_Project and Raster_ToScreen, and returns its screen y; otherwise returns DAT_005d7ff4. No caller found by es2_xref. The hgrid.cpp counterpart of DBSIM's Terrain_ProjectFarEdgeAhead (00470910), which writes both screen coordinates to an out argument and uses distance 1000 near an edge.",
+      "description": "(grid, view): when the viewer's cell (view +4/+8 >> grid+0x104) is at least grid+0x108 cells from every grid edge, projects the point grid+0x108 << cellSizeShift straight ahead along the view's heading (+0x14; Math_BuildRotation2D and Transform2D_ApplyToPoint about the viewer's x and y) at height grid+0x10c, through the transform at DAT_005d7fa0, Raster_Project and Raster_ToScreen, and returns its screen y; otherwise returns DAT_005d7ff4. No caller found by es2_xref. The hgrid.cpp counterpart of DBSIM's Terrain_ProjectFarEdgeAhead (00470910), which writes both screen coordinates to an out argument and uses distance 1000 near an edge.",
       "source": "VSHELL decompile and disassembly at 0042b7c7",
       "verified": {
         "bytes": "0042b7c7+268",
@@ -25128,7 +25128,7 @@
       "type": "data",
       "confidence": "high",
       "name": "g_RasterVisibilityRange",
-      "description": "int32, 100000 in the image: the far limit Raster_SetDepthFadeFromDistance clamps a depth to and measures against. Raster_SetVisibilityRange (0042026c) writes it; Terrain_DrawCellRowRun passes that function grid+0x108 << cellShift per cell. The VSHELL counterpart of DBSIM's DAT_004a08c4.",
+      "description": "int32, 100000 in the image: the far limit Raster_SetDepthFadeFromDistance clamps a depth to and measures against. Raster_SetVisibilityRange (0042026c) writes it; Terrain_DrawCellRowRun passes that function grid+0x108 << cellSizeShift per cell. The VSHELL counterpart of DBSIM's DAT_004a08c4.",
       "source": "VSHELL decompile at 00420279 and 0042026c"
     },
     {
@@ -26449,7 +26449,7 @@
       "type": "data",
       "confidence": "high",
       "name": "g_TerrainViewerPos",
-      "description": "int32 {x, y, z} viewer position Terrain_FaceVisibilityTest measures from; 0042b019 shifts its x and y by the grid's cell shift. The VSHELL copy of DBSIM's g_TerrainViewerPos.",
+      "description": "int32 {x, y, z} viewer position Terrain_FaceVisibilityTest measures from; 0042b019 shifts its x and y by the grid's cell size shift. The VSHELL copy of DBSIM's g_TerrainViewerPos.",
       "source": "VSHELL decompile; es2_naming.py match/diff against the DBSIM function named in the description"
     },
     {

@@ -12,9 +12,9 @@ Two mechanisms that share one palette: the distance fade, and the backdrop the s
 Raster_SetVisibilityRange(grid[+0x10c] << grid[+0x108])      // 00467fdc -> DAT_004a08c4
 ```
 
-`grid+0x10c` is the **view radius in cells** and `grid+0x108` the cell shift. [`terrain-texturing.md`](terrain-texturing.md#grid0x10c--the-lod--draw-radius-field) is the canonical account of the field, its writer and the rest of its consumers; the radius comes from the player's terrain-detail setting, so every range below is per setting, not per zone.
+`grid+0x10c` is the **view radius in cells** and `grid+0x108` the cell size shift. [`terrain-texturing.md`](terrain-texturing.md#grid0x10c--the-lod--draw-radius-field) is the canonical account of the field, its writer and the rest of its consumers; the radius comes from the player's terrain-detail setting, so every range below is per setting, not per zone.
 
-| Cell shift | Zones | Range at detail 0 / 1 / 2 |
+| Cell size shift | Zones | Range at detail 0 / 1 / 2 |
 |---|---|---|
 | 12 | 1 | 147 m / 246 m / 344 m |
 | 13 | 10 | 295 m / 492 m / 688 m |

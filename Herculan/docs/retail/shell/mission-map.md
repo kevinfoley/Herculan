@@ -28,7 +28,7 @@ The vtable at `004721b0`:
 | `data\mission.str` | the constructor | group 0's line count at `+0x217` and its lines at `+0x1c7`, which [the intro](#the-intro) paces itself by |
 | `data\maplabel.str` | the constructor | two groups, at `+0x229` and `+0x2f3` ([Open](#open)) |
 | `data\script.dat` | `ShellMap_LoadScriptDat` (`004243d7`) | blocks 1-3, 7 and 9-11 ([`../formats/script-dat.md`](../formats/script-dat.md)) |
-| `dat\zone%d.dat`, `dba\zone%d.dba` | `ShellMap_LoadZone` (`00424b48`) | the zone named by the script's header: the `.dat`'s cell shift, and the `.dba`'s first frame as heights |
+| `dat\zone%d.dat`, `dba\zone%d.dba` | `ShellMap_LoadZone` (`00424b48`) | the zone named by the script's header: the `.dat`'s cell size shift, and the `.dba`'s first frame as heights |
 | `data\player.mec` | `ShellMap_ReadSquadHeader` (`00424db0`) | the second `int16`, the squad size, at `+0x80` |
 | `data\mforms.dat` | the same | the formation record the squad stands in |
 
@@ -40,7 +40,7 @@ The vtable at `004721b0`:
 
 In the file, `+0x1a` and `+0x1c` are the first two operations of the structure's out-of-action report ([`../formats/script-dat.md`](../formats/script-dat.md#the-two-pass-read--and-what-it-means-for-dbsim-keeps)). The writes reach only this copy, which nothing writes back, so DBSIM still reads the record's own operations; a base no type-2 group names would be shown by its first operation. No retail mission has one under any campaign flags or random table roll: each of the 1,937 GUID-carrying base records in the 62 missions is named by a type-2 group record with no condition, and the only conditional group records that share such a group's GUID, and so [overlay](../formats/msn-mission-file.md#repeated-guids) it, are one each in `C4_09.MSN` and `C4_10.MSN`, of type 2 with no members. The 537 type-2 group records carry `-1` (465), 0 (71) or 1 (1). `+0x1a` is what [shows a base](#bases); no reader of `+0x1c` in the map's copy has been found ([Open](#open)).
 
-**The heights.** `ShellMap_LoadZone` reads the `.dat`'s first two `int32` and discards them, keeps the third as the cell shift (`+0x104`) and the fourth as the height scale, and loads the `.dba` through `HeightGrid_Load` (`00429010`) and `HeightGrid_FromBitmap` (`00428d5b`), the shell's copy of the simulator's zone loader ([`../formats/zone-terrain.md`](../formats/zone-terrain.md#loading-pipeline)): each pixel byte is one cell's height, the bitmap's rows running north to south.
+**The heights.** `ShellMap_LoadZone` reads the `.dat`'s first two `int32` and discards them, keeps the third as the cell size shift (`+0x104`) and the fourth as the height scale, and loads the `.dba` through `HeightGrid_Load` (`00429010`) and `HeightGrid_FromBitmap` (`00428d5b`), the shell's copy of the simulator's zone loader ([`../formats/zone-terrain.md`](../formats/zone-terrain.md#loading-pipeline)): each pixel byte is one cell's height, the bitmap's rows running north to south.
 
 ### The squad's positions
 
@@ -100,7 +100,7 @@ Nothing re-derives it when the intro sets the altitude, so until the first zoom 
 
 ## The relief
 
-`ShellMap_BuildRelief` (`00426fe0`) draws the ground under the bounds once, into an 8-bit bitmap the paint stretches. It takes the cells from `(low - 100000) >> cellShift` to `(high + 100000) >> cellShift` on each axis and gives each `min(640 / columns, 400 / rows)` pixels (`DAT_00471c24`, `DAT_00471c26`), so the bitmap is `columns * perCell` by `rows * perCell`, cleared to 0.
+`ShellMap_BuildRelief` (`00426fe0`) draws the ground under the bounds once, into an 8-bit bitmap the paint stretches. It takes the cells from `(low - 100000) >> cellSizeShift` to `(high + 100000) >> cellSizeShift` on each axis and gives each `min(640 / columns, 400 / rows)` pixels (`DAT_00471c24`, `DAT_00471c26`), so the bitmap is `columns * perCell` by `rows * perCell`, cleared to 0.
 
 A height becomes a colour as `min(height, 0x7f) / 5 + 0xd1` — the divisor is `0x80 / 0x18`, so the 128 heights fall in 26 steps, palette indices `0xd1` to `0xea`, and each briefing palette `br_w1`-`br_w5` carries its own ramp there. The rows run from the highest cell row down, each drawn as the band between its row and the one above; each cell is two triangles, `(left, bottom)`-`(left, top)`-`(right, top)` and `(left, bottom)`-`(right, top)`-`(right, bottom)`, whose corners take the colours of the heights at `(x, y)`, `(x, y + 1)`, `(x + 1, y + 1)` and `(x + 1, y)`. The last row and column of cells are never drawn, so the bitmap's right and bottom `perCell` pixels stay 0. A cell off the grid has all four corners at 0. A cell on the grid's last row reads the row above it past the end of the height array.
 

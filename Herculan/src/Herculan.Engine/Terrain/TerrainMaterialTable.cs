@@ -15,7 +15,7 @@ namespace Herculan.Engine.Terrain;
 /// </param>
 /// <param name="BlockShift">
 /// How the frame is placed on a cell: zero stretches the whole frame across the quad, non-zero tiles
-/// it at <c>1 &lt;&lt; (CellShift + BlockShift - 13)</c> texels per cell, wrapping at 256 — see
+/// it at <c>1 &lt;&lt; (CellSizeShift + BlockShift - 13)</c> texels per cell, wrapping at 256 — see
 /// docs/retail/rendering/terrain-texturing.md#mat0s-two-fields. Record 0's copy also sizes the
 /// block of cells that shares one material roll at zone load
 /// (docs/retail/simulation/terrain-heightmap.md#per-cell-record-16-bytes).

@@ -100,17 +100,17 @@ public sealed partial class HeightGrid {
 		bool truncateMajor = octant == 3;
 		bool truncateMinor = octant is 2 or 3;
 
-		int cellSize = 1 << CellShift;
-		int cellX = start.X >> CellShift;
-		int cellY = start.Y >> CellShift;
+		int cellSize = 1 << CellSizeShift;
+		int cellX = start.X >> CellSizeShift;
+		int cellY = start.Y >> CellSizeShift;
 		if (cellX < 0 || cellX >= Width || cellY < 0 || cellY >= Height) {
 			return false;
 		}
 
 		// The next cell boundary on each axis, in world units: the far edge of the starting cell in
 		// whichever direction that axis runs.
-		int boundX = (cellX << CellShift) + (stepX > 0 ? cellSize : 0);
-		int boundY = (cellY << CellShift) + (stepY > 0 ? cellSize : 0);
+		int boundX = (cellX << CellSizeShift) + (stepX > 0 ? cellSize : 0);
+		int boundY = (cellY << CellSizeShift) + (stepY > 0 ? cellSize : 0);
 
 		// The cell the current step is tested against, and the one the step has advanced into. They
 		// are one apart for the length of an iteration and re-synced at the bottom of it.
@@ -440,10 +440,10 @@ public sealed partial class HeightGrid {
 
 		// The west and east edges run along Y; the north and south edges run along X.
 		int along = edge < EdgeNorth
-			? exitY - (cellY << CellShift)
-			: exitX - (cellX << CellShift);
+			? exitY - (cellY << CellSizeShift)
+			: exitX - (cellX << CellSizeShift);
 
-		return exitZ <= nearHeight + ((along * (farHeight - nearHeight)) >> CellShift);
+		return exitZ <= nearHeight + ((along * (farHeight - nearHeight)) >> CellSizeShift);
 	}
 
 	/// <summary>
@@ -470,9 +470,9 @@ public sealed partial class HeightGrid {
 			return null;
 		}
 
-		int cellSize = 1 << CellShift;
-		int originX = cellX << CellShift;
-		int originY = cellY << CellShift;
+		int cellSize = 1 << CellSizeShift;
+		int originX = cellX << CellSizeShift;
+		int originY = cellY << CellSizeShift;
 
 		// Everything below works in cell-local X/Y with world Z, which is the frame the face normals
 		// were built in.
@@ -623,17 +623,17 @@ public sealed partial class HeightGrid {
 	/// the cell at the far end of the neighbouring row, the wrap <see cref="CornerIndex"/> carries.
 	/// </summary>
 	private bool FaceBlocksAt(int worldX, int worldY, int dirX, int dirY, int dirZ) {
-		int cell = CornerIndex(worldX >> CellShift, worldY >> CellShift);
+		int cell = CornerIndex(worldX >> CellSizeShift, worldY >> CellSizeShift);
 		if (cell < 0) {
 			return true;
 		}
 
-		int fracX = worldX & ((1 << CellShift) - 1);
-		int fracY = worldY & ((1 << CellShift) - 1);
+		int fracX = worldX & ((1 << CellSizeShift) - 1);
+		int fracY = worldY & ((1 << CellSizeShift) - 1);
 
 		int split = _diagonals[cell] & 3;
 		bool farTriangle = split switch {
-			0 => fracX + fracY > 1 << CellShift,
+			0 => fracX + fracY > 1 << CellSizeShift,
 			2 => fracY <= fracX,
 			_ => false
 		};
@@ -705,9 +705,9 @@ public sealed partial class HeightGrid {
 	/// diagonals.</para>
 	/// </summary>
 	private Vec3i DiagonalCrossing(int cellX, int cellY, int fromX, int fromY, int fromZ, int toX, int toY) {
-		int cellSize = 1 << CellShift;
-		int originX = cellX << CellShift;
-		int originY = cellY << CellShift;
+		int cellSize = 1 << CellSizeShift;
+		int originX = cellX << CellSizeShift;
+		int originY = cellY << CellSizeShift;
 		bool antiDiagonal = (_diagonals[CornerIndex(cellX, cellY)] & 3) == 0;
 
 		int nearX = fromX - originX, nearY = fromY - originY;

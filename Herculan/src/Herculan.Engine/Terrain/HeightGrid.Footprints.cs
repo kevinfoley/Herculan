@@ -53,19 +53,19 @@ public sealed partial class HeightGrid {
 	/// out-of-bounds write is a crash rather than behaviour worth reproducing.</para>
 	/// </summary>
 	public void MarkStructureFootprint(int worldX, int worldY, int radius) {
-		int cellX = worldX >> CellShift;
-		int cellY = worldY >> CellShift;
+		int cellX = worldX >> CellSizeShift;
+		int cellY = worldY >> CellSizeShift;
 		SetScratch(cellX, cellY, FootprintMarked);
 
-		int minX = (worldX - radius) >> CellShift;
-		int maxX = (worldX + radius) >> CellShift;
-		int minY = (worldY - radius) >> CellShift;
-		int maxY = (worldY + radius) >> CellShift;
+		int minX = (worldX - radius) >> CellSizeShift;
+		int maxX = (worldX + radius) >> CellSizeShift;
+		int minY = (worldY - radius) >> CellSizeShift;
+		int maxY = (worldY + radius) >> CellSizeShift;
 
 		for (int y = minY; y <= maxY; y++) {
 			for (int x = minX; x <= maxX; x++) {
-				int dx = (x << CellShift) - worldX;
-				int dy = (y << CellShift) - worldY;
+				int dx = (x << CellSizeShift) - worldX;
+				int dy = (y << CellSizeShift) - worldY;
 				if (Numerics.SimMath.FastMagnitude3D(dx, dy, 0) > radius) {
 					continue;
 				}
