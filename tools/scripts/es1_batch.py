@@ -756,7 +756,7 @@ def cmd_brief(args):
     lo, hi = args.lo.lower().zfill(8), args.hi.lower().zfill(8)
     if args.auto:
         notes = (notes + "\n\n" if notes else "") + auto_leads(args.binary, lo, hi)
-    return write_brief("es1_batch_brief.md", dict(values, LO=lo, HI=hi), notes, {"range"}, args)
+    return write_brief("es1_batch_brief.md", dict(values, LO=lo, HI=hi, BINARY=args.binary), notes, {"range"}, args)
 
 
 def cmd_port(args):
@@ -779,7 +779,7 @@ def main():
     b.add_argument("--out", help="where to write the brief (default <scratch>/brief.md)")
     b.add_argument("--auto", action="store_true",
                    help="append the tools' leads: bounds, function counts, match candidates, docs naming the range")
-    b.add_argument("--binary", default="ES1DBSIM", help="the binary --auto reads (default ES1DBSIM)")
+    b.add_argument("--binary", default="ES1DBSIM", help="the binary the range is in, named in the brief and read by --auto (default ES1DBSIM)")
     pt = sub.add_parser("port", help="write a port subagent's brief from es1_port_brief.md")
     pt.add_argument("part", help="the part's name, M1")
     pt.add_argument("--title", required=True, help="what the part ports, for the brief's heading")
