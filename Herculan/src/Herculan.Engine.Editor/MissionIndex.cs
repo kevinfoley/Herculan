@@ -1,4 +1,4 @@
-using Herculan.Engine.Content;
+using HercWorks.Core.Data.File.Msn;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Scene;
 using Herculan.Engine.World;
@@ -6,190 +6,184 @@ using Herculan.Engine.World;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// One route the mission's orders name — a <c>script.dat</c> block-3 waypoint group, resolved to
-/// points.
-/// </summary>
-/// <param name="Reference">The block-3 record index.</param>
-/// <param name="Points">Its waypoints, in order.</param>
-/// <param name="WalkedBy">
-/// The groups whose order slot 0 names it — the only route a group ever walks, see
-/// docs/retail/simulation/ai-goals.md#the-route-cursor-is-loaded-once.
-/// </param>
-/// <param name="NamedBy">The groups that name it only in a later order slot, which no group walks.</param>
-internal sealed record EditorRoute(int Reference, IReadOnlyList<Vec3i> Points, IReadOnlyList<int> WalkedBy,
-	IReadOnlyList<int> NamedBy) {
-
-	/// <summary>
-	/// Whether the route closes on itself — its last waypoint is its first — and so is walked as a loop
-	/// that never ends. Compared by position, as the simulation's route cursor compares it (see
-	/// <see cref="Sim.MissionGroup.RouteCursor"/>).
-	/// </summary>
-	public bool Closed => Points.Count > 1 && Points[^1] == Points[0];
-
-	/// <summary>Whether any group walks it.</summary>
-	public bool Walked => WalkedBy.Count > 0;
-}
-
-/// <summary>One order slot of one group.</summary>
-internal readonly record struct OrderSlot(int Group, int Slot, MissionOrder Order);
-
-/// <summary>
-/// Everything that activates one mission action, and everything that waits on it — the four
-/// activation routes and the three consumers in docs/retail/simulation/mission-deployment.md.
-/// </summary>
-internal sealed record ActionLinks(
-	IReadOnlyList<int> TimersFiringIt,
-	IReadOnlyList<int> TimersItStarts,
-	IReadOnlyList<SceneObject> EngagedObjects,
-	IReadOnlyList<SceneObject> DefeatedObjects,
-	IReadOnlyList<int> WaitingGroups,
-	IReadOnlyList<OrderSlot> OrdersItEnds);
-
-/// <summary>
-/// The editor's cross-reference over one loaded mission, built once: which actions name which
-/// trigger area, which groups walk which route, what fires each action and what each one sets off.
-/// Nothing in a mission moves while the editor shows it, so none of this is recomputed per frame.
+/// The scene's objects, groups, routes and trigger areas as the <c>.MSN</c>'s layout places them (<see cref="LayoutPlacement"/>),
+/// keyed by GUID, every record included, a conditional one too: each object and the roster record it stands for
+/// (<see cref="ObjectKey"/>); each group's members, setup, pad, roster, side, the action it waits on and its place in row 16;
+/// each route's waypoints and the groups walking or naming it; each area's shape and the actions testing it; each action's
+/// areas, what else fires it and what follows it (<see cref="TriggerWiring"/>); each objective's subject, its group and the
+/// order it reads; and the mission box. Built again by
+/// <see cref="SceneSync"/> after every edit, undo and redo, and placed again, keeping its objects, for a drag's preview
+/// (<see cref="Replan"/>), which moves nothing the wiring reads.
 /// </summary>
 internal sealed class MissionIndex {
-	private readonly Dictionary<(MissionUnitKind, int), SceneObject> _bySlot = new();
-	private readonly ActionLinks[] _actionLinks;
+	private readonly Dictionary<ObjectKey, SceneObject> _byKey = new();
+	private readonly Dictionary<SceneObject, ObjectKey> _keyOf = new(ReferenceEqualityComparer.Instance);
+	private readonly Dictionary<short, IReadOnlyList<SceneObject>> _members = new();
+	private List<SceneObject> _objects = new();
+	private List<MissionBasePad> _pads = new();
+	private IReadOnlyDictionary<short, TriggerLinks> _links = new Dictionary<short, TriggerLinks>();
 
-	public MissionIndex(MissionScene scene, SquadMessages? commandMessages) {
-		Mission = scene.Mission;
-		CommandMessages = commandMessages;
-
-		var members = new List<SceneObject>[Mission.GroupKinds.Count];
-		for (int i = 0; i < members.Length; i++) {
-			members[i] = new List<SceneObject>();
-		}
-
-		foreach (var placed in scene.Objects) {
-			if (placed.Placement.GroupIndex >= 0 && placed.Placement.GroupIndex < members.Length) {
-				members[placed.Placement.GroupIndex].Add(placed);
-			}
-
-			if (placed.Placement.SlotIndex >= 0) {
-				_bySlot[(placed.Placement.Kind, placed.Placement.SlotIndex)] = placed;
-			}
-		}
-
-		GroupMembers = members;
-		Areas = BuildAreas(Mission);
-		Routes = BuildRoutes(Mission);
-
-		_actionLinks = new ActionLinks[Mission.Actions.Count];
-		for (int i = 0; i < _actionLinks.Length; i++) {
-			_actionLinks[i] = BuildLinks(i, scene.Objects);
-		}
+	/// <param name="objects">The object built for each placed record that has one.</param>
+	public MissionIndex(LayoutPlan plan, IReadOnlyDictionary<ObjectKey, SceneObject> objects) {
+		Plan = plan;
+		Reload(plan, objects);
 	}
 
-	public Mission Mission { get; }
+	/// <summary>Where the layout places everything, as last placed: after the last edit, or by the drag under way.</summary>
+	public LayoutPlan Plan { get; private set; }
+
+	/// <summary>The layout <see cref="Plan"/> places.</summary>
+	public MissionLayout Layout => Plan.Layout;
+
+	/// <summary>Every object in the scene, in <see cref="LayoutPlan.Objects"/>' order.</summary>
+	public IReadOnlyList<SceneObject> Objects => _objects;
+
+	/// <summary>Every pad a group paints, in group order, each by its group's place in row 16 (<see cref="PlannedGroup.Position"/>).</summary>
+	public IReadOnlyList<MissionBasePad> BasePads => _pads;
+
+	/// <summary>Every row-16 group, in layout order.</summary>
+	public IReadOnlyList<PlannedGroup> Groups => Plan.Groups;
+
+	/// <inheritdoc cref="LayoutPlan.Routes"/>
+	public IReadOnlyList<PlannedRoute> Routes => Plan.Routes;
+
+	/// <inheritdoc cref="LayoutPlan.Areas"/>
+	public IReadOnlyList<PlannedArea> Areas => Plan.Areas;
+
+	/// <inheritdoc cref="LayoutPlan.Actions"/>
+	public IReadOnlyList<PlannedAction> Actions => Plan.Actions;
+
+	/// <summary>The route the player's squad walks, group 0's slot-0 order's, or null.</summary>
+	public PlannedRoute? PlayerRoute => Groups.Count > 0 ? Routes.FirstOrDefault(route => route.WalkedBy.Contains(Groups[0].Guid)) : null;
 
 	/// <summary>
-	/// The speakerless message set an action's message is looked up in — <c>COMMAND&lt;n&gt;.STR</c>,
-	/// see <see cref="MissionAction.MessageId"/> — or null when the install has none.
+	/// The mission box: the extent of every row-6 point, as <see cref="MissionBox"/> is the extent of block 1, which the
+	/// generation writes from them. As of the last edit; a drag's preview does not move it.
 	/// </summary>
-	public SquadMessages? CommandMessages { get; }
-
-	/// <summary>Each group's placed members, by block-11 record index.</summary>
-	public IReadOnlyList<IReadOnlyList<SceneObject>> GroupMembers { get; }
+	public MissionBox Box { get; private set; }
 
 	/// <summary>
-	/// Every trigger area some action tests, once each, in block-4 order. An area no action names, or
-	/// that sits behind its action's first unset slot, is never tested and is not listed.
+	/// Builds the index again over <paramref name="plan"/> and <paramref name="objects"/>, the object built for each placed
+	/// record that has one.
 	/// </summary>
-	public IReadOnlyList<MissionTriggerArea> Areas { get; }
-
-	/// <summary>Every route some order names, once each, in block-3 order.</summary>
-	public IReadOnlyList<EditorRoute> Routes { get; }
-
-	/// <summary>The route the player's squad walks, or null.</summary>
-	public EditorRoute? PlayerRoute => Routes.FirstOrDefault(route => route.WalkedBy.Contains(0));
-
-	public MissionTriggerArea? Area(int reference) {
-		foreach (var area in Areas) {
-			if (area.Reference == reference) {
-				return area;
+	public void Reload(LayoutPlan plan, IReadOnlyDictionary<ObjectKey, SceneObject> objects) {
+		Plan = plan;
+		_byKey.Clear();
+		_keyOf.Clear();
+		_objects = new List<SceneObject>(objects.Count);
+		foreach (var planned in plan.Objects) {
+			if (objects.TryGetValue(planned.Key, out var placed)) {
+				_byKey[planned.Key] = placed;
+				_keyOf[placed] = planned.Key;
+				_objects.Add(placed);
 			}
 		}
 
-		return null;
-	}
-
-	public EditorRoute? Route(int reference) => Routes.FirstOrDefault(route => route.Reference == reference);
-
-	/// <summary>The actions that test <paramref name="areaReference"/>, in block-5 order.</summary>
-	public IEnumerable<int> ActionsTesting(int areaReference) {
-		for (int i = 0; i < Mission.Actions.Count; i++) {
-			if (Mission.Actions[i].Areas.Any(area => area.Reference == areaReference)) {
-				yield return i;
-			}
-		}
-	}
-
-	public ActionLinks LinksOf(int action) => _actionLinks[action];
-
-	/// <summary>
-	/// The placed object a mission ref names — an order, objective or action subject — or null when
-	/// nothing was placed in that slot.
-	/// </summary>
-	public SceneObject? ObjectAt(MissionUnitKind kind, int slot) => _bySlot.GetValueOrDefault((kind, slot));
-
-	/// <summary>The action <paramref name="group"/> waits on before it is in the mission, or -1.</summary>
-	public int DeploymentActionOf(int group) =>
-		group >= 0 && group < Mission.GroupDeploymentActions.Count ? Mission.GroupDeploymentActions[group] : -1;
-
-	/// <summary>Whether <paramref name="placed"/> belongs to a group waiting on an action.</summary>
-	public bool IsWaiting(SceneObject placed) => DeploymentActionOf(placed.Placement.GroupIndex) >= 0;
-
-	/// <summary>A group's point, heading and formation, or null for an index the mission does not have.</summary>
-	public MissionGroupSetup? SetupOf(int group) =>
-		group >= 0 && group < Mission.GroupSetups.Count ? Mission.GroupSetups[group] : null;
-
-	/// <summary>
-	/// Where a record a mission ref names stands: an object's position, or a group's point. Null when
-	/// nothing was placed in that slot.
-	/// </summary>
-	public Vec3i? PointOf(MissionUnitKind? kind, int reference) => kind is { } objectKind
-		? ObjectAt(objectKind, reference)?.Object.Position
-		: SetupOf(reference)?.Point;
-
-	/// <summary>
-	/// The objects an objective is asked of: its subject object, or every placed member of its
-	/// subject group.
-	/// </summary>
-	public IReadOnlyList<SceneObject> SubjectObjectsOf(MissionObjective objective) {
-		if (UnitKindOf(objective.SubjectKind) is { } kind) {
-			return ObjectAt(kind, objective.SubjectRef) is { } placed ? new[] { placed } : Array.Empty<SceneObject>();
+		_members.Clear();
+		foreach (var group in plan.Groups) {
+			_members[group.Guid] = group.Members.Select(key => _byKey.GetValueOrDefault(key)).OfType<SceneObject>().ToList();
 		}
 
-		return objective.SubjectKind == MissionObjectiveSubject.Group
-				&& objective.SubjectRef >= 0 && objective.SubjectRef < GroupMembers.Count
-			? GroupMembers[objective.SubjectRef]
-			: Array.Empty<SceneObject>();
+		_pads = PadsOf(plan);
+		_links = TriggerWiring.Build(plan);
+		Box = MissionBox.Of(plan.Layout.Entries<MapPoint22>()
+			.Select(point => new Vec3i(point.Fields.X, point.Fields.Y, point.Fields.Z)).ToList());
 	}
 
 	/// <summary>
-	/// The group whose orders condition 0 reads: the subject group, or the group the subject object
-	/// belongs to. -1 when the subject is an object nothing placed.
+	/// Takes <paramref name="plan"/>, which places the same records as <see cref="Plan"/> elsewhere, for the groups' setups
+	/// and pads and the routes and areas, keeping the objects: a drag's preview.
 	/// </summary>
-	public int OrderGroupOf(MissionObjective objective) => UnitKindOf(objective.SubjectKind) is { } kind
-		? ObjectAt(kind, objective.SubjectRef)?.Placement.GroupIndex ?? -1
-		: objective.SubjectKind == MissionObjectiveSubject.Group ? objective.SubjectRef : -1;
+	public void Replan(LayoutPlan plan) {
+		Plan = plan;
+		_pads = PadsOf(plan);
+	}
+
+	/// <summary>The roster record <paramref name="placed"/> stands for, or null for an object not in the scene.</summary>
+	public ObjectKey? KeyOf(SceneObject placed) => _keyOf.TryGetValue(placed, out var key) ? key : null;
+
+	/// <summary>The object standing for <paramref name="key"/>, or null when the scene has none.</summary>
+	public SceneObject? ObjectOf(ObjectKey key) => _byKey.GetValueOrDefault(key);
+
+	/// <summary>The object <paramref name="selection"/> names, or null when the scene has none.</summary>
+	public SceneObject? ObjectOf(ObjectSelection selection) => ObjectOf(new ObjectKey(selection.Row, selection.Guid));
+
+	/// <summary>The selection of <paramref name="placed"/>, by the record it stands for; null for an object not in the scene.</summary>
+	public ObjectSelection? SelectionOf(SceneObject placed) =>
+		KeyOf(placed) is { } key ? new ObjectSelection(key.Row, key.Guid) : null;
+
+	/// <summary>How <paramref name="placed"/> is placed, or null for an object not in the scene.</summary>
+	public PlannedObject? Planned(SceneObject placed) => KeyOf(placed) is { } key ? Plan.Object(key) : null;
+
+	/// <summary>Row-16 GUID <paramref name="guid"/>'s group, or null when the layout has none.</summary>
+	public PlannedGroup? Group(short guid) => Plan.Group(guid);
+
+	/// <summary>The group that places <paramref name="placed"/>, or null for an object not in the scene.</summary>
+	public PlannedGroup? GroupOf(SceneObject placed) => Planned(placed) is { } planned ? Group(planned.Group) : null;
+
+	/// <summary>The objects group <paramref name="guid"/> places, in roster order, the squad's in slot order.</summary>
+	public IReadOnlyList<SceneObject> MembersOf(short guid) => _members.GetValueOrDefault(guid) ?? [];
+
+	/// <summary>Whether <paramref name="placed"/>'s group waits on an action before it is in the mission.</summary>
+	public bool IsWaiting(SceneObject placed) => GroupOf(placed)?.Waiting == true;
 
 	/// <summary>
-	/// The order slot of <paramref name="group"/> whose completion an order-complete objective on
-	/// <paramref name="routeRef"/> reads, or -1 when none runs that route — the first slot to run it,
-	/// as <see cref="Sim.MissionGroup.OrderCompletedForRoute"/> picks it.
+	/// Whether <paramref name="placed"/> is in the scene, drawn and picked: false for a member of a group kept out of it
+	/// (<see cref="PlannedGroup.OffScene"/>), which is still indexed and selected from the outliner.
 	/// </summary>
-	public int SlotOnRoute(int group, int routeRef) {
-		if (group < 0 || group >= Mission.GroupOrders.Count || routeRef < 0) {
+	public bool InScene(SceneObject placed) => GroupOf(placed)?.OffScene != true;
+
+	/// <summary>The pad group <paramref name="guid"/> paints, or null.</summary>
+	public MissionBasePad? PadOf(short guid) => Group(guid)?.Pad;
+
+	/// <summary>Row-8 GUID <paramref name="guid"/>'s route, or null when it has no waypoint that stands somewhere.</summary>
+	public PlannedRoute? Route(short guid) => Plan.Route(guid);
+
+	/// <summary>Row-9 GUID <paramref name="guid"/>'s trigger area, or null when it stands nowhere.</summary>
+	public PlannedArea? Area(short guid) => Plan.Area(guid);
+
+	/// <summary>Row-10 GUID <paramref name="guid"/>'s action, or null when the layout has none.</summary>
+	public PlannedAction? Action(short guid) => Plan.Action(guid);
+
+	/// <summary>What fires row-10 GUID <paramref name="guid"/> besides its areas, and what follows it; <see cref="TriggerLinks.None"/> for none.</summary>
+	public TriggerLinks Links(short guid) => _links.GetValueOrDefault(guid) ?? TriggerLinks.None;
+
+	/// <summary>
+	/// The roster record an objective's or order's subject of <paramref name="kind"/> (1 a herc, 2 a flyer, 3 a structure or
+	/// ground vehicle) and GUID <paramref name="guid"/> names; null for a group (kind 0), none or an unknown kind.
+	/// </summary>
+	public static ObjectKey? SubjectKey(short kind, short guid) => kind switch {
+		1 => new ObjectKey(12, guid),
+		2 => new ObjectKey(13, guid),
+		3 => new ObjectKey(14, guid),
+		_ => null,
+	};
+
+	/// <summary>
+	/// The row-16 GUID of the group whose orders objective <paramref name="fields"/>'s condition 0 reads: its subject group, or
+	/// the group that places its subject; <c>-1</c> when there is none.
+	/// </summary>
+	public short SubjectGroup(MissionObjective58 fields) => fields.SubjectKind == 0
+		? Group(fields.SubjectRef) != null ? fields.SubjectRef : (short)-1
+		: SubjectKey(fields.SubjectKind, fields.SubjectRef) is { } key && Plan.Object(key) is { } planned ? planned.Group : (short)-1;
+
+	/// <summary>The objects objective <paramref name="fields"/> is asked of: its subject's object, or every member of its subject group.</summary>
+	public IReadOnlyList<SceneObject> SubjectObjects(MissionObjective58 fields) => fields.SubjectKind == 0
+		? MembersOf(fields.SubjectRef)
+		: SubjectKey(fields.SubjectKind, fields.SubjectRef) is { } key && ObjectOf(key) is { } placed ? [placed] : [];
+
+	/// <summary>
+	/// The order slot of group <paramref name="group"/> whose completion a condition-0 objective on row-8 GUID
+	/// <paramref name="route"/> reads: the first slot whose order names that route, as <c>Mission_GroupOrderCompleteOnRoute</c>
+	/// (<c>0041324c</c>) scans them (docs/retail/simulation/ai-goals.md#what-else-reads-an-order); <c>-1</c> for none.
+	/// </summary>
+	public int SlotOnRoute(short group, short route) {
+		if (route == -1 || Group(group) is not { } planned) {
 			return -1;
 		}
 
-		var orders = Mission.GroupOrders[group];
-		for (int slot = 0; slot < orders.Count; slot++) {
-			if (orders[slot]?.RouteRef == routeRef) {
+		for (int slot = 0; slot < planned.Orders.Count; slot++) {
+			if (planned.Orders[slot] != -1 && Layout.Entry<MissionOrder22>(planned.Orders[slot])?.Fields.RouteRef == route) {
 				return slot;
 			}
 		}
@@ -197,124 +191,42 @@ internal sealed class MissionIndex {
 		return -1;
 	}
 
-	/// <summary>The objectives whose subject is <paramref name="group"/>.</summary>
-	public IEnumerable<int> ObjectivesOfGroup(int group) {
-		for (int i = 0; i < Mission.Objectives.Count; i++) {
-			if (Mission.Objectives[i] is { SubjectKind: MissionObjectiveSubject.Group } objective
-					&& objective.SubjectRef == group) {
-				yield return i;
-			}
-		}
-	}
-
-	/// <summary>The objectives whose subject is <paramref name="placed"/> itself.</summary>
-	public IEnumerable<int> ObjectivesOfObject(SceneObject placed) {
-		for (int i = 0; i < Mission.Objectives.Count; i++) {
-			var objective = Mission.Objectives[i];
-			if (UnitKindOf(objective.SubjectKind) == placed.Placement.Kind
-					&& objective.SubjectRef == placed.Placement.SlotIndex && placed.Placement.SlotIndex >= 0) {
-				yield return i;
-			}
-		}
-	}
-
-	/// <summary>The roster an objective subject indexes, or null for a group subject.</summary>
-	public static MissionUnitKind? UnitKindOf(MissionObjectiveSubject kind) => kind switch {
-		MissionObjectiveSubject.Mech => MissionUnitKind.Mech,
-		MissionObjectiveSubject.Flyer => MissionUnitKind.Flyer,
-		MissionObjectiveSubject.Base => MissionUnitKind.Base,
-		_ => null
-	};
-
-	/// <summary>The roster an order subject indexes, or null for a group subject (or none).</summary>
-	public static MissionUnitKind? UnitKindOf(MissionOrderSubject kind) => kind switch {
-		MissionOrderSubject.Mech => MissionUnitKind.Mech,
-		MissionOrderSubject.Flyer => MissionUnitKind.Flyer,
-		MissionOrderSubject.Base => MissionUnitKind.Base,
-		_ => null
-	};
-
-	private static List<MissionTriggerArea> BuildAreas(Mission mission) {
-		var byReference = new SortedDictionary<int, MissionTriggerArea>();
-		foreach (var action in mission.Actions) {
-			foreach (var area in action.Areas) {
-				byReference.TryAdd(area.Reference, area);
-			}
+	/// <summary>The group slots whose base names row-15 GUID <paramref name="order"/>, in layout order.</summary>
+	public IReadOnlyList<EndsOrder> OrderSlots(short order) {
+		var slots = new List<EndsOrder>();
+		if (order == -1) {
+			return slots;
 		}
 
-		return byReference.Values.ToList();
-	}
-
-	private static List<EditorRoute> BuildRoutes(Mission mission) {
-		var points = new SortedDictionary<int, IReadOnlyList<Vec3i>>();
-		var walkedBy = new Dictionary<int, List<int>>();
-		var namedBy = new Dictionary<int, List<int>>();
-
-		for (int group = 0; group < mission.GroupOrders.Count; group++) {
-			var orders = mission.GroupOrders[group];
-			for (int slot = 0; slot < orders.Count; slot++) {
-				if (orders[slot] is not { RouteRef: >= 0 } order || order.Route.Count == 0) {
-					continue;
-				}
-
-				points.TryAdd(order.RouteRef, order.Route);
-				var into = slot == 0 ? walkedBy : namedBy;
-				if (!into.TryGetValue(order.RouteRef, out var groups)) {
-					into[order.RouteRef] = groups = new List<int>();
-				}
-
-				if (!groups.Contains(group)) {
-					groups.Add(group);
+		foreach (var group in Groups) {
+			for (int slot = 0; slot < group.Orders.Count; slot++) {
+				if (group.Orders[slot] == order) {
+					slots.Add(new EndsOrder(group.Guid, slot));
 				}
 			}
 		}
 
-		return points
-			.Select(entry => {
-				var walked = walkedBy.GetValueOrDefault(entry.Key) ?? new List<int>();
-				var named = (namedBy.GetValueOrDefault(entry.Key) ?? new List<int>()).Except(walked).ToList();
-				return new EditorRoute(entry.Key, entry.Value, walked, named);
-			})
-			.ToList();
+		return slots;
 	}
 
-	private ActionLinks BuildLinks(int action, IReadOnlyList<SceneObject> objects) {
-		var firing = new List<int>();
-		var starts = new List<int>();
-		for (int i = 0; i < Mission.ActionTimers.Count; i++) {
-			var timer = Mission.ActionTimers[i];
-			if (timer.SequenceRefs.Any(reference => reference == action)) {
-				firing.Add(i);
-			}
+	/// <summary>The objectives whose subject is group <paramref name="group"/>, in row-17 order.</summary>
+	public IEnumerable<LayoutObjective> ObjectivesAbout(short group) =>
+		Layout.Objectives.Where(objective => objective.Fields.SubjectKind == 0 && objective.Fields.SubjectRef == group);
 
-			if (timer.PrimaryActionRef == action) {
-				starts.Add(i);
-			}
-		}
+	/// <summary>The objectives whose subject is the roster record <paramref name="key"/> itself, in row-17 order.</summary>
+	public IEnumerable<LayoutObjective> ObjectivesAbout(ObjectKey key) =>
+		Layout.Objectives.Where(objective => SubjectKey(objective.Fields.SubjectKind, objective.Fields.SubjectRef) == key);
 
-		var waiting = new List<int>();
-		for (int group = 0; group < Mission.GroupDeploymentActions.Count; group++) {
-			if (Mission.GroupDeploymentActions[group] == action) {
-				waiting.Add(group);
-			}
-		}
+	/// <summary>
+	/// The objectives that read the order in group <paramref name="group"/>'s slot <paramref name="slot"/>: those asking
+	/// whether the subject's group has finished its order on a route (condition 0) whose group is this one and whose route is
+	/// the first this group's orders name in that slot (<see cref="SlotOnRoute"/>), in row-17 order.
+	/// </summary>
+	public IReadOnlyList<LayoutObjective> ObjectivesReadingOrder(short group, int slot) => Layout.Objectives
+		.Where(objective => objective.Fields.ConditionCode == MissionObjective.ConditionOrderComplete
+			&& SubjectGroup(objective.Fields) == group && SlotOnRoute(group, objective.Fields.RouteRef) == slot)
+		.ToList();
 
-		var ends = new List<OrderSlot>();
-		for (int group = 0; group < Mission.GroupOrders.Count; group++) {
-			var orders = Mission.GroupOrders[group];
-			for (int slot = 0; slot < orders.Count; slot++) {
-				if (orders[slot] is { } order && order.ActionRef == action) {
-					ends.Add(new OrderSlot(group, slot, order));
-				}
-			}
-		}
-
-		return new ActionLinks(
-			firing,
-			starts,
-			objects.Where(o => o.Placement.EngagementActionRef == action).ToList(),
-			objects.Where(o => o.Placement.DefeatActionRef == action).ToList(),
-			waiting,
-			ends);
-	}
+	private static List<MissionBasePad> PadsOf(LayoutPlan plan) =>
+		plan.Groups.Select(group => group.Pad).OfType<MissionBasePad>().ToList();
 }

@@ -1,3 +1,4 @@
+using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Data.File.Sav;
 using HercWorks.Core.Io;
 using HercWorks.Core.Io.Transform.Common;
@@ -53,30 +54,129 @@ public static class MissionFileLaunch {
 
 	/// <summary>
 	/// Writes the handoff for <paramref name="name"/> into the install's <c>DATA\</c> and returns its
-	/// <c>script.dat</c>, or null with the reason.
+	/// <c>script.dat</c>, or null with the reason. <paramref name="ownWorld"/> plays a mission that takes the training load
+	/// on its own theater and time of day, as the mission editor shows it (<see cref="ShellTrainingLaunch.Load(string,
+	/// GameContent, SimulatorPreferences, int, string, byte[], byte[], bool, Func{short, int}, short[],
+	/// HercWorks.Core.Data.File.Sav.PlayerSave, ShellHangar, out string?, MissionGenerating?, bool)"/>); a campaign mission
+	/// plays its stage's theater and its own time of day either way.
 	/// </summary>
-	public static string? Write(string installRoot, string name, out string? failure) =>
+	public static string? Write(string installRoot, string name, bool ownWorld, out string? failure) =>
 		// The career table, the name tables and the catalogs are the shell's, and the missions are in ZONES.VOL,
 		// which the shell mounts with them.
-		Write(GameContent.MountShell(installRoot), installRoot, name, ShellWorkingFiles.DataDirectory(installRoot), out failure);
+		Write(GameContent.MountShell(installRoot), installRoot, name, ShellWorkingFiles.DataDirectory(installRoot), ownWorld, out failure);
 
 	/// <summary>
 	/// Writes the handoff for <paramref name="name"/> into <paramref name="directory"/> and returns its
-	/// <c>script.dat</c>, or null with the reason. <paramref name="shellContent"/> is VSHELL's mount of the install.
+	/// <c>script.dat</c>, or null with the reason. <paramref name="shellContent"/> is VSHELL's mount of the install;
+	/// <paramref name="ownWorld"/> is as for <see cref="Write(string, string, bool, out string?)"/>.
 	/// </summary>
-	public static string? Write(GameContent shellContent, string installRoot, string name, string directory, out string? failure) {
-		string installData = ShellWorkingFiles.DataDirectory(installRoot);
-		var random = ShellTrainingLaunch.StartupRandom();
-		var clearList = new short[MissionGenerator.ClearListLength];
+	public static string? Write(GameContent shellContent, string installRoot, string name, string directory, bool ownWorld,
+			out string? failure) =>
+		Write(shellContent, installRoot, name, directory, ShellTrainingLaunch.StartupRandom(), generating: null, ownWorld, out _,
+			out failure);
 
-		if (ShellCampaignLaunch.Find(shellContent, name) is not var (stage, mission)) {
-			return WriteUnlisted(shellContent, installData, name, directory, random, clearList, out failure);
+	/// <summary>
+	/// Writes the handoff for <paramref name="name"/> into <paramref name="directory"/>, as <see cref="Write(GameContent,
+	/// string, string, string, out string?)"/> does, and holds the mission as a <see cref="MissionDocument"/> for the
+	/// mission editor: the <c>.MSN</c> and <c>.ENG</c> the load read, generated with the flags and header words the load
+	/// used and draws from VSHELL's generator as it stood when the load began drawing, so the document's every generation
+	/// draws what this handoff's did (docs/herculan/editor-design.md#what-moves-the-random-draws).
+	/// <paramref name="random"/> is VSHELL's generator as the load begins, which every draw comes from in the launch's own
+	/// order: a new <see cref="ShellTrainingLaunch.StartupRandom"/> draws as the game's load does, and the mission editor's
+	/// open passes <see cref="SimRandom.Lowest"/>. <paramref name="squad"/> says which Hercs the squad pilots and builds its
+	/// <c>player.mec</c> again. Returns the handoff's <c>script.dat</c>, or null with the reason.
+	/// </summary>
+	public static string? Open(GameContent shellContent, string installRoot, string name, string directory, SimRandom random,
+			out MissionDocument? document, out MissionSquad? squad, out string? failure) =>
+		Hold(name, random, (SimRandom drawing, MissionGenerating generating, out MissionSquad? piloted, out string? why) =>
+			Write(shellContent, installRoot, name, directory, drawing, generating, ownWorld: false, out piloted, out why), out document,
+			out squad, out failure);
+
+	/// <summary>
+	/// <see cref="Open"/> for a mission held in memory rather than read from the archives or the install: the <c>.MSN</c>
+	/// <paramref name="msn"/> and its text <paramref name="text"/>, under the name <paramref name="name"/>
+	/// (no extension), loaded as <c>INSTANT ACTION</c> loads a mission <c>gam\career.dat</c> does not list, the way
+	/// <see cref="Open"/> loads such a mission from a file. The mission editor's File &gt; New mission opens its new
+	/// mission this way until it is saved, after which <see cref="Open"/> reads the saved file.
+	/// </summary>
+	public static string? OpenNew(GameContent shellContent, string installRoot, string name, byte[] msn, byte[]? text,
+			string directory, SimRandom random, out MissionDocument? document, out MissionSquad? squad, out string? failure) =>
+		Hold(name, random, (SimRandom drawing, MissionGenerating generating, out MissionSquad? piloted, out string? why) =>
+				LoadUnlisted(shellContent, ShellWorkingFiles.DataDirectory(installRoot), $"{MissionFolder}\\{name}{MissionExtension}",
+					msn, text, directory, drawing, new short[MissionGenerator.ClearListLength], generating, ownWorld: false, out piloted,
+					out why),
+			out document, out squad, out failure);
+
+	/// <summary>
+	/// <see cref="Write(GameContent, string, string, string, bool, out string?)"/> for a mission held in memory, the
+	/// <c>.MSN</c> <paramref name="msn"/> and its text <paramref name="text"/> under the name <paramref name="name"/> (no
+	/// extension), loaded as <c>INSTANT ACTION</c> loads a mission <c>gam\career.dat</c> does not list whatever its name:
+	/// a custom mission's bundle (<see cref="CustomMissions"/>).
+	/// </summary>
+	public static string? WriteHeld(GameContent shellContent, string installRoot, string name, byte[] msn, byte[]? text,
+			string directory, bool ownWorld, out string? failure) =>
+		LoadUnlisted(shellContent, ShellWorkingFiles.DataDirectory(installRoot), $"{MissionFolder}\\{name}{MissionExtension}", msn,
+			text, directory, ShellTrainingLaunch.StartupRandom(), new short[MissionGenerator.ClearListLength], generating: null,
+			ownWorld, out _, out failure);
+
+	/// <summary>
+	/// Removes the handoff a load wrote into <paramref name="directory"/>, since the shell's writer does not truncate
+	/// (<see cref="ShellWorkingFiles.WriteMissionFile"/>) and a shorter mission would otherwise keep a longer one's tail.
+	/// </summary>
+	public static void ClearHandoff(string directory) {
+		foreach (string file in new[] {
+				MissionLoader.ScriptFileName, MissionLoader.TextFileName, MissionLoader.PlayerFileName,
+				MissionLoader.CountersFileName }) {
+			string path = CaseInsensitivePath.Combine(directory, file);
+			if (File.Exists(path)) {
+				File.Delete(path);
+			}
+		}
+	}
+
+	private delegate string? HandoffWriter(SimRandom random, MissionGenerating generating, out MissionSquad? squad,
+		out string? failure);
+
+	// Writes a handoff through <write>, drawing from <random>, and holds the mission its load generated as a MissionDocument,
+	// which draws what the handoff's load drew.
+	private static string? Hold(string name, SimRandom random, HandoffWriter write, out MissionDocument? document,
+			out MissionSquad? squad, out string? failure) {
+		MissionDocument? opened = null;
+		string? script = write(random, (msn, text, flags, header) => {
+			var drawn = random.Copy();
+			opened = MissionDocument.Read(msn, text, new MissionGeneration(flags, header, () => drawn.Copy().NextBelow));
+		}, out squad, out failure);
+
+		document = script != null ? opened : null;
+		if (script != null && document == null) {
+			failure = $"{name} was loaded without the mission load being seen.";
+			return null;
 		}
 
+		return script;
+	}
+
+	private static string? Write(GameContent shellContent, string installRoot, string name, string directory, SimRandom random,
+			MissionGenerating? generating, bool ownWorld, out MissionSquad? squad, out string? failure) =>
+		ShellCampaignLaunch.Find(shellContent, name) is var (stage, mission)
+			? WriteAt(shellContent, installRoot, stage, mission, directory, random, generating, ownWorld, out squad, out failure)
+			: WriteUnlisted(shellContent, ShellWorkingFiles.DataDirectory(installRoot), name, directory, random,
+				new short[MissionGenerator.ClearListLength], generating, ownWorld, out squad, out failure);
+
+	/// <summary>
+	/// The load of the mission at career position (<paramref name="stage"/>, <paramref name="mission"/>), read from the archives;
+	/// <paramref name="ownWorld"/> reaches a stage-0 mission's training load alone.
+	/// </summary>
+	private static string? WriteAt(GameContent shellContent, string installRoot, int stage, int mission, string directory,
+			SimRandom random, MissionGenerating? generating, bool ownWorld, out MissionSquad? squad, out string? failure) {
+		string installData = ShellWorkingFiles.DataDirectory(installRoot);
+		var clearList = new short[MissionGenerator.ClearListLength];
 		if (stage == 0) {
 			var options = PracticeOptions(installData);
-			var training = ShellTrainingLaunch.Write(directory, shellContent, options, mission,
-				instantAction: mission >= ShellPracticeScreen.RowCount, random, clearList, held: null, out failure);
+			bool instantAction = mission >= ShellPracticeScreen.RowCount;
+			squad = MissionSquad.Training(shellContent, options, mission, instantAction, random);
+			var training = ShellTrainingLaunch.Write(directory, shellContent, options, mission, instantAction, random, clearList,
+				held: null, out failure, generating, ownWorld);
 			if (training != null) {
 				Console.WriteLine($"{training.MissionPath}: stage 0 row {mission}, loaded as a training mission — "
 					+ $"{training.SquadPositions} squad position(s), handoff written to {directory}.");
@@ -85,6 +185,7 @@ public static class MissionFileLaunch {
 			return training?.ScriptPath;
 		}
 
+		squad = MissionSquad.Campaign();
 		string playerPath = CaseInsensitivePath.Combine(installData, MissionLoader.PlayerFileName);
 		byte[]? playerBytes = File.Exists(playerPath) ? File.ReadAllBytes(playerPath) : null;
 		if (playerBytes == null || new MecFileTransformer().Parse(playerBytes) is not MecFile { Entries: [var player, ..] }) {
@@ -93,8 +194,9 @@ public static class MissionFileLaunch {
 		}
 
 		var flags = new short[MissionGenerator.CampaignFlagCount];
-		var campaign = ShellCampaignLaunch.Write(directory, shellContent, stage, mission, player.Skill, flags, clearList,
-			bound => random.NextBelow(bound), out failure);
+		int Roll(short bound) => random.NextBelow(bound);
+		var campaign = ShellCampaignLaunch.Write(directory, shellContent, stage, mission, player.Skill, flags, clearList, Roll,
+			out failure, generating: generating);
 		if (campaign == null) {
 			return null;
 		}
@@ -119,36 +221,63 @@ public static class MissionFileLaunch {
 
 	/// <summary>
 	/// A mission <c>gam\career.dat</c> does not list, loaded as <c>INSTANT ACTION</c> would load it on the first row
-	/// past the practice list, with its typed path in place of the row's.
+	/// past the practice list, with its typed path in place of the row's. One no archive or install file holds is read from
+	/// the bundle of that name HERCULAN comes with (<see cref="CustomMissions.FindIncluded"/>), if there is one.
 	/// </summary>
 	private static string? WriteUnlisted(GameContent shellContent, string installData, string name, string directory,
-			SimRandom random, short[] clearList, out string? failure) {
+			SimRandom random, short[] clearList, MissionGenerating? generating, bool ownWorld, out MissionSquad? squad,
+			out string? failure) {
 		string file = Path.GetFileName(name);
 		if (Path.GetExtension(file).Length == 0) {
 			file += MissionExtension;
 		}
 
 		string missionPath = $"{MissionFolder}\\{file}";
-		if (!shellContent.Contains(MissionFolder, file)) {
+		byte[] msn;
+		byte[]? text;
+		if (ShellTrainingLaunch.ReadMission(shellContent, missionPath) is (byte[] read, var readText)) {
+			(msn, text) = (read, readText);
+		} else if (CustomMissions.FindIncluded(Path.GetFileNameWithoutExtension(file)) is { } included) {
+			(msn, text) = (included.Msn, CustomMissions.Text(included, shellContent.Language));
+		} else {
+			squad = null;
 			failure = $"{name} is not a mission in any mounted archive.";
 			return null;
 		}
 
-		int Roll(short bound) => random.NextBelow(bound);
+		return LoadUnlisted(shellContent, installData, missionPath, msn, text, directory, random, clearList, generating, ownWorld,
+			out squad, out failure);
+	}
+
+	/// <summary>The load <see cref="WriteUnlisted"/> makes, of the mission <paramref name="msn"/> and its text, read.</summary>
+	private static string? LoadUnlisted(GameContent shellContent, string installData, string missionPath, byte[] msn, byte[]? text,
+			string directory, SimRandom random, short[] clearList, MissionGenerating? generating, bool ownWorld,
+			out MissionSquad? squad, out string? failure) {
 		var options = PracticeOptions(installData);
 		const int row = ShellPracticeScreen.RowCount;
-		if (ShellTrainingLaunch.NewCareer(shellContent, options, row, Roll, held: null, out failure) is not var (game, hangar)) {
-			return null;
-		}
-
-		var training = ShellTrainingLaunch.Load(directory, shellContent, options, row, missionPath, instantAction: true, Roll,
-			clearList, game, hangar, out failure);
+		squad = MissionSquad.Training(shellContent, options, row, instantAction: true, random);
+		var training = LoadTraining(shellContent, options, row, instantAction: true, missionPath, msn, text, directory, random,
+			clearList, generating, ownWorld, out failure);
 		if (training != null) {
 			Console.WriteLine($"{missionPath}: not in gam\\career.dat, loaded as an INSTANT ACTION mission — "
 				+ $"{training.SquadPositions} squad position(s), handoff written to {directory}.");
 		}
 
 		return training?.ScriptPath;
+	}
+
+	/// <summary>
+	/// <see cref="ShellTrainingLaunch.Write"/> for the mission <paramref name="msn"/> and its text, read, named
+	/// <paramref name="missionPath"/>: the new career on <paramref name="row"/>, then the training load of that mission.
+	/// </summary>
+	private static ShellTrainingHandoff? LoadTraining(GameContent shellContent, SimulatorPreferences options, int row,
+			bool instantAction, string missionPath, byte[] msn, byte[]? text, string directory, SimRandom random, short[] clearList,
+			MissionGenerating? generating, bool ownWorld, out string? failure) {
+		int Roll(short bound) => random.NextBelow(bound);
+		return ShellTrainingLaunch.NewCareer(shellContent, options, row, Roll, held: null, out failure) is var (game, hangar)
+			? ShellTrainingLaunch.Load(directory, shellContent, options, row, missionPath, msn, text, instantAction, Roll, clearList,
+				game, hangar, out failure, generating, ownWorld)
+			: null;
 	}
 
 	/// <summary>The practice options <c>data\prefs.cfg</c> holds, with saving off.</summary>

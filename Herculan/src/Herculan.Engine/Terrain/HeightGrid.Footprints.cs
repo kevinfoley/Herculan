@@ -17,17 +17,32 @@ public sealed partial class HeightGrid {
 	/// <summary>
 	/// The original's <c>+0xf0</c> array: one byte per cell, parallel to the cell records.
 	///
-	/// <para>Here it belongs to this pass alone and is never cleared, which is safe only because the
-	/// engine has no per-cell object dispatch. The original reuses the same bytes every frame as a
-	/// pending-object count and gets away with it by <c>memset</c>ting the array at the top of each
-	/// frame — anything added here that counts into these bytes needs that reset first, or it will
-	/// read a flattened base's footprint marks as counts. See docs/retail/simulation/terrain-heightmap.md,
-	/// "Structure footprints — the flattening pass".</para>
+	/// <para>Here it belongs to this pass alone and is cleared only by
+	/// <see cref="RestoreUnlevelledHeights"/>, which is safe only because the engine has no per-cell object
+	/// dispatch. The original reuses the same bytes every frame as a pending-object count and gets away with it
+	/// by <c>memset</c>ting the array at the top of each frame — anything added here that counts into these
+	/// bytes needs that reset first, or it will read a flattened base's footprint marks as counts. See
+	/// docs/retail/simulation/terrain-heightmap.md, "Structure footprints — the flattening pass".</para>
 	/// </summary>
 	private readonly byte[] _cellScratch;
 
+	// The raw heights as the zone loaded them, kept by the first flattening pass for RestoreUnlevelledHeights.
+	private byte[]? _unlevelledHeights;
+
 	private int _footprintSum;
 	private int _footprintCount;
+
+	/// <summary>
+	/// Puts back the raw heights the first <see cref="FlattenStructureFootprints"/> levelled and clears every
+	/// footprint mark, so the pass can be run again over a different set of footprints. Not retail: DBSIM
+	/// flattens once, at spawn, and never undoes it. The mission editor runs the pass again this way after a
+	/// structure moves, so the ground under it is what mission start would make of the new layout.
+	/// The surface is left as it was until the next <see cref="FlattenStructureFootprints"/> rebuilds it.
+	/// </summary>
+	public void RestoreUnlevelledHeights() {
+		_unlevelledHeights?.CopyTo(_rawHeights, 0);
+		Array.Clear(_cellScratch);
+	}
 
 	/// <summary>
 	/// <c>Terrain_MarkStructureFootprint</c> (<c>00470dc8</c>) — registers one structure's
@@ -74,13 +89,15 @@ public sealed partial class HeightGrid {
 	/// <c>Terrain_FlattenStructureFootprints</c> (<c>00471190</c>) — flattens every marked
 	/// footprint and rebuilds the surface. Run once, after the whole roster is placed; the structures
 	/// standing on it must then be re-settled, which is what <c>DBSim_SpawnMissionObjects</c> does
-	/// with its own base list the moment this returns.
+	/// with its own base list the moment this returns. Running it again needs
+	/// <see cref="RestoreUnlevelledHeights"/> first.
 	///
 	/// <para>Walks to the grid's own height where the original walks both axes to
 	/// <c>1 &lt;&lt; WidthShift</c> — a latent bug that cannot fire, every retail zone being
 	/// square.</para>
 	/// </summary>
 	public void FlattenStructureFootprints() {
+		_unlevelledHeights ??= (byte[])_rawHeights.Clone();
 		int width = 1 << WidthShift;
 		int height = 1 << HeightShift;
 

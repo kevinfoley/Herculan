@@ -554,8 +554,14 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObjectBase_ConstructWithDetailTable",
-      "description": "The shape-drawing base constructor that takes a LOD detail table: same body as SimObjectBase_ConstructAnimated, but builds the shape holder from roots[0] and stores the table itself at obj+0x41, where the other two base constructors null that field. Its only caller is Mech_Constructor, which is why a machine is the only class that selects a root.",
-      "source": "docs/retail/rendering/mech-shape-drawing.md"
+      "description": "(obj, detailTable): the shape-drawing base constructor that takes a LOD detail table. Runs SimObjectBase_ConstructShaped on the table's roots[0] (the root array is the table's first dword, read without a null test, so a table never filled faults here at 004033b1), installs vtable 004973ac then DET_ANIM_OBJ 004973cc, counting each in the live-destructor count [006cbf74], stores the table itself at obj+0x41 and returns obj. SimObjectBase_ConstructAnimated and SimObjectBase_ConstructStatic null obj+0x41 (mech-shape-drawing.md). es2_xref finds one call, in Mech_Constructor, which is why a machine is the only class that selects a root.",
+      "source": "docs/retail/rendering/mech-shape-drawing.md",
+      "verified": {
+        "bytes": "004033a4+62",
+        "sha1": "1a1df4558d07",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "004033e4",
@@ -716,8 +722,21 @@
       "type": "function",
       "confidence": "high",
       "name": "Base_ThinkTick",
-      "description": "StructureVtable's and StructureRadarVtable's +0x18 tick slot -- the plain building's whole per-tick behaviour. Base_DeathSequenceTick, then while standing: if typeRec+0x24 >= 0, step cell sequence typeRec+0x24 by one modulo that sequence's own frame count, on a countdown at +0x1f6 reloaded from typeRec+0x26 (milliseconds); and if typeRec+0x06 is non-zero, SimObject_ApplyRootMotionIfEnabled(this, 100), which steps the structure's animation threads. Eight retail types state a cell sequence but only types 9 and 0x1a reach this function; of the rest, the Armed types step the same array as a muzzle flash instead, the transport (0x22) never steps it, and 0x0a is never built. The flipbook is NOT what turns a radar dish -- all four radar types state -1 for it and spin a free-running thread instead.",
-      "source": "docs/retail/simulation/structure-behaviour.md"
+      "description": "StructureVtable's and StructureRadarVtable's +0x18 tick slot -- the plain building's whole per-tick behaviour. Base_DeathSequenceTick, then while standing: if typeRec+0x24 >= 0, step cell sequence typeRec+0x24 by one modulo that sequence's own frame count, on a countdown at +0x1f6 reloaded from typeRec+0x26 (simulation timer units); and if typeRec+0x06 is non-zero, SimObject_ApplyRootMotionIfEnabled(this, 100), which steps the structure's animation threads. Eight retail types state a cell sequence but only types 9 and 0x1a have this function as their standing tick; of the rest, the Armed types step the same array as a muzzle flash instead, the transport (0x22) never steps it, and 0x0a is never built. The flipbook is NOT what turns a radar dish -- all four radar types state -1 for it and spin a free-running thread instead.",
+      "source": "docs/retail/simulation/structure-behaviour.md",
+      "verified": {
+        "bytes": "00403ca8+178",
+        "sha1": "d4eb8285eb4a",
+        "scope": "body",
+        "via": "decompile",
+        "negatives": [
+          {
+            "claim": "Eight retail types state a cell sequence but only types 9 and 0x1a have this function as their standing tick; of the rest, the Armed types step the same array as a muzzle flash instead, the transport (0x22) never steps it, and 0x0a is never built.",
+            "evidence": "data",
+            "how": "BASES.DAT +0x24 >= 0 on exactly 8, 9, 0x0a, 0x0b, 0x1a, 0x20, 0x22, 0x23 (all 65 records walked); Base_Construct's switch puts 9 and 0x1a in the Plain case, 8/0x0b/0x20/0x23 Armed, 0x22 Transport, and 0x0a in no case"
+          }
+        ]
+      }
     },
     {
       "address": "00403d5c",
@@ -725,8 +744,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Base_TurretSeek",
-      "description": "The structure turret seek, two axes. Axis 0 is the ELEVATION and takes Math_EulerToward's X straight; axis 1 is the TRAVERSE and takes its Z NEGATED. Per axis: clamp(angle >> 3) to +/-0x100, a square-law gain Q8(Q8(|in|, in), gain), Math_RateLimitedMoveToward into the per-axis rate at +0x209, accumulate that into the angle at +0x20d clamped between the per-axis stops, then AnimThread_SeekToPosition(thread[axis], axis, (unsigned)angle >> 2). Tails into SimObject_ApplyRootMotionIfEnabled(this, 100), which re-poses the nodes. Gain 004973e4 = {2000, 2500}; rate limit 004973e8 = {200, 800}; lower stop 004973ec = {-4000, -32768}; upper stop 004973f0 = {4000, 32767} -- so the traverse is unlimited and only the elevation is held, to +/-4000. Same mechanism as the HERC turret: the angle seeks a position in a full-sweep animation rather than rotating a node.",
-      "source": "docs/retail/simulation/structure-behaviour.md"
+      "description": "The structure turret seek, two axes. Axis 0 is the ELEVATION and takes Math_EulerToward's X straight; axis 1 is the TRAVERSE and takes its Z NEGATED. Per axis: clamp(angle >> 3) to +/-0x100, a square-law gain Q8(Q8(|in|, in), gain), Math_RateLimitedMoveToward into the per-axis rate at +0x209, accumulate that into the angle at +0x20d clamped between the per-axis stops, then AnimThread_SeekToPosition(thread[axis], axis, (unsigned)angle >> 2), the thread taken from the pair at +0x1f9 with no null test. Tails into SimObject_ApplyRootMotionIfEnabled(this, 100), which re-poses the nodes. Gain 004973e4 = {2000, 2500}; rate limit 004973e8 = {200, 800}; lower stop 004973ec = {-4000, -32768}; upper stop 004973f0 = {4000, 32767} -- so the traverse is unlimited and only the elevation is held, to +/-4000. Same mechanism as the HERC turret: the angle seeks a position in a full-sweep animation rather than rotating a node.",
+      "source": "docs/retail/simulation/structure-behaviour.md",
+      "verified": {
+        "bytes": "00403d5c+400",
+        "sha1": "7bca8d8c10f4",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00403eec",
@@ -734,8 +759,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Base_AimTurret",
-      "description": "Transforms an aim point into a structure turret's own frame -- the object's world transform inverted, then shape PART 2's (transform 2 on all four armed BASES_AN roots, the barrel node hanging off the traversing base at transform 1) inverted -- takes the aim error from Math_EulerToward into DAT_004a9670, and hands it to the turret seek (00403d5c). Returns DAT_004a9670, a static triple, so the result is not reentrant.",
-      "source": "docs/retail/simulation/structure-behaviour.md"
+      "description": "Transforms an aim point into a structure turret's own frame -- the object's world transform inverted, then shape PART 2's (transform 2 on all four armed BASES_AN roots, the barrel node hanging off the traversing base at transform 1) inverted, or the identity at 006c572c when the shape's part lookup (shape vtable +0x20) finds no part 2 or it has a negative transform id -- takes the aim error from Math_EulerToward into DAT_004a9670, and hands it to the turret seek (00403d5c). Returns DAT_004a9670, a static triple, so the result is not reentrant.",
+      "source": "docs/retail/simulation/structure-behaviour.md",
+      "verified": {
+        "bytes": "00403eec+532",
+        "sha1": "b26624e5bafa",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00404100",
@@ -5622,7 +5653,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Group_ConditionTier",
-      "description": "A mission group's 0-4 condition tier: 4 when every member is immobilised (+0xa4) or destroyed (+0x99); else 3 when the lost fraction reaches 650/1024 or the mean overall damage across all members reaches 0xc1; else 2 at 250/1024 or 0x81; else 1 at mean damage 0x33; else 0. The mean includes dead members.",
+      "description": "A mission group's 0-4 condition tier: 4 when every member is immobilised (+0xa4) or destroyed (+0x99); else 3 when the lost fraction reaches 650/1024 or the mean overall damage across all members reaches 0xc1; else 2 at 250/1024 or 0x81; else 1 at mean damage 0x33; else 0. The mean includes dead members. Both the mean and the fraction divide by the member count (group+0x10) unchecked, so a group with no members divides by zero.",
       "source": "docs/retail/simulation/ai-goals.md",
       "verified": {
         "bytes": "00412c8c+191",
@@ -5812,7 +5843,13 @@
       "confidence": "high",
       "name": "Mission_IsOutsideBox",
       "description": "(point, margin): returns 1 when the point's x and y are not strictly inside Mission_Box (004aa6c4) widened by margin on every side, 0 when they are. It reads the box and writes nothing; DBSim_LoadScriptDat builds the box inline. SimObject_IsOutsideMissionBox and SimObject_IsFarOutsideMissionBox call it for Mission_Status's two box arms.",
-      "source": "DBSIM decompile and disassembly at 0041373c"
+      "source": "DBSIM decompile and disassembly at 0041373c",
+      "verified": {
+        "bytes": "0041373c+66",
+        "sha1": "9ecb6b16316c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00413780",
@@ -5853,8 +5890,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Group_IsWrittenOff",
-      "description": "A group's condition tier against its side's threshold -- 3 for a human group, 4 for a Cybrid one.",
-      "source": "docs/retail/simulation/mission-objectives.md"
+      "description": "(group): 1 when Group_ConditionTier reaches the side's threshold -- 3 when the group's side byte +0x12 is 0 (human), 4 for any other side.",
+      "source": "docs/retail/simulation/mission-objectives.md",
+      "verified": {
+        "bytes": "00413920+46",
+        "sha1": "73aa831d1015",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00413950",
@@ -7924,8 +7967,14 @@
       "type": "function",
       "confidence": "medium",
       "name": "maybe_MechTypeSlot_GetIndex",
-      "description": "Trivial accessor, returns (&DAT_004a9d8c)[param_1] -- a per-slot byte, 0xff sentinel meaning 'unused', otherwise the allocated dense index used by MechType_InitOne. Not independently cross-checked beyond its two callers (Mechs_InitAllTypes, MechTypeSlot_Allocate).",
-      "source": "memory project_es2_dts_texture_binding (DBSIM-side RE)"
+      "description": "(short mechType): returns the byte at 004a9d8c[mechType], zero-extended -- the type's dense slot in the mech type table (004a9de8, stride 0x21e), or 0xff for a type maybe_MechTypeSlot_Allocate never gave one, since Allocate tests for 0xff before assigning a slot. No range test on mechType. Mech_Constructor sign-extends the low word and indexes the type table with it unchecked, so an unallocated type becomes slot 255 (script-dat.md, the two-pass read). Callers found by es2_xref: Mech_Constructor (twice), maybe_MechTypeSlot_Allocate, MechType_InitOne and Mechs_InitAllTypes.",
+      "source": "memory project_es2_dts_texture_binding (DBSIM-side RE)",
+      "verified": {
+        "bytes": "0041ff00+16",
+        "sha1": "1491c65d83bc",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0041ff10",
@@ -8827,9 +8876,15 @@
       "type": "function",
       "confidence": "high",
       "name": "ActionTimer_Tick",
-      "description": "One script.dat block-6 action timer per frame -- the second of the four ways a mission action activates. Counts the millisecond countdown at timer+0x2c down through Timer_CountDown, but only while the primary action at timer+0x00 has activated or the record names none (in which case it runs from mission start). On expiry it calls Action_Activate on each of the ten resolved action pointers at timer+0x04..+0x28 and re-arms the countdown with 30000, which through the <<11 in ActionTimer_SetDelay is about seventeen hours -- so a timer effectively activates once. This is why an action carrying no trigger area of its own is ordinary rather than dead.",
+      "description": "One script.dat block-6 action timer per frame -- the second of the four ways a mission action activates. Counts the countdown at timer+0x2c down through Timer_CountDown, in the simulation's timer unit, but only while the primary action at timer+0x00 is null or has activated (its +0x0a set), so a timer naming none runs from mission start. When the countdown reads 0 it calls Action_Activate on each non-null one of the ten action pointers at timer+0x04..+0x28 and re-arms the countdown through ActionTimer_SetDelay with 30000, which is 30,000 seconds, about 8.3 hours -- so a timer effectively activates once. This is why an action carrying no trigger area of its own is ordinary rather than dead.",
       "source": "docs/retail/simulation/mission-deployment.md",
-      "signature": "void __cdecl ActionTimer_Tick(int *timer)"
+      "signature": "void __cdecl ActionTimer_Tick(int *timer)",
+      "verified": {
+        "bytes": "004230a4+94",
+        "sha1": "c12af8c316e5",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00423104",
@@ -8837,8 +8892,14 @@
       "type": "function",
       "confidence": "high",
       "name": "DBSim_BuildActionTimerRecord",
-      "description": "Small helper called once per row11 (action timer) record inside DBSim_LoadScriptDat: builds a resolved in-memory action timer from a primary-action ref + the delay short + a 10-slot ref array, all already resolved to row10-array pointers by the caller.",
-      "source": "docs/retail/formats/script-dat.md"
+      "description": "(record, primary, refs, delay): builds one in-memory block-6 action timer from pointers already resolved into the block-5 array: the primary action at +0x00, the ten fired actions copied from refs to +0x04..+0x28, and the delay short stored at +0x2c through ActionTimer_SetDelay.",
+      "source": "docs/retail/formats/script-dat.md",
+      "verified": {
+        "bytes": "00423104+56",
+        "sha1": "fe2374c770d3",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042313c",
@@ -8893,14 +8954,14 @@
       "type": "function",
       "confidence": "high",
       "name": "TriggerArea_Resolve",
-      "description": "Load-time resolve of one script.dat block-4 (row #9) record into the 10-byte trigger-area record TriggerArea_ContainsPoint reads: type flag at +0, pointer to block-1 coordinate RefA at +2, and at +6 either a pointer to coordinate RefB (type 0) or the record's literal times 10 (other types).",
+      "description": "Load-time resolve of one script.dat block-4 (row #9) record into the 10-byte trigger-area record TriggerArea_ContainsPoint reads: the record's first word, the type flag, at +0; a pointer to the block-1 coordinate its second word indexes at +2; and at +6 either a pointer to the coordinate its third word indexes (type 0) or that word sign-extended (MOVSX) and multiplied by 10 (any other type), the radius.",
       "source": "docs/retail/simulation/mission-deployment.md",
       "signature": "void __cdecl TriggerArea_Resolve(short *area, short *record, int coordinateBase)",
       "verified": {
         "bytes": "00423358+74",
         "sha1": "d3262345bb15",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -8957,14 +9018,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Action_TestTriggerForGroup",
-      "description": "Action_TestTrigger applied to every member of a group in turn (member array at group+0x0c, count at group+0x10), stopping at the first that activates it.",
+      "description": "Action_TestTrigger applied to every member of a group in turn (member array at group+0x0c, count at group+0x10), stopping at the first that activates it, and returning that member's answer, else the last member's 0. The answer is kept at [EBP-2], the high half of the ECX pushed at entry as the local's slot, which only the loop writes, so a group with no members returns whatever ECX held.",
       "source": "docs/retail/simulation/mission-deployment.md",
       "signature": "short __cdecl Action_TestTriggerForGroup(int *group, int *action)",
       "verified": {
         "bytes": "00423508+65",
         "sha1": "afd8aefac774",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -9005,7 +9066,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Group_OrderTargetObject",
-      "description": "The object the group's current order names -- the first member of the group it holds (+0xc == 0), or the object directly (1-3).",
+      "description": "The object the group's current order names -- the first member of the group it holds (+0xc == 0), read without checking that group has a member, or the object directly (1-3); 0 for no current order or another subject kind.",
       "source": "docs/retail/simulation/ai-targeting.md",
       "verified": {
         "bytes": "004238a0+52",
@@ -9170,14 +9231,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mission_TotalSalvage",
-      "description": "Sums Mech_SalvageValue over every object on the other side from the player's that is destroyed (+0x99) or immobilised (+0xa4). The second argument, the objective selector Mission_WriteResults passes, is not read. Called once as the mission writes its results; the total is scaled by Q10(2500) into the campaign salvage pool.",
+      "description": "Sums Mech_SalvageValue over every machine in GlobalMechList, walked from its end by Pool_Prev, whose group side byte (+0x45, +0x12) differs from the player group's and that is destroyed (+0x99) or immobilised (+0xa4). The second argument, the objective selector Mission_WriteResults passes, is not read. Called once as the mission writes its results; the total is scaled by Q10(2500) into the campaign salvage pool.",
       "source": "docs/retail/simulation/component-damage.md",
       "signature": "int __cdecl Mission_TotalSalvage(void *playerGroup, short unused)",
       "verified": {
         "bytes": "00423e88+126",
         "sha1": "bc1916e031d5",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -9432,7 +9493,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Actions_EvaluateTriggers",
-      "description": "(mech): walks the whole block-5 action array (DAT_004a9eac, count DAT_004a9ea8, stride 0x3a) and offers Action_TestTrigger positions by the action's type +0: 0 the mech's (+0x26); 1 each member of its group (+0x45) through Action_TestTriggerForGroup; 2 and 3 each member of each mission group (stride 0x7a) of side +0x12 0 or 1, and 4, 5 and 6 of kind +0 0, 1 or 2, each of those skipping a group whose action +0x14 is set and stopping at the first group that answers; 7, 8 and 9 the action's resolved target object +0x36's position; 10 the target group +0x36. A non-zero answer goes to Action_Activate. es2_xref finds one call, from Sim_MainTick (0045f760).",
+      "description": "(mech): walks the whole block-5 action array (DAT_004a9eac, count DAT_004a9ea8, stride 0x3a) and offers Action_TestTrigger positions by the action's type +0: 0 the mech's (+0x26); 1 each member of its group (+0x45) through Action_TestTriggerForGroup; 2 and 3 each member of each mission group (stride 0x7a) of side +0x12 0 or 1, and 4, 5 and 6 of kind +0 0, 1 or 2, each of those skipping a group whose action +0x14 is set (an undeployed group cannot trip a trigger) and stopping at the first group that answers; 7, 8 and 9 the action's resolved target object +0x36's position; 10 the target group +0x36; any other type tests nothing. Neither 7-9 nor 10 tests +0x36 for null. A non-zero answer goes to Action_Activate. es2_xref finds one call, from Sim_MainTick (0045f760).",
       "source": "docs/retail/simulation/mission-deployment.md",
       "verified": {
         "bytes": "00426b70+825",
@@ -24781,8 +24842,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ActionTimer_SetDelay",
-      "description": "(timer, value): stores value << 11 at timer+1, converting the file's delay into the simulation's timer counts. DBSim_BuildActionTimerRecord and ActionTimer_Tick call it.",
-      "source": "DBSIM decompile at 004679c0"
+      "description": "(timer, value): stores the short value sign-extended (MOVSX) and shifted left 11 as an int at timer+1, converting the file's delay in seconds into the simulation's timer counts, 2048 a second; a stored value past 32767 is negative. DBSim_BuildActionTimerRecord and ActionTimer_Tick call it.",
+      "source": "DBSIM decompile at 004679c0",
+      "verified": {
+        "bytes": "004679c0+18",
+        "sha1": "dfc276a52379",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "004679d8",
@@ -30418,7 +30485,13 @@
       "confidence": "high",
       "name": "FileRStream_SetIoError",
       "description": "Sets the stream status at +4 to 1 when the dword at 004966ea is nonzero, else 3, and returns 0. That dword is the _errno import thunk's code bytes, as in VolRStream_SetIoError, so it always stores 1.",
-      "source": "DBSIM decompile and disassembly at 0047ae54"
+      "source": "DBSIM decompile and disassembly at 0047ae54",
+      "verified": {
+        "bytes": "0047ae54+35",
+        "sha1": "c32acbc15924",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0047ae78",
@@ -30435,8 +30508,14 @@
       "type": "function",
       "confidence": "high",
       "name": "FileRStream_Read",
-      "description": "FileRStream read (vtable slot +0x18): does nothing and returns 0 when the status is already nonzero; _reads from the handle at +8, sets status 2 on a short read and goes to FileRStream_SetIoError on an error. The DBSIM copy of VSHELL's FileRStream_Read.",
-      "source": "DBSIM decompile and disassembly at 0047ae8c"
+      "description": "FileRStream read (vtable slot +0x18), (stream, count, buffer): returns 0 without reading when the status at +4 is already nonzero, and 1 at once for a count of 0. Otherwise _reads count bytes from the handle at +8 into buffer: -1 goes to FileRStream_SetIoError (status 1, returns 0), a short read sets status 2 and returns 0, a full one returns 1. FileRStream_Seek resets only status 2, and status 1 lasts until the stream is reopened, so after an I/O error every later read is a no-op. The DBSIM copy of VSHELL's FileRStream_Read.",
+      "source": "DBSIM decompile and disassembly at 0047ae8c",
+      "verified": {
+        "bytes": "0047ae8c+80",
+        "sha1": "3561de9cb265",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0047aedc",
@@ -41206,8 +41285,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Eh_InitExceptBlock",
-      "description": "Borland C++ exception-frame prologue, the DBSIM copy of VSHELL's Eh_InitExceptBlock (0046b234): builds the frame's registration record (handler 0049672c, the frame descriptor passed in EAX, the live-destructor count from [006cbf74]) and links it into the FS:[0] SEH chain. Functions that construct objects with destructors call it first, which is why it has 258 call sites.",
-      "source": "DBSIM decompile and disassembly at 00496248"
+      "description": "Borland C++ exception-frame prologue, the DBSIM copy of VSHELL's Eh_InitExceptBlock (0046b234): builds the frame's registration record at the caller's EBP plus the frame descriptor's +4 offset (handler 0049672c at +4, the descriptor passed in EAX at +8, the caller's ESP at +0xc, +0x10..+0x15 zeroed, the live-destructor count from [006cbf74] at +0x1c) and links it into the FS:[0] SEH chain, the previous head at +0. DBSim_SpawnMissionObjects, read this session, calls it first in its prologue with descriptor 0049a8b5, whose +4 offset is -0x34.",
+      "source": "DBSIM decompile and disassembly at 00496248",
+      "verified": {
+        "bytes": "00496248+62",
+        "sha1": "d8a00b7b239c",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00496288",

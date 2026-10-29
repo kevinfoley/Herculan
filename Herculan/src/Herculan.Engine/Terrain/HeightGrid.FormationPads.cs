@@ -20,6 +20,16 @@ namespace Herculan.Engine.Terrain;
 /// docs/retail/rendering/terrain-texturing.md, "Base formation pads".</para>
 /// </summary>
 public sealed partial class HeightGrid {
+	// The cell materials as the zone loaded them, kept by the first pad painted for RestoreUnpaintedMaterials.
+	private byte[]? _unpaintedFlags;
+
+	/// <summary>
+	/// Puts back the material of every cell a <see cref="PaintFormationPad"/> has painted, as the zone loaded it, so
+	/// the pads can be painted again where they now stand. Not retail: DBSIM paints each pad once, at spawn. The
+	/// mission editor does this, with <see cref="RestoreUnlevelledHeights"/>, after a pad moves.
+	/// </summary>
+	public void RestoreUnpaintedMaterials() => _unpaintedFlags?.CopyTo(_cellFlags, 0);
+
 	/// <summary>
 	/// Paints one base formation's material over the terrain tile <paramref name="worldX"/>,
 	/// <paramref name="worldY"/> falls in.
@@ -46,6 +56,8 @@ public sealed partial class HeightGrid {
 	/// </param>
 	public void PaintFormationPad(int worldX, int worldY, int materialIndex, int blockShift,
 			int dimension, ReadOnlySpan<byte> map) {
+		_unpaintedFlags ??= (byte[])_cellFlags.Clone();
+
 		// Map entries per cell along one axis, as a shift: the map is expressed at the material's
 		// own block size, the grid at its cell size, and only their ratio matters here.
 		int entryShift = CellShift - 13;

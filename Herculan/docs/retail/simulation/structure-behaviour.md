@@ -83,7 +83,7 @@ if (typeRec+0x06 != 0) SimObject_ApplyRootMotionIfEnabled(this, 100)
 
 `BASES.DAT +0x24` is a **cell sequence index** and `+0x26` its **frame interval**, in the simulation's timer unit ([Timer units](dbsim-physics-notes.md#timer-units) — 256 of them is a frame every 125 ms). The array it steps is the same per-sequence cell array damage moves, so an idle animation and a collapsed part are one mechanism pointed at different sequences.
 
-Eight retail types state a sequence, all of them sequence 0 on a 256-count interval — a frame every 125 ms: 8, 9, `0x0a`, `0x0b`, `0x1a`, `0x20`, `0x22`, `0x23`. **Only two of the eight reach this function** — 9 and `0x1a`, the two that are Plain. Types 8, `0x0b`, `0x20` and `0x23` are Armed, whose tick steps the same cell array from its firing path instead, as a muzzle flash rather than a loop. `0x22` is the transport, whose tick never steps it, so the sequence it states is never played. `0x0a` matches no case and is never built. So the free-running flipbook belongs to exactly two structures in the game.
+Eight retail types state a sequence, all of them sequence 0 on a 256-count interval — a frame every 125 ms: 8, 9, `0x0a`, `0x0b`, `0x1a`, `0x20`, `0x22`, `0x23`. **Only two of the eight have this function as their standing tick** — 9 and `0x1a`, the two that are Plain. Types 8, `0x0b`, `0x20` and `0x23` are Armed, whose tick steps the same cell array from its firing path instead, as a muzzle flash rather than a loop. `0x22` is the transport, whose tick never steps it, so the sequence it states is never played. `0x0a` matches no case and is never built. So the free-running flipbook belongs to exactly two structures in the game.
 
 The last line is the animation step, for any type that states threads at all.
 
@@ -134,7 +134,7 @@ At a run both shortfalls are large — a HERC at 90 km/h covers about 120 m in 4
 
 `BASES.DAT +0x2c` is how far up the structure anything aiming at it aims. **All 65 retail types state one**, 1000 to 2000 world units, so a building is never shot at the ground point its model origin sits on. Two vtable slots carry it, read by different callers:
 
-- **`+0x24`, `Base_GetAimNodeTransform` (`00403548`)** returns a node transform whose translation is `(0, 0, +0x2c)`. Homing rockets and bullets, the HUD target indicator and the line-of-sight ray read this slot — [`target-selection.md`](target-selection.md#aim-point--vtable-0x24).
+- **`+0x24`, `Base_GetAimNodeTransform` (`00403548`)** returns a node transform whose translation is `(0, 0, +0x2c)`. Homing rockets and bullets, the HUD target indicator and the line-of-sight ray read this slot — [`aim-point.md`](aim-point.md).
 - **`+0x30`, `Base_GetAimPoint` (`0040351c`)** fills two out triples. The shared base form (`SimObject_GetAimPointZero`, `00411a74`) zeroes both and the structure's writes `+0x2c` into the Z of the second. Its callers are the armed and transport ticks, which add the second triple to the target's position unrotated for their aim point — for a HERC target that is `Mech_GetAimPoint`'s (`004155c4`) orbit centre `(0, type+0x68, type+0x6a)`, not the cockpit node `+0x24` names; the camera attach, where the first triple is the eye and the second the orbit centre ([`external-views.md`](external-views.md#the-camera-object--cam)); and `Ai_AimAndFire`'s fallback for a target that is neither a machine nor a structure.
 
 ### What the turret's AI is, and is not

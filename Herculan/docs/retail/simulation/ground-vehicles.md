@@ -12,7 +12,7 @@ Countdowns are in the simulation's timer unit, about 0.49 ms a count ([Timer uni
 
 ## The ground vehicle tick — `0046a5d0`
 
-Gated on the group's first member answering `targetClass == 3`, so a ground-vehicle type dropped into a group led by anything else is an ordinary building.
+Gated on the group's first member answering `targetClass == 3`, so a ground-vehicle type dropped into a group led by anything else is an ordinary building: the other branch is `Base_ThinkTick` alone, with no firing, turret seek or movement. `Base_Construct` writes target class 3 for the GroundVehicle class and 1 for every other structure class. The retail missions put the one armed vehicle type in exactly that position — [The retail missions](#the-retail-missions).
 
 ```
 if (typeRec+0x2e == 0) Base_ThinkTick(this)
@@ -28,7 +28,7 @@ if (!destroyed) {
 }
 ```
 
-So a ground vehicle fights with [the armed tick](structure-behaviour.md#the-armed-tick--00404100) and moves with its own, and its block handling is `Mech_MovementTick`'s: restore the step and arm a back-off rather than detonate. **This is [the turret seek](structure-behaviour.md#the-turret-seek--base_aimturret-00403eec-and-00403d5c)'s second caller**: with nothing acquired, the two turret angles are fed straight back in negated, which walks the turret to centre.
+So a ground vehicle fights with [the armed tick](structure-behaviour.md#the-armed-tick--00404100) and moves with its own, and its block handling is `Mech_MovementTick`'s: restore the step and arm a back-off rather than detonate. **This is [the turret seek](structure-behaviour.md#the-turret-seek--base_aimturret-00403eec-and-00403d5c)'s second caller**: with nothing acquired, the two turret angles are fed straight back in negated, which walks them back to centre. On a vehicle the angles turn nothing — [How a vehicle fires](#how-a-vehicle-fires).
 
 - **`GroundVehicle_CollisionTest` (`0046a510`)** is `Mech_CollisionTest`'s two object sweeps standing alone — the same group `+0x14` action gate, the same asymmetric vtable `+0x5c` against `+0x7c` radius pair, and the same `Structure_GatherWalkCandidates` volume sweep behind them, whose result is the return value. The vehicle is itself in the structure pool, so it passes itself as the gather's one excluded structure (`0046a5ad`); `Mech_CollisionTest` and `Deployment_PickPointNearPlayer` pass none. It drops the machine's other two arms: there is no terrain test, so a ground vehicle drives up anything, and a block does no damage to what was hit. It does still call the blocker's vtable `+0x68`, which makes it the **second writer** of the `obj+0xb1` latch a ramming machine detonates on — see [`ai-combat-states.md`](ai-combat-states.md#the-charge--mech_behaviourramtick-0041e488).
 - **`GroundVehicle_Advance` (`0046a70c`)** picks the group leader (`0046a4b8`: the first of up to four group members that is neither immobilised nor destroyed — so unlike a HERC group, a convoy promotes when the vehicle in front goes down), steers as leader or follower, then steps the position forward by `+0x220` along model Y, through the vehicle's whole frame rather than its heading alone.
@@ -64,3 +64,33 @@ heading += Q8(200, steer)                               // the steer *is* the he
 A speed of zero means "none stated" and takes `0xaa`, the same default `Ai_DriveToPoint` uses.
 
 **`C1_06` exercises both arms.** Its groups 4 and 33 are four-vehicle convoys led by a supply transport (type `0x2d`): group 4 travels out and back along a three-waypoint route, and group 33 drives a two-waypoint route to the rendezvous with the Maverick. In retail play group 33 is met head-on beyond the player's first waypoint, four vehicles in formation driving toward the player.
+
+## How a vehicle fires
+
+A vehicle whose `BASES.DAT +0x2e` is non-zero fires through [the armed tick](structure-behaviour.md#the-armed-tick--00404100), which aims and fires in the frame of shape part 2, the turret node. On a tower that node is the barrel, posed by the two animation threads [the turret seek](structure-behaviour.md#the-turret-seek--base_aimturret-00403eec-and-00403d5c) drives. **Every vehicle type states 0 threads** (`BASES.DAT +0x06` is 0 on all twenty types `0x2d`-`0x40`), and that is fatal before it is anything else.
+
+**Retail crashes on an armed vehicle that leads its own group.** Every tick the ground vehicle tick reaches `Base_TurretSeek` (`00403d5c`) — through `Base_AimTurret` while it holds a target, directly while it holds none — and the seek hands each thread slot at `+0x1f9` to `AnimThread_SeekToPosition` (`00479238`) with no null test, which dereferences it. A vehicle type builds no threads. In retail play such a vehicle crashes DBSIM, and no retail mission places one ([The retail missions](#the-retail-missions)).
+
+Past that fault, the turret frame is the body's. `Base_AimTurret` and the armed tick both look part 2 up with the shape's part lookup (`TSPartList_FindPart`, `00476744`: the part itself when its id at `+6` matches, otherwise its children depth first) and fall back to the identity transform at `006c572c` when it finds none or the part's transform id (`+4`) is negative. No vehicle shape gives part 2 a transform: the `BASES.DGS` shapes of the fifteen built types state no node transforms at all, shape 15 (`0x2f`, and `0x31`) has no part 2, and shapes 16 and 34 (`0x30`, `0x32`, `0x3a`, `0x3c`) have one only as a geometry group whose transform id is -1. So:
+
+- **It aims only at what is nearly straight ahead.** The aim error is the bearing from the body's nose, and the fire gate wants it inside ±1000 on both axes, about ±5.5°, across and up. Nothing turns the vehicle toward a target: its heading is the route's.
+- **Its rounds leave at ground level, along the body.** The armed tick fires from (±300, 400, 0) in that frame concatenated with the body's, pointing along it: both barrels sit 400 units ahead at the height of the vehicle's origin, which [the terrain conform](#terrain-conform--simobject_conformtoterrain-004029d8) sets to the mean of four ground samples, and the round flies along the body's own pitch and heading, not at the target. Wherever the ground ahead is higher than that mean, the muzzle is under it, and on any slope the round runs along or into the terrain.
+
+## The retail missions
+
+**No retail mission reaches the armed branch of the tick.** `0x2f` MOBILE MISSILE is the only ground-vehicle type whose `BASES.DAT +0x2e` is non-zero (1, a gun — [the armament table](structure-behaviour.md#the-armed-tick--00404100)), and of the types named MOBILE MISSILE, MOBILE CANNON or ARMORED ASSAULT, the missions place two:
+
+| Type | Missions | Placed as | What it does |
+|---|---|---|---|
+| `0x31` ARMORED ASSAULT | `C1_01`, `C1_02`, `C1_05`, `C1_06` (both convoys), `C1_09`, `C1_10`, `DEMO_02` | slot 1 of a human four-vehicle convoy led by a SUPPLY TRANSPORT (`0x2d`): `0x2d`, `0x31`, `0x2e`, `0x2d` | drives with the convoy; `+0x2e` is 0, so it takes the `Base_ThinkTick` branch and never fires |
+| `0x2f` MOBILE MISSILE | `C2_01`, `C2_03`, `C2_04`, `C2_05`, `C2_07`, `C2_08`, `C2_10` | slot 3 of a human ten-structure base group led by a MISSILE TOWER (`0x0b`) | the leader's target class is 1, so the gate hands it `Base_ThinkTick`: it neither moves nor fires |
+
+The MOBILE MISSILE's stated armament still counts where the AI reads `+0x2e` as a danger flag ([`ai-combat-states.md`](ai-combat-states.md#basesdat-0x2e)).
+
+Each of the two carries a campaign flag across its campaign: destroying it adds 1 to flag 101 (ARMORED ASSAULT) or 147 (MOBILE MISSILE), and every mission that places it overlays a starting condition of 0 while that flag is set, so it starts destroyed in the missions after.
+
+The orders the retail missions give structure groups are 12 travel, one follow (`C1_06`'s group 33) and one guard (`C2_08`'s group 180); none is search and destroy.
+
+## Open
+
+- **Open:** that the armed-vehicle crash faults in `AnimThread_SeekToPosition` on an empty thread slot, as [How a vehicle fires](#how-a-vehicle-fires) reads it; a crash dump's faulting address would confirm it.

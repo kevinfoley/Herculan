@@ -11,10 +11,14 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Herculan.Engine.Editor\Herculan.Engine.Editor.csproj" />
+    <!-- The game, built beside the editor for Play to start as a program of its own (PlayInGame). -->
+    <ProjectReference Include="..\Herculan.Engine.Host\Herculan.Engine.Host.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <None Include="Assets\Fonts\Open_Sans\static\OpenSans-Regular.ttf" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Assets\Fonts\Open_Sans\static\OpenSans-Bold.ttf" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Assets\Fonts\Open_Sans\static\OpenSans-Italic.ttf" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

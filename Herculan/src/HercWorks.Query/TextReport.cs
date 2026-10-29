@@ -35,12 +35,12 @@ internal static class TextReport {
 					line.Add(Cond(hit.ConditionRef, hit.Condition, variants));
 				}
 
-				if (hit.VariantKey != -1) {
-					line.Add($"variant key {hit.VariantKey}: type and payload drawn");
+				if (hit.RandomTableKey != -1) {
+					line.Add($"random table key {hit.RandomTableKey}: type and payload picked");
 				}
 
-				if (hit.VariantSourceKey is { } key) {
-					line.Add($"variant of key {key}, drawn by {(hit.DrawnBy.Count == 0 ? "nothing" : "GUID " + string.Join(", ", hit.DrawnBy))}");
+				if (hit.TemplateKey is { } key) {
+					line.Add($"template of key {key}, picked by {(hit.PickedBy.Count == 0 ? "nothing" : "GUID " + string.Join(", ", hit.PickedBy))}");
 				}
 
 				o.WriteLine("  " + string.Join(", ", line));

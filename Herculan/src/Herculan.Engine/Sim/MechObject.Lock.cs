@@ -358,7 +358,7 @@ public sealed partial class MechObject {
 
 		// A Targeting Pod on THIS machine — the one holding the lock, not the one jamming it — cuts
 		// the weight to a quarter while its own cached damage is under TargetingPodLock.EcmAssistLimit.
-		// docs/retail/simulation/target-selection.md has all four of the pod's thresholds.
+		// docs/retail/simulation/targeting-pod.md has all four of the pod's thresholds.
 		int weight = Pods.TargetingMount?.ComponentLock is { ComponentDamage: < TargetingPodLock.EcmAssistLimit }
 			? EcmRollWeightWithPod
 			: EcmRollWeight;

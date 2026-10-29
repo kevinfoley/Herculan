@@ -170,6 +170,12 @@ public sealed partial class FlyerObject : IFlightBody {
 	private Transform3 _rotation;
 	private bool _rotationValid;
 
+	/// <inheritdoc />
+	public override void Face(int heading) {
+		Heading = heading;
+		_rotationValid = false;
+	}
+
 	/// <summary>
 	/// <c>Flyer_MovementTick</c> (<c>004218c4</c>) — the flyer's per-tick move, the function its behaviour descriptors carry
 	/// in the <c>+0x24</c> slot where a walking machine carries <c>Mech_MovementTick</c>. It

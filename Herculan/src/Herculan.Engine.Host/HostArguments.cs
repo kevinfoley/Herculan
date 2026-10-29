@@ -77,6 +77,7 @@ static class HostArguments {
 		  --play <tape>               replay an input tape, by path or TAPES folder stem; implies --mission
 		  --demo                      a demo tape from TAPES\demolist.str, as VIEW DEMO plays it; implies --mission
 		  --record <tape>             record the mission's input to <tape>.tap
+		  --own-world                 a named .MSN mission plays its own theater and time of day
 
 		Front end (none combines with --mission)
 		  --shell-tab <0-7>  --shell-bay <0-7>  --shell-practice

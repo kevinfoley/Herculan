@@ -28,12 +28,20 @@
   <ItemGroup>
     <None Include="..\Herculan.Engine.Host.Editor\Assets\Fonts\Open_Sans\static\OpenSans-Regular.ttf" Link="Assets\Fonts\Open_Sans\static\OpenSans-Regular.ttf" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\Herculan.Engine.Host.Editor\Assets\Fonts\Open_Sans\static\OpenSans-Italic.ttf" Link="Assets\Fonts\Open_Sans\static\OpenSans-Italic.ttf" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\Herculan.Engine.Host.Editor\Assets\Fonts\Open_Sans\static\OpenSans-Bold.ttf" Link="Assets\Fonts\Open_Sans\static\OpenSans-Bold.ttf" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <!-- The window icon (WindowIcon), linked from Branding/ like the font above: loose files, since the artwork is not
        MIT-licensed and stays covered by Branding/README.md. -->
   <ItemGroup>
     <None Include="..\..\..\Branding\HE Icon *.png" LinkBase="Assets\Icon" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- The missions that come with HERCULAN (CustomMissions.IncludedFolder), from Herculan/missions/; the editor's File >
+       Export Mission Bundle writes one there. The editor host, which references this project, gets them beside its own
+       executable too. -->
+  <ItemGroup>
+    <None Include="..\..\missions\*.hcm" LinkBase="Missions" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <!-- The licence the About window shows, embedded so that a build run from bin, which has no copy beside it, has it too.

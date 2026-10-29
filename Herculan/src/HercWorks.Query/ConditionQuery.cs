@@ -2,7 +2,7 @@ namespace HercWorks.Query;
 
 /// <summary>One row-1 record: what it asks, read through its chain, and every record its GUID gates.</summary>
 /// <param name="Index">The record's position in row 1.</param>
-/// <param name="Type">0 a flag test, 1 a draw, 2 a range of its parent's draw, 3 a variant table.</param>
+/// <param name="Type">0 a flag test, 1 a draw, 2 a range of its parent's draw, 3 a random table.</param>
 internal sealed record ConditionRecord(int Index, short Guid, short Type, string Description, IReadOnlyList<GatedRecord> Gates);
 
 internal sealed record ConditionQueryMission(string Mission, IReadOnlyList<ConditionRecord> Conditions);
@@ -10,7 +10,7 @@ internal sealed record ConditionQueryMission(string Mission, IReadOnlyList<Condi
 /// <summary>
 /// <c>conditions</c>: every row-1 record of the named missions, with the records its GUID gates
 /// (docs/retail/formats/msn-mission-file.md#the-conditions--row-1). <c>flag</c> lists only the type-0
-/// records testing one flag; this lists the draws and variant tables between them as well.
+/// records testing one flag; this lists the draws and random tables between them as well.
 /// </summary>
 internal static class ConditionQuery {
 	public static List<ConditionQueryMission> Run(RetailData data, IReadOnlyCollection<string> missions) =>

@@ -1,3 +1,4 @@
+using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Data.File.Sav;
 using HercWorks.Core.Data.Struct.Vshell.Sav;
 using HercWorks.Core.Io;
@@ -16,6 +17,14 @@ namespace Herculan.Engine.Shell;
 /// </summary>
 public sealed record ShellTrainingHandoff(string ScriptPath, string MissionPath, PlayerSave Game, ShellHangar Hangar,
 	int SquadPositions);
+
+/// <summary>
+/// Told what a mission load is about to hand <see cref="MissionGenerator.Load"/>: the <c>.MSN</c>, its <c>.ENG</c> or
+/// null, the campaign flags as seeded, before the load's row 2 clears any, and the header words the load writes over
+/// once it has generated (<see cref="MissionGeneration.WriteHeader"/>). The flags are the load's own array, which it
+/// goes on to change.
+/// </summary>
+public delegate void MissionGenerating(byte[] msn, byte[]? text, short[] flags, short?[] header);
 
 /// <summary>
 /// <c>Begin Mission</c>'s path from the button to the simulator, in training mode, which
@@ -74,11 +83,12 @@ public static class ShellTrainingLaunch {
 	/// <see cref="Load"/> of its mission. <paramref name="random"/> is VSHELL's generator, which both draw from.
 	/// </summary>
 	public static ShellTrainingHandoff? Write(string directory, GameContent content, SimulatorPreferences options,
-			int row, bool instantAction, SimRandom random, short[] clearList, PlayerSave? held, out string? failure) {
+			int row, bool instantAction, SimRandom random, short[] clearList, PlayerSave? held, out string? failure,
+			MissionGenerating? generating = null, bool ownWorld = false) {
 		int Roll(short bound) => random.NextBelow(bound);
 		return NewCareer(content, options, row, Roll, held, out failure) is var (game, hangar)
 			? Load(directory, content, options, row, MissionPath(content, 0, row), instantAction, Roll, clearList, game, hangar,
-				out failure)
+				out failure, generating, ownWorld)
 			: null;
 	}
 
@@ -109,12 +119,13 @@ public static class ShellTrainingLaunch {
 	/// dialog's typed one. <paramref name="row"/> is the practice screen's lit row, <c>PracticeScreen_SelectedRow</c>
 	/// (<c>00479bb8</c>), which picks the player's machine. <paramref name="clearList"/> is the row-2 clear list the shell
 	/// keeps across loads (<see cref="MissionGenerator.Load"/>), and <paramref name="instantAction"/> is
-	/// <c>InstantAction_Active</c> (<c>0047363c</c>), which <c>INSTANT ACTION</c> sets. Null, with the reason, when the
-	/// install lacks a file the original would open.
+	/// <c>InstantAction_Active</c> (<c>0047363c</c>), which <c>INSTANT ACTION</c> sets. <paramref name="generating"/> is
+	/// told what the mission load is handed, and <paramref name="ownWorld"/> keeps the mission's own theater and time of day
+	/// (<see cref="PracticeHeader"/>). Null, with the reason, when the install lacks a file the original would open.
 	/// </summary>
 	public static ShellTrainingHandoff? Load(string directory, GameContent content, SimulatorPreferences options, int row,
 			string? missionPath, bool instantAction, Func<short, int> roll, short[] clearList, PlayerSave game,
-			ShellHangar hangar, out string? failure) {
+			ShellHangar hangar, out string? failure, MissionGenerating? generating = null, bool ownWorld = false) {
 		if (missionPath == null) {
 			failure = $"gam\\career.dat or missions.bin has no stage-0 mission {row}.";
 			return null;
@@ -125,18 +136,28 @@ public static class ShellTrainingLaunch {
 			return null;
 		}
 
+		return Load(directory, content, options, row, missionPath, msn, text, instantAction, roll, clearList, game, hangar,
+			out failure, generating, ownWorld);
+	}
+
+	/// <summary>
+	/// <see cref="Load(string, GameContent, SimulatorPreferences, int, string?, bool, Func{short, int}, short[], PlayerSave,
+	/// ShellHangar, out string?, MissionGenerating?)"/> for a mission already read: the <c>.MSN</c> <paramref name="msn"/>
+	/// and its text <paramref name="text"/>, or null, named <paramref name="missionPath"/>. The original reads every mission
+	/// from its archives; this engine's mission editor hands one it holds in memory (<see cref="MissionFileLaunch.OpenNew"/>).
+	/// <paramref name="ownWorld"/> keeps the mission's own theater and time of day (<see cref="PracticeHeader"/>).
+	/// </summary>
+	public static ShellTrainingHandoff? Load(string directory, GameContent content, SimulatorPreferences options, int row,
+			string missionPath, byte[] msn, byte[]? text, bool instantAction, Func<short, int> roll, short[] clearList,
+			PlayerSave game, ShellHangar hangar, out string? failure, MissionGenerating? generating = null, bool ownWorld = false) {
 		// MsnGen_SeedCampaignFlags: a training load clears the flag array first.
 		var flags = new short[MissionGenerator.CampaignFlagCount];
 		SeedDrawnFlags(flags, roll);
 
+		var header = PracticeHeader(options, ownWorld);
+		generating?.Invoke(msn, text, flags, header);
 		var mission = MissionGenerator.Load(msn, text, flags, clearList, roll);
-		var header = mission.Header;
-		header[5] = options[AmmoOption];
-		header[6] = options[DamageOption];
-		header[7] = options[DifficultyOption];
-		header[8] = 0;
-		header[9] = options[TimeOfDayOption];
-		header[0] = 1;
+		MissionGeneration.WriteHeader(mission.Header, header);
 
 		string scriptPath = CaseInsensitivePath.Combine(directory, MissionLoader.ScriptFileName);
 		if (!ShellWorkingFiles.TryWrite(() => {
@@ -147,12 +168,37 @@ public static class ShellTrainingLaunch {
 			return null;
 		}
 
+		int positions = BuildSquad(content, options, row, instantAction, mission, hangar);
+
+		// The flag array as the load left it is the career's.
+		for (int i = 0; i < flags.Length; i++) {
+			game.SetCampaignFlag(i, flags[i]);
+		}
+
+		var flagBytes = new byte[flags.Length * 2];
+		Buffer.BlockCopy(flags, 0, flagBytes, 0, flagBytes.Length);
+		if (!ShellWorkingFiles.TryWrite(() => {
+				File.WriteAllBytes(CaseInsensitivePath.Combine(directory, ShellMissionLaunch.MissionVarFileName), flagBytes);
+				File.WriteAllBytes(CaseInsensitivePath.Combine(directory, MissionLoader.PlayerFileName), ShellMissionLaunch.ExportPlayerMec(hangar));
+			}, out failure)) {
+			return null;
+		}
+
+		return new ShellTrainingHandoff(scriptPath, missionPath, game, hangar, positions);
+	}
+
+	/// <summary>
+	/// The squad half of the training load, between the write of <c>script.dat</c> and the export: the positions in play from
+	/// <paramref name="mission"/>'s group 0, the player's machine into bay 0, and a machine, a bay and a position for each
+	/// wingman, into <paramref name="hangar"/>, which <see cref="NewCareer"/> left. Returns the positions in play. See
+	/// docs/retail/shell/main-menu.md#starting-a-practice-mission.
+	/// </summary>
+	internal static int BuildSquad(GameContent content, SimulatorPreferences options, int row, bool instantAction,
+			MissionGenerator mission, ShellHangar hangar) {
 		int positions = mission.SquadPositions;
 		hangar.SetPositionsInPlay(positions);
 
-		// MsnGen_BuildPlayerHerc (0041c58d): the first four rows, and INSTANT ACTION, fly group 0's first member; the rest fly
-		// a stock fit of the chassis the Herc Type option holds.
-		var player = row < FirstChosenChassisRow || instantAction
+		var player = PilotsMissionMachine(row, instantAction)
 			? Machine(mission.Herc(mission.SquadMember(0)))
 			: StockFit(content, options[ShellPracticeScreen.HercTypeOption]);
 		if (player != null) {
@@ -173,22 +219,28 @@ public static class ShellTrainingLaunch {
 			hangar.SetSquadPosition(member, member + 1);
 		}
 
-		// The flag array as the load left it is the career's.
-		for (int i = 0; i < flags.Length; i++) {
-			game.SetCampaignFlag(i, flags[i]);
-		}
-
-		var flagBytes = new byte[flags.Length * 2];
-		Buffer.BlockCopy(flags, 0, flagBytes, 0, flagBytes.Length);
-		if (!ShellWorkingFiles.TryWrite(() => {
-				File.WriteAllBytes(CaseInsensitivePath.Combine(directory, ShellMissionLaunch.MissionVarFileName), flagBytes);
-				File.WriteAllBytes(CaseInsensitivePath.Combine(directory, MissionLoader.PlayerFileName), ShellMissionLaunch.ExportPlayerMec(hangar));
-			}, out failure)) {
-			return null;
-		}
-
-		return new ShellTrainingHandoff(scriptPath, missionPath, game, hangar, positions);
+		return positions;
 	}
+
+	/// <summary>
+	/// <c>MsnGen_BuildPlayerHerc</c> (<c>0041c58d</c>)'s choice: on the first four rows, and in <c>INSTANT ACTION</c>, the
+	/// player pilots group 0's first member; on the rest, a stock fit of the chassis the Herc Type option holds.
+	/// </summary>
+	public static bool PilotsMissionMachine(int row, bool instantAction) => row < FirstChosenChassisRow || instantAction;
+
+	/// <summary>The theater a training load writes over the mission's own, whatever it patched.</summary>
+	public const short PracticeTheater = 1;
+
+	/// <summary>
+	/// The header words a training load writes over the loaded header: word 0 set to <see cref="PracticeTheater"/>, then the ammunition, damage,
+	/// difficulty and time-of-day options into words 5 to 7 and 9, and word 8 cleared. <paramref name="ownWorld"/> leaves words
+	/// 0 and 9 as the mission sets them, so it plays on its own theater and time of day: this engine's departure for a mission
+	/// played from the mission editor (docs/herculan/editor-design.md#saving-and-playing), which retail has no path for.
+	/// </summary>
+	private static short?[] PracticeHeader(SimulatorPreferences options, bool ownWorld) => [
+		ownWorld ? null : PracticeTheater, null, null, null, null,
+		options[AmmoOption], options[DamageOption], options[DifficultyOption], 0, ownWorld ? null : options[TimeOfDayOption],
+	];
 
 	/// <summary>
 	/// Flag 3's source, <c>00482606</c>, which the startup memset from <c>MissionScreenView</c> clears.
@@ -374,8 +426,11 @@ public static class ShellTrainingLaunch {
 		return machine;
 	}
 
-	/// <summary>The stock fit of a chassis, <c>gam\ini_*.dat</c> read through <c>HercRecord_ReadCatalogForm</c>.</summary>
-	private static ShellBayMachine? StockFit(GameContent content, int chassis) =>
+	/// <summary>
+	/// The stock fit of a chassis, <c>gam\ini_*.dat</c> read through <c>HercRecord_ReadCatalogForm</c>; null for a chassis
+	/// past the nine, or an install without the file.
+	/// </summary>
+	public static ShellBayMachine? StockFit(GameContent content, int chassis) =>
 		chassis >= 0 && chassis < StockFits.Length
 			&& content.Read(ShellRepairCosts.CatalogFolder, StockFits[chassis]) is { } bytes
 			&& new InitHercTransformer().Parse(bytes)?.Data is { } record

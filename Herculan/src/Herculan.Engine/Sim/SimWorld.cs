@@ -91,8 +91,11 @@ public sealed class SimWorld {
 	/// <summary>The launcher-round table, or null when the resource was not loaded.</summary>
 	public RocketCatalog? Rockets { get; }
 
-	/// <summary>The beam appearance table, or null when the resource was not loaded.</summary>
-	public BeamAppearance? BeamTable { get; }
+	/// <summary>
+	/// The beam appearance table, or null when the resource was not loaded. Its colours are the theater palette's, so
+	/// <see cref="Scene.MissionScene.ChangeTheater"/> replaces it.
+	/// </summary>
+	public BeamAppearance? BeamTable { get; internal set; }
 
 	/// <summary>
 	/// The simulation's pseudo-random generator — DBSIM's single global state block at

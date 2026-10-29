@@ -54,7 +54,7 @@ uniform bool uShadeRampEnabled;
 uniform float uShadeRampGouraudRow;
 
 #ifdef EDITOR_GRID
-// Only the measuring grid needs a surface point's horizontal world position, so the varying does not
+// Only the measuring grid and the ground tint need a surface point's horizontal world position, so the varying does not
 // exist at all in the program the simulator draws with.
 VARYING vec2 vWorldXZ;
 #endif
@@ -246,6 +246,16 @@ uniform float uGridMajorWidthScale;
 uniform float uGridMinCellPixels;
 uniform float uGridFadeStart;
 uniform float uGridFadeEnd;
+
+// The ground tint, SceneRenderer.Highlight. uHighlightShape is GroundHighlightShape: 0 none, 1 a box from
+// uHighlightA to uHighlightB, 2 everything within uHighlightRadius of uHighlightA.
+uniform bool uHighlightEnabled;
+uniform int uHighlightShape;
+uniform vec2 uHighlightA;
+uniform vec2 uHighlightB;
+uniform float uHighlightRadius;
+uniform vec3 uHighlightColor;
+uniform float uHighlightStrength;
 #endif
 
 uniform vec3 uFogColor;
@@ -332,6 +342,21 @@ float gridCoverage() {
 		cellsPerPixel / uGridMajorEvery, uGridLineWidthPixels * uGridMajorWidthScale);
 
 	return max(minor, major);
+}
+
+// Whether a surface point lies in the tinted region. The box is strict on every side and the range is
+// SimMath.FastMagnitude2D's max + min/2, as a trigger area tests them (MissionTriggerArea.Contains).
+bool inHighlight() {
+	if (uHighlightShape == 1) {
+		return all(greaterThan(vWorldXZ, uHighlightA)) && all(lessThan(vWorldXZ, uHighlightB));
+	}
+
+	if (uHighlightShape == 2) {
+		vec2 d = abs(vWorldXZ - uHighlightA);
+		return max(d.x, d.y) + min(d.x, d.y) * 0.5 < uHighlightRadius;
+	}
+
+	return false;
 }
 
 #endif
@@ -510,6 +535,10 @@ void main() {
 	if (uGridEnabled) {
 		float reach = 1.0 - smoothstep(uGridFadeStart, uGridFadeEnd, vViewDistance);
 		lit = mix(lit, uGridColor, reach * gridCoverage());
+	}
+
+	if (uHighlightEnabled && inHighlight()) {
+		lit = mix(lit, uHighlightColor, uHighlightStrength);
 	}
 #endif
 

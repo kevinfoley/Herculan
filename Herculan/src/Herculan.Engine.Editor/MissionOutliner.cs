@@ -1,4 +1,5 @@
 using System.Numerics;
+using HercWorks.Core.Data.File.Msn;
 using Herculan.Engine.Platform;
 using Herculan.Engine.World;
 using ImGuiNET;
@@ -6,49 +7,113 @@ using ImGuiNET;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The Mission panel down the left of the window: every group (with its members), trigger area,
-/// action, timer, route and objective as a list, under the mission check's findings. It is the only way to reach the parts of a mission that are not
-/// standing somewhere — an action with no area, a group not yet in the mission — and the other way
-/// to make a selection.
+/// The Mission panel in the top half of the left of the window: the mission check's findings, then every group (with its members), trigger area,
+/// trigger (row-10 action), countdown (row-11 timer), route, win and lose condition (row-17 objective) and random table as a
+/// list, the objective lines the player reads apart from the win and lose conditions, the trigger areas and routes with the
+/// buttons that start placing a new one, and the triggers, countdowns and win and lose conditions with the buttons that create
+/// one; last, under Advanced, every condition. It is the only way to reach the parts of a mission that are not
+/// standing somewhere (a trigger with no area, a route with no waypoints) and the other way
+/// to make a selection. A double-click also frames the record in the view (<see cref="SelectionState.Focus"/>).
+///
+/// <para>Every list is the <c>.MSN</c>'s layout (docs/herculan/editor-design.md#the-layout): every record
+/// of its row, a conditional one included, in layout order, each named by <see cref="MissionNames"/> with its number in its
+/// row dimmed, cut to fit the panel with the whole name on hover, and selecting its record by GUID or row-17 index. A row
+/// whose record is not in every version of the mission is marked <see cref="NotAlways"/>.</para>
 /// </summary>
 internal sealed class MissionOutliner {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
-	public const float PanelWidth = 300f;
+	public const float PanelWidth = 360f;
+
+	private const int RouteRow = 8;
+	private const int AreaRow = 9;
+	private const int ActionRow = 10;
+	private const int TimerRow = 11;
+	private const int GroupRow = 16;
+
+	/// <summary>
+	/// What a row whose record is present only under a condition carries after its text, the words the "Present when" field
+	/// every view opens with uses for the other case.
+	/// </summary>
+	private const string NotAlways = " (not always present)";
+
+	/// <summary>What every selectable row is drawn with, so the second click of a double-click presses it (<see cref="Choose"/>).</summary>
+	private const ImGuiSelectableFlags DoubleClick = ImGuiSelectableFlags.AllowDoubleClick;
 
 	private static readonly Vector4 FindingLinkColor = new(0.55f, 0.78f, 1f, 1f);
 	private static readonly Vector4 SelectedFindingColor = new(1f, 0.85f, 0.1f, 1f);
 
+	private readonly MissionDocument _source;
 	private readonly MissionIndex _index;
-	private readonly MissionLint _lint;
+	private readonly MissionNames _names;
+	private MissionLint _lint;
 	private readonly SelectionState _selection;
 
-	public MissionOutliner(MissionIndex index, MissionLint lint, SelectionState selection) {
+	// Which kinds of group the Groups list shows, by its filter checkboxes.
+	private bool _showHercGroups = true;
+	private bool _showFlyerGroups = true;
+	private bool _showStructureGroups = true;
+
+	public MissionOutliner(MissionDocument source, MissionIndex index, MissionNames names, SelectionState selection) {
+		_source = source;
 		_index = index;
-		_lint = lint;
+		_names = names;
+		_lint = new MissionLint(source, index, names.Types);
 		_selection = selection;
 	}
 
-	private Mission Mission => _index.Mission;
+	private MissionLayout Layout => _index.Layout;
+
+	/// <summary>Runs the mission check again and lists its findings in place of the last ones, for a mission built again.</summary>
+	public void Recheck() => _lint = new MissionLint(_source, _index, _names.Types);
+
+	/// <summary>The route-placing mode the Routes list's New route starts; set once the mission's tools are built.</summary>
+	public RoutePlacing? Placing { get; set; }
+
+	/// <summary>The area-placing mode the Trigger areas list's New box and New circle start; set once the mission's tools are built.</summary>
+	public AreaPlacing? AreaPlacing { get; set; }
+
+	/// <summary>What the Win and lose conditions list's New win condition asks to create an objective; set once the mission's tools are built.</summary>
+	public ObjectiveEditor? Objectives { get; set; }
+
+	/// <summary>What the Triggers list's New trigger asks to create a trigger; set once the mission's tools are built.</summary>
+	public ActionEditor? Actions { get; set; }
+
+	/// <summary>What the Countdowns list's New countdown asks to create a countdown; set once the mission's tools are built.</summary>
+	public TimerEditor? Timers { get; set; }
+
+	/// <summary>What the Conditions list under Advanced reads; set once the mission's tools are built.</summary>
+	public ConditionEditor? Conditions { get; set; }
+
+	/// <summary>What the Random tables list reads; set once the mission's tools are built.</summary>
+	public RandomTables? Tables { get; set; }
+
+	/// <summary>
+	/// The panel's height: the top half of the left side below the menu bar, the Toolbox (<see cref="EditorToolbox"/>) docked
+	/// in the bottom half.
+	/// </summary>
+	public static float PanelHeight(Vector2 display, float menuBarHeight) => MathF.Floor((display.Y - menuBarHeight) / 2f);
 
 	public void Draw(Vector2 display, float menuBarHeight) {
 		ImGui.SetNextWindowPos(new Vector2(0f, menuBarHeight));
-		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(PanelWidth), display.Y - menuBarHeight));
+		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(PanelWidth), PanelHeight(display, menuBarHeight)));
 		ImGui.Begin("Mission", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse);
 
 		DrawProblems();
 		DrawGroups();
 		DrawAreas();
-		DrawActions();
-		DrawTimers();
+		DrawTriggers();
+		DrawCountdowns();
 		DrawRoutes();
 		DrawObjectives();
+		DrawTables();
+		DrawAdvanced();
 
 		ImGui.End();
 	}
 
 	/// <summary>
-	/// The mission check's findings, open by default when there are any. A finding whose record the
-	/// editor can show selects it.
+	/// The mission check's findings, open by default when there are any, each in the editor's words (<see cref="ProblemText"/>).
+	/// A finding whose record the editor can show selects it.
 	/// </summary>
 	private void DrawProblems() {
 		var flags = _lint.Findings.Count > 0 ? ImGuiTreeNodeFlags.DefaultOpen : ImGuiTreeNodeFlags.None;
@@ -57,108 +122,191 @@ internal sealed class MissionOutliner {
 		}
 
 		if (_lint.Findings.Count == 0) {
-			ImGui.TextDisabled("None found.");
+			EditorText.Note("None found.");
 			return;
 		}
 
 		// Wrapped text rather than a Selectable, whose label does not wrap and most messages are
 		// wider than the panel.
-		foreach (var (finding, target) in _lint.Findings) {
+		foreach (var finding in _lint.Findings) {
+			ImGui.BulletText(string.Empty);
+			ImGui.SameLine();
+			string text = ProblemText.Of(finding, _names, Layout);
+			var target = finding.Target;
 			if (target == null) {
-				ImGui.BulletText(string.Empty);
-				ImGui.SameLine();
-				ImGui.TextWrapped(finding.Message);
+				EditorText.Wrapped(text);
 				continue;
 			}
 
-			ImGui.BulletText(string.Empty);
-			ImGui.SameLine();
 			ImGui.PushStyleColor(ImGuiCol.Text, _selection.Is(target) ? SelectedFindingColor : FindingLinkColor);
-			ImGui.TextWrapped(finding.Message);
+			EditorText.Wrapped(text);
 			ImGui.PopStyleColor();
-			if (ImGui.IsItemClicked()) {
-				_selection.Current = target;
-			}
+			Choose(target, ImGui.IsItemClicked());
 		}
 	}
 
-	private void DrawTimers() {
-		if (!ImGui.CollapsingHeader($"Timers ({Mission.ActionTimers.Count})###timers")) {
+	/// <summary>Every row-11 countdown, by its delay and what starts it.</summary>
+	private void DrawCountdowns() {
+		var countdowns = Layout.Entries<ActionTimer30>();
+		if (!ImGui.CollapsingHeader($"Countdowns ({countdowns.Count})###timers")) {
 			return;
 		}
 
-		for (int i = 0; i < Mission.ActionTimers.Count; i++) {
-			var timer = Mission.ActionTimers[i];
-			var fires = timer.SequenceRefs.Where(reference => reference >= 0 && reference < Mission.Actions.Count);
-			var selection = new TimerSelection(i);
-			if (ImGui.Selectable($"Timer {i}: {MissionText.TimerSummary(timer)}, fires {string.Join(", ", fires)}##timer{i}",
-					_selection.Is(selection))) {
-				_selection.Current = selection;
+		if (Timers is { } editor) {
+			if (ImGui.SmallButton("New countdown")) {
+				editor.RequestCreate();
 			}
+		}
+
+		foreach (var countdown in countdowns) {
+			var selection = new TimerSelection(countdown.Guid);
+			Choose(selection, Row(_names.Countdown(countdown.Guid), TimerRow, countdown.Guid, $"timer{countdown.Guid}", selection));
 		}
 	}
 
 	/// <summary>
-	/// The objectives the simulation tests (block 12), under the list the player is shown (block 13).
-	/// Nothing reconciles the two, so they are listed apart.
+	/// The objectives the mission tests (row 17), its win and lose conditions, each by its sentence
+	/// (<see cref="MissionNames.Objective(LayoutObjective)"/>).
 	/// </summary>
 	private void DrawObjectives() {
-		if (!ImGui.CollapsingHeader($"Objectives ({Mission.Objectives.Count})###objectives")) {
+		var records = Layout.Objectives;
+		if (!ImGui.CollapsingHeader($"Win and lose conditions ({records.Count})###objectives")) {
 			return;
 		}
 
-		// Both wrapped, as their lines run well past the panel's width.
-		if (Mission.ObjectiveTextRefs.Count > 0) {
-			ImGui.TextDisabled("Briefing list:");
-			foreach (int line in Mission.ObjectiveTextRefs) {
-				ImGui.BulletText(string.Empty);
-				ImGui.SameLine();
-				ImGui.TextWrapped(Mission.TextAt(line));
+		// A new objective's subject is the current selection.
+		if (Objectives is { } objectives) {
+			string? why = objectives.WhyNoCreate(_selection.Current);
+			ImGui.BeginDisabled(why != null);
+			if (ImGui.SmallButton("New win condition")) {
+				objectives.RequestCreate(_selection.Current);
 			}
 
-			ImGui.Spacing();
+			ImGui.EndDisabled();
+			EditorText.Reason(why);
 		}
 
-		for (int i = 0; i < Mission.Objectives.Count; i++) {
-			var selection = new ObjectiveSelection(i);
-			if (WrappedSelectable(MissionText.DescribeObjective(Mission.Objectives[i], i), $"objective{i}",
-					_selection.Is(selection))) {
-				_selection.Current = selection;
-			}
+		foreach (var objective in records) {
+			var selection = new ObjectiveSelection(objective.Index);
+			var name = _names.Objective(objective);
+			string marker = objective.Presence.Always ? string.Empty : NotAlways;
+			Choose(selection, NameText.Selectable(name with { Text = name.Text + marker }, $"objective{objective.Index}",
+				_selection.Is(selection), flags: DoubleClick));
 		}
 	}
 
 	/// <summary>
-	/// A <see cref="ImGui.Selectable(string, bool)"/> whose label wraps at the panel's edge: a label-less selectable
-	/// as tall as the wrapped text, with the text drawn over it.
+	/// Every random table, in row-1 order, as its Random table view titles it, with how many records pick from it; selected
+	/// while it or a range over it is (docs/herculan/editor-design.md#random-tables).
 	/// </summary>
-	private static bool WrappedSelectable(string text, string id, bool selected) {
-		float width = ImGui.GetContentRegionAvail().X;
-		var start = ImGui.GetCursorScreenPos();
-		float height = ImGui.CalcTextSize(text, false, width).Y;
-		bool clicked = ImGui.Selectable($"##{id}", selected, ImGuiSelectableFlags.None, new Vector2(0f, height));
-		var next = ImGui.GetCursorScreenPos();
-		ImGui.SetCursorScreenPos(start);
-		ImGui.PushTextWrapPos(ImGui.GetCursorPosX() + width);
-		ImGui.TextUnformatted(text);
-		ImGui.PopTextWrapPos();
-		ImGui.SetCursorScreenPos(next);
-		return clicked;
-	}
-
-	private void DrawGroups() {
-		if (!ImGui.CollapsingHeader($"Groups ({_index.GroupMembers.Count})###groups")) {
+	private void DrawTables() {
+		if (Tables is not { } randomTables) {
 			return;
 		}
 
-		for (int group = 0; group < _index.GroupMembers.Count; group++) {
-			var members = _index.GroupMembers[group];
-			string waiting = group < Mission.GroupDeploymentActions.Count && Mission.GroupDeploymentActions[group] >= 0
-				? $", waits on action {Mission.GroupDeploymentActions[group]}"
+		var tables = randomTables.All;
+		if (!ImGui.CollapsingHeader($"Random tables ({tables.Count})###tables")) {
+			return;
+		}
+
+		short? current = _selection.Current is ConditionSelection { Guid: var guid }
+			? RandomTableEditing.IsTable(_source, guid) ? guid : RandomTableEditing.TableOfRange(_source, guid)
+			: null;
+		foreach (short table in tables) {
+			if (randomTables.Read(table) is not { } read) {
+				continue;
+			}
+
+			int users = randomTables.Users(read).Count + randomTables.Others(read);
+			Choose(new ConditionSelection(table), EditorText.WrappedSelectable($"{randomTables.Title(read)} (used by {users})", $"table{table}",
+				current == table, DoubleClick));
+		}
+	}
+
+	/// <summary>
+	/// Advanced, collapsed: every row-1 condition, in file order, as the conditions the other records' condition fields
+	/// reference.
+	/// </summary>
+	private void DrawAdvanced() {
+		if (Conditions is not { } conditions || !ImGui.CollapsingHeader("Advanced###advanced")) {
+			return;
+		}
+
+		var records = conditions.Listed;
+		if (!ImGui.TreeNode($"Conditions ({records.Count})###conditions")) {
+			return;
+		}
+
+		var source = conditions.Source;
+		for (int i = 0; i < records.Count; i++) {
+			var record = records[i];
+			var selection = new ConditionSelection(record.GUID);
+			Choose(selection, EditorText.WrappedSelectable($"Condition {record.GUID}: {ConditionEditing.Describe(source.Mission, record)}",
+				$"condition{i}", _selection.Is(selection), DoubleClick));
+		}
+
+		ImGui.TreePop();
+	}
+
+	/// <summary>
+	/// Selects <paramref name="selection"/> when the item just drawn was <paramref name="clicked"/>, and frames it in the
+	/// view when that click was the second of a double-click. The click is the row's own, not a hover test after it: a
+	/// selectable row's last item is the text drawn over it, never hovered while the selectable is, so a row's selectable
+	/// carries <see cref="DoubleClick"/> to press on the second click.
+	/// </summary>
+	private void Choose(EditorSelection selection, bool clicked) {
+		if (clicked && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left)) {
+			_selection.Focus(selection);
+		} else if (clicked) {
+			_selection.Current = selection;
+		}
+	}
+
+	/// <summary>
+	/// A row naming the row-<paramref name="row"/> record of <paramref name="guid"/> (<see cref="NameText.Selectable"/>), marked
+	/// <see cref="NotAlways"/> when it is not always present; whether it was clicked.
+	/// </summary>
+	private bool Row(RecordName name, int row, short guid, string id, EditorSelection selection) =>
+		NameText.Selectable(name with { Text = name.Text + Marker(row, guid) }, id, _selection.Is(selection), flags: DoubleClick);
+
+	/// <summary><see cref="NotAlways"/> when row <paramref name="row"/>'s entry for <paramref name="guid"/> is present only under a condition, else nothing.</summary>
+	private string Marker(int row, short guid) => Layout.Entry(row, guid)?.Presence.Always == false ? NotAlways : string.Empty;
+
+	/// <summary>
+	/// Every row-16 group with its members, filtered by kind: HERCs, flyers, and structures and ground vehicles, which share a
+	/// group kind.
+	/// </summary>
+	private void DrawGroups() {
+		var groups = _index.Groups;
+		if (!ImGui.CollapsingHeader($"Groups ({groups.Count})###groups")) {
+			return;
+		}
+
+		ImGui.PushID("groupFilter");
+		FilterCheckbox("HERCs", ref _showHercGroups, first: true);
+		FilterCheckbox("Flyers", ref _showFlyerGroups, first: false);
+		FilterCheckbox("Structures and ground vehicles", ref _showStructureGroups, first: false);
+		ImGui.PopID();
+
+		foreach (var group in groups) {
+			bool listed = group.Kind switch {
+				MissionUnitKind.Mech => _showHercGroups,
+				MissionUnitKind.Flyer => _showFlyerGroups,
+				_ => _showStructureGroups,
+			};
+
+			if (!listed) {
+				continue;
+			}
+
+			var members = _index.MembersOf(group.Guid);
+			string waiting = group.Waiting && _index.Action(group.DeploymentAction) is { } action
+				? $", arrives when trigger {action.Number} fires"
 				: string.Empty;
 
 			var flags = ImGuiTreeNodeFlags.OpenOnArrow | ImGuiTreeNodeFlags.SpanAvailWidth;
-			if (_selection.Is(new GroupSelection(group))) {
+			var selection = new GroupSelection(group.Guid);
+			if (_selection.Is(selection)) {
 				flags |= ImGuiTreeNodeFlags.Selected;
 			}
 
@@ -166,75 +314,108 @@ internal sealed class MissionOutliner {
 				flags |= ImGuiTreeNodeFlags.Leaf;
 			}
 
-			bool open = ImGui.TreeNodeEx($"{MissionText.DescribeGroup(Mission, group)}: {members.Count}{waiting}##group{group}", flags);
-			if (ImGui.IsItemClicked() && !ImGui.IsItemToggledOpen()) {
-				_selection.Current = new GroupSelection(group);
+			var name = _names.Group(group.Guid);
+			string full = $"{name.Full}{waiting}{Marker(GroupRow, group.Guid)}";
+			string shown = NameText.Fit(full, ImGui.GetContentRegionAvail().X - ImGui.GetTreeNodeToLabelSpacing());
+			bool open = ImGui.TreeNodeEx($"{shown}##group{group.Guid}", flags);
+			if (shown != full && ImGui.IsItemHovered()) {
+				ImGui.SetTooltip(full);
 			}
+
+			Choose(selection, ImGui.IsItemClicked() && !ImGui.IsItemToggledOpen());
 
 			if (!open) {
 				continue;
 			}
 
 			foreach (var member in members) {
-				var selection = new ObjectSelection(member);
-				if (ImGui.Selectable($"{MissionText.Describe(member)}##m{group}.{member.Placement.SlotIndex}",
-						_selection.Is(selection))) {
-					_selection.Current = selection;
+				if (_index.Planned(member) is not { } planned) {
+					continue;
 				}
+
+				var chosen = new ObjectSelection(planned.Key.Row, planned.Key.Guid);
+				Choose(chosen, Row(new RecordName(_names.MemberName(planned.Key)), planned.Key.Row, planned.Key.Guid,
+					$"m{planned.Key.Row}.{planned.Key.Guid}", chosen));
 			}
 
 			ImGui.TreePop();
 		}
 	}
 
+	// A filter checkbox, on the same line as the one before it when it fits there.
+	private static void FilterCheckbox(string label, ref bool shown, bool first) {
+		if (!first) {
+			float width = ImGui.GetFrameHeight() + ImGui.GetStyle().ItemInnerSpacing.X + ImGui.CalcTextSize(label).X;
+			ImGui.SameLine();
+			if (ImGui.GetContentRegionAvail().X < width) {
+				ImGui.NewLine();
+			}
+		}
+
+		ImGui.Checkbox(label, ref shown);
+	}
+
+	/// <summary>
+	/// Every row-9 trigger area, by its shape and who enters it. One whose corner or centre references a point the layout has
+	/// none for stands nowhere: it is listed with what is missing, and no action tests it.
+	/// </summary>
 	private void DrawAreas() {
-		if (!ImGui.CollapsingHeader($"Trigger areas ({_index.Areas.Count})###areas")) {
+		var entries = Layout.Entries<TriggerArea12>();
+		if (!ImGui.CollapsingHeader($"Trigger areas ({entries.Count})###areas")) {
 			return;
 		}
 
-		foreach (var area in _index.Areas) {
-			string shape = area.Shape == MissionTriggerShape.Circle
-				? $"circle, {MissionText.Distance(area.Radius)}"
-				: "box";
-			string actions = string.Join(", ", _index.ActionsTesting(area.Reference));
-			var selection = new AreaSelection(area.Reference);
-			if (ImGui.Selectable($"Area {area.Reference}: {shape}, action {actions}##area{area.Reference}",
-					_selection.Is(selection))) {
-				_selection.Current = selection;
-			}
+		AreaPlacing?.DrawStartButtons(small: true);
+		foreach (var entry in entries) {
+			var selection = new AreaSelection(entry.Guid);
+			Choose(selection, Row(_names.Area(entry.Guid), AreaRow, entry.Guid, $"area{entry.Guid}", selection));
 		}
 	}
 
-	private void DrawActions() {
-		if (!ImGui.CollapsingHeader($"Actions ({Mission.Actions.Count})###actions")) {
+	/// <summary>
+	/// Every row-10 trigger, by what fires it (its areas, else the countdowns or objects that do, else that nothing does) and what
+	/// it does (<see cref="MissionNames.Trigger"/>).
+	/// </summary>
+	private void DrawTriggers() {
+		var triggers = _index.Actions;
+		if (!ImGui.CollapsingHeader($"Triggers ({triggers.Count})###actions")) {
 			return;
 		}
 
-		for (int i = 0; i < Mission.Actions.Count; i++) {
-			var action = Mission.Actions[i];
-			var links = _index.LinksOf(i);
-			string trigger = action.Areas.Count > 0 ? $"{action.Areas.Count} area(s)" : "no area";
-			string effect = links.WaitingGroups.Count > 0 ? $", brings in {links.WaitingGroups.Count} group(s)" : string.Empty;
-			var selection = new ActionSelection(i);
-			if (ImGui.Selectable($"Action {i}: {trigger}{effect}##action{i}", _selection.Is(selection))) {
-				_selection.Current = selection;
+		if (Actions is { } editor) {
+			if (ImGui.SmallButton("New trigger")) {
+				editor.RequestCreate();
 			}
+		}
+
+		foreach (var trigger in triggers) {
+			var selection = new ActionSelection(trigger.Guid);
+			Choose(selection, Row(_names.Trigger(trigger.Guid), ActionRow, trigger.Guid, $"action{trigger.Guid}", selection));
 		}
 	}
 
+	/// <summary>
+	/// Every row-8 route, by its shape and who walks it. One none of whose waypoints references a point the layout has stands
+	/// nowhere, and says so.
+	/// </summary>
 	private void DrawRoutes() {
-		if (!ImGui.CollapsingHeader($"Routes ({_index.Routes.Count})###routes")) {
+		var entries = Layout.Entries<WaypointGroup>();
+		if (!ImGui.CollapsingHeader($"Routes ({entries.Count})###routes")) {
 			return;
 		}
 
-		foreach (var route in _index.Routes) {
-			string walkers = route.Walked ? $"groups {string.Join(", ", route.WalkedBy)}" : "never walked";
-			string shape = route.Closed ? "loop" : "open";
-			var selection = new RouteSelection(route.Reference);
-			if (ImGui.Selectable($"Route {route.Reference}: {shape}, {walkers}##route{route.Reference}",
-					_selection.Is(selection))) {
-				_selection.Current = selection;
+		if (Placing is { } placing) {
+			ImGui.BeginDisabled(placing.Active || placing.WhyNoStart != null);
+			if (ImGui.SmallButton("New route")) {
+				placing.BeginNew();
 			}
+
+			ImGui.EndDisabled();
+		}
+
+		foreach (var entry in entries) {
+			var selection = new RouteSelection(entry.Guid);
+			Choose(selection, Row(_names.Route(entry.Guid), RouteRow, entry.Guid, $"route{entry.Guid}", selection));
 		}
 	}
 }

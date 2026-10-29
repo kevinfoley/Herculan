@@ -49,6 +49,7 @@ sealed class SimulatorHost : IDisposable {
 	private readonly DebugOptions _debugOptions;
 	private readonly DebugProbes _debugProbes;
 	private readonly DebugPanel _debugPanel;
+	private readonly MissionScriptingWindow? _scripting;
 	private readonly HostMenuBar _menuBar;
 	private readonly DeveloperKeys _developerKeys;
 	private readonly KeyMap _keyMap;
@@ -91,22 +92,23 @@ sealed class SimulatorHost : IDisposable {
 
 	/// <summary>
 	/// Runs one mission in <paramref name="window"/> with -R&lt;n&gt;'s track select, and returns its exit code
-	/// (Sim_Shutdown, 00461eec): 1 when there was nothing to run.
+	/// (Sim_Shutdown, 00461eec): 1 when there was nothing to run. <paramref name="developer"/> turns developer mode on
+	/// whatever <c>--developer</c> says, as the mission editor's Play does.
 	/// </summary>
 	public static int Run(HostSession session, HostWindow window, HostOptions options, SimulatorStaging staging,
-			ShellLaunch? shellLaunch, bool demoTape, int trackSelect) {
+			ShellLaunch? shellLaunch, bool demoTape, int trackSelect, bool developer = false) {
 		using var loading = new LoadingScreen(window);
 		if (SimulatorStartup.Load(session, options, shellLaunch, demoTape, loading) is not { } start) {
 			return 1;
 		}
 
-		using var host = new SimulatorHost(session, window, options, staging, start, trackSelect);
+		using var host = new SimulatorHost(session, window, options, staging, start, trackSelect, developer || options.DeveloperMode);
 		window.PumpEvents();
 		return host.RunWindow();
 	}
 
 	private SimulatorHost(HostSession session, HostWindow window, HostOptions options, SimulatorStaging staging,
-			SimulatorStart start, int trackSelect) {
+			SimulatorStart start, int trackSelect, bool developerMode) {
 		_session = session;
 		_options = options;
 		_staging = staging;
@@ -147,20 +149,21 @@ sealed class SimulatorHost : IDisposable {
 		// why it is ImGui rather than the game's own HUD font. Reachable only under --developer; without it the
 		// options and measurements still exist, with the overlays off, since the renderer reads the one and the
 		// host takes the other.
-		_debugOptions = new DebugOptions(options.DeveloperMode, _view.SteadyEye);
+		_debugOptions = new DebugOptions(developerMode, _view.SteadyEye);
 		_debugProbes = new DebugProbes();
 		_debugPanel = new DebugPanel(_debugOptions, _debugProbes);
+		_scripting = developerMode ? new MissionScriptingWindow() : null;
 
 		// Hidden until [Shift+Esc] first raises it — see SimulatorFrame's [Esc] — since it is the only way
 		// to reach its panels and every key from F1 to F12, [Esc] and [Tab] among the rest, is already retail's. A
 		// mission has no shell turn to restart, so Settings shows the folders greyed.
 		_menuBar = new HostMenuBar(session.Localization, session.Keys, new TweaksMenu(TweakSettings.Current, session.Localization),
 			new SettingsWindow(session, restartShell: null), new ControllerWindow(session.Localization, () => _start.DataDirectory),
-			options.DeveloperMode ? _debugPanel : null);
+			developerMode ? _debugPanel : null, scripting: _scripting);
 
 		// The -SPRUNKNOWN keys, and the Alt+S freeze a replay honours without them.
-		_developerKeys = new DeveloperKeys(options.DeveloperMode);
-		if (options.DeveloperMode) {
+		_developerKeys = new DeveloperKeys(developerMode);
+		if (developerMode) {
 			Console.WriteLine("Developer keys on (docs/retail/key-bindings.md).");
 		}
 
@@ -382,6 +385,9 @@ sealed class SimulatorHost : IDisposable {
 		_windowKeys.ReadManualKey(_displays.FlashCommHasKeyboard, _panels.AnyOpen);
 		_windowKeys.ReadFullScreenKeys();
 
+		// What the Mission Scripting window's buttons asked for last frame, before the frame's ticks so they see it.
+		_scripting?.ApplyPending(_scene.World);
+
 		_frame.Update(deltaSeconds);
 		ApplyTerrainTexture();
 		RefreshDrawItems();
@@ -565,6 +571,7 @@ sealed class SimulatorHost : IDisposable {
 			new DebugPanelContext(_view.Piloting, _view.ExternalViewActive, pilotMech, _scene.Targeting, _scene.World,
 				_scene.PlayerObject?.Model?.Segments.Length ?? 0, _scene.World.Terrain),
 			window.Y);
+		_scripting?.Draw(_scene.World, window.Y);
 
 		_imgui?.Render();
 

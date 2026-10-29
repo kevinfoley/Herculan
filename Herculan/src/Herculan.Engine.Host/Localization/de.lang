@@ -122,12 +122,44 @@ error.slot_load                Der Spielstand konnte nicht geladen werden.
 error.save                     Das Spiel konnte nicht gespeichert werden.
 error.debrief                  Die Ergebnisse der Mission konnten nicht gelesen werden.
 menu.debug                     Debug
+menu.mission_scripting         Missionsskripte
 menu.tweaks                    Optimierungen
 menu.accessibility             Barrierefreiheit
 menu.settings                  Einstellungen
 menu.controller                Controller
 menu.keys                      Tasten
 menu.editor                    Editor
+menu.custom_missions           Eigene Missionen
+custom_missions.title          Eigene Missionen
+custom_missions.mission        Mission
+custom_missions.author         Autor
+custom_missions.date           Datum
+custom_missions.version        Version
+custom_missions.play           Spielen
+custom_missions.about          Info
+custom_missions.about_title    Über die Mission
+custom_missions.delete         Löschen
+custom_missions.delete_title   Mission löschen
+custom_missions.delete_message {0} löschen? Diese Dateien werden aus dem MSN-Ordner der Installation gelöscht:
+custom_missions.cannot_undo    Dies kann nicht rückgängig gemacht werden.
+custom_missions.delete_failed  {0} konnte nicht gelöscht werden.
+custom_missions.import         Importieren...
+custom_missions.picker_title   Missionspaket importieren
+custom_missions.picker_filter  Missionspakete (.hcm)
+custom_missions.no_picker      Auf diesem System gibt es keine Dateiauswahl. Um ein Missionspaket zu importieren, kopieren Sie seine .hcm-Datei nach {0}.
+custom_missions.imported       {0} wurde importiert.
+custom_missions.import_failed  {0} konnte nicht importiert werden.
+custom_missions.replace_title  Missionspaket ersetzen
+custom_missions.replace_message Der MSN-Ordner enthält bereits {0}. Durch das ausgewählte Paket ersetzen? Dies kann nicht rückgängig gemacht werden.
+custom_missions.replace        Ersetzen
+custom_missions.play_failed    {0} konnte nicht gespielt werden.
+custom_missions.cannot_play    Diese Mission kann nicht gespielt werden: {0}
+custom_missions.bundle_file    Missionspaket {0}
+custom_missions.loose_file     Missionsdatei {0}
+custom_missions.included_file  Missionspaket, das HERCULAN beiliegt: {0}
+custom_missions.included       (beiliegend)
+custom_missions.cannot_delete_included Diese Mission liegt HERCULAN bei und kann nicht gelöscht werden.
+custom_missions.empty          In {0} gibt es keine eigenen Missionen. Die Liste zeigt jede Mission, die der Missionseditor dort speichert, und jedes .hcm-Missionspaket dort. Importieren... fügt ein Paket hinzu.
 menu.about                     Über
 pause.title                    Pause
 pause.resume                   Fortsetzen

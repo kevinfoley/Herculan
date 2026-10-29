@@ -45,17 +45,36 @@ public static class TerrainMeshBuilder {
 	/// </param>
 	public static MeshVertex[] Build(HeightGrid grid, TerrainTextureBank? bank = null,
 			SurfaceShading? shading = null) {
-		bool bakeShade = shading != null;
+		var vertices = new MeshVertex[Math.Max(grid.Width - 1, 0) * Math.Max(grid.Height - 1, 0) * VerticesPerCell];
+		Rebuild(vertices, grid, bank, shading, 0, 0, grid.Width - 2, grid.Height - 2);
+		return vertices;
+	}
+
+	/// <summary>
+	/// Builds again, in place in <paramref name="vertices"/> (a mesh <see cref="Build"/> made of the same grid), the
+	/// cells from (<paramref name="minCellX"/>, <paramref name="minCellY"/>) to (<paramref name="maxCellX"/>,
+	/// <paramref name="maxCellY"/>) inclusive, for a grid whose heights have changed there. Answers the run of
+	/// vertices holding those cells' whole rows, which is what a caller uploads again.
+	/// </summary>
+	public static (int FirstVertex, int VertexCount) Rebuild(MeshVertex[] vertices, HeightGrid grid,
+			TerrainTextureBank? bank, SurfaceShading? shading, int minCellX, int minCellY, int maxCellX, int maxCellY) {
 		int quadsX = grid.Width - 1;
 		int quadsY = grid.Height - 1;
-		var vertices = new List<MeshVertex>(quadsX * quadsY * 6);
+		minCellX = Math.Max(minCellX, 0);
+		minCellY = Math.Max(minCellY, 0);
+		maxCellX = Math.Min(maxCellX, quadsX - 1);
+		maxCellY = Math.Min(maxCellY, quadsY - 1);
+		if (minCellX > maxCellX || minCellY > maxCellY) {
+			return (0, 0);
+		}
 
 		// Normalise the colour gradient against this zone's own peak rather than a fixed height, so
 		// a flat zone still reads as varied instead of uniformly low.
 		float peak = MathF.Max(WorldScale.DistanceToRender(grid.MaxWorldHeight), 1f);
 
-		for (int cellY = 0; cellY < quadsY; cellY++) {
-			for (int cellX = 0; cellX < quadsX; cellX++) {
+		for (int cellY = minCellY; cellY <= maxCellY; cellY++) {
+			for (int cellX = minCellX; cellX <= maxCellX; cellX++) {
+				var cell = vertices.AsSpan((cellY * quadsX + cellX) * VerticesPerCell, VerticesPerCell);
 				Vector3 c00 = Corner(grid, cellX, cellY);
 				Vector3 c10 = Corner(grid, cellX + 1, cellY);
 				Vector3 c01 = Corner(grid, cellX, cellY + 1);
@@ -72,20 +91,23 @@ public static class TerrainMeshBuilder {
 
 				if (grid.DiagonalSelectorAt(cellX, cellY) == 2) {
 					// Split along the c00-c11 diagonal, matching the height query's selector-2 case.
-					AddTriangle(vertices, c00, c10, c11, t00, t10, t11, textured, peak, shading);
-					AddTriangle(vertices, c00, c11, c01, t00, t11, t01, textured, peak, shading);
+					AddTriangle(cell[..3], c00, c10, c11, t00, t10, t11, textured, peak, shading);
+					AddTriangle(cell[3..], c00, c11, c01, t00, t11, t01, textured, peak, shading);
 				} else {
 					// Selector 0 splits along c01-c10. Selector 1 is a coplanar quad and selector 3 has
 					// no observed producer; the height query treats both as a single plane through
 					// c00/c10/c01, which this same split renders.
-					AddTriangle(vertices, c00, c10, c01, t00, t10, t01, textured, peak, shading);
-					AddTriangle(vertices, c10, c11, c01, t10, t11, t01, textured, peak, shading);
+					AddTriangle(cell[..3], c00, c10, c01, t00, t10, t01, textured, peak, shading);
+					AddTriangle(cell[3..], c10, c11, c01, t10, t11, t01, textured, peak, shading);
 				}
 			}
 		}
 
-		return vertices.ToArray();
+		return (minCellY * quadsX * VerticesPerCell, (maxCellY - minCellY + 1) * quadsX * VerticesPerCell);
 	}
+
+	// Two triangles a cell, in row-major cell order, so a cell's vertices are found from its coordinates.
+	private const int VerticesPerCell = 6;
 
 	private static Vector3 Corner(HeightGrid grid, int cellX, int cellY) =>
 		WorldScale.ToRender(
@@ -93,7 +115,7 @@ public static class TerrainMeshBuilder {
 			(float)cellY * grid.CellSize,
 			grid.WorldHeightAt(cellX, cellY));
 
-	private static void AddTriangle(List<MeshVertex> vertices, Vector3 a, Vector3 b, Vector3 c,
+	private static void AddTriangle(Span<MeshVertex> vertices, Vector3 a, Vector3 b, Vector3 c,
 			Vector2 uvA, Vector2 uvB, Vector2 uvC, bool textured, float peak,
 			SurfaceShading? shading) {
 		bool bakeShade = shading != null;
@@ -125,9 +147,9 @@ public static class TerrainMeshBuilder {
 			? fill
 			: SurfaceColor((a.Y + b.Y + c.Y) / 3f, normal, peak);
 
-		vertices.Add(new MeshVertex(a, normal, color, uvA, textured, bakeShade, shade, solidPaletteIndex: fillIndex));
-		vertices.Add(new MeshVertex(b, normal, color, uvB, textured, bakeShade, shade, solidPaletteIndex: fillIndex));
-		vertices.Add(new MeshVertex(c, normal, color, uvC, textured, bakeShade, shade, solidPaletteIndex: fillIndex));
+		vertices[0] = new MeshVertex(a, normal, color, uvA, textured, bakeShade, shade, solidPaletteIndex: fillIndex);
+		vertices[1] = new MeshVertex(b, normal, color, uvB, textured, bakeShade, shade, solidPaletteIndex: fillIndex);
+		vertices[2] = new MeshVertex(c, normal, color, uvC, textured, bakeShade, shade, solidPaletteIndex: fillIndex);
 	}
 
 	/// <summary>

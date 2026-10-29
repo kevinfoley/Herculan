@@ -24,7 +24,7 @@ The 38-byte state block, offsets from the gunsight's `+0xb1` and from a child's 
 | 36 | **Indicator armed.** Set to 1 by all three selection entry points and never cleared; the box's paint refuses to draw until it is set |
 | 37 | `mech+0x9b`, missile lock |
 
-`Player_ResolveTargetAimPoint` has two branches. With a Targeting Pod fitted (`mech+0x30b`) and the target inside 30000 units — 180 m, the manual's "close range" — it hands off to `TargetingPod_ResolveAimPoint` (`0040e4dc`) for a component aim point and a component id; otherwise it takes the target's vtable `+0x24` aim node and writes 0 to the component id. The pod side is [`target-selection.md`](target-selection.md#component-targeting--the-targeting-pod)'s.
+`Player_ResolveTargetAimPoint` has two branches. With a Targeting Pod fitted (`mech+0x30b`) and the target inside 30000 units — 180 m, the manual's "close range" — it hands off to `TargetingPod_ResolveAimPoint` (`0040e4dc`) for a component aim point and a component id; otherwise it takes the target's vtable `+0x24` aim node and writes 0 to the component id. The pod side is [`targeting-pod.md`](targeting-pod.md)'s.
 
 ## Child 4 — the reticle
 

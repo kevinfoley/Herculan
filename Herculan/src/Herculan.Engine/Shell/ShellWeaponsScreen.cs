@@ -122,6 +122,12 @@ public sealed class ShellWeaponsScreen {
 	/// <summary>The guidance kind each of the four buttons shows — its <c>wpn_desc.bin</c> block and its <c>arm_weap.dat</c> record.</summary>
 	private static readonly int[] ButtonGuidance = { 2, 1, 0, 3 };
 
+	/// <summary>The guidance kinds the four buttons write into a mount, in button order: ARM, ARH, SARH, EO.</summary>
+	public static IReadOnlyList<int> GuidanceKinds => ButtonGuidance;
+
+	/// <summary>Whether a weapon takes a guidance kind — whether its row puts the guidance buttons up.</summary>
+	public static bool TakesGuidance(int weaponId) => weaponId is >= FirstMissileRack and <= LastMissileRack;
+
 	/// <summary>The three description lines' tops and bottoms, in the box; each runs from 1 to the box's own right edge.</summary>
 	private static readonly (int Top, int Bottom)[] DescriptionRows = { (0x7a, 0x88), (0x88, 0x94), (0x94, 0xa0) };
 
@@ -315,7 +321,7 @@ public sealed class ShellWeaponsScreen {
 		ShowingGuidance = false;
 		_description = weapon * DescriptionLines;
 
-		if (weapon is >= FirstMissileRack and <= LastMissileRack) {
+		if (TakesGuidance(weapon)) {
 			GuidanceButtonsShown = true;
 			if (SelectedHardpoint != -1 && Machine is { } racked) {
 				ShowGuidanceKind(racked.Mount(SelectedHardpoint)?.Guidance ?? ShellWeaponUnit.NoGuidance, show: false);

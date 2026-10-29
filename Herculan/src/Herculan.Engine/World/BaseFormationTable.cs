@@ -123,6 +123,13 @@ public sealed class BaseFormationTable {
 	}
 
 	/// <summary>
+	/// How many member slots formation <paramref name="formationId"/> places apart: slot 0, on the group's point, and one
+	/// per follower offset it holds (<see cref="OffsetFor"/>). Zero for an id outside the table.
+	/// </summary>
+	public int SlotCount(int formationId) =>
+		formationId >= 0 && formationId < _formations.Length ? _formations[formationId].Length + 1 : 0;
+
+	/// <summary>
 	/// How far this slot's structure is turned relative to its group, in binary-angle units. Zero for
 	/// the group's first-claimed member and for any slot the table does not reach.
 	///
@@ -141,8 +148,10 @@ public sealed class BaseFormationTable {
 	public BaseFormationLayout? LayoutFor(int formationId) =>
 		formationId >= 0 && formationId < _layouts.Length ? _layouts[formationId] : null;
 
-	public static BaseFormationTable Load(GameContent content) {
-		byte[] bytes = content.ReadRequired(ResourceFolder, ResourceName);
+	public static BaseFormationTable Load(GameContent content) => Parse(content.ReadRequired(ResourceFolder, ResourceName));
+
+	/// <summary>The table out of its bytes.</summary>
+	public static BaseFormationTable Parse(byte[] bytes) {
 		int offset = 0;
 
 		int NextInt32() {

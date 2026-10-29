@@ -25,6 +25,9 @@ public sealed partial class ShellHangar {
 	/// <summary>The first campaign-flag slot the unit-grant pass reads.</summary>
 	private const int FirstUnitGrantFlag = 0x15;
 
+	/// <summary>How many of <see cref="WeaponUnitGrantIds"/> are the retail table's own entries, the rest being its overrun.</summary>
+	private const int UnitGrantTableLength = 22;
+
 	/// <summary>
 	/// <c>WeaponGrant_UnitIds</c> (<c>0046f8e0</c>) — the weapon each flag from <see cref="FirstUnitGrantFlag"/> stocks.
 	/// Retail's table is the first 22 words; its loop runs to slot <c>0x31</c>, so the last seven are the
@@ -73,6 +76,38 @@ public sealed partial class ShellHangar {
 		return granted;
 	}
 
+	/// <summary>
+	/// The weapon id whose units campaign flag <paramref name="flag"/> stocks at the debrief (<see cref="GrantCampaignWeapons"/>),
+	/// for a flag of the retail table, <c>0x15</c> to <c>0x2a</c>; null for any other, the table's overrun included.
+	/// </summary>
+	public static int? UnitGrantWeapon(int flag) =>
+		flag >= FirstUnitGrantFlag && flag < FirstUnitGrantFlag + UnitGrantTableLength
+			? WeaponUnitGrantIds[flag - FirstUnitGrantFlag]
+			: null;
+
+	/// <summary>
+	/// The weapon id campaign flag <paramref name="flag"/> unlocks at the debrief while it is locked, and the value the flag must
+	/// hold (<see cref="GrantCampaignWeapons"/>); null for a flag no weapon's unlock tests.
+	/// </summary>
+	public static (int Weapon, short Value)? WeaponUnlock(int flag) {
+		int id = Array.IndexOf(WeaponUnlockSlots, (short)flag);
+		return flag >= 0 && id >= 0 ? (id, WeaponUnlockValues[id]) : null;
+	}
+
+	/// <summary>
+	/// The chassis type campaign flag <paramref name="flag"/> makes available at the debrief while it is not, and the value the
+	/// flag must hold (<see cref="GrantChassis"/>); null for a flag no chassis grant tests.
+	/// </summary>
+	public static (int Chassis, int Value)? ChassisUnlock(int flag) {
+		foreach (var (type, slot, expected) in ChassisSlots()) {
+			if (slot == flag) {
+				return (type, expected);
+			}
+		}
+
+		return null;
+	}
+
 	/// <summary>The number of <c>herc_inf.dat</c> records <c>Herc_GrantUnlocks</c> walks; record <c>i</c> is chassis type <c>i</c>.</summary>
 	private const int ChassisTypeCount = 9;
 
@@ -83,16 +118,26 @@ public sealed partial class ShellHangar {
 	/// the expected value, and the slot is zeroed either way. The expected value is the original's
 	/// loop-carried local — 2, set to 1 in the Razor's branch — so the Razor, last in type order, is the
 	/// only chassis that tests 1.
-	///
-	/// <para>The debrief that calls this is not ported (ROADMAP), so nothing calls it yet.</para>
 	/// </summary>
 	public void GrantChassis(short[] flags) {
-		int expected = 2;
-		for (int type = 0; type < ChassisTypeCount; type++) {
+		foreach (var (type, slot, expected) in ChassisSlots()) {
 			if (IsChassisAvailable(type)) {
 				continue;
 			}
 
+			if (flags[slot] == expected) {
+				_availableChassis.Add(type);
+			}
+
+			flags[slot] = 0;
+		}
+	}
+
+	// Each chassis type Herc_GrantUnlocks tests, in type order, with its flag slot and the value it expects there: the
+	// original's loop-carried local, 2 until the Razor's branch sets it to 1.
+	private static IEnumerable<(int Type, int Slot, int Expected)> ChassisSlots() {
+		int expected = 2;
+		for (int type = 0; type < ChassisTypeCount; type++) {
 			int slot = type switch {
 				1 => 0x3c,
 				6 => 0x3e,
@@ -105,11 +150,7 @@ public sealed partial class ShellHangar {
 			}
 
 			if (slot != -1) {
-				if (flags[slot] == expected) {
-					_availableChassis.Add(type);
-				}
-
-				flags[slot] = 0;
+				yield return (type, slot, expected);
 			}
 		}
 	}

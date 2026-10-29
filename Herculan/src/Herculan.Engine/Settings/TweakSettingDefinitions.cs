@@ -175,11 +175,10 @@ public static class TweakSettingDefinitions {
 	public static readonly TweakSettingDefinition<bool> StrandedStingrayClosesIn = new("tweak.c2_05_stingray_closes_in", TweakCategory.AI, defaultValue: false, recommendedValue: true);
 
 	/// <summary>
-	/// A guard order that names a subject lasts until the subject is destroyed. Retail also ends it as soon as no
-	/// enemy group's order names the same subject, so in <c>C5_10</c> six Cybrids that guard the base and then sleep
-	/// fall asleep on arrival, standing still and ignoring fire. That mission is the only retail one this changes; a
-	/// mission made in the editor changes wherever a guard order with a subject has a later order. See
-	/// <see cref="Sim.MissionGroup.GuardHeldUntilSubjectDestroyed"/>.
+	/// In <c>C5_10</c>, the six Cybrids that guard the base and then sleep keep their guard order until the base is
+	/// destroyed. Retail also ends a guard order as soon as no enemy group's order names the same subject, so they fall
+	/// asleep on arrival, standing still and ignoring fire. Only those six groups are affected; every other guard order,
+	/// in any mission, behaves as retail's. See <see cref="Sim.SleepingGuardsFix"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> GuardHoldsUntilDestroyed = new("tweak.c5_10_guards_hold", TweakCategory.AI, defaultValue: false, recommendedValue: true);
 	#endregion

@@ -43,6 +43,9 @@ public sealed class SquadMessages {
 	/// <summary>How many distinct message ids the file carried.</summary>
 	public int Count => _byId.Count;
 
+	/// <summary>Every message id the file carries, in the order of each id's first entry.</summary>
+	public IEnumerable<int> Ids => _firstIndex.OrderBy(entry => entry.Value).Select(entry => entry.Key);
+
 	/// <summary>Every recording of <paramref name="id"/>, or an empty list when it has none.</summary>
 	public IReadOnlyList<Entry> Variants(int id) =>
 		_byId.TryGetValue(id, out var entries) ? entries : Array.Empty<Entry>();

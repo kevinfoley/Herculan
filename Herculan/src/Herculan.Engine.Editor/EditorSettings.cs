@@ -42,18 +42,28 @@ public sealed class EditorSettings {
 	public bool ShowBasePads { get; set; } = true;
 
 	/// <summary>
-	/// How the members of a group waiting on an action are shown. The simulation draws none of them
-	/// until the action fires, and most stand at a placeholder point, so by default they are outlined
-	/// rather than drawn.
+	/// How the members of a group waiting on an action are shown, one that arrives in place or a structure group: a group
+	/// arriving by drop pod or on foot is never in the scene (<see cref="PlannedGroup.OffScene"/>). The simulation draws
+	/// none of them until the action fires, so by default they are outlined rather than drawn.
 	/// </summary>
 	[JsonConverter(typeof(JsonStringEnumConverter<WaitingGroupDisplay>))]
 	public WaitingGroupDisplay WaitingGroups { get; set; } = WaitingGroupDisplay.Outlined;
+
+	/// <summary>What a Cybrid's hardpoints offer (<see cref="CybridWeapons.Offered"/>); retail's fits by default.</summary>
+	[JsonConverter(typeof(JsonStringEnumConverter<CybridLoadouts>))]
+	public CybridLoadouts CybridLoadouts { get; set; } = CybridLoadouts.Vanilla;
 
 	/// <summary>
 	/// Where the editor's window was when the editor last closed on its own (not from the game, which hands it the
 	/// game window's place), for it to open at again. Null until then, when it opens maximized.
 	/// </summary>
 	public SavedWindow? Window { get; set; }
+
+	/// <summary>
+	/// The <c>.MSN</c> the editor last opened or saved, as File's mission lists name it, for the editor to open again when it
+	/// starts with no mission named; null until one is. Like <see cref="Window"/>, Cancel in the settings panel leaves it.
+	/// </summary>
+	public string? LastMission { get; set; }
 
 	/// <summary>Where the settings live: <c>editor-settings.json</c> in <see cref="UserConfig.Folder"/>.</summary>
 	public static string FilePath => UserConfig.PathOf("editor-settings.json");
@@ -97,6 +107,7 @@ public sealed class EditorSettings {
 		ShowMissionBox = other.ShowMissionBox;
 		ShowBasePads = other.ShowBasePads;
 		WaitingGroups = other.WaitingGroups;
+		CybridLoadouts = other.CybridLoadouts;
 	}
 }
 
@@ -130,6 +141,15 @@ public sealed class SavedWindow {
 		? new WindowPlacement(X is { } x && Y is { } y ? new Vector2D<int>(x, y) : null, new Vector2D<int>(Width, Height),
 			Maximized)
 		: null;
+}
+
+/// <summary>The two choices of <see cref="EditorSettings.CybridLoadouts"/>.</summary>
+public enum CybridLoadouts {
+	/// <summary>Each hardpoint offers the weapons retail missions fit there on that chassis.</summary>
+	Vanilla,
+
+	/// <summary>Each hardpoint offers every HERC weapon, PITBULL's apart (<see cref="CybridWeapons.Offered"/>).</summary>
+	Unrestricted
 }
 
 /// <summary>The three ways <see cref="EditorSettings.WaitingGroups"/> shows a waiting group's members.</summary>

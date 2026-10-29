@@ -24,6 +24,10 @@ internal static class Program {
 		  orders [<mission>...]            every row #16 group's row #15 orders, of every mission or of
 		                                   those named: verb, formation, point, route, subject and the
 		                                   action that ends each
+		  formations [<mission>...]        every row #16 structure group record, of every mission or of
+		                                   those named, by its BFORMS.DAT formation: whether it lays a
+		                                   pad, and the type in each member slot; raw, as records reads
+		                                   them
 		  routes [<mission>...]            every row #8 route, of every mission or of those named: its
 		                                   waypoints' coordinates and leg lengths, whether it closes on
 		                                   itself, and the group orders and objectives naming it
@@ -31,14 +35,31 @@ internal static class Program {
 		                                   mandatory or failure, condition, subject, route, failure
 		                                   text and counter writes
 		  conditions [<mission>...]        every row #1 condition, of every mission or of those named:
-		                                   the test, draw or variant table, its chain, and what it gates
+		                                   the test, draw or random table, its chain, and what it gates
 		  repeats [<mission>...]           every GUID two or more unconditioned records carry in rows
-		                                   #3, #6, #7, #8 or #9, where the last replaces the rest
-		  lint [<mission>...]              the mission check over the script.dat each mission's load
-		                                   writes, every campaign flag zero and every roll 0
+		                                   #3, #6, #7, #8 or #9, where the last replaces the rest; and
+		                                   every GUID two or more records carry in rows #10 to #16,
+		                                   where later ones overlay the fields they set, each with
+		                                   their conditions and whether they differ
+		  lint [<mission>...]              the mission check over every mission's .MSN and .ENG, or those
+		                                   named, every version at once: refs to records the mission does
+		                                   not have, records DBSIM never reads, shapes it faults on,
+		                                   rosters and text past what it holds; with --generated, over the
+		                                   script.dat each mission's load writes instead, every campaign
+		                                   flag zero and every roll 0
 		  text <mission>... [--ids LO-HI]  the named missions' .ENG text records in file order, each with
 		                                   its decoded condition; a later record of an id replaces the
 		                                   line when its condition holds
+		  records <mission> [--row N]      the mission's .MSN records as read, row by row in file order, each
+		                                   with its index in the row and its named fields; raw: no condition
+		                                   applied, no option picked, no repeated GUID merged
+		  header <mission>                 the mission's row #2 records as read, beside the script.dat
+		                                   header its load writes with every campaign flag zero and every
+		                                   roll 0
+		  values --row N --field X [<mission>...]
+		                                   how many records of typed row #N (1, 3, 4, 6-17), of every mission
+		                                   or of those named, carry each value of field X, most first; raw, as
+		                                   records reads them
 
 		  chassis [--field <name|offset>]  every chassis' dat\<name>.DAT type record, in MECHS.NAM order:
 		                                   with --field, each chassis' value of that field in decimal
@@ -54,18 +75,33 @@ internal static class Program {
 		  --install <dir>   the install to read (default: the nearest ES2\ folder above the working
 		                    directory). ZONES.VOL and SIMVOL0.VOL are read from <dir>\VOL, or from the
 		                    VOL folder of the directory <dir>\DATA\drive.cfg names.
+		  --msn <file>      also read this loose .MSN, and the .ENG beside it, as a mission named by its
+		                    file name: a custom mission (--msn ES2\MSN\SHOWDOWN.MSN); repeatable. Every
+		                    query that reads all missions then counts it too
 		  --against <dir>   census: count the entries whose folder, name and bytes match an entry of
 		                    this install's archives
 		  --variants        decode the condition on each conditioned record ("flag 625 > 0")
 		  --route-switch    orders: list only groups with a later order naming a route other than
 		                    slot 0's
 		  --with-point      orders: list only groups with an order that names a row #6 point
+		  --generated       lint: check the script.dat each load writes, not the .MSN
 		  --ids LO-HI       text: list only the records whose id is in this range (--ids 200-204);
 		                    routes: only the routes whose GUID is in it
-		  --field <f>       chassis: a record field, by name (whole, then prefix) or by record offset
+		  --row N           records: list only row #N, 1-17; values: the row to count
+		  --field X         values: a property of the row's record type, any case (--field TypeIndex); an
+		                    array takes an element index (--field OrderRefs[0]), and without one each
+		                    whole array is a value. An unknown field lists the row's fields.
+		                    chassis: a record field, by name (whole, then prefix) or by record offset
 		                    (0x52, 82). An offset that starts no field prints the word stored there
 		                    and names the field it falls in. Record offset N is the exe's type-record
 		                    offset N+2.
+		  --non-squad       values: leave out the player's squad: row #16's group 0 and every later
+		                    record with its GUID, the row #12 records those name and the templates
+		                    their random table keys pick; row #15 keeps the orders a group outside it names
+		  --kind K          values: mech, flyer or structure — row #16 groups naming a member of that
+		                    member kind, row #15 orders such a group names
+		  --where F=V       values: count only the records whose field F (as --field names it) prints
+		  --where F!=V      as V, or does not; repeatable, all must hold (--where TypeIndex!=-1)
 		  --json            print the raw result as JSON
 
 		A type is a decimal or 0x-hex index, a name matched whole and then as a prefix, or all
@@ -82,13 +118,18 @@ internal static class Program {
 	}
 
 	internal static int Run(string[] args, TextWriter output) {
-		string? install = null, type = null, against = null, ids = null, field = null;
-		bool json = false, variants = false, routeSwitch = false, withPoint = false;
+		string? install = null, type = null, against = null, ids = null, rowOption = null, field = null, kindOption = null;
+		bool json = false, variants = false, routeSwitch = false, withPoint = false, nonSquad = false, generated = false;
 		var positional = new List<string>();
+		var where = new List<string>();
+		var missionFiles = new List<string>();
 		for (int i = 0; i < args.Length; i++) {
 			switch (args[i].ToLowerInvariant()) {
 				case "--install" when i + 1 < args.Length:
 					install = args[++i];
+					break;
+				case "--msn" when i + 1 < args.Length:
+					missionFiles.Add(args[++i]);
 					break;
 				case "--type" when i + 1 < args.Length:
 					type = args[++i];
@@ -102,6 +143,18 @@ internal static class Program {
 				case "--ids" when i + 1 < args.Length:
 					ids = args[++i];
 					break;
+				case "--row" when i + 1 < args.Length:
+					rowOption = args[++i];
+					break;
+				case "--kind" when i + 1 < args.Length:
+					kindOption = args[++i];
+					break;
+				case "--where" when i + 1 < args.Length:
+					where.Add(args[++i]);
+					break;
+				case "--non-squad":
+					nonSquad = true;
+					break;
 				case "--json":
 					json = true;
 					break;
@@ -113,6 +166,9 @@ internal static class Program {
 					break;
 				case "--with-point":
 					withPoint = true;
+					break;
+				case "--generated":
+					generated = true;
 					break;
 				case "-h" or "--help" or "/?":
 					output.WriteLine(Usage);
@@ -148,7 +204,7 @@ internal static class Program {
 			return 0;
 		}
 
-		var data = RetailData.Load(install);
+		var data = RetailData.Load(install, missionFiles);
 		if (command == "flag") {
 			if (positional.Count < 2 || !short.TryParse(positional[1], out short flag) || flag < 0) {
 				return Fail("flag takes a flag index, 0-999.");
@@ -181,7 +237,7 @@ internal static class Program {
 			return 0;
 		}
 
-		if (command is "actions" or "orders" or "routes" or "objectives" or "conditions" or "text" or "lint" or "repeats"
+		if (command is "actions" or "orders" or "formations" or "routes" or "objectives" or "conditions" or "text" or "lint" or "repeats" or "records" or "header" or "values"
 				&& positional.Skip(1).FirstOrDefault(n => !data.Missions.Any(m => string.Equals(m.Name, n, StringComparison.OrdinalIgnoreCase))) is { } unknown) {
 			return Fail($"No mission is named {unknown}; `missions` lists them.");
 		}
@@ -192,6 +248,60 @@ internal static class Program {
 			if (bounds.Length != 2 || !short.TryParse(bounds[0], out lowId) || !short.TryParse(bounds[1], out highId)) {
 				return Fail("--ids takes a range, LO-HI.");
 			}
+		}
+
+		if (command is "records" or "header") {
+			if (positional.Count != 2) {
+				return Fail($"{command} takes one mission name.");
+			}
+
+			var mission = data.Missions.First(m => string.Equals(m.Name, positional[1], StringComparison.OrdinalIgnoreCase));
+			if (command == "header") {
+				var header = RecordQuery.Header(mission);
+				if (json) {
+					WriteJson(output, header);
+				} else {
+					RecordQuery.WriteHeader(output, header);
+				}
+
+				return 0;
+			}
+
+			int? rowNumber = null;
+			if (rowOption != null) {
+				if (!int.TryParse(rowOption, out int n) || n < 1 || n > RecordQuery.RowCount) {
+					return Fail($"--row takes a row number, 1-{RecordQuery.RowCount}.");
+				}
+
+				rowNumber = n;
+			}
+
+			var records = RecordQuery.Records(mission, rowNumber);
+			if (json) {
+				WriteJson(output, records);
+			} else {
+				RecordQuery.WriteRecords(output, records);
+			}
+
+			return 0;
+		}
+
+		if (command == "values") {
+			if (rowOption == null || !int.TryParse(rowOption, out int row) || field == null) {
+				return Fail("values needs --row N and --field X.");
+			}
+
+			if (ValueQuery.Run(data, positional.Skip(1).ToList(), row, field, kindOption, nonSquad, where, out string? error) is not { } values) {
+				return Fail(error!);
+			}
+
+			if (json) {
+				WriteJson(output, values);
+			} else {
+				ValueQuery.Write(output, values);
+			}
+
+			return 0;
 		}
 
 		if (command == "routes") {
@@ -221,7 +331,7 @@ internal static class Program {
 		}
 
 		if (command == "lint") {
-			var lint = LintQuery.Run(data, positional.Skip(1).ToList());
+			var lint = LintQuery.Run(data, positional.Skip(1).ToList(), generated);
 			if (json) {
 				WriteJson(output, lint);
 			} else {
@@ -259,6 +369,17 @@ internal static class Program {
 				WriteJson(output, orders);
 			} else {
 				TextReport.Orders(output, orders);
+			}
+
+			return 0;
+		}
+
+		if (command == "formations") {
+			var formations = FormationQuery.Run(data, positional.Skip(1).ToList());
+			if (json) {
+				WriteJson(output, formations);
+			} else {
+				FormationQuery.Write(output, formations);
 			}
 
 			return 0;

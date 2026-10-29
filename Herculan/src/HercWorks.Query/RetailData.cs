@@ -90,8 +90,13 @@ internal sealed class RetailData {
 		return null;
 	}
 
-	/// <exception cref="FileNotFoundException">The install has no <c>ZONES.VOL</c>.</exception>
-	public static RetailData Load(string installRoot) {
+	/// <param name="missionFiles">
+	/// Loose <c>.MSN</c> files read as missions beside the archive's, each named by its file name and
+	/// with the <c>.ENG</c> next to it, if any — a custom mission in the install's <c>MSN</c> folder.
+	/// </param>
+	/// <exception cref="FileNotFoundException">The install has no <c>ZONES.VOL</c>, or a mission file does not exist.</exception>
+	/// <exception cref="InvalidDataException">A mission file shares its name with a mission already read.</exception>
+	public static RetailData Load(string installRoot, IReadOnlyList<string>? missionFiles = null) {
 		string zones = FindArchive(installRoot, MissionArchive)
 			?? throw new FileNotFoundException($"No {ArchiveFolder}\\{MissionArchive} in {installRoot} or the directory its drive.cfg names.");
 
@@ -112,6 +117,25 @@ internal sealed class RetailData {
 			byte[]? eng = Find(zonesVol, "MSN", name + ".ENG")?.RawBytes;
 			var text = eng != null ? engTransformer.Parse(eng) : null;
 			missions.Add(new Mission(name.ToUpperInvariant(), file, text, msn, eng));
+		}
+
+		foreach (string path in missionFiles ?? []) {
+			if (!File.Exists(path)) {
+				throw new FileNotFoundException($"No mission file {path}.");
+			}
+
+			string name = Path.GetFileNameWithoutExtension(path).ToUpperInvariant();
+			if (missions.Any(m => m.Name == name)) {
+				throw new InvalidDataException($"{path} has the name of a mission already read, {name}.");
+			}
+
+			byte[] msn = File.ReadAllBytes(path);
+			var file = msnTransformer.Parse(msn)
+				?? throw new InvalidDataException($"{path} is empty.");
+			string engPath = Path.ChangeExtension(path, ".ENG");
+			byte[]? eng = File.Exists(engPath) ? File.ReadAllBytes(engPath) : null;
+			var text = eng != null ? engTransformer.Parse(eng) : null;
+			missions.Add(new Mission(name, file, text, msn, eng));
 		}
 
 		missions.Sort((a, b) => string.CompareOrdinal(a.Name, b.Name));

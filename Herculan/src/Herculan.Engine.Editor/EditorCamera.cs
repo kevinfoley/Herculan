@@ -11,13 +11,16 @@ namespace Herculan.Engine.Editor;
 /// this is not a <see cref="Sim.SimObject"/> — it is tool-only input handling with no place in the
 /// simulation, so it lives in the editor host and drives a <see cref="Camera"/> directly from
 /// float deltas each frame rather than through the fixed-point sim tick.
+///
+/// <para>It also has a top-down view (<see cref="EnterTopDown"/>), looking as nearly straight down as
+/// <see cref="PitchLimit"/> lets it, north up; leaving it returns to the pose it was entered from.</para>
 /// </summary>
 public sealed class EditorCamera {
-	/// <summary>Cruise speed, in metres per second.</summary>
-	public float CruiseSpeedMetersPerSecond { get; set; } = 30f;
+	/// <summary>Cruise speed, in meters per second.</summary>
+	public float CruiseSpeedMetersPerSecond { get; set; } = 90f;
 
 	/// <summary>Multiplies <see cref="CruiseSpeedMetersPerSecond"/> while boosting (shift held).</summary>
-	public float BoostMultiplier { get; set; } = 3f;
+	public float BoostMultiplier { get; set; } = 4f;
 
 	/// <summary>Radians of yaw/pitch per pixel of mouse movement while looking.</summary>
 	public float LookSensitivity { get; set; } = 0.0025f;
@@ -34,12 +37,78 @@ public sealed class EditorCamera {
 	/// <summary>Pitch in radians. Positive looks up.</summary>
 	public float Pitch { get; set; }
 
+	/// <summary>Extra distance added when framing the camera to an object.</summary>
+	public float ExtraFrameDistance { get; set; } = 18 * WorldScale.WorldUnitsPerMeter;
+
+	// The pose the top-down view was entered from, which leaving it returns to; null outside it.
+	private (Vector3 Position, float Yaw, float Pitch)? _beforeTopDown;
+
+	/// <summary>
+	/// Whether the camera is in its top-down view. Looking then turns it about the vertical alone, and moving keeps
+	/// to the horizontal plane, forward being up the screen.
+	/// </summary>
+	public bool TopDown => _beforeTopDown != null;
+
 	/// <summary>Starts the camera at a sim position/heading — typically the scene's default camera start.</summary>
 	public void ResetTo(Vec3i position, int headingBam) {
+		_beforeTopDown = null;
 		WorldPosition = new Vector3(position.X, position.Y, position.Z);
 		Yaw = BinaryAngle.ToRadians(headingBam);
 		Pitch = 0f;
 	}
+
+	/// <summary>
+	/// Switches to the top-down view, north up, centered on <paramref name="ground"/> (world units) from
+	/// <paramref name="height"/> world units above it. The pose it leaves is kept for <see cref="LeaveTopDown"/>.
+	/// </summary>
+	public void EnterTopDown(Vector3 ground, float height) {
+		if (TopDown) {
+			return;
+		}
+
+		_beforeTopDown = (WorldPosition, Yaw, Pitch);
+		Yaw = 0f;
+		Pitch = -PitchLimit;
+		WorldPosition = ground - Forward * (height / MathF.Sin(PitchLimit));
+	}
+
+	/// <summary>Leaves the top-down view for the pose it was entered from.</summary>
+	public void LeaveTopDown() {
+		if (_beforeTopDown is not { } before) {
+			return;
+		}
+
+		(WorldPosition, Yaw, Pitch) = before;
+		_beforeTopDown = null;
+	}
+
+	/// <summary>The least angle below level <see cref="Frame"/> looks down at what it frames, in radians (20 degrees).</summary>
+	public float FramePitch { get; set; } = 20f * MathF.PI / 180f;
+
+	/// <summary>The nearest <see cref="Frame"/> stands to what it frames, in meters.</summary>
+	public float MinFrameDistanceMeters { get; set; } = 25f;
+
+	/// <summary>
+	/// Frame the camera around a sphere with the given center and radius. Never farther than 
+	/// <paramref name="maxDistance"/>, so the sphere's center stays short of the far plane.
+	/// </summary>
+	public void Frame(Vector3 center, float radius, float verticalFieldOfView, float maxDistance) {
+		Pitch = MathF.Min(Pitch, -FramePitch);
+
+		float distance = MathF.Min(MathF.Max(radius / MathF.Sin(verticalFieldOfView / 2f),
+			MinFrameDistanceMeters * WorldScale.WorldUnitsPerMeter), maxDistance);
+
+		// Add some extra distance so the camera doesn't crop too tightly on small objects.
+		// This is fixed rather than proportional so that the camera doesn't pull too far
+		// back on very large objects like trigger areas.
+		distance += ExtraFrameDistance;
+
+		WorldPosition = center - Forward * distance;
+	}
+
+	/// <summary>The direction the eye looks, in world axes.</summary>
+	private Vector3 Forward =>
+		new(MathF.Cos(Pitch) * MathF.Sin(Yaw), MathF.Cos(Pitch) * MathF.Cos(Yaw), MathF.Sin(Pitch));
 
 	/// <summary>
 	/// Advances the camera by one frame. <paramref name="lookDelta"/> is the mouse's screen-space
@@ -51,8 +120,10 @@ public sealed class EditorCamera {
 			bool acceptKeyboardInput) {
 		if (lookActive) {
 			Yaw += lookDelta.X * LookSensitivity;
-			Pitch -= lookDelta.Y * LookSensitivity;
-			Pitch = Math.Clamp(Pitch, -PitchLimit, PitchLimit);
+			if (!TopDown) {
+				Pitch -= lookDelta.Y * LookSensitivity;
+				Pitch = Math.Clamp(Pitch, -PitchLimit, PitchLimit);
+			}
 		}
 
 		if (keyboard == null || !acceptKeyboardInput) {
@@ -74,12 +145,12 @@ public sealed class EditorCamera {
 		float sinPitch = MathF.Sin(Pitch), cosPitch = MathF.Cos(Pitch);
 
 		// Same convention as FlyCameraObject.Tick: forward carries the pitch component, strafe
-		// stays in the horizontal plane.
-		float horizontal = forwardAxis * cosPitch;
+		// stays in the horizontal plane. Looking down from above, forward is up the screen instead.
+		float horizontal = TopDown ? forwardAxis : forwardAxis * cosPitch;
 		var move = new Vector3(
 			horizontal * sinYaw + strafeAxis * cosYaw,
 			horizontal * cosYaw - strafeAxis * sinYaw,
-			forwardAxis * sinPitch + verticalAxis);
+			(TopDown ? 0f : forwardAxis * sinPitch) + verticalAxis);
 
 		WorldPosition += Vector3.Normalize(move) * speed * (float)deltaSeconds;
 	}

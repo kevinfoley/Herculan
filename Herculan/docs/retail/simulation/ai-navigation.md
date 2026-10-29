@@ -207,8 +207,8 @@ Its target handling is the exception among the five: it runs `Ai_SelectDefenceTa
 | `+0x252` | short | AI cruise speed, from block 7 `+0x02` ([`script-dat.md`](../formats/script-dat.md), [`msn-mission-file.md`](../formats/msn-mission-file.md)). Zero means `0xaa` |
 | `+0x5a` | timer | The navigation states' own decision clock, 10000 counts or about 4.9 s, in the behaviour block's scratch |
 | `+0x5f` | ptr | What `travelling` and `following` point the turret at. Not a selected target |
-| `+0x97` | byte | The mission file's standing radar setting for this machine, from block 7 `+0x00` — [`target-selection.md`](target-selection.md#how-an-ai-machines-radar-is-set) |
-| `+0x96` | byte | Radar mode, written here from `+0x97`, or from `+0xb2` in the player's squad — [`target-selection.md`](target-selection.md#how-an-ai-machines-radar-is-set) |
+| `+0x97` | byte | The mission file's standing radar setting for this machine, from block 7 `+0x00` — [`sensors.md`](sensors.md#how-an-ai-machines-radar-is-set) |
+| `+0x96` | byte | Radar mode, written here from `+0x97`, or from `+0xb2` in the player's squad — [`sensors.md`](sensors.md#how-an-ai-machines-radar-is-set) |
 | `+0xb6` | byte | `FIRE AT WILL` — lets a non-leader run the patrol, search-and-destroy and guard thinks. Written by [`ai-squadmates.md`](ai-squadmates.md) |
 
 ## Rejected readings

@@ -1,4 +1,5 @@
 using Herculan.Engine.Host.Localization;
+using Herculan.Engine.Host.Shell;
 using Herculan.Engine.Host.Settings;
 using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
@@ -42,8 +43,8 @@ sealed class FrontEndWindow : IDisposable {
 	// Whether the bar was up at the last pad update, to see it go down.
 	private bool _barWasVisible;
 
-	// Set by the Settings menu's restart and the Editor item, either of which closes the window once the frame's ImGui
-	// is drawn.
+	// Set by the Settings menu's restart, the Editor item and Custom Missions' Play, each of which closes the window once
+	// the frame's ImGui is drawn.
 	private bool _closePending;
 
 	/// <param name="window">The window the front end's turn runs in.</param>
@@ -54,8 +55,9 @@ sealed class FrontEndWindow : IDisposable {
 	/// The Editor item's switch to the mission editor, run as it is asked for; the window then closes once the frame
 	/// is drawn.
 	/// </param>
+	/// <param name="customMissions">The menu bar's Custom Missions window, or null for a bar without it.</param>
 	public FrontEndWindow(HostSession session, HostWindow window, string title, string? screenshotPath,
-			Action restartRequested, Action editorRequested) {
+			Action restartRequested, Action editorRequested, CustomMissionsWindow? customMissions = null) {
 		_imguiFontPath = session.ImGuiFontPath;
 		_imguiItalicFontPath = session.ImGuiItalicFontPath;
 		_screenshotPath = screenshotPath;
@@ -67,7 +69,7 @@ sealed class FrontEndWindow : IDisposable {
 		controller.Saved += file => _padPointer.Settings = file.Mouse;
 		_menuBar = new HostMenuBar(session.Localization, session.Keys, new TweaksMenu(TweakSettings.Current, session.Localization),
 			new SettingsWindow(session, () => RequestClose(restartRequested)), controller,
-			openEditor: () => RequestClose(editorRequested));
+			openEditor: () => RequestClose(editorRequested), customMissions: customMissions);
 		_window.FocusChanged += focused => {
 			HasFocus = focused;
 			FocusChanged?.Invoke(focused);
@@ -297,6 +299,12 @@ sealed class FrontEndWindow : IDisposable {
 
 	public void Close() => _window.Close();
 
+	/// <summary>
+	/// Closes the window once the frame's ImGui is drawn, for a request made from inside one of the bar's windows, since the
+	/// close disposes the ImGui context.
+	/// </summary>
+	public void CloseAfterFrame() => _closePending = true;
+
 	public void DisposeImGui() {
 		_imgui?.Dispose();
 		_imgui = null;
@@ -314,6 +322,6 @@ sealed class FrontEndWindow : IDisposable {
 	// close waits for DrawMenuBar to finish the frame.
 	private void RequestClose(Action requested) {
 		requested();
-		_closePending = true;
+		CloseAfterFrame();
 	}
 }

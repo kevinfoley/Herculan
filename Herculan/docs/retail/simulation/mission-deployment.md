@@ -52,9 +52,9 @@ Walks the whole action array and, per action, picks whose position `Action_TestT
 
 #### The areas — block 4, resolved by `TriggerArea_Resolve` (`00423358`)
 
-A block-4 record resolves to a 10-byte area ([`script-dat.md`](../formats/script-dat.md#the-13-block-structure), block 4). `TriggerArea_ContainsPoint` (`004233a4`) tests a position against it:
+A block-4 record resolves to a 10-byte area ([`script-dat.md`](../formats/script-dat.md#the-13-block-structure), block 4); a circle's radius is the record's third word sign-extended and multiplied by 10, so a stored word past 32767 reads as a negative radius. `TriggerArea_ContainsPoint` (`004233a4`) tests a position against it:
 
-- **type 0** — axis-aligned XY box strictly between the two coordinates. Z is ignored, so a box catches anything standing over its footprint however high.
+- **type 0** — axis-aligned XY box strictly between the two coordinates, taking the smaller and the larger of the two on each axis, so either corner order catches the same ground. Z is ignored, so a box catches anything standing over its footprint however high.
 - **type != 0** — ground-plane distance from the coordinate is less than the stored radius.
 
 A populated slot behind the action's first negative ref is never tested ([`script-dat.md`](../formats/script-dat.md#block-5-in-memory--58-bytes-0x3a)).
@@ -90,14 +90,14 @@ Every mech, flyer and structure carries two action pointers, resolved by `DBSim_
 
 The raycast's route is the tail of the sweep in [`hit-detection.md`](hit-detection.md#the-sweep--sim_raycastobjectlist-00426528). Shooting at what you have boxed engages it with nothing in detection range of it.
 
-`Detection_ShareContact` takes a spotter and a contact and does nothing if they are on the same side (`group+0x12`). Otherwise it walks the live-object list. Each object on the spotter's side whose group has arrived (`group+0x14` clear), the spotter included, is measured to the contact with `Math_DistanceBetweenPoints`. Within 100000 it gets the contact ([`target-selection.md`](target-selection.md#the-sensor-model--sim_detectiontick-004123ac)). Within 50000 the function also raises the **contact's** `+0x9e` (`004127a7`, through `EDI`, the second argument) and activates the **list object's own** `+0x1b2` (`004127ab`-`004127c2`, through `EBX`). The `+0x9e` write does not depend on the list object having an action. Two things call it:
+`Detection_ShareContact` takes a spotter and a contact and does nothing if they are on the same side (`group+0x12`). Otherwise it walks the live-object list. Each object on the spotter's side whose group has arrived (`group+0x14` clear), the spotter included, is measured to the contact with `Math_DistanceBetweenPoints`. Within 100000 it gets the contact ([`sensors.md`](sensors.md#the-sensor-model--sim_detectiontick-004123ac)). Within 50000 the function also raises the **contact's** `+0x9e` (`004127a7`, through `EDI`, the second argument) and activates the **list object's own** `+0x1b2` (`004127ab`-`004127c2`, through `EBX`). The `+0x9e` write does not depend on the list object having an action. Two things call it:
 
-- **A new contact in the sweep.** One that a human-side object other than the player's machine makes, and the reciprocal one that a Cybrid object makes. A contact the player's own machine makes is not shared ([`target-selection.md`](target-selection.md#passes)).
+- **A new contact in the sweep.** One that a human-side object other than the player's machine makes, and the reciprocal one that a Cybrid object makes. A contact the player's own machine makes is not shared ([`sensors.md`](sensors.md#passes)).
 - **A shot striking an object**, with the struck object as spotter and the shooter as contact. The struck object's vtable `+0x50` makes the call: `SimObject_AiOnTakingFire` (`00411aec`) for a structure, flyer or base object, `Mech_AiOnTakingFire` for a HERC past its own gates ([`ai-targeting.md`](ai-targeting.md#passing-a-contact-on)).
 
 So an engagement action does not wait for a mutual contact. It activates as soon as an object within 50000 of a hostile first spots it, or is shot by it from within 50000.
 
-Each site activates an object's action only while that object's own `obj+0xa2` is clear. `Mech_PerTickSystemsUpdate` raises the byte (`0041abd8`) on the machine's own selected target while its ECM pod's switch is on, which only the player's ever is ([`equipment-pods.md`](equipment-pods.md#what-each-class-actually-overrides)). `Sim_DetectionTick` clears it on everything at the end of its pass ([`target-selection.md`](target-selection.md#passes)). Those are the only two writers `es2_fieldscan.py` finds. `Sim_MainTick` runs the per-mech systems pass straight after the detection tick (`0045f775`, then `0045f7a0`), so the byte is raised again before the next tick's object updates and sweep read it. **Jamming a target holds back its engagement action** for as long as the jammer stays on it. No site gates `+0x9e`, so the target still counts as engaged.
+Each site activates an object's action only while that object's own `obj+0xa2` is clear. `Mech_PerTickSystemsUpdate` raises the byte (`0041abd8`) on the machine's own selected target while its ECM pod's switch is on, which only the player's ever is ([`equipment-pods.md`](equipment-pods.md#what-each-class-actually-overrides)). `Sim_DetectionTick` clears it on everything at the end of its pass ([`sensors.md`](sensors.md#passes)). Those are the only two writers `es2_fieldscan.py` finds. `Sim_MainTick` runs the per-mech systems pass straight after the detection tick (`0045f775`, then `0045f7a0`), so the byte is raised again before the next tick's object updates and sweep read it. **Jamming a target holds back its engagement action** for as long as the jammer stays on it. No site gates `+0x9e`, so the target still counts as engaged.
 
 **`+0x1b6` — defeated.** Four sites, and they are the four ways an object stops being a threat. The first three run the object's [out-of-action report](#the-out-of-action-report) just before it; the fourth does not:
 
@@ -191,7 +191,7 @@ vz     = -height / n
 
 `Meteor_Render` (`00409cd0`) draws the plain shape (root 0) while falling and the opening animation's own shape instance at `+0x41` (root 1) once landed.
 
-Only the leader is repositioned; the rest of the group follows under its orders. Every retail drop-pod group has exactly one member.
+Only the leader is repositioned; every other member goes live where the mission placed it. Every retail drop-pod group that can arrive has one member. `DEMO2`'s group 84 has three HERCs and waits on action 41, which has no trigger area and which no countdown and no object's engaged or defeated ref names, so it never arrives.
 
 ### A pod aimed off the heightmap
 
@@ -279,7 +279,7 @@ A worked example, because it is the only place the four mechanisms are visible t
 
 Action 0's circle is centred at (1005988, 1058404) with radius 150,000 and its subject is type 3 — deployed **Cybrid** groups, not the player. The player spawns inside it at 64,132; group 2's machine spawns north at 252,252 and walks south, crossing in at tick 1222 (~49 s at 25 Hz). So the first wave arrives on its own if the player does nothing, and sooner if the player kills the machine. Actions 1 and 2 carry no area, so their only route is the kill.
 
-The Cybrid HERCs' chassis are not fixed. Each of the eight roster records names a type-3 variant key, so every HERC draws its own chassis (DIABLO, ACHILLES, HYPERION or HEADHUNTER) when the mission loads ([`msn-mission-file.md`](../formats/msn-mission-file.md#variants)). The counts, groups, actions and routes above are the same on every load.
+The Cybrid HERCs' chassis are not fixed. Each of the eight roster records names a random table key, so every HERC picks its own chassis (DIABLO, ACHILLES, HYPERION or HEADHUNTER) when the mission loads ([`msn-mission-file.md`](../formats/msn-mission-file.md#random-tables)). The counts, groups, actions and routes above are the same on every load.
 
 ## Rejected readings
 

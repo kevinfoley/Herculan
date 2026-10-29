@@ -5,7 +5,16 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <!-- ImGuiLayoutCheck turns off ImGui's imgui.ini through its native IO struct. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\ImGuiLayoutCheck.cs" Link="Shared\ImGuiLayoutCheck.cs" />
+    <!-- The editor's faces, which PropertiesPanelLayoutTests lays the panel out in. -->
+    <None Include="..\..\src\Herculan.Engine.Host.Editor\Assets\Fonts\Open_Sans\static\OpenSans-Regular.ttf" Link="Assets\Fonts\Open_Sans\static\OpenSans-Regular.ttf" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\src\Herculan.Engine.Host.Editor\Assets\Fonts\Open_Sans\static\OpenSans-Bold.ttf" Link="Assets\Fonts\Open_Sans\static\OpenSans-Bold.ttf" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
@@ -15,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Herculan.Engine\Herculan.Engine.csproj" />
+    <ProjectReference Include="..\..\src\Herculan.Engine.Editor\Herculan.Engine.Editor.csproj" />
   </ItemGroup>
 
 </Project>

@@ -9,7 +9,7 @@ namespace HercWorks.Core.Io.Transform.Common;
 /// <c>MsnGen_ParseMsnFile</c> (<c>00417b67</c>) with the <c>.ENG</c> load (<c>Msn_LoadEngText</c> (<c>0041768c</c>)) it makes
 /// between rows 2 and 3, <see cref="WriteScriptDat"/> is <c>WriteScriptDatFile</c> (<c>0041ac54</c>) and
 /// <see cref="WriteMissionText"/> is <c>MissionStr_Write</c> (<c>004179f0</c>). What the rows mean, and the condition,
-/// variant and merge rules, are docs/retail/formats/msn-mission-file.md's.
+/// random table and merge rules, are docs/retail/formats/msn-mission-file.md's.
 ///
 /// <para>Loads all 62 retail missions. At the generator state docs/retail/shell/campaign-loop.md, "The
 /// shell's generator", describes, it reproduces two retail training handoffs of TRAIN5 — each a
@@ -25,7 +25,7 @@ namespace HercWorks.Core.Io.Transform.Common;
 /// beside that property; the offsets no model property covers — row 2's, row 5's and row 8's count —
 /// are literals.</para>
 ///
-/// <para>Where the original would read outside an array — a variant with no record to copy, a ref to
+/// <para>Where the original would read outside an array — an option with no template to copy, a ref to
 /// a row-3 record through an index taken from another space — this leaves the field as it was, which
 /// is this port's choice rather than anything the original does on purpose.</para>
 /// </summary>
@@ -39,19 +39,22 @@ public sealed class MissionGenerator {
 	/// <summary><c>maybe_CampaignFlagArray</c>'s length in <c>int16</c>s.</summary>
 	public const int CampaignFlagCount = 1000;
 
-	/// <summary>The row-1 comparison opcodes, <c>0x119</c>-<c>0x11e</c>.</summary>
-	private const short OpEqual = 0x119;
-	private const short OpNotEqual = 0x11a;
-	private const short OpLess = 0x11b;
-	private const short OpLessOrEqual = 0x11c;
-	private const short OpGreater = 0x11d;
-	private const short OpGreaterOrEqual = 0x11e;
+	/// <summary>
+	/// The row-1 comparison opcodes, <c>0x119</c>-<c>0x11e</c>, each named by the test it makes of the flag against the
+	/// operand (<see cref="Compare"/>): <see cref="OpGreater"/> holds when the flag is greater.
+	/// </summary>
+	public const short OpEqual = 0x119;
+	public const short OpNotEqual = 0x11a;
+	public const short OpLess = 0x11b;
+	public const short OpLessOrEqual = 0x11c;
+	public const short OpGreater = 0x11d;
+	public const short OpGreaterOrEqual = 0x11e;
 
 	/// <summary>What <c>Msn_ConditionParentValue</c> (<c>004159d0</c>) answers for a type-3 parent: a range test that always passes.</summary>
-	private const short AnyVariant = -99;
+	private const short AnyRoll = -99;
 
 	private readonly List<short[]> _conditions = new();
-	private readonly List<short[]> _variants = new();
+	private readonly List<short[]> _movieChoices = new();
 	private readonly List<short[]> _texts = new();
 	private readonly List<short[]> _points = new();
 	private readonly List<short[]> _headings = new();
@@ -88,6 +91,9 @@ public sealed class MissionGenerator {
 	/// before the write; <see cref="WriteScriptDat"/> puts a literal 1 in place of the third.
 	/// </summary>
 	public short[] Header { get; } = new short[10];
+
+	/// <summary>Which <c>.MSN</c> and <c>.ENG</c> records supplied each exported record and <c>mission.str</c> line.</summary>
+	public MissionProvenance Provenance { get; } = new();
 
 	/// <summary>
 	/// Loads a mission. <paramref name="flags"/> is the campaign flag array the row-1 comparisons read,
@@ -141,7 +147,7 @@ public sealed class MissionGenerator {
 		generator.ReadConditions(reader);
 		reader.Skip(reader.Short() * 0x52);
 		generator.ReadText(text);
-		generator.ReadVariants(reader);
+		generator.ReadMovieChoices(reader);
 		reader.Skip(reader.Short() * 0x90);
 
 		// Row 5, 64 bytes: a condition, thirty text refs and a row-3 ref, read into the slot the survivor
@@ -166,9 +172,9 @@ public sealed class MissionGenerator {
 			}
 
 			if (record[31] != -1) {
-				short variant = Find(generator._variants, record[31], generator._variants.Count, exported: true);
-				if (variant >= 0 && variant < generator._variants.Count) {
-					record[31] = generator._variants[variant][VariantValue8.ValueWord];
+				short choice = Find(generator._movieChoices, record[31], generator._movieChoices.Count, exported: true);
+				if (choice >= 0 && choice < generator._movieChoices.Count) {
+					record[31] = generator._movieChoices[choice][MovieChoice8.ValueWord];
 				}
 			}
 
@@ -213,7 +219,7 @@ public sealed class MissionGenerator {
 					break;
 				case 2:
 					int value = ParentValue(record[condition], _conditions.Count);
-					if (value == AnyVariant || ((ushort)record[lower] <= value && value <= (ushort)record[upper])) {
+					if (value == AnyRoll || ((ushort)record[lower] <= value && value <= (ushort)record[upper])) {
 						_conditions.Add(record);
 					}
 
@@ -261,7 +267,7 @@ public sealed class MissionGenerator {
 
 	/// <summary>
 	/// <c>Msn_ConditionParentValue</c> (<c>004159d0</c>): the first earlier survivor with the GUID — a type-1 record's drawn number, or
-	/// <see cref="AnyVariant"/> for a type-3 record — and <c>-1</c> when there is none.
+	/// <see cref="AnyRoll"/> for a type-3 record — and <c>-1</c> when there is none.
 	/// </summary>
 	private int ParentValue(short condition, int count) {
 		for (int i = 0; i < count; i++) {
@@ -271,7 +277,7 @@ public sealed class MissionGenerator {
 			}
 
 			if (record[MapObject.GUIDWord] == condition && record[MissionCondition14.TypeWord] == 3) {
-				return AnyVariant;
+				return AnyRoll;
 			}
 		}
 
@@ -279,29 +285,34 @@ public sealed class MissionGenerator {
 	}
 
 	/// <summary>
-	/// <c>Msn_PickVariant</c> (<c>00415fc3</c>), which a record's variant field (<c>0x04</c>) goes through: the type-3 record
+	/// <c>Msn_PickOption</c> (<c>00415fc3</c>), which a record's random table key (<c>0x04</c>) goes through: the type-3 record
 	/// whose <c>0x06</c> matches is rolled against its <c>0x0a</c>, the roll stored at its <c>0x0c</c>, and
 	/// the type-2 child whose range holds the roll is the answer — its row-1 index. It rolls again on
 	/// every call, and returns <c>-1</c> when no type-3 record's child claims the roll.
 	/// </summary>
-	private int PickVariant(short variant) {
+	private int PickOption(short key) {
 		const int type = MissionCondition14.TypeWord;
 		const int lower = MissionCondition14.FlagIndexOrRangeLowerWord;
 		const int upper = MissionCondition14.OperatorOrRangeUpperOrResultWord;
 		const int draw = MissionCondition14.LatestDrawWord;
 		for (int parent = 0; parent < _conditions.Count; parent++) {
 			var record = _conditions[parent];
-			if (record[type] != 3 || record[lower] != variant) {
+			if (record[type] != 3 || record[lower] != key) {
 				continue;
 			}
 
 			record[draw] = (short)_roll(record[MissionCondition14.ComparisonOperandWord]);
-			for (int child = 0; child < _conditions.Count; child++) {
+			int picked = -1;
+			for (int child = 0; picked < 0 && child < _conditions.Count; child++) {
 				var candidate = _conditions[child];
 				if (candidate[type] == 2 && candidate[MissionCondition14.ConditionRefWord] == record[MapObject.GUIDWord]
 					&& (ushort)candidate[lower] <= record[draw] && record[draw] <= (ushort)candidate[upper]) {
-					return child;
+					picked = child;
 				}
+			}
+
+			if (picked >= 0) {
+				return picked;
 			}
 		}
 
@@ -309,25 +320,22 @@ public sealed class MissionGenerator {
 	}
 
 	/// <summary>
-	/// <c>Msn_VariantSourceRow6</c> (<c>00416120</c>) and its six siblings: the variant picked, then the first of the row's first
-	/// <paramref name="count"/> records whose condition is that variant's GUID. That record is what a
-	/// record with a variant field copies its fields from.
+	/// <c>Msn_TemplateRow6</c> (<c>00416120</c>) and its six siblings: the option picked, then the first of the row's first
+	/// <paramref name="count"/> records whose condition is that option's range: the template a record with a
+	/// random table key copies its fields from.
 	/// </summary>
-	private int VariantSource(IReadOnlyList<short[]> row, short variant, int count) {
-		int picked = PickVariant(variant);
-		if (picked < 0) {
-			return -1;
-		}
-
-		short guid = _conditions[picked][MapObject.GUIDWord];
-		for (int i = 0; i < count; i++) {
-			// Word 1 is the condition ref of every row with a variant key.
-			if (row[i][1] == guid) {
-				return i;
+	private int TemplateOf(IReadOnlyList<short[]> row, short key, int count) {
+		int picked = PickOption(key);
+		int source = -1;
+		for (int i = 0; picked >= 0 && i < count; i++) {
+			// Word 1 is the condition ref of every row with a random table key.
+			if (row[i][1] == _conditions[picked][MapObject.GUIDWord]) {
+				source = i;
+				break;
 			}
 		}
 
-		return -1;
+		return source;
 	}
 
 	// ---- Row 2: the header patches --------------------------------------------------------------
@@ -350,13 +358,11 @@ public sealed class MissionGenerator {
 				continue;
 			}
 
-			if (patch[1] != 1) {
-				Header[0] = patch[1];
-			}
-
-			for (int word = 1; word < Header.Length; word++) {
-				if (patch[1 + word] != 0) {
+			Provenance.HeaderPatched(i);
+			for (int word = 0; word < Header.Length; word++) {
+				if (patch[1 + word] != MissionSettingsPatch.Unset(word)) {
 					Header[word] = patch[1 + word];
+					Provenance.HeaderWordWritten(word, i);
 				}
 			}
 
@@ -410,8 +416,10 @@ public sealed class MissionGenerator {
 
 			if (existing == -1) {
 				_strings.Add((id, body));
+				Provenance.LineAdded(i);
 			} else {
 				_strings[existing] = (_strings[existing].Id, body);
+				Provenance.LineReplaced(existing, i);
 			}
 		}
 	}
@@ -441,7 +449,7 @@ public sealed class MissionGenerator {
 	// ---- Rows 3-17 --------------------------------------------------------------------------------
 
 	private void ReadRows(Cursor reader) {
-		ReadVariants(reader);
+		ReadMovieChoices(reader);
 		ReadTextPackages(reader);
 		reader.Skip(reader.Short() * 0x40);
 		ReadPoints(reader);
@@ -519,40 +527,51 @@ public sealed class MissionGenerator {
 	private static short Ref(IReadOnlyList<short[]> row, short guid) => Find(row, guid, row.Count, exported: true);
 
 	/// <summary>
-	/// Adds a record, or when an earlier record has its GUID hands both to <paramref name="merge"/> —
-	/// the compaction every GUID-keyed row shares. The slot the original read into is reused.
+	/// Adds record <paramref name="index"/> of <c>.MSN</c> row <paramref name="msnRow"/>, or when an earlier
+	/// record has its GUID merges it into that one by the row's <see cref="MergeRules"/> — the compaction every
+	/// GUID-keyed row shares. The slot the original read into is reused.
 	/// </summary>
-	private static void AddOrMerge(List<short[]> row, short[] record, Action<short[], short[]> merge) {
+	private void AddOrMerge(List<short[]> row, int msnRow, int index, short[] record) {
 		int existing = Find(row, record[MapObject.GUIDWord], row.Count, exported: false);
 		if (existing == -1) {
 			row.Add(record);
-		} else {
-			merge(record, row[existing]);
+			Provenance.Added(msnRow, index, record);
+			return;
 		}
-	}
 
-	/// <summary>The whole-record replace rows 3, 6, 7 and 9 use for a repeated GUID.</summary>
-	private static void Replace(short[] source, short[] target) => Array.Copy(source, target, target.Length);
+		Provenance.Merging(msnRow, existing, index);
+		var target = row[existing];
+		if (MergeRules.Replaces(msnRow)) {
+			Array.Copy(record, target, target.Length);
+			Provenance.Wrote(0, target.Length);
+			return;
+		}
 
-	/// <summary>Copies each word of <paramref name="source"/> in the range that is not <paramref name="unset"/>.</summary>
-	private static void Overlay(short[] source, short[] target, int first, int count, short unset) {
-		for (int i = first; i < first + count; i++) {
-			if (source[i] != unset) {
-				target[i] = source[i];
+		foreach (var span in MergeRules.Overlay(msnRow)) {
+			for (int i = span.First; i < span.First + span.Count; i++) {
+				if (record[i] != span.Unset) {
+					target[i] = record[i];
+					Provenance.Wrote(i, 1);
+				}
 			}
 		}
 	}
 
-	private static void Copy(short[] source, short[] target, int first, int count) =>
-		Array.Copy(source, first, target, first, count);
+	/// <summary>A template copy of row <paramref name="msnRow"/>'s <see cref="MergeRules.TemplateCopy"/> spans from slot <paramref name="source"/> of <paramref name="row"/> into <paramref name="target"/>.</summary>
+	private void CopyTemplate(IReadOnlyList<short[]> row, int source, short[] target, int msnRow) {
+		foreach (var span in MergeRules.TemplateCopy(msnRow)) {
+			Array.Copy(row[source], span.First, target, span.First, span.Count);
+			Provenance.CopiedFromTemplate(source, span.First, span.Count);
+		}
+	}
 
 	/// <summary>Row 3, 8 bytes: GUID, condition, a word, the value row 4 fetches.</summary>
-	private void ReadVariants(Cursor reader) {
+	private void ReadMovieChoices(Cursor reader) {
 		int count = reader.Short();
 		for (int i = 0; i < count; i++) {
 			short[] record = reader.Words(4);
-			if (Gate(record[VariantValue8.ConditionRefWord], _conditions.Count)) {
-				AddOrMerge(_variants, record, Replace);
+			if (Gate(record[MovieChoice8.ConditionRefWord], _conditions.Count)) {
+				AddOrMerge(_movieChoices, 3, i, record);
 			}
 		}
 	}
@@ -568,6 +587,7 @@ public sealed class MissionGenerator {
 			short[] record = reader.Words(72);
 			if (_texts.Count == 0) {
 				_textSlot0 = record;
+				Provenance.TextPackage(i, record.Length);
 			}
 
 			if (!Gate(record[MissionText144.ConditionRefWord], _conditions.Count)) {
@@ -582,9 +602,9 @@ public sealed class MissionGenerator {
 
 			const int movie = MissionText144.MovieRefWord;
 			if (record[movie] != -1) {
-				short variant = Find(_variants, record[movie], _variants.Count, exported: true);
-				if (variant >= 0 && variant < _variants.Count) {
-					record[movie] = _variants[variant][VariantValue8.ValueWord];
+				short choice = Find(_movieChoices, record[movie], _movieChoices.Count, exported: true);
+				if (choice >= 0 && choice < _movieChoices.Count) {
+					record[movie] = _movieChoices[choice][MovieChoice8.ValueWord];
 				}
 			}
 
@@ -593,8 +613,8 @@ public sealed class MissionGenerator {
 	}
 
 	/// <summary>
-	/// Row 6, 22 bytes: GUID, condition, variant, a word, the sum flag, and an <c>int32</c> X, Y and Z. A
-	/// variant copies the three coordinates. The sum flag makes the point the sum of two earlier points,
+	/// Row 6, 22 bytes: GUID, condition, random table key, a word, the sum flag, and an <c>int32</c> X, Y and
+	/// Z. A template supplies the three coordinates. The sum flag makes the point the sum of two earlier points,
 	/// named by the low words of its own X and Y.
 	/// </summary>
 	private void ReadPoints(Cursor reader) {
@@ -605,9 +625,9 @@ public sealed class MissionGenerator {
 				continue;
 			}
 
-			short variantKey = record[MapPoint22.VariantKeyWord];
-			if (variantKey != -1 && VariantSource(_points, variantKey, _points.Count) is >= 0 and var source) {
-				Copy(_points[source], record, MapPoint22.XWord, 6);
+			short tableKey = record[MapPoint22.RandomTableKeyWord];
+			if (tableKey != -1 && TemplateOf(_points, tableKey, _points.Count) is >= 0 and var source) {
+				CopyTemplate(_points, source, record, 6);
 			}
 
 			if (record[MapPoint22.SumFlagWord] != 0) {
@@ -621,7 +641,7 @@ public sealed class MissionGenerator {
 				}
 			}
 
-			AddOrMerge(_points, record, Replace);
+			AddOrMerge(_points, 6, i, record);
 		}
 	}
 
@@ -632,7 +652,7 @@ public sealed class MissionGenerator {
 		words[at + 1] = (short)(value >> 16);
 	}
 
-	/// <summary>Row 7, 10 bytes: GUID, condition, variant, a word, the heading. A variant copies the heading.</summary>
+	/// <summary>Row 7, 10 bytes: GUID, condition, random table key, a word, the heading. A template supplies the heading.</summary>
 	private void ReadHeadings(Cursor reader) {
 		int count = reader.Short();
 		for (int i = 0; i < count; i++) {
@@ -641,18 +661,18 @@ public sealed class MissionGenerator {
 				continue;
 			}
 
-			short variantKey = record[Heading10.VariantKeyWord];
-			if (variantKey != -1 && VariantSource(_headings, variantKey, _headings.Count) is >= 0 and var source) {
-				record[Heading10.DegreesWord] = _headings[source][Heading10.DegreesWord];
+			short tableKey = record[Heading10.RandomTableKeyWord];
+			if (tableKey != -1 && TemplateOf(_headings, tableKey, _headings.Count) is >= 0 and var source) {
+				CopyTemplate(_headings, source, record, 7);
 			}
 
-			AddOrMerge(_headings, record, Replace);
+			AddOrMerge(_headings, 7, i, record);
 		}
 	}
 
 	/// <summary>
-	/// Row 8: GUID, condition, variant, a word, a count, then that many point refs, each resolved as it
-	/// is read — before the record's own condition is tested. A variant copies the list; a repeated GUID
+	/// Row 8: GUID, condition, random table key, a word, a count, then that many point refs, each resolved as it
+	/// is read — before the record's own condition is tested. A template supplies the list; a repeated GUID
 	/// replaces the earlier record whole.
 	/// </summary>
 	private void ReadWaypointGroups(Cursor reader) {
@@ -667,8 +687,8 @@ public sealed class MissionGenerator {
 				continue;
 			}
 
-			if (group.Words[Data.File.Msn.WaypointGroup.VariantKeyWord] != -1) {
-				int picked = PickVariant(group.Words[Data.File.Msn.WaypointGroup.VariantKeyWord]);
+			if (group.Words[Data.File.Msn.WaypointGroup.RandomTableKeyWord] != -1) {
+				int picked = PickOption(group.Words[Data.File.Msn.WaypointGroup.RandomTableKeyWord]);
 				int source = -1;
 				for (int j = 0; picked >= 0 && j < _waypointGroups.Count; j++) {
 					if (_waypointGroups[j].Words[Data.File.Msn.WaypointGroup.ConditionRefWord] == _conditions[picked][MapObject.GUIDWord]) {
@@ -678,16 +698,21 @@ public sealed class MissionGenerator {
 				}
 
 				if (source >= 0) {
-					group.Words[4] = _waypointGroups[source].Words[4];
+					const int list = MergeRules.RouteListWord;
+					group.Words[list] = _waypointGroups[source].Words[list];
 					group.Points.Clear();
 					group.Points.AddRange(_waypointGroups[source].Points);
+					Provenance.CopiedFromTemplate(source, list, 1);
 				}
 			}
 
 			int existing = FindGroup(_waypointGroups, group.Words[MapObject.GUIDWord], _waypointGroups.Count, exported: false);
 			if (existing == -1) {
 				_waypointGroups.Add(group);
+				Provenance.Added(8, i, group.Words);
 			} else {
+				Provenance.Merging(8, existing, i);
+				Provenance.Wrote(0, group.Words.Length);
 				_waypointGroups[existing] = group;
 			}
 		}
@@ -707,7 +732,7 @@ public sealed class MissionGenerator {
 				record[TriggerArea12.SecondPointOrRadiusWord] = Ref(_points, record[TriggerArea12.SecondPointOrRadiusWord]);
 			}
 
-			AddOrMerge(_areas, record, Replace);
+			AddOrMerge(_areas, 9, i, record);
 		}
 	}
 
@@ -736,13 +761,7 @@ public sealed class MissionGenerator {
 				}
 			}
 
-			AddOrMerge(_actions, record, (source, target) => {
-				Overlay(source, target, MissionAction82.TypeWord, 10, -1);
-				Overlay(source, target, MissionAction82.CounterPairsWord, 20, -1);
-				Overlay(source, target, MissionAction82.TextRefsWord, 5, -1);
-				Overlay(source, target, MissionAction82.MessageIdWord, 1, 0);
-				Overlay(source, target, MissionAction82.TargetRefWord, 1, -1);
-			});
+			AddOrMerge(_actions, 10, i, record);
 		}
 	}
 
@@ -761,18 +780,14 @@ public sealed class MissionGenerator {
 				}
 			}
 
-			AddOrMerge(_timers, record, (source, target) => {
-				Overlay(source, target, ActionTimer30.PrimaryActionRefWord, 1, -1);
-				Overlay(source, target, ActionTimer30.DelayWord, 1, 0);
-				Overlay(source, target, ActionTimer30.SequenceRefsWord, 10, -1);
-			});
+			AddOrMerge(_timers, 11, i, record);
 		}
 	}
 
 	/// <summary>
-	/// Row 12, 144 bytes: the HERC roster. With no variant its point, heading and two actions are
+	/// Row 12, 144 bytes: the HERC roster. With no random table key its point, heading and two actions are
 	/// resolved; with one, every field past the header but <c>0x06</c> and <c>0x4a</c> is copied from the
-	/// variant's record, refs already resolved. Merged by <c>Msn_MergeRow12</c> (<c>00416864</c>).
+	/// template, refs already resolved. Merged by <c>Msn_MergeRow12</c> (<c>00416864</c>).
 	/// </summary>
 	private void ReadHercs(Cursor reader) {
 		int count = reader.Short();
@@ -782,38 +797,18 @@ public sealed class MissionGenerator {
 				continue;
 			}
 
-			if (record[MechRosterEntry144.VariantKeyWord] == -1) {
+			if (record[MechRosterEntry144.RandomTableKeyWord] == -1) {
 				record[MechRosterEntry144.PositionRefWord] = Ref(_points, record[MechRosterEntry144.PositionRefWord]);
 				record[MechRosterEntry144.HeadingRefWord] = Ref(_headings, record[MechRosterEntry144.HeadingRefWord]);
 				record[MechRosterEntry144.EngagementActionRefWord] = Ref(_actions, record[MechRosterEntry144.EngagementActionRefWord]);
 				record[MechRosterEntry144.DefeatActionRefWord] = Ref(_actions, record[MechRosterEntry144.DefeatActionRefWord]);
-			} else if (VariantSource(_hercs, record[MechRosterEntry144.VariantKeyWord], _hercs.Count) is >= 0 and var source) {
-				var from = _hercs[source];
-				Copy(from, record, MechRosterEntry144.AiRadarActiveWord, 20);
-				Copy(from, record, MechRosterEntry144.WeaponRefsWord, 10);
-				Copy(from, record, MechRosterEntry144.PositionRefWord, 2);
-				record[MechRosterEntry144.TypeIndexWord] = from[MechRosterEntry144.TypeIndexWord];
-				Copy(from, record, MechRosterEntry144.OutOfActionReportWord, 20);
-				Copy(from, record, MechRosterEntry144.WeaponSecondaryWord, 10);
-				Copy(from, record, MechRosterEntry144.Constant2Word, 4);
+			} else if (TemplateOf(_hercs, record[MechRosterEntry144.RandomTableKeyWord], _hercs.Count) is >= 0 and var source) {
+				CopyTemplate(_hercs, source, record, 12);
 			}
 
-			AddOrMerge(_hercs, record, (source, target) => {
-				Overlay(source, target, MechRosterEntry144.AiRadarActiveWord, 20, 0);
-				Overlay(source, target, MechRosterEntry144.WeaponRefsWord, 10, -1);
-				Overlay(source, target, MechRosterEntry144.WeaponSecondaryWord, 10, HercNoGuidance);
-				Overlay(source, target, MechRosterEntry144.TypeIndexWord, 1, -1);
-				Overlay(source, target, MechRosterEntry144.PositionRefWord, 2, -1);
-				Overlay(source, target, MechRosterEntry144.OutOfActionReportWord, 20, -1);
-				Overlay(source, target, MechRosterEntry144.Constant2Word, 1, 2);
-				Overlay(source, target, MechRosterEntry144.EngagementActionRefWord, 2, -1);
-				Overlay(source, target, MechRosterEntry144.StartingConditionWord, 1, 100);
-			});
+			AddOrMerge(_hercs, 12, i, record);
 		}
 	}
-
-	/// <summary>The ammunition word a HERC mount leaves at when it carries nothing guided.</summary>
-	private const short HercNoGuidance = 5;
 
 	/// <summary>Row 13, 102 bytes: the flyer roster, the same arrangement one class down. Merged by <c>Msn_MergeRow13</c> (<c>00416c17</c>).</summary>
 	private void ReadFlyers(Cursor reader) {
@@ -824,28 +819,21 @@ public sealed class MissionGenerator {
 				continue;
 			}
 
-			if (record[FlyerRosterEntry102.VariantKeyWord] == -1) {
+			if (record[FlyerRosterEntry102.RandomTableKeyWord] == -1) {
 				record[FlyerRosterEntry102.PositionRefWord] = Ref(_points, record[FlyerRosterEntry102.PositionRefWord]);
 				record[FlyerRosterEntry102.HeadingRefWord] = Ref(_headings, record[FlyerRosterEntry102.HeadingRefWord]);
 				record[FlyerRosterEntry102.EngagementActionRefWord] = Ref(_actions, record[FlyerRosterEntry102.EngagementActionRefWord]);
 				record[FlyerRosterEntry102.DefeatActionRefWord] = Ref(_actions, record[FlyerRosterEntry102.DefeatActionRefWord]);
-			} else if (VariantSource(_flyers, record[FlyerRosterEntry102.VariantKeyWord], _flyers.Count) is >= 0 and var source) {
-				var from = _flyers[source];
-				Copy(from, record, FlyerRosterEntry102.FlagSpanWord, 23);
-				Copy(from, record, FlyerRosterEntry102.OutOfActionReportWord, 23);
+			} else if (TemplateOf(_flyers, record[FlyerRosterEntry102.RandomTableKeyWord], _flyers.Count) is >= 0 and var source) {
+				CopyTemplate(_flyers, source, record, 13);
 			}
 
-			AddOrMerge(_flyers, record, (source, target) => {
-				Overlay(source, target, FlyerRosterEntry102.FlagSpanWord, 20, 0);
-				Overlay(source, target, FlyerRosterEntry102.PositionRefWord, 3, -1);
-				Overlay(source, target, FlyerRosterEntry102.OutOfActionReportWord, 22, -1);
-				Overlay(source, target, FlyerRosterEntry102.UnkVal_100Word, 1, 100);
-			});
+			AddOrMerge(_flyers, 13, i, record);
 		}
 	}
 
 	/// <summary>
-	/// Row 14, 62 bytes: the base roster. A variant copies everything but <c>0x0e</c>. Merged by
+	/// Row 14, 62 bytes: the base roster. A template supplies everything but <c>0x0e</c>. Merged by
 	/// <c>Msn_MergeRow14</c> (<c>00416e7a</c>).
 	/// </summary>
 	private void ReadBases(Cursor reader) {
@@ -856,29 +844,23 @@ public sealed class MissionGenerator {
 				continue;
 			}
 
-			if (record[BaseRosterEntry62.VariantKeyWord] == -1) {
+			if (record[BaseRosterEntry62.RandomTableKeyWord] == -1) {
 				record[BaseRosterEntry62.PositionRefWord] = Ref(_points, record[BaseRosterEntry62.PositionRefWord]);
 				record[BaseRosterEntry62.HeadingRefWord] = Ref(_headings, record[BaseRosterEntry62.HeadingRefWord]);
 				record[BaseRosterEntry62.EngagementActionRefWord] = Ref(_actions, record[BaseRosterEntry62.EngagementActionRefWord]);
 				record[BaseRosterEntry62.DefeatActionRefWord] = Ref(_actions, record[BaseRosterEntry62.DefeatActionRefWord]);
-			} else if (VariantSource(_bases, record[BaseRosterEntry62.VariantKeyWord], _bases.Count) is >= 0 and var source) {
-				var from = _bases[source];
-				Copy(from, record, BaseRosterEntry62.TypeIndexWord, 3);
-				Copy(from, record, BaseRosterEntry62.OutOfActionReportWord, 23);
+			} else if (TemplateOf(_bases, record[BaseRosterEntry62.RandomTableKeyWord], _bases.Count) is >= 0 and var source) {
+				CopyTemplate(_bases, source, record, 14);
 			}
 
-			AddOrMerge(_bases, record, (source, target) => {
-				Overlay(source, target, BaseRosterEntry62.TypeIndexWord, 3, -1);
-				Overlay(source, target, BaseRosterEntry62.OutOfActionReportWord, 22, -1);
-				Overlay(source, target, BaseRosterEntry62.StartingConditionWord, 1, 100);
-			});
+			AddOrMerge(_bases, 14, i, record);
 		}
 	}
 
 	/// <summary>
 	/// Row 15, 22 bytes: the group order. Its subject is resolved by the kind at <c>0x10</c> — 1 a HERC,
 	/// 2 a flyer, 3 a base — except kind 0, a group, whose row is not loaded yet and waits for
-	/// <see cref="ResolveDeferredRefs"/>. A variant copies the seven payload words. Merged by
+	/// <see cref="ResolveDeferredRefs"/>. A template supplies the seven payload words. Merged by
 	/// <c>Msn_MergeRow15</c> (<c>004170e8</c>).
 	/// </summary>
 	private void ReadOrders(Cursor reader) {
@@ -889,7 +871,7 @@ public sealed class MissionGenerator {
 				continue;
 			}
 
-			if (record[MissionOrder22.VariantKeyWord] == -1) {
+			if (record[MissionOrder22.RandomTableKeyWord] == -1) {
 				const int subject = MissionOrder22.SubjectRefWord;
 				record[MissionOrder22.PointRefWord] = Ref(_points, record[MissionOrder22.PointRefWord]);
 				record[MissionOrder22.RouteRefWord] = FindGroup(_waypointGroups, record[MissionOrder22.RouteRefWord], _waypointGroups.Count, exported: true);
@@ -900,16 +882,16 @@ public sealed class MissionGenerator {
 					3 => Ref(_bases, record[subject]),
 					_ => record[subject],
 				};
-			} else if (VariantSource(_orders, record[MissionOrder22.VariantKeyWord], _orders.Count) is >= 0 and var source) {
-				Copy(_orders[source], record, MissionOrder22.VerbWord, 7);
+			} else if (TemplateOf(_orders, record[MissionOrder22.RandomTableKeyWord], _orders.Count) is >= 0 and var source) {
+				CopyTemplate(_orders, source, record, 15);
 			}
 
-			AddOrMerge(_orders, record, (source, target) => Overlay(source, target, MissionOrder22.VerbWord, 7, -1));
+			AddOrMerge(_orders, 15, i, record);
 		}
 	}
 
 	/// <summary>
-	/// Row 16, 164 bytes: the group. It has no variant field. Its twenty members are resolved into the
+	/// Row 16, 164 bytes: the group. It has no random table key. Its twenty members are resolved into the
 	/// roster its discriminator (<c>0x2e</c>) names — 0 HERCs, 1 flyers, 2 bases — and its ten orders into
 	/// row 15. Merged by <c>Msn_MergeRow16</c> (<c>00417286</c>).
 	/// </summary>
@@ -942,13 +924,7 @@ public sealed class MissionGenerator {
 				record[slot] = Ref(_orders, record[slot]);
 			}
 
-			AddOrMerge(_groups, record, (source, target) => {
-				Overlay(source, target, MissionGroup164.PaintsGroundWord, 20, 0);
-				Overlay(source, target, MissionGroup164.MemberRefsWord, 30, -1);
-				Overlay(source, target, MissionGroup164.MemberKindWord, 5, -1);
-				Overlay(source, target, MissionGroup164.SideWord, 2, -1);
-				Overlay(source, target, MissionGroup164.OutOfActionReportWord, 21, -1);
-			});
+			AddOrMerge(_groups, 16, i, record);
 		}
 	}
 
@@ -1006,6 +982,7 @@ public sealed class MissionGenerator {
 			};
 
 			_objectives.Add(record);
+			Provenance.Added(17, i, record);
 		}
 	}
 

@@ -14,4 +14,14 @@
     <ProjectReference Include="..\Herculan.Engine\Herculan.Engine.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Herculan.Engine.Tests" />
+  </ItemGroup>
+
+  <!-- The manual the Help window shows (HelpWindow), embedded so that every build of either host carries it, a
+       single-file publish included, with no copy to find beside the executable. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\docs\herculan\editor-manual.md" LogicalName="editor-manual.md" />
+  </ItemGroup>
+
 </Project>

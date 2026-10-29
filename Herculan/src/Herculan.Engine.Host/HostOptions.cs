@@ -46,6 +46,9 @@ sealed class HostOptions {
 	/// <summary>Whether a mission is started directly instead of starting in the front end.</summary>
 	public bool RunMission { get; private set; }
 
+	/// <summary>Whether a mission named by its <c>.MSN</c> keeps its own theater and time of day (<see cref="MissionFileLaunch.Write(string, string, bool, out string?)"/>).</summary>
+	public bool OwnWorld { get; private set; }
+
 	public string? InstallSource { get; private set; }
 	public string? InstallDestination { get; private set; }
 	public RetailInstaller.Size InstallSize { get; private set; } = RetailInstaller.Size.Maximum;
@@ -215,6 +218,11 @@ sealed class HostOptions {
 				// for looking at the simulator without clicking through the shell to reach it. A named mission,
 				// --play and --demo imply it.
 				options.RunMission = true;
+			} else if (args[i] == "--own-world") {
+				// Play a practice, demo or user-made mission named by its .MSN on its own theater and time of day, where the
+				// training load writes theater 1 and the practice screen's time of day over them. The mission editor's Play
+				// passes it, so the game plays what the editor showed. This engine's own flag.
+				options.OwnWorld = true;
 			} else if (args[i] == "--shell-palette") {
 				// Which dpl\<name>.DPL the shell decodes its art through, pinned for the whole run. Without it
 				// the palette follows the tab, as the original's does — see ShellPalette for the table and for
