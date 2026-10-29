@@ -98,7 +98,7 @@ record count x {
 
 `Inventory_Write` (`00027f88`) writes the slot count and then, for every slot, the slot and its stack through `WordStack_Write`: the layout above, every slot present and each slot's words from the head, so writing a stock and reading it back reverses each slot's words, as ES2's armory save does. `Inventory_SaveFile` (`00027f1b`) writes a stock to a `FileRWStream` on a path, asserting at severity 5 (`inventor.cpp` line `0x5f`) when it cannot open it. `Inventory_CopyThroughScratch` (`00027cb3`), given two indexes, saves the stock the dword `000aad62` + 4 × the first points to as `car\scratch.arm`, loads that file into the stock of the second, and deletes it. `Inventory_Add` (`00028311`) pushes a word onto a slot's stack and `Inventory_Take` (`0002833f`) pops one, each then calling `Inventory_TraceSlots`.
 
-`es2_xref.py` finds three calls to `Inventory_LoadFile`: `Career_New` with `car\c_armory.dat` ([starting a career](bst-battle-sets.md#starting-a-career)), `SingleMission_Start` with `car\s_armory.dat` ([single missions](bst-battle-sets.md#single-missions)), and `Inventory_CopyThroughScratch`; and a call to `Inventory_Read` from `00016c1e`. After a career mission `Shell_ProcessMissionResults` passes each pair (*a*, *b*) of `data\results.dat` to `Inventory_Add`, pushing *b* onto slot *a* ([after a mission](bst-battle-sets.md#after-a-mission)).
+`es2_xref.py` finds three calls to `Inventory_LoadFile`: `Career_New` with `car\c_armory.dat` ([starting a career](bst-battle-sets.md#starting-a-career)), `SingleMission_Start` with `car\s_armory.dat` ([single missions](bst-battle-sets.md#single-missions)), and `Inventory_CopyThroughScratch`; and a call to `Inventory_Read` from `Career_LoadCurrent` (`00016c1e`). After a career mission `Shell_ProcessMissionResults` passes each pair (*a*, *b*) of `data\results.dat` to `Inventory_Add`, pushing *b* onto slot *a* ([after a mission](bst-battle-sets.md#after-a-mission)).
 
 ### The retail stock
 
@@ -114,6 +114,6 @@ Every value is 100.
 ## Open
 
 - **Open:** what the header words `00080896`, `00080898` and the dword `0008089c` are; what the per-mount words (5, or 0 and 1 on weapons 9 and 10), which the simulator takes as ammunition types ([the second pass](script-dat.md#the-second-pass)), and the word `+0x2c` are to the shell; and which external areas the lists at `0007ef54` group.
-- **Open:** that a stock slot is a weapon number and a value that unit's condition, and what reads the stacks to offer the units; `00016c1e`'s use of `Inventory_Read`.
+- **Open:** that a stock slot is a weapon number and a value that unit's condition, and what reads the stacks to offer the units; `Career_LoadCurrent` (`00016c1e`)'s use of `Inventory_Read`.
 - **Open:** what `00028db6` reads, which `Hangar_ReadFromSave` calls once per HERC list it passes over.
 - **Open:** whether the install's loose `CAR\SM_INIT.DAT` or the archive's is the one `VolRStream_CtorFromPath` opens.

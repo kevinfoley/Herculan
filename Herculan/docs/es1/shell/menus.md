@@ -28,27 +28,27 @@ The image stores each class's name just before its vtable, and the word before t
 | Screen | Class (vtable) | Handler | Backdrop |
 |---|---|---|---|
 | 9999 | `SimLoadMenu` (`00081d7e`) | `SimLoadMenu_OnMessage` (`0003f96d`) | 1000 |
-| 1490, 1499, 1520 | none: `00037eac`(`0009b010`, *n*), with *n* 2 for 1490 and for 1499 0 in `Shell_Mode` 0 and 1 otherwise; 1520 also sets the byte `00081d20` | | 7000, 3000, by the career |
+| 1490, 1499, 1520 | none: `MessageBox_SetKind` (`00037eac`)(`0009b010`, *n*), with *n* 2 for 1490 and for 1499 0 in `Shell_Mode` 0 and 1 otherwise; 1520 also sets the byte `00081d20` | | 7000, 3000, by the career |
 | 1510 | `DebriefingMenu_Ctor` (`0002c422`) | | by the career |
-| 3000 | `UnArmedAlert` (`00081da0`) | `0002a650` | |
+| 3000 | `UnArmedAlert` (`00081da0`) | `UnArmedAlert_OnMessage` (`0002a650`) | |
 | 3333, 6666, 7770, 7772 | `UnAssignedAlert` (`00081dc2`) | `UnAssignedAlert_OnMessage` (`0003fae8`) | |
-| 7771 | `AnyDisabledAlert` (`00081de8`) | `0002a581` | |
+| 7771 | `AnyDisabledAlert` (`00081de8`) | `AnyDisabledAlert_OnMessage` (`0002a581`) | |
 | 4444 | `ScrapAlert` (`00081e06`) | `0002f111` | |
-| 5555 | `TechReleaseAlert` (`00081e2c`) | `0002a6a9` | 4000 |
-| 999 | `QuitAlert` (`00081e48`) | `0002a554` | |
+| 5555 | `TechReleaseAlert` (`00081e2c`) | `TechReleaseAlert_OnMessage` (`0002a6a9`) | 4000 |
+| 999 | `QuitAlert` (`00081e48`) | `QuitAlert_OnMessage` (`0002a554`) | |
 | 1000 | `MainMenu` (`00081bf4`) | `0002a70a` | 1000 |
 | 1200 | `CareerMenu` (`00081c12`) | `0002aa0e` | 1000 |
 | 1210 | `NewCareerAlert` (`00081e6a`) | `0002aeec` | |
 | 1220 | `CareerRecordsMenu` (`00081e90`) | `0002af94` | |
 | 1230 | `CareerStatsAlert` (`00081eb4`) | `0002b2cc` | |
 | 1240 | `SaveWarningAlert` (`00081ed8`) | `0002b30a` | |
-| 1250, 1260 | `KIAWarningAlert` (`00081efa`) | `0002b34c` | |
+| 1250, 1260 | `KIAWarningAlert` (`00081efa`) | `KIAWarningAlert_OnMessage` (`0002b34c`) | |
 | 1270 | `DeleteAlert` (`00081f1a`) | `0002ae96` | |
 | 1100 | `MissionMenu` (`00081c3a`) | `0002b375` | 1000 |
 | 1110 | `MissionOptionsAlert` (`00081f42`) | `0002b4fe` | |
 | 1310 | `PrefsMenu` (`00081f60`) | `0002b82b` | 1000 |
 | 1320 | none: code of its own at `0003e9ae`, which changes the keyboard's subscribers and mode | | 1000 |
-| 1300 | `OptionsMenu` (`00081f7e`) | `0002b79d` | |
+| 1300 | `OptionsMenu` (`00081f7e`) | `OptionsMenu_OnMessage` (`0002b79d`) | |
 | 1330 | `BattlesetAlert` (`00081fa2`) | `0002bb29` | |
 | 1500, 1501 | `WarMapMenu_Ctor` (`0002bbbd`) | | 6000 |
 | 1610 | `0002c743`, then `ShellBackdrop_LoadPalette` | | 4000 |
@@ -94,7 +94,7 @@ The backdrop is the object `Shell_Backdrop` (`000a09a0`), `0x1c` bytes with a `G
 
 `Shell_OpenFirstScreen`(exit code), [the start-up's](startup.md#the-start-up) step 15, sets up the scripts and then, by the code:
 
-- **3 or 4**, back from a mission: `Mission_ReadRestore` and `Shell_ProcessMissionResults`, and `Shell_PreviousScreen` (`000817c2`) set to 999. In `Shell_Mode` 0, when the current career record's pilot is fit (`PilotEntry_Condition` 0) the backdrop 1000 and `MissionMenu`, screen 1100 (`Shell_CurrentScreen` (`000817c0`) 1100, `Shell_BackdropId` 1000); otherwise `00037eac`(`0009b010`, 3) and the backdrop 5000. In mode 1, a fit pilot plays `endfa.ttm` (with music track 7) when `Shell_PlayIntro` is set and opens the home menu; otherwise by `Career_PeekNextCampaign`: `c`, the campaign won, music 13 and `end_win1.ttm` to `end_win3.ttm` and `intro\earth.ttm`, then the home menu; −1 music 19 and `failed.ttm` and `intro\earth.ttm`, then the home menu; any other `00037eac`(`0009b010`, 7), `000aad5c` set by `00037bf0`(7) and the backdrop 4000. Mode 1 then calls `0001601b`, `00016fdd` and `000168b0` on the careers block.
+- **3 or 4**, back from a mission: `Mission_ReadRestore` and `Shell_ProcessMissionResults`, and `Shell_PreviousScreen` (`000817c2`) set to 999. In `Shell_Mode` 0, when the current career record's pilot is lost (`PilotEntry_Condition` 0, of a starting 100; [pilot entries](../formats/bst-battle-sets.md#pilot-entries)) the backdrop 1000 and `MissionMenu`, screen 1100 (`Shell_CurrentScreen` (`000817c0`) 1100, `Shell_BackdropId` 1000); otherwise `MessageBox_SetKind` (`00037eac`)(`0009b010`, 3) and the backdrop 5000. In mode 1, a lost pilot plays `endfa.ttm` (with music track 7) when `Shell_PlayIntro` is set and opens the home menu; otherwise by `Career_PeekNextCampaign`: `c`, the campaign won, music 13 and `end_win1.ttm` to `end_win3.ttm` and `intro\earth.ttm`, then the home menu; −1 music 19 and `failed.ttm` and `intro\earth.ttm`, then the home menu; any other `00037eac`(`0009b010`, 7), `000aad5c` set by `00037bf0`(7) and the backdrop 4000. Mode 1 then calls `0001601b`, `00016fdd` and `000168b0` on the careers block.
 - **6**, back from a demo, and **any other** after the intro ([the start-up](startup.md#the-start-up)): `anm\esiege2.anm` put into `000aacfe` with the byte `0007fcd7` set to 2, so [the draw](#drawing-a-screen) plays it; the backdrop 1000; a `MainMenu` made the current menu `Shell_CurrentMenu` (`000817c8`) and opened with `Menu_Open`(menu, 1000); `Shell_CurrentScreen` 1000, `Shell_PreviousScreen` 999 and `Shell_BackdropId` 1000.
 
 `Shell_OpenHomeMenu` (`0003b3db`) does the same as the main menu's case with `anm\esiege2.anm` and the backdrop 1000, then in `Shell_Mode` 0 opens `MainMenu` as 1000 and in mode 1 `CareerMenu` as 1200, setting `Shell_CurrentScreen` and the word `0007fce8` to that number.
@@ -131,7 +131,7 @@ The backdrop is the object `Shell_Backdrop` (`000a09a0`), `0x1c` bytes with a `G
 
 1. sets the pending message to (−1, −1, 0, 0), and answers 0 when the code is −1;
 2. calls the current menu's slot `+8` with the copy, which may change it;
-3. with target 99, *back*: unless the current screen is 1000, or the previous one is 1500 or 1501 and the object `000809a4` is not set, the target becomes `Shell_PreviousScreen`; and when the word `000817be` is not −1, `Shell_CurrentScreen` takes it and it is set to −1;
+3. with target 99, *back*: unless the current screen is 1000, or the previous one is 1500 or 1501 and the object `Shell_MissionMap` (`000809a4`) is not set, the target becomes `Shell_PreviousScreen`; and when the word `Shell_ResumeScreen` (`000817be`) is not −1, `Shell_CurrentScreen` takes it and it is set to −1;
 4. answers 0 when the target is not in `Shell_ScreenIds`;
 5. for target 3000 or 3333 from screen 1500 or 1501 sets the byte `000817bd` to 3 while the byte `000809a8` is set, and to 0 otherwise;
 6. closes the current menu with `Menu_Close`, destroys it through its slot `+4` with flags 3, and clears `Shell_CurrentMenu`;
@@ -151,11 +151,11 @@ The current menu is destroyed at the shutdown by `Shell_CloseScreens` (`0003c081
 1. clears `DUIWindow_InputReady` and calls the routine at `0008662c`;
 2. with the byte `000817c6` clear: on screens 1700 and 1710, the career record's HERC diagram (`00029651`, `CareerRecord_SelectPilot`; [the HERC diagrams](../formats/herc-diagrams.md)) is drawn, between `0004c053` and `0004bc0d` when the record's `+0x12` and `+0xe` differ. With it set: unless `0007fcd7` is set or the screen is 1000, `0008663c` is called with (the draw page, 0) and (the visible page, 0); with `0007fcd7` 2 the `.ANM` at `000aacfe` is played with `Anm_Play`(1, `0xa`, name) ([playing](../formats/anm-animation.md#playing)) and `0007fcd7` cleared; the backdrop is drawn with `ShellBackdrop_Draw`; and backdrop 4000 calls `0001240b` and the HERC diagram, any other `00012467`;
 3. `DigitalDialog_ShowMessage`(`0009b010`) and `Ttm_RunAll`;
-4. with a current menu: makes the render contexts `0007fcdc` (`0004c88a`, of the window's rect) and `0007fcd8` (`0004c53c`) and the scripts' default, sets the source and draw pages to page 2, and saves the background under the window into `+2` with `Region_Save`. Unless the message box is up (the byte `0009b013`, `0009b010`'s `+3`), it draws the window on page 2 with `DUIWindow_Draw` (`0001bfa3`), after running the object `000809a4`'s slot `+4` and the text box `00018dcb` twice, once per page, while the byte `000817bd` counts down; then sets the draw page back. Still unless the message box is up: on backdrop 1000, except screen 9999, it adds the whole screen as a dirty box, delay 1, so the next frames copy page 2 onto both pages; otherwise it draws the window again on the draw page and, while `000809a8` is set, calls `00009c64` with `000809a4` and sets `000809a8` to 3. It sets the byte `0007fcd6`, which makes the next frame wait 0.1 s ([presenting a frame](../rendering/screen-pages.md#presenting-a-frame));
+4. with a current menu: makes the render contexts `0007fcdc` (`0004c88a`, of the window's rect) and `0007fcd8` (`0004c53c`) and the scripts' default, sets the source and draw pages to page 2, and saves the background under the window into `+2` with `Region_Save`. Unless the message box is up (the byte `0009b013`, `Shell_MessageBox` (`0009b010`)'s `+3`), it draws the window on page 2 with `DUIWindow_Draw` (`0001bfa3`), after running the object `Shell_MissionMap` (`000809a4`)'s slot `+4` and the text box `00018dcb` twice, once per page, while the byte `000817bd` counts down; then sets the draw page back. Still unless the message box is up: on backdrop 1000, except screen 9999, it adds the whole screen as a dirty box, delay 1, so the next frames copy page 2 onto both pages; otherwise it draws the window again on the draw page and, while `000809a8` is set, calls `00009c64` with `000809a4` and sets `000809a8` to 3. It sets the byte `0007fcd6`, which makes the next frame wait 0.1 s ([presenting a frame](../rendering/screen-pages.md#presenting-a-frame));
 5. with `0007fcd7` 1 uploads the palette `0007fcd0`, clears `0007fcd4`, plays the `.ANM` with `Anm_Play`(1, `0xb`, name) and clears `0007fcd7`;
 6. puts the source page back, adds the whole screen as a dirty box with delay 0, calls `00086628` unless the screen is 9999, and sets `DUIWindow_InputReady`.
 
-**Each pass after that** the frame loop's step 5 runs `Shell_TickScreen` (`0003c115`): unless the message box is up it updates the current menu's window with `DUIWindow_Update` (`0001c067`, [updating a window](#updating-a-window--duiwindow_update-0001c067)); and while the object `000809a4` is set and the byte `000809a8` is above 1 it calls `00009cfb` and lowers `000809a8` when `0007fcd4` is clear, sets it to 2 when it is 1 and the object's byte `+0x4c0` is clear, and to 3 when it is 1 and `+0x4c2` is set ([Open](#open)).
+**Each pass after that** the frame loop's step 5 runs `Shell_TickScreen` (`0003c115`): unless the message box is up it updates the current menu's window with `DUIWindow_Update` (`0001c067`, [updating a window](#updating-a-window--duiwindow_update-0001c067)); and while the object `Shell_MissionMap` (`000809a4`) is set and the byte `000809a8` is above 1 it calls `00009cfb` and lowers `000809a8` when `0007fcd4` is clear, sets it to 2 when it is 1 and the object's byte `+0x4c0` is clear, and to 3 when it is 1 and `+0x4c2` is set ([Open](#open)).
 
 ## The window
 
@@ -231,7 +231,7 @@ The slots the window code calls:
 
 ### Buttons
 
-Kind 3's style 1 builds an icon button, `MTBmpButton_Ctor` (`0001d47d`, class `MTBmpButton`), with no text when the key is non-zero; any other style a text button, `MTButton_Ctor` (`0001cde8`, class `MTButton`). The main menu's six are text buttons with no key. Menu 1300's button 100 takes its text from code chosen by the word `0007fce8` among the four values at `000819e0` ([Open](#open)); when it is none of them, the text pointer keeps the value an earlier record left in it.
+Kind 3's style 1 builds an icon button, `MTBmpButton_Ctor` (`0001d47d`, class `MTBmpButton`), with no text when the key is non-zero; any other style a text button, `MTButton_Ctor` (`0001cde8`, class `MTButton`). The main menu's six are text buttons with no key. Menu 1300's button 100 takes its text by `Shell_ReturnScreen` (`0007fce8`) among the four values at `000819e0` ([the return screen](main-menu.md#the-return-screen)); when it is none of them, the text pointer keeps the value an earlier record left in it.
 
 `MTButton_Ctor` builds a `0x95`-byte button with `DUIControl_CtorWithKey`(button, 1, key, rect), sets `+0x1b` to 0, and stores the id at `+0x17`, its vtable `0007f18c` at `+0x20`, the `STYLES.DAT` records 0, 1 and 2 (the pointer `00082654`) at `+0x30`, `+0x34` and `+0x38`, and the `active`, `pushed` and `inactive` fonts (`000aacce`, `000aacd2`, `000aacd6`) at `+0x24`, `+0x28` and `+0x2c`, one per state. It copies the text to `+0x3c` and places it three times at `+0x7c`, once per font: x the rect's left, y the bottom less half of (height − the font's cell height) less 2, the pushed one a pixel lower than the up one. With no text, `+0x3c` and the points are 0. `MTButton_SetTextFromTable` (`0001d393`)(button, line) copies line *line* of `eng\watext.bin` (`0009afa8`) to `+0x3c`, places it again and sets *changed*; `Menu_Open` calls it on the buttons of several menus.
 
@@ -258,9 +258,30 @@ Any other key sets no frames, and four ids at `0007f2c4` jump to code Ghidra lef
 
 then, with text, the text in the state's font at the state's point, centered in the button's width (the render context's `+0x231` 2, `+0x235` the width), and *changed* cleared.
 
+`CornerFrame_Draw` is `ES1DBSIM`'s `CornerFrame_Draw` (`ES1DBSIM 00044954`) with the shell display's render context `+0x40` for the simulator's `+0x44` ([drawing a frame from a style](../simulation/alert-panels.md#drawing-a-frame-from-a-style)), with `CornerFrame_DrawEdgeRing` (`00044dc8`), `CornerFrame_DrawCorners` (`000451c1`), which takes its pictures from the shell's corner bank, and `Rect_CopyCtorFrameCopy` (`00044d9a`). `Raster_FillFrameRectColours` and `Raster_FrameRectColour` (`0004b867`) are `ES1DBSIM`'s (`ES1DBSIM 00044e50`, `00044e00`) on the render context `000ab612`: the second frames a rect's four edges in one color ([the color helpers](../simulation/alert-panels.md#the-resource-loaders-and-the-color-helpers)), the first fills it in one and then frames it in the other. A button draws with the same two: its state's `STYLES.DAT` record through `CornerFrame_Draw`, and, while highlighted, a frame in color 10 through `Raster_FrameRectColour`.
+
 ### The list box
 
-Kind 15 builds `MTStrListBox_Ctor` (`0001e11a`, class `MTStrListBox`, vtable `0007f474`) over `DUIVSlider` (`0007f412`) and `DUISliderControl` (`0007f2f8`), a `0x5a`-byte control on `DUIControl_Ctor`(list, 0, id, rect), so `Tab` passes over it: `+0x1b` 1, the range `+0x24` 0 to `+0x26` the line count `0001eac5`(list, lines), the selected line at `+0x28`, `+0x2a` and `+0x54` from the record's word, the style at `+0x3e`, the lines at `+0x4c`, `STYLES.DAT` record 4 at `+0x50`, the fonts `nm_green` (`000aacda`) and `nm_red1` (`000aacde`) at `+0x40` and `+0x44`, the line height `+0x2c` (the font's cell height − 1, at most the rect's height − 1), the lines shown `+0x58` (the height over that, 1 to the count) and the first line shown `+0x56`, 0 or so that the selected line is the last shown. The main menu's 1002 is one, at (112, 47)–(196, 59). Its slots are a later module's ([Open](#open)).
+Kind 15 builds `MTStrListBox_Ctor` (`0001e11a`, class `MTStrListBox`, vtable `0007f474`) over `DUIVSlider` (`0007f412`) and `DUISliderControl` (`0007f2f8`), a `0x5a`-byte control on `DUIControl_Ctor`(list, 0, id, rect), so `Tab` passes over it: `+0x1b` 1, the range `+0x24` 0 to `+0x26` the line count `0001eac5`(list, lines), the selected line at `+0x28`, `+0x2a` and `+0x54` from the record's word, the style at `+0x3e`, the lines at `+0x4c`, `STYLES.DAT` record 4 at `+0x50`, the fonts `nm_green` (`000aacda`) and `nm_red1` (`000aacde`) at `+0x40` and `+0x44`, the line height `+0x2c` (the font's cell height − 1, at most the rect's height − 1), the lines shown `+0x58` (the height over that, 1 to the count) and the first line shown `+0x56`, 0 or so that the selected line is the last shown. The main menu's 1002 is one, at (112, 47)–(196, 59). Its lines are `Menu_ListLines`(id) ([the main menu's list](main-menu.md#the-list)).
+
+`MTStrListBox`'s vtable (`0007f474`) holds the slots the window code calls ([the controls](#the-controls)):
+
+| Slot | Function | Does |
+|---|---|---|
+| `+4` | `MTStrListBox_Dtor` (`0001e41e`) | frees the lines array `+0x4c`, and for id 1002 first its first line and the name buffer pointer `0007ebc0`, which it clears; stores `DUIVSlider`'s, `DUISliderControl`'s and `DUIControl`'s vtables in turn and frees the list when bit 0 of the flags is set |
+| `+8` | `MTStrListBox_Draw` (`0001e584`) | `CornerFrame_Draw` (`00044b86`) with `STYLES.DAT` record 4 (`+0x50`) over the list's rect, then `MTStrListBox_DrawLines` (`0001e5b7`), and *changed* cleared |
+| `+0xc` | `MTStrListBox_TrackSelect` (`0001e96a`) | with style 0 only: selects the line under the tracked point, below |
+| `+0x1c`, `+0x20` | `MTStrListBox_SelectPrev` (`0001e8df`), `MTStrListBox_SelectNext` (`0001e919`) | moves the selected line `+0x54` up or down one within the lines, scrolling the first line shown `+0x56` to keep it shown, and sets *changed* |
+| `+0x24` | `MTStrListBox_SelectLine` (`0001ea4f`)(list, line) | selects the line, clamped to the last when past it and unchanged when negative, shows from it or from the last page, and sets *changed* |
+| `+0x2c` | `MTStrListBox_GetSelected` (`0001e3d3`) | the selected line `+0x54`: the message's value |
+| `+0x30` | `MTStrListBox_SelectedText` (`0001e3e5`) | the selected line's text |
+| `+0x38` | `MTStrListBox_SetTrackPoint` (`0001e404`)(list, point) | stores the point's y at `+0x28` |
+| `+0x44` | `MTStrListBox_SetLines` (`0001e50a`)(list, lines) | frees the old array, takes the new one, counts it into `+0x26` with `MTStrListBox_CountLines` (`0001eac5`), shows from line 0 and sets the lines shown `+0x58` to the rect's height over the line height, at most the count |
+| `+0x48` | `BarGraph_GetRectButtonCopy` (`0001d0e6`) | the rect |
+
+**Drawing the lines.** `MTStrListBox_DrawLines` sets the render context `000ab612`'s alignment `+0x231` to the list's `+0x48`, 0 from the record, and its field width `+0x235` to the rect's width less 2. For each row *r* from 0 while *r* is below the lines shown and the line `+0x56` + *r* exists, with *h* the line height `+0x2c` and (*x0*, *y0*, *x1*) the rect: in style 0 the selected line is drawn on a box (*x0* + 1, *y0* + *r* × *h* + 1)–(*x1* − 1, *y0* + *r* × *h* + *h*) filled in color 4 and framed in color 5 (`Raster_FillFrameRectColours` (`0004b8d8`)(5, 4, box)), its text in the font `+0x44`, `nm_red1`; every other line, and every line in style 1, in the font `+0x40`, `nm_green`; the text with `HudFont_DrawString` at (*x0* + 3, *y0* + *r* × *h* + *h* − 1).
+
+**A press and a move.** The list tracks the pointer (`+0x1b` 1), so a press and each move while it is held call slot `+0x38` with the point relative to the window and then slot `+0xc` ([the mouse](#the-mouse)). `MTStrListBox_TrackSelect` returns at once unless the style `+0x3e` is 0. With style 0: a y above the rect's top selects the previous line with slot `+0x1c` and then the first line shown; a y below its bottom selects the next with slot `+0x20` and then one more while that is below the last line; a y inside selects the line of the shown row it falls in and sets *changed*.
 
 ## The input
 
@@ -318,7 +339,7 @@ The other codes `Shell_NavKeySubscriber` passes, the arrows, `Space`, `Backspace
 | `0007fcb4` | the value, the control's slot `+0x2c`: 1 for a button |
 | `0007fcb6` | the target: the control's id |
 
-So on the main menu a click of a button runs the main menu's handler, slot `+8` of `MainMenu`'s vtable, with the message, and then opens the screen of the button's number when it is one of `Shell_ScreenIds`. The main menu's 1003 is not among them, so its click changes no screen ([the ways out](startup.md#the-ways-out)). The handler's cases are the main menu's buttons' module ([Open](#open)).
+So on the main menu a click of a button runs the main menu's handler, slot `+8` of `MainMenu`'s vtable, with the message, and then opens the screen of the button's number when it is one of `Shell_ScreenIds`. The main menu's 1003 is not among them, so its click changes no screen ([the ways out](startup.md#the-ways-out)). The handler's cases are [the main menu's](main-menu.md#the-buttons).
 
 ## Functions
 
@@ -354,6 +375,10 @@ So on the main menu a click of a button runs the main menu's handler, slot `+8` 
 | `MTButton_Highlight`, `MTButton_Unhighlight`, `MTButton_Draw`, `MTButton_SetTextFromTable`, `DUIButtonControl_GetValue` | `0001d1ce`, `0001d1e7`, `0001d200`, `0001d393`, `0001d088` |
 | `BarGraph_NoOpButtonCopy`, `GridShape_GetMemorySizeButtonCopy`, `BarGraph_GetRectButtonCopy`, `Rect_CopyCtorButtonCopy` | `0001d041`, `0001d096`, `0001d0e6`, `0001d365` |
 | `MTBmpButton_Ctor`, `MTStrListBox_Ctor` | `0001d47d`, `0001e11a` |
+| `MTStrListBox_GetSelected`, `MTStrListBox_SelectedText`, `MTStrListBox_SetTrackPoint`, `MTStrListBox_Dtor`, `MTStrListBox_SetLines`, `MTStrListBox_Draw`, `MTStrListBox_DrawLines` | `0001e3d3`, `0001e3e5`, `0001e404`, `0001e41e`, `0001e50a`, `0001e584`, `0001e5b7` |
+| `MTStrListBox_SelectPrev`, `MTStrListBox_SelectNext`, `MTStrListBox_TrackSelect`, `MTStrListBox_SelectLine`, `MTStrListBox_CountLines` | `0001e8df`, `0001e919`, `0001e96a`, `0001ea4f`, `0001eac5` |
+| `CornerFrame_Draw`, `Rect_CopyCtorFrameCopy`, `CornerFrame_DrawEdgeRing`, `CornerFrame_DrawCorners` | `00044b86`, `00044d9a`, `00044dc8`, `000451c1` |
+| `Raster_FrameRectColour`, `Raster_FillFrameRectColours` | `0004b867`, `0004b8d8` |
 | `MTWindow_Ctor`, `MTWindow_Dtor`, `MTWindow_AddLabel`, `MTWindow_Draw` | `00036874`, `00036a09`, `00036a93`, `00036b4c` |
 
 ## Globals
@@ -378,12 +403,12 @@ So on the main menu a click of a button runs the main menu's handler, slot `+8` 
 
 - **Open:** whether `00040b94`, a stub returning its first argument, is `shell.cpp`'s last function or the word stacks' file's first: it starts on a 4-byte boundary right after `Shell_StaticDtor`, and `WordStack_Push` follows it with no fill.
 - **Open:** where the button file ends, and whether the slider and list classes from `0001deaa` share it.
-- **Open:** what the byte `000817c6` is, which picks between `Shell_DrawScreen`'s two backdrop paths, and who writes `000817be`, the screen `Shell_HandleMessage`'s *back* puts in place.
+- **Open:** what the byte `000817c6` is, which picks between `Shell_DrawScreen`'s two backdrop paths and which `Shell_OpenQuitAlert` clears ([the quit question](main-menu.md#the-quit-question)).
 - **Open:** what `0002141c`'s tail adds after its copy, `00011f19`, `000122e0`, `0001240b` and `00012467` do for a backdrop.
-- **Open:** what `00044b86` draws of a `STYLES.DAT` record and what `0004b867`(10, rect) draws for a highlighted button, and what calls `MTButton_Highlight` and `MTButton_Unhighlight`: no caller of `MTButton`'s slots `+0x10` and `+0x18` was found in the window, dialog or shell code read here.
+- **Open:** what calls `MTButton_Highlight` and `MTButton_Unhighlight`: no caller of `MTButton`'s slots `+0x10` and `+0x18` was found in the window, dialog or shell code read here.
 - **Open:** the lines `0004ba84` draws for the title plate: which of the four colors takes which edge.
 - **Open:** the routines at `0008662c` and `00086628` that `Shell_DrawScreen` and `Shell_HandleMessage` call, and `0008663c`, which `Shell_PlayTtm` and `Shell_DrawScreen` call with a page and 0.
-- **Open:** the object `000809a4` and the bytes `000809a8`, `000809a9` and `000817bd` that `Shell_DrawScreen`, `Shell_TickScreen` and `Shell_HandleMessage` test, and `00009cfb` and `00009c64`.
-- **Open:** the other screens' cases and handlers in [the screens](#the-screens) table, among them screen 999 and the main menu's handler `0002a70a`, the message box `00037eac`, screen 1320's code at `0003e9ae`, the hangar test of `ShellMouse_OnLeftPress` with the dword `0007fce4`, and `MTBmpButton`'s slots `0001da8d`, `0001db87` and `0001dc9f`.
-- **Open:** the list box's slots and what the main menu's list 1002 lists (`0003750d`(1002), [the kinds](../formats/dlg-menu-dialogs.md#the-kinds)), and what a press and a move do to it through slot `+0x38`.
+- **Open:** the object `Shell_MissionMap` (`000809a4`) and the bytes `000809a8`, `000809a9` and `000817bd` that `Shell_DrawScreen`, `Shell_TickScreen` and `Shell_HandleMessage` test, and `00009cfb` and `00009c64`.
+- **Open:** the other screens' cases and handlers in [the screens](#the-screens) table, among them screen 1320's code at `0003e9ae`, the hangar test of `ShellMouse_OnLeftPress` with the dword `0007fce4`, and `MTBmpButton`'s slots `0001da8d`, `0001db87` and `0001dc9f`.
+- **Open:** the list box's slots `+0x10`, `+0x14`, `+0x18`, `+0x28`, `+0x34`, `+0x3c` and `+0x40` (`0001d037`, `BarGraph_NoOpButtonCopy`, `0001d04f`, `0001d07b`, `0001d0a2`, `0001d0bd`, `0001d0cb`), and the 27 ids other than 1002 that `Menu_ListLines` gives their own lines (the table at `000812f4`).
 - **Open:** a retail check under DOSBox-X: on the main menu, `Tab` moves the pointer onto the next button and `Enter` presses it; pressing a button and dragging off it before the release opens nothing.

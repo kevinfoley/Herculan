@@ -50,6 +50,6 @@ ES1's shell keeps its menu text, file names and spoken-message text in `.BIN` st
 
 ## Open
 
-- **Open:** what the words `000ab222`, `000814e8` and `000815a8` hold, what `00037bf0` computes, and which screens send each message kind (`DigitalDialog_ShowMessage`'s callers `0003837f` and `Shell_DrawScreen` (`0003c1b7`)).
+- **Open:** what the words `000ab222`, `000814e8` and `000815a8` hold, what `00037bf0` computes, and which screens send each message kind (`DigitalDialog_ShowMessage`'s callers `MessageBox_Answer` (`0003837f`) and `Shell_DrawScreen` (`0003c1b7`)).
 - **Open:** what `0004589c` does with a line's record, and so how a line's lip-sync plays ([the lip-sync lists' Open](shell-file-lists.md#open)).
 - **Open:** whether every line of a file is reachable: the line numbers above against each file's count.

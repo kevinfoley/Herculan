@@ -45,7 +45,7 @@ So the shell adds at most one career between a load and the next, and a later ne
 
 `CareerLog_Delete` (`0001828e`), given the log and an entry below the count, deletes the entry's two files (`remove`), takes 1 from the current entry when it is not 0, writes the log leaving the entry out, and loads it again. `es2_xref.py` finds one call, from `0002ae96` with the word `0007fcea` when the word `+6` of its second argument is 100 ([Open](#open)).
 
-`CareerLog_CurrentNameArray` (`000182f8`) returns a new null-terminated array of string pointers: empty when the current entry is −1, and otherwise the 64-byte buffer at `0007ebc0`, allocated on first use, holding the current entry's name (`sprintf` with `%s`). The test loads the current entry into `AX` and compares all of `EAX` with −1, so it holds only when `EAX`'s upper half is `0xffff` on entry. `es2_xref.py` finds one call, from `0003750d`.
+`CareerLog_CurrentNameArray` (`000182f8`) returns a new null-terminated array of string pointers: empty when the current entry is −1, and otherwise the 64-byte buffer at `0007ebc0`, allocated on first use, holding the current entry's name (`sprintf` with `%s`). The test loads the current entry into `AX` and compares all of `EAX` with −1, so it holds only when `EAX`'s upper half is `0xffff` on entry. `es2_xref.py` finds one call, from `Menu_ListLines` (`0003750d`), which gives the array as the lines of the main menu's list 1002 ([the list](../shell/main-menu.md#the-list)).
 
 ### The retail file
 
@@ -53,7 +53,7 @@ So the shell adds at most one career between a load and the next, and a later ne
 
 ## The player file
 
-`PlayerMec_Write` (`0002299e`) deletes entry 4 of the file-name table, `data\player.mec`, opens it as a `FileRWStream` with no test that it opened, writes it with `PlayerMec_WriteEntries` (`00022a05`), closes it, saves the career record with `CareerRecord_SaveCurrent` (`00014f28`) and destroys the stream. `CareerRecord_SaveCurrent` writes a single mission's record to `car\sm_play.gam` (`SingleMission_SaveRecord`, `00014f54`, [the squad](msn-mission-file.md#the-squad)) and in mode 1 calls `000168b0` with the roster and its current record. `es2_xref.py` finds three calls to `PlayerMec_Write`: from `0002c057`, `0002d327` and `MsnGen_LoadMission`.
+`PlayerMec_Write` (`0002299e`) deletes entry 4 of the file-name table, `data\player.mec`, opens it as a `FileRWStream` with no test that it opened, writes it with `PlayerMec_WriteEntries` (`00022a05`), closes it, saves the career record with `CareerRecord_SaveCurrent` (`00014f28`) and destroys the stream. `CareerRecord_SaveCurrent` writes a single mission's record to `car\sm_play.gam` (`SingleMission_SaveRecord`, `00014f54`, [the squad](msn-mission-file.md#the-squad)) and in mode 1 calls `000168b0` with the roster and its current record. `es2_xref.py` finds three calls to `PlayerMec_Write`: from `WarMapMenu_OnMessage` (`0002c057`), `0002d327` and `MsnGen_LoadMission`.
 
 ```
 int16    the player's entry
@@ -148,7 +148,7 @@ The 66-byte blocks hold words such as 50, 64, 70, 75, 80 and 95. Read as the pla
 ## Open
 
 - **Open:** what reads `car\CAREER1.MEC`: the byte searches above find its name in no executable, and its entries match neither the player file's layout nor the hangar list's.
-- **Open:** what the careers-log entry's word `+0x40` is: `Career_New` passes its second argument, and the player file's first pilot word is that word in mode 1. What `0002ae96` is, whose message word 100 deletes a career, and what `0003750d` does with the current name.
+- **Open:** what the careers-log entry's word `+0x40` is: `Career_New` passes its second argument, and the player file's first pilot word is that word in mode 1. What else `0002ae96`, the handler of screen 1270 ([the screens](../shell/menus.md#the-screens)), does when its message word 100 deletes a career.
 - **Open:** whether an entry is ever written without a HERC record, which the simulator's read takes the next entry's words for: in a single mission it can when the player's machine has a type other than 0 to 7, a slot `sm_init.dat` does not fill, and in a career when a pilot's slot holds none. The record of the first group's first member holds type 1, 6 or 7 in 12 of the 14 single missions and takes a template's in `SM_ESC50.MSN` and `SM_SCT50.MSN`, whose candidates are not walked.
 - **Open:** what the simulator does with the two pilot words, the mount words, the word `+0x3a` and the 17 bytes at `000af9e8`.
 - **Open:** what `00020fff`, which `es2_xref.py` finds calling `CareerLog_FreeEntries` beside the shell's shutdown (`Shell_FreeData`, `00020ae3`, [the shutdown](../shell/startup.md#the-shutdown)), does with the log.

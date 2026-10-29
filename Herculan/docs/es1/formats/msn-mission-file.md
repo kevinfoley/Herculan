@@ -20,16 +20,9 @@ ES1's missions are the `.MSN` files in `ZONES.VOL`'s `MSN\` folder. The shell, `
 
 ### The mode and the mission parameters
 
-**A mission started from the main menu's INSTANT ACTION or SINGLE MISSION is a single mission, one started from RESUME or CAREER a career's, and a single mission takes five of its header words from the MISSION PARAMS menu: AMMO, DAMAGE, DIFFICULTY, VISIBILITY and TIME OF DAY.**
+**A mission is a single mission or a career's by the shell's mode, and a single mission takes five of its header words from the MISSION PARAMS menu: AMMO, DAMAGE, DIFFICULTY, VISIBILITY and TIME OF DAY.**
 
-The mode is `Shell_Mode` (`000aad56`), 0 for a single mission and 1 for a career. In steps 4 and 6, mode 1 takes its values from the `0x1f7`-byte record at `0009b23b + 0x1f7 × [0009b21f]` and mode 0 from the words at `000aacbc`–`000aacc4`; step 9 runs only in mode 0. `MainMenu_OnMessage` (`0002a70a`), the handler of the main menu, `dlg\menu1000.dlg` ([the menu dialogs](dlg-menu-dialogs.md)), stores it:
-
-| Button | Id | Mode | Then |
-|---|---|---|---|
-| INSTANT ACTION | 1499 | 0 | `000aad5a` to −1 and `SingleMission_Start` ([single missions](bst-battle-sets.md#single-missions)), so the list is drawn at random |
-| SINGLE MISSION | 1100 | 0 | the SINGLE MISSION menu, `dlg\menu1100.dlg` |
-| RESUME | 1700 | 1 | a career's resume |
-| CAREER | 1200 | 1 | the career menu |
+The mode is `Shell_Mode` (`000aad56`), 0 for a single mission and 1 for a career, which the main menu's buttons set ([the main menu's buttons](../shell/main-menu.md#the-buttons)). In steps 4 and 6, mode 1 takes its values from the `0x1f7`-byte record at `0009b23b + 0x1f7 × [0009b21f]` and mode 0 from the words at `000aacbc`–`000aacc4`; step 9 runs only in mode 0.
 
 In the SINGLE MISSION menu, `MissionMenu_OnMessage` (`0002b375`) keeps the value of its list control (id 1101), which the two arrows step, in `000aad5a`, and BRIEFING (1501) calls `SingleMission_Start`, which passes `000aad5a` to `SingleMission_BuildPath` as the list index. Step 6 of the load then stores header word 3 there, which is not always the index of the list in `msn\sing_msn.dat` that names the mission: after its header patches `SM_SCR01.MSN`'s is 4, the list that names it, and `SM_ASS01.MSN`'s is 9, where lists 6 and 7 name it. `Mission_ReadRestore` (`00036512`) also writes the mode, reading it back from `data\restore.dat` ([which file](eng-mission-text.md#which-file)); the other 37 instructions `es2_xref.py` finds holding the mode's address read it.
 

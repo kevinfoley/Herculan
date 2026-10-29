@@ -102,7 +102,7 @@ The byte `+0x42`, set once the page has run, the bitmap-array slot selected `+0x
 
 `Ttm_AllocHandles` registers `Ttm_TimerTick` (`00046681`) with `Timer_AddCallback` at a count of 2, so the tick comes on every second interrupt ([callbacks](../simulation/timer.md#callbacks)): 30 times a second at the divisor `0x4da6`, 60.02 interrupts a second, that `Ttm_AllocHandles` builds its timer with and the shell's two `DVTimer_SetRate` calls set ([the rate](../simulation/timer.md#the-rate)). The tick returns at once while the byte `000829d4` is set, which the [fade commands](#the-commands) do while they run; otherwise it sets the byte `000829d5` and adds 1 to the word `000829d6`, the ticks to be run.
 
-`Ttm_RunAll` (`0004652e`) notes `000829d6`, waits in a loop until `000829d5` is set and clears it, then runs every handle's script with `TtmScript_Run`(script, `000829d6` as it is then). It restores the render context as `Ttm_RunScript` does, subtracts the noted value from `000829d6`, and returns 1. `es2_xref.py` finds calls from `Shell_Main`, `000382f6` and `Shell_DrawScreen` (`0003c1b7`). `Ttm_RunScript` runs one handle's script without waiting.
+`Ttm_RunAll` (`0004652e`) notes `000829d6`, waits in a loop until `000829d5` is set and clears it, then runs every handle's script with `TtmScript_Run`(script, `000829d6` as it is then). It restores the render context as `Ttm_RunScript` does, subtracts the noted value from `000829d6`, and returns 1. `es2_xref.py` finds calls from `Shell_Main`, `MessageBox_Run` (`000382f6`) and `Shell_DrawScreen` (`0003c1b7`). `Ttm_RunScript` runs one handle's script without waiting.
 
 ### A run
 

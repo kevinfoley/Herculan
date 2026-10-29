@@ -92,8 +92,8 @@ Where ES2's `Shell_Main` differs ([ES2's start-up](../../retail/shell/startup.md
 2. `Shell_PollInput` (`0004de3a`) into `Shell_InputBlock` (`0007e73c`), and `Shell_HandleInput` (`00012be8`) on it ([the input](#the-input)).
 3. `NoOp_Void`; `Shell_QuitFlag` set when the screen word `Shell_CurrentScreen` (`000817c0`) is 9999 ([the ways out](#the-ways-out)).
 4. `Shell_HandleMessage` (`0003c7d8`)(the dwords `Shell_PendingMessage` (`0007fcb0`), `0007fcb4`), the menu message pending there, which answers 1 when it has changed screens ([changing screens](menus.md#changing-screens--shell_handlemessage-0003c7d8)). On an answer of 0, `Ttm_RunAll` runs the scripts ([running the scripts](../formats/ttm-scripts.md)).
-5. `Shell_TickScreen` (`0003c115`), the current screen's tick ([drawing a screen](menus.md#drawing-a-screen)); `0001098e`, the mouse's event queue, which `Shell_PollInput` also calls; `000382f6`(`0009b010`, the input block), the message box; `00018dcb`(`0009afc8`), the text box.
-6. When `Shell_QuitRequested` (`0007e808`) is set, `000408cc`, which opens screen 999, the quit question, unless the screen word `Shell_CurrentScreen` (`000817c0`) is 999 already, and the flag cleared.
+5. `Shell_TickScreen` (`0003c115`), the current screen's tick ([drawing a screen](menus.md#drawing-a-screen)); `0001098e`, the mouse's event queue, which `Shell_PollInput` also calls; `MessageBox_Run` (`000382f6`)(`0009b010`, the input block), the message box; `00018dcb`(`0009afc8`), the text box.
+6. When `Shell_QuitRequested` (`0007e808`) is set, `Shell_OpenQuitAlert` (`000408cc`), which opens screen 999, the quit question, unless the screen word `Shell_CurrentScreen` (`000817c0`) is 999 already, and the flag cleared.
 7. `X32_TotalFreeBytes` into locals, and `ShellTime_UpdateFrameScale` ([the frame-time scale](#the-frame-time-scale)).
 
 ### The input
@@ -104,7 +104,7 @@ Where ES2's `Shell_Main` differs ([ES2's start-up](../../retail/shell/startup.md
 
 | Word | Does |
 |---|---|
-| `Space`, `,`, `.`, `-`, `=`, each with or without `Shift` | calls a function of the object `000809a4`, while it is set and the byte `000809a8` is not 0, and sets `000809a8` to 3 ([Open](#open)) |
+| `Space`, `,`, `.`, `-`, `=`, each with or without `Shift` | calls a function of the object `Shell_MissionMap` (`000809a4`), while it is set and the byte `000809a8` is not 0, and sets `000809a8` to 3 ([Open](#open)) |
 | `Insert` (`0x52`) | `Tab` to the dialog (`DUIWindow_HandleNavKey` (`0001cc86`)(`0xf`)) when `prefs.cfg` option 10 is set |
 | `Ctrl+Esc`, `Alt+Esc` | `Shell_QuitRequested` |
 | `Ctrl+Q`, `Alt+Q`, `Ctrl+X`, `Alt+X` | `Shell_QuitRequested` |
@@ -127,8 +127,8 @@ Then the first button (`+0x1d`) pressed sends `Enter` (`0x1c`) to the dialog thr
 | Way out | `Shell_ExitCode` |
 |---|---|
 | `EXIT TO DOS` on the main menu (`MainMenu_OnMessage`, `0002a70a`), which sets `Shell_QuitFlag` | 0 |
-| message 100 to `0002a554`, which sets `Shell_QuitFlag` | 0 |
-| `Shell_HandleMessage` (`0003c7d8`)'s case for message 9999, which opens screen 9999, the loading picture ([changing screens](menus.md#changing-screens--shell_handlemessage-0003c7d8)), and so ends the loop on the next pass | 5 when `Shell_DemoRequested` (`000817ce`) is set, which `0002b79d` sets when it turns message `0x515` into 9999; 2 otherwise |
+| message 100 to `QuitAlert_OnMessage` (`0002a554`), which sets `Shell_QuitFlag` | 0 |
+| `Shell_HandleMessage` (`0003c7d8`)'s case for message 9999, which opens screen 9999, the loading picture ([changing screens](menus.md#changing-screens--shell_handlemessage-0003c7d8)), and so ends the loop on the next pass | 5 when `Shell_DemoRequested` (`000817ce`) is set, which `OptionsMenu_OnMessage` (`0002b79d`) sets when it turns message `0x515` into 9999; 2 otherwise |
 
 Two more end the program without the shutdown: no `-eggplant`, through `__exit`(1) before `exit.cfg` is read; and a fatal assert, below. The [simulator](../simulation/main-loop.md#the-end--sim_shutdown-0005b568) leaves 3, 4, 6 or 0, which the next start's step 15 reads. What `ES.BAT` and `ESCD.EXE` do with the shell's status and the file is not in `GO.EXE` ([Open](#open)).
 
@@ -187,7 +187,7 @@ After the loop, in order:
 ## Open
 
 - **Open:** what the launcher does with the shell's exit status and with `data\exit.cfg`: `GO.EXE` holds no code of `ES.BAT` or `ESCD.EXE`. A retail check: after `EXIT TO DOS` under DOSBox-X, `data\exit.cfg` holds the `int16` 0, and after a mission's launch 2 until the simulator overwrites it.
-- **Open:** what the object `000809a4` is, whose functions `0000a9c8`, `0000d657`, `0000d599` and slots `+8` and `+0xc` of its `+0x4a` table `Space`, `,`, `.`, `=` and `-` call, and which `Shell_TickScreen` (`0003c115`) ticks while `000809a8` is above 1. A retail check: press `Space` on a screen that plays something and watch what stops.
+- **Open:** what the object `Shell_MissionMap` (`000809a4`) is, whose functions `0000a9c8`, `0000d657`, `0000d599` and slots `+8` and `+0xc` of its `+0x4a` table `Space`, `,`, `.`, `=` and `-` call, and which `Shell_TickScreen` (`0003c115`) ticks while `000809a8` is above 1. A retail check: press `Space` on a screen that plays something and watch what stops.
 - **Open:** what reads `Shell_BlinkOn`: `es2_xref.py` finds its two writes and a reference at `0001f77f`, in code Ghidra has not disassembled, inside `0001f442`'s region.
 - **Open:** what reads `Shell_MSwitchGiven`: `es2_xref.py` finds the parser's store only.
 - **Open:** what reaches `Shell_QuitKeyCallback`: `es2_xref.py` finds no branch to it and no stored pointer.

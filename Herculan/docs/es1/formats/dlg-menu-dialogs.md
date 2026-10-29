@@ -34,7 +34,7 @@ A record's text is the line of `eng\menu<n>.bin` whose number is the record's po
 | 2 | `0001f442`(0, id, rect), added to the window |
 | 3 | a [button](../shell/menus.md#buttons): style 1 an icon button, any other style a text button, added to the window |
 | 14 | for ids 1612 to 1614, a clickable area: `DUIWindow_AddHotspot` (`0001b2de`)(window, 0, id, `00017a19`, rect). Fourteen other ids at `00081b08` jump to code Ghidra left undefined; any other id builds nothing |
-| 15 | a [list box](../shell/menus.md#the-list-box), `MTStrListBox_Ctor` (`0001e11a`)(0, `0x100`, 0, 0, a word, style, id, `0003750d`(id), rect), added to the window. The word is 0, or for the 23 ids at `00081a00` set by their own code, two of them from the bytes `0007fcb8` and `0007fcb9` |
+| 15 | a [list box](../shell/menus.md#the-list-box), `MTStrListBox_Ctor` (`0001e11a`)(0, `0x100`, 0, 0, a word, style, id, `Menu_ListLines` (`0003750d`)(id), rect), added to the window. The word is 0, or for the 23 ids at `00081a00` set by their own code, two of them from the bytes `0007fcb8` and `0007fcb9` |
 | 16 | `0001eaef`(0, `0x100`, 0, a word, id, `00037827`(id), rect), added to the window. The word is −1, or for the ten ids at `00081ab8` set by their own code, 0 and the word `0007fcba` for two of them |
 | 17 | `0001eff6`(0, `0x13`, 0, `0xffff`, id, `00037996`(id), rect), added to the window. `00037996` returns the 18 bytes at `000a056c`: for id 1803 the handles of fourteen `w1800w<i>.ttm` and four `w1800r0<i>.ttm` scripts it loads, for any other id `0xff` each |
 | 18 | with style 1, `0004c83a`(rect), which stores the rect in the 24-byte entry of `000a0a9c` that the word at `+4` of `00083bc4`'s object numbers, when that is under 9 |
@@ -42,12 +42,11 @@ A record's text is the line of `eng\menu<n>.bin` whose number is the record's po
 
 A control is added with `DUIWindow_AddControl`, which also adds its key ([the window](../shell/menus.md#the-window)). Text buttons carry keys as icon buttons do: button 99 of menu 1230 `0x01` Esc, button 1624 of menu 1610 `0x39` Space. Some labels carry a non-zero key byte, which the build does not read.
 
-`0003750d` jumps elsewhere for the 28 ids at `000812f4` and otherwise returns `000373fa`(`000811a4`); `00037827` jumps elsewhere for the eleven ids at `0008144c` and otherwise returns 0.
+`Menu_ListLines` (`0003750d`) jumps elsewhere for the 28 ids at `000812f4`, among them 1002, the main menu's list, which takes the current career's name ([the main menu's list](../shell/main-menu.md#the-list)), and otherwise returns `WaText_LinesFromList` (`000373fa`)(`000811a4`), a new zero-ended array of the lines of `eng\watext.bin` that the words of the list at `000811a4` number; `00037827` jumps elsewhere for the eleven ids at `0008144c` and otherwise returns 0.
 
 ## Open
 
-- **Open:** what the classes `0001f442` (kind 2, vtable `0007f590`), `0001eaef` (kind 16) and `0001eff6` (kind 17) are, and what `0003750d`, `00037827` and `000373fa` return for them and for kind 15.
-- **Open:** the code the special ids jump to: kinds 0, 1, 4 and 5's 5557, 5558 and 1223, kind 14's fourteen ids at `00081b08`, kind 15's 23 and kind 16's ten, menu 1300's button 100, the icon button's four ids at `0007f2c4`, and `MTWindow_Ctor`'s six ids at `00081174`.
-- **Open:** what `Resource_LoadBitmapArray` returns for a name with no file, which windows 1501 and 1700 load.
+- **Open:** what the classes `0001f442` (kind 2, vtable `0007f590`), `0001eaef` (kind 16) and `0001eff6` (kind 17) are, and what `00037827` returns for them and `Menu_ListLines` (`0003750d`) for the 27 kind-15 ids other than 1002.
+- **Open:** the code the special ids jump to: kinds 0, 1, 4 and 5's 5557, 5558 and 1223, kind 14's fourteen ids at `00081b08`, kind 15's 23 and kind 16's ten, and the icon button's four ids at `0007f2c4`.- **Open:** what `Resource_LoadBitmapArray` returns for a name with no file, which windows 1501 and 1700 load.
 - **Open:** what `0002a1aa` does with menu 4444's `#` text, what `0001a4f4` sets on the four icon buttons, and what `000512a0` builds at the window's `+0x17`.
 - **Open:** `eng\` holds `MENU1499.BIN`, `MENU1600.BIN` and `MENU1810.BIN`, for which `dlg\` holds no `.DLG`; what builds those menus.

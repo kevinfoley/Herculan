@@ -74,7 +74,7 @@ The pieces of a block are one text: the literal pieces end mid-sentence where th
 
 ## The objectives
 
-`Mission_WriteObjectives` (`00018824`), which `0002a523` calls with the `.eng` path, finds the file's first `OBJ:` block and writes its pieces to `data\object.str` (file-name entry 6) for the simulator. It reads the `int32` count, the `int16` sum and the `int16` piece count, and then for each piece a byte it does not test, the `int16` length and the text. With no `OBJ:` block it writes nothing and leaves any `data\object.str` as it was. Otherwise it removes the old file and writes, through a `FileRWStream` (assert at `dialog.cpp` line `0x56`):
+`Mission_WriteObjectives` (`00018824`), which `Shell_PrepareMission` (`0002a523`) calls with the `.eng` path, finds the file's first `OBJ:` block and writes its pieces to `data\object.str` (file-name entry 6) for the simulator. It reads the `int32` count, the `int16` sum and the `int16` piece count, and then for each piece a byte it does not test, the `int16` length and the text. With no `OBJ:` block it writes nothing and leaves any `data\object.str` as it was. Otherwise it removes the old file and writes, through a `FileRWStream` (assert at `dialog.cpp` line `0x56`):
 
 | Bytes | Field |
 |---|---|
@@ -120,5 +120,5 @@ A `DialogBox` is `0x2d` bytes; its subclasses differ in their constructors and v
 - **Open:** whether the simulator rewrites `data\mission.var` before the debriefing reads flags through it, so whether a debriefing's choices see the flags as the mission load seeded them.
 - **Open:** how the box is drawn and its text broken into lines: `00019a1d`, `00018dcb` and `00018edd`, which the page steps call, `0001907e`, and `00051ff0`'s line height.
 - **Open:** what the byte at a box's `+0` means, what the word `Shell_BackdropId` (`000817c4`) that picks the box's position holds, and the boxes at `0009ae64`, `0009ae84` and `0009ae94`.
-- **Open:** when the briefing page `000809b2` carries over from one visit to the war map to the next, since `0002bf15` sets it to 0; the rest of `0002bf15` and the war map's handler `0002c057` are not read.
+- **Open:** when the briefing page `000809b2` carries over from one visit to the war map to the next, since `0002bf15` sets it to 0; the rest of `0002bf15` and the war map's handler `WarMapMenu_OnMessage` (`0002c057`) are not read.
 - **Open:** why `Mission_ReadRestore` reads the word written from `000aad5a` into `000aad5e`, and what the two words hold.
