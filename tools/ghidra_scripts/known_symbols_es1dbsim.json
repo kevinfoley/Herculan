@@ -32935,7 +32935,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_ParseCommandLine",
-      "description": "(argv, argc) in stack order, callee-cleaned: for each argument starting '-', looks its next character up in the 16 dwords at 00096e88 by REPNE SCASD and jumps to the target 16 dwords after (cases at 00058ec8-0005921c, outside Ghidra's extent): B sets 000b5bcc; D sets DemoMode (000b5bd0) and TapePlayback (000b5b76) and opens tapes\\<DemoTape_PickRandom (0005771c)'s name>.tap (Config_BuildPath (00059300), Path_ApplyAltDrive (000592a4), fopen rb) as TapeFile (000b5b82), unpacking as -p does, both flags cleared when it does not open; S sets CmdLine_SinglePage (000b5b67); m sets 000bda94; C calls CockpitChassis_SelectByName (00024394) with the rest; s toggles 000b5b68; P sets 000b5b69; t passes atol of the rest to Sim_SetCommBox0PilotOverride (0003ea50); V, W and T store atol of the rest in 000b5bb2, 000b5bb4 and 000b5bb6; p takes the rest as TapeStem (000b5b7a) unless set, opens <stem>.tap rb as TapeFile, sets TapePlayback and unpacks seven files with Tape_UnpackFile (0005756c) (data\\script.dat, data\\player.mec, data\\mission.var, Config_BuildPath of prefs.cfg, data\\restore.dat, data\\object.str, Config_BuildPath of keyjoy.cfg); r opens <stem>.tap wb, packs the same seven with Tape_PackFile (000574a0) (from data\\, keyjoy.cfg without a folder), closes it and sets TapeRecording (000b5b78); d opens <stem>.dmp as DmpFile (000b5b7e), wb while recording (closing it at once) and rb otherwise; l sets g_LowMemory (000bda98); e compares the rest with 'eggplant' and 'EGGPLANT' and sets Sim_EggplantGiven (000b5bc4) on a match. ES2's Sim_ParseCommandLine (DBSIM 0045e73c).",
+      "description": "(argv, argc) in stack order, callee-cleaned: for each argument starting '-', looks its next character up in the 16 dwords at 00096e88 by REPNE SCASD and jumps to the target 16 dwords after (cases at 00058ec8-0005921c, outside Ghidra's extent): B sets 000b5bcc; D stores DemoTape_PickRandom (0005771c)'s answer in TapeStem (000b5b7a) whatever it held, clears DemoMode (000b5bd0) and TapePlayback (000b5b76) for a null answer, and otherwise sets both and opens tapes\\<stem>.tap (Config_BuildPath (00059300), Path_ApplyAltDrive (000592a4), fopen rb) as TapeFile (000b5b82), unpacking as -p does, both flags cleared when it does not open; S sets CmdLine_SinglePage (000b5b67); m sets 000bda94; C calls CockpitChassis_SelectByName (00024394) with the rest; s toggles 000b5b68; P sets 000b5b69; t passes atol of the rest to Sim_SetCommBox0PilotOverride (0003ea50); V, W and T store atol of the rest in 000b5bb2, 000b5bb4 and 000b5bb6; p takes the rest as TapeStem unless set, opens <stem>.tap rb from the current folder as TapeFile, sets TapePlayback whatever the open answered, and unpacks seven files with Tape_UnpackFile (0005756c) (data\\script.dat, data\\player.mec, data\\mission.var, Config_BuildPath of prefs.cfg, data\\restore.dat, data\\object.str, Config_BuildPath of keyjoy.cfg); r takes the rest as TapeStem unless set, opens <stem>.tap wb, a stream it does not test, packs the same seven with Tape_PackFile (000574a0) (from data\\, keyjoy.cfg without a folder), closes it and sets TapeRecording (000b5b78); d opens <stem>.dmp as DmpFile (000b5b7e), wb while recording (closing it at once) and rb otherwise; l sets g_LowMemory (000bda98); e compares the rest with 'eggplant' and 'EGGPLANT' and sets Sim_EggplantGiven (000b5bc4) on a match. ES2's Sim_ParseCommandLine (DBSIM 0045e73c).",
       "source": "Herculan/docs/es1/simulation/main-loop.md#the-command-line; ES1DBSIM decompile and disassembly at 00058e74",
       "verified": {
         "bytes": "00058e74+965",
@@ -46370,6 +46370,15 @@
       "source": "Herculan/docs/es1/simulation/input.md#globals; ES1DBSIM disassembly"
     },
     {
+      "address": "000958be",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Input_PlaybackCursorPending",
+      "description": "byte, 1 in the image: while it is set, Input_BuildPlayerDevice (0004cb14)'s playback reads the cursor's position into Input_CursorPos (000b17d8) with Cursor_GetPosition and clears it, so the first playback frame does. es2_xref --decode finds that read and that clear and no other access.",
+      "source": "Herculan/docs/es1/simulation/input.md#recording-and-playback; ES1DBSIM decompile at 0004cb14"
+    },
+    {
       "address": "000959dc",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -48364,7 +48373,7 @@
       "type": "data",
       "confidence": "high",
       "name": "TapeRecording",
-      "description": "int16: 1 after -r packed the tape; Input_BuildPlayerDevice appends a frame each tick while it is set. ES2's TapeRecording.",
+      "description": "int16: 1 after -r packed the tape; Input_BuildPlayerDevice appends a frame on each call while it is set, in playback and in the panels' loops as in the tick; es2_xref --decode finds one write, -r's. ES2's TapeRecording.",
       "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
     },
     {
@@ -48373,7 +48382,7 @@
       "type": "data",
       "confidence": "high",
       "name": "TapeStem",
-      "description": "char *: the tape's name from -p, -r or -D, the first given; .tap and .dmp are added to it.",
+      "description": "char *: the tape's name: -p and -r store theirs only while it is 0, -D stores its pick whatever it holds; .tap and .dmp are added to it.",
       "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
     },
     {
@@ -48391,7 +48400,7 @@
       "type": "data",
       "confidence": "high",
       "name": "TapeFile",
-      "description": "FILE *: the tape -p or -D opens for reading. ES2's TapeFile.",
+      "description": "FILE *: the tape -p or -D opens for reading, which -p stores whatever fopen answers. Input_BuildPlayerDevice closes it at the tape's end without clearing it, and Sim_Shutdown (0005b568) finds it set and closes it again. ES2's TapeFile.",
       "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
     },
     {
@@ -48571,7 +48580,7 @@
       "type": "data",
       "confidence": "high",
       "name": "DemoAbort",
-      "description": "int16: ends Sim_Main's loop; set by a key under DemoMode and by the tape's end. ES2's DemoAbort.",
+      "description": "int16: ends Sim_Main's loop; set by a key under DemoMode, and by the tape's end and Ctrl+E (0x412) whatever DemoMode holds. ES2's DemoAbort.",
       "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
     },
     {

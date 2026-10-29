@@ -4,6 +4,8 @@
 
 - a frame's record is 18 bytes before its mouse events where ES2's is 24, and carries one command word and no list of command codes ([the frames](#the-frames));
 - the tape has no joystick capability block;
+- a tape played with `-p` ends the mission when it runs out or `Ctrl+E` is pressed, as under `-D`, where ES2's ends the mission so under `-D` alone ([recording and playback](../simulation/input.md#recording-and-playback));
+- a tape plays on the install's own `data\prefs.cfg`, its own copy unpacked into `tapes\` and no reader of it found ([the bundle](#the-bundle));
 - the demo pick never repeats the name it picked last, and since a run of the simulator plays one mission, `-D` never picks the first name on `tapes\demolist.str`'s list when the list holds more than one ([the demo tape](#the-demo-tape));
 - in playback the checkpoint flush formats a `Playback error. Frame #%ld` message each frame and discards it, where ES2's does nothing ([the checkpoint file](#the-checkpoint-file)).
 
@@ -11,15 +13,20 @@ Addresses are `ES1DBSIM` image addresses ([the X-32 executable](x32-executable.m
 
 ## The bundle
 
-A tape opens with seven length-prefixed blocks, ES2's seven ([ES2's bundle](../../retail/formats/tap-input-tape.md#the-bundle)), each a `uint32` size and that many bytes. `Sim_ParseCommandLine` (`00058e74`) writes and reads them ([the command line](../simulation/main-loop.md#the-command-line)). The name of `-p`, `-r` and `-D` is `TapeStem` (`000b5b7a`), the first one given; the extension is forced to `tap`. `-p` opens the tape, `rb`, as `TapeFile` (`000b5b82`) and unpacks seven files from it with `0005756c`: `data\script.dat`, `data\player.mec`, `data\mission.var`, `tapes\prefs.cfg`, `data\restore.dat`, `data\object.str` and `tapes\keyjoy.cfg`, the two configuration files through `Config_BuildPath` (`00059300`), which gives `tapes\` once `TapePlayback` is set. `-r` opens it `wb`, packs the same seven with `000574a0` from `data\`, `keyjoy.cfg` with no folder, and closes it. `-D` opens and unpacks a tape as `-p` does ([the demo tape](#the-demo-tape)).
+A tape opens with seven length-prefixed blocks, ES2's seven ([ES2's bundle](../../retail/formats/tap-input-tape.md#the-bundle)), each a `uint32` size and that many bytes. `Sim_ParseCommandLine` (`00058e74`) writes and reads them ([the command line](../simulation/main-loop.md#the-command-line)). The tape's name is `TapeStem` (`000b5b7a`): `-p` and `-r` store theirs only while it is 0, so the first of them given is kept, and `-D` stores its pick whatever it holds (`00058edd`), so a `-D` after `-p` or `-r` replaces the name, and one whose pick is null clears it. `Path_WithExtension` (`00060644`) forces the extension `tap`, cutting the name at its first `.`, so a name through a folder whose name holds a `.` loses the rest of its path.
 
-**`Tape_PackFile` (`000574a0`)**, (path, tape): opens the path `rb` and takes its size with `fseek` (`0007566d`) to the end and `ftell` (`000756ef`), then seeks back to the start and clears the stream's error flag; a file that does not open has size 0. It writes the size, then the file in chunks of at most 500 bytes.
+- **`-p`** (`00058fe0`) opens `<stem>.tap` from the current folder, `rb`, with no `Path_ApplyAltDrive`, as `TapeFile` (`000b5b82`), and sets `TapePlayback` (`000b5b76`) whether or not it opened: nothing tests the open, so a tape that does not open is unpacked from a null stream ([Open](#open)).
+- **`-D`** (`00058ed6`) clears `TapePlayback` and `DemoMode` when its pick is null; otherwise it sets both, then opens `Path_ApplyAltDrive`(`Config_BuildPath`(`<stem>.tap`)), so `tapes\<stem>.tap`, and clears both again when the tape does not open ([the demo tape](#the-demo-tape)).
+- **The unpack** (`00059020`–`000590c1`), which `-p` falls into and `-D` jumps to, writes seven files with `Tape_UnpackFile`, each destination through `Path_ApplyAltDrive`: `data\script.dat` (`00096d90`), `data\player.mec` (`00096da0`), `data\mission.var` (`00096db0`), `prefs.cfg` (`00096dc1`), `data\restore.dat` (`00096dcb`), `data\object.str` (`00096ddc`) and `keyjoy.cfg` (`00096dec`), the two configuration files first through `Config_BuildPath` (`00059300`), which gives `tapes\` once `TapePlayback` is set.
+- **`-r`** (`000590cb`) opens `<stem>.tap` `wb`, a stream nothing tests or stores, packs seven files into it with `Tape_PackFile`, each source through `Path_ApplyAltDrive` alone: `data\script.dat` (`00096dfe`), `data\player.mec` (`00096e0e`), `data\mission.var` (`00096e1e`), `data\prefs.cfg` (`00096e2f`), `data\restore.dat` (`00096e3e`), `data\object.str` (`00096e4f`) and `keyjoy.cfg` (`00096e5f`), the last from the current folder; then it closes the tape and sets `TapeRecording` (`000b5b78`). The ES1 install holds `DATA\KEYJOY.CFG` and none in its own folder, so a recording made from there packs an empty `keyjoy.cfg`, as each [retail tape](#the-retail-tapes) carries.
 
-**`Tape_UnpackFile` (`0005756c`)**, (path or null, tape): opens the path `wb` unless it is null, reads the size, and reads that many bytes in chunks of at most 500, writing each to the destination when there is one. No read's count is checked, so a tape cut short inside the bundle unpacks whatever the stack buffer held.
+**`Tape_PackFile` (`000574a0`)**, (path, tape): opens the path `rb` and takes its size with `fseek` (`0007566d`) to the end and `ftell` (`000756ef`), then seeks back to the start and clears the stream's error flag; a file that does not open has size 0. It writes the size, then the file in chunks of at most 500 bytes, and closes the source with `fclose` even when it did not open, a null handle.
+
+**`Tape_UnpackFile` (`0005756c`)**, (path or null, tape): opens the path `wb` unless it is null, reads the size, and reads that many bytes in chunks of at most 500, writing each to the destination when there is one. A destination that does not open is treated as a null one, its bytes read and dropped, and `fclose` gets the null handle. No read's count is checked, so a tape cut short inside the bundle unpacks whatever the stack buffer held. The loop runs while the size left is not 0, taking the whole of it when it is below 500, so a negative size, which no retail tape holds, makes one pass whose read count is the size itself.
 
 Both are ES2's, ES2's arguments in the other order. Where the bundle's handling differs from ES2's:
 
-- the preferences are [the preferences start-up](../simulation/input.md#the-preferences-start-up)'s, which under `DemoMode` loads them twice and puts seven options back, where ES2's `-p` copies seven bytes of `data\prefs.cfg` over `tapes\prefs.cfg`;
+- the tape's `prefs.cfg` is unpacked into `tapes\`, but `Prefs_Load` (`0004a744`) opens `data\prefs.cfg` itself, through `Path_ApplyAltDrive`, and `es2_xref.py` finds four calls of `Config_BuildPath`, `Keyjoy_LoadConfig`'s and three in `Sim_ParseCommandLine`, so a tape is played on the install's preferences and no reader of `tapes\prefs.cfg` was found ([Open](#open)); under `DemoMode` [the preferences start-up](../simulation/input.md#the-preferences-start-up) loads `data\prefs.cfg` twice. ES2's `-p` copies seven bytes of `data\prefs.cfg` over `tapes\prefs.cfg`;
 - `Keyjoy_LoadConfig` reads `Config_BuildPath`'s `keyjoy.cfg`, so playback reads the tape's `tapes\keyjoy.cfg` ([`keyjoy.cfg`](../simulation/input.md#keyjoycfg--keyjoy_loadconfig-0004d918)), where ES2's always reads `data\keyjoy.cfg`.
 
 ## The frames
@@ -29,13 +36,31 @@ After the bundle, one record a frame, which `Input_BuildPlayerDevice` (`0004cb14
 | Offset | Type | Field |
 |---|---|---|
 | `+0x00` | `int16` | the command word |
-| `+0x02` | `int16` × 4 | the four axes |
+| `+0x02` | `int16` × 4 | the four axes, steering, throttle, twist and pitch, as step 7 of the build leaves them: before the camera-axis step and `Backturn`, which playback runs again on them |
 | `+0x0a` | `int16` | `SimTickDelta` |
-| `+0x0c` | `uint16` | bit 0 button 0 (the input block's `+0x15`), bits 1–7 buttons 1–7, bits 8–11 the four source buttons |
-| `+0x0e` | `uint32` | the mouse-event count *n* |
+| `+0x0c` | `uint16` | bit 0 set when button 0 (the input block's `+0x15`) is not 0, bits 1–7 the same for buttons 1–7, bits 8–11 for the four source buttons; bits 12–15 0 |
+| `+0x0e` | `int32` | the mouse-event count *n* |
 | `+0x12` | 14 × *n* | the mouse events, in `CockpitMouseQueue_Push`'s record ([the callback and the queue](../simulation/cockpit-mouse.md#the-callback-and-the-queue)) |
 
 Where ES2's differs ([ES2's stream](../../retail/formats/tap-input-tape.md#the-stream)): ES2's tape carries the eight-byte joystick capability block once after the bundle; its 24-byte header holds the trigger, the hat and the stick's own eight buttons in bytes of their own and a command count; and the command codes follow the mouse events. ES1's frame carries the one command word the build took from the keyboard ([the command word](../simulation/input.md#the-command-word)) and no list.
+
+**The pointer and the mouse bytes are not recorded**, as in ES2 ([ES2's stream](../../retail/formats/tap-input-tape.md#the-stream)): the input block's `+2`–`+0xc` are on no record, and playback leaves them 0, the build copying them from the live block only in its live step ([recording and playback](../simulation/input.md#recording-and-playback)). [The gunsight drag](../simulation/main-loop.md#the-players-controls--sim_pollplayerinput-0005a0c0) reads them, so a replay never arms it. The mouse events replay through the cockpit's queue.
+
+### The page parity
+
+**A tape replays the views as they were recorded only when its first frame finds the same page on the screen as the recording's did.** The view command's page gate holds a glance, or the return from one, until the display's `+0x88` is its page ([the view command](../simulation/cockpit-views.md#cockpitview_processviewcommand-000226f0)), and `Sim_EndFrame` swaps `+0x88` and `+0x8c` every frame, so the frame on which a recorded view change lands depends on the pages' parity, which the tape does not carry. `Sim_StartMission` leaves `+0x88` at 0 ([the mission start](../simulation/main-loop.md#the-mission-start--sim_startmission-0005a9dc)), and a mission that opens with the lift has swapped the pair 115 times more before the first frame, an odd count ([the lift](../simulation/main-loop.md#open)), so the lift is part of what a tape replays. `CockpitViewManager_QueueViewCommand` (`00022634`) latches a command whenever none is pending, so a hat held across a glance's return queues the opposite glance one frame after the return lands, unless the gate held the return a frame. Traced through those rules, `DEMO2`–`DEMO4`'s hat buttons take each view change once from the parity the lift leaves, the gate holding each return a frame, and bounce into the opposite glance at each return from the other parity ([Open](#open)).
+
+### The retail tapes
+
+The install's `TAPES` folder holds four, read through `HercWorks.Core`:
+
+| | `DEMO1` | `DEMO2` | `DEMO3` | `DEMO4` |
+|---|---|---|---|---|
+| Frames | 2308 | 2951 | 2470 | 1571 |
+| Mouse events | 1332 | 983 | 42 | 370 |
+| `object.str`, bytes | 38 | 38 | 290 | 201 |
+
+In each, `script.dat` is 4558 bytes, `player.mec` 241, `mission.var` 200, `prefs.cfg` 17, `restore.dat` 42 and `keyjoy.cfg` 0, and `SimTickDelta` runs from 64 to 450, 25 to 176 ms.
 
 ## The demo tape
 
@@ -91,4 +116,7 @@ The class tag has no Ghidra function. `time` reads DOS's date and time (`INT 21h
 - **Open:** a caller of `Vcr_Checkpoint` (`00000bd4`). `es2_xref.py` finds no branch to it, the same sweep finding `Input_BuildPlayerDevice`'s seven callers. The two stored dwords it lists, `00000bd2` at `0002f350` and `00000bd3` at `00073eeb`, which reach the padding before it, are bytes of other instructions: `0002f350` is the imm32 tail of `MOV byte ptr [0x000bd222],0x0` at `0002f34d` in `MessagePort_StepToVariant`, and `00073eeb` the rel32 of `CALL 0x00074ac2` at `00073eea` in `00073ee8`.
 - **Open:** a reader of `Vcr_MismatchFlag`; `es2_xref.py --decode` finds `Vcr_Checkpoint`'s write and no read.
 - **Open:** a retail check of the demo pick, and whether the shell's demo runs the simulator with `-D`. Run `DBSIM -eggplant -D` eight times and note each tape's opening scene, then `DBSIM -eggplant -ptapes\demo1` once: its opening scene is not among the eight.
+- **Open:** a reader of the unpacked `tapes\prefs.cfg`. `es2_xref.py` finds four calls of `Config_BuildPath`, `Keyjoy_LoadConfig`'s and three in `Sim_ParseCommandLine`, and a grep of the decompile for `tapes` finds only `tapes\demolist.str` and `Config_BuildPath`'s prefix.
+- **Open:** what the runtime's `fread` and `fwrite` do with the null stream that `-p`'s and `-r`'s untested opens hand them. A retail check, on a copy of the install, since the unpack first truncates `data\script.dat`: `DBSIM -eggplant -pnosuch` from its folder, noting whether the simulator stops, hangs or starts a mission.
+- **Open:** whether the missions of `DEMO2`–`DEMO4` open with the lift, as their hat buttons' trace through the page gate implies: the player group's point lies 39563 from a structure group's point on `DEMO2` and 15000 on `DEMO3`, group points, not the structures' placements. A retail check: `DBSIM -eggplant -ptapes\demo2` shows the HERC rising before play starts.
 - **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)): after a mission run with `-rtest`, `TEST.TAP`'s first four bytes are `data\script.dat`'s size.

@@ -51,14 +51,14 @@ Where ES2's `Sim_Run` differs: it reads `data\drive.cfg` instead of the environm
 
 ### The command line
 
-`Sim_ParseCommandLine` (`00058e74`), (argv, argc), looks each argument that starts with `-` up by its next character in the 16 dwords at `00096e88` (`REPNE SCASD`) and jumps to the target 16 dwords after; Ghidra has not disassembled the case bodies (`00058ec8`–`0005921c`). Case-sensitive, and no `/`:
+`Sim_ParseCommandLine` (`00058e74`), (argv, argc), looks each argument that starts with `-` up by its next character in the 16 dwords at `00096e88` (`REPNE SCASD`) and jumps to the target 16 dwords after: `B` `00058ec8`, `D` `00058ed6`, `S` `00058f40`, `m` `00058f4c`, `C` `00058f58`, `s` `00058f67`, `P` `00058f74`, `t` `00058f80`, `V` `00058f98`, `W` `00058fb0`, `T` `00058fc8`, `p` `00058fe0`, `r` `000590cb`, `d` `0005918d`, `l` `000591d7` and `e` `000591e2`. Ghidra has not disassembled the case bodies (`00058ec8`–`0005921c`). Case-sensitive, and no `/`:
 
 | Switch | Store | Effect |
 |---|---|---|
 | `-eggplant` or `-EGGPLANT` | `Sim_EggplantGiven` (`000b5bc4`) = 1 | Without it the simulator refuses ([above](#starting--sim_main-00059350)) |
 | `-c` | `Sim_AltDriveAllowed` (`000b5bce`), by `Sim_PreParseCommandLine` | `ALT_DRIVE` is honored |
 | `-B` | `000b5bcc` = 1 | `Sim_DebugBreak` (`00059658`) runs `INT3` while it is set |
-| `-D` | `TapePlayback` (`000b5b76`), `DemoMode` (`000b5bd0`) = 1 | Plays `tapes\<name>.tap`, the name from `DemoTape_PickRandom` (`0005771c`) ([the demo tape](../formats/tap-input-tape.md#the-demo-tape)), through `Config_BuildPath`; both flags go back to 0 when it does not open |
+| `-D` | `TapePlayback` (`000b5b76`), `DemoMode` (`000b5bd0`) = 1 | Plays `tapes\<name>.tap`, the name from `DemoTape_PickRandom` (`0005771c`) ([the demo tape](../formats/tap-input-tape.md#the-demo-tape)), which replaces any name given before, through `Config_BuildPath`; both flags go back to 0 when the pick is null or the tape does not open |
 | `-S` | `000b5b67` = 1 | The page numbers [`Sim_StartMission`](#the-mission-start--sim_startmission-0005a9dc) gives the display |
 | `-m` | `000bda94` = 1 | `Sim_StartMission` clears the monochrome monitor (`Mono_Clear`) |
 | `-C<name>` | `CockpitChassis_SelectByName` (`00024394`)(name) | The cockpit's chassis ([the cockpit's scripts](../formats/ttm-scripts.md#the-simulator)) |
@@ -66,8 +66,8 @@ Where ES2's `Sim_Run` differs: it reads `data\drive.cfg` instead of the environm
 | `-P` | `000b5b69` = 1 | No reader found by `es2_xref.py` besides this store ([Open](#open)) |
 | `-t<n>` | `Sim_SetCommBox0PilotOverride` (`0003ea50`)(`atol`(n)) | The pilot in the first squad comm box ([who is in it](heads-down-display.md#who-is-in-it--hddgauge_loadpilotframes-0003dab4)) |
 | `-V<n>`, `-W<n>`, `-T<n>` | `000b5bb2`, `000b5bb4`, `000b5bb6` | Set to -1 by `Main_StaticInit` (`00057414`); no other reader found ([Open](#open)) |
-| `-p<name>` | `TapePlayback` = 1 | Plays `<name>.tap` ([the bundle](../formats/tap-input-tape.md#the-bundle)) |
-| `-r<name>` | `TapeRecording` (`000b5b78`) = 1 | Records to `<name>.tap` ([the bundle](../formats/tap-input-tape.md#the-bundle)) |
+| `-p<name>` | `TapePlayback` = 1, whether or not the tape opens | Plays `<name>.tap` from the current folder, the name taken only when none was given before; its open is not tested ([the bundle](../formats/tap-input-tape.md#the-bundle)). A tape that runs out, or `Ctrl+E`, ends the mission, as under `-D` ([recording and playback](input.md#recording-and-playback)) |
+| `-r<name>` | `TapeRecording` (`000b5b78`) = 1 | Records to `<name>.tap`, the name taken only when none was given before; its open is not tested ([the bundle](../formats/tap-input-tape.md#the-bundle)) |
 | `-d` | `DmpFile` (`000b5b7e`) | Opens `<name>.dmp`, mode `wb` while recording (and closes it again) and `rb` otherwise; the name is the tape's ([the checkpoint file](../formats/tap-input-tape.md#the-checkpoint-file)) |
 | `-l` | `g_LowMemory` (`000bda98`) = 1 | The low-memory mode ([low memory](../formats/chassis-dat.md#low-memory)) |
 
@@ -146,7 +146,7 @@ No arguments; ES2's frame has no counterpart. In order:
 
 No arguments. In order:
 
-1. The input block = `Input_BuildPlayerDevice` ([the input build](input.md#the-input-build--input_buildplayerdevice-0004cb14)); during playback `SimTickDelta` = the block's `+0x29`, the frame's recorded delta.
+1. The input block = `Input_BuildPlayerDevice` ([the input build](input.md#the-input-build--input_buildplayerdevice-0004cb14)); during playback `SimTickDelta` = the block's `+0x29`, the frame's recorded delta. The test (`00059711`) follows the build, so on the frame that ends a tape, whose build has cleared `TapePlayback`, `SimTickDelta` keeps the last frame's delta, `Time_BeginSimTick` not having run on that pass. `SimTickDelta2`, which no tape carries, stays at `Time_InitSimClock`'s `0x100` through a playback ([the tick length](fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40)).
 2. Unless `Sim_Frozen` (`000b5b92`) is set, each pool walked oldest first with `Pool_Prev` from 0 ([object pools](memory.md#object-pools)), so a pool's walk also reaches what the walks before it, or its own elements' ticks, add to it on this tick, and steps on from an element it destroys:
    - every structure of `g_BasePool`, through slot `+0x1c`, whatever its group;
    - the explosions (`g_ExplosionPool`, `Explosion_TickUpdate` (`00005d74`), [the impact effects](impact-effects.md)), the smoke balls (`g_SmokeBallPool` (`000aef68`), `Effect_DriftAndAnimate` (`0000693c`)), the smoke emitters (`g_SmokePool` (`000aefd4`), `Smoke_Tick` (`00006b28`)) and the debris (`g_DebrisPool` (`000aeef8`), `Debris_TickUpdate` (`000064b8`), [the wreckage and smoke](destruction-effects.md)), an element whose tick answers non-zero destroyed at once through slot `+0xc` with 3;
@@ -338,7 +338,7 @@ The flags lie in the block `Main_StaticInit` zeroes, `000b5b5c`–`000b5bd3`.
 - **Open:** which songs ES1's catalog rows 0 to 5 name, which of them `Music_Tick` takes as calm and which as battle, and what ES1's rows `0x13` and `0x2d` hold. A retail check: in a mission with enemies, the music changes within about 5 seconds of the first enemy coming within 25000 or into view ahead.
 - **Open:** a registration `es2_xref.py` cannot see, such as a call of `RegisterSubsystemLoader` through a pointer, at phase 0, 1, 3 or 4.
 - **Open:** how far step 15's copy reaches: its inclusive rect {0, 0, 320, 400} reaches column 320, one past a page's width, and row 400, and `Widget_DrawToCockpit` copies it with the cockpit's canvas context installed, in clip mode 1, which cuts it to the canvas rect, the `.GAU` record's first 16 bytes ([building it](cockpit-panel.md#building-it)), whose values in the retail files are not read here.
-- **Open:** which retail missions place a friendly structure within 40000 of the player's start, and so open with the lift (`00057cf4` and `00057ffc` unread). A retail check: such a mission brightens through a palette shift before play starts, and one that does not starts at once.
+- **Open:** which retail missions place a friendly structure within 40000 of the player's start, and so open with the lift, and the lift's two functions: `00057cf4` unread, and `00057ffc` read for its rise alone. The rise plays sound `0x21` and raises `LocalPlayerMech`'s height `+0x28` from 4000 below its own in steps of `0x23` while it is below it, 115 passes, each running `Cam_Update`, `Sim_RenderFrame`, the `intro` bitmap and `Sim_EndFrame`, so the display's pages are swapped 115 times, an odd count, before the first frame of play ([the page parity](../formats/tap-input-tape.md#the-page-parity)); a shake of `Sim_RenderFrame` alone, with no `Sim_EndFrame`, follows until the clock `000981c4` passes its start + `0x1e`, half a second. A retail check: such a mission brightens through a palette shift before play starts, and one that does not starts at once.
 - **Open:** a reader of `Mission_EndingAnswer`'s words 0, 1, 5 and `0x11` (1, 1, 1 and 0); `es2_xref.py --decode` finds no instruction holding the address of word `0x11` (`0009717a`), and the two indexed reads above.
 - **Open:** the death flash in the running game. A retail check: let the HERC be destroyed in the cockpit view; within about 4 seconds the view shakes for half a second, the colors jump and fade to black over about 4 seconds with nothing moving, and `YOU HAVE BEEN KILLED.` comes up on a black screen, `CONTINUE` ending the mission. Pressing `Q` in the seconds between the destruction and the flash shows the same panel with no flash.
 - **Open:** whether `Ctrl+Esc`, keypad 0 and `Esc`'s sound reach `Sim_DispatchCommand` in retail as the table says. A retail check: in a mission, `Ctrl+Esc` raises the same panel as `Ctrl+Q`.
