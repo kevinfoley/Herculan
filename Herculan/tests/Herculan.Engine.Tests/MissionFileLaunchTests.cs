@@ -1,3 +1,4 @@
+using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Data.File.Msn.Script;
 using HercWorks.Core.Io.Transform.Common;
@@ -121,6 +122,47 @@ public class MissionFileLaunchTests {
 			var planned = mission.Index.Planned(placed)!.Place.Position;
 			Assert.Equal((planned.X, planned.Y), (placed.Object.Position.X, placed.Object.Position.Y));
 		}
+	}
+
+	/// <summary>
+	/// A launch of a mission with its own zone (<see cref="MissionFileLaunch.WriteHeld"/>, as the Custom Missions window plays
+	/// a bundle) writes the pair beside <c>script.dat</c> under the zone number the script plays on, where the simulator looks
+	/// (<see cref="Terrain.TerrainZoneLoader.Load"/>), and a later launch into the same folder of a mission without one removes
+	/// it. Catches the pair written under another number or name, and a stale pair left for the next mission on that number.
+	/// </summary>
+	[Fact]
+	public void ALaunchWritesTheMissionsOwnZoneBesideItsScriptAndALaunchWithoutOneRemovesIt() {
+		if (GameInstall.Locate(null) is not { } root) {
+			return;
+		}
+
+		string directory = Path.Combine(Path.GetTempPath(), "herculan-tests",
+			nameof(ALaunchWritesTheMissionsOwnZoneBesideItsScriptAndALaunchWithoutOneRemovesIt));
+		Directory.CreateDirectory(directory);
+		MissionFileLaunch.ClearHandoff(directory);
+		var shell = GameContent.MountShell(root);
+		var (msn, text) = ShellTrainingLaunch.ReadMission(shell, $"{MissionFileLaunch.MissionFolder}\\TRAIN5.MSN")!.Value;
+		var heights = new byte[128 * 128];
+		new Random(128).NextBytes(heights);
+		var zone = ZoneFiles.Create(heights, 14, 149);
+
+		string? script = MissionFileLaunch.WriteHeld(shell, root, "MINE", msn, text, zone, directory, ownWorld: true,
+			out string? failure);
+
+		Assert.True(script != null, failure);
+		int zoneIndex = ((ScriptDat)new ScriptDatTransformer().Parse(File.ReadAllBytes(script))!).ZoneIndex;
+		string headerPath = Path.Combine(directory, Terrain.TerrainZoneLoader.HeaderFile(zoneIndex));
+		string heightmapPath = Path.Combine(directory, Terrain.TerrainZoneLoader.HeightmapFile(zoneIndex));
+		var written = ZoneFiles.Read(File.ReadAllBytes(headerPath), File.ReadAllBytes(heightmapPath), out failure);
+		Assert.True(written != null, failure);
+		Assert.Equal(heights, written.Heights.ToArray());
+
+		MissionFileLaunch.ClearHandoff(directory);
+		script = MissionFileLaunch.WriteHeld(shell, root, "MINE", msn, text, zone: null, directory, ownWorld: true, out failure);
+
+		Assert.True(script != null, failure);
+		Assert.False(File.Exists(headerPath));
+		Assert.False(File.Exists(heightmapPath));
 	}
 
 	// Header word <word> as the document's row 2 patches it: the supplying record's, else the word's unset value.

@@ -44,7 +44,8 @@ public sealed record CustomMissionImport(string Name, string Destination, byte[]
 /// plays as that career mission, on its stage's theater; and a bundle from the bytes it holds, read
 /// again as it is played, loaded as a mission <c>gam\career.dat</c> does not list
 /// (<see cref="MissionFileLaunch.WriteHeld"/>). A bundle's text is the shell language's, else English, else the first
-/// it holds. Nothing in a bundle is ever extracted to disk.</para>
+/// it holds. Nothing in a bundle is ever extracted to disk; its own zone, like a loose mission's, is written into the
+/// handoff, which the simulator reads it from.</para>
 /// </summary>
 public static class CustomMissions {
 	/// <summary>The extensions a mission's text takes, one per language the shell runs in.</summary>
@@ -204,7 +205,7 @@ public static class CustomMissions {
 			}
 
 			return MissionFileLaunch.WriteHeld(shellContent, installRoot, bundle.Name, bundle.Msn, Text(bundle, shellContent.Language),
-				directory, ownWorld: true, out failure);
+				bundle.Zone, directory, ownWorld: true, out failure);
 		} catch (Exception ex) when (IsLoadFailure(ex)) {
 			failure = ex.Message;
 			return null;

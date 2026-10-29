@@ -2,7 +2,7 @@
 
 Letting a mission designer give a mission its own terrain: a heightmap imported from an image, saved with the mission, shared in its `.hcm` bundle, and played in HERCULAN. Sculpting terrain in the editor's 3D view comes later.
 
-This is a plan, not a record of something built. Steps 1 to 3 are implemented (`ZoneFiles`, `SavedMissions`, `MissionBundle`); the rest are not.
+This is a plan, not a record of something built. Steps 1 to 4 are implemented (`ZoneFiles`, `SavedMissions`, `MissionBundle`, `MissionFileLaunch` and `TerrainZoneLoader`); step 5 is not.
 
 ## What a zone is
 
@@ -11,7 +11,7 @@ A zone is a 16-byte header and an 8-bit heightmap, the same Dynamix bitmap conta
 ## Decisions
 
 - **A custom zone belongs to one mission.** Its files are named for the mission, as its `.ABT` about file is: `<MISSION>.DAT` for the 16-byte header and `<MISSION>.DBA` for the heightmap. A saved mission keeps them beside its `.MSN` in the install's mission folder; a bundle carries them as two more entries under the same names. Neither the editor nor an import ever writes them to the install's `DAT\` and `DBA\` folders: retail reads a zone there ahead of `ZONES.VOL` for every mission ([`../retail/formats/zone-terrain.md`](../retail/formats/zone-terrain.md#loose-zone-files)), so a file there is shared by every mission on that number.
-- **A mission plays with its zone from its handoff.** A custom mission is played from the handoff its launch writes (`MissionFileLaunch.Write` and `WriteHeld`), and a bundle is never extracted (`CustomMissions`). The handoff carries the mission's zone, and the simulator reads a zone from the handoff before the install's and the archives'. Each launch writes its own handoff, so two bundles that both use zone 9909 never meet.
+- **A mission plays with its zone from its handoff.** A custom mission is played from the handoff its launch writes (`MissionFileLaunch.Write` and `WriteHeld`), and a bundle is never extracted (`CustomMissions`). The handoff carries the mission's zone beside its `script.dat`, under the zone's own file names (`zoneNNNN.dat`, `zoneNNNN.dba`) for the number the script plays on, and the simulator reads a zone from the handoff before the install's and the archives'. Each launch writes its own handoff, so two bundles that both use zone 9909 never meet.
 - **The zone number is chosen automatically, from numbers no archive zone has, 0 to 9999.** Collisions between custom zones are harmless under the two decisions above. Keeping clear of the archive's numbers means a custom zone written into the install for a retail launch ([Open](#open)) never replaces a retail zone other missions play on. Numbers up to 9999 keep the 8.3 file names the retail zones have; DBSIM builds a longer name, but a 5-digit zone file has not been loaded in retail.
 - **Grid sizes are the retail ones:** square, 128×128 or 256×256 cells, with the header's width and height shifts written to match the image, though retail reads the size from the image alone.
 - **The first version imports and exports images.** Sculpting is a later stage ([below](#later-sculpting)).

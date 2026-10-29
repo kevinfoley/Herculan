@@ -1,9 +1,12 @@
+using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Data.File.Msn;
+using HercWorks.Core.Data.File.Msn.Script;
 using HercWorks.Core.Data.File.Sav;
 using HercWorks.Core.Io;
 using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Content;
 using Herculan.Engine.Numerics;
+using Herculan.Engine.Terrain;
 using Herculan.Engine.World;
 
 namespace Herculan.Engine.Shell;
@@ -102,22 +105,22 @@ public static class MissionFileLaunch {
 	public static string? OpenNew(GameContent shellContent, string installRoot, string name, byte[] msn, byte[]? text,
 			string directory, SimRandom random, out MissionDocument? document, out MissionSquad? squad, out string? failure) =>
 		Hold(name, random, (SimRandom drawing, MissionGenerating generating, out MissionSquad? piloted, out string? why) =>
-				LoadUnlisted(shellContent, ShellWorkingFiles.DataDirectory(installRoot), $"{MissionFolder}\\{name}{MissionExtension}",
-					msn, text, directory, drawing, new short[MissionGenerator.ClearListLength], generating, ownWorld: false, out piloted,
-					out why),
+				WithZone(LoadUnlisted(shellContent, ShellWorkingFiles.DataDirectory(installRoot),
+					$"{MissionFolder}\\{name}{MissionExtension}", msn, text, directory, drawing,
+					new short[MissionGenerator.ClearListLength], generating, ownWorld: false, out piloted, out why), zone: null, ref why),
 			out document, out squad, out failure);
 
 	/// <summary>
 	/// <see cref="Write(GameContent, string, string, string, bool, out string?)"/> for a mission held in memory, the
 	/// <c>.MSN</c> <paramref name="msn"/> and its text <paramref name="text"/> under the name <paramref name="name"/> (no
 	/// extension), loaded as <c>INSTANT ACTION</c> loads a mission <c>gam\career.dat</c> does not list whatever its name:
-	/// a custom mission's bundle (<see cref="CustomMissions"/>).
+	/// a custom mission's bundle (<see cref="CustomMissions"/>), with its own zone <paramref name="zone"/>, or null.
 	/// </summary>
 	public static string? WriteHeld(GameContent shellContent, string installRoot, string name, byte[] msn, byte[]? text,
-			string directory, bool ownWorld, out string? failure) =>
-		LoadUnlisted(shellContent, ShellWorkingFiles.DataDirectory(installRoot), $"{MissionFolder}\\{name}{MissionExtension}", msn,
-			text, directory, ShellTrainingLaunch.StartupRandom(), new short[MissionGenerator.ClearListLength], generating: null,
-			ownWorld, out _, out failure);
+			ZoneFiles? zone, string directory, bool ownWorld, out string? failure) =>
+		WithZone(LoadUnlisted(shellContent, ShellWorkingFiles.DataDirectory(installRoot), $"{MissionFolder}\\{name}{MissionExtension}",
+			msn, text, directory, ShellTrainingLaunch.StartupRandom(), new short[MissionGenerator.ClearListLength], generating: null,
+			ownWorld, out _, out failure), zone, ref failure);
 
 	/// <summary>
 	/// Removes the handoff a load wrote into <paramref name="directory"/>, since the shell's writer does not truncate
@@ -156,12 +159,54 @@ public static class MissionFileLaunch {
 		return script;
 	}
 
+	// The load of the mission named <name>, with its own zone (CustomMissions.Zone) when it has one; a zone that does not read
+	// fails it before anything is written.
 	private static string? Write(GameContent shellContent, string installRoot, string name, string directory, SimRandom random,
-			MissionGenerating? generating, bool ownWorld, out MissionSquad? squad, out string? failure) =>
-		ShellCampaignLaunch.Find(shellContent, name) is var (stage, mission)
+			MissionGenerating? generating, bool ownWorld, out MissionSquad? squad, out string? failure) {
+		var zone = CustomMissions.Zone(installRoot, Path.GetFileNameWithoutExtension(name), out failure);
+		if (failure != null) {
+			squad = null;
+			return null;
+		}
+
+		string? script = ShellCampaignLaunch.Find(shellContent, name) is var (stage, mission)
 			? WriteAt(shellContent, installRoot, stage, mission, directory, random, generating, ownWorld, out squad, out failure)
 			: WriteUnlisted(shellContent, ShellWorkingFiles.DataDirectory(installRoot), name, directory, random,
 				new short[MissionGenerator.ClearListLength], generating, ownWorld, out squad, out failure);
+		return WithZone(script, zone, ref failure);
+	}
+
+	/// <summary>
+	/// <paramref name="script"/>, a handoff's <c>script.dat</c> or null, once its mission's own zone <paramref name="zone"/> is
+	/// written beside it as the zone its header names (<see cref="TerrainZoneLoader.HeaderFile"/>,
+	/// <see cref="TerrainZoneLoader.HeightmapFile"/>), which the simulator reads ahead of the archives'
+	/// (<see cref="TerrainZoneLoader.Load"/>); a null <paramref name="zone"/> removes such a pair, a stale one from an
+	/// earlier handoff. Null, with the reason in <paramref name="failure"/>, when the files cannot be written. Each launch of
+	/// a mission with a zone of its own writes the pair, so missions sharing a zone number never share a zone; a handoff
+	/// written elsewhere (a career's) leaves a pair alone, and a custom zone's number is one no archive zone has
+	/// (docs/herculan/plan-zone-editing.md#decisions).
+	/// </summary>
+	private static string? WithZone(string? script, ZoneFiles? zone, ref string? failure) {
+		if (script == null) {
+			return null;
+		}
+
+		string directory = Path.GetDirectoryName(script)!;
+		return ShellWorkingFiles.TryWrite(() => {
+				int zoneIndex = new ScriptDat { HeaderBytes = File.ReadAllBytes(script)[..ScriptDat.HeaderSize] }.ZoneIndex;
+				string headerPath = CaseInsensitivePath.Combine(directory, TerrainZoneLoader.HeaderFile(zoneIndex));
+				string heightmapPath = CaseInsensitivePath.Combine(directory, TerrainZoneLoader.HeightmapFile(zoneIndex));
+				if (zone != null) {
+					File.WriteAllBytes(headerPath, zone.WriteHeader());
+					File.WriteAllBytes(heightmapPath, zone.WriteHeightmap());
+				} else {
+					File.Delete(headerPath);
+					File.Delete(heightmapPath);
+				}
+			}, out failure)
+			? script
+			: null;
+	}
 
 	/// <summary>
 	/// The load of the mission at career position (<paramref name="stage"/>, <paramref name="mission"/>), read from the archives;

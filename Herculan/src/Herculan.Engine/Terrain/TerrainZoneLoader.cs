@@ -33,21 +33,38 @@ public static class TerrainZoneLoader {
 	/// </summary>
 	public const byte DefaultHeightBias = 0;
 
+	/// <summary>Zone <paramref name="zoneIndex"/>'s header file name, <c>zoneNNNN.dat</c>, in <see cref="HeaderFolder"/> and a handoff alike.</summary>
+	public static string HeaderFile(int zoneIndex) => $"zone{zoneIndex}.dat";
+
+	/// <summary>Zone <paramref name="zoneIndex"/>'s heightmap file name, <c>zoneNNNN.dba</c>, in <see cref="HeightmapFolder"/> and a handoff alike.</summary>
+	public static string HeightmapFile(int zoneIndex) => $"zone{zoneIndex}.dba";
+
 	/// <summary>
 	/// Loads zone <paramref name="zoneIndex"/> (e.g. 504 for <c>ZONE504</c>) from mounted content.
 	/// <paramref name="materials"/> supplies the shared <c>dat\mat0</c> table, whose first record
 	/// sizes the material-roll block (see <see cref="TerrainMaterial.BlockShift"/>);
 	/// <paramref name="random"/> drives the roll itself.
+	///
+	/// <para>A zone a mission carries of its own (<see cref="ZoneFiles"/>) is read first from
+	/// <paramref name="handoffDirectory"/>, beside the handoff's <c>script.dat</c>, under <see cref="HeaderFile"/> and
+	/// <see cref="HeightmapFile"/>, and checked as <see cref="ZoneFiles.Read"/> checks it; a pair there that does not read,
+	/// or half of one, is an <see cref="InvalidDataException"/>. Retail reads no zone from its handoff; this lookup is this
+	/// engine's, and the handoff writer is <see cref="Shell.MissionFileLaunch"/>.</para>
 	/// </summary>
 	/// <param name="detailLevel">
 	/// The terrain-detail setting the zone's draw radius comes from — see <see cref="TerrainDetail"/>.
 	/// </param>
 	public static HeightGrid Load(GameContent content, int zoneIndex, TerrainMaterialTable materials,
 			SimRandom random, byte heightBias = DefaultHeightBias,
-			int detailLevel = TerrainDetail.DefaultLevel) {
+			int detailLevel = TerrainDetail.DefaultLevel, string? handoffDirectory = null) {
+		if (ReadHandoffZone(handoffDirectory, zoneIndex) is { } own) {
+			return PopulateFromBitmap(own.Heightmap(), own.CellSizeShift, own.HeightScale, materials, random, heightBias,
+				detailLevel);
+		}
+
 		string baseName = $"zone{zoneIndex}";
 
-		byte[] bytes = content.ReadRequired(HeaderFolder, baseName + ".dat");
+		byte[] bytes = content.ReadRequired(HeaderFolder, HeaderFile(zoneIndex));
 		var header = new ZoneDatTransformer().Parse(bytes)
 			?? throw new InvalidDataException(
 				$"{HeaderFolder}\\{baseName}.dat is {bytes.Length} bytes; the zone header is {ZoneDatTransformer.Size}.");
@@ -64,6 +81,29 @@ public static class TerrainZoneLoader {
 			detailLevel);
 	}
 
+	// The zone <directory> holds for <zoneIndex>, or null when it holds neither file or there is no directory.
+	private static ZoneFiles? ReadHandoffZone(string? directory, int zoneIndex) {
+		if (string.IsNullOrEmpty(directory)) {
+			return null;
+		}
+
+		string headerPath = Path.Combine(directory, HeaderFile(zoneIndex));
+		string heightmapPath = Path.Combine(directory, HeightmapFile(zoneIndex));
+		bool hasHeader = File.Exists(headerPath);
+		if (hasHeader != File.Exists(heightmapPath)) {
+			throw new InvalidDataException(
+				$"The handoff in {directory} holds {Path.GetFileName(hasHeader ? headerPath : heightmapPath)} without "
+				+ $"{Path.GetFileName(hasHeader ? heightmapPath : headerPath)}.");
+		}
+
+		if (!hasHeader) {
+			return null;
+		}
+
+		return ZoneFiles.Read(File.ReadAllBytes(headerPath), File.ReadAllBytes(heightmapPath), out string? failure)
+			?? throw new InvalidDataException($"{HeaderFile(zoneIndex)} and {HeightmapFile(zoneIndex)} in {directory}: {failure}");
+	}
+
 	/// <summary>
 	/// Opens <c>dba\zoneNNNN.dba</c> and returns its single image. In the original this goes
 	/// through the generic <c>ClassItem_LoadResource</c> registry dispatch — the same polymorphic
@@ -73,7 +113,7 @@ public static class TerrainZoneLoader {
 	/// </summary>
 	public static DynamixBitmap ReadHeightmapImage(GameContent content, int zoneIndex) {
 		string baseName = $"zone{zoneIndex}";
-		byte[] bytes = content.ReadRequired(HeightmapFolder, baseName + ".dba");
+		byte[] bytes = content.ReadRequired(HeightmapFolder, HeightmapFile(zoneIndex));
 
 		var array = new DynamixBitmapArrayTransformer().Parse(bytes) as DynamixBitmapArray
 			?? throw new InvalidDataException($"{HeightmapFolder}\\{baseName}.dba is not a DynamixBitmapArray.");

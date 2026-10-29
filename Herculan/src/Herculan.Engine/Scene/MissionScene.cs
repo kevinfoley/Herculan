@@ -338,7 +338,7 @@ public sealed class MissionScene {
 		// nothing to read.
 		int detail = TerrainDetail.LevelFrom(detailDirectory);
 		var terrain = TerrainZoneLoader.Load(content, mission.Header.ZoneIndex, materials, random,
-			detailLevel: detail);
+			detailLevel: detail, handoffDirectory: Path.GetDirectoryName(mission.SourcePath));
 
 		// The travelling-projectile table, loaded once at startup as Bullet_LoadResources (0040ade0) loads it, and given
 		// to the world because a shot in flight is simulation state before it is anything visual.
