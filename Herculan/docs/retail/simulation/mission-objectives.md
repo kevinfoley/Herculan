@@ -20,7 +20,7 @@ An objective is **one condition asked of one subject**, plus what satisfying it 
 | `+0x24`/`+0x38` | ten mission-counter refs and ten operations |
 | `+0x22` | runtime: the counters have been applied |
 
-**The counter operation codes are not the action layer's.** Here 4 sets, 5 clears, 6 increments and 7 decrements; `Action_Activate` knows only 5 and 6 and reads them as clear and increment, so the two layers disagree on 6 with nothing to warn a reader. A slot is skipped unless **both** its ref and its operation are non-negative. The array is [`mission-deployment.md`](mission-deployment.md#the-mission-counters--dat_004a9ef4)'s.
+**The objective layer has four counter operations, the action layer two.** Here 4 sets, 5 clears, 6 increments and 7 decrements; `Action_Activate` knows only 5 and 6, with the same meanings, so an action given 4 or 7 leaves its counter alone. A slot is skipped unless **both** its ref and its operation are non-negative. The array is [`mission-deployment.md`](mission-deployment.md#the-mission-counters--dat_004a9ef4)'s.
 
 The counters are applied the first time the condition holds and never again; the latch is not "the objective is met", which is re-read every poll.
 

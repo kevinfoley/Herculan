@@ -51,10 +51,9 @@ public sealed class MissionObjectiveState {
 	/// The counter walk the evaluator runs the first time the condition holds — ten (ref, operation)
 	/// pairs, a slot with a negative ref or a negative operation skipped whole.
 	///
-	/// <para><b>The operation codes are the objective layer's, not the action layer's</b>: 4 sets,
-	/// 5 clears, 6 increments and 7 decrements, where <c>Action_Activate</c> knows only 5 and 6 and
-	/// reads them as clear and increment. The two overlap on 5 and disagree on 6 with nothing to
-	/// warn a reader. See <see cref="MissionActionState.Activate"/>.</para>
+	/// <para><b>The objective layer has four operation codes</b>: 4 sets, 5 clears, 6 increments and
+	/// 7 decrements. <c>Action_Activate</c> shares 5 and 6 with the same meanings and has no 4 or 7;
+	/// see <see cref="MissionActionState.Activate"/>.</para>
 	/// </summary>
 	internal void ApplyCounters(SimWorld world) {
 		if (CountersApplied) {
