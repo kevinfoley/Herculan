@@ -82,7 +82,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Arena_Alloc",
-      "description": "(arena, size) in stack order, callee-cleaned: bump-allocates from an arena {base +0, limit +4, cursor +8}: when arena is non-null and cursor + size is at most the limit it returns base + cursor and advances the cursor by size; otherwise it returns operator_new(size); the same statements as ES1DBSIM's Arena_Alloc (000552f8) in different code.",
+      "description": "(arena, size) in stack order, callee-cleaned: bump-allocates from an arena {base +0, limit +4, cursor +8}: when arena is non-null and cursor + size is at most the limit it returns base + cursor and advances the cursor by size; otherwise it returns Mem_New(size); the same statements as ES1DBSIM's Arena_Alloc (000552f8) in different code.",
       "source": "ES1GO decompile at 000007f0",
       "verified": {
         "bytes": "000007f0+83",
@@ -216,9 +216,9 @@
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "Heap_Ctor",
-      "description": "(this), callee-cleaned: the heap object's constructor. With a null this it allocates 0x10 bytes through operator_new and returns 0 if that fails. Stores the address 000aa24a at 000aa24a. Returns the global heap 0009a308 untouched; any other heap gets its four dwords zeroed.",
-      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "name": "Memory_Ctor",
+      "description": "(this), its argument removed by this function: ES2's Memory_Ctor (DBSIM 00476ccc). With a null this it allocates 0x10 bytes through Mem_New (000019f0) and returns 0 if that fails. Stores the address of X32_FreeListHead (000aa24a) into it, then returns g_ShellPool (0009a308) as it is or zeroes any other heap's four dwords. Returns this. Its one call found by es2_xref is from Mem_StaticInit (00001b5c).",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-two-programs; ES1GO decompile at 00000ef4",
       "verified": {
         "bytes": "00000ef4+81",
         "sha1": "224144e495aa",
@@ -231,9 +231,9 @@
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "Heap_Init",
-      "description": "(heap, block, size), callee-cleaned: ES1DBSIM's Heap_Init without the low mark: +0 base, +4 the size as given, +8 the free list (the block, its link zeroed), +0xc and the block's own size the size rounded down to a multiple of 8, and FBLK at the block's +8.",
-      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "name": "Memory_Init",
+      "description": "(heap, block, size) in stack order, its arguments removed by this function: ES2's Memory_Init (DBSIM 00476ce8) without the low mark (+0x10), tagging the block FBLK (0x4b4c4246) where ES2's tags KLBF.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-two-programs; ES1GO decompile at 00000f45",
       "verified": {
         "bytes": "00000f45+82",
         "sha1": "ba520b4dac0f",
@@ -246,9 +246,9 @@
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "Heap_IsAllocated",
-      "description": "(heap, payload): 1 when the payload lies from the heap's base to its end (+0 + +4) and its header (payload - 8) holds ABLK, else 0.",
-      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "name": "Memory_IsAllocatedBlock",
+      "description": "(heap, payload), its arguments removed by this function: ES2's Memory_IsAllocatedBlock (DBSIM 00476d20), testing the header for ABLK (0x4b4c4241) where ES2's tests KLBA. Its one call found by es2_xref is from Memory_CheckOverrun (00001028).",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-two-programs; ES1GO decompile at 00000f97",
       "verified": {
         "bytes": "00000f97+66",
         "sha1": "9fcdb9e57848",
@@ -261,9 +261,9 @@
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "Heap_IsBlock",
-      "description": "(heap, block header): ES1DBSIM's Heap_IsBlock. 1 when the address lies from the heap's base to 0x10 bytes before its end and carries FBLK at +8 or ABLK at +0, else 0.",
-      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "name": "Memory_IsBlockHeader",
+      "description": "(heap, block header), its arguments removed by this function: ES2's Memory_IsBlockHeader (DBSIM 00476d50), testing for FBLK (0x4b4c4246) at +8 or ABLK (0x4b4c4241) at +0 where ES2's tests KLBF and KLBA.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-two-programs; ES1GO decompile at 00000fd9",
       "verified": {
         "bytes": "00000fd9+79",
         "sha1": "ed0223f51ff8",
@@ -276,14 +276,14 @@
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "Heap_IsValidAllocation",
-      "description": "(heap, payload): 0 unless Heap_IsAllocated. Then 1 when the block's end (header + size) equals the heap's base plus 8 times the dword at +4, which Heap_Init sets to the size in bytes; otherwise Heap_IsBlock on the block's own header.",
-      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "name": "Memory_CheckOverrun",
+      "description": "(heap, payload), its arguments removed by this function: ES2's Memory_CheckOverrun (DBSIM 00476d8c), with its fault (Herculan/docs/retail/runtime-library.md#the-overrun-check-checks-nothing): 0 when Memory_IsAllocatedBlock (00000f97) fails; 1 when the block ends at the heap's base plus 8 times its byte size (+4); otherwise Memory_IsBlockHeader (00000fd9) of the block's own header. No branch or stored pointer to it found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-two-programs; ES1GO decompile at 00001028",
       "verified": {
         "bytes": "00001028+105",
         "sha1": "fa240881d02a",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -291,9 +291,9 @@
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "Heap_LargestFree",
-      "description": "(heap): the largest size on the free list less the 8-byte header. Reads the list's head without testing it for null.",
-      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "name": "Memory_LargestFreeBlock",
+      "description": "(heap), its argument removed by this function: ES2's Memory_LargestFreeBlock (DBSIM 00476dd0), answering the largest size on the free list (+8) less the 8-byte header where ES2's subtracts 0x6c and clamps at 0. Like ES2's, it reads the list's head without testing it for null. No branch or stored pointer to it found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-two-programs; ES1GO decompile at 00001091",
       "verified": {
         "bytes": "00001091+72",
         "sha1": "40f628f7d750",
@@ -306,9 +306,9 @@
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "Heap_Alloc",
-      "description": "(heap, size), callee-cleaned: ES1DBSIM's Heap_Alloc without the trackLow argument and the low mark. First fit on (size + 8) rounded up to 8: an exact block is unlinked, one more than 0x10 bytes larger is split with the tail left free (FBLK); tags the block ABLK, zero-fills the payload, takes the size off +0xc and returns the payload. 0 for size 0 or when nothing fits.",
-      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "name": "Memory_Alloc",
+      "description": "(heap, size) in stack order, its arguments removed by this function: ES2's Memory_Alloc (DBSIM 00476e00) without trackLow and the low mark, tagging the block ABLK (0x4b4c4241) and a split-off tail FBLK (0x4b4c4246) where ES2's use KLBA and KLBF.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-two-programs; ES1GO decompile at 000010d9",
       "verified": {
         "bytes": "000010d9+378",
         "sha1": "a12ccfe73411",
@@ -321,9 +321,9 @@
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "Heap_Free",
-      "description": "(heap, payload), callee-cleaned: ES1DBSIM's Heap_Free. Nothing for null; otherwise adds the size back to +0xc, tags the block FBLK, inserts it into the free list in address order and merges it with touching free neighbours.",
-      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "name": "Memory_Free",
+      "description": "(heap, payload), its arguments removed by this function: ES2's Memory_Free (DBSIM 00476f00), tagging the block FBLK (0x4b4c4246) where ES2's tags KLBF.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-two-programs; ES1GO decompile at 00001253",
       "verified": {
         "bytes": "00001253+333",
         "sha1": "3910e6144fac",
@@ -336,9 +336,9 @@
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "Heap_Realloc",
-      "description": "(heap, size, payload), callee-cleaned: ES1DBSIM's Heap_Realloc with its branches inverted and returning early, and without the low mark. Size 0 frees; a smaller size gives the tail to a following free block, frees it as its own block when over 0x10 bytes, or moves the data; a larger size takes it from a following free block that has room, or moves the data. Calls Heap_IsBlock, Heap_FindPrevFree, Heap_Alloc, Heap_Free and memmove.",
-      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "name": "Memory_Realloc",
+      "description": "(heap, size, payload) in stack order, its arguments removed by this function: ES2's Memory_Realloc (DBSIM 00476f9c) without the low mark, moving the data with memmove where ES2's uses memcpy, and testing for ABLK (0x4b4c4241) and writing FBLK (0x4b4c4246) where ES2's use KLBA and KLBF. The in-place cases come first and return at once, to the same effect as ES1DBSIM's order.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-two-programs; ES1GO decompile at 000013a0",
       "verified": {
         "bytes": "000013a0+793",
         "sha1": "7ce72d71c281",
@@ -351,9 +351,9 @@
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "Heap_DrawMap",
-      "description": "(heap, rows, columns, top, left), callee-cleaned (RET 0x14): divides the heap's +4 size into rows x columns equal shares and walks the global heap 0009a308's blocks with HeapIter_Init and HeapIter_Next, working out for each cell the share of its bytes in ABLK blocks. Each cell is passed to Mono_Printf (0004f904) with left + column, top + row, 0007d7b0 and a character by that share: 7 for none, 0xb1 below 50%, 0xb2 below 100% and 0xdb for all.",
-      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "name": "Memory_DrawUsageMap",
+      "description": "(heap, rows, columns, top, left) in stack order, its arguments removed by this function (RET 0x14): ES2's Memory_DrawUsageMap (DBSIM 004771b4). Shares out the byte size (+4) of the heap it is passed, walks g_ShellPool (0009a308) with Memory_BlockIterBegin (000018d1) and Memory_BlockIterNext (0000190b), and prints each cell with Mono_Printf (0004f904)(left + column, top + row, 0007d7b0, character). No branch or stored pointer to it found by es2_xref but a chance dword at 0004a223, the operand of a MOV ECX, 0x16 inside TtmScript_RunDrawCommand.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-two-programs; ES1GO decompile at 000016b9",
       "verified": {
         "bytes": "000016b9+466",
         "sha1": "32558f8bd2fd",
@@ -366,9 +366,9 @@
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "Heap_FindPrevFree",
-      "description": "(heap, block): ES1DBSIM's Heap_FindPrevFree. The free block whose link is the given block; 0 when it heads the list or the walk ends.",
-      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "name": "Memory_PrevLinkedHeader",
+      "description": "(heap, block), its arguments removed by this function: ES2's Memory_PrevLinkedHeader (DBSIM 004772e8).",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-two-programs; ES1GO decompile at 0000188b",
       "verified": {
         "bytes": "0000188b+70",
         "sha1": "282197081dfb",
@@ -381,9 +381,9 @@
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "HeapIter_Init",
-      "description": "(this, heap), callee-cleaned: a two-dword heap walker. With a null this it allocates 8 bytes through operator_new and returns 0 if that fails. Stores the heap at +0 and the heap's base, its first block, at +4.",
-      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "name": "Memory_BlockIterBegin",
+      "description": "(walker, heap), its arguments removed by this function: ES2's Memory_BlockIterBegin (DBSIM 00477310). With a null walker it allocates 8 bytes through Mem_New (000019f0) and returns 0 if that fails. Returns the walker.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-two-programs; ES1GO decompile at 000018d1",
       "verified": {
         "bytes": "000018d1+58",
         "sha1": "ecc39637f7cd",
@@ -396,9 +396,9 @@
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "HeapIter_Next",
-      "description": "(walker), callee-cleaned: returns 0 when the walker's block (+4) is 0. Otherwise steps +4 on by the block's size, sets it to 0 when that reaches the heap's base plus size, and returns the new +4.",
-      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "name": "Memory_BlockIterNext",
+      "description": "(walker), its argument removed by this function: ES2's Memory_BlockIterNext (DBSIM 00477324).",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-two-programs; ES1GO decompile at 0000190b",
       "verified": {
         "bytes": "0000190b+84",
         "sha1": "c4cf289a36f0",
@@ -412,7 +412,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mem_InitHeap",
-      "description": "(size): ES1DBSIM's Mem_InitHeap with the cap at X32_LargestFreeBlock() - 15000: takes the block from X32_AllocMemory, asserting 'Memory alloc failed' (src\\memory.cpp line 494, severity 5) through Assert_Report when that returns -1, makes it the heap 0009a308 (Heap_Init) and sets 0007d7b4.",
+      "description": "(size): ES1DBSIM's Mem_InitHeap with the cap at X32_LargestFreeBlock() - 15000: takes the block from X32_AllocMemory, asserting 'Memory alloc failed' (src\\memory.cpp line 494, severity 5) through Assert_Report when that returns -1, makes it the heap g_ShellPool (0009a308) (Memory_Init) and sets Mem_UseHeap (0007d7b4).",
       "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
       "verified": {
         "bytes": "0000195f+130",
@@ -427,7 +427,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mem_HeapOff",
-      "description": "Clears 0007d7b4, after which operator new and malloc take memory from X32_AllocMemory and the frees do nothing.",
+      "description": "Clears Mem_UseHeap (0007d7b4), after which operator new and malloc take memory from X32_AllocMemory and the frees do nothing.",
       "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
       "verified": {
         "bytes": "000019e1+15",
@@ -441,24 +441,24 @@
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "operator_new",
-      "description": "The program's operator new (size), callee-cleaned (RET 4): Heap_Alloc(0009a308, size) while 0007d7b4 is set, otherwise X32_AllocMemory(size) with -1 returned as 0.",
-      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "name": "Mem_New",
+      "description": "The global operator new (size), its argument removed by this function (RET 4): ES2's Mem_New (DBSIM 00477390) with a switch in place of its size test. Memory_Alloc(g_ShellPool (0009a308), size) while Mem_UseHeap (0007d7b4) is set, otherwise X32_AllocMemory (000001d7)(size) with -1 returned as 0; the extender's block is returned as the extender gives it, where ES2's Mem_New clears every block it returns.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-two-programs; ES1GO decompile at 000019f0",
       "verified": {
         "bytes": "000019f0+60",
         "sha1": "5acef9b789b9",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
       "address": "00001a2c",
       "binary": "ES1GO",
       "type": "function",
-      "confidence": "high",
-      "name": "Mem_AllocFromHeap",
-      "description": "(heap, size), callee-cleaned (RET 8): Heap_Alloc(heap, size) on the heap it is given.",
-      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "confidence": "medium",
+      "name": "maybe_Memory_OperatorNew",
+      "description": "(heap, size) in stack order, its arguments removed by this function (RET 8): ES2's maybe_Memory_OperatorNew (DBSIM 00477358): Memory_Alloc(heap, size). The name assumes a class operator new(size_t, Memory*). No branch or stored pointer to it found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-two-programs; ES1GO decompile at 00001a2c",
       "verified": {
         "bytes": "00001a2c+24",
         "sha1": "533ab51c837e",
@@ -471,14 +471,14 @@
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "operator_delete",
-      "description": "The program's operator delete (pointer), callee-cleaned (RET 4): Heap_Free(0009a308, pointer) while 0007d7b4 is set, otherwise nothing.",
-      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "name": "Mem_Delete",
+      "description": "The global operator delete (pointer), its argument removed by this function (RET 4): ES2's Mem_Delete (DBSIM 0047743c) with a switch in place of its pool test. Memory_Free(g_ShellPool (0009a308), pointer) while Mem_UseHeap (0007d7b4) is set, otherwise a return.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-two-programs; ES1GO decompile at 00001a44",
       "verified": {
         "bytes": "00001a44+32",
         "sha1": "7d997e3bcffb",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -487,7 +487,7 @@
       "type": "function",
       "confidence": "high",
       "name": "malloc",
-      "description": "The program's malloc (size), C convention: operator_new's body, returning with a plain RET.",
+      "description": "The program's malloc (size), C convention: Mem_New's body, returning with a plain RET.",
       "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
       "verified": {
         "bytes": "00001a64+56",
@@ -502,7 +502,7 @@
       "type": "function",
       "confidence": "high",
       "name": "free",
-      "description": "The program's free (pointer), C convention: operator_delete's body, returning with a plain RET.",
+      "description": "The program's free (pointer), C convention: Mem_Delete's body, returning with a plain RET.",
       "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
       "verified": {
         "bytes": "00001a9c+30",
@@ -517,7 +517,7 @@
       "type": "function",
       "confidence": "high",
       "name": "realloc",
-      "description": "The program's realloc (pointer, size), C convention: Heap_Realloc(0009a308, size, pointer), whether or not 0007d7b4 is set.",
+      "description": "The program's realloc (pointer, size), C convention: Memory_Realloc(g_ShellPool (0009a308), size, pointer), whether or not Mem_UseHeap (0007d7b4) is set.",
       "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
       "verified": {
         "bytes": "00001aba+27",
@@ -532,7 +532,7 @@
       "type": "function",
       "confidence": "high",
       "name": "calloc",
-      "description": "The program's calloc (count, size), C convention: ES1DBSIM's calloc over the heap 0009a308 and flag 0007d7b4. Clears the block over the size in the header before it, which a block from X32_AllocMemory does not have.",
+      "description": "The program's calloc (count, size), C convention: ES1DBSIM's calloc over the heap g_ShellPool (0009a308) and flag Mem_UseHeap (0007d7b4). Clears the block over the size in the header before it, which a block from X32_AllocMemory does not have.",
       "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
       "verified": {
         "bytes": "00001ad5+135",
@@ -546,9 +546,9 @@
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "Mem_ConstructHeap",
-      "description": "No arguments, C convention: Heap_Ctor(0009a308), the global heap.",
-      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "name": "Mem_StaticInit",
+      "description": "No arguments, C convention: the static constructor table's bottom entry 0009a218, which Runtime_RunStaticCtors (0004df02) runs last: Memory_Ctor (00000ef4)(g_ShellPool (0009a308)). ES2's Mem_StaticInit (DBSIM 004774c4).",
+      "source": "Herculan/docs/es1/simulation/memory.md#who-makes-the-heap; ES1GO decompile at 00001b5c",
       "verified": {
         "bytes": "00001b5c+15",
         "sha1": "444049536e63",
@@ -847,7 +847,7 @@
       "type": "function",
       "confidence": "high",
       "name": "BarGraphH_Ctor",
-      "description": "(bar, range, rect) in stack order, callee-cleaned: allocates 0x2c bytes with operator_new when bar is null (returning null when that fails), runs BarGraph_Ctor (00003d7c)(bar, rect), stores BarGraphHVtable (0007dc30) at +0x28 and sets the span +0x10 = (x1 - x0) * 0x10000 / range, the start +0x14 = x0, the end +0x18 = x1 and the fill position +0x1c = the end when the span is below 1, else the start. es2_xref finds calls from LedBarGraph_Ctor (0000472a) and LedBmBarGraphH_Ctor (00005331). The same statements as ES1DBSIM's BarGraphH_Ctor (00031740) in different code.",
+      "description": "(bar, range, rect) in stack order, callee-cleaned: allocates 0x2c bytes with Mem_New when bar is null (returning null when that fails), runs BarGraph_Ctor (00003d7c)(bar, rect), stores BarGraphHVtable (0007dc30) at +0x28 and sets the span +0x10 = (x1 - x0) * 0x10000 / range, the start +0x14 = x0, the end +0x18 = x1 and the fill position +0x1c = the end when the span is below 1, else the start. es2_xref finds calls from LedBarGraph_Ctor (0000472a) and LedBmBarGraphH_Ctor (00005331). The same statements as ES1DBSIM's BarGraphH_Ctor (00031740) in different code.",
       "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 00031740 ES1GO 00003dfa",
       "verified": {
         "bytes": "00003dfa+134",
@@ -967,7 +967,7 @@
       "type": "function",
       "confidence": "high",
       "name": "LedBarGraph_Ctor",
-      "description": "(bar, range, rect) in stack order, callee-cleaned: allocates 0x34 bytes with operator_new when bar is null (returning null when that fails), runs BarGraphH_Ctor (00003dfa)(bar, range, rect) and stores LEDBarGraphHVtable (0007dc74) at +0x28. es2_xref finds one call, from 0000395e. The same statements as ES1DBSIM's LedBarGraph_Ctor (00031e28) in different code.",
+      "description": "(bar, range, rect) in stack order, callee-cleaned: allocates 0x34 bytes with Mem_New when bar is null (returning null when that fails), runs BarGraphH_Ctor (00003dfa)(bar, range, rect) and stores LEDBarGraphHVtable (0007dc74) at +0x28. es2_xref finds one call, from 0000395e. The same statements as ES1DBSIM's LedBarGraph_Ctor (00031e28) in different code.",
       "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 00031e28 ES1GO 0000472a",
       "verified": {
         "bytes": "0000472a+67",
@@ -1027,7 +1027,7 @@
       "type": "function",
       "confidence": "high",
       "name": "LEDBarGraphV_Ctor",
-      "description": "(bar, range, rect) in stack order, callee-cleaned: allocates 0x3c bytes with operator_new when bar is null (returning null when that fails), runs BarGraphV_Ctor (00004272)(bar, range, rect) and stores LEDBarGraphVVtable (0007dc98) at +0x28. No reference found by es2_xref. The same statements as ES1DBSIM's LEDBarGraphV_Ctor (0003216c) in different code.",
+      "description": "(bar, range, rect) in stack order, callee-cleaned: allocates 0x3c bytes with Mem_New when bar is null (returning null when that fails), runs BarGraphV_Ctor (00004272)(bar, range, rect) and stores LEDBarGraphVVtable (0007dc98) at +0x28. No reference found by es2_xref. The same statements as ES1DBSIM's LEDBarGraphV_Ctor (0003216c) in different code.",
       "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 0003216c ES1GO 00004d04",
       "verified": {
         "bytes": "00004d04+67",
@@ -1087,7 +1087,7 @@
       "type": "function",
       "confidence": "high",
       "name": "LedBmBarGraphH_Ctor",
-      "description": "(bar, unlit, lit, range, rect) in stack order, callee-cleaned: allocates 0x68 bytes when bar is null (returning null when that fails), runs BarGraphH_Ctor (00003dfa)(bar, range, rect), builds the two GLRectangleRegions at +0x2c and +0x44 (the file's vtable copies ending with 0007dd4c at +0, the dword +4 zeroed), stores LEDBMBarGraphHVtable (0007dd82) at +0x28, lit at +0x60 and unlit at +0x64, and allocates unlit's width (int16 +6) times its height (int16 +4) plus 0x20 bytes at +0x5c with operator_new. No reference found by es2_xref. The same statements as ES1DBSIM's LedBmBarGraphH_Ctor (000324e4) in different code.",
+      "description": "(bar, unlit, lit, range, rect) in stack order, callee-cleaned: allocates 0x68 bytes when bar is null (returning null when that fails), runs BarGraphH_Ctor (00003dfa)(bar, range, rect), builds the two GLRectangleRegions at +0x2c and +0x44 (the file's vtable copies ending with 0007dd4c at +0, the dword +4 zeroed), stores LEDBMBarGraphHVtable (0007dd82) at +0x28, lit at +0x60 and unlit at +0x64, and allocates unlit's width (int16 +6) times its height (int16 +4) plus 0x20 bytes at +0x5c with Mem_New. No reference found by es2_xref. The same statements as ES1DBSIM's LedBmBarGraphH_Ctor (000324e4) in different code.",
       "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 000324e4 ES1GO 00005331",
       "verified": {
         "bytes": "00005331+559",
@@ -1102,7 +1102,7 @@
       "type": "function",
       "confidence": "high",
       "name": "GLBase_DtorBarGraphsCopy",
-      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 0007dce2, the shell bar graph code's copy of GLBase's vtable: with the object non-null stores 0007dce2 at +0 and deletes the object with operator_delete when bit 0 of flags is set. The same statements as ES1DBSIM's GLBase_DtorBarGraphsCopy (000326e8) in different code.",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 0007dce2, the shell bar graph code's copy of GLBase's vtable: with the object non-null stores 0007dce2 at +0 and deletes the object with Mem_Delete when bit 0 of flags is set. The same statements as ES1DBSIM's GLBase_DtorBarGraphsCopy (000326e8) in different code.",
       "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 000326e8 ES1GO 00005560",
       "verified": {
         "bytes": "00005560+44",
@@ -1117,7 +1117,7 @@
       "type": "function",
       "confidence": "high",
       "name": "GLRegion_DtorBarGraphsCopy",
-      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 0007dd14, the copy of GLRegion's vtable: with the object non-null stores 0007dd14 and then 0007dce2 at +0 and deletes the object with operator_delete when bit 0 of flags is set. The same statements as ES1DBSIM's GLRegion_DtorBarGraphsCopy (0003270c) in different code.",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 0007dd14, the copy of GLRegion's vtable: with the object non-null stores 0007dd14 and then 0007dce2 at +0 and deletes the object with Mem_Delete when bit 0 of flags is set. The same statements as ES1DBSIM's GLRegion_DtorBarGraphsCopy (0003270c) in different code.",
       "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 0003270c ES1GO 0000558c",
       "verified": {
         "bytes": "0000558c+73",
@@ -1132,7 +1132,7 @@
       "type": "function",
       "confidence": "high",
       "name": "GLRectangleRegion_DtorBarGraphsCopy",
-      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 0007dd4c, the copy of GLRectangleRegion's vtable: with the object non-null stores 0007dd4c, 0007dd14 and 0007dce2 in turn at +0 and deletes the object with operator_delete when bit 0 of flags is set. The same statements as ES1DBSIM's GLRectangleRegion_DtorBarGraphsCopy (00032734) in different code.",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 0007dd4c, the copy of GLRectangleRegion's vtable: with the object non-null stores 0007dd4c, 0007dd14 and 0007dce2 in turn at +0 and deletes the object with Mem_Delete when bit 0 of flags is set. The same statements as ES1DBSIM's GLRectangleRegion_DtorBarGraphsCopy (00032734) in different code.",
       "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 00032734 ES1GO 000055d5",
       "verified": {
         "bytes": "000055d5+107",
@@ -1627,7 +1627,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Label_Ctor",
-      "description": "(label, font), callee-cleaned: a 0x20-byte HUD text label. Allocates it with operator_new when label is null (returning null when that fails), zeroes the 0x20 bytes and stores font at +0. The rest of the layout, from Label_SetRect and Label_SetText: the rect at +4..+0x13, the text anchor's x at +0x14 and y at +0x16 (int16), the alignment flags at +0x18 and the fill colour at +0x1c; the same statements as ES1DBSIM's Label_Ctor (00030f44) in different code.",
+      "description": "(label, font), callee-cleaned: a 0x20-byte HUD text label. Allocates it with Mem_New when label is null (returning null when that fails), zeroes the 0x20 bytes and stores font at +0. The rest of the layout, from Label_SetRect and Label_SetText: the rect at +4..+0x13, the text anchor's x at +0x14 and y at +0x16 (int16), the alignment flags at +0x18 and the fill colour at +0x1c; the same statements as ES1DBSIM's Label_Ctor (00030f44) in different code.",
       "source": "ES1GO decompile at 0000fd20",
       "verified": {
         "bytes": "0000fd20+166",
@@ -1702,7 +1702,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Label_CtorWithAltFont",
-      "description": "(label, font) in stack order, callee-cleaned: allocates 0x24 bytes with operator_new when label is null (returning null when that fails), runs Label_Ctor(label, font) and stores font again at +0x20, the hotkey font Label_SetTextWithHotkey draws its one character in. ES2's Label_CtorWithAltFont (DBSIM 00438a70), whose label has the hotkey font at +0x21. No reference found by es2_xref; the same statements as ES1DBSIM's Label_CtorWithAltFont (00031250) in different code.",
+      "description": "(label, font) in stack order, callee-cleaned: allocates 0x24 bytes with Mem_New when label is null (returning null when that fails), runs Label_Ctor(label, font) and stores font again at +0x20, the hotkey font Label_SetTextWithHotkey draws its one character in. ES2's Label_CtorWithAltFont (DBSIM 00438a70), whose label has the hotkey font at +0x21. No reference found by es2_xref; the same statements as ES1DBSIM's Label_CtorWithAltFont (00031250) in different code.",
       "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#labels",
       "verified": {
         "bytes": "00010103+61",
@@ -3052,7 +3052,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Text_LoadDataFile",
-      "description": "(table, stream) in stack order, callee-cleaned: reads the int32 count into +8 and the int32 pool size into +0xc, allocates count * 2 bytes at +0 and the pool size at +4 with operator_new, reads the offsets and the pool into them through the stream's read slot (+0x1c), and returns 1 when the stream status (+0) is 0, else 0. VSHELL's Text_LoadDataFile (0040828a), without its assert on a stream error.",
+      "description": "(table, stream) in stack order, callee-cleaned: reads the int32 count into +8 and the int32 pool size into +0xc, allocates count * 2 bytes at +0 and the pool size at +4 with Mem_New, reads the offsets and the pool into them through the stream's read slot (+0x1c), and returns 1 when the stream status (+0) is 0, else 0. VSHELL's Text_LoadDataFile (0040828a), without its assert on a stream error.",
       "source": "es2_naming.py diff ES1GO 00018755 VSHELL 0040828a; Herculan/docs/es1/formats/bin-string-tables.md#the-table",
       "verified": {
         "bytes": "00018755+206",
@@ -3817,7 +3817,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HercLayout_RecordCtor",
-      "description": "(record), callee-cleaned: the vector constructor of a 0x14-byte mount picture record; allocates 0x14 bytes with operator_new (000019f0) when given null, returning null when that fails; the constructors of its two point members (+4 and +0xc) store nothing.",
+      "description": "(record), callee-cleaned: the vector constructor of a 0x14-byte mount picture record; allocates 0x14 bytes with Mem_New (000019f0) when given null, returning null when that fails; the constructors of its two point members (+4 and +0xc) store nothing.",
       "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-pictures",
       "verified": {
         "bytes": "00021f71+75",
@@ -3832,7 +3832,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HercLayout_Free",
-      "description": "(), C convention: for chassis 0-7 deletes each mount's record array (__vec_delete (0005547c), 0x14-byte records, no destructor) for the word count at 000aae0e + 6 * chassis, then frees the mount array in the dword 000aae0a + 6 * chassis with operator_delete (00001a44). es2_xref finds one call, from 00020ae3.",
+      "description": "(), C convention: for chassis 0-7 deletes each mount's record array (__vec_delete (0005547c), 0x14-byte records, no destructor) for the word count at 000aae0e + 6 * chassis, then frees the mount array in the dword 000aae0a + 6 * chassis with Mem_Delete (00001a44). es2_xref finds one call, from 00020ae3.",
       "source": "Herculan/docs/es1/formats/herc-diagrams.md",
       "verified": {
         "bytes": "00021fbc+104",
@@ -3922,7 +3922,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HercDamageMarks_MarkCtor",
-      "description": "(mark), callee-cleaned: the vector constructor of a 10-byte damage mark; allocates 10 bytes with operator_new (000019f0) when given null, returning null when that fails; the constructor of its point member at +2 stores nothing.",
+      "description": "(mark), callee-cleaned: the vector constructor of a 10-byte damage mark; allocates 10 bytes with Mem_New (000019f0) when given null, returning null when that fails; the constructor of its point member at +2 stores nothing.",
       "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-damage-marks",
       "verified": {
         "bytes": "0002236c+53",
@@ -3967,7 +3967,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HercHotspots_AreaCtor",
-      "description": "(area), callee-cleaned: the vector constructor of a 0x14-byte area; allocates 0x14 bytes with operator_new (000019f0) when given null, returning null when that fails, and zeroes its rect's two points (+0, +8) and the dword +0x10.",
+      "description": "(area), callee-cleaned: the vector constructor of a 0x14-byte area; allocates 0x14 bytes with Mem_New (000019f0) when given null, returning null when that fails, and zeroes its rect's two points (+0, +8) and the dword +0x10.",
       "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-clickable-areas",
       "verified": {
         "bytes": "000226b4+241",
@@ -3982,7 +3982,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HercHotspots_AreaDtor",
-      "description": "(area, flags) in stack order, callee-cleaned: when area is not null, destroys the object at +0x10, when there is one, through its vtable's +0x1c with 3 and zeroes +0x10, then frees the area with operator_delete (00001a44) when bit 0 of flags is set.",
+      "description": "(area, flags) in stack order, callee-cleaned: when area is not null, destroys the object at +0x10, when there is one, through its vtable's +0x1c with 3 and zeroes +0x10, then frees the area with Mem_Delete (00001a44) when bit 0 of flags is set.",
       "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-clickable-areas",
       "verified": {
         "bytes": "000227a5+63",
@@ -5701,7 +5701,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WordStack_Push",
-      "description": "(stack, &word) in stack order, callee-cleaned: makes a 6-byte node (operator_new (000019f0)) holding the word at +0 and the old head at +2, makes it the head (+2) and adds 1 to the int16 count +0.",
+      "description": "(stack, &word) in stack order, callee-cleaned: makes a 6-byte node (Mem_New (000019f0)) holding the word at +0 and the old head at +2, makes it the head (+2) and adds 1 to the int16 count +0.",
       "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-weapon-stock",
       "verified": {
         "bytes": "00040ba6+87",
@@ -5716,7 +5716,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WordStack_Pop",
-      "description": "(stack), callee-cleaned: returns -1 when WordStack_IsEmpty (00040c57); otherwise unlinks the head (+2), frees it with operator_delete (00001a44), subtracts 1 from the count +0 and returns the head's word.",
+      "description": "(stack), callee-cleaned: returns -1 when WordStack_IsEmpty (00040c57); otherwise unlinks the head (+2), frees it with Mem_Delete (00001a44), subtracts 1 from the count +0 and returns the head's word.",
       "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-weapon-stock",
       "verified": {
         "bytes": "00040bfd+90",
@@ -6316,7 +6316,7 @@
       "type": "function",
       "confidence": "medium",
       "name": "maybe_SncList_Dtor",
-      "description": "(player, flags), callee-cleaned: returns for a null player; deletes the line lists +0x11 when set (__vec_delete (0005547c) with StrList_Dtor (000202b4), 6-byte elements); passes the timer slot, the word +0, to Timer_RemoveCallback (000565b7); destroys the +0x15 object through its slot +0x1c with 3 when set; releases the script +3 with ShellSnc_Release (00045a04); frees the player with operator_delete (00001a44) when flags bit 0 is set. es2_xref finds one call, from 00020fff.",
+      "description": "(player, flags), callee-cleaned: returns for a null player; deletes the line lists +0x11 when set (__vec_delete (0005547c) with StrList_Dtor (000202b4), 6-byte elements); passes the timer slot, the word +0, to Timer_RemoveCallback (000565b7); destroys the +0x15 object through its slot +0x1c with 3 when set; releases the script +3 with ShellSnc_Release (00045a04); frees the player with Mem_Delete (00001a44) when flags bit 0 is set. es2_xref finds one call, from 00020fff.",
       "source": "Herculan/docs/es1/formats/snc-lip-sync.md#playing-it",
       "verified": {
         "bytes": "00045758+169",
@@ -6346,7 +6346,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ShellSnc_Load",
-      "description": "(script, name), callee-cleaned: builds SNC\\ (0008265c) followed by name with strcat (0004efb8); opens it with VolRStream_CtorFromPath (0004d064), reads an int16 length through the read slot +0x1c, stores length >> 2 as the record count +8, takes count x 4 bytes from operator_new (000019f0) for +4 and reads length bytes into them with VolRStream_Read (0004d6d6), and closes the stream with VolRStream_Close (0004d18e); then adds each record's second word to the next record's, from record 1 to the last, so that each holds its running total, zeroes the index +0xa, and destroys the stream with VolRStream_Dtor (0004d0cb). es2_xref finds one call, from maybe_SncList_PlayEntry (000453be), which passes player + 3.",
+      "description": "(script, name), callee-cleaned: builds SNC\\ (0008265c) followed by name with strcat (0004efb8); opens it with VolRStream_CtorFromPath (0004d064), reads an int16 length through the read slot +0x1c, stores length >> 2 as the record count +8, takes count x 4 bytes from Mem_New (000019f0) for +4 and reads length bytes into them with VolRStream_Read (0004d6d6), and closes the stream with VolRStream_Close (0004d18e); then adds each record's second word to the next record's, from record 1 to the last, so that each holds its running total, zeroes the index +0xa, and destroys the stream with VolRStream_Dtor (0004d0cb). es2_xref finds one call, from maybe_SncList_PlayEntry (000453be), which passes player + 3.",
       "source": "Herculan/docs/es1/formats/snc-lip-sync.md#loading-a-line",
       "verified": {
         "bytes": "0004589c+223",
@@ -6376,7 +6376,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ShellSnc_Release",
-      "description": "(script), callee-cleaned: when there are records +4, deletes them with operator_delete (00001a44) and zeroes +4 and the count +8; when the sound +0 is set, calls its slot +0x14 and then its slot +8 with 3 (vtable at +0x3b) and clears +0. es2_xref finds calls from maybe_SncList_Stop (00045556) and maybe_SncList_Dtor (00045758).",
+      "description": "(script), callee-cleaned: when there are records +4, deletes them with Mem_Delete (00001a44) and zeroes +4 and the count +8; when the sound +0 is set, calls its slot +0x14 and then its slot +8 with 3 (vtable at +0x3b) and clears +0. es2_xref finds calls from maybe_SncList_Stop (00045556) and maybe_SncList_Dtor (00045758).",
       "source": "Herculan/docs/es1/formats/snc-lip-sync.md#playing-it",
       "verified": {
         "bytes": "00045a04+99",
@@ -6976,7 +6976,7 @@
       "type": "function",
       "confidence": "high",
       "name": "RLERStream_DtorCopy",
-      "description": "(stream, flags): RLERStream_Dtor (0006449c)'s code with the TTM module's copy of RLERStream's vtable, 000837ee, whose slot +4 holds it: returns at once for a null stream; otherwise stores that vtable, Stream_BaseDtor(stream, 0), and operator_delete when bit 0 of the flags is set.",
+      "description": "(stream, flags): RLERStream_Dtor (0006449c)'s code with the TTM module's copy of RLERStream's vtable, 000837ee, whose slot +4 holds it: returns at once for a null stream; otherwise stores that vtable, Stream_BaseDtor(stream, 0), and Mem_Delete when bit 0 of the flags is set.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#loading",
       "verified": {
         "bytes": "0004809c+53",
@@ -7246,7 +7246,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Volume_Ctor",
-      "description": "Volume constructor, callee-cleaned (this): allocates 0x30 bytes through operator_new when this is null (0 if that fails), then clears the file stream +0, the buffered stream +4 and the arrays +0x24, +0x28 and +0x2c. The class stores no vptr; the same statements as ES1DBSIM's Volume_Ctor (00055d20) in different code.",
+      "description": "Volume constructor, callee-cleaned (this): allocates 0x30 bytes through Mem_New when this is null (0 if that fails), then clears the file stream +0, the buffered stream +4 and the arrays +0x24, +0x28 and +0x2c. The class stores no vptr; the same statements as ES1DBSIM's Volume_Ctor (00055d20) in different code.",
       "source": "Herculan/docs/es1/formats/streams.md#the-volume-class",
       "verified": {
         "bytes": "0004ca58+59",
@@ -7261,7 +7261,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Volume_Dtor",
-      "description": "Volume destructor (this, flags): returns at once for a null this; otherwise operator_delete on each of the arrays +0x24, +0x28 and +0x2c that is set, deletes the buffered stream +4 and then the file stream +0 through their slot +4 with flags 3, and operator_delete on this when bit 0 of the flags is set; the same statements as ES1DBSIM's Volume_Dtor (00055d50) in different code.",
+      "description": "Volume destructor (this, flags): returns at once for a null this; otherwise Mem_Delete on each of the arrays +0x24, +0x28 and +0x2c that is set, deletes the buffered stream +4 and then the file stream +0 through their slot +4 with flags 3, and Mem_Delete on this when bit 0 of the flags is set; the same statements as ES1DBSIM's Volume_Dtor (00055d50) in different code.",
       "source": "Herculan/docs/es1/formats/streams.md#the-volume-class",
       "verified": {
         "bytes": "0004ca93+137",
@@ -7306,7 +7306,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VolRStream_Ctor",
-      "description": "VolRStream() constructor, callee-cleaned (this): allocates 0x2f bytes through operator_new when this is null (0 if that fails), Stream_BaseCtor, the vtable 00083c16 at +4, clears the filters +0x27 and +0x2b and the entry fields +0xa, +0xe and +0x16, handle -1 at +8 and status 5 at +0; the same statements as ES1DBSIM's VolRStream_Ctor (00056710) in different code.",
+      "description": "VolRStream() constructor, callee-cleaned (this): allocates 0x2f bytes through Mem_New when this is null (0 if that fails), Stream_BaseCtor, the vtable 00083c16 at +4, clears the filters +0x27 and +0x2b and the entry fields +0xa, +0xe and +0x16, handle -1 at +8 and status 5 at +0; the same statements as ES1DBSIM's VolRStream_Ctor (00056710) in different code.",
       "source": "Herculan/docs/es1/formats/streams.md#volrstream",
       "verified": {
         "bytes": "0004cf84+95",
@@ -7351,7 +7351,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VolRStream_Dtor",
-      "description": "VolRStream destructor (this, flags), vtable slot +4: restores the vtable 00083c16, deletes the filters at +0x27 and +0x2b through their own slot +4 with flags 3, VolRStream_Close, Stream_BaseDtor(this, 0), and operator_delete when bit 0 of the flags is set; the same statements as ES1DBSIM's VolRStream_Dtor (00056824) in different code.",
+      "description": "VolRStream destructor (this, flags), vtable slot +4: restores the vtable 00083c16, deletes the filters at +0x27 and +0x2b through their own slot +4 with flags 3, VolRStream_Close, Stream_BaseDtor(this, 0), and Mem_Delete when bit 0 of the flags is set; the same statements as ES1DBSIM's VolRStream_Dtor (00056824) in different code.",
       "source": "Herculan/docs/es1/formats/streams.md#volrstream",
       "verified": {
         "bytes": "0004d0cb+112",
@@ -7576,7 +7576,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VolumeGroup_Ctor",
-      "description": "VolumeGroup constructor, callee-cleaned, (this, dirFirst, dir, extension, mask) in stack order: allocates 0x29 bytes through operator_new when this is null (0 if that fails), clears the 10 volume pointers at +0 and the count byte +0x28, sets VolumeGroup_BufferSize (00083c64) to 0x400, then VolumeGroup_SetGroup with the same arguments, and returns this. ES1DBSIM's VolumeGroup_Ctor (00056180), the same statements in different code.",
+      "description": "VolumeGroup constructor, callee-cleaned, (this, dirFirst, dir, extension, mask) in stack order: allocates 0x29 bytes through Mem_New when this is null (0 if that fails), clears the 10 volume pointers at +0 and the count byte +0x28, sets VolumeGroup_BufferSize (00083c64) to 0x400, then VolumeGroup_SetGroup with the same arguments, and returns this. ES1DBSIM's VolumeGroup_Ctor (00056180), the same statements in different code.",
       "source": "Herculan/docs/es1/formats/streams.md#the-volume-group",
       "verified": {
         "bytes": "0004d82c+110",
@@ -7591,7 +7591,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VolumeGroup_Dtor",
-      "description": "VolumeGroup destructor (this, flags): returns at once for a null this; otherwise Volume_Dtor (0004ca93)(volume, 3) on each of the count (+0x28) volume pointers, and operator_delete when bit 0 of the flags is set. The class stores no vptr. ES1DBSIM's VolumeGroup_Dtor (000561d8), the same statements in different code.",
+      "description": "VolumeGroup destructor (this, flags): returns at once for a null this; otherwise Volume_Dtor (0004ca93)(volume, 3) on each of the count (+0x28) volume pointers, and Mem_Delete when bit 0 of the flags is set. The class stores no vptr. ES1DBSIM's VolumeGroup_Dtor (000561d8), the same statements in different code.",
       "source": "Herculan/docs/es1/formats/streams.md#the-volume-group",
       "verified": {
         "bytes": "0004d89a+87",
@@ -8161,7 +8161,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Assert_AddHook",
-      "description": "(hook), its argument removed by this function: pushes an 8-byte node {next, hook} from operator_new onto the list at 000a0bd8, printing 'Assert: assert_abort_notify: Can...' through 0004e108 and calling 0004ed2e when the allocation fails. The code of ES1DBSIM's Assert_AddHook (0005730c), relocated operands aside.",
+      "description": "(hook), its argument removed by this function: pushes an 8-byte node {next, hook} from Mem_New onto the list at 000a0bd8, printing 'Assert: assert_abort_notify: Can...' through 0004e108 and calling 0004ed2e when the allocation fails. The code of ES1DBSIM's Assert_AddHook (0005730c), relocated operands aside.",
       "source": "Herculan/docs/es1/simulation/timer.md#the-timer-object--dvtimer; ES1DBSIM decompile at 0005730c",
       "verified": {
         "bytes": "0004f594+64",
@@ -8314,7 +8314,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mono_Printf",
-      "description": "(column, row, format, ...), C convention: vsprintf into a 256-byte buffer and Mono_WriteText(buffer, row, column), under Mono_WriteChar's gate. Heap_DrawMap prints its map with it. The code of ES1DBSIM's Mono_Printf (00060e78), relocated operands aside.",
+      "description": "(column, row, format, ...), C convention: vsprintf into a 256-byte buffer and Mono_WriteText(buffer, row, column), under Mono_WriteChar's gate. Memory_DrawUsageMap prints its map with it. The code of ES1DBSIM's Mono_Printf (00060e78), relocated operands aside.",
       "source": "ES1GO decompile at 0004f904",
       "verified": {
         "bytes": "0004f904+86",
@@ -9169,7 +9169,7 @@
       "type": "function",
       "confidence": "high",
       "name": "DVJoystick_Ctor",
-      "description": "DVJoystick constructor, (this, mask, port, kind) in stack order, callee-cleaned: allocates 0x78 bytes through operator_new (000019f0) for a null this, runs GL_ClaimGlobal (00066bf0)(this, this, kind), and when GL slot kind (000ab784 + kind * 4) holds this runs DVJoystick_Init (00052364)(this, mask, port, kind); returns this. es2_xref finds one call, from JoystickDevice_Ctor (00025d6d). The code of ES1DBSIM's DVJoystick_Ctor (0006b42c), relocated operands aside.",
+      "description": "DVJoystick constructor, (this, mask, port, kind) in stack order, callee-cleaned: allocates 0x78 bytes through Mem_New (000019f0) for a null this, runs GL_ClaimGlobal (00066bf0)(this, this, kind), and when GL slot kind (000ab784 + kind * 4) holds this runs DVJoystick_Init (00052364)(this, mask, port, kind); returns this. es2_xref finds one call, from JoystickDevice_Ctor (00025d6d). The code of ES1DBSIM's DVJoystick_Ctor (0006b42c), relocated operands aside.",
       "source": "Herculan/docs/es1/simulation/joystick.md#construction-and-detection",
       "verified": {
         "bytes": "000522d4+68",
@@ -9184,7 +9184,7 @@
       "type": "function",
       "confidence": "high",
       "name": "DVJoystick_Dtor",
-      "description": "DVJoystick destructor, (this, flags), callee-cleaned: returns for a null this; when GL slot +0x68 (000ab784 + index * 4) is non-zero, runs DVJoystick_Shutdown (00052464) through the 0x90 byte before it and clears the slot, without comparing it with this; then operator_delete (00001a44) for flags bit 0. es2_xref finds one call, from JoystickDevice_Dtor (00025e57). The code of ES1DBSIM's DVJoystick_Dtor (0006b470), relocated operands aside.",
+      "description": "DVJoystick destructor, (this, flags), callee-cleaned: returns for a null this; when GL slot +0x68 (000ab784 + index * 4) is non-zero, runs DVJoystick_Shutdown (00052464) through the 0x90 byte before it and clears the slot, without comparing it with this; then Mem_Delete (00001a44) for flags bit 0. es2_xref finds one call, from JoystickDevice_Dtor (00025e57). The code of ES1DBSIM's DVJoystick_Dtor (0006b470), relocated operands aside.",
       "source": "Herculan/docs/es1/simulation/joystick.md#construction-and-detection",
       "verified": {
         "bytes": "00052318+76",
@@ -9454,7 +9454,7 @@
       "type": "function",
       "confidence": "high",
       "name": "FileRStream_Dtor",
-      "description": "FileRStream destructor (this, flags), vtable slot +4: restores the vtable 00086f8a, FileRStream_Close, Stream_BaseDtor(this, 0), and operator_delete when bit 0 of the flags is set. The copy of ES1DBSIM's FileRStream_Dtor (00065610).",
+      "description": "FileRStream destructor (this, flags), vtable slot +4: restores the vtable 00086f8a, FileRStream_Close, Stream_BaseDtor(this, 0), and Mem_Delete when bit 0 of the flags is set. The copy of ES1DBSIM's FileRStream_Dtor (00065610).",
       "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
       "verified": {
         "bytes": "00052af0+54",
@@ -9679,7 +9679,7 @@
       "type": "function",
       "confidence": "high",
       "name": "FileWStream_Dtor",
-      "description": "FileWStream destructor (this, flags), vtable slot +4: restores the vtable 00086fc6, FileWStream_Close, Stream_BaseDtor(this, 0), and operator_delete when bit 0 of the flags is set. The copy of ES1DBSIM's FileWStream_Dtor (0006598c).",
+      "description": "FileWStream destructor (this, flags), vtable slot +4: restores the vtable 00086fc6, FileWStream_Close, Stream_BaseDtor(this, 0), and Mem_Delete when bit 0 of the flags is set. The copy of ES1DBSIM's FileWStream_Dtor (0006598c).",
       "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
       "verified": {
         "bytes": "00052e6c+54",
@@ -9964,7 +9964,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TSContext_Dtor",
-      "description": "(context, flags), callee-cleaned: TSContext's destructor, slot +4 of its vtable 00087032: stores that vtable at +0x12 and calls operator_delete when flags bit 0 is set; returns at once for a null context. The code of ES1DBSIM's TSContext_Dtor (0005b878), relocated operands aside.",
+      "description": "(context, flags), callee-cleaned: TSContext's destructor, slot +4 of its vtable 00087032: stores that vtable at +0x12 and calls Mem_Delete when flags bit 0 is set; returns at once for a null context. The code of ES1DBSIM's TSContext_Dtor (0005b878), relocated operands aside.",
       "source": "ES1GO decompile at 000535f4",
       "verified": {
         "bytes": "000535f4+40",
@@ -10039,7 +10039,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TSCamera_Dtor",
-      "description": "(camera, flags), callee-cleaned: slot +4 of TSCamera's vtable 00087042: stores that vtable, runs TSContext_Dtor(camera, 0) and calls operator_delete when flags bit 0 is set; returns at once for a null camera. The code of ES1DBSIM's TSCamera_Dtor (0005b970), relocated operands aside.",
+      "description": "(camera, flags), callee-cleaned: slot +4 of TSCamera's vtable 00087042: stores that vtable, runs TSContext_Dtor(camera, 0) and calls Mem_Delete when flags bit 0 is set; returns at once for a null camera. The code of ES1DBSIM's TSCamera_Dtor (0005b970), relocated operands aside.",
       "source": "ES1GO decompile at 000536ec",
       "verified": {
         "bytes": "000536ec+43",
@@ -10084,7 +10084,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TSOrthoCamera_Dtor",
-      "description": "(camera, flags), callee-cleaned: slot +4 of TSOrthoCamera's vtable 00087052: stores that vtable and then TSCamera's 00087042, runs TSContext_Dtor(camera, 0) and calls operator_delete when flags bit 0 is set; returns at once for a null camera. VSHELL's TSOrthoCamera_Dtor (0045f9a6). The code of ES1DBSIM's TSOrthoCamera_Dtor (0005ba24), relocated operands aside.",
+      "description": "(camera, flags), callee-cleaned: slot +4 of TSOrthoCamera's vtable 00087052: stores that vtable and then TSCamera's 00087042, runs TSContext_Dtor(camera, 0) and calls Mem_Delete when flags bit 0 is set; returns at once for a null camera. VSHELL's TSOrthoCamera_Dtor (0045f9a6). The code of ES1DBSIM's TSOrthoCamera_Dtor (0005ba24), relocated operands aside.",
       "source": "ES1GO decompile at 000537a0",
       "verified": {
         "bytes": "000537a0+50",
@@ -10099,7 +10099,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TSBase_Dtor",
-      "description": "(this, flags), callee-cleaned: the root class's destructor. Returns at once for a null this; otherwise stores the root vtable 00087062 and calls operator_delete on this when flags bit 0 is set. The vtable holds it at +0x1c, after the stubs at +4 (returns -1), +8 and +0xc (return 0), +0x10 and +0x14 (return, removing three arguments) and the shared ClassItem_DebugPrintType (00000b5c) at +0x18, and before the empty TSBase_Render (000537fc) at +0x20: the shape of ES2's TSBase vtable. es1_naming.py vtables finds it in the destructor slot of five other vtables. The code of ES1DBSIM's TSBase_Dtor (0005ba58), relocated operands aside.",
+      "description": "(this, flags), callee-cleaned: the root class's destructor. Returns at once for a null this; otherwise stores the root vtable 00087062 and calls Mem_Delete on this when flags bit 0 is set. The vtable holds it at +0x1c, after the stubs at +4 (returns -1), +8 and +0xc (return 0), +0x10 and +0x14 (return, removing three arguments) and the shared ClassItem_DebugPrintType (00000b5c) at +0x18, and before the empty TSBase_Render (000537fc) at +0x20: the shape of ES2's TSBase vtable. es1_naming.py vtables finds it in the destructor slot of five other vtables. The code of ES1DBSIM's TSBase_Dtor (0005ba58), relocated operands aside.",
       "source": "ES1GO disassembly at 000537d4 and its vtable 00087062",
       "verified": {
         "bytes": "000537d4+39",
@@ -10594,7 +10594,7 @@
       "type": "function",
       "confidence": "high",
       "name": "__vec_new",
-      "description": "Symantec C++ runtime `__vec_new`, from `vecnew.cpp`: (ctor, count, size, p) in stack order, callee-cleaned; 6.1's library declares it (p, size, count, ctor). When p is null it allocates count * size + 4 bytes with operator_new and returns null when that fails. Stores count in the first dword, calls ctor (when non-null) on each element from the next dword at size intervals, and returns the address after the count. The code of ES1DBSIM's __vec_new (00061038), relocated operands aside.",
+      "description": "Symantec C++ runtime `__vec_new`, from `vecnew.cpp`: (ctor, count, size, p) in stack order, callee-cleaned; 6.1's library declares it (p, size, count, ctor). When p is null it allocates count * size + 4 bytes with Mem_New and returns null when that fails. Stores count in the first dword, calls ctor (when non-null) on each element from the next dword at size intervals, and returns the address after the count. The code of ES1DBSIM's __vec_new (00061038), relocated operands aside.",
       "source": "Herculan/docs/es1/formats/compiler.md#constructors-and-destructors",
       "verified": {
         "bytes": "0005542c+80",
@@ -10609,7 +10609,7 @@
       "type": "function",
       "confidence": "high",
       "name": "__vec_delete",
-      "description": "Symantec C++ runtime `__vec_delete`, from `vecnew.cpp`: (dtor, size, flags, p) in stack order, callee-cleaned; 6.1's library declares it (p, free, size, dtor). When p is non-null: when dtor is non-null, calls dtor(element, 2) on each element, last first, their count read from the dword before p; then calls operator_delete(p - 4) when flags bit 0 is set. The code of ES1DBSIM's __vec_delete (00061088), relocated operands aside.",
+      "description": "Symantec C++ runtime `__vec_delete`, from `vecnew.cpp`: (dtor, size, flags, p) in stack order, callee-cleaned; 6.1's library declares it (p, free, size, dtor). When p is non-null: when dtor is non-null, calls dtor(element, 2) on each element, last first, their count read from the dword before p; then calls Mem_Delete(p - 4) when flags bit 0 is set. The code of ES1DBSIM's __vec_delete (00061088), relocated operands aside.",
       "source": "Herculan/docs/es1/formats/dts-shape.md",
       "verified": {
         "bytes": "0005547c+67",
@@ -11158,7 +11158,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ANShapeInstance_Dtor",
-      "description": "(instance, flags), callee-cleaned: returns at once for a null instance; stores the vtable 000884b6, operator_delete of the dirty, local and world arrays (+0xe, +0x12, +0x16), the base destructor TSShapeInstance_Dtor (000588c0) with flags 0, and operator_delete of the instance when flags bit 0 is set. The vtable's slot +0x1c. The code of ES1DBSIM's ANShapeInstance_Dtor (00061460), relocated operands aside.",
+      "description": "(instance, flags), callee-cleaned: returns at once for a null instance; stores the vtable 000884b6, Mem_Delete of the dirty, local and world arrays (+0xe, +0x12, +0x16), the base destructor TSShapeInstance_Dtor (000588c0) with flags 0, and Mem_Delete of the instance when flags bit 0 is set. The vtable's slot +0x1c. The code of ES1DBSIM's ANShapeInstance_Dtor (00061460), relocated operands aside.",
       "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
       "verified": {
         "bytes": "00056c10+71",
@@ -11638,7 +11638,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TSShape_Dtor",
-      "description": "(shape, flags), callee-cleaned: returns at once for a null shape; stores the vtable 000884e6, operator_delete of +0x20 and +0x1c, __vec_delete(0, 0x20, 7, +0x18) on the node transform block, TSPartList_Dtor with flags 0, and operator_delete of the shape when flags bit 0 is set. The vtable's slot +0x1c. The code of ES1DBSIM's TSShape_Dtor (00062f7c), relocated operands aside.",
+      "description": "(shape, flags), callee-cleaned: returns at once for a null shape; stores the vtable 000884e6, Mem_Delete of +0x20 and +0x1c, __vec_delete(0, 0x20, 7, +0x18) on the node transform block, TSPartList_Dtor with flags 0, and Mem_Delete of the shape when flags bit 0 is set. The vtable's slot +0x1c. The code of ES1DBSIM's TSShape_Dtor (00062f7c), relocated operands aside.",
       "source": "Herculan/docs/es1/formats/dts-shape.md",
       "verified": {
         "bytes": "0005872c+77",
@@ -11683,7 +11683,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TSShapeInstance_Dtor",
-      "description": "(instance, flags), callee-cleaned: returns at once for a null instance; stores the vtable 0008856a, operator_delete of the cell frame copy +8, TSBase_Dtor with flags 0, and operator_delete of the instance when flags bit 0 is set. The vtable's slot +0x1c; es2_xref finds one call, from ANShapeInstance_Dtor, its base destructor call. The code of ES1DBSIM's TSShapeInstance_Dtor (00063110), relocated operands aside.",
+      "description": "(instance, flags), callee-cleaned: returns at once for a null instance; stores the vtable 0008856a, Mem_Delete of the cell frame copy +8, TSBase_Dtor with flags 0, and Mem_Delete of the instance when flags bit 0 is set. The vtable's slot +0x1c; es2_xref finds one call, from ANShapeInstance_Dtor, its base destructor call. The code of ES1DBSIM's TSShapeInstance_Dtor (00063110), relocated operands aside.",
       "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
       "verified": {
         "bytes": "000588c0+55",
@@ -11962,7 +11962,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TSPartBase_DtorCopy",
-      "description": "(part, flags), callee-cleaned: TSPartBase_Dtor (0006a54c)'s code with TSPartBase's second vtable 00088622, whose slot +0x1c holds it: stores that vtable, runs TSBase_Dtor(part, 0) and calls operator_delete on part when flags bit 0 is set; returns at once for a null part. TSPartList_Ctor (000596b4) installs 00088622. The code of ES1DBSIM's TSPartBase_DtorCopy (00052d68), relocated operands aside.",
+      "description": "(part, flags), callee-cleaned: TSPartBase_Dtor (0006a54c)'s code with TSPartBase's second vtable 00088622, whose slot +0x1c holds it: stores that vtable, runs TSBase_Dtor(part, 0) and calls Mem_Delete on part when flags bit 0 is set; returns at once for a null part. TSPartList_Ctor (000596b4) installs 00088622. The code of ES1DBSIM's TSPartBase_DtorCopy (00052d68), relocated operands aside.",
       "source": "Herculan/docs/es1/formats/dts-shape.md",
       "verified": {
         "bytes": "0005975c+42",
@@ -11977,7 +11977,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TSPartList_Dtor",
-      "description": "(list, flags), callee-cleaned: slot +0x1c of TSPartList's vtable 00088656. Returns at once for a null list; otherwise stores that vtable, calls each non-null child's destructor slot (+0x1c) with flags 3, operator_delete on the pointer array +0x12, stores TSPartBase's vtable 00088622, runs TSBase_Dtor(list, 0) and calls operator_delete on list when flags bit 0 is set. The code of ES1DBSIM's TSPartList_Dtor (00052d94), relocated operands aside.",
+      "description": "(list, flags), callee-cleaned: slot +0x1c of TSPartList's vtable 00088656. Returns at once for a null list; otherwise stores that vtable, calls each non-null child's destructor slot (+0x1c) with flags 3, Mem_Delete on the pointer array +0x12, stores TSPartBase's vtable 00088622, runs TSBase_Dtor(list, 0) and calls Mem_Delete on list when flags bit 0 is set. The code of ES1DBSIM's TSPartList_Dtor (00052d94), relocated operands aside.",
       "source": "Herculan/docs/es1/formats/dts-shape.md",
       "verified": {
         "bytes": "00059788+130",
@@ -12067,7 +12067,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TSDetailPart_Dtor",
-      "description": "(part, flags), callee-cleaned: slot +0x1c of TSDetailPart's vtable 0008868e. Returns at once for a null part; otherwise stores that vtable, calls operator_delete on the thresholds +0x16, runs TSPartList_Dtor(part, 0) and calls operator_delete on part when flags bit 0 is set. The code of ES1DBSIM's TSDetailPart_Dtor (0005305c), relocated operands aside.",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of TSDetailPart's vtable 0008868e. Returns at once for a null part; otherwise stores that vtable, calls Mem_Delete on the thresholds +0x16, runs TSPartList_Dtor(part, 0) and calls Mem_Delete on part when flags bit 0 is set. The code of ES1DBSIM's TSDetailPart_Dtor (0005305c), relocated operands aside.",
       "source": "Herculan/docs/es1/formats/dts-shape.md",
       "verified": {
         "bytes": "00059a50+55",
@@ -12097,7 +12097,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TSBSPPart_Dtor",
-      "description": "(part, flags), callee-cleaned: slot +0x1c of TSBSPPart's vtable 000886c2. Returns at once for a null part; otherwise stores that vtable, calls __vec_delete(0, 0xe, 7, nodes +0x18), which with no destructor and flags bit 0 set calls operator_delete on the address 4 bytes before the nodes, calls operator_delete on the transform ids +0x1c, runs TSPartList_Dtor(part, 0) and calls operator_delete on part when flags bit 0 is set. The code of ES1DBSIM's TSBSPPart_Dtor (000531f8), relocated operands aside.",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of TSBSPPart's vtable 000886c2. Returns at once for a null part; otherwise stores that vtable, calls __vec_delete(0, 0xe, 7, nodes +0x18), which with no destructor and flags bit 0 set calls Mem_Delete on the address 4 bytes before the nodes, calls Mem_Delete on the transform ids +0x1c, runs TSPartList_Dtor(part, 0) and calls Mem_Delete on part when flags bit 0 is set. The code of ES1DBSIM's TSBSPPart_Dtor (000531f8), relocated operands aside.",
       "source": "Herculan/docs/es1/formats/dts-shape.md",
       "verified": {
         "bytes": "00059bfc+69",
@@ -12331,7 +12331,7 @@
       "type": "function",
       "confidence": "high",
       "name": "FileRWStream_Dtor",
-      "description": "FileRWStream destructor (this, flags), vtable slot +4: restores the vtable 0008880e, FileRWStream_Close, Stream_BaseDtor(this, 0), and operator_delete when bit 0 of the flags is set. The copy of ES1DBSIM's FileRWStream_Dtor (0006ac7c).",
+      "description": "FileRWStream destructor (this, flags), vtable slot +4: restores the vtable 0008880e, FileRWStream_Close, Stream_BaseDtor(this, 0), and Mem_Delete when bit 0 of the flags is set. The copy of ES1DBSIM's FileRWStream_Dtor (0006ac7c).",
       "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
       "verified": {
         "bytes": "0005ab24+54",
@@ -12976,7 +12976,7 @@
       "type": "function",
       "confidence": "high",
       "name": "DVMouse_Dtor",
-      "description": "(mouse, flags) in stack order, its arguments removed by this function: for a mouse that is set, when the GL slot 2 (000ab78c) is set, runs DVMouse_Shutdown (0005d1b4)(mouse) by its padding 0005d1b1 and clears the slot; frees the mouse with operator_delete (00001a44) when bit 0 of flags is set. es2_xref finds one call, from 000268ff. The code of ES1DBSIM's DVMouse_Dtor (0006bcd4), relocated operands aside.",
+      "description": "(mouse, flags) in stack order, its arguments removed by this function: for a mouse that is set, when the GL slot 2 (000ab78c) is set, runs DVMouse_Shutdown (0005d1b4)(mouse) by its padding 0005d1b1 and clears the slot; frees the mouse with Mem_Delete (00001a44) when bit 0 of flags is set. es2_xref finds one call, from 000268ff. The code of ES1DBSIM's DVMouse_Dtor (0006bcd4), relocated operands aside.",
       "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver",
       "verified": {
         "bytes": "0005d104+58",
@@ -13357,7 +13357,7 @@
       "type": "function",
       "confidence": "high",
       "name": "DVTimer_Dtor",
-      "description": "(this, flags) in stack order, its arguments removed by this function: for a non-null this, when GL slot 0 (000ab784) is set, Pit_RemoveHandler (000564c7) and the slot cleared, whichever timer it holds; operator_delete when flags bit 0 is set. The code of ES1DBSIM's DVTimer_Dtor (0006c758), relocated operands aside.",
+      "description": "(this, flags) in stack order, its arguments removed by this function: for a non-null this, when GL slot 0 (000ab784) is set, Pit_RemoveHandler (000564c7) and the slot cleared, whichever timer it holds; Mem_Delete when flags bit 0 is set. The code of ES1DBSIM's DVTimer_Dtor (0006c758), relocated operands aside.",
       "source": "Herculan/docs/es1/simulation/timer.md#the-timer-object--dvtimer; ES1DBSIM disassembly at 0006c758",
       "verified": {
         "bytes": "0005d714+55",
@@ -13507,7 +13507,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Stream_BaseCtor",
-      "description": "StreamIO constructor, callee-cleaned (this): allocates 8 bytes through operator_new when this is null (0 if that fails), installs the vtable 00089fa2 at +4 and clears the status at +0. The copy of ES1DBSIM's Stream_BaseCtor (00064ce4).",
+      "description": "StreamIO constructor, callee-cleaned (this): allocates 8 bytes through Mem_New when this is null (0 if that fails), installs the vtable 00089fa2 at +4 and clears the status at +0. The copy of ES1DBSIM's Stream_BaseCtor (00064ce4).",
       "source": "Herculan/docs/es1/formats/streams.md#the-base-class",
       "verified": {
         "bytes": "0005d9c0+44",
@@ -13522,7 +13522,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Stream_BaseDtor",
-      "description": "StreamIO destructor (this, flags), vtable slot +4: restores the vtable 00089fa2, calls StreamIO_Flush directly, through the padding at 0005da45, and operator_delete when bit 0 of the flags is set. The copy of ES1DBSIM's Stream_BaseDtor (00064d10).",
+      "description": "StreamIO destructor (this, flags), vtable slot +4: restores the vtable 00089fa2, calls StreamIO_Flush directly, through the padding at 0005da45, and Mem_Delete when bit 0 of the flags is set. The copy of ES1DBSIM's Stream_BaseDtor (00064d10).",
       "source": "Herculan/docs/es1/formats/streams.md#the-base-class",
       "verified": {
         "bytes": "0005d9ec+46",
@@ -13642,7 +13642,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MemRWStream_Dtor",
-      "description": "(stream, flags) in stack order, callee-cleaned: slot +4 of MemRWStream's vtable 00089fde (entered at its padding 0005da9f): returns at once for a null stream; otherwise stores 00089fde at +4, runs Stream_BaseDtor (0005d9ec)(stream, 0) and calls operator_delete (00001a44) when flags bit 0 is set. The code of ES1DBSIM's MemRWStream_Dtor (00064dc4), relocated operands aside.",
+      "description": "(stream, flags) in stack order, callee-cleaned: slot +4 of MemRWStream's vtable 00089fde (entered at its padding 0005da9f): returns at once for a null stream; otherwise stores 00089fde at +4, runs Stream_BaseDtor (0005d9ec)(stream, 0) and calls Mem_Delete (00001a44) when flags bit 0 is set. The code of ES1DBSIM's MemRWStream_Dtor (00064dc4), relocated operands aside.",
       "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-weapon-models; ES1GO disassembly at 0005daa0",
       "verified": {
         "bytes": "0005daa0+43",
@@ -14002,7 +14002,7 @@
       "type": "function",
       "confidence": "high",
       "name": "RLERStream_Ctor",
-      "description": "RLERStream() constructor, callee-cleaned (this): allocates 0x92 bytes through operator_new when this is null (0 if that fails), Stream_BaseCtor, the vtable 0008b00a at +4, RLERStream_Init, and status 6 (no source). The code of ES1DBSIM's RLERStream_Ctor (00074f9c), relocated operands aside.",
+      "description": "RLERStream() constructor, callee-cleaned (this): allocates 0x92 bytes through Mem_New when this is null (0 if that fails), Stream_BaseCtor, the vtable 0008b00a at +4, RLERStream_Init, and status 6 (no source). The code of ES1DBSIM's RLERStream_Ctor (00074f9c), relocated operands aside.",
       "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
       "verified": {
         "bytes": "00064460+59",
@@ -14017,7 +14017,7 @@
       "type": "function",
       "confidence": "high",
       "name": "RLERStream_Dtor",
-      "description": "RLERStream destructor (this, flags), vtable slot +4: returns at once for a null this; otherwise restores the vtable 0008b00a, Stream_BaseDtor(this, 0), and operator_delete when bit 0 of the flags is set. The code of ES1DBSIM's RLERStream_Dtor (00074fd8), relocated operands aside.",
+      "description": "RLERStream destructor (this, flags), vtable slot +4: returns at once for a null this; otherwise restores the vtable 0008b00a, Stream_BaseDtor(this, 0), and Mem_Delete when bit 0 of the flags is set. The code of ES1DBSIM's RLERStream_Dtor (00074fd8), relocated operands aside.",
       "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
       "verified": {
         "bytes": "0006449c+43",
@@ -14212,7 +14212,7 @@
       "type": "function",
       "confidence": "high",
       "name": "BuffRStream_Ctor",
-      "description": "BuffRStream constructor, callee-cleaned (this, buffer, size, source) in stack order: allocates 0x21 bytes through operator_new when this is null (0 if that fails), Stream_BaseCtor, the vtable 0008b04e at +4, BuffRStream_InitBuffer(this, buffer, size) and BuffRStream_SetSource(this, source). The code of ES1DBSIM's BuffRStream_Ctor (000744f4), relocated operands aside.",
+      "description": "BuffRStream constructor, callee-cleaned (this, buffer, size, source) in stack order: allocates 0x21 bytes through Mem_New when this is null (0 if that fails), Stream_BaseCtor, the vtable 0008b04e at +4, BuffRStream_InitBuffer(this, buffer, size) and BuffRStream_SetSource(this, source). The code of ES1DBSIM's BuffRStream_Ctor (000744f4), relocated operands aside.",
       "source": "Herculan/docs/es1/formats/streams.md#the-volume-class",
       "verified": {
         "bytes": "00064ae0+65",
@@ -14266,7 +14266,7 @@
       "type": "function",
       "confidence": "high",
       "name": "LZHRStream_Ctor",
-      "description": "LZHRStream() constructor, callee-cleaned (this): allocates 0x28 bytes through operator_new when this is null (0 if that fails), Stream_BaseCtor, the vtable 0008b08a at +4, LZHRStream_Init, and status 6 (no source). The code of ES1DBSIM's LZHRStream_Ctor (00074b8c), relocated operands aside.",
+      "description": "LZHRStream() constructor, callee-cleaned (this): allocates 0x28 bytes through Mem_New when this is null (0 if that fails), Stream_BaseCtor, the vtable 0008b08a at +4, LZHRStream_Init, and status 6 (no source). The code of ES1DBSIM's LZHRStream_Ctor (00074b8c), relocated operands aside.",
       "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
       "verified": {
         "bytes": "00064ec0+56",
@@ -14296,7 +14296,7 @@
       "type": "function",
       "confidence": "high",
       "name": "LZHRStream_Init",
-      "description": "(stream): clears the source pointer +8, makes the Huffman coder at +0xc with LZHuffman_Ctor(0) and allocates the 0x103b-byte window at +0x10 through operator_new. The code of ES1DBSIM's LZHRStream_Init (00074c00), relocated operands aside.",
+      "description": "(stream): clears the source pointer +8, makes the Huffman coder at +0xc with LZHuffman_Ctor(0) and allocates the 0x103b-byte window at +0x10 through Mem_New. The code of ES1DBSIM's LZHRStream_Init (00074c00), relocated operands aside.",
       "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
       "verified": {
         "bytes": "00064f34+39",
@@ -14311,7 +14311,7 @@
       "type": "function",
       "confidence": "high",
       "name": "LZHRStream_Dtor",
-      "description": "LZHRStream destructor (this, flags), vtable slot +4: returns at once for a null this; otherwise restores the vtable 0008b08a, LZHRStream_Close, LZHuffman_Dtor(coder +0xc, 3), operator_delete on the window +0x10, Stream_BaseDtor(this, 0), and operator_delete when bit 0 of the flags is set. The code of ES1DBSIM's LZHRStream_Dtor (00074c28), relocated operands aside.",
+      "description": "LZHRStream destructor (this, flags), vtable slot +4: returns at once for a null this; otherwise restores the vtable 0008b08a, LZHRStream_Close, LZHuffman_Dtor(coder +0xc, 3), Mem_Delete on the window +0x10, Stream_BaseDtor(this, 0), and Mem_Delete when bit 0 of the flags is set. The code of ES1DBSIM's LZHRStream_Dtor (00074c28), relocated operands aside.",
       "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
       "verified": {
         "bytes": "00064f5c+72",
@@ -15196,7 +15196,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TSPartBase_Dtor",
-      "description": "(part, flags), callee-cleaned: slot +0x1c of TSPartBase's vtable 0008c622: stores that vtable, runs TSBase_Dtor(part, 0) and calls operator_delete on part when flags bit 0 is set; returns at once for a null part. The code of ES1DBSIM's TSPartBase_Dtor (0005d614), relocated operands aside.",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of TSPartBase's vtable 0008c622: stores that vtable, runs TSBase_Dtor(part, 0) and calls Mem_Delete on part when flags bit 0 is set; returns at once for a null part. The code of ES1DBSIM's TSPartBase_Dtor (0005d614), relocated operands aside.",
       "source": "Herculan/docs/es1/formats/dts-shape.md",
       "verified": {
         "bytes": "0006a54c+42",
@@ -15316,7 +15316,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TSBitmapPart_Dtor",
-      "description": "(part, flags), callee-cleaned: slot +0x1c of TSBitmapPart's vtable 0008c692: stores that vtable and then 0008c622, runs TSBase_Dtor(part, 0) and calls operator_delete on part when flags bit 0 is set; returns at once for a null part. The code of ES1DBSIM's TSBitmapPart_Dtor (0005d918), relocated operands aside.",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of TSBitmapPart's vtable 0008c692: stores that vtable and then 0008c622, runs TSBase_Dtor(part, 0) and calls Mem_Delete on part when flags bit 0 is set; returns at once for a null part. The code of ES1DBSIM's TSBitmapPart_Dtor (0005d918), relocated operands aside.",
       "source": "Herculan/docs/es1/formats/dts-shape.md",
       "verified": {
         "bytes": "0006a850+48",
@@ -15541,7 +15541,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TSCellAnimPart_Dtor",
-      "description": "(part, flags), callee-cleaned: slot +0x1c of TSCellAnimPart's vtable 0008c6fa: stores that vtable, runs TSPartList_Dtor(part, 0) and calls operator_delete on part when flags bit 0 is set; returns at once for a null part. The code of ES1DBSIM's TSCellAnimPart_Dtor (0005dde0), relocated operands aside.",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of TSCellAnimPart's vtable 0008c6fa: stores that vtable, runs TSPartList_Dtor(part, 0) and calls Mem_Delete on part when flags bit 0 is set; returns at once for a null part. The code of ES1DBSIM's TSCellAnimPart_Dtor (0005dde0), relocated operands aside.",
       "source": "Herculan/docs/es1/formats/dts-shape.md",
       "verified": {
         "bytes": "0006ad18+42",
@@ -16033,7 +16033,7 @@
       "type": "function",
       "confidence": "high",
       "name": "LZHuffman_Ctor",
-      "description": "LZHuffman constructor, callee-cleaned (this): allocates 0x16 bytes through operator_new when this is null (0 if that fails), then through operator_new the frequency table +4 (0x4e8 bytes), the parent links +8 (0x75a) and the child links +0xc (0x4e6), LZHUF's sizes for 314 symbols and a 627-node tree. The class stores no vptr. The code of ES1DBSIM's LZHuffman_Ctor (00082734), relocated operands aside.",
+      "description": "LZHuffman constructor, callee-cleaned (this): allocates 0x16 bytes through Mem_New when this is null (0 if that fails), then through Mem_New the frequency table +4 (0x4e8 bytes), the parent links +8 (0x75a) and the child links +0xc (0x4e6), LZHUF's sizes for 314 symbols and a 627-node tree. The class stores no vptr. The code of ES1DBSIM's LZHuffman_Ctor (00082734), relocated operands aside.",
       "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
       "verified": {
         "bytes": "0006f85c+70",
@@ -16048,7 +16048,7 @@
       "type": "function",
       "confidence": "high",
       "name": "LZHuffman_Dtor",
-      "description": "LZHuffman destructor (this, flags): returns at once for a null this; otherwise operator_delete on the tables +4, +8 and +0xc, and on this when bit 0 of the flags is set. The code of ES1DBSIM's LZHuffman_Dtor (0008277c), relocated operands aside.",
+      "description": "LZHuffman destructor (this, flags): returns at once for a null this; otherwise Mem_Delete on the tables +4, +8 and +0xc, and on this when bit 0 of the flags is set. The code of ES1DBSIM's LZHuffman_Dtor (0008277c), relocated operands aside.",
       "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
       "verified": {
         "bytes": "0006f8a4+57",
@@ -16952,6 +16952,15 @@
       }
     },
     {
+      "address": "0007d7b4",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mem_UseHeap",
+      "description": "dword: 1 while the heap g_ShellPool (0009a308) is on. Mem_InitHeap (0000195f) sets it and Mem_HeapOff (000019e1) clears it; Mem_New, Mem_Delete, malloc, free and calloc test it.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-two-programs"
+    },
+    {
       "address": "0007dc30",
       "binary": "ES1GO",
       "type": "data",
@@ -17474,6 +17483,15 @@
       "source": "Herculan/docs/es1/formats/dts-shape.md"
     },
     {
+      "address": "0009a308",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_ShellPool",
+      "description": "The heap, a Memory object as ES2's g_ShellPool (VSHELL 0048239c) without the low mark: the four dwords +0 base, +4 byte size, +8 free-list head and +0xc free bytes. Mem_StaticInit (00001b5c) runs Memory_Ctor on it and Mem_InitHeap (0000195f) gives it its block.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-two-programs"
+    },
+    {
       "address": "0009aec0",
       "binary": "ES1GO",
       "type": "data",
@@ -17742,6 +17760,15 @@
       "name": "Poly_ScreenCount",
       "description": "The ring's point count (uint16), set by the projectors and the near-plane clips. ES2's DBSIM 006cbc86. ES1DBSIM's Poly_ScreenCount is at 000bba3e.",
       "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
+    },
+    {
+      "address": "000aa24a",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "X32_FreeListHead",
+      "description": "dword: the head node of the circular list the pointer 0007d558 holds, which X32_LargestFreeBlock (0004f738) walks from the node's link until it comes back to the node. Memory_Ctor (00000ef4) stores the node's own address into it, which leaves the list with no other node; es2_xref --decode finds no other write to it.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-two-programs"
     },
     {
       "address": "000aa24e",

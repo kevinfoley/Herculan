@@ -28,7 +28,7 @@ The file's static initializer is not its last code. `MfdMissileView_StaticInit` 
 | `+0x3f` | the repaint counter, a byte | `+0x43` |
 | `+0x40` | the lock blink's latch, a byte | `+0x44` |
 
-Of the object, the constructor writes `+0` (by `MFDisplay_Ctor`), `+8` to `+0x17` and the labels `+0x2f`–`+0x3e`, and no other byte: the flash's explosion `+0x18` and toggle `+0x1c`, the saved pose `+0x1d`–`+0x2e` (whose inlined constructors store nothing), the counter `+0x3f` and the latch `+0x40` start at 0 because `MfdDisplay_Ctor` passes no screen, so the `0x41` bytes come from `operator_new`, and the heap zero-fills what it hands out ([the heap](memory.md#the-heap)). `MfdDisplay_Ctor` sets `+4` afterwards.
+Of the object, the constructor writes `+0` (by `MFDisplay_Ctor`), `+8` to `+0x17` and the labels `+0x2f`–`+0x3e`, and no other byte: the flash's explosion `+0x18` and toggle `+0x1c`, the saved pose `+0x1d`–`+0x2e` (whose inlined constructors store nothing), the counter `+0x3f` and the latch `+0x40` start at 0 because `MfdDisplay_Ctor` passes no screen, so the `0x41` bytes come from `Mem_New`, and the heap zero-fills what it hands out ([the heap](memory.md#the-heap)). `MfdDisplay_Ctor` sets `+4` afterwards.
 
 ### The viewport and the camera
 

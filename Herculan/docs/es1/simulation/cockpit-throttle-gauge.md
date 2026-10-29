@@ -90,7 +90,7 @@ The gauge starts at 0, so on the frame `Sim_StartMission` runs the update the ma
 4. the knob, from the track {*x0*, *y0*, *x1*, *y1*}:
    - vertical: the length `+0x2c` is the knob bitmap's rows, its `int16` `+4`; the knob spans the track's width, its bottom row ((*y1* − *y0*) ≫ 1 below *y1*) + (length ≫ 1) and its top row that less the length;
    - horizontal: the length is 12 whatever the bitmap; the knob spans the track's rows, its left column *x0* + ((*x1* − *x0*) ≫ 1) − 6 and its right that plus 12;
-   - the region's rect and `+0x6e`/`+0x72` take the knob's rect and top-left, and `+0x52` is allocated with `operator_new`;
+   - the region's rect and `+0x6e`/`+0x72` take the knob's rect and top-left, and `+0x52` is allocated with `Mem_New`;
 5. the bars: the forward bar `+0x7e` over the block's `int32` 8–11 plus the origin, range `0x400`, and the reverse bar `+0x82` over `int32` 12–15, range −`0x400`, each `LedBmBarGraphV_Ctor` or `LedBmBarGraphH_Ctor` ([bitmap bar graphs](cockpit-widgets.md#bitmap-bar-graphs)) with frame 1 of `+0x76` as the lit picture and frame 0 (forward) or 2 (reverse) as the unlit one;
 6. `+0x4a` and `+0x7a` = 0; the position `+0x28` and `+0x2a` = the knob's bottom row (vertical) or left column (horizontal); the minimum −`0x400`, the maximum `0x400`; and `SliderWidget_RecomputeScaleV` or `H` again, which makes the scale ((*y1* − length − *y0*) ≪ 16) / `0x800`, or the same across.
 

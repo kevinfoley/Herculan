@@ -13,7 +13,7 @@ Its `RET` at `0001a128` is followed by three zero bytes and a lone copy of the 4
 ## The functions this page names
 
 - **`Shape_RemapTransformId` (`00019aa0`)**, (map, id): ES2's (`0041ff68`): when the `int16` at *id* is not negative it becomes the signed byte *map*[*id*]. `Shape_RemapTransformIds` (`00019ac4`, [the type record](../formats/chassis-dat.md)) calls it for each node field.
-- **`MECH_TYPE_DATA_Dtor` (`0001a020`)**, (record, flags): for a record that is not null, `__vec_dtor` (`000610fd`) over the ten `0x18`-byte parts at `+0xd4` with `ConfigPart_DtorThunk`, then `operator_delete` on flags bit 0. ES2's (`00420867`) also counts the live destructors.
+- **`MECH_TYPE_DATA_Dtor` (`0001a020`)**, (record, flags): for a record that is not null, `__vec_dtor` (`000610fd`) over the ten `0x18`-byte parts at `+0xd4` with `ConfigPart_DtorThunk`, then `Mem_Delete` on flags bit 0. ES2's (`00420867`) also counts the live destructors.
 - **`ConfigPart_DtorThunk` (`0001a08c`)**, frameless: jumps to slot `+0x1c` of the part its first argument points at, the part's destructor, with the arguments `__vec_dtor` passed.
 - **`Mechs_FreeAllTypes` (`0001a054`)**, frameless: `__vec_delete` (`00061088`)(`MECH_TYPE_DATA_Dtor`, `0x1c4`, 7, `g_MechTypeTable` (`000bc444`)), then `g_MechTypeSlotIndex` (`000bc430`) set to `0xff` over its 16 bytes and `g_MechTypeCount` (`000bc42e`) to 0. ES2's (`00420560`) does the same over its `0x21e`-byte records and `0x55`-byte map. `es2_xref.py` finds no branch or stored pointer to it ([Open](#open)).
 

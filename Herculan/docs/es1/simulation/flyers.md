@@ -180,7 +180,7 @@ and it answers 1; otherwise 0. ES2's sets the debris carrier global around the c
 
 ## `flyersys.cpp`
 
-The loads are in the formats' pages: `FlyerSys_RegisterSubsystem` registers `Flyer_LoadResources` (`0001c558`) at phase 2, which reads `FFORMS.DAT` ([the loads](../formats/formations-dat.md#the-loads)); `FlyerTypes_LoadAll` (`0001c770`) reads the type names and each type's files ([`SKIMMER.DAT`'s load](../formats/bullets-skimmer-dat.md#the-load-1)). `FlyerTypes_Free` (`0001c7c4`), a frameless function with no Ghidra function, sets the two-byte type-slot table `000bc466` to `0xff`, the type count `000bc464` to 0 and frees the records `000bc46c` with `operator_delete`; ES2's code at `00423018` is the same with its `0x22`-byte table ([Open](#open)).
+The loads are in the formats' pages: `FlyerSys_RegisterSubsystem` registers `Flyer_LoadResources` (`0001c558`) at phase 2, which reads `FFORMS.DAT` ([the loads](../formats/formations-dat.md#the-loads)); `FlyerTypes_LoadAll` (`0001c770`) reads the type names and each type's files ([`SKIMMER.DAT`'s load](../formats/bullets-skimmer-dat.md#the-load-1)). `FlyerTypes_Free` (`0001c7c4`), a frameless function with no Ghidra function, sets the two-byte type-slot table `000bc466` to `0xff`, the type count `000bc464` to 0 and frees the records `000bc46c` with `Mem_Delete`; ES2's code at `00423018` is the same with its `0x22`-byte table ([Open](#open)).
 
 ## Functions
 

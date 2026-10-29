@@ -30,7 +30,7 @@ The screen is the adapter's text memory at linear `0xb0000` (`Mono_Clear` addres
 
 The memory, driver and slot listings at `0004e858` and the grenade distance at `0000b714` print with `Mono_Printf`, and the frame-rate meter below with `Mono_PrintfRow`.
 
-`GO.EXE` has the same screen: `Mono_Screen` at `ES1GO 000a0bdc`, built by `Mono_StaticInit` (`ES1GO 0004fab8`), with `Mono_WriteChar`, `Mono_WriteText`, `Mono_Printf`, `Mono_PrintScreen` and `Mono_ShowCursor` at `ES1GO 0004f83c`, `0004f894`, `0004f904`, `0004f95c` and `0004fa90`, and the detection at `ES1GO 00065c42`–`00065ccc`. `Heap_DrawMap` prints its map with `Mono_Printf` ([the heap](memory.md)).
+`GO.EXE` has the same screen: `Mono_Screen` at `ES1GO 000a0bdc`, built by `Mono_StaticInit` (`ES1GO 0004fab8`), with `Mono_WriteChar`, `Mono_WriteText`, `Mono_Printf`, `Mono_PrintScreen` and `Mono_ShowCursor` at `ES1GO 0004f83c`, `0004f894`, `0004f904`, `0004f95c` and `0004fa90`, and the detection at `ES1GO 00065c42`–`00065ccc`. `Memory_DrawUsageMap` prints its map with `Mono_Printf` ([the heap](memory.md)).
 
 ## The frame-rate meter
 

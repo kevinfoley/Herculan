@@ -28664,7 +28664,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Memory_Ctor",
-      "description": "The DBSIM copy of VSHELL's 004077ac, identical after normalisation: (pool) zeroes a src\\mymem.cpp Memory object's base +0, byte size +4, free-list head +8 and free bytes +0xc, leaving +0x10 (the lowest free count). Mem_StaticInit runs it on g_SimPool before Heap_InitInBuffer gives the pool its buffer.",
+      "description": "The DBSIM copy of VSHELL's 004077ac, identical after normalisation: (pool) zeroes a src\\mymem.cpp Memory object's base +0, byte size +4, free-list head +8 and free bytes +0xc, leaving +0x10 (the lowest free count). Mem_StaticInit runs it on g_SimPool before Memory_Init gives the pool its buffer.",
       "source": "DBSIM decompile at 00476ccc",
       "verified": {
         "bytes": "00476ccc+25",
@@ -28678,9 +28678,15 @@
       "binary": "DBSIM",
       "type": "function",
       "confidence": "high",
-      "name": "Heap_InitInBuffer",
+      "name": "Memory_Init",
       "description": "(heap, size, block): heap+0 and +8 = block, +4 = size, +0xc and +0x10 = size & ~7; the block's first dword 0, second size & ~7, and the tag 'KLBF' (0x46424c4b) at block+8. Sim_Run sets up 006bb37c over the 0xb0000 bytes at 00604f88 with it when CockpitArt_LoadOnDemand is set.",
-      "source": "DBSIM decompile at 00476ce8"
+      "source": "DBSIM decompile at 00476ce8",
+      "verified": {
+        "bytes": "00476ce8+54",
+        "sha1": "c45bd6338abe",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00476d20",
@@ -28689,7 +28695,13 @@
       "confidence": "high",
       "name": "Memory_IsAllocatedBlock",
       "description": "Returns 1 when ptr (header at ptr-8) lies inside the pool's [base, base+size) and its header holds 'KLBA' (0x41424c4b). The DBSIM copy of VSHELL's Memory_IsAllocatedBlock.",
-      "source": "DBSIM decompile and disassembly at 00476d20"
+      "source": "DBSIM decompile and disassembly at 00476d20",
+      "verified": {
+        "bytes": "00476d20+46",
+        "sha1": "1b0fcf5a3628",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00476d50",
@@ -28743,7 +28755,13 @@
       "confidence": "high",
       "name": "Memory_Alloc",
       "description": "First-fit allocation from a src\\mymem.cpp pool (pool, size, trackLow): the same algorithm and 'KLBA'/'KLBF' block tags as VSHELL's Memory_Alloc, with the asserts compiled out. Mem_New and Mem_NewArray use it on the pool at 006bb37c.",
-      "source": "DBSIM decompile and disassembly at 00476e00"
+      "source": "DBSIM decompile and disassembly at 00476e00",
+      "verified": {
+        "bytes": "00476e00+256",
+        "sha1": "ee0cdfd8cb9f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00476f00",
@@ -45622,7 +45640,7 @@
       "type": "data",
       "confidence": "high",
       "name": "g_SimPool",
-      "description": "The src\\mymem.cpp Memory pool behind Mem_New, Mem_NewArray, Mem_Delete and Mem_DeleteArray, DBSIM's counterpart of VSHELL's g_ShellPool: +0 base, +4 byte size, +8 free-list head, +0xc free bytes (006bb388, Mem_New's size test), +0x10 lowest free bytes. Mem_StaticInit zeroes it through Memory_Ctor; 0045f326 gives it 0xb0000 bytes at 0x4d4f88 + 0x130000 through Heap_InitInBuffer; Memory_DrawUsageMap walks it.",
+      "description": "The src\\mymem.cpp Memory pool behind Mem_New, Mem_NewArray, Mem_Delete and Mem_DeleteArray, DBSIM's counterpart of VSHELL's g_ShellPool: +0 base, +4 byte size, +8 free-list head, +0xc free bytes (006bb388, Mem_New's size test), +0x10 lowest free bytes. Mem_StaticInit zeroes it through Memory_Ctor; 0045f326 gives it 0xb0000 bytes at 0x4d4f88 + 0x130000 through Memory_Init; Memory_DrawUsageMap walks it.",
       "source": "DBSIM disassembly at 0045f326, 00477390-0047749a, 004774c4"
     },
     {

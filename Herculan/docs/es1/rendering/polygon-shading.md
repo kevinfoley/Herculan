@@ -224,7 +224,7 @@ Tags 1, 3, 5, 6 and 7 hold ES2's lists ([ES2's `SHADES.DAT`](../../retail/render
 
 ### The zone shapes
 
-Every zone shape object carries tag 0: neither `TSObj_Ctor` nor `Terrain_LoadZoneShapes` writes `+0`, and `operator_new` takes the object from the heap, which zero-fills it ([the heap](../simulation/memory.md#the-heap)); `Sim_Main` (`00059350`) turns the heap on before anything else and off only on its way out. So for a zone shape, each frame:
+Every zone shape object carries tag 0: neither `TSObj_Ctor` nor `Terrain_LoadZoneShapes` writes `+0`, and `Mem_New` takes the object from the heap, which zero-fills it ([the heap](../simulation/memory.md#the-heap)); `Sim_Main` (`00059350`) turns the heap on before anything else and off only on its way out. So for a zone shape, each frame:
 
 1. the cull and the band use `WorldShades_BandsTag0` and its count, with no distance offset;
 2. `WorldShades_ApplyForObject` re-points ramp 14, and only ramp 14, at band *b*'s range of column 7: entry 7 × 16 + *b* of `WorldShades_LevelRanges`, which runs over the 16 bands from the world file's first column-7 range to its second ([the retail ranges](../formats/wld-world.md#the-distance-colour-ranges));

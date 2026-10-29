@@ -15,7 +15,7 @@ ES1's simulator reports a failed check through the same assert logger ES2 has, a
 | 5 | writes `Internal Error:`, a request to call Sierra customer support, and the message to `0009e87c` |
 | 6 | passes `Assert::break: Ctrl-C / Ctrl-Break` to `00056f30` and writes it to `0009e87c` |
 
-Severities 4, 5 and 6 are fatal. `Assert_Report` executes `INT 3` and returns when `000b5bcc` is set, which `-B` does ([the command line](main-loop.md#the-command-line)); otherwise it calls each hook on the list at `000b5b58` with the severity (`Assert_RunHooks`, `00057270`), emits the assert, emits severity 1 for the warning count, and ends the program through `__exit(1)`. `Assert_AddHook` (`0005730c`), (hook), pushes an 8-byte node {next, hook} from `operator_new` at the list's head, so the newest hook runs first.
+Severities 4, 5 and 6 are fatal. `Assert_Report` executes `INT 3` and returns when `000b5bcc` is set, which `-B` does ([the command line](main-loop.md#the-command-line)); otherwise it calls each hook on the list at `000b5b58` with the severity (`Assert_RunHooks`, `00057270`), emits the assert, emits severity 1 for the warning count, and ends the program through `__exit(1)`. `Assert_AddHook` (`0005730c`), (hook), pushes an 8-byte node {next, hook} from `Mem_New` at the list's head, so the newest hook runs first.
 
 ## A fatal assert in a mission
 

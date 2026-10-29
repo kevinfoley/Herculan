@@ -138,7 +138,7 @@ ES2's also steps a counter through 0–3 on each rise of the coarse ticks' bit `
    | class 1, a structure of any other type | `0x4a` on side 0, `0x48` on another | 13 | yes, `+0x4d` 13 |
 
    An object of another class gets no marker. A HERC other than the player's and a structure read their group's side with no test of the group for null, and a structure its type record likewise. A marker takes the frame at `+0x24`, the object at `+0x38`, the class at `+0x48`, `HddMarker_SetSize`(marker, size) and the ranged byte `+0x4c`; a ranged one also `+0x4d`, 0 at `+0x4f`, the color `+0x51`, `0x32` on side 0 and `0x35` on another, and 25000 at `+0x57`;
-3. `+0x109` = 1, and the markers from the count to 74 freed with `operator_delete`, their pointers left in the array.
+3. `+0x109` = 1, and the markers from the count to 74 freed with `Mem_Delete`, their pointers left in the array.
 
 It does not compare the count with 75 ([Open](#open)). ES2's builds a nav marker after the objects, which ES1's has no counterpart of, and gives ground vehicles, class 3, markers of their own.
 
@@ -275,7 +275,7 @@ The key slot's `Enter` table and `HddCommandScreen_PickTarget`'s and `HddCommand
 - **Open:** whether a retail mission has more HERCs, flyers and structures than the 75 markers less its player's route markers hold: `HddCommandScreen_BuildMapMarkers` counts on past 75 and reads the pointer after the array. Proposed check: one pass over the missions with `HercWorks.Query`, counting each mission's objects of those three classes and its player group's route points.
 - **Open:** what reads a marker's `+0x2e`/`+0x32`, `+0x36`, `+0x4d` and `+0x51`, which this file writes and `HddMarker_Paint` does not read, `+0x51` aside on a branch whose guard is never true.
 - **Open:** a retail check of the map's look, by eye in `F7`: with the zoom-in magnifier pressed until the map stops changing, neighboring grid lines 128 pixels apart; the border frame clear of the outermost structures and the route's points; the ground as flat-shaded shapes rather than contour bands; and the selected squadmate's marker blinking in its place while the others stay lit.
-- **Open:** whether `+0x103` and `+0x104` start at 0: the constructor writes neither, and the screen comes from `operator_new` (`000015a4`) with 0 for the screen.
+- **Open:** whether `+0x103` and `+0x104` start at 0: the constructor writes neither, and the screen comes from `Mem_New` (`000015a4`) with 0 for the screen.
 - **Open:** what the map's redraw in `HddCommandScreen_Update` shows with a line up in the pilot channel: it makes the display's `+0x8c` page both source and draw page, runs the channel's slot `+0x18` before the copy and `+0x14` after it, the reverse of the display's stage 1 lift ([the paint stages](heads-down-display.md#drawing-it)), and leaves the pages so. Proposed retail check, by eye: with a squadmate's line up on the look-down view, press a magnifier and watch whether the line or the ticker flickers or is left on the map.
 - **Open:** `DEFEND POSITION`'s gridpoint after a first pick. Proposed retail check: select a squadmate, press `F`, click open ground on the map (a blip, the message row clears), then click other open ground: in ES1 no second blip and the squadmate's line stays on the first point.
 - **Open:** the undefined bytes in `ES1Recon` of `HddCommandScreen_KeyDispatch`'s cases from `0003f982`, and its shared return at `0003fbaa`–`0003fbb4`, outside Ghidra's extent of the function; a `REPNE SCASD` repair would give them Ghidra code.

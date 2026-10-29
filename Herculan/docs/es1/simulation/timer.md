@@ -40,7 +40,7 @@ A 6-byte object: a dword of flags at `+0`, bit 0 set while its handler is instal
 - **`DVTimer_Ctor` (`0006c6f8`)**, (this, divisor): allocates 6 bytes for a null *this*, returning 0 when that fails; `GL_ClaimGlobal` (`0007d5bc`) takes GL slot 0 for it when the slot is empty and clears `+0`; when the slot holds it, `DVTimer_Init`, and when that answers non-zero, `atexit` (`0007d628`) of `Pit_RemoveHandler` and `Assert_AddHook` (`0005730c`) of `DVTimer_AssertRemoveHook` (`0006c750`, pushed as its padding entry `0006c74d`), which calls `Pit_RemoveHandler`, so the timer is put back when the program exits or an assert aborts it. Returns *this*. ES2's is `004809e4`.
 - **`DVTimer_Init` (`0006c790`)**, (this, divisor): `Pit_InstallHandler`(divisor, this) and, when that answers non-zero, the divisor to `+4`; returns bit 0 of `+0`.
 - **`DVTimer_SetRate` (`0006c7bc`)**, (this, divisor): `Pit_SetDivisor`(divisor), and the divisor to `+4` with 1 returned when that answers; 0 otherwise ([Open](#open)).
-- **`DVTimer_Dtor` (`0006c758`)**, (this, flags): for a non-null *this*, when GL slot 0 holds a timer, `Pit_RemoveHandler` and the slot cleared, whichever timer the slot holds; `operator_delete` when bit 0 of *flags* is set. `Sim_ReleaseSessionObjects` (`0005b534`) deletes `Sim_Timer` with it ([small functions](main-loop.md#small-functions)).
+- **`DVTimer_Dtor` (`0006c758`)**, (this, flags): for a non-null *this*, when GL slot 0 holds a timer, `Pit_RemoveHandler` and the slot cleared, whichever timer the slot holds; `Mem_Delete` when bit 0 of *flags* is set. `Sim_ReleaseSessionObjects` (`0005b534`) deletes `Sim_Timer` with it ([small functions](main-loop.md#small-functions)).
 
 ## The interrupt — `Pit_TimerInterrupt` (`0006d391`)
 

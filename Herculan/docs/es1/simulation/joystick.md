@@ -65,7 +65,7 @@ The code before is `GLCursor_Dtor`'s, whose `RET 8` at `0006b40e` is followed by
 4. A mask of `0xf` takes the detected mask. `+0x6f` becomes the detected mask ANDed with the mask; when that is 0 or differs from the mask, the dword `+0` is cleared and 0 returned.
 5. Sets `+0x73` to the number of bits in `+0x6f`, sets bit 0 of `+0` and returns 1.
 
-So a mask other than `0xf` enables the object only when every axis it names answers, and the object then reads those axes alone. Init leaves `+0x6c` as the allocation left it; `operator new` (`000015a4`) zero-fills a block it takes from `Heap_Alloc` ([memory](memory.md)). `ES1GO`'s Init (`00052364`) tests the mask differently: a mask of 0, or one whose axes all answered, enables the object with the detected mask and count unchanged.
+So a mask other than `0xf` enables the object only when every axis it names answers, and the object then reads those axes alone. Init leaves `+0x6c` as the allocation left it; `Mem_New` (`000015a4`) returns `Memory_Alloc`'s block, which `Memory_Alloc` zero-fills ([memory](memory.md)). `ES1GO`'s Init (`00052364`) tests the mask differently: a mask of 0, or one whose axes all answered, enables the object with the detected mask and count unchanged.
 
 **`DVJoystick_Detect` (`0006be74`)**, (joystick), C convention: the game port first, `DVJoystick_DetectGamePort`, answering 1 when it found an axis; then the BIOS, `DVJoystick_DetectBios`, answering 1 when that found one and 0 otherwise. Both routines take the object in `ESI` and keep `EAX` to `EDX`.
 

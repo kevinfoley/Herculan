@@ -45,7 +45,7 @@ The asserts that name `main.cpp` are `Sim_Main`'s (`0005937c`, `0005942f`, `0005
 9. `Sim_StartMission` (`0005a9dc`), subsystem phase 3, and the frame loop ([the frame](#the-frame)).
 10. After the loop, `Sim_Shutdown` (`0005b568`), `Mem_HeapOff`, and with `-eggplant` given and the quit flag clear, bit 0 of the byte `SimDisplay` (`000b5b5c`) points at cleared.
 
-**`Sim_Main` returns no value, so the program's exit status is not the exit code.** Nothing after the loop sets `EAX` (`00059627`–`00059654`; `Mem_HeapOff` (`00001598`) only clears `000901d4`), and the startup passes whatever `EAX` holds to `exit` (`00000173`, [startup](../formats/compiler.md#startup)): what `Sim_Shutdown`'s calls left there. The exit code reaches the shell through `data\exit.cfg` alone ([the end](#the-end--sim_shutdown-0005b568)).
+**`Sim_Main` returns no value, so the program's exit status is not the exit code.** Nothing after the loop sets `EAX` (`00059627`–`00059654`; `Mem_HeapOff` (`00001598`) only clears `Mem_UseHeap` (`000901d4`)), and the startup passes whatever `EAX` holds to `exit` (`00000173`, [startup](../formats/compiler.md#startup)): what `Sim_Shutdown`'s calls left there. The exit code reaches the shell through `data\exit.cfg` alone ([the end](#the-end--sim_shutdown-0005b568)).
 
 Where ES2's `Sim_Run` differs: it reads `data\drive.cfg` instead of the environment, refuses without `-eggplant` in a message box, checks physical memory, after the loop saves the full-screen option and deletes the tape's two configuration files ([ES2's start](../../retail/simulation/main-loop.md#starting)), and its `WinMain` returns the exit code ([exit codes](../../retail/command-line.md#exit-codes)).
 
@@ -93,7 +93,7 @@ Where ES2's parsers differ ([ES2's switches](../../retail/command-line.md#dbsim)
 14. **The lift.** `LiftStart_Pending` (`000b5bb0`) = 1 when a structure of `g_BasePool` whose group (`+0x3f`) has side byte `+0x14` 0, the player's side, lies within 40000 of the player. Then it calls `00057cf4`; otherwise it sets `000928ee` = 8 and runs `Palette_BlendRangeByPitch`, `Palette_FlushDirtyRange` and a first `Sim_RenderFrame`. ES2's runs the same search over its structures (side byte `+0x12`) at the same point and discards the answer: its two lift calls, `LiftStart_DarkenPalette` here and `LiftStart_Rise` at the end, test its block's `+0x54` instead ([the lift start](../../retail/simulation/mission-deployment.md#the-lift-start)).
 15. `000b5bca` = 0; `Palette_FlushDirtyRange`; `Widget_DrawToCockpit`(0, {0, 0, 320, 400}, 1), the whole of page `+0x8c` onto `+0x88`; the driver's routine at `0009df4c`, slot 30, `VGA8_ShowCursor`, which draws the cursor for the first time ([the cursor](../rendering/screen-pages.md#the-cursor)); `000b5b72` and `000b5b74` = option 6 (`000bd568`) and `ShapeDetail_ApplyDetailSetting`(option 6), the detail setting `Sim_RenderFrame` applies again when the option changes ([the detail setting](object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08)); `000b5b96` = option 5 above 240 ([the ground](../rendering/ground-and-sky.md)); `0004e294`(1); with the lift, `00057ffc`; unless a tape plays, `CockpitMouseLive` = 1; `Sound_Play`(`0x13`).
 
-`Sim_CreateDisplay` builds the display's two four-element arrays with `DisplayPageOrigin_ElementCtor` (`0005a79c`), (p): p, or `operator_new`(8) when p is null.
+`Sim_CreateDisplay` builds the display's two four-element arrays with `DisplayPageOrigin_ElementCtor` (`0005a79c`), (p): p, or `Mem_New`(8) when p is null.
 
 ## The frame
 

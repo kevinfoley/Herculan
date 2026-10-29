@@ -25,7 +25,7 @@ The code is `000107f0`–`00010d5f`. It opens with `Mech_ApplySquadCondition`, a
 
 So on `SPIDER`, whose `.DMG` gives 12 internals ([the files](../formats/dmg-damage-file.md#the-files)), the squad condition reads maxima 12–21, the readouts maxima 12–21 and the overall reading maxima 12–20 past the end of its maxima array.
 
-`Component_AllocDamageArrays` takes the two damage arrays from `operator_new`, 42 and 56 bytes. Through a mission's load the heap rounds a block with its 8-byte header up to a multiple of 8 and zero-fills it ([the heap](memory.md#the-heap)), so internal 21 falls in the 6 bytes the internals' 42 are rounded up by, and component 28 in the 2 bytes after the components' block, which end on a multiple of 8 ([Open](#open)).
+`Component_AllocDamageArrays` takes the two damage arrays from `Mem_New`, 42 and 56 bytes. Through a mission's load the heap rounds a block with its 8-byte header up to a multiple of 8 and zero-fills it ([the heap](memory.md#the-heap)), so internal 21 falls in the 6 bytes the internals' 42 are rounded up by, and component 28 in the 2 bytes after the components' block, which end on a multiple of 8 ([Open](#open)).
 
 ## Functions
 
@@ -43,5 +43,5 @@ So on `SPIDER`, whose `.DMG` gives 12 internals ([the files](../formats/dmg-dama
 
 ## Open
 
-- **Open:** what the tenth mount pair reads and overwrites: the 2 bytes after the components' 56-byte block are the start of whatever follows it in the heap, the next block's 8-byte header when one follows, and which block that is depends on where `Heap_Alloc` placed the arrays; the `.DMG` table's piece 28 and `SPIDER`'s maxima 12–21 lie past arrays `HercPiece_LoadTable` sizes from the file. How many pieces each `dmg\` file holds, and each mount pair's armor plus internal maximum, which `Component_FillDamageReadouts` divides by, are data questions for `HercWorks.Core`: no `HercWorks.Query` command reads `.DMG`.
+- **Open:** what the tenth mount pair reads and overwrites: the 2 bytes after the components' 56-byte block are the start of whatever follows it in the heap, the next block's 8-byte header when one follows, and which block that is depends on where `Memory_Alloc` placed the arrays; the `.DMG` table's piece 28 and `SPIDER`'s maxima 12–21 lie past arrays `HercPiece_LoadTable` sizes from the file. How many pieces each `dmg\` file holds, and each mount pair's armor plus internal maximum, which `Component_FillDamageReadouts` divides by, are data questions for `HercWorks.Core`: no `HercWorks.Query` command reads `.DMG`.
 - **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: in a career mission with a squad HERC the shell lists as damaged, `BP <CS>:000107f0` fires once per squad machine as the mission loads, and that HERC's damage screen shows the damage on its first frame.

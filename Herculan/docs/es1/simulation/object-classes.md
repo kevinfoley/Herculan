@@ -8,7 +8,7 @@ Addresses are `ES1DBSIM` image addresses ([the X-32 executable](../formats/x32-e
 
 Two object files, with no assert naming a source path in either ([object files](../formats/compiler.md#where-object-files-meet-in-the-code)):
 
-- **`000016e8`–`0000252b`, the classes and the transform save.** It opens after `memory.cpp`, whose static initializer (`000016dc`, table entry `000adbb8`) ends with a `RET` at `000016e6` and one zero byte. Its own static initializer, `SimObject_StaticInit` (`0000230c`, entry `000adbbc`, no Ghidra function), stands after the transform save, and its three element constructors follow it; the last, `Transform_CtorTSObjCopy`, ends with a `RET 4` at `00002528`, and one zero byte follows. Its functions are ES2's from `TinyObj_GetPosition` (`00401f08`) to `AnimThread_ElementCtor` (`00402c36`) with the `TINY_OBJ`, `REG_OBJ`, `MAT_OBJ` and `TS_OBJ` destructors ES2 places elsewhere, in an order of their own.
+- **`000016e8`–`0000252b`, the classes and the transform save.** It opens after `memory.cpp`, whose static initializer (`Mem_StaticInit` (`000016dc`), table entry `000adbb8`) ends with a `RET` at `000016e6` and one zero byte. Its own static initializer, `SimObject_StaticInit` (`0000230c`, entry `000adbbc`, no Ghidra function), stands after the transform save, and its three element constructors follow it; the last, `Transform_CtorTSObjCopy`, ends with a `RET 4` at `00002528`, and one zero byte follows. Its functions are ES2's from `TinyObj_GetPosition` (`00401f08`) to `AnimThread_ElementCtor` (`00402c36`) with the `TINY_OBJ`, `REG_OBJ`, `MAT_OBJ` and `TS_OBJ` destructors ES2 places elsewhere, in an order of their own.
 - **`0000252c`–`00002c7b`, `CONFIG_PART` and `DET_ANIM_OBJ`.** It opens with `ShapeInstance_CtorCellFrames` and no copy of the 40-byte destructor; `Shape_DrawAtDetailLevel`'s `RET 4` at `00002c76` is followed by three zero bytes and the run of `ConfigPart`'s copies that opens the next file at `00002c7c`. It has no static initializer. Its functions are ES2's from `ShapeInstance_CtorCellFrames` (`00402fc0`) to `Shape_DrawAtDetailLevel` (`004033e4`), in ES2's order, with the `DET_ANIM_OBJ` destructor ES2 places at `00426f98` and this file's copies of `TS_OBJ`'s small slots.
 
 ## The classes
@@ -63,7 +63,7 @@ The orientation block is ES2's `Context`. `Context_GetTransform` (`000016e8`) bu
 
 ## The constructors
 
-Each takes (object, argument), allocates its class's size with `operator_new` when the object is null and returns 0 when that fails, and returns the object.
+Each takes (object, argument), allocates its class's size with `Mem_New` when the object is null and returns 0 when that fails, and returns the object.
 
 - **`TSObj_Ctor` (`00001b04`)**, (object, shape): ES2's `SimObjectBase_Constructor` (`00402188`): `DRAWABLE`'s table, the orientation block zeroed, `MAT_OBJ`'s and `TS_OBJ`'s tables, a static shape instance from `TSShapeInstance_Ctor` (`00063080`) at `+0x2e`, 0 for a null shape, and `+0x32`–`+0x39` cleared.
 - **`SimObjectBase_ConstructShaped` (`00001da0`)**, (object, shape): the same with an animated instance, `ShapeInst_Construct` (`00061224`, [the instance](../rendering/dts-node-posing.md)), and `+0x33` set. ES2's (`00402278`).
@@ -77,7 +77,7 @@ Each takes (object, argument), allocates its class's size with `operator_new` wh
 
 ## The destructors
 
-Each takes (object, flags), returns at once for a null object (except `Drawable_Dtor`, which tests nothing), stores its class's table, runs its base's destruction inline or by call, and calls `operator_delete` on the object when flags bit 0 is set. `Drawable_Dtor` stores `DRAWABLE`'s table and frees nothing.
+Each takes (object, flags), returns at once for a null object (except `Drawable_Dtor`, which tests nothing), stores its class's table, runs its base's destruction inline or by call, and calls `Mem_Delete` on the object when flags bit 0 is set. `Drawable_Dtor` stores `DRAWABLE`'s table and frees nothing.
 
 - **`TSObj_Dtor` (`00001d10`)** destroys the shape instance through its slot `+0x1c` with 3, then stores `MAT_OBJ`'s and `DRAWABLE`'s tables; **`MatObj_Dtor` (`00001cb0`)** and **`TinyObj_Dtor` (`000018f8`)** only store their tables. ES2's `TSObj_Dtor` (`0046b890`), `MatObj_Dtor` (`0046b97d`), `TinyObj_Dtor` (`00402f94`).
 - **`AnimObj_Dtor` (`00001f98`)**: with `+0x33` set, takes each thread off the instance (`ShapeInst_RemoveThread` on its first slot, `+0x1a`, until it is empty), deletes each, destroys the instance and zeroes `+0x2e`; then `TS_OBJ`'s steps. ES2's (`00402400`). **`DetAnimObj_Dtor` (`00002a48`)** stores its table and runs `AnimObj_Dtor`(object, 0); ES2's (`00426f98`). `es2_xref.py` finds `AnimObj_Dtor` called from 12 places, the HERC's destructors among them.
