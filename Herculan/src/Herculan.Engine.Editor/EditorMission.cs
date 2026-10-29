@@ -110,8 +110,8 @@ internal sealed class EditorMission {
 	public short Zone => Source.LaunchHeader[ZoneCatalog.ZoneWord];
 
 	/// <summary>
-	/// The mission's own zone, which Save writes beside its <c>.MSN</c> (<see cref="SavedMissions.Write"/>), or null when it
-	/// plays on the archive's zone <see cref="Zone"/>.
+	/// The mission's own zone, which Save writes beside its <c>.MSN</c> (<see cref="SavedMissions.Write"/>) and Export Mission
+	/// Bundle into its bundle, or null when it plays on the archive's zone <see cref="Zone"/>.
 	/// </summary>
 	public ZoneFiles? OwnZone { get; set; }
 

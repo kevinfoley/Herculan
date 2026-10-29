@@ -2,7 +2,7 @@
 
 Letting a mission designer give a mission its own terrain: a heightmap imported from an image, saved with the mission, shared in its `.hcm` bundle, and played in HERCULAN. Sculpting terrain in the editor's 3D view comes later.
 
-This is a plan, not a record of something built. Steps 1 and 2 are implemented (`ZoneFiles`, `SavedMissions`); the rest are not.
+This is a plan, not a record of something built. Steps 1 to 3 are implemented (`ZoneFiles`, `SavedMissions`, `MissionBundle`); the rest are not.
 
 ## What a zone is
 

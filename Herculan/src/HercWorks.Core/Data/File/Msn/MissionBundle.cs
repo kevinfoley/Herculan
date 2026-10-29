@@ -1,19 +1,22 @@
 using System.IO.Compression;
+using HercWorks.Core.Data.File.Dat.Sim;
 
 namespace HercWorks.Core.Data.File.Msn;
 
 /// <summary>
 /// A mission bundle, a <c>.hcm</c> file: HERCULAN's own way to pass a custom mission round as one file, which retail has no
 /// part in. It is a zip archive holding, at its top level, one <c>.MSN</c>, the mission's text under the same stem in one
-/// or more of the languages the shell reads, and optionally its about file under the same stem (<see cref="MissionAbout"/>):
-/// the files a saved mission keeps in the install, as they are there. Any other file in it is ignored.
+/// or more of the languages the shell reads, optionally its about file under the same stem (<see cref="MissionAbout"/>), and
+/// optionally the header and heightmap of the mission's own zone under the same stem (<see cref="ZoneFiles"/>): the files a
+/// saved mission keeps in the install, as they are there. Any other file in it is ignored.
 ///
 /// <para>A bundle comes from anyone, so the reader trusts nothing in it. It reads the archive into memory, at most
 /// <see cref="MaxFileSize"/>, and extracts nothing to disk, so no entry's name ever reaches a path. It refuses an archive of
-/// more than <see cref="MaxEntries"/> entries, a file in a folder, two entries of one name, a text or about file not named
-/// for the mission, an entry that claims or inflates to more than <see cref="MaxEntrySize"/> (<see cref="MissionAbout.MaxSize"/>
-/// for the about file), and any archive the zip reader cannot read; it inflates only the entries it takes, so the cap on each
-/// bounds the whole read.</para>
+/// more than <see cref="MaxEntries"/> entries, a file in a folder, two entries of one name, a text, about or zone file not
+/// named for the mission, an entry that claims or inflates to more than <see cref="MaxEntrySize"/>
+/// (<see cref="MissionAbout.MaxSize"/> for the about file, <see cref="ZoneFiles.MaxHeightmapSize"/> for each zone file), one
+/// zone file without the other, a zone <see cref="ZoneFiles.Read"/> refuses, and any archive the zip reader cannot read; it
+/// inflates only the entries it takes, so the cap on each bounds the whole read.</para>
 /// </summary>
 public sealed class MissionBundle {
 	/// <summary>The bundle's file extension.</summary>
@@ -33,11 +36,12 @@ public sealed class MissionBundle {
 
 	private readonly Dictionary<string, byte[]> _texts;
 
-	private MissionBundle(string name, byte[] msn, Dictionary<string, byte[]> texts, MissionAbout? about) {
+	private MissionBundle(string name, byte[] msn, Dictionary<string, byte[]> texts, MissionAbout? about, ZoneFiles? zone) {
 		Name = name;
 		Msn = msn;
 		_texts = texts;
 		About = about;
+		Zone = zone;
 	}
 
 	/// <summary>The mission's name: its <c>.MSN</c>'s file name without the extension, as the bundle spells it.</summary>
@@ -51,6 +55,9 @@ public sealed class MissionBundle {
 
 	/// <summary>What the mission's about file says, or null when the bundle has none.</summary>
 	public MissionAbout? About { get; }
+
+	/// <summary>The mission's own zone, or null when the bundle has none.</summary>
+	public ZoneFiles? Zone { get; }
 
 	/// <summary>The mission's text under <paramref name="extension"/> (with its dot, any case), or null when the bundle has none.</summary>
 	public byte[]? Text(string extension) => _texts.GetValueOrDefault(extension.ToUpperInvariant());
@@ -107,6 +114,8 @@ public sealed class MissionBundle {
 
 		ZipArchiveEntry? mission = null;
 		ZipArchiveEntry? about = null;
+		ZipArchiveEntry? zoneHeader = null;
+		ZipArchiveEntry? zoneHeightmap = null;
 		var texts = new List<(string Extension, ZipArchiveEntry Entry)>();
 		var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 		foreach (var entry in entries) {
@@ -136,6 +145,20 @@ public sealed class MissionBundle {
 				}
 
 				about = entry;
+			} else if (extension.Equals(ZoneFiles.HeaderExtension, StringComparison.OrdinalIgnoreCase)) {
+				if (zoneHeader != null) {
+					failure = $"The bundle holds two zone headers, {zoneHeader.FullName} and {name}.";
+					return null;
+				}
+
+				zoneHeader = entry;
+			} else if (extension.Equals(ZoneFiles.HeightmapExtension, StringComparison.OrdinalIgnoreCase)) {
+				if (zoneHeightmap != null) {
+					failure = $"The bundle holds two zone heightmaps, {zoneHeightmap.FullName} and {name}.";
+					return null;
+				}
+
+				zoneHeightmap = entry;
 			} else if (textExtensions.Any(text => text.Equals(extension, StringComparison.OrdinalIgnoreCase))) {
 				texts.Add((extension.ToUpperInvariant(), entry));
 			}
@@ -147,7 +170,7 @@ public sealed class MissionBundle {
 		}
 
 		string stem = Path.GetFileNameWithoutExtension(mission.FullName);
-		if (texts.Select(text => text.Entry).Append(about)
+		if (texts.Select(text => text.Entry).Append(about).Append(zoneHeader).Append(zoneHeightmap)
 				.FirstOrDefault(entry => entry != null && !Path.GetFileNameWithoutExtension(entry.FullName).Equals(stem, StringComparison.OrdinalIgnoreCase))
 				is { } stray) {
 			failure = $"The bundle's {stray.FullName} is not named for its mission, {mission.FullName}.";
@@ -156,6 +179,12 @@ public sealed class MissionBundle {
 
 		if (texts.Count == 0) {
 			failure = $"The bundle holds no text for {mission.FullName}: a {string.Join(", ", textExtensions)} file named {stem}.";
+			return null;
+		}
+
+		if ((zoneHeader == null) != (zoneHeightmap == null)) {
+			string missing = stem + (zoneHeader == null ? ZoneFiles.HeaderExtension : ZoneFiles.HeightmapExtension);
+			failure = $"The bundle holds {(zoneHeader ?? zoneHeightmap)!.FullName} and no {missing}; a zone takes both.";
 			return null;
 		}
 
@@ -181,16 +210,31 @@ public sealed class MissionBundle {
 			aboutText = MissionAbout.Parse(aboutBytes);
 		}
 
+		ZoneFiles? zone = null;
+		if (zoneHeader != null && zoneHeightmap != null) {
+			if (ReadEntry(zoneHeader, ZoneFiles.MaxHeightmapSize, out failure) is not { } header
+					|| ReadEntry(zoneHeightmap, ZoneFiles.MaxHeightmapSize, out failure) is not { } heightmap) {
+				return null;
+			}
+
+			zone = ZoneFiles.Read(header, heightmap, out string? why);
+			if (zone == null) {
+				failure = $"{zoneHeader.FullName} and {zoneHeightmap.FullName}: {why}";
+				return null;
+			}
+		}
+
 		failure = null;
-		return new MissionBundle(stem, msn, textBytes, aboutText);
+		return new MissionBundle(stem, msn, textBytes, aboutText, zone);
 	}
 
 	/// <summary>
 	/// The bundle file for mission <paramref name="name"/> (no extension): its <c>.MSN</c> <paramref name="msn"/>, its text in
-	/// each language <paramref name="texts"/> holds, by extension with its dot, and <paramref name="about"/> unless it is null or
-	/// blank, each under <paramref name="name"/>.
+	/// each language <paramref name="texts"/> holds, by extension with its dot, <paramref name="about"/> unless it is null or
+	/// blank, and <paramref name="zone"/>'s header and heightmap unless it is null, each under <paramref name="name"/>.
 	/// </summary>
-	public static byte[] Write(string name, byte[] msn, IReadOnlyDictionary<string, byte[]> texts, MissionAbout? about) {
+	public static byte[] Write(string name, byte[] msn, IReadOnlyDictionary<string, byte[]> texts, MissionAbout? about,
+			ZoneFiles? zone) {
 		using var buffer = new MemoryStream();
 		using (var archive = new ZipArchive(buffer, ZipArchiveMode.Create, leaveOpen: true)) {
 			Add(MissionExtension, msn);
@@ -200,6 +244,11 @@ public sealed class MissionBundle {
 
 			if (about is { IsBlank: false }) {
 				Add(MissionAbout.Extension, about.Write());
+			}
+
+			if (zone != null) {
+				Add(ZoneFiles.HeaderExtension, zone.WriteHeader());
+				Add(ZoneFiles.HeightmapExtension, zone.WriteHeightmap());
 			}
 
 			void Add(string extension, byte[] bytes) {

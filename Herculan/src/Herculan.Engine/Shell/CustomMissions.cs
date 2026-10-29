@@ -74,12 +74,13 @@ public static class CustomMissions {
 		SavedMissions.Exists(installRoot, name) ? SavedMissions.ReadAbout(installRoot, name) : FindIncluded(name)?.About;
 
 	/// <summary>
-	/// Mission <paramref name="name"/>'s own zone, from the install's saved files when it has them; null without one, or
-	/// with the reason in <paramref name="failure"/> (<see cref="SavedMissions.ReadZone"/>).
+	/// Mission <paramref name="name"/>'s own zone, from the install's saved files when it has them
+	/// (<see cref="SavedMissions.ReadZone"/>, which gives the reason in <paramref name="failure"/> when they do not read), else
+	/// from the bundle HERCULAN comes with of that name; null without one.
 	/// </summary>
 	public static ZoneFiles? Zone(string installRoot, string name, out string? failure) {
 		failure = null;
-		return SavedMissions.Exists(installRoot, name) ? SavedMissions.ReadZone(installRoot, name, out failure) : null;
+		return SavedMissions.Exists(installRoot, name) ? SavedMissions.ReadZone(installRoot, name, out failure) : FindIncluded(name)?.Zone;
 	}
 
 	/// <summary>Every custom mission in the install and every one HERCULAN comes with, by name, with what keeps each from being played.</summary>
