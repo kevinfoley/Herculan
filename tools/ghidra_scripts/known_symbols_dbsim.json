@@ -18702,7 +18702,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HddCommandScreen_Repaint",
-      "description": "Floods the screen rect with colour id 19, refreshes the order rows, draws the selected order's 2px marker bar in id 15, repaints the two magnifier buttons, builds the map markers while the screen's +0x109 latch is 0 (HddCommandScreen_BuildMapMarkers sets it), rasterizes the map, and sets the +0x13a label's text from +0x140 while +0x13e is nonzero and +0x144 is 0.",
+      "description": "Floods the screen rect with colour id 19, refreshes the order rows, draws the selected order's 2px marker bar in id 15, repaints the display's XMIT and CANCEL buttons (+0x4c, +0x50) through their paint slots, builds the map markers while the screen's +0x109 latch is 0 (HddCommandScreen_BuildMapMarkers sets it), rasterizes the map, and sets the +0x13a label's text from +0x140 while +0x13e is nonzero and +0x144 is 0.",
       "source": "docs/retail/simulation/heads-down-display.md",
       "verified": {
         "bytes": "0044c894+203",
@@ -18777,7 +18777,13 @@
       "confidence": "high",
       "name": "HddMap_ZoomIn",
       "description": "One magnifier step in, down to a floor of 60000 (8.8 fixed world units per pixel).",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044cf9c+49",
+        "sha1": "4c0431601157",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044cfd0",
@@ -18786,7 +18792,13 @@
       "confidence": "high",
       "name": "HddMap_PanLeft",
       "description": "Scrolls the map one pan step toward the mission box's minimum x, or by whatever room is left.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044cfd0+99",
+        "sha1": "b0feea0c3cb5",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044d034",
@@ -18795,7 +18807,13 @@
       "confidence": "high",
       "name": "HddMap_PanRight",
       "description": "The same toward maximum x.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044d034+100",
+        "sha1": "b89b1acbc123",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044d098",
@@ -18804,7 +18822,13 @@
       "confidence": "high",
       "name": "HddMap_PanUp",
       "description": "The same toward maximum y.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044d098+100",
+        "sha1": "c6586e4d0d84",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044d0fc",
@@ -18813,7 +18837,13 @@
       "confidence": "high",
       "name": "HddMap_PanDown",
       "description": "The same toward minimum y.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044d0fc+100",
+        "sha1": "0082bcf319bb",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044d160",
@@ -18861,7 +18891,13 @@
       "confidence": "high",
       "name": "HddCommandScreen_InstallMapContext",
       "description": "(screen): sets the rect of the screen's own render context (screen+0x10, +0x210..+0x21c) to the map viewport rect at +0x71..+0x7d, less the current context's origin (+0x220/+0x224) and the view offsets 004d25da/004d25de, installs it with Raster_InstallRenderContext and returns it. HddCommandScreen_DrawMap and HddMarker_Paint draw through it.",
-      "source": "DBSIM decompile at 0044d29c"
+      "source": "DBSIM decompile at 0044d29c",
+      "verified": {
+        "bytes": "0044d29c+172",
+        "sha1": "e7429a5a0145",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044d348",

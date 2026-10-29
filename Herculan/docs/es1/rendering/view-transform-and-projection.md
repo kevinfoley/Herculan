@@ -10,7 +10,7 @@
 
 **The installed view is laid out differently.** The clip rect is four `int32` at `000b5ee8`–`000b5ef4` and the projection centre two at `000b5ee0`, and the focal shift, near plane and orthographic divisor sit apart from them, at `000bdb52`–`000bdb5a`. ES2 keeps a copy of the rect's top-left beside the centre; ES1 does not. The world-to-view transform is a static at `000b5e04` with a one-byte first-use flag before it and no constructor call.
 
-**Every ES1 camera keeps the near-plane clip exact.** The four calls to `TSCamera_Ctor` in the decompile pass a near-plane depth of `2^shift`: the main view 0x100 with shift 8 (`0005a9dc`), and three cameras 0x80 with shift 7 (`000360c0`, `00036b18`, `0003ee58`). So the crossing points the [clip](../../retail/rendering/view-transform-and-projection.md#clipping-at-the-near-plane) places without a divide always land where the projection would put them.
+**Every ES1 camera keeps the near-plane clip exact.** The four calls to `TSCamera_Ctor` in the decompile pass a near-plane depth of `2^shift`: the main view 0x100 with shift 8 (`0005a9dc`), and three cameras 0x80 with shift 7 (`000360c0`, `00036b18`, `HddCommandScreen_Ctor` (`0003ee58`)). So the crossing points the [clip](../../retail/rendering/view-transform-and-projection.md#clipping-at-the-near-plane) places without a divide always land where the projection would put them.
 
 **The model-space flag is not next to the scratch block.** ES1's `Light_ModelSpaceEnabled` is at `000bdbce`; ES2's sits right after the ring's point count ([`../../retail/rendering/effect-lights.md`](../../retail/rendering/effect-lights.md#per-object-selection--lightmanager_selectlightsforobject-00407098)).
 

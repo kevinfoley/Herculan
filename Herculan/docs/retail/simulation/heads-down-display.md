@@ -148,7 +148,7 @@ Logical ids through `dat\COLORS.DAT` (see [`../formats/colors-dat.md`](../format
 |---|---|---|
 | `HddCommandScreen_Ctor` | `0044c264` | Builds the map target, 140 marker gadgets, nine label rows and the two click regions. |
 | `HddCommandScreen_Show` / `_Hide` | `0044cee8` / `0044cf28` | Vtable slots 3 and 2; the page-switch visibility the widget table does not cover. |
-| `HddCommandScreen_Repaint` | `0044c894` | Screen flood, order rows, selected-row bar, magnifiers, markers, map. |
+| `HddCommandScreen_Repaint` | `0044c894` | Screen flood, order rows, selected-row bar, `XMIT` and `CANCEL`, markers, map. |
 | `HddCommandScreen_KeyDispatch` | `0044cc40` | Vtable slot 4; switches on the DOS scancode. |
 | `HddCommandScreen_DrawMap` | `0044e30c` | Everything inside the viewport, in the order listed below. |
 | `HddMap_DrawTerrain` | `004502e4` | Blits the raster over the grown mission box, turned by its angle argument. |

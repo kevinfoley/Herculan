@@ -105,7 +105,7 @@ The two thunks add −`0x20` to the object and jump to the paint and to the flus
 
 **`MfdDisplay_CycleScannerRange` (`0003ab1c`)** and **`MfdDisplay_SetScannerRange` (`0003ab44`)**, (display) and (display, index), are ES2's (`00446fc8`, `00446fec`): the cycle passes `+0x8e` + 1, 3 wrapping to 0, to the set, which, when the index differs from `+0x8e`, stores it there and `MfdScannerRanges`[index] at `+0x86`. From the starting index 2 the first step goes to 30000.
 
-**`MfdDisplay_InScannerRange` (`0003ae00`)**, (display, object): whether `Math_DistanceBetweenPoints` from the object's `+0x20` to the cockpit's machine's `+0x20` is less than the range `+0x86`, ES2's (`0044725c`) on ES1's offsets. `es2_xref.py` finds one call, from `00040254` ([Open](#open)).
+**`MfdDisplay_InScannerRange` (`0003ae00`)**, (display, object): whether `Math_DistanceBetweenPoints` from the object's `+0x20` to the cockpit's machine's `+0x20` is less than the range `+0x86`, ES2's (`0044725c`) on ES1's offsets. `es2_xref.py` finds one call, from `HddCommandScreen_PickTarget` (`00040254`), which takes a unit for `ATTACK ENEMY` or `DEFEND POSITION` only inside that range ([picks](hdd-command-screen.md#picks)).
 
 ### The subject
 
@@ -192,7 +192,6 @@ The FLASH COMM functions in the file, `MfdFlashComm_HandleAltKey` (`0003a890`), 
 - **Open:** what calls `HeapPtr_DtorMfdDisplayCopy`, `MfdDisplay_StubNoOp`, `MfdDisplay_StubRet8` or `MfdDisplay_StubReturnZero`: `es2_xref.py` finds no branch or stored pointer to any of them or their padding.
 - **Open:** what reads the shared block's second dword (`+0x7e`) and the byte `+0xc8`: the constructor clears the first with the block's `memset` and the second with a byte store, and `es2_fieldscan.py` over `00032ed8`–`0003b0ab` finds no read of either in the display's code, against `+0xc9`'s read and write in `MfdDisplay_Update` and write in the constructor as control.
 - **Open:** whether ES1 cycles the display's mode from anything but the title: `es2_xref.py` finds `MfdDisplay_CycleMode` called from `MfdButton_OnClick` alone, where ES2's `Sim_PollPlayerInput` calls ES2's on a command.
-- **Open:** what `00040254`, the caller of `MfdDisplay_InScannerRange`, is, unread.
 - **Open:** which ES1 projectile records have type 0 and subtype 3, the launchers that switch the display to the missile camera.
 - **Open:** whether another module draws a squadmate's picture over the display while he transmits, as ES2's display does itself: `MfdDisplay_Update` draws none. A retail check: order a squadmate with FLASH COMM's XMIT and watch the display while he answers.
 - **Open:** whether `OFFLINE` shows at all on the SCANNER, whose update paints over it on the frame it is copied. A retail check: with the display's feed damaged (`Player_DependentCondition`(4) 2 or more), the STATUS screen shows `OFFLINE` for up to half a second at a time, the SCANNER keeps its plot.
