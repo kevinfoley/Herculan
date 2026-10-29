@@ -59,6 +59,13 @@ sealed class ShellHost : IDisposable {
 	public const int EditorExitCode = -2;
 
 	/// <summary>
+	/// Custom Missions' Play's exit code, this engine's and outside retail's 0-6: the shell closes with the mission
+	/// handed over, which the caller runs and then brings the shell back up with, as it does after the editor, with the
+	/// Custom Missions window open again; a custom mission has no career to debrief.
+	/// </summary>
+	public const int CustomMissionExitCode = -3;
+
+	/// <summary>
 	/// The simulator's code for a destroyed player in <c>MissionModeFlag</c>, which the shell takes into the
 	/// debrief as it does 3. The simulator never returns it (<see cref="MissionResults.ExitCode"/>).
 	/// </summary>
@@ -77,6 +84,7 @@ sealed class ShellHost : IDisposable {
 	private readonly WidgetEvents _widgets;
 	private readonly ShellOutcome _outcome = new();
 	private readonly FrontEndWindow _window;
+	private readonly CustomMissionsWindow _customMissions;
 	private readonly PolledButtons _buttons = new(Key.Escape, Key.Space);
 	private readonly StartupScreen _startup;
 	private readonly ShellMovies _movies;
@@ -109,8 +117,9 @@ sealed class ShellHost : IDisposable {
 	/// (<c>Shell_StartupCode</c>, <c>0048227e</c>): <see cref="StartupCode"/> on a first start, or the code the simulator returned —
 	/// <see cref="MissionResults.DebriefExitCode"/> into the debrief, <see cref="MissionResults.DemoExitCode"/>
 	/// after a demo (<c>Shell_BuildScreensAndStart</c>, <c>004012b0</c>) — or this engine's own
-	/// <see cref="SettingsRestartCode"/>, the Settings menu's restart, or <see cref="EditorExitCode"/>, a return from the
-	/// mission editor. <paramref name="forcedMode"/> overrides
+	/// <see cref="SettingsRestartCode"/>, the Settings menu's restart, <see cref="EditorExitCode"/>, a return from the
+	/// mission editor, or <see cref="CustomMissionExitCode"/>, a return from a custom mission. Custom Missions' Play closes it
+	/// with <see cref="CustomMissionExitCode"/> and the mission. <paramref name="forcedMode"/> overrides
 	/// the campaign/training mode the startup seeds from <c>prefs.cfg</c> option 42 (<c>Shell_InitGameState</c> (<c>0040e17e</c>)); the mode
 	/// the shell ends in is returned for the next turn, which is how it survives a return from the simulator when
 	/// <c>--no-write-prefs</c> keeps option 42 off the disk.</para>
@@ -208,9 +217,15 @@ sealed class ShellHost : IDisposable {
 
 		// The Settings menu's restart: the shell closes with SettingsRestartCode, which the caller answers by
 		// running it again on the session's folders. The Editor item closes it with EditorExitCode, which the caller
-		// answers with the mission editor.
+		// answers with the mission editor, and Custom Missions' Play with CustomMissionExitCode and the mission.
+		_customMissions = new CustomMissionsWindow(session.Localization, installRoot, content, launch => {
+			_outcome.Launch = launch;
+			_outcome.ExitCode = CustomMissionExitCode;
+			// Set on the next line, long before a Play can run.
+			_window!.CloseAfterFrame();
+		});
 		_window = new FrontEndWindow(session, window, "HERCULAN Engine — shell", screenshotPath,
-			() => _outcome.ExitCode = SettingsRestartCode, () => _outcome.ExitCode = EditorExitCode);
+			() => _outcome.ExitCode = SettingsRestartCode, () => _outcome.ExitCode = EditorExitCode, _customMissions);
 
 		// A step that fails says so to the player, what failed over why.
 		var localization = session.Localization;
@@ -314,11 +329,16 @@ sealed class ShellHost : IDisposable {
 
 		// The startup's two intro movies (Shell_BuildScreensAndStart, 004012b0), played before the startup
 		// sequence — except after a demo, whose -X6 goes straight to the sequence, after a mission, whose -X3
-		// goes to the debrief, and after the Settings menu's restart or the editor, which go to the sequence as a demo's
-		// does.
+		// goes to the debrief, and after the Settings menu's restart, the editor or a custom mission, which go to the
+		// sequence as a demo's does.
+		if (_returnCode == CustomMissionExitCode) {
+			_customMissions.Open();
+		}
+
 		if (_fromMission) {
 			_loop.ReturnFromMission();
-		} else if (_startup.Present && _returnCode is not (MissionResults.DemoExitCode or SettingsRestartCode or EditorExitCode)) {
+		} else if (_startup.Present
+				&& _returnCode is not (MissionResults.DemoExitCode or SettingsRestartCode or EditorExitCode or CustomMissionExitCode)) {
 			_movies.Queue.Enqueue(ShellMovieQueue.IntroPart1, ShellMovieQueue.FullRect);
 			_movies.Queue.Enqueue(ShellMovieQueue.IntroPart2, ShellMovieQueue.FullRect);
 			_movies.Start();

@@ -211,10 +211,11 @@ public sealed class EditorHost {
 		_settingsPanel = new EditorSettingsPanel(_settings);
 		_help = new HelpWindow(() => _imgui?.RadialFont, () => _imgui?.ItalicFont);
 		IReadOnlyList<BrowsedMission> All() =>
-			MissionBrowser.Merge(MissionFileLaunch.List(launch.ShellContent()), SavedMissions.List(launch.InstallRoot));
+			MissionBrowser.Merge(MissionFileLaunch.List(launch.ShellContent()), SavedMissions.List(launch.InstallRoot),
+				CustomMissions.IncludedNames().Select(name => name + MissionFileLaunch.MissionExtension));
 		_volBrowser = new MissionBrowser("Load from VOL", "The install's archives hold no missions.",
 			() => MissionBrowser.Archived(All()));
-		_customBrowser = new MissionBrowser("Load custom mission", "No custom missions are saved in the install yet.",
+		_customBrowser = new MissionBrowser("Load custom mission", "No custom missions are saved in the install, and none come with HERCULAN.",
 			() => MissionBrowser.Custom(All()));
 		_saving = new MissionSaving(launch.InstallRoot, launch.ShellContent, _missionCache);
 		_saving.Saved += _volBrowser.Refresh;
@@ -730,7 +731,7 @@ public sealed class EditorHost {
 
 		_volBrowser.Draw();
 		_customBrowser.Draw();
-		_saving.Draw();
+		_saving.Draw(_window.View.Native?.Win32?.Hwnd ?? 0);
 		_newMission.Draw();
 		_playInGame.Draw();
 		_imgui?.Render();
@@ -948,6 +949,7 @@ public sealed class EditorHost {
 		mission.Squad.RunRequest();
 		mission.Theater.RunRequest();
 		mission.PlayableIn.RunRequest();
+		mission.About.RunRequest();
 		mission.Routes.RunRequest();
 		mission.Areas.RunRequest();
 		mission.Orders.RunRequest();
@@ -1014,7 +1016,8 @@ public sealed class EditorHost {
 		browser.Open();
 	}
 
-	// Generates the handoff for the mission the request names, an archive's or one saved into the install, into the scratch
+	// Generates the handoff for the mission the request names, an archive's, one saved into the install or one HERCULAN comes
+	// with (CustomMissions.FindIncluded), into the scratch
 	// directory, holds the mission as its .MSN, swaps the editor over to it and remembers it for the next run. On failure
 	// the open mission stays, and the browser that asked says why.
 	private void LoadMission(LoadRequest request) {
@@ -1035,6 +1038,7 @@ public sealed class EditorHost {
 
 			opened = EditorMission.Open(_launch.SimulatorContent, generated, Path.GetFileNameWithoutExtension(name), _installData,
 				source!, squad!, _launch.ShellContent, _cybridWeapons, _zones, _presets);
+			opened.About.Load(CustomMissions.About(_launch.InstallRoot, opened.Name) ?? MissionAbout.Blank);
 		} catch (Exception ex) when (ex is MissingHandoffFileException or InvalidDataException or IOException
 				or UnauthorizedAccessException) {
 			request.From.Failure = ex.Message;
@@ -1098,19 +1102,9 @@ public sealed class EditorHost {
 		ReportLoaded(opened);
 	}
 
-	// Removes the last generated handoff from <directory>, the open's scratch directory unless named, since the shell's
-	// writer does not truncate (ShellWorkingFiles.WriteMissionFile) and a shorter mission would otherwise keep the longer
-	// one's tail.
-	private void ClearMissionCache(string? directory = null) {
-		foreach (string file in new[] {
-				MissionLoader.ScriptFileName, MissionLoader.TextFileName, MissionLoader.PlayerFileName,
-				MissionLoader.CountersFileName }) {
-			string path = CaseInsensitivePath.Combine(directory ?? _missionCache, file);
-			if (File.Exists(path)) {
-				File.Delete(path);
-			}
-		}
-	}
+	// Removes the last generated handoff from <directory>, the open's scratch directory unless named
+	// (MissionFileLaunch.ClearHandoff).
+	private void ClearMissionCache(string? directory = null) => MissionFileLaunch.ClearHandoff(directory ?? _missionCache);
 
 	private static void ReportLoaded(EditorMission opened) {
 		Console.WriteLine(
@@ -1153,6 +1147,11 @@ public sealed class EditorHost {
 			WhyNoSave();
 			if (ImGui.MenuItem("Export script.dat...", null, false, saveable)) {
 				_saving.Export();
+			}
+
+			WhyNoSave();
+			if (ImGui.MenuItem("Export Mission Bundle...", null, false, saveable)) {
+				_saving.ExportBundle();
 			}
 
 			WhyNoSave();

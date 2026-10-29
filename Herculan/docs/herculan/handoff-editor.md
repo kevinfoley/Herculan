@@ -2,16 +2,14 @@
 
 The editor, `Herculan.Engine.Editor`, run on its own by `Herculan.Engine.Host.Editor` and from the game's Editor menu item, opens a mission as its `.MSN` and `.ENG`, shows its scene, the Mission panel's lists and every Properties view from the `.MSN`, every record included, checks the `.MSN` for the Problems list, edits it, and saves it into the install, where the game loads it in place of the archive's. It generates a `script.dat` only to open the mission's world and for File > Export.
 
-| Doc | Covers |
-|---|---|
-| [handoff-editor-document.md](handoff-editor-document.md) | how the `.MSN` is held, its layout, which record each edit writes, the edit tools, the generation and the rebuild after an edit, saving and export |
-| [handoff-editor-viewing.md](handoff-editor-viewing.md) | opening, New mission, theater and time of day, selection, camera, picking, overlays, groups, waiting groups, the mission check |
-| [handoff-editor-placement.md](handoff-editor-placement.md) | moving objects, waypoints, groups and area corners; routes; trigger areas |
-| [handoff-editor-roster.md](handoff-editor-roster.md) | adding hercs, flyers, ground vehicles and structures; type and fit; sides; deleting; the player's squad |
-| [handoff-editor-mission-logic.md](handoff-editor-mission-logic.md) | orders, wiring, campaign variable writes, triggers, countdowns, objectives, the mission's text and its debrief |
-| [handoff-editor-conditions.md](handoff-editor-conditions.md) | what the editor shows, conditions, random tables, Present when |
-| [handoff-editor-ux-plan.md](handoff-editor-ux-plan.md) | the planned UI redesign, by phase; its evidence is [handoff-editor-ux-review.md](handoff-editor-ux-review.md) |
-
+| Doc                                                                | Covers                                                                                                                                             |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [handoff-editor-document.md](handoff-editor-document.md)           | how the `.MSN` is held, its layout, which record each edit writes, the edit tools, the generation and the rebuild after an edit, saving and export |
+| [handoff-editor-viewing.md](handoff-editor-viewing.md)             | opening, New mission, theater and time of day, selection, camera, picking, overlays, groups, waiting groups, the mission check                     |
+| [handoff-editor-placement.md](handoff-editor-placement.md)         | moving objects, waypoints, groups and area corners; routes; trigger areas                                                                          |
+| [handoff-editor-roster.md](handoff-editor-roster.md)               | adding hercs, flyers, ground vehicles and structures; type and fit; sides; deleting; the player's squad                                            |
+| [handoff-editor-mission-logic.md](handoff-editor-mission-logic.md) | orders, wiring, campaign variable writes, triggers, countdowns, objectives, the mission's text and its debrief                                     |
+| [handoff-editor-conditions.md](handoff-editor-conditions.md)       | what the editor shows, conditions, random tables, Present when                                                                                     |
 ## What every edit does
 
 These hold for every edit in the docs above unless the doc says otherwise:
@@ -35,7 +33,6 @@ What the user has corrected in the editor's panels, which every new view follows
 - **No note for what a disabled control already shows.** A field the user cannot change is drawn disabled; a note is added only when the reason is not obvious.
 - **Notes go through `EditorText`.** `EditorText.Note` draws every aside wrapped, in a grey lighter than ImGui's disabled text (unwrapped, the 340-pixel Properties panel cuts it off). `EditorText.Emphasis` draws, in bold, the one note per view the user must not miss.
 - **Latin-1 only in UI strings.** The ImGui font atlas holds Basic Latin and Latin-1, so an em dash or a curly quote draws as `?`. Use parentheses, colons and straight quotes; `°` is in range.
-- **Names, not numbers.** A record is named by what it is and does, with its number in its row dimmed after it so a link still reads, cut to fit on one line and whole on hover; one source names it everywhere ([Names](handoff-editor-mission-logic.md#names)). Every number a designer sees counts from 1, a record's (`MissionText.Number`) and a list position's ("1st order") alike; a route's waypoints follow the cockpit, "Start" then "Waypoint 1" ([Routes](handoff-editor-placement.md#routes)).
 - **Identity first.** An object's view opens with its name and then its group.
 - **Errors point at the fix.** A refused input shows its reason in a strong red and tints the field to change.
 
@@ -63,18 +60,18 @@ Beyond the gaps each doc lists:
 
 ## Scope
 
-| Slice | Size |
-|---|---|
-| The rest of the debrief, low priority: its movie, outcomes and loss line ([phase 7](handoff-editor-ux-plan.md#7-debrief)) | small–medium |
-| Mission text: action lines, the briefing movie | small–medium |
-| Edit roster and group fields | medium |
-| The objective type and the training mission number | small |
-| A line-length check against the mission screen's wrap, and a line's trailing newline | small |
-| Ordering objectives; clearing a reference that refuses a delete | small each |
-| Heading entry and a turn handle | small |
-| The mission list showing each mission's zone and theater | small |
-| Empty formation slots, briefing-only order point | small each |
-| Tint every area of a selected trigger; tint ground planes too | small |
-| Waiting groups as translucent ghosts | small–medium |
-| Orthographic top-down view | small–medium |
-| Trigger graph | medium–large |
+| Slice                                                                                | Size         |
+| ------------------------------------------------------------------------------------ | ------------ |
+| The rest of the debrief, low priority: its movie, outcomes and loss line             | small–medium |
+| Mission text: action lines, the briefing movie                                       | small–medium |
+| Edit roster and group fields                                                         | medium       |
+| The objective type and the training mission number                                   | small        |
+| A line-length check against the mission screen's wrap, and a line's trailing newline | small        |
+| Ordering objectives; clearing a reference that refuses a delete                      | small each   |
+| Heading entry and a turn handle                                                      | small        |
+| The mission list showing each mission's zone and theater                             | small        |
+| Empty formation slots, briefing-only order point                                     | small each   |
+| Tint every area of a selected trigger; tint ground planes too                        | small        |
+| Waiting groups as translucent ghosts                                                 | small–medium |
+| Orthographic top-down view                                                           | small–medium |
+| Trigger graph                                                                        | medium–large |

@@ -12,14 +12,21 @@ namespace Herculan.Engine.Editor;
 /// <param name="File">The <c>.MSN</c> file name, which the load is asked for.</param>
 /// <param name="Saved">Whether the install has it as a loose file, which is what loads (<see cref="SavedMissions"/>).</param>
 /// <param name="InArchive">Whether an archive holds it too, which the loose file overrides.</param>
-internal sealed record BrowsedMission(string File, bool Saved, bool InArchive) {
-	/// <summary>The list's line: the file name, marked "(saved)" over an archive mission.</summary>
-	public string Label => Saved && InArchive ? $"{File} (saved)" : File;
+/// <param name="Included">Whether HERCULAN comes with it (<see cref="CustomMissions.FindIncluded"/>), which the loose file overrides.</param>
+internal sealed record BrowsedMission(string File, bool Saved, bool InArchive, bool Included = false) {
+	/// <summary>
+	/// The list's line: the file name, marked "(saved)" over an archive mission or one HERCULAN comes with, and "(included)"
+	/// on one HERCULAN comes with that the install does not override.
+	/// </summary>
+	public string Label => Saved && (InArchive || Included) ? $"{File} (saved)"
+		: Included ? $"{File} (included)"
+		: File;
 }
 
 /// <summary>
 /// A floating window opened from File that lists missions, one of which the user picks to open: "Load from VOL", every
-/// <c>.MSN</c> in the install's archives, or "Load custom mission", every one saved into the install that no archive holds.
+/// <c>.MSN</c> in the install's archives, or "Load custom mission", every one saved into the install or that HERCULAN
+/// comes with that no archive holds.
 /// The window only asks; the host does the load (<see cref="TakeRequest"/>) and reports back through <see cref="Loading"/>
 /// and <see cref="Failure"/>.
 /// </summary>
@@ -54,15 +61,17 @@ internal sealed class MissionBrowser {
 		missions.Where(mission => !mission.InArchive).ToList();
 
 	/// <summary>
-	/// The archives' missions <paramref name="archive"/> and the install's loose ones <paramref name="saved"/>, by file
-	/// name, as one list in name order, each name once.
+	/// The archives' missions <paramref name="archive"/>, the install's loose ones <paramref name="saved"/> and those HERCULAN
+	/// comes with <paramref name="included"/>, by file name, as one list in name order, each name once.
 	/// </summary>
-	public static IReadOnlyList<BrowsedMission> Merge(IEnumerable<string> archive, IEnumerable<string> saved) {
+	public static IReadOnlyList<BrowsedMission> Merge(IEnumerable<string> archive, IEnumerable<string> saved,
+			IEnumerable<string>? included = null) {
 		var inArchive = new HashSet<string>(archive, StringComparer.OrdinalIgnoreCase);
 		var loose = new HashSet<string>(saved, StringComparer.OrdinalIgnoreCase);
-		return inArchive.Union(loose, StringComparer.OrdinalIgnoreCase)
+		var comesWith = new HashSet<string>(included ?? [], StringComparer.OrdinalIgnoreCase);
+		return inArchive.Union(loose, StringComparer.OrdinalIgnoreCase).Union(comesWith, StringComparer.OrdinalIgnoreCase)
 			.Order(StringComparer.OrdinalIgnoreCase)
-			.Select(file => new BrowsedMission(file, loose.Contains(file), inArchive.Contains(file)))
+			.Select(file => new BrowsedMission(file, loose.Contains(file), inArchive.Contains(file), comesWith.Contains(file)))
 			.ToList();
 	}
 

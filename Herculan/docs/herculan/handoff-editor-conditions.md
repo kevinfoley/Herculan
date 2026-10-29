@@ -10,9 +10,9 @@ A herc, flyer, structure, ground vehicle, group, route or trigger area some load
 
 ## Conditions
 
-The Conditions list, under the collapsed **Advanced** header at the end of the Mission panel, shows every row-1 record in file order as "Condition <GUID>: <test>" (`ConditionEditing.Describe`: "flag 100 > 0", "draw below 11", "draw 0 to 9 of condition 66", "random table 170 below 100", with "if condition 65" after one that requires another), each operator worded as the load tests flag against value, flag on the left. Nothing in the list creates a condition; Present when makes the flag tests and draws it needs ([What a set writes](#what-a-set-writes)), and a draw's view adds a range over it.
+The Conditions list, under the collapsed **Advanced** header at the end of the Mission panel, shows every row-1 record in file order as "Condition {GUID}: {test}" (`ConditionEditing.Describe`: "flag 100 > 0", "draw below 11", "draw 0 to 9 of condition 66", "random table 170 below 100", with "if condition 65" after one that requires another), each operator worded as the load tests flag against value, flag on the left. Nothing in the list creates a condition; Present when makes the flag tests and draws it needs ([What a set writes](#what-a-set-writes)), and a draw's view adds a range over it.
 
-The view (`ConditionView`, through `ConditionEditor`) opens with "Condition <GUID>" and its kind, then:
+The view (`ConditionView`, through `ConditionEditor`) opens with "Condition {GUID>" and its kind, then:
 
 - a flag test's flag, picked from the campaign variable list Present when uses ([The campaign variable picker](#the-campaign-variable-picker)), its operator and its value;
 - a draw's bound; adding or deleting a draw, or changing whether one is made, changes every later draw and pick, and a draw's view says so;

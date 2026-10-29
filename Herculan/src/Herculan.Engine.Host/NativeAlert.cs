@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using Herculan.Engine.Host.Install;
+using Herculan.Engine.Platform;
 
 namespace Herculan.Engine.Host;
 

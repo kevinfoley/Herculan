@@ -38,6 +38,8 @@ static class Launcher {
 	/// restart is this engine's own turn: the shell again, on whatever install the session now names. So is the
 	/// Editor item's: the mission editor, whose Back to game brings the shell up again as the restart does, whose Play
 	/// runs its mission and then brings the editor back on it, and whose window closing ends the run as the shell's does.
+	/// So is Custom Missions' Play: the mission it hands over, then the shell again as after the editor, however the
+	/// mission ended, with no debrief; the window closing in the mission ends the run.
 	/// </summary>
 	public static int RunShellLoop(HostSession session, HostOptions options) {
 		using var window = OpenWindow(session);
@@ -67,6 +69,19 @@ static class Launcher {
 			if (shellExit == ShellHost.EditorExitCode) {
 				if (!RunEditorTurns(session, window, options, staging, ref launches)) {
 					return 0;
+				}
+
+				state = shellExit;
+				continue;
+			}
+
+			if (shellExit == ShellHost.CustomMissionExitCode) {
+				if (launched != null) {
+					SimulatorHost.Run(session, window, options, staging, launched, false, options.MusicTrackSelect + launches++);
+					window.Hold(null);
+					if (window.Closed || TerminationSignal.Requested) {
+						return 0;
+					}
 				}
 
 				state = shellExit;

@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace Herculan.Engine.Host.Install;
+namespace Herculan.Engine.Platform;
 
 /// <summary>
 /// The operating system's own choose-a-folder and choose-a-file dialogs. Neither .NET nor Silk.NET has one, so
@@ -10,7 +10,7 @@ namespace Herculan.Engine.Host.Install;
 /// <c>kdialog</c> on Linux, whichever is installed. A Linux desktop with neither has no picker;
 /// <see cref="IsAvailable"/> says so, and the caller falls back to a typed path.
 /// </summary>
-static class NativePathPicker {
+public static class NativePathPicker {
 	/// <summary>Which files a file picker offers: a label and the extensions, without their dots.</summary>
 	public sealed record FileFilter(string Name, IReadOnlyList<string> Extensions);
 

@@ -78,8 +78,9 @@ internal sealed class EditorMission {
 		var randomTables = new RandomTables(source, sceneIndex, Names, squad);
 		Outliner.Tables = randomTables;
 		PlayableIn = new PlayableInEditor(source, Mover, Sync);
+		About = new MissionAboutEditor(Mover);
 		Settings = new MissionSettingsWindow(() => Name, () => zones.Describe(Zone), Theater, TheaterNames.Labels(content),
-			PlayableIn, new MissionTextView(Texts), new DebriefView(Debrief));
+			PlayableIn, About, new MissionTextView(Texts), new DebriefView(Debrief));
 		var catalog = new UnitTypeCatalog(content);
 		Properties = new PropertiesPanel(sceneIndex, Selection, source, Mover, Sides, Deleter, Members,
 			new SquadMachinePanel(Fitter, Squad, squad, Presets), new RosterFitView(Fitter, Types, TableEditor, catalog, Presets),
@@ -209,6 +210,9 @@ internal sealed class EditorMission {
 
 	/// <summary>Marks <see cref="Source"/> as meant for HERCULAN alone or for retail too, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public PlayableInEditor PlayableIn { get; }
+
+	/// <summary>Edits the mission's about file, kept beside its <c>.MSN</c>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	public MissionAboutEditor About { get; }
 
 	/// <summary>Sets the own headings of structures, ground vehicles and groups in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public HeadingEditor Headings { get; }

@@ -107,6 +107,33 @@ public static class MissionFileLaunch {
 					out why),
 			out document, out squad, out failure);
 
+	/// <summary>
+	/// <see cref="Write(GameContent, string, string, string, bool, out string?)"/> for a mission held in memory, the
+	/// <c>.MSN</c> <paramref name="msn"/> and its text <paramref name="text"/> under the name <paramref name="name"/> (no
+	/// extension), loaded as <c>INSTANT ACTION</c> loads a mission <c>gam\career.dat</c> does not list whatever its name:
+	/// a custom mission's bundle (<see cref="CustomMissions"/>).
+	/// </summary>
+	public static string? WriteHeld(GameContent shellContent, string installRoot, string name, byte[] msn, byte[]? text,
+			string directory, bool ownWorld, out string? failure) =>
+		LoadUnlisted(shellContent, ShellWorkingFiles.DataDirectory(installRoot), $"{MissionFolder}\\{name}{MissionExtension}", msn,
+			text, directory, ShellTrainingLaunch.StartupRandom(), new short[MissionGenerator.ClearListLength], generating: null,
+			ownWorld, out _, out failure);
+
+	/// <summary>
+	/// Removes the handoff a load wrote into <paramref name="directory"/>, since the shell's writer does not truncate
+	/// (<see cref="ShellWorkingFiles.WriteMissionFile"/>) and a shorter mission would otherwise keep a longer one's tail.
+	/// </summary>
+	public static void ClearHandoff(string directory) {
+		foreach (string file in new[] {
+				MissionLoader.ScriptFileName, MissionLoader.TextFileName, MissionLoader.PlayerFileName,
+				MissionLoader.CountersFileName }) {
+			string path = CaseInsensitivePath.Combine(directory, file);
+			if (File.Exists(path)) {
+				File.Delete(path);
+			}
+		}
+	}
+
 	private delegate string? HandoffWriter(SimRandom random, MissionGenerating generating, out MissionSquad? squad,
 		out string? failure);
 
@@ -194,7 +221,8 @@ public static class MissionFileLaunch {
 
 	/// <summary>
 	/// A mission <c>gam\career.dat</c> does not list, loaded as <c>INSTANT ACTION</c> would load it on the first row
-	/// past the practice list, with its typed path in place of the row's.
+	/// past the practice list, with its typed path in place of the row's. One no archive or install file holds is read from
+	/// the bundle of that name HERCULAN comes with (<see cref="CustomMissions.FindIncluded"/>), if there is one.
 	/// </summary>
 	private static string? WriteUnlisted(GameContent shellContent, string installData, string name, string directory,
 			SimRandom random, short[] clearList, MissionGenerating? generating, bool ownWorld, out MissionSquad? squad,
@@ -205,7 +233,13 @@ public static class MissionFileLaunch {
 		}
 
 		string missionPath = $"{MissionFolder}\\{file}";
-		if (ShellTrainingLaunch.ReadMission(shellContent, missionPath) is not (byte[] msn, var text)) {
+		byte[] msn;
+		byte[]? text;
+		if (ShellTrainingLaunch.ReadMission(shellContent, missionPath) is (byte[] read, var readText)) {
+			(msn, text) = (read, readText);
+		} else if (CustomMissions.FindIncluded(Path.GetFileNameWithoutExtension(file)) is { } included) {
+			(msn, text) = (included.Msn, CustomMissions.Text(included, shellContent.Language));
+		} else {
 			squad = null;
 			failure = $"{name} is not a mission in any mounted archive.";
 			return null;

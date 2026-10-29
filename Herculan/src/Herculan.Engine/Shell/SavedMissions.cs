@@ -1,3 +1,4 @@
+using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Io;
 using Herculan.Engine.Content;
 
@@ -9,7 +10,8 @@ namespace Herculan.Engine.Shell;
 /// name (docs/retail/formats/vol-archive.md#loose-files-on-disk-carry-no-prefix). The text file takes the extension
 /// <c>Msn_LoadEngText</c> looks for in the shell's language (<see cref="ShellTrainingLaunch.ReadMission"/>), so the shell
 /// that reads the mission finds it. A name no archive holds loads as <see cref="MissionFileLaunch"/> loads any mission
-/// <c>gam\career.dat</c> does not list.
+/// <c>gam\career.dat</c> does not list. Beside them goes the mission's about file (<see cref="MissionAbout"/>), which
+/// only the editor and the Custom Missions window read.
 ///
 /// <para>A write first copies each file it replaces to <c>&lt;file&gt;.bak</c>, one generation, overwritten by the
 /// next write. That backup, and the whole save path, is this engine's: retail writes no mission file.</para>
@@ -48,6 +50,25 @@ public static class SavedMissions {
 		CaseInsensitivePath.Combine(installRoot, MissionFileLaunch.MissionFolder,
 			name + ShellTrainingLaunch.MissionTextExtension(language));
 
+	/// <summary>The about file for mission <paramref name="name"/> under <paramref name="installRoot"/>.</summary>
+	public static string AboutPath(string installRoot, string name) =>
+		CaseInsensitivePath.Combine(installRoot, MissionFileLaunch.MissionFolder, name + MissionAbout.Extension);
+
+	/// <summary>
+	/// What mission <paramref name="name"/>'s about file says, or null when it has none, or one that cannot be read or is
+	/// larger than <see cref="MissionAbout.MaxSize"/>.
+	/// </summary>
+	public static MissionAbout? ReadAbout(string installRoot, string name) {
+		string path = AboutPath(installRoot, name);
+		try {
+			return File.Exists(path) && new FileInfo(path).Length <= MissionAbout.MaxSize
+				? MissionAbout.Parse(File.ReadAllBytes(path))
+				: null;
+		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+			return null;
+		}
+	}
+
 	/// <summary>Whether the install has a loose <c>.MSN</c> for mission <paramref name="name"/>.</summary>
 	public static bool Exists(string installRoot, string name) => File.Exists(MissionPath(installRoot, name));
 
@@ -67,11 +88,13 @@ public static class SavedMissions {
 	}
 
 	/// <summary>
-	/// Writes mission <paramref name="name"/>'s <c>.MSN</c> <paramref name="msn"/> and, unless null, its text
-	/// <paramref name="text"/> into the install's mission folder, creating the folder, each replaced file copied to its
-	/// <see cref="BackupExtension"/> first. Returns the paths written.
+	/// Writes mission <paramref name="name"/>'s <c>.MSN</c> <paramref name="msn"/>, unless null its text
+	/// <paramref name="text"/>, and unless blank its about file <paramref name="about"/> into the install's mission folder,
+	/// creating the folder, each replaced file copied to its <see cref="BackupExtension"/> first. A blank
+	/// <paramref name="about"/> removes the about file there, after the same copy. Returns the paths written.
 	/// </summary>
-	public static IReadOnlyList<string> Write(string installRoot, string name, GameLanguage language, byte[] msn, byte[]? text) {
+	public static IReadOnlyList<string> Write(string installRoot, string name, GameLanguage language, byte[] msn, byte[]? text,
+			MissionAbout about) {
 		if (WhyNotName(name) is { } why) {
 			throw new ArgumentException(why, nameof(name));
 		}
@@ -81,6 +104,14 @@ public static class SavedMissions {
 		WriteBackedUp(MissionPath(installRoot, name), msn, written);
 		if (text != null) {
 			WriteBackedUp(TextPath(installRoot, name, language), text, written);
+		}
+
+		string aboutPath = AboutPath(installRoot, name);
+		if (!about.IsBlank) {
+			WriteBackedUp(aboutPath, about.Write(), written);
+		} else if (File.Exists(aboutPath)) {
+			File.Copy(aboutPath, aboutPath + BackupExtension, overwrite: true);
+			File.Delete(aboutPath);
 		}
 
 		return written;

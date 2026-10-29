@@ -235,17 +235,50 @@ internal sealed class HelpWindow {
 			ImGui.GetColorU32(QuoteBar));
 	}
 
-	// The header row in bold on the header color, and each column as wide as its longest cell's share of the whole.
+	// The header row in bold on the header color, and each column as wide as its longest cell's share of the whole, but
+	// never narrower than its widest word: a column whose share is narrower is fixed at that word's width instead, and
+	// the rest share what is left.
 	private void DrawTable(MarkdownTable table) {
 		int columns = table.Header.Count;
-		if (columns == 0 || !ImGui.BeginTable("##table", columns,
+		if (columns == 0) {
+			return;
+		}
+
+		var weight = new float[columns];
+		var widestWord = new float[columns];
+		for (int column = 0; column < columns; column++) {
+			int longest = table.Rows.Select(row => row[column].Plain.Length).Append(table.Header[column].Plain.Length).Max();
+			weight[column] = MathF.Max(longest, 1f);
+			widestWord[column] = table.Rows.Select(row => WidestWord(row[column]))
+				.Append(WidestWord(table.Header[column], bold: true)).Max();
+		}
+
+		var style = ImGui.GetStyle();
+		float free = ImGui.GetContentRegionAvail().X - columns * (style.CellPadding.X * 2f + 1f);
+		var fixedWidth = new bool[columns];
+		for (bool changed = true; changed;) {
+			changed = false;
+			float shared = free - Enumerable.Range(0, columns).Where(c => fixedWidth[c]).Sum(c => widestWord[c]);
+			float totalWeight = Enumerable.Range(0, columns).Where(c => !fixedWidth[c]).Sum(c => weight[c]);
+			for (int column = 0; column < columns; column++) {
+				if (!fixedWidth[column] && shared * weight[column] / totalWeight < widestWord[column]) {
+					fixedWidth[column] = true;
+					changed = true;
+				}
+			}
+		}
+
+		if (!ImGui.BeginTable("##table", columns,
 				ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchProp)) {
 			return;
 		}
 
 		for (int column = 0; column < columns; column++) {
-			int longest = table.Rows.Select(row => row[column].Plain.Length).Append(table.Header[column].Plain.Length).Max();
-			ImGui.TableSetupColumn($"##column{column}", ImGuiTableColumnFlags.WidthStretch, MathF.Max(longest, 1f));
+			if (fixedWidth[column]) {
+				ImGui.TableSetupColumn($"##column{column}", ImGuiTableColumnFlags.WidthFixed, widestWord[column]);
+			} else {
+				ImGui.TableSetupColumn($"##column{column}", ImGuiTableColumnFlags.WidthStretch, weight[column]);
+			}
 		}
 
 		ImGui.TableNextRow(ImGuiTableRowFlags.Headers);
@@ -282,9 +315,7 @@ internal sealed class HelpWindow {
 		float right = ImGui.GetCursorScreenPos().X + ImGui.GetContentRegionAvail().X;
 		bool lineStart = true;
 		foreach (var span in text.Spans) {
-			var face = span.Bold || bold ? EditorText.BoldFont?.Invoke() ?? font
-				: span.Italic ? _italicFont() ?? font
-				: font;
+			var face = Face(span, font, bold);
 			if (face is { } pushed) {
 				ImGui.PushFont(pushed);
 			}
@@ -311,6 +342,33 @@ internal sealed class HelpWindow {
 				ImGui.PopFont();
 			}
 		}
+	}
+
+	// The face DrawInline draws <span> in.
+	private ImFontPtr? Face(MarkdownSpan span, ImFontPtr? font, bool bold) =>
+		span.Bold || bold ? EditorText.BoldFont?.Invoke() ?? font
+		: span.Italic ? _italicFont() ?? font
+		: font;
+
+	// The width of <text>'s widest word, in the face DrawInline draws it in: the narrowest it can wrap to.
+	private float WidestWord(MarkdownInline text, bool bold = false) {
+		float widest = 0f;
+		foreach (var span in text.Spans) {
+			var face = Face(span, null, bold);
+			if (face is { } pushed) {
+				ImGui.PushFont(pushed);
+			}
+
+			foreach (string word in Words(span.Text)) {
+				widest = MathF.Max(widest, ImGui.CalcTextSize(word.Trim()).X);
+			}
+
+			if (face != null) {
+				ImGui.PopFont();
+			}
+		}
+
+		return widest;
 	}
 
 	// <text>'s words, each with the spaces after it; spaces before the first are a word of their own.

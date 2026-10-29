@@ -7,7 +7,8 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// The floating "Mission Settings" window, opened from Edit &gt; Mission Settings: the mission's name and zone, the zone with
 /// its size and the retail missions played in it (<see cref="ZoneCatalog"/>), then the theater it is played on and the time
-/// of day, changed through <see cref="TheaterChanger"/>, then whether it is meant for HERCULAN alone (<see cref="PlayableInEditor"/>), then its text (<see cref="MissionTextView"/>), with the briefing,
+/// of day, changed through <see cref="TheaterChanger"/>, then whether it is meant for HERCULAN alone (<see cref="PlayableInEditor"/>),
+/// then its about file (<see cref="MissionAboutEditor"/>), then its text (<see cref="MissionTextView"/>), with the briefing,
 /// intelligence report and debrief (<see cref="DebriefView"/>) under "Campaign Only".
 /// </summary>
 internal sealed class MissionSettingsWindow {
@@ -23,6 +24,8 @@ internal sealed class MissionSettingsWindow {
 	private readonly TheaterChanger _theaters;
 	private readonly IReadOnlyList<string> _labels;
 	private readonly PlayableInEditor _playableIn;
+	private readonly MissionAboutEditor _about;
+	private readonly MissionAboutFields _aboutFields = new();
 	private readonly MissionTextView _text;
 	private readonly DebriefView _debrief;
 	private bool _open;
@@ -31,12 +34,13 @@ internal sealed class MissionSettingsWindow {
 	/// <param name="zone">The zone the mission is played in, as the launch plays it (<see cref="EditorMission.Zone"/>), described by <see cref="ZoneCatalog.Describe"/>.</param>
 	/// <param name="labels">Each theater's label, in theater order (<see cref="TheaterNames.Labels"/>).</param>
 	public MissionSettingsWindow(Func<string> name, Func<string> zone, TheaterChanger theaters, IReadOnlyList<string> labels,
-			PlayableInEditor playableIn, MissionTextView text, DebriefView debrief) {
+			PlayableInEditor playableIn, MissionAboutEditor about, MissionTextView text, DebriefView debrief) {
 		_name = name;
 		_zone = zone;
 		_theaters = theaters;
 		_labels = labels;
 		_playableIn = playableIn;
+		_about = about;
 		_text = text;
 		_debrief = debrief;
 	}
@@ -105,6 +109,7 @@ internal sealed class MissionSettingsWindow {
 		}
 
 		DrawPlayableIn();
+		DrawAbout();
 		_text.Draw();
 		ImGui.SeparatorText("Campaign Only");
 		_text.DrawCampaignOnly();
@@ -138,6 +143,17 @@ internal sealed class MissionSettingsWindow {
 		ImGui.EndDisabled();
 		EditorText.Reason(why);
 		EditorText.Reason(_playableIn.Failure, "Not changed: ");
+	}
+
+	// Who made the mission and what it is, for the players it is shared with (MissionAboutEditor).
+	private void DrawAbout() {
+		ImGui.Separator();
+		ImGui.Text("About");
+		EditorText.Note("What the game's Custom Missions window shows for this mission. Saved with the mission, and exported in "
+			+ "its mission bundle.");
+		if (_aboutFields.Draw(_about.About) is { } edited) {
+			_about.Request(edited);
+		}
 	}
 
 	// The combo's label for <theater>: its own, or its number for one past the list.

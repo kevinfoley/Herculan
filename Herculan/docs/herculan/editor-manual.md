@@ -212,3 +212,11 @@ The simulator's limits, such as the maximum of 112 objects in the scene, do not 
 The Mission Editor does *not* take conditionals into account when calculating whether limits have been exceeded. It is technically possible to build a mission which the Editor says exceeds the limits, but that will actually play correctly in retail. This requires great care and is not recommended. Most retail missions do not come anywhere close to the limits.
 
 Limits do not apply in HERCULAN Engine.
+
+## Sharing a mission
+
+Edit > Mission Settings > "About" says who made the mission and what it is: its author, version, date and description. The game's Custom Missions window (`Shift+Esc` in the front end) shows them. They are saved with the mission, in a file beside its `.MSN` with the same name and the extension `.ABT`, and an edit to them undoes like any other.
+
+File > "Export Mission Bundle..." writes the mission as one `.hcm` (**H**ERCULAN **C**ustom **M**ission) file to share: the mission, its text and its About. It shows the About fields for a last look, with today's date filled in when the mission has none, and saves the mission first when it has unsaved changes, so the bundle holds what the game plays. The bundle carries the mission's text in the language the game runs in. You can share the HCM file with other players. They can download the HCM file and then import it from the Custom Missions window.
+
+Some missions come with HERCULAN. File > "Load custom mission" lists them, marked "(included)", and so does the Custom Missions window. Open one in the editor to see how it is built. Saving it writes your own copy into the install, which the game then plays in its place; delete that copy to go back to the one that came with HERCULAN. The Custom Missions window cannot delete a mission that comes with HERCULAN.

@@ -129,6 +129,37 @@ menu.settings                  Paramètres
 menu.controller                Manette
 menu.keys                      Touches
 menu.editor                    Éditeur
+menu.custom_missions           Missions personnalisées
+custom_missions.title          Missions personnalisées
+custom_missions.mission        Mission
+custom_missions.author         Auteur
+custom_missions.date           Date
+custom_missions.version        Version
+custom_missions.play           Jouer
+custom_missions.about          À propos
+custom_missions.about_title    À propos de la mission
+custom_missions.delete         Supprimer
+custom_missions.delete_title   Supprimer la mission
+custom_missions.delete_message Supprimer {0} ? Ces fichiers sont supprimés du dossier MSN de l'installation :
+custom_missions.cannot_undo    Cette action est irréversible.
+custom_missions.delete_failed  {0} n'a pas pu être supprimée.
+custom_missions.import         Importer...
+custom_missions.picker_title   Importer un paquet de mission
+custom_missions.picker_filter  Paquets de mission (.hcm)
+custom_missions.no_picker      Ce système n'a pas de sélecteur de fichiers. Pour importer un paquet de mission, copiez son fichier .hcm dans {0}.
+custom_missions.imported       {0} a été importé.
+custom_missions.import_failed  {0} n'a pas pu être importé.
+custom_missions.replace_title  Remplacer le paquet de mission
+custom_missions.replace_message Le dossier MSN contient déjà {0}. Le remplacer par celui choisi ? Cette action est irréversible.
+custom_missions.replace        Remplacer
+custom_missions.play_failed    {0} n'a pas pu être lancée.
+custom_missions.cannot_play    Impossible de jouer cette mission : {0}
+custom_missions.bundle_file    Paquet de mission {0}
+custom_missions.loose_file     Fichier de mission {0}
+custom_missions.included_file  Paquet de mission fourni avec HERCULAN : {0}
+custom_missions.included       (fourni)
+custom_missions.cannot_delete_included Cette mission est fournie avec HERCULAN et ne peut pas être supprimée.
+custom_missions.empty          Aucune mission personnalisée dans {0}. La liste montre chaque mission que l'éditeur de missions y enregistre, et chaque paquet de mission .hcm qui s'y trouve. Importer... ajoute un paquet.
 menu.about                     À propos
 pause.title                    Pause
 pause.resume                   Reprendre
