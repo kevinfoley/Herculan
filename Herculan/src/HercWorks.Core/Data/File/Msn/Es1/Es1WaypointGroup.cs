@@ -8,8 +8,8 @@ public class Es1WaypointGroup : MapObject {
 	/// <summary>0x02 — condition ref.</summary>
 	public short ConditionRef { get; set; }
 
-	/// <summary>0x04 — variant key; a variant copies the waypoint list.</summary>
-	public short VariantKey { get; set; }
+	/// <summary>0x04 — random table key; a template supplies the waypoint list.</summary>
+	public short RandomTableKey { get; set; }
 
 	/// <summary>0x06 — unnamed, as in ES2's record.</summary>
 	public short Word06 { get; set; }

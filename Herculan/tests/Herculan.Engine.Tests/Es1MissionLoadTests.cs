@@ -8,14 +8,14 @@ namespace Herculan.Engine.Tests;
 
 /// <summary>
 /// <see cref="Es1MissionLoad"/>, the shell's mode-0 load (docs/es1/formats/msn-mission-file.md#loading-a-mission), over a
-/// constructed mission small enough to work out by hand: a draw, a variant table, a repeated point after a point with no
+/// constructed mission small enough to work out by hand: a draw, a random table, a repeated point after a point with no
 /// GUID, a repeated mech, a squad of the player and one squadmate.
 /// </summary>
 public class Es1MissionLoadTests {
 	private static readonly Es1MissionParams Params = new(Ammo: 1, Damage: 1, Difficulty: 2, Visibility: 1, TimeOfDay: 2);
 
 	/// <summary>The draws the scripted roll answers, in the doc's order: the three flags, the condition's draw, the
-	/// variant, the theater, the squadmate's name group, name, rank 2, its three rank draws, and the player's word.</summary>
+	/// random table's roll, the theater, the squadmate's name group, name, rank 2, its three rank draws, and the player's word.</summary>
 	private static readonly int[] Answers = [1, 2, 3, 4, 60, 2, 1, 2, 2, 3, 7, 11, 7];
 
 	/// <summary>Catches a draw moved out of the doc's order, or a bound taken from the wrong field.</summary>
@@ -23,14 +23,14 @@ public class Es1MissionLoadTests {
 	public void DrawsInTheDocsOrder() {
 		var (_, bounds) = Load();
 
-		// 12 × 3 the flags, 10 the type-1 condition, 100 the variant's parent, 4 the theater, then the squadmate:
+		// 12 × 3 the flags, 10 the type-1 condition, 100 the random table, 4 the theater, then the squadmate:
 		// 4 and 3 its name, 6 its rank, 5 + 1 for rank 2's threshold, 5 × 2 and 10 × 2, and 11 the player's word.
 		Assert.Equal([12, 12, 12, 10, 100, 4, 4, 3, 6, 6, 10, 20, 11], bounds);
 	}
 
 	/// <summary>
 	/// Catches refs resolved counting the records with no GUID, a repeated point finding its slot by array index rather
-	/// than by the GUID count, a repeated mech overlaying by that count, a variant copying the wrong child's record, and
+	/// than by the GUID count, a repeated mech overlaying by that count, a template copied from the wrong option, and
 	/// the header words the mode overrides.
 	/// </summary>
 	[Fact]
@@ -49,7 +49,7 @@ public class Es1MissionLoadTests {
 		Assert.Equal(2, script.Mechs[0].PointRef);
 		Assert.Equal(0, script.Mechs[0].HeadingRef);
 
-		// The variant's draw of 60 picks the 50–99 child, whose record is the second source.
+		// The random table's roll of 60 picks the 50–99 option, whose template is the second source.
 		Assert.Equal(2, script.Mechs[1].Type);
 		Assert.Equal([6, 9, 17], script.Mechs[1].Words32[..3]);
 
@@ -117,7 +117,7 @@ public class Es1MissionLoadTests {
 		],
 		HeaderPatches = [new() { ConditionRef = -1, HeaderWords = [1, 1004, 0, 0, 0, 0, 0, 0, 0, 0] }],
 		Points = [Point(-1, 1), Point(5, 10), Point(6, 20), Point(5, 30)],
-		Headings = [new() { GUID = 8, ConditionRef = -1, VariantKey = -1, Value = 90 }],
+		Headings = [new() { GUID = 8, ConditionRef = -1, RandomTableKey = -1, Value = 90 }],
 		Mechs = [
 			Mech(10, type: 6, key: -1, weapons: [2, 2, 8], point: 6, heading: 8),
 			Mech(-1, type: 1, key: -1, weapons: [0, 0, 17], condition: 3),
@@ -131,7 +131,7 @@ public class Es1MissionLoadTests {
 		],
 	};
 
-	private static Es1Point Point(short guid, int x) => new() { GUID = guid, ConditionRef = -1, VariantKey = -1, X = x };
+	private static Es1Point Point(short guid, int x) => new() { GUID = guid, ConditionRef = -1, RandomTableKey = -1, X = x };
 
 	/// <summary>A mech whose unset fields hold their unset values, so a repeat overlays only what it sets.</summary>
 	private static Es1Mech Mech(short guid, short type, short key, short[] weapons, short point = -1, short heading = -1,
@@ -139,7 +139,7 @@ public class Es1MissionLoadTests {
 		var words32 = Enumerable.Repeat((short)-1, 10).ToArray();
 		weapons.CopyTo(words32, 0);
 		return new Es1Mech {
-			GUID = guid, ConditionRef = condition, VariantKey = key, Type = type, Words32 = words32, PointRef = point,
+			GUID = guid, ConditionRef = condition, RandomTableKey = key, Type = type, Words32 = words32, PointRef = point,
 			HeadingRef = heading, Word4A = -1, Word4C = -1, Words4E = Enumerable.Repeat((short)5, 10).ToArray(), Word62 = 2,
 			ActionRef64 = -1, ActionRef66 = -1, Word68 = 100,
 		};

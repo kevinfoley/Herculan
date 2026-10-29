@@ -4997,7 +4997,7 @@
       "confidence": "high",
       "name": "Msn_ResolveRow6Ref",
       "description": "(count, guid) in stack order, callee-cleaned: -1 for guid -1; otherwise the number of records with a GUID other than -1 before the first of the first count point records (00080f28, 22 bytes each) whose GUID is guid, or -1 when none is. VSHELL's Msn_ResolveRow6Ref (00415b44) less its flag: ES1's always skips the records whose GUID is -1, so the parser's repeat test gets that count rather than the record's slot.",
-      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats",
       "verified": {
         "bytes": "000313f1+132",
         "sha1": "bd3e63915777",
@@ -5012,7 +5012,7 @@
       "confidence": "high",
       "name": "Msn_ResolveRow7Ref",
       "description": "(count, guid) in stack order, callee-cleaned: Msn_ResolveRow6Ref (000313f1) over the heading records (00080f2c, 10 bytes each). VSHELL's Msn_ResolveRow7Ref (00415bab) less its flag.",
-      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats",
       "verified": {
         "bytes": "00031475+136",
         "sha1": "a168de8359e9",
@@ -5027,7 +5027,7 @@
       "confidence": "high",
       "name": "Msn_ResolveRow8Ref",
       "description": "(count, guid) in stack order, callee-cleaned: Msn_ResolveRow6Ref (000313f1) over the waypoint group records (00080f38, 0x12 bytes each in memory). VSHELL's Msn_ResolveRow8Ref (00415c12) less its flag.",
-      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats",
       "verified": {
         "bytes": "000314fd+136",
         "sha1": "959d4e617897",
@@ -5042,7 +5042,7 @@
       "confidence": "high",
       "name": "Msn_ResolveRow9Ref",
       "description": "(count, guid) in stack order, callee-cleaned: Msn_ResolveRow6Ref (000313f1) over the trigger area records (00080f44, 12 bytes each). VSHELL's Msn_ResolveRow9Ref (00415c79) less its flag.",
-      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats",
       "verified": {
         "bytes": "00031585+132",
         "sha1": "3ca9e427e688",
@@ -5057,7 +5057,7 @@
       "confidence": "high",
       "name": "Msn_ResolveRow10Ref",
       "description": "(count, guid) in stack order, callee-cleaned: Msn_ResolveRow6Ref (000313f1) over the action records (00080f48, 30 bytes each). VSHELL's Msn_ResolveRow10Ref (00415ce0) less its flag.",
-      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats",
       "verified": {
         "bytes": "00031609+132",
         "sha1": "e674126c07e2",
@@ -5072,7 +5072,7 @@
       "confidence": "high",
       "name": "Msn_ResolveRow16Ref",
       "description": "(count, guid) in stack order, callee-cleaned: Msn_ResolveRow6Ref (000313f1) over the group records (00080f3c, 88 bytes each). VSHELL's Msn_ResolveRow16Ref (00415db6) less its flag.",
-      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats",
       "verified": {
         "bytes": "0003168d+132",
         "sha1": "9d467705759f",
@@ -5087,7 +5087,7 @@
       "confidence": "high",
       "name": "Msn_ResolveRow12Ref",
       "description": "(skipUnnamed, count, guid) in stack order, callee-cleaned: -1 for guid -1; otherwise searches the first count mech records (00080f30, 106 bytes each) for guid and returns how many records before it it counted, a record whose GUID is -1 counting only when skipUnnamed is 0; -1 when none matches. VSHELL's Msn_ResolveRow12Ref (00415e1d).",
-      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats",
       "verified": {
         "bytes": "00031711+150",
         "sha1": "6fda6e3c1bc2",
@@ -5102,7 +5102,7 @@
       "confidence": "high",
       "name": "Msn_ResolveRow13Ref",
       "description": "(skipUnnamed, count, guid) in stack order, callee-cleaned: Msn_ResolveRow12Ref (00031711) over the flyer records (00080f34, 64 bytes each). VSHELL's Msn_ResolveRow13Ref (00415e87).",
-      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats",
       "verified": {
         "bytes": "000317a7+150",
         "sha1": "e52affdc9978",
@@ -5117,7 +5117,7 @@
       "confidence": "high",
       "name": "Msn_ResolveRow14Ref",
       "description": "(skipUnnamed, count, guid) in stack order, callee-cleaned: Msn_ResolveRow12Ref (00031711) over the base records (00080f40, 24 bytes each). VSHELL's Msn_ResolveRow14Ref (00415eed).",
-      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats",
       "verified": {
         "bytes": "0003183d+152",
         "sha1": "78f188b42759",
@@ -5130,9 +5130,9 @@
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "Msn_PickVariant",
-      "description": "(key), callee-cleaned: for each condition record (00080f24, 00080f4e of them) of type 3 whose +6 is key, draws Math_RandomBelow (00038774) on the generator Shell_RandomState (0009aec0) below its +0xa into its +0xc and returns the index of the first type-2 record whose parent (+2) is its GUID and whose unsigned range +6..+8 holds the draw; with none it goes on to the next such type-3 record, and returns -1 after the last. VSHELL's Msn_PickVariant (00415fc3).",
-      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats",
+      "name": "Msn_PickOption",
+      "description": "(key), callee-cleaned: for each condition record (00080f24, 00080f4e of them) of type 3 whose +6 is key, draws Math_RandomBelow (00038774) on the generator Shell_RandomState (0009aec0) below its +0xa into its +0xc and returns the index of the first type-2 record whose parent (+2) is its GUID and whose unsigned range +6..+8 holds the draw; with none it goes on to the next such type-3 record, and returns -1 after the last. VSHELL's Msn_PickOption (00415fc3).",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats",
       "verified": {
         "bytes": "000318d5+295",
         "sha1": "0f985985cd32",
@@ -5145,9 +5145,9 @@
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "Msn_VariantSourceRow6",
-      "description": "(count, key) in stack order, callee-cleaned: Msn_PickVariant (000318d5) on key, then the index of the first of the first count point records whose condition (+2) is the picked condition record's GUID, or -1. VSHELL's Msn_VariantSourceRow6 (00416120).",
-      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats",
+      "name": "Msn_TemplateRow6",
+      "description": "(count, key) in stack order, callee-cleaned: Msn_PickOption (000318d5) on key, then the index of the first of the first count point records whose condition (+2) is the picked condition record's GUID, or -1. VSHELL's Msn_TemplateRow6 (00416120).",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats",
       "verified": {
         "bytes": "000319fc+107",
         "sha1": "abf4eaad4ee1",
@@ -5160,9 +5160,9 @@
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "Msn_VariantSourceRow7",
-      "description": "(count, key) in stack order, callee-cleaned: Msn_VariantSourceRow6 (000319fc) over the heading records. VSHELL's Msn_VariantSourceRow7 (00416175).",
-      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats",
+      "name": "Msn_TemplateRow7",
+      "description": "(count, key) in stack order, callee-cleaned: Msn_TemplateRow6 (000319fc) over the heading records. VSHELL's Msn_TemplateRow7 (00416175).",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats",
       "verified": {
         "bytes": "00031a67+109",
         "sha1": "f5a44dc02777",
@@ -5175,9 +5175,9 @@
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "Msn_VariantSourceRow8",
-      "description": "(count, key) in stack order, callee-cleaned: Msn_VariantSourceRow6 (000319fc) over the waypoint group records. VSHELL's Msn_VariantSourceRow8 (004161ca).",
-      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats",
+      "name": "Msn_TemplateRow8",
+      "description": "(count, key) in stack order, callee-cleaned: Msn_TemplateRow6 (000319fc) over the waypoint group records. VSHELL's Msn_TemplateRow8 (004161ca).",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats",
       "verified": {
         "bytes": "00031ad4+109",
         "sha1": "73286d46c3e0",
@@ -5190,9 +5190,9 @@
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "Msn_VariantSourceRow12",
-      "description": "(count, key) in stack order, callee-cleaned: Msn_VariantSourceRow6 (000319fc) over the mech records. VSHELL's Msn_VariantSourceRow12 (0041621f).",
-      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats",
+      "name": "Msn_TemplateRow12",
+      "description": "(count, key) in stack order, callee-cleaned: Msn_TemplateRow6 (000319fc) over the mech records. VSHELL's Msn_TemplateRow12 (0041621f).",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats",
       "verified": {
         "bytes": "00031b41+107",
         "sha1": "10691a525f49",
@@ -5205,9 +5205,9 @@
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "Msn_VariantSourceRow13",
-      "description": "(count, key) in stack order, callee-cleaned: Msn_VariantSourceRow6 (000319fc) over the flyer records. VSHELL's Msn_VariantSourceRow13 (00416276).",
-      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats",
+      "name": "Msn_TemplateRow13",
+      "description": "(count, key) in stack order, callee-cleaned: Msn_TemplateRow6 (000319fc) over the flyer records. VSHELL's Msn_TemplateRow13 (00416276).",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats",
       "verified": {
         "bytes": "00031bac+109",
         "sha1": "d344b9df4e69",
@@ -5220,9 +5220,9 @@
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
-      "name": "Msn_VariantSourceRow14",
-      "description": "(count, key) in stack order, callee-cleaned: Msn_VariantSourceRow6 (000319fc) over the base records. VSHELL's Msn_VariantSourceRow14 (004162cb).",
-      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats",
+      "name": "Msn_TemplateRow14",
+      "description": "(count, key) in stack order, callee-cleaned: Msn_TemplateRow6 (000319fc) over the base records. VSHELL's Msn_TemplateRow14 (004162cb).",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats",
       "verified": {
         "bytes": "00031c19+107",
         "sha1": "786e26722d1a",
@@ -5252,7 +5252,7 @@
       "confidence": "high",
       "name": "Msn_MergeRow10",
       "description": "(earlier, new) in stack order, callee-cleaned: overlays action record new onto earlier (00080f48, 30 bytes each), copying each of +6, +8, the eight area refs at +0xa and the words +0x1a and +0x1c that is not -1. VSHELL's Msn_MergeRow10 (00416521) over ES1's shorter record.",
-      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats",
       "verified": {
         "bytes": "00031d67+276",
         "sha1": "4a665edc6632",
@@ -5267,7 +5267,7 @@
       "confidence": "high",
       "name": "Msn_MergeRow12",
       "description": "(earlier, new) in stack order, callee-cleaned: overlays mech record new onto earlier (00080f30, 106 bytes each), copying each field that is not its unset value: 0 for the 20 words at +8, -1 for the ten at +0x32, 5 for the ten at +0x4e, -1 for +0x30, +0x46, +0x48, +0x4a, +0x4c, +0x64 and +0x66, 2 for +0x62 and 100 for +0x68. VSHELL's Msn_MergeRow12 (00416864) over ES1's shorter record.",
-      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats",
       "verified": {
         "bytes": "00031e7b+638",
         "sha1": "dccfabb97242",
@@ -5282,7 +5282,7 @@
       "confidence": "high",
       "name": "Msn_MergeRow13",
       "description": "(earlier, new) in stack order, callee-cleaned: overlays flyer record new onto earlier (00080f34, 64 bytes each): the 20 words at +8 that are not 0, +0x30 to +0x3c that are not -1, and +0x3e when not 100. VSHELL's Msn_MergeRow13 (00416c17) over ES1's shorter record.",
-      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats",
       "verified": {
         "bytes": "000320f9+445",
         "sha1": "ce546f01e2c9",
@@ -5297,7 +5297,7 @@
       "confidence": "high",
       "name": "Msn_MergeRow14",
       "description": "(earlier, new) in stack order, callee-cleaned: overlays base record new onto earlier (00080f40, 24 bytes each): +8 to +0x14 when not -1, and +0x16 when not 100. VSHELL's Msn_MergeRow14 (00416e7a) over ES1's shorter record.",
-      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats",
       "verified": {
         "bytes": "000322b6+372",
         "sha1": "f9d6fc244d2f",
@@ -5312,7 +5312,7 @@
       "confidence": "high",
       "name": "Msn_MergeRow16",
       "description": "(earlier, new) in stack order, callee-cleaned: overlays group record new onto earlier (00080f3c, 88 bytes each): the 20 words at +6 that are not 0, the eight member refs at +0x3a and the words +0x2e to +0x38 and +0x4a to +0x56 that are not -1. VSHELL's Msn_MergeRow16 (00417286) over ES1's shorter record.",
-      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats",
       "verified": {
         "bytes": "0003242a+743",
         "sha1": "3a0decf9825c",
@@ -5341,7 +5341,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MsnGen_ParseMsnFile",
-      "description": "(stream), callee-cleaned: reads a mission's eleven rows from stream, whose revision word MsnGen_LoadMission (00035873) has read: conditions (14 bytes), header patches (22, applied by Msn_ApplyHeaderPatch (00031c84)), points (22), headings (10), waypoint groups (10 + 2 per waypoint), trigger areas (12), actions (30), mechs (106), flyers (64), bases (24) and groups (88), each an int16 count and the records, into the arrays at 00080f24-00080f48 with their counts at 00080f4c-00080f60, the header patches into the scratch record 000ab22e. It filters, resolves refs, picks variants and replaces or overlays repeated GUIDs as VSHELL's MsnGen_ParseMsnFile (00417b67) does, with ES1's condition operators 0x114-0x117 (==, !=, <, >) over the 100 flags at 000ab244. Returns 1.",
+      "description": "(stream), callee-cleaned: reads a mission's eleven rows from stream, whose revision word MsnGen_LoadMission (00035873) has read: conditions (14 bytes), header patches (22, applied by Msn_ApplyHeaderPatch (00031c84)), points (22), headings (10), waypoint groups (10 + 2 per waypoint), trigger areas (12), actions (30), mechs (106), flyers (64), bases (24) and groups (88), each an int16 count and the records, into the arrays at 00080f24-00080f48 with their counts at 00080f4c-00080f60, the header patches into the scratch record 000ab22e. It filters, resolves refs, picks options and replaces or overlays repeated GUIDs as VSHELL's MsnGen_ParseMsnFile (00417b67) does, with ES1's condition operators 0x114-0x117 (==, !=, <, >) over the 100 flags at 000ab244. Returns 1.",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-layout",
       "verified": {
         "bytes": "0003276c+7407",
@@ -5627,7 +5627,7 @@
       "confidence": "high",
       "name": "Math_RandomNext",
       "description": "(state), callee-cleaned: ES1DBSIM's Math_RandomNext (00063af4), the same statements in different code: table[+0x71] += table[+0x70] over the state's 56 shorts, returns it, and advances both cursors, each wrapping from 56 to 0.",
-      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats",
       "verified": {
         "bytes": "00038723+81",
         "sha1": "2ff9b1096852",
@@ -5642,7 +5642,7 @@
       "confidence": "high",
       "name": "Math_RandomBelow",
       "description": "(state, int16 bound) in stack order, callee-cleaned: 0 when bound is 0, otherwise (Math_RandomNext(state) & 0x7fff) % bound. ES1DBSIM's Math_RandomBelow (00063b3c) has no test for 0. The shell's mission load draws on the generator at Shell_RandomState (0009aec0).",
-      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats",
       "verified": {
         "bytes": "00038774+51",
         "sha1": "3730af3b1bc8",

@@ -8,8 +8,8 @@ public class Es1Base : MapObject {
 	/// <summary>0x02 — condition ref.</summary>
 	public short ConditionRef { get; set; }
 
-	/// <summary>0x04 — variant key; a variant copies 0x08–0x17.</summary>
-	public short VariantKey { get; set; }
+	/// <summary>0x04 — random table key; a template supplies 0x08–0x17.</summary>
+	public short RandomTableKey { get; set; }
 
 	/// <summary>0x06 — not read by the load, not exported.</summary>
 	public short Word06 { get; set; }

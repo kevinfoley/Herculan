@@ -6,8 +6,8 @@ namespace HercWorks.Core.Data.File.Msn.Es1;
 /// them (docs/es1/formats/msn-mission-file.md#the-layout). Nothing follows the last row.
 ///
 /// <para>The editing model, as ES2's <see cref="MissionFile"/> is: it round-trips a file byte for
-/// byte and keeps every record as authored, refs as GUIDs. It does not apply the conditions, variants
-/// and repeated GUIDs the load applies (docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats).
+/// byte and keeps every record as authored, refs as GUIDs. It does not apply the conditions, random tables
+/// and repeated GUIDs the load applies (docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats).
 /// It also holds a file in the other layout (docs/es1/formats/msn-mission-file.md#a-file-in-another-layout):
 /// <see cref="HeaderWords"/> set, <see cref="HeaderPatches"/> empty, and one word in each mech's
 /// <see cref="Es1Mech.Words4E"/>.</para>

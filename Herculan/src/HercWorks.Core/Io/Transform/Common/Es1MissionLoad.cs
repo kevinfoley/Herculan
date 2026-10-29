@@ -47,11 +47,11 @@ public sealed record Es1MissionLoadResult(Es1ScriptDat Script, short[] Flags, Es
 /// docs/es1/formats/msn-mission-file.md#the-order-of-the-loads-draws gives.
 ///
 /// <para>Records are kept as the load keeps them, as arrays of <c>int16</c> words, each index the <c>.MSN</c> offset halved.
-/// The rules for filtering, variants and repeated GUIDs are ES2's (<see cref="MissionGenerator"/>) with ES1's differences
-/// (docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats); this walks <see cref="Es1MissionFile"/>'s records
+/// The rules for filtering, random tables and repeated GUIDs are ES2's (<see cref="MissionGenerator"/>) with ES1's differences
+/// (docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats); this walks <see cref="Es1MissionFile"/>'s records
 /// in file order, which is the order the loader reads them in.</para>
 ///
-/// <para>Where the original would read outside an array — a variant with no record to copy, a flag index past the 100 —
+/// <para>Where the original would read outside an array — an option with no template to copy, a flag index past the 100 —
 /// this leaves the field as it was or reads 0, as <see cref="MissionGenerator"/> does, which is this port's choice.</para>
 /// </summary>
 public sealed class Es1MissionLoad {
@@ -77,7 +77,7 @@ public sealed class Es1MissionLoad {
 	private const short OpGreater = 0x117;
 
 	/// <summary>What <c>Msn_ConditionParentValue</c> answers for a type-3 parent, as ES2's: a range test that always passes.</summary>
-	private const int AnyVariant = -99;
+	private const int AnyRoll = -99;
 
 	private readonly List<short[]> _conditions = new();
 	private readonly List<short[]> _points = new();
@@ -181,7 +181,7 @@ public sealed class Es1MissionLoad {
 					break;
 				case 2:
 					int value = ParentValue(record[1]);
-					if (value == AnyVariant || ((ushort)record[3] <= value && value <= (ushort)record[4])) {
+					if (value == AnyRoll || ((ushort)record[3] <= value && value <= (ushort)record[4])) {
 						_conditions.Add(record);
 					}
 
@@ -218,7 +218,7 @@ public sealed class Es1MissionLoad {
 			}
 
 			if (record[0] == condition && record[2] == 3) {
-				return AnyVariant;
+				return AnyRoll;
 			}
 		}
 
@@ -226,11 +226,11 @@ public sealed class Es1MissionLoad {
 	}
 
 	/// <summary>
-	/// <c>Msn_PickVariant</c> (<c>000318d5</c>), ES2's: for each surviving type-3 condition whose <c>0x06</c> is the key, a
+	/// <c>Msn_PickOption</c> (<c>000318d5</c>), ES2's: for each surviving type-3 condition whose <c>0x06</c> is the key, a
 	/// draw below its <c>0x0a</c>, kept at its <c>0x0c</c>, until one has a type-2 child whose range holds the draw; the
 	/// child's index, or -1.
 	/// </summary>
-	private int PickVariant(short key) {
+	private int PickOption(short key) {
 		foreach (var parent in _conditions) {
 			if (parent[2] != 3 || parent[3] != key) {
 				continue;
@@ -249,9 +249,9 @@ public sealed class Es1MissionLoad {
 		return -1;
 	}
 
-	/// <summary>The first record of <paramref name="row"/>, read so far, whose condition is the picked variant's GUID, or -1.</summary>
-	private int VariantSource<T>(List<T> row, Func<T, short> conditionOf, short key) {
-		int picked = PickVariant(key);
+	/// <summary>The first record of <paramref name="row"/>, read so far, whose condition is the picked option's range, its template, or -1.</summary>
+	private int TemplateOf<T>(List<T> row, Func<T, short> conditionOf, short key) {
+		int picked = PickOption(key);
 		if (picked < 0) {
 			return -1;
 		}
@@ -288,7 +288,7 @@ public sealed class Es1MissionLoad {
 	/// <summary>
 	/// A GUID's index among <paramref name="row"/>'s records with a GUID, the index <c>data\script.dat</c> gives it, or -1
 	/// for <c>-1</c> or none. It is how every ref resolves, and the slot a repeated GUID lands on in the six rows that
-	/// find it this way (docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats).
+	/// find it this way (docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats).
 	/// </summary>
 	private static short Exported<T>(IReadOnlyList<T> row, Func<T, short> guidOf, short guid) {
 		if (guid == -1) {
@@ -346,7 +346,7 @@ public sealed class Es1MissionLoad {
 	private static void Copy(short[] source, short[] target, int first, int count) =>
 		Array.Copy(source, first, target, first, count);
 
-	/// <summary>Row 3. A variant copies X, Y and Z (words 5 to 10).</summary>
+	/// <summary>Row 3. A template supplies X, Y and Z (words 5 to 10).</summary>
 	private void ReadPoints(IEnumerable<Es1Point> points) {
 		foreach (var p in points) {
 			if (p.SumFlag != 0) {
@@ -354,13 +354,13 @@ public sealed class Es1MissionLoad {
 					$"Point {p.GUID} sets its sum flag; what ES1's load does with it is not in docs/es1/formats/msn-mission-file.md, and no retail point sets one.");
 			}
 
-			short[] record = [p.GUID, p.ConditionRef, p.VariantKey, p.Word06, p.SumFlag,
+			short[] record = [p.GUID, p.ConditionRef, p.RandomTableKey, p.Word06, p.SumFlag,
 				(short)p.X, (short)(p.X >> 16), (short)p.Y, (short)(p.Y >> 16), (short)p.Z, (short)(p.Z >> 16)];
 			if (!Gate(record[1])) {
 				continue;
 			}
 
-			if (record[2] != -1 && VariantSource(_points, r => r[1], record[2]) is >= 0 and var source) {
+			if (record[2] != -1 && TemplateOf(_points, r => r[1], record[2]) is >= 0 and var source) {
 				Copy(_points[source], record, 5, 6);
 			}
 
@@ -368,15 +368,15 @@ public sealed class Es1MissionLoad {
 		}
 	}
 
-	/// <summary>Row 4. A variant copies the heading.</summary>
+	/// <summary>Row 4. A template supplies the heading.</summary>
 	private void ReadHeadings(IEnumerable<Es1Heading> headings) {
 		foreach (var h in headings) {
-			short[] record = [h.GUID, h.ConditionRef, h.VariantKey, h.Word06, h.Value];
+			short[] record = [h.GUID, h.ConditionRef, h.RandomTableKey, h.Word06, h.Value];
 			if (!Gate(record[1])) {
 				continue;
 			}
 
-			if (record[2] != -1 && VariantSource(_headings, r => r[1], record[2]) is >= 0 and var source) {
+			if (record[2] != -1 && TemplateOf(_headings, r => r[1], record[2]) is >= 0 and var source) {
 				record[4] = _headings[source][4];
 			}
 
@@ -384,16 +384,16 @@ public sealed class Es1MissionLoad {
 		}
 	}
 
-	/// <summary>Row 5. Each waypoint resolves as it is read; a variant copies the list.</summary>
+	/// <summary>Row 5. Each waypoint resolves as it is read; a template supplies the list.</summary>
 	private void ReadWaypointGroups(IEnumerable<Es1WaypointGroup> groups) {
 		foreach (var g in groups) {
-			var group = new WaypointGroup([g.GUID, g.ConditionRef, g.VariantKey, g.Word06],
+			var group = new WaypointGroup([g.GUID, g.ConditionRef, g.RandomTableKey, g.Word06],
 				g.Waypoints.Select(waypoint => Ref(_points, waypoint)).ToList());
 			if (!Gate(group.Words[1])) {
 				continue;
 			}
 
-			if (group.Words[2] != -1 && VariantSource(_waypointGroups, r => r.Words[1], group.Words[2]) is >= 0 and var source) {
+			if (group.Words[2] != -1 && TemplateOf(_waypointGroups, r => r.Words[1], group.Words[2]) is >= 0 and var source) {
 				group.Points.Clear();
 				group.Points.AddRange(_waypointGroups[source].Points);
 			}
@@ -441,8 +441,8 @@ public sealed class Es1MissionLoad {
 	}
 
 	/// <summary>
-	/// Row 8. With no variant its point, heading and two actions resolve; with one it copies <c>0x08</c>–<c>0x69</c> from
-	/// the variant's record, refs already resolved. A repeat overlays each field that is not its unset value.
+	/// Row 8. With no random table key its point, heading and two actions resolve; with one it copies <c>0x08</c>–<c>0x69</c> from
+	/// the template, refs already resolved. A repeat overlays each field that is not its unset value.
 	/// </summary>
 	private void ReadMechs(IEnumerable<Es1Mech> mechs) {
 		foreach (var m in mechs) {
@@ -450,7 +450,7 @@ public sealed class Es1MissionLoad {
 				throw new NotSupportedException("A mech in the other layout's 88-byte form.");
 			}
 
-			short[] record = [m.GUID, m.ConditionRef, m.VariantKey, m.Word06, .. m.Words08, m.Type, .. m.Words32, m.PointRef,
+			short[] record = [m.GUID, m.ConditionRef, m.RandomTableKey, m.Word06, .. m.Words08, m.Type, .. m.Words32, m.PointRef,
 				m.HeadingRef, m.Word4A, m.Word4C, .. m.Words4E, m.Word62, m.ActionRef64, m.ActionRef66, m.Word68];
 			if (!Gate(record[1])) {
 				continue;
@@ -461,7 +461,7 @@ public sealed class Es1MissionLoad {
 				record[36] = Ref(_headings, record[36]);
 				record[50] = Ref(_actions, record[50]);
 				record[51] = Ref(_actions, record[51]);
-			} else if (VariantSource(_mechs, r => r[1], record[2]) is >= 0 and var source) {
+			} else if (TemplateOf(_mechs, r => r[1], record[2]) is >= 0 and var source) {
 				Copy(_mechs[source], record, 4, 49);
 			}
 
@@ -476,10 +476,10 @@ public sealed class Es1MissionLoad {
 		}
 	}
 
-	/// <summary>Row 9, as row 8 one class down; a variant copies <c>0x08</c>–<c>0x3f</c>.</summary>
+	/// <summary>Row 9, as row 8 one class down; a template supplies <c>0x08</c>–<c>0x3f</c>.</summary>
 	private void ReadFlyers(IEnumerable<Es1Flyer> flyers) {
 		foreach (var f in flyers) {
-			short[] record = [f.GUID, f.ConditionRef, f.VariantKey, f.Word06, .. f.Words08, f.PointRef, f.HeadingRef, f.Type,
+			short[] record = [f.GUID, f.ConditionRef, f.RandomTableKey, f.Word06, .. f.Words08, f.PointRef, f.HeadingRef, f.Type,
 				f.Word36, f.Word38, f.ActionRef3A, f.ActionRef3C, f.Word3E];
 			if (!Gate(record[1])) {
 				continue;
@@ -490,7 +490,7 @@ public sealed class Es1MissionLoad {
 				record[25] = Ref(_headings, record[25]);
 				record[29] = Ref(_actions, record[29]);
 				record[30] = Ref(_actions, record[30]);
-			} else if (VariantSource(_flyers, r => r[1], record[2]) is >= 0 and var source) {
+			} else if (TemplateOf(_flyers, r => r[1], record[2]) is >= 0 and var source) {
 				Copy(_flyers[source], record, 4, 28);
 			}
 
@@ -502,10 +502,10 @@ public sealed class Es1MissionLoad {
 		}
 	}
 
-	/// <summary>Row 10; a variant copies <c>0x08</c>–<c>0x17</c>.</summary>
+	/// <summary>Row 10; a template supplies <c>0x08</c>–<c>0x17</c>.</summary>
 	private void ReadBases(IEnumerable<Es1Base> bases) {
 		foreach (var b in bases) {
-			short[] record = [b.GUID, b.ConditionRef, b.VariantKey, b.Word06, b.Type, b.PointRef, b.HeadingRef, b.Word0E,
+			short[] record = [b.GUID, b.ConditionRef, b.RandomTableKey, b.Word06, b.Type, b.PointRef, b.HeadingRef, b.Word0E,
 				b.Word10, b.ActionRef12, b.ActionRef14, b.Word16];
 			if (!Gate(record[1])) {
 				continue;
@@ -516,7 +516,7 @@ public sealed class Es1MissionLoad {
 				record[6] = Ref(_headings, record[6]);
 				record[9] = Ref(_actions, record[9]);
 				record[10] = Ref(_actions, record[10]);
-			} else if (VariantSource(_bases, r => r[1], record[2]) is >= 0 and var source) {
+			} else if (TemplateOf(_bases, r => r[1], record[2]) is >= 0 and var source) {
 				Copy(_bases[source], record, 4, 8);
 			}
 

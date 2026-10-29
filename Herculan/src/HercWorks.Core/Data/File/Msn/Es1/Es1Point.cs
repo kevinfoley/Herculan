@@ -8,8 +8,8 @@ public class Es1Point : MapObject {
 	/// <summary>0x02 — condition ref.</summary>
 	public short ConditionRef { get; set; }
 
-	/// <summary>0x04 — variant key; a variant copies X, Y and Z (docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats).</summary>
-	public short VariantKey { get; set; }
+	/// <summary>0x04 — random table key; a template supplies X, Y and Z (docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats).</summary>
+	public short RandomTableKey { get; set; }
 
 	/// <summary>0x06 — unnamed, as in ES2's record.</summary>
 	public short Word06 { get; set; }

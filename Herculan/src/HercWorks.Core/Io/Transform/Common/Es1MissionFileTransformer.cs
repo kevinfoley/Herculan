@@ -127,7 +127,7 @@ public class Es1MissionFileTransformer : ByteTransformer<Es1MissionFile> {
 	private Es1Point ParsePoint() => new() {
 		GUID = IndexShortLE(),
 		ConditionRef = IndexShortLE(),
-		VariantKey = IndexShortLE(),
+		RandomTableKey = IndexShortLE(),
 		Word06 = IndexShortLE(),
 		SumFlag = IndexShortLE(),
 		X = IndexIntLE(),
@@ -138,7 +138,7 @@ public class Es1MissionFileTransformer : ByteTransformer<Es1MissionFile> {
 	private Es1Heading ParseHeading() => new() {
 		GUID = IndexShortLE(),
 		ConditionRef = IndexShortLE(),
-		VariantKey = IndexShortLE(),
+		RandomTableKey = IndexShortLE(),
 		Word06 = IndexShortLE(),
 		Value = IndexShortLE(),
 	};
@@ -148,7 +148,7 @@ public class Es1MissionFileTransformer : ByteTransformer<Es1MissionFile> {
 		var group = new Es1WaypointGroup {
 			GUID = IndexShortLE(),
 			ConditionRef = IndexShortLE(),
-			VariantKey = IndexShortLE(),
+			RandomTableKey = IndexShortLE(),
 			Word06 = IndexShortLE(),
 		};
 
@@ -186,7 +186,7 @@ public class Es1MissionFileTransformer : ByteTransformer<Es1MissionFile> {
 	private Es1Mech ParseMech(int words4E) => new() {
 		GUID = IndexShortLE(),
 		ConditionRef = IndexShortLE(),
-		VariantKey = IndexShortLE(),
+		RandomTableKey = IndexShortLE(),
 		Word06 = IndexShortLE(),
 		Words08 = IndexShortLEArray(20),
 		Type = IndexShortLE(),
@@ -205,7 +205,7 @@ public class Es1MissionFileTransformer : ByteTransformer<Es1MissionFile> {
 	private Es1Flyer ParseFlyer() => new() {
 		GUID = IndexShortLE(),
 		ConditionRef = IndexShortLE(),
-		VariantKey = IndexShortLE(),
+		RandomTableKey = IndexShortLE(),
 		Word06 = IndexShortLE(),
 		Words08 = IndexShortLEArray(20),
 		PointRef = IndexShortLE(),
@@ -221,7 +221,7 @@ public class Es1MissionFileTransformer : ByteTransformer<Es1MissionFile> {
 	private Es1Base ParseBase() => new() {
 		GUID = IndexShortLE(),
 		ConditionRef = IndexShortLE(),
-		VariantKey = IndexShortLE(),
+		RandomTableKey = IndexShortLE(),
 		Word06 = IndexShortLE(),
 		Type = IndexShortLE(),
 		PointRef = IndexShortLE(),
@@ -276,14 +276,14 @@ public class Es1MissionFileTransformer : ByteTransformer<Es1MissionFile> {
 			});
 		}
 		WriteRow(w, data.Points, (w, e) => {
-			Words(w, e.GUID, e.ConditionRef, e.VariantKey, e.Word06, e.SumFlag);
+			Words(w, e.GUID, e.ConditionRef, e.RandomTableKey, e.Word06, e.SumFlag);
 			w.Write(e.X);
 			w.Write(e.Y);
 			w.Write(e.Z);
 		});
-		WriteRow(w, data.Headings, (w, e) => Words(w, e.GUID, e.ConditionRef, e.VariantKey, e.Word06, e.Value));
+		WriteRow(w, data.Headings, (w, e) => Words(w, e.GUID, e.ConditionRef, e.RandomTableKey, e.Word06, e.Value));
 		WriteRow(w, data.WaypointGroups, (w, e) => {
-			Words(w, e.GUID, e.ConditionRef, e.VariantKey, e.Word06, (short)e.Waypoints.Length);
+			Words(w, e.GUID, e.ConditionRef, e.RandomTableKey, e.Word06, (short)e.Waypoints.Length);
 			Words(w, e.Waypoints);
 		});
 		WriteRow(w, data.TriggerAreas, (w, e) => Words(w, e.GUID, e.ConditionRef, e.Word04, e.Shape, e.PointRef, e.Word0A));
@@ -293,7 +293,7 @@ public class Es1MissionFileTransformer : ByteTransformer<Es1MissionFile> {
 			Words(w, e.Word1A, e.Word1C);
 		});
 		WriteRow(w, data.Mechs, (w, e) => {
-			Words(w, e.GUID, e.ConditionRef, e.VariantKey, e.Word06);
+			Words(w, e.GUID, e.ConditionRef, e.RandomTableKey, e.Word06);
 			Words(w, e.Words08);
 			w.Write(e.Type);
 			Words(w, e.Words32);
@@ -302,11 +302,11 @@ public class Es1MissionFileTransformer : ByteTransformer<Es1MissionFile> {
 			Words(w, e.Word62, e.ActionRef64, e.ActionRef66, e.Word68);
 		});
 		WriteRow(w, data.Flyers, (w, e) => {
-			Words(w, e.GUID, e.ConditionRef, e.VariantKey, e.Word06);
+			Words(w, e.GUID, e.ConditionRef, e.RandomTableKey, e.Word06);
 			Words(w, e.Words08);
 			Words(w, e.PointRef, e.HeadingRef, e.Type, e.Word36, e.Word38, e.ActionRef3A, e.ActionRef3C, e.Word3E);
 		});
-		WriteRow(w, data.Bases, (w, e) => Words(w, e.GUID, e.ConditionRef, e.VariantKey, e.Word06, e.Type, e.PointRef,
+		WriteRow(w, data.Bases, (w, e) => Words(w, e.GUID, e.ConditionRef, e.RandomTableKey, e.Word06, e.Type, e.PointRef,
 			e.HeadingRef, e.Word0E, e.Word10, e.ActionRef12, e.ActionRef14, e.Word16));
 		WriteRow(w, data.Groups, (w, e) => {
 			Words(w, e.GUID, e.ConditionRef, e.Word04);
