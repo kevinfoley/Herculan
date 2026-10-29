@@ -9,7 +9,8 @@ namespace HercWorks.Core.Io.Write;
 /// Attempts to write non-strict Voln objects out to a proper ThreeSpace 2.0 .VOL file — i.e.
 /// compiles a brand-new VOL from scratch (computing fresh offsets/sizes), unlike the "strict"
 /// writer which just round-trips an already-loaded VOL byte-for-byte.
-/// Ported from org.hercworks.core.io.write.VolFileCompiler.
+/// Ported from org.hercworks.core.io.write.VolFileCompiler, which wrote to a hardcoded developer path;
+/// <see cref="Compile"/> takes the output path instead.
 /// </summary>
 public static class VolFileCompiler {
 	/// <summary>Compiles a brand-new VOL file, calculating offsets and sizes, and writes it to <paramref name="outputPath"/>.</summary>

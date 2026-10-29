@@ -54,15 +54,15 @@ The docs state what is true now. How the project got there belongs in `git log`.
    user applies those two, and work on a doc's open tasks skips them. Those are the only status
    terms — never "not ported", "untraced", "unresolved", "undecoded". The body
    states what is known and may link to [Open](#open); it carries no tasks and no hedges
-   ("plausibly", "unconfirmed") — a hypothesis is an Open item. `KNOWN_ISSUES.md`, `ROADMAP.md` and
-   `README.md` keep their own structure.
+   ("plausibly", "unconfirmed") — a hypothesis is an Open item. `KNOWN_ISSUES.md` and `ROADMAP.md`
+   keep their own structure.
 
 9. **Retail docs describe retail.** `docs/retail/` says what the original does, not what HERCULAN
    does. The engine's types, file layout, tweaks and
    departures from retail go in doc comments on the C# that implements them, citing the doc
    section, so an engine change never has to hunt for prose to update (rule 5 decides which is
    which). A retail doc may link to an engine doc, but it does not name C# types. The engine docs are
-   `docs/herculan/`, `KNOWN_ISSUES.md`, `ROADMAP.md` and `README.md`.
+   `docs/herculan/`, `KNOWN_ISSUES.md` and `ROADMAP.md`.
 
 `tools/scripts/doc_lint.py` enforces 1, 4, 6 and 8, warns on a doc over 70 KB (`doc-too-long`:
 split it by topic), and runs automatically after any edit under

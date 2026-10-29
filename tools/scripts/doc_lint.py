@@ -136,7 +136,7 @@ RULES: list[tuple[str, str, re.Pattern[str], str]] = [
 # "open" (anything else unfinished), and the user's own "deferred" (until later) and "accepted"
 # (as is), and only in a final `## Open` section, so one scroll to the bottom of a doc finds all
 # of it. Markdown only; the status registers carry their own structure.
-STATUS_EXEMPT_BASENAMES = {"KNOWN_ISSUES.md", "ROADMAP.md", "README.md"}
+STATUS_EXEMPT_BASENAMES = {"KNOWN_ISSUES.md", "ROADMAP.md"}
 
 # A doc past this size has stopped being one topic: it gets read in pages, and a section added to it
 # is written without the rest in view. Measured in bytes because the docs are not hard-wrapped, so a
@@ -198,7 +198,7 @@ OUTSIDE_OPEN_RULES: list[tuple[str, re.Pattern[str], str]] = [
 # original — lives in the C# that implements it, which cites the doc section, so an engine change
 # never has to go looking for prose to update. Only these docs are about the engine itself.
 ENGINE_DOC_BASENAMES = {
-    "KNOWN_ISSUES.md", "ROADMAP.md", "README.md",
+    "KNOWN_ISSUES.md", "ROADMAP.md",
 }
 ENGINE_DOC_DIRS = [os.path.join("Herculan", "docs", "herculan")]
 
