@@ -274,7 +274,7 @@ internal sealed class RetailData {
 	};
 
 	/// <summary><paramref name="archive"/> in the install's <c>VOL</c> folder, else in the drive.cfg directory's; null when neither has it.</summary>
-	private static string? FindArchive(string installRoot, string archive) {
+	internal static string? FindArchive(string installRoot, string archive) {
 		foreach (string? root in new[] { installRoot, DiscDirectory(installRoot) }) {
 			if (root == null) {
 				continue;
@@ -299,7 +299,7 @@ internal sealed class RetailData {
 		return Path.GetFullPath(Path.Combine(installRoot, directory));
 	}
 
-	private static IEnumerable<VolEntry> EntriesIn(Voln vol, string folder) =>
+	internal static IEnumerable<VolEntry> EntriesIn(Voln vol, string folder) =>
 		vol.FilesSet.Where(e => e.FileName != null
 			&& vol.Folders.TryGetValue(e.DirIdx, out var dir)
 			&& string.Equals(dir.Label, folder, StringComparison.OrdinalIgnoreCase));

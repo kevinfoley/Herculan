@@ -97,6 +97,10 @@ internal static class Program {
 		                                   Gau_Load leaves it, after its origin add, which is what the
 		                                   simulator draws with; --as-read gives the file's own. --type
 		                                   picks the chassis (default all)
+		  menu [<n>...]                    every shell menu's dlg\MENU<n>.DLG records, or those of the
+		                                   menus named: kind, style, key, id and rect, each beside the
+		                                   line of eng\MENU<n>.BIN its position reads; a menu with a
+		                                   .BIN and no .DLG is listed with its lines
 
 		Options:
 		  --install <dir>   the install to read (default: the nearest ES2\ folder above the working
@@ -309,6 +313,33 @@ internal static class Program {
 
 		if (command == "strings") {
 			return Strings(output, data, group, json);
+		}
+
+		if (command == "menu") {
+			var numbers = new List<int>();
+			foreach (string n in positional.Skip(1)) {
+				if (!int.TryParse(n, out int number)) {
+					return Fail($"menu takes menu numbers (menu 1000); {n} is not one.");
+				}
+
+				numbers.Add(number);
+			}
+
+			if (MenuQuery.Run(data.InstallRoot, numbers) is not { } menus) {
+				return Fail($"No {RetailData.ArchiveFolder}\\{MenuQuery.ShellArchive} in {data.InstallRoot} or the directory its drive.cfg names.");
+			}
+
+			if (numbers.Where(n => menus.All(m => m.Number != n)).Select(n => (int?)n).FirstOrDefault() is { } missingMenu) {
+				return Fail($"No menu {missingMenu}: {MenuQuery.ShellArchive} has no dlg\\MENU{missingMenu}.DLG or eng\\MENU{missingMenu}.BIN.");
+			}
+
+			if (json) {
+				WriteJson(output, menus);
+			} else {
+				MenuQuery.Write(output, menus);
+			}
+
+			return 0;
 		}
 
 		if (command == "missions" && es1) {
@@ -606,6 +637,7 @@ internal static class Program {
 	/// <summary>The line an ES1-only command prints over an ES2 install: why it has no ES2 answer. Null for any other command.</summary>
 	private static string? Es1Only(string command) => command switch {
 		"gau" => "gau reads ES1's gau\\<name>.GAU cockpit layouts; ES2's layout (docs/retail/formats/gau-cockpit-layout.md) has its own reader, which this command does not use.",
+		"menu" => "menu reads ES1's dlg\\MENU<n>.DLG menu layouts; ES2's shell builds its screens in code (docs/retail/shell/widgets.md).",
 		_ => null,
 	};
 
