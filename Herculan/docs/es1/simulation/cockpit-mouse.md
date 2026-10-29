@@ -51,6 +51,7 @@ The root's operations, each ES2's on these offsets:
 
 - **`Widget_SetHitShape` (`00043784`)**, (widget, shape), ES2's (`0045234c`), identical after normalization: the hit-shape byte = shape, and for 1 the radius = (*x1* − *x0*) ≫ 1 and the center (*x0* + radius, *y0* + radius). `es2_xref.py` finds one call, from `HddDisplay_Ctor` (`0003c258`), for the Heads-Down Display's arrows in five chassis ([the buttons](heads-down-display.md#the-buttons)).
 - **`Widget_HitTest` (`000437d0`)**, (widget, point), ES2's ([rectangle or circle](../../retail/simulation/cockpit-input.md#6-hit-test-rectangle-or-circle)): with the hit-shape byte 0, whether the point lies in the rect, edges included; otherwise whether |*x* − *cx*| + |*y* − *cy*| ≤ *r*.
+- **`Widget_MoveTo` (`000438a4`)**, (rect, point), ES2's (`0045242c`): moves the rect so its top-left is the point, keeping its width and height. `es2_xref.py` finds one call, from the command screen's map ([drawing the map](hdd-command-screen.md#drawing-the-map)).
 - **`Widget_HitTestChildren` (`0004401c`)**, (root, point), also entered at its padding `0004401a`: the index of the first widget in the list that `Widget_HitTest` passes and whose state is not 2, else −1. So the widget registered first takes the point.
 
 ## Press, release and drag
@@ -97,7 +98,7 @@ No arguments; `Input_BuildPlayerDevice` calls it once a tick, recording or playi
 4. A left release, bit 0 clear with `CockpitMouse_LeftHeld` set, clears that byte, sets `CockpitMouse_DoubleClick` when the record's time less `CockpitMouse_LastLeftRelease` (`00094c60`) is under `CockpitMouse_DoubleClickTicks`, the two compared unsigned (`JNC`), stores the time there and sets `Widget_ClickButtons` to the buttons with bit 0; a right release does the same with `CockpitMouse_RightHeld`, `CockpitMouse_LastRightRelease` (`00094c64`) and bit 1, after the left's.
 5. After either release, it stores the canvas point and, with no drag captured, calls `Widget_OnMouseUp`; with one captured, it puts the captured widget in state 0, repaints it, clears `Widget_DragCapture`, calls its click slot `+0xc` with what its value slot `+0x14` returns, sign-extended from 16 bits as in `Widget_OnMouseUp` (`CWDE` at `000447e5`), and sets `Widget_PressedIndex` to −1.
 
-It returns the front queue, its `int32` count and its buffer, which the recording appends to the tape ([recording and playback](input.md#recording-and-playback)). ES2's clears its button word after each record, where ES1's keeps the last record's until the next. `es2_xref.py` finds `CockpitMouse_CanvasPoint` pushed by `Gunsight_ClickGadget_OnClick` (`000337dc`), `MFDListGadget_OnClick` (`0003b088`, [the MFD's click surface](mfd-display.md#the-click-surface)) and `0004208c` ([Open](#open)), and `CockpitMouse_DoubleClick` read by `MfdButton_OnClick` (`0003a46c`), `MfdFlashComm_HandleListClick` (`0003ac04`, [picking a row](mfd-flash-comm.md#picking-a-row)) and `HddCommandScreen_QueueListClick` (`0003fed8`), which keeps it for the click a double-click on the armed order turns into `XMIT` ([clicks and keys](hdd-command-screen.md#clicks-and-keys)).
+It returns the front queue, its `int32` count and its buffer, which the recording appends to the tape ([recording and playback](input.md#recording-and-playback)). ES2's clears its button word after each record, where ES1's keeps the last record's until the next. `es2_xref.py` finds `CockpitMouse_CanvasPoint` pushed by `Gunsight_ClickGadget_OnClick` (`000337dc`), `MFDListGadget_OnClick` (`0003b088`, [the MFD's click surface](mfd-display.md#the-click-surface)) and `HDDListGadget_OnClick` (`0004208c`), which hands it to the command screen's click queue as the press point ([the click regions' class](hdd-command-screen.md#the-click-regions-class)), and `CockpitMouse_DoubleClick` read by `MfdButton_OnClick` (`0003a46c`), `MfdFlashComm_HandleListClick` (`0003ac04`, [picking a row](mfd-flash-comm.md#picking-a-row)) and `HddCommandScreen_QueueListClick` (`0003fed8`), which keeps it for the click a double-click on the armed order turns into `XMIT` ([clicks and keys](hdd-command-screen.md#clicks-and-keys)).
 
 ## The slider base
 
@@ -118,7 +119,7 @@ ES2's slider functions ([the symbol reference](../../retail/simulation/cockpit-i
 
 | ES1 | Address | ES2 |
 |---|---|---|
-| `Widget_HitTest`, `Widget_OffsetRect` | `000437d0`, `0004387c` | `00452388`, `0045240c` |
+| `Widget_HitTest`, `Widget_OffsetRect`, `Widget_MoveTo` | `000437d0`, `0004387c`, `000438a4` | `00452388`, `0045240c`, `0045242c` |
 | `SliderWidget_CtorBase`, `CTLSliderControl_PaintNoOp`, `CTLSliderControl_InvalidateNoOp` | `000439d4`, `00043a5e`, `00043a63` | `004524a8`, `0045571c`, `00455721` |
 | `SliderWidget_DragToPointH`, `SliderWidget_GetValueH`, `SliderWidget_SetValueH`, `SliderWidget_RecomputeScaleH` | `00043a68`, `00043ac8`, `00043ae4`, `00043b4c` | `004524f8`, `00452544`, `0045255c`, `004525a8` |
 | `SliderWidget_DragToPointV`, `SliderWidget_GetValueV`, `SliderWidget_SetValueV`, `SliderWidget_RecomputeScaleV` | `00043b80`, `00043be8`, `00043c08`, `00043c74` | `004525d8`, `00452628`, `00452644`, `00452694` |
@@ -158,7 +159,6 @@ In the image `Cursor_FollowsMouse` is 1, and `CockpitMouse_LastEventTime`, `Cock
 
 ## Open
 
-- **Open:** the first file's functions not read here: `00043784`, `000438a4`, and the button base table's slot functions `000439ae`–`000439cf`, with the slider base table's from `+0xc`.
-- **Open:** what `CockpitMouse_CanvasPoint` gives `0004208c`.
+- **Open:** the first file's functions not read here: `00043784` and the button base table's slot functions `000439ae`–`000439cf`, with the slider base table's from `+0xc`.
 - **Open:** what reaches `CockpitMouse_Shutdown`, `Widget_NotifySelfAndChildren_Thunk`, `Widget_NoOp`, `Widget_Show`, `Widget_Hide` and `HeapPtr_DtorCockpitMouseCopy`, to none of which `es2_xref.py` finds a reference.
 - **Open:** a positive control in the running game ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed, by eye: in the forward view a left click on the screen's bottom rows pans down to the heads-down view, and there a left click on the top rows pans back up, the root's origin having moved with the view. In DOSBox-X's debugger, `BP <CS>:00044830` set during a mission fires as the mouse moves or a button changes, with the dword at `[ESP+4]` the clock `000981c4`.

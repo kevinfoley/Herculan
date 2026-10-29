@@ -19216,8 +19216,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HddCommandScreen_EnableOrders",
-      "description": "Sets all eight order-availability bytes, which is the whole of what makes the order list live.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "description": "(screen): sets all eight order-availability bytes +0x131 to 1, which is the whole of what makes the order list live, and +0x139 to 1.",
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044edd8+33",
+        "sha1": "368b301e0470",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044edfc",
@@ -19225,8 +19231,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HddCommandScreen_DisableOrders",
-      "description": "Clears all eight, greying the list back to CPBLUE.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "description": "(screen): clears all eight order-availability bytes +0x131, greying the list back to CPBLUE, and sets +0x139 to 1.",
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044edfc+33",
+        "sha1": "fbdf78c13e77",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044ee20",
@@ -19235,7 +19247,13 @@
       "confidence": "high",
       "name": "HddCommandScreen_NextOrder",
       "description": "Steps the armed order forward one place, wrapping; returns at once with none armed.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044ee20+61",
+        "sha1": "81ff19fdbb55",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044ee60",
@@ -19244,7 +19262,13 @@
       "confidence": "high",
       "name": "HddCommandScreen_PreviousOrder",
       "description": "The same backwards.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044ee60+63",
+        "sha1": "c8f6be5d3972",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044eea0",
@@ -19253,7 +19277,13 @@
       "confidence": "high",
       "name": "HddMap_RecomputePanStep",
       "description": "Recomputes the arrow pan step from the current zoom: 5000 world units at the closest view rising to 50000 at the widest.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044eea0+64",
+        "sha1": "dad4608cc94c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044eee0",
@@ -19367,7 +19397,13 @@
       "confidence": "high",
       "name": "HddMarker_Invalidate",
       "description": "HDDMapGadget vtable +0x04 (0049d9b0): this->[0x1f] = 2, and marks the command map screen (*(DAT_0049d6b0+8)) for a repaint: its +0x10f = 1 and +0xb0 = 2.",
-      "source": "DBSIM decompile at 0044f5a8"
+      "source": "DBSIM decompile at 0044f5a8",
+      "verified": {
+        "bytes": "0044f5a8+34",
+        "sha1": "dccf1b119cce",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044f5cc",
@@ -19376,7 +19412,13 @@
       "confidence": "high",
       "name": "HddMarker_FlushDeferredPaint",
       "description": "HDDMapGadget vtable +0x0c (0049d9b0): when the marker is on screen and at stage 2 (+0x1f), paints it through slot +0x00 (HddMarker_Paint) with +0x37 raised for the call, copies it to the cockpit with Widget_DrawToCockpit(1, marker), and sets the stage to 0.",
-      "source": "DBSIM decompile at 0044f5cc"
+      "source": "DBSIM decompile at 0044f5cc",
+      "verified": {
+        "bytes": "0044f5cc+60",
+        "sha1": "187334ea46e7",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044f608",
@@ -19385,7 +19427,13 @@
       "confidence": "high",
       "name": "HddMarker_OnClick",
       "description": "HDDMapGadget vtable +0x08 (0049d9b0), (marker, value): clears +0x37 when bit 0 of value is set.",
-      "source": "DBSIM decompile at 0044f608"
+      "source": "DBSIM decompile at 0044f608",
+      "verified": {
+        "bytes": "0044f608+18",
+        "sha1": "a823d79bd690",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044f61c",
@@ -19394,7 +19442,13 @@
       "confidence": "high",
       "name": "Widget_PaintUnlessByte37",
       "description": "(widget): calls slot 0 (Paint) of the vtable at widget+0x17 on it unless the byte at +0x37 is set. HddCommandScreen_Update runs it on the selected pilot button ((screen+0x31)[+0x105]) and then clears that button's +0x1f.",
-      "source": "DBSIM decompile at 0044f61c; slot meaning from known_vtables.json CockpitWidgetVtable"
+      "source": "DBSIM decompile at 0044f61c; slot meaning from known_vtables.json CockpitWidgetVtable",
+      "verified": {
+        "bytes": "0044f61c+21",
+        "sha1": "acb3eea4cff2",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044f634",
