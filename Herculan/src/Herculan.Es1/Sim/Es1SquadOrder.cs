@@ -21,15 +21,14 @@ public sealed class Es1SquadOrder {
 	public IEs1SimObject? Issuer { get; set; }
 
 	/// <summary>
-	/// <c>+6</c>, the point, which verbs <c>0xc</c> to <c>0xe</c> read. PLACEHOLDER: its writer, the Heads-Down Display's
-	/// command screen (<c>0004070c</c>, ES2's <c>HddCommandScreen_FillOrderRecord</c>), is the rest of the cockpit's after
-	/// plan step 8; (0, 0, 0) until then.
+	/// <c>+6</c>, the point, which verbs <c>0xc</c> to <c>0xe</c> read: the Heads-Down Display's command screen's saved
+	/// gridpoint pick (<see cref="Hdd.Es1HddCommandScreen.FillOrderRecord"/>).
 	/// </summary>
 	public Vec3i Point { get; set; }
 
 	/// <summary>
-	/// <c>+0x12</c>, the subject, which verb <c>0xb</c> reads. PLACEHOLDER: written by the same command screen as
-	/// <see cref="Point"/>; null until then.
+	/// <c>+0x12</c>, the subject, which verb <c>0xb</c> reads: the command screen's saved unit pick
+	/// (<see cref="Hdd.Es1HddCommandScreen.FillOrderRecord"/>).
 	/// </summary>
 	public IEs1SimObject? Subject { get; set; }
 }

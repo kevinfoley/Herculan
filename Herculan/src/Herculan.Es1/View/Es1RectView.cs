@@ -18,6 +18,14 @@ public enum Es1RectScene {
 	/// the last band's cull still applied (docs/es1/rendering/polygon-shading.md#the-distance-bands).
 	/// </summary>
 	MissileCamera,
+
+	/// <summary>
+	/// The Heads-Down Display's command screen's map ground (docs/es1/simulation/hdd-command-screen.md#drawing-the-map):
+	/// every zone shape as <see cref="FlatZoneShapes"/> draws them, but on ramps where <c>Palette_SetRampsToRange</c>({0x38,
+	/// 1}, 1, 14) has pointed ramp 14, on which a zone shape's every shaded face lies, at the one palette entry
+	/// <c>0x38</c> (<see cref="Scene.Es1Shading.HddMapBlock"/>), so every lit face takes that entry.
+	/// </summary>
+	HddMapZoneShapes,
 }
 
 /// <summary>

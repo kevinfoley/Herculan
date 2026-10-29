@@ -54,28 +54,6 @@ public abstract class Es1HddPage {
 }
 
 /// <summary>
-/// Page 0, the command screen, <c>0003ee58</c>(0, display, the order column, the screen rect)
-/// (docs/es1/simulation/heads-down-display.md#pages-and-visibility), with the three fields the display reads.
-/// PLACEHOLDER: the screen's object file from <c>0003edbc</c> is unread (docs/es1/simulation/heads-down-display.md#open),
-/// so it is the pages' base with its slots and its fields at 0, and registers no click region; the rest of the cockpit
-/// after plan step 8 (docs/herculan/plan-es1-first-mission.md).
-/// </summary>
-public sealed class Es1HddCommandScreen : Es1HddPage {
-	internal Es1HddCommandScreen(Es1HddDisplay display, Es1Rect orderColumn, Es1Rect screen)
-		: base(display, orderColumn, screen) {
-	}
-
-	/// <summary><c>+0x5d</c>, the word <c>XMIT</c> puts in the order record as its verb.</summary>
-	public short Word5D { get; set; }
-
-	/// <summary><c>+0x103</c>, set while the armed order wants a pick: a comm box's press then puts up the map-pick cursor.</summary>
-	public bool WantsPick { get; set; }
-
-	/// <summary><c>+0x104</c>, which <c>XMIT</c>'s press and paint test: set, the press transmits and the held button lights.</summary>
-	public bool Byte104 { get; set; }
-}
-
-/// <summary>
 /// Page 1, the damage screen, <c>00042164</c>(0, display, the damage column, the screen rect)
 /// (docs/es1/simulation/heads-down-display.md#pages-and-visibility), with the field the display's title reads.
 /// PLACEHOLDER: the screen's object file is unread (docs/es1/simulation/heads-down-display.md#open), so it is the pages'

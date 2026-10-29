@@ -453,6 +453,7 @@ public static class Es1ZoneViewer {
 	/// A camera's view into a cockpit rect of <paramref name="size"/> screen pixels, drawn in <paramref name="viewport"/>
 	/// from <paramref name="camera"/> placed and projected as <paramref name="view"/> says: for
 	/// <see cref="Es1RectScene.FlatZoneShapes"/>, <see cref="Es1WorldDraw.FlatZoneShapes"/> with no backdrop; for
+	/// <see cref="Es1RectScene.HddMapZoneShapes"/>, <see cref="Es1WorldDraw.HddMapZoneShapes"/> the same way; for
 	/// <see cref="Es1RectScene.MissileCamera"/>, the forward view's pass (<see cref="DrawWorld"/>) over
 	/// <paramref name="missileHorizon"/> with the items placed for the camera (<see cref="Es1WorldDraw.DrawFlatView"/>).
 	/// </summary>
@@ -472,6 +473,7 @@ public static class Es1ZoneViewer {
 
 		IReadOnlyList<SceneItem> items = view.Scene switch {
 			Es1RectScene.FlatZoneShapes => draw.FlatZoneShapes,
+			Es1RectScene.HddMapZoneShapes => draw.HddMapZoneShapes,
 			_ => [],
 		};
 

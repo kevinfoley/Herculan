@@ -516,13 +516,18 @@ public sealed class Es1HddDisplay {
 	/// <c>HddDisplay_HandleWidgetPress</c> (<c>0003d48c</c>)(display), from the update
 	/// (docs/es1/simulation/heads-down-display.md#presses): nothing with no press waiting, nor while the display is dark
 	/// for a button above 1, whose press then waits. Otherwise, by the button: 0 and 1 <see cref="SetPage"/>; 2 to 7 on
-	/// page 0 the command screen's pans and zooms, each setting page 0's update flag and the paint stage 2; 2, 3 and 9
+	/// page 0 the command screen's pans and zooms (<see cref="Es1HddCommandScreen.PanUp"/>,
+	/// <see cref="Es1HddCommandScreen.PanDown"/>, <see cref="Es1HddCommandScreen.PanLeft"/>,
+	/// <see cref="Es1HddCommandScreen.PanRight"/>, <see cref="Es1HddCommandScreen.ZoomOut"/>,
+	/// <see cref="Es1HddCommandScreen.ZoomIn"/>), each setting page 0's update flag and the paint stage 2; 2, 3 and 9
 	/// on page 1 the damage screen's view steps, each setting page 1's full-repaint flag and the stage 2; 4 and 5 on page
 	/// 1 <see cref="PreviousSubject"/> and <see cref="NextSubject"/> into the damage page's subject, then
 	/// <see cref="StepIndicator"/>; 10 to 12, page 1 first switching to 0, <see cref="SelectPilot"/> of the box's slot
 	/// when it is not the selected one and its squadmate is set and not destroyed, then the map-pick cursor in the other
-	/// views' slot while the command screen <see cref="Es1HddCommandScreen.WantsPick"/>; 13, <c>XMIT</c>, on page 0, and
-	/// 14, <c>CANCEL</c>, as below. The press is then cleared.
+	/// views' slot while the command screen <see cref="Es1HddCommandScreen.WantsPick"/>; 13, <c>XMIT</c>, on page 0, as
+	/// <see cref="Transmit"/>; and 14, <c>CANCEL</c>, on any page, the command screen's
+	/// <see cref="Es1HddCommandScreen.CancelTransmission"/>, the arrow in the other views' slot and no pilot selected.
+	/// The press is then cleared.
 	/// </summary>
 	public void HandleWidgetPress() {
 		if (PressedButton == NoPress || (Dropout.Dark && PressedButton > DamagePageButton)) {
@@ -535,8 +540,12 @@ public sealed class Es1HddDisplay {
 				break;
 			case UpButton or DownButton:
 				if (Page == CommandPage) {
-					// PLACEHOLDER: 0003fd2c or 0003fd58 (command screen), ES2's HddMap_PanUp's and _PanDown's places;
-					// the command screen is unread (Es1HddCommandScreen).
+					if (PressedButton == UpButton) {
+						CommandScreen.PanUp();
+					} else {
+						CommandScreen.PanDown();
+					}
+
 					ScheduleUpdate(CommandPage);
 				} else if (Page == DamagePage) {
 					// PLACEHOLDER: 0004246c or 00042494 (damage screen), ES2's HddDamageScreen_NextView's and _PrevView's
@@ -547,7 +556,12 @@ public sealed class Es1HddDisplay {
 				break;
 			case LeftButton or RightButton:
 				if (Page == CommandPage) {
-					// PLACEHOLDER: 0003fcd4 or 0003fd00 (command screen), ES2's HddMap_PanLeft's and _PanRight's places.
+					if (PressedButton == LeftButton) {
+						CommandScreen.PanLeft();
+					} else {
+						CommandScreen.PanRight();
+					}
+
 					ScheduleUpdate(CommandPage);
 				} else if (Page == DamagePage) {
 					DamageSubject = PressedButton == LeftButton ? PreviousSubject() : NextSubject();
@@ -557,7 +571,12 @@ public sealed class Es1HddDisplay {
 				break;
 			case ZoomOutButton or ZoomInButton:
 				if (Page == CommandPage) {
-					// PLACEHOLDER: 0003fc70 or 0003fca4 (command screen), ES2's HddMap_ZoomOut's and _ZoomIn's places.
+					if (PressedButton == ZoomOutButton) {
+						CommandScreen.ZoomOut();
+					} else {
+						CommandScreen.ZoomIn();
+					}
+
 					ScheduleUpdate(CommandPage);
 				}
 
@@ -592,7 +611,7 @@ public sealed class Es1HddDisplay {
 
 				break;
 			case CancelButton:
-				// PLACEHOLDER: 000407d4 (command screen), ES2's HddCommandScreen_CancelTransmission's place.
+				CommandScreen.CancelTransmission();
 				Cockpit.Cursors.SetOffForwardCursor(Es1CockpitCursors.Arrow);
 				SelectPilot(-1);
 				break;
@@ -605,7 +624,8 @@ public sealed class Es1HddDisplay {
 	/// <c>HddDisplay_SelectPilot</c> (<c>0003da08</c>)(display, <paramref name="slot"/>): the selected box's lamp put out
 	/// and the box invalidated when it was lit; the selection kept as <see cref="PreviousSlot"/> and
 	/// <paramref name="slot"/> stored; for a slot other than −1, its box's lamp lit and the box invalidated when it was
-	/// out, and message <see cref="PilotSelectedMessage"/> posted to the pilot channel about the slot's squadmate.
+	/// out, and message <see cref="PilotSelectedMessage"/> posted to the pilot channel about the slot's squadmate; last,
+	/// for any slot, the command screen's <see cref="Es1HddCommandScreen.SelectPilot"/> of the selection.
 	/// </summary>
 	public void SelectPilot(int slot) {
 		if (SelectedSlot != -1) {
@@ -628,7 +648,7 @@ public sealed class Es1HddDisplay {
 			Cockpit.PilotChannel.Post(PilotSelectedMessage, Cockpit.SquadmateMachines[slot]);
 		}
 
-		// PLACEHOLDER: 00040664 (command screen, the selected slot), in the command screen's unread file.
+		CommandScreen.SelectPilot(SelectedSlot);
 	}
 
 	/// <summary>
@@ -745,29 +765,32 @@ public sealed class Es1HddDisplay {
 	}
 
 	/// <summary>
-	/// <c>XMIT</c>'s press on page 0: with the command screen's <see cref="Es1HddCommandScreen.Byte104"/> clear the
-	/// screen's message row; otherwise, with a pilot selected, the screen's <see cref="Es1HddCommandScreen.Word5D"/> as
-	/// the order record's verb, the order sent to the selected slot (<see cref="Es1Cockpit.SendOrderToSlot"/>), the arrow
-	/// in the other views' cursor slot and the selection cleared. The order record is <c>HddOrderRecord</c>
-	/// (<c>000b0ddc</c>), the global the MFD's transmit fills, <see cref="Mfd.Es1MfdDisplay.Order"/>.
+	/// <c>XMIT</c>'s press on page 0: with the command screen not <see cref="Es1HddCommandScreen.ReadyToSend"/>, its
+	/// message row (<see cref="Es1HddCommandScreen.SetMessageRow"/>(1, none)); otherwise
+	/// <see cref="Es1HddCommandScreen.CommitPick"/> and, with a pilot selected, the screen's
+	/// <see cref="Es1HddCommandScreen.ArmedOrder"/> as the order record's verb, the screen's pick in the record
+	/// (<see cref="Es1HddCommandScreen.FillOrderRecord"/>), the order sent to the selected slot
+	/// (<see cref="Es1Cockpit.SendOrderToSlot"/>), the arrow in the other views' cursor slot,
+	/// <see cref="Es1HddCommandScreen.CancelTransmission"/> and the selection cleared. The order record is
+	/// <c>HddOrderRecord</c> (<c>000b0ddc</c>), the global the MFD's transmit fills, <see cref="Mfd.Es1MfdDisplay.Order"/>.
 	/// </summary>
 	private void Transmit() {
-		if (!CommandScreen.Byte104) {
-			// PLACEHOLDER: 00040834(command screen, 1, 0), ES2's HddCommandScreen_SetMessageRow's place.
+		if (!CommandScreen.ReadyToSend) {
+			CommandScreen.SetMessageRow(1, null);
 			return;
 		}
 
-		// PLACEHOLDER: 0004075c(command screen), ES2's HddCommandScreen_CommitPick's place.
+		CommandScreen.CommitPick();
 		if (SelectedSlot == -1) {
 			return;
 		}
 
 		var order = Cockpit.Mfd.Order;
-		order.Verb = CommandScreen.Word5D;
-		// PLACEHOLDER: 0004070c(command screen, the record), ES2's HddCommandScreen_FillOrderRecord's place.
+		order.Verb = (short)CommandScreen.ArmedOrder;
+		CommandScreen.FillOrderRecord(order);
 		Cockpit.SendOrderToSlot(SelectedSlot, order);
 		Cockpit.Cursors.SetOffForwardCursor(Es1CockpitCursors.Arrow);
-		// PLACEHOLDER: 000407d4(command screen), ES2's HddCommandScreen_CancelTransmission's place.
+		CommandScreen.CancelTransmission();
 		SelectPilot(-1);
 	}
 
@@ -895,8 +918,8 @@ public sealed class Es1HddDisplay {
 		canvas.FillRect(TitleIndicator.X0, TitleIndicator.Y0, TitleIndicator.X1, TitleIndicator.Y1,
 			IndicatorFlag ? IndicatorLit : IndicatorUnlit);
 
-	/// <summary>A command-screen press's flags: page 0's update flag and the paint stage 2.</summary>
-	private void ScheduleUpdate(int page) {
+	/// <summary>A page's update flag and the paint stage 2, as a command-screen press and the command screen's own changes set them.</summary>
+	internal void ScheduleUpdate(int page) {
 		_updateFlags[page] = true;
 		Dropout.Repaint = Es1GaugeDropout.RepaintPasses;
 	}
@@ -909,6 +932,9 @@ public sealed class Es1HddDisplay {
 
 	/// <summary><c>STRINGS0.STR</c> group <paramref name="group"/>'s entry <paramref name="entry"/>, or none.</summary>
 	internal string? Text(int group, int entry) => _strings?.Text(group, entry);
+
+	/// <summary><c>STRINGS0.STR</c>, whose group 0 the command screen's order rows read with their hotkey bytes; none when missing.</summary>
+	internal StringFile? Strings => _strings;
 
 	/// <summary><c>ColorSchemePanels</c>[<paramref name="index"/>], or none when its file is missing.</summary>
 	internal HudFont? Font(int index) => index < _fonts.Count ? _fonts[index] : null;

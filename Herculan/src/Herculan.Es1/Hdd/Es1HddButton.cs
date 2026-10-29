@@ -61,7 +61,7 @@ public sealed class Es1HddButton : Es1ButtonWidget {
 	/// lamp lit the selected box's marker rect filled <see cref="MarkerLit"/> and with it out the previous box's
 	/// <see cref="MarkerUnlit"/>, none when there is no previous box; 13 and 14 the caption's fill
 	/// <see cref="CaptionHeld"/> while held (for <c>XMIT</c> also only with the command screen's
-	/// <see cref="Es1HddCommandScreen.Byte104"/> set), else <see cref="Es1HddDisplay.LabelFill"/>, and <c>XMIT</c> or
+	/// <see cref="Es1HddCommandScreen.ReadyToSend"/> set), else <see cref="Es1HddDisplay.LabelFill"/>, and <c>XMIT</c> or
 	/// <c>CANCEL</c> written; 8 and 9 nothing.
 	/// </summary>
 	public override void Paint() {
@@ -88,7 +88,7 @@ public sealed class Es1HddButton : Es1ButtonWidget {
 					break;
 				}
 
-				bool lit = State == Pressed && (Index == Es1HddDisplay.CancelButton || Display.CommandScreen.Byte104);
+				bool lit = State == Pressed && (Index == Es1HddDisplay.CancelButton || Display.CommandScreen.ReadyToSend);
 				Caption.FillColor = lit ? CaptionHeld : Es1HddDisplay.LabelFill;
 				Caption.SetText(canvas, Display.ButtonCaption(Index - Es1HddDisplay.XmitButton));
 				break;

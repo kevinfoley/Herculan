@@ -29,6 +29,7 @@ public sealed class Es1WorldDraw {
 	private readonly Es1AppliedDetail _detail;
 	private readonly List<(SceneItem Item, Es1PlacedShape Shape, object Object)> _zoneItems = new();
 	private readonly List<SceneItem> _flatZoneItems = new();
+	private readonly List<SceneItem> _hddMapZoneItems = new();
 	private readonly List<MechItems> _mechs = new();
 	private readonly List<(SceneItem Item, Es1Shadow Shadow)> _shadowItems = new();
 
@@ -76,6 +77,7 @@ public sealed class Es1WorldDraw {
 				LightAnchor = (new Vec3i(frame.X, frame.Y, frame.Z), radius),
 			}, shape, zoneObject));
 			_flatZoneItems.Add(new SceneItem(mesh, WorldScale.ToRenderMatrix(shape.Frame)) { RampBlock = scene.Shading.FlatBlock });
+			_hddMapZoneItems.Add(new SceneItem(mesh, WorldScale.ToRenderMatrix(shape.Frame)) { RampBlock = scene.Shading.HddMapBlock });
 		}
 
 		foreach (var mech in world.MechPool) {
@@ -97,6 +99,12 @@ public sealed class Es1WorldDraw {
 	/// leaves (<see cref="Es1Shading.FlatBlock"/>).
 	/// </summary>
 	public IReadOnlyList<SceneItem> FlatZoneShapes => _flatZoneItems;
+
+	/// <summary>
+	/// The zone shapes as <see cref="View.Es1RectScene.HddMapZoneShapes"/> draws them: <see cref="FlatZoneShapes"/>'
+	/// items on the command screen's map's ramps (<see cref="Es1Shading.HddMapBlock"/>).
+	/// </summary>
+	public IReadOnlyList<SceneItem> HddMapZoneShapes => _hddMapZoneItems;
 
 	/// <summary>The flyers' draw, whose items <see cref="Objects"/> lists after the HERCs', as the live object list holds them; null for none.</summary>
 	public Es1FlyerDraw? Flyers { get; }

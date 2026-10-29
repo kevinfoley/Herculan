@@ -101,8 +101,9 @@ public sealed class Es1Shading {
 		int bands = world.RampRows;
 
 		// Block (t, b) is the raster's ramp table once WorldShades_ApplyForObject has re-pointed tag t's ramps at band b
-		// (Palette_SetRampsToRange: a range's consecutive indices); the last, FlatBlock, once WorldShades_ResetRamps has.
-		var blocks = new IReadOnlyList<short[]>[Tags.Count * bands + 1];
+		// (Palette_SetRampsToRange: a range's consecutive indices); then FlatBlock, once WorldShades_ResetRamps has; the
+		// last, HddMapBlock, once the command screen's map has pointed ramp 14 at its one entry.
+		var blocks = new IReadOnlyList<short[]>[Tags.Count * bands + 2];
 		for (int t = 0; t < Tags.Count; t++) {
 			var pairs = shades.Lists.FirstOrDefault(list => list.Tag == Tags[t])?.Pairs ?? [];
 			for (int band = 0; band < bands; band++) {
@@ -123,7 +124,13 @@ public sealed class Es1Shading {
 			flat[ramp] = Enumerable.Range(FlatRange.Start, FlatRange.Length).Select(i => (short)i).ToArray();
 		}
 
-		blocks[^1] = flat;
+		blocks[^2] = flat;
+		var hddMap = palette.ShadeRamps.ToArray();
+		if (HddMapRamp < hddMap.Length) {
+			hddMap[HddMapRamp] = [HddMapEntry];
+		}
+
+		blocks[^1] = hddMap;
 
 		byte? Entry(int ramp, int shade, int block) =>
 			ramp < blocks[block].Count && blocks[block][ramp] is { Length: > 0 } entries
@@ -144,6 +151,20 @@ public sealed class Es1Shading {
 	/// without a table.
 	/// </summary>
 	public int? FlatBlock => Table != null ? Tags.Count * _bands : null;
+
+	/// <summary>
+	/// The block of the ramps as <c>HddCommandScreen_DrawMap</c> (<c>00040d4c</c>) leaves them with
+	/// <c>Palette_SetRampsToRange</c>({<see cref="HddMapEntry"/>, 1}, 1, <see cref="HddMapRamp"/>) before it draws the
+	/// zone's shapes (docs/es1/simulation/hdd-command-screen.md#drawing-the-map): ramp 14 the one entry, every other ramp
+	/// the palette's own, which no zone shape's face reads; null without a table.
+	/// </summary>
+	public int? HddMapBlock => Table != null ? Tags.Count * _bands + 1 : null;
+
+	/// <summary>The ramp the command screen's map points, and the one palette entry it points it at.</summary>
+	private const int HddMapRamp = 14;
+
+	/// <inheritdoc cref="HddMapRamp"/>
+	private const short HddMapEntry = 0x38;
 
 	/// <summary>
 	/// The block an object of <paramref name="tag"/> at <paramref name="distance"/> reads, a tag-5 object's by its slot
