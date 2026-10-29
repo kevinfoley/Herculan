@@ -1,3 +1,4 @@
+using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Io;
 using Herculan.Engine.Content;
@@ -107,6 +108,12 @@ internal sealed class EditorMission {
 
 	/// <summary>The zone the mission is played in: the launch's header word (<see cref="MissionDocument.LaunchHeader"/>).</summary>
 	public short Zone => Source.LaunchHeader[ZoneCatalog.ZoneWord];
+
+	/// <summary>
+	/// The mission's own zone, which Save writes beside its <c>.MSN</c> (<see cref="SavedMissions.Write"/>), or null when it
+	/// plays on the archive's zone <see cref="Zone"/>.
+	/// </summary>
+	public ZoneFiles? OwnZone { get; set; }
 
 	/// <summary>The scene's objects and the mission's groups, routes and trigger areas, as the <c>.MSN</c>'s layout places them, by GUID.</summary>
 	public MissionIndex Index { get; }

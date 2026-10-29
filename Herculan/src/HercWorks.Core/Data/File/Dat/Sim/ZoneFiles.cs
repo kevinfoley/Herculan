@@ -19,6 +19,16 @@ public sealed class ZoneFiles {
 	/// <summary>The cells a zone's side may have.</summary>
 	public static readonly IReadOnlyList<int> Sides = [128, 256];
 
+	/// <summary>The extension of a mission's own zone header, after its mission's name, beside its <c>.MSN</c> and in its bundle.</summary>
+	public const string HeaderExtension = ".DAT";
+
+	/// <summary>The extension of a mission's own zone heightmap, after its mission's name, beside its <c>.MSN</c> and in its bundle.</summary>
+	public const string HeightmapExtension = ".DBA";
+
+	/// <summary>The largest heightmap <see cref="WriteHeightmap"/> writes, in bytes: that of the largest of <see cref="Sides"/>.</summary>
+	public static int MaxHeightmapSize { get; } =
+		Create(new byte[Sides.Max() * Sides.Max()], MinCellSizeShift, MinHeightScale).WriteHeightmap().Length;
+
 	/// <summary>The smallest <see cref="CellSizeShift"/> a zone may have, the retail zones' smallest.</summary>
 	public const int MinCellSizeShift = 12;
 

@@ -1,3 +1,4 @@
+using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Io;
 using HercWorks.Core.Io.Transform.Common;
@@ -72,13 +73,22 @@ public static class CustomMissions {
 	public static MissionAbout? About(string installRoot, string name) =>
 		SavedMissions.Exists(installRoot, name) ? SavedMissions.ReadAbout(installRoot, name) : FindIncluded(name)?.About;
 
+	/// <summary>
+	/// Mission <paramref name="name"/>'s own zone, from the install's saved files when it has them; null without one, or
+	/// with the reason in <paramref name="failure"/> (<see cref="SavedMissions.ReadZone"/>).
+	/// </summary>
+	public static ZoneFiles? Zone(string installRoot, string name, out string? failure) {
+		failure = null;
+		return SavedMissions.Exists(installRoot, name) ? SavedMissions.ReadZone(installRoot, name, out failure) : null;
+	}
+
 	/// <summary>Every custom mission in the install and every one HERCULAN comes with, by name, with what keeps each from being played.</summary>
 	public static IReadOnlyList<CustomMission> List(string installRoot) {
 		var missions = new List<CustomMission>();
 		foreach (string file in SavedMissions.List(installRoot)) {
 			string path = CaseInsensitivePath.Combine(Folder(installRoot), file);
 			string name = Path.GetFileNameWithoutExtension(file);
-			string? problem = SavedMissions.WhyNotName(name) ?? WhyNotReadable(path);
+			string? problem = SavedMissions.WhyNotName(name) ?? WhyNotReadable(path) ?? WhyNotZone(installRoot, name);
 			missions.Add(new CustomMission(name, path, CustomMissionForm.Loose, SavedMissions.ReadAbout(installRoot, name), problem));
 		}
 
@@ -100,8 +110,8 @@ public static class CustomMissions {
 
 	/// <summary>
 	/// The files <see cref="Delete"/> removes for <paramref name="mission"/>: none for one HERCULAN comes with; a bundle's own
-	/// file; a loose mission's <c>.MSN</c>, its text in every language, its about file, and the mission editor's backup of
-	/// each (<see cref="SavedMissions.BackupExtension"/>), those that exist.
+	/// file; a loose mission's <c>.MSN</c>, its text in every language, its about file, its own zone's header and heightmap,
+	/// and the mission editor's backup of each (<see cref="SavedMissions.BackupExtension"/>), those that exist.
 	/// </summary>
 	public static IReadOnlyList<string> Files(string installRoot, CustomMission mission) {
 		if (mission.Form == CustomMissionForm.Included) {
@@ -113,7 +123,8 @@ public static class CustomMissions {
 		}
 
 		string folder = Folder(installRoot);
-		return new[] { MissionFileLaunch.MissionExtension }.Concat(TextExtensions).Append(MissionAbout.Extension)
+		return new[] { MissionFileLaunch.MissionExtension }.Concat(TextExtensions)
+			.Concat([MissionAbout.Extension, ZoneFiles.HeaderExtension, ZoneFiles.HeightmapExtension])
 			.Select(extension => CaseInsensitivePath.Combine(folder, mission.Name + extension))
 			.SelectMany(path => new[] { path, path + SavedMissions.BackupExtension })
 			.Where(File.Exists)
@@ -231,6 +242,12 @@ public static class CustomMissions {
 		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
 			return ex.Message;
 		}
+	}
+
+	// Why loose mission <name>'s own zone cannot be played, when it has one.
+	private static string? WhyNotZone(string installRoot, string name) {
+		SavedMissions.ReadZone(installRoot, name, out string? failure);
+		return failure;
 	}
 
 	// Why <msn> is not a mission file: the reader comes to its end early or reads a count it cannot hold.

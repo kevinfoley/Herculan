@@ -25,8 +25,8 @@ public sealed class MissionSavingTests : IDisposable {
 	/// </summary>
 	[Fact]
 	public void SaveWritesIntoTheMissionFolderAndBacksUpWhatItReplaces() {
-		SavedMissions.Write(_root, "C1_01", GameLanguage.English, [1, 1], [10], MissionAbout.Blank);
-		var written = SavedMissions.Write(_root, "C1_01", GameLanguage.English, [2, 2], [20], MissionAbout.Blank);
+		SavedMissions.Write(_root, "C1_01", GameLanguage.English, [1, 1], [10], MissionAbout.Blank, null);
+		var written = SavedMissions.Write(_root, "C1_01", GameLanguage.English, [2, 2], [20], MissionAbout.Blank, null);
 
 		string folder = Path.Combine(_root, MissionFileLaunch.MissionFolder);
 		Assert.Equal([Path.Combine(folder, "C1_01.MSN"), Path.Combine(folder, "C1_01.ENG")], written);
@@ -39,7 +39,7 @@ public sealed class MissionSavingTests : IDisposable {
 	/// <summary>Catches a text file always written as <c>.ENG</c>, which a French or German shell would not read.</summary>
 	[Fact]
 	public void TextFileTakesTheShellLanguagesExtension() {
-		SavedMissions.Write(_root, "MINE", GameLanguage.French, [1], [2], MissionAbout.Blank);
+		SavedMissions.Write(_root, "MINE", GameLanguage.French, [1], [2], MissionAbout.Blank, null);
 
 		string folder = Path.Combine(_root, MissionFileLaunch.MissionFolder);
 		Assert.True(File.Exists(Path.Combine(folder, "MINE.FRE")));

@@ -583,7 +583,8 @@ internal sealed class MissionSaving {
 			byte[] msn = new MissionFileTransformer().Write(document.Mission)
 				?? throw new InvalidOperationException("The mission file does not write.");
 			byte[]? text = document.Text == null ? null : new MissionStringFileTransformer().Write(document.Text);
-			var written = SavedMissions.Write(_installRoot, request.Name, _shellContent().Language, msn, text, mission.About.About);
+			var written = SavedMissions.Write(_installRoot, request.Name, _shellContent().Language, msn, text, mission.About.About,
+				mission.OwnZone);
 			Console.WriteLine($"Saved {mission.Name} as {string.Join(" and ", written)}.");
 		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException
 				or ArgumentException) {

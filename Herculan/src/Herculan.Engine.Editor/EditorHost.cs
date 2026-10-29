@@ -1024,7 +1024,8 @@ public sealed class EditorHost {
 	// Generates the handoff for the mission the request names, an archive's, one saved into the install or one HERCULAN comes
 	// with (CustomMissions.FindIncluded), into the scratch
 	// directory, holds the mission as its .MSN, swaps the editor over to it and remembers it for the next run. On failure
-	// the open mission stays, and the browser that asked says why.
+	// the open mission stays, and the browser that asked says why. A saved mission's own zone that does not read is such a
+	// failure, so a Save never replaces its files.
 	private void LoadMission(LoadRequest request) {
 		if (_gl == null || _renderer == null) {
 			return;
@@ -1033,6 +1034,13 @@ public sealed class EditorHost {
 		string name = request.File;
 		EditorMission opened;
 		try {
+			var ownZone = CustomMissions.Zone(_launch.InstallRoot, Path.GetFileNameWithoutExtension(name), out string? zoneFailure);
+			if (zoneFailure != null) {
+				request.From.Failure = zoneFailure;
+				Console.Error.WriteLine($"Cannot load {name}: {zoneFailure}");
+				return;
+			}
+
 			ClearMissionCache();
 			if (MissionOpener.Open(_launch.ShellContent(), _launch.InstallRoot, name, _missionCache, out var source,
 					out var squad, out string? failure) is not { } generated) {
@@ -1044,6 +1052,7 @@ public sealed class EditorHost {
 			opened = EditorMission.Open(_launch.SimulatorContent, generated, Path.GetFileNameWithoutExtension(name), _installData,
 				source!, squad!, _launch.ShellContent, _cybridWeapons, _zones, _presets);
 			opened.About.Load(CustomMissions.About(_launch.InstallRoot, opened.Name) ?? MissionAbout.Blank);
+			opened.OwnZone = ownZone;
 		} catch (Exception ex) when (ex is MissingHandoffFileException or InvalidDataException or IOException
 				or UnauthorizedAccessException) {
 			request.From.Failure = ex.Message;
