@@ -52,19 +52,3 @@ public abstract class Es1HddPage {
 	/// <summary>Slot <c>+0x14</c>, the key slot, <c>HDDisplay_KeyDispatchNone</c> (<c>0003c24f</c>) in the base's table: 0.</summary>
 	public virtual short KeyDispatch(ushort code) => 0;
 }
-
-/// <summary>
-/// Page 1, the damage screen, <c>00042164</c>(0, display, the damage column, the screen rect)
-/// (docs/es1/simulation/heads-down-display.md#pages-and-visibility), with the field the display's title reads.
-/// PLACEHOLDER: the screen's object file is unread (docs/es1/simulation/heads-down-display.md#open), so it is the pages'
-/// base with its slots and <see cref="TitleIndex"/> at 0, so the title reads <c>" STRUCT DAMAGE"</c>; the rest of the
-/// cockpit after plan step 8 (docs/herculan/plan-es1-first-mission.md).
-/// </summary>
-public sealed class Es1HddDamageScreen : Es1HddPage {
-	internal Es1HddDamageScreen(Es1HddDisplay display, Es1Rect damageColumn, Es1Rect screen)
-		: base(display, damageColumn, screen) {
-	}
-
-	/// <summary><c>+0x74</c>, the entry of <c>STRINGS0.STR</c> group 11 that <see cref="Es1HddDisplay.SetTitle"/> shows on page 1.</summary>
-	public int TitleIndex { get; set; }
-}

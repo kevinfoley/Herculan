@@ -749,6 +749,13 @@ public sealed class Es1Mech : IEs1SimObject {
 	public Es1WeaponMounts? Mounts { get; private set; }
 
 	/// <summary>
+	/// <c>+0x194</c>, the weapon icons, the {count, icons} holder <c>Sim_StartMission</c>'s step 13 stores
+	/// (<see cref="Panels.Es1PaperDoll.BuildWeaponIconsForPool"/>), which the Heads-Down Display's damage screen draws;
+	/// none before then.
+	/// </summary>
+	public IReadOnlyList<Panels.Es1WeaponIcon> WeaponIcons { get; set; } = [];
+
+	/// <summary>
 	/// The frame <c>Context_GetTransform</c> of <c>+6</c> builds: the rotation from the angles, at the position.
 	/// </summary>
 	public Transform3 Frame {

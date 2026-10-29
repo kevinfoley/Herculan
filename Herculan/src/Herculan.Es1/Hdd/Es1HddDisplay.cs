@@ -372,13 +372,13 @@ public sealed class Es1HddDisplay {
 
 	/// <summary>
 	/// <c>HddDisplay_SetTitle</c> (<c>0003d9b8</c>)(display): the title label written with <c>MAP</c> on page 0 and with
-	/// the entry of group 11 the damage screen's <see cref="Es1HddDamageScreen.TitleIndex"/> picks on page 1; nothing on
+	/// the entry of group 11 the damage screen's <see cref="Es1HddDamageScreen.View"/> picks on page 1; nothing on
 	/// another page or for a missing entry.
 	/// </summary>
 	public void SetTitle() {
 		string? text = Page switch {
 			CommandPage => Text(MapTitleGroup, 0),
-			DamagePage => Text(DamageTitleGroup, DamageScreen.TitleIndex),
+			DamagePage => Text(DamageTitleGroup, DamageScreen.View),
 			_ => null,
 		};
 		if (text != null) {
@@ -519,8 +519,9 @@ public sealed class Es1HddDisplay {
 	/// page 0 the command screen's pans and zooms (<see cref="Es1HddCommandScreen.PanUp"/>,
 	/// <see cref="Es1HddCommandScreen.PanDown"/>, <see cref="Es1HddCommandScreen.PanLeft"/>,
 	/// <see cref="Es1HddCommandScreen.PanRight"/>, <see cref="Es1HddCommandScreen.ZoomOut"/>,
-	/// <see cref="Es1HddCommandScreen.ZoomIn"/>), each setting page 0's update flag and the paint stage 2; 2, 3 and 9
-	/// on page 1 the damage screen's view steps, each setting page 1's full-repaint flag and the stage 2; 4 and 5 on page
+	/// <see cref="Es1HddCommandScreen.ZoomIn"/>), each setting page 0's update flag and the paint stage 2; 2 and 9 on
+	/// page 1 the damage screen's <see cref="Es1HddDamageScreen.NextView"/> and 3 its
+	/// <see cref="Es1HddDamageScreen.PrevView"/>, each setting page 1's full-repaint flag and the stage 2; 4 and 5 on page
 	/// 1 <see cref="PreviousSubject"/> and <see cref="NextSubject"/> into the damage page's subject, then
 	/// <see cref="StepIndicator"/>; 10 to 12, page 1 first switching to 0, <see cref="SelectPilot"/> of the box's slot
 	/// when it is not the selected one and its squadmate is set and not destroyed, then the map-pick cursor in the other
@@ -548,8 +549,12 @@ public sealed class Es1HddDisplay {
 
 					ScheduleUpdate(CommandPage);
 				} else if (Page == DamagePage) {
-					// PLACEHOLDER: 0004246c or 00042494 (damage screen), ES2's HddDamageScreen_NextView's and _PrevView's
-					// places; the damage screen is unread (Es1HddDamageScreen).
+					if (PressedButton == UpButton) {
+						DamageScreen.NextView();
+					} else {
+						DamageScreen.PrevView();
+					}
+
 					ScheduleFullRepaint(DamagePage);
 				}
 
@@ -583,7 +588,7 @@ public sealed class Es1HddDisplay {
 				break;
 			case TitleButton:
 				if (Page == DamagePage) {
-					// PLACEHOLDER: 0004246c (damage screen), as button 2.
+					DamageScreen.NextView();
 					ScheduleFullRepaint(DamagePage);
 				}
 
@@ -686,7 +691,7 @@ public sealed class Es1HddDisplay {
 	/// (docs/es1/simulation/heads-down-display.md#keys): one of <see cref="KeyCodes"/> acts and answers 1: the arrows
 	/// press buttons 2 to 5, <c>1</c> to <c>3</c> buttons 10 to 12, <c>-</c> and keypad <c>-</c> button 6, <c>=</c> and
 	/// keypad <c>+</c> button 7 (<see cref="PressButton"/>); <c>S</c>, <c>I</c> and <c>W</c> <see cref="SetPage"/> 1 and
-	/// the damage screen's view; [Ctrl]+[Alt] with keypad 4, keypad 6 and <c>\</c> <see cref="PostDebugMessage"/>. Any
+	/// the damage screen's <see cref="Es1HddDamageScreen.SetView"/> with 0, 1 and 2; [Ctrl]+[Alt] with keypad 4, keypad 6 and <c>\</c> <see cref="PostDebugMessage"/>. Any
 	/// other code goes to the current page's key slot, whose answer it returns.
 	/// </summary>
 	public short KeyDispatch(ushort code) {
@@ -723,8 +728,11 @@ public sealed class Es1HddDisplay {
 				break;
 			case 0x1f or 0x17 or 0x11:
 				SetPage(DamagePage);
-				// PLACEHOLDER: 000423d8(damage screen, 0, 1 or 2 for S, I and W), ES2's HddDamageScreen_SetView's place;
-				// the damage screen is unread (Es1HddDamageScreen).
+				DamageScreen.SetView(code switch {
+					0x1f => Es1HddDamageScreen.StructuralView,
+					0x17 => Es1HddDamageScreen.InternalView,
+					_ => Es1HddDamageScreen.WeaponsView,
+				});
 				break;
 			default:
 				return CurrentPage?.KeyDispatch(code) ?? 0;
@@ -792,6 +800,22 @@ public sealed class Es1HddDisplay {
 		Cockpit.Cursors.SetOffForwardCursor(Es1CockpitCursors.Arrow);
 		CommandScreen.CancelTransmission();
 		SelectPilot(-1);
+	}
+
+	/// <summary>
+	/// <c>HddDamageScreen_SetSubjectCaption</c> (<c>0003e9b8</c>)(display, <paramref name="label"/>)
+	/// (docs/es1/simulation/heads-down-display.md#subject-stepping), from the damage screen's update: by
+	/// <see cref="Selector"/>, the label's font and fill <c>cpylw</c> on <c>0x32</c> for the player, <c>cpred</c> on
+	/// <c>0x3b</c> for the target and <c>cpred</c> on the slot's color (<see cref="Es1Cockpit.SquadSlotColor"/> of
+	/// selector − 1) for a squadmate; then the label written with the subject's name, <see cref="SubjectNames"/>[selector].
+	/// </summary>
+	internal void SetSubjectCaption(Es1PanelCanvas canvas, Es1Label label) {
+		(label.Font, label.FillColor) = Selector switch {
+			PlayerSubject => (Font(Es1CockpitViews.CpYellow), 0x32),
+			TargetSubject => (Font(Es1CockpitViews.CpRed), 0x3b),
+			_ => (Font(Es1CockpitViews.CpRed), Es1Cockpit.SquadSlotColor(Selector - 1)),
+		};
+		label.SetText(canvas, _subjectNames[Selector]);
 	}
 
 	/// <summary>

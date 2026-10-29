@@ -26,7 +26,6 @@
 
 Until its step lands, each of these does nothing, tagged `// PLACEHOLDER:` in code:
 
-- **The Heads-Down Display's damage screen**, until part K2 of the rest of the cockpit after step 8: the display switches to it, and it draws nothing and takes no press or key.
 - **The hit flash**, no step yet: the impact palette (`dpl\IMPACT1.DPL`) is not loaded, so a hit shakes the view without the palette's flicker ([the hit shake](../es1/simulation/cockpit-panel.md#the-hit-shake)); and the effects' billboards, the sky's bands, the skyline and the clouds keep the colors of the palette they were built in, where retail draws them as indices through the live palette ([installing colors](../es1/rendering/palette.md#installing-colors)), so neither that flicker nor the death flash reaches them (decision 18).
 - **Sound**, no step yet: the footfalls, the fall, the refused move's thump, the turret's servo, the frame's engine hum and the adaptive music (`Sim_FrameSoundTick`, [the frame's sounds](../es1/simulation/main-loop.md#the-frames-sounds--sim_framesoundtick-00058574)), the pilots' voice lines, the comm boxes' static, the Heads-Down Display buttons' click, the command screen's pick tones, the weapons' shots, the effects and the lock tone play nothing; their latches and state run, and a talking pilot's face still follows its script ([Open](#open)).
 - **Tapes**, no step yet: `-p`, `-r` and `-D` are not taken, so the input build's recording and playback and `DemoMode` do nothing.
