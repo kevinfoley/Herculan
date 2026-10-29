@@ -61,24 +61,9 @@ public class InputTape {
 		public byte Spare { get; set; }
 
 		/// <summary>The cockpit mouse queue's records for this build.</summary>
-		public List<MouseEvent> MouseEvents { get; set; } = new();
+		public List<TapeMouseEvent> MouseEvents { get; set; } = new();
 
 		/// <summary>The command queue at <c>004d2148</c> for this build.</summary>
 		public short[] Commands { get; set; } = Array.Empty<short>();
-	}
-
-	/// <summary>
-	/// One cockpit mouse record, <c>CockpitMouseQueue_Push</c>'s own 14-byte layout: a position in the
-	/// game's screen space, the held-button mask and a coarse-tick timestamp.
-	/// </summary>
-	public class MouseEvent {
-		public int X { get; set; }
-		public int Y { get; set; }
-
-		/// <summary>Bit 0 the left button, bit 1 the right.</summary>
-		public ushort Buttons { get; set; }
-
-		/// <summary><c>Time_GetCoarseTicks</c> when the event was queued — 16 ms units.</summary>
-		public int Time { get; set; }
 	}
 }

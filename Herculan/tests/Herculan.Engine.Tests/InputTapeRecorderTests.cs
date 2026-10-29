@@ -34,7 +34,7 @@ public class InputTapeRecorderTests : IDisposable {
 			recorder.SetHeld(new PilotAxes(-128, 64, 10, -20), trigger: true, rawButtons: 0x81);
 			recorder.AddPress(0x10);
 			recorder.AddPress(InputTapePlayer.AltBit | 0x02);
-			recorder.AddMouse(new InputTape.MouseEvent { X = 324, Y = 298, Buttons = 1, Time = 7 });
+			recorder.AddMouse(new TapeMouseEvent { X = 324, Y = 298, Buttons = 1, Time = 7 });
 			recorder.SetDiscreteStick(1, JoystickHat.North);
 			recorder.EmitTick(81, stick);
 

@@ -2,7 +2,7 @@ using HercWorks.Core.Data.File.Cfg;
 using Herculan.Engine.Cockpit;
 using Herculan.Engine.Content;
 using static Herculan.Engine.Input.KeyChords;
-using InputTape = HercWorks.Core.Data.File.Dbsim.InputTape;
+using TapeMouseEvent = HercWorks.Core.Data.File.Dbsim.TapeMouseEvent;
 
 namespace Herculan.Engine.Input;
 
@@ -96,7 +96,7 @@ public sealed class TapeRecording {
 		int scale = _preferences[Prefs.VideoModeOption] == 1 ? 2 : 1;
 		var (screenX, screenY) = AlertPanelLayout.Placement.CreateAt(framebufferWidth, framebufferHeight, 0, 0)
 			.ToPanel(x, y);
-		Recorder.AddMouse(new InputTape.MouseEvent {
+		Recorder.AddMouse(new TapeMouseEvent {
 			X = (int)MathF.Round(screenX / scale),
 			Y = (int)MathF.Round(screenY / scale),
 			Buttons = (ushort)((int)buttons & 3),

@@ -10,12 +10,9 @@ namespace HercWorks.Core.Io.Transform.Dbsim;
 /// <para>The frame stream has no count and no terminator: DBSIM reads until a header read comes up
 /// short, so a trailing partial header is dropped here the same way.</para>
 /// </summary>
-public class InputTapeTransformer : ByteTransformer<InputTape> {
+public class InputTapeTransformer : InputTapeTransformerBase<InputTape> {
 	/// <summary>The fixed part of a frame record.</summary>
 	public const int FrameHeaderSize = 0x18;
-
-	/// <summary>One cockpit mouse record.</summary>
-	public const int MouseEventSize = 14;
 
 	public override InputTape? Parse(byte[]? inputArray) {
 		if (inputArray == null) {
@@ -23,20 +20,11 @@ public class InputTapeTransformer : ByteTransformer<InputTape> {
 		}
 
 		SetBytes(inputArray);
-		var tape = new InputTape();
-
-		for (int i = 0; i < InputTape.BundleFileCount; i++) {
-			if (Index + 4 > inputArray.Length) {
-				return null;
-			}
-
-			int size = IndexIntLE();
-			if (size < 0 || Index + size > inputArray.Length) {
-				return null;
-			}
-
-			tape.Bundle[i] = IndexSegment(size);
+		if (IndexBundle() is not { } bundle) {
+			return null;
 		}
+
+		var tape = new InputTape { Bundle = bundle };
 
 		if (Index + InputTape.CapabilityBlockSize > inputArray.Length) {
 			return tape;
@@ -63,12 +51,7 @@ public class InputTapeTransformer : ByteTransformer<InputTape> {
 			}
 
 			for (int m = 0; m < mouseCount; m++) {
-				frame.MouseEvents.Add(new InputTape.MouseEvent {
-					X = IndexIntLE(),
-					Y = IndexIntLE(),
-					Buttons = (ushort)IndexShortLE(),
-					Time = IndexIntLE(),
-				});
+				frame.MouseEvents.Add(IndexMouseEvent());
 			}
 
 			frame.Commands = IndexShortLEArray(commandCount);
@@ -95,22 +78,9 @@ public class InputTapeTransformer : ByteTransformer<InputTape> {
 	}
 
 	/// <summary>
-	/// The bundle alone — seven size-prefixed files, a null entry written as size 0 the way
-	/// <c>Tape_PackFile</c> writes a file it could not open. A recorder writes this, then the capability
-	/// block, then <see cref="WriteFrame"/> once per frame.
+	/// One frame record: the 24-byte header, its mouse events and its command codes. A recorder writes
+	/// <see cref="InputTapeTransformerBase{T}.WriteBundle"/>, then the capability block, then this once per frame.
 	/// </summary>
-	public byte[] WriteBundle(byte[]?[] bundle) {
-		using var outStream = new MemoryStream();
-		for (int i = 0; i < InputTape.BundleFileCount; i++) {
-			byte[] file = (i < bundle.Length ? bundle[i] : null) ?? Array.Empty<byte>();
-			Emit(outStream, WriteIntLE(file.Length));
-			Emit(outStream, file);
-		}
-
-		return outStream.ToArray();
-	}
-
-	/// <summary>One frame record: the 24-byte header, its mouse events and its command codes.</summary>
 	public byte[] WriteFrame(InputTape.Frame frame) {
 		using var outStream = new MemoryStream();
 		Emit(outStream, WriteShortLE(frame.CommandWord));
@@ -124,15 +94,10 @@ public class InputTapeTransformer : ByteTransformer<InputTape> {
 		Emit(outStream, WriteIntLE(frame.Commands.Length));
 
 		foreach (var mouse in frame.MouseEvents) {
-			Emit(outStream, WriteIntLE(mouse.X));
-			Emit(outStream, WriteIntLE(mouse.Y));
-			Emit(outStream, WriteShortLE((short)mouse.Buttons));
-			Emit(outStream, WriteIntLE(mouse.Time));
+			EmitMouseEvent(outStream, mouse);
 		}
 
 		Emit(outStream, WriteShortLESegment(frame.Commands));
 		return outStream.ToArray();
 	}
-
-	private static void Emit(Stream stream, byte[] bytes) => stream.Write(bytes, 0, bytes.Length);
 }

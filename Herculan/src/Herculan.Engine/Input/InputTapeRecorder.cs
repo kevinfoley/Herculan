@@ -25,7 +25,7 @@ public sealed class InputTapeRecorder : IDisposable {
 	private readonly FileStream _stream;
 	private readonly InputTapeTransformer _transformer = new();
 	private readonly List<int> _presses = new();
-	private readonly List<InputTape.MouseEvent> _mouse = new();
+	private readonly List<TapeMouseEvent> _mouse = new();
 	private bool _capabilitiesWritten;
 	private byte _buttonBank;
 	private PilotAxes _axes = PilotAxes.Centred;
@@ -108,7 +108,7 @@ public sealed class InputTapeRecorder : IDisposable {
 	public void AddPress(int code) => _presses.Add(code);
 
 	/// <summary>Queues one mouse event, already in the game's screen space.</summary>
-	public void AddMouse(InputTape.MouseEvent mouseEvent) => _mouse.Add(mouseEvent);
+	public void AddMouse(TapeMouseEvent mouseEvent) => _mouse.Add(mouseEvent);
 
 	/// <summary>
 	/// Queues the stick's discrete half for this host frame: the bound button (0-based) that fired, and
@@ -159,7 +159,7 @@ public sealed class InputTapeRecorder : IDisposable {
 			ButtonBank = _buttonBank,
 			RawButtonBank = _rawButtons,
 			TriggerBank = (byte)(_trigger ? 1 : 0),
-			MouseEvents = new List<InputTape.MouseEvent>(_mouse),
+			MouseEvents = new List<TapeMouseEvent>(_mouse),
 			Commands = _presses.Skip(1).Select(code => (short)code).ToArray(),
 		};
 

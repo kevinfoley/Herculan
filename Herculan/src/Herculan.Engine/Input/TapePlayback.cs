@@ -4,6 +4,7 @@ using Herculan.Engine.Content;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using InputTape = HercWorks.Core.Data.File.Dbsim.InputTape;
+using TapeMouseEvent = HercWorks.Core.Data.File.Dbsim.TapeMouseEvent;
 
 namespace Herculan.Engine.Input;
 
@@ -203,7 +204,7 @@ public sealed class TapePlayback {
 	// (0048083c) scales a client position to half the back buffer, which is the viewport: the 640x480 a
 	// panel centres itself on and the forward view fills, or 320x240 in the low-resolution mode — so it
 	// lands wherever this engine puts that screen.
-	private void ApplyMouse(InputTape.MouseEvent mouseEvent, bool underPanel) {
+	private void ApplyMouse(TapeMouseEvent mouseEvent, bool underPanel) {
 		var framebuffer = _framebufferSize();
 		int scale = _preferences[Prefs.VideoModeOption] == 1 ? 2 : 1;
 
