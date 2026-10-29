@@ -57,9 +57,9 @@ Entry stride is therefore `size + 10`, and the last entry's trailer is the archi
 
 ## Loose files on disk carry no prefix
 
-The retail install's own override tree is content-only. `DATA\MAT0.DAT` (244 bytes) and `DATA\MFORMS.DAT` (142 bytes) are byte-identical to the content of the `dat\MAT0.DAT` and `dat\MFORMS.DAT` entries in SIMVOL0.VOL, whose size fields read 244 and 142 — no prefix, no trailer. So does `DATA\script.dat`, which the game reads straight off disk at offset 0.
+The retail install's own override tree is content-only. `DATA\MAT0.DAT` (244 bytes) and `DATA\MFORMS.DAT` (142 bytes) are byte-identical to the content of the `dat\MAT0.DAT` and `dat\MFORMS.DAT` entries in SIMVOL0.VOL, whose size fields read 244 and 142 — no prefix, no trailer. So does `DATA\script.dat`, which the game reads straight off disk at offset 0. `DATA\MAT0.DAT` stands in for no archive entry: the shell reads it at its own path, `data\mat0.dat` ([`zone-terrain.md`](zone-terrain.md#loose-zone-files)).
 
-**A loose file at an entry's own path takes precedence over the archive.** `VolRStream_Open` (VSHELL `00402d25`, DBSIM `00472fdc`) tries `_open(path)` before it searches the volume group, and the path is relative, so a loose file in the install wins; the disc is not searched for loose files. With a content-only `DAT\PROJ.DAT` in the game folder, beside `DBSIM.EXE`, DBSIM loaded it in place of `SIMVOL0.VOL`'s `dat\PROJ.DAT`: the record table it built in memory (`004a9980`) held the loose file's values. The retail install ships no `DAT` folder; this was a file placed there for the test ([`proj-dat.md`](proj-dat.md#lookup)).
+**A loose file at an entry's own path takes precedence over the archive.** `VolRStream_Open` (VSHELL `00402d25`, DBSIM `00472fdc`) tries `_open(path)` before it searches the volume group, and the path is relative, so a loose file in the install wins; the disc is not searched for loose files. With a content-only `DAT\PROJ.DAT` in the game folder, beside `DBSIM.EXE`, DBSIM loaded it in place of `SIMVOL0.VOL`'s `dat\PROJ.DAT`: the record table it built in memory (`004a9980`) held the loose file's values. The retail install ships no `DAT` folder; this was a file placed there for the test ([`proj-dat.md`](proj-dat.md#lookup)). Both programs open a terrain zone's files this way ([`zone-terrain.md`](zone-terrain.md#loose-zone-files)).
 
 What does carry a prefix is anything unpacked by a tool that copies the archive bytes wholesale. `ES2/VOL/extractVol.py` slices each entry from its offset to the next entry's offset, so every file under `ES2/VOL/simvol0/`, `ES2/VOL/ZONES/` and `ES2/VOL/SHELL0/` is `prefix + content + trailer`, ten bytes longer than the file the game reads.
 
@@ -75,4 +75,4 @@ That extraction is uniform. Comparing all 1,672 entries of those three archives 
 
 ## Open
 
-- **Open:** whether every resource either program reads goes through `VolRStream_Open`, and so can be overridden by a loose file. Only `DAT\PROJ.DAT` has been seen to override.
+- **Open:** whether every resource either program reads goes through `VolRStream_Open`, and so can be overridden by a loose file. The zone files do ([`zone-terrain.md`](zone-terrain.md#loose-zone-files)); `DAT\PROJ.DAT` is the one override seen in retail.

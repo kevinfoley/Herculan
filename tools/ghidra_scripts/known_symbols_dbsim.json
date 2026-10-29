@@ -25841,8 +25841,14 @@
       "type": "function",
       "confidence": "high",
       "name": "TerrainZone_LoadHeightmap",
-      "description": "terrain.cpp. Called by Terrain_LoadZone with the zone's built 'dba\\zoneNNNN' path. Also separately loads the shared 'dat\\mat0' material/detail-type table (count-prefixed array of 8-byte records, ZONES_MaterialTable) into HeightGrid+0x121. Branches on the path's extension: '.dba' (real retail data, ZONES.VOL\\DBA\\ZONE*.DBA) goes through ClassItem_LoadResource -> TerrainZone_PopulateFromBitmap; any other extension falls back to an ASCII fopen/fscanf format ('%d %d %d %d' header = width shift, height shift, max raw height, min raw height, then one '%d' per cell) -- almost certainly a level-design/debug-only path, no such loose files found in retail data.",
-      "source": "memory project_es2_exe_recon (terrain data-structure session)"
+      "description": "terrain.cpp. (grid, path, heightBias): Terrain_LoadZone (0042789c) passes it the zone's 'dba\\zoneN.dba' path. Copies the path, opens 'dat\\mat0.dat' (ResourcePath_BuildFolderName) with VolRStream_CtorFromPath and reads its int32 count into HeightGrid+0x11d and that many 8-byte records into a new array at +0x121 (ZONES_MaterialTable). A path whose extension is '.dba' is opened with VolRStream_CtorFromPath, loaded with ClassItem_LoadResource and handed to TerrainZone_PopulateFromBitmap with the bias; the bitmap is then destroyed. Any other path is opened with _fopen, so only as a loose file, and read as ASCII: a '%d %d %d %d' header of width shift, height shift, maximum and minimum raw height, the two heights shifted by 15 minus the cell shift (+0x108), then one '%d' height per cell, shifted the same way, each cell's material rolled over records 1 to count-1 at 0x4ce in 0x1000; it ends with HeightOffsetTable_SetScale and HeightOffsetTable_Reset on +0xd0.",
+      "source": "memory project_es2_exe_recon (terrain data-structure session)",
+      "verified": {
+        "bytes": "0046c650+1095",
+        "sha1": "365f05b2bc0c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0046ca98",
@@ -26769,7 +26775,13 @@
       "confidence": "high",
       "name": "VolRStream_CtorFromPath",
       "description": "VolRStream(path) constructor (vtable 004a0e28, RTTI name 'VolRStream', 0x2f bytes): Stream_BaseCtor, clears the entry fields and filter pointers, handle -1, then VolRStream_Open(path). The DBSIM copy of VSHELL's VolRStream_CtorFromPath, without the volume-group assert; layout as described there.",
-      "source": "DBSIM decompile and disassembly at 00472e08"
+      "source": "DBSIM decompile and disassembly at 00472e08",
+      "verified": {
+        "bytes": "00472e08+80",
+        "sha1": "7b7afa176efe",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00472e58",

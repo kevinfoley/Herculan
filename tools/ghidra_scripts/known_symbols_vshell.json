@@ -7490,8 +7490,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ShellMap_LoadZone",
-      "description": "Loads dat\\zone%d.dat (keeps int32[2] cell shift at +0x104, int32[3] height scale) and dba\\zone%d.dba through HeightGrid_Load into the map's HeightGrid (DAT_00472258).",
-      "source": "docs/retail/shell/mission-map.md"
+      "description": "(map, zone), the first argument unused: asserts the zone is not negative, builds 'dat\\zone%d.dat' and opens it with VolRStream_CtorFromPath (asserting it opened), reads and discards the first two int32, allocates and constructs a 0x125-byte HeightGrid (asserting the allocation), keeps the third int32 as the cell shift (+0x104), stores the fourth times the short at 00471c2a at +0x114 and the short at 00471c28 at +0x108, zeroes +0xf0, +0xf4 and +0xf8, then loads 'dba\\zone%d.dba' into it through HeightGrid_Load and installs it as the map's HeightGrid (DAT_00472258).",
+      "source": "docs/retail/shell/mission-map.md",
+      "verified": {
+        "bytes": "00424b48+616",
+        "sha1": "0a995ecc0c51",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00424db0",
@@ -8081,8 +8087,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HeightGrid_Load",
-      "description": "hgrid.cpp: loads data\\mat0.dat, then a .dba through HeightGrid_FromBitmap or any other extension as the ASCII debug format.",
-      "source": "docs/retail/shell/mission-map.md"
+      "description": "hgrid.cpp (grid, path, bias): opens 'data\\mat0.dat' with VolRStream_CtorFromPath (asserting it opened) and reads its int32 count into +0x119 and that many 8-byte records into a new array at +0x11d. A path whose extension is '.dba' is opened with VolRStream_CtorFromPath, loaded with VshellClassItem_LoadItem (both asserted) and handed to HeightGrid_FromBitmap; the bitmap is then destroyed. Any other path is opened with _fopen, so only as a loose file, and read as the ASCII format DBSIM's TerrainZone_LoadHeightmap also reads, with the shell's own material roll (ShellRandom_Next against the short at 00472250 times 0x29).",
+      "source": "docs/retail/shell/mission-map.md",
+      "verified": {
+        "bytes": "00429010+1374",
+        "sha1": "a614ff0d115c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042956e",
