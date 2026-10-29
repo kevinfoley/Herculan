@@ -3,8 +3,8 @@ using System.Text.RegularExpressions;
 
 namespace Herculan.Engine.Editor;
 
-/// <summary>A run of inline text in one style: bold, code, or part of a link to <see cref="Link"/>.</summary>
-internal sealed record MarkdownSpan(string Text, bool Bold = false, bool Code = false, string? Link = null);
+/// <summary>A run of inline text in one style: bold, italic, code, or part of a link to <see cref="Link"/>.</summary>
+internal sealed record MarkdownSpan(string Text, bool Bold = false, bool Italic = false, bool Code = false, string? Link = null);
 
 /// <summary>A line or paragraph of inline text, as its styled runs.</summary>
 internal sealed record MarkdownInline(IReadOnlyList<MarkdownSpan> Spans) {
@@ -36,7 +36,7 @@ internal sealed record MarkdownRule : MarkdownBlock;
 /// <summary>
 /// A Markdown document read into blocks for <see cref="HelpWindow"/> to draw. It reads the subset the editor's manual is
 /// written in: ATX headings, paragraphs, bullet and numbered lists, block quotes, pipe tables, fenced code and rules, with
-/// <c>**bold**</c>, <c>`code`</c> and <c>[links](target)</c> inside them. Anything else stays as its text. HTML comments
+/// <c>**bold**</c>, <c>*italic*</c> or <c>_italic_</c>, <c>`code`</c> and <c>[links](target)</c> inside them. Anything else stays as its text. HTML comments
 /// (the docs' lint markers) are dropped. Anchors are GitHub's, so the manual's <c>#fragment</c> links work here as on
 /// GitHub.
 /// </summary>
@@ -213,12 +213,13 @@ internal sealed class MarkdownDocument {
 		return cells.Select(text => Inline(text.Trim())).ToList();
 	}
 
-	// <text>'s styled runs: "**" turns bold on and off, `code` is a run of its own, and [label](target) a run per styled
-	// part of its label; a backslash takes the punctuation after it as it is.
+	// <text>'s styled runs: "**" turns bold on and off, a single '*' or '_' italic (ItalicMarker), `code` is a run of its
+	// own, and [label](target) a run per styled part of its label; a backslash takes the punctuation after it as it is.
 	private static MarkdownInline Inline(string text) {
 		var spans = new List<MarkdownSpan>();
 		var run = new StringBuilder();
 		bool bold = false;
+		bool italic = false;
 
 		for (int i = 0; i < text.Length; i++) {
 			char c = text[i];
@@ -234,9 +235,15 @@ internal sealed class MarkdownDocument {
 				continue;
 			}
 
+			if (ItalicMarker(text, i, italic)) {
+				Flush();
+				italic = !italic;
+				continue;
+			}
+
 			if (c == '`' && text.IndexOf('`', i + 1) is int codeEnd and > 0) {
 				Flush();
-				spans.Add(new MarkdownSpan(text[(i + 1)..codeEnd], bold, Code: true));
+				spans.Add(new MarkdownSpan(text[(i + 1)..codeEnd], bold, italic, Code: true));
 				i = codeEnd;
 				continue;
 			}
@@ -245,7 +252,8 @@ internal sealed class MarkdownDocument {
 					&& text.IndexOf(')', close + 2) is int linkEnd and > 0) {
 				Flush();
 				string target = text[(close + 2)..linkEnd].Trim();
-				spans.AddRange(Inline(text[(i + 1)..close]).Spans.Select(part => part with { Bold = part.Bold || bold, Link = target }));
+				spans.AddRange(Inline(text[(i + 1)..close]).Spans
+					.Select(part => part with { Bold = part.Bold || bold, Italic = part.Italic || italic, Link = target }));
 				i = linkEnd;
 				continue;
 			}
@@ -258,10 +266,40 @@ internal sealed class MarkdownDocument {
 
 		void Flush() {
 			if (run.Length > 0) {
-				spans.Add(new MarkdownSpan(run.ToString(), bold));
+				spans.Add(new MarkdownSpan(run.ToString(), bold, italic));
 				run.Clear();
 			}
 		}
+	}
+
+	// Whether the '*' or '_' at <at> in <text> turns italic on, or off when <italic>. One that opens has a character other
+	// than a space after it and a marker that can close later on; one that closes has a character other than a space before
+	// it. An '_' also has to stand at a word's edge, so a name such as known_symbols keeps its underscores. A marker that
+	// does neither is text.
+	private static bool ItalicMarker(string text, int at, bool italic) {
+		char marker = text[at];
+		if (marker is not ('*' or '_')) {
+			return false;
+		}
+
+		if (italic) {
+			return Closes(at);
+		}
+
+		if (at + 1 >= text.Length || char.IsWhiteSpace(text[at + 1]) || marker == '_' && at > 0 && char.IsLetterOrDigit(text[at - 1])) {
+			return false;
+		}
+
+		for (int close = text.IndexOf(marker, at + 2); close > 0; close = text.IndexOf(marker, close + 1)) {
+			if (Closes(close)) {
+				return true;
+			}
+		}
+
+		return false;
+
+		bool Closes(int index) => index > 0 && !char.IsWhiteSpace(text[index - 1])
+			&& !(marker == '_' && index + 1 < text.Length && char.IsLetterOrDigit(text[index + 1]));
 	}
 
 	// GitHub's anchor for a heading titled <title>: lower case, spaces as hyphens, and every character but letters, digits,

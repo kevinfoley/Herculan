@@ -18,6 +18,7 @@
   <ItemGroup>
     <None Include="Assets\Fonts\Open_Sans\static\OpenSans-Regular.ttf" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Assets\Fonts\Open_Sans\static\OpenSans-Bold.ttf" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Assets\Fonts\Open_Sans\static\OpenSans-Italic.ttf" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

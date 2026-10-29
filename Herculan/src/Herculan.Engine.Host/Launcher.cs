@@ -140,6 +140,7 @@ static class Launcher {
 			Window = window,
 			Mission = mission,
 			BoldFontPath = Path.Combine(Path.GetDirectoryName(session.ImGuiFontPath)!, "OpenSans-Bold.ttf"),
+			ItalicFontPath = session.ImGuiItalicFontPath,
 		});
 	}
 

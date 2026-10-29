@@ -51,6 +51,9 @@ public sealed record EditorLaunch(string InstallRoot, GameContent SimulatorConte
 	/// <summary>The bold face of <see cref="FontPath"/>'s font, for the panels' emphasised notes; null for none.</summary>
 	public string? BoldFontPath { get; init; }
 
+	/// <summary>The italic face of <see cref="FontPath"/>'s font, for the manual's italics (<see cref="HelpWindow"/>); null for none.</summary>
+	public string? ItalicFontPath { get; init; }
+
 	/// <summary>
 	/// The game's window, which the editor takes as a turn and leaves open for the game; null for a window of its own,
 	/// where the editor last closed on its own (<see cref="EditorSettings.Window"/>), or maximized the first time.
@@ -79,7 +82,8 @@ public sealed class EditorHost {
 	private readonly EditorSettings _settings = EditorSettings.Load();
 	private readonly EditorSettingsPanel _settingsPanel;
 
-	// The manual's headings are drawn in the radial menu's face, the one larger than the window's own.
+	// The manual's headings are drawn in the radial menu's face, the one larger than the window's own, and its italics in
+	// the italic face.
 	private readonly HelpWindow _help;
 	private readonly MissionBrowser _volBrowser;
 	private readonly MissionBrowser _customBrowser;
@@ -205,7 +209,7 @@ public sealed class EditorHost {
 		_flyFarPlane = _camera.FarPlane;
 		_padPointer = new GamepadPointer { Settings = JoystickMapFile.LoadIn(_installData).Mouse };
 		_settingsPanel = new EditorSettingsPanel(_settings);
-		_help = new HelpWindow(() => _imgui?.RadialFont);
+		_help = new HelpWindow(() => _imgui?.RadialFont, () => _imgui?.ItalicFont);
 		IReadOnlyList<BrowsedMission> All() =>
 			MissionBrowser.Merge(MissionFileLaunch.List(launch.ShellContent()), SavedMissions.List(launch.InstallRoot));
 		_volBrowser = new MissionBrowser("Load from VOL", "The install's archives hold no missions.",
@@ -335,7 +339,7 @@ public sealed class EditorHost {
 		// is backface-culled.
 		gl.Disable(EnableCap.CullFace);
 
-		_imgui = new ScaledImGui(gl, _window, input, _launch.FontPath, boldFontPath: _launch.BoldFontPath) {
+		_imgui = new ScaledImGui(gl, _window, input, _launch.FontPath, _launch.ItalicFontPath, _launch.BoldFontPath) {
 			HeldAsMouseButtons = () => (_padPointer.ClickHeld, _padPointer.RightClickHeld),
 			PointerOverride = () => _padPointer.Override,
 		};

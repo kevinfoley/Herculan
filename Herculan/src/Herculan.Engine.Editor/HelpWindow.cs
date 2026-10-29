@@ -28,6 +28,7 @@ internal sealed class HelpWindow {
 
 	private readonly Lazy<MarkdownDocument?> _manual = new(ReadManual);
 	private readonly Func<ImFontPtr?> _headingFont;
+	private readonly Func<ImFontPtr?> _italicFont;
 	private bool _open;
 
 	// The heading to scroll the manual to, by anchor, once it is next drawn.
@@ -42,8 +43,10 @@ internal sealed class HelpWindow {
 	private string? _hovering;
 
 	/// <param name="headingFont">The larger face the top two levels of heading are drawn in; null for the window's own.</param>
-	public HelpWindow(Func<ImFontPtr?> headingFont) {
+	/// <param name="italicFont">The face italic runs are drawn in; null for the window's own.</param>
+	public HelpWindow(Func<ImFontPtr?> headingFont, Func<ImFontPtr?> italicFont) {
 		_headingFont = headingFont;
+		_italicFont = italicFont;
 	}
 
 	public void Open() => _open = true;
@@ -273,13 +276,15 @@ internal sealed class HelpWindow {
 	}
 
 	// Draws <text> wrapped at the right edge of the region it starts in, a word at a time so that each run keeps its own
-	// face and color: <font> for plain runs (the window's own for null), and the bold face for bold runs, or for all of them
-	// when <bold>.
+	// face and color: <font> for plain runs (the window's own for null), the bold face for bold runs, or for all of them
+	// when <bold>, and the italic face for italic ones. There is no bold italic face, so a run that is both is bold.
 	private void DrawInline(MarkdownInline text, ImFontPtr? font = null, bool bold = false) {
 		float right = ImGui.GetCursorScreenPos().X + ImGui.GetContentRegionAvail().X;
 		bool lineStart = true;
 		foreach (var span in text.Spans) {
-			var face = span.Bold || bold ? EditorText.BoldFont?.Invoke() ?? font : font;
+			var face = span.Bold || bold ? EditorText.BoldFont?.Invoke() ?? font
+				: span.Italic ? _italicFont() ?? font
+				: font;
 			if (face is { } pushed) {
 				ImGui.PushFont(pushed);
 			}

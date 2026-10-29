@@ -27,6 +27,7 @@ EditorHost.Run(new EditorLaunch(installRoot, GameContent.MountSimulator(installR
 	Path.Combine(AppContext.BaseDirectory, "Assets", "Fonts", "Open_Sans", "static", "OpenSans-Regular.ttf")) {
 	Mission = args.Length > 1 ? args[1] : null,
 	BoldFontPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Fonts", "Open_Sans", "static", "OpenSans-Bold.ttf"),
+	ItalicFontPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Fonts", "Open_Sans", "static", "OpenSans-Italic.ttf"),
 });
 
 return 0;
