@@ -33,7 +33,7 @@ Until its step lands, each of these does nothing, tagged `// PLACEHOLDER:` in co
 - **The lift**, no step yet: a mission whose HERC starts within 40000 of a friendly structure opens without it, its two calls (`00057cf4`, `00057ffc`) unread ([the mission start](../es1/simulation/main-loop.md#the-mission-start--sim_startmission-0005a9dc)).
 - **The start of a run's files**, no step yet: `Sim_Main`'s writes of `data\mem.got` and of an `int16` 0 to `data\exit.cfg` ([starting](../es1/simulation/main-loop.md#starting--sim_main-00059350), step 4) are not made, so a run the window's close ends, which writes no file, leaves `exit.cfg` as the last mission's end wrote it.
 - **An unread edge case of step 3b**, no step yet: a cockpit scheme above 7, whose `0x40` word retail reads past its table ([the color scheme](../es1/simulation/cockpit-views.md#the-color-scheme)), keeps the second range's colour at `0x40`.
-- **The shell's after-mission files and a career's load**: a single mission's load writes no `car\sm_play.mec` or `car\sm_play.gam`, which only the shell reads back, and a career's mode 1 waits for the shell. The mission's end writes `data\results.dat`, `data\mission.var` and `data\exit.cfg` as retail's does ([the results](../es1/simulation/world.md#writing-the-results--mission_writeresults-0001d698), [the end](../es1/simulation/main-loop.md#the-end--sim_shutdown-0005b568)).
+- **A career's load**: a career's mode 1 waits for the shell's career module. The mission's end writes `data\results.dat`, `data\mission.var` and `data\exit.cfg` as retail's does ([the results](../es1/simulation/world.md#writing-the-results--mission_writeresults-0001d698), [the end](../es1/simulation/main-loop.md#the-end--sim_shutdown-0005b568)).
 
 ## Decisions
 

@@ -9,7 +9,10 @@ public class Es1HercList {
 	/// <summary>The number of hangar slots, the word <c>ES1GO 00080890</c>.</summary>
 	public short SlotCount { get; set; }
 
-	/// <summary>The word read into <c>ES1GO 00080894</c> (docs/es1/formats/car-hercs-and-stock.md#open).</summary>
+	/// <summary>
+	/// The word read into <c>ES1GO 00080894</c>, <c>Hangar_SelectedSlot</c> (<see cref="Es1Hangar.SelectedSlot"/>), which
+	/// <c>Hangar_Write</c> writes back (docs/es1/formats/car-hercs-and-stock.md#the-herc-lists).
+	/// </summary>
 	public short Word1 { get; set; }
 
 	/// <summary>The slot whose HERC is read with <see cref="MarkedSlotWord"/>, the word <c>ES1GO 00080896</c>; −1 in both retail files.</summary>
@@ -55,6 +58,91 @@ public class Es1HercRecord {
 
 	/// <summary>The 66-byte block at the HERC's <c>+0x2e</c>, <see cref="StatusLength"/> <c>int16</c>.</summary>
 	public short[] Status { get; set; } = new short[StatusLength];
+
+	/// <summary>The weapon an empty mount carries, <c>0x11</c>.</summary>
+	public const short EmptyMount = 17;
+
+	/// <summary>The status word every write sets in a single mission, and the value of every word <c>HercStatus_Ctor</c> sets.</summary>
+	public const short FullStatus = 100;
+
+	/// <summary><see cref="Status"/>' index of internal word 9 (<c>+0x5a</c> in the HERC), which carries the pilot's condition.</summary>
+	public const int PilotConditionWord = 13 + 9;
+
+	/// <summary><see cref="Status"/>' index of the first per-mount word (<c>+0x5c</c> in the HERC).</summary>
+	public const int MountStatusWords = 13 + 10;
+
+	/// <summary>The per-mount words the block has room for.</summary>
+	private const int MountStatusCount = 10;
+
+	/// <summary>Internal word 9, the pilot's condition: <c>Herc_GetStatus</c> (<c>00024b86</c>)(<i>h</i>, 9, <c>0x784</c>) and <c>Herc_SetStatus</c> (<c>00024c14</c>).</summary>
+	public short PilotCondition {
+		get => Status[PilotConditionWord];
+		set => Status[PilotConditionWord] = value;
+	}
+
+	/// <summary>
+	/// <c>Herc_SetAllStatus</c> (<c>00024c3c</c>)(<i>h</i>, <paramref name="value"/>): the external words, internal words 0
+	/// to 8 and the per-mount words of the mounts below the mount count set to the value, or to 100 for an empty mount;
+	/// internal word 9 left as it is.
+	/// </summary>
+	public void SetAllStatus(short value) {
+		for (int word = 0; word < MountStatusWords; word++) {
+			if (word != PilotConditionWord) {
+				Status[word] = value;
+			}
+		}
+
+		for (int mount = 0; mount < Weapons.Length && mount < MountStatusCount; mount++) {
+			Status[MountStatusWords + mount] = Weapons[mount] == EmptyMount ? FullStatus : value;
+		}
+	}
+
+	/// <summary>
+	/// <c>Herc_IsUnarmed</c> (<c>00022ebf</c>): every mount below the mount count carries <see cref="EmptyMount"/>, so also
+	/// a HERC with no mounts.
+	/// </summary>
+	public bool IsUnarmed() => Weapons.All(weapon => weapon == EmptyMount);
+
+	/// <summary>
+	/// What <c>Herc_Write</c> (<c>000233ce</c>) does to the HERC before it writes the mount words: the word of each mount
+	/// whose weapon is 9, 10 or 11 and whose word is 5 set to 0.
+	/// </summary>
+	public void PrepareWrite() {
+		for (int mount = 0; mount < Weapons.Length; mount++) {
+			if (Weapons[mount] is >= 9 and <= 11 && MountWords[mount] == 5) {
+				MountWords[mount] = 0;
+			}
+		}
+	}
+
+	/// <summary>
+	/// What <c>Herc_BuildDiagram</c> (<c>00023883</c>) does to the HERC's record as it builds the diagram, per mount below
+	/// the mount count: a mount whose status word is 0 (<c>Herc_GetMountStatus</c>, <c>00024b23</c>) made empty, its
+	/// status word set back to 100 (<c>Herc_SetStatus</c>(<i>h</i>, 100, mount, <c>0x786</c>)); and the word of a mount
+	/// whose weapon is 9, 10 or 11 and whose word is 5 set to 0. The diagram itself is the shell's
+	/// (docs/es1/formats/herc-diagrams.md#the-mount-pictures).
+	/// </summary>
+	public void BuildDiagramMounts() {
+		for (int mount = 0; mount < Weapons.Length; mount++) {
+			if (mount < MountStatusCount && Status[MountStatusWords + mount] == 0) {
+				Weapons[mount] = EmptyMount;
+				Status[MountStatusWords + mount] = FullStatus;
+			}
+
+			if (Weapons[mount] is >= 9 and <= 11 && MountWords[mount] == 5) {
+				MountWords[mount] = 0;
+			}
+		}
+	}
+
+	/// <summary>A copy of the record, its arrays copied.</summary>
+	public Es1HercRecord Clone() => new() {
+		Chassis = Chassis,
+		Weapons = (short[])Weapons.Clone(),
+		MountWords = (short[])MountWords.Clone(),
+		Word = Word,
+		Status = (short[])Status.Clone(),
+	};
 }
 
 /// <summary>

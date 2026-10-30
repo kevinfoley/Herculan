@@ -27,11 +27,18 @@ public readonly record struct Es1MissionParams(short Ammo, short Damage, short D
 	}
 }
 
-/// <summary>What a single mission's load writes: the three <c>data\</c> files the simulator reads.</summary>
+/// <summary>
+/// What a single mission's load writes and keeps: the three <c>data\</c> files the simulator reads, the two <c>car\</c>
+/// files the shell reads back after the mission, and the record and the hangar the shell goes on with.
+/// </summary>
 /// <param name="Script"><c>data\script.dat</c>.</param>
 /// <param name="Flags"><c>data\mission.var</c>, its 100 <c>int16</c> flags.</param>
 /// <param name="Player"><c>data\player.mec</c>.</param>
-public sealed record Es1MissionLoadResult(Es1ScriptDat Script, short[] Flags, Es1PlayerMec Player) {
+/// <param name="Record"><c>SingleMission_Record</c> (<c>0009b014</c>) as the load leaves it, which is <c>car\sm_play.gam</c>.</param>
+/// <param name="Hangar">The hangar as the load leaves it, every slot.</param>
+/// <param name="SavedHangar"><c>car\sm_play.mec</c>, the hangar's slots 0 to 7 as the squad build's step 5 saves them.</param>
+public sealed record Es1MissionLoadResult(Es1ScriptDat Script, short[] Flags, Es1PlayerMec Player, Es1CareerRecord Record,
+		Es1Hangar Hangar, Es1HercList SavedHangar) {
 	/// <summary><see cref="Flags"/> as the 200 bytes of <c>data\mission.var</c>.</summary>
 	public byte[] MissionVarBytes() {
 		var bytes = new byte[Flags.Length * 2];
@@ -101,13 +108,15 @@ public sealed class Es1MissionLoad {
 	/// Loads <paramref name="mission"/> as a single mission. <paramref name="roll"/> is the shell's <c>Math_RandomBelow</c>
 	/// (<c>ES1GO 00038774</c>) on <c>Shell_RandomState</c>, a draw in [0, bound) that returns 0 without a draw for a bound of
 	/// 0 (docs/es1/formats/msn-mission-file.md#the-shells-generator). <paramref name="hangar"/> is <c>car\sm_init.dat</c> and
-	/// <paramref name="tech"/> <c>bst\tech_sng.dat</c>.
+	/// <paramref name="tech"/> <c>bst\tech_sng.dat</c>. <paramref name="record"/> is <c>SingleMission_Record</c> as the shell
+	/// holds it, which the squad build sets up in place and the result carries; a new record, all zero as the image's
+	/// static record is, when null.
 	/// </summary>
 	/// <exception cref="NotSupportedException">The mission is in the other layout, whose reader is Open; it sets a point's
 	/// sum flag, which no retail point does and the doc does not cover; or its squad has more than four members.</exception>
 	/// <exception cref="InvalidDataException">A squad member's ref names no mech record, or its type no chassis.</exception>
 	public static Es1MissionLoadResult Load(Es1MissionFile mission, Es1MissionParams missionParams, Es1HercList hangar,
-			Es1TechFile tech, Func<short, int> roll) {
+			Es1TechFile tech, Func<short, int> roll, Es1CareerRecord? record = null) {
 		if (mission.HeaderWords != null) {
 			throw new NotSupportedException(
 				"The mission is in the other layout (docs/es1/formats/msn-mission-file.md#a-file-in-another-layout), which no reader is known for.");
@@ -147,13 +156,53 @@ public sealed class Es1MissionLoad {
 		var script = load.WriteScriptDat();
 		var flags = (short[])load._flags.Clone();
 
-		// Steps 8 to 10.
-		var squad = new SquadBuild(load, hangar, tech, roll);
-		var player = squad.WritePlayerMec();
+		// Steps 8 and 9, the squad build with its step 5, car\sm_play.mec; then step 10, PlayerMec_Write, whose
+		// CareerRecord_SaveCurrent writes the record to car\sm_play.gam as it stands after the player file.
+		var squad = new SquadBuild(load, hangar, tech, roll, record ?? new Es1CareerRecord());
+		var player = WritePlayerMec(squad.Record, squad.Hangar, roll);
+		return new Es1MissionLoadResult(script, flags, player, squad.Record, squad.Hangar, squad.SavedHangar);
+	}
 
-		// PLACEHOLDER: car\sm_play.mec (Hangar_SaveFile, ES1GO 0002909c) and car\sm_play.gam (SingleMission_SaveRecord,
-		// 00014f54), which only the shell's after-mission step reads back, are not written; the shell's port writes them.
-		return new Es1MissionLoadResult(script, flags, player);
+	/// <summary>
+	/// <c>PlayerMec_WriteEntries</c> (<c>00022a05</c>) in <c>Shell_Mode</c> 0
+	/// (docs/es1/formats/career-log-and-player-mec.md#the-player-file), for the load's step 10 and BEGIN MISSION >'s
+	/// write: with the record's current pilot and <paramref name="hangar"/>'s selected slot kept, the player's entry
+	/// <c>+0xe</c>, the count of entries on strength with a slot (<see cref="Es1CareerRecord.CountPilots"/>), the player's
+	/// entry made the current pilot; then, that many times, the current pilot's two words
+	/// (<c>PlayerMec_WritePilotWords</c>, <c>0001548f</c>: for the player's entry a draw below 11 with
+	/// <paramref name="roll"/> and 0, for any other its name index and its number), the HERC in the selected slot, when
+	/// there is one, with every status word set to 100 (<see cref="Es1HercRecord.SetAllStatus"/> and internal word 9)
+	/// and written with <c>Herc_Write</c> (<see cref="Es1HercRecord.PrepareWrite"/>, a copy kept), and the next pilot
+	/// (<see cref="Es1CareerRecord.NextPilot"/>); then the record's weapons' available bytes, and the kept current pilot
+	/// and selected slot put back. The HERCs' changes are made in the hangar, as retail's are.
+	/// </summary>
+	public static Es1PlayerMec WritePlayerMec(Es1CareerRecord record, Es1Hangar hangar, Func<short, int> roll) {
+		short keptPilot = record.CurrentPilot;
+		short keptSlot = hangar.SelectedSlot;
+		short playerEntry = record.PlayerEntry;
+		int count = record.CountPilots();
+		record.SelectPilot(playerEntry, hangar);
+		var entries = new Es1PlayerMecEntry[count];
+		for (int written = 0; written < count; written++) {
+			short current = record.CurrentPilot;
+			entries[written] = current == playerEntry
+				? new Es1PlayerMecEntry { Word1 = (short)roll(11), Word2 = 0 }
+				: new Es1PlayerMecEntry { Word1 = record.Pilots[current].NameIndex(current), Word2 = current };
+
+			if (hangar.HercIn(hangar.SelectedSlot) is { } herc) {
+				herc.SetAllStatus(Es1HercRecord.FullStatus);
+				herc.PilotCondition = Es1HercRecord.FullStatus;
+				herc.PrepareWrite();
+				entries[written].Herc = herc.Clone();
+			}
+
+			record.NextPilot(hangar);
+		}
+
+		var player = new Es1PlayerMec { PlayerEntry = playerEntry, Entries = entries, WeaponsAvailable = record.Equipment.WeaponsAvailable() };
+		record.SelectPilot(keptPilot, hangar);
+		hangar.SelectedSlot = keptSlot;
+		return player;
 	}
 
 	// ---- Row 1: the conditions ----------------------------------------------------------------------------------------
@@ -625,97 +674,65 @@ public sealed class Es1MissionLoad {
 		public List<short> Points { get; } = points;
 	}
 
-	// ---- Steps 8 to 10: the squad and data\player.mec ------------------------------------------------------------------
+	// ---- Steps 8 and 9: the squad ---------------------------------------------------------------------------------------
 
 	/// <summary>
-	/// The mode-0 squad build (docs/es1/formats/msn-mission-file.md#the-squad) on <c>SingleMission_Record</c>'s pilot
-	/// entries and the hangar, and <c>PlayerMec_Write</c>'s mode-0 path
-	/// (docs/es1/formats/career-log-and-player-mec.md#a-single-missions-file).
+	/// The mode-0 squad build (docs/es1/formats/msn-mission-file.md#the-squad) on <c>SingleMission_Record</c> and the
+	/// hangar, through its step 5, <c>car\sm_play.mec</c>.
 	/// </summary>
 	private sealed class SquadBuild {
-		/// <summary>The career record's four pilot entries.</summary>
-		private const int PilotCount = 4;
-
 		/// <summary>The words at <c>000803c8</c>: each chassis' mount count.</summary>
 		private static readonly short[] ChassisMountCounts = [3, 3, 4, 5, 6, 7, 8, 9];
 
-		/// <summary><c>PilotRankThresholds</c> (<c>0007ebd4</c>), with the −1 <c>PilotEntry_DrawForRank</c> reads for rank 5.</summary>
-		private static readonly short[] RankThresholds = [0, 1, 5, 15, 30, -1];
-
-		/// <summary>The weapon an empty mount carries.</summary>
-		private const short EmptyMount = 17;
-
-		/// <summary>The status word every write sets, and the value of every word <c>HercStatus_Ctor</c> sets.</summary>
-		private const short FullStatus = 100;
-
-		/// <summary>The status block's index of internal word 9, the pilot's condition, which <c>HercStatus_Ctor</c> leaves.</summary>
-		private const int PilotConditionWord = 13 + 9;
-
-		/// <summary>Where the per-mount status words start in the block.</summary>
-		private const int MountStatusWords = 13 + 10;
-
 		private readonly Es1MissionLoad _load;
 		private readonly Func<short, int> _roll;
-		private readonly Es1HercRecord?[] _slots;
-		private readonly Pilot[] _pilots = new Pilot[PilotCount];
-		private readonly byte[] _weaponsAvailable = new byte[Es1PlayerMec.WeaponCount];
 
-		public SquadBuild(Es1MissionLoad load, Es1HercList hangar, Es1TechFile tech, Func<short, int> roll) {
+		public SquadBuild(Es1MissionLoad load, Es1HercList hangar, Es1TechFile tech, Func<short, int> roll, Es1CareerRecord record) {
 			_load = load;
 			_roll = roll;
 
-			// 1. Hangar_LoadFile with car\sm_init.dat: each HERC in its slot, with no bounds test.
-			_slots = new Es1HercRecord?[Math.Max((int)hangar.SlotCount, 0)];
-			foreach (var entry in hangar.Hercs) {
-				if (entry.Slot >= 0 && entry.Slot < _slots.Length) {
-					_slots[entry.Slot] = Clone(entry.Herc);
-				}
-			}
+			// 1. Hangar_LoadFile with car\sm_init.dat.
+			Hangar = Es1Hangar.Read(hangar);
 
 			// 2. CareerRecord_Init in mode 0: every entry through PilotEntry_Init, and the equipment from tech_sng.dat.
-			for (int i = 0; i < PilotCount; i++) {
-				_pilots[i] = new Pilot();
-			}
+			Record = record;
+			Record.InitSingleMission(tech);
 
-			LoadWeapons(tech);
+			// 3. Each member's entry.
 			BuildMembers();
+
+			// 4. The player's entry made the current pilot, which selects its slot.
+			Record.SelectPilot(Record.PlayerEntry, Hangar);
+
+			// 5. Hangar_SaveFile(car\sm_play.mec).
+			SavedHangar = Hangar.SingleMissionSave();
 		}
+
+		/// <summary><c>SingleMission_Record</c> (<c>0009b014</c>).</summary>
+		public Es1CareerRecord Record { get; }
+
+		/// <summary>The hangar, every slot.</summary>
+		public Es1Hangar Hangar { get; }
+
+		/// <summary>Step 5's <c>car\sm_play.mec</c>.</summary>
+		public Es1HercList SavedHangar { get; }
 
 		/// <summary>
-		/// <c>Tech_Read</c> and <c>Tech_Unlock</c>(0) for the weapons, whose available bytes are all the player file carries:
-		/// a weapon whose two counts hold no -1 is available when either is 0, the grade test passing outside a career
-		/// (docs/es1/formats/bst-battle-sets.md#equipment-availability). An entry the file does not name keeps counts of 0,
-		/// <c>SingleMission_Record</c> being static data; a weapon index past the 17 is dropped here, where the original
-		/// writes it unchecked.
+		/// Step 3 for each of the first group's members: an entry set up by <see cref="Es1PilotEntry.Init"/>, filled, and
+		/// copied over pilot entry <i>i</i> of the record.
 		/// </summary>
-		private void LoadWeapons(Es1TechFile tech) {
-			var first = new short[Es1PlayerMec.WeaponCount];
-			var second = new short[Es1PlayerMec.WeaponCount];
-			foreach (var record in tech.Records) {
-				if (record.Kind == 1 && record.Index >= 0 && record.Index < Es1PlayerMec.WeaponCount) {
-					first[record.Index] = record.GoodGradeMissions;
-					second[record.Index] = record.AnyGradeMissions;
-				}
-			}
-
-			for (int w = 0; w < Es1PlayerMec.WeaponCount; w++) {
-				bool holdsNoMinusOne = first[w] != -1 && second[w] != -1;
-				_weaponsAvailable[w] = holdsNoMinusOne && (first[w] == 0 || second[w] == 0) ? (byte)1 : (byte)0;
-			}
-		}
-
-		/// <summary>Step 3 for each of the first group's members, and step 4.</summary>
 		private void BuildMembers() {
 			var group = _load._groups.Count > 0 ? _load._groups[0] : null;
 			int members = SquadMemberCount(group);
-			if (members > PilotCount) {
+			if (members > Es1CareerRecord.PilotCount) {
 				throw new NotSupportedException(
 					$"The squad has {members} members; the career record holds four pilot entries, and a fifth's lands on its equipment.");
 			}
 
 			for (int i = 0; i < members; i++) {
 				var mech = MechRecord(group![29 + i]);
-				var entry = new Pilot();
+				var entry = new Es1PilotEntry();
+				entry.Init();
 				if (i == 0) {
 					entry.NameGroup = 0;
 					entry.Name = 0;
@@ -725,10 +742,10 @@ public sealed class Es1MissionLoad {
 					entry.Name = (short)_roll(3);
 					entry.Rank = (short)_roll(6);
 					DrawForRank(entry);
-					entry.Slot = AddHerc(NewHerc(mech));
+					entry.Slot = Hangar.AddHerc(NewHerc(mech));
 				}
 
-				_pilots[i] = entry;
+				Record.Pilots[i] = entry;
 			}
 		}
 
@@ -753,13 +770,19 @@ public sealed class Es1MissionLoad {
 				: throw new InvalidDataException($"A squad member's ref, {exported}, names no mech record of the {kept.Count} kept.");
 		}
 
-		/// <summary><c>PilotEntry_DrawForRank</c> (<c>00015402</c>), its draws in the doc's order.</summary>
-		private void DrawForRank(Pilot entry) {
-			short threshold = RankThresholds[entry.Rank];
-			entry.Word17 = (short)(threshold + _roll((short)(threshold + 1)));
+		/// <summary>
+		/// <c>PilotEntry_DrawForRank</c> (<c>00015402</c>), its draws in the doc's order, with the −1 that ends
+		/// <see cref="Es1PilotEntry.RankThresholds"/> as rank 5's threshold.
+		/// </summary>
+		private void DrawForRank(Es1PilotEntry entry) {
+			short threshold = Es1PilotEntry.RankThresholds[entry.Rank];
+			entry.GainSums[0] = (short)(threshold + _roll((short)(threshold + 1)));
 			if (entry.Rank != 0) {
-				entry.Word19 = (short)_roll((short)(5 * entry.Rank));
-				entry.Word1B = (short)_roll((short)(10 * entry.Rank));
+				entry.GainSums[1] = (short)_roll((short)(5 * entry.Rank));
+				entry.GainSums[2] = (short)_roll((short)(10 * entry.Rank));
+			} else {
+				entry.GainSums[1] = 0;
+				entry.GainSums[2] = 0;
 			}
 		}
 
@@ -779,136 +802,13 @@ public sealed class Es1MissionLoad {
 				Weapons = mech[25..(25 + mounts)],
 				MountWords = mech[39..(39 + mounts)],
 				Word = mech[49],
-				Status = Enumerable.Repeat(FullStatus, Es1HercRecord.StatusLength).ToArray(),
+				Status = Enumerable.Repeat(Es1HercRecord.FullStatus, Es1HercRecord.StatusLength).ToArray(),
 			};
 
 			// HercStatus_Ctor leaves the pilot's condition as the allocation left it; the player file's write sets it.
-			herc.Status[PilotConditionWord] = 0;
-			SetAllStatus(herc, FullStatus);
+			herc.PilotCondition = 0;
+			herc.SetAllStatus(Es1HercRecord.FullStatus);
 			return herc;
-		}
-
-		/// <summary><c>Herc_SetAllStatus</c> (<c>00024c3c</c>): every status word but internal word 9 and the mounts past the count.</summary>
-		private static void SetAllStatus(Es1HercRecord herc, short value) {
-			for (int word = 0; word < MountStatusWords; word++) {
-				if (word != PilotConditionWord) {
-					herc.Status[word] = value;
-				}
-			}
-
-			for (int mount = 0; mount < herc.Weapons.Length && mount < 10; mount++) {
-				herc.Status[MountStatusWords + mount] = herc.Weapons[mount] == EmptyMount ? FullStatus : value;
-			}
-		}
-
-		/// <summary><c>Hangar_AddHerc</c> (<c>00029d0f</c>): the first empty slot, or -1 with the HERC kept nowhere.</summary>
-		private short AddHerc(Es1HercRecord herc) {
-			int slot = Array.IndexOf(_slots, null);
-			if (slot < 0) {
-				return -1;
-			}
-
-			_slots[slot] = herc;
-			return (short)slot;
-		}
-
-		/// <summary>
-		/// Step 10, <c>PlayerMec_WriteEntries</c> (<c>00022a05</c>) in mode 0: the player's entry, the count of entries on
-		/// strength with a slot, then from the player's entry on each one's two words and its slot's HERC, and the weapons'
-		/// available bytes. The player's first word is the load's last draw.
-		/// </summary>
-		public Es1PlayerMec WritePlayerMec() {
-			const short playerEntry = 0;
-			int count = _pilots.Count(OnStrengthWithSlot);
-			var entries = new List<Es1PlayerMecEntry>();
-			int current = playerEntry;
-			for (int written = 0; written < count; written++) {
-				var pilot = _pilots[current];
-				var entry = current == playerEntry
-					? new Es1PlayerMecEntry { Word1 = (short)_roll(11), Word2 = 0 }
-					: new Es1PlayerMecEntry { Word1 = NameIndex(current, pilot), Word2 = (short)current };
-
-				if (pilot.Slot >= 0 && pilot.Slot < _slots.Length && _slots[pilot.Slot] is { } herc) {
-					SetAllStatus(herc, FullStatus);
-					herc.Status[PilotConditionWord] = FullStatus;
-					entry.Herc = HercWrite(herc);
-				}
-
-				entries.Add(entry);
-				current = NextPilot(current);
-			}
-
-			return new Es1PlayerMec {
-				PlayerEntry = playerEntry,
-				Entries = entries.ToArray(),
-				WeaponsAvailable = (byte[])_weaponsAvailable.Clone(),
-			};
-		}
-
-		/// <summary><c>PilotEntry_NameIndex</c> (<c>00015f50</c>): 3 × the name group plus the name, -1 for entry 0.</summary>
-		private static short NameIndex(int index, Pilot pilot) => index == 0 ? (short)-1 : (short)(3 * pilot.NameGroup + pilot.Name);
-
-		private static bool OnStrengthWithSlot(Pilot pilot) => pilot.OnStrength && pilot.Slot != -1;
-
-		/// <summary><c>CareerRecord_NextPilot</c> (<c>00015b0a</c>): the next entry on strength with a slot, modulo 4.</summary>
-		private int NextPilot(int from) {
-			for (int step = 1; step <= PilotCount; step++) {
-				int index = (from + step) % PilotCount;
-				if (OnStrengthWithSlot(_pilots[index])) {
-					return index;
-				}
-			}
-
-			return from;
-		}
-
-		/// <summary>
-		/// <c>Herc_Write</c> (<c>000233ce</c>): the HERC as written, after it sets to 0 the word of each mount whose weapon is
-		/// 9, 10 or 11 and whose word is 5, in the HERC itself.
-		/// </summary>
-		private static Es1HercRecord HercWrite(Es1HercRecord herc) {
-			for (int mount = 0; mount < herc.Weapons.Length; mount++) {
-				if (herc.Weapons[mount] is >= 9 and <= 11 && herc.MountWords[mount] == 5) {
-					herc.MountWords[mount] = 0;
-				}
-			}
-
-			return Clone(herc);
-		}
-
-		private static Es1HercRecord Clone(Es1HercRecord herc) => new() {
-			Chassis = herc.Chassis,
-			Weapons = (short[])herc.Weapons.Clone(),
-			MountWords = (short[])herc.MountWords.Clone(),
-			Word = herc.Word,
-			Status = (short[])herc.Status.Clone(),
-		};
-
-		/// <summary>The fields of a <c>0x25</c>-byte pilot entry the build sets, as <c>PilotEntry_Init</c> (<c>000151c8</c>) leaves them.</summary>
-		private sealed class Pilot {
-			/// <summary><c>+0x00</c>, the name's group.</summary>
-			public short NameGroup { get; set; } = -1;
-
-			/// <summary><c>+0x02</c>, the name within the group.</summary>
-			public short Name { get; set; } = -1;
-
-			/// <summary><c>+0x08</c>, the hangar slot of the pilot's HERC.</summary>
-			public short Slot { get; set; } = -1;
-
-			/// <summary><c>+0x0a</c>, on strength.</summary>
-			public bool OnStrength { get; } = true;
-
-			/// <summary><c>+0x0d</c>, the rank.</summary>
-			public short Rank { get; set; }
-
-			/// <summary><c>+0x17</c>.</summary>
-			public short Word17 { get; set; }
-
-			/// <summary><c>+0x19</c>.</summary>
-			public short Word19 { get; set; }
-
-			/// <summary><c>+0x1b</c>.</summary>
-			public short Word1B { get; set; }
 		}
 	}
 }
