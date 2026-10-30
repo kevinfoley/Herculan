@@ -129,6 +129,14 @@ public sealed class Es1SimClock {
 	}
 
 	/// <summary>
+	/// The host time from now to the PC timer's next interrupt, rounded up to a <see cref="TimeSpan"/> tick, so that
+	/// <see cref="Hold"/> for it counts exactly that interrupt. The shell steps its timer an interrupt at a time with it while
+	/// its frame spins on a flag a timer callback sets (<c>Shell_PresentFrame</c>, <c>Shell_WaitTicks</c>,
+	/// docs/es1/shell/startup.md#the-devices).
+	/// </summary>
+	public TimeSpan ToNextInterrupt => TimeSpan.FromTicks((TimeSpan.TicksPerSecond - _phase + TicksPerSecond - 1) / TicksPerSecond);
+
+	/// <summary>
 	/// <c>Timer_AddCallback</c> (<c>0006d289</c>)(<paramref name="count"/>, <paramref name="callback"/>): the callback run
 	/// on every <paramref name="count"/>th interrupt from now, after the slots taken before it
 	/// (docs/es1/simulation/timer.md#callbacks). Returns the slot + 1. <c>Time_SimClockTimerTick</c>, slot 0 in retail,

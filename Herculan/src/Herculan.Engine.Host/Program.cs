@@ -15,7 +15,8 @@ using HercWorks.Core.Io.Transform;
 // here and reuse everything below it unchanged.
 //
 // This file is the entry point alone: parse the command line, find the install, and hand over to the
-// turn that was asked for — an install (DiscInstall), a Metaltech: Earthsiege zone (Es1ZoneViewer), a movie
+// turn that was asked for — an install (DiscInstall), Metaltech: Earthsiege's shell (Es1ShellHost) or one of its
+// missions (Es1ZoneViewer), a movie
 // (MovieHost), one mission, or by default ES.EXE's loop of front end and simulator (Launcher).
 
 HostLog.Start();
@@ -81,16 +82,35 @@ if (installRoot == null) {
 	return 1;
 }
 
-// A Metaltech: Earthsiege install runs that game's mission, the part of it ported so far, and is not remembered: the
-// remembered install is the one a bare launch runs, and that is still Earthsiege 2's front end. With no mission named it
-// runs on the install's data\ files, as DBSIM.EXE does; --play and --demo play a tape, as its -p and -D do, and
+// A Metaltech: Earthsiege install is not remembered: the remembered install is the one a bare launch runs, and that is
+// still Earthsiege 2's front end. With no mission named and none of --play, --demo, --record and --sim it opens the
+// shell, GO.EXE, with GO.EXE's own switches. A named mission loads as a single mission and runs the simulator; --sim
+// runs it on the install's data\ files, as DBSIM.EXE does; --play and --demo play a tape, as its -p and -D do, and
 // --record records one, as its -r does.
 if (RetailGameDetector.Detect(installRoot) == RetailGame.Earthsiege1) {
-	return Es1ZoneViewer.Run(installRoot, options.MissionPath, options.Es1.ToOverrides(), options.PlayTape, options.DemoTape,
+	var es1 = options.Es1;
+	bool simulator = options.MissionPath != null || options.PlayTape != null || options.DemoTape || options.RecordTape != null
+		|| es1.Simulator;
+	if (!simulator) {
+		if (es1.Staged) {
+			HostLog.Fail($"--theater and --world stage the simulator: add {Es1Options.SimulatorFlag} or name a mission.");
+			return 1;
+		}
+
+		return Herculan.Es1.Shell.Es1ShellHost.Run(installRoot, es1.ShellArguments, imguiFontPath, imguiItalicFontPath,
+			options.ScreenshotPath);
+	}
+
+	if (es1.ShellArguments.Count > 0) {
+		HostLog.Fail($"{es1.ShellArguments[0]} is a switch of GO.EXE's shell, which does not run with the simulator.");
+		return 1;
+	}
+
+	return Es1ZoneViewer.Run(installRoot, options.MissionPath, es1.ToOverrides(), options.PlayTape, options.DemoTape,
 		options.RecordTape);
 }
-if (options.Es1.Staged) {
-	HostLog.Fail("--theater and --world are for a Metaltech: Earthsiege install.");
+if (options.Es1.Staged || options.Es1.Simulator || options.Es1.ShellArguments.Count > 0) {
+	HostLog.Fail($"--theater, --world, {Es1Options.SimulatorFlag} and GO.EXE's switches are for a Metaltech: Earthsiege install.");
 	return 1;
 }
 

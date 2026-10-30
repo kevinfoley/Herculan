@@ -35,7 +35,7 @@ public interface IEs1WorldLayer {
 
 /// <summary>
 /// The simulator's display during a mission and the VGA memory it draws in (docs/es1/rendering/screen-pages.md#the-video-memory):
-/// a screen 640 pixels wide over the VGA's 256 KB, the four page origins, the display's page pair <c>+0x88</c>/<c>+0x8c</c>,
+/// a screen 640 pixels wide over the VGA's 256 KB, or the shell's 320 (<see cref="ShellWidth"/>), the four page origins, the display's page pair <c>+0x88</c>/<c>+0x8c</c>,
 /// its visible, source and draw pages <c>+0x34</c>, <c>+0x38</c> and <c>+0x3c</c>, and <c>VGA_8</c>'s page routines on
 /// them (docs/es1/rendering/screen-pages.md#the-simulators-own-page-routines). The monitor shows the 320 × 200 window at
 /// the start address and pan <see cref="ShowPage"/> last wrote.
@@ -51,17 +51,35 @@ public interface IEs1WorldLayer {
 /// translation 0: unclipped, at the draw page's origin.</para>
 /// </summary>
 public sealed class Es1VideoMemory {
-	/// <summary>The screen's width, <c>GLDisplay_SetAttribute</c>(display, 640, 2) in <c>Sim_StartMission</c> step 11.</summary>
+	/// <summary>The simulator's screen width, <c>GLDisplay_SetAttribute</c>(display, 640, 2) in <c>Sim_StartMission</c> step 11.</summary>
 	public const int Width = 640;
+
+	/// <summary>
+	/// The shell's screen width: <c>Shell_CreateDisplay</c> (<c>ES1GO 00045b25</c>) sets none, so the <c>VGA_8</c> mode's
+	/// 320 stands, and its four pages lie one under another (docs/es1/rendering/screen-pages.md#the-pages).
+	/// </summary>
+	public const int ShellWidth = 320;
 
 	/// <summary>The VGA's 256 KB, one pixel a byte across its four planes, where its addresses wrap.</summary>
 	public const int CellCount = 0x40000;
 
-	/// <summary>The whole rows the memory holds at 640 pixels a row, 409; the 410th is partly addressable.</summary>
-	public const int Rows = CellCount / Width;
+	/// <summary>A display of <paramref name="screenWidth"/> pixels a row: <see cref="Width"/>, the simulator's, or <see cref="ShellWidth"/>.</summary>
+	public Es1VideoMemory(int screenWidth = Width) {
+		ScreenWidth = screenWidth;
+		Rows = CellCount / screenWidth;
+		StoreRows = (CellCount + screenWidth - 1) / screenWidth;
+		Cells = new ushort[screenWidth * StoreRows];
+		_dirtyLast = StoreRows - 1;
+	}
+
+	/// <summary>The screen's width, the cells a row of the memory holds.</summary>
+	public int ScreenWidth { get; }
+
+	/// <summary>The whole rows the memory holds, 409 at 640 pixels a row; the next is partly addressable.</summary>
+	public int Rows { get; }
 
 	/// <summary>The rows <see cref="Cells"/> is laid out in, the partial last row included.</summary>
-	public const int StoreRows = (CellCount + Width - 1) / Width;
+	public int StoreRows { get; }
 
 	/// <summary>The monitor's window, one page: 320 × 200.</summary>
 	public const int PageWidth = Es1CockpitViews.ScreenWidth;
@@ -82,13 +100,13 @@ public sealed class Es1VideoMemory {
 	private int _startOffset;
 	private int _pan;
 
-	private int _dirtyFirst = 0, _dirtyLast = StoreRows - 1;
+	private int _dirtyFirst, _dirtyLast;
 
 	// The last DrawWorld whose world layer was drawn: its page, its rect held to the page, and its clip block.
 	private (int Page, int X0, int Y0, int X1, int Y1, Es1ClipBlock Clip)? _worldPass;
 
-	/// <summary>The store, <see cref="StoreRows"/> rows of <see cref="Width"/> cells, a palette index or <see cref="WorldCell"/> each, from index 0.</summary>
-	public ushort[] Cells { get; } = new ushort[Width * StoreRows];
+	/// <summary>The store, <see cref="StoreRows"/> rows of <see cref="ScreenWidth"/> cells, a palette index or <see cref="WorldCell"/> each, from index 0.</summary>
+	public ushort[] Cells { get; }
 
 	/// <summary>The world layer under the cells, or none.</summary>
 	public IEs1WorldLayer? Layer { get; set; }
@@ -127,7 +145,7 @@ public sealed class Es1VideoMemory {
 	public int MonitorStart => Wrap(_startOffset + _pan);
 
 	/// <summary>The monitor's top-left pixel as a column and row of the store.</summary>
-	public (int X, int Y) MonitorOrigin => (MonitorStart % Width, MonitorStart / Width);
+	public (int X, int Y) MonitorOrigin => (MonitorStart % ScreenWidth, MonitorStart / ScreenWidth);
 
 	/// <summary>Sets page <paramref name="page"/>'s own origin, the display's <c>+0x48</c> entry, and puts the page there.</summary>
 	public void SetPageBase(int page, int x, int y) {
@@ -334,15 +352,15 @@ public sealed class Es1VideoMemory {
 					runStart = x;
 				} else if (!kept && runStart >= 0) {
 					int start = Address(DrawPage, runStart, y);
-					keep.Add((start % Width, start / Width, x - runStart));
+					keep.Add((start % ScreenWidth, start / ScreenWidth, x - runStart));
 					runStart = -1;
 				}
 			}
 		}
 
 		int corner = Address(DrawPage, window.X0, window.Y0);
-		int left = corner % Width, top = corner / Width;
-		if (Layer != null && left + width <= Width && top + rows <= StoreRows) {
+		int left = corner % ScreenWidth, top = corner / ScreenWidth;
+		if (Layer != null && left + width <= ScreenWidth && top + rows <= StoreRows) {
 			Layer.DrawWorld(left, top, width, rows, keep);
 			_worldPass = (DrawPage, window.X0, window.Y0, x1, y1, clip);
 		}
@@ -360,8 +378,8 @@ public sealed class Es1VideoMemory {
 	public void DrawWorldView(Es1Rect rect, Es1RectView view) {
 		int width = rect.X1 - rect.X0 + 1, rows = rect.Y1 - rect.Y0 + 1;
 		int corner = Address(DrawPage, rect.X0, rect.Y0);
-		int left = corner % Width, top = corner / Width;
-		if (Layer == null || width <= 0 || rows <= 0 || left + width > Width || top + rows > StoreRows) {
+		int left = corner % ScreenWidth, top = corner / ScreenWidth;
+		if (Layer == null || width <= 0 || rows <= 0 || left + width > ScreenWidth || top + rows > StoreRows) {
 			return;
 		}
 
@@ -389,7 +407,7 @@ public sealed class Es1VideoMemory {
 		}
 
 		int address = Address(pass.Page, x, y);
-		return Layer.ObjectAt(address % Width, address / Width);
+		return Layer.ObjectAt(address % ScreenWidth, address / ScreenWidth);
 	}
 
 	/// <summary>The store's rows written since the last call, for the GPU's copy of the cells; (0, 0) for none.</summary>
@@ -410,7 +428,7 @@ public sealed class Es1VideoMemory {
 	/// <summary>The linear address of (<paramref name="x"/>, <paramref name="y"/>) of page <paramref name="page"/>, as the row table and the pan give it, wrapped to the memory.</summary>
 	public int Address(int page, int x, int y) {
 		var origin = _pageOrigins[page];
-		return Wrap((origin.Y + y) * Width + origin.X + x);
+		return Wrap((origin.Y + y) * ScreenWidth + origin.X + x);
 	}
 
 	private static int Wrap(int address) {
@@ -420,7 +438,7 @@ public sealed class Es1VideoMemory {
 
 	private void Write(int address, ushort value) {
 		Cells[address] = value;
-		int row = address / Width;
+		int row = address / ScreenWidth;
 		_dirtyFirst = Math.Min(_dirtyFirst, row);
 		_dirtyLast = Math.Max(_dirtyLast, row);
 	}
@@ -433,12 +451,12 @@ public sealed class Es1VideoMemory {
 
 		while (length > 0) {
 			int run = Math.Min(length, Math.Min(RunLeft(source), RunLeft(target)));
-			Layer.Copy(source % Width, source / Width, target % Width, target / Width, run, 1);
+			Layer.Copy(source % ScreenWidth, source / ScreenWidth, target % ScreenWidth, target / ScreenWidth, run, 1);
 			source = Wrap(source + run);
 			target = Wrap(target + run);
 			length -= run;
 		}
 	}
 
-	private static int RunLeft(int address) => Math.Min(Width - address % Width, CellCount - address);
+	private int RunLeft(int address) => Math.Min(ScreenWidth - address % ScreenWidth, CellCount - address);
 }

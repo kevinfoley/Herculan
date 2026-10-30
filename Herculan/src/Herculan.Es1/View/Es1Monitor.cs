@@ -25,7 +25,7 @@ public sealed class Es1Monitor : IEs1WorldLayer, IDisposable {
 
 	/// <summary>Becomes <paramref name="display"/>'s world layer.</summary>
 	public Es1Monitor(GL gl, Es1VideoMemory display) {
-		_surface = new IndexedWorldSurface(gl, Es1VideoMemory.Width, Es1VideoMemory.StoreRows);
+		_surface = new IndexedWorldSurface(gl, display.ScreenWidth, display.StoreRows);
 		Display = display;
 		display.Layer = this;
 	}

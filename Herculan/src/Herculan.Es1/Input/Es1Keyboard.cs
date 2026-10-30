@@ -4,16 +4,16 @@ namespace Herculan.Es1.Input;
 public delegate int Es1KeySubscriber(ushort code);
 
 /// <summary>
-/// ES1's keyboard library as the simulator installs it, mode <c>0x10000</c>: each set-1 byte the keyboard sends is
-/// <c>Keyboard_Dispatch</c> (<c>ES1DBSIM 0007de20</c>)'s, which makes the byte a key code with the modifier bits,
-/// updates the modifiers, and offers the code to the subscribers wanting it, newest first
-/// (docs/es1/simulation/input.md#the-keyboard and its subsections).
+/// ES1's keyboard library as the simulator installs it, mode <see cref="Int9Mode"/>, or as the shell does,
+/// <see cref="Int15Mode"/>: each set-1 byte the keyboard sends is <c>Keyboard_Dispatch</c> (<c>ES1DBSIM 0007de20</c>,
+/// <c>ES1GO 0005cde4</c>)'s, which makes the byte a key code with the modifier bits, updates the modifiers, and offers
+/// the code to the subscribers wanting it, newest first (docs/es1/simulation/input.md#the-keyboard and its subsections).
+/// The host hands each byte to <see cref="Interrupt"/>, the mode's interrupt handler.
 ///
 /// <para>Left out: the translate table (<c>Keyboard_SetTranslateTable</c>, <c>0006c289</c>), which <c>es2_xref.py</c>
-/// finds no call to, and the <c>INT 15h</c> mode with its <c>E0</c> prefix count, which the simulator's mode does not
-/// hook, so bit <c>0x8000</c> of the modifiers is always clear here. <c>Keyboard_PostCode</c>,
-/// <c>Keyboard_RemoveSubscriber</c> and <c>Keyboard_RemoveSubscriberCodes</c>, which <c>es2_xref.py</c> finds no call
-/// to either (input.md's Open), are not ported.</para>
+/// finds no call to. <c>Keyboard_PostCode</c>, <c>Keyboard_RemoveSubscriber</c> and
+/// <c>Keyboard_RemoveSubscriberCodes</c>, which <c>es2_xref.py</c> finds no call to in the simulator (input.md's Open),
+/// are not ported.</para>
 /// </summary>
 public sealed class Es1Keyboard {
 	/// <summary>A subscriber's answer that ends the walk.</summary>
@@ -40,18 +40,80 @@ public sealed class Es1Keyboard {
 	private readonly uint[] _codeMasks = new uint[256];
 
 	/// <summary>
-	/// <c>Keyboard_Ctor</c> (<c>0006c600</c>) with the mode <c>0x10000</c>: <c>Keyboard_SetMode</c>'s seed of the
-	/// modifiers from <paramref name="biosShiftFlags"/>, then <see cref="Queue"/>'s subscriber as the first, wanting no
-	/// codes yet.
+	/// The modes <c>Keyboard_SetMode</c> hooks: <c>INT 9</c>, the simulator's, and <c>INT 15h</c> function <c>0x4f</c>, the
+	/// shell's (docs/es1/simulation/input.md#installing--keyboard_ctor-0006c600).
+	/// </summary>
+	public const int Int9Mode = 0x10000, Int15Mode = 0x20000;
+
+	/// <summary>The byte the keyboard sends before an extended key's.</summary>
+	public const byte ExtendedPrefix = 0xe0;
+
+	/// <summary>The modifier bit set while <see cref="PrefixCount"/> is not 0: the key after an <c>E0</c>.</summary>
+	public const ushort ExtendedBit = 0x8000;
+
+	/// <summary>
+	/// <c>Keyboard_Ctor</c> (<c>0006c600</c>) with <paramref name="mode"/>: <c>Keyboard_SetMode</c>'s seed of the
+	/// modifiers from <paramref name="biosShiftFlags"/>, its prefix count cleared, then <see cref="Queue"/>'s subscriber
+	/// as the first, wanting no codes yet.
 	/// </summary>
 	/// <param name="biosShiftFlags">The shift-flag byte the BIOS's <c>INT 16h</c> function 2 answers.</param>
-	public Es1Keyboard(byte biosShiftFlags) {
+	/// <param name="mode"><see cref="Int9Mode"/> or <see cref="Int15Mode"/>.</param>
+	public Es1Keyboard(byte biosShiftFlags, int mode = Int9Mode) {
+		if (mode is not (Int9Mode or Int15Mode)) {
+			throw new ArgumentOutOfRangeException(nameof(mode));
+		}
+
+		Mode = mode;
 		SeedModifiers(biosShiftFlags);
 		AddSubscriber(QueueSubscriber, ReadOnlySpan<byte>.Empty);
 	}
 
+	/// <summary>The mode the keyboard was installed in, kept at the keyboard input device's <c>+9</c>.</summary>
+	public int Mode { get; }
+
 	/// <summary><c>Keyboard_Modifiers</c> (<c>0009b6ae</c>): the BIOS's shift flags in the low byte, the code's bits in the high.</summary>
 	public ushort Modifiers { get; private set; }
+
+	/// <summary>
+	/// <c>Keyboard_PrefixCount</c> (<c>ES1DBSIM 0009b6b0</c>, <c>ES1GO 0007f644</c>): the <c>INT 15h</c> handler's count
+	/// of an <c>E0</c> prefix, 1 for the key after one and 0 otherwise. The <c>INT 9</c> handler leaves it 0.
+	/// </summary>
+	public int PrefixCount { get; private set; }
+
+	/// <summary>
+	/// Where the <c>INT 15h</c> handler lets the BIOS have a byte, the carry flag set on its return: an <c>E0</c>, a byte
+	/// no subscriber claimed, or the <c>E0</c> put in place of a claimed extended key's byte. None drops it.
+	/// </summary>
+	public Action<byte>? Bios { get; set; }
+
+	/// <summary>
+	/// The mode's interrupt handler on one byte from the keyboard (docs/es1/simulation/input.md#a-key--keyboard_int9handler-0007dde4-and-keyboard_dispatch-0007de20).
+	/// <see cref="Int9Mode"/>'s, <c>Keyboard_Int9Handler</c>, dispatches it and drops the answer. <see cref="Int15Mode"/>'s,
+	/// the handler at <c>ES1GO 0005cd10</c>, adds 2 to <see cref="PrefixCount"/> for an <c>E0</c> and dispatches any other
+	/// byte, then halves the count; it lets the BIOS have an <c>E0</c> and a byte the dispatch answers 0 for, and for a
+	/// claimed byte the bit the halving shifted out picks between the BIOS having an <c>E0</c> instead and having nothing.
+	/// </summary>
+	public void Interrupt(byte scancode) {
+		if (Mode == Int9Mode) {
+			Dispatch(scancode);
+			return;
+		}
+
+		if (scancode == ExtendedPrefix) {
+			PrefixCount = (PrefixCount + 2) >> 1;
+			Bios?.Invoke(scancode);
+			return;
+		}
+
+		int answer = Dispatch(scancode);
+		bool afterPrefix = (PrefixCount & 1) != 0;
+		PrefixCount >>= 1;
+		if (answer == 0) {
+			Bios?.Invoke(scancode);
+		} else if (afterPrefix) {
+			Bios?.Invoke(ExtendedPrefix);
+		}
+	}
 
 	/// <summary>The keyboard's queue, <c>KeyQueue</c>.</summary>
 	public Es1KeyQueue Queue { get; } = new();
@@ -117,12 +179,14 @@ public sealed class Es1Keyboard {
 	}
 
 	/// <summary>
-	/// <c>Keyboard_Dispatch</c> (<c>0007de20</c>) on one byte from the keyboard: the code is the byte or'd with the
-	/// modifiers' high byte as it stood before the byte; a modifier key then updates the modifiers; and the code goes
-	/// to each subscriber wanting its low byte, newest first, while they answer <see cref="PassOn"/>. Answers 1 when
-	/// one claimed it and 0 when none did, which the <c>INT 9</c> handler drops.
+	/// <c>Keyboard_Dispatch</c> (<c>0007de20</c>) on one byte from the keyboard: <see cref="ExtendedBit"/> set while
+	/// <see cref="PrefixCount"/> is not 0 and cleared otherwise; the code is the byte or'd with the modifiers' high byte as
+	/// it stood before the byte; a modifier key then updates the modifiers; and the code goes to each subscriber wanting its
+	/// low byte, newest first, while they answer <see cref="PassOn"/>. Answers 1 when one claimed it and 0 when none did,
+	/// which the <c>INT 9</c> handler drops.
 	/// </summary>
 	public int Dispatch(byte scancode) {
+		Modifiers = (ushort)(PrefixCount != 0 ? Modifiers | ExtendedBit : Modifiers & ~ExtendedBit);
 		ushort code = (ushort)(scancode | (Modifiers & 0xff00));
 		UpdateModifiers(scancode);
 

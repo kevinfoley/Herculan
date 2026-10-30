@@ -79,8 +79,10 @@ static class HostArguments {
 		  --record <tape>             record the mission's input to <tape>.tap
 		  --own-world                 a named .MSN mission plays its own theater and time of day
 
-		Metaltech: Earthsiege (an install holding GO.EXE loads the named <mission> as a single mission into DATA,
-		or runs on the DATA files it holds)
+		Metaltech: Earthsiege (an install holding GO.EXE opens its shell, or with a named <mission> loads it as a
+		single mission into DATA and runs the simulator)
+		  --sim                       the simulator on the DATA files the install holds, without the shell
+		  -A  -C  -M  -S  -X          GO.EXE's own switches, handed to its shell
 		  --theater <0-3>             header word 0: desert, temper, ice, urban, over DATA\script.dat's
 		  --world <0-2> <0-1>         header words 9 and 8, the palette and world file, over DATA\script.dat's
 

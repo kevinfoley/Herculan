@@ -405,6 +405,14 @@ sealed class HostOptions {
 					options.Es1.WorldDetail = detail;
 				}
 				options.Es1.Staged = true;
+			} else if (args[i] == Es1Options.SimulatorFlag) {
+				// Metaltech: Earthsiege only: the simulator on the install's data\ files, as DBSIM.EXE runs on what the shell
+				// left there, without the shell, which a bare run opens. An engine aid.
+				options.Es1.Simulator = true;
+			} else if (Es1Options.IsShellSwitch(args[i])) {
+				// Metaltech: Earthsiege only: one of GO.EXE's own switches, -A, -C, -M, -S, -X or -eggplant, handed to its shell
+				// as retail's command line gives them (Es1ShellSwitches).
+				options.Es1.ShellArguments.Add(args[i]);
 			} else if (args[i] == "--install-disc-files") {
 				// Also copy what retail always reads from the disc, as the install window's box does. See RetailInstaller.Plan.
 				options.InstallDiscFiles = true;
@@ -447,10 +455,28 @@ sealed class ShellOptions {
 	public bool Movies { get; set; } = true;
 }
 
-/// <summary>The flags only a Metaltech: Earthsiege install takes. Each sets <see cref="Staged"/>.</summary>
+/// <summary>The flags only a Metaltech: Earthsiege install takes.</summary>
 sealed class Es1Options {
+	/// <summary>The flag that runs the simulator on the install's <c>data\</c> files without the shell.</summary>
+	public const string SimulatorFlag = "--sim";
+
 	/// <summary>Whether <c>--theater</c> or <c>--world</c> was given, which an Earthsiege 2 install refuses.</summary>
 	public bool Staged { get; set; }
+
+	/// <summary>Whether <see cref="SimulatorFlag"/> was given.</summary>
+	public bool Simulator { get; set; }
+
+	/// <summary>The arguments handed to <c>GO.EXE</c>'s shell, in their order on the command line.</summary>
+	public List<string> ShellArguments { get; } = [];
+
+	/// <summary>
+	/// Whether <paramref name="argument"/> is one of <c>GO.EXE</c>'s switches as the host takes them: a single <c>-</c>
+	/// and a letter (<c>--</c> opens the host's own flags), or <c>/</c> and a letter alone, since a longer <c>/</c> argument
+	/// is a path. Retail's parser reads only the letter after either (<c>Es1ShellSwitches</c>).
+	/// </summary>
+	public static bool IsShellSwitch(string argument) =>
+		(argument.Length >= 2 && argument[0] == '-' && argument[1] != '-' && char.IsLetter(argument[1]))
+		|| (argument.Length == 2 && argument[0] == '/' && char.IsLetter(argument[1]));
 	public int? Theater { get; set; }
 	public int? WorldVariant { get; set; }
 	public int? WorldDetail { get; set; }

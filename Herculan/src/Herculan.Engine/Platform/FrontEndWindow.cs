@@ -101,6 +101,9 @@ public sealed class FrontEndWindow : IDisposable {
 
 	public Vector2D<int> FramebufferSize => _window.FramebufferSize;
 
+	/// <inheritdoc cref="EngineWindow.ClientSize"/>
+	public Vector2D<int> ClientSize => _window.ClientSize;
+
 	/// <summary>Whether the pointer is over the menu bar or one of its windows.</summary>
 	public bool ImGuiWantsMouse => _imgui != null && ImGui.GetIO().WantCaptureMouse;
 
@@ -173,12 +176,9 @@ public sealed class FrontEndWindow : IDisposable {
 	}
 
 	/// <summary>
-	/// VSHELL's Display_ToggleFullScreen (00407085). Retail sets an exclusive 640x480 8-bit display mode with the window's frame pushed
-	/// off the screen, confines the pointer to the screen and centres it; going back releases DirectDraw,
-	/// which restores the desktop's mode, and centres the window. Here full screen covers the monitor at
-	/// its current mode (EngineWindow.ToggleFullScreen), with the canvas scaled into it as it is in a
-	/// window — a divergence the user chose, so that no display mode changes. The pointer is confined and
-	/// centred as retail's is.
+	/// The front end into full screen or out of it: full screen covers the monitor at its current mode
+	/// (<see cref="EngineWindow.ToggleFullScreen(IMouse?)"/>), with the canvas scaled into it as it is in a window, so that
+	/// no display mode changes, and the pointer confined and centred. Each caller cites the retail toggle it stands for.
 	/// </summary>
 	public void ToggleFullScreen() => _window.ToggleFullScreen(Mouse);
 

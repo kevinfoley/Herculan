@@ -13,8 +13,10 @@ namespace Herculan.Es1.Input;
 /// order the host reports them, from the host's key events, so a press shorter than a host frame still arrives. The
 /// byte is <see cref="TapeKeys.KeysOf"/> reversed, which gives the grey arrows and editing keys the keypad's codes,
 /// with the other keys ES1 folds onto a plain one: keypad <c>Enter</c> and <c>/</c>, and the right <c>Ctrl</c> and
-/// <c>Alt</c>. A grey key sends its plain key's byte only: ES1 dispatches the <c>E0</c> prefix as a code nothing wants
-/// (input.md's "Extended keys"), so it is not sent.</para>
+/// <c>Alt</c>. To the simulator's <c>INT 9</c> keyboard a grey key sends its plain key's byte only: ES1 dispatches the
+/// <c>E0</c> prefix as a code nothing wants (input.md's "Extended keys"), so it is not sent. To the shell's <c>INT 15h</c>
+/// keyboard, whose handler counts the prefix (<see cref="Es1Keyboard.Interrupt"/>), the grey key's bytes follow an
+/// <c>E0</c> (<see cref="SendsExtendedPrefix"/>).</para>
 ///
 /// <para>A held key repeats as the keyboard's typematic does: the key pressed last sends its make byte again after the
 /// host's repeat delay and then at its rate (<see cref="KeyRepeat.SystemTypematic"/>), until it goes up, since ES1 is
@@ -39,9 +41,22 @@ public sealed class Es1HostKeyboard {
 		_typematic = typematic;
 	}
 
-	/// <summary>Sends to <paramref name="keyboard"/> at the host's own repeat delay and rate.</summary>
-	public Es1HostKeyboard(Es1Keyboard keyboard) : this(b => keyboard.Dispatch(b), KeyRepeat.SystemTypematic()) {
+	/// <summary>
+	/// Sends to <paramref name="keyboard"/>'s interrupt handler at the host's own repeat delay and rate, with the
+	/// <c>E0</c> prefix when the keyboard is in <see cref="Es1Keyboard.Int15Mode"/>.
+	/// </summary>
+	public Es1HostKeyboard(Es1Keyboard keyboard) : this(keyboard.Interrupt, KeyRepeat.SystemTypematic()) {
+		SendsExtendedPrefix = keyboard.Mode == Es1Keyboard.Int15Mode;
 	}
+
+	/// <summary>The grey keys, which a keyboard sends after an <c>E0</c>.</summary>
+	private static readonly HashSet<Key> ExtendedKeys = [
+		Key.Up, Key.Down, Key.Left, Key.Right, Key.Home, Key.End, Key.PageUp, Key.PageDown, Key.Insert, Key.Delete,
+		Key.KeypadEnter, Key.KeypadDivide, Key.ControlRight, Key.AltRight,
+	];
+
+	/// <summary>Whether a grey key's make and break bytes each follow an <c>E0</c>.</summary>
+	public bool SendsExtendedPrefix { get; init; }
 
 	/// <summary>The set-1 make byte <paramref name="key"/> sends, or null for a key with none.</summary>
 	public static byte? MakeCodeOf(Key key) => MakeCodes.TryGetValue(key, out byte code) ? code : null;
@@ -70,7 +85,7 @@ public sealed class Es1HostKeyboard {
 
 		_repeating = key;
 		_untilRepeat = _typematic.Delay;
-		_send(make);
+		Send(key, make);
 	}
 
 	/// <summary>A host key-up: the break byte, and the typematic stopped when this key had it.</summary>
@@ -83,7 +98,7 @@ public sealed class Es1HostKeyboard {
 			_repeating = null;
 		}
 
-		_send((byte)(make | Es1Keyboard.BreakBit));
+		Send(key, (byte)(make | Es1Keyboard.BreakBit));
 	}
 
 	/// <summary>One host frame of the typematic: each repeat that fell due sends the repeating key's make byte.</summary>
@@ -96,7 +111,7 @@ public sealed class Es1HostKeyboard {
 		_untilRepeat -= deltaSeconds;
 		while (_untilRepeat <= 0) {
 			_untilRepeat += _typematic.Interval;
-			_send(make);
+			Send(key, make);
 		}
 	}
 
@@ -121,6 +136,15 @@ public sealed class Es1HostKeyboard {
 		return (byte)((device.IsKeyPressed(Key.ShiftRight) ? 0x01 : 0) | (device.IsKeyPressed(Key.ShiftLeft) ? 0x02 : 0)
 			| (device.IsKeyPressed(Key.ControlLeft) || device.IsKeyPressed(Key.ControlRight) ? 0x04 : 0)
 			| (device.IsKeyPressed(Key.AltLeft) || device.IsKeyPressed(Key.AltRight) ? 0x08 : 0));
+	}
+
+	// One of the key's bytes, after an E0 for a grey key when SendsExtendedPrefix is set.
+	private void Send(Key key, byte value) {
+		if (SendsExtendedPrefix && ExtendedKeys.Contains(key)) {
+			_send(Es1Keyboard.ExtendedPrefix);
+		}
+
+		_send(value);
 	}
 
 	private void OnKeyDown(IKeyboard device, Key key, int scancode) => KeyDown(key);
