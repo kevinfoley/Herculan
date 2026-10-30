@@ -6,7 +6,7 @@ namespace Herculan.Es1.Shell;
 
 /// <summary>
 /// <c>Shell_ProcessMissionResults</c> (<c>00038eb5</c>) in <c>Shell_Mode</c> 0, a single mission's way back
-/// (docs/es1/formats/bst-battle-sets.md#after-a-mission), and the values it leaves for the debriefing's results panel
+/// (docs/es1/shell/between-missions.md#after-a-mission), and the values it leaves for the debriefing's results panel
 /// (docs/es1/shell/debriefing.md#the-results-panel): the salvage, the salvage pairs, the three totals and the lost pilots'
 /// count. The outcome goes to <see cref="Es1ShellMission.Outcome"/>, the flags to <see cref="Es1ShellMission.Flags"/>,
 /// the record and the hangar to <see cref="Es1ShellMission.Record"/> and <see cref="Es1ShellMission.Hangar"/>; the

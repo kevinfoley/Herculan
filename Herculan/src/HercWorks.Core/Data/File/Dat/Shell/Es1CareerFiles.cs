@@ -164,6 +164,119 @@ public class Es1InventoryRecord {
 }
 
 /// <summary>
+/// A weapon stock as the shell holds it, one of the 41 the dwords from <c>ES1GO 000aad62</c> point to, which
+/// <c>00027c4c</c> makes at the start-up with 17 slots each (<c>00027d0d</c>(stock, <c>0x11</c>)): per slot a stack of words
+/// (docs/es1/formats/car-hercs-and-stock.md#the-weapon-stock). Its file form is <see cref="Es1Inventory"/>, read with
+/// <see cref="Read"/> and written with <see cref="ToFile"/>. The class is this engine's form of the linked stacks; every
+/// member is retail's.
+/// </summary>
+public class Es1WeaponStock {
+	/// <summary>The slots <c>00027c4c</c> gives each stock.</summary>
+	public const int SlotCount = 17;
+
+	/// <summary>Per slot, its stack's words from the head.</summary>
+	public List<short>[] Slots { get; } = Enumerable.Range(0, SlotCount).Select(_ => new List<short>()).ToArray();
+
+	/// <summary>
+	/// <c>Inventory_Read</c> (<c>00027e3c</c>) of <paramref name="file"/>: every stack emptied with <c>WordStack_Clear</c>
+	/// (<see cref="ClearStack"/>), then each record's words pushed onto its slot's stack in file order, so the last is the
+	/// head. Retail pushes with no bounds test on the slot; a record outside the 17 is dropped here, an engine guard.
+	/// <c>Inventory_TraceSlots</c>, before and after, calls a function that does nothing.
+	/// </summary>
+	public void Read(Es1Inventory file) {
+		foreach (var stack in Slots) {
+			ClearStack(stack);
+		}
+
+		foreach (var record in file.Records) {
+			if (record.Slot is >= 0 and < SlotCount) {
+				foreach (short value in record.Values) {
+					Slots[record.Slot].Insert(0, value);
+				}
+			}
+		}
+	}
+
+	/// <summary>
+	/// <c>Inventory_Write</c> (<c>00027f88</c>)'s file: the slot count of records, every slot in order with its words from
+	/// the head (<c>WordStack_Write</c>, <c>00040ca2</c>), so a write read back reverses each slot's words.
+	/// </summary>
+	public Es1Inventory ToFile() => new() {
+		Records = Slots.Select((stack, slot) => new Es1InventoryRecord { Slot = (short)slot, Values = stack.ToArray() }).ToArray(),
+	};
+
+	/// <summary>
+	/// <c>WordStack_Clear</c> (<c>00040d19</c>): pops until a pop returns −1, which <c>WordStack_Pop</c> (<c>00040bfd</c>)
+	/// returns for an empty stack, so a stored −1 also ends it and leaves the words under it.
+	/// </summary>
+	private static void ClearStack(List<short> stack) {
+		while (stack.Count > 0) {
+			short word = stack[0];
+			stack.RemoveAt(0);
+			if (word == -1) {
+				return;
+			}
+		}
+	}
+}
+
+/// <summary>
+/// FILE - ES1's <c>car\CAR_</c><i>n</i><c>.CAR</c>, a career file in the install: the roster's header and its 41 career
+/// records, each followed by its weapon stock (docs/es1/shell/career.md#the-files). Read by
+/// <see cref="Io.Transform.Shell.Es1CareerFileTransformer"/>.
+/// </summary>
+public class Es1CareerFile {
+	/// <summary>The records a roster holds: the career and its 40 backups.</summary>
+	public const int RecordCount = 41;
+
+	/// <summary>The name groups, three rows of four.</summary>
+	public const int NameGroupCount = 12;
+
+	/// <summary>The roster's byte <c>+0</c>.</summary>
+	public byte Byte0 { get; set; }
+
+	/// <summary>The roster's word <c>+5</c>, the battle set.</summary>
+	public short BattleSet { get; set; }
+
+	/// <summary>The roster's 12 words from <c>+0xb</c>, the squadmates' name groups of <c>car\names.dat</c>.</summary>
+	public short[] NameGroups { get; set; } = new short[NameGroupCount];
+
+	/// <summary>The 41 records, record 0 the career.</summary>
+	public Es1CareerFileRecord[] Records { get; set; } = [];
+
+	/// <summary>
+	/// Bytes after the 41 records, which <c>Career_LoadCurrent</c> (<c>ES1GO 00016c1e</c>) does not read: what a longer
+	/// earlier file left, since <c>Career_New</c>'s <c>FileRWStream</c> does not truncate. Empty in a file
+	/// <c>Career_Save</c> wrote, which deletes the file first.
+	/// </summary>
+	public byte[] Tail { get; set; } = [];
+}
+
+/// <summary>One record of an <see cref="Es1CareerFile"/>: a <c>0x1f7</c>-byte career record and the stock after it.</summary>
+public class Es1CareerFileRecord {
+	public Es1CareerRecord Record { get; set; } = new();
+
+	/// <summary>The record's weapon stock, as <c>Inventory_Write</c> writes it.</summary>
+	public Es1Inventory Stock { get; set; } = new();
+}
+
+/// <summary>
+/// FILE - ES1's <c>car\CAR_</c><i>n</i><c>.MEC</c>, a career's hangar file in the install: a hangar list for each of the
+/// roster's 41 records, list <i>n</i> record <i>n</i>'s (docs/es1/shell/career.md#the-files). Read by
+/// <see cref="Io.Transform.Shell.Es1CareerHangarFileTransformer"/>.
+/// </summary>
+public class Es1CareerHangarFile {
+	/// <summary>The 41 lists.</summary>
+	public Es1HercList[] Lists { get; set; } = [];
+
+	/// <summary>
+	/// Bytes after the 41 lists, which no reader reaches: what a longer earlier file left, since <c>Career_New</c>'s
+	/// <c>FileRWStream</c> does not truncate.
+	/// </summary>
+	public byte[] Tail { get; set; } = [];
+}
+
+/// <summary>
 /// FILE - ES1's <c>car\NAMES.LOG</c> in <c>SHELL0.VOL</c>: the careers log, a count, the current entry and that many
 /// 100-byte entries each naming a career and its two files (docs/es1/formats/career-log-and-player-mec.md#the-careers-log).
 /// Read by <see cref="Io.Transform.Shell.Es1CareerLogTransformer"/>.
@@ -198,6 +311,12 @@ public class Es1CareerLogEntry {
 
 	/// <summary>The word <c>+0x40</c>, which <c>CareerLog_FindOrAdd</c> (<c>ES1GO 00018099</c>) matches with the name.</summary>
 	public short Word { get; set; }
+
+	/// <summary>A NUL-terminated buffer's text up to its NUL, or the whole buffer with none.</summary>
+	public static string Text(byte[] buffer) {
+		int end = Array.IndexOf(buffer, (byte)0);
+		return System.Text.Encoding.Latin1.GetString(buffer, 0, end < 0 ? buffer.Length : end);
+	}
 
 	/// <summary>The career file's path, <c>CAR\CAR_</c><i>n</i><c>.CAR</c>, <c>+0x42</c>.</summary>
 	public byte[] CareerFile { get; set; } = new byte[PathLength];

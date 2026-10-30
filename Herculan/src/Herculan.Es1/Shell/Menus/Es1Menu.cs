@@ -85,8 +85,12 @@ public class Es1Menu {
 			MakeInactive(window, window.FindControlById(ResumeButton));
 		}
 
-		// PLACEHOLDER: Menu_Open's control changes for the menus 1310, 1920, 1200, 2000, 1610, 1800, 1820, 1700 and 1900 (the
-		// last after the focus below) are their modules'; no ported screen opens them.
+		if (number == Es1CareerMenu.Screen) {
+			Es1CareerMenu.SetButtons(window, Context.Data, MakeInactive);
+		}
+
+		// PLACEHOLDER: Menu_Open's control changes for the menus 1310, 1920, 2000, 1610, 1800, 1820, 1700 and 1900 (the last
+		// after the focus below) are their modules'; no ported screen opens them.
 
 		// Retail points at control 0 of a window with none, reading an empty slot; here such a window keeps the pointer, an
 		// engine guard.
@@ -220,9 +224,7 @@ public sealed class Es1MainMenu : Es1Menu {
 				mission.Mode = 1;
 				screens.ReturnScreen = Es1ShellScreens.MainMenuScreen;
 				mission.MissionKind = -1;
-				// PLACEHOLDER: the career's part from 0002a78e (docs/es1/shell/main-menu.md#resume): Career_LoadCurrent once a
-				// session, the target turned into the career's screen, 1250, 1260 or 5555, Career_StartMission and
-				// Shell_PrepareMission, and anm\esiege3.anm with 0007fcd7 1; S3's. Until it lands the target stays 1700.
+				ResumeCareer(ref message);
 				break;
 			case SingleMission:
 				// 0002a963.
@@ -244,6 +246,58 @@ public sealed class Es1MainMenu : Es1Menu {
 				screens.QuitFlag = true;
 				break;
 		}
+	}
+
+	/// <summary>
+	/// RESUME's career part from <c>0002a78e</c> (docs/es1/shell/main-menu.md#resume), on the roster and its current record:
+	/// while no career is loaded, <c>Career_LoadCurrent</c> (<see cref="Es1CareerRoster.LoadCurrent"/>), then
+	/// <see cref="Es1CareerRoster.PeekNextCampaign"/>'s low byte <c>0xff</c> or <c>0x63</c>, the career lost or won, ends the
+	/// case with the target 1260 and <see cref="Es1ShellScreens.ReturnScreen"/> 1000; otherwise the target the record's word
+	/// <c>+4</c>, the career's mission loaded unless that is 1710 or the player's pilot is lost, <c>Career_BackupLine</c>
+	/// the last backup's line and <c>Career_Loaded</c> set. Then, with the player's pilot lost, the target 1250 and the
+	/// return screen 1000; otherwise the target the record's <c>+4</c>, 5555 for 1710 when the record's word <c>+0xa8</c>
+	/// is not −1, and <c>anm\esiege3.anm</c> to play after the next screen.
+	/// </summary>
+	private void ResumeCareer(ref Es1MenuMessage message) {
+		var screens = Context.Screens;
+		var roster = Context.Mission.Roster;
+		if (!roster.Loaded) {
+			// 0002a79b.
+			roster.LoadCurrent();
+			if ((roster.PeekNextCampaign(roster.CurrentRecord) & 0xff) is 0xff or 0x63) {
+				screens.ReturnScreen = Es1ShellScreens.MainMenuScreen;
+				message = message with { Target = Es1KIAWarningAlert.CareerOverScreen };
+				return;
+			}
+
+			message = message with { Target = roster.CurrentRecord.Word4 };
+			if (message.Target != Es1CareerMenu.ServiceBay && Es1CareerRoster.PlayerCondition(roster.CurrentRecord) != 0) {
+				// PLACEHOLDER: Career_StartMission (00016e93)(Career_Roster, 0), the career's mission load, P10's.
+			}
+
+			roster.BackupLine = (short)(roster.CountUsedRecords() - 1);
+			roster.Loaded = true;
+		}
+
+		// 0002a878.
+		var record = roster.CurrentRecord;
+		if (Es1CareerRoster.PlayerCondition(record) == 0) {
+			screens.ReturnScreen = Es1ShellScreens.MainMenuScreen;
+			message = message with { Target = Es1KIAWarningAlert.KilledScreen };
+			return;
+		}
+
+		message = message with { Target = record.Word4 };
+		if (message.Target != Es1CareerMenu.ServiceBay) {
+			// PLACEHOLDER: Shell_PrepareMission (0002a523) of the career's mission, which Career_StartMission loads; P10's.
+		}
+
+		if (message.Target == Es1CareerMenu.ServiceBay && record.Equipment.LastKind != -1) {
+			message = message with { Target = Es1CareerMenu.TechRelease };
+		}
+
+		screens.AnmName = MissionAnm;
+		screens.AnmMode = 1;
 	}
 
 	/// <summary>Slot <c>+4</c>, <c>MainMenu_Dtor</c> (<c>0003b771</c>): its vtable, then <c>Menu</c>'s, stored and the menu freed.</summary>

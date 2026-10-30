@@ -3,13 +3,16 @@ using HercWorks.Core.Data.File.Dat.Shell;
 namespace HercWorks.Core.Io.Transform.Shell;
 
 /// <summary>
-/// Reads and writes ES1's <c>car\CAR_INIT.DAT</c> and <c>car\SM_INIT.DAT</c> (<see cref="Es1HercList"/>), as <c>Hangar_Read</c>
-/// (<c>ES1GO 00028c50</c>) and <c>Herc_ReadFromStream</c> (<c>0002352f</c>) read them, and <c>car\sm_play.mec</c>, which
-/// <c>Hangar_Write</c> (<c>00029107</c>) writes in the same layout from the list <see cref="Es1Hangar.SingleMissionSave"/>
-/// makes.
+/// The parts ES1's career files share, each read and written as the shell's functions read and write it: a HERC list
+/// (<c>Hangar_Read</c>, <c>Hangar_Write</c>), a career record (written from memory whole) and a weapon stock
+/// (<c>Inventory_Read</c>, <c>Inventory_Write</c>).
 /// </summary>
-public class Es1HercListTransformer : Es1WalkedFileTransformer<Es1HercList> {
-	protected override Es1HercList ReadFile() {
+public abstract class Es1CareerDataTransformer<T> : Es1WalkedFileTransformer<T> where T : class {
+	/// <summary>
+	/// A HERC list at the cursor, as <c>Hangar_Read</c> (<c>ES1GO 00028c50</c>) and <c>Herc_ReadFromStream</c>
+	/// (<c>0002352f</c>) read it (docs/es1/formats/car-hercs-and-stock.md#the-herc-lists).
+	/// </summary>
+	protected Es1HercList ReadHercList() {
 		var list = new Es1HercList {
 			SlotCount = ReadInt16(),
 			Word1 = ReadInt16(),
@@ -31,7 +34,8 @@ public class Es1HercListTransformer : Es1WalkedFileTransformer<Es1HercList> {
 		return list;
 	}
 
-	protected override void WriteFile(BinaryWriter w, Es1HercList source) {
+	/// <summary>Writes <paramref name="source"/> in <see cref="ReadHercList"/>'s layout, its count the HERCs it holds.</summary>
+	protected static void WriteHercList(BinaryWriter w, Es1HercList source) {
 		w.Write(source.SlotCount);
 		w.Write(source.Word1);
 		w.Write(source.MarkedSlot);
@@ -44,15 +48,8 @@ public class Es1HercListTransformer : Es1WalkedFileTransformer<Es1HercList> {
 		}
 	}
 
-}
-
-/// <summary>
-/// Reads and writes an ES1 career record (<see cref="Es1CareerRecord"/>), the <c>0x1f7</c> bytes
-/// <c>SingleMission_SaveRecord</c> (<c>ES1GO 00014f54</c>) writes to <c>car\sm_play.gam</c> from memory whole and
-/// <c>SingleMission_RestoreRecord</c> (<c>00014fd6</c>) reads back (docs/es1/formats/bst-battle-sets.md#the-career-record).
-/// </summary>
-public class Es1CareerRecordTransformer : Es1WalkedFileTransformer<Es1CareerRecord> {
-	protected override Es1CareerRecord ReadFile() {
+	/// <summary>A <c>0x1f7</c>-byte career record at the cursor (docs/es1/formats/bst-battle-sets.md#the-career-record).</summary>
+	protected Es1CareerRecord ReadCareerRecord() {
 		var record = new Es1CareerRecord {
 			InUse = ReadByte(),
 			Byte1 = ReadByte(),
@@ -100,7 +97,8 @@ public class Es1CareerRecordTransformer : Es1WalkedFileTransformer<Es1CareerReco
 		return record;
 	}
 
-	protected override void WriteFile(BinaryWriter w, Es1CareerRecord source) {
+	/// <summary>Writes <paramref name="source"/> in <see cref="ReadCareerRecord"/>'s layout.</summary>
+	protected static void WriteCareerRecord(BinaryWriter w, Es1CareerRecord source) {
 		if (source.Pilots.Length != Es1CareerRecord.PilotCount || source.Flags.Length != Es1CareerRecord.FlagCount
 				|| source.Equipment.Chassis.Length != Es1EquipmentState.ChassisCount
 				|| source.Equipment.Weapons.Length != Es1EquipmentState.WeaponCount
@@ -148,14 +146,12 @@ public class Es1CareerRecordTransformer : Es1WalkedFileTransformer<Es1CareerReco
 		WriteInt16s(w, source.Flags);
 		w.Write(source.Word1F5);
 	}
-}
 
-/// <summary>
-/// Reads and writes ES1's <c>car\C_ARMORY.DAT</c> and <c>car\S_ARMORY.DAT</c> (<see cref="Es1Inventory"/>), as
-/// <c>Inventory_Read</c> (<c>ES1GO 00027e3c</c>) reads them.
-/// </summary>
-public class Es1InventoryTransformer : Es1WalkedFileTransformer<Es1Inventory> {
-	protected override Es1Inventory ReadFile() {
+	/// <summary>
+	/// A weapon stock at the cursor, as <c>Inventory_Read</c> (<c>ES1GO 00027e3c</c>) reads it
+	/// (docs/es1/formats/car-hercs-and-stock.md#the-weapon-stock).
+	/// </summary>
+	protected Es1Inventory ReadInventory() {
 		short count = ReadInt16();
 		if (count < 0) {
 			throw new InvalidDataException($"The record count is {count}.");
@@ -175,13 +171,114 @@ public class Es1InventoryTransformer : Es1WalkedFileTransformer<Es1Inventory> {
 		return new Es1Inventory { Records = records };
 	}
 
-	protected override void WriteFile(BinaryWriter w, Es1Inventory source) {
+	/// <summary>Writes <paramref name="source"/> in <see cref="ReadInventory"/>'s layout.</summary>
+	protected static void WriteInventory(BinaryWriter w, Es1Inventory source) {
 		w.Write(checked((short)source.Records.Length));
 		foreach (var record in source.Records) {
 			w.Write(record.Slot);
 			w.Write(checked((short)record.Values.Length));
 			WriteInt16s(w, record.Values);
 		}
+	}
+
+	/// <summary>The bytes from the cursor to the file's end.</summary>
+	protected byte[] ReadRest() => ReadBytes(Bytes!.Length - Index);
+}
+
+/// <summary>
+/// Reads and writes ES1's <c>car\CAR_INIT.DAT</c> and <c>car\SM_INIT.DAT</c> (<see cref="Es1HercList"/>), as <c>Hangar_Read</c>
+/// (<c>ES1GO 00028c50</c>) and <c>Herc_ReadFromStream</c> (<c>0002352f</c>) read them, and <c>car\sm_play.mec</c>, which
+/// <c>Hangar_Write</c> (<c>00029107</c>) writes in the same layout from the list <see cref="Es1Hangar.SingleMissionSave"/>
+/// makes.
+/// </summary>
+public class Es1HercListTransformer : Es1CareerDataTransformer<Es1HercList> {
+	protected override Es1HercList ReadFile() => ReadHercList();
+
+	protected override void WriteFile(BinaryWriter w, Es1HercList source) => WriteHercList(w, source);
+}
+
+/// <summary>
+/// Reads and writes an ES1 career record (<see cref="Es1CareerRecord"/>), the <c>0x1f7</c> bytes
+/// <c>SingleMission_SaveRecord</c> (<c>ES1GO 00014f54</c>) writes to <c>car\sm_play.gam</c> from memory whole and
+/// <c>SingleMission_RestoreRecord</c> (<c>00014fd6</c>) reads back (docs/es1/formats/bst-battle-sets.md#the-career-record).
+/// </summary>
+public class Es1CareerRecordTransformer : Es1CareerDataTransformer<Es1CareerRecord> {
+	protected override Es1CareerRecord ReadFile() => ReadCareerRecord();
+
+	protected override void WriteFile(BinaryWriter w, Es1CareerRecord source) => WriteCareerRecord(w, source);
+}
+
+/// <summary>
+/// Reads and writes ES1's <c>car\C_ARMORY.DAT</c> and <c>car\S_ARMORY.DAT</c> (<see cref="Es1Inventory"/>), as
+/// <c>Inventory_Read</c> (<c>ES1GO 00027e3c</c>) reads them.
+/// </summary>
+public class Es1InventoryTransformer : Es1CareerDataTransformer<Es1Inventory> {
+	protected override Es1Inventory ReadFile() => ReadInventory();
+
+	protected override void WriteFile(BinaryWriter w, Es1Inventory source) => WriteInventory(w, source);
+}
+
+/// <summary>
+/// Reads and writes ES1's career file <c>car\CAR_</c><i>n</i><c>.CAR</c> (<see cref="Es1CareerFile"/>), as
+/// <c>Career_LoadCurrent</c> (<c>ES1GO 00016c1e</c>) reads it and <c>Career_New</c> (<c>000163ac</c>) and <c>Career_Save</c>
+/// (<c>000168b0</c>) write it (docs/es1/shell/career.md#the-files). The bytes after the 41 records are kept as
+/// <see cref="Es1CareerFile.Tail"/>.
+/// </summary>
+public class Es1CareerFileTransformer : Es1CareerDataTransformer<Es1CareerFile> {
+	protected override Es1CareerFile ReadFile() {
+		var file = new Es1CareerFile { Byte0 = ReadByte(), BattleSet = ReadInt16(), NameGroups = ReadInt16s(Es1CareerFile.NameGroupCount) };
+		file.Records = new Es1CareerFileRecord[Es1CareerFile.RecordCount];
+		for (int i = 0; i < file.Records.Length; i++) {
+			file.Records[i] = new Es1CareerFileRecord { Record = ReadCareerRecord(), Stock = ReadInventory() };
+		}
+
+		file.Tail = ReadRest();
+		return file;
+	}
+
+	protected override void WriteFile(BinaryWriter w, Es1CareerFile source) {
+		if (source.NameGroups.Length != Es1CareerFile.NameGroupCount || source.Records.Length != Es1CareerFile.RecordCount) {
+			throw new InvalidDataException("A career file needs 12 name groups and 41 records.");
+		}
+
+		w.Write(source.Byte0);
+		w.Write(source.BattleSet);
+		WriteInt16s(w, source.NameGroups);
+		foreach (var record in source.Records) {
+			WriteCareerRecord(w, record.Record);
+			WriteInventory(w, record.Stock);
+		}
+
+		w.Write(source.Tail);
+	}
+}
+
+/// <summary>
+/// Reads and writes ES1's career hangar file <c>car\CAR_</c><i>n</i><c>.MEC</c> (<see cref="Es1CareerHangarFile"/>): 41 HERC
+/// lists, as <c>Hangar_ReadFromSave</c> (<c>ES1GO 00028bd6</c>) passes over and reads them and <c>Career_New</c>
+/// (<c>000163ac</c>) and <c>Career_Save</c> (<c>000168b0</c>) write them (docs/es1/shell/career.md#the-files). The bytes
+/// after the 41 lists are kept as <see cref="Es1CareerHangarFile.Tail"/>.
+/// </summary>
+public class Es1CareerHangarFileTransformer : Es1CareerDataTransformer<Es1CareerHangarFile> {
+	protected override Es1CareerHangarFile ReadFile() {
+		var lists = new Es1HercList[Es1CareerFile.RecordCount];
+		for (int i = 0; i < lists.Length; i++) {
+			lists[i] = ReadHercList();
+		}
+
+		return new Es1CareerHangarFile { Lists = lists, Tail = ReadRest() };
+	}
+
+	protected override void WriteFile(BinaryWriter w, Es1CareerHangarFile source) {
+		if (source.Lists.Length != Es1CareerFile.RecordCount) {
+			throw new InvalidDataException("A career hangar file needs 41 lists.");
+		}
+
+		foreach (var list in source.Lists) {
+			WriteHercList(w, list);
+		}
+
+		w.Write(source.Tail);
 	}
 }
 

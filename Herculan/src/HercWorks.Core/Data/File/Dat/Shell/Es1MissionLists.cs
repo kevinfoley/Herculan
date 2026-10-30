@@ -26,6 +26,52 @@ public class Es1NameList {
 /// </summary>
 public class Es1BattleSet {
 	public Es1Campaign[] Campaigns { get; set; } = [];
+
+	/// <summary>
+	/// <c>BattleSet_NextCampaignTable</c> (<c>ES1GO 0007ead0</c>): per campaign 0 to 7, the campaign after its last position
+	/// for outcome 0 and outcome 1; 99 a career won and −1 none (docs/es1/shell/between-missions.md#moving-on).
+	/// </summary>
+	public static readonly short[,] NextCampaignTable = {
+		{ 1, 2 }, { 3, 4 }, { 3, -1 }, { 5, 6 }, { 5, -1 }, { 7, -1 }, { 7, -1 }, { 99, -1 },
+	};
+
+	/// <summary>
+	/// <c>BattleSet_PeekNextCampaign</c> (<c>0001418e</c>)(set, <paramref name="outcome"/>, <paramref name="position"/>,
+	/// <paramref name="campaign"/>): 0 when the position after <paramref name="position"/> is in the campaign
+	/// (<see cref="NextPosition"/>), otherwise <see cref="NextCampaignTable"/>'s campaign; nothing written. Retail indexes the
+	/// campaigns and the table with no bounds test; a campaign outside either reads as having no positions here and an
+	/// outcome or campaign outside the table gives −1, engine guards.
+	/// </summary>
+	public short PeekNextCampaign(int outcome, short position, short campaign) =>
+		NextPosition(campaign, ref position) ? (short)0 : NextCampaign(campaign, outcome);
+
+	/// <summary>
+	/// <c>BattleSet_Advance</c> (<c>000141d0</c>)(set, <paramref name="outcome"/>, position*, campaign*): the position moved
+	/// on (<see cref="NextPosition"/>); past the campaign's last, the campaign set to <see cref="NextCampaignTable"/>'s and
+	/// the position to 0, answering true; otherwise false. Bounds as <see cref="PeekNextCampaign"/>'s.
+	/// </summary>
+	public bool Advance(int outcome, ref short position, ref short campaign) {
+		if (NextPosition(campaign, ref position)) {
+			return false;
+		}
+
+		campaign = NextCampaign(campaign, outcome);
+		position = 0;
+		return true;
+	}
+
+	/// <summary>
+	/// <c>Campaign_NextPosition</c> (<c>0001431f</c>)(campaign, position*): 1 added to the position; true when it is at least
+	/// 0 and below the campaign's position count.
+	/// </summary>
+	private bool NextPosition(short campaign, ref short position) {
+		position++;
+		int count = campaign >= 0 && campaign < Campaigns.Length ? Campaigns[campaign].Positions.Length : 0;
+		return position >= 0 && position < count;
+	}
+
+	private static short NextCampaign(short campaign, int outcome) =>
+		campaign >= 0 && campaign < NextCampaignTable.GetLength(0) && outcome is 0 or 1 ? NextCampaignTable[campaign, outcome] : (short)-1;
 }
 
 /// <summary>One campaign of a battle set: its mission positions in play order.</summary>

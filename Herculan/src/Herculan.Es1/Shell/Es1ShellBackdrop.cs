@@ -21,11 +21,19 @@ public sealed class Es1ShellBackdrop {
 	private static readonly short[] CampaignWords = [0, 1, 2, 3, 1, 2, 3, 1];
 
 	/// <summary>
-	/// The word at <c>0007ea94</c> + 2 × the current career record's campaign <c>+6</c> (docs/es1/shell/menus.md#the-backdrop).
-	/// PLACEHOLDER: the roster's records are zero in the image and only the career screens (S3's) load one, so the
-	/// campaign is taken as the zeroed record's 0, which is retail's for every session that loads no career.
+	/// <c>CareerRecord_Current</c> (<see cref="Es1ShellMission.CurrentRecord"/>), which the shell's start-up hands the
+	/// backdrop once the mission globals exist; none before, and none in mode 0 before a single mission's record is made,
+	/// which read as retail's zeroed records' campaign 0.
 	/// </summary>
-	private static short CampaignWord => CampaignWords[0];
+	public Func<HercWorks.Core.Data.File.Dat.Shell.Es1CareerRecord?>? CurrentRecord { get; set; }
+
+	/// <summary>
+	/// The word at <c>0007ea94</c> + 2 × <c>CareerRecord_Current</c>'s campaign <c>+6</c> (docs/es1/shell/menus.md#the-backdrop).
+	/// Retail indexes the eight words with no bounds test; a campaign outside them reads 0 here, an engine guard.
+	/// </summary>
+	private short CampaignWord => CurrentRecord?.Invoke()?.Campaign is { } campaign && campaign >= 0 && campaign < CampaignWords.Length
+		? CampaignWords[campaign]
+		: (short)0;
 
 	private readonly Es1VideoMemory _display;
 	private readonly GameContent _content;
@@ -142,7 +150,7 @@ public sealed class Es1ShellBackdrop {
 	/// <c>Shell_BackdropForScreen</c> (<c>00040afa</c>)(<paramref name="current"/>, <paramref name="screen"/>): the group
 	/// of the screen among the 20 numbers at <c>000821a8</c>, and <paramref name="current"/> for any other.
 	/// </summary>
-	public static short ForScreen(short current, short screen) => screen switch {
+	public short ForScreen(short current, short screen) => screen switch {
 		1000 or 1200 or 1100 or 1310 or 1320 or 9999 => 1000,
 		1490 => 7000,
 		1499 => 3000,

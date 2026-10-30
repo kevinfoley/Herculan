@@ -48,12 +48,12 @@ public static class Es1MenuBuild {
 	public const short CareerNameList = 1002;
 
 	/// <summary>
-	/// The 21 ids that <c>Menu_ListLines</c> gives lines of their own and that are not ported, of the 28 at
-	/// <c>000812f4</c>: all but 1002 and the single-mission lists of <see cref="WaTextLists"/>.
+	/// The 20 ids that <c>Menu_ListLines</c> gives lines of their own and that are not ported, of the 28 at
+	/// <c>000812f4</c>: all but 1002, 1202 and the single-mission lists of <see cref="WaTextLists"/>.
 	/// </summary>
 	private static readonly short[] OwnLinesLists = [
-		1921, 1924, 1925, 1926, 1907, 1906, 1927, 1923, 1314, 1315, 1316, 1318, 1331, 1202, 1904, 1903, 1905, 1922, 1808,
-		1809, 1223,
+		1921, 1924, 1925, 1926, 1907, 1906, 1927, 1923, 1314, 1315, 1316, 1318, 1331, 1904, 1903, 1905, 1922, 1808, 1809,
+		1223,
 	];
 
 	/// <summary>
@@ -215,15 +215,18 @@ public static class Es1MenuBuild {
 	/// <summary>
 	/// Kind 15: the lines (<see cref="ListLines"/>), then a list box, <c>MTStrListBox_Ctor</c>(0, <c>0x100</c>, 0, 0,
 	/// selection, style, id, lines, rect), added to the window: the selection 0, or for the 23 ids at <c>00081a00</c> the
-	/// one their case sets, MISSION PARAMS' lists 1116 to 1120 their word of <see cref="Es1ShellData.MissionParams"/>.
+	/// one their case sets, MISSION PARAMS' lists 1116 to 1120 their word of <see cref="Es1ShellData.MissionParams"/> and
+	/// the career list 1202 <see cref="Es1ShellData.SelectedEntry"/> (<c>0003ab5f</c>).
 	/// </summary>
 	private static void BuildList(Es1Menu menu, Es1MenuControl record, Es1Rect rect) {
 		var lines = ListLines(menu.Context, record.Id);
 		short selected = 0;
 		if (record.Id is >= FirstParamsList and <= LastParamsList) {
 			selected = menu.Context.Data.MissionParams[record.Id - FirstParamsList];
+		} else if (record.Id == Es1CareerMenu.CareerList) {
+			selected = menu.Context.Data.SelectedEntry;
 		} else if (Array.IndexOf(OwnSelectionLists, record.Id) >= 0) {
-			// PLACEHOLDER: the other 18 ids at 00081a00 build their list with a selection, and 1903 an alignment, set by their
+			// PLACEHOLDER: the other 17 ids at 00081a00 build their list with a selection, and 1903 an alignment, set by their
 			// own code (dlg-menu-dialogs.md's Open); their menus are later modules'.
 			return;
 		}
@@ -234,6 +237,7 @@ public static class Es1MenuBuild {
 	/// <summary>
 	/// <c>Menu_ListLines</c> (<c>0003750d</c>)(<paramref name="id"/>): for 1002, the main menu's list,
 	/// <c>CareerLog_CurrentNameArray</c> (<c>000182f8</c>) of the careers log (docs/es1/shell/main-menu.md#the-list); for
+	/// 1202, the career menu's list, <c>CareerLog_NameLines</c> (<see cref="Es1ShellData.CareerNameLines"/>); for
 	/// the single-mission lists, <see cref="LinesFromList"/> of their word list (<see cref="WaTextLists"/>); for any id
 	/// outside the 28 at <c>000812f4</c>, <see cref="LinesFromList"/> of the list at <c>000811a4</c>, which numbers none.
 	/// </summary>
@@ -242,12 +246,16 @@ public static class Es1MenuBuild {
 			return CurrentCareerName(context.Data.CareerLog);
 		}
 
+		if (id == Es1CareerMenu.CareerList) {
+			return context.Data.CareerNameLines();
+		}
+
 		if (WaTextLists.TryGetValue(id, out var numbers)) {
 			return LinesFromList(context.Data.Text, numbers);
 		}
 
 		if (Array.IndexOf(OwnLinesLists, id) >= 0) {
-			// PLACEHOLDER: the 21 other ids at 000812f4 give lines of their own (the cases at 00081364), unread; their menus are
+			// PLACEHOLDER: the 20 other ids at 000812f4 give lines of their own (the cases at 00081364), unread; their menus are
 			// later modules', and the list is empty until they land.
 			return [null];
 		}

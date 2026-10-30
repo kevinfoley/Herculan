@@ -87,8 +87,9 @@ public sealed class Es1ShellScreens {
 
 	/// <summary>
 	/// <c>Shell_ReturnScreen</c> (<c>0007fce8</c>), 1000 in the image: the screen the options menu's RETURN button goes
-	/// back to, which names that button (docs/es1/shell/main-menu.md#the-return-screen). The main menu's and the
-	/// debriefing's buttons set it.
+	/// back to, which names that button, and the screen the KIA warnings' DONE goes to
+	/// (docs/es1/shell/main-menu.md#the-return-screen). The main menu's, the career menu's and the debriefing's buttons set
+	/// it.
 	/// </summary>
 	public short ReturnScreen { get; set; } = MainMenuScreen;
 
@@ -675,7 +676,7 @@ public sealed class Es1ShellScreens {
 			// and Ttm_SetPathPrefix(res32\); no ported screen sets ScriptsToPlay.
 		}
 
-		short group = Es1ShellBackdrop.ForScreen(BackdropId, target);
+		short group = _backdrop.ForScreen(BackdropId, target);
 		if ((group == 0 || group == BackdropId) && AnmMode != 2) {
 			DrawsBackdrop = false;
 		} else {
@@ -714,8 +715,8 @@ public sealed class Es1ShellScreens {
 	/// <summary>
 	/// <c>Shell_HandleMessage</c>'s step 9, the case of the table at <c>00082060</c> (targets at <c>00082104</c>) for
 	/// <paramref name="target"/>: most make the screen's object the current menu (docs/es1/shell/menus.md#the-screens).
-	/// The main menu's, SINGLE MISSION's, MISSION PARAMS', the war map's, its two alerts', the debriefing's and the quit
-	/// question's are ported, and screen 9999's exit code; with any other the screen becomes current with no menu, as
+	/// The main menu's, SINGLE MISSION's, MISSION PARAMS', the war map's, its two alerts', the debriefing's, the career
+	/// menu's, the KIA warnings', the delete warning's and the quit question's are ported, and screen 9999's exit code; with any other the screen becomes current with no menu, as
 	/// retail's does for the cases that make none, its backdrop shown with no window. The waits are the war map's and the
 	/// debriefing's, whose constructors delete the box the text box held.
 	/// </summary>
@@ -820,18 +821,41 @@ public sealed class Es1ShellScreens {
 				}
 
 				break;
-			case 1200:
+			case Es1CareerMenu.Screen:
+				// A CareerMenu, the career menu.
+				if (_menuContext != null) {
+					CurrentMenu = new Es1CareerMenu(_menuContext);
+				}
+
+				break;
+			case Es1KIAWarningAlert.KilledScreen:
+			case Es1KIAWarningAlert.CareerOverScreen:
+				// A KIAWarningAlert.
+				if (_menuContext != null) {
+					CurrentMenu = new Es1KIAWarningAlert(_menuContext);
+				}
+
+				break;
+			case Es1DeleteAlert.Screen:
+				// A DeleteAlert.
+				if (_menuContext != null) {
+					CurrentMenu = new Es1DeleteAlert(_menuContext);
+				}
+
+				break;
 			case 1210:
+			case 6666:
 			case 1220:
 			case 1230:
 			case 1240:
-			case 1250:
-			case 1260:
-			case 1270:
+				// PLACEHOLDER: NewCareerAlert, UnAssignedAlert's disk-space warning, CareerRecordsMenu, CareerStatsAlert and
+				// SaveWarningAlert, P9b's.
+				break;
 			case 1330:
+				// PLACEHOLDER: BattlesetAlert, the battle-set picker, P10's.
+				break;
 			case 5555:
-				// PLACEHOLDER: the career's screens, S3's: CareerMenu, NewCareerAlert, CareerRecordsMenu, CareerStatsAlert,
-				// SaveWarningAlert, KIAWarningAlert, DeleteAlert, BattlesetAlert and TechReleaseAlert.
+				// PLACEHOLDER: TechReleaseAlert, P11's.
 				break;
 			case 1610:
 			case 1700:
@@ -843,7 +867,6 @@ public sealed class Es1ShellScreens {
 			case 1920:
 			case 2000:
 			case 2010:
-			case 6666:
 			case 7770:
 			case 7771:
 			case 7772:

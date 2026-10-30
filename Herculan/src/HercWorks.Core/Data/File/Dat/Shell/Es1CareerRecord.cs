@@ -78,9 +78,35 @@ public class Es1CareerRecord {
 	/// <paramref name="tech"/>, <c>bst\tech_sng.dat</c> (<see cref="Es1EquipmentState.LoadSingleMission"/>) and its words
 	/// <c>+0</c> and <c>+2</c> set to −1, the pilot count 4 and every pilot entry set up with
 	/// <see cref="Es1PilotEntry.Init"/>. The init also zeroes the shell's word <c>000aad58</c>, the outcome, which the shell
-	/// holds, not the record. Mode 1's <c>PilotEntry_InitRandom</c> and <c>bst\tech_0.dat</c> are a career's.
+	/// holds, not the record. Mode 1's is <see cref="InitCareer"/>.
 	/// </summary>
 	public void InitSingleMission(Es1TechFile tech) {
+		InitFields(tech);
+		foreach (var pilot in Pilots) {
+			pilot.Init();
+		}
+	}
+
+	/// <summary>
+	/// <c>CareerRecord_Init</c> (<c>000158ff</c>) in <c>Shell_Mode</c> 1, as <c>Career_New</c> runs it on each roster record
+	/// (docs/es1/shell/career.md#career_new): as <see cref="InitSingleMission"/>, the equipment state loaded from
+	/// <paramref name="tech"/>, <c>bst\tech_0.dat</c>, and every pilot entry but the one <see cref="PlayerEntry"/> names (0,
+	/// as the init leaves it) set up with <see cref="Es1PilotEntry.InitRandom"/>'s draws on <paramref name="randomBelow"/>,
+	/// <c>Math_RandomBelow</c> on <c>Shell_RandomState</c>, in entry order.
+	/// </summary>
+	public void InitCareer(Es1TechFile tech, Func<short, int> randomBelow) {
+		InitFields(tech);
+		for (int i = 0; i < PilotCountWord; i++) {
+			if (i == PlayerEntry) {
+				Pilots[i].Init();
+			} else {
+				Pilots[i].InitRandom(randomBelow);
+			}
+		}
+	}
+
+	/// <summary><c>CareerRecord_Init</c>'s fields before its pilot entries, which its two modes share.</summary>
+	private void InitFields(Es1TechFile tech) {
 		InUse = 0;
 		Byte1 = 0;
 		Word2 = 0;
@@ -90,15 +116,15 @@ public class Es1CareerRecord {
 		MissionsPlayed = 0;
 		PlayerEntry = 0;
 		CurrentPilot = 0;
-		Array.Clear(Flags);
-		Equipment.LoadSingleMission(tech);
+		ClearWords();
+		Equipment.LoadTech(tech);
 		Equipment.LastKind = -1;
 		Equipment.LastIndex = -1;
 		PilotCountWord = PilotCount;
-		foreach (var pilot in Pilots) {
-			pilot.Init();
-		}
 	}
+
+	/// <summary><c>CareerRecord_ClearWords</c> (<c>000161ae</c>): the 100 words <see cref="Flags"/> zeroed.</summary>
+	public void ClearWords() => Array.Clear(Flags);
 
 	/// <summary>Whether entry <paramref name="index"/> is on strength with a hangar slot, the test the pilot functions share.</summary>
 	public bool OnStrengthWithSlot(int index) => Pilots[index].OnStrength != 0 && Pilots[index].Slot != -1;
@@ -255,6 +281,34 @@ public class Es1PilotEntry {
 	}
 
 	/// <summary>
+	/// <c>PilotEntry_InitRandom</c> (<c>00015228</c>) (docs/es1/formats/bst-battle-sets.md#pilot-entries): the name words −1,
+	/// <c>+4</c> and <c>+6</c> 0, no slot, the condition 100, on strength, the gains and the pay share 0; then, by draws on
+	/// <paramref name="randomBelow"/> in this order, <i>d</i> below 2 into <see cref="Word1D"/> and <see cref="WordB"/>,
+	/// <see cref="Word1F"/> a draw below 5 plus 5<i>d</i>, the HERC kills (a draw below 3 + 1) × <see cref="Word1F"/>, the
+	/// flyer kills (a draw below 2 + 1) × <see cref="Word1F"/> and the structure kills a draw below 2 × <see cref="Word1F"/>;
+	/// then <see cref="ApplyGains"/>, which with the gains 0 sets the rank from the HERC kills.
+	/// </summary>
+	public void InitRandom(Func<short, int> randomBelow) {
+		NameGroup = -1;
+		Name = -1;
+		Word4 = 0;
+		Word6 = 0;
+		Slot = -1;
+		Condition = 100;
+		OnStrength = 1;
+		short d = (short)randomBelow(2);
+		Word1D = d;
+		WordB = d;
+		Word1F = (short)(randomBelow(5) + d * 5);
+		Array.Clear(Gains);
+		GainSums[0] = (short)((randomBelow(3) + 1) * Word1F);
+		GainSums[2] = (short)((randomBelow(2) + 1) * Word1F);
+		GainSums[1] = (short)(randomBelow(2) * Word1F);
+		PayShare = 0;
+		ApplyGains(null);
+	}
+
+	/// <summary>
 	/// <c>PilotEntry_ApplyGains</c> (<c>00015317</c>): when on strength, each gain added to its sum and to
 	/// <paramref name="totals"/>' word, the words <c>0009ae5c</c>, <c>0009ae5e</c> and <c>0009ae60</c> (none when the
 	/// caller's gains are all 0); then the rank set from <see cref="RankThresholds"/>.
@@ -311,14 +365,14 @@ public class Es1EquipmentState {
 
 	/// <summary>
 	/// <c>Tech_Clear</c> (<c>00001ee3</c>), <c>Tech_Read</c> (<c>00001e16</c>) and <c>Tech_Unlock</c> (<c>00001f78</c>)(state,
-	/// 0) outside a career, as <c>CareerRecord_Init</c> runs them: the available bytes cleared, the counts left; each of
-	/// <paramref name="tech"/>'s records' counts copied into the entry its kind and index name; then every entry not yet
-	/// available and holding no −1 made available when either count is 0 (the grade test passing outside a career), its
-	/// kind and index stored at <c>+0</c> and <c>+2</c>. Retail writes an index past the entries unchecked; such a record
+	/// 0), as <c>CareerRecord_Init</c> runs them on <c>bst\tech_sng.dat</c> or, in a career, <c>bst\tech_0.dat</c>: the
+	/// available bytes cleared, the counts left; each of <paramref name="tech"/>'s records' counts copied into the entry its
+	/// kind and index name; then every entry not yet available and holding no −1 made available when either count is 0 (the
+	/// grade test passing for a mission count of 0 in either mode), its kind and index stored at <c>+0</c> and <c>+2</c>. Retail writes an index past the entries unchecked; such a record
 	/// is dropped here, an engine guard. <c>Tech_Unlock</c>'s copies of the item's name into <c>0007d7e0</c> are the
 	/// shell's text, not the state's.
 	/// </summary>
-	public void LoadSingleMission(Es1TechFile tech) {
+	public void LoadTech(Es1TechFile tech) {
 		foreach (var entry in Chassis.Concat(Weapons)) {
 			entry.Available = 0;
 		}
@@ -458,6 +512,29 @@ public class Es1Hangar {
 	public Es1HercList SingleMissionSave() {
 		var hercs = new List<Es1HercListEntry>();
 		for (short slot = 0; slot < SingleMissionSlots; slot++) {
+			if (HercIn(slot) is { } herc) {
+				herc.PrepareWrite();
+				hercs.Add(new Es1HercListEntry { Slot = slot, Herc = herc.Clone() });
+			}
+		}
+
+		return new Es1HercList {
+			SlotCount = SlotCount, Word1 = SelectedSlot, MarkedSlot = MarkedSlot, MarkedSlotWord = MarkedSlotWord, Dword = Dword,
+			Hercs = hercs.ToArray(),
+		};
+	}
+
+	/// <summary>
+	/// <c>Hangar_Write</c> (<c>00029107</c>) outside <c>Shell_Mode</c> 0, as a career's files take it
+	/// (docs/es1/shell/career.md#the-files): the header with <see cref="SelectedSlot"/> as its second word, then each slot
+	/// below <see cref="SlotCount"/> that holds a HERC, in slot order, its HERC's mount words changed first
+	/// (<see cref="Es1HercRecord.PrepareWrite"/>); the list holds copies. Retail writes <see cref="HercCount"/> as the count;
+	/// the list's count is the HERCs it holds, the same while <see cref="Read"/> and <see cref="AddHerc"/> keep the count,
+	/// an engine guard that keeps the file readable.
+	/// </summary>
+	public Es1HercList CareerSave() {
+		var hercs = new List<Es1HercListEntry>();
+		for (short slot = 0; slot < SlotCount && slot < Slots.Length; slot++) {
 			if (HercIn(slot) is { } herc) {
 				herc.PrepareWrite();
 				hercs.Add(new Es1HercListEntry { Slot = slot, Herc = herc.Clone() });

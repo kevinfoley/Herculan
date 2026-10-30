@@ -12,8 +12,8 @@ namespace Herculan.Es1.Shell;
 
 /// <summary>
 /// The mission the shell loads for the simulator: <c>mission.cpp</c>'s globals, the mode <c>Shell_Mode</c>, the
-/// mission's kind <c>Mission_Kind</c>, the mission's path and its text's path, the single mission's record and the hangar;
-/// and the shell's steps over them, <c>SingleMission_Start</c>, <c>Mission_WriteRestore</c>, <c>Mission_ReadRestore</c>,
+/// mission's kind <c>Mission_Kind</c>, the mission's path and its text's path, the single mission's record, the career's
+/// roster and the hangar; and the shell's steps over them, <c>SingleMission_Start</c>, <c>Mission_WriteRestore</c>, <c>Mission_ReadRestore</c>,
 /// <c>Shell_PrepareMission</c> and the war map's tests and player file
 /// (docs/es1/shell/main-menu.md#the-buttons, docs/es1/shell/single-mission.md#starting-the-mission,
 /// docs/es1/formats/eng-mission-text.md#which-file). The class is this engine's bundle of those globals, handed to the
@@ -34,7 +34,21 @@ public sealed class Es1ShellMission {
 		_installRoot = installRoot;
 		_content = content;
 		_data = data;
+		Roster = new Es1CareerRoster(installRoot, content, data, this);
 	}
+
+	/// <summary>The install whose <c>data\</c> and <c>car\</c> the shell's files are written into.</summary>
+	public string InstallRoot => _installRoot;
+
+	/// <summary>The roster <c>Career_Roster</c> (<c>0009b218</c>), the loaded career and its backups (<see cref="Es1CareerRoster"/>).</summary>
+	public Es1CareerRoster Roster { get; }
+
+	/// <summary>
+	/// <c>CareerRecord_Current</c> (<c>00014ef4</c>) (docs/es1/formats/bst-battle-sets.md#the-career-record): in
+	/// <see cref="Mode"/> 0 <see cref="Record"/>, otherwise the roster's record its word <c>+7</c> names
+	/// (<see cref="Es1CareerRoster.CurrentRecord"/>).
+	/// </summary>
+	public Es1CareerRecord? CurrentRecord => Mode == 0 ? Record : Roster.CurrentRecord;
 
 	/// <summary>
 	/// <c>Shell_Mode</c> (<c>000aad56</c>), 0 in the image: 0 a single mission, 1 a career, which decides how a mission
@@ -65,21 +79,24 @@ public sealed class Es1ShellMission {
 	/// <summary>
 	/// The word <c>000aad58</c>, the first word of <c>data\results.dat</c>, the debriefing's ordinal, which
 	/// <c>Mission_OutcomeGrade</c> grades for kind 3's line; 0 in the image. Set by the results' read
-	/// (<see cref="Es1ShellResults.Process"/>), and zeroed by <c>CareerRecord_Init</c>, the load's
-	/// (<see cref="StartSingleMission"/>).
+	/// (<see cref="Es1ShellResults.Process"/>), zeroed by <c>CareerRecord_Init</c>, the load's
+	/// (<see cref="StartSingleMission"/>) and a new career's (<see cref="Es1CareerRoster.New"/>), and set to flag 0 by
+	/// <c>Roster_ActivateRecord</c> (<see cref="Es1CareerRoster.ActivateRecord"/>).
 	/// </summary>
 	public short Outcome { get; set; }
 
 	/// <summary>
 	/// The word <c>000aad5e</c>, which <c>Mission_ReadRestore</c> (<see cref="ReadRestore"/>) reads from the word
 	/// <c>data\restore.dat</c> holds from <see cref="MissionKind"/>: the kind <c>Mission_OutcomeGrade</c> picks its table
-	/// by; 0 in the image.
+	/// by, and <c>Career_OutcomeChoice</c> its threshold; 0 in the image. <c>Roster_ActivateRecord</c> sets it to the
+	/// career record's <c>+0xc</c> (<see cref="Es1CareerRoster.ActivateRecord"/>).
 	/// </summary>
 	public short RestoredMissionKind { get; set; }
 
 	/// <summary>
 	/// The 100 <c>int16</c> flags at <c>000ab244</c>, which the results' read loads from <c>data\mission.var</c> with flag 0
-	/// the outcome (docs/es1/formats/bst-battle-sets.md#after-a-mission); 0 in the image. The load seeds its own copy
+	/// the outcome (docs/es1/shell/between-missions.md#after-a-mission), and a career's record sets and saves
+	/// (<see cref="Es1CareerRoster"/>); 0 in the image. The load seeds its own copy
 	/// (<see cref="Es1MissionLoad"/>), which it does not hand back.
 	/// </summary>
 	public short[] Flags { get; } = new short[Es1MissionLoad.FlagCount];
@@ -105,8 +122,9 @@ public sealed class Es1ShellMission {
 	public Es1CareerRecord? Record { get; set; }
 
 	/// <summary>
-	/// The hangar (<see cref="Es1Hangar"/>): the one a single mission's load leaves, and after the mission the one read back
-	/// from <c>car\sm_play.mec</c>. None before either, and after a load that fails, which the war map's tests read as an
+	/// The hangar (<see cref="Es1Hangar"/>): the one a single mission's load leaves, after the mission the one read back
+	/// from <c>car\sm_play.mec</c>, and a career's, which the roster reads and writes (<see cref="Es1CareerRoster"/>). None
+	/// before any, and after a load that fails, which the war map's tests read as an
 	/// engine guard (<see cref="PlayerHasNoHerc"/>).
 	/// </summary>
 	public Es1Hangar? Hangar { get; set; }

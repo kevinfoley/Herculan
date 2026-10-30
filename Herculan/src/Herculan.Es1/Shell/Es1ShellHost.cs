@@ -190,9 +190,12 @@ public static class Es1ShellHost {
 			// 14. The fonts and styles.
 			data.LoadStylesAndFonts(_content);
 
-			// 15. The first screen; 16. its palette uploaded and the screen drawn.
-			foreach (var wait in _screens.OpenFirstScreen(_screens.ExitCode, _switches.PlayIntro, data,
-					new Es1ShellMission(_installRoot, _content, data), _frame.PresentFrame, _frame.PollDeviceBlock)) {
+			// 15. The first screen; 16. its palette uploaded and the screen drawn. The backdrop reads CareerRecord_Current
+			// through the mission globals.
+			var mission = new Es1ShellMission(_installRoot, _content, data);
+			_backdrop.CurrentRecord = () => mission.CurrentRecord;
+			foreach (var wait in _screens.OpenFirstScreen(_screens.ExitCode, _switches.PlayIntro, data, mission, _frame.PresentFrame,
+					_frame.PollDeviceBlock)) {
 				yield return wait;
 			}
 

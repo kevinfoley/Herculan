@@ -78,8 +78,12 @@ public sealed class Es1DebriefingMenu : Es1Menu {
 				screens.AnmMode = 2;
 				break;
 			case Proceed:
-				// 0002c6c7. PLACEHOLDER: the target 5555 when the current career record's word +0xa8 is not -1 (the roster
-				// 0009b218's record by its word +7), the careers being S3's; the target stays 1710.
+				// 0002c6c7: the target 5555 when the word +0xa8 of the roster's record its word +7 names is not -1, read from the
+				// roster in either mode, not through CareerRecord_Current.
+				if (Context.Mission.Roster.CurrentRecord.Equipment.LastKind != -1) {
+					message = message with { Target = Es1CareerMenu.TechRelease };
+				}
+
 				screens.ReturnScreen = CareerMenu;
 				break;
 		}
@@ -154,12 +158,9 @@ public sealed class Es1DebriefingMenu : Es1Menu {
 		render.DrawString(values, Decimal(results.Salvage), x0 + 89, y0 + 8);
 
 		// YOURS: the words +0x25, +0x29 and +0x27 of CareerRecord_Current's record, its pilot entry 0's gains of HERCs, flyers
-		// and structures. The record is Shell_Mode 0's; the results' read sets it before this screen opens, and the test for
-		// it is an engine guard.
-		if (mission.Mode != 0) {
-			// PLACEHOLDER: in Shell_Mode 1 CareerRecord_Current is the roster's current record, the careers being S3's; the
-			// column draws nothing.
-		} else if (mission.Record is { } record) {
+		// and structures. In Shell_Mode 0 the results' read sets the record before this screen opens; the test for it is an
+		// engine guard.
+		if (mission.CurrentRecord is { } record) {
 			short[] gains = record.Pilots[0].Gains;
 			render.DrawString(values, Decimal(gains[0]), x0 + 94, y0 + 26);
 			render.DrawString(values, Decimal(gains[2]), x0 + 94, y0 + 35);
