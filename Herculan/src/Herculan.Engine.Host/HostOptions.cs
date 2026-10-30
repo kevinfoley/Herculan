@@ -410,8 +410,8 @@ sealed class HostOptions {
 				// left there, without the shell, which a bare run opens. An engine aid.
 				options.Es1.Simulator = true;
 			} else if (Es1Options.IsShellSwitch(args[i])) {
-				// Metaltech: Earthsiege only: one of GO.EXE's own switches, -A, -C, -M, -S, -X or -eggplant, handed to its shell
-				// as retail's command line gives them (Es1ShellSwitches).
+				// Metaltech: Earthsiege only: one of GO.EXE's own switches, -A, -C, -M, -S, -X or -eggplant, the launcher's
+				// command line, which it hands on to the shell (Es1ShellSwitches) and the simulator (Es1Launcher).
 				options.Es1.ShellArguments.Add(args[i]);
 			} else if (args[i] == "--install-disc-files") {
 				// Also copy what retail always reads from the disc, as the install window's box does. See RetailInstaller.Plan.
@@ -466,7 +466,10 @@ sealed class Es1Options {
 	/// <summary>Whether <see cref="SimulatorFlag"/> was given.</summary>
 	public bool Simulator { get; set; }
 
-	/// <summary>The arguments handed to <c>GO.EXE</c>'s shell, in their order on the command line.</summary>
+	/// <summary>
+	/// The arguments handed to <c>ESCD.EXE</c>'s launcher, in their order on the command line, which it hands on to the
+	/// shell and the simulator (<c>Es1Launcher</c>).
+	/// </summary>
 	public List<string> ShellArguments { get; } = [];
 
 	/// <summary>

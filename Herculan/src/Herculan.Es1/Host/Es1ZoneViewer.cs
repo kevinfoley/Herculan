@@ -57,7 +57,7 @@ public sealed record Es1HeaderOverrides(int? Theater, int? WorldVariant, int? Wo
 /// status panel's answer that ends it (docs/es1/simulation/main-loop.md#which-answer-ends-the-mission), and the death
 /// flash (docs/es1/simulation/main-loop.md#the-death-flash--sim_deathflash-00058414). A mission's end runs
 /// <see cref="Es1Shutdown.Run"/> before the window closes; closing the window, which retail has no counterpart of, runs
-/// nothing and writes no file.</para>
+/// nothing and writes no file, so <c>data\exit.cfg</c> keeps the 0 the start wrote.</para>
 /// </summary>
 public static class Es1ZoneViewer {
 	/// <summary>The clear colour when the theater's sky cannot be built: a mid grey, plainly not a retail sky.</summary>
@@ -66,7 +66,8 @@ public static class Es1ZoneViewer {
 	/// <summary>
 	/// Starts <paramref name="missionName"/> (with or without <c>.MSN</c>) as a single mission and runs the simulator on
 	/// the files that writes, or with no mission named runs it on the files the install's <c>data\</c> holds, as
-	/// <c>DBSIM.EXE</c> does. Returns the process exit code: 1 when the mission does not load, and otherwise
+	/// <c>DBSIM.EXE</c> does. Returns the process exit code: 1 when <c>data\exit.cfg</c> does not open for writing or the
+	/// mission does not load, and otherwise
 	/// <see cref="Show"/>'s. Returning the code <c>data\exit.cfg</c> holds as the process's is this engine's own: retail's
 	/// <c>Sim_Main</c> returns nothing, and the shell reads the file.
 	///
@@ -83,8 +84,20 @@ public static class Es1ZoneViewer {
 	/// <c>data\</c> files; here a named mission's load writes them, so the bundle is packed after that load, from the files
 	/// the mission then runs on. Returns 1 when the tape does not open for writing.</para>
 	/// </summary>
+	/// <param name="window">
+	/// The window the launcher's turns share (<see cref="Es1Launcher"/>), which stays open after the mission; none for a
+	/// window of the simulator's own, closed with it.
+	/// </param>
 	public static int Run(string installRoot, string? missionName, Es1HeaderOverrides overrides, string? playTape = null,
-			bool demo = false, string? recordTape = null) {
+			bool demo = false, string? recordTape = null, HostWindow? window = null) {
+		// Sim_Main's step 4, before the command line's parse (docs/es1/simulation/main-loop.md#starting--sim_main-00059350):
+		// an int16 0 to data\exit.cfg, so a run that ends before Sim_Shutdown leaves 0, which ends the launcher's loop.
+		// PLACEHOLDER: the heap's size to data\mem.got before it; this engine has no fixed heap to give the size of.
+		if (!Es1Shutdown.WriteExitCode(installRoot, 0)) {
+			Console.Error.WriteLine($"data\\{Es1Shutdown.ExitName} does not open for writing in {installRoot} (main.cpp line 0xf9 asserts here).");
+			return Es1Shutdown.AssertExitStatus;
+		}
+
 		Es1TapePlayback? tape = null;
 		if (playTape != null || demo) {
 			if (!Es1TapePlayback.FromCommandLine(installRoot, playTape, demo, out tape, out string? tapeError)) {
@@ -125,9 +138,6 @@ public static class Es1ZoneViewer {
 			Console.WriteLine($"Recording input to {Path.GetFullPath(recording.FilePath)}, its bundle packed from the install's data\\ files and keyjoy.cfg.");
 		}
 
-		// PLACEHOLDER: Sim_Main's step 4, the heap's size to data\mem.got and an int16 0 to data\exit.cfg
-		// (docs/es1/simulation/main-loop.md#starting--sim_main-00059350), is not made, so a run the window's close ends
-		// leaves exit.cfg as the last mission's end wrote it.
 		if (Es1MissionFiles.Read(installRoot, out string? error, tape?.DemoMode == true) is not { } files) {
 			Console.Error.WriteLine(error);
 			return 1;
@@ -186,7 +196,7 @@ public static class Es1ZoneViewer {
 			"G textured/banded ground; close the window to quit" + (player == null ? " (or Esc)." : "."));
 		string source = tape != null ? Path.GetFileName(tape.FilePath) : missionName ?? "data\\script.dat";
 		return Show(installRoot, files.Preferences, content, scene, world, views, $"HERCULAN — Metaltech: Earthsiege — {source}, zone {header[1]}",
-			tape, recording);
+			tape, recording, window);
 	}
 
 	/// <summary>
@@ -197,9 +207,11 @@ public static class Es1ZoneViewer {
 	/// </summary>
 	/// <param name="tape">The tape playing, which the cockpit's mouse and the simulation read; none with no tape.</param>
 	/// <param name="recording">The tape recording, which the simulation's input build appends to; none with no recording.</param>
+	/// <param name="host">The launcher's shared window, or none for one of this turn's own.</param>
 	private static int Show(string installRoot, Es1Preferences preferences, GameContent content, Es1ZoneScene scene,
-			Es1World world, Es1CockpitViews? views, string title, Es1TapePlayback? tape, Es1TapeRecording? recording) {
-		using var window = new EngineWindow(title);
+			Es1World world, Es1CockpitViews? views, string title, Es1TapePlayback? tape, Es1TapeRecording? recording,
+			HostWindow? host) {
+		using var window = host != null ? new EngineWindow(host, title) : new EngineWindow(title);
 		int exitCode = 0;
 
 		Silk.NET.OpenGL.GL? glContext = null;

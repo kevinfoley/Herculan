@@ -45,7 +45,7 @@ A flic plays as `dos_setdrive` (`00001fab`)(preferred drive), `spawnl` (`00001be
 
 ### The disk check — `Launcher_HasDiskSpace` (`000003bc`)
 
-`Launcher_HasDiskSpace` (`000003bc`), (bytes, prefix): with an empty prefix the drive is the current one (`dos_getdrive`); otherwise it is the prefix's first character, upper-cased, less `0x40`, after an assert at severity 4 (line `0x4f`) unless that character is a letter (bits 1 and 2 of the runtime's character-class table at `0000602d`). It answers 1 when `dos_getdiskfreespace` (`00003258`) gives at least bytes for the drive, as an unsigned comparison, and 0 otherwise. `dos_getdiskfreespace` gives the free clusters × sectors a cluster × bytes a sector from `INT 21h` `AH=36h`, and −1 for a drive DOS does not know, which the unsigned comparison passes.
+`Launcher_HasDiskSpace` (`000003bc`), (bytes, prefix): with an empty prefix the drive is the current one (`dos_getdrive`); otherwise it is the prefix's first character, upper-cased, less `0x40`, after an assert at severity 4 (line `0x4f`) unless that character is a letter (bits 0 and 1, the mask 3, of the runtime's character-class table at `0000602d`). It answers 1 when `dos_getdiskfreespace` (`00003258`) gives at least bytes for the drive, as an unsigned comparison, and 0 otherwise. `dos_getdiskfreespace` gives the free clusters × sectors a cluster × bytes a sector from `INT 21h` `AH=36h`, and −1 for a drive DOS does not know, which the unsigned comparison passes.
 
 ### The flic player — `Launcher_FileReadable` (`000004ac`)
 

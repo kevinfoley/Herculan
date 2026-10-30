@@ -15,7 +15,7 @@ using HercWorks.Core.Io.Transform;
 // here and reuse everything below it unchanged.
 //
 // This file is the entry point alone: parse the command line, find the install, and hand over to the
-// turn that was asked for — an install (DiscInstall), Metaltech: Earthsiege's shell (Es1ShellHost) or one of its
+// turn that was asked for — an install (DiscInstall), Metaltech: Earthsiege's launcher (Es1Launcher) or one of its
 // missions (Es1ZoneViewer), a movie
 // (MovieHost), one mission, or by default ES.EXE's loop of front end and simulator (Launcher).
 
@@ -83,8 +83,9 @@ if (installRoot == null) {
 }
 
 // A Metaltech: Earthsiege install is not remembered: the remembered install is the one a bare launch runs, and that is
-// still Earthsiege 2's front end. With no mission named and none of --play, --demo, --record and --sim it opens the
-// shell, GO.EXE, with GO.EXE's own switches. A named mission loads as a single mission and runs the simulator; --sim
+// still Earthsiege 2's front end. With no mission named and none of --play, --demo, --record and --sim it runs the
+// launcher, ESCD.EXE, as ES.BAT does, with GO.EXE's switches as its own command line, which it hands on to the shell and
+// the simulator. A named mission loads as a single mission and runs the simulator alone; --sim
 // runs it on the install's data\ files, as DBSIM.EXE does; --play and --demo play a tape, as its -p and -D do, and
 // --record records one, as its -r does.
 if (RetailGameDetector.Detect(installRoot) == RetailGame.Earthsiege1) {
@@ -97,8 +98,7 @@ if (RetailGameDetector.Detect(installRoot) == RetailGame.Earthsiege1) {
 			return 1;
 		}
 
-		return Herculan.Es1.Shell.Es1ShellHost.Run(installRoot, es1.ShellArguments, imguiFontPath, imguiItalicFontPath,
-			options.ScreenshotPath);
+		return Es1Launcher.Run(installRoot, es1.ShellArguments, imguiFontPath, imguiItalicFontPath, options.ScreenshotPath);
 	}
 
 	if (es1.ShellArguments.Count > 0) {

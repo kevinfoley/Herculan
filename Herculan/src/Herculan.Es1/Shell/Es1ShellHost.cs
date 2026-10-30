@@ -42,8 +42,12 @@ public static class Es1ShellHost {
 	/// </summary>
 	/// <param name="imguiFontPath">The faces the frame's ImGui draws in (<see cref="FrontEndWindow"/>).</param>
 	/// <param name="screenshotPath"><c>--screenshot</c>'s file, which the window captures and then closes; none for a play.</param>
+	/// <param name="window">
+	/// The window the launcher's turns share (<see cref="Host.Es1Launcher"/>), which stays open after the shell; none for a
+	/// window of the shell's own, closed with it.
+	/// </param>
 	public static int Run(string installRoot, IReadOnlyList<string> arguments, string imguiFontPath, string imguiItalicFontPath,
-			string? screenshotPath) {
+			string? screenshotPath, HostWindow? window = null) {
 		// 1. Mem_InitHeap(3,700,000) and its assert: this engine has no fixed heap.
 		// 2. Shell_ParseCommandLine; without -eggplant this engine goes on (Es1ShellSwitches).
 		var switches = Es1ShellSwitches.Parse(arguments);
@@ -71,7 +75,7 @@ public static class Es1ShellHost {
 
 		// 6. The heap against BND\MAIN.BND's +0xc and +8: this engine's memory is never that short, so Shell_LowMemory stays clear.
 
-		return new Session(installRoot, content, switches, exitCode).Run(imguiFontPath, imguiItalicFontPath, screenshotPath);
+		return new Session(installRoot, content, switches, exitCode).Run(imguiFontPath, imguiItalicFontPath, screenshotPath, window);
 	}
 
 	/// <summary>One run's objects and its window.</summary>
@@ -103,8 +107,9 @@ public static class Es1ShellHost {
 			_shellMouse = new Es1ShellMouse(_globals);
 		}
 
-		public int Run(string imguiFontPath, string imguiItalicFontPath, string? screenshotPath) {
-			using (var host = new HostWindow()) {
+		public int Run(string imguiFontPath, string imguiItalicFontPath, string? screenshotPath, HostWindow? shared) {
+			using (var owned = shared == null ? new HostWindow() : null) {
+				var host = shared ?? owned!;
 				string dataDirectory = CaseInsensitivePath.Combine(_installRoot, Es1MissionFiles.DataFolder);
 				using var window = new FrontEndWindow(host, Title, screenshotPath, imguiFontPath, imguiItalicFontPath, dataDirectory,
 					new Es1ShellMenus());
@@ -226,8 +231,7 @@ public static class Es1ShellHost {
 			_devices.Shutdown();
 
 			// 6. VolRStream_DeleteGroup and Mem_HeapOff, and under -X an INT 3, which this engine does not raise.
-			// 7. Shell_ExitCode returned. PLACEHOLDER: what ES.BAT does with 2 (a mission's launch) or 5 (a demo) is not in
-			// GO.EXE (startup.md's Open); the host runs nothing after the shell, S2's to settle.
+			// 7. Shell_ExitCode returned. The launcher (Host.Es1Launcher) reads the code from data\exit.cfg, not from this.
 			return _screens.ExitCode;
 		}
 	}
@@ -253,5 +257,23 @@ public static class Es1ExitCfg {
 		}
 
 		return (short)((bytes.Length > 0 ? bytes[0] : 0) | (bytes.Length > 1 ? bytes[1] << 8 : 0));
+	}
+
+	/// <summary>
+	/// The launcher's read, <c>Launcher_ReadExitCfg</c> (<c>00000448</c> in <c>ES1ESCD</c>): <paramref name="path"/> opened
+	/// for reading and writing, as <c>r+b</c> opens it, and up to its first 4 bytes laid over <paramref name="dword"/>'s
+	/// low bytes, the bytes past the file's end keeping their value. Null when the file does not open, where retail asserts.
+	/// </summary>
+	public static int? ReadOver(string path, int dword) {
+		Span<byte> bytes = stackalloc byte[4];
+		System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(bytes, dword);
+		try {
+			using var file = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
+			file.ReadAtLeast(bytes, bytes.Length, throwOnEndOfStream: false);
+		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException) {
+			return null;
+		}
+
+		return System.Buffers.Binary.BinaryPrimitives.ReadInt32LittleEndian(bytes);
 	}
 }
