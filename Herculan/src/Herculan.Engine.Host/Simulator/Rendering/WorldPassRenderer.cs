@@ -54,6 +54,7 @@ sealed class WorldPassRenderer : IDisposable {
 		// scene to for a fraction of a second at a time — see Scene.ImpactFlash. After the two above,
 		// which this is measured against.
 		Scene.SetImpactRamps(scene.Models.ImpactFlash?.ShadeRamps, scene.Models.ImpactFlash?.PaletteRamp);
+		Scene.DistanceBands = scene.Models.DistanceBands;
 
 		_wireframe = new WireframeRenderer(gl);
 

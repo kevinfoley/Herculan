@@ -245,6 +245,9 @@ public sealed class SceneRenderer : IDisposable {
 	private static readonly string[] EffectLightIntensityNames = Enumerable
 		.Range(0, EffectLightSelection.MaxPerObject)
 		.Select(i => $"uEffectLightIntensity[{i}]").ToArray();
+	private static readonly string[] BandRampNames = Enumerable
+		.Range(0, DistanceColorBands.MaxRepoints)
+		.Select(i => $"uBandRamps[{i}]").ToArray();
 
 	/// <param name="editorGrid">
 	/// Compiles the measuring grid, the ground tint and the ground discs into the scene program, so
@@ -392,6 +395,14 @@ public sealed class SceneRenderer : IDisposable {
 			? new GpuTexture(_gl, paletteRamp.Pixels, PaletteRampTable.Width, paletteRamp.Height)
 			: null;
 	}
+
+	/// <summary>
+	/// The theater's distance colour bands, which re-point a <c>TSGouraudPoly</c>'s ramps by its object's distance from the
+	/// view, or null to draw every Gouraud face through the palette's own ramps. An item is banded by its
+	/// <see cref="SceneItem.Filing"/>'s tag and distance; one with none is not banded, and nothing is while
+	/// <see cref="FogEnabled"/> is off. Set once per loaded mission.
+	/// </summary>
+	public DistanceColorBands? DistanceBands { get; set; }
 
 	/// <summary>
 	/// Whether the scene draws through the damage-flash palette this frame. The cockpit's shake owns
@@ -634,6 +645,11 @@ public sealed class SceneRenderer : IDisposable {
 		// The count last uploaded, so that a scene with no effect lights sets it once and every
 		// item after the first costs nothing.
 		int uploadedLightCount = -1;
+
+		// The distance colour bands' ramps last uploaded, for the same reason: every item of one object, and most
+		// neighbouring objects, share them.
+		IReadOnlyList<BandRamp>? uploadedBandRamps = null;
+		var viewer = camera.Position;
 
 		if (ground != null) {
 			Draw(ground.Terrain);
@@ -883,6 +899,21 @@ public sealed class SceneRenderer : IDisposable {
 			if (_hasGrid) {
 				_shader.SetInt("uGridEnabled", item.ShowGrid ? 1 : 0);
 				_shader.SetInt("uHighlightEnabled", item.ShowHighlight ? 1 : 0);
+			}
+
+			// WorldShades_ApplyForObject (0042e8e8), run per drawn object as ObjList_DrawEntryRender runs it — see
+			// DistanceColorBands.
+			IReadOnlyList<BandRamp> bandRamps = FogEnabled && DistanceBands is { } bands && item.Filing is { } entry
+				? bands.Ramps(entry.Tag, bands.Band(entry.Tag, entry.DistanceFrom(viewer), entry.ShapeRadius))
+				: Array.Empty<BandRamp>();
+			if (!ReferenceEquals(bandRamps, uploadedBandRamps)) {
+				for (int i = 0; i < bandRamps.Count; i++) {
+					_shader.SetVector3(BandRampNames[i],
+						new Vector3(bandRamps[i].Ramp, bandRamps[i].Start, bandRamps[i].Count));
+				}
+
+				_shader.SetInt("uBandRampCount", bandRamps.Count);
+				uploadedBandRamps = bandRamps;
 			}
 
 			_shader.SetInt("uFullbright", item.Fullbright ? 1 : 0);

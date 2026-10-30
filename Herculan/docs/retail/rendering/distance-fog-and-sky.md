@@ -143,18 +143,24 @@ Where they match, fully fogged terrain meets the backdrop without a seam.
 
 Apart from the fade, an object's shade ramps are re-pointed by its distance. `ObjList_DrawEntryRender` calls `WorldShades_ApplyForObject` (call at `004287b3`) before each deferred object's draw, and `Terrain_FillCellUntextured` (call at `0046bc6a`) before an untextured cell's.
 
-`World_LoadShades` (`0042e760`) loads `dat\shades` into `WorldShades_TypeTable` (`004cfd64`): per object type tag (`obj+4`), a list of `{ramp, column}` byte pairs. A tag with no list is left alone. Retail `SHADES.DAT`:
+`World_LoadShades` (`0042e760`) loads `dat\shades` into `WorldShades_TypeTable` (`004cfd64`): per object type tag (`obj+4`), a list of `{ramp, column}` byte pairs. A tag with no list is left alone. Retail `SHADES.DAT`, with the [classes that carry each tag](terrain-drawing.md#objects-in-the-walk):
 
 | Tag | Ramps re-pointed | From columns |
 |---|---|---|
-| 1, 5, 7 | 0, 2, 4, 6, 8, 12 | 0, 1, 2, 3, 4, 6 |
+| 1 debris, 5 a structure, 7 a HERC | 0, 2, 4, 6, 8, 12 | 0, 1, 2, 3, 4, 6 |
 | 3, a projectile ([above](#a-projectile-is-faded-like-anything-else)) | 0, 12 | 0, 6 |
-| 6 | 8, 12 | 4, 6 |
+| 6, a flyer | 8, 12 | 4, 6 |
 
 1. `WorldShades_DistanceBand` (`0042e878`) counts the thresholds the distance has reached, at most one fewer than there are: `WorldShades_BandsTagged` (`004cfd84`) for a non-zero tag, `WorldShades_BandsTag0` (`004cfd88`) for tag 0. A tag-5 object first has one of the two `WorldShades_DistanceOffsets` (`004cfd6c`) added — the second when its radius (vtable `+0x10`) is 5000 or more — clamped at 0.
 2. For each pair, `Palette_SetRampsToRange` re-points the ramp at the `(column, band)` entry of `WorldShades_LevelRanges` (`004cfd7c`), the index ranges `World_LoadTheater` expands from the `.WLD`'s two ramp tables ([`../formats/wld-world.md`](../formats/wld-world.md#the-worldn-descriptor--layout)).
 
 Both threshold sets are read from the theater's `.WLD`; their retail values are in [`../formats/wld-world.md`](../formats/wld-world.md#the-worldn-descriptor--layout).
+
+**Only a `TSGouraudPoly` sees the bands.** `Palette_SetRampsToRange` fills records of `g_ShadeRamps` (`0049b034`) with the range's consecutive indices and copies them into the raster's ramp table `g_RasterColourRamps` (`004a4fbd`) through `Raster_SetColourRamps` (`00486d04`). That table is what `Raster_FillContourPolygon` looks a Gouraud corner up in ([`dts-texture-binding.md`](dts-texture-binding.md#tsgouraudpoly--same-ramp-number-per-vertex-light-no-rmp-row)): entry `(shade * count) >> 8` of the run. A `TSShadedPoly` resolves its ramp through `Palette_ShadeRampLookup`, which reads the active palette's own ramp array, and fogs by the slices instead. Uploading a palette (`GLDisplay_SetColourRamps`, `00481fab`) copies that palette's ramps into the raster table, so a ramp no list names keeps the palette's run, and one an object re-points stays re-pointed until the next object's draw re-points it again.
+
+The bands apply at every distance, the nearest included: band 0 is the first `.WLD` table's run, not the palette's ramp. Ramp 8 is palette indices 172–187 in all ten `WORLD<n>.DPL` and 172–183 in band 0 of all ten `.WLD`. The tag-5 offsets are −10000 for both radii in all ten files, so a structure's bands start 10000 units (60 m) further out than a HERC's.
+
+The retail Gouraud faces are on objects of tags 1, 5 and 7, which share one list, and on ground vehicles: the structure libraries `BASES.DGS`, `BHULKS.DGS` and `BASES_AN.DTS`, the weapon models in `MECHWPNS.DTS`/`MECHWPN2.DTS`, and `SAMSON`, `SCARAB`, `TOMAHAWK` and two of their debris files. A ground vehicle is tag 10, which has no list, so its faces read the six listed ramps as the object drawn before it left them: `BASES.DGS` shapes 16 (types `0x30` and `0x32`) and 34 (types `0x3a` and `0x3c`) are 264 Gouraud faces on ramp 8 each. The tall chimney, structure type 14 (`BASES.DGS` shape 10), is 9 Gouraud faces on ramp 8 and 2 on ramp 12 out of 15. Ramps 10 and 14 (on `BASES_AN.DTS` and `BASES.DGS` shapes 29 and 39) are in no list and keep the palette's run; so is `SAMSON.DTS`'s ramp 202 ([Open](#open)).
 
 With its third argument non-zero — `ObjList_DrawEntryRender` passes the byte at `004cfa08` — step 2 instead builds a two-segment range list for `Palette_SetRampsToRangeList` from the band's range and the band's entry of `WorldShades_BlendRanges` (`004cfd80`) ([Open](#open)). While `0049aef2` is set (0 in the image) the whole step is replaced by `WorldShades_ResetRamps` (`0042ea0c`), which points ramps 0, 2, 4, 6, 8, 10, 12 and 24 at the range `{16, 16}`.
 
@@ -162,7 +168,7 @@ With its third argument non-zero — `ObjList_DrawEntryRender` passes the byte a
 
 | Reading | Why it is wrong |
 |---|---|
-| Fog is a blend toward the fog colour, so the ramp slices can be replaced by a linear fade of the same mean strength | The slices fog each palette index at its own rate and keep distinct colours apart almost to the last one. A uniform blend fades a whole surface evenly and washes distant terrain into featureless pastel. A `TSGouraudPoly`, whose fill reads no `.RMP` row, is not faded at all ([above](#the-fade--raster_setdepthfadefromdistance-00467fec)) |
+| Fog is a blend toward the fog colour, so the ramp slices can be replaced by a linear fade of the same mean strength | The slices fog each palette index at its own rate and keep distinct colours apart almost to the last one. A uniform blend fades a whole surface evenly and washes distant terrain into featureless pastel. A `TSGouraudPoly`, whose fill reads no `.RMP` row, is faded by the [distance colour bands](#distance-colour-bands--worldshades_applyforobject-0042e8e8) instead, a band per object |
 | Fog is measured against distance from the eye | It is measured against view-space **depth**, component 1 of `Raster_PerspectiveDivide`'s input. Radial distance is larger everywhere off the view axis, by 18% at the corner of the view |
 | The game draws past the visibility range, so the far clip is a separate free parameter | `Terrain_BuildDrawRegionQuad` (`0046d220`) makes the draw region that same radius: the world ends exactly where the fade saturates |
 | The fill below the horizon stops at `Terrain_ProjectFarEdgeAhead`'s point, the projected far edge of the terrain, which `Scene_DrawTerrainPass` computes every frame for it | The rolled branch of `Hzline_FillGround` puts the moved line into polygon vertices it then overwrites or leaves past the vertex count, and the level branch never reads the point. The fill always runs from the horizon line to the bottom of the view |
@@ -171,8 +177,8 @@ With its third argument non-zero — `ObjList_DrawEntryRender` passes the byte a
 
 ## Open
 
-- **Unported:** [the distance colour bands](#distance-colour-bands--worldshades_applyforobject-0042e8e8).
-- **Open:** which classes carry type tags 1, 5 and 6.
+- **Open:** what `SAMSON.DTS`'s six Gouraud faces on ramp 202 draw. `Raster_FillContourPolygon` indexes `g_RasterColourRamps` by the ramp number with no bound, and the palette upload fills only as many records as the palette has ramps.
+- **Unported:** a ground vehicle's Gouraud faces taking the ramps the object drawn before it left ([above](#distance-colour-bands--worldshades_applyforobject-0042e8e8)).
 - **Deferred:** whether `004cfa08` (copied from `004d2549`) is ever non-zero. With it set, `WorldShades_ApplyForObject` hands `Palette_SetRampsToRangeList` a descriptor whose segment pointers are one per segment (`0042e9ca`/`0042e9cd`) while the callee reads a ramp's segments contiguously from the first pointer, so its second segment would be that pointer's own bytes.
 - **Deferred:** what `DAT_0049aee4` holds. `Scene_DrawTerrainPass` calls its slot `+0x34` with the view, after the backdrop, when it is non-null; it is zero in the image and `es2_xref.py` finds no reference besides that read.
 - **Deferred:** what reads `0049aee8`, which `World_LoadTheater` sets to `short4 + short6 - 1`; `es2_xref.py` finds only that store.

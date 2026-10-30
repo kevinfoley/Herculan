@@ -25,7 +25,7 @@ public enum ObjectTypeTag : short {
 	/// <summary>A smoke ball or a fire.</summary>
 	Fire = 4,
 
-	/// <summary>A structure, ground vehicles included.</summary>
+	/// <summary>A structure other than a ground vehicle.</summary>
 	Structure = 5,
 
 	/// <summary>A flyer.</summary>
@@ -39,6 +39,9 @@ public enum ObjectTypeTag : short {
 
 	/// <summary>A ground shape.</summary>
 	GroundShape = 9,
+
+	/// <summary>A GroundVehicle: <c>Base_Construct</c> (<c>00405314</c>) writes 5 and then 10 over it in that arm.</summary>
+	GroundVehicle = 10,
 }
 
 /// <summary>
@@ -92,6 +95,9 @@ public sealed class DrawEntry {
 	/// draws. Null for everything else.
 	/// </summary>
 	public object? HiddenWhenRidden { get; set; }
+
+	/// <summary>Its distance from <paramref name="viewer"/> as the original's render entry carries it — see <see cref="ObjectDrawTable.EntryDistance"/>.</summary>
+	public int DistanceFrom(Vec3i viewer) => ObjectDrawTable.EntryDistance(Tag, Position, EntryHeight, viewer);
 
 	/// <summary>Whether this pass draws it. True until a pass has filed it.</summary>
 	public bool Drawn { get; internal set; } = true;
@@ -178,8 +184,10 @@ public sealed class ObjectDrawTable {
 			entry.Cell = cell;
 
 			// Only the structure, machine and flyer walks store the cell back on the object (+0x1e8),
-			// and those are the only objects anything is filed with.
-			if (entry.Tag is ObjectTypeTag.Structure or ObjectTypeTag.Herc or ObjectTypeTag.Flyer) {
+			// and those are the only objects anything is filed with. The structure walk files ground
+			// vehicles too.
+			if (entry.Tag is ObjectTypeTag.Structure or ObjectTypeTag.GroundVehicle or ObjectTypeTag.Herc
+					or ObjectTypeTag.Flyer) {
 				_cells[entry.Subject] = cell;
 			}
 		}
@@ -259,11 +267,20 @@ public sealed class ObjectDrawTable {
 			return false;
 		}
 
+		return !IsBeyondDrawDistance(tag, shapeRadius, EntryDistance(tag, position, entryHeight, _viewer));
+	}
+
+	/// <summary>
+	/// The distance <c>ObjList_DrawCellObjects</c> (<c>00428c60</c>) stores at a render entry's <c>+0x12</c>, which the
+	/// draw-distance test, the distance colour bands and the fade all take: <c>Math_DistanceBetweenPoints</c> from the
+	/// viewer to the object's position, raised by <paramref name="entryHeight"/> for a structure or a HERC.
+	/// </summary>
+	internal static int EntryDistance(ObjectTypeTag tag, Vec3i position, int entryHeight, Vec3i viewer) {
 		var measured = tag is ObjectTypeTag.Structure or ObjectTypeTag.Herc
 			? new Vec3i(position.X, position.Y, position.Z + entryHeight)
 			: position;
 
-		return !IsBeyondDrawDistance(tag, shapeRadius, measured.ApproxDistanceTo(_viewer));
+		return measured.ApproxDistanceTo(viewer);
 	}
 
 	/// <summary>

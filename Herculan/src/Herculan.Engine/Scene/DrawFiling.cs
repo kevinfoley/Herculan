@@ -20,18 +20,20 @@ public sealed class DrawFiling(MissionScene scene) {
 	/// </summary>
 	public DrawEntry ObjectEntry(SimObject subject) {
 		if (!_objectEntries.TryGetValue(subject, out var entry)) {
-			entry = new DrawEntry(subject) {
-				Tag = subject switch {
-					MechObject => ObjectTypeTag.Herc,
-					FlyerObject => ObjectTypeTag.Flyer,
-					_ => ObjectTypeTag.Structure,
-				},
-			};
+			entry = new DrawEntry(subject) { Tag = TagOf(subject) };
 			_objectEntries[subject] = entry;
 		}
 
 		return entry;
 	}
+
+	/// <summary>The type tag of a machine, a structure, a ground vehicle or a flyer.</summary>
+	public static ObjectTypeTag TagOf(SimObject subject) => subject switch {
+		MechObject => ObjectTypeTag.Herc,
+		FlyerObject => ObjectTypeTag.Flyer,
+		BaseObject { Class: BaseObject.StructureClass.GroundVehicle } => ObjectTypeTag.GroundVehicle,
+		_ => ObjectTypeTag.Structure,
+	};
 
 	/// <summary>
 	/// The entry of something rebuilt every frame, made the first time this frame it is asked for, so a round's
@@ -88,13 +90,18 @@ public sealed class DrawFiling(MissionScene scene) {
 				}
 
 				var entry = ObjectEntry(subject);
-				entry.Position = subject.Position;
-				entry.FilingRadius = subject.HitRadius;
-				entry.ShapeRadius = subject.ShapeRadius;
-				entry.EntryHeight = subject is MechObject or BaseObject ? subject.SightHeight : 0;
+				Place(entry, subject);
 				entry.FileWith = (subject as MechObject)?.StandingIn;
 				table.Entries.Add(entry);
 			}
 		}
+	}
+
+	/// <summary>Brings an object's entry to where it stands now: what the submit files it by and measures it from.</summary>
+	public static void Place(DrawEntry entry, SimObject subject) {
+		entry.Position = subject.Position;
+		entry.FilingRadius = subject.HitRadius;
+		entry.ShapeRadius = subject.ShapeRadius;
+		entry.EntryHeight = entry.Tag is ObjectTypeTag.Herc or ObjectTypeTag.Structure ? subject.SightHeight : 0;
 	}
 }

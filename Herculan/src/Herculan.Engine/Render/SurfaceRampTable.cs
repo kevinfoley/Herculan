@@ -52,8 +52,8 @@ public sealed class SurfaceRampTable {
 	/// <para><c>TSShadedPoly_Render</c> ends in <c>Raster_ShadeRampRow</c>, so its colour is fogged by
 	/// the same slice offset every other <c>.RMP</c> read is — see <see cref="PaletteRampTable"/>.
 	/// <c>TSGouraudPoly_Render</c>'s fill writes plain palette indices and reads no slice offset, so
-	/// the Gouraud block is stored once and those surfaces are not fogged
-	/// (docs/retail/rendering/distance-fog-and-sky.md, "The fade").</para>
+	/// the Gouraud block is stored once (docs/retail/rendering/distance-fog-and-sky.md, "The fade"). Those surfaces fade
+	/// through <see cref="DistanceColorBands"/> instead, which the scene program applies over this block.</para>
 	/// </summary>
 	public int DepthSlices { get; }
 

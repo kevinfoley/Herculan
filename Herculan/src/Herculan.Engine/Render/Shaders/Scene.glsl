@@ -97,6 +97,12 @@ uniform vec4 uEffectLights[MAX_EFFECT_LIGHTS];
 uniform float uEffectLightIntensity[MAX_EFFECT_LIGHTS];
 uniform float uEffectLightFalloff;
 
+// The shade ramps the distance colour bands have re-pointed for the object being drawn, in list order: .x the ramp, .y
+// the first palette index of its run and .z the run's length. See DistanceColorBands.
+#define MAX_BAND_RAMPS 8
+uniform int uBandRampCount;
+uniform vec3 uBandRamps[MAX_BAND_RAMPS];
+
 void main() {
 	vec4 worldPosition = uModel * vec4(aPosition, 1.0);
 #ifdef EDITOR_GRID
@@ -202,12 +208,26 @@ void main() {
 
 	// A TSGouraudPoly corner's palette index, Raster_FillContourPolygon's per-vertex lookup: entry
 	// (shade * length) >> 8 of the ramp the surface names, which is the Gouraud block's alpha at
-	// this shade (SurfaceRampTable). The shade is the byte the light function returns, so it is
+	// this shade (SurfaceRampTable), or the run the distance colour bands have re-pointed that ramp at,
+	// the last one naming it. The shade is the byte the light function returns, so it is
 	// truncated, not rounded. The fragment stage bands what this interpolates to.
 	vGouraudIndex = 0.0;
 	if (uShadeRampEnabled && aShadeRamp >= 256.0) {
-		ivec2 cell = ivec2(int(min(shade, 255.0)), int(uShadeRampGouraudRow + (aShadeRamp - 256.0) + 0.5));
-		vGouraudIndex = floor(texelFetch(uShadeRampTable, cell, 0).a * 255.0 + 0.5);
+		float shadeByte = floor(min(shade, 255.0));
+		float ramp = floor(aShadeRamp - 256.0 + 0.5);
+		float banded = -1.0;
+		for (int i = 0; i < uBandRampCount; i++) {
+			if (uBandRamps[i].x == ramp) {
+				banded = uBandRamps[i].y + floor(shadeByte * uBandRamps[i].z / 256.0);
+			}
+		}
+
+		if (banded >= 0.0) {
+			vGouraudIndex = banded;
+		} else {
+			ivec2 cell = ivec2(int(shadeByte), int(uShadeRampGouraudRow + ramp + 0.5));
+			vGouraudIndex = floor(texelFetch(uShadeRampTable, cell, 0).a * 255.0 + 0.5);
+		}
 	}
 
 	vColor = aColor;
@@ -468,7 +488,8 @@ void main() {
 		// index between its corners' and fills each band flat with the band's UPPER index, so a pixel
 		// takes the ceiling of its interpolated index and the lowest corner's index shows only where
 		// every corner has it. The band is a plain palette index: no .RMP row and no depth slice is
-		// applied, so the face is not fogged. docs/retail/rendering/dts-texture-binding.md,
+		// applied. What fades the face with distance is the run its corners were looked up in, which the
+		// distance colour bands pick in the vertex stage. docs/retail/rendering/dts-texture-binding.md,
 		// "TSGouraudPoly — same ramp number, per-vertex light, no .RMP row".
 		//
 		// The cuts are straight lines through points spaced evenly along the triangle's edges, which

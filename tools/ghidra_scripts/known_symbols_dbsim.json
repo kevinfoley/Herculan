@@ -1855,9 +1855,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Debris_Construct",
-      "description": "Builds one thrown piece on a shape: position at +0x26, child debris group at +0x41 (signed char, -1 = never bursts and the gate on the whole death branch), EXPLOS.DAT death effect at +0x59, a burst countdown of RandomBelow(30000)+2000 at +0x55, and the currently installed alternate database captured at +0x5d so a burst reads its child group against the same table its parent came from.",
+      "description": "Builds one thrown piece on a shape: SimObjectBase_Constructor, then DebrisVtable, type tag +0x04 = 1, position at +0x26, +0x50 = 0, child debris group at +0x41 (signed char, -1 = never bursts and the gate on the whole death branch), EXPLOS.DAT death effect at +0x59, a burst countdown of RandomBelow(30000)+2000 at +0x55, and the currently installed alternate database captured at +0x5d so a burst reads its child group against the same table its parent came from.",
       "source": "docs/retail/simulation/destruction-effects.md",
-      "signature": "int * __cdecl Debris_Construct(int *debris, int shape, int *position, char childGroup, short deathEffect)"
+      "signature": "int * __cdecl Debris_Construct(int *debris, int shape, int *position, char childGroup, short deathEffect)",
+      "verified": {
+        "bytes": "00408940+124",
+        "sha1": "9890c3e62d78",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004089bc",
@@ -10175,8 +10181,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ObjList_DrawCellObjects",
-      "description": "The per-terrain-cell object draw hook (installed at HeightGrid+0x125, invoked by Terrain_DrawCellObjects). Walks the cell's ObjList::drawTable row and branches on each object's type tag at +4: tag 9 (a ground shape) is drawn immediately, in filing order, with the ramp row count DAT_004a5b1c zeroed around the draw and no fade of its own -- its solid faces fog with the one the cell's quad installed; everything else (a Bullet is tag 3, written by Bullet_Construct) is turned into a 0x36-byte render entry carrying its position, LOD short and distance, appended to the list ObjList_DrawSorted then walks. See docs/retail/rendering/terrain-drawing.md, 'Objects in the walk'.",
-      "source": "docs/retail/rendering/terrain-drawing.md"
+      "description": "The per-terrain-cell object draw hook (installed at HeightGrid+0x125, invoked by Terrain_DrawCellObjects). Walks the cell's ObjList::drawTable row and branches on each object's type tag at +4: tag 9 (a ground shape) is drawn immediately, in filing order, with the ramp row count DAT_004a5b1c zeroed around the draw and no fade of its own -- its solid faces fog with the one the cell's quad installed. Everything else that Cam_IsAttachedTo says the view does not ride (a Bullet is tag 3, written by Bullet_Construct) copies the byte 004d2549 to 004cfa08 and fills a 0x36-byte render entry: the object at +0x32, kind 0 at +0x16, its position (vtable +4) at +4/+8/+0xc, raised for tags 5 and 7 by the Z (+0x1c) of the node vtable +0x24 returns or by 500 when it returns none, the shape radius (vtable +0x10) at +0x10, and Math_DistanceBetweenPoints from that position to the view object's at +0x12. The entry joins the list only when ObjList_IsBeyondDrawDistance says no; ObjList_DrawSorted then draws the list. See docs/retail/rendering/terrain-drawing.md, 'Objects in the walk'.",
+      "source": "docs/retail/rendering/terrain-drawing.md",
+      "verified": {
+        "bytes": "00428c60+392",
+        "sha1": "1f3a128fc1b0",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00428de8",
@@ -11496,13 +11508,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_InterpolateIndexRanges",
-      "description": "Palette_InterpolateIndexRanges(from, to, rampCount, levels, out): linearly interpolates palette index RANGES, not colours. Each of from/to/out is an array of (int16 start, int16 count) pairs; for each of rampCount ramps it emits `levels` interpolated ranges in 8.8 fixed point, with the final step forced exactly to the `to` endpoint. Called twice by World_LoadTheater with endpoint tables read from WORLD<n>.WLD. WORLD0 expands to 11 ramps x 16 levels, all ranges within indices 96-239 (terrain shading only; no cockpit equivalent found).",
+      "description": "Palette_InterpolateIndexRanges(from, to, rampCount, levels, out): linearly interpolates palette index RANGES, not colours. Each of from/to/out is an array of (int16 start, int16 count) pairs; for each of rampCount ramps it emits `levels` ranges. With s0/e0 the from range's first and last index and s1/e1 the to range's, the start step is (short)(((s1 - s0) + 1) * 256 / (levels - 1)) and the end step likewise from e0/e1 (IDIV, truncating); level i < levels - 1 starts at s0 + (i * startStep >> 8) and ends at e0 + (i * endStep >> 8) (SAR), and the last level is exactly the to range. levels 1 divides by zero. Callers found by a disassembly grep: two calls in World_LoadTheater, passing the .WLD's two column tables into WorldShades_LevelRanges (004cfd7c) and its two 1-wide ranges into WorldShades_BlendRanges (004cfd80).",
       "source": "docs/retail/rendering/cockpit-canopy-palette.md (Palette module)",
       "verified": {
         "bytes": "00430d08+248",
         "sha1": "1b937178e2a9",
         "scope": "body",
-        "via": "decompile"
+        "via": "disasm"
       }
     },
     {
@@ -11526,8 +11538,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_ShadeRampLookup",
-      "description": "Palette_ShadeRampLookup(value, shade): idx = value & 0xff, clamped to 0 when >= ActivePaletteObject+0x0c (the ramp count); reads ActivePaletteObject+0x10 as an array of 8-byte {int16* indices, int32 length} shade ramps and returns ramp[idx].indices[ Math_Q8Multiply(shade, length) ], stepping back one when that lands on the end. So a value here is a RAMP NUMBER, not a colour: the ramps are per-material brightness sequences of palette indices. They live in the tail of each .DPL, after the 256 colour entries. Sole consumer found: TSShadedPoly_Render.",
-      "source": "docs/retail/rendering/dts-texture-binding.md"
+      "description": "Palette_ShadeRampLookup(value, shade): idx = value & 0xff, clamped to 0 when >= the int16 ActivePaletteObject+0x0c (the ramp count); returns 0 when that count is 0. Otherwise reads ActivePaletteObject+0x10 as an array of 8-byte {int16* indices, int16 length at +4} shade ramps and returns ramp[idx].indices[ Math_Q8Multiply(shade, length) ], stepping back one when that lands on the end. So a value here is a RAMP NUMBER, not a colour: the ramps are per-material brightness sequences of palette indices. They live in the tail of each .DPL, after the 256 colour entries. Callers found by es2_xref: TSShadedPoly_Render (twice) and Terrain_FillCellUntextured.",
+      "source": "docs/retail/rendering/dts-texture-binding.md",
+      "verified": {
+        "bytes": "00430e34+89",
+        "sha1": "519dd42b8891",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00430e90",

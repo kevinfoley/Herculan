@@ -67,6 +67,12 @@ public sealed class MissionModels {
 	/// </summary>
 	public ImpactFlash? ImpactFlash { get; }
 
+	/// <summary>
+	/// The theater's distance colour bands, or null when they did not load. A host hands this to
+	/// <see cref="SceneRenderer.DistanceBands"/> once after loading.
+	/// </summary>
+	public DistanceColorBands? DistanceBands { get; private init; }
+
 	/// <summary>The distinct models the scene draws with — upload each of these once.</summary>
 	public IReadOnlyList<SceneModel> All { get; }
 
@@ -343,7 +349,8 @@ public sealed class MissionModels {
 					Atmosphere.From(terrain, impact, theater.File))
 				: null,
 			debrisModels, fireModels, hulkModels, dropPodModel, dropPodOpening, groundShapeModels) {
-			TerrainShading = models.Shading
+			TerrainShading = models.Shading,
+			DistanceBands = DistanceColorBands.Load(content, theater.File)
 		};
 	}
 }
