@@ -178,7 +178,7 @@ With its third argument non-zero — `ObjList_DrawEntryRender` passes the byte a
 ## Open
 
 - **Open:** what `SAMSON.DTS`'s six Gouraud faces on ramp 202 draw. `Raster_FillContourPolygon` indexes `g_RasterColourRamps` by the ramp number with no bound, and the palette upload fills only as many records as the palette has ramps.
-- **Unported:** a ground vehicle's Gouraud faces taking the ramps the object drawn before it left ([above](#distance-colour-bands--worldshades_applyforobject-0042e8e8)).
+- **Deferred:** a ground vehicle's Gouraud faces taking the ramps the object drawn before it left ([above](#distance-colour-bands--worldshades_applyforobject-0042e8e8)).
 - **Deferred:** whether `004cfa08` (copied from `004d2549`) is ever non-zero. With it set, `WorldShades_ApplyForObject` hands `Palette_SetRampsToRangeList` a descriptor whose segment pointers are one per segment (`0042e9ca`/`0042e9cd`) while the callee reads a ramp's segments contiguously from the first pointer, so its second segment would be that pointer's own bytes.
 - **Deferred:** what `DAT_0049aee4` holds. `Scene_DrawTerrainPass` calls its slot `+0x34` with the view, after the backdrop, when it is non-null; it is zero in the image and `es2_xref.py` finds no reference besides that read.
 - **Deferred:** what reads `0049aee8`, which `World_LoadTheater` sets to `short4 + short6 - 1`; `es2_xref.py` finds only that store.
