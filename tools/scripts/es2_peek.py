@@ -13,7 +13,7 @@ dispatch tables the dumps do not show whole.
   es2_peek.py BIN ADDR COUNT --words | --bytes
       COUNT words or bytes from ADDR, in hex.
 
-BIN is any binary retail_binaries.py registers (DBSIM, VSHELL, ES1DBSIM, ES1GO). Reads the image
+BIN is any binary retail_binaries.py registers (DBSIM, VSHELL, ES1DBSIM, ES1GO, ES1ESCD). Reads the image
 file only: bytes past a section's file data (zero-filled memory) read as missing.
 """
 

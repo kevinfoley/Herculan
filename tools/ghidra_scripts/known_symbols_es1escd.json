@@ -1,0 +1,10 @@
+﻿{
+  "schema_version": 1,
+  "_readme": [
+    "Known symbols for ES1's ESCD.EXE (ES1ESCD): confirmed address -> meaning mappings, applied to the ES1Recon Ghidra project by ES2ApplySymbolNames.java.",
+    "Addresses are offsets into the flat X-32 image (Herculan/docs/es1/formats/x32-executable.md#the-image).",
+    "Schema, confidence rules and run order: tools/ghidra_scripts/README.md, 'Known symbols'.",
+    "Entries are in address order. tools/scripts/es2_naming.py insert and edit keep it, and check that it holds."
+  ],
+  "entries": []
+}

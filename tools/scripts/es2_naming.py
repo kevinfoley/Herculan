@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Helpers for working down the function-naming backlog in the known_symbols_<binary>.json files.
 
-Subcommands (BIN is a binary tools/scripts/retail_binaries.py registers: DBSIM, VSHELL, ES1DBSIM or
-ES1GO). rtti, vtables, classes and stats read Borland class records and refuse ES1's Symantec C++
+Subcommands (BIN is a binary tools/scripts/retail_binaries.py registers: DBSIM, VSHELL, ES1DBSIM,
+ES1GO or ES1ESCD). rtti, vtables, classes and stats read Borland class records and refuse ES1's Symantec C++
 binaries. match pairs two PE images or two X-32 images, never one of each, since the two mask
 address operands by different rules (insn_streams).
 
@@ -102,8 +102,8 @@ address operands by different rules (insn_streams).
       FUN_/DAT_/bare-address mentions of the batch's named addresses in docs/src/tests.
   fixrefs batch.json [--write]
       Rewrite `FUN_a` to `Name` (`a`) in docs and <c>FUN_a</c> / bare FUN_a in C#, and a bare
-      backticked `a` to `Name` (`a`) in the docs of its binary's family (docs/es1/ for ES1DBSIM and
-      ES1GO, docs/retail/ for DBSIM and VSHELL): the first mention in each paragraph, list item or
+      backticked `a` to `Name` (`a`) in the docs of its binary's family (docs/es1/ for ES1DBSIM,
+      ES1GO and ES1ESCD, docs/retail/ for DBSIM and VSHELL): the first mention in each paragraph, list item or
       table row, never one after a name or a binary's name, in a link, in an address column or in
       a code fence. Lists each rewrite per file, and the mentions it cannot rewrite safely (after
       another name, after a binary's name, an address another binary of the family also has, other
@@ -963,7 +963,7 @@ def relink(text, new):
     return text
 
 
-BINARY_TAG = re.compile(r"\b(?:DBSIM|VSHELL|ES1DBSIM|ES1GO)(?:'s)? $")
+BINARY_TAG = re.compile(r"\b(?:DBSIM|VSHELL|ES1DBSIM|ES1GO|ES1ESCD)(?:'s)? $")
 
 
 def relink_bare(text, binary, named, quiet=False):
@@ -1122,8 +1122,8 @@ def batch_names(path):
     return named
 
 
-DOC_FAMILY = {"ES1DBSIM": "es1", "ES1GO": "es1", "DBSIM": "retail", "VSHELL": "retail"}
-ADDR_COLUMN = re.compile(r"(?i)^(?:address|es1|es2|dbsim|vshell|es1dbsim|es1go)$")
+DOC_FAMILY = {"ES1DBSIM": "es1", "ES1GO": "es1", "ES1ESCD": "es1", "DBSIM": "retail", "VSHELL": "retail"}
+ADDR_COLUMN = re.compile(r"(?i)^(?:address|es1|es2|dbsim|vshell|es1dbsim|es1go|es1escd)$")
 LIST_ITEM = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s")
 TABLE_SEP = re.compile(r"^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)*\|?\s*$")
 
@@ -1218,7 +1218,7 @@ def cmd_fixrefs(args):
     """Rewrite the usual reference shapes to a batch's new names in docs (.md) and C# (.cs):
     `FUN_a` -> `Name` (`a`) in markdown, <c>FUN_a</c> -> <c>Name</c> (<c>a</c>) and a bare FUN_a
     -> Name (a) in C#, and a bare `a` -> `Name` (`a`) in the docs of the address's binary family
-    (docs/es1/ for ES1DBSIM and ES1GO, docs/retail/ for DBSIM and VSHELL; fix_bare_doc says which).
+    (docs/es1/ for ES1DBSIM, ES1GO and ES1ESCD, docs/retail/ for DBSIM and VSHELL; fix_bare_doc says which).
     Anything else naming the address is listed for a manual edit."""
     named = batch_names(args[0])
     if not named:

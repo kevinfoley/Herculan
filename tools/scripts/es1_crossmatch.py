@@ -597,7 +597,8 @@ def run(bid, targets, args):
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--binary", type=str.upper, action="append", choices=("ES1DBSIM", "ES1GO"))
+    ap.add_argument("--binary", type=str.upper, action="append", choices=("ES1DBSIM", "ES1GO", "ES1ESCD"),
+                    help="pair only this binary (repeatable; default ES1DBSIM and ES1GO)")
     ap.add_argument("--target", type=str.upper, action="append", choices=("DBSIM", "VSHELL"))
     ap.add_argument("--list", action="store_true", help="print every candidate")
     ap.add_argument("--show", action="append", metavar="ADDR", help="print one ES1 function's record and conflicts")
