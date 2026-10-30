@@ -285,7 +285,7 @@ public class Es1DUIWindow {
 	}
 
 	/// <summary>
-	/// <c>DUIWindow_SetActive</c> (<c>0001c536</c>)(window) (docs/es1/shell/menus.md#the-active-window): the window made
+	/// <c>DUIWindow_SetActive</c> (<c>0001c536</c>)(window) (docs/es1/shell/menu-input.md#the-active-window): the window made
 	/// <see cref="Es1MenuGlobals.Active"/>, <see cref="Activate"/>, and <see cref="Es1MenuGlobals.KeysEnabled"/> set.
 	/// </summary>
 	public void SetActive(Es1MenuGlobals globals) {
@@ -368,7 +368,7 @@ public class Es1DUIWindow {
 
 	/// <summary>
 	/// <c>DUIWindow_OnPress</c> (<c>0001b436</c>)(window, <paramref name="x"/>, <paramref name="y"/>)
-	/// (docs/es1/shell/menus.md#the-mouse), the point on the screen: the holding control let go of;
+	/// (docs/es1/shell/menu-input.md#the-mouse), the point on the screen: the holding control let go of;
 	/// <see cref="Es1MenuGlobals.PressedIndex"/> the control under the point; one found made pushed and changed, given the
 	/// point relative to the window through its slot <c>+0x38</c> and <see cref="Es1MenuGlobals.Tracking"/> set when it
 	/// follows the pointer (tracking 1), or given the point and made the holding control when it holds the input (2), and
@@ -467,7 +467,7 @@ public class Es1DUIWindow {
 	}
 
 	/// <summary>
-	/// <c>DUIWindow_PressControl</c> (<c>0001b5bb</c>)(window, <paramref name="index"/>) (docs/es1/shell/menus.md#the-keys):
+	/// <c>DUIWindow_PressControl</c> (<c>0001b5bb</c>)(window, <paramref name="index"/>) (docs/es1/shell/menu-input.md#the-keys):
 	/// for an index of 0 or more whose control is not inactive, the holding control let go of, the control made
 	/// <see cref="Es1MenuGlobals.PressedIndex"/>, pushed and changed, and its slot <c>+0xc</c> called. An index past the
 	/// controls does nothing, an engine guard.
@@ -533,7 +533,7 @@ public class Es1DUIWindow {
 	}
 
 	/// <summary>
-	/// <c>DUIWindow_KeySubscriber</c> (<c>0001ba73</c>)(<paramref name="code"/>) (docs/es1/shell/menus.md#the-keys), the
+	/// <c>DUIWindow_KeySubscriber</c> (<c>0001ba73</c>)(<paramref name="code"/>) (docs/es1/shell/menu-input.md#the-keys), the
 	/// keyboard subscriber <see cref="Activate"/> registers for the window's key list: 1 while
 	/// <see cref="Es1MenuGlobals.KeysEnabled"/> is clear; then the repeat test and the release conversion, below; the
 	/// code kept as <see cref="Es1MenuGlobals.LastKey"/>; 2 for a code with <c>Alt</c>, <c>Ctrl</c> or <c>Shift</c>
@@ -588,7 +588,7 @@ public class Es1DUIWindow {
 	}
 
 	/// <summary>
-	/// <c>DUIWindow_HandleNavKey</c> (<c>0001cc86</c>)(<paramref name="code"/>) (docs/es1/shell/menus.md#the-keys), the
+	/// <c>DUIWindow_HandleNavKey</c> (<c>0001cc86</c>)(<paramref name="code"/>) (docs/es1/shell/menu-input.md#the-keys), the
 	/// dialog's key handler: nothing without an active window; otherwise by the seven codes of the table at
 	/// <c>0007f0e0</c>. <c>Tab</c> puts the pressed control up and changed, with no slot called, and moves the focus to the
 	/// next focusable control, wrapping by the remainder of the count; <c>Shift+Tab</c> and <c>Alt+Tab</c> move it to the

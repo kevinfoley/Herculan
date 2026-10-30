@@ -23,9 +23,9 @@ namespace Herculan.Es1.Shell;
 /// steps 7 on and the frame loop run in the window, on host time (<see cref="Es1ShellFrame"/>); the shutdown runs once
 /// the window has closed.</para>
 ///
-/// <para><b>Engine guard:</b> no ported screen sets <c>Shell_QuitFlag</c> yet (<c>EXIT TO DOS</c> and the quit question
-/// are P3's), so closing the window ends the shell: the pass in progress is left where it stands, as though the flag had
-/// been set, and the shutdown runs with <c>Shell_ExitCode</c> as it stands, the code the start read.</para>
+/// <para><b>Engine guard:</b> closing the window ends the shell as EXIT TO DOS and the quit question's PROCEED do
+/// through <c>Shell_QuitFlag</c>: the pass in progress is left where it stands, as though the flag had been set, and the
+/// shutdown runs with <c>Shell_ExitCode</c> as it stands, the code the start read unless a screen set it.</para>
 /// </summary>
 public static class Es1ShellHost {
 	/// <summary>The window's title.</summary>
@@ -89,17 +89,13 @@ public static class Es1ShellHost {
 		private Es1ShellData? _data;
 		private Es1Monitor? _monitor;
 
-		/// <summary><c>Shell_ExitCode</c> (<c>0007fcac</c>).</summary>
-		private short _exitCode;
-
 		public Session(string installRoot, GameContent content, Es1ShellSwitches switches, short exitCode) {
 			_installRoot = installRoot;
 			_content = content;
 			_switches = switches;
-			_exitCode = exitCode;
 			_dirty = new Es1DirtyList(_devices.Display);
 			_backdrop = new Es1ShellBackdrop(_devices.Display, content, _dirty);
-			_screens = new Es1ShellScreens(_devices, _backdrop, _dirty, content, _globals);
+			_screens = new Es1ShellScreens(_devices, _backdrop, _dirty, content, _globals) { ExitCode = exitCode };
 			_frame = new Es1ShellFrame(_devices, _backdrop, _dirty, _screens, _time, switches.DebugMode);
 			_shellMouse = new Es1ShellMouse(_globals);
 		}
@@ -132,7 +128,7 @@ public static class Es1ShellHost {
 			}
 
 			// The window's close, the engine guard of the class summary, or the loop's end.
-			_frame.QuitFlag = true;
+			_screens.QuitFlag = true;
 			return Shutdown();
 		}
 
@@ -145,6 +141,7 @@ public static class Es1ShellHost {
 			window.Attach(gl, input);
 			_monitor = new Es1Monitor(gl, _devices.Display);
 			_frame.UploadPalette = _monitor.SetPalette;
+			_screens.UploadPalette = _monitor.SetPalette;
 			_devices.Mouse.Pointer = () => Es1Monitor.Pointer(window.FramebufferSize, window.ClientSize);
 
 			_frame.Start(Main(Es1HostKeyboard.ReadBiosShiftFlags(window.Keyboard)));
@@ -184,7 +181,7 @@ public static class Es1ShellHost {
 			data.LoadStylesAndFonts(_content);
 
 			// 15. The first screen; 16. its palette uploaded and the screen drawn.
-			_screens.OpenFirstScreen(_exitCode, _switches.PlayIntro, data);
+			_screens.OpenFirstScreen(_screens.ExitCode, _switches.PlayIntro, data, new Es1ShellMission(_installRoot, _content, data));
 			if (_backdrop.Palette is { } palette) {
 				_frame.UploadPalette?.Invoke(palette);
 			}
@@ -192,7 +189,7 @@ public static class Es1ShellHost {
 			_backdrop.PaletteDue = false;
 			_screens.DrawScreen();
 
-			while (!_frame.QuitFlag) {
+			while (!_screens.QuitFlag) {
 				foreach (var wait in _frame.Pass()) {
 					yield return wait;
 				}
@@ -206,7 +203,7 @@ public static class Es1ShellHost {
 		private int Shutdown() {
 			// 1. CareerLog_Write(log, -1); 2. ExitCfg_Write.
 			_data?.WriteCareersLog();
-			if (!Es1Shutdown.WriteExitCode(_installRoot, _exitCode)) {
+			if (!Es1Shutdown.WriteExitCode(_installRoot, _screens.ExitCode)) {
 				Console.Error.WriteLine($"data\\{Es1Shutdown.ExitName} does not open for writing in {_installRoot} (main.cpp line 0x88 asserts here).");
 				return AssertExitStatus;
 			}
@@ -220,7 +217,7 @@ public static class Es1ShellHost {
 			// 6. VolRStream_DeleteGroup and Mem_HeapOff, and under -X an INT 3, which this engine does not raise.
 			// 7. Shell_ExitCode returned. PLACEHOLDER: what ES.BAT does with 2 (a mission's launch) or 5 (a demo) is not in
 			// GO.EXE (startup.md's Open); the host runs nothing after the shell, S2's to settle.
-			return _exitCode;
+			return _screens.ExitCode;
 		}
 	}
 }

@@ -37,4 +37,14 @@ public sealed class Es1ShellRandom {
 
 	/// <summary><c>Math_RandomBelow</c> (<c>ES1GO 00038774</c>): a draw in [0, bound), or 0 with no draw for a bound of 0.</summary>
 	public int Below(short bound) => _state.NextBelow(bound);
+
+	/// <summary>
+	/// <c>StrList_PickRandom</c> (<c>ES1GO 00020289</c>)(list) (docs/es1/formats/bst-battle-sets.md#name-lists): the name
+	/// <see cref="Below"/>(the list's count) indexes. A list of no names draws nothing and reads retail's null name array;
+	/// here it gives null, an engine guard.
+	/// </summary>
+	public string? PickRandom(IReadOnlyList<string> names) {
+		int index = Below((short)names.Count);
+		return index < names.Count ? names[index] : null;
+	}
 }

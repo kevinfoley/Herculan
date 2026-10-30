@@ -4,7 +4,7 @@ namespace Herculan.Es1.Shell.Menus;
 
 /// <summary>
 /// A control's message, <c>Shell_PendingMessage</c>'s four words (<c>0007fcb0</c>–<c>0007fcb7</c>)
-/// (docs/es1/shell/menus.md#a-messages-path): the code, 0 from a control and −1 for none, the control's index in the
+/// (docs/es1/shell/menu-input.md#a-messages-path): the code, 0 from a control and −1 for none, the control's index in the
 /// window, the value its slot <c>+0x2c</c> gives, and the target, the control's id.
 /// </summary>
 public readonly record struct Es1MenuMessage(short Code, short Index, short Value, short Target) {
@@ -90,7 +90,7 @@ public sealed class Es1MenuGlobals {
 	/// <summary>
 	/// The message box's "up" byte, <c>Shell_MessageBox</c> (<c>0009b010</c>)'s <c>+3</c> (<c>0009b013</c>): while it is
 	/// set the screen's window is neither drawn nor updated, and the mouse's press and release do nothing. The message
-	/// box is the main menu's part's (docs/es1/shell/main-menu.md); nothing here sets it.
+	/// box is S2's (docs/es1/shell/main-menu.md#instant-actions-path-to-the-mission); nothing here sets it.
 	/// </summary>
 	public bool MessageBoxUp { get; set; }
 }

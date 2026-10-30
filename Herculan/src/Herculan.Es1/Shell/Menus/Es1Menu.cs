@@ -6,10 +6,11 @@ namespace Herculan.Es1.Shell.Menus;
 
 /// <summary>
 /// What a menu and its window draw and read with: the shell's display, its archives, its shared data, the window
-/// globals, the dirty list and the screen state. This engine's bundle of retail's globals, passed where retail reads them.
+/// globals, the dirty list, the screen state and the mission the shell loads. This engine's bundle of retail's globals,
+/// passed where retail reads them.
 /// </summary>
 public sealed record Es1MenuContext(Es1VideoMemory Display, GameContent Content, Es1ShellData Data, Es1MenuGlobals Globals,
-	Es1DirtyList Dirty, Es1ShellScreens Screens);
+	Es1DirtyList Dirty, Es1ShellScreens Screens, Es1ShellMission Mission);
 
 /// <summary>
 /// A screen object, class <c>Menu</c> (vtable <c>00081bd8</c>, <c>0x26</c> bytes) (docs/es1/shell/menus.md#the-screen-object):
@@ -168,15 +169,94 @@ public class Es1Menu {
 /// screen 1000.
 /// </summary>
 public sealed class Es1MainMenu : Es1Menu {
+	/// <summary>The buttons' ids, the six of the table at <c>000809b8</c>.</summary>
+	private const short InstantAction = 1499, Resume = 1700, SingleMission = 1100, Career = 1200, Options = 1300, ExitToDos = 1003;
+
+	/// <summary>The <c>.ANM</c> INSTANT ACTION and RESUME put into <c>000aacfe</c>, the string at <c>00080984</c>.</summary>
+	private const string MissionAnm = "anm\\esiege3.anm";
+
 	public Es1MainMenu(Es1MenuContext context) : base(context) {
 	}
 
-	/// <summary>Slot <c>+8</c>, <c>MainMenu_OnMessage</c> (<c>0002a70a</c>) (docs/es1/shell/main-menu.md#the-buttons).</summary>
+	/// <summary>
+	/// Slot <c>+8</c>, <c>MainMenu_OnMessage</c> (<c>0002a70a</c>) (docs/es1/shell/main-menu.md#the-buttons): by the
+	/// message's target, the case of the table at <c>000809b8</c> (cases at <c>000809d0</c>); nothing for any other target.
+	/// Each case but EXIT TO DOS sets <see cref="Es1ShellScreens.ReturnScreen"/>.
+	/// </summary>
 	public override void OnMessage(ref Es1MenuMessage message) {
-		// PLACEHOLDER: MainMenu_OnMessage (0002a70a), the main menu's buttons' cases, P3's; until it lands a message changes nothing.
+		var screens = Context.Screens;
+		var mission = Context.Mission;
+		switch (message.Target) {
+			case InstantAction:
+				// 0002a730: a random single mission loaded, its objectives written, and the .ANM played after the next screen.
+				mission.Mode = 0;
+				screens.ReturnScreen = Es1ShellScreens.MainMenuScreen;
+				mission.SingleMissionIndex = -1;
+				mission.StartSingleMission();
+				mission.Prepare(screens);
+				screens.AnmName = MissionAnm;
+				screens.AnmMode = 1;
+				break;
+			case Resume:
+				// 0002a773.
+				mission.Mode = 1;
+				screens.ReturnScreen = Es1ShellScreens.MainMenuScreen;
+				mission.SingleMissionIndex = -1;
+				// PLACEHOLDER: the career's part from 0002a78e (docs/es1/shell/main-menu.md#resume): Career_LoadCurrent once a
+				// session, the target turned into the career's screen, 1250, 1260 or 5555, Career_StartMission and
+				// Shell_PrepareMission, and anm\esiege3.anm with 0007fcd7 1; S3's. Until it lands the target stays 1700.
+				break;
+			case SingleMission:
+				// 0002a963.
+				mission.Mode = 0;
+				screens.ReturnScreen = SingleMission;
+				break;
+			case Career:
+				// 0002a977.
+				mission.Mode = 1;
+				screens.ReturnScreen = Career;
+				break;
+			case Options:
+				// 0002a98b.
+				screens.ReturnScreen = Es1ShellScreens.MainMenuScreen;
+				break;
+			case ExitToDos:
+				// 0002a996.
+				screens.ExitCode = 0;
+				screens.QuitFlag = true;
+				break;
+		}
 	}
 
 	/// <summary>Slot <c>+4</c>, <c>MainMenu_Dtor</c> (<c>0003b771</c>): its vtable, then <c>Menu</c>'s, stored and the menu freed.</summary>
+	public override void Dtor() {
+	}
+}
+
+/// <summary>
+/// The quit question's screen object, class <c>QuitAlert</c> (vtable <c>00081e48</c>) (docs/es1/shell/main-menu.md#the-quit-question):
+/// screen 999, opened as menu 888 or 999 (<see cref="Es1ShellScreens.OpenQuitAlert"/>).
+/// </summary>
+public sealed class Es1QuitAlert : Es1Menu {
+	/// <summary>PROCEED's id.</summary>
+	private const short Proceed = 100;
+
+	public Es1QuitAlert(Es1MenuContext context) : base(context) {
+	}
+
+	/// <summary>
+	/// Slot <c>+8</c>, <c>QuitAlert_OnMessage</c> (<c>0002a554</c>): for PROCEED, <see cref="Es1ShellScreens.ExitCode"/> 0
+	/// and <see cref="Es1ShellScreens.QuitFlag"/> set. CANCEL (99) passes to <see cref="Es1ShellScreens.HandleMessage"/>'s
+	/// <i>back</i>.
+	/// </summary>
+	public override void OnMessage(ref Es1MenuMessage message) {
+		if (message.Target == Proceed) {
+			Context.Screens.ExitCode = 0;
+			Context.Screens.QuitFlag = true;
+		}
+	}
+
+	/// <summary>Slot <c>+4</c>, <c>QuitAlert_Dtor</c> (<c>0003fd1a</c>): its vtable, then <c>Menu</c>'s, stored and the menu freed.</summary>
 	public override void Dtor() {
 	}
 }

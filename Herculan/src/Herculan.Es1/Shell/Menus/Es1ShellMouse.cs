@@ -3,7 +3,7 @@ using Herculan.Es1.Input;
 namespace Herculan.Es1.Shell.Menus;
 
 /// <summary>
-/// The shell's mouse callbacks into the active window, the dialog file's (docs/es1/shell/menus.md#the-mouse):
+/// The shell's mouse callbacks into the active window, the dialog file's (docs/es1/shell/menu-input.md#the-mouse):
 /// <c>ShellMouse_AddCallbacks</c> registers them with the mouse driver at the start-up's step 13 and
 /// <c>ShellMouse_RemoveCallbacks</c> takes them off at the shutdown's step 4.
 ///

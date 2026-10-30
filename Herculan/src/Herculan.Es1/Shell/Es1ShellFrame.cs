@@ -78,9 +78,6 @@ public sealed class Es1ShellFrame {
 	/// <summary><c>Palette_UploadWhole</c>: the palette made the live one, the monitor's (<see cref="Es1Monitor.SetPalette"/>).</summary>
 	public Action<DynamixPalette>? UploadPalette { get; set; }
 
-	/// <summary><c>Shell_QuitFlag</c> (<c>0007fd05</c>), which ends the frame loop.</summary>
-	public bool QuitFlag { get; set; }
-
 	/// <summary><c>Shell_QuitRequested</c> (<c>0007e808</c>), which the quit keys set.</summary>
 	public bool QuitRequested { get; private set; }
 
@@ -235,7 +232,7 @@ public sealed class Es1ShellFrame {
 		HandleInput(InputBlock);
 		// NoOp_Void.
 		if (_screens.CurrentScreen == Es1ShellScreens.LoadingScreen) {
-			QuitFlag = true;
+			_screens.QuitFlag = true;
 		}
 
 		foreach (var wait in _screens.HandleMessage(_screens.Globals.PendingMessage, PresentFrame)) {
@@ -248,10 +245,10 @@ public sealed class Es1ShellFrame {
 
 		_screens.TickScreen();
 		// 0001098e, the widget root's mouse queue (Shell_PollInput's), does nothing until its queue is started.
-		// PLACEHOLDER: MessageBox_Run (000382f6) and the text box 00018dcb, P3's.
+		// PLACEHOLDER: MessageBox_Run (000382f6) and the text box 00018dcb(0009afc8), the message box and the briefing's text,
+		// S2's.
 		if (QuitRequested) {
-			// PLACEHOLDER: Shell_OpenQuitAlert (000408cc), which opens screen 999, the quit question, P3's; until it lands
-			// a quit key does nothing visible.
+			_screens.OpenQuitAlert();
 			QuitRequested = false;
 		}
 
@@ -272,8 +269,8 @@ public sealed class Es1ShellFrame {
 	/// nothing.</para>
 	/// </summary>
 	public Es1LiveBlock PollInput() {
-		// PLACEHOLDER: 0001098e's queue, once Shell_PrepareMission (0002a523, INSTANT ACTION's and S2's) or screen 1320's
-		// case starts it.
+		// PLACEHOLDER: 0001098e's queue, once Shell_PrepareMission's maybe_MouseEventQueue_Start (the mission map's, S5's) or
+		// screen 1320's case starts it.
 		var mouse = _devices.Mouse;
 		var block = new Es1LiveBlock {
 			CommandWord = ReadKeyboardWord(),

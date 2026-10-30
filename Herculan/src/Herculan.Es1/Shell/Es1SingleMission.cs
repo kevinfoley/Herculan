@@ -13,7 +13,8 @@ namespace Herculan.Es1.Shell;
 /// A named mission started as the shell's SINGLE MISSION starts one: <see cref="Es1MissionLoad"/>, the mode-0 load, on
 /// the mission, the MISSION PARAMS options of the install's <c>data\prefs.cfg</c>, <c>car\sm_init.dat</c> and
 /// <c>bst\tech_sng.dat</c>, writing <c>data\script.dat</c>, <c>data\mission.var</c> and <c>data\player.mec</c> into the
-/// install for the simulator to read (docs/es1/formats/msn-mission-file.md#loading-a-mission).
+/// install for the simulator to read (docs/es1/formats/msn-mission-file.md#loading-a-mission). The shell's own loads,
+/// <see cref="Es1ShellMission.StartSingleMission"/>'s, go through it with the shell's MISSION PARAMS words.
 ///
 /// <para>The files are written as the shell writes them: <c>data\script.dat</c> through a stream that does not truncate,
 /// so a shorter mission leaves the last one's tail (docs/es1/formats/script-dat.md#writing); <c>data\mission.var</c>
@@ -30,6 +31,17 @@ public static class Es1SingleMission {
 	/// </summary>
 	public static Es1MissionLoadResult? Start(string installRoot, GameContent shell, string missionName,
 			Es1ShellRandom random, out string? error) {
+		string prefsPath = Es1MissionFiles.DataPath(installRoot, "prefs.cfg");
+		var missionParams = Es1MissionParams.FromPrefs(File.Exists(prefsPath) ? File.ReadAllBytes(prefsPath) : null);
+		return Start(installRoot, shell, missionName, missionParams, random, out error);
+	}
+
+	/// <summary>
+	/// <see cref="Start(string, GameContent, string, Es1ShellRandom, out string?)"/> with the MISSION PARAMS words
+	/// <paramref name="missionParams"/>, as the shell holds them from its start-up (<see cref="Es1ShellData.MissionParams"/>).
+	/// </summary>
+	public static Es1MissionLoadResult? Start(string installRoot, GameContent shell, string missionName,
+			Es1MissionParams missionParams, Es1ShellRandom random, out string? error) {
 		string fileName = Path.HasExtension(missionName) ? missionName : missionName + ".MSN";
 		if (shell.Read(Es1MissionFiles.MissionFolder, fileName) is not { } missionBytes
 				|| new Es1MissionFileTransformer().Parse(missionBytes) is not Es1MissionFile mission) {
@@ -48,9 +60,6 @@ public static class Es1SingleMission {
 			error = "bst\\tech_sng.dat is missing or unreadable.";
 			return null;
 		}
-
-		string prefsPath = Es1MissionFiles.DataPath(installRoot, "prefs.cfg");
-		var missionParams = Es1MissionParams.FromPrefs(File.Exists(prefsPath) ? File.ReadAllBytes(prefsPath) : null);
 
 		Es1MissionLoadResult result;
 		try {

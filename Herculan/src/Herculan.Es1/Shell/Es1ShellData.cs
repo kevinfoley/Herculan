@@ -13,7 +13,8 @@ namespace Herculan.Es1.Shell;
 /// <summary>
 /// What the shell loads once at its start and keeps for every screen (docs/es1/shell/startup.md#the-shared-data), as far
 /// as the main menu needs it: the file-name table, the <c>prefs.cfg</c> options' bytes and words, the 13 fonts, the
-/// generator, the shell's text and the careers log. The HERC diagrams and the battle set are later parts'.
+/// generator, the shell's text, the careers log and the single missions' lists. The HERC diagrams and the rest of the
+/// battle set are later parts'.
 /// </summary>
 public sealed class Es1ShellData {
 	/// <summary>The file-name table's entry of the careers log, <c>car\names.log</c> (docs/es1/formats/career-log-and-player-mec.md#the-careers-log).</summary>
@@ -86,7 +87,8 @@ public sealed class Es1ShellData {
 	/// <c>Shell_LoadData</c> (<c>00020630</c>), the start-up's step 11, on <paramref name="preferences"/>, the options as the
 	/// devices left them: options 12–16 into <see cref="MissionParams"/>, 0 and 1 into the two bytes, 2 into
 	/// <see cref="Option2Word"/>, <see cref="DetailWord"/>; the 14 font slots; the generator seeded with <c>time()</c>
-	/// % 128 draws; <c>eng\watext.bin</c>; and the careers log, with <see cref="CurrentCareer"/> from it.
+	/// % 128 draws; <c>eng\watext.bin</c>; the careers log, with <see cref="CurrentCareer"/> from it; and, of
+	/// <c>BattleSet_Load</c>, <see cref="SingleMissions"/>.
 	/// </summary>
 	public void Load(GameContent content, Es1Preferences preferences, string installRoot, long secondsSince1970) {
 		for (int i = 0; i < MissionParams.Length; i++) {
@@ -107,10 +109,44 @@ public sealed class Es1ShellData {
 		Text = content.Read("eng", "WATEXT.BIN") is { } text ? new BinStringFileTransformer().Parse(text)?.Values : null;
 
 		// PLACEHOLDER: the rect 0009b000–0009b00c, (0, 0) and the display's attributes 2 and 3 less 1, which only screen
-		// 9999 reads (P2 and P3's); the HERC diagrams' tables and art (HercLayout_Load, HercDamageMarks_Load,
-		// LoadDamageDat_Shell, HercHotspots_Load, HercArt_LoadAllBanks), S3's; BattleSet_Load, S4's; and 00027c4c, unread.
+		// 9999 reads (S2's); the HERC diagrams' tables and art (HercLayout_Load, HercDamageMarks_Load, LoadDamageDat_Shell,
+		// HercHotspots_Load, HercArt_LoadAllBanks), S3's.
 
 		LoadCareersLog(installRoot);
+
+		// BattleSet_Load(g_BattleSet, the roster's battle set): PLACEHOLDER: bst\batlsets.bin, BattleSet_ReadFile and
+		// PilotNames_Load, S4's; of it only SingleMissions_Load, which INSTANT ACTION draws from. Then 00027c4c, unread.
+		LoadSingleMissions(content);
+	}
+
+	/// <summary>
+	/// The single missions' lists, the array <c>00081080</c> of the count word <c>00081084</c>'s low byte; none in the image
+	/// (docs/es1/formats/bst-battle-sets.md#single-missions).
+	/// </summary>
+	public IReadOnlyList<Es1NameList>? SingleMissions { get; private set; }
+
+	/// <summary>
+	/// <c>SingleMissions_Load</c> (<c>000361ac</c>): <c>msn\sing_msn.dat</c>'s lists, which replace the array only when the
+	/// count is not 0. Retail reads whatever a missing or short file gives; here such a file is reported and changes
+	/// nothing, an engine guard.
+	/// </summary>
+	private void LoadSingleMissions(GameContent content) {
+		Es1SingleMissions? file;
+		try {
+			file = content.Read("msn", "SING_MSN.DAT") is { } bytes ? new Es1SingleMissionsTransformer().Parse(bytes) : null;
+		} catch (InvalidDataException ex) {
+			Console.Error.WriteLine($"msn\\sing_msn.dat does not read ({ex.Message}): the single missions' lists are not loaded.");
+			return;
+		}
+
+		if (file == null) {
+			Console.Error.WriteLine("msn\\sing_msn.dat is missing: the single missions' lists are not loaded.");
+			return;
+		}
+
+		if (file.Lists.Length != 0) {
+			SingleMissions = file.Lists;
+		}
 	}
 
 	/// <summary>The style table the shell's controls draw with, <c>CFG\styles.dat</c>; none when it does not read.</summary>

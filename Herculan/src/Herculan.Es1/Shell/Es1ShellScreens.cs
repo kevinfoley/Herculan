@@ -7,8 +7,8 @@ namespace Herculan.Es1.Shell;
 /// <summary>
 /// The shell's screen state and the routines of <c>shell.cpp</c> the start-up, the frame loop and the shutdown run
 /// (docs/es1/shell/menus.md#opening-and-closing-a-screen): <c>Shell_OpenFirstScreen</c>, <c>Shell_HandleMessage</c>,
-/// <c>Shell_DrawScreen</c>, <c>Shell_TickScreen</c> and <c>Shell_CloseScreens</c>. The menus themselves are
-/// <see cref="Es1Menu"/> and the window classes under it; the main menu's buttons are P3's.
+/// <c>Shell_DrawScreen</c>, <c>Shell_TickScreen</c>, <c>Shell_OpenQuitAlert</c> and <c>Shell_CloseScreens</c>. The menus
+/// themselves are <see cref="Es1Menu"/> and the window classes under it.
 /// </summary>
 public sealed class Es1ShellScreens {
 	/// <summary>The main menu's screen and backdrop group, and the screen <c>Shell_PreviousScreen</c> starts from.</summary>
@@ -34,6 +34,24 @@ public sealed class Es1ShellScreens {
 	/// <summary>The window file's globals the menus share with the input.</summary>
 	public Es1MenuGlobals Globals { get; }
 
+	/// <summary>
+	/// <c>Shell_ExitCode</c> (<c>0007fcac</c>), the code the shutdown writes to <c>data\exit.cfg</c> and the shell returns:
+	/// the code the start-up read until a screen sets it (docs/es1/shell/startup.md#the-ways-out).
+	/// </summary>
+	public short ExitCode { get; set; }
+
+	/// <summary><c>Shell_QuitFlag</c> (<c>0007fd05</c>), which ends the frame loop at its next test.</summary>
+	public bool QuitFlag { get; set; }
+
+	/// <summary>
+	/// <c>Shell_DemoRequested</c> (<c>000817ce</c>), which the options menu's VIEW DEMO sets and screen 9999 turns into exit
+	/// code 5 (docs/es1/shell/main-menu.md#the-return-screen). No ported screen sets it.
+	/// </summary>
+	public bool DemoRequested { get; set; }
+
+	/// <summary><c>Palette_UploadWhole</c>: the palette made the live one, the monitor's.</summary>
+	public Action<HercWorks.Core.Data.File.Dyn.DynamixPalette>? UploadPalette { get; set; }
+
 	/// <summary><c>Shell_CurrentScreen</c> (<c>000817c0</c>), −1 in the image.</summary>
 	public short CurrentScreen { get; private set; } = -1;
 
@@ -55,19 +73,21 @@ public sealed class Es1ShellScreens {
 	/// <summary>
 	/// The byte <c>000817c6</c>, 1 in the image: <see cref="DrawScreen"/> draws the backdrop. <see cref="HandleMessage"/>
 	/// sets it when the new screen shows a new backdrop and clears it when it does not (disassembly <c>0003ca4d</c>,
-	/// <c>0003ca6e</c>).
+	/// <c>0003ca6e</c>); <see cref="OpenQuitAlert"/> clears it, so the question is drawn over the picture as it stands.
 	/// </summary>
 	public bool DrawsBackdrop { get; private set; } = true;
 
 	/// <summary>
 	/// <c>Shell_ResumeScreen</c> (<c>000817be</c>), −1 in the image: what a <i>back</i> message (target 99) stores as the
-	/// current screen, once, so that the screen it opens takes it as its previous one. No ported screen sets it.
+	/// current screen, once, so that the screen it opens takes it as its previous one. <see cref="OpenQuitAlert"/> sets it
+	/// to the previous screen of the screen it closes.
 	/// </summary>
 	public short ResumeScreen { get; set; } = -1;
 
 	/// <summary>
 	/// The object <c>Shell_MissionMap</c> (<c>000809a4</c>), the briefing's mission map, none in the image. Its class is
-	/// S5's and no ported screen makes one; <see cref="HandleMessage"/> tests it as retail does.
+	/// S5's and no ported screen makes one (<see cref="Es1ShellMission.Prepare"/>); <see cref="HandleMessage"/> tests it as
+	/// retail does.
 	/// </summary>
 	public object? MissionMap { get; set; }
 
@@ -79,7 +99,8 @@ public sealed class Es1ShellScreens {
 
 	/// <summary>
 	/// The byte <c>000817bd</c>, 0 in the image: how many more times <see cref="DrawScreen"/> runs the mission map's drawing
-	/// first (menus.md's Open). <see cref="HandleMessage"/> sets it for the alerts 3000 and 3333 over the war map.
+	/// first (menus.md's Open). <see cref="HandleMessage"/> sets it for the alerts 3000 and 3333 over the war map, and
+	/// <see cref="OpenQuitAlert"/> for the quit question.
 	/// </summary>
 	public byte MapDrawCount { get; private set; }
 
@@ -96,7 +117,7 @@ public sealed class Es1ShellScreens {
 	public bool IntroCutShort { get; private set; }
 
 	/// <summary>The <c>.ANM</c> name at <c>000aacfe</c>.</summary>
-	public string? AnmName { get; private set; }
+	public string? AnmName { get; set; }
 
 	/// <summary>The byte <c>0007fcd7</c>: 2 plays <see cref="AnmName"/> before the backdrop is drawn, 1 after the screen.</summary>
 	public byte AnmMode { get; set; }
@@ -121,8 +142,9 @@ public sealed class Es1ShellScreens {
 	/// </summary>
 	/// <param name="playIntro"><c>Shell_PlayIntro</c>, which <c>-A</c> clears.</param>
 	/// <param name="data">The shared data the start-up loaded, which the menus draw with.</param>
-	public void OpenFirstScreen(short exitCode, bool playIntro, Es1ShellData data) {
-		_menuContext = new Es1MenuContext(_devices.Display, _content, data, Globals, _dirty, this);
+	/// <param name="mission">The mission the menus load, which their handlers reach through the menus' context.</param>
+	public void OpenFirstScreen(short exitCode, bool playIntro, Es1ShellData data, Es1ShellMission mission) {
+		_menuContext = new Es1MenuContext(_devices.Display, _content, data, Globals, _dirty, this, mission);
 		// DirtyList_CreateContext is the dirty list's (Es1DirtyList). PLACEHOLDER: Ttm_Configure(page 2, the full-screen
 		// context, 0x32), Ttm_AllocHandles(2), Ttm_SetPathPrefix(res32\) and TtmLists_Load set up the shell's script
 		// interpreter, which is not ported (ES1's simulator interpreter differs, docs/es1/formats/ttm-scripts.md#the-shell).
@@ -182,7 +204,7 @@ public sealed class Es1ShellScreens {
 		if (DrawsBackdrop) {
 			if (AnmMode == 0 && CurrentScreen != MainMenuScreen) {
 				// The raster slot 0008663c with (the draw page, 0) and (the visible page, 0). PLACEHOLDER: the slot is
-				// unread; a change to a screen with a new backdrop (RESUME's 1700, INSTANT ACTION's 1499) reaches it.
+				// unread; a change to a screen with a new backdrop and no .ANM reaches it, as the later modules' screens do.
 			}
 
 			if (AnmMode == 2) {
@@ -201,8 +223,8 @@ public sealed class Es1ShellScreens {
 			// PLACEHOLDER: the career record's HERC diagram (00029651, CareerRecord_SelectPilot), S3's.
 		}
 
-		// PLACEHOLDER: DigitalDialog_ShowMessage(Shell_MessageBox) and Ttm_RunAll, the message box (P3's) and the scripts
-		// (the shell's unported interpreter).
+		// PLACEHOLDER: DigitalDialog_ShowMessage(Shell_MessageBox) and Ttm_RunAll, the message box (S2's,
+		// docs/es1/shell/main-menu.md#instant-actions-path-to-the-mission) and the scripts (the shell's unported interpreter).
 		if (CurrentMenu is { } menu) {
 			DrawMenu(menu, keptDraw);
 		} else {
@@ -210,7 +232,13 @@ public sealed class Es1ShellScreens {
 		}
 
 		if (AnmMode == 1) {
-			// PLACEHOLDER: the palette uploaded, then Anm_Play(1, 0xb, AnmName); no ported screen sets mode 1.
+			// Palette_UploadWhole(0007fcd0) and 0007fcd4 cleared, then Anm_Play(1, 0xb, AnmName). PLACEHOLDER: the shell has
+			// no .ANM player yet (docs/es1/formats/anm-animation.md).
+			if (_backdrop.Palette is { } palette) {
+				UploadPalette?.Invoke(palette);
+			}
+
+			_backdrop.PaletteDue = false;
 			AnmMode = 0;
 		}
 
@@ -364,8 +392,8 @@ public sealed class Es1ShellScreens {
 	/// <summary>
 	/// <c>Shell_HandleMessage</c>'s step 9, the case of the table at <c>00082060</c> (targets at <c>00082104</c>) for
 	/// <paramref name="target"/>: most make the screen's object the current menu (docs/es1/shell/menus.md#the-screens).
-	/// Only the main menu's is ported; with any other the screen becomes current with no menu, as retail's does for the
-	/// cases that make none.
+	/// The main menu's and the quit question's are ported, and screen 9999's exit code; with any other the screen becomes
+	/// current with no menu, as retail's does for the cases that make none, its backdrop shown with no window.
 	/// </summary>
 	private void OpenScreenCase(short target) {
 		switch (target) {
@@ -377,17 +405,24 @@ public sealed class Es1ShellScreens {
 
 				break;
 			case LoadingScreen:
-				// PLACEHOLDER: 0003cab5: Shell_ExitCode 5 with Shell_DemoRequested (000817ce) set and 2 otherwise, a SimLoadMenu,
-				// ShellBackdrop_LoadPalette(9999), 0007fcd5 cleared, anm\esiege2.anm with 0007fcd7 2 and the rect 0009b000
-				// copied to the visible page; P3's.
+				// 0003cab5.
+				ExitCode = (short)(DemoRequested ? 5 : 2);
+				// PLACEHOLDER: a SimLoadMenu, ShellBackdrop_LoadPalette(9999), 0007fcd5 cleared, anm\esiege2.anm with 0007fcd7 2
+				// and the rect 0009b000 copied to the visible page: the loading screen, S2's, which the war map's BEGIN MISSION >
+				// and the options menu's VIEW DEMO reach.
 				break;
 			case QuitAlertScreen:
-				// PLACEHOLDER: 0003d553: a QuitAlert, the quit question; P3's.
+				// 0003d553: a QuitAlert, which step 10 opens as menu 999.
+				if (_menuContext != null) {
+					CurrentMenu = new Es1QuitAlert(_menuContext);
+				}
+
 				break;
 			case 1490:
 			case 1499:
 				// PLACEHOLDER: 0003cccc and 0003ccdd: MessageBox_SetKind(Shell_MessageBox, 2), and for 1499 0 in Shell_Mode 0 and
-				// 1 otherwise; the message box is P3's. Neither makes a menu.
+				// 1 otherwise; the message box is S2's. Neither makes a menu, so until it lands INSTANT ACTION shows its
+				// backdrop with no window, and the quit keys' question is the way out.
 				break;
 			case 1520:
 			case 1510:
@@ -456,6 +491,53 @@ public sealed class Es1ShellScreens {
 
 		// PLACEHOLDER: while Shell_MissionMap (000809a4) is set, 00009cfb and the byte 000809a8's countdown (menus.md's Open);
 		// no ported screen makes the mission map.
+	}
+
+	/// <summary>The menu the quit question opens as on backdrop 1000, whose window is the main menu's rect.</summary>
+	private const short QuitAlertMainMenu = 888;
+
+	/// <summary>The backdrop group whose palette the quit question loads again, the service bay's.</summary>
+	private const short ServiceBayBackdrop = 4000;
+
+	/// <summary>
+	/// <c>Shell_OpenQuitAlert</c> (<c>000408cc</c>), the frame loop's step 6 after a quit key
+	/// (docs/es1/shell/main-menu.md#the-quit-question): <see cref="MapDrawCount"/> 3 while <see cref="MapRefresh"/> is set
+	/// and 0 otherwise; then, unless the current screen is 999 already: with a current menu,
+	/// <see cref="PreviousScreen"/> kept in <see cref="ResumeScreen"/> and the menu closed and destroyed;
+	/// <see cref="DrawsBackdrop"/> cleared; an <see cref="Es1QuitAlert"/> made the current menu and opened as menu 888 on
+	/// backdrop 1000, as 999 after backdrop 4000's palette is loaded again on backdrop 4000, and as 999 on any other; the
+	/// screens moved on to 999; and the screen drawn. The backdrop and the music stay.
+	/// </summary>
+	public void OpenQuitAlert() {
+		MapDrawCount = (byte)(MapRefresh != 0 ? 3 : 0);
+		// The context exists from the first screen on, before the frame loop reads a quit key; the test is an engine guard.
+		if (CurrentScreen == QuitAlertScreen || _menuContext == null) {
+			return;
+		}
+
+		if (CurrentMenu is { } closing) {
+			ResumeScreen = PreviousScreen;
+			closing.Close();
+			closing.Dtor();
+			CurrentMenu = null;
+		}
+
+		DrawsBackdrop = false;
+		var alert = new Es1QuitAlert(_menuContext);
+		CurrentMenu = alert;
+		if (BackdropId == MainMenuScreen) {
+			alert.Open(QuitAlertMainMenu);
+		} else {
+			if (BackdropId == ServiceBayBackdrop) {
+				_backdrop.LoadPalette(ServiceBayBackdrop);
+			}
+
+			alert.Open(QuitAlertScreen);
+		}
+
+		PreviousScreen = CurrentScreen;
+		CurrentScreen = QuitAlertScreen;
+		DrawScreen();
 	}
 
 	/// <summary>
