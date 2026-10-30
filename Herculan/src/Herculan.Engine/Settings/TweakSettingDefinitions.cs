@@ -164,6 +164,8 @@ public static class TweakSettingDefinitions {
 	/// (docs/retail/launch-options.md, "Display"), and the frame is scaled to fit the window, centred, so a window wider
 	/// than 4:3 gets bars at its sides; HERCULAN's own ImGui windows stay at the window's resolution either way. The
 	/// shell is drawn at 640x480 whatever this is set to.
+	/// <para>On, a structure is also drawn while any of it is on screen though the terrain walk misses its cell, which
+	/// the wider view shows at its edges — see <see cref="Render.ObjectDrawTable.File"/>.</para>
 	/// <para>Defaults on, an exception to the retail-by-default rule. See <see cref="Render.FixedResolutionTarget"/>.</para>
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> HighResolutionWidescreen = new("tweak.high_resolution_widescreen", TweakCategory.Cosmetic, defaultValue: true, recommendedValue: true);

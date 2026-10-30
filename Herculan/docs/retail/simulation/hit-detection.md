@@ -72,6 +72,12 @@ Per cluster (`Mech_ComponentGeometryTest_Candidate`, `0040c8fc`):
 
 The two transform helpers under it differ only in input width: `Transform_ApplyToShortPoint` (`004800c8`) takes a `short` point (structure/sphere centres), `Transform_ApplyToPoint` (`00480330`) an `int` one. Both branch on the transform's rank byte at `+0x12` — translation only, Z-rotation only, or full 3×3 — which is an optimisation, not a behavioural difference.
 
+### A HERC wreck stays solid
+
+`Mech_DirectFireHitTest` tests none of the three out-of-action bytes, and the cluster skip above goes by each component's alive flag, which only `Component_DestroyAndCascade` clears ([`component-damage.md`](component-damage.md#the-component-damage-system)). The torso, component 6, runs no destruction on 20 of the 21 chassis ([its flags](../formats/dmg-damage-file.md#the-piece-record)), so its clusters stay live for the rest of the mission: a destroyed HERC's torso, the one part a wreck always keeps, stops every shot that reaches it. The sweep skips the `+0x50` notification for it, but the ray still ends there.
+
+A shot stopped on a wreck short of a live target beyond it is a blocked line of fire like any other. A fighting machine is sent [`skirting`](ai-combat-states.md#skirting-14--mech_behaviourskirtthink-0041dd64), whose re-test cannot see a machine, so it comes straight back and fires into the wreck again. A [`travelling`](ai-navigation.md#travelling-9-and-bulldog-travel-11--mech_behaviourtravelthink-0041d9cc) or [`following`](ai-navigation.md#following-10--mech_behaviourfollowthink-0041daac) machine holds no target, so the report above is never made, and it goes on firing into the wreck at the object it is watching.
+
 ## The collision volume — the `.DGS` record's height field
 
 The shape's collision volume is the tail of its `.DGS` record: a grid of columns, rows and a cell size, a 256-entry height table and one byte code per cell, laid out in [`../formats/dgs-hd0-notes.md`](../formats/dgs-hd0-notes.md#the-collision-volume).

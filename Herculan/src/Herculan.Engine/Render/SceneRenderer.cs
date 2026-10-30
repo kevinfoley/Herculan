@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using Herculan.Engine.Gl;
+using Herculan.Engine.Settings;
 using Herculan.Engine.Sim;
 using Herculan.Engine.Terrain;
 using Silk.NET.OpenGL;
@@ -1056,14 +1057,20 @@ public sealed class SceneRenderer : IDisposable {
 	/// <summary>
 	/// This pass's side of the original's submit: rebuilds the zone's visible region for the pass's
 	/// view, as <c>Terrain_SetupVisibleRegion</c> does before the submit, and files the layer's objects
-	/// by it. Returns the walk's order, which the ground shapes are ranked by.
+	/// by it. Returns the walk's order, which the ground shapes are ranked by. Under the widescreen tweak the filing
+	/// also draws a structure the walk misses while it is on screen (<see cref="ObjectDrawTable.File"/>).
 	/// </summary>
 	private static TerrainPaintOrder FileObjects(Camera camera, float aspect, GroundShapeLayer ground) {
 		var grid = ground.Grid;
 		var viewer = camera.Position;
-		ground.Region.Update(grid, viewer, camera.ViewRotation, camera.EdgeSlopes(aspect));
+		var rotation = camera.ViewRotation;
+		var edges = camera.EdgeSlopes(aspect);
+		ground.Region.Update(grid, viewer, rotation, edges);
 		var order = TerrainPaintOrder.For(grid, viewer, camera.SimHeading);
-		ground.Objects.File(grid, ground.Region, viewer, order);
+		ViewSphereTest? reachesView = TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.HighResolutionWidescreen)
+			? new ViewSphereTest(viewer, rotation, edges)
+			: null;
+		ground.Objects.File(grid, ground.Region, viewer, order, reachesView);
 		return order;
 	}
 

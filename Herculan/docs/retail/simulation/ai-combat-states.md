@@ -218,6 +218,8 @@ return steep ? 1 : 2
 
 **The two nonzero answers are not "shape" and "terrain".** `1` is anything the machine cannot get past — a shape, or ground whose slope `Terrain_FaceBlocksMovement` says it could not walk. `2` is ground it *could* walk: the thin ray grazes a rise the machine can simply crest. That is what makes the reading matter to the state above.
 
+**A machine in the way reads clear.** `Sim_RaycastShapes` tests the structure pool alone, while the shot that sent the machine here can have stopped on another machine — most often a destroyed HERC, whose torso keeps stopping shots ([`hit-detection.md`](hit-detection.md#a-herc-wreck-stays-solid)). The first re-test then ends the state about 2.4 seconds in, the machine goes back to the state it left, fires into the same wreck, and is sent skirting again. With its target standing beyond the wreck it repeats that for as long as it has anything to fire: a short arc, back, a few shots, another arc.
+
 ## `sleeping` (13) — `Mech_BehaviourSleepThink` (`0041c418`)
 
 Release the target, `Mech_LocomotionTick(mech, 0, 0, 0)`, `Ai_UpdateWeaponsFree`. A sleeping machine stands with its throttle at zero and its radar on its standing setting ([`sensors.md`](sensors.md#how-an-ai-machines-radar-is-set)), and holds no target. It is still ticked and still detectable, but it does not fight back: `sleeping`'s descriptor carries flag bit 3, so `Mech_AiOnTakingFire` shares the shooter as a contact and returns before choosing a response ([`ai-targeting.md`](ai-targeting.md#taking-fire--mech_aiontakingfire-0041f7b8-mech-vtable-0x50)). Verb 4 never completes, so only the order's action moves a sleeping group on. With no action, the machine stays asleep for the rest of the mission.

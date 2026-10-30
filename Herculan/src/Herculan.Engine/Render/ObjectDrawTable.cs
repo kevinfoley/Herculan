@@ -169,6 +169,7 @@ public sealed class ObjectDrawTable {
 	private bool _walked;
 	private (int X, int Y) _viewerCell;
 	private (int X, int Y)? _playerCell;
+	private ViewSphereTest? _reachesView;
 
 	/// <summary>
 	/// Every object to file this frame, in the order the original submits them. A structure, a HERC
@@ -189,11 +190,20 @@ public sealed class ObjectDrawTable {
 	/// Files every entry for a view at <paramref name="viewer"/> and settles each one's
 	/// <see cref="DrawEntry.Drawn"/>. <paramref name="region"/> must already be this view's, as
 	/// <c>Terrain_SetupVisibleRegion</c> builds it before the submit.
+	///
+	/// <para>With <paramref name="reachesView"/>, a structure filed under a cell the draw does not reach is drawn anyway
+	/// when its shape radius about its position reaches into the view, and is then held to the same ridden-camera and
+	/// draw-distance tests as one the walk reached. This is the widescreen tweak's, not the original's: retail draws
+	/// nothing filed under a cell its walk misses, so a large building whose centre lies past the walk's margin vanishes
+	/// whole while part of it is on screen (docs/retail/rendering/terrain-drawing.md, "The visible region" and "What is
+	/// filed where"). Null is retail.</para>
 	/// </summary>
-	public void File(HeightGrid grid, TerrainVisibleRegion region, Vec3i viewer, TerrainPaintOrder order) {
+	public void File(HeightGrid grid, TerrainVisibleRegion region, Vec3i viewer, TerrainPaintOrder order,
+			ViewSphereTest? reachesView = null) {
 		_grid = grid;
 		_region = region;
 		_viewer = viewer;
+		_reachesView = reachesView;
 		_viewerCell = (order.CentreX, order.CentreY);
 		SetDrawDistances(grid);
 		Walk(grid, region, order);
@@ -285,7 +295,9 @@ public sealed class ObjectDrawTable {
 	/// The draw rule: the no-cell bucket is drawn with no test at all (<c>ObjList_DrawAfterTerrain</c>
 	/// calls each one's draw slot directly); a cell the draw does not reach draws nothing; within one it
 	/// does, a ground shape is drawn on the spot, and anything else is skipped when the camera rides it
-	/// or when it lies beyond its class's draw distance (<c>ObjList_DrawCellObjects</c>, <c>00428c60</c>).
+	/// or when it lies beyond its class's draw distance (<c>ObjList_DrawCellObjects</c>, <c>00428c60</c>). A structure
+	/// in a cell the draw does not reach is treated as reached when the pass's view test says it is on screen — see
+	/// <see cref="File"/>.
 	/// </summary>
 	private bool Decide((int X, int Y)? cell, ObjectTypeTag tag, object? subject, Vec3i position,
 			int entryHeight, int shapeRadius) {
@@ -293,7 +305,8 @@ public sealed class ObjectDrawTable {
 			return true;
 		}
 
-		if (!CellDrawn(filed)) {
+		if (!CellDrawn(filed)
+				&& !(tag == ObjectTypeTag.Structure && _reachesView is { } view && view.Overlaps(position, shapeRadius))) {
 			return false;
 		}
 
