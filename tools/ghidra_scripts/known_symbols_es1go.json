@@ -2047,7 +2047,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_NavKeySubscriber",
-      "description": "(code), its argument removed by this function: a keyboard subscriber that passes the code with bit 0x1000 cleared to DUIWindow_HandleNavKey (0001cc86), the open dialog's key handler, and answers 1. Shell_InitDevices (00045d24) registers it with Keyboard_AddSubscriber for the 13 codes at 0007e7f0 unless Shell_DebugMode (0007fd08) is set. es2_xref finds its address loaded there, in Shell_AssertCleanupHook (00045a68) and Shell_ShutdownDevices (00046094), which remove it, and stored at 0003eaed and 0003ebd4.",
+      "description": "(code), its argument removed by this function: a keyboard subscriber that passes the code with bit 0x1000 cleared to DUIWindow_HandleNavKey (0001cc86), the open dialog's key handler, and answers 1. Shell_InitDevices (00045d24) registers it with Keyboard_AddSubscriber for the NUL-ended codes at 0007e7f0, Tab, Enter and Enter's release (0x0f, 0x1c, 0x9c; the ten bytes after the NUL are not read) unless Shell_DebugMode (0007fd08) is set. es2_xref finds its address loaded there, in Shell_AssertCleanupHook (00045a68) and Shell_ShutdownDevices (00046094), which remove it, and stored at 0003eaed and 0003ebd4.",
       "source": "Herculan/docs/es1/shell/startup.md#the-keyboard-subscribers; ES1GO decompile at 00012b4e",
       "verified": {
         "bytes": "00012b4e+27",

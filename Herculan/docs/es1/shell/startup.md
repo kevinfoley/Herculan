@@ -5,7 +5,7 @@
 - the switches are `-A`, which skips the intro scripts and `endfa.ttm`, `-C`, `-M`, `-S` and `-X`, each also written with `/` and in either case ([the command line](#the-command-line)), where ES2's shell has its own set ([ES2's switches](../../retail/command-line.md#vshell));
 - run without `-eggplant`, it prints `To play EarthSiege, type ES.` and exits, where ES2's shows a message box;
 - `Ctrl+Esc`, `Alt+Esc`, `Ctrl+Q`, `Alt+Q`, `Ctrl+X` and `Alt+X` open the quit question, screen 999 ([the input](#the-input));
-- a click of the first mouse button is `Enter` and of the second `Tab` to the open dialog ([the input](#the-input)).
+- the joystick's first button is `Enter` and its second `Tab` to the open dialog ([the input](#the-input)); a mouse click reaches the menus through the mouse's own callbacks ([the mouse](menus.md#the-mouse)).
 
 Addresses are `ES1GO` image addresses ([the X-32 executable](../formats/x32-executable.md#the-image)); ES2's are VSHELL's. The functions here remove their own arguments, so argument lists are in stack order ([calling conventions](../formats/compiler.md#calling-conventions)). What a screen does inside the loop is [the menus](menus.md)'.
 
@@ -67,7 +67,7 @@ Where ES2's `Shell_Main` differs ([ES2's start-up](../../retail/shell/startup.md
 5. **The display**, `Shell_CreateDisplay` (`00045b25`): the `VGA_8` driver's 320 × 200 screen and its four pages ([the pages](../rendering/screen-pages.md#the-pages)).
 6. **The cursor**: `res32\arrow.dci` into `00082764` and `Cursor_SetImage` ([cursors](../formats/dfn-hfn-dci.md#cursors)); the raster slot `0008662c`; `Cursor_SyncPosition` at (1, 1).
 7. **The mouse**: `Shell_MouseDevice` (`00082760`) = `MouseInputDevice_Ctor` (`000268b6`)(0), the simulator's mouse device ([the input devices](../simulation/input.md#the-input-devices)), its bounds (0, 0, display attribute 0, attribute 1) on the display `00082750` (`MouseDriver_SetBoundsRect`), `Mouse_SetPosition`(1, 1), enabled.
-8. **The keyboard**: `Shell_KeyboardDevice` (`0008275c`) = `KeyboardInputDevice_Ctor` (`00025a82`)(0, mode), mode `0x20000`, which takes keys through `INT 15h` and lets the BIOS have those no subscriber claims, or under `-X` `0x10000`, the simulator's `INT 9` ([installing](../simulation/input.md#installing--keyboard_ctor-0006c600)); `KeyQueue_Subscriber` given the codes at `00082914`; enabled; and, unless `-X` was given, `Shell_NavKeySubscriber` for 13 codes ([the keyboard subscribers](#the-keyboard-subscribers)).
+8. **The keyboard**: `Shell_KeyboardDevice` (`0008275c`) = `KeyboardInputDevice_Ctor` (`00025a82`)(0, mode), mode `0x20000`, which takes keys through `INT 15h` and lets the BIOS have those no subscriber claims, or under `-X` `0x10000`, the simulator's `INT 9` ([installing](../simulation/input.md#installing--keyboard_ctor-0006c600)); `KeyQueue_Subscriber` given the codes at `00082914`; enabled; and, unless `-X` was given, `Shell_NavKeySubscriber` for three codes ([the keyboard subscribers](#the-keyboard-subscribers)).
 9. `000081a4`, and with no sound manager (`00082768` 0) options 0, 1 and 2 of `prefs.cfg` set to 0 with `Prefs_SetOption` ([the options](../formats/msn-mission-file.md)).
 
 ### The frame-time scale
@@ -108,15 +108,16 @@ Where ES2's `Shell_Main` differs ([ES2's start-up](../../retail/shell/startup.md
 | `Insert` (`0x52`) | `Tab` to the dialog (`DUIWindow_HandleNavKey` (`0001cc86`)(`0xf`)) when `prefs.cfg` option 10 is set |
 | `Ctrl+Esc`, `Alt+Esc` | `Shell_QuitRequested` |
 | `Ctrl+Q`, `Alt+Q`, `Ctrl+X`, `Alt+X` | `Shell_QuitRequested` |
-| `Q`, `X`, `C` otherwise (`Ctrl+C` or `Alt+C` included) | the character `q`, `x` or `c`, upper case with `Shift` or `Caps Lock` (`0x800`), or'd with `0x4000`, to `DUIWindow_SendChar` (`0001bb85`) with the current screen `Shell_CurrentMenu` (`000817c8`)'s `+6` |
+| `Ctrl+C` (`0x42e`) | nothing: the table's last code, whose case is the same end as code 0 |
+| `Q`, `X`, `C` otherwise (`Alt+C` included) | the character `q`, `x` or `c`, upper case with `Shift` or `Caps Lock` (`0x800`), or'd with `0x4000`, to `DUIWindow_SendChar` (`0001bb85`) with the current screen `Shell_CurrentMenu` (`000817c8`)'s `+6` |
 
-Then the first button (`+0x1d`) pressed sends `Enter` (`0x1c`) to the dialog through `DUIWindow_HandleNavKey` (`0001cc86`) and latches the button, and on the next pass, the button reading released, `Enter`'s release (`0x9c`); the second (`+0x1e`) sends `Tab` and latches. Last, unless `-X` was given, a word with bit `0x4000`, a typed character, goes to `DUIWindow_SendChar` (`0001bb85`) with the current screen's `+6`.
+Then the joysticks' first button (`+0x1d`, [the live block](../simulation/input.md#the-live-block--input_polldeviceblock-0004c2d0)) pressed sends `Enter` (`0x1c`) to the dialog through `DUIWindow_HandleNavKey` (`0001cc86`) and latches the button, and on the next pass, the button reading released, `Enter`'s release (`0x9c`); the second (`+0x1e`) sends `Tab` and latches. Last, unless `-X` was given, a word with bit `0x4000`, a typed character, goes to `DUIWindow_SendChar` (`0001bb85`) with the current screen's `+6`.
 
 ### The keyboard subscribers
 
 `main.cpp` holds three of the keyboard library's subscribers ([a key](../simulation/input.md#a-key--keyboard_int9handler-0007dde4-and-keyboard_dispatch-0007de20)):
 
-- `Shell_NavKeySubscriber` (`00012b4e`), registered by `Shell_InitDevices` for `Tab`, `Enter`, `Enter`'s release, `Space`, the four arrows, `Backspace`, `Home`, `End`, `Esc` and `Del` (the 13 bytes at `0007e7f0`), passes each, Num Lock's bit cleared, to the dialog's key handler `DUIWindow_HandleNavKey` (`0001cc86`) and claims it.
+- `Shell_NavKeySubscriber` (`00012b4e`), registered by `Shell_InitDevices` for `Tab`, `Enter` and `Enter`'s release, the NUL-ended list at `0007e7f0` that `Keyboard_AddSubscriber` reads (the ten bytes after its NUL, `Space`, the four arrows, `Backspace`, `Home`, `End`, `Esc` and `Del`, are not registered), passes each, Num Lock's bit cleared, to the dialog's key handler `DUIWindow_HandleNavKey` (`0001cc86`) and claims it.
 - `Shell_ScanKeySubscriber` (`00012b69`), which `0001f442` and `0001f66f` register, passes on `Home`, `Up`, `Left`, `Right`, `End` and `Down` while Num Lock is on, claims `Ctrl+Alt+Del` (`0x653`) and does nothing with it, and hands every other code to `Shell_ForwardKeyToDialog` (`00012bb7`), which gives it to `DUIWindow_SendKey` (`0001bbd2`) with the dialog `DUIWindow_Active` (`0007f0d0`) while that pointer is set.
 - `Shell_QuitKeyCallback` (`00012b01`) sets `Shell_QuitRequested` for the six quit keys and writes `entering quitKeyCallback` to the monochrome monitor; `es2_xref.py` finds no reference to it ([Open](#open)).
 

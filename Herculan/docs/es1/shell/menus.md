@@ -174,7 +174,7 @@ The current menu is destroyed at the shutdown by `Shell_CloseScreens` (`0003c081
 | `+0x4e7` | `int16` the hotspot count |
 | `+0x4e9` | the vtable: `DUIWindow`'s `0007eff0`, slot `+4` `DUIWindow_AddLabel` (`0001ae9b`), which does nothing, and `+8` `DUIWindow_DrawBackground` (`0001aeb7`), which does nothing |
 
-`MTWindow_Ctor` (`00036874`, class `MTWindow`) takes the window record's id, the title and the rect. It builds the window in `0x5a7` bytes with `DUIWindow_Ctor`, six label entries of `0x12` bytes at `+0x537`, and the vtable `00081140`, whose slot `+4` is `MTWindow_AddLabel` and `+8` `MTWindow_Draw` (`00036b4c`). It loads `res32\menu<id>.dba` with `Resource_LoadBitmapArray` into `+0x5a3`; id 9999 loads `res32\menu<9999 − r>.dba`, `r` from `Math_RandomBelow(5)`. It sets `+0x4ed` to the `title` font (`000aacc6`, [the shell's fonts](../formats/styles-dat.md#the-loads)); the six ids at `00081174`, 999, 1240, 4444, 1610, 1800 and 1920, go elsewhere from here ([Open](#open)). For the rest it sets `+0x4f1` to the `gray` font (`000aacca`), copies the title to `+0x4f5`, or a 0 byte when there is none, and zeroes the label count `+0x535` and the hotspot count `+0x4e7`.
+`MTWindow_Ctor` (`00036874`, class `MTWindow`) takes the window record's id, the title and the rect. It builds the window in `0x5a7` bytes with `DUIWindow_Ctor`, six label entries of `0x12` bytes at `+0x537`, and the vtable `00081140`, whose slot `+4` is `MTWindow_AddLabel` and `+8` `MTWindow_Draw` (`00036b4c`). It loads `res32\menu<id>.dba` with `Resource_LoadBitmapArray` into `+0x5a3`; id 9999 loads `res32\menu<9999 − r>.dba`, `r` from `Math_RandomBelow(5)`. It sets `+0x4ed` to the `title` font (`000aacc6`, [the shell's fonts](../formats/styles-dat.md#the-loads)); the six ids at `00081174`, 999, 1240, 4444, 1610, 1800 and 1920, go elsewhere from here ([Open](#open)). For the rest it sets `+0x4f1` to the font in `000aacca`, `cpylw`, which `Widget_LoadStylesAndFonts` stores over `Shell_LoadData`'s `gray` ([the loads](../formats/styles-dat.md#the-loads)), copies the title to `+0x4f5`, or a 0 byte when there is none, and zeroes the label count `+0x535` and the hotspot count `+0x4e7`.
 
 `MTWindow_AddLabel` (`00036a93`), the slot kinds 1, 4 and 5 call, keeps up to six labels and drops the rest: for each, a copy of the text in a new buffer of the length given, at `+0`, the point at `+4` and `+8`, the width at `+0xc` and the mode at `+0xe`.
 
@@ -188,7 +188,7 @@ The current menu is destroyed at the shutdown by `Shell_CloseScreens` (`0003c081
 
 1. the first bitmap of `+0x5a3`, `res32\menu<id>.dba`, at (0, 0), with `Bitmap_Blit`;
 2. with a title, its plate: *y0* 4 on backdrops 4000 and 2000 and 5 on the others, *y1* = *y0* + 17; a margin *m* of 20 on backdrop 4000 and 40 on the others; *x0* = (window width − title width − *m*) / 2 and *x1* = *x0* + title width + *m*, the widths by `HudFont_MeasureString` in the `title` font. Four lines through `0004ba84` in colors `0x10`, `0x10`, `0x1b` and `0x1c`, then frames 0 to 3 of `res32\corners.dba` (`000ab4ee`) at the plate's corners, set 4 pixels in, and the title in the `title` font, centered between *x0* and *x1* (the render context's `+0x231` 2, `+0x235` the width; `HudFont_DrawString`), at the plate's middle row less 1;
-3. each label, in the `gray` font: `HudFont_DrawString` at (*x*, *y* + the font's cell height − 3), the label's mode as `+0x231` and its width as `+0x235`. So kind 1's mode 0 draws the text from *x*, kind 4's mode 1 ends it at *x* + width, and kind 5's mode 2 centers it in the width ([the kinds](../formats/dlg-menu-dialogs.md#the-kinds)).
+3. each label, in the font `+0x4f1`: `HudFont_DrawString` at (*x*, *y* + the font's cell height − 3), the label's mode as `+0x231` and its width as `+0x235`. So kind 1's mode 0 draws the text from *x*, kind 4's mode 1 ends it at *x* + width, and kind 5's mode 2 centers it in the width ([the kinds](../formats/dlg-menu-dialogs.md#the-kinds)).
 
 ### Drawing a window — `DUIWindow_Draw` (`0001bfa3`)
 
@@ -318,7 +318,7 @@ So a click of a button posts its id as the target, and the press shows the pushe
 | `Enter` (`0x1c`), `Shift+Enter` (`0x81c`) | presses the focused control, `DUIWindow_PressControl` (`0001b5bb`) |
 | `Enter`'s release (`0x9c`), with `Shift` (`0x89c`) | releases it, `DUIWindow_ReleaseControl` (`0001b7d5`) |
 
-The other codes `Shell_NavKeySubscriber` passes, the arrows, `Space`, `Backspace`, `Home`, `End`, `Esc` and `Del`, match none of them. The focus wraps by the remainder of the control count, and the walk does not stop when no control is focusable.
+`Shell_NavKeySubscriber` passes `Tab`, `Enter` and `Enter`'s release only ([the keyboard subscribers](startup.md#the-keyboard-subscribers)). The focus wraps by the remainder of the control count, and the walk does not stop when no control is focusable.
 
 `DUIWindow_PointAtControl`(window, index) sets `Shell_PointerX` and `Shell_PointerY` to the control's center on the screen, which the next frame gives the cursor and the mouse driver ([opening a menu](#opening-a-menu--menu_open-0003969e)).
 
