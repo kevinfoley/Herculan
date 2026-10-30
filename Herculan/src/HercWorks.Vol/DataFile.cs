@@ -5,6 +5,7 @@ namespace HercWorks.Vol;
 /// Ported from org.hercworks.voln.DataFile.
 /// </summary>
 public abstract class DataFile {
+	/// <summary>The file's first four bytes, fewer for a shorter file; empty for a type that has no header.</summary>
 	public byte[]? Header { get; set; }
 
 	public string? FileName { get; set; }

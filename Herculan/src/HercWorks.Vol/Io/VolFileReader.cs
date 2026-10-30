@@ -175,7 +175,8 @@ public static class VolFileReader {
 				entry.Header = Array.Empty<byte>();
 			} else {
 				try {
-					entry.Header = ByteOps.Slice(entry.RawBytes!, 0, 4);
+					// A file shorter than the header, ES1's 2-byte NAMES.LOG among them, keeps what it has.
+					entry.Header = ByteOps.Slice(entry.RawBytes!, 0, Math.Min(4, entry.RawBytes!.Length));
 				} catch (Exception dbgE) {
 					Console.WriteLine($"ERROR[{entry.FileName}](setHeader):{dbgE.Message}");
 				}
