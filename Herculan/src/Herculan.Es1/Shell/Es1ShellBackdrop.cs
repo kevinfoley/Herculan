@@ -43,8 +43,12 @@ public sealed class Es1ShellBackdrop {
 	/// <summary><c>ShellBackdrop_Picture</c> (<c>000aa7ac</c>).</summary>
 	public DynamixBitmap? Picture { get; private set; }
 
-	/// <summary>The palette <c>0007fcd0</c>, which <c>Shell_PresentFrame</c> uploads while <see cref="PaletteDue"/> is set.</summary>
-	public DynamixPalette? Palette { get; private set; }
+	/// <summary>
+	/// The palette <c>0007fcd0</c>, which <c>Shell_PresentFrame</c> uploads while <see cref="PaletteDue"/> is set: the
+	/// backdrop's, or the one a script's palette command left (<see cref="Ttm.Es1TtmManager.PresentPalette"/>), which
+	/// <c>Shell_PlayTtm</c> clears.
+	/// </summary>
+	public DynamixPalette? Palette { get; set; }
 
 	/// <summary>The byte <c>0007fcd4</c>: <see cref="Palette"/> is to be uploaded.</summary>
 	public bool PaletteDue { get; set; }

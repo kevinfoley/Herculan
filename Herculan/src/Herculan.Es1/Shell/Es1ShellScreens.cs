@@ -1,6 +1,10 @@
+using HercWorks.Core.Data.File.Dat.Shell;
+using HercWorks.Core.Io.Transform.Shell;
 using Herculan.Engine.Content;
 using Herculan.Es1.Input;
+using Herculan.Es1.Panels;
 using Herculan.Es1.Shell.Menus;
+using Herculan.Es1.Ttm;
 using Herculan.Es1.View;
 
 namespace Herculan.Es1.Shell;
@@ -114,7 +118,7 @@ public sealed class Es1ShellScreens {
 	/// <summary><see cref="HandleMessage"/>'s answer: 1 when it changed screens, 0 when it did not.</summary>
 	public bool MessageChangedScreen { get; private set; }
 
-	/// <summary>The byte <c>000817bc</c>: an intro script was cut short, so <c>lead_in.ttm</c> is skipped.</summary>
+	/// <summary>The byte <c>000817bc</c>: a script <see cref="PlayTtm"/> played was cut short, so the intro skips <c>lead_in.ttm</c>.</summary>
 	public bool IntroCutShort { get; private set; }
 
 	/// <summary>The <c>.ANM</c> name at <c>000aacfe</c>.</summary>
@@ -135,43 +139,102 @@ public sealed class Es1ShellScreens {
 	/// <summary>The bundle the menus read through, made by <see cref="OpenFirstScreen"/> once the shared data is loaded.</summary>
 	private Es1MenuContext? _menuContext;
 
+	/// <summary>The shell's <c>.TTM</c> scripts, their handle table and globals, which <see cref="OpenFirstScreen"/> sets up; none before.</summary>
+	public Es1TtmManager? Scripts { get; private set; }
+
+	/// <summary><c>TtmLists_Load</c>'s lists, the array at <c>0007e710</c> of the count byte <c>0007e714</c>'s lists; none before it reads a count.</summary>
+	public Es1NameList[]? TtmLists { get; private set; }
+
+	/// <summary>
+	/// <c>RenderContext_GetFullScreen</c> (<c>0004c716</c>): the one render context <c>00083bc4</c> it makes, set each call
+	/// to the rect (0, 0)–(319, 199), the origin (0, 0), clip mode 1 and the translation flag clear, made afresh for each
+	/// use; <c>Shell_Main</c> keeps it at <c>0007fcd8</c>.
+	/// </summary>
+	public Es1PanelCanvas FullScreenContext() => new(_devices.Display, FullScreen);
+
+	/// <summary>The scripts' timer count, every second interrupt: 60 ticks a second.</summary>
+	private const int ScriptTimerCount = 2;
+
+	/// <summary><c>Ttm_Configure</c>'s handle count.</summary>
+	private const byte ScriptHandles = 0x32;
+
+	/// <summary>The folders <c>Ttm_SetPathPrefix</c> is given, the two <c>SHELL0</c> folders that hold scripts.</summary>
+	private const string ScriptFolder = "res32\\", IntroFolder = "intro\\";
+
 	/// <summary>
 	/// <c>Shell_OpenFirstScreen</c> (<c>0003ba47</c>)(<paramref name="exitCode"/>), the start-up's step 15
-	/// (docs/es1/shell/menus.md#the-first-screen--shell_openfirstscreen-0003ba47): the scripts set up, then by the code
-	/// the intro or a mission's results, then the main menu over the backdrop 1000: a <see cref="Es1MainMenu"/> made the
-	/// current menu and opened as 1000.
+	/// (docs/es1/shell/menus.md#the-first-screen--shell_openfirstscreen-0003ba47): the scripts set up
+	/// (<c>Ttm_Configure</c>(page 2, the full-screen context, <c>0x32</c>), <c>Ttm_AllocHandles</c>(2) on
+	/// <c>Shell_Timer</c>, the prefix <c>res32\</c> and <c>TtmLists_Load</c>), then by the code the intro or a mission's
+	/// results, then the main menu over the backdrop 1000: a <see cref="Es1MainMenu"/> made the current menu and opened as
+	/// 1000. The intro, any code but 3, 4 and 6 while <paramref name="playIntro"/> is set, plays <c>intro\dynamix.ttm</c>,
+	/// <c>intro\lead_in.ttm</c> unless the first was cut short, <c>intro\iintro.ttm</c> and <c>intro\earth_w.ttm</c>
+	/// (<see cref="PlayTtm"/>); the prefix goes back to <c>res32\</c> as the main menu's case begins.
 	/// </summary>
 	/// <param name="playIntro"><c>Shell_PlayIntro</c>, which <c>-A</c> clears.</param>
 	/// <param name="data">The shared data the start-up loaded, which the menus draw with.</param>
 	/// <param name="mission">The mission the menus load, which their handlers reach through the menus' context.</param>
-	public void OpenFirstScreen(short exitCode, bool playIntro, Es1ShellData data, Es1ShellMission mission) {
+	/// <param name="presentFrame"><c>Shell_PresentFrame</c>, which the intro's scripts show their frames with.</param>
+	/// <param name="pollDeviceBlock"><c>Input_PollDeviceBlock</c>, which the intro's scripts read the key or button that cuts them short from.</param>
+	public IEnumerable<Es1ShellWait> OpenFirstScreen(short exitCode, bool playIntro, Es1ShellData data, Es1ShellMission mission,
+			Func<IEnumerable<Es1ShellWait>> presentFrame, Func<Es1LiveBlock> pollDeviceBlock) {
 		// The devices load the options before the first screen; options of no file stand in when they did not, an engine guard.
 		_menuContext = new Es1MenuContext(_devices.Display, _content, data, Globals, _dirty, this, mission,
 			_devices.Preferences ?? Es1Preferences.Default);
-		// DirtyList_CreateContext is the dirty list's (Es1DirtyList). PLACEHOLDER: Ttm_Configure(page 2, the full-screen
-		// context, 0x32), Ttm_AllocHandles(2), Ttm_SetPathPrefix(res32\) and TtmLists_Load set up the shell's script
-		// interpreter, which is not ported (ES1's simulator interpreter differs, docs/es1/formats/ttm-scripts.md#the-shell).
+		// DirtyList_CreateContext is the dirty list's (Es1DirtyList). Then the scripts. The shared data's generator exists from
+		// the start-up's step 11 on; a draw of 0 without it is an engine guard.
+		var random = data.Random;
+		var scripts = Es1TtmManager.ForShell(_devices.Display, _content.Read, _dirty, bound => random?.Below(bound) ?? 0);
+		scripts.UploadPalette = palette => UploadPalette?.Invoke(palette);
+		scripts.PresentPalette = palette => {
+			_backdrop.Palette = palette;
+			_backdrop.PaletteDue = true;
+		};
+		Scripts = scripts;
+		scripts.Configure(Es1ShellBackdrop.BackgroundPage, FullScreenContext, ScriptHandles);
+		scripts.AllocHandles(ScriptTimerCount, _devices.Timer);
+		scripts.SetPathPrefix(ScriptFolder);
+		LoadTtmLists();
 		switch (exitCode) {
 			case 3:
 			case 4:
 				// PLACEHOLDER: back from a mission, Mission_ReadRestore, Shell_ProcessMissionResults and the results screens
-				// of a single mission or a career, which are S2's and S3's; the start goes on to the main menu as code 6 does.
+				// of a single mission or a career, with the endings' scripts through PlayTtm, which are S2's and S3's; the
+				// start goes on to the main menu as code 6 does.
 				Console.WriteLine($"data\\exit.cfg holds {exitCode}, back from a mission: the results screens are not ported, so the main menu opens.");
 				break;
 			case 6:
 				break;
 			default:
 				if (playIntro) {
-					// PLACEHOLDER: ShellMusic_Play(0xc), intro\dynamix.ttm, intro\lead_in.ttm unless IntroCutShort is set,
-					// ShellMusic_Play(0xd), intro\iintro.ttm and intro\earth_w.ttm, through Shell_PlayTtm; the shell's script
-					// interpreter is not ported, so every start goes on as -A does.
+					scripts.SetPathPrefix(IntroFolder);
+					// PLACEHOLDER: ShellMusic_Play(0xc), and (0xd) before iintro.ttm; ES1's sound is not ported
+					// (Es1ShellDevices.Init's ShellSound_Init).
+					foreach (var wait in PlayTtm("dynamix.ttm", presentFrame, pollDeviceBlock)) {
+						yield return wait;
+					}
+
+					if (!IntroCutShort) {
+						foreach (var wait in PlayTtm("lead_in.ttm", presentFrame, pollDeviceBlock)) {
+							yield return wait;
+						}
+					}
+
+					foreach (var wait in PlayTtm("iintro.ttm", presentFrame, pollDeviceBlock)) {
+						yield return wait;
+					}
+
+					foreach (var wait in PlayTtm("earth_w.ttm", presentFrame, pollDeviceBlock)) {
+						yield return wait;
+					}
 				}
 
 				IntroCutShort = false;
 				break;
 		}
 
-		// Ttm_SetPathPrefix(res32\) is the scripts' (above); then the main menu's case.
+		// The main menu's case.
+		scripts.SetPathPrefix(ScriptFolder);
 		AnmName = "anm\\esiege2.anm";
 		AnmMode = 2;
 		_backdrop.Show(MainMenuScreen);
@@ -181,6 +244,81 @@ public sealed class Es1ShellScreens {
 		CurrentScreen = MainMenuScreen;
 		PreviousScreen = QuitAlertScreen;
 		BackdropId = MainMenuScreen;
+	}
+
+	/// <summary>
+	/// <c>TtmLists_Load</c> (<c>00011dfc</c>) (docs/es1/formats/shell-file-lists.md#the-animation-lists):
+	/// <c>cfg\tm_files.dat</c>'s lists, which replace the ones before unless the file's count is 0. A file that does not
+	/// open or read leaves the lists as they are here, where retail reads its count from the failed stream.
+	/// </summary>
+	private void LoadTtmLists() {
+		if (_content.Read("cfg", "TM_FILES.DAT") is { } bytes && new Es1TtmFileListsTransformer().Parse(bytes) is { } file
+				&& file.Lists.Length != 0) {
+			TtmLists = file.Lists;
+		}
+	}
+
+	/// <summary>
+	/// <c>Shell_PlayTtm</c> (<c>0003b8df</c>)(<paramref name="name"/>) (docs/es1/shell/menus.md#the-first-screen--shell_openfirstscreen-0003ba47):
+	/// the draw page and page 2 cleared to colour 0 with <c>VGA8_ClearPage</c>, the raster's slot 35 (<c>0008663c</c>,
+	/// docs/es1/rendering/screen-pages.md#lines-and-clipped-bitmaps), a frame shown and the new draw page cleared; the
+	/// full-screen render context made the scripts' default; the script opened playing, not looping, on that default
+	/// (<c>Ttm_Open</c>(0, 0, 0, name)); then, a frame each, the script run (<c>Ttm_RunScript</c>), the input read
+	/// (<c>Input_PollDeviceBlock</c>) and a frame shown, until the script's mode is not playing, the input's keyboard word
+	/// is not 0 or its first mouse button is down. A script still playing, so cut short, has the pages cleared again with
+	/// a frame between; a key or the button sets <see cref="IntroCutShort"/>. Then the script closed and the palette
+	/// <c>0007fcd0</c> cleared. A script that does not open counts as ended after one frame here (see
+	/// <see cref="Es1TtmManager.GetMode"/>), where retail reads the slot before the handle table.
+	/// </summary>
+	private IEnumerable<Es1ShellWait> PlayTtm(string name, Func<IEnumerable<Es1ShellWait>> presentFrame,
+			Func<Es1LiveBlock> pollDeviceBlock) {
+		var display = _devices.Display;
+		var scripts = Scripts!;
+		foreach (var wait in ClearPages()) {
+			yield return wait;
+		}
+
+		scripts.SetDefaultContext(FullScreenContext);
+		byte handle = scripts.Open(Es1TtmPlayer.Playing, 0, null, name);
+		Es1LiveBlock block;
+		while (true) {
+			foreach (var wait in scripts.RunScript(handle)) {
+				yield return wait;
+			}
+
+			block = pollDeviceBlock();
+			foreach (var wait in presentFrame()) {
+				yield return wait;
+			}
+
+			if (scripts.GetMode(handle) != Es1TtmPlayer.Playing || block.CommandWord != 0 || block.MouseButtons[0] != 0) {
+				break;
+			}
+		}
+
+		if (scripts.GetMode(handle) == Es1TtmPlayer.Playing) {
+			foreach (var wait in ClearPages()) {
+				yield return wait;
+			}
+		}
+
+		if (block.CommandWord != 0 || block.MouseButtons[0] != 0) {
+			IntroCutShort = true;
+		}
+
+		scripts.Close(handle);
+		_backdrop.Palette = null;
+
+		// The draw page as it is at each call: before the frame, and the new one after it.
+		IEnumerable<Es1ShellWait> ClearPages() {
+			display.ClearPage(display.DrawPage, 0);
+			display.ClearPage(Es1ShellBackdrop.BackgroundPage, 0);
+			foreach (var wait in presentFrame()) {
+				yield return wait;
+			}
+
+			display.ClearPage(display.DrawPage, 0);
+		}
 	}
 
 	/// <summary>
@@ -226,8 +364,8 @@ public sealed class Es1ShellScreens {
 			// PLACEHOLDER: the career record's HERC diagram (00029651, CareerRecord_SelectPilot), S3's.
 		}
 
-		// PLACEHOLDER: DigitalDialog_ShowMessage(Shell_MessageBox) and Ttm_RunAll, the message box (S2's,
-		// docs/es1/shell/main-menu.md#instant-actions-path-to-the-mission) and the scripts (the shell's unported interpreter).
+		// PLACEHOLDER: DigitalDialog_ShowMessage(Shell_MessageBox) and Ttm_RunAll (Scripts.RunAllAfterTick), the message box
+		// and the scripts it draws through (P7b, docs/es1/shell/main-menu.md#instant-actions-path-to-the-mission).
 		if (CurrentMenu is { } menu) {
 			DrawMenu(menu, keptDraw);
 		} else {
@@ -258,7 +396,8 @@ public sealed class Es1ShellScreens {
 	/// <summary>
 	/// <c>Shell_DrawScreen</c>'s step 4 with a current menu: the render contexts <c>0007fcdc</c> (<c>0004c88a</c>, of the
 	/// window's rect) and <c>0007fcd8</c> (<c>0004c53c</c>, the screen less the window, in clip mode 2) made the scripts'
-	/// default, which this engine does not keep as it has no script interpreter; the source and draw pages set to page 2
+	/// default (PLACEHOLDER: P7b's, with <see cref="Es1TtmManager.SetDefaultContext"/>; until then the scripts keep the
+	/// full-screen default, and no ported screen opens a script past the intro); the source and draw pages set to page 2
 	/// and the background saved (<see cref="Es1Menu.SaveBackground"/>); the window drawn on page 2 unless the message box
 	/// is up; the draw page put back; and unless the message box is up, the whole screen dirty with delay 1 on backdrop
 	/// 1000 (screen 9999 aside) or the window drawn again on the draw page, and <see cref="WaitAfterDraw"/> set.
@@ -352,14 +491,14 @@ public sealed class Es1ShellScreens {
 			ScriptsToPlay = 0;
 			// The raster slot 0008662c, VGA_8's slot 31, takes the cursor off.
 			display.Cursor.Hide();
-			// PLACEHOLDER: Ttm_SetPathPrefix(intro\), ShellMusic_Play(0xd), Shell_PlayTtm of intro\iintro.ttm and
-			// intro\earth_w.ttm, and Ttm_SetPathPrefix(res32\); the shell's script interpreter is not ported.
+			// PLACEHOLDER: Ttm_SetPathPrefix(intro\), ShellMusic_Play(0xd), Shell_PlayTtm (PlayTtm) of intro\iintro.ttm and
+			// intro\earth_w.ttm, and Ttm_SetPathPrefix(res32\); no ported screen sets ScriptsToPlay.
 		}
 
 		if (ScriptsToPlay == 2) {
 			display.Cursor.Hide();
-			// PLACEHOLDER: Ttm_SetPathPrefix(intro\), Shell_PlayTtm of intro\credit_a.ttm and intro\credit_b.ttm, and
-			// Ttm_SetPathPrefix(res32\); the shell's script interpreter is not ported.
+			// PLACEHOLDER: Ttm_SetPathPrefix(intro\), Shell_PlayTtm (PlayTtm) of intro\credit_a.ttm and intro\credit_b.ttm,
+			// and Ttm_SetPathPrefix(res32\); no ported screen sets ScriptsToPlay.
 		}
 
 		short group = Es1ShellBackdrop.ForScreen(BackdropId, target);
@@ -563,12 +702,13 @@ public sealed class Es1ShellScreens {
 	}
 
 	/// <summary>
-	/// <c>Shell_CloseScreens</c> (<c>0003c081</c>), the shutdown's step 3: <c>0004199c</c> and <c>Ttm_Shutdown</c>, the
-	/// scripts' (not ported); the current menu destroyed through its slot <c>+4</c> (<see cref="Es1Menu.Dtor"/>), which
-	/// leaves its window as it stands; and the render contexts <c>0007fcd8</c> and <c>0007fcdc</c> destroyed, which this
-	/// engine does not keep.
+	/// <c>Shell_CloseScreens</c> (<c>0003c081</c>), the shutdown's step 3: <c>0004199c</c>; <c>Ttm_Shutdown</c>, the
+	/// scripts' (<see cref="Es1TtmManager.Shutdown"/>); the current menu destroyed through its slot <c>+4</c>
+	/// (<see cref="Es1Menu.Dtor"/>), which leaves its window as it stands; and the render contexts <c>0007fcd8</c> and
+	/// <c>0007fcdc</c> destroyed, which this engine makes afresh for each use.
 	/// </summary>
 	public void CloseScreens() {
+		Scripts?.Shutdown();
 		CurrentMenu?.Dtor();
 	}
 }

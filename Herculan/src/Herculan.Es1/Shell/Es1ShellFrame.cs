@@ -220,8 +220,10 @@ public sealed class Es1ShellFrame {
 
 	/// <summary>
 	/// The frame loop's pass (docs/es1/shell/startup.md#the-frame-loop), in retail's order: a frame shown, the input read
-	/// and handled, the quit flag set on screen 9999, the pending menu message handled, the screen's work, the quit
-	/// question, and the frame-time scale.
+	/// and handled, the quit flag set on screen 9999, the pending menu message handled, the scripts run with
+	/// <c>Ttm_RunAll</c> when it changed no screen (<see cref="Ttm.Es1TtmManager.RunAllAfterTick"/>, which waits for the
+	/// scripts' tick), the screen's work, the quit question, and the frame-time scale. The scripts exist from the first
+	/// screen on, before the first pass; the test for them is an engine guard.
 	/// </summary>
 	public IEnumerable<Es1ShellWait> Pass() {
 		foreach (var wait in PresentFrame()) {
@@ -239,8 +241,10 @@ public sealed class Es1ShellFrame {
 			yield return wait;
 		}
 
-		if (!_screens.MessageChangedScreen) {
-			// PLACEHOLDER: Ttm_RunAll, the shell's script interpreter's, which is not ported.
+		if (!_screens.MessageChangedScreen && _screens.Scripts is { } scripts) {
+			foreach (var wait in scripts.RunAllAfterTick()) {
+				yield return wait;
+			}
 		}
 
 		_screens.TickScreen();
@@ -271,20 +275,7 @@ public sealed class Es1ShellFrame {
 	public Es1LiveBlock PollInput() {
 		// PLACEHOLDER: 0001098e's queue, once Shell_PrepareMission's maybe_MouseEventQueue_Start (the mission map's, S5's) or
 		// screen 1320's case starts it.
-		var mouse = _devices.Mouse;
-		var block = new Es1LiveBlock {
-			CommandWord = ReadKeyboardWord(),
-			KeyboardEnabled = _devices.Keyboard != null,
-			PointerX = mouse.X,
-			PointerY = mouse.Y,
-			MouseEnabled = true,
-		};
-
-		// Input_PollJoysticks and the two joystick devices' records: Shell_InitDevices builds no joystick device.
-		block.MouseButtons[0] = (byte)((mouse.Buttons & Es1HostMouse.LeftBit) != 0 ? 1 : 0);
-		block.MouseButtons[1] = (byte)((mouse.Buttons & Es1HostMouse.RightBit) != 0 ? 1 : 0);
-		block.MouseButtons[2] = (byte)((mouse.Buttons & Es1HostMouse.MiddleBit) != 0 ? 1 : 0);
-
+		var block = PollDeviceBlock();
 		for (int i = 0; i < LatchedButtons; i++) {
 			if (!_latched[i]) {
 				continue;
@@ -298,6 +289,28 @@ public sealed class Es1ShellFrame {
 		}
 
 		block.CommandWord = (ushort)(block.CommandWord & ~LockBits);
+		return block;
+	}
+
+	/// <summary>
+	/// <c>Input_PollDeviceBlock</c> (<c>000277d8</c>) on the shell's devices, which <see cref="PollInput"/> calls and
+	/// <c>Shell_PlayTtm</c> calls itself: the keyboard's word, the mouse's position and its three buttons at
+	/// <c>+0xa</c>–<c>+0xc</c>.
+	/// </summary>
+	public Es1LiveBlock PollDeviceBlock() {
+		var mouse = _devices.Mouse;
+		var block = new Es1LiveBlock {
+			CommandWord = ReadKeyboardWord(),
+			KeyboardEnabled = _devices.Keyboard != null,
+			PointerX = mouse.X,
+			PointerY = mouse.Y,
+			MouseEnabled = true,
+		};
+
+		// Input_PollJoysticks and the two joystick devices' records: Shell_InitDevices builds no joystick device.
+		block.MouseButtons[0] = (byte)((mouse.Buttons & Es1HostMouse.LeftBit) != 0 ? 1 : 0);
+		block.MouseButtons[1] = (byte)((mouse.Buttons & Es1HostMouse.RightBit) != 0 ? 1 : 0);
+		block.MouseButtons[2] = (byte)((mouse.Buttons & Es1HostMouse.MiddleBit) != 0 ? 1 : 0);
 		return block;
 	}
 

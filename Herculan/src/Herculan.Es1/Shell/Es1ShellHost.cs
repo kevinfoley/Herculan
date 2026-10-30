@@ -170,7 +170,7 @@ public static class Es1ShellHost {
 			}
 
 			// 11. The shared data. 12. RenderContext_GetFullScreen into 0007fcd8, the render context the scripts draw
-			// through, which this engine does not keep.
+			// through (Es1ShellScreens.FullScreenContext, made afresh for each use).
 			data.Load(_content, _devices.Preferences!, _installRoot, DateTimeOffset.UtcNow.ToUnixTimeSeconds());
 
 			// 13. PLACEHOLDER: maybe_SncList_Init (the .SNC list) and ShellMap_LoadResources (the briefing map's bitmaps and its
@@ -181,7 +181,11 @@ public static class Es1ShellHost {
 			data.LoadStylesAndFonts(_content);
 
 			// 15. The first screen; 16. its palette uploaded and the screen drawn.
-			_screens.OpenFirstScreen(_screens.ExitCode, _switches.PlayIntro, data, new Es1ShellMission(_installRoot, _content, data));
+			foreach (var wait in _screens.OpenFirstScreen(_screens.ExitCode, _switches.PlayIntro, data,
+					new Es1ShellMission(_installRoot, _content, data), _frame.PresentFrame, _frame.PollDeviceBlock)) {
+				yield return wait;
+			}
+
 			if (_backdrop.Palette is { } palette) {
 				_frame.UploadPalette?.Invoke(palette);
 			}
