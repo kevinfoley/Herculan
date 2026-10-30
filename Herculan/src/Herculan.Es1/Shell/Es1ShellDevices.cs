@@ -103,7 +103,7 @@ public sealed class Es1ShellDevices {
 		Keyboard = new Es1Keyboard(biosShiftFlags, debugMode ? Es1Keyboard.Int9Mode : Es1Keyboard.Int15Mode) {
 			// PLACEHOLDER: the BIOS's translation of the keys no subscriber claims into its key buffer, which DOS's
 			// function 8 reads (Input_ReadDeviceEvent's mode 0x20000), is not ported, so no typed character reaches the
-			// input word; the menus that take them are P2's.
+			// input word; the menus that take them are P2b's.
 			Bios = null,
 		};
 		Keyboard.AddSubscriberCodes(Keyboard.QueueSubscriber, QueueCodes);
@@ -189,7 +189,7 @@ public sealed class Es1ShellDevices {
 	/// claimed.
 	/// </summary>
 	private int NavKeySubscriber(ushort code) {
-		// PLACEHOLDER: DUIWindow_HandleNavKey (0001cc86)(code & ~0x1000), the open dialog's key handler, is P2's.
+		// PLACEHOLDER: DUIWindow_HandleNavKey (0001cc86)(code & ~0x1000), the open dialog's key handler, is P2b's.
 		_ = code;
 		return Es1Keyboard.Claimed;
 	}

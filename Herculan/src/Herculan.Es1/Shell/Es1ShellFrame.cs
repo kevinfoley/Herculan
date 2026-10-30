@@ -80,11 +80,11 @@ public sealed class Es1ShellFrame {
 	/// <summary><c>Shell_QuitRequested</c> (<c>0007e808</c>), which the quit keys set.</summary>
 	public bool QuitRequested { get; private set; }
 
-	/// <summary><c>Shell_SyncPointer</c> (<c>0007fd07</c>), which <c>Menu_Open</c> sets, P2's.</summary>
-	public bool SyncPointer { get; set; }
+	/// <inheritdoc cref="Menus.Es1MenuGlobals.SyncPointer"/>
+	public bool SyncPointer => _screens.Globals.SyncPointer;
 
-	/// <summary><c>Shell_PointerX</c> and <c>Shell_PointerY</c> (<c>0009aff0</c>, <c>0009aff4</c>), which <c>ShellMouse_OnMove</c> stores, P2's.</summary>
-	public (int X, int Y) Pointer { get; set; }
+	/// <inheritdoc cref="Menus.Es1MenuGlobals.Pointer"/>
+	public (int X, int Y) Pointer => _screens.Globals.Pointer;
 
 	/// <summary><c>Shell_InputBlock</c> (<c>0007e73c</c>), the block the last pass read.</summary>
 	public Es1LiveBlock? InputBlock { get; private set; }
@@ -233,9 +233,10 @@ public sealed class Es1ShellFrame {
 			QuitFlag = true;
 		}
 
-		// PLACEHOLDER: Shell_HandleMessage (0003c7d8) on the pending menu message, and on its answer of 0 Ttm_RunAll; then
-		// Shell_TickScreen (0003c115), 0001098e (the mouse's event queue), MessageBox_Run (000382f6) and the text box
-		// 00018dcb. The menus and the message box are P2's, and the shell's script interpreter is not ported.
+		// PLACEHOLDER: Shell_HandleMessage (0003c7d8) on the pending menu message, P2b's, and on its answer of 0 Ttm_RunAll,
+		// the shell's unported script interpreter's.
+		_screens.TickScreen();
+		// PLACEHOLDER: 0001098e (the mouse's event queue), P2b's; MessageBox_Run (000382f6) and the text box 00018dcb, P3's.
 		if (QuitRequested) {
 			// PLACEHOLDER: Shell_OpenQuitAlert (000408cc), which opens screen 999, the quit question, P3's; until it lands
 			// a quit key does nothing visible.
@@ -326,7 +327,7 @@ public sealed class Es1ShellFrame {
 					// set and the byte 000809a8 is not 0. No ported screen makes the object, so there is none.
 					break;
 				case 0x0052:
-					// PLACEHOLDER: Insert, DUIWindow_HandleNavKey (0001cc86)(0xf) with prefs.cfg option 10 set, P2's.
+					// PLACEHOLDER: Insert, DUIWindow_HandleNavKey (0001cc86)(0xf) with prefs.cfg option 10 set, P2b's.
 					break;
 				case 0x0401:
 				case 0x0201:
@@ -340,21 +341,21 @@ public sealed class Es1ShellFrame {
 		}
 
 		if (block.StickButtons[0] != 0) {
-			// PLACEHOLDER: DUIWindow_HandleNavKey(0x1c), Enter to the dialog, P2's.
+			// PLACEHOLDER: DUIWindow_HandleNavKey(0x1c), Enter to the dialog, P2b's.
 			LatchButton(1, 1);
 			_enterHeld = true;
 		} else if (_enterHeld) {
-			// PLACEHOLDER: DUIWindow_HandleNavKey(0x9c), Enter's release, P2's.
+			// PLACEHOLDER: DUIWindow_HandleNavKey(0x9c), Enter's release, P2b's.
 			_enterHeld = false;
 		}
 
 		if (block.StickButtons[1] != 0) {
-			// PLACEHOLDER: DUIWindow_HandleNavKey(0xf), Tab to the dialog, P2's.
+			// PLACEHOLDER: DUIWindow_HandleNavKey(0xf), Tab to the dialog, P2b's.
 			LatchButton(1, 2);
 		}
 
 		if (!_debugMode && (block.CommandWord & CharacterBit) != 0) {
-			// PLACEHOLDER: DUIWindow_SendChar (0001bb85) with the current menu's window, P2's; no menu is current.
+			// PLACEHOLDER: DUIWindow_SendChar (0001bb85) with the current menu's window, P2b's.
 		}
 	}
 
@@ -374,6 +375,6 @@ public sealed class Es1ShellFrame {
 			return;
 		}
 
-		// PLACEHOLDER: DUIWindow_SendChar (0001bb85) with the current menu's window, P2's; no menu is current.
+		// PLACEHOLDER: DUIWindow_SendChar (0001bb85) with the current menu's window, P2b's.
 	}
 }

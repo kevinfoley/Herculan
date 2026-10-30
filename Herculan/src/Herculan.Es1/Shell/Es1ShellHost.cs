@@ -2,6 +2,7 @@ using HercWorks.Core.Io;
 using Herculan.Engine.Content;
 using Herculan.Engine.Platform;
 using Herculan.Es1.Input;
+using Herculan.Es1.Shell.Menus;
 using Herculan.Es1.Sim;
 using Herculan.Es1.View;
 using Silk.NET.Input;
@@ -14,7 +15,7 @@ namespace Herculan.Es1.Shell;
 /// (docs/es1/shell/startup.md): the start-up, the frame loop and the shutdown, as far as the main menu's picture under the
 /// cursor. The devices are <see cref="Es1ShellDevices"/>, the shared data <see cref="Es1ShellData"/>, the frame and its
 /// input <see cref="Es1ShellFrame"/>, the screens <see cref="Es1ShellScreens"/> over <see cref="Es1ShellBackdrop"/> and
-/// <see cref="Es1DirtyList"/>, and the frame-time scale <see cref="Es1ShellTime"/>; the monitor is <see cref="Es1Monitor"/>
+/// <see cref="Es1DirtyList"/> with the menus' window globals <see cref="Es1MenuGlobals"/>, and the frame-time scale <see cref="Es1ShellTime"/>; the monitor is <see cref="Es1Monitor"/>
 /// on the display.
 ///
 /// <para>The start-up's steps 1 to 6 run before the window opens, so a step that ends the program ends it without one;
@@ -78,6 +79,7 @@ public static class Es1ShellHost {
 		private readonly Es1ShellSwitches _switches;
 		private readonly Es1ShellDevices _devices = new();
 		private readonly Es1ShellTime _time = new();
+		private readonly Es1MenuGlobals _globals = new();
 		private readonly Es1DirtyList _dirty;
 		private readonly Es1ShellBackdrop _backdrop;
 		private readonly Es1ShellScreens _screens;
@@ -95,7 +97,7 @@ public static class Es1ShellHost {
 			_exitCode = exitCode;
 			_dirty = new Es1DirtyList(_devices.Display);
 			_backdrop = new Es1ShellBackdrop(_devices.Display, content, _dirty);
-			_screens = new Es1ShellScreens(_devices, _backdrop, _dirty);
+			_screens = new Es1ShellScreens(_devices, _backdrop, _dirty, content, _globals);
 			_frame = new Es1ShellFrame(_devices, _backdrop, _dirty, _screens, _time, switches.DebugMode);
 		}
 
@@ -179,7 +181,7 @@ public static class Es1ShellHost {
 			data.LoadStylesAndFonts(_content);
 
 			// 15. The first screen; 16. its palette uploaded and the screen drawn.
-			_screens.OpenFirstScreen(_exitCode, _switches.PlayIntro);
+			_screens.OpenFirstScreen(_exitCode, _switches.PlayIntro, data);
 			if (_backdrop.Palette is { } palette) {
 				_frame.UploadPalette?.Invoke(palette);
 			}
