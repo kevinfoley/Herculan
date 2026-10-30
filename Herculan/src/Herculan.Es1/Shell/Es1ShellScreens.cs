@@ -257,7 +257,7 @@ public sealed class Es1ShellScreens {
 		var dialog = new Es1ShellDialog(_devices.Display, _dirty, _content.Read, _lipSync, () => data.Fonts[DialogFontSlot],
 			() => data.Option2Word, () => BackdropId, () => mission.MessageBoxLine);
 		Dialog = dialog;
-		MessageBox = new Es1MessageBox(Globals, dialog, mission, data, () => Scripts, GetFullScreen);
+		MessageBox = new Es1MessageBox(Globals, dialog, mission, data, _backdrop, () => Scripts, GetFullScreen);
 		scripts.Configure(Es1ShellBackdrop.BackgroundPage, FullScreenContext, ScriptHandles);
 		scripts.AllocHandles(ScriptTimerCount, _devices.Timer);
 		scripts.SetPathPrefix(ScriptFolder);
@@ -716,7 +716,9 @@ public sealed class Es1ShellScreens {
 	/// <c>Shell_HandleMessage</c>'s step 9, the case of the table at <c>00082060</c> (targets at <c>00082104</c>) for
 	/// <paramref name="target"/>: most make the screen's object the current menu (docs/es1/shell/menus.md#the-screens).
 	/// The main menu's, SINGLE MISSION's, MISSION PARAMS', the war map's, its two alerts', the debriefing's, the career
-	/// menu's, the KIA warnings', the delete warning's and the quit question's are ported, and screen 9999's exit code; with any other the screen becomes current with no menu, as
+	/// menu's and its REGISTRATION, backups, stats and overwrite warning, the KIA warnings', the delete warning's, the
+	/// disk-space warning's and the quit question's are ported, 1490's message box, and screen 9999's exit code; with any
+	/// other the screen becomes current with no menu, as
 	/// retail's does for the cases that make none, its backdrop shown with no window. The waits are the war map's and the
 	/// debriefing's, whose constructors delete the box the text box held.
 	/// </summary>
@@ -743,9 +745,9 @@ public sealed class Es1ShellScreens {
 				}
 
 				break;
-			case 1490:
-				// PLACEHOLDER: 0003cccc: MessageBox_SetKind(Shell_MessageBox, 2), the career's G0 lines, S3's; no ported screen
-				// posts 1490.
+			case Es1NewCareerAlert.OpeningScreen:
+				// 0003cccc: MessageBox_SetKind(Shell_MessageBox, 2), the campaign's opening lines; no menu.
+				Globals.MessageBox.SetKind(Es1NewCareerAlert.OpeningKind);
 				break;
 			case MessageScreen:
 				// 0003ccdd: MessageBox_SetKind(Shell_MessageBox, 0) in Shell_Mode 0, a single mission's opening line; no menu.
@@ -815,7 +817,8 @@ public sealed class Es1ShellScreens {
 
 				break;
 			case Es1UnAssignedAlert.Screen:
-				// 0003ced7: an UnAssignedAlert.
+			case Es1NewCareerAlert.DiskWarningScreen:
+				// 0003ced7: an UnAssignedAlert, 3333's, and 6666's, the disk-space warning, whose OKAY is 1200.
 				if (_menuContext != null) {
 					CurrentMenu = new Es1UnAssignedAlert(_menuContext);
 				}
@@ -843,13 +846,33 @@ public sealed class Es1ShellScreens {
 				}
 
 				break;
-			case 1210:
-			case 6666:
-			case 1220:
-			case 1230:
-			case 1240:
-				// PLACEHOLDER: NewCareerAlert, UnAssignedAlert's disk-space warning, CareerRecordsMenu, CareerStatsAlert and
-				// SaveWarningAlert, P9b's.
+			case Es1NewCareerAlert.Screen:
+				// 0003da30: a NewCareerAlert, REGISTRATION.
+				if (_menuContext != null) {
+					CurrentMenu = new Es1NewCareerAlert(_menuContext);
+				}
+
+				break;
+			case Es1CareerRecordsMenu.Screen:
+				// 0003dbcf: a CareerRecordsMenu, CAREER BACKUPS.
+				if (_menuContext != null) {
+					CurrentMenu = new Es1CareerRecordsMenu(_menuContext);
+				}
+
+				break;
+			case Es1CareerStatsAlert.Screen:
+				// 0003dd6e: a CareerStatsAlert, CAREER STATS.
+				if (_menuContext != null) {
+					CurrentMenu = new Es1CareerStatsAlert(_menuContext);
+				}
+
+				break;
+			case Es1SaveWarningAlert.Screen:
+				// 0003df0d: a SaveWarningAlert, the overwrite warning.
+				if (_menuContext != null) {
+					CurrentMenu = new Es1SaveWarningAlert(_menuContext);
+				}
+
 				break;
 			case 1330:
 				// PLACEHOLDER: BattlesetAlert, the battle-set picker, P10's.

@@ -23,7 +23,23 @@ public readonly record struct Es1MenuMessage(short Code, short Index, short Valu
 public sealed class Es1MenuGlobals {
 	public Es1MenuGlobals() {
 		KeySubscriber = code => Es1DUIWindow.KeySubscriber(this, code);
+		ScanKeySubscriber = code => Es1ShellDevices.ScanKeySubscriber(this, code);
 	}
+
+	/// <summary>
+	/// <c>Shell_ScanKeySubscriber</c> (<c>00012b69</c>) as the one delegate the name box's constructor registers and its
+	/// destructor removes (<see cref="Es1MTEditBox"/>).
+	/// </summary>
+	public Es1KeySubscriber ScanKeySubscriber { get; }
+
+	/// <summary>The byte <c>0007f118</c>, clear in the image: <see cref="ScanKeySubscriber"/> is registered with the keyboard.</summary>
+	public bool ScanKeysRegistered { get; set; }
+
+	/// <summary>
+	/// <c>Shell_BlinkOn</c> (<c>0007fce0</c>), <see cref="Es1ShellDevices.BlinkOn"/>, which the name box's caret blinks by;
+	/// set by <see cref="Es1ShellDevices.Init"/>, off before.
+	/// </summary>
+	public Func<bool> BlinkOn { get; set; } = () => false;
 
 	/// <summary>
 	/// <c>DUIWindow_KeySubscriber</c> (<c>0001ba73</c>) as the one delegate <c>DUIWindow_Activate</c> registers and

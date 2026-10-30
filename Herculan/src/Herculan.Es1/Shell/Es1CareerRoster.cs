@@ -1,3 +1,4 @@
+using System.Globalization;
 using HercWorks.Core.Data.File.Dat.Shell;
 using HercWorks.Core.Io.Transform.Shell;
 using Herculan.Engine.Content;
@@ -121,6 +122,92 @@ public sealed class Es1CareerRoster {
 
 	/// <summary><c>Roster_CountUsedRecords</c> (<c>00017026</c>): the records 1 to 40 in use, the backups.</summary>
 	public short CountUsedRecords() => (short)Records.Skip(1).Count(record => record.InUse != 0);
+
+	/// <summary><c>Career_CampaignStarts</c> (<c>0007ebf0</c>): the missions played before each campaign.</summary>
+	private static readonly short[] CampaignStarts = [0, 7, 7, 15, 15, 24, 24, 32];
+
+	/// <summary><c>Career_CampaignNumbers</c> (<c>0007ebe0</c>): each campaign's number as the player counts them.</summary>
+	private static readonly short[] CampaignNumbers = [1, 2, 2, 3, 3, 4, 4, 5];
+
+	/// <summary>
+	/// <c>Roster_BackupLines</c> (<c>000aa7d4</c>), 41 lines of 25 bytes, line <i>n</i> record <i>n</i>'s, empty in the image:
+	/// what <see cref="BackupListLines"/> last wrote.
+	/// </summary>
+	private readonly string[] _backupLines = Enumerable.Repeat("", RecordCount).ToArray();
+
+	/// <summary>
+	/// <c>Roster_BackupListLines</c> (<c>000183bd</c>) (docs/es1/shell/career.md#the-backup-list): for each of records 1 to
+	/// 40 in use, in order, its line written into <c>Roster_BackupLines</c> at the record's number with
+	/// <c>CAMPAIGN %1d: MISSION %1d</c> (<c>0007ede1</c>): <i>k</i> the record's campaign, replaced by the last of 0 to 7
+	/// whose <see cref="CampaignStarts"/> word is its missions played; the number <see cref="CampaignNumbers"/>[<i>k</i>]
+	/// and the mission the missions played − <see cref="CampaignStarts"/>[<i>k</i>] + 1. The lines end with a null. Retail
+	/// reads past the tables for a <i>k</i> outside 0 to 7; here such a <i>k</i> reads 0 from both, an engine guard.
+	/// </summary>
+	public string?[] BackupListLines() {
+		var lines = new List<string?>();
+		for (int n = 1; n <= LastBackup; n++) {
+			var record = Records[n];
+			if (record.InUse == 0) {
+				continue;
+			}
+
+			int k = record.Campaign;
+			for (int c = 0; c < CampaignStarts.Length; c++) {
+				if (record.MissionsPlayed == CampaignStarts[c]) {
+					k = c;
+				}
+			}
+
+			bool known = k >= 0 && k < CampaignStarts.Length;
+			int number = known ? CampaignNumbers[k] : 0, start = known ? CampaignStarts[k] : 0;
+			_backupLines[n] = string.Create(CultureInfo.InvariantCulture, $"CAMPAIGN {number}: MISSION {record.MissionsPlayed - start + 1}");
+			lines.Add(_backupLines[n]);
+		}
+
+		lines.Add(null);
+		return [.. lines];
+	}
+
+	/// <summary>
+	/// <c>Roster_SaveSlotUsed</c> (<c>000167a1</c>) (docs/es1/shell/career.md#save-and-the-overwrite-warning): whether the
+	/// record numbered record 0's missions played + 1, the backup <see cref="SaveBackup"/> would write, is in use. Retail
+	/// reads past the roster for a number past 40; here such a record is not in use, an engine guard.
+	/// </summary>
+	public bool SaveSlotUsed() {
+		int slot = Records[0].MissionsPlayed + 1;
+		return slot is >= 0 and < RecordCount && Records[slot].InUse != 0;
+	}
+
+	/// <summary>
+	/// <c>Roster_SaveBackup</c> (<c>000167cd</c>): <see cref="Current"/> set to the missions played of the record it names,
+	/// plus 1, <see cref="Save"/> to that record, and <see cref="Current"/> 0 again.
+	/// </summary>
+	public void SaveBackup() {
+		Current = (short)(CurrentRecord.MissionsPlayed + 1);
+		Save(Current);
+		Current = 0;
+	}
+
+	/// <summary>
+	/// <c>Roster_RestoreBackup</c> (<c>00016817</c>)(roster, <paramref name="n"/>) (docs/es1/shell/career.md#restore):
+	/// <see cref="Current"/> set to <see cref="NthUsedRecord"/>(<paramref name="n"/>), that record made the career with
+	/// <see cref="ActivateRecord"/>, and <see cref="Current"/> 0 again.
+	/// </summary>
+	public void RestoreBackup(short n) {
+		Current = NthUsedRecord(n);
+		ActivateRecord();
+		Current = 0;
+	}
+
+	/// <summary>
+	/// <c>Roster_SaveSlotText</c> (<c>0001838d</c>): <c>Roster_BackupLines</c>' line at the missions played of the record
+	/// <see cref="Current"/> names, plus 1, the line the backup list last wrote for the backup SAVE would replace. Retail
+	/// reads past the lines for a number past 40; here such a number gives an empty line, an engine guard.
+	/// </summary>
+	public string SaveSlotText() {
+		int line = CurrentRecord.MissionsPlayed + 1;
+		return line is >= 0 and < RecordCount ? _backupLines[line] : "";
+	}
 
 	/// <summary>
 	/// <c>Roster_ForEachPilotNoOp</c> (<c>00016fdd</c>): <c>BarGraph_NoOpCareerCopy</c> (<c>0001600d</c>)(the record

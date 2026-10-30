@@ -48,12 +48,11 @@ public static class Es1MenuBuild {
 	public const short CareerNameList = 1002;
 
 	/// <summary>
-	/// The 20 ids that <c>Menu_ListLines</c> gives lines of their own and that are not ported, of the 28 at
-	/// <c>000812f4</c>: all but 1002, 1202 and the single-mission lists of <see cref="WaTextLists"/>.
+	/// The 19 ids that <c>Menu_ListLines</c> gives lines of their own and that are not ported, of the 28 at
+	/// <c>000812f4</c>: all but 1002, 1202, 1223 and the single-mission lists of <see cref="WaTextLists"/>.
 	/// </summary>
 	private static readonly short[] OwnLinesLists = [
 		1921, 1924, 1925, 1926, 1907, 1906, 1927, 1923, 1314, 1315, 1316, 1318, 1331, 1904, 1903, 1905, 1922, 1808, 1809,
-		1223,
 	];
 
 	/// <summary>
@@ -107,9 +106,12 @@ public static class Es1MenuBuild {
 					continue;
 				}
 
-				if (Array.IndexOf(CareerTextIds, record.Id) >= 0) {
-					// PLACEHOLDER: ids 5556, 5557, 5558 and 1223 take their text from the current career record (0003a5c8,
-					// 0003a60e, 0003a654, 0003a705), the careers being S3's; the record is built with no text.
+				if (record.Id == Es1SaveWarningAlert.SlotLabel) {
+					// 0003a705: Roster_SaveSlotText, the overwrite warning's line of the backup SAVE would replace.
+					text = context.Mission.Roster.SaveSlotText();
+				} else if (Array.IndexOf(CareerTextIds, record.Id) >= 0) {
+					// PLACEHOLDER: ids 5556, 5557 and 5558 take their text from the current career record (0003a5c8, 0003a60e,
+					// 0003a654), TECH RELEASE's, P11's; the record is built with no text.
 					text = "";
 				} else {
 					text = Line(table, i);
@@ -130,7 +132,8 @@ public static class Es1MenuBuild {
 					menu.Window?.AddLabel(mode, rect.X1 - rect.X0, rect.X0, rect.Y0, text ?? "");
 					break;
 				case Kind2:
-					// PLACEHOLDER: 0001f442(0, id, rect), kind 2's control (vtable 0007f590), is dlg-menu-dialogs.md's Open.
+					// MTEditBox_Ctor (0001f442)(0, id, rect), the name box (docs/es1/shell/career.md#the-name-box).
+					menu.Window?.AddControl(new Es1MTEditBox(context.Data, context.Globals, record.Id, rect));
 					break;
 				case ButtonKind:
 					text = BuildButton(menu, number, record, table, i, text, rect);
@@ -138,7 +141,11 @@ public static class Es1MenuBuild {
 				case HotspotKind:
 					if (Array.IndexOf(HotspotIds, record.Id) >= 0) {
 						// PLACEHOLDER: 1502's a, the rect 000a02d4, is a later module's; no hotspot keeps one until it lands.
-						var handler = record.Id == Es1DebriefingMenu.ResultsPanel ? Es1DebriefingMenu.ResultsHandler(context) : HotspotPlaceholder;
+						var handler = record.Id switch {
+							Es1DebriefingMenu.ResultsPanel => Es1DebriefingMenu.ResultsHandler(context),
+							Es1CareerStatsAlert.StatsPanel => Es1CareerStatsAlert.StatsHandler(context),
+							_ => HotspotPlaceholder,
+						};
 						menu.Window?.AddHotspot(null, record.Id, handler, rect);
 					}
 
@@ -216,7 +223,8 @@ public static class Es1MenuBuild {
 	/// Kind 15: the lines (<see cref="ListLines"/>), then a list box, <c>MTStrListBox_Ctor</c>(0, <c>0x100</c>, 0, 0,
 	/// selection, style, id, lines, rect), added to the window: the selection 0, or for the 23 ids at <c>00081a00</c> the
 	/// one their case sets, MISSION PARAMS' lists 1116 to 1120 their word of <see cref="Es1ShellData.MissionParams"/> and
-	/// the career list 1202 <see cref="Es1ShellData.SelectedEntry"/> (<c>0003ab5f</c>).
+	/// the career list 1202 <see cref="Es1ShellData.SelectedEntry"/> (<c>0003ab5f</c>) and the backup list 1223
+	/// <c>Career_BackupLine</c> (<see cref="Es1CareerRoster.BackupLine"/>, <c>0003abf0</c>).
 	/// </summary>
 	private static void BuildList(Es1Menu menu, Es1MenuControl record, Es1Rect rect) {
 		var lines = ListLines(menu.Context, record.Id);
@@ -225,8 +233,11 @@ public static class Es1MenuBuild {
 			selected = menu.Context.Data.MissionParams[record.Id - FirstParamsList];
 		} else if (record.Id == Es1CareerMenu.CareerList) {
 			selected = menu.Context.Data.SelectedEntry;
+		} else if (record.Id == Es1CareerRecordsMenu.BackupList) {
+			// 0003abf0.
+			selected = menu.Context.Mission.Roster.BackupLine;
 		} else if (Array.IndexOf(OwnSelectionLists, record.Id) >= 0) {
-			// PLACEHOLDER: the other 17 ids at 00081a00 build their list with a selection, and 1903 an alignment, set by their
+			// PLACEHOLDER: the other 16 ids at 00081a00 build their list with a selection, and 1903 an alignment, set by their
 			// own code (dlg-menu-dialogs.md's Open); their menus are later modules'.
 			return;
 		}
@@ -237,9 +248,10 @@ public static class Es1MenuBuild {
 	/// <summary>
 	/// <c>Menu_ListLines</c> (<c>0003750d</c>)(<paramref name="id"/>): for 1002, the main menu's list,
 	/// <c>CareerLog_CurrentNameArray</c> (<c>000182f8</c>) of the careers log (docs/es1/shell/main-menu.md#the-list); for
-	/// 1202, the career menu's list, <c>CareerLog_NameLines</c> (<see cref="Es1ShellData.CareerNameLines"/>); for
-	/// the single-mission lists, <see cref="LinesFromList"/> of their word list (<see cref="WaTextLists"/>); for any id
-	/// outside the 28 at <c>000812f4</c>, <see cref="LinesFromList"/> of the list at <c>000811a4</c>, which numbers none.
+	/// 1202, the career menu's list, <c>CareerLog_NameLines</c> (<see cref="Es1ShellData.CareerNameLines"/>); for 1223,
+	/// the backup list, <c>Roster_BackupListLines</c> (<see cref="Es1CareerRoster.BackupListLines"/>); for the
+	/// single-mission lists, <see cref="LinesFromList"/> of their word list (<see cref="WaTextLists"/>); for any id outside
+	/// the 28 at <c>000812f4</c>, <see cref="LinesFromList"/> of the list at <c>000811a4</c>, which numbers none.
 	/// </summary>
 	public static string?[] ListLines(Es1MenuContext context, short id) {
 		if (id == CareerNameList) {
@@ -250,12 +262,16 @@ public static class Es1MenuBuild {
 			return context.Data.CareerNameLines();
 		}
 
+		if (id == Es1CareerRecordsMenu.BackupList) {
+			return context.Mission.Roster.BackupListLines();
+		}
+
 		if (WaTextLists.TryGetValue(id, out var numbers)) {
 			return LinesFromList(context.Data.Text, numbers);
 		}
 
 		if (Array.IndexOf(OwnLinesLists, id) >= 0) {
-			// PLACEHOLDER: the 20 other ids at 000812f4 give lines of their own (the cases at 00081364), unread; their menus are
+			// PLACEHOLDER: the 19 other ids at 000812f4 give lines of their own (the cases at 00081364), unread; their menus are
 			// later modules', and the list is empty until they land.
 			return [null];
 		}
@@ -300,11 +316,12 @@ public static class Es1MenuBuild {
 
 	/// <summary>
 	/// The handler every hotspot but 1522, the debriefing's results panel (<see cref="Es1DebriefingMenu.ResultsHandler"/>),
-	/// is given in place of its own (<see cref="HotspotIds"/>): it draws nothing. 00017a19 draws the current career record's
-	/// pilot portraits and their marks, and the other handlers are unread; all are later modules'.
+	/// and 1231, the career's stats (<see cref="Es1CareerStatsAlert.StatsHandler"/>), is given in place of its own
+	/// (<see cref="HotspotIds"/>): it draws nothing. 00017a19 draws the current career record's pilot portraits and their
+	/// marks, and the other handlers are unread; all are later modules'.
 	/// </summary>
 	private static void HotspotPlaceholder(Es1ShellRenderContext context, Es1Rect rect, short id) {
-		// PLACEHOLDER: the hotspot handlers (00017a19 and the seven other handlers above, 000175d7 aside), the later modules'; the area
-		// draws nothing.
+		// PLACEHOLDER: the hotspot handlers (00017a19 and the six other handlers above, 000175d7 and 0001705e aside), the later
+		// modules'; the area draws nothing.
 	}
 }

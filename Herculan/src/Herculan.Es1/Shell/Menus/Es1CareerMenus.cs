@@ -15,7 +15,7 @@ public sealed class Es1CareerMenu : Es1Menu {
 	public const short New = 1210, Proceed = 1700, Records = 1220, Stats = 1230, Delete = 1201, UpArrow = 101, DownArrow = 102;
 
 	/// <summary>The screens the handler turns NEW and DELETE into: the disk-space warning and the delete warning.</summary>
-	private const short DiskWarning = 6666, DeleteWarning = 1270;
+	private const short DiskWarning = Es1NewCareerAlert.DiskWarningScreen, DeleteWarning = 1270;
 
 	/// <summary>The career's screen that loads no mission, the service bay.</summary>
 	public const short ServiceBay = 1710;
@@ -196,6 +196,63 @@ public sealed class Es1CareerMenu : Es1Menu {
 		} catch (Exception ex) when (ex is IOException or ArgumentException or UnauthorizedAccessException) {
 			return true;
 		}
+	}
+
+	/// <summary>Slot <c>+4</c>, the class's destructor: its vtable, then <c>Menu</c>'s, stored and the menu freed.</summary>
+	public override void Dtor() {
+	}
+}
+
+/// <summary>
+/// The REGISTRATION window's screen object, class <c>NewCareerAlert</c> (vtable <c>00081e6a</c>)
+/// (docs/es1/shell/career.md#starting-a-career): screen 1210, the name box, ACCEPT and CANCEL.
+/// </summary>
+public sealed class Es1NewCareerAlert : Es1Menu {
+	/// <summary>The screen and the menu, <c>dlg\menu1210.dlg</c>.</summary>
+	public const short Screen = 1210;
+
+	/// <summary>The disk-space warning NEW opens in its place, an <c>UnAssignedAlert</c>, <c>dlg\menu6666.dlg</c>.</summary>
+	public const short DiskWarningScreen = 6666;
+
+	/// <summary>ACCEPT's id, and the name box's.</summary>
+	private const short Accept = 100, NameBox = 103;
+
+	/// <summary>The screen ACCEPT opens, the campaign's talking head, which shows the message box's kind 2.</summary>
+	public const short OpeningScreen = 1490;
+
+	/// <summary>The message box's kind for the campaign's opening lines.</summary>
+	public const short OpeningKind = 2;
+
+	/// <summary>The <c>.ANM</c> ACCEPT puts into <c>000aacfe</c>, the string at <c>00080984</c>.</summary>
+	private const string MissionAnm = "anm\\esiege3.anm";
+
+	public Es1NewCareerAlert(Es1MenuContext context) : base(context) {
+	}
+
+	/// <summary>
+	/// Slot <c>+8</c>, <c>NewCareerAlert_OnMessage</c> (<c>0002aeec</c>): for ACCEPT, the text of the name box, control
+	/// 103 found with <c>DUIWindow_FindEnabledControlById</c>, through its slot <c>+0x30</c>
+	/// (<see cref="Es1MTEditBox.GetText"/>); <c>Career_New</c>(roster, 0, the text) (<see cref="Es1CareerRoster.New"/>);
+	/// the career's first mission loaded; the target 1490; <c>anm\esiege3.anm</c> to play after the next screen; and the
+	/// message box's kind 2. CANCEL (99) passes to <see cref="Es1ShellScreens.HandleMessage"/>'s <i>back</i>. Retail reads
+	/// the slot of whatever the index −1 gives when no box is found; here the name is then empty, an engine guard.
+	/// </summary>
+	public override void OnMessage(ref Es1MenuMessage message) {
+		if (message.Target != Accept) {
+			return;
+		}
+
+		string name = Window is { } window && window.FindEnabledControlById(NameBox) is var index and >= 0
+			&& window.Controls[index] is Es1MTEditBox box
+				? box.GetText()
+				: "";
+		Context.Mission.Roster.New(0, name);
+		// PLACEHOLDER: Career_StartMission (00016e93)(Career_Roster, 0) and Shell_PrepareMission (0002a523), the career's
+		// mission load, P10's.
+		message = message with { Target = OpeningScreen };
+		Context.Screens.AnmName = MissionAnm;
+		Context.Screens.AnmMode = 1;
+		Context.Globals.MessageBox.SetKind(OpeningKind);
 	}
 
 	/// <summary>Slot <c>+4</c>, the class's destructor: its vtable, then <c>Menu</c>'s, stored and the menu freed.</summary>

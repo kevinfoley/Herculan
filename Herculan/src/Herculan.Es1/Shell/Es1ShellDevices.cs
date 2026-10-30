@@ -73,6 +73,7 @@ public sealed class Es1ShellDevices {
 	public void Init(GameContent content, string installRoot, bool debugMode, byte biosShiftFlags, Es1MenuGlobals globals) {
 		_globals = globals;
 		globals.DebugMode = debugMode;
+		globals.BlinkOn = () => BlinkOn;
 		// 0005152c (ClassItem_RegisterBucket) and Light_ResetSystem set up the 3D library, which no ported shell screen
 		// draws with; Assert_AddHook(Shell_AssertCleanupHook) adds the fatal assert's hook, and no ported step of the shell
 		// asserts.
@@ -201,6 +202,26 @@ public sealed class Es1ShellDevices {
 	private int NavKeySubscriber(ushort code) {
 		if (_globals != null) {
 			Es1DUIWindow.HandleNavKey(_globals, (ushort)(code & ~Es1Keyboard.NumLockBit));
+		}
+
+		return Es1Keyboard.Claimed;
+	}
+
+	/// <summary>
+	/// <c>Shell_ScanKeySubscriber</c> (<c>00012b69</c>) (docs/es1/shell/startup.md#the-keyboard-subscribers), which the
+	/// name box registers for the ten codes at <c>0007e7f4</c> (<see cref="Es1MTEditBox"/>): <c>Home</c>, <c>Up</c>,
+	/// <c>Left</c>, <c>Right</c>, <c>End</c> and <c>Down</c> with Num Lock's bit passed on; the code <c>0x653</c>,
+	/// <c>Ctrl+Alt+Del</c>, claimed with nothing done; any other code claimed and handed to
+	/// <c>Shell_ForwardKeyToDialog</c> (<c>00012bb7</c>), which gives it to <see cref="Es1DUIWindow.SendKey"/> of the
+	/// active window while there is one.
+	/// </summary>
+	public static int ScanKeySubscriber(Es1MenuGlobals globals, ushort code) {
+		if ((code & 0xff) is 0x47 or 0x48 or 0x4b or 0x4d or 0x4f or 0x50 && (code & Es1Keyboard.NumLockBit) != 0) {
+			return Es1Keyboard.PassOn;
+		}
+
+		if (code != 0x653) {
+			globals.Active?.SendKey(globals, code);
 		}
 
 		return Es1Keyboard.Claimed;
