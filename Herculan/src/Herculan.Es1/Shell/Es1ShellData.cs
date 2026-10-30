@@ -38,7 +38,12 @@ public sealed class Es1ShellData {
 	/// <summary><c>cfg\filename.bin</c>, the table <c>FileNames_Load</c> (<c>0002094d</c>) loads into <c>0009afb8</c>; none when it does not read.</summary>
 	public string[]? FileNames { get; private init; }
 
-	/// <summary>The mission parameters' five words, options 12 to 16 (docs/es1/formats/msn-mission-file.md).</summary>
+	/// <summary>
+	/// The mission parameters' five <c>int16</c>, <c>MissionParams_Ammo</c> (<c>000aacbc</c>), <c>MissionParams_Damage</c>,
+	/// <c>MissionParams_Difficulty</c>, <c>MissionParams_Visibility</c> and <c>MissionParams_TimeOfDay</c>
+	/// (<c>000aacc4</c>): options 12 to 16, which MISSION PARAMS steps (docs/es1/shell/single-mission.md#the-mission-params-menu,
+	/// docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters).
+	/// </summary>
 	public short[] MissionParams { get; } = new short[5];
 
 	/// <summary>The byte <c>0007fcb8</c>, option 0, which lets <c>ShellMusic_Play</c> start a track.</summary>

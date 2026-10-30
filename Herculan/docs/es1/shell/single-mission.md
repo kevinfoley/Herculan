@@ -44,7 +44,7 @@ A press on the list or a move while it is held selects the line under the pointe
 
 ### The buttons
 
-**A release posts the control's id; `MissionMenu_OnMessage` (`0002b375`), slot `+8` of `MissionMenu`'s vtable, acts on four ids, and `Shell_HandleMessage` then opens the screen the message names ([changing screens](menus.md#changing-screens--shell_handlemessage-0003c7d8)).** The handler looks the message's target `+6` up among the four ids of the `REPNE SCASD` table at `00080a54`, its cases at `00080a64`, and does nothing for any other id; Ghidra holds the arrows' cases, `0002b419` and `0002b489`, as undefined bytes.
+**A release posts the control's id; `MissionMenu_OnMessage` (`0002b375`), slot `+8` of `MissionMenu`'s vtable, acts on four ids, and `Shell_HandleMessage` then opens the screen the message names ([changing screens](menus.md#changing-screens--shell_handlemessage-0003c7d8)).** The handler looks the message's target `+6` up among the four ids of the `REPNE SCASD` table at `00080a54`, its cases at `00080a64`, and does nothing for any other id.
 
 | Control | Id | The handler | Then |
 |---|---|---|---|
@@ -97,7 +97,7 @@ The pointer starts on ACCEPT; `Esc` presses and releases CANCEL and `Space` ACCE
 
 A list of style 1 draws every line in `nm_green` with no selection box and shows its lines from the selected one, as many as its 12-pixel height holds ([the list box](menus.md#the-list-box)). A press on one selects nothing, and its release posts its id, which the handler and `Shell_ScreenIds` do not hold.
 
-**The buttons.** `MissionParams_OnMessage` (`0002b4fe`), slot `+8` of `MissionOptionsAlert`'s vtable, looks the target up among the seven ids of the table at `00080a74`, its cases at `00080a90`; Ghidra holds the cases from `0002b603` as undefined bytes.
+**The buttons.** `MissionParams_OnMessage` (`0002b4fe`), slot `+8` of `MissionOptionsAlert`'s vtable, looks the target up among the seven ids of the table at `00080a74`, its cases at `00080a90`.
 
 - AMMO, DAMAGE, DIFFICULTY, VISIBILITY and TIME OF DAY (1111 to 1115) each add 1 to their word, modulo 2, 2, 4, 2 and 3, select the new value in their list 1116 to 1120 with its slot `+0x24`, `MTStrListBox_SelectLine`, and store it as option 12 to 16 with `Prefs_SetOption` (`00008378`)(1, value, option). No handler is registered for options 12 to 16 ([Open](#open)), so `Prefs_SetOption` only stores the byte. The screen stays: 1111 to 1115 are not in `Shell_ScreenIds`.
 - CANCEL (99) copies the object's `+0x26`–`+0x2e` back into the five words and puts every option back from `Prefs_Committed` (`000aa260`) with `Prefs_RevertAll` (`00008316`)(1), then does what ACCEPT does.

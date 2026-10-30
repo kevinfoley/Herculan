@@ -84,8 +84,10 @@ public sealed class Es1ShellDevices {
 			Timer.AddCallback(2, BlinkTick);
 		}
 
-		// PLACEHOLDER: ShellSound_Init, the shell's sound manager; no plan step ports ES1's sound, so there is none, as on
-		// a machine whose resource.cfg names no driver.
+		// PLACEHOLDER: ShellSound_Init, the shell's sound manager; no plan step ports ES1's sound. The manager counts as
+		// present (00082768 set), as on a retail machine with a sound card and as the simulator's does (the user's choice,
+		// plan-es1-first-mission.md decision 15): the options' load below leaves options 0-2 as data\prefs.cfg holds them,
+		// and what plays through the manager plays nothing.
 
 		CreateDisplay();
 
@@ -126,18 +128,15 @@ public sealed class Es1ShellDevices {
 		// data\prefs.cfg, option 2 set to 0 without the speech archive, and 000087ff.
 		// PLACEHOLDER: 0000868c and 000087ff are unread; the shell registers no other handler here.
 		string prefsPath = Es1MissionFiles.DataPath(installRoot, "prefs.cfg");
-		var preferences = Es1Preferences.FromFile(File.Exists(prefsPath) ? File.ReadAllBytes(prefsPath) : null);
+		var preferences = Es1Preferences.FromFile(File.Exists(prefsPath) ? File.ReadAllBytes(prefsPath) : null, prefsPath);
 		for (int option = 0; option < Es1Preferences.OptionCount; option++) {
 			preferences.SetHandler(option, null);
 		}
 
-		// Its clear of option 2 without the speech archive (Speech_ArchivePresent, whose path is unread) is not made: with no
-		// sound manager the next step clears option 2 whatever it answers.
+		// PLACEHOLDER: the byte 0007e09c from Speech_ArchivePresent (000087ce), whose path is unread, and with it 0 option 2
+		// set to 0 with Prefs_SetOption(1, 0, 2); option 2 stays as the file holds it.
 
-		// With no sound manager, options 0, 1 and 2 set to 0 with Prefs_SetOption(1, 0, n).
-		preferences.SetOption(true, 0, Es1Preferences.MusicOption);
-		preferences.SetOption(true, 0, Es1Preferences.SoundsOption);
-		preferences.SetOption(true, 0, Es1Preferences.RadioOption);
+		// With no sound manager (00082768 0) options 0, 1 and 2 would be set to 0 here; the manager counts as present (above).
 		Preferences = preferences;
 	}
 
@@ -162,7 +161,7 @@ public sealed class Es1ShellDevices {
 	/// <summary>
 	/// <c>Shell_ShutdownDevices</c> (<c>00046094</c>), as far as this engine holds them: the host's keyboard and mouse let
 	/// go. The rest returns DOS what the shell took, which the host does not hold: the button sound and the sound
-	/// manager (none here), <c>Shell_NavKeySubscriber</c> and the keyboard and mouse devices, the PC timer's divisor
+	/// manager (not ported), <c>Shell_NavKeySubscriber</c> and the keyboard and mouse devices, the PC timer's divisor
 	/// <c>0x4da6</c>, its callbacks and <c>Pit_RemoveHandler</c>, the render context, and the display, which with
 	/// <c>Shell_ExitCode</c> not 0 keeps its mode for the simulator.
 	/// </summary>

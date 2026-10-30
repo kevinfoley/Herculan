@@ -7,7 +7,9 @@ namespace Herculan.Es1.Input;
 /// (<c>ES1DBSIM 000bd562</c>) as <c>Prefs_Load</c> (<c>0004a744</c>) reads them from <c>data\prefs.cfg</c>, all 0 when
 /// the file does not open, with its two copies, <c>Prefs_LoadedOptions</c> (<c>000bd574</c>) and
 /// <c>Prefs_PreviousOptions</c> (<c>000bd586</c>); the handler table <c>Prefs_HandlerTable</c> (<c>000bd598</c>); the
-/// writes the panels make through <c>Prefs_SetOption</c>; and the save back to the file. The options the input build
+/// writes the panels make through <c>Prefs_SetOption</c>; and the save back to the file. The shell keeps the same 17
+/// options with <c>ES1GO</c>'s own <c>Prefs_*</c> functions, the <c>Shell</c>-prefixed methods where they differ from the
+/// simulator's, its <c>Prefs_Committed</c> held as the load-time copy. The options the input build
 /// reads are named here; <see cref="Es1ControlsState"/> registers the handlers of options 8 and 10,
 /// <see cref="Es1InputBuild"/> that of option 11, and this type those of options 0, 1, 2 and 6
 /// (docs/es1/simulation/input.md#the-preferences-start-up).
@@ -73,7 +75,7 @@ public sealed class Es1Preferences {
 	/// The options from the bytes of <c>data\prefs.cfg</c>, or all 0 for null, a file that does not open: the read of
 	/// <c>Prefs_Load</c> and its two copies. A file shorter than 17 bytes gives 0 for the bytes it lacks. No handler runs.
 	/// </summary>
-	/// <param name="path">Where <see cref="SaveSelectedOptions"/> writes, <c>data\prefs.cfg</c> in the install; none saves nothing.</param>
+	/// <param name="path">Where <see cref="SaveSelectedOptions"/> and <see cref="ShellSave"/> write, <c>data\prefs.cfg</c> in the install; none saves nothing.</param>
 	public static Es1Preferences FromFile(byte[]? file, string? path = null) {
 		var options = new byte[OptionCount];
 
@@ -141,7 +143,7 @@ public sealed class Es1Preferences {
 	public static bool VoiceArchiveExists(string installRoot) =>
 		File.Exists(CaseInsensitivePath.Combine(installRoot, VoiceArchivePath));
 
-	/// <summary><c>data\prefs.cfg</c> in the install, which <see cref="SaveSelectedOptions"/> reads and writes; none saves nothing.</summary>
+	/// <summary><c>data\prefs.cfg</c> in the install, which <see cref="SaveSelectedOptions"/> reads and writes and <see cref="ShellSave"/> writes; none saves nothing.</summary>
 	public string? FilePath { get; }
 
 	/// <summary>
@@ -323,6 +325,72 @@ public sealed class Es1Preferences {
 
 		try {
 			File.WriteAllBytes(FilePath, buffer);
+		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+			// FileWStream_Ctor's open failed, and nothing is written.
+		}
+	}
+
+	/// <summary>
+	/// The shell's <c>Prefs_SetOption</c> (<c>ES1GO 00008378</c>)(<paramref name="apply"/>, <paramref name="value"/>,
+	/// <paramref name="index"/>) (docs/es1/shell/single-mission.md#the-mission-params-menu): <see cref="SetOption"/>
+	/// without the old value kept in <c>Prefs_PreviousOptions</c>, a copy the shell does not have; the value stored and,
+	/// with <paramref name="apply"/>, the option's handler, when it has one, called with it.
+	/// </summary>
+	public void ShellSetOption(bool apply, byte value, int index) {
+		_options[index] = value;
+		if (apply) {
+			_handlers[index]?.Invoke(value);
+		}
+	}
+
+	/// <summary>
+	/// The shell's <c>Prefs_CommitAll</c> (<c>ES1GO 000082b0</c>)(<paramref name="apply"/>)
+	/// (docs/es1/shell/single-mission.md#the-mission-params-menu): <see cref="CommitOptions"/> without the copy of every
+	/// option into <c>Prefs_PreviousOptions</c>. For each option that differs from its committed copy
+	/// <c>Prefs_Committed</c> (<c>000aa260</c>), held as <see cref="Loaded"/>, its handler called with it when
+	/// <paramref name="apply"/> is set and it has one, then the copy made current.
+	/// </summary>
+	public void ShellCommitAll(bool apply) {
+		for (int index = 0; index < OptionCount; index++) {
+			if (_loaded[index] != _options[index]) {
+				if (apply) {
+					_handlers[index]?.Invoke(_options[index]);
+				}
+
+				_loaded[index] = _options[index];
+			}
+		}
+	}
+
+	/// <summary>
+	/// The shell's <c>Prefs_RevertAll</c> (<c>ES1GO 00008316</c>)(<paramref name="apply"/>)
+	/// (docs/es1/shell/single-mission.md#the-mission-params-menu), the same statements as the simulator's <c>0004a8a8</c>,
+	/// which this type has no other use for: each option that differs from its committed copy (<see cref="Loaded"/>) set
+	/// back to it, and its handler called with it when <paramref name="apply"/> is set and it has one.
+	/// </summary>
+	public void ShellRevertAll(bool apply) {
+		for (int index = 0; index < OptionCount; index++) {
+			if (_options[index] != _loaded[index]) {
+				_options[index] = _loaded[index];
+				if (apply) {
+					_handlers[index]?.Invoke(_options[index]);
+				}
+			}
+		}
+	}
+
+	/// <summary>
+	/// The shell's <c>Prefs_Save</c> (<c>ES1GO 00008267</c>) (docs/es1/shell/single-mission.md#the-mission-params-menu):
+	/// the 17 options written to <see cref="FilePath"/> when it opens for writing. Unlike
+	/// <see cref="SaveSelectedOptions"/> it does not read the file first. With no <see cref="FilePath"/> nothing is saved.
+	/// </summary>
+	public void ShellSave() {
+		if (FilePath == null) {
+			return;
+		}
+
+		try {
+			File.WriteAllBytes(FilePath, _options);
 		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
 			// FileWStream_Ctor's open failed, and nothing is written.
 		}

@@ -120,8 +120,8 @@ public class Es1MTButton : Es1DUIButtonControl {
 	/// played (slot <c>+0x10</c>).
 	/// </summary>
 	protected static void Click() {
-		// The sound object 0007fd00 is 0 in the image and ShellSound_Init makes no sound manager here, as
-		// Es1ShellFrame.PresentFrame's music says, so there is none and the press is silent.
+		// PLACEHOLDER: the sound object 0007fd00, which the shell's sound manager makes; ES1's sound is not ported
+		// (Es1ShellDevices.Init's ShellSound_Init), so the press is silent.
 	}
 
 	/// <summary>Slot <c>+0xc</c>, <c>MTButton_Invalidate</c> (<c>0001d17b</c>): <see cref="Es1DUIControl.Changed"/> set.</summary>

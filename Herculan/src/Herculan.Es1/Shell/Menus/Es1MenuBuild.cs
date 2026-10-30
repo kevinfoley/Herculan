@@ -47,11 +47,36 @@ public static class Es1MenuBuild {
 	/// <summary>The main menu's list, which shows the current career's name.</summary>
 	public const short CareerNameList = 1002;
 
-	/// <summary>The 27 ids other than 1002 that <c>Menu_ListLines</c> gives lines of their own, of the 28 at <c>000812f4</c>.</summary>
+	/// <summary>
+	/// The 21 ids that <c>Menu_ListLines</c> gives lines of their own and that are not ported, of the 28 at
+	/// <c>000812f4</c>: all but 1002 and the single-mission lists of <see cref="WaTextLists"/>.
+	/// </summary>
 	private static readonly short[] OwnLinesLists = [
-		1921, 1924, 1925, 1926, 1907, 1906, 1927, 1923, 1116, 1117, 1119, 1120, 1118, 1314, 1315, 1316, 1318, 1331, 1101,
-		1202, 1904, 1903, 1905, 1922, 1808, 1809, 1223,
+		1921, 1924, 1925, 1926, 1907, 1906, 1927, 1923, 1314, 1315, 1316, 1318, 1331, 1202, 1904, 1903, 1905, 1922, 1808,
+		1809, 1223,
 	];
+
+	/// <summary>
+	/// The ids of the 28 at <c>000812f4</c> whose cases give <see cref="LinesFromList"/> of a word list
+	/// (docs/es1/shell/single-mission.md): 1101, the SINGLE MISSION menu's mission types (<c>000376f5</c>, the list at
+	/// <c>00081264</c>), and 1116 to 1120, the MISSION PARAMS menu's values (<c>0003765c</c>, <c>0003766d</c>,
+	/// <c>000376a0</c>, <c>0003767e</c>, <c>0003768f</c>, the lists at <c>000811c4</c>, <c>000811cc</c>, <c>00081244</c>,
+	/// <c>000811d4</c> and <c>000811dc</c>).
+	/// </summary>
+	private static readonly Dictionary<short, short[]> WaTextLists = new() {
+		[Es1MissionMenu.KindList] = [0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, -1],
+		[1116] = [8, 9, -1],
+		[1117] = [10, 11, -1],
+		[1118] = [23, 24, 25, 26, -1],
+		[1119] = [12, 4, -1],
+		[1120] = [13, 14, 15, -1],
+	};
+
+	/// <summary>
+	/// The MISSION PARAMS menu's lists, 1116 to 1120, of the 23 at <c>00081a00</c>: their cases (<c>0003a9c7</c>–<c>0003aa1c</c>)
+	/// select <see cref="Es1ShellData.MissionParams"/>' word of the same position.
+	/// </summary>
+	private const short FirstParamsList = 1116, LastParamsList = 1120;
 
 	/// <summary>The list at <c>000811a4</c> that any other id's lines are numbered by: it opens with −1, so it numbers none.</summary>
 	private static readonly short[] DefaultLineNumbers = [-1];
@@ -187,33 +212,41 @@ public static class Es1MenuBuild {
 	}
 
 	/// <summary>
-	/// Kind 15: the lines (<see cref="ListLines"/>), then for an id other than the 23 at <c>00081a00</c> a list box,
-	/// <c>MTStrListBox_Ctor</c>(0, <c>0x100</c>, 0, 0, 0, style, id, lines, rect), added to the window.
+	/// Kind 15: the lines (<see cref="ListLines"/>), then a list box, <c>MTStrListBox_Ctor</c>(0, <c>0x100</c>, 0, 0,
+	/// selection, style, id, lines, rect), added to the window: the selection 0, or for the 23 ids at <c>00081a00</c> the
+	/// one their case sets, MISSION PARAMS' lists 1116 to 1120 their word of <see cref="Es1ShellData.MissionParams"/>.
 	/// </summary>
 	private static void BuildList(Es1Menu menu, Es1MenuControl record, Es1Rect rect) {
 		var lines = ListLines(menu.Context, record.Id);
-		if (Array.IndexOf(OwnSelectionLists, record.Id) >= 0) {
-			// PLACEHOLDER: the 23 ids at 00081a00 build their list with a selection set by their own code (dlg-menu-dialogs.md's
-			// Open); their menus are later modules'.
+		short selected = 0;
+		if (record.Id is >= FirstParamsList and <= LastParamsList) {
+			selected = menu.Context.Data.MissionParams[record.Id - FirstParamsList];
+		} else if (Array.IndexOf(OwnSelectionLists, record.Id) >= 0) {
+			// PLACEHOLDER: the other 18 ids at 00081a00 build their list with a selection, and 1903 an alignment, set by their
+			// own code (dlg-menu-dialogs.md's Open); their menus are later modules'.
 			return;
 		}
 
-		menu.Window?.AddControl(new Es1MTStrListBox(menu.Context.Data, 0x100, 0, 0, 0, record.Style, record.Id, lines, rect));
+		menu.Window?.AddControl(new Es1MTStrListBox(menu.Context.Data, 0x100, 0, 0, selected, record.Style, record.Id, lines, rect));
 	}
 
 	/// <summary>
 	/// <c>Menu_ListLines</c> (<c>0003750d</c>)(<paramref name="id"/>): for 1002, the main menu's list,
 	/// <c>CareerLog_CurrentNameArray</c> (<c>000182f8</c>) of the careers log (docs/es1/shell/main-menu.md#the-list); for
-	/// any id outside the 28 at <c>000812f4</c>, <see cref="LinesFromList"/> of the list at <c>000811a4</c>, which numbers
-	/// none.
+	/// the single-mission lists, <see cref="LinesFromList"/> of their word list (<see cref="WaTextLists"/>); for any id
+	/// outside the 28 at <c>000812f4</c>, <see cref="LinesFromList"/> of the list at <c>000811a4</c>, which numbers none.
 	/// </summary>
 	public static string?[] ListLines(Es1MenuContext context, short id) {
 		if (id == CareerNameList) {
 			return CurrentCareerName(context.Data.CareerLog);
 		}
 
+		if (WaTextLists.TryGetValue(id, out var numbers)) {
+			return LinesFromList(context.Data.Text, numbers);
+		}
+
 		if (Array.IndexOf(OwnLinesLists, id) >= 0) {
-			// PLACEHOLDER: the 27 other ids at 000812f4 give lines of their own (the cases at 00081364), unread; their menus are
+			// PLACEHOLDER: the 21 other ids at 000812f4 give lines of their own (the cases at 00081364), unread; their menus are
 			// later modules', and the list is empty until they land.
 			return [null];
 		}

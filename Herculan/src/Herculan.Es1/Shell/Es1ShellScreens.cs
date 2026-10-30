@@ -1,4 +1,5 @@
 using Herculan.Engine.Content;
+using Herculan.Es1.Input;
 using Herculan.Es1.Shell.Menus;
 using Herculan.Es1.View;
 
@@ -144,7 +145,9 @@ public sealed class Es1ShellScreens {
 	/// <param name="data">The shared data the start-up loaded, which the menus draw with.</param>
 	/// <param name="mission">The mission the menus load, which their handlers reach through the menus' context.</param>
 	public void OpenFirstScreen(short exitCode, bool playIntro, Es1ShellData data, Es1ShellMission mission) {
-		_menuContext = new Es1MenuContext(_devices.Display, _content, data, Globals, _dirty, this, mission);
+		// The devices load the options before the first screen; options of no file stand in when they did not, an engine guard.
+		_menuContext = new Es1MenuContext(_devices.Display, _content, data, Globals, _dirty, this, mission,
+			_devices.Preferences ?? Es1Preferences.Default);
 		// DirtyList_CreateContext is the dirty list's (Es1DirtyList). PLACEHOLDER: Ttm_Configure(page 2, the full-screen
 		// context, 0x32), Ttm_AllocHandles(2), Ttm_SetPathPrefix(res32\) and TtmLists_Load set up the shell's script
 		// interpreter, which is not ported (ES1's simulator interpreter differs, docs/es1/formats/ttm-scripts.md#the-shell).
@@ -392,8 +395,9 @@ public sealed class Es1ShellScreens {
 	/// <summary>
 	/// <c>Shell_HandleMessage</c>'s step 9, the case of the table at <c>00082060</c> (targets at <c>00082104</c>) for
 	/// <paramref name="target"/>: most make the screen's object the current menu (docs/es1/shell/menus.md#the-screens).
-	/// The main menu's and the quit question's are ported, and screen 9999's exit code; with any other the screen becomes
-	/// current with no menu, as retail's does for the cases that make none, its backdrop shown with no window.
+	/// The main menu's, SINGLE MISSION's, MISSION PARAMS' and the quit question's are ported, and screen 9999's exit code;
+	/// with any other the screen becomes current with no menu, as retail's does for the cases that make none, its backdrop
+	/// shown with no window.
 	/// </summary>
 	private void OpenScreenCase(short target) {
 		switch (target) {
@@ -421,17 +425,35 @@ public sealed class Es1ShellScreens {
 			case 1490:
 			case 1499:
 				// PLACEHOLDER: 0003cccc and 0003ccdd: MessageBox_SetKind(Shell_MessageBox, 2), and for 1499 0 in Shell_Mode 0 and
-				// 1 otherwise; the message box is S2's. Neither makes a menu, so until it lands INSTANT ACTION shows its
-				// backdrop with no window, and the quit keys' question is the way out.
+				// 1 otherwise; the message box is S2's. Neither makes a menu, so until it lands INSTANT ACTION and SINGLE
+				// MISSION's BRIEFING > show its backdrop with no window, and the quit keys' question is the way out.
 				break;
 			case 1520:
 			case 1510:
 				// PLACEHOLDER: 0003cd09 (MessageBox_SetKind(Shell_MessageBox, 4) once, by the byte 00081d20) and 0003cd27,
 				// DebriefingMenu_Ctor; S2's debriefing.
 				break;
-			case 1100:
-			case 1110:
-				// PLACEHOLDER: 0003e3ea and 0003e589: MissionMenu and MissionOptionsAlert, SINGLE MISSION and MISSION PARAMS; S2's.
+			case Es1MissionMenu.Screen:
+				// 0003e3ea: a MissionMenu, SINGLE MISSION.
+				if (_menuContext != null) {
+					CurrentMenu = new Es1MissionMenu(_menuContext);
+				}
+
+				break;
+			case Es1MissionOptionsAlert.Screen:
+				// 0003e589: a MissionOptionsAlert, MISSION PARAMS; at 0003e718 options 12 to 16 into the five words, each byte
+				// zero-extended, and the words into the object's +0x26 to +0x2e (docs/es1/shell/single-mission.md#the-mission-params-menu).
+				if (_menuContext != null) {
+					var alert = new Es1MissionOptionsAlert(_menuContext);
+					short[] words = _menuContext.Data.MissionParams;
+					for (int i = 0; i < words.Length; i++) {
+						words[i] = _menuContext.Preferences[Es1MissionOptionsAlert.FirstOption + i];
+					}
+
+					Array.Copy(words, alert.OpenedParams, words.Length);
+					CurrentMenu = alert;
+				}
+
 				break;
 			case 1500:
 			case 1501:

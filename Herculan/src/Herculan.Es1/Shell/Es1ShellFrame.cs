@@ -158,7 +158,7 @@ public sealed class Es1ShellFrame {
 	/// <summary>
 	/// <c>Shell_PresentFrame</c> (<c>00012980</c>) (docs/es1/rendering/screen-pages.md#presenting-a-frame): waits for
 	/// <c>Shell_FrameDue</c> and clears it; uploads the palette when one is due; starts the track when one is due, which
-	/// <c>ShellMusic_Play</c> does only with a sound manager, never here; shows <c>+0x88</c>, which <c>VGA8_ShowPage</c>
+	/// <c>ShellMusic_Play</c> does through the sound manager, which plays nothing here; shows <c>+0x88</c>, which <c>VGA8_ShowPage</c>
 	/// does after waiting out the retrace it finds and before waiting for the next to start, the display's attribute 9
 	/// being 2; draws on <c>+0x84</c> and swaps the two; waits 0.1 s once after a screen drew on backdrop 1000; flushes the
 	/// dirty list onto the new draw page from page 2; and with <see cref="SyncPointer"/> set puts the cursor and the mouse
@@ -177,7 +177,7 @@ public sealed class Es1ShellFrame {
 		}
 
 		if (_backdrop.MusicDue) {
-			// ShellMusic_Play(Shell_MusicTrack) does nothing without the sound manager, which ShellSound_Init does not make here.
+			// PLACEHOLDER: ShellMusic_Play(Shell_MusicTrack); ES1's sound is not ported (Es1ShellDevices.Init's ShellSound_Init).
 			_backdrop.MusicDue = false;
 		}
 

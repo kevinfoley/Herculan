@@ -11,9 +11,9 @@ namespace Herculan.Es1.Shell;
 
 /// <summary>
 /// The mission the shell loads for the simulator: <c>mission.cpp</c>'s globals, the mode <c>Shell_Mode</c>, the
-/// single-mission index, the mission's path and its text's path; and the menu handlers' steps over them,
+/// mission's kind <c>Mission_Kind</c>, the mission's path and its text's path; and the menu handlers' steps over them,
 /// <c>SingleMission_Start</c>, <c>Mission_WriteRestore</c> and <c>Shell_PrepareMission</c>
-/// (docs/es1/shell/main-menu.md#the-buttons, docs/es1/formats/bst-battle-sets.md#single-missions,
+/// (docs/es1/shell/main-menu.md#the-buttons, docs/es1/shell/single-mission.md#starting-the-mission,
 /// docs/es1/formats/eng-mission-text.md#which-file). The class is this engine's bundle of those globals, handed to the
 /// menus through <see cref="Menus.Es1MenuContext"/>; every member is retail's.
 /// </summary>
@@ -41,10 +41,11 @@ public sealed class Es1ShellMission {
 	public short Mode { get; set; }
 
 	/// <summary>
-	/// The word <c>000aad5a</c>, 0 in the image: the single mission's list, −1 for one drawn at random, which a load that
-	/// parses replaces with the mission's header word 3.
+	/// <c>Mission_Kind</c> (<c>000aad5a</c>), an <c>int16</c>, 0 in the image: the single mission's list, the SINGLE
+	/// MISSION menu's line, −1 for one drawn at random, which a load that parses replaces with the mission's header word 3
+	/// (docs/es1/shell/single-mission.md#the-list).
 	/// </summary>
-	public short SingleMissionIndex { get; set; }
+	public short MissionKind { get; set; }
 
 	/// <summary>The mission's path <c>000aad14</c>, <c>msn\&lt;name&gt;</c>; empty in the image.</summary>
 	public string Path { get; private set; } = "";
@@ -53,8 +54,8 @@ public sealed class Es1ShellMission {
 	public string TextPath { get; private set; } = "";
 
 	/// <summary>
-	/// <c>SingleMission_Start</c> (<c>00036807</c>) (docs/es1/formats/bst-battle-sets.md#single-missions): the path built
-	/// from <see cref="SingleMissionIndex"/>; the mission loaded in the mode-0 load, which writes <c>data\script.dat</c>,
+	/// <c>SingleMission_Start</c> (<c>00036807</c>) (docs/es1/shell/single-mission.md#starting-the-mission): the path built
+	/// from <see cref="MissionKind"/>; the mission loaded in the mode-0 load, which writes <c>data\script.dat</c>,
 	/// <c>data\mission.var</c> and <c>data\player.mec</c> (<see cref="Es1SingleMission"/>); and the paths saved with
 	/// <see cref="WriteRestore"/>. A load that fails is reported and the restore still written, as retail writes it after
 	/// a mission that does not parse; a path that is not built (no lists, or a list of no names, where retail reads past
@@ -63,12 +64,12 @@ public sealed class Es1ShellMission {
 	public void StartSingleMission() {
 		// PLACEHOLDER: Inventory_LoadFile (00027e02)(the stock 000aad62, car\s_armory.dat), the weapon stock, which the arming
 		// screen and the results read (S4's and S2's, docs/es1/formats/car-hercs-and-stock.md#the-weapon-stock); not loaded.
-		if (BuildSingleMissionPath(SingleMissionIndex) is { } name && _data.Random is { } random) {
+		if (BuildSingleMissionPath(MissionKind) is { } name && _data.Random is { } random) {
 			var p = _data.MissionParams;
 			var missionParams = new Es1MissionParams(p[0], p[1], p[2], p[3], p[4]);
 			if (Es1SingleMission.Start(_installRoot, _content, name, missionParams, random, out string? error) is { } result) {
 				// MsnGen_LoadMission stores header words 3 and 4 in 000aad5a and 000aad5c; no ported code reads 000aad5c.
-				SingleMissionIndex = result.Script.Header[3];
+				MissionKind = result.Script.Header[3];
 			} else {
 				Console.Error.WriteLine(error);
 			}
@@ -118,7 +119,7 @@ public sealed class Es1ShellMission {
 
 	/// <summary>
 	/// <c>Mission_WriteRestore</c> (<c>0003634b</c>) (docs/es1/formats/eng-mission-text.md#which-file): <c>data\restore.dat</c>
-	/// written with <see cref="Mode"/>, <see cref="SingleMissionIndex"/> and the two paths, each an <c>int16</c> length
+	/// written with <see cref="Mode"/>, <see cref="MissionKind"/> and the two paths, each an <c>int16</c> length
 	/// counting the NUL and the path with its NUL, through the <c>FileRWStream</c> that does not truncate, so a shorter file
 	/// leaves a longer one's tail. Retail asserts at severity 5 at <c>mission.cpp</c> line <c>0x55</c> when the file does
 	/// not open; here that is reported, an engine guard.
@@ -127,7 +128,7 @@ public sealed class Es1ShellMission {
 		using var bytes = new MemoryStream();
 		using (var writer = new BinaryWriter(bytes, Encoding.Latin1, leaveOpen: true)) {
 			writer.Write(Mode);
-			writer.Write(SingleMissionIndex);
+			writer.Write(MissionKind);
 			foreach (string path in new[] { Path, TextPath }) {
 				byte[] text = Encoding.Latin1.GetBytes(path);
 				writer.Write((short)(text.Length + 1));

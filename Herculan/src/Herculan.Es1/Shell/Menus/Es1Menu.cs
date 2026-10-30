@@ -1,4 +1,5 @@
 using Herculan.Engine.Content;
+using Herculan.Es1.Input;
 using Herculan.Es1.Panels;
 using Herculan.Es1.View;
 
@@ -6,11 +7,11 @@ namespace Herculan.Es1.Shell.Menus;
 
 /// <summary>
 /// What a menu and its window draw and read with: the shell's display, its archives, its shared data, the window
-/// globals, the dirty list, the screen state and the mission the shell loads. This engine's bundle of retail's globals,
-/// passed where retail reads them.
+/// globals, the dirty list, the screen state, the mission the shell loads and the options <c>Prefs_Options</c>
+/// (<c>000aa24e</c>). This engine's bundle of retail's globals, passed where retail reads them.
 /// </summary>
 public sealed record Es1MenuContext(Es1VideoMemory Display, GameContent Content, Es1ShellData Data, Es1MenuGlobals Globals,
-	Es1DirtyList Dirty, Es1ShellScreens Screens, Es1ShellMission Mission);
+	Es1DirtyList Dirty, Es1ShellScreens Screens, Es1ShellMission Mission, Es1Preferences Preferences);
 
 /// <summary>
 /// A screen object, class <c>Menu</c> (vtable <c>00081bd8</c>, <c>0x26</c> bytes) (docs/es1/shell/menus.md#the-screen-object):
@@ -75,12 +76,17 @@ public class Es1Menu {
 		}
 
 		window.SetActive(globals);
+		if (number == Es1MissionMenu.Screen) {
+			// The list selects Mission_Kind's line with its slot +0x24 (docs/es1/shell/single-mission.md#the-single-mission-menu).
+			FindList(Es1MissionMenu.KindList)?.SelectLine(Context.Mission.MissionKind);
+		}
+
 		if (number == Es1ShellScreens.MainMenuScreen && (Context.Data.CareerLog?.Entries.Length ?? 0) == 0) {
 			MakeInactive(window, window.FindControlById(ResumeButton));
 		}
 
-		// PLACEHOLDER: Menu_Open's control changes for the menus 1310, 1920, 1100, 1200, 2000, 1610, 1800, 1820, 1700 and 1900
-		// (the last after the focus below) are their modules'; no ported screen opens them.
+		// PLACEHOLDER: Menu_Open's control changes for the menus 1310, 1920, 1200, 2000, 1610, 1800, 1820, 1700 and 1900 (the
+		// last after the focus below) are their modules'; no ported screen opens them.
 
 		// Retail points at control 0 of a window with none, reading an empty slot; here such a window keeps the pointer, an
 		// engine guard.
@@ -111,6 +117,17 @@ public class Es1Menu {
 		var cells = new Es1PanelCanvas(Context.Display, Es1ShellScreens.FullScreen).SaveRegion(Region);
 		Array.Copy(cells, SavedBackground, Math.Min(cells.Length, SavedBackground.Length));
 	}
+
+	/// <summary>
+	/// <c>DUIWindow_FindEnabledControlById</c> (<c>0001bda4</c>)(the window <c>+6</c>, <paramref name="id"/>) and the
+	/// control at the index it gives, whose list-box slots the handlers then call. Retail indexes the controls with the −1
+	/// of an id it does not find and calls the slot of whatever control the index holds; here neither gives a list and the
+	/// call is skipped, an engine guard.
+	/// </summary>
+	protected Es1MTStrListBox? FindList(short id) =>
+		Window is { } window && window.FindEnabledControlById(id) is var index and >= 0 && window.Controls[index] is Es1MTStrListBox list
+			? list
+			: null;
 
 	/// <summary>
 	/// A control made inactive as <c>Menu_Open</c> does it: the state 2 and <i>changed</i> written, no slot called. Retail
@@ -191,7 +208,7 @@ public sealed class Es1MainMenu : Es1Menu {
 				// 0002a730: a random single mission loaded, its objectives written, and the .ANM played after the next screen.
 				mission.Mode = 0;
 				screens.ReturnScreen = Es1ShellScreens.MainMenuScreen;
-				mission.SingleMissionIndex = -1;
+				mission.MissionKind = -1;
 				mission.StartSingleMission();
 				mission.Prepare(screens);
 				screens.AnmName = MissionAnm;
@@ -201,7 +218,7 @@ public sealed class Es1MainMenu : Es1Menu {
 				// 0002a773.
 				mission.Mode = 1;
 				screens.ReturnScreen = Es1ShellScreens.MainMenuScreen;
-				mission.SingleMissionIndex = -1;
+				mission.MissionKind = -1;
 				// PLACEHOLDER: the career's part from 0002a78e (docs/es1/shell/main-menu.md#resume): Career_LoadCurrent once a
 				// session, the target turned into the career's screen, 1250, 1260 or 5555, Career_StartMission and
 				// Shell_PrepareMission, and anm\esiege3.anm with 0007fcd7 1; S3's. Until it lands the target stays 1700.
