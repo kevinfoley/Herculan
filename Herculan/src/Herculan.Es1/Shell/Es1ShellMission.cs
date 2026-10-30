@@ -1,5 +1,6 @@
 using System.Text;
 using HercWorks.Core.Data.File;
+using HercWorks.Core.Data.File.Dat.Shell;
 using HercWorks.Core.Data.File.Msn.Es1;
 using HercWorks.Core.Io;
 using HercWorks.Core.Io.Transform.Common;
@@ -81,6 +82,18 @@ public sealed class Es1ShellMission {
 	public string TextPath { get; private set; } = "";
 
 	/// <summary>
+	/// What this engine keeps of <c>SingleMission_Record</c> (<c>0009b014</c>) and the hangar after a single mission's
+	/// load: the <c>data\player.mec</c> it wrote, which holds the squad's entries from the player's on, each with its
+	/// slot's HERC (docs/es1/formats/career-log-and-player-mec.md#a-single-missions-file); none before a load and after one
+	/// that fails. The load builds the record and the hangar inside <see cref="Es1MissionLoad"/> and keeps neither; the war
+	/// map's tests and its second write read this instead (<see cref="PlayerHasNoHerc"/>, <see cref="AnyPilotUnarmed"/>,
+	/// <see cref="WritePlayerMec"/>), which holds while no ported screen changes the squad between the load and BEGIN
+	/// MISSION >. PLACEHOLDER: the arming screens, S4's, change the hangar's HERCs; with them the record and the hangar
+	/// are to be kept in its place.
+	/// </summary>
+	public Es1PlayerMec? Player { get; private set; }
+
+	/// <summary>
 	/// <c>SingleMission_Start</c> (<c>00036807</c>) (docs/es1/shell/single-mission.md#starting-the-mission): the path built
 	/// from <see cref="MissionKind"/>; the mission loaded in the mode-0 load, which writes <c>data\script.dat</c>,
 	/// <c>data\mission.var</c> and <c>data\player.mec</c> (<see cref="Es1SingleMission"/>); and the paths saved with
@@ -99,7 +112,9 @@ public sealed class Es1ShellMission {
 				MissionKind = result.Script.Header[3];
 				HeaderWord4 = result.Script.Header[4];
 				MessageBoxLine = HeaderWord4;
+				Player = result.Player;
 			} else {
+				Player = null;
 				Console.Error.WriteLine(error);
 			}
 		}
@@ -178,18 +193,85 @@ public sealed class Es1ShellMission {
 
 	/// <summary>
 	/// <c>Shell_PrepareMission</c> (<c>0002a523</c>) (docs/es1/shell/main-menu.md#the-buttons), after every mission load
-	/// the shell's menus make: the mission map deleted (<c>Shell_DeleteMissionMap</c>, <c>0002a4ec</c>), the objectives
+	/// the shell's menus make: the mission map deleted (<see cref="Es1ShellScreens.DeleteMissionMap"/>), the objectives
 	/// written (<see cref="WriteObjectives"/>), and the mission map made again.
 	/// </summary>
 	public void Prepare(Es1ShellScreens screens) {
-		if (screens.MissionMap != null) {
-			// PLACEHOLDER: maybe_MouseEventQueue_Stop (000106af), 0000a9c8(map) and 00009a73(map, 3), the mission map's, S5's.
-			screens.MissionMap = null;
-		}
-
+		screens.DeleteMissionMap();
 		WriteObjectives();
 		// PLACEHOLDER: maybe_MouseEventQueue_Start (00010559), the byte 0007e5df cleared and Shell_MissionMap (000809a4) made
-		// with 000094d9(0, 000a02d4): the briefing's mission map, S5's; until it lands no mission map is made.
+		// with 000094d9(0, 000a02d4): the briefing's mission map, S5's. Until it lands an object with no behaviour stands for
+		// it, so that what tests the map set (a back to the war map, Es1ShellScreens.HandleMessage's step 3) sees it set.
+		screens.MissionMap = new object();
+	}
+
+	/// <summary>
+	/// <c>MissionVar_ReadFlag</c> (<c>0003628d</c>)(<paramref name="index"/>) (docs/es1/formats/eng-mission-text.md#reading-a-block):
+	/// the <c>int16</c> at twice the index in <c>data\mission.var</c>, which it opens for each read. Retail asserts at
+	/// <c>mission.cpp</c> line <c>0x4b</c> when the file does not open and reads past its end as the stream gives; here
+	/// either reads 0, reported for a file that does not open, an engine guard.
+	/// </summary>
+	public short ReadFlag(short index) {
+		byte[] bytes;
+		try {
+			bytes = File.ReadAllBytes(Es1MissionFiles.DataPath(_installRoot, Es1MissionFiles.MissionVarName));
+		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+			Console.Error.WriteLine($"data\\{Es1MissionFiles.MissionVarName} does not open ({ex.Message}; mission.cpp line 0x4b asserts here).");
+			return 0;
+		}
+
+		int at = index * 2;
+		return at >= 0 && at + 1 < bytes.Length ? (short)(bytes[at] | bytes[at + 1] << 8) : (short)0;
+	}
+
+	/// <summary>
+	/// <c>CareerRecord_PlayerHasNoHerc</c> (<c>000161dc</c>)(<c>CareerRecord_Current</c>) in <see cref="Mode"/> 0
+	/// (docs/es1/shell/war-map.md#begin-mission): the player's entry has no hangar slot. Read from <see cref="Player"/>, the
+	/// player's entry, written first, carrying no HERC; that also holds for a slot that names an empty one, which retail
+	/// answers 0 for, where the doc gives a chassis type of 0 to 7 a HERC of <c>car\sm_init.dat</c>. With no
+	/// <see cref="Player"/>, after a load that
+	/// failed, the answer is true, an engine guard that keeps the shell from leaving for a mission with no file.
+	/// </summary>
+	public bool PlayerHasNoHerc() => Player is not { Entries: [{ Herc: not null }, ..] };
+
+	/// <summary>
+	/// <c>CareerRecord_AnyPilotUnarmed</c> (<c>0001620d</c>)(<c>CareerRecord_Current</c>) in <see cref="Mode"/> 0
+	/// (docs/es1/shell/war-map.md#begin-mission): any pilot with a hangar slot whose HERC carries weapon 17, the empty
+	/// mount, on every mount (<c>Hangar_SlotIsUnarmed</c>, <c>0002a354</c>; <c>Herc_IsUnarmed</c>, <c>00022ebf</c>), so
+	/// also one with no mounts; an empty slot answers false. Retail steps the current pilot through the entries with a
+	/// slot, as many as <c>CareerRecord_CountPilots</c> counts, from the record's current pilot; <see cref="Player"/> holds
+	/// those entries, so each is tested once. Retail's steps also move the current pilot and the hangar's selected slot,
+	/// which this engine does not keep (<see cref="Player"/>).
+	/// </summary>
+	public bool AnyPilotUnarmed() =>
+		Player?.Entries.Any(entry => entry.Herc is { } herc && herc.Weapons.All(weapon => weapon == UnarmedWeapon)) ?? false;
+
+	/// <summary>The weapon an empty mount carries.</summary>
+	private const short UnarmedWeapon = 17;
+
+	/// <summary>
+	/// <c>PlayerMec_Write</c> (<c>0002299e</c>) in <see cref="Mode"/> 0, BEGIN MISSION >'s
+	/// (docs/es1/formats/career-log-and-player-mec.md#the-player-file): <c>data\player.mec</c> written again with the
+	/// squad the load kept (<see cref="Player"/>), the player's first word drawn again with <c>Math_RandomBelow</c>(11)
+	/// as <c>PlayerMec_WritePilotWords</c> (<c>0001548f</c>) draws it on each write; the HERCs' status and mount words are
+	/// as the load's write left them, which a second write leaves unchanged. Nothing is written with no
+	/// <see cref="Player"/>. PLACEHOLDER: <c>CareerRecord_SaveCurrent</c> (<c>00014f28</c>)'s <c>car\sm_play.gam</c>, the
+	/// shell's after-mission file (plan-es1-first-mission.md's "The shell's after-mission files").
+	/// </summary>
+	public void WritePlayerMec() {
+		if (Player is not { } player) {
+			return;
+		}
+
+		if (player.Entries is [var first, ..] && _data.Random is { } random) {
+			first.Word1 = (short)random.Below(11);
+		}
+
+		try {
+			Es1SingleMission.WritePlayerMec(_installRoot, player);
+		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+			Console.Error.WriteLine($"data\\{Es1MissionFiles.PlayerName} does not open for writing ({ex.Message}).");
+		}
 	}
 
 	/// <summary>

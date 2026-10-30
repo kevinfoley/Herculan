@@ -11,8 +11,8 @@ public delegate int Es1KeySubscriber(ushort code);
 /// The host hands each byte to <see cref="Interrupt"/>, the mode's interrupt handler.
 ///
 /// <para>Left out: the translate table (<c>Keyboard_SetTranslateTable</c>, <c>0006c289</c>), which <c>es2_xref.py</c>
-/// finds no call to. <c>Keyboard_PostCode</c> and <c>Keyboard_RemoveSubscriberCodes</c>, which <c>es2_xref.py</c> finds
-/// no call to in the simulator (input.md's Open), are not ported.</para>
+/// finds no call to. <c>Keyboard_PostCode</c>, which <c>es2_xref.py</c> finds no call to in the simulator (input.md's
+/// Open), is not ported.</para>
 /// </summary>
 public sealed class Es1Keyboard {
 	/// <summary>A subscriber's answer that ends the walk.</summary>
@@ -67,8 +67,35 @@ public sealed class Es1Keyboard {
 		AddSubscriber(QueueSubscriber, ReadOnlySpan<byte>.Empty);
 	}
 
-	/// <summary>The mode the keyboard was installed in, kept at the keyboard input device's <c>+9</c>.</summary>
-	public int Mode { get; }
+	/// <summary>
+	/// The mode the keyboard was installed in or <see cref="SetMode"/> last set, kept at the keyboard input device's
+	/// <c>+9</c> (<c>KeyboardInputDevice_GetMode</c>, <c>ES1GO 00025d19</c>).
+	/// </summary>
+	public int Mode { get; private set; }
+
+	/// <summary>
+	/// The shift-flag byte the BIOS's <c>INT 16h</c> function 2 answers now, which <see cref="SetMode"/> seeds the
+	/// modifiers from; none leaves the modifiers' own low byte as the BIOS's, this engine's stand-in.
+	/// </summary>
+	public Func<byte>? BiosShiftFlags { get; set; }
+
+	/// <summary>
+	/// <c>KeyboardInputDevice_SetMode</c> (<c>ES1GO 00025ce6</c>) with <c>Keyboard_SetMode</c> (<c>0006c0e8</c>,
+	/// <c>ES1GO 0001fd10</c>): the modifiers seeded again from <see cref="BiosShiftFlags"/> (<see cref="SeedModifiers"/>)
+	/// and <paramref name="mode"/> kept. The hooks the two modes take are <see cref="Interrupt"/>'s, which follows
+	/// <see cref="Mode"/>; the host's <c>E0</c> prefix (<see cref="Es1HostKeyboard.SendsExtendedPrefix"/>) stays as the
+	/// installed mode set it, and the shell sets only the mode it installed. Any other mode returns false with nothing
+	/// changed, where retail has already unhooked the old mode and seeded the modifiers.
+	/// </summary>
+	public bool SetMode(int mode) {
+		if (mode is not (Int9Mode or Int15Mode)) {
+			return false;
+		}
+
+		SeedModifiers(BiosShiftFlags?.Invoke() ?? (byte)Modifiers);
+		Mode = mode;
+		return true;
+	}
 
 	/// <summary><c>Keyboard_Modifiers</c> (<c>0009b6ae</c>): the BIOS's shift flags in the low byte, the code's bits in the high.</summary>
 	public ushort Modifiers { get; private set; }
@@ -170,6 +197,24 @@ public sealed class Es1Keyboard {
 		for (int slot = SubscriberCount - 1; slot >= 0; slot--) {
 			if (_subscribers[slot].Equals(callback)) {
 				SetBits(slot, codes);
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/// <summary>
+	/// <c>Keyboard_RemoveSubscriberCodes</c> (<c>0006c408</c>, <c>ES1GO 00020030</c>): <see cref="AddSubscriberCodes"/>
+	/// clearing the newest slot's bit for each of the codes instead of setting it. False when no slot holds the callback.
+	/// </summary>
+	public bool RemoveSubscriberCodes(Es1KeySubscriber callback, ReadOnlySpan<byte> codes) {
+		for (int slot = SubscriberCount - 1; slot >= 0; slot--) {
+			if (_subscribers[slot].Equals(callback)) {
+				foreach (byte code in codes) {
+					_codeMasks[code] &= ~(1u << slot);
+				}
+
 				return true;
 			}
 		}

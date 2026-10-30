@@ -106,24 +106,52 @@ public sealed class Es1ShellScreens {
 	public short ResumeScreen { get; set; } = -1;
 
 	/// <summary>
-	/// The object <c>Shell_MissionMap</c> (<c>000809a4</c>), the briefing's mission map, none in the image. Its class is
-	/// S5's and no ported screen makes one (<see cref="Es1ShellMission.Prepare"/>); <see cref="HandleMessage"/> tests it as
-	/// retail does.
+	/// The object <c>Shell_MissionMap</c> (<c>000809a4</c>), the briefing's mission map, none in the image.
+	/// PLACEHOLDER: its class is S5's; <see cref="Es1ShellMission.Prepare"/> makes an object with no behaviour in its place
+	/// and <see cref="DeleteMissionMap"/> clears it, so <see cref="HandleMessage"/> tests it as retail does.
 	/// </summary>
 	public object? MissionMap { get; set; }
 
 	/// <summary>
+	/// <c>Shell_DeleteMissionMap</c> (<c>0002a4ec</c>) (docs/es1/shell/main-menu.md#the-buttons): with
+	/// <see cref="MissionMap"/> set, the map deleted and cleared.
+	/// </summary>
+	public void DeleteMissionMap() {
+		if (MissionMap != null) {
+			// PLACEHOLDER: maybe_MouseEventQueue_Stop (000106af), 0000a9c8(map) and 00009a73(map, 3), the mission map's, S5's.
+			MissionMap = null;
+		}
+	}
+
+	/// <summary>
 	/// The byte <c>000809a8</c>, 0 in the image, which the mission map's redraws count down (<c>Shell_TickScreen</c>,
-	/// <c>Shell_DrawScreen</c>, <c>Shell_HandleInput</c>; menus.md's Open). No ported screen sets it.
+	/// <c>Shell_DrawScreen</c>, <c>Shell_HandleInput</c>; menus.md's Open): the war map sets it to 3 and its destructor
+	/// clears it (<see cref="Es1WarMapMenu"/>).
 	/// </summary>
 	public byte MapRefresh { get; set; }
 
 	/// <summary>
-	/// The byte <c>000817bd</c>, 0 in the image: how many more times <see cref="DrawScreen"/> runs the mission map's drawing
-	/// first (menus.md's Open). <see cref="HandleMessage"/> sets it for the alerts 3000 and 3333 over the war map, and
-	/// <see cref="OpenQuitAlert"/> for the quit question.
+	/// The byte <c>000817bd</c>, 0 in the image: how many more times <see cref="DrawScreen"/> draws the war map's briefing,
+	/// and runs the mission map's drawing, under the next screen's window (docs/es1/shell/war-map.md#leaving-it).
+	/// <see cref="HandleMessage"/> sets it for the alerts 3000 and 3333 over the war map, and <see cref="OpenQuitAlert"/>
+	/// for the quit question; while it is not 0 the war map's destructor keeps the briefing.
 	/// </summary>
 	public byte MapDrawCount { get; private set; }
+
+	/// <summary>
+	/// <c>WarMap_BriefingPage</c> (<c>000809b2</c>), an <c>int16</c>, 0 in the image: the war map's <c>PgDn</c> presses less
+	/// its <c>PgUp</c> presses since its briefing's box was last deleted (docs/es1/shell/war-map.md#the-briefing).
+	/// </summary>
+	public short BriefingPage { get; set; }
+
+	/// <summary><c>WarMap_SavedKeyboardMode</c> (<c>000a04d8</c>): the keyboard's mode while the war map is up.</summary>
+	public int SavedKeyboardMode { get; set; }
+
+	/// <summary>
+	/// The byte <c>000aa778</c>, 0 in the image, which the war map sets and its destructor clears; its reader is the mouse
+	/// callback <c>00010900</c>, the mission map's, S5's (docs/es1/shell/war-map.md#open).
+	/// </summary>
+	public byte MapMouseFlag { get; set; }
 
 	/// <summary>
 	/// The byte <c>000809a9</c>, 0 in the image: <see cref="HandleMessage"/> plays the intro's last two scripts on the next
@@ -447,9 +475,12 @@ public sealed class Es1ShellScreens {
 	/// <c>Shell_DrawScreen</c>'s step 4 with a current menu: the render context <c>0007fcdc</c> (<c>RenderContext_GetForRect</c>,
 	/// <c>0004c88a</c>, of the window's rect), which no ported code reads and is not made here, and <c>0007fcd8</c>
 	/// (<see cref="FullScreenAround"/>) made the scripts' default; the source and draw pages set to page 2
-	/// and the background saved (<see cref="Es1Menu.SaveBackground"/>); the window drawn on page 2 unless the message box
-	/// is up; the draw page put back; and unless the message box is up, the whole screen dirty with delay 1 on backdrop
-	/// 1000 (screen 9999 aside) or the window drawn again on the draw page, and <see cref="WaitAfterDraw"/> set.
+	/// and the background saved (<see cref="Es1Menu.SaveBackground"/>); unless the message box is up, the war map's
+	/// briefing while <see cref="MapDrawCount"/> is not 0 (<see cref="DrawBriefingUnder"/>) and the window drawn on page
+	/// 2; the draw page put back; and unless the message box is up, the whole screen dirty with delay 1 on backdrop 1000
+	/// (screen 9999 aside) or the window drawn again on the draw page and, while <see cref="MapRefresh"/> is set,
+	/// <see cref="MapDrawCount"/> cleared, or with it 0 the mission map's <c>00009c64</c>, and <see cref="MapRefresh"/> set
+	/// to 3; and <see cref="WaitAfterDraw"/> set.
 	/// </summary>
 	private void DrawMenu(Es1Menu menu, int keptDraw) {
 		var display = _devices.Display;
@@ -459,8 +490,10 @@ public sealed class Es1ShellScreens {
 		display.DrawPage = Es1ShellBackdrop.BackgroundPage;
 		menu.SaveBackground();
 		if (!Globals.MessageBox.Up) {
-			// PLACEHOLDER: while the byte 000817bd counts down, Shell_MissionMap's slot +4 and the text box 00018dcb run once per
-			// page first; no ported screen makes the mission map or sets the byte.
+			if (MapDrawCount != 0) {
+				DrawBriefingUnder(keptDraw);
+			}
+
 			menu.Window?.Draw();
 		}
 
@@ -473,11 +506,37 @@ public sealed class Es1ShellScreens {
 			_dirty.Add(0, 0, Es1VideoMemory.PageWidth, Es1VideoMemory.PageHeight, 1);
 		} else {
 			menu.Window?.Draw();
-			// PLACEHOLDER: with the byte 000809a8 set, 00009c64(Shell_MissionMap) and 000809a8 set to 3; no ported screen makes
-			// the mission map.
+			if (MapRefresh != 0) {
+				if (MapDrawCount == 0) {
+					if (MissionMap != null) {
+						// PLACEHOLDER: 00009c64(Shell_MissionMap), the mission map's, S5's.
+					}
+				} else {
+					MapDrawCount = 0;
+				}
+
+				MapRefresh = 3;
+			}
 		}
 
 		WaitAfterDraw = true;
+	}
+
+	/// <summary>
+	/// <c>Shell_DrawScreen</c>'s step 4 while <see cref="MapDrawCount"/> is not 0 (docs/es1/shell/menus.md#drawing-a-screen):
+	/// the war map's briefing kept behind the next screen. With page 2 the draw page, the mission map's slot <c>+4</c> and
+	/// the text box drawn (<see cref="Es1ShellDialog.Draw"/>); then the same on <paramref name="keptDraw"/>, the draw page
+	/// the screen's draw found; the draw page set back to page 2 and the count lowered by 1.
+	/// </summary>
+	private void DrawBriefingUnder(int keptDraw) {
+		var display = _devices.Display;
+		// PLACEHOLDER: Shell_MissionMap's slot +4 of its table +0x4a, called with no test that the map is set; S5's.
+		Dialog?.Draw();
+		display.DrawPage = keptDraw;
+		// PLACEHOLDER: Shell_MissionMap's slot +4 again, S5's.
+		Dialog?.Draw();
+		display.DrawPage = Es1ShellBackdrop.BackgroundPage;
+		MapDrawCount--;
 	}
 
 	/// <summary>
@@ -592,7 +651,10 @@ public sealed class Es1ShellScreens {
 			ScriptsToPlay = 0;
 		}
 
-		OpenScreenCase(target);
+		foreach (var wait in OpenScreenCase(target)) {
+			yield return wait;
+		}
+
 		CurrentMenu?.Open(target);
 		PreviousScreen = target == MainMenuScreen ? MainMenuScreen : CurrentScreen;
 		CurrentScreen = target;
@@ -606,11 +668,12 @@ public sealed class Es1ShellScreens {
 	/// <summary>
 	/// <c>Shell_HandleMessage</c>'s step 9, the case of the table at <c>00082060</c> (targets at <c>00082104</c>) for
 	/// <paramref name="target"/>: most make the screen's object the current menu (docs/es1/shell/menus.md#the-screens).
-	/// The main menu's, SINGLE MISSION's, MISSION PARAMS' and the quit question's are ported, and screen 9999's exit code;
-	/// with any other the screen becomes current with no menu, as retail's does for the cases that make none, its backdrop
-	/// shown with no window.
+	/// The main menu's, SINGLE MISSION's, MISSION PARAMS', the war map's, its two alerts' and the quit question's are
+	/// ported, and screen 9999's exit code; with any other the screen becomes current with no menu, as retail's does for
+	/// the cases that make none, its backdrop shown with no window. The waits are the war map's, whose constructor
+	/// deletes the box the text box held.
 	/// </summary>
-	private void OpenScreenCase(short target) {
+	private IEnumerable<Es1ShellWait> OpenScreenCase(short target) {
 		switch (target) {
 			case MainMenuScreen:
 				// 0003d6f2: a MainMenu.
@@ -673,9 +736,32 @@ public sealed class Es1ShellScreens {
 				}
 
 				break;
-			case 1500:
-			case 1501:
-				// PLACEHOLDER: 0003ef9b: WarMapMenu_Ctor, the war map; S5's.
+			case Es1WarMapMenu.CareerScreen:
+			case Es1WarMapMenu.Screen:
+				// 0003ef9b: WarMapMenu_Ctor(0), the war map.
+				if (_menuContext != null && Dialog != null) {
+					var warMap = new Es1WarMapMenu(_menuContext, Dialog);
+					foreach (var wait in warMap.Load()) {
+						yield return wait;
+					}
+
+					CurrentMenu = warMap;
+				}
+
+				break;
+			case Es1UnArmedAlert.Screen:
+				// 0003cd38: an UnArmedAlert.
+				if (_menuContext != null) {
+					CurrentMenu = new Es1UnArmedAlert(_menuContext);
+				}
+
+				break;
+			case Es1UnAssignedAlert.Screen:
+				// 0003ced7: an UnAssignedAlert.
+				if (_menuContext != null) {
+					CurrentMenu = new Es1UnAssignedAlert(_menuContext);
+				}
+
 				break;
 			case 1200:
 			case 1210:
@@ -700,8 +786,6 @@ public sealed class Es1ShellScreens {
 			case 1920:
 			case 2000:
 			case 2010:
-			case 3000:
-			case 3333:
 			case 6666:
 			case 7770:
 			case 7771:
@@ -709,7 +793,7 @@ public sealed class Es1ShellScreens {
 			case 4444:
 				// PLACEHOLDER: the hangar's screens, S4's: 0002c743 with ShellBackdrop_LoadPalette(1610), ServiceBayMenu,
 				// ArmingMenu, RepairMenu, RepairPrefsAlert, 0002f1aa, 0002986f(3) with 000307c9 (which sets the hangar test's
-				// dword 0007fce4), SalvageAllocAlert, UnArmedAlert, UnAssignedAlert, AnyDisabledAlert and ScrapAlert.
+				// dword 0007fce4), SalvageAllocAlert, AnyDisabledAlert and ScrapAlert.
 				break;
 			case 1300:
 			case 1310:
@@ -730,7 +814,7 @@ public sealed class Es1ShellScreens {
 		}
 
 		// PLACEHOLDER: while Shell_MissionMap (000809a4) is set, 00009cfb and the byte 000809a8's countdown (menus.md's Open);
-		// no ported screen makes the mission map.
+		// the mission map's, S5's, so MapRefresh stays as the war map sets it.
 	}
 
 	/// <summary>The menu the quit question opens as on backdrop 1000, whose window is the main menu's rect.</summary>

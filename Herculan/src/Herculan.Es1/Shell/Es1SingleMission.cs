@@ -86,9 +86,17 @@ public static class Es1SingleMission {
 			script.Write(new Es1ScriptDatTransformer().Write(result.Script));
 		}
 
-		// Step 10: PlayerMec_Write deletes the file and opens it again.
+		// Step 10.
+		WritePlayerMec(installRoot, result.Player);
+	}
+
+	/// <summary>
+	/// <c>PlayerMec_Write</c> (<c>0002299e</c>)'s file: <c>data\player.mec</c> deleted and written again with
+	/// <paramref name="player"/> (docs/es1/formats/career-log-and-player-mec.md#the-player-file).
+	/// </summary>
+	public static void WritePlayerMec(string installRoot, Es1PlayerMec player) {
 		string playerPath = Es1MissionFiles.DataPath(installRoot, Es1MissionFiles.PlayerName);
 		File.Delete(playerPath);
-		File.WriteAllBytes(playerPath, new Es1PlayerMecTransformer().Write(result.Player)!);
+		File.WriteAllBytes(playerPath, new Es1PlayerMecTransformer().Write(player)!);
 	}
 }

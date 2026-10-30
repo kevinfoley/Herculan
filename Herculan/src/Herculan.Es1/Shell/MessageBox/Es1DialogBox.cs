@@ -1,3 +1,4 @@
+using HercWorks.Core.Data.File.Msn.Es1;
 using Herculan.Engine.Content;
 using Herculan.Es1.Panels;
 using Herculan.Es1.View;
@@ -8,7 +9,8 @@ namespace Herculan.Es1.Shell.MessageBox;
 /// <c>dialog.cpp</c>'s <c>DialogBox</c> (vtable <c>0007ee88</c>), <c>0x2d</c> bytes: the shell's text box, which cuts a text
 /// into lines that fit its rect and shows one page of them (docs/es1/shell/message-box.md#the-box). The subclasses differ
 /// only in their constructors and destructors: <see cref="Es1DefaultDialogBox"/>, <see cref="Es1DigitalDialogBox"/> (a
-/// message), and the <c>.ENG</c> block's <c>ConditionalDialogBox</c>, which the war map's briefing and the debriefing load.
+/// message), and <see cref="Es1ConditionalDialogBox"/>, the <c>.ENG</c> block's, which the war map's briefing and the
+/// debriefing load.
 ///
 /// <para>Retail keeps the text in a buffer it cuts in place, each line's start a pointer into it ended by a NUL the wrap
 /// writes; here the buffer is a <see cref="char"/> array and the line slots indexes into it, −1 for a slot never set.</para>
@@ -346,5 +348,58 @@ public sealed class Es1DigitalDialogBox : Es1DialogBox {
 		}
 
 		DtorBase();
+	}
+}
+
+/// <summary>
+/// <c>ConditionalDialogBox</c> (vtable <c>0007ef48</c>), an <c>.ENG</c> block's box, which
+/// <see cref="Es1ShellDialog.LoadConditional"/> builds for a version word of 1: the war map's briefing and the debriefing
+/// (docs/es1/formats/eng-mission-text.md#reading-a-block). Its destructor, <c>ConditionalDialogBox_Dtor</c>
+/// (<c>00019871</c>), is the base's.
+/// </summary>
+public sealed class Es1ConditionalDialogBox : Es1DialogBox {
+	/// <summary>
+	/// <c>ConditionalDialogBox_Ctor</c> (<c>00019453</c>)(box, <paramref name="ordinal"/>, <paramref name="tag"/>, dialog):
+	/// the <c>nm_green</c> font, the rect by the backdrop (<see cref="SetRect"/>), the block of <paramref name="tag"/> of
+	/// that ordinal (<see cref="Es1MissionText.Find"/>) with each choice's text picked by its flag's value
+	/// (<see cref="Es1TextBlock.Compose"/>) as the text, and the text laid out. A file with no block of the tag, where
+	/// retail reads the count from where its search gave up, gives a box with no text, an engine guard.
+	/// </summary>
+	/// <param name="flag"><c>MissionVar_ReadFlag</c> (<c>0003628d</c>): a campaign flag's value by its index.</param>
+	public Es1ConditionalDialogBox(Es1ShellDialog dialog, Es1MissionText text, short ordinal, string tag, Func<short, short> flag)
+			: base(dialog) {
+		Font = dialog.Font();
+		SetRect(dialog.BackdropId());
+		if (text.Find(tag, ordinal) is not { } block) {
+			Console.Error.WriteLine($"The text holds no {tag} block: its box shows no text.");
+			return;
+		}
+
+		SetText(block.Compose(flag));
+		Layout();
+	}
+
+	/// <summary>
+	/// <c>ConditionalDialogBox_SetRect</c> (<c>00018e5f</c>) (docs/es1/shell/message-box.md#where-the-box-stands): the
+	/// backdrop <paramref name="backdropId"/> rounded down to a thousand, and looked up in the four groups at
+	/// <c>0007ee44</c>: 6000 puts the box in <see cref="Es1DialogBox.Backdrop6000Rect"/> and 5000 in
+	/// <see cref="Es1DialogBox.Backdrop5000Rect"/>, both with <see cref="Es1DialogBox.TopStrip"/> clear; 3000, 4000 and
+	/// any other group in the top strip.
+	/// </summary>
+	private void SetRect(short backdropId) {
+		switch (backdropId / 1000 * 1000) {
+			case 6000:
+				Rect = Backdrop6000Rect;
+				TopStrip = false;
+				break;
+			case 5000:
+				Rect = Backdrop5000Rect;
+				TopStrip = false;
+				break;
+			default:
+				Rect = TopRect;
+				TopStrip = true;
+				break;
+		}
 	}
 }

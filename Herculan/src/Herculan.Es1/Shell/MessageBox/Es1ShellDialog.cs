@@ -1,4 +1,5 @@
 using HercWorks.Core.Data.File.Dyn;
+using HercWorks.Core.Data.File.Msn.Es1;
 using HercWorks.Core.Io.Transform.Common;
 using HercWorks.Core.Io.Transform.Dbsim;
 using Herculan.Engine.Content;
@@ -157,8 +158,47 @@ public sealed class Es1ShellDialog {
 		}
 	}
 
-	// PLACEHOLDER: Dialog_LoadConditional (00018cdb) and ConditionalDialogBox (ConditionalDialogBox_Ctor 00019453,
-	// ConditionalDialogBox_SetRect 00018e5f, ConditionalDialogBox_Dtor 00019871): the .ENG block's box, the war map's briefing
-	// and the debriefing (P5, P8; docs/es1/formats/eng-mission-text.md#reading-a-block). An Es1DialogBox subclass and a loader
-	// here that sets Version 1.
+	/// <summary>
+	/// <c>Dialog_LoadConditional</c> (<c>00018cdb</c>)(dialog, <paramref name="ordinal"/>, <paramref name="tag"/>,
+	/// <paramref name="path"/>) (docs/es1/formats/eng-mission-text.md#reading-a-block), the loader of a mission's
+	/// <c>.ENG</c> blocks: the box deleted (<see cref="DeleteBox"/>), the file opened and its version word read; 1 makes an
+	/// <see cref="Es1ConditionalDialogBox"/> from the block of <paramref name="tag"/> of that ordinal, any other no box.
+	/// The file is read through <see cref="Es1MissionTextTransformer"/>, which finds a block by the byte counts where retail
+	/// searches for the tag's bytes; in every retail file the two find the same blocks. A file that does not open or read
+	/// leaves no box and the version as it was, reported, where retail reads from the failed stream, an engine guard.
+	/// </summary>
+	/// <param name="path">The path, its folder before the backslash, as <c>Mission_SetTextPath</c> builds it.</param>
+	/// <param name="flag"><c>MissionVar_ReadFlag</c> (<c>0003628d</c>), which a choice's text is picked by.</param>
+	public IEnumerable<Es1ShellWait> LoadConditional(short ordinal, string tag, string path, Func<short, short> flag) {
+		foreach (var wait in DeleteBox()) {
+			yield return wait;
+		}
+
+		int slash = path.IndexOf('\\');
+		byte[]? bytes = _read?.Invoke(slash < 0 ? "" : path[..slash], path[(slash + 1)..]);
+		if (bytes is not { Length: >= 2 }) {
+			Console.Error.WriteLine($"{path} is missing or unreadable: its {tag} box shows no text.");
+			yield break;
+		}
+
+		Version = (short)(bytes[0] | bytes[1] << 8);
+		if (Version != ConditionalVersion) {
+			yield break;
+		}
+
+		Es1MissionText? text;
+		try {
+			text = new Es1MissionTextTransformer().Parse(bytes);
+		} catch (InvalidDataException ex) {
+			Console.Error.WriteLine($"{path} does not read ({ex.Message}): its {tag} box shows no text.");
+			yield break;
+		}
+
+		if (text != null) {
+			Box = new Es1ConditionalDialogBox(this, text, ordinal, tag, flag);
+		}
+	}
+
+	/// <summary>The version word of an <c>.ENG</c> file, which makes an <see cref="Es1ConditionalDialogBox"/>.</summary>
+	public const short ConditionalVersion = 1;
 }

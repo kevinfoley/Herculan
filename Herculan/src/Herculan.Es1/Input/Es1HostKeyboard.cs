@@ -138,6 +138,9 @@ public sealed class Es1HostKeyboard {
 			| (device.IsKeyPressed(Key.AltLeft) || device.IsKeyPressed(Key.AltRight) ? 0x08 : 0));
 	}
 
+	/// <summary><see cref="ReadBiosShiftFlags(IKeyboard?)"/> of the device <see cref="Attach"/> took, or of none.</summary>
+	public byte ReadBiosShiftFlags() => ReadBiosShiftFlags(_device);
+
 	// One of the key's bytes, after an E0 for a grey key when SendsExtendedPrefix is set.
 	private void Send(Key key, byte value) {
 		if (SendsExtendedPrefix && ExtendedKeys.Contains(key)) {

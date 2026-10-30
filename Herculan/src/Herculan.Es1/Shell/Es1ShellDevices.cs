@@ -123,6 +123,8 @@ public sealed class Es1ShellDevices {
 		}
 
 		HostKeyboard = new Es1HostKeyboard(Keyboard);
+		// INT 16h function 2, which Keyboard_SetMode reads when the war map sets the mode again.
+		Keyboard.BiosShiftFlags = HostKeyboard.ReadBiosShiftFlags;
 
 		// 000081a4: every option's handler cleared, then 00008920: option 11's handler 0000868c, Prefs_Load of
 		// data\prefs.cfg, option 2 set to 0 without the speech archive, and 000087ff.

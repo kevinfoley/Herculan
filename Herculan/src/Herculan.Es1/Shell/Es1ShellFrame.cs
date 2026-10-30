@@ -364,7 +364,7 @@ public sealed class Es1ShellFrame {
 					break;
 				case 0x0039 or 0x0839 or 0x0033 or 0x0833 or 0x0034 or 0x0834 or 0x000c or 0x080c or 0x000d or 0x080d:
 					// Space, ',', '.', '-' and '=', with or without Shift: Shell_MissionMap (000809a4)'s functions while it is
-					// set and the byte 000809a8 is not 0. No ported screen makes the object, so there is none.
+					// set and the byte 000809a8 is not 0. PLACEHOLDER: the mission map's, S5's.
 					break;
 				case 0x0052:
 					// Insert (00012cca): Tab to the dialog while prefs.cfg option 10, the simulator's throttle keys, is set.
