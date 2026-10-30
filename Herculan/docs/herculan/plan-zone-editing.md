@@ -1,8 +1,8 @@
 # Plan — custom terrain zones in the mission editor
 
-Letting a mission designer give a mission its own terrain: a heightmap imported from an image, saved with the mission, shared in its `.hcm` bundle, and played in HERCULAN. Sculpting terrain in the editor's 3D view comes later.
+Letting a mission designer give a mission its own terrain: a heightmap imported from an image, saved with the mission, shared in its `.hcm` bundle, and played in HERCULAN, or sculpted in the editor's 3D view.
 
-Steps 1 to 5 are implemented (`ZoneFiles`, `SavedMissions`, `MissionBundle`, `MissionFileLaunch` and `TerrainZoneLoader`, `TerrainImages` and `TerrainChanger`); sculpting is not.
+Steps 1 to 7 are implemented (`ZoneFiles`, `SavedMissions`, `MissionBundle`, `MissionFileLaunch` and `TerrainZoneLoader`, `TerrainImages` and `TerrainChanger`, `TerrainSculptor`).
 
 ## What a zone is
 
@@ -14,7 +14,7 @@ A zone is a 16-byte header and an 8-bit heightmap, the same Dynamix bitmap conta
 - **A mission plays with its zone from its handoff.** A custom mission is played from the handoff its launch writes (`MissionFileLaunch.Write` and `WriteHeld`), and a bundle is never extracted (`CustomMissions`). The handoff carries the mission's zone beside its `script.dat`, under the zone's own file names (`zoneNNNN.dat`, `zoneNNNN.dba`) for the number the script plays on, and the simulator reads a zone from the handoff before the install's and the archives'. Each launch writes its own handoff, so two bundles that both use zone 9909 never meet.
 - **The zone number is chosen automatically, from numbers no archive zone has, 0 to 9999.** Collisions between custom zones are harmless under the two decisions above. Keeping clear of the archive's numbers means a custom zone written into the install for a retail launch ([Open](#open)) never replaces a retail zone other missions play on. Numbers up to 9999 keep the 8.3 file names the retail zones have; DBSIM builds a longer name, but a 5-digit zone file has not been loaded in retail.
 - **Grid sizes are the retail ones:** square, 128×128 or 256×256 cells, with the header's width and height shifts written to match the image, though retail reads the size from the image alone.
-- **The first version imports and exports images.** Sculpting is a later stage ([below](#sculpting)).
+- **Images first, sculpting after.** A terrain is first imported and exported as an image (steps 1 to 5), then sculpted in the editor ([below](#sculpting)).
 - **A terrain image is a PNG or a raw 8-bit file, read without an image library.** The engine already wrote PNG (`PngEncoder`); its decoder (`PngDecoder`) sits beside it in HercWorks.Help, which takes no package for files from outside. A raw file is one byte a cell, the form terrain tools export as 8-bit raw. An image is taken as it is: a gray value is a height byte, black lowest, a 16-bit PNG by its high byte; one that is not 128 or 256 pixels square, or has a colored pixel, is refused with the reason rather than resized or converted. Exported, a heightmap is an 8-bit grayscale PNG, which reads back as the same heights.
 - **Replacing a mission's terrain keeps the mission's place about the terrain's center.** Every terrain starts at the world's origin, so a terrain of another size would leave the mission kilometers from its center; every position moves by half the difference in size, in the same undo step as the terrain.
 - **Changing a mission's terrain keeps each flyer as high above the ground as it was**, whether the terrain is replaced or sculpted. Only a flyer reads its height from its position ([`../retail/formats/script-dat.md`](../retail/formats/script-dat.md#placement--the-actual-rule), rule 5), so a flyer's position, and a flyer group's, rises or falls with the ground under it, in the same undo step as the terrain; everything else stands on the new ground as on any.
