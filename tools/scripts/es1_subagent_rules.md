@@ -6,7 +6,7 @@ The rules every ES1 subagent shares: RE batches, doc batches and port parts. The
 
 - Work only in the worktree `E:\ES2Stuff\.claude\worktrees\es1` (branch `features/es1`). The gitignored assets live only in the main checkout: `E:\ES2Stuff\ES1\`, `ES2\`, `tools\analysis_out\` and the Ghidra project. The Python RE tools find them themselves; anything else uses the absolute path.
 - The Bash tool is Git Bash. It eats one backslash level, even in `<<'EOF'` heredocs, and the worktree guard refuses heredoc or pipe input to `py`: write a script to the scratchpad with the Write tool and run it as a plain command. Join paths with `/`.
-- In a Python edit script, `assert old in text` before every `str.replace` (a replace that matches nothing exits 0 and writes the file unchanged), open files with `encoding="utf-8"`, and keep the file's newline style and BOM. Exact text edits to tracked files go through `py tools/scripts/es2_naming.py repl spec.json`, which asserts the counts.
+- In a Python edit script, `assert old in text` before every `str.replace` (a replace that matches nothing exits 0 and writes the file unchanged), open files with `encoding="utf-8"`, and keep the file's newline style and BOM. Exact text edits to tracked files go through `py tools/scripts/es2_naming.py repl spec.json`, which asserts the counts and matches a CRLF file with `\n` in the spec, so it replaces a hand-written edit script.
 - Compare hex addresses as zero-padded strings in Python, never as numbers in `awk` (`00430e00` parses as scientific notation).
 
 ## Reading
@@ -14,7 +14,7 @@ The rules every ES1 subagent shares: RE batches, doc batches and port parts. The
 - Read a file you will edit whole first: every doc you add to, every code file you change. A file you only consult gets the section the brief names, or a Grep and then a Read with an offset. Read the decompile and disassembly dumps the same way, never with a Bash dump. Read nothing twice.
 - **Look up before deriving.** `tools/scripts/Check-Symbol.ps1 <address|name>` before describing any function or field: the dumps in `tools/analysis_out/` lag `known_symbols_*.json`, so a `FUN_` there may already be named, described and stamped. A stamped description is the answer; an unstamped one is a lead.
 - **Never cut an enumeration with `head` or `tail`.** Count it with `| wc -l`, then read all of it.
-- **Read retail files through `HercWorks.Core`.** Before any script that reads an install file or a VOL entry, grep `Herculan/src/HercWorks.Core/Data/File/**` for its extension and use that reader, through `HercWorks.Query` (`--help`) when a command fits: a shell menu's `.DLG` records beside their `.BIN` lines are `HercWorks.Query menu <n>`. Never hand-decode a file Core reads; if Core reads it wrong, report that.
+- **Read retail files through `HercWorks.Core`.** Before any script that reads an install file or a VOL entry, grep `Herculan/src/HercWorks.Core/Data/File/**` for its extension and use that reader, through `HercWorks.Query` (`--help`) when a command fits: a shell menu's `.DLG` records beside their `.BIN` lines are `HercWorks.Query menu <n>`, and any `.BIN` string table's lines `HercWorks.Query bin <file> [<line>...]` (`bin watext 0xbe`). Never hand-decode a file Core reads; if Core reads it wrong, report that.
 - Before writing a fact or an Open item, grep `Herculan/docs` for its addresses and names: another doc may already hold it or answer it.
 
 ## Negative claims

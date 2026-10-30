@@ -110,6 +110,7 @@ address operands by different rules (insn_streams).
       shapes) for a manual edit.
   repl spec.json [--write]
       [[relpath, old, new, count]]: exact replacements asserting the count; BOM and newlines kept.
+      In a file whose every line ends in CRLF, old and new match and write in either newline style.
   apply BIN [--write] [--define [addr+addr...]]
       Run ES2ApplySymbolNames headless (-readOnly unless --write) and print only the summary,
       errors and warnings. --define first runs ES2DefineFunctionAt in the same session, on the
@@ -1292,13 +1293,21 @@ def cmd_repl(args):
             with open(p, "rb") as fh:
                 raw = fh.read()
             bom = raw[:3] == b"\xef\xbb\xbf"
-            files[p] = [bom, (raw[3:] if bom else raw).decode("utf-8")]
-        t = files[p][1]
+            t = (raw[3:] if bom else raw).decode("utf-8")
+            # A file whose every newline is CRLF is matched as LF and written back as CRLF, so a spec's
+            # "\n" lines match it; a file with mixed endings is matched exactly as it stands.
+            crlf = "\r\n" in t and t.count("\r\n") == t.count("\n")
+            files[p] = [bom, t.replace("\r\n", "\n") if crlf else t, crlf]
+        t, crlf = files[p][1], files[p][2]
+        if crlf:
+            old, new = old.replace("\r\n", "\n"), new.replace("\r\n", "\n")
         assert t.count(old) == cnt, (rel, old, t.count(old))
         files[p][1] = t.replace(old, new)
     print("ok", len(spec), "replacements in", len(files), "files")
     if "--write" in args:
-        for p, (bom, t) in files.items():
+        for p, (bom, t, crlf) in files.items():
+            if crlf:
+                t = t.replace("\n", "\r\n")
             with open(p, "wb") as fh:
                 fh.write((b"\xef\xbb\xbf" if bom else b"") + t.encode("utf-8"))
         print("written")

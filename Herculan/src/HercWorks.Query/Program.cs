@@ -44,6 +44,9 @@ internal static class Program {
 		                                   fail or have no reader, then each failure's cursor offset
 		  vol [<archive>...] [--name <p>]  every entry of the install's VOL folder archives, or of those
 		                                   named: its archive, folder, name and size
+		  bin <file> [<line>...]           the lines of a .BIN string table in any of those archives,
+		                                   named as name or folder\name (.BIN optional): every line, or
+		                                   the lines named, in decimal or 0x hex, each with its index
 		  chassis [--field <name|offset>]  every chassis' dat\<name>.DAT type record, in MECHS.NAM order:
 		                                   with --field, each chassis' value of that field in decimal
 		                                   and hex; without, the record's fields with their offsets and
@@ -276,6 +279,34 @@ internal static class Program {
 				WriteJson(output, rows);
 			} else {
 				VolQuery.Write(output, rows, searched.Count, name);
+			}
+
+			return 0;
+		}
+
+		if (command == "bin") {
+			if (positional.Count < 2) {
+				return Fail("bin takes a .BIN file name (bin watext, bin eng\\filename.bin), then any line numbers.");
+			}
+
+			var indexes = new List<int>();
+			foreach (string s in positional.Skip(2)) {
+				if (BinQuery.ParseIndex(s) is not { } index) {
+					return Fail($"bin takes line numbers in decimal or 0x hex (bin watext 0xbe 190); {s} is not one.");
+				}
+
+				indexes.Add(index);
+			}
+
+			var tables = BinQuery.Run(Census.Archives(install), positional[1], indexes);
+			if (tables.Count == 0) {
+				return Fail($"No {positional[1]} in the archives of {install}\\{RetailData.ArchiveFolder}.");
+			}
+
+			if (json) {
+				WriteJson(output, tables);
+			} else {
+				BinQuery.Write(output, tables);
 			}
 
 			return 0;
