@@ -30,7 +30,9 @@ for each w in 0..17:
 
 The rows are 0x42 bytes, 33 words, with the internals from the row's fourteenth word, as in ES2's table. The prices are eight words in the image at `000808b8`, 50, 60, 80, 100, 120, 140, 170 and 200, where ES2's come from `herc_inf.dat`. `es2_xref.py` finds one call, at `000208d8` in `Shell_LoadData` (`00020630`).
 
+The after-mission repair prices a HERC from the row of its chassis word and `000ab332` by each mount's weapon ([repairs](../shell/between-missions.md#repairs)), scrapping a lost squadmate's HERC turns its worn weapons into salvage at `000ab332`'s values ([lost squadmates](../shell/between-missions.md#lost-squadmates)), and the hangar's marked HERC reads its chassis' price ([the marked HERC](../shell/between-missions.md#the-marked-herc)).
+
 ## Open
 
-- **Open:** which chassis each of the eight prices belongs to, and what reads the tables at `000a0580` and `000ab332`.
+- **Open:** which chassis each of the eight prices belongs to: the readers index them by a HERC's chassis word.
 - **Open:** which weapon each of the 18 values prices, and the tenth internal, whose percentage is 0.

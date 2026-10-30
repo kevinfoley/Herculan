@@ -1,0 +1,178 @@
+# GO.EXE — the career between missions
+
+**Between two missions a career stands at the service bay, the hangar's picture with a strip of buttons along the bottom of the screen. Back from a mission, a talking head comments on how it went and the debriefing follows, then the bay; NEXT MISSION > there moves the career on to its next mission, through its talking heads to the war map. After a campaign's last mission whose outcome ends the career, an ending plays instead.** The career menu, its screens and the career's files are [the career's](career.md); this page holds the service bay's strip of buttons, what the shell does with a career mission's results, and how the career moves from one mission to the next.
+
+Addresses are `ES1GO` image addresses ([the X-32 executable](../formats/x32-executable.md#the-image)). The functions here remove their own arguments, so argument lists are in stack order ([calling conventions](../formats/compiler.md#calling-conventions)). The roster is `Career_Roster` (`0009b218`) throughout ([the roster](career.md#the-roster)).
+
+## Where the code lies
+
+The service bay's handler `ServiceBayMenu_OnMessage` (`0002d327`) lies inside [the menu handlers' file](main-menu.md#where-the-object-files-start-and-end): it follows the last code of `0002d19e`, which ends at `0002d326`, and its `RET 8` at `0002d5bc` stands right before `0002d5bf`. Ghidra's function for it holds only the dispatch and the shared exit; the case bodies from `0002d34d` are code its body leaves out. `es1_boilerplate.py bounds` over `0002d227`–`0002d6be` finds no object-file boundary evidence. The other functions here lie in [`career.cpp`](career.md#where-the-object-file-starts-and-ends), `0001601b` to `00016294`, and in code no batch has placed in its file yet: `HercStatus_OverallCondition` (`0001a323`) after `HercStatus_Ctor` (`0001a29c`); the HERC's, the stock's and the hangar's functions from `00022f05` to `0002a395`; and the repair costs from `00038b64` to `00038c50`, before `Shell_ProcessMissionResults` (`00038eb5`).
+
+## The career's screen
+
+**The career record's word `+4` names the screen the career stands at, the one RESUME, PROCEED and RESTORE open: 1700, the service bay before a mission; 1710, the service bay after one; or 1500, the war map.** `CareerRecord_Init` sets 1700 (`0x6a4`) ([the career record](../formats/bst-battle-sets.md#the-career-record)); the bay's BRIEFING and NEXT MISSION > and `AnyDisabledAlert_OnMessage` (`0002a581`) set 1700, `Shell_ProcessMissionResults` 1710 after each mission ([after a mission](#after-a-mission)), and the war map's CANCEL 1500 ([CANCEL](war-map.md#cancel)). On any screen but 1710 those three load the career's next mission with `Career_StartMission` and build its map with `Shell_PrepareMission`; on 1710 they load none, NEXT MISSION > loading it ([RESUME](main-menu.md#resume), [PROCEED](career.md#proceed), [RESTORE](career.md#restore)).
+
+## The service bay's bar
+
+**Between missions the career shows the service bay, the hangar's picture with a strip of five buttons along the bottom of the screen. Before a mission the strip reads MAIN MENU, ARMING, CREW, BRIEFING and BEGIN MISSION >; after one it reads MAIN MENU, CAREER, REPAIR, BUILD and NEXT MISSION >, which checks that no HERC of the squad is disabled and moves the career to its next mission.** Screen 1700 is the bay before a mission, with the career's next mission loaded; 1710 is the bay after one, before the next is loaded ([the career's screen](#the-careers-screen)). Both are `ServiceBayMenu` (`00081fc6`) on backdrop 4000, with the handler `ServiceBayMenu_OnMessage` (`0002d327`) ([the screens](menus.md#the-screens)). The bay's own display and the screens its buttons open, ARMING (1800), CREW (1610), REPAIR (1900) and BUILD (2000), are the hangar's ([Open](#open)).
+
+`dlg\menu1700.dlg` and `dlg\menu1710.dlg` each lay out a plain window, style 1, id 1700, at (3, 183)–(318, 195) on the screen; five text buttons across it, MAIN MENU first with the key `Esc` and the last with `Space`, so the menu opens with the pointer on it ([opening a menu](menus.md#opening-a-menu--menu_open-0003969e)); and four kind-18 records, which add their rects, 1 to 3 pixels wide in the gaps between the buttons, to the full-screen render context's list ([the kinds](../formats/dlg-menu-dialogs.md#the-kinds)) (`HercWorks.Query menu 1700 1710`). `Menu_Close` destroys both windows with `DUIWindow_Dtor` ([closing a menu](menus.md#closing-a-menu--menu_close-0003b138)).
+
+### The bar's buttons
+
+**`ServiceBayMenu_OnMessage` looks the message's target `+6` up among the seven ids of the `REPNE SCASD` table at `00080d28`, its cases at `00080d44`, five of them in bytes Ghidra left undefined from `0002d38b`, and does nothing for any other id.** Both bars share it, and `Shell_HandleMessage` then opens the screen the target names when it is one of `Shell_ScreenIds` ([changing screens](menus.md#changing-screens--shell_handlemessage-0003c7d8)).
+
+| Button | Id | Bar | The handler | Then |
+|---|---|---|---|---|
+| MAIN MENU | 1000 | both | deletes the mission map with `Shell_DeleteMissionMap` (`0002a4ec`), and puts `anm\esiege2.anm` into `000aacfe` with the byte `0007fcd7` 2 | the main menu, the animation played on the way ([drawing a screen](menus.md#drawing-a-screen)) |
+| ARMING | 1800 | 1700 | the target becomes 1820 while `Shell_LowMemory` (`0007fd09`) is set, as the war map's ARMING does ([ARMING and SERVICE BAY](war-map.md#arming-and-service-bay)) | the arming screen |
+| CREW | 1610 | 1700 | nothing | screen 1610 |
+| BRIEFING | 1500 | 1700 | [BRIEFING](#briefing) | the war map, or the mission's talking head first |
+| BEGIN MISSION > | 100 | 1700 | [starting the mission](#starting-the-mission-from-the-bay) | a warning, or a talking head and then the mission |
+| CAREER | 1200 | 1710 | `Shell_DeleteMissionMap`; `Shell_ReturnScreen` (`0007fce8`) 1710; `anm\esiege2.anm` into `000aacfe` with `0007fcd7` 2 | the career menu |
+| REPAIR | 1900 | 1710 | nothing | the repair screen |
+| BUILD | 2000 | 1710 | the target becomes 7772 when the hangar's HERC count `00080892`, less 1 when `Hangar_HasMarkedHerc` (`0002a277`) answers 1, is 8 or more | screen 2000, or the warning 7772 |
+| NEXT MISSION > | 1499 | 1710 | [NEXT MISSION >](#next-mission) | a warning, or the talking heads of the next mission |
+
+`Shell_ReturnScreen` 1710 makes the options menu's RETURN button read RETURN TO CAREER and go back to 1200 ([the return screen](main-menu.md#the-return-screen)). `Hangar_HasMarkedHerc` answers 1 in `AL` when the hangar's marked slot `00080896` is not −1 and holds a HERC ([the HERC lists](../formats/car-hercs-and-stock.md#the-herc-lists), [the marked HERC](#the-marked-herc)), so BUILD does not count the marked HERC.
+
+The warnings are windows titled WARNING! (`HercWorks.Query menu 7770 7771 7772`): 7770 says "Your Herc is disabled. You must repair it." over OKAY (99, `Space`); 7772 "All service bays are filled." over OKAY (99, `Space`); and 7771 "One or more hercs in your squad is disabled." over CANCEL (99, `Esc`) and PROCEED (1499, `Space`). 7770 and 7772 are `UnAssignedAlert`, whose handler does nothing, and 7771 is `AnyDisabledAlert` ([the screens](menus.md#the-screens)); 99, *back*, returns to the bay ([changing screens](menus.md#changing-screens--shell_handlemessage-0003c7d8), step 3), and 7771's PROCEED runs NEXT MISSION >'s step 3 in `AnyDisabledAlert_OnMessage` (`0002a581`).
+
+### NEXT MISSION >
+
+1. When `CareerRecord_PlayerHercDisabled` (`0001626d`)(`CareerRecord_Current` (`00014ef4`)) answers non-zero, the target becomes 7770.
+2. Otherwise, when `CareerRecord_AnyHercDisabled` (`00016294`)(`CareerRecord_Current`) answers non-zero, it becomes 7771.
+3. Otherwise `Shell_ReturnScreen` becomes 1200 and the career's screen, the word `+4` of the record the roster's word `+7` names, 1700; `Roster_AdvanceCareer` (`00016f22`)(roster, the dword `000aad58`) moves the career on ([moving on](#moving-on)); `Career_StartMission` (`00016e93`)(roster, 0) loads its next mission ([a career's next mission](career.md#a-careers-next-mission)); `Career_Save` (`000168b0`)(roster, the roster's dword `+7`, whose low word is 0) writes the career ([saving](career.md#saving--career_save-000168b0)); and `Shell_PrepareMission` (`0002a523`) builds the mission's map ([`Shell_PrepareMission`](main-menu.md#the-buttons)). When the record's position `+8` is then 0, the first of a new campaign, it puts up message kind 5 with `MessageBox_SetKind` (`00037eac`)(`Shell_MessageBox` (`0009b010`), 5) and makes the target 1710; otherwise the target stays 1499.
+
+So a mission within a campaign goes through screen 1499, whose case in `Shell_Mode` 1 puts up kind 1, the campaign's talking head speaking the mission's line, and then the war map, 1500. A new campaign's first mission goes through kind 5 over the bay, a line of `T1_text.bin`, then screen 1490's kind 2, the campaign's opening lines, and a `camni` script, which ends on 1700 ([the kinds](message-box.md#the-kinds), [the answer](message-box.md#the-answer)).
+
+`CareerRecord_PlayerHercDisabled`(record) answers `Hangar_SlotIsDisabled` (`0002a395`) of the slot `+8` of the player's entry `+0xe`. `CareerRecord_AnyHercDisabled`(record) steps through the pilots as `CareerRecord_AnyPilotUnarmed` does ([BEGIN MISSION >](war-map.md#begin-mission)), testing each current pilot's slot with `Hangar_SlotIsDisabled`, and answers 1 in `AL` when any test did; the player's test comes first, so 7771 is about a squadmate's HERC. `Hangar_SlotIsDisabled`(slot) answers 0 for slot −1 or an empty slot of the hangar's array `000808a0`, and otherwise `Herc_IsDisabled` (`00022f05`) of its HERC: 1 when its internal word 0, 1 or 5 (`Herc_GetStatus` (`00024b86`)(*h*, *i*, `0x784`)) is below 50 ([the HERC record](../formats/car-hercs-and-stock.md#the-herc-record), [Open](#open)).
+
+### BRIEFING
+
+**BRIEFING plays the mission's talking head and then opens the war map, or opens the war map at once when the bay was opened from it.** It sets the career's screen `+4` to 1700 and saves the career with `Career_Save`(roster, the roster's dword `+7`). When the record's byte `+1` is 0 it puts up kind 1 (`MessageBox_SetKind`(`Shell_MessageBox`, 1)) and makes the target 1499, whose case puts up kind 1 again; otherwise the target stays 1500. The war map's SERVICE BAY sets the byte, and its CANCEL, `CareerRecord_Init` and `Roster_AdvanceCareer` clear it ([the war map's buttons](war-map.md#the-buttons), [CANCEL](war-map.md#cancel)).
+
+### Starting the mission from the bay
+
+BEGIN MISSION > runs the war map's tests ([BEGIN MISSION >](war-map.md#begin-mission)): the target 3333 when `CareerRecord_PlayerHasNoHerc` (`000161dc`) answers non-zero, otherwise 3000 when `CareerRecord_AnyPilotUnarmed` (`0001620d`) does, each of `CareerRecord_Current`. Otherwise it writes `data\player.mec` with `PlayerMec_Write` (`0002299e`) and, where the war map's makes the target 9999, makes it 1700 and puts up kind 6 with `MessageBox_SetKind`(`Shell_MessageBox`, 6), a line of `T1_text.bin` whose answer posts 9999, the mission ([the kinds](message-box.md#the-kinds)); then it deletes the mission map with `Shell_DeleteMissionMap` and clears the byte `000809a8`. The unarmed alert's PROCEED does the same in `Shell_Mode` 1, without `PlayerMec_Write` ([BEGIN MISSION >](war-map.md#begin-mission)). The alerts' 99 returns to the bay.
+
+## After a mission
+
+**Back from a career mission, a talking head comments on how it went and the debriefing follows; its PROCEED > leads to the service bay, by way of a TECH RELEASE window when the mission made a HERC or weapon available. Before they show, the shell has taken the mission's salvage, recovered weapons, kills and the pilots' condition into the career, shared the salvage among the pilots, replaced each squadmate lost with a new pilot and scrapped the lost pilot's HERC, resupplied the weapon stock, made new equipment available, moved the hangar's marked HERC on, repaired HERCs out of each pilot's share and saved the career. With the player lost, or after a campaign's last mission whose outcome ends the career, an ending plays instead and the career menu opens.**
+
+### Reading the results — `Shell_ProcessMissionResults` (`00038eb5`)
+
+`Shell_ProcessMissionResults` reads the simulator's results back, in both modes:
+
+1. In mode 1 it calls `Career_LoadCurrent` (`00016c1e`) with the roster, otherwise `SingleMission_RestoreRecord` (`00014fd6`), which reads `car\sm_play.gam` back into `SingleMission_Record` and loads `car\sm_play.mec` into the hangar ([the squad](../formats/msn-mission-file.md#the-squad)).
+2. It opens `data\results.dat` (entry 7 of the file-name table, severity-5 assert at `shell.cpp` line 199) and reads a word into `000aad58`, the debriefing's ordinal, a dword into `0007fcf4`, the mission's salvage, a word count into `000817cc`, and that many pairs of words (*a*, *b*); in mode 1 `Inventory_Add` (`00028311`) pushes each *b* onto slot *a* of the weapon stock `000aad62` ([the weapon stock](../formats/car-hercs-and-stock.md#the-weapon-stock)), the shape in which `Herc_ScrapToSalvage` pushes a mount's condition onto its weapon's slot ([lost squadmates](#lost-squadmates)). It then reads the pilots' results with `CareerRecord_ReadPilotResults` (`0001568d`): it zeroes the words `0009ae5c`, `0009ae5e` and `0009ae60`, and for each entry of `CareerRecord_Current`'s record on strength with a slot, in entry order, it reads the pilot's condition `+0xf` and 6 bytes of gains (`PilotEntry_ReadGains`, `000153d8`, which applies them). For the player's entry 0, and for every entry in mode 1, `Hangar_ReadStatusBlock` (`00028e50`) reads 66 bytes over the status block of the HERC in the entry's slot, rebuilding its diagram, and the condition is that HERC's internal word 9, `Herc_GetStatus` (`00024b86`)(*h*, 9, `0x784`); when the slot holds no HERC nothing is read for the block and the condition is 0. The HERC read tests the literal index 0, not the record's `+0xe`. For a single mission's squadmates, entries 1 to 3 in mode 0, the 66 bytes go into a block of the function's own, built on the stack with `HercStatus_Ctor` and then read whole over, no HERC changes, and the condition is that block's internal word 9 ([the HERC record](../formats/car-hercs-and-stock.md#the-herc-record)). So each entry takes the 72 bytes the simulator writes for each machine of the player's group ([writing the results](../simulation/world.md#writing-the-results--mission_writeresults-0001d698)): 26 bytes of external words, 20 of internal words, of which bytes `0x2c`–`0x2d` are internal word 9, the condition, 20 of per-mount words, and the 6 bytes of gains; an entry read through a slot holding no HERC takes only the 6 bytes of gains.
+3. It reads `data\mission.var` (entry 5, assert at line `0xd7`) through a `FileRWStream`, 200 bytes into the 100 flags at `000ab244`, closes it, and then sets flag 0 to `000aad58`.
+4. In mode 1, on the record `0009b23b` + `0x1f7` × [`0009b21f`], it calls `Shell_StockItemsFromFlags` (`00038e48`), adds the mission's salvage `0007fcf4` to `Career_Salvage` (`0007fcf0`), resupplies the stock with `Inventory_ResupplyWeapons` (`00028375`)(the stock `000aad62` points to) ([resupply](#resupply)), calls `CareerRecord_FinishMission` (`000160cb`) ([lost squadmates](#lost-squadmates)) and `Tech_Unlock` with the missions played ([equipment availability](../formats/bst-battle-sets.md#equipment-availability)), moves the marked HERC on with `Hangar_AdvanceMarkedHerc` (`00029e01`) ([the marked HERC](#the-marked-herc)), and sets the career's screen `+4` to 1710. Otherwise it counts the single mission's pilots whose condition is 0 into the word `0007ebca` (`CareerRecord_CountLostPilots`, `00015db7`), which the debriefing shows as SQUAD LOSSES:, beside the totals `0009ae5c`–`0009ae60` ([the results panel](debriefing.md#the-results-panel)).
+
+`Tech_Unlock` stores the kind and index of the last item it makes available at the record's `+0xa8` and `+0xaa`, which `CareerRecord_Init` sets to −1 ([equipment availability](../formats/bst-battle-sets.md#equipment-availability)); the debriefing's PROCEED > opens screen 5555, TECH RELEASE, while `+0xa8` is not −1, and its PROCEED sets both back to −1 ([the debriefing's buttons](debriefing.md#the-buttons-and-keys), [RESUME](main-menu.md#resume)). The window's labels name the item ([the build](menus.md#opening-a-menu--menu_open-0003969e)).
+
+### Back at the shell
+
+`Shell_OpenFirstScreen` (`0003ba47`) runs `Shell_ProcessMissionResults` and then, in mode 1 ([the first screen](menus.md#the-first-screen--shell_openfirstscreen-0003ba47)):
+
+- with the player lost, plays `endfa.ttm` when `Shell_PlayIntro` is set and opens the home menu, the career menu; RESUME and PROCEED then open the KIA warning 1250;
+- with `Career_PeekNextCampaign` giving 99 or −1, plays the career's ending and opens the career menu ([moving on](#moving-on));
+- otherwise puts up kind 7 over backdrop 4000, the line by the condition of the player's HERC ([the kinds](message-box.md#the-kinds)), whose answer posts 1520. 1520's case puts up kind 4, the campaign's talking head on the mission, while `MessageBox_Kind4Shown` (`00081d20`) is 0, and builds the career's debriefing ([opening it](debriefing.md#opening-it)), whose PROCEED > opens 5555 or 1710 with `Shell_ReturnScreen` 1200 ([the debriefing's buttons](debriefing.md#the-buttons-and-keys)).
+
+On every path it then calls `CareerRecord_AutoRepairSquad` (`0001601b`)(the record the roster's word `+7` names) ([repairs](#repairs)), `Roster_ForEachPilotNoOp`(roster) and `Career_Save`(roster, the roster's dword `+7`), which writes the career as the mission left it.
+
+### Resupply
+
+`Inventory_ResupplyWeapons` (`00028375`)(stock) takes the weapon numbers of `Inventory_ResupplyList` (`00080874`: 2, 8, 4, 12, 3, 1, 7, 11, 10, 13, 9, 6 and 0, ended by −1) in that order and pushes a 100 with `Inventory_Add` onto the stock's slot of each one that the current career record makes available, `Tech_IsAvailable` (`00028409`)(record + `0xa8`, the number, 1), and whose slot holds fewer than 2 (`Inventory_SlotCount`, `000282eb`), stopping after five pushes. It runs before `Tech_Unlock`, so a weapon the mission made available is first resupplied after the next mission; weapons 5 and 14 to 16 are not in the list ([the retail files](../formats/bst-battle-sets.md#the-retail-files)). `Tech_IsAvailable`(state, index, kind) answers the available byte of the chassis entry *index* for kind 0, of the weapon entry for kind 1, and the kind itself for any other ([equipment availability](../formats/bst-battle-sets.md#equipment-availability)); `Inventory_SlotCount`(stock, slot) answers the count word of the slot's stack ([the weapon stock](../formats/car-hercs-and-stock.md#the-weapon-stock)).
+
+### Lost squadmates
+
+`CareerRecord_FinishMission` divides `Career_Salvage` by *n*, the count `CareerRecord_CountPilots` returns for the record, and *n* times steps to the next pilot (`CareerRecord_NextPilot`) and stores the share at its dword `+0x21`; it then replaces the lost pilots and adds 1 to the missions played. `CareerRecord_ReplaceLostPilots` (`00015e0b`) takes each entry *i* on strength with a slot and a condition of 0, adds 1 to `0007ebca` and, when it is not the player's: with *k* its word `+4` and *v* its word `+6`, scraps the HERC in its slot with `Hangar_ScrapSlot` (`0002a20d`), sets the entry up again with `PilotEntry_InitRandom`, takes its name group from the word `0009b223` + 8(*i* − 1) + 2*k* of the roster, its name `+2` and `+6` from *v*, `+4` from (*k* + 1) mod 3, and, when that is 0, `+6` from (*v* + 1) mod 3. `PilotEntry_InitRandom` sets the slot `+8` to −1, so the new pilot has no HERC ([pilot entries](../formats/bst-battle-sets.md#pilot-entries)).
+
+`Hangar_ScrapSlot`(slot), for a slot that is not −1 and holds a HERC, scraps the HERC with `Herc_ScrapToSalvage` (`00024cec`)(HERC, 0), destroys it (`000232a4` with 3), clears the slot and takes 1 from the HERC count `00080892`. `Herc_ScrapToSalvage`(HERC, value), for each mount whose weapon (`00024ab7`) is not 17, the empty mount: with the mount's condition (`Herc_GetStatus`(*h*, mount, `0x786`)) below 80, adds the weapon's value `000ab332`[weapon] × the condition / 100 to `Career_Salvage`; otherwise pushes the condition onto the weapon's slot of the stock `000aad62` points to with `Inventory_Add`. Then it adds *value* to `Career_Salvage`, or, when *value* is 0, what `00038d6c`(HERC) returns ([Open](#open)). `es2_xref.py` finds calls to it from `0002a046` and `Hangar_ScrapSlot`. The values are `damage.dat`'s ([the load](../formats/herc-catalogs.md#the-load)). ES2 scraps a lost squadmate's machine in its debrief ([scrapping](../../retail/shell/armory.md#scrapping)); `es2_naming.py match` pairs no ES2 function with `Herc_ScrapToSalvage`, the best scoring 0.18.
+
+### The marked HERC
+
+`Hangar_AdvanceMarkedHerc` (`00029e01`)() does nothing unless `Hangar_HasMarkedHerc` answers 1. While the marked slot's word `00080898` is above 0 it takes 1 from it, builds the HERC's diagram again with the word unless `Shell_LowMemory` is set ([the mount pictures](../formats/herc-diagrams.md#the-mount-pictures)), and sets the dword `0008089c` to (*v* × 80 × *p* / 10000 + (100 − *p*) × *v*) / 100, *v* being the HERC's chassis' price word of `000808b8` ([the load](../formats/herc-catalogs.md#the-load)) and *p* `Hangar_MarkedHercProgress` (`00029f93`)(): (*c* − the word) × 100 / *c*, *c* the chassis' word of `000808d8`, 1, 1, 2, 2, 2, 3, 3 and 3 for chassis 0 to 7. When the word is then below 1 it sets every status word of the HERC to 100 with `Herc_SetAllStatus`, builds its diagram again unless `Shell_LowMemory` is set, and sets the marked slot to −1 and `0008089c` to 0. So a marked HERC comes out at full condition after its chassis' count of career missions ([Open](#open)).
+
+### Repairs
+
+**After each career mission the shell repairs the squad's HERCs on its own, each pilot paying for their HERC out of their share of the salvage, as far down a ladder of levels as the share reaches.** It is ES2's auto repair ([repair levels](../../retail/shell/armory.md#repair-levels)) with ES1's ladder and budget.
+
+`CareerRecord_AutoRepairSquad` (`0001601b`)(record) picks the first pilot entry by the record's word `+0x1f5`: 0, entry 4, so none; 1, entry 1, the squadmates; 2, entry 0, all four; any other value leaves the entry as `EDI` held it. It calls `CareerRecord_AutoRepairFrom` (`0001605c`)(record, first), which for each entry from *first* to 3 on strength with a slot calls `Repair_Auto` (`00029bf3`)(the entry's share `+0x21`, its slot `+8`). The word `+0x1f5` is `Career_AutoRepairMode` (`0007fcf8`) as the career's saves store it ([saving](career.md#saving--career_save-000168b0)); `es2_xref.py --decode` finds it written by `Roster_ActivateRecord` and by screen 1910's handler `0003052f`, `RepairPrefsAlert`'s ([the screens](menus.md#the-screens)). ES2's `Game_AutoRepairSquad` takes its mode from `prefs.cfg` and gives every machine the same budget.
+
+`Repair_Auto`(budget, slot) does nothing for slot −1 or an empty slot. Otherwise, on the slot's HERC, it walks ES2's ladder ([repair levels](../../retail/shell/armory.md#repair-levels)) with `Repair_HercCost` (`00038c50`): from level 0, one level down while the cost is not below the budget and the level is below the HERC's own, `Repair_LevelForCondition` (`000389fb`) of `Herc_OverallCondition` (`00024b6a`), which is `HercStatus_OverallCondition` (`0001a323`)(the status block, the mount count `+2`). When the cost is below the budget, compared unsigned, it sets every status word to the level's target with `Herc_SetAllStatus`, takes the cost from `Career_Salvage`, and stores budget − cost as the share of the entry `CareerRecord_FindPilotBySlot` finds for the slot in `CareerRecord_Current`'s record. ES1's ladder has five levels where ES2's has six:
+
+| Level | Condition (`RepairLevelTable`, `0008179c`) | Repaired to (`RepairTargetTable`, `00081790`) |
+|---|---|---|
+| 0 | 91–100 | 100 |
+| 1 | 75–90 | 90 |
+| 2 | 52–74 | 74 |
+| 3 | 1–51 | 51 |
+| 4 | 0 | 0 |
+
+`Repair_LevelForCondition`(condition) answers the first of the five whose floor is at or below the condition, and 0 for a condition below 0. `Repair_HercCost`(level, HERC) sums `Repair_ItemCost` (`00038b64`)(level, condition, value) over the six conditions `Herc_GetStatus`(*h*, *i*, `0x785`) with the values of the chassis' row of `000a0580`, the nine internal words with the row's internals (`+0x1a`), and each mount whose weapon is not 17 and whose condition is not 0 with `000ab332`[weapon] ([the load](../formats/herc-catalogs.md#the-load)); unlike ES2's it does not test for a null HERC. `Repair_ItemCost` is ES2's: 0 when the condition is at or above *level*, otherwise (the target of *level*'s level − the condition) × value / 100.
+
+## Moving on
+
+**NEXT MISSION > moves the career to the next position of its campaign, or, past the campaign's last position, to the campaign the last mission's outcome leads to. A campaign table entry of −1 ends the career lost and 99 ends it won: the shell plays the ending after that mission, and the career can be played on only from a backup.**
+
+`Career_AdvanceCampaign` (`00015a5a`) moves a career record on with `BattleSet_Advance` (`000141d0`) and returns whether its campaign changed. `BattleSet_Advance` adds 1 to the position (`Campaign_NextPosition`, `0001431f`, which is true while the position is at least 0 and below the campaign's count); past the campaign's last position it sets the campaign to the entry of `BattleSet_NextCampaignTable` (`0007ead0`) for the campaign and the outcome, `Career_OutcomeChoice` ([a career's missions](../formats/bst-battle-sets.md#a-careers-missions)), and the position to 0. `Career_PeekNextCampaign` (`00015aa5`) returns, through `BattleSet_PeekNextCampaign` (`0001418e`), 0 when the next position is in the campaign, and otherwise the campaign the table gives, writing nothing. No entry of the table is 0.
+
+| Campaign | Outcome 0, the mission won | Outcome 1, the mission lost |
+|---|---|---|
+| 0 | 1 | 2 |
+| 1 | 3 | 4 |
+| 2 | 3 | −1 |
+| 3 | 5 | 6 |
+| 4 | 5 | −1 |
+| 5 | 7 | −1 |
+| 6 | 7 | −1 |
+| 7 | 99 | −1 |
+
+`es2_xref.py` finds one call to `Career_AdvanceCampaign`, from `Roster_AdvanceCareer`, which NEXT MISSION > and the disabled warning's PROCEED call; neither tests the campaign. It finds three calls to `Career_PeekNextCampaign`, each of which treats −1 and 99 as the career's end:
+
+- `Shell_OpenFirstScreen` after a mission, which plays the won ending for 99 and the lost one for −1 and opens the home menu, the career menu ([the first screen](menus.md#the-first-screen--shell_openfirstscreen-0003ba47));
+- RESUME and PROCEED, for either: screen 1260, `dlg\menu1260.dlg`'s window CAREER OVER with "Please restore a backup to replay this career." and DONE ([RESUME](main-menu.md#resume), [PROCEED](career.md#proceed)).
+
+So the career at its end keeps its last position and the screen 1710, and RESTORE of a backup is the way on ([RESTORE](career.md#restore)).
+
+## Functions
+
+| ES1 | Address |
+|---|---|
+| `ServiceBayMenu_OnMessage` | `0002d327` |
+| `CareerRecord_PlayerHercDisabled`, `CareerRecord_AnyHercDisabled`, `Hangar_SlotIsDisabled`, `Herc_IsDisabled` | `0001626d`, `00016294`, `0002a395`, `00022f05` |
+| `CareerRecord_AutoRepairSquad`, `CareerRecord_AutoRepairFrom` | `0001601b`, `0001605c` |
+| `Inventory_ResupplyWeapons`, `Tech_IsAvailable`, `Inventory_SlotCount` | `00028375`, `00028409`, `000282eb` |
+| `Hangar_ScrapSlot`, `Herc_ScrapToSalvage` | `0002a20d`, `00024cec` |
+| `Hangar_HasMarkedHerc`, `Hangar_AdvanceMarkedHerc`, `Hangar_MarkedHercProgress` | `0002a277`, `00029e01`, `00029f93` |
+
+ES1 and ES2 (`VSHELL`) share these, with ES1's differences [above](#repairs):
+
+| ES1 | Address | ES2 |
+|---|---|---|
+| `Repair_Auto` | `00029bf3` | `00411328` |
+| `Repair_HercCost`, `Repair_ItemCost`, `Repair_LevelForCondition` | `00038c50`, `00038b64`, `000389fb` | `004139f7`, `0041392a`, `0041381c` |
+| `Herc_OverallCondition`, `HercStatus_OverallCondition` | `00024b6a`, `0001a323` | —, `00411bd4` |
+
+## Globals
+
+| | Address |
+|---|---|
+| `Career_AutoRepairMode`, `int16`: 0 none, 1 the squadmates' HERCs, 2 all | `0007fcf8` |
+| `BattleSet_NextCampaignTable`, eight campaigns × two outcomes | `0007ead0` |
+| `RepairTargetTable`, `RepairLevelTable`, six and five `int16` | `00081790`, `0008179c` |
+| `Inventory_ResupplyList`, `int16` weapon numbers ended by −1 | `00080874` |
+| `ServiceBayMenu_OnMessage`'s case table, seven ids and their targets | `00080d28` |
+
+## Open
+
+- **Open:** the service bay's display and the screens its buttons open, ARMING (1800 and 1820), CREW (1610), REPAIR (1900, with its preferences 1910) and BUILD (2000): the hangar's module. Among them, what marks the hangar's slot `00080896` and sets its word `00080898`, and what the dword `0008089c` is to the shell.
+- **Open:** which parts of a HERC the internal words 0, 1 and 5 are, the three `Herc_IsDisabled` tests.
+- **Open:** what `00038d6c` returns, which `Herc_ScrapToSalvage` adds to `Career_Salvage` when it is given no value, and what `0002a046`, its other caller, scraps.
+- **Open:** whether a pilot entry on strength can name a hangar slot that holds no HERC when the results are read: `CareerRecord_ReadPilotResults` then reads only that entry's 6 bytes of gains, so every later entry reads 66 bytes early.
+- **Open:** what reads a pilot's share `+0x21` besides `Repair_Auto`, which leaves in it the share less the repair.
+- **Open:** whether a career can reach NEXT MISSION > at its end: the career menu's SAVE/RESTORE load and RESTORE test no campaign with `Career_PeekNextCampaign` ([PROCEED](career.md#proceed), [RESTORE](career.md#restore)), so a backup made after a career's last mission, at screen 1710, would let `Career_AdvanceCampaign` store −1 or 99 as the campaign and `Career_StartMission` build a path from it.
+- **Open:** whether screen 1910's handler `0003052f` can store a `Career_AutoRepairMode` other than 0 to 2, for which `CareerRecord_AutoRepairSquad` passes on `EDI` as its caller left it.
+- **Open:** a retail check under DOSBox-X: in a new career, finish the first mission; a face speaks, then the DEBRIEFING window shows MAIN MENU and PROCEED >; PROCEED > shows the bay's strip with MAIN MENU, CAREER, REPAIR, BUILD and NEXT MISSION >; NEXT MISSION > plays the campaign's talking head and opens the war map of the second mission; SERVICE BAY there, then BRIEFING, returns to the war map with no talking head.

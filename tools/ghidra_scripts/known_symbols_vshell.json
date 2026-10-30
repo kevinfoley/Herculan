@@ -4348,7 +4348,13 @@
       "confidence": "high",
       "name": "Repair_Auto",
       "description": "The Auto Repair mode. Steps down repair levels while the cost exceeds the budget, stopping once the machine's own average condition reaches the level under test, then applies through Repair_Apply. Repairs and charges nothing when no level is affordable.",
-      "source": "docs/retail/shell/armory.md"
+      "source": "docs/retail/shell/armory.md",
+      "verified": {
+        "bytes": "00411328+135",
+        "sha1": "e56b08744c5e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004113af",
@@ -4590,8 +4596,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HercStatus_OverallCondition",
-      "description": "Mean condition over 13 external entries, the first 9 internal entries and one per occupied hardpoint, divided by hardpoints + 0x16. The divisor is what proves the 13/9 split and that internal index 9 is excluded from its own average.",
-      "source": "docs/retail/formats/save-games.md"
+      "description": "Mean condition over 13 external entries, the first 9 internal entries and the first n hardpoint entries, n the second argument, divided by n + 0x16. The divisor is what proves the 13/9 split and that internal index 9 is excluded from its own average.",
+      "source": "docs/retail/formats/save-games.md",
+      "verified": {
+        "bytes": "00411bd4+85",
+        "sha1": "abedb14eba7d",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00411c29",
@@ -5161,7 +5173,13 @@
       "confidence": "high",
       "name": "Repair_LevelForCondition",
       "description": "First level 0-5 whose band floor in 0046fd84 is at or below the given condition; 0 when none matches.",
-      "source": "docs/retail/shell/armory.md"
+      "source": "docs/retail/shell/armory.md",
+      "verified": {
+        "bytes": "0041381c+28",
+        "sha1": "371de620bad1",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00413838",
@@ -5203,7 +5221,13 @@
       "confidence": "high",
       "name": "Repair_ItemCost",
       "description": "Cost to bring one component from its current condition to a target: zero when already at or above it, else (levelTarget - current) * unitValue / 100.",
-      "source": "docs/retail/shell/armory.md"
+      "source": "docs/retail/shell/armory.md",
+      "verified": {
+        "bytes": "0041392a+62",
+        "sha1": "13670b31ec1e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00413968",
@@ -5221,7 +5245,13 @@
       "confidence": "high",
       "name": "Repair_HercCost",
       "description": "Total repair cost for a machine to a target condition: Repair_ItemCost over the six external groups, the nine internals, and each occupied hardpoint at its weapon's scrap value.",
-      "source": "docs/retail/shell/armory.md"
+      "source": "docs/retail/shell/armory.md",
+      "verified": {
+        "bytes": "004139f7+345",
+        "sha1": "e48cabb053be",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00413b50",

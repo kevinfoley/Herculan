@@ -77,7 +77,7 @@ Step 9 builds the squad from the first group's members, *n* of them, `Squad_Memb
 4. It makes the player's entry, the record's `+0xe`, 0, the current pilot (`CareerRecord_SelectPilot`, `00015ad4`), which sets the hangar's selected slot `Hangar_SelectedSlot` (`00080894`) to the player's.
 5. It writes the hangar to `car\sm_play.mec` with `Hangar_SaveFile` (`0002909c`), which in mode 0 holds slots 0 to 7 only ([the HERC lists](car-hercs-and-stock.md#the-herc-lists)).
 
-`PlayerMec_Write` ends, in mode 0, by writing `SingleMission_Record` whole to `car\sm_play.gam` (`SingleMission_SaveRecord`, `00014f54`); after the mission `Shell_ProcessMissionResults` reads both `car\` files back ([after a mission](bst-battle-sets.md#after-a-mission)). A byte search of `DBSIM.EXE` finds no `sm_play`, where the same search finds `player.mec`.
+`PlayerMec_Write` ends, in mode 0, by writing `SingleMission_Record` whole to `car\sm_play.gam` (`SingleMission_SaveRecord`, `00014f54`); after the mission `Shell_ProcessMissionResults` reads both `car\` files back ([after a mission](../shell/between-missions.md#after-a-mission)). A byte search of `DBSIM.EXE` finds no `sm_play`, where the same search finds `player.mec`.
 
 ### The flags
 

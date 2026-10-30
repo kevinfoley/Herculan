@@ -53,7 +53,7 @@ So the shell adds at most one career between a load and the next, and a later ne
 
 ## The player file
 
-`PlayerMec_Write` (`0002299e`) deletes entry 4 of the file-name table, `data\player.mec`, opens it as a `FileRWStream` with no test that it opened, writes it with `PlayerMec_WriteEntries` (`00022a05`), closes it, saves the career record with `CareerRecord_SaveCurrent` (`00014f28`) and destroys the stream. `CareerRecord_SaveCurrent` writes a single mission's record to `car\sm_play.gam` (`SingleMission_SaveRecord`, `00014f54`, [the squad](msn-mission-file.md#the-squad)) and in mode 1 calls `Career_Save` (`000168b0`) with the roster and its current record ([saving](../shell/career.md#saving--career_save-000168b0)). `es2_xref.py` finds three calls to `PlayerMec_Write`: from `WarMapMenu_OnMessage` (`0002c057`), `0002d327` and `MsnGen_LoadMission`.
+`PlayerMec_Write` (`0002299e`) deletes entry 4 of the file-name table, `data\player.mec`, opens it as a `FileRWStream` with no test that it opened, writes it with `PlayerMec_WriteEntries` (`00022a05`), closes it, saves the career record with `CareerRecord_SaveCurrent` (`00014f28`) and destroys the stream. `CareerRecord_SaveCurrent` writes a single mission's record to `car\sm_play.gam` (`SingleMission_SaveRecord`, `00014f54`, [the squad](msn-mission-file.md#the-squad)) and in mode 1 calls `Career_Save` (`000168b0`) with the roster and its current record ([saving](../shell/career.md#saving--career_save-000168b0)). `es2_xref.py` finds three calls to `PlayerMec_Write`: from `WarMapMenu_OnMessage` (`0002c057`), `ServiceBayMenu_OnMessage` (`0002d327`) and `MsnGen_LoadMission`.
 
 ```
 int16    the player's entry
