@@ -138,7 +138,8 @@ public static class Es1MenuBuild {
 				case HotspotKind:
 					if (Array.IndexOf(HotspotIds, record.Id) >= 0) {
 						// PLACEHOLDER: 1502's a, the rect 000a02d4, is a later module's; no hotspot keeps one until it lands.
-						menu.Window?.AddHotspot(null, record.Id, HotspotPlaceholder, rect);
+						var handler = record.Id == Es1DebriefingMenu.ResultsPanel ? Es1DebriefingMenu.ResultsHandler(context) : HotspotPlaceholder;
+						menu.Window?.AddHotspot(null, record.Id, handler, rect);
 					}
 
 					break;
@@ -290,11 +291,12 @@ public static class Es1MenuBuild {
 	}
 
 	/// <summary>
-	/// The handler every hotspot is given in place of its own (<see cref="HotspotIds"/>): it draws nothing. 00017a19 draws
-	/// the current career record's pilot portraits and their marks, and the other handlers are unread; all are later
-	/// modules'.
+	/// The handler every hotspot but 1522, the debriefing's results panel (<see cref="Es1DebriefingMenu.ResultsHandler"/>),
+	/// is given in place of its own (<see cref="HotspotIds"/>): it draws nothing. 00017a19 draws the current career record's
+	/// pilot portraits and their marks, and the other handlers are unread; all are later modules'.
 	/// </summary>
 	private static void HotspotPlaceholder(Es1ShellRenderContext context, Es1Rect rect, short id) {
-		// PLACEHOLDER: the hotspot handlers (00017a19 and the eight others above), the career screens' (S3); the area draws nothing.
+		// PLACEHOLDER: the hotspot handlers (00017a19 and the seven other handlers above, 000175d7 aside), the later modules'; the area
+		// draws nothing.
 	}
 }

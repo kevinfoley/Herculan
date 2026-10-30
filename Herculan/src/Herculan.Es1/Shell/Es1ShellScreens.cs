@@ -87,7 +87,8 @@ public sealed class Es1ShellScreens {
 
 	/// <summary>
 	/// <c>Shell_ReturnScreen</c> (<c>0007fce8</c>), 1000 in the image: the screen the options menu's RETURN button goes
-	/// back to, which names that button (docs/es1/shell/main-menu.md#the-return-screen). The main menu's buttons set it.
+	/// back to, which names that button (docs/es1/shell/main-menu.md#the-return-screen). The main menu's and the
+	/// debriefing's buttons set it.
 	/// </summary>
 	public short ReturnScreen { get; set; } = MainMenuScreen;
 
@@ -713,10 +714,10 @@ public sealed class Es1ShellScreens {
 	/// <summary>
 	/// <c>Shell_HandleMessage</c>'s step 9, the case of the table at <c>00082060</c> (targets at <c>00082104</c>) for
 	/// <paramref name="target"/>: most make the screen's object the current menu (docs/es1/shell/menus.md#the-screens).
-	/// The main menu's, SINGLE MISSION's, MISSION PARAMS', the war map's, its two alerts' and the quit question's are
-	/// ported, and screen 9999's exit code; with any other the screen becomes current with no menu, as retail's does for
-	/// the cases that make none, its backdrop shown with no window. The waits are the war map's, whose constructor
-	/// deletes the box the text box held.
+	/// The main menu's, SINGLE MISSION's, MISSION PARAMS', the war map's, its two alerts', the debriefing's and the quit
+	/// question's are ported, and screen 9999's exit code; with any other the screen becomes current with no menu, as
+	/// retail's does for the cases that make none, its backdrop shown with no window. The waits are the war map's and the
+	/// debriefing's, whose constructors delete the box the text box held.
 	/// </summary>
 	private IEnumerable<Es1ShellWait> OpenScreenCase(short target) {
 		switch (target) {
@@ -754,12 +755,21 @@ public sealed class Es1ShellScreens {
 				}
 
 				break;
-			case 1520:
-			case 1510:
-				// PLACEHOLDER: 0003cd09 (MessageBox_SetKind(Shell_MessageBox, 4) once, by the byte 00081d20) and 0003cd27,
-				// DebriefingMenu_Ctor: the debriefing, S2's part P8b, which the message box's kind 3 reaches by its answer's
-				// post of 1510 (OpenAfterSingleMission). Its results panel reads Es1ShellMission.Results and the record's
-				// pilot entry 0's gains.
+			case Es1DebriefingMenu.CareerScreen:
+			case Es1DebriefingMenu.Screen:
+				// 0003cd09, 1520's: PLACEHOLDER: while the byte MessageBox_Kind4Shown (00081d20) is 0, MessageBox_SetKind(
+				// Shell_MessageBox, 4) and the byte set to 1, the career's, S3's; then as 1510's.
+				// 0003cd27, 1510's: DebriefingMenu_Ctor(0), the debriefing, which the message box's kind 3 reaches by its
+				// answer's post of 1510 (OpenAfterSingleMission).
+				if (_menuContext != null && Dialog != null) {
+					var debriefing = new Es1DebriefingMenu(_menuContext, Dialog);
+					foreach (var wait in debriefing.Load()) {
+						yield return wait;
+					}
+
+					CurrentMenu = debriefing;
+				}
+
 				break;
 			case Es1MissionMenu.Screen:
 				// 0003e3ea: a MissionMenu, SINGLE MISSION.

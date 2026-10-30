@@ -47,8 +47,8 @@ The text box is the block's `ConditionalDialogBox` in `DialogBox_Backdrop5000Rec
 **Below the text the window shows a framed panel of the mission's results: the salvage, a table of kills with a column for the player and one for the squad, the squad's losses, the weapons recovered and the new technology recovered.** The panel is the hotspot 1522: `Menu_BuildFromDlg`'s kind-14 case adds it with `DebriefingResultsHotspot_Draw` (`000175d7`) as its handler ([the build](menus.md#opening-a-menu--menu_open-0003969e)), and `DUIWindow_Draw` calls the handler with (the hotspot's rect, 1522) when the window is drawn, as `DUIWindow_UpdateHotspots` does whenever the hotspot's pressed byte `+0` is set ([drawing a window](menus.md#drawing-a-window--duiwindow_draw-0001bfa3), [updating a window](menus.md#updating-a-window--duiwindow_update-0001c067)). The handler reads only the rect (*x0*, *y0*, *x1*, *y1*), in the window's render context `000ab612`, whose origin is the window's corner:
 
 1. sets the context's alignment `+0x231` to 0, left, and fills the rect with color `0x1f` framed in `0x1f` with `Raster_FillFrameRectColours` (`0004b8d8`);
-2. draws eleven lines of `eng\watext.bin` (`0009afa8`, `Text_GetString`) in the font `000aacea`, `cstats_2` ([the window](menus.md#the-window)), with `HudFont_DrawString`;
-3. draws the values in the font `000aace6`, each formatted with `sprintf` as a decimal;
+2. draws ten lines of `eng\watext.bin` (`0009afa8`, `Text_GetString`) in the font `000aacea`, `cstats_2` ([the window](menus.md#the-window)), with `HudFont_DrawString`;
+3. draws the values in the font `000aace6`, `cstats_1`, which `Shell_LoadData` loads from `dfn\cstats_1.dfn` (`000207fa`) ([the loads](../formats/styles-dat.md#the-loads)), each formatted with `sprintf` as a decimal, `%ld` (`0007ed4d`) for the salvage and `%d` for the rest;
 4. sets the alignment to 2, centered, with the field width `+0x235` *x1* − *x0*, and draws the text at `0007d808` at (*x0*, *y0* + 81), and leaves the alignment at 2.
 
 | Line | Label | At | Value | At |
@@ -111,7 +111,6 @@ So the debriefing deletes its box on every way out, the quit question included, 
 
 - **Open:** what reaches `Shell_BackToReturnScreen` (`0002c71a`): `es2_xref.py` finds no branch, stored pointer or vtable slot holding it.
 - **Open:** what writes the text at `0007d808`, which `Tech_FormatLockedName` (`000021b5`) and `MessageBox_PickT1Line` (`00037bf0`) also pass (`es2_xref.py --decode` finds those four address uses and no other), and so what NEW TECHNOLOGY RECOVERED shows after a single mission, where `Tech_Unlock` does not run.
-- **Open:** the font `000aace6`, the results panel's values' font, among `Shell_Fonts` ([the loads](../formats/styles-dat.md#the-loads)).
 - **Open:** what `Menu_Close`'s `DUIWindow_Dtor` on the menu windows 1510 and 1520 leaves of the work `MTWindow_Dtor` does, their bitmap arrays `res32\menu1510.dba` and `res32\menu1520.dba` among it.
 - **Open:** what the SINGLE MISSION menu's list selects after a mission: `Menu_Open` selects the line `Mission_Kind` (`000aad5a`) holds ([the list](single-mission.md#the-list)), and the shell started after the mission restores the saved word into `000aad5e`, not `000aad5a` ([which file](../formats/eng-mission-text.md#which-file)).
 - **Open:** the career's way to the debriefing, screen 1520 and kind 4, and what screen 5555 and PROCEED >'s 1710 then show (the career module's).
