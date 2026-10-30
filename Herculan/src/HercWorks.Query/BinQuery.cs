@@ -27,7 +27,6 @@ internal static class BinQuery {
 			file += ".BIN";
 		}
 
-		var reader = new BinStringFileTransformer();
 		var tables = new List<BinTable>();
 		foreach (string path in archivePaths) {
 			var vol = VolFileReader.ParseVolFile(path);
@@ -39,7 +38,7 @@ internal static class BinQuery {
 					continue;
 				}
 
-				string[] lines = (e.RawBytes is { } bytes ? reader.Parse(bytes)?.Values : null)
+				string[] lines = (e.RawBytes is { } bytes ? Lines(name, bytes) : null)
 					?? throw new InvalidDataException($"{folder}\\{name} in {Path.GetFileName(path)} is not a .BIN string table.");
 				var picked = indexes.Count == 0
 					? lines.Select((text, i) => new BinLine(i, text))
@@ -49,6 +48,21 @@ internal static class BinQuery {
 		}
 
 		return tables;
+	}
+
+	/// <summary>
+	/// The file's lines through the reader the registry binds to its name: <see cref="Es1DialogTextTransformer"/> for ES1's
+	/// <c>*_TEXT.BIN</c> talking-head text, which puts a version word before the table, else
+	/// <see cref="BinStringFileTransformer"/>; null when the bytes are not that layout.
+	/// </summary>
+	private static string[]? Lines(string name, byte[] bytes) {
+		try {
+			return name.EndsWith("_TEXT.BIN", StringComparison.OrdinalIgnoreCase)
+				? new Es1DialogTextTransformer().Parse(bytes)?.Lines
+				: new BinStringFileTransformer().Parse(bytes)?.Values;
+		} catch (Exception ex) when (ex is InvalidDataException or ArgumentException or IndexOutOfRangeException) {
+			return null;
+		}
 	}
 
 	public static void Write(TextWriter o, IReadOnlyList<BinTable> tables) {

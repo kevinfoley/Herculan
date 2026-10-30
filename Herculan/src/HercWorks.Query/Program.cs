@@ -44,7 +44,8 @@ internal static class Program {
 		                                   fail or have no reader, then each failure's cursor offset
 		  vol [<archive>...] [--name <p>]  every entry of the install's VOL folder archives, or of those
 		                                   named: its archive, folder, name and size
-		  bin <file> [<line>...]           the lines of a .BIN string table in any of those archives,
+		  bin <file> [<line>...]           the lines of a .BIN string table, or of ES1's *_TEXT.BIN
+		                                   talking-head text, in any of those archives,
 		                                   named as name or folder\name (.BIN optional): every line, or
 		                                   the lines named, in decimal or 0x hex, each with its index
 		  chassis [--field <name|offset>]  every chassis' dat\<name>.DAT type record, in MECHS.NAM order:
