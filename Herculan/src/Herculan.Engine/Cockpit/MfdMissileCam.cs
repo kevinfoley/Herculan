@@ -170,6 +170,7 @@ public static class MfdMissileCam {
 		FieldOfView = 2f * MathF.Atan(height / 2f / FocalLengthPixels),
 		PrincipalPoint = new Vector2(centre.X / (float)Math.Max(width, 1), centre.Y / (float)Math.Max(height, 1)),
 		NearPlane = WorldScale.DistanceToRender(NearPlaneUnits),
+		ViewNearPlane = WorldScale.DistanceToRender(NearPlaneUnits),
 	};
 
 	/// <summary>

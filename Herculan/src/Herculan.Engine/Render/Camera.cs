@@ -70,6 +70,21 @@ public sealed class Camera {
 	public float NearPlane { get; set; } = 2f;
 
 	/// <summary>
+	/// The near-plane depth of DBSIM's main view, world units: <c>Sim_InitMissionSession</c>'s
+	/// <c>View_Ctor</c> passes <c>0x100</c> (docs/retail/rendering/view-transform-and-projection.md,
+	/// "Contexts, cameras and lights").
+	/// </summary>
+	public const int MainViewNearPlaneUnits = 0x100;
+
+	/// <summary>
+	/// The near-plane depth the original's view carries (<c>view+0x1e</c>), in render units: what the
+	/// original's own clips test against — the beam draw's, through <c>DAT_006c60b0</c>. It is not
+	/// <see cref="NearPlane"/>, which is the GPU's and sits farther out for depth precision. Defaults
+	/// to the main view's, <see cref="MainViewNearPlaneUnits"/>.
+	/// </summary>
+	public float ViewNearPlane { get; set; } = WorldScale.DistanceToRender(MainViewNearPlaneUnits);
+
+	/// <summary>
 	/// Far plane, in render units. A mission view sets this to the zone's own draw distance —
 	/// <see cref="Terrain.HeightGrid.VisibilityRange"/>, applied through
 	/// <see cref="Scene.Atmosphere.ApplyTo(Camera)"/> — which is where the original's terrain draw

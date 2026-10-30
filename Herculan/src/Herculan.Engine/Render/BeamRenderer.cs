@@ -22,7 +22,9 @@ namespace Herculan.Engine.Render;
 /// ribbon faces the viewer. The four-pixel minimum width is kept (<see cref="MinimumHalfPixels"/>),
 /// measured in the framebuffer the panel is drawn into. Depth testing is on with depth writes off,
 /// where the original has no depth here at all: a beam already ends at whatever it hit, so the test
-/// changes nothing visible except that a shot fired past a ridge is not painted over it.</para>
+/// changes nothing visible except that a shot fired past a ridge is not painted over it. Depth
+/// clamping is on for the straight beams, so the GPU's near plane does not cut a ribbon that
+/// <see cref="ClipToNearPlane"/> has already clipped nearer.</para>
 ///
 /// <para><b>ELF and ELF2 are flat-colored zigzags.</b> A chain tracer's quads are drawn as
 /// <see cref="BeamTracer"/> built them, untextured, in the record's color, and not turned toward the
@@ -129,10 +131,15 @@ public sealed class BeamRenderer : IDisposable {
 		_gl.BindVertexArray(_vertexArray);
 		_gl.BindBuffer(BufferTargetARB.ArrayBuffer, _vertexBuffer);
 
+		// The segments are clipped at the view's own near plane, nearer than the GPU's, so the GPU's
+		// near clip is turned off for them rather than cutting the muzzle end a second time.
+		_gl.Enable(EnableCap.DepthClamp);
+
 		foreach (var tracer in tracers) {
-			Draw(tracer, camera.ViewMatrix, camera.NearPlane, filing);
+			Draw(tracer, camera.ViewMatrix, camera.ViewNearPlane, filing);
 		}
 
+		_gl.Disable(EnableCap.DepthClamp);
 		_gl.BindVertexArray(0);
 		_gl.DepthMask(true);
 	}
@@ -259,6 +266,10 @@ public sealed class BeamRenderer : IDisposable {
 	///
 	/// <para>The original clips whichever end is short and leaves the other, which is what this does;
 	/// a pair with both ends behind the plane is dropped, as its <c>return 0</c> does.</para>
+	///
+	/// <para>The plane is the view's own (<see cref="Camera.ViewNearPlane"/>), not the GPU's farther
+	/// <see cref="Camera.NearPlane"/>: the farther plane puts the cut end deeper, and so nearer the
+	/// screen's centre, than the original draws it.</para>
 	/// </summary>
 	private static bool ClipToNearPlane(Matrix4x4 view, float nearPlane, ref Vector3 start, ref Vector3 end) {
 		// Render space is right-handed with the camera looking down -Z, so a point's depth in front
