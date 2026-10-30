@@ -11,9 +11,8 @@ public delegate int Es1KeySubscriber(ushort code);
 /// The host hands each byte to <see cref="Interrupt"/>, the mode's interrupt handler.
 ///
 /// <para>Left out: the translate table (<c>Keyboard_SetTranslateTable</c>, <c>0006c289</c>), which <c>es2_xref.py</c>
-/// finds no call to. <c>Keyboard_PostCode</c>, <c>Keyboard_RemoveSubscriber</c> and
-/// <c>Keyboard_RemoveSubscriberCodes</c>, which <c>es2_xref.py</c> finds no call to in the simulator (input.md's Open),
-/// are not ported.</para>
+/// finds no call to. <c>Keyboard_PostCode</c> and <c>Keyboard_RemoveSubscriberCodes</c>, which <c>es2_xref.py</c> finds
+/// no call to in the simulator (input.md's Open), are not ported.</para>
 /// </summary>
 public sealed class Es1Keyboard {
 	/// <summary>A subscriber's answer that ends the walk.</summary>
@@ -173,6 +172,36 @@ public sealed class Es1Keyboard {
 				SetBits(slot, codes);
 				return true;
 			}
+		}
+
+		return false;
+	}
+
+	/// <summary>
+	/// <c>Keyboard_RemoveSubscriber</c> (<c>0006c30a</c>, <c>ES1GO 0001ff32</c>): the newest slot holding the callback
+	/// dropped, the later slots moved down one, and in each code's mask that slot's bit dropped and the higher bits moved
+	/// down one. False when no slot holds it. The shell's window removes its key subscriber with it
+	/// (<c>DUIWindow_Deactivate</c>).
+	/// </summary>
+	public bool RemoveSubscriber(Es1KeySubscriber callback) {
+		for (int slot = SubscriberCount - 1; slot >= 0; slot--) {
+			if (!_subscribers[slot].Equals(callback)) {
+				continue;
+			}
+
+			SubscriberCount--;
+			for (int i = slot; i < SubscriberCount; i++) {
+				_subscribers[i] = _subscribers[i + 1];
+			}
+
+			_subscribers[SubscriberCount] = null!;
+			uint below = (1u << slot) - 1;
+			for (int code = 0; code < _codeMasks.Length; code++) {
+				uint mask = _codeMasks[code];
+				_codeMasks[code] = (mask & below) | ((mask >> 1) & ~below);
+			}
+
+			return true;
 		}
 
 		return false;

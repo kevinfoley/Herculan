@@ -1,3 +1,4 @@
+using Herculan.Es1.Input;
 using Herculan.Es1.View;
 
 namespace Herculan.Es1.Shell.Menus;
@@ -41,6 +42,9 @@ public sealed class Es1WindowHotspot {
 public class Es1DUIWindow {
 	/// <summary>The hotspots a window keeps, <c>DUIWindow_AddHotspot</c>'s bound.</summary>
 	public const int MaxHotspots = 15;
+
+	/// <summary>The id of the control <see cref="Activate"/> makes the holding control, 103.</summary>
+	private const short HoldingControlId = 103;
 
 	/// <summary>
 	/// <c>DUIWindow_Ctor</c> (<c>0001abcf</c>)(window, <paramref name="rect"/>): the 15 hotspots, the render context
@@ -282,27 +286,368 @@ public class Es1DUIWindow {
 
 	/// <summary>
 	/// <c>DUIWindow_SetActive</c> (<c>0001c536</c>)(window) (docs/es1/shell/menus.md#the-active-window): the window made
-	/// <see cref="Es1MenuGlobals.Active"/>, <c>DUIWindow_Activate</c> (<c>0001b0ff</c>), and
-	/// <see cref="Es1MenuGlobals.KeysEnabled"/> set.
+	/// <see cref="Es1MenuGlobals.Active"/>, <see cref="Activate"/>, and <see cref="Es1MenuGlobals.KeysEnabled"/> set.
 	/// </summary>
 	public void SetActive(Es1MenuGlobals globals) {
 		globals.Active = this;
-		// PLACEHOLDER: DUIWindow_Activate (0001b0ff): the enabled control 103 made pushed and the holding control, the window's
-		// key subscriber registered unless -X, and DUIWindow_FocusIndex set to the control under the pointer; P2b's input.
+		Activate(globals);
 		globals.KeysEnabled = true;
 	}
 
 	/// <summary>
+	/// <c>DUIWindow_Activate</c> (<c>0001b0ff</c>)(window): <see cref="Es1MenuGlobals.PressedIndex"/> set to the first
+	/// enabled control with id 103, −1 for none; one found is made pushed and changed, the holding control, and has its slot
+	/// <c>+0xc</c> called; unless <c>-X</c>, the window's key subscriber registered for its key list; and
+	/// <see cref="Es1MenuGlobals.FocusIndex"/> set to the control under the pointer, relative to the window.
+	/// </summary>
+	private void Activate(Es1MenuGlobals globals) {
+		globals.PressedIndex = FindEnabledControlById(HoldingControlId);
+		if (globals.PressedIndex != -1) {
+			var control = Controls[globals.PressedIndex];
+			control.State = Es1DUIControl.Pushed;
+			control.Changed = true;
+			globals.HeldIndex = globals.PressedIndex;
+			globals.Holding = true;
+			control.Invalidate();
+		}
+
+		if (!globals.DebugMode) {
+			// 00027bbf, the keyboard device's getter, whose answer is dropped.
+			globals.Keyboard?.AddSubscriber(globals.KeySubscriber, Keys.ToArray());
+		}
+
+		globals.FocusIndex = HitControl(globals.Pointer.X - Rect.X0, globals.Pointer.Y - Rect.Y0);
+	}
+
+	/// <summary>
 	/// <c>DUIWindow_ClearActive</c> (<c>0001c57c</c>): <c>DUIWindow_Deactivate</c> (<c>0001b25b</c>), which sets
-	/// <see cref="Es1MenuGlobals.HeldIndex"/> to −1 and clears <see cref="Es1MenuGlobals.Holding"/>, then
-	/// <see cref="Es1MenuGlobals.Active"/> and <see cref="Es1MenuGlobals.KeysEnabled"/> cleared.
+	/// <see cref="Es1MenuGlobals.HeldIndex"/> to −1, clears <see cref="Es1MenuGlobals.Holding"/> and removes the window's
+	/// key subscriber, whatever <c>-X</c> is; then <see cref="Es1MenuGlobals.Active"/> and
+	/// <see cref="Es1MenuGlobals.KeysEnabled"/> cleared.
 	/// </summary>
 	public static void ClearActive(Es1MenuGlobals globals) {
 		globals.HeldIndex = -1;
 		globals.Holding = false;
-		// PLACEHOLDER: DUIWindow_Deactivate's 00027bbf and Keyboard_RemoveSubscriber(DUIWindow_KeySubscriber); the key
-		// subscriber is P2b's input and is never registered until it lands.
+		// 00027bbf, the keyboard device's getter, whose answer is dropped.
+		globals.Keyboard?.RemoveSubscriber(globals.KeySubscriber);
 		globals.Active = null;
 		globals.KeysEnabled = false;
+	}
+
+	/// <summary>
+	/// Whether <paramref name="index"/> names one of the controls. Retail indexes the array whatever the index is, reading
+	/// past it for −1 (<c>DUIWindow_Tracking</c> outlives the pressed index that <c>Tab</c>, a key and a new window clear);
+	/// the input's engine guards skip such an index.
+	/// </summary>
+	public bool HasControl(short index) => index >= 0 && index < Controls.Count;
+
+	/// <summary>
+	/// The holding control let go of, as <c>DUIWindow_OnPress</c> and <c>DUIWindow_PressControl</c> do it while
+	/// <see cref="Es1MenuGlobals.Holding"/> is set: up and changed, with no slot called, <see cref="Es1MenuGlobals.Holding"/>
+	/// cleared and <see cref="Es1MenuGlobals.HeldIndex"/> −1.
+	/// </summary>
+	private void LetGoOfHeld(Es1MenuGlobals globals) {
+		if (!globals.Holding) {
+			return;
+		}
+
+		if (HasControl(globals.HeldIndex)) {
+			Controls[globals.HeldIndex].State = Es1DUIControl.Up;
+			Controls[globals.HeldIndex].Changed = true;
+		}
+
+		globals.Holding = false;
+		globals.HeldIndex = -1;
+	}
+
+	/// <summary>A control's message posted to <see cref="Es1MenuGlobals.PendingMessage"/>: (0, the index, its slot <c>+0x2c</c>, its id).</summary>
+	private void Post(Es1MenuGlobals globals, short index) {
+		var control = Controls[index];
+		globals.PendingMessage = new Es1MenuMessage(0, index, control.GetValue(), control.Id);
+	}
+
+	/// <summary>
+	/// <c>DUIWindow_OnPress</c> (<c>0001b436</c>)(window, <paramref name="x"/>, <paramref name="y"/>)
+	/// (docs/es1/shell/menus.md#the-mouse), the point on the screen: the holding control let go of;
+	/// <see cref="Es1MenuGlobals.PressedIndex"/> the control under the point; one found made pushed and changed, given the
+	/// point relative to the window through its slot <c>+0x38</c> and <see cref="Es1MenuGlobals.Tracking"/> set when it
+	/// follows the pointer (tracking 1), or given the point and made the holding control when it holds the input (2), and
+	/// its slot <c>+0xc</c> called; the hotspot under the point marked pressed.
+	/// </summary>
+	public void OnPress(Es1MenuGlobals globals, int x, int y) {
+		x -= Rect.X0;
+		y -= Rect.Y0;
+		LetGoOfHeld(globals);
+		globals.PressedIndex = HitControl(x, y);
+		if (globals.PressedIndex != -1) {
+			var control = Controls[globals.PressedIndex];
+			control.State = Es1DUIControl.Pushed;
+			control.Changed = true;
+			if (control.Tracking == 1) {
+				control.SetTrackPoint(x, y);
+				globals.Tracking = true;
+			} else if (control.Tracking == 2) {
+				control.SetTrackPoint(x, y);
+				globals.HeldIndex = globals.PressedIndex;
+				globals.Holding = true;
+			}
+
+			control.Invalidate();
+		}
+
+		MarkHotspot(x, y);
+	}
+
+	/// <summary>
+	/// <c>DUIWindow_OnRelease</c> (<c>0001b683</c>)(window, <paramref name="x"/>, <paramref name="y"/>), the point on the
+	/// screen: <see cref="Es1MenuGlobals.PressedIndex"/> becomes the control under the point; one found posts its message
+	/// when it is the control pressed before, is put up and changed with its slot <c>+0xc</c> unless it holds the input, and
+	/// <see cref="Es1MenuGlobals.PressedIndex"/> becomes −1; the hotspot under the point marked pressed.
+	/// </summary>
+	public void OnRelease(Es1MenuGlobals globals, int x, int y) {
+		x -= Rect.X0;
+		y -= Rect.Y0;
+		short pressed = globals.PressedIndex;
+		globals.PressedIndex = HitControl(x, y);
+		if (globals.PressedIndex != -1) {
+			if (globals.PressedIndex == pressed) {
+				Post(globals, globals.PressedIndex);
+			}
+
+			var control = Controls[globals.PressedIndex];
+			if (control.Tracking != 2) {
+				control.State = Es1DUIControl.Up;
+				control.Changed = true;
+				control.Invalidate();
+			}
+
+			globals.PressedIndex = -1;
+		}
+
+		MarkHotspot(x, y);
+	}
+
+	/// <summary>
+	/// <c>DUIWindow_OnDrag</c> (<c>0001b8fc</c>)(window, <paramref name="x"/>, <paramref name="y"/>), the point on the
+	/// screen: <see cref="Es1MenuGlobals.FocusIndex"/> becomes the control under the point; with none pressed nothing more.
+	/// The pressed control, when it is the one under the point or holds the input, is made pushed from up, and otherwise up
+	/// from pushed, each change changed and followed by its slot <c>+0xc</c>; the hotspot under the point marked pressed.
+	/// A pressed index past the controls is taken as none, an engine guard.
+	/// </summary>
+	public void OnDrag(Es1MenuGlobals globals, int x, int y) {
+		x -= Rect.X0;
+		y -= Rect.Y0;
+		globals.FocusIndex = HitControl(x, y);
+		if (globals.PressedIndex == -1 || !HasControl(globals.PressedIndex)) {
+			return;
+		}
+
+		var control = Controls[globals.PressedIndex];
+		if (globals.FocusIndex == globals.PressedIndex || control.Tracking == 2) {
+			if (control.State == Es1DUIControl.Up) {
+				control.State = Es1DUIControl.Pushed;
+				control.Changed = true;
+				control.Invalidate();
+			}
+		} else if (control.State == Es1DUIControl.Pushed) {
+			control.State = Es1DUIControl.Up;
+			control.Changed = true;
+			control.Invalidate();
+		}
+
+		MarkHotspot(x, y);
+	}
+
+	/// <summary>The hotspot <see cref="HitHotspot"/> finds at the point, relative to the window, marked pressed.</summary>
+	private void MarkHotspot(int x, int y) {
+		short hotspot = HitHotspot(x, y);
+		if (hotspot != -1) {
+			Hotspots[hotspot].Pressed = true;
+		}
+	}
+
+	/// <summary>
+	/// <c>DUIWindow_PressControl</c> (<c>0001b5bb</c>)(window, <paramref name="index"/>) (docs/es1/shell/menus.md#the-keys):
+	/// for an index of 0 or more whose control is not inactive, the holding control let go of, the control made
+	/// <see cref="Es1MenuGlobals.PressedIndex"/>, pushed and changed, and its slot <c>+0xc</c> called. An index past the
+	/// controls does nothing, an engine guard.
+	/// </summary>
+	public void PressControl(Es1MenuGlobals globals, short index) {
+		if (!HasControl(index) || Controls[index].State == Es1DUIControl.Inactive) {
+			return;
+		}
+
+		LetGoOfHeld(globals);
+		globals.PressedIndex = index;
+		var control = Controls[index];
+		control.State = Es1DUIControl.Pushed;
+		control.Changed = true;
+		control.Invalidate();
+	}
+
+	/// <summary>
+	/// <c>DUIWindow_ReleaseControl</c> (<c>0001b7d5</c>)(window, <paramref name="index"/>): for an index of 0 or more whose
+	/// control is not inactive, the control's message posted when it was <see cref="Es1MenuGlobals.PressedIndex"/>, the
+	/// control put up and changed with its slot <c>+0xc</c> unless it holds the input, and
+	/// <see cref="Es1MenuGlobals.PressedIndex"/> −1. An index past the controls does nothing, an engine guard.
+	/// </summary>
+	public void ReleaseControl(Es1MenuGlobals globals, short index) {
+		if (!HasControl(index) || Controls[index].State == Es1DUIControl.Inactive) {
+			return;
+		}
+
+		short pressed = globals.PressedIndex;
+		globals.PressedIndex = index;
+		if (index == pressed) {
+			Post(globals, index);
+		}
+
+		var control = Controls[index];
+		if (control.Tracking != 2) {
+			control.State = Es1DUIControl.Up;
+			control.Changed = true;
+			control.Invalidate();
+		}
+
+		globals.PressedIndex = -1;
+	}
+
+	/// <summary>
+	/// <c>DUIWindow_SendChar</c> (<c>0001bb85</c>)(window, <paramref name="word"/>): while a control holds the input, a
+	/// word with <c>0x4000</c> and without <c>0x8000</c>, a typed character, goes to its slot <c>+0x3c</c> as its low byte.
+	/// </summary>
+	public void SendChar(Es1MenuGlobals globals, ushort word) {
+		if (globals.Holding && (word & 0x4000) != 0 && (word & 0x8000) == 0 && HasControl(globals.HeldIndex)) {
+			Controls[globals.HeldIndex].SetTextFromTable((short)(word & 0xff));
+		}
+	}
+
+	/// <summary>
+	/// <c>DUIWindow_SendKey</c> (<c>0001bbd2</c>)(window, <paramref name="word"/>): while a control holds the input, the
+	/// word's low seven bits (<c>AND DI,0x7f</c>) go to its slot <c>+0x40</c>.
+	/// </summary>
+	public void SendKey(Es1MenuGlobals globals, ushort word) {
+		if (globals.Holding && HasControl(globals.HeldIndex)) {
+			Controls[globals.HeldIndex].SendKey((short)(word & 0x7f));
+		}
+	}
+
+	/// <summary>
+	/// <c>DUIWindow_KeySubscriber</c> (<c>0001ba73</c>)(<paramref name="code"/>) (docs/es1/shell/menus.md#the-keys), the
+	/// keyboard subscriber <see cref="Activate"/> registers for the window's key list: 1 while
+	/// <see cref="Es1MenuGlobals.KeysEnabled"/> is clear; then the repeat test and the release conversion, below; the
+	/// code kept as <see cref="Es1MenuGlobals.LastKey"/>; 2 for a code with <c>Alt</c>, <c>Ctrl</c> or <c>Shift</c>
+	/// (<c>0xe00</c>); and the scan code looked up among the active window's enabled controls' keys, straight into
+	/// <see cref="Es1MenuGlobals.PressedIndex"/>. Found, the control takes the pointer and the focus and is pressed on a
+	/// press code or released on a release code, and the answer is 1; otherwise 2.
+	///
+	/// <para>The repeat test is <c>(LastKey == 0xff) &amp; code</c> and the release conversion
+	/// <c>(code == 0x7f) &amp; LastKey</c> (disassembly <c>0001ba8e</c>–<c>0001baf2</c>): the source's <c>==</c> binds
+	/// before its <c>&amp;</c>, so the first answers 2 only after the code <c>0xff</c> and for an odd code, and the second
+	/// makes the code the last one's release only for the code <c>0x7f</c> after an odd press. Ported as the binary has
+	/// them; a held key's repeats press its control again, which shows nothing new.</para>
+	/// </summary>
+	public static int KeySubscriber(Es1MenuGlobals globals, ushort code) {
+		if (!globals.KeysEnabled) {
+			return Es1Keyboard.Claimed;
+		}
+
+		ushort last = (ushort)globals.LastKey;
+		if (last == 0xff && (code & 1) != 0) {
+			return Es1Keyboard.PassOn;
+		}
+
+		if (last != 0 && (last & 0x80) == 0 && code == 0x7f && (last & 1) != 0) {
+			code = (ushort)(last | 0x80);
+		}
+
+		globals.LastKey = (short)code;
+		if ((code & 0xe00) != 0) {
+			return Es1Keyboard.PassOn;
+		}
+
+		// Retail reads the window DUIWindow_Active points at; with none the key goes on, an engine guard.
+		if (globals.Active is not { } window) {
+			return Es1Keyboard.PassOn;
+		}
+
+		globals.PressedIndex = window.FindControlByKey((byte)(code & 0x7f));
+		if (globals.PressedIndex == -1) {
+			return Es1Keyboard.PassOn;
+		}
+
+		window.PointAtControl(globals, globals.PressedIndex);
+		globals.FocusIndex = globals.PressedIndex;
+		if ((code & 0x80) != 0) {
+			window.ReleaseControl(globals, globals.PressedIndex);
+		} else {
+			window.PressControl(globals, globals.PressedIndex);
+		}
+
+		return Es1Keyboard.Claimed;
+	}
+
+	/// <summary>
+	/// <c>DUIWindow_HandleNavKey</c> (<c>0001cc86</c>)(<paramref name="code"/>) (docs/es1/shell/menus.md#the-keys), the
+	/// dialog's key handler: nothing without an active window; otherwise by the seven codes of the table at
+	/// <c>0007f0e0</c>. <c>Tab</c> puts the pressed control up and changed, with no slot called, and moves the focus to the
+	/// next focusable control, wrapping by the remainder of the count; <c>Shift+Tab</c> and <c>Alt+Tab</c> move it to the
+	/// previous, a focus below 1 taken as the count first; both then put the pointer on it. <c>Enter</c> presses the
+	/// focused control and its release releases it.
+	///
+	/// <para><b>Engine guard:</b> retail divides by the control count and walks until a focusable control turns up, so a
+	/// window with no controls faults and one with no focusable control hangs; here either leaves the focus as it is.</para>
+	/// </summary>
+	public static void HandleNavKey(Es1MenuGlobals globals, ushort code) {
+		if (globals.Active is not { } window) {
+			return;
+		}
+
+		switch (code) {
+			case 0x0f:
+				if (!window.Controls.Exists(c => c.Focusable)) {
+					return;
+				}
+
+				do {
+					if (globals.PressedIndex != -1) {
+						if (window.HasControl(globals.PressedIndex)) {
+							window.Controls[globals.PressedIndex].State = Es1DUIControl.Up;
+							window.Controls[globals.PressedIndex].Changed = true;
+						}
+
+						globals.PressedIndex = -1;
+					}
+
+					globals.FocusIndex = (short)((globals.FocusIndex + 1) % window.Controls.Count);
+				} while (!window.Controls[globals.FocusIndex].Focusable);
+
+				window.PointAtControl(globals, globals.FocusIndex);
+				break;
+			case 0x80f:
+			case 0x20f:
+				if (!window.Controls.Exists(c => c.Focusable)) {
+					return;
+				}
+
+				do {
+					if (globals.FocusIndex < 1) {
+						globals.FocusIndex = (short)window.Controls.Count;
+					}
+
+					globals.FocusIndex--;
+				} while (!window.Controls[globals.FocusIndex].Focusable);
+
+				window.PointAtControl(globals, globals.FocusIndex);
+				break;
+			case 0x1c:
+			case 0x81c:
+				window.PressControl(globals, globals.FocusIndex);
+				break;
+			case 0x9c:
+			case 0x89c:
+				window.ReleaseControl(globals, globals.FocusIndex);
+				break;
+		}
 	}
 }

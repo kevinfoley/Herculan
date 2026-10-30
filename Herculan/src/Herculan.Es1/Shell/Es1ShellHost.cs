@@ -12,11 +12,12 @@ namespace Herculan.Es1.Shell;
 
 /// <summary>
 /// ES1's shell, <c>GO.EXE</c>'s <c>Shell_Main</c> (<c>00012ec7</c>), in the core's <see cref="FrontEndWindow"/>
-/// (docs/es1/shell/startup.md): the start-up, the frame loop and the shutdown, as far as the main menu's picture under the
-/// cursor. The devices are <see cref="Es1ShellDevices"/>, the shared data <see cref="Es1ShellData"/>, the frame and its
-/// input <see cref="Es1ShellFrame"/>, the screens <see cref="Es1ShellScreens"/> over <see cref="Es1ShellBackdrop"/> and
-/// <see cref="Es1DirtyList"/> with the menus' window globals <see cref="Es1MenuGlobals"/>, and the frame-time scale <see cref="Es1ShellTime"/>; the monitor is <see cref="Es1Monitor"/>
-/// on the display.
+/// (docs/es1/shell/startup.md): the start-up, the frame loop and the shutdown, as far as the main menu and its input. The
+/// devices are <see cref="Es1ShellDevices"/>, the shared data <see cref="Es1ShellData"/>, the frame and its input
+/// <see cref="Es1ShellFrame"/>, the screens <see cref="Es1ShellScreens"/> over <see cref="Es1ShellBackdrop"/> and
+/// <see cref="Es1DirtyList"/> with the menus' window globals <see cref="Es1MenuGlobals"/>, the mouse's callbacks into the
+/// menus <see cref="Es1ShellMouse"/>, and the frame-time scale <see cref="Es1ShellTime"/>; the monitor is
+/// <see cref="Es1Monitor"/> on the display.
 ///
 /// <para>The start-up's steps 1 to 6 run before the window opens, so a step that ends the program ends it without one;
 /// steps 7 on and the frame loop run in the window, on host time (<see cref="Es1ShellFrame"/>); the shutdown runs once
@@ -84,6 +85,7 @@ public static class Es1ShellHost {
 		private readonly Es1ShellBackdrop _backdrop;
 		private readonly Es1ShellScreens _screens;
 		private readonly Es1ShellFrame _frame;
+		private readonly Es1ShellMouse _shellMouse;
 		private Es1ShellData? _data;
 		private Es1Monitor? _monitor;
 
@@ -99,6 +101,7 @@ public static class Es1ShellHost {
 			_backdrop = new Es1ShellBackdrop(_devices.Display, content, _dirty);
 			_screens = new Es1ShellScreens(_devices, _backdrop, _dirty, content, _globals);
 			_frame = new Es1ShellFrame(_devices, _backdrop, _dirty, _screens, _time, switches.DebugMode);
+			_shellMouse = new Es1ShellMouse(_globals);
 		}
 
 		public int Run(string imguiFontPath, string imguiItalicFontPath, string? screenshotPath) {
@@ -163,7 +166,7 @@ public static class Es1ShellHost {
 			_data = data;
 
 			// 8. The devices; 9. the frame-time scale; 10. a frame shown.
-			_devices.Init(_content, _installRoot, _switches.DebugMode, biosShiftFlags);
+			_devices.Init(_content, _installRoot, _switches.DebugMode, biosShiftFlags, _globals);
 			_time.Init(_devices.Timer);
 			foreach (var wait in _frame.PresentFrame()) {
 				yield return wait;
@@ -173,9 +176,9 @@ public static class Es1ShellHost {
 			// through, which this engine does not keep.
 			data.Load(_content, _devices.Preferences!, _installRoot, DateTimeOffset.UtcNow.ToUnixTimeSeconds());
 
-			// 13. PLACEHOLDER: maybe_SncList_Init (the .SNC list), ShellMap_LoadResources (the briefing map's bitmaps and its
-			// timer callback) and ShellMouse_AddCallbacks (the mouse's three callbacks into the active window), later parts'.
-			// Until the last lands the cursor stays where the start-up put it.
+			// 13. PLACEHOLDER: maybe_SncList_Init (the .SNC list) and ShellMap_LoadResources (the briefing map's bitmaps and its
+			// timer callback), later modules'. Then ShellMouse_AddCallbacks, the mouse's three callbacks into the active window.
+			_shellMouse.AddCallbacks(_devices.Mouse);
 
 			// 14. The fonts and styles.
 			data.LoadStylesAndFonts(_content);
@@ -208,9 +211,10 @@ public static class Es1ShellHost {
 				return AssertExitStatus;
 			}
 
-			// 3. Shell_CloseScreens. 4. ShellMap_ReleaseResources, Shell_FreeData and ShellMouse_RemoveCallbacks, which hold
-			// nothing the collector does not free. 5. Shell_ShutdownDevices.
+			// 3. Shell_CloseScreens. 4. ShellMap_ReleaseResources and Shell_FreeData, which hold nothing the collector does not
+			// free, and ShellMouse_RemoveCallbacks. 5. Shell_ShutdownDevices.
 			_screens.CloseScreens();
+			_shellMouse.RemoveCallbacks(_devices.Mouse);
 			_devices.Shutdown();
 
 			// 6. VolRStream_DeleteGroup and Mem_HeapOff, and under -X an INT 3, which this engine does not raise.

@@ -44,8 +44,11 @@ public class Es1Menu {
 	/// <summary><c>+0xa</c>, the <c>GLRectangleRegion</c>: its type-0 region at <c>+0xe</c> with the window's rect at <c>+0x12</c>–<c>+0x21</c>.</summary>
 	public Es1Rect Region { get; set; }
 
-	/// <summary>Slot <c>+8</c>, the menu's message handler: <c>Menu_OnMessage</c> (<c>0003b764</c>), nothing.</summary>
-	public virtual void OnMessage(Es1MenuMessage message) {
+	/// <summary>
+	/// Slot <c>+8</c>, the menu's message handler, given the address of <see cref="Es1ShellScreens.HandleMessage"/>'s copy
+	/// of the message, which it may change: <c>Menu_OnMessage</c> (<c>0003b764</c>), nothing.
+	/// </summary>
+	public virtual void OnMessage(ref Es1MenuMessage message) {
 	}
 
 	/// <summary>Slot <c>+4</c>, <c>Menu_Dtor</c> (<c>0003b6d1</c>)(menu, flags): the vtables stored back and the menu freed; the window and the background are <see cref="Close"/>'s.</summary>
@@ -169,7 +172,7 @@ public sealed class Es1MainMenu : Es1Menu {
 	}
 
 	/// <summary>Slot <c>+8</c>, <c>MainMenu_OnMessage</c> (<c>0002a70a</c>) (docs/es1/shell/main-menu.md#the-buttons).</summary>
-	public override void OnMessage(Es1MenuMessage message) {
+	public override void OnMessage(ref Es1MenuMessage message) {
 		// PLACEHOLDER: MainMenu_OnMessage (0002a70a), the main menu's buttons' cases, P3's; until it lands a message changes nothing.
 	}
 

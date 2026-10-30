@@ -1,6 +1,7 @@
 using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Content;
 using Herculan.Es1.Input;
+using Herculan.Es1.Shell.Menus;
 using Herculan.Es1.Sim;
 using Herculan.Es1.View;
 
@@ -26,6 +27,9 @@ public sealed class Es1ShellDevices {
 
 	// Shell_BlinkTick's counter, 0007e7e8.
 	private int _blinkCounter;
+
+	// The menus' globals, whose active window Shell_NavKeySubscriber's dialog key handler acts on; none before Init.
+	private Es1MenuGlobals? _globals;
 
 	/// <summary><c>Shell_Timer</c> (<c>00082758</c>), <c>Kind0InputDevice_Ctor</c>(0, <c>0x26d3</c>): the PC timer at the simulator's rate.</summary>
 	public Es1SimClock Timer { get; } = new();
@@ -61,10 +65,14 @@ public sealed class Es1ShellDevices {
 	public Es1Preferences? Preferences { get; private set; }
 
 	/// <summary>
-	/// <c>Shell_InitDevices</c>, in its order; <paramref name="debugMode"/> is <c>-X</c>'s <c>Shell_DebugMode</c>.
+	/// <c>Shell_InitDevices</c>, in its order; <paramref name="debugMode"/> is <c>-X</c>'s <c>Shell_DebugMode</c>, which
+	/// with the keyboard is handed to the menus' <paramref name="globals"/>, whose dialog key handler
+	/// <c>Shell_NavKeySubscriber</c> calls.
 	/// </summary>
 	/// <param name="biosShiftFlags">The host's lock and shift state, <see cref="Es1HostKeyboard.ReadBiosShiftFlags"/>.</param>
-	public void Init(GameContent content, string installRoot, bool debugMode, byte biosShiftFlags) {
+	public void Init(GameContent content, string installRoot, bool debugMode, byte biosShiftFlags, Es1MenuGlobals globals) {
+		_globals = globals;
+		globals.DebugMode = debugMode;
 		// 0005152c (ClassItem_RegisterBucket) and Light_ResetSystem set up the 3D library, which no ported shell screen
 		// draws with; Assert_AddHook(Shell_AssertCleanupHook) adds the fatal assert's hook, and no ported step of the shell
 		// asserts.
@@ -103,9 +111,10 @@ public sealed class Es1ShellDevices {
 		Keyboard = new Es1Keyboard(biosShiftFlags, debugMode ? Es1Keyboard.Int9Mode : Es1Keyboard.Int15Mode) {
 			// PLACEHOLDER: the BIOS's translation of the keys no subscriber claims into its key buffer, which DOS's
 			// function 8 reads (Input_ReadDeviceEvent's mode 0x20000), is not ported, so no typed character reaches the
-			// input word; the menus that take them are P2b's.
+			// input word, and DUIWindow_SendChar gets only Q, X and C's; no ported menu has a control that takes them.
 			Bios = null,
 		};
+		globals.Keyboard = Keyboard;
 		Keyboard.AddSubscriberCodes(Keyboard.QueueSubscriber, QueueCodes);
 		if (!debugMode) {
 			Keyboard.AddSubscriber(NavKeySubscriber, NavKeyCodes);
@@ -189,8 +198,10 @@ public sealed class Es1ShellDevices {
 	/// claimed.
 	/// </summary>
 	private int NavKeySubscriber(ushort code) {
-		// PLACEHOLDER: DUIWindow_HandleNavKey (0001cc86)(code & ~0x1000), the open dialog's key handler, is P2b's.
-		_ = code;
+		if (_globals != null) {
+			Es1DUIWindow.HandleNavKey(_globals, (ushort)(code & ~Es1Keyboard.NumLockBit));
+		}
+
 		return Es1Keyboard.Claimed;
 	}
 }

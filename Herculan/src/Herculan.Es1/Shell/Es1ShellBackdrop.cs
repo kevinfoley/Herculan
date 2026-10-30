@@ -17,6 +17,16 @@ public sealed class Es1ShellBackdrop {
 	/// <summary>The music track of each group, 1000 to 8000: the eight words at <c>000817d0</c>.</summary>
 	private static readonly short[] GroupTracks = [1, 1, 3, 4, 3, 3, 1, 0];
 
+	/// <summary>The words at <c>0007ea94</c>, one per campaign, that groups 3000 and 5000 add to their number.</summary>
+	private static readonly short[] CampaignWords = [0, 1, 2, 3, 1, 2, 3, 1];
+
+	/// <summary>
+	/// The word at <c>0007ea94</c> + 2 × the current career record's campaign <c>+6</c> (docs/es1/shell/menus.md#the-backdrop).
+	/// PLACEHOLDER: the roster's records are zero in the image and only the career screens (S3's) load one, so the
+	/// campaign is taken as the zeroed record's 0, which is retail's for every session that loads no career.
+	/// </summary>
+	private static short CampaignWord => CampaignWords[0];
+
 	private readonly Es1VideoMemory _display;
 	private readonly GameContent _content;
 	private readonly Es1DirtyList _dirty;
@@ -39,8 +49,8 @@ public sealed class Es1ShellBackdrop {
 	/// <summary>The byte <c>0007fcd4</c>: <see cref="Palette"/> is to be uploaded.</summary>
 	public bool PaletteDue { get; set; }
 
-	/// <summary><c>Shell_MusicTrack</c> (<c>00081938</c>), −1 in the image.</summary>
-	public short MusicTrack { get; private set; } = -1;
+	/// <summary><c>Shell_MusicTrack</c> (<c>00081938</c>), −1 in the image; <see cref="Show"/> and <c>Shell_HandleMessage</c> set it.</summary>
+	public short MusicTrack { get; set; } = -1;
 
 	/// <summary>The word <c>00081936</c>, the track last asked for, −1 in the image.</summary>
 	public short LastTrack { get; private set; } = -1;
@@ -77,17 +87,12 @@ public sealed class Es1ShellBackdrop {
 
 	/// <summary>
 	/// <c>ShellBackdrop_LoadPalette</c> (<c>0003950a</c>)(backdrop, <paramref name="group"/>): the palette released, then
-	/// <c>res32\regn&lt;group&gt;.dpl</c> loaded into it and <see cref="PaletteDue"/> set.
+	/// <c>res32\regn&lt;group&gt;.dpl</c> loaded into it, group 3000 taking 3000 plus <see cref="CampaignWord"/>, and
+	/// <see cref="PaletteDue"/> set.
 	/// </summary>
 	public void LoadPalette(short group) {
 		Palette = null;
-		if (group == 3000) {
-			// PLACEHOLDER: group 3000 takes 3000 plus the word at 0007ea94 + 2 × the current career record's +6, the
-			// careers being S3's; no screen of this part opens it.
-			throw new NotImplementedException("Backdrop group 3000 needs the current career record, which is not ported.");
-		}
-
-		string name = $"REGN{group}.DPL";
+		string name = $"REGN{(group == 3000 ? group + CampaignWord : group)}.DPL";
 		Palette = _content.Read("res32", name) is { } bytes ? new DynamixPaletteTransformer().Parse(bytes) : null;
 		if (Palette == null) {
 			Console.Error.WriteLine($"res32\\{name} is missing or unreadable: the palette is not changed.");
@@ -138,9 +143,7 @@ public sealed class Es1ShellBackdrop {
 		1490 => 7000,
 		1499 => 3000,
 		1500 or 1501 => 6000,
-		// PLACEHOLDER: 5000 plus the word at 0007ea94 + 2 × the current career record's +6, the careers being S3's; no
-		// screen of this part asks for it.
-		1510 or 1520 => throw new NotImplementedException("Screens 1510 and 1520 need the current career record, which is not ported."),
+		1510 or 1520 => (short)(5000 + CampaignWord),
 		1700 or 1710 or 1900 or 1800 or 1820 or 2000 or 1610 or 5555 => 4000,
 		_ => current,
 	};

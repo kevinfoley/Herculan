@@ -1,6 +1,7 @@
 using HercWorks.Core.Data.File.Dyn;
 using Herculan.Es1.Host;
 using Herculan.Es1.Input;
+using Herculan.Es1.Shell.Menus;
 using Herculan.Es1.View;
 
 namespace Herculan.Es1.Shell;
@@ -37,6 +38,9 @@ public sealed class Es1ShellFrame {
 
 	/// <summary>The latched buttons, <c>+0x1d</c>–<c>+0x20</c> of the block.</summary>
 	private const int LatchedButtons = 4;
+
+	/// <summary>The codes <c>Shell_HandleInput</c> hands <c>DUIWindow_HandleNavKey</c>: <c>Tab</c>, <c>Enter</c> and <c>Enter</c>'s release.</summary>
+	private const ushort NavTab = 0x0f, NavEnter = 0x1c, NavEnterRelease = 0x9c;
 
 	private readonly Es1ShellDevices _devices;
 	private readonly Es1ShellBackdrop _backdrop;
@@ -200,7 +204,7 @@ public sealed class Es1ShellFrame {
 		_dirty.Flush(devices.PairB, Es1ShellBackdrop.BackgroundPage);
 		if (SyncPointer) {
 			display.Cursor.SyncPosition(Pointer.X, Pointer.Y);
-			// PLACEHOLDER: 00027bc9, between the two, is unread.
+			// 00027bc9, the mouse device's getter, whose answer is dropped.
 			devices.Mouse.SetPosition(Pointer.X, Pointer.Y);
 		}
 	}
@@ -219,7 +223,8 @@ public sealed class Es1ShellFrame {
 
 	/// <summary>
 	/// The frame loop's pass (docs/es1/shell/startup.md#the-frame-loop), in retail's order: a frame shown, the input read
-	/// and handled, the quit flag set on screen 9999, the screen's work, the quit question, and the frame-time scale.
+	/// and handled, the quit flag set on screen 9999, the pending menu message handled, the screen's work, the quit
+	/// question, and the frame-time scale.
 	/// </summary>
 	public IEnumerable<Es1ShellWait> Pass() {
 		foreach (var wait in PresentFrame()) {
@@ -233,10 +238,17 @@ public sealed class Es1ShellFrame {
 			QuitFlag = true;
 		}
 
-		// PLACEHOLDER: Shell_HandleMessage (0003c7d8) on the pending menu message, P2b's, and on its answer of 0 Ttm_RunAll,
-		// the shell's unported script interpreter's.
+		foreach (var wait in _screens.HandleMessage(_screens.Globals.PendingMessage, PresentFrame)) {
+			yield return wait;
+		}
+
+		if (!_screens.MessageChangedScreen) {
+			// PLACEHOLDER: Ttm_RunAll, the shell's script interpreter's, which is not ported.
+		}
+
 		_screens.TickScreen();
-		// PLACEHOLDER: 0001098e (the mouse's event queue), P2b's; MessageBox_Run (000382f6) and the text box 00018dcb, P3's.
+		// 0001098e, the widget root's mouse queue (Shell_PollInput's), does nothing until its queue is started.
+		// PLACEHOLDER: MessageBox_Run (000382f6) and the text box 00018dcb, P3's.
 		if (QuitRequested) {
 			// PLACEHOLDER: Shell_OpenQuitAlert (000408cc), which opens screen 999, the quit question, P3's; until it lands
 			// a quit key does nothing visible.
@@ -248,12 +260,20 @@ public sealed class Es1ShellFrame {
 	}
 
 	/// <summary>
-	/// <c>Shell_PollInput</c> (<c>0004de3a</c>): <c>Input_PollDeviceBlock</c> (<c>000277d8</c>) on the shell's devices,
-	/// then each of the four buttons <c>+0x1d</c>–<c>+0x20</c> with its latch set inverted while it still equals the
-	/// latched value and the latch dropped once it differs, and the keyboard word's Num Lock and Scroll Lock bits cleared.
+	/// <c>Shell_PollInput</c> (<c>0004de3a</c>): <c>0001098e</c>, then <c>Input_PollDeviceBlock</c> (<c>000277d8</c>) on
+	/// the shell's devices, then each of the four buttons <c>+0x1d</c>–<c>+0x20</c> with its latch set inverted while it
+	/// still equals the latched value and the latch dropped once it differs, and the keyboard word's Num Lock and Scroll
+	/// Lock bits cleared.
+	///
+	/// <para><c>0001098e</c> is the shell's copy of the simulator's <c>CockpitMouse_ProcessQueue</c> for a widget root, not
+	/// the menus' path: the driver calls the menus' callbacks itself (<see cref="Menus.Es1ShellMouse"/>). It returns at once
+	/// until <c>maybe_MouseEventQueue_Start</c> (<c>00010559</c>, which <c>Shell_PrepareMission</c> and screen 1320's case
+	/// call) has registered its queue's callback and <c>0001070d</c> has set its root, so on every ported screen it does
+	/// nothing.</para>
 	/// </summary>
 	public Es1LiveBlock PollInput() {
-		// PLACEHOLDER: 0001098e, the mouse's event queue, which runs first, is unread.
+		// PLACEHOLDER: 0001098e's queue, once Shell_PrepareMission (0002a523, INSTANT ACTION's and S2's) or screen 1320's
+		// case starts it.
 		var mouse = _devices.Mouse;
 		var block = new Es1LiveBlock {
 			CommandWord = ReadKeyboardWord(),
@@ -327,7 +347,11 @@ public sealed class Es1ShellFrame {
 					// set and the byte 000809a8 is not 0. No ported screen makes the object, so there is none.
 					break;
 				case 0x0052:
-					// PLACEHOLDER: Insert, DUIWindow_HandleNavKey (0001cc86)(0xf) with prefs.cfg option 10 set, P2b's.
+					// Insert (00012cca): Tab to the dialog while prefs.cfg option 10, the simulator's throttle keys, is set.
+					if (_devices.Preferences is { } preferences && preferences[Es1Preferences.ThrottleKeysOption] != 0) {
+						Es1DUIWindow.HandleNavKey(_screens.Globals, NavTab);
+					}
+
 					break;
 				case 0x0401:
 				case 0x0201:
@@ -340,23 +364,32 @@ public sealed class Es1ShellFrame {
 			}
 		}
 
+		var globals = _screens.Globals;
 		if (block.StickButtons[0] != 0) {
-			// PLACEHOLDER: DUIWindow_HandleNavKey(0x1c), Enter to the dialog, P2b's.
+			Es1DUIWindow.HandleNavKey(globals, NavEnter);
 			LatchButton(1, 1);
 			_enterHeld = true;
 		} else if (_enterHeld) {
-			// PLACEHOLDER: DUIWindow_HandleNavKey(0x9c), Enter's release, P2b's.
+			Es1DUIWindow.HandleNavKey(globals, NavEnterRelease);
 			_enterHeld = false;
 		}
 
 		if (block.StickButtons[1] != 0) {
-			// PLACEHOLDER: DUIWindow_HandleNavKey(0xf), Tab to the dialog, P2b's.
+			Es1DUIWindow.HandleNavKey(globals, NavTab);
 			LatchButton(1, 2);
 		}
 
 		if (!_debugMode && (block.CommandWord & CharacterBit) != 0) {
-			// PLACEHOLDER: DUIWindow_SendChar (0001bb85) with the current menu's window, P2b's.
+			SendCharToMenu(block.CommandWord);
 		}
+	}
+
+	/// <summary>
+	/// <c>DUIWindow_SendChar</c> (<c>0001bb85</c>) with the current menu <c>Shell_CurrentMenu</c> (<c>000817c8</c>)'s
+	/// window <c>+6</c>, while there is a current menu.
+	/// </summary>
+	private void SendCharToMenu(ushort word) {
+		_screens.CurrentMenu?.Window?.SendChar(_screens.Globals, word);
 	}
 
 	/// <summary>
@@ -375,6 +408,15 @@ public sealed class Es1ShellFrame {
 			return;
 		}
 
-		// PLACEHOLDER: DUIWindow_SendChar (0001bb85) with the current menu's window, P2b's.
+		int character = scan switch {
+			0x10 => 'q',
+			0x2d => 'x',
+			_ => 'c',
+		};
+		if ((word & Es1Keyboard.ShiftBit) != 0) {
+			character -= 0x20;
+		}
+
+		SendCharToMenu((ushort)(character | CharacterBit));
 	}
 }

@@ -1,3 +1,5 @@
+using Herculan.Es1.Input;
+
 namespace Herculan.Es1.Shell.Menus;
 
 /// <summary>
@@ -6,17 +8,43 @@ namespace Herculan.Es1.Shell.Menus;
 /// window, the value its slot <c>+0x2c</c> gives, and the target, the control's id.
 /// </summary>
 public readonly record struct Es1MenuMessage(short Code, short Index, short Value, short Target) {
-	/// <summary>The message <c>Shell_HandleMessage</c> resets the pending one to: (−1, −1, 0, 0).</summary>
+	/// <summary>The message <c>Shell_HandleMessage</c> resets the pending one to: (−1, −1, 0, 0), the image's value too.</summary>
 	public static Es1MenuMessage None => new(-1, -1, 0, 0);
 }
 
 /// <summary>
 /// The globals of the shell's window file and the pointer they move (docs/es1/shell/menus.md#globals), each initialised
-/// to the value the image holds. Retail keeps them as statics; here they are one object the shell host owns and hands to
-/// the screens, the windows and the frame, so the input (the active window's activation, the mouse callbacks, the keys)
+/// to the value the image holds, with the pending message the releases post and the two of <c>main.cpp</c>'s the active
+/// window's activation reads (the keyboard and <c>-X</c>). Retail keeps them as statics; here they are one object the
+/// shell host owns and hands to the devices, the screens, the windows, the mouse's callbacks and the frame, so the input
 /// shares them. The object is this engine's invention; every member is retail's.
 /// </summary>
 public sealed class Es1MenuGlobals {
+	public Es1MenuGlobals() {
+		KeySubscriber = code => Es1DUIWindow.KeySubscriber(this, code);
+	}
+
+	/// <summary>
+	/// <c>DUIWindow_KeySubscriber</c> (<c>0001ba73</c>) as the one delegate <c>DUIWindow_Activate</c> registers and
+	/// <c>DUIWindow_Deactivate</c> removes (<see cref="Es1Keyboard.RemoveSubscriber"/> finds it by equality).
+	/// </summary>
+	public Es1KeySubscriber KeySubscriber { get; }
+
+	/// <summary>
+	/// The keyboard library, <c>Shell_KeyboardDevice</c> (<c>0008275c</c>)'s, which <c>DUIWindow_Activate</c> registers the
+	/// window's key subscriber with; set by <see cref="Es1ShellDevices.Init"/>, none before.
+	/// </summary>
+	public Es1Keyboard? Keyboard { get; set; }
+
+	/// <summary><c>Shell_DebugMode</c> (<c>0007fd08</c>), <c>-X</c>: the window's key subscriber is not registered.</summary>
+	public bool DebugMode { get; set; }
+
+	/// <summary>
+	/// <c>Shell_PendingMessage</c> (<c>0007fcb0</c>), which a release posts and the frame loop's step 4 hands to
+	/// <see cref="Es1ShellScreens.HandleMessage"/>; <see cref="Es1MenuMessage.None"/> in the image.
+	/// </summary>
+	public Es1MenuMessage PendingMessage { get; set; } = Es1MenuMessage.None;
+
 	/// <summary><c>DUIWindow_Active</c> (<c>0007f0d0</c>), the window that takes the input; none in the image.</summary>
 	public Es1DUIWindow? Active { get; set; }
 
@@ -37,7 +65,7 @@ public sealed class Es1MenuGlobals {
 
 	/// <summary>
 	/// <c>DUIWindow_InputReady</c> (<c>0007f0dc</c>), set in the image: the mouse's move callback runs only while it is
-	/// set, and the drawing clears it for its run.
+	/// set, and the drawing and the mouse's callbacks clear it for their run.
 	/// </summary>
 	public bool InputReady { get; set; } = true;
 
@@ -48,7 +76,7 @@ public sealed class Es1MenuGlobals {
 	public short LastKey { get; set; }
 
 	/// <summary>
-	/// <c>Shell_SyncPointer</c> (<c>0007fd07</c>), which <see cref="Es1Menu.Open"/> sets and nothing clears: every frame
+	/// <c>Shell_SyncPointer</c> (<c>0007fd07</c>), which <see cref="Es1Menu.Open"/> sets and no write found clears: every frame
 	/// from then on puts the cursor and the mouse on <see cref="Pointer"/>.
 	/// </summary>
 	public bool SyncPointer { get; set; }
