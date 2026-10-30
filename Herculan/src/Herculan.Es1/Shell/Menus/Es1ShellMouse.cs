@@ -81,7 +81,7 @@ public sealed class Es1ShellMouse {
 	/// </summary>
 	private void OnLeftPress(Es1MouseRecord record) {
 		var globals = _globals;
-		if (globals.MessageBoxUp) {
+		if (globals.MessageBox.Up) {
 			return;
 		}
 
@@ -108,7 +108,7 @@ public sealed class Es1ShellMouse {
 	/// </summary>
 	private void OnLeftRelease(Es1MouseRecord record) {
 		var globals = _globals;
-		if (globals.MessageBoxUp) {
+		if (globals.MessageBox.Up) {
 			return;
 		}
 

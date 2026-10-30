@@ -222,8 +222,10 @@ public sealed class Es1ShellFrame {
 	/// The frame loop's pass (docs/es1/shell/startup.md#the-frame-loop), in retail's order: a frame shown, the input read
 	/// and handled, the quit flag set on screen 9999, the pending menu message handled, the scripts run with
 	/// <c>Ttm_RunAll</c> when it changed no screen (<see cref="Ttm.Es1TtmManager.RunAllAfterTick"/>, which waits for the
-	/// scripts' tick), the screen's work, the quit question, and the frame-time scale. The scripts exist from the first
-	/// screen on, before the first pass; the test for them is an engine guard.
+	/// scripts' tick), the screen's work: <c>Shell_TickScreen</c>, the message box's loop (<c>MessageBox_Run</c>
+	/// (<c>000382f6</c>)(<c>Shell_MessageBox</c>, <see cref="InputBlock"/>), <see cref="MessageBox.Es1MessageBox.Run"/>) and the
+	/// text box drawn (<c>Dialog_Draw</c>(<c>Shell_Dialog</c>)); the quit question, and the frame-time scale. The scripts and
+	/// the message box exist from the first screen on, before the first pass; the tests for them are engine guards.
 	/// </summary>
 	public IEnumerable<Es1ShellWait> Pass() {
 		foreach (var wait in PresentFrame()) {
@@ -249,10 +251,18 @@ public sealed class Es1ShellFrame {
 
 		_screens.TickScreen();
 		// 0001098e, the widget root's mouse queue (Shell_PollInput's), does nothing until its queue is started.
-		// PLACEHOLDER: MessageBox_Run (000382f6) and the text box 00018dcb(0009afc8), the message box and the briefing's text,
-		// S2's.
+		if (_screens.MessageBox is { } messageBox) {
+			foreach (var wait in messageBox.Run(InputBlock, PresentFrame, PollDeviceBlock)) {
+				yield return wait;
+			}
+		}
+
+		_screens.Dialog?.Draw();
 		if (QuitRequested) {
-			_screens.OpenQuitAlert();
+			foreach (var wait in _screens.OpenQuitAlert()) {
+				yield return wait;
+			}
+
 			QuitRequested = false;
 		}
 

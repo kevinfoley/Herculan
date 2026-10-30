@@ -47,6 +47,33 @@ public sealed class Es1ShellMission {
 	/// </summary>
 	public short MissionKind { get; set; }
 
+	/// <summary>
+	/// The loaded mission's header word 4, <c>000ab222</c>, as its header patches leave it: the line of <c>C0_text.bin</c> a
+	/// single mission's opening message shows (docs/es1/shell/message-box.md#the-kinds); 0 in the image.
+	/// </summary>
+	public short HeaderWord4 { get; private set; }
+
+	/// <summary>
+	/// <c>MessageBox_Line</c> (<c>000aad5c</c>), the line of its text file a message shows and of its lip-sync list the talking
+	/// head speaks: <c>MsnGen_LoadMission</c> copies header word 4 into it, and <c>DigitalDialog_ShowMessage</c> sets it by
+	/// the message's kind (docs/es1/shell/message-box.md#showing-a-message).
+	/// </summary>
+	public short MessageBoxLine { get; set; }
+
+	/// <summary>
+	/// The word <c>000aad58</c>, the first word of <c>data\results.dat</c>, the debriefing's ordinal, which
+	/// <c>Mission_OutcomeGrade</c> grades for kind 3's line; 0 in the image. Set by the results' read, S2's
+	/// <c>Shell_ProcessMissionResults</c>, which no ported code runs.
+	/// </summary>
+	public short Outcome { get; set; }
+
+	/// <summary>
+	/// The word <c>000aad5e</c>, which <c>Mission_ReadRestore</c> reads from the word <c>data\restore.dat</c> holds from
+	/// <see cref="MissionKind"/>: the kind <c>Mission_OutcomeGrade</c> picks its table by; 0 in the image. Set by the
+	/// restore's read, which no ported code runs.
+	/// </summary>
+	public short RestoredMissionKind { get; set; }
+
 	/// <summary>The mission's path <c>000aad14</c>, <c>msn\&lt;name&gt;</c>; empty in the image.</summary>
 	public string Path { get; private set; } = "";
 
@@ -68,8 +95,10 @@ public sealed class Es1ShellMission {
 			var p = _data.MissionParams;
 			var missionParams = new Es1MissionParams(p[0], p[1], p[2], p[3], p[4]);
 			if (Es1SingleMission.Start(_installRoot, _content, name, missionParams, random, out string? error) is { } result) {
-				// MsnGen_LoadMission stores header words 3 and 4 in 000aad5a and 000aad5c; no ported code reads 000aad5c.
+				// MsnGen_LoadMission stores header words 3 and 4 in 000aad5a and 000aad5c, and keeps the header, 000ab222 its word 4.
 				MissionKind = result.Script.Header[3];
+				HeaderWord4 = result.Script.Header[4];
+				MessageBoxLine = HeaderWord4;
 			} else {
 				Console.Error.WriteLine(error);
 			}

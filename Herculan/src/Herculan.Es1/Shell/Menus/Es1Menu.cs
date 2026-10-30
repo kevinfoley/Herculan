@@ -177,7 +177,8 @@ public class Es1Menu {
 		}
 
 		Window = null;
-		// RenderContext_GetFullScreen into 0007fcd8, the scripts' render context, which this engine does not keep.
+		// RenderContext_GetFullScreen into 0007fcd8, which puts the scripts' default render context back to the whole screen.
+		Context.Screens.GetFullScreen();
 	}
 }
 

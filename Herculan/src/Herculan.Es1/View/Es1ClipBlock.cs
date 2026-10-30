@@ -65,6 +65,9 @@ public sealed class Es1ClipBlock {
 	/// <summary>A block of the one rect region {<paramref name="x0"/>, <paramref name="y0"/>, <paramref name="x1"/>, <paramref name="y1"/>}, its bounds included.</summary>
 	public static Es1ClipBlock FromRect(int x0, int y0, int x1, int y1) => new([(x0, y0, x1, y1)], []);
 
+	/// <summary>A block of the rect regions <paramref name="rects"/>, in order, their bounds included.</summary>
+	public static Es1ClipBlock FromRects(params (int X0, int Y0, int X1, int Y1)[] rects) => new(rects.ToArray(), []);
+
 	/// <summary>
 	/// Whether a pixel of the page lies in one of the regions: a rect's bounds included, and a span's last column
 	/// included as ES2's span ends are (docs/es1/formats/hd-ed-clip-regions.md#open).

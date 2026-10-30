@@ -4,6 +4,7 @@ using Herculan.Engine.Content;
 using Herculan.Es1.Input;
 using Herculan.Es1.Panels;
 using Herculan.Es1.Shell.Menus;
+using Herculan.Es1.Shell.MessageBox;
 using Herculan.Es1.Ttm;
 using Herculan.Es1.View;
 
@@ -26,18 +27,33 @@ public sealed class Es1ShellScreens {
 	private readonly Es1ShellBackdrop _backdrop;
 	private readonly Es1DirtyList _dirty;
 	private readonly GameContent _content;
+	private readonly Es1LipSyncPlayer _lipSync;
 
+	/// <param name="lipSync"><c>Shell_LipSyncPlayer</c> (<c>0009afd4</c>), which a message's box loads its talking head into.</param>
 	public Es1ShellScreens(Es1ShellDevices devices, Es1ShellBackdrop backdrop, Es1DirtyList dirty, GameContent content,
-			Es1MenuGlobals globals) {
+			Es1MenuGlobals globals, Es1LipSyncPlayer lipSync) {
 		_devices = devices;
 		_backdrop = backdrop;
 		_dirty = dirty;
 		_content = content;
 		Globals = globals;
+		_lipSync = lipSync;
 	}
 
 	/// <summary>The window file's globals the menus share with the input.</summary>
 	public Es1MenuGlobals Globals { get; }
+
+	/// <summary>
+	/// <c>Shell_Dialog</c> (<c>0009afc8</c>), the shell's text box, which <see cref="OpenFirstScreen"/> makes once the shared
+	/// data is loaded; none before.
+	/// </summary>
+	public Es1ShellDialog? Dialog { get; private set; }
+
+	/// <summary>The message box's functions on <see cref="Es1MenuGlobals.MessageBox"/>, which <see cref="OpenFirstScreen"/> makes; none before.</summary>
+	public Es1MessageBox? MessageBox { get; private set; }
+
+	/// <summary>The font slot <c>000aacda</c>, the <c>nm_green</c> font every text box takes: slot 5 of the 14 at <c>Shell_Fonts</c> (<c>000aacc6</c>).</summary>
+	private const int DialogFontSlot = 5;
 
 	/// <summary>
 	/// <c>Shell_ExitCode</c> (<c>0007fcac</c>), the code the shutdown writes to <c>data\exit.cfg</c> and the shell returns:
@@ -146,11 +162,25 @@ public sealed class Es1ShellScreens {
 	public Es1NameList[]? TtmLists { get; private set; }
 
 	/// <summary>
-	/// <c>RenderContext_GetFullScreen</c> (<c>0004c716</c>): the one render context <c>00083bc4</c> it makes, set each call
-	/// to the rect (0, 0)–(319, 199), the origin (0, 0), clip mode 1 and the translation flag clear, made afresh for each
-	/// use; <c>Shell_Main</c> keeps it at <c>0007fcd8</c>.
+	/// The render context <c>00083bc4</c> as it stands, which <c>Shell_Main</c> keeps at <c>0007fcd8</c>: the rect (0, 0)–(319,
+	/// 199), the origin (0, 0) and the translation clear, in clip mode 1 as <see cref="GetFullScreen"/> leaves it or in clip
+	/// mode 2 with the regions <see cref="GetFullScreenAround"/> gave it. Retail's two functions set the one object, so a
+	/// later <see cref="GetFullScreen"/> also changes what a script handed the context before draws through; here the
+	/// context is made afresh for each use from <see cref="_screenRegions"/>, to the same effect.
 	/// </summary>
-	public Es1PanelCanvas FullScreenContext() => new(_devices.Display, FullScreen);
+	public Es1PanelCanvas FullScreenContext() => new(_devices.Display, FullScreen) { Regions = _screenRegions };
+
+	/// <summary>The clip regions of <c>00083bc4</c>: none in clip mode 1, the four around a window in clip mode 2.</summary>
+	private Es1ClipBlock? _screenRegions;
+
+	/// <summary>
+	/// <c>RenderContext_GetFullScreen</c> (<c>0004c716</c>): <c>00083bc4</c> set to clip mode 1 with no regions, and returned
+	/// (<see cref="FullScreenContext"/>).
+	/// </summary>
+	public Func<Es1PanelCanvas> GetFullScreen() {
+		_screenRegions = null;
+		return FullScreenContext;
+	}
 
 	/// <summary>The scripts' timer count, every second interrupt: 60 ticks a second.</summary>
 	private const int ScriptTimerCount = 2;
@@ -191,6 +221,12 @@ public sealed class Es1ShellScreens {
 			_backdrop.PaletteDue = true;
 		};
 		Scripts = scripts;
+		_lipSync.Scripts = scripts;
+		// The message box and its text box, statics in retail, made here once what they read exists.
+		var dialog = new Es1ShellDialog(_devices.Display, _dirty, _content.Read, _lipSync, () => data.Fonts[DialogFontSlot],
+			() => data.Option2Word, () => BackdropId, () => mission.MessageBoxLine);
+		Dialog = dialog;
+		MessageBox = new Es1MessageBox(Globals, dialog, mission, data, () => Scripts, GetFullScreen);
 		scripts.Configure(Es1ShellBackdrop.BackgroundPage, FullScreenContext, ScriptHandles);
 		scripts.AllocHandles(ScriptTimerCount, _devices.Timer);
 		scripts.SetPathPrefix(ScriptFolder);
@@ -278,7 +314,7 @@ public sealed class Es1ShellScreens {
 			yield return wait;
 		}
 
-		scripts.SetDefaultContext(FullScreenContext);
+		scripts.SetDefaultContext(GetFullScreen());
 		byte handle = scripts.Open(Es1TtmPlayer.Playing, 0, null, name);
 		Es1LiveBlock block;
 		while (true) {
@@ -330,11 +366,15 @@ public sealed class Es1ShellScreens {
 	/// and then, still unless the message box is up, on backdrop 1000 (screen 9999 aside) the whole screen added as dirty
 	/// with delay 1, otherwise the window drawn again on the draw page, and <see cref="WaitAfterDraw"/> set; with none, the
 	/// draw page put back; then the source page put back, the whole screen added as dirty with delay 0, the cursor drawn
-	/// unless the screen is 9999, and <see cref="Es1MenuGlobals.InputReady"/> set.
+	/// unless the screen is 9999, and <see cref="Es1MenuGlobals.InputReady"/> set. Between the backdrop and the menu, step 3:
+	/// the message box's line loaded while it is to be shown (<see cref="Es1MessageBox.ShowMessage"/>) and the scripts run
+	/// (<c>Ttm_RunAll</c>, <see cref="Es1TtmManager.RunAllAfterTick"/>). The waits are the scripts' tick's and their
+	/// fades'. The message box and the scripts exist from the first screen on, before its first draw; the tests for them
+	/// are engine guards.
 	/// </summary>
-	public void DrawScreen() {
+	public IEnumerable<Es1ShellWait> DrawScreen() {
 		if (!PageShown) {
-			return;
+			yield break;
 		}
 
 		var display = _devices.Display;
@@ -364,8 +404,18 @@ public sealed class Es1ShellScreens {
 			// PLACEHOLDER: the career record's HERC diagram (00029651, CareerRecord_SelectPilot), S3's.
 		}
 
-		// PLACEHOLDER: DigitalDialog_ShowMessage(Shell_MessageBox) and Ttm_RunAll (Scripts.RunAllAfterTick), the message box
-		// and the scripts it draws through (P7b, docs/es1/shell/main-menu.md#instant-actions-path-to-the-mission).
+		if (MessageBox is { } messageBox) {
+			foreach (var wait in messageBox.ShowMessage()) {
+				yield return wait;
+			}
+		}
+
+		if (Scripts is { } scripts) {
+			foreach (var wait in scripts.RunAllAfterTick()) {
+				yield return wait;
+			}
+		}
+
 		if (CurrentMenu is { } menu) {
 			DrawMenu(menu, keptDraw);
 		} else {
@@ -394,27 +444,28 @@ public sealed class Es1ShellScreens {
 	}
 
 	/// <summary>
-	/// <c>Shell_DrawScreen</c>'s step 4 with a current menu: the render contexts <c>0007fcdc</c> (<c>0004c88a</c>, of the
-	/// window's rect) and <c>0007fcd8</c> (<c>0004c53c</c>, the screen less the window, in clip mode 2) made the scripts'
-	/// default (PLACEHOLDER: P7b's, with <see cref="Es1TtmManager.SetDefaultContext"/>; until then the scripts keep the
-	/// full-screen default, and no ported screen opens a script past the intro); the source and draw pages set to page 2
+	/// <c>Shell_DrawScreen</c>'s step 4 with a current menu: the render context <c>0007fcdc</c> (<c>RenderContext_GetForRect</c>,
+	/// <c>0004c88a</c>, of the window's rect), which no ported code reads and is not made here, and <c>0007fcd8</c>
+	/// (<see cref="FullScreenAround"/>) made the scripts' default; the source and draw pages set to page 2
 	/// and the background saved (<see cref="Es1Menu.SaveBackground"/>); the window drawn on page 2 unless the message box
 	/// is up; the draw page put back; and unless the message box is up, the whole screen dirty with delay 1 on backdrop
 	/// 1000 (screen 9999 aside) or the window drawn again on the draw page, and <see cref="WaitAfterDraw"/> set.
 	/// </summary>
 	private void DrawMenu(Es1Menu menu, int keptDraw) {
 		var display = _devices.Display;
+		var around = GetFullScreenAround(menu.Region);
+		Scripts?.SetDefaultContext(around);
 		display.SourcePage = Es1ShellBackdrop.BackgroundPage;
 		display.DrawPage = Es1ShellBackdrop.BackgroundPage;
 		menu.SaveBackground();
-		if (!Globals.MessageBoxUp) {
+		if (!Globals.MessageBox.Up) {
 			// PLACEHOLDER: while the byte 000817bd counts down, Shell_MissionMap's slot +4 and the text box 00018dcb run once per
 			// page first; no ported screen makes the mission map or sets the byte.
 			menu.Window?.Draw();
 		}
 
 		display.DrawPage = keptDraw;
-		if (Globals.MessageBoxUp) {
+		if (Globals.MessageBox.Up) {
 			return;
 		}
 
@@ -428,6 +479,24 @@ public sealed class Es1ShellScreens {
 
 		WaitAfterDraw = true;
 	}
+
+	/// <summary>
+	/// <c>RenderContext_GetFullScreenAround</c> (<c>0004c53c</c>)(<paramref name="rect"/>): the context <c>00083bc4</c> set to
+	/// clip mode 2 with the four regions at <c>000a0a9c</c>, the screen above the rect, left of it, right of it and below
+	/// it, so a script drawn through it stays off the window (docs/es1/shell/menus.md#drawing-a-screen), and returned
+	/// (<see cref="FullScreenContext"/>).
+	/// </summary>
+	private Func<Es1PanelCanvas> GetFullScreenAround(Es1Rect rect) {
+		_screenRegions = Es1ClipBlock.FromRects(
+			(0, 0, FullScreen.X1, rect.Y0 - 1),
+			(0, rect.Y0, rect.X0 - 1, rect.Y1),
+			(rect.X1 + 1, rect.Y0, FullScreen.X1, rect.Y1),
+			(0, rect.Y1 + 1, FullScreen.X1, FullScreen.Y1));
+		return FullScreenContext;
+	}
+
+	/// <summary>The screen that puts up a mission's opening message, 1499, which INSTANT ACTION > and SINGLE MISSION's BRIEFING > post.</summary>
+	private const short MessageScreen = 1499;
 
 	/// <summary>The target a <i>back</i> message names, 99.</summary>
 	private const short BackTarget = 99;
@@ -527,7 +596,10 @@ public sealed class Es1ShellScreens {
 		CurrentMenu?.Open(target);
 		PreviousScreen = target == MainMenuScreen ? MainMenuScreen : CurrentScreen;
 		CurrentScreen = target;
-		DrawScreen();
+		foreach (var wait in DrawScreen()) {
+			yield return wait;
+		}
+
 		MessageChangedScreen = true;
 	}
 
@@ -562,10 +634,17 @@ public sealed class Es1ShellScreens {
 
 				break;
 			case 1490:
-			case 1499:
-				// PLACEHOLDER: 0003cccc and 0003ccdd: MessageBox_SetKind(Shell_MessageBox, 2), and for 1499 0 in Shell_Mode 0 and
-				// 1 otherwise; the message box is S2's. Neither makes a menu, so until it lands INSTANT ACTION and SINGLE
-				// MISSION's BRIEFING > show its backdrop with no window, and the quit keys' question is the way out.
+				// PLACEHOLDER: 0003cccc: MessageBox_SetKind(Shell_MessageBox, 2), the career's G0 lines, S3's; no ported screen
+				// posts 1490.
+				break;
+			case MessageScreen:
+				// 0003ccdd: MessageBox_SetKind(Shell_MessageBox, 0) in Shell_Mode 0, a single mission's opening line; no menu.
+				if (_menuContext?.Mission.Mode == 0) {
+					Globals.MessageBox.SetKind(0);
+				} else {
+					// PLACEHOLDER: MessageBox_SetKind(Shell_MessageBox, 1) in Shell_Mode 1, a career's opening line, S3's.
+				}
+
 				break;
 			case 1520:
 			case 1510:
@@ -646,7 +725,7 @@ public sealed class Es1ShellScreens {
 	/// unless the message box is up, the current menu's window updated (<see cref="Es1DUIWindow.Update"/>).
 	/// </summary>
 	public void TickScreen() {
-		if (CurrentMenu?.Window is { } window && !Globals.MessageBoxUp) {
+		if (CurrentMenu?.Window is { } window && !Globals.MessageBox.Up) {
 			window.Update(Globals, _dirty);
 		}
 
@@ -667,13 +746,13 @@ public sealed class Es1ShellScreens {
 	/// <see cref="PreviousScreen"/> kept in <see cref="ResumeScreen"/> and the menu closed and destroyed;
 	/// <see cref="DrawsBackdrop"/> cleared; an <see cref="Es1QuitAlert"/> made the current menu and opened as menu 888 on
 	/// backdrop 1000, as 999 after backdrop 4000's palette is loaded again on backdrop 4000, and as 999 on any other; the
-	/// screens moved on to 999; and the screen drawn. The backdrop and the music stay.
+	/// screens moved on to 999; and the screen drawn, whose waits these are. The backdrop and the music stay.
 	/// </summary>
-	public void OpenQuitAlert() {
+	public IEnumerable<Es1ShellWait> OpenQuitAlert() {
 		MapDrawCount = (byte)(MapRefresh != 0 ? 3 : 0);
 		// The context exists from the first screen on, before the frame loop reads a quit key; the test is an engine guard.
 		if (CurrentScreen == QuitAlertScreen || _menuContext == null) {
-			return;
+			yield break;
 		}
 
 		if (CurrentMenu is { } closing) {
@@ -698,7 +777,9 @@ public sealed class Es1ShellScreens {
 
 		PreviousScreen = CurrentScreen;
 		CurrentScreen = QuitAlertScreen;
-		DrawScreen();
+		foreach (var wait in DrawScreen()) {
+			yield return wait;
+		}
 	}
 
 	/// <summary>

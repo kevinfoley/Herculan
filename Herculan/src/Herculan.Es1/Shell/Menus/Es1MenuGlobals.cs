@@ -1,4 +1,5 @@
 using Herculan.Es1.Input;
+using Herculan.Es1.Shell.MessageBox;
 
 namespace Herculan.Es1.Shell.Menus;
 
@@ -88,9 +89,8 @@ public sealed class Es1MenuGlobals {
 	public (int X, int Y) Pointer { get; set; }
 
 	/// <summary>
-	/// The message box's "up" byte, <c>Shell_MessageBox</c> (<c>0009b010</c>)'s <c>+3</c> (<c>0009b013</c>): while it is
-	/// set the screen's window is neither drawn nor updated, and the mouse's press and release do nothing. The message
-	/// box is S2's (docs/es1/shell/main-menu.md#instant-actions-path-to-the-mission); nothing here sets it.
+	/// <c>Shell_MessageBox</c> (<c>0009b010</c>), the message box's record, whose <i>up</i> byte <c>+3</c> (<c>0009b013</c>)
+	/// the screens and the mouse's press and release test.
 	/// </summary>
-	public bool MessageBoxUp { get; set; }
+	public Es1MessageBoxRecord MessageBox { get; } = new();
 }

@@ -3,6 +3,7 @@ using Herculan.Engine.Content;
 using Herculan.Engine.Platform;
 using Herculan.Es1.Input;
 using Herculan.Es1.Shell.Menus;
+using Herculan.Es1.Shell.MessageBox;
 using Herculan.Es1.Sim;
 using Herculan.Es1.View;
 using Silk.NET.Input;
@@ -86,6 +87,7 @@ public static class Es1ShellHost {
 		private readonly Es1ShellScreens _screens;
 		private readonly Es1ShellFrame _frame;
 		private readonly Es1ShellMouse _shellMouse;
+		private readonly Es1LipSyncPlayer _lipSync;
 		private Es1ShellData? _data;
 		private Es1Monitor? _monitor;
 
@@ -95,7 +97,8 @@ public static class Es1ShellHost {
 			_switches = switches;
 			_dirty = new Es1DirtyList(_devices.Display);
 			_backdrop = new Es1ShellBackdrop(_devices.Display, content, _dirty);
-			_screens = new Es1ShellScreens(_devices, _backdrop, _dirty, content, _globals) { ExitCode = exitCode };
+			_lipSync = new Es1LipSyncPlayer(_devices.Display, content.Read, _globals.MessageBox);
+			_screens = new Es1ShellScreens(_devices, _backdrop, _dirty, content, _globals, _lipSync) { ExitCode = exitCode };
 			_frame = new Es1ShellFrame(_devices, _backdrop, _dirty, _screens, _time, switches.DebugMode);
 			_shellMouse = new Es1ShellMouse(_globals);
 		}
@@ -170,11 +173,13 @@ public static class Es1ShellHost {
 			}
 
 			// 11. The shared data. 12. RenderContext_GetFullScreen into 0007fcd8, the render context the scripts draw
-			// through (Es1ShellScreens.FullScreenContext, made afresh for each use).
+			// through (Es1ShellScreens.GetFullScreen).
 			data.Load(_content, _devices.Preferences!, _installRoot, DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+			_screens.GetFullScreen();
 
-			// 13. PLACEHOLDER: maybe_SncList_Init (the .SNC list) and ShellMap_LoadResources (the briefing map's bitmaps and its
-			// timer callback), later modules'. Then ShellMouse_AddCallbacks, the mouse's three callbacks into the active window.
+			// 13. maybe_SncList_Init, the talking heads' player. PLACEHOLDER: ShellMap_LoadResources (the briefing map's bitmaps
+			// and its timer callback), S5's. Then ShellMouse_AddCallbacks, the mouse's three callbacks into the active window.
+			_lipSync.Init(_devices.Timer);
 			_shellMouse.AddCallbacks(_devices.Mouse);
 
 			// 14. The fonts and styles.
@@ -191,7 +196,9 @@ public static class Es1ShellHost {
 			}
 
 			_backdrop.PaletteDue = false;
-			_screens.DrawScreen();
+			foreach (var wait in _screens.DrawScreen()) {
+				yield return wait;
+			}
 
 			while (!_screens.QuitFlag) {
 				foreach (var wait in _frame.Pass()) {
