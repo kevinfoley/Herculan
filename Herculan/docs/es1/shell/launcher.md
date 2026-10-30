@@ -15,7 +15,7 @@ Addresses are `ES1ESCD` image addresses ([the X-32 executable](../formats/x32-ex
 `Launcher_Main` (`000005cc`), (argc, argv), called by the startup at `0xd` ([startup](../formats/compiler.md#startup)). It reads none of its arguments as switches: `Launcher_BuildArgs` passes all of them on to each program it runs ([a program's command line](#a-programs-command-line--launcher_buildargs-00000518)). In order:
 
 1. `Mem_New` (`00001664`)(argc × 4 + 8), whose answer it does not keep; the heap is still off, so the memory comes from the extender ([the heap](../simulation/memory.md#the-heap)).
-2. **The memory check.** *free* = `X32_LargestFreeBlock` (`00002e63`)() − 25,000, the extender's largest free block ([`ESCD.EXE`'s kernel](../formats/x32-executable.md#escdexes-kernel)). Below 3,435,000 it prints `Insufficient memory.` with `puts` (`00002248`) and `You need %d more bytes of free memory to play EarthSiege.` with `printf` (`0000232e`), the number 3,435,000 − *free*, and ends with `Mem_HeapOff` (`00001658`) and `exit`(0) (`00001b50`). So the launcher needs a largest free block of 3,460,000 bytes.
+2. **The memory check.** *free* = `X32_LargestFreeBlock` (`00002e63`)() − 25,000, the extender's largest free block ([`ESCD.EXE`'s kernel](../formats/x32-executable.md#escdexes-kernel)). Below 3,435,000, compared signed, it prints `Insufficient memory.` with `puts` (`00002248`) and `You need %d more bytes of free memory to play EarthSiege.` with `printf` (`0000232e`), the number 3,435,000 − *free*, and ends with `Mem_HeapOff` (`00001658`) and `exit`(0) (`00001b50`). So the launcher needs a largest free block of 3,460,000 bytes.
 3. **The drive prefixes**, two strings: `ALT_DRIVE` and `PREFER_ALT` read with `getenv`, `PREFER_ALT` counting as set when `getenv` finds it at all.
     - `Launcher_PreferredPrefix` (`0000657c`) = `ALT_DRIVE` when `PREFER_ALT` is set, the empty string otherwise. With `PREFER_ALT` set and `ALT_DRIVE` not, the copy reads from address 0, which faults, since the data selector refuses offsets `0`–`0x7f` ([loading the image](../formats/x32-executable.md#loading-the-image)); neither of the installer's `ES.BAT`s sets that pair ([below](#the-installers-esbat)).
     - `Launcher_OtherPrefix` (`00006580`) = the empty string when both are set, `ALT_DRIVE` when only it is set, the empty string when it is not.
@@ -39,13 +39,13 @@ With `ALT_DRIVE` set, `Launcher_Main` takes three drive numbers (1 for `A:`): th
 | the intro | *flic drive*`:playflic.exe` | *flic drive*`:flic\intro3.dfl` | `-B1000000`, `-S83` |
 | the end | *flic drive*`:playflic.exe` | *flic drive*`:flic\end.dfl` | `-B1000000`, `-S83` |
 
-What the two switches tell `PLAYFLIC.EXE` is [Open](#open). The probe path of step 9 is `Launcher_PrefixPath`(`Launcher_OtherPrefix`, `playflic.exe`).
+What the two switches tell `PLAYFLIC.EXE` is [Open](#open). The probe path of step 9 is `Launcher_PrefixPath`(`Launcher_OtherPrefix`, `playflic.exe`), built once; every later probe tests that same path. The eight strings go into 25-byte locals and the probe path into a 28-byte one, each copied with no bound, so a long `ALT_DRIVE` overruns them.
 
 A flic plays as `dos_setdrive` (`00001fab`)(preferred drive), `spawnl` (`00001be0`)(0, program, program, file, `-B1000000`, `-S83`, null), and `dos_setdrive`(starting drive): the current drive is the preferred one while `PLAYFLIC.EXE` runs. Mode 0 is `P_WAIT`: the launcher waits for the program to end.
 
 ### The disk check — `Launcher_HasDiskSpace` (`000003bc`)
 
-`Launcher_HasDiskSpace` (`000003bc`), (bytes, prefix): with an empty prefix the drive is the current one (`dos_getdrive`); otherwise it is the prefix's first character, upper-cased, less `0x40`, after an assert at severity 4 (line `0x4f`) unless that character is a letter (bits 0 and 1, the mask 3, of the runtime's character-class table at `0000602d`). It answers 1 when `dos_getdiskfreespace` (`00003258`) gives at least bytes for the drive, as an unsigned comparison, and 0 otherwise. `dos_getdiskfreespace` gives the free clusters × sectors a cluster × bytes a sector from `INT 21h` `AH=36h`, and −1 for a drive DOS does not know, which the unsigned comparison passes.
+`Launcher_HasDiskSpace` (`000003bc`), (bytes, prefix): with an empty prefix the drive is the current one (`dos_getdrive`); otherwise it is the prefix's first character less `0x40`, after an assert at severity 4 (line `0x4f`) unless that character is a letter (bits 0 and 1, the mask 3, of the runtime's character-class table at `0000602d`); the character is upper-cased after the test, by taking `0x20` off when it is above `Z`. It and `Launcher_ReadExitCfg` add 1 to the dword `00006726` just before their assert tests, whether or not the assert fires. It answers 1 when `dos_getdiskfreespace` (`00003258`) gives at least bytes for the drive, as an unsigned comparison, and 0 otherwise. `dos_getdiskfreespace` gives the free clusters × sectors a cluster × bytes a sector from `INT 21h` `AH=36h`, and −1 for a drive DOS does not know, which the unsigned comparison passes.
 
 ### The flic player — `Launcher_FileReadable` (`000004ac`)
 
@@ -81,7 +81,7 @@ After each case `Launcher_ReadExitCfg` (`00000448`) opens `data\exit.cfg` `r+b` 
 | 2 (`dbsim.exe`) | | `-c` |
 | 5 (`dbsim.exe`) | `-D` | `-c` |
 
-and last `-eggplant` and a null. So `ES` typed with switches passes them to both programs. `GO.EXE` takes `-a` as `-A`, which skips its own intro scripts, and `-c` as `-C`, which lets it honor `ALT_DRIVE` ([the shell's command line](startup.md#the-command-line)); `DBSIM.EXE` takes `-c` the same way and `-D` as a demo ([the simulator's command line](../simulation/main-loop.md#the-command-line)). Without the flic player, then, the shell plays its own intro scripts and neither program uses `ALT_DRIVE`.
+and last `-eggplant` and a null. The cases are the 6-entry table `00005884`, states 1 to 6: 1, 3, 4 and 6 at `00000555`, 2 at `0000058d`, and 5 at `0000057e`, which adds `-D` and falls into 2's; a state outside 1 to 6 adds nothing. So `ES` typed with switches passes them to both programs. `GO.EXE` takes `-a` as `-A`, which skips its own intro scripts, and `-c` as `-C`, which lets it honor `ALT_DRIVE` ([the shell's command line](startup.md#the-command-line)); `DBSIM.EXE` takes `-c` the same way and `-D` as a demo ([the simulator's command line](../simulation/main-loop.md#the-command-line)). Without the flic player, then, the shell plays its own intro scripts and neither program uses `ALT_DRIVE`.
 
 ## The end
 
@@ -99,7 +99,7 @@ The two refusals of steps 2 and 4 end with `exit`(0) before the video mode is sa
 | `playflic.exe` | `Launcher_OtherPrefix` | opens it to see that it is there |
 | `flic\intro3.dfl`, `flic\end.dfl` | the flic drive | passed to `PLAYFLIC.EXE` |
 
-A path through a prefix is `Launcher_PrefixPath` (`00000304`)(prefix, path): the prefix followed by the path less a drive letter of its own, built in `00006584`. A path on a drive is `Launcher_DrivePath` (`00000360`)(drive, path): the drive's letter (drive + `0x40`) and `:` followed by the path less its own drive letter, built in `000065a4`.
+A path through a prefix is `Launcher_PrefixPath` (`00000304`)(prefix, path): the prefix followed by the path less a drive letter of its own, built in `00006584`. A path on a drive is `Launcher_DrivePath` (`00000360`)(drive, path): the drive's letter (drive + `0x40`) and `:` followed by the path less its own drive letter, built in `000065a4`. Both take a path's own drive as its first two characters when its second is `:`, testing nothing of the first.
 
 ## The installer's `ES.BAT`
 
@@ -150,6 +150,7 @@ ES2's supervisor ([`ES.EXE`](../../retail/command-line.md#esexe--the-supervisor)
 | the saved `INT 24h` vectors, protected-mode (6 bytes) and real-mode | `00005a3c`, `00005a42` |
 | `CritErr_Count`, the error's `DI` and `AX`, `CritErr_RetryLimit`, words | `00005a46`, `00005a48`, `00005a4a`, `00005a4c` |
 | `Mem_UseHeap` | `00005c18` |
+| the dword the two asserts' sites count up | `00006726` |
 | `DS` for the handler | `00005a50` |
 | the case table of the loop, `Launcher_BuildArgs`' | `00005a20`, `00005884` |
 

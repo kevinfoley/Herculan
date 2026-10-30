@@ -43,13 +43,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Launcher_HasDiskSpace",
-      "description": "(bytes, prefix), its arguments removed by this function: the drive is the current one (dos_getdrive (00001f9c)) when prefix is empty, and otherwise prefix's first character, upper-cased, less 0x40, after an assert at severity 4 (src\\es.cpp line 0x4f) through Assert_Report (000030a0) when the character-class table at 0000602d gives the character neither of bits 1 and 2. Returns 1 when dos_getdiskfreespace (00003258) gives at least bytes for the drive, compared unsigned, and 0 otherwise.",
+      "description": "(bytes, prefix), its arguments removed by this function: the drive is the current one (dos_getdrive (00001f9c)) when prefix is empty, and otherwise prefix's first character, upper-cased, less 0x40, after an assert at severity 4 (src\\es.cpp line 0x4f) through Assert_Report (000030a0) when the character-class table at 0000602d gives the character neither of bits 0 and 1 (the mask 3), adding 1 to the dword 00006726 just before that test whether or not it fires; the character is upper-cased after the test, by taking 0x20 off when it is above 'Z'. Returns 1 when dos_getdiskfreespace (00003258) gives at least bytes for the drive, compared unsigned, and 0 otherwise.",
       "source": "Herculan/docs/es1/shell/launcher.md#the-disk-check--launcher_hasdiskspace-000003bc; ES1ESCD decompile and disassembly at 000003bc",
       "verified": {
         "bytes": "000003bc+139",
         "sha1": "15c27cff9ed4",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -58,13 +58,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Launcher_ReadExitCfg",
-      "description": "(): opens data\\exit.cfg 'r+b' with fopen (000020d8) through Launcher_PrefixPath (00000304) with Launcher_PreferredPrefix (0000657c), asserting at severity 4 (src\\es.cpp line 0x67) through Assert_Report (000030a0) when the open answers null, reads one 4-byte item into Launcher_State (00005854) with fread (00002edc) and closes the file with fclose (00002034).",
+      "description": "(): opens data\\exit.cfg 'r+b' with fopen (000020d8) through Launcher_PrefixPath (00000304) with Launcher_PreferredPrefix (0000657c), adding 1 to the dword 00006726 and asserting at severity 4 (src\\es.cpp line 0x67) through Assert_Report (000030a0) when the open answers null, reads one 4-byte item into Launcher_State (00005854) with fread (00002edc) and closes the file with fclose (00002034).",
       "source": "Herculan/docs/es1/shell/launcher.md#the-loop; ES1ESCD decompile and disassembly at 00000448",
       "verified": {
         "bytes": "00000448+97",
         "sha1": "a1f2abc17b7c",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {

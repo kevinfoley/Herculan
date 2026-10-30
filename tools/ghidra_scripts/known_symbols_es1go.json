@@ -3217,13 +3217,13 @@
       "type": "function",
       "confidence": "high",
       "name": "CareerRecord_PlayerHasNoHerc",
-      "description": "(record), its argument removed by this function: 1 when the slot +8 of the pilot entry +0xe names is -1, otherwise 0.",
+      "description": "(record), its argument removed by this function: 1 in AL (EAX 0xffffff01, the slot's -1 above it) when the slot +8 of the pilot entry +0xe names is -1, otherwise 0.",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#pilot-entries",
       "verified": {
         "bytes": "000161dc+49",
         "sha1": "15097217acf5",
         "scope": "body",
-        "via": "both"
+        "via": "disasm"
       }
     },
     {
@@ -8107,13 +8107,13 @@
       "type": "function",
       "confidence": "high",
       "name": "SingleMission_Start",
-      "description": "(), callee-cleaned: Inventory_LoadFile (00027e02)(word 000aad62, car\\s_armory.dat); SingleMission_BuildPath (00036649)(word Mission_Kind (000aad5a)); MsnGen_LoadMission (000aad14); Mission_WriteRestore.",
+      "description": "(), callee-cleaned: Inventory_LoadFile (00027e02)(the dword 000aad62, the stock's pointer, car\\s_armory.dat); SingleMission_BuildPath (00036649)(word Mission_Kind (000aad5a)); MsnGen_LoadMission (000aad14); Mission_WriteRestore.",
       "source": "Herculan/docs/es1/shell/single-mission.md#starting-the-mission",
       "verified": {
         "bytes": "00036807+48",
         "sha1": "2cc8119c81cd",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -8386,14 +8386,8 @@
       "type": "function",
       "confidence": "high",
       "name": "MessageBox_Answer",
-      "description": "(box, input), its arguments removed by this function: by the kind +0. Kinds 0, 1, 3, 4 and any kind not below: sets Shell_PendingMessage (0007fcb0)'s code word to 0 and its target 0007fcb6 to MessageBox_NextScreen (00081690)[kind], closes the box with MessageBox_Close (000382d5) and calls the raster slot 00086628, which shows the cursor. Kinds 5, 6 and 8 to 11 first call Ttm_SetMode (00046948)(0, handle) for the handle bytes at the dword 0007e718 + 0x12 and + 9. Kind 2: adds 1 to the word 000814e8, Dialog_MarkDirty (00018d76)(Shell_Dialog (0009afc8)) and MessageBox_Close; with the input's word +0 and byte +0xa 0 and the word of the table 000814ec at the career's campaign (0009b241 + 0x1f7 x 0009b21f) x 0x16 + 2 x 000814e8 not -1, Shell_PresentFrame (00012980), MessageBox_SetKind (00037eac)(box, 2) and DigitalDialog_ShowMessage (00037edd)(box); otherwise 000814e8 = 0, Shell_PresentFrame, the raster slot 0008663c with (draw page, 0), (visible page, 0) and (0007fccc, 0), Shell_PlayTtmInPlace (00037dce) of a_camni.ttm for campaign 0, d_camni.ttm for 1 and 2, b_camni.ttm for 3 and 4, g_camni.ttm for 5 to 7 (any other campaign leaves the name buffer unwritten), and code 0 with target MessageBox_NextScreen[2] (00081694). Kind 7: adds 1 to 000814e8, Dialog_MarkDirty and MessageBox_Close; while 0008159c[000814e8] is not -1, MessageBox_SetKind(box, 7) and DigitalDialog_ShowMessage; at -1, in Shell_Mode (000aad56) 0 sets MessageBox_NextScreen[7] to 1510, sets 0008159c[0 .. 000814e8 - 1] to -1 and 000814e8 to 0, posts code 0 with target MessageBox_NextScreen[7] (0008169e), and calls Ttm_SetMode(0, handle) for the two handles above. es2_xref finds one call, from MessageBox_Run (000382f6).",
-      "source": "Herculan/docs/es1/shell/message-box.md#the-answer; ES1GO decompile at 0003837f",
-      "verified": {
-        "bytes": "0003837f+840",
-        "sha1": "ebc20441804f",
-        "scope": "body",
-        "via": "decompile"
-      }
+      "description": "(box, input), its arguments removed by this function: by the kind +0. Kinds 0, 1, 3, 4 and any kind not below: sets Shell_PendingMessage (0007fcb0)'s code word to 0 and its target 0007fcb6 to MessageBox_NextScreen (00081690)[kind], closes the box with MessageBox_Close (000382d5) and calls the raster slot 00086628, which shows the cursor. Kinds 5, 6 and 8 to 11 first call Ttm_SetMode (00046948)(0, handle) for the handle bytes at the dword 0007e718 + 0x12 and + 9. Kind 2: adds 1 to the word 000814e8, Dialog_MarkDirty (00018d76)(Shell_Dialog (0009afc8)) and MessageBox_Close; with the input's word +0 and byte +0xa 0 and the word of the table 000814ec at the career's campaign (0009b241 + 0x1f7 x 0009b21f) x 0x16 + 2 x 000814e8 not -1, Shell_PresentFrame (00012980), MessageBox_SetKind (00037eac)(box, 2) and DigitalDialog_ShowMessage (00037edd)(box); otherwise 000814e8 = 0, Shell_PresentFrame, the raster slot 0008663c with (draw page, 0), (visible page, 0) and (0007fccc, 0), Shell_PlayTtmInPlace (00037dce) of a_camni.ttm for campaign 0, d_camni.ttm for 1 and 2, b_camni.ttm for 3 and 4, g_camni.ttm for 5 to 7 (any other campaign leaves the name buffer unwritten), and code 0 with target MessageBox_NextScreen[2] (00081694). Kind 7: adds 1 to 000814e8, Dialog_MarkDirty and MessageBox_Close; while 0008159c[000814e8] is not -1, MessageBox_SetKind(box, 7) and DigitalDialog_ShowMessage; at -1, in Shell_Mode (000aad56) 0 stores 1510 at MessageBox_NextScreen indexed by the box's kind word, which MessageBox_Close has just set to -1, so at entry -1, 0008168e (000383e0-000383e4), sets 0008159c[0 .. 000814e8 - 1] to -1 and 000814e8 to 0, posts code 0 with target MessageBox_NextScreen[7] (0008169e), and calls Ttm_SetMode(0, handle) for the two handles above. es2_xref finds one call, from MessageBox_Run (000382f6).",
+      "source": "Herculan/docs/es1/shell/message-box.md#the-answer; ES1GO decompile at 0003837f"
     },
     {
       "address": "000386c8",
@@ -8731,13 +8725,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_PlayTtm",
-      "description": "(name), its argument removed by this function: calls the raster slot 0008663c with (draw page, 0) and (page 2 0007fccc, 0), Shell_PresentFrame, the slot again for the draw page; sets 0007fcd8 to RenderContext_GetFullScreen and makes it the default (Ttm_SetDefaultContext); opens name with Ttm_Open(0, 0, 0, name) and runs Ttm_RunScript, Input_PollDeviceBlock and Shell_PresentFrame until Ttm_GetMode is not 0, the block's word +0 is not 0 or its byte +0xa is set; when the script ran out, clears the pages again with a frame between; sets the byte 000817bc when a key or button stopped it; Ttm_Close and 0007fcd0 cleared.",
+      "description": "(name), its argument removed by this function: calls the raster slot 0008663c, VGA8_ClearPage (00075afc), with (draw page, 0) and (page 2 0007fccc, 0), Shell_PresentFrame, the slot again for the draw page; sets 0007fcd8 to RenderContext_GetFullScreen and makes it the default (Ttm_SetDefaultContext); opens name with Ttm_Open(0, 0, 0, name) and runs Ttm_RunScript, Input_PollDeviceBlock and Shell_PresentFrame until Ttm_GetMode is not 0, the block's word +0 is not 0 or its byte +0xa is set; when the mode is still 0 after the loop, a key or the button having stopped a script still playing, clears the draw page and page 2 again, presents a frame and clears the new draw page, where a script that ended by itself skips that; sets the byte 000817bc when the last poll's word +0 or byte +0xa is set; Ttm_Close and 0007fcd0 cleared.",
       "source": "Herculan/docs/es1/shell/menus.md#the-first-screen--shell_openfirstscreen-0003ba47; ES1GO decompile at 0003b8df",
       "verified": {
         "bytes": "0003b8df+360",
         "sha1": "76715fc7d57c",
         "scope": "body",
-        "via": "decompile"
+        "via": "disasm"
       }
     },
     {
@@ -10093,13 +10087,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Ttm_RunAll",
-      "description": "(): notes the word 000829d6, waits in a loop until the byte 000829d5 is non-zero, clears it, and calls TtmScript_Run (00046f2c)(script, 000829d6 as it is then) for each handle of the table 000829e0 below the count 000829dc that holds a script. Then stores the render context 000ab612's +4 (0 with none) at +0x40 of the display object 00082a94, passing it to Raster_SetClipBlock when the display slot 000ab7a0 holds that object, installs 000ab612 with Raster_InstallRenderContext, subtracts the noted value from 000829d6 and returns 1. es2_xref finds calls from Shell_Main, MessageBox_Run (000382f6) and Shell_DrawScreen (0003c1b7).",
+      "description": "(): waits in a loop until the byte 000829d5 is non-zero, then notes the word 000829d6 (00046540), clears 000829d5 and calls TtmScript_Run (00046f2c)(script, the noted value) for each handle of the table 000829e0 below the count 000829dc that holds a script. Then stores the render context 000ab612's +4 (0 with none) at +0x40 of the display object 00082a94, passing it to Raster_SetClipBlock when the display slot 000ab7a0 holds that object, installs 000ab612 with Raster_InstallRenderContext, subtracts the noted value from 000829d6 and returns 1. es2_xref finds calls from Shell_Main, MessageBox_Run (000382f6) and Shell_DrawScreen (0003c1b7).",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#running-a-script",
       "verified": {
         "bytes": "0004652e+172",
         "sha1": "dfe330faf394",
         "scope": "body",
-        "via": "decompile"
+        "via": "disasm"
       }
     },
     {
@@ -20027,6 +20021,21 @@
         "sha1": "81314b3bdcb0",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00070130",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_WritePaletteRange",
+      "description": "(first, count, colours), C convention: slot 13 of VGA_8's table 0008b2f0 (the dword at 0008b324; the shell's driver slot 000865e4, which Palette_UploadWhole (0005a8e8) calls). Spins on port 3DA until bit 3, the vertical retrace, is set; reads port 3C7 and, when its low two bits are not 3, writes that byte to 3C9; writes first to 3C8; then, with interrupts off, writes count entries of colours to 3C9, three bytes of each 4-byte entry, the fourth skipped, and turns interrupts on.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-fades; ES1GO disassembly at 00070130",
+      "verified": {
+        "bytes": "00070130+63",
+        "sha1": "39c6cf387bca",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {

@@ -56,7 +56,7 @@ A press on the list or a move while it is held selects the line under the pointe
 | OPTIONS | 1300 | nothing | the options menu, `OptionsMenu` |
 | RETURN TO MAIN | 1000 | nothing | the main menu |
 
-Each case finds the list with `DUIWindow_FindEnabledControlById` (`0001bda4`)(the window `+6`, 1101). The arrows move the selection one line within the seven and stop at the ends.
+Each case finds the list with `DUIWindow_FindEnabledControlById` (`0001bda4`)(the window `+6`, 1101), the arrows twice, once for the step and once for the value, and indexes the window's controls `+0x1f` with the answer untested, so a −1, no enabled 1101, reads the dword before the array. The arrows move the selection one line within the seven and stop at the ends.
 
 **BRIEFING >** loads the mission before the screen changes, as INSTANT ACTION > does, and from screen 1499 on takes INSTANT ACTION's path: the message box over backdrop 3000, then [the war map](war-map.md) 1501 with the mission's briefing ([the path to the mission](main-menu.md#instant-actions-path-to-the-mission)). `Shell_Mode` stays 0, as SINGLE MISSION on the main menu set it, and `Shell_ReturnScreen` 1100. The `.ANM` plays when the next screen is drawn ([drawing a screen](menus.md#drawing-a-screen)).
 
@@ -64,7 +64,7 @@ Each case finds the list with `DUIWindow_FindEnabledControlById` (`0001bda4`)(th
 
 ### Starting the mission
 
-`SingleMission_Start` (`00036807`) loads `car\s_armory.dat` into the weapon stock `000aad62` with `Inventory_LoadFile` (`00027e02`, [the weapon stock](../formats/car-hercs-and-stock.md#the-weapon-stock)), builds the path with `SingleMission_BuildPath` (`00036649`) from `Mission_Kind`, loads the mission with `MsnGen_LoadMission` ([loading a mission](../formats/msn-mission-file.md#loading-a-mission)) and saves the paths with `Mission_WriteRestore`. `SingleMission_BuildPath`, given a list index, or −1 for a list drawn at random below the count `00081084` on `Shell_RandomState` (`0009aec0`), formats a name `StrList_PickRandom` draws from that list as `msn\%s` into `000aad14` and sets the text path. `es2_xref.py` finds two calls of `SingleMission_Start`: `MissionMenu_OnMessage`'s BRIEFING > and `MainMenu_OnMessage`'s INSTANT ACTION >, which passes −1.
+`SingleMission_Start` (`00036807`) loads `car\s_armory.dat` into the weapon stock with `Inventory_LoadFile` (`00027e02`)(the dword `000aad62`, the stock's pointer, [the weapon stock](../formats/car-hercs-and-stock.md#the-weapon-stock)), builds the path with `SingleMission_BuildPath` (`00036649`) from `Mission_Kind`, loads the mission with `MsnGen_LoadMission` ([loading a mission](../formats/msn-mission-file.md#loading-a-mission)) and saves the paths with `Mission_WriteRestore` ([the restore file](../formats/eng-mission-text.md#which-file)). `SingleMission_BuildPath`, given a list index, or −1 for a list drawn at random below the count `00081084` on `Shell_RandomState` (`0009aec0`), formats a name `StrList_PickRandom` draws from that list as `msn\%s` (`000810cc` for −1, `000810d3` otherwise) into `000aad14` and sets the text path. So −1 makes two draws, the list and then the name below the list's count word `+0`, and an index one, all before `MsnGen_LoadMission`'s draws ([the draws](../formats/msn-mission-file.md#the-draws)). `StrList_PickRandom` (`00020289`) on a list of count 0 draws nothing, `Math_RandomBelow`(0) being 0, and reads the first slot of its null name array. `es2_xref.py` finds two calls of `SingleMission_Start`: `MissionMenu_OnMessage`'s BRIEFING > and `MainMenu_OnMessage`'s INSTANT ACTION >, which passes −1.
 
 ## The MISSION PARAMS menu
 
@@ -83,29 +83,42 @@ Each case finds the list with `DUIWindow_FindEnabledControlById` (`0001bda4`)(th
 
 The pointer starts on ACCEPT; `Esc` presses and releases CANCEL and `Space` ACCEPT.
 
-**Opening it.** Screen 1110's case at `0003e589` allocates a `0x30`-byte screen object, the `0x26` bytes of [the screen object](menus.md#the-screen-object) and five `int16` from `+0x26`, and builds it as 1100's case does with `MissionOptionsAlert`'s vtable (`00081f42`). At `0003e718` it copies options 12 to 16 of `Prefs_Options` (`000aa24e`) into the five words `MissionParams_Ammo` (`000aacbc`) to `MissionParams_TimeOfDay` (`000aacc4`), each byte zero-extended, and the five words into the object's `+0x26`, `+0x28`, `+0x2a`, `+0x2c` and `+0x2e`, the values CANCEL puts back; then it makes the object `Shell_CurrentMenu`. 1110 is not among the screens `Shell_BackdropForScreen` (`00040afa`) gives a group, so the backdrop stays. `Menu_Open` changes no control for 1110.
+**Opening it.** Screen 1110's case at `0003e589` allocates a `0x30`-byte screen object, the `0x26` bytes of [the screen object](menus.md#the-screen-object) and five `int16` from `+0x26`, and builds it as 1100's case does with `MissionOptionsAlert`'s vtable (`00081f42`). At `0003e718` it copies options 12 to 16 of `Prefs_Options` (`000aa24e`) into the five words `MissionParams_Ammo` (`000aacbc`) to `MissionParams_TimeOfDay` (`000aacc4`), each byte zero-extended, and the five words into the object's `+0x26`, `+0x28`, `+0x2a`, `+0x2c` and `+0x2e`, the values CANCEL puts back; then it makes the object `Shell_CurrentMenu`. Each option is read as `MOVSX ECX, index; MOV AL, [ECX + 000aa24e]; MOVZX EAX, AL`. When `Mem_New` fails (`0003e5a4`) the case skips the build and the copy and stores the null object as `Shell_CurrentMenu`. 1110 is not among the screens `Shell_BackdropForScreen` (`00040afa`) gives a group, so the backdrop stays. `Menu_Open` changes no control for 1110.
 
-**The values.** The build gives each list its word as the selected line: 1116 to 1120 are among the 23 ids at `00081a00`, whose cases at `0003a9c7`–`0003aa1c` pass `MissionParams_Ammo`, `MissionParams_Damage`, `MissionParams_Difficulty`, `MissionParams_Visibility` and `MissionParams_TimeOfDay` ([the kinds](../formats/dlg-menu-dialogs.md#the-kinds)). Their lines are `Menu_ListLines`' cases for them, each `WaText_LinesFromList` of a word list naming lines of `eng\watext.bin`:
+**The values.** The build gives each list its word as the selected line: 1116 to 1120 are among the 23 ids at `00081a00`, whose cases `0003a9c7`, `0003a9d9`, `0003a9eb`, `0003a9fd` and `0003aa0f` each load one of `MissionParams_Ammo`, `MissionParams_Damage`, `MissionParams_Difficulty`, `MissionParams_Visibility` and `MissionParams_TimeOfDay` as the selected word and jump to the common tail `0003abfd`, `MTStrListBox_Ctor`(0, `0x100`, 0, the alignment, the word, the style, the id, the lines, the rect) and `DUIWindow_AddControl` ([the kinds](../formats/dlg-menu-dialogs.md#the-kinds)). The alignment is a local the kind's code zeroes before the lookup, which these five leave 0, left-aligned ([the list box](menus.md#the-list-box)). Their lines are `Menu_ListLines`' cases for them (`0003765c`, `0003766d`, `000376a0`, `0003767e`, `0003768f`), each `push` of a word list, `WaText_LinesFromList` and `RET 4`, the list's `int16` words, −1-ended, naming lines of `eng\watext.bin`:
 
-| List | Word | Word list | Lines, value 0 first |
-|---|---|---|---|
-| 1116 | AMMO, `MissionParams_Ammo` | `000811c4` | LIMITED, UNLIMITED |
-| 1117 | DAMAGE, `MissionParams_Damage` | `000811cc` | VULNERABLE, INVULNERABLE |
-| 1118 | DIFFICULTY, `MissionParams_Difficulty` | `00081244` | TRAINING, NO SWEAT, CHALLENGING, BRUTAL |
-| 1119 | VISIBILITY, `MissionParams_Visibility` | `000811d4` | NORMAL, LOW |
-| 1120 | TIME OF DAY, `MissionParams_TimeOfDay` | `000811dc` | DAY, DUSK, NIGHT |
+| List | Word | Word list | Lines | Texts, value 0 first |
+|---|---|---|---|---|
+| 1116 | AMMO, `MissionParams_Ammo` | `000811c4` | 8, 9 | LIMITED, UNLIMITED |
+| 1117 | DAMAGE, `MissionParams_Damage` | `000811cc` | 10, 11 | VULNERABLE, INVULNERABLE |
+| 1118 | DIFFICULTY, `MissionParams_Difficulty` | `00081244` | 23, 24, 25, 26 | TRAINING, NO SWEAT, CHALLENGING, BRUTAL |
+| 1119 | VISIBILITY, `MissionParams_Visibility` | `000811d4` | 12, 4 | NORMAL, LOW |
+| 1120 | TIME OF DAY, `MissionParams_TimeOfDay` | `000811dc` | 13, 14, 15 | DAY, DUSK, NIGHT |
+
+The lists overlap in the image: `000811c4`'s −1 is followed by a 0 word and then `000811cc`'s first word, and `000811d4`'s −1 by a 0 word and `000811dc`'s.
 
 A list of style 1 draws every line in `nm_green` with no selection box and shows its lines from the selected one, as many as its 12-pixel height holds ([the list box](menus.md#the-list-box)). A press on one selects nothing, and its release posts its id, which the handler and `Shell_ScreenIds` do not hold.
 
 **The buttons.** `MissionParams_OnMessage` (`0002b4fe`), slot `+8` of `MissionOptionsAlert`'s vtable, looks the target up among the seven ids of the table at `00080a74`, its cases at `00080a90`.
 
-- AMMO, DAMAGE, DIFFICULTY, VISIBILITY and TIME OF DAY (1111 to 1115) each add 1 to their word, modulo 2, 2, 4, 2 and 3, select the new value in their list 1116 to 1120 with its slot `+0x24`, `MTStrListBox_SelectLine`, and store it as option 12 to 16 with `Prefs_SetOption` (`00008378`)(1, value, option). No handler is registered for options 12 to 16 ([Open](#open)), so `Prefs_SetOption` only stores the byte. The screen stays: 1111 to 1115 are not in `Shell_ScreenIds`.
+- AMMO, DAMAGE, DIFFICULTY, VISIBILITY and TIME OF DAY (1111 to 1115) each add 1 to their word as an `int16` and take a signed remainder, by 2, 2, 4, 2 and 3: AMMO, DAMAGE and VISIBILITY compile it as `CDQ; XOR EAX,EDX; AND EAX,1; ADD EDX,EAX`, DIFFICULTY and TIME OF DAY as an `IDIV`. They select the new value in their list 1116 to 1120 with its slot `+0x24`, `MTStrListBox_SelectLine`, and store it as option 12 to 16 with `Prefs_SetOption` (`00008378`)(1, value, option), which takes the word in a dword and stores its low byte. No handler is registered for options 12 to 16 ([Open](#open)), so `Prefs_SetOption` only stores the byte. The screen stays: 1111 to 1115 are not in `Shell_ScreenIds`.
 - CANCEL (99) copies the object's `+0x26`–`+0x2e` back into the five words and puts every option back from `Prefs_Committed` (`000aa260`) with `Prefs_RevertAll` (`00008316`)(1), then does what ACCEPT does.
 - ACCEPT (100) copies the options into `Prefs_Committed` with `Prefs_CommitAll` (`000082b0`)(1), writes all 17 to `data\prefs.cfg` with `Prefs_Save` (`00008267`), and makes the target 1100.
 
 So both buttons return to the SINGLE MISSION menu and both write `data\prefs.cfg`, CANCEL with the values the menu opened with. The handler sets the target before `Shell_HandleMessage`'s *back* step, so CANCEL's 99 never becomes `Shell_PreviousScreen`. How the five words reach the mission is [the mission parameters](../formats/msn-mission-file.md#the-mode-and-the-mission-parameters).
 
-`Prefs_SetHandler` (`00008659`)(handler, option) stores a handler in `Prefs_Handlers` (`000aa272`) at the option's index, as `ES1DBSIM`'s `Prefs_SetHandler` (`ES1DBSIM 0004ac4c`) does in its own table.
+### The options
+
+**The shell keeps the 17 bytes of `data\prefs.cfg` as options, a handler each, and a committed copy that CANCEL goes back to.** `Prefs_Load` (`000081ca`) reads the 17 bytes through `Path_ApplyAltDrive` into `Prefs_Options` (`000aa24e`), zeroes them when the file does not open, and for each option calls its handler (`Prefs_Handlers`, `000aa272`) when one is registered and then copies it into `Prefs_Committed` (`000aa260`). At start-up `Shell_LoadData` (`00020630`) copies options 12 to 16 into the five words ([the shared data](startup.md#the-shared-data)), and the MISSION PARAMS menu copies them in again each time it opens. `Prefs_SetHandler` (`00008659`)(handler, option) stores a handler in `Prefs_Handlers` at the option's index, as `ES1DBSIM`'s `Prefs_SetHandler` (`ES1DBSIM 0004ac4c`) does in its own table. The other four differ from the simulator's ([the option array](../simulation/preferences.md#the-option-array)):
+
+| `ES1GO` | Does | `ES1DBSIM`'s |
+|---|---|---|
+| `Prefs_SetOption` (`00008378`), (apply, value, index) | stores the value's low byte, then with apply set calls the option's handler, when there is one, with it | `Prefs_SetOption` (`0004a914`), which first keeps the old value in `Prefs_PreviousOptions`; the shell keeps no previous copy |
+| `Prefs_CommitAll` (`000082b0`), (apply) | for each option that differs from `Prefs_Committed`, with apply set its handler when there is one, then the committed copy updated | `Prefs_CommitOptions` (`0004a83c`), with `Prefs_LoadedOptions` for `Prefs_Committed`, which then copies every option into `Prefs_PreviousOptions` |
+| `Prefs_RevertAll` (`00008316`), (apply) | for each option that differs from `Prefs_Committed`, the committed value put back and, with apply set, its handler called with it | the same statements as `0004a8a8` (`es2_naming.py diff` differs only in the loop's shape and the names) |
+| `Prefs_Save` (`00008267`) | writes the 17 options outright to `data\prefs.cfg`, through `Path_ApplyAltDrive`, with a `FileWStream`, when it opens | `Prefs_SaveSelectedOptions` (`0004ab6c`), which reads the file first and copies only the named options over it |
+
+So the start-up's `Prefs_SetOption`(1, 0, *n*) of options 0, 1 and 2 with no sound manager ([the devices](startup.md#the-devices)) runs after `Prefs_Load` has made the committed copy, which keeps the file's values. MISSION PARAMS' CANCEL then puts options 0 to 2 back to the file's values with `Prefs_RevertAll`, and ACCEPT commits their 0s and `Prefs_Save` writes MUSIC, SOUNDS and RADIO off into `data\prefs.cfg`, unless an earlier commit has made the 0s the committed copy: `es2_xref.py` finds `Prefs_CommitAll` called also from `000064c4` and from `0002b82b`, the PREFS menu's handler, with `Prefs_RevertAll` and `Prefs_Save` ([Open](#open)). With a sound manager the start-up does not clear them, and neither button changes them.
 
 ## Functions
 
@@ -127,5 +140,6 @@ So both buttons return to the SINGLE MISSION menu and both write `data\prefs.cfg
 ## Open
 
 - **Open:** what reads options 12 to 16 through a handler: `es2_xref.py --decode` on `Prefs_Handlers` finds writes only in `Prefs_ClearHandlersAndInit`'s zeroing loop and in `Prefs_SetHandler`, whose one call `es2_xref.py` finds is `Prefs_Init`'s, for option 11 ([the devices](startup.md#the-devices)).
+- **Open:** what `000064c4` and the PREFS menu's handler `0002b82b` commit and save, which decides whether MISSION PARAMS' ACCEPT can still write options 0 to 2 off with no sound manager ([the options](#the-options)). A retail check under DOSBox-X with no sound card: note `data\prefs.cfg`'s bytes 0 to 2, open MISSION PARAMS from SINGLE MISSION, ACCEPT, and compare them.
 - **Open:** how many lines the MISSION PARAMS lists show, which turns on the cell height of `nm_green`. A retail check: open MISSION PARAMS, press DIFFICULTY three times, and see one name beside it change from the current value through the others.
 - **Open:** a retail check under DOSBox-X: SINGLE MISSION shows the seven types with the pointer on BRIEFING >; `Down` moves the red line; RETURN TO MAIN on `Esc`; select STRIKE, BRIEFING >, then CANCEL on the war map, and the list comes back on STRIKE; select SCOUT, BRIEFING >, CANCEL, and the list comes back on the line of the loaded mission's header word 3.
