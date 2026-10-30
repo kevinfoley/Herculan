@@ -59,10 +59,8 @@ public static class Es1SingleMission {
 	/// </summary>
 	public static Es1MissionLoadResult? Start(string installRoot, GameContent shell, string missionName,
 			Es1MissionParams missionParams, Es1ShellRandom random, Es1CareerRecord? record, out string? error) {
-		string fileName = Path.HasExtension(missionName) ? missionName : missionName + ".MSN";
-		if (shell.Read(Es1MissionFiles.MissionFolder, fileName) is not { } missionBytes
-				|| new Es1MissionFileTransformer().Parse(missionBytes) is not Es1MissionFile mission) {
-			error = $"No ES1 mission {Es1MissionFiles.MissionFolder}\\{fileName} in {installRoot}.";
+		string fileName = MissionFileName(missionName);
+		if (ReadMission(installRoot, shell, missionName, out error) is not { } mission) {
 			return null;
 		}
 
@@ -91,37 +89,72 @@ public static class Es1SingleMission {
 		return result;
 	}
 
+	/// <summary><paramref name="missionName"/> with <c>.MSN</c> after it when it has no extension.</summary>
+	private static string MissionFileName(string missionName) => Path.HasExtension(missionName) ? missionName : missionName + ".MSN";
+
+	/// <summary>
+	/// <c>MsnGen_LoadMission</c>'s step 1, which both modes share: <paramref name="missionName"/> (with or without
+	/// <c>.MSN</c>) read from <c>msn\</c> and parsed; null with the reason in <paramref name="error"/> when it is missing or
+	/// does not parse.
+	/// </summary>
+	public static Es1MissionFile? ReadMission(string installRoot, GameContent shell, string missionName, out string? error) {
+		string fileName = MissionFileName(missionName);
+		if (shell.Read(Es1MissionFiles.MissionFolder, fileName) is not { } missionBytes
+				|| new Es1MissionFileTransformer().Parse(missionBytes) is not Es1MissionFile mission) {
+			error = $"No ES1 mission {Es1MissionFiles.MissionFolder}\\{fileName} in {installRoot}.";
+			return null;
+		}
+
+		error = null;
+		return mission;
+	}
+
 	/// <summary>Writes the load's files into the install's <c>data\</c> and <c>car\</c>, in the load's order.</summary>
 	public static void Write(string installRoot, Es1MissionLoadResult result) {
-		Directory.CreateDirectory(CaseInsensitivePath.Combine(installRoot, Es1MissionFiles.DataFolder));
-
-		// Step 7: mission.var through a FileWStream, which truncates; script.dat through the FileRWStream the load opened
-		// before reading the rows, which does not.
-		File.WriteAllBytes(Es1MissionFiles.DataPath(installRoot, Es1MissionFiles.MissionVarName), result.MissionVarBytes());
-		WriteOver(Es1MissionFiles.DataPath(installRoot, Es1MissionFiles.ScriptName), new Es1ScriptDatTransformer().Write(result.Script)!);
+		WriteDataFiles(installRoot, result);
 
 		// Step 9's step 5: Hangar_SaveFile (0002909c) through a FileRWStream. Retail asserts at severity 5 (mechman.cpp line
 		// 0x132) when the file does not open; here the exception reaches the caller as the other files' do.
 		Directory.CreateDirectory(CaseInsensitivePath.Combine(installRoot, CarFolder));
-		WriteOver(CarPath(installRoot, SavedHangarName), new Es1HercListTransformer().Write(result.SavedHangar)!);
+		if (result.SavedHangar is { } saved) {
+			WriteOver(CarPath(installRoot, SavedHangarName), new Es1HercListTransformer().Write(saved)!);
+		}
 
 		// Step 10.
 		WritePlayerMec(installRoot, result.Player, result.Record);
 	}
 
 	/// <summary>
-	/// <c>PlayerMec_Write</c> (<c>0002299e</c>)'s files in <c>Shell_Mode</c> 0: <c>data\player.mec</c> deleted and written
-	/// again with <paramref name="player"/> (docs/es1/formats/career-log-and-player-mec.md#the-player-file), then
-	/// <c>CareerRecord_SaveCurrent</c> (<c>00014f28</c>)'s <c>SingleMission_SaveRecord</c> (<c>00014f54</c>):
-	/// <paramref name="record"/> written to <c>car\sm_play.gam</c> through a <c>FileWStream</c>. Retail asserts at
-	/// <c>career.cpp</c> line <c>0x58</c> when the record's file does not open; here the exception reaches the caller.
+	/// The load's step 7 in either mode: <c>data\mission.var</c> through a <c>FileWStream</c>, which truncates, and
+	/// <c>data\script.dat</c> through the <c>FileRWStream</c> the load opened before reading the rows, which does not.
+	/// </summary>
+	public static void WriteDataFiles(string installRoot, Es1MissionLoadResult result) {
+		Directory.CreateDirectory(CaseInsensitivePath.Combine(installRoot, Es1MissionFiles.DataFolder));
+		File.WriteAllBytes(Es1MissionFiles.DataPath(installRoot, Es1MissionFiles.MissionVarName), result.MissionVarBytes());
+		WriteOver(Es1MissionFiles.DataPath(installRoot, Es1MissionFiles.ScriptName), new Es1ScriptDatTransformer().Write(result.Script)!);
+	}
+
+	/// <summary>
+	/// <c>PlayerMec_Write</c> (<c>0002299e</c>)'s files in <c>Shell_Mode</c> 0: <c>data\player.mec</c>
+	/// (<see cref="WritePlayerFile"/>), then <c>CareerRecord_SaveCurrent</c> (<c>00014f28</c>)'s
+	/// <c>SingleMission_SaveRecord</c> (<c>00014f54</c>): <paramref name="record"/> written to <c>car\sm_play.gam</c> through
+	/// a <c>FileWStream</c>. Retail asserts at <c>career.cpp</c> line <c>0x58</c> when the record's file does not open; here
+	/// the exception reaches the caller.
 	/// </summary>
 	public static void WritePlayerMec(string installRoot, Es1PlayerMec player, Es1CareerRecord record) {
+		WritePlayerFile(installRoot, player);
+		Directory.CreateDirectory(CaseInsensitivePath.Combine(installRoot, CarFolder));
+		File.WriteAllBytes(CarPath(installRoot, SavedRecordName), new Es1CareerRecordTransformer().Write(record)!);
+	}
+
+	/// <summary>
+	/// <c>PlayerMec_Write</c>'s own file in either mode: <c>data\player.mec</c> deleted and written again with
+	/// <paramref name="player"/> (docs/es1/formats/career-log-and-player-mec.md#the-player-file).
+	/// </summary>
+	public static void WritePlayerFile(string installRoot, Es1PlayerMec player) {
 		string playerPath = Es1MissionFiles.DataPath(installRoot, Es1MissionFiles.PlayerName);
 		File.Delete(playerPath);
 		File.WriteAllBytes(playerPath, new Es1PlayerMecTransformer().Write(player)!);
-		Directory.CreateDirectory(CaseInsensitivePath.Combine(installRoot, CarFolder));
-		File.WriteAllBytes(CarPath(installRoot, SavedRecordName), new Es1CareerRecordTransformer().Write(record)!);
 	}
 
 	/// <summary><paramref name="bytes"/> written over <paramref name="path"/> from its start, its tail past them kept, as a <c>FileRWStream</c> writes.</summary>

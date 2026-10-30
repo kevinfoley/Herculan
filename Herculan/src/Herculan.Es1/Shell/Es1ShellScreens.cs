@@ -875,7 +875,7 @@ public sealed class Es1ShellScreens {
 
 				break;
 			case 1330:
-				// PLACEHOLDER: BattlesetAlert, the battle-set picker, P10's.
+				// PLACEHOLDER: BattlesetAlert, the battle-set picker, P10b's.
 				break;
 			case 5555:
 				// PLACEHOLDER: TechReleaseAlert, P11's.

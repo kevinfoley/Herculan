@@ -117,8 +117,12 @@ public sealed class Es1WarMapMenu : Es1Menu {
 			case Cancel:
 				// 0002c2ad.
 				if (mission.Mode == 1) {
-					// PLACEHOLDER: the current career record's byte +1 cleared, its word +4 set to 1500 and the roster saved
-					// with 000168b0(0009b218, the roster's word +7); the careers are S3's.
+					// The current career record's byte +1 cleared, its word +4, the career's screen, 1500, and Career_Save
+					// (000168b0)(roster, the roster's word +7).
+					var roster = mission.Roster;
+					roster.CurrentRecord.Byte1 = 0;
+					roster.CurrentRecord.Word4 = CareerScreen;
+					roster.Save(roster.Current);
 					message = message with { Target = CareerMenu };
 				} else {
 					message = message with { Target = Es1MissionMenu.Screen };
@@ -135,7 +139,7 @@ public sealed class Es1WarMapMenu : Es1Menu {
 				break;
 			case ServiceBay:
 				// 0002c382: PLACEHOLDER: 0000a9c8(Shell_MissionMap), with no test that the map is set, the mission map's,
-				// S5's; and in Shell_Mode 1 the current career record's byte +1 set to 1, S3's. The target stays 1700.
+				// S5's; and in Shell_Mode 1 the current career record's byte +1 set to 1, P10b's. The target stays 1700.
 				break;
 			case BeginMission:
 				BeginMissionPressed(ref message);
@@ -144,7 +148,8 @@ public sealed class Es1WarMapMenu : Es1Menu {
 	}
 
 	/// <summary>
-	/// BEGIN MISSION >, <c>0002c3c9</c> (docs/es1/shell/war-map.md#begin-mission): 3333 when the player has no HERC
+	/// BEGIN MISSION >, <c>0002c3c9</c> (docs/es1/shell/war-map.md#begin-mission), on <c>CareerRecord_Current</c>, the
+	/// single mission's record or the roster's current one: 3333 when the player has no HERC
 	/// (<see cref="Es1ShellMission.PlayerHasNoHerc"/>), else 3000 when any pilot's HERC is unarmed
 	/// (<see cref="Es1ShellMission.AnyPilotUnarmed"/>), else <c>data\player.mec</c> written again
 	/// (<see cref="Es1ShellMission.WritePlayerMec"/>), 9999, the mission map deleted and
@@ -153,12 +158,6 @@ public sealed class Es1WarMapMenu : Es1Menu {
 	private void BeginMissionPressed(ref Es1MenuMessage message) {
 		var screens = Context.Screens;
 		var mission = Context.Mission;
-		if (mission.Mode != 0) {
-			// PLACEHOLDER: in Shell_Mode 1 the tests and PlayerMec_Write run on the roster's current career record, S3's;
-			// the target stays 100, which names no screen.
-			return;
-		}
-
 		if (mission.PlayerHasNoHerc()) {
 			message = message with { Target = NoHercAlert };
 		} else if (mission.AnyPilotUnarmed()) {
@@ -239,7 +238,7 @@ public sealed class Es1UnArmedAlert : Es1Menu {
 
 		var screens = Context.Screens;
 		if (Context.Mission.Mode == 1) {
-			// PLACEHOLDER: in Shell_Mode 1 the target 1700 and MessageBox_SetKind(Shell_MessageBox, 6), the career's, S3's;
+			// PLACEHOLDER: in Shell_Mode 1 the target 1700 and MessageBox_SetKind(Shell_MessageBox, 6), the career's, P10b's;
 			// the target stays 100, which names no screen.
 		} else {
 			message = message with { Target = Es1ShellScreens.LoadingScreen };

@@ -92,7 +92,7 @@ public sealed class Es1CareerMenu : Es1Menu {
 				if (FindList(CareerList) is { } list && (list.GetValue() != current || !Context.Mission.Roster.Loaded)) {
 					LoadSelected(list);
 					if (Es1CareerRoster.PlayerCondition(Context.Mission.Roster.CurrentRecord) != 0) {
-						// PLACEHOLDER: Career_StartMission (00016e93)(Career_Roster, 0), the career's mission load, P10's.
+						Context.Mission.Roster.StartMission(0);
 					}
 
 					MarkLoaded();
@@ -142,7 +142,7 @@ public sealed class Es1CareerMenu : Es1Menu {
 
 			message = message with { Target = roster.CurrentRecord.Word4 };
 			if (message.Target != ServiceBay && Es1CareerRoster.PlayerCondition(roster.CurrentRecord) != 0) {
-				// PLACEHOLDER: Career_StartMission (00016e93)(Career_Roster, 0), the career's mission load, P10's.
+				roster.StartMission(0);
 			}
 
 			MarkLoaded();
@@ -157,7 +157,7 @@ public sealed class Es1CareerMenu : Es1Menu {
 
 		message = message with { Target = record.Word4 };
 		if (message.Target != ServiceBay) {
-			// PLACEHOLDER: Shell_PrepareMission (0002a523) of the career's mission, which Career_StartMission loads; P10's.
+			Context.Mission.Prepare(screens);
 		}
 
 		if (message.Target == ServiceBay && record.Equipment.LastKind != -1) {
@@ -233,7 +233,8 @@ public sealed class Es1NewCareerAlert : Es1Menu {
 	/// Slot <c>+8</c>, <c>NewCareerAlert_OnMessage</c> (<c>0002aeec</c>): for ACCEPT, the text of the name box, control
 	/// 103 found with <c>DUIWindow_FindEnabledControlById</c>, through its slot <c>+0x30</c>
 	/// (<see cref="Es1MTEditBox.GetText"/>); <c>Career_New</c>(roster, 0, the text) (<see cref="Es1CareerRoster.New"/>);
-	/// the career's first mission loaded; the target 1490; <c>anm\esiege3.anm</c> to play after the next screen; and the
+	/// the career's first mission loaded (<see cref="Es1CareerRoster.StartMission"/>) and prepared
+	/// (<see cref="Es1ShellMission.Prepare"/>); the target 1490; <c>anm\esiege3.anm</c> to play after the next screen; and the
 	/// message box's kind 2. CANCEL (99) passes to <see cref="Es1ShellScreens.HandleMessage"/>'s <i>back</i>. Retail reads
 	/// the slot of whatever the index −1 gives when no box is found; here the name is then empty, an engine guard.
 	/// </summary>
@@ -247,8 +248,8 @@ public sealed class Es1NewCareerAlert : Es1Menu {
 				? box.GetText()
 				: "";
 		Context.Mission.Roster.New(0, name);
-		// PLACEHOLDER: Career_StartMission (00016e93)(Career_Roster, 0) and Shell_PrepareMission (0002a523), the career's
-		// mission load, P10's.
+		Context.Mission.Roster.StartMission(0);
+		Context.Mission.Prepare(Context.Screens);
 		message = message with { Target = OpeningScreen };
 		Context.Screens.AnmName = MissionAnm;
 		Context.Screens.AnmMode = 1;

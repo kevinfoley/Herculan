@@ -272,7 +272,7 @@ public sealed class Es1MainMenu : Es1Menu {
 
 			message = message with { Target = roster.CurrentRecord.Word4 };
 			if (message.Target != Es1CareerMenu.ServiceBay && Es1CareerRoster.PlayerCondition(roster.CurrentRecord) != 0) {
-				// PLACEHOLDER: Career_StartMission (00016e93)(Career_Roster, 0), the career's mission load, P10's.
+				roster.StartMission(0);
 			}
 
 			roster.BackupLine = (short)(roster.CountUsedRecords() - 1);
@@ -289,7 +289,7 @@ public sealed class Es1MainMenu : Es1Menu {
 
 		message = message with { Target = record.Word4 };
 		if (message.Target != Es1CareerMenu.ServiceBay) {
-			// PLACEHOLDER: Shell_PrepareMission (0002a523) of the career's mission, which Career_StartMission loads; P10's.
+			Context.Mission.Prepare(screens);
 		}
 
 		if (message.Target == Es1CareerMenu.ServiceBay && record.Equipment.LastKind != -1) {

@@ -155,7 +155,7 @@ public sealed class Es1MessageBox {
 			}
 			case 1:
 			case 4:
-				// PLACEHOLDER: a career's mission line, eng\C<k>_text.bin (message-box.md's kind 1), P10's, and its debriefing
+				// PLACEHOLDER: a career's mission line, eng\C<k>_text.bin (message-box.md's kind 1), P10b's, and its debriefing
 				// line, eng\D<k>_text.bin (kind 4), P11's; the box loads nothing.
 				yield break;
 			case >= 5 and <= 11:

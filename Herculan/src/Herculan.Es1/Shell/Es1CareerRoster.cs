@@ -530,6 +530,91 @@ public sealed class Es1CareerRoster {
 	}
 
 	/// <summary>
+	/// <c>Career_StartMission</c> (<c>00016e93</c>)(roster, <paramref name="b"/>) (docs/es1/shell/career.md#a-careers-next-mission):
+	/// <see cref="Current"/> set to <see cref="NthUsedRecord"/>(<paramref name="b"/>); the battle set <see cref="BattleSet"/>
+	/// loaded again (<see cref="Es1ShellData.LoadBattleSet"/>); the mission's path built from the record <see cref="Current"/>
+	/// names (<see cref="BuildMissionPath"/>); the mission loaded in mode 1 (<see cref="Es1ShellMission.LoadCareerMission"/>);
+	/// the record's pilots marked by <c>Squad_MemberCount</c> (<see cref="Es1CareerRecord.MarkTopPilots"/>); the record's
+	/// <c>+0xc</c> set to <c>Mission_Kind</c>; and the paths saved (<see cref="Es1ShellMission.WriteRestore"/>). A path that
+	/// is not built loads nothing, an engine guard (<see cref="GetMissionName"/>).
+	/// </summary>
+	public void StartMission(short b) {
+		Current = NthUsedRecord(b);
+		_data.LoadBattleSet(_content, BattleSet);
+		var record = CurrentRecord;
+		if (BuildMissionPath(record) is { } name) {
+			_mission.LoadCareerMission(name, record);
+		}
+
+		record.MarkTopPilots(_mission.SquadMemberCount);
+		CurrentRecord.LastMissionKind = _mission.MissionKind;
+		_mission.WriteRestore();
+	}
+
+	/// <summary>
+	/// <c>Career_BuildMissionPath</c> (<c>00015a13</c>)(<paramref name="record"/>)
+	/// (docs/es1/formats/bst-battle-sets.md#a-careers-missions): <see cref="GetMissionName"/> for <see cref="OutcomeChoice"/>,
+	/// the record's position <c>+8</c> and campaign <c>+6</c>, formatted as <c>msn\%s</c> into <see cref="Es1ShellMission.Path"/>
+	/// with the text's path set (<see cref="Es1ShellMission.SetPath"/>). Returns the name, or null when none is found,
+	/// which leaves both paths as they were.
+	/// </summary>
+	private string? BuildMissionPath(Es1CareerRecord record) {
+		if (GetMissionName(OutcomeChoice(), record.Position, record.Campaign) is not { } name) {
+			return null;
+		}
+
+		_mission.SetPath(name);
+		return name;
+	}
+
+	/// <summary>
+	/// <c>BattleSet_GetMissionName</c> (<c>000140a5</c>)(<c>g_BattleSet</c>, <paramref name="outcome"/>,
+	/// <paramref name="position"/>, <paramref name="campaign"/>): the position's name for the outcome,
+	/// <c>Campaign_GetPositionName</c> (<c>000142f6</c>) through <c>StrList_Get</c> (<c>00020254</c>), which takes the
+	/// list's only name when it holds one and name <paramref name="outcome"/> otherwise. A name holding <c>.MSN</c>
+	/// (<c>Str_FindBoyerMoore</c>, case kept) is returned as it is; any other names a list, <c>bst\&lt;name&gt;</c>, read as
+	/// one name list (<c>StrList_Read</c>), and the name <c>StrList_PickRandom</c> (<see cref="Es1ShellRandom.PickRandom"/>)
+	/// draws from it is copied over the position's name and returned. Retail reads past its arrays for a campaign, position
+	/// or name that is not there and reads what a missing list's stream gives; here each is reported and gives null, engine
+	/// guards.
+	/// </summary>
+	private string? GetMissionName(int outcome, short position, short campaign) {
+		if (_data.BattleSet is not { } set || campaign < 0 || campaign >= set.Campaigns.Length
+				|| position < 0 || position >= set.Campaigns[campaign].Positions.Length) {
+			Console.Error.WriteLine($"The battle set has no campaign {campaign} position {position}: no mission is loaded.");
+			return null;
+		}
+
+		var names = set.Campaigns[campaign].Positions[position].Names;
+		int index = names.Length == 1 ? 0 : outcome;
+		if (index < 0 || index >= names.Length) {
+			Console.Error.WriteLine($"Campaign {campaign} position {position} has no name {index}: no mission is loaded.");
+			return null;
+		}
+
+		string name = names[index];
+		if (name.Contains(".MSN", StringComparison.Ordinal)) {
+			return name;
+		}
+
+		Es1NameList? list;
+		try {
+			list = _content.Read("bst", name) is { } bytes ? new Es1NameListTransformer().Parse(bytes) : null;
+		} catch (InvalidDataException ex) {
+			Console.Error.WriteLine($"bst\\{name} does not read ({ex.Message}): no mission is loaded.");
+			return null;
+		}
+
+		if (list == null || _data.Random?.PickRandom(list.Names) is not { } drawn) {
+			Console.Error.WriteLine($"bst\\{name} is missing or names no mission: no mission is loaded.");
+			return null;
+		}
+
+		names[index] = drawn;
+		return drawn;
+	}
+
+	/// <summary>
 	/// <c>Inventory_CopyThroughScratch</c> (<c>00027cb3</c>)(<paramref name="from"/>, <paramref name="to"/>): the stock
 	/// <paramref name="from"/> written as <c>car\scratch.arm</c> and read into the stock <paramref name="to"/>, which reverses
 	/// each slot's words; the file is deleted after. Here the write and the read are made in memory, to the same result, and

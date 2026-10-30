@@ -195,6 +195,32 @@ public class Es1CareerRecord {
 	/// </summary>
 	public short CountLostPilots() =>
 		(short)Enumerable.Range(0, PilotCount).Count(i => OnStrengthWithSlot(i) && Pilots[i].Condition == 0);
+
+	/// <summary>
+	/// <c>CareerRecord_MarkTopPilots</c> (<c>00015cbb</c>) (docs/es1/shell/career.md#a-careers-next-mission): the entries
+	/// 1, 2 and 3 (the table at <c>0007ec9c</c>) bubble-sorted by their rank, greatest first, a pair swapped only when the
+	/// first's rank is the smaller; then the entry in place <i>p</i> put on strength when <i>p</i> + 1 is below
+	/// <paramref name="squadMemberCount"/>, <c>Squad_MemberCount</c> (<c>0007ebc8</c>), and off strength otherwise.
+	/// </summary>
+	public void MarkTopPilots(int squadMemberCount) {
+		short[] order = [1, 2, 3];
+		int end = order.Length;
+		bool swapped = true;
+		while (swapped) {
+			end--;
+			swapped = false;
+			for (int i = 0; i < end; i++) {
+				if (Pilots[order[i]].Rank < Pilots[order[i + 1]].Rank) {
+					(order[i], order[i + 1]) = (order[i + 1], order[i]);
+					swapped = true;
+				}
+			}
+		}
+
+		for (int place = 0; place < order.Length; place++) {
+			Pilots[order[place]].OnStrength = place + 1 < squadMemberCount ? (byte)1 : (byte)0;
+		}
+	}
 }
 
 /// <summary>

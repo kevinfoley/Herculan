@@ -109,8 +109,8 @@ public sealed class Es1CareerRecordsMenu : Es1Menu {
 		}
 
 		if (message.Target != Es1CareerMenu.ServiceBay) {
-			// PLACEHOLDER: Career_StartMission (00016e93)(Career_Roster, 0) and Shell_PrepareMission (0002a523), the career's
-			// mission load, P10's.
+			roster.StartMission(0);
+			Context.Mission.Prepare(Context.Screens);
 		}
 
 		roster.Save(roster.Current);
