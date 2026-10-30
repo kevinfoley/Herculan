@@ -66,7 +66,7 @@ The pieces of a block are one text: the literal pieces end mid-sentence where th
 
 ## The briefing
 
-`WarMapMenu_Ctor` (`0002bbbd`), the war map screen, loads block 0 of `BRF:` and turns the box's page forward with `Dialog_NextPage` (`00018e18`) as many times as the word `000809b2`. The screen's handler steps the page with `Dialog_PrevPage` (`00018df0`) or `Dialog_NextPage` and decrements or increments `000809b2` with it (code at `0002c281` and `0002c297`, in bytes Ghidra left undefined), and `0002bf15`, the first slot of the screen's vtable `00080bc6`, calls `Dialog_DeleteBox` and sets `000809b2` to 0.
+The war map shows block 0 of `BRF:` in its text box, a page at a time ([the war map's briefing](../shell/war-map.md#the-briefing)).
 
 ## The debriefing
 
@@ -94,5 +94,4 @@ That is a string table of one group ([ES2's `.STR` layout](../../retail/formats/
 
 - **Open:** what the debriefing ordinal, the first word of `data\results.dat`, counts: which outcome the simulator writes as each value, and why some missions have eight debriefings and some nine.
 - **Open:** whether the simulator rewrites `data\mission.var` before the debriefing reads flags through it, so whether a debriefing's choices see the flags as the mission load seeded them.
-- **Open:** when the briefing page `000809b2` carries over from one visit to the war map to the next, since `0002bf15` sets it to 0; the rest of `0002bf15` and the war map's handler `WarMapMenu_OnMessage` (`0002c057`) are not read.
 - **Open:** why `Mission_ReadRestore` reads the word written from `Mission_Kind` (`000aad5a`) into `000aad5e`, and what the two words hold.

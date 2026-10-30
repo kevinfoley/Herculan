@@ -3227,6 +3227,21 @@
       }
     },
     {
+      "address": "0001620d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerRecord_AnyPilotUnarmed",
+      "description": "(record), its argument removed by this function: as many times as CareerRecord_CountPilots (00015bfb)(record) counts, tests the slot +8 of the current pilot entry (+0x14 + 0x25 x the word +0x12) with Hangar_SlotIsUnarmed (0002a354) and steps the current pilot with CareerRecord_NextPilot (00015b0a)(record); answers 1 in AL when any test answered non-zero, otherwise 0. es2_xref finds calls from WarMapMenu_OnMessage (0002c057) and 0002d327.",
+      "source": "Herculan/docs/es1/shell/war-map.md#begin-mission; ES1GO decompile and disassembly at 0001620d",
+      "verified": {
+        "bytes": "0001620d+96",
+        "sha1": "783c645ab1fa",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "000163ac",
       "binary": "ES1GO",
       "type": "function",
@@ -5452,7 +5467,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Keyboard_RemoveSubscriberCodes",
-      "description": "(callback, codes), C convention: Keyboard_AddSubscriberCodes (0001ffdc) clearing the slot's bit for each code instead of setting it. No caller found by es2_xref. The code of ES1DBSIM's Keyboard_RemoveSubscriberCodes (0006c408), relocated operands aside.",
+      "description": "(callback, codes), C convention: Keyboard_AddSubscriberCodes (0001ffdc) clearing the slot's bit for each code instead of setting it. es2_xref finds calls from WarMapMenu_Dtor (0002bf15) and Shell_HandleMessage (0003c7d8). The code of ES1DBSIM's Keyboard_RemoveSubscriberCodes (0006c408), relocated operands aside.",
       "source": "Herculan/docs/es1/simulation/input.md#a-key--keyboard_int9handler-0007dde4-and-keyboard_dispatch-0007de20",
       "verified": {
         "bytes": "00020030+86",
@@ -5969,6 +5984,21 @@
         "sha1": "46fe3b4284e8",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00022ebf",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_IsUnarmed",
+      "description": "(herc), its argument removed by this function: 1 in AL when every mount of the int16 mount count +2 holds weapon 17 (0x11), the empty mount, at +4 + 2 x mount, so also for a HERC with no mounts; otherwise 0.",
+      "source": "Herculan/docs/es1/shell/war-map.md#begin-mission; ES1GO decompile and disassembly at 00022ebf",
+      "verified": {
+        "bytes": "00022ebf+70",
+        "sha1": "7d8a8b3aa861",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -6962,6 +6992,21 @@
       }
     },
     {
+      "address": "0002a354",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_SlotIsUnarmed",
+      "description": "(slot), its argument removed by this function: 0 when the int16 slot is -1 or the hangar's slot array 000808a0 holds no HERC at it, otherwise Herc_IsUnarmed (00022ebf) of that HERC.",
+      "source": "Herculan/docs/es1/shell/war-map.md#begin-mission; ES1GO decompile and disassembly at 0002a354",
+      "verified": {
+        "bytes": "0002a354+65",
+        "sha1": "5ac89e959a4b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0002a3d8",
       "binary": "ES1GO",
       "type": "function",
@@ -7247,13 +7292,28 @@
       }
     },
     {
+      "address": "0002bbaf",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "WarMapMenu_MapAreaNoOp",
+      "description": "(rect, id) in stack order, its arguments removed by this function: the handler of the war map's hotspot 1502, the map area, which Menu_BuildFromDlg (0003a1f7)'s kind-14 case passes (es2_xref finds its address stored at 0003af3b, in code Ghidra left undefined). Loads its two arguments into EAX and CX and returns: byte for byte the code of BarGraph_NoOp (00003de0), relocated operands aside.",
+      "source": "Herculan/docs/es1/shell/war-map.md#the-screen; ES1GO disassembly at 0002bbaf",
+      "verified": {
+        "bytes": "0002bbaf+14",
+        "sha1": "1550088044a9",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "0002bbbd",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "WarMapMenu_Ctor",
-      "description": "(this): the war map screen (vtable 00080bc6, class name WarMapMenu before it), built over the Menu base (vtable 00080ba8) with 0x26 bytes allocated when this is 0. Loads the briefing, block 0 of BRF: from the .eng path 000aad2a, into the dialog Shell_Dialog (0009afc8) with Dialog_LoadConditional (00018cdb) and calls Dialog_NextPage (00018e18) as many times as the word 000809b2; sets 000809a8 to 3; when the byte Shell_DebugMode (0007fd08) is 0 calls Input_GetKeyboardDevice_Thunk (00027bbf) and, with its result, KeyboardInputDevice_GetMode (00025d19), KeyboardInputDevice_SetMode (00025ce6)(r, 0x20000) and 0001ffdc(0005d6a0, 000809ac); sets 000aa778 to 1.",
-      "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-briefing",
+      "description": "(this): the war map screen (vtable 00080bc6, class name WarMapMenu before it), built over the Menu base (vtable 00080ba8) with 0x26 bytes allocated when this is 0. Loads the briefing, block 0 of BRF: from the .eng path 000aad2a, into the dialog Shell_Dialog (0009afc8) with Dialog_LoadConditional (00018cdb) and calls Dialog_NextPage (00018e18) as many times as WarMap_BriefingPage (000809b2), compared signed; sets 000809a8 to 3; when the byte Shell_DebugMode (0007fd08) is 0 calls Input_GetKeyboardDevice_Thunk (00027bbf) and, with a device r, keeps KeyboardInputDevice_GetMode (00025d19)(r) in WarMap_SavedKeyboardMode (000a04d8) and calls KeyboardInputDevice_SetMode (00025ce6)(r, 0x20000) and Keyboard_AddSubscriberCodes (0001ffdc)(KeyQueue_Subscriber (0005d6a0), WarMap_MapKeys (000809ac)); sets the byte 000aa778 to 1. es2_xref finds one call, from Shell_HandleMessage (0003c7d8)'s case for screens 1500 and 1501 at 0003ef9b.",
+      "source": "Herculan/docs/es1/shell/war-map.md#opening-it",
       "verified": {
         "bytes": "0002bbbd+472",
         "sha1": "270ba8d53938",
@@ -7262,13 +7322,109 @@
       }
     },
     {
+      "address": "0002bd95",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLBase_DtorMenuHandlersCopy",
+      "description": "(object, flags), its arguments removed by this function: slot +0x1c of the vtable 00080b12: byte for byte the code of GLBase_Dtor (00046d4f), relocated operands aside, storing 00080b12 where that stores 00082ada.",
+      "source": "Herculan/docs/es1/shell/main-menu.md#where-the-object-files-start-and-end; ES1GO disassembly at 0002bd95",
+      "verified": {
+        "bytes": "0002bd95+44",
+        "sha1": "adc8152ee437",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0002bdc1",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRegion_DtorMenuHandlersCopy",
+      "description": "(region, flags), its arguments removed by this function: slot +0x1c of the vtable 00080b44: byte for byte the code of GLRegion_Dtor (00046d7b), relocated operands aside, storing 00080b44 and 00080b12 where that stores 00082b0c and 00082ada.",
+      "source": "Herculan/docs/es1/shell/main-menu.md#where-the-object-files-start-and-end; ES1GO disassembly at 0002bdc1",
+      "verified": {
+        "bytes": "0002bdc1+73",
+        "sha1": "80bffc43c564",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0002be0a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRectangleRegion_DtorMenuHandlersCopy",
+      "description": "(region, flags), its arguments removed by this function: slot +0x1c of the vtable 00080b7c: byte for byte the code of GLRectangleRegion_Dtor (00046dc4), relocated operands aside, storing 00080b7c and 00080b44 and 00080b12 where that stores 00082b44 and 00082b0c and 00082ada.",
+      "source": "Herculan/docs/es1/shell/main-menu.md#where-the-object-files-start-and-end; ES1GO disassembly at 0002be0a",
+      "verified": {
+        "bytes": "0002be0a+107",
+        "sha1": "dfdfdd04f530",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0002be75",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Menu_DtorMenuHandlersCopy",
+      "description": "(menu, flags), its arguments removed by this function: slot +4 of the vtable 00080ba8: byte for byte the code of Menu_Dtor (0003b6d1), relocated operands aside, storing 00080ba8 and 00080b7c and 00080b44 and 00080b12 where that stores 00081bd8 and 00081900 and 000818c8 and 00081896.",
+      "source": "Herculan/docs/es1/shell/main-menu.md#where-the-object-files-start-and-end; ES1GO disassembly at 0002be75",
+      "verified": {
+        "bytes": "0002be75+147",
+        "sha1": "3e85e5f8ebfd",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0002bf08",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Menu_OnMessageMenuHandlersCopy",
+      "description": "(menu, message), its arguments removed by this function: slot +8 of the vtable 00080ba8: byte for byte the code of Menu_OnMessage (0003b764), relocated operands aside.",
+      "source": "Herculan/docs/es1/shell/main-menu.md#where-the-object-files-start-and-end; ES1GO disassembly at 0002bf08",
+      "verified": {
+        "bytes": "0002bf08+13",
+        "sha1": "029e49697cf2",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0002bf15",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "WarMapMenu_Dtor",
+      "description": "(menu, flags) in stack order, its arguments removed by this function: slot +4 of WarMapMenu's vtable (00080bc6). With menu set: stores 00080bc6 at +0x22; while the byte 000817bd is 0, Dialog_DeleteBox (00018d93)(Shell_Dialog (0009afc8)) and WarMap_BriefingPage (000809b2) set to 0; clears the byte 000809a8; unless Shell_DebugMode (0007fd08) is set, with the device Input_GetKeyboardDevice_Thunk (00027bbf) answers, Keyboard_RemoveSubscriberCodes (00020030)(KeyQueue_Subscriber (0005d6a0), WarMap_MapKeys (000809ac)) and KeyboardInputDevice_SetMode (00025ce6)(device, WarMap_SavedKeyboardMode (000a04d8)); clears the byte 000aa778; stores Menu's vtable 00080ba8 at +0x22 and 00080b7c, 00080b44 and 00080b12 in turn at +0xa; frees menu with Mem_Delete when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/shell/war-map.md#leaving-it; ES1GO disassembly at 0002bf15",
+      "verified": {
+        "bytes": "0002bf15+322",
+        "sha1": "dd4f1966f448",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "0002c057",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "WarMapMenu_OnMessage",
-      "description": "(menu, message) in stack order, its arguments removed by this function: slot +8 of WarMapMenu's vtable (00080bc6), the war map, screens 1500 and 1501. By the message's target +6, through the REPNE SCASD table of twelve ids at 00080bdc and their cases at 00080c0c, most in bytes Ghidra left undefined: 100, BEGIN MISSION, becomes 3333 when CareerRecord_PlayerHasNoHerc (000161dc) of CareerRecord_Current (00014ef4) answers non-zero, else 3000 when 0001620d of it does, else PlayerMec_Write (0002299e), 9999, Shell_DeleteMissionMap (0002a4ec) and the byte 000809a8 cleared; 99, CANCEL, in Shell_Mode (000aad56) 1 clears the current career record's byte +1, sets its word +4 to 1500, calls 000168b0(0009b218, the roster's word +7) and becomes 1200, in any other mode becomes 1100, then anm\\esiege2.anm into 000aacfe with the byte 0007fcd7 2, Shell_DeleteMissionMap and 000809a8 cleared; 1800, ARMING, becomes 1820 while the byte 0007fd09 is set; 1700 calls 0000a9c8(Shell_MissionMap (000809a4)) and in mode 1 sets the record's byte +1; 108 and 109 call slots +8 and +0xc of the table at the map's +0x4a with the map, set 000809a8 to 3 and set the pressed byte of the hotspot 1502 DUIWindow_FindHotspotById (0001be6f). The cases of 101, 102 and 1503 to 1506 are not read here.",
-      "source": "Herculan/docs/es1/shell/main-menu.md#instant-actions-path-to-the-mission; read in part"
+      "description": "(menu, message) in stack order, its arguments removed by this function: slot +8 of WarMapMenu's vtable (00080bc6), the war map, screens 1500 and 1501. By the message's target +6 among the twelve ids of the REPNE SCASD table at 00080bdc, with cases at 00080c0c in bytes Ghidra left undefined but for 108's and 109's, and nothing for any other id: 100 becomes 3333 when CareerRecord_PlayerHasNoHerc (000161dc)(CareerRecord_Current (00014ef4)) answers non-zero, else 3000 when CareerRecord_AnyPilotUnarmed (0001620d)(CareerRecord_Current) does, else PlayerMec_Write (0002299e), 9999, Shell_DeleteMissionMap (0002a4ec) and the byte 000809a8 cleared; 99 in Shell_Mode (000aad56) 1 clears the current career record's byte +1 (0009b23b + 0x1f7 x the roster 0009b218's word +7), sets its word +4 to 1500, calls 000168b0(0009b218, the roster's word +7) and becomes 1200, in any other mode becomes 1100, then sprintf(000aacfe, the string 00080994, anm\\esiege2.anm), the byte 0007fcd7 set to 2, Shell_DeleteMissionMap and 000809a8 cleared; 1800 becomes 1820 while the byte Shell_LowMemory (0007fd09) is set; 1700 calls 0000a9c8(Shell_MissionMap (000809a4)) with no test that it is set and in mode 1 sets the record's byte +1 to 1; 101 calls Dialog_PrevPage (00018df0)(Shell_Dialog (0009afc8)) and subtracts 1 from WarMap_BriefingPage (000809b2); 102 calls Dialog_NextPage (00018e18)(Shell_Dialog) and adds 1 to it; 108, 109, 1503, 1504, 1505 and 1506 call, while Shell_MissionMap is set, slot +8, +0xc, +0x10, +0x14, +0x18 or +0x1c of the table at the map's +0x4a with the map, then set 000809a8 to 3 and the byte +0 of the hotspot 1502, at the window +6's +0x19f + 0x38 x DUIWindow_FindHotspotById (0001be6f)(window, 1502).",
+      "source": "Herculan/docs/es1/shell/war-map.md#the-buttons; ES1GO decompile and disassembly at 0002c057",
+      "verified": {
+        "bytes": "0002c057+971",
+        "sha1": "f5df9791e6c8",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0002c422",
@@ -20875,7 +21031,7 @@
       "type": "data",
       "confidence": "high",
       "name": "Shell_DebugMode",
-      "description": "byte: 1 after -X or /X (Shell_ParseCommandLine (0001272d)). Keeps Shell_BlinkTick and Shell_NavKeySubscriber from being registered, builds the keyboard in mode 0x10000 instead of 0x20000, makes Shell_AssertCleanupHook (00045a68) and the end of Shell_Main (00012ec7) execute INT 3, and keeps Shell_HandleInput (00012be8) from passing typed characters on; es2_xref --decode finds readers in DUIWindow_Activate (0001b0ff), 0001f442, WarMapMenu_Ctor, 0002bf15 and ShellSound_Init too.",
+      "description": "byte: 1 after -X or /X (Shell_ParseCommandLine (0001272d)). Keeps Shell_BlinkTick and Shell_NavKeySubscriber from being registered, builds the keyboard in mode 0x10000 instead of 0x20000, makes Shell_AssertCleanupHook (00045a68) and the end of Shell_Main (00012ec7) execute INT 3, and keeps Shell_HandleInput (00012be8) from passing typed characters on; es2_xref --decode finds readers in DUIWindow_Activate (0001b0ff), 0001f442, WarMapMenu_Ctor, WarMapMenu_Dtor (0002bf15) and ShellSound_Init too.",
       "source": "Herculan/docs/es1/shell/startup.md#the-command-line"
     },
     {
@@ -21003,6 +21159,24 @@
       "name": "Career_Loaded",
       "description": "byte: set once the current career's file is loaded for the session. es2_xref --decode finds it written by MainMenu_OnMessage (0002a70a)'s RESUME and 0002aa0e, which set it, and 0002ae96, which clears it when it deletes a career, and read by those two, beside two references in bytes Ghidra left undefined.",
       "source": "Herculan/docs/es1/shell/main-menu.md#resume"
+    },
+    {
+      "address": "000809ac",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "WarMap_MapKeys",
+      "description": "bytes: the scan codes 0x39 Space, 0x33 comma, 0x34 period, 0x0d = and 0x0c -, and a 0, which WarMapMenu_Ctor (0002bbbd) gives KeyQueue_Subscriber (0005d6a0) with Keyboard_AddSubscriberCodes (0001ffdc) and WarMapMenu_Dtor (0002bf15) takes back.",
+      "source": "Herculan/docs/es1/shell/war-map.md#opening-it"
+    },
+    {
+      "address": "000809b2",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "WarMap_BriefingPage",
+      "description": "int16: the war map's briefing page as PgDn presses less PgUp presses (WarMapMenu_OnMessage (0002c057)'s cases 102 and 101), with no bound; WarMapMenu_Ctor (0002bbbd) turns the briefing's page that many times and WarMapMenu_Dtor (0002bf15) sets it to 0 when it deletes the box.",
+      "source": "Herculan/docs/es1/shell/war-map.md#the-briefing"
     },
     {
       "address": "00081690",
@@ -21579,6 +21753,15 @@
       "name": "JoystickAxisBuffer",
       "description": "17 bytes: ES1DBSIM's JoystickAxisBuffer (000b1754), the buffer Joystick_ReadWithResponse (00025ee5) reads the axes into.",
       "source": "Herculan/docs/es1/simulation/joystick.md#the-record"
+    },
+    {
+      "address": "000a04d8",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "WarMap_SavedKeyboardMode",
+      "description": "dword: the keyboard device's mode, KeyboardInputDevice_GetMode (00025d19), which WarMapMenu_Ctor (0002bbbd) keeps before setting mode 0x20000 and WarMapMenu_Dtor (0002bf15) puts back.",
+      "source": "Herculan/docs/es1/shell/war-map.md#opening-it"
     },
     {
       "address": "000a09a0",

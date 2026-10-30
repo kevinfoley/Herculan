@@ -40,7 +40,7 @@ The line is the index of the list of `msn\sing_msn.dat` that BRIEFING > draws fr
 
 A press on the list or a move while it is held selects the line under the pointer, and above or below it the line before or after ([the list box](menus.md#the-list-box)); the release posts (0, the list's index, its selected line, 1101), and `MissionMenu_OnMessage` stores the line in `Mission_Kind`. 1101 is not in `Shell_ScreenIds`, so the screen stays.
 
-`Mission_Kind` is also header word 3 of the mission last loaded: the load's step 6 stores it there ([loading a mission](../formats/msn-mission-file.md#loading-a-mission)). Counted from line `0x23` of `eng\watext.bin` as the list's lines are, `SM_SCR01.MSN`'s 4 is SCRAMBLE, the line that names it, and `SM_ASS01.MSN`'s 9 is ASSAULT, three lines past STRIKE ([the mode](../formats/msn-mission-file.md#the-mode-and-the-mission-parameters)). So when the menu opens again after BRIEFING >, from the war map's CANCEL ([the path to the mission](main-menu.md#instant-actions-path-to-the-mission)), the list selects the line of the loaded mission's word 3, the last line, STRIKE, for 9.
+`Mission_Kind` is also header word 3 of the mission last loaded: the load's step 6 stores it there ([loading a mission](../formats/msn-mission-file.md#loading-a-mission)). Counted from line `0x23` of `eng\watext.bin` as the list's lines are, `SM_SCR01.MSN`'s 4 is SCRAMBLE, the line that names it, and `SM_ASS01.MSN`'s 9 is ASSAULT, three lines past STRIKE ([the mode](../formats/msn-mission-file.md#the-mode-and-the-mission-parameters)). So when the menu opens again after BRIEFING >, from the war map's CANCEL ([CANCEL](war-map.md#cancel)), the list selects the line of the loaded mission's word 3, the last line, STRIKE, for 9.
 
 ### The buttons
 
@@ -58,7 +58,7 @@ A press on the list or a move while it is held selects the line under the pointe
 
 Each case finds the list with `DUIWindow_FindEnabledControlById` (`0001bda4`)(the window `+6`, 1101). The arrows move the selection one line within the seven and stop at the ends.
 
-**BRIEFING >** loads the mission before the screen changes, as INSTANT ACTION > does, and from screen 1499 on takes INSTANT ACTION's path: the message box over backdrop 3000, then the war map 1501 with the mission's briefing ([the path to the mission](main-menu.md#instant-actions-path-to-the-mission)). `Shell_Mode` stays 0, as SINGLE MISSION on the main menu set it, and `Shell_ReturnScreen` 1100. The `.ANM` plays when the next screen is drawn ([drawing a screen](menus.md#drawing-a-screen)).
+**BRIEFING >** loads the mission before the screen changes, as INSTANT ACTION > does, and from screen 1499 on takes INSTANT ACTION's path: the message box over backdrop 3000, then [the war map](war-map.md) 1501 with the mission's briefing ([the path to the mission](main-menu.md#instant-actions-path-to-the-mission)). `Shell_Mode` stays 0, as SINGLE MISSION on the main menu set it, and `Shell_ReturnScreen` 1100. The `.ANM` plays when the next screen is drawn ([drawing a screen](menus.md#drawing-a-screen)).
 
 **OPTIONS** opens the options menu with `Shell_ReturnScreen` as the main menu's SINGLE MISSION left it, 1100, so its RETURN button reads RETURN TO MISSION and comes back here ([the return screen](main-menu.md#the-return-screen)). Reached instead from the war map after INSTANT ACTION >, which sets `Shell_ReturnScreen` to 1000, the options menu's button reads RETURN TO MAIN and goes to the main menu.
 

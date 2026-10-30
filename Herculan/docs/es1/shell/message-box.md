@@ -34,8 +34,8 @@ Addresses are `ES1GO` image addresses ([the X-32 executable](../formats/x32-exec
 
 | Kind | Put up by | File | Line | *a*, *b*: list | Next screen |
 |---|---|---|---|---|---|
-| 0 | screen 1499's case in `Shell_Mode` 0 ([the screens](menus.md#the-screens)): INSTANT ACTION > ([its path](main-menu.md#instant-actions-path-to-the-mission)) and SINGLE MISSION's BRIEFING > ([BRIEFING >](single-mission.md#the-single-mission-menu)) | `eng\C0_text.bin` | the mission's header word 4, the word `000ab222` | 0, 1: `C0` | 1501, the war map |
-| 1 | screen 1499's case in mode 1 | `eng\C<k>_text.bin` | as kind 0 | 2*k*, 1: `C<k>` | 1500 |
+| 0 | screen 1499's case in `Shell_Mode` 0 ([the screens](menus.md#the-screens)): INSTANT ACTION > ([its path](main-menu.md#instant-actions-path-to-the-mission)) and SINGLE MISSION's BRIEFING > ([BRIEFING >](single-mission.md#the-single-mission-menu)) | `eng\C0_text.bin` | the mission's header word 4, the word `000ab222` | 0, 1: `C0` | 1501, [the war map](war-map.md) |
+| 1 | screen 1499's case in mode 1 | `eng\C<k>_text.bin` | as kind 0 | 2*k*, 1: `C<k>` | 1500, a career's war map |
 | 2 | screen 1490's case, and `0002aeec`, screen 1210's handler | `eng\G0_text.bin` | the word of the table `000814ec` at the career's campaign × `0x16` + 2 × the word `000814e8` | 0, 3: `G0` | 1700, after the last line ([the answer](#the-answer)) |
 | 3 | `Shell_OpenFirstScreen` back from a mission in mode 0, the pilot not lost ([the first screen](menus.md#the-first-screen--shell_openfirstscreen-0003ba47)) | `eng\D0_text.bin` | 2*g* + *r*, below | 1, 1: `D0` | 1510, the debriefing |
 | 4 | screen 1520's case, the first time in a session | `eng\D<k>_text.bin` | as kind 3 | 2*k* + 1, 1: `D<k>` | 1520 |
@@ -245,7 +245,7 @@ It sets no page and adds no dirty box: it draws on the display's current draw pa
 
 ### Stepping pages
 
-`DialogBox_NextPage` (`0001911f`) moves the page shown `+0x27` forward while it is below the page count less 1, and `DialogBox_PrevPage` (`000190fd`) back while it is above 0; each clears `+0` when it moves. So once a box in the top strip has turned a page it no longer draws its frame and fills its rect, `DialogBox_TopRect`, with colour `0x1f` instead, inside the frame drawn before. The war map's handler steps its briefing ([the briefing](../formats/eng-mission-text.md#the-briefing)).
+`DialogBox_NextPage` (`0001911f`) moves the page shown `+0x27` forward while it is below the page count less 1, and `DialogBox_PrevPage` (`000190fd`) back while it is above 0; each clears `+0` when it moves. So once a box in the top strip has turned a page it no longer draws its frame and fills its rect, `DialogBox_TopRect`, with colour `0x1f` instead, inside the frame drawn before. The war map's handler steps its briefing ([the war map's briefing](war-map.md#the-briefing)).
 
 ## Open
 
