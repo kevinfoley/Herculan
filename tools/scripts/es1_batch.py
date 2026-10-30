@@ -67,9 +67,9 @@ and the held rows (--held) inside.
 
 Usage:
     python tools/scripts/es1_batch.py next START [--target 60] [--window HEX] [--held a+b]
-    python tools/scripts/es1_batch.py brief N LO HI --scratch DIR [--notes NOTES.md] [--auto] [--out FILE] [--over-budget REASON]
-    python tools/scripts/es1_batch.py brief N --doc --scratch DIR --notes NOTES.md [--out FILE] [--over-budget REASON]
-    python tools/scripts/es1_batch.py port PART --title TITLE --scratch DIR [--notes NOTES.md] [--budget 150] [--out FILE] [--over-budget REASON]
+    python tools/scripts/es1_batch.py brief N LO HI --scratch DIR [--binary ES1GO] [--notes NOTES.md] [--auto] [--out FILE] [--over-budget REASON]
+    python tools/scripts/es1_batch.py brief N --doc --scratch DIR --notes NOTES.md [--binary ES1GO] [--out FILE] [--over-budget REASON]
+    python tools/scripts/es1_batch.py port PART --title TITLE --scratch DIR [--binary ES1GO] [--notes NOTES.md] [--budget 150] [--out FILE] [--over-budget REASON]
     python tools/scripts/es1_batch.py run COMMANDS.txt [--from N] [--no-precheck]
     python tools/scripts/es1_batch.py precheck COMMANDS.txt [--fix]
     python tools/scripts/es1_batch.py list COMMANDS.txt
@@ -743,7 +743,7 @@ def notes_text(args):
 def cmd_brief(args):
     """Fills es1_batch_brief.md with the batch number, range, scratch folder and the batch's own notes; with --doc,
     its doc-batch blocks in place of the range's."""
-    values = {"BATCH": str(args.batch), "SCRATCH": args.scratch.replace("/", "\\")}
+    values = {"BATCH": str(args.batch), "SCRATCH": args.scratch.replace("/", "\\"), "BINARY": args.binary}
     notes = notes_text(args)
     if args.doc:
         if args.lo or args.auto:
@@ -756,13 +756,14 @@ def cmd_brief(args):
     lo, hi = args.lo.lower().zfill(8), args.hi.lower().zfill(8)
     if args.auto:
         notes = (notes + "\n\n" if notes else "") + auto_leads(args.binary, lo, hi)
-    return write_brief("es1_batch_brief.md", dict(values, LO=lo, HI=hi, BINARY=args.binary), notes, {"range"}, args)
+    return write_brief("es1_batch_brief.md", dict(values, LO=lo, HI=hi), notes, {"range"}, args)
 
 
 def cmd_port(args):
-    """Fills es1_port_brief.md with the part's name, title, scratch folder, budget and its own notes."""
+    """Fills es1_port_brief.md with the part's name, title, binary, scratch folder, budget and its own notes."""
     return write_brief("es1_port_brief.md", {"PART": args.part, "TITLE": args.title, "BUDGET": str(args.budget),
-                                             "SCRATCH": args.scratch.replace("/", "\\")}, notes_text(args), set(), args)
+                                             "BINARY": args.binary, "SCRATCH": args.scratch.replace("/", "\\")},
+                       notes_text(args), set(), args)
 
 
 def main():
@@ -779,7 +780,8 @@ def main():
     b.add_argument("--out", help="where to write the brief (default <scratch>/brief.md)")
     b.add_argument("--auto", action="store_true",
                    help="append the tools' leads: bounds, function counts, match candidates, docs naming the range")
-    b.add_argument("--binary", default="ES1DBSIM", help="the binary the range is in, named in the brief and read by --auto (default ES1DBSIM)")
+    b.add_argument("--binary", default="ES1DBSIM", choices=("ES1DBSIM", "ES1GO"),
+                   help="the binary the batch reads: the range's, whose dumps the brief names and --auto reads (default ES1DBSIM)")
     pt = sub.add_parser("port", help="write a port subagent's brief from es1_port_brief.md")
     pt.add_argument("part", help="the part's name, M1")
     pt.add_argument("--title", required=True, help="what the part ports, for the brief's heading")
@@ -787,6 +789,8 @@ def main():
     pt.add_argument("--notes", help="a file with the part's own section: context, the user's choices, ## Scope, and "
                                     "## Read first / ## Code / ## Limits / ## Report items to add to the template's")
     pt.add_argument("--budget", type=int, default=150, help="the tool-call budget (default 150)")
+    pt.add_argument("--binary", default="ES1DBSIM", choices=("ES1DBSIM", "ES1GO"),
+                    help="the binary the part ports from, whose dumps the brief names (default ES1DBSIM)")
     pt.add_argument("--out", help="where to write the brief (default <scratch>/brief.md)")
     for sp in (b, pt):
         sp.add_argument("--over-budget", metavar="REASON",

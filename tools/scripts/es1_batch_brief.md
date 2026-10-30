@@ -27,7 +27,7 @@ You are running batch @@BATCH@@ of the ES1 (Metaltech: Earthsiege) reverse-engin
 5. `py tools/scripts/es2_peek.py BIN ADDR [COUNT]` reads a vtable, label table or `REPNE SCASD` case table with each dword resolved to a name, a function (or an offset into one, or the function its padding falls through to) or the string it points at; `--strings`, `--words`, `--bytes` for the rest. Use it rather than a scratch script.
 <!-- /range -->
 <!-- doc -->
-**For each detail:** read the body at its address in the dumps (`E:\ES2Stuff\tools\analysis_out\ES1DBSIM_decomp_full.c` and `ES1DBSIM_disasm_full.txt`; Grep for the address, then Read with an offset), find the doc section that owns it (grep `Herculan/docs` for its addresses and names first), and write it there, or correct what the section says. `es2_xref.py --binary ES1DBSIM --table a b c` and `es2_peek.py BIN ADDR [COUNT]` settle callers and tables in one run each. A detail the body does not bear out is reported, not written.
+**For each detail:** read the body at its address in the dumps (`E:\ES2Stuff\tools\analysis_out\@@BINARY@@_decomp_full.c` and `@@BINARY@@_disasm_full.txt`, and the other ES1 binary's for a function a doc names as that binary's; Grep for the address, then Read with an offset), find the doc section that owns it (grep `Herculan/docs` for its addresses and names first), and write it there, or correct what the section says. `es2_xref.py --binary @@BINARY@@ --table a b c` and `es2_peek.py BIN ADDR [COUNT]` settle callers and tables in one run each. A detail the body does not bear out is reported, not written.
 <!-- /doc -->
 
 ## Docs

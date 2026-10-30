@@ -13,7 +13,7 @@ You are porting part @@PART@@ of the ES1 port on branch `features/es1`. Work onl
 Read each file you change whole before changing it; the rest only where the part touches it.
 
 ## Method
-- Before writing each function, read its body in the dumps (`E:\ES2Stuff\tools\analysis_out\ES1DBSIM_decomp_full.c` and `ES1DBSIM_disasm_full.txt`; Grep for its address, then Read with an offset) and check the doc against it. Where they disagree the decompile wins: port what it shows and report it.
+- Before writing each function, read its body in the dumps (`E:\ES2Stuff\tools\analysis_out\@@BINARY@@_decomp_full.c` and `@@BINARY@@_disasm_full.txt`, and the other ES1 binary's for a function a doc names as that binary's; Grep for its address, then Read with an offset) and check the doc against it. Where they disagree the decompile wins: port what it shows and report it.
 - Write every detail you took from the decompile that the docs do not state to `@@SCRATCH@@\@@PART@@_details.md`: one bullet per detail, with its address and any disagreement with the doc. A doc batch verifies and writes them up from that file.
 - Keep the layout and style of the code around you. Doc comments cite the retail symbol and address and link the doc section; an engine guard or invention says so. Every class under about 1500 lines.
 
