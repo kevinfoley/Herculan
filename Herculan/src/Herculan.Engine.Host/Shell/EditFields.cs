@@ -1,4 +1,5 @@
 using Herculan.Engine.Host.Shell.Tabs;
+using Herculan.Engine.Platform;
 using Herculan.Engine.Shell;
 using Silk.NET.Input;
 

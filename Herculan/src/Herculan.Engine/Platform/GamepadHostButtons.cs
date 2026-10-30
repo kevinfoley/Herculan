@@ -1,15 +1,15 @@
 using Herculan.Engine.Input;
 using Silk.NET.Input;
 
-namespace Herculan.Engine.Host;
+namespace Herculan.Engine.Platform;
 
 /// <summary>
 /// A gamepad's Back and Start, which the host keeps for itself (<see cref="ControllerDevice.Reserved"/>): Back raises
-/// the menu bar as [Shift+Esc] does, and Start raises a mission's pause menu (<see cref="Simulator.PauseMenu"/>;
-/// docs/herculan/herculan-key-bindings.md). This engine's own; retail has no gamepad. Either button on any connected
-/// gamepad counts.
+/// the menu bar as [Shift+Esc] does (<see cref="FrontEndWindow.BeginFrame"/> over a front end), and Start is the game's
+/// host's to answer, which over an Earthsiege 2 mission raises its pause menu (docs/herculan/herculan-key-bindings.md).
+/// This engine's own; retail has no gamepad. Either button on any connected gamepad counts.
 /// </summary>
-sealed class GamepadHostButtons {
+public sealed class GamepadHostButtons {
 	private bool _backDown;
 	private bool _startDown;
 

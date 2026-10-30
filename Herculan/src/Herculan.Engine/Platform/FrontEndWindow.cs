@@ -1,26 +1,21 @@
-using Herculan.Engine.Host.Localization;
-using Herculan.Engine.Host.Shell;
-using Herculan.Engine.Host.Settings;
 using Herculan.Engine.Input;
-using Herculan.Engine.Platform;
-using Herculan.Engine.Settings;
-using Herculan.Engine.Shell;
 using ImGuiNET;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 
-namespace Herculan.Engine.Host;
+namespace Herculan.Engine.Platform;
 
 /// <summary>
-/// A front end's window and what this engine adds to it: HERCULAN's own menu bar and its windows, the Settings
-/// menu's restart, the <c>--screenshot</c> capture, the focus, and the pointer in framebuffer pixels. None of it is
-/// the game's, so another game's front end reuses it as it stands; what the game does with the keys, the focus and
-/// the pointer stays with the caller.
+/// A front end's window and what this engine adds to it: the game's menu bar and its windows (<see cref="IFrontEndMenus"/>),
+/// ImGui on the window's GL context, the gamepad's pointer and its ImGui navigation, the <c>--screenshot</c> capture, the
+/// focus, and the pointer in framebuffer pixels. None of it is the game's retail front end, so each game's front end
+/// reuses it as it stands with its own menus; what the game does with the keys, the focus and the pointer stays with the
+/// caller.
 /// </summary>
-sealed class FrontEndWindow : IDisposable {
+public sealed class FrontEndWindow : IDisposable {
 	/// <summary>
-	/// Frames to let pass before <c>--screenshot</c> fires. The shell has nothing to settle — no
+	/// Frames to let pass before <c>--screenshot</c> fires. A front end has nothing to settle — no
 	/// simulation, no streaming — but the window manager can hand back a stale or part-sized
 	/// framebuffer for the first frame or two, so the capture waits the same short beat the mission
 	/// host waits.
@@ -28,11 +23,10 @@ sealed class FrontEndWindow : IDisposable {
 	private const int ScreenshotFrame = 5;
 
 	private readonly EngineWindow _window;
-	private readonly HostMenuBar _menuBar;
+	private readonly IFrontEndMenus _menus;
 	private readonly string _imguiFontPath;
 	private readonly string _imguiItalicFontPath;
 	private readonly string? _screenshotPath;
-	private readonly LocalizationTable _localization;
 	private readonly GamepadHostButtons _padButtons = new();
 	private readonly GamepadPointer _padPointer = new();
 	private IInputContext? _input;
@@ -43,33 +37,27 @@ sealed class FrontEndWindow : IDisposable {
 	// Whether the bar was up at the last pad update, to see it go down.
 	private bool _barWasVisible;
 
-	// Set by the Settings menu's restart, the Editor item and Custom Missions' Play, each of which closes the window once
-	// the frame's ImGui is drawn.
+	// Set by CloseAfterFrame, which the menus' CloseRequested and the caller's own requests from inside an ImGui window
+	// go through, to close the window once the frame's ImGui is drawn.
 	private bool _closePending;
 
 	/// <param name="window">The window the front end's turn runs in.</param>
-	/// <param name="restartRequested">
-	/// The Settings menu's restart, run as it is asked for; the window then closes once the frame is drawn.
+	/// <param name="imguiFontPath">The regular face ImGui draws the menus in (<see cref="ScaledImGui"/>).</param>
+	/// <param name="imguiItalicFontPath">The italic face ImGui draws the menus in.</param>
+	/// <param name="dataDirectory">
+	/// The folder whose controller map (<see cref="JoystickMapFile"/>) gives the gamepad pointer its starting settings.
 	/// </param>
-	/// <param name="editorRequested">
-	/// The Editor item's switch to the mission editor, run as it is asked for; the window then closes once the frame
-	/// is drawn.
-	/// </param>
-	/// <param name="customMissions">The menu bar's Custom Missions window, or null for a bar without it.</param>
-	public FrontEndWindow(HostSession session, HostWindow window, string title, string? screenshotPath,
-			Action restartRequested, Action editorRequested, CustomMissionsWindow? customMissions = null) {
-		_imguiFontPath = session.ImGuiFontPath;
-		_imguiItalicFontPath = session.ImGuiItalicFontPath;
+	/// <param name="menus">The game's menu bar and its windows, which the window takes over and disposes once its turn has run.</param>
+	public FrontEndWindow(HostWindow window, string title, string? screenshotPath, string imguiFontPath,
+			string imguiItalicFontPath, string dataDirectory, IFrontEndMenus menus) {
+		_imguiFontPath = imguiFontPath;
+		_imguiItalicFontPath = imguiItalicFontPath;
 		_screenshotPath = screenshotPath;
-		_localization = session.Localization;
 		_window = new EngineWindow(window, title);
-		string dataDirectory = ShellWorkingFiles.DataDirectory(session.InstallRoot);
 		_padPointer.Settings = JoystickMapFile.LoadIn(dataDirectory).Mouse;
-		var controller = new ControllerWindow(session.Localization, () => dataDirectory);
-		controller.Saved += file => _padPointer.Settings = file.Mouse;
-		_menuBar = new HostMenuBar(session.Localization, session.Keys, new TweaksMenu(TweakSettings.Current, session.Localization),
-			new SettingsWindow(session, () => RequestClose(restartRequested)), controller,
-			openEditor: () => RequestClose(editorRequested), customMissions: customMissions);
+		_menus = menus;
+		_menus.PadPointerSettingsChanged += settings => _padPointer.Settings = settings;
+		_menus.CloseRequested += CloseAfterFrame;
 		_window.FocusChanged += focused => {
 			HasFocus = focused;
 			FocusChanged?.Invoke(focused);
@@ -125,13 +113,12 @@ sealed class FrontEndWindow : IDisposable {
 			HeldAsMouseButtons = () => (_padPointer.ClickHeld, _padPointer.RightClickHeld),
 			PointerOverride = () => _padPointer.Override,
 		};
-		_menuBar.Tweaks.Fonts = _imgui;
 		_padNav = new ImGuiGamepad(input);
 		_imgui.GamepadFeed = _padNav.Feed;
 		Mouse = input.Mice.Count > 0 ? input.Mice[0] : null;
 		Keyboard = input.Keyboards.Count > 0 ? input.Keyboards[0] : null;
 		_input = input;
-		_menuBar.Controller.Attach(input);
+		_menus.Attach(_imgui, input);
 	}
 
 	/// <summary>
@@ -155,13 +142,13 @@ sealed class FrontEndWindow : IDisposable {
 	/// Whether a gamepad button is held as a skip key (<see cref="GamepadPointer"/>); never while the bar is up, where the
 	/// buttons work the bar.
 	/// </summary>
-	public bool PadSkipHeld => _padPointer.SkipHeld && !_menuBar.Visible;
+	public bool PadSkipHeld => _padPointer.SkipHeld && !_menus.Visible;
 
 	/// <summary>Whether a gamepad's A is held (<see cref="GamepadPointer.AHeld"/>); never while the bar is up, as <see cref="PadSkipHeld"/>.</summary>
-	public bool PadAHeld => _padPointer.AHeld && !_menuBar.Visible;
+	public bool PadAHeld => _padPointer.AHeld && !_menus.Visible;
 
 	/// <summary>Whether a gamepad's B is held (<see cref="GamepadPointer.BHeld"/>); never while the bar is up, as <see cref="PadSkipHeld"/>.</summary>
-	public bool PadBHeld => _padPointer.BHeld && !_menuBar.Visible;
+	public bool PadBHeld => _padPointer.BHeld && !_menus.Visible;
 
 	/// <summary>
 	/// Moves the pointer by a gamepad's stick and reads its triggers and its buttons, once an update before the
@@ -176,13 +163,13 @@ sealed class FrontEndWindow : IDisposable {
 			return;
 		}
 
-		if (_barWasVisible && !_menuBar.Visible) {
+		if (_barWasVisible && !_menus.Visible) {
 			_padPointer.WaitForRelease();
 		}
 
-		_barWasVisible = _menuBar.Visible;
+		_barWasVisible = _menus.Visible;
 		_padPointer.Update(_input, Mouse, _window.ClientSize, delta,
-			active: HasFocus && _screenshotPath == null && !_menuBar.PanelOpen);
+			active: HasFocus && _screenshotPath == null && !_menus.PanelOpen);
 	}
 
 	/// <summary>
@@ -200,68 +187,66 @@ sealed class FrontEndWindow : IDisposable {
 
 	/// <summary>A menu-bar key press: closes whichever of its windows is open, else hides an empty bar, else raises it.</summary>
 	public void MenuBarEscape() {
-		if (!_menuBar.BackOut()) {
-			_menuBar.Show();
+		if (!_menus.BackOut()) {
+			_menus.Show();
 		}
 	}
 
 	/// <summary>Whether the menu bar or one of its windows is up.</summary>
-	public bool MenuBarUp => _menuBar.Up;
+	public bool MenuBarUp => _menus.Visible || _menus.PanelOpen;
 
 	/// <summary>
-	/// Raises the first start's <see cref="WelcomeDialog"/>, unless it has been dismissed before, and starts the
-	/// automatic update check (<see cref="UpdateChecks.StartAutomatic"/>), neither in a <c>--screenshot</c> capture,
-	/// which draws no menu bar windows.
+	/// Raises what the menus offer at the start (<see cref="IFrontEndMenus.OfferWelcome"/>), never in a <c>--screenshot</c>
+	/// capture, which draws no menu bar windows.
 	/// </summary>
 	public void OfferWelcome() {
 		if (_screenshotPath == null) {
-			_menuBar.Welcome.Offer();
-			UpdateChecks.StartAutomatic();
+			_menus.OfferWelcome();
 		}
 	}
 
 	/// <summary>
-	/// Tells the player that <paramref name="message"/>, with <paramref name="detail"/> saying why: in the
-	/// <see cref="ErrorDialog"/> over the window while it is up, or in the operating system's own box
-	/// (<see cref="NativeAlert"/>) once the window has closed, as it has for the autosave at the loop's end. A
+	/// Tells the player that <paramref name="message"/>, with <paramref name="detail"/> saying why: over the window while
+	/// it is up (<see cref="IFrontEndMenus.ShowError"/>), or without it once the window has closed
+	/// (<see cref="IFrontEndMenus.ShowErrorOutsideWindow"/>), as it has for the autosave at the loop's end. A
 	/// <c>--screenshot</c> capture, which has nobody to close either, only writes it to standard error.
 	/// </summary>
 	public void ShowError(string message, string detail) {
 		if (_screenshotPath != null) {
 			Console.Error.WriteLine($"{message} {detail}");
 		} else if (_imgui != null) {
-			_menuBar.Error.Show(message, detail);
+			_menus.ShowError(message, detail);
 		} else {
-			NativeAlert.ShowError(_localization.GetStringOrKey("error.window_title"), $"{message}\n\n{detail}");
+			_menus.ShowErrorOutsideWindow(message, detail);
 		}
 	}
 
 	/// <summary>
 	/// The top of a frame: ImGui's, and a gamepad's Back, which raises the menu bar or backs out of it as [Shift+Esc]
-	/// does (<see cref="GamepadHostButtons"/>), and puts ImGui's navigation on the bar it leaves up. The front end has no
-	/// pause, so Start does nothing here.
+	/// does (<see cref="GamepadHostButtons"/>, <see cref="IFrontEndMenus.PadBack"/>). The front end has no pause, so
+	/// Start does nothing here.
 	/// </summary>
 	public void BeginFrame(double delta) {
 		if (_padNav != null) {
-			_padNav.Suspended = _menuBar.Controller.Listening;
+			_padNav.Suspended = _menus.PadNavigationSuspended;
 		}
 
 		_imgui?.Update((float)delta);
 		if (_input != null && _screenshotPath == null) {
 			_padButtons.Update(_input);
 			if (_padButtons.BackPressed) {
-				_menuBar.PadBack();
+				_menus.PadBack();
 			}
 		}
 	}
 
 	/// <summary>
-	/// The menu bar and its windows over whatever the frame drew, never in a <c>--screenshot</c> capture; and the update
-	/// notice, once the automatic check has found a newer release and the welcome and any error notice are down.
+	/// The menu bar and its windows over whatever the frame drew (<see cref="IFrontEndMenus.Draw"/>), never in a
+	/// <c>--screenshot</c> capture.
 	/// </summary>
 	/// <param name="revealOnHover">
-	/// Whether the pointer at the window's top left raises the bar (<see cref="HostMenuBar.ShowOnHover"/>): the caller's
-	/// say, which the shell withholds while a movie plays. It does nothing without the focus either, nor in a capture.
+	/// Whether the pointer at the window's top may raise the bar: the caller's say, which the shell withholds while a movie
+	/// plays. It does nothing without the focus either, nor in a capture.
 	/// </param>
 	public void DrawMenuBar(bool revealOnHover) {
 		if (_imgui == null) {
@@ -269,15 +254,7 @@ sealed class FrontEndWindow : IDisposable {
 		}
 
 		if (_screenshotPath == null) {
-			if (!_menuBar.Welcome.IsOpen && !_menuBar.Error.IsOpen && UpdateChecks.TakeNews() is { } news) {
-				_menuBar.Update.Offer(news);
-			}
-
-			if (revealOnHover && HasFocus) {
-				_menuBar.ShowOnHover();
-			}
-
-			_menuBar.Draw(_window.View.Native?.Win32?.Hwnd ?? 0, _window.FullScreen);
+			_menus.Draw(_window.View.Native?.Win32?.Hwnd ?? 0, _window.FullScreen, revealOnHover && HasFocus);
 		}
 
 		_imgui.Render();
@@ -313,15 +290,8 @@ sealed class FrontEndWindow : IDisposable {
 	/// <summary>Runs the front end's turn until it ends.</summary>
 	public void Run() {
 		_window.Run();
-		_menuBar.Settings.Dispose();
+		_menus.Dispose();
 	}
 
 	public void Dispose() => _window.Dispose();
-
-	// Settings and the Editor item ask from inside an ImGui window, and the close disposes the ImGui context, so the
-	// close waits for DrawMenuBar to finish the frame.
-	private void RequestClose(Action requested) {
-		requested();
-		CloseAfterFrame();
-	}
 }

@@ -1,4 +1,5 @@
 using Herculan.Engine.Content;
+using Herculan.Engine.Platform;
 using Herculan.Engine.Shell;
 using Herculan.Engine.World;
 

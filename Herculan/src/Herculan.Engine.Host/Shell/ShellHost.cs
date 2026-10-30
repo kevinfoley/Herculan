@@ -18,9 +18,9 @@ namespace Herculan.Engine.Host.Shell;
 /// mission loop uses (docs/herculan/planning.md, "Engine internal architecture"): everything here is
 /// wiring, and every rule about what the shell looks like and where its widgets are lives in
 /// <c>Herculan.Engine.Shell</c>. This class is the composition and the frame's order — what runs before what
-/// each update and each render — and each step is the named component's. The window, its menu bar and the
-/// polled buttons are game-agnostic (<see cref="FrontEndWindow"/>, <see cref="PolledButtons"/>); everything else
-/// under this namespace is VSHELL's.
+/// each update and each render — and each step is the named component's. The window and the polled buttons are
+/// game-agnostic (<see cref="FrontEndWindow"/>, <see cref="PolledButtons"/>), and the menu bar over them is HERCULAN's
+/// own (<see cref="ShellMenus"/>); everything else under this namespace is VSHELL's.
 ///
 /// <para>It is a separate entry point rather than a mode of the mission loop because the two share
 /// nothing: the shell mounts different archives, loads no zone, runs no simulation and needs no fixed
@@ -224,8 +224,11 @@ sealed class ShellHost : IDisposable {
 			// Set on the next line, long before a Play can run.
 			_window!.CloseAfterFrame();
 		});
-		_window = new FrontEndWindow(session, window, "HERCULAN Engine — shell", screenshotPath,
-			() => _outcome.ExitCode = SettingsRestartCode, () => _outcome.ExitCode = EditorExitCode, _customMissions);
+		string dataDirectory = ShellWorkingFiles.DataDirectory(installRoot);
+		var menus = new ShellMenus(session, dataDirectory, () => _outcome.ExitCode = SettingsRestartCode,
+			() => _outcome.ExitCode = EditorExitCode, _customMissions);
+		_window = new FrontEndWindow(window, "HERCULAN Engine — shell", screenshotPath, session.ImGuiFontPath,
+			session.ImGuiItalicFontPath, dataDirectory, menus);
 
 		// A step that fails says so to the player, what failed over why.
 		var localization = session.Localization;

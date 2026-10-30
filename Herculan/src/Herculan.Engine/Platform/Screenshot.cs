@@ -1,6 +1,6 @@
 using Silk.NET.OpenGL;
 
-namespace Herculan.Engine.Host;
+namespace Herculan.Engine.Platform;
 
 /// <summary>
 /// Writes the framebuffer to a file, so a run can be checked without somebody watching it.
@@ -10,10 +10,10 @@ namespace Herculan.Engine.Host;
 /// framebuffer with <c>glReadPixels</c>, and BMP's bottom-up row order happens to match GL's
 /// bottom-left origin, so no row flip is needed.</para>
 ///
-/// <para>Host-side, and shared by both entry points: the mission loop's <c>--screenshot</c> and the
-/// shell's.</para>
+/// <para>Shared by every entry point's <c>--screenshot</c>: the mission loop's, the movie player's and the front
+/// end's (<see cref="FrontEndWindow"/>).</para>
 /// </summary>
-static class Screenshot {
+public static class Screenshot {
 	public static void Capture(GL gl, int width, int height, string path) {
 		// A pack alignment of 4 pads each row GL writes as a BMP's rows are padded, so the pixels are read straight
 		// into place.

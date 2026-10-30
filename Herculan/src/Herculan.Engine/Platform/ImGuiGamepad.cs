@@ -2,16 +2,15 @@ using Herculan.Engine.Input;
 using ImGuiNET;
 using Silk.NET.Input;
 
-namespace Herculan.Engine.Host;
+namespace Herculan.Engine.Platform;
 
 /// <summary>
-/// The first connected gamepad, given to ImGui as its gamepad keys (<see cref="Platform.ScaledImGui.GamepadFeed"/>) so the
+/// The first connected gamepad, given to ImGui as its gamepad keys (<see cref="ScaledImGui.GamepadFeed"/>) so the
 /// menu bar and its windows can be worked without a mouse, through ImGui's own gamepad navigation
 /// (docs/herculan/herculan-key-bindings.md, "Gamepad in the menus"). This engine's own. Back and Start are the host's
-/// (<see cref="GamepadHostButtons"/>) and the sticks' clicks the radials' (<see cref="Simulator.PadRadial"/>), so ImGui
-/// is not given them.
+/// (<see cref="GamepadHostButtons"/>) and the sticks' clicks the mission's radials', so ImGui is not given them.
 /// </summary>
-sealed class ImGuiGamepad(IInputContext input) {
+public sealed class ImGuiGamepad(IInputContext input) {
 	// Where a stick starts and finishes counting toward a direction, and a trigger, which rests at -1, toward its pull,
 	// as fractions of the axis: the bands ImGui's own GLFW backend uses.
 	private const float StickStart = 0.25f;

@@ -1,5 +1,6 @@
 using Herculan.Engine.Content;
 using Herculan.Engine.Host.Shell.Tabs;
+using Herculan.Engine.Platform;
 using Herculan.Engine.Shell;
 
 namespace Herculan.Engine.Host.Shell;

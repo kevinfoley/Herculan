@@ -1,5 +1,6 @@
 using HercWorks.Core.Data.File.Cfg;
 using Herculan.Engine.Content;
+using Herculan.Engine.Platform;
 using Herculan.Engine.Shell;
 
 namespace Herculan.Engine.Host.Shell.Tabs;

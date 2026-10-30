@@ -1,6 +1,6 @@
 using Silk.NET.Input;
 
-namespace Herculan.Engine.Host;
+namespace Herculan.Engine.Platform;
 
 /// <summary>
 /// The mouse's two buttons and a front end's skip keys, polled once an update: what each was the last time, so
@@ -8,7 +8,7 @@ namespace Herculan.Engine.Host;
 /// Polling rather than queueing the device's own events means two changes inside one update arrive together,
 /// and a press and release both inside one update are lost.
 /// </summary>
-sealed class PolledButtons {
+public sealed class PolledButtons {
 	private readonly Key[] _skipKeys;
 	private bool _leftHeld;
 	private bool _rightHeld;
@@ -20,13 +20,13 @@ sealed class PolledButtons {
 	/// <summary>A skip key the host has taken for itself, such as the menu bar's [Shift+Esc], which counts as up.</summary>
 	public Func<Key, bool>? Taken { get; set; }
 
-	/// <summary>Another control held as the left button, such as a gamepad's trigger (<see cref="Platform.GamepadPointer"/>).</summary>
+	/// <summary>Another control held as the left button, such as a gamepad's trigger (<see cref="GamepadPointer"/>).</summary>
 	public Func<bool>? AlsoLeft { get; set; }
 
-	/// <summary>Another control held as the right button, such as a gamepad's other trigger (<see cref="Platform.GamepadPointer"/>).</summary>
+	/// <summary>Another control held as the right button, such as a gamepad's other trigger (<see cref="GamepadPointer"/>).</summary>
 	public Func<bool>? AlsoRight { get; set; }
 
-	/// <summary>Another control held as a skip key, such as a gamepad's buttons (<see cref="Platform.GamepadPointer"/>).</summary>
+	/// <summary>Another control held as a skip key, such as a gamepad's buttons (<see cref="GamepadPointer"/>).</summary>
 	public Func<bool>? AlsoSkip { get; set; }
 
 	/// <summary>Takes the buttons' state without delivering it, so an edge made meanwhile is spent.</summary>
