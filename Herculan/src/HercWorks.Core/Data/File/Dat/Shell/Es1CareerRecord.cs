@@ -133,6 +133,24 @@ public class Es1CareerRecord {
 	public short CountPilots() => (short)Enumerable.Range(0, PilotCount).Count(OnStrengthWithSlot);
 
 	/// <summary>
+	/// <c>CareerRecord_FindPilotBySlot</c> (<c>00015c39</c>)(record, <paramref name="slot"/>): −1 for a slot of −1, otherwise
+	/// the first entry, 0 to 3, whose slot is <paramref name="slot"/>, or −1.
+	/// </summary>
+	public short FindPilotBySlot(short slot) {
+		if (slot == -1) {
+			return -1;
+		}
+
+		for (short i = 0; i < PilotCount; i++) {
+			if (Pilots[i].Slot == slot) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	/// <summary>
 	/// <c>CareerRecord_SelectPilot</c> (<c>00015ad4</c>)(record, <paramref name="entry"/>): <see cref="CurrentPilot"/> set to
 	/// it and, when it is not −1, <paramref name="hangar"/>'s selected slot to its slot. Retail reads the entry with no bounds
 	/// test; an entry past the four leaves the slot here, an engine guard.
@@ -418,10 +436,8 @@ public class Es1EquipmentState {
 	/// <c>Tech_Clear</c> (<c>00001ee3</c>), <c>Tech_Read</c> (<c>00001e16</c>) and <c>Tech_Unlock</c> (<c>00001f78</c>)(state,
 	/// 0), as <c>CareerRecord_Init</c> runs them on <c>bst\tech_sng.dat</c> or, in a career, <c>bst\tech_0.dat</c>: the
 	/// available bytes cleared, the counts left; each of <paramref name="tech"/>'s records' counts copied into the entry its
-	/// kind and index name; then every entry not yet available and holding no −1 made available when either count is 0 (the
-	/// grade test passing for a mission count of 0 in either mode), its kind and index stored at <c>+0</c> and <c>+2</c>. Retail writes an index past the entries unchecked; such a record
-	/// is dropped here, an engine guard. <c>Tech_Unlock</c>'s copies of the item's name into <c>0007d7e0</c> are the
-	/// shell's text, not the state's.
+	/// kind and index name; then <see cref="Unlock"/>(0) with the grade test passing, as it passes for a mission count of 0
+	/// in either mode. Retail writes an index past the entries unchecked; such a record is dropped here, an engine guard.
 	/// </summary>
 	public void LoadTech(Es1TechFile tech) {
 		foreach (var entry in Chassis.Concat(Weapons)) {
@@ -436,15 +452,28 @@ public class Es1EquipmentState {
 			}
 		}
 
-		// Tech_Unlock(state, 0): <= for a chassis, == for a weapon, which agree at 0 for counts that are not -1.
+		Unlock(0, gradePasses: true);
+	}
+
+	/// <summary>
+	/// <c>Tech_Unlock</c> (<c>00001f78</c>)(state, <paramref name="missions"/>)
+	/// (docs/es1/formats/bst-battle-sets.md#equipment-availability): each chassis entry not yet available and holding no −1
+	/// made available when its good-grade count is at or below the missions and <paramref name="gradePasses"/>, or its
+	/// any-grade count is; then each weapon entry the same with "equal to" for "at or below". Each item made available stores
+	/// its kind (0 a chassis, 1 a weapon) and index at <c>+0</c> and <c>+2</c>, so the last one's stay. The grade test is the
+	/// shell's: it passes but in <c>Shell_Mode</c> 1 with missions not 0, where it is <c>Mission_OutcomeGrade</c> below 2.
+	/// <c>Tech_Unlock</c>'s copies of <c>NONE</c> and of each item's name into <c>0007d7e0</c> are the shell's text, not the
+	/// state's.
+	/// </summary>
+	public void Unlock(short missions, bool gradePasses) {
 		for (short kind = 0; kind <= 1; kind++) {
 			var entries = kind == 0 ? Chassis : Weapons;
 			for (short i = 0; i < entries.Length; i++) {
 				var entry = entries[i];
 				bool holdsNoMinusOne = entry.GoodGradeMissions != -1 && entry.AnyGradeMissions != -1;
 				bool reached = kind == 0
-					? entry.GoodGradeMissions <= 0 || entry.AnyGradeMissions <= 0
-					: entry.GoodGradeMissions == 0 || entry.AnyGradeMissions == 0;
+					? (entry.GoodGradeMissions <= missions && gradePasses) || entry.AnyGradeMissions <= missions
+					: (entry.GoodGradeMissions == missions && gradePasses) || entry.AnyGradeMissions == missions;
 				if (entry.Available == 0 && holdsNoMinusOne && reached) {
 					entry.Available = 1;
 					LastKind = kind;
@@ -452,6 +481,21 @@ public class Es1EquipmentState {
 				}
 			}
 		}
+	}
+
+	/// <summary>
+	/// <c>Tech_IsAvailable</c> (<c>00028409</c>)(state, <paramref name="index"/>, <paramref name="kind"/>)
+	/// (docs/es1/shell/between-missions.md#resupply): the available byte of chassis entry <paramref name="index"/> for kind
+	/// 0, of the weapon entry for kind 1, and the kind itself for any other. Retail reads with no bounds test; an index
+	/// outside the entries answers 0 here, an engine guard.
+	/// </summary>
+	public short IsAvailable(short index, short kind) {
+		var entries = kind switch { 0 => Chassis, 1 => Weapons, _ => null };
+		if (entries == null) {
+			return kind;
+		}
+
+		return index >= 0 && index < entries.Length ? entries[index].Available : (short)0;
 	}
 
 	/// <summary><c>Tech_WriteWeaponFlags</c> (<c>00001f2b</c>)'s bytes: each weapon's available byte.</summary>

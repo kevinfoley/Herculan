@@ -339,10 +339,10 @@ public sealed class Es1ShellMission {
 	}
 
 	/// <summary>
-	/// <c>Shell_ProcessMissionResults</c> (<c>00038eb5</c>) in <see cref="Mode"/> 0 over the install's files
+	/// <c>Shell_ProcessMissionResults</c> (<c>00038eb5</c>) over the install's files, in either <see cref="Mode"/>
 	/// (<see cref="Es1ShellResults.Process"/>).
 	/// </summary>
-	public void ProcessResults() => Results.Process(this, _installRoot);
+	public void ProcessResults() => Results.Process(this, _installRoot, _data);
 
 	/// <summary>One of <see cref="ReadRestore"/>'s paths: its length, then that many bytes, the text up to the first NUL.</summary>
 	private static string ReadPath(Es1ShellResults.Cursor reader) {

@@ -65,6 +65,9 @@ public sealed class Es1ShellData {
 	/// <summary><c>Shell_RandomState</c>, seeded.</summary>
 	public Es1ShellRandom? Random { get; private set; }
 
+	/// <summary>The value tables <c>LoadDamageDat_Shell</c> expands from <c>cfg\damage.dat</c>, zero in the image until <see cref="Load"/>.</summary>
+	public Es1RepairCosts RepairCosts { get; private set; } = new();
+
 	/// <summary><c>eng\watext.bin</c>, the shell's text at <c>0009afa8</c>; none when it does not read.</summary>
 	public string[]? Text { get; private set; }
 
@@ -106,7 +109,7 @@ public sealed class Es1ShellData {
 	/// <c>Shell_LoadData</c> (<c>00020630</c>), the start-up's step 11, on <paramref name="preferences"/>, the options as the
 	/// devices left them: options 12–16 into <see cref="MissionParams"/>, 0 and 1 into the two bytes, 2 into
 	/// <see cref="Option2Word"/>, <see cref="DetailWord"/>; the 14 font slots; the generator seeded with <c>time()</c>
-	/// % 128 draws; <c>eng\watext.bin</c>; the careers log, with <see cref="SelectedEntry"/> from it; and
+	/// % 128 draws; <c>eng\watext.bin</c>; the value tables (<see cref="Es1RepairCosts.Load"/>); the careers log, with <see cref="SelectedEntry"/> from it; and
 	/// <c>BattleSet_Load</c> of the roster's battle set (<see cref="LoadBattleSet"/>), the roster's word <c>+5</c>, which is
 	/// 0 in the image and set by nothing before this load. <c>00027c4c</c>, which makes the 41 weapon stocks, follows; they
 	/// are the roster's here (<see cref="Es1CareerRoster.Stocks"/>).
@@ -130,8 +133,9 @@ public sealed class Es1ShellData {
 		Text = content.Read("eng", "WATEXT.BIN") is { } text ? new BinStringFileTransformer().Parse(text)?.Values : null;
 
 		// PLACEHOLDER: the rect 0009b000–0009b00c, (0, 0) and the display's attributes 2 and 3 less 1, which only screen
-		// 9999 reads (S2's); the HERC diagrams' tables and art (HercLayout_Load, HercDamageMarks_Load, LoadDamageDat_Shell,
-		// HercHotspots_Load, HercArt_LoadAllBanks), S3's.
+		// 9999 reads (S2's); the HERC diagrams' tables and art (HercLayout_Load, HercDamageMarks_Load, HercHotspots_Load,
+		// HercArt_LoadAllBanks), S4's.
+		RepairCosts = Es1RepairCosts.Load(content);
 
 		CareersLogPath = FileNames is { Length: > CareersLogEntry } names ? InstallPath(installRoot, names[CareersLogEntry]) : null;
 		LoadCareersLog();

@@ -215,7 +215,7 @@ public sealed class Es1MessageBox {
 	/// entry of the table at <c>000810f4</c> for the kinds 0, 1, 2 and 6 and of <c>00081108</c> for any other. Retail reads
 	/// with no bounds test; an ordinal past the table is grade 0 here, an engine guard.
 	/// </summary>
-	private static short OutcomeGrade(short ordinal, short kind) {
+	internal static short OutcomeGrade(short ordinal, short kind) {
 		short[] grades = kind is 0 or 1 or 2 or 6 ? GradesA : GradesB;
 		return ordinal >= 0 && ordinal < grades.Length ? grades[ordinal] : (short)0;
 	}

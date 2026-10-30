@@ -103,8 +103,62 @@ public class Es1HercRecord {
 	/// </summary>
 	public bool IsUnarmed() => Weapons.All(weapon => weapon == EmptyMount);
 
+	/// <summary>The external words, 13, and the internal words the shell's sums read, 0 to 8.</summary>
+	public const int ExternalCount = 13, InternalCount = 9;
+
+	/// <summary>
+	/// The −1-ended lists at <c>ES1GO 0007ef54</c>, 8 bytes each: the external words each of the six external areas
+	/// averages (docs/es1/formats/car-hercs-and-stock.md#the-herc-record).
+	/// </summary>
+	public static readonly short[][] ExternalAreas = [[0, 1], [2, 4], [3, 5], [6], [7, 9, 11], [8, 10, 12]];
+
+	/// <summary>
+	/// <c>Herc_GetStatus</c> (<c>00024b86</c>)(<i>h</i>, <paramref name="area"/>, <c>0x785</c>), <c>HercStatus_ExternalAverage</c>
+	/// (<c>0001a3ba</c>): the external words <see cref="ExternalAreas"/> names for the area summed in an <c>int16</c> and
+	/// divided by their count, truncated. Retail reads past the lists for an area outside the six; such an area is 0 here, an
+	/// engine guard.
+	/// </summary>
+	public short ExternalAverage(int area) {
+		if (area < 0 || area >= ExternalAreas.Length) {
+			return 0;
+		}
+
+		short sum = 0;
+		foreach (short word in ExternalAreas[area]) {
+			sum += Status[word];
+		}
+
+		return (short)(sum / ExternalAreas[area].Length);
+	}
+
+	/// <summary>
+	/// <c>Herc_GetStatus</c> (<c>00024b86</c>)(<i>h</i>, <paramref name="mount"/>, <c>0x786</c>): the mount's per-mount word.
+	/// Retail reads the HERC's fields past the block for a mount past its ten words; such a mount reads 0 here, an engine
+	/// guard.
+	/// </summary>
+	public short MountStatus(int mount) => mount >= 0 && mount < MountStatusCount ? Status[MountStatusWords + mount] : (short)0;
+
+	/// <summary>
+	/// <c>Herc_OverallCondition</c> (<c>00024b6a</c>), <c>HercStatus_OverallCondition</c> (<c>0001a323</c>)(the block, the
+	/// mount count) (docs/es1/shell/between-missions.md#repairs): the 13 external words, internal words 0 to 8 and the
+	/// per-mount words of the mounts below the mount count summed in an <c>int16</c>, and divided by the mount count + 22,
+	/// truncated. Mounts past the ten words read 0 (<see cref="MountStatus"/>).
+	/// </summary>
+	public short OverallCondition() {
+		short sum = 0;
+		for (int word = 0; word < FirstInternalWord + InternalCount; word++) {
+			sum += Status[word];
+		}
+
+		for (int mount = 0; mount < Weapons.Length; mount++) {
+			sum += MountStatus(mount);
+		}
+
+		return (short)(sum / (Weapons.Length + ExternalCount + InternalCount));
+	}
+
 	/// <summary><see cref="Status"/>' index of internal word 0, the first after the 13 external words.</summary>
-	private const int FirstInternalWord = 13;
+	public const int FirstInternalWord = 13;
 
 	/// <summary>The condition below which <see cref="IsDisabled"/> counts an internal word as disabled, 50 (<c>0x32</c>).</summary>
 	private const short DisabledBelow = 50;
@@ -217,6 +271,23 @@ public class Es1WeaponStock {
 	public Es1Inventory ToFile() => new() {
 		Records = Slots.Select((stack, slot) => new Es1InventoryRecord { Slot = (short)slot, Values = stack.ToArray() }).ToArray(),
 	};
+
+	/// <summary>
+	/// <c>Inventory_Add</c> (<c>00028311</c>)(stock, &amp;<paramref name="value"/>, <paramref name="slot"/>): the word pushed
+	/// onto the slot's stack, its new head (<c>WordStack_Push</c>, <c>00040ba6</c>). Retail pushes with no bounds test on the
+	/// slot; a slot outside the 17 is dropped here, an engine guard.
+	/// </summary>
+	public void Add(short slot, short value) {
+		if (slot is >= 0 and < SlotCount) {
+			Slots[slot].Insert(0, value);
+		}
+	}
+
+	/// <summary>
+	/// <c>Inventory_SlotCount</c> (<c>000282eb</c>)(stock, <paramref name="slot"/>): the count word of the slot's stack.
+	/// Retail reads with no bounds test; a slot outside the 17 counts 0 here, an engine guard.
+	/// </summary>
+	public short CountIn(short slot) => slot is >= 0 and < SlotCount ? (short)Slots[slot].Count : (short)0;
 
 	/// <summary>
 	/// <c>WordStack_Clear</c> (<c>00040d19</c>): pops until a pop returns −1, which <c>WordStack_Pop</c> (<c>00040bfd</c>)

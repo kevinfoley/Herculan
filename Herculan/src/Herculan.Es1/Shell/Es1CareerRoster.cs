@@ -213,7 +213,7 @@ public sealed class Es1CareerRoster {
 	/// <c>Roster_ForEachPilotNoOp</c> (<c>00016fdd</c>): <c>BarGraph_NoOpCareerCopy</c> (<c>0001600d</c>)(the record
 	/// <see cref="Current"/> names, <i>i</i>) for <i>i</i> from 0 to 3, a call that does nothing.
 	/// </summary>
-	private static void ForEachPilotNoOp() {
+	public static void ForEachPilotNoOp() {
 	}
 
 	/// <summary>

@@ -227,7 +227,9 @@ public sealed class Es1ShellScreens {
 	/// (docs/es1/shell/menus.md#the-first-screen--shell_openfirstscreen-0003ba47): the scripts set up
 	/// (<c>Ttm_Configure</c>(page 2, the full-screen context, <c>0x32</c>), <c>Ttm_AllocHandles</c>(2) on
 	/// <c>Shell_Timer</c>, the prefix <c>res32\</c> and <c>TtmLists_Load</c>), then by the code: for 3 and 4, back from a
-	/// mission, <see cref="Es1ShellMission.ReadRestore"/> and in mode 0 <see cref="OpenAfterSingleMission"/>; for any
+	/// mission, <see cref="Es1ShellMission.ReadRestore"/>, <c>Shell_ProcessMissionResults</c>
+	/// (<see cref="Es1ShellMission.ProcessResults"/>), <see cref="PreviousScreen"/> 999, and in mode 0
+	/// <see cref="OpenAfterSingleMission"/>, in mode 1 <see cref="OpenAfterCareerMission"/>; for any
 	/// other, the intro and then the main menu over the backdrop 1000: a <see cref="Es1MainMenu"/> made the current menu
 	/// and opened as 1000. The intro, any code but 3, 4 and 6 while <paramref name="playIntro"/> is set, plays <c>intro\dynamix.ttm</c>,
 	/// <c>intro\lead_in.ttm</c> unless the first was cut short, <c>intro\iintro.ttm</c> and <c>intro\earth_w.ttm</c>
@@ -266,19 +268,18 @@ public sealed class Es1ShellScreens {
 		switch (exitCode) {
 			case 3:
 			case 4:
-				// Back from a mission: Mission_ReadRestore, then by the mode it restores.
+				// Back from a mission: Mission_ReadRestore, Shell_ProcessMissionResults, then by the mode it restores; a mode
+				// other than 0 and 1 opens no screen, as retail's does.
 				mission.ReadRestore();
+				mission.ProcessResults();
+				PreviousScreen = QuitAlertScreen;
 				if (mission.Mode == 0) {
 					OpenAfterSingleMission(mission);
-					yield break;
+				} else if (mission.Mode == 1) {
+					OpenAfterCareerMission(mission, data);
 				}
 
-				// PLACEHOLDER: Shell_ProcessMissionResults' and this case's mode-1 paths, a career's, S3's: Career_LoadCurrent,
-				// the stock, CareerRecord_FinishMission and Tech_Unlock, then by the player's condition and
-				// Career_PeekNextCampaign the endings' scripts through PlayTtm and the home menu, or kind 7 over backdrop 4000.
-				// The start goes on to the main menu as code 6 does.
-				Console.WriteLine($"data\\exit.cfg holds {exitCode}, back from a career's mission: a career's results are not ported, so the main menu opens.");
-				break;
+				yield break;
 			case 6:
 				break;
 			default:
@@ -329,18 +330,15 @@ public sealed class Es1ShellScreens {
 	private const short DebriefingMessageKind = 3;
 
 	/// <summary>
-	/// <see cref="OpenFirstScreen"/>'s codes 3 and 4 in <c>Shell_Mode</c> 0
-	/// (docs/es1/shell/menus.md#the-first-screen--shell_openfirstscreen-0003ba47): <c>Shell_ProcessMissionResults</c>
-	/// (<see cref="Es1ShellMission.ProcessResults"/>) and <see cref="PreviousScreen"/> 999; then, when the player's pilot
-	/// is lost (<c>PilotEntry_Condition</c> (<c>0001618d</c>) of the record's player entry <c>+0xe</c> 0), backdrop 1000
-	/// and the SINGLE MISSION menu (<see cref="Es1MissionMenu"/>) made the current menu and opened as 1100, the current
-	/// screen 1100, the previous 999 and the backdrop group 1000; otherwise the message box's kind 3, the debriefing's
-	/// talking head (<see cref="Es1MessageBox"/>, whose answer posts 1510), with the backdrop group 5000 shown and no menu.
-	/// Retail reads the player's entry with no bounds test; an entry past the four reads as lost here, an engine guard.
+	/// <see cref="OpenFirstScreen"/>'s codes 3 and 4 in <c>Shell_Mode</c> 0, after the results' read
+	/// (docs/es1/shell/menus.md#the-first-screen--shell_openfirstscreen-0003ba47): when the player's pilot is lost
+	/// (<c>PilotEntry_Condition</c> (<c>0001618d</c>) of the record's player entry <c>+0xe</c> 0), backdrop 1000 and the
+	/// SINGLE MISSION menu (<see cref="Es1MissionMenu"/>) made the current menu and opened as 1100, the current screen 1100,
+	/// the previous 999 and the backdrop group 1000; otherwise the message box's kind 3, the debriefing's talking head
+	/// (<see cref="Es1MessageBox"/>, whose answer posts 1510), with the backdrop group 5000 shown and no menu. Retail reads
+	/// the player's entry with no bounds test; an entry past the four reads as lost here, an engine guard.
 	/// </summary>
 	private void OpenAfterSingleMission(Es1ShellMission mission) {
-		mission.ProcessResults();
-		PreviousScreen = QuitAlertScreen;
 		var record = mission.Record!;
 		bool lost = record.PlayerEntry is < 0 or >= Es1CareerRecord.PilotCount || record.Pilots[record.PlayerEntry].Condition == 0;
 		if (lost) {
@@ -356,6 +354,48 @@ public sealed class Es1ShellScreens {
 			BackdropId = DebriefingBackdrop;
 			_backdrop.Show(DebriefingBackdrop);
 		}
+	}
+
+	/// <summary>
+	/// <see cref="OpenFirstScreen"/>'s codes 3 and 4 in <c>Shell_Mode</c> 1, after the results' read
+	/// (docs/es1/shell/between-missions.md#back-at-the-shell): the screen by the player's condition and
+	/// <c>Career_PeekNextCampaign</c>; then on every path <c>CareerRecord_AutoRepairSquad</c> on the roster's record its word
+	/// <c>+7</c> names (<see cref="Es1CareerAfterMission.AutoRepairSquad"/>), <c>Roster_ForEachPilotNoOp</c> and
+	/// <c>Career_Save</c>(roster, its word <c>+7</c>) (<see cref="Es1CareerRoster.Save"/>).
+	/// </summary>
+	private void OpenAfterCareerMission(Es1ShellMission mission, Es1ShellData data) {
+		// PLACEHOLDER: the three paths, P11b's: with the player lost (PilotEntry_Condition of the record's +0xe 0),
+		// ShellMusic_Play(7) and Shell_PlayTtm(endfa.ttm) while Shell_PlayIntro is set, then the home menu; with
+		// Career_PeekNextCampaign 'c', music 0xd, end_win1.ttm to end_win3.ttm and intro\earth.ttm, then the home menu; with
+		// -1, music 0x13, failed.ttm and intro\earth.ttm, then the home menu; otherwise MessageBox_SetKind(7), MessageBox_Line
+		// by MessageBox_PickT1Line(7) and backdrop 4000. Until P11b every path opens the home menu, the career menu.
+		OpenHomeMenu(mission);
+		var roster = mission.Roster;
+		if (mission.Hangar is { } hangar) {
+			new Es1CareerAfterMission(mission, data).AutoRepairSquad(roster.CurrentRecord, hangar);
+		}
+
+		Es1CareerRoster.ForEachPilotNoOp();
+		roster.Save(roster.Current);
+	}
+
+	/// <summary>
+	/// <c>Shell_OpenHomeMenu</c> (<c>0003b3db</c>) (docs/es1/shell/menus.md#the-first-screen--shell_openfirstscreen-0003ba47):
+	/// <c>anm\esiege2.anm</c> with <see cref="AnmMode"/> 2, the backdrop 1000 shown and <see cref="BackdropId"/> 1000; then in
+	/// <c>Shell_Mode</c> 0 a <see cref="Es1MainMenu"/> opened as 1000, in any other a <see cref="Es1CareerMenu"/> as 1200,
+	/// <see cref="CurrentScreen"/> and <see cref="ReturnScreen"/> taking the number.
+	/// </summary>
+	private void OpenHomeMenu(Es1ShellMission mission) {
+		AnmName = "anm\\esiege2.anm";
+		AnmMode = 2;
+		_backdrop.Show(MainMenuScreen);
+		BackdropId = MainMenuScreen;
+		Es1Menu menu = mission.Mode == 0 ? new Es1MainMenu(_menuContext!) : new Es1CareerMenu(_menuContext!);
+		short screen = mission.Mode == 0 ? MainMenuScreen : Es1CareerMenu.Screen;
+		CurrentScreen = screen;
+		CurrentMenu = menu;
+		menu.Open(screen);
+		ReturnScreen = screen;
 	}
 
 	/// <summary>

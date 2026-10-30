@@ -5,13 +5,14 @@ using Herculan.Es1.Sim;
 namespace Herculan.Es1.Shell;
 
 /// <summary>
-/// <c>Shell_ProcessMissionResults</c> (<c>00038eb5</c>) in <c>Shell_Mode</c> 0, a single mission's way back
+/// <c>Shell_ProcessMissionResults</c> (<c>00038eb5</c>), the way back from a mission in either mode
 /// (docs/es1/shell/between-missions.md#after-a-mission), and the values it leaves for the debriefing's results panel
 /// (docs/es1/shell/debriefing.md#the-results-panel): the salvage, the salvage pairs, the three totals and the lost pilots'
 /// count. The outcome goes to <see cref="Es1ShellMission.Outcome"/>, the flags to <see cref="Es1ShellMission.Flags"/>,
-/// the record and the hangar to <see cref="Es1ShellMission.Record"/> and <see cref="Es1ShellMission.Hangar"/>; the
-/// player's three gains, the panel's "YOURS" column, are the record's pilot entry 0's <see cref="Es1PilotEntry.Gains"/>.
-/// The class is this engine's bundle of those globals; every member is retail's.
+/// a single mission's record and hangar to <see cref="Es1ShellMission.Record"/> and <see cref="Es1ShellMission.Hangar"/>,
+/// a career's to the roster (<see cref="Es1ShellMission.Roster"/>); the player's three gains, the panel's "YOURS" column,
+/// are the record's pilot entry 0's <see cref="Es1PilotEntry.Gains"/>. The class is this engine's bundle of those
+/// globals; every member is retail's.
 /// </summary>
 public sealed class Es1ShellResults {
 	/// <summary><c>data\results.dat</c>'s salvage, the dword <c>0007fcf4</c>; 0 in the image.</summary>
@@ -33,28 +34,42 @@ public sealed class Es1ShellResults {
 	/// The word <c>0007ebca</c>, 0 in the image, to which <c>CareerRecord_CountLostPilots</c> adds the single mission's
 	/// pilots whose condition is 0: the panel's "SQUAD LOSSES:". <c>es2_xref</c> finds its address in the two functions that
 	/// add to it and in two readers, and none that zeroes it; here it counts from the shell's start, as the image's 0 does.
+	/// A career's <c>CareerRecord_ReplaceLostPilots</c> adds to it in place of the count
+	/// (<see cref="Es1CareerAfterMission.ReplaceLostPilots"/>).
 	/// </summary>
-	public short LostPilots { get; private set; }
+	public short LostPilots { get; internal set; }
+
+	/// <summary>The career record's word <c>+4</c> after each career mission, the service bay after one (docs/es1/shell/between-missions.md#the-careers-screen).</summary>
+	private const short AfterMissionScreen = 1710;
 
 	/// <summary>
-	/// <c>Shell_ProcessMissionResults</c> in <c>Shell_Mode</c> 0 on <paramref name="mission"/>, after
-	/// <see cref="Es1ShellMission.ReadRestore"/>:
+	/// <c>Shell_ProcessMissionResults</c> on <paramref name="mission"/>, after <see cref="Es1ShellMission.ReadRestore"/>:
 	/// <list type="number">
-	/// <item><c>SingleMission_RestoreRecord</c> (<c>00014fd6</c>): <c>car\sm_play.gam</c> into the record and
+	/// <item>in <c>Shell_Mode</c> 1 <c>Career_LoadCurrent</c> (<see cref="Es1CareerRoster.LoadCurrent"/>), otherwise
+	/// <c>SingleMission_RestoreRecord</c> (<c>00014fd6</c>): <c>car\sm_play.gam</c> into the record and
 	/// <c>car\sm_play.mec</c> into the hangar (<see cref="RestoreRecord"/>);</item>
-	/// <item><c>data\results.dat</c>: the outcome, the salvage, the pair count and the pairs, then
-	/// <see cref="ReadPilotResults"/>;</item>
+	/// <item><c>data\results.dat</c>: the outcome, the salvage, the pair count and the pairs, each pair (<i>a</i>, <i>b</i>)
+	/// in mode 1 pushing <i>b</i> onto slot <i>a</i> of the roster's stock 0 (<see cref="Es1WeaponStock.Add"/>), then
+	/// <see cref="ReadPilotResults"/> on <c>CareerRecord_Current</c>'s record;</item>
 	/// <item><c>data\mission.var</c> whole into the flags, and flag 0 set to the outcome;</item>
-	/// <item><c>CareerRecord_CountLostPilots</c> (<see cref="Es1CareerRecord.CountLostPilots"/>) added to <see cref="LostPilots"/>.</item>
+	/// <item>in mode 1 <see cref="FinishCareerMission"/>; otherwise <c>CareerRecord_CountLostPilots</c>
+	/// (<see cref="Es1CareerRecord.CountLostPilots"/>) of <c>CareerRecord_Current</c>'s record added to
+	/// <see cref="LostPilots"/>.</item>
 	/// </list>
 	/// Retail asserts at severity 5 when a file does not open (<c>shell.cpp</c> line 199 for <c>results.dat</c>,
 	/// <c>0xd7</c> for <c>mission.var</c>) and reads what a stream gives past its end; here a file that does not open is
-	/// reported and read as empty, and every field past a file's end reads 0, engine guards.
+	/// reported and read as empty, and every field past a file's end reads 0, engine guards. A career whose load left no
+	/// hangar is read over an empty one, an engine guard.
 	/// </summary>
-	public void Process(Es1ShellMission mission, string installRoot) {
-		RestoreRecord(mission, installRoot);
-		var record = mission.Record!;
-		var hangar = mission.Hangar!;
+	public void Process(Es1ShellMission mission, string installRoot, Es1ShellData data) {
+		if (mission.Mode == 1) {
+			mission.Roster.LoadCurrent();
+		} else {
+			RestoreRecord(mission, installRoot);
+		}
+
+		var record = mission.CurrentRecord!;
+		var hangar = mission.Hangar ??= Es1Hangar.Read(new Es1HercList());
 
 		var results = new Cursor(ReadData(installRoot, Es1MissionResults.ResultsName, "shell.cpp line 199"));
 		mission.Outcome = results.Int16();
@@ -63,6 +78,9 @@ public sealed class Es1ShellResults {
 		Pairs = new (short, short)[Math.Max((int)count, 0)];
 		for (int i = 0; i < Pairs.Length; i++) {
 			Pairs[i] = (results.Int16(), results.Int16());
+			if (mission.Mode == 1) {
+				mission.Roster.Stocks[0].Add(Pairs[i].Slot, Pairs[i].Value);
+			}
 		}
 
 		ReadPilotResults(record, hangar, mission.Mode, results);
@@ -73,7 +91,35 @@ public sealed class Es1ShellResults {
 		}
 
 		mission.Flags[0] = mission.Outcome;
-		LostPilots += record.CountLostPilots();
+		if (mission.Mode == 1) {
+			FinishCareerMission(mission, data, hangar);
+		} else {
+			LostPilots += record.CountLostPilots();
+		}
+	}
+
+	/// <summary>
+	/// <c>Shell_ProcessMissionResults</c>' last step in <c>Shell_Mode</c> 1 (docs/es1/shell/between-missions.md#after-a-mission),
+	/// on the roster's record its word <c>+7</c> names: <c>Shell_StockItemsFromFlags</c>, <see cref="Salvage"/> added to
+	/// <c>Career_Salvage</c>, <c>Inventory_ResupplyWeapons</c> of stock 0 and <c>CareerRecord_FinishMission</c>
+	/// (<see cref="Es1CareerAfterMission"/>); <c>Tech_Unlock</c>(the record's equipment state, its missions played)
+	/// (<see cref="Es1EquipmentState.Unlock"/>), whose grade test passes for missions played 0 and otherwise when
+	/// <c>Mission_OutcomeGrade</c> (<c>00036837</c>)(the outcome, the word <c>000aad5e</c>) is below 2;
+	/// <c>Hangar_AdvanceMarkedHerc</c>; and the record's word <c>+4</c> 1710.
+	/// </summary>
+	private void FinishCareerMission(Es1ShellMission mission, Es1ShellData data, Es1Hangar hangar) {
+		var roster = mission.Roster;
+		var after = new Es1CareerAfterMission(mission, data);
+		after.StockItemsFromFlags();
+		roster.Salvage += Salvage;
+		after.ResupplyWeapons(roster.Stocks[0]);
+		var record = roster.CurrentRecord;
+		after.FinishMission(record, hangar);
+		short missions = record.MissionsPlayed;
+		bool gradePasses = missions == 0 || MessageBox.Es1MessageBox.OutcomeGrade(mission.Outcome, mission.RestoredMissionKind) < 2;
+		record.Equipment.Unlock(missions, gradePasses);
+		Es1CareerAfterMission.AdvanceMarkedHerc(hangar);
+		record.Word4 = AfterMissionScreen;
 	}
 
 	/// <summary>
