@@ -21,7 +21,7 @@ The first two are frameless, with no Ghidra function. ES2's `Sound_StaticInit` (
 | `SIMSOUND` | `hmi\` | 52 `.SFX` | the simulator's catalog, `str\SOUNDS.STR`, as `hmi\<name>.sfx` ([The simulator's catalog](#the-simulators-catalog)) |
 | `SIMVOICE` | `simvoice\` | 147 `.SFX`, `P1_01000.SFX` … | `SpeechLine_Load`, as `simvoice\<name>.sfx` ([Voice lines](#voice-lines)) |
 | `SHELL0` | `res32\` | 3 `.SFX`, 14 `.RAW` | the shell's name table, which holds `BUTTON.SFX`, `XXXXXXXX.SFX`, `MENUCLSA.RAW`, `MENUOPN2.RAW` and `XXXXXXXX.RAW` ([The shell's names](#the-shells-names)) |
-| `SPEECH` | `snc\` | 161 `.RAW` | the talking heads' lip-sync lists, each line played with its `.SNC` script ([`snc-lip-sync.md`](snc-lip-sync.md#loading-a-line)) |
+| `SPEECH` | `snc\` | 161 `.RAW` | the talking heads' lip-sync lists, each line played with its `.SNC` script ([loading a line](../shell/message-box.md#loading-a-line)) |
 
 `ROSEY1.SFX` and eleven `res32\` `.RAW` files are not in the shell's table; what plays them is [Open](#open).
 
@@ -174,7 +174,7 @@ So the key is the voice bank and the five digits of the id and attribute byte ([
 
 ## The shell's names
 
-`ShellSound_Init` (`ES1GO 00046235`; `es2_xref` finds its one call, from `ES1GO 00045d24`) gives the manager the 20 names at `ES1GO 000828c0`, `res32\xxxxxxxx.sfx` first, then the songs and sounds of the front end. Index 9, `res32\button.sfx`, is made into the sound `ES1GO 0007fd00` and loaded at once. Index 0 is a placeholder: `ShellSnc_OpenSound` names each talking-head line, `snc\<name>.RAW`, as index 0 and makes a sound on it ([`snc-lip-sync.md`](snc-lip-sync.md#loading-a-line)).
+`ShellSound_Init` (`ES1GO 00046235`; `es2_xref` finds its one call, from `ES1GO 00045d24`) gives the manager the 20 names at `ES1GO 000828c0`, `res32\xxxxxxxx.sfx` first, then the songs and sounds of the front end. Index 9, `res32\button.sfx`, is made into the sound `ES1GO 0007fd00` and loaded at once. Index 0 is a placeholder: `ShellSnc_OpenSound` names each talking-head line, `snc\<name>.RAW`, as index 0 and makes a sound on it ([loading a line](../shell/message-box.md#loading-a-line)).
 
 `ES1GO 000087ce` returns 1 when `vol\speech.vol`, the `.RAW` lines' archive, opens; `es2_xref` finds its one call, from `ES1GO 00008920`.
 

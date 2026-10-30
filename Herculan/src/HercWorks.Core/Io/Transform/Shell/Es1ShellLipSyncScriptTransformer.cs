@@ -5,7 +5,7 @@ namespace HercWorks.Core.Io.Transform.Shell;
 
 /// <summary>
 /// Reads and writes ES1's shell lip-sync scripts (<see cref="Es1ShellLipSyncScript"/>;
-/// docs/es1/formats/snc-lip-sync.md#loading-a-line), the bytes <c>ShellSnc_Load</c> (<c>ES1GO 0004589c</c>) reads. Writing a
+/// docs/es1/formats/snc-lip-sync.md#the-shells-scripts), the bytes <c>ShellSnc_Load</c> (<c>ES1GO 0004589c</c>) reads. Writing a
 /// parsed script gives back its bytes.
 ///
 /// <para>A file shorter than the length's 2 bytes, a negative length, or one that runs past the end throws

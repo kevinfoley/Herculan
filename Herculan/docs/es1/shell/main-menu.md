@@ -66,15 +66,13 @@ How a list box draws its lines and takes a press is [the list box's](menus.md#th
 **INSTANT ACTION > shows a message over the instant-action picture, waits for a key or a click, opens the war map with the mission's briefing, and BEGIN MISSION > there ends the shell with exit code 2, which starts the simulator.** In order:
 
 1. The release of button 1499 posts (0, its index, 1, 1499) ([a message's path](menu-input.md#a-messages-path)); the frame loop's step 4 hands it to `Shell_HandleMessage`, which runs `MainMenu_OnMessage`: the mission loads and its map is built ([the buttons](#the-buttons)).
-2. `Shell_HandleMessage` closes the main menu, shows backdrop 3000, the group of screen 1499 ([the backdrop](menus.md#the-backdrop)), and runs 1499's case, which makes no menu and puts up the message box `Shell_MessageBox` (`0009b010`) with kind 0 in `Shell_Mode` 0 ([the screens](menus.md#the-screens)). Its `Shell_DrawScreen` shows the message, line `000ab222` of `eng\C0_text.bin` with the lip-sync list `C0` ([which file and line](../formats/bin-string-tables.md#which-file-and-line)), and plays `anm\esiege3.anm`.
-3. In the frame loop's step 5, `MessageBox_Run` (`000382f6`)(`Shell_MessageBox`, the input block) calls the routine at `0008662c` and holds the frame loop in a loop of its own while the box is up: `Shell_PresentFrame`, `maybe_SncList_Tick` (`0009afd4`), `Ttm_RunAll` and the text box `Dialog_Draw` (`00018dcb`)(`0009afc8`) each pass, until `Input_PollDeviceBlock` gives a key (word `+0`) or the first button (byte `+0xa`). Then `MessageBox_Answer` (`0003837f`) posts the message (0, −1, 0, the kind's screen from `MessageBox_NextScreen` (`00081690`)), 1501 for kind 0, closes the box with `MessageBox_Close` (`000382d5`), which sets its kind to −1 and deletes the dialog `0009afc8`'s box, and calls the routine at `00086628`.
+2. `Shell_HandleMessage` closes the main menu, shows backdrop 3000, the group of screen 1499 ([the backdrop](menus.md#the-backdrop)), and runs 1499's case, which makes no menu and puts up the message box with kind 0 in `Shell_Mode` 0 ([the screens](menus.md#the-screens)). Its `Shell_DrawScreen` loads the message, the mission's opening line and its talking head, and plays `anm\esiege3.anm` ([the kinds](message-box.md#the-kinds)).
+3. In the frame loop's step 5 the message box holds the shell while the face speaks the line, until a key, a click or the line's end, and then posts 1501 ([the loop](message-box.md#the-loop), [the answer](message-box.md#the-answer)).
 4. The next step 4 opens screen 1501, the war map, `WarMapMenu`, on backdrop 6000, which shows the mission's briefing ([the briefing](../formats/eng-mission-text.md#the-briefing)). `dlg\menu1501.dlg` gives it ARMING (1800), CANCEL (99, key `Esc`), BEGIN MISSION > (100), the map area 1502, and icon buttons 101–109 and 1503–1506.
 5. BEGIN MISSION >: `WarMapMenu_OnMessage` (`0002c057`) turns 100 into 3333 when the player's pilot has no HERC (`CareerRecord_PlayerHasNoHerc` (`000161dc`) of `CareerRecord_Current` (`00014ef4`)), into 3000 when `0001620d`(record) answers non-zero for one of its pilots, and otherwise writes `data\player.mec` with `PlayerMec_Write` (`0002299e`), turns it into 9999, deletes the mission map and clears the byte `000809a8`. Screen 3000, `UnArmedAlert`, turns its own 100 into 9999 in `Shell_Mode` 0, and into 1700 with message box kind 6 in mode 1, and deletes the mission map and clears `000809a8` (`UnArmedAlert_OnMessage`, `0002a650`).
 6. Screen 9999 sets `Shell_ExitCode` to 2, makes the loading screen `SimLoadMenu` and draws it ([changing screens](menus.md#changing-screens--shell_handlemessage-0003c7d8)); the next pass's step 3 sets `Shell_QuitFlag`, the loop ends, the shutdown writes the code to `data\exit.cfg`, and `Shell_Main` returns 2 ([the ways out](startup.md#the-ways-out)).
 
 CANCEL on the war map (99) goes to the SINGLE MISSION menu, 1100, in `Shell_Mode` 0, so an instant action's way back from its briefing is that menu, not the main menu; in mode 1 it clears the record's byte `+1`, sets its `+4` to 1500, saves the roster with `000168b0` and goes to the career menu, 1200. Either way it puts `anm\esiege2.anm` into `000aacfe` with `0007fcd7` 2, deletes the mission map and clears `000809a8`.
-
-The message box (`Shell_MessageBox`, `0009b010`): `MessageBox_SetKind` (`00037eac`)(box, kind) stores the kind at `+0` and, for −1, clears the bytes `+2`, *to show*, and `+3`, *up*, and for any other kind sets both. `Shell_DrawScreen` shows a box whose `+2` is set ([drawing a screen](menus.md#drawing-a-screen), step 3), and `+3` keeps the window, the mouse's presses and releases and the screen's tick off while it is up. `MessageBox_NextScreen` holds, for kinds 0 to 11: 1501, 1500, 1700, 1510, 1520, 1490, 9999, and 1520 for 7 to 11. `MessageBox_Answer` posts that screen for every kind but 2 and 7, which turn the page of a multi-page message ([Open](#open)).
 
 ## The quit question
 
@@ -102,7 +100,6 @@ The answers:
 | `Career_LoadCurrent`, `Roster_CountUsedRecords` | `00016c1e`, `00017026` |
 | `maybe_MouseEventQueue_Start`, `maybe_MouseEventQueue_Stop` | `00010559`, `000106af` |
 | `WaText_LinesFromList`, `Menu_ListLines` | `000373fa`, `0003750d` |
-| `MessageBox_SetKind`, `MessageBox_Close`, `MessageBox_Run`, `MessageBox_Answer` | `00037eac`, `000382d5`, `000382f6`, `0003837f` |
 | `Shell_OpenQuitAlert` | `000408cc` |
 
 ## Globals
@@ -113,8 +110,6 @@ The answers:
 | `Shell_MissionMap`, the mission map | `000809a4` |
 | `Career_Loaded`, byte | `000809aa` |
 | `Shell_ResumeScreen`, `int16` | `000817be` |
-| `Shell_MessageBox`: `int16` kind, bytes *to show* `+2` and *up* `+3` | `0009b010` |
-| `MessageBox_NextScreen`, 12 `int16` | `00081690` |
 | `MemLog_File` | `00080944` |
 
 ## Open
@@ -124,5 +119,5 @@ The answers:
 - **Open:** what the mission map `000094d9` builds is and draws, what `0000a9c8` and `00009a73` do to it, what `maybe_MouseEventQueue_Start` (`00010559`) queues for it (it registers `00010900` with the mouse driver for the events `0x1f` and allocates two arrays of `0009adf0` 14-byte entries), and what the byte `0007e5df` is.
 - **Open:** what reads `000809b4`, which RESUME and the career menu set to `Roster_CountUsedRecords` − 1, and what `Career_LoadCurrent`'s last call `00016d45` does; what `0001620d` tests of a record's pilots that sends the war map to 3000 (it asks `0002a354` of each pilot's slot), and `000168b0` and `00016f22`, which the war map's CANCEL and `AnyDisabledAlert_OnMessage` call on the roster.
 - **Open:** the readers of `Shell_ReturnScreen` in code Ghidra left undefined (at `0002b223`, `0002b2bf`, `0002c682`, `0002c6a6`, `0002c70d`, `0002d393` and `0002d3f8`) and `0002c71a`'s.
-- **Open:** `MessageBox_Answer`'s kinds 2 and 7, which step `000814e8` through a multi-page message and run `.TTM` scripts by the career's campaign; `MessageBox_SetKind`'s caller `00020b68`, the static initializer; and the war map handler's other cases, the zoom buttons 108 and 109 on the map's object, ARMING (1800, to 1820 while the byte `0007fd09` is set), 1700, and the four icon buttons 1503 to 1506 at `0002c129`–`0002c280` in code Ghidra left undefined.
-- **Open:** a retail check under DOSBox-X: with no career saved, RESUME is drawn greyed and a click on it does nothing; `Ctrl+Q` on the main menu shows EXIT TO DOS? with the pointer on PROCEED, CANCEL brings the main menu back, and PROCEED returns to the DOS prompt; INSTANT ACTION > shows a message over a new picture, a key opens the war map, and CANCEL there opens SINGLE MISSION rather than the main menu.
+- **Open:** the war map handler's other cases, the zoom buttons 108 and 109 on the map's object, ARMING (1800, to 1820 while the byte `0007fd09` is set), 1700, and the four icon buttons 1503 to 1506 at `0002c129`–`0002c280` in code Ghidra left undefined.
+- **Open:** a retail check under DOSBox-X: with no career saved, RESUME is drawn greyed and a click on it does nothing; `Ctrl+Q` on the main menu shows EXIT TO DOS? with the pointer on PROCEED, CANCEL brings the main menu back, and PROCEED returns to the DOS prompt; INSTANT ACTION > shows a talking head over a new picture, a key opens the war map, and CANCEL there opens SINGLE MISSION rather than the main menu.

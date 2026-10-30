@@ -63,42 +63,10 @@ length/4 x {
 
 In all 162 the length is the file's size less 2 and a multiple of 4. ES2's reader refuses them: their first four bytes, read as ES2's `int32` length, run past the end.
 
-### The player
-
-The player that `maybe_SncList_Load` fills holds one script and its sound:
-
-| Offset | Contents |
-|---|---|
-| `+0x00` | `int16` timer slot, from `Timer_AddCallback` |
-| `+0x02` | byte, the `.TTM` script's handle, or -1 |
-| `+0x03` | the line's sound object |
-| `+0x07` | the script's records |
-| `+0x0b` | `int16` record count |
-| `+0x0d` | `int16` index of the current record |
-| `+0x0f` | `int16` line count |
-| `+0x11` | the lines' name lists, 6 bytes each |
-| `+0x15` | the object the `.TTM` script is opened on |
-| `+0x19` | byte, set while a line plays |
-| `+0x1a` | byte, a request to stop |
-
-`maybe_SncList_Init` (`00045337`), called from `Shell_Main`, makes the `+0x15` object with `GLViewport_Ctor` (`000512a0`)(0) and sets its dwords `+0x210`, `+0x214`, `+0x218` and `+0x21c` to 0, 0, 319 and 199, `+0x208` to 1 and `+0x20c` to 0, then registers `maybe_SncList_TimerTick` (`00045320`) with `Timer_AddCallback` at count 2 and keeps the slot. The tick adds 1 to the word `00082658`, the line's clock, while the byte `0009afed` is set. The clock's rate: [Open](#open).
-
-### Loading a line
-
-`maybe_SncList_PlayEntry` passes a line's first name to `ShellSnc_Load` (`0004589c`), with the script at `+0x03`. It opens `SNC\<name>`, reads the `int16` length, makes `length / 4` records for `+0x0b`, reads `length` bytes into them and closes the stream. It then adds each record's delta to the one after it, from the second record to the last, so each holds the clock reading at which it ends, and sets the index to 0. It appends no terminator.
-
-`maybe_SncList_StartSound` (`0004544a`) starts a line's sound once: when the handle is not -1 and neither `+0x19` nor `+0x1a` is set, it sets `+0x19`, opens the line's second name, its `.RAW`, with `ShellSnc_OpenSound` (`00045801`), starts it through the sound's slot `+0x10`, `DigiSound_Play` ([`sound-samples.md`](sound-samples.md#playing)), when the dword `Shell_RadioOption` (`0007fcbc`) is above 0, and sets the clock to 0. `ShellSnc_OpenSound` does nothing while `0007fcbc` is 0; otherwise it builds `snc\<name>` and, when the sound manager `00082768` exists, calls the slot `+0x30` of the manager's object slot 0 (`SoundManager_GetObject`, `00042b81`) until it returns 0 and names the file as the manager's name index 0 with `SoundManager_SetSampleName` (`00042f39`), which takes a `.RAW` as a digital sound. When that succeeds it stores `SoundManager_CreateObject` (`000429db`)(manager, 2, 0, 0), a sound on that index, and loads it with `SoundObject_LoadSample` (`00043d8a`); when it fails it stores 0 ([the shell's names](sound-samples.md#the-shells-names)).
-
-### Playing it
-
-`maybe_SncList_Tick` (`000454c4`) stops the line with `maybe_SncList_Stop` when `+0x1a` is set, and while `+0x19` is set advances the script and shows its frame. `ShellSnc_Advance` (`0004597b`) does nothing with no records or while the clock is below the current record's total; otherwise it steps the index past every record whose total the clock has reached, and on reaching the count sets the byte `0009afee` to 1. A record therefore shows for its own delta, as in ES2's scripts. The tick takes the current record's frame, the last record's once the index reaches the count, or -1 with no records, sets the script's page to it with `Ttm_SetPage` (`000468fc`), and stores 0 at the script's `+0x3c` with `00046948`(0, handle) ([choosing a page](ttm-scripts.md#choosing-a-page)); what a page draws is [Open](ttm-scripts.md#open). The last frame stays on after the script ends.
-
-`ShellSnc_Release` (`00045a04`), from `maybe_SncList_Stop` and `maybe_SncList_Dtor` (`00045758`), frees the records and zeroes the count, then stops and destroys the sound through its slots `+0x14` and `+0x08`(3), `DigiSound_Stop` and `DigiSound_Dtor`, and clears it. `maybe_SncList_Dtor` also deletes the lines' name lists, passes the timer slot to `000565b7`, destroys the `+0x15` object through its slot `+0x1c`(3), and frees the player when its flags' bit 0 is set.
+The shell plays these with the message box's talking head: the player, how a line is loaded and how it plays are [the talking head](../shell/message-box.md#the-talking-head)'s.
 
 ## Open
 
-- **Open:** how often the timer calls a slot registered at count 2, and so the clock's rate ([the timer's Open items](../simulation/debug-monitor.md#open)).
-- **Open:** what sets and clears `0009afed`, which gates the clock, and what reads `0009afee`.
 - **Open:** what calls `Snc_CtorLoad` (`ES1DBSIM 0004e46c`): `es2_xref` finds no branch or stored pointer to it or its padding, where it finds `Snc_Load`'s two calls; ES2's `maybe_Snc_Ctor` has none either.
 - **Open:** a writer of `Snc_SkipTimerInstall` (`ES1DBSIM 000959e0`): `es2_xref --decode` finds `Snc_MissionInit`'s read and no other access.
 - **Open:** what a voice-line slot's key `+0x2b` holds before `SpeechLine_Load` first takes the slot, which neither constructor writes ([the speech slot](#the-speech-slot)): what the block `Sound_Init` (`ES1DBSIM 0004db14`) gets from `__vec_new` holds there. A key of 0 cannot match a line's voice name, whose bank digit is 1 or more ([voice lines](sound-samples.md#voice-lines)).

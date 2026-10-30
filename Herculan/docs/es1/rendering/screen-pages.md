@@ -78,7 +78,7 @@ The `.TTM` commands add every box with delay 1, `0xa601`'s rect through `DirtyBo
 
 ## Presenting a frame
 
-**The shell shows a new frame each time its frame timer ticks: it shows the page it drew, switches drawing to the other, and restores that page's dirty boxes from the background.** `Shell_PresentFrame` (`00012980`), which `es2_xref.py` finds called twice from `Shell_Main` and nine times from `00037dce`, `MessageBox_Run` (`000382f6`), `MessageBox_Answer` (`0003837f`), `Shell_PlayTtm` (`0003b8df`) and `Shell_HandleMessage` (`0003c7d8`):
+**The shell shows a new frame each time its frame timer ticks: it shows the page it drew, switches drawing to the other, and restores that page's dirty boxes from the background.** `Shell_PresentFrame` (`00012980`), which `es2_xref.py` finds called twice from `Shell_Main` and nine times from `Shell_PlayTtmInPlace` (`00037dce`), `MessageBox_Run` (`000382f6`), `MessageBox_Answer` (`0003837f`), `Shell_PlayTtm` (`0003b8df`) and `Shell_HandleMessage` (`0003c7d8`):
 
 1. waits until the byte `Shell_FrameDue` (`0007fd06`) is set, and clears it. `Shell_FrameTick` (`00012974`) sets it: `Shell_InitDevices` (`00045d24`) registers it with `Timer_AddCallback` at a count of 2, the scripts' count ([the timer](../formats/ttm-scripts.md#the-timer));
 2. when there is a palette at `0007fcd0` and the byte `0007fcd4` is set, uploads it with `Palette_UploadWhole` and clears the byte. The scripts' palette commands leave their palette there;

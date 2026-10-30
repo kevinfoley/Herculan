@@ -36,7 +36,7 @@ A record's text is the line of `eng\menu<n>.bin` whose number is the record's po
 | 14 | for the 17 ids at `00081b08`, a clickable area: `DUIWindow_AddHotspot` (`0001b2de`)(window, 0, id, handler, rect), each id with its handler ([the build](../shell/menus.md#opening-a-menu--menu_open-0003969e)); any other id builds nothing |
 | 15 | a [list box](../shell/menus.md#the-list-box), `MTStrListBox_Ctor` (`0001e11a`)(0, `0x100`, 0, 0, a word, style, id, `Menu_ListLines` (`0003750d`)(id), rect), added to the window. The word is 0, or for the 23 ids at `00081a00` set by their own code, two of them from the bytes `0007fcb8` and `0007fcb9` |
 | 16 | `0001eaef`(0, `0x100`, 0, a word, id, `00037827`(id), rect), added to the window. The word is −1, or for the ten ids at `00081ab8` set by their own code, 0 and the word `0007fcba` for two of them |
-| 17 | `0001eff6`(0, `0x13`, 0, `0xffff`, id, `00037996`(id), rect), added to the window. `00037996` returns the 18 bytes at `000a056c`: for id 1803 the handles of fourteen `w1800w<i>.ttm` and four `w1800r0<i>.ttm` scripts it loads, for any other id `0xff` each |
+| 17 | `0001eff6`(0, `0x13`, 0, `0xffff`, id, `Menu_OpenControlTtms` (`00037996`)(id), rect), added to the window. `00037996` returns the 18 bytes at `000a056c`: for id 1803 the handles of fourteen `w1800w<i>.ttm` and four `w1800r0<i>.ttm` scripts it loads, for any other id `0xff` each |
 | 18 | with style 1, `0004c83a`(rect), which stores the rect in the 24-byte entry of `000a0a9c` that the word at `+4` of `00083bc4`'s object numbers, when that is under 9 |
 | 6–13, above 18 | nothing |
 
