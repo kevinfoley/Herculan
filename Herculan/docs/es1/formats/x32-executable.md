@@ -101,6 +101,8 @@ Its address table:
 
 The kernel reads `+0xec` from the table (`ESCD.EXE` kernel `0x3498` in the image-read routine, and `0x38a5`, where the DPMI path allocates its block by the same formula). The image-read routine caps the read at the smaller of `+0x184` and the memory size (`0x34bd`) and closes the file (`0x3505`). After each of the routine's three calls the kernel stores the memory size into image dwords `0x5794` and `0x5798`, as the immediate `0x67c0` (`0x0190`, `0x36dc`, `0x39c9`), where `DBSIM.EXE`'s returns straight after the first two (kernel `0x1b1`, `0x37ca`). The dword that holds minus the image's linear base, `+0x124`'s in `DBSIM.EXE`, is image `0x57a8` here, outside the table: the DPMI path stores it at `0x3996` and the base-setting routine at `0x31c7`, and the image ships it as `0xf0000000`.
 
+`X32_LargestFreeBlock` (`ES1ESCD 00002e63`), which the launcher's memory check calls ([starting](../shell/launcher.md#starting--launcher_main-000005cc)), reads `0x5794` at `00002e69` as its high-water mark: it takes the extender's figure (`INT 21h` `AX=350Bh`) plus the rest of the 4 KB page above the mark, `0x840` bytes above `0x67c0`, and answers the larger of that and the largest size on the list headed at `0x6696`, less 4, or 0.
+
 Under DPMI the stack pointer is the block's length from its first page boundary (`0x38e3`), less `0x1200` that the image-read routine takes off it (`0x3483`). The two hand-offs push `0xd` at `0x3a7f` (DPMI, followed by the far return at `0x3a85`) and `0x365e` (VCPI and raw XMS), in the same sequences as `DBSIM.EXE`'s.
 
 ## The image
@@ -116,4 +118,4 @@ The kernel's read runs to end of file, and the three parts cover every byte of e
 - **Open:** what reads the kernel header's minimum and maximum extra paragraphs.
 - **Open:** where the image's stack sits under VCPI and raw XMS hosts; the kernel computes the dword at `+0x198` for them in the image-read routine.
 - **Open:** what the kernel keeps in the `0x126a` bytes (`0x1200` in `ESCD.EXE`) between the image's initial stack pointer and the end of its DPMI block.
-- **Open:** what `ES1ESCD` does with the memory size the kernel stores at `0x5794` and `0x5798`; `0x5794` is read at `000001eb` and `00002e69`.
+- **Open:** what `ES1ESCD` does with the memory size the kernel stores at `0x5798`, and with `0x5794` at `000001eb`, in the startup.

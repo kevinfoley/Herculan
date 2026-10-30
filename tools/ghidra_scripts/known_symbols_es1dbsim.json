@@ -35812,13 +35812,13 @@
       "type": "function",
       "confidence": "high",
       "name": "X32_LargestFreeBlock",
-      "description": "No arguments, C convention: the larger of the extender's figure (INT 21h AX=350Bh, in EAX) less the part of the current 4 KB page above the high-water mark 00090028, and the largest size (+4) on the circular list headed at the pointer 0009002c; minus 4, or 0 when that would go below 0. Mem_InitHeap caps the heap's size with it.",
+      "description": "No arguments, C convention: the larger of the extender's figure (INT 21h AX=350Bh, in EAX) plus the rest of the 4 KB page above the high-water mark 00090028, and the largest size (+4) on the circular list headed at the pointer 0009002c; minus 4, or 0 when that would go below 0. Mem_InitHeap caps the heap's size with it.",
       "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
       "verified": {
         "bytes": "00060cac+66",
         "sha1": "61dfc0f8554d",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {

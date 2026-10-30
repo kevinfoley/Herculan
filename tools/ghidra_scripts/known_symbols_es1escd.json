@@ -6,5 +6,549 @@
     "Schema, confidence rules and run order: tools/ghidra_scripts/README.md, 'Known symbols'.",
     "Entries are in address order. tools/scripts/es2_naming.py insert and edit keep it, and check that it holds."
   ],
-  "entries": []
+  "entries": [
+    {
+      "address": "00000304",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "Launcher_PrefixPath",
+      "description": "(prefix, path), its arguments removed by this function: copies prefix into the buffer 00006584 and appends path with strcat (000032cc), less path's first two characters when its second is ':', and returns the buffer, which the next call overwrites.",
+      "source": "Herculan/docs/es1/shell/launcher.md#the-files; ES1ESCD decompile and disassembly at 00000304",
+      "verified": {
+        "bytes": "00000304+89",
+        "sha1": "56e414417251",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00000360",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "Launcher_DrivePath",
+      "description": "(drive, path), its arguments removed by this function: writes the drive's letter (drive + 0x40, 1 for A) and ':' into the buffer 000065a4, copies path after them less path's first two characters when its second is ':', and returns the buffer, which the next call overwrites. es2_xref finds four calls, from Launcher_Main (000005cc).",
+      "source": "Herculan/docs/es1/shell/launcher.md#the-flics; ES1ESCD decompile and disassembly at 00000360",
+      "verified": {
+        "bytes": "00000360+92",
+        "sha1": "34e7948f17ae",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000003bc",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "Launcher_HasDiskSpace",
+      "description": "(bytes, prefix), its arguments removed by this function: the drive is the current one (dos_getdrive (00001f9c)) when prefix is empty, and otherwise prefix's first character, upper-cased, less 0x40, after an assert at severity 4 (src\\es.cpp line 0x4f) through Assert_Report (000030a0) when the character-class table at 0000602d gives the character neither of bits 1 and 2. Returns 1 when dos_getdiskfreespace (00003258) gives at least bytes for the drive, compared unsigned, and 0 otherwise.",
+      "source": "Herculan/docs/es1/shell/launcher.md#the-disk-check--launcher_hasdiskspace-000003bc; ES1ESCD decompile and disassembly at 000003bc",
+      "verified": {
+        "bytes": "000003bc+139",
+        "sha1": "15c27cff9ed4",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00000448",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "Launcher_ReadExitCfg",
+      "description": "(): opens data\\exit.cfg 'r+b' with fopen (000020d8) through Launcher_PrefixPath (00000304) with Launcher_PreferredPrefix (0000657c), asserting at severity 4 (src\\es.cpp line 0x67) through Assert_Report (000030a0) when the open answers null, reads one 4-byte item into Launcher_State (00005854) with fread (00002edc) and closes the file with fclose (00002034).",
+      "source": "Herculan/docs/es1/shell/launcher.md#the-loop; ES1ESCD decompile and disassembly at 00000448",
+      "verified": {
+        "bytes": "00000448+97",
+        "sha1": "a1f2abc17b7c",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000004ac",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "Launcher_FileReadable",
+      "description": "(path), its argument removed by this function: 0 for a null path. Otherwise it zeroes the critical-error count CritErr_Count (00005a46) and the words 00005a48 and 00005a4a, installs CritErr_Handler (00000c07) with CritErr_InstallHandler (00000bac), opens path 'rb' with fopen (000020d8), puts the old handler back with CritErr_RemoveHandler (00000bec), closes the file when it opened, and returns 1 when it opened and the count is still 0, and 0 otherwise.",
+      "source": "Herculan/docs/es1/shell/launcher.md#the-flic-player--launcher_filereadable-000004ac; ES1ESCD decompile and disassembly at 000004ac",
+      "verified": {
+        "bytes": "000004ac+108",
+        "sha1": "2f8471e5e14e",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00000518",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "Launcher_BuildArgs",
+      "description": "(argv, argc), its arguments removed by this function: fills Launcher_ChildArgs (000065c4) with argc entries of argv, argv[0] included, then by Launcher_State (00005854) through the case table 00005884: for 1, 3, 4 and 6, '-a' and '-c' when Launcher_FlicPlayerFound (00005858) is set; for 5, '-D' and then '-c' when it is set; for 2, '-c' when it is set; for any other state nothing. Then '-eggplant' and a null. Returns the vector.",
+      "source": "Herculan/docs/es1/shell/launcher.md#a-programs-command-line--launcher_buildargs-00000518; ES1ESCD decompile and disassembly at 00000518",
+      "verified": {
+        "bytes": "00000518+179",
+        "sha1": "c326c393e3c7",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000005cc",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "Launcher_Main",
+      "description": "(argc, argv), C convention: es.cpp's main, which es2_xref finds called once, from the startup at 0000000d. Mem_New (00001664)(argc * 4 + 8), its answer not kept; the memory check, X32_LargestFreeBlock (00002e63)() - 25000 below 3,435,000 printing 'Insufficient memory.' and the shortfall and ending with exit (00001b50)(0); the drive prefixes Launcher_PreferredPrefix (0000657c) and Launcher_OtherPrefix (00006580) from ALT_DRIVE and PREFER_ALT, upper-cased with strupr (00002294), the first given to Assert_SetLogDir (00001814); Launcher_HasDiskSpace (000003bc)(40000, Launcher_PreferredPrefix) or exit(0); the memory figure written to data\\es.got; Mem_InitHeap (000015dc)(20000); Launcher_SaveVideoMode (00000b60); with ALT_DRIVE set, the intro and end flics' command lines on the other prefix's drive; Launcher_FlicPlayerFound (00005858) from Launcher_FileReadable (000004ac). Then the loop on Launcher_State (00005854) through the case table 00005a20: 1 runs detect.exe when data\\prefs.cfg does not open and the intro flic, then continues as 3 and 6, which run go.exe with spawnv (00001bf7); 4 the end flic, then go.exe; 2 and 5 dbsim.exe; each with Launcher_BuildArgs (00000518)'s vector and followed by Launcher_ReadExitCfg (00000448). spawnv's answers are not kept. At 0 it calls Launcher_RestoreVideoMode (00000b83) and Mem_HeapOff (00001658) and returns without setting EAX.",
+      "source": "Herculan/docs/es1/shell/launcher.md#starting--launcher_main-000005cc; ES1ESCD decompile and disassembly at 000005cc",
+      "verified": {
+        "bytes": "000005cc+1428",
+        "sha1": "1cbbe831eabe",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00000b60",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "Launcher_SaveVideoMode",
+      "description": "(): reads the BIOS equipment byte at linear 0x410 (0040:0010), through the selector at 000057a6, into Launcher_SavedEquipmentByte (00005a39), and the video mode INT 10h AH=0Fh answers in AL into Launcher_SavedVideoMode (00005a38).",
+      "source": "Herculan/docs/es1/shell/launcher.md#starting--launcher_main-000005cc; ES1ESCD decompile and disassembly at 00000b60",
+      "verified": {
+        "bytes": "00000b60+35",
+        "sha1": "df80fec36bb1",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00000b83",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "Launcher_RestoreVideoMode",
+      "description": "(): sets video mode 3 (INT 10h AX=3), writes the byte Launcher_SavedEquipmentByte (00005a39) back to linear 0x410 through the selector at 000057a6, and calls INT 10h with EAX the byte Launcher_SavedVideoMode (00005a38) sign-extended, which sets that mode when it is below 0x80.",
+      "source": "Herculan/docs/es1/shell/launcher.md#the-end; ES1ESCD decompile and disassembly at 00000b83",
+      "verified": {
+        "bytes": "00000b83+41",
+        "sha1": "ddf7a7c3638e",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00000bac",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "CritErr_InstallHandler",
+      "description": "(): stores DS in 00005a50 for the handler, saves INT 24h's protected-mode vector (INT 21h AX=2502h, CL=24h; EBX in 00005a3c, ES in 00005a40) and its real-mode vector (AX=2503h; EBX in 00005a42), and points INT 24h at CritErr_Handler (00000c07) in the code segment with AX=2506h.",
+      "source": "Herculan/docs/es1/shell/launcher.md#the-flic-player--launcher_filereadable-000004ac; ES1ESCD decompile and disassembly at 00000bac",
+      "verified": {
+        "bytes": "00000bac+64",
+        "sha1": "89a25ab718ec",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00000bec",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "CritErr_RemoveHandler",
+      "description": "(): INT 21h AX=2507h with CL=24h, DS:EDX the protected-mode vector saved at 00005a3c and EBX the real-mode one saved at 00005a42: puts back the two vectors of INT 24h that CritErr_InstallHandler (00000bac) saved.",
+      "source": "Herculan/docs/es1/shell/launcher.md#the-flic-player--launcher_filereadable-000004ac; ES1ESCD decompile and disassembly at 00000bec",
+      "verified": {
+        "bytes": "00000bec+27",
+        "sha1": "e5443304004e",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00000c07",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "CritErr_Handler",
+      "description": "The INT 24h handler CritErr_InstallHandler (00000bac) installs: loads DS from 00005a50, adds 1 to the count CritErr_Count (00005a46), keeps AX in 00005a4a and DI in 00005a48, and returns with STI and IRETD, AL 1 (retry) while the count is below the word CritErr_RetryLimit (00005a4c) (2 in the image) and 3 (fail) from then on.",
+      "source": "Herculan/docs/es1/shell/launcher.md#the-flic-player--launcher_filereadable-000004ac; ES1ESCD disassembly at 00000c07",
+      "verified": {
+        "bytes": "00000c07+58",
+        "sha1": "19659a9a5a17",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000015dc",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mem_InitHeap",
+      "description": "(size): ES1GO's Mem_InitHeap (0000195f) at severity 4: caps size at X32_LargestFreeBlock (00002e63)() - 15000, takes the block from 000001ca, asserting 'Memory alloc failed' (src\\memory.cpp line 0x1ee, severity 4) through Assert_Report (000030a0) when that returns -1, makes it the heap 00006614 (00000c84) and sets Mem_UseHeap (00005c18). Returns the capped size.",
+      "source": "Herculan/docs/es1/shell/launcher.md#starting--launcher_main-000005cc; ES1ESCD decompile and disassembly at 000015dc",
+      "verified": {
+        "bytes": "000015dc+121",
+        "sha1": "801444a06330",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00001658",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mem_HeapOff",
+      "description": "(): ES1GO's Mem_HeapOff (000019e1): clears Mem_UseHeap (00005c18).",
+      "source": "Herculan/docs/es1/shell/launcher.md#the-end; ES1ESCD decompile and disassembly at 00001658",
+      "verified": {
+        "bytes": "00001658+11",
+        "sha1": "7ab1393a26bb",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00001664",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mem_New",
+      "description": "(size), its argument removed by this function: ES1GO's Mem_New (000019f0) with its test the other way round: with Mem_UseHeap (00005c18) set, 00000db4(the heap 00006614, size); otherwise 000001ca(size), its -1 answered as 0.",
+      "source": "Herculan/docs/es1/shell/launcher.md#starting--launcher_main-000005cc; ES1ESCD decompile and disassembly at 00001664",
+      "verified": {
+        "bytes": "00001664+60",
+        "sha1": "43a4682be42b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00001814",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "Assert_SetLogDir",
+      "description": "(dir), its argument removed by this function: ES1GO's Assert_SetLogDir (0000035e), copying dir into 00006624.",
+      "source": "Herculan/docs/es1/shell/launcher.md#starting--launcher_main-000005cc; ES1ESCD decompile and disassembly at 00001814",
+      "verified": {
+        "bytes": "00001814+38",
+        "sha1": "00cbe374f396",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00001b50",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "exit",
+      "description": "Symantec C++ runtime exit: an exact match of ES1GO's exit (0004df64) by es2_naming.py match.",
+      "source": "Herculan/docs/es1/shell/launcher.md#functions"
+    },
+    {
+      "address": "00001be0",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "spawnl",
+      "description": "(mode, path, arg0, ...), C convention: spawnv (00001bf7)(mode, path, the address of arg0). es1_libmatch.py matches its bytes to spawnl, spawnlp, fprintf and sprintf alike; its callee settles it. Launcher_Main (000005cc) runs detect.exe and the flics with it.",
+      "source": "Herculan/docs/es1/shell/launcher.md#the-flics; ES1ESCD decompile and disassembly at 00001be0",
+      "verified": {
+        "bytes": "00001be0+23",
+        "sha1": "e7296922c645",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00001bf7",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "spawnv",
+      "description": "(mode, path, argv), C convention: 00001c38(0, argv, path, mode), the spawn core that 00001e4e, the core 00001c23 calls, also calls once more for each folder of the PATH variable. es1_libmatch.py matches its bytes to spawnv at 00001bf7 and 00001c23 alike.",
+      "source": "Herculan/docs/es1/shell/launcher.md#the-loop; ES1ESCD decompile and disassembly at 00001bf7",
+      "verified": {
+        "bytes": "00001bf7+21",
+        "sha1": "5ba32c627c4f",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00001f9c",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "dos_getdrive",
+      "description": "Symantec C++ runtime `dos_getdrive`, from `dosfil.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. (pdrive), C convention: INT 21h AH=19h, and the drive it answers plus 1 (1 for A) stored through pdrive.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification; ES1ESCD disassembly at 00001f9c",
+      "verified": {
+        "bytes": "00001f9c+15",
+        "sha1": "a057ed315a36",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00001fab",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "dos_setdrive",
+      "description": "Symantec C++ runtime `dos_setdrive`, from `dosfil.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. (drive, pcount), C convention: INT 21h AH=0Eh with DL = drive - 1, and the drive count DOS answers in AL stored through pcount.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification; ES1ESCD disassembly at 00001fab",
+      "verified": {
+        "bytes": "00001fab+21",
+        "sha1": "f07ba96f948c",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00002034",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "fclose",
+      "description": "Symantec C++ runtime fclose: an exact match of ES1GO's fclose (000530f8) by es2_naming.py match.",
+      "source": "Herculan/docs/es1/shell/launcher.md#functions"
+    },
+    {
+      "address": "000020d8",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "fopen",
+      "description": "Symantec C++ runtime fopen: an exact match of ES1GO's fopen (0005319c) by es2_naming.py match.",
+      "source": "Herculan/docs/es1/shell/launcher.md#functions"
+    },
+    {
+      "address": "0000211c",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "fwrite",
+      "description": "Symantec C++ runtime fwrite: an exact match of ES1GO's fwrite (000531e0) by es2_naming.py match.",
+      "source": "Herculan/docs/es1/shell/launcher.md#functions"
+    },
+    {
+      "address": "00002248",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "puts",
+      "description": "(s), C convention: writes each character of s with 0000374c to the stream at 00006164, then a newline (10); returns 1 when a write answers -1, and 0 otherwise.",
+      "source": "Herculan/docs/es1/shell/launcher.md#starting--launcher_main-000005cc; ES1ESCD decompile and disassembly at 00002248",
+      "verified": {
+        "bytes": "00002248+74",
+        "sha1": "f4a5f3bb54ae",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00002294",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "strupr",
+      "description": "(s), C convention: replaces each character of s by 0000412c's answer for it, upper case, and returns s. ES1GO's 0006028c has the same code calling tolower.",
+      "source": "Herculan/docs/es1/shell/launcher.md#starting--launcher_main-000005cc; ES1ESCD decompile and disassembly at 00002294",
+      "verified": {
+        "bytes": "00002294+38",
+        "sha1": "2dd518a3e940",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000022bc",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "getenv",
+      "description": "Symantec C++ runtime `getenv`, from `getenv.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. (name), C convention: walks the environment block at the pointer 00005e0c and answers the address after the '=' of the entry whose name equals name, or 0 at the block's end.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification; ES1ESCD disassembly at 000022bc",
+      "verified": {
+        "bytes": "000022bc+62",
+        "sha1": "a144cfa6cb83",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000232e",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "printf",
+      "description": "Symantec C++ runtime printf: an exact match of ES1GO's printf (0004e172) by es2_naming.py match.",
+      "source": "Herculan/docs/es1/shell/launcher.md#functions"
+    },
+    {
+      "address": "00002e63",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "X32_LargestFreeBlock",
+      "description": "No arguments, C convention: ES1GO's X32_LargestFreeBlock (0004f738), the runtime's __x386_coreleft by es1_libmatch.py, with the high-water mark at 00005794, which the kernel sets to the image's memory size 0x67c0, and the list headed at 00006696: the extender's figure (INT 21h AX=350Bh) plus the rest of the 4 KB page above the mark, or the largest size (+4) on the list when that is larger, minus 4, or 0 when that would go below 0.",
+      "source": "Herculan/docs/es1/formats/x32-executable.md#escdexes-kernel; ES1ESCD decompile and disassembly at 00002e63",
+      "verified": {
+        "bytes": "00002e63+66",
+        "sha1": "859a3d0c909e",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00002edc",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "fread",
+      "description": "Symantec C++ runtime fread: an exact match of ES1GO's fread (0005330c) by es2_naming.py match.",
+      "source": "Herculan/docs/es1/shell/launcher.md#functions"
+    },
+    {
+      "address": "000030a0",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "Assert_Report",
+      "description": "(logger, message, line, file, condition, severity) in stack order: an exact match of ES1GO's Assert_Report (0004f498) by es2_naming.py match.",
+      "source": "Herculan/docs/es1/shell/launcher.md#functions"
+    },
+    {
+      "address": "00003258",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "dos_getdiskfreespace",
+      "description": "Symantec C++ runtime `dos_getdiskfreespace`, from `getdos.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. (drive), C convention: INT 21h AH=36h with DL = drive (0 the current, 1 for A); answers AX * BX * CX, the bytes free, or -1 when DOS answers AX = FFFFh.",
+      "source": "Herculan/docs/es1/shell/launcher.md#the-disk-check--launcher_hasdiskspace-000003bc; ES1ESCD disassembly at 00003258",
+      "verified": {
+        "bytes": "00003258+40",
+        "sha1": "ba3647c71f37",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000032cc",
+      "binary": "ES1ESCD",
+      "type": "function",
+      "confidence": "high",
+      "name": "strcat",
+      "description": "Symantec C++ runtime `strcat`, from `strings.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. (dest, src), C convention: copies src with its terminator to the end of dest and returns dest.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification; ES1ESCD disassembly at 000032cc",
+      "verified": {
+        "bytes": "000032cc+65",
+        "sha1": "d81b332a4a5c",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00005854",
+      "binary": "ES1ESCD",
+      "type": "data",
+      "confidence": "high",
+      "name": "Launcher_State",
+      "description": "dword, 1 in the image: the state Launcher_Main (000005cc)'s loop runs by, read back from data\\exit.cfg by Launcher_ReadExitCfg (00000448) after each program; Launcher_BuildArgs (00000518) reads it too.",
+      "source": "Herculan/docs/es1/shell/launcher.md#the-loop"
+    },
+    {
+      "address": "00005858",
+      "binary": "ES1ESCD",
+      "type": "data",
+      "confidence": "high",
+      "name": "Launcher_FlicPlayerFound",
+      "description": "byte: 1 when Launcher_FileReadable (000004ac) opened playflic.exe through Launcher_OtherPrefix (00006580), set by Launcher_Main (000005cc) before the loop and again before each program. It gates the flics, the -a and -c switches Launcher_BuildArgs (00000518) adds, and which prefix detect.exe is run through.",
+      "source": "Herculan/docs/es1/shell/launcher.md#the-flic-player--launcher_filereadable-000004ac"
+    },
+    {
+      "address": "00005a38",
+      "binary": "ES1ESCD",
+      "type": "data",
+      "confidence": "high",
+      "name": "Launcher_SavedVideoMode",
+      "description": "byte: the video mode Launcher_SaveVideoMode (00000b60) reads and Launcher_RestoreVideoMode (00000b83) sets back.",
+      "source": "Herculan/docs/es1/shell/launcher.md#the-end"
+    },
+    {
+      "address": "00005a39",
+      "binary": "ES1ESCD",
+      "type": "data",
+      "confidence": "high",
+      "name": "Launcher_SavedEquipmentByte",
+      "description": "byte: the BIOS equipment byte at 0040:0010 that Launcher_SaveVideoMode (00000b60) reads and Launcher_RestoreVideoMode (00000b83) writes back.",
+      "source": "Herculan/docs/es1/shell/launcher.md#the-end"
+    },
+    {
+      "address": "00005a46",
+      "binary": "ES1ESCD",
+      "type": "data",
+      "confidence": "high",
+      "name": "CritErr_Count",
+      "description": "word: the critical errors CritErr_Handler (00000c07) has counted since Launcher_FileReadable (000004ac) zeroed it.",
+      "source": "Herculan/docs/es1/shell/launcher.md#the-flic-player--launcher_filereadable-000004ac"
+    },
+    {
+      "address": "00005a4c",
+      "binary": "ES1ESCD",
+      "type": "data",
+      "confidence": "high",
+      "name": "CritErr_RetryLimit",
+      "description": "word, 2 in the image: CritErr_Handler (00000c07) answers retry while CritErr_Count (00005a46) is below it and fail from then on.",
+      "source": "Herculan/docs/es1/shell/launcher.md#the-flic-player--launcher_filereadable-000004ac"
+    },
+    {
+      "address": "00005c18",
+      "binary": "ES1ESCD",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mem_UseHeap",
+      "description": "dword: set by Mem_InitHeap (000015dc) and cleared by Mem_HeapOff (00001658); Mem_New (00001664) takes memory from the heap 00006614 while it is set.",
+      "source": "Herculan/docs/es1/shell/launcher.md#starting--launcher_main-000005cc"
+    },
+    {
+      "address": "0000657c",
+      "binary": "ES1ESCD",
+      "type": "data",
+      "confidence": "high",
+      "name": "Launcher_PreferredPrefix",
+      "description": "4 bytes: ALT_DRIVE when PREFER_ALT is set and the empty string otherwise, upper-cased, written by Launcher_Main (000005cc): the prefix of data\\es.got, data\\prefs.cfg and data\\exit.cfg and the drive of the disk check.",
+      "source": "Herculan/docs/es1/shell/launcher.md#starting--launcher_main-000005cc"
+    },
+    {
+      "address": "00006580",
+      "binary": "ES1ESCD",
+      "type": "data",
+      "confidence": "high",
+      "name": "Launcher_OtherPrefix",
+      "description": "4 bytes: the empty string when ALT_DRIVE and PREFER_ALT are both set, ALT_DRIVE when only it is, and the empty string when it is not, upper-cased, written by Launcher_Main (000005cc): the prefix playflic.exe is looked for through.",
+      "source": "Herculan/docs/es1/shell/launcher.md#starting--launcher_main-000005cc"
+    },
+    {
+      "address": "000065c4",
+      "binary": "ES1ESCD",
+      "type": "data",
+      "confidence": "high",
+      "name": "Launcher_ChildArgs",
+      "description": "The argument vector Launcher_BuildArgs (00000518) fills and spawnv (00001bf7) passes to go.exe and dbsim.exe.",
+      "source": "Herculan/docs/es1/shell/launcher.md#a-programs-command-line--launcher_buildargs-00000518"
+    }
+  ]
 }

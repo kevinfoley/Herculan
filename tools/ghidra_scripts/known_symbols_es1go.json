@@ -11911,7 +11911,7 @@
       "type": "function",
       "confidence": "high",
       "name": "X32_LargestFreeBlock",
-      "description": "No arguments, C convention: ES1DBSIM's X32_LargestFreeBlock, with the high-water mark at 0007d554 and the list headed at the pointer 0007d558. The larger of the extender's figure (INT 21h AX=350Bh) less the rest of the current 4 KB page and the largest size on that list, minus 4, or 0.",
+      "description": "No arguments, C convention: ES1DBSIM's X32_LargestFreeBlock, with the high-water mark at 0007d554 and the list headed at the pointer 0007d558. The larger of the extender's figure (INT 21h AX=350Bh) plus the rest of the 4 KB page above the high-water mark and the largest size on that list, minus 4, or 0.",
       "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
       "verified": {
         "bytes": "0004f738+66",
@@ -11926,13 +11926,13 @@
       "type": "function",
       "confidence": "high",
       "name": "X32_TotalFreeBytes",
-      "description": "No arguments: the extender's figure (INT 21h AX=350Bh) less the rest of the current page above the high-water mark 0007d554, plus the size +4 of each node on the list the pointer 0007d558 heads, returned in EAX; X32_LargestFreeBlock (0004f738) takes the larger instead of the sum. es2_xref finds two calls, both from Shell_Main (00012ec7), which keeps the results in locals it does not read.",
+      "description": "No arguments: the extender's figure (INT 21h AX=350Bh) plus the rest of the 4 KB page above the high-water mark 0007d554, plus the size +4 of each node on the list the pointer 0007d558 heads, returned in EAX; X32_LargestFreeBlock (0004f738) takes the larger instead of the sum. es2_xref finds two calls, both from Shell_Main (00012ec7), which keeps the results in locals it does not read.",
       "source": "Herculan/docs/es1/shell/startup.md#the-start-up; ES1GO decompile and disassembly at 0004f77a",
       "verified": {
         "bytes": "0004f77a+54",
         "sha1": "66e39ece5fdf",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {

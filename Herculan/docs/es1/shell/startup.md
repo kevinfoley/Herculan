@@ -1,6 +1,6 @@
 # GO.EXE — the start-up, the frame loop and the shutdown
 
-**ES1's shell is a DOS program that starts from the number the last run left in `data\exit.cfg`: it plays the intro and opens the main menu, or comes back from a mission into its results, then draws up to 60 frames a second until the player leaves for DOS or starts a mission, and on the way out writes its own code back to `exit.cfg` and returns it as its exit status.** ES2's shell gets that number from `ES.EXE` on its command line instead ([ES2's start-up](../../retail/shell/startup.md#the-startup--shell_main-00401525)). What a player would see differently:
+**ES1's shell is a DOS program that starts from the number the last run left in `data\exit.cfg`: it plays the intro and opens the main menu, or comes back from a mission into its results, then draws up to 60 frames a second until the player leaves for DOS or starts a mission, and on the way out writes its own code back to `exit.cfg` and returns it as its exit status.** ES1's launcher, `ESCD.EXE`, runs it with `-eggplant` and reads the number back from the file when it ends ([the launcher](launcher.md)); ES2's shell gets that number from `ES.EXE` on its command line instead ([ES2's start-up](../../retail/shell/startup.md#the-startup--shell_main-00401525)). What a player would see differently:
 
 - the switches are `-A`, which skips the intro scripts and `endfa.ttm`, `-C`, `-M`, `-S` and `-X`, each also written with `/` and in either case ([the command line](#the-command-line)), where ES2's shell has its own set ([ES2's switches](../../retail/command-line.md#vshell));
 - run without `-eggplant`, it prints `To play EarthSiege, type ES.` and exits, where ES2's shows a message box;
@@ -137,7 +137,7 @@ Then the joysticks' first button (`+0x1d`, [the live block](../simulation/input.
 | message 100 to `QuitAlert_OnMessage` (`0002a554`), which sets `Shell_QuitFlag` | 0 |
 | `Shell_HandleMessage` (`0003c7d8`)'s case for message 9999, which opens screen 9999, the loading picture ([changing screens](menus.md#changing-screens--shell_handlemessage-0003c7d8)), and so ends the loop on the next pass | 5 when `Shell_DemoRequested` (`000817ce`) is set, which `OptionsMenu_OnMessage` (`0002b79d`) sets when it turns message `0x515` into 9999; 2 otherwise |
 
-Two more end the program without the shutdown: no `-eggplant`, through `__exit`(1) before `exit.cfg` is read; and a fatal assert, below. The [simulator](../simulation/main-loop.md#the-end--sim_shutdown-0005b568) leaves 3, 4, 6 or 0, which the next start's step 15 reads. What `ES.BAT` and `ESCD.EXE` do with the shell's status and the file is not in `GO.EXE` ([Open](#open)).
+Two more end the program without the shutdown: no `-eggplant`, through `__exit`(1) before `exit.cfg` is read; and a fatal assert, below. The [simulator](../simulation/main-loop.md#the-end--sim_shutdown-0005b568) leaves 3, 4, 6 or 0, which the next start's step 15 reads. The launcher, `ESCD.EXE`, chooses the next program by the code in the file and does not read the shell's status ([the launcher's loop](launcher.md#the-loop)).
 
 ### A fatal assert
 
@@ -193,7 +193,6 @@ After the loop, in order:
 
 ## Open
 
-- **Open:** what the launcher does with the shell's exit status and with `data\exit.cfg`: `GO.EXE` holds no code of `ES.BAT` or `ESCD.EXE`. A retail check: after `EXIT TO DOS` under DOSBox-X, `data\exit.cfg` holds the `int16` 0, and after a mission's launch 2 until the simulator overwrites it.
 - **Open:** what the object `Shell_MissionMap` (`000809a4`) is, whose functions `0000a9c8`, `0000d657`, `0000d599` and slots `+8` and `+0xc` of its `+0x4a` table `Space`, `,`, `.`, `=` and `-` call, and which `Shell_TickScreen` (`0003c115`) ticks while `000809a8` is above 1. A retail check: press `Space` on a screen that plays something and watch what stops.
 - **Open:** what reads `Shell_BlinkOn`: `es2_xref.py` finds its two writes and a reference at `0001f77f`, in code Ghidra has not disassembled, inside `0001f442`'s region.
 - **Open:** what reads `Shell_MSwitchGiven`: `es2_xref.py` finds the parser's store only.
