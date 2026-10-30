@@ -95,7 +95,7 @@ The `+0x25`, `+0x27` and `+0x29` words are of `CareerRecord_Current` (`00014ef4`
 | down arrow, `Down` | 102 | `Dialog_NextPage` (`00018e18`)(`Shell_Dialog`) | no screen |
 | MAIN MENU | 1000 | `Shell_ReturnScreen` (`0007fce8`) set to 1000; `anm\esiege2.anm` (the string `00080994`) put into `000aacfe` with `sprintf` and the byte `0007fcd7` set to 2 | the main menu, 1000 |
 | MISSION > | 1100 | `Shell_ReturnScreen` set to 1100; `anm\esiege2.anm` into `000aacfe` and `0007fcd7` 2 | the SINGLE MISSION menu, 1100 |
-| PROCEED > | 1710 | the target becomes 5555 when the current career record's word `+0xa8` is not −1, the record the roster `0009b218`'s word `+7` numbers among the records from `0009b23b`, `0x1f7` bytes each; `Shell_ReturnScreen` set to 1200 | 5555 or 1710 |
+| PROCEED > | 1710 | the target becomes 5555 when the current career record's word `+0xa8` is not −1, the record the roster `Career_Roster` (`0009b218`)'s word `+7` numbers among the records from `0009b23b`, `0x1f7` bytes each; `Shell_ReturnScreen` set to 1200 | 5555 or 1710 |
 
 Each page arrow steps the box a page and draws it ([stepping pages](message-box.md#stepping-pages)); the debriefing keeps no page count of its own. With `0007fcd7` 2 the next screen change shows the new backdrop even within the same group and its draw plays `anm\esiege2.anm` ([changing screens](menus.md#changing-screens--shell_handlemessage-0003c7d8), step 8; [drawing a screen](menus.md#drawing-a-screen), step 2). `Shell_ReturnScreen` names the screen the options menu's RETURN button goes back to and its text ([the return screen](main-menu.md#the-return-screen)). Screen 5555 is `TechReleaseAlert` ([RESUME](main-menu.md#resume)).
 

@@ -1,6 +1,6 @@
 # GO.EXE — the starting HERCs and the weapon stock
 
-**A new career and a single mission each start the player with a hangar of HERCs and a stock of spare weapons, read from two pairs of files in `SHELL0.VOL`'s `car\`.** `car\car_init.dat` and `car\c_armory.dat` are a career's, `car\sm_init.dat` and `car\s_armory.dat` a single mission's. A HERC list is a few header words and a counted list of HERCs, each with its chassis, a weapon per mount and a 66-byte block of 100s; a stock file is a counted list of slots, each with a count of words, every one 100 in retail. The shell writes both objects back in the same layouts into the two files a new career opens ([starting a career](bst-battle-sets.md#starting-a-career)). ES2 starts a career from `gam\hercs.dat` ([ES2's starting hangar](../../retail/formats/herc-catalogs.md#gamhercsdat--the-starting-hangar)) and keeps its stock per catalog weapon ([ES2's armory stock record](../../retail/formats/save-games.md#armory-stock-record)). Addresses are `ES1GO` image addresses ([the X-32 executable](x32-executable.md#the-image)).
+**A new career and a single mission each start the player with a hangar of HERCs and a stock of spare weapons, read from two pairs of files in `SHELL0.VOL`'s `car\`.** `car\car_init.dat` and `car\c_armory.dat` are a career's, `car\sm_init.dat` and `car\s_armory.dat` a single mission's. A HERC list is a few header words and a counted list of HERCs, each with its chassis, a weapon per mount and a 66-byte block of 100s; a stock file is a counted list of slots, each with a count of words, every one 100 in retail. The shell writes both objects back in the same layouts into the two files a new career opens ([the files](../shell/career.md#the-files)). ES2 starts a career from `gam\hercs.dat` ([ES2's starting hangar](../../retail/formats/herc-catalogs.md#gamhercsdat--the-starting-hangar)) and keeps its stock per catalog weapon ([ES2's armory stock record](../../retail/formats/save-games.md#armory-stock-record)). Addresses are `ES1GO` image addresses ([the X-32 executable](x32-executable.md#the-image)).
 
 ## The HERC lists
 
@@ -26,7 +26,7 @@ HERC count x {
 
 `Herc_Read` reads the record with `Herc_ReadFromStream` (`0002352f`) and, unless the byte `Shell_LowMemory` (`0007fd09`) is set, builds the HERC's diagram with `Herc_BuildDiagram` (`00023883`, [the mount pictures](herc-diagrams.md#the-mount-pictures)), handing it the word.
 
-`es2_xref.py` finds three calls to `Hangar_LoadFile`: from `Career_New` with `car\car_init.dat` ([starting a career](bst-battle-sets.md#starting-a-career)), from `MsnGen_LoadMission` in mode 0 with `car\sm_init.dat` ([loading a mission](msn-mission-file.md#loading-a-mission)), and from `00014fd6`, which `Shell_ProcessMissionResults` calls outside mode 1. `Hangar_ReadFromSave` (`00028bd6`), given *n* and a path, opens the file as a `FileRStream`, calls `00028db6` *n* times and then `Hangar_Read`.
+`es2_xref.py` finds three calls to `Hangar_LoadFile`: from `Career_New` with `car\car_init.dat` ([`Career_New`](../shell/career.md#career_new)), from `MsnGen_LoadMission` in mode 0 with `car\sm_init.dat` ([loading a mission](msn-mission-file.md#loading-a-mission)), and from `00014fd6`, which `Shell_ProcessMissionResults` calls outside mode 1. `Hangar_ReadFromSave` (`00028bd6`), given *n* and a path, opens the file as a `FileRStream`, passes over *n* lists with `HercList_Skip` (`00028db6`) and then reads the next with `Hangar_Read`: a career's hangar file holds a list for each of its records ([the files](../shell/career.md#the-files)).
 
 `Hangar_Write` (`00029107`) writes the five header fields as read. When the mode word `000aad56` is not 0 it then writes the HERC count and, for each slot below the slot count that holds a HERC, the slot and the HERC (`Herc_Write`). In mode 0 it writes a count of 8 and then, for each of slots 0 to 7 that holds a HERC, the slot and the HERC, so the count it writes is 8 whatever the slots hold. `Hangar_SaveFile` (`0002909c`), given a path, writes the hangar there through a `FileRWStream`, asserting at severity 5 (`mechman.cpp` line `0x132`) when it cannot open it; a single mission's load saves it as `car\sm_play.mec` ([the squad](msn-mission-file.md#the-squad)).
 
@@ -79,7 +79,7 @@ The install's loose `CAR\SM_INIT.DAT` holds the archive's 786 bytes but for the 
 
 ## The weapon stock
 
-The stock is the object the dword `000aad62` points to, built in `inventor.cpp`: an `int16` slot count at `+0` and at `+2` a pointer to that many 6-byte stacks of words, each an `int16` count and a pointer to its head node; a node is 6 bytes, the word and a pointer to the next node.
+The stock is the object the dword `000aad62` points to, built in `inventor.cpp`; `Career_LoadCurrent` and `Career_Save` index the dwords from `000aad62` by career record, 41 of them, a stock for each ([the files](../shell/career.md#the-files)), and `es2_xref.py --decode` finds them written by `00027c4c` ([Open](#open)). A stock is an `int16` slot count at `+0` and at `+2` a pointer to that many 6-byte stacks of words, each an `int16` count and a pointer to its head node; a node is 6 bytes, the word and a pointer to the next node.
 
 ```
 int16    record count
@@ -100,7 +100,7 @@ record count x {
 
 `Inventory_Write` (`00027f88`) writes the slot count and then, for every slot, the slot and its stack through `WordStack_Write`: the layout above, every slot present and each slot's words from the head, so writing a stock and reading it back reverses each slot's words, as ES2's armory save does. `Inventory_SaveFile` (`00027f1b`) writes a stock to a `FileRWStream` on a path, asserting at severity 5 (`inventor.cpp` line `0x5f`) when it cannot open it. `Inventory_CopyThroughScratch` (`00027cb3`), given two indexes, saves the stock the dword `000aad62` + 4 × the first points to as `car\scratch.arm`, loads that file into the stock of the second, and deletes it. `Inventory_Add` (`00028311`) pushes a word onto a slot's stack and `Inventory_Take` (`0002833f`) pops one, each then calling `Inventory_TraceSlots`.
 
-`es2_xref.py` finds three calls to `Inventory_LoadFile`: `Career_New` with `car\c_armory.dat` ([starting a career](bst-battle-sets.md#starting-a-career)), `SingleMission_Start` with `car\s_armory.dat` ([starting the mission](../shell/single-mission.md#starting-the-mission)), and `Inventory_CopyThroughScratch`; and a call to `Inventory_Read` from `Career_LoadCurrent` (`00016c1e`). After a career mission `Shell_ProcessMissionResults` passes each pair (*a*, *b*) of `data\results.dat` to `Inventory_Add`, pushing *b* onto slot *a* ([after a mission](bst-battle-sets.md#after-a-mission)).
+`es2_xref.py` finds three calls to `Inventory_LoadFile`: `Career_New` with `car\c_armory.dat` ([`Career_New`](../shell/career.md#career_new)), `SingleMission_Start` with `car\s_armory.dat` ([starting the mission](../shell/single-mission.md#starting-the-mission)), and `Inventory_CopyThroughScratch`; and a call to `Inventory_Read` from `Career_LoadCurrent` (`00016c1e`). After a career mission `Shell_ProcessMissionResults` passes each pair (*a*, *b*) of `data\results.dat` to `Inventory_Add`, pushing *b* onto slot *a* ([after a mission](bst-battle-sets.md#after-a-mission)).
 
 ### The retail stock
 
@@ -117,5 +117,5 @@ Every value is 100.
 
 - **Open:** what the header words `00080896`, `00080898` and the dword `0008089c` are; what the per-mount words (5, or 0 and 1 on weapons 9 and 10), which the simulator takes as ammunition types ([the second pass](script-dat.md#the-second-pass)), and the word `+0x2c` are to the shell; and which external areas the lists at `0007ef54` group.
 - **Open:** that a stock slot is a weapon number and a value that unit's condition, and what reads the stacks to offer the units; `Career_LoadCurrent` (`00016c1e`)'s use of `Inventory_Read`.
-- **Open:** what `00028db6` reads, which `Hangar_ReadFromSave` calls once per HERC list it passes over.
+- **Open:** what `00027c4c` builds into the dwords from `000aad62`, and when.
 - **Open:** whether the install's loose `CAR\SM_INIT.DAT` or the archive's is the one `VolRStream_CtorFromPath` opens.

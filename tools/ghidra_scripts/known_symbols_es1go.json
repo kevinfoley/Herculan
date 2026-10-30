@@ -2122,7 +2122,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_ScanKeySubscriber",
-      "description": "(code), its argument removed by this function: a keyboard subscriber. A code whose low byte is 0x47, 0x48, 0x4b, 0x4d, 0x4f or 0x50 (Home, Up, Left, Right, End, Down) with bit 0x1000 set answers 2; any other code but 0x653 goes to Shell_ForwardKeyToDialog (00012bb7), and it answers 1. es2_xref finds its address loaded in 0001f442 and 0001f66f and stored at 0003eb0d and 0003ec00.",
+      "description": "(code), its argument removed by this function: a keyboard subscriber. A code whose low byte is 0x47, 0x48, 0x4b, 0x4d, 0x4f or 0x50 (Home, Up, Left, Right, End, Down) with bit 0x1000 set answers 2; any other code but 0x653 goes to Shell_ForwardKeyToDialog (00012bb7), and it answers 1. es2_xref finds its address loaded in MTEditBox_Ctor (0001f442) and MTEditBox_Dtor (0001f66f) and stored at 0003eb0d and 0003ec00.",
       "source": "Herculan/docs/es1/shell/startup.md#the-keyboard-subscribers; ES1GO decompile at 00012b69",
       "verified": {
         "bytes": "00012b69+78",
@@ -2677,7 +2677,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CareerRecord_Current",
-      "description": "(): the career record the shell works on: the single mission's record SingleMission_Record (0009b014) when the mode word Shell_Mode (000aad56) is 0, otherwise the roster's record 0009b23b + 0x1f7 x [0009b21f], with 0009b218 left in EDX. es2_xref finds 54 calls.",
+      "description": "(): the career record the shell works on: the single mission's record SingleMission_Record (0009b014) when the mode word Shell_Mode (000aad56) is 0, otherwise the roster's record 0009b23b + 0x1f7 x [0009b21f], with Career_Roster (0009b218) left in EDX. es2_xref finds 54 calls.",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#the-career-record",
       "verified": {
         "bytes": "00014ef4+52",
@@ -2692,7 +2692,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CareerRecord_SaveCurrent",
-      "description": "(): in mode 0 (the word Shell_Mode (000aad56)) SingleMission_SaveRecord (00014f54); otherwise 000168b0(0009b218, the dword 0009b21f). es2_xref finds six calls, PlayerMec_Write (0002299e)'s among them.",
+      "description": "(): in mode 0 (the word Shell_Mode (000aad56)) SingleMission_SaveRecord (00014f54); otherwise Career_Save (000168b0)(Career_Roster (0009b218), the dword 0009b21f). es2_xref finds six calls, PlayerMec_Write (0002299e)'s among them.",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-squad",
       "verified": {
         "bytes": "00014f28+44",
@@ -2842,7 +2842,7 @@
       "type": "function",
       "confidence": "high",
       "name": "PlayerMec_WritePilotWords",
-      "description": "(entry, player, stream) in stack order, callee-cleaned: writes two int16 through the stream's slot +0x18. When entry equals player: in mode 0 (the word Shell_Mode (000aad56)) Math_RandomBelow(Shell_RandomState (0009aec0), 11) and 0; otherwise the word +0x40 of the careers-log entry the roster 0009b218 holds at +1, then, after CareerRecord_SelectPilot (00015ad4)(record, its dword +0xe) on the record 0009b23b + 0x1f7 x [0009b21f], the word at that record's +0x21 + 0x25 x its word +0x12. For any other entry: PilotEntry_NameIndex (00015f50)(record, entry), the record being SingleMission_Record (0009b014) in mode 0 and 0009b23b + 0x1f7 x [0009b21f] otherwise, then entry in mode 0 or the word at that record's +0x21 + 0x25 x entry otherwise. es2_xref finds one call, from PlayerMec_WriteEntries (00022a05).",
+      "description": "(entry, player, stream) in stack order, callee-cleaned: writes two int16 through the stream's slot +0x18. When entry equals player: in mode 0 (the word Shell_Mode (000aad56)) Math_RandomBelow(Shell_RandomState (0009aec0), 11) and 0; otherwise the word +0x40 of the careers-log entry the roster Career_Roster (0009b218) holds at +1, then, after CareerRecord_SelectPilot (00015ad4)(record, its dword +0xe) on the record 0009b23b + 0x1f7 x [0009b21f], the word at that record's +0x21 + 0x25 x its word +0x12. For any other entry: PilotEntry_NameIndex (00015f50)(record, entry), the record being SingleMission_Record (0009b014) in mode 0 and 0009b23b + 0x1f7 x [0009b21f] otherwise, then entry in mode 0 or the word at that record's +0x21 + 0x25 x entry otherwise. es2_xref finds one call, from PlayerMec_WriteEntries (00022a05).",
       "source": "Herculan/docs/es1/formats/career-log-and-player-mec.md#the-player-file",
       "verified": {
         "bytes": "0001548f+510",
@@ -3157,7 +3157,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CareerRecord_FinishMission",
-      "description": "(record), callee-cleaned: takes n = CareerRecord_CountPilots (00015bfb)(record) and the share 0007fcf0 / n (unsigned); n times calls CareerRecord_NextPilot (00015b0a)(record) and stores the share at dword +0x21 of the pilot entry the word +0x12 names (record + 0x35 + 0x25 * i); then calls CareerRecord_ReplaceLostPilots (00015e0b)(record) and adds 1 to the missions played, the word +0xa. es2_xref finds one call, from Shell_ProcessMissionResults (00038eb5).",
+      "description": "(record), callee-cleaned: takes n = CareerRecord_CountPilots (00015bfb)(record) and the share Career_Salvage (0007fcf0) / n (unsigned); n times calls CareerRecord_NextPilot (00015b0a)(record) and stores the share at dword +0x21 of the pilot entry the word +0x12 names (record + 0x35 + 0x25 * i); then calls CareerRecord_ReplaceLostPilots (00015e0b)(record) and adds 1 to the missions played, the word +0xa. es2_xref finds one call, from Shell_ProcessMissionResults (00038eb5).",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#after-a-mission",
       "verified": {
         "bytes": "000160cb+109",
@@ -3202,7 +3202,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CareerRecord_ClearWords",
-      "description": "(record), callee-cleaned: zeroes the 100 int16 at +0x12d. es2_xref finds two calls, from CareerRecord_Init (000158ff) and 00016f22.",
+      "description": "(record), callee-cleaned: zeroes the 100 int16 at +0x12d. es2_xref finds two calls, from CareerRecord_Init (000158ff) and Roster_AdvanceCareer (00016f22).",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#the-career-record",
       "verified": {
         "bytes": "000161ae+46",
@@ -3242,12 +3242,27 @@
       }
     },
     {
+      "address": "000162f4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Words_RandomPermutation",
+      "description": "(n, words), its arguments removed by this function: sets the n words to -1 with memset, then for i from 0 to n - 1 draws k = Math_RandomBelow (00038774)(Shell_RandomState (0009aec0), n - i) and stores i in the (k + 1)-th word still -1: a random order of 0 to n - 1. es2_xref finds one call, from Roster_ShuffleNameGroups (00016677).",
+      "source": "Herculan/docs/es1/shell/career.md#career_new; ES1GO decompile and disassembly at 000162f4",
+      "verified": {
+        "bytes": "000162f4+184",
+        "sha1": "3891b4a54d96",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "000163ac",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "Career_New",
-      "description": "(roster, a, b) in stack order, callee-cleaned: stores at roster + 1 the pointer CareerLog_FindOrAdd (00018099)(0009b20c, a, b) returns; sets the roster's word +5 to the word 0007fcec, the words +7 and +9 to 0 and the byte +0 to 1, and the dword 0007fcf0 to 60000; calls 00016677(roster); loads car\\c_armory.dat into the stock the dword 000aad62 points to with Inventory_LoadFile (00027e02) and car\\car_init.dat with Hangar_LoadFile (00028c25); opens a FileRWStream (FileRWStream_Ctor, 0005aae4) on each of the names at the pointer's +0x42 and +0x53 through Path_ApplyAltDrive (00020989), asserting at severity 5 (Assert_Report (0004f498), career.cpp lines 0x2d1 and 0x2d8) when one does not open, and writes the roster's byte +0, word +5 and 0x18 bytes from +0xb to the first; for each of the 41 0x1f7-byte records from roster + 0x23 calls CareerRecord_Init (000158ff), and for the record the word +7 names sets its byte +0 to 1, calls 000166ed(roster), stores 0007fcf0 at its +0x129, copies its 100 words at +0x12d into the flags at 000ab244 and stores the word 0007fcf8 at its +0x1f5; writes each record and the stock (Inventory_Write (00027f88)) to the first file and the hangar (Hangar_Write (00029107)) to the second; closes both (FileRWStream_Close, 0005abc4), calls CareerRecord_SelectPilot (00015ad4)(that record, its four bytes at +0xe) and 00016fdd(roster), and destroys both streams (FileRWStream_Dtor, 0005ab24).",
+      "description": "(roster, a, b) in stack order, callee-cleaned: stores at roster + 1 the pointer CareerLog_FindOrAdd (00018099)(Career_Log (0009b20c), a, b) returns; sets the roster's word +5 to the word 0007fcec, the words +7 and +9 to 0 and the byte +0 to 1, and the dword Career_Salvage (0007fcf0) to 60000; calls Roster_ShuffleNameGroups (00016677)(roster); loads car\\c_armory.dat into the stock the dword 000aad62 points to with Inventory_LoadFile (00027e02) and car\\car_init.dat with Hangar_LoadFile (00028c25); opens a FileRWStream (FileRWStream_Ctor, 0005aae4) on each of the names at the pointer's +0x42 and +0x53 through Path_ApplyAltDrive (00020989), asserting at severity 5 (Assert_Report (0004f498), career.cpp lines 0x2d1 and 0x2d8) when one does not open, and writes the roster's byte +0, word +5 and 0x18 bytes from +0xb to the first; for each of the 41 0x1f7-byte records from roster + 0x23 calls CareerRecord_Init (000158ff), and for the record the word +7 names sets its byte +0 to 1, calls Roster_InitSquadPilots (000166ed)(roster), stores Career_Salvage (0007fcf0) at its +0x129, copies its 100 words at +0x12d into the flags at 000ab244 and stores the word 0007fcf8 at its +0x1f5; writes each record and the stock (Inventory_Write (00027f88)) to the first file and the hangar (Hangar_Write (00029107)) to the second; closes both (FileRWStream_Close, 0005abc4), calls CareerRecord_SelectPilot (00015ad4)(that record, its four bytes at +0xe) and Roster_ForEachPilotNoOp (00016fdd)(roster), and destroys both streams (FileRWStream_Dtor, 0005ab24).",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#starting-a-career",
       "verified": {
         "bytes": "000163ac+715",
@@ -3257,16 +3272,106 @@
       }
     },
     {
+      "address": "00016677",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Roster_ShuffleNameGroups",
+      "description": "(roster), its argument removed by this function: for each row r from 0 to 2 calls Words_RandomPermutation (000162f4)(4, four stack words) and stores 4r + word i at the roster's word +0xb + 8r + 2i: each squadmate's four car\\names.dat name groups, 4r to 4r + 3, in a random order. Career_New (000163ac)'s step 2.",
+      "source": "Herculan/docs/es1/shell/career.md#career_new; ES1GO decompile and disassembly at 00016677",
+      "verified": {
+        "bytes": "00016677+118",
+        "sha1": "493caadbd7f5",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000166ed",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Roster_InitSquadPilots",
+      "description": "(roster), its argument removed by this function: on the record the roster's word +7 names (roster + 0x23 + 0x1f7 x +7) sets pilot entry 0's hangar slot word (record +0x1c) to 0 and calls BarGraph_NoOpCareerCopy (0001600d)(record, 0); then on record 0 (roster + 0x37 + 0x25 i), for squadmate entries i from 1 to 3, sets the name group +0 to the roster's word +0xb + 8(i - 1), +2 to 0, +4 to 1, +6 to 0, the hangar slot +8 to i and the on-strength byte +0xa to 1.",
+      "source": "Herculan/docs/es1/shell/career.md#career_new; ES1GO decompile and disassembly at 000166ed",
+      "verified": {
+        "bytes": "000166ed+180",
+        "sha1": "a7be41cf3046",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000167a1",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Roster_SaveSlotUsed",
+      "description": "(roster), its argument removed by this function: returns in AL the byte +0 of the record numbered record 0's missions played (+0x23 + 0xa) + 1, set when the backup SAVE would write exists. es2_xref finds one call, from CareerRecordsMenu_OnMessage (0002af94)'s SAVE.",
+      "source": "Herculan/docs/es1/shell/career.md#save-and-the-overwrite-warning; ES1GO decompile and disassembly at 000167a1",
+      "verified": {
+        "bytes": "000167a1+44",
+        "sha1": "a22019a8b150",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000167cd",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Roster_SaveBackup",
+      "description": "(roster), its argument removed by this function: sets the roster's word +7 to the missions played +0xa of the record +7 names, plus 1, calls Career_Save (000168b0)(roster, the dword at +7), and sets +7 back to 0.",
+      "source": "Herculan/docs/es1/shell/career.md#save-and-the-overwrite-warning; ES1GO decompile and disassembly at 000167cd",
+      "verified": {
+        "bytes": "000167cd+74",
+        "sha1": "16eb4b4c7cfd",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00016817",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Roster_RestoreBackup",
+      "description": "(roster, n), its arguments removed by this function: sets the roster's word +7 to Roster_NthUsedRecord (00016845)(roster, n), calls Roster_ActivateRecord (00016d45)(roster), and sets +7 back to 0.",
+      "source": "Herculan/docs/es1/shell/career.md#restore; ES1GO decompile and disassembly at 00016817",
+      "verified": {
+        "bytes": "00016817+46",
+        "sha1": "1ddb746f60de",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00016845",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "Roster_NthUsedRecord",
-      "description": "(roster, n) in stack order, callee-cleaned: returns 0 when n is 0; otherwise counts the records 1 to 0x28 (roster + 0x23 + 0x1f7 * i) whose first byte is not 0 and returns the index of the n-th, or 0 when there are fewer. Career_StartMission (00016e93) stores the result in the roster's word +7; es2_xref finds seven calls to Career_StartMission, each passing the roster 0009b218 and 0.",
+      "description": "(roster, n) in stack order, callee-cleaned: returns 0 when n is 0; otherwise counts the records 1 to 0x28 (roster + 0x23 + 0x1f7 * i) whose first byte is not 0 and returns the index of the n-th, or 0 when there are fewer. Career_StartMission (00016e93) stores the result in the roster's word +7; es2_xref finds seven calls to Career_StartMission, each passing the roster Career_Roster (0009b218) and 0.",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#the-career-record",
       "verified": {
         "bytes": "00016845+107",
         "sha1": "d748f91a9189",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000168b0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Career_Save",
+      "description": "(roster, slot), its arguments removed by this function, the slot the low word of the second: returns at once while the roster's dword +1 (the careers-log entry) is 0. Writes the 100 flags at 000ab244 to file-name entry 5 (data\\mission.var, Text_GetString (00018717) on 0009afb8, Path_ApplyAltDrive (00020989)) through a FileWStream (FileWStream_Ctor 00052e2c, slot +0x18, FileWStream_Close 00052f18), with a severity-5 Assert_Report (0004f498) at career.cpp line 0x346 when it does not open; removes the career file (entry +0x42) and opens it with FileRWStream_Ctor (0005aae4), assert at line 0x350, and writes the roster's byte +0, word +5 and 0x18 bytes from +0xb (FileRWStream_Write 0005ad48); sets record 0's byte +0 to 1, word +2 to the roster's +9, dword +0x129 to Career_Salvage (0007fcf0), the 100 words +0x12d to the flags and +0x1f5 to the word 0007fcf8; with a slot not 0 copies record 0 over record slot with memmove and the stock with Inventory_CopyThroughScratch (00027cb3)(0, slot); writes the 41 records, each followed by Inventory_Write (00027f88) of the dword 000aad62 + 4n, and closes it (FileRWStream_Close 0005abc4). Then copies file-name entry 12 (car\\temp.mec) to the stack, opens the hangar file (entry +0x53) with FileRStream_Ctor (00052ab0) and the temp path with FileRWStream_Open (0005ac0c), and for each of 41 lists, for the slot's calls HercList_Skip (00028db6)(read stream) and Hangar_Write (00029107)(temp), and otherwise HercList_Copy (000292da)(temp, read stream); closes both, removes the hangar file and renames the temp path to it, asserting at line 0x382 ('Unable to rename file') when rename fails; destroys the three streams.",
+      "source": "Herculan/docs/es1/shell/career.md#saving--career_save-000168b0; ES1GO decompile and disassembly at 000168b0",
+      "verified": {
+        "bytes": "000168b0+878",
+        "sha1": "6b44adbbf716",
         "scope": "body",
         "via": "both"
       }
@@ -3277,13 +3382,28 @@
       "type": "function",
       "confidence": "high",
       "name": "Career_LoadCurrent",
-      "description": "(roster): reads the current career's file into the roster. Sets its word +7 to 0 and its dword +1 to the current careers-log entry, the log's entries 0009b20c + 100 x its current entry 0009b212; opens the entry's career file path +0x42 through Path_ApplyAltDrive (00020989) as a FileRStream FileRStream_Ctor (00052ab0), with a severity-5 assert Assert_Report (0004f498) at career.cpp line 0x38a while the stream's first dword is not 0; reads through the stream's slot +0x1c 1 byte to the roster's +0 and 2 to +5, then with FileRStream_Read (00052d2c) 0x18 bytes to +0xb and, for each of 41 records i, 0x1f7 bytes to roster + 0x23 + 0x1f7 x i followed by Inventory_Read (00027e3c)(the dword 000aad62 + 4i, stream); FileRStream_Close (00052b9c), 00016d45(roster) and FileRStream_Dtor (00052af0)(stream, 2).",
+      "description": "(roster): reads the current career's file into the roster. Sets its word +7 to 0 and its dword +1 to the current careers-log entry, the log's entries Career_Log (0009b20c) + 100 x its current entry 0009b212; opens the entry's career file path +0x42 through Path_ApplyAltDrive (00020989) as a FileRStream FileRStream_Ctor (00052ab0), with a severity-5 assert Assert_Report (0004f498) at career.cpp line 0x38a while the stream's first dword is not 0; reads through the stream's slot +0x1c 1 byte to the roster's +0 and 2 to +5, then with FileRStream_Read (00052d2c) 0x18 bytes to +0xb and, for each of 41 records i, 0x1f7 bytes to roster + 0x23 + 0x1f7 x i followed by Inventory_Read (00027e3c)(the dword 000aad62 + 4i, stream); FileRStream_Close (00052b9c), Roster_ActivateRecord (00016d45)(roster) and FileRStream_Dtor (00052af0)(stream, 2).",
       "source": "Herculan/docs/es1/shell/main-menu.md#resume; ES1GO decompile at 00016c1e",
       "verified": {
         "bytes": "00016c1e+295",
         "sha1": "0fc2469c26b0",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00016d45",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Roster_ActivateRecord",
+      "description": "(roster), its argument removed by this function: on the record r the roster's word +7 names, sets the dword Career_Salvage (0007fcf0) to r's +0x129, the word 000aad5e to r's +0xc, the roster's word +9 to r's +2, the 100 flags at 000ab244 to r's words +0x12d and the word 000aad58 to flag 0; with +7 not 0 copies r over record 0 with memmove and the stock with Inventory_CopyThroughScratch (00027cb3)(+7, 0); sets the word 0007fcf8 to r's +0x1f5; Hangar_ReadFromSave (00028bd6)(the dword at +7, Path_ApplyAltDrive (00020989) of the careers-log entry's +0x53); CareerRecord_SelectPilot (00015ad4)(r, r's +0xe); and Roster_ForEachPilotNoOp (00016fdd)(roster). es2_xref finds two calls, from Career_LoadCurrent (00016c1e) and Roster_RestoreBackup (00016817).",
+      "source": "Herculan/docs/es1/shell/career.md#making-a-record-current--roster_activaterecord-00016d45; ES1GO decompile and disassembly at 00016d45",
+      "verified": {
+        "bytes": "00016d45+334",
+        "sha1": "7d45cc5bc9db",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -3302,6 +3422,66 @@
       }
     },
     {
+      "address": "00016f22",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Roster_AdvanceCareer",
+      "description": "(roster, a), its arguments removed by this function (RET 8), its body reading no second argument: clears the roster's byte +0 and the byte +1 of the record r its word +7 names, calls Career_AdvanceCampaign (00015a5a)(r), and when that answers non-zero sets r's word +2 and the roster's word +9 to 0 and calls CareerRecord_ClearWords (000161ae)(r). es2_xref finds two calls, from AnyDisabledAlert_OnMessage (0002a581) and 0002d327.",
+      "source": "Herculan/docs/es1/shell/career.md#moving-a-career-on--roster_advancecareer-00016f22; ES1GO decompile and disassembly at 00016f22",
+      "verified": {
+        "bytes": "00016f22+142",
+        "sha1": "2b1164be8ef1",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00016fb0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "medium",
+      "name": "maybe_Roster_ReadPlayerEntry",
+      "description": "(p, stream), its arguments removed by this function: reads 2 bytes through the stream's slot +0x1c into p + 0x31, which for the roster is record 0's player entry word +0xe. es2_xref finds no branch, stored pointer or vtable slot holding it.",
+      "source": "Herculan/docs/es1/shell/career.md#the-roster; ES1GO decompile and disassembly at 00016fb0",
+      "verified": {
+        "bytes": "00016fb0+45",
+        "sha1": "197d64209c8d",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00016fdd",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Roster_ForEachPilotNoOp",
+      "description": "(roster), its argument removed by this function: calls BarGraph_NoOpCareerCopy (0001600d)(the record the roster's word +7 names, i) for i from 0 to 3, a call that does nothing.",
+      "source": "Herculan/docs/es1/shell/career.md#career_new; ES1GO decompile and disassembly at 00016fdd",
+      "verified": {
+        "bytes": "00016fdd+55",
+        "sha1": "301945ef216e",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00017014",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Roster_GetRecordWord2",
+      "description": "(roster), its argument removed by this function: returns in AX the roster's word +9, the copy of record 0's word +2 Roster_ActivateRecord (00016d45) makes. es2_xref finds no branch, stored pointer or vtable slot holding it.",
+      "source": "Herculan/docs/es1/shell/career.md#the-roster; ES1GO decompile and disassembly at 00017014",
+      "verified": {
+        "bytes": "00017014+18",
+        "sha1": "9dea891f55b4",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00017026",
       "binary": "ES1GO",
       "type": "function",
@@ -3314,6 +3494,36 @@
         "sha1": "12ef5bf4c707",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "0001705e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerStatsHotspot_Draw",
+      "description": "(rect, id), its arguments removed by this function, the handler of menu 1230's hotspot 1231: sets the render context 000ab612's alignment +0x231 to 0 and fills a copy of the rect Rect_CopyCtorCareerCopy (000175a9) with Raster_FillFrameRectColours (0004b8d8)(0x1f, 0x1f). Draws eng\\watext.bin (0009afa8, Text_GetString 00018717) lines 0xa7, 0xa9, 0xaa, 0xab, 0xac, 0xad, 0xaf, 0xae, 0xb0 and 0xa8 (NAME:, CURRENT MISSION:, TOTAL MISSIONS:, SALVAGE:, KILLS, HERCS:, FLYERS:, STRUCTURES:, MISC:, STATUS:) in the font 000aacea with HudFont_DrawString (000520d8), and in the font 000aace6 the careers-log entry's name at the roster Career_Roster (0009b218)'s +1, the +7 record's position +8 + 1, CareerRecord_Current (00014ef4)'s +0xa, the record's dword +0x129 as '%ld KG', the player entry +0xe's words +0x17, +0x1b and +0x19 as %d, the text '0', and line 0xb7 when PilotEntry_Condition (0001618d) of CareerRecord_Current's record and its +0xe is 0, else 0xb6. Points relative to the rect's (x0, y0): labels at x0 + 8 (y0 + 9 to + 45), HERCS:/FLYERS: x0 + 46, STRUCTURES:/MISC: x0 + 106, STATUS: x0 + 113; values at x0 + 36 (name), x0 + 81, x0 + 161 and x0 + 147 (status).",
+      "source": "Herculan/docs/es1/shell/career.md#the-stats; ES1GO disassembly at 0001705e",
+      "verified": {
+        "bytes": "0001705e+1355",
+        "sha1": "555ef54d374d",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000175a9",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Rect_CopyCtorCareerCopy",
+      "description": "(rect, source), its arguments removed by this function: byte for byte the code of Rect_CopyCtor (0004b398), relocated operands aside.",
+      "source": "Herculan/docs/es1/shell/career.md#where-the-object-file-starts-and-ends; ES1GO disassembly at 000175a9",
+      "verified": {
+        "bytes": "000175a9+46",
+        "sha1": "c8fa6929f8e3",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -3397,7 +3607,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CareerLog_FindOrAdd",
-      "description": "(log, word, name) in stack order, callee-cleaned: returns the careers-log entry for the name and word, adding one when none matches; an empty name becomes entry 0x16 of the text table 0009afa8 (UNTITLED). With no entries: copies the name and word into entry 0 (+0, +0x40) and CAR\\CAR_0.CAR and CAR\\CAR_0.MEC into its +0x42 and +0x53, sets the count to 1 and the byte +8 to 1, and sets the current entry +6 and the word 0007fcea to 0. Otherwise returns the first entry whose name equals the name (stricmp) and whose word +0x40 equals the word, storing its index at +6 and 0007fcea; with no match and the byte +8 clear, fills entry count the same way with CAR\\CAR_%d.CAR and CAR\\CAR_%d.MEC of its index (sprintf), adds 1 to the count, sets the byte and makes it current; with no match and the byte set, copies the name and word over the last entry, keeping its paths, and makes it current. es2_xref finds one call, from Career_New (000163ac).",
+      "description": "(log, word, name) in stack order, callee-cleaned: returns the careers-log entry for the name and word, adding one when none matches; an empty name becomes entry 0x16 of the text table 0009afa8 (UNTITLED). With no entries: copies the name and word into entry 0 (+0, +0x40) and CAR\\CAR_0.CAR and CAR\\CAR_0.MEC into its +0x42 and +0x53, sets the count to 1 and the byte +8 to 1, and sets the current entry +6 and the word Career_SelectedEntry (0007fcea) to 0. Otherwise returns the first entry whose name equals the name (stricmp) and whose word +0x40 equals the word, storing its index at +6 and Career_SelectedEntry (0007fcea); with no match and the byte +8 clear, fills entry count the same way with CAR\\CAR_%d.CAR and CAR\\CAR_%d.MEC of its index (sprintf), adds 1 to the count, sets the byte and makes it current; with no match and the byte set, copies the name and word over the last entry, keeping its paths, and makes it current. es2_xref finds one call, from Career_New (000163ac).",
       "source": "Herculan/docs/es1/formats/career-log-and-player-mec.md#adding-a-career",
       "verified": {
         "bytes": "00018099+501",
@@ -3412,7 +3622,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CareerLog_Delete",
-      "description": "(log, index) in stack order, callee-cleaned: when index is below the count, removes the entry's two files (its paths at +0x42 and +0x53), subtracts 1 from the current entry +6 when it is not 0, writes the log without the entry (CareerLog_Write) and loads it again (CareerLog_Load). es2_xref finds one call, from 0002ae96.",
+      "description": "(log, index) in stack order, callee-cleaned: when index is below the count, removes the entry's two files (its paths at +0x42 and +0x53), subtracts 1 from the current entry +6 when it is not 0, writes the log without the entry (CareerLog_Write) and loads it again (CareerLog_Load). es2_xref finds one call, from DeleteAlert_OnMessage (0002ae96).",
       "source": "Herculan/docs/es1/formats/career-log-and-player-mec.md#writing",
       "verified": {
         "bytes": "0001828e+106",
@@ -3440,15 +3650,60 @@
       "address": "0001838d",
       "binary": "ES1GO",
       "type": "function",
-      "confidence": "medium",
-      "name": "maybe_Roster_NextMissionEntry",
-      "description": "(roster): with the current record r = roster + 0x23 + 0x1f7 x the word roster +7, returns in EAX 000aa7d4 + 0x19 x (r's word +0xa, the missions played, + 1), a 25-byte entry, and r in EDX. Menu_BuildFromDlg (0003a1f7) takes it as the text of a kind-0, 1, 4 or 5 record with id 1223.",
-      "source": "Herculan/docs/es1/shell/menus.md#opening-a-menu--menu_open-0003969e; ES1GO decompile at 0001838d",
+      "confidence": "high",
+      "name": "Roster_SaveSlotText",
+      "description": "(roster): with the current record r = roster + 0x23 + 0x1f7 x the word roster +7, returns in EAX Roster_BackupLines (000aa7d4) + 0x19 x (r's word +0xa, the missions played, + 1), the backup list's 25-byte line (Roster_BackupLines) of the backup SAVE would write, and r in EDX. Menu_BuildFromDlg (0003a1f7) takes it as the text of a kind-0, 1, 4 or 5 record with id 1223, the overwrite warning 1240's second label.",
+      "source": "Herculan/docs/es1/shell/career.md#save-and-the-overwrite-warning; ES1GO decompile at 0001838d",
       "verified": {
         "bytes": "0001838d+48",
         "sha1": "c02327c152d7",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "000183bd",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Roster_BackupListLines",
+      "description": "(roster), its argument removed by this function: the lines of the backup list 1223. Allocates Roster_CountUsedRecords (00017026) + 1 pointers with Mem_New and, for each record n from 1 to 40 whose byte +0 is set, takes k as its campaign +6, replaced by the last c from 0 to 7 whose word of Career_CampaignStarts (0007ebf0) (0, 7, 7, 15, 15, 24, 24, 32) equals its missions played +0xa, and sprintf's 'CAMPAIGN %1d: MISSION %1d' (0007ede1) with word k of Career_CampaignNumbers (0007ebe0) (1, 2, 2, 3, 3, 4, 4, 5) and +0xa - word k of Career_CampaignStarts (0007ebf0) + 1 into Roster_BackupLines (000aa7d4) + 0x19n, storing its pointer; ends the array with a null pointer and returns it. es2_xref finds two calls, from Menu_ListLines (0003750d) for 1223 and CareerRecordsMenu_OnMessage (0002af94).",
+      "source": "Herculan/docs/es1/shell/career.md#the-backup-list; ES1GO decompile and disassembly at 000183bd",
+      "verified": {
+        "bytes": "000183bd+322",
+        "sha1": "9639f8e4905b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000184ff",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerLog_NameLines",
+      "description": "(log), its argument removed by this function: the lines of the career menu's list 1202. Allocates count (+4) + 1 pointers; frees each buffer of the array at CareerLog_NameBuffers (0007edfc) and the array, then allocates a new one there; for each entry i fills a new 64-byte buffer with sprintf '%s' (0007ee00) of the entry's name (+0 + 100i), stored in both arrays; ends both with a null pointer and returns the first. es2_xref finds one call, from Menu_ListLines (0003750d).",
+      "source": "Herculan/docs/es1/shell/career.md#the-list; ES1GO decompile at 000184ff",
+      "verified": {
+        "bytes": "000184ff+298",
+        "sha1": "2da1e1dd6442",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00018629",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Career_StaticInit",
+      "description": "career.cpp's static initializer, the static constructor table's entry 0009a248: builds the three words at 0009ae5c (the squad's kill totals) zeroed, through a constructor inlined with a Mem_New of 6 bytes for a null object. Its RET at 00018658 is followed by three zero bytes, the end of career.cpp.",
+      "source": "Herculan/docs/es1/shell/career.md#where-the-object-file-starts-and-ends; ES1GO disassembly at 00018629",
+      "verified": {
+        "bytes": "00018629+48",
+        "sha1": "aa60061e3bac",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -4132,7 +4387,7 @@
       "type": "function",
       "confidence": "high",
       "name": "DUIControl_Ctor",
-      "description": "(this, byte, id, rect) in stack order, callee-cleaned: as DUIControl_CtorWithKey (0001a7e5), with the key +0x1d 0 and the id at +0x17. The menu dialog's kind-2 control (0001f442) is built on it.",
+      "description": "(this, byte, id, rect) in stack order, callee-cleaned: as DUIControl_CtorWithKey (0001a7e5), with the key +0x1d 0 and the id at +0x17. The menu dialog's kind-2 control (MTEditBox_Ctor (0001f442)) is built on it.",
       "source": "ES1GO decompile at 0001a716",
       "verified": {
         "bytes": "0001a716+207",
@@ -5342,6 +5597,141 @@
       }
     },
     {
+      "address": "0001f442",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTEditBox_Ctor",
+      "description": "(this, id, rect), its arguments removed by this function: builds the 0x90-byte text box of a .DLG kind-2 record, allocated when this is 0, on DUIControl_Ctor (0001a716)(this, 0, id, rect) through the vtables 0007f2f8 and 0007f356 to MTEditBox's 0007f590. Unless Shell_DebugMode (0007fd08) is set, and while the byte 0007f118 is clear, registers Shell_ScanKeySubscriber with Keyboard_AddSubscriber for the codes at 0007e7f4 and sets the byte. Sets +0x1b to 2 (holds the input), zeroes the 13-byte text at +0x46, stores STYLES.DAT record 3 (00082654 + 0xc0) at +0x8c, the font 000aace2 at +0x3e, the alignment 0 at +0x42, the caret line at +0x2e..+0x3a (left + 3, top + 3) to (left + 3, bottom - 3), the words +0x2c, +0x88 and +0x86 0, +0x8a 1, and clears +0x1f. es2_xref finds one call, from Menu_BuildFromDlg (0003a1f7).",
+      "source": "Herculan/docs/es1/shell/career.md#the-name-box; ES1GO decompile and disassembly at 0001f442",
+      "verified": {
+        "bytes": "0001f442+517",
+        "sha1": "de86e0b40044",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001f647",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTEditBox_GetText",
+      "description": "(box), its argument removed by this function, MTEditBox's slot +0x30: returns box + 0x46, the text.",
+      "source": "Herculan/docs/es1/shell/career.md#the-name-box; ES1GO decompile at 0001f647",
+      "verified": {
+        "bytes": "0001f647+15",
+        "sha1": "1e0e9a9622e7",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001f656",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTEditBox_SetTrackPoint",
+      "description": "(box, point), its arguments removed by this function, MTEditBox's slot +0x38: stores the low word of the point's first dword, its x, at the word +0x28.",
+      "source": "Herculan/docs/es1/shell/career.md#the-name-box; ES1GO decompile at 0001f656",
+      "verified": {
+        "bytes": "0001f656+25",
+        "sha1": "8e050ae8c03b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001f66f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTEditBox_Dtor",
+      "description": "(box, flags), its arguments removed by this function, MTEditBox's slot +4: with a box, stores the vtable 0007f590; while the byte 0007f118 is set removes Shell_ScanKeySubscriber with Keyboard_RemoveSubscriber and clears the byte; stores the vtables 0007f356, 0007f2f8 and 0007f1ea in turn; and frees the box with Mem_Delete when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/shell/career.md#the-name-box; ES1GO decompile at 0001f66f",
+      "verified": {
+        "bytes": "0001f66f+201",
+        "sha1": "69a717a9fb6a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001f738",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTEditBox_Draw",
+      "description": "(box), its argument removed by this function, MTEditBox's slot +8: sets the render context 000ab612's alignment +0x231 to +0x42; CornerFrame_Draw (00044b86)(+0x8c, the rect); when the state +0x19 is 1 and Shell_BlinkOn (0007fce0) is 1, Raster_DrawLineColour (0004ba84)(0x17, the line +0x2e..+0x3a); then for each index from +0x88 to +0x8a inclusive whose text byte (+0x46) is not 0, HudFont_DrawGlyph (00052004) in the font +0x3e at (x, bottom - 3), x from left + 3 advancing by HudFont_GlyphWidth (00051f80); clears +0x1f.",
+      "source": "Herculan/docs/es1/shell/career.md#the-name-box; ES1GO disassembly at 0001f738",
+      "verified": {
+        "bytes": "0001f738+10",
+        "sha1": "5efb801143a6",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0001f85f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTEditBox_PlaceCursor",
+      "description": "(box), its argument removed by this function, MTEditBox's slot +0xc: by the x word +0x28. Left of left + 3: while +0x88 is above 0, takes 1 from +0x88 and the cursor +0x86, sets the caret +0x2e, +0x36 and +0x28 to left + 3 and +0x1f. Up to right - 3: walks the characters from +0x88 to +0x8a, a 0 byte 1 wide and any other HudFont_GlyphWidth (00051f80) of the font +0x3e, and for the one under x sets the cursor, calls MTEditBox_UpdateCaret (0001f9a0) and sets +0x1f. Right of right - 3: while the caret x is right of right - 3, adds 1 to +0x88 and calls MTEditBox_UpdateCaret when the cursor is below 13; then sets +0x1f.",
+      "source": "Herculan/docs/es1/shell/career.md#the-name-box; ES1GO decompile at 0001f85f",
+      "verified": {
+        "bytes": "0001f85f+321",
+        "sha1": "683483e7f0cb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001f9a0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTEditBox_UpdateCaret",
+      "description": "(box), its argument removed by this function: sets the caret x to left + 3 plus HudFont_GlyphWidth (00051f80) in the font +0x3e of each text character from +0x88 up to the cursor +0x86, storing it at +0x2e, +0x36 and the word +0x28.",
+      "source": "Herculan/docs/es1/shell/career.md#the-name-box; ES1GO decompile at 0001f9a0",
+      "verified": {
+        "bytes": "0001f9a0+101",
+        "sha1": "566abedcb232",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001fa19",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTEditBox_TypeChar",
+      "description": "(box, character), its arguments removed by this function, MTEditBox's slot +0x3c: for a word from 0x20 to 0x7f, with the cursor +0x86 below 12, stores its byte at +0x46 + cursor, adds 1 to the cursor and to +0x8a, and calls MTEditBox_UpdateCaret (0001f9a0); sets +0x1f in any case.",
+      "source": "Herculan/docs/es1/shell/career.md#the-name-box; ES1GO decompile and disassembly at 0001fa19",
+      "verified": {
+        "bytes": "0001fa19+101",
+        "sha1": "eae7df48e8b7",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001fa7e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTEditBox_HandleKey",
+      "description": "(box, code), its arguments removed by this function, MTEditBox's slot +0x40: returns while the state +0x19 is 2. Looks the code up among the ten of the REPNE SCASD table at 0007f5e0, cases at 0007f608, seven in bytes Ghidra left undefined from 0001fac6: 0x39 slot +0x3c with 0x20; 0x48 and 0x50 nothing; 0x4b the cursor +0x86 less 1 unless 0; 0x4d the cursor plus 1 while below +0x8a - 1; 0x0e at cursor 0 the cursor and +0x88 0 and +0x8a 1, at cursor +0x8a - 1 +0x8a and the cursor less 1 and that byte 0, else the cursor less 1 and that byte 0x20; 0x01 memset of the 13-byte text, the cursor and +0x88 0, +0x8a 1, the caret (+0x2e, +0x36, +0x28) at left + 3; 0x47 the cursor and +0x88 0, the caret at left + 3; 0x4f the cursor +0x8a - 1; 0x53 with the cursor below +0x8a - 1 the bytes after it moved down one, byte +0x8a - 1 cleared and +0x8a less 1. 0x4b, 0x4d, 0x0e and 0x4f then call MTEditBox_UpdateCaret (0001f9a0); every code sets +0x1f.",
+      "source": "Herculan/docs/es1/shell/career.md#the-name-box; ES1GO disassembly at 0001fa7e",
+      "verified": {
+        "bytes": "0001fa7e+560",
+        "sha1": "57725d4b6c93",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "0001fcb0",
       "binary": "ES1GO",
       "type": "function",
@@ -5452,7 +5842,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Keyboard_RemoveSubscriber",
-      "description": "(callback), C convention: with Keyboard_Instance (0007f63e) set, finds the highest slot of Keyboard_Subscribers (0007fb56) holding callback, decrements Keyboard_SubscriberCount (0007fb52), moves the later slots down one and, in each of the 256 dwords of Keyboard_CodeMasks (0007f752), drops that slot's bit and moves the higher bits down one, returning 1; returns 0 when no slot holds it. es2_xref finds six calls: from DUIWindow_Deactivate (0001b25b), 0001f66f, Shell_HandleMessage (0003c7d8) twice in screen 1320's case, Shell_AssertCleanupHook (00045a68) and Shell_ShutdownDevices (00046094). The code of ES1DBSIM's Keyboard_RemoveSubscriber (0006c30a), relocated operands aside.",
+      "description": "(callback), C convention: with Keyboard_Instance (0007f63e) set, finds the highest slot of Keyboard_Subscribers (0007fb56) holding callback, decrements Keyboard_SubscriberCount (0007fb52), moves the later slots down one and, in each of the 256 dwords of Keyboard_CodeMasks (0007f752), drops that slot's bit and moves the higher bits down one, returning 1; returns 0 when no slot holds it. es2_xref finds six calls: from DUIWindow_Deactivate (0001b25b), MTEditBox_Dtor (0001f66f), Shell_HandleMessage (0003c7d8) twice in screen 1320's case, Shell_AssertCleanupHook (00045a68) and Shell_ShutdownDevices (00046094). The code of ES1DBSIM's Keyboard_RemoveSubscriber (0006c30a), relocated operands aside.",
       "source": "Herculan/docs/es1/simulation/input.md#a-key--keyboard_int9handler-0007dde4-and-keyboard_dispatch-0007de20",
       "verified": {
         "bytes": "0001ff32+170",
@@ -5632,7 +6022,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_LoadData",
-      "description": "(): copies options 12 to 16 of Prefs_Options into the mission parameters' words, options 0 and 1 into the bytes 0007fcb8 and 0007fcb9, option 2 into the word Shell_RadioOption (0007fcbc), and into the word 0007fcba the word 0007fd10, or 0007fd18 with option 3 set, plus options 4, 5 and 6, over 256; loads 13 fonts through 0004b757 into the 14 dwords Shell_Fonts (000aacc6) to 000aacfa, the nm_green handle stored twice; seeds Shell_RandomState with Math_RandomSeedAndSkip (000386f4)(state, time modulo 128); loads eng\\watext.bin into 0009afa8 with Text_LoadDataFile; sets 0009b000 and 0009b004 to 0 and 0009b008 and 0009b00c to the display 000ab616's attributes 2 and 3 less 1; HercLayout_Load, HercDamageMarks_Load, LoadDamageDat_Shell, HercHotspots_Load and, unless Shell_LowMemory (0007fd09) is set, HercArt_LoadAllBanks; CareerLog_Load (00017e7f)(0009b20c) and its current entry into the word 0007fcea, 0 when negative; BattleSet_Load; and 00027c4c. es2_xref finds one call, from Shell_Main (00012ec7).",
+      "description": "(): copies options 12 to 16 of Prefs_Options into the mission parameters' words, options 0 and 1 into the bytes 0007fcb8 and 0007fcb9, option 2 into the word Shell_RadioOption (0007fcbc), and into the word 0007fcba the word 0007fd10, or 0007fd18 with option 3 set, plus options 4, 5 and 6, over 256; loads 13 fonts through 0004b757 into the 14 dwords Shell_Fonts (000aacc6) to 000aacfa, the nm_green handle stored twice; seeds Shell_RandomState with Math_RandomSeedAndSkip (000386f4)(state, time modulo 128); loads eng\\watext.bin into 0009afa8 with Text_LoadDataFile; sets 0009b000 and 0009b004 to 0 and 0009b008 and 0009b00c to the display 000ab616's attributes 2 and 3 less 1; HercLayout_Load, HercDamageMarks_Load, LoadDamageDat_Shell, HercHotspots_Load and, unless Shell_LowMemory (0007fd09) is set, HercArt_LoadAllBanks; CareerLog_Load (00017e7f)(Career_Log (0009b20c)) and its current entry into the word Career_SelectedEntry (0007fcea), 0 when negative; BattleSet_Load; and 00027c4c. es2_xref finds one call, from Shell_Main (00012ec7).",
       "source": "Herculan/docs/es1/shell/startup.md#the-shared-data; ES1GO decompile at 00020630",
       "verified": {
         "bytes": "00020630+797",
@@ -5692,7 +6082,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_FreeData",
-      "description": "(): destroys each set font of the 14 dwords at Shell_Fonts (000aacc6) and the render context 0007fcd8 when set through slot +0x1c with 3; HercLayout_Free, HercDamageMarks_Free, HercHotspots_Free and, unless Shell_LowMemory (0007fd09) is set, 00022981; CareerLog_FreeEntries (00017e59)(0009b20c), BattleSet_FreeCampaigns, 00027c8e and 00020a18. es2_xref finds one call, from Shell_Main (00012ec7), at the shutdown.",
+      "description": "(): destroys each set font of the 14 dwords at Shell_Fonts (000aacc6) and the render context 0007fcd8 when set through slot +0x1c with 3; HercLayout_Free, HercDamageMarks_Free, HercHotspots_Free and, unless Shell_LowMemory (0007fd09) is set, 00022981; CareerLog_FreeEntries (00017e59)(Career_Log (0009b20c)), BattleSet_FreeCampaigns, 00027c8e and 00020a18. es2_xref finds one call, from Shell_Main (00012ec7), at the shutdown.",
       "source": "Herculan/docs/es1/shell/startup.md#the-shutdown; ES1GO decompile at 00020ae3",
       "verified": {
         "bytes": "00020ae3+133",
@@ -6952,7 +7342,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Hangar_ReadFromSave",
-      "description": "(n, path) in stack order, callee-cleaned: opens path with FileRStream_Ctor (00052ab0), calls 00028db6(stream) n times, reads the hangar with Hangar_Read (00028c50) and destroys the stream with FileRStream_Dtor (00052af0).",
+      "description": "(n, path) in stack order, callee-cleaned: opens path with FileRStream_Ctor (00052ab0), calls HercList_Skip (00028db6)(stream) n times, reads the hangar with Hangar_Read (00028c50) and destroys the stream with FileRStream_Dtor (00052af0).",
       "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists",
       "verified": {
         "bytes": "00028bd6+79",
@@ -6987,6 +7377,21 @@
       "verified": {
         "bytes": "00028c50+358",
         "sha1": "5cea3facf5cd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00028db6",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercList_Skip",
+      "description": "(stream), its argument removed by this function: passes over one hangar list in a read stream. Builds a stack HERC with Herc_Ctor (00022f5e)(-1), moves the stream 12 bytes on (its slot +8 position, slot +0xc set), reads the HERC count (slot +0x1c, 2 bytes), and for each HERC moves 2 bytes on and reads a HERC record with Herc_ReadFromStream (0002352f) into the stack HERC; then 000232a4(HERC, 2).",
+      "source": "Herculan/docs/es1/shell/career.md#saving--career_save-000168b0; ES1GO decompile at 00028db6",
+      "verified": {
+        "bytes": "00028db6+154",
+        "sha1": "8b84e6d61798",
         "scope": "body",
         "via": "decompile"
       }
@@ -7032,6 +7437,21 @@
       "verified": {
         "bytes": "00029107+467",
         "sha1": "132f8726ae0b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000292da",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercList_Copy",
+      "description": "(dest, src), its arguments removed by this function: copies one hangar list from the stream src to the stream dest. Builds a stack HERC with Herc_Ctor (00022f5e)(-1); reads four words, a dword and the HERC count through src's slot +0x1c, writing each through dest's slot +0x18; for each HERC copies its slot word the same way, reads the HERC with Herc_ReadFromStream (0002352f) from src and writes it with Herc_Write (000233ce) to dest; then 000232a4(HERC, 2).",
+      "source": "Herculan/docs/es1/shell/career.md#saving--career_save-000168b0; ES1GO decompile at 000292da",
+      "verified": {
+        "bytes": "000292da+510",
+        "sha1": "b67040a023ca",
         "scope": "body",
         "via": "decompile"
       }
@@ -7192,7 +7612,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_PrepareMission",
-      "description": "(): Shell_DeleteMissionMap (0002a4ec); Mission_WriteObjectives (00018824)(000aad2a, the mission's .eng path); maybe_MouseEventQueue_Start (00010559); clears the byte 0007e5df; Shell_MissionMap (000809a4) = 000094d9(0, 000a02d4). es2_xref finds eight calls, from MainMenu_OnMessage (0002a70a), MissionMenu_OnMessage (0002b375), AnyDisabledAlert_OnMessage (0002a581), 0002aa0e, 0002aeec, 0002af94 and 0002d327.",
+      "description": "(): Shell_DeleteMissionMap (0002a4ec); Mission_WriteObjectives (00018824)(000aad2a, the mission's .eng path); maybe_MouseEventQueue_Start (00010559); clears the byte 0007e5df; Shell_MissionMap (000809a4) = 000094d9(0, 000a02d4). es2_xref finds eight calls, from MainMenu_OnMessage (0002a70a), MissionMenu_OnMessage (0002b375), AnyDisabledAlert_OnMessage (0002a581), CareerMenu_OnMessage (0002aa0e), NewCareerAlert_OnMessage (0002aeec), CareerRecordsMenu_OnMessage (0002af94) and 0002d327.",
       "source": "Herculan/docs/es1/shell/main-menu.md#the-buttons; ES1GO decompile and disassembly at 0002a523",
       "verified": {
         "bytes": "0002a523+49",
@@ -7222,7 +7642,7 @@
       "type": "function",
       "confidence": "high",
       "name": "AnyDisabledAlert_OnMessage",
-      "description": "(menu, message) in stack order, its arguments removed by this function: the handler of AnyDisabledAlert (00081de8), screen 7771: for the message's target +6 1499 sets Shell_ReturnScreen (0007fce8) to 1200 and the current career record's (0009b23b + 0x1f7 x the word 0009b21f) word +4 to 1700; calls 00016f22(0009b218, the dword 000aad58), Career_StartMission (00016e93)(0009b218, 0), 000168b0(0009b218, the dword at 0009b21f) and Shell_PrepareMission (0002a523); and when the record's word +8 is 0, MessageBox_SetKind (00037eac)(Shell_MessageBox (0009b010), 5) and the target 1710.",
+      "description": "(menu, message) in stack order, its arguments removed by this function: the handler of AnyDisabledAlert (00081de8), screen 7771: for the message's target +6 1499 sets Shell_ReturnScreen (0007fce8) to 1200 and the current career record's (0009b23b + 0x1f7 x the word 0009b21f) word +4 to 1700; calls Roster_AdvanceCareer (00016f22)(Career_Roster (0009b218), the dword 000aad58), Career_StartMission (00016e93)(Career_Roster (0009b218), 0), Career_Save (000168b0)(Career_Roster (0009b218), the dword at 0009b21f) and Shell_PrepareMission (0002a523); and when the record's word +8 is 0, MessageBox_SetKind (00037eac)(Shell_MessageBox (0009b010), 5) and the target 1710.",
       "source": "Herculan/docs/es1/shell/main-menu.md#the-return-screen; ES1GO decompile and disassembly at 0002a581",
       "verified": {
         "bytes": "0002a581+207",
@@ -7267,7 +7687,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MainMenu_OnMessage",
-      "description": "(menu, message) in stack order, its arguments removed by this function: the handler of the main menu, dlg\\menu1000.dlg, slot +8 of MainMenu's vtable (00081bf4). By the message's target +6, through the REPNE SCASD table of six ids at 000809b8 and their cases at 000809d0, four of them (0002a963-0002a9a5) in bytes Ghidra left undefined: 1499, INSTANT ACTION, sets the mode word Shell_Mode (000aad56) to 0, Shell_ReturnScreen (0007fce8) to 1000 and Mission_Kind (000aad5a) to -1, calls SingleMission_Start (00036807) and Shell_PrepareMission (0002a523), formats anm\\esiege3.anm into 000aacfe with sprintf (0004e1dc) and sets the byte 0007fcd7 to 1. 1700, RESUME, sets the mode to 1, Shell_ReturnScreen to 1000 and Mission_Kind (000aad5a) to -1; then, on the current career record 0009b23b + 0x1f7 x the word 0009b21f, while the byte Career_Loaded (000809aa) is clear: Career_LoadCurrent (00016c1e)(0009b218); when Career_PeekNextCampaign (00015aa5)(record) gives -1 or 'c', Shell_ReturnScreen 1000 and the target 1260, and it returns; otherwise the target becomes the record's word +4 and, unless that is 1710, while PilotEntry_Condition (0001618d)(record, its +0xe) is not 0, Career_StartMission (00016e93)(0009b218, 0); 000809b4 becomes Roster_CountUsedRecords (00017026)(0009b218) - 1 and Career_Loaded is set. Then with the pilot's condition 0, Shell_ReturnScreen 1000 and the target 1250; otherwise the target becomes the record's +4, Shell_PrepareMission runs unless it is 1710, the target becomes 5555 when it is 1710 and the record's word +0xa8 is not -1, and anm\\esiege3.anm goes into 000aacfe with 0007fcd7 1. 1100, SINGLE MISSION, sets the mode to 0 and Shell_ReturnScreen to 1100; 1200, CAREER, the mode to 1 and Shell_ReturnScreen to 1200; 1300, OPTIONS, Shell_ReturnScreen to 1000; 1003, EXIT TO DOS, sets the word Shell_ExitCode (0007fcac) to 0 and the byte Shell_QuitFlag (0007fd05) to 1.",
+      "description": "(menu, message) in stack order, its arguments removed by this function: the handler of the main menu, dlg\\menu1000.dlg, slot +8 of MainMenu's vtable (00081bf4). By the message's target +6, through the REPNE SCASD table of six ids at 000809b8 and their cases at 000809d0, four of them (0002a963-0002a9a5) in bytes Ghidra left undefined: 1499, INSTANT ACTION, sets the mode word Shell_Mode (000aad56) to 0, Shell_ReturnScreen (0007fce8) to 1000 and Mission_Kind (000aad5a) to -1, calls SingleMission_Start (00036807) and Shell_PrepareMission (0002a523), formats anm\\esiege3.anm into 000aacfe with sprintf (0004e1dc) and sets the byte 0007fcd7 to 1. 1700, RESUME, sets the mode to 1, Shell_ReturnScreen to 1000 and Mission_Kind (000aad5a) to -1; then, on the current career record 0009b23b + 0x1f7 x the word 0009b21f, while the byte Career_Loaded (000809aa) is clear: Career_LoadCurrent (00016c1e)(Career_Roster (0009b218)); when Career_PeekNextCampaign (00015aa5)(record) gives -1 or 'c', Shell_ReturnScreen 1000 and the target 1260, and it returns; otherwise the target becomes the record's word +4 and, unless that is 1710, while PilotEntry_Condition (0001618d)(record, its +0xe) is not 0, Career_StartMission (00016e93)(Career_Roster (0009b218), 0); Career_BackupLine (000809b4) becomes Roster_CountUsedRecords (00017026)(Career_Roster (0009b218)) - 1 and Career_Loaded is set. Then with the pilot's condition 0, Shell_ReturnScreen 1000 and the target 1250; otherwise the target becomes the record's +4, Shell_PrepareMission runs unless it is 1710, the target becomes 5555 when it is 1710 and the record's word +0xa8 is not -1, and anm\\esiege3.anm goes into 000aacfe with 0007fcd7 1. 1100, SINGLE MISSION, sets the mode to 0 and Shell_ReturnScreen to 1100; 1200, CAREER, the mode to 1 and Shell_ReturnScreen to 1200; 1300, OPTIONS, Shell_ReturnScreen to 1000; 1003, EXIT TO DOS, sets the word Shell_ExitCode (0007fcac) to 0 and the byte Shell_QuitFlag (0007fd05) to 1.",
       "source": "Herculan/docs/es1/shell/main-menu.md#the-buttons; ES1GO disassembly at 0002a70a",
       "verified": {
         "bytes": "0002a70a+675",
@@ -7282,13 +7702,103 @@
       "type": "function",
       "confidence": "high",
       "name": "Disk_HasFreeBytes",
-      "description": "(bytes): takes the drive letter Path_ApplyAltDrive (00020989) puts before the empty path 000809e8, upper-cased, or with none the current drive from dos_getdrive (0005d928); returns 1 when bytes is at most dos_getdiskfreespace (0005d538) of that drive, else 0. es2_xref finds one call, from 0002aa0e.",
+      "description": "(bytes): takes the drive letter Path_ApplyAltDrive (00020989) puts before the empty path 000809e8, upper-cased, or with none the current drive from dos_getdrive (0005d928); returns 1 when bytes is at most dos_getdiskfreespace (0005d538) of that drive, else 0. es2_xref finds one call, from CareerMenu_OnMessage (0002aa0e).",
       "source": "Herculan/docs/es1/shell/main-menu.md#where-the-object-files-start-and-end; ES1GO decompile at 0002a9ad",
       "verified": {
         "bytes": "0002a9ad+97",
         "sha1": "06b5a5f3824a",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0002aa0e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerMenu_OnMessage",
+      "description": "(menu, message), its arguments removed by this function: the career menu's handler, slot +8 of CareerMenu's vtable 00081c12, screen 1200. Looks the message's target +6 up among the seven ids of the REPNE SCASD table 000809ec, cases at 00080a08, five in bytes Ghidra left undefined from 0002acd3. 1210: target 6666 when Disk_HasFreeBytes (0002a9ad)(60000) answers 0. 1700: when the list 1202's selected line (slot +0x2c) differs from the log Career_Log (0009b20c)'s current entry +6 or Career_Loaded (000809aa) is clear, makes it the current entry, Career_LoadCurrent (00016c1e)(Career_Roster (0009b218)); Career_PeekNextCampaign (00015aa5) -1 or 'c' gives Shell_ReturnScreen 1000 and target 1260 and ends; otherwise the target is the record's +4 and, unless 0x6ae, Career_StartMission (00016e93)(roster, 0) while PilotEntry_Condition (0001618d) is not 0; Career_BackupLine (000809b4) = Roster_CountUsedRecords (00017026) - 1, Career_Loaded set. Then a condition of 0 gives target 1250 and Shell_ReturnScreen 1200; otherwise target +4, Shell_PrepareMission (0002a523) unless 0x6ae, target 5555 when 0x6ae and the record's +0xa8 is not -1, and anm\\esiege3.anm sprintf'd into 000aacfe with the byte 0007fcd7 1. 1220 and 1230: the same test and load, Career_StartMission whenever the condition is not 0, Career_BackupLine (000809b4) and Career_Loaded, no target change. 1201: target 1270. 101 and 102: the list's slot +0x1c or +0x20. Every message then stores the list's selected line in the word Career_SelectedEntry (0007fcea).",
+      "source": "Herculan/docs/es1/shell/career.md#the-buttons; ES1GO disassembly at 0002aa0e",
+      "verified": {
+        "bytes": "0002aa0e+1160",
+        "sha1": "6ea7f83667ae",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0002ae96",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DeleteAlert_OnMessage",
+      "description": "(menu, message), its arguments removed by this function: the handler of screen 1270, DeleteAlert (vtable 00081f1a). For a target +6 of 100: CareerLog_Delete (0001828e)(Career_Log (0009b20c), the dword Career_SelectedEntry (0007fcea), its low word the career menu's selected line), the word Career_SelectedEntry (0007fcea) set to the log's current entry +6 (0009b212), Career_Loaded (000809aa) cleared, and the target set to 1200.",
+      "source": "Herculan/docs/es1/shell/career.md#deleting-a-career; ES1GO decompile and disassembly at 0002ae96",
+      "verified": {
+        "bytes": "0002ae96+86",
+        "sha1": "959c46f1ae23",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002aeec",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "NewCareerAlert_OnMessage",
+      "description": "(menu, message), its arguments removed by this function: the handler of screen 1210, NewCareerAlert (vtable 00081e6a). For a target +6 of 100: the text of control 103 (DUIWindow_FindEnabledControlById (0001bda4), slot +0x30), Career_New (000163ac)(Career_Roster (0009b218), 0, text), Career_StartMission (00016e93)(Career_Roster (0009b218), 0), Shell_PrepareMission (0002a523), the target set to 1490, anm\\esiege3.anm sprintf'd into 000aacfe with the byte 0007fcd7 1, and MessageBox_SetKind (00037eac)(Shell_MessageBox (0009b010), 2).",
+      "source": "Herculan/docs/es1/shell/career.md#starting-a-career; ES1GO decompile and disassembly at 0002aeec",
+      "verified": {
+        "bytes": "0002aeec+168",
+        "sha1": "eaf7f290c45c",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002af94",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerRecordsMenu_OnMessage",
+      "description": "(menu, message), its arguments removed by this function: the handler of screen 1220, CareerRecordsMenu (vtable 00081e90). Looks the target +6 up among the six ids of the REPNE SCASD table 00080a24, cases at 00080a3c in bytes Ghidra left undefined from 0002afba, each on the list 1223 found with DUIWindow_FindEnabledControlById (0001bda4). 101 and 102: the list's slot +0x1c or +0x20. 1221: target 1240 when Roster_SaveSlotUsed (000167a1)(Career_Roster (0009b218)) answers non-zero; otherwise Roster_SaveBackup (000167cd), the list's slot +0x44 with Roster_BackupListLines (000183bd)(roster) and slot +0x24 with Roster_CountUsedRecords (00017026) - 1. 1222: Roster_RestoreBackup (00016817)(roster, selected + 1), the word Career_BackupLine (000809b4) the selected line, the target the record's +4; with PilotEntry_Condition (0001618d) 0 the target 1250 and Shell_ReturnScreen 1220; otherwise, unless 0x6ae, Career_StartMission (00016e93)(roster, 0) and Shell_PrepareMission (0002a523), then Career_Save (000168b0)(roster, the dword at +7) and anm\\esiege3.anm into 000aacfe with 0007fcd7 1. 1230: the roster's word +7 Roster_NthUsedRecord (00016845)(roster, selected + 1), Career_BackupLine (000809b4) the selected line. 1200: Shell_ReturnScreen 1200.",
+      "source": "Herculan/docs/es1/shell/career.md#backups; ES1GO disassembly at 0002af94",
+      "verified": {
+        "bytes": "0002af94+824",
+        "sha1": "9a3765bc5aa6",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0002b2cc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerStatsAlert_OnMessage",
+      "description": "(menu, message), its arguments removed by this function: the handler of screen 1230, CareerStatsAlert (vtable 00081eb4). For a target +6 of 99 sets the roster Career_Roster (0009b218)'s word +7 to Roster_NthUsedRecord (00016845)(roster, 0).",
+      "source": "Herculan/docs/es1/shell/career.md#the-stats; ES1GO decompile and disassembly at 0002b2cc",
+      "verified": {
+        "bytes": "0002b2cc+62",
+        "sha1": "d8fb679f716a",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002b30a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "SaveWarningAlert_OnMessage",
+      "description": "(menu, message), its arguments removed by this function: the handler of screen 1240, SaveWarningAlert (vtable 00081ed8). A target +6 of 100 calls Roster_SaveBackup (000167cd)(Career_Roster (0009b218)) and becomes 1220; 99 becomes 1220.",
+      "source": "Herculan/docs/es1/shell/career.md#save-and-the-overwrite-warning; ES1GO decompile and disassembly at 0002b30a",
+      "verified": {
+        "bytes": "0002b30a+66",
+        "sha1": "9d8eba079e2f",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -7492,7 +8002,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WarMapMenu_OnMessage",
-      "description": "(menu, message) in stack order, its arguments removed by this function: slot +8 of WarMapMenu's vtable (00080bc6), the war map, screens 1500 and 1501. By the message's target +6 among the twelve ids of the REPNE SCASD table at 00080bdc, with cases at 00080c0c in bytes Ghidra left undefined but for 108's and 109's, and nothing for any other id: 100 becomes 3333 when CareerRecord_PlayerHasNoHerc (000161dc)(CareerRecord_Current (00014ef4)) answers non-zero, else 3000 when CareerRecord_AnyPilotUnarmed (0001620d)(CareerRecord_Current) does, else PlayerMec_Write (0002299e), 9999, Shell_DeleteMissionMap (0002a4ec) and the byte 000809a8 cleared; 99 in Shell_Mode (000aad56) 1 clears the current career record's byte +1 (0009b23b + 0x1f7 x the roster 0009b218's word +7), sets its word +4 to 1500, calls 000168b0(0009b218, the roster's word +7) and becomes 1200, in any other mode becomes 1100, then sprintf(000aacfe, the string 00080994, anm\\esiege2.anm), the byte 0007fcd7 set to 2, Shell_DeleteMissionMap and 000809a8 cleared; 1800 becomes 1820 while the byte Shell_LowMemory (0007fd09) is set; 1700 calls 0000a9c8(Shell_MissionMap (000809a4)) with no test that it is set and in mode 1 sets the record's byte +1 to 1; 101 calls Dialog_PrevPage (00018df0)(Shell_Dialog (0009afc8)) and subtracts 1 from WarMap_BriefingPage (000809b2); 102 calls Dialog_NextPage (00018e18)(Shell_Dialog) and adds 1 to it; 108, 109, 1503, 1504, 1505 and 1506 call, while Shell_MissionMap is set, slot +8, +0xc, +0x10, +0x14, +0x18 or +0x1c of the table at the map's +0x4a with the map, then set 000809a8 to 3 and the byte +0 of the hotspot 1502, at the window +6's +0x19f + 0x38 x DUIWindow_FindHotspotById (0001be6f)(window, 1502).",
+      "description": "(menu, message) in stack order, its arguments removed by this function: slot +8 of WarMapMenu's vtable (00080bc6), the war map, screens 1500 and 1501. By the message's target +6 among the twelve ids of the REPNE SCASD table at 00080bdc, with cases at 00080c0c in bytes Ghidra left undefined but for 108's and 109's, and nothing for any other id: 100 becomes 3333 when CareerRecord_PlayerHasNoHerc (000161dc)(CareerRecord_Current (00014ef4)) answers non-zero, else 3000 when CareerRecord_AnyPilotUnarmed (0001620d)(CareerRecord_Current) does, else PlayerMec_Write (0002299e), 9999, Shell_DeleteMissionMap (0002a4ec) and the byte 000809a8 cleared; 99 in Shell_Mode (000aad56) 1 clears the current career record's byte +1 (0009b23b + 0x1f7 x the roster Career_Roster (0009b218)'s word +7), sets its word +4 to 1500, calls Career_Save (000168b0)(Career_Roster (0009b218), the roster's word +7) and becomes 1200, in any other mode becomes 1100, then sprintf(000aacfe, the string 00080994, anm\\esiege2.anm), the byte 0007fcd7 set to 2, Shell_DeleteMissionMap and 000809a8 cleared; 1800 becomes 1820 while the byte Shell_LowMemory (0007fd09) is set; 1700 calls 0000a9c8(Shell_MissionMap (000809a4)) with no test that it is set and in mode 1 sets the record's byte +1 to 1; 101 calls Dialog_PrevPage (00018df0)(Shell_Dialog (0009afc8)) and subtracts 1 from WarMap_BriefingPage (000809b2); 102 calls Dialog_NextPage (00018e18)(Shell_Dialog) and adds 1 to it; 108, 109, 1503, 1504, 1505 and 1506 call, while Shell_MissionMap is set, slot +8, +0xc, +0x10, +0x14, +0x18 or +0x1c of the table at the map's +0x4a with the map, then set 000809a8 to 3 and the byte +0 of the hotspot 1502, at the window +6's +0x19f + 0x38 x DUIWindow_FindHotspotById (0001be6f)(window, 1502).",
       "source": "Herculan/docs/es1/shell/war-map.md#the-buttons; ES1GO decompile and disassembly at 0002c057",
       "verified": {
         "bytes": "0002c057+971",
@@ -7537,7 +8047,7 @@
       "type": "function",
       "confidence": "high",
       "name": "DebriefingMenu_OnMessage",
-      "description": "(menu, message), its arguments removed by this function: the debriefing's handler, slot +8 of DebriefingMenu's vtable 00080c4e, for screens 1510 and 1520. Looks the message's target +6 up among the five ids of the REPNE SCASD table 00080c64, cases at 00080c78, three of them in bytes Ghidra left undefined from 0002c67f: 101 Dialog_PrevPage (00018df0)(Shell_Dialog, 0009afc8); 102 Dialog_NextPage (00018e18)(Shell_Dialog); 1000 and 1100 set Shell_ReturnScreen (0007fce8) to the id, sprintf anm\\esiege2.anm (00080994) into 000aacfe and set the byte 0007fcd7 to 2; 1710 makes the target 5555 when the current career record's word +0xa8 is not -1 (the roster 0009b218's record 0009b23b + 0x1f7 times its word +7) and sets Shell_ReturnScreen to 1200. Any other id is left as it is.",
+      "description": "(menu, message), its arguments removed by this function: the debriefing's handler, slot +8 of DebriefingMenu's vtable 00080c4e, for screens 1510 and 1520. Looks the message's target +6 up among the five ids of the REPNE SCASD table 00080c64, cases at 00080c78, three of them in bytes Ghidra left undefined from 0002c67f: 101 Dialog_PrevPage (00018df0)(Shell_Dialog, 0009afc8); 102 Dialog_NextPage (00018e18)(Shell_Dialog); 1000 and 1100 set Shell_ReturnScreen (0007fce8) to the id, sprintf anm\\esiege2.anm (00080994) into 000aacfe and set the byte 0007fcd7 to 2; 1710 makes the target 5555 when the current career record's word +0xa8 is not -1 (the roster Career_Roster (0009b218)'s record 0009b23b + 0x1f7 times its word +7) and sets Shell_ReturnScreen to 1200. Any other id is left as it is.",
       "source": "Herculan/docs/es1/shell/debriefing.md#the-buttons-and-keys; ES1GO decompile and disassembly at 0002c638",
       "verified": {
         "bytes": "0002c638+226",
@@ -8227,7 +8737,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Menu_ListLines",
-      "description": "(id): the lines of a kind-15 list box. By the id, through the REPNE SCASD table of 28 ids at 000812f4 and their cases at 00081364 in bytes Ghidra left undefined: 1002, the main menu's list, returns CareerLog_CurrentNameArray (000182f8)(0009b20c); an id not in the table returns WaText_LinesFromList (000373fa)(000811a4). 1101, the SINGLE MISSION menu's list (00081364's case at 000376f5), returns the same of the word list 00081264, eng\\watext.bin lines 0x23 to 0x29; 1116, 1117, 1118, 1119 and 1120, the MISSION PARAMS menu's lists, of 000811c4, 000811cc, 00081244, 000811d4 and 000811dc. The other 21 cases are not read here.",
+      "description": "(id): the lines of a kind-15 list box. By the id, through the REPNE SCASD table of 28 ids at 000812f4 and their cases at 00081364 in bytes Ghidra left undefined: 1002, the main menu's list, returns CareerLog_CurrentNameArray (000182f8)(Career_Log (0009b20c)); an id not in the table returns WaText_LinesFromList (000373fa)(000811a4). 1101, the SINGLE MISSION menu's list (00081364's case at 000376f5), returns the same of the word list 00081264, eng\\watext.bin lines 0x23 to 0x29; 1116, 1117, 1118, 1119 and 1120, the MISSION PARAMS menu's lists, of 000811c4, 000811cc, 00081244, 000811d4 and 000811dc. The other 21 cases are not read here.",
       "source": "Herculan/docs/es1/shell/main-menu.md#the-list; read in part"
     },
     {
@@ -8485,7 +8995,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_ProcessMissionResults",
-      "description": "(), C convention: in mode 1 (Shell_Mode (000aad56)) calls Career_LoadCurrent (00016c1e)(0009b218), otherwise SingleMission_RestoreRecord (00014fd6)(). Opens data\\results.dat (filename table entry 7, Path_ApplyAltDrive, FileRStream; severity-5 assert at shell.cpp line 199) and reads a word to 000aad58, a dword to 0007fcf4, a word count to 000817cc and that many pairs of words (a, b), each passed in mode 1 to Inventory_Add (00028311)(000aad62, &b, a); calls CareerRecord_ReadPilotResults (0001568d)(stream). Reads data\\mission.var (entry 5, FileRWStream; assert at line 0xd7) whole into the 100 flags at 000ab244 and sets flag 0 to 000aad58. In mode 1 it then calls Shell_StockItemsFromFlags (00038e48)(), adds 0007fcf4 to 0007fcf0, calls 00028375(000aad62), CareerRecord_FinishMission (000160cb) and Tech_Unlock (00001f78)(record + 0xa8, record word +0xa) on the record 0009b23b + 0x1f7 * [0009b21f], calls 00029e01() and sets the record's word +4 to 0x6ae; otherwise it calls CareerRecord_CountLostPilots (00015db7)(CareerRecord_Current (00014ef4)()). es2_xref finds one call, from Shell_OpenFirstScreen (0003ba47).",
+      "description": "(), C convention: in mode 1 (Shell_Mode (000aad56)) calls Career_LoadCurrent (00016c1e)(Career_Roster (0009b218)), otherwise SingleMission_RestoreRecord (00014fd6)(). Opens data\\results.dat (filename table entry 7, Path_ApplyAltDrive, FileRStream; severity-5 assert at shell.cpp line 199) and reads a word to 000aad58, a dword to 0007fcf4, a word count to 000817cc and that many pairs of words (a, b), each passed in mode 1 to Inventory_Add (00028311)(000aad62, &b, a); calls CareerRecord_ReadPilotResults (0001568d)(stream). Reads data\\mission.var (entry 5, FileRWStream; assert at line 0xd7) whole into the 100 flags at 000ab244 and sets flag 0 to 000aad58. In mode 1 it then calls Shell_StockItemsFromFlags (00038e48)(), adds 0007fcf4 to Career_Salvage (0007fcf0), calls 00028375(000aad62), CareerRecord_FinishMission (000160cb) and Tech_Unlock (00001f78)(record + 0xa8, record word +0xa) on the record 0009b23b + 0x1f7 * [0009b21f], calls 00029e01() and sets the record's word +4 to 0x6ae; otherwise it calls CareerRecord_CountLostPilots (00015db7)(CareerRecord_Current (00014ef4)()). es2_xref finds one call, from Shell_OpenFirstScreen (0003ba47).",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#after-a-mission",
       "verified": {
         "bytes": "00038eb5+729",
@@ -8620,7 +9130,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Menu_BuildFromDlg",
-      "description": "(menu, number) in stack order, callee-cleaned: builds shell menu number's window and controls from dlg\\menu<number>.dlg, their text from eng\\menu<number>.bin (TextTable_Ctor; VolRStream_CtorFromPath, and Text_LoadDataFile when it opens). Reads the int16 count through the stream's slot +0x1c, then per record four int16 rect words (VolRStream_Read) into the low halves of zeroed dwords, the bytes kind, style and key, and the int16 id. Record i's text is line i (Text_GetString), taken before the switch for kinds 0, 1, 4 and 5 unless the id is one of the five at 0008196c, which jump through the table beside them (1211 to the next record). By kind: 0 the window at menu +6, MTWindow_Ctor (00036874)(0, id, text, rect) for style 0 and DUIWindow_Ctor (0001abcf)(0, rect) for style 1, the rect copied to menu +0x12 for any style; 1, 4 and 5 the window's vtable +0x4e9 slot +4 with mode 0, 1 or 2, width right - left, the point (left, top), the text's length + 1 and the text, menu 4444's kind-1 text holding '#' first passed to 0002a1aa; 2 0001f442(0, id, rect); 3 MTBmpButton_Ctor (0001d47d) for style 1 (no text when the key is non-zero) and MTButton_Ctor (0001cde8) otherwise, menu 1300's id 100 taking its text from the four values at 000819e0 on the word Shell_ReturnScreen (0007fce8); 14 each of the 17 ids at 00081b08 DUIWindow_AddHotspot (0001b2de)(window, a, id, its handler, rect), 1612 to 1614 with maybe_PilotPortraitHotspot_Draw (00017a19) and 1502 with a = 000a02d4; 15 MTStrListBox_Ctor (0001e11a)(0, 0x100, 0, 0, a word, style, id, Menu_ListLines (0003750d)(id), rect), the word set for the 23 ids at 00081a00; 16 0001eaef(0, 0x100, 0, a word, id, 00037827(id), rect), the word -1 or set for the ten ids at 00081ab8; 17 0001eff6(0, 0x13, 0, 0xffff, id, Menu_OpenControlTtms (00037996)(id), rect); 18 0004c83a(rect) for style 1; other kinds nothing. Kinds 2, 3, 15, 16 and 17 add the control with DUIWindow_AddControl (0001b207). Closes and destroys both streams (VolRStream_Close, VolRStream_Dtor) and the table (TextTable_Dtor). es2_xref finds one call, from Menu_Open (0003969e).",
+      "description": "(menu, number) in stack order, callee-cleaned: builds shell menu number's window and controls from dlg\\menu<number>.dlg, their text from eng\\menu<number>.bin (TextTable_Ctor; VolRStream_CtorFromPath, and Text_LoadDataFile when it opens). Reads the int16 count through the stream's slot +0x1c, then per record four int16 rect words (VolRStream_Read) into the low halves of zeroed dwords, the bytes kind, style and key, and the int16 id. Record i's text is line i (Text_GetString), taken before the switch for kinds 0, 1, 4 and 5 unless the id is one of the five at 0008196c, which jump through the table beside them (1211 to the next record). By kind: 0 the window at menu +6, MTWindow_Ctor (00036874)(0, id, text, rect) for style 0 and DUIWindow_Ctor (0001abcf)(0, rect) for style 1, the rect copied to menu +0x12 for any style; 1, 4 and 5 the window's vtable +0x4e9 slot +4 with mode 0, 1 or 2, width right - left, the point (left, top), the text's length + 1 and the text, menu 4444's kind-1 text holding '#' first passed to 0002a1aa; 2 MTEditBox_Ctor (0001f442)(0, id, rect); 3 MTBmpButton_Ctor (0001d47d) for style 1 (no text when the key is non-zero) and MTButton_Ctor (0001cde8) otherwise, menu 1300's id 100 taking its text from the four values at 000819e0 on the word Shell_ReturnScreen (0007fce8); 14 each of the 17 ids at 00081b08 DUIWindow_AddHotspot (0001b2de)(window, a, id, its handler, rect), 1612 to 1614 with maybe_PilotPortraitHotspot_Draw (00017a19) and 1502 with a = 000a02d4; 15 MTStrListBox_Ctor (0001e11a)(0, 0x100, 0, 0, a word, style, id, Menu_ListLines (0003750d)(id), rect), the word set for the 23 ids at 00081a00; 16 0001eaef(0, 0x100, 0, a word, id, 00037827(id), rect), the word -1 or set for the ten ids at 00081ab8; 17 0001eff6(0, 0x13, 0, 0xffff, id, Menu_OpenControlTtms (00037996)(id), rect); 18 0004c83a(rect) for style 1; other kinds nothing. Kinds 2, 3, 15, 16 and 17 add the control with DUIWindow_AddControl (0001b207). Closes and destroys both streams (VolRStream_Close, VolRStream_Dtor) and the table (TextTable_Dtor). es2_xref finds one call, from Menu_Open (0003969e).",
       "source": "ES1GO decompile and disassembly at 0003a1f7",
       "verified": {
         "bytes": "0003a1f7+3905",
@@ -8740,7 +9250,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_OpenFirstScreen",
-      "description": "(code), its argument removed by this function: DirtyList_CreateContext, Ttm_Configure(page 2, 0007fcd8, 0x32), Ttm_AllocHandles(2), Ttm_SetPathPrefix(res32\\), TtmLists_Load; then by code: 3 and 4 Mission_ReadRestore, Shell_ProcessMissionResults, Shell_PreviousScreen (000817c2) 999, and by Shell_Mode and the current pilot's PilotEntry_Condition the MissionMenu 1100, MessageBox_SetKind (00037eac)(Shell_MessageBox (0009b010), 3), the end scripts with ShellMusic_Play (00020a70) and Shell_PlayTtm (0003b8df), Shell_OpenHomeMenu (0003b3db), or MessageBox_SetKind (00037eac)(Shell_MessageBox (0009b010), 7) with MessageBox_Line (000aad5c) = MessageBox_PickT1Line (00037bf0)(7); mode 1 then 0001601b, 00016fdd and 000168b0. Any other code plays the intro scripts while Shell_PlayIntro is set, clears 000817bc and goes on as 6: anm\\esiege2.anm, ShellBackdrop_Show (000395a0)(Shell_Backdrop, 1000), a MainMenu opened as 1000, Shell_CurrentScreen 1000, Shell_PreviousScreen 999, Shell_BackdropId 1000.",
+      "description": "(code), its argument removed by this function: DirtyList_CreateContext, Ttm_Configure(page 2, 0007fcd8, 0x32), Ttm_AllocHandles(2), Ttm_SetPathPrefix(res32\\), TtmLists_Load; then by code: 3 and 4 Mission_ReadRestore, Shell_ProcessMissionResults, Shell_PreviousScreen (000817c2) 999, and by Shell_Mode and the current pilot's PilotEntry_Condition the MissionMenu 1100, MessageBox_SetKind (00037eac)(Shell_MessageBox (0009b010), 3), the end scripts with ShellMusic_Play (00020a70) and Shell_PlayTtm (0003b8df), Shell_OpenHomeMenu (0003b3db), or MessageBox_SetKind (00037eac)(Shell_MessageBox (0009b010), 7) with MessageBox_Line (000aad5c) = MessageBox_PickT1Line (00037bf0)(7); mode 1 then 0001601b, Roster_ForEachPilotNoOp (00016fdd) and Career_Save (000168b0). Any other code plays the intro scripts while Shell_PlayIntro is set, clears 000817bc and goes on as 6: anm\\esiege2.anm, ShellBackdrop_Show (000395a0)(Shell_Backdrop, 1000), a MainMenu opened as 1000, Shell_CurrentScreen 1000, Shell_PreviousScreen 999, Shell_BackdropId 1000.",
       "source": "Herculan/docs/es1/shell/menus.md#the-first-screen--shell_openfirstscreen-0003ba47; ES1GO decompile at 0003ba47",
       "verified": {
         "bytes": "0003ba47+1411",
@@ -20885,6 +21395,24 @@
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#pilot-entries"
     },
     {
+      "address": "0007ebe0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Career_CampaignNumbers",
+      "description": "eight int16, 1, 2, 2, 3, 3, 4, 4, 5: the number the backup list shows for campaigns 0 to 7.",
+      "source": "Herculan/docs/es1/shell/career.md#the-backup-list"
+    },
+    {
+      "address": "0007ebf0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Career_CampaignStarts",
+      "description": "eight int16, 0, 7, 7, 15, 15, 24, 24, 32: the missions played before campaigns 0 to 7, from which the backup list counts a campaign's missions.",
+      "source": "Herculan/docs/es1/shell/career.md#the-backup-list"
+    },
+    {
       "address": "0007ec80",
       "binary": "ES1GO",
       "type": "data",
@@ -20892,6 +21420,15 @@
       "name": "Career_OutcomeThresholds",
       "description": "int16[10]: 4, 4, 4, 3, 3, 3, 4, 3, 3, 3. Career_OutcomeChoice (000159e9) gives outcome 1 when the word 000aad58 exceeds the entry the word 000aad5e indexes.",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#a-careers-missions"
+    },
+    {
+      "address": "0007edfc",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "CareerLog_NameBuffers",
+      "description": "the null-ended array of the career list's 64-byte name buffers CareerLog_NameLines (000184ff) makes and frees on its next call.",
+      "source": "Herculan/docs/es1/shell/career.md#the-list"
     },
     {
       "address": "0007ee64",
@@ -21115,8 +21652,26 @@
       "type": "data",
       "confidence": "high",
       "name": "Shell_ReturnScreen",
-      "description": "int16: the screen the options menu's RETURN (100) and KIAWarningAlert's back (99) go to, and which line menu 1300's button 100 shows (1000 RETURN TO MAIN, 1100 RETURN TO MISSION, 1710 and 1200 RETURN TO CAREER). MainMenu_OnMessage (0002a70a) sets 1000, 1100 or 1200 and Shell_OpenHomeMenu (0003b3db) 1000 or 1200; es2_xref --decode finds the other writers in AnyDisabledAlert_OnMessage (0002a581) and 0002aa0e.",
+      "description": "int16: the screen the options menu's RETURN (100) and KIAWarningAlert's back (99) go to, and which line menu 1300's button 100 shows (1000 RETURN TO MAIN, 1100 RETURN TO MISSION, 1710 and 1200 RETURN TO CAREER). MainMenu_OnMessage (0002a70a) sets 1000, 1100 or 1200 and Shell_OpenHomeMenu (0003b3db) 1000 or 1200; es2_xref --decode finds the other writers in AnyDisabledAlert_OnMessage (0002a581), CareerMenu_OnMessage (0002aa0e), 1000 and 1200, and CareerRecordsMenu_OnMessage (0002af94), 1220 and 1200, at 0002b223 and 0002b2bf in bytes Ghidra left undefined.",
       "source": "Herculan/docs/es1/shell/main-menu.md#the-return-screen"
+    },
+    {
+      "address": "0007fcea",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Career_SelectedEntry",
+      "description": "int16: the careers-log entry the career menu's list 1202 selects; Menu_BuildFromDlg (0003a1f7) builds the list with it selected, and CareerMenu_OnMessage (0002aa0e) stores the selection after every message. The word after it, 0007fcec, is the battle set Career_New (000163ac) gives a new career.",
+      "source": "Herculan/docs/es1/shell/career.md#the-list"
+    },
+    {
+      "address": "0007fcf0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Career_Salvage",
+      "description": "int32: the career's salvage in kilograms, 60000 from Career_New (000163ac); Shell_ProcessMissionResults (00038eb5) adds each mission's, and the career record's +0x129 keeps it.",
+      "source": "Herculan/docs/es1/shell/career.md#the-stats"
     },
     {
       "address": "0007fd04",
@@ -21160,7 +21715,7 @@
       "type": "data",
       "confidence": "high",
       "name": "Shell_DebugMode",
-      "description": "byte: 1 after -X or /X (Shell_ParseCommandLine (0001272d)). Keeps Shell_BlinkTick and Shell_NavKeySubscriber from being registered, builds the keyboard in mode 0x10000 instead of 0x20000, makes Shell_AssertCleanupHook (00045a68) and the end of Shell_Main (00012ec7) execute INT 3, and keeps Shell_HandleInput (00012be8) from passing typed characters on; es2_xref --decode finds readers in DUIWindow_Activate (0001b0ff), 0001f442, WarMapMenu_Ctor, WarMapMenu_Dtor (0002bf15) and ShellSound_Init too.",
+      "description": "byte: 1 after -X or /X (Shell_ParseCommandLine (0001272d)). Keeps Shell_BlinkTick and Shell_NavKeySubscriber from being registered, builds the keyboard in mode 0x10000 instead of 0x20000, makes Shell_AssertCleanupHook (00045a68) and the end of Shell_Main (00012ec7) execute INT 3, and keeps Shell_HandleInput (00012be8) from passing typed characters on; es2_xref --decode finds readers in DUIWindow_Activate (0001b0ff), MTEditBox_Ctor (0001f442), WarMapMenu_Ctor, WarMapMenu_Dtor (0002bf15) and ShellSound_Init too.",
       "source": "Herculan/docs/es1/shell/startup.md#the-command-line"
     },
     {
@@ -21286,7 +21841,7 @@
       "type": "data",
       "confidence": "high",
       "name": "Career_Loaded",
-      "description": "byte: set once the current career's file is loaded for the session. es2_xref --decode finds it written by MainMenu_OnMessage (0002a70a)'s RESUME and 0002aa0e, which set it, and 0002ae96, which clears it when it deletes a career, and read by those two, beside two references in bytes Ghidra left undefined.",
+      "description": "byte: set once the current career's file is loaded for the session. es2_xref --decode finds it written by MainMenu_OnMessage (0002a70a)'s RESUME and CareerMenu_OnMessage (0002aa0e), which set it, and DeleteAlert_OnMessage (0002ae96), which clears it when it deletes a career, and read by the first two; the career menu's read at 0002ad24 and write at 0002add4 are in bytes Ghidra left undefined.",
       "source": "Herculan/docs/es1/shell/main-menu.md#resume"
     },
     {
@@ -21306,6 +21861,15 @@
       "name": "WarMap_BriefingPage",
       "description": "int16: the war map's briefing page as PgDn presses less PgUp presses (WarMapMenu_OnMessage (0002c057)'s cases 102 and 101), with no bound; WarMapMenu_Ctor (0002bbbd) turns the briefing's page that many times and WarMapMenu_Dtor (0002bf15) sets it to 0 when it deletes the box.",
       "source": "Herculan/docs/es1/shell/war-map.md#the-briefing"
+    },
+    {
+      "address": "000809b4",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Career_BackupLine",
+      "description": "int16: the backup list 1223's selected line, which Menu_BuildFromDlg (0003a1f7) builds it with. es2_xref --decode finds it written by MainMenu_OnMessage (0002a70a), CareerMenu_OnMessage (0002aa0e) and CareerRecordsMenu_OnMessage (0002af94).",
+      "source": "Herculan/docs/es1/shell/career.md#the-backup-list"
     },
     {
       "address": "00081690",
@@ -21839,6 +22403,24 @@
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-squad"
     },
     {
+      "address": "0009b20c",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Career_Log",
+      "description": "the careers log: its entries +0, count +4, current entry +6 and added byte +8.",
+      "source": "Herculan/docs/es1/formats/career-log-and-player-mec.md#the-careers-log"
+    },
+    {
+      "address": "0009b218",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Career_Roster",
+      "description": "the roster: byte +0, the careers-log entry pointer +1, the battle set word +5, the working record word +7, record 0's word +2 kept at +9, 12 name-group words at +0xb, and 41 career records of 0x1f7 bytes at +0x23, record 0 the career and records 1 to 40 its backups.",
+      "source": "Herculan/docs/es1/shell/career.md#the-roster"
+    },
+    {
       "address": "000a02cc",
       "binary": "ES1GO",
       "type": "data",
@@ -22152,6 +22734,15 @@
       "name": "ShellBackdrop_Picture",
       "description": "dword: the backdrop's bitmap, res32\\regn<group>.dbm, loaded by ShellBackdrop_Show (000395a0), which destroys the previous one.",
       "source": "Herculan/docs/es1/shell/menus.md#the-backdrop"
+    },
+    {
+      "address": "000aa7d4",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Roster_BackupLines",
+      "description": "41 buffers of 25 bytes, the backup list's lines Roster_BackupListLines (000183bd) writes, buffer n for record n.",
+      "source": "Herculan/docs/es1/shell/career.md#the-backup-list"
     },
     {
       "address": "000aacbc",

@@ -1,6 +1,6 @@
 # GO.EXE — the careers log and the player file (`.LOG`, `.MEC`)
 
-**The shell keeps a list of the careers the player has started, reading it when it starts and writing it back when it quits, and before a mission it writes the player's HERCs and pilots to a file the simulator reads.** The list is `car\names.log`; each entry names a career and the two files `Career_New` writes for it, `CAR\CAR_`*n*`.CAR` and the hangar `CAR\CAR_`*n*`.MEC` ([starting a career](bst-battle-sets.md#starting-a-career)). The simulator's file is `data\player.mec`. `SHELL0.VOL` holds a `car\NAMES.LOG` with no careers and a `car\CAREER1.MEC` for which no reader was found. ES2 lists its saves in a fixed directory of twelve slots ([`sav\GAMEFILE.STR`](../../retail/formats/save-games.md#the-twelve-slots--savgamefilestr)) and writes its `data\player.mec` in its own layout ([ES2's player file](../../retail/shell/campaign-loop.md#launching-a-mission--game_exportmissionhandoff-0040f0d4)). Addresses are `ES1GO` image addresses unless an `ES1DBSIM` one is named ([the X-32 executable](x32-executable.md#the-image)).
+**The shell keeps a list of the careers the player has started, reading it when it starts and writing it back when it quits, and before a mission it writes the player's HERCs and pilots to a file the simulator reads.** The list is `car\names.log`; each entry names a career and the two files `Career_New` writes for it, `CAR\CAR_`*n*`.CAR` and the hangar `CAR\CAR_`*n*`.MEC` ([`Career_New`](../shell/career.md#career_new)). The simulator's file is `data\player.mec`. `SHELL0.VOL` holds a `car\NAMES.LOG` with no careers and a `car\CAREER1.MEC` for which no reader was found. ES2 lists its saves in a fixed directory of twelve slots ([`sav\GAMEFILE.STR`](../../retail/formats/save-games.md#the-twelve-slots--savgamefilestr)) and writes its `data\player.mec` in its own layout ([ES2's player file](../../retail/shell/campaign-loop.md#launching-a-mission--game_exportmissionhandoff-0040f0d4)). Addresses are `ES1GO` image addresses unless an `ES1DBSIM` one is named ([the X-32 executable](x32-executable.md#the-image)).
 
 ## The careers log
 
@@ -43,7 +43,7 @@ So the shell adds at most one career between a load and the next, and a later ne
 
 `CareerLog_Write` (`00017f5f`), given the log and an entry to leave out or −1, deletes the file (`remove`), opens it as a `FileRWStream`, asserting at severity 5 (`career.cpp` line `0x51b`, "Unable to open careers log file") when it cannot, and writes the count, one less when an entry is left out. When that count is not 0 it writes the current entry and every entry but the one left out, 100 bytes each. It closes and destroys the stream. `es2_xref.py` finds two calls: from `Shell_Main` with −1, where `VolRStream_DeleteGroup` and `Mem_HeapOff` follow it, and from `CareerLog_Delete`.
 
-`CareerLog_Delete` (`0001828e`), given the log and an entry below the count, deletes the entry's two files (`remove`), takes 1 from the current entry when it is not 0, writes the log leaving the entry out, and loads it again. `es2_xref.py` finds one call, from `0002ae96` with the word `0007fcea` when the word `+6` of its second argument is 100 ([Open](#open)).
+`CareerLog_Delete` (`0001828e`), given the log and an entry below the count, deletes the entry's two files (`remove`), takes 1 from the current entry when it is not 0, writes the log leaving the entry out, and loads it again. `es2_xref.py` finds one call, from `DeleteAlert_OnMessage` (`0002ae96`), screen 1270's DELETE, with the career list's selected line `Career_SelectedEntry` (`0007fcea`) ([deleting a career](../shell/career.md#deleting-a-career)).
 
 `CareerLog_CurrentNameArray` (`000182f8`) returns a new null-terminated array of string pointers: empty when the current entry is −1, and otherwise the 64-byte buffer at `0007ebc0`, allocated on first use, holding the current entry's name (`sprintf` with `%s`). The test loads the current entry into `AX` and compares all of `EAX` with −1, so it holds only when `EAX`'s upper half is `0xffff` on entry. `es2_xref.py` finds one call, from `Menu_ListLines` (`0003750d`), which gives the array as the lines of the main menu's list 1002 ([the list](../shell/main-menu.md#the-list)).
 
@@ -53,7 +53,7 @@ So the shell adds at most one career between a load and the next, and a later ne
 
 ## The player file
 
-`PlayerMec_Write` (`0002299e`) deletes entry 4 of the file-name table, `data\player.mec`, opens it as a `FileRWStream` with no test that it opened, writes it with `PlayerMec_WriteEntries` (`00022a05`), closes it, saves the career record with `CareerRecord_SaveCurrent` (`00014f28`) and destroys the stream. `CareerRecord_SaveCurrent` writes a single mission's record to `car\sm_play.gam` (`SingleMission_SaveRecord`, `00014f54`, [the squad](msn-mission-file.md#the-squad)) and in mode 1 calls `000168b0` with the roster and its current record. `es2_xref.py` finds three calls to `PlayerMec_Write`: from `WarMapMenu_OnMessage` (`0002c057`), `0002d327` and `MsnGen_LoadMission`.
+`PlayerMec_Write` (`0002299e`) deletes entry 4 of the file-name table, `data\player.mec`, opens it as a `FileRWStream` with no test that it opened, writes it with `PlayerMec_WriteEntries` (`00022a05`), closes it, saves the career record with `CareerRecord_SaveCurrent` (`00014f28`) and destroys the stream. `CareerRecord_SaveCurrent` writes a single mission's record to `car\sm_play.gam` (`SingleMission_SaveRecord`, `00014f54`, [the squad](msn-mission-file.md#the-squad)) and in mode 1 calls `Career_Save` (`000168b0`) with the roster and its current record ([saving](../shell/career.md#saving--career_save-000168b0)). `es2_xref.py` finds three calls to `PlayerMec_Write`: from `WarMapMenu_OnMessage` (`0002c057`), `0002d327` and `MsnGen_LoadMission`.
 
 ```
 int16    the player's entry
@@ -79,7 +79,7 @@ So the entries run from the player's on in entry order. It then writes the recor
 
 | Entry | Word | Mode 0 | Mode 1 |
 |---|---|---|---|
-| the player's | 1 | `Math_RandomBelow`(`Shell_RandomState`, 11) | the word `+0x40` of the careers-log entry the roster `0009b218` holds at `+1` |
+| the player's | 1 | `Math_RandomBelow`(`Shell_RandomState`, 11) | the word `+0x40` of the careers-log entry the roster `Career_Roster` (`0009b218`) holds at `+1` |
 | the player's | 2 | 0 | its rank `+0xd`, after `CareerRecord_SelectPilot` on it |
 | any other | 1 | `PilotEntry_NameIndex` (`00015f50`): 3 × its name group `+0` plus its name `+2`, or −1 for entry 0 | the same |
 | any other | 2 | the entry's number | its rank `+0xd` |
@@ -148,7 +148,7 @@ The 66-byte blocks hold words such as 50, 64, 70, 75, 80 and 95. Read as the pla
 ## Open
 
 - **Open:** what reads `car\CAREER1.MEC`: the byte searches above find its name in no executable, and its entries match neither the player file's layout nor the hangar list's.
-- **Open:** what the careers-log entry's word `+0x40` is: `Career_New` passes its second argument, and the player file's first pilot word is that word in mode 1. What else `0002ae96`, the handler of screen 1270 ([the screens](../shell/menus.md#the-screens)), does when its message word 100 deletes a career.
+- **Open:** what the careers-log entry's word `+0x40` is for: `Career_New` passes its second argument, which `es2_xref.py`'s one call of it, NEW's ACCEPT, gives as 0 ([starting a career](../shell/career.md#starting-a-career)), and the player file's first pilot word is that word in mode 1.
 - **Open:** whether an entry is ever written without a HERC record, which the simulator's read takes the next entry's words for: in a single mission it can when the player's machine has a type other than 0 to 7, a slot `sm_init.dat` does not fill, and in a career when a pilot's slot holds none. The record of the first group's first member holds type 1, 6 or 7 in 12 of the 14 single missions and takes a template's in `SM_ESC50.MSN` and `SM_SCT50.MSN`, whose candidates are not walked.
 - **Open:** what the simulator does with the two pilot words, the mount words, the word `+0x3a` and the 17 bytes at `000af9e8`.
 - **Open:** what `00020fff`, which `es2_xref.py` finds calling `CareerLog_FreeEntries` beside the shell's shutdown (`Shell_FreeData`, `00020ae3`, [the shutdown](../shell/startup.md#the-shutdown)), does with the log.

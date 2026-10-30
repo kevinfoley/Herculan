@@ -41,9 +41,9 @@ A campaign's `+0` word is the *k* of its talking-head files `C<k>_TEXT.BIN` and 
 
 `BattleSet_Load` loads the battle set whose index is the word `+5` of the roster at `0009b218` (`0009b21d`). `es2_xref.py` finds three calls to it:
 
-- `Shell_LoadData` (`00020630`), which also loads the shell's fonts and `eng\watext.bin`, after it loads the [careers log](career-log-and-player-mec.md#loading) `0009b20c` with `CareerLog_Load` (`00017e7f`);
-- `BattleSetDialog_OnMessage` (`0002bb29`), a dialog's message handler, which on message 100 stores in the roster's word `+5` the value of the dialog's control `0x533` (its vtable slot `+0x2c`), loads that battle set, and changes the message to `0x514`;
-- `Career_StartMission`, before it builds each mission's path ([A career's missions](#a-careers-missions)).
+- `Shell_LoadData` (`00020630`), which also loads the shell's fonts and `eng\watext.bin`, after it loads the [careers log](career-log-and-player-mec.md#loading) `Career_Log` (`0009b20c`) with `CareerLog_Load` (`00017e7f`);
+- `BattleSetDialog_OnMessage` (`0002bb29`), the handler of screen 1330, `BattlesetAlert` ([the screens](../shell/menus.md#the-screens)), which on message 100, its ACCEPT button, stores in the roster's word `+5` the selected line of its list box 1331 (`0x533`, the control's slot `+0x2c`), loads that battle set, and changes the message to `0x514`, 1300;
+- `Career_StartMission`, before it builds each mission's path ([a career's next mission](../shell/career.md#a-careers-next-mission)).
 
 `BATLSETS.BIN` names three files, so the word selects `BTLSET_0` to `BTLSET_2`. A byte search of `GO.EXE` for `test_btl` finds nothing, where the same search finds `tech_sng.dat` ([Open](#open)).
 
@@ -81,11 +81,7 @@ All 38 of `ZONES.VOL`'s `any_msn.dat` names are in `BTLSET_0.DAT`. Every mission
 
 ## A career's missions
 
-`Career_StartMission` (`00016e93`), given a roster and a word *b*, sets the roster's word `+7` to `Roster_NthUsedRecord` (`00016845`)(roster, *b*), loads the battle set whose index is the roster's word `+5` into `000a02cc`, builds the path from the [career record](#the-career-record) at roster + `0x23` + `0x1f7` × word `+7` with `Career_BuildMissionPath`, loads the mission with `MsnGen_LoadMission`, marks the record's pilots with `CareerRecord_MarkTopPilots` (`00015cbb`), copies the word `Mission_Kind` (`000aad5a`) (header word 3) to the record's `+0xc`, and saves the paths with `Mission_WriteRestore`. `es2_xref.py` finds seven calls to it, each passing the roster `0009b218` and *b* 0, so the word `+7` is 0 and the record is the roster's first, at `0009b23b`, the record [mode 1's flags](msn-mission-file.md#the-flags) 1 and 2 are seeded from: the campaign and the position.
-
-`Roster_NthUsedRecord` returns 0 for an *n* of 0; otherwise it counts the records 1 to 40 whose first byte is not 0 and returns the index of the *n*-th, or 0 when there are fewer.
-
-`CareerRecord_MarkTopPilots` orders the pilot entries 1, 2 and 3 (the table at `0007ec9c`) by their word `+0xd`, greatest first, with a bubble sort swapping through `Word_Swap` (`00015c93`), and sets the byte `+0xa` of the entry in place *p* (0 to 2) to 1 when *p* + 1 is less than `Squad_MemberCount` (`0007ebc8`), the number of the mission's first group's members ([loading a mission](msn-mission-file.md#loading-a-mission)), and to 0 otherwise. So the career's pilots with the greatest ranks fill the squad's places after the player's.
+A career's mission is drawn from the battle set by the [career record](#the-career-record)'s campaign `+6` and position `+8`, each time `Career_StartMission` (`00016e93`) loads the career's next mission ([a career's next mission](../shell/career.md#a-careers-next-mission)).
 
 `Career_BuildMissionPath` (`00015a13`) passes the outcome, `Career_OutcomeChoice`(`000aad58`), the position and the campaign to `BattleSet_GetMissionName` (`000140a5`), formats the name as `msn\%s` into `000aad14`, and sets the text path (`Mission_SetTextPath`). `BattleSet_GetMissionName` takes the position's name for the outcome (`Campaign_GetPositionName`, `000142f6`, through `StrList_Get`). A name containing `.MSN` is returned as it is. Any other name is a list: it opens `bst\<name>`, reads one name list, and copies a name `StrList_PickRandom` draws from it over the position's name, which it returns. `Career_StartMission` reloads the battle set before every build, so a position naming a list draws again for each mission it starts.
 
@@ -93,11 +89,11 @@ All 38 of `ZONES.VOL`'s `any_msn.dat` names are in `BTLSET_0.DAT`. Every mission
 
 ### The career record
 
-A record is `0x1f7` bytes. `CareerRecord_Init` (`000158ff`) sets one up; `es2_xref.py` finds it called by `Career_New` (`000163ac`) for each roster record ([starting a career](#starting-a-career)) and by `MsnGen_LoadMission` for the record at `0009b014`.
+A record is `0x1f7` bytes. `CareerRecord_Init` (`000158ff`) sets one up; `es2_xref.py` finds it called by `Career_New` (`000163ac`) for each roster record ([`Career_New`](../shell/career.md#career_new)) and by `MsnGen_LoadMission` for the record at `0009b014`. The roster's records are the career and its backups ([the roster](../shell/career.md#the-roster)).
 
 | Offset | Field | At `CareerRecord_Init` |
 |---|---|---|
-| `+0` | byte, nonzero for a record in use ([`Roster_NthUsedRecord`](#a-careers-missions)) | 0 |
+| `+0` | byte, nonzero for a record in use: the career, and a backup made ([the roster](../shell/career.md#the-roster)) | 0 |
 | `+4` | word | `0x6a4`; `0x6ae` after each career mission |
 | `+6` | the campaign | 0 |
 | `+8` | the position in it | 0 |
@@ -108,9 +104,9 @@ A record is `0x1f7` bytes. `CareerRecord_Init` (`000158ff`) sets one up; `es2_xr
 | `+0x12` | word, the pilot entry `CareerRecord_FinishMission` stores its share in | 0 |
 | `+0x14` | four `0x25`-byte pilot entries | |
 | `+0xa8` | the [equipment state](#equipment-availability), `0x81` bytes | loaded |
-| `+0x129` | dword, set to `0007fcf0` when the career starts | |
-| `+0x12d` | 100 `int16` | 0 (`CareerRecord_ClearWords`, `000161ae`) |
-| `+0x1f5` | word, set to `0007fcf8` when the career starts | |
+| `+0x129` | dword, the career's salvage in kilograms, `Career_Salvage` (`0007fcf0`) as `Career_Save` and `Career_New` store it: 60000 at the start ([the stats](../shell/career.md#the-stats)) | |
+| `+0x12d` | 100 `int16`, the shell's flags `000ab244` as the career's saves store them | 0 (`CareerRecord_ClearWords`, `000161ae`) |
+| `+0x1f5` | word, the word `0007fcf8` as the career's saves store it | |
 
 The init also zeroes byte `+1`, the word `+2` and the word `000aad58`. For each pilot entry it calls `PilotEntry_Init` (`000151c8`) when the mode word `000aad56` is 0 or the entry is the one `+0xe` names, and `PilotEntry_InitRandom` (`00015228`) otherwise ([pilot entries](#pilot-entries)).
 
@@ -131,25 +127,14 @@ A pilot entry is `0x25` bytes. Making an entry the record's current pilot `+0x12
 | `+0x0d` | the rank | from `+0x17` | from `+0x17` |
 | `+0x0f` | the pilot's condition | 100 | 100 |
 | `+0x11`, `+0x13`, `+0x15` | a mission's gains to `+0x17`, `+0x19`, `+0x1b` | 0 | 0 |
-| `+0x17` | the word the rank is read from | 0 | (a draw below 3 + 1) × `+0x1f` |
-| `+0x19` | word | 0 | a draw below 2 × `+0x1f` |
-| `+0x1b` | word | 0 | (a draw below 2 + 1) × `+0x1f` |
+| `+0x17` | the HERC kills, which the stats show as HERCS: and the rank is read from | 0 | (a draw below 3 + 1) × `+0x1f` |
+| `+0x19` | the structure kills, the stats' STRUCTURES: | 0 | a draw below 2 × `+0x1f` |
+| `+0x1b` | the flyer kills, the stats' FLYERS: ([the stats](../shell/career.md#the-stats)) | 0 | (a draw below 2 + 1) × `+0x1f` |
 | `+0x1d` | word | 0 | *d* |
 | `+0x1f` | word | 0 | a draw below 5 + 5*d* |
 | `+0x21` | dword, the pilot's pay share | 0 | 0 |
 
 `PilotEntry_InitRandom`'s draws are on `Shell_RandomState` ([the shell's generator](msn-mission-file.md#the-shells-generator)) in the order *d*, `+0x1f`, `+0x17`, `+0x1b`, `+0x19`. Both then call `PilotEntry_ApplyGains` (`00015317`), which, when the byte `+0xa` is set, adds the three gains to `+0x17`, `+0x19` and `+0x1b` and to the words `0009ae5c`, `0009ae5e` and `0009ae60`, and sets the rank to the number of `PilotRankThresholds` (`0007ebd4`: 0, 1, 5, 15 and 30) below `+0x17`, at most 4. `PilotEntry_NameIndex` (`00015f50`) is 3 × `+0` + `+2`, the name's index among the twelve groups of three, and `PilotEntry_Name` (`00015fc0`) the name itself ([`PilotNames_Load`](#battle-sets)). `PilotEntry_Condition` (`0001618d`) returns `+0xf`. A single mission's squad sets its entries otherwise ([the squad](msn-mission-file.md#the-squad)).
-
-### Starting a career
-
-`Career_New` (`000163ac`), given a roster and two arguments:
-
-1. stores at the roster's `+1` the careers-log entry `CareerLog_FindOrAdd` (`00018099`) returns for the log `0009b20c`, the second argument and the third, whose `+0x42` and `+0x53` name the career file and the hangar file ([adding a career](career-log-and-player-mec.md#adding-a-career)); sets the roster's word `+5`, the battle set, to the word `0007fcec`, the words `+7` and `+9` to 0 and the byte `+0` to 1; and sets the dword `0007fcf0` to 60000;
-2. calls `00016677` with the roster;
-3. loads `car\c_armory.dat` into the weapon stock `000aad62` with `Inventory_LoadFile` and `car\car_init.dat` into the hangar with `Hangar_LoadFile` ([the starting HERCs and the weapon stock](car-hercs-and-stock.md));
-4. opens a `FileRWStream` on each of the two file names, asserting at severity 5 (`career.cpp` lines `0x2d1` and `0x2d8`) when one does not open, and writes to the first the roster's byte `+0`, its word `+5` and its `0x18` bytes from `+0xb`;
-5. for each of the 41 records: sets it up with `CareerRecord_Init`; when it is the record the word `+7` names, sets its byte `+0` to 1, calls `000166ed` with the roster, stores `0007fcf0` at its `+0x129`, copies its 100 words at `+0x12d` into the flags at `000ab244`, and stores the word `0007fcf8` at its `+0x1f5`; then writes the record's `0x1f7` bytes and the stock (`Inventory_Write`) to the first file and the hangar (`Hangar_Write`) to the second;
-6. closes both files, makes the player's entry `+0xe` of the record the word `+7` names that record's current pilot (`CareerRecord_SelectPilot`, [pilot entries](#pilot-entries)), and calls `00016fdd` with the roster.
 
 ### After a mission
 
@@ -158,7 +143,7 @@ A pilot entry is `0x25` bytes. Making an entry the record's current pilot `+0x12
 1. In mode 1 it calls `Career_LoadCurrent` (`00016c1e`) with the roster, otherwise `SingleMission_RestoreRecord` (`00014fd6`), which reads `car\sm_play.gam` back into `SingleMission_Record` and loads `car\sm_play.mec` into the hangar ([the squad](msn-mission-file.md#the-squad)).
 2. It opens `data\results.dat` (entry 7 of the file-name table, severity-5 assert at `shell.cpp` line 199) and reads a word into `000aad58`, a dword into `0007fcf4`, a word count into `000817cc`, and that many pairs of words (*a*, *b*); in mode 1 `Inventory_Add` (`00028311`) pushes each *b* onto slot *a* of the weapon stock `000aad62` ([the weapon stock](car-hercs-and-stock.md#the-weapon-stock)). It then reads the pilots' results with `CareerRecord_ReadPilotResults` (`0001568d`): it zeroes the words `0009ae5c`, `0009ae5e` and `0009ae60`, and for each entry of `CareerRecord_Current`'s record on strength with a slot, in entry order, it reads the pilot's condition `+0xf` and 6 bytes of gains (`PilotEntry_ReadGains`, `000153d8`, which applies them). For the player's entry 0, and for every entry in mode 1, `Hangar_ReadStatusBlock` (`00028e50`) reads 66 bytes over the status block of the HERC in the entry's slot, rebuilding its diagram, and the condition is that HERC's internal word 9, `Herc_GetStatus` (`00024b86`)(*h*, 9, `0x784`); when the slot holds no HERC nothing is read for the block and the condition is 0. The HERC read tests the literal index 0, not the record's `+0xe`. For a single mission's squadmates, entries 1 to 3 in mode 0, the 66 bytes go into a block of the function's own, built on the stack with `HercStatus_Ctor` and then read whole over, no HERC changes, and the condition is that block's internal word 9 ([the HERC record](car-hercs-and-stock.md#the-herc-record)). So each entry takes the 72 bytes the simulator writes for each machine of the player's group ([writing the results](../simulation/world.md#writing-the-results--mission_writeresults-0001d698)): 26 bytes of external words, 20 of internal words, of which bytes `0x2c`–`0x2d` are internal word 9, the condition, 20 of per-mount words, and the 6 bytes of gains; an entry read through a slot holding no HERC takes only the 6 bytes of gains.
 3. It reads `data\mission.var` (entry 5, assert at line `0xd7`) through a `FileRWStream`, 200 bytes into the 100 flags at `000ab244`, closes it, and then sets flag 0 to `000aad58`.
-4. In mode 1 it calls `Shell_StockItemsFromFlags` (`00038e48`), adds `0007fcf4` to `0007fcf0`, calls `00028375`(`000aad62`), and on the record `0009b23b` + `0x1f7` × [`0009b21f`] calls `CareerRecord_FinishMission` (`000160cb`) and `Tech_Unlock` with the missions played ([Equipment availability](#equipment-availability)); it then calls `00029e01` and sets the record's word `+4` to `0x6ae`. Otherwise it counts the single mission's pilots whose condition is 0 into the word `0007ebca` (`CareerRecord_CountLostPilots`, `00015db7`), which the debriefing shows as SQUAD LOSSES:, beside the totals `0009ae5c`–`0009ae60` ([the results panel](../shell/debriefing.md#the-results-panel)).
+4. In mode 1 it calls `Shell_StockItemsFromFlags` (`00038e48`), adds the mission's salvage `0007fcf4` to `Career_Salvage` (`0007fcf0`), calls `00028375`(`000aad62`), and on the record `0009b23b` + `0x1f7` × [`0009b21f`] calls `CareerRecord_FinishMission` (`000160cb`) and `Tech_Unlock` with the missions played ([Equipment availability](#equipment-availability)); it then calls `00029e01` and sets the record's word `+4` to `0x6ae`. Otherwise it counts the single mission's pilots whose condition is 0 into the word `0007ebca` (`CareerRecord_CountLostPilots`, `00015db7`), which the debriefing shows as SQUAD LOSSES:, beside the totals `0009ae5c`–`0009ae60` ([the results panel](../shell/debriefing.md#the-results-panel)).
 
 `CareerRecord_FinishMission` divides `0007fcf0` by *n*, the count `CareerRecord_CountPilots` returns for the record, and *n* times steps to the next pilot (`CareerRecord_NextPilot`) and stores the share at its dword `+0x21`; it then replaces the lost pilots and adds 1 to the missions played. `CareerRecord_ReplaceLostPilots` (`00015e0b`) takes each entry *i* on strength with a slot and a condition of 0, adds 1 to `0007ebca` and, when it is not the player's: with *k* its word `+4` and *v* its word `+6`, calls `0002a20d` with its slot, sets it up again with `PilotEntry_InitRandom`, takes its name group from the word `0009b223` + 8(*i* − 1) + 2*k* of the roster, its name `+2` and `+6` from *v*, `+4` from (*k* + 1) mod 3, and, when that is 0, `+6` from (*v* + 1) mod 3.
 
@@ -244,12 +229,11 @@ Both files hold 25 records, the 8 chassis and the 17 weapons. Each cell gives *f
 
 - **Open:** whether the career and single-mission paths can reach the five missions no list names ([the retail battle sets](#the-retail-battle-sets)). A byte search of the seven `VOL` archives and of `GO.EXE` and `DBSIM.EXE` finds `B0_C1_20` and `B0_C1_30` only in `ZONES.VOL`'s directory ([a file in another layout](msn-mission-file.md#a-file-in-another-layout)).
 - **Open:** what calls `Mission_BuildPathFromFiles` and with which pattern: `es2_xref.py` finds no branch to it, and its one stored-pointer hit, `000097e5`, is inside the instruction at `000097e4`.
-- **Open:** which dialog `BattleSetDialog_OnMessage` serves, found by `es2_xref.py` only as the stored pointer at `00081faa`, and which values its control `0x533` gives.
+- **Open:** what lines screen 1330's list 1331 shows, the battle sets `BattleSetDialog_OnMessage` stores the selection of: `Menu_ListLines` takes them from the target of 1331 among its cases at `00081364`, which no reading has followed; and what opens screen 1330.
 - **Open:** what reads `TEST_BTL.DAT` and the eleven `ANY_*.DAT` other than `ANY_MSN.DAT`. `BATLSETS.BIN` names only the three `BTLSET_*`, the retail battle sets name only `any_msn.dat`, and a byte search of `GO.EXE` finds neither `test_btl` nor `any_`, where it finds `tech_sng.dat`.
 - **Open:** what the callers of `Career_AdvanceCampaign` and `Career_PeekNextCampaign` do with the campaign table's −1 and 99, how the outcome table at `0007ec80` relates to the debriefings' order, and which debriefings `Mission_OutcomeGrade` rates below 2.
 - **Open:** what reads and restores the equipment state besides the init: what reads back the bytes `CareerRecord_WriteWeaponFlags` writes to the [player file](career-log-and-player-mec.md#the-player-file) (`es2_xref.py` finds its one call there), what saves the chassis' bytes, and what reads the state to offer the items; and what calls `Tech_FormatLockedName`, to which `es2_xref.py` finds no branch and no stored pointer.
 - **Open:** how the equipment indexes map to the shell's chassis and weapon lists, `MECHS.NAM` and `WEAPONS.DAT`'s 17 templates among them.
-- **Open:** what the pilot entry's words `+0x04`, `+0x06`, `+0x0b` and `+0x17` to `+0x1f`, and so its gains, mean; and what `0002a20d` does with a lost pilot's slot.
-- **Open:** what `Shell_ProcessMissionResults`' callees `Career_LoadCurrent` (`00016c1e`), `Shell_StockItemsFromFlags` (`00038e48`), `00028375` and `00029e01` do with the results; what the word pairs it adds to the weapon stock are; and what `0007fcf4` and `0007fcf0` count.
+- **Open:** what the pilot entry's words `+0x0b`, `+0x1d` and `+0x1f` mean, and `+0x04` and `+0x06` beyond the name column and the name `CareerRecord_ReplaceLostPilots` takes from them; and what `0002a20d` does with a lost pilot's slot.
+- **Open:** what `Shell_ProcessMissionResults`' callees `Shell_StockItemsFromFlags` (`00038e48`), `00028375` and `00029e01` do with the results, and what the word pairs it adds to the weapon stock are.
 - **Open:** whether a pilot entry on strength can name a hangar slot that holds no HERC when the results are read: `CareerRecord_ReadPilotResults` then reads only that entry's 6 bytes of gains, so every later entry reads 66 bytes early.
-- **Open:** what `Career_New`'s callees `00016677`, `000166ed` and `00016fdd` do, what the word `0007fcf8` holds, and what reads the career record's `+0x129` and `+0x1f5`.
