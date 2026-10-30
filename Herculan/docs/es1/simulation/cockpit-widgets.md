@@ -142,7 +142,7 @@ Both tables hold three slots from `+4`, ES2's in order: paint, repaint and reset
 
 ## In GO.EXE
 
-**The shell compiles the label file and the font functions too.** `ES1GO` `0000fd20`, `0000fdc6`, `0000fe8e`, `0000ffc5`, `000100d8`, `00010103`, `00010140` and `00010158` are `Label_Ctor` to `Label_SetTextWithHotkey` in the order of the table below, the same statements laid out differently; its `Label_SetText` finds the render context at the display's `+0x40` less 4 where the simulator's reads `+0x44`. `00051f80`, `00051ff0` and `00052004` are `HudFont_GlyphWidth`, `HudFont_CellHeight2` and `HudFont_DrawGlyph`, the last testing the render context `000ab612`. Its code from `00008920` holds the gadget click handlers' statements ([Open](#open)).
+**The shell compiles the label file and the font functions too.** `ES1GO` `0000fd20`, `0000fdc6`, `0000fe8e`, `0000ffc5`, `000100d8`, `00010103`, `00010140` and `00010158` are `Label_Ctor` to `Label_SetTextWithHotkey` in the order of the table below, the same statements laid out differently; its `Label_SetText` finds the render context at the display's `+0x40` less 4 where the simulator's reads `+0x44`. `00051f80`, `00051ff0` and `00052004` are `HudFont_GlyphWidth`, `HudFont_CellHeight2` and `HudFont_DrawGlyph`, the last testing the render context `000ab612`. Its code from `Prefs_Init` (`00008920`) holds the gadget click handlers' statements ([Open](#open)).
 
 **The shell compiles the bar graph file too**, as its code from `00003d7c` to the `RET 8` at `0000601e`, in the simulator's order:
 

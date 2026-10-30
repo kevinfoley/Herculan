@@ -81,7 +81,7 @@ The player that `maybe_SncList_Load` fills holds one script and its sound:
 | `+0x19` | byte, set while a line plays |
 | `+0x1a` | byte, a request to stop |
 
-`maybe_SncList_Init` (`00045337`), called from `Shell_Main`, makes the `+0x15` object with `000512a0`(0) and sets its dwords `+0x210`, `+0x214`, `+0x218` and `+0x21c` to 0, 0, 319 and 199, `+0x208` to 1 and `+0x20c` to 0, then registers `maybe_SncList_TimerTick` (`00045320`) with `Timer_AddCallback` at count 2 and keeps the slot. The tick adds 1 to the word `00082658`, the line's clock, while the byte `0009afed` is set. The clock's rate: [Open](#open).
+`maybe_SncList_Init` (`00045337`), called from `Shell_Main`, makes the `+0x15` object with `GLViewport_Ctor` (`000512a0`)(0) and sets its dwords `+0x210`, `+0x214`, `+0x218` and `+0x21c` to 0, 0, 319 and 199, `+0x208` to 1 and `+0x20c` to 0, then registers `maybe_SncList_TimerTick` (`00045320`) with `Timer_AddCallback` at count 2 and keeps the slot. The tick adds 1 to the word `00082658`, the line's clock, while the byte `0009afed` is set. The clock's rate: [Open](#open).
 
 ### Loading a line
 

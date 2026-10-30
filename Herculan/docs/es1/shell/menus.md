@@ -2,12 +2,12 @@
 
 **Every screen of ES1's shell between the intro and a mission is a menu: a picture behind it, a framed window with a title, labels and buttons, laid out by the menu's `.DLG` file ([the menu dialogs](../formats/dlg-menu-dialogs.md)). A button is pressed with the mouse or with `Enter`, and acts when it is let go over the same button; its number names the next screen. The shell then closes the open menu, changes the picture and the music behind when the next screen belongs to another group, builds the next menu and draws it.** What a player would see:
 
-- pointing at a button gives it the focus, and `Tab`, `Shift+Tab` and `Alt+Tab` move the focus to the next or previous button and put the pointer on it ([the keys](#the-keys));
-- a button pressed and then dragged off pops back up, and acts only if the pointer comes back over it before the release ([the mouse](#the-mouse));
+- pointing at a button gives it the focus, and `Tab`, `Shift+Tab` and `Alt+Tab` move the focus to the next or previous button and put the pointer on it ([the keys](menu-input.md#the-keys));
+- a button pressed and then dragged off pops back up, and acts only if the pointer comes back over it before the release ([the mouse](menu-input.md#the-mouse));
 - a pressed text button clicks when the byte `0007fcb9` is set, which `prefs.cfg` option 1 sets ([drawing a control](#drawing-a-control));
 - a menu opens with the pointer on the button whose key is `Space`, or on its first control ([opening a menu](#opening-a-menu--menu_open-0003969e)).
 
-Addresses are `ES1GO` image addresses ([the X-32 executable](../formats/x32-executable.md#the-image)). The functions here remove their own arguments, so argument lists are in stack order ([calling conventions](../formats/compiler.md#calling-conventions)). The frame loop that runs a screen is [the start-up's](startup.md#the-frame-loop).
+Addresses are `ES1GO` image addresses ([the X-32 executable](../formats/x32-executable.md#the-image)). The functions here remove their own arguments, so argument lists are in stack order ([calling conventions](../formats/compiler.md#calling-conventions)). The frame loop that runs a screen is [the start-up's](startup.md#the-frame-loop), and how the open menu takes the mouse and the keys is [the menus' input](menu-input.md).
 
 ## Where the object files start and end
 
@@ -23,7 +23,7 @@ The image stores each class's name just before its vtable, and the word before t
 
 ## The screens
 
-**A screen is a number. The numbers a message may name are the zero-ended list `Shell_ScreenIds` (`000817e0`); 41 of them build something of their own when opened, by the table at `00082060`, and the rest only become the current screen.** The table's 41 numbers are followed by their targets at `00082104`, case bodies of `Shell_HandleMessage` (`0003c7d8`). Most cases allocate a `0x26`-byte screen object, store their class's vtable, and make it the current menu; `Shell_HandleMessage` then opens it with `Menu_Open`. The handler is the class's slot `+8`:
+**A screen is a number. The numbers a message may name are the 41 of the zero-ended list `Shell_ScreenIds` (`000817e0`), and each has a case of its own in the table at `00082060`, though some cases (1490, 1499, 1520, 1320) make no menu.** The table holds the same 41 numbers as the list, in another order, followed by their targets at `00082104`, case bodies of `Shell_HandleMessage` (`0003c7d8`). Most cases allocate a `0x26`-byte screen object, store their class's vtable, and make it the current menu; `Shell_HandleMessage` then opens it with `Menu_Open`. The handler is the class's slot `+8`:
 
 | Screen | Class (vtable) | Handler | Backdrop |
 |---|---|---|---|
@@ -51,13 +51,13 @@ The image stores each class's name just before its vtable, and the word before t
 | 1300 | `OptionsMenu` (`00081f7e`) | `OptionsMenu_OnMessage` (`0002b79d`) | |
 | 1330 | `BattlesetAlert` (`00081fa2`) | `0002bb29` | |
 | 1500, 1501 | `WarMapMenu_Ctor` (`0002bbbd`) | | 6000 |
-| 1610 | `0002c743`, then `ShellBackdrop_LoadPalette` | | 4000 |
+| 1610 | `0002c743`, then `ShellBackdrop_LoadPalette`(backdrop, 1610), `res32\regn1610.dpl` | | 4000 |
 | 1700, 1710 | `ServiceBayMenu` (`00081fc6`) | `0002d327` | 4000 |
 | 1800, 1820 | `ArmingMenu` (`00081fe6`) | `0002e54c` | 4000 |
 | 1900 | `RepairMenu` (`00082006`) | `0002f009` | 4000 |
 | 1920 | `0002f1aa` | | |
 | 1910 | `RepairPrefsAlert` (`0008202c`) | `0003052f` | |
-| 2000 | `0002986f`, `000307c9` | | 4000 |
+| 2000 | `0002986f`(3), then `000307c9`(0) makes the menu; sets the dword `0007fce4` to `0008003c` ([the mouse](menu-input.md#the-mouse)) | | 4000 |
 | 2010 | `SalvageAllocAlert` (`00082050`) | `00030ed3` | |
 
 Every class derives from `Menu` (`00081bd8`), whose slot `+4` is `Menu_Dtor` (`0003b6d1`) and slot `+8` `Menu_OnMessage` (`0003b764`), which does nothing. Each subclass's slot `+4` is its destructor, `MainMenu_Dtor` (`0003b771`) and the 22 others of the same code ([Functions](#functions)): it stores its vtable, then `Menu`'s, then the region's three, and frees the object when bit 0 of its flags is set. The screens other than the main menu's and 9999's are later modules' ([Open](#open)).
@@ -74,7 +74,7 @@ Every class derives from `Menu` (`00081bd8`), whose slot `+4` is `Menu_Dtor` (`0
 
 ### The backdrop
 
-**Behind every menu is a full-screen picture with its own palette and music, one for each group of screens.** The group of a screen is `Shell_BackdropForScreen` (`00040afa`)(current, screen), which looks the screen up among the 20 numbers at `000821a8` and answers 1000 for 1000, 1200, 1100, 1310, 1320 and 9999; 7000 for 1490; 3000 for 1499; 6000 for 1500 and 1501; 5000 plus the word at `0007ea94` + 2 × the current career record's `+6` for 1510 and 1520; 4000 for 1700, 1710, 1900, 1800, 1820, 2000, 1610 and 5555; and *current* for any other. The current group is the word `Shell_BackdropId` (`000817c4`).
+**Behind every menu is a full-screen picture with its own palette and music, one for each group of screens.** The group of a screen is `Shell_BackdropForScreen` (`00040afa`)(current, screen), which looks the screen up among the 20 dwords at `000821a8` and answers 1000 for 1000, 1200, 1100, 1310, 1320 and 9999; 7000 for 1490; 3000 for 1499; 6000 for 1500 and 1501; 5000 plus the word at `0007ea94` + 2 × the current career record's `+6`, its campaign, for 1510 and 1520 (the table holds 0, 1, 2, 3, 1, 2, 3, 1 for campaigns 0 to 7, [the campaigns](../formats/bst-battle-sets.md#battle-sets)); 4000 for 1700, 1710, 1900, 1800, 1820, 2000, 1610 and 5555; and *current* for any other. The current group is the word `Shell_BackdropId` (`000817c4`).
 
 `ShellBackdrop_Show` (`000395a0`)(backdrop, group):
 
@@ -86,7 +86,7 @@ Every class derives from `Menu` (`00081bd8`), whose slot `+4` is `Menu_Dtor` (`0
 
 `ShellMusic_Play` (`00020a70`)(track), with a sound manager (`00082768`), calls `00020a18`, makes the sound object `0007fcfc` with `SoundManager_CreateObject`(manager, 2, 0, track), loads it with `SoundObject_LoadSample`, calls its slot `+0x28` with (−1, −1, `0xffff`), and plays it through slot `+0x10` when the byte `0007fcb8` is set, which `prefs.cfg` option 0 sets ([the shared data](startup.md#the-shared-data)).
 
-The backdrop is the object `Shell_Backdrop` (`000a09a0`), `0x1c` bytes with a `GLRectangleRegion` at `+4`: `ShellBackdrop_Ctor` (`0003918e`) builds the region with a zero rect and clears `0007fcfc`; `ShellBackdrop_Dtor` (`00039422`) destroys the palette `0007fcd0` and clears it. `ShellBackdrop_Draw` (`0002141c`)(backdrop) copies the region from page 2 to the draw page.
+The backdrop is the object `Shell_Backdrop` (`000a09a0`), `0x1c` bytes with a `GLRectangleRegion` at `+4`: `ShellBackdrop_Ctor` (`0003918e`) builds the region with a zero rect and clears `0007fcfc`; `ShellBackdrop_Dtor` (`00039422`) destroys the palette `0007fcd0` and clears it. `ShellBackdrop_SetPicture` with no bitmap zeroes the rect's right `+0x10` (twice) and leaves its bottom `+0x14`. `ShellBackdrop_Draw` (`0002141c`)(backdrop + 4) copies the region from page 2 to the draw page and adds a dirty box of delay 0 at the rect's corner whose width and height are the rect's right `+0x10` and bottom `+0x14` themselves: for the full-screen picture, 319 × 199 from (0, 0), before `DirtyBox_Add`'s rounding ([dirty boxes](../rendering/screen-pages.md#dirty-boxes)).
 
 ## Opening and closing a screen
 
@@ -106,12 +106,24 @@ The backdrop is the object `Shell_Backdrop` (`000a09a0`), `0x1c` bytes with a `G
 `Menu_Open`(menu, number):
 
 1. stores the number at the menu's `+0`, sets the byte `Shell_SyncPointer` (`0007fd07`), and builds the window and its controls with `Menu_BuildFromDlg` ([the build](../formats/dlg-menu-dialogs.md#the-kinds));
-2. makes the window the active one with `DUIWindow_SetActive` (`0001c536`) ([the active window](#the-active-window));
-3. sets controls' states by the number. For the main menu, 1000: with no careers in the log (`0009b210`, [the careers log](../formats/career-log-and-player-mec.md#loading)'s count), button 1700 is made inactive, state 2. The other numbers' changes (1310, 1920, 1100, 1200, 2000, 1610, 1800, 1820, 1700 and 1900) are later modules';
+2. makes the window the active one with `DUIWindow_SetActive` (`0001c536`) ([the active window](menu-input.md#the-active-window));
+3. sets controls' states by the number, finding each with `DUIWindow_FindControlById` (`0001be16`), which takes a control in any state, or `DUIWindow_FindEnabledControlById` (`0001bda4`), which passes over inactive ones; it makes a control inactive by writing state 2 to `+0x19` and 1 to *changed* `+0x1f` itself, with no call of the control's slot `+0xc`. For the main menu, 1000: with no careers in the log (`0009b210`, [the careers log](../formats/career-log-and-player-mec.md#loading)'s count), button 1700, found in any state, is made inactive. The other numbers' changes (1310, 1920, 1100, 1200, 2000, 1610, 1800, 1820 and 1700) are later modules';
 4. unless the number is 9999, puts the focus on the first control whose key is `Space` (`0x39`), or on control 0, with `DUIWindow_PointAtControl` (`0001c3ec`), and stores it in `DUIWindow_FocusIndex` (`0007f0d8`);
-5. allocates the saved background, `Region_PixelCount` of the region `+0xe` bytes, zeroed, at `+2`, and sets the byte `DUIWindow_InputReady` (`0007f0dc`).
+5. for 1900 only, after the focus: makes control 1901 inactive when the word `00080892`, less 1 when `0002a277` answers non-zero, is below 2 (a later module's);
+6. allocates the saved background, `Region_PixelCount` of the region `+0xe` bytes with `Mem_New`, zeroed with `memset`, at `+2`, and sets the byte `DUIWindow_InputReady` (`0007f0dc`).
 
-**The build.** `Menu_BuildFromDlg` (`0003a1f7`)(menu, number), whose one call `es2_xref.py` finds is `Menu_Open`'s, opens `eng\menu<n>.bin` through `VolRStream_CtorFromPath` and, when that opens, reads it into a text table with `Text_LoadDataFile`; then it opens `dlg\menu<n>.dlg`, reads the count, and for each record reads the four rect words into the low halves of four zeroed dwords, the three bytes and the id. It handles the record by its kind ([the kinds](../formats/dlg-menu-dialogs.md#the-kinds)), then counts it. At the end it closes and destroys both streams and the table.
+**The build.** `Menu_BuildFromDlg` (`0003a1f7`)(menu, number), whose one call `es2_xref.py` finds is `Menu_Open`'s, opens `eng\menu<n>.bin` through `VolRStream_CtorFromPath` and, when that opens, reads it into a text table with `Text_LoadDataFile`; then it opens `dlg\menu<n>.dlg`, reads the count, and for each record reads the four rect words into the low halves of four zeroed dwords with `VolRStream_Read`, then through the stream's slot `+0x1c` the bytes kind, style and key, in the file's order, and the id as two bytes. It handles the record by its kind ([the kinds](../formats/dlg-menu-dialogs.md#the-kinds)), then counts it: the counter (`[EBP-0x114]`) is the record's text line, and every record advances it, one that builds nothing included (the loop's end `0003b0e3` is also id 1211's target). At the end it closes and destroys both streams and the table.
+
+What the build does beyond [the kinds' table](../formats/dlg-menu-dialogs.md#the-kinds):
+
+- **Kinds 0, 1, 4 and 5**, before the text: the five ids at `0008196c` jump through the targets at `00081980`. 1211 (`0003b0e3`) skips the record; the other four take a text other than the record's own line and then go on to the kind's code as any record does, all from the current career record, `0009b23b` + `0x1f7` × the word `0009b21f` ([the career record](../formats/bst-battle-sets.md#the-career-record)): 5556 (`0003a5c8`) line (the record's word `+0xa8`) + 2 of the menu's own table; 5557 (`0003a60e`) line (that word) + 4 of it; 5558 (`0003a654`) line (the record's word `+0xaa`) + `0x1b` of `eng\watext.bin` (`0009afa8`) when the word `+0xa8` is 0, and line (`+0xaa`) + `0xd5` of it otherwise; 1223 (`0003a705`) the text `maybe_Roster_NextMissionEntry` (`0001838d`)(`0009b218`) answers ([Open](#open)).
+- **Kind 0** passes the text's length (`REPNE SCASB`) in the high word of the dword whose low word is the id; `MTWindow_Ctor` reads only the low word. A style other than 0 or 1 builds no window and leaves `+6` as it was, and the rect is still copied to `+0x12`.
+- **Kind 3**: style 1 takes its text, the record's own line, only when the key byte is 0, and otherwise passes no text. Both button constructors get the key as the low byte of the dword read from the key byte's address, which holds the style, a stack byte and the id's low byte above it. Menu 1300's button 100 looks `Shell_ReturnScreen` up among the four values at `000819e0`, targets `000819f0`: 1000 the record's own line (`0003a863`), 1100 the line after it (`0003a87d`), 1710 and 1200 the line two after (`0003a89b`); for any other value it reads no line and keeps the text pointer (`[EBP-0x208]`) the previous record left ([the return screen](main-menu.md#the-return-screen)).
+- **Kind 14**: each of the 17 ids at `00081b08` adds a hotspot with `DUIWindow_AddHotspot`(window, *a*, id, handler, rect), the targets at `00081b4c` differing only in the handler and, for 1502, *a*: 1612–1614 `maybe_PilotPortraitHotspot_Draw` (`00017a19`); 1619–1622 `00017b4a`; 1615–1618 `00017d9f`; 1231 `0001705e`; 1522 `000175d7`; 1502 `0002bbaf` with *a* the rect `000a02d4`; 2005 `0002845c`; 1803 `0002d5bf`; 1811 `0002dacf` ([Open](#open)). Any other id builds nothing.
+- **Kind 15** calls `Menu_ListLines`(id) before it looks the id up among the 23 at `00081a00` (1314, 1315, 1316, 1318, 1116–1120, 1325–1327, 1903, 1904, 1905, 1907, 1923, 1906, 1927, 1202, 1922, 1808, 1223), so a list whose id is among them has its lines built before its own code runs. The selected word passed for any other id is the low word of a local zeroed before the lookup, 0.
+- A control is added with `DUIWindow_AddControl`, which also adds its key ([the window](#the-window)). Text buttons carry keys as icon buttons do: button 99 of menu 1230 `0x01` Esc, button 1624 of menu 1610 `0x39` Space. Some labels carry a non-zero key byte, which the build does not read.
+
+`Menu_ListLines` (`0003750d`)(id) looks the id up among the 28 at `000812f4` (1921, 1924, 1925, 1926, 1907, 1906, 1927, 1923, 1116, 1117, 1119, 1120, 1118, 1314, 1315, 1316, 1318, 1331, 1101, 1002, 1202, 1904, 1903, 1905, 1922, 1808, 1809, 1223), targets at `00081364` in bytes Ghidra left undefined; 1002's (`00037706`) returns `CareerLog_CurrentNameArray` (`000182f8`)(`0009b20c`), the main menu's list ([the main menu's list](main-menu.md#the-list)). Any other id gets `WaText_LinesFromList` (`000373fa`)(`000811a4`): a new zero-ended array of the lines of `eng\watext.bin` that the `int16` words of the list number, as many as `WordList_CountNonNegative` (`000373d3`) counts before the first negative word. The list at `000811a4` opens with −1, so that array holds only its end, and the list box is empty. `00037827`, kind 16's lines, jumps elsewhere for the eleven ids at `0008144c` and otherwise returns 0.
 
 `es2_xref.py --decode` finds one write of `Shell_SyncPointer`, `Menu_Open`'s, and one read, `Shell_PresentFrame`'s, which does not clear it, so from the first menu on every frame's step 7 puts the cursor and the mouse driver at the pointer `Shell_PointerX`, `Shell_PointerY` (`0009aff0`, `0009aff4`) with `Cursor_SyncPosition` and `Mouse_SetPosition` ([presenting a frame](../rendering/screen-pages.md#presenting-a-frame)).
 
@@ -119,7 +131,7 @@ The backdrop is the object `Shell_Backdrop` (`000a09a0`), `0x1c` bytes with a `G
 
 `Menu_Close`(menu):
 
-1. clears `DUIWindow_InputReady`. While the byte `0008444e` is set, it puts the saved background back over the window's rect with `Region_Restore`, first on page 2 and then on the draw page, and adds the window's rect with `DirtyBox_Add`, delay 1 ([dirty boxes](../rendering/screen-pages.md#dirty-boxes));
+1. clears `DUIWindow_InputReady`. While the byte `0008444e` is set, it puts the saved background back with `Region_Restore` through the region `+0xe`, at the window's corner (its dwords `+0` and `+4`): first on the draw page the display (`+0x38`) holds at entry, then with the draw page set to page 2 (`0007fccc`), and then puts the entry's draw page back. It adds the window's rect with `DirtyBox_Add`(1, bottom − top, right − left, top, left), delay 1, the differences as the width and height rather than the inclusive sizes ([dirty boxes](../rendering/screen-pages.md#dirty-boxes));
 2. frees the saved background, and clears the active window with `DUIWindow_ClearActive` (`0001c57c`);
 3. destroys the window: for menus 1501, 1500, 1700, 1710, 1510 and 1520 (the six numbers at `00081b90`) with `DUIWindow_Dtor` (`0001afa1`), for any other with `MTWindow_Dtor` (`00036a09`), flags 3; clears `+6`; and makes the full-screen render context `0007fcd8` again with `RenderContext_GetFullScreen`.
 
@@ -127,17 +139,17 @@ The backdrop is the object `Shell_Backdrop` (`000a09a0`), `0x1c` bytes with a `G
 
 ### Changing screens — `Shell_HandleMessage` (`0003c7d8`)
 
-**The frame loop's step 4 hands the pending message to `Shell_HandleMessage`, which gives it to the current menu's handler and then, when the message names a screen, closes the menu and opens that screen.** The message is four words, `Shell_PendingMessage` (`0007fcb0`–`0007fcb7`): a code, the control's index, a value and the target screen ([a message's path](#a-messages-path)). `Shell_HandleMessage`(the dwords `0007fcb0`, `0007fcb4`), on a copy of the four on its stack:
+**The frame loop's step 4 hands the pending message to `Shell_HandleMessage`, which gives it to the current menu's handler and then, when the message names a screen, closes the menu and opens that screen.** The message is four words, `Shell_PendingMessage` (`0007fcb0`–`0007fcb7`): a code, the control's index, a value and the target screen ([a message's path](menu-input.md#a-messages-path)). `Shell_HandleMessage`(the dwords `0007fcb0`, `0007fcb4`), on a copy of the four on its stack:
 
 1. sets the pending message to (−1, −1, 0, 0), and answers 0 when the code is −1;
 2. calls the current menu's slot `+8` with the copy, which may change it;
 3. with target 99, *back*: unless the current screen is 1000, or the previous one is 1500 or 1501 and the object `Shell_MissionMap` (`000809a4`) is not set, the target becomes `Shell_PreviousScreen`; and when the word `Shell_ResumeScreen` (`000817be`) is not −1, `Shell_CurrentScreen` takes it and it is set to −1;
 4. answers 0 when the target is not in `Shell_ScreenIds`;
 5. for target 3000 or 3333 from screen 1500 or 1501 sets the byte `000817bd` to 3 while the byte `000809a8` is set, and to 0 otherwise;
-6. closes the current menu with `Menu_Close`, destroys it through its slot `+4` with flags 3, and clears `Shell_CurrentMenu`;
-7. with the byte `000809a9` 1 clears it and plays music 13, `intro\iintro.ttm` and `intro\earth_w.ttm`; with 2 plays `intro\credit_a.ttm` and `credit_b.ttm`; each first calls the routine at `0008662c`;
-8. takes the target's group with `Shell_BackdropForScreen`; when it is not 0 and differs from `Shell_BackdropId`, or the byte `0007fcd7` is 2, it first presents a frame after calling `0008662c` when the group was 1000, and shows the new backdrop with `ShellBackdrop_Show`, storing the group in `Shell_BackdropId`. With `000809a9` 2 it sets `Shell_MusicTrack` to 1 and `0007fcd5`, and clears `000809a9`;
-9. runs the target's case in the table, when it has one;
+6. with a current menu, closes it with `Menu_Close`, destroys it through its slot `+4` with flags 3 while `Shell_CurrentMenu` is still set, and clears `Shell_CurrentMenu`;
+7. with the byte `000809a9` 1 clears it, hides the cursor (`0008662c`, [the cursor](../rendering/screen-pages.md#the-cursor)), sets the scripts' path prefix to `intro\` with `Ttm_SetPathPrefix`, plays music 13, `iintro.ttm` and `earth_w.ttm` with `Shell_PlayTtm`, and sets the prefix back to `res32\`; with 2 does the same with `credit_a.ttm` and `credit_b.ttm` and no music, leaving the byte for step 8;
+8. takes the target's group with `Shell_BackdropForScreen`; when it is not 0 and differs from `Shell_BackdropId`, or the byte `0007fcd7` is 2, it first, when the old group is 1000, hides the cursor and presents a frame with `Shell_PresentFrame` itself, then sets the byte `Shell_BackdropChanged` (`000817c6`) to 1, stores the group in `Shell_BackdropId` and shows the new backdrop with `ShellBackdrop_Show`; otherwise it sets `Shell_BackdropChanged` to 0. With `000809a9` 2 it then sets `Shell_MusicTrack` to 1 and `0007fcd5`, and clears `000809a9`;
+9. runs the target's case in the table (`REPNE SCASD` over the 41 dwords, `JMP [EDI+0xa0]`);
 10. opens the new menu with `Menu_Open`(menu, target) when a case made one; sets `Shell_PreviousScreen` to 1000 for target 1000 and to the current screen otherwise, `Shell_CurrentScreen` to the target; draws the screen with `Shell_DrawScreen` and answers 1.
 
 **Screen 9999** sets `Shell_ExitCode` to 5 when `Shell_DemoRequested` (`000817ce`) is set and to 2 otherwise, makes a `SimLoadMenu`, loads the palette `res32\regn9999.dpl`, clears `0007fcd5`, puts the string at `00080994` into `000aacfe` with `0007fcd7` 2, and copies the rect `0009b000` from the draw page to the visible page with `Display_CopyRectToPage`. The frame loop then sees 9999 and ends ([the ways out](startup.md#the-ways-out)).
@@ -148,14 +160,14 @@ The current menu is destroyed at the shutdown by `Shell_CloseScreens` (`0003c081
 
 **A screen is drawn once when it opens and redrawn only where something changed.** `Shell_DrawScreen` (`0003c1b7`), while the byte `0008444e` is set:
 
-1. clears `DUIWindow_InputReady` and calls the routine at `0008662c`;
-2. with the byte `000817c6` clear: on screens 1700 and 1710, the career record's HERC diagram (`00029651`, `CareerRecord_SelectPilot`; [the HERC diagrams](../formats/herc-diagrams.md)) is drawn, between `0004c053` and `0004bc0d` when the record's `+0x12` and `+0xe` differ. With it set: unless `0007fcd7` is set or the screen is 1000, `0008663c` is called with (the draw page, 0) and (the visible page, 0); with `0007fcd7` 2 the `.ANM` at `000aacfe` is played with `Anm_Play`(1, `0xa`, name) ([playing](../formats/anm-animation.md#playing)) and `0007fcd7` cleared; the backdrop is drawn with `ShellBackdrop_Draw`; and backdrop 4000 calls `0001240b` and the HERC diagram, any other `00012467`;
+1. clears `DUIWindow_InputReady` and hides the cursor, the raster's slot 31 (`0008662c`, [the cursor](../rendering/screen-pages.md#the-cursor));
+2. with `Shell_BackdropChanged` (`000817c6`) clear, that is after a change of screen within the backdrop's group: on screens 1700 and 1710, the career record's HERC diagram (`00029651`, `CareerRecord_SelectPilot`; [the HERC diagrams](../formats/herc-diagrams.md)) is drawn, between `0004c053` and `0004bc0d` when the record's `+0x12` and `+0xe` differ, and on any other screen nothing. With it set, after a new backdrop: unless `0007fcd7` is set or the screen is 1000, `0008663c` is called with (the draw page, 0) and (the visible page, 0); with `0007fcd7` 2 the `.ANM` at `000aacfe` is played with `Anm_Play`(1, `0xa`, name) ([playing](../formats/anm-animation.md#playing)) and `0007fcd7` cleared; the backdrop is drawn with `ShellBackdrop_Draw`; and backdrop 4000 calls `0001240b` and the HERC diagram, any other `00012467`;
 3. `DigitalDialog_ShowMessage`(`0009b010`) and `Ttm_RunAll`;
-4. with a current menu: makes the render contexts `0007fcdc` (`0004c88a`, of the window's rect) and `0007fcd8` (`0004c53c`) and the scripts' default, sets the source and draw pages to page 2, and saves the background under the window into `+2` with `Region_Save`. Unless the message box is up (the byte `0009b013`, `Shell_MessageBox` (`0009b010`)'s `+3`), it draws the window on page 2 with `DUIWindow_Draw` (`0001bfa3`), after running the object `Shell_MissionMap` (`000809a4`)'s slot `+4` and the text box `00018dcb` twice, once per page, while the byte `000817bd` counts down; then sets the draw page back. Still unless the message box is up: on backdrop 1000, except screen 9999, it adds the whole screen as a dirty box, delay 1, so the next frames copy page 2 onto both pages; otherwise it draws the window again on the draw page and, while `000809a8` is set, calls `00009c64` with `000809a4` and sets `000809a8` to 3. It sets the byte `0007fcd6`, which makes the next frame wait 0.1 s ([presenting a frame](../rendering/screen-pages.md#presenting-a-frame));
+4. with no current menu, only sets the draw page back to the one it found; with a current menu: makes the render contexts `0007fcdc` with `RenderContext_GetForRect` (`0004c88a`) and `0007fcd8` with `RenderContext_GetFullScreenAround` (`0004c53c`), both of the window's rect, and hands them to the script interpreter with `Ttm_SetDefaultContext`, installing neither; sets the source and draw pages to page 2, and saves the background under the window into `+2` with `Region_Save`, in whatever render context is installed. `RenderContext_GetForRect` sets the context `00083bc8`, made with `GLViewport_Ctor` (`000512a0`)(0) on first use, to the rect, origin (0, 0), no clip regions (`+4` 0), clip mode 1 and translation 0; `RenderContext_GetFullScreenAround` sets the full-screen context `00083bc4` to (0, 0)–(319, 199), origin (0, 0), clip mode 2 and translation 0, with four clip regions, the 24-byte entries at `000a0a9c`: the screen above the rect, left of it, right of it and below it, so that the scripts drawn through `0007fcd8` stay off the window. Unless the message box is up (the byte `0009b013`, `Shell_MessageBox` (`0009b010`)'s `+3`), it draws the window on page 2 with `DUIWindow_Draw` (`0001bfa3`), after running the object `Shell_MissionMap` (`000809a4`)'s slot `+4` and the text box `00018dcb` twice, once per page, while the byte `000817bd` counts down; then sets the draw page back. Still unless the message box is up: on backdrop 1000, except screen 9999, it adds the whole screen as a dirty box, `DirtyBox_Add`(1, 200, 320, 0, 0), so the next frames copy page 2 onto both pages; otherwise it draws the window again on the draw page and, while `000809a8` is set, calls `00009c64` with `000809a4` and sets `000809a8` to 3. It sets the byte `0007fcd6`, which makes the next frame wait 0.1 s ([presenting a frame](../rendering/screen-pages.md#presenting-a-frame));
 5. with `0007fcd7` 1 uploads the palette `0007fcd0`, clears `0007fcd4`, plays the `.ANM` with `Anm_Play`(1, `0xb`, name) and clears `0007fcd7`;
-6. puts the source page back, adds the whole screen as a dirty box with delay 0, calls `00086628` unless the screen is 9999, and sets `DUIWindow_InputReady`.
+6. puts the source page back, adds the whole screen as a dirty box with delay 0, shows the cursor again unless the screen is 9999 (slot 30, `00086628`), and sets `DUIWindow_InputReady`.
 
-**Each pass after that** the frame loop's step 5 runs `Shell_TickScreen` (`0003c115`): unless the message box is up it updates the current menu's window with `DUIWindow_Update` (`0001c067`, [updating a window](#updating-a-window--duiwindow_update-0001c067)); and while the object `Shell_MissionMap` (`000809a4`) is set and the byte `000809a8` is above 1 it calls `00009cfb` and lowers `000809a8` when `0007fcd4` is clear, sets it to 2 when it is 1 and the object's byte `+0x4c0` is clear, and to 3 when it is 1 and `+0x4c2` is set ([Open](#open)).
+**Each pass after that** the frame loop's step 5 runs `Shell_TickScreen` (`0003c115`): unless the message box is up it updates the current menu's window with `DUIWindow_Update` (`0001c067`, [updating a window](#updating-a-window--duiwindow_update-0001c067)); and while the object `Shell_MissionMap` (`000809a4`) is set and the byte `000809a8` is above 1 it calls `00009cfb` and lowers `000809a8` when `0007fcd4` is clear, sets it to 2 when it is 1 and the object's byte `+0x4c0` is clear, and to 3 when it is 1 and `+0x4c2` is set; these last two read the object without testing that `Shell_MissionMap` is set ([Open](#open)).
 
 ## The window
 
@@ -164,30 +176,30 @@ The current menu is destroyed at the shutdown by `Shell_CloseScreens` (`0003c081
 | Offset | Holds |
 |---|---|
 | `+0` | the rect, `int32` left, top, right, bottom, on the screen |
-| `+0x10` | a byte: 0 hit-tests the rect; otherwise the pointer must lie within the distance `+0x15` of the point (`+0x11`, `+0x13`), measured as \|dx\| + \|dy\| |
-| `+0x17` | the render context, `000512a0`(0), with the rect copied to its `+0x210`, a zero point to its `+0x220` and 1 to its `+0x208` |
+| `+0x10` | a byte: 0 hit-tests the rect; otherwise the pointer must lie within the distance `+0x15` of the point (`+0x11`, `+0x13`), measured as \|dx\| + \|dy\|. The constructor zeroes it and leaves `+0x11`–`+0x16` unwritten |
+| `+0x17` | the render context, `GLViewport_Ctor` (`000512a0`)(0), with the rect copied to its `+0x210`, a zero point to its `+0x220` and 1 to its `+0x208` |
 | `+0x1b` | `int16` the control count |
 | `+0x1d` | `int16` `0xffff` |
 | `+0x1f` | the controls, up to 64 pointers |
 | `+0x11f` | the keys, a zero-ended 64-byte list of scan codes and their release codes |
 | `+0x19f` | 15 hotspots of `0x38` bytes (`__vec_ctor` of `WindowHotspot_Ctor`, `0001ad4e`) |
-| `+0x4e7` | `int16` the hotspot count |
+| `+0x4e7` | `int16` the hotspot count, which `DUIWindow_Ctor` does not write: `MTWindow_Ctor` zeroes it, and a plain window keeps what the allocation held |
 | `+0x4e9` | the vtable: `DUIWindow`'s `0007eff0`, slot `+4` `DUIWindow_AddLabel` (`0001ae9b`), which does nothing, and `+8` `DUIWindow_DrawBackground` (`0001aeb7`), which does nothing |
 
-`MTWindow_Ctor` (`00036874`, class `MTWindow`) takes the window record's id, the title and the rect. It builds the window in `0x5a7` bytes with `DUIWindow_Ctor`, six label entries of `0x12` bytes at `+0x537`, and the vtable `00081140`, whose slot `+4` is `MTWindow_AddLabel` and `+8` `MTWindow_Draw` (`00036b4c`). It loads `res32\menu<id>.dba` with `Resource_LoadBitmapArray` into `+0x5a3`; id 9999 loads `res32\menu<9999 − r>.dba`, `r` from `Math_RandomBelow(5)`. It sets `+0x4ed` to the `title` font (`000aacc6`, [the shell's fonts](../formats/styles-dat.md#the-loads)); the six ids at `00081174`, 999, 1240, 4444, 1610, 1800 and 1920, go elsewhere from here ([Open](#open)). For the rest it sets `+0x4f1` to the font in `000aacca`, `cpylw`, which `Widget_LoadStylesAndFonts` stores over `Shell_LoadData`'s `gray` ([the loads](../formats/styles-dat.md#the-loads)), copies the title to `+0x4f5`, or a 0 byte when there is none, and zeroes the label count `+0x535` and the hotspot count `+0x4e7`.
+`MTWindow_Ctor` (`00036874`, class `MTWindow`) takes the window record's id, the title and the rect. It builds the window in `0x5a7` bytes with `DUIWindow_Ctor`, six label entries of `0x12` bytes at `+0x537`, and the vtable `00081140`, whose slot `+4` is `MTWindow_AddLabel` and `+8` `MTWindow_Draw` (`00036b4c`). It loads `res32\menu<id>.dba` with `Resource_LoadBitmapArray` into `+0x5a3`; id 9999 loads `res32\menu<9999 − r>.dba`, `r` from `Math_RandomBelow(5)`. It sets `+0x4ed` to the `title` font (`000aacc6`, [the shell's fonts](../formats/styles-dat.md#the-loads)) and the label font `+0x4f1` by the id: the six ids at `00081174` jump through the targets beside them, 999, 1240 and 4444 to `nm_green` (`000aacda`), 1610 and 1800 to `cstats_2` (`000aacea`) and 1920 to `active` (`000aacce`), and any other id takes `000aacca`, `cpylw`, which `Widget_LoadStylesAndFonts` stores over `Shell_LoadData`'s `gray` ([the loads](../formats/styles-dat.md#the-loads)); every id then goes on alike (`00036987`). It copies the title to `+0x4f5`, or a 0 byte when there is none, and zeroes the label count `+0x535` and the hotspot count `+0x4e7`.
 
-`MTWindow_AddLabel` (`00036a93`), the slot kinds 1, 4 and 5 call, keeps up to six labels and drops the rest: for each, a copy of the text in a new buffer of the length given, at `+0`, the point at `+4` and `+8`, the width at `+0xc` and the mode at `+0xe`.
+`MTWindow_AddLabel` (`00036a93`), the slot kinds 1, 4 and 5 call, keeps up to six labels and drops the rest: for each, a copy of the text in a new buffer of the length given, at `+0`, the point at `+4` and `+8`, the `int16` width at `+0xc` and the mode as a dword at `+0xe`, the entry's last four bytes.
 
-`DUIWindow_AddHotspot` (`0001b2de`) keeps up to 15 areas: for each, 1 at `+1`, the rect at `+2` and again at `+0x24`, the second argument at `+0x12`, the id at `+0x16`, the handler at `+0x18` and 0 at `+0x34`. The byte `+0` is set when the area is pressed.
+`DUIWindow_AddHotspot` (`0001b2de`)(window, *a*, id, handler, rect) keeps up to 15 areas: for each, 1 at `+1`, the rect at `+2` and again at `+0x24`, *a* as a dword at `+0x12`, the id at `+0x16`, the handler at `+0x18` and 0 at `+0x34`. The byte `+0` is set when the area is pressed. `DUIWindow_HitHotspot` (`0001beca`) takes *a* as a pointer to a rect: a point inside the hotspot's rect but also inside that rect, when *a* is not 0, does not hit it.
 
-`DUIWindow_AddControl` (`0001b207`) appends a control to `+0x1f`, counted at `+0x1b`. When the control's key byte `+0x1d` is non-zero it passes the key, and the key with bit 7 set, to `DUIWindow_AddKey` (`0001b296`), which appends a byte to the key list unless the list holds it already.
+`DUIWindow_AddControl` (`0001b207`) appends a control to `+0x1f`, counted at `+0x1b`, with no test against the 64 slots. When the control's key byte `+0x1d` is non-zero it passes the key, and the key with bit 7 set, to `DUIWindow_AddKey` (`0001b296`), which appends a byte to the key list unless the list holds it already; its walk has no bound either, so a 65th distinct code would be written past the 64 bytes the constructor zeroes.
 
 ### The menu window's drawing — `MTWindow_Draw` (`00036b4c`)
 
 `MTWindow_Draw`(window) draws, in the window's render context, whose origin is the window's corner:
 
-1. the first bitmap of `+0x5a3`, `res32\menu<id>.dba`, at (0, 0), with `Bitmap_Blit`;
-2. with a title, its plate: *y0* 4 on backdrops 4000 and 2000 and 5 on the others, *y1* = *y0* + 17; a margin *m* of 20 on backdrop 4000 and 40 on the others; *x0* = (window width − title width − *m*) / 2 and *x1* = *x0* + title width + *m*, the widths by `HudFont_MeasureString` in the `title` font. Four lines through `0004ba84` in colors `0x10`, `0x10`, `0x1b` and `0x1c`, then frames 0 to 3 of `res32\corners.dba` (`000ab4ee`) at the plate's corners, set 4 pixels in, and the title in the `title` font, centered between *x0* and *x1* (the render context's `+0x231` 2, `+0x235` the width; `HudFont_DrawString`), at the plate's middle row less 1;
+1. the first bitmap of `+0x5a3`, `res32\menu<id>.dba`, with `Bitmap_Blit` at the window's own first two dwords, its corner on the screen: `DUIWindow_Draw` has cleared the context's translation `+0x20c`, so the corner is not added again. It then sets `+0x20c`, and the rest is drawn relative to the corner;
+2. the plate, for every menu window: the test at `00036b86` (`ADD EBX,0x4f5`) is of the title buffer's address, never 0, so a window with an empty title gets the plate too. *y0* 4 on backdrops 4000 and 2000 and 5 on the others, *y1* = *y0* + 17; a margin *m* of 20 on backdrop 4000 and 40 on the others; *x0* = (*w* − title width − *m*) / 2, truncating, with *w* the window's `int16` right − left, and *x1* = title width + *x0* + *m*, the widths by `HudFont_MeasureString` in the `title` font. Four lines through `Raster_DrawLineColour` (`0004ba84`), each under the pen {0, color} at the render context's `+0x228`: the top (*x0*, *y0*)–(*x1*, *y0*) and the left (*x0*, *y0*)–(*x0*, *y1*) in `0x10`, the right (*x1*, *y1*)–(*x1*, *y0*) in `0x1b` and the bottom (*x1*, *y1*)–(*x0*, *y1*) in `0x1c`. Then frames 0 to 3 of `res32\corners.dba` (`000ab4ee`) with `Bitmap_Blit`, flags 0, at (*x0*, *y0*), (*x1* − 4, *y0*), (*x0*, *y1* − 4) and (*x1* − 4, *y1* − 4), so only the right and bottom ones are set in. Last the title in the `title` font, centered between *x0* and *x1* (the render context's `+0x231` 2, `+0x235` *x1* − *x0*; `HudFont_DrawString`), its pen at (*x0*, (*y1* − *y0*) / 2 + *y0* − 1), the division truncating;
 3. each label, in the font `+0x4f1`: `HudFont_DrawString` at (*x*, *y* + the font's cell height − 3), the label's mode as `+0x231` and its width as `+0x235`. So kind 1's mode 0 draws the text from *x*, kind 4's mode 1 ends it at *x* + width, and kind 5's mode 2 centers it in the width ([the kinds](../formats/dlg-menu-dialogs.md#the-kinds)).
 
 ### Drawing a window — `DUIWindow_Draw` (`0001bfa3`)
@@ -200,7 +212,7 @@ The current menu is destroyed at the shutdown by `Shell_CloseScreens` (`0003c081
 
 ## The controls
 
-**A control is a rect, an id, a state and a vtable; the id is the screen a press of it names.** `DUIControl_CtorWithKey` (`0001a7e5`)(control, *focusable*, key, rect) and `DUIControl_Ctor` (`0001a716`)(control, *focusable*, id, rect) build the `DUIControl` base, `0x24` bytes, storing the vtable `0007ef92` and the rect with `DUIControl_SetRect` (`0001a8b3`), which also clears `+0x19` and `+0x1f`:
+**A control is a rect, an id, a state and a vtable; the id is the screen a press of it names.** `DUIControl_CtorWithKey` (`0001a7e5`)(control, *focusable*, key, rect) and `DUIControl_Ctor` (`0001a716`)(control, *focusable*, id, rect) build the `DUIControl` base, `0x24` bytes, zeroing the byte `+0x10` and storing the vtable `0007ef92` and the rect with `DUIControl_SetRect` (`0001a8b3`), which also clears `+0x19` and `+0x1f`; neither writes `+0x1b`, which the derived constructors set. `DUIControl_SetHitMode` (`0001a4f4`)(control, mode) stores the mode at `+0x10` and, for mode 1, sets the distance `+0x15` to (right − left) >> 1 and the point `+0x11`, `+0x13` to (left + that, top + that), so the control is hit inside the diamond inscribed in the top square of its rect:
 
 | Offset | Holds |
 |---|---|
@@ -208,7 +220,7 @@ The current menu is destroyed at the shutdown by `Shell_CloseScreens` (`0003c081
 | `+0x10` | a byte: 0 hit-tests the rect; otherwise the distance test of the window's `+0x10`, with the point at `+0x11`, `+0x13` and the distance `+0x15` |
 | `+0x17` | `int16` the id |
 | `+0x19` | `int16` the state: 0 up, 1 pushed, 2 inactive |
-| `+0x1b` | `int16` how a press is tracked: 0 a button's, 1 the control follows the pointer while pressed, 2 the control holds the input ([the mouse](#the-mouse)) |
+| `+0x1b` | `int16` how a press is tracked: 0 a button's, 1 the control follows the pointer while pressed, 2 the control holds the input ([the mouse](menu-input.md#the-mouse)) |
 | `+0x1d` | the key, a scan code, or 0 |
 | `+0x1e` | *focusable*: 1 for buttons, which `Tab` stops at |
 | `+0x1f` | *changed*: set when the control needs drawing |
@@ -224,7 +236,7 @@ The slots the window code calls:
 | `+0x2c` | a release, (control): the message's value | `DUIControl_GetValue` (`0001a6ac`): 1 | `DUIButtonControl_GetValue` (`0001d088`): 1 |
 | `+0x38` | a press or a move of a tracking control, (control, point relative to the window) | | |
 | `+0x3c` | a typed character to the holding control, (control, character) | | `MTButton_SetTextFromTable` (`0001d393`) |
-| `+0x40` | a key code to the holding control, (control, code & `0xff7f`) | | |
+| `+0x40` | a key code to the holding control, (control, code & `0x7f`) | | |
 | `+0x48` | `DUIWindow_Update`, (control): the rect | `BarGraph_GetRectWindowCopy` (`0001a70a`) | `BarGraph_GetRectButtonCopy` (`0001d0e6`) |
 
 `MTButton`'s slots `+0x10` and `+0x18`, `MTButton_Highlight` (`0001d1ce`) and `MTButton_Unhighlight` (`0001d1e7`), set and clear the byte `+0x94` and set *changed* ([Open](#open)).
@@ -233,9 +245,9 @@ The slots the window code calls:
 
 Kind 3's style 1 builds an icon button, `MTBmpButton_Ctor` (`0001d47d`, class `MTBmpButton`), with no text when the key is non-zero; any other style a text button, `MTButton_Ctor` (`0001cde8`, class `MTButton`). The main menu's six are text buttons with no key. Menu 1300's button 100 takes its text by `Shell_ReturnScreen` (`0007fce8`) among the four values at `000819e0` ([the return screen](main-menu.md#the-return-screen)); when it is none of them, the text pointer keeps the value an earlier record left in it.
 
-`MTButton_Ctor` builds a `0x95`-byte button with `DUIControl_CtorWithKey`(button, 1, key, rect), sets `+0x1b` to 0, and stores the id at `+0x17`, its vtable `0007f18c` at `+0x20`, the `STYLES.DAT` records 0, 1 and 2 (the pointer `00082654`) at `+0x30`, `+0x34` and `+0x38`, and the `active`, `pushed` and `inactive` fonts (`000aacce`, `000aacd2`, `000aacd6`) at `+0x24`, `+0x28` and `+0x2c`, one per state. It copies the text to `+0x3c` and places it three times at `+0x7c`, once per font: x the rect's left, y the bottom less half of (height − the font's cell height) less 2, the pushed one a pixel lower than the up one. With no text, `+0x3c` and the points are 0. `MTButton_SetTextFromTable` (`0001d393`)(button, line) copies line *line* of `eng\watext.bin` (`0009afa8`) to `+0x3c`, places it again and sets *changed*; `Menu_Open` calls it on the buttons of several menus.
+`MTButton_Ctor` builds a `0x95`-byte button with `DUIControl_CtorWithKey`(button, 1, key, rect), sets `+0x1b` to 0, zeroes the bytes `+0x94` and `+0x1f`, and stores the id at `+0x17`, its vtable `0007f18c` at `+0x20`, the `STYLES.DAT` records 0, 1 and 2 (the pointer `00082654`) at `+0x30`, `+0x34` and `+0x38`, and the `active`, `pushed` and `inactive` fonts (`000aacce`, `000aacd2`, `000aacd6`) at `+0x24`, `+0x28` and `+0x2c`, one per state. It copies the text to `+0x3c` and places it three times at `+0x7c`, once per font: x the rect's left, y the bottom less ((`int16` height) − the font's cell height) / 2, truncating, less 2: the up point with the font `+0x24`, the pushed one a pixel lower, and the inactive one with the font `+0x2c`. With no text, `+0x3c` and the points are 0. `MTButton_SetTextFromTable` (`0001d393`)(button, line) copies line *line* of `eng\watext.bin` (`0009afa8`) to `+0x3c`, places it again and sets *changed*; `Menu_Open` calls it on the buttons of several menus.
 
-`MTBmpButton_Ctor` builds a `0xb1`-byte button over a text button, stores its vtable `0007f24a` at `+0x20` and the rect's left and top at `+0x95`, and takes its pictures by key from `res32\corners.dba`, the array `Shell_Main` loads into `000ab4ee`: frame *a* at `+0xa5` and `+0xad`, frame *b* at `+0xa9`. Eight ids take other frames, and four of them also call `0001a4f4`(button, 1).
+`MTBmpButton_Ctor` builds a `0xb1`-byte button over a text button, stores its vtable `0007f24a` at `+0x20` and the rect's left and top at `+0x95`, and takes its pictures by key from `res32\corners.dba`, the array `Shell_Main` loads into `000ab4ee`: frame *a* at `+0xa5` and `+0xad`, frame *b* at `+0xa9`: the frames of states 0, 1 and 2, so an inactive icon button looks as it does up. Eight ids take other frames, and four of them also give themselves the diamond hit area with `DUIControl_SetHitMode`(button, 1).
 
 | Key | Frames *a*, *b* | Other ids |
 |---|---|---|
@@ -246,7 +258,16 @@ Kind 3's style 1 builds an icon button, `MTBmpButton_Ctor` (`0001d47d`, class `M
 | `0x4e` keypad + | 28, 30 | 108: 32, 33 |
 | `0x50` Down, `0x51` PgDn | 21, 23 | 1504: 38, 39 and `0001a4f4` |
 
-Any other key sets no frames, and four ids at `0007f2c4` jump to code Ghidra left undefined.
+With any other key the constructor looks the id up among the four at `0007f2c4`, 1806, 2003, 1807 and 2004, and jumps to `0001d97a` for the first two and `0001d9f9` for the others, code Ghidra left undefined ([Open](#open)); any other id sets no frames.
+
+`MTBmpButton`'s vtable (`0007f24a`) has its own slots `+4`, `+8`, `+0xc` and `+0x48`, and `MTButton`'s for `+0x10`, `+0x18`, `+0x2c` and `+0x3c`:
+
+| Slot | Function | Does |
+|---|---|---|
+| `+4` | `MTBmpButton_Dtor` (`0001da8d`) | stores its vtable, then `MTButton`'s, `DUIButtonControl`'s and the button file's copy of `DUIControl`'s (`0007f1ea`), and frees the button when bit 0 of the flags is set |
+| `+8` | `MTBmpButton_Draw` (`0001db87`) | `Bitmap_Blit` of the state's frame (`+0xa5` + 4 × state), flags 0, at the point `+0x95`; in state 1, the click as `MTButton_Draw`'s, after the blit; the text, centered (the render context's `+0x231` 2) in the frame's `int16` width `+6`, in the state's font at the state's point; *changed* cleared |
+| `+0xc` | `MTBmpButton_Invalidate` (`0001dc9f`) | sets *changed* |
+| `+0x48` | `MTBmpButton_GetRect` (`0001db1d`) | sets `+0x9d`, `+0xa1` to the point `+0x95` plus the state's frame's width `+6` and height `+4`, and answers the rect at `+0x95` |
 
 ### Drawing a control
 
@@ -255,21 +276,22 @@ Any other key sets no frames, and four ids at `0007f2c4` jump to code Ghidra lef
 - **1, pushed**: while the byte `0007fcb9` and the sound object `0007fd00` are set, it stops the object when its slot `+0x30` answers non-zero (slot `+0x14`) and plays it (slot `+0x10`): the click. Then as state 0;
 - **0, up**, and pushed: `00044b86` with the state's `STYLES.DAT` record over the button's rect, and, while the byte `+0x94` is set, `0004b867`(10, rect);
 - **2, inactive**: `00044b86` with record 2;
+- any other state draws no frame;
 
-then, with text, the text in the state's font at the state's point, centered in the button's width (the render context's `+0x231` 2, `+0x235` the width), and *changed* cleared.
+then the text in the state's font at the state's point, centered in the button's width, the `int16` right − left (the render context's `+0x231` 2, `+0x235` the width), and *changed* cleared. The text test is of the text buffer's address, never 0, so the text is always drawn, and an empty one draws nothing.
 
-`CornerFrame_Draw` is `ES1DBSIM`'s `CornerFrame_Draw` (`ES1DBSIM 00044954`) with the shell display's render context `+0x40` for the simulator's `+0x44` ([drawing a frame from a style](../simulation/alert-panels.md#drawing-a-frame-from-a-style)), with `CornerFrame_DrawEdgeRing` (`00044dc8`), `CornerFrame_DrawCorners` (`000451c1`), which takes its pictures from the shell's corner bank, and `Rect_CopyCtorFrameCopy` (`00044d9a`). `Raster_FillFrameRectColours` and `Raster_FrameRectColour` (`0004b867`) are `ES1DBSIM`'s (`ES1DBSIM 00044e50`, `00044e00`) on the render context `000ab612`: the second frames a rect's four edges in one color ([the color helpers](../simulation/alert-panels.md#the-resource-loaders-and-the-color-helpers)), the first fills it in one and then frames it in the other. A button draws with the same two: its state's `STYLES.DAT` record through `CornerFrame_Draw`, and, while highlighted, a frame in color 10 through `Raster_FrameRectColour`.
+`CornerFrame_Draw` is `ES1DBSIM`'s `CornerFrame_Draw` (`ES1DBSIM 00044954`) with the shell display's `+0x40` less 4 for the simulator's `+0x44` less 4: `Raster_InstallRenderContext` (`000513fc`) stores the installed context + 4 there, so it draws in the installed context, the one `000ab612` holds ([drawing a frame from a style](../simulation/alert-panels.md#drawing-a-frame-from-a-style)), with `CornerFrame_DrawEdgeRing` (`00044dc8`), `CornerFrame_DrawCorners` (`000451c1`), which takes its pictures from the shell's corner bank, and `Rect_CopyCtorFrameCopy` (`00044d9a`). `Raster_FillFrameRectColours` and `Raster_FrameRectColour` (`0004b867`) are `ES1DBSIM`'s (`ES1DBSIM 00044e50`, `00044e00`) on the render context `000ab612`: the second frames a rect's four edges in one color ([the color helpers](../simulation/alert-panels.md#the-resource-loaders-and-the-color-helpers)), the first fills it in one and then frames it in the other. A button draws with the same two: its state's `STYLES.DAT` record through `CornerFrame_Draw`, and, while highlighted, a frame in color 10 through `Raster_FrameRectColour`.
 
 ### The list box
 
-Kind 15 builds `MTStrListBox_Ctor` (`0001e11a`, class `MTStrListBox`, vtable `0007f474`) over `DUIVSlider` (`0007f412`) and `DUISliderControl` (`0007f2f8`), a `0x5a`-byte control on `DUIControl_Ctor`(list, 0, id, rect), so `Tab` passes over it: `+0x1b` 1, the range `+0x24` 0 to `+0x26` the line count `0001eac5`(list, lines), the selected line at `+0x28`, `+0x2a` and `+0x54` from the record's word, the style at `+0x3e`, the lines at `+0x4c`, `STYLES.DAT` record 4 at `+0x50`, the fonts `nm_green` (`000aacda`) and `nm_red1` (`000aacde`) at `+0x40` and `+0x44`, the line height `+0x2c` (the font's cell height − 1, at most the rect's height − 1), the lines shown `+0x58` (the height over that, 1 to the count) and the first line shown `+0x56`, 0 or so that the selected line is the last shown. The main menu's 1002 is one, at (112, 47)–(196, 59). Its lines are `Menu_ListLines`(id) ([the main menu's list](main-menu.md#the-list)).
+Kind 15 builds `MTStrListBox_Ctor` (`0001e11a`, class `MTStrListBox`, vtable `0007f474`) over `DUIVSlider` (`0007f412`) and `DUISliderControl` (`0007f2f8`), a `0x5a`-byte control on `DUIControl_Ctor`(list, 0, id, rect), so `Tab` passes over it: `+0x1b` 1, the range `+0x24` 0 to `+0x26` the line count `0001eac5`(list, lines), the selected line at `+0x28`, `+0x2a` and `+0x54` from the record's word, the style at `+0x3e`, the lines at `+0x4c`, `STYLES.DAT` record 3 at `+0x50` (`00082654` + `0xc0`, where `MTButton_Ctor`'s records 0 to 2 are `+0`, `+0x40` and `+0x80`), the fonts `nm_green` (`000aacda`) and `nm_red1` (`000aacde`) at `+0x40` and `+0x44`, the line height `+0x2c`: `HudFont_CellHeight2` of `nm_green` (passed the first line, which it does not read) − 1, replaced by the rect's `int16` height − 1 when the height is below it, so a height equal to it stays. The lines shown `+0x58` are the height over the line height (`int16` division), 1 when that is 0, then at most the line count, so 0 for an empty list; the first line shown `+0x56` is 0 when the selected line is below the lines shown, and otherwise selected − shown + 1, so that the selected line is the last shown. The main menu's 1002 is one, at (112, 47)–(196, 59). Its lines are `Menu_ListLines`(id) ([the main menu's list](main-menu.md#the-list)).
 
 `MTStrListBox`'s vtable (`0007f474`) holds the slots the window code calls ([the controls](#the-controls)):
 
 | Slot | Function | Does |
 |---|---|---|
 | `+4` | `MTStrListBox_Dtor` (`0001e41e`) | frees the lines array `+0x4c`, and for id 1002 first its first line and the name buffer pointer `0007ebc0`, which it clears; stores `DUIVSlider`'s, `DUISliderControl`'s and `DUIControl`'s vtables in turn and frees the list when bit 0 of the flags is set |
-| `+8` | `MTStrListBox_Draw` (`0001e584`) | `CornerFrame_Draw` (`00044b86`) with `STYLES.DAT` record 4 (`+0x50`) over the list's rect, then `MTStrListBox_DrawLines` (`0001e5b7`), and *changed* cleared |
+| `+8` | `MTStrListBox_Draw` (`0001e584`) | `CornerFrame_Draw` (`00044b86`) with `STYLES.DAT` record 3 (`+0x50`) over the list's rect, then `MTStrListBox_DrawLines` (`0001e5b7`), and *changed* cleared |
 | `+0xc` | `MTStrListBox_TrackSelect` (`0001e96a`) | with style 0 only: selects the line under the tracked point, below |
 | `+0x1c`, `+0x20` | `MTStrListBox_SelectPrev` (`0001e8df`), `MTStrListBox_SelectNext` (`0001e919`) | moves the selected line `+0x54` up or down one within the lines, scrolling the first line shown `+0x56` to keep it shown, and sets *changed* |
 | `+0x24` | `MTStrListBox_SelectLine` (`0001ea4f`)(list, line) | selects the line, clamped to the last when past it and unchanged when negative, shows from it or from the last page, and sets *changed* |
@@ -281,65 +303,7 @@ Kind 15 builds `MTStrListBox_Ctor` (`0001e11a`, class `MTStrListBox`, vtable `00
 
 **Drawing the lines.** `MTStrListBox_DrawLines` sets the render context `000ab612`'s alignment `+0x231` to the list's `+0x48`, 0 from the record, and its field width `+0x235` to the rect's width less 2. For each row *r* from 0 while *r* is below the lines shown and the line `+0x56` + *r* exists, with *h* the line height `+0x2c` and (*x0*, *y0*, *x1*) the rect: in style 0 the selected line is drawn on a box (*x0* + 1, *y0* + *r* × *h* + 1)–(*x1* − 1, *y0* + *r* × *h* + *h*) filled in color 4 and framed in color 5 (`Raster_FillFrameRectColours` (`0004b8d8`)(5, 4, box)), its text in the font `+0x44`, `nm_red1`; every other line, and every line in style 1, in the font `+0x40`, `nm_green`; the text with `HudFont_DrawString` at (*x0* + 3, *y0* + *r* × *h* + *h* − 1).
 
-**A press and a move.** The list tracks the pointer (`+0x1b` 1), so a press and each move while it is held call slot `+0x38` with the point relative to the window and then slot `+0xc` ([the mouse](#the-mouse)). `MTStrListBox_TrackSelect` returns at once unless the style `+0x3e` is 0. With style 0: a y above the rect's top selects the previous line with slot `+0x1c` and then the first line shown; a y below its bottom selects the next with slot `+0x20` and then one more while that is below the last line; a y inside selects the line of the shown row it falls in and sets *changed*.
-
-## The input
-
-### The active window
-
-**One window at a time takes the input: `DUIWindow_Active` (`0007f0d0`).** `DUIWindow_SetActive` (`0001c536`)(window) stores it, runs `DUIWindow_Activate` (`0001b0ff`) and sets the byte `DUIWindow_KeysEnabled` (`0007f0dd`). `DUIWindow_Activate`:
-
-1. when the window has an enabled control with id 103, makes it pushed and changed, the pressed control `DUIWindow_PressedIndex` (`0007f0d4`), and the holding control `DUIWindow_HeldIndex` (`0007f0d6`) with the byte `DUIWindow_Holding` (`0007f0db`) set, and calls its slot `+0xc`;
-2. unless `-X` was given, registers `DUIWindow_KeySubscriber` (`0001ba73`) with the keyboard for the window's key list `+0x11f` (`Keyboard_AddSubscriber`, after `00027bbf`);
-3. sets `DUIWindow_FocusIndex` to the control under the pointer, `DUIWindow_HitControl` (`0001bc11`)(window, the pointer relative to the window), −1 for none.
-
-`DUIWindow_ClearActive` (`0001c57c`) runs `DUIWindow_Deactivate` (`0001b25b`), which sets `DUIWindow_HeldIndex` to −1, clears `DUIWindow_Holding` and removes `DUIWindow_KeySubscriber`, and then clears `DUIWindow_Active` and `DUIWindow_KeysEnabled`.
-
-`DUIWindow_HitControl`(window, x, y) answers the first control, in the order they were added, that is not inactive and whose rect holds the point (or, with its `+0x10` set, within its distance), and −1 for none.
-
-### The mouse
-
-`ShellMouse_AddCallbacks` (`0001c460`) registers three callbacks with the mouse driver ([the mouse driver's events](../simulation/cockpit-mouse.md)): mask 1, the pointer moved; 2, the left button pressed; 4, the left button released. Each is given the pointer's point.
-
-- **`ShellMouse_OnMove` (`0001c605`)**, while `DUIWindow_InputReady` is set and there is an active window: clears `DUIWindow_InputReady` for its run and stores the point in `Shell_PointerX` and `Shell_PointerY`. While the byte `DUIWindow_Tracking` (`0007f0da`) is set it calls the pressed control's slot `+0x38` with the point relative to the window and its slot `+0xc`. Otherwise, with the point inside the window (its rect, or its distance test), it runs `DUIWindow_OnDrag` (`0001b8fc`)(window, point): `DUIWindow_FocusIndex` becomes the control under the pointer; while a control is pressed, it is made pushed when the pointer is over it again, or it holds the input, and up when the pointer has left it, each change calling slot `+0xc`; and a hotspot under the pointer has its byte `+0` set.
-- **`ShellMouse_OnLeftPress` (`0001c7d8`)**, unless the message box is up (`0009b013`): with the point inside the active window, `DUIWindow_OnPress` (`0001b436`)(window, point): it lets go of the holding control (state 0, changed, `DUIWindow_Holding` cleared, `DUIWindow_HeldIndex` −1); takes the control under the pointer as `DUIWindow_PressedIndex`; makes it pushed and changed; for a `+0x1b` of 1 calls its slot `+0x38` with the point and sets `DUIWindow_Tracking`, for 2 calls slot `+0x38` and makes it the holding control; calls its slot `+0xc`; and sets the byte `+0` of a hotspot under the pointer. With no active window, or the point outside it, `DUIWindow_PressedIndex` becomes −1, and while the dword `0007fce4` is set the point is tested against the selected hangar slot's rects, posting the message (0, −1, the rect's index or −1, 1702) ([Open](#open)).
-- **`ShellMouse_OnLeftRelease` (`0001caaa`)**, unless the message box is up: while `DUIWindow_Tracking` is set, it puts the pressed control up and changed, clears `DUIWindow_Tracking` and posts the message (0, the index, its slot `+0x2c`, its id) wherever the pointer is. Otherwise, with the point inside the window, `DUIWindow_OnRelease` (`0001b683`)(window, point): when the control under the pointer is the pressed one it posts (0, the index, slot `+0x2c`, the id); a control under the pointer that does not hold the input is put up and changed (slot `+0xc`); `DUIWindow_PressedIndex` becomes −1; and a hotspot under the pointer has its byte `+0` set. With the point outside, `DUIWindow_PressedIndex` becomes −1 and nothing is posted.
-
-So a click of a button posts its id as the target, and the press shows the pushed state from the press to the release.
-
-### The keys
-
-**`DUIWindow_HandleNavKey` (`0001cc86`)**, the dialog's key handler, which `Shell_NavKeySubscriber` and `Shell_HandleInput` call ([the input](startup.md#the-input)), does nothing without an active window, and otherwise acts on seven codes, the `REPNE SCASD` table at `0007f0e0`:
-
-| Code | Does |
-|---|---|
-| `Tab` (`0x0f`) | puts the pressed control, if any, up and changed and clears `DUIWindow_PressedIndex`; moves `DUIWindow_FocusIndex` to the next control, wrapping, passing over controls whose *focusable* byte is 0; and puts the pointer on its center with `DUIWindow_PointAtControl` |
-| `Shift+Tab` (`0x80f`), `Alt+Tab` (`0x20f`) | moves the focus to the previous focusable control, wrapping, and puts the pointer on it |
-| `Enter` (`0x1c`), `Shift+Enter` (`0x81c`) | presses the focused control, `DUIWindow_PressControl` (`0001b5bb`) |
-| `Enter`'s release (`0x9c`), with `Shift` (`0x89c`) | releases it, `DUIWindow_ReleaseControl` (`0001b7d5`) |
-
-`Shell_NavKeySubscriber` passes `Tab`, `Enter` and `Enter`'s release only ([the keyboard subscribers](startup.md#the-keyboard-subscribers)). The focus wraps by the remainder of the control count, and the walk does not stop when no control is focusable.
-
-`DUIWindow_PointAtControl`(window, index) sets `Shell_PointerX` and `Shell_PointerY` to the control's center on the screen, which the next frame gives the cursor and the mouse driver ([opening a menu](#opening-a-menu--menu_open-0003969e)).
-
-`DUIWindow_PressControl`(window, index), for an index of 0 or more whose control is not inactive, lets go of the holding control, makes the control `DUIWindow_PressedIndex`, pushed and changed, and calls its slot `+0xc`. `DUIWindow_ReleaseControl`(window, index), for the same, posts the message (0, index, slot `+0x2c`, the id) when the control is the pressed one, puts it up and changed unless it holds the input, and sets `DUIWindow_PressedIndex` to −1.
-
-**`DUIWindow_KeySubscriber` (`0001ba73`)**(code), registered for the window's key list ([the keyboard subscribers](startup.md#the-keyboard-subscribers)), answers 1 at once while `DUIWindow_KeysEnabled` is clear. Otherwise it answers 2 for a repeat of the last code `DUIWindow_LastKey` (`0007f0c4`); takes a code whose low seven bits match a last code that was a press as that key's release; stores the code as the last; answers 2 for a code with `Alt`, `Ctrl` or the shift bit (`0xe00`); and looks the scan code up among the enabled controls' keys (`DUIWindow_FindControlByKey`, `0001bd41`). Found, the control takes the focus and the pointer, is pressed (`DUIWindow_PressControl`) on a press code and released (`DUIWindow_ReleaseControl`) on a release code, and the answer is 1; otherwise 2.
-
-**Typed characters and other keys** go only to the holding control, the one whose `+0x1b` is 2: `DUIWindow_SendChar` (`0001bb85`)(window, word), for a word with bit `0x4000` and without `0x8000`, calls its slot `+0x3c` with the word's low byte; `DUIWindow_SendKey` (`0001bbd2`)(window, word), from `Shell_ForwardKeyToDialog`, its slot `+0x40` with the word & `0xff7f` ([the input](startup.md#the-input)).
-
-## A message's path
-
-**A control's release writes the four words of `Shell_PendingMessage`; the frame loop's next step 4 passes them to `Shell_HandleMessage`.** `es2_xref.py --decode` on `0007fcb0` and `0007fcb4` finds them written by `DUIWindow_OnRelease`, `DUIWindow_ReleaseControl`, `ShellMouse_OnLeftRelease` and `ShellMouse_OnLeftPress`'s hangar test, beside `Shell_HandleMessage`'s reset:
-
-| Word | Holds |
-|---|---|
-| `0007fcb0` | the code: 0 from a control, −1 for no message |
-| `0007fcb2` | the control's index in the window |
-| `0007fcb4` | the value, the control's slot `+0x2c`: 1 for a button |
-| `0007fcb6` | the target: the control's id |
-
-So on the main menu a click of a button runs the main menu's handler, slot `+8` of `MainMenu`'s vtable, with the message, and then opens the screen of the button's number when it is one of `Shell_ScreenIds`. The main menu's 1003 is not among them, so its click changes no screen ([the ways out](startup.md#the-ways-out)). The handler's cases are [the main menu's](main-menu.md#the-buttons).
+**A press and a move.** The list tracks the pointer (`+0x1b` 1), so a press and each move while it is held call slot `+0x38` with the point relative to the window and then slot `+0xc` ([the mouse](menu-input.md#the-mouse)). `MTStrListBox_TrackSelect` returns at once unless the style `+0x3e` is 0. With style 0: a y above the rect's top selects the previous line with slot `+0x1c` and then the first line shown; a y below its bottom selects the next with slot `+0x20` and then one more while that is below the last line; a y inside selects the line of the shown row it falls in and sets *changed*.
 
 ## Functions
 
@@ -364,13 +328,7 @@ So on the main menu a click of a button runs the main menu's handler, slot `+8` 
 | `BarGraph_NoOpWindowCopy`, `GridShape_GetMemorySizeWindowCopy`, `BarGraph_GetRectWindowCopy` | `0001a665`, `0001a6ba`, `0001a70a` |
 | `DUIWindow_Ctor`, `WindowHotspot_Ctor`, `DUIWindow_AddLabel`, `DUIWindow_DrawBackground`, `DUIWindow_Dtor`, `WindowHotspot_Dtor` | `0001abcf`, `0001ad4e`, `0001ae9b`, `0001aeb7`, `0001afa1`, `0001b06f` |
 | `GLBase_DtorWindowCopy`, `GLRegion_DtorWindowCopy`, `GLRectangleRegion_DtorWindowCopy`, `Rect_CopyCtorWindowCopy` | `0001aec1`, `0001aeed`, `0001af36`, `0001c242` |
-| `DUIWindow_Activate`, `DUIWindow_AddControl`, `DUIWindow_Deactivate`, `DUIWindow_AddKey`, `DUIWindow_AddHotspot`, `DUIWindow_Offset` | `0001b0ff`, `0001b207`, `0001b25b`, `0001b296`, `0001b2de`, `0001b395` |
-| `DUIWindow_OnPress`, `DUIWindow_PressControl`, `DUIWindow_OnRelease`, `DUIWindow_ReleaseControl`, `DUIWindow_OnDrag` | `0001b436`, `0001b5bb`, `0001b683`, `0001b7d5`, `0001b8fc` |
-| `DUIWindow_KeySubscriber`, `DUIWindow_SendChar`, `DUIWindow_SendKey`, `DUIWindow_HitControl` | `0001ba73`, `0001bb85`, `0001bbd2`, `0001bc11` |
-| `DUIWindow_FindControlByKey`, `DUIWindow_FindEnabledControlById`, `DUIWindow_FindControlById`, `DUIWindow_FindHotspotById`, `DUIWindow_HitHotspot` | `0001bd41`, `0001bda4`, `0001be16`, `0001be6f`, `0001beca` |
 | `DUIWindow_Draw`, `DUIWindow_Update`, `DUIWindow_UpdateHotspots`, `DUIWindow_PointAtControl` | `0001bfa3`, `0001c067`, `0001c270`, `0001c3ec` |
-| `ShellMouse_OnMove`, `ShellMouse_OnLeftPress`, `ShellMouse_OnLeftRelease` | `0001c605`, `0001c7d8`, `0001caaa` |
-| `DUIWindow_SetActive`, `DUIWindow_DrawActive`, `DUIWindow_OffsetActive`, `DUIWindow_ClearActive`, `DUIWindow_EnableControl`, `DUIWindow_DisableControl`, `DUIWindow_HandleNavKey` | `0001c536`, `0001c556`, `0001c566`, `0001c57c`, `0001c59d`, `0001c5d0`, `0001cc86` |
 | `MTButton_Ctor`, `DUIButtonControl_Dtor`, `MTButton_Dtor`, `MTButton_Invalidate`, `DUIControl_DtorButtonCopy` | `0001cde8`, `0001cfd8`, `0001d10d`, `0001d17b`, `0001d18d` |
 | `MTButton_Highlight`, `MTButton_Unhighlight`, `MTButton_Draw`, `MTButton_SetTextFromTable`, `DUIButtonControl_GetValue` | `0001d1ce`, `0001d1e7`, `0001d200`, `0001d393`, `0001d088` |
 | `BarGraph_NoOpButtonCopy`, `GridShape_GetMemorySizeButtonCopy`, `BarGraph_GetRectButtonCopy`, `Rect_CopyCtorButtonCopy` | `0001d041`, `0001d096`, `0001d0e6`, `0001d365` |
@@ -380,35 +338,36 @@ So on the main menu a click of a button runs the main menu's handler, slot `+8` 
 | `CornerFrame_Draw`, `Rect_CopyCtorFrameCopy`, `CornerFrame_DrawEdgeRing`, `CornerFrame_DrawCorners` | `00044b86`, `00044d9a`, `00044dc8`, `000451c1` |
 | `Raster_FrameRectColour`, `Raster_FillFrameRectColours` | `0004b867`, `0004b8d8` |
 | `MTWindow_Ctor`, `MTWindow_Dtor`, `MTWindow_AddLabel`, `MTWindow_Draw` | `00036874`, `00036a09`, `00036a93`, `00036b4c` |
+| `DUIControl_SetHitMode`, `MTBmpButton_Dtor`, `MTBmpButton_GetRect`, `MTBmpButton_Draw`, `MTBmpButton_Invalidate` | `0001a4f4`, `0001da8d`, `0001db1d`, `0001db87`, `0001dc9f` |
+| `Raster_DrawLineColour`, `GLViewport_Ctor`, `RenderContext_GetFullScreenAround`, `RenderContext_GetForRect` | `0004ba84`, `000512a0`, `0004c53c`, `0004c88a` |
+| `WordList_CountNonNegative`, `maybe_Roster_NextMissionEntry`, `maybe_PilotPortraitHotspot_Draw` | `000373d3`, `0001838d`, `00017a19` |
 
 ## Globals
 
-| | Address |
-|---|---|
-| `Shell_CurrentScreen`, `Shell_PreviousScreen`, `Shell_BackdropId`, `int16` | `000817c0`, `000817c2`, `000817c4` |
-| `Shell_CurrentMenu`, the open screen object | `000817c8` |
-| `Shell_ScreenIds`, zero-ended `int16` list | `000817e0` |
-| `Shell_PendingMessage`, four `int16` | `0007fcb0` |
-| `Shell_Backdrop` | `000a09a0` |
-| `Shell_MusicTrack`, `int16`; the track last set | `00081938`; `00081936` |
-| `ShellBackdrop_Picture` | `000aa7ac` |
-| `Shell_SyncPointer`, byte | `0007fd07` |
-| `Shell_PointerX`, `Shell_PointerY` | `0009aff0`, `0009aff4` |
-| `DUIWindow_Active` | `0007f0d0` |
-| `DUIWindow_PressedIndex`, `DUIWindow_HeldIndex`, `DUIWindow_FocusIndex`, `int16` | `0007f0d4`, `0007f0d6`, `0007f0d8` |
-| `DUIWindow_Tracking`, `DUIWindow_Holding`, `DUIWindow_InputReady`, `DUIWindow_KeysEnabled`, bytes | `0007f0da`, `0007f0db`, `0007f0dc`, `0007f0dd` |
-| `DUIWindow_LastKey`, `int16` | `0007f0c4` |
+The values in the image are the ones the shell starts with.
+
+| | Address | In the image |
+|---|---|---|
+| `Shell_CurrentScreen`, `Shell_PreviousScreen`, `Shell_BackdropId`, `int16` | `000817c0`, `000817c2`, `000817c4` | −1 each |
+| `Shell_ResumeScreen`, `int16` | `000817be` | −1 |
+| `Shell_BackdropChanged`, byte: 1 after `Shell_HandleMessage` shows a new backdrop | `000817c6` | 1 |
+| the bytes `000817bc`, `000817bd` | | 0 |
+| `Shell_CurrentMenu`, the open screen object | `000817c8` | |
+| `Shell_ScreenIds`, zero-ended `int16` list | `000817e0` | |
+| `Shell_Backdrop` | `000a09a0` | |
+| `Shell_MusicTrack`, `int16`; the track last set | `00081938`; `00081936` | −1; −1, so the first backdrop always starts its track |
+| `ShellBackdrop_Picture` | `000aa7ac` | |
+| `Shell_SyncPointer`, byte | `0007fd07` | |
 
 ## Open
 
 - **Open:** whether `00040b94`, a stub returning its first argument, is `shell.cpp`'s last function or the word stacks' file's first: it starts on a 4-byte boundary right after `Shell_StaticDtor`, and `WordStack_Push` follows it with no fill.
 - **Open:** where the button file ends, and whether the slider and list classes from `0001deaa` share it.
-- **Open:** what the byte `000817c6` is, which picks between `Shell_DrawScreen`'s two backdrop paths and which `Shell_OpenQuitAlert` clears ([the quit question](main-menu.md#the-quit-question)).
-- **Open:** what `0002141c`'s tail adds after its copy, `00011f19`, `000122e0`, `0001240b` and `00012467` do for a backdrop.
+- **Open:** what `00011f19`, `000122e0`, `0001240b` and `00012467` do for a backdrop.
 - **Open:** what calls `MTButton_Highlight` and `MTButton_Unhighlight`: no caller of `MTButton`'s slots `+0x10` and `+0x18` was found in the window, dialog or shell code read here.
-- **Open:** the lines `0004ba84` draws for the title plate: which of the four colors takes which edge.
-- **Open:** the routines at `0008662c` and `00086628` that `Shell_DrawScreen` and `Shell_HandleMessage` call, and `0008663c`, which `Shell_PlayTtm` and `Shell_DrawScreen` call with a page and 0.
+- **Open:** the raster's slot 35, `0008663c`, which `Shell_PlayTtm` and `Shell_DrawScreen` call with a page and 0.
 - **Open:** the object `Shell_MissionMap` (`000809a4`) and the bytes `000809a8`, `000809a9` and `000817bd` that `Shell_DrawScreen`, `Shell_TickScreen` and `Shell_HandleMessage` test, and `00009cfb` and `00009c64`.
-- **Open:** the other screens' cases and handlers in [the screens](#the-screens) table, among them screen 1320's code at `0003e9ae`, the hangar test of `ShellMouse_OnLeftPress` with the dword `0007fce4`, and `MTBmpButton`'s slots `0001da8d`, `0001db87` and `0001dc9f`.
+- **Open:** the other screens' cases and handlers in [the screens](#the-screens) table, among them screen 1320's code at `0003e9ae`, screen 2000's `0002986f` and `000307c9`, the hangar test of `ShellMouse_OnLeftPress` with the dword `0007fce4`, the icon button's ids 1806, 2003, 1807 and 2004 at `0001d97a` and `0001d9f9`, and the kind-14 hotspot handlers other than `maybe_PilotPortraitHotspot_Draw` (`00017b4a`, `00017d9f`, `0001705e`, `000175d7`, `0002bbaf`, `0002845c`, `0002d5bf`, `0002dacf`).
+- **Open:** what `maybe_Roster_NextMissionEntry` (`0001838d`)'s table `000aa7d4` of 25-byte entries holds, which kind 0's id 1223 takes its text from: the entry the current career record's missions played (`+0xa`) + 1 number.
+- **Open:** what `maybe_PilotPortraitHotspot_Draw` (`00017a19`) draws, for ids 1612–1614 with *n* = id − 1611: frame (pilot entry *n*'s word `+0`) of the bitmap array `0007ebcc` at the rect's corner plus (1, 1), and, while the career record's byte `+1` is set and the entry's byte `+0xa` is 0, frame 0 of the array `0007ebd0` at the rect's corner; which banks the two arrays are.
 - **Open:** the list box's slots `+0x10`, `+0x14`, `+0x18`, `+0x28`, `+0x34`, `+0x3c` and `+0x40` (`0001d037`, `BarGraph_NoOpButtonCopy`, `0001d04f`, `0001d07b`, `0001d0a2`, `0001d0bd`, `0001d0cb`), and the 27 ids other than 1002 that `Menu_ListLines` gives their own lines (the table at `000812f4`).
-- **Open:** a retail check under DOSBox-X: on the main menu, `Tab` moves the pointer onto the next button and `Enter` presses it; pressing a button and dragging off it before the release opens nothing.
