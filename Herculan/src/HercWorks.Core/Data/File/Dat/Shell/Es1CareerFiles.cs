@@ -103,6 +103,19 @@ public class Es1HercRecord {
 	/// </summary>
 	public bool IsUnarmed() => Weapons.All(weapon => weapon == EmptyMount);
 
+	/// <summary><see cref="Status"/>' index of internal word 0, the first after the 13 external words.</summary>
+	private const int FirstInternalWord = 13;
+
+	/// <summary>The condition below which <see cref="IsDisabled"/> counts an internal word as disabled, 50 (<c>0x32</c>).</summary>
+	private const short DisabledBelow = 50;
+
+	/// <summary>
+	/// <c>Herc_IsDisabled</c> (<c>00022f05</c>) (docs/es1/shell/between-missions.md#next-mission): internal word 0, 1 or 5
+	/// (<c>Herc_GetStatus</c> (<c>00024b86</c>)(<i>h</i>, <i>i</i>, <c>0x784</c>)) below 50.
+	/// </summary>
+	public bool IsDisabled() =>
+		Status[FirstInternalWord] < DisabledBelow || Status[FirstInternalWord + 1] < DisabledBelow || Status[FirstInternalWord + 5] < DisabledBelow;
+
 	/// <summary>
 	/// What <c>Herc_Write</c> (<c>000233ce</c>) does to the HERC before it writes the mount words: the word of each mount
 	/// whose weapon is 9, 10 or 11 and whose word is 5 set to 0.

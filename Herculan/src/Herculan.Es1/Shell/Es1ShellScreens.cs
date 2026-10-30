@@ -66,7 +66,7 @@ public sealed class Es1ShellScreens {
 
 	/// <summary>
 	/// <c>Shell_DemoRequested</c> (<c>000817ce</c>), which the options menu's VIEW DEMO sets and screen 9999 turns into exit
-	/// code 5 (docs/es1/shell/main-menu.md#the-return-screen). No ported screen sets it.
+	/// code 5 (docs/es1/shell/main-menu.md#the-return-screen) (<see cref="Es1OptionsMenu"/>).
 	/// </summary>
 	public bool DemoRequested { get; set; }
 
@@ -157,7 +157,8 @@ public sealed class Es1ShellScreens {
 
 	/// <summary>
 	/// The byte <c>000809a9</c>, 0 in the image: <see cref="HandleMessage"/> plays the intro's last two scripts on the next
-	/// change of screen when it is 1, the credits when it is 2. No ported screen sets it.
+	/// change of screen when it is 1, the credits when it is 2. The options menu's CREDITS sets 2 (<see cref="Es1OptionsMenu"/>);
+	/// no ported screen sets 1.
 	/// </summary>
 	public byte ScriptsToPlay { get; set; }
 
@@ -470,13 +471,13 @@ public sealed class Es1ShellScreens {
 
 			_backdrop.Draw();
 			if (BackdropId == 4000) {
-				// PLACEHOLDER: 0001240b and the career record's HERC diagram, S3's; RESUME's screen 1700 shows backdrop 4000,
-				// with no menu until S4.
+				// PLACEHOLDER: 0001240b and the career record's HERC diagram, the service bay's own display, S4's; the bay's
+				// screens 1700 and 1710 show backdrop 4000 with only their strip of buttons.
 			} else {
 				// PLACEHOLDER: 00012467 is unread.
 			}
 		} else if (CurrentScreen is 1700 or 1710) {
-			// PLACEHOLDER: the career record's HERC diagram (00029651, CareerRecord_SelectPilot), S3's.
+			// PLACEHOLDER: the career record's HERC diagram (00029651, CareerRecord_SelectPilot), the bay's own display, S4's.
 		}
 
 		if (MessageBox is { } messageBox) {
@@ -673,7 +674,8 @@ public sealed class Es1ShellScreens {
 		if (ScriptsToPlay == 2) {
 			display.Cursor.Hide();
 			// PLACEHOLDER: Ttm_SetPathPrefix(intro\), Shell_PlayTtm (PlayTtm) of intro\credit_a.ttm and intro\credit_b.ttm,
-			// and Ttm_SetPathPrefix(res32\); no ported screen sets ScriptsToPlay.
+			// and Ttm_SetPathPrefix(res32\): the credits, which the options menu's CREDITS asks for, are not played; PlayTtm
+			// reads Input_PollDeviceBlock, which the frame loop does not hand this method.
 		}
 
 		short group = _backdrop.ForScreen(BackdropId, target);
@@ -717,8 +719,9 @@ public sealed class Es1ShellScreens {
 	/// <paramref name="target"/>: most make the screen's object the current menu (docs/es1/shell/menus.md#the-screens).
 	/// The main menu's, SINGLE MISSION's, MISSION PARAMS', the war map's, its two alerts', the debriefing's, the career
 	/// menu's and its REGISTRATION, backups, stats and overwrite warning, the KIA warnings', the delete warning's, the
-	/// disk-space warning's and the quit question's are ported, 1490's message box, and screen 9999's exit code; with any
-	/// other the screen becomes current with no menu, as
+	/// disk-space warning's, the options menu's and its battle-set picker's, the service bay's and its three warnings', and
+	/// the quit question's are ported, 1490's and 1499's message boxes, and screen 9999's exit code; with any other the
+	/// screen becomes current with no menu, as
 	/// retail's does for the cases that make none, its backdrop shown with no window. The waits are the war map's and the
 	/// debriefing's, whose constructors delete the box the text box held.
 	/// </summary>
@@ -750,13 +753,10 @@ public sealed class Es1ShellScreens {
 				Globals.MessageBox.SetKind(Es1NewCareerAlert.OpeningKind);
 				break;
 			case MessageScreen:
-				// 0003ccdd: MessageBox_SetKind(Shell_MessageBox, 0) in Shell_Mode 0, a single mission's opening line; no menu.
-				if (_menuContext?.Mission.Mode == 0) {
-					Globals.MessageBox.SetKind(0);
-				} else {
-					// PLACEHOLDER: MessageBox_SetKind(Shell_MessageBox, 1) in Shell_Mode 1, a career's opening line, S3's.
-				}
-
+				// 0003ccdd: MessageBox_SetKind(Shell_MessageBox, 0) in Shell_Mode 0, a single mission's opening line, and 1 in
+				// any other, a career mission's; no menu. Without the context, before the first screen, mode 0 is read, an
+				// engine guard.
+				Globals.MessageBox.SetKind((_menuContext?.Mission.Mode ?? 0) == 0 ? (short)0 : Es1ServiceBayMenu.BriefingKind);
 				break;
 			case Es1DebriefingMenu.CareerScreen:
 			case Es1DebriefingMenu.Screen:
@@ -818,9 +818,32 @@ public sealed class Es1ShellScreens {
 				break;
 			case Es1UnAssignedAlert.Screen:
 			case Es1NewCareerAlert.DiskWarningScreen:
-				// 0003ced7: an UnAssignedAlert, 3333's, and 6666's, the disk-space warning, whose OKAY is 1200.
+			case Es1ServiceBayMenu.PlayerDisabledAlert:
+			case Es1ServiceBayMenu.BaysFullAlert:
+				// 0003ced7: an UnAssignedAlert, 3333's, 6666's, the disk-space warning, whose OKAY is 1200, and the bay's
+				// warnings 7770 and 7772.
 				if (_menuContext != null) {
 					CurrentMenu = new Es1UnAssignedAlert(_menuContext);
+				}
+
+				break;
+			case Es1AnyDisabledAlert.Screen:
+				// 0003d076: an AnyDisabledAlert.
+				if (_menuContext != null) {
+					CurrentMenu = new Es1AnyDisabledAlert(_menuContext);
+				}
+
+				break;
+			case Es1ServiceBayMenu.Screen:
+			case Es1ServiceBayMenu.AfterScreen:
+				// 0003efcc: a ServiceBayMenu; the dword 0007fce4 cleared, PLACEHOLDER: the hangar test's (Es1ShellMouse), which
+				// only screen 2000's case sets, S4's; and coming from 1610, CREW, backdrop 4000's palette loaded again.
+				if (_menuContext != null) {
+					CurrentMenu = new Es1ServiceBayMenu(_menuContext);
+				}
+
+				if (CurrentScreen == CrewScreen) {
+					_backdrop.LoadPalette(ServiceBayBackdrop);
 				}
 
 				break;
@@ -874,15 +897,24 @@ public sealed class Es1ShellScreens {
 				}
 
 				break;
-			case 1330:
-				// PLACEHOLDER: BattlesetAlert, the battle-set picker, P10b's.
+			case Es1OptionsMenu.Screen:
+				// 0003ec5d: an OptionsMenu.
+				if (_menuContext != null) {
+					CurrentMenu = new Es1OptionsMenu(_menuContext);
+				}
+
+				break;
+			case Es1BattlesetAlert.Screen:
+				// 0003edfc: a BattlesetAlert, the battle-set picker.
+				if (_menuContext != null) {
+					CurrentMenu = new Es1BattlesetAlert(_menuContext);
+				}
+
 				break;
 			case 5555:
 				// PLACEHOLDER: TechReleaseAlert, P11's.
 				break;
-			case 1610:
-			case 1700:
-			case 1710:
+			case CrewScreen:
 			case 1800:
 			case 1820:
 			case 1900:
@@ -890,22 +922,21 @@ public sealed class Es1ShellScreens {
 			case 1920:
 			case 2000:
 			case 2010:
-			case 7770:
-			case 7771:
-			case 7772:
 			case 4444:
-				// PLACEHOLDER: the hangar's screens, S4's: 0002c743 with ShellBackdrop_LoadPalette(1610), ServiceBayMenu,
-				// ArmingMenu, RepairMenu, RepairPrefsAlert, 0002f1aa, 0002986f(3) with 000307c9 (which sets the hangar test's
-				// dword 0007fce4), SalvageAllocAlert, AnyDisabledAlert and ScrapAlert.
+				// PLACEHOLDER: the hangar's screens, S4's: 0002c743 with ShellBackdrop_LoadPalette(1610), ArmingMenu,
+				// RepairMenu, RepairPrefsAlert, 0002f1aa, 0002986f(3) with 000307c9 (which sets the hangar test's dword
+				// 0007fce4), SalvageAllocAlert and ScrapAlert.
 				break;
-			case 1300:
 			case 1310:
 			case 1320:
-				// PLACEHOLDER: OptionsMenu, PrefsMenu and screen 1320's code at 0003e9ae (the keyboard's subscribers and mode);
-				// the options menus, which the plan's shell modules S1–S5 do not list yet.
+				// PLACEHOLDER: PrefsMenu and screen 1320's code at 0003e9ae (the keyboard's subscribers and mode), PREFERENCES
+				// and CONTROLS, the preferences and controls module's, after S5.
 				break;
 		}
 	}
+
+	/// <summary>The crew screen, 1610, from which the service bay's case loads backdrop 4000's palette again.</summary>
+	private const short CrewScreen = 1610;
 
 	/// <summary>
 	/// <c>Shell_TickScreen</c> (<c>0003c115</c>), the frame loop's step 5 (docs/es1/shell/menus.md#drawing-a-screen):

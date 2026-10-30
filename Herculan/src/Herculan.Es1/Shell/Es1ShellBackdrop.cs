@@ -17,8 +17,12 @@ public sealed class Es1ShellBackdrop {
 	/// <summary>The music track of each group, 1000 to 8000: the eight words at <c>000817d0</c>.</summary>
 	private static readonly short[] GroupTracks = [1, 1, 3, 4, 3, 3, 1, 0];
 
-	/// <summary>The words at <c>0007ea94</c>, one per campaign, that groups 3000 and 5000 add to their number.</summary>
-	private static readonly short[] CampaignWords = [0, 1, 2, 3, 1, 2, 3, 1];
+	/// <summary>
+	/// The ten words at <c>0007ea94</c>, one per campaign, that groups 3000 and 5000 add to their number, and that
+	/// <c>BattleSet_ReadFile</c> gives each campaign of a battle set as its <c>+0</c> word, the <i>k</i> of its talking-head
+	/// files (docs/es1/formats/bst-battle-sets.md#battle-sets).
+	/// </summary>
+	internal static readonly short[] CampaignWords = [0, 1, 2, 3, 1, 2, 3, 1, 2, 3];
 
 	/// <summary>
 	/// <c>CareerRecord_Current</c> (<see cref="Es1ShellMission.CurrentRecord"/>), which the shell's start-up hands the
@@ -29,7 +33,7 @@ public sealed class Es1ShellBackdrop {
 
 	/// <summary>
 	/// The word at <c>0007ea94</c> + 2 × <c>CareerRecord_Current</c>'s campaign <c>+6</c> (docs/es1/shell/menus.md#the-backdrop).
-	/// Retail indexes the eight words with no bounds test; a campaign outside them reads 0 here, an engine guard.
+	/// Retail indexes the ten words with no bounds test; a campaign outside them reads 0 here, an engine guard.
 	/// </summary>
 	private short CampaignWord => CurrentRecord?.Invoke()?.Campaign is { } campaign && campaign >= 0 && campaign < CampaignWords.Length
 		? CampaignWords[campaign]
@@ -94,8 +98,17 @@ public sealed class Es1ShellBackdrop {
 		Picture = picture;
 		SetPicture(0, 0, picture);
 
-		// PLACEHOLDER: 00011f19(group), and for group 4000 000122e0, are unread; later modules' (menus.md's Open).
+		// PLACEHOLDER: 00011f19(group), which opens the group's list of tm_files.dat as scripts into ScriptHandles, and for
+		// group 4000 000122e0, are later modules' (menus.md's Open).
 	}
+
+	/// <summary>
+	/// The array of 3-byte entries at the dword <c>0007e718</c>, none in the image, each entry's byte <c>+0</c> a script handle:
+	/// the scripts <c>00011f19</c>(group) opens with <c>Ttm_Open</c>(0, 0, 0, name) for the names of the group's list of
+	/// <c>cfg\tm_files.dat</c>, the list group / 1000 − 1. The message box's kinds 5 to 11 set entries 3 and 6 to mode 2 while
+	/// their line is up (<see cref="MessageBox.Es1MessageBox"/>). PLACEHOLDER: <c>00011f19</c> is not ported, so none.
+	/// </summary>
+	public byte[]? ScriptHandles { get; private set; }
 
 	/// <summary>
 	/// <c>ShellBackdrop_LoadPalette</c> (<c>0003950a</c>)(backdrop, <paramref name="group"/>): the palette released, then

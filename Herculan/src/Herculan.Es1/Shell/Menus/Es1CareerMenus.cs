@@ -57,7 +57,7 @@ public sealed class Es1CareerMenu : Es1Menu {
 	/// A control's slot <c>+0x3c</c> with a line of <c>eng\watext.bin</c>. Retail indexes the controls with the −1 of an id
 	/// it does not find; here such an id is passed over, an engine guard.
 	/// </summary>
-	private static void SetText(Es1DUIWindow window, short id, short line) {
+	internal static void SetText(Es1DUIWindow window, short id, short line) {
 		short index = window.FindControlById(id);
 		if (index >= 0) {
 			window.Controls[index].SetTextFromTable(line);

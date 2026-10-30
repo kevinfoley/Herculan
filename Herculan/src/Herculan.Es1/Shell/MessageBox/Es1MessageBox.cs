@@ -1,3 +1,4 @@
+using System.Globalization;
 using Herculan.Es1.Input;
 using Herculan.Es1.Panels;
 using Herculan.Es1.Shell.Menus;
@@ -9,8 +10,9 @@ namespace Herculan.Es1.Shell.MessageBox;
 /// The message box's file (docs/es1/shell/message-box.md#the-message-box): on the record <see cref="Es1MessageBoxRecord"/>,
 /// <c>DigitalDialog_ShowMessage</c>, <c>MessageBox_Run</c>, <c>MessageBox_Answer</c> and <c>MessageBox_Close</c>, over the
 /// dialog record <see cref="Es1ShellDialog"/> and the talking head <see cref="Es1LipSyncPlayer"/>. Kinds 0 and 3, a single
-/// mission's opening line and its debriefing line, and kind 2, a new career's campaign opening lines, are ported; the
-/// career's other kinds are later parts'.
+/// mission's opening line and its debriefing line, kind 1, a career mission's line, kind 2, a new career's campaign
+/// opening lines, and the lines of <c>eng\T1_text.bin</c> kinds 5 to 11 show are ported; kind 4's line and kind 7's pick
+/// and answer are P11's.
 /// </summary>
 public sealed class Es1MessageBox {
 	/// <summary>
@@ -55,6 +57,23 @@ public sealed class Es1MessageBox {
 	/// </summary>
 	private static readonly string[] OpeningScripts = ["a_camni.ttm", "d_camni.ttm", "d_camni.ttm", "b_camni.ttm", "b_camni.ttm",
 		"g_camni.ttm", "g_camni.ttm", "g_camni.ttm"];
+
+	/// <summary>
+	/// The words <c>0008159c</c>, <c>0008159e</c> and <c>000815a0</c>, −1 in the image: the lines of <c>eng\T1_text.bin</c>
+	/// kinds 5 to 11 show at each <see cref="LineStep"/>, the first <see cref="PickT1Line"/>'s.
+	/// </summary>
+	private readonly short[] _t1Lines = [-1, -1, -1];
+
+	/// <summary>
+	/// The 41 words at <c>000815a8</c>, by line of <c>eng\T1_text.bin</c>: the lip-sync list's <i>a</i>, 0 for
+	/// <c>T0_FILES.DAT</c> and 1 for <c>T1_FILES.DAT</c> (docs/es1/shell/message-box.md#loading-a-line).
+	/// </summary>
+	private static readonly short[] T1Lists = [
+		1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1,
+	];
+
+	/// <summary><see cref="PickT1Line"/>'s line for kind 5, a new campaign's, and the first of kind 6's, before a mission.</summary>
+	private const short CampaignLine = 2, FirstLaunchLine = 3;
 
 	private readonly Es1MenuGlobals _globals;
 	private readonly Es1ShellDialog _dialog;
@@ -153,15 +172,35 @@ public sealed class Es1MessageBox {
 
 				break;
 			}
-			case 1:
+			case 1: {
+				// A career's mission line: the line as kind 0's, of eng\C<k>_text.bin, k the +0 word of the career's campaign
+				// in the battle set, formatted signed.
+				b = 1;
+				short k = CampaignFileWord();
+				a = (short)(k * 2);
+				_mission.MessageBoxLine = _mission.HeaderWord4;
+				path = string.Create(CultureInfo.InvariantCulture, $"eng\\C{k}_text.bin");
+				break;
+			}
 			case 4:
-				// PLACEHOLDER: a career's mission line, eng\C<k>_text.bin (message-box.md's kind 1), P10b's, and its debriefing
-				// line, eng\D<k>_text.bin (kind 4), P11's; the box loads nothing.
+				// PLACEHOLDER: a career's debriefing line, eng\D<k>_text.bin (message-box.md's kind 4), P11's; the box loads
+				// nothing.
 				yield break;
 			case >= 5 and <= 11:
-				// PLACEHOLDER: eng\T1_text.bin with MessageBox_PickT1Line (00037bf0) and the two Ttm_SetMode calls on the handles
-				// at 0007e718 + 0x12 and + 9 (message-box.md's kinds 5 to 11), P11's; the box loads nothing.
-				yield break;
+				// A line of eng\T1_text.bin: kind 7 skips the pick and, at step 0, keeps the line set before it.
+				if (record.Kind != 7 && LineStep == 0) {
+					_mission.MessageBoxLine = PickT1Line(record.Kind);
+				}
+
+				if (LineStep != 0) {
+					_mission.MessageBoxLine = T1Line(LineStep);
+				}
+
+				b = 2;
+				a = T1List(_mission.MessageBoxLine);
+				path = "eng\\T1_text.bin";
+				SetBackdropScriptsMode(Es1TtmPlayer.Hidden);
+				break;
 			default:
 				yield break;
 		}
@@ -179,6 +218,77 @@ public sealed class Es1MessageBox {
 	private static short OutcomeGrade(short ordinal, short kind) {
 		short[] grades = kind is 0 or 1 or 2 or 6 ? GradesA : GradesB;
 		return ordinal >= 0 && ordinal < grades.Length ? grades[ordinal] : (short)0;
+	}
+
+	/// <summary>
+	/// Kind 1's <i>k</i> (docs/es1/shell/message-box.md#the-kinds): the <c>+0</c> word of the career record's campaign in the
+	/// loaded battle set, <c>g_BattleSet</c> (<c>000a02cc</c>), which <c>BattleSet_ReadFile</c> sets to the campaign's word of
+	/// <c>0007ea94</c> (<see cref="Es1ShellBackdrop.CampaignWords"/>); −1 with no campaigns or a campaign outside them.
+	/// Retail reads past the table for a battle set of more than its ten campaigns; such a campaign is −1 here, an engine
+	/// guard.
+	/// </summary>
+	private short CampaignFileWord() {
+		short campaign = Campaign;
+		return _data.BattleSet is { } set && campaign >= 0 && campaign < set.Campaigns.Length && campaign < Es1ShellBackdrop.CampaignWords.Length
+			? Es1ShellBackdrop.CampaignWords[campaign]
+			: (short)-1;
+	}
+
+	/// <summary>
+	/// <c>MessageBox_PickT1Line</c> (<c>00037bf0</c>)(<paramref name="kind"/>) (docs/es1/shell/message-box.md#the-kinds): sets
+	/// the line word <c>0008159c</c>, <see cref="_t1Lines"/>' first, and returns it. Kind 5: line 2, the new campaign's.
+	/// Kind 6: line 3 plus <c>Math_RandomBelow</c>(<c>Shell_RandomState</c>, 4), or below 6 when the current career
+	/// record's missions played <c>+0xa</c> is not 0. Any other kind returns the line as it was. A draw without the
+	/// generator is 0, and no record reads as none played, engine guards.
+	/// </summary>
+	private short PickT1Line(short kind) {
+		switch (kind) {
+			case 6: {
+				short played = _mission.CurrentRecord?.MissionsPlayed ?? 0;
+				_t1Lines[0] = (short)(FirstLaunchLine + (_data.Random?.Below(played == 0 ? (short)4 : (short)6) ?? 0));
+				break;
+			}
+			case 5:
+				_t1Lines[0] = CampaignLine;
+				break;
+			case 7:
+				// PLACEHOLDER: kind 7's line by the bands of Herc_OverallCondition (00024b6a) of the career record's +0x1c HERC,
+				// and its second line 0008159e, P11's; no ported caller asks for kind 7 (its caller is Shell_OpenFirstScreen's
+				// mode 1, back from a career's mission), so the line stays.
+				break;
+		}
+
+		return _t1Lines[0];
+	}
+
+	/// <summary>
+	/// The word of <see cref="_t1Lines"/> at <paramref name="step"/>, the line kind 7 shows at that step. Retail reads past
+	/// the three words; a step past them is −1 here, an engine guard.
+	/// </summary>
+	private short T1Line(short step) => step >= 0 && step < _t1Lines.Length ? _t1Lines[step] : (short)-1;
+
+	/// <summary>
+	/// The word of <see cref="T1Lists"/> at <paramref name="line"/>, the lip-sync list's <i>a</i>: 0 <c>T0_FILES.DAT</c>, 1
+	/// <c>T1_FILES.DAT</c>. Retail reads past the 41 words; a line past them is 0 here, an engine guard.
+	/// </summary>
+	private static short T1List(short line) => line >= 0 && line < T1Lists.Length ? T1Lists[line] : (short)0;
+
+	/// <summary>
+	/// <c>Ttm_SetMode</c> (<c>00046948</c>)(<paramref name="mode"/>, handle) for the backdrop's scripts 6 and 3, the handle bytes
+	/// at the dword <c>0007e718</c> + <c>0x12</c> and + 9 (<see cref="Es1ShellBackdrop.ScriptHandles"/>), in that order:
+	/// mode 2 as kinds 5 to 11 load their line, 0 as their answer closes it. Retail reads the bytes through a null dword
+	/// when the backdrop opened none; here no call is made then, an engine guard.
+	/// </summary>
+	private void SetBackdropScriptsMode(int mode) {
+		if (_backdrop.ScriptHandles is not { } handles || _scripts() is not { } scripts) {
+			return;
+		}
+
+		foreach (int entry in new[] { 6, 3 }) {
+			if (entry < handles.Length) {
+				scripts.SetMode(mode, handles[entry]);
+			}
+		}
 	}
 
 	/// <summary>
@@ -227,7 +337,8 @@ public sealed class Es1MessageBox {
 
 	/// <summary>
 	/// <c>MessageBox_Answer</c> (<c>0003837f</c>)(box, <paramref name="input"/>) (docs/es1/shell/message-box.md#the-answer):
-	/// kind 2 by <see cref="AnswerOpening"/>; for the kinds 0, 1, 3, 4 and any kind not named below, the pending message's
+	/// kind 2 by <see cref="AnswerOpening"/>; for 5, 6 and 8 to 11 the backdrop's two scripts first set back to mode 0
+	/// (<see cref="SetBackdropScriptsMode"/>), then as for the kinds 0, 1, 3, 4 and any kind not named below: the pending message's
 	/// code set to 0 and its target to the kind's next screen, the index and value left as
 	/// <see cref="Es1ShellScreens.HandleMessage"/> left them; the box closed (<see cref="Close"/>); and the cursor drawn.
 	/// </summary>
@@ -248,7 +359,7 @@ public sealed class Es1MessageBox {
 			case 5:
 			case 6:
 			case >= 8 and <= 11:
-				// PLACEHOLDER: Ttm_SetMode(0, handle) for the handle bytes at the dword 0007e718 + 0x12 and + 9, S3's.
+				SetBackdropScriptsMode(Es1TtmPlayer.Playing);
 				break;
 		}
 

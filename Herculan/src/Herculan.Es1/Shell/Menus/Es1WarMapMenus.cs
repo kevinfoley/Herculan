@@ -139,7 +139,12 @@ public sealed class Es1WarMapMenu : Es1Menu {
 				break;
 			case ServiceBay:
 				// 0002c382: PLACEHOLDER: 0000a9c8(Shell_MissionMap), with no test that the map is set, the mission map's,
-				// S5's; and in Shell_Mode 1 the current career record's byte +1 set to 1, P10b's. The target stays 1700.
+				// S5's. Then in Shell_Mode 1 the byte +1 of the roster's record its word +7 names set to 1, the briefing seen,
+				// which makes the bay's BEGIN MISSION > active (Es1ServiceBayMenu.SetButtons). The target stays 1700.
+				if (mission.Mode == 1) {
+					mission.Roster.CurrentRecord.Byte1 = 1;
+				}
+
 				break;
 			case BeginMission:
 				BeginMissionPressed(ref message);
@@ -227,9 +232,11 @@ public sealed class Es1UnArmedAlert : Es1Menu {
 	}
 
 	/// <summary>
-	/// Slot <c>+8</c>, <c>UnArmedAlert_OnMessage</c> (<c>0002a650</c>): for PROCEED, the target 9999 in
-	/// <c>Shell_Mode</c> 0, the mission map deleted and <see cref="Es1ShellScreens.MapRefresh"/> cleared. It writes no
-	/// <c>data\player.mec</c>: the load's stands.
+	/// Slot <c>+8</c>, <c>UnArmedAlert_OnMessage</c> (<c>0002a650</c>): for PROCEED, in <c>Shell_Mode</c> 1 the target
+	/// 1700, the service bay, and the message box's kind 6, whose answer posts the mission, 9999
+	/// (docs/es1/shell/between-missions.md#starting-the-mission-from-the-bay); in any other mode the target 9999; then the
+	/// mission map deleted and <see cref="Es1ShellScreens.MapRefresh"/> cleared. It writes no <c>data\player.mec</c>: the
+	/// load's stands.
 	/// </summary>
 	public override void OnMessage(ref Es1MenuMessage message) {
 		if (message.Target != Proceed) {
@@ -238,8 +245,8 @@ public sealed class Es1UnArmedAlert : Es1Menu {
 
 		var screens = Context.Screens;
 		if (Context.Mission.Mode == 1) {
-			// PLACEHOLDER: in Shell_Mode 1 the target 1700 and MessageBox_SetKind(Shell_MessageBox, 6), the career's, P10b's;
-			// the target stays 100, which names no screen.
+			message = message with { Target = Es1ServiceBayMenu.Screen };
+			Context.Globals.MessageBox.SetKind(Es1ServiceBayMenu.LaunchKind);
 		} else {
 			message = message with { Target = Es1ShellScreens.LoadingScreen };
 		}
@@ -255,8 +262,10 @@ public sealed class Es1UnArmedAlert : Es1Menu {
 
 /// <summary>
 /// The no-HERC alert's screen object, class <c>UnAssignedAlert</c> (vtable <c>00081dc2</c>)
-/// (docs/es1/shell/war-map.md#begin-mission): screen 3333, over the war map's backdrop, WARNING! with OKAY (99), which
-/// passes to <see cref="Es1ShellScreens.HandleMessage"/>'s <i>back</i>, to the war map. Its slot <c>+8</c>,
+/// (docs/es1/shell/war-map.md#begin-mission): screen 3333, over the war map's or the bay's backdrop, WARNING! with OKAY
+/// (99), which passes to <see cref="Es1ShellScreens.HandleMessage"/>'s <i>back</i>, to the screen it came from; also
+/// the disk-space warning 6666, whose OKAY is 1200, and the bay's warnings 7770 and 7772, whose OKAY is 99
+/// (docs/es1/shell/between-missions.md#the-bars-buttons). Its slot <c>+8</c>,
 /// <c>UnAssignedAlert_OnMessage</c> (<c>0003fae8</c>), is <c>Menu_OnMessage</c>'s code, nothing.
 /// </summary>
 public sealed class Es1UnAssignedAlert : Es1Menu {

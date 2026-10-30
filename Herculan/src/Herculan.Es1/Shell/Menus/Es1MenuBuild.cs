@@ -48,19 +48,20 @@ public static class Es1MenuBuild {
 	public const short CareerNameList = 1002;
 
 	/// <summary>
-	/// The 19 ids that <c>Menu_ListLines</c> gives lines of their own and that are not ported, of the 28 at
-	/// <c>000812f4</c>: all but 1002, 1202, 1223 and the single-mission lists of <see cref="WaTextLists"/>.
+	/// The 18 ids that <c>Menu_ListLines</c> gives lines of their own and that are not ported, of the 28 at
+	/// <c>000812f4</c>: all but 1002, 1202, 1223 and the lists of <see cref="WaTextLists"/>.
 	/// </summary>
 	private static readonly short[] OwnLinesLists = [
-		1921, 1924, 1925, 1926, 1907, 1906, 1927, 1923, 1314, 1315, 1316, 1318, 1331, 1904, 1903, 1905, 1922, 1808, 1809,
+		1921, 1924, 1925, 1926, 1907, 1906, 1927, 1923, 1314, 1315, 1316, 1318, 1904, 1903, 1905, 1922, 1808, 1809,
 	];
 
 	/// <summary>
-	/// The ids of the 28 at <c>000812f4</c> whose cases give <see cref="LinesFromList"/> of a word list
-	/// (docs/es1/shell/single-mission.md): 1101, the SINGLE MISSION menu's mission types (<c>000376f5</c>, the list at
-	/// <c>00081264</c>), and 1116 to 1120, the MISSION PARAMS menu's values (<c>0003765c</c>, <c>0003766d</c>,
-	/// <c>000376a0</c>, <c>0003767e</c>, <c>0003768f</c>, the lists at <c>000811c4</c>, <c>000811cc</c>, <c>00081244</c>,
-	/// <c>000811d4</c> and <c>000811dc</c>).
+	/// The ids of the 28 at <c>000812f4</c> whose cases give <see cref="LinesFromList"/> of a word list: 1101, the SINGLE
+	/// MISSION menu's mission types (<c>000376f5</c>, the list at <c>00081264</c>), and 1116 to 1120, the MISSION PARAMS
+	/// menu's values (<c>0003765c</c>, <c>0003766d</c>, <c>000376a0</c>, <c>0003767e</c>, <c>0003768f</c>, the lists at
+	/// <c>000811c4</c>, <c>000811cc</c>, <c>00081244</c>, <c>000811d4</c> and <c>000811dc</c>)
+	/// (docs/es1/shell/single-mission.md); and 1331, the battle-set picker's list (<c>000376e4</c>, the list at
+	/// <c>000811e4</c>), the one line <c>0x13</c>, which names the retail battle set.
 	/// </summary>
 	private static readonly Dictionary<short, short[]> WaTextLists = new() {
 		[Es1MissionMenu.KindList] = [0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, -1],
@@ -69,6 +70,7 @@ public static class Es1MenuBuild {
 		[1118] = [23, 24, 25, 26, -1],
 		[1119] = [12, 4, -1],
 		[1120] = [13, 14, 15, -1],
+		[Es1BattlesetAlert.BattleSetList] = [0x13, -1],
 	};
 
 	/// <summary>
@@ -250,7 +252,7 @@ public static class Es1MenuBuild {
 	/// <c>CareerLog_CurrentNameArray</c> (<c>000182f8</c>) of the careers log (docs/es1/shell/main-menu.md#the-list); for
 	/// 1202, the career menu's list, <c>CareerLog_NameLines</c> (<see cref="Es1ShellData.CareerNameLines"/>); for 1223,
 	/// the backup list, <c>Roster_BackupListLines</c> (<see cref="Es1CareerRoster.BackupListLines"/>); for the
-	/// single-mission lists, <see cref="LinesFromList"/> of their word list (<see cref="WaTextLists"/>); for any id outside
+	/// single-mission lists and the battle-set list, <see cref="LinesFromList"/> of their word list (<see cref="WaTextLists"/>); for any id outside
 	/// the 28 at <c>000812f4</c>, <see cref="LinesFromList"/> of the list at <c>000811a4</c>, which numbers none.
 	/// </summary>
 	public static string?[] ListLines(Es1MenuContext context, short id) {
@@ -271,7 +273,7 @@ public static class Es1MenuBuild {
 		}
 
 		if (Array.IndexOf(OwnLinesLists, id) >= 0) {
-			// PLACEHOLDER: the 19 other ids at 000812f4 give lines of their own (the cases at 00081364), unread; their menus are
+			// PLACEHOLDER: the 18 other ids at 000812f4 give lines of their own (the cases at 00081364), unread; their menus are
 			// later modules', and the list is empty until they land.
 			return [null];
 		}

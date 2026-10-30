@@ -190,6 +190,31 @@ public class Es1CareerRecord {
 	}
 
 	/// <summary>
+	/// <c>CareerRecord_PlayerHercDisabled</c> (<c>0001626d</c>) (docs/es1/shell/between-missions.md#next-mission):
+	/// <see cref="Es1Hangar.SlotIsDisabled"/> of the slot of the player's entry <see cref="PlayerEntry"/>. Retail reads the
+	/// entry with no bounds test; an entry past the four tests a slot of −1 here, an engine guard.
+	/// </summary>
+	public bool PlayerHercDisabled(Es1Hangar hangar) =>
+		hangar.SlotIsDisabled(PlayerEntry is >= 0 and < PilotCount ? Pilots[PlayerEntry].Slot : (short)-1);
+
+	/// <summary>
+	/// <c>CareerRecord_AnyHercDisabled</c> (<c>00016294</c>) (docs/es1/shell/between-missions.md#next-mission): as
+	/// <see cref="AnyPilotUnarmed"/>, each current pilot's slot tested with <see cref="Es1Hangar.SlotIsDisabled"/>, the current
+	/// pilot and the hangar's selected slot stepped as retail's are; true when any test was.
+	/// </summary>
+	public bool AnyHercDisabled(Es1Hangar hangar) {
+		bool any = false;
+		int count = CountPilots();
+		for (int i = 0; i < count; i++) {
+			short slot = CurrentPilot is >= 0 and < PilotCount ? Pilots[CurrentPilot].Slot : (short)-1;
+			any |= hangar.SlotIsDisabled(slot);
+			NextPilot(hangar);
+		}
+
+		return any;
+	}
+
+	/// <summary>
 	/// <c>CareerRecord_CountLostPilots</c> (<c>00015db7</c>): the entries on strength with a slot whose condition
 	/// (<c>PilotEntry_Condition</c>, <c>0001618d</c>) is 0, which retail adds to the word <c>0007ebca</c>.
 	/// </summary>
@@ -526,6 +551,19 @@ public class Es1Hangar {
 	/// <see cref="Es1HercRecord.IsUnarmed"/>.
 	/// </summary>
 	public bool SlotIsUnarmed(short slot) => HercIn(slot) is { } herc && herc.IsUnarmed();
+
+	/// <summary>
+	/// <c>Hangar_SlotIsDisabled</c> (<c>0002a395</c>) (docs/es1/shell/between-missions.md#next-mission): false for −1 or a
+	/// slot holding no HERC, otherwise <see cref="Es1HercRecord.IsDisabled"/>.
+	/// </summary>
+	public bool SlotIsDisabled(short slot) => HercIn(slot) is { } herc && herc.IsDisabled();
+
+	/// <summary>
+	/// <c>Hangar_HasMarkedHerc</c> (<c>0002a277</c>) (docs/es1/shell/between-missions.md#the-bars-buttons): <see cref="MarkedSlot"/>
+	/// is not −1 and holds a HERC. Retail reads the array with no bounds test; a slot outside it holds none here, an engine
+	/// guard.
+	/// </summary>
+	public bool HasMarkedHerc() => MarkedSlot != -1 && HercIn(MarkedSlot) != null;
 
 	/// <summary>
 	/// <c>Hangar_Write</c> (<c>00029107</c>) in <c>Shell_Mode</c> 0, as <c>Hangar_SaveFile</c> (<c>0002909c</c>) writes

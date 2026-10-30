@@ -399,6 +399,20 @@ public sealed class Es1ShellMission {
 	public bool AnyPilotUnarmed() => CurrentRecord is { } record && Hangar is { } hangar && record.AnyPilotUnarmed(hangar);
 
 	/// <summary>
+	/// <c>CareerRecord_PlayerHercDisabled</c> (<c>0001626d</c>)(<c>CareerRecord_Current</c>)
+	/// (docs/es1/shell/between-missions.md#next-mission), on <see cref="CurrentRecord"/> and <see cref="Hangar"/>; false with
+	/// neither, an engine guard.
+	/// </summary>
+	public bool PlayerHercDisabled() => CurrentRecord is { } record && Hangar is { } hangar && record.PlayerHercDisabled(hangar);
+
+	/// <summary>
+	/// <c>CareerRecord_AnyHercDisabled</c> (<c>00016294</c>)(<c>CareerRecord_Current</c>)
+	/// (docs/es1/shell/between-missions.md#next-mission), on <see cref="CurrentRecord"/> and <see cref="Hangar"/>; false with
+	/// neither, an engine guard.
+	/// </summary>
+	public bool AnyHercDisabled() => CurrentRecord is { } record && Hangar is { } hangar && record.AnyHercDisabled(hangar);
+
+	/// <summary>
 	/// <c>PlayerMec_Write</c> (<c>0002299e</c>), BEGIN MISSION >'s
 	/// (docs/es1/formats/career-log-and-player-mec.md#the-player-file), on <see cref="CurrentRecord"/> and
 	/// <see cref="Hangar"/>. In <see cref="Mode"/> 0 <c>data\player.mec</c> is written again with the load's writer
