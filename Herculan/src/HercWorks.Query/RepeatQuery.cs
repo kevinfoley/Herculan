@@ -17,7 +17,7 @@ internal sealed record RepeatedRecord(int Index, short Condition, string Payload
 /// <param name="Records">In file order.</param>
 /// <param name="NoGuidBefore">
 /// ES1 only: how many records with GUID <c>-1</c> precede the first. ES1's load finds the slot it replaces by counting the
-/// survivors before it whose GUID is not <c>-1</c> (docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats),
+/// survivors before it whose GUID is not <c>-1</c> (docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats),
 /// so when one of those survives, the replacement lands on an earlier slot than the first record's.
 /// </param>
 internal sealed record RepeatedGuid(int Row, short Guid, IReadOnlyList<RepeatedRecord> Records,
@@ -65,7 +65,7 @@ internal static class RepeatQuery {
 
 	/// <summary>
 	/// <see cref="Run"/> over an ES1 install: its rows 3 to 6, the points, headings, waypoint groups and trigger areas, whose
-	/// later unconditioned records replace the earlier (docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats).
+	/// later unconditioned records replace the earlier (docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats).
 	/// </summary>
 	public static IReadOnlyList<RepeatQueryMission> RunEs1(RetailData data, IReadOnlyCollection<string> missions) =>
 		data.Es1Missions
