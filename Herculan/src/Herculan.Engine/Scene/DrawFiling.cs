@@ -14,6 +14,9 @@ public sealed class DrawFiling(MissionScene scene) {
 	private readonly Dictionary<SimObject, DrawEntry> _objectEntries = new();
 	private readonly Dictionary<object, DrawEntry> _frameEntries = new(ReferenceEqualityComparer.Instance);
 
+	// This frame's transient entries in the order they were made, the beam spans' among them.
+	private readonly List<DrawEntry> _frameOrder = new();
+
 	/// <summary>
 	/// The entry of a machine, a structure or a flyer, made the first time it is asked for and kept: the object
 	/// is in the world for the whole mission, and its cell is what anything filed with it reads.
@@ -51,21 +54,39 @@ public sealed class DrawFiling(MissionScene scene) {
 				FileWith = fileWith,
 			};
 			_frameEntries[subject] = entry;
+			_frameOrder.Add(entry);
 		}
 
 		return entry;
 	}
 
+	/// <summary>
+	/// A new entry this frame for one tracer object of <paramref name="tracer"/>, filed by <paramref name="start"/> with no
+	/// radius — see <see cref="BeamSpanDraw"/>. Each span of a straight beam is an object of its own in the original, so
+	/// each call makes another.
+	/// </summary>
+	public DrawEntry SpanEntry(BeamTracer tracer, Vec3i start) {
+		var entry = new DrawEntry(tracer) { Tag = ObjectTypeTag.Projectile, Position = start };
+		_frameOrder.Add(entry);
+		return entry;
+	}
+
 	/// <summary>Forgets last frame's transient entries, before this frame's are made.</summary>
-	public void BeginFrame() => _frameEntries.Clear();
+	public void BeginFrame() {
+		_frameEntries.Clear();
+		_frameOrder.Clear();
+	}
 
 	/// <summary>
 	/// Scene_SubmitFrameObjects (0042841c), once a frame: the table every pass of this frame files and culls by.
 	/// The machine, structure and flyer walks come first, in the original's order -- structures, machines,
 	/// flyers -- because a machine standing in a structure is filed under the cell the structure walk has just
 	/// picked, and an owned effect and a fire under their owner's. An object still waiting on its mission
-	/// action is not submitted. The rest follow; nothing is filed with any of them, so their order changes
-	/// nothing.
+	/// action is not submitted. The rest follow in the original's pool order -- projectiles (bullets, missiles,
+	/// then beam spans, where the original's one pool interleaves them by age), impact effects, debris,
+	/// fires, drop pods -- each in the order it was made this frame, which is its list's, oldest first. Nothing is
+	/// filed with any of them; the order decides which of two entries at the same distance in one cell the
+	/// painter's-order draw paints first (docs/retail/rendering/terrain-drawing.md, "What is filed where").
 	///
 	/// <para>The camera this frame's passes ride is set here; the missile camera's pass, which rides nothing,
 	/// clears it around its own draw.</para>
@@ -79,7 +100,9 @@ public sealed class DrawFiling(MissionScene scene) {
 		Submit<BaseObject>();
 		Submit<MechObject>();
 		Submit<FlyerObject>();
-		table.Entries.AddRange(_frameEntries.Values);
+
+		// Stable, so each pool keeps the order its entries were made in.
+		table.Entries.AddRange(_frameOrder.OrderBy(entry => PoolOrder(entry.Tag)));
 
 		// Every object of the class, drawn or not: a structure with no model of its own still files the
 		// machines standing in it.
@@ -96,6 +119,16 @@ public sealed class DrawFiling(MissionScene scene) {
 			}
 		}
 	}
+
+	// Where a transient entry's pool comes in Scene_SubmitFrameObjects (0042841c)'s walk after the flyers.
+	private static int PoolOrder(ObjectTypeTag tag) => tag switch {
+		ObjectTypeTag.Projectile => 0,
+		ObjectTypeTag.Effect or ObjectTypeTag.EffectFar => 1,
+		ObjectTypeTag.Debris => 2,
+		ObjectTypeTag.Fire => 3,
+		ObjectTypeTag.DropPod => 4,
+		_ => 5,
+	};
 
 	/// <summary>Brings an object's entry to where it stands now: what the submit files it by and measures it from.</summary>
 	public static void Place(DrawEntry entry, SimObject subject) {

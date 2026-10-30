@@ -149,6 +149,17 @@ public static class TweakSettingDefinitions {
 	public static readonly TweakSettingDefinition<bool> ChangePbwBeamHue = new("tweak.change_pbw_beam_hue", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: false);
 
 	/// <summary>
+	/// Draw a mission's 3D view with a depth test at every pixel, so wherever two surfaces overlap the nearer one shows,
+	/// whichever object it belongs to. Off, the view is painted in retail's order (docs/retail/rendering/terrain-drawing.md,
+	/// "The cell walk", "Objects in the walk", "The draw order within a cell" and "After the walk"): the terrain a cell at
+	/// a time, far to near, each cell's objects straight after its ground, farthest first, each object whole over what came
+	/// before, so an impact effect on a building shows whole in front of it or not at all, and a ground shape filed under
+	/// a later cell covers a HERC filed under an earlier one. The mission editor always draws per pixel. See
+	/// <see cref="Render.WorldDrawPass"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> PerPixelDepthSorting = new("tweak.per_pixel_depth_sorting", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: false);
+
+	/// <summary>
 	/// Draw a mission at the window's own resolution and shape. Off, it is drawn at 640x480, retail's own resolution
 	/// (docs/retail/launch-options.md, "Display"), and the frame is scaled to fit the window, centred, so a window wider
 	/// than 4:3 gets bars at its sides; HERCULAN's own ImGui windows stay at the window's resolution either way. The
@@ -298,6 +309,6 @@ public static class TweakSettingDefinitions {
 		SmootherTurretMovement, MouseExternalView, FixDefendPositionOrder, FixWeaponDamageRecords,
 		ChargeBarPowerLevel, FlashThroughSecondHit, ShowAltitudeTape, DropPodSoundFromPod, FixRepairDiagramSides,
 		FixTerrainHitPoint, FlyerIgnoresPlayerThrottle, StrandedStingrayClosesIn, GuardHoldsUntilDestroyed, FasterKeyboardAiming, FixGunsightDrag, FixRaptorIIPerspective, ResetCountersOnReplay, SquadmateClearOfTransport,
-		AutoFillSaveName, AutoSaveSlot10, PlayLastMusicTrack, ShuffleMissionMusic, ChangePbwBeamHue,
+		AutoFillSaveName, AutoSaveSlot10, PlayLastMusicTrack, ShuffleMissionMusic, ChangePbwBeamHue, PerPixelDepthSorting,
 	};
 }

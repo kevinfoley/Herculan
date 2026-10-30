@@ -284,10 +284,10 @@ public sealed class SceneRenderer : IDisposable {
 	/// <summary>How many stencil bits the framebuffer has; zero leaves BSP children painted without one.</summary>
 	private readonly int _stencilBits;
 
-	/// <summary>Numbers <see cref="Render"/>'s passes, so a <see cref="BspDrawGroup"/> knows when to forget the last one.</summary>
+	/// <summary>The last number DrawItems handed out, one per call.</summary>
 	private int _pass;
 
-	/// <summary>The top-level BSP groups a pass has touched, in the order it first touched them.</summary>
+	/// <summary>The top-level BSP groups a DrawItems call has touched, in the order it first touched them.</summary>
 	private readonly List<BspDrawGroup> _bspRoots = new();
 
 	/// <summary>The nodes the original has composed so far in the group being prepared — see PrepareBspGroup.</summary>
@@ -512,9 +512,11 @@ public sealed class SceneRenderer : IDisposable {
 		Render(camera, items, null, viewportX, viewportY, viewportWidth, viewportHeight);
 
 	/// <summary>
-	/// The same pass with the ground drawn as the original paints it: <paramref name="ground"/>'s
-	/// terrain first, then its ground shapes in the terrain's paint order, then everything else in
-	/// <paramref name="items"/> (which may hold the terrain item too; it is not drawn twice).
+	/// The same pass with the ground drawn as the original paints it and every object depth-tested per pixel:
+	/// <paramref name="ground"/>'s terrain first, then its ground shapes in the terrain's paint order, then everything else
+	/// in <paramref name="items"/> (which may hold the terrain item too; it is not drawn twice). This is the mission
+	/// editor's draw, and the simulator's when its "Per-pixel depth sorting" tweak is on; the simulator's default, the
+	/// original's painter's order, is <see cref="WorldDrawPass"/>, which draws through this class's internal members.
 	///
 	/// <para>The original paints each ground shape straight after its own cell's ground, so the
 	/// ground of every cell its walk paints later covers it and it covers everything painted
@@ -534,9 +536,12 @@ public sealed class SceneRenderer : IDisposable {
 	/// terrain's own plane on a level pad, where a depth test could only tie with the ground.</para>
 	///
 	/// <para>Everything else is drawn afterwards with the depth test, so a machine stands over its
-	/// own shadow and a structure over its floor. The original also paints a shape over an object filed
-	/// under a cell painted earlier where the two overlap on screen; that is not reproduced here — every
-	/// object is drawn over every shape — and KNOWN_ISSUES.md lists it.</para>
+	/// own shadow and a structure over its floor. Two things the original's painter's order does are
+	/// not reproduced by this draw: a shape filed under a later cell is painted over an object filed under an earlier one
+	/// where the two overlap on screen, where here every object is drawn over every shape; and
+	/// one object is painted whole over another (docs/retail/rendering/terrain-drawing.md, "The draw order within a cell"),
+	/// where here a surface of one that cuts through the other, such as an impact effect's billboard through the building
+	/// it struck, shows only its nearer part.</para>
 	///
 	/// <para>Before any of it, the pass rebuilds the zone's visible region for its own view, as
 	/// <c>Terrain_SetupVisibleRegion</c> does before the submit, and files <paramref name="ground"/>'s
@@ -557,6 +562,137 @@ public sealed class SceneRenderer : IDisposable {
 				viewportX, viewportY, viewportWidth, viewportHeight)
 			: null;
 
+		BeginDraw(camera, projection, viewportX, viewportY, viewportWidth, viewportHeight);
+
+		if (ground != null) {
+			DrawItem(ground.Terrain);
+		}
+
+		if (groundShapes != null) {
+			_gl.Disable(EnableCap.DepthTest);
+			_gl.DepthMask(false);
+			BindPaintRanks();
+			_shader.SetInt("uPaintRankTest", 1);
+
+			foreach (var (item, rank) in groundShapes) {
+				_shader.SetUInt("uEntryRank", rank);
+				DrawItem(item);
+			}
+
+			_shader.SetInt("uPaintRankTest", 0);
+			_gl.DepthMask(true);
+			_gl.Enable(EnableCap.DepthTest);
+		}
+
+		DrawItems(items, ground?.Terrain);
+	}
+
+	/// <summary>
+	/// The start of a <see cref="WorldDrawPass"/> pass in the original's painter's order: files <paramref name="ground"/>'s
+	/// objects for this view as <see cref="Render(Camera, IEnumerable{SceneItem}, GroundShapeLayer?, int, int, int, int)"/>
+	/// does, draws the terrain's paint ranks (<see cref="TerrainPaintRankBuffer"/>) for every entry to test against, and
+	/// readies the frame: the viewport, the sky and the scene program's per-pass state. Returns the walk's order.
+	/// </summary>
+	internal TerrainPaintOrder BeginPaintedPass(Camera camera, GroundShapeLayer ground,
+			int viewportX, int viewportY, int viewportWidth, int viewportHeight) {
+		float aspect = (float)viewportWidth / System.Math.Max(viewportHeight, 1);
+		var projection = camera.ProjectionMatrix(aspect);
+		var order = FileObjects(camera, aspect, ground);
+
+		// Before anything is drawn into the frame, because it draws into a target of its own.
+		_paintRanks ??= new TerrainPaintRankBuffer(_gl);
+		_paintRanks.Draw(ground.Terrain, ground.Grid, order, camera.ViewMatrix, projection,
+			viewportX, viewportY, viewportWidth, viewportHeight);
+
+		BeginDraw(camera, projection, viewportX, viewportY, viewportWidth, viewportHeight);
+		return order;
+	}
+
+	/// <summary>The camera's own projection for the pass under way, which every program's clip distances are taken from.</summary>
+	internal Matrix4x4 PassProjection => _passProjection;
+
+	/// <summary>Draws the terrain through the pass's own projection, with no rank test and depth-tested against itself.</summary>
+	internal void DrawTerrain(SceneItem terrain) {
+		_shader.Use();
+		_shader.SetMatrix("uEntryProjection", _passProjection);
+		_shader.SetInt("uPaintRankTest", 0);
+		DrawItem(terrain);
+	}
+
+	/// <summary>Binds the paint ranks this pass drew to <see cref="PaintRankUnit"/>, where every program's rank test samples them.</summary>
+	internal void BindPaintRanks() {
+		_gl.ActiveTexture(TextureUnit.Texture0 + PaintRankUnit);
+		_gl.BindTexture(TextureTarget.Texture2D, _paintRanks!.RankTexture);
+	}
+
+	/// <summary>
+	/// Readies the scene program for one entry of a <see cref="WorldDrawPass"/> pass: <paramref name="entryProjection"/>
+	/// places its vertices, the pass's own projection still clips them, and a fragment is kept only where the ground
+	/// showing ranks no later than <paramref name="rank"/>.
+	/// </summary>
+	internal void BeginEntry(in Matrix4x4 entryProjection, uint rank) {
+		_shader.Use();
+		_shader.SetMatrix("uEntryProjection", entryProjection);
+		_shader.SetInt("uPaintRankTest", 1);
+		_shader.SetUInt("uEntryRank", rank);
+	}
+
+	/// <summary>
+	/// Draws <paramref name="item"/> with depth testing, and so depth writing, off: painted over whatever is there, the way
+	/// a ground shape and a structure's ground plane are drawn.
+	/// </summary>
+	internal void DrawUndepthed(SceneItem item) {
+		_gl.Disable(EnableCap.DepthTest);
+		DrawItem(item);
+		_gl.Enable(EnableCap.DepthTest);
+	}
+
+	/// <summary>Draws one entry's items, depth-tested among themselves, a BSP part's children in its walk's order.</summary>
+	internal void DrawEntryItems(IReadOnlyList<SceneItem> items) => DrawItems(items, null);
+
+	/// <summary>Ends a <see cref="WorldDrawPass"/> pass, leaving the scene program with the pass's own projection and no rank test.</summary>
+	internal void EndPaintedPass() {
+		_shader.Use();
+		_shader.SetMatrix("uEntryProjection", _passProjection);
+		_shader.SetInt("uPaintRankTest", 0);
+	}
+
+	/// <summary>
+	/// Whether a pass draws <paramref name="item"/>: it is <see cref="SceneItem.Visible"/>, <see cref="SceneItem.DetailSelected"/>,
+	/// and its <see cref="SceneItem.Filing"/> does not leave it out.
+	/// </summary>
+	internal static bool IsDrawn(SceneItem item) =>
+		item.Visible && item.DetailSelected && item.Filing is not { Drawn: false };
+
+	/// <summary>The camera's projection for the pass under way.</summary>
+	private Matrix4x4 _passProjection;
+
+	/// <summary>Whether any impact effect carries a light this pass — see BeginDraw.</summary>
+	private bool _anyEffectLights;
+
+	/// <summary>The effect-light count last uploaded this pass, so that a scene with none sets it once.</summary>
+	private int _uploadedLightCount;
+
+	/// <summary>The distance colour bands' ramps last uploaded this pass, for the same reason.</summary>
+	private IReadOnlyList<BandRamp>? _uploadedBandRamps;
+
+	/// <summary>This pass's view position, which the distance colour bands measure from.</summary>
+	private Numerics.Vec3i _viewer;
+
+	/// <summary>How much nearer than its own depth a cell's leading corner is this pass — see <see cref="FogCellSize"/>.</summary>
+	private float _cellFogBias;
+
+	/// <summary>This pass's eye in render space, which a BSP part's walk is ordered for.</summary>
+	private Vector3 _eyeWorld;
+
+	/// <summary>The number DrawItems gave its current call, which a <see cref="BspDrawGroup"/> forgets the last one by.</summary>
+	private int _itemsPass;
+
+	// The frame and the scene program's per-pass state, which both draws share: the viewport, the sky, and every uniform
+	// that does not change from item to item.
+	private void BeginDraw(Camera camera, Matrix4x4 projection,
+			int viewportX, int viewportY, int viewportWidth, int viewportHeight) {
+		_passProjection = projection;
 		_gl.Viewport(viewportX, viewportY, (uint)System.Math.Max(viewportWidth, 1), (uint)System.Math.Max(viewportHeight, 1));
 
 		DrawSky(camera, viewportX, viewportY, viewportWidth, viewportHeight);
@@ -564,6 +700,7 @@ public sealed class SceneRenderer : IDisposable {
 		_shader.Use();
 		_shader.SetMatrix("uView", camera.ViewMatrix);
 		_shader.SetMatrix("uProjection", projection);
+		_shader.SetMatrix("uEntryProjection", projection);
 		_shader.SetVector3("uLightDirection", LightDirection);
 		_shader.SetVector3("uFogColor", FogColor);
 		_shader.SetFloat("uFogStart", FogEnabled ? FogStart : FogDisabledDistance);
@@ -633,63 +770,44 @@ public sealed class SceneRenderer : IDisposable {
 		// direction — see FogCellSize. The grid runs along render X and Z, so a step along either
 		// axis covers cellSize * that component of the forward direction.
 		var forward = camera.Forward;
-		float cellFogBias = 0.5f * FogCellSize
+		_cellFogBias = 0.5f * FogCellSize
 			* (MathF.Abs(forward.X) + MathF.Abs(forward.Z));
 
 		// Whether any impact effect is carrying a light this frame at all, asked once rather than
 		// per item: the usual answer is no, and it is what lets the selection below be skipped
 		// outright instead of walking twenty empty slots for every drawn thing.
-		bool anyEffectLights = HasLiveEffectLight();
+		_anyEffectLights = HasLiveEffectLight();
 		_shader.SetFloat("uEffectLightFalloff", EffectLightSelection.PointFalloff);
 
 		// The count last uploaded, so that a scene with no effect lights sets it once and every
 		// item after the first costs nothing.
-		int uploadedLightCount = -1;
+		_uploadedLightCount = -1;
 
 		// The distance colour bands' ramps last uploaded, for the same reason: every item of one object, and most
 		// neighbouring objects, share them.
-		IReadOnlyList<BandRamp>? uploadedBandRamps = null;
-		var viewer = camera.Position;
-
-		if (ground != null) {
-			Draw(ground.Terrain);
-		}
-
-		if (groundShapes != null) {
-			_gl.Disable(EnableCap.DepthTest);
-			_gl.DepthMask(false);
-			_gl.ActiveTexture(TextureUnit.Texture0 + PaintRankUnit);
-			_gl.BindTexture(TextureTarget.Texture2D, _paintRanks!.RankTexture);
-			_shader.SetInt("uPaintRankTest", 1);
-
-			foreach (var (item, rank) in groundShapes) {
-				_shader.SetUInt("uGroundShapeRank", rank);
-				Draw(item);
-			}
-
-			_shader.SetInt("uPaintRankTest", 0);
-			_gl.DepthMask(true);
-			_gl.Enable(EnableCap.DepthTest);
-		}
-
-		// A child of a BSP part is held back and painted with the rest of its part, in the walk's order
-		// — see DrawBspGroup.
-		int pass = ++_pass;
-		var eyeWorld = WorldScale.ToRender(camera.Position);
-		_bspRoots.Clear();
+		_uploadedBandRamps = null;
+		_viewer = camera.Position;
+		_eyeWorld = WorldScale.ToRender(camera.Position);
 		_stencilCleared = false;
+	}
+
+	// Draws `items`, all but `skip` (the terrain, already drawn). A child of a BSP part is held back and painted with the
+	// rest of its part, in the walk's order — see DrawBspGroup.
+	private void DrawItems(IEnumerable<SceneItem> items, SceneItem? skip) {
+		_itemsPass = ++_pass;
+		_bspRoots.Clear();
 
 		foreach (var item in items) {
-			if (ground != null && ReferenceEquals(item, ground.Terrain)) {
+			if (skip != null && ReferenceEquals(item, skip)) {
 				continue;
 			}
 
 			if (item.BspGroup is { } group) {
-				if (Drawn(item) && item.BspLeaf >= 0 && item.BspLeaf < group.Tree.LeafCount) {
+				if (IsDrawn(item) && item.BspLeaf >= 0 && item.BspLeaf < group.Tree.LeafCount) {
 					Touch(group).Items[item.BspLeaf].Add(item);
 				}
 			} else {
-				Draw(item);
+				DrawItem(item);
 			}
 		}
 
@@ -697,243 +815,240 @@ public sealed class SceneRenderer : IDisposable {
 			PrepareBspGroup(root);
 			DrawBspGroup(root);
 		}
+	}
 
-		// Walks a top-level group's paint order ahead of the draw, recording it for DrawStenciled and
-		// DrawPainted, and follows the node state the original carries through that order: the first
-		// child on a node composes it and moves every registered light into its space, and a later child
-		// on it, or on no node, takes back a saved state that restores the sun alone, so its effect lights
-		// stay in the space of the node composed last (ShapeNode_InstallTransform (00476030),
-		// Raster_SaveState (0048d60c), Raster_RestoreState (0048d6e0)). Each child whose own node is not
-		// that one gets the matrix that puts a light where the original's shading finds it — the light
-		// brought into the last node's space and read as though in the child's. The original starts the
-		// state afresh per shape draw (ShapeInst_BindNodeTransformArray, 00475fd8), with the lights in the
-		// object's own frame; starting it per group is the same thing because every retail shape whose
-		// parts carry nodes draws through at most one TSBSPPart, outside which nothing installs a node
-		// before it. A group drawn inside a child (a gun in its hardpoint slot) is lit as that
-		// child: every part under the mount carries the slot's node or none (Shape_StampTransformId,
-		// 00417530), so it composes nothing new. See docs/retail/rendering/effect-lights.md, "A part
-		// drawn through a saved state shades the effect lights in another node's frame".
-		void PrepareBspGroup(BspDrawGroup root) {
-			_composedNodes.Clear();
-			int lastComposed = -1;
-			Prepare(root, root, ref lastComposed, null, nested: false);
-		}
+	// Walks a top-level group's paint order ahead of the draw, recording it for DrawStenciled and
+	// DrawPainted, and follows the node state the original carries through that order: the first
+	// child on a node composes it and moves every registered light into its space, and a later child
+	// on it, or on no node, takes back a saved state that restores the sun alone, so its effect lights
+	// stay in the space of the node composed last (ShapeNode_InstallTransform (00476030),
+	// Raster_SaveState (0048d60c), Raster_RestoreState (0048d6e0)). Each child whose own node is not
+	// that one gets the matrix that puts a light where the original's shading finds it — the light
+	// brought into the last node's space and read as though in the child's. The original starts the
+	// state afresh per shape draw (ShapeInst_BindNodeTransformArray, 00475fd8), with the lights in the
+	// object's own frame; starting it per group is the same thing because every retail shape whose
+	// parts carry nodes draws through at most one TSBSPPart, outside which nothing installs a node
+	// before it. A group drawn inside a child (a gun in its hardpoint slot) is lit as that
+	// child: every part under the mount carries the slot's node or none (Shape_StampTransformId,
+	// 00417530), so it composes nothing new. See docs/retail/rendering/effect-lights.md, "A part
+	// drawn through a saved state shades the effect lights in another node's frame".
+	private void PrepareBspGroup(BspDrawGroup root) {
+		_composedNodes.Clear();
+		int lastComposed = -1;
+		Prepare(root, root, ref lastComposed, null, nested: false);
+	}
 
-		void Prepare(BspDrawGroup group, BspDrawGroup frames, ref int lastComposed, Matrix4x4? inherited,
-				bool nested) {
-			group.OrderCount = group.Tree.PaintOrder(group.EyeInFrame, group.Order);
-			for (int k = 0; k < group.OrderCount; k++) {
-				int leaf = group.Order[k];
-				var retarget = inherited;
-				if (!nested) {
-					// A hardpoint slot installs its node only when a mount is spliced into it; the blank
-					// record that stands in otherwise draws nothing and installs nothing.
-					int node = group.Tree.LeafNode(leaf);
-					if (node >= 0 && (!group.Tree.IsAttachmentSlot(leaf) || group.Children[leaf].Count > 0)
-							&& _composedNodes.Add(node)) {
-						lastComposed = node;
-					}
-
-					retarget = anyEffectLights && lastComposed != node
-						? LightRetarget(frames, lastComposed, node)
-						: null;
+	private void Prepare(BspDrawGroup group, BspDrawGroup frames, ref int lastComposed, Matrix4x4? inherited,
+			bool nested) {
+		group.OrderCount = group.Tree.PaintOrder(group.EyeInFrame, group.Order);
+		for (int k = 0; k < group.OrderCount; k++) {
+			int leaf = group.Order[k];
+			var retarget = inherited;
+			if (!nested) {
+				// A hardpoint slot installs its node only when a mount is spliced into it; the blank
+				// record that stands in otherwise draws nothing and installs nothing.
+				int node = group.Tree.LeafNode(leaf);
+				if (node >= 0 && (!group.Tree.IsAttachmentSlot(leaf) || group.Children[leaf].Count > 0)
+						&& _composedNodes.Add(node)) {
+					lastComposed = node;
 				}
 
-				group.LightRetarget[leaf] = retarget;
-				foreach (var child in group.Children[leaf]) {
-					Prepare(child, frames, ref lastComposed, retarget, nested: true);
-				}
-			}
-		}
-
-		// Readies a group for this pass the first time the pass reaches it, and files it under the
-		// child of its parent it is drawn inside, or as a top-level group.
-		BspDrawGroup Touch(BspDrawGroup group) {
-			if (group.Pass != pass) {
-				group.BeginPass(pass, eyeWorld);
-				if (group.Parent is { } parent && group.ParentLeaf >= 0
-						&& group.ParentLeaf < parent.Tree.LeafCount) {
-					Touch(parent).Children[group.ParentLeaf].Add(group);
-				} else {
-					_bspRoots.Add(group);
-				}
+				retarget = _anyEffectLights && lastComposed != node
+					? LightRetarget(frames, lastComposed, node)
+					: null;
 			}
 
-			return group;
-		}
-
-		// The original paints a TSBSPPart's children one after another in its tree's order, back to
-		// front from the eye, with no depth buffer: wherever two children overlap on screen, the one
-		// the walk reaches later is what shows, whichever is nearer
-		// (docs/retail/rendering/dts-texture-binding.md#tsbsppart-child-selection). The rest of this
-		// scene is depth-buffered, between objects and between the polys of one child, so the part's
-		// own order is laid over the depth test with the stencil buffer:
-		//
-		// - The children are drawn in REVERSE paint order, each with its own stencil value, the
-		//   later-painted child the higher value, and a fragment passes only where the stencil holds
-		//   no more than its child's value (GEQUAL), writing that value where it lands. A child the
-		//   original paints later has therefore already claimed every pixel it covers, and nothing
-		//   painted before it can land there, nearer or not.
-		// - A child painted in more than one layer (PaintLayers: a decal lying over an earlier poly of
-		//   its own child) takes a value per layer, the later layer the higher, in the same way.
-		// - Within one layer of one child the depth test alone decides, and against the rest of the
-		//   scene too.
-		//
-		// A coplanar marking or insignia in a later child or layer wins its pixels outright, with no depth
-		// precision involved. Polygon offset by walk rank or a depth-equal test would only settle
-		// exact ties; retail's later child also covers an earlier one that is genuinely nearer
-		// wherever a part's planes do not separate its children, and only the painted order
-		// reproduces that.
-		//
-		// A group drawn inside a child (a weapon in its hardpoint slot) takes stencil values under
-		// that child's own and is painted in its turn, so it stands to the machine's other children
-		// exactly as that child does. Values are handed out in increasing blocks over the pass, so
-		// a later group always passes over an earlier one's marks; the stencil is cleared before the
-		// first group of a pass and whenever the eight bits run out. With no stencil buffer the
-		// children are drawn in paint order on the depth test alone.
-		void DrawBspGroup(BspDrawGroup root) {
-			int span = root.StencilSpan();
-			int maxValue = _stencilBits >= 8 ? 255 : (1 << _stencilBits) - 1;
-			if (span > maxValue) {
-				DrawPainted(root);
-				return;
+			group.LightRetarget[leaf] = retarget;
+			foreach (var child in group.Children[leaf]) {
+				Prepare(child, frames, ref lastComposed, retarget, nested: true);
 			}
-
-			if (!_stencilCleared || _stencilUsed + span > maxValue) {
-				_gl.ClearStencil(0);
-				_gl.Clear(ClearBufferMask.StencilBufferBit);
-				_stencilCleared = true;
-				_stencilUsed = 0;
-			}
-
-			_gl.Enable(EnableCap.StencilTest);
-			_gl.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
-			DrawStenciled(root, _stencilUsed + span);
-			_gl.Disable(EnableCap.StencilTest);
-			_stencilUsed += span;
-		}
-
-		// Paints a group's children from the last-painted to the first, the child at `top` and the
-		// ones before it below: each child's layers from its last down, then its nested groups under
-		// its first layer's value. The order is the one PrepareBspGroup recorded.
-		void DrawStenciled(BspDrawGroup group, int top) {
-			for (int k = group.OrderCount - 1; k >= 0; k--) {
-				int leaf = group.Order[k];
-				int layers = group.LayerCount(leaf);
-				for (int layer = layers - 1; layer >= 0; layer--) {
-					_gl.StencilFunc(StencilFunction.Gequal, top - (layers - 1 - layer), 0xff);
-					foreach (var item in group.Items[leaf]) {
-						if (item.PaintLayer == layer) {
-							Draw(item, group.LightRetarget[leaf]);
-						}
-					}
-				}
-
-				int below = top - layers;
-				foreach (var child in group.Children[leaf]) {
-					DrawStenciled(child, below);
-					below -= child.StencilSpan();
-				}
-
-				top -= group.ChildSpan(leaf);
-			}
-		}
-
-		void DrawPainted(BspDrawGroup group) {
-			for (int k = 0; k < group.OrderCount; k++) {
-				int leaf = group.Order[k];
-				foreach (var child in group.Children[leaf]) {
-					DrawPainted(child);
-				}
-
-				int layers = group.LayerCount(leaf);
-				for (int layer = 0; layer < layers; layer++) {
-					foreach (var item in group.Items[leaf]) {
-						if (item.PaintLayer == layer) {
-							Draw(item, group.LightRetarget[leaf]);
-						}
-					}
-				}
-			}
-		}
-
-		bool Drawn(SceneItem item) =>
-			item.Visible && item.DetailSelected && item.Filing is not { Drawn: false };
-
-		// `lightRetarget` moves the effect lights into the frame the original shades this item's faces
-		// against them in — see PrepareBspGroup.
-		void Draw(SceneItem item, Matrix4x4? lightRetarget = null) {
-			if (!Drawn(item)) {
-				return;
-			}
-
-			_shader.SetMatrix("uModel", item.Transform);
-
-			// LightManager_SelectLightsForObject (00407098), run per drawn object just as ObjList_DrawEntryRender runs it — see
-			// EffectLightSelection.
-			int lightCount = 0;
-			if (anyEffectLights && item.LightSubject is { } subject) {
-				lightCount = EffectLightSelection.Select(EffectLights!, subject.Position,
-					subject.ShapeRadius, _effectLights);
-
-				for (int i = 0; i < lightCount; i++) {
-					var light = _effectLights[i];
-					var vector = light.Vector;
-					if (lightRetarget is { } retarget) {
-						vector = light.Directional
-							? Vector3.Normalize(Vector3.TransformNormal(vector, retarget))
-							: Vector3.Transform(vector, retarget);
-					}
-
-					// w is the original's own light type tag: 1 directional, 2 point.
-					_shader.SetVector4(EffectLightNames[i],
-						new Vector4(vector, light.Directional ? 1f : 2f));
-					_shader.SetFloat(EffectLightIntensityNames[i], light.Intensity);
-				}
-			}
-
-			if (lightCount != uploadedLightCount) {
-				_shader.SetInt("uEffectLightCount", lightCount);
-				uploadedLightCount = lightCount;
-			}
-			if (_hasGrid) {
-				_shader.SetInt("uGridEnabled", item.ShowGrid ? 1 : 0);
-				_shader.SetInt("uHighlightEnabled", item.ShowHighlight ? 1 : 0);
-			}
-
-			// WorldShades_ApplyForObject (0042e8e8), run per drawn object as ObjList_DrawEntryRender runs it — see
-			// DistanceColorBands.
-			IReadOnlyList<BandRamp> bandRamps = FogEnabled && DistanceBands is { } bands && item.Filing is { } entry
-				? bands.Ramps(entry.Tag, bands.Band(entry.Tag, entry.DistanceFrom(viewer), entry.ShapeRadius))
-				: Array.Empty<BandRamp>();
-			if (!ReferenceEquals(bandRamps, uploadedBandRamps)) {
-				for (int i = 0; i < bandRamps.Count; i++) {
-					_shader.SetVector3(BandRampNames[i],
-						new Vector3(bandRamps[i].Ramp, bandRamps[i].Start, bandRamps[i].Count));
-				}
-
-				_shader.SetInt("uBandRampCount", bandRamps.Count);
-				uploadedBandRamps = bandRamps;
-			}
-
-			_shader.SetInt("uFullbright", item.Fullbright ? 1 : 0);
-			_shader.SetInt("uGroundFill", item.GroundFill ? 1 : 0);
-			_shader.SetFloat("uFogDepthBias", item.CellQuantisedFog ? cellFogBias : 0f);
-
-			// Bind texture if available, otherwise use flat shading.
-			if (item.TextureHandle.HasValue) {
-				_shader.SetSamplerTexture("uTexture", item.TextureHandle.Value, 0);
-				_shader.SetInt("uTextureEnabled", 1);
-			} else {
-				_shader.SetInt("uTextureEnabled", 0);
-			}
-
-			item.Mesh.Draw();
 		}
 	}
 
+	// Readies a group for this DrawItems call the first time the call reaches it, and files it under the
+	// child of its parent it is drawn inside, or as a top-level group.
+	private BspDrawGroup Touch(BspDrawGroup group) {
+		if (group.Pass != _itemsPass) {
+			group.BeginPass(_itemsPass, _eyeWorld);
+			if (group.Parent is { } parent && group.ParentLeaf >= 0
+					&& group.ParentLeaf < parent.Tree.LeafCount) {
+				Touch(parent).Children[group.ParentLeaf].Add(group);
+			} else {
+				_bspRoots.Add(group);
+			}
+		}
+
+		return group;
+	}
+
+	// The original paints a TSBSPPart's children one after another in its tree's order, back to
+	// front from the eye, with no depth buffer: wherever two children overlap on screen, the one
+	// the walk reaches later is what shows, whichever is nearer
+	// (docs/retail/rendering/dts-texture-binding.md#tsbsppart-child-selection). The rest of this
+	// scene is depth-buffered, between objects and between the polys of one child, so the part's
+	// own order is laid over the depth test with the stencil buffer:
+	//
+	// - The children are drawn in REVERSE paint order, each with its own stencil value, the
+	//   later-painted child the higher value, and a fragment passes only where the stencil holds
+	//   no more than its child's value (GEQUAL), writing that value where it lands. A child the
+	//   original paints later has therefore already claimed every pixel it covers, and nothing
+	//   painted before it can land there, nearer or not.
+	// - A child painted in more than one layer (PaintLayers: a decal lying over an earlier poly of
+	//   its own child) takes a value per layer, the later layer the higher, in the same way.
+	// - Within one layer of one child the depth test alone decides, and against the rest of the
+	//   scene too.
+	//
+	// A coplanar marking or insignia in a later child or layer wins its pixels outright, with no depth
+	// precision involved. Polygon offset by walk rank or a depth-equal test would only settle
+	// exact ties; retail's later child also covers an earlier one that is genuinely nearer
+	// wherever a part's planes do not separate its children, and only the painted order
+	// reproduces that.
+	//
+	// A group drawn inside a child (a weapon in its hardpoint slot) takes stencil values under
+	// that child's own and is painted in its turn, so it stands to the machine's other children
+	// exactly as that child does. Values are handed out in increasing blocks over the pass, so
+	// a later group always passes over an earlier one's marks; the stencil is cleared before the
+	// first group of a pass and whenever the eight bits run out. With no stencil buffer the
+	// children are drawn in paint order on the depth test alone.
+	private void DrawBspGroup(BspDrawGroup root) {
+		int span = root.StencilSpan();
+		int maxValue = _stencilBits >= 8 ? 255 : (1 << _stencilBits) - 1;
+		if (span > maxValue) {
+			DrawPainted(root);
+			return;
+		}
+
+		if (!_stencilCleared || _stencilUsed + span > maxValue) {
+			_gl.ClearStencil(0);
+			_gl.Clear(ClearBufferMask.StencilBufferBit);
+			_stencilCleared = true;
+			_stencilUsed = 0;
+		}
+
+		_gl.Enable(EnableCap.StencilTest);
+		_gl.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
+		DrawStenciled(root, _stencilUsed + span);
+		_gl.Disable(EnableCap.StencilTest);
+		_stencilUsed += span;
+	}
+
+	// Paints a group's children from the last-painted to the first, the child at `top` and the
+	// ones before it below: each child's layers from its last down, then its nested groups under
+	// its first layer's value. The order is the one PrepareBspGroup recorded.
+	private void DrawStenciled(BspDrawGroup group, int top) {
+		for (int k = group.OrderCount - 1; k >= 0; k--) {
+			int leaf = group.Order[k];
+			int layers = group.LayerCount(leaf);
+			for (int layer = layers - 1; layer >= 0; layer--) {
+				_gl.StencilFunc(StencilFunction.Gequal, top - (layers - 1 - layer), 0xff);
+				foreach (var item in group.Items[leaf]) {
+					if (item.PaintLayer == layer) {
+						DrawItem(item, group.LightRetarget[leaf]);
+					}
+				}
+			}
+
+			int below = top - layers;
+			foreach (var child in group.Children[leaf]) {
+				DrawStenciled(child, below);
+				below -= child.StencilSpan();
+			}
+
+			top -= group.ChildSpan(leaf);
+		}
+	}
+
+	private void DrawPainted(BspDrawGroup group) {
+		for (int k = 0; k < group.OrderCount; k++) {
+			int leaf = group.Order[k];
+			foreach (var child in group.Children[leaf]) {
+				DrawPainted(child);
+			}
+
+			int layers = group.LayerCount(leaf);
+			for (int layer = 0; layer < layers; layer++) {
+				foreach (var item in group.Items[leaf]) {
+					if (item.PaintLayer == layer) {
+						DrawItem(item, group.LightRetarget[leaf]);
+					}
+				}
+			}
+		}
+	}
+
+	// `lightRetarget` moves the effect lights into the frame the original shades this item's faces
+	// against them in — see PrepareBspGroup.
+	private void DrawItem(SceneItem item, Matrix4x4? lightRetarget = null) {
+		if (!IsDrawn(item)) {
+			return;
+		}
+
+		_shader.SetMatrix("uModel", item.Transform);
+
+		// LightManager_SelectLightsForObject (00407098), run per drawn object just as ObjList_DrawEntryRender runs it — see
+		// EffectLightSelection.
+		int lightCount = 0;
+		if (_anyEffectLights && item.LightSubject is { } subject) {
+			lightCount = EffectLightSelection.Select(EffectLights!, subject.Position,
+				subject.ShapeRadius, _effectLights);
+
+			for (int i = 0; i < lightCount; i++) {
+				var light = _effectLights[i];
+				var vector = light.Vector;
+				if (lightRetarget is { } retarget) {
+					vector = light.Directional
+						? Vector3.Normalize(Vector3.TransformNormal(vector, retarget))
+						: Vector3.Transform(vector, retarget);
+				}
+
+				// w is the original's own light type tag: 1 directional, 2 point.
+				_shader.SetVector4(EffectLightNames[i],
+					new Vector4(vector, light.Directional ? 1f : 2f));
+				_shader.SetFloat(EffectLightIntensityNames[i], light.Intensity);
+			}
+		}
+
+		if (lightCount != _uploadedLightCount) {
+			_shader.SetInt("uEffectLightCount", lightCount);
+			_uploadedLightCount = lightCount;
+		}
+		if (_hasGrid) {
+			_shader.SetInt("uGridEnabled", item.ShowGrid ? 1 : 0);
+			_shader.SetInt("uHighlightEnabled", item.ShowHighlight ? 1 : 0);
+		}
+
+		// WorldShades_ApplyForObject (0042e8e8), run per drawn object as ObjList_DrawEntryRender runs it — see
+		// DistanceColorBands.
+		IReadOnlyList<BandRamp> bandRamps = FogEnabled && DistanceBands is { } bands && item.Filing is { } entry
+			? bands.Ramps(entry.Tag, bands.Band(entry.Tag, entry.DistanceFrom(_viewer), entry.ShapeRadius))
+			: Array.Empty<BandRamp>();
+		if (!ReferenceEquals(bandRamps, _uploadedBandRamps)) {
+			for (int i = 0; i < bandRamps.Count; i++) {
+				_shader.SetVector3(BandRampNames[i],
+					new Vector3(bandRamps[i].Ramp, bandRamps[i].Start, bandRamps[i].Count));
+			}
+
+			_shader.SetInt("uBandRampCount", bandRamps.Count);
+			_uploadedBandRamps = bandRamps;
+		}
+
+		_shader.SetInt("uFullbright", item.Fullbright ? 1 : 0);
+		_shader.SetInt("uGroundFill", item.GroundFill ? 1 : 0);
+		_shader.SetFloat("uFogDepthBias", item.CellQuantisedFog ? _cellFogBias : 0f);
+
+		// Bind texture if available, otherwise use flat shading.
+		if (item.TextureHandle.HasValue) {
+			_shader.SetSamplerTexture("uTexture", item.TextureHandle.Value, 0);
+			_shader.SetInt("uTextureEnabled", 1);
+		} else {
+			_shader.SetInt("uTextureEnabled", 0);
+		}
+
+		item.Mesh.Draw();
+	}
+
 	/// <summary>The texture unit the terrain's paint ranks are sampled from.</summary>
-	private const int PaintRankUnit = 3;
+	internal const int PaintRankUnit = 3;
 
 	// The ground discs' texture unit (GroundDiscs), on its own for the reason PaintRankUnit is.
 	private const uint DiscUnit = 4;

@@ -7,19 +7,20 @@ namespace Herculan.Engine.Render;
 
 /// <summary>
 /// The terrain's paint rank at every pixel of a view: which cell's ground is showing there, as that
-/// cell's place in the original's cell walk (<see cref="TerrainPaintOrder"/>). A ground shape is
-/// painted in the original straight after its own cell's ground, so every later cell's ground
-/// covers it and every earlier cell's is covered by it; with this target, the shape's fragment
-/// shader keeps a pixel exactly when the ground there ranks no later than the shape's cell. See
-/// <see cref="SceneRenderer"/>, which draws with it, and docs/retail/simulation/ground-shapes.md, "The draw
-/// pass".
+/// cell's place in the original's cell walk (<see cref="TerrainPaintOrder"/>). Whatever is filed under a
+/// cell is painted in the original straight after that cell's ground, so every later cell's ground
+/// covers it and every earlier cell's is covered by it (docs/retail/rendering/terrain-drawing.md, "Objects in
+/// the walk"); with this target, a fragment shader keeps a pixel exactly when the ground there ranks no later
+/// than the cell what it draws is filed under. The per-pixel depth draw tests the ground shapes against it
+/// (<see cref="SceneRenderer.Render(Camera, IEnumerable{SceneItem}, GroundShapeLayer?, int, int, int, int)"/>);
+/// the painter's-order draw (<see cref="WorldDrawPass"/>) tests every entry, the terrain's depth having been
+/// cleared, so the ranks are then the only way the ground covers anything.
 ///
-/// <para>This is how this engine reproduces a painter's order it does not otherwise have: the
-/// scene is depth-buffered, the original is painted a cell at a time. The terrain mesh is drawn
+/// <para>The terrain itself is depth-buffered, the original's painted a cell at a time. The terrain mesh is drawn
 /// once more per pass, into an unsigned-integer colour target with a depth buffer of its own, so
 /// the rank recorded at a pixel is that of the nearest ground, the ground the scene itself shows
 /// there. Clearing to <see cref="TerrainPaintOrder.NoTerrain"/> leaves the sky below every cell,
-/// so a shape draws over it as in the original.</para>
+/// so an object draws over it as in the original.</para>
 ///
 /// <para>The per-cell ranks are a texture the size of the grid, re-uploaded only when the walk
 /// changes — when the viewer crosses into another cell or turns between walking by row and by

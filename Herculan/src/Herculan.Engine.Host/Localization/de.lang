@@ -39,6 +39,8 @@ tweak.shuffle_mission_music.display_name  Einsatzmusik zufällig wählen
 tweak.shuffle_mission_music.description   Jeder Einsatz spielt ein zufällig gewähltes Musikstück, nie zweimal hintereinander dasselbe. Das Originalspiel spielt die Stücke in fester Reihenfolge, eines pro Einsatz.
 tweak.change_pbw_beam_hue.display_name  PBW-Strahlfarbe ändern
 tweak.change_pbw_beam_hue.description   Im Originalspiel verwenden die Strahlen von PBW und PBW2 dieselbe Textur wie die Laser, sodass sie nicht zu unterscheiden sind. Diese Anpassung ändert den Farbton von PBW und PBW2 zur besseren Unterscheidung, nach den Farben aus Metaltech: Earthsiege.
+tweak.per_pixel_depth_sorting.display_name  Tiefensortierung pro Pixel
+tweak.per_pixel_depth_sorting.description   Zeichnet die 3D-Ansicht mit einem Tiefentest an jedem Pixel, sodass dort, wo sich zwei Dinge überlappen, immer das nähere zu sehen ist. Das Originalspiel malt den Boden Stück für Stück von fern nach nah und jedes Objekt vollständig über alles zuvor Gemalte, sodass ein Treffer an einem Gebäude ganz vor dem Gebäude oder gar nicht zu sehen ist, nie halb darin.
 tweak.high_resolution_widescreen.display_name  Hochauflösende Breitbilddarstellung aktivieren
 tweak.high_resolution_widescreen.description   Wenn aktiviert, wird das Spielgeschehen in der Auflösung und im Seitenverhältnis des Fensters dargestellt. Wenn deaktiviert, wird es in 640x480 dargestellt. Die Menüs außerhalb des Einsatzes sind immer 640x480.
 tweak.smoother_turret_movement.display_name   Flüssigere Geschützturmbewegung

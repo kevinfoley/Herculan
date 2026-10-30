@@ -104,11 +104,33 @@ public sealed class DrawEntry {
 
 	/// <summary>The cell this pass filed it under, null for the no-cell bucket.</summary>
 	internal (int X, int Y)? Cell { get; set; }
+
+	/// <summary>
+	/// Its place in <see cref="ObjectDrawTable.Entries"/> when last filed, the original's submit order, which decides
+	/// ties in the painter's-order draw (<see cref="WorldDrawPass"/>). Past every filed entry until it is first filed.
+	/// </summary>
+	internal int FilingIndex { get; set; } = int.MaxValue - 1;
+}
+
+/// <summary>Where in a pass's paint what is filed under a cell is drawn — see <see cref="ObjectDrawTable.PhaseOf"/>.</summary>
+internal enum PaintPhase {
+	/// <summary>In the terrain walk, straight after its cell's ground.</summary>
+	Walk = 0,
+
+	/// <summary>After the walk, in the no-cell bucket.</summary>
+	NoCell = 1,
+
+	/// <summary>After the no-cell bucket, with the flying player's cell when the walk did not reach it.</summary>
+	PlayerCell = 2,
+
+	/// <summary>Nowhere: the pass's draw does not reach the cell.</summary>
+	NotDrawn = 3,
 }
 
 /// <summary>
-/// The original's per-cell object filing and the terrain walk's culling, reduced to what they decide
-/// here: <b>whether</b> each object is drawn. The depth buffer still decides what covers what.
+/// The original's per-cell object filing and the terrain walk's culling: <b>whether</b> each object is drawn, and where
+/// in the paint (<see cref="PhaseOf"/>), which the painter's-order draw (<see cref="WorldDrawPass"/>) orders the entries
+/// by. The per-pixel depth draw reads only whether; there the depth buffer decides what covers what.
 ///
 /// <para>Each pass, <see cref="File"/> files every entry under a cell as <c>Scene_SubmitFrameObjects</c>
 /// (<c>0042841c</c>) does — by <c>HeightGrid_PickDrawCell</c>, or under another object's cell for a
@@ -176,7 +198,9 @@ public sealed class ObjectDrawTable {
 		SetDrawDistances(grid);
 		Walk(grid, region, order);
 
-		foreach (var entry in Entries) {
+		for (int index = 0; index < Entries.Count; index++) {
+			var entry = Entries[index];
+			entry.FilingIndex = index;
 			var cell = entry.FileWith is { } with
 				? _cells.TryGetValue(with, out var cached) ? cached : null
 				: grid.PickDrawCell(entry.Position, entry.FilingRadius, viewer, region);
@@ -228,20 +252,34 @@ public sealed class ObjectDrawTable {
 			return true;
 		}
 
-		if (cell == _playerCell) {
-			return true;
-		}
-
-		// Terrain_DrawVisibleCells draws the viewer's cell after the walk when the walk missed it, but
-		// only when it walks at all.
-		if (!_walked) {
-			return false;
-		}
-
-		return cell == _viewerCell
-			|| (cell.X >= 0 && cell.X < grid.Width && cell.Y >= 0 && cell.Y < grid.Height
-				&& _walkedStamp[cell.Y * grid.Width + cell.X] == _pass);
+		return cell == _playerCell || Walked(grid, cell);
 	}
+
+	/// <summary>
+	/// Where this pass paints what is filed under <paramref name="cell"/>: in the walk when the walk draws that cell's
+	/// objects (<see cref="TerrainPaintOrder.Rank"/> orders them), in the no-cell bucket for a null cell, after it for a
+	/// flying player's cell the walk did not reach (<c>ObjList_DrawAfterTerrain</c>, <c>0042883c</c>), and nowhere
+	/// otherwise. Before the first <see cref="File"/>, every cell is in the walk.
+	/// </summary>
+	internal PaintPhase PhaseOf((int X, int Y)? cell) {
+		if (cell is not { } filed) {
+			return PaintPhase.NoCell;
+		}
+
+		if (_grid is not { } grid || Walked(grid, filed)) {
+			return PaintPhase.Walk;
+		}
+
+		return filed == _playerCell ? PaintPhase.PlayerCell : PaintPhase.NotDrawn;
+	}
+
+	// Whether the walk draws the objects filed under `cell`: it visits the cell, or the cell is the viewer's, which
+	// Terrain_DrawVisibleCells draws after the walk when the walk missed it, but only when it walks at all.
+	private bool Walked(HeightGrid grid, (int X, int Y) cell) =>
+		_walked
+		&& (cell == _viewerCell
+			|| (cell.X >= 0 && cell.X < grid.Width && cell.Y >= 0 && cell.Y < grid.Height
+				&& _walkedStamp[cell.Y * grid.Width + cell.X] == _pass));
 
 	/// <summary>
 	/// The draw rule: the no-cell bucket is drawn with no test at all (<c>ObjList_DrawAfterTerrain</c>

@@ -9,6 +9,14 @@ using Silk.NET.OpenGL;
 namespace Herculan.Engine.Render;
 
 /// <summary>
+/// One tracer object as the original allocates and files it: span <paramref name="Span"/> of a straight beam, or a chain
+/// tracer whole when <paramref name="Span"/> is -1 — see <see cref="BeamTracer.Span"/>. <paramref name="Filing"/> files it
+/// by the span's start point with no radius, a <see cref="ObjectTypeTag.Projectile"/>, as <c>Scene_SubmitObject</c>
+/// (<c>004282d8</c>) files every object of the tracer pool (docs/retail/simulation/beam-visuals.md, "Chain").
+/// </summary>
+public readonly record struct BeamSpanDraw(BeamTracer Tracer, int Span, DrawEntry Filing);
+
+/// <summary>
 /// Draws the live <see cref="BeamTracer"/>s — the GPU counterpart of <c>BeamTracer_Draw</c>
 /// (<c>0040bc14</c>). What the original draws is docs/retail/simulation/beam-visuals.md#drawing--beamtracer_draw-0040bc14-vtable-slot-0.
 ///
@@ -20,11 +28,17 @@ namespace Herculan.Engine.Render;
 /// original steps each projected end along the segment's 2D perpendicular; the vertex shader here
 /// offsets each end along <c>cross(axis, toCamera)</c> in clip space, at that end's own depth, so the
 /// ribbon faces the viewer. The four-pixel minimum width is kept (<see cref="MinimumHalfPixels"/>),
-/// measured in the framebuffer the panel is drawn into. Depth testing is on with depth writes off,
-/// where the original has no depth here at all: a beam already ends at whatever it hit, so the test
-/// changes nothing visible except that a shot fired past a ridge is not painted over it. Depth
+/// measured in the framebuffer the panel is drawn into. In the per-pixel draw, depth testing is on with depth writes
+/// off, where the original has no depth here at all: a beam already ends at whatever it hit, so the test changes
+/// nothing visible except that a shot fired past a ridge is not painted over it. Depth
 /// clamping is on for the straight beams, so the GPU's near plane does not cut a ribbon that
 /// <see cref="ClipToNearPlane"/> has already clipped nearer.</para>
+///
+/// <para><b>In the painter's-order draw a span is an entry.</b> <see cref="WorldDrawPass"/> draws each
+/// <see cref="BeamSpanDraw"/> in its entry's turn through <see cref="DrawSpan"/>, with that entry's depth slice and the
+/// terrain's paint-rank test in place of the depth test against the world. So a span covers what was painted before
+/// its cell and is covered by every cell painted after: fired past a ridge, the spans that start beyond it are hidden,
+/// and the one that starts in front of it, an ELF's whole chain among them, is painted over it.</para>
 ///
 /// <para><b>ELF and ELF2 are flat-colored zigzags.</b> A chain tracer's quads are drawn as
 /// <see cref="BeamTracer"/> built them, untextured, in the record's color, and not turned toward the
@@ -61,6 +75,12 @@ public sealed class BeamRenderer : IDisposable {
 		_appearance = appearance;
 		_shader = ShaderProgram.Load(gl, "Beam.glsl");
 		_jaggedShader = ShaderProgram.Load(gl, "BeamJagged.glsl");
+
+		// Their own unit for good, as SceneRenderer keeps it: a usampler2D on the profile's unit fails every draw.
+		foreach (var program in new[] { _shader, _jaggedShader }) {
+			program.Use();
+			program.SetInt("uPaintRank", SceneRenderer.PaintRankUnit);
+		}
 
 		_vertexArray = _gl.GenVertexArray();
 		_gl.BindVertexArray(_vertexArray);
@@ -112,7 +132,6 @@ public sealed class BeamRenderer : IDisposable {
 		}
 
 		float aspect = (float)viewportWidth / Math.Max(viewportHeight, 1);
-		var cameraPosition = WorldScale.ToRender(camera.Position);
 		var projection = camera.ProjectionMatrix(aspect);
 
 		// Opaque, and no depth write: the original submits these polys with no z at all, and nothing
@@ -121,15 +140,7 @@ public sealed class BeamRenderer : IDisposable {
 
 		DrawChains(camera, projection, tracers, filing);
 
-		_shader.Use();
-		_shader.SetMatrix("uView", camera.ViewMatrix);
-		_shader.SetMatrix("uProjection", projection);
-		_shader.SetVector3("uCameraPosition", cameraPosition);
-		_shader.SetVector2("uViewport", new Vector2(viewportWidth, Math.Max(viewportHeight, 1)));
-		_shader.SetFloat("uMinimumHalfPixels", MinimumHalfPixels);
-
-		_gl.BindVertexArray(_vertexArray);
-		_gl.BindBuffer(BufferTargetARB.ArrayBuffer, _vertexBuffer);
+		UseStraight(camera, projection, projection, viewportWidth, viewportHeight, rank: null);
 
 		// The segments are clipped at the view's own near plane, nearer than the GPU's, so the GPU's
 		// near clip is turned off for them rather than cutting the muzzle end a second time.
@@ -159,33 +170,11 @@ public sealed class BeamRenderer : IDisposable {
 			}
 
 			if (!started) {
-				_jaggedShader.Use();
-				_jaggedShader.SetMatrix("uView", camera.ViewMatrix);
-				_jaggedShader.SetMatrix("uProjection", projection);
-				_gl.BindVertexArray(_jaggedVertexArray);
-				_gl.BindBuffer(BufferTargetARB.ArrayBuffer, _jaggedVertexBuffer);
+				UseJagged(camera, projection, projection, rank: null);
 				started = true;
 			}
 
-			_chain.Clear();
-			for (int quad = 0; quad < tracer.QuadCount; quad++) {
-				var (a, b, c, d) = tracer.Quad(quad);
-				var pa = WorldScale.ToRender(a);
-				var pb = WorldScale.ToRender(b);
-				var pc = WorldScale.ToRender(c);
-				var pd = WorldScale.ToRender(d);
-				_chain.Add(pa);
-				_chain.Add(pb);
-				_chain.Add(pc);
-				_chain.Add(pa);
-				_chain.Add(pc);
-				_chain.Add(pd);
-			}
-
-			_jaggedShader.SetVector3("uColor", _appearance.Color(tracer.SubtypeId));
-			_gl.BufferData<Vector3>(BufferTargetARB.ArrayBuffer, CollectionsMarshal.AsSpan(_chain),
-				BufferUsageARB.DynamicDraw);
-			_gl.DrawArrays(PrimitiveType.Triangles, 0, (uint)_chain.Count);
+			DrawChain(tracer);
 		}
 
 		if (started) {
@@ -193,19 +182,150 @@ public sealed class BeamRenderer : IDisposable {
 		}
 	}
 
+	// The straight beams' program and buffers, readied for a pass: placed through `entryProjection`, measured through
+	// `projection`, and with the paint-rank test against `rank` when there is one.
+	private void UseStraight(Camera camera, in Matrix4x4 projection, in Matrix4x4 entryProjection,
+			int viewportWidth, int viewportHeight, uint? rank) {
+		_shader.Use();
+		_shader.SetMatrix("uView", camera.ViewMatrix);
+		_shader.SetMatrix("uProjection", projection);
+		_shader.SetMatrix("uEntryProjection", entryProjection);
+		_shader.SetVector3("uCameraPosition", WorldScale.ToRender(camera.Position));
+		_shader.SetVector2("uViewport", new Vector2(viewportWidth, Math.Max(viewportHeight, 1)));
+		_shader.SetFloat("uMinimumHalfPixels", MinimumHalfPixels);
+		_shader.SetInt("uPaintRankTest", rank.HasValue ? 1 : 0);
+		_shader.SetUInt("uEntryRank", rank ?? 0);
+
+		_gl.BindVertexArray(_vertexArray);
+		_gl.BindBuffer(BufferTargetARB.ArrayBuffer, _vertexBuffer);
+	}
+
+	// The chains' program and buffers, the same way.
+	private void UseJagged(Camera camera, in Matrix4x4 projection, in Matrix4x4 entryProjection, uint? rank) {
+		_jaggedShader.Use();
+		_jaggedShader.SetMatrix("uView", camera.ViewMatrix);
+		_jaggedShader.SetMatrix("uProjection", projection);
+		_jaggedShader.SetMatrix("uEntryProjection", entryProjection);
+		_jaggedShader.SetInt("uPaintRankTest", rank.HasValue ? 1 : 0);
+		_jaggedShader.SetUInt("uEntryRank", rank ?? 0);
+		_gl.BindVertexArray(_jaggedVertexArray);
+		_gl.BindBuffer(BufferTargetARB.ArrayBuffer, _jaggedVertexBuffer);
+	}
+
+	// One chain tracer's quads, a flat fill in its subtype's colour, through the program UseJagged readied.
+	private void DrawChain(BeamTracer tracer) {
+		_chain.Clear();
+		for (int quad = 0; quad < tracer.QuadCount; quad++) {
+			var (a, b, c, d) = tracer.Quad(quad);
+			var pa = WorldScale.ToRender(a);
+			var pb = WorldScale.ToRender(b);
+			var pc = WorldScale.ToRender(c);
+			var pd = WorldScale.ToRender(d);
+			_chain.Add(pa);
+			_chain.Add(pb);
+			_chain.Add(pc);
+			_chain.Add(pa);
+			_chain.Add(pc);
+			_chain.Add(pd);
+		}
+
+		_jaggedShader.SetVector3("uColor", _appearance.Color(tracer.SubtypeId));
+		_gl.BufferData<Vector3>(BufferTargetARB.ArrayBuffer, CollectionsMarshal.AsSpan(_chain),
+			BufferUsageARB.DynamicDraw);
+		_gl.DrawArrays(PrimitiveType.Triangles, 0, (uint)_chain.Count);
+	}
+
+	/// <summary>
+	/// Draws one tracer object as its entry's turn in <see cref="WorldDrawPass"/>'s painter's order: a straight beam's
+	/// span, or a chain and the muzzle stub its tracer leaves (see the class remarks). Placed through
+	/// <paramref name="entryProjection"/>, measured through <paramref name="projection"/> (the camera's own), and kept only
+	/// where the ground showing ranks no later than <paramref name="rank"/>. The caller has bound the paint ranks, set the
+	/// entry's depth range and turned depth clamping on, which the straight segment needs as <see cref="Render"/> gives it.
+	/// </summary>
+	internal void DrawSpan(in BeamSpanDraw span, Camera camera, in Matrix4x4 projection, in Matrix4x4 entryProjection,
+			uint rank, int viewportWidth, int viewportHeight) {
+		var tracer = span.Tracer;
+		_gl.DepthMask(false);
+
+		if (span.Span < 0 && tracer.IsJagged && tracer.QuadCount > 0) {
+			UseJagged(camera, projection, entryProjection, rank);
+			DrawChain(tracer);
+		}
+
+		if (Appearance(tracer) is { } look) {
+			UseStraight(camera, projection, entryProjection, viewportWidth, viewportHeight, rank);
+			if (tracer.IsJagged) {
+				if (span.Span < 0 && tracer.Points.Count >= 2) {
+					DrawSegment(tracer.Points[0], tracer.Points[1], look.HalfWidth, look.Profile, camera.ViewMatrix,
+						camera.ViewNearPlane);
+				}
+			} else if (span.Span >= 0 && span.Span < tracer.SpanCount) {
+				var (from, to) = tracer.Span(span.Span);
+				DrawSegment(from, to, look.HalfWidth, look.Profile, camera.ViewMatrix, camera.ViewNearPlane);
+			}
+		}
+
+		_gl.BindVertexArray(0);
+		_gl.DepthMask(true);
+	}
+
+	/// <summary>
+	/// Widens [<paramref name="nearest"/>, <paramref name="farthest"/>] to the view depths <see cref="DrawSpan"/> would
+	/// draw <paramref name="span"/> at: its points' depths, each no nearer than the view's near plane the segment is
+	/// clipped at, give or take the ribbon's half-width.
+	/// </summary>
+	internal void ExtendDepth(in BeamSpanDraw span, Camera camera, ref float nearest, ref float farthest) {
+		var tracer = span.Tracer;
+		var view = camera.ViewMatrix;
+		float margin = WorldScale.DistanceToRender(System.Math.Max(_appearance.HalfWidth(tracer.SubtypeId), 0));
+		float near = camera.ViewNearPlane;
+		float least = float.PositiveInfinity;
+		float most = float.NegativeInfinity;
+
+		if (tracer.IsJagged) {
+			foreach (var point in tracer.Points) {
+				Take(point);
+			}
+		} else if (span.Span >= 0 && span.Span < tracer.SpanCount) {
+			var (from, to) = tracer.Span(span.Span);
+			Take(from);
+			Take(to);
+		}
+
+		if (most >= near) {
+			nearest = MathF.Min(nearest, MathF.Max(least - margin, near));
+			farthest = MathF.Max(farthest, most + margin);
+		}
+
+		void Take(Numerics.Vec3i point) {
+			float depth = -Vector3.Transform(WorldScale.ToRender(point), view).Z;
+			least = MathF.Min(least, depth);
+			most = MathF.Max(most, depth);
+		}
+	}
+
 	/// <summary>Whether the tracer filed at <paramref name="start"/> is drawn this pass — true with no table.</summary>
 	private static bool SpanDrawn(ObjectDrawTable? filing, Numerics.Vec3i start) =>
 		filing?.WouldDraw(start, 0, ObjectTypeTag.Projectile) ?? true;
 
-	private void Draw(BeamTracer tracer, Matrix4x4 view, float nearPlane, ObjectDrawTable? filing) {
+	// A straight segment's half-width and cross-section, or null when its subtype draws none.
+	private (int HalfWidth, GpuTexture Profile)? Appearance(BeamTracer tracer) {
 		int halfWidth = _appearance.HalfWidth(tracer.SubtypeId);
 
 		// Read every frame, so toggling the tweak recolours the next shot at once.
 		bool hueTurned = BeamAppearance.IsParticleBeam(tracer.SubtypeId)
 			&& TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.ChangePbwBeamHue);
-		if (halfWidth <= 0 || Profile(tracer.SubtypeId, hueTurned) is not { } profile) {
+		return halfWidth > 0 && Profile(tracer.SubtypeId, hueTurned) is { } profile
+			? (halfWidth, profile)
+			: null;
+	}
+
+	private void Draw(BeamTracer tracer, Matrix4x4 view, float nearPlane, ObjectDrawTable? filing) {
+		if (Appearance(tracer) is not { } look) {
 			return;
 		}
+
+		var (halfWidth, profile) = look;
 
 		// A chain tracer reaches here too, because the original's jagged branch falls through into
 		// this code rather than returning — and it draws the tracer's first two points, which for a

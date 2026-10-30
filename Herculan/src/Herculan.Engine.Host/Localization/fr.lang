@@ -39,6 +39,8 @@ tweak.shuffle_mission_music.display_name  Musique de mission aléatoire
 tweak.shuffle_mission_music.description   Chaque mission joue une piste musicale choisie au hasard, jamais la même deux fois de suite. Le jeu original joue les pistes dans un ordre fixe, une par mission.
 tweak.change_pbw_beam_hue.display_name  Changer la teinte PBW
 tweak.change_pbw_beam_hue.description   Dans le jeu original, les rayons du PBW et du PBW2 utilisent la même texture que les lasers, ce qui les rend impossibles à distinguer. Cet ajustement modifie la teinte du PBW et du PBW2 pour plus de clarté, d'après les couleurs de Metaltech: Earthsiege.
+tweak.per_pixel_depth_sorting.display_name  Profondeur par pixel
+tweak.per_pixel_depth_sorting.description   Dessine la vue 3D avec un test de profondeur à chaque pixel, de sorte que là où deux éléments se chevauchent, le plus proche est visible. Le jeu original peint le sol morceau par morceau, du plus lointain au plus proche, et chaque objet en entier par-dessus tout ce qui a été peint avant, si bien qu'un impact sur un bâtiment apparaît entier devant le bâtiment ou pas du tout, jamais à moitié dedans.
 tweak.high_resolution_widescreen.display_name  Rendu haute résolution panoramique
 tweak.high_resolution_widescreen.description   Activé, le jeu est rendu à la résolution et aux proportions de la fenêtre. Désactivé, le jeu est rendu en 640x480. L'interface hors mission est toujours en 640x480.
 tweak.smoother_turret_movement.display_name   Mouvement de tourelle plus fluide

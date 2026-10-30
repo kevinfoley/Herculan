@@ -1726,7 +1726,13 @@
       "confidence": "high",
       "name": "Explosion_GetOwnerDrawCell",
       "description": "Returns owner+0x1e8 (the owner's cached draw-table cell pair) for an impact effect that has an owner (effect+0x57), else 0. Scene_SubmitFrameObjects files the effect under that cell instead of the one its own position falls in.",
-      "source": "docs/retail/simulation/impact-effects.md"
+      "source": "docs/retail/simulation/impact-effects.md",
+      "verified": {
+        "bytes": "00408228+24",
+        "sha1": "e09bb551f7dc",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00408240",

@@ -2,6 +2,7 @@ using System.Numerics;
 using Herculan.Engine.Host.Debugging;
 using Herculan.Engine.Render;
 using Herculan.Engine.Scene;
+using Herculan.Engine.Settings;
 using Herculan.Engine.Sim;
 using Herculan.Engine.Sim.Anim;
 using Silk.NET.OpenGL;
@@ -9,9 +10,10 @@ using Silk.NET.OpenGL;
 namespace Herculan.Engine.Host.Simulator.Rendering;
 
 /// <summary>
-/// One pass of the world into a viewport: the scene, then the beams, the billboards and the debug skeleton over
-/// it. Every view the simulator draws — the cockpit's panels, the heads-down window, the external view, the
-/// observer camera and the MFD's missile camera — is one or more of these.
+/// One pass of the world into a viewport: the scene with its beams and billboards (<see cref="WorldDrawPass"/>), then the
+/// debug skeleton over it. Every view the simulator draws — the cockpit's panels, the heads-down window, the external
+/// view, the observer camera and the MFD's missile camera — is one or more of these. Each pass reads
+/// <see cref="TweakSettingDefinitions.PerPixelDepthSorting"/> as it starts, so the tweak takes effect on the next frame.
 /// </summary>
 sealed class WorldPassRenderer : IDisposable {
 	private readonly MissionScene _scene;
@@ -20,6 +22,7 @@ sealed class WorldPassRenderer : IDisposable {
 	private readonly WireframeRenderer _wireframe;
 	private readonly BeamRenderer? _beams;
 	private readonly SpriteRenderer _sprites;
+	private readonly WorldDrawPass _draw;
 	private readonly WorldDrawItems _world;
 	private readonly TransientDrawItems _transient;
 
@@ -65,6 +68,7 @@ sealed class WorldPassRenderer : IDisposable {
 		// Billboards need no resource of their own — every sprite they draw belongs to a model already
 		// built, so this is unconditional where the beam renderer is not.
 		_sprites = new SpriteRenderer(gl);
+		_draw = new WorldDrawPass(gl, Scene, _sprites, _beams);
 	}
 
 	public SceneRenderer Scene { get; }
@@ -87,9 +91,7 @@ sealed class WorldPassRenderer : IDisposable {
 
 	/// <summary>The world into one viewport, from <paramref name="view"/>.</summary>
 	public void Draw(Camera view, int x, int y, int width, int height) {
-		Scene.Render(view, VisibleItems(), _world.GroundLayer, x, y, width, height);
-		DrawBeams(view, width, height);
-		DrawSprites(view, width, height);
+		DrawWorld(view, VisibleItems(), _world.GroundLayer, x, y, width, height);
 		DrawSkeleton(view, width, height);
 	}
 
@@ -127,9 +129,7 @@ sealed class WorldPassRenderer : IDisposable {
 		var riding = groundLayer.Objects.CameraAttachedTo;
 		groundLayer.Objects.CameraAttachedTo = null;
 
-		Scene.Render(view, _world.All.Concat(_transient.Items), groundLayer, x, y, width, height);
-		DrawBeams(view, width, height);
-		DrawSprites(view, width, height);
+		DrawWorld(view, _world.All.Concat(_transient.Items), groundLayer, x, y, width, height);
 
 		groundLayer.Objects.CameraAttachedTo = riding;
 		terrainItem.TextureHandle = terrainTexture;
@@ -140,18 +140,17 @@ sealed class WorldPassRenderer : IDisposable {
 		gl.Disable(EnableCap.ScissorTest);
 	}
 
-	// Every beam fired on the last tick, over the world already drawn into the current viewport. The
-	// tracers outlive the tick that made them by exactly one tick, so a shot is on screen for every
-	// frame drawn in that window and for none after — see BeamTracer.
-	private void DrawBeams(Camera view, int viewportWidth, int viewportHeight) {
-		_beams?.Render(view, _scene.World.Tracers, viewportWidth, viewportHeight, _world.GroundLayer.Objects);
-	}
-
-	// The billboards, over the world already drawn into the current viewport: the EMP rounds crossing
-	// the ground and the impact effects wherever shots have landed. After the beams for the same reason
-	// they are after the world — they are alpha-tested and depth-tested against what is already there.
-	private void DrawSprites(Camera view, int viewportWidth, int viewportHeight) {
-		_sprites.Render(view, _transient.Sprites, viewportWidth, viewportHeight);
+	// The scene, every beam fired on the last tick and the billboards (the EMP rounds crossing the ground, the impact
+	// effects wherever shots have landed, the fires), in the mode the tweak picks for this pass. The tracers outlive the
+	// tick that made them by exactly one tick, so a shot is on screen for every frame drawn in that window and for none
+	// after — see BeamTracer.
+	private void DrawWorld(Camera view, IEnumerable<SceneItem> items, GroundShapeLayer groundLayer,
+			int x, int y, int width, int height) {
+		var mode = TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.PerPixelDepthSorting)
+			? WorldDrawMode.PerPixelDepth
+			: WorldDrawMode.PaintersOrder;
+		_draw.Draw(mode, view, items, groundLayer, _transient.Sprites, _scene.World.Tracers, _transient.BeamSpans,
+			x, y, width, height);
 	}
 
 	// The animating skeleton, drawn over whatever was just rendered into the current viewport.

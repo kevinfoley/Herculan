@@ -45,10 +45,13 @@ public readonly record struct SpriteBatch(
 ///
 /// <para>Transparency is palette index 0, which the bank is decoded with — see
 /// <c>Scene.SceneModelLibrary</c>. Alpha is tested rather than blended, matching a rasterizer that
-/// either wrote a palette byte or skipped the pixel. Depth testing is on with writes off, as
-/// <see cref="BeamRenderer"/> has it: the original submits these through a depth-sorted per-cell
-/// draw list rather than a depth buffer, but testing against the world already drawn is what keeps a
-/// puff from painting over the ridge in front of it.</para>
+/// either wrote a palette byte or skipped the pixel. Depth writes are off.</para>
+///
+/// <para>The original paints each impact effect, fire or shot as one entry of its per-cell draw list
+/// (docs/retail/rendering/terrain-drawing.md, "Objects in the walk"). <see cref="WorldDrawPass"/> draws a batch in its
+/// entry's turn through <see cref="DrawEntry"/>, with that entry's depth slice and the terrain's paint-rank test, so a
+/// puff is painted whole over what came before it and the ridge in front of it still covers it. The per-pixel depth draw
+/// instead draws every batch after the world through <see cref="Render"/>, depth-tested against it.</para>
 /// </summary>
 public sealed class SpriteRenderer : IDisposable {
 	/// <summary>
@@ -67,6 +70,10 @@ public sealed class SpriteRenderer : IDisposable {
 	public SpriteRenderer(GL gl) {
 		_gl = gl;
 		_shader = ShaderProgram.Load(gl, "Sprite.glsl");
+
+		// Its own unit for good, as SceneRenderer keeps it: a usampler2D on uTexture's unit fails every draw.
+		_shader.Use();
+		_shader.SetInt("uPaintRank", SceneRenderer.PaintRankUnit);
 
 		_vertexArray = _gl.GenVertexArray();
 		_gl.BindVertexArray(_vertexArray);
@@ -96,9 +103,12 @@ public sealed class SpriteRenderer : IDisposable {
 
 		float aspect = (float)viewportWidth / Math.Max(viewportHeight, 1);
 		var view = camera.ViewMatrix;
+		var projection = camera.ProjectionMatrix(aspect);
 
 		_shader.Use();
-		_shader.SetMatrix("uProjection", camera.ProjectionMatrix(aspect));
+		_shader.SetMatrix("uProjection", projection);
+		_shader.SetMatrix("uEntryProjection", projection);
+		_shader.SetInt("uPaintRankTest", 0);
 
 		_gl.DepthMask(false);
 		_gl.BindVertexArray(_vertexArray);
@@ -112,13 +122,60 @@ public sealed class SpriteRenderer : IDisposable {
 		_gl.DepthMask(true);
 	}
 
-	private void Draw(in SpriteBatch batch, in Matrix4x4 view, float nearPlane) {
-		if (batch.Sprites.Length == 0 || batch.Filing is { Drawn: false }) {
-			return;
+	/// <summary>
+	/// Draws one batch as its entry's turn in <see cref="WorldDrawPass"/>'s painter's order: placed through
+	/// <paramref name="entryProjection"/>, clipped by <paramref name="projection"/> (the camera's own), and kept only where
+	/// the ground showing ranks no later than <paramref name="rank"/>. The caller has bound the paint ranks and set the
+	/// entry's depth range.
+	/// </summary>
+	internal void DrawEntry(in SpriteBatch batch, Camera camera, in Matrix4x4 projection, in Matrix4x4 entryProjection,
+			uint rank) {
+		_shader.Use();
+		_shader.SetMatrix("uProjection", projection);
+		_shader.SetMatrix("uEntryProjection", entryProjection);
+		_shader.SetInt("uPaintRankTest", 1);
+		_shader.SetUInt("uEntryRank", rank);
+
+		_gl.DepthMask(false);
+		_gl.BindVertexArray(_vertexArray);
+		_gl.BindBuffer(BufferTargetARB.ArrayBuffer, _vertexBuffer);
+		Draw(batch, camera.ViewMatrix, camera.NearPlane);
+		_gl.BindVertexArray(0);
+		_gl.DepthMask(true);
+	}
+
+	/// <summary>
+	/// Widens [<paramref name="nearest"/>, <paramref name="farthest"/>] to the view depths <see cref="DrawEntry"/> would
+	/// draw <paramref name="batch"/>'s quads at. Each quad lies in the plane square to the view axis at its anchor's depth,
+	/// so the anchors are the whole of it.
+	/// </summary>
+	internal static void ExtendDepth(in SpriteBatch batch, in Matrix4x4 view, float nearPlane,
+			ref float nearest, ref float farthest) {
+		foreach (var quad in Quads(batch)) {
+			float depth = -Vector3.Transform(Vector3.Transform(quad.Center, batch.Transform), view).Z;
+			if (depth >= nearPlane) {
+				nearest = MathF.Min(nearest, depth);
+				farthest = MathF.Max(farthest, depth);
+			}
+		}
+	}
+
+	// The quads of the flipbook frame the batch shows, empty when it has none.
+	private static SpriteQuad[] Quads(in SpriteBatch batch) {
+		if (batch.Sprites.Length == 0) {
+			return Array.Empty<SpriteQuad>();
 		}
 
 		int frame = ((batch.Frame % batch.Sprites.Length) + batch.Sprites.Length) % batch.Sprites.Length;
-		var quads = batch.Sprites[frame];
+		return batch.Sprites[frame];
+	}
+
+	private void Draw(in SpriteBatch batch, in Matrix4x4 view, float nearPlane) {
+		if (batch.Filing is { Drawn: false }) {
+			return;
+		}
+
+		var quads = Quads(batch);
 		if (quads.Length == 0) {
 			return;
 		}

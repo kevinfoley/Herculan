@@ -1,3 +1,4 @@
+using System.Numerics;
 using Silk.NET.OpenGL;
 
 namespace Herculan.Engine.Gl;
@@ -32,6 +33,10 @@ public sealed class GpuMesh : IDisposable {
 			? vertices.Length
 			: Math.Clamp(triangleVertexCount, 0, vertices.Length);
 		PointVertexCount = Math.Clamp(pointVertexCount, 0, VertexCount - TriangleVertexCount);
+		if (!vertices.IsEmpty) {
+			BoundsMin = BoundsMax = vertices[0].Position;
+			Grow(vertices);
+		}
 
 		_vertexArray = _gl.GenVertexArray();
 		_gl.BindVertexArray(_vertexArray);
@@ -103,6 +108,16 @@ public sealed class GpuMesh : IDisposable {
 	public int PointVertexCount { get; }
 
 	/// <summary>
+	/// The least corner of a model-space box holding every vertex uploaded, which is how far along the view axis the
+	/// mesh can reach — what the painter's-order draw fits each entry's depth range to (<see cref="Render.WorldDrawPass"/>).
+	/// <see cref="Update"/> grows it and nothing shrinks it. Zero for an empty mesh.
+	/// </summary>
+	public Vector3 BoundsMin { get; private set; }
+
+	/// <summary>The greatest corner of that box.</summary>
+	public Vector3 BoundsMax { get; private set; }
+
+	/// <summary>
 	/// Replaces the uploaded vertices from <paramref name="firstVertex"/> on with <paramref name="vertices"/>, for a
 	/// mesh whose geometry has changed in place; the ranges and the count stay as built.
 	/// </summary>
@@ -114,6 +129,19 @@ public sealed class GpuMesh : IDisposable {
 		_gl.BindBuffer(BufferTargetARB.ArrayBuffer, _vertexBuffer);
 		_gl.BufferSubData(BufferTargetARB.ArrayBuffer, (nint)(firstVertex * MeshVertex.SizeInBytes), vertices);
 		_gl.BindBuffer(BufferTargetARB.ArrayBuffer, 0);
+		Grow(vertices);
+	}
+
+	private void Grow(ReadOnlySpan<MeshVertex> vertices) {
+		var min = BoundsMin;
+		var max = BoundsMax;
+		foreach (var vertex in vertices) {
+			min = Vector3.Min(min, vertex.Position);
+			max = Vector3.Max(max, vertex.Position);
+		}
+
+		BoundsMin = min;
+		BoundsMax = max;
 	}
 
 	public void Draw() {

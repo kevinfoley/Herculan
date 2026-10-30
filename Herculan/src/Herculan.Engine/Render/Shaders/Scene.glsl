@@ -83,6 +83,11 @@ uniform mat4 uView;
 uniform mat4 uProjection;
 uniform vec3 uLightDirection;
 
+// What places the vertex: uProjection itself, or in WorldDrawPass's painter's order the same frustum with its depth
+// range fitted to the one entry being drawn. uProjection's near and far planes are kept as the two clip distances, which
+// only that draw turns on, together with depth clamping; a culled corner sets both negative.
+uniform mat4 uEntryProjection;
+
 // The impact effects' dynamic lights, as they apply to the object being drawn — FUN_00407098 picks
 // them per render entry and the renderer uploads its answer here. See EffectLightSelection, and
 // docs/retail/formats/effect-lights.md for the two shade terms below.
@@ -134,6 +139,8 @@ void main() {
 	// on one spot past the far plane and rasterizes nothing.
 	if (aSide != 0.0 && aSide != sideSign) {
 		gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
+		gl_ClipDistance[0] = -1.0;
+		gl_ClipDistance[1] = -1.0;
 		return;
 	}
 
@@ -151,6 +158,8 @@ void main() {
 		float dependSign = dot(viewDependNormal, viewOnPlane) >= 0.0 ? -1.0 : 1.0;
 		if (dependSign != aDependSide) {
 			gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
+			gl_ClipDistance[0] = -1.0;
+			gl_ClipDistance[1] = -1.0;
 			return;
 		}
 	}
@@ -247,7 +256,10 @@ void main() {
 	// which reaches 18% at the corner of the view and fogs the edges of the screen too hard.
 	vViewDistance = -viewPosition.z;
 
-	gl_Position = uProjection * viewPosition;
+	vec4 clipPosition = uProjection * viewPosition;
+	gl_ClipDistance[0] = clipPosition.z + clipPosition.w;
+	gl_ClipDistance[1] = clipPosition.w - clipPosition.z;
+	gl_Position = uEntryProjection * viewPosition;
 }
 
 #endif
@@ -306,13 +318,13 @@ uniform float uDepthSlices;
 uniform float uFogDepthBias;
 uniform bool uFullbright;
 
-// A ground shape is painted in the original straight after its own terrain cell, so the ground of
-// every cell painted later covers it. uPaintRank holds, per pixel, the paint rank of the ground
-// showing there (TerrainPaintRankBuffer); uGroundShapeRank is the rank of the shape's own cell. See
-// SceneRenderer.Render.
+// Whatever is filed under a terrain cell is painted in the original straight after that cell's ground, so the ground
+// of every cell painted later covers it. uPaintRank holds, per pixel, the paint rank of the ground showing there
+// (TerrainPaintRankBuffer); uEntryRank is the rank of the cell what is being drawn is filed under. See
+// SceneRenderer.Render for the ground shapes and WorldDrawPass for every entry.
 uniform usampler2D uPaintRank;
 uniform bool uPaintRankTest;
-uniform uint uGroundShapeRank;
+uniform uint uEntryRank;
 
 out vec4 FragColor;
 
@@ -403,7 +415,7 @@ vec3 paintDiscs(vec3 lit) {
 #endif
 
 void main() {
-	if (uPaintRankTest && texelFetch(uPaintRank, ivec2(gl_FragCoord.xy), 0).r > uGroundShapeRank) {
+	if (uPaintRankTest && texelFetch(uPaintRank, ivec2(gl_FragCoord.xy), 0).r > uEntryRank) {
 		discard;
 	}
 
