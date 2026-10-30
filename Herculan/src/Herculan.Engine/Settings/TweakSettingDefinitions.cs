@@ -246,7 +246,8 @@ public static class TweakSettingDefinitions {
 	/// Hold the right mouse button on the front window and move the mouse to aim the turret. Retail has the control,
 	/// but its mouse record drops the held right button at the first move, so the drag never acts; this feeds it the
 	/// button itself, and turns the turret no faster than a stick pushed all the way, where retail's term grows without
-	/// limit. Off, it reads the record's bit as retail does. See <see cref="Input.GunsightDrag"/>.
+	/// limit. While the drag aims, the left button fires as [Space] does, which retail has no counterpart for. Off, it
+	/// reads the record's bit as retail does. See <see cref="Input.GunsightDrag"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> FixGunsightDrag = new("tweak.fix_gunsight_drag", TweakCategory.Functional, defaultValue: false, recommendedValue: true);
 

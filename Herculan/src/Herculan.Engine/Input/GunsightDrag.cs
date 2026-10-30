@@ -5,8 +5,10 @@ namespace Herculan.Engine.Input;
 /// <summary>
 /// The pointer as <c>Sim_PollPlayerInput</c> reads it for the gunsight drag: the right-button byte <c>+0x0b</c> of
 /// the frame's device block, and the position at <c>+0x02</c>/<c>+0x06</c> in the forward view's art pixels.
+/// <paramref name="Left"/> is this engine's: the held left button, which fires while the drag is armed (see
+/// <see cref="GunsightDrag.Firing"/>), and which only the tweak's caller sets.
 /// </summary>
-public readonly record struct GunsightPointer(bool Right, int X, int Y) {
+public readonly record struct GunsightPointer(bool Right, int X, int Y, bool Left = false) {
 	/// <summary>No right button: what a replay, a modal panel's loop or a missing pointer leaves in the block.</summary>
 	public static GunsightPointer Released => default;
 }
@@ -23,6 +25,7 @@ public sealed class GunsightDrag {
 	private bool _armed;
 	private int _anchorX;
 	private int _anchorY;
+	private bool _left;
 
 	// 0049f6f8 / 0049f6fc: the two terms, kept between frames — the frame that arms leaves them as they were.
 	private int _twist;
@@ -34,11 +37,21 @@ public sealed class GunsightDrag {
 	/// <summary>The pitch term, positive with the pointer above the press.</summary>
 	public int Pitch => _pitch;
 
+	/// <summary>Whether the drag is armed: the right button held since it went down, or came, inside the rect.</summary>
+	public bool Armed => _armed;
+
+	/// <summary>
+	/// Whether the left button is held with the drag armed, which fires as [Space] does, so a pilot aiming with the
+	/// mouse need not reach for the keyboard. This engine's: retail has no mouse trigger.
+	/// </summary>
+	public bool Firing => _armed && _left;
+
 	/// <summary>
 	/// One frame of the drag. <paramref name="armX0"/> to <paramref name="armY1"/> is the complex's rect, inclusive,
 	/// in the same space as the pointer.
 	/// </summary>
 	public void Update(GunsightPointer pointer, int armX0, int armY0, int armX1, int armY1) {
+		_left = pointer.Left;
 		if (!pointer.Right) {
 			_armed = false;
 			_twist = 0;

@@ -377,6 +377,7 @@ public sealed class SimulatorFrame {
 			// cockpit had held when the panel was raised.
 			_displays.Hud = _displays.Hud with { PressedWidget = null };
 		} else if (_art != null && !_view.ExternalViewActive && (_tape.Playing || !_input.ImGuiWantsMouse)) {
+			_input.Cockpit.LeftPressesNothing = Pilot.LeftButtonFires;
 			Commands.DrainClicks(_input.Cockpit, deltaSeconds, framebuffer.X, framebuffer.Y);
 		}
 
@@ -408,7 +409,8 @@ public sealed class SimulatorFrame {
 	// The pointer as the gunsight drag reads it. The original compares the screen position with a rect that no view
 	// change moves, so the position is taken through the forward view placed at rest, whatever the pan, the glance or
 	// the external view are doing. Its right-button bit is the mouse record's unless the tweak hands it the button
-	// itself. Nothing reaches the drag over the debug panel, as nothing clicks the cockpit there.
+	// itself, and only then the left button it lets fire. Nothing reaches the drag over the debug panel, as nothing clicks
+	// the cockpit there.
 	private GunsightPointer SampleGunsightPointer() {
 		if (_art == null || _input.ImGuiWantsMouse) {
 			return GunsightPointer.Released;
@@ -422,10 +424,12 @@ public sealed class SimulatorFrame {
 		var framebuffer = _framebufferSize();
 		var (artX, artY) = CockpitScreenLayout.Create(framebuffer.X, framebuffer.Y, _art, 0f, _view.Pan.TravelRows)
 			.Center.WindowToArt(x, y);
-		bool right = TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.FixGunsightDrag)
+		bool tweak = TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.FixGunsightDrag);
+		bool right = tweak
 			? buttons.HasFlag(CockpitMouseButtons.Right)
 			: _input.Cockpit.RightPressedLast;
-		return new GunsightPointer(right, (int)MathF.Floor(artX), (int)MathF.Floor(artY));
+		return new GunsightPointer(right, (int)MathF.Floor(artX), (int)MathF.Floor(artY),
+			Left: tweak && buttons.HasFlag(CockpitMouseButtons.Left));
 	}
 
 	// The preferences read where they are used, every frame rather than watched for changes: the preferences
