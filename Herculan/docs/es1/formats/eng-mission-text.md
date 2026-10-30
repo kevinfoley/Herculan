@@ -70,7 +70,24 @@ The war map shows block 0 of `BRF:` in its text box, a page at a time ([the war 
 
 ## The debriefing
 
-`DebriefingMenu_Ctor` (`0002c422`) loads the `DEB:` block whose ordinal is the word `000aad58`. The code at `00038f3c` reads that word as the first word of `data\results.dat` (file-name entry 7) and, at `000390a8`, copies it to flag 0. In `B0_C1_20.ENG` the first four debriefings report success and the last four failure ([Open](#open)).
+The debriefing screen shows one `DEB:` block in its text box ([the debriefing](../shell/debriefing.md)). `DebriefingMenu_Ctor` (`0002c422`) loads the block whose ordinal is the word `000aad58`. The code at `00038f3c` reads that word as the first word of `data\results.dat` (file-name entry 7) and, at `000390a8`, copies it to flag 0 of the shell's flags `000ab244` ([after a mission](bst-battle-sets.md#after-a-mission)).
+
+**The ordinal is the mission's outcome: the report line of the player's squad, picked by the mission's header word 3, less 1.** The simulator writes it at the mission's end as `Group_StatusLineIndex` (`ES1DBSIM 0000f0f0`)(the player's group, header word 3) ([writing the results](../simulation/world.md#writing-the-results--mission_writeresults-0001d698)), whose answer lies in bands, each band spread by the squad's damage tier, 0 to 3 ([the group report](../simulation/mission-status.md#the-group-report--group_statuslineindex-0000f0f0)). So header word 3 decides how many ordinals a mission can give:
+
+| Header word 3 | Bands of the ordinal | Ordinals |
+|---|---|---|
+| 0, 1, 2, 6 | 0; 1 to 4; 5 to 8 | 0 to 8, nine |
+| 3, 5 | 0 to 3; 4 to 7 | 0 to 7, eight |
+| 4 | 0; 1 to 3; 4 to 7 | 0 to 7, eight |
+| 7 | 0, 1, 2, 3; 4 to 7 | 0 to 7, eight |
+| 8 | 0 to 3; 4; 4 to 7 | 0 to 7, eight |
+| 9 | 0; 1 to 3; 4 and 5; 6 and 7 | 0 to 7, eight |
+
+The lower ordinals report success and the upper failure. In `SM_SCR01.ENG` (header word 3 is 4) blocks 0 to 3 report the Cybrid attack driven off with more damage to the base at each, 4 to 7 failure; in `SM_ASS01.ENG` (9) blocks 0 to 3 report the Cybrid base destroyed with more damage to the squad at each, 4 to 7 that it was not; in `B0_C1_20.ENG` (3) the first four report success and the last four failure.
+
+That is why a file has eight or nine `DEB:` blocks. Header word 3 as `HercWorks.Query patches` gives it ([the status](../simulation/mission-status.md#the-status--mission_status-0000f4e8)) and the count of each `.ENG`'s `DEB:` blocks agree for 69 of the 77 missions. The eight others: `B0_C0_4B` (word 3 is 4), `B0_C6_1A` (3) and `B0_C7_6A` (9) have nine blocks, whose ninth no outcome picks; `B0_C3_2A` and `B0_C6_6A` (6), `SM_ESC50` (1), and `SM_RCN02` and `SM_RCN03` (0, the same text) have eight, so an ordinal of 8 reads the eighth, the last ([reading a block](#reading-a-block)). `B4_C1_20.ENG` and `B4_C1_30.ENG` have the counts of the files they copy. `Mission_OutcomeGrade` (`00036837`), which grades the ordinal for the talking head's line and the career, keeps its table of ten words for kinds 0, 1, 2 and 6 and its table of eight for the others ([equipment availability](bst-battle-sets.md#equipment-availability)).
+
+**The flags a debriefing's choices read are the ones the mission left.** The choices read `data\mission.var` through `MissionVar_ReadFlag`, and the simulator's `Mission_WriteResults` writes its 100 flags back over that file at the mission's end, before the exit code that brings the shell back ([writing the results](../simulation/world.md#writing-the-results--mission_writeresults-0001d698), [the end](../simulation/main-loop.md#the-end--sim_shutdown-0005b568)): the flags as the mission load seeded them, with what the mission's actions wrote and flag 7 set to 0 at the simulator's load ([reading](script-dat.md#reading)). The copy of the ordinal to flag 0 is made in the shell's flags, not in the file. The `DEB:` choices of the 23 files that have any test flags 4, 7, 13, 20, 21, 26, 30, 31, 35, 36, 38, 44, 50, 70, 71, 96, 97 and 98, flag 0 in none.
 
 ## The objectives
 
@@ -92,6 +109,5 @@ That is a string table of one group ([ES2's `.STR` layout](../../retail/formats/
 
 ## Open
 
-- **Open:** what the debriefing ordinal, the first word of `data\results.dat`, counts: which outcome the simulator writes as each value, and why some missions have eight debriefings and some nine.
-- **Open:** whether the simulator rewrites `data\mission.var` before the debriefing reads flags through it, so whether a debriefing's choices see the flags as the mission load seeded them.
+- **Open:** whether the shell writes its flags `000ab244`, flag 0 the ordinal among them, back to `data\mission.var` before the debriefing's block is read; the writer this page's sources name is the mission load's step 7 ([loading a mission](msn-mission-file.md#loading-a-mission)).
 - **Open:** why `Mission_ReadRestore` reads the word written from `Mission_Kind` (`000aad5a`) into `000aad5e`, and what the two words hold.

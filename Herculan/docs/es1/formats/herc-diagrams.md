@@ -50,6 +50,8 @@ Four lookups take a weapon, a mount and a chassis, with no bounds test on the mo
 
 Last, when the `+0x98` element exists and `0007ff8e` is clear, it passes (0, 0) to `000216e0` for it.
 
+`Herc_FreeDiagram` (`0002330e`), given a HERC, deletes the `+0xa4` array (`__vec_delete`, `0005547c`, with `000232df` for each 38-byte element) and the `+0x94` array (with `00021519` for each 34-byte element), destroys the `+0x98` element with `00021519`(element, 3), nulling each pointer it frees, and, when the byte `Shell_LowMemory` (`0007fd09`) is set, calls `000228aa` with the chassis and nulls the bank pointers `+0x9c` and `+0xa0`. `es2_xref.py` finds three calls: from `000232a4`, which [`Hangar_Clear`](car-hercs-and-stock.md#the-herc-lists) destroys each HERC with, `000241cd`, and `Hangar_ReadStatusBlock` (`00028e50`), which frees and rebuilds a HERC's diagram around the status block it reads ([the HERC record](car-hercs-and-stock.md#the-herc-record)).
+
 `MountPicture_Set`, given an element, a value, a weapon, a mount and a chassis, stores the record `HercLayout_Find` returns at the element's `+0`. For weapon 17 it passes (0, 0) to `000216e0` for the element's `+4`. For any other weapon, when the value is below `0x33` it loads the chassis's `RES32\<chassis>WEPD.DBA` into the table at `0007fffc` the first time, and passes the record's first point; at `0x33` or more it passes the first point only when the chassis's `WEP1` bank is loaded. `HercArt_LoadAllBanks` (`0002280f`) loads all eight chassis' `WEP1`, `OUTL`, `DMG1` and `WEPD` banks into their tables, and the `BILD` banks of chassis 2 to 7 into the table at `0008001c`.
 
 `es2_xref.py` finds `HercLayout_FindFrame`, `HercLayout_FindSecondPoint` and `MountPicture_Set` called from `Herc_BuildDiagram` and `00024788`, `HercLayout_Find` from `MountPicture_Set`, and no branch to and no stored pointer of `HercLayout_FindFirstPoint`.
@@ -75,7 +77,7 @@ ES2's `gam\arm_*.dat` places a mount's picture from a group per weapon id with a
 
 `HercDamageMarks_Load` (`00022252`) opens the eight files in turn through one `VolRStream` and for each list reads the count into the word at `000aae3a` + `0x6c` × chassis + `0x12` × group + 6 × level and makes an array of that many 10-byte marks (`HercDamageMarks_MarkCtor`, `0002236c`) at the dword after it, reading each mark whole. `HercDamageMarks_Free` deletes the 144 arrays.
 
-`Herc_DrawDamageMarks` (`00024366`), given a HERC, loads its chassis's `DMG1` bank into the table at `0007ffdc` the first time, and for each group *g* from 0 to 5 takes the level `000389fb` returns for `00024b86`(HERC, *g*, `0x785`). For a level of 1 to 3 it draws each mark of the group's list for that level: `Bitmap_Blit` of the bank's frame at (*x*, *y*), once with the word at `+0x38` of the canvas `000ab616` set to the word `0007fccc` and once with it put back, each time also through the routine `000865f4` when the canvas is the current one. `es2_xref.py` finds one call, from `000241f9`.
+`Herc_DrawDamageMarks` (`00024366`), given a HERC, loads its chassis's `DMG1` bank into the table at `0007ffdc` the first time, and for each group *g* from 0 to 5 takes the level `000389fb` returns for the mean of external area *g*, `Herc_GetStatus` (`00024b86`)(HERC, *g*, `0x785`) ([the HERC record](car-hercs-and-stock.md#the-herc-record)). For a level of 1 to 3 it draws each mark of the group's list for that level: `Bitmap_Blit` of the bank's frame at (*x*, *y*), once with the word at `+0x38` of the canvas `000ab616` set to the word `0007fccc` and once with it put back, each time also through the routine `000865f4` when the canvas is the current one. `es2_xref.py` finds one call, from `000241f9`.
 
 ## The clickable areas
 
@@ -104,7 +106,7 @@ ES2's `gam\arm_hots.dat` holds the same kind of per-mount areas as `int32` corne
 
 ## Open
 
-- **Open:** what the frame of a mount picture record selects and what `000216e0` does with the points; what the `+0x94` and `+0x98` elements draw; what `00023605`, `00024788` and `00024b86` compute; and what `HercLayout_FindFirstPoint` serves, to which `es2_xref.py` finds no branch and no stored pointer.
-- **Open:** which six component groups and which damage levels the mark lists are, through `000389fb` and `00024b86`, and what the word `+0x38` of the canvas set to `0007fccc` does to the first of the two blits.
+- **Open:** what the frame of a mount picture record selects and what `000216e0` does with the points; what the `+0x94` and `+0x98` elements draw; what `00023605` and `00024788` compute; and what `HercLayout_FindFirstPoint` serves, to which `es2_xref.py` finds no branch and no stored pointer.
+- **Open:** which six component groups and which damage levels the mark lists are, through `000389fb` and the external areas at `0007ef54`, and what the word `+0x38` of the canvas set to `0007fccc` does to the first of the two blits.
 - **Open:** what reads the areas at `0008003c`: a search of the disassembly for the address finds only `HercHotspots_Load` and `HercHotspots_Free`.
 - **Open:** what `CONFIG.DAT` and `TEST.DAT` are.

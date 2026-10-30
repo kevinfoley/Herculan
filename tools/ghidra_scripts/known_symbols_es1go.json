@@ -2857,7 +2857,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CareerRecord_ReadPilotResults",
-      "description": "(stream), its argument removed by this function: zeroes the words 0009ae5c, 0009ae5e and 0009ae60, then for each pilot entry 0 to 3 of the record CareerRecord_Current (00014ef4) returns whose byte +0xa is set and slot +8 is not -1: for entry 0, or in any mode but 0 (the word Shell_Mode (000aad56)), calls 00028e50(stream, slot) and sets the entry's condition +0xf to 00024b86(h, 9, 0x784) for the HERC h in the slot, or to 0 when the slot holds none; otherwise reads a 66-byte status block set up by HercStatus_Ctor (0001a29c) from the stream through its slot +0x1c and sets +0xf to its internal word 9, HercStatus_Get (00015896)(block, 9, 0x784). Then PilotEntry_ReadGains (000153d8)(entry, stream). es2_xref finds one call, from Shell_ProcessMissionResults (00038eb5).",
+      "description": "(stream), its argument removed by this function: zeroes the words 0009ae5c, 0009ae5e and 0009ae60, then for each pilot entry 0 to 3 of the record CareerRecord_Current (00014ef4) returns whose byte +0xa is set and slot +8 is not -1: for entry 0, or in any mode but 0 (the word Shell_Mode (000aad56)), calls Hangar_ReadStatusBlock (00028e50)(stream, slot) and sets the entry's condition +0xf to Herc_GetStatus (00024b86)(h, 9, 0x784) for the HERC h in the slot, or to 0 when the slot holds none; otherwise reads a 66-byte status block set up by HercStatus_Ctor (0001a29c) from the stream through its slot +0x1c and sets +0xf to its internal word 9, HercStatus_Get (00015896)(block, 9, 0x784). Then PilotEntry_ReadGains (000153d8)(entry, stream). es2_xref finds one call, from Shell_ProcessMissionResults (00038eb5).",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#after-a-mission",
       "verified": {
         "bytes": "0001568d+521",
@@ -3312,6 +3312,21 @@
       "verified": {
         "bytes": "00017026+56",
         "sha1": "12ef5bf4c707",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000175d7",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DebriefingResultsHotspot_Draw",
+      "description": "(rect, id), its arguments removed by this function, reading only the rect: the handler of the debriefing's hotspot 1522, the results panel. Sets the render context 000ab612's alignment +0x231 to 0 and fills the rect with Raster_FillFrameRectColours (0004b8d8)(0x1f, 0x1f, rect); draws eng\\watext.bin (0009afa8) lines 0xab, 0xac, 0xad, 0xaf, 0xae, 0xb3, 0xb4, 0xb5, 0xb1 and 0xb2 (SALVAGE:, KILLS, HERCS:, FLYERS:, STRUCTURES:, SQUAD LOSSES:, WEAPONS RECOVERED:, NEW TECHNOLOGY RECOVERED:, YOURS, TOTAL) with Text_GetString and HudFont_DrawString (000520d8) in the font 000aacea; then in the font 000aace6, with sprintf: the dword 0007fcf4 (%ld), the words +0x25, +0x29 and +0x27 of CareerRecord_Current (00014ef4)'s record, copied as six bytes, the word 0007ebca, the words 0009ae5c, 0009ae60 and 0009ae5e and the word 000817cc; last, with the alignment +0x231 2 and the field width +0x235 the rect's right less its left, the text at 0007d808 at (left, top + 81), leaving the alignment at 2.",
+      "source": "Herculan/docs/es1/shell/debriefing.md#the-results-panel; ES1GO decompile and disassembly at 000175d7",
+      "verified": {
+        "bytes": "000175d7+1090",
+        "sha1": "71d00a616270",
         "scope": "body",
         "via": "both"
       }
@@ -6017,6 +6032,21 @@
       }
     },
     {
+      "address": "0002330e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_FreeDiagram",
+      "description": "(herc), its argument removed by this function: when +0xa4 is set, __vec_delete (0005547c)(000232df, 0x26, 7, it) and nulls it; when +0x94 is set, __vec_delete(00021519, 0x22, 7, it) and nulls it; when +0x98 is set, 00021519(it, 3) and nulls it; when Shell_LowMemory (0007fd09) is set, 000228aa(the chassis +0) and nulls +0x9c and +0xa0. es2_xref finds three calls, from 000232a4, 000241cd and Hangar_ReadStatusBlock (00028e50).",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-pictures; ES1GO decompile and disassembly at 0002330e",
+      "verified": {
+        "bytes": "0002330e+192",
+        "sha1": "3301c7841e2b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "000233ce",
       "binary": "ES1GO",
       "type": "function",
@@ -6067,7 +6097,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Herc_BuildDiagram",
-      "description": "(herc, word) in stack order, callee-cleaned: sets +0x70 to -1 and clears 0007ff98; stores the chassis's RES32 WEP1 and OUTL banks at +0x9c and +0xa0, loading each with Resource_LoadBitmapArray (0004b7df) into 0007ff9c or 0007ffbc + 4 * chassis when it is 0; calls 00023605(herc, word); for chassis 7 makes a 0x22-byte element at +0x98, else stores null there; when the mount count is not 0 makes 0x26-byte elements at +0xa4 (__vec_new (0005542c) with 00023d70) and 0x22-byte elements at +0x94 (with 00023f2c). Per mount: when Herc_GetMountStatus (00024b23)(herc, mount) is 0 sets the weapon to 0x11 and calls Herc_SetStatus (00024c14)(herc, 100, mount, 0x786); calls HercLayout_FindFrame (00022086), passes HercLayout_FindSecondPoint (0002219f)'s point to 000216e0 for the +0x94 element, and sets the +0xa4 element with MountPicture_Set (00022d78) and Herc_GetMountStatus (00024b23)'s value; on chassis 7, when mount 2 or 3 is not 0x11, passes the point 0x56, 0x19 to 000216e0 for the +0x98 element and sets the byte 0007ff8e; sets to 0 the mount's +0x18 word when its weapon is 9 to 11 and the word is 5. Last, when +0x98 is set and 0007ff8e is clear, passes 0, 0 to 000216e0 for it. es2_xref finds seven calls: from Herc_Read (00023501), 000241f9, 00028e50, Hangar_AddHerc (00029d0f), 00029d68, and twice from 00029e01.",
+      "description": "(herc, word) in stack order, callee-cleaned: sets +0x70 to -1 and clears 0007ff98; stores the chassis's RES32 WEP1 and OUTL banks at +0x9c and +0xa0, loading each with Resource_LoadBitmapArray (0004b7df) into 0007ff9c or 0007ffbc + 4 * chassis when it is 0; calls 00023605(herc, word); for chassis 7 makes a 0x22-byte element at +0x98, else stores null there; when the mount count is not 0 makes 0x26-byte elements at +0xa4 (__vec_new (0005542c) with 00023d70) and 0x22-byte elements at +0x94 (with 00023f2c). Per mount: when Herc_GetMountStatus (00024b23)(herc, mount) is 0 sets the weapon to 0x11 and calls Herc_SetStatus (00024c14)(herc, 100, mount, 0x786); calls HercLayout_FindFrame (00022086), passes HercLayout_FindSecondPoint (0002219f)'s point to 000216e0 for the +0x94 element, and sets the +0xa4 element with MountPicture_Set (00022d78) and Herc_GetMountStatus (00024b23)'s value; on chassis 7, when mount 2 or 3 is not 0x11, passes the point 0x56, 0x19 to 000216e0 for the +0x98 element and sets the byte 0007ff8e; sets to 0 the mount's +0x18 word when its weapon is 9 to 11 and the word is 5. Last, when +0x98 is set and 0007ff8e is clear, passes 0, 0 to 000216e0 for it. es2_xref finds seven calls: from Herc_Read (00023501), 000241f9, Hangar_ReadStatusBlock (00028e50), Hangar_AddHerc (00029d0f), 00029d68, and twice from 00029e01.",
       "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-pictures",
       "verified": {
         "bytes": "00023883+1261",
@@ -6082,7 +6112,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Herc_DrawDamageMarks",
-      "description": "(herc), callee-cleaned: loads the chassis's RES32 DMG1 bank with Resource_LoadBitmapArray (0004b7df) into 0007ffdc + 4 * chassis when it is 0; for groups 0-5 takes the level 000389fb(00024b86(herc, group, 0x785)) returns and for a level of 1 to 3 draws each mark of the list at 000aae3a + 0x6c * chassis + 0x12 * group + 6 * (level - 1): Bitmap_Blit (000502c0) of the bank's frame at the mark's point, once with the word +0x38 of the canvas 000ab616 set to the word 0007fccc and once with it put back, each time also storing it to 0008448e and calling the routine at 000865f4 with it when the canvas is the current one. es2_xref finds one call, from 000241f9.",
+      "description": "(herc), callee-cleaned: loads the chassis's RES32 DMG1 bank with Resource_LoadBitmapArray (0004b7df) into 0007ffdc + 4 * chassis when it is 0; for groups 0-5 takes the level 000389fb(Herc_GetStatus (00024b86)(herc, group, 0x785)) returns and for a level of 1 to 3 draws each mark of the list at 000aae3a + 0x6c * chassis + 0x12 * group + 6 * (level - 1): Bitmap_Blit (000502c0) of the bank's frame at the mark's point, once with the word +0x38 of the canvas 000ab616 set to the word 0007fccc and once with it put back, each time also storing it to 0008448e and calling the routine at 000865f4 with it when the canvas is the current one. es2_xref finds one call, from 000241f9.",
       "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-damage-marks",
       "verified": {
         "bytes": "00024366+507",
@@ -6104,6 +6134,36 @@
         "sha1": "ae0212926d14",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00024b86",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_GetStatus",
+      "description": "(herc, index, kind) in stack order, its arguments removed by this function: HercStatus_GetHercCopy (00024bab)(herc + 0x2e, index, kind), a word of the HERC's status block. es2_xref finds 22 calls.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-record; ES1GO decompile and disassembly at 00024b86",
+      "verified": {
+        "bytes": "00024b86+37",
+        "sha1": "29637f3ba890",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00024bab",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercStatus_GetHercCopy",
+      "description": "(block, index, kind) in stack order, its arguments removed by this function: the code of HercStatus_Get (00015896), a second copy: for kind 0x785 HercStatus_ExternalAverage (0001a3ba)(block, index); for 0x784 the internal word +0x1a + 2 x index; for 0x786 the per-mount word +0x2e + 2 x index; for any other kind the kind. es2_xref finds one call, from Herc_GetStatus (00024b86).",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-record; ES1GO decompile and disassembly at 00024bab",
+      "verified": {
+        "bytes": "00024bab+105",
+        "sha1": "07e9ec2cca34",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -6932,6 +6992,21 @@
       }
     },
     {
+      "address": "00028e50",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_ReadStatusBlock",
+      "description": "(stream, slot) in stack order, its arguments removed by this function: when slot is not -1 and the hangar's slot array 000808a0 holds a HERC there, Herc_FreeDiagram (0002330e)(herc), reads 0x42 bytes into the HERC's status block +0x2e through the stream's vtable (at +4) slot +0x1c (stream, block, 0x42), and Herc_BuildDiagram (00023883)(herc, 0), whatever Shell_LowMemory (0007fd09) holds. es2_xref finds one call, from CareerRecord_ReadPilotResults (0001568d). ES2's Herc_ReadStatusBlock (VSHELL 00411720) is given the HERC and deletes a mount whose word arrived at 0 itself; ES1's leaves that to Herc_BuildDiagram, which makes the mount empty.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-record; ES1GO decompile and disassembly at 00028e50",
+      "verified": {
+        "bytes": "00028e50+121",
+        "sha1": "4ac01772c118",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0002909c",
       "binary": "ES1GO",
       "type": "function",
@@ -7439,6 +7514,51 @@
         "sha1": "826b5c35e520",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0002c574",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DebriefingMenu_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: the debriefing's destructor, slot +4 of DebriefingMenu's vtable 00080c4e. With a menu: stores that vtable at +0x22, deletes the debriefing's text box with Dialog_DeleteBox (00018d93)(Shell_Dialog, 0009afc8), stores Menu's vtable 00080ba8 at +0x22 and the region's three at +0xa in turn (00080b7c, 00080b44, 00080b12), and frees the menu with Mem_Delete when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/shell/debriefing.md#leaving-it; ES1GO decompile and disassembly at 0002c574",
+      "verified": {
+        "bytes": "0002c574+196",
+        "sha1": "ad1ae3bf652e",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002c638",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DebriefingMenu_OnMessage",
+      "description": "(menu, message), its arguments removed by this function: the debriefing's handler, slot +8 of DebriefingMenu's vtable 00080c4e, for screens 1510 and 1520. Looks the message's target +6 up among the five ids of the REPNE SCASD table 00080c64, cases at 00080c78, three of them in bytes Ghidra left undefined from 0002c67f: 101 Dialog_PrevPage (00018df0)(Shell_Dialog, 0009afc8); 102 Dialog_NextPage (00018e18)(Shell_Dialog); 1000 and 1100 set Shell_ReturnScreen (0007fce8) to the id, sprintf anm\\esiege2.anm (00080994) into 000aacfe and set the byte 0007fcd7 to 2; 1710 makes the target 5555 when the current career record's word +0xa8 is not -1 (the roster 0009b218's record 0009b23b + 0x1f7 times its word +7) and sets Shell_ReturnScreen to 1200. Any other id is left as it is.",
+      "source": "Herculan/docs/es1/shell/debriefing.md#the-buttons-and-keys; ES1GO decompile and disassembly at 0002c638",
+      "verified": {
+        "bytes": "0002c638+226",
+        "sha1": "ed52b164e2eb",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002c71a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_BackToReturnScreen",
+      "description": "(menu, message), its arguments removed by this function, a handler's shape: a message whose target +6 is 99 gets Shell_ReturnScreen (0007fce8) as its target; any other is left. It follows DebriefingMenu_OnMessage (0002c638) in the menu handlers' file. es2_xref finds no branch, stored pointer or vtable slot holding it.",
+      "source": "Herculan/docs/es1/shell/debriefing.md#functions; ES1GO decompile and disassembly at 0002c71a",
+      "verified": {
+        "bytes": "0002c71a+41",
+        "sha1": "d4091170311b",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
