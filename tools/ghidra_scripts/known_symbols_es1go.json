@@ -1397,6 +1397,21 @@
       }
     },
     {
+      "address": "00008659",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Prefs_SetHandler",
+      "description": "(handler, option) in stack order, its arguments removed by this function: stores the handler in Prefs_Handlers (000aa272) at the option's index, the handler Prefs_SetOption (00008378), Prefs_Load (000081ca), Prefs_RevertAll (00008316) and Prefs_CommitAll (000082b0) call with the option's value. ES1DBSIM's Prefs_SetHandler (0004ac4c). es2_xref finds one call, Prefs_Init (00008920)'s, for option 11.",
+      "source": "Herculan/docs/es1/shell/single-mission.md#the-mission-params-menu; ES1GO decompile and disassembly at 00008659",
+      "verified": {
+        "bytes": "00008659+28",
+        "sha1": "f45eb01ce50b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "000087ce",
       "binary": "ES1GO",
       "type": "function",
@@ -1417,7 +1432,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Prefs_Init",
-      "description": "No arguments: 00008659(0000868c, 0xb); Prefs_Load (000081ca); the byte 0007e09c = Speech_ArchivePresent (000087ce), and when that is 0 Prefs_SetOption (00008378)(1, 0, 2), option 2 set to 0; then 000087ff. ES1DBSIM's Prefs_Init (0004afe8) in role, with one call of 00008659, no in-progress flag, one load with no argument, no demo-mode loads and no joystick devices.",
+      "description": "No arguments: Prefs_SetHandler (00008659)(0000868c, 0xb); Prefs_Load (000081ca); the byte 0007e09c = Speech_ArchivePresent (000087ce), and when that is 0 Prefs_SetOption (00008378)(1, 0, 2), option 2 set to 0; then 000087ff. ES1DBSIM's Prefs_Init (0004afe8) in role, with one call of Prefs_SetHandler (00008659), no in-progress flag, one load with no argument, no demo-mode loads and no joystick devices.",
       "source": "Herculan/docs/es1/shell/startup.md#the-devices; ES1GO decompile at 00008920",
       "verified": {
         "bytes": "00008920+52",
@@ -3262,7 +3277,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Career_StartMission",
-      "description": "(roster, b) in stack order, callee-cleaned: sets the roster's word +7 to Roster_NthUsedRecord (00016845)(roster, b); BattleSet_Load (00013f01)(g_BattleSet (000a02cc), the roster's word +5); Career_BuildMissionPath (00015a13) on the 0x1f7-byte record at roster + 0x23 + 0x1f7 * word +7; MsnGen_LoadMission (000aad14); CareerRecord_MarkTopPilots (00015cbb)(the record); copies the word 000aad5a to the record's +0xc; Mission_WriteRestore.",
+      "description": "(roster, b) in stack order, callee-cleaned: sets the roster's word +7 to Roster_NthUsedRecord (00016845)(roster, b); BattleSet_Load (00013f01)(g_BattleSet (000a02cc), the roster's word +5); Career_BuildMissionPath (00015a13) on the 0x1f7-byte record at roster + 0x23 + 0x1f7 * word +7; MsnGen_LoadMission (000aad14); CareerRecord_MarkTopPilots (00015cbb)(the record); copies the word Mission_Kind (000aad5a) to the record's +0xc; Mission_WriteRestore.",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#a-careers-missions",
       "verified": {
         "bytes": "00016e93+143",
@@ -6952,7 +6967,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MainMenu_OnMessage",
-      "description": "(menu, message) in stack order, its arguments removed by this function: the handler of the main menu, dlg\\menu1000.dlg, slot +8 of MainMenu's vtable (00081bf4). By the message's target +6, through the REPNE SCASD table of six ids at 000809b8 and their cases at 000809d0, four of them (0002a963-0002a9a5) in bytes Ghidra left undefined: 1499, INSTANT ACTION, sets the mode word Shell_Mode (000aad56) to 0, Shell_ReturnScreen (0007fce8) to 1000 and 000aad5a to -1, calls SingleMission_Start (00036807) and Shell_PrepareMission (0002a523), formats anm\\esiege3.anm into 000aacfe with sprintf (0004e1dc) and sets the byte 0007fcd7 to 1. 1700, RESUME, sets the mode to 1, Shell_ReturnScreen to 1000 and 000aad5a to -1; then, on the current career record 0009b23b + 0x1f7 x the word 0009b21f, while the byte Career_Loaded (000809aa) is clear: Career_LoadCurrent (00016c1e)(0009b218); when Career_PeekNextCampaign (00015aa5)(record) gives -1 or 'c', Shell_ReturnScreen 1000 and the target 1260, and it returns; otherwise the target becomes the record's word +4 and, unless that is 1710, while PilotEntry_Condition (0001618d)(record, its +0xe) is not 0, Career_StartMission (00016e93)(0009b218, 0); 000809b4 becomes Roster_CountUsedRecords (00017026)(0009b218) - 1 and Career_Loaded is set. Then with the pilot's condition 0, Shell_ReturnScreen 1000 and the target 1250; otherwise the target becomes the record's +4, Shell_PrepareMission runs unless it is 1710, the target becomes 5555 when it is 1710 and the record's word +0xa8 is not -1, and anm\\esiege3.anm goes into 000aacfe with 0007fcd7 1. 1100, SINGLE MISSION, sets the mode to 0 and Shell_ReturnScreen to 1100; 1200, CAREER, the mode to 1 and Shell_ReturnScreen to 1200; 1300, OPTIONS, Shell_ReturnScreen to 1000; 1003, EXIT TO DOS, sets the word Shell_ExitCode (0007fcac) to 0 and the byte Shell_QuitFlag (0007fd05) to 1.",
+      "description": "(menu, message) in stack order, its arguments removed by this function: the handler of the main menu, dlg\\menu1000.dlg, slot +8 of MainMenu's vtable (00081bf4). By the message's target +6, through the REPNE SCASD table of six ids at 000809b8 and their cases at 000809d0, four of them (0002a963-0002a9a5) in bytes Ghidra left undefined: 1499, INSTANT ACTION, sets the mode word Shell_Mode (000aad56) to 0, Shell_ReturnScreen (0007fce8) to 1000 and Mission_Kind (000aad5a) to -1, calls SingleMission_Start (00036807) and Shell_PrepareMission (0002a523), formats anm\\esiege3.anm into 000aacfe with sprintf (0004e1dc) and sets the byte 0007fcd7 to 1. 1700, RESUME, sets the mode to 1, Shell_ReturnScreen to 1000 and Mission_Kind (000aad5a) to -1; then, on the current career record 0009b23b + 0x1f7 x the word 0009b21f, while the byte Career_Loaded (000809aa) is clear: Career_LoadCurrent (00016c1e)(0009b218); when Career_PeekNextCampaign (00015aa5)(record) gives -1 or 'c', Shell_ReturnScreen 1000 and the target 1260, and it returns; otherwise the target becomes the record's word +4 and, unless that is 1710, while PilotEntry_Condition (0001618d)(record, its +0xe) is not 0, Career_StartMission (00016e93)(0009b218, 0); 000809b4 becomes Roster_CountUsedRecords (00017026)(0009b218) - 1 and Career_Loaded is set. Then with the pilot's condition 0, Shell_ReturnScreen 1000 and the target 1250; otherwise the target becomes the record's +4, Shell_PrepareMission runs unless it is 1710, the target becomes 5555 when it is 1710 and the record's word +0xa8 is not -1, and anm\\esiege3.anm goes into 000aacfe with 0007fcd7 1. 1100, SINGLE MISSION, sets the mode to 0 and Shell_ReturnScreen to 1100; 1200, CAREER, the mode to 1 and Shell_ReturnScreen to 1200; 1300, OPTIONS, Shell_ReturnScreen to 1000; 1003, EXIT TO DOS, sets the word Shell_ExitCode (0007fcac) to 0 and the byte Shell_QuitFlag (0007fd05) to 1.",
       "source": "Herculan/docs/es1/shell/main-menu.md#the-buttons; ES1GO disassembly at 0002a70a",
       "verified": {
         "bytes": "0002a70a+675",
@@ -6997,8 +7012,8 @@
       "type": "function",
       "confidence": "high",
       "name": "MissionMenu_OnMessage",
-      "description": "(menu, message) in stack order, its arguments removed by this function: the handler of the SINGLE MISSION menu, dlg\\menu1100.dlg, which the menu table names MissionMenu (00081c2c). By the message's code +6, through the REPNE SCASD table at 00080a54: 1101 stores the message's word +4 in 000aad5a; 101 and 102, the arrows, step the control 1101 of the menu's window +6 back (its slot +0x1c) or on (+0x20) and store its value (+0x2c) in 000aad5a; 1501, BRIEFING, stores that value in 000aad5a, calls SingleMission_Start (00036807) and Shell_PrepareMission (0002a523), formats anm\\esiege3.anm into 000aacfe, sets the byte 0007fcd7 to 1 and the code to 1499.",
-      "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters",
+      "description": "(menu, message) in stack order, its arguments removed by this function: the handler of the SINGLE MISSION menu, dlg\\menu1100.dlg, which the menu table names MissionMenu (00081c2c). By the message's target +6, through the REPNE SCASD table at 00080a54: 1101, the list, stores the message's value +4 in Mission_Kind (000aad5a); 101 and 102, the arrows, step the control 1101 of the menu's window +6 back (its slot +0x1c) or on (+0x20) and store its value (+0x2c) in Mission_Kind (000aad5a); 1501, BRIEFING, stores that value in Mission_Kind (000aad5a), calls SingleMission_Start (00036807) and Shell_PrepareMission (0002a523), formats anm\\esiege3.anm into 000aacfe, sets the byte 0007fcd7 to 1 and the target to 1499. Any other id does nothing; the arrows' cases are undefined bytes in Ghidra.",
+      "source": "Herculan/docs/es1/shell/single-mission.md#the-buttons; ES1GO disassembly at 0002b375 and its cases at 0002b419 and 0002b489",
       "verified": {
         "bytes": "0002b375+393",
         "sha1": "8fc047432a50",
@@ -7012,8 +7027,8 @@
       "type": "function",
       "confidence": "high",
       "name": "MissionParams_OnMessage",
-      "description": "(menu, message) in stack order, its arguments removed by this function: the handler of the MISSION PARAMS menu, dlg\\menu1110.dlg, which the menu table names MissionOptionsAlert (00081f2c). By the message's code +6, through the REPNE SCASD table at 00080a74: 1111 to 1115, its buttons AMMO, DAMAGE, DIFFICULTY, VISIBILITY and TIME OF DAY, add 1 to the word MissionParams_Ammo (000aacbc), MissionParams_Damage (000aacbe), MissionParams_Difficulty (000aacc0), MissionParams_Visibility (000aacc2) or MissionParams_TimeOfDay (000aacc4) modulo 2, 2, 4, 2 or 3, show it in the control 1116 to 1120 of the menu's window +6 (DUIWindow_FindEnabledControlById (0001bda4) finds it; the control's slot +0x24) and pass it to Prefs_SetOption (00008378)(1, word, 12 to 16); 99, CANCEL, copies the menu's words +0x26 to +0x2e back into the five words and calls Prefs_RevertAll (00008316)(1), then runs on into 100; 100, ACCEPT, calls Prefs_CommitAll (000082b0)(1) and Prefs_Save (00008267) and sets the code to 1100. Ghidra holds the case bodies from 0002b603 as undefined bytes.",
-      "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters",
+      "description": "(menu, message) in stack order, its arguments removed by this function: the handler of the MISSION PARAMS menu, dlg\\menu1110.dlg, which the menu table names MissionOptionsAlert (00081f2c). By the message's target +6, through the REPNE SCASD table at 00080a74: 1111 to 1115, its buttons AMMO, DAMAGE, DIFFICULTY, VISIBILITY and TIME OF DAY, add 1 to the word MissionParams_Ammo (000aacbc), MissionParams_Damage (000aacbe), MissionParams_Difficulty (000aacc0), MissionParams_Visibility (000aacc2) or MissionParams_TimeOfDay (000aacc4) modulo 2, 2, 4, 2 or 3, show it in the control 1116 to 1120 of the menu's window +6 (DUIWindow_FindEnabledControlById (0001bda4) finds it; the control's slot +0x24) and pass it to Prefs_SetOption (00008378)(1, word, 12 to 16); 99, CANCEL, copies the menu's words +0x26 to +0x2e back into the five words and calls Prefs_RevertAll (00008316)(1), then runs on into 100; 100, ACCEPT, calls Prefs_CommitAll (000082b0)(1) and Prefs_Save (00008267) and sets the target to 1100. Ghidra holds the case bodies from 0002b603 as undefined bytes.",
+      "source": "Herculan/docs/es1/shell/single-mission.md#the-mission-params-menu; ES1GO disassembly at 0002b4fe and its cases from 0002b603",
       "verified": {
         "bytes": "0002b4fe+671",
         "sha1": "f7ebc801ef46",
@@ -7501,7 +7516,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MsnGen_LoadMission",
-      "description": "(path), its argument removed by this function: reads the .MSN entry whole into a buffer and reads it through a memory stream made by MemRWStream_Ctor (0005da60); opens data\\script.dat as a FileRWStream (severity-5 assert, mg.cpp line 0x4c5); reads the revision word, formatting an error string nothing reads when it is not 5; seeds the flags at 000ab244 by the mode Shell_Mode (000aad56), flag 3 from MissionParams_TimeOfDay (000aacc4) and flags 4 to 6 each a Math_RandomBelow (00038774)(Shell_RandomState (0009aec0), 12); parses with MsnGen_ParseMsnFile (0003276c); copies header words 3 and 4 to 000aad5a and 000aad5c and sets the header words the mode overrides, word 0 a draw below 4 outside mode 1; writes the 200 flag bytes to data\\mission.var (FileWStream, assert at line 0x505) and the mission through WriteScriptDatFile (0003445b); counts the first group's member refs before its first -1 into Squad_MemberCount (0007ebc8). In mode 0 it then loads car\\sm_init.dat with Hangar_LoadFile (00028c25), sets up the record SingleMission_Record (0009b014) with CareerRecord_Init (000158ff), and fills pilot entry i at 0009b028 + 0x25 x i for each member i: PilotEntry_Init (000151c8), then with m the mech record MsnGen_HercArrayIndex (0003581a) gives for the ref, for i = 0 the words +0 and +2 0 and the slot +8 m's type +0x30; for i > 0 +0 a draw below 4 plus ((i - 1) x 12) / 3, +2 a draw below 3, +0xd a draw below 6, PilotEntry_DrawForRank (00015402), and a HERC from Herc_Ctor (00022f5e)(0, -1) with m's type as chassis, the mount count of the table 000803c8 for it, per mount m's +0x32 weapon and +0x4e word, m's +0x62 as +0x2c, Herc_SetAllStatus (00024c3c)(h, 100), its slot from Hangar_AddHerc (00029d0f). Then CareerRecord_SelectPilot (00015ad4)(SingleMission_Record (0009b014), its word +0xe) and Hangar_SaveFile (0002909c)(car\\sm_play.mec). In every mode it then calls PlayerMec_Write (0002299e), and frees the condition, point, heading, waypoint, mech, group and base arrays. VSHELL's MsnGen_LoadMission (0041c73d) in role.",
+      "description": "(path), its argument removed by this function: reads the .MSN entry whole into a buffer and reads it through a memory stream made by MemRWStream_Ctor (0005da60); opens data\\script.dat as a FileRWStream (severity-5 assert, mg.cpp line 0x4c5); reads the revision word, formatting an error string nothing reads when it is not 5; seeds the flags at 000ab244 by the mode Shell_Mode (000aad56), flag 3 from MissionParams_TimeOfDay (000aacc4) and flags 4 to 6 each a Math_RandomBelow (00038774)(Shell_RandomState (0009aec0), 12); parses with MsnGen_ParseMsnFile (0003276c); copies header words 3 and 4 to Mission_Kind (000aad5a) and 000aad5c and sets the header words the mode overrides, word 0 a draw below 4 outside mode 1; writes the 200 flag bytes to data\\mission.var (FileWStream, assert at line 0x505) and the mission through WriteScriptDatFile (0003445b); counts the first group's member refs before its first -1 into Squad_MemberCount (0007ebc8). In mode 0 it then loads car\\sm_init.dat with Hangar_LoadFile (00028c25), sets up the record SingleMission_Record (0009b014) with CareerRecord_Init (000158ff), and fills pilot entry i at 0009b028 + 0x25 x i for each member i: PilotEntry_Init (000151c8), then with m the mech record MsnGen_HercArrayIndex (0003581a) gives for the ref, for i = 0 the words +0 and +2 0 and the slot +8 m's type +0x30; for i > 0 +0 a draw below 4 plus ((i - 1) x 12) / 3, +2 a draw below 3, +0xd a draw below 6, PilotEntry_DrawForRank (00015402), and a HERC from Herc_Ctor (00022f5e)(0, -1) with m's type as chassis, the mount count of the table 000803c8 for it, per mount m's +0x32 weapon and +0x4e word, m's +0x62 as +0x2c, Herc_SetAllStatus (00024c3c)(h, 100), its slot from Hangar_AddHerc (00029d0f). Then CareerRecord_SelectPilot (00015ad4)(SingleMission_Record (0009b014), its word +0xe) and Hangar_SaveFile (0002909c)(car\\sm_play.mec). In every mode it then calls PlayerMec_Write (0002299e), and frees the condition, point, heading, waypoint, mech, group and base arrays. VSHELL's MsnGen_LoadMission (0041c73d) in role.",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#loading-a-mission",
       "verified": {
         "bytes": "00035873+2305",
@@ -7561,7 +7576,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mission_WriteRestore",
-      "description": "(): writes data\\restore.dat (file-name entry 8 through Text_GetString and Path_ApplyAltDrive) through a FileRWStream, a severity-5 assert at mission.cpp line 0x55 when it does not open: the words Shell_Mode (000aad56) and 000aad5a, then the .msn path at 000aad14 and the .eng path at 000aad2a, each as an int16 length counting the NUL and the string with its NUL.",
+      "description": "(): writes data\\restore.dat (file-name entry 8 through Text_GetString and Path_ApplyAltDrive) through a FileRWStream, a severity-5 assert at mission.cpp line 0x55 when it does not open: the words Shell_Mode (000aad56) and Mission_Kind (000aad5a), then the .msn path at 000aad14 and the .eng path at 000aad2a, each as an int16 length counting the NUL and the string with its NUL.",
       "source": "Herculan/docs/es1/formats/eng-mission-text.md#which-file",
       "verified": {
         "bytes": "0003634b+371",
@@ -7591,7 +7606,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mission_ReadRestore",
-      "description": "(): reads data\\restore.dat (file-name entry 8) through a FileRStream, a severity-5 assert at mission.cpp line 0x75 when it does not open: a word into Shell_Mode (000aad56), a word into 000aad5e (Mission_WriteRestore wrote it from 000aad5a), then two int16-length-prefixed strings into 000aad14 (the .msn path) and 000aad2a (the .eng path).",
+      "description": "(): reads data\\restore.dat (file-name entry 8) through a FileRStream, a severity-5 assert at mission.cpp line 0x75 when it does not open: a word into Shell_Mode (000aad56), a word into 000aad5e (Mission_WriteRestore wrote it from Mission_Kind (000aad5a)), then two int16-length-prefixed strings into 000aad14 (the .msn path) and 000aad2a (the .eng path).",
       "source": "Herculan/docs/es1/formats/eng-mission-text.md#which-file",
       "verified": {
         "bytes": "00036512+311",
@@ -7607,7 +7622,7 @@
       "confidence": "high",
       "name": "SingleMission_BuildPath",
       "description": "(index), callee-cleaned: when index is -1 takes the list Math_RandomBelow(Shell_RandomState (0009aec0), word 00081084) indexes, else list index, of the array 00081080; formats StrList_PickRandom (00020289)'s draw from it as msn\\%s into 000aad14; Mission_SetTextPath.",
-      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#single-missions",
+      "source": "Herculan/docs/es1/shell/single-mission.md#starting-the-mission",
       "verified": {
         "bytes": "00036649+120",
         "sha1": "d480baceb609",
@@ -7636,8 +7651,8 @@
       "type": "function",
       "confidence": "high",
       "name": "SingleMission_Start",
-      "description": "(), callee-cleaned: Inventory_LoadFile (00027e02)(word 000aad62, car\\s_armory.dat); SingleMission_BuildPath (00036649)(word 000aad5a); MsnGen_LoadMission (000aad14); Mission_WriteRestore.",
-      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#single-missions",
+      "description": "(), callee-cleaned: Inventory_LoadFile (00027e02)(word 000aad62, car\\s_armory.dat); SingleMission_BuildPath (00036649)(word Mission_Kind (000aad5a)); MsnGen_LoadMission (000aad14); Mission_WriteRestore.",
+      "source": "Herculan/docs/es1/shell/single-mission.md#starting-the-mission",
       "verified": {
         "bytes": "00036807+48",
         "sha1": "2cc8119c81cd",
@@ -7756,7 +7771,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Menu_ListLines",
-      "description": "(id): the lines of a kind-15 list box. By the id, through the REPNE SCASD table of 28 ids at 000812f4 and their cases at 00081364 in bytes Ghidra left undefined: 1002, the main menu's list, returns CareerLog_CurrentNameArray (000182f8)(0009b20c); an id not in the table returns WaText_LinesFromList (000373fa)(000811a4). The other 27 cases are not read here.",
+      "description": "(id): the lines of a kind-15 list box. By the id, through the REPNE SCASD table of 28 ids at 000812f4 and their cases at 00081364 in bytes Ghidra left undefined: 1002, the main menu's list, returns CareerLog_CurrentNameArray (000182f8)(0009b20c); an id not in the table returns WaText_LinesFromList (000373fa)(000811a4). 1101, the SINGLE MISSION menu's list (00081364's case at 000376f5), returns the same of the word list 00081264, eng\\watext.bin lines 0x23 to 0x29; 1116, 1117, 1118, 1119 and 1120, the MISSION PARAMS menu's lists, of 000811c4, 000811cc, 00081244, 000811d4 and 000811dc. The other 21 cases are not read here.",
       "source": "Herculan/docs/es1/shell/main-menu.md#the-list; read in part"
     },
     {
@@ -21504,6 +21519,15 @@
       "name": "Shell_Mode",
       "description": "The shell's mode word, int16: 0 for a single mission, 1 for a career. MainMenu_OnMessage (0002a70a) stores 0 for INSTANT ACTION and SINGLE MISSION and 1 for RESUME and CAREER, and Mission_ReadRestore (00036512) reads it from data\\restore.dat; the other 37 instructions es2_xref finds holding its address read it.",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters"
+    },
+    {
+      "address": "000aad5a",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mission_Kind",
+      "description": "int16: header word 3 of the mission last loaded, which MsnGen_LoadMission (00035873) stores at its step 6, numbering eng\\watext.bin's mission-type names from line 0x23 as the SINGLE MISSION list does. Before a single mission's load it holds the list's selected line, which MissionMenu_OnMessage (0002b375) stores and SingleMission_Start (00036807) passes to SingleMission_BuildPath (00036649) as the list index, or -1 from MainMenu_OnMessage (0002a70a); Menu_Open (0003969e) selects its line in the list 1101 when menu 1100 opens. Career_StartMission (00016e93) copies it to the career record's +0xc and Mission_WriteRestore (0003634b) saves it.",
+      "source": "Herculan/docs/es1/shell/single-mission.md#the-list"
     },
     {
       "address": "000ab60a",

@@ -24,23 +24,19 @@ ES1's missions are the `.MSN` files in `ZONES.VOL`'s `MSN\` folder. The shell, `
 
 The mode is `Shell_Mode` (`000aad56`), 0 for a single mission and 1 for a career, which the main menu's buttons set ([the main menu's buttons](../shell/main-menu.md#the-buttons)). In steps 4 and 6, mode 1 takes its values from the `0x1f7`-byte record at `0009b23b + 0x1f7 × [0009b21f]` and mode 0 from the words at `000aacbc`–`000aacc4`; step 9 runs only in mode 0.
 
-In the SINGLE MISSION menu, `MissionMenu_OnMessage` (`0002b375`) keeps the value of its list control (id 1101), which the two arrows step, in `000aad5a`, and BRIEFING (1501) calls `SingleMission_Start`, which passes `000aad5a` to `SingleMission_BuildPath` as the list index. Step 6 of the load then stores header word 3 there, which is not always the index of the list in `msn\sing_msn.dat` that names the mission: after its header patches `SM_SCR01.MSN`'s is 4, the list that names it, and `SM_ASS01.MSN`'s is 9, where lists 6 and 7 name it. `Mission_ReadRestore` (`00036512`) also writes the mode, reading it back from `data\restore.dat` ([which file](eng-mission-text.md#which-file)); the other 37 instructions `es2_xref.py` finds holding the mode's address read it.
+A single mission's path comes from the SINGLE MISSION menu's list, through `Mission_Kind` (`000aad5a`), and step 6 of the load then stores header word 3 there, which is not always the index of the list in `msn\sing_msn.dat` that names the mission: after its header patches `SM_SCR01.MSN`'s is 4, the list that names it, and `SM_ASS01.MSN`'s is 9, where lists 6 and 7 name it ([the list](../shell/single-mission.md#the-list)). `Mission_ReadRestore` (`00036512`) also writes the mode, reading it back from `data\restore.dat` ([which file](eng-mission-text.md#which-file)); the other 37 instructions `es2_xref.py` finds holding the mode's address read it.
 
-The five words are the MISSION PARAMS menu's settings, `dlg\menu1110.dlg`, and options 12 to 16 of `data\prefs.cfg`:
+The five words are the settings of the [MISSION PARAMS menu](../shell/single-mission.md#the-mission-params-menu), options 12 to 16 of `data\prefs.cfg`:
 
-| Word | Header word | Button | Option | Values | The simulator's reading |
-|---|---|---|---|---|---|
-| `MissionParams_Ammo` (`000aacbc`) | 5 | AMMO | 12 | 0, 1 | [Open](#open) |
-| `MissionParams_Damage` (`000aacbe`) | 6 | DAMAGE | 13 | 0, 1 | [Open](#open) |
-| `MissionParams_Difficulty` (`000aacc0`) | 7 | DIFFICULTY | 14 | 0 to 3 | the [difficulty scale](../simulation/world.md#the-difficulty-scale--damage_scalebydifficulty-0001f82c)'s index |
-| `MissionParams_Visibility` (`000aacc2`) | 8 | VISIBILITY | 15 | 0, 1 | the [world file](wld-world.md#which-file)'s *d* and the [contact scan range](../simulation/world.md#small-functions) |
-| `MissionParams_TimeOfDay` (`000aacc4`) | 9 | TIME OF DAY | 16 | 0 to 2 | the world file's *v*; also flag 3 in either mode |
+| Word | Header word | Option | Values | The simulator's reading |
+|---|---|---|---|---|
+| `MissionParams_Ammo` (`000aacbc`) | 5 | 12 | 0, 1 | [Open](#open) |
+| `MissionParams_Damage` (`000aacbe`) | 6 | 13 | 0, 1 | [Open](#open) |
+| `MissionParams_Difficulty` (`000aacc0`) | 7 | 14 | 0 to 3 | the [difficulty scale](../simulation/world.md#the-difficulty-scale--damage_scalebydifficulty-0001f82c)'s index |
+| `MissionParams_Visibility` (`000aacc2`) | 8 | 15 | 0, 1 | the [world file](wld-world.md#which-file)'s *d* and the [contact scan range](../simulation/world.md#small-functions) |
+| `MissionParams_TimeOfDay` (`000aacc4`) | 9 | 16 | 0 to 2 | the world file's *v*; also flag 3 in either mode |
 
-The shell keeps 17 option bytes with a handler each: `Prefs_Load` (`000081ca`) reads the 17 bytes of `data\prefs.cfg` into `Prefs_Options` (`000aa24e`), zeroes them when the file does not open, calls each option's handler (`Prefs_Handlers`, `000aa272`) and copies them into `Prefs_Committed` (`000aa260`). At start-up `Shell_LoadData` (`00020630`) copies options 12 to 16 into the five words, and `Shell_HandleMessage` (`0003c7d8`) copies them in again at `0003e718`, keeping copies at `+0x26`–`+0x2e` of the object in `EBX` there, the offsets CANCEL puts the words back from. `MissionParams_OnMessage` (`0002b4fe`) handles the menu's buttons:
-
-- AMMO, DAMAGE, DIFFICULTY, VISIBILITY and TIME OF DAY (ids 1111 to 1115) each add 1 to their word modulo the number of its values, show it in controls 1116 to 1120 and store it in their option with `Prefs_SetOption` (`00008378`), which calls the option's handler;
-- CANCEL (99) puts back the five words from the menu's `+0x26`–`+0x2e` and the options from `Prefs_Committed` (`Prefs_RevertAll`, `00008316`), then does what ACCEPT does;
-- ACCEPT (100) copies the options into `Prefs_Committed` (`Prefs_CommitAll`, `000082b0`) and writes all 17 to `data\prefs.cfg` (`Prefs_Save`, `00008267`).
+The shell keeps 17 option bytes with a handler each: `Prefs_Load` (`000081ca`) reads the 17 bytes of `data\prefs.cfg` into `Prefs_Options` (`000aa24e`), zeroes them when the file does not open, calls each option's handler (`Prefs_Handlers`, `000aa272`) and copies them into `Prefs_Committed` (`000aa260`). At start-up `Shell_LoadData` (`00020630`) copies options 12 to 16 into the five words, and the MISSION PARAMS menu copies them in again each time it opens.
 
 ### The draws
 
