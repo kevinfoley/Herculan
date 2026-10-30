@@ -26,14 +26,16 @@ public sealed partial class HeightGrid {
 	/// </summary>
 	private readonly byte[] _cellScratch;
 
-	// The raw heights as the zone loaded them, kept by the first flattening pass for RestoreUnlevelledHeights.
+	// The raw heights as the zone loaded them, kept by the first flattening pass or the first WriteLoadedHeights for
+	// RestoreUnlevelledHeights.
 	private byte[]? _unlevelledHeights;
 
 	private int _footprintSum;
 	private int _footprintCount;
 
 	/// <summary>
-	/// Puts back the raw heights the first <see cref="FlattenStructureFootprints"/> levelled and clears every
+	/// Puts back the raw heights as the zone loaded them (<see cref="LoadedHeightAt"/>), which
+	/// <see cref="FlattenStructureFootprints"/> levelled, and clears every
 	/// footprint mark, so the pass can be run again over a different set of footprints. Not retail: DBSIM
 	/// flattens once, at spawn, and never undoes it. The mission editor runs the pass again this way after a
 	/// structure moves, so the ground under it is what mission start would make of the new layout.
@@ -42,6 +44,37 @@ public sealed partial class HeightGrid {
 	public void RestoreUnlevelledHeights() {
 		_unlevelledHeights?.CopyTo(_rawHeights, 0);
 		Array.Clear(_cellScratch);
+	}
+
+	/// <summary>The cell's raw 0–255 height as the zone loaded it, before any <see cref="FlattenStructureFootprints"/> levelled it.</summary>
+	public byte LoadedHeightAt(int cellX, int cellY) => (_unlevelledHeights ?? _rawHeights)[CellIndex(cellX, cellY)];
+
+	/// <summary>
+	/// Writes the raw heights the zone loaded (<see cref="LoadedHeightAt"/>) over the cells from (<paramref name="left"/>,
+	/// <paramref name="bottom"/>): <paramref name="heights"/> holds rows of <paramref name="width"/> cells, the lowest cell
+	/// row first. The heights in use, and the surface, change only once <see cref="RestoreUnlevelledHeights"/> puts these in
+	/// place and <see cref="RebuildSurface"/> or <see cref="FlattenStructureFootprints"/> builds it.
+	/// <see cref="MaxWorldHeight"/> follows the highest loaded height, as the loader sets it. Not retail: the mission
+	/// editor's sculpting writes the heightmap this way.
+	/// </summary>
+	public void WriteLoadedHeights(int left, int bottom, int width, ReadOnlySpan<byte> heights) {
+		int rows = width > 0 ? heights.Length / width : 0;
+		if (left < 0 || bottom < 0 || width <= 0 || rows * width != heights.Length
+				|| left + width > 1 << WidthShift || bottom + rows > 1 << HeightShift) {
+			throw new ArgumentOutOfRangeException(nameof(heights), "The cells written are not a rectangle within the grid.");
+		}
+
+		_unlevelledHeights ??= (byte[])_rawHeights.Clone();
+		for (int row = 0; row < rows; row++) {
+			heights.Slice(row * width, width).CopyTo(_unlevelledHeights.AsSpan(CellIndex(left, bottom + row), width));
+		}
+
+		int highest = 0;
+		foreach (byte height in _unlevelledHeights) {
+			highest = Math.Max(highest, height);
+		}
+
+		MaxWorldHeight = HeightScale * highest;
 	}
 
 	/// <summary>

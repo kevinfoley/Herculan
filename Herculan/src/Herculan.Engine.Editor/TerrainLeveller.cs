@@ -18,6 +18,9 @@ namespace Herculan.Engine.Editor;
 /// <para>What stands on the ground is settled again where it changed: a structure on the ground under it, as the
 /// spawn pass re-settles them, and a walking mech where the editor draws it (<see cref="GroundStanding.Settled"/>).
 /// The terrain mesh is rebuilt over the cells that changed (<see cref="Changed"/>) and the overlays laid on it again.</para>
+///
+/// <para>While <see cref="Flattening"/> is off, as it is while the terrain is sculpted (<see cref="TerrainSculptor"/>), a pass
+/// paints the pads but levels nothing, so the ground shows as the zone loads it, which is what the brushes write. This is the editor's own.</para>
 /// </summary>
 internal sealed class TerrainLeveller {
 	private readonly SimWorld _world;
@@ -35,6 +38,10 @@ internal sealed class TerrainLeveller {
 	private byte[] _meshed = [];
 	private byte[] _meshedMaterials = [];
 	private int[] _levelledFor = [];
+	private bool _flattening = true;
+
+	// Whether the next Relevel runs whether or not anything has moved.
+	private bool _forced;
 
 	/// <param name="place">Stands an object at a position and heading, for whatever draws and picks it.</param>
 	public TerrainLeveller(MissionScene scene, MissionIndex index, TerrainMaterialTable materials, MissionOverlay overlay,
@@ -63,7 +70,28 @@ internal sealed class TerrainLeveller {
 		}
 
 		_levelledFor = Footprints();
+
+		// The terrain taken was levelled, which a pass with flattening off undoes.
+		_forced = !_flattening;
 	}
+
+	/// <summary>
+	/// Whether a pass levels the ground under the structures (<see cref="HeightGrid.FlattenStructureFootprints"/>), as the
+	/// game levels it on load; on unless the terrain is being sculpted. Turning it on or off has the next
+	/// <see cref="Relevel"/> run.
+	/// </summary>
+	public bool Flattening {
+		get => _flattening;
+		set {
+			if (_flattening != value) {
+				_flattening = value;
+				_forced = true;
+			}
+		}
+	}
+
+	/// <summary>Has the next <see cref="Relevel"/> run whether or not anything has moved: once the heights the zone loaded are written.</summary>
+	public void Invalidate() => _forced = true;
 
 	/// <summary>
 	/// Raised with the run of <see cref="MissionModels.TerrainMesh"/>'s vertices a re-levelling rebuilt, for whatever
@@ -71,19 +99,25 @@ internal sealed class TerrainLeveller {
 	/// </summary>
 	public event Action<int, int>? Changed;
 
-	/// <summary>Levels and paints the ground again if a structure or a pad has moved, or a structure changed type, since it was last levelled.</summary>
+	/// <summary>
+	/// Levels and paints the ground again if a structure or a pad has moved, or a structure changed type, since it was last
+	/// levelled, or the pass is due regardless (<see cref="Invalidate"/>, <see cref="Flattening"/>).
+	/// </summary>
 	public void Relevel() {
 		int[] footprints = Footprints();
-		if (footprints.AsSpan().SequenceEqual(_levelledFor)) {
+		if (!_forced && footprints.AsSpan().SequenceEqual(_levelledFor)) {
 			return;
 		}
 
+		_forced = false;
 		_levelledFor = footprints;
 		_terrain.RestoreUnlevelledHeights();
 		_terrain.RestoreUnpaintedMaterials();
-		foreach (var sceneObject in _index.Objects) {
-			if (sceneObject.Object is BaseObject structure) {
-				_terrain.MarkStructureFootprint(structure.Position.X, structure.Position.Y, structure.ShapeRadius);
+		if (_flattening) {
+			foreach (var sceneObject in _index.Objects) {
+				if (sceneObject.Object is BaseObject structure) {
+					_terrain.MarkStructureFootprint(structure.Position.X, structure.Position.Y, structure.ShapeRadius);
+				}
 			}
 		}
 
@@ -93,7 +127,11 @@ internal sealed class TerrainLeveller {
 				_materials[pad.Layout.MaterialIndex].BlockShift, pad.Layout.Dimension, pad.Layout.Map);
 		}
 
-		_terrain.FlattenStructureFootprints();
+		if (_flattening) {
+			_terrain.FlattenStructureFootprints();
+		} else {
+			_terrain.RebuildSurface();
+		}
 
 		// The cells to build again: those with a corner that moved, and those repainted. A cell is drawn from its own
 		// corner and the three east and north of it, so a moved corner reaches the cells one west and south of it too;

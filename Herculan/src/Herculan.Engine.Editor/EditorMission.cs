@@ -11,7 +11,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// One opened mission and everything the editor builds over it on the CPU: the scene, its objects placed from the
-/// <c>.MSN</c>'s layout (<see cref="Index"/>), the overlays, the picker, the two side panels, the Mission Settings and Terrain windows and the move, add, delete, fit, type, starting condition, heading, base pad, route, trigger area, trigger, countdown, condition, presence, random table, order, objective, text, theater and terrain tools, all sharing one
+/// <c>.MSN</c>'s layout (<see cref="Index"/>), the overlays, the picker, the two side panels, the Mission Settings and Terrain windows and the move, add, delete, fit, type, starting condition, heading, base pad, route, trigger area, trigger, countdown, condition, presence, random table, order, objective, text, theater, terrain and sculpting tools, all sharing one
 /// selection. Every edit, undo and redo syncs the scene and the indices with the document in place (<see cref="Sync"/>), and a
 /// change of theater or time of day dresses the scene in its world again in place (<see cref="Theater"/>), and a
 /// replaced terrain is swapped into it in place (<see cref="Terrain"/>). Opening another
@@ -53,6 +53,7 @@ internal sealed class EditorMission {
 		AreaPlacing = new AreaPlacing(Areas, drape);
 		Placing.Blocked = () => AreaPlacing.Active;
 		AreaPlacing.Blocked = () => Placing.Active;
+		Sculptor = new TerrainSculptor(source, scene.World, sceneIndex, Mover, Sync, Terrain, drape) { Blocked = () => PlacingAny };
 		Hercs = new HercPlacer(source, scene, sceneIndex, Mover, Sync, Selection, Fitter, UnitTypeNames.LoadMechs(content));
 		Flyers = new FlyerPlacer(source, scene, sceneIndex, Mover, Sync, Selection, UnitTypeNames.LoadFlyers(content));
 		Vehicles = new VehiclePlacer(source, sceneIndex, Mover, Sync, Selection, Placer);
@@ -259,6 +260,12 @@ internal sealed class EditorMission {
 
 	/// <summary>Whether a route or a trigger area is being placed, while which the view picks and moves nothing.</summary>
 	public bool PlacingAny => Placing.Active || AreaPlacing.Active;
+
+	/// <summary>The sculpting brushes, which take the view's left-drag while the Toolbox's "Sculpt Terrain" tab is shown.</summary>
+	public TerrainSculptor Sculptor { get; }
+
+	/// <summary>Whether a drag is under way, of the move handles or a sculpting stroke, while which no other edit is made.</summary>
+	public bool Dragging => Gizmo.Dragging || Sculptor.Stroking;
 
 	/// <summary>The window title, the name marked <c>*</c> when <paramref name="unsaved"/> changes are held.</summary>
 	public string Title(bool unsaved) => $"HERCULAN Mission Editor — {Name}{(unsaved ? "*" : "")}, zone {Zone}";

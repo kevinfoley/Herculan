@@ -240,6 +240,14 @@ public sealed partial class HeightGrid {
 	}
 
 	/// <summary>
+	/// Builds the surface again over the whole grid (<see cref="BuildSurface"/>), for heights put in place with no
+	/// flattening pass after them, which would build it: the mission editor's, while it shows the ground as the zone loads it
+	/// (<see cref="WriteLoadedHeights"/>, <see cref="RestoreUnlevelledHeights"/>). Not retail: DBSIM builds the surface at
+	/// zone load and after flattening alone.
+	/// </summary>
+	public void RebuildSurface() => BuildSurface();
+
+	/// <summary>
 	/// <c>Math_NormalizeVec3ShortToLength</c> (<c>0046c138</c>) — rescales a vector to length <see cref="NormalOne"/>, measured with the
 	/// sim's sqrt-free magnitude approximation, halving it first if it is close enough to overflowing
 	/// a signed short that the Q16 scale would.

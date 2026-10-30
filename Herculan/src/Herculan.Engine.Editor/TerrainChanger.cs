@@ -28,12 +28,12 @@ namespace Herculan.Engine.Editor;
 /// and the templates a random table copies from included. A position that is the sum of two others (unused in retail) is
 /// left to its sum, which moves twice as far; <see cref="Note"/> counts them. This is the editor's own choice.</para>
 ///
-/// <para>Only a flyer reads its height from its position (docs/retail/formats/script-dat.md#placement--the-actual-rule,
-/// rule 5); everything else stands on whatever ground is under it. So the replacement keeps each flyer as high above the
-/// ground as it was: every position a flyer stands on of its own, and every position a flyer group stands on, is raised or
-/// lowered by how much the ground under it rose or fell, where it stands before and after the move, a position at Z 0 counted at the 5000 units a flyer flies at
-/// there. This is the editor's own choice, not retail's: retail has no terrain to replace. A position whose coordinates
-/// cannot be written (<see cref="MissionDocument.SetPoint"/>) keeps its height, and <see cref="Note"/> names it.</para>
+/// <para>The replacement keeps each flyer as high above the ground as it was (<see cref="FlyerHeights"/>), measuring the
+/// ground where it stands before and after the move. A position whose coordinates cannot be written keeps its height, and
+/// <see cref="Note"/> names it.</para>
+///
+/// <para>A mission on an archive zone is given a terrain of its own, a copy of that zone, before it is sculpted
+/// (<see cref="CopyZone"/>), and a sculpting stroke builds that terrain again from the scene's (<see cref="TakeSculpted"/>).</para>
 ///
 /// <para>The edits run when <see cref="RunRequest"/> is called, once the frame's ImGui is rendered, since replacing the
 /// terrain replaces what the frame draws with.</para>
@@ -51,6 +51,7 @@ internal sealed class TerrainChanger {
 	private readonly TerrainMaterialTable _materials;
 	private readonly int _detailLevel;
 	private readonly Func<short> _freeZone;
+	private readonly FlyerHeights _flyers;
 	private ZoneFiles? _requested;
 
 	/// <param name="content">DBSIM's mount, which holds the archive's zones.</param>
@@ -68,6 +69,7 @@ internal sealed class TerrainChanger {
 		_materials = materials;
 		_detailLevel = detailLevel;
 		_freeZone = freeZone;
+		_flyers = new FlyerHeights(source, index);
 	}
 
 	/// <summary>Raised once the scene's terrain is replaced or put back, for whatever has it uploaded.</summary>
@@ -140,11 +142,7 @@ internal sealed class TerrainChanger {
 		int dy = (int)((after.WorldHeight - before.WorldHeight) / 2);
 
 		// Read before the move writes them.
-		var flyers = FlyerPoints()
-			.Select(point => (Point: point, At: _source.Layout.Entry<MapPoint22>(point)?.Fields))
-			.Where(flyer => flyer.At != null)
-			.Select(flyer => (flyer.Point, flyer.At!.X, flyer.At.Y, flyer.At.Z))
-			.ToList();
+		var flyers = _flyers.Read();
 		Swap(after, zone);
 
 		var skipped = new List<string>();
@@ -170,21 +168,8 @@ internal sealed class TerrainChanger {
 					}
 				}
 
-				foreach (var (point, x, y, z) in flyers) {
-					int rise = after.HeightAtWorld(x + dx, y + dy) - before.HeightAtWorld(x, y);
-					if (rise == 0) {
-						continue;
-					}
-
-					// Z 0 is where a flyer flies at its default height; a raised one that lands on 0 is written 1 above it.
-					int raisedZ = (z == 0 ? FlyerObject.DefaultHoverHeight : z) + rise;
-					try {
-						_source.SetPoint(point, x + dx, y + dy, raisedZ == 0 ? 1 : raisedZ);
-						raised++;
-					} catch (InvalidOperationException ex) {
-						skipped.Add(ex.Message);
-					}
-				}
+				raised = _flyers.Raise(flyers, dx, dy,
+					flyer => after.HeightAtWorld(flyer.X + dx, flyer.Y + dy) - before.HeightAtWorld(flyer.X, flyer.Y), skipped);
 			});
 		} catch (InvalidOperationException ex) {
 			Swap(before, previous);
@@ -220,26 +205,67 @@ internal sealed class TerrainChanger {
 	private static string Meters(int worldUnits) =>
 		(worldUnits / Render.WorldScale.WorldUnitsPerMeter).ToString("#,0", System.Globalization.CultureInfo.InvariantCulture) + " m";
 
-	// The row-6 GUIDs of the positions a flyer reads its height from: each flyer's own, and each flyer group's own or its
-	// route start's.
-	private HashSet<short> FlyerPoints() {
-		var points = new HashSet<short>();
-		foreach (var entry in _source.Layout.Entries<FlyerRosterEntry102>()) {
-			if (entry.Fields.PositionRef != -1) {
-				points.Add(entry.Fields.PositionRef);
-			}
+	/// <summary>
+	/// Gives a mission that plays on an archive zone a terrain of its own, a copy of that zone's heightmap at the terrain's
+	/// cell size and height scale, played as the highest number no zone of the install has, as a replacement is, as one step
+	/// of the undo history. The scene's terrain is the same heights, so it stays. Answers why it could not be made, or null;
+	/// a mission with a terrain of its own already is left as it is.
+	/// </summary>
+	public string? CopyZone() {
+		if (WhyFixed is { } reason) {
+			return reason;
 		}
 
-		foreach (var group in _index.Groups.Where(group => group.Kind == MissionUnitKind.Flyer)) {
-			if (group.OwnPoint != -1) {
-				points.Add(group.OwnPoint);
-			} else {
-				points.UnionWith(group.StartPoints);
-			}
+		if (OwnZone != null) {
+			return null;
 		}
 
-		return points;
+		ZoneFiles zone;
+		try {
+			var (_, _, heights) = Heightmap();
+			var (shift, scale) = Scale;
+			zone = ZoneFiles.Create(heights, shift, scale);
+		} catch (Exception ex) when (ex is InvalidDataException or FileNotFoundException or ArgumentException) {
+			return ex.Message;
+		}
+
+		short number = _freeZone();
+		MsnEdit change;
+		try {
+			change = _sync.Run(() => _source.Change(() => _source.SetHeaderWord(ZoneCatalog.ZoneWord, number)));
+		} catch (InvalidOperationException ex) {
+			return ex.Message;
+		}
+
+		OwnZone = zone;
+		_mover.Record(new OwnZoneEdit(this, change, zone));
+		return null;
 	}
+
+	/// <summary>
+	/// Builds the mission's own terrain again from the scene's heights as the zone loads them
+	/// (<see cref="HeightGrid.LoadedHeightAt"/>), once a sculpting stroke has written them, and answers it. The mission has a
+	/// terrain of its own already (<see cref="CopyZone"/>), whose cell size and height scale the scene's are.
+	/// </summary>
+	internal ZoneFiles TakeSculpted() {
+		var terrain = _scene.World.Terrain;
+		int side = terrain.Width;
+		var heights = new byte[side * terrain.Height];
+
+		// Image order: row 0 is the north edge, the grid's highest cell row (TerrainZoneLoader).
+		for (int y = 0; y < terrain.Height; y++) {
+			int row = (terrain.Height - 1 - y) * side;
+			for (int x = 0; x < side; x++) {
+				heights[row + x] = terrain.LoadedHeightAt(x, y);
+			}
+		}
+
+		OwnZone = ZoneFiles.Create(heights, terrain.CellSizeShift, terrain.HeightScale);
+		return OwnZone;
+	}
+
+	/// <summary>Puts <paramref name="zone"/> back as the mission's own terrain, for a sculpting stroke's undo or redo.</summary>
+	internal void PutSculpted(ZoneFiles zone) => OwnZone = zone;
 
 	// Puts <terrain> in the scene and <zone> as the mission's own, levels the ground and stands everything on it again.
 	private void Swap(HeightGrid terrain, ZoneFiles? zone) {
@@ -255,6 +281,19 @@ internal sealed class TerrainChanger {
 		_mover.TakeTerrain();
 		_overlay.Redrape();
 		WorldChanged?.Invoke();
+	}
+
+	// Puts the mission's zone number and its own terrain back as the copy of an archive zone found or left them, and syncs.
+	private sealed record OwnZoneEdit(TerrainChanger Changer, MsnEdit Change, ZoneFiles Zone) : IEditorEdit {
+		public void Undo() {
+			Changer._sync.Undo(Change);
+			Changer.OwnZone = null;
+		}
+
+		public void Redo() {
+			Changer._sync.Redo(Change);
+			Changer.OwnZone = Zone;
+		}
 	}
 
 	// Puts the terrain and the .MSN back as the step found or left them, and syncs; the step moved every position <East>

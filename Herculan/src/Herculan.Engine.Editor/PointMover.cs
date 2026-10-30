@@ -112,6 +112,9 @@ internal sealed class PointMover {
 	/// </summary>
 	public void TakeTerrain() => _leveller.Reset();
 
+	/// <summary>What levels the ground under the structures after every move and every step of the history.</summary>
+	public TerrainLeveller Leveller => _leveller;
+
 	/// <summary>The mission box as the mission was opened, which a point outside of grows.</summary>
 	public MissionBox LoadedBox { get; }
 
