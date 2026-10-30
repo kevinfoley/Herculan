@@ -326,15 +326,20 @@ public sealed class Es1ShellFrame {
 
 	/// <summary>
 	/// <c>Input_ReadDeviceEvent</c> (<c>00025b30</c>) on the keyboard: in mode <c>0x10000</c> the queue's next word or 0;
-	/// in mode <c>0x20000</c> the queue's next word while it holds one, and otherwise the DOS key read, a character or'd
-	/// with <c>0x4000</c>, which the BIOS stand-in this engine lacks never gives (<see cref="Es1ShellDevices.Init"/>).
+	/// in mode <c>0x20000</c> the queue's next word while it holds one, and otherwise the DOS key read
+	/// (<see cref="Es1BiosKeyBuffer.Read"/>), a character or'd with <c>0x4000</c>, or a key with none read as its code
+	/// with <c>0x8000</c> as well.
 	/// </summary>
 	private ushort ReadKeyboardWord() {
 		if (_devices.Keyboard is not { } keyboard) {
 			return 0;
 		}
 
-		return keyboard.Queue.HasWords ? keyboard.Queue.Pop() : (ushort)0;
+		if (keyboard.Queue.HasWords) {
+			return keyboard.Queue.Pop();
+		}
+
+		return keyboard.Mode != Es1Keyboard.Int9Mode ? _devices.BiosKeys.Read() : (ushort)0;
 	}
 
 	/// <summary><c>Input_LatchButton</c> (<c>0004de18</c>)(<paramref name="value"/>, <paramref name="button"/>), button 1 to 4.</summary>

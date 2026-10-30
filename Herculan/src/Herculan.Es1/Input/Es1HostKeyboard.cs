@@ -58,6 +58,12 @@ public sealed class Es1HostKeyboard {
 	/// <summary>Whether a grey key's make and break bytes each follow an <c>E0</c>.</summary>
 	public bool SendsExtendedPrefix { get; init; }
 
+	/// <summary>Each host key-down's make byte, before the byte is sent: the shell's BIOS stand-in, <see cref="Es1BiosKeyBuffer.HostKeyDown"/>.</summary>
+	public Action<byte>? Pressed { get; init; }
+
+	/// <summary>Each character the host types: the shell's BIOS stand-in, <see cref="Es1BiosKeyBuffer.HostChar"/>.</summary>
+	public Action<char>? Typed { get; init; }
+
 	/// <summary>The set-1 make byte <paramref name="key"/> sends, or null for a key with none.</summary>
 	public static byte? MakeCodeOf(Key key) => MakeCodes.TryGetValue(key, out byte code) ? code : null;
 
@@ -67,12 +73,14 @@ public sealed class Es1HostKeyboard {
 		_device = device;
 		device.KeyDown += OnKeyDown;
 		device.KeyUp += OnKeyUp;
+		device.KeyChar += OnKeyChar;
 	}
 
 	public void Detach() {
 		if (_device is { } device) {
 			device.KeyDown -= OnKeyDown;
 			device.KeyUp -= OnKeyUp;
+			device.KeyChar -= OnKeyChar;
 			_device = null;
 		}
 	}
@@ -85,6 +93,7 @@ public sealed class Es1HostKeyboard {
 
 		_repeating = key;
 		_untilRepeat = _typematic.Delay;
+		Pressed?.Invoke(make);
 		Send(key, make);
 	}
 
@@ -153,6 +162,8 @@ public sealed class Es1HostKeyboard {
 	private void OnKeyDown(IKeyboard device, Key key, int scancode) => KeyDown(key);
 
 	private void OnKeyUp(IKeyboard device, Key key, int scancode) => KeyUp(key);
+
+	private void OnKeyChar(IKeyboard device, char character) => Typed?.Invoke(character);
 
 	private static Dictionary<Key, byte> BuildMakeCodes() {
 		var codes = new Dictionary<Key, byte>();

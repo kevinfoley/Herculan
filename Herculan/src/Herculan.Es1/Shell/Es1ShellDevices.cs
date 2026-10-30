@@ -58,6 +58,9 @@ public sealed class Es1ShellDevices {
 	/// <summary><c>Shell_KeyboardDevice</c> (<c>0008275c</c>)'s keyboard; none before <see cref="Init"/>.</summary>
 	public Es1Keyboard? Keyboard { get; private set; }
 
+	/// <summary>The BIOS's key buffer, which takes the keys <see cref="Keyboard"/> lets the BIOS have and DOS's key read empties.</summary>
+	public Es1BiosKeyBuffer BiosKeys { get; } = new();
+
 	/// <summary>The host's keys into <see cref="Keyboard"/>; none before <see cref="Init"/>.</summary>
 	public Es1HostKeyboard? HostKeyboard { get; private set; }
 
@@ -111,11 +114,10 @@ public sealed class Es1ShellDevices {
 
 		// The keyboard: mode 0x20000, INT 15h, or under -X the simulator's 0x10000; the queue's codes; enabled; and unless
 		// -X Shell_NavKeySubscriber.
+		// The keys no subscriber claims go to the BIOS's key buffer, which DOS's function 8 reads; the buffer is this
+		// engine's stand-in, its characters the host's typed text (Es1BiosKeyBuffer).
 		Keyboard = new Es1Keyboard(biosShiftFlags, debugMode ? Es1Keyboard.Int9Mode : Es1Keyboard.Int15Mode) {
-			// PLACEHOLDER: the BIOS's translation of the keys no subscriber claims into its key buffer, which DOS's
-			// function 8 reads (Input_ReadDeviceEvent's mode 0x20000), is not ported, so no typed character reaches the
-			// input word, and DUIWindow_SendChar gets only Q, X and C's; no ported menu has a control that takes them.
-			Bios = null,
+			Bios = BiosKeys.Accept,
 		};
 		globals.Keyboard = Keyboard;
 		Keyboard.AddSubscriberCodes(Keyboard.QueueSubscriber, QueueCodes);
@@ -123,7 +125,7 @@ public sealed class Es1ShellDevices {
 			Keyboard.AddSubscriber(NavKeySubscriber, NavKeyCodes);
 		}
 
-		HostKeyboard = new Es1HostKeyboard(Keyboard);
+		HostKeyboard = new Es1HostKeyboard(Keyboard) { Pressed = BiosKeys.HostKeyDown, Typed = BiosKeys.HostChar };
 		// INT 16h function 2, which Keyboard_SetMode reads when the war map sets the mode again.
 		Keyboard.BiosShiftFlags = HostKeyboard.ReadBiosShiftFlags;
 
