@@ -82,7 +82,7 @@ The keyboard's reads go through `Input_ReadDeviceEvent` (`00025b30`), `ES1DBSIM`
 
 `Shell_LoadData` (`00020630`):
 
-- copies `prefs.cfg` options 12 to 16 into the mission parameters' words ([the options](../formats/msn-mission-file.md)), options 0 and 1 into the bytes `0007fcb8` and `0007fcb9`, option 2 into the word `0007fcbc`, and into the word `0007fcba` (the word `0007fd10`, `0x3f` in the image, or `0007fd18`, `0xbf`, with option 3 set, plus options 4, 5 and 6) / 256;
+- copies `prefs.cfg` options 12 to 16 into the mission parameters' words ([the options](../formats/msn-mission-file.md)), options 0 and 1 into the bytes `0007fcb8` and `0007fcb9`, option 2 into the word `Shell_RadioOption` (`0007fcbc`), and into the word `0007fcba` (the word `0007fd10`, `0x3f` in the image, or `0007fd18`, `0xbf`, with option 3 set, plus options 4, 5 and 6) / 256;
 - loads 13 fonts ([the loads](../formats/styles-dat.md#the-loads));
 - seeds `Shell_RandomState` ([the shell's generator](../formats/msn-mission-file.md)) and loads `eng\watext.bin` into `0009afa8` ([string tables](../formats/bin-string-tables.md));
 - sets the rect `0009b000`–`0009b00c` to (0, 0, the display's attribute 2 − 1, attribute 3 − 1);
@@ -96,7 +96,7 @@ The keyboard's reads go through `Input_ReadDeviceEvent` (`00025b30`), `ES1DBSIM`
 2. `Shell_PollInput` (`0004de3a`) into `Shell_InputBlock` (`0007e73c`), and `Shell_HandleInput` (`00012be8`) on it ([the input](#the-input)).
 3. `NoOp_Void`; `Shell_QuitFlag` set when the screen word `Shell_CurrentScreen` (`000817c0`) is 9999 ([the ways out](#the-ways-out)).
 4. `Shell_HandleMessage` (`0003c7d8`)(the dwords `Shell_PendingMessage` (`0007fcb0`), `0007fcb4`), the menu message pending there, which answers 1 when it has changed screens ([changing screens](menus.md#changing-screens--shell_handlemessage-0003c7d8)). On an answer of 0, `Ttm_RunAll` runs the scripts ([running the scripts](../formats/ttm-scripts.md)).
-5. `Shell_TickScreen` (`0003c115`), the current screen's tick ([drawing a screen](menus.md#drawing-a-screen)); `CockpitMouse_ProcessQueue` (`0001098e`), the mouse's event queue for a widget root, which `Shell_PollInput` also calls ([below](#the-input)); `MessageBox_Run` (`000382f6`)(`0009b010`, the input block), the message box; `00018dcb`(`0009afc8`), the text box.
+5. `Shell_TickScreen` (`0003c115`), the current screen's tick ([drawing a screen](menus.md#drawing-a-screen)); `CockpitMouse_ProcessQueue` (`0001098e`), the mouse's event queue for a widget root, which `Shell_PollInput` also calls ([below](#the-input)); `MessageBox_Run` (`000382f6`)(`0009b010`, the input block), the message box; `Dialog_Draw` (`00018dcb`)(`0009afc8`), the text box.
 6. When `Shell_QuitRequested` (`0007e808`) is set, `Shell_OpenQuitAlert` (`000408cc`), which opens screen 999, the quit question, unless the screen word `Shell_CurrentScreen` (`000817c0`) is 999 already, and the flag cleared.
 7. `X32_TotalFreeBytes` into locals, and `ShellTime_UpdateFrameScale` ([the frame-time scale](#the-frame-time-scale)).
 

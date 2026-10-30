@@ -712,7 +712,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Widget_LoadStylesAndFonts",
-      "description": "No arguments: WidgetStyles_Load (00044aa4)(dat\\styles); then dfn\\title, cpylw, active, pushed, inactive, nm_green and nm_red1 each through 0004b757, its result to the dwords 000aacc6 to 000aacde, four bytes apart; then dba\\corners through Resource_LoadBitmapArray (0004b7df) into 000ab4ee. ES1DBSIM's Widget_LoadStylesAndFonts (00045e10) with the last two fonts green6x8 and red6x8. Caller found by es2_xref: 00012ec7, which then loads CFG\\styles.dat with WidgetStyles_Load and res32\\corners.dba with Resource_LoadBitmapArray (0004b7df).",
+      "description": "No arguments: WidgetStyles_Load (00044aa4)(dat\\styles); then dfn\\title, cpylw, active, pushed, inactive, nm_green and nm_red1 each through 0004b757, its result to the dwords Shell_Fonts (000aacc6) to 000aacde, four bytes apart; then dba\\corners through Resource_LoadBitmapArray (0004b7df) into 000ab4ee. ES1DBSIM's Widget_LoadStylesAndFonts (00045e10) with the last two fonts green6x8 and red6x8. Caller found by es2_xref: 00012ec7, which then loads CFG\\styles.dat with WidgetStyles_Load and res32\\corners.dba with Resource_LoadBitmapArray (0004b7df).",
       "source": "Herculan/docs/es1/formats/styles-dat.md#the-loads",
       "verified": {
         "bytes": "00002818+243",
@@ -3542,13 +3542,28 @@
       }
     },
     {
+      "address": "00018d76",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Dialog_MarkDirty",
+      "description": "(dialog), its argument removed by this function: when the dialog's box at +6 is set, DialogBox_MarkDirty (0001907e)(box). es2_xref finds its two calls in MessageBox_Answer (0003837f).",
+      "source": "Herculan/docs/es1/shell/message-box.md#the-dialog-record; ES1GO decompile and disassembly at 00018d76",
+      "verified": {
+        "bytes": "00018d76+29",
+        "sha1": "754f11302ddf",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00018d93",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "Dialog_DeleteBox",
       "description": "(dialog): when the dialog's box at +6 is set, calls its destructor (vtable +0x29, slot +4) with 3 and sets +6 to 0.",
-      "source": "Herculan/docs/es1/formats/eng-mission-text.md#reading-a-block",
+      "source": "Herculan/docs/es1/shell/message-box.md#the-dialog-record",
       "verified": {
         "bytes": "00018d93+56",
         "sha1": "e706369712c3",
@@ -3557,12 +3572,27 @@
       }
     },
     {
+      "address": "00018dcb",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Dialog_Draw",
+      "description": "(dialog), its argument removed by this function: when the dialog's box at +6 is set, DialogBox_Draw (00018edd)(box, the dialog's version word +4). es2_xref finds calls from Dialog_PrevPage (00018df0), Dialog_NextPage (00018e18), MessageBox_Run (000382f6), Shell_DrawScreen (0003c1b7) and Shell_Main (00012ec7).",
+      "source": "Herculan/docs/es1/shell/message-box.md#the-dialog-record; ES1GO decompile and disassembly at 00018dcb",
+      "verified": {
+        "bytes": "00018dcb+37",
+        "sha1": "ac8409a6d5a4",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00018df0",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "Dialog_PrevPage",
-      "description": "(dialog): when the dialog has a box at +6, steps it back a page with DialogBox_PrevPage (000190fd) and calls 00018dcb(dialog).",
+      "description": "(dialog): when the dialog has a box at +6, steps it back a page with DialogBox_PrevPage (000190fd) and calls Dialog_Draw (00018dcb)(dialog).",
       "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-briefing",
       "verified": {
         "bytes": "00018df0+40",
@@ -3577,7 +3607,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Dialog_NextPage",
-      "description": "(dialog): when the dialog has a box at +6, steps it forward a page with DialogBox_NextPage (0001911f) and calls 00018dcb(dialog).",
+      "description": "(dialog): when the dialog has a box at +6, steps it forward a page with DialogBox_NextPage (0001911f) and calls Dialog_Draw (00018dcb)(dialog).",
       "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-briefing",
       "verified": {
         "bytes": "00018e18+40",
@@ -3587,16 +3617,76 @@
       }
     },
     {
+      "address": "00018e40",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DialogBox_SetFont",
+      "description": "(box, n), its arguments removed by this function: sets the box's font +1 to the dword Shell_Fonts (000aacc6)[n], n an int16 sign-extended. es2_xref finds no branch to it and no stored pointer.",
+      "source": "Herculan/docs/es1/shell/message-box.md#the-box; ES1GO decompile and disassembly at 00018e40",
+      "verified": {
+        "bytes": "00018e40+31",
+        "sha1": "c2f7305d07d5",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00018e5f",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "ConditionalDialogBox_SetRect",
-      "description": "(box), callee-cleaned: rounds the word Shell_BackdropId (000817c4) down to a thousand and looks it up in the four ints at 0007ee44 (6000, 5000, 3000, 4000) with a jump table beside them: 6000 copies the 16 bytes at 0009ae84 to +5 and sets +0 to 0; 5000 the bytes at 0009ae94 and +0 to 0 (code at 00018ea6 Ghidra left undefined); 3000, 4000 and any other value the bytes at 0009ae64 and +0 to 1.",
-      "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-dialog-box",
+      "description": "(box), callee-cleaned: rounds the word Shell_BackdropId (000817c4) down to a thousand and looks it up in the four ints at 0007ee44 (6000, 5000, 3000, 4000) with a jump table beside them: 6000 copies the 16 bytes at DialogBox_Backdrop6000Rect (0009ae84) to +5 and sets +0 to 0; 5000 the bytes at DialogBox_Backdrop5000Rect (0009ae94) and +0 to 0 (code at 00018ea6 Ghidra left undefined); 3000, 4000 and any other value the bytes at DialogBox_TopRect (0009ae64) and +0 to 1.",
+      "source": "Herculan/docs/es1/shell/message-box.md#where-the-box-stands",
       "verified": {
         "bytes": "00018e5f+126",
         "sha1": "189a909982c2",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00018edd",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DialogBox_Draw",
+      "description": "(box, mode), its arguments removed by this function, mode an int16, the dialog's version word. With the byte +0 set: unless the word Shell_RadioOption (0007fcbc) is 1, loads res32\\textbox.dba into DialogBox_FrameBitmaps (0007ee64) with Resource_LoadBitmapArray (0004b7df) while that is 0, and draws the first bitmap of the array's table +8 at the point (3, 4) with Bitmap_Blit (000502c0), flags 0. With +0 clear: Raster_FillFrameRectColours (0004b8d8)(0x1f, 0x1f, the box's rect +5 copied by Rect_CopyCtorDialogCopy (00019050)). Then, when the font +1 and the slots +0x1b are set: unless mode is 2 and Shell_RadioOption is 1, for the +0x25 slots from the page +0x27 times +0x25, each below the slot count +0x19 and set, HudFont_DrawString (000520d8)(font, the slot, the next of the line points +0x1f from the first); and then maybe_SncList_StartSound (0004544a)(0009afd4).",
+      "source": "Herculan/docs/es1/shell/message-box.md#drawing-a-page; ES1GO decompile and disassembly at 00018edd",
+      "verified": {
+        "bytes": "00018edd+371",
+        "sha1": "af1e2b2cbf55",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00019050",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Rect_CopyCtorDialogCopy",
+      "description": "(rect, source), its arguments removed by this function: byte for byte the code of Rect_CopyCtor (0004b398), relocated operands aside.",
+      "source": "Herculan/docs/es1/shell/message-box.md#where-the-object-file-starts-and-ends; ES1GO decompile and disassembly at 00019050",
+      "verified": {
+        "bytes": "00019050+46",
+        "sha1": "52f71d31f561",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001907e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DialogBox_MarkDirty",
+      "description": "(box), its argument removed by this function: DirtyBox_AddRect (00041062) with delay 0 and then with delay 1, of DialogBox_TopFrameRect (0009ae74) when the byte +0 is set and of the box's rect +5 otherwise.",
+      "source": "Herculan/docs/es1/shell/message-box.md#drawing-a-page; ES1GO decompile and disassembly at 0001907e",
+      "verified": {
+        "bytes": "0001907e+127",
+        "sha1": "e48dfe33212c",
         "scope": "body",
         "via": "both"
       }
@@ -3608,7 +3698,7 @@
       "confidence": "high",
       "name": "DialogBox_PrevPage",
       "description": "(box): when the page +0x27 is above 0, decrements it and clears the byte +0.",
-      "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-dialog-box",
+      "source": "Herculan/docs/es1/shell/message-box.md#stepping-pages",
       "verified": {
         "bytes": "000190fd+34",
         "sha1": "9bee10e708a9",
@@ -3623,7 +3713,7 @@
       "confidence": "high",
       "name": "DialogBox_NextPage",
       "description": "(box): when the page +0x27 is below the page count +0x23 less 1, increments it and clears the byte +0.",
-      "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-dialog-box",
+      "source": "Herculan/docs/es1/shell/message-box.md#stepping-pages",
       "verified": {
         "bytes": "0001911f+42",
         "sha1": "e214a4f334e0",
@@ -3637,8 +3727,8 @@
       "type": "function",
       "confidence": "high",
       "name": "DefaultDialogBox_Ctor",
-      "description": "(this): allocates 0x2d bytes when this is 0; DialogBox_Init (00019b25); vtable 0007eea8; font 000aacda; the 16 bytes at 0009ae64 as the box; sprintfs 'This is a Default Dialog Box.' into a new buffer at +0x15; DialogBox_Layout (000198a6).",
-      "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-dialog-box",
+      "description": "(this): allocates 0x2d bytes when this is 0; DialogBox_Init (00019b25); vtable 0007eea8; font 000aacda; the 16 bytes at DialogBox_TopRect (0009ae64) as the box; sprintfs 'This is a Default Dialog Box.' into a new buffer at +0x15; DialogBox_Layout (000198a6).",
+      "source": "Herculan/docs/es1/shell/message-box.md#the-box",
       "verified": {
         "bytes": "00019149+251",
         "sha1": "dfa4acc3e6ad",
@@ -3652,8 +3742,8 @@
       "type": "function",
       "confidence": "high",
       "name": "DefaultDialogBox_Dtor",
-      "description": "(this, flags): slot +4 of vtable 0007eea8; stores the vtable, calls 00019b54(this, 0) and deletes this when flags bit 0 is set.",
-      "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-dialog-box",
+      "description": "(this, flags): slot +4 of vtable 0007eea8; stores the vtable, calls DialogBox_Dtor (00019b54)(this, 0) and deletes this when flags bit 0 is set.",
+      "source": "Herculan/docs/es1/shell/message-box.md#the-box",
       "verified": {
         "bytes": "00019244+53",
         "sha1": "a0a41b89b36d",
@@ -3682,8 +3772,8 @@
       "type": "function",
       "confidence": "high",
       "name": "DigitalDialogBox_Dtor",
-      "description": "(this, flags): slot +4 of vtable 0007ef04; stores the vtable, calls maybe_SncList_Stop (00045556)(0009afd4) and 00019b54(this, 0), and deletes this when flags bit 0 is set.",
-      "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-dialog-box",
+      "description": "(this, flags): slot +4 of vtable 0007ef04; stores the vtable, calls maybe_SncList_Stop (00045556)(0009afd4) and DialogBox_Dtor (00019b54)(this, 0), and deletes this when flags bit 0 is set.",
+      "source": "Herculan/docs/es1/shell/message-box.md#the-box",
       "verified": {
         "bytes": "000193a8+70",
         "sha1": "2e9eaae0babc",
@@ -3697,8 +3787,8 @@
       "type": "function",
       "confidence": "high",
       "name": "DigitalDialogBox_SetRect",
-      "description": "(box), callee-cleaned: rounds the word Shell_BackdropId (000817c4) down to a thousand and looks it up in the four ints at 0007ef10 (3000, 5000, 4000, 7000) with the jump table beside them: 3000, 5000 and 4000 copy the 16 bytes at 0009ae64 to +5 and set +0 to 1; 7000 copies those at 0009aea4 and sets +0 to 0 (code at 00019435 Ghidra left undefined); any other value changes nothing. ConditionalDialogBox_SetRect (00018e5f) is the same shape over other boxes.",
-      "source": "Herculan/docs/es1/formats/bin-string-tables.md#the-load",
+      "description": "(box), callee-cleaned: rounds the word Shell_BackdropId (000817c4) down to a thousand and looks it up in the four ints at 0007ef10 (3000, 5000, 4000, 7000) with the jump table beside them: 3000, 5000 and 4000 copy the 16 bytes at DialogBox_TopRect (0009ae64) to +5 and set +0 to 1; 7000 copies those at DialogBox_Backdrop7000Rect (0009aea4) and sets +0 to 0 (code at 00019435 Ghidra left undefined); any other value changes nothing. ConditionalDialogBox_SetRect (00018e5f) is the same shape over other boxes.",
+      "source": "Herculan/docs/es1/shell/message-box.md#where-the-box-stands",
       "verified": {
         "bytes": "000193ee+101",
         "sha1": "de4834768ddc",
@@ -3722,18 +3812,63 @@
       }
     },
     {
+      "address": "00019871",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConditionalDialogBox_Dtor",
+      "description": "(this, flags), its arguments removed by this function: slot +4 of ConditionalDialogBox's vtable 0007ef48; returns for none; stores the vtable, calls DialogBox_Dtor (00019b54)(this, 0) and deletes this when flags bit 0 is set. Byte for byte the code of DefaultDialogBox_Dtor (00019244), relocated operands aside, storing 0007ef48 where that stores 0007eea8.",
+      "source": "Herculan/docs/es1/shell/message-box.md#the-box; ES1GO decompile and disassembly at 00019871",
+      "verified": {
+        "bytes": "00019871+53",
+        "sha1": "e0c5fb1d1afc",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "000198a6",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "DialogBox_Layout",
-      "description": "(box): line height = HudFont_CellHeight2 (00051ff0)(font, text) - 2; the slot count +0x19 = HudFont_MeasureString(font, text) / (right - left) + 2; lines per page +0x25 = (bottom - top) / line height; page count +0x23 = slots / lines per page, plus 1 when they differ; page +0x27 = 0; allocates and zeroes the slot pointers +0x1b, and with __vec_new one 8-byte point per line of a page at +0x1f, line i at (left, top + (i + 1) line heights); then calls 00019a1d(box, right - left, text).",
-      "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-dialog-box",
+      "description": "(box): line height = HudFont_CellHeight2 (00051ff0)(font, text) - 2; the slot count +0x19 = HudFont_MeasureString(font, text) / (right - left) + 2; lines per page +0x25 = (bottom - top) / line height; page count +0x23 = slots / lines per page, plus 1 when they differ; page +0x27 = 0; allocates and zeroes the slot pointers +0x1b, and with __vec_new one 8-byte point per line of a page at +0x1f, line i at (left, top + (i + 1) line heights); then calls DialogBox_Wrap (00019a1d)(box, right - left, text).",
+      "source": "Herculan/docs/es1/shell/message-box.md#laying-out-the-text",
       "verified": {
         "bytes": "000198a6+348",
         "sha1": "1211786ab606",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00019a02",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Point_DefaultCtorDialogCopy",
+      "description": "(point), its argument removed by this function: byte for byte the code of Point_DefaultCtor (0004b37d), relocated operands aside. es2_xref finds its address pushed in DialogBox_Layout (000198a6), the element constructor of the line points' __vec_new.",
+      "source": "Herculan/docs/es1/shell/message-box.md#where-the-object-file-starts-and-ends; ES1GO decompile and disassembly at 00019a02",
+      "verified": {
+        "bytes": "00019a02+27",
+        "sha1": "9788e8ca67e4",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00019a1d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DialogBox_Wrap",
+      "description": "(box, width, text), its arguments removed by this function, width an int16: VSHELL's TextBox_Wrap (0040d0d6) over the box's slots +0x1b, slot 0 the text, measuring with HudFont_MeasureString (00051fac) in the font +1. It makes no character a space and has no assert after a cut, and it writes the slots without testing the slot count +0x19. Returns the count of cuts and newlines, one less than the lines.",
+      "source": "Herculan/docs/es1/shell/message-box.md#laying-out-the-text; ES1GO decompile and disassembly at 00019a1d",
+      "verified": {
+        "bytes": "00019a1d+264",
+        "sha1": "ffddb6107864",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -3743,12 +3878,57 @@
       "confidence": "high",
       "name": "DialogBox_Init",
       "description": "(box): sets the byte +0 to 1 and zeroes the font +1, the text +0x15, the line slots +0x1b, the line points +0x1f and the words +0x19, +0x23, +0x25 and +0x27.",
-      "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-dialog-box",
+      "source": "Herculan/docs/es1/shell/message-box.md#the-box",
       "verified": {
         "bytes": "00019b25+47",
         "sha1": "cc9be59ad0bb",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00019b54",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DialogBox_Dtor",
+      "description": "(box, flags), its arguments removed by this function: slot +4 of DialogBox's vtable 0007ee88. Returns for none; stores the vtable; frees the text +0x15 and the slots +0x1b with Mem_Delete and the line points +0x1f with __vec_delete (0005547c)(0, 8, 7, points); runs DialogBox_Init (00019b25); when DialogBox_FrameBitmaps (0007ee64) is set, destroys it with GLBitmapArray_Dtor (0005343c)(array, 3) and zeroes it; adds DirtyBox_AddRect (00041062)(0, rect), the rect being DialogBox_TopFrameRect (0009ae74) when the byte +0 is set, as DialogBox_Init has just made it, and the box's rect +5 otherwise; deletes the box when flags bit 0 is set.",
+      "source": "Herculan/docs/es1/shell/message-box.md#the-box; ES1GO decompile and disassembly at 00019b54",
+      "verified": {
+        "bytes": "00019b54+214",
+        "sha1": "cb33d86bf138",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00019c2a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Dialog_StaticInit",
+      "description": "(): dialog.cpp's static initializer, the static constructor table's entry 0009a24c. Builds five int32 rects {left, top, right, bottom}, each from two points with the smaller x and y first: DialogBox_TopRect (0009ae64) (8, 7)-(284, 29), DialogBox_TopFrameRect (0009ae74) (3, 4)-(287, 32), DialogBox_Backdrop6000Rect (0009ae84) (69, 150)-(267, 184), DialogBox_Backdrop5000Rect (0009ae94) (17, 31)-(143, 85) and DialogBox_Backdrop7000Rect (0009aea4) (108, 160)-(299, 195).",
+      "source": "Herculan/docs/es1/shell/message-box.md#where-the-box-stands; ES1GO decompile at 00019c2a",
+      "verified": {
+        "bytes": "00019c2a+1644",
+        "sha1": "59b3d4e1ed79",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001a296",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Dialog_StaticExit",
+      "description": "(): dialog.cpp's exit routine, the exit table's entry 0009a290: PUSH EBP, MOV EBP,ESP, POP EBP and RET.",
+      "source": "Herculan/docs/es1/shell/message-box.md#where-the-object-file-starts-and-ends; ES1GO disassembly at 0001a296",
+      "verified": {
+        "bytes": "0001a296+5",
+        "sha1": "74c0a4a36986",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -5422,7 +5602,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_LoadData",
-      "description": "(): copies options 12 to 16 of Prefs_Options into the mission parameters' words, options 0 and 1 into the bytes 0007fcb8 and 0007fcb9, option 2 into the word 0007fcbc, and into the word 0007fcba the word 0007fd10, or 0007fd18 with option 3 set, plus options 4, 5 and 6, over 256; loads 13 fonts through 0004b757 into the 14 dwords 000aacc6 to 000aacfa, the nm_green handle stored twice; seeds Shell_RandomState with Math_RandomSeedAndSkip (000386f4)(state, time modulo 128); loads eng\\watext.bin into 0009afa8 with Text_LoadDataFile; sets 0009b000 and 0009b004 to 0 and 0009b008 and 0009b00c to the display 000ab616's attributes 2 and 3 less 1; HercLayout_Load, HercDamageMarks_Load, LoadDamageDat_Shell, HercHotspots_Load and, unless Shell_LowMemory (0007fd09) is set, HercArt_LoadAllBanks; CareerLog_Load (00017e7f)(0009b20c) and its current entry into the word 0007fcea, 0 when negative; BattleSet_Load; and 00027c4c. es2_xref finds one call, from Shell_Main (00012ec7).",
+      "description": "(): copies options 12 to 16 of Prefs_Options into the mission parameters' words, options 0 and 1 into the bytes 0007fcb8 and 0007fcb9, option 2 into the word Shell_RadioOption (0007fcbc), and into the word 0007fcba the word 0007fd10, or 0007fd18 with option 3 set, plus options 4, 5 and 6, over 256; loads 13 fonts through 0004b757 into the 14 dwords Shell_Fonts (000aacc6) to 000aacfa, the nm_green handle stored twice; seeds Shell_RandomState with Math_RandomSeedAndSkip (000386f4)(state, time modulo 128); loads eng\\watext.bin into 0009afa8 with Text_LoadDataFile; sets 0009b000 and 0009b004 to 0 and 0009b008 and 0009b00c to the display 000ab616's attributes 2 and 3 less 1; HercLayout_Load, HercDamageMarks_Load, LoadDamageDat_Shell, HercHotspots_Load and, unless Shell_LowMemory (0007fd09) is set, HercArt_LoadAllBanks; CareerLog_Load (00017e7f)(0009b20c) and its current entry into the word 0007fcea, 0 when negative; BattleSet_Load; and 00027c4c. es2_xref finds one call, from Shell_Main (00012ec7).",
       "source": "Herculan/docs/es1/shell/startup.md#the-shared-data; ES1GO decompile at 00020630",
       "verified": {
         "bytes": "00020630+797",
@@ -5482,7 +5662,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_FreeData",
-      "description": "(): destroys each set font of the 14 dwords at 000aacc6 and the render context 0007fcd8 when set through slot +0x1c with 3; HercLayout_Free, HercDamageMarks_Free, HercHotspots_Free and, unless Shell_LowMemory (0007fd09) is set, 00022981; CareerLog_FreeEntries (00017e59)(0009b20c), BattleSet_FreeCampaigns, 00027c8e and 00020a18. es2_xref finds one call, from Shell_Main (00012ec7), at the shutdown.",
+      "description": "(): destroys each set font of the 14 dwords at Shell_Fonts (000aacc6) and the render context 0007fcd8 when set through slot +0x1c with 3; HercLayout_Free, HercDamageMarks_Free, HercHotspots_Free and, unless Shell_LowMemory (0007fd09) is set, 00022981; CareerLog_FreeEntries (00017e59)(0009b20c), BattleSet_FreeCampaigns, 00027c8e and 00020a18. es2_xref finds one call, from Shell_Main (00012ec7), at the shutdown.",
       "source": "Herculan/docs/es1/shell/startup.md#the-shutdown; ES1GO decompile at 00020ae3",
       "verified": {
         "bytes": "00020ae3+133",
@@ -7072,7 +7252,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WarMapMenu_Ctor",
-      "description": "(this): the war map screen (vtable 00080bc6, class name WarMapMenu before it), built over the Menu base (vtable 00080ba8) with 0x26 bytes allocated when this is 0. Loads the briefing, block 0 of BRF: from the .eng path 000aad2a, into the dialog 0009afc8 with Dialog_LoadConditional (00018cdb) and calls Dialog_NextPage (00018e18) as many times as the word 000809b2; sets 000809a8 to 3; when the byte Shell_DebugMode (0007fd08) is 0 calls Input_GetKeyboardDevice_Thunk (00027bbf) and, with its result, KeyboardInputDevice_GetMode (00025d19), KeyboardInputDevice_SetMode (00025ce6)(r, 0x20000) and 0001ffdc(0005d6a0, 000809ac); sets 000aa778 to 1.",
+      "description": "(this): the war map screen (vtable 00080bc6, class name WarMapMenu before it), built over the Menu base (vtable 00080ba8) with 0x26 bytes allocated when this is 0. Loads the briefing, block 0 of BRF: from the .eng path 000aad2a, into the dialog Shell_Dialog (0009afc8) with Dialog_LoadConditional (00018cdb) and calls Dialog_NextPage (00018e18) as many times as the word 000809b2; sets 000809a8 to 3; when the byte Shell_DebugMode (0007fd08) is 0 calls Input_GetKeyboardDevice_Thunk (00027bbf) and, with its result, KeyboardInputDevice_GetMode (00025d19), KeyboardInputDevice_SetMode (00025ce6)(r, 0x20000) and 0001ffdc(0005d6a0, 000809ac); sets 000aa778 to 1.",
       "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-briefing",
       "verified": {
         "bytes": "0002bbbd+472",
@@ -7096,7 +7276,7 @@
       "type": "function",
       "confidence": "high",
       "name": "DebriefingMenu_Ctor",
-      "description": "(this): the debriefing screen (vtable 00080c4e, class name DebriefingMenu before it), built over the Menu base (vtable 00080ba8) with 0x26 bytes allocated when this is 0. Loads the DEB: block of ordinal word 000aad58 from the .eng path 000aad2a into the dialog 0009afc8 with Dialog_LoadConditional (00018cdb).",
+      "description": "(this): the debriefing screen (vtable 00080c4e, class name DebriefingMenu before it), built over the Menu base (vtable 00080ba8) with 0x26 bytes allocated when this is 0. Loads the DEB: block of ordinal word 000aad58 from the .eng path 000aad2a into the dialog Shell_Dialog (0009afc8) with Dialog_LoadConditional (00018cdb).",
       "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-debriefing",
       "verified": {
         "bytes": "0002c422+338",
@@ -7681,7 +7861,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MTWindow_Ctor",
-      "description": "(this, id, title, rect) in stack order, callee-cleaned: a shell menu's window, 0x5a7 bytes allocated when this is 0, over DUIWindow_Ctor (0001abcf)(this, rect); six 0x12-byte label entries at +0x537 (__vec_ctor of 000369d4) and the vtable 00081140 at +0x4e9. Loads res32\\menu<id>.dba with Resource_LoadBitmapArray (0004b7df) into +0x5a3 (id 9999: res32\\menu<9999 - Math_RandomBelow(5)>.dba) and sets the font +0x4ed to 000aacc6; it sets the label font +0x4f1 by the id: the six ids at 00081174 jump through the table beside them, 999, 1240 and 4444 to 000aacda, 1610 and 1800 to 000aacea and 1920 to 000aacce, and any other id takes 000aacca; then (00036987) it copies title to +0x4f5 (a 0 byte for none), and zeroes the label count +0x535 and the hotspot count +0x4e7.",
+      "description": "(this, id, title, rect) in stack order, callee-cleaned: a shell menu's window, 0x5a7 bytes allocated when this is 0, over DUIWindow_Ctor (0001abcf)(this, rect); six 0x12-byte label entries at +0x537 (__vec_ctor of 000369d4) and the vtable 00081140 at +0x4e9. Loads res32\\menu<id>.dba with Resource_LoadBitmapArray (0004b7df) into +0x5a3 (id 9999: res32\\menu<9999 - Math_RandomBelow(5)>.dba) and sets the font +0x4ed to Shell_Fonts (000aacc6); it sets the label font +0x4f1 by the id: the six ids at 00081174 jump through the table beside them, 999, 1240 and 4444 to 000aacda, 1610 and 1800 to 000aacea and 1920 to 000aacce, and any other id takes 000aacca; then (00036987) it copies title to +0x4f5 (a 0 byte for none), and zeroes the label count +0x535 and the hotspot count +0x4e7.",
       "source": "ES1GO decompile at 00036874",
       "verified": {
         "bytes": "00036874+352",
@@ -7795,7 +7975,7 @@
       "type": "function",
       "confidence": "high",
       "name": "DigitalDialog_ShowMessage",
-      "description": "(message), callee-cleaned: returns at once when the byte +2 is 0; calls RenderContext_GetFullScreen (0004c716) into 0007fcd8 and Ttm_SetDefaultContext (000467ef) with it; then by the kind word +0 builds the path with sprintf, sets the line number word 000aad5c and picks the lip-sync list words a and b: 0 eng\\C0_text.bin, line 000ab222, (0, 1); 1 eng\\C<k>_text.bin, line 000ab222, (2k, 1), k the first word of the 8-byte record of the table at 000a02ce that the word at 0009b241 + 0009b21f * 0x1f7 indexes, or -1 when out of range; 2 eng\\G0_text.bin, line a word of the table at 000814ec, (0, 3), and it updates Shell_MusicTrack (00081938) and sets 0007fcd5 when 000814d8's entry + 0xf differs from it; 3 eng\\D0_text.bin, line 2 * Mission_OutcomeGrade (00036837)(000aad58, 000aad5e) plus Math_RandomBelow(2) unless that call gave 1, (1, 1); 4 eng\\D<k>_text.bin, the same line, (2k + 1, 1); 5-11 eng\\T1_text.bin, line 0008159c[000814e8] when 000814e8 is nonzero, else (5, 6, 8-11) 00037bf0(kind), (000815a8[line], 2), and two 00046948 calls; any other kind returns. Then Dialog_LoadFromFile (00018c36)(0009afc8, a, b, path).",
+      "description": "(message), callee-cleaned: returns at once when the byte +2 is 0; calls RenderContext_GetFullScreen (0004c716) into 0007fcd8 and Ttm_SetDefaultContext (000467ef) with it; then by the kind word +0 builds the path with sprintf, sets the line number word 000aad5c and picks the lip-sync list words a and b: 0 eng\\C0_text.bin, line 000ab222, (0, 1); 1 eng\\C<k>_text.bin, line 000ab222, (2k, 1), k the first word of the 8-byte record of the table at 000a02ce that the word at 0009b241 + 0009b21f * 0x1f7 indexes, or -1 when out of range; 2 eng\\G0_text.bin, line a word of the table at 000814ec, (0, 3), and it updates Shell_MusicTrack (00081938) and sets 0007fcd5 when 000814d8's entry + 0xf differs from it; 3 eng\\D0_text.bin, line 2 * Mission_OutcomeGrade (00036837)(000aad58, 000aad5e) plus Math_RandomBelow(2) unless that call gave 1, (1, 1); 4 eng\\D<k>_text.bin, the same line, (2k + 1, 1); 5-11 eng\\T1_text.bin, line 0008159c[000814e8] when 000814e8 is nonzero, else (5, 6, 8-11) 00037bf0(kind), (000815a8[line], 2), and two 00046948 calls; any other kind returns. Then Dialog_LoadFromFile (00018c36)(Shell_Dialog (0009afc8), a, b, path).",
       "source": "Herculan/docs/es1/formats/bin-string-tables.md#which-file-and-line",
       "verified": {
         "bytes": "00037edd+1016",
@@ -7810,7 +7990,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MessageBox_Close",
-      "description": "(box): MessageBox_SetKind (00037eac)(box, -1) and Dialog_DeleteBox (00018d93)(0009afc8).",
+      "description": "(box): MessageBox_SetKind (00037eac)(box, -1) and Dialog_DeleteBox (00018d93)(Shell_Dialog (0009afc8)).",
       "source": "Herculan/docs/es1/shell/main-menu.md#instant-actions-path-to-the-mission; ES1GO decompile at 000382d5",
       "verified": {
         "bytes": "000382d5+33",
@@ -7825,7 +8005,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MessageBox_Run",
-      "description": "(box, input): returns at once while the box's byte +2 is 0. Otherwise calls the routine at 0008662c and NoOp_Void (00012bde), and while the input's word +0 and byte +0xa are 0 and the box's byte +3 is set: Shell_PresentFrame (00012980), maybe_SncList_Tick (000454c4)(0009afd4), Ttm_RunAll (0004652e), 00018dcb(0009afc8) and the input again from Input_PollDeviceBlock (000277d8); then NoOp_Void and MessageBox_Answer (0003837f)(box, input). es2_xref finds one call, from Shell_Main (00012ec7).",
+      "description": "(box, input): returns at once while the box's byte +2 is 0. Otherwise calls the routine at 0008662c and NoOp_Void (00012bde), and while the input's word +0 and byte +0xa are 0 and the box's byte +3 is set: Shell_PresentFrame (00012980), maybe_SncList_Tick (000454c4)(0009afd4), Ttm_RunAll (0004652e), Dialog_Draw (00018dcb)(Shell_Dialog (0009afc8)) and the input again from Input_PollDeviceBlock (000277d8); then NoOp_Void and MessageBox_Answer (0003837f)(box, input). es2_xref finds one call, from Shell_Main (00012ec7).",
       "source": "Herculan/docs/es1/shell/main-menu.md#instant-actions-path-to-the-mission; ES1GO decompile at 000382f6",
       "verified": {
         "bytes": "000382f6+137",
@@ -8254,7 +8434,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_DrawScreen",
-      "description": "(), C convention: while 0008444e is set: clears DUIWindow_InputReady (0007f0dc), calls 0008662c; by the byte Shell_BackdropChanged (000817c6) the HERC diagram path for screens 1700 and 1710, or the page fills through 0008663c, the .ANM at 000aacfe (Anm_Play(1, 0xa, name)) when 0007fcd7 is 2, ShellBackdrop_Draw (0002141c)(000a09a4) and 0001240b or 00012467; DigitalDialog_ShowMessage(Shell_MessageBox (0009b010)), Ttm_RunAll; with a current menu, the render contexts 0007fcdc (RenderContext_GetForRect (0004c88a)) and 0007fcd8 (RenderContext_GetFullScreenAround (0004c53c)), source and draw pages 2, Region_Save of the window's region into +2, DUIWindow_Draw (0001bfa3) on page 2 (with Shell_MissionMap (000809a4)'s slot +4 and 00018dcb per page while 000817bd counts down), then on backdrop 1000 except screen 9999 a whole-screen DirtyBox_Add with delay 1, otherwise DUIWindow_Draw on the draw page and 00009c64; sets 0007fcd6. With 0007fcd7 1 uploads 0007fcd0 and plays Anm_Play(1, 0xb, name). Puts the source page back, DirtyBox_Add(0, 200, 320, 0, 0), 00086628 unless the screen is 9999, and sets DUIWindow_InputReady.",
+      "description": "(), C convention: while 0008444e is set: clears DUIWindow_InputReady (0007f0dc), calls 0008662c; by the byte Shell_BackdropChanged (000817c6) the HERC diagram path for screens 1700 and 1710, or the page fills through 0008663c, the .ANM at 000aacfe (Anm_Play(1, 0xa, name)) when 0007fcd7 is 2, ShellBackdrop_Draw (0002141c)(000a09a4) and 0001240b or 00012467; DigitalDialog_ShowMessage(Shell_MessageBox (0009b010)), Ttm_RunAll; with a current menu, the render contexts 0007fcdc (RenderContext_GetForRect (0004c88a)) and 0007fcd8 (RenderContext_GetFullScreenAround (0004c53c)), source and draw pages 2, Region_Save of the window's region into +2, DUIWindow_Draw (0001bfa3) on page 2 (with Shell_MissionMap (000809a4)'s slot +4 and Dialog_Draw (00018dcb) per page while 000817bd counts down), then on backdrop 1000 except screen 9999 a whole-screen DirtyBox_Add with delay 1, otherwise DUIWindow_Draw on the draw page and 00009c64; sets 0007fcd6. With 0007fcd7 1 uploads 0007fcd0 and plays Anm_Play(1, 0xb, name). Puts the source page back, DirtyBox_Add(0, 200, 320, 0, 0), 00086628 unless the screen is 9999, and sets DUIWindow_InputReady.",
       "source": "Herculan/docs/es1/shell/menus.md#drawing-a-screen; ES1GO decompile at 0003c1b7",
       "verified": {
         "bytes": "0003c1b7+1523",
@@ -9286,13 +9466,13 @@
       "type": "function",
       "confidence": "medium",
       "name": "maybe_SncList_StartSound",
-      "description": "(player), callee-cleaned: when the handle byte +2 is not -1 and neither +0x19 nor +0x1a is set, sets +0x19, opens the second name of the current line's list (StrList_Get (00020254) of record 000aad5c of +0x11, 1) with ShellSnc_OpenSound (00045801) into the script +3, starts the sound through the slot +0x10 of its vtable (at its +0x3b) when it is non-null and the dword 0007fcbc is above 0, and sets the clock 00082658 to 0. es2_xref finds one call, from 00018edd.",
+      "description": "(player), callee-cleaned: when the handle byte +2 is not -1 and neither +0x19 nor +0x1a is set, sets +0x19, opens the second name of the current line's list (StrList_Get (00020254) of record 000aad5c of +0x11, 1) with ShellSnc_OpenSound (00045801) into the script +3, starts the sound through the slot +0x10 of its vtable (at its +0x3b) when it is non-null and the word Shell_RadioOption (0007fcbc) is above 0, and sets the clock 00082658 to 0. es2_xref finds one call, from DialogBox_Draw (00018edd).",
       "source": "Herculan/docs/es1/formats/snc-lip-sync.md#loading-a-line",
       "verified": {
         "bytes": "0004544a+122",
         "sha1": "52d8e4cf66b7",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -9361,7 +9541,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ShellSnc_OpenSound",
-      "description": "(script, name), callee-cleaned: when the dword 0007fcbc is non-zero, formats snc\\%s (00082748) of name into 000aad40 with sprintf (0004e1dc); when the object 00082768 is set, calls the slot +0x30 (vtable at +0x3b) of SoundManager_GetObject (00042b81)(00082768, 0) until it returns 0, and opens the path through SoundManager_SetSampleName (00042f39)(00082768, 0, path): on success stores SoundManager_CreateObject (000429db)(00082768, 2, 0, 0) as the sound at +0 and passes it to SoundObject_LoadSample (00043d8a), otherwise stores 0. es2_xref finds one call, from maybe_SncList_StartSound (0004544a).",
+      "description": "(script, name), callee-cleaned: when the dword Shell_RadioOption (0007fcbc) is non-zero, formats snc\\%s (00082748) of name into 000aad40 with sprintf (0004e1dc); when the object 00082768 is set, calls the slot +0x30 (vtable at +0x3b) of SoundManager_GetObject (00042b81)(00082768, 0) until it returns 0, and opens the path through SoundManager_SetSampleName (00042f39)(00082768, 0, path): on success stores SoundManager_CreateObject (000429db)(00082768, 2, 0, 0) as the sound at +0 and passes it to SoundObject_LoadSample (00043d8a), otherwise stores 0. es2_xref finds one call, from maybe_SncList_StartSound (0004544a).",
       "source": "Herculan/docs/es1/formats/snc-lip-sync.md#loading-a-line",
       "verified": {
         "bytes": "00045801+155",
@@ -20333,6 +20513,15 @@
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#a-careers-missions"
     },
     {
+      "address": "0007ee64",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "DialogBox_FrameBitmaps",
+      "description": "The bitmap array res32\\textbox.dba, the top strip's frame: DialogBox_Draw (00018edd) loads it while it is 0, and DialogBox_Dtor (00019b54) destroys it and zeroes it.",
+      "source": "Herculan/docs/es1/shell/message-box.md#drawing-a-page"
+    },
+    {
       "address": "0007f0c4",
       "binary": "ES1GO",
       "type": "data",
@@ -20520,6 +20709,15 @@
       "name": "Shell_PendingMessage",
       "description": "four int16: the menu message the frame loop passes to Shell_HandleMessage (0003c7d8): the code (0 from a control, -1 for none), the control's index, its value (slot +0x2c) and the target screen, the control's id.",
       "source": "Herculan/docs/es1/shell/menu-input.md#a-messages-path"
+    },
+    {
+      "address": "0007fcbc",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_RadioOption",
+      "description": "int16: the shell's copy of data\\prefs.cfg option 2, RADIO (0 TEXT ONLY, 1 VOICE ONLY, 2 TEXT / VOICE), which Shell_LoadData (00020630) stores. At 1 DialogBox_Draw (00018edd) draws neither the top strip's frame nor a message's lines; above 0 maybe_SncList_StartSound (0004544a) starts a line's sound.",
+      "source": "Herculan/docs/es1/shell/message-box.md#drawing-a-page"
     },
     {
       "address": "0007fce0",
@@ -21107,6 +21305,51 @@
       "source": "Herculan/docs/es1/simulation/memory.md#the-two-programs"
     },
     {
+      "address": "0009ae64",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "DialogBox_TopRect",
+      "description": "int32 rect {left, top, right, bottom}, (8, 7)-(284, 29), which Dialog_StaticInit (00019c2a) builds: the text of the strip across the top of the screen, which ConditionalDialogBox_SetRect (00018e5f), DigitalDialogBox_SetRect (000193ee) and DefaultDialogBox_Ctor (00019149) copy to a box.",
+      "source": "Herculan/docs/es1/shell/message-box.md#where-the-box-stands"
+    },
+    {
+      "address": "0009ae74",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "DialogBox_TopFrameRect",
+      "description": "int32 rect {left, top, right, bottom}, (3, 4)-(287, 32), which Dialog_StaticInit (00019c2a) builds: the top strip's frame, the dirty box DialogBox_MarkDirty (0001907e) and DialogBox_Dtor (00019b54) add for a box whose byte +0 is set.",
+      "source": "Herculan/docs/es1/shell/message-box.md#where-the-box-stands"
+    },
+    {
+      "address": "0009ae84",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "DialogBox_Backdrop6000Rect",
+      "description": "int32 rect {left, top, right, bottom}, (69, 150)-(267, 184), which Dialog_StaticInit (00019c2a) builds: the box ConditionalDialogBox_SetRect (00018e5f) gives on backdrop group 6000, the war map's briefing.",
+      "source": "Herculan/docs/es1/shell/message-box.md#where-the-box-stands"
+    },
+    {
+      "address": "0009ae94",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "DialogBox_Backdrop5000Rect",
+      "description": "int32 rect {left, top, right, bottom}, (17, 31)-(143, 85), which Dialog_StaticInit (00019c2a) builds: the box ConditionalDialogBox_SetRect (00018e5f) gives on backdrop group 5000, the debriefing.",
+      "source": "Herculan/docs/es1/shell/message-box.md#where-the-box-stands"
+    },
+    {
+      "address": "0009aea4",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "DialogBox_Backdrop7000Rect",
+      "description": "int32 rect {left, top, right, bottom}, (108, 160)-(299, 195), which Dialog_StaticInit (00019c2a) builds: the box DigitalDialogBox_SetRect (000193ee) gives on backdrop group 7000.",
+      "source": "Herculan/docs/es1/shell/message-box.md#where-the-box-stands"
+    },
+    {
       "address": "0009aec0",
       "binary": "ES1GO",
       "type": "data",
@@ -21123,6 +21366,15 @@
       "name": "Shell_RandomState2",
       "description": "A second generator state of the layout of Shell_RandomState (0009aec0), which the static initializer 00020b68 seeds with Math_RandomSeed (000386c8). es2_xref finds no other reference to its address.",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-shells-generator"
+    },
+    {
+      "address": "0009afc8",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_Dialog",
+      "description": "The shell's dialog record: +0 the stream it was loaded from, +4 the file's version word, +6 its DialogBox. Dialog_LoadFromFile (00018c36) fills it for a message, Dialog_LoadConditional (00018cdb) for an .ENG block.",
+      "source": "Herculan/docs/es1/shell/message-box.md#the-dialog-record"
     },
     {
       "address": "0009aff0",
@@ -21510,6 +21762,15 @@
       "name": "MissionParams_TimeOfDay",
       "description": "int16, the MISSION PARAMS menu's TIME OF DAY setting, 0 to 2: data\\prefs.cfg option 16, which Shell_LoadData (00020630) at start-up and Shell_HandleMessage (0003c7d8) copy in and MissionParams_OnMessage (0002b4fe) steps. MsnGen_LoadMission (00035873) seeds flag 3 with it in every mode and writes it as header word 9 outside mode 1.",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters"
+    },
+    {
+      "address": "000aacc6",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_Fonts",
+      "description": "14 dwords, 000aacc6 to 000aacfa: the shell's font handles, which Shell_LoadData (00020630) loads and Widget_LoadStylesAndFonts (00002818) overwrites the first seven of. Entry 5, 000aacda, is nm_green, the text box's font.",
+      "source": "Herculan/docs/es1/formats/styles-dat.md#the-loads"
     },
     {
       "address": "000aad56",

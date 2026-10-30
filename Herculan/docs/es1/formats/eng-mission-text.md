@@ -53,14 +53,14 @@ The pieces of a block are one text: the literal pieces end mid-sentence where th
 
 ## Reading a block
 
-`Dialog_LoadConditional` (`00018cdb`) loads a block into a dialog record, the one at `0009afc8` for both the briefing and the debriefing: `+0` the stream, `+4` the version word, `+6` the box. It deletes the box it held (`Dialog_DeleteBox`, `00018d93`) and its stream, opens the file through `VolRStream_CtorFromPath`, and reads the version. When it is 1 the box is a `ConditionalDialogBox` built from the block; any other version leaves no box. It closes the stream.
+`Dialog_LoadConditional` (`00018cdb`) loads a block into the shell's dialog record, `Shell_Dialog` (`0009afc8`), for both the briefing and the debriefing ([the dialog record](../shell/message-box.md#the-dialog-record)). It deletes the box it held (`Dialog_DeleteBox`, `00018d93`) and its stream, opens the file through `VolRStream_CtorFromPath`, and reads the version. When it is 1 the box is a `ConditionalDialogBox` built from the block; any other version leaves no box. It closes the stream.
 
 `ConditionalDialogBox_Ctor` (`00019453`) takes the block's ordinal among the blocks of its tag and the tag:
 
 1. `Stream_FindNthTag` (`0004b6d6`) finds the tag's occurrence of that ordinal, counting from the byte after the version. It calls `Stream_FindTag` (`0004b658`) once more than the ordinal. `Stream_FindTag` reads a byte at a time, stepping through the tag while the bytes match it and starting again from the tag's first byte at a byte that does not, without testing that byte against the first; it stops when the whole tag has matched, the stream after it, or at the end of the stream, when it seeks back to where the search began. So a block is found by its tag's bytes, not by the counts, and an ordinal past the tag's last block reads the last block. In every retail file a raw search for each tag finds exactly the blocks of that tag.
 2. It reads the `int32` count and the `int16` sum, and does not use the sum. A count of 0 leaves the box without text. Otherwise it allocates that many bytes for the text: more than the text needs, since the count also covers the block's lengths and piece bytes.
 3. It reads a piece byte and handles pieces until it reads `0x10`. A literal's text is read to the end of the text so far, over the NUL of the piece before it. A choice reads the flag's value with `MissionVar_ReadFlag` (`0003628d`), the counts, the offsets into a stack array with room for ten, and then tests each pair but the last: of the pairs whose range holds the value, inclusive at both ends and signed, the last one picks its text. It notes the stream's position, reads the picked text, if any, at that position plus its offset onto the text so far, and seeks to that position plus the last offset. A byte other than 1, 2 or `0x10` is passed over.
-4. It lays the text out in the box ([The dialog box](#the-dialog-box)).
+4. It lays the text out in the box ([laying out the text](../shell/message-box.md#laying-out-the-text)).
 
 `MissionVar_ReadFlag` opens `data\mission.var` (file-name entry 5; assert at `mission.cpp` line `0x4b`), seeks to twice the index and returns the `int16` there.
 
@@ -84,30 +84,6 @@ The pieces of a block are one text: the literal pieces end mid-sentence where th
 
 That is a string table of one group ([ES2's `.STR` layout](../../retail/formats/str-strings.md#layout)), the 0 byte each text's count of attributes. Each literal piece of an `OBJ:` block is one objective, and the retail blocks hold only literals. The simulator's objectives panel (`F11`) reads the file as a string table and shows its first seven lines that are not empty ([the objectives panel](../simulation/alert-panels.md#the-objectives-panel--objectivespanel_ctor-0004a1b4)).
 
-## The dialog box
-
-A `DialogBox` is `0x2d` bytes; its subclasses differ in their constructors and vtables: `DialogBox` (`0007ee88`), `DefaultDialogBox` (`0007eea8`), `DigitalDialogBox` (`0007ef04`), `ConditionalDialogBox` (`0007ef48`), each the class name the image stores before its vtable.
-
-| Offset | Field |
-|---|---|
-| `+0x00` | a byte: 1 from `DialogBox_Init` (`00019b25`), 0 from a page step ([Open](#open)) |
-| `+0x01` | the font: `000aacda` for the conditional and digital boxes |
-| `+0x05`–`+0x11` | the box: left, top, right, bottom, `int32` |
-| `+0x15` | the text |
-| `+0x19` | `int16`, the count of line slots |
-| `+0x1b` | the line slots, one pointer each, zeroed |
-| `+0x1f` | one 8-byte point per line of a page |
-| `+0x23` | `int16`, the count of pages |
-| `+0x25` | `int16`, the lines a page holds |
-| `+0x27` | `int16`, the page shown |
-| `+0x29` | the vtable |
-
-`ConditionalDialogBox_SetRect` (`00018e5f`) picks the box by the word `Shell_BackdropId` (`000817c4`) rounded down to a thousand: 6000 copies the box at `0009ae84` and sets `+0` to 0, 5000 the box at `0009ae94` and `+0` to 0, and any other value the box at `0009ae64` and `+0` to 1.
-
-`DialogBox_Layout` (`000198a6`) takes a line's height as `00051ff0`(font, text) less 2. It sets the slot count to the text's width by `HudFont_MeasureString` divided by the box's width, plus 2; the lines a page holds to the box's height divided by the line height; the page count to the slot count divided by the lines a page holds, plus 1 when the two differ; and the page shown to 0. Line *i* of a page stands at the box's left and its top plus (*i* + 1) line heights. It then passes the box's width and the text to `00019a1d` ([Open](#open)). `DialogBox_NextPage` (`0001911f`) and `DialogBox_PrevPage` (`000190fd`) step `+0x27` within 0 and the page count less 1 and clear `+0`.
-
-`Dialog_LoadFromFile` (`00018c36`) is the dialog record's other loader, for the talking-head messages' `eng\*_text.bin` files ([the dialog text files](bin-string-tables.md#the-dialog-text-files)).
-
 ## Rejected readings
 
 | Reading | Why it is wrong |
@@ -118,7 +94,5 @@ A `DialogBox` is `0x2d` bytes; its subclasses differ in their constructors and v
 
 - **Open:** what the debriefing ordinal, the first word of `data\results.dat`, counts: which outcome the simulator writes as each value, and why some missions have eight debriefings and some nine.
 - **Open:** whether the simulator rewrites `data\mission.var` before the debriefing reads flags through it, so whether a debriefing's choices see the flags as the mission load seeded them.
-- **Open:** how the box is drawn and its text broken into lines: `00019a1d`, `00018dcb` and `00018edd`, which the page steps call, `0001907e`, and `00051ff0`'s line height.
-- **Open:** what the byte at a box's `+0` means, what the word `Shell_BackdropId` (`000817c4`) that picks the box's position holds, and the boxes at `0009ae64`, `0009ae84` and `0009ae94`.
 - **Open:** when the briefing page `000809b2` carries over from one visit to the war map to the next, since `0002bf15` sets it to 0; the rest of `0002bf15` and the war map's handler `WarMapMenu_OnMessage` (`0002c057`) are not read.
 - **Open:** why `Mission_ReadRestore` reads the word written from `Mission_Kind` (`000aad5a`) into `000aad5e`, and what the two words hold.
