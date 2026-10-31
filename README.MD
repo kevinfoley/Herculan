@@ -17,6 +17,7 @@ The HERCULAN Engine is a modern reimplementation of _Earthsiege 2_. Because the 
 ### Features
 
 - Play all of _Earthsiege 2_, at any resolution, with support for widescreen and ultra-widescreen monitors (menus render at 4:3).
+- Supports modern joysticks and gamepads, with customizable bindings (the original keyboard bindings are not currently customizable).
 - Hardware-accelerated rendering that almost perfectly matches retail's software renderer.
 - Runs on Windows and Linux, with potential macOS support in the future.
 - Full support for retail's file formats, including saved games.

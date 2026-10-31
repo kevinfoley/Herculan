@@ -8,7 +8,7 @@ The group decides several things for all of its members:
 
 - **Team.** Every member is on the group's team, human or Cybrid. A unit's own view shows its team but cannot change it.
 - **Orders.** Orders belong to the group, not to its members, and every member carries them out together. A group works through up to ten orders in turn. It moves on to the next order when the current one is done, or when that order's "Ends when" trigger fires, and it stays on its last order. The group walks only its first order's route, whatever routes its later orders name.
-- **Arrival.** A group with a trigger under "Waits on" is not in the mission until that trigger fires. It then arrives as the trigger's "Arrives" choice says. A group with nothing under "Waits on" is in the mission from the start.
+- **Arrival.** A group with a trigger under "Waits on" is not in the mission until that trigger fires. It then arrives as the trigger's "Arrives" choice says, for example [by drop pod](#drop-pods). A group with nothing under "Waits on" is in the mission from the start.
 
 A group's **leader** is its first member. Under "Patrol" and "Search and destroy", only the leader walks the route and looks for targets, and the other members keep formation on it ([What each order attacks](#what-each-order-attacks)). No other member takes over when the leader is destroyed. The rest of the group then stops following the route and stops looking for targets, though its members still fight back when shot.
 
@@ -29,6 +29,39 @@ Each member has a **place** in the group, numbered from 1, and each place has it
 A member can instead stand at a **position of its own**, set by moving it. "Return to formation" puts it back in its default place. A structure stays at its own position for the whole mission, but a ground vehicle does not: the first vehicle that is not destroyed or immobilized drives the group's route, and the others drive to their places in the formation around it. For a HERC or flyer other than the leader, its own position only sets where it starts. Some orders make the members follow the leader in formation: "Patrol" and "Search and destroy" for HERCs, and "Patrol", "Search and destroy" and "Travel" for flyers. Under those orders, a member with its own position leaves it as soon as the mission starts and moves to its place in the formation around the leader.
 
 A structure group can also lay a **base pad**: a concrete pad painted over the ground tile under the group, with the ground under it levelled. Its structures then stand at a fixed spot in that tile. Only some structure formations have a base pad, and picking one without a pad stops the group laying one.
+
+## Drop pods
+
+Drop pods are used for Cybrids to dynamically deploy in a mission zone when a trigger is activated.
+
+### One unit per pod
+
+**A pod carries only a group's first member.** Any other members of the group appear where the mission placed them, with no pod, at the moment the pod opens. In other words, you normally shouldn't put more than one Cybrid in a group that will be spawned in a drop pod. The retail missions only ever bring in one unit per pod, though one trigger often spawns multiple pods. To bring in several units by pod, put each one in a group of its own and set every group's "Waits on" to the same trigger.
+
+### Setting one up
+
+1. Add a new Cybrid HERC to the scene. It starts out in a group by itself.
+2. Create a new Trigger, or select an existing Trigger. Next to "Then:", click "Add", then choose **Bring in a group**. You can add additional groups if you want the trigger to bring in multiple drop pods.
+3. Still in the trigger, make sure you set "Arrives" to one of the two drop pod choices.
+
+"Arrives" belongs to the trigger, not to the group, so every group the trigger brings in arrives the same way.
+
+### Where the pod lands
+
+**A drop pod always lands relative to the player, wherever the player happens to be when the trigger fires.** The group's own position on the map is never used, which is why the editor does not show a group arriving by drop pod in the 3D view. **There is no way to make a pod drop at a specific position or within a specific area.** This is not a limitation of the Mission Editor, it is how drop pods are coded in _Earthsiege 2_.
+
+The pod aims 900 m from the player, in a direction based on which way the player's HERC is facing:
+
+| "Arrives"                                   | Where the pod aims                                                          |
+| ------------------------------------------- | --------------------------------------------------------------------------- |
+| "By drop pod, in front of the player"       | Anywhere in the half-circle ahead of the player, up to 90° to either side   |
+| "By drop pod, straight ahead of the player" | Within 22.5° of straight ahead, a stretch about 700 m wide at that distance |
+
+The exact direction is randomized. If the spot it picks is too steep to stand on, or too close to a structure, the pod moves further away from the player along the same line, 12 m at a time, until it finds clear ground. It does not avoid other units.
+### When a pod never releases its units
+
+- **The pod lands on something.** A pod's landing blast damages whatever is close to where it comes down. If the blast catches anything, even a unit whose shields absorb it, the pod opens empty and that group never arrives for the rest of the mission.
+- **The player is near the edge of the map.** Nothing stops a pod from aiming past the edge of the terrain. Past the east or west edge, the pod lands off the map, where no terrain is drawn, and its unit is stranded there: it can shoot but never move. Past the north or south edge, the original game freezes, while HERCULAN drops the pod off the map instead. Keep each drop pod trigger to places where the player is more than 900 m from every edge of the terrain.
 
 ## Budgets
 
