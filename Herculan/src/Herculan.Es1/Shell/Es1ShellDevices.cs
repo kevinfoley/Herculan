@@ -40,6 +40,17 @@ public sealed class Es1ShellDevices {
 	/// <summary><c>Shell_WaitCount</c> (<c>000a0a90</c>), which <see cref="WaitTick"/> raises for <c>Shell_WaitTicks</c>.</summary>
 	public short WaitCount { get; set; }
 
+	/// <summary>
+	/// <c>Shell_WaitTicks</c> (<c>0004bbe9</c>)(<paramref name="count"/>): <see cref="WaitCount"/> zeroed, then a wait
+	/// until <see cref="WaitTick"/> has raised it to the count, two interrupts each.
+	/// </summary>
+	public IEnumerable<Es1ShellWait> WaitTicks(short count) {
+		WaitCount = 0;
+		while (WaitCount < count) {
+			yield return Es1ShellWait.For(() => WaitCount >= count);
+		}
+	}
+
 	/// <summary><c>Shell_BlinkOn</c> (<c>0007fce0</c>), set for 20 of every 41 <see cref="BlinkTick"/> calls.</summary>
 	public bool BlinkOn { get; private set; }
 

@@ -90,11 +90,37 @@ public sealed class Es1ShellMouse {
 			window.OnPress(globals, record.X, record.Y);
 		} else {
 			globals.PressedIndex = -1;
-			// PLACEHOLDER: while the dword 0007fce4 is set (screen 2000's case sets it), the point tested against the selected
-			// hangar slot's rects and the message (0, -1, the rect's index or -1, 1702) posted, S4's; no ported screen sets it.
+			if (globals.HangarAreas is { } areas) {
+				TestHangarAreas(globals, areas, record.X, record.Y);
+			}
 		}
 
 		globals.InputReady = true;
+	}
+
+	/// <summary>The target the hangar's press test posts, 1702.</summary>
+	public const short HangarAreaTarget = 1702;
+
+	/// <summary>
+	/// <c>ShellMouse_OnLeftPress</c>'s hangar test (<c>0001c8ef</c>, docs/es1/shell/menu-input.md#the-mouse): with <i>t</i>
+	/// the selected HERC's type (<see cref="Es1MenuGlobals.HangarSelectedType"/>), <see cref="Es1MenuGlobals.HangarArea"/>
+	/// counts through the rects of <paramref name="areas"/>[<i>t</i>], as many as the chassis' mount count
+	/// (<see cref="Hangar.Es1HercArt.MountCounts"/>), to the first holding the point, edges included, and becomes −1 when
+	/// none does; the message (0, −1, that index, 1702) is posted. Retail reads the count before the table (8) and the list
+	/// before the arrays for type −1, and past a list shorter than the count; such a list holds no rect here, engine
+	/// guards, so the press posts −1.
+	/// </summary>
+	private static void TestHangarAreas(Es1MenuGlobals globals, View.Es1Rect[][] areas, int x, int y) {
+		short type = globals.HangarSelectedType();
+		short count = type is >= 0 and < Hangar.Es1HercArt.ChassisCount ? Hangar.Es1HercArt.MountCounts[type] : (short)0;
+		var list = type >= 0 && type < areas.Length ? areas[type] : [];
+		short area = 0;
+		while (area < count && !(area < list.Length && list[area].Contains(x, y))) {
+			area++;
+		}
+
+		globals.HangarArea = area == count ? (short)-1 : area;
+		globals.PendingMessage = new Es1MenuMessage(0, -1, globals.HangarArea, HangarAreaTarget);
 	}
 
 	/// <summary>

@@ -109,4 +109,21 @@ public sealed class Es1MenuGlobals {
 	/// the screens and the mouse's press and release test.
 	/// </summary>
 	public Es1MessageBoxRecord MessageBox { get; } = new();
+
+	/// <summary>
+	/// The dword <c>0007fce4</c>, 0 in the image: while set, the per-chassis area lists a left press outside the active
+	/// window is tested against (<see cref="Es1ShellMouse"/>, docs/es1/shell/menu-input.md#the-mouse), the clickable areas
+	/// of the HERC diagrams (<see cref="Hangar.Es1HercArt.Hotspots"/>) once a hangar screen sets it. The service bay's
+	/// screens clear it.
+	/// </summary>
+	public View.Es1Rect[][]? HangarAreas { get; set; }
+
+	/// <summary>
+	/// The type the hangar's press test reads: the chassis of the HERC in <c>Hangar_SelectedSlot</c>, −1 for none
+	/// (<see cref="Hangar.Es1HangarBay.SelectedHercType"/>); set by the screens once the bay exists, −1 before.
+	/// </summary>
+	public Func<short> HangarSelectedType { get; set; } = () => -1;
+
+	/// <summary>The word <c>0007ff92</c>, −1 in the image: the area the hangar's press test last found, −1 for none.</summary>
+	public short HangarArea { get; set; } = -1;
 }

@@ -359,18 +359,18 @@ public sealed class Es1MessageBox {
 
 	/// <summary>
 	/// <c>Ttm_SetMode</c> (<c>00046948</c>)(<paramref name="mode"/>, handle) for the backdrop's scripts 6 and 3, the handle bytes
-	/// at the dword <c>0007e718</c> + <c>0x12</c> and + 9 (<see cref="Es1ShellBackdrop.ScriptHandles"/>), in that order:
+	/// at the dword <c>0007e718</c> + <c>0x12</c> and + 9 (<see cref="Es1ShellBackdrop.GroupTtms"/>), in that order:
 	/// mode 2 as kinds 5 to 11 load their line, 0 as their answer closes it. Retail reads the bytes through a null dword
-	/// when the backdrop opened none; here no call is made then, an engine guard.
+	/// when the backdrop opened none, and past the entries; here no call is made then, an engine guard.
 	/// </summary>
 	private void SetBackdropScriptsMode(int mode) {
-		if (_backdrop.ScriptHandles is not { } handles || _scripts() is not { } scripts) {
+		if (_backdrop.GroupTtms is not { } entries || _scripts() is not { } scripts) {
 			return;
 		}
 
 		foreach (int entry in new[] { 6, 3 }) {
-			if (entry < handles.Length) {
-				scripts.SetMode(mode, handles[entry]);
+			if (entry < entries.Length) {
+				scripts.SetMode(mode, entries[entry].Handle);
 			}
 		}
 	}

@@ -3,6 +3,7 @@ using HercWorks.Core.Io.Transform.Shell;
 using Herculan.Engine.Content;
 using Herculan.Es1.Input;
 using Herculan.Es1.Panels;
+using Herculan.Es1.Shell.Hangar;
 using Herculan.Es1.Shell.Menus;
 using Herculan.Es1.Shell.MessageBox;
 using Herculan.Es1.Ttm;
@@ -186,6 +187,12 @@ public sealed class Es1ShellScreens {
 	/// <summary>The bundle the menus read through, made by <see cref="OpenFirstScreen"/> once the shared data is loaded.</summary>
 	private Es1MenuContext? _menuContext;
 
+	/// <summary>
+	/// The service bay's display and the hangar's selection (<see cref="Es1HangarBay"/>), which <see cref="OpenFirstScreen"/>
+	/// makes; none before.
+	/// </summary>
+	public Es1HangarBay? Bay { get; private set; }
+
 	/// <summary>The shell's <c>.TTM</c> scripts, their handle table and globals, which <see cref="OpenFirstScreen"/> sets up; none before.</summary>
 	public Es1TtmManager? Scripts { get; private set; }
 
@@ -265,6 +272,13 @@ public sealed class Es1ShellScreens {
 		scripts.AllocHandles(ScriptTimerCount, _devices.Timer);
 		scripts.SetPathPrefix(ScriptFolder);
 		LoadTtmLists();
+		// The bay and the backdrop's group scripts, statics in retail, wired here once what they read exists.
+		_backdrop.Scripts = () => Scripts;
+		_backdrop.TtmLists = () => TtmLists;
+		var bay = new Es1HangarBay(_backdrop, () => Scripts, mission, data, _devices, _dirty, () => BackdropId);
+		Bay = bay;
+		_backdrop.AssignHangarScripts = bay.AssignScripts;
+		Globals.HangarSelectedType = () => bay.SelectedHercType;
 		switch (exitCode) {
 			case 3:
 			case 4:
@@ -557,7 +571,9 @@ public sealed class Es1ShellScreens {
 	/// <c>Shell_DrawScreen</c> (<c>0003c1b7</c>) (docs/es1/shell/menus.md#drawing-a-screen), while
 	/// <see cref="PageShown"/> is set: <see cref="Es1MenuGlobals.InputReady"/> cleared and the cursor taken off; with
 	/// <see cref="DrawsBackdrop"/> set, the <c>.ANM</c> when <see cref="AnmMode"/> is 2, then the backdrop copied onto the
-	/// draw page (<see cref="Es1ShellBackdrop.Draw"/>); with a current menu, the source and draw pages set to page 2, the
+	/// draw page (<see cref="Es1ShellBackdrop.Draw"/>) and, on backdrop 4000, the group's scripts played and the player's
+	/// bay shown (<see cref="Es1HangarBay.ShowPlayerBay"/>), on any other the scripts run (<see cref="Es1HangarBay.RunScripts"/>);
+	/// with it clear, on screens 1700 and 1710, the player's bay shown; with a current menu, the source and draw pages set to page 2, the
 	/// background under the window saved, the window drawn on page 2 unless the message box is up, the draw page put back,
 	/// and then, still unless the message box is up, on backdrop 1000 (screen 9999 aside) the whole screen added as dirty
 	/// with delay 1, otherwise the window drawn again on the draw page, and <see cref="WaitAfterDraw"/> set; with none, the
@@ -590,14 +606,16 @@ public sealed class Es1ShellScreens {
 			}
 
 			_backdrop.Draw();
-			if (BackdropId == 4000) {
-				// PLACEHOLDER: 0001240b and the career record's HERC diagram, the service bay's own display, S4's; the bay's
-				// screens 1700 and 1710 show backdrop 4000 with only their strip of buttons.
-			} else {
-				// PLACEHOLDER: 00012467 is unread.
+			if (Bay is { } bay) {
+				var draw = BackdropId == ServiceBayBackdrop ? bay.ShowPlayerBay(true, Globals.MessageBox.Up) : bay.RunScripts();
+				foreach (var wait in draw) {
+					yield return wait;
+				}
 			}
-		} else if (CurrentScreen is 1700 or 1710) {
-			// PLACEHOLDER: the career record's HERC diagram (00029651, CareerRecord_SelectPilot), the bay's own display, S4's.
+		} else if (CurrentScreen is Es1ServiceBayMenu.Screen or Es1ServiceBayMenu.AfterScreen && Bay is { } bay) {
+			foreach (var wait in bay.ShowPlayerBay(false, Globals.MessageBox.Up)) {
+				yield return wait;
+			}
 		}
 
 		if (MessageBox is { } messageBox) {
@@ -964,8 +982,9 @@ public sealed class Es1ShellScreens {
 				break;
 			case Es1ServiceBayMenu.Screen:
 			case Es1ServiceBayMenu.AfterScreen:
-				// 0003efcc: a ServiceBayMenu; the dword 0007fce4 cleared, PLACEHOLDER: the hangar test's (Es1ShellMouse), which
-				// only screen 2000's case sets, S4's; and coming from 1610, CREW, backdrop 4000's palette loaded again.
+				// 0003efcc: a ServiceBayMenu; the dword 0007fce4, the hangar's press test's areas (Es1ShellMouse), cleared; and
+				// coming from 1610, CREW, backdrop 4000's palette loaded again.
+				Globals.HangarAreas = null;
 				if (_menuContext != null) {
 					CurrentMenu = new Es1ServiceBayMenu(_menuContext);
 				}

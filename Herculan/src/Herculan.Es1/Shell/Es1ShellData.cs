@@ -8,14 +8,15 @@ using HercWorks.Core.Io.Transform.Dbsim;
 using HercWorks.Core.Io.Transform.Shell;
 using Herculan.Engine.Content;
 using Herculan.Es1.Input;
+using Herculan.Es1.Shell.Hangar;
 
 namespace Herculan.Es1.Shell;
 
 /// <summary>
 /// What the shell loads once at its start and keeps for every screen (docs/es1/shell/startup.md#the-shared-data): the
 /// file-name table, the <c>prefs.cfg</c> options' bytes and words, the 13 fonts, the generator, the shell's text, the
-/// careers log and its functions, and the battle set with the single missions' lists and the pilot names. The HERC
-/// diagrams are later parts'.
+/// careers log and its functions, the HERC diagrams' tables and art, and the battle set with the single missions' lists
+/// and the pilot names.
 /// </summary>
 public sealed class Es1ShellData {
 	/// <summary>The file-name table's entry of the careers log, <c>car\names.log</c> (docs/es1/formats/career-log-and-player-mec.md#the-careers-log).</summary>
@@ -64,6 +65,12 @@ public sealed class Es1ShellData {
 
 	/// <summary><c>Shell_RandomState</c>, seeded.</summary>
 	public Es1ShellRandom? Random { get; private set; }
+
+	/// <summary>
+	/// The HERC diagrams' tables and art (<see cref="Es1HercArt"/>) and the HERCs' diagrams built from them, none in the
+	/// image until <see cref="Load"/>.
+	/// </summary>
+	public Es1HercDiagrams HercDiagrams { get; private set; } = new(Es1HercArt.Empty());
 
 	/// <summary>The value tables <c>LoadDamageDat_Shell</c> expands from <c>cfg\damage.dat</c>, zero in the image until <see cref="Load"/>.</summary>
 	public Es1RepairCosts RepairCosts { get; private set; } = new();
@@ -132,10 +139,12 @@ public sealed class Es1ShellData {
 		Random = Es1ShellRandom.AtStartup(secondsSince1970);
 		Text = content.Read("eng", "WATEXT.BIN") is { } text ? new BinStringFileTransformer().Parse(text)?.Values : null;
 
-		// PLACEHOLDER: the rect 0009b000–0009b00c, (0, 0) and the display's attributes 2 and 3 less 1, which only screen
-		// 9999 reads (S2's); the HERC diagrams' tables and art (HercLayout_Load, HercDamageMarks_Load, HercHotspots_Load,
-		// HercArt_LoadAllBanks), S4's.
+		// PLACEHOLDER: the rect 0009b000–0009b00c, (0, 0) and the display's attributes 2 and 3 less 1, which screen 9999
+		// reads (S2's); Es1ScreenBlinds takes its bottom as a constant. Retail runs LoadDamageDat_Shell between the HERC
+		// diagrams' second and third loads; here it follows all four, and neither reads what the other loads.
+		var art = Es1HercArt.Load(content);
 		RepairCosts = Es1RepairCosts.Load(content);
+		HercDiagrams = new Es1HercDiagrams(art);
 
 		CareersLogPath = FileNames is { Length: > CareersLogEntry } names ? InstallPath(installRoot, names[CareersLogEntry]) : null;
 		LoadCareersLog();

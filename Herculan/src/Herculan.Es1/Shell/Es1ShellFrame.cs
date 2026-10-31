@@ -206,17 +206,8 @@ public sealed class Es1ShellFrame {
 		}
 	}
 
-	/// <summary>
-	/// <c>Shell_WaitTicks</c> (<c>0004bbe9</c>)(<paramref name="count"/>): <c>Shell_WaitCount</c> zeroed, then a wait
-	/// until <c>Shell_WaitTick</c> has raised it to the count, two interrupts each.
-	/// </summary>
-	public IEnumerable<Es1ShellWait> WaitTicks(short count) {
-		var devices = _devices;
-		devices.WaitCount = 0;
-		while (devices.WaitCount < count) {
-			yield return Es1ShellWait.For(() => devices.WaitCount >= count);
-		}
-	}
+	/// <inheritdoc cref="Es1ShellDevices.WaitTicks"/>
+	public IEnumerable<Es1ShellWait> WaitTicks(short count) => _devices.WaitTicks(count);
 
 	/// <summary>
 	/// The frame loop's pass (docs/es1/shell/startup.md#the-frame-loop), in retail's order: a frame shown, the input read

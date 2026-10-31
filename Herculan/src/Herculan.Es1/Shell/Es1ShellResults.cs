@@ -83,7 +83,7 @@ public sealed class Es1ShellResults {
 			}
 		}
 
-		ReadPilotResults(record, hangar, mission.Mode, results);
+		ReadPilotResults(record, hangar, mission.Mode, results, data.HercDiagrams);
 
 		var flags = new Cursor(ReadData(installRoot, Es1MissionFiles.MissionVarName, "shell.cpp line 0xd7"));
 		for (int i = 0; i < mission.Flags.Length; i++) {
@@ -118,7 +118,7 @@ public sealed class Es1ShellResults {
 		short missions = record.MissionsPlayed;
 		bool gradePasses = missions == 0 || MessageBox.Es1MessageBox.OutcomeGrade(mission.Outcome, mission.RestoredMissionKind) < 2;
 		record.Equipment.Unlock(missions, gradePasses);
-		Es1CareerAfterMission.AdvanceMarkedHerc(hangar);
+		Es1CareerAfterMission.AdvanceMarkedHerc(hangar, data.HercDiagrams);
 		record.Word4 = AfterMissionScreen;
 	}
 
@@ -154,16 +154,17 @@ public sealed class Es1ShellResults {
 	/// <paramref name="record"/> on strength with a slot, in entry order, its condition and its gains:
 	/// <list type="bullet">
 	/// <item>for entry 0, or every entry outside <paramref name="mode"/> 0: <c>Hangar_ReadStatusBlock</c>
-	/// (<c>00028e50</c>)(stream, slot), which, when the slot holds a HERC, reads the 66-byte block over its status block
-	/// and makes its diagram's changes (<see cref="Es1HercRecord.BuildDiagramMounts"/>), and reads nothing otherwise; the
-	/// condition is that HERC's internal word 9, or 0 with none;</item>
+	/// (<c>00028e50</c>)(stream, slot), which, when the slot holds a HERC, frees its diagram
+	/// (<see cref="Hangar.Es1HercDiagrams.Free"/>), reads the 66-byte block over its status block and builds the diagram
+	/// again with 0 (<see cref="Hangar.Es1HercDiagrams.Build"/>), whatever <c>Shell_LowMemory</c> holds, and reads nothing
+	/// otherwise; the condition is that HERC's internal word 9, or 0 with none;</item>
 	/// <item>for the other entries in mode 0: a block of its own (<c>HercStatus_Ctor</c>) read whole from the stream, the
 	/// condition its internal word 9, no HERC changed;</item>
 	/// </list>
 	/// then <c>PilotEntry_ReadGains</c> (<c>000153d8</c>): 6 bytes into the gains, and <see cref="Es1PilotEntry.ApplyGains"/>
 	/// with <see cref="Totals"/>.
 	/// </summary>
-	private void ReadPilotResults(Es1CareerRecord record, Es1Hangar hangar, short mode, Cursor results) {
+	private void ReadPilotResults(Es1CareerRecord record, Es1Hangar hangar, short mode, Cursor results, Hangar.Es1HercDiagrams diagrams) {
 		Array.Clear(Totals);
 		for (int i = 0; i < Es1CareerRecord.PilotCount; i++) {
 			if (!record.OnStrengthWithSlot(i)) {
@@ -173,8 +174,9 @@ public sealed class Es1ShellResults {
 			var entry = record.Pilots[i];
 			if (i == 0 || mode != 0) {
 				if (hangar.HercIn(entry.Slot) is { } herc) {
+					diagrams.Free(herc);
 					herc.Status = results.Int16s(Es1HercRecord.StatusLength);
-					herc.BuildDiagramMounts();
+					diagrams.Build(herc, 0);
 					entry.Condition = herc.PilotCondition;
 				} else {
 					entry.Condition = 0;

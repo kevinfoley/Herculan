@@ -35,7 +35,7 @@ public sealed class Es1ShellBackdrop {
 	/// The word at <c>0007ea94</c> + 2 × <c>CareerRecord_Current</c>'s campaign <c>+6</c> (docs/es1/shell/menus.md#the-backdrop).
 	/// Retail indexes the ten words with no bounds test; a campaign outside them reads 0 here, an engine guard.
 	/// </summary>
-	private short CampaignWord => CurrentRecord?.Invoke()?.Campaign is { } campaign && campaign >= 0 && campaign < CampaignWords.Length
+	internal short CampaignWord => CurrentRecord?.Invoke()?.Campaign is { } campaign && campaign >= 0 && campaign < CampaignWords.Length
 		? CampaignWords[campaign]
 		: (short)0;
 
@@ -97,18 +97,79 @@ public sealed class Es1ShellBackdrop {
 
 		Picture = picture;
 		SetPicture(0, 0, picture);
-
-		// PLACEHOLDER: 00011f19(group), which opens the group's list of tm_files.dat as scripts into ScriptHandles, and for
-		// group 4000 000122e0, are later modules' (menus.md's Open).
+		OpenGroupTtms(group);
+		if (group == HangarGroup && AssignHangarScripts?.Invoke() is { } waits) {
+			// HangarBay_AssignScripts (000122e0). Show is no iterator; a fade's retrace waits in its script runs are passed
+			// over, as Es1TtmPlayer.Run passes them, an engine reading.
+			foreach (var _ in waits) {
+			}
+		}
 	}
 
+	/// <summary>The service bay's group, whose show gives the scripts their bays.</summary>
+	public const short HangarGroup = 4000;
+
 	/// <summary>
-	/// The array of 3-byte entries at the dword <c>0007e718</c>, none in the image, each entry's byte <c>+0</c> a script handle:
-	/// the scripts <c>00011f19</c>(group) opens with <c>Ttm_Open</c>(0, 0, 0, name) for the names of the group's list of
-	/// <c>cfg\tm_files.dat</c>, the list group / 1000 − 1. The message box's kinds 5 to 11 set entries 3 and 6 to mode 2 while
-	/// their line is up (<see cref="MessageBox.Es1MessageBox"/>). PLACEHOLDER: <c>00011f19</c> is not ported, so none.
+	/// <c>HangarBay_AssignScripts</c> (<c>000122e0</c>), the bay's (<see cref="Hangar.Es1HangarBay.AssignScripts"/>), which
+	/// <see cref="Show"/> runs for <see cref="HangarGroup"/>; set by the screens once the bay exists, none before.
 	/// </summary>
-	public byte[]? ScriptHandles { get; private set; }
+	public Func<IEnumerable<Es1ShellWait>>? AssignHangarScripts { get; set; }
+
+	/// <summary>The shell's scripts (<see cref="Es1ShellScreens.Scripts"/>), which the group's scripts open in; none before the first screen.</summary>
+	public Func<Ttm.Es1TtmManager?>? Scripts { get; set; }
+
+	/// <summary><c>TtmLists_Load</c>'s lists (<see cref="Es1ShellScreens.TtmLists"/>), the array at <c>0007e710</c>.</summary>
+	public Func<HercWorks.Core.Data.File.Dat.Shell.Es1NameList[]?>? TtmLists { get; set; }
+
+	/// <summary>
+	/// <c>ShellBackdrop_GroupTtms</c> (<c>0007e718</c>), the array of 3-byte entries of the group's scripts, none in the
+	/// image (docs/es1/shell/menus.md#the-backdrop), its count <c>ShellBackdrop_GroupTtmCount</c> (<c>0007e71c</c>) its
+	/// length. The message box's kinds 5 to 11 set entries 3 and 6 to mode 2 while their line is up
+	/// (<see cref="MessageBox.Es1MessageBox"/>), and the bay gives the entries their slots
+	/// (<see cref="Hangar.Es1HangarBay"/>).
+	/// </summary>
+	public Es1TtmEntry[]? GroupTtms { get; private set; }
+
+	/// <summary><c>ShellBackdrop_GroupTtmList</c> (<c>0007e716</c>), −1 in the image: the list of <c>cfg\tm_files.dat</c> the group's scripts came from.</summary>
+	public short GroupTtmList { get; private set; } = -1;
+
+	/// <summary>
+	/// <c>ShellBackdrop_OpenGroupTtms</c> (<c>00011f19</c>)(<paramref name="group"/>) (docs/es1/shell/menus.md#the-backdrop):
+	/// with entries, each destroyed with <c>TtmEntry_Dtor</c> (<c>00011edd</c>), which closes its script, and the array
+	/// cleared; the list group / 1000 − 1; when the lists' count is not 0, that list's count of entries made with
+	/// <c>TtmEntry_Ctor</c> (<c>0001201b</c>), each with its name opened playing, not looping, on the default render
+	/// context (<c>Ttm_Open</c>(0, 0, 0, name)), its handle in the entry. A list of no names leaves no array. Retail indexes
+	/// the lists with no bounds test; a group past them opens none here, an engine guard.
+	/// </summary>
+	private void OpenGroupTtms(short group) {
+		var scripts = Scripts?.Invoke();
+		if (GroupTtms is { } entries) {
+			foreach (var entry in entries) {
+				if (entry.Handle != Ttm.Es1TtmManager.NoHandle) {
+					scripts?.Close(entry.Handle);
+					entry.Handle = Ttm.Es1TtmManager.NoHandle;
+				}
+
+				entry.Slot = Es1TtmEntry.NoSlot;
+			}
+
+			GroupTtms = null;
+		}
+
+		GroupTtmList = (short)(group / 1000 - 1);
+		if (TtmLists?.Invoke() is not { Length: > 0 } lists || GroupTtmList < 0 || GroupTtmList >= lists.Length) {
+			return;
+		}
+
+		string[] names = lists[GroupTtmList].Names;
+		if (names.Length == 0) {
+			return;
+		}
+
+		GroupTtms = names.Select(name => new Es1TtmEntry {
+			Handle = scripts?.Open(Ttm.Es1TtmPlayer.Playing, 0, null, name) ?? Ttm.Es1TtmManager.NoHandle,
+		}).ToArray();
+	}
 
 	/// <summary>
 	/// <c>ShellBackdrop_LoadPalette</c> (<c>0003950a</c>)(backdrop, <paramref name="group"/>): the palette released, then
@@ -172,4 +233,24 @@ public sealed class Es1ShellBackdrop {
 		1700 or 1710 or 1900 or 1800 or 1820 or 2000 or 1610 or 5555 => 4000,
 		_ => current,
 	};
+}
+
+/// <summary>
+/// A 3-byte entry of <see cref="Es1ShellBackdrop.GroupTtms"/> (docs/es1/shell/menus.md#the-backdrop): the script's handle
+/// byte <c>+0</c> and the word <c>+1</c>, the hangar slot the script stands for, 99 for one that always plays and −99 for
+/// one that shows nothing yet (docs/es1/shell/hangar.md#the-service-bays-display). <c>TtmEntry_Ctor</c> (<c>0001201b</c>)
+/// sets −1 and −99.
+/// </summary>
+public sealed class Es1TtmEntry {
+	/// <summary>The word <c>+1</c> of an entry that shows nothing yet, −99.</summary>
+	public const short NoSlot = -99;
+
+	/// <summary>The word <c>+1</c> of an entry that always plays, 99.</summary>
+	public const short Always = 99;
+
+	/// <summary><c>+0</c>, the script's handle, <see cref="Ttm.Es1TtmManager.NoHandle"/> for none.</summary>
+	public byte Handle { get; set; } = Ttm.Es1TtmManager.NoHandle;
+
+	/// <summary><c>+1</c>, the slot word.</summary>
+	public short Slot { get; set; } = NoSlot;
 }

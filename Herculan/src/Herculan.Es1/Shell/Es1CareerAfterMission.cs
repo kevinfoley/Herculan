@@ -29,7 +29,7 @@ public sealed class Es1CareerAfterMission {
 	private const short ReturnToStockCondition = 80;
 
 	/// <summary>The words at <c>000808d8</c>: by chassis, the career missions a marked HERC takes to finish.</summary>
-	private static readonly short[] MarkedHercMissions = [1, 1, 2, 2, 2, 3, 3, 3];
+	internal static readonly short[] MarkedHercMissions = [1, 1, 2, 2, 2, 3, 3, 3];
 
 	/// <summary>
 	/// The first pilot entry <see cref="AutoRepairSquad"/> repairs from, by the record's word <c>+0x1f5</c>: 0 entry 4, so
@@ -154,7 +154,8 @@ public sealed class Es1CareerAfterMission {
 	/// <summary>
 	/// <c>Hangar_ScrapSlot</c> (<c>0002a20d</c>)(<paramref name="slot"/>) (docs/es1/shell/between-missions.md#lost-squadmates):
 	/// for a slot that is not −1 and holds a HERC, the HERC scrapped (<see cref="ScrapToSalvage"/>(HERC, 0)), destroyed
-	/// (<c>000232a4</c>(HERC, 3), which frees its diagram and deletes it), the slot emptied and the HERC count down 1.
+	/// (<c>Herc_Dtor</c> (<c>000232a4</c>)(HERC, 3), which frees its diagram, <see cref="Hangar.Es1HercDiagrams.Destroy"/>),
+	/// the slot emptied and the HERC count down 1.
 	/// </summary>
 	public void ScrapSlot(Es1Hangar hangar, short slot) {
 		if (hangar.HercIn(slot) is not { } herc) {
@@ -162,7 +163,7 @@ public sealed class Es1CareerAfterMission {
 		}
 
 		ScrapToSalvage(herc, 0);
-		// PLACEHOLDER: Herc_FreeDiagram, the HERC's diagram freed by 000232a4, the hangar's (S4); the record has none here.
+		_data.HercDiagrams.Destroy(herc);
 		hangar.Slots[slot] = null;
 		hangar.HercCount--;
 	}
@@ -198,17 +199,18 @@ public sealed class Es1CareerAfterMission {
 	/// the HERC's diagram built again, and <see cref="Es1Hangar.Dword"/> set to (<i>v</i> × 80 × <i>p</i> / 10000 + (100 −
 	/// <i>p</i>) × <i>v</i>) / 100, <i>v</i> the chassis' price (<see cref="Es1RepairCosts.ChassisPrices"/>) and <i>p</i>
 	/// <see cref="MarkedHercProgress"/>. When the word is then below 1, every status word of the HERC 100
-	/// (<see cref="Es1HercRecord.SetAllStatus"/>), its diagram built again, the marked slot −1 and the dword 0. Each build runs
+	/// (<see cref="Es1HercRecord.SetAllStatus"/>), its diagram built again, the marked slot −1 and the dword 0. Each build,
+	/// <c>Herc_BuildDiagram</c> (<c>00023883</c>)(HERC, the lowered word) (<see cref="Hangar.Es1HercDiagrams.Build"/>), runs
 	/// unless <c>Shell_LowMemory</c> (<c>0007fd09</c>) is set, which this engine does not set.
 	/// </summary>
-	public static void AdvanceMarkedHerc(Es1Hangar hangar) {
+	public static void AdvanceMarkedHerc(Es1Hangar hangar, Hangar.Es1HercDiagrams diagrams) {
 		if (!hangar.HasMarkedHerc() || hangar.HercIn(hangar.MarkedSlot) is not { } herc) {
 			return;
 		}
 
 		if (hangar.MarkedSlotWord > 0) {
 			hangar.MarkedSlotWord--;
-			BuildDiagram(herc);
+			diagrams.Build(herc, hangar.MarkedSlotWord);
 			int price = Price(herc.Chassis);
 			int progress = MarkedHercProgress(hangar);
 			hangar.Dword = (price * 80 * progress / 10000 + (100 - progress) * price) / 100;
@@ -216,7 +218,7 @@ public sealed class Es1CareerAfterMission {
 
 		if (hangar.MarkedSlotWord < 1) {
 			herc.SetAllStatus(Full);
-			BuildDiagram(herc);
+			diagrams.Build(herc, hangar.MarkedSlotWord);
 			hangar.MarkedSlot = -1;
 			hangar.Dword = 0;
 		}
@@ -240,16 +242,6 @@ public sealed class Es1CareerAfterMission {
 	/// <summary>The chassis' word of <c>000808b8</c>; retail reads past the eight for a chassis past them, 0 here, an engine guard.</summary>
 	private static short Price(short chassis) =>
 		chassis >= 0 && chassis < Es1RepairCosts.ChassisPrices.Length ? Es1RepairCosts.ChassisPrices[chassis] : (short)0;
-
-	/// <summary>
-	/// <c>Herc_BuildDiagram</c> (<c>00023883</c>)(HERC, the marked slot's word): its changes to the HERC's mounts
-	/// (<see cref="Es1HercRecord.BuildDiagramMounts"/>).
-	/// </summary>
-	private static void BuildDiagram(Es1HercRecord herc) {
-		herc.BuildDiagramMounts();
-		// PLACEHOLDER: the diagram itself, which Herc_BuildDiagram builds with the marked slot's word
-		// (docs/es1/formats/herc-diagrams.md#the-mount-pictures), the hangar's (S4).
-	}
 
 	/// <summary>
 	/// <c>CareerRecord_AutoRepairSquad</c> (<c>0001601b</c>)(<paramref name="record"/>) (docs/es1/shell/between-missions.md#repairs):

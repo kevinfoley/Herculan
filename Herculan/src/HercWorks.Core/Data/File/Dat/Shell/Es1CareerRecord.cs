@@ -184,6 +184,28 @@ public class Es1CareerRecord {
 	}
 
 	/// <summary>
+	/// <c>CareerRecord_PrevPilot</c> (<c>00015b85</c>) (docs/es1/shell/repair-and-build.md#the-hangars-selection):
+	/// <see cref="CurrentPilot"/> stepped back by 1, from 0 to 3, until it names an entry on strength with a slot, which can
+	/// be the one it started from, and <paramref name="hangar"/>'s selected slot set to that entry's when it changed. Retail
+	/// loops for ever when no entry qualifies, and reads past the entries from a current pilot past 4; here the current
+	/// pilot then stays, and the step is taken modulo 4, engine guards.
+	/// </summary>
+	public void PrevPilot(Es1Hangar hangar) {
+		short start = CurrentPilot;
+		for (int step = 1; step <= PilotCount; step++) {
+			int index = ((start - step) % PilotCount + PilotCount) % PilotCount;
+			if (OnStrengthWithSlot(index)) {
+				CurrentPilot = (short)index;
+				if (CurrentPilot != start) {
+					hangar.SelectedSlot = Pilots[index].Slot;
+				}
+
+				return;
+			}
+		}
+	}
+
+	/// <summary>
 	/// <c>CareerRecord_PlayerHasNoHerc</c> (<c>000161dc</c>): the player's entry <see cref="PlayerEntry"/> has no slot. Retail
 	/// reads the entry with no bounds test; an entry past the four answers true here, an engine guard.
 	/// </summary>
@@ -588,6 +610,97 @@ public class Es1Hangar {
 		herc.BuildDiagramMounts();
 		HercCount++;
 		return (short)slot;
+	}
+
+	/// <summary>
+	/// <c>Hangar_FindFreeSlot</c> (<c>0002983a</c>): the first slot below <see cref="SlotCount"/> that holds no HERC, or −1.
+	/// </summary>
+	public short FindFreeSlot() {
+		for (short slot = 0; slot < SlotCount; slot++) {
+			if (HercIn(slot) == null) {
+				return slot;
+			}
+		}
+
+		return -1;
+	}
+
+	/// <summary>
+	/// <c>Hangar_NextHercSlot</c> (<c>00029729</c>) (docs/es1/shell/repair-and-build.md#the-hangars-selection):
+	/// <see cref="SelectedSlot"/> plus 1 modulo <see cref="SlotCount"/> until the slot holds a HERC and is not
+	/// <see cref="MarkedSlot"/>, or is the slot it started from. Retail divides by a slot count of 0, and loops for ever from
+	/// a slot outside the count when no slot qualifies; here a count of 0 changes nothing and the walk stops after
+	/// <see cref="SlotCount"/> steps, engine guards.
+	/// </summary>
+	public void NextHercSlot() {
+		short start = SelectedSlot;
+		for (int step = 0; step < SlotCount; step++) {
+			SelectedSlot = (short)((SelectedSlot + 1) % SlotCount);
+			if ((HercIn(SelectedSlot) != null && SelectedSlot != MarkedSlot) || SelectedSlot == start) {
+				return;
+			}
+		}
+	}
+
+	/// <summary>
+	/// <c>Hangar_PrevHercSlot</c> (<c>000296c9</c>): <see cref="SelectedSlot"/> less 1, from a slot below 1 to
+	/// <see cref="SlotCount"/> − 1, until the slot holds a HERC and is not <see cref="MarkedSlot"/>, or is the slot it
+	/// started from. The walk stops after <see cref="SlotCount"/> steps, an engine guard as <see cref="NextHercSlot"/>'s.
+	/// </summary>
+	public void PrevHercSlot() {
+		short start = SelectedSlot;
+		for (int step = 0; step < SlotCount; step++) {
+			if (SelectedSlot < 1) {
+				SelectedSlot = SlotCount;
+			}
+
+			SelectedSlot--;
+			if ((HercIn(SelectedSlot) != null && SelectedSlot != MarkedSlot) || SelectedSlot == start) {
+				return;
+			}
+		}
+	}
+
+	/// <summary>
+	/// <c>Hangar_NextUnpilotedHercSlot</c> (<c>0002978c</c>): <see cref="NextHercSlot"/> until
+	/// <see cref="Es1CareerRecord.FindPilotBySlot"/> of <paramref name="record"/>, <c>CareerRecord_Current</c>'s, answers −1
+	/// for the slot, or the selection is back where it started. The walk stops after <see cref="SlotCount"/> + 1 steps, an
+	/// engine guard where retail loops for ever from a slot the steps never reach.
+	/// </summary>
+	public void NextUnpilotedHercSlot(Es1CareerRecord record) {
+		short start = SelectedSlot;
+		for (int step = 0; step <= SlotCount; step++) {
+			NextHercSlot();
+			if (record.FindPilotBySlot(SelectedSlot) == -1 || SelectedSlot == start) {
+				return;
+			}
+		}
+	}
+
+	/// <summary>
+	/// <c>Hangar_PrevUnpilotedHercSlot</c> (<c>000297cb</c>): <see cref="NextUnpilotedHercSlot"/> stepping with
+	/// <see cref="PrevHercSlot"/>, with the same guard.
+	/// </summary>
+	public void PrevUnpilotedHercSlot(Es1CareerRecord record) {
+		short start = SelectedSlot;
+		for (int step = 0; step <= SlotCount; step++) {
+			PrevHercSlot();
+			if (record.FindPilotBySlot(SelectedSlot) == -1 || SelectedSlot == start) {
+				return;
+			}
+		}
+	}
+
+	/// <summary>
+	/// <c>Hangar_SelectMarkedSlot</c> (<c>0002980a</c>): <see cref="MarkedSlot"/> given <see cref="FindFreeSlot"/>'s answer
+	/// when it is −1, then selected.
+	/// </summary>
+	public void SelectMarkedSlot() {
+		if (MarkedSlot == -1) {
+			MarkedSlot = FindFreeSlot();
+		}
+
+		SelectedSlot = MarkedSlot;
 	}
 
 	/// <summary>
