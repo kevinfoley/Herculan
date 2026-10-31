@@ -144,6 +144,9 @@ public static class Es1MenuBuild {
 						var handler = record.Id switch {
 							Es1DebriefingMenu.ResultsPanel => Es1DebriefingMenu.ResultsHandler(context),
 							Es1CareerStatsAlert.StatsPanel => Es1CareerStatsAlert.StatsHandler(context),
+							>= Es1CrewAssignMenu.FirstPortrait and <= Es1CrewAssignMenu.LastPortrait => Es1CrewAssignMenu.PortraitHandler(context),
+							>= Es1CrewAssignMenu.FirstLines and <= Es1CrewAssignMenu.LastLines => Es1CrewAssignMenu.LinesHandler(context),
+							>= Es1CrewAssignMenu.FirstTile and <= Es1CrewAssignMenu.LastTile => Es1CrewAssignMenu.BayNumberHandler(context),
 							_ => HotspotPlaceholder,
 						};
 						menu.Window?.AddHotspot(null, record.Id, handler, rect);
@@ -154,8 +157,7 @@ public static class Es1MenuBuild {
 					BuildList(menu, record, rect);
 					break;
 				case Kind16:
-					// PLACEHOLDER: 0001eaef(0, 0x100, 0, a word, id, 00037827(id), rect), kind 16's control, is
-					// dlg-menu-dialogs.md's Open.
+					BuildPictureTile(menu, record, rect);
 					break;
 				case Kind17:
 					// PLACEHOLDER: 0001eff6(0, 0x13, 0, 0xffff, id, 00037996(id), rect), kind 17's control, is
@@ -268,6 +270,40 @@ public static class Es1MenuBuild {
 		menu.Window?.AddControl(new Es1MTStrListBox(menu.Context.Data, 0x100, 0, 0, selected, record.Style, record.Id, lines, rect));
 	}
 
+	/// <summary>The kind-16 ids at <c>00081ab8</c> whose word is set by their own code, the ported ones: CREW's insignia and HERC tiles.</summary>
+	private const short InsigniaTile = Es1CrewAssignMenu.InsigniaTile, FirstHercTile = Es1CrewAssignMenu.FirstTile,
+		LastHercTile = Es1CrewAssignMenu.LastTile;
+
+	/// <summary>
+	/// Kind 16 (<c>0003ac49</c>): the bank <c>00037827</c>(id) (<see cref="Es1MenuBanks.ForControl"/>), then a picture tile,
+	/// <c>0001eaef</c>(0, <c>0x100</c>, 0, word, id, bank, rect) (<see cref="Es1MTGfxListBox"/>), added to the window. The
+	/// word is −1, or for the ten ids at <c>00081ab8</c> (targets at <c>00081ae0</c>, in bytes Ghidra left undefined) set by
+	/// their own code: 1611 (<c>0003ac98</c>) 0, and 1615 to 1618 (<c>0003aca6</c>) the chassis, word <c>+0</c>, of the
+	/// HERC in the slot <c>+8</c> of pilot entry id − 1615 of the roster's record its word <c>+7</c> names, read from the
+	/// roster in either mode, −1 for a slot of −1 or one holding no HERC.
+	/// </summary>
+	private static void BuildPictureTile(Es1Menu menu, Es1MenuControl record, Es1Rect rect) {
+		var context = menu.Context;
+		if (!Es1MenuBanks.HasBankFor(record.Id)) {
+			// PLACEHOLDER: the other kind-16 ids, 1316 and 1321 (PREFERENCES, the words 0007fcba and 0, 0003ac86 and 0003ac78),
+			// 1803 (the word -1) and 1914 to 1916 (1 or 0 by the word 0007fcf8, 0003ad45 to 0003ad87), take banks from cases of
+			// 00037827 still unread, and any id outside the eleven at 0008144c none; their menus are later parts', and no tile
+			// is built.
+			return;
+		}
+
+		var bank = context.Banks.ForControl(record.Id);
+		short word = -1;
+		if (record.Id == InsigniaTile) {
+			word = 0;
+		} else if (record.Id is >= FirstHercTile and <= LastHercTile) {
+			short slot = context.Mission.Roster.CurrentRecord.Pilots[record.Id - FirstHercTile].Slot;
+			word = context.Mission.Hangar?.HercIn(slot)?.Chassis ?? -1;
+		}
+
+		menu.Window?.AddControl(new Es1MTGfxListBox(context.Data, context.Banks, 0x100, 0, word, record.Id, bank, rect));
+	}
+
 	/// <summary>
 	/// <c>Menu_ListLines</c> (<c>0003750d</c>)(<paramref name="id"/>): for 1002, the main menu's list,
 	/// <c>CareerLog_CurrentNameArray</c> (<c>000182f8</c>) of the careers log (docs/es1/shell/main-menu.md#the-list); for
@@ -338,13 +374,14 @@ public static class Es1MenuBuild {
 	}
 
 	/// <summary>
-	/// The handler every hotspot but 1522, the debriefing's results panel (<see cref="Es1DebriefingMenu.ResultsHandler"/>),
-	/// and 1231, the career's stats (<see cref="Es1CareerStatsAlert.StatsHandler"/>), is given in place of its own
-	/// (<see cref="HotspotIds"/>): it draws nothing. 00017a19 draws the current career record's pilot portraits and their
-	/// marks, and the other handlers are unread; all are later modules'.
+	/// The handler 1502, 2005, 1803 and 1811 are given in place of their own (<see cref="HotspotIds"/>): it draws nothing.
+	/// The ported handlers are 1522's, the debriefing's results panel (<see cref="Es1DebriefingMenu.ResultsHandler"/>),
+	/// 1231's, the career's stats (<see cref="Es1CareerStatsAlert.StatsHandler"/>), and CREW's three
+	/// (<see cref="Es1CrewAssignMenu.PortraitHandler"/>, <see cref="Es1CrewAssignMenu.LinesHandler"/>,
+	/// <see cref="Es1CrewAssignMenu.BayNumberHandler"/>).
 	/// </summary>
 	private static void HotspotPlaceholder(Es1ShellRenderContext context, Es1Rect rect, short id) {
-		// PLACEHOLDER: the hotspot handlers (00017a19 and the six other handlers above, 000175d7 and 0001705e aside), the later
-		// modules'; the area draws nothing.
+		// PLACEHOLDER: the hotspot handlers 0002bbaf, 0002845c, 0002d5bf and 0002dacf, the war map's, BUILD's and ARMING's,
+		// later parts'; the area draws nothing.
 	}
 }

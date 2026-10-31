@@ -857,8 +857,8 @@ public sealed class Es1ShellScreens {
 	/// <paramref name="target"/>: most make the screen's object the current menu (docs/es1/shell/menus.md#the-screens).
 	/// The main menu's, SINGLE MISSION's, MISSION PARAMS', the war map's, its two alerts', the debriefing's in either mode, the
 	/// career menu's and its REGISTRATION, backups, stats and overwrite warning, the KIA warnings', TECH RELEASE's, the delete
-	/// warning's, the disk-space warning's, the options menu's and its battle-set picker's, the service bay's and its three
-	/// warnings', and the quit question's are ported, 1490's, 1499's and 1520's message boxes, and screen 9999's exit code;
+	/// warning's, the disk-space warning's, the options menu's and its battle-set picker's, the service bay's, its three
+	/// warnings' and CREW's, and the quit question's are ported, 1490's, 1499's and 1520's message boxes, and screen 9999's exit code;
 	/// with any other the
 	/// screen becomes current with no menu, as
 	/// retail's does for the cases that make none, its backdrop shown with no window. The waits are the war map's and the
@@ -1066,6 +1066,13 @@ public sealed class Es1ShellScreens {
 
 				break;
 			case CrewScreen:
+				// 0003efac: CrewAssignMenu_Ctor(0), CREW, then ShellBackdrop_LoadPalette(1610).
+				if (_menuContext != null) {
+					CurrentMenu = new Es1CrewAssignMenu(_menuContext);
+				}
+
+				_backdrop.LoadPalette(CrewScreen);
+				break;
 			case 1800:
 			case 1820:
 			case 1900:
@@ -1074,9 +1081,8 @@ public sealed class Es1ShellScreens {
 			case 2000:
 			case 2010:
 			case 4444:
-				// PLACEHOLDER: the hangar's screens, S4's: 0002c743 with ShellBackdrop_LoadPalette(1610), ArmingMenu,
-				// RepairMenu, RepairPrefsAlert, 0002f1aa, 0002986f(3) with 000307c9 (which sets the hangar test's dword
-				// 0007fce4), SalvageAllocAlert and ScrapAlert.
+				// PLACEHOLDER: the hangar's screens, S4's: ArmingMenu, RepairMenu, RepairPrefsAlert, 0002f1aa, 0002986f(3) with
+				// 000307c9 (which sets the hangar test's dword 0007fce4), SalvageAllocAlert and ScrapAlert.
 				break;
 			case 1310:
 			case 1320:
@@ -1086,8 +1092,8 @@ public sealed class Es1ShellScreens {
 		}
 	}
 
-	/// <summary>The crew screen, 1610, from which the service bay's case loads backdrop 4000's palette again.</summary>
-	private const short CrewScreen = 1610;
+	/// <summary>The crew screen, 1610, whose case loads its own palette and from which the service bay's case loads backdrop 4000's again.</summary>
+	private const short CrewScreen = Es1CrewAssignMenu.Screen;
 
 	/// <summary>The message box's kind for a career's debriefing line, which screen 1520's case puts up.</summary>
 	private const short CareerDebriefingKind = 4;

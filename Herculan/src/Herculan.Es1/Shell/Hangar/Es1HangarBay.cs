@@ -68,7 +68,7 @@ public sealed class Es1HangarBay {
 	private short RandomBelow(short bound) => (short)(_data.Random?.Below(bound) ?? 0);
 
 	/// <summary>The handle of group script <paramref name="entry"/>; retail reads past the entries unchecked, none here, an engine guard.</summary>
-	private byte Handle(int entry) => Entries is { } entries && entry >= 0 && entry < entries.Length ? entries[entry].Handle : Es1TtmManager.NoHandle;
+	public byte Handle(int entry) => Entries is { } entries && entry >= 0 && entry < entries.Length ? entries[entry].Handle : Es1TtmManager.NoHandle;
 
 	/// <summary>The HERC in the selected slot <c>Hangar_SelectedSlot</c> (<c>00080894</c>), or null for −1, an empty slot or no hangar.</summary>
 	public Es1HercRecord? SelectedHerc => Hangar is { } hangar ? hangar.HercIn(hangar.SelectedSlot) : null;
