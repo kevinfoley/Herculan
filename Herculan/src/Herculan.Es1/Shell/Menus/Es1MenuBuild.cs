@@ -1,5 +1,6 @@
 using System.Text;
 using HercWorks.Core.Data.File;
+using HercWorks.Core.Data.File.Dat.Shell;
 using HercWorks.Core.Io.Transform.Common;
 using HercWorks.Core.Io.Transform.Shell;
 using Herculan.Es1.View;
@@ -15,6 +16,9 @@ public static class Es1MenuBuild {
 	/// <summary>The record kinds the build handles.</summary>
 	private const byte WindowKind = 0, LeftLabelKind = 1, Kind2 = 2, ButtonKind = 3, RightLabelKind = 4, CenteredLabelKind = 5,
 		HotspotKind = 14, ListKind = 15, Kind16 = 16, Kind17 = 17, Kind18 = 18;
+
+	/// <summary>The maximum the build gives a kind-17 control, <c>0x13</c>.</summary>
+	private const short AnimationMax = 0x13;
 
 	/// <summary>The id of kinds 0, 1, 4 and 5 that builds nothing, the first of the five at <c>0008196c</c>.</summary>
 	private const short SkippedId = 1211;
@@ -48,11 +52,11 @@ public static class Es1MenuBuild {
 	public const short CareerNameList = 1002;
 
 	/// <summary>
-	/// The 18 ids that <c>Menu_ListLines</c> gives lines of their own and that are not ported, of the 28 at
-	/// <c>000812f4</c>: all but 1002, 1202, 1223 and the lists of <see cref="WaTextLists"/>.
+	/// The 14 ids that <c>Menu_ListLines</c> gives lines of their own and that are not ported, of the 28 at
+	/// <c>000812f4</c>: all but 1002, 1202, 1223, ARMING's four and the lists of <see cref="WaTextLists"/>.
 	/// </summary>
 	private static readonly short[] OwnLinesLists = [
-		1921, 1924, 1925, 1926, 1907, 1906, 1927, 1923, 1314, 1315, 1316, 1318, 1904, 1903, 1905, 1922, 1808, 1809,
+		1921, 1924, 1925, 1926, 1907, 1906, 1927, 1923, 1314, 1315, 1316, 1318, 1905, 1922,
 	];
 
 	/// <summary>
@@ -144,6 +148,8 @@ public static class Es1MenuBuild {
 						var handler = record.Id switch {
 							Es1DebriefingMenu.ResultsPanel => Es1DebriefingMenu.ResultsHandler(context),
 							Es1CareerStatsAlert.StatsPanel => Es1CareerStatsAlert.StatsHandler(context),
+							Es1ArmingMenu.WeaponPanel => Es1ArmingMenu.WeaponInfoHandler(context),
+							Es1ArmingMenu.MissilePanel => Es1ArmingMenu.MissileInfoHandler(context),
 							>= Es1CrewAssignMenu.FirstPortrait and <= Es1CrewAssignMenu.LastPortrait => Es1CrewAssignMenu.PortraitHandler(context),
 							>= Es1CrewAssignMenu.FirstLines and <= Es1CrewAssignMenu.LastLines => Es1CrewAssignMenu.LinesHandler(context),
 							>= Es1CrewAssignMenu.FirstTile and <= Es1CrewAssignMenu.LastTile => Es1CrewAssignMenu.BayNumberHandler(context),
@@ -154,14 +160,15 @@ public static class Es1MenuBuild {
 
 					break;
 				case ListKind:
-					BuildList(menu, record, rect);
+					BuildList(menu, number, record, rect);
 					break;
 				case Kind16:
 					BuildPictureTile(menu, record, rect);
 					break;
 				case Kind17:
-					// PLACEHOLDER: 0001eff6(0, 0x13, 0, 0xffff, id, 00037996(id), rect), kind 17's control, is
-					// dlg-menu-dialogs.md's Open.
+					// 0001eff6(0, 0x13, 0, 0xffff, id, Menu_OpenControlTtms(id), rect), added to the window.
+					menu.Window?.AddControl(new Es1AnimationControl(context.Data, () => context.Screens.Scripts, AnimationMax, 0, -1,
+						record.Id, Es1AnimationControl.OpenScripts(context, record.Id), rect));
 					break;
 				case Kind18:
 					if (record.Style == 1) {
@@ -244,30 +251,50 @@ public static class Es1MenuBuild {
 		return text;
 	}
 
+	/// <summary>The alignment HERC's and PILOT's readouts take outside ARMING, 2, centered.</summary>
+	private const int CenteredReadout = 2;
+
 	/// <summary>
-	/// Kind 15: the lines (<see cref="ListLines"/>), then a list box, <c>MTStrListBox_Ctor</c>(0, <c>0x100</c>, 0, 0,
-	/// selection, style, id, lines, rect), added to the window: the selection 0, or for the 23 ids at <c>00081a00</c> the
-	/// one their case sets, MISSION PARAMS' lists 1116 to 1120 their word of <see cref="Es1ShellData.MissionParams"/> and
-	/// the career list 1202 <see cref="Es1ShellData.SelectedEntry"/> (<c>0003ab5f</c>) and the backup list 1223
-	/// <c>Career_BackupLine</c> (<see cref="Es1CareerRoster.BackupLine"/>, <c>0003abf0</c>).
+	/// Kind 15: the lines (<see cref="ListLines"/>), then a list box, <c>MTStrListBox_Ctor</c>(0, <c>0x100</c>, 0,
+	/// alignment, selection, style, id, lines, rect), added to the window: the alignment 0 and the selection 0, or for the
+	/// 23 ids at <c>00081a00</c> what their case sets: MISSION PARAMS' lists 1116 to 1120 their word of
+	/// <see cref="Es1ShellData.MissionParams"/>; the career list 1202 <see cref="Es1ShellData.SelectedEntry"/>
+	/// (<c>0003ab5f</c>); the backup list 1223 <c>Career_BackupLine</c> (<see cref="Es1CareerRoster.BackupLine"/>,
+	/// <c>0003abf0</c>); HERC's readout 1903 (<c>0003aa57</c>) the chassis of <c>Hangar_SelectedSlot</c>'s HERC, −1 for
+	/// none, and PILOT's 1904 (<c>0003aac4</c>) <see cref="Es1ArmingMenu.PilotLine"/>(<c>CareerRecord_Current</c>, its
+	/// current pilot <c>+0x12</c>), each with the alignment 2 unless <paramref name="number"/> is 1800 or 1820; and the
+	/// weapon list 1808 (<c>0003abdd</c>) its counts written (<see cref="Es1ArmingGlobals.FormatCounts"/>).
 	/// </summary>
-	private static void BuildList(Es1Menu menu, Es1MenuControl record, Es1Rect rect) {
-		var lines = ListLines(menu.Context, record.Id);
+	private static void BuildList(Es1Menu menu, short number, Es1MenuControl record, Es1Rect rect) {
+		var context = menu.Context;
+		var lines = ListLines(context, record.Id);
 		short selected = 0;
+		int alignment = 0;
+		bool arming = number is Es1ArmingMenu.Screen or Es1ArmingMenu.LowMemoryScreen;
 		if (record.Id is >= FirstParamsList and <= LastParamsList) {
-			selected = menu.Context.Data.MissionParams[record.Id - FirstParamsList];
+			selected = context.Data.MissionParams[record.Id - FirstParamsList];
 		} else if (record.Id == Es1CareerMenu.CareerList) {
-			selected = menu.Context.Data.SelectedEntry;
+			selected = context.Data.SelectedEntry;
 		} else if (record.Id == Es1CareerRecordsMenu.BackupList) {
 			// 0003abf0.
-			selected = menu.Context.Mission.Roster.BackupLine;
+			selected = context.Mission.Roster.BackupLine;
+		} else if (record.Id == Es1ArmingMenu.ChassisList) {
+			var hangar = context.Mission.Hangar;
+			selected = hangar?.HercIn(hangar.SelectedSlot)?.Chassis ?? -1;
+			alignment = arming ? 0 : CenteredReadout;
+		} else if (record.Id == Es1ArmingMenu.PilotList) {
+			var current = context.Mission.CurrentRecord;
+			selected = Es1ArmingMenu.PilotLine(current, current?.CurrentPilot ?? -1);
+			alignment = arming ? 0 : CenteredReadout;
+		} else if (record.Id == Es1ArmingMenu.WeaponList) {
+			context.Arming.FormatCounts(context, lines);
 		} else if (Array.IndexOf(OwnSelectionLists, record.Id) >= 0) {
-			// PLACEHOLDER: the other 16 ids at 00081a00 build their list with a selection, and 1903 an alignment, set by their
-			// own code (dlg-menu-dialogs.md's Open); their menus are later modules'.
+			// PLACEHOLDER: the other 13 ids at 00081a00 build their list with a selection set by their own code
+			// (dlg-menu-dialogs.md's Open); their menus are later modules'.
 			return;
 		}
 
-		menu.Window?.AddControl(new Es1MTStrListBox(menu.Context.Data, 0x100, 0, 0, selected, record.Style, record.Id, lines, rect));
+		menu.Window?.AddControl(new Es1MTStrListBox(context.Data, 0x100, 0, alignment, selected, record.Style, record.Id, lines, rect));
 	}
 
 	/// <summary>The kind-16 ids at <c>00081ab8</c> whose word is set by their own code, the ported ones: CREW's insignia and HERC tiles.</summary>
@@ -285,10 +312,9 @@ public static class Es1MenuBuild {
 	private static void BuildPictureTile(Es1Menu menu, Es1MenuControl record, Es1Rect rect) {
 		var context = menu.Context;
 		if (!Es1MenuBanks.HasBankFor(record.Id)) {
-			// PLACEHOLDER: the other kind-16 ids, 1316 and 1321 (PREFERENCES, the words 0007fcba and 0, 0003ac86 and 0003ac78),
-			// 1803 (the word -1) and 1914 to 1916 (1 or 0 by the word 0007fcf8, 0003ad45 to 0003ad87), take banks from cases of
-			// 00037827 still unread, and any id outside the eleven at 0008144c none; their menus are later parts', and no tile
-			// is built.
+			// PLACEHOLDER: the other kind-16 ids, 1316 and 1321 (PREFERENCES, the words 0007fcba and 0, 0003ac86 and 0003ac78)
+			// and 1914 to 1916 (1 or 0 by the word 0007fcf8, 0003ad45 to 0003ad87), take banks from cases of 00037827 not
+			// ported, and any id outside the eleven at 0008144c none; their menus are later parts', and no tile is built.
 			return;
 		}
 
@@ -309,8 +335,13 @@ public static class Es1MenuBuild {
 	/// <c>CareerLog_CurrentNameArray</c> (<c>000182f8</c>) of the careers log (docs/es1/shell/main-menu.md#the-list); for
 	/// 1202, the career menu's list, <c>CareerLog_NameLines</c> (<see cref="Es1ShellData.CareerNameLines"/>); for 1223,
 	/// the backup list, <c>Roster_BackupListLines</c> (<see cref="Es1CareerRoster.BackupListLines"/>); for the
-	/// single-mission lists and the battle-set list, <see cref="LinesFromList"/> of their word list (<see cref="WaTextLists"/>); for any id outside
-	/// the 28 at <c>000812f4</c>, <see cref="LinesFromList"/> of the list at <c>000811a4</c>, which numbers none.
+	/// single-mission lists and the battle-set list, <see cref="LinesFromList"/> of their word list (<see cref="WaTextLists"/>);
+	/// for ARMING's, 1903 (<c>00037760</c>) the chassis' names (<see cref="Es1ArmingGlobals.ChassisLines"/>), 1904
+	/// (<c>00037728</c>) PLAYER, the squadmates' names and UNASSIGNED (<see cref="Es1ArmingGlobals.PilotLines"/>), the
+	/// first line replaced in <c>Shell_Mode</c> 1 by the career's name, that of the careers-log entry the roster's dword
+	/// <c>+1</c> points at, 1808 (<c>00037782</c>) <see cref="Es1ArmingGlobals.BuildWeaponList"/>(−1, −1) and 1809
+	/// (<c>0003779a</c>) the missile types (<see cref="Es1ArmingGlobals.MissileTypeLines"/>); for any id outside the 28
+	/// at <c>000812f4</c>, <see cref="LinesFromList"/> of the list at <c>000811a4</c>, which numbers none.
 	/// </summary>
 	public static string?[] ListLines(Es1MenuContext context, short id) {
 		if (id == CareerNameList) {
@@ -329,8 +360,25 @@ public static class Es1MenuBuild {
 			return LinesFromList(context.Data.Text, numbers);
 		}
 
+		switch (id) {
+			case Es1ArmingMenu.ChassisList:
+				return LinesFromList(context.Data.Text, Es1ArmingGlobals.ChassisLines);
+			case Es1ArmingMenu.PilotList:
+				var pilots = LinesFromList(context.Data.Text, Es1ArmingGlobals.PilotLines);
+				if (context.Mission.Mode == 1) {
+					// A roster with no log entry leaves a null pointer there, which ends the lines at once.
+					pilots[0] = context.Mission.Roster.LogEntry is { } entry ? Es1CareerLogEntry.Text(entry.Name) : null;
+				}
+
+				return pilots;
+			case Es1ArmingMenu.WeaponList:
+				return LinesFromList(context.Data.Text, context.Arming.BuildWeaponList(context, -1, -1));
+			case Es1ArmingMenu.MissileTypeList:
+				return LinesFromList(context.Data.Text, Es1ArmingGlobals.MissileTypeLines);
+		}
+
 		if (Array.IndexOf(OwnLinesLists, id) >= 0) {
-			// PLACEHOLDER: the 18 other ids at 000812f4 give lines of their own (the cases at 00081364), unread; their menus are
+			// PLACEHOLDER: the 14 other ids at 000812f4 give lines of their own (the cases at 00081364), unread; their menus are
 			// later modules', and the list is empty until they land.
 			return [null];
 		}
@@ -374,14 +422,15 @@ public static class Es1MenuBuild {
 	}
 
 	/// <summary>
-	/// The handler 1502, 2005, 1803 and 1811 are given in place of their own (<see cref="HotspotIds"/>): it draws nothing.
-	/// The ported handlers are 1522's, the debriefing's results panel (<see cref="Es1DebriefingMenu.ResultsHandler"/>),
-	/// 1231's, the career's stats (<see cref="Es1CareerStatsAlert.StatsHandler"/>), and CREW's three
+	/// The handler 1502 and 2005 are given in place of their own (<see cref="HotspotIds"/>): it draws nothing. The ported
+	/// handlers are 1522's, the debriefing's results panel (<see cref="Es1DebriefingMenu.ResultsHandler"/>), 1231's, the
+	/// career's stats (<see cref="Es1CareerStatsAlert.StatsHandler"/>), CREW's three
 	/// (<see cref="Es1CrewAssignMenu.PortraitHandler"/>, <see cref="Es1CrewAssignMenu.LinesHandler"/>,
-	/// <see cref="Es1CrewAssignMenu.BayNumberHandler"/>).
+	/// <see cref="Es1CrewAssignMenu.BayNumberHandler"/>) and ARMING's two (<see cref="Es1ArmingMenu.WeaponInfoHandler"/>,
+	/// <see cref="Es1ArmingMenu.MissileInfoHandler"/>).
 	/// </summary>
 	private static void HotspotPlaceholder(Es1ShellRenderContext context, Es1Rect rect, short id) {
-		// PLACEHOLDER: the hotspot handlers 0002bbaf, 0002845c, 0002d5bf and 0002dacf, the war map's, BUILD's and ARMING's,
-		// later parts'; the area draws nothing.
+		// PLACEHOLDER: the hotspot handlers 0002bbaf and 0002845c, the war map's and BUILD's, later parts'; the area draws
+		// nothing.
 	}
 }

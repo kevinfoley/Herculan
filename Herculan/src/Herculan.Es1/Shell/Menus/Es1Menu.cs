@@ -8,13 +8,22 @@ namespace Herculan.Es1.Shell.Menus;
 /// <summary>
 /// What a menu and its window draw and read with: the shell's display, its archives, its shared data, the window
 /// globals, the dirty list, the screen state, the mission the shell loads, the options <c>Prefs_Options</c>
-/// (<c>000aa24e</c>) and the picture tiles' and CREW's bitmap arrays. This engine's bundle of retail's globals, passed
-/// where retail reads them.
+/// (<c>000aa24e</c>), the picture tiles' and CREW's bitmap arrays, ARMING's statics and the animations' script handles.
+/// This engine's bundle of retail's globals, passed where retail reads them.
 /// </summary>
 public sealed record Es1MenuContext(Es1VideoMemory Display, GameContent Content, Es1ShellData Data, Es1MenuGlobals Globals,
 	Es1DirtyList Dirty, Es1ShellScreens Screens, Es1ShellMission Mission, Es1Preferences Preferences) {
 	/// <summary>The bitmap arrays the picture tiles and CREW's hotspots draw from, retail's statics.</summary>
 	public Es1MenuBanks Banks { get; } = new(Content);
+
+	/// <summary>ARMING's statics and its weapon list (<see cref="Es1ArmingMenu"/>).</summary>
+	public Es1ArmingGlobals Arming { get; } = new();
+
+	/// <summary>
+	/// The 18 handle bytes at <c>000a056c</c>, zeroes in the image, which <see cref="Es1AnimationControl.OpenScripts"/>
+	/// fills and every animation holds.
+	/// </summary>
+	public byte[] ControlScripts { get; } = new byte[Es1AnimationControl.ScriptCount];
 }
 
 /// <summary>
@@ -65,7 +74,7 @@ public class Es1Menu {
 	/// <c>Menu_Open</c> (<c>0003969e</c>)(menu, <paramref name="number"/>)
 	/// (docs/es1/shell/menus.md#opening-a-menu--menu_open-0003969e): the number kept, <see cref="Es1MenuGlobals.SyncPointer"/>
 	/// set and the window built (<see cref="Es1MenuBuild.BuildFromDlg"/>); the window made the active one; the number's
-	/// control changes (1100's, 1000's, 1200's, 1610's <see cref="Es1CrewAssignMenu.SetOpeningControls"/> and, in <c>Shell_Mode</c> 1, 1700's <see cref="Es1ServiceBayMenu.SetButtons"/>); unless the number is 9999, the focus and the pointer on the first control whose key is <c>Space</c>,
+	/// control changes (1100's, 1000's, 1200's, 1610's <see cref="Es1CrewAssignMenu.SetOpeningControls"/>, 1800's and 1820's <see cref="Es1ArmingMenu.SetOpeningControls"/> and, in <c>Shell_Mode</c> 1, 1700's <see cref="Es1ServiceBayMenu.SetButtons"/>); unless the number is 9999, the focus and the pointer on the first control whose key is <c>Space</c>,
 	/// or on control 0; the saved background allocated, zeroed; and <see cref="Es1MenuGlobals.InputReady"/> set.
 	/// </summary>
 	public void Open(short number) {
@@ -97,12 +106,16 @@ public class Es1Menu {
 			Es1CrewAssignMenu.SetOpeningControls(window, MakeInactive);
 		}
 
+		if (number is Es1ArmingMenu.Screen or Es1ArmingMenu.LowMemoryScreen) {
+			Es1ArmingMenu.SetOpeningControls(window, number, MakeInactive);
+		}
+
 		if (number == Es1ServiceBayMenu.Screen && Context.Mission.Mode == 1) {
 			Es1ServiceBayMenu.SetButtons(window, Context.Mission.Roster.CurrentRecord, MakeInactive);
 		}
 
 		// PLACEHOLDER: Menu_Open's control changes for menu 1310 are the preferences and controls module's, after S5; for
-		// 1920, 2000, 1800, 1820 and 1900 (the last after the focus below) S4's. No ported screen opens them.
+		// 1920, 2000 and 1900 (the last after the focus below) S4's. No ported screen opens them.
 
 		// Retail points at control 0 of a window with none, reading an empty slot; here such a window keeps the pointer, an
 		// engine guard.

@@ -290,6 +290,45 @@ public class Es1WeaponStock {
 	public short CountIn(short slot) => slot is >= 0 and < SlotCount ? (short)Slots[slot].Count : (short)0;
 
 	/// <summary>
+	/// <c>Inventory_Take</c> (<c>0002833f</c>)(stock, <paramref name="slot"/>): <c>WordStack_Pop</c> (<c>00040bfd</c>) of
+	/// the slot's stack, −1 for an empty stack and otherwise its head, unlinked (docs/es1/shell/arming.md#fitting-a-weapon).
+	/// Retail pops with no bounds test on the slot; a slot outside the 17 answers −1 here, an engine guard.
+	/// <c>Inventory_TraceSlots</c>, after the pop, calls a function that does nothing.
+	/// </summary>
+	public short Take(short slot) {
+		if (slot is < 0 or >= SlotCount || Slots[slot].Count == 0) {
+			return -1;
+		}
+
+		short word = Slots[slot][0];
+		Slots[slot].RemoveAt(0);
+		return word;
+	}
+
+	/// <summary>
+	/// <c>Inventory_FormatCounts</c> (<c>00028242</c>)(stock, <paramref name="lines"/>) (docs/es1/shell/arming.md#the-weapon-list):
+	/// nothing in <c>Shell_Mode</c> 0 (<paramref name="shellMode"/>); otherwise, for each line before the first null one
+	/// that starts with <c>[</c>, the first two characters of <c>%2d</c> (<c>0008086d</c>) of the count of the slot
+	/// <paramref name="weaponAtListPosition"/> gives for the line's index (<c>Arming_WeaponAtListPosition</c>,
+	/// <c>0003714e</c>), written over the line's characters 1 and 2 in place. Retail writes past the end of a line shorter
+	/// than three characters; such a line is lengthened here, an engine guard.
+	/// </summary>
+	public void FormatCounts(short shellMode, string?[] lines, Func<short, short> weaponAtListPosition) {
+		if (shellMode == 0) {
+			return;
+		}
+
+		for (short i = 0; i < lines.Length && lines[i] is { } line; i++) {
+			if (!line.StartsWith('[')) {
+				continue;
+			}
+
+			string count = CountIn(weaponAtListPosition(i)).ToString(System.Globalization.CultureInfo.InvariantCulture).PadLeft(2);
+			lines[i] = string.Concat("[", count.AsSpan(0, 2), line.Length > 3 ? line.AsSpan(3) : ReadOnlySpan<char>.Empty);
+		}
+	}
+
+	/// <summary>
 	/// <c>WordStack_Clear</c> (<c>00040d19</c>): pops until a pop returns −1, which <c>WordStack_Pop</c> (<c>00040bfd</c>)
 	/// returns for an empty stack, so a stored −1 also ends it and leaves the words under it.
 	/// </summary>

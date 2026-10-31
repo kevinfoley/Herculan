@@ -164,6 +164,20 @@ public static class Es1SingleMission {
 		File.WriteAllBytes(playerPath, new Es1PlayerMecTransformer().Write(player)!);
 	}
 
+	/// <summary>The hangar file ARMING's DONE writes in a single mission, <c>car\sm_init.dat</c> (<c>00080da8</c>).</summary>
+	public const string InitHangarName = "sm_init.dat";
+
+	/// <summary>
+	/// <c>Hangar_SaveFile</c> (<c>0002909c</c>)(<c>car\</c><paramref name="name"/>) in <c>Shell_Mode</c> 0: <paramref name="hangar"/>
+	/// as <c>Hangar_Write</c> writes it (<see cref="Es1Hangar.SingleMissionSave"/>) through a <c>FileRWStream</c>. Retail
+	/// asserts at severity 5 (<c>mechman.cpp</c> line <c>0x132</c>) when the file does not open; here the exception reaches
+	/// the caller.
+	/// </summary>
+	public static void SaveHangar(string installRoot, string name, Es1Hangar hangar) {
+		Directory.CreateDirectory(CaseInsensitivePath.Combine(installRoot, CarFolder));
+		WriteOver(CarPath(installRoot, name), new Es1HercListTransformer().Write(hangar.SingleMissionSave())!);
+	}
+
 	/// <summary><paramref name="bytes"/> written over <paramref name="path"/> from its start, its tail past them kept, as a <c>FileRWStream</c> writes.</summary>
 	private static void WriteOver(string path, byte[] bytes) {
 		using var stream = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write);

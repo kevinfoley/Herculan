@@ -1,4 +1,5 @@
 using HercWorks.Core.Data.File.Dat.Shell;
+using HercWorks.Core.Io.Transform.Shell;
 using Herculan.Es1.Ttm;
 
 namespace Herculan.Es1.Shell.Hangar;
@@ -570,6 +571,90 @@ public sealed class Es1HangarBay {
 	public void ClearSelectedMount() {
 		if (SelectedHerc is { } herc && SelectedDiagram != null) {
 			Diagrams.HideMountHighlight(herc, _surface);
+		}
+	}
+
+	/// <summary>The condition an empty mount's unit counts as when <see cref="FitWeapon"/> fits 17, 100.</summary>
+	private const short EmptyMountUnit = 100;
+
+	/// <summary>
+	/// <c>Hangar_FitWeapon</c> (<c>00029abc</c>)(<paramref name="weapon"/>) (docs/es1/shell/arming.md#fitting-a-weapon), on
+	/// the selected HERC's current mount and the stock <c>[000aad62]</c>, the roster's stock 0: nothing when the mount
+	/// carries the weapon already; the incoming unit 100 for 17 and otherwise <see cref="Es1WeaponStock.Take"/> of the
+	/// weapon's stack, nothing when that is −1; the mounts erased; unless the mount was empty, its condition
+	/// (<see cref="Es1HercDiagrams.CurrentMountStatus"/>) pushed onto the old weapon's stack
+	/// (<see cref="Es1WeaponStock.Add"/>); the mount's condition set to the unit and its weapon to the weapon
+	/// (<see cref="Es1HercDiagrams.SetCurrentMountWeapon"/>, which makes it 17 for a unit of 0); the mounts drawn. Retail
+	/// reads the selected slot's HERC before testing it and pops the unit before it finds the slot empty; with no HERC
+	/// nothing is done here, an engine guard.
+	/// </summary>
+	public void FitWeapon(short weapon) {
+		if (SelectedHerc is not { } herc || SelectedDiagram == null) {
+			return;
+		}
+
+		short current = Diagrams.CurrentMountWeapon(herc);
+		if (current == weapon) {
+			return;
+		}
+
+		var stock = _mission.Roster.Stocks[0];
+		short unit = weapon == Es1HercArt.EmptyMount ? EmptyMountUnit : stock.Take(weapon);
+		if (unit == -1) {
+			return;
+		}
+
+		Diagrams.EraseMounts(herc, _surface);
+		if (current != Es1HercArt.EmptyMount) {
+			stock.Add(current, Diagrams.CurrentMountStatus(herc));
+		}
+
+		Diagrams.SetCurrentMountStatus(herc, unit);
+		Diagrams.SetCurrentMountWeapon(herc, weapon);
+		Diagrams.DrawMounts(herc, _surface);
+	}
+
+	/// <summary>The entry of the file-name table <c>0009afb8</c> that names <c>car\sm_play.mec</c>.</summary>
+	private const int SavedHangarEntry = 10;
+
+	/// <summary>
+	/// <c>Hangar_ReloadSelectedLoadout</c> (<c>00028ec9</c>) (docs/es1/shell/repair-and-build.md#the-hangars-selection):
+	/// nothing in <c>Shell_Mode</c> 1; otherwise the file-name table's entry 10, <c>car\sm_play.mec</c>, through
+	/// <c>Path_ApplyAltDrive</c>, opened as a <c>FileRStream</c> and read with <see cref="RefitSelectedFrom"/>.
+	/// <c>es2_xref.py</c> finds no caller (repair-and-build.md's Open). Retail reads a file that does not open from the
+	/// failed stream; with no table, no entry or a file that does not read nothing is done here, an engine guard.
+	/// </summary>
+	public void ReloadSelectedLoadout() {
+		if (_mission.Mode == 1 || _data.FileNames is not { } names || SavedHangarEntry >= names.Length) {
+			return;
+		}
+
+		string path = Es1ShellData.InstallPath(_mission.InstallRoot, names[SavedHangarEntry]);
+		if (File.Exists(path) && new Es1HercListTransformer().Parse(File.ReadAllBytes(path)) is { } list) {
+			RefitSelectedFrom(list);
+		}
+	}
+
+	/// <summary>
+	/// <c>HercList_RefitSelectedFromStream</c> (<c>00028f16</c>)(stream), over the HERC list the stream holds: for every
+	/// HERC whose slot is <c>Hangar_SelectedSlot</c>, read as it stands in the file into a HERC of its own, each mount below
+	/// its count selected (<see cref="SelectMount"/>) and given that HERC's weapon (<c>Herc_MountWeapon</c>,
+	/// <see cref="FitWeapon"/>); the other HERCs are passed over.
+	/// </summary>
+	public void RefitSelectedFrom(Es1HercList list) {
+		if (Hangar is not { } hangar) {
+			return;
+		}
+
+		foreach (var entry in list.Hercs) {
+			if (entry.Slot != hangar.SelectedSlot) {
+				continue;
+			}
+
+			for (short mount = 0; mount < entry.Herc.Weapons.Length; mount++) {
+				SelectMount(mount);
+				FitWeapon(entry.Herc.Weapons[mount]);
+			}
 		}
 	}
 }

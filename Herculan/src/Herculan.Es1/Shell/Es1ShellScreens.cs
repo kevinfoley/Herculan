@@ -212,6 +212,23 @@ public sealed class Es1ShellScreens {
 	private Es1ClipBlock? _screenRegions;
 
 	/// <summary>
+	/// The rect of the render context <c>00083bc8</c> that <c>0007fcdc</c> points at, which <see cref="DrawMenu"/> sets to
+	/// the current menu's window rect (<c>RenderContext_GetForRect</c>, <c>0004c88a</c>); none before the first draw with a
+	/// menu, when <c>0007fcdc</c> is 0.
+	/// </summary>
+	private Es1Rect? _windowContextRect;
+
+	/// <summary>
+	/// <c>0007fcdc</c>, the render context the animations' scripts are opened on (<see cref="Es1AnimationControl.OpenScripts"/>):
+	/// clip mode 1 to the rect <see cref="DrawMenu"/> last set, origin (0, 0), no translation; none (0) before the first
+	/// draw with a menu, which leaves a script on the default context. Retail's scripts hold the one object, so a later
+	/// draw's rect also moves what they draw through; the context is made afresh for each use from the rect as it then
+	/// stands, to the same effect.
+	/// </summary>
+	public Func<Es1PanelCanvas>? WindowContext =>
+		_windowContextRect == null ? null : () => new Es1PanelCanvas(_devices.Display, _windowContextRect ?? FullScreen);
+
+	/// <summary>
 	/// <c>RenderContext_GetFullScreen</c> (<c>0004c716</c>): <c>00083bc4</c> set to clip mode 1 with no regions, and returned
 	/// (<see cref="FullScreenContext"/>).
 	/// </summary>
@@ -659,8 +676,8 @@ public sealed class Es1ShellScreens {
 
 	/// <summary>
 	/// <c>Shell_DrawScreen</c>'s step 4 with a current menu: the render context <c>0007fcdc</c> (<c>RenderContext_GetForRect</c>,
-	/// <c>0004c88a</c>, of the window's rect), which no ported code reads and is not made here, and <c>0007fcd8</c>
-	/// (<see cref="FullScreenAround"/>) made the scripts' default; the source and draw pages set to page 2
+	/// <c>0004c88a</c>) set to the window's rect (<see cref="WindowContext"/>), and <c>0007fcd8</c>
+	/// (<see cref="GetFullScreenAround"/>) made the scripts' default; the source and draw pages set to page 2
 	/// and the background saved (<see cref="Es1Menu.SaveBackground"/>); unless the message box is up, the war map's
 	/// briefing while <see cref="MapDrawCount"/> is not 0 (<see cref="DrawBriefingUnder"/>) and the window drawn on page
 	/// 2; the draw page put back; and unless the message box is up, the whole screen dirty with delay 1 on backdrop 1000
@@ -670,6 +687,7 @@ public sealed class Es1ShellScreens {
 	/// </summary>
 	private void DrawMenu(Es1Menu menu, int keptDraw) {
 		var display = _devices.Display;
+		_windowContextRect = menu.Region;
 		var around = GetFullScreenAround(menu.Region);
 		Scripts?.SetDefaultContext(around);
 		display.SourcePage = Es1ShellBackdrop.BackgroundPage;
@@ -858,11 +876,11 @@ public sealed class Es1ShellScreens {
 	/// The main menu's, SINGLE MISSION's, MISSION PARAMS', the war map's, its two alerts', the debriefing's in either mode, the
 	/// career menu's and its REGISTRATION, backups, stats and overwrite warning, the KIA warnings', TECH RELEASE's, the delete
 	/// warning's, the disk-space warning's, the options menu's and its battle-set picker's, the service bay's, its three
-	/// warnings' and CREW's, and the quit question's are ported, 1490's, 1499's and 1520's message boxes, and screen 9999's exit code;
+	/// warnings', CREW's and ARMING's, and the quit question's are ported, 1490's, 1499's and 1520's message boxes, and screen 9999's exit code;
 	/// with any other the
 	/// screen becomes current with no menu, as
 	/// retail's does for the cases that make none, its backdrop shown with no window. The waits are the war map's and the
-	/// debriefing's, whose constructors delete the box the text box held.
+	/// debriefing's, whose constructors delete the box the text box held, and ARMING's step to a HERC.
 	/// </summary>
 	private IEnumerable<Es1ShellWait> OpenScreenCase(short target) {
 		switch (target) {
@@ -1073,15 +1091,34 @@ public sealed class Es1ShellScreens {
 
 				_backdrop.LoadPalette(CrewScreen);
 				break;
-			case 1800:
-			case 1820:
+			case Es1ArmingMenu.Screen:
+			case Es1ArmingMenu.LowMemoryScreen:
+				// 0003f196: an ArmingMenu made the current menu; the dword 0007fce4 set to the HERC diagrams' areas 0008003c, so a
+				// press outside the window posts 1702 (Es1ShellMouse); and with no HERC selected (its chassis −1),
+				// Hangar_SelectNext(0) and the pilot of the slot's HERC made CareerRecord_Current's current pilot.
+				if (_menuContext != null) {
+					CurrentMenu = new Es1ArmingMenu(_menuContext);
+					Globals.HangarAreas = _menuContext.Data.HercDiagrams.Art.Hotspots;
+					if (Bay is { } bay && bay.SelectedHercType == -1) {
+						foreach (var wait in bay.SelectNext(0)) {
+							yield return wait;
+						}
+
+						var mission = _menuContext.Mission;
+						if (mission.CurrentRecord is { } record && mission.Hangar is { } hangar) {
+							record.SelectPilot(record.FindPilotBySlot(hangar.SelectedSlot), hangar);
+						}
+					}
+				}
+
+				break;
 			case 1900:
 			case 1910:
 			case 1920:
 			case 2000:
 			case 2010:
 			case 4444:
-				// PLACEHOLDER: the hangar's screens, S4's: ArmingMenu, RepairMenu, RepairPrefsAlert, 0002f1aa, 0002986f(3) with
+				// PLACEHOLDER: the hangar's screens, S4's: RepairMenu, RepairPrefsAlert, 0002f1aa, 0002986f(3) with
 				// 000307c9 (which sets the hangar test's dword 0007fce4), SalvageAllocAlert and ScrapAlert.
 				break;
 			case 1310:

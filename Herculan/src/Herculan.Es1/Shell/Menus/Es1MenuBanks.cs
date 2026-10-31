@@ -12,11 +12,14 @@ namespace Herculan.Es1.Shell.Menus;
 /// menu context; every member is retail's. A bank is a <c>.DBA</c>'s frames, none when the file does not read.
 /// </summary>
 public sealed class Es1MenuBanks {
-	/// <summary>The kind-16 ids <see cref="ForControl"/> loads <see cref="Insignia"/> for: CREW's insignia tile.</summary>
+	/// <summary>The kind-16 ids <see cref="ForControl"/> loads <c>res32\insignia.dba</c> for: CREW's insignia tile.</summary>
 	private const short InsigniaTile = 1611;
 
 	/// <summary>The kind-16 ids <see cref="ForControl"/> loads <see cref="Mechs"/> for: CREW's four HERC tiles.</summary>
 	private const short FirstHercTile = 1615, LastHercTile = 1618;
+
+	/// <summary>The id <see cref="ForControl"/> loads <c>res32\allweap.dba</c> for: ARMING's animation, 1803.</summary>
+	private const short ArmingAnimation = 1803;
 
 	private readonly GameContent _content;
 
@@ -24,8 +27,12 @@ public sealed class Es1MenuBanks {
 		_content = content;
 	}
 
-	/// <summary>The dword <c>000813d4</c>, <c>res32\insignia.dba</c> once <see cref="ForControl"/> has loaded it; none in the image.</summary>
-	public IReadOnlyList<DynamixBitmap>? Insignia { get; private set; }
+	/// <summary>
+	/// The dword <c>000813d4</c>, none in the image: the bank the first of <see cref="ForControl"/>'s cases for 1611 and
+	/// 1803 loaded, <c>res32\insignia.dba</c> or <c>res32\allweap.dba</c>; each of those cases loads its file only while
+	/// the dword is empty and otherwise returns what it holds.
+	/// </summary>
+	public IReadOnlyList<DynamixBitmap>? SharedBank { get; private set; }
 
 	/// <summary>The dword <c>000813dc</c>, <c>res32\mechs.dba</c> once <see cref="ForControl"/> has loaded it; none in the image.</summary>
 	public IReadOnlyList<DynamixBitmap>? Mechs { get; private set; }
@@ -44,42 +51,47 @@ public sealed class Es1MenuBanks {
 		_content.Read("res32", name) is { } bytes ? new DynamixBitmapArrayTransformer().Parse(bytes)?.Images : null;
 
 	/// <summary>
-	/// <c>00037827</c>(<paramref name="id"/>), the bank <c>Menu_BuildFromDlg</c> hands a kind-16 control: the id looked up
-	/// among the eleven at <c>0008144c</c> (targets at <c>00081478</c>); 1611 <see cref="Insignia"/> and 1615 to 1618
-	/// <see cref="Mechs"/>, each loaded the first time and then the one loaded (<c>0003784a</c>, <c>0003786d</c>); any id
-	/// outside the eleven none, the <c>XOR EAX,EAX</c> at <c>0003791c</c>.
+	/// <c>00037827</c>(<paramref name="id"/>), the bank <c>Menu_BuildFromDlg</c> hands a kind-16 control and ARMING's case
+	/// takes while memory is low: the id looked up among the eleven at <c>0008144c</c> (targets at <c>00081478</c>); 1611
+	/// (<c>0003784a</c>) <c>res32\insignia.dba</c> and 1803 (<c>000378d6</c>) <c>res32\allweap.dba</c> into
+	/// <see cref="SharedBank"/>, 1615 to 1618 (<c>0003786d</c>) <see cref="Mechs"/>, each loaded when its dword is empty
+	/// and then the dword returned as it stands; any id outside the eleven none, the <c>XOR EAX,EAX</c> at <c>0003791c</c>.
 	/// </summary>
 	public IReadOnlyList<DynamixBitmap>? ForControl(short id) {
 		if (id == InsigniaTile) {
-			return Insignia ??= Load("INSIGNIA.DBA");
+			return SharedBank ??= Load("INSIGNIA.DBA");
+		}
+
+		if (id == ArmingAnimation) {
+			return SharedBank ??= Load("ALLWEAP.DBA");
 		}
 
 		if (id is >= FirstHercTile and <= LastHercTile) {
 			return Mechs ??= Load("MECHS.DBA");
 		}
 
-		// PLACEHOLDER: the six other ids at 0008144c, 1321 and 1316 (PREFERENCES), 1803 (ARMING) and 1914 to 1916, jump to
-		// cases Ghidra left undefined (00037890, 000378b3, 000378d6, 000378f9), unread; their menus are later parts', and
-		// they get none here.
+		// PLACEHOLDER: the five other ids at 0008144c, 1321 (00037890) and 1316 (000378b3), PREFERENCES', and 1914 to 1916
+		// (000378f9), each loading a file into 000813d4 as 1611's case does; their menus are later parts', and they get none
+		// here.
 		return null;
 	}
 
 	/// <summary>Whether <see cref="ForControl"/> gives a bank of its own for <paramref name="id"/>, the ids whose cases are ported.</summary>
-	public static bool HasBankFor(short id) => id == InsigniaTile || id is >= FirstHercTile and <= LastHercTile;
+	public static bool HasBankFor(short id) => id is InsigniaTile or ArmingAnimation || id is >= FirstHercTile and <= LastHercTile;
 
 	/// <summary>
 	/// <c>Shell_FreeBitmapArraySlot</c> (<c>00037924</c>)(<paramref name="bank"/>): the first of <c>000813d4</c>,
 	/// <c>000813d8</c> and <c>000813dc</c> that holds the bank destroyed (<c>GLBitmapArray_Dtor</c>(bank, 3)) and cleared;
 	/// any other bank left. So the first of the four HERC tiles destroyed frees <see cref="Mechs"/> and the next ones find
-	/// it cleared. <c>000813d8</c> is the bank of a case still unread (<see cref="ForControl"/>) and holds none here.
+	/// it cleared. None of <see cref="ForControl"/>'s cases loads <c>000813d8</c>, which holds none here.
 	/// </summary>
 	public void Free(IReadOnlyList<DynamixBitmap>? bank) {
 		if (bank == null) {
 			return;
 		}
 
-		if (ReferenceEquals(Insignia, bank)) {
-			Insignia = null;
+		if (ReferenceEquals(SharedBank, bank)) {
+			SharedBank = null;
 		} else if (ReferenceEquals(Mechs, bank)) {
 			Mechs = null;
 		}
