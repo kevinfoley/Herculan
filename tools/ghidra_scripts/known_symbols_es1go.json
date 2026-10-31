@@ -8267,6 +8267,36 @@
       }
     },
     {
+      "address": "0002800c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Inventory_CopyStream",
+      "description": "(stock, destination, source) in stack order, its arguments removed by this function: copies a stock in Inventory_Write (00027f88)'s layout from the source stream to the destination, word by word: the record count, then each record's slot, value count and values, reading through the source's slot +0x1c and writing through the destination's +0x18. The stock argument is not read. No caller found by es2_xref.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-weapon-stock; ES1GO decompile at 0002800c",
+      "verified": {
+        "bytes": "0002800c+317",
+        "sha1": "92478d30842b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00028149",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Inventory_SkipStream",
+      "description": "(stock, stream) in stack order, its arguments removed by this function: reads past a stock in Inventory_Write (00027f88)'s layout: reads the record count and, for each record, seeks 2 bytes past its slot (the stream's slot +8 for the position, +0xc to seek), reads the value count and seeks past 2 x that many bytes. The stock argument is not read. No caller found by es2_xref.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-weapon-stock; ES1GO decompile at 00028149",
+      "verified": {
+        "bytes": "00028149+142",
+        "sha1": "b5a2e14d5179",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000281d7",
       "binary": "ES1GO",
       "type": "function",
@@ -8279,6 +8309,21 @@
         "sha1": "e9958f66cd8e",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "00028242",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Inventory_FormatCounts",
+      "description": "(stock, lines) in stack order, its arguments removed by this function: returns at once when Shell_Mode (000aad56) is 0; otherwise, for each line of the zero-ended array whose first character is '[', takes the weapon Arming_WeaponAtListPosition (0003714e)(the line's index) and writes the first two characters of sprintf \"%2d\" (0008086d) of that weapon's stack count (the word at the stock's +2 + 6 x weapon) over the line's characters 1 and 2. es2_xref finds two calls, Arming_SelectWeapon (0002e157)'s and Menu_BuildFromDlg's for list 1808.",
+      "source": "Herculan/docs/es1/shell/arming.md#the-weapon-list; ES1GO decompile at 00028242",
+      "verified": {
+        "bytes": "00028242+169",
+        "sha1": "4eb3c64aef36",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -9362,6 +9407,126 @@
       }
     },
     {
+      "address": "0002d5bf",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Arming_DrawWeaponInfo",
+      "description": "(rect, id), its arguments removed by this function: hotspot 1803's handler on ARMING, describing the weapon Arming_ShownWeapon (00080d64); returns when it is 17. Clears with Raster_FillFrameRectColours (0004b8d8)(0x1f, 0x1f, rect) the bands from the rect's corner to (122, 59) and from (12, 98) to the rect's far corner, or with Shell_LowMemory (0007fd09) set the whole rect (a copy by Rect_CopyCtorMenuHandlersCopy (0002daa1)); draws eng\\watext.bin's TYPE: and RANGE: (0xcf, 0xd1) in nm_white at (l+5, t+6) and (l+5, t+15); at (l+5, t+59) by the weapon SIZE: and 0xf8 + w for 0-2, MISSILES: and 0x10a or 0x106 + Arming_ShownMissileType (00080d66) for 9-11, nothing for 5 and 13, POWER: and 0xf8 + w otherwise; in nm_ylw the name 0xd5 + w at (l+30, t+6) and the range 0x10b + the type (9-11) or 0xea + w at (l+30, t+15); with Shell_LowMemory set, Bitmap_Blit of frame w of Arming_LowMemPictures (00080d6c) at point w of Arming_PicturePoints (000a04dc).",
+      "source": "Herculan/docs/es1/shell/arming.md#the-panel; ES1GO decompile and disassembly at 0002d5bf",
+      "verified": {
+        "bytes": "0002d5bf+1250",
+        "sha1": "c94f8d66f964",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002daa1",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Rect_CopyCtorMenuHandlersCopy",
+      "description": "(rect, source), its arguments removed by this function: byte for byte the code of Rect_CopyCtor (0004b398), relocated operands aside; the menu handlers' file's copy.",
+      "source": "Herculan/docs/es1/shell/arming.md#where-the-object-files-start-and-end; ES1GO disassembly at 0002daa1",
+      "verified": {
+        "bytes": "0002daa1+46",
+        "sha1": "d28342b5ee4a",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0002dacf",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Arming_DrawMissileInfo",
+      "description": "(rect, id), its arguments removed by this function: hotspot 1811's handler on ARMING, describing the missile type m = Arming_ShownMissileType (00080d66); returns unless the byte 0007ff98 (a mount selected) is set and m is not 5. With Shell_LowMemory (0007fd09) set it clears the rect with Raster_FillFrameRectColours (0004b8d8)(0x1f, 0x1f, rect); draws TYPE: and RANGE: (eng\\watext.bin 0xcf, 0xd1) in nm_white at (l+5, t+6) and (l+5, t+15), and in nm_ylw 0x106 + m at (l+30, t+6) and 0x10b + m at (l+30, t+15); with Shell_LowMemory set, frame m + 14 of Arming_LowMemPictures (00080d6c) at point m + 14 of Arming_PicturePoints (000a04dc).",
+      "source": "Herculan/docs/es1/shell/arming.md#the-panel; ES1GO decompile at 0002dacf",
+      "verified": {
+        "bytes": "0002dacf+389",
+        "sha1": "1b22d81d2b9b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002dc54",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Arming_Refresh",
+      "description": "(menu), its argument removed by this function: Arming_ShownMissileType (00080d66) = the selected HERC's word +0x18 + 2 x +0x70 (0 with none); the list 1808's lines (slot +0x44) = WaText_LinesFromList (000373fa)(Arming_BuildWeaponList (000371ad)(+0x70, chassis), -1 each with no HERC), kept in Arming_WeaponLines (00080d60). With the byte 0007ff98 clear: Arming_ShownWeapon (00080d64) = 0 and, when Arming_AnimatedWeapon (00080d68) is not 0, line 0 selected, control 1803's slot +0x24 with 0 unless Shell_LowMemory (0007fd09), hotspot 1803's byte +0 set and Arming_AnimatedWeapon (00080d68) = 0; button 1111 inactive. With it set: Arming_ShownWeapon (00080d64) = Herc_CurrentMountWeapon (00024a6f) (-1 with no HERC), its line selected (Arming_WeaponListPosition (000370ec)); unless Shell_LowMemory, control 1803's slot +0x24 with -1 for 17 or the weapon when it differs from Arming_AnimatedWeapon (00080d68); hotspot 1803 set; Arming_AnimatedWeapon (00080d68) = it; button 1111 up for 9-11, inactive otherwise. Last, button 1111's text = eng\\watext.bin line 0 (slot +0x3c) and the menu's byte +0x27 = 0.",
+      "source": "Herculan/docs/es1/shell/arming.md#refreshing; ES1GO decompile at 0002dc54",
+      "verified": {
+        "bytes": "0002dc54+1234",
+        "sha1": "f467b33ad854",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002e126",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Arming_SelectListLine",
+      "description": "(menu, line), its arguments removed by this function: Arming_SelectMissileType (0002e47f)(menu, line) when the menu's byte +0x27 is 1, Arming_SelectWeapon (0002e157)(menu, line) otherwise.",
+      "source": "Herculan/docs/es1/shell/arming.md#picking-a-line; ES1GO decompile at 0002e126",
+      "verified": {
+        "bytes": "0002e126+49",
+        "sha1": "06e5dd220471",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002e157",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Arming_SelectWeapon",
+      "description": "(menu, line), its arguments removed by this function: w = Arming_WeaponAtListPosition (0003714e)(line) into Arming_ShownWeapon (00080d64). When w differs from Arming_AnimatedWeapon (00080d68): unless Shell_LowMemory (0007fd09), control 1803's slot +0x24 with w (-1 for 17); hotspot 1803's byte +0 set; with the byte 0007ff98 set, 00029abc(w) fits it, the list rebuilt (Arming_BuildWeaponList (000371ad)(+0x70, chassis) into Arming_WeaponLines (00080d60), Inventory_FormatCounts (00028242), slot +0x44) and w's line selected (Arming_WeaponListPosition (000370ec), slot +0x24); Arming_AnimatedWeapon (00080d68) = w. For w 9-11, Arming_ShownMissileType (00080d66) = the selected HERC's word +0x18 + 2 x +0x70 (0 with none) and hotspot 1803 set. With 0007ff98 set, button 1111 made up for 9-11 and inactive otherwise.",
+      "source": "Herculan/docs/es1/shell/arming.md#picking-a-line; ES1GO decompile at 0002e157",
+      "verified": {
+        "bytes": "0002e157+808",
+        "sha1": "5ed7f8cfafe6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002e47f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Arming_SelectMissileType",
+      "description": "(menu, type), its arguments removed by this function: Arming_ShownMissileType (00080d66) = type; with a HERC in Hangar_SelectedSlot (00080894), 00024a1e(HERC, type), which stores it in the current mount's word +0x18 + 2 x +0x70; unless Shell_LowMemory (0007fd09), control 1803's slot +0x24 with type + 14; hotspot 1811's byte +0 set.",
+      "source": "Herculan/docs/es1/shell/arming.md#missile-type; ES1GO decompile at 0002e47f",
+      "verified": {
+        "bytes": "0002e47f+205",
+        "sha1": "b0133e0b5b3c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002e54c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ArmingMenu_OnMessage",
+      "description": "(menu, message), its arguments removed by this function: ArmingMenu's slot +8 (vtable 00081fe6), the handler of screens 1800 and 1820. Looks the message's target +6 up among the eleven ids of ArmingMenu_CaseTable (00080db8) with REPNE SCASD and jumps to the target beside it: 1803 sets hotspot 1803's byte +0; 1808 Arming_SelectListLine (0002e126)(menu, the value +4); 1801 and 1802 the list's slot +0x1c or +0x20 and then Arming_SelectListLine with its selected line; 2004 and 2003 0002986f or 00029946 with 2 in Shell_Mode (000aad56) 0 (then storing Hangar_SelectedSlot (00080894) in SingleMission_Record (0009b014)'s current pilot entry's +8) and 0 otherwise, then CareerRecord_SelectPilot (00015ad4)(CareerRecord_Current (00014ef4), CareerRecord_FindPilotBySlot (00015c39)), lists 1904 and 1903 set to PilotEntry_NameIndex (00015f50) + 1 and the chassis, the byte 0007ff98 cleared and Arming_Refresh (0002dc54); 1702, 1807 and 1806 00029a14(value), 00029a52 or 00029a87, +0x27 = 0 and Arming_Refresh; 1111 the list's mode toggle (Menu_ListLines (0003750d)(1809) and button text line 1, or Arming_Refresh); 100 0002961c, CareerRecord_SaveCurrent (00014f28) and, in mode 0, Hangar_SaveFile (0002909c)(Path_ApplyAltDrive (00020989)(car\\sm_init.dat)) and target 1501, otherwise target 1700. Ghidra's function holds only the dispatch, the 1803 and 1808 cases and the exit; the other case bodies from 0002e5c5 to 0002ecb8 lie outside it.",
+      "source": "Herculan/docs/es1/shell/arming.md#what-a-press-does; ES1GO disassembly at 0002e54c",
+      "verified": {
+        "bytes": "0002e54c+1908",
+        "sha1": "86ca3f858c12",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "0003136c",
       "binary": "ES1GO",
       "type": "function",
@@ -9992,6 +10157,51 @@
       }
     },
     {
+      "address": "000370ec",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Arming_WeaponListPosition",
+      "description": "(weapon), its argument removed by this function: the first i below 17 whose word of Arming_ListLines (000ab30c) is not 0 and equals the weapon's line in Arming_SingleWeaponLines (0008129c) in Shell_Mode (000aad56) 0 or Arming_CareerWeaponLines (00081274) otherwise; 17 when none does.",
+      "source": "Herculan/docs/es1/shell/arming.md#the-weapon-list; ES1GO decompile at 000370ec",
+      "verified": {
+        "bytes": "000370ec+98",
+        "sha1": "80a34bc92797",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003714e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Arming_WeaponAtListPosition",
+      "description": "(position), its argument removed by this function: the first weapon 0 to 17 whose line in Arming_SingleWeaponLines (0008129c) in Shell_Mode (000aad56) 0, or Arming_CareerWeaponLines (00081274) otherwise, equals word position of Arming_ListLines (000ab30c); 17 when none does.",
+      "source": "Herculan/docs/es1/shell/arming.md#the-weapon-list; ES1GO decompile at 0003714e",
+      "verified": {
+        "bytes": "0003714e+95",
+        "sha1": "aecc6f45c667",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000371ad",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Arming_BuildWeaponList",
+      "description": "(mount, chassis), its arguments removed by this function: fills Arming_ListLines (000ab30c) with eng\\watext.bin line numbers from Arming_SingleWeaponLines (0008129c) in Shell_Mode (000aad56) 0 or Arming_CareerWeaponLines (00081274) otherwise, ends it with -1 and returns it. A weapon is offered when 00037383 (a copy of Tech_IsAvailable (00028409)) finds it available in CareerRecord_Current (00014ef4)'s +0xa8 or Inventory_SlotCount (000282eb) of the stock [000aad62] is not 0. Mount -1: each weapon 0-16 offered. Otherwise word 17 (NONE) first, then each record from the second on of the chassis's layout for that mount (the dword 000aae0a + 6 x chassis, its 6-byte mount, 20-byte records) whose weapon is offered or is Herc_CurrentMountWeapon (00024a6f) of the selected HERC.",
+      "source": "Herculan/docs/es1/shell/arming.md#the-weapon-list; ES1GO decompile at 000371ad",
+      "verified": {
+        "bytes": "000371ad+470",
+        "sha1": "c560a3dfd868",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000373d3",
       "binary": "ES1GO",
       "type": "function",
@@ -10036,7 +10246,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_FreeBitmapArraySlot",
-      "description": "(array), its argument removed by this function: when one of the dwords 000813d4, 000813d8 and 000813dc, tested in that order, holds array, destroys it with GLBitmapArray_Dtor (0005343c)(array, 3) and clears that dword; otherwise does nothing. es2_xref finds calls from 0001ec76, a control's destructor, with the control's +0x3e, and from 000405ae.",
+      "description": "(array), its argument removed by this function: when one of the dwords 000813d4, 000813d8 and 000813dc, tested in that order, holds array, destroys it with GLBitmapArray_Dtor (0005343c)(array, 3) and clears that dword; otherwise does nothing. es2_xref finds calls from 0001ec76, a control's destructor, with the control's +0x3e, and from ArmingMenu_Dtor (000405ae).",
       "source": "Herculan/docs/es1/shell/message-box.md#where-the-object-files-start-and-end; ES1GO decompile at 00037924",
       "verified": {
         "bytes": "00037924+114",
@@ -11003,6 +11213,21 @@
         "sha1": "420bd6b7b193",
         "scope": "body",
         "via": "disasm"
+      }
+    },
+    {
+      "address": "000405ae",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ArmingMenu_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: ArmingMenu's slot +4 (vtable 00081fe6): with a menu, stores 00081fe6, frees Arming_LowMemPictures (00080d6c) with Shell_FreeBitmapArraySlot when it is set, stores Menu's vtable 00081bd8 at +0x22 and the region's three at +0xa (00081900, 000818c8, 00081896), and frees the menu with Mem_Delete when bit 0 of the flags is set.",
+      "source": "Herculan/docs/es1/shell/arming.md#done; ES1GO decompile at 000405ae",
+      "verified": {
+        "bytes": "000405ae+249",
+        "sha1": "2acac3adcd97",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -23351,6 +23576,78 @@
       "source": "Herculan/docs/es1/shell/career.md#the-backup-list"
     },
     {
+      "address": "00080d60",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Arming_WeaponLines",
+      "description": "dword: the lines array Arming_Refresh (0002dc54) and Arming_SelectWeapon (0002e157) last gave ARMING's list 1808, from WaText_LinesFromList (000373fa); es2_xref --decode finds those two writers.",
+      "source": "Herculan/docs/es1/shell/arming.md#globals"
+    },
+    {
+      "address": "00080d64",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Arming_ShownWeapon",
+      "description": "int16: the weapon ARMING's panel describes (Arming_DrawWeaponInfo (0002d5bf)), 17 for the empty mount; 0 in the image and not reset by the screen's entry.",
+      "source": "Herculan/docs/es1/shell/arming.md#globals"
+    },
+    {
+      "address": "00080d66",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Arming_ShownMissileType",
+      "description": "int16: the missile type ARMING's panel describes, 0 SARH, 1 ARH, 2 ARM, 3 EO, 5 none (Arming_DrawWeaponInfo (0002d5bf), Arming_DrawMissileInfo (0002dacf)).",
+      "source": "Herculan/docs/es1/shell/arming.md#globals"
+    },
+    {
+      "address": "00080d68",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Arming_AnimatedWeapon",
+      "description": "int16: the weapon ARMING last showed and gave its animation; Arming_SelectWeapon (0002e157) fits and redraws only a weapon that differs from it.",
+      "source": "Herculan/docs/es1/shell/arming.md#globals"
+    },
+    {
+      "address": "00080d6c",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Arming_LowMemPictures",
+      "description": "dword: res32\\allweap.dba, set by screen 1800's and 1820's case while Shell_LowMemory (0007fd09) is set and 0 otherwise; ARMING's still pictures; ArmingMenu_Dtor (000405ae) frees it.",
+      "source": "Herculan/docs/es1/shell/arming.md#globals"
+    },
+    {
+      "address": "00080db8",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "ArmingMenu_CaseTable",
+      "description": "ArmingMenu_OnMessage (0002e54c)'s case table: eleven dword ids (1803, 1808, 1801, 1802, 2004, 2003, 1702, 1807, 1806, 1111, 100) and at 00080de4 their eleven targets.",
+      "source": "Herculan/docs/es1/shell/arming.md#what-a-press-does"
+    },
+    {
+      "address": "00081274",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Arming_CareerWeaponLines",
+      "description": "18 int16 and a -1: a career's eng\\watext.bin line per weapon, 0x2e + w for 0-16 (the bracketed lines that carry a count) and 0x2d NONE for 17.",
+      "source": "Herculan/docs/es1/shell/arming.md#the-weapon-list"
+    },
+    {
+      "address": "0008129c",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Arming_SingleWeaponLines",
+      "description": "18 int16 and a -1: a single mission's eng\\watext.bin line per weapon, 0x47-0x54 for 0-13, 0x3c-0x3e for 14-16 and 0x2d NONE for 17.",
+      "source": "Herculan/docs/es1/shell/arming.md#the-weapon-list"
+    },
+    {
       "address": "00081690",
       "binary": "ES1GO",
       "type": "data",
@@ -23999,6 +24296,15 @@
       "source": "Herculan/docs/es1/shell/war-map.md#opening-it"
     },
     {
+      "address": "000a04dc",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Arming_PicturePoints",
+      "description": "18 int32 (x, y) points, filled by the menu handlers' file's static initializer 00030ee9: where ARMING draws a weapon's still picture (index 0-16) or a missile type's (14 + type) while memory is low.",
+      "source": "Herculan/docs/es1/shell/arming.md#globals"
+    },
+    {
       "address": "000a09a0",
       "binary": "ES1GO",
       "type": "data",
@@ -24348,6 +24654,15 @@
       "name": "MessageBox_Line",
       "description": "int16, the line of the message box's text file and lip-sync list: DigitalDialog_ShowMessage (00037edd) sets it by the message kind, the mission's header word 4 (000ab222) for kinds 0 and 1; MsnGen_LoadMission (00035873) also copies header word 4 into it. DigitalDialogBox_Ctor (00019279), maybe_SncList_PlayEntry (000453be) and maybe_SncList_StartSound (0004544a) read it.",
       "source": "Herculan/docs/es1/shell/message-box.md#showing-a-message"
+    },
+    {
+      "address": "000ab30c",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Arming_ListLines",
+      "description": "int16 array: the eng\\watext.bin line numbers Arming_BuildWeaponList (000371ad) fills for ARMING's weapon list, ended by -1.",
+      "source": "Herculan/docs/es1/shell/arming.md#globals"
     },
     {
       "address": "000ab60a",

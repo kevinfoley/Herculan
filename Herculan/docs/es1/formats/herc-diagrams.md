@@ -130,7 +130,7 @@ The body and the damage marks are drawn under the mounts ([drawing the HERC into
 
 `Herc_ReadOverDiagram`(HERC, stream) reads through the stream's slot `+0x1c` two `int16` it does not keep, then for each mount of the HERC's count `+2` an `int16` weapon, which it gives the mount as the current one with `Herc_SetCurrentMountWeapon`, putting `+0x70` back afterwards, then the mount count's `int16` words into `+0x18`, an `int16` into `+0x2c` and 66 bytes into the status block `+0x2e`, as `Herc_ReadFromStream` (`0002352f`) does; `es2_xref.py` finds no branch to it and no stored pointer.
 
-Three setters change one field: `Herc_SetCurrentMountAmmo` (`00024a1e`)(HERC, word) the current mount's word `+0x18`, `Herc_SetCurrentMountStatus` (`00024aea`)(HERC, word) its status word in the block's per-mount words at `+0x5c`, and `Herc_SetWord2C` (`00024a57`)(HERC, word) `+0x2c`; the first two do nothing when `+0x70` is −1. `es2_xref.py` finds `Herc_SetCurrentMountAmmo` called from `0002e47f`, `Herc_SetCurrentMountStatus` from `00029abc`, and no branch to `Herc_SetWord2C` and no stored pointer.
+Three setters change one field: `Herc_SetCurrentMountAmmo` (`00024a1e`)(HERC, word) the current mount's word `+0x18`, `Herc_SetCurrentMountStatus` (`00024aea`)(HERC, word) its status word in the block's per-mount words at `+0x5c`, and `Herc_SetWord2C` (`00024a57`)(HERC, word) `+0x2c`; the first two do nothing when `+0x70` is −1. `es2_xref.py` finds `Herc_SetCurrentMountAmmo` called from `Arming_SelectMissileType` (`0002e47f`), `Herc_SetCurrentMountStatus` from `00029abc`, and no branch to `Herc_SetWord2C` and no stored pointer.
 
 ## The status lines
 

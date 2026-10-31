@@ -4,7 +4,7 @@ Tabs 2 and 3, which work on the machine in the bay [the squad panel](squad-and-c
 
 ## The weapons screen
 
-Tab 2, `WEAPONS`, the arming screen. Built once by `Arming_BuildScreen` (`0043e52c`, `warmingi.cpp`), entered by `Arming_Enter` (`0043f548`) and hidden by `Arming_Leave` (`0043f5d2`), the teardown dispatcher's arming arm. Rects are parent-relative. The left of the canvas is [the squad panel](squad-and-crew.md#the-squad-panel), filled with the three-quarter [bay picture](squad-and-crew.md#the-bay-picture).
+Tab 2, `WEAPONS`, the arming screen; ES1's is a menu of its own, [ARMAMENT](../../es1/shell/arming.md). Built once by `Arming_BuildScreen` (`0043e52c`, `warmingi.cpp`), entered by `Arming_Enter` (`0043f548`) and hidden by `Arming_Leave` (`0043f5d2`), the teardown dispatcher's arming arm. Rects are parent-relative. The left of the canvas is [the squad panel](squad-and-crew.md#the-squad-panel), filled with the three-quarter [bay picture](squad-and-crew.md#the-bay-picture).
 
 | Widget | Class | Rect (in its parent) | Content |
 |---|---|---|---|
