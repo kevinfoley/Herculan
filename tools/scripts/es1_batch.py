@@ -624,9 +624,16 @@ def merge_notes(text, notes):
 
 
 def md_section(text, heading):
-    """The text of the markdown section whose heading is `heading` (any level), from the heading to the next one of
-    its level or higher; a heading matches by its text with backticks and link targets removed, whole or followed by
-    more words, or by its anchor. None when no heading matches."""
+    """The text of the markdown section whose heading is `heading` (any level); see md_section_span."""
+    span = md_section_span(text, heading)
+    return span[2] if span else None
+
+
+def md_section_span(text, heading):
+    """(first line, last line, text) of the markdown section whose heading is `heading` (any level), from the heading
+    to the next one of its level or higher, the lines numbered from 1 as the Read tool numbers them; a heading matches
+    by its text with backticks and link targets removed, whole or followed by more words, or by its anchor. None when
+    no heading matches."""
     def norm(s):
         s = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", s).replace("`", "")
         return re.sub(r"\s+", " ", s).strip().lower()
@@ -645,7 +652,7 @@ def md_section(text, heading):
     for k, (i, level, h) in enumerate(heads):
         if norm(h) == want or norm(h).startswith(want + " ") or slug(h) == heading.lower():
             end = next((j for j, lv, _ in heads[k + 1:] if lv <= level), len(lines))
-            return "".join(lines[i:end])
+            return i + 1, end, "".join(lines[i:end])
     return None
 
 
@@ -677,8 +684,9 @@ def gate_reading(brief, scratch, over_budget):
     """Totals the brief's fixed reading: each file its read list names, whole or by its named sections. The brief's
     own size is printed beside it, not counted; a doc marked (edit) and a file in the scratch folder (the part's own
     input) are listed but not counted. Stops with nothing written when a file or section is not found, or when the
-    total passes READ_BUDGET and no --over-budget reason is given."""
-    total = 0
+    total passes READ_BUDGET and no --over-budget reason is given. Returns {(path, heading): (first, last)}, the line
+    range of each named section, for annotate_ranges."""
+    total, ranges = 0, {}
     rows, errors = [("%5.1f KB" % (len(brief.encode("utf-8")) / 1024), "the brief itself (not counted)")], []
     scratch_dir = Path(scratch).resolve()
     for path, sections, edit, base in read_list(brief):
@@ -698,11 +706,12 @@ def gate_reading(brief, scratch, over_budget):
         else:
             size = 0
             for s in sections:
-                body = md_section(text, s)
-                if body is None:
+                span = md_section_span(text, s)
+                if span is None:
                     errors.append('no section "%s" in %s' % (s, path))
                     continue
-                size += len(body.encode("utf-8"))
+                ranges[(path, s)] = span[:2]
+                size += len(span[2].encode("utf-8"))
             rows.append(("%5.1f KB" % (size / 1024), "%s: %s" % (path, ", ".join('"%s"' % s for s in sections))))
         total += size
     for size, label in rows:
@@ -715,6 +724,36 @@ def gate_reading(brief, scratch, over_budget):
             raise SystemExit("not written: the fixed reading is over the budget. Cut the read list (sections, not whole "
                              "docs; mark docs the part edits (edit)), or pass --over-budget \"<reason>\".")
         print("  over budget: " + over_budget)
+    return ranges
+
+
+def annotate_ranges(brief, ranges):
+    """The brief with each section the "Read first" bullets name followed by its line range, `"Heading" (lines a–b)`,
+    so a subagent reads it with an offset and a limit rather than the whole doc."""
+    section = md_section(brief, "Read first")
+    if not section or not ranges:
+        return brief
+    out = []
+    for line in section.splitlines(keepends=True):
+        if line.lstrip().startswith("- "):
+            path = None
+
+            def mark(m):
+                # The same path test as read_list, so a backticked name that is not a file leaves the path as it was.
+                nonlocal path
+                tok, quoted = m.groups()
+                key = None
+                if tok is None:
+                    key = (path, quoted) if path else None
+                elif re.fullmatch(r"[^\s#]+\.([A-Za-z]\w*)(#[\w-]+)?", tok) and tok.split("#")[0].rsplit(".", 1)[1].lower() in READ_EXTENSIONS:
+                    path, _, frag = tok.partition("#")
+                    key = (path, frag) if frag else None
+                span = ranges.get(key) if key else None
+                return m.group(0) + (" (lines %d–%d)" % span if span else "")
+
+            line = READ_TOKEN.sub(mark, line)
+        out.append(line)
+    return brief.replace(section, "".join(out), 1)
 
 
 def write_brief(template, values, notes, keep, args):
@@ -728,8 +767,8 @@ def write_brief(template, values, notes, keep, args):
     left = re.findall(r"@@\w+@@", text)
     if left:
         raise SystemExit("unfilled placeholders: " + " ".join(sorted(set(left))))
-    gate_reading(text, args.scratch, args.over_budget)
-    out = Path(args.out) if args.out else Path(args.scratch) / "brief.md"
+    text = annotate_ranges(text, gate_reading(text, args.scratch, args.over_budget))
+    out =Path(args.out) if args.out else Path(args.scratch) / "brief.md"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(text, encoding="utf-8")
     print("%s: %d words" % (out, len(text.split())))
