@@ -515,6 +515,41 @@ public sealed class Es1HercDiagrams {
 	};
 
 	/// <summary>
+	/// <c>Herc_SetStatus</c> (<c>00024c14</c>)(<paramref name="herc"/>, <paramref name="value"/>, <paramref name="index"/>,
+	/// <paramref name="kind"/>), <c>HercStatus_Set</c> (<c>0001a492</c>) on the HERC's block
+	/// (docs/es1/shell/repair-and-build.md#and): for <see cref="External"/> every external word of area
+	/// <paramref name="index"/>'s list (<see cref="Es1HercRecord.ExternalAreas"/>) set to the value (<c>0001a42c</c>), for
+	/// <see cref="Internal"/> internal word <paramref name="index"/>, for <see cref="MountKind"/> the mount's word; any other
+	/// kind writes nothing. Retail writes with no bounds test; an index outside the block writes nothing here, an engine
+	/// guard.
+	/// </summary>
+	public static void SetStatus(Es1HercRecord herc, short value, int index, short kind) {
+		short[] block = herc.Status;
+		switch (kind) {
+			case External:
+				if (index >= 0 && index < Es1HercRecord.ExternalAreas.Length) {
+					foreach (short word in Es1HercRecord.ExternalAreas[index]) {
+						block[word] = value;
+					}
+				}
+
+				break;
+			case Internal:
+				if (index >= 0 && Es1HercRecord.FirstInternalWord + index < block.Length) {
+					block[Es1HercRecord.FirstInternalWord + index] = value;
+				}
+
+				break;
+			case MountKind:
+				if (index >= 0 && Es1HercRecord.MountStatusWords + index < block.Length) {
+					block[Es1HercRecord.MountStatusWords + index] = value;
+				}
+
+				break;
+		}
+	}
+
+	/// <summary>
 	/// <c>Herc_BuildStatusLines</c> (<c>00024d99</c>)(<paramref name="herc"/>, <paramref name="kind"/>)
 	/// (docs/es1/formats/herc-diagrams.md#the-status-lines): for <see cref="InternalLines"/> or <see cref="Internal"/>
 	/// <c>eng\watext.bin</c>'s lines <c>0x80</c> to <c>0x88</c>, for <see cref="External"/> lines <c>0x89</c> to

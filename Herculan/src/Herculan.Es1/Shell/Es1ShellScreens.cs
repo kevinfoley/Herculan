@@ -876,7 +876,7 @@ public sealed class Es1ShellScreens {
 	/// The main menu's, SINGLE MISSION's, MISSION PARAMS', the war map's, its two alerts', the debriefing's in either mode, the
 	/// career menu's and its REGISTRATION, backups, stats and overwrite warning, the KIA warnings', TECH RELEASE's, the delete
 	/// warning's, the disk-space warning's, the options menu's and its battle-set picker's, the service bay's, its three
-	/// warnings', CREW's, ARMING's, REPAIR's and PREFERENCES', and the quit question's are ported, 1490's, 1499's and 1520's
+	/// warnings', CREW's, ARMING's, REPAIR's, PREFERENCES' and SYSTEM REPAIR's, and the quit question's are ported, 1490's, 1499's and 1520's
 	/// message boxes, and screen 9999's exit code; with any other the screen becomes current with no menu, as retail's does
 	/// for the cases that make none, its backdrop shown with no window. The waits are the war map's and the debriefing's,
 	/// whose constructors delete the box the text box held, and ARMING's and REPAIR's step to a HERC.
@@ -1120,12 +1120,20 @@ public sealed class Es1ShellScreens {
 				}
 
 				break;
-			case 1920:
+			case Es1SystemRepairMenu.Screen:
+				// 0003f5a4: SystemRepairMenu_Ctor(0), SYSTEM REPAIR, made the current menu, and the dword 0007fce4 set to the HERC
+				// diagrams' areas 0008003c as 1900's case sets it; no step to a HERC.
+				if (_menuContext != null) {
+					CurrentMenu = new Es1SystemRepairMenu(_menuContext);
+					Globals.HangarAreas = _menuContext.Data.HercDiagrams.Art.Hotspots;
+				}
+
+				break;
 			case 2000:
 			case 2010:
 			case 4444:
-				// PLACEHOLDER: the hangar's other screens: 1920's SystemRepairMenu_Ctor (0002f1aa), P15b's; and P16's,
-				// 0002986f(3) with 000307c9 (which sets the hangar test's dword 0007fce4), SalvageAllocAlert and ScrapAlert.
+				// PLACEHOLDER: the hangar's other screens, P16's: 0002986f(3) with 000307c9 (which sets the hangar test's dword
+				// 0007fce4), SalvageAllocAlert and ScrapAlert.
 				break;
 			case 1310:
 			case 1320:

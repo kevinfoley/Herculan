@@ -74,7 +74,7 @@ public class Es1Menu {
 	/// <c>Menu_Open</c> (<c>0003969e</c>)(menu, <paramref name="number"/>)
 	/// (docs/es1/shell/menus.md#opening-a-menu--menu_open-0003969e): the number kept, <see cref="Es1MenuGlobals.SyncPointer"/>
 	/// set and the window built (<see cref="Es1MenuBuild.BuildFromDlg"/>); the window made the active one; the number's
-	/// control changes (1100's, 1000's, 1200's, 1610's <see cref="Es1CrewAssignMenu.SetOpeningControls"/>, 1800's and 1820's <see cref="Es1ArmingMenu.SetOpeningControls"/> and, in <c>Shell_Mode</c> 1, 1700's <see cref="Es1ServiceBayMenu.SetButtons"/>); unless the number is 9999, the focus and the pointer on the first control whose key is <c>Space</c>,
+	/// control changes (1100's, 1000's, 1200's, 1610's <see cref="Es1CrewAssignMenu.SetOpeningControls"/>, 1800's and 1820's <see cref="Es1ArmingMenu.SetOpeningControls"/>, in <c>Shell_Mode</c> 1, 1700's <see cref="Es1ServiceBayMenu.SetButtons"/>, and 1920's <see cref="Es1SystemRepairMenu.SetPlusState"/> of <c>Repair_StepCost</c> against <c>Career_Salvage</c>); unless the number is 9999, the focus and the pointer on the first control whose key is <c>Space</c>,
 	/// or on control 0; 1900's change after the focus (<see cref="Es1RepairMenu.SetOpeningControls"/>); the saved
 	/// background allocated, zeroed; and <see cref="Es1MenuGlobals.InputReady"/> set.
 	/// </summary>
@@ -115,8 +115,12 @@ public class Es1Menu {
 			Es1ServiceBayMenu.SetButtons(window, Context.Mission.Roster.CurrentRecord, MakeInactive);
 		}
 
-		// PLACEHOLDER: Menu_Open's control changes for menu 1310 are the preferences and controls module's, after S5; for
-		// 1920 SYSTEM REPAIR's (P15b) and for 2000 BUILD's (P16). No ported screen opens them.
+		if (number == Es1SystemRepairMenu.Screen) {
+			Es1SystemRepairMenu.SetPlusState(window, Context.Data.RepairCosts.StepCost, Context.Mission.Roster.Salvage);
+		}
+
+		// PLACEHOLDER: Menu_Open's control changes for menu 1310 are the preferences and controls module's, after S5, and
+		// for 2000 BUILD's (P16). No ported screen opens them.
 
 		// Retail points at control 0 of a window with none, reading an empty slot; here such a window keeps the pointer, an
 		// engine guard.

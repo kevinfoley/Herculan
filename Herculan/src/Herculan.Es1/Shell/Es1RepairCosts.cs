@@ -33,6 +33,22 @@ public sealed class Es1RepairCosts {
 	/// <summary><c>RepairLevelTable</c> (<c>0008179c</c>), five words: each repair level's lowest condition.</summary>
 	public static readonly short[] RepairLevels = [91, 75, 52, 1, 0];
 
+	/// <summary>
+	/// The word after <see cref="RepairLevels"/>, at <c>000817a6</c>: the bytes "cf" that open the string
+	/// <c>cfg\damage.dat</c>, which <see cref="LevelStepCost"/> and <see cref="FloorForLevel"/> read as level 5's floor.
+	/// </summary>
+	private const short WordPastLevels = 0x6663;
+
+	/// <summary>The kinds <see cref="UnitValueCost"/> prices: internal parts, external areas, mounts.</summary>
+	private const short InternalKind = 0x784, ExternalKind = 0x785, MountKind = 0x786;
+
+	/// <summary>
+	/// <c>Repair_StepCost</c> (<c>000ab212</c>), an <c>int16</c>: the cost of one level up of SYSTEM REPAIR's selected
+	/// item, which <c>SystemRepairMenu_Ctor</c> and <c>SystemRepairMenu_Refresh</c> set, the + and − cases also set, and
+	/// <c>Menu_Open</c> reads (docs/es1/shell/repair-and-build.md#system-repair--screen-1920).
+	/// </summary>
+	public short StepCost { get; set; }
+
 	/// <summary>The rows at <c>000a0580</c>, by chassis; zero until the load.</summary>
 	private readonly short[,] _rows = new short[ChassisCount, RowWords];
 
@@ -84,9 +100,11 @@ public sealed class Es1RepairCosts {
 
 	/// <summary>
 	/// Word <paramref name="word"/> of <paramref name="chassis"/>' row. Retail indexes with no bounds test, reading rows 8 to
-	/// 15 of the 16 <c>00038e2f</c> builds and past them; a chassis outside 0 to 7 reads 0 here, an engine guard.
+	/// 15 of the 16 <c>00038e2f</c> builds and past them, and past a row's words; a chassis outside 0 to 7 or a word
+	/// outside the row reads 0 here, an engine guard.
 	/// </summary>
-	private short Row(short chassis, int word) => chassis is >= 0 and < ChassisCount ? _rows[chassis, word] : (short)0;
+	private short Row(short chassis, int word) =>
+		chassis is >= 0 and < ChassisCount && word is >= 0 and < RowWords ? _rows[chassis, word] : (short)0;
 
 	/// <summary>
 	/// The word of <c>000ab332</c> for <paramref name="weapon"/>. Retail reads past the 18 for a weapon past them; such a
@@ -107,6 +125,71 @@ public sealed class Es1RepairCosts {
 
 		return 0;
 	}
+
+	/// <summary>
+	/// <c>Repair_TargetForLevel</c> (<c>00038a30</c>)(<paramref name="level"/>)
+	/// (docs/es1/shell/repair-and-build.md#system-repair--screen-1920): 100, <see cref="RepairTargets"/>[0], for level 0,
+	/// and <see cref="RepairTargets"/>[level] + 1, the floor of the level above, as a 16-bit add for any other. Retail
+	/// indexes with no bounds test; a level outside the six words gives 0 here, an engine guard.
+	/// </summary>
+	public static short TargetForLevel(short level) {
+		if (level is < 0 or >= 6) {
+			return 0;
+		}
+
+		return level == 0 ? RepairTargets[0] : (short)(RepairTargets[level] + 1);
+	}
+
+	/// <summary>
+	/// <c>Repair_FloorForLevel</c> (<c>00038a5c</c>)(<paramref name="level"/>): <see cref="RepairLevels"/>[level], the
+	/// level's own floor, level 5 reading <see cref="WordPastLevels"/>. Retail indexes with no bounds test; any other level
+	/// outside the table gives 0 here, an engine guard.
+	/// </summary>
+	public static short FloorForLevel(int level) => level switch {
+		>= 0 and < 5 => RepairLevels[level],
+		5 => WordPastLevels,
+		_ => 0,
+	};
+
+	/// <summary>
+	/// <c>Repair_LevelStepCost</c> (<c>00038a72</c>)(<paramref name="up"/>, <paramref name="condition"/>,
+	/// <paramref name="value"/>) (docs/es1/shell/repair-and-build.md#system-repair--screen-1920), with <i>L</i>
+	/// <see cref="LevelForCondition"/>(condition): 0 for <i>L</i> below 0 or above 4; up, (100 − condition) × value / 100 at
+	/// level 0 and (<see cref="FloorForLevel"/>(<i>L</i> − 1) − condition) × value / 100 at any other; down, (100 −
+	/// <see cref="FloorForLevel"/>(<i>L</i>)) × value / 100 for a condition of 100 and (condition −
+	/// <see cref="FloorForLevel"/>(<i>L</i> + 1)) × value / 100 for any other. Each product is 32-bit and each division
+	/// truncates toward zero. ES1's port of the function ES2's shell ports in its own repair costs, as
+	/// docs/herculan/planning.md#how-the-two-games-share-code has each game's shell ported apart.
+	/// </summary>
+	public static int LevelStepCost(bool up, short condition, short value) {
+		short level = LevelForCondition(condition);
+		if (level is < 0 or > 4) {
+			return 0;
+		}
+
+		if (!up) {
+			return condition == 100
+				? (100 - FloorForLevel(level)) * value / 100
+				: (condition - FloorForLevel(level + 1)) * value / 100;
+		}
+
+		return level == 0 ? (RepairTargets[0] - condition) * value / 100 : (FloorForLevel(level - 1) - condition) * value / 100;
+	}
+
+	/// <summary>
+	/// <c>Repair_UnitValueCost</c> (<c>00038bb9</c>)(<paramref name="up"/>, <paramref name="condition"/>,
+	/// <paramref name="index"/>, <paramref name="kind"/>, <paramref name="chassis"/>)
+	/// (docs/es1/shell/repair-and-build.md#system-repair--screen-1920): <see cref="LevelStepCost"/> priced with the
+	/// chassis row's internal word <paramref name="index"/> for <c>0x784</c>, its word <paramref name="index"/> for
+	/// <c>0x785</c>, and <see cref="WeaponValue"/>(<paramref name="index"/>) for <c>0x786</c>, so a weapon is priced by its
+	/// mount's number, not by the weapon it carries; any other kind answers the kind.
+	/// </summary>
+	public int UnitValueCost(bool up, short condition, short index, short kind, short chassis) => kind switch {
+		InternalKind => LevelStepCost(up, condition, Row(chassis, Es1HercRecord.FirstInternalWord + index)),
+		ExternalKind => LevelStepCost(up, condition, Row(chassis, index)),
+		MountKind => LevelStepCost(up, condition, WeaponValue(index)),
+		_ => kind,
+	};
 
 	/// <summary>
 	/// <c>Repair_ItemCost</c> (<c>00038b64</c>)(<paramref name="target"/>, <paramref name="condition"/>, <paramref name="value"/>):
