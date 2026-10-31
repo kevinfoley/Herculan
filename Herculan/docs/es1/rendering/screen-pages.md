@@ -74,7 +74,7 @@ Records come from a free list at `000a09bc`. `DirtyBox_Alloc` (`00040e58`) takes
 
 `DirtyList_CreateContext` (`00040d54`) makes the flush's render context with `GLViewport_Ctor` (`000512a0`)(0) and stores it at `00082248`, setting its clip block's clip mode to 1, its translation flag to 1, its rect to (0, 0) to (319, 199) and its origin to (0, 0). `Shell_OpenFirstScreen` (`0003ba47`), which sets up the scripts ([the shell](../formats/ttm-scripts.md#the-shell)), calls it first.
 
-The `.TTM` commands add every box with delay 1, `0xa601`'s rect through `DirtyBox_AddRect`; `es2_xref.py` finds further calls of `DirtyBox_Add` from `ShellBackdrop_Draw` (`0002141c`), `000217a9` and `00021a6e`, with delay 0, and from `Menu_Close` (`0003b138`) and `Shell_DrawScreen` (`0003c1b7`), and of `DirtyBox_AddRect` from the text box's `DialogBox_MarkDirty` (`0001907e`) and `DialogBox_Dtor` (`00019b54`) ([drawing a page](../shell/message-box.md#drawing-a-page)), `DUIWindow_Update` (`0001c067`) and `DUIWindow_UpdateHotspots` (`0001c270`).
+The `.TTM` commands add every box with delay 1, `0xa601`'s rect through `DirtyBox_AddRect`; `es2_xref.py` finds further calls of `DirtyBox_Add` from `ShellBackdrop_Draw` (`0002141c`), `Sprite_Draw` (`000217a9`) and `Sprite_Erase` (`00021a6e`), with delay 0, and from `Menu_Close` (`0003b138`) and `Shell_DrawScreen` (`0003c1b7`), and of `DirtyBox_AddRect` from the text box's `DialogBox_MarkDirty` (`0001907e`) and `DialogBox_Dtor` (`00019b54`) ([drawing a page](../shell/message-box.md#drawing-a-page)), `DUIWindow_Update` (`0001c067`) and `DUIWindow_UpdateHotspots` (`0001c270`).
 
 ## Presenting a frame
 
@@ -290,5 +290,5 @@ The two routines are one object file, `00088728`–`0008886f`, between zero fill
 - **Open:** whether a mission calls the simulator's slots 20 to 23. A retail check: a breakpoint on `ES1DBSIM 00051c3c` during a glance.
 - **Open:** what `0008b408`, which `VGA8_OpenMode` (`ES1DBSIM 0008b4f8`) calls with the mode, does to the VGA, and what `VGA_8`'s slots 9 and 10 (`000885dc`, `0008862c`) do in the open.
 - **Open:** `Shell_CreateDisplay`'s `0005a388` and `0005a5d0`, and the `0x20` bytes at `+0x64`.
-- **Open:** which screens `000217a9` and `00021a6e` draw, which add dirty boxes or fix rects; the menus' own boxes are [the menus'](../shell/menus.md#drawing-a-screen).
+- **Open:** which screens `Sprite_Draw` (`000217a9`) and `Sprite_Erase` (`00021a6e`) draw, which add dirty boxes or fix rects; the menus' own boxes are [the menus'](../shell/menus.md#drawing-a-screen).
 - **Open:** the callees `0006659c` and `0004fd65` the region copy clips with, matched by position to ES2's `Rect_Intersect` and `SpanList_ClipToRect`.

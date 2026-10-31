@@ -2027,6 +2027,111 @@
       }
     },
     {
+      "address": "00012047",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmEntry_AssignSlot",
+      "description": "(slot, entry), its arguments removed by this function: when the word +1 of entry `entry` of ShellBackdrop_GroupTtms (0007e718) is -99, stores the slot there and answers 1 in AL; otherwise answers 0 and writes nothing.",
+      "source": "Herculan/docs/es1/shell/hangar.md#giving-the-scripts-their-bays; ES1GO decompile at 00012047",
+      "verified": {
+        "bytes": "00012047+71",
+        "sha1": "4eec1bfaea78",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001208e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmEntry_FreeAll",
+      "description": "(): sets the word +1 of each of the ShellBackdrop_GroupTtmCount (0007e71c) group script entries to -99.",
+      "source": "Herculan/docs/es1/shell/hangar.md#giving-the-scripts-their-bays; ES1GO decompile at 0001208e",
+      "verified": {
+        "bytes": "0001208e+44",
+        "sha1": "e2cbaa26f0cd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000120ba",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmEntry_FreeSlot",
+      "description": "(slot), its argument removed by this function: sets to -99 the word +1 of each group script entry whose word +1 is the slot.",
+      "source": "Herculan/docs/es1/shell/hangar.md#giving-the-scripts-their-bays; ES1GO decompile at 000120ba",
+      "verified": {
+        "bytes": "000120ba+63",
+        "sha1": "f4b79c3042ef",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000122e0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HangarBay_AssignScripts",
+      "description": "(): TtmEntry_FreeAll (0001208e); takes the slot +8 of the current record's player entry +0xe; TtmEntry_AssignSlot (00012047)(99, k) for entries 0 to 3, and for entry 4 when the word 000aad5a is 4 (in Shell_Mode 1 only while the current career record's byte +1 is also set); for each of the hangar's 00080892 HERCs steps Hangar_SelectedSlot with 00029729 and calls 000120f9(slot, 0) for the player's slot and 000120f9(slot, 2) for any other; then CareerRecord_SelectPilot (00015ad4)(record, its +0xe) and ShellBackdrop_RunScripts (00012467). es2_xref finds calls from ShellBackdrop_Show, CrewAssignMenu_OnMessage (0002d19e) and 0002f111.",
+      "source": "Herculan/docs/es1/shell/hangar.md#giving-the-scripts-their-bays; ES1GO decompile at 000122e0",
+      "verified": {
+        "bytes": "000122e0+299",
+        "sha1": "df34f340f92d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001240b",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellBackdrop_PlayAllScripts",
+      "description": "(): for each group script entry, Ttm_SetMode(0, its handle) and Ttm_RunScript of it once.",
+      "source": "Herculan/docs/es1/shell/hangar.md#running-the-scripts; ES1GO decompile at 0001240b",
+      "verified": {
+        "bytes": "0001240b+92",
+        "sha1": "b8119638ba12",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00012467",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellBackdrop_RunScripts",
+      "description": "(): by Shell_BackdropId / 1000 * 1000: 3000, for k 0 to 3 the scripts 2k and 2k + 1 mode 0 when k is the current career record's campaign word (CareerRecord_CampaignWord, 0 in Shell_Mode 0) and mode 2 otherwise, each run once; 5000, script Shell_BackdropId mod 1000 mode 0 and the others 2, each run once; 4000, each script whose entry word +1 is Hangar_SelectedSlot or 99 mode 0 and the others 2, each run once; any other group ShellBackdrop_PlayAllScripts (0001240b).",
+      "source": "Herculan/docs/es1/shell/hangar.md#running-the-scripts; ES1GO decompile at 00012467",
+      "verified": {
+        "bytes": "00012467+610",
+        "sha1": "443fb92235d6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000126c9",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellBackdrop_RunAllScripts",
+      "description": "(): Ttm_RunScript of each group script entry once, setting no mode. No caller found by es2_xref.",
+      "source": "Herculan/docs/es1/shell/hangar.md#running-the-scripts; ES1GO decompile at 000126c9",
+      "verified": {
+        "bytes": "000126c9+56",
+        "sha1": "abb0c1ec2f7b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00012704",
       "binary": "ES1GO",
       "type": "function",
@@ -3652,7 +3757,7 @@
       "type": "function",
       "confidence": "medium",
       "name": "maybe_PilotPortraitHotspot_Draw",
-      "description": "(rect, id): the kind-14 hotspot handler Menu_BuildFromDlg (0003a1f7) gives ids 1612 to 1614. With n = id - 1611 and the career record 0009b23b + 0x1f7 x the word 0009b21f: Bitmap_Blit, flags 0, of frame (pilot entry n's word +0, at 0009b24f + 0x25 x n in the record, or -1 for n -1) of the bitmap array 0007ebcc at (rect left + 1, top + 1); then, while the record's byte +1 is set and the entry's byte +0xa (record +0x1e + 0x25 x n) is 0, frame 0 of the array 0007ebd0 at the rect's corner.",
+      "description": "(rect, id): the kind-14 hotspot handler Menu_BuildFromDlg (0003a1f7) gives ids 1612 to 1614. With n = id - 1611 and the career record 0009b23b + 0x1f7 x the word 0009b21f: Bitmap_Blit, flags 0, of frame (pilot entry n's word +0, at 0009b24f + 0x25 x n in the record, or -1 for n -1) of the bitmap array CrewAssignMenu_Portraits (0007ebcc) at (rect left + 1, top + 1); then, while the record's byte +1 is set and the entry's byte +0xa (record +0x1e + 0x25 x n) is 0, frame 0 of the array CrewAssignMenu_Mesh (0007ebd0) at the rect's corner.",
       "source": "Herculan/docs/es1/shell/menus.md#opening-a-menu--menu_open-0003969e; ES1GO decompile at 00017a19",
       "verified": {
         "bytes": "00017a19+305",
@@ -6202,7 +6307,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_FreeData",
-      "description": "(): destroys each set font of the 14 dwords at Shell_Fonts (000aacc6) and the render context 0007fcd8 when set through slot +0x1c with 3; HercLayout_Free, HercDamageMarks_Free, HercHotspots_Free and, unless Shell_LowMemory (0007fd09) is set, 00022981; CareerLog_FreeEntries (00017e59)(Career_Log (0009b20c)), BattleSet_FreeCampaigns, Inventory_FreeAll (00027c8e) and 00020a18. es2_xref finds one call, from Shell_Main (00012ec7), at the shutdown.",
+      "description": "(): destroys each set font of the 14 dwords at Shell_Fonts (000aacc6) and the render context 0007fcd8 when set through slot +0x1c with 3; HercLayout_Free, HercDamageMarks_Free, HercHotspots_Free and, unless Shell_LowMemory (0007fd09) is set, HercArt_FreeAllBanks (00022981); CareerLog_FreeEntries (00017e59)(Career_Log (0009b20c)), BattleSet_FreeCampaigns, Inventory_FreeAll (00027c8e) and 00020a18. es2_xref finds one call, from Shell_Main (00012ec7), at the shutdown.",
       "source": "Herculan/docs/es1/shell/startup.md#the-shutdown; ES1GO decompile at 00020ae3",
       "verified": {
         "bytes": "00020ae3+133",
@@ -6237,6 +6342,141 @@
       "verified": {
         "bytes": "0002141c+253",
         "sha1": "1644e839f1ec",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00021519",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sprite_Dtor",
+      "description": "(sprite, flags), its arguments removed by this function: for a sprite, Sprite_FreeBackground (00021698), stores the region's vtables 0007fee8, 0007ff18 and 0007ff46 at +6, and frees the sprite when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#sprites; ES1GO decompile at 00021519",
+      "verified": {
+        "bytes": "00021519+159",
+        "sha1": "352afeabab74",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000215b8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRectangleRegion_DtorSpriteCopy",
+      "description": "(region, flags), its arguments removed by this function: slot +0x1c of the vtable 0007fee8: byte for byte the code of GLRectangleRegion_Dtor (00046dc4), relocated operands aside, storing 0007fee8 and 0007ff18 and 0007ff46 where that stores 00082b44 and 00082b0c and 00082ada.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#where-the-code-lies; ES1GO disassembly at 000215b8",
+      "verified": {
+        "bytes": "000215b8+107",
+        "sha1": "cae44230361e",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00021623",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRegion_DtorSpriteCopy",
+      "description": "(region, flags), its arguments removed by this function: slot +0x1c of the vtable 0007ff18: byte for byte the code of GLRegion_Dtor (00046d7b), relocated operands aside, storing 0007ff18 and 0007ff46 where that stores 00082b0c and 00082ada.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#where-the-code-lies; ES1GO disassembly at 00021623",
+      "verified": {
+        "bytes": "00021623+73",
+        "sha1": "96e0c2980501",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0002166c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLBase_DtorSpriteCopy",
+      "description": "(object, flags), its arguments removed by this function: slot +0x1c of the vtable 0007ff46: byte for byte the code of GLBase_Dtor (00046d4f), relocated operands aside, storing 0007ff46 where that stores 00082ada.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#where-the-code-lies; ES1GO disassembly at 0002166c",
+      "verified": {
+        "bytes": "0002166c+44",
+        "sha1": "de5b974c85aa",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00021698",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sprite_FreeBackground",
+      "description": "(sprite), its argument removed by this function: frees the saved background +0x1e when set and nulls it, and clears the drawn byte +0.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#sprites; ES1GO decompile at 00021698",
+      "verified": {
+        "bytes": "00021698+47",
+        "sha1": "239066462652",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000216c7",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sprite_SetBitmap",
+      "description": "(sprite, bitmap), its arguments removed by this function: stores the bitmap at +2 and clears the drawn byte +0, leaving the rect.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#sprites; ES1GO decompile at 000216c7",
+      "verified": {
+        "bytes": "000216c7+25",
+        "sha1": "a7f751b671df",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000216e0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sprite_Set",
+      "description": "(sprite, keep, x, y, bitmap), its arguments removed by this function: stores the bitmap at +2, the byte keep at +1, x at +0xe and y at +0x12, frees the buffer +0x1e; with a bitmap sets +0x16 to x + the bitmap's word +6 and +0x1a to y + its word +4 and, for keep 0, allocates Region_PixelCount of the region +0xa bytes at +0x1e; with a null bitmap writes 0 to +0x16 twice. Clears the drawn byte +0.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#sprites; ES1GO decompile and disassembly at 000216e0",
+      "verified": {
+        "bytes": "000216e0+201",
+        "sha1": "05583f59f231",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000217a9",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sprite_Draw",
+      "description": "(sprite), its argument removed by this function: with a bitmap, sets the canvas 000ab616's source page +0x34 to 0007fccc; for keep +1 0 Region_Save of the region into +0x1e, otherwise Region_CopyBetweenPages to the page 0007fcce; Bitmap_Blit at the corner +0xe on page 0007fccc; Region_CopyBetweenPages to the draw page it found; DirtyBox_Add(0, the bitmap's +4, +6, top, left); puts the source page back and sets the drawn byte +0.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#sprites; ES1GO decompile at 000217a9",
+      "verified": {
+        "bytes": "000217a9+709",
+        "sha1": "d5924f96c4fa",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00021a6e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sprite_Erase",
+      "description": "(sprite), its argument removed by this function: with a bitmap and the drawn byte +0 set, on page 0007fccc puts the background back, for keep +1 0 with Region_Restore from +0x1e, otherwise with Region_CopyBetweenPages from the page 0007fcce; copies the region to the draw page it found and adds the dirty box Sprite_Draw (000217a9) adds. It leaves the drawn byte.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#sprites; ES1GO decompile at 00021a6e",
+      "verified": {
+        "bytes": "00021a6e+669",
+        "sha1": "dd4773663c2d",
         "scope": "body",
         "via": "decompile"
       }
@@ -6307,7 +6547,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HercLayout_FindFrame",
-      "description": "(weapon, mount, chassis) in stack order, callee-cleaned: the word +2 (frame) of the first record of the chassis's mount whose word +0 is weapon, or -1; no bounds test on mount or chassis. es2_xref finds calls from Herc_BuildDiagram (00023883) and 00024788 and a stored pointer at 00008e1f.",
+      "description": "(weapon, mount, chassis) in stack order, callee-cleaned: the word +2 (frame) of the first record of the chassis's mount whose word +0 is weapon, or -1; no bounds test on mount or chassis. es2_xref finds calls from Herc_BuildDiagram (00023883) and Herc_SetCurrentMountWeapon (00024788) and a stored pointer at 00008e1f.",
       "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-pictures",
       "verified": {
         "bytes": "00022086+102",
@@ -6337,7 +6577,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HercLayout_FindSecondPoint",
-      "description": "(point, weapon, mount, chassis) in stack order, callee-cleaned: HercLayout_FindFirstPoint (000220ec) for the record's int32 pair at +0xc. es2_xref finds calls from Herc_BuildDiagram (00023883) and 00024788.",
+      "description": "(point, weapon, mount, chassis) in stack order, callee-cleaned: HercLayout_FindFirstPoint (000220ec) for the record's int32 pair at +0xc. es2_xref finds calls from Herc_BuildDiagram (00023883) and Herc_SetCurrentMountWeapon (00024788).",
       "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-pictures",
       "verified": {
         "bytes": "0002219f+179",
@@ -6467,6 +6707,36 @@
       }
     },
     {
+      "address": "000228aa",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercArt_FreeChassisBanks",
+      "description": "(chassis), its argument removed by this function: for each of the chassis' WEP1 (0007ff9c), OUTL (0007ffbc), DMG1 (0007ffdc), WEPD (0007fffc) and BILD (0008001c) bank pointers that is set, GLBitmapArray_Dtor(bank, 3) and nulls it.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md; ES1GO decompile at 000228aa",
+      "verified": {
+        "bytes": "000228aa+215",
+        "sha1": "6f5bcb8f40dc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00022981",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercArt_FreeAllBanks",
+      "description": "(): HercArt_FreeChassisBanks (000228aa) for chassis 0 to 7. es2_xref finds calls from Hangar_Clear and Shell_FreeData.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md; ES1GO decompile at 00022981",
+      "verified": {
+        "bytes": "00022981+29",
+        "sha1": "d47e410cdbae",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0002299e",
       "binary": "ES1GO",
       "type": "function",
@@ -6497,16 +6767,61 @@
       }
     },
     {
+      "address": "00022c51",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MountPicture_Clear",
+      "description": "(element), its argument removed by this function: nulls the record +0 and Sprite_Set (000216e0)(element + 4, 0, 0, 0, no bitmap). No caller found by es2_xref.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-hercs-diagram; ES1GO disassembly at 00022c51",
+      "verified": {
+        "bytes": "00022c51+100",
+        "sha1": "c622fb6a461e",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00022cb5",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MountPicture_SetBitmap",
+      "description": "(element, value, chassis), its arguments removed by this function: Sprite_SetBitmap (000216c7) of the sprite +4 with no bitmap for the record's weapon 17 (or no record); for a value below 0x33 frame (the record's frame - 1) of the chassis' WEPD bank, loading it into 0007fffc the first time; otherwise, when the chassis' WEP1 bank 0007ff9c is loaded, the record's frame of it. No caller found by es2_xref.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-hercs-diagram; ES1GO decompile at 00022cb5",
+      "verified": {
+        "bytes": "00022cb5+195",
+        "sha1": "c103816bc2fd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00022d78",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "MountPicture_Set",
-      "description": "(element, value, weapon, mount, chassis) in stack order, callee-cleaned: stores HercLayout_Find (00022024)(weapon, mount, chassis) at element +0; for weapon 0x11 passes the point 0, 0 to 000216e0 for element + 4; otherwise, when value is below 0x33, loads the chassis's RES32\\<chassis>WEPD.DBA with Resource_LoadBitmapArray (0004b7df) into the dword 0007fffc + 4 * chassis when it is 0, and passes the record's first point (+4) to 000216e0 for element + 4; at 0x33 or more does so only when the chassis's WEP1 bank (0007ff9c + 4 * chassis) is loaded. es2_xref finds calls from Herc_BuildDiagram (00023883) and 00024788.",
+      "description": "(element, value, weapon, mount, chassis) in stack order, callee-cleaned: stores HercLayout_Find (00022024)(weapon, mount, chassis) at element +0; for weapon 0x11 passes the point 0, 0 to Sprite_Set (000216e0) for element + 4; otherwise, when value is below 0x33, loads the chassis's RES32\\<chassis>WEPD.DBA with Resource_LoadBitmapArray (0004b7df) into the dword 0007fffc + 4 * chassis when it is 0, and passes the record's first point (+4) to Sprite_Set (000216e0) for element + 4; at 0x33 or more does so only when the chassis's WEP1 bank (0007ff9c + 4 * chassis) is loaded. es2_xref finds calls from Herc_BuildDiagram (00023883) and Herc_SetCurrentMountWeapon (00024788).",
       "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-pictures",
       "verified": {
         "bytes": "00022d78+304",
         "sha1": "46fe3b4284e8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00022ea8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MountPicture_Erase",
+      "description": "(element), its argument removed by this function: Sprite_Erase (00021a6e)(element + 4).",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#sprites; ES1GO decompile at 00022ea8",
+      "verified": {
+        "bytes": "00022ea8+23",
+        "sha1": "cfbd37aab363",
         "scope": "body",
         "via": "decompile"
       }
@@ -6557,16 +6872,76 @@
       }
     },
     {
+      "address": "000231c4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLBase_DtorHercCopy",
+      "description": "(object, flags), its arguments removed by this function: slot +0x1c of the vtable 000805e6: byte for byte the code of GLBase_Dtor (00046d4f), relocated operands aside, storing 000805e6 where that stores 00082ada.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#where-the-code-lies; ES1GO disassembly at 000231c4",
+      "verified": {
+        "bytes": "000231c4+44",
+        "sha1": "262bfbba82be",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000231f0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRegion_DtorHercCopy",
+      "description": "(region, flags), its arguments removed by this function: slot +0x1c of the vtable 00080618: byte for byte the code of GLRegion_Dtor (00046d7b), relocated operands aside, storing 00080618 and 000805e6 where that stores 00082b0c and 00082ada.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#where-the-code-lies; ES1GO disassembly at 000231f0",
+      "verified": {
+        "bytes": "000231f0+73",
+        "sha1": "310151fc0322",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00023239",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRectangleRegion_DtorHercCopy",
+      "description": "(region, flags), its arguments removed by this function: slot +0x1c of the vtable 00080650: byte for byte the code of GLRectangleRegion_Dtor (00046dc4), relocated operands aside, storing 00080650 and 00080618 and 000805e6 where that stores 00082b44 and 00082b0c and 00082ada.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#where-the-code-lies; ES1GO disassembly at 00023239",
+      "verified": {
+        "bytes": "00023239+107",
+        "sha1": "d29de9269ae2",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "000232a4",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "Herc_Dtor",
-      "description": "(herc, flags), its arguments removed by this function: the HERC's destructor. Returns for a null HERC; otherwise Herc_FreeDiagram (0002330e)(herc), 00021519(herc + 0x72, 2), and Mem_Delete(herc) when bit 0 of flags is set. es2_xref finds seven calls, Hangar_Clear (00028b19)'s, Hangar_ScrapSlot (0002a20d)'s and two in Hangar_ScrapSelectedHerc (0002a046) among them.",
+      "description": "(herc, flags), its arguments removed by this function: the HERC's destructor. Returns for a null HERC; otherwise Herc_FreeDiagram (0002330e)(herc), Sprite_Dtor (00021519)(herc + 0x72, 2), and Mem_Delete(herc) when bit 0 of flags is set. es2_xref finds seven calls, Hangar_Clear (00028b19)'s, Hangar_ScrapSlot (0002a20d)'s and two in Hangar_ScrapSelectedHerc (0002a046) among them.",
       "source": "Herculan/docs/es1/shell/between-missions.md#lost-squadmates; ES1GO decompile at 000232a4",
       "verified": {
         "bytes": "000232a4+59",
         "sha1": "4573a7eb722f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000232df",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MountPicture_Dtor",
+      "description": "(element, flags), its arguments removed by this function: for an element, Sprite_Dtor (00021519)(element + 4, 2), and frees the element when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-hercs-diagram; ES1GO decompile at 000232df",
+      "verified": {
+        "bytes": "000232df+47",
+        "sha1": "437dd34fec78",
         "scope": "body",
         "via": "decompile"
       }
@@ -6577,7 +6952,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Herc_FreeDiagram",
-      "description": "(herc), its argument removed by this function: when +0xa4 is set, __vec_delete (0005547c)(000232df, 0x26, 7, it) and nulls it; when +0x94 is set, __vec_delete(00021519, 0x22, 7, it) and nulls it; when +0x98 is set, 00021519(it, 3) and nulls it; when Shell_LowMemory (0007fd09) is set, 000228aa(the chassis +0) and nulls +0x9c and +0xa0. es2_xref finds three calls, from Herc_Dtor (000232a4), 000241cd and Hangar_ReadStatusBlock (00028e50).",
+      "description": "(herc), its argument removed by this function: when +0xa4 is set, __vec_delete (0005547c)(MountPicture_Dtor (000232df), 0x26, 7, it) and nulls it; when +0x94 is set, __vec_delete(Sprite_Dtor (00021519), 0x22, 7, it) and nulls it; when +0x98 is set, Sprite_Dtor (00021519)(it, 3) and nulls it; when Shell_LowMemory (0007fd09) is set, HercArt_FreeChassisBanks (000228aa)(the chassis +0) and nulls +0x9c and +0xa0. es2_xref finds three calls, from Herc_Dtor (000232a4), Herc_EraseFromBay (000241cd) and Hangar_ReadStatusBlock (00028e50).",
       "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-pictures; ES1GO decompile and disassembly at 0002330e",
       "verified": {
         "bytes": "0002330e+192",
@@ -6632,16 +7007,166 @@
       }
     },
     {
+      "address": "00023605",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_SetBodyPicture",
+      "description": "(HERC, remaining), its arguments removed by this function: Sprite_Set (000216e0) of the body +0x72 by the chassis +0 (above 7 nothing) and remaining: 0, WEP1 (+0x9c) frame 0 at Herc_BodyPositions (000a0398)[chassis]; chassis 0 and 1 any other, and 2 to 4 with 2, and 5 to 7 with 3, no bitmap at that point; chassis 2 to 4 with 1, and 5 to 7 with 1 or 2, BILD frame remaining - 1 at Herc_BuildPositions (000a03d8)[chassis][remaining - 1], loading the BILD bank into 0008001c the first time; other values nothing.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-body; ES1GO decompile and disassembly at 00023605",
+      "verified": {
+        "bytes": "00023605+638",
+        "sha1": "189f685c4b9d",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00023883",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "Herc_BuildDiagram",
-      "description": "(herc, word) in stack order, callee-cleaned: sets +0x70 to -1 and clears 0007ff98; stores the chassis's RES32 WEP1 and OUTL banks at +0x9c and +0xa0, loading each with Resource_LoadBitmapArray (0004b7df) into 0007ff9c or 0007ffbc + 4 * chassis when it is 0; calls 00023605(herc, word); for chassis 7 makes a 0x22-byte element at +0x98, else stores null there; when the mount count is not 0 makes 0x26-byte elements at +0xa4 (__vec_new (0005542c) with 00023d70) and 0x22-byte elements at +0x94 (with 00023f2c). Per mount: when Herc_GetMountStatus (00024b23)(herc, mount) is 0 sets the weapon to 0x11 and calls Herc_SetStatus (00024c14)(herc, 100, mount, 0x786); calls HercLayout_FindFrame (00022086), passes HercLayout_FindSecondPoint (0002219f)'s point to 000216e0 for the +0x94 element, and sets the +0xa4 element with MountPicture_Set (00022d78) and Herc_GetMountStatus (00024b23)'s value; on chassis 7, when mount 2 or 3 is not 0x11, passes the point 0x56, 0x19 to 000216e0 for the +0x98 element and sets the byte 0007ff8e; sets to 0 the mount's +0x18 word when its weapon is 9 to 11 and the word is 5. Last, when +0x98 is set and 0007ff8e is clear, passes 0, 0 to 000216e0 for it. es2_xref finds seven calls: from Herc_Read (00023501), 000241f9, Hangar_ReadStatusBlock (00028e50), Hangar_AddHerc (00029d0f), 00029d68, and twice from Hangar_AdvanceMarkedHerc (00029e01).",
+      "description": "(herc, word) in stack order, callee-cleaned: sets +0x70 to -1 and clears Herc_MountHighlightShown (0007ff98); stores the chassis's RES32 WEP1 and OUTL banks at +0x9c and +0xa0, loading each with Resource_LoadBitmapArray (0004b7df) into 0007ff9c or 0007ffbc + 4 * chassis when it is 0; calls Herc_SetBodyPicture (00023605)(herc, word); for chassis 7 makes a 0x22-byte element at +0x98, else stores null there; when the mount count is not 0 makes 0x26-byte elements at +0xa4 (__vec_new (0005542c) with MountPicture_Ctor (00023d70)) and 0x22-byte elements at +0x94 (with Sprite_Ctor (00023f2c)). Per mount: when Herc_GetMountStatus (00024b23)(herc, mount) is 0 sets the weapon to 0x11 and calls Herc_SetStatus (00024c14)(herc, 100, mount, 0x786); calls HercLayout_FindFrame (00022086), passes HercLayout_FindSecondPoint (0002219f)'s point to Sprite_Set (000216e0) for the +0x94 element, and sets the +0xa4 element with MountPicture_Set (00022d78) and Herc_GetMountStatus (00024b23)'s value; on chassis 7, when mount 2 or 3 is not 0x11, passes the point 0x56, 0x19 to Sprite_Set (000216e0) for the +0x98 element and sets the byte Herc_ColossusTopShown (0007ff8e); sets to 0 the mount's +0x18 word when its weapon is 9 to 11 and the word is 5. Last, when +0x98 is set and Herc_ColossusTopShown (0007ff8e) is clear, passes 0, 0 to Sprite_Set (000216e0) for it. es2_xref finds seven calls: from Herc_Read (00023501), Herc_DrawInBay (000241f9), Hangar_ReadStatusBlock (00028e50), Hangar_AddHerc (00029d0f), 00029d68, and twice from Hangar_AdvanceMarkedHerc (00029e01).",
       "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-pictures",
       "verified": {
         "bytes": "00023883+1261",
         "sha1": "3a621951d727",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00023d70",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MountPicture_Ctor",
+      "description": "(element), its argument removed by this function: allocates 0x26 bytes for a null element; builds the sprite at +4 as Sprite_Ctor (00023f2c) does, inline, and zeroes the record +0.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-hercs-diagram; ES1GO decompile at 00023d70",
+      "verified": {
+        "bytes": "00023d70+444",
+        "sha1": "873df521ec45",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00023f2c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sprite_Ctor",
+      "description": "(sprite), its argument removed by this function: allocates 0x22 bytes for a null sprite; builds the region at +6 inline (vtables 000805bc, 000805e6, 00080618, then 00080650) with a zero rect at +0xe, and zeroes the bitmap +2, the buffer +0x1e and the drawn byte +0.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#sprites; ES1GO decompile at 00023f2c",
+      "verified": {
+        "bytes": "00023f2c+400",
+        "sha1": "61c2f3389c9b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000240bc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_ReadOverDiagram",
+      "description": "(HERC, stream), its arguments removed by this function: through the stream's slot +0x1c reads two int16 into locals it does not use, then for each mount of +2 an int16 weapon given with Herc_SetCurrentMountWeapon (00024788) with +0x70 set to the mount, puts +0x70 back, then 2 x +2 bytes into +0x18, 2 into +0x2c and 0x42 into +0x2e. No caller found by es2_xref.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-highlight; ES1GO decompile at 000240bc",
+      "verified": {
+        "bytes": "000240bc+273",
+        "sha1": "74ff68a0b744",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000241cd",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_EraseFromBay",
+      "description": "(HERC), its argument removed by this function: Herc_EraseMounts (00024561), Sprite_Erase (00021a6e) of the body +0x72, and with Shell_LowMemory (0007fd09) set Herc_FreeDiagram (0002330e).",
+      "source": "Herculan/docs/es1/shell/hangar.md#drawing-the-herc-into-its-bay; ES1GO decompile at 000241cd",
+      "verified": {
+        "bytes": "000241cd+44",
+        "sha1": "10046050f4f5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000241f9",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_DrawInBay",
+      "description": "(HERC, remaining), its arguments removed by this function: with Shell_LowMemory (0007fd09) set Herc_BuildDiagram (00023883)(HERC, remaining); Sprite_Draw (000217a9) of the body +0x72; Herc_DrawDamageMarks (00024366); Ttm_RunScript of group script 1; Herc_DrawMounts (00024670); Ttm_RunScript of scripts 0 and 2.",
+      "source": "Herculan/docs/es1/shell/hangar.md#drawing-the-herc-into-its-bay; ES1GO decompile at 000241f9",
+      "verified": {
+        "bytes": "000241f9+142",
+        "sha1": "92de40b03f1a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00024287",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_HideMountHighlight",
+      "description": "(HERC), its argument removed by this function: Herc_EraseMounts (00024561), clears Herc_MountHighlightShown (0007ff98), Herc_DrawMounts (00024670).",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-highlight; ES1GO decompile at 00024287",
+      "verified": {
+        "bytes": "00024287+31",
+        "sha1": "c2848bed3ff3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000242a6",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_HighlightNextMount",
+      "description": "(HERC), its argument removed by this function: Herc_EraseMounts (00024561), the current mount +0x70 plus 1 modulo the mount count +2, Herc_MountHighlightShown (0007ff98) 1, Herc_DrawMounts (00024670).",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-highlight; ES1GO decompile at 000242a6",
+      "verified": {
+        "bytes": "000242a6+66",
+        "sha1": "c8a1c171dea4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000242e8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_HighlightPreviousMount",
+      "description": "(HERC), its argument removed by this function: Herc_EraseMounts (00024561), the current mount +0x70 less 1, below 0 the mount count +2 less 1, Herc_MountHighlightShown (0007ff98) 1, Herc_DrawMounts (00024670).",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-highlight; ES1GO decompile at 000242e8",
+      "verified": {
+        "bytes": "000242e8+62",
+        "sha1": "7eb3b086e801",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00024326",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_HighlightMount",
+      "description": "(HERC, mount), its arguments removed by this function: Herc_EraseMounts (00024561), the current mount +0x70 set to mount, Herc_MountHighlightShown (0007ff98) 1 for a mount other than -1 and 0 for -1, Herc_DrawMounts (00024670).",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-highlight; ES1GO decompile at 00024326",
+      "verified": {
+        "bytes": "00024326+64",
+        "sha1": "e0c6331827a0",
         "scope": "body",
         "via": "decompile"
       }
@@ -6652,11 +7177,86 @@
       "type": "function",
       "confidence": "high",
       "name": "Herc_DrawDamageMarks",
-      "description": "(herc), callee-cleaned: loads the chassis's RES32 DMG1 bank with Resource_LoadBitmapArray (0004b7df) into 0007ffdc + 4 * chassis when it is 0; for groups 0-5 takes the level Repair_LevelForCondition (000389fb)(Herc_GetStatus (00024b86)(herc, group, 0x785)) returns and for a level of 1 to 3 draws each mark of the list at 000aae3a + 0x6c * chassis + 0x12 * group + 6 * (level - 1): Bitmap_Blit (000502c0) of the bank's frame at the mark's point, once with the word +0x38 of the canvas 000ab616 set to the word 0007fccc and once with it put back, each time also storing it to 0008448e and calling the routine at 000865f4 with it when the canvas is the current one. es2_xref finds one call, from 000241f9.",
+      "description": "(herc), callee-cleaned: loads the chassis's RES32 DMG1 bank with Resource_LoadBitmapArray (0004b7df) into 0007ffdc + 4 * chassis when it is 0; for groups 0-5 takes the level Repair_LevelForCondition (000389fb)(Herc_GetStatus (00024b86)(herc, group, 0x785)) returns and for a level of 1 to 3 draws each mark of the list at 000aae3a + 0x6c * chassis + 0x12 * group + 6 * (level - 1): Bitmap_Blit (000502c0) of the bank's frame at the mark's point, once with the word +0x38 of the canvas 000ab616 set to the word 0007fccc and once with it put back, each time also storing it to 0008448e and calling the routine at 000865f4 with it when the canvas is the current one. es2_xref finds one call, from Herc_DrawInBay (000241f9).",
       "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-damage-marks",
       "verified": {
         "bytes": "00024366+507",
         "sha1": "f7470aef683e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00024561",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_EraseMounts",
+      "description": "(HERC), its argument removed by this function: for k from the mount count +2 less 1 down to 0, m the chassis' word k of Herc_MountDrawOrder (000803d8): Sprite_Erase (00021a6e) of +0x98 on chassis 7 with Herc_ColossusTopShown (0007ff8e) set and m 3; of the outline +0x94[m] while Herc_MountHighlightShown (0007ff98) is set and m is the current mount +0x70; MountPicture_Erase (00022ea8) of +0xa4[m]; each only when its array is set.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#drawing-the-diagram; ES1GO decompile at 00024561",
+      "verified": {
+        "bytes": "00024561+271",
+        "sha1": "39c87867c7aa",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00024670",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_DrawMounts",
+      "description": "(HERC), its argument removed by this function: for k from 0 to the mount count +2 less 1, m the chassis' word k of Herc_MountDrawOrder (000803d8): Sprite_Draw (000217a9) of +0xa4[m]'s sprite +4; of the outline +0x94[m] while Herc_MountHighlightShown (0007ff98) is set and m is the current mount +0x70; of +0x98 on chassis 7 with Herc_ColossusTopShown (0007ff8e) set and m 3; each only when its array is set.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#drawing-the-diagram; ES1GO decompile at 00024670",
+      "verified": {
+        "bytes": "00024670+280",
+        "sha1": "7887348fc6af",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00024788",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_SetCurrentMountWeapon",
+      "description": "(HERC, weapon), its arguments removed by this function: for +0x70 other than -1: the mount's weapon word becomes 17 when Herc_GetMountStatus (00024b23) is 0 and the weapon otherwise; MountPicture_Set (00022d78) of +0xa4[mount] with Herc_CurrentMountStatus (00024b51), and Sprite_Set (000216e0) of the outline +0x94[mount] to the OUTL frame HercLayout_FindFrame gives at HercLayout_FindSecondPoint's point, both for the weapon argument; when that frame is not 0, on chassis 7 with mount 2 or 3: Herc_ColossusTopShown (0007ff8e) clear, +0x98 set to WEP1 frame 43 at (0x56, 0x19) and the flag set; the flag set and the other of mounts 2 and 3 holding weapon 0, +0x98 set to no bitmap at (0, 0) and the flag cleared. Last the mount's word +0x18 becomes 5 for a weapon outside 9 to 11, or 0 for one of them whose word is 5.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-highlight; ES1GO decompile and disassembly at 00024788",
+      "verified": {
+        "bytes": "00024788+662",
+        "sha1": "02ae2e2aa420",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00024a1e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_SetCurrentMountAmmo",
+      "description": "(HERC, word), its arguments removed by this function: for +0x70 other than -1 stores the word in the current mount's word +0x18 + 2 x +0x70.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-highlight; ES1GO decompile at 00024a1e",
+      "verified": {
+        "bytes": "00024a1e+57",
+        "sha1": "a44eba605bb0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00024a57",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_SetWord2C",
+      "description": "(HERC, word), its arguments removed by this function: stores the word at +0x2c. No caller found by es2_xref.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-highlight; ES1GO decompile at 00024a57",
+      "verified": {
+        "bytes": "00024a57+24",
+        "sha1": "78c9ffab10b7",
         "scope": "body",
         "via": "decompile"
       }
@@ -6692,6 +7292,21 @@
       }
     },
     {
+      "address": "00024aea",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_SetCurrentMountStatus",
+      "description": "(HERC, word), its arguments removed by this function: for +0x70 other than -1 stores the word at +0x5c + 2 x +0x70, the current mount's status word in the block +0x2e.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-highlight; ES1GO decompile at 00024aea",
+      "verified": {
+        "bytes": "00024aea+57",
+        "sha1": "c0615afdfe56",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00024b23",
       "binary": "ES1GO",
       "type": "function",
@@ -6702,6 +7317,21 @@
       "verified": {
         "bytes": "00024b23+46",
         "sha1": "ae0212926d14",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00024b51",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_CurrentMountStatus",
+      "description": "(HERC), its argument removed by this function: Herc_GetMountStatus (00024b23)(HERC, +0x70).",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-highlight; ES1GO decompile at 00024b51",
+      "verified": {
+        "bytes": "00024b51+25",
+        "sha1": "f901258e479a",
         "scope": "body",
         "via": "decompile"
       }
@@ -6792,6 +7422,96 @@
       "verified": {
         "bytes": "00024cec+173",
         "sha1": "bad6cea358d5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00024d99",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_BuildStatusLines",
+      "description": "(HERC, kind), its arguments removed by this function: for kind 0x781 or 0x784 WaText_LinesFromList(0007ff6c), lines 0x80 to 0x88; for 0x785 WaText_LinesFromList(0007ff80), lines 0x89 to 0x8e; for 0x786 a new null-ended array at 000a0304 of the mount count +2 pointers to 16-byte lines at 000a0308 + 16i, each a copy of eng\\watext.bin line 0xa0 for weapon 17 and line 0x8f + weapon otherwise; then Herc_FormatStatusLines (00024f9e)(HERC, the lines, kind).",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-status-lines; ES1GO decompile at 00024d99",
+      "verified": {
+        "bytes": "00024d99+347",
+        "sha1": "4d73d1afd23d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00024ef4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_FormatStatusLine",
+      "description": "(HERC, index, line, kind), its arguments removed by this function: for a line not starting with '-', writes the first three characters of %3d of Herc_GetStatus (00024b86)(HERC, index, 0x784) for kind 0x781 or 0x784, (HERC, index, 0x785) for 0x785, or Herc_GetMountStatus (00024b23)(HERC, index) for 0x786 over the line's first three.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-status-lines; ES1GO decompile at 00024ef4",
+      "verified": {
+        "bytes": "00024ef4+170",
+        "sha1": "2610b5843b51",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00024f9e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_FormatStatusLines",
+      "description": "(HERC, lines, kind), its arguments removed by this function: for each line i of the null-ended array not starting with '-', writes %3d of the status Herc_FormatStatusLine (00024ef4) takes for (HERC, i, kind) over its first three characters.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-status-lines; ES1GO decompile at 00024f9e",
+      "verified": {
+        "bytes": "00024f9e+242",
+        "sha1": "04e4e39d7520",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00025090",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_StaticInit",
+      "description": "(): the HERC file's static initializer, entry 0009a254: fills Herc_BodyPositions (000a0398), eight int32 points, and Herc_BuildPositions (000a03d8), two points per chassis, constructing the second point of chassis 0 to 4 with __vec_ctor of Point_DefaultCtorHercCopy (0002560e) without a value.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#where-the-code-lies; ES1GO decompile at 00025090",
+      "verified": {
+        "bytes": "00025090+1401",
+        "sha1": "5373bdd3b792",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00025609",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_StaticExit",
+      "description": "(): the HERC file's exit routine, exit table entry 0009a298: a bare return.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#where-the-code-lies; ES1GO disassembly at 00025609",
+      "verified": {
+        "bytes": "00025609+5",
+        "sha1": "74c0a4a36986",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0002560e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Point_DefaultCtorHercCopy",
+      "description": "(point), its argument removed by this function: the HERC file's copy of Point_DefaultCtor (0004b37d): allocates 8 bytes for a null point and returns it, writing no field.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#where-the-code-lies; ES1GO decompile at 0002560e",
+      "verified": {
+        "bytes": "0002560e+27",
+        "sha1": "bccc21f54563",
         "scope": "body",
         "via": "decompile"
       }
@@ -7657,7 +8377,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Hangar_Clear",
-      "description": "(), C convention: when 000808a0 is set, destroys each HERC in it below the slot count 00080890 with Herc_Dtor (000232a4)(herc, 3), zeroing its pointer, and frees the array; calls 00022981 when the dword 0009a30c is below the dword 0007e738; sets 00080890 and 00080892 to 0, Hangar_SelectedSlot (00080894) and 00080896 to -1, and 00080898 and the dword 0008089c to 0.",
+      "description": "(), C convention: when 000808a0 is set, destroys each HERC in it below the slot count 00080890 with Herc_Dtor (000232a4)(herc, 3), zeroing its pointer, and frees the array; calls HercArt_FreeAllBanks (00022981) when the dword 0009a30c is below the dword 0007e738; sets 00080890 and 00080892 to 0, Hangar_SelectedSlot (00080894) and 00080896 to -1, and 00080898 and the dword 0008089c to 0.",
       "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists",
       "verified": {
         "bytes": "00028b19+189",
@@ -7782,6 +8502,21 @@
       "verified": {
         "bytes": "000292da+510",
         "sha1": "b67040a023ca",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00029651",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_ShowSlot",
+      "description": "(slot), its argument removed by this function: 000295e7; sets the marked slot 00080896 to -1 when it is Hangar_SelectedSlot and that slot holds no HERC; for slot -1 takes Hangar_FindFreeSlot (0002983a), and when that is -1 too calls 0002978c and takes Hangar_SelectedSlot; stores the slot in Hangar_SelectedSlot; 000294d8; 00029a14(-1). es2_xref finds calls from Shell_DrawScreen (two), 0002f009 and 0002f8d4.",
+      "source": "Herculan/docs/es1/shell/hangar.md#showing-a-bay; ES1GO decompile at 00029651",
+      "verified": {
+        "bytes": "00029651+120",
+        "sha1": "de545455e646",
         "scope": "body",
         "via": "decompile"
       }
@@ -8517,6 +9252,96 @@
       "verified": {
         "bytes": "0002c71a+41",
         "sha1": "d4091170311b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002c743",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CrewAssignMenu_Ctor",
+      "description": "(menu), its argument removed by this function: CREW's menu, 0x40 bytes allocated for a null one: builds the Menu base and region inline, stores the vtable 00080c9e, Ttm_SetMode(2, group script 3's handle), sets +0x26 CareerRecord_Current, +0x2a 1615, +0x2c Hangar_SelectedSlot, +0x2e and +0x30 -1, the four words +0x32 to each pilot entry's slot +8, +0x3a and +0x3c the record's +0x12, +0x3e -1, and loads res32\\pilots.dba into CrewAssignMenu_Portraits (0007ebcc) and res32\\mesh.dba into CrewAssignMenu_Mesh (0007ebd0).",
+      "source": "Herculan/docs/es1/shell/hangar.md#opening-it; ES1GO decompile at 0002c743",
+      "verified": {
+        "bytes": "0002c743+527",
+        "sha1": "98f41e021896",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002c952",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CrewAssignMenu_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: vtable slot +4 of 00080c9e: stores 00080c9e, GLBitmapArray_Dtor(bank, 3) of CrewAssignMenu_Portraits (0007ebcc) and CrewAssignMenu_Mesh (0007ebd0) and clears both, Ttm_SetMode(0, group script 3's handle), stores the base vtables 00080ba8, 00080b7c, 00080b44 and 00080b12, and frees the menu when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/shell/hangar.md#leaving-it; ES1GO decompile at 0002c952",
+      "verified": {
+        "bytes": "0002c952+264",
+        "sha1": "a1fdde229084",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002ca5a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CrewAssignMenu_UndoSwap",
+      "description": "(menu), its argument removed by this function: with an entry e in +0x3e, calls slot +0x18 of tile 1615 + e; when +0x2a - 1615 is the record's current pilot +0x12, gives entry e the current pilot's slot +8, sets tile 1615 + e's frame (slot +0x24) to that slot's HERC's chassis or -1, and sets the redraw bytes of hotspots 1619 + e and 1615 + e. It leaves +0x3e.",
+      "source": "Herculan/docs/es1/shell/hangar.md#assigning-a-herc; ES1GO decompile at 0002ca5a",
+      "verified": {
+        "bytes": "0002ca5a+455",
+        "sha1": "5b42de40278c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002cc21",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CrewAssignMenu_AssignSelectedSlot",
+      "description": "(menu), its argument removed by this function: sets Hangar_SelectedSlot to -1 when it equals +0x2e; stores it in +0x2e and CareerRecord_FindPilotBySlot(record, slot) in +0x3e; for an entry e found, gives it the slot +0x30, calls tile 1615 + e's slot +0x14 with colour 10 and slot +0x24 with +0x30's chassis or -1, and sets the redraw bytes of hotspots 1619 + e and 1615 + e; then sets the current pilot +0x12's tile frame to the slot's chassis, gives that entry the slot, sets its two hotspots' redraw bytes, and calls Roster_ForEachPilotNoOp(Career_Roster).",
+      "source": "Herculan/docs/es1/shell/hangar.md#assigning-a-herc; ES1GO decompile and disassembly at 0002cc21",
+      "verified": {
+        "bytes": "0002cc21+757",
+        "sha1": "59f82d7313ff",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002cf16",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CrewAssignMenu_SelectColumn",
+      "description": "(menu, id), its arguments removed by this function: for +0x2a not -1, calls its tile's slot +0x18 and sets the redraw bytes of hotspots +0x2a and +0x2a + 4; with an entry e in +0x3e, calls tile 1615 + e's slot +0x18, sets hotspot 1615 + e's redraw byte and sets +0x3e to -1; makes button 1623 inactive (+0x19 2) for id 1615 and active (0) otherwise, with +0x1f 1; calls the id's tile's slot +0x14 with colour 4, sets the redraw bytes of hotspots id and id + 4, CareerRecord_SelectPilot (00015ad4)(record, id - 1615), and stores the id in +0x2a and Hangar_SelectedSlot in +0x30.",
+      "source": "Herculan/docs/es1/shell/hangar.md#assigning-a-herc; ES1GO decompile at 0002cf16",
+      "verified": {
+        "bytes": "0002cf16+648",
+        "sha1": "b53222666559",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002d19e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CrewAssignMenu_OnMessage",
+      "description": "(menu, message), its arguments removed by this function: vtable slot +8 of 00080c9e: looks the message's target +6 up among the eleven ids at 00080cd0 and jumps through the targets at 00080cfc, case bodies inside this function up to its RET 8 at 0002d324: 2003 and 2004 CrewAssignMenu_UndoSwap, 000296c9 or 00029729, CrewAssignMenu_AssignSelectedSlot; 1623 the same with Hangar_SelectedSlot and +0x30 set to -1; 1700 restores Hangar_SelectedSlot from +0x2c, CareerRecord_SelectPilot(record, +0x3a) and the four entries' slots from +0x32; 100 sets the target to 1700, CareerRecord_SaveCurrent, CareerRecord_SelectPilot(record, +0xe), HangarBay_AssignScripts (000122e0) and Hangar_SelectedSlot from +0x2c; 1615 to 1618 as 2004 for the id in +0x2a and CrewAssignMenu_SelectColumn otherwise; 1624 CrewAssignMenu_SelectColumn of the next tile, 1618 going to 1615; 1611 nothing.",
+      "source": "Herculan/docs/es1/shell/hangar.md#the-buttons; ES1GO decompile and disassembly at 0002d19e",
+      "verified": {
+        "bytes": "0002d19e+393",
+        "sha1": "eb21291cff99",
         "scope": "body",
         "via": "both"
       }
@@ -9646,7 +10471,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ShellBackdrop_Show",
-      "description": "(backdrop, group), its arguments removed by this function: sets Shell_MusicTrack (00081938) to the word at 000817d0 + 2 * (group / 1000 - 1) and, when it differs from 00081936, sets the byte 0007fcd5 and copies it there; destroys ShellBackdrop_Picture (000aa7ac) through its slot +0x1c with 3 when set; ShellBackdrop_LoadPalette (0003950a)(backdrop, group); loads res32\\regn%d.dbm with Resource_LoadBitmap into ShellBackdrop_Picture and calls ShellBackdrop_SetPicture (00021334)(backdrop + 4, 0, 0, picture); calls ShellBackdrop_OpenGroupTtms (00011f19)(group) and, for group 4000, 000122e0.",
+      "description": "(backdrop, group), its arguments removed by this function: sets Shell_MusicTrack (00081938) to the word at 000817d0 + 2 * (group / 1000 - 1) and, when it differs from 00081936, sets the byte 0007fcd5 and copies it there; destroys ShellBackdrop_Picture (000aa7ac) through its slot +0x1c with 3 when set; ShellBackdrop_LoadPalette (0003950a)(backdrop, group); loads res32\\regn%d.dbm with Resource_LoadBitmap into ShellBackdrop_Picture and calls ShellBackdrop_SetPicture (00021334)(backdrop + 4, 0, 0, picture); calls ShellBackdrop_OpenGroupTtms (00011f19)(group) and, for group 4000, HangarBay_AssignScripts (000122e0).",
       "source": "Herculan/docs/es1/shell/menus.md#the-backdrop; ES1GO decompile and disassembly at 000395a0",
       "verified": {
         "bytes": "000395a0+254",
@@ -9856,7 +10681,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_DrawScreen",
-      "description": "(), C convention: while 0008444e is set: clears DUIWindow_InputReady (0007f0dc), calls 0008662c; by the byte Shell_BackdropChanged (000817c6) the HERC diagram path for screens 1700 and 1710, or the page fills through 0008663c, the .ANM at 000aacfe (Anm_Play(1, 0xa, name)) when 0007fcd7 is 2, ShellBackdrop_Draw (0002141c)(000a09a4) and 0001240b or 00012467; DigitalDialog_ShowMessage(Shell_MessageBox (0009b010)), Ttm_RunAll; with a current menu, the render contexts 0007fcdc (RenderContext_GetForRect (0004c88a)) and 0007fcd8 (RenderContext_GetFullScreenAround (0004c53c)), source and draw pages 2, Region_Save of the window's region into +2, DUIWindow_Draw (0001bfa3) on page 2 (with Shell_MissionMap (000809a4)'s slot +4 and Dialog_Draw (00018dcb) per page while 000817bd counts down), then on backdrop 1000 except screen 9999 a whole-screen DirtyBox_Add with delay 1, otherwise DUIWindow_Draw on the draw page and 00009c64; sets 0007fcd6. With 0007fcd7 1 uploads 0007fcd0 and plays Anm_Play(1, 0xb, name). Puts the source page back, DirtyBox_Add(0, 200, 320, 0, 0), 00086628 unless the screen is 9999, and sets DUIWindow_InputReady.",
+      "description": "(), C convention: while 0008444e is set: clears DUIWindow_InputReady (0007f0dc), calls 0008662c; by the byte Shell_BackdropChanged (000817c6) the HERC diagram path for screens 1700 and 1710, or the page fills through 0008663c, the .ANM at 000aacfe (Anm_Play(1, 0xa, name)) when 0007fcd7 is 2, ShellBackdrop_Draw (0002141c)(000a09a4) and ShellBackdrop_PlayAllScripts (0001240b) or ShellBackdrop_RunScripts (00012467); DigitalDialog_ShowMessage(Shell_MessageBox (0009b010)), Ttm_RunAll; with a current menu, the render contexts 0007fcdc (RenderContext_GetForRect (0004c88a)) and 0007fcd8 (RenderContext_GetFullScreenAround (0004c53c)), source and draw pages 2, Region_Save of the window's region into +2, DUIWindow_Draw (0001bfa3) on page 2 (with Shell_MissionMap (000809a4)'s slot +4 and Dialog_Draw (00018dcb) per page while 000817bd counts down), then on backdrop 1000 except screen 9999 a whole-screen DirtyBox_Add with delay 1, otherwise DUIWindow_Draw on the draw page and 00009c64; sets 0007fcd6. With 0007fcd7 1 uploads 0007fcd0 and plays Anm_Play(1, 0xb, name). Puts the source page back, DirtyBox_Add(0, 200, 320, 0, 0), 00086628 unless the screen is 9999, and sets DUIWindow_InputReady.",
       "source": "Herculan/docs/es1/shell/menus.md#drawing-a-screen; ES1GO decompile at 0003c1b7",
       "verified": {
         "bytes": "0003c1b7+1523",
@@ -21968,6 +22793,24 @@
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#loading-a-mission"
     },
     {
+      "address": "0007ebcc",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "CrewAssignMenu_Portraits",
+      "description": "GLBitmapArray*: res32\\pilots.dba, loaded by CrewAssignMenu_Ctor (0002c743) and destroyed and cleared by CrewAssignMenu_Dtor (0002c952); CREW's squadmate portraits, frame the pilot entry's word +0.",
+      "source": "Herculan/docs/es1/shell/hangar.md#the-screen; ES1GO decompile at 0002c743"
+    },
+    {
+      "address": "0007ebd0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "CrewAssignMenu_Mesh",
+      "description": "GLBitmapArray*: res32\\mesh.dba, loaded by CrewAssignMenu_Ctor (0002c743) and destroyed and cleared by CrewAssignMenu_Dtor (0002c952); its frame 0 is drawn over a CREW portrait.",
+      "source": "Herculan/docs/es1/shell/hangar.md#the-screen; ES1GO decompile at 0002c743"
+    },
+    {
       "address": "0007ebd4",
       "binary": "ES1GO",
       "type": "data",
@@ -22344,6 +23187,33 @@
       "name": "Shell_AltDriveAllowed",
       "description": "byte: 1 after -C or /C (Shell_ParseCommandLine (0001272d)); without it Shell_Main (00012ec7) takes the ALT_DRIVE variable as null. ES1DBSIM's Sim_AltDriveAllowed (000b5bce).",
       "source": "Herculan/docs/es1/shell/startup.md#the-command-line"
+    },
+    {
+      "address": "0007ff8e",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Herc_ColossusTopShown",
+      "description": "byte: set when Herc_BuildDiagram (00023883) or Herc_SetCurrentMountWeapon (00024788) gives a Colossus' +0x98 sprite WEP1 frame 43, cleared when the latter takes it away; while set Herc_DrawMounts (00024670) draws the sprite with mount 3.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-hercs-diagram; ES1GO disassembly at 00024788"
+    },
+    {
+      "address": "0007ff98",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Herc_MountHighlightShown",
+      "description": "byte: while set, Herc_DrawMounts (00024670) draws the current mount's outline; cleared by Herc_BuildDiagram (00023883) and Herc_HideMountHighlight (00024287), set by the other highlight functions.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-highlight; ES1GO decompile at 00024326"
+    },
+    {
+      "address": "000803d8",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Herc_MountDrawOrder",
+      "description": "nine int16 mount numbers per chassis, 0x12 bytes apart: the order Herc_DrawMounts (00024670) draws a HERC's mounts in and Herc_EraseMounts (00024561) erases them in reverse.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#drawing-the-diagram; ES1GO decompile at 00024670"
     },
     {
       "address": "0008070d",
@@ -23064,6 +23934,24 @@
       "name": "g_BattleSet",
       "description": "The shell's battle set, 6 bytes: the campaign count word +0 and the pointer +2 to the 8-byte campaigns, each a talking-head word +0, a position count +2 and a pointer +4 to 6-byte name lists. Filled by BattleSet_Load (00013f01).",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#battle-sets"
+    },
+    {
+      "address": "000a0398",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Herc_BodyPositions",
+      "description": "eight int32 (x, y) points, one per chassis, filled by Herc_StaticInit (00025090): where Herc_SetBodyPicture (00023605) puts a HERC's body.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-body; ES1GO decompile at 00025090"
+    },
+    {
+      "address": "000a03d8",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Herc_BuildPositions",
+      "description": "eight pairs of int32 (x, y) points, one pair per chassis, filled by Herc_StaticInit (00025090): where Herc_SetBodyPicture (00023605) puts BILD frames 0 and 1.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-body; ES1GO decompile at 00025090"
     },
     {
       "address": "000a045c",

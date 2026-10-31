@@ -6,7 +6,7 @@ Addresses are `ES1GO` image addresses ([the X-32 executable](../formats/x32-exec
 
 ## Where the object file starts and ends
 
-The debriefing's code, `0002c422` to `0002c742`, lies inside the menu handlers' file ([where it starts and ends](main-menu.md#where-the-object-files-start-and-end)), right after [the war map's](war-map.md#where-the-object-file-starts-and-ends): `DebriefingMenu_Ctor` (`0002c422`) follows `WarMapMenu_OnMessage`'s `RET 8` at `0002c41f`, and the `RET 8` of `0002c71a` at `0002c740` runs straight into `0002c743`, screen 1610's ([the screens](menus.md#the-screens)). The class's name `DebriefingMenu` stands at `00080c3c`, before its vtable `00080c4e`, which holds the destructor at `+4` and the handler at `+8`; the handler's case table `00080c64` follows. `es1_boilerplate.py bounds` over `0002c474`–`0002c842` finds no object-file boundary evidence.
+The debriefing's code, `0002c422` to `0002c742`, lies inside the menu handlers' file ([where it starts and ends](main-menu.md#where-the-object-files-start-and-end)), right after [the war map's](war-map.md#where-the-object-file-starts-and-ends): `DebriefingMenu_Ctor` (`0002c422`) follows `WarMapMenu_OnMessage`'s `RET 8` at `0002c41f`, and the `RET 8` of `0002c71a` at `0002c740` runs straight into `CrewAssignMenu_Ctor` (`0002c743`), screen 1610's ([the screens](menus.md#the-screens)). The class's name `DebriefingMenu` stands at `00080c3c`, before its vtable `00080c4e`, which holds the destructor at `+4` and the handler at `+8`; the handler's case table `00080c64` follows. `es1_boilerplate.py bounds` over `0002c474`–`0002c842` finds no object-file boundary evidence.
 
 | Address | Function | The vtable slot that holds it |
 |---|---|---|
