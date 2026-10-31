@@ -86,7 +86,7 @@ The keyboard's reads go through `Input_ReadDeviceEvent` (`00025b30`), `ES1DBSIM`
 - loads 13 fonts ([the loads](../formats/styles-dat.md#the-loads));
 - seeds `Shell_RandomState` ([the shell's generator](../formats/msn-mission-file.md)) and loads `eng\watext.bin` into `0009afa8` ([string tables](../formats/bin-string-tables.md));
 - sets the rect `0009b000`–`0009b00c` to (0, 0, the display's attribute 2 − 1, attribute 3 − 1);
-- loads the HERC diagrams' tables and, unless `Shell_LowMemory` is set, their art ([the load](../formats/herc-diagrams.md)), the careers log ([loading](../formats/career-log-and-player-mec.md#loading)) and the battle set ([which battle set](../formats/bst-battle-sets.md#which-battle-set)), and calls `00027c4c`.
+- loads the HERC diagrams' tables and, unless `Shell_LowMemory` is set, their art ([the load](../formats/herc-diagrams.md)), the careers log ([loading](../formats/career-log-and-player-mec.md#loading)) and the battle set ([which battle set](../formats/bst-battle-sets.md#which-battle-set)), and calls `Inventory_AllocAll` (`00027c4c`).
 
 ## The frame loop
 

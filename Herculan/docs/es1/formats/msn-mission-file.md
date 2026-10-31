@@ -22,7 +22,7 @@ ES1's missions are the `.MSN` files in `ZONES.VOL`'s `MSN\` folder. The shell, `
 
 **A mission is a single mission or a career's by the shell's mode, and a single mission takes five of its header words from the MISSION PARAMS menu: AMMO, DAMAGE, DIFFICULTY, VISIBILITY and TIME OF DAY.**
 
-The mode is `Shell_Mode` (`000aad56`), 0 for a single mission and 1 for a career, which the main menu's buttons set ([the main menu's buttons](../shell/main-menu.md#the-buttons)). In steps 4 and 6, mode 1 takes its values from the `0x1f7`-byte record at `0009b23b + 0x1f7 × [0009b21f]` and mode 0 from the words at `000aacbc`–`000aacc4`; step 9 runs only in mode 0.
+The mode is `Shell_Mode` (`000aad56`), 0 for a single mission and 1 for a career, which the main menu's buttons set ([the main menu's buttons](../shell/main-menu.md#the-buttons)). In steps 4 and 6, mode 1 takes its values from the `0x1f7`-byte record at `0009b23b + 0x1f7 × [0009b21f]` and mode 0 from the words at `000aacbc`–`000aacc4`; step 9 runs only in mode 0, and with it the only `CareerRecord_Init` of the load, so a mode-1 load leaves the outcome word `000aad58` as it was, the word `Career_BuildMissionPath` read before the load ([a career's missions](bst-battle-sets.md#a-careers-missions)).
 
 A single mission's path comes from the SINGLE MISSION menu's list, through `Mission_Kind` (`000aad5a`), where step 6 then stores header word 3 ([the list](../shell/single-mission.md#the-list)). `Mission_ReadRestore` (`00036512`) also writes the mode, reading it back from `data\restore.dat` ([which file](eng-mission-text.md#which-file)); the other 37 instructions `es2_xref.py` finds holding the mode's address read it.
 
@@ -91,7 +91,7 @@ The conditions compare against 100 `int16` flags at `000ab244`, which the load s
 | 3 | TIME OF DAY, `000aacc4` | TIME OF DAY, `000aacc4` |
 | 4, 5, 6 | each a draw below 12 | each a draw below 12 |
 
-The draws are the load's first ([the draws](#the-draws)). No row writes a flag: the header patch has no flag list ([Header patches](#header-patches)), so `data\mission.var` is the array as seeded.
+The load writes these values into the shell's flags at `000ab244` themselves, in either mode, so after a mode-1 load every flag but 1 to 6 holds what the shell held before it, such as the career record's words that `Roster_ActivateRecord` or `Career_New` copied there, and the career's save at the end of the load stores the seeded array in the career record ([a career's next mission](../shell/career.md#a-careers-next-mission)). The draws are the load's first ([the draws](#the-draws)). No row writes a flag: the header patch has no flag list ([Header patches](#header-patches)), so `data\mission.var` is the array as seeded.
 
 ## The layout
 

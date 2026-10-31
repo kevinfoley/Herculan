@@ -30,7 +30,7 @@ A record's text is the line of `eng\menu<n>.bin` whose number is the record's po
 | Kind | Builds |
 |---|---|
 | 0 | the window, kept at the menu's `+6`: style 0 a [menu window](../shell/menus.md#the-window) (`MTWindow_Ctor`, `00036874`) with the text as its title, style 1 a plain one (`DUIWindow_Ctor`, `0001abcf`), any other style none. Each style copies the rect to the menu's `+0x12` |
-| 1, 4, 5 | a label: the window's vtable `+0x4e9`, slot `+4`, is called with a mode, 0, 1 or 2 for kinds 1, 4 and 5, the width (right − left), the point (left, top), the text's length plus 1, and the text. The menu window draws mode 0 from the point, 1 ending at the point plus the width and 2 centered in the width ([its drawing](../shell/menus.md#the-menu-windows-drawing--mtwindow_draw-00036b4c)). In menu 4444 a kind-1 text holding `#` is first passed to `0002a1aa` |
+| 1, 4, 5 | a label: the window's vtable `+0x4e9`, slot `+4`, is called with a mode, 0, 1 or 2 for kinds 1, 4 and 5, the width (right − left), the point (left, top), the text's length plus 1, and the text. The menu window draws mode 0 from the point, 1 ending at the point plus the width and 2 centered in the width ([its drawing](../shell/menus.md#the-menu-windows-drawing--mtwindow_draw-00036b4c)). In menu 4444 a kind-1 text holding `#` is first passed to `Hangar_FormatScrapValue` (`0002a1aa`), which writes the selected HERC's scrap value in thousands, three characters, over the `#` and the two characters after it: "### tons of salvage." ([scrapping](../shell/between-missions.md#lost-squadmates)) |
 | 2 | a text box, `MTEditBox_Ctor` (`0001f442`)(0, id, rect), added to the window: the career's name box ([the name box](../shell/career.md#the-name-box)) |
 | 3 | a [button](../shell/menus.md#buttons): style 1 an icon button, any other style a text button, added to the window |
 | 14 | for the 17 ids at `00081b08`, a clickable area: `DUIWindow_AddHotspot` (`0001b2de`)(window, 0, id, handler, rect), each id with its handler ([the build](../shell/menus.md#opening-a-menu--menu_open-0003969e)); any other id builds nothing |
@@ -47,5 +47,4 @@ What the build does with each kind beyond this table, the keys a control adds an
 - **Open:** what the classes `0001eaef` (kind 16) and `0001eff6` (kind 17) are, and what `00037827` returns for them; the kind-15 ids whose lines are open are in [the menus' Open](../shell/menus.md#open).
 - **Open:** the code kind 15's 23 special ids and kind 16's ten jump to.
 - **Open:** what `Resource_LoadBitmapArray` returns for a name with no file, which windows 1501 and 1700 load.
-- **Open:** what `0002a1aa` does with menu 4444's `#` text.
 - **Open:** `eng\` holds `MENU1499.BIN`, `MENU1600.BIN` and `MENU1810.BIN`, for which `dlg\` holds no `.DLG`; what builds those menus.

@@ -4,7 +4,7 @@ ES1's shell takes the name of each mission it loads from lists in `ZONES.VOL`. A
 
 ## Name lists
 
-A name list is a byte, the count *n*, then *n* names, each with its NUL. `StrList_Read` (`000201b7`) reads one from a stream into a 6-byte list: the count into the low byte of the word `+0`, and a pointer at `+2` to *n* new 13-byte buffers, each filled by `Stream_ReadCString` (`00020154`), which reads a byte at a time until it has read a NUL or 13 bytes. A count of 0 allocates nothing and skips the byte after it. `StrList_Get` (`00020254`) returns name *i*, or the only name when *n* is 1, whatever *i* is; `StrList_PickRandom` (`00020289`) returns name `Math_RandomBelow`(*n*) on the shell's generator `0009aec0`; `StrList_Dtor` (`000202b4`) frees the names and the pointer array.
+A name list is a byte, the count *n*, then *n* names, each with its NUL. `StrList_Read` (`000201b7`) reads one from a stream into a 6-byte list: the count into the low byte of the word `+0`, and a pointer at `+2` to *n* new 13-byte buffers, each filled by `Stream_ReadCString` (`00020154`), which reads a byte at a time until it has read a NUL or 13 bytes. A count of 0 allocates nothing and skips the byte after it. `StrList_Get` (`00020254`) returns name *i*, or the only name when *n* is 1, whatever *i* is, with no bounds test on *i*, so on a list of no names it reads through the pointer array the read never made; `StrList_PickRandom` (`00020289`) returns name `Math_RandomBelow`(*n*) on the shell's generator `0009aec0`; `StrList_Dtor` (`000202b4`) frees the names and the pointer array.
 
 `ZONES.VOL`'s `BST\` folder holds twelve files that are one name list each. A battle set position names one by its file name ([A career's missions](#a-careers-missions)), and the retail battle sets name only `any_msn.dat`. Each name ends `.MSN`:
 
@@ -42,10 +42,10 @@ A campaign's `+0` word is the *k* of its talking-head files `C<k>_TEXT.BIN` and 
 `BattleSet_Load` loads the battle set whose index is the word `+5` of the roster at `0009b218` (`0009b21d`). `es2_xref.py` finds three calls to it:
 
 - `Shell_LoadData` (`00020630`), which also loads the shell's fonts and `eng\watext.bin`, after it loads the [careers log](career-log-and-player-mec.md#loading) `Career_Log` (`0009b20c`) with `CareerLog_Load` (`00017e7f`);
-- `BattleSetDialog_OnMessage` (`0002bb29`), the handler of screen 1330, `BattlesetAlert` ([the screens](../shell/menus.md#the-screens)), which on message 100, its ACCEPT button, stores in the roster's word `+5` the selected line of its list box 1331 (`0x533`, the control's slot `+0x2c`), loads that battle set, and changes the message to `0x514`, 1300;
+- `BattleSetDialog_OnMessage` (`0002bb29`), the handler of screen 1330, `BattlesetAlert` ([the screens](../shell/menus.md#the-screens)), which on message 100, its ACCEPT button, stores in the roster's word `+5` and in `Career_NewBattleSet` (`0007fcec`), the battle set `Career_New` gives a new career, the selected line of its list box 1331 (`0x533`, the control's slot `+0x2c`), loads that battle set, and changes the message to `0x514`, 1300 ([LOAD BATTLESET](../shell/main-menu.md#load-battleset));
 - `Career_StartMission`, before it builds each mission's path ([a career's next mission](../shell/career.md#a-careers-next-mission)).
 
-`BATLSETS.BIN` names three files, so the word selects `BTLSET_0` to `BTLSET_2`. A byte search of `GO.EXE` for `test_btl` finds nothing, where the same search finds `tech_sng.dat` ([Open](#open)).
+`BATLSETS.BIN` names three files, so the word selects `BTLSET_0` to `BTLSET_2`. The picker offers battle set 0 alone ([LOAD BATTLESET](../shell/main-menu.md#load-battleset)) and `Career_NewBattleSet` is 0 in the image, so every career starts in `BTLSET_0`. A byte search of `GO.EXE` for `test_btl` finds nothing, where the same search finds `tech_sng.dat` ([Open](#open)).
 
 ### The retail battle sets
 
@@ -75,6 +75,8 @@ Every position of the four retail files names two files, the same file twice whe
 | 5, 7 | `C5_00`, `C5_20`, `C5_30`/`C5_31`, `C5_50`, `C5_70` |
 | 6 | `C6_0A` to `C6_7A`, eight |
 
+An expansion adds a second battle set, and this install holds none of it, but is laid out for one: `eng\watext.bin`'s lines `0x14` and `0x15`, after `0x13`'s METALTECH: EARTH SIEGE, are BATTLESET 1: LUNAR LANDINGS and BATTLESET 2: MARTIAN MASSACRE; `BTLSET_1.DAT` and `BTLSET_2.DAT` are these identical stand-ins, whose names are all `B0_` missions; `HercWorks.Query vol --name` finds no `B1_` or `B2_` entry in the seven archives, where it finds the three `BTLSET_*`; and the picker lists line `0x13` alone ([LOAD BATTLESET](../shell/main-menu.md#load-battleset), [Open](#open)).
+
 `TEST_BTL.DAT` is `BTLSET_1.DAT` but for three campaigns: 0 is `C0_0A`; 1 opens with `C1_60` where `BTLSET_1`'s opens with `C1_00`; 2 is `C2_00` alone; and 7 is `C7_0A` to `C7_7A`.
 
 All 38 of `ZONES.VOL`'s `any_msn.dat` names are in `BTLSET_0.DAT`. Every mission a list names is in `ZONES.VOL`; of its 77 missions, `B0_C0_4B`, `B0_C1_20`, `B0_C1_30`, `SM_ESC50` and `SM_RCN03` are named by no battle set or list.
@@ -83,7 +85,7 @@ All 38 of `ZONES.VOL`'s `any_msn.dat` names are in `BTLSET_0.DAT`. Every mission
 
 A career's mission is drawn from the battle set by the [career record](#the-career-record)'s campaign `+6` and position `+8`, each time `Career_StartMission` (`00016e93`) loads the career's next mission ([a career's next mission](../shell/career.md#a-careers-next-mission)).
 
-`Career_BuildMissionPath` (`00015a13`) passes the outcome, `Career_OutcomeChoice`(`000aad58`), the position and the campaign to `BattleSet_GetMissionName` (`000140a5`), formats the name as `msn\%s` into `000aad14`, and sets the text path (`Mission_SetTextPath`). `BattleSet_GetMissionName` takes the position's name for the outcome (`Campaign_GetPositionName`, `000142f6`, through `StrList_Get`). A name containing `.MSN` is returned as it is. Any other name is a list: it opens `bst\<name>`, reads one name list, and copies a name `StrList_PickRandom` draws from it over the position's name, which it returns. `Career_StartMission` reloads the battle set before every build, so a position naming a list draws again for each mission it starts.
+`Career_BuildMissionPath` (`00015a13`) passes the outcome, `Career_OutcomeChoice`(`000aad58`), the position and the campaign to `BattleSet_GetMissionName` (`000140a5`), formats the name as `msn\%s` into `000aad14`, and sets the text path (`Mission_SetTextPath`). `BattleSet_GetMissionName` takes the position's name for the outcome (`Campaign_GetPositionName`, `000142f6`, through `StrList_Get`), so a position with one name gives it whatever the outcome. A name containing `.MSN` anywhere, in capitals, is returned as it is: the test is `Str_FindBoyerMoore` (`0005b0e4`), a byte search. Any other name is a list: it opens `bst\<name>` with `VolRStream_CtorFromPath`, with no test that it opened, reads one name list into a list of its own, copies a name `StrList_PickRandom` draws from it over the position's 13-byte name in the loaded battle set with `sprintf` `%s`, frees the list, and returns the position's name. The drawn name stays in the battle set until the next `BattleSet_Load`; `Career_StartMission` reloads the battle set before every build, so a position naming a list draws again for each mission it starts.
 
 `Career_OutcomeChoice` (`000159e9`) is 1 when the outcome word exceeds the word of the table at `0007ec80` that the word `000aad5e` indexes, and 0 otherwise. The table holds 4, 4, 4, 3, 3, 3, 4, 3, 3, 3. For each header word 3 its word is the last ordinal of the debriefing's success bands, so outcome 1 is a mission lost ([which text](../shell/debriefing.md#which-text)); which campaign each outcome leads to is [moving on](../shell/between-missions.md#moving-on)'s. `000aad58` is the first word of `data\results.dat`, the debriefing's ordinal ([which text](../shell/debriefing.md#which-text)), and `Mission_ReadRestore` loads `000aad5e` from the word saved from `Mission_Kind` (`000aad5a`) ([the restore file](eng-mission-text.md#which-file)).
 
@@ -172,7 +174,7 @@ The file is an `int16` count and that many 8-byte records, nothing after them:
 
 `Mission_OutcomeGrade`, given an ordinal and a kind, returns the ordinal's word of the table at `000810f4`, 0, 0, 1, 1, 1, 2, 2, 3, 3, 0, when the kind is 0, 1, 2 or 6, and of the table at `00081108`, 0, 0, 1, 1, 2, 2, 3, 3, otherwise, with no bounds test. The debriefing's talking head takes its line from the same value ([the kinds](../shell/message-box.md#the-kinds)).
 
-`Tech_WriteWeaponFlags` (`00001f2b`) writes the 17 weapons' available bytes to a stream, one byte each; `CareerRecord_WriteWeaponFlags` (`000160ac`) calls it with the record's state. `Tech_FormatLockedName` (`0000216f`), given the state, an index and a kind, copies the item's name into `0007d808` when it is not yet available ([Open](#open)).
+`Tech_WriteWeaponFlags` (`00001f2b`) writes the 17 weapons' available bytes to a stream, one byte each; `CareerRecord_WriteWeaponFlags` (`000160ac`) calls it with the record's state. `Tech_FormatLockedName` (`0000216f`), given the state, an index and a kind, copies the item's name into `Debriefing_NewTechText` (`0007d808`) when it is not yet available ([Open](#open)).
 
 ### The retail files
 
@@ -203,7 +205,7 @@ Both files hold 25 records, the 8 chassis and the 17 weapons. Each cell gives *f
 
 - **Open:** whether the career and single-mission paths can reach the five missions no list names ([the retail battle sets](#the-retail-battle-sets)). A byte search of the seven `VOL` archives and of `GO.EXE` and `DBSIM.EXE` finds `B0_C1_20` and `B0_C1_30` only in `ZONES.VOL`'s directory ([a file in another layout](msn-mission-file.md#a-file-in-another-layout)).
 - **Open:** what calls `Mission_BuildPathFromFiles` and with which pattern: `es2_xref.py` finds no branch to it, and its one stored-pointer hit, `000097e5`, is inside the instruction at `000097e4`.
-- **Open:** what lines screen 1330's list 1331 shows, the battle sets `BattleSetDialog_OnMessage` stores the selection of: `Menu_ListLines` takes them from the target of 1331 among its cases at `00081364`, which no reading has followed; and what opens screen 1330.
+- **Open:** the expansion's `GO.EXE` and `ZONES.VOL`, which this install lacks: what its picker's word list holds, what its `BTLSET_1.DAT` or `BTLSET_2.DAT` names, and its `B1_` or `B2_` missions.
 - **Open:** what reads `TEST_BTL.DAT` and the eleven `ANY_*.DAT` other than `ANY_MSN.DAT`. `BATLSETS.BIN` names only the three `BTLSET_*`, the retail battle sets name only `any_msn.dat`, and a byte search of `GO.EXE` finds neither `test_btl` nor `any_`, where it finds `tech_sng.dat`.
 - **Open:** what reads and restores the equipment state besides the init: what reads back the bytes `CareerRecord_WriteWeaponFlags` writes to the [player file](career-log-and-player-mec.md#the-player-file) (`es2_xref.py` finds its one call there), what saves the chassis' bytes, and what reads the state to offer the items; and what calls `Tech_FormatLockedName`, to which `es2_xref.py` finds no branch and no stored pointer.
 - **Open:** how the equipment indexes map to the shell's chassis and weapon lists, `MECHS.NAM` and `WEAPONS.DAT`'s 17 templates among them.
