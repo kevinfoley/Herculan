@@ -44,7 +44,7 @@ The bay's ARMING ([the bar's buttons](between-missions.md#the-bars-buttons)) and
 1. allocates the `0x28`-byte `ArmingMenu`, stores its vtable `00081fe6`, `0xff` in `+0x26` and 0 in `+0x27`;
 2. sets `Arming_LowMemPictures` (`00080d6c`) to 0, or, while `Shell_LowMemory` is set, to `res32\allweap.dba`, which `00037827`(1803) loads with `Resource_LoadBitmapArray` once and keeps at `000813d4`;
 3. makes it the current menu and sets the dword `0007fce4` to `0008003c`, so a press outside the window tests the HERC's mount areas and posts 1702 ([the mouse](menu-input.md#the-mouse), [the clickable areas](../formats/herc-diagrams.md#the-clickable-areas));
-4. when `Hangar_SelectedSlot` (`00080894`) is −1 or holds no HERC, calls `0002986f`(0), which selects the next slot that holds a HERC and is not the marked slot `00080896` ([the hangar](hangar.md)), and makes the pilot whose HERC that is the current record's current pilot (`CareerRecord_SelectPilot` of `CareerRecord_FindPilotBySlot`, [pilot entries](../formats/bst-battle-sets.md#pilot-entries)).
+4. when `Hangar_SelectedSlot` (`00080894`) is −1 or holds no HERC, calls `Hangar_SelectNext` (`0002986f`)(0), which selects the next slot that holds a HERC and is not the marked slot `Hangar_MarkedSlot` (`00080896`) ([the hangar](hangar.md)), and makes the pilot whose HERC that is the current record's current pilot (`CareerRecord_SelectPilot` of `CareerRecord_FindPilotBySlot`, [pilot entries](../formats/bst-battle-sets.md#pilot-entries)).
 
 `Menu_Open` builds the window ([the build](menus.md#opening-a-menu--menu_open-0003969e)). The list 1808 takes the lines `Arming_BuildWeaponList`(−1, −1) names, with the counts `Inventory_FormatCounts` writes, and line 0 selected ([the list](#the-weapon-list)); 1903 takes the eight chassis names, the list `00081250`, `eng\watext.bin` `0x1b`–`0x22`, with the selected HERC's chassis selected, or −1; 1904 takes the pilot names of `000811e8`, `eng\watext.bin` `0x55` PLAYER, the 36 names and `0x7a` UNASSIGNED, its first line replaced in a career by the dword at the roster's `+1`, with the line `PilotEntry_NameIndex`(record, the record's current pilot `+0x12`) + 1 selected. Then for 1800 it makes MISSILE TYPE inactive and calls the animation's slot `+0x24` with 0; for 1820 it makes MISSILE TYPE inactive.
 
@@ -60,7 +60,7 @@ The entry leaves the shown weapon `Arming_ShownWeapon` (`00080d64`), the shown m
 2. Labels at (*l* + 5, *t* + 6) `0xcf` TYPE: and (*l* + 5, *t* + 15) `0xd1` RANGE:, both lines of `eng\watext.bin` (`0009afa8`).
 3. At (*l* + 5, *t* + 59), by *w*: for 0 to 2, the autocannons, `0xd4` SIZE: and, 25 pixels right, the value `0xf8` + *w* (20 mm, 35 mm, 50 mm); for 9 to 11, the missile racks, `0xd2` MISSILES: and, 35 pixels right, `0x10a` NONE when `Arming_ShownMissileType` is 5 and `0x106` + the type otherwise (SEMI-ACTIVE RADAR, ACTIVE RADAR, ANTI-RADIATION, ELECTRO-OPTICAL); for 5 and 13, the grenade launcher and the jammer pod, nothing; for any other, `0xd3` POWER: and, 30 pixels right, `0xf8` + *w*.
 4. The values at (*l* + 30, *t* + 6), the name `0xd5` + *w* (SCORPION AUTOCANNON to SPECIAL ELF), and at (*l* + 30, *t* + 15), the range: `0x10b` + the missile type for 9 to 11 and `0xea` + *w* otherwise.
-5. While `Shell_LowMemory` is set, frame *w* of `Arming_LowMemPictures` with `Bitmap_Blit`, flags 0, at the point *w* of `Arming_PicturePoints` (`000a04dc`), 18 `int32` pairs the menu handlers' file's static initializer `00030ee9` fills.
+5. While `Shell_LowMemory` is set, frame *w* of `Arming_LowMemPictures` with `Bitmap_Blit`, flags 0, at the point *w* of `Arming_PicturePoints` (`000a04dc`), 18 `int32` pairs the menu handlers' file's static initializer `MenuHandlers_StaticInit` (`00030ee9`) fills.
 
 **`Arming_DrawMissileInfo` (`0002dacf`)**, hotspot 1811's, draws only while the byte `Herc_MountHighlightShown` (`0007ff98`) is set, a mount being selected ([the hangar](hangar.md)), and `Arming_ShownMissileType` is not 5. With *m* the type: while `Shell_LowMemory` is set it clears the whole rect as above (it clears nothing otherwise); TYPE: and RANGE: as above; at (*l* + 30, *t* + 6) `0x106` + *m* and at (*l* + 30, *t* + 15) `0x10b` + *m*; and while `Shell_LowMemory` is set, frame *m* + 14 of `Arming_LowMemPictures` at the point *m* + 14.
 
@@ -89,9 +89,9 @@ The animation is the kind-17 control 1803, which plays `.TTM` scripts ([the kind
 | 1802 | `0002e653` | the same with slot `+0x20`, `MTStrListBox_SelectNext` |
 | 2004 | `0002e6e1` | HERCS >, [below](#hercs) |
 | 2003 | `0002e896` | < HERCS, [below](#hercs) |
-| 1702 | `0002ea0f` | a press on a mount area: `00029a14`(value), which selects that mount, or none for −1; `+0x27` = 0; `Arming_Refresh` |
-| 1807 | `0002ea2c` | POINTS >: `00029a52`, the next mount, wrapping to the first; `+0x27` = 0; `Arming_Refresh` |
-| 1806 | `0002ea43` | < POINTS: `00029a87`, the previous mount, wrapping to the last; `+0x27` = 0; `Arming_Refresh` |
+| 1702 | `0002ea0f` | a press on a mount area: `Hangar_SelectMount` (`00029a14`)(value), which selects that mount, or none for −1; `+0x27` = 0; `Arming_Refresh` |
+| 1807 | `0002ea2c` | POINTS >: `Hangar_NextMount` (`00029a52`), the next mount, wrapping to the first; `+0x27` = 0; `Arming_Refresh` |
+| 1806 | `0002ea43` | < POINTS: `Hangar_PrevMount` (`00029a87`), the previous mount, wrapping to the last; `+0x27` = 0; `Arming_Refresh` |
 | 1111 | `0002ea5a` | MISSILE TYPE, [below](#missile-type) |
 | 100 | `0002ec7f` | DONE, [below](#done) |
 
@@ -111,7 +111,7 @@ So with no mount selected a line only shows its weapon, and the line already sho
 
 ### Fitting a weapon
 
-**Fitting moves a unit between the mount and the stock; a unit in stock is its condition, a word on its weapon's stack.** `Arming_SelectWeapon` passes *w* to `00029abc` ([repair and build](repair-and-build.md)), which works on `Hangar_SelectedSlot`'s HERC's current mount:
+**Fitting moves a unit between the mount and the stock; a unit in stock is its condition, a word on its weapon's stack.** `Arming_SelectWeapon` passes *w* to `Hangar_FitWeapon` (`00029abc`) ([repair and build](repair-and-build.md)), which works on `Hangar_SelectedSlot`'s HERC's current mount:
 
 1. Nothing happens when the mount already carries *w*.
 2. The incoming unit is 100 for 17, the empty mount, and otherwise the head of *w*'s stack, popped with `Inventory_Take`; with *w*'s stack empty nothing happens.
@@ -145,7 +145,7 @@ With `+0x27` 1: while `Shell_LowMemory` is clear, the animation's slot `+0x24` w
 
 ### HERCS
 
-HERCS > calls `0002986f` and < HERCS `00029946`, with 2 in a single mission (`Shell_Mode` (`000aad56`) 0) and 0 in a career. With 0 they step `Hangar_SelectedSlot` to the next or previous slot that holds a HERC and is not the marked slot; with 2, on until a HERC that no pilot of the single mission's record has, or back to the start. Both then clear the HERC's mount and redraw the bay, `00029946` only while `Hangar_SelectedSlot` is not −1 ([the hangar](hangar.md)). In a single mission the case then gives the HERC to the record's current pilot, storing the slot in `SingleMission_Record` (`0009b014`)'s pilot entry `+0x12`, its `+8`. Both cases go on alike:
+HERCS > calls `Hangar_SelectNext` (`0002986f`) and < HERCS `Hangar_SelectPrev` (`00029946`), with 2 in a single mission (`Shell_Mode` (`000aad56`) 0) and 0 in a career. With 0 they step `Hangar_SelectedSlot` to the next or previous slot that holds a HERC and is not the marked slot; with 2, on until a HERC that no pilot of the single mission's record has, or back to the start. Both then clear the HERC's mount and redraw the bay, `00029946` only while `Hangar_SelectedSlot` is not −1 ([the hangar](hangar.md)). In a single mission the case then gives the HERC to the record's current pilot, storing the slot in `SingleMission_Record` (`0009b014`)'s pilot entry `+0x12`, its `+8`. Both cases go on alike:
 
 1. the pilot of the slot's HERC made the current record's current pilot (`CareerRecord_SelectPilot`(record, `CareerRecord_FindPilotBySlot`(record, slot)));
 2. 1904 selects the line `PilotEntry_NameIndex`(the roster's current record `0009b23b` + `0x1f7` × `[0009b21f]`, that pilot) + 1, and 1903 the HERC's chassis, or −1 (slot `+0x24`);
@@ -153,7 +153,7 @@ HERCS > calls `0002986f` and < HERCS `00029946`, with 2 in a single mission (`Sh
 
 ### DONE
 
-DONE (`Space`) calls `0002961c`, which clears the mount selection and redraws the mount pictures ([the hangar](hangar.md)), and saves the current record with `CareerRecord_SaveCurrent` (`00014f28`). In a single mission it then writes the hangar to `car\sm_init.dat` through `Path_ApplyAltDrive` with `Hangar_SaveFile` ([the HERC lists](../formats/car-hercs-and-stock.md#the-herc-lists)) and sets the message's target to 1501, the war map; in a career it sets the target to 1700, the service bay before a mission. The stock is not saved here.
+DONE (`Space`) calls `Hangar_ClearSelectedMount` (`0002961c`), which clears the mount selection and redraws the mount pictures ([the hangar](hangar.md)), and saves the current record with `CareerRecord_SaveCurrent` (`00014f28`). In a single mission it then writes the hangar to `car\sm_init.dat` through `Path_ApplyAltDrive` with `Hangar_SaveFile` ([the HERC lists](../formats/car-hercs-and-stock.md#the-herc-lists)) and sets the message's target to 1501, the war map; in a career it sets the target to 1700, the service bay before a mission. The stock is not saved here.
 
 **Leaving.** `ArmingMenu_Dtor` (`000405ae`) frees `Arming_LowMemPictures` with `Shell_FreeBitmapArraySlot` when it is set, then does what every menu's destructor does ([the screens](menus.md#the-screens)).
 

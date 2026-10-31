@@ -5188,7 +5188,13 @@
       "confidence": "high",
       "name": "Repair_TargetForLevel",
       "description": "Target condition for a repair level: 0046fd78[0] for level 0, else 0046fd78[level] + 1.",
-      "source": "docs/retail/shell/armory.md"
+      "source": "docs/retail/shell/armory.md",
+      "verified": {
+        "bytes": "00413838+40",
+        "sha1": "bda988f31a2a",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00413860",
@@ -5202,7 +5208,7 @@
         "bytes": "00413860+17",
         "sha1": "3395397a4192",
         "scope": "body",
-        "via": "disasm"
+        "via": "decompile"
       }
     },
     {
@@ -5236,7 +5242,13 @@
       "confidence": "high",
       "name": "Repair_UnitValueCost",
       "description": "Picks the unit value by accessor mode -- HercExternalGroupValues and HercInternalValues at chassisType*0x21 + index, WeaponScrapValues at the weapon id -- and calls Repair_LevelStepCost (00413871) on it. It formats nothing and draws nothing; it returns a cost.",
-      "source": "docs/retail/shell/armory.md#what-one-repair-level-costs"
+      "source": "docs/retail/shell/armory.md#what-one-repair-level-costs",
+      "verified": {
+        "bytes": "00413968+143",
+        "sha1": "f019d292c0ff",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004139f7",

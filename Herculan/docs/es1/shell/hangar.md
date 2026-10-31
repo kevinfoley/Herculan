@@ -16,11 +16,11 @@ Addresses are `ES1GO` image addresses ([the X-32 executable](../formats/x32-exec
 
 ### Giving the scripts their bays
 
-`HangarBay_AssignScripts` (`000122e0`)(), called by `ShellBackdrop_Show` for group 4000 ([the backdrop](menus.md#the-backdrop)), by CREW's ACCEPT ([the buttons](#the-buttons)) and by `ScrapAlert`'s handler `0002f111` (`es2_xref.py` finds those three calls):
+`HangarBay_AssignScripts` (`000122e0`)(), called by `ShellBackdrop_Show` for group 4000 ([the backdrop](menus.md#the-backdrop)), by CREW's ACCEPT ([the buttons](#the-buttons)) and by `ScrapAlert`'s handler `ScrapAlert_OnMessage` (`0002f111`) (`es2_xref.py` finds those three calls):
 
 1. frees every entry with `TtmEntry_FreeAll` (`0001208e`), which sets each entry's word `+1` to −99, and takes the slot `+8` of the player's entry `+0xe` of the current record;
 2. gives entries 0 to 3 the value 99, and entry 4 when `Mission_Kind` (`000aad5a`) is 4, in `Shell_Mode` 1 only while the current career record's byte `+1` is also set ([BRIEFING](between-missions.md#briefing));
-3. for each of the hangar's HERCs (the count `00080892`) steps `Hangar_SelectedSlot` (`00080894`) to the next slot that holds a HERC and is not the marked one, with `00029729`, and calls `000120f9`(slot, 0) for the player's slot and `000120f9`(slot, 2) for any other, which give the slot its scripts ([`repair-and-build.md`](repair-and-build.md));
+3. for each of the hangar's HERCs (the count `Hangar_HercCount` (`00080892`)) steps `Hangar_SelectedSlot` (`00080894`) to the next slot that holds a HERC and is not the marked one, with `Hangar_NextHercSlot` (`00029729`), and calls `HangarBay_AssignSlotScripts` (`000120f9`)(slot, 0) for the player's slot and `000120f9`(slot, 2) for any other, which give the slot its scripts ([`repair-and-build.md`](repair-and-build.md));
 4. makes the player's entry the current pilot with `CareerRecord_SelectPilot` (`00015ad4`)(record, its `+0xe`), which puts `Hangar_SelectedSlot` back on the player's slot, and runs the scripts with `ShellBackdrop_RunScripts`.
 
 `TtmEntry_AssignSlot` (`00012047`)(slot, entry) stores the slot in the entry's word `+1` when that is −99 and answers 1 in `AL`; otherwise it answers 0 and changes nothing. `TtmEntry_FreeSlot` (`000120ba`)(slot) sets −99 in every entry holding the slot.
@@ -40,18 +40,18 @@ Addresses are `ES1GO` image addresses ([the X-32 executable](../formats/x32-exec
 
 ### Showing a bay
 
-**`Hangar_ShowSlot` (`00029651`)(slot) takes the selected bay's HERC out of the picture and shows another bay.** `Shell_DrawScreen` calls it with the player's slot whenever it draws backdrop 4000, so the bay opens on the player's HERC ([drawing a screen](menus.md#drawing-a-screen)); `es2_xref.py` finds its other two calls in `0002f009` and `0002f8d4` ([`repair-and-build.md`](repair-and-build.md)). It:
+**`Hangar_ShowSlot` (`00029651`)(slot) takes the selected bay's HERC out of the picture and shows another bay.** `Shell_DrawScreen` calls it with the player's slot whenever it draws backdrop 4000, so the bay opens on the player's HERC ([drawing a screen](menus.md#drawing-a-screen)); `es2_xref.py` finds its other two calls in `RepairMenu_OnMessage` (`0002f009`) and `SystemRepairMenu_OnMessage` (`0002f8d4`) ([`repair-and-build.md`](repair-and-build.md)). It:
 
-1. takes the selected slot's HERC out of the picture with `000295e7`, which calls `Herc_EraseFromBay` on it;
-2. sets the marked slot `00080896` to −1 when it is the selected slot and that slot holds no HERC;
-3. for slot −1 takes the first empty slot (`Hangar_FindFreeSlot`, `0002983a`), and when there is none steps `Hangar_SelectedSlot` with `0002978c` to a slot holding a HERC that no pilot entry holds, or back to where it began, and takes that;
-4. stores the slot in `Hangar_SelectedSlot` and calls `000294d8`, which moves scripts 0, 1 and 2 to the slot's pages, draws the slot's HERC with `Herc_DrawInBay` and runs the scripts with `ShellBackdrop_RunScripts`; then `00029a14`(−1), which takes the mount highlight off the HERC with `Herc_HighlightMount`(HERC, −1) ([the HERC diagrams](../formats/herc-diagrams.md#the-mount-highlight)).
+1. takes the selected slot's HERC out of the picture with `Hangar_LeaveSelectedHerc` (`000295e7`), which calls `Herc_EraseFromBay` on it;
+2. sets the marked slot `Hangar_MarkedSlot` (`00080896`) to −1 when it is the selected slot and that slot holds no HERC;
+3. for slot −1 takes the first empty slot (`Hangar_FindFreeSlot`, `0002983a`), and when there is none steps `Hangar_SelectedSlot` with `Hangar_NextUnpilotedHercSlot` (`0002978c`) to a slot holding a HERC that no pilot entry holds, or back to where it began, and takes that;
+4. stores the slot in `Hangar_SelectedSlot` and calls `Hangar_ShowSelectedHerc` (`000294d8`), which moves scripts 0, 1 and 2 to the slot's pages, draws the slot's HERC with `Herc_DrawInBay` and runs the scripts with `ShellBackdrop_RunScripts`; then `Hangar_SelectMount` (`00029a14`)(−1), which takes the mount highlight off the HERC with `Herc_HighlightMount`(HERC, −1) ([the HERC diagrams](../formats/herc-diagrams.md#the-mount-highlight)).
 
 So a player with no HERC is shown an empty bay.
 
 ### Drawing the HERC into its bay
 
-`Herc_DrawInBay` (`000241f9`)(HERC, remaining) builds the HERC's diagram first with `Herc_BuildDiagram`(HERC, remaining) when the byte `Shell_LowMemory` (`0007fd09`) is set, then draws, in this order: the body (`Sprite_Draw` of `+0x72`), the damage marks (`Herc_DrawDamageMarks`), one run of script 1, the mounts (`Herc_DrawMounts`), and one run each of scripts 0 and 2 ([the HERC diagrams](../formats/herc-diagrams.md#drawing-the-diagram)). `000294d8` passes the marked slot's word `00080898` as *remaining* for the marked HERC and 0 for any other. `Herc_EraseFromBay` (`000241cd`)(HERC) erases the mounts (`Herc_EraseMounts`) and the body (`Sprite_Erase` of `+0x72`) and, with `Shell_LowMemory` set, frees the diagram with `Herc_FreeDiagram`.
+`Herc_DrawInBay` (`000241f9`)(HERC, remaining) builds the HERC's diagram first with `Herc_BuildDiagram`(HERC, remaining) when the byte `Shell_LowMemory` (`0007fd09`) is set, then draws, in this order: the body (`Sprite_Draw` of `+0x72`), the damage marks (`Herc_DrawDamageMarks`), one run of script 1, the mounts (`Herc_DrawMounts`), and one run each of scripts 0 and 2 ([the HERC diagrams](../formats/herc-diagrams.md#drawing-the-diagram)). `Hangar_ShowSelectedHerc` (`000294d8`) passes the marked slot's word `Hangar_MarkedMissionsLeft` (`00080898`) as *remaining* for the marked HERC and 0 for any other. `Herc_EraseFromBay` (`000241cd`)(HERC) erases the mounts (`Herc_EraseMounts`) and the body (`Sprite_Erase` of `+0x72`) and, with `Shell_LowMemory` set, frees the diagram with `Herc_FreeDiagram`.
 
 ## CREW
 
@@ -107,8 +107,8 @@ The hotspots draw through their handlers ([the build](menus.md#opening-a-menu--m
 
 | Control | Id | Case | Does |
 |---|---|---|---|
-| `←` | 2003 | `0002d1c4` | `CrewAssignMenu_UndoSwap`; `000296c9` steps `Hangar_SelectedSlot` back to the previous slot holding a HERC other than the marked one; `CrewAssignMenu_AssignSelectedSlot` |
-| `→` | 2004 | `0002d1de` | the same, stepping forward with `00029729` |
+| `←` | 2003 | `0002d1c4` | `CrewAssignMenu_UndoSwap`; `Hangar_PrevHercSlot` (`000296c9`) steps `Hangar_SelectedSlot` back to the previous slot holding a HERC other than the marked one; `CrewAssignMenu_AssignSelectedSlot` |
+| `→` | 2004 | `0002d1de` | the same, stepping forward with `Hangar_NextHercSlot` (`00029729`) |
 | NONE | 1623 | `0002d1f8` | `CrewAssignMenu_UndoSwap`; `Hangar_SelectedSlot` and `+0x30` set to −1; `CrewAssignMenu_AssignSelectedSlot` |
 | CANCEL | 1700 | `0002d220` | `Hangar_SelectedSlot` back to `+0x2c`; `CareerRecord_SelectPilot`(record, `+0x3a`); each entry's slot `+8` back to its word of `+0x32`; the target stays 1700, the bay |
 | ACCEPT | 100 | `0002d284` | the target becomes 1700; `CareerRecord_SaveCurrent` (`00014f28`) saves the career; `CareerRecord_SelectPilot`(record, the player's entry `+0xe`); `HangarBay_AssignScripts`; `Hangar_SelectedSlot` back to `+0x2c` |
@@ -168,7 +168,7 @@ The column's pilot is the current pilot only after a column has been picked: unt
 ## Open
 
 - **Open:** where the object file that `TtmLists_Load` (`00011dfc`) and the bay's scripts share starts: `es1_boilerplate.py bounds` over `00011400`–`00011f20` finds zero fill after the `RET 8` at `000119da`, up to `000119e0`.
-- **Open:** what each of group 4000's scripts shows (the list of `cfg\tm_files.dat` [the animation lists](../formats/shell-file-lists.md#the-animation-lists) gives the group), and so what scripts 0 to 4, entry 6, entries 7 and 8 and entries 9 + slot, which `000120f9` hands out, draw in the bay.
+- **Open:** what each of group 4000's scripts shows (the list of `cfg\tm_files.dat` [the animation lists](../formats/shell-file-lists.md#the-animation-lists) gives the group), and so what scripts 0 to 4, entry 6, entries 7 and 8 and entries 9 + slot, which `HangarBay_AssignSlotScripts` (`000120f9`) hands out, draw in the bay.
 - **Open:** which control a key reaches on CREW, where HERC and ACCEPT both carry `Space` and NONE and CANCEL both `Esc`.
 - **Open:** what reads `ShellBackdrop_RunAllScripts` (`000126c9`): `es2_xref.py` finds no branch to it and no stored pointer; and what reads the menu's `+0x3c`, which none of CREW's six functions reads.
 - **Open:** a retail check under DOSBox-X: from the bay before a mission, CREW shows four columns with the player's insignia over the first; `→` changes the first column's HERC picture and bay number and CURRENT HERC; picking the second column with a click on its HERC, then stepping to the HERC the player holds, frames the first column's HERC in another colour and gives it the second pilot's old HERC; CANCEL returns to the bay with nothing changed, and ACCEPT with the changes kept.

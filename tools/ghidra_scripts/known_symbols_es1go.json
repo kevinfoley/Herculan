@@ -2072,12 +2072,27 @@
       }
     },
     {
+      "address": "000120f9",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HangarBay_AssignSlotScripts",
+      "description": "(slot, mode) in stack order, its arguments removed by this function: gives the slot its bay scripts and picks the page words 000aa7b0[slot] and 000aa7c0[slot] that Hangar_ShowSelectedHerc (000294d8) passes to Ttm_SetPage. Mode 0: 00012047(slot, 6), 000aa7b0[slot] a draw below 5, 000aa7c0[slot] 2. Mode 2: 00012047(slot, slot + 9), 000aa7b0[slot] 3 plus a draw below 2 for slot 0 and a draw below 5 otherwise, 000aa7c0[slot] a draw below 5 for a chassis below 5 and below 3 otherwise. Mode 1: 000120ba(slot); with no marked HERC (Hangar_HasMarkedHerc (0002a277)) or Hangar_SelectedBuildProgress (0002a2a1) 0, 00012047(slot, 8) and 000aa7b0[slot] 3 plus a draw below 2; otherwise 00012047(slot, 7), 00012047(slot, the word 0007e700[chassis]) while the progress is below 51, and 000aa7b0[slot] a draw below 3; then 000aa7c0[slot] a draw below 5. The draws are Math_RandomBelow(Shell_RandomState, n). Any other mode does nothing.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#the-hangars-selection; ES1GO decompile at 000120f9",
+      "verified": {
+        "bytes": "000120f9+487",
+        "sha1": "b771ec6bea69",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000122e0",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "HangarBay_AssignScripts",
-      "description": "(): TtmEntry_FreeAll (0001208e); takes the slot +8 of the current record's player entry +0xe; TtmEntry_AssignSlot (00012047)(99, k) for entries 0 to 3, and for entry 4 when the word 000aad5a is 4 (in Shell_Mode 1 only while the current career record's byte +1 is also set); for each of the hangar's 00080892 HERCs steps Hangar_SelectedSlot with 00029729 and calls 000120f9(slot, 0) for the player's slot and 000120f9(slot, 2) for any other; then CareerRecord_SelectPilot (00015ad4)(record, its +0xe) and ShellBackdrop_RunScripts (00012467). es2_xref finds calls from ShellBackdrop_Show, CrewAssignMenu_OnMessage (0002d19e) and 0002f111.",
+      "description": "(): TtmEntry_FreeAll (0001208e); takes the slot +8 of the current record's player entry +0xe; TtmEntry_AssignSlot (00012047)(99, k) for entries 0 to 3, and for entry 4 when the word 000aad5a is 4 (in Shell_Mode 1 only while the current career record's byte +1 is also set); for each of the hangar's Hangar_HercCount (00080892) HERCs steps Hangar_SelectedSlot with Hangar_NextHercSlot (00029729) and calls HangarBay_AssignSlotScripts (000120f9)(slot, 0) for the player's slot and HangarBay_AssignSlotScripts (000120f9)(slot, 2) for any other; then CareerRecord_SelectPilot (00015ad4)(record, its +0xe) and ShellBackdrop_RunScripts (00012467). es2_xref finds calls from ShellBackdrop_Show, CrewAssignMenu_OnMessage (0002d19e) and ScrapAlert_OnMessage (0002f111).",
       "source": "Herculan/docs/es1/shell/hangar.md#giving-the-scripts-their-bays; ES1GO decompile at 000122e0",
       "verified": {
         "bytes": "000122e0+299",
@@ -3142,7 +3157,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CareerRecord_PrevPilot",
-      "description": "(record), its argument removed by this function: CareerRecord_NextPilot (00015b0a) stepping back: +0x12 goes down by 1, from 0 to 3, until it names an entry whose byte +0xa is set and slot +8 is not -1; when it has changed, sets Hangar_SelectedSlot (00080894) to that entry's slot. es2_xref finds one call, from 00029946.",
+      "description": "(record), its argument removed by this function: CareerRecord_NextPilot (00015b0a) stepping back: +0x12 goes down by 1, from 0 to 3, until it names an entry whose byte +0xa is set and slot +8 is not -1; when it has changed, sets Hangar_SelectedSlot (00080894) to that entry's slot. es2_xref finds one call, from Hangar_SelectPrev (00029946).",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#pilot-entries",
       "verified": {
         "bytes": "00015b85+118",
@@ -6757,7 +6772,7 @@
       "type": "function",
       "confidence": "high",
       "name": "PlayerMec_WriteEntries",
-      "description": "(stream), callee-cleaned: with r the career record CareerRecord_Current (00014ef4) returns, keeps r's word +0x12 and the word Hangar_SelectedSlot (00080894); writes through the stream's slot +0x18 r's word +0xe and the count n that CareerRecord_CountPilots (00015bfb)(r) returns; calls CareerRecord_SelectPilot (00015ad4)(r, r's dword +0xe). Then n times: writes the pilot words with PlayerMec_WritePilotWords (0001548f)(r's word +0x12, r's word +0xe, stream); with h the HERC in hangar slot Hangar_SelectedSlot (00080894) of the array 000808a0, when the slot is not -1 and holds one, calls in mode 0 (the word Shell_Mode (000aad56)) Herc_SetAllStatus (00024c3c)(h, 100) and Herc_SetStatus (00024c14)(h, 100, 9, 0x784), and otherwise Herc_SetStatus (00024c14)(h, PilotEntry_Condition (0001618d)(r, r's dword +0xe), 9, 0x784); writes h with Herc_Write (000233ce) when there is one, and nothing in its place otherwise; calls CareerRecord_NextPilot (00015b0a)(r). Then writes r's 17 weapon bytes with CareerRecord_WriteWeaponFlags (000160ac), calls CareerRecord_SelectPilot (00015ad4)(r, the kept word +0x12 and the kept Hangar_SelectedSlot (00080894) as one dword) and restores Hangar_SelectedSlot (00080894). es2_xref finds one call, from PlayerMec_Write (0002299e).",
+      "description": "(stream), callee-cleaned: with r the career record CareerRecord_Current (00014ef4) returns, keeps r's word +0x12 and the word Hangar_SelectedSlot (00080894); writes through the stream's slot +0x18 r's word +0xe and the count n that CareerRecord_CountPilots (00015bfb)(r) returns; calls CareerRecord_SelectPilot (00015ad4)(r, r's dword +0xe). Then n times: writes the pilot words with PlayerMec_WritePilotWords (0001548f)(r's word +0x12, r's word +0xe, stream); with h the HERC in hangar slot Hangar_SelectedSlot (00080894) of the array Hangar_Slots (000808a0), when the slot is not -1 and holds one, calls in mode 0 (the word Shell_Mode (000aad56)) Herc_SetAllStatus (00024c3c)(h, 100) and Herc_SetStatus (00024c14)(h, 100, 9, 0x784), and otherwise Herc_SetStatus (00024c14)(h, PilotEntry_Condition (0001618d)(r, r's dword +0xe), 9, 0x784); writes h with Herc_Write (000233ce) when there is one, and nothing in its place otherwise; calls CareerRecord_NextPilot (00015b0a)(r). Then writes r's 17 weapon bytes with CareerRecord_WriteWeaponFlags (000160ac), calls CareerRecord_SelectPilot (00015ad4)(r, the kept word +0x12 and the kept Hangar_SelectedSlot (00080894) as one dword) and restores Hangar_SelectedSlot (00080894). es2_xref finds one call, from PlayerMec_Write (0002299e).",
       "source": "Herculan/docs/es1/formats/career-log-and-player-mec.md#the-player-file",
       "verified": {
         "bytes": "00022a05+588",
@@ -7027,7 +7042,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Herc_BuildDiagram",
-      "description": "(herc, word) in stack order, callee-cleaned: sets +0x70 to -1 and clears Herc_MountHighlightShown (0007ff98); stores the chassis's RES32 WEP1 and OUTL banks at +0x9c and +0xa0, loading each with Resource_LoadBitmapArray (0004b7df) into 0007ff9c or 0007ffbc + 4 * chassis when it is 0; calls Herc_SetBodyPicture (00023605)(herc, word); for chassis 7 makes a 0x22-byte element at +0x98, else stores null there; when the mount count is not 0 makes 0x26-byte elements at +0xa4 (__vec_new (0005542c) with MountPicture_Ctor (00023d70)) and 0x22-byte elements at +0x94 (with Sprite_Ctor (00023f2c)). Per mount: when Herc_GetMountStatus (00024b23)(herc, mount) is 0 sets the weapon to 0x11 and calls Herc_SetStatus (00024c14)(herc, 100, mount, 0x786); calls HercLayout_FindFrame (00022086), passes HercLayout_FindSecondPoint (0002219f)'s point to Sprite_Set (000216e0) for the +0x94 element, and sets the +0xa4 element with MountPicture_Set (00022d78) and Herc_GetMountStatus (00024b23)'s value; on chassis 7, when mount 2 or 3 is not 0x11, passes the point 0x56, 0x19 to Sprite_Set (000216e0) for the +0x98 element and sets the byte Herc_ColossusTopShown (0007ff8e); sets to 0 the mount's +0x18 word when its weapon is 9 to 11 and the word is 5. Last, when +0x98 is set and Herc_ColossusTopShown (0007ff8e) is clear, passes 0, 0 to Sprite_Set (000216e0) for it. es2_xref finds seven calls: from Herc_Read (00023501), Herc_DrawInBay (000241f9), Hangar_ReadStatusBlock (00028e50), Hangar_AddHerc (00029d0f), 00029d68, and twice from Hangar_AdvanceMarkedHerc (00029e01).",
+      "description": "(herc, word) in stack order, callee-cleaned: sets +0x70 to -1 and clears Herc_MountHighlightShown (0007ff98); stores the chassis's RES32 WEP1 and OUTL banks at +0x9c and +0xa0, loading each with Resource_LoadBitmapArray (0004b7df) into 0007ff9c or 0007ffbc + 4 * chassis when it is 0; calls Herc_SetBodyPicture (00023605)(herc, word); for chassis 7 makes a 0x22-byte element at +0x98, else stores null there; when the mount count is not 0 makes 0x26-byte elements at +0xa4 (__vec_new (0005542c) with MountPicture_Ctor (00023d70)) and 0x22-byte elements at +0x94 (with Sprite_Ctor (00023f2c)). Per mount: when Herc_GetMountStatus (00024b23)(herc, mount) is 0 sets the weapon to 0x11 and calls Herc_SetStatus (00024c14)(herc, 100, mount, 0x786); calls HercLayout_FindFrame (00022086), passes HercLayout_FindSecondPoint (0002219f)'s point to Sprite_Set (000216e0) for the +0x94 element, and sets the +0xa4 element with MountPicture_Set (00022d78) and Herc_GetMountStatus (00024b23)'s value; on chassis 7, when mount 2 or 3 is not 0x11, passes the point 0x56, 0x19 to Sprite_Set (000216e0) for the +0x98 element and sets the byte Herc_ColossusTopShown (0007ff8e); sets to 0 the mount's +0x18 word when its weapon is 9 to 11 and the word is 5. Last, when +0x98 is set and Herc_ColossusTopShown (0007ff8e) is clear, passes 0, 0 to Sprite_Set (000216e0) for it. es2_xref finds seven calls: from Herc_Read (00023501), Herc_DrawInBay (000241f9), Hangar_ReadStatusBlock (00028e50), Hangar_AddHerc (00029d0f), Hangar_BuildIntoSelected (00029d68), and twice from Hangar_AdvanceMarkedHerc (00029e01).",
       "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-pictures",
       "verified": {
         "bytes": "00023883+1261",
@@ -7282,7 +7297,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Herc_MountWeapon",
-      "description": "(herc, mount), its arguments removed by this function: sets the HERC's current mount word +0x70 to mount, takes Herc_CurrentMountWeapon (00024a6f)(herc), puts +0x70 back and returns that weapon in AX. es2_xref finds five calls, from Herc_SetAllStatus (00024c3c), Herc_ScrapToSalvage (00024cec), 00028f16 and Repair_HercCost (00038c50) (two).",
+      "description": "(herc, mount), its arguments removed by this function: sets the HERC's current mount word +0x70 to mount, takes Herc_CurrentMountWeapon (00024a6f)(herc), puts +0x70 back and returns that weapon in AX. es2_xref finds five calls, from Herc_SetAllStatus (00024c3c), Herc_ScrapToSalvage (00024cec), HercList_RefitSelectedFromStream (00028f16) and Repair_HercCost (00038c50) (two).",
       "source": "Herculan/docs/es1/shell/between-missions.md#lost-squadmates; ES1GO decompile and disassembly at 00024ab7",
       "verified": {
         "bytes": "00024ab7+51",
@@ -8402,12 +8417,42 @@
       }
     },
     {
+      "address": "0002845c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "FabricationMenu_DrawPanel",
+      "description": "(rect, id) in stack order, its arguments removed by this function: the BUILD screen's hotspot 2005 handler, drawing in the render context 000ab612. Fills the rect with color 0x1f framed in 0x1f (Raster_FillFrameRectColours (0004b8d8), on a copy Rect_CopyCtorMechManCopy (00028a9b) makes); with a marked HERC sets Fabrication_Chassis (000808a4) to the selected HERC's chassis word (-1 for none); blits that frame of Fabrication_ChassisArt (000ab20e) at the rect's corner + (1, 1); draws eng\\watext.bin lines 0xc4 to 0xc7 in nm_green (000aacda) at (75, 34), (75, 52), (75, 70), (75, 88) and the chassis name (0x1b + chassis), %d TONS of Chassis_MassTable (000808a8), %d KPH of Chassis_SpeedTable (000808c8) and %d WEAPONS of the mount counts 000803c8 in nm_white (000aacee) at (79, 43) to (79, 97); with a marked HERC a box (16, 111)-(118, 117) in color 4, line 0xcc in nm_red1 centered in 102 at (17, 117), line 0xc8 at (17, 126) and %d of (c - Hangar_MarkedMissionsLeft (00080898)) x 100 / c at (67, 126), c from Chassis_BuildMissions (000808d8); line 0xcb (marked) or 0xc9 at (17, 135) with %3d TONS of Hangar_MarkedValue (0008089c) or Chassis_PriceTable (000808b8)[chassis] at (87, 135); line 0xca at (17, 144) with %3d TONS of Career_Salvage / 1000, unsigned, at (87, 144).",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#build--screen-2000; ES1GO decompile and disassembly at 0002845c",
+      "verified": {
+        "bytes": "0002845c+1599",
+        "sha1": "778b147d15d4",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00028a9b",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Rect_CopyCtorMechManCopy",
+      "description": "(rect, source), its arguments removed by this function: byte for byte the code of Rect_CopyCtor (0004b398), relocated operands aside.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#where-the-object-files-start-and-end; ES1GO disassembly at 00028a9b",
+      "verified": {
+        "bytes": "00028a9b+46",
+        "sha1": "922ef3d23ec0",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "00028ac9",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "Hangar_AllocSlots",
-      "description": "(), C convention: when the slot count word 00080890 is not 0, makes an array of that many null pointers at 000808a0.",
+      "description": "(), C convention: when the slot count word Hangar_SlotCount (00080890) is not 0, makes an array of that many null pointers at Hangar_Slots (000808a0).",
       "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists",
       "verified": {
         "bytes": "00028ac9+80",
@@ -8422,7 +8467,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Hangar_Clear",
-      "description": "(), C convention: when 000808a0 is set, destroys each HERC in it below the slot count 00080890 with Herc_Dtor (000232a4)(herc, 3), zeroing its pointer, and frees the array; calls HercArt_FreeAllBanks (00022981) when the dword 0009a30c is below the dword 0007e738; sets 00080890 and 00080892 to 0, Hangar_SelectedSlot (00080894) and 00080896 to -1, and 00080898 and the dword 0008089c to 0.",
+      "description": "(), C convention: when Hangar_Slots (000808a0) is set, destroys each HERC in it below the slot count Hangar_SlotCount (00080890) with Herc_Dtor (000232a4)(herc, 3), zeroing its pointer, and frees the array; calls HercArt_FreeAllBanks (00022981) when the dword 0009a30c is below the dword 0007e738; sets Hangar_SlotCount (00080890) and Hangar_HercCount (00080892) to 0, Hangar_SelectedSlot (00080894) and Hangar_MarkedSlot (00080896) to -1, and Hangar_MarkedMissionsLeft (00080898) and the dword Hangar_MarkedValue (0008089c) to 0.",
       "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists",
       "verified": {
         "bytes": "00028b19+189",
@@ -8467,7 +8512,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Hangar_Read",
-      "description": "(stream), callee-cleaned: Hangar_Clear (00028b19); reads through the stream's slot +0x1c the int16 slot count into 00080890, then Hangar_AllocSlots (00028ac9); the int16s Hangar_SelectedSlot (00080894), 00080896 and 00080898, the dword 0008089c and the int16 HERC count 00080892; per HERC an int16 slot, a HERC from Herc_Ctor (00022f5e)(null, -1) stored in the slot of 000808a0 with no bounds test, read with Herc_Read (00023501) given 00080898 when the slot is 00080896 and 00080898 is not 0, and 0 otherwise. es2_xref finds calls from Hangar_ReadFromSave (00028bd6) and Hangar_LoadFile (00028c25).",
+      "description": "(stream), callee-cleaned: Hangar_Clear (00028b19); reads through the stream's slot +0x1c the int16 slot count into Hangar_SlotCount (00080890), then Hangar_AllocSlots (00028ac9); the int16s Hangar_SelectedSlot (00080894), Hangar_MarkedSlot (00080896) and Hangar_MarkedMissionsLeft (00080898), the dword Hangar_MarkedValue (0008089c) and the int16 HERC count Hangar_HercCount (00080892); per HERC an int16 slot, a HERC from Herc_Ctor (00022f5e)(null, -1) stored in the slot of Hangar_Slots (000808a0) with no bounds test, read with Herc_Read (00023501) given Hangar_MarkedMissionsLeft (00080898) when the slot is Hangar_MarkedSlot (00080896) and Hangar_MarkedMissionsLeft (00080898) is not 0, and 0 otherwise. es2_xref finds calls from Hangar_ReadFromSave (00028bd6) and Hangar_LoadFile (00028c25).",
       "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists",
       "verified": {
         "bytes": "00028c50+358",
@@ -8497,13 +8542,43 @@
       "type": "function",
       "confidence": "high",
       "name": "Hangar_ReadStatusBlock",
-      "description": "(stream, slot) in stack order, its arguments removed by this function: when slot is not -1 and the hangar's slot array 000808a0 holds a HERC there, Herc_FreeDiagram (0002330e)(herc), reads 0x42 bytes into the HERC's status block +0x2e through the stream's vtable (at +4) slot +0x1c (stream, block, 0x42), and Herc_BuildDiagram (00023883)(herc, 0), whatever Shell_LowMemory (0007fd09) holds. es2_xref finds one call, from CareerRecord_ReadPilotResults (0001568d). ES2's Herc_ReadStatusBlock (VSHELL 00411720) is given the HERC and deletes a mount whose word arrived at 0 itself; ES1's leaves that to Herc_BuildDiagram, which makes the mount empty.",
+      "description": "(stream, slot) in stack order, its arguments removed by this function: when slot is not -1 and the hangar's slot array Hangar_Slots (000808a0) holds a HERC there, Herc_FreeDiagram (0002330e)(herc), reads 0x42 bytes into the HERC's status block +0x2e through the stream's vtable (at +4) slot +0x1c (stream, block, 0x42), and Herc_BuildDiagram (00023883)(herc, 0), whatever Shell_LowMemory (0007fd09) holds. es2_xref finds one call, from CareerRecord_ReadPilotResults (0001568d). ES2's Herc_ReadStatusBlock (VSHELL 00411720) is given the HERC and deletes a mount whose word arrived at 0 itself; ES1's leaves that to Herc_BuildDiagram, which makes the mount empty.",
       "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-record; ES1GO decompile and disassembly at 00028e50",
       "verified": {
         "bytes": "00028e50+121",
         "sha1": "4ac01772c118",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "00028ec9",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_ReloadSelectedLoadout",
+      "description": "(): returns at once in Shell_Mode 1; otherwise opens entry 10 of the file-name table 0009afb8, car\\sm_play.mec, through Path_ApplyAltDrive as a FileRStream, runs HercList_RefitSelectedFromStream (00028f16)(stream), closes and destroys it.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#the-hangars-selection; ES1GO decompile at 00028ec9",
+      "verified": {
+        "bytes": "00028ec9+77",
+        "sha1": "bc5c402b388d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00028f16",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercList_RefitSelectedFromStream",
+      "description": "(stream), its argument removed by this function: seeks past the HERC list's 12 header bytes, reads the HERC count, and for each HERC reads its slot; for the slot Hangar_SelectedSlot (00080894) reads the record into a HERC on the stack (Herc_Ctor (00022f5e) with -1, Herc_ReadFromStream (0002352f)) and for each of its mounts calls Hangar_SelectMount (00029a14)(mount) and Hangar_FitWeapon (00029abc)(Herc_MountWeapon (00024ab7)(that HERC, mount)), then Herc_Dtor (000232a4)(that HERC, 2); any other HERC is skipped field by field (2, the mount count, 2n, 2n, 2 and 0x42 bytes).",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#the-hangars-selection; ES1GO decompile at 00028f16",
+      "verified": {
+        "bytes": "00028f16+390",
+        "sha1": "4ee989627bd0",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -8527,7 +8602,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Hangar_Write",
-      "description": "(stream), callee-cleaned: writes through the stream's slot +0x18 the words 00080890, Hangar_SelectedSlot (00080894), 00080896 and 00080898 and the dword 0008089c; then, when the mode word Shell_Mode (000aad56) is 0, a count of 8 and, for each of slots 0-7 of 000808a0 that holds a HERC, the slot and the HERC (Herc_Write (000233ce)); otherwise the count 00080892 and the same for each slot below 00080890.",
+      "description": "(stream), callee-cleaned: writes through the stream's slot +0x18 the words Hangar_SlotCount (00080890), Hangar_SelectedSlot (00080894), Hangar_MarkedSlot (00080896) and Hangar_MarkedMissionsLeft (00080898) and the dword Hangar_MarkedValue (0008089c); then, when the mode word Shell_Mode (000aad56) is 0, a count of 8 and, for each of slots 0-7 of Hangar_Slots (000808a0) that holds a HERC, the slot and the HERC (Herc_Write (000233ce)); otherwise the count Hangar_HercCount (00080892) and the same for each slot below Hangar_SlotCount (00080890).",
       "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists",
       "verified": {
         "bytes": "00029107+467",
@@ -8552,16 +8627,136 @@
       }
     },
     {
+      "address": "000294d8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_ShowSelectedHerc",
+      "description": "(): for Hangar_SelectedSlot (00080894) not -1, sets the bay's group scripts' pages with Ttm_SetPage (000468fc): the handle of the 3-byte entry 0 of ShellBackdrop_GroupTtms (0007e718) to the page 000aa7b0[slot] + 1, entry 1's to 000aa7c0[slot] + 1, entry 2's to slot mod 8 + 1; for a slot holding a HERC calls 000241f9(HERC, Hangar_MarkedMissionsLeft (00080898) for the marked slot Hangar_MarkedSlot (00080896), else 0). Then 00012467().",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#the-hangars-selection; ES1GO decompile at 000294d8",
+      "verified": {
+        "bytes": "000294d8+271",
+        "sha1": "5f0d3bbc18ea",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000295e7",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_LeaveSelectedHerc",
+      "description": "(): 000241cd(the HERC in Hangar_SelectedSlot (00080894)) when the slot is not -1 and holds one.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#the-hangars-selection; ES1GO decompile at 000295e7",
+      "verified": {
+        "bytes": "000295e7+53",
+        "sha1": "1c61502cb601",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002961c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_ClearSelectedMount",
+      "description": "(): 00024287(the HERC in Hangar_SelectedSlot (00080894)) when the slot is not -1 and holds one.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#the-hangars-selection; ES1GO decompile at 0002961c",
+      "verified": {
+        "bytes": "0002961c+53",
+        "sha1": "a63e1dbcfd3e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00029651",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "Hangar_ShowSlot",
-      "description": "(slot), its argument removed by this function: 000295e7; sets the marked slot 00080896 to -1 when it is Hangar_SelectedSlot and that slot holds no HERC; for slot -1 takes Hangar_FindFreeSlot (0002983a), and when that is -1 too calls 0002978c and takes Hangar_SelectedSlot; stores the slot in Hangar_SelectedSlot; 000294d8; 00029a14(-1). es2_xref finds calls from Shell_DrawScreen (two), 0002f009 and 0002f8d4.",
+      "description": "(slot), its argument removed by this function: Hangar_LeaveSelectedHerc (000295e7); sets the marked slot Hangar_MarkedSlot (00080896) to -1 when it is Hangar_SelectedSlot and that slot holds no HERC; for slot -1 takes Hangar_FindFreeSlot (0002983a), and when that is -1 too calls Hangar_NextUnpilotedHercSlot (0002978c) and takes Hangar_SelectedSlot; stores the slot in Hangar_SelectedSlot; Hangar_ShowSelectedHerc (000294d8); Hangar_SelectMount (00029a14)(-1). es2_xref finds calls from Shell_DrawScreen (two), RepairMenu_OnMessage (0002f009) and SystemRepairMenu_OnMessage (0002f8d4).",
       "source": "Herculan/docs/es1/shell/hangar.md#showing-a-bay; ES1GO decompile at 00029651",
       "verified": {
         "bytes": "00029651+120",
         "sha1": "de545455e646",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000296c9",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_PrevHercSlot",
+      "description": "(): takes 1 from Hangar_SelectedSlot (00080894), from 0 to Hangar_SlotCount (00080890) - 1, until the slot holds a HERC and is not Hangar_MarkedSlot (00080896), or is the slot it started from.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#the-hangars-selection; ES1GO decompile at 000296c9",
+      "verified": {
+        "bytes": "000296c9+96",
+        "sha1": "2918166e938a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00029729",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_NextHercSlot",
+      "description": "(): adds 1 to Hangar_SelectedSlot (00080894) modulo Hangar_SlotCount (00080890) until the slot holds a HERC and is not Hangar_MarkedSlot (00080896), or is the slot it started from.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#the-hangars-selection; ES1GO decompile at 00029729",
+      "verified": {
+        "bytes": "00029729+99",
+        "sha1": "123c31657dbe",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002978c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_NextUnpilotedHercSlot",
+      "description": "(): Hangar_NextHercSlot (00029729) until CareerRecord_FindPilotBySlot (00015c39)(CareerRecord_Current (00014ef4), the slot) answers -1 or the selection is back where it started.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#the-hangars-selection; ES1GO decompile at 0002978c",
+      "verified": {
+        "bytes": "0002978c+63",
+        "sha1": "a7003fc89a70",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000297cb",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_PrevUnpilotedHercSlot",
+      "description": "(): Hangar_PrevHercSlot (000296c9) until CareerRecord_FindPilotBySlot (00015c39)(CareerRecord_Current (00014ef4), the slot) answers -1 or the selection is back where it started.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#the-hangars-selection; ES1GO decompile at 000297cb",
+      "verified": {
+        "bytes": "000297cb+63",
+        "sha1": "54acb2bb8780",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002980a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_SelectMarkedSlot",
+      "description": "(): sets Hangar_MarkedSlot (00080896) to Hangar_FindFreeSlot (0002983a) when it is -1, then Hangar_SelectedSlot (00080894) to it.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#the-hangars-selection; ES1GO decompile at 0002980a",
+      "verified": {
+        "bytes": "0002980a+48",
+        "sha1": "0ee5f0a07986",
         "scope": "body",
         "via": "decompile"
       }
@@ -8572,11 +8767,116 @@
       "type": "function",
       "confidence": "high",
       "name": "Hangar_FindFreeSlot",
-      "description": "(): the first slot below the slot count 00080890 whose pointer in the array 000808a0 is null, or -1.",
+      "description": "(): the first slot below the slot count Hangar_SlotCount (00080890) whose pointer in the array Hangar_Slots (000808a0) is null, or -1.",
       "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists",
       "verified": {
         "bytes": "0002983a+53",
         "sha1": "a5cc87a38269",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002986f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_SelectNext",
+      "description": "(mode), its argument removed by this function: Hangar_LeaveSelectedHerc (000295e7); then mode 0 Hangar_NextHercSlot (00029729), 1 CareerRecord_NextPilot (00015b0a)(the current career record), 2 Hangar_NextUnpilotedHercSlot (0002978c), 3 Hangar_SelectMarkedSlot (0002980a) and, with Hangar_MarkedSlot (00080896) not -1, HangarBay_AssignSlotScripts (000120f9)(it, 1); then Screen_BlindsClear (0004c053)(8, 0, 1), Hangar_ShowSelectedHerc (000294d8), Hangar_SelectMount (00029a14)(-1) and Screen_BlindsCopy (0004bc0d)(8, the display 000ab616's +0x30, its +0x38, 1).",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#the-hangars-selection; ES1GO decompile at 0002986f",
+      "verified": {
+        "bytes": "0002986f+215",
+        "sha1": "af1a70ca6b23",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00029946",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_SelectPrev",
+      "description": "(mode), its argument removed by this function: Hangar_LeaveSelectedHerc (000295e7); then mode 0 Hangar_PrevHercSlot (000296c9), 1 CareerRecord_PrevPilot (00015b85)(the current career record), 2 Hangar_PrevUnpilotedHercSlot (000297cb); then, while Hangar_SelectedSlot (00080894) is not -1, Screen_BlindsClear (0004c053)(8, 0, 1), Hangar_ShowSelectedHerc (000294d8), Hangar_SelectMount (00029a14)(-1) and Screen_BlindsCopy (0004bc0d)(8, the display 000ab616's +0x30, its +0x38, 1).",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#the-hangars-selection; ES1GO decompile at 00029946",
+      "verified": {
+        "bytes": "00029946+206",
+        "sha1": "a50d0fdcdb74",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00029a14",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_SelectMount",
+      "description": "(mount), its argument removed by this function: 00024326(the HERC in Hangar_SelectedSlot (00080894), mount) when the slot is not -1 and holds one.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#the-hangars-selection; ES1GO decompile at 00029a14",
+      "verified": {
+        "bytes": "00029a14+62",
+        "sha1": "76340805e712",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00029a52",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_NextMount",
+      "description": "(): 000242a6(the HERC in Hangar_SelectedSlot (00080894)) when the slot is not -1 and holds one.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#the-hangars-selection; ES1GO decompile at 00029a52",
+      "verified": {
+        "bytes": "00029a52+53",
+        "sha1": "8e8c2b4b5354",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00029a87",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_PrevMount",
+      "description": "(): 000242e8(the HERC in Hangar_SelectedSlot (00080894)) when the slot is not -1 and holds one.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#the-hangars-selection; ES1GO decompile at 00029a87",
+      "verified": {
+        "bytes": "00029a87+53",
+        "sha1": "60e5a35f43d8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00029abc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_FitWeapon",
+      "description": "(weapon), its argument removed by this function: on the HERC in Hangar_SelectedSlot (00080894), not tested for -1: returns when Herc_CurrentMountWeapon (00024a6f) is the weapon; the condition is 100 for weapon 0x11 and otherwise Inventory_Take (0002833f)(the stock 000aad62 points to, weapon), returning when that is -1 or the slot holds no HERC; then 00024561(HERC); for a current weapon other than 0x11, Inventory_Add (00028311)(stock, &00024b51(HERC), the current weapon); then 00024aea(HERC, condition), 00024788(HERC, weapon) and 00024670(HERC).",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#the-hangars-selection; ES1GO decompile at 00029abc",
+      "verified": {
+        "bytes": "00029abc+289",
+        "sha1": "841a87f150ba",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00029bdd",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Repair_AutoSelected",
+      "description": "(): Repair_Auto (00029bf3)(Career_Salvage (0007fcf0), Hangar_SelectedSlot (00080894)). REPAIR's REPAIR ALL.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#repair-all; ES1GO decompile at 00029bdd",
+      "verified": {
+        "bytes": "00029bdd+22",
+        "sha1": "f16915b72963",
         "scope": "body",
         "via": "decompile"
       }
@@ -8587,7 +8887,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Repair_Auto",
-      "description": "(budget, slot), its arguments removed by this function: ES2's Repair_Auto (VSHELL 00411328), on the HERC in the hangar slot (array 000808a0), doing nothing for slot -1 or an empty slot. The ladder walk is ES2's with Repair_HercCost (00038c50), RepairTargetTable (00081790), Herc_OverallCondition (00024b6a) and Repair_LevelForCondition (000389fb). Where ES2 applies the level and returns the cost, ES1 when the cost is below the budget (unsigned) calls Herc_SetAllStatus (00024c3c)(herc, the level's target), takes the cost from Career_Salvage (0007fcf0) and stores budget - cost at the dword +0x21 of the pilot entry CareerRecord_FindPilotBySlot (00015c39)(CareerRecord_Current (00014ef4), slot) returns. es2_xref finds calls from CareerRecord_AutoRepairFrom (0001605c) and 00029bdd.",
+      "description": "(budget, slot), its arguments removed by this function: ES2's Repair_Auto (VSHELL 00411328), on the HERC in the hangar slot (array Hangar_Slots (000808a0)), doing nothing for slot -1 or an empty slot. The ladder walk is ES2's with Repair_HercCost (00038c50), RepairTargetTable (00081790), Herc_OverallCondition (00024b6a) and Repair_LevelForCondition (000389fb). Where ES2 applies the level and returns the cost, ES1 when the cost is below the budget (unsigned) calls Herc_SetAllStatus (00024c3c)(herc, the level's target), takes the cost from Career_Salvage (0007fcf0) and stores budget - cost at the dword +0x21 of the pilot entry CareerRecord_FindPilotBySlot (00015c39)(CareerRecord_Current (00014ef4), slot) returns. es2_xref finds calls from CareerRecord_AutoRepairFrom (0001605c) and Repair_AutoSelected (00029bdd).",
       "source": "Herculan/docs/es1/shell/between-missions.md#repairs; ES1GO decompile and disassembly at 00029bf3",
       "verified": {
         "bytes": "00029bf3+284",
@@ -8602,7 +8902,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Hangar_AddHerc",
-      "description": "(herc), its argument removed by this function: stores herc in the slot Hangar_FindFreeSlot (0002983a) gives, builds its diagram with Herc_BuildDiagram (00023883)(herc, 0) unless the byte Shell_LowMemory (0007fd09) is set, adds 1 to the HERC count 00080892, and returns the slot; with no free slot it stores nothing and returns -1.",
+      "description": "(herc), its argument removed by this function: stores herc in the slot Hangar_FindFreeSlot (0002983a) gives, builds its diagram with Herc_BuildDiagram (00023883)(herc, 0) unless the byte Shell_LowMemory (0007fd09) is set, adds 1 to the HERC count Hangar_HercCount (00080892), and returns the slot; with no free slot it stores nothing and returns -1.",
       "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists",
       "verified": {
         "bytes": "00029d0f+89",
@@ -8612,12 +8912,27 @@
       }
     },
     {
+      "address": "00029d68",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_BuildIntoSelected",
+      "description": "(chassis), its argument removed by this function: returns when Hangar_SelectedSlot (00080894) is -1; otherwise sets Hangar_MarkedMissionsLeft (00080898) to Chassis_BuildMissions (000808d8)[chassis] and Hangar_MarkedValue (0008089c) to Chassis_PriceTable (000808b8)[chassis], stores Herc_Ctor (00022f5e)(0, chassis) in the slot without testing what it held, takes the price x 1000 from Career_Salvage (0007fcf0), builds its diagram with Herc_BuildDiagram (00023883)(HERC, Hangar_MarkedMissionsLeft) unless Shell_LowMemory (0007fd09) is set, and adds 1 to Hangar_HercCount (00080892).",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#build--screen-2000; ES1GO decompile at 00029d68",
+      "verified": {
+        "bytes": "00029d68+153",
+        "sha1": "2a5f36a0c2a3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00029e01",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "Hangar_AdvanceMarkedHerc",
-      "description": "(): returns unless Hangar_HasMarkedHerc (0002a277) answers non-zero. While the marked slot's word 00080898 is above 0 it takes 1 from it, calls Herc_BuildDiagram (00023883)(the marked HERC, the word) unless Shell_LowMemory (0007fd09) is set, and sets the dword 0008089c to (v x 0x50 x p / 10000 + (100 - p) x v) / 100, v the HERC's chassis' word of 000808b8 and p Hangar_MarkedHercProgress (00029f93)(). When the word is then below 1 it calls Herc_SetAllStatus (00024c3c)(herc, 100), Herc_BuildDiagram again unless Shell_LowMemory is set, and sets the marked slot 00080896 to -1 and 0008089c to 0. es2_xref finds one call, from Shell_ProcessMissionResults (00038eb5).",
+      "description": "(): returns unless Hangar_HasMarkedHerc (0002a277) answers non-zero. While the marked slot's word Hangar_MarkedMissionsLeft (00080898) is above 0 it takes 1 from it, calls Herc_BuildDiagram (00023883)(the marked HERC, the word) unless Shell_LowMemory (0007fd09) is set, and sets the dword Hangar_MarkedValue (0008089c) to (v x 0x50 x p / 10000 + (100 - p) x v) / 100, v the HERC's chassis' word of Chassis_PriceTable (000808b8) and p Hangar_MarkedHercProgress (00029f93)(). When the word is then below 1 it calls Herc_SetAllStatus (00024c3c)(herc, 100), Herc_BuildDiagram again unless Shell_LowMemory is set, and sets the marked slot Hangar_MarkedSlot (00080896) to -1 and Hangar_MarkedValue (0008089c) to 0. es2_xref finds one call, from Shell_ProcessMissionResults (00038eb5).",
       "source": "Herculan/docs/es1/shell/between-missions.md#the-marked-herc; ES1GO decompile at 00029e01",
       "verified": {
         "bytes": "00029e01+402",
@@ -8632,7 +8947,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Hangar_MarkedHercProgress",
-      "description": "(): (c - the word 00080898) x 100 / c, c the word of 000808d8 for the chassis (word +0) of the HERC in the marked slot 00080896, -1 indexing the word before when the slot is -1 or empty.",
+      "description": "(): (c - the word Hangar_MarkedMissionsLeft (00080898)) x 100 / c, c the word of Chassis_BuildMissions (000808d8) for the chassis (word +0) of the HERC in the marked slot Hangar_MarkedSlot (00080896), -1 indexing the word before when the slot is -1 or empty.",
       "source": "Herculan/docs/es1/shell/between-missions.md#the-marked-herc; ES1GO decompile at 00029f93",
       "verified": {
         "bytes": "00029f93+179",
@@ -8647,7 +8962,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Hangar_ScrapSelectedHerc",
-      "description": "(), C convention: when the hangar's selected slot Hangar_SelectedSlot (00080894) is not -1 and holds a HERC: for the marked slot 00080896, Herc_ScrapToSalvage (00024cec)(herc, the dword 0008089c x 1000), 000295e7(), Herc_Dtor (000232a4)(herc, 3), the slot's pointer zeroed, the word 00080898 and 0008089c set to 0, 1 taken from the HERC count 00080892 and 000120f9(slot, 1); for any other slot, Herc_ScrapToSalvage(herc, 0), 000295e7(), the slot +8 of the pilot entry CareerRecord_FindPilotBySlot (00015c39)(CareerRecord_Current (00014ef4), slot) finds set to -1 when it finds one, Herc_Dtor(herc, 3), the pointer zeroed, 1 taken from the count and 00029729(). Both then call 0004c053(8, 0, 1) and 000294d8(). es2_xref finds two calls, from ScrapAlert's handler 0002f111 and from 000309d7.",
+      "description": "(), C convention: when the hangar's selected slot Hangar_SelectedSlot (00080894) is not -1 and holds a HERC: for the marked slot Hangar_MarkedSlot (00080896), Herc_ScrapToSalvage (00024cec)(herc, the dword Hangar_MarkedValue (0008089c) x 1000), Hangar_LeaveSelectedHerc (000295e7)(), Herc_Dtor (000232a4)(herc, 3), the slot's pointer zeroed, the word Hangar_MarkedMissionsLeft (00080898) and Hangar_MarkedValue (0008089c) set to 0, 1 taken from the HERC count Hangar_HercCount (00080892) and HangarBay_AssignSlotScripts (000120f9)(slot, 1); for any other slot, Herc_ScrapToSalvage(herc, 0), Hangar_LeaveSelectedHerc (000295e7)(), the slot +8 of the pilot entry CareerRecord_FindPilotBySlot (00015c39)(CareerRecord_Current (00014ef4), slot) finds set to -1 when it finds one, Herc_Dtor(herc, 3), the pointer zeroed, 1 taken from the count and Hangar_NextHercSlot (00029729)(). Both then call Screen_BlindsClear (0004c053)(8, 0, 1) and Hangar_ShowSelectedHerc (000294d8)(). es2_xref finds two calls, from ScrapAlert's handler ScrapAlert_OnMessage (0002f111) and from FabricationMenu_OnMessage (000309d7).",
       "source": "Herculan/docs/es1/shell/between-missions.md#lost-squadmates; ES1GO decompile at 0002a046",
       "verified": {
         "bytes": "0002a046+356",
@@ -8677,7 +8992,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Hangar_ScrapSlot",
-      "description": "(slot), its argument removed by this function: for a slot that is not -1 and holds a HERC in the array 000808a0, calls Herc_ScrapToSalvage (00024cec)(herc, 0), destroys the HERC with Herc_Dtor (000232a4)(herc, 3), zeroes the slot's pointer and takes 1 from the HERC count 00080892. es2_xref finds one call, from CareerRecord_ReplaceLostPilots (00015e0b).",
+      "description": "(slot), its argument removed by this function: for a slot that is not -1 and holds a HERC in the array Hangar_Slots (000808a0), calls Herc_ScrapToSalvage (00024cec)(herc, 0), destroys the HERC with Herc_Dtor (000232a4)(herc, 3), zeroes the slot's pointer and takes 1 from the HERC count Hangar_HercCount (00080892). es2_xref finds one call, from CareerRecord_ReplaceLostPilots (00015e0b).",
       "source": "Herculan/docs/es1/shell/between-missions.md#lost-squadmates; ES1GO decompile and disassembly at 0002a20d",
       "verified": {
         "bytes": "0002a20d+106",
@@ -8692,7 +9007,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Hangar_HasMarkedHerc",
-      "description": "(): answers 1 in AL when the hangar's marked slot, the word 00080896, is not -1 and its entry of the array 000808a0 holds a HERC, otherwise 0 in EAX.",
+      "description": "(): answers 1 in AL when the hangar's marked slot, the word Hangar_MarkedSlot (00080896), is not -1 and its entry of the array Hangar_Slots (000808a0) holds a HERC, otherwise 0 in EAX.",
       "source": "Herculan/docs/es1/shell/between-missions.md#the-bars-buttons; ES1GO decompile and disassembly at 0002a277",
       "verified": {
         "bytes": "0002a277+42",
@@ -8702,12 +9017,27 @@
       }
     },
     {
+      "address": "0002a2a1",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_SelectedBuildProgress",
+      "description": "(): (c - Hangar_MarkedMissionsLeft (00080898)) x 100 / c, signed, c the word of Chassis_BuildMissions (000808d8) for the chassis word of the HERC in Hangar_SelectedSlot (00080894), -1 for no HERC.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#the-hangars-selection; ES1GO decompile at 0002a2a1",
+      "verified": {
+        "bytes": "0002a2a1+179",
+        "sha1": "03d2842027f8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0002a354",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "Hangar_SlotIsUnarmed",
-      "description": "(slot), its argument removed by this function: 0 when the int16 slot is -1 or the hangar's slot array 000808a0 holds no HERC at it, otherwise Herc_IsUnarmed (00022ebf) of that HERC.",
+      "description": "(slot), its argument removed by this function: 0 when the int16 slot is -1 or the hangar's slot array Hangar_Slots (000808a0) holds no HERC at it, otherwise Herc_IsUnarmed (00022ebf) of that HERC.",
       "source": "Herculan/docs/es1/shell/war-map.md#begin-mission; ES1GO decompile and disassembly at 0002a354",
       "verified": {
         "bytes": "0002a354+65",
@@ -8722,7 +9052,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Hangar_SlotIsDisabled",
-      "description": "(slot), its argument removed by this function: 0 for slot -1 or a slot of the hangar array 000808a0 that holds no HERC; otherwise Herc_IsDisabled (00022f05) of its HERC.",
+      "description": "(slot), its argument removed by this function: 0 for slot -1 or a slot of the hangar array Hangar_Slots (000808a0) that holds no HERC; otherwise Herc_IsDisabled (00022f05) of its HERC.",
       "source": "Herculan/docs/es1/shell/between-missions.md#next-mission; ES1GO decompile at 0002a395",
       "verified": {
         "bytes": "0002a395+65",
@@ -9382,7 +9712,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CrewAssignMenu_OnMessage",
-      "description": "(menu, message), its arguments removed by this function: vtable slot +8 of 00080c9e: looks the message's target +6 up among the eleven ids at 00080cd0 and jumps through the targets at 00080cfc, case bodies inside this function up to its RET 8 at 0002d324: 2003 and 2004 CrewAssignMenu_UndoSwap, 000296c9 or 00029729, CrewAssignMenu_AssignSelectedSlot; 1623 the same with Hangar_SelectedSlot and +0x30 set to -1; 1700 restores Hangar_SelectedSlot from +0x2c, CareerRecord_SelectPilot(record, +0x3a) and the four entries' slots from +0x32; 100 sets the target to 1700, CareerRecord_SaveCurrent, CareerRecord_SelectPilot(record, +0xe), HangarBay_AssignScripts (000122e0) and Hangar_SelectedSlot from +0x2c; 1615 to 1618 as 2004 for the id in +0x2a and CrewAssignMenu_SelectColumn otherwise; 1624 CrewAssignMenu_SelectColumn of the next tile, 1618 going to 1615; 1611 nothing.",
+      "description": "(menu, message), its arguments removed by this function: vtable slot +8 of 00080c9e: looks the message's target +6 up among the eleven ids at 00080cd0 and jumps through the targets at 00080cfc, case bodies inside this function up to its RET 8 at 0002d324: 2003 and 2004 CrewAssignMenu_UndoSwap, Hangar_PrevHercSlot (000296c9) or Hangar_NextHercSlot (00029729), CrewAssignMenu_AssignSelectedSlot; 1623 the same with Hangar_SelectedSlot and +0x30 set to -1; 1700 restores Hangar_SelectedSlot from +0x2c, CareerRecord_SelectPilot(record, +0x3a) and the four entries' slots from +0x32; 100 sets the target to 1700, CareerRecord_SaveCurrent, CareerRecord_SelectPilot(record, +0xe), HangarBay_AssignScripts (000122e0) and Hangar_SelectedSlot from +0x2c; 1615 to 1618 as 2004 for the id in +0x2a and CrewAssignMenu_SelectColumn otherwise; 1624 CrewAssignMenu_SelectColumn of the next tile, 1618 going to 1615; 1611 nothing.",
       "source": "Herculan/docs/es1/shell/hangar.md#the-buttons; ES1GO decompile and disassembly at 0002d19e",
       "verified": {
         "bytes": "0002d19e+393",
@@ -9397,7 +9727,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ServiceBayMenu_OnMessage",
-      "description": "(menu, message), its arguments removed by this function: the handler of ServiceBayMenu (00081fc6), screens 1700 and 1710, slot +8. Looks the message's target +6 up among the seven ids of the REPNE SCASD table at 00080d28 (1800, 1000, 1200, 1499, 1500, 2000, 100), its cases at 00080d44, five of them in bytes Ghidra left undefined from 0002d38b. 1800: the target 1820 while Shell_LowMemory (0007fd09) is set. 1000: Shell_DeleteMissionMap (0002a4ec), anm\\esiege2.anm into 000aacfe with sprintf and the byte 0007fcd7 2. 1200: the same with Shell_ReturnScreen (0007fce8) 1710. 1499: the target 7770 when CareerRecord_PlayerHercDisabled (0001626d)(CareerRecord_Current (00014ef4)) answers non-zero, else 7771 when CareerRecord_AnyHercDisabled (00016294)(CareerRecord_Current) does; else Shell_ReturnScreen 1200, the word +4 of the record the roster's word +7 names 1700, Roster_AdvanceCareer (00016f22)(Career_Roster (0009b218), the dword 000aad58), Career_StartMission (00016e93)(roster, 0), Career_Save (000168b0)(roster, the roster's dword +7), Shell_PrepareMission (0002a523), and when the record's word +8 is 0, MessageBox_SetKind (00037eac)(Shell_MessageBox (0009b010), 5) and the target 1710. 1500: the record's +4 1700, Career_Save(roster, the roster's dword +7), and when the record's byte +1 is 0, MessageBox_SetKind(.., 1) and the target 1499. 2000: the target 7772 when the word 00080892, less 1 when Hangar_HasMarkedHerc (0002a277) answers non-zero, is 8 or more. 100: the target 3333 when CareerRecord_PlayerHasNoHerc (000161dc)(CareerRecord_Current) answers non-zero, else 3000 when CareerRecord_AnyPilotUnarmed (0001620d) does; else PlayerMec_Write (0002299e), the target 1700, MessageBox_SetKind(.., 6), Shell_DeleteMissionMap and the byte 000809a8 cleared.",
+      "description": "(menu, message), its arguments removed by this function: the handler of ServiceBayMenu (00081fc6), screens 1700 and 1710, slot +8. Looks the message's target +6 up among the seven ids of the REPNE SCASD table at 00080d28 (1800, 1000, 1200, 1499, 1500, 2000, 100), its cases at 00080d44, five of them in bytes Ghidra left undefined from 0002d38b. 1800: the target 1820 while Shell_LowMemory (0007fd09) is set. 1000: Shell_DeleteMissionMap (0002a4ec), anm\\esiege2.anm into 000aacfe with sprintf and the byte 0007fcd7 2. 1200: the same with Shell_ReturnScreen (0007fce8) 1710. 1499: the target 7770 when CareerRecord_PlayerHercDisabled (0001626d)(CareerRecord_Current (00014ef4)) answers non-zero, else 7771 when CareerRecord_AnyHercDisabled (00016294)(CareerRecord_Current) does; else Shell_ReturnScreen 1200, the word +4 of the record the roster's word +7 names 1700, Roster_AdvanceCareer (00016f22)(Career_Roster (0009b218), the dword 000aad58), Career_StartMission (00016e93)(roster, 0), Career_Save (000168b0)(roster, the roster's dword +7), Shell_PrepareMission (0002a523), and when the record's word +8 is 0, MessageBox_SetKind (00037eac)(Shell_MessageBox (0009b010), 5) and the target 1710. 1500: the record's +4 1700, Career_Save(roster, the roster's dword +7), and when the record's byte +1 is 0, MessageBox_SetKind(.., 1) and the target 1499. 2000: the target 7772 when the word Hangar_HercCount (00080892), less 1 when Hangar_HasMarkedHerc (0002a277) answers non-zero, is 8 or more. 100: the target 3333 when CareerRecord_PlayerHasNoHerc (000161dc)(CareerRecord_Current) answers non-zero, else 3000 when CareerRecord_AnyPilotUnarmed (0001620d) does; else PlayerMec_Write (0002299e), the target 1700, MessageBox_SetKind(.., 6), Shell_DeleteMissionMap and the byte 000809a8 cleared.",
       "source": "Herculan/docs/es1/shell/between-missions.md#the-bars-buttons; ES1GO disassembly at 0002d327",
       "verified": {
         "bytes": "0002d327+664",
@@ -9487,7 +9817,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Arming_SelectWeapon",
-      "description": "(menu, line), its arguments removed by this function: w = Arming_WeaponAtListPosition (0003714e)(line) into Arming_ShownWeapon (00080d64). When w differs from Arming_AnimatedWeapon (00080d68): unless Shell_LowMemory (0007fd09), control 1803's slot +0x24 with w (-1 for 17); hotspot 1803's byte +0 set; with the byte 0007ff98 set, 00029abc(w) fits it, the list rebuilt (Arming_BuildWeaponList (000371ad)(+0x70, chassis) into Arming_WeaponLines (00080d60), Inventory_FormatCounts (00028242), slot +0x44) and w's line selected (Arming_WeaponListPosition (000370ec), slot +0x24); Arming_AnimatedWeapon (00080d68) = w. For w 9-11, Arming_ShownMissileType (00080d66) = the selected HERC's word +0x18 + 2 x +0x70 (0 with none) and hotspot 1803 set. With 0007ff98 set, button 1111 made up for 9-11 and inactive otherwise.",
+      "description": "(menu, line), its arguments removed by this function: w = Arming_WeaponAtListPosition (0003714e)(line) into Arming_ShownWeapon (00080d64). When w differs from Arming_AnimatedWeapon (00080d68): unless Shell_LowMemory (0007fd09), control 1803's slot +0x24 with w (-1 for 17); hotspot 1803's byte +0 set; with the byte 0007ff98 set, Hangar_FitWeapon (00029abc)(w) fits it, the list rebuilt (Arming_BuildWeaponList (000371ad)(+0x70, chassis) into Arming_WeaponLines (00080d60), Inventory_FormatCounts (00028242), slot +0x44) and w's line selected (Arming_WeaponListPosition (000370ec), slot +0x24); Arming_AnimatedWeapon (00080d68) = w. For w 9-11, Arming_ShownMissileType (00080d66) = the selected HERC's word +0x18 + 2 x +0x70 (0 with none) and hotspot 1803 set. With 0007ff98 set, button 1111 made up for 9-11 and inactive otherwise.",
       "source": "Herculan/docs/es1/shell/arming.md#picking-a-line; ES1GO decompile at 0002e157",
       "verified": {
         "bytes": "0002e157+808",
@@ -9517,11 +9847,311 @@
       "type": "function",
       "confidence": "high",
       "name": "ArmingMenu_OnMessage",
-      "description": "(menu, message), its arguments removed by this function: ArmingMenu's slot +8 (vtable 00081fe6), the handler of screens 1800 and 1820. Looks the message's target +6 up among the eleven ids of ArmingMenu_CaseTable (00080db8) with REPNE SCASD and jumps to the target beside it: 1803 sets hotspot 1803's byte +0; 1808 Arming_SelectListLine (0002e126)(menu, the value +4); 1801 and 1802 the list's slot +0x1c or +0x20 and then Arming_SelectListLine with its selected line; 2004 and 2003 0002986f or 00029946 with 2 in Shell_Mode (000aad56) 0 (then storing Hangar_SelectedSlot (00080894) in SingleMission_Record (0009b014)'s current pilot entry's +8) and 0 otherwise, then CareerRecord_SelectPilot (00015ad4)(CareerRecord_Current (00014ef4), CareerRecord_FindPilotBySlot (00015c39)), lists 1904 and 1903 set to PilotEntry_NameIndex (00015f50) + 1 and the chassis, the byte 0007ff98 cleared and Arming_Refresh (0002dc54); 1702, 1807 and 1806 00029a14(value), 00029a52 or 00029a87, +0x27 = 0 and Arming_Refresh; 1111 the list's mode toggle (Menu_ListLines (0003750d)(1809) and button text line 1, or Arming_Refresh); 100 0002961c, CareerRecord_SaveCurrent (00014f28) and, in mode 0, Hangar_SaveFile (0002909c)(Path_ApplyAltDrive (00020989)(car\\sm_init.dat)) and target 1501, otherwise target 1700. Ghidra's function holds only the dispatch, the 1803 and 1808 cases and the exit; the other case bodies from 0002e5c5 to 0002ecb8 lie outside it.",
+      "description": "(menu, message), its arguments removed by this function: ArmingMenu's slot +8 (vtable 00081fe6), the handler of screens 1800 and 1820. Looks the message's target +6 up among the eleven ids of ArmingMenu_CaseTable (00080db8) with REPNE SCASD and jumps to the target beside it: 1803 sets hotspot 1803's byte +0; 1808 Arming_SelectListLine (0002e126)(menu, the value +4); 1801 and 1802 the list's slot +0x1c or +0x20 and then Arming_SelectListLine with its selected line; 2004 and 2003 Hangar_SelectNext (0002986f) or Hangar_SelectPrev (00029946) with 2 in Shell_Mode (000aad56) 0 (then storing Hangar_SelectedSlot (00080894) in SingleMission_Record (0009b014)'s current pilot entry's +8) and 0 otherwise, then CareerRecord_SelectPilot (00015ad4)(CareerRecord_Current (00014ef4), CareerRecord_FindPilotBySlot (00015c39)), lists 1904 and 1903 set to PilotEntry_NameIndex (00015f50) + 1 and the chassis, the byte 0007ff98 cleared and Arming_Refresh (0002dc54); 1702, 1807 and 1806 Hangar_SelectMount (00029a14)(value), Hangar_NextMount (00029a52) or Hangar_PrevMount (00029a87), +0x27 = 0 and Arming_Refresh; 1111 the list's mode toggle (Menu_ListLines (0003750d)(1809) and button text line 1, or Arming_Refresh); 100 Hangar_ClearSelectedMount (0002961c), CareerRecord_SaveCurrent (00014f28) and, in mode 0, Hangar_SaveFile (0002909c)(Path_ApplyAltDrive (00020989)(car\\sm_init.dat)) and target 1501, otherwise target 1700. Ghidra's function holds only the dispatch, the 1803 and 1808 cases and the exit; the other case bodies from 0002e5c5 to 0002ecb8 lie outside it.",
       "source": "Herculan/docs/es1/shell/arming.md#what-a-press-does; ES1GO disassembly at 0002e54c",
       "verified": {
         "bytes": "0002e54c+1908",
         "sha1": "86ca3f858c12",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0002ecc0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "RepairMenu_RefreshSalvage",
+      "description": "(menu), its argument removed by this function: sets the lines of list 1907 to Menu_NumberLines (000374af)(Career_Salvage (0007fcf0), 1907) and selects line 0; sets list 1906's to Menu_NumberLines(Repair_HercCost (00038c50)(100, the selected HERC), 1906) while Herc_OverallCondition (00024b6a) is below 100 and to the number 0 otherwise (0 for no HERC), and selects line 0. The arrays are kept at 00080e18 and 00080e1c.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#repair--screen-1900; ES1GO decompile at 0002ecc0",
+      "verified": {
+        "bytes": "0002ecc0+432",
+        "sha1": "7dd6aa34066b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002ee70",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "RepairMenu_RefreshHerc",
+      "description": "(menu), its argument removed by this function: CareerRecord_SelectPilot (00015ad4)(record, CareerRecord_FindPilotBySlot (00015c39)(record, Hangar_SelectedSlot (00080894))); selects in list 1904 line PilotEntry_NameIndex (00015f50)(that record, entry) + 1, in 1903 the selected HERC's chassis word (-1 for none), in 1905 Repair_LevelForCondition (000389fb)(Herc_OverallCondition (00024b6a)) (of 0 for none); then RepairMenu_RefreshSalvage (0002ecc0)(menu).",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#repair--screen-1900; ES1GO decompile at 0002ee70",
+      "verified": {
+        "bytes": "0002ee70+409",
+        "sha1": "6984776bdfe9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002f009",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "RepairMenu_OnMessage",
+      "description": "(menu, message), its arguments removed by this function: RepairMenu (00082006)'s slot +8, screen 1900. Looks the target +6 up among the five ids of RepairMenu_CaseTable (00080e20), cases in bytes Ghidra left undefined: 2004 Hangar_SelectNext (0002986f)(0) and 2003 Hangar_SelectPrev (00029946)(0), each then RepairMenu_RefreshHerc (0002ee70); 1902 Repair_AutoSelected (00029bdd), 00029651(Hangar_SelectedSlot (00080894)), list 1905's line to the new level, RepairMenu_RefreshSalvage (0002ecc0) and Roster_ForEachPilotNoOp (00016fdd)(0009b218); 1901 the target becomes 4444; 1710 CareerRecord_SaveCurrent (00014f28).",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#repair--screen-1900; ES1GO decompile and disassembly at 0002f009",
+      "verified": {
+        "bytes": "0002f009+264",
+        "sha1": "6b0731c6b5b3",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002f111",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ScrapAlert_OnMessage",
+      "description": "(menu, message), its arguments removed by this function: ScrapAlert (00081e06)'s slot +8, screen 4444. For the target 100 only: Hangar_ScrapSelectedHerc (0002a046); finds CareerRecord_FindPilotBySlot (00015c39)(CareerRecord_Current (00014ef4), Hangar_SelectedSlot (00080894)); 000122e0(); Screen_BlindsCopy (0004bc0d)(8, the display 000ab616's +0x30, its +0x38, 1); CareerRecord_SelectPilot (00015ad4)(record, that entry), and for an entry of -1 sets the selected slot back to the one it read; the target becomes 1900.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#scrap--screen-4444; ES1GO decompile and disassembly at 0002f111",
+      "verified": {
+        "bytes": "0002f111+153",
+        "sha1": "18981eedf93b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002f1aa",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "SystemRepairMenu_Ctor",
+      "description": "(menu), its argument removed by this function: screen 1920's menu, allocating 0x72 bytes when menu is null: the screen object's region and Menu vtables, HercStatus_Ctor (0001a29c) on +0x2e, the vtable 00080e5c, SystemRepair_ItemLines (00080e10) 0, +0x2a Career_Salvage (0007fcf0), +0x26 0x784, +0x28 0, the selected HERC's status block copied over +0x2e from Hangar_CopySelectedStatus (0002f3e9)(a stack buffer), Repair_StepCost (000ab212) = Repair_UnitValueCost (00038bb9)(1, Herc_GetStatus (00024b86)(HERC, 0, 0x784) or 0, 0, 0x784, chassis or -1), +0x70 0. Returns the menu.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#system-repair--screen-1920; ES1GO decompile at 0002f1aa",
+      "verified": {
+        "bytes": "0002f1aa+575",
+        "sha1": "f363749f1234",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002f3e9",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_CopySelectedStatus",
+      "description": "(buffer), its argument removed by this function: ES2's HercList_CopySelectedStatus (VSHELL 00434eb7) on the HERC in Hangar_SelectedSlot (00080894), copying its 66-byte block +0x2e. ES1 allocates 66 bytes with Mem_New when buffer is null and answers the buffer; with no HERC it copies nothing and answers the slot number.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#system-repair--screen-1920; ES1GO decompile at 0002f3e9",
+      "verified": {
+        "bytes": "0002f3e9+119",
+        "sha1": "9b23596c19ee",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002f460",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "SystemRepairMenu_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: SystemRepairMenu (00080e5c)'s slot +4: stores its vtable, then Menu's and the region's three, and frees the menu with Mem_Delete when bit 0 of flags is set; MainMenu_Dtor (0003b771)'s code with the vtable 00080e5c.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#system-repair--screen-1920; ES1GO decompile at 0002f460",
+      "verified": {
+        "bytes": "0002f460+183",
+        "sha1": "c457e982b7d6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002f517",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "SystemRepairMenu_SelectItem",
+      "description": "(menu), its argument removed by this function: stores list 1921's selected line (slot +0x2c) at +0x28; selects in list 1922 Repair_LevelForCondition (000389fb)(Herc_GetStatus (00024b86)(the selected HERC, +0x28, +0x26), 0 for none); sets list 1923's lines to Menu_NumberLines (000374af)(+0x70, 1923), kept at 00080e14, and selects line 0; then SystemRepairMenu_Refresh (0002f680)(menu).",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#system-repair--screen-1920; ES1GO decompile at 0002f517",
+      "verified": {
+        "bytes": "0002f517+361",
+        "sha1": "cd404d8c2b54",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002f680",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "SystemRepairMenu_Refresh",
+      "description": "(menu), its argument removed by this function: sets list 1907's lines to Menu_NumberLines (000374af)(Career_Salvage (0007fcf0), 1907) and selects line 0; sets Repair_StepCost (000ab212) to Repair_UnitValueCost (00038bb9)(1, the item's condition (0 for no HERC), +0x28, +0x26, the chassis word or -1); sets list 1927's lines to that number and selects line 0; makes control 106, +, inactive (+0x19 2) when Repair_StepCost, sign-extended, is above Career_Salvage, compared unsigned, and active (0) otherwise, *changed* set.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#system-repair--screen-1920; ES1GO decompile and disassembly at 0002f680",
+      "verified": {
+        "bytes": "0002f680+596",
+        "sha1": "7b33c110aa48",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002f8d4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "SystemRepairMenu_OnMessage",
+      "description": "(menu, message), its arguments removed by this function: SystemRepairMenu (00080e5c)'s slot +8, screen 1920. Reads list 1921's selected line, then looks the target up among the ten ids of SystemRepairMenu_CaseTable (00080e6c), cases in bytes Ghidra left undefined: 1921 SystemRepairMenu_SelectItem (0002f517); 1924 to 1926 the system +0x26 becomes the id, SystemRepair_ItemLines (00080e10) Menu_ListLines (0003750d)(id), given to 1921 with line 0 selected, then SystemRepairMenu_SelectItem; 101 and 102 list 1921's slot +0x1c or +0x20, then SystemRepairMenu_SelectItem; 106 (+) adds Repair_StepCost (000ab212) to +0x70, sets the item to Repair_TargetForLevel (00038a30)(1922's level) with Herc_SetStatus (00024c14), rewrites its line with Hangar_FormatSelectedStatusLine (00030478), lowers 1922's level by 1 when above 0, takes the cost from Career_Salvage (0007fcf0) and the current pilot's dword +0x21, and runs SystemRepairMenu_Refresh (0002f680); 107 (-) returns unless the item's condition is above its value in the block +0x2e (HercStatus_GetMenuHandlersCopy (000304c6)), refunds Repair_UnitValueCost (00038bb9)(1, the old value, ..) when 1922's level is the old value's, or one less while the condition is below 100, and Repair_UnitValueCost(0, the condition, ..) otherwise, from +0x70 to Career_Salvage and the pilot's +0x21, raises the level by 1 while the condition is below 100, and sets the item to the old value at the old level and to Repair_FloorForLevel (00038a5c)(level) otherwise; 1900, unless Career_Salvage equals +0x2a, sets the item to Repair_TargetForLevel(1922's level) and calls 00029651(slot); 99 puts the pilot's +0x21 back by +0x2a - Career_Salvage, Career_Salvage to +0x2a and the block +0x2e over the HERC's, and makes the target 1900.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#system-repair--screen-1920; ES1GO decompile and disassembly at 0002f8d4",
+      "verified": {
+        "bytes": "0002f8d4+2980",
+        "sha1": "a26ecb2072c7",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00030478",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_FormatSelectedStatusLine",
+      "description": "(item, line, kind) in stack order, its arguments removed by this function: 00024ef4(the HERC in Hangar_SelectedSlot (00080894), item, line, kind) when the slot is not -1 and holds one.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#system-repair--screen-1920; ES1GO decompile at 00030478",
+      "verified": {
+        "bytes": "00030478+78",
+        "sha1": "9c5fe1432807",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000304c6",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercStatus_GetMenuHandlersCopy",
+      "description": "(block, index, kind) in stack order, its arguments removed by this function: byte for byte the code of HercStatus_Get (00015896), relocated operands aside.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#where-the-object-files-start-and-end; ES1GO disassembly at 000304c6",
+      "verified": {
+        "bytes": "000304c6+105",
+        "sha1": "31e0c22039a8",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0003052f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "RepairPrefsAlert_OnMessage",
+      "description": "(menu, message), its arguments removed by this function: RepairPrefsAlert (0008202c)'s slot +8, screen 1910. For the target 1911, 1912 or 1913 sets Career_AutoRepairMode (0007fcf8) to 0, 1 or 2, calls slot +0x24 of the controls 1914, 1915 and 1916 with 1 for the button's and 0 for the others, and makes the target 1900; any other target does nothing.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#preferences--screen-1910; ES1GO decompile at 0003052f",
+      "verified": {
+        "bytes": "0003052f+666",
+        "sha1": "851076ea6f42",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000307c9",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "FabricationMenu_Ctor",
+      "description": "(menu), its argument removed by this function: screen 2000's menu, allocating 0x26 bytes when menu is null: the screen object's region and Menu vtables, then the vtable 00080ece, and Fabrication_ChassisArt (000ab20e) = Resource_LoadBitmapArray of res32\\blueherx.dba. Returns the menu.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#build--screen-2000; ES1GO decompile at 000307c9",
+      "verified": {
+        "bytes": "000307c9+327",
+        "sha1": "0afd100c185c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00030910",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "FabricationMenu_Dtor",
+      "description": "(menu, flags), its arguments removed by this function: FabricationMenu (00080ece)'s slot +4: stores its vtable, destroys Fabrication_ChassisArt (000ab20e) with GLBitmapArray_Dtor(array, 3), stores Menu's and the region's vtables, and frees the menu with Mem_Delete when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#build--screen-2000; ES1GO decompile at 00030910",
+      "verified": {
+        "bytes": "00030910+199",
+        "sha1": "950a495049b6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000309d7",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "FabricationMenu_OnMessage",
+      "description": "(menu, message), its arguments removed by this function: FabricationMenu (00080ece)'s slot +8, screen 2000. Takes CareerRecord_Current (00014ef4), then looks the target up among the four ids of FabricationMenu_CaseTable (00080ef4), cases in bytes Ghidra left undefined: 2003 and 2004 step Fabrication_Chassis (000808a4) down from 0 to 7 or up modulo 8 until Tech_IsAvailableMenuHandlersCopy (00030e83)(record + 0xa8, chassis, 0) answers non-zero, make control 2001 inactive when Chassis_PriceTable (000808b8)[chassis] x 1000 is above Career_Salvage (0007fcf0), compared unsigned, and active otherwise, and set hotspot 2005's pressed byte (DUIWindow_FindHotspotById, the window's +0x19f + 0x38 x index); 2001 with a marked HERC (Hangar_HasMarkedHerc (0002a277)) Hangar_ScrapSelectedHerc (0002a046), Screen_BlindsCopy (0004bc0d)(8, +0x30, +0x38, 1), 2001's text eng\\watext.bin line 0xce through its slot +0x3c and 2003, 2004 active, and without one Hangar_BuildIntoSelected (00029d68)(Fabrication_Chassis), the text line 0xcd and 2003, 2004 inactive, then the hotspot's byte set; 1710 CareerRecord_SaveCurrent (00014f28).",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#build--screen-2000; ES1GO decompile and disassembly at 000309d7",
+      "verified": {
+        "bytes": "000309d7+1196",
+        "sha1": "ee34e72f8411",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00030e83",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Tech_IsAvailableMenuHandlersCopy",
+      "description": "(state, index, kind), its arguments removed by this function: byte for byte the code of Tech_IsAvailable (00028409), relocated operands aside.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#where-the-object-files-start-and-end; ES1GO disassembly at 00030e83",
+      "verified": {
+        "bytes": "00030e83+80",
+        "sha1": "fc39f97b3a33",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00030ed3",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "SalvageAllocAlert_OnMessage",
+      "description": "(menu, message), its arguments removed by this function: SalvageAllocAlert (00082050)'s slot +8, screen 2010: answers the message's target word +6, sign-extended, and writes nothing.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#salvage--screen-2010; ES1GO decompile at 00030ed3",
+      "verified": {
+        "bytes": "00030ed3+22",
+        "sha1": "6faff12ba36a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00030ee9",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MenuHandlers_StaticInit",
+      "description": "(): the menu handlers' file's static initializer, static constructor table entry 0009a260: stores 18 (x, y) dword pairs at 000a04dc, (37, 72), (29, 69), (23, 72), (19, 66), (21, 63), (0, 0), (34, 72), (26, 72), (18, 70), (36, 67), (32, 66), (32, 60), (17, 71), (42, 71), (28, 75), (17, 74), (25, 74) and (29, 69), each through an inlined point constructor whose Mem_New branch cannot run.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#where-the-object-files-start-and-end; ES1GO decompile and disassembly at 00030ee9",
+      "verified": {
+        "bytes": "00030ee9+1150",
+        "sha1": "def89ab7eaa0",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00031367",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MenuHandlers_StaticExit",
+      "description": "(): the menu handlers' file's exit routine, exit table entry 0009a29c: PUSH EBP, MOV EBP,ESP, POP EBP and RET.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#where-the-object-files-start-and-end; ES1GO disassembly at 00031367",
+      "verified": {
+        "bytes": "00031367+5",
+        "sha1": "74c0a4a36986",
         "scope": "body",
         "via": "disasm"
       }
@@ -10232,6 +10862,36 @@
       }
     },
     {
+      "address": "00037468",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "WaText_NumberLine",
+      "description": "(value, line) in stack order, its arguments removed by this function: a new two-dword array (Mem_New (000019f0) of 8) whose first is Text_GetString (00018717)(0009afa8, line), the eng\\watext.bin line's own buffer, into which it prints value with sprintf and %ld (000812ce), and whose second is 0.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#repair--screen-1900; ES1GO decompile at 00037468",
+      "verified": {
+        "bytes": "00037468+71",
+        "sha1": "681502a8446e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000374af",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Menu_NumberLines",
+      "description": "(value, id) in stack order, its arguments removed by this function: looks id up among the four of the REPNE SCASD table 000812d4, cases in bytes Ghidra left undefined, and answers WaText_NumberLine (00037468)(value, line) with line 0xb9 for 1907, 0xba for 1906 and 1927 and 0xbb for 1923; any other id answers EAX as the search left it.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#repair--screen-1900; ES1GO decompile and disassembly at 000374af",
+      "verified": {
+        "bytes": "000374af+94",
+        "sha1": "8db6c5f59315",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0003750d",
       "binary": "ES1GO",
       "type": "function",
@@ -10239,6 +10899,21 @@
       "name": "Menu_ListLines",
       "description": "(id): the lines of a kind-15 list box. By the id, through the REPNE SCASD table of 28 ids at 000812f4 and their cases at 00081364 in bytes Ghidra left undefined: 1002, the main menu's list, returns CareerLog_CurrentNameArray (000182f8)(Career_Log (0009b20c)); an id not in the table returns WaText_LinesFromList (000373fa)(000811a4). 1101, the SINGLE MISSION menu's list (00081364's case at 000376f5), returns the same of the word list 00081264, eng\\watext.bin lines 0x23 to 0x29; 1116, 1117, 1118, 1119 and 1120, the MISSION PARAMS menu's lists, of 000811c4, 000811cc, 00081244, 000811d4 and 000811dc. The other 21 cases are not read here.",
       "source": "Herculan/docs/es1/shell/main-menu.md#the-list; read in part"
+    },
+    {
+      "address": "000377cd",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_SelectedComponentLines",
+      "description": "(kind), its argument removed by this function: 00024d99(the HERC in Hangar_SelectedSlot (00080894), kind) when the slot is not -1 and holds one; Menu_ListLines (0003750d)'s case for 1921, 1924, 1925 and 1926.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#system-repair--screen-1920; ES1GO decompile at 000377cd",
+      "verified": {
+        "bytes": "000377cd+68",
+        "sha1": "0ecb9a4be832",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00037924",
@@ -10306,7 +10981,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MessageBox_PickT1Line",
-      "description": "(kind), its argument removed by this function: picks the eng\\T1_text.bin line of message kinds 5 to 7 into the word 0008159c and returns it. Kind 5: 2. Kind 6: 3 + Math_RandomBelow(Shell_RandomState, 4), or (.., 6) when CareerRecord_Current's word +0xa is not 0. Kind 7: sets the word 0008159e to 0x20 + Math_RandomBelow(.., 1) when the string at 000815a2 differs from Debriefing_NewTechText (0007d808)'s; takes v = Herc_OverallCondition (00024b6a)(the dword of the table 000808a0 that the current career record's word +0x1c, pilot entry 0's slot +8, indexes), 0 when that word is -1 or the dword is 0; v of 96 and above gives 10 + a draw below 4, and 0008159e 0x22 when it is still -1 and the dword 0007fcf4 is above 20000, compared unsigned; 71 to 95 gives 15 + a draw below 4; 51 to 70 20 + a draw below 3; 1 to 50 24 + a draw below 4, and 0008159e 0x1e when it is still -1 and the word 0007ebca is above 1; 0 or less leaves the line as it was. Any other kind returns 0008159c as it was. es2_xref finds calls from DigitalDialog_ShowMessage (00037edd) and Shell_OpenFirstScreen (0003ba47).",
+      "description": "(kind), its argument removed by this function: picks the eng\\T1_text.bin line of message kinds 5 to 7 into the word 0008159c and returns it. Kind 5: 2. Kind 6: 3 + Math_RandomBelow(Shell_RandomState, 4), or (.., 6) when CareerRecord_Current's word +0xa is not 0. Kind 7: sets the word 0008159e to 0x20 + Math_RandomBelow(.., 1) when the string at 000815a2 differs from Debriefing_NewTechText (0007d808)'s; takes v = Herc_OverallCondition (00024b6a)(the dword of the table Hangar_Slots (000808a0) that the current career record's word +0x1c, pilot entry 0's slot +8, indexes), 0 when that word is -1 or the dword is 0; v of 96 and above gives 10 + a draw below 4, and 0008159e 0x22 when it is still -1 and the dword 0007fcf4 is above 20000, compared unsigned; 71 to 95 gives 15 + a draw below 4; 51 to 70 20 + a draw below 3; 1 to 50 24 + a draw below 4, and 0008159e 0x1e when it is still -1 and the word 0007ebca is above 1; 0 or less leaves the line as it was. Any other kind returns 0008159c as it was. es2_xref finds calls from DigitalDialog_ShowMessage (00037edd) and Shell_OpenFirstScreen (0003ba47).",
       "source": "Herculan/docs/es1/shell/message-box.md#the-kinds; ES1GO decompile at 00037bf0",
       "verified": {
         "bytes": "00037bf0+478",
@@ -10471,7 +11146,7 @@
       "type": "function",
       "confidence": "high",
       "name": "LoadDamageDat_Shell",
-      "description": "No arguments: opens cfg\\damage.dat (000817a6) and reads 2, 12, 20, 2 and 36 bytes (chassis scale, 6 external and 10 internal percentages, weapon scale, 18 weapon values), closes the stream; then for each chassis s in 0..7, with price = word 000808b8[s] * 1000, stores Math_Q10Multiply(Math_Q10Multiply(price, percent), chassis scale) for the 6 externals at 000a0580 + s * 0x42 and the 10 internals at 000a0580 + s * 0x42 + 0x1a, and Math_Q10Multiply(value, weapon scale) for the 18 weapons at 000ab332; destroys the stream. VSHELL's LoadDamageDat_Shell (00413628) reads gam\\damage.dat with 9 internals and a counted weapon column, for 9 chassis priced from herc_inf.dat.",
+      "description": "No arguments: opens cfg\\damage.dat (000817a6) and reads 2, 12, 20, 2 and 36 bytes (chassis scale, 6 external and 10 internal percentages, weapon scale, 18 weapon values), closes the stream; then for each chassis s in 0..7, with price = word Chassis_PriceTable (000808b8)[s] * 1000, stores Math_Q10Multiply(Math_Q10Multiply(price, percent), chassis scale) for the 6 externals at 000a0580 + s * 0x42 and the 10 internals at 000a0580 + s * 0x42 + 0x1a, and Math_Q10Multiply(value, weapon scale) for the 18 weapons at 000ab332; destroys the stream. VSHELL's LoadDamageDat_Shell (00413628) reads gam\\damage.dat with 9 internals and a counted weapon column, for 9 chassis priced from herc_inf.dat.",
       "source": "es2_naming.py diff ES1GO 000387a8 VSHELL 00413628; Herculan/docs/es1/formats/herc-catalogs.md#cfgdamagedat",
       "verified": {
         "bytes": "000387a8+595",
@@ -10496,6 +11171,51 @@
       }
     },
     {
+      "address": "00038a30",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Repair_TargetForLevel",
+      "description": "(level), its argument removed by this function: ES2's Repair_TargetForLevel (VSHELL 00413838) on RepairTargetTable (00081790): its word 0 for level 0, otherwise its word level + 1.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#system-repair--screen-1920; ES1GO decompile at 00038a30",
+      "verified": {
+        "bytes": "00038a30+44",
+        "sha1": "6e8916293ee8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00038a5c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Repair_FloorForLevel",
+      "description": "(level), its argument removed by this function: ES2's Repair_FloorForLevel (VSHELL 00413860): RepairLevelTable (0008179c)[level].",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#system-repair--screen-1920; ES1GO decompile at 00038a5c",
+      "verified": {
+        "bytes": "00038a5c+22",
+        "sha1": "e07bee80d394",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00038a72",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Repair_LevelStepCost",
+      "description": "(up, condition, value) in stack order, its arguments removed by this function: ES2's Repair_LevelStepCost (VSHELL 00413871), its arguments in reverse, over RepairTargetTable (00081790) and RepairLevelTable (0008179c), answering 0 for a Repair_LevelForCondition (000389fb) level below 0 or above 4 where ES2's bound is 5.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#system-repair--screen-1920; ES1GO decompile at 00038a72",
+      "verified": {
+        "bytes": "00038a72+242",
+        "sha1": "381db1ca18b8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00038b64",
       "binary": "ES1GO",
       "type": "function",
@@ -10506,6 +11226,21 @@
       "verified": {
         "bytes": "00038b64+85",
         "sha1": "a236af5e167b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00038bb9",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Repair_UnitValueCost",
+      "description": "(up, condition, index, kind, chassis) in stack order, its arguments removed by this function: ES2's Repair_UnitValueCost (VSHELL 00413968), its arguments in reverse, with the status kinds 0x785, 0x784 and 0x786 for ES2's modes 0, 1 and 2: Repair_LevelStepCost (00038a72)(up, condition, value) with value the word index of 000a0580 + chassis x 0x42, its word 0xd + index, or 000ab332[index]; any other kind answers the kind in EAX.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#system-repair--screen-1920; ES1GO decompile and disassembly at 00038bb9",
+      "verified": {
+        "bytes": "00038bb9+151",
+        "sha1": "dd17bfd02c57",
         "scope": "body",
         "via": "both"
       }
@@ -13018,13 +13753,43 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_WaitTicks",
-      "description": "(count), int16, its argument removed by this function: zeroes Shell_WaitCount (000a0a90) and loops until it is at least count, Shell_WaitTick (0004bbdd) raising it once every 2 interrupts. es2_xref finds three calls: from Shell_PresentFrame (00012980) with 6, 000209e0 and 0004bc0d.",
+      "description": "(count), int16, its argument removed by this function: zeroes Shell_WaitCount (000a0a90) and loops until it is at least count, Shell_WaitTick (0004bbdd) raising it once every 2 interrupts. es2_xref finds three calls: from Shell_PresentFrame (00012980) with 6, 000209e0 and Screen_BlindsCopy (0004bc0d).",
       "source": "Herculan/docs/es1/shell/startup.md#the-devices; ES1GO decompile and disassembly at 0004bbe9",
       "verified": {
         "bytes": "0004bbe9+36",
         "sha1": "58557f5293c7",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "0004bc0d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Screen_BlindsCopy",
+      "description": "(n, to, from, flag) in stack order, its arguments removed by this function: installs the render context 0007fcd8; sets the display 000ab616's source page +0x34 to from and draw page +0x38 to to, through the raster routines 000865f0 and 000865f4 while it is the current display; for each pass i below n copies the one-pixel rows i, i + n, ... below the word 0009b00c, 0 to 0x13f wide, with Region_CopyBetweenPages and waits Shell_WaitTicks(1); then puts both pages and the render context back. flag is not read.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#the-hangars-selection; ES1GO decompile at 0004bc0d",
+      "verified": {
+        "bytes": "0004bc0d+870",
+        "sha1": "4a751c2ca157",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004c053",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Screen_BlindsClear",
+      "description": "(n, color, flag) in stack order, its arguments removed by this function: clears the display 000ab616's draw page +0x38 to color through the raster routine 0008663c, Screen_BlindsCopy (0004bc0d)(n, the visible page +0x30, the draw page, flag), then with the source page set to 0007fccc copies the region 0009aff8 onto the draw page with Region_CopyBetweenPages and puts the source page back.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#the-hangars-selection; ES1GO decompile at 0004c053",
+      "verified": {
+        "bytes": "0004c053+297",
+        "sha1": "3f60f1179450",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -23338,7 +24103,7 @@
       "type": "data",
       "confidence": "high",
       "name": "Career_AutoRepairMode",
-      "description": "int16: which pilots' HERCs the after-mission repair covers, read by CareerRecord_AutoRepairSquad (0001601b) through the career record's +0x1f5: 0 none, 1 the squadmates', 2 all. Career_New (000163ac) and Career_Save (000168b0) store it at +0x1f5; es2_xref --decode finds it written by Roster_ActivateRecord (00016d45) and three times by 0003052f, RepairPrefsAlert's handler, and three references in bytes Ghidra left undefined from 0003ad48.",
+      "description": "int16: which pilots' HERCs the after-mission repair covers, read by CareerRecord_AutoRepairSquad (0001601b) through the career record's +0x1f5: 0 none, 1 the squadmates', 2 all. Career_New (000163ac) and Career_Save (000168b0) store it at +0x1f5; es2_xref --decode finds it written by Roster_ActivateRecord (00016d45) and three times by RepairPrefsAlert_OnMessage (0003052f), RepairPrefsAlert's handler, and three references in bytes Ghidra left undefined from 0003ad48.",
       "source": "Herculan/docs/es1/shell/between-missions.md#repairs"
     },
     {
@@ -23513,6 +24278,24 @@
       "source": "Herculan/docs/es1/shell/between-missions.md#resupply"
     },
     {
+      "address": "00080890",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Hangar_SlotCount",
+      "description": "int16, the hangar's slot count, the HERC list's first header word: the length of Hangar_Slots (000808a0).",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists"
+    },
+    {
+      "address": "00080892",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Hangar_HercCount",
+      "description": "int16, the HERCs in the hangar, the marked HERC among them: Hangar_AddHerc (00029d0f) and Hangar_BuildIntoSelected (00029d68) add 1, Hangar_ScrapSlot (0002a20d) and Hangar_ScrapSelectedHerc (0002a046) take 1.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists"
+    },
+    {
       "address": "00080894",
       "binary": "ES1GO",
       "type": "data",
@@ -23520,6 +24303,87 @@
       "name": "Hangar_SelectedSlot",
       "description": "int16, the hangar's selected slot, the header word Hangar_Read (00028c50) reads and Hangar_Write (00029107) writes second: CareerRecord_SelectPilot (00015ad4), CareerRecord_NextPilot (00015b0a) and CareerRecord_PrevPilot (00015b85) set it to the current pilot's slot.",
       "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists"
+    },
+    {
+      "address": "00080896",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Hangar_MarkedSlot",
+      "description": "int16, the slot of the HERC being built, -1 for none: Hangar_SelectMarkedSlot (0002980a) gives it a free slot, Hangar_AdvanceMarkedHerc (00029e01) sets -1 when the HERC is finished, and Hangar_NextHercSlot (00029729) and Hangar_PrevHercSlot (000296c9) pass over it.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#globals"
+    },
+    {
+      "address": "00080898",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Hangar_MarkedMissionsLeft",
+      "description": "int16, the career missions the marked HERC still needs: Hangar_BuildIntoSelected (00029d68) sets it from Chassis_BuildMissions (000808d8) and Hangar_AdvanceMarkedHerc (00029e01) takes 1 after each career mission.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#globals"
+    },
+    {
+      "address": "0008089c",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Hangar_MarkedValue",
+      "description": "int32, the marked HERC's scrap value in tons: Hangar_BuildIntoSelected (00029d68) sets it to the chassis' price, Hangar_AdvanceMarkedHerc (00029e01) lowers it with the progress, and Hangar_ScrapSelectedHerc (0002a046) adds it x 1000 to Career_Salvage.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#globals"
+    },
+    {
+      "address": "000808a0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Hangar_Slots",
+      "description": "dword, the hangar's array of Hangar_SlotCount (00080890) HERC pointers, a null pointer for an empty slot, made by Hangar_AllocSlots (00028ac9).",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists"
+    },
+    {
+      "address": "000808a4",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Fabrication_Chassis",
+      "description": "int16, BUILD's shown chassis, 0 in the image: FabricationMenu_OnMessage (000309d7)'s arrows step it, and FabricationMenu_DrawPanel (0002845c) sets it to the marked HERC's chassis.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#build--screen-2000"
+    },
+    {
+      "address": "000808a8",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Chassis_MassTable",
+      "description": "eight int16, each chassis' mass in tons for BUILD's panel: 18, 27, 36, 45, 50, 54, 63 and 77.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#build--screen-2000"
+    },
+    {
+      "address": "000808b8",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Chassis_PriceTable",
+      "description": "eight int16, each chassis' price in tons: 50, 60, 80, 100, 120, 140, 170 and 200; LoadDamageDat_Shell (000387a8) scales the repair values from them.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#build--screen-2000"
+    },
+    {
+      "address": "000808c8",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Chassis_SpeedTable",
+      "description": "eight int16, each chassis' speed in KPH for BUILD's panel: 84, 80, 76, 71, 64, 56, 52 and 46.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#build--screen-2000"
+    },
+    {
+      "address": "000808d8",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Chassis_BuildMissions",
+      "description": "eight int16, the career missions each chassis takes to build: 1, 1, 2, 2, 2, 3, 3 and 3.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#build--screen-2000"
     },
     {
       "address": "00080944",
@@ -23628,6 +24492,42 @@
       "name": "ArmingMenu_CaseTable",
       "description": "ArmingMenu_OnMessage (0002e54c)'s case table: eleven dword ids (1803, 1808, 1801, 1802, 2004, 2003, 1702, 1807, 1806, 1111, 100) and at 00080de4 their eleven targets.",
       "source": "Herculan/docs/es1/shell/arming.md#what-a-press-does"
+    },
+    {
+      "address": "00080e10",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "SystemRepair_ItemLines",
+      "description": "dword, the lines SYSTEM REPAIR's list 1921 shows: SystemRepairMenu_Ctor (0002f1aa) sets 0 and SystemRepairMenu_OnMessage (0002f8d4) Menu_ListLines (0003750d)(the system).",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#system-repair--screen-1920"
+    },
+    {
+      "address": "00080e20",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "RepairMenu_CaseTable",
+      "description": "RepairMenu_OnMessage (0002f009)'s REPNE SCASD table: the ids 2004, 2003, 1902, 1901 and 1710, then their five case addresses.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#repair--screen-1900"
+    },
+    {
+      "address": "00080e6c",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "SystemRepairMenu_CaseTable",
+      "description": "SystemRepairMenu_OnMessage (0002f8d4)'s REPNE SCASD table: the ids 1921, 1924, 1925, 1926, 106, 107, 101, 102, 1900 and 99, then their ten case addresses.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#system-repair--screen-1920"
+    },
+    {
+      "address": "00080ef4",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "FabricationMenu_CaseTable",
+      "description": "FabricationMenu_OnMessage (000309d7)'s REPNE SCASD table: the ids 2003, 2004, 2001 and 1710, then their four case addresses.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#build--screen-2000"
     },
     {
       "address": "00081274",
@@ -24301,7 +25201,7 @@
       "type": "data",
       "confidence": "high",
       "name": "Arming_PicturePoints",
-      "description": "18 int32 (x, y) points, filled by the menu handlers' file's static initializer 00030ee9: where ARMING draws a weapon's still picture (index 0-16) or a missile type's (14 + type) while memory is low.",
+      "description": "18 int32 (x, y) points, filled by the menu handlers' file's static initializer MenuHandlers_StaticInit (00030ee9): where ARMING draws a weapon's still picture (index 0-16) or a missile type's (14 + type) while memory is low.",
       "source": "Herculan/docs/es1/shell/arming.md#globals"
     },
     {
@@ -24654,6 +25554,24 @@
       "name": "MessageBox_Line",
       "description": "int16, the line of the message box's text file and lip-sync list: DigitalDialog_ShowMessage (00037edd) sets it by the message kind, the mission's header word 4 (000ab222) for kinds 0 and 1; MsnGen_LoadMission (00035873) also copies header word 4 into it. DigitalDialogBox_Ctor (00019279), maybe_SncList_PlayEntry (000453be) and maybe_SncList_StartSound (0004544a) read it.",
       "source": "Herculan/docs/es1/shell/message-box.md#showing-a-message"
+    },
+    {
+      "address": "000ab20e",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Fabrication_ChassisArt",
+      "description": "dword, res32\\blueherx.dba's bitmap array, one frame per chassis, loaded by FabricationMenu_Ctor (000307c9).",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#build--screen-2000"
+    },
+    {
+      "address": "000ab212",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Repair_StepCost",
+      "description": "int16, the cost of SYSTEM REPAIR's + on the selected item, from Repair_UnitValueCost (00038bb9).",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#system-repair--screen-1920"
     },
     {
       "address": "000ab30c",

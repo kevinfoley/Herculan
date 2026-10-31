@@ -19,7 +19,7 @@ HERC count x {
 
 `Hangar_LoadFile` (`00028c25`) opens the path through `VolRStream_CtorFromPath`, reads it with `Hangar_Read` (`00028c50`) and destroys the stream. `Hangar_Read`:
 
-1. empties the hangar with `Hangar_Clear` (`00028b19`): each HERC in the slot array `000808a0` below the slot count is destroyed (`Herc_Dtor` (`000232a4`) with 3) and its pointer zeroed, the array is freed, `HercArt_FreeAllBanks` (`00022981`) runs when the dword `0009a30c` is below the dword `0007e738`, and the six header fields become 0, 0, −1, −1, 0 and 0 in the order slot count, HERC count, `00080894`, marked slot, marked slot's word, dword;
+1. empties the hangar with `Hangar_Clear` (`00028b19`): each HERC in the slot array `Hangar_Slots` (`000808a0`) below the slot count is destroyed (`Herc_Dtor` (`000232a4`) with 3) and its pointer zeroed, the array is freed, `HercArt_FreeAllBanks` (`00022981`) runs when the dword `0009a30c` is below the dword `0007e738`, and the six header fields become 0, 0, −1, −1, 0 and 0 in the order slot count, HERC count, `00080894`, marked slot, marked slot's word, dword;
 2. reads the slot count, and `Hangar_AllocSlots` (`00028ac9`) makes an array of that many null pointers at `000808a0` when it is not 0;
 3. reads the other four header fields and the HERC count;
 4. for each HERC reads its slot, makes a HERC with `Herc_Ctor` (`00022f5e`) for chassis −1, stores it in that slot with no bounds test, and reads it with `Herc_Read` (`00023501`), passing the marked slot's word when the slot is the marked slot and that word is not 0, and 0 otherwise.
@@ -117,7 +117,7 @@ Every value is 100.
 
 ## Open
 
-- **Open:** what marks the hangar's slot `00080896` and sets its word `00080898`, which the after-mission step counts down to the HERC's completion ([the marked HERC](../shell/between-missions.md#the-marked-herc)), and what the dword `0008089c` is to the shell; what the word `+0x2c` is to the shell; and which part of its area ([the status block](#the-herc-record)) each of the 13 external words is.
+- **Open:** what marks the hangar's slot `Hangar_MarkedSlot` (`00080896`) and sets its word `Hangar_MarkedMissionsLeft` (`00080898`), which the after-mission step counts down to the HERC's completion ([the marked HERC](../shell/between-missions.md#the-marked-herc)), and what the dword `Hangar_MarkedValue` (`0008089c`) is to the shell; what the word `+0x2c` is to the shell; and which part of its area ([the status block](#the-herc-record)) each of the 13 external words is.
 - **Open:** `Career_LoadCurrent` (`00016c1e`)'s use of `Inventory_Read`.
 - **Open:** `Inventory_CopyStream` (`0002800c`) and `Inventory_SkipStream` (`00028149`): no caller found by `es2_xref`.
 - **Open:** whether the install's loose `CAR\SM_INIT.DAT` or the archive's is the one `VolRStream_CtorFromPath` opens.
