@@ -75,7 +75,8 @@ public class Es1Menu {
 	/// (docs/es1/shell/menus.md#opening-a-menu--menu_open-0003969e): the number kept, <see cref="Es1MenuGlobals.SyncPointer"/>
 	/// set and the window built (<see cref="Es1MenuBuild.BuildFromDlg"/>); the window made the active one; the number's
 	/// control changes (1100's, 1000's, 1200's, 1610's <see cref="Es1CrewAssignMenu.SetOpeningControls"/>, 1800's and 1820's <see cref="Es1ArmingMenu.SetOpeningControls"/> and, in <c>Shell_Mode</c> 1, 1700's <see cref="Es1ServiceBayMenu.SetButtons"/>); unless the number is 9999, the focus and the pointer on the first control whose key is <c>Space</c>,
-	/// or on control 0; the saved background allocated, zeroed; and <see cref="Es1MenuGlobals.InputReady"/> set.
+	/// or on control 0; 1900's change after the focus (<see cref="Es1RepairMenu.SetOpeningControls"/>); the saved
+	/// background allocated, zeroed; and <see cref="Es1MenuGlobals.InputReady"/> set.
 	/// </summary>
 	public void Open(short number) {
 		var globals = Context.Globals;
@@ -115,7 +116,7 @@ public class Es1Menu {
 		}
 
 		// PLACEHOLDER: Menu_Open's control changes for menu 1310 are the preferences and controls module's, after S5; for
-		// 1920, 2000 and 1900 (the last after the focus below) S4's. No ported screen opens them.
+		// 1920 SYSTEM REPAIR's (P15b) and for 2000 BUILD's (P16). No ported screen opens them.
 
 		// Retail points at control 0 of a window with none, reading an empty slot; here such a window keeps the pointer, an
 		// engine guard.
@@ -127,6 +128,10 @@ public class Es1Menu {
 
 			window.PointAtControl(globals, focus);
 			globals.FocusIndex = focus;
+		}
+
+		if (number == Es1RepairMenu.Screen) {
+			Es1RepairMenu.SetOpeningControls(window, Context.Mission.Hangar, MakeInactive);
 		}
 
 		SavedBackground = new ushort[Math.Max(0, Region.X1 - Region.X0 + 1) * Math.Max(0, Region.Y1 - Region.Y0 + 1)];

@@ -93,7 +93,7 @@ public abstract class Es1CareerDataTransformer<T> : Es1WalkedFileTransformer<T> 
 
 		record.Dword129 = ReadInt32();
 		record.Flags = ReadInt16s(Es1CareerRecord.FlagCount);
-		record.Word1F5 = ReadInt16();
+		record.AutoRepairMode = ReadInt16();
 		return record;
 	}
 
@@ -144,7 +144,7 @@ public abstract class Es1CareerDataTransformer<T> : Es1WalkedFileTransformer<T> 
 
 		w.Write(source.Dword129);
 		WriteInt16s(w, source.Flags);
-		w.Write(source.Word1F5);
+		w.Write(source.AutoRepairMode);
 	}
 
 	/// <summary>

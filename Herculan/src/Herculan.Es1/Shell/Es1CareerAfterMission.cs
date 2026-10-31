@@ -250,7 +250,7 @@ public sealed class Es1CareerAfterMission {
 	/// engine guard.
 	/// </summary>
 	public void AutoRepairSquad(Es1CareerRecord record, Es1Hangar hangar) {
-		short mode = record.Word1F5;
+		short mode = record.AutoRepairMode;
 		short first = mode >= 0 && mode < AutoRepairFirst.Length ? AutoRepairFirst[mode] : (short)Es1CareerRecord.PilotCount;
 		AutoRepairFrom(record, first, hangar);
 	}

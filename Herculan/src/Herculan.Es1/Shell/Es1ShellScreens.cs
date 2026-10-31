@@ -876,11 +876,10 @@ public sealed class Es1ShellScreens {
 	/// The main menu's, SINGLE MISSION's, MISSION PARAMS', the war map's, its two alerts', the debriefing's in either mode, the
 	/// career menu's and its REGISTRATION, backups, stats and overwrite warning, the KIA warnings', TECH RELEASE's, the delete
 	/// warning's, the disk-space warning's, the options menu's and its battle-set picker's, the service bay's, its three
-	/// warnings', CREW's and ARMING's, and the quit question's are ported, 1490's, 1499's and 1520's message boxes, and screen 9999's exit code;
-	/// with any other the
-	/// screen becomes current with no menu, as
-	/// retail's does for the cases that make none, its backdrop shown with no window. The waits are the war map's and the
-	/// debriefing's, whose constructors delete the box the text box held, and ARMING's step to a HERC.
+	/// warnings', CREW's, ARMING's, REPAIR's and PREFERENCES', and the quit question's are ported, 1490's, 1499's and 1520's
+	/// message boxes, and screen 9999's exit code; with any other the screen becomes current with no menu, as retail's does
+	/// for the cases that make none, its backdrop shown with no window. The waits are the war map's and the debriefing's,
+	/// whose constructors delete the box the text box held, and ARMING's and REPAIR's step to a HERC.
 	/// </summary>
 	private IEnumerable<Es1ShellWait> OpenScreenCase(short target) {
 		switch (target) {
@@ -1093,11 +1092,13 @@ public sealed class Es1ShellScreens {
 				break;
 			case Es1ArmingMenu.Screen:
 			case Es1ArmingMenu.LowMemoryScreen:
-				// 0003f196: an ArmingMenu made the current menu; the dword 0007fce4 set to the HERC diagrams' areas 0008003c, so a
-				// press outside the window posts 1702 (Es1ShellMouse); and with no HERC selected (its chassis −1),
-				// Hangar_SelectNext(0) and the pilot of the slot's HERC made CareerRecord_Current's current pilot.
+			case Es1RepairMenu.Screen:
+				// 0003f196 and REPAIR's 0003f3e8: an ArmingMenu or a RepairMenu made the current menu; the dword 0007fce4 set to
+				// the HERC diagrams' areas 0008003c, so a press outside the window posts 1702 (Es1ShellMouse); and with no HERC
+				// selected (its chassis −1), Hangar_SelectNext(0) and the pilot of the slot's HERC made CareerRecord_Current's
+				// current pilot.
 				if (_menuContext != null) {
-					CurrentMenu = new Es1ArmingMenu(_menuContext);
+					CurrentMenu = target == Es1RepairMenu.Screen ? new Es1RepairMenu(_menuContext) : new Es1ArmingMenu(_menuContext);
 					Globals.HangarAreas = _menuContext.Data.HercDiagrams.Art.Hotspots;
 					if (Bay is { } bay && bay.SelectedHercType == -1) {
 						foreach (var wait in bay.SelectNext(0)) {
@@ -1112,14 +1113,19 @@ public sealed class Es1ShellScreens {
 				}
 
 				break;
-			case 1900:
-			case 1910:
+			case Es1RepairPrefsAlert.Screen:
+				// 0003f5bf: a RepairPrefsAlert, PREFERENCES.
+				if (_menuContext != null) {
+					CurrentMenu = new Es1RepairPrefsAlert(_menuContext);
+				}
+
+				break;
 			case 1920:
 			case 2000:
 			case 2010:
 			case 4444:
-				// PLACEHOLDER: the hangar's screens, S4's: RepairMenu, RepairPrefsAlert, 0002f1aa, 0002986f(3) with
-				// 000307c9 (which sets the hangar test's dword 0007fce4), SalvageAllocAlert and ScrapAlert.
+				// PLACEHOLDER: the hangar's other screens: 1920's SystemRepairMenu_Ctor (0002f1aa), P15b's; and P16's,
+				// 0002986f(3) with 000307c9 (which sets the hangar test's dword 0007fce4), SalvageAllocAlert and ScrapAlert.
 				break;
 			case 1310:
 			case 1320:

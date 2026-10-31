@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using HercWorks.Core.Data.File;
 using HercWorks.Core.Data.File.Dat.Shell;
@@ -52,12 +53,22 @@ public static class Es1MenuBuild {
 	public const short CareerNameList = 1002;
 
 	/// <summary>
-	/// The 14 ids that <c>Menu_ListLines</c> gives lines of their own and that are not ported, of the 28 at
-	/// <c>000812f4</c>: all but 1002, 1202, 1223, ARMING's four and the lists of <see cref="WaTextLists"/>.
+	/// The 10 ids that <c>Menu_ListLines</c> gives lines of their own and that are not ported, of the 28 at
+	/// <c>000812f4</c>: all but 1002, 1202, 1223, ARMING's four, REPAIR's 1905, 1906 and 1907, SYSTEM REPAIR's 1922 and
+	/// the lists of <see cref="WaTextLists"/>.
 	/// </summary>
 	private static readonly short[] OwnLinesLists = [
-		1921, 1924, 1925, 1926, 1907, 1906, 1927, 1923, 1314, 1315, 1316, 1318, 1905, 1922,
+		1921, 1924, 1925, 1926, StepCostList, AllocatedList, 1314, 1315, 1316, 1318,
 	];
+
+	/// <summary>SYSTEM REPAIR's status list, whose lines are <see cref="Es1RepairMenu.LevelLines"/> as CONDITION's are.</summary>
+	private const short StatusList = 1922;
+
+	/// <summary>SYSTEM REPAIR's number lists: the cost of one level up and the salvage allocated in the window.</summary>
+	private const short StepCostList = 1927, AllocatedList = 1923;
+
+	/// <summary>The lines of <c>eng\watext.bin</c> <see cref="NumberLines"/> prints into, each "0123456789" in the retail file.</summary>
+	private const short SalvageNumberLine = 0xb9, CostNumberLine = 0xba, AllocatedNumberLine = 0xbb;
 
 	/// <summary>
 	/// The ids of the 28 at <c>000812f4</c> whose cases give <see cref="LinesFromList"/> of a word list: 1101, the SINGLE
@@ -262,8 +273,11 @@ public static class Es1MenuBuild {
 	/// (<c>0003ab5f</c>); the backup list 1223 <c>Career_BackupLine</c> (<see cref="Es1CareerRoster.BackupLine"/>,
 	/// <c>0003abf0</c>); HERC's readout 1903 (<c>0003aa57</c>) the chassis of <c>Hangar_SelectedSlot</c>'s HERC, −1 for
 	/// none, and PILOT's 1904 (<c>0003aac4</c>) <see cref="Es1ArmingMenu.PilotLine"/>(<c>CareerRecord_Current</c>, its
-	/// current pilot <c>+0x12</c>), each with the alignment 2 unless <paramref name="number"/> is 1800 or 1820; and the
-	/// weapon list 1808 (<c>0003abdd</c>) its counts written (<see cref="Es1ArmingGlobals.FormatCounts"/>).
+	/// current pilot <c>+0x12</c>), each with the alignment 2 unless <paramref name="number"/> is 1800 or 1820; REPAIR's
+	/// CONDITION 1905 (<c>0003ab09</c>) <see cref="Es1RepairCosts.LevelForCondition"/> of the selected HERC's overall
+	/// condition, of 0 for none, and the number lists 1907, 1923, 1906 and 1927 (<c>0003ab50</c>, where 1905's case goes
+	/// on) the selection 0, each with the alignment 2; and the weapon list 1808 (<c>0003abdd</c>) its counts written
+	/// (<see cref="Es1ArmingGlobals.FormatCounts"/>).
 	/// </summary>
 	private static void BuildList(Es1Menu menu, short number, Es1MenuControl record, Es1Rect rect) {
 		var context = menu.Context;
@@ -286,11 +300,18 @@ public static class Es1MenuBuild {
 			var current = context.Mission.CurrentRecord;
 			selected = Es1ArmingMenu.PilotLine(current, current?.CurrentPilot ?? -1);
 			alignment = arming ? 0 : CenteredReadout;
+		} else if (record.Id == Es1RepairMenu.LevelList) {
+			var hangar = context.Mission.Hangar;
+			selected = Es1RepairCosts.LevelForCondition(hangar?.HercIn(hangar.SelectedSlot)?.OverallCondition() ?? 0);
+			alignment = CenteredReadout;
+		} else if (record.Id is Es1RepairMenu.SalvageList or Es1RepairMenu.CostList or AllocatedList or StepCostList) {
+			alignment = CenteredReadout;
 		} else if (record.Id == Es1ArmingMenu.WeaponList) {
 			context.Arming.FormatCounts(context, lines);
 		} else if (Array.IndexOf(OwnSelectionLists, record.Id) >= 0) {
-			// PLACEHOLDER: the other 13 ids at 00081a00 build their list with a selection set by their own code
-			// (dlg-menu-dialogs.md's Open); their menus are later modules'.
+			// PLACEHOLDER: the other 8 ids at 00081a00, PREFERENCES' 1314, 1315, 1316 and 1318 and CONTROLS' 1325 to 1327
+			// (the preferences and controls module's, after S5) and SYSTEM REPAIR's 1922 (0003ab71, P15b's), build their
+			// list with a selection set by their own code (dlg-menu-dialogs.md's Open); no list is built until they land.
 			return;
 		}
 
@@ -305,16 +326,17 @@ public static class Es1MenuBuild {
 	/// Kind 16 (<c>0003ac49</c>): the bank <c>00037827</c>(id) (<see cref="Es1MenuBanks.ForControl"/>), then a picture tile,
 	/// <c>0001eaef</c>(0, <c>0x100</c>, 0, word, id, bank, rect) (<see cref="Es1MTGfxListBox"/>), added to the window. The
 	/// word is −1, or for the ten ids at <c>00081ab8</c> (targets at <c>00081ae0</c>, in bytes Ghidra left undefined) set by
-	/// their own code: 1611 (<c>0003ac98</c>) 0, and 1615 to 1618 (<c>0003aca6</c>) the chassis, word <c>+0</c>, of the
+	/// their own code: 1611 (<c>0003ac98</c>) 0; 1615 to 1618 (<c>0003aca6</c>) the chassis, word <c>+0</c>, of the
 	/// HERC in the slot <c>+8</c> of pilot entry id − 1615 of the roster's record its word <c>+7</c> names, read from the
-	/// roster in either mode, −1 for a slot of −1 or one holding no HERC.
+	/// roster in either mode, −1 for a slot of −1 or one holding no HERC; and PREFERENCES' 1914 to 1916 (<c>0003ad45</c>,
+	/// <c>0003ad65</c>, <c>0003ad87</c>) <see cref="Es1RepairPrefsAlert.TileWord"/> of <c>Career_AutoRepairMode</c>.
 	/// </summary>
 	private static void BuildPictureTile(Es1Menu menu, Es1MenuControl record, Es1Rect rect) {
 		var context = menu.Context;
 		if (!Es1MenuBanks.HasBankFor(record.Id)) {
-			// PLACEHOLDER: the other kind-16 ids, 1316 and 1321 (PREFERENCES, the words 0007fcba and 0, 0003ac86 and 0003ac78)
-			// and 1914 to 1916 (1 or 0 by the word 0007fcf8, 0003ad45 to 0003ad87), take banks from cases of 00037827 not
-			// ported, and any id outside the eleven at 0008144c none; their menus are later parts', and no tile is built.
+			// PLACEHOLDER: the other kind-16 ids, 1316 and 1321 (PREFERENCES, the words 0007fcba and 0, 0003ac86 and
+			// 0003ac78), take banks from cases of 00037827 not ported, and any id outside the eleven at 0008144c none; their
+			// menu is the preferences and controls module's, after S5, and no tile is built.
 			return;
 		}
 
@@ -325,6 +347,8 @@ public static class Es1MenuBuild {
 		} else if (record.Id is >= FirstHercTile and <= LastHercTile) {
 			short slot = context.Mission.Roster.CurrentRecord.Pilots[record.Id - FirstHercTile].Slot;
 			word = context.Mission.Hangar?.HercIn(slot)?.Chassis ?? -1;
+		} else if (record.Id is >= Es1RepairPrefsAlert.FirstTile and <= Es1RepairPrefsAlert.LastTile) {
+			word = Es1RepairPrefsAlert.TileWord(record.Id, context.Mission.Roster.AutoRepairMode);
 		}
 
 		menu.Window?.AddControl(new Es1MTGfxListBox(context.Data, context.Banks, 0x100, 0, word, record.Id, bank, rect));
@@ -340,8 +364,12 @@ public static class Es1MenuBuild {
 	/// (<c>00037728</c>) PLAYER, the squadmates' names and UNASSIGNED (<see cref="Es1ArmingGlobals.PilotLines"/>), the
 	/// first line replaced in <c>Shell_Mode</c> 1 by the career's name, that of the careers-log entry the roster's dword
 	/// <c>+1</c> points at, 1808 (<c>00037782</c>) <see cref="Es1ArmingGlobals.BuildWeaponList"/>(−1, −1) and 1809
-	/// (<c>0003779a</c>) the missile types (<see cref="Es1ArmingGlobals.MissileTypeLines"/>); for any id outside the 28
-	/// at <c>000812f4</c>, <see cref="LinesFromList"/> of the list at <c>000811a4</c>, which numbers none.
+	/// (<c>0003779a</c>) the missile types (<see cref="Es1ArmingGlobals.MissileTypeLines"/>); for REPAIR's, 1905 and
+	/// SYSTEM REPAIR's 1922 (<c>00037771</c>) the five levels (<see cref="Es1RepairMenu.LevelLines"/>), 1907
+	/// (<c>0003753d</c>) <see cref="NumberLine"/>(<c>Career_Salvage</c>, <c>0xb9</c>) and 1906 (<c>00037554</c>)
+	/// <see cref="NumberLine"/>(<see cref="Es1RepairCosts.HercCost"/>(100, the selected HERC), 0 for none, <c>0xba</c>);
+	/// for any id outside the 28 at <c>000812f4</c>, <see cref="LinesFromList"/> of the list at <c>000811a4</c>, which
+	/// numbers none.
 	/// </summary>
 	public static string?[] ListLines(Es1MenuContext context, short id) {
 		if (id == CareerNameList) {
@@ -375,15 +403,56 @@ public static class Es1MenuBuild {
 				return LinesFromList(context.Data.Text, context.Arming.BuildWeaponList(context, -1, -1));
 			case Es1ArmingMenu.MissileTypeList:
 				return LinesFromList(context.Data.Text, Es1ArmingGlobals.MissileTypeLines);
+			case Es1RepairMenu.LevelList:
+			case StatusList:
+				return LinesFromList(context.Data.Text, Es1RepairMenu.LevelLines);
+			case Es1RepairMenu.SalvageList:
+				return NumberLine(context.Data, context.Mission.Roster.Salvage, SalvageNumberLine);
+			case Es1RepairMenu.CostList:
+				var hangar = context.Mission.Hangar;
+				var herc = hangar?.HercIn(hangar.SelectedSlot);
+				return NumberLine(context.Data, herc != null ? context.Data.RepairCosts.HercCost(100, herc) : 0, CostNumberLine);
 		}
 
 		if (Array.IndexOf(OwnLinesLists, id) >= 0) {
-			// PLACEHOLDER: the 14 other ids at 000812f4 give lines of their own (the cases at 00081364), unread; their menus are
-			// later modules', and the list is empty until they land.
+			// PLACEHOLDER: SYSTEM REPAIR's lines, P15b's: 1921 and 1924 to 1926 (0003752e) Hangar_SelectedComponentLines
+			// (000377cd)(id), 1927 (0003759a) NumberLine(Repair_UnitValueCost (00038bb9)(1, internal 0's condition by
+			// Herc_GetStatus, 0 for no HERC, 0, 0x784, the chassis, −1 for none), 0xba) and 1923 (00037649) NumberLine(0,
+			// 0xbb); and PREFERENCES' 1314 to 1318 (000376b1, 000376c2, 000376d3), the preferences and controls module's,
+			// after S5. Each list is empty until its part lands.
 			return [null];
 		}
 
 		return LinesFromList(context.Data.Text, DefaultLineNumbers);
+	}
+
+	/// <summary>
+	/// <c>Menu_NumberLines</c> (<c>000374af</c>)(<paramref name="value"/>, <paramref name="id"/>): <see cref="NumberLine"/>
+	/// of the value on the line the id gives among the four at <c>000812d4</c> (targets at <c>000812e4</c>): 1907
+	/// <c>0xb9</c>, 1906 and 1927 <c>0xba</c>, 1923 <c>0xbb</c>. For any other id retail returns the id itself, which the
+	/// <c>REPNE SCASD</c> left in <c>EAX</c>; here an array holding only its end, an engine guard.
+	/// </summary>
+	public static string?[] NumberLines(Es1ShellData data, int value, short id) => id switch {
+		Es1RepairMenu.SalvageList => NumberLine(data, value, SalvageNumberLine),
+		Es1RepairMenu.CostList or StepCostList => NumberLine(data, value, CostNumberLine),
+		AllocatedList => NumberLine(data, value, AllocatedNumberLine),
+		_ => [null],
+	};
+
+	/// <summary>
+	/// <c>WaText_NumberLine</c> (<c>00037468</c>)(<paramref name="value"/>, <paramref name="line"/>): a new array of
+	/// <c>eng\watext.bin</c> line <paramref name="line"/>'s own buffer, into which the value is printed with <c>%ld</c>,
+	/// and the end. Retail's arrays of one line share its buffer, so a list still holding an earlier one shows the new
+	/// value at its next draw; here the table's line takes the printed value and each array holds its own string. With no
+	/// table, or a line past it, the value is printed and not stored, an engine guard.
+	/// </summary>
+	public static string?[] NumberLine(Es1ShellData data, int value, short line) {
+		string printed = value.ToString(CultureInfo.InvariantCulture);
+		if (data.Text is { } table && line >= 0 && line < table.Length) {
+			table[line] = printed;
+		}
+
+		return [printed, null];
 	}
 
 	/// <summary>

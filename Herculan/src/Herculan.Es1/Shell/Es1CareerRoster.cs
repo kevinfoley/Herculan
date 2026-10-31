@@ -75,8 +75,11 @@ public sealed class Es1CareerRoster {
 	/// <summary><c>Career_Salvage</c> (<c>0007fcf0</c>), the career's salvage in kilograms.</summary>
 	public int Salvage { get; set; } = StartingSalvage;
 
-	/// <summary>The word <c>0007fcf8</c>, 1 in the image, which the career's saves store at a record's <c>+0x1f5</c> (career.md's Open).</summary>
-	public short RecordWord1F5 { get; set; } = 1;
+	/// <summary>
+	/// <c>Career_AutoRepairMode</c> (<c>0007fcf8</c>), 1 in the image, which PREFERENCES sets and the career's saves store
+	/// at a record's <c>+0x1f5</c> (<see cref="Es1CareerRecord.AutoRepairMode"/>).
+	/// </summary>
+	public short AutoRepairMode { get; set; } = 1;
 
 	/// <summary><c>Career_Loaded</c> (<c>000809aa</c>): the current career is loaded this session.</summary>
 	public bool Loaded { get; set; }
@@ -283,7 +286,7 @@ public sealed class Es1CareerRoster {
 	/// from <c>car\c_armory.dat</c> and the hangar from <c>car\car_init.dat</c>; then for each of the 41 records,
 	/// <c>CareerRecord_Init</c> in the mode (each zeroing <see cref="Es1ShellMission.Outcome"/>), the record
 	/// <see cref="Current"/> names made the career (in use, <see cref="InitSquadPilots"/>, the salvage, its flags into
-	/// <see cref="Es1ShellMission.Flags"/>, <see cref="RecordWord1F5"/> into it), the record and stock 0 to the career file
+	/// <see cref="Es1ShellMission.Flags"/>, <see cref="AutoRepairMode"/> into it), the record and stock 0 to the career file
 	/// and the hangar (<c>Hangar_Write</c>) to the hangar file; then that record's player entry made its current pilot.
 	/// Both files are written through a <c>FileRWStream</c>, which does not truncate. Retail asserts at severity 5
 	/// (<c>career.cpp</c> lines <c>0x2d1</c> and <c>0x2d8</c>) when a file does not open, and reads what a missing starting
@@ -325,7 +328,7 @@ public sealed class Es1CareerRoster {
 				InitSquadPilots();
 				record.Dword129 = Salvage;
 				Array.Copy(record.Flags, _mission.Flags, _mission.Flags.Length);
-				record.Word1F5 = RecordWord1F5;
+				record.AutoRepairMode = AutoRepairMode;
 			}
 
 			// The record's bytes as they stand now, before the next record's InitSquadPilots or the selection below.
@@ -389,7 +392,7 @@ public sealed class Es1CareerRoster {
 	/// <see cref="Current"/> names, <see cref="Salvage"/> from its <c>+0x129</c>, the word <c>000aad5e</c>
 	/// (<see cref="Es1ShellMission.RestoredMissionKind"/>) from its <c>+0xc</c>, <see cref="Word9"/> from its <c>+2</c>, the
 	/// flags from its 100 words and the outcome <c>000aad58</c> from flag 0; with <see cref="Current"/> not 0, <i>r</i> copied
-	/// over record 0 and its stock over stock 0 (<see cref="CopyStock"/>); <see cref="RecordWord1F5"/> from its
+	/// over record 0 and its stock over stock 0 (<see cref="CopyStock"/>); <see cref="AutoRepairMode"/> from its
 	/// <c>+0x1f5</c>; hangar list <see cref="Current"/> of the hangar file read into the hangar (<see cref="ReadHangar"/>);
 	/// and <i>r</i>'s player entry made its current pilot.
 	/// </summary>
@@ -405,7 +408,7 @@ public sealed class Es1CareerRoster {
 			CopyStock(Current, 0);
 		}
 
-		RecordWord1F5 = record.Word1F5;
+		AutoRepairMode = record.AutoRepairMode;
 		var hangar = ReadHangar(Current);
 		_mission.Hangar = hangar;
 		record.SelectPilot(record.PlayerEntry, hangar);
@@ -416,7 +419,7 @@ public sealed class Es1CareerRoster {
 	/// <c>Career_Save</c> (<c>000168b0</c>)(roster, <paramref name="slot"/>) (docs/es1/shell/career.md#saving--career_save-000168b0):
 	/// with no careers-log entry, nothing. Otherwise the flags to <c>data\mission.var</c>; the career file deleted and
 	/// written with the header; record 0 updated (in use, <c>+2</c> from <see cref="Word9"/>, the salvage, the flags,
-	/// <see cref="RecordWord1F5"/>) and, for a slot other than 0, copied over record <paramref name="slot"/> with its stock;
+	/// <see cref="AutoRepairMode"/>) and, for a slot other than 0, copied over record <paramref name="slot"/> with its stock;
 	/// the 41 records and their stocks written; then the hangar file written again through <c>car\temp.mec</c>, list
 	/// <paramref name="slot"/> the hangar as it stands and every other list copied from the old file
 	/// (<c>HercList_Copy</c>, <see cref="CopyHercList"/>), and <c>temp.mec</c> renamed over it. Retail asserts at severity 5
@@ -440,7 +443,7 @@ public sealed class Es1CareerRoster {
 		record.Word2 = Word9;
 		record.Dword129 = Salvage;
 		Array.Copy(_mission.Flags, record.Flags, record.Flags.Length);
-		record.Word1F5 = RecordWord1F5;
+		record.AutoRepairMode = AutoRepairMode;
 		if (slot is > 0 and < RecordCount) {
 			Records[slot] = CopyRecord(record);
 			CopyStock(0, slot);

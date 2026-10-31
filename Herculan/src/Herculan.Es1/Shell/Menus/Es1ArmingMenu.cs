@@ -266,11 +266,18 @@ public sealed class Es1ArmingMenu : Es1Menu {
 
 	/// <summary>
 	/// PILOT's line for <paramref name="entry"/> of <paramref name="record"/>: <c>PilotEntry_NameIndex</c> (<c>00015f50</c>)
-	/// + 1, so 0 for entry 0 and 1 + 3 × the name group + the name otherwise. Retail reads an entry outside the four, −1
-	/// for a HERC no pilot has, before or past the record's entries; such an entry gives line 0 here, an engine guard.
+	/// + 1, so 0 for entry 0, 37 for entry −1, a HERC no pilot has, whose index is 36 with no entry read (UNASSIGNED, line
+	/// <c>0x7a</c>), and 1 + 3 × the name group + the name otherwise. Retail reads any other entry outside the four before
+	/// or past the record's entries; such an entry gives line 0 here, as does one of the four with no record, an engine guard.
 	/// </summary>
-	public static short PilotLine(Es1CareerRecord? record, short entry) =>
-		record != null && entry is >= 0 and < Es1CareerRecord.PilotCount ? (short)(record.Pilots[entry].NameIndex(entry) + 1) : (short)0;
+	public static short PilotLine(Es1CareerRecord? record, short entry) => entry switch {
+		UnassignedEntry => UnassignedLine,
+		>= 0 and < Es1CareerRecord.PilotCount when record != null => (short)(record.Pilots[entry].NameIndex(entry) + 1),
+		_ => 0,
+	};
+
+	/// <summary>The entry of a HERC no pilot has, −1, and PILOT's line for it, <c>PilotEntry_NameIndex</c>'s 36 + 1.</summary>
+	private const short UnassignedEntry = -1, UnassignedLine = 37;
 
 	/// <summary>
 	/// DONE's case (docs/es1/shell/arming.md#done): <c>Hangar_ClearSelectedMount</c>, <c>CareerRecord_SaveCurrent</c>

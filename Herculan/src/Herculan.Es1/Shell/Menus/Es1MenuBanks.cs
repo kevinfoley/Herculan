@@ -21,6 +21,9 @@ public sealed class Es1MenuBanks {
 	/// <summary>The id <see cref="ForControl"/> loads <c>res32\allweap.dba</c> for: ARMING's animation, 1803.</summary>
 	private const short ArmingAnimation = 1803;
 
+	/// <summary>The kind-16 ids <see cref="ForControl"/> loads <c>res32\check.dba</c> for: PREFERENCES' three tiles, 1914 to 1916.</summary>
+	private const short FirstCheckTile = Es1RepairPrefsAlert.FirstTile, LastCheckTile = Es1RepairPrefsAlert.LastTile;
+
 	private readonly GameContent _content;
 
 	public Es1MenuBanks(GameContent content) {
@@ -28,9 +31,9 @@ public sealed class Es1MenuBanks {
 	}
 
 	/// <summary>
-	/// The dword <c>000813d4</c>, none in the image: the bank the first of <see cref="ForControl"/>'s cases for 1611 and
-	/// 1803 loaded, <c>res32\insignia.dba</c> or <c>res32\allweap.dba</c>; each of those cases loads its file only while
-	/// the dword is empty and otherwise returns what it holds.
+	/// The dword <c>000813d4</c>, none in the image: the bank the first of <see cref="ForControl"/>'s cases for 1611, 1803
+	/// and 1914 to 1916 loaded, <c>res32\insignia.dba</c>, <c>res32\allweap.dba</c> or <c>res32\check.dba</c>; each of those
+	/// cases loads its file only while the dword is empty and otherwise returns what it holds.
 	/// </summary>
 	public IReadOnlyList<DynamixBitmap>? SharedBank { get; private set; }
 
@@ -53,9 +56,10 @@ public sealed class Es1MenuBanks {
 	/// <summary>
 	/// <c>00037827</c>(<paramref name="id"/>), the bank <c>Menu_BuildFromDlg</c> hands a kind-16 control and ARMING's case
 	/// takes while memory is low: the id looked up among the eleven at <c>0008144c</c> (targets at <c>00081478</c>); 1611
-	/// (<c>0003784a</c>) <c>res32\insignia.dba</c> and 1803 (<c>000378d6</c>) <c>res32\allweap.dba</c> into
-	/// <see cref="SharedBank"/>, 1615 to 1618 (<c>0003786d</c>) <see cref="Mechs"/>, each loaded when its dword is empty
-	/// and then the dword returned as it stands; any id outside the eleven none, the <c>XOR EAX,EAX</c> at <c>0003791c</c>.
+	/// (<c>0003784a</c>) <c>res32\insignia.dba</c>, 1803 (<c>000378d6</c>) <c>res32\allweap.dba</c> and 1914 to 1916
+	/// (<c>000378f9</c>) <c>res32\check.dba</c> into <see cref="SharedBank"/>, 1615 to 1618 (<c>0003786d</c>)
+	/// <see cref="Mechs"/>, each loaded when its dword is empty and then the dword returned as it stands; any id outside the
+	/// eleven none, the <c>XOR EAX,EAX</c> at <c>0003791c</c>.
 	/// </summary>
 	public IReadOnlyList<DynamixBitmap>? ForControl(short id) {
 		if (id == InsigniaTile) {
@@ -66,18 +70,23 @@ public sealed class Es1MenuBanks {
 			return SharedBank ??= Load("ALLWEAP.DBA");
 		}
 
+		if (id is >= FirstCheckTile and <= LastCheckTile) {
+			return SharedBank ??= Load("CHECK.DBA");
+		}
+
 		if (id is >= FirstHercTile and <= LastHercTile) {
 			return Mechs ??= Load("MECHS.DBA");
 		}
 
-		// PLACEHOLDER: the five other ids at 0008144c, 1321 (00037890) and 1316 (000378b3), PREFERENCES', and 1914 to 1916
-		// (000378f9), each loading a file into 000813d4 as 1611's case does; their menus are later parts', and they get none
-		// here.
+		// PLACEHOLDER: the two other ids at 0008144c, 1321 (00037890, res32\controls.dba) and 1316 (000378b3,
+		// res32\bluebar.dba), PREFERENCES', each loading its file into 000813d4 as 1611's case does; their menu is the
+		// preferences and controls module's, after S5, and they get none here.
 		return null;
 	}
 
 	/// <summary>Whether <see cref="ForControl"/> gives a bank of its own for <paramref name="id"/>, the ids whose cases are ported.</summary>
-	public static bool HasBankFor(short id) => id is InsigniaTile or ArmingAnimation || id is >= FirstHercTile and <= LastHercTile;
+	public static bool HasBankFor(short id) =>
+		id is InsigniaTile or ArmingAnimation || id is >= FirstHercTile and <= LastHercTile || id is >= FirstCheckTile and <= LastCheckTile;
 
 	/// <summary>
 	/// <c>Shell_FreeBitmapArraySlot</c> (<c>00037924</c>)(<paramref name="bank"/>): the first of <c>000813d4</c>,

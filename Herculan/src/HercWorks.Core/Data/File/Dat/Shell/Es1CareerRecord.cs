@@ -66,8 +66,11 @@ public class Es1CareerRecord {
 	/// <summary><c>+0x12d</c>, 100 <c>int16</c> a career starts its flags from; the init zeroes them.</summary>
 	public short[] Flags { get; set; } = new short[FlagCount];
 
-	/// <summary><c>+0x1f5</c>, a word set to <c>0007fcf8</c> when a career starts; the init leaves it.</summary>
-	public short Word1F5 { get; set; }
+	/// <summary>
+	/// <c>+0x1f5</c>, the saved <c>Career_AutoRepairMode</c> (<c>0007fcf8</c>): which HERCs the shell repairs on its own after
+	/// a mission, 0 none, 1 the squadmates', 2 all (docs/es1/shell/between-missions.md#repairs); the init leaves it.
+	/// </summary>
+	public short AutoRepairMode { get; set; }
 
 	private static Es1PilotEntry[] NewPilots() => Enumerable.Range(0, PilotCount).Select(_ => new Es1PilotEntry()).ToArray();
 
