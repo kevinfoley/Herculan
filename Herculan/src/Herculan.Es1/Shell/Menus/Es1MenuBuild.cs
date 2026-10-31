@@ -20,7 +20,7 @@ public static class Es1MenuBuild {
 	private const short SkippedId = 1211;
 
 	/// <summary>The other four ids at <c>0008196c</c>, whose text comes from the current career record.</summary>
-	private static readonly short[] CareerTextIds = [5556, 5557, 5558, 1223];
+	private static readonly short[] CareerTextIds = [ReleaseLabel, ReleaseArticleLabel, ReleaseNameLabel, 1223];
 
 	/// <summary>The options menu and its RETURN button, whose text <c>Shell_ReturnScreen</c> picks (docs/es1/shell/main-menu.md#the-return-screen).</summary>
 	private const short OptionsMenu = 1300, ReturnButton = 100;
@@ -112,9 +112,7 @@ public static class Es1MenuBuild {
 					// 0003a705: Roster_SaveSlotText, the overwrite warning's line of the backup SAVE would replace.
 					text = context.Mission.Roster.SaveSlotText();
 				} else if (Array.IndexOf(CareerTextIds, record.Id) >= 0) {
-					// PLACEHOLDER: ids 5556, 5557 and 5558 take their text from the current career record (0003a5c8, 0003a60e,
-					// 0003a654), TECH RELEASE's, P11's; the record is built with no text.
-					text = "";
+					text = TechReleaseText(context, table, record.Id);
 				} else {
 					text = Line(table, i);
 				}
@@ -176,6 +174,29 @@ public static class Es1MenuBuild {
 
 	/// <summary>Line <paramref name="index"/> of <paramref name="table"/>; <c>Text_GetString</c> has no bounds test, and a line past the table is none here, an engine guard.</summary>
 	private static string? Line(string[] table, int index) => index >= 0 && index < table.Length ? table[index] : null;
+
+	/// <summary>The TECH RELEASE labels' ids among <see cref="CareerTextIds"/>: the opening line, the line with its article, and the item's name.</summary>
+	private const short ReleaseLabel = 5556, ReleaseArticleLabel = 5557, ReleaseNameLabel = 5558;
+
+	/// <summary>The first lines of <c>eng\watext.bin</c> the item's name is read from: the chassis' names for kind 0, the weapons' for any other.</summary>
+	private const short ChassisNames = 0x1b, WeaponNames = 0xd5;
+
+	/// <summary>
+	/// The text of TECH RELEASE's labels (docs/es1/shell/menus.md#opening-a-menu--menu_open-0003969e), from the equipment
+	/// state's item last made available on the roster's record its word <c>+7</c> names: 5556 (<c>0003a5c8</c>) the menu's
+	/// line (the kind <c>+0xa8</c>) + 2, 5557 (<c>0003a60e</c>) the menu's line (the kind) + 4, and 5558
+	/// (<c>0003a654</c>) the line (the index <c>+0xaa</c>) + <see cref="ChassisNames"/> of <c>eng\watext.bin</c> for kind
+	/// 0 and + <see cref="WeaponNames"/> otherwise. Each sum is a 16-bit add.
+	/// </summary>
+	private static string? TechReleaseText(Es1MenuContext context, string[] table, short id) {
+		var equipment = context.Mission.Roster.CurrentRecord.Equipment;
+		return id switch {
+			ReleaseLabel => Line(table, (short)(equipment.LastKind + 2)),
+			ReleaseArticleLabel => Line(table, (short)(equipment.LastKind + 4)),
+			ReleaseNameLabel => Line(context.Data.Text ?? [], (short)(equipment.LastIndex + (equipment.LastKind == 0 ? ChassisNames : WeaponNames))),
+			_ => null,
+		};
+	}
 
 	/// <summary>
 	/// Kind 0: style 0 a menu window (<c>MTWindow_Ctor</c>) with the text as its title, style 1 a plain one

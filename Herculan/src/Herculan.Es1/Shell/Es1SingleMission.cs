@@ -137,12 +137,19 @@ public static class Es1SingleMission {
 	/// <summary>
 	/// <c>PlayerMec_Write</c> (<c>0002299e</c>)'s files in <c>Shell_Mode</c> 0: <c>data\player.mec</c>
 	/// (<see cref="WritePlayerFile"/>), then <c>CareerRecord_SaveCurrent</c> (<c>00014f28</c>)'s
+	/// <see cref="SaveRecord"/>.
+	/// </summary>
+	public static void WritePlayerMec(string installRoot, Es1PlayerMec player, Es1CareerRecord record) {
+		WritePlayerFile(installRoot, player);
+		SaveRecord(installRoot, record);
+	}
+
+	/// <summary>
 	/// <c>SingleMission_SaveRecord</c> (<c>00014f54</c>): <paramref name="record"/> written to <c>car\sm_play.gam</c> through
 	/// a <c>FileWStream</c>. Retail asserts at <c>career.cpp</c> line <c>0x58</c> when the record's file does not open; here
 	/// the exception reaches the caller.
 	/// </summary>
-	public static void WritePlayerMec(string installRoot, Es1PlayerMec player, Es1CareerRecord record) {
-		WritePlayerFile(installRoot, player);
+	public static void SaveRecord(string installRoot, Es1CareerRecord record) {
 		Directory.CreateDirectory(CaseInsensitivePath.Combine(installRoot, CarFolder));
 		File.WriteAllBytes(CarPath(installRoot, SavedRecordName), new Es1CareerRecordTransformer().Write(record)!);
 	}

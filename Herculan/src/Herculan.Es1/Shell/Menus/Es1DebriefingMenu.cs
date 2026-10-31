@@ -107,11 +107,12 @@ public sealed class Es1DebriefingMenu : Es1Menu {
 	private const byte PanelColor = 0x1f;
 
 	/// <summary>
-	/// The text at <c>0007d808</c>, <c>NONE</c> in the image, the panel's new technology recovered. Its other users,
-	/// <c>Tech_FormatLockedName</c> (<c>000021b5</c>) and <c>MessageBox_PickT1Line</c> (<c>00037bf0</c>), are the career's
-	/// and unported, and the shell after a single mission starts from the image; what writes it is debriefing.md's Open.
+	/// The text at <c>0007d808</c>, <c>NONE</c> in the image, the panel's new technology recovered, which
+	/// <c>MessageBox_PickT1Line</c> (<see cref="Es1MessageBox.PickT1Line"/>) compares for kind 7. Its one write
+	/// found, <c>Tech_FormatLockedName</c> (<c>000021b5</c>)'s, is unported, and the shell after a mission starts from the
+	/// image; what writes it is debriefing.md's Open.
 	/// </summary>
-	private const string NewTechnology = "NONE";
+	internal static readonly string NewTechnology = "NONE";
 
 	/// <summary>
 	/// The handler <c>Menu_BuildFromDlg</c> gives the hotspot 1522, <c>DebriefingResultsHotspot_Draw</c>

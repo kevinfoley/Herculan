@@ -275,6 +275,29 @@ public sealed class Es1ShellMission {
 	}
 
 	/// <summary>
+	/// <c>CareerRecord_SaveCurrent</c> (<c>00014f28</c>): in <see cref="Mode"/> 0 <c>SingleMission_SaveRecord</c>
+	/// (<see cref="Es1SingleMission.SaveRecord"/>) of <see cref="Record"/>, otherwise <c>Career_Save</c>(roster, its word
+	/// <c>+7</c>) (<see cref="Es1CareerRoster.Save"/>). With no single-mission record nothing is written, and a record file
+	/// that does not open is reported, engine guards.
+	/// </summary>
+	public void SaveCurrentRecord() {
+		if (Mode != 0) {
+			Roster.Save(Roster.Current);
+			return;
+		}
+
+		if (Record is not { } record) {
+			return;
+		}
+
+		try {
+			Es1SingleMission.SaveRecord(_installRoot, record);
+		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+			Console.Error.WriteLine($"car\\{Es1SingleMission.SavedRecordName} does not open for writing ({ex.Message}; career.cpp line 0x58 asserts here).");
+		}
+	}
+
+	/// <summary>
 	/// <c>Mission_SetTextPath</c> (<c>000364be</c>) (docs/es1/formats/eng-mission-text.md#which-file): <see cref="Path"/>
 	/// cut at its first <c>.</c> with <c>.eng</c> after it. Retail writes through a null pointer for a path with no
 	/// <c>.</c>; here <c>.eng</c> goes after the whole path, an engine guard.

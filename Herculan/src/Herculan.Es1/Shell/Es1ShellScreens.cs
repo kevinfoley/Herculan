@@ -276,7 +276,9 @@ public sealed class Es1ShellScreens {
 				if (mission.Mode == 0) {
 					OpenAfterSingleMission(mission);
 				} else if (mission.Mode == 1) {
-					OpenAfterCareerMission(mission, data);
+					foreach (var wait in OpenAfterCareerMission(mission, data, playIntro, presentFrame, pollDeviceBlock)) {
+						yield return wait;
+					}
 				}
 
 				yield break;
@@ -356,27 +358,105 @@ public sealed class Es1ShellScreens {
 		}
 	}
 
+	/// <summary>The script a career whose pilot is lost plays, in <c>res32\</c>.</summary>
+	private const string LostScript = "endfa.ttm";
+
+	/// <summary>The scripts a won career plays in <c>res32\</c>, before <see cref="EarthScript"/>.</summary>
+	private static readonly string[] WonScripts = ["end_win1.ttm", "end_win2.ttm", "end_win3.ttm"];
+
+	/// <summary>The scripts a lost career plays in <c>res32\</c>, before <see cref="EarthScript"/>.</summary>
+	private static readonly string[] FailedScripts = ["failed.ttm"];
+
+	/// <summary>The script either ending of a career closes with, in <c>intro\</c>.</summary>
+	private const string EarthScript = "earth.ttm";
+
+	/// <summary><c>Career_PeekNextCampaign</c>'s low byte for a won career, 99 (<c>'c'</c>), and for a lost one, −1.</summary>
+	private const int CareerWon = 0x63, CareerLost = 0xff;
+
 	/// <summary>
 	/// <see cref="OpenFirstScreen"/>'s codes 3 and 4 in <c>Shell_Mode</c> 1, after the results' read
-	/// (docs/es1/shell/between-missions.md#back-at-the-shell): the screen by the player's condition and
-	/// <c>Career_PeekNextCampaign</c>; then on every path <c>CareerRecord_AutoRepairSquad</c> on the roster's record its word
-	/// <c>+7</c> names (<see cref="Es1CareerAfterMission.AutoRepairSquad"/>), <c>Roster_ForEachPilotNoOp</c> and
-	/// <c>Career_Save</c>(roster, its word <c>+7</c>) (<see cref="Es1CareerRoster.Save"/>).
+	/// (docs/es1/shell/between-missions.md#back-at-the-shell, disassembly <c>0003bc6f</c>–<c>0003bdd5</c>), on the roster's
+	/// record its word <c>+7</c> names, <c>CareerRecord_Current</c>'s in mode 1: with the player's pilot lost
+	/// (<see cref="Es1CareerRoster.PlayerCondition"/> 0), <see cref="LostScript"/> while <paramref name="playIntro"/> is set,
+	/// then the home menu (<see cref="OpenHomeMenu"/>). Otherwise by <c>Career_PeekNextCampaign</c>'s low byte, compared
+	/// sign-extended: 99, the career won, <see cref="WonScripts"/>, and −1, the career lost, <see cref="FailedScripts"/>, each
+	/// played whatever <paramref name="playIntro"/>, then <see cref="EarthScript"/> with the prefix <c>intro\</c> and the
+	/// prefix back to <c>res32\</c>, then the home menu; any other, the message box's kind 7, the lines after the mission
+	/// (<see cref="Es1MessageBox"/>, whose answer posts 1520), <c>MessageBox_Line</c> set to
+	/// <see cref="Es1MessageBox.PickT1Line"/>(7) after the kind, the backdrop group 4000 shown and no menu. The scripts play
+	/// through <see cref="PlayTtm"/>. Then on every path <c>CareerRecord_AutoRepairSquad</c> on the same record
+	/// (<see cref="Es1CareerAfterMission.AutoRepairSquad"/>), <c>Roster_ForEachPilotNoOp</c> and <c>Career_Save</c>(roster,
+	/// its word <c>+7</c>) (<see cref="Es1CareerRoster.Save"/>). The message box exists from the first screen on; the test
+	/// for it, and for the hangar the repair walks, are engine guards.
 	/// </summary>
-	private void OpenAfterCareerMission(Es1ShellMission mission, Es1ShellData data) {
-		// PLACEHOLDER: the three paths, P11b's: with the player lost (PilotEntry_Condition of the record's +0xe 0),
-		// ShellMusic_Play(7) and Shell_PlayTtm(endfa.ttm) while Shell_PlayIntro is set, then the home menu; with
-		// Career_PeekNextCampaign 'c', music 0xd, end_win1.ttm to end_win3.ttm and intro\earth.ttm, then the home menu; with
-		// -1, music 0x13, failed.ttm and intro\earth.ttm, then the home menu; otherwise MessageBox_SetKind(7), MessageBox_Line
-		// by MessageBox_PickT1Line(7) and backdrop 4000. Until P11b every path opens the home menu, the career menu.
-		OpenHomeMenu(mission);
+	private IEnumerable<Es1ShellWait> OpenAfterCareerMission(Es1ShellMission mission, Es1ShellData data, bool playIntro,
+			Func<IEnumerable<Es1ShellWait>> presentFrame, Func<Es1LiveBlock> pollDeviceBlock) {
 		var roster = mission.Roster;
+		if (Es1CareerRoster.PlayerCondition(roster.CurrentRecord) == 0) {
+			if (playIntro) {
+				// PLACEHOLDER: ShellMusic_Play(7); ES1's sound is not ported (Es1ShellDevices.Init's ShellSound_Init).
+				foreach (var wait in PlayTtm(LostScript, presentFrame, pollDeviceBlock)) {
+					yield return wait;
+				}
+			}
+
+			OpenHomeMenu(mission);
+		} else {
+			switch (roster.PeekNextCampaign(roster.CurrentRecord) & 0xff) {
+				case CareerWon:
+					// PLACEHOLDER: ShellMusic_Play(0xd); ES1's sound is not ported.
+					foreach (var wait in PlayCareerEnding(mission, WonScripts, presentFrame, pollDeviceBlock)) {
+						yield return wait;
+					}
+
+					break;
+				case CareerLost:
+					// PLACEHOLDER: ShellMusic_Play(0x13); ES1's sound is not ported.
+					foreach (var wait in PlayCareerEnding(mission, FailedScripts, presentFrame, pollDeviceBlock)) {
+						yield return wait;
+					}
+
+					break;
+				default:
+					Globals.MessageBox.SetKind(Es1MessageBox.AfterMissionKind);
+					if (MessageBox is { } messageBox) {
+						mission.MessageBoxLine = messageBox.PickT1Line(Es1MessageBox.AfterMissionKind);
+					}
+
+					BackdropId = ServiceBayBackdrop;
+					_backdrop.Show(ServiceBayBackdrop);
+					break;
+			}
+		}
+
 		if (mission.Hangar is { } hangar) {
 			new Es1CareerAfterMission(mission, data).AutoRepairSquad(roster.CurrentRecord, hangar);
 		}
 
 		Es1CareerRoster.ForEachPilotNoOp();
 		roster.Save(roster.Current);
+	}
+
+	/// <summary>
+	/// A career's ending (<c>0003bce6</c>, <c>0003bd30</c>): <paramref name="scripts"/> played with the prefix as it stands,
+	/// <c>res32\</c>; the prefix <c>intro\</c>, <see cref="EarthScript"/> played and the prefix <c>res32\</c> again; then the
+	/// home menu (<see cref="OpenHomeMenu"/>).
+	/// </summary>
+	private IEnumerable<Es1ShellWait> PlayCareerEnding(Es1ShellMission mission, string[] scripts,
+			Func<IEnumerable<Es1ShellWait>> presentFrame, Func<Es1LiveBlock> pollDeviceBlock) {
+		foreach (string name in scripts) {
+			foreach (var wait in PlayTtm(name, presentFrame, pollDeviceBlock)) {
+				yield return wait;
+			}
+		}
+
+		Scripts!.SetPathPrefix(IntroFolder);
+		foreach (var wait in PlayTtm(EarthScript, presentFrame, pollDeviceBlock)) {
+			yield return wait;
+		}
+
+		Scripts.SetPathPrefix(ScriptFolder);
+		OpenHomeMenu(mission);
 	}
 
 	/// <summary>
@@ -757,10 +837,11 @@ public sealed class Es1ShellScreens {
 	/// <summary>
 	/// <c>Shell_HandleMessage</c>'s step 9, the case of the table at <c>00082060</c> (targets at <c>00082104</c>) for
 	/// <paramref name="target"/>: most make the screen's object the current menu (docs/es1/shell/menus.md#the-screens).
-	/// The main menu's, SINGLE MISSION's, MISSION PARAMS', the war map's, its two alerts', the debriefing's, the career
-	/// menu's and its REGISTRATION, backups, stats and overwrite warning, the KIA warnings', the delete warning's, the
-	/// disk-space warning's, the options menu's and its battle-set picker's, the service bay's and its three warnings', and
-	/// the quit question's are ported, 1490's and 1499's message boxes, and screen 9999's exit code; with any other the
+	/// The main menu's, SINGLE MISSION's, MISSION PARAMS', the war map's, its two alerts', the debriefing's in either mode, the
+	/// career menu's and its REGISTRATION, backups, stats and overwrite warning, the KIA warnings', TECH RELEASE's, the delete
+	/// warning's, the disk-space warning's, the options menu's and its battle-set picker's, the service bay's and its three
+	/// warnings', and the quit question's are ported, 1490's, 1499's and 1520's message boxes, and screen 9999's exit code;
+	/// with any other the
 	/// screen becomes current with no menu, as
 	/// retail's does for the cases that make none, its backdrop shown with no window. The waits are the war map's and the
 	/// debriefing's, whose constructors delete the box the text box held.
@@ -799,11 +880,18 @@ public sealed class Es1ShellScreens {
 				Globals.MessageBox.SetKind((_menuContext?.Mission.Mode ?? 0) == 0 ? (short)0 : Es1ServiceBayMenu.BriefingKind);
 				break;
 			case Es1DebriefingMenu.CareerScreen:
+				// 0003cd09, 1520's: while Kind4Shown is clear, MessageBox_SetKind(Shell_MessageBox, 4), the career's
+				// debriefing line, which the screen's draw loads over the debriefing's box and whose answer posts 1520 again,
+				// and the byte set; then as 1510's.
+				if (!Kind4Shown) {
+					Globals.MessageBox.SetKind(CareerDebriefingKind);
+					Kind4Shown = true;
+				}
+
+				goto case Es1DebriefingMenu.Screen;
 			case Es1DebriefingMenu.Screen:
-				// 0003cd09, 1520's: PLACEHOLDER: while the byte MessageBox_Kind4Shown (00081d20) is 0, MessageBox_SetKind(
-				// Shell_MessageBox, 4) and the byte set to 1, the career's, S3's; then as 1510's.
 				// 0003cd27, 1510's: DebriefingMenu_Ctor(0), the debriefing, which the message box's kind 3 reaches by its
-				// answer's post of 1510 (OpenAfterSingleMission).
+				// answer's post of 1510 (OpenAfterSingleMission), and kinds 7 and 4 by their posts of 1520.
 				if (_menuContext != null && Dialog != null) {
 					var debriefing = new Es1DebriefingMenu(_menuContext, Dialog);
 					foreach (var wait in debriefing.Load()) {
@@ -951,8 +1039,12 @@ public sealed class Es1ShellScreens {
 				}
 
 				break;
-			case 5555:
-				// PLACEHOLDER: TechReleaseAlert, P11's.
+			case Es1TechReleaseAlert.Screen:
+				// 0003d3b4: a TechReleaseAlert, TECH RELEASE.
+				if (_menuContext != null) {
+					CurrentMenu = new Es1TechReleaseAlert(_menuContext);
+				}
+
 				break;
 			case CrewScreen:
 			case 1800:
@@ -977,6 +1069,16 @@ public sealed class Es1ShellScreens {
 
 	/// <summary>The crew screen, 1610, from which the service bay's case loads backdrop 4000's palette again.</summary>
 	private const short CrewScreen = 1610;
+
+	/// <summary>The message box's kind for a career's debriefing line, which screen 1520's case puts up.</summary>
+	private const short CareerDebriefingKind = 4;
+
+	/// <summary>
+	/// <c>MessageBox_Kind4Shown</c> (<c>00081d20</c>), 0 in the image: screen 1520's case has put up the message box's kind
+	/// 4, so it puts it up once a run of the shell, which retail starts as a new process after each mission. Its only
+	/// accesses <c>es2_xref.py --decode</c> finds are that case's read and its write of 1 (message-box.md's Open).
+	/// </summary>
+	public bool Kind4Shown { get; private set; }
 
 	/// <summary>
 	/// <c>Shell_TickScreen</c> (<c>0003c115</c>), the frame loop's step 5 (docs/es1/shell/menus.md#drawing-a-screen):

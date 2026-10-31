@@ -20,8 +20,8 @@ public sealed class Es1CareerMenu : Es1Menu {
 	/// <summary>The career's screen that loads no mission, the service bay.</summary>
 	public const short ServiceBay = 1710;
 
-	/// <summary>The technology release, <c>TechReleaseAlert</c>, which 1710 becomes while the record's word <c>+0xa8</c> is not −1.</summary>
-	public const short TechRelease = 5555;
+	/// <summary>The technology release, <see cref="Es1TechReleaseAlert"/>, which 1710 becomes while the record's word <c>+0xa8</c> is not −1.</summary>
+	public const short TechRelease = Es1TechReleaseAlert.Screen;
 
 	/// <summary>The free bytes NEW asks the drive for.</summary>
 	private const long NewCareerBytes = 60000;
@@ -326,6 +326,44 @@ public sealed class Es1KIAWarningAlert : Es1Menu {
 	}
 
 	/// <summary>Slot <c>+4</c>, the class's destructor: its vtable, then <c>Menu</c>'s, stored and the menu freed.</summary>
+	public override void Dtor() {
+	}
+}
+
+/// <summary>
+/// The TECH RELEASE window's screen object, class <c>TechReleaseAlert</c> (vtable <c>00081e2c</c>)
+/// (docs/es1/shell/main-menu.md#resume): screen 5555, the item the last mission made available, its kind and index the
+/// career record's words <c>+0xa8</c> and <c>+0xaa</c> (the labels 5556 to 5558, <see cref="Es1MenuBuild"/>), and PROCEED.
+/// </summary>
+public sealed class Es1TechReleaseAlert : Es1Menu {
+	/// <summary>The screen and the menu, <c>dlg\menu5555.dlg</c>.</summary>
+	public const short Screen = 5555;
+
+	/// <summary>PROCEED's id.</summary>
+	private const short Proceed = 100;
+
+	public Es1TechReleaseAlert(Es1MenuContext context) : base(context) {
+	}
+
+	/// <summary>
+	/// Slot <c>+8</c>, <c>TechReleaseAlert_OnMessage</c> (<c>0002a6a9</c>): for PROCEED, the target the service bay, 1710;
+	/// the words <c>+0xa8</c> and <c>+0xaa</c> of the roster's record its word <c>+7</c> names set to −1, read from the
+	/// roster, not through <c>CareerRecord_Current</c>; and <c>CareerRecord_SaveCurrent</c>
+	/// (<see cref="Es1ShellMission.SaveCurrentRecord"/>).
+	/// </summary>
+	public override void OnMessage(ref Es1MenuMessage message) {
+		if (message.Target != Proceed) {
+			return;
+		}
+
+		message = message with { Target = Es1CareerMenu.ServiceBay };
+		var equipment = Context.Mission.Roster.CurrentRecord.Equipment;
+		equipment.LastKind = -1;
+		equipment.LastIndex = -1;
+		Context.Mission.SaveCurrentRecord();
+	}
+
+	/// <summary>Slot <c>+4</c>, <c>TechReleaseAlert_Dtor</c> (<c>0003fc63</c>): its vtable, then <c>Menu</c>'s, stored and the menu freed.</summary>
 	public override void Dtor() {
 	}
 }
