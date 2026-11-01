@@ -8,7 +8,7 @@ namespace Herculan.Es1.Shell.Menus;
 
 /// <summary>
 /// The shell's text button, class <c>MTButton</c> (vtable <c>0007f18c</c>, <c>0x95</c> bytes)
-/// (docs/es1/shell/menus.md#buttons): a bevelled frame of the state's <c>STYLES.DAT</c> record, and its text centered
+/// (docs/es1/shell/menu-controls.md#buttons): a bevelled frame of the state's <c>STYLES.DAT</c> record, and its text centered
 /// in the state's font.
 /// </summary>
 public class Es1MTButton : Es1DUIButtonControl {
@@ -78,7 +78,7 @@ public class Es1MTButton : Es1DUIButtonControl {
 	}
 
 	/// <summary>
-	/// Slot <c>+8</c>, <c>MTButton_Draw</c> (<c>0001d200</c>) (docs/es1/shell/menus.md#drawing-a-control): in state 1
+	/// Slot <c>+8</c>, <c>MTButton_Draw</c> (<c>0001d200</c>) (docs/es1/shell/menu-controls.md#drawing-a-control): in state 1
 	/// the click (<see cref="Click"/>); in states 0 and 1 <c>CornerFrame_Draw</c> with the state's record over the rect
 	/// and, while <see cref="Highlighted"/>, <c>Raster_FrameRectColour</c>(10, rect); in state 2 <c>CornerFrame_Draw</c>
 	/// with record 2; any other state no frame. Then the text in the state's font from its pen, centered in the
@@ -154,7 +154,7 @@ public class Es1MTButton : Es1DUIButtonControl {
 
 /// <summary>
 /// The shell's icon button, class <c>MTBmpButton</c> (vtable <c>0007f24a</c>, <c>0xb1</c> bytes)
-/// (docs/es1/shell/menus.md#buttons): a text button drawn as a picture of <c>res32\corners.dba</c> chosen by its key.
+/// (docs/es1/shell/menu-controls.md#buttons): a text button drawn as a picture of <c>res32\corners.dba</c> chosen by its key.
 /// </summary>
 public sealed class Es1MTBmpButton : Es1MTButton {
 	/// <summary>

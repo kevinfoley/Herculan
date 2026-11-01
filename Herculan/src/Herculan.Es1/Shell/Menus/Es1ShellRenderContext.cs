@@ -7,7 +7,7 @@ namespace Herculan.Es1.Shell.Menus;
 
 /// <summary>
 /// A shell window's render context, the <c>GLViewport</c> <c>000512a0</c>(0) builds at the window's <c>+0x17</c>
-/// (docs/es1/shell/menus.md#the-window): <c>0x239</c> bytes copied from the clip block the shell display's
+/// (docs/es1/shell/menu-controls.md#the-window): <c>0x239</c> bytes copied from the clip block the shell display's
 /// <c>+0x3c</c> points at, the rect <c>+0x210</c> the window's on the screen, the origin <c>+0x220</c> (0, 0), clip mode
 /// <c>+0x208</c> 1, and the underline <c>+0x230</c>, alignment <c>+0x231</c> and field width <c>+0x235</c> cleared.
 ///

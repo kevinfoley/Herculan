@@ -354,19 +354,19 @@ public sealed class Es1CrewAssignMenu : Es1Menu {
 	private const string NoStatus = "---";
 
 	/// <summary>
-	/// The handler <c>Menu_BuildFromDlg</c> gives the hotspots 1612 to 1614, <c>maybe_PilotPortraitHotspot_Draw</c>
+	/// The handler <c>Menu_BuildFromDlg</c> gives the hotspots 1612 to 1614, <c>PilotPortraitHotspot_Draw</c>
 	/// (<c>00017a19</c>), over <paramref name="context"/>'s banks and roster.
 	/// </summary>
 	public static Es1HotspotHandler PortraitHandler(Es1MenuContext context) => (render, rect, id) => DrawPortrait(context, render, rect, id);
 
-	/// <summary>The handler the hotspots 1619 to 1622 are given, <c>00017b4a</c>.</summary>
+	/// <summary>The handler the hotspots 1619 to 1622 are given, <c>PilotLinesHotspot_Draw</c> (<c>00017b4a</c>).</summary>
 	public static Es1HotspotHandler LinesHandler(Es1MenuContext context) => (render, rect, id) => DrawLines(context, render, rect, id);
 
-	/// <summary>The handler the hotspots 1615 to 1618 are given, <c>00017d9f</c>.</summary>
+	/// <summary>The handler the hotspots 1615 to 1618 are given, <c>BayNumberHotspot_Draw</c> (<c>00017d9f</c>).</summary>
 	public static Es1HotspotHandler BayNumberHandler(Es1MenuContext context) => (render, rect, id) => DrawBayNumber(context, render, rect, id);
 
 	/// <summary>
-	/// <c>maybe_PilotPortraitHotspot_Draw</c> (<c>00017a19</c>)(<paramref name="rect"/>, <paramref name="id"/>)
+	/// <c>PilotPortraitHotspot_Draw</c> (<c>00017a19</c>)(<paramref name="rect"/>, <paramref name="id"/>)
 	/// (docs/es1/shell/hangar.md#the-screen), on the roster's record its word <c>+7</c> names, read from the roster in
 	/// either mode, with <i>n</i> = id − 1611: frame (entry <i>n</i>'s word <c>+0</c>) of
 	/// <see cref="Es1MenuBanks.CrewPortraits"/> blitted at the rect's corner plus (1, 1); then, while the record's byte
@@ -392,7 +392,7 @@ public sealed class Es1CrewAssignMenu : Es1Menu {
 		bank != null && index >= 0 && index < bank.Count ? bank[index] : null;
 
 	/// <summary>
-	/// <c>00017b4a</c>(<paramref name="rect"/>, <paramref name="id"/>) (docs/es1/shell/hangar.md#the-screen), with
+	/// <c>PilotLinesHotspot_Draw</c> (<c>00017b4a</c>)(<paramref name="rect"/>, <paramref name="id"/>) (docs/es1/shell/hangar.md#the-screen), with
 	/// <i>n</i> = id − 1619 and the record <c>CareerRecord_Current</c>'s: the font <c>nm_ylw</c> for the record's current
 	/// pilot <c>+0x12</c> and <c>nm_white</c> otherwise; the alignment 0; the rect filled and framed in
 	/// <see cref="LinesColor"/>; then four lines from (left + 2, top + 7), 8 apart: the name, for the player's entry
@@ -462,7 +462,7 @@ public sealed class Es1CrewAssignMenu : Es1Menu {
 	}
 
 	/// <summary>
-	/// <c>00017d9f</c>(<paramref name="rect"/>, <paramref name="id"/>) (docs/es1/shell/hangar.md#the-screen), with <i>n</i>
+	/// <c>BayNumberHotspot_Draw</c> (<c>00017d9f</c>)(<paramref name="rect"/>, <paramref name="id"/>) (docs/es1/shell/hangar.md#the-screen), with <i>n</i>
 	/// = id − 1615 and the record <c>CareerRecord_Current</c>'s: for a slot <c>+8</c> of 0 or more, the alignment 0 and
 	/// <c>%d</c> (<c>0007ed72</c>) of the slot + 1 in <c>big_red</c> at the rect's corner plus (3, 8). Nothing is drawn
 	/// under it. An entry past the four draws nothing here, an engine guard.

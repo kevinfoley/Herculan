@@ -16,7 +16,7 @@ public readonly record struct Es1MenuLabel(string Text, int X, int Y, short Widt
 
 /// <summary>
 /// The menu window, class <c>MTWindow</c> (vtable <c>00081140</c>, <c>0x5a7</c> bytes)
-/// (docs/es1/shell/menus.md#the-window): a <see cref="Es1DUIWindow"/> with a picture, a title on a framed plate and up to
+/// (docs/es1/shell/menu-controls.md#the-window): a <see cref="Es1DUIWindow"/> with a picture, a title on a framed plate and up to
 /// six labels.
 /// </summary>
 public sealed class Es1MTWindow : Es1DUIWindow {
@@ -94,7 +94,7 @@ public sealed class Es1MTWindow : Es1DUIWindow {
 
 	/// <summary>
 	/// Slot <c>+8</c>, <c>MTWindow_Draw</c> (<c>00036b4c</c>)
-	/// (docs/es1/shell/menus.md#the-menu-windows-drawing--mtwindow_draw-00036b4c): the first bitmap at the window's corner,
+	/// (docs/es1/shell/menu-controls.md#the-menu-windows-drawing--mtwindow_draw-00036b4c): the first bitmap at the window's corner,
 	/// which <c>DUIWindow_Draw</c> has the context draw untranslated; the translation set; the title's plate and the title,
 	/// which the code draws for every menu window, an empty title included (it tests the title buffer's address); then
 	/// each label in the label font from (<i>x</i>, <i>y</i> + the font's cell height − 3), its mode as the alignment and

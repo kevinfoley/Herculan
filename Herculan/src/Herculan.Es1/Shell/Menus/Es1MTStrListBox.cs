@@ -7,7 +7,7 @@ namespace Herculan.Es1.Shell.Menus;
 
 /// <summary>
 /// The shell's list box, class <c>MTStrListBox</c> (vtable <c>0007f474</c>, <c>0x5a</c> bytes) over <c>DUIVSlider</c>
-/// (<c>0007f412</c>) and <c>DUISliderControl</c> (<c>0007f2f8</c>) (docs/es1/shell/menus.md#the-list-box): a framed
+/// (<c>0007f412</c>) and <c>DUISliderControl</c> (<c>0007f2f8</c>) (docs/es1/shell/menu-controls.md#the-list-box): a framed
 /// column of text lines, one of them selected. The two base classes' fields are kept here; their slots are the list's.
 /// </summary>
 public sealed class Es1MTStrListBox : Es1DUIControl {

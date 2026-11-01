@@ -3770,15 +3770,45 @@
       "address": "00017a19",
       "binary": "ES1GO",
       "type": "function",
-      "confidence": "medium",
-      "name": "maybe_PilotPortraitHotspot_Draw",
-      "description": "(rect, id): the kind-14 hotspot handler Menu_BuildFromDlg (0003a1f7) gives ids 1612 to 1614. With n = id - 1611 and the career record 0009b23b + 0x1f7 x the word 0009b21f: Bitmap_Blit, flags 0, of frame (pilot entry n's word +0, at 0009b24f + 0x25 x n in the record, or -1 for n -1) of the bitmap array CrewAssignMenu_Portraits (0007ebcc) at (rect left + 1, top + 1); then, while the record's byte +1 is set and the entry's byte +0xa (record +0x1e + 0x25 x n) is 0, frame 0 of the array CrewAssignMenu_Mesh (0007ebd0) at the rect's corner.",
-      "source": "Herculan/docs/es1/shell/menus.md#opening-a-menu--menu_open-0003969e; ES1GO decompile at 00017a19",
+      "confidence": "high",
+      "name": "PilotPortraitHotspot_Draw",
+      "description": "(rect, id) in stack order, its arguments removed by this function: the kind-14 hotspot handler Menu_BuildFromDlg (0003a1f7) gives ids 1612 to 1614. With n = id - 1611 and the roster's current record 0009b23b + 0x1f7 x the word 0009b21f, read directly rather than through CareerRecord_Current: Bitmap_Blit, flags 0, of frame (pilot entry n's word +0, at 0009b24f + 0x25 x n in the record, or -1 for n -1) of the bitmap array CrewAssignMenu_Portraits (0007ebcc) at (rect left + 1, top + 1); then, while the record's byte +1 is set and the entry's byte +0xa (record +0x1e + 0x25 x n) is 0, frame 0 of the array CrewAssignMenu_Mesh (0007ebd0) at the rect's corner.",
+      "source": "Herculan/docs/es1/shell/hangar.md#the-screen; ES1GO decompile at 00017a19",
       "verified": {
         "bytes": "00017a19+305",
         "sha1": "2a432c3eec73",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00017b4a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "PilotLinesHotspot_Draw",
+      "description": "(rect, id) in stack order, its arguments removed by this function: the kind-14 hotspot handler Menu_BuildFromDlg (0003a1f7) gives CREW's ids 1619 to 1622. With n = id - 1619 and CareerRecord_Current (00014ef4)'s record: sets the render context 000ab612's alignment +0x231 to 0, fills the rect in colour 0x1f framed in 0x1f (Raster_FillFrameRectColours (0004b8d8)), and writes four lines with HudFont_DrawString (000520d8) from the pen (rect left + 2, top + 7), in the font 000aacee, or 000aacf6 when n is the record's current pilot +0x12: the name, for the player's entry +0xe the string the dword 0009b219 points at and otherwise PilotEntry_Name (00015fc0)(the roster's current record 0009b23b + 0x1f7 x the word 0009b21f, n); eng\\watext.bin line 0xa1 + entry n's rank +0xd (Text_GetString (00018717)); and for entry n's slot +8 of -1 line 0xa6 and the sprintf of \"---\" (0007ed6e), otherwise line 0x1b + the chassis of the slot's HERC in Hangar_Slots (000808a0), -1 for none, and \"%d%%\" (0007ed69) of Herc_OverallCondition (00024b6a), 0 for none.",
+      "source": "Herculan/docs/es1/shell/hangar.md#the-screen; ES1GO decompile at 00017b4a",
+      "verified": {
+        "bytes": "00017b4a+597",
+        "sha1": "7d52dce47786",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00017d9f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BayNumberHotspot_Draw",
+      "description": "(rect, id) in stack order, its arguments removed by this function: the kind-14 hotspot handler Menu_BuildFromDlg (0003a1f7) gives CREW's ids 1615 to 1618. With n = id - 1615 and CareerRecord_Current (00014ef4)'s record, returns when entry n's slot +8 is below 0; otherwise sets the render context 000ab612's alignment +0x231 to 0 and writes the sprintf of \"%d\" (0007ed72) of the slot + 1 (the INC at 00017e0d) with HudFont_DrawString (000520d8) in the font 000aacfa at (rect left + 3, top + 8).",
+      "source": "Herculan/docs/es1/shell/hangar.md#the-screen; ES1GO decompile and disassembly at 00017d9f",
+      "verified": {
+        "bytes": "00017d9f+186",
+        "sha1": "2a4e7dbe01f9",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -4487,12 +4517,27 @@
       }
     },
     {
+      "address": "0001a42c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercStatus_SetExternalArea",
+      "description": "(block, value, area) in stack order, its arguments removed by this function: writes value to each word of block that the -1-ended word list at 0007ef54 + 8 x area names, the external words of that area. HercStatus_Set (0001a492) calls it for the kind 0x785.",
+      "source": "Herculan/docs/es1/shell/repair-and-build.md#system-repair--screen-1920; ES1GO decompile and disassembly at 0001a42c",
+      "verified": {
+        "bytes": "0001a42c+102",
+        "sha1": "4a51e4352231",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0001a492",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "HercStatus_Set",
-      "description": "(block, value, index, kind) in stack order, its arguments removed by this function: for kind 0x785 0001a42c(block, value, index); for 0x784 sets the internal word +0x1a + 2 x index to value; for 0x786 the per-mount word +0x2e + 2 x index; any other kind changes nothing.",
+      "description": "(block, value, index, kind) in stack order, its arguments removed by this function: for kind 0x785 HercStatus_SetExternalArea (0001a42c)(block, value, index); for 0x784 sets the internal word +0x1a + 2 x index to value; for 0x786 the per-mount word +0x2e + 2 x index; any other kind changes nothing.",
       "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-record",
       "verified": {
         "bytes": "0001a492+97",
@@ -4664,6 +4709,36 @@
         "sha1": "102be7dc4613",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0001aac3",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIVSlider_SetTrackPoint",
+      "description": "(control, point) in stack order, its arguments removed by this function: DUIVSlider's slot +0x38 (vtable 0007f412), which MTGfxListBox and MTAnimListBox keep. Copies the tracked point +0x28 to +0x2a, then stores in +0x28 the point's y held within the rect's top +4 and its bottom +0xc less +0x2c.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-list-box; ES1GO decompile at 0001aac3",
+      "verified": {
+        "bytes": "0001aac3+105",
+        "sha1": "3b1db11542c7",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001ab2c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DUIVSlider_GetValue",
+      "description": "(control), its argument removed by this function: DUIVSlider's slot +0x2c (vtable 0007f412), which MTGfxListBox and MTAnimListBox keep. In the runtime's soft floats (__LNGDBL, __DBLFLT, __FDIV, __FADD): scale = ((rect bottom +0xc - top +4) - (the rect +0x2e's bottom +0x3a - top +0x32)) / (+0x26 - +0x24); answers ((the dword +0x32 - rect top), sign-extended from 16 bits) / scale + +0x24, truncated with __DBLINT.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-list-box; ES1GO disassembly at 0001ab2c",
+      "verified": {
+        "bytes": "0001ab2c+163",
+        "sha1": "ddc852b50ccd",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -5832,6 +5907,291 @@
       "verified": {
         "bytes": "0001eac5+42",
         "sha1": "f3e03004b473",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001eaef",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTGfxListBox_Ctor",
+      "description": "(control, max, min, word, id, bank, rect) in stack order, its arguments removed by this function: kind 16's picture tile, class MTGfxListBox (vtable 0007f4d4), 0x4b bytes, allocated for a null control. Builds DUIControl_Ctor (0001a716)(control, 0, id, rect), then the DUISliderControl part (vtable 0007f2f8): +0x24 min, +0x26 max, +0x28 and +0x2a the word, +0x2c 1, +0x1b 1; stores DUIVSlider's vtable 0007f412, then its own, the bank at +0x3e, the bank's dword +4 as an int16 at +0x26, the word modulo that at +0x42, STYLES.DAT record 3 (the dword 00082654 + 0xc0) at +0x44, the int16 10 at +0x49, and clears +0x48 and +0x1f. The rect at +0x2e is not written.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-picture-tile; ES1GO decompile at 0001eaef",
+      "verified": {
+        "bytes": "0001eaef+391",
+        "sha1": "55ea3c3a7c94",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001ec76",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTGfxListBox_Dtor",
+      "description": "(control, flags) in stack order, its arguments removed by this function: MTGfxListBox's slot +4. Stores its vtable 0007f4d4, frees the bank +0x3e with Shell_FreeBitmapArraySlot (00037924) and clears +0x3e, stores the vtables 0007f412, 0007f2f8 and 0007f1ea in turn, and frees the control with Mem_Delete (00001a44) when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-picture-tile; ES1GO decompile at 0001ec76",
+      "verified": {
+        "bytes": "0001ec76+171",
+        "sha1": "658d1d580f7f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001ed21",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTGfxListBox_Draw",
+      "description": "(control), its argument removed by this function: MTGfxListBox's slot +8. For a frame +0x42 below 0 or at least +0x26, CornerFrame_Draw (00044b86) with the record +0x44 over the rect; otherwise Bitmap_Blit (000502c0), flags 0, of the bank +0x3e's array +8 at that frame at (rect left + 1, top + 1). While the byte +0x48 is set, Raster_FrameRectColour (0004b867)(the colour +0x49, the rect from (left + 1, top + 1) to (right - 1, bottom - 1), each coordinate pair put in order). Clears +0x1f.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-picture-tile; ES1GO decompile at 0001ed21",
+      "verified": {
+        "bytes": "0001ed21+463",
+        "sha1": "41d7d5c15e34",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001eef0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTGfxListBox_PrevFrame",
+      "description": "(control), its argument removed by this function: MTGfxListBox's slot +0x1c. Takes 1 from the frame +0x42 while it is above 0, and sets +0x1f.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-picture-tile; ES1GO decompile at 0001eef0",
+      "verified": {
+        "bytes": "0001eef0+34",
+        "sha1": "547df8398ac3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001ef12",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTGfxListBox_NextFrame",
+      "description": "(control), its argument removed by this function: MTGfxListBox's slot +0x20. Sets the frame +0x42 to (+0x42 + 1) mod +0x26, sets +0x1f, and returns (the old +0x42 + 1) / +0x26, 1 when the frame went round.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-picture-tile; ES1GO decompile at 0001ef12",
+      "verified": {
+        "bytes": "0001ef12+45",
+        "sha1": "88c210399fda",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001ef3f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTGfxListBox_SetFrame",
+      "description": "(control, frame) in stack order, its arguments removed by this function: MTGfxListBox's slot +0x24. Stores frame at +0x42 with no test, and sets +0x1f.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-picture-tile; ES1GO decompile at 0001ef3f",
+      "verified": {
+        "bytes": "0001ef3f+28",
+        "sha1": "3f4890e073b1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001ef5b",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTGfxListBox_TrackSelect",
+      "description": "(control), its argument removed by this function: MTGfxListBox's slot +0xc. Calls the control's slot +0x1c when the tracked point +0x28 is above the rect's top +4, its slot +0x20 when it is below the rect's bottom +0xc, and otherwise nothing.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-picture-tile; ES1GO decompile at 0001ef5b",
+      "verified": {
+        "bytes": "0001ef5b+76",
+        "sha1": "d9ec91801ae6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001efa7",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTGfxListBox_Highlight",
+      "description": "(control), its argument removed by this function: MTGfxListBox's slot +0x10. Sets the byte +0x48 and +0x1f.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-picture-tile; ES1GO decompile at 0001efa7",
+      "verified": {
+        "bytes": "0001efa7+22",
+        "sha1": "734755fe8ec1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001efbd",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTGfxListBox_HighlightIn",
+      "description": "(control, colour) in stack order, its arguments removed by this function: MTGfxListBox's slot +0x14. Stores colour at +0x49, then calls the control's slot +0x10.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-picture-tile; ES1GO decompile at 0001efbd",
+      "verified": {
+        "bytes": "0001efbd+35",
+        "sha1": "c8dc4e51b3ab",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001efe0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTGfxListBox_Unhighlight",
+      "description": "(control), its argument removed by this function: MTGfxListBox's slot +0x18. Clears the byte +0x48 and sets +0x1f.",
+      "source": "Herculan/docs/es1/shell/menus.md#the-picture-tile; ES1GO decompile at 0001efe0",
+      "verified": {
+        "bytes": "0001efe0+22",
+        "sha1": "f93468838f93",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001eff6",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTAnimListBox_Ctor",
+      "description": "(control, max, min, word, id, handles, rect) in stack order, its arguments removed by this function: kind 17's animation, class MTAnimListBox (vtable 0007f534), allocated for a null control. Builds DUIControl_Ctor (0001a716)(control, 0, id, rect), then the DUISliderControl part (vtable 0007f2f8): +0x24 min, +0x26 max, +0x28 and +0x2a the word, +0x2c 1, +0x1b 1; stores DUIVSlider's vtable 0007f412, then its own, the handle bytes at +0x3e, max again at +0x26, 0 at +0x42, STYLES.DAT record 3 (the dword 00082654 + 0xc0) at +0x44, and clears +0x1f. It writes neither the byte +0x48 nor the rect at +0x2e.",
+      "source": "Herculan/docs/es1/shell/arming.md#the-animation; ES1GO decompile at 0001eff6",
+      "verified": {
+        "bytes": "0001eff6+366",
+        "sha1": "d37bb2d866f0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001f164",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTAnimListBox_Dtor",
+      "description": "(control, flags) in stack order, its arguments removed by this function: MTAnimListBox's slot +4. Stores its vtable 0007f534, closes the scripts with Menu_CloseControlTtms (00037aac)(+0x3e) and clears +0x3e, stores the vtables 0007f412, 0007f2f8 and 0007f1ea in turn, and frees the control with Mem_Delete (00001a44) when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/shell/arming.md#the-animation; ES1GO decompile at 0001f164",
+      "verified": {
+        "bytes": "0001f164+171",
+        "sha1": "352707dd0568",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001f20f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTAnimListBox_Draw",
+      "description": "(control), its argument removed by this function: MTAnimListBox's slot +8. CornerFrame_Draw (00044b86) with the record +0x44 over the rect; while the byte +0x48 is set, Raster_FrameRectColour (0004b867)(10, the rect); while the script index +0x42 is 0 or more, Ttm_SetMode (00046948)(0, the handle byte +0x3e[+0x42]). Clears +0x1f.",
+      "source": "Herculan/docs/es1/shell/arming.md#the-animation; ES1GO decompile at 0001f20f",
+      "verified": {
+        "bytes": "0001f20f+102",
+        "sha1": "87b30dd03729",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001f275",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTAnimListBox_SelectPrev",
+      "description": "(control), its argument removed by this function: MTAnimListBox's slot +0x1c. While the script index +0x42 is 0 or more: Ttm_SetMode (00046948)(2, its handle byte +0x3e[+0x42]), takes 1 from +0x42 (from 0 to -1, the byte before the handles), and Ttm_SetPage (000468fc)(1, that handle) and Ttm_SetMode(0, that handle). Sets +0x1f either way.",
+      "source": "Herculan/docs/es1/shell/arming.md#the-animation; ES1GO decompile at 0001f275",
+      "verified": {
+        "bytes": "0001f275+103",
+        "sha1": "ad2d71973bcc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001f2dc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTAnimListBox_SelectNext",
+      "description": "(control), its argument removed by this function: MTAnimListBox's slot +0x20. Ttm_SetMode (00046948)(2, the handle byte +0x3e[+0x42]) while the script index +0x42 is 0 or more; sets +0x42 to (+0x42 + 1) mod +0x26; Ttm_SetPage (000468fc)(1, its handle) and Ttm_SetMode(0, its handle); sets +0x1f.",
+      "source": "Herculan/docs/es1/shell/arming.md#the-animation; ES1GO decompile at 0001f2dc",
+      "verified": {
+        "bytes": "0001f2dc+125",
+        "sha1": "b6672b4977a0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001f359",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTAnimListBox_Select",
+      "description": "(control, index) in stack order, its arguments removed by this function: MTAnimListBox's slot +0x24. Ttm_SetMode (00046948)(2, the handle byte +0x3e[+0x42]) while the script index +0x42 is 0 or more; stores index at +0x42; for an index of 0 or more, Ttm_SetPage (000468fc)(1, its handle) and Ttm_SetMode(0, its handle); sets +0x1f.",
+      "source": "Herculan/docs/es1/shell/arming.md#the-animation; ES1GO decompile at 0001f359",
+      "verified": {
+        "bytes": "0001f359+113",
+        "sha1": "8c387e52d1e8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001f3ca",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTAnimListBox_TrackSelect",
+      "description": "(control), its argument removed by this function: MTAnimListBox's slot +0xc. Calls the control's slot +0x1c when the tracked point +0x28 is above the rect's top +4, its slot +0x20 when it is below the rect's bottom +0xc, and otherwise nothing.",
+      "source": "Herculan/docs/es1/shell/arming.md#the-animation; ES1GO decompile at 0001f3ca",
+      "verified": {
+        "bytes": "0001f3ca+76",
+        "sha1": "d9ec91801ae6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001f416",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTAnimListBox_Highlight",
+      "description": "(control), its argument removed by this function: MTAnimListBox's slot +0x10. Sets the byte +0x48 and +0x1f.",
+      "source": "Herculan/docs/es1/shell/arming.md#the-animation; ES1GO decompile at 0001f416",
+      "verified": {
+        "bytes": "0001f416+22",
+        "sha1": "734755fe8ec1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001f42c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MTAnimListBox_Unhighlight",
+      "description": "(control), its argument removed by this function: MTAnimListBox's slot +0x18. Clears the byte +0x48 and sets +0x1f.",
+      "source": "Herculan/docs/es1/shell/arming.md#the-animation; ES1GO decompile at 0001f42c",
+      "verified": {
+        "bytes": "0001f42c+22",
+        "sha1": "f93468838f93",
         "scope": "body",
         "via": "decompile"
       }
@@ -9847,14 +10207,8 @@
       "type": "function",
       "confidence": "high",
       "name": "ArmingMenu_OnMessage",
-      "description": "(menu, message), its arguments removed by this function: ArmingMenu's slot +8 (vtable 00081fe6), the handler of screens 1800 and 1820. Looks the message's target +6 up among the eleven ids of ArmingMenu_CaseTable (00080db8) with REPNE SCASD and jumps to the target beside it: 1803 sets hotspot 1803's byte +0; 1808 Arming_SelectListLine (0002e126)(menu, the value +4); 1801 and 1802 the list's slot +0x1c or +0x20 and then Arming_SelectListLine with its selected line; 2004 and 2003 Hangar_SelectNext (0002986f) or Hangar_SelectPrev (00029946) with 2 in Shell_Mode (000aad56) 0 (then storing Hangar_SelectedSlot (00080894) in SingleMission_Record (0009b014)'s current pilot entry's +8) and 0 otherwise, then CareerRecord_SelectPilot (00015ad4)(CareerRecord_Current (00014ef4), CareerRecord_FindPilotBySlot (00015c39)), lists 1904 and 1903 set to PilotEntry_NameIndex (00015f50) + 1 and the chassis, the byte 0007ff98 cleared and Arming_Refresh (0002dc54); 1702, 1807 and 1806 Hangar_SelectMount (00029a14)(value), Hangar_NextMount (00029a52) or Hangar_PrevMount (00029a87), +0x27 = 0 and Arming_Refresh; 1111 the list's mode toggle (Menu_ListLines (0003750d)(1809) and button text line 1, or Arming_Refresh); 100 Hangar_ClearSelectedMount (0002961c), CareerRecord_SaveCurrent (00014f28) and, in mode 0, Hangar_SaveFile (0002909c)(Path_ApplyAltDrive (00020989)(car\\sm_init.dat)) and target 1501, otherwise target 1700. Ghidra's function holds only the dispatch, the 1803 and 1808 cases and the exit; the other case bodies from 0002e5c5 to 0002ecb8 lie outside it.",
-      "source": "Herculan/docs/es1/shell/arming.md#what-a-press-does; ES1GO disassembly at 0002e54c",
-      "verified": {
-        "bytes": "0002e54c+1908",
-        "sha1": "86ca3f858c12",
-        "scope": "body",
-        "via": "disasm"
-      }
+      "description": "(menu, message), its arguments removed by this function: ArmingMenu's slot +8 (vtable 00081fe6), the handler of screens 1800 and 1820. Looks the message's target +6 up among the eleven ids of ArmingMenu_CaseTable (00080db8) with REPNE SCASD and jumps to the target beside it: 1803 sets hotspot 1803's byte +0; 1808 Arming_SelectListLine (0002e126)(menu, the value +4); 1801 and 1802 the list's slot +0x1c or +0x20 and then Arming_SelectListLine with its selected line; 2004 and 2003 Hangar_SelectNext (0002986f) or Hangar_SelectPrev (00029946) with 2 in Shell_Mode (000aad56) 0 (then storing Hangar_SelectedSlot (00080894) in SingleMission_Record (0009b014)'s current pilot entry's +8) and 0 otherwise, then CareerRecord_SelectPilot (00015ad4)(CareerRecord_Current (00014ef4), CareerRecord_FindPilotBySlot (00015c39)), lists 1904 and 1903 set to PilotEntry_NameIndex (00015f50) + 1 and the chassis, the byte 0007ff98 cleared and Arming_Refresh (0002dc54); 1702, 1807 and 1806 Hangar_SelectMount (00029a14)(value), Hangar_NextMount (00029a52) or Hangar_PrevMount (00029a87), +0x27 = 0 and Arming_Refresh; 1111 the list's mode toggle (Menu_ListLines (0003750d)(1809) and button text line 1, or Arming_Refresh); 100 Hangar_ClearSelectedMount (0002961c), CareerRecord_SaveCurrent (00014f28) and, in mode 0, Hangar_SaveFile (0002909c)(Path_ApplyAltDrive (00020989)(car\\sm_init.dat)) and target 1501, otherwise target 1700.",
+      "source": "Herculan/docs/es1/shell/arming.md#what-a-press-does; ES1GO disassembly at 0002e54c"
     },
     {
       "address": "0002ecc0",
@@ -9877,7 +10231,7 @@
       "type": "function",
       "confidence": "high",
       "name": "RepairMenu_RefreshHerc",
-      "description": "(menu), its argument removed by this function: CareerRecord_SelectPilot (00015ad4)(record, CareerRecord_FindPilotBySlot (00015c39)(record, Hangar_SelectedSlot (00080894))); selects in list 1904 line PilotEntry_NameIndex (00015f50)(that record, entry) + 1, in 1903 the selected HERC's chassis word (-1 for none), in 1905 Repair_LevelForCondition (000389fb)(Herc_OverallCondition (00024b6a)) (of 0 for none); then RepairMenu_RefreshSalvage (0002ecc0)(menu).",
+      "description": "(menu), its argument removed by this function: CareerRecord_SelectPilot (00015ad4)(record, CareerRecord_FindPilotBySlot (00015c39)(record, Hangar_SelectedSlot (00080894))); selects in list 1904 line PilotEntry_NameIndex (00015f50)(the roster's current record 0009b23b + 0x1f7 x [0009b21f], entry) + 1, in 1903 the selected HERC's chassis word (-1 for none), in 1905 Repair_LevelForCondition (000389fb)(Herc_OverallCondition (00024b6a)) (of 0 for none); then RepairMenu_RefreshSalvage (0002ecc0)(menu).",
       "source": "Herculan/docs/es1/shell/repair-and-build.md#repair--screen-1900; ES1GO decompile at 0002ee70",
       "verified": {
         "bytes": "0002ee70+409",
@@ -10822,7 +11176,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Arming_BuildWeaponList",
-      "description": "(mount, chassis), its arguments removed by this function: fills Arming_ListLines (000ab30c) with eng\\watext.bin line numbers from Arming_SingleWeaponLines (0008129c) in Shell_Mode (000aad56) 0 or Arming_CareerWeaponLines (00081274) otherwise, ends it with -1 and returns it. A weapon is offered when 00037383 (a copy of Tech_IsAvailable (00028409)) finds it available in CareerRecord_Current (00014ef4)'s +0xa8 or Inventory_SlotCount (000282eb) of the stock [000aad62] is not 0. Mount -1: each weapon 0-16 offered. Otherwise word 17 (NONE) first, then each record from the second on of the chassis's layout for that mount (the dword 000aae0a + 6 x chassis, its 6-byte mount, 20-byte records) whose weapon is offered or is Herc_CurrentMountWeapon (00024a6f) of the selected HERC.",
+      "description": "(mount, chassis), its arguments removed by this function: fills Arming_ListLines (000ab30c) with eng\\watext.bin line numbers from Arming_SingleWeaponLines (0008129c) in Shell_Mode (000aad56) 0 or Arming_CareerWeaponLines (00081274) otherwise, ends it with -1 and returns it. A weapon is offered when Tech_IsAvailableListCopy (00037383) (a copy of Tech_IsAvailable (00028409)) finds it available in CareerRecord_Current (00014ef4)'s +0xa8 or Inventory_SlotCount (000282eb) of the stock [000aad62] is not 0. Mount -1: each weapon 0-16 offered. Otherwise word 17 (NONE) first, then each record from the second on of the chassis's layout for that mount (the dword 000aae0a + 6 x chassis, its 6-byte mount, 20-byte records) whose weapon is offered or is Herc_CurrentMountWeapon (00024a6f) of the selected HERC.",
       "source": "Herculan/docs/es1/shell/arming.md#the-weapon-list; ES1GO decompile at 000371ad",
       "verified": {
         "bytes": "000371ad+470",
@@ -10830,6 +11184,15 @@
         "scope": "body",
         "via": "decompile"
       }
+    },
+    {
+      "address": "00037383",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Tech_IsAvailableListCopy",
+      "description": "A second copy of Tech_IsAvailable (00028409) in the file of Menu_ListLines: es2_naming.py diff finds it identical after normalisation. es2_xref finds its two calls in Arming_BuildWeaponList (000371ad).",
+      "source": "Herculan/docs/es1/shell/arming.md#the-weapon-list; es2_naming.py diff ES1GO 00037383 ES1GO 00028409"
     },
     {
       "address": "000373d3",
@@ -10906,13 +11269,28 @@
       "type": "function",
       "confidence": "high",
       "name": "Hangar_SelectedComponentLines",
-      "description": "(kind), its argument removed by this function: 00024d99(the HERC in Hangar_SelectedSlot (00080894), kind) when the slot is not -1 and holds one; Menu_ListLines (0003750d)'s case for 1921, 1924, 1925 and 1926.",
+      "description": "(kind), its argument removed by this function: 00024d99(the HERC in Hangar_SelectedSlot (00080894), kind) when the slot is not -1 and holds one, and otherwise answers the selected slot, sign-extended, as its test left it in EAX; Menu_ListLines (0003750d)'s case for 1921, 1924, 1925 and 1926.",
       "source": "Herculan/docs/es1/shell/repair-and-build.md#system-repair--screen-1920; ES1GO decompile at 000377cd",
       "verified": {
         "bytes": "000377cd+68",
         "sha1": "0ecb9a4be832",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
+      }
+    },
+    {
+      "address": "00037827",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Menu_LoadControlBitmaps",
+      "description": "(id), its argument removed by this function: kind 16's bank. Looks id up among the eleven dwords at 0008144c with REPNE SCASD and jumps through the target beside it (00081478), cases Ghidra leaves outside the function: 1611 (0003784a) loads res32\\insignia.dba (000813e0) with Resource_LoadBitmapArray (0004b7df) into the dword 000813d4 while that is 0, and answers the dword; 1615 to 1618 (0003786d) the same with 000813f3 into 000813dc; 1321, 1316, 1803 and 1914 to 1916 (00037890, 000378b3, 000378d6, 000378f9, undefined bytes in the same shape) with 00081403, 00081416, 00081428 and 0008143a into 000813d4. Any other id answers 0 (0003791c).",
+      "source": "Herculan/docs/es1/shell/menus.md#the-picture-tile; ES1GO decompile and disassembly at 00037827",
+      "verified": {
+        "bytes": "00037827+253",
+        "sha1": "de603bdacac3",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -10921,7 +11299,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_FreeBitmapArraySlot",
-      "description": "(array), its argument removed by this function: when one of the dwords 000813d4, 000813d8 and 000813dc, tested in that order, holds array, destroys it with GLBitmapArray_Dtor (0005343c)(array, 3) and clears that dword; otherwise does nothing. es2_xref finds calls from 0001ec76, a control's destructor, with the control's +0x3e, and from ArmingMenu_Dtor (000405ae).",
+      "description": "(array), its argument removed by this function: when one of the dwords 000813d4, 000813d8 and 000813dc, tested in that order, holds array, destroys it with GLBitmapArray_Dtor (0005343c)(array, 3) and clears that dword; otherwise does nothing. es2_xref finds calls from MTGfxListBox_Dtor (0001ec76), a control's destructor, with the control's +0x3e, and from ArmingMenu_Dtor (000405ae).",
       "source": "Herculan/docs/es1/shell/message-box.md#where-the-object-files-start-and-end; ES1GO decompile at 00037924",
       "verified": {
         "bytes": "00037924+114",
@@ -10936,7 +11314,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Menu_OpenControlTtms",
-      "description": "(id), its argument removed by this function: for id 1803 (0x70b) opens w1800w0%d.ttm for 0 to 9 and w1800w%d.ttm for 10 to 13 into the bytes 000a056c[0..13], and w1800r0%d.ttm for 0 to 3 into 000a057a[0..3], each with Ttm_Open (0004680a)(0, 0, the render context 0007fcdc, name) and run once with Ttm_RunScript (000465da); then sets the mode of each of the 18 handles that is not 0xff to 2, hidden, with Ttm_SetMode (00046948). For any other id sets the 18 bytes to 0xff. Returns 000a056c. es2_xref finds one call, from Menu_BuildFromDlg (0003a1f7), for a kind-17 record, whose control constructor 0001eff6 is passed the result.",
+      "description": "(id), its argument removed by this function: for id 1803 (0x70b) opens w1800w0%d.ttm for 0 to 9 and w1800w%d.ttm for 10 to 13 into the bytes 000a056c[0..13], and w1800r0%d.ttm for 0 to 3 into 000a057a[0..3], each with Ttm_Open (0004680a)(0, 0, the render context 0007fcdc, name) and run once with Ttm_RunScript (000465da); then sets the mode of each of the 18 handles that is not 0xff to 2, hidden, with Ttm_SetMode (00046948). For any other id sets the 18 bytes to 0xff. Returns 000a056c. es2_xref finds one call, from Menu_BuildFromDlg (0003a1f7), for a kind-17 record, whose control constructor MTAnimListBox_Ctor (0001eff6) is passed the result.",
       "source": "Herculan/docs/es1/shell/message-box.md#where-the-object-files-start-and-end; ES1GO decompile at 00037996",
       "verified": {
         "bytes": "00037996+278",
@@ -10951,7 +11329,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Menu_CloseControlTtms",
-      "description": "(handles), its argument removed by this function: closes with Ttm_Close (000469da) each of the 18 handle bytes at handles that is not 0xff, the bytes Menu_OpenControlTtms (00037996) fills. es2_xref finds one call, from 0001f164, a control's destructor, with the control's +0x3e.",
+      "description": "(handles), its argument removed by this function: closes with Ttm_Close (000469da) each of the 18 handle bytes at handles that is not 0xff, the bytes Menu_OpenControlTtms (00037996) fills. es2_xref finds one call, from MTAnimListBox_Dtor (0001f164), a control's destructor, with the control's +0x3e.",
       "source": "Herculan/docs/es1/shell/message-box.md#where-the-object-files-start-and-end; ES1GO decompile at 00037aac",
       "verified": {
         "bytes": "00037aac+49",
@@ -11446,7 +11824,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Menu_BuildFromDlg",
-      "description": "(menu, number) in stack order, callee-cleaned: builds shell menu number's window and controls from dlg\\menu<number>.dlg, their text from eng\\menu<number>.bin (TextTable_Ctor; VolRStream_CtorFromPath, and Text_LoadDataFile when it opens). Reads the int16 count through the stream's slot +0x1c, then per record four int16 rect words (VolRStream_Read) into the low halves of zeroed dwords, the bytes kind, style and key, and the int16 id. Record i's text is line i (Text_GetString), taken before the switch for kinds 0, 1, 4 and 5 unless the id is one of the five at 0008196c, which jump through the table beside them (1211 to the next record). By kind: 0 the window at menu +6, MTWindow_Ctor (00036874)(0, id, text, rect) for style 0 and DUIWindow_Ctor (0001abcf)(0, rect) for style 1, the rect copied to menu +0x12 for any style; 1, 4 and 5 the window's vtable +0x4e9 slot +4 with mode 0, 1 or 2, width right - left, the point (left, top), the text's length + 1 and the text, menu 4444's kind-1 text holding '#' first passed to Hangar_FormatScrapValue (0002a1aa); 2 MTEditBox_Ctor (0001f442)(0, id, rect); 3 MTBmpButton_Ctor (0001d47d) for style 1 (no text when the key is non-zero) and MTButton_Ctor (0001cde8) otherwise, menu 1300's id 100 taking its text from the four values at 000819e0 on the word Shell_ReturnScreen (0007fce8); 14 each of the 17 ids at 00081b08 DUIWindow_AddHotspot (0001b2de)(window, a, id, its handler, rect), 1612 to 1614 with maybe_PilotPortraitHotspot_Draw (00017a19) and 1502 with a = 000a02d4; 15 MTStrListBox_Ctor (0001e11a)(0, 0x100, 0, 0, a word, style, id, Menu_ListLines (0003750d)(id), rect), the word set for the 23 ids at 00081a00; 16 0001eaef(0, 0x100, 0, a word, id, 00037827(id), rect), the word -1 or set for the ten ids at 00081ab8; 17 0001eff6(0, 0x13, 0, 0xffff, id, Menu_OpenControlTtms (00037996)(id), rect); 18 0004c83a(rect) for style 1; other kinds nothing. Kinds 2, 3, 15, 16 and 17 add the control with DUIWindow_AddControl (0001b207). Closes and destroys both streams (VolRStream_Close, VolRStream_Dtor) and the table (TextTable_Dtor). es2_xref finds one call, from Menu_Open (0003969e).",
+      "description": "(menu, number) in stack order, callee-cleaned: builds shell menu number's window and controls from dlg\\menu<number>.dlg, their text from eng\\menu<number>.bin (TextTable_Ctor; VolRStream_CtorFromPath, and Text_LoadDataFile when it opens). Reads the int16 count through the stream's slot +0x1c, then per record four int16 rect words (VolRStream_Read) into the low halves of zeroed dwords, the bytes kind, style and key, and the int16 id. Record i's text is line i (Text_GetString), taken before the switch for kinds 0, 1, 4 and 5 unless the id is one of the five at 0008196c, which jump through the table beside them (1211 to the next record). By kind: 0 the window at menu +6, MTWindow_Ctor (00036874)(0, id, text, rect) for style 0 and DUIWindow_Ctor (0001abcf)(0, rect) for style 1, the rect copied to menu +0x12 for any style; 1, 4 and 5 the window's vtable +0x4e9 slot +4 with mode 0, 1 or 2, width right - left, the point (left, top), the text's length + 1 and the text, menu 4444's kind-1 text holding '#' first passed to Hangar_FormatScrapValue (0002a1aa); 2 MTEditBox_Ctor (0001f442)(0, id, rect); 3 MTBmpButton_Ctor (0001d47d) for style 1 (no text when the key is non-zero) and MTButton_Ctor (0001cde8) otherwise, menu 1300's id 100 taking its text from the four values at 000819e0 on the word Shell_ReturnScreen (0007fce8); 14 each of the 17 ids at 00081b08 DUIWindow_AddHotspot (0001b2de)(window, a, id, its handler, rect), 1612 to 1614 with PilotPortraitHotspot_Draw (00017a19) and 1502 with a = 000a02d4; 15 MTStrListBox_Ctor (0001e11a)(0, 0x100, 0, 0, a word, style, id, Menu_ListLines (0003750d)(id), rect), the word set for the 23 ids at 00081a00; 16 MTGfxListBox_Ctor (0001eaef)(0, 0x100, 0, a word, id, Menu_LoadControlBitmaps (00037827)(id), rect), the word -1 or set for the ten ids at 00081ab8; 17 MTAnimListBox_Ctor (0001eff6)(0, 0x13, 0, 0xffff, id, Menu_OpenControlTtms (00037996)(id), rect); 18 0004c83a(rect) for style 1; other kinds nothing. Kinds 2, 3, 15, 16 and 17 add the control with DUIWindow_AddControl (0001b207). Closes and destroys both streams (VolRStream_Close, VolRStream_Dtor) and the table (TextTable_Dtor). es2_xref finds one call, from Menu_Open (0003969e).",
       "source": "ES1GO decompile and disassembly at 0003a1f7",
       "verified": {
         "bytes": "0003a1f7+3905",
@@ -13768,7 +14146,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Screen_BlindsCopy",
-      "description": "(n, to, from, flag) in stack order, its arguments removed by this function: installs the render context 0007fcd8; sets the display 000ab616's source page +0x34 to from and draw page +0x38 to to, through the raster routines 000865f0 and 000865f4 while it is the current display; for each pass i below n copies the one-pixel rows i, i + n, ... below the word 0009b00c, 0 to 0x13f wide, with Region_CopyBetweenPages and waits Shell_WaitTicks(1); then puts both pages and the render context back. flag is not read.",
+      "description": "(n, to, from, flag) in stack order, its arguments removed by this function: installs the render context 0007fcd8; sets the display 000ab616's source page +0x34 to from and draw page +0x38 to to, through the raster routines 000865f0 and 000865f4 while it is the current display; for each pass i below n copies with Region_CopyBetweenPages the rects from (0, r) to (0x13f, r + 1), inclusive, so two rows each, for r = i, i + n, ... below the word 0009b00c and waits Shell_WaitTicks(1); then puts both pages and the render context back. flag is not read.",
       "source": "Herculan/docs/es1/shell/repair-and-build.md#the-hangars-selection; ES1GO decompile at 0004bc0d",
       "verified": {
         "bytes": "0004bc0d+870",

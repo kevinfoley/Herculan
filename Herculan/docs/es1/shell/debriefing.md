@@ -17,7 +17,7 @@ The debriefing's code, `0002c422` to `0002c742`, lies inside the menu handlers' 
 
 ## The screen
 
-**`dlg\menu1510.dlg`, a single mission's debriefing, and `dlg\menu1520.dlg`, a career's, lay out a menu window titled DEBRIEFING, two text buttons along its bottom, the two page arrows and the results panel; their `eng\menu<n>.bin` hold the title and the buttons' texts.** The window is a menu window, style 0 (`MTWindow_Ctor`, [the kinds](../formats/dlg-menu-dialogs.md#the-kinds)), id 1510 or 1520, so it draws `res32\menu1510.dba` or `res32\menu1520.dba` and the title on its plate ([the menu window's drawing](menus.md#the-menu-windows-drawing--mtwindow_draw-00036b4c)). The window is (5, 2)–(168, 196) in 1510 and (5, 2)–(167, 196) in 1520; the other rects are in the window (`HercWorks.Query menu 1510 1520`):
+**`dlg\menu1510.dlg`, a single mission's debriefing, and `dlg\menu1520.dlg`, a career's, lay out a menu window titled DEBRIEFING, two text buttons along its bottom, the two page arrows and the results panel; their `eng\menu<n>.bin` hold the title and the buttons' texts.** The window is a menu window, style 0 (`MTWindow_Ctor`, [the kinds](../formats/dlg-menu-dialogs.md#the-kinds)), id 1510 or 1520, so it draws `res32\menu1510.dba` or `res32\menu1520.dba` and the title on its plate ([the menu window's drawing](menu-controls.md#the-menu-windows-drawing--mtwindow_draw-00036b4c)). The window is (5, 2)–(168, 196) in 1510 and (5, 2)–(167, 196) in 1520; the other rects are in the window (`HercWorks.Query menu 1510 1520`):
 
 | Id | Kind | Rect | Key | Text |
 |---|---|---|---|---|
@@ -28,7 +28,7 @@ The debriefing's code, `0002c422` to `0002c742`, lies inside the menu handlers' 
 | 102 | icon button | (141, 75)–(152, 85) | `0x50` Down | |
 | 1522 | hotspot, kind 14 | (8, 87)–(154, 172) in 1510, (7, 87)–(154, 172) in 1520 | | the results panel |
 
-The icon buttons take their frames from `res32\corners.dba` by key ([buttons](menus.md#buttons)). In 1510 no control has the key `Space`, so `Menu_Open` puts the pointer on control 0, MISSION >; in 1520 it goes to PROCEED > ([opening a menu](menus.md#opening-a-menu--menu_open-0003969e), step 4). `Menu_Open` changes no control for 1510 or 1520 (step 3). `Menu_Close` destroys both windows with `DUIWindow_Dtor`, as it does the plain windows of 1500 and 1501, not with `MTWindow_Dtor` ([closing a menu](menus.md#closing-a-menu--menu_close-0003b138), [Open](#open)).
+The icon buttons take their frames from `res32\corners.dba` by key ([buttons](menu-controls.md#buttons)). In 1510 no control has the key `Space`, so `Menu_Open` puts the pointer on control 0, MISSION >; in 1520 it goes to PROCEED > ([opening a menu](menus.md#opening-a-menu--menu_open-0003969e), step 4). `Menu_Open` changes no control for 1510 or 1520 (step 3). `Menu_Close` destroys both windows with `DUIWindow_Dtor`, as it does the plain windows of 1500 and 1501, not with `MTWindow_Dtor` ([closing a menu](menus.md#closing-a-menu--menu_close-0003b138), [Open](#open)).
 
 ### Opening it
 
@@ -63,10 +63,10 @@ That is why a file has eight or nine `DEB:` blocks. Header word 3 as `HercWorks.
 
 ### The results panel
 
-**Below the text the window shows a framed panel of the mission's results: the salvage, a table of kills with a column for the player and one for the squad, the squad's losses, the weapons recovered and the new technology recovered.** The panel is the hotspot 1522: `Menu_BuildFromDlg`'s kind-14 case adds it with `DebriefingResultsHotspot_Draw` (`000175d7`) as its handler ([the build](menus.md#opening-a-menu--menu_open-0003969e)), and `DUIWindow_Draw` calls the handler with (the hotspot's rect, 1522) when the window is drawn, as `DUIWindow_UpdateHotspots` does whenever the hotspot's pressed byte `+0` is set ([drawing a window](menus.md#drawing-a-window--duiwindow_draw-0001bfa3), [updating a window](menus.md#updating-a-window--duiwindow_update-0001c067)). The handler reads only the rect (*x0*, *y0*, *x1*, *y1*), in the window's render context `000ab612`, whose origin is the window's corner:
+**Below the text the window shows a framed panel of the mission's results: the salvage, a table of kills with a column for the player and one for the squad, the squad's losses, the weapons recovered and the new technology recovered.** The panel is the hotspot 1522: `Menu_BuildFromDlg`'s kind-14 case adds it with `DebriefingResultsHotspot_Draw` (`000175d7`) as its handler ([the build](menus.md#opening-a-menu--menu_open-0003969e)), and `DUIWindow_Draw` calls the handler with (the hotspot's rect, 1522) when the window is drawn, as `DUIWindow_UpdateHotspots` does whenever the hotspot's pressed byte `+0` is set ([drawing a window](menu-controls.md#drawing-a-window--duiwindow_draw-0001bfa3), [updating a window](menu-controls.md#updating-a-window--duiwindow_update-0001c067)). The handler reads only the rect (*x0*, *y0*, *x1*, *y1*), in the window's render context `000ab612`, whose origin is the window's corner:
 
 1. sets the context's alignment `+0x231` to 0, left, and fills the rect with color `0x1f` framed in `0x1f` with `Raster_FillFrameRectColours` (`0004b8d8`);
-2. draws ten lines of `eng\watext.bin` (`0009afa8`, `Text_GetString`) in the font `000aacea`, `cstats_2` ([the window](menus.md#the-window)), with `HudFont_DrawString`;
+2. draws ten lines of `eng\watext.bin` (`0009afa8`, `Text_GetString`) in the font `000aacea`, `cstats_2` ([the window](menu-controls.md#the-window)), with `HudFont_DrawString`;
 3. draws the values in the font `000aace6`, `cstats_1`, which `Shell_LoadData` loads from `dfn\cstats_1.dfn` (`000207fa`) ([the loads](../formats/styles-dat.md#the-loads)), each formatted with `sprintf` as a decimal, `%ld` (`0007ed4d`) for the salvage and `%d` for the rest;
 4. sets the alignment to 2, centered, with the field width `+0x235` *x1* − *x0*, and draws the text at `0007d808` at (*x0*, *y0* + 81), and leaves the alignment at 2.
 

@@ -8,7 +8,7 @@ public delegate void Es1HotspotHandler(Es1ShellRenderContext context, Es1Rect re
 
 /// <summary>
 /// One of a window's clickable areas, a <c>0x38</c>-byte entry <c>WindowHotspot_Ctor</c> (<c>0001ad4e</c>) builds
-/// (docs/es1/shell/menus.md#the-window), filled by <see cref="Es1DUIWindow.AddHotspot"/>.
+/// (docs/es1/shell/menu-controls.md#the-window), filled by <see cref="Es1DUIWindow.AddHotspot"/>.
 /// </summary>
 public sealed class Es1WindowHotspot {
 	/// <summary><c>+0</c>: the area was pressed, or the pointer met it, and is to be drawn by <see cref="Es1DUIWindow.UpdateHotspots"/>.</summary>
@@ -35,7 +35,7 @@ public sealed class Es1WindowHotspot {
 
 /// <summary>
 /// The shell's window, class <c>DUIWindow</c> (vtable <c>0007eff0</c>, <c>0x4ed</c> bytes)
-/// (docs/es1/shell/menus.md#the-window): its rect on the screen, its render context, up to 64 controls, the keys they
+/// (docs/es1/shell/menu-controls.md#the-window): its rect on the screen, its render context, up to 64 controls, the keys they
 /// answer to, and up to 15 hotspots. The plain window draws no background and keeps no labels;
 /// <see cref="Es1MTWindow"/> is the menu window.
 /// </summary>
@@ -120,7 +120,7 @@ public class Es1DUIWindow {
 	}
 
 	/// <summary>
-	/// <c>DUIWindow_Draw</c> (<c>0001bfa3</c>) (docs/es1/shell/menus.md#drawing-a-window--duiwindow_draw-0001bfa3): in
+	/// <c>DUIWindow_Draw</c> (<c>0001bfa3</c>) (docs/es1/shell/menu-controls.md#drawing-a-window--duiwindow_draw-0001bfa3): in
 	/// the window's render context, the translation cleared for the window's slot <c>+8</c> and set again; each control's
 	/// slot <c>+8</c>; each hotspot's handler with its rect and id. The draws go to the display's draw page.
 	/// </summary>
@@ -138,7 +138,7 @@ public class Es1DUIWindow {
 	}
 
 	/// <summary>
-	/// <c>DUIWindow_Update</c> (<c>0001c067</c>) (docs/es1/shell/menus.md#updating-a-window--duiwindow_update-0001c067):
+	/// <c>DUIWindow_Update</c> (<c>0001c067</c>) (docs/es1/shell/menu-controls.md#updating-a-window--duiwindow_update-0001c067):
 	/// the translation set and <see cref="Es1MenuGlobals.InputReady"/> cleared; each control whose
 	/// <see cref="Es1DUIControl.Changed"/> is set or that holds the input (tracking 2) drawn on page 2 and then on the draw
 	/// page the display held, and its slot <c>+0x48</c> rect, moved by the window's corner, added as dirty with delay 0;

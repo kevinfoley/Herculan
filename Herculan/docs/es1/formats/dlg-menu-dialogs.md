@@ -19,7 +19,7 @@ A record:
 | 10 | `uint8` | the key, a keyboard scan code; read for kind 3 only |
 | 11 | `int16` | the id |
 
-The first record is the menu's window, kind 0. Its id picks the bitmap array the window loads, `res32\menu<id>.dba` ([the window](../shell/menus.md#the-window)): the menu's own number in 25 files, 999 in eight (menus 1270, 3000, 3333, 5555, 6666 and 7770 to 7772), 1240 in three (888, 1250 and 1260), and 1501, 1700 and 1800 in menus 1500, 1710 and 1820. `SHELL0.VOL`'s `RES32\` holds no `MENU1501.DBA` or `MENU1700.DBA`. A control's rect is relative to the window's, and a control's id is the screen its press names ([a message's path](../shell/menu-input.md#a-messages-path)). In `MENU1000.DLG`, the main menu, the window is (49, 50)–(281, 165), and six style-0 buttons with no key follow, ids 1499, 1100, 1700, 1200, 1300 and 1003, then a style-1 kind-15 control, id 1002.
+The first record is the menu's window, kind 0. Its id picks the bitmap array the window loads, `res32\menu<id>.dba` ([the window](../shell/menu-controls.md#the-window)): the menu's own number in 25 files, 999 in eight (menus 1270, 3000, 3333, 5555, 6666 and 7770 to 7772), 1240 in three (888, 1250 and 1260), and 1501, 1700 and 1800 in menus 1500, 1710 and 1820. `SHELL0.VOL`'s `RES32\` holds no `MENU1501.DBA` or `MENU1700.DBA`. A control's rect is relative to the window's, and a control's id is the screen its press names ([a message's path](../shell/menu-input.md#a-messages-path)). In `MENU1000.DLG`, the main menu, the window is (49, 50)–(281, 165), and six style-0 buttons with no key follow, ids 1499, 1100, 1700, 1200, 1300 and 1003, then a style-1 kind-15 control, id 1002.
 
 ## The text
 
@@ -29,14 +29,14 @@ A record's text is the line of `eng\menu<n>.bin` whose number is the record's po
 
 | Kind | Builds |
 |---|---|
-| 0 | the window, kept at the menu's `+6`: style 0 a [menu window](../shell/menus.md#the-window) (`MTWindow_Ctor`, `00036874`) with the text as its title, style 1 a plain one (`DUIWindow_Ctor`, `0001abcf`), any other style none. Each style copies the rect to the menu's `+0x12` |
-| 1, 4, 5 | a label: the window's vtable `+0x4e9`, slot `+4`, is called with a mode, 0, 1 or 2 for kinds 1, 4 and 5, the width (right − left), the point (left, top), the text's length plus 1, and the text. The menu window draws mode 0 from the point, 1 ending at the point plus the width and 2 centered in the width ([its drawing](../shell/menus.md#the-menu-windows-drawing--mtwindow_draw-00036b4c)). In menu 4444 a kind-1 text holding `#` is first passed to `Hangar_FormatScrapValue` (`0002a1aa`), which writes the selected HERC's scrap value in thousands, three characters, over the `#` and the two characters after it: "### tons of salvage." ([scrapping](../shell/between-missions.md#lost-squadmates)) |
+| 0 | the window, kept at the menu's `+6`: style 0 a [menu window](../shell/menu-controls.md#the-window) (`MTWindow_Ctor`, `00036874`) with the text as its title, style 1 a plain one (`DUIWindow_Ctor`, `0001abcf`), any other style none. Each style copies the rect to the menu's `+0x12` |
+| 1, 4, 5 | a label: the window's vtable `+0x4e9`, slot `+4`, is called with a mode, 0, 1 or 2 for kinds 1, 4 and 5, the width (right − left), the point (left, top), the text's length plus 1, and the text. The menu window draws mode 0 from the point, 1 ending at the point plus the width and 2 centered in the width ([its drawing](../shell/menu-controls.md#the-menu-windows-drawing--mtwindow_draw-00036b4c)). In menu 4444 a kind-1 text holding `#` is first passed to `Hangar_FormatScrapValue` (`0002a1aa`), which writes the selected HERC's scrap value in thousands, three characters, over the `#` and the two characters after it: "### tons of salvage." ([scrapping](../shell/between-missions.md#lost-squadmates)) |
 | 2 | a text box, `MTEditBox_Ctor` (`0001f442`)(0, id, rect), added to the window: the career's name box ([the name box](../shell/career.md#the-name-box)) |
-| 3 | a [button](../shell/menus.md#buttons): style 1 an icon button, any other style a text button, added to the window |
+| 3 | a [button](../shell/menu-controls.md#buttons): style 1 an icon button, any other style a text button, added to the window |
 | 14 | for the 17 ids at `00081b08`, a clickable area: `DUIWindow_AddHotspot` (`0001b2de`)(window, 0, id, handler, rect), each id with its handler ([the build](../shell/menus.md#opening-a-menu--menu_open-0003969e)); any other id builds nothing |
-| 15 | a [list box](../shell/menus.md#the-list-box), `MTStrListBox_Ctor` (`0001e11a`)(0, `0x100`, 0, 0, a word, style, id, `Menu_ListLines` (`0003750d`)(id), rect), added to the window. The word is 0, or for the 23 ids at `00081a00` set by their own code, two of them from the bytes `0007fcb8` and `0007fcb9` |
-| 16 | `0001eaef`(0, `0x100`, 0, a word, id, `00037827`(id), rect), added to the window. The word is −1, or for the ten ids at `00081ab8` set by their own code, 0 and the word `0007fcba` for two of them |
-| 17 | `0001eff6`(0, `0x13`, 0, `0xffff`, id, `Menu_OpenControlTtms` (`00037996`)(id), rect), added to the window. `00037996` returns the 18 bytes at `000a056c`: for id 1803 the handles of fourteen `w1800w<i>.ttm` and four `w1800r0<i>.ttm` scripts it loads, for any other id `0xff` each |
+| 15 | a [list box](../shell/menu-controls.md#the-list-box), `MTStrListBox_Ctor` (`0001e11a`)(0, `0x100`, 0, an alignment, a word, style, id, `Menu_ListLines` (`0003750d`)(id), rect), added to the window. The alignment and the word are 0, or for the 23 ids at `00081a00` set by their own code: the word, the selected line, from the bytes `0007fcb8` and `0007fcb9` for two of them, and the alignment 2, centered, for 1905, 1906, 1907, 1922, 1923 and 1927, and for 1903 and 1904 outside ARMING |
+| 16 | a [picture tile](../shell/menu-controls.md#the-picture-tile), `MTGfxListBox_Ctor` (`0001eaef`)(0, `0x100`, 0, a word, id, `Menu_LoadControlBitmaps` (`00037827`)(id), rect), added to the window. The word, the picture shown, is −1, or for the ten ids at `00081ab8` set by their own code: 0 for 1321 and 1611, the word `0007fcba` for 1316, a HERC's chassis for 1615 to 1618, and 1 or 0 by `Career_AutoRepairMode` (`0007fcf8`) for 1914 to 1916 |
+| 17 | [the animation](../shell/arming.md#the-animation), `MTAnimListBox_Ctor` (`0001eff6`)(0, `0x13`, 0, `0xffff`, id, `Menu_OpenControlTtms` (`00037996`)(id), rect), added to the window. `00037996` returns the 18 bytes at `000a056c`: for id 1803 the handles of fourteen `w1800w<i>.ttm` and four `w1800r0<i>.ttm` scripts it loads, for any other id `0xff` each |
 | 18 | with style 1, `0004c83a`(rect), which stores the rect in the 24-byte entry of `000a0a9c` that the word at `+4` of `00083bc4`'s object numbers, when that is under 9 |
 | 6–13, above 18 | nothing |
 
@@ -44,7 +44,6 @@ What the build does with each kind beyond this table, the keys a control adds an
 
 ## Open
 
-- **Open:** what the classes `0001eaef` (kind 16) and `0001eff6` (kind 17) are, and what `00037827` returns for them; the kind-15 ids whose lines are open are in [the menus' Open](../shell/menus.md#open).
-- **Open:** the code kind 15's 23 special ids and kind 16's ten jump to.
+- **Open:** the kind-15 ids whose lines are open are in [the menus' Open](../shell/menus.md#open).
 - **Open:** what `Resource_LoadBitmapArray` returns for a name with no file, which windows 1501 and 1700 load.
 - **Open:** `eng\` holds `MENU1499.BIN`, `MENU1600.BIN` and `MENU1810.BIN`, for which `dlg\` holds no `.DLG`; what builds those menus.

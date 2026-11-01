@@ -36,7 +36,7 @@ The war map's code, `0002bbaf` to `0002c421`, lies inside the menu handlers' fil
 | 101 | icon button | (271, 150)–(282, 160) | `0x49` PgUp | |
 | 102 | icon button | (271, 172)–(282, 182) | `0x51` PgDn | |
 
-The icon buttons take their frames from `res32\corners.dba` by key, and 1503–1506, 108 and 109 by id, the four arrows with the diamond hit area ([buttons](menus.md#buttons)). No control has the key `Space`, so `Menu_Open` puts the pointer on control 0, ARMING or SERVICE BAY ([opening a menu](menus.md#opening-a-menu--menu_open-0003969e), step 4). The kind-14 record makes the hotspot 1502 with `WarMapMenu_MapAreaNoOp` (`0002bbaf`) as its handler and the rect `000a02d4` as its *a* ([the build](menus.md#opening-a-menu--menu_open-0003969e)); `DUIWindow_Draw` and `DUIWindow_UpdateHotspots` call the handler with (the hotspot's rect, 1502), and it returns at once ([drawing a window](menus.md#drawing-a-window--duiwindow_draw-0001bfa3)).
+The icon buttons take their frames from `res32\corners.dba` by key, and 1503–1506, 108 and 109 by id, the four arrows with the diamond hit area ([buttons](menu-controls.md#buttons)). No control has the key `Space`, so `Menu_Open` puts the pointer on control 0, ARMING or SERVICE BAY ([opening a menu](menus.md#opening-a-menu--menu_open-0003969e), step 4). The kind-14 record makes the hotspot 1502 with `WarMapMenu_MapAreaNoOp` (`0002bbaf`) as its handler and the rect `000a02d4` as its *a* ([the build](menus.md#opening-a-menu--menu_open-0003969e)); `DUIWindow_Draw` and `DUIWindow_UpdateHotspots` call the handler with (the hotspot's rect, 1502), and it returns at once ([drawing a window](menu-controls.md#drawing-a-window--duiwindow_draw-0001bfa3)).
 
 ### Opening it
 
@@ -100,7 +100,7 @@ ARMING goes to screen 1800, or 1820 while `Shell_LowMemory` is set; both are `Ar
 
 #### The map's buttons
 
-Each of 108, 109 and 1503 to 1506, while `Shell_MissionMap` is set, calls a slot of the table at the map's `+0x4a` with the map: 108 `+8`, 109 `+0xc`, 1503 `+0x10`, 1504 `+0x14`, 1505 `+0x18` and 1506 `+0x1c`. Then, map or none, it sets `000809a8` to 3 and sets the pressed byte `+0` of the hotspot 1502, the window `+6`'s hotspot at `+0x19f` + `0x38` × `DUIWindow_FindHotspotById` (`0001be6f`)(window, 1502), so the next `DUIWindow_Update` calls `WarMapMenu_MapAreaNoOp` and clears it ([updating a window](menus.md#updating-a-window--duiwindow_update-0001c067)). The index is not tested: for −1 the byte written is the window's `+0x167`. What the six slots do is the mission map's ([Open](#open)).
+Each of 108, 109 and 1503 to 1506, while `Shell_MissionMap` is set, calls a slot of the table at the map's `+0x4a` with the map: 108 `+8`, 109 `+0xc`, 1503 `+0x10`, 1504 `+0x14`, 1505 `+0x18` and 1506 `+0x1c`. Then, map or none, it sets `000809a8` to 3 and sets the pressed byte `+0` of the hotspot 1502, the window `+6`'s hotspot at `+0x19f` + `0x38` × `DUIWindow_FindHotspotById` (`0001be6f`)(window, 1502), so the next `DUIWindow_Update` calls `WarMapMenu_MapAreaNoOp` and clears it ([updating a window](menu-controls.md#updating-a-window--duiwindow_update-0001c067)). The index is not tested: for −1 the byte written is the window's `+0x167`. What the six slots do is the mission map's ([Open](#open)).
 
 ### Leaving it
 

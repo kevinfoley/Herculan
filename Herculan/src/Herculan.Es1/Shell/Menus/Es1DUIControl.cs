@@ -4,7 +4,7 @@ namespace Herculan.Es1.Shell.Menus;
 
 /// <summary>
 /// The shell's control, class <c>DUIControl</c> (vtable <c>0007ef92</c>, and the button file's copy <c>0007f1ea</c>)
-/// (docs/es1/shell/menus.md#the-controls): a rect relative to its window, a hit shape, an id, a state and the slots the
+/// (docs/es1/shell/menu-controls.md#the-controls): a rect relative to its window, a hit shape, an id, a state and the slots the
 /// window code calls, as virtual members named after the slot's function. The base's slots do nothing, as
 /// <c>DUIControl</c>'s do.
 /// </summary>
@@ -129,7 +129,7 @@ public class Es1DUIControl {
 
 /// <summary>
 /// <c>DUIButtonControl</c> (vtable <c>0007f130</c>), the class <see cref="Es1MTButton"/> derives from
-/// (docs/es1/shell/menus.md#buttons): <c>MTButton_Ctor</c> stores its vtable and zeroes <see cref="Es1DUIControl.Tracking"/>
+/// (docs/es1/shell/menu-controls.md#buttons): <c>MTButton_Ctor</c> stores its vtable and zeroes <see cref="Es1DUIControl.Tracking"/>
 /// before storing its own. Its slots that differ from the base's are no-ops or <see cref="Es1MTButton"/>'s too.
 /// </summary>
 public class Es1DUIButtonControl : Es1DUIControl {
