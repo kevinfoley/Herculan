@@ -128,8 +128,8 @@ public sealed class Es1ArmingMenu : Es1Menu {
 
 	/// <summary>
 	/// The selected HERC's word <c>+0x18</c> + 2 × <c>+0x70</c>, the current mount's missile type, 0 with no HERC. Retail
-	/// reads it with no test of <c>+0x70</c>, so for −1 it reads <c>+0x16</c>, mount 9's weapon (arming.md's Open); a
-	/// HERC with fewer than ten mounts, or a mount past its words, reads 0 here, an engine guard.
+	/// reads it with no test of <c>+0x70</c>, so for −1 it reads <c>+0x16</c>, mount 9's weapon, which is 0 in every HERC
+	/// (docs/es1/shell/arming.md#picking-a-line); a mount past the HERC's words reads 0 here, an engine guard.
 	/// </summary>
 	private short SelectedMountAmmo() {
 		if (Bay is not { } bay || SelectedHerc is not { } herc) {
