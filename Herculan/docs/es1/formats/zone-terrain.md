@@ -7,7 +7,7 @@ ES1's zone file lists the shapes that stand on a mission's ground: for each, whi
 The zone and the theater are header words 1 and 0 of `data\script.dat` ([`script-dat.md`](script-dat.md)), the [header patch](msn-mission-file.md#header-patches) words a mission's load leaves there. Word 1 comes from the mission's own patches; the load overrides word 0 by its mode, from a table or by a draw below 4.
 
 - **The simulator.** `DBSim_LoadScriptDat` (`0001d850`), having read `data\script.dat`'s header into `000bc49c`, calls `Terrain_LoadZoneShapes` (`00020238`) with word 0 as the theater and word 1 as the zone, after `Mechs_InitAllTypes` and `FlyerTypes_LoadAll`.
-- **The shell.** The map screen's load (`ES1GO 0000c068`) reads `data\script.dat`'s 20-byte header itself and calls `ShellMap_LoadZoneShapes` (`ES1GO 0000c7e3`) with the same two words.
+- **The shell.** The map screen's load, `ShellMap_LoadScriptDat` (`ES1GO 0000c068`), reads `data\script.dat`'s 20-byte header itself and calls `ShellMap_LoadZoneShapes` (`ES1GO 0000c7e3`) with the same two words.
 
 Each loader copies `zoneXXXX` into a buffer, calls `ltoa` with the zone number, the address of the `XXXX` and radix 10, and opens `dat\zone<number>` through `ResourcePath_BuildFolderName` and `VolRStream_CtorFromPath`; the retail files are named that way, `ZONE1110.DAT` for zone 1110. A negative zone loads nothing.
 
@@ -120,7 +120,7 @@ The record a zone shape points at is its shape's [dividing line](#dattheater-the
 
 - A negative zone sets the map's count (`+0xc8`) to 0 and its root array (`+0xca`) and object array (`+0xd0`) to null.
 - A zone file that does not open asserts at severity 5 (line `0x565`). The count goes to `+0xc8`.
-- `ShellMap_LoadShapeRoots` (`ES1GO 000092b9`) loads `dgs\<name>`'s root shapes into an array at `+0xca` and their number to `+0xce`. It is `Shape_LoadAllRoots` with no skip, its arena based at the pointer in `ES1GO 0007e20c` and limited by the dword at `ES1GO 0009a4d6`, a chunk with another tag asserting at line `0x61`. The shell's archive is `SHELL0.VOL`, whose four `.DGS` are of other sizes than `SIMVOL0`'s.
+- `ShellMap_LoadShapeRoots` (`ES1GO 000092b9`) loads `dgs\<name>`'s root shapes into an array at `+0xca` and their number to `+0xce`. It is `Shape_LoadAllRoots` with no skip, its arena based at the pointer in `ES1GO 0007e20c` and limited by `ShellMapBnd_ShapeArenaSize` (`ES1GO 0009a4d6`), 75000 ([`SHELLMAP.BND`](bnd-notes.md#bndmapbnd-and-bndshellmapbnd)), a chunk with another tag asserting at line `0x61`. The shell's archive is `SHELL0.VOL`, whose four `.DGS` are of other sizes than `SIMVOL0`'s.
 - `ShellMap_LoadResource` (`ES1GO 0000923c`) loads `dba\tex1`, `SHELL0`'s `TEX1.DBA`, to `+0x4c3`.
 - It reads no `dat\<name>`.
 - For each record it first stores the `TEX1` bitmap array in the root shape's `+0x26`, where a `TSShape` keeps its bound bitmap array ([`TSShape`](../../retail/formats/dts-shape.md#part-chunks)), then builds the object with the shell's `TSObj_Ctor` (`ES1GO 0000e518`) and the root shape. The shell's `TS_OBJ` has its vptr at `+0` and its orientation block at `+4`, two bytes lower than the simulator's, so the angles go to `+4`, the position to `+0x1e` and the 0 to `+0x2a`. The object has no record pointer.
